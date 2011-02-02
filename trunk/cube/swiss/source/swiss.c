@@ -424,7 +424,15 @@ unsigned int load_app(int mode)
 	
 	if(noVideoPatch) {
 		switch(*(char*)0x80000003) {
-			case 'P':
+			case 'P': // PAL
+			case 'D': // German
+			case 'F': // French
+			case 'S': // Spanish
+			case 'I': // Italian
+			case 'L': // Japanese Import to PAL
+			case 'M': // American Import to PAL
+			case 'X': // PAL other languages?
+			case 'Y': // PAL other languages?
 				*(volatile unsigned long*)0x800000CC = 1;
 				break;
 			case 'U':
