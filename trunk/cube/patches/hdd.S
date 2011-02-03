@@ -202,7 +202,7 @@ do_read_generic:
 # Flush the destination - needed?
 	mr		3,		20			# load dst from r20
 	mr		4,		21			# load len from r21
-	bl		dcache_flush
+	bl		dcache_flush_icache_inv
 	
 ## Re-enable audio if it was a large read
 #	lis		4,		0x4			# r4 = 0x40000
