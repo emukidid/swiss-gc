@@ -70,11 +70,32 @@
 	.globl _start
 _start:
 
-	b		_do_read				# read
+	b		_do_read_v1				# read
 	b		_do_readdiskid			# read a disk id
 	b		_do_videomode			# set a different video mode to r3
 	b		_do_seek				# make seek go to offset 0
+	b		_do_read_v2				# patch read version 2
 
+_do_read_v1:
+	stw     0, 	4 (1)      			# this is what we patched over, so do it here. 
+	b		do_read_generic
+  
+_do_read_v2:
+	stwu		1, 	-0x0020 (1)			# these 4 are instructions we patched over, so do them here
+	stw 		31, 28 (1)
+	# this read stores dst and len using:
+	# stw 		3, 	8 (1)  
+	# mr        31, 4    
+	# so we'll set it later to ours.
+	mflr		31
+	stw			31, 8(1)
+	bl			do_read_generic
+	lwz			31, 8(1)
+	mtlr		31
+	stw 		3, 	8 (1)  
+	mr        	31, 4  
+	blr
+	
 _do_seek:
 	stw 	0,		4(1)			# this is what we patched over, so do it here.
 	li		3,		0				# make it go to offset 0
@@ -132,8 +153,7 @@ loopReadId:
 # r5  0x00626D40	ofs
 # r6  0x0000EB7F	lba base
 
-_do_read:
-	stw 	0,		4 (1)		# this is what we patched over, so do it here.
+do_read_generic:
 	cmpwi	3,		0			# no dst? return
 	beqlr
 	cmpwi	4,		0			# no len? return
@@ -155,9 +175,6 @@ _do_read:
 	mr		21, 	4			# r21 is saved len (r4)
 	mr		22, 	5			# r22 is saved ofs (r5)
 
-# Invalidate the destination - needed?
-	bl			dcache_inv
-
 # Setup our non-volatile registers
 	lis 	3,		0x8000
 	lwz 	15, 	0x2F20(3)	# load sector address hi from memory to r15
@@ -178,8 +195,6 @@ _do_read:
 ## Reload dst,len,ofs	
 #drS1:
 	mr		3,		20			# load dst from r20
-	mr		4,		21			# load len from r21
-	mr		5,		22			# load ofs from r22
 
 # Read from the HDD to the destination
 	bl		do_read 			# do_read(dst,size, offset);
@@ -630,32 +645,22 @@ loopFend:
 # End of ATA functions
 
 # Cache functions
-dcache_flush:
-	clrlwi. 	5,	3, 27			# check for lower bits set in address
-	beq 		1f
-	addi		4,	4, 0x20
+dcache_flush_icache_inv:
+	clrlwi. 5, 3, 27  # check for lower bits set in address
+	beq 1f
+	addi 4, 4, 0x20 
 1:
-	addi		4,	4, 0x1f
-	srwi		4,	4, 5
-	mtctr		4
+	addi 4, 4, 0x1f
+	srwi 4, 4, 5
+	mtctr 4
 2:
-	dcbf		0,	3
-	addi		3,	3, 0x20
-	bdnz		2b
-	blr
-
-dcache_inv:
-	clrlwi. 	5,	3, 27  # check for lower bits set in address
-	beq 		3f
-	addi		4,	4, 0x20
-3:
-	addi		4,	4, 0x1f
-	srwi		4,	4, 5
-	mtctr		4
-4:
-	dcbi		0,	3
-	addi		3,	3, 0x20
-	bdnz		4b
+	dcbf 0, 3
+	icbi 0, 3
+	addi 3, 3, 0x20
+	bdnz 2b
+	sc
+	sync
+	isync
 	blr
 
 # End of Cache functions
