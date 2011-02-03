@@ -1,4 +1,10 @@
-Swiss 0.1 (svn revision 2)
+Swiss 0.1 (svn revision 7)
+
+New in svn revision 7:
+- Fixed Invalidation and Flushing
+- Fixed Zelda CE and possibly a few other games (use pre-patcher for it)
+- Fixed Audio Streaming original media on Wii
+- Fixed Other PAL titles (German/etc)
 
 Current Features:
 - Load DOL from SD/SDHC/DVD-R/HDD
