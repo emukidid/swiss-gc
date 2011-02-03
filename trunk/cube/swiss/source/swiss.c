@@ -130,12 +130,28 @@ void ogc_video__reset()
     DrawFrameStart();
     if(curVideoSelection==AUTO) {
 		noVideoPatch = 1;
-		if(((GCMDisk.CountryCode == 'E') || (GCMDisk.CountryCode == 'J')))
-			curVideoSelection = NTSC;
-		else if(GCMDisk.CountryCode == 'P')
-			curVideoSelection = PAL50;
-		else if(GCMDisk.CountryCode == 'U')
-			curVideoSelection = PAL60;
+		switch(GCMDisk.CountryCode) {
+			case 'P': // PAL
+			case 'D': // German
+			case 'F': // French
+			case 'S': // Spanish
+			case 'I': // Italian
+			case 'L': // Japanese Import to PAL
+			case 'M': // American Import to PAL
+			case 'X': // PAL other languages?
+			case 'Y': // PAL other languages?
+				curVideoSelection = PAL50;
+				break;
+			case 'E':
+			case 'J':
+				curVideoSelection = NTSC;
+				break;
+			case 'U':
+				curVideoSelection = PAL60;
+				break;
+			default:
+				break;
+		}
     }
 
     /* set TV mode for current game*/
