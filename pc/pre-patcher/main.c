@@ -319,7 +319,8 @@ int patch_loader(FILE *file, unsigned int offset, int is_reloader, int size)
 {
   if(size<0)
   	size = 2*1024*1024;
-  offset+=0x20; // skip the header
+  if(!is_reloader)
+  	offset+=0x20; // skip the header
   char *appldr = malloc(size);
 	int modified = 0;
 	
