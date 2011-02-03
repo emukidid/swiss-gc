@@ -42,11 +42,32 @@
 	.globl _start   
  _start:         
 
-  b       _do_read        # read 
+  b       _do_read_v1     # read 
   b       _do_readdiskid  # read a disk id
   b       _do_videomode   # set a different video mode to r3
   b       _do_seek        # make seek go to offset 0
+  b       _do_read_v2     # patch read version 2
+
+_do_read_v1:
+  stw     0, 4 (1)      # this is what we patched over, so do it here. 
+  b			do_read_generic
   
+_do_read_v2:
+  stwu		1, -0x0020 (1)	# these 4 are instructions we patched over, so do them here
+  stw 		31, 28 (1)
+  # this read stores dst and len using:
+  # stw 		3, 8 (1)  
+  # mr        31, 4    
+  # so we'll set it later to ours.
+  mflr		31
+  stw		31, 8(1)
+  bl		do_read_generic
+  lwz		31, 8(1)
+  mtlr		31
+  stw 		3, 8 (1)  
+  mr        31, 4  
+  blr
+
 _do_seek: 
   stw     0, 4 (1)      # this is what we patched over, so do it here.
   li      3, 0          # make it go to offset 0
@@ -94,8 +115,7 @@ loopReadId:
   ori     3, 3, 0x2FC0
   blr
   
- _do_read:
-  stw     0, 4 (1)      # this is what we patched over, so do it here.
+do_read_generic:
   cmpwi   3,  0         # no dst? return
   beqlr
   cmpwi   4,  0         # no len? return
@@ -114,10 +134,6 @@ loopReadId:
   mr      21, 4         # r21 is saved len (r4)
   mr      22, 5         # r22 is saved ofs (r5)
 	
-  bl      dcache_inv
-	mr      3, 20         # load dst from r20
-	mr      4, 21         # load len from r21
-	mr      5, 22         # load ofs from r22
 	
 	lis     6, 0x8000   
   lwz     17,0x2F30(6)  # load sd speed from memory to r6
@@ -127,7 +143,7 @@ loopReadId:
 
 	mr      3, 20         # load dst from r20 
 	mr      4, 21         # load len from r21  
-  bl      dcache_flush
+  bl      dcache_flush_icache_inv
 
   lwz     6,    12(1)   # reload r6
   lmw     17,   16(1)   # load r17->r31
@@ -379,7 +395,7 @@ loopFend:
 
 # End of SD functions 
 
- dcache_flush:
+dcache_flush_icache_inv:
 	clrlwi. 5, 3, 27  # check for lower bits set in address
 	beq 1f
 	addi 4, 4, 0x20 
@@ -389,21 +405,10 @@ loopFend:
 	mtctr 4
 2:
 	dcbf 0, 3
+	icbi 0, 3
 	addi 3, 3, 0x20
 	bdnz 2b
- blr
-
-dcache_inv:
-	clrlwi. 5, 3, 27  # check for lower bits set in address
-	beq 3f
-	addi 4, 4, 0x20 
-3:
-	addi 4, 4, 0x1f
-	srwi 4, 4, 5
-	mtctr 4
-4:
-	dcbi 0, 3
-	addi 3, 3, 0x20
-	bdnz 4b
+	sc
+	sync
+	isync
 	blr
-

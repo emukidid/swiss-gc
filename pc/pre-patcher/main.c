@@ -10,12 +10,16 @@ static unsigned char ELFfileNameArray[1024][512];
 static unsigned int  ELFfileOffsetArray[1024];
 static unsigned int  ELFfileSizeArray[1024];
 static unsigned int  ELFfileIsDOL[1024];
+static unsigned int  ReloaderOffsetArray[1024];
+static unsigned int  ReloaderSizeArray[1024];
 static int ELFnumFiles = 0;
+static int ReloaderNumFiles = 0;
 
 //TGC (Embedded GCM files)
 static unsigned char TGCfileNameArray[1024][512];
 static unsigned int  TGCfileOffsetArray[1024];
 static unsigned int  TGCfileSizeArray[1024];
+static unsigned int  TGCapploaderOffsetsArray[1024];
 static int TGCnumFiles = 0;
 
 int jitterfix = 0;
@@ -88,7 +92,7 @@ static const unsigned int geckoPatch[31] = {
   0x2000804E
 };
 
-static const unsigned int _Read_original[11] = {
+static const unsigned int _Read_original[11] = {			
 	0xA602087C,
 	0x04000190,
 	0x00000038,
@@ -100,6 +104,19 @@ static const unsigned int _Read_original[11] = {
 	0x0000A43B,
 	0x18008193,
 	0x0000833B
+};
+
+static const unsigned int _Read_original_2[9] = {
+	
+	0xA602087C,
+	0x04000190,
+	0xE0FF2194,
+	0x1C00E193,
+	0x08006190,
+	0x78239F7C,
+	0x1000A190,
+	0x1400C190,
+	0x14000180,
 };
 
 static const unsigned int _DVDLowReadDiskID_original[8] = {
@@ -152,14 +169,25 @@ int patchRead(char* buffer,int size,unsigned int dst)
 	unsigned int newbranch = 0;
 	while(count<size) {
 		if(memcmp(buffer+count,_Read_original,sizeof(_Read_original))==0) {
-  		if(dst+count & 0x80000000)
-  		{
-  			printf("Patching Read %08X\n",dst+count);
-  			writeBranch((unsigned int)(buffer + count + 0x04), dst + count + 0x04, 0x80001800);  			
-  			patched = 1;
+  			if(dst+count & 0x80000000)
+  			{
+  				printf("Patching Read %08X\n",dst+count);
+  				writeBranch((unsigned int)(buffer + count + 0x04), dst + count + 0x04, 0x80001800);  			
+  				patched = 1;
 			}
 		}
-		count+=4;
+		if(memcmp(buffer+count,_Read_original_2,sizeof(_Read_original_2))==0) {
+  			if(dst+count & 0x80000000)
+  			{
+  				printf("Patching Read_v2 %08X\n",dst+count);
+  				*(unsigned int*)(buffer + count + 8) = convert_int(0x3C008000); // lis		0, 0x8000   
+  				*(unsigned int*)(buffer + count + 12) = convert_int(0x60001810); // ori		0, 0, 0x1810
+  				*(unsigned int*)(buffer + count + 16) = convert_int(0x7C0903A6); // mtctr	0          
+  				*(unsigned int*)(buffer + count + 20) = convert_int(0x4E800421); // bctrl            
+  				patched = 1;
+			}
+		}
+		count+=4;		
 	}
 	return patched;
 }
@@ -286,16 +314,18 @@ int patch_ELF(FILE *file, unsigned int size, unsigned int offset)
 	free(elf);
 	return modified;
 }
-int patch_APPLDR(FILE *file)
+
+int patch_loader(FILE *file, unsigned int offset, int is_reloader, int size)
 {
-  int size = 2*1024*1024;
-  unsigned int offset = 0x2460;
+  if(size<0)
+  	size = 2*1024*1024;
+  offset+=0x20; // skip the header
   char *appldr = malloc(size);
 	int modified = 0;
 	
 	if(!appldr)
 	{
-		printf("Can't malloc enough space for Apploader.\n");
+		printf("Can't malloc enough space for %s.\n", is_reloader ? "reloader":"apploader");
 		fclose(file);
 		exit(0);
 	}
@@ -303,16 +333,16 @@ int patch_APPLDR(FILE *file)
 	fseek(file,offset,SEEK_SET); 
 	fread(appldr, 1, size, file);
 	
-	if(do_patches((char*)(appldr),size,0x81200000))
+	if(do_patches((char*)(appldr),size,is_reloader ? 0x81300000 : 0x81200000))
 			modified = 1;
 	if(modified)
 	{
-		printf("Writing apploader patch\n");
+		printf("Writing %s patch\n", is_reloader ? "reloader":"apploader");
 		fseek(file,offset,SEEK_SET); 
 		fwrite(appldr, 1, size, file);
 	}
 	else
-		printf("Apploader doesn't require patching or couldn't patch!!\n");
+		printf("%s doesn't require patching or couldn't patch!!\n",is_reloader ? "reloader":"apploader");
 	free(appldr);
 	return modified;
 }
@@ -397,11 +427,14 @@ int main(int argc, char **argv) {
   offset=convert_int(offset);    
   patched = patch_DOL(in,10*1024*1024,offset);	//assume 10mb is the largest DOL
   printf("\nPatching Apploader\n");
-  patched |= patch_APPLDR(in);
+  patched |= patch_loader(in, 0x2440, 0, -1);
+
   // collect all .dol/.elf from embedded GCM files
-  if(TGCnumFiles>0)
-	 	for(i = 0; i < TGCnumFiles; i++)
-		  parse_tgc(in,TGCfileOffsetArray[i]);
+  if(TGCnumFiles>0) {
+	for(i = 0; i < TGCnumFiles; i++) {
+	  parse_tgc(in,TGCfileOffsetArray[i]);
+	}
+  }
 
   if(ELFnumFiles>0)
   {
@@ -416,7 +449,17 @@ int main(int argc, char **argv) {
 	    printf("\n");
 	  }
 	}
-		
+	
+	for(i = 0; i < TGCnumFiles; i++) {
+	  printf("\nPatching TGC Apploader\n");
+	  patched |= patch_loader(in, TGCapploaderOffsetsArray[i], 0, -1);
+    }	
+    
+    for(i = 0; i < ReloaderNumFiles; i++) {
+	    printf("\nPatching execD.img reloader\n");
+	    patched |= patch_loader(in, ReloaderOffsetArray[i], 1, ReloaderSizeArray[i]);
+    }
+	
 	if(patched) {
 		unsigned int magic_words[3] = {0x50617463,0x68656421,0x00000001};	//'Patched!' followed by patcher version number
 		for(i = 0; i < 3; i++)
@@ -545,6 +588,7 @@ void parse_gcm(FILE *file) {
 			strcpy(tmp,filename+(strlen(filename)-4));
 			memcpy(&loc,&FST[offset+4],4);
 			memcpy(&len,&FST[offset+8],4);
+			//printf("file: %s%s 0x%08X\n",current_path,filename,convert_int(loc));
 			if((!stricmp(tmp,".elf")) || (!stricmp(tmp,".ELF")) || (!stricmp(tmp,".dol")) || (!stricmp(tmp,".DOL"))) 
 			{
 				strcpy(&ELFfileNameArray[ELFnumFiles][0],current_path);
@@ -561,7 +605,13 @@ void parse_gcm(FILE *file) {
 				strcat(&TGCfileNameArray[TGCnumFiles][0],filename);
 				TGCfileOffsetArray[TGCnumFiles] = convert_int(loc);
 				TGCfileSizeArray[TGCnumFiles] = convert_int(len);
+				TGCapploaderOffsetsArray[TGCnumFiles] = TGCfileOffsetArray[TGCnumFiles];
 				TGCnumFiles++;
+			}
+			if(!stricmp(filename,"execD.img")) {
+				ReloaderOffsetArray[ReloaderNumFiles] = convert_int(loc);
+				ReloaderSizeArray[ReloaderNumFiles] = convert_int(len);
+				ReloaderNumFiles++;
 			}
 
 			free (tmp);

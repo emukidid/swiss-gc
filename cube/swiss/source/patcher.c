@@ -75,6 +75,19 @@ u8 _Read_original[46] = {
 	0x90, 0x0D               // stw r0 to someplace in (sd1) - differs on different sdk's
 };
 
+u8 _Read_original_2[38] = {
+	0x7C, 0x08, 0x02, 0xA6,  	//	mflr        r0               
+	0x90, 0x01, 0x00, 0x04,  	//	stw         r0, 4 (sp)       
+	0x94, 0x21, 0xFF, 0xE0,  	//	stwu        sp, -0x0020 (sp) 
+	0x93, 0xE1, 0x00, 0x1C,  	//	stw         r31, 28 (sp)     
+	0x90, 0x61, 0x00, 0x08,  	//	stw         r3, 8 (sp)       
+	0x7C, 0x9F, 0x23, 0x78,  	//	mr          r31, r4          
+	0x90, 0xA1, 0x00, 0x10,  	//	stw         r5, 16 (sp)      
+	0x90, 0xC1, 0x00, 0x14,  	//	stw         r6, 20 (sp)      
+	0x80, 0x01, 0x00, 0x14,  	//	lwz         r0, 20 (sp)      
+	0x90, 0x0D					//	stw r0 to someplace in (sd1) - differs on different sdk's
+};
+
 u32 _DVDLowReadDiskID_original[8] = {
   0x7C0802A6,  // mflr        r0
   0x39000000,  // li          r8, 0
@@ -321,7 +334,14 @@ void dvd_patchDVDRead(void *addr, u32 len) {
 	{
 		if(memcmp(addr_start,_Read_original,sizeof(_Read_original))==0) 
 		{
-      writeBranchLink((u32)addr_start+0x04,READ_JUMP_OFFSET);
+      		writeBranchLink((u32)addr_start+0x04,READ_JUMP_OFFSET);
+		}
+		if(memcmp(addr_start,_Read_original_2,sizeof(_Read_original_2))==0) 
+		{
+      		*(unsigned int*)(addr_start + 8) = 0x3C008000; // lis		0, 0x8000   
+  			*(unsigned int*)(addr_start + 12) = 0x60001810; // ori		0, 0, 0x1810
+  			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
+  			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
 		}
 		addr_start += 4;
 	}
