@@ -92,31 +92,32 @@ static const unsigned int geckoPatch[31] = {
   0x2000804E
 };
 
-static const unsigned int _Read_original[11] = {			
-	0xA602087C,
-	0x04000190,
-	0x00000038,
-	0xD8FF2194,
-	0x2400E193,
-	0x2000C193,
-	0x0000C53B,
-	0x1C00A193,
-	0x0000A43B,
-	0x18008193,
-	0x0000833B
+static unsigned char _Read_original[46] = {
+	0x7C, 0x08, 0x02, 0xA6,  //	mflr        r0
+	0x90, 0x01, 0x00, 0x04,  //	stw         r0, 4 (sp)
+	0x38, 0x00, 0x00, 0x00,  //	li          r0, 0
+	0x94, 0x21, 0xFF, 0xD8,  //	stwu        sp, -0x0028 (sp)
+	0x93, 0xE1, 0x00, 0x24,  //	stw         r31, 36 (sp)
+	0x93, 0xC1, 0x00, 0x20,  //	stw         r30, 32 (sp)
+	0x3B, 0xC5, 0x00, 0x00,  //	addi        r30, r5, 0
+	0x93, 0xA1, 0x00, 0x1C,  //	stw         r29, 28 (sp)
+	0x3B, 0xA4, 0x00, 0x00,  //	addi        r29, r4, 0
+	0x93, 0x81, 0x00, 0x18,  //	stw         r28, 24 (sp)
+	0x3B, 0x83, 0x00, 0x00,  //	addi        r28, r3, 0
+	0x90, 0x0D               // stw r0 to someplace in (sd1) - differs on different sdk's
 };
 
-static const unsigned int _Read_original_2[9] = {
-	
-	0xA602087C,
-	0x04000190,
-	0xE0FF2194,
-	0x1C00E193,
-	0x08006190,
-	0x78239F7C,
-	0x1000A190,
-	0x1400C190,
-	0x14000180,
+static unsigned char _Read_original_2[38] = {
+	0x7C, 0x08, 0x02, 0xA6,  	//	mflr        r0               
+	0x90, 0x01, 0x00, 0x04,  	//	stw         r0, 4 (sp)       
+	0x94, 0x21, 0xFF, 0xE0,  	//	stwu        sp, -0x0020 (sp) 
+	0x93, 0xE1, 0x00, 0x1C,  	//	stw         r31, 28 (sp)     
+	0x90, 0x61, 0x00, 0x08,  	//	stw         r3, 8 (sp)       
+	0x7C, 0x9F, 0x23, 0x78,  	//	mr          r31, r4          
+	0x90, 0xA1, 0x00, 0x10,  	//	stw         r5, 16 (sp)      
+	0x90, 0xC1, 0x00, 0x14,  	//	stw         r6, 20 (sp)      
+	0x80, 0x01, 0x00, 0x14,  	//	lwz         r0, 20 (sp)      
+	0x90, 0x0D					//	stw r0 to someplace in (sd1) - differs on different sdk's
 };
 
 static const unsigned int _DVDLowReadDiskID_original[8] = {
@@ -168,7 +169,7 @@ int patchRead(char* buffer,int size,unsigned int dst)
 	int patched = 0;
 	unsigned int newbranch = 0;
 	while(count<size) {
-		if(memcmp(buffer+count,_Read_original,sizeof(_Read_original))==0) {
+		if(memcmp((unsigned char*)(buffer+count),_Read_original,sizeof(_Read_original))==0) {
   			if(dst+count & 0x80000000)
   			{
   				printf("Patching Read %08X\n",dst+count);
