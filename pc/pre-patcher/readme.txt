@@ -1,4 +1,4 @@
-Pre-patcher for Swiss 0.1 - revision 7
+Pre-patcher for Swiss 0.1 - revision 17
 
 Usage example:
                 sd-boot-RC4-prepatch.exe file.gcm
@@ -24,7 +24,10 @@ Note:
 BEFORE USING THIS, MAKE A COPY OF THE FILE YOU'RE ABOUT TO PATCH, 
 IT WILL OVERWRITE IT!
 
-This will only work with Swiss 0.1 - revision 7 on wards
+This will only work with Swiss 0.1 - revision 17 on wards
 
+New in revision 17:
+- Relative branching removed - fixes 007 Everything or Nothing
+- Fix for Kirby's Air ride
 New in revision 7:
 - Full support for Zelda CE
