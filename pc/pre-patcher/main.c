@@ -173,7 +173,11 @@ int patchRead(char* buffer,int size,unsigned int dst)
   			if(dst+count & 0x80000000)
   			{
   				printf("Patching Read %08X\n",dst+count);
-  				writeBranch((unsigned int)(buffer + count + 0x04), dst + count + 0x04, 0x80001800);  			
+  				//writeBranch((unsigned int)(buffer + count + 0x04), dst + count + 0x04, 0x80001800);  			
+  				*(unsigned int*)(buffer + count + 8) = convert_int(0x3C008000); // lis		0, 0x8000   
+  				*(unsigned int*)(buffer + count + 12) = convert_int(0x60001800); // ori		0, 0, 0x1800
+  				*(unsigned int*)(buffer + count + 16) = convert_int(0x7C0903A6); // mtctr	0          
+  				*(unsigned int*)(buffer + count + 20) = convert_int(0x4E800421); // bctrl  
   				patched = 1;
 			}
 		}

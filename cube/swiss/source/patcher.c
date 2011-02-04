@@ -334,7 +334,11 @@ void dvd_patchDVDRead(void *addr, u32 len) {
 	{
 		if(memcmp(addr_start,_Read_original,sizeof(_Read_original))==0) 
 		{
-      		writeBranchLink((u32)addr_start+0x04,READ_JUMP_OFFSET);
+      		//writeBranchLink((u32)addr_start+0x04,READ_JUMP_OFFSET);
+      		*(unsigned int*)(addr_start + 8) = 0x3C008000; // lis		0, 0x8000   
+  			*(unsigned int*)(addr_start + 12) = 0x60001800; // ori		0, 0, 0x1800
+  			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
+  			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
 		}
 		if(memcmp(addr_start,_Read_original_2,sizeof(_Read_original_2))==0) 
 		{

@@ -57,14 +57,14 @@
 
 # EXI Address defines
 #SLOT A
-#.set CHN_SR,		0x6800
-#.set CHN_CR,		0x680C
-#.set CHN_DATA,		0x6810
+.set CHN_SR,		0x6800
+.set CHN_CR,		0x680C
+.set CHN_DATA,		0x6810
 
 #SLOT B
-.set CHN_SR,		0x6814
-.set CHN_CR,		0x6820
-.set CHN_DATA,		0x6824
+#.set CHN_SR,		0x6814
+#.set CHN_CR,		0x6820
+#.set CHN_DATA,		0x6824
 
 .section .text
 	.globl _start
@@ -77,8 +77,16 @@ _start:
 	b		_do_read_v2				# patch read version 2
 
 _do_read_v1:
-	stw     0, 	4 (1)      			# this is what we patched over, so do it here. 
+	stwu		1,	-0x0028 (1)		# these are instructions we patched over, so do them here
+	stw			30, 32 (1)
+	mflr		31
+	stw			31, 36(1)			# use this spot to save lr
 	b		do_read_generic
+	lwz			0, 36(1)
+	mtlr		0
+	stw			31, 36 (1)			# was patched over, do it now.
+	li			0, 0				# was patched over, do it now.
+	blr
   
 _do_read_v2:
 	stwu		1, 	-0x0020 (1)			# these 4 are instructions we patched over, so do them here

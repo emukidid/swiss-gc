@@ -49,8 +49,17 @@
   b       _do_read_v2     # patch read version 2
 
 _do_read_v1:
-  stw     0, 4 (1)      # this is what we patched over, so do it here. 
-  b			do_read_generic
+  stwu    1, -0x0028 (1)	# these are instructions we patched over, so do them here
+  stw     30, 32 (1)
+  mflr	  31
+  stw	  31, 36(1)				# use this spot to save lr
+  b		  do_read_generic
+  lwz	  0, 36(1)
+  mtlr    0
+  stw     31, 36 (1)			# was patched over, do it now.
+  li      0, 0					# was patched over, do it now.
+  blr
+  
   
 _do_read_v2:
   stwu		1, -0x0020 (1)	# these 4 are instructions we patched over, so do them here
@@ -64,8 +73,8 @@ _do_read_v2:
   bl		do_read_generic
   lwz		31, 8(1)
   mtlr		31
-  stw 		3, 8 (1)  
-  mr        31, 4  
+  stw 		3, 8 (1)  	# was patched over, do it now.
+  mr        31, 4  		# was patched over, do it now.
   blr
 
 _do_seek: 
