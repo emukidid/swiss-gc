@@ -449,10 +449,8 @@ unsigned int load_app(int mode)
 			case 'M': // American Import to PAL
 			case 'X': // PAL other languages?
 			case 'Y': // PAL other languages?
-				*(volatile unsigned long*)0x800000CC = 1;
-				break;
 			case 'U':
-				*(volatile unsigned long*)0x800000CC = 5;
+				*(volatile unsigned long*)0x800000CC = 1;
 				break;
 			case 'E':
 			case 'J':
