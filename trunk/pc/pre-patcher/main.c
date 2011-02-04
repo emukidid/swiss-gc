@@ -481,7 +481,7 @@ void parse_gcm(FILE *file) {
 	unsigned long   fst_offset=0,filename_offset=0,entries=0,string_table_offset=0,fst_size=0; 
 	unsigned int    found=0; 
 	unsigned long   i=0,j=0,k=0,offset=0,parent_offset=0,next_offset=0,name_offset=0; 
-	unsigned char   *filename=malloc(30),*path=malloc(256),*temp=malloc(256),*current_path=malloc(256); 
+	unsigned char   *filename=malloc(256),*path=malloc(256),*temp=malloc(256),*current_path=malloc(256); 
 	
 	// Initialise the vars
 	memset(ELFfileNameArray,0,sizeof(ELFfileNameArray));
@@ -628,7 +628,7 @@ void parse_tgc(FILE *file,unsigned int tgc_base) {
 	unsigned long   fst_offset=0,filename_offset=0,entries=0,string_table_offset=0,fst_size=0; 
 	unsigned int    found=0; 
 	unsigned long   i=0,j=0,k=0,offset=0,parent_offset=0,next_offset=0,name_offset=0; 
-	unsigned char   *filename=malloc(30),*path=malloc(256),*temp=malloc(256),*current_path=malloc(256); 
+	unsigned char   *filename=malloc(256),*path=malloc(256),*temp=malloc(256),*current_path=malloc(256); 
 
 
 	// add this embedded GCM's main DOL
