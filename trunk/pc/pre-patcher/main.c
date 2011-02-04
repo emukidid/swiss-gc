@@ -467,7 +467,7 @@ int main(int argc, char **argv) {
     }
 	
 	if(patched) {
-		unsigned int magic_words[3] = {0x50617463,0x68656421,0x00000001};	//'Patched!' followed by patcher version number
+		unsigned int magic_words[3] = {0x50617463,0x68656421,0x00000002};	//'Patched!' followed by patcher version number
 		for(i = 0; i < 3; i++)
     		magic_words[i] = convert_int(magic_words[i]);
 		fseek(in,0x100,SEEK_SET); 

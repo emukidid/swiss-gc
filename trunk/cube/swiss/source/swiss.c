@@ -657,6 +657,14 @@ void check_game()
 		return;
 	}
 	
+	if(isPatched[2] != 0x00000002) {
+		DrawFrameStart();
+		DrawMessageBox(D_INFO,"Game is using outdated pre-patcher!");
+		DrawFrameFinish();
+		sleep(5);
+		return;
+	}
+	
 	DrawFrameStart();
 	DrawEmptyBox(75,120, vmode->fbWidth-78, 460, COLOR_BLACK);  
 	WriteCentre(130, "Checking ISO/GCM");

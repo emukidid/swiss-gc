@@ -1,4 +1,12 @@
-Swiss 0.1 (svn revision 7)
+Swiss 0.1 (svn revision 17)
+
+New in svn revision 17:
+- Fixed Zelda CE Windwaker demo (pre-patcher issue)
+- Fixed Zelda Master Quest
+- Changed relative branching to direct branching (mtctr,bctrl) (fixed 007 Everything or nothing)
+- Possibly more titles fixed - please test :)
+- Fixed broken ide-exi code
+- Swiss now checks the version a game was pre-patched with
 
 New in svn revision 7:
 - Fixed Invalidation and Flushing
