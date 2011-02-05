@@ -386,6 +386,7 @@ unsigned int load_app(int mode)
 		while(1);
 	}
 	DCFlushRange((void*)0x81200000,apploader_info[1]+apploader_info[2]);
+	ICInvalidateRange((void*)0x81200000,apploader_info[1]+apploader_info[2]);
   
 	DrawFrameStart();
 	DrawProgressBar(66, "Executing Apploader...");
@@ -429,16 +430,17 @@ unsigned int load_app(int mode)
 		}
 		dvd_patchVideoMode(app_dst, app_len, noVideoPatch ? AUTO:curVideoSelection);
 		DCFlushRange(app_dst, app_len);
+		ICInvalidateRange(app_dst, app_len);
 	}
 	deviceHandler_deinit(&curFile);
  
 	DrawFrameStart();
 	DrawProgressBar(100, "Executing Game!");
 	DrawFrameFinish();
-
+/*
 	do_videomode_swap();
 	
-	if(noVideoPatch) {
+	if(noVideoPatch) {*/
 		switch(*(char*)0x80000003) {
 			case 'P': // PAL
 			case 'D': // German
@@ -459,9 +461,9 @@ unsigned int load_app(int mode)
 			default:
 				*(volatile unsigned long*)0x800000CC = 0;
 		}
-	}
+	/*}*/
       
-	DCInvalidateRange((void*)0x80001800,0x1800);
+	DCFlushRange((void*)0x80001800,0x1800);
 	ICInvalidateRange((void*)0x80001800,0x1800);
 	
 	// copy sd/hdd read or 2 disc code to 0x80001800
@@ -473,6 +475,7 @@ unsigned int load_app(int mode)
 	} 
   
 	DCFlushRange((void*)0x80000000, 0x3100);
+	ICInvalidateRange((void*)0x80000000, 0x3100);
 	
 	if(debugUSB) {
 		sprintf(txtbuffer,"Sector: %08X%08X Speed: %08x\n",*(volatile unsigned int*)0x80002F00,
@@ -657,7 +660,7 @@ void check_game()
 		return;
 	}
 	
-	if(isPatched[2] != 0x00000002) {
+	if(((isPatched[0] == 0x50617463) && (isPatched[1] == 0x68656421)) && (isPatched[2] != 0x00000002)) {
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,"Game is using outdated pre-patcher!");
 		DrawFrameFinish();
@@ -671,6 +674,9 @@ void check_game()
 	DrawFrameFinish();	// We want to draw these as they are worked out
 	
 	int read_patchable = check_dol(&curFile, (u32*)_Read_original, sizeof(_Read_original));
+	if(read_patchable != 1) {
+		read_patchable = check_dol(&curFile, (u32*)_Read_original_2, sizeof(_Read_original_2));
+	}
 	if(read_patchable == -1)
 		WriteCentre(170,"Read patchable: Error checking");
 	else {

@@ -4,6 +4,7 @@
 #include "devices/deviceHandler.h"
 
 extern u8 _Read_original[46];
+extern u8 _Read_original_2[38];
 extern u32 _DVDLowReadDiskID_original[8];
 extern u32 _DVDLowSeek_original[9];
 extern u32 _AIResetStreamSampleCount_original[9];
