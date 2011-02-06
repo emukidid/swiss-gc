@@ -20,7 +20,7 @@
 
 #define CHTS_PER_PAGE 6
 /* local vars */
-char *cheatsFileName = "/sd-boot/cheats.qch";
+char *cheatsFileName = "/cheats.qch";
 char *cheatsFileInMem = NULL;
 char *cheatGameNamesp[1024];
 char  cheatGameNames[1024][128];
@@ -238,7 +238,7 @@ int QCH_Find(char *gamename, curGameCheats *chts)
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_B)) { 
   		return 1;
 		}
-		usleep(250);
+		while((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || (PAD_ButtonsHeld(0) & PAD_BUTTON_UP));
 	}
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
 	
@@ -271,7 +271,7 @@ int QCH_Find(char *gamename, curGameCheats *chts)
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_A)) { chts->cheats[curChtSelection].enabled^=1; while((PAD_ButtonsHeld(0) & PAD_BUTTON_A)); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_B)) break;
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_START)) {apply=1; break;}
-	  usleep(450);
+	  while((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || (PAD_ButtonsHeld(0) & PAD_BUTTON_UP));
 	}
 	if(apply) {
   	DrawFrameStart();

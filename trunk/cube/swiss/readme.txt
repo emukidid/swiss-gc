@@ -1,4 +1,11 @@
-Swiss 0.1 (svn revision 17)
+Swiss 0.1 (svn revision 21)
+
+New in svn revision 21:
+- Re-added device speed selection
+- Simplify Video forcing/patching (less green screen boot)
+- Fixed pre-patched image check
+- Fixed cheats scrolling being too fast
+- Cheats file now should be placed in device root:\cheats.qch
 
 New in svn revision 17:
 - Fixed Zelda CE Windwaker demo (pre-patcher issue)
@@ -25,6 +32,13 @@ Current Features:
 *HDD features require a IDE-EXI or homemade adapter
 **SD features require a SDGecko or homemade adapter
 
+Using cheats:
+Cheats are stored in a Qoob based file format, they may be edited/updated
+using the included cheats editor. You may convert action replay codes using
+GCNCrypt and then add those too.
+Swiss comes with a embedded cheats database but if you have an updated one,
+place it as device:\cheats.qch and it will picked up and loaded instead of 
+the internal cheats database.
 
 IMPORTANT:
 - 480P video mode forcing is Work in Progress - it may not work at all yet!
