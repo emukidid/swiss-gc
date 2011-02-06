@@ -1022,7 +1022,6 @@ void credits()
 void select_speed()
 { 	
 	GC_SD_SPEED=EXI_SPEED32MHZ;
-	return;/*
 	while(1)
 	{
 		doBackdrop();
@@ -1041,8 +1040,9 @@ void select_speed()
 			break;
 		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
 	}
-	sdgecko_setSpeed(GC_SD_SPEED);
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));*/
+	if(curDevice == SD_CARD)
+		sdgecko_setSpeed(GC_SD_SPEED);
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 }
 
 void select_slot()
