@@ -1,0 +1,6 @@
+#labels Featured
+= How to =
+
+Cheats are stored in a Qoob based file format, they may be edited/updated using the included cheats editor. You may convert action replay codes using GCNCrypt and then add those too.
+
+Swiss comes with a embedded cheats database but if you have an updated one, place it as device:\cheats.qch and it will picked up and loaded instead of the internal cheats database.
