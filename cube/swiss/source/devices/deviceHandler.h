@@ -7,7 +7,6 @@
 #define DEVICE_HANDLER_H
 
 #include <stdint.h>
-#include "ff.h"
 
 typedef struct {
 	char name[1024]; // File or Folder, absolute path goes here

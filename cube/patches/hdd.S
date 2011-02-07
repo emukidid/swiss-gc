@@ -8,12 +8,9 @@
 # we have 0x1800 bytes to play with at 0x80001800 (code+data)
 # This code is placed at 0x80001800
 # 0x80002B00 is a 512 byte area used to read into
-# 0x80002F00 is the base file hi sector for disk 1
-# 0x80002F04 is the base file lo sector for disk 1
-# 0x80002F10 is the base file hi sector for disk 2
-# 0x80002F14 is the base file lo sector for disk 2
-# 0x80002F20 is the currently selected disk hi sector
-# 0x80002F24 is the currently selected disk lo sector
+# 0x80002F00 is the base file sector for disk 1
+# 0x80002F10 is the base file sector for disk 2
+# 0x80002F20 is the currently selected disk sector
 # 0x80002F30 is the SD card speed
 # 0x80002F40 is the Video mode to patch
 # 0x80002F80 is the Disc ID of the first disk
@@ -21,7 +18,7 @@
 # 0x80002FC0 is a 32 byte area to redirect reads to
 
 # register map
-# r15-r16 is the 64-bit LBA
+# r16 is the 32-bit LBA (2TB Max)
 # r17 is EXI speed
 # r18 is constant 0xFFFFFFFF
 # r19 is constant 0xCC000000
@@ -57,14 +54,14 @@
 
 # EXI Address defines
 #SLOT A
-.set CHN_SR,		0x6800
-.set CHN_CR,		0x680C
-.set CHN_DATA,		0x6810
+#.set CHN_SR,		0x6800
+#.set CHN_CR,		0x680C
+#.set CHN_DATA,		0x6810
 
 #SLOT B
-#.set CHN_SR,		0x6814
-#.set CHN_CR,		0x6820
-#.set CHN_DATA,		0x6824
+.set CHN_SR,		0x6814
+.set CHN_CR,		0x6820
+.set CHN_DATA,		0x6824
 
 .section .text
 	.globl _start
@@ -116,43 +113,39 @@ _do_videomode:
 	blr
 
 _do_readdiskid:
-	stw 	0,		4(1)			# this is what we patched over, so do it here.
-
+	stw     0, 4 (1)      # this is what we patched over, so do it here.
+	
 	# determine if we need to swap current file base sector
-	lis 	5,		0x8000
-	lwz 	6,		0x2F04(5)		# r6 = file base lbalo for disk 1
-	lwz 	7,		0x2F24(5)		# r7 = current file file base lba lo
-	cmpw	5,		6, 7			# cur base lo != disk 1 lo base?
-	bne 	5,		_swap_file_base
-
-	lwz 	6,		0x2F10(5)		# r6 = file base hi for disk 2
-	stw 	6,		0x2F20(5)		# store disk 2 file base hi as current
-	lwz 	6,		0x2F14(5)		# r6 = file base lo for disk 2
-	stw 	6,		0x2F24(5)		# store disk 2 file base lo as current
-	lis 	5,		0x8000
-	ori 	5,		5, 0x2FA0		# src=0x80002FA0 (disk 2 id)
-	b		_do_id_copy
-
-_swap_file_base:					# so swap it
-	stw 	6,		0x2F20(5)		# store disk 1 file base hi as current
-	lwz 	6,		0x2F04(5)		# r6 = file base lo for disk 1
-	stw 	6,		0x2F24(5)		# store disk 1 file base lo as current
-	lis 	5,		0x8000
-	ori 	5,		5, 0x2F80		# src=0x80002F80 (disk 1 id)
-
+	lis     5, 0x8000
+	lwz     6, 0x2F00(5)  # r6 = file base for disk 1
+	lwz     7, 0x2F20(5)  # r7 = current file file base
+	cmpw    5, 6, 7       # cur base != disk 1 base?
+	bne     5, _swap_file_base
+	
+	lwz     6, 0x2F10(5)  # r6 = file base for disk 2
+	stw     6, 0x2F20(5)  # store disk 2 file base as current
+	lis     5, 0x8000
+	ori     5, 5, 0x2FA0  # src=0x80002FA0 (disk 2 id)
+	b       _do_id_copy
+  
+_swap_file_base:  # so swap it
+	stw     6, 0x2F20(5)  # store disk 1 file base as current
+	lis     5, 0x8000
+	ori     5, 5, 0x2F80  # src=0x80002F80 (disk 1 id)
+  
 _do_id_copy:
-	li		6,		8				# rem=32/4 == 8;
+  li      6, 8          # rem=32/4 == 8;
 loopReadId:
-	lwz 	7,		0(5)			# r7 = src[i]
-	stw 	7,		0(3)			# dst[i] = r7
-	addi	3,		3, 4			# dst+=4;
-	addi	6,		6, -1			# rem--;
-	addi	5,		5, 4			# src+=4;
-	cmpwi	5,		6, 0
-	bne 	5,	loopReadId
-
-	lis 	3,		0x8000
-	ori 	3,		3, 0x2FC0
+	lwz     7, 0(5)       # r7 = src[i]
+	stw     7, 0(3)       # dst[i] = r7
+	addi    3, 3, 4       # dst+=4;
+	addi    6, 6, -1      # rem--;
+	addi    5, 5, 4       # src+=4;
+	cmpwi   5, 6, 0 
+	bne     5, loopReadId   
+	
+	lis     3, 0x8000  
+	ori     3, 3, 0x2FC0
 	blr
 
 # Animal Crossing NTSC first read
@@ -176,7 +169,7 @@ do_read_generic:
 	stw 	9,		24(1)		# save r9
 	stw 	10, 	28(1)		# save r10
 	stw 	11, 	32(1)		# save r11
-	stmw	15, 	36(1)		# save r15->r31
+	stmw	16, 	36(1)		# save r16->r31
 
 # Keep a back up copy of dst,len,ofs in r20,r21,r22
 	mr		20, 	3			# r20 is saved dst (r3)
@@ -185,9 +178,8 @@ do_read_generic:
 
 # Setup our non-volatile registers
 	lis 	3,		0x8000
-	lwz 	15, 	0x2F20(3)	# load sector address hi from memory to r15
-	lwz 	16, 	0x2F24(3)	# load sector address lo from memory to r16
-	lwz 	17, 	0x2F30(3)	# load sd speed from memory to r17
+	lwz 	16, 	0x2F20(3)	# load sector address from memory to r16
+	lwz 	17, 	0x2F30(3)	# load hdd speed from memory to r17
 	li		18, 	-1			# r18 is constant 0xFFFFFFFF
 	lis 	19, 	0xCC00		# r19 is constant 0xCC000000
 
@@ -231,7 +223,7 @@ do_read_generic:
 	lwz 	9,		24(1)		# reload r9
 	lwz 	10, 	28(1)		# reload r10
 	lwz 	11, 	32(1)		# reload r11
-	lmw 	15, 	36(1)		# reload r15->r31
+	lmw 	16, 	36(1)		# reload r16->r31
 
 # Setup registers for a small read from sector 0
 	li		5,		0			# offset 0
@@ -433,7 +425,7 @@ ata_setup_read:
 	eieio
 	# LBA Mid
 	li		3, 	ATA_REG_LBAMID
-	rlwinm		4, 	15, 0, 24, 31
+	li		4,	0
 	bl 		ata_write_byte			#ataWriteByte(ATA_REG_LBAMID, (u8)((lbaHI) & 0xFF));
 	eieio
 	# LBA Mid
@@ -443,7 +435,7 @@ ata_setup_read:
 	eieio
 	# LBA Hi
 	li		3, 	ATA_REG_LBAHI
-	rlwinm		4, 	15, 24, 24, 31
+	li		4, 0
 	bl 		ata_write_byte			#ataWriteByte(ATA_REG_LBAHI, (u8)((lbaHI>>8) & 0xFF));
 	eieio
 	# LBA Hi
@@ -528,7 +520,7 @@ loopATARS2:
 	mtlr	0
 	blr
 	
-# Reads X sectors specified in r6 from the u64 sector in r15->r16 to the dst in r3
+# Reads X sectors specified in r6 from the u32 sector in r16 to the dst in r3
 # Returns nothing in r3, clobbers r3,r4,r5,r6,r7,r23,r24
 # ataReadSectors(u32 *dst, u32 numSectors)
 ata_read_sectors:
@@ -567,8 +559,7 @@ do_read:
 	mr		28, 	4				# r28 = numbytes = len
 	mr		29, 	3				# r29 = dst
 	srwi	3,		5, 9			# r3 = offset >> 9
-	addc	16, 	16, 3			# lbalo += offset>>9
-	addze	15, 	15				# lbahi += offset>>9
+	add		16, 	16, 3			# lba += offset>>9
 
 	cmpwi	5,		27, 0
 	beq 	5,		loopF1			# if(!startByte), go to aligned reads section
@@ -595,8 +586,7 @@ loopF2:
 	sub 	3,		3, 27			# 512-startByte
 	sub 	28, 	28, 3			# numBytes-=(512-startByte);
 	add 	29, 	29, 3			# dst+=(512-startByte);
-	addic	16, 	16, 1			# lbalo ++;
-	addze	15, 	15				# lbahi ++;
+	addi	16, 	16, 1			# lba ++;
 
 # Check to see if we'll need to read from many full blocks or just a single aligned sector < 512b
 # We re-use r27 now since startByte is always 0 at this section
@@ -613,8 +603,7 @@ loopF1:
 #	mr		3,		29				# move dst
 #	li		4,		127				# offset 0 in the sector
 #	bl		ata_read_sectors		# ata_read_sectors(u32 *dst, numSectors);
-#	addic	16, 	16, 127			# lbalo+=127;
-#	addze	15, 	15				# lbahi+=127;
+#	addi	16, 	16, 127			# lbalo+=127;
 #	li		3,		127
 #	subi	27, 	27, 127			# numFullBlocks-=127;
 #	slwi	3,		3,	9
@@ -628,8 +617,7 @@ loopF3A:
 	mr		3,		29				# move dst
 	li		4,		1				# 1 block to read
 	bl		ata_read_sectors		# ata_read_sectors(dst,numFullBlocks);
-	addic	16, 	16, 1			# lbalo += 1;
-	addze	15, 	15				# lbahi += 1;
+	addi	16, 	16, 1			# lba += 1;
 	subi	27, 	27, 1			# number of sectors read--
 	addi 	29, 	29, 512			# dst+=(number of sectors read *512);
 	subi 	28, 	28, 512			# numBytes-=(number of sectors read *512);

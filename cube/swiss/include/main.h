@@ -13,7 +13,6 @@
 #include <ogcsys.h>
 #include <ogc/exi.h>
 #include <sdcard/card_cmn.h>
-#include "ff.h"
 #include "deviceHandler.h"
 
 /*** 2D Video Globals ***/

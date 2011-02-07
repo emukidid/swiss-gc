@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include <malloc.h>
 #include <sys/dir.h>
-#include "ff.h"
 #include "font.h"
 #include "qchparse.h"
 #include "main.h"
@@ -27,7 +26,7 @@ char  cheatGameNames[1024][128];
 int   cheatFileSize = 0;
 int   cheatNumGames = 0;
 int   useInbuilt    = 0;
-static FIL cheatsFile;
+//static FIL cheatsFile;
 
 int cmpstringp(const void *p1, const void *p2)
 {
@@ -77,7 +76,7 @@ int getBestMatch(char *gamename) {
 
 /* Call this in the menu to set things up */
 int QCH_Init()
-{
+{/*
 	FRESULT ret;
 	FILINFO finfo;
 	UINT bytesRead;
@@ -119,7 +118,7 @@ int QCH_Init()
   else {
     cheatsFileInMem = (char*)&cheatsEmbedded[0];
     cheatFileSize = cheatsEmbedded_size;
-  }
+  }*/
 	return 1;
 }
 
