@@ -1,4 +1,12 @@
-Swiss 0.1 (svn revision 21)
+Swiss 0.1 (svn revision 24)
+
+New in svn revision 24:
+- Extreme WIP version 
+- Fragmented files detection (no support for them yet)
+- Disabled disc dumper until I tidy up the code/fix it
+- Disabled Qoob Cheats loading until I fix that too
+- Removed ELMchan FATFS in favour of libFAT
+- Simplified IDE-EXI code to use a 32bit sector addr (2TB Max)
 
 New in svn revision 21:
 - Re-added device speed selection
