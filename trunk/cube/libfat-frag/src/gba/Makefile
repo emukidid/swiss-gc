@@ -1,58 +1,63 @@
 #---------------------------------------------------------------------------------
-# Clear the implicit built in rules
-#---------------------------------------------------------------------------------
 .SUFFIXES:
 #---------------------------------------------------------------------------------
-ifeq ($(strip $(DEVKITPPC)),)
-$(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC")
+ifeq ($(strip $(DEVKITARM)),)
+$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM)
 endif
 
-include $(DEVKITPPC)/gamecube_rules
+include $(DEVKITARM)/gba_rules
+
 
 #---------------------------------------------------------------------------------
-# TARGET is the name of the output
 # BUILD is the directory where object files & intermediate files will be placed
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
+# DATA is a list of directories containing binary files
+# LIB is where the built library will be placed
+# all directories are relative to this makefile
 #---------------------------------------------------------------------------------
-TARGET		:=	swiss
-BUILD		:=	build
-SOURCES		:=  source \
-              source/aram \
-              source/devices \
-              source/devices/dvd \
-              source/devices/fat \
-              source/devices/memcard \
-              source/devices/wode \
-              source/elmchan \
-              source/elmchan/option \
-              source/cheats \
-              source/patches \
-              source/images \
-              source/gui
-DATA		:=	data  
-INCLUDES	:= include $(SOURCES)
+BUILD		?=	release
+SOURCES		:=	../source
+INCLUDES	:=	../include
+DATA		:=
+LIB		:=	$(TOPDIR)/gba/lib
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
+ARCH	:=	-mthumb -mthumb-interwork
 
-CFLAGS		= -g -O3 -Wall -fno-strict-aliasing $(MACHDEP) $(INCLUDE)
-CXXFLAGS	= $(CFLAGS)
+CFLAGS	:=	-g -Wall -O2\
+		-mcpu=arm7tdmi -mtune=arm7tdmi\
+ 		-fomit-frame-pointer\
+		-ffast-math \
+		$(ARCH)
 
-LDFLAGS		= -g $(MACHDEP) -mogc -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x81300000
+CFLAGS	+=	$(INCLUDE) -DGBA
+CXXFLAGS	:=	$(CFLAGS)
+
+ASFLAGS	:=	-g $(ARCH)
+
+ifneq ($(BUILD),debug)
+export GBABIN	:=	$(LIB)/libfat.a
+else
+export GBABIN	:=	$(LIB)/libfatd.a
+CFLAGS	+=	-DFAT_DEBUG
+endif
+
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-logc -lm -lfat -lm -logc
-
+LIBS	:= 
+#-lnds9
+ 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=
-
+LIBDIRS	:=	$(LIBGBA)
+ 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
 # rules for different file extensions
@@ -60,86 +65,96 @@ LIBDIRS	:=
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export TOPDIR ?= $(CURDIR)/..
+
+export DEPSDIR := $(CURDIR)/$(BUILD)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-			$(foreach dir,$(DATA),$(CURDIR)/$(dir))
-
-export DEPSDIR	:=	$(CURDIR)/$(BUILD)
-
-#---------------------------------------------------------------------------------
-# automatically build a list of object files for our project
-#---------------------------------------------------------------------------------
+					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+ 
+export CC		:=	$(PREFIX)gcc
+export CXX		:=	$(PREFIX)g++
+export AR		:=	$(PREFIX)ar
+export OBJCOPY	:=	$(PREFIX)objcopy
+ 
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
-sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
-SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
+SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
-
+ 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
 #---------------------------------------------------------------------------------
 ifeq ($(strip $(CPPFILES)),)
+#---------------------------------------------------------------------------------
 	export LD	:=	$(CC)
+#---------------------------------------------------------------------------------
 else
+#---------------------------------------------------------------------------------
 	export LD	:=	$(CXX)
+#---------------------------------------------------------------------------------
 endif
+#---------------------------------------------------------------------------------
 
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
-			$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
-			$(sFILES:.s=.o) $(SFILES:.S=.o)
-
-#---------------------------------------------------------------------------------
-# build a list of include paths
-#---------------------------------------------------------------------------------
+					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+ 
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-			-I$(CURDIR)/$(BUILD) \
-			-I$(LIBOGC_INC)
-
-#---------------------------------------------------------------------------------
-# build a list of library paths
-#---------------------------------------------------------------------------------
-export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
-			-L$(LIBOGC_LIB)
-
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
+					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+					-I$(CURDIR)/$(BUILD)
+ 
+export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+ 
 .PHONY: $(BUILD) clean
-
+ 
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-
+ 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
-#---------------------------------------------------------------------------------
-run:	
-	$(DEVKITPRO)/emulators/gcube/gcube $(OUTPUT).dol
+	@rm -fr debug release $(LIB)
 
+all: $(GBABIN)
+
+dist-bin:
+	@tar --exclude=.svn --exclude=*CVS* -cvjf $(TOPDIR)/distribute/$(VERSTRING)/libfat-gba-$(VERSTRING).tar.bz2 include lib
+	
+install:
+	cp lib/libfat.a $(DEVKITPRO)/libgba/lib
+	cp include/fat.h $(DEVKITPRO)/libgba/include
+ 
 #---------------------------------------------------------------------------------
 else
-
+ 
 DEPENDS	:=	$(OFILES:.o=.d)
-
+ 
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-$(OUTPUT).dol: $(OUTPUT).elf
-$(OUTPUT).elf: $(OFILES)
+$(GBABIN)	:	$(OFILES) $(LIB)
+	@rm -f "$(GBABIN)"
+	@$(AR) rcs "$(GBABIN)" $(OFILES)
+	@echo built ... $(notdir $@)
+
+$(LIB):
+	mkdir $(LIB)
 
 #---------------------------------------------------------------------------------
-# This rule links in binary data with the .jpg extension
+# you need a rule like this for each extension you use as binary data 
 #---------------------------------------------------------------------------------
-%.jpg.o	:	%.jpg
+%.bin.o	:	%.bin
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
-	$(bin2o)
+	@$(bin2o)
+
 
 -include $(DEPENDS)
-
-#---------------------------------------------------------------------------------
+ 
+#---------------------------------------------------------------------------------------
 endif
-#---------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------
+

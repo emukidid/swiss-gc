@@ -1,0 +1,346 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.7	//
+ABOVE_UCS_RANGE	directory.c	86;"	d	file:
+ALIAS_ENTRY_LENGTH	directory.h	43;"	d
+ATTRIB_ARCH	directory.h	52;"	d
+ATTRIB_DIR	directory.h	53;"	d
+ATTRIB_HID	directory.h	57;"	d
+ATTRIB_LFN	directory.h	54;"	d
+ATTRIB_RO	directory.h	58;"	d
+ATTRIB_SYS	directory.h	56;"	d
+ATTRIB_VOL	directory.h	55;"	d
+BPB	partition.c	/^enum BPB {$/;"	g	file:
+BPB_FAT16_bootCode	partition.c	/^	BPB_FAT16_bootCode = 0x3E,$/;"	e	enum:BPB	file:
+BPB_FAT16_driveNumber	partition.c	/^	BPB_FAT16_driveNumber = 0x24,$/;"	e	enum:BPB	file:
+BPB_FAT16_extBootSig	partition.c	/^	BPB_FAT16_extBootSig = 0x26,$/;"	e	enum:BPB	file:
+BPB_FAT16_fileSysType	partition.c	/^	BPB_FAT16_fileSysType = 0x36,$/;"	e	enum:BPB	file:
+BPB_FAT16_reserved1	partition.c	/^	BPB_FAT16_reserved1 = 0x25,$/;"	e	enum:BPB	file:
+BPB_FAT16_volumeID	partition.c	/^	BPB_FAT16_volumeID = 0x27,$/;"	e	enum:BPB	file:
+BPB_FAT16_volumeLabel	partition.c	/^	BPB_FAT16_volumeLabel = 0x2B,$/;"	e	enum:BPB	file:
+BPB_FAT32_bkBootSec	partition.c	/^	BPB_FAT32_bkBootSec = 0x32,$/;"	e	enum:BPB	file:
+BPB_FAT32_bootCode	partition.c	/^	BPB_FAT32_bootCode = 0x5A,$/;"	e	enum:BPB	file:
+BPB_FAT32_driveNumber	partition.c	/^	BPB_FAT32_driveNumber = 0x40,$/;"	e	enum:BPB	file:
+BPB_FAT32_extBootSig	partition.c	/^	BPB_FAT32_extBootSig = 0x42,$/;"	e	enum:BPB	file:
+BPB_FAT32_extFlags	partition.c	/^	BPB_FAT32_extFlags = 0x28,$/;"	e	enum:BPB	file:
+BPB_FAT32_fileSysType	partition.c	/^	BPB_FAT32_fileSysType = 0x52,$/;"	e	enum:BPB	file:
+BPB_FAT32_fsInfo	partition.c	/^	BPB_FAT32_fsInfo = 0x30,$/;"	e	enum:BPB	file:
+BPB_FAT32_fsVer	partition.c	/^	BPB_FAT32_fsVer = 0x2A,$/;"	e	enum:BPB	file:
+BPB_FAT32_reserved1	partition.c	/^	BPB_FAT32_reserved1 = 0x41,$/;"	e	enum:BPB	file:
+BPB_FAT32_rootClus	partition.c	/^	BPB_FAT32_rootClus = 0x2C,$/;"	e	enum:BPB	file:
+BPB_FAT32_sectorsPerFAT32	partition.c	/^	BPB_FAT32_sectorsPerFAT32 = 0x24,$/;"	e	enum:BPB	file:
+BPB_FAT32_volumeID	partition.c	/^	BPB_FAT32_volumeID = 0x43,$/;"	e	enum:BPB	file:
+BPB_FAT32_volumeLabel	partition.c	/^	BPB_FAT32_volumeLabel = 0x47,$/;"	e	enum:BPB	file:
+BPB_OEMName	partition.c	/^	BPB_OEMName = 0x03,$/;"	e	enum:BPB	file:
+BPB_bootSig_55	partition.c	/^	BPB_bootSig_55 = 0x1FE,$/;"	e	enum:BPB	file:
+BPB_bootSig_AA	partition.c	/^	BPB_bootSig_AA = 0x1FF$/;"	e	enum:BPB	file:
+BPB_bytesPerSector	partition.c	/^	BPB_bytesPerSector = 0x0B,$/;"	e	enum:BPB	file:
+BPB_jmpBoot	partition.c	/^	BPB_jmpBoot = 0x00,$/;"	e	enum:BPB	file:
+BPB_mediaDesc	partition.c	/^	BPB_mediaDesc = 0x15,$/;"	e	enum:BPB	file:
+BPB_numFATs	partition.c	/^	BPB_numFATs = 0x10,$/;"	e	enum:BPB	file:
+BPB_numHeads	partition.c	/^	BPB_numHeads = 0x1A,$/;"	e	enum:BPB	file:
+BPB_numHiddenSectors	partition.c	/^	BPB_numHiddenSectors = 0x1C,$/;"	e	enum:BPB	file:
+BPB_numSectors	partition.c	/^	BPB_numSectors = 0x20,$/;"	e	enum:BPB	file:
+BPB_numSectorsSmall	partition.c	/^	BPB_numSectorsSmall = 0x13,$/;"	e	enum:BPB	file:
+BPB_reservedSectors	partition.c	/^	BPB_reservedSectors = 0x0E,$/;"	e	enum:BPB	file:
+BPB_rootEntries	partition.c	/^	BPB_rootEntries = 0x11,$/;"	e	enum:BPB	file:
+BPB_sectorsPerCluster	partition.c	/^	BPB_sectorsPerCluster = 0x0D,$/;"	e	enum:BPB	file:
+BPB_sectorsPerFAT	partition.c	/^	BPB_sectorsPerFAT = 0x16,$/;"	e	enum:BPB	file:
+BPB_sectorsPerTrk	partition.c	/^	BPB_sectorsPerTrk = 0x18,$/;"	e	enum:BPB	file:
+BYTES_PER_READ	common.h	32;"	d
+CACHE	cache.h	/^} CACHE;$/;"	t	typeref:struct:__anon2
+CACHE_ENTRY	cache.h	/^} CACHE_ENTRY;$/;"	t	typeref:struct:__anon1
+CACHE_FREE	cache.c	47;"	d	file:
+CACHE_PAGE_SIZE	cache.h	43;"	d
+CLUSTERS_PER_FAT12	file_allocation_table.h	43;"	d
+CLUSTERS_PER_FAT16	file_allocation_table.h	44;"	d
+CLUSTER_EOF	file_allocation_table.h	37;"	d
+CLUSTER_EOF_16	file_allocation_table.h	36;"	d
+CLUSTER_ERROR	file_allocation_table.h	41;"	d
+CLUSTER_FIRST	file_allocation_table.h	40;"	d
+CLUSTER_FREE	file_allocation_table.h	38;"	d
+CLUSTER_ROOT	file_allocation_table.h	39;"	d
+DEFAULT_CACHE_PAGES	common.h	60;"	d
+DEFAULT_CACHE_PAGES	common.h	65;"	d
+DEFAULT_CACHE_PAGES	common.h	70;"	d
+DEFAULT_CACHE_PAGES	common.h	74;"	d
+DEFAULT_SECTORS_PAGE	common.h	61;"	d
+DEFAULT_SECTORS_PAGE	common.h	66;"	d
+DEFAULT_SECTORS_PAGE	common.h	71;"	d
+DEFAULT_SECTORS_PAGE	common.h	75;"	d
+DEVICE_NAME	partition.c	/^const char* DEVICE_NAME = "fat";$/;"	v
+DIR_ENTRY	directory.h	/^} DIR_ENTRY;$/;"	t	typeref:struct:__anon5
+DIR_ENTRY_DATA_SIZE	directory.h	38;"	d
+DIR_ENTRY_FREE	directory.c	46;"	d	file:
+DIR_ENTRY_LAST	directory.c	45;"	d	file:
+DIR_ENTRY_POSITION	directory.h	/^} DIR_ENTRY_POSITION;$/;"	t	typeref:struct:__anon4
+DIR_ENTRY_aDate	directory.h	/^	DIR_ENTRY_aDate = 0x12,$/;"	e	enum:DIR_ENTRY_offset
+DIR_ENTRY_attributes	directory.h	/^	DIR_ENTRY_attributes = 0x0B,$/;"	e	enum:DIR_ENTRY_offset
+DIR_ENTRY_cDate	directory.h	/^	DIR_ENTRY_cDate = 0x10,$/;"	e	enum:DIR_ENTRY_offset
+DIR_ENTRY_cTime	directory.h	/^	DIR_ENTRY_cTime = 0x0E,$/;"	e	enum:DIR_ENTRY_offset
+DIR_ENTRY_cTime_ms	directory.h	/^	DIR_ENTRY_cTime_ms = 0x0D,$/;"	e	enum:DIR_ENTRY_offset
+DIR_ENTRY_cluster	directory.h	/^	DIR_ENTRY_cluster = 0x1A,$/;"	e	enum:DIR_ENTRY_offset
+DIR_ENTRY_clusterHigh	directory.h	/^	DIR_ENTRY_clusterHigh = 0x14,$/;"	e	enum:DIR_ENTRY_offset
+DIR_ENTRY_extension	directory.h	/^	DIR_ENTRY_extension = 0x08,$/;"	e	enum:DIR_ENTRY_offset
+DIR_ENTRY_fileSize	directory.h	/^	DIR_ENTRY_fileSize = 0x1C$/;"	e	enum:DIR_ENTRY_offset
+DIR_ENTRY_mDate	directory.h	/^	DIR_ENTRY_mDate = 0x18,$/;"	e	enum:DIR_ENTRY_offset
+DIR_ENTRY_mTime	directory.h	/^	DIR_ENTRY_mTime = 0x16,$/;"	e	enum:DIR_ENTRY_offset
+DIR_ENTRY_name	directory.h	/^	DIR_ENTRY_name = 0x00,$/;"	e	enum:DIR_ENTRY_offset
+DIR_ENTRY_offset	directory.h	/^enum DIR_ENTRY_offset {$/;"	g
+DIR_ENTRY_reserved	directory.h	/^	DIR_ENTRY_reserved = 0x0C,$/;"	e	enum:DIR_ENTRY_offset
+DIR_SEPARATOR	directory.h	49;"	d
+DIR_STATE_STRUCT	fatdir.h	/^} DIR_STATE_STRUCT;$/;"	t	typeref:struct:__anon7
+FAT	partition.h	/^} FAT;$/;"	t	typeref:struct:__anon10
+FAT16_ROOT_DIR_CLUSTER	directory.h	47;"	d
+FAT_SIG	partition.c	/^static const char FAT_SIG[3] = {'F', 'A', 'T'};$/;"	v	file:
+FILE_MAX_SIZE	fatfile.h	42;"	d
+FILE_POSITION	fatfile.h	/^} FILE_POSITION;$/;"	t	typeref:struct:__anon8
+FILE_STRUCT	fatfile.h	/^typedef struct _FILE_STRUCT FILE_STRUCT;$/;"	t	typeref:struct:_FILE_STRUCT
+FILE_TYPE	directory.h	/^typedef enum {FT_DIRECTORY, FT_FILE} FILE_TYPE;$/;"	t	typeref:enum:__anon3
+FS_FAT12	partition.h	/^typedef enum {FS_UNKNOWN, FS_FAT12, FS_FAT16, FS_FAT32} FS_TYPE;$/;"	e	enum:__anon9
+FS_FAT16	partition.h	/^typedef enum {FS_UNKNOWN, FS_FAT12, FS_FAT16, FS_FAT32} FS_TYPE;$/;"	e	enum:__anon9
+FS_FAT32	partition.h	/^typedef enum {FS_UNKNOWN, FS_FAT12, FS_FAT16, FS_FAT32} FS_TYPE;$/;"	e	enum:__anon9
+FS_TYPE	partition.h	/^typedef enum {FS_UNKNOWN, FS_FAT12, FS_FAT16, FS_FAT32} FS_TYPE;$/;"	t	typeref:enum:__anon9
+FS_UNKNOWN	partition.h	/^typedef enum {FS_UNKNOWN, FS_FAT12, FS_FAT16, FS_FAT32} FS_TYPE;$/;"	e	enum:__anon9
+FT_DIRECTORY	directory.h	/^typedef enum {FT_DIRECTORY, FT_FILE} FILE_TYPE;$/;"	e	enum:__anon3
+FT_FILE	directory.h	/^typedef enum {FT_DIRECTORY, FT_FILE} FILE_TYPE;$/;"	e	enum:__anon3
+FindFirstValidPartition	partition.c	/^sec_t FindFirstValidPartition(const DISC_INTERFACE* disc)$/;"	f
+ILLEGAL_ALIAS_CHARACTERS	directory.c	/^static const char ILLEGAL_ALIAS_CHARACTERS[] = "\\\\\/:;*?\\"<>|&+,=[] ";$/;"	v	file:
+ILLEGAL_LFN_CHARACTERS	directory.c	/^static const char ILLEGAL_LFN_CHARACTERS[] = "\\\\\/:*?\\"<>|";$/;"	v	file:
+INTERFACE_ID	disc.h	/^} INTERFACE_ID;$/;"	t	typeref:struct:__anon6
+LAST_LFN_POS	directory.c	48;"	d	file:
+LAST_LFN_POS_CORRECTION	directory.c	49;"	d	file:
+LFN_DEL	directory.c	77;"	d	file:
+LFN_END	directory.c	76;"	d	file:
+LFN_ENTRY_LENGTH	directory.h	42;"	d
+LFN_offset	directory.c	/^enum LFN_offset {$/;"	g	file:
+LFN_offset_char0	directory.c	/^	LFN_offset_char0 = 0x01,	$/;"	e	enum:LFN_offset	file:
+LFN_offset_char1	directory.c	/^	LFN_offset_char1 = 0x03,$/;"	e	enum:LFN_offset	file:
+LFN_offset_char10	directory.c	/^	LFN_offset_char10 = 0x18,$/;"	e	enum:LFN_offset	file:
+LFN_offset_char11	directory.c	/^	LFN_offset_char11 = 0x1C,$/;"	e	enum:LFN_offset	file:
+LFN_offset_char12	directory.c	/^	LFN_offset_char12 = 0x1E$/;"	e	enum:LFN_offset	file:
+LFN_offset_char2	directory.c	/^	LFN_offset_char2 = 0x05,$/;"	e	enum:LFN_offset	file:
+LFN_offset_char3	directory.c	/^	LFN_offset_char3 = 0x07,$/;"	e	enum:LFN_offset	file:
+LFN_offset_char4	directory.c	/^	LFN_offset_char4 = 0x09,$/;"	e	enum:LFN_offset	file:
+LFN_offset_char5	directory.c	/^	LFN_offset_char5 = 0x0E,$/;"	e	enum:LFN_offset	file:
+LFN_offset_char6	directory.c	/^	LFN_offset_char6 = 0x10,$/;"	e	enum:LFN_offset	file:
+LFN_offset_char7	directory.c	/^	LFN_offset_char7 = 0x12,$/;"	e	enum:LFN_offset	file:
+LFN_offset_char8	directory.c	/^	LFN_offset_char8 = 0x14,$/;"	e	enum:LFN_offset	file:
+LFN_offset_char9	directory.c	/^	LFN_offset_char9 = 0x16,$/;"	e	enum:LFN_offset	file:
+LFN_offset_checkSum	directory.c	/^	LFN_offset_checkSum = 0x0D,	\/\/ Checksum of short file name (alias)$/;"	e	enum:LFN_offset	file:
+LFN_offset_flag	directory.c	/^	LFN_offset_flag = 0x0B,	\/\/ Should be equal to ATTRIB_LFN$/;"	e	enum:LFN_offset	file:
+LFN_offset_ordinal	directory.c	/^	LFN_offset_ordinal = 0x00,	\/\/ Position within LFN$/;"	e	enum:LFN_offset	file:
+LFN_offset_reserved1	directory.c	/^	LFN_offset_reserved1 = 0x0C,	\/\/ Always 0x00$/;"	e	enum:LFN_offset	file:
+LFN_offset_reserved2	directory.c	/^	LFN_offset_reserved2 = 0x1A,	\/\/ Always 0x0000$/;"	e	enum:LFN_offset	file:
+LFN_offset_table	directory.c	/^static const int LFN_offset_table[13]={0x01,0x03,0x05,0x07,0x09,0x0E,0x10,0x12,0x14,0x16,0x18,0x1C,0x1E}; $/;"	v	file:
+LIMIT_SECTORS	common.h	76;"	d
+MAX_ALIAS_EXT_LENGTH	directory.h	44;"	d
+MAX_ALIAS_LENGTH	directory.h	41;"	d
+MAX_ALIAS_PRI_LENGTH	directory.h	45;"	d
+MAX_DAY	filetime.c	40;"	d	file:
+MAX_FILENAME_LENGTH	directory.h	40;"	d
+MAX_HOUR	filetime.c	34;"	d	file:
+MAX_LFN_LENGTH	directory.h	39;"	d
+MAX_MINUTE	filetime.c	35;"	d	file:
+MAX_MONTH	filetime.c	38;"	d	file:
+MAX_NUMERIC_TAIL	directory.h	46;"	d
+MAX_SECOND	filetime.c	36;"	d	file:
+MIN_DAY	filetime.c	41;"	d	file:
+MIN_MONTH	filetime.c	39;"	d	file:
+NDS	common.h	40;"	d
+PAGE_SECTORS	cache.h	42;"	d
+PARTITION	partition.h	/^} PARTITION;$/;"	t	typeref:struct:__anon11
+USE_LWP_LOCK	common.h	62;"	d
+USE_LWP_LOCK	common.h	67;"	d
+USE_RTC_TIME	common.h	63;"	d
+USE_RTC_TIME	common.h	68;"	d
+USE_RTC_TIME	common.h	72;"	d
+_BIT_OPS_H	bit_ops.h	30;"	d
+_CACHE_H	cache.h	37;"	d
+_COMMON_H	common.h	30;"	d
+_DIRECTORY_H	directory.h	31;"	d
+_DISC_H	disc.h	30;"	d
+_FATDIR_H	fatdir.h	33;"	d
+_FATFILE_H	fatfile.h	33;"	d
+_FAT_H	file_allocation_table.h	31;"	d
+_FAT_cache_constructor	cache.c	/^CACHE* _FAT_cache_constructor (unsigned int numberOfPages, unsigned int sectorsPerPage, const DISC_INTERFACE* discInterface, sec_t endOfPartition) {$/;"	f
+_FAT_cache_destructor	cache.c	/^void _FAT_cache_destructor (CACHE* cache) {$/;"	f
+_FAT_cache_eraseWritePartialSector	cache.c	/^bool _FAT_cache_eraseWritePartialSector (CACHE* cache, const void* buffer, sec_t sector, unsigned int offset, size_t size) $/;"	f
+_FAT_cache_findPage	cache.c	/^static CACHE_ENTRY* _FAT_cache_findPage(CACHE *cache, sec_t sector, sec_t count) {$/;"	f	file:
+_FAT_cache_flush	cache.c	/^bool _FAT_cache_flush (CACHE* cache) {$/;"	f
+_FAT_cache_getPage	cache.c	/^static CACHE_ENTRY* _FAT_cache_getPage(CACHE *cache,sec_t sector)$/;"	f	file:
+_FAT_cache_invalidate	cache.c	/^void _FAT_cache_invalidate (CACHE* cache) {$/;"	f
+_FAT_cache_readLittleEndianValue	cache.c	/^bool _FAT_cache_readLittleEndianValue (CACHE* cache, uint32_t *value, sec_t sector, unsigned int offset, int num_bytes) {$/;"	f
+_FAT_cache_readPartialSector	cache.c	/^bool _FAT_cache_readPartialSector (CACHE* cache, void* buffer, sec_t sector, unsigned int offset, size_t size) $/;"	f
+_FAT_cache_readSector	cache.h	/^static inline bool _FAT_cache_readSector (CACHE* cache, void* buffer, sec_t sector) {$/;"	f
+_FAT_cache_readSectors	cache.c	/^bool _FAT_cache_readSectors(CACHE *cache,sec_t sector,sec_t numSectors,void *buffer)$/;"	f
+_FAT_cache_writeLittleEndianValue	cache.c	/^bool _FAT_cache_writeLittleEndianValue (CACHE* cache, const uint32_t value, sec_t sector, unsigned int offset, int size) {$/;"	f
+_FAT_cache_writePartialSector	cache.c	/^bool _FAT_cache_writePartialSector (CACHE* cache, const void* buffer, sec_t sector, unsigned int offset, size_t size) $/;"	f
+_FAT_cache_writeSector	cache.h	/^static inline bool _FAT_cache_writeSector (CACHE* cache, const void* buffer, sec_t sector) {$/;"	f
+_FAT_cache_writeSectors	cache.c	/^bool _FAT_cache_writeSectors (CACHE* cache, sec_t sector, sec_t numSectors, const void* buffer) $/;"	f
+_FAT_chdir_r	fatdir.c	/^int _FAT_chdir_r (struct _reent *r, const char *path) {$/;"	f
+_FAT_check_position_for_next_cluster	fatfile.c	/^static bool _FAT_check_position_for_next_cluster(struct _reent *r,$/;"	f	file:
+_FAT_close_r	fatfile.c	/^int _FAT_close_r (struct _reent *r, int fd) {$/;"	f
+_FAT_dirclose_r	fatdir.c	/^int _FAT_dirclose_r (struct _reent *r, DIR_ITER *dirState) {$/;"	f
+_FAT_directory_addEntry	directory.c	/^bool _FAT_directory_addEntry (PARTITION* partition, DIR_ENTRY* entry, uint32_t dirCluster) {$/;"	f
+_FAT_directory_chdir	directory.c	/^bool _FAT_directory_chdir (PARTITION* partition, const char* path) {$/;"	f
+_FAT_directory_createAlias	directory.c	/^static int _FAT_directory_createAlias (char* alias, const char* lfn) {$/;"	f	file:
+_FAT_directory_entryExists	directory.c	/^static bool _FAT_directory_entryExists (PARTITION* partition, const char* name, uint32_t dirCluster) {$/;"	f	file:
+_FAT_directory_entryFromPath	directory.c	/^bool _FAT_directory_entryFromPath (PARTITION* partition, DIR_ENTRY* entry, const char* path, const char* pathEnd) {$/;"	f
+_FAT_directory_entryFromPosition	directory.c	/^bool _FAT_directory_entryFromPosition (PARTITION* partition, DIR_ENTRY* entry) {$/;"	f
+_FAT_directory_entryGetAlias	directory.c	/^static bool _FAT_directory_entryGetAlias (const u8* entryData, char* destName) {$/;"	f	file:
+_FAT_directory_entryGetCluster	directory.c	/^uint32_t _FAT_directory_entryGetCluster (PARTITION* partition, const uint8_t* entryData) {$/;"	f
+_FAT_directory_entryStat	directory.c	/^void _FAT_directory_entryStat (PARTITION* partition, DIR_ENTRY* entry, struct stat *st) {$/;"	f
+_FAT_directory_findEntryGap	directory.c	/^static bool _FAT_directory_findEntryGap (PARTITION* partition, DIR_ENTRY* entry, uint32_t dirCluster, size_t size) {$/;"	f	file:
+_FAT_directory_getFirstEntry	directory.c	/^bool _FAT_directory_getFirstEntry (PARTITION* partition, DIR_ENTRY* entry, uint32_t dirCluster) {$/;"	f
+_FAT_directory_getNextEntry	directory.c	/^bool _FAT_directory_getNextEntry (PARTITION* partition, DIR_ENTRY* entry) {$/;"	f
+_FAT_directory_getRootEntry	directory.c	/^bool _FAT_directory_getRootEntry (PARTITION* partition, DIR_ENTRY* entry) {$/;"	f
+_FAT_directory_incrementDirEntryPosition	directory.c	/^static bool _FAT_directory_incrementDirEntryPosition (PARTITION* partition, DIR_ENTRY_POSITION* entryPosition, bool extendDirectory) {$/;"	f	file:
+_FAT_directory_isDirectory	directory.h	/^static inline bool _FAT_directory_isDirectory (DIR_ENTRY* entry) {$/;"	f
+_FAT_directory_isDot	directory.h	/^static inline bool _FAT_directory_isDot (DIR_ENTRY* entry) {$/;"	f
+_FAT_directory_isWritable	directory.h	/^static inline bool _FAT_directory_isWritable (DIR_ENTRY* entry) {$/;"	f
+_FAT_directory_lfnLength	directory.c	/^static int _FAT_directory_lfnLength (const char* name) {$/;"	f	file:
+_FAT_directory_mbsncasecmp	directory.c	/^static int _FAT_directory_mbsncasecmp (const char* s1, const char* s2, size_t len1) {$/;"	f	file:
+_FAT_directory_mbstoucs2	directory.c	/^static size_t _FAT_directory_mbstoucs2 (ucs2_t* dst, const char* src, size_t len) {$/;"	f	file:
+_FAT_directory_removeEntry	directory.c	/^bool _FAT_directory_removeEntry (PARTITION* partition, DIR_ENTRY* entry) {$/;"	f
+_FAT_directory_ucs2tombs	directory.c	/^static size_t _FAT_directory_ucs2tombs (char* dst, const ucs2_t* src, size_t len) {$/;"	f	file:
+_FAT_dirnext_r	fatdir.c	/^int _FAT_dirnext_r (struct _reent *r, DIR_ITER *dirState, char *filename, struct stat *filestat) {$/;"	f
+_FAT_diropen_r	fatdir.c	/^DIR_ITER* _FAT_diropen_r(struct _reent *r, DIR_ITER *dirState, const char *path) {$/;"	f
+_FAT_dirreset_r	fatdir.c	/^int _FAT_dirreset_r (struct _reent *r, DIR_ITER *dirState) {$/;"	f
+_FAT_disc_clearStatus	disc.h	/^static inline bool _FAT_disc_clearStatus (const DISC_INTERFACE* disc) {$/;"	f
+_FAT_disc_features	disc.h	/^static inline uint32_t _FAT_disc_features (const DISC_INTERFACE* disc) {$/;"	f
+_FAT_disc_hostType	disc.h	/^static inline uint32_t _FAT_disc_hostType (const DISC_INTERFACE* disc) {$/;"	f
+_FAT_disc_interfaces	disc.c	/^const INTERFACE_ID _FAT_disc_interfaces[] = {$/;"	v
+_FAT_disc_isInserted	disc.h	/^static inline bool _FAT_disc_isInserted (const DISC_INTERFACE* disc) {$/;"	f
+_FAT_disc_readSectors	disc.h	/^static inline bool _FAT_disc_readSectors (const DISC_INTERFACE* disc, sec_t sector, sec_t numSectors, void* buffer) {$/;"	f
+_FAT_disc_shutdown	disc.h	/^static inline bool _FAT_disc_shutdown (const DISC_INTERFACE* disc) {$/;"	f
+_FAT_disc_startup	disc.h	/^static inline bool _FAT_disc_startup (const DISC_INTERFACE* disc) {$/;"	f
+_FAT_disc_writeSectors	disc.h	/^static inline bool _FAT_disc_writeSectors (const DISC_INTERFACE* disc, sec_t sector, sec_t numSectors, const void* buffer) {$/;"	f
+_FAT_fat_clearLinks	file_allocation_table.c	/^bool _FAT_fat_clearLinks (PARTITION* partition, uint32_t cluster) {$/;"	f
+_FAT_fat_clusterToSector	file_allocation_table.h	/^static inline sec_t _FAT_fat_clusterToSector (PARTITION* partition, uint32_t cluster) {$/;"	f
+_FAT_fat_freeClusterCount	file_allocation_table.c	/^unsigned int _FAT_fat_freeClusterCount (PARTITION* partition) {$/;"	f
+_FAT_fat_isValidCluster	file_allocation_table.h	/^static inline bool _FAT_fat_isValidCluster (PARTITION* partition, uint32_t cluster) {$/;"	f
+_FAT_fat_lastCluster	file_allocation_table.c	/^uint32_t _FAT_fat_lastCluster (PARTITION* partition, uint32_t cluster) {$/;"	f
+_FAT_fat_linkFreeCluster	file_allocation_table.c	/^uint32_t _FAT_fat_linkFreeCluster(PARTITION* partition, uint32_t cluster) {$/;"	f
+_FAT_fat_linkFreeClusterCleared	file_allocation_table.c	/^uint32_t _FAT_fat_linkFreeClusterCleared (PARTITION* partition, uint32_t cluster) {$/;"	f
+_FAT_fat_nextCluster	file_allocation_table.c	/^uint32_t _FAT_fat_nextCluster(PARTITION* partition, uint32_t cluster)$/;"	f
+_FAT_fat_trimChain	file_allocation_table.c	/^uint32_t _FAT_fat_trimChain (PARTITION* partition, uint32_t startCluster, unsigned int chainLength) {$/;"	f
+_FAT_fat_writeFatEntry	file_allocation_table.c	/^static bool _FAT_fat_writeFatEntry (PARTITION* partition, uint32_t cluster, uint32_t value) {$/;"	f	file:
+_FAT_file_extend_r	fatfile.c	/^static bool _FAT_file_extend_r (struct _reent *r, FILE_STRUCT* file) {$/;"	f	file:
+_FAT_filetime_getDateFromRTC	filetime.c	/^uint16_t _FAT_filetime_getDateFromRTC (void) {$/;"	f
+_FAT_filetime_getTimeFromRTC	filetime.c	/^uint16_t _FAT_filetime_getTimeFromRTC (void) {$/;"	f
+_FAT_filetime_to_time_t	filetime.c	/^time_t _FAT_filetime_to_time_t (uint16_t t, uint16_t d) {$/;"	f
+_FAT_fstat_r	fatfile.c	/^int _FAT_fstat_r (struct _reent *r, int fd, struct stat *st) {$/;"	f
+_FAT_fsync_r	fatfile.c	/^int _FAT_fsync_r (struct _reent *r, int fd) {$/;"	f
+_FAT_ftruncate_r	fatfile.c	/^int _FAT_ftruncate_r (struct _reent *r, int fd, off_t len) {$/;"	f
+_FAT_link_r	fatdir.c	/^int _FAT_link_r (struct _reent *r, const char *existing, const char *newLink) {$/;"	f
+_FAT_lock	lock.h	/^static inline void _FAT_lock(mutex_t *mutex)$/;"	f
+_FAT_lock_deinit	lock.h	/^static inline void _FAT_lock_deinit(mutex_t *mutex)$/;"	f
+_FAT_lock_init	lock.h	/^static inline void _FAT_lock_init(mutex_t *mutex)$/;"	f
+_FAT_mem_align	mem_allocate.h	/^static inline void* _FAT_mem_align (size_t size) {$/;"	f
+_FAT_mem_allocate	mem_allocate.h	/^static inline void* _FAT_mem_allocate (size_t size) {$/;"	f
+_FAT_mem_free	mem_allocate.h	/^static inline void _FAT_mem_free (void* mem) {$/;"	f
+_FAT_mkdir_r	fatdir.c	/^int _FAT_mkdir_r (struct _reent *r, const char *path, int mode) {$/;"	f
+_FAT_open_r	fatfile.c	/^int _FAT_open_r (struct _reent *r, void *fileStruct, const char *path, int flags, int mode) {$/;"	f
+_FAT_partition_constructor	partition.c	/^PARTITION* _FAT_partition_constructor (const DISC_INTERFACE* disc, uint32_t cacheSize, uint32_t sectorsPerPage, sec_t startSector) {$/;"	f
+_FAT_partition_destructor	partition.c	/^void _FAT_partition_destructor (PARTITION* partition) {$/;"	f
+_FAT_partition_getPartitionFromPath	partition.c	/^PARTITION* _FAT_partition_getPartitionFromPath (const char* path) {$/;"	f
+_FAT_read_r	fatfile.c	/^ssize_t _FAT_read_r (struct _reent *r, int fd, char *ptr, size_t len) {$/;"	f
+_FAT_rename_r	fatdir.c	/^int _FAT_rename_r (struct _reent *r, const char *oldName, const char *newName) {$/;"	f
+_FAT_seek_r	fatfile.c	/^off_t _FAT_seek_r (struct _reent *r, int fd, off_t pos, int dir) {$/;"	f
+_FAT_startSector	partition.c	/^sec_t _FAT_startSector;$/;"	v
+_FAT_stat_r	fatdir.c	/^int _FAT_stat_r (struct _reent *r, const char *path, struct stat *st) {$/;"	f
+_FAT_statvfs_r	fatdir.c	/^int _FAT_statvfs_r (struct _reent *r, const char *path, struct statvfs *buf) $/;"	f
+_FAT_syncToDisc	fatfile.c	/^int _FAT_syncToDisc (FILE_STRUCT* file) {$/;"	f
+_FAT_unlink_r	fatdir.c	/^int _FAT_unlink_r (struct _reent *r, const char *path) {$/;"	f
+_FAT_unlock	lock.h	/^static inline void _FAT_unlock(mutex_t *mutex)$/;"	f
+_FAT_write_r	fatfile.c	/^ssize_t _FAT_write_r (struct _reent *r, int fd, const char *ptr, size_t len) {$/;"	f
+_FILETIME_H	filetime.h	30;"	d
+_FILE_STRUCT	fatfile.h	/^struct _FILE_STRUCT {$/;"	s
+_LOCK_H	lock.h	30;"	d
+_MEM_ALLOCATE_H	mem_allocate.h	32;"	d
+_PARTITION_H	partition.h	31;"	d
+accessCounter	cache.c	/^static u32 accessCounter = 0;$/;"	v	file:
+accessTime	cache.c	/^static u32 accessTime(){$/;"	f	file:
+append	fatfile.h	/^	bool                 append;$/;"	m	struct:_FILE_STRUCT
+appendPosition	fatfile.h	/^	FILE_POSITION        appendPosition;$/;"	m	struct:_FILE_STRUCT
+byte	fatfile.h	/^	s32   byte;$/;"	m	struct:__anon8
+bytesPerCluster	partition.h	/^	uint32_t              bytesPerCluster;$/;"	m	struct:__anon11
+bytesPerSector	partition.h	/^	uint32_t              bytesPerSector;$/;"	m	struct:__anon11
+cache	cache.h	/^	uint8_t*     cache;$/;"	m	struct:__anon1
+cache	partition.h	/^	CACHE*                cache;$/;"	m	struct:__anon11
+cacheEntries	cache.h	/^	CACHE_ENTRY*          cacheEntries;$/;"	m	struct:__anon2
+cluster	directory.h	/^	uint32_t cluster;$/;"	m	struct:__anon4
+cluster	fatfile.h	/^	u32   cluster;$/;"	m	struct:__anon8
+count	cache.h	/^	unsigned int count;$/;"	m	struct:__anon1
+currentEntry	fatdir.h	/^	DIR_ENTRY  currentEntry;$/;"	m	struct:__anon7
+currentPosition	fatfile.h	/^	uint32_t             currentPosition;$/;"	m	struct:_FILE_STRUCT
+cwdCluster	partition.h	/^	uint32_t              cwdCluster;			\/\/ Current working directory cluster$/;"	m	struct:__anon11
+dataEnd	directory.h	/^	DIR_ENTRY_POSITION dataEnd;			\/\/ Always points to the file\/directory's alias entry$/;"	m	struct:__anon5
+dataStart	directory.h	/^	DIR_ENTRY_POSITION dataStart;		\/\/ Points to the start of the LFN entries of a file, or the alias for no LFN$/;"	m	struct:__anon5
+dataStart	partition.h	/^	sec_t                 dataStart;$/;"	m	struct:__anon11
+dirEntryEnd	fatfile.h	/^	DIR_ENTRY_POSITION   dirEntryEnd;		\/\/ Always points to the file's alias entry$/;"	m	struct:_FILE_STRUCT
+dirEntryStart	fatfile.h	/^	DIR_ENTRY_POSITION   dirEntryStart;		\/\/ Points to the start of the LFN entries of a file, or the alias for no LFN$/;"	m	struct:_FILE_STRUCT
+dirty	cache.h	/^	bool         dirty;$/;"	m	struct:__anon1
+disc	cache.h	/^	const DISC_INTERFACE* disc;$/;"	m	struct:__anon2
+disc	partition.h	/^	const DISC_INTERFACE* disc;$/;"	m	struct:__anon11
+dotab_fat	libfat.c	/^static const devoptab_t dotab_fat = {$/;"	v	file:
+endOfPartition	cache.h	/^	sec_t		          endOfPartition;$/;"	m	struct:__anon2
+entryData	directory.h	/^	uint8_t            entryData[DIR_ENTRY_DATA_SIZE];$/;"	m	struct:__anon5
+fat	partition.h	/^	FAT                   fat;$/;"	m	struct:__anon11
+fatInit	libfat.c	/^bool fatInit (uint32_t cacheSize, bool setAsDefaultDevice) {$/;"	f
+fatInitDefault	libfat.c	/^bool fatInitDefault (void) {$/;"	f
+fatMount	libfat.c	/^bool fatMount (const char* name, const DISC_INTERFACE* interface, sec_t startSector, uint32_t cacheSize, uint32_t SectorsPerPage) {$/;"	f
+fatMountSimple	libfat.c	/^bool fatMountSimple (const char* name, const DISC_INTERFACE* interface) {$/;"	f
+fatStart	partition.h	/^	sec_t    fatStart;$/;"	m	struct:__anon10
+fatUnmount	libfat.c	/^void fatUnmount (const char* name) {$/;"	f
+filename	directory.h	/^	char               filename[MAX_FILENAME_LENGTH];$/;"	m	struct:__anon5
+filesize	fatfile.h	/^	uint32_t             filesize;$/;"	m	struct:_FILE_STRUCT
+filesysType	partition.h	/^	FS_TYPE               filesysType;$/;"	m	struct:__anon11
+firstFree	partition.h	/^	uint32_t firstFree;$/;"	m	struct:__anon10
+firstOpenFile	partition.h	/^	struct _FILE_STRUCT*  firstOpenFile;		\/\/ The start of a linked list of files$/;"	m	struct:__anon11	typeref:struct:__anon11::_FILE_STRUCT
+getInterface	disc.h	/^	const DISC_INTERFACE* (*getInterface)(void);$/;"	m	struct:__anon6
+get_io_gcsda	disc.c	/^static const DISC_INTERFACE* get_io_gcsda (void) {$/;"	f	file:
+get_io_gcsdb	disc.c	/^static const DISC_INTERFACE* get_io_gcsdb (void) {$/;"	f	file:
+get_io_usbstorage	disc.c	/^static const DISC_INTERFACE* get_io_usbstorage (void) {$/;"	f	file:
+get_io_wiisd	disc.c	/^static const DISC_INTERFACE* get_io_wiisd (void) {$/;"	f	file:
+inUse	fatdir.h	/^	bool       inUse;$/;"	m	struct:__anon7
+inUse	fatfile.h	/^	bool                 inUse;$/;"	m	struct:_FILE_STRUCT
+lastCluster	partition.h	/^	uint32_t lastCluster;$/;"	m	struct:__anon10
+last_access	cache.h	/^	unsigned int last_access;$/;"	m	struct:__anon1
+lock	partition.h	/^	mutex_t               lock;					\/\/ A lock for partition operations$/;"	m	struct:__anon11
+modified	fatfile.h	/^	bool                 modified;$/;"	m	struct:_FILE_STRUCT
+mutex_t	lock.h	/^typedef int mutex_t;$/;"	t
+name	disc.h	/^	const char* name; $/;"	m	struct:__anon6
+nextOpenFile	fatfile.h	/^	struct _FILE_STRUCT* nextOpenFile;		\/\/ The next entry in a double-linked list of open files$/;"	m	struct:_FILE_STRUCT	typeref:struct:_FILE_STRUCT::_FILE_STRUCT
+numberOfPages	cache.h	/^	unsigned int          numberOfPages;$/;"	m	struct:__anon2
+numberOfSectors	partition.h	/^	uint32_t              numberOfSectors;$/;"	m	struct:__anon11
+offset	directory.h	/^	int32_t  offset;$/;"	m	struct:__anon4
+openFileCount	partition.h	/^	int                   openFileCount;$/;"	m	struct:__anon11
+partition	fatdir.h	/^	PARTITION* partition;$/;"	m	struct:__anon7
+partition	fatfile.h	/^	PARTITION*           partition;$/;"	m	struct:_FILE_STRUCT
+prevOpenFile	fatfile.h	/^	struct _FILE_STRUCT* prevOpenFile;		\/\/ The previous entry in a double-linked list of open files$/;"	m	struct:_FILE_STRUCT	typeref:struct:_FILE_STRUCT::_FILE_STRUCT
+read	fatfile.h	/^	bool                 read;$/;"	m	struct:_FILE_STRUCT
+readOnly	partition.h	/^	bool                  readOnly;				\/\/ If this is set, then do not try writing to the disc$/;"	m	struct:__anon11
+rootDirCluster	partition.h	/^	uint32_t              rootDirCluster;$/;"	m	struct:__anon11
+rootDirStart	partition.h	/^	sec_t                 rootDirStart;$/;"	m	struct:__anon11
+rwPosition	fatfile.h	/^	FILE_POSITION        rwPosition;$/;"	m	struct:_FILE_STRUCT
+sector	cache.h	/^	sec_t        sector;$/;"	m	struct:__anon1
+sector	directory.h	/^	sec_t    sector;$/;"	m	struct:__anon4
+sector	fatfile.h	/^	sec_t sector;$/;"	m	struct:__anon8
+sectorsPerCluster	partition.h	/^	uint32_t              sectorsPerCluster;$/;"	m	struct:__anon11
+sectorsPerFat	partition.h	/^	uint32_t sectorsPerFat;$/;"	m	struct:__anon10
+sectorsPerPage	cache.h	/^	unsigned int          sectorsPerPage;$/;"	m	struct:__anon2
+startCluster	fatdir.h	/^	uint32_t   startCluster;$/;"	m	struct:__anon7
+startCluster	fatfile.h	/^	uint32_t             startCluster;$/;"	m	struct:_FILE_STRUCT
+totalSize	partition.h	/^	uint64_t              totalSize;$/;"	m	struct:__anon11
+u16_to_u8array	bit_ops.h	/^static inline void u16_to_u8array (uint8_t* item, int offset, uint16_t value) {$/;"	f
+u32_to_u8array	bit_ops.h	/^static inline void u32_to_u8array (uint8_t* item, int offset, uint32_t value) {$/;"	f
+u8array_to_u16	bit_ops.h	/^static inline uint16_t u8array_to_u16 (const uint8_t* item, int offset) {$/;"	f
+u8array_to_u32	bit_ops.h	/^static inline uint32_t u8array_to_u32 (const uint8_t* item, int offset) {$/;"	f
+ucs2_t	directory.c	/^typedef unsigned short ucs2_t;$/;"	t	file:
+validEntry	fatdir.h	/^	bool       validEntry;$/;"	m	struct:__anon7
+write	fatfile.h	/^	bool                 write;$/;"	m	struct:_FILE_STRUCT

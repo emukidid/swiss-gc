@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
-#include "ff.h"
 #include "bnr2yuv.h"
 #include "banner.h"
 #include "dvd.h"

@@ -28,8 +28,6 @@
 #include "exi.h"
 #include "patcher.h"
 #include "bnr2yuv.h"
-#include "ff.h"
-#include "diskio.h"
 #include "TDPATCH.h"
 #include "qchparse.h"
 #include "dvd.h"
@@ -44,9 +42,7 @@
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
 #include "devices/dvd/deviceHandler-DVD.h"
-#include "devices/ide-exi/deviceHandler-ide-exi.h"
-#include "devices/ide-exi/ata.h"
-#include "devices/sd/deviceHandler-SD.h"
+#include "devices/fat/deviceHandler-FAT.h"
 
 static DiskHeader GCMDisk;      //Gamecube Disc Header struct
 char IPLInfo[256] __attribute__((aligned(32)));
@@ -611,7 +607,7 @@ void boot_file()
 			secondDisc = NULL;
 		}
 		if(secondDisc) {
-			FIL tempFile;
+			/*FIL tempFile;
 			if(f_open(&tempFile,secondDisc->name,FA_READ)==FR_OK) {
 				secondDisc->fileBase = mclust2sect(tempFile.org_clust);
 				DrawFrameStart();
@@ -619,7 +615,7 @@ void boot_file()
 				DrawFrameFinish();
 				sleep(2);
 				f_close(&tempFile);
-			}
+			}*/
 		}
 	}
   
@@ -776,7 +772,7 @@ void cheats_game()
 }
 
 void install_game()
-{
+{/*
 	char dumpName[32];
 	FIL dumpFile;
 	FRESULT res;
@@ -909,7 +905,7 @@ void install_game()
 	DrawFrameStart();
 	DrawMessageBox(D_INFO, txtbuffer);
 	DrawFrameFinish();
-	wait_press_A();
+	wait_press_A();*/
 	needsRefresh=1;
 }
 
@@ -1096,16 +1092,20 @@ void select_device()
 	if(deviceHandler_deinit) deviceHandler_deinit( deviceHandler_initial );
 	switch(curDevice) {
 		case SD_CARD:
+		case IDEEXI:
 			select_speed();
 			select_slot();
 			// Change all the deviceHandler pointers
-			deviceHandler_initial = GC_SD_CHANNEL==0 ? &initial_SD0 : &initial_SD1;
-			deviceHandler_readDir  =  deviceHandler_SD_readDir;
-			deviceHandler_readFile =  deviceHandler_SD_readFile;
-			deviceHandler_seekFile =  deviceHandler_SD_seekFile;
-			deviceHandler_setupFile=  deviceHandler_SD_setupFile;
-			deviceHandler_init     =  deviceHandler_SD_init;
-			deviceHandler_deinit   =  deviceHandler_SD_deinit;
+			if(curDevice==IDEEXI)
+				deviceHandler_initial = GC_SD_CHANNEL==0 ? &initial_IDE0 : &initial_IDE1;
+			else
+				deviceHandler_initial = GC_SD_CHANNEL==0 ? &initial_SD0 : &initial_SD1;
+			deviceHandler_readDir  =  deviceHandler_FAT_readDir;
+			deviceHandler_readFile =  deviceHandler_FAT_readFile;
+			deviceHandler_seekFile =  deviceHandler_FAT_seekFile;
+			deviceHandler_setupFile=  deviceHandler_FAT_setupFile;
+			deviceHandler_init     =  deviceHandler_FAT_init;
+			deviceHandler_deinit   =  deviceHandler_FAT_deinit;
 		break;
 		case DVD_DISC:
 			// Change all the deviceHandler pointers
@@ -1117,18 +1117,6 @@ void select_device()
 			deviceHandler_init     =  deviceHandler_DVD_init;
 			deviceHandler_deinit   =  deviceHandler_DVD_deinit;
  		break;
-		case IDEEXI:
-			select_speed();
-			select_slot();
-			// Change all the deviceHandler pointers
-			deviceHandler_initial = GC_SD_CHANNEL==0 ? &initial_IDEEXI0 : &initial_IDEEXI1;
-			deviceHandler_readDir  =  deviceHandler_IDEEXI_readDir;
-			deviceHandler_readFile =  deviceHandler_IDEEXI_readFile;
-			deviceHandler_seekFile =  deviceHandler_IDEEXI_seekFile;
-			deviceHandler_setupFile=  deviceHandler_IDEEXI_setupFile;
-			deviceHandler_init     =  deviceHandler_IDEEXI_init;
-			deviceHandler_deinit   =  deviceHandler_IDEEXI_deinit;
-		break;
 	}
 	memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
 }

@@ -21,7 +21,7 @@ file_handle initial_CARDA =
 	  0,          // offset
 	  0,          // size
 	  IS_DIR,
-	  FR_OK
+	  0
 };
 
 file_handle initial_CARDB =
@@ -30,7 +30,7 @@ file_handle initial_CARDB =
 	  0,          // offset
 	  0,          // size
 	  IS_DIR,
-	  FR_OK
+	  0
 };
 
 static unsigned char *sys_area = NULL;
