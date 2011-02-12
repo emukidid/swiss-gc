@@ -50,6 +50,8 @@ bin2s dvdcode.bin > READpatch.s
 And then we open the READpatch.s file and place the code from it into cube\swiss\source\patches\SlotA-HDD.s for example (remembering to rename the array).
 
 
+Copy cube\linker-script\vgcogc.ld to C:\devkitPro\devkitPPC\powerpc-eabi\lib\ and override it.
+
 To build Swiss now with all the latest patch codes, we simply enter cube\swiss and execute: 
 {{{
 make
