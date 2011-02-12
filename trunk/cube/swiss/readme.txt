@@ -1,4 +1,8 @@
-Swiss 0.1 (svn revision 24)
+Swiss 0.1 (svn revision 28)
+
+New in svn revision 28:
+- Fixed a pretty big bug in SD/HDD code
+- Pokemon Box support
 
 New in svn revision 24:
 - Extreme WIP version 
