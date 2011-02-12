@@ -53,7 +53,7 @@ _do_read_v1:
   stw     30, 32 (1)
   mflr	  31
   stw	  31, 36(1)				# use this spot to save lr
-  b		  do_read_generic
+  bl		  do_read_generic
   lwz	  0, 36(1)
   mtlr    0
   stw     31, 36 (1)			# was patched over, do it now.

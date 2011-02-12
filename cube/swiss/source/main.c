@@ -32,7 +32,7 @@ int curMenuLocation = ON_FILLIST; //where are we on the screen?
 int files = 0;                  //number of files in a directory
 int curMenuSelection = 0;	      //menu selection
 int curSelection = 0;		        //game selection
-int debugUSB = 0;               //re-direct debug messages over usbgecko (slot b)
+int debugUSB = 1;               //re-direct debug messages over usbgecko (slot b)
 int needsDeviceChange = 0;
 int needsRefresh = 0;
  
