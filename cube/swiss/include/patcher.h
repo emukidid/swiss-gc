@@ -22,6 +22,8 @@ void dvd_patchVideoMode(void *addr, u32 len, char mode);
 void dvd_patchfwrite(void *addr, u32 len);
 void dvd_patchreset(void *addr,u32 len);
 int check_dol(file_handle *disc, unsigned int *sig, int size);
+void set_base_addr(int useHi);
+u32 get_base_addr();
 
 #endif
 

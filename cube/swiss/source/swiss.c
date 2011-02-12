@@ -333,6 +333,18 @@ void textFileBrowser(file_handle** directory, int num_files)
 	}
 }
 
+void override_memory_limits() {
+	// reserve memory for patch code high up
+	u32 base = get_base_addr();
+    *(volatile u32*)0x80000028 = (u32)base & 0x01FFFFFF;	//Physical Memory Size
+    *(volatile u32*)0x8000002C = (u32)0x00000003;			//Retail GC
+    *(volatile u32*)0x80000034 = 0;							//Arena Lo
+    *(volatile u32*)0x80000038 = 0;							//Arena Hi
+    *(volatile u32*)0x800000EC = (u32)base;					//Debug Monitor Location
+    *(volatile u32*)0x800000F0 = (u32)base & 0x01FFFFFF;	//Console Simulated Mem size
+    *(volatile u32*)0x800000F4 = 0;							//DVD BI2 Location
+}
+
 static void nothing(const char* txt, ...){}
 unsigned int load_app(int mode)
 {
@@ -342,6 +354,8 @@ unsigned int load_app(int mode)
 	void* (*app_final)();
 	void  (*app_entry)(void(**init)(void (*report)(const char* fmt, ...)),
 	int (**main)(), void *(**final)());
+	char* gameID = (char*)0x80000000;
+	int useHi = 0;
 	// Apploader related variables
 	void* app_dst = 0;
 	int app_len = 0,app_offset = 0, apploader_info[3], res;
@@ -367,7 +381,17 @@ unsigned int load_app(int mode)
 		DrawFrameFinish();
 		while(1);
 	}
-	 	
+	
+	// Will we use the low mem area for our patch code?
+	if (!strncmp(gameID, "GPXE01", 6) || !strncmp(gameID, "GPXP01", 6) || !strncmp(gameID, "GPXJ01", 6)) {
+		useHi = 1;
+	}
+	// If not, setup the game for High mem patch code
+	set_base_addr(useHi);
+	if(useHi) {
+		override_memory_limits();
+	}
+
 	sprintf(txtbuffer,"Reading Apploader (%d bytes)",apploader_info[1]+apploader_info[2]);
 	DrawFrameStart();
 	DrawProgressBar(33, txtbuffer);

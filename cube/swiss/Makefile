@@ -7,8 +7,29 @@ ifeq ($(strip $(DEVKITPPC)),)
 $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC")
 endif
 
-include $(DEVKITPPC)/gamecube_rules
+export	LIBOGC_INC	:=	$(DEVKITPRO)/libogc/include
+export	LIBOGC_LIB	:=	$(DEVKITPRO)/libogc/lib/cube
 
+include $(DEVKITPPC)/base_rules
+
+MACHDEP =  -DGEKKO -mvgc -mcpu=750 -meabi -mhard-float
+
+#---------------------------------------------------------------------------------
+%.dol: %.elf
+	@echo output ... $(notdir $@)
+	@elf2dol $< $@
+
+#---------------------------------------------------------------------------------
+%.tpl : %.scf
+	@echo $(notdir $<)
+	@gxtexconv -s $< -d $(DEPSDIR)/$*.d -o $@
+
+#---------------------------------------------------------------------------------
+%.elf:
+	@echo linking ... $(notdir $@)
+	@$(LD)  $^ $(LDFLAGS) $(LIBPATHS) $(LIBS) -o $@
+
+	
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
 # BUILD is the directory where object files & intermediate files will be placed
@@ -40,7 +61,7 @@ INCLUDES	:= include $(SOURCES)
 CFLAGS		= -g -O3 -Wall -fno-strict-aliasing $(MACHDEP) $(INCLUDE)
 CXXFLAGS	= $(CFLAGS)
 
-LDFLAGS		= -g $(MACHDEP) -mogc -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x81300000
+LDFLAGS		= -g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x81300000
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project

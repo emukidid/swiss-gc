@@ -22,16 +22,6 @@
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
 
-// set these variables to the limits of the arena1 area you require
-// see the makefile for rebasing the dol
-// add -Wl,--section-start,.init=<base address> to LDFLAGS
-
-// The lower limit of arena1 area available for malloc
-void *__myArena1Lo = (void*)0x80A00000;
-
-// The upper limit of arena1, up to start address of rebased dol
-void *__myArena1Hi = (void*)0x81FFEFF0; 
-
 /* SD-Boot vars */
 GXRModeObj *vmode = NULL;				//Graphics Mode Object
 u32 *xfb[2] = { NULL, NULL };   //Framebuffers
