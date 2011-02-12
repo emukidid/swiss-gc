@@ -26,11 +26,16 @@ extern u32 slot_b_sdhc_size;
 extern u8 slot_b_sd[];
 extern u32 slot_b_sd_size;
 
+#define LO_RESERVE 0x80001800
+#define HI_RESERVE 0x817F8000
+
+static unsigned int base_addr = LO_RESERVE;
+
 /* Function jump locations */
-#define READ_JUMP_OFFSET 0x80001800
-#define ID_JUMP_OFFSET 0x80001804
-#define VI_JUMP_OFFSET 0x80002A00
-#define SEEK_JUMP_OFFSET 0x8000180C
+#define READ_JUMP_OFFSET (base_addr)
+#define ID_JUMP_OFFSET (base_addr | 0x04)
+#define VI_JUMP_OFFSET (base_addr | 0x1200)
+#define SEEK_JUMP_OFFSET (base_addr | 0x0C)
 
 
 /*** externs ***/
@@ -304,24 +309,24 @@ void install_code()
   	if(curDevice == IDEEXI)	{	
 	  	// IDE-EXI in slot A
   		if((GC_SD_CHANNEL==0)) {
-	  		memcpy((void*)0x80001800,slot_a_hdd,slot_a_hdd_size);
+	  		memcpy((void*)base_addr,slot_a_hdd,slot_a_hdd_size);
   		}
   		else {
 	  		// IDE-EXI in slot B
-	  		memcpy((void*)0x80001800,slot_b_hdd,slot_b_hdd_size);
+	  		memcpy((void*)base_addr,slot_b_hdd,slot_b_hdd_size);
   		}
   	}
 	else if((SDHCCard == 1) && (GC_SD_CHANNEL==0))	{	//byte addressing
-		memcpy((void*)0x80001800,slot_a_sd,slot_a_sd_size);
+		memcpy((void*)base_addr,slot_a_sd,slot_a_sd_size);
 	}
 	else if((SDHCCard == 0) && (GC_SD_CHANNEL==0))	{	//sector addressing
-		memcpy((void*)0x80001800,slot_a_sdhc,slot_a_sdhc_size);
+		memcpy((void*)base_addr,slot_a_sdhc,slot_a_sdhc_size);
  	}
  	else if((SDHCCard == 1) && (GC_SD_CHANNEL==1))	{	//byte addressing
- 		memcpy((void*)0x80001800,slot_b_sd,slot_b_sd_size);
+ 		memcpy((void*)base_addr,slot_b_sd,slot_b_sd_size);
  	}
  	else if((SDHCCard == 0) && (GC_SD_CHANNEL==1))	{	//sector addressing
- 		memcpy((void*)0x80001800,slot_b_sdhc,slot_b_sdhc_size);
+ 		memcpy((void*)base_addr,slot_b_sdhc,slot_b_sdhc_size);
  	}
   	
 }
@@ -335,15 +340,15 @@ void dvd_patchDVDRead(void *addr, u32 len) {
 		if(memcmp(addr_start,_Read_original,sizeof(_Read_original))==0) 
 		{
       		//writeBranchLink((u32)addr_start+0x04,READ_JUMP_OFFSET);
-      		*(unsigned int*)(addr_start + 8) = 0x3C008000; // lis		0, 0x8000   
-  			*(unsigned int*)(addr_start + 12) = 0x60001800; // ori		0, 0, 0x1800
+      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (base_addr >> 16); // lis		0, 0x8000 (example)   
+  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (base_addr & 0xFFFF); // ori		0, 0, 0x1800 (example)
   			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
 		}
 		if(memcmp(addr_start,_Read_original_2,sizeof(_Read_original_2))==0) 
 		{
-      		*(unsigned int*)(addr_start + 8) = 0x3C008000; // lis		0, 0x8000   
-  			*(unsigned int*)(addr_start + 12) = 0x60001810; // ori		0, 0, 0x1810
+      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (base_addr >> 16); // lis		0, 0x8000 (example)   
+  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (base_addr & 0xFFFF); // ori		0, 0, 0x1800 (example)
   			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
 		}
@@ -524,4 +529,12 @@ void dvd_patchVideoMode(void *addr, u32 len,int mode)
 		}
 		addr_start += 4;
 	}
+}
+
+void set_base_addr(int useHi) {
+	base_addr = useHi ? HI_RESERVE : LO_RESERVE;
+}
+
+u32 get_base_addr() {
+	return base_addr;
 }
