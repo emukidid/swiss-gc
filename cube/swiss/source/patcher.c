@@ -292,6 +292,50 @@ u32 __viInitPatch[4] = {
 	0x4E800020   //	blr                                                      
 };
 
+u32 GXSETVAT_NTSC_orig[32] = {
+    0x8142ce00, 0x39800000, 0x39600000, 0x3ce0cc01,
+    0x48000070, 0x5589063e, 0x886a04f2, 0x38000001,
+    0x7c004830, 0x7c600039, 0x41820050, 0x39000008,
+    0x99078000, 0x61230070, 0x380b001c, 0x98678000,
+    0x61250080, 0x388b003c, 0x7cca002e, 0x61230090,
+    0x380b005c, 0x90c78000, 0x99078000, 0x98a78000,
+    0x7c8a202e, 0x90878000, 0x99078000, 0x98678000,
+    0x7c0a002e, 0x90078000, 0x396b0004, 0x398c0001
+};
+
+u32 GXSETVAT_NTSC_patched[32] = {
+    0x8122ce00, 0x39400000, 0x896904f2, 0x7d284b78,
+    0x556007ff, 0x41820050, 0x38e00008, 0x3cc0cc01,
+    0x98e68000, 0x61400070, 0x61440080, 0x61430090,
+    0x98068000, 0x38000000, 0x80a8001c, 0x90a68000,
+    0x98e68000, 0x98868000, 0x8088003c, 0x90868000,
+    0x98e68000, 0x98668000, 0x8068005c, 0x90668000,
+    0x98068000, 0x556bf87f, 0x394a0001, 0x39080004,
+    0x4082ffa0, 0x38000000, 0x980904f2, 0x4e800020
+};
+
+u32 GXSETVAT_PAL_orig[32] = {   
+    0x8142cdd0, 0x39800000, 0x39600000, 0x3ce0cc01,
+    0x48000070, 0x5589063e, 0x886a04f2, 0x38000001,
+    0x7c004830, 0x7c600039, 0x41820050, 0x39000008,
+    0x99078000, 0x61230070, 0x380b001c, 0x98678000,
+    0x61250080, 0x388b003c, 0x7cca002e, 0x61230090,
+    0x380b005c, 0x90c78000, 0x99078000, 0x98a78000,
+    0x7c8a202e, 0x90878000, 0x99078000, 0x98678000,
+    0x7c0a002e, 0x90078000, 0x396b0004, 0x398c0001
+};
+   
+const u32 GXSETVAT_PAL_patched[32] = {
+    0x8122cdd0, 0x39400000, 0x896904f2, 0x7d284b78,
+    0x556007ff, 0x41820050, 0x38e00008, 0x3cc0cc01,
+    0x98e68000, 0x61400070, 0x61440080, 0x61430090,
+    0x98068000, 0x38000000, 0x80a8001c, 0x90a68000,
+    0x98e68000, 0x98868000, 0x8088003c, 0x90868000,
+    0x98e68000, 0x98668000, 0x8068005c, 0x90668000,
+    0x98068000, 0x556bf87f, 0x394a0001, 0x39080004,
+    0x4082ffa0, 0x38000000, 0x980904f2, 0x4e800020
+};
+
 void writeBranchLink(unsigned int sourceAddr,unsigned int destAddr) {
 	unsigned int temp;
 		
@@ -540,4 +584,22 @@ void set_base_addr(int useHi) {
 
 u32 get_base_addr() {
 	return base_addr;
+}
+
+void patchZeldaWW(void *addr, u32 len,int mode) {
+	void *addr_start = addr;
+	void *addr_end = addr+len;	
+	
+	while(addr_start<addr_end) 
+	{
+		if(mode == 1 && memcmp(addr_start,GXSETVAT_PAL_orig,sizeof(GXSETVAT_PAL_orig))==0) 
+		{
+			memcpy(addr_start, GXSETVAT_PAL_patched, sizeof(GXSETVAT_PAL_patched));
+		}
+		if(mode == 2 && memcmp(addr_start,GXSETVAT_NTSC_orig,sizeof(GXSETVAT_NTSC_orig))==0) 
+		{
+			memcpy(addr_start, GXSETVAT_NTSC_patched, sizeof(GXSETVAT_NTSC_patched));
+		}
+		addr_start += 4;
+	}
 }
