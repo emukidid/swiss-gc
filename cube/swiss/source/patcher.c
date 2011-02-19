@@ -339,11 +339,12 @@ void dvd_patchDVDRead(void *addr, u32 len) {
 	{
 		if(memcmp(addr_start,_Read_original,sizeof(_Read_original))==0) 
 		{
-      		//writeBranchLink((u32)addr_start+0x04,READ_JUMP_OFFSET);
       		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (base_addr >> 16); // lis		0, 0x8000 (example)   
   			*(unsigned int*)(addr_start + 12) = 0x60000000 | (base_addr & 0xFFFF); // ori		0, 0, 0x1800 (example)
   			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
+  			*(unsigned int*)(addr_start + 92) = 0x3C60AB00; // lis         r3, 0xAB00 (make it a seek)
+  			*(unsigned int*)(addr_start + 112) = 0x38000001;//  li          r0, 1 (IMM not DMA)
 		}
 		if(memcmp(addr_start,_Read_original_2,sizeof(_Read_original_2))==0) 
 		{
@@ -351,6 +352,8 @@ void dvd_patchDVDRead(void *addr, u32 len) {
   			*(unsigned int*)(addr_start + 12) = 0x60000000 | (base_addr & 0xFFFF); // ori		0, 0, 0x1800 (example)
   			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
+  			*(unsigned int*)(addr_start + 68) = 0x3C00AB00;	//  lis         r0, 0xAB00 (make it a seek)
+  			*(unsigned int*)(addr_start + 128) = 0x38000001;//  li          r0, 1 (IMM not DMA)
 		}
 		addr_start += 4;
 	}

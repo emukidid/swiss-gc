@@ -157,7 +157,7 @@ do_read_generic:
   lwz     6,    12(1)   # reload r6
   lmw     17,   16(1)   # load r17->r31
   li      5,  0         # offset 0
-  li      4, 32         # len 32
+  li      4, 0         	# len 0
   lis     3,    0x8000  # to this dest
   ori     3, 3, 0x2FC0  # in memory
 	lwz     0,    0(1)    # load lr 

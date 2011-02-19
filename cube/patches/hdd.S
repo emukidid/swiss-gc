@@ -225,9 +225,9 @@ do_read_generic:
 	lwz 	11, 	32(1)		# reload r11
 	lmw 	16, 	36(1)		# reload r16->r31
 
-# Setup registers for a small read from sector 0
+# Setup registers for a seek to sector 0
 	li		5,		0			# offset 0
-	li		4,		32			# len 32
+	li		4,		0			# len 0
 	lis 	3,		0x8000		# to this dest
 	ori 	3,		3, 0x2FC0	# in memory
 	lwz 	0,		0(1)		# load lr
