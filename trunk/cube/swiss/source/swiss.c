@@ -355,7 +355,7 @@ unsigned int load_app(int mode)
 	void  (*app_entry)(void(**init)(void (*report)(const char* fmt, ...)),
 	int (**main)(), void *(**final)());
 	char* gameID = (char*)0x80000000;
-	int useHi = 0;
+	int useHi = 0, zeldaVAT = 0;
 	// Apploader related variables
 	void* app_dst = 0;
 	int app_len = 0,app_offset = 0, apploader_info[3], res;
@@ -380,6 +380,13 @@ unsigned int load_app(int mode)
 		DrawMessageBox(D_FAIL, "Apploader Header Failed to read");
 		DrawFrameFinish();
 		while(1);
+	}
+	// Fix Zelda WW on Wii (__GXSetVAT? patch)
+	if (mfpvr() == GC_CPU_VERSION && (!strncmp(gameID, "GZLP01", 6) || !strncmp(gameID, "GZLE01", 6) || !strncmp(gameID, "GZLJ01", 6))) {
+		if(!strncmp(gameID, "GZLP01", 6))
+			zeldaVAT = 1;	//PAL
+		else if(!strncmp(gameID, "GZLE01", 6) || !strncmp(gameID, "GZLJ01", 6))
+			zeldaVAT = 2;	//NTSC-U,NTSC-J
 	}
 	
 	// Will we use the low mem area for our patch code?
@@ -439,6 +446,10 @@ unsigned int load_app(int mode)
 			dvd_patchDVDReadID(app_dst, app_len);
 			dvd_patchAISCount(app_dst, app_len);
 			dvd_patchDVDLowSeek(app_dst, app_len);
+		}
+		// Fix Zelda WW on Wii
+		if(zeldaVAT) {
+			patchZeldaWW(app_dst, app_len, zeldaVAT);
 		}
 		// 2 Disc support with no modchip
 		if((curDevice == DVD_DISC) && (mfpvr() == GC_CPU_VERSION) && (drive_status == DEBUG_MODE)) {

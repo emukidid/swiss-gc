@@ -24,6 +24,7 @@ void dvd_patchreset(void *addr,u32 len);
 int check_dol(file_handle *disc, unsigned int *sig, int size);
 void set_base_addr(int useHi);
 u32 get_base_addr();
+void patchZeldaWW(void *addr, u32 len,int mode);
 
 #endif
 
