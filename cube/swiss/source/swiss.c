@@ -105,7 +105,7 @@ char *getVideoString()
 	}
 	return "Autodetect";
 }
- 
+int ask_stop_drive(); 
 static void ProperScanPADS()	{ 
 	PAD_ScanPads(); 
 }
@@ -608,6 +608,9 @@ void boot_file()
 		if(initialize_disc(GCMDisk.AudioStreaming) == DRV_ERROR) {
 			return; //fail
 		}
+		if(ask_stop_drive()) {
+			dvd_motor_off();
+		}
 	}
   	
 	file_handle *secondDisc = NULL;
@@ -1037,6 +1040,30 @@ void credits()
 	WriteCentre(370,"Press A to return");
 	DrawFrameFinish();	
 	wait_press_A();
+}
+
+int ask_stop_drive()
+{  
+	int sel = 0;
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	while(1) {
+		doBackdrop();
+		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
+		WriteCentre(215,"Stop DVD Motor?");
+		DrawSelectableButton(100, 280, -1, 310, "Yes", (sel==1) ? B_SELECTED:B_NOSELECT);
+		DrawSelectableButton(380, 280, -1, 310, "No", (!sel) ? B_SELECTED:B_NOSELECT);
+		DrawFrameFinish();
+		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+		u16 btns = PAD_ButtonsHeld(0);
+		if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
+			sel^=1;
+		}
+		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
+			break;
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
+	}
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	return sel;
 }
 
 void select_speed()
