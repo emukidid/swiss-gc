@@ -1,4 +1,9 @@
-Swiss 0.1 (svn revision 28)
+Swiss 0.1 (svn revision 33)
+
+New in svn revision 33:
+- Zelda WW on Wii support
+- Add "Stop Motor" support now
+- DVD Seek instead of small Read now
 
 New in svn revision 28:
 - Fixed a pretty big bug in SD/HDD code
