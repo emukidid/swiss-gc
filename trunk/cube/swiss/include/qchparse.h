@@ -6,6 +6,8 @@
 #ifndef QCH_H
 #define QCH_H
 
+#include "devices/deviceHandler.h"
+
 #define HEADER_SIZE   0x100
 #define MASK_GAMENAME 0x0000
 #define MASK_CHTNAME  0x0200
@@ -31,6 +33,7 @@ typedef struct {
 
 int cmpstringp(const void *p1, const void *p2);
 void wait_press_A();
+void QCH_SetCheatsFile(file_handle* cheatFile);
 int  QCH_Init();
 void QCH_DeInit();
 int  QCH_Parse();

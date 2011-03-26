@@ -106,6 +106,7 @@ char *getVideoString()
 	return "Autodetect";
 }
 int ask_stop_drive(); 
+int ask_set_cheats();
 static void ProperScanPADS()	{ 
 	PAD_ScanPads(); 
 }
@@ -319,6 +320,7 @@ void textFileBrowser(file_handle** directory, int num_files)
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_FILE){
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
+				boot_file();
 			}
 			return;
 		}
@@ -574,8 +576,22 @@ void boot_dol()
 /* Boot currently selected game or DOL */
 void boot_file()
 {
+	char *fileName = &curFile.name[0];
+	
+	// Cheats file?
+	if(strlen(fileName)>4) {
+		if((strstr(fileName,".QCH")!=NULL) || (strstr(fileName,".qch")!=NULL)) {
+			if(ask_set_cheats()) {
+				DrawFrameStart();
+				DrawMessageBox(D_INFO, "Loading Cheats File ..");
+				DrawFrameFinish();
+				QCH_SetCheatsFile(&curFile);
+				return;
+			}
+		}
+	}
+	
 	if((curDevice != DVD_DISC) || (dvdDiscTypeInt==ISO9660_DISC)) {
-		char *fileName = &curFile.name[0];
 		//if it's a DOL, boot it
 		if(strlen(fileName)>4) {
 			if((strstr(fileName,".DOL")!=NULL) || (strstr(fileName,".dol")!=NULL)) {
@@ -593,7 +609,7 @@ void boot_file()
 				DrawFrameStart();
 				DrawMessageBox(D_WARN, "Unknown File Type!");
 				DrawFrameFinish();
-				sleep(2);
+				sleep(1);
 				return;
 			}
 		}
@@ -1061,6 +1077,30 @@ int ask_stop_drive()
 		doBackdrop();
 		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
 		WriteCentre(215,"Stop DVD Motor?");
+		DrawSelectableButton(100, 280, -1, 310, "Yes", (sel==1) ? B_SELECTED:B_NOSELECT);
+		DrawSelectableButton(380, 280, -1, 310, "No", (!sel) ? B_SELECTED:B_NOSELECT);
+		DrawFrameFinish();
+		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+		u16 btns = PAD_ButtonsHeld(0);
+		if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
+			sel^=1;
+		}
+		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
+			break;
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
+	}
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	return sel;
+}
+
+int ask_set_cheats()
+{  
+	int sel = 0;
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	while(1) {
+		doBackdrop();
+		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
+		WriteCentre(215,"Load this cheats file?");
 		DrawSelectableButton(100, 280, -1, 310, "Yes", (sel==1) ? B_SELECTED:B_NOSELECT);
 		DrawSelectableButton(380, 280, -1, 310, "No", (!sel) ? B_SELECTED:B_NOSELECT);
 		DrawFrameFinish();
