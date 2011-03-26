@@ -19,14 +19,13 @@
 
 #define CHTS_PER_PAGE 6
 /* local vars */
-char *cheatsFileName = "/cheats.qch";
 char *cheatsFileInMem = NULL;
 char *cheatGameNamesp[1024];
 char  cheatGameNames[1024][128];
 int   cheatFileSize = 0;
 int   cheatNumGames = 0;
 int   useInbuilt    = 0;
-//static FIL cheatsFile;
+file_handle* cheatFile;
 
 int cmpstringp(const void *p1, const void *p2)
 {
@@ -74,61 +73,43 @@ int getBestMatch(char *gamename) {
   return 0;
 }
 
+void QCH_SetCheatsFile(file_handle* cheatFile) {
+	
+	if(cheatsFileInMem) {
+		free(cheatsFileInMem);
+	}
+	cheatsFileInMem = (char*)memalign(32,cheatFile->size);
+	
+	if(deviceHandler_readFile(cheatFile,cheatsFileInMem,cheatFile->size) == cheatFile->size) {
+		useInbuilt = 0;
+		cheatFileSize = cheatFile->size;
+	}
+	else {
+		useInbuilt = 1;
+	}
+}
+
 /* Call this in the menu to set things up */
 int QCH_Init()
-{/*
-	FRESULT ret;
-	FILINFO finfo;
-	UINT bytesRead;
-  
-	// open cheats file
-  ret=f_open(&cheatsFile,(const char*)&cheatsFileName[0],FA_READ);
- 	if(ret!=FR_OK) {
-   	useInbuilt = 1;
- 	}
-
+{
 	memset(cheatGameNamesp,0,sizeof(cheatGameNamesp));
 	memset(cheatGameNames,0,sizeof(cheatGameNames));
-	
-	if(!useInbuilt) {	
-  	memset(&finfo,0,sizeof(FILINFO));
-   	ret=f_stat((const char*)&cheatsFileName[0],&finfo);
-   	if(ret!=FR_OK) {
-     	f_close(&cheatsFile); 
-     	return 0;
-    }
-  
-   	int size = finfo.fsize;
-  	cheatFileSize = size;
 
-  	cheatsFileInMem = (char*)memalign(32,size);
-  	if(!cheatsFileInMem) {
-  	  return 0;
-    }
-  
-  	ret = f_read(&cheatsFile,cheatsFileInMem,size,&bytesRead);
-  	if(ret != FR_OK) {
-    	f_close(&cheatsFile);
-    	free(cheatsFileInMem);
-    	return 0;
-  	}	
-  
-    f_close(&cheatsFile);
-  }
-  else {
-    cheatsFileInMem = (char*)&cheatsEmbedded[0];
-    cheatFileSize = cheatsEmbedded_size;
-  }*/
+	if(useInbuilt) {
+		cheatsFileInMem = (char*)&cheatsEmbedded[0];
+		cheatFileSize = cheatsEmbedded_size;
+ 	}
 	return 1;
 }
 
 /* Call this when we launch a game to free up resources */
 void QCH_DeInit()
 {
-  if(!useInbuilt) {
-  	//free cheats data
-  	free(cheatsFileInMem);
+	if(!useInbuilt) {
+		//free cheats data
+		free(cheatsFileInMem);
 	}
+	useInbuilt = 1;
 	cheatsFileInMem = NULL;
 }
 
