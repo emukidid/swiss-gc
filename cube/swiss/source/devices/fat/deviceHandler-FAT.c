@@ -176,6 +176,19 @@ void deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
   }
 }
 
+int EXI_ResetSD(int drv) {
+	/* Wait for any pending transfers to complete */
+	while ( *(vu32 *)0xCC00680C & 1 );
+	while ( *(vu32 *)0xCC006820 & 1 );
+	while ( *(vu32 *)0xCC006834 & 1 );
+	*(vu32 *)0xCC00680C = 0xC0A;
+	*(vu32 *)0xCC006820 = 0xC0A;
+	*(vu32 *)0xCC006834 = 0x80A;
+	/*** Needed to re-kick after insertion etc ***/
+	EXI_ProbeEx(drv);
+	return 1;
+}
+
 int deviceHandler_FAT_init(file_handle* file){
 	int isSDCard = file->name[0] == 's';
 	int slot = isSDCard ? (file->name[2] == 'b') : (file->name[3] == 'b');
@@ -186,11 +199,11 @@ int deviceHandler_FAT_init(file_handle* file){
 	DrawFrameFinish();
 	
 	// Slot A - SD Card
-	if(isSDCard && !slot && carda->startup()) {
+	if(isSDCard && !slot && EXI_ResetSD(0) && carda->startup()) {
 		return fatMountSimple ("sda", carda);
 	}
 	// Slot B - SD Card
-	if(isSDCard && slot && cardb->startup()) {
+	if(isSDCard && slot && EXI_ResetSD(1) && cardb->startup()) {
 		return fatMountSimple ("sdb", cardb);
 	}
 	// Slot A - IDE-EXI

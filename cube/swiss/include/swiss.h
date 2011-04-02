@@ -52,7 +52,7 @@ extern void textFileBrowser(file_handle** directory, int num_files);
 
 extern void boot_dol();
 extern void boot_file();
-extern void check_game();
+extern int check_game();
 extern void cheats_game();
 extern void install_game();
 extern void info_game();
