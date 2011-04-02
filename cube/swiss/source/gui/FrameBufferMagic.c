@@ -44,6 +44,9 @@ void _DrawBackdrop() {
   else if(curDevice == IDEEXI) {
 	sprintf(topStr, "%s - IDE-EXI Device (%d GB)",videoStr, ataDriveInfo.sizeInGigaBytes);
   }
+  else if(curDevice == QOOB_FLASH) {
+	  sprintf(topStr, "%s - IPL Replacement",videoStr);
+  }
   WriteFont(55,420, topStr);
 }
 

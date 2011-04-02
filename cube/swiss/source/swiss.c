@@ -35,6 +35,7 @@
 #include "gcdvdicon.h"
 #include "sdicon.h"
 #include "hddicon.h"
+#include "qoobicon.h"
 #include "redcross.h"
 #include "greentick.h"
 #include "aram/sidestep.h"
@@ -43,6 +44,7 @@
 #include "devices/deviceHandler.h"
 #include "devices/dvd/deviceHandler-DVD.h"
 #include "devices/fat/deviceHandler-FAT.h"
+#include "devices/Qoob/deviceHandler-Qoob.h"
 
 static DiskHeader GCMDisk;      //Gamecube Disc Header struct
 char IPLInfo[256] __attribute__((aligned(32)));
@@ -1161,21 +1163,23 @@ void select_device()
 	dvdDiscTypeStr = NotInitStr;
 	while(1) {
 		doBackdrop();
-		DrawEmptyBox(75,190, vmode->fbWidth-78, 355, COLOR_BLACK);
+		DrawEmptyBox(20,190, vmode->fbWidth-20, 355, COLOR_BLACK);
 		WriteCentre(195,"Select device and press A");
-		drawBitmap(gcdvdsmall_Bitmap, 60, 230, 80,79);
-		drawBitmap(sdsmall_Bitmap, 145, 225, 60,80);
-		drawBitmap(hdd_Bitmap, 225, 225, 80,80);
-		DrawSelectableButton(90, 315, -1, 345, "DVD Disc", (curDevice==DVD_DISC) ? B_SELECTED:B_NOSELECT);
-		DrawSelectableButton(260, 315, -1, 345, "SDGecko", (curDevice==SD_CARD) ? B_SELECTED:B_NOSELECT);
-		DrawSelectableButton(430, 315, -1, 345, "Ide-Exi", (curDevice==IDEEXI) ? B_SELECTED:B_NOSELECT);
+		drawBitmap(gcdvdsmall_Bitmap, 30, 230, 80,79);
+		drawBitmap(sdsmall_Bitmap, 110, 225, 60,80);
+		drawBitmap(hdd_Bitmap, 170, 225, 80,80);
+		drawBitmap(qoob_Bitmap, 240, 225, 70,80);
+		DrawSelectableButton(30, 315, -1, 345, "DVD Disc", (curDevice==DVD_DISC) ? B_SELECTED:B_NOSELECT);
+		DrawSelectableButton(180, 315, -1, 345, "SDGecko", (curDevice==SD_CARD) ? B_SELECTED:B_NOSELECT);
+		DrawSelectableButton(330, 315, -1, 345, "Ide-Exi", (curDevice==IDEEXI) ? B_SELECTED:B_NOSELECT);
+		DrawSelectableButton(450, 315, -1, 345, "Qoob PRO", (curDevice==QOOB_FLASH) ? B_SELECTED:B_NOSELECT);
 		DrawFrameFinish();
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 		u16 btns = PAD_ButtonsHeld(0);
 		if(btns & PAD_BUTTON_RIGHT)
-			curDevice = curDevice == 2 ? 0 : curDevice+1;
+			curDevice = curDevice == 3 ? 0 : curDevice+1;
 		if(btns & PAD_BUTTON_LEFT)
-			curDevice = curDevice == 0 ? 2 : curDevice-1;
+			curDevice = curDevice == 0 ? 3 : curDevice-1;
 		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
 			break;
 		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
@@ -1209,6 +1213,16 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_DVD_setupFile;
 			deviceHandler_init     =  deviceHandler_DVD_init;
 			deviceHandler_deinit   =  deviceHandler_DVD_deinit;
+ 		break;
+ 		case QOOB_FLASH:
+			// Change all the deviceHandler pointers
+			deviceHandler_initial = &initial_Qoob;
+			deviceHandler_readDir  =  deviceHandler_Qoob_readDir;
+			deviceHandler_readFile =  deviceHandler_Qoob_readFile;
+			deviceHandler_seekFile =  deviceHandler_Qoob_seekFile;
+			deviceHandler_setupFile=  deviceHandler_Qoob_setupFile;
+			deviceHandler_init     =  deviceHandler_Qoob_init;
+			deviceHandler_deinit   =  deviceHandler_Qoob_deinit;
  		break;
 	}
 	memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));

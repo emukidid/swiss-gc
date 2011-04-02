@@ -44,6 +44,7 @@ SOURCES		:=  source \
               source/devices/dvd \
               source/devices/fat \
               source/devices/memcard \
+              source/devices/qoob \
               source/devices/wode \
               source/elmchan \
               source/elmchan/option \
