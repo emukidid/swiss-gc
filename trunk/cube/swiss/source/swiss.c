@@ -470,31 +470,28 @@ unsigned int load_app(int mode)
 	DrawFrameStart();
 	DrawProgressBar(100, "Executing Game!");
 	DrawFrameFinish();
-/*
+
 	do_videomode_swap();
-	
-	if(noVideoPatch) {*/
-		switch(*(char*)0x80000003) {
-			case 'P': // PAL
-			case 'D': // German
-			case 'F': // French
-			case 'S': // Spanish
-			case 'I': // Italian
-			case 'L': // Japanese Import to PAL
-			case 'M': // American Import to PAL
-			case 'X': // PAL other languages?
-			case 'Y': // PAL other languages?
-			case 'U':
-				*(volatile unsigned long*)0x800000CC = 1;
-				break;
-			case 'E':
-			case 'J':
-				*(volatile unsigned long*)0x800000CC = 0;
-				break;
-			default:
-				*(volatile unsigned long*)0x800000CC = 0;
-		}
-	/*}*/
+	switch(*(char*)0x80000003) {
+		case 'P': // PAL
+		case 'D': // German
+		case 'F': // French
+		case 'S': // Spanish
+		case 'I': // Italian
+		case 'L': // Japanese Import to PAL
+		case 'M': // American Import to PAL
+		case 'X': // PAL other languages?
+		case 'Y': // PAL other languages?
+		case 'U':
+			*(volatile unsigned long*)0x800000CC = 1;
+			break;
+		case 'E':
+		case 'J':
+			*(volatile unsigned long*)0x800000CC = 0;
+			break;
+		default:
+			*(volatile unsigned long*)0x800000CC = 0;
+	}
       
 	DCFlushRange((void*)0x80001800,0x1800);
 	ICInvalidateRange((void*)0x80001800,0x1800);
@@ -577,6 +574,7 @@ void boot_dol()
 void boot_file()
 {
 	char *fileName = &curFile.name[0];
+	int isPrePatched = 0;
 	
 	// Cheats file?
 	if(strlen(fileName)>4) {
@@ -624,10 +622,13 @@ void boot_file()
 		sleep(2);
 		return;
 	}
-	
+
 	// Report to the user the patch status of this GCM/ISO file
 	if((curDevice == SD_CARD) || ((curDevice == IDEEXI))) {
-		check_game();
+		isPrePatched = check_game();
+		if(isPrePatched < 0) {
+			return;
+		}
 	}
 	
 	// Start up the DVD Drive
@@ -635,7 +636,7 @@ void boot_file()
 		if(initialize_disc(GCMDisk.AudioStreaming) == DRV_ERROR) {
 			return; //fail
 		}
-		if(ask_stop_drive()) {
+		if(!isPrePatched && ask_stop_drive()) {
 			dvd_motor_off();
 		}
 	}
@@ -660,17 +661,6 @@ void boot_file()
 			free(secondDisc);
 			secondDisc = NULL;
 		}
-		if(secondDisc) {
-			/*FIL tempFile;
-			if(f_open(&tempFile,secondDisc->name,FA_READ)==FR_OK) {
-				secondDisc->fileBase = mclust2sect(tempFile.org_clust);
-				DrawFrameStart();
-				DrawMessageBox(D_INFO, "Setting up two disc game");
-				DrawFrameFinish();
-				sleep(2);
-				f_close(&tempFile);
-			}*/
-		}
 	}
   
 	// Call the special setup for each device (e.g. SD will set the sector(s))
@@ -691,7 +681,7 @@ void boot_file()
 	}
 }
 
-void check_game()
+int check_game()
 { 	
 	DrawFrameStart();
 	DrawMessageBox(D_INFO,"Checking Game ..");
@@ -701,21 +691,21 @@ void check_game()
 	deviceHandler_seekFile(&curFile,0x100,DEVICE_HANDLER_SEEK_SET);
 	deviceHandler_readFile(&curFile,&isPatched,12);
 	
+	if(((isPatched[0] == 0x50617463) && (isPatched[1] == 0x68656421)) && (isPatched[2] != 0x00000002)) {
+		DrawFrameStart();
+		DrawMessageBox(D_INFO,"Game is using outdated pre-patcher!");
+		DrawFrameFinish();
+		sleep(5);
+		return -1;
+	}
+	
 	// Check to see if it's already patched
 	if((isPatched[0] == 0x50617463) && (isPatched[1] == 0x68656421)) { //'Patched!'
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,"Game is already patched!");
 		DrawFrameFinish();
 		sleep(1);
-		return;
-	}
-	
-	if(((isPatched[0] == 0x50617463) && (isPatched[1] == 0x68656421)) && (isPatched[2] != 0x00000002)) {
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,"Game is using outdated pre-patcher!");
-		DrawFrameFinish();
-		sleep(5);
-		return;
+		return 1;
 	}
 	
 	DrawFrameStart();
@@ -779,6 +769,7 @@ void check_game()
 	WriteCentre(430,"Press A to continue");
 	DrawFrameFinish();	
 	wait_press_A();
+	return 0;
 }
 
 void cheats_game()
