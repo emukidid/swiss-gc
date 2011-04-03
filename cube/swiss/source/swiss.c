@@ -270,7 +270,7 @@ void doBackdrop()
 	DrawFrameStart();
 	int i;
 	for(i = 0; i<MENU_MAX; i++)
-		DrawSelectableButton(458,130+(i*40),-1,140+(i*40)+24,_menu_array[i],B_NOSELECT);
+		DrawSelectableButton(458,130+(i*40),-1,140+(i*40)+24,_menu_array[i],B_NOSELECT,-1);
 }
 
 char *getRelativeName(char *str) {
@@ -297,7 +297,7 @@ void textFileBrowser(file_handle** directory, int num_files)
 		i = MIN(MAX(0,curSelection-4),MAX(0,num_files-8));
 		max = MIN(num_files, MAX(curSelection+4,8));
 		for(j = 0; i<max; ++i,++j) {
-			DrawSelectableButton(50,160+(j*30), 430, 160+(j*30)+30, getRelativeName((*directory)[i].name), (i == curSelection) ? B_SELECTED:B_NOSELECT);
+			DrawSelectableButton(50,160+(j*30), 430, 160+(j*30)+30, getRelativeName((*directory)[i].name), (i == curSelection) ? B_SELECTED:B_NOSELECT,-1);
 		}
 		DrawFrameFinish();
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN));
@@ -1021,7 +1021,7 @@ void setup_game()
 		//write out all the settings (dodgy)
 		WriteFont(80, 160+(32*1), "Game Video Mode");
 		sprintf(txtbuffer,"%s",getVideoString());
-		DrawSelectableButton(vmode->fbWidth-170, 160+(32*1), -1, 160+(32*1)+30, txtbuffer, (!currentSettingPos) ? B_SELECTED:B_NOSELECT);
+		DrawSelectableButton(vmode->fbWidth-170, 160+(32*1), -1, 160+(32*1)+30, txtbuffer, (!currentSettingPos) ? B_SELECTED:B_NOSELECT,-1);
 		WriteCentre(370,"Press B to return");
 		DrawFrameFinish();
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B));
@@ -1070,8 +1070,8 @@ int ask_stop_drive()
 		doBackdrop();
 		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
 		WriteCentre(215,"Stop DVD Motor?");
-		DrawSelectableButton(100, 280, -1, 310, "Yes", (sel==1) ? B_SELECTED:B_NOSELECT);
-		DrawSelectableButton(380, 280, -1, 310, "No", (!sel) ? B_SELECTED:B_NOSELECT);
+		DrawSelectableButton(100, 280, -1, 310, "Yes", (sel==1) ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(380, 280, -1, 310, "No", (!sel) ? B_SELECTED:B_NOSELECT,-1);
 		DrawFrameFinish();
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 		u16 btns = PAD_ButtonsHeld(0);
@@ -1094,8 +1094,8 @@ int ask_set_cheats()
 		doBackdrop();
 		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
 		WriteCentre(215,"Load this cheats file?");
-		DrawSelectableButton(100, 280, -1, 310, "Yes", (sel==1) ? B_SELECTED:B_NOSELECT);
-		DrawSelectableButton(380, 280, -1, 310, "No", (!sel) ? B_SELECTED:B_NOSELECT);
+		DrawSelectableButton(100, 280, -1, 310, "Yes", (sel==1) ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(380, 280, -1, 310, "No", (!sel) ? B_SELECTED:B_NOSELECT,-1);
 		DrawFrameFinish();
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 		u16 btns = PAD_ButtonsHeld(0);
@@ -1118,8 +1118,8 @@ void select_speed()
 		doBackdrop();
 		DrawEmptyBox (75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
 		WriteCentre(215,"Select Speed and press A");
-		DrawSelectableButton(100, 280, -1, 310, "Compatible", (GC_SD_SPEED==EXI_SPEED16MHZ) ? B_SELECTED:B_NOSELECT);
-		DrawSelectableButton(380, 280, -1, 310, "Fast", (GC_SD_SPEED==EXI_SPEED32MHZ) ? B_SELECTED:B_NOSELECT);
+		DrawSelectableButton(100, 280, -1, 310, "Compatible", (GC_SD_SPEED==EXI_SPEED16MHZ) ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(380, 280, -1, 310, "Fast", (GC_SD_SPEED==EXI_SPEED32MHZ) ? B_SELECTED:B_NOSELECT,-1);
 		DrawFrameFinish();
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 		u16 btns = PAD_ButtonsHeld(0);
@@ -1143,8 +1143,8 @@ void select_slot()
 		doBackdrop();
 		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
 		WriteCentre(215,"Select Slot and press A");
-		DrawSelectableButton(100, 280, -1, 310, "Slot A", (GC_SD_CHANNEL==0) ? B_SELECTED:B_NOSELECT);
-		DrawSelectableButton(380, 280, -1, 310, "Slot B", (GC_SD_CHANNEL==1) ? B_SELECTED:B_NOSELECT);
+		DrawSelectableButton(100, 280, -1, 310, "Slot A", (GC_SD_CHANNEL==0) ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(380, 280, -1, 310, "Slot B", (GC_SD_CHANNEL==1) ? B_SELECTED:B_NOSELECT,-1);
 		DrawFrameFinish();
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 		u16 btns = PAD_ButtonsHeld(0);
@@ -1165,21 +1165,35 @@ void select_device()
 		doBackdrop();
 		DrawEmptyBox(20,190, vmode->fbWidth-20, 355, COLOR_BLACK);
 		WriteCentre(195,"Select device and press A");
-		drawBitmap(gcdvdsmall_Bitmap, 30, 230, 80,79);
-		drawBitmap(sdsmall_Bitmap, 110, 225, 60,80);
-		drawBitmap(hdd_Bitmap, 170, 225, 80,80);
-		drawBitmap(qoob_Bitmap, 240, 225, 70,80);
-		DrawSelectableButton(30, 315, -1, 345, "DVD Disc", (curDevice==DVD_DISC) ? B_SELECTED:B_NOSELECT);
-		DrawSelectableButton(180, 315, -1, 345, "SDGecko", (curDevice==SD_CARD) ? B_SELECTED:B_NOSELECT);
-		DrawSelectableButton(330, 315, -1, 345, "Ide-Exi", (curDevice==IDEEXI) ? B_SELECTED:B_NOSELECT);
-		DrawSelectableButton(450, 315, -1, 345, "Qoob PRO", (curDevice==QOOB_FLASH) ? B_SELECTED:B_NOSELECT);
+		if(curDevice==DVD_DISC) {
+			DrawSelectableButton(170, 230, 450, 340, "DVD Disc", B_NOSELECT,COLOR_BLACK);
+			drawBitmap(gcdvdsmall_Bitmap, 170, 250, 80,79);
+		}
+		else if(curDevice==SD_CARD) {
+			DrawSelectableButton(170, 230, 450, 340, "SDGecko", B_NOSELECT,COLOR_BLACK);
+			drawBitmap(sdsmall_Bitmap, 180, 245, 60,80);
+		}
+		else if(curDevice==IDEEXI) {
+			DrawSelectableButton(170, 230, 450, 340, "Ide-Exi", B_NOSELECT,COLOR_BLACK);
+			drawBitmap(hdd_Bitmap, 170, 245, 80,80);
+		}
+		else if(curDevice==QOOB_FLASH) {
+			DrawSelectableButton(170, 230, 450, 340, "Qoob PRO",B_NOSELECT,COLOR_BLACK);
+			drawBitmap(qoob_Bitmap, 175, 245, 70,80);
+		}
+		if(curDevice != 3) {
+			WriteFont(520, 300, "->");
+		}
+		if(curDevice != 0) {
+			WriteFont(100, 300, "<-");
+		}
 		DrawFrameFinish();
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 		u16 btns = PAD_ButtonsHeld(0);
-		if(btns & PAD_BUTTON_RIGHT)
-			curDevice = curDevice == 3 ? 0 : curDevice+1;
-		if(btns & PAD_BUTTON_LEFT)
-			curDevice = curDevice == 0 ? 3 : curDevice-1;
+		if((btns & PAD_BUTTON_RIGHT) && curDevice < 3)
+			curDevice++;
+		if((btns & PAD_BUTTON_LEFT) && curDevice > 0)
+			curDevice--;
 		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
 			break;
 		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));

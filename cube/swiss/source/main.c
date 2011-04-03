@@ -62,15 +62,15 @@ void main_loop()
 		i = MIN(MAX(0,curSelection-4),MAX(0,files-8));
 		max = MIN(files, MAX(curSelection+4,8));
 		for(j = 0; i<max; ++i,++j){
-			DrawSelectableButton(50, 160+(j*30), 430, 160+(j*30)+30, getRelativeName(&allFiles[i].name[0]), (i == curSelection)?B_SELECTED:B_NOSELECT);
+			DrawSelectableButton(50, 160+(j*30), 430, 160+(j*30)+30, getRelativeName(&allFiles[i].name[0]), (i == curSelection)?B_SELECTED:B_NOSELECT, -1);
 		}
 		// print menu
 		for(i = 0; i<MENU_MAX; i++)	{
 			if(i == curMenuSelection)	{
-				DrawSelectableButton(458,130+(i*40),-1,140+(i*40)+24,_menu_array[i],(curMenuLocation==ON_OPTIONS)?B_SELECTED:B_NOSELECT);
+				DrawSelectableButton(458,130+(i*40),-1,140+(i*40)+24,_menu_array[i],(curMenuLocation==ON_OPTIONS)?B_SELECTED:B_NOSELECT, -1);
 			}
 			else {
-				DrawSelectableButton(458,130+(i*40),-1,140+(i*40)+24,_menu_array[i],B_NOSELECT);
+				DrawSelectableButton(458,130+(i*40),-1,140+(i*40)+24,_menu_array[i],B_NOSELECT, -1);
 			}
 		}
 		DrawFrameFinish();

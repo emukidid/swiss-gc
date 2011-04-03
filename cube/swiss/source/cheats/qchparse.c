@@ -200,7 +200,7 @@ int QCH_Find(char *gamename, curGameCheats *chts)
 		max = MIN(cheatNumGames, MAX(curChtSelection+(CHTS_PER_PAGE/2),CHTS_PER_PAGE));
 		WriteFont(30,130, "Select your game:");
 		for(j = 0; i < max; ++i, ++j) {
-			DrawSelectableButton(30,170+(j*32), vmode->fbWidth-33, 170+(j*32)+30, cheatGameNamesp[i], (i == curChtSelection) ? B_SELECTED:B_NOSELECT);
+			DrawSelectableButton(30,170+(j*32), vmode->fbWidth-33, 170+(j*32)+30, cheatGameNamesp[i], (i == curChtSelection) ? B_SELECTED:B_NOSELECT, -1);
 		}
 		WriteCentre(364, "(A) Select - (B) Return");
 		DrawFrameFinish();
@@ -239,7 +239,7 @@ int QCH_Find(char *gamename, curGameCheats *chts)
   		  sprintf(txtbuffer,"[%s] %s",chts->cheats[i].enabled ? "*":" ",&chts->cheats[i].cht_name[0]);
   		else  //it's a title/comment
   		  sprintf(txtbuffer,"%s",&chts->cheats[i].cht_name[0]);
-		  DrawSelectableButton(30,170+(j*32), vmode->fbWidth-33-45, 170+(j*32)+30, txtbuffer, (i == curChtSelection) ?B_SELECTED:B_NOSELECT);
+		  DrawSelectableButton(30,170+(j*32), vmode->fbWidth-33-45, 170+(j*32)+30, txtbuffer, (i == curChtSelection) ?B_SELECTED:B_NOSELECT, -1);
 		}
 	  WriteCentre(364,"(Start) Apply - (A) Toggle - (B) Abort");
 		DrawFrameFinish();
