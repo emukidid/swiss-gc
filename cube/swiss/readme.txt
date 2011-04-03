@@ -1,4 +1,13 @@
-Swiss 0.1 (svn revision 33)
+Swiss 0.1 (svn revision 38)
+
+New in svn revision 38:
+- No need to navigate to the "Boot" button anymore, just press A on a file
+- Cheat file loading from browser on any device (.QCH format)
+- Reset SD Gecko on mount
+- Fix the pre-patcher detection
+- Motor Stopping is not allowed on pre-patched games
+- Added Qoob Flash file browsing support (DOL loading from it)
+- Changed the device selection screen to allow for more devices to come
 
 New in svn revision 33:
 - Zelda WW on Wii support
