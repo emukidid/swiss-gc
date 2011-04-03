@@ -174,8 +174,9 @@ void DrawRawFont(int x, int y, char *message) {
   WriteFont(x, y, message);
 }
 
-void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode) {
+void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode, u32 color) {
   int i = 0, middleY, borderSize;
+  color = (color == -1) ? BUTTON_COLOUR_INNER : color;
   
   borderSize = (mode==B_SELECTED) ? 6 : 4;
   middleY = (((y2-y1)/2)-12)+y1;
