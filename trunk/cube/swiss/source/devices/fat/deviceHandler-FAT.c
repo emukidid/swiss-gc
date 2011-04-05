@@ -86,7 +86,14 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir){
 		(*dir)[i].offset = 0;
 		(*dir)[i].size     = fstat.st_size;
 		(*dir)[i].fileAttrib   = (fstat.st_mode & S_IFDIR) ? IS_DIR : IS_FILE;
-		(*dir)[i].fileBase = 0;
+		if((*dir)[i].fileAttrib == IS_FILE) {
+			get_frag_list((*dir)[i].name);
+			u32 file_base = frag_list->num > 1 ? -1 : frag_list->frag[0].sector;
+			(*dir)[i].fileBase = file_base;
+		}
+		else {
+			(*dir)[i].fileBase = 0;
+		}		
 		++i;
 	}
 	
@@ -124,6 +131,21 @@ int deviceHandler_FAT_readFile(file_handle* file, void* buffer, unsigned int len
 	
 	fclose(f);
 	return bytes_read;
+}
+
+FILE *writeFile = NULL;
+
+int deviceHandler_FAT_writeFile(file_handle* file, void* buffer, unsigned int length){
+  	if(writeFile == NULL) {
+		writeFile = fopen( file->name, "wb" );
+		fseek(writeFile, file->offset, SEEK_SET);
+	}
+	if(!writeFile) return -1;
+		
+	int bytes_written = fwrite(buffer, 1, length, writeFile);
+	if(bytes_written > 0) file->offset += bytes_written;
+	
+	return bytes_written;
 }
 
 int unlockedDVD = 0;
@@ -218,6 +240,10 @@ int deviceHandler_FAT_init(file_handle* file){
 }
 
 int deviceHandler_FAT_deinit(file_handle* file) {
+	if(writeFile) {
+		fclose(writeFile);
+		writeFile = NULL;
+	}
 	return 0;
 }
 

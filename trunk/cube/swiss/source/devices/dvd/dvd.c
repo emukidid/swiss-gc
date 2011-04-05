@@ -79,7 +79,7 @@ void dvd_set_offset(u64 offset)
 {
 	dvd[0] = 0x2E;
 	dvd[1] = 0;
-	dvd[2] = ((mfpvr()==GC_CPU_VERSION))?(0x32000000):(0xD9000000);
+	dvd[2] = (is_gamecube())?(0x32000000):(0xD9000000);
 	dvd[3] = ((offset>>2)&0xFFFFFFFF);
 	dvd[4] = 0;
 	dvd[7] = 1;

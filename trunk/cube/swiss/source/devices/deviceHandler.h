@@ -32,6 +32,10 @@ extern int (*deviceHandler_readDir)(file_handle*, file_handle**);
      arguments: handle*, buffer, length */
 extern int (*deviceHandler_readFile)(file_handle*, void*, unsigned int);
 
+/* writeFile returns the status of the write and writes if it can
+     arguments: handle*, buffer, length */
+extern int (*deviceHandler_writeFile)(file_handle*, void*, unsigned int);
+
 /* seekFile returns the status of the seek and seeks if it can
      arguments: file*, offset, seek type */
 extern int (*deviceHandler_seekFile)(file_handle*, unsigned int, unsigned int);

@@ -386,7 +386,7 @@ unsigned int load_app(int mode)
 		while(1);
 	}
 	// Fix Zelda WW on Wii (__GXSetVAT? patch)
-	if (mfpvr() == GC_CPU_VERSION && (!strncmp(gameID, "GZLP01", 6) || !strncmp(gameID, "GZLE01", 6) || !strncmp(gameID, "GZLJ01", 6))) {
+	if (!is_gamecube() && (!strncmp(gameID, "GZLP01", 6) || !strncmp(gameID, "GZLE01", 6) || !strncmp(gameID, "GZLJ01", 6))) {
 		if(!strncmp(gameID, "GZLP01", 6))
 			zeldaVAT = 1;	//PAL
 		else if(!strncmp(gameID, "GZLE01", 6) || !strncmp(gameID, "GZLJ01", 6))
@@ -456,7 +456,7 @@ unsigned int load_app(int mode)
 			patchZeldaWW(app_dst, app_len, zeldaVAT);
 		}
 		// 2 Disc support with no modchip
-		if((curDevice == DVD_DISC) && (mfpvr() == GC_CPU_VERSION) && (drive_status == DEBUG_MODE)) {
+		if((curDevice == DVD_DISC) && (is_gamecube()) && (drive_status == DEBUG_MODE)) {
 			dvd_patchreset(app_dst,app_len);  
 		}
 		// Patch OSReport to print out over USBGecko
@@ -819,16 +819,12 @@ void cheats_game()
 }
 
 void install_game()
-{/*
+{
 	char dumpName[32];
-	FIL dumpFile;
-	FRESULT res;
-	FATFS *fs;
-	DWORD clust;
   
 	if((curDevice!=SD_CARD) && (curDevice!=IDEEXI)) {
 		DrawFrameStart();
-		DrawMessageBox(D_INFO, "Only available in SD Card mode");
+		DrawMessageBox(D_INFO, "Only available in SD/IDE Card mode");
 		DrawFrameFinish();
 		sleep(2);
 		return;
@@ -838,8 +834,8 @@ void install_game()
 	DrawFrameStart();
 	DrawEmptyBox(10,120, vmode->fbWidth-10, 470, COLOR_BLACK);
 	WriteCentre(130,"*** WARNING ***");
-	WriteCentre(200,"This program is not responsible");
-	WriteCentre(230,"for any loss of data or card corruption");
+	WriteCentre(200,"This program is not responsible for any");
+	WriteCentre(230,"loss of data or file system corruption");
 	WriteCentre(300, "Press A to Continue, or B to return");
 	DrawFrameFinish();
 	while(1) {
@@ -853,15 +849,6 @@ void install_game()
 			return;
 		}
 	}
-  
-	res = f_getfree("", &clust, &fs);
-	if(res!=FR_OK) {
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL, "Failed to get free space amount!");
-		DrawFrameFinish();
-		sleep(2);
-		return;
-	}
    
 	DrawFrameStart();
 	DrawMessageBox(D_INFO,"Insert a DVD and press the A button");
@@ -872,29 +859,21 @@ void install_game()
 	DrawMessageBox(D_INFO,"Mounting Disc");
 	DrawFrameFinish();
 
-	dvddiskid *disk_id = memalign(32,sizeof(dvddiskid));
-	if(mfpvr() == GC_CPU_VERSION)
-		DVD_Mount();
-	else
-		DVD_Reset(DVD_RESETHARD);
-	DVD_ReadID(disk_id);
+	initialize_disc(DISABLE_AUDIO);
 	char *gameID = memalign(32,2048);
 		
 	memset(gameID,0,2048);
 	DVD_Read(gameID, 0, 32);
-	xeno_disable();
 	if(!gameID[0]) {
 		free(gameID);
 		DrawFrameStart();
-		DrawMessageBox(D_FAIL,"Disc is not GC Game. Press A");
+		DrawMessageBox(D_FAIL,"Invalid Disc. Press A to exit");
 		DrawFrameFinish();
 		wait_press_A();
 		return;
 	}
 
-	strcpy(dumpName,GC_SD_CHANNEL ? "1:/DISC-":"0:/DISC-");
-	strncat(dumpName,gameID,6);
-	strcat(dumpName,".iso");
+	sprintf(dumpName, "%s/disc-%s%02X.iso", deviceHandler_initial->name, gameID, gameID[6]);
 	free(gameID);
   
 	sprintf(txtbuffer,"Creating: %s",dumpName);
@@ -902,26 +881,24 @@ void install_game()
 	DrawMessageBox(D_INFO,txtbuffer);
 	DrawFrameFinish();
   
-	res = f_open(&dumpFile,(const char*)&dumpName[0], FA_CREATE_ALWAYS|FA_WRITE|FA_READ );
-	if(res!=FR_OK) {
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL,"Unable to create file. Press A.");
-		DrawFrameFinish();
-		wait_press_A();
-		return;
-	}
+	file_handle* dumpFile = malloc(sizeof(file_handle));
+	
+	sprintf(dumpFile->name, "%s", (const char*)&dumpName[0]);
+	dumpFile->offset = 0;
+	dumpFile->size = 0;
+	dumpFile->fileAttrib = IS_FILE;
+	dumpFile->fileBase = 0;
     
 	unsigned char *dvdDumpBuffer = (unsigned char*)memalign(32,CHUNK_SIZE);
     
 	long long copyTime = gettime();
 	long long startTime = gettime();
-	unsigned int writtenOffset=0;
-	UINT bytesWritten;
+	unsigned int writtenOffset = 0, bytesWritten = 0;
 	
 	for(writtenOffset = 0; (writtenOffset+CHUNK_SIZE) < DISC_SIZE; writtenOffset+=CHUNK_SIZE)
 	{
 		DVD_LowRead64(dvdDumpBuffer, CHUNK_SIZE, writtenOffset);
-		f_write(&dumpFile,&dvdDumpBuffer[0],CHUNK_SIZE,&bytesWritten);
+		bytesWritten = deviceHandler_writeFile(dumpFile,&dvdDumpBuffer[0],CHUNK_SIZE);
 		long long timeNow = gettime();
 		int etaTime = (((DISC_SIZE-writtenOffset)/1024)/(CHUNK_SIZE/diff_msec(copyTime,timeNow))); //in secs
 		sprintf(txtbuffer,(bytesWritten!=CHUNK_SIZE) ? 
@@ -937,7 +914,7 @@ void install_game()
   
 	if(writtenOffset<DISC_SIZE) {
 		DVD_LowRead64(dvdDumpBuffer, DISC_SIZE-writtenOffset, writtenOffset);
-		f_write(&dumpFile,&dvdDumpBuffer[0],(DISC_SIZE-writtenOffset),&bytesWritten);
+		bytesWritten = deviceHandler_writeFile(dumpFile,&dvdDumpBuffer[0],(DISC_SIZE-writtenOffset));
 		if((bytesWritten!=(DISC_SIZE-writtenOffset))) {
 			DrawFrameStart();
 			DrawProgressBar(100.0f, "Write Error!!!");
@@ -945,14 +922,15 @@ void install_game()
 		}
 		copyTime = gettime();
 	}
-	f_close(&dumpFile);
+	deviceHandler_deinit(dumpFile);
+	free(dumpFile);
 	free(dvdDumpBuffer);
   
 	sprintf(txtbuffer,"Copy completed in %d mins. Press A",diff_sec(startTime, gettime())/60);
 	DrawFrameStart();
 	DrawMessageBox(D_INFO, txtbuffer);
 	DrawFrameFinish();
-	wait_press_A();*/
+	wait_press_A();
 	needsRefresh=1;
 }
 
@@ -980,12 +958,23 @@ void info_game()
 	if((curDevice==SD_CARD)||(curDevice == IDEEXI) ||((curDevice == DVD_DISC) && (dvdDiscTypeInt==ISO9660_DISC))) {
 		sprintf(txtbuffer,"Size: %.2fMB", (float)curFile.size/1024/1024);
 		WriteCentre(160,txtbuffer);
-		sprintf(txtbuffer,"Position on Disk: %d",(u32)(curFile.fileBase&0xFFFFFFFF));
+		if((u32)(curFile.fileBase&0xFFFFFFFF) == -1) {
+			sprintf(txtbuffer,"File is Fragmented!");
+		}
+		else {
+			sprintf(txtbuffer,"Position on Disk: %08X",(u32)(curFile.fileBase&0xFFFFFFFF));
+		}
 		WriteCentre(190,txtbuffer);
 	}
 	else if(curDevice == DVD_DISC)  {
 		sprintf(txtbuffer,"%s DVD disc", dvdDiscTypeStr);
 		WriteCentre(160,txtbuffer);
+	}
+	else if(curDevice == QOOB_FLASH) {
+		sprintf(txtbuffer,"Size: %.2fKb (%i blocks)", (float)curFile.size/1024, curFile.size/0x10000);
+		WriteCentre(160,txtbuffer);
+		sprintf(txtbuffer,"Position on Flash: %08X",(u32)(curFile.fileBase&0xFFFFFFFF));
+		WriteCentre(190,txtbuffer);
 	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
 		sprintf(txtbuffer,"Region [%s] Audio Streaming [%s]",(GCMDisk.CountryCode=='P') ? "PAL":"NTSC",(GCMDisk.AudioStreaming=='\1') ? "YES":"NO");
@@ -1048,8 +1037,8 @@ void credits()
 	DrawFrameStart();
 	DrawEmptyBox(55,120, vmode->fbWidth-58, 400, COLOR_BLACK);
 	WriteCentre(130,"Swiss ver 0.1");
-	WriteCentre(160,"by emu_kidid 2010");
-	if(mfpvr() != GC_CPU_VERSION)
+	WriteCentre(160,"by emu_kidid 2011");
+	if(!is_gamecube())
 		WriteCentre(220,"Running on a Wii");
 	else
 		WriteCentre(220,"Running on a Gamecube");
@@ -1213,6 +1202,7 @@ void select_device()
 				deviceHandler_initial = GC_SD_CHANNEL==0 ? &initial_SD0 : &initial_SD1;
 			deviceHandler_readDir  =  deviceHandler_FAT_readDir;
 			deviceHandler_readFile =  deviceHandler_FAT_readFile;
+			deviceHandler_writeFile=  deviceHandler_FAT_writeFile;
 			deviceHandler_seekFile =  deviceHandler_FAT_seekFile;
 			deviceHandler_setupFile=  deviceHandler_FAT_setupFile;
 			deviceHandler_init     =  deviceHandler_FAT_init;
