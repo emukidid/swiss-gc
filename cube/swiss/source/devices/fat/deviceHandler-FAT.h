@@ -16,6 +16,7 @@ extern file_handle initial_IDE1;
 
 int  deviceHandler_FAT_readDir(file_handle*, file_handle**);
 int  deviceHandler_FAT_readFile(file_handle*, void*, unsigned int);
+int  deviceHandler_FAT_writeFile(file_handle*, void*, unsigned int);
 int  deviceHandler_FAT_seekFile(file_handle*, unsigned int, unsigned int);
 void deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2);
 int  deviceHandler_FAT_init(file_handle* file);

@@ -123,7 +123,7 @@ int initialize_disc(u32 streaming) {
 	DrawFrameStart();
 	DrawProgressBar(33, "DVD Is Initializing");
 	DrawFrameFinish();
-	if(mfpvr() == GC_CPU_VERSION)
+	if(is_gamecube())
 	{
 		if((dvd_get_error()>>24) > 1) { //we have an error (besides open lid) Try to enable patches
 			DrawFrameStart();
@@ -220,7 +220,7 @@ int gettype_disc() {
 
 int deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir){
 
-  unsigned int i = 0, isGC = (mfpvr()==GC_CPU_VERSION);
+  unsigned int i = 0, isGC = is_gamecube();
   unsigned int  *tmpTable = NULL;
   char *tmpName  = NULL;
   u64 tmpOffset = 0LL;

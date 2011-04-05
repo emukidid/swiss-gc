@@ -26,7 +26,7 @@ char topStr[256];
 void _DrawBackdrop() {
   drawBitmap(backdrop_Bitmap, 0, 0, 640,480);
   WriteFont(55,40, "Swiss v0.1 for Gamecube");
-  if(mfpvr() == GC_CPU_VERSION) {
+  if(is_gamecube()) {
 	  if(!IPLInfo[0x55]) {
 		sprintf(topStr, "IPL: NTSC Revision 1.0   DVD: %08X",driveVersion);
 	  }
