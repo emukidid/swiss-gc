@@ -54,6 +54,7 @@ void main_loop()
 			if(allFiles){ free(allFiles); allFiles = NULL; }
 			files = deviceHandler_readDir(&curFile, &allFiles);
 			if(files<1) { break;}
+			curMenuLocation=ON_FILLIST;
 		}
 		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
 		doBackdrop();

@@ -24,7 +24,7 @@ char *cheatGameNamesp[1024];
 char  cheatGameNames[1024][128];
 int   cheatFileSize = 0;
 int   cheatNumGames = 0;
-int   useInbuilt    = 0;
+int   useInbuilt    = 1;
 file_handle* cheatFile;
 
 int cmpstringp(const void *p1, const void *p2)

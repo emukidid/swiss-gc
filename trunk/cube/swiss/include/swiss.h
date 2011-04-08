@@ -53,9 +53,9 @@ extern void textFileBrowser(file_handle** directory, int num_files);
 extern void boot_dol();
 extern void boot_file();
 extern int check_game();
-extern void cheats_game();
+extern int cheats_game();
 extern void install_game();
-extern void info_game();
+extern int info_game();
 extern void setup_game();
 extern void credits();
 
