@@ -300,9 +300,9 @@ void textFileBrowser(file_handle** directory, int num_files)
 			DrawSelectableButton(50,160+(j*30), 430, 160+(j*30)+30, getRelativeName((*directory)[i].name), (i == curSelection) ? B_SELECTED:B_NOSELECT,-1);
 		}
 		DrawFrameFinish();
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN));
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_UP){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN){curSelection = (curSelection + 1) % num_files;	}
+		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN));
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) > 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || PAD_StickY(0) < -16) {curSelection = (curSelection + 1) % num_files;	}
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_A))	{
 			//go into a folder or select a file
 			if((*directory)[curSelection].fileAttrib==IS_DIR) {
@@ -332,8 +332,12 @@ void textFileBrowser(file_handle** directory, int num_files)
 			curMenuLocation=ON_OPTIONS;
 			return;
 		}
-		
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)));
+		if(PAD_StickY(0) < -16 || PAD_StickY(0) > 16) {
+			usleep(50000 - abs(PAD_StickY(0)*256));
+		}
+		else {
+			while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)));
+		}
 	}
 }
 
@@ -625,6 +629,11 @@ void boot_file()
 		return;
 	}
 
+	// Show game info and allow the user to select cheats or return to the menu
+	if(!info_game()) {
+		return;
+	}
+	
 	// Report to the user the patch status of this GCM/ISO file
 	if((curDevice == SD_CARD) || ((curDevice == IDEEXI))) {
 		isPrePatched = check_game();
@@ -774,17 +783,9 @@ int check_game()
 	return 0;
 }
 
-void cheats_game()
+int cheats_game()
 { 
 	int ret;
-  
-	// lets just quickly check if this is a valid GCM (contains magic)
-	memset(&GCMDisk,0,sizeof(DiskHeader));
- 	
-	deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
-	if((deviceHandler_readFile(&curFile,(unsigned char*)&GCMDisk,sizeof(DiskHeader))!= sizeof(DiskHeader)) || (GCMDisk.DVDMagicWord != DVD_MAGIC)) {
-		return; 
-	}  
   
 	DrawFrameStart();
 	DrawMessageBox(D_INFO,"Loading Cheat DB");
@@ -795,7 +796,7 @@ void cheats_game()
 		DrawMessageBox(D_FAIL,"Failed to open cheats.qch. Press A.");
 		DrawFrameFinish();
 		wait_press_A();
-		return;
+		return 0;
 	}
   
 	ret = QCH_Parse(NULL);
@@ -804,7 +805,7 @@ void cheats_game()
 		DrawMessageBox(D_FAIL,"Failed to parse cheat DB. Press A.");
 		DrawFrameFinish();
 		wait_press_A();
-		return;
+		return 0;
 	}
 	sprintf(txtbuffer,"Found %d Games",ret);
 	DrawFrameStart();
@@ -816,6 +817,7 @@ void cheats_game()
 	free(selected_cheats);
   
 	QCH_DeInit();  
+	return 1;
 }
 
 void install_game()
@@ -935,16 +937,9 @@ void install_game()
 }
 
 /* Show info about the game */
-void info_game()
+int info_game()
 {  
 	
-	memset(&GCMDisk,0,sizeof(DiskHeader));
-	
-	deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
-	if(deviceHandler_readFile(&curFile,(unsigned char*)&GCMDisk,sizeof(DiskHeader)) != sizeof(DiskHeader)){
-		return; 
-	}
-		
 	DrawFrameStart();
 	DrawEmptyBox(75,120, vmode->fbWidth-78, 400, COLOR_BLACK);
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
@@ -981,17 +976,17 @@ void info_game()
 		WriteCentre(220,txtbuffer);
 	}
 
-	WriteCentre(370,"Cheats(Y) - Exit(B)");
+	WriteCentre(370,"Cheats(Y) - Exit(B) - Continue (A)");
 	DrawFrameFinish();
-	while((PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y));
+	while((PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 	while(1){
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
-			cheats_game();
-			break;
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
+			return cheats_game();
 		}
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B){
-			while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B));	
-			break;
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){
+			return (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
 		}
 	}
 }
