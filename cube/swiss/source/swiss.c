@@ -728,6 +728,9 @@ int check_game()
 	if(read_patchable != 1) {
 		read_patchable = check_dol(&curFile, (u32*)_Read_original_2, sizeof(_Read_original_2));
 	}
+	if(read_patchable != 1) {
+		read_patchable = check_dol(&curFile, (u32*)_Read_original_3, sizeof(_Read_original_3));
+	}
 	if(read_patchable == -1)
 		WriteCentre(170,"Read patchable: Error checking");
 	else {
