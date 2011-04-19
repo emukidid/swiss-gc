@@ -393,7 +393,7 @@ unsigned int load_app(int mode)
 	if (!is_gamecube() && (!strncmp(gameID, "GZLP01", 6) || !strncmp(gameID, "GZLE01", 6) || !strncmp(gameID, "GZLJ01", 6))) {
 		if(!strncmp(gameID, "GZLP01", 6))
 			zeldaVAT = 1;	//PAL
-		else if(!strncmp(gameID, "GZLE01", 6) || !strncmp(gameID, "GZLJ01", 6))
+		else 
 			zeldaVAT = 2;	//NTSC-U,NTSC-J
 	}
 	

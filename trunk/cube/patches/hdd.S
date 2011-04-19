@@ -72,6 +72,7 @@ _start:
 	b		_do_videomode			# set a different video mode to r3
 	b		_do_seek				# make seek go to offset 0
 	b		_do_read_v2				# patch read version 2
+	b		_do_read_v3				# patch read version 3
 
 _do_read_v1:
 	stwu		1,	-0x0028 (1)		# these are instructions we patched over, so do them here
@@ -99,6 +100,18 @@ _do_read_v2:
 	mtlr		31
 	stw 		3, 	8 (1)  
 	mr        	31, 4  
+	blr
+	
+_do_read_v3:
+	stwu		1,	-0x0028 (1)		# these are instructions we patched over, so do them here
+	stw			30, 32 (1)
+	mflr		31
+	stw			31, 36(1)			# use this spot to save lr
+	bl			do_read_generic
+	lwz			0, 36(1)
+	mtlr		0
+	stw			31, 36 (1)			# was patched over, do it now.
+	li			0, 1				# was patched over, do it now.
 	blr
 	
 _do_seek:

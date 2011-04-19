@@ -32,7 +32,9 @@ extern u32 slot_b_sd_size;
 static unsigned int base_addr = LO_RESERVE;
 
 /* Function jump locations */
-#define READ_JUMP_OFFSET (base_addr)
+#define READ_V1_JUMP_OFFSET (base_addr)
+#define READ_V2_JUMP_OFFSET (base_addr | 0x10)
+#define READ_V3_JUMP_OFFSET (base_addr | 0x14)
 #define ID_JUMP_OFFSET (base_addr | 0x04)
 #define VI_JUMP_OFFSET (base_addr | 0x1200)
 #define SEEK_JUMP_OFFSET (base_addr | 0x0C)
@@ -95,17 +97,17 @@ u8 _Read_original_2[38] = {
 
 /* Luigis Mansion NTSC (not Players Choice) */
 u8 _Read_original_3[46] = {
-	0x7C, 0x08, 0x02, 0xA6,  //	mflr        r0
-	0x90, 0x01, 0x00, 0x04,  //	stw         r0, 4 (sp)
-	0x38, 0x00, 0x00, 0x00,  //	li          r0, 0
-	0x94, 0x21, 0xFF, 0xD8,  //	stwu        sp, -0x0028 (sp)
-	0x93, 0xE1, 0x00, 0x24,  //	stw         r31, 36 (sp)
-	0x93, 0xC1, 0x00, 0x20,  //	stw         r30, 32 (sp)
-	0x3B, 0xC5, 0x00, 0x00,  //	addi        r30, r5, 0
-	0x93, 0xA1, 0x00, 0x1C,  //	stw         r29, 28 (sp)
-	0x3B, 0xA4, 0x00, 0x00,  //	addi        r29, r4, 0
-	0x93, 0x81, 0x00, 0x18,  //	stw         r28, 24 (sp)
-	0x3B, 0x83, 0x00, 0x00,  //	addi        r28, r3, 0
+	0x7C, 0x08, 0x02, 0xA6,  // mflr        r0              
+	0x90, 0x01, 0x00, 0x04,  // stw         r0, 4 (sp)      
+	0x38, 0x00, 0x00, 0x01,  // li          r0, 1           
+	0x94, 0x21, 0xFF, 0xD8,  // stwu        sp, -0x0028 (sp)
+	0x93, 0xE1, 0x00, 0x24,  // stw         r31, 36 (sp)    
+	0x93, 0xC1, 0x00, 0x20,  // stw         r30, 32 (sp)    
+	0x3B, 0xC5, 0x00, 0x00,  // addi        r30, r5, 0      
+	0x93, 0xA1, 0x00, 0x1C,  // stw         r29, 28 (sp)    
+	0x3B, 0xA4, 0x00, 0x00,  // addi        r29, r4, 0      
+	0x93, 0x81, 0x00, 0x18,  // stw         r28, 24 (sp)    
+	0x3B, 0x83, 0x00, 0x00,  // addi        r28, r3, 0      
 	0x90, 0xCD               // stw r6 to someplace in (sd1) - differs on different sdk's
 };
 
@@ -399,8 +401,8 @@ void dvd_patchDVDRead(void *addr, u32 len) {
 	{
 		if(memcmp(addr_start,_Read_original,sizeof(_Read_original))==0) 
 		{
-      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (base_addr >> 16); // lis		0, 0x8000 (example)   
-  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (base_addr & 0xFFFF); // ori		0, 0, 0x1800 (example)
+      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (READ_V1_JUMP_OFFSET >> 16); // lis		0, 0x8000 (example)   
+  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_V1_JUMP_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
   			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
   			*(unsigned int*)(addr_start + 92) = 0x3C60AB00; // lis         r3, 0xAB00 (make it a seek)
@@ -408,8 +410,8 @@ void dvd_patchDVDRead(void *addr, u32 len) {
 		}		
 		if(memcmp(addr_start,_Read_original_2,sizeof(_Read_original_2))==0) 
 		{
-      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (base_addr >> 16); // lis		0, 0x8000 (example)   
-  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (base_addr & 0xFFFF); // ori		0, 0, 0x1800 (example)
+      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (READ_V2_JUMP_OFFSET >> 16); // lis		0, 0x8000 (example)   
+  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_V2_JUMP_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
   			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
   			*(unsigned int*)(addr_start + 68) = 0x3C00AB00;	//  lis         r0, 0xAB00 (make it a seek)
@@ -417,8 +419,8 @@ void dvd_patchDVDRead(void *addr, u32 len) {
 		}
 		if(memcmp(addr_start,_Read_original_3,sizeof(_Read_original_3))==0) 
 		{
-      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (base_addr >> 16); // lis		0, 0x8000 (example)   
-  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (base_addr & 0xFFFF); // ori		0, 0, 0x1800 (example)
+      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (READ_V3_JUMP_OFFSET >> 16); // lis		0, 0x8000 (example)   
+  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_V3_JUMP_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
   			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
   			*(unsigned int*)(addr_start + 84) = 0x3C60AB00; // lis         r3, 0xAB00 (make it a seek)
