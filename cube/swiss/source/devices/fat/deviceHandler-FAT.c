@@ -154,25 +154,15 @@ void unlockCB() {
 }
 
 void deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
-  	u32 file1_base = 0, file2_base = 0, file1_count = 0, file2_count = 0;
-  	
-  	// Check for fragments - currently we only support 1
-	get_frag_list(file->name);
-	file1_base = frag_list->frag[0].sector;
-	file1_count = frag_list->num;
-  	if(file2) {
-  		get_frag_list(file2->name);
-  		file2_base = frag_list->frag[0].sector;
-  		file2_count = frag_list->num;
-	}
-	
-	if(file1_count > 1) {
+  	// We looked for fragments when this file was read from the directory
+  	// if it's -1, it means it's fragmented - so fail it.
+	if(file->fileBase == -1) {
 		DrawFrameStart();
 		sprintf(txtbuffer, "CANNOT RUN FRAGMENTED FILE! %s", file->name);
 		DrawMessageBox(D_INFO,txtbuffer);
 		DrawFrameFinish();
 	}
-	if(file2 && (file2_count > 1)) {
+	if(file2 && (file2->fileBase == -1)) {
 		DrawFrameStart();
 		sprintf(txtbuffer, "CANNOT RUN FRAGMENTED FILE DISC 2! %s", file2->name);
 		DrawMessageBox(D_INFO,txtbuffer);
@@ -180,11 +170,11 @@ void deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	}
 	
   // Disk 1 sector
-  *(volatile unsigned int*)0x80002F00 = (u32)(file1_base&0xFFFFFFFF);
+  *(volatile unsigned int*)0x80002F00 = (u32)(file->fileBase&0xFFFFFFFF);
   // Disk 2 sector
-  *(volatile unsigned int*)0x80002F10 = file2 ? (u32)(file2_base&0xFFFFFFFF):(u32)(file1_base&0xFFFFFFFF);
+  *(volatile unsigned int*)0x80002F10 = file2 ? (u32)(file2->fileBase&0xFFFFFFFF):(u32)(file->fileBase&0xFFFFFFFF);
   // Currently selected disk sector
-  *(volatile unsigned int*)0x80002F20 = (u32)(file1_base&0xFFFFFFFF);
+  *(volatile unsigned int*)0x80002F20 = (u32)(file->fileBase&0xFFFFFFFF);
   // Copy the current speed
   *(volatile unsigned int*)0x80002F30 = (GC_SD_SPEED == EXI_SPEED16MHZ) ? 192:208;
   // Copy disc headers
