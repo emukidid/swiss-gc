@@ -77,8 +77,8 @@ _start:
 _do_read_v1:
 	stwu		1,	-0x0028 (1)		# these are instructions we patched over, so do them here
 	stw			30, 32 (1)
-	mflr		31
-	stw			31, 36(1)			# use this spot to save lr
+	mflr		0
+	stw			0, 36(1)			# use this spot to save lr
 	bl			do_read_generic
 	lwz			0, 36(1)
 	mtlr		0
@@ -105,8 +105,8 @@ _do_read_v2:
 _do_read_v3:
 	stwu		1,	-0x0028 (1)		# these are instructions we patched over, so do them here
 	stw			30, 32 (1)
-	mflr		31
-	stw			31, 36(1)			# use this spot to save lr
+	mflr		0
+	stw			0, 36(1)			# use this spot to save lr
 	bl			do_read_generic
 	lwz			0, 36(1)
 	mtlr		0

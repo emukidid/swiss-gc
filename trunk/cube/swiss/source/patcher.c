@@ -407,6 +407,7 @@ void dvd_patchDVDRead(void *addr, u32 len) {
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
   			*(unsigned int*)(addr_start + 92) = 0x3C60AB00; // lis         r3, 0xAB00 (make it a seek)
   			*(unsigned int*)(addr_start + 112) = 0x38000001;//  li          r0, 1 (IMM not DMA)
+  			print_gecko("Read V1 patched\r\n");
 		}		
 		if(memcmp(addr_start,_Read_original_2,sizeof(_Read_original_2))==0) 
 		{
@@ -416,6 +417,7 @@ void dvd_patchDVDRead(void *addr, u32 len) {
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
   			*(unsigned int*)(addr_start + 68) = 0x3C00AB00;	//  lis         r0, 0xAB00 (make it a seek)
   			*(unsigned int*)(addr_start + 128) = 0x38000001;//  li          r0, 1 (IMM not DMA)
+  			print_gecko("Read V2 patched\r\n");
 		}
 		if(memcmp(addr_start,_Read_original_3,sizeof(_Read_original_3))==0) 
 		{
@@ -425,6 +427,7 @@ void dvd_patchDVDRead(void *addr, u32 len) {
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
   			*(unsigned int*)(addr_start + 84) = 0x3C60AB00; // lis         r3, 0xAB00 (make it a seek)
   			*(unsigned int*)(addr_start + 104) = 0x38000001;//  li          r0, 1 (IMM not DMA)
+  			print_gecko("Read V3 patched\r\n");
 		}
 		addr_start += 4;
 	}
