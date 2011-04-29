@@ -120,6 +120,22 @@ static unsigned char _Read_original_2[38] = {
 	0x90, 0x0D					//	stw r0 to someplace in (sd1) - differs on different sdk's
 };
 
+/* Luigis Mansion NTSC (not Players Choice) */
+static unsigned char _Read_original_3[46] = {
+	0x7C, 0x08, 0x02, 0xA6,  // mflr        r0              
+	0x90, 0x01, 0x00, 0x04,  // stw         r0, 4 (sp)      
+	0x38, 0x00, 0x00, 0x01,  // li          r0, 1           
+	0x94, 0x21, 0xFF, 0xD8,  // stwu        sp, -0x0028 (sp)
+	0x93, 0xE1, 0x00, 0x24,  // stw         r31, 36 (sp)    
+	0x93, 0xC1, 0x00, 0x20,  // stw         r30, 32 (sp)    
+	0x3B, 0xC5, 0x00, 0x00,  // addi        r30, r5, 0      
+	0x93, 0xA1, 0x00, 0x1C,  // stw         r29, 28 (sp)    
+	0x3B, 0xA4, 0x00, 0x00,  // addi        r29, r4, 0      
+	0x93, 0x81, 0x00, 0x18,  // stw         r28, 24 (sp)    
+	0x3B, 0x83, 0x00, 0x00,  // addi        r28, r3, 0      
+	0x90, 0xCD               // stw r6 to someplace in (sd1) - differs on different sdk's
+};
+
 static const unsigned int _DVDLowReadDiskID_original[8] = {
   0xA602087C,  // mflr        r0
   0x00000039,  // li          r8, 0
@@ -178,6 +194,8 @@ int patchRead(char* buffer,int size,unsigned int dst)
   				*(unsigned int*)(buffer + count + 12) = convert_int(0x60001800); // ori		0, 0, 0x1800
   				*(unsigned int*)(buffer + count + 16) = convert_int(0x7C0903A6); // mtctr	0          
   				*(unsigned int*)(buffer + count + 20) = convert_int(0x4E800421); // bctrl  
+  				*(unsigned int*)(buffer + count + 92) = convert_int(0x3C60AB00); // lis         r3, 0xAB00 (make it a seek)
+  				*(unsigned int*)(buffer + count + 112) = convert_int(0x38000001);//  li          r0, 1 (IMM not DMA)
   				patched = 1;
 			}
 		}
@@ -188,7 +206,22 @@ int patchRead(char* buffer,int size,unsigned int dst)
   				*(unsigned int*)(buffer + count + 8) = convert_int(0x3C008000); // lis		0, 0x8000   
   				*(unsigned int*)(buffer + count + 12) = convert_int(0x60001810); // ori		0, 0, 0x1810
   				*(unsigned int*)(buffer + count + 16) = convert_int(0x7C0903A6); // mtctr	0          
+  				*(unsigned int*)(buffer + count + 20) = convert_int(0x4E800421); // bctrl   
+  				*(unsigned int*)(buffer + count + 68) = convert_int(0x3C00AB00);	//  lis         r0, 0xAB00 (make it a seek)
+  				*(unsigned int*)(buffer + count + 128) = convert_int(0x38000001);//  li          r0, 1 (IMM not DMA)         
+  				patched = 1;
+			}
+		}
+		if(memcmp(buffer+count,_Read_original_3,sizeof(_Read_original_3))==0) {
+  			if(dst+count & 0x80000000)
+  			{
+  				printf("Patching Read_v3 %08X\n",dst+count);
+  				*(unsigned int*)(buffer + count + 8) = convert_int(0x3C008000); // lis		0, 0x8000   
+  				*(unsigned int*)(buffer + count + 12) = convert_int(0x60001814); // ori		0, 0, 0x1814
+  				*(unsigned int*)(buffer + count + 16) = convert_int(0x7C0903A6); // mtctr	0          
   				*(unsigned int*)(buffer + count + 20) = convert_int(0x4E800421); // bctrl            
+  				*(unsigned int*)(buffer + count + 84) = convert_int(0x3C60AB00); // lis         r3, 0xAB00 (make it a seek)
+  				*(unsigned int*)(buffer + count + 104) = convert_int(0x38000001);//  li          r0, 1 (IMM not DMA)
   				patched = 1;
 			}
 		}
