@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <ogc/lwp_threads.h>
 #include "main.h"
 #include "hook.bin.h"
 

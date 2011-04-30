@@ -12,6 +12,7 @@
 #include <ogc/usbgecko.h>
 #include <ogc/video_types.h>
 #include <sdcard/card_cmn.h>
+#include <ogc/lwp_threads.h>
 #include <ogc/machine/processor.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -36,6 +37,7 @@
 #include "sdicon.h"
 #include "hddicon.h"
 #include "qoobicon.h"
+#include "wodeimg.h"
 #include "redcross.h"
 #include "greentick.h"
 #include "aram/sidestep.h"
@@ -45,6 +47,7 @@
 #include "devices/dvd/deviceHandler-DVD.h"
 #include "devices/fat/deviceHandler-FAT.h"
 #include "devices/Qoob/deviceHandler-Qoob.h"
+#include "devices/wode/deviceHandler-WODE.h"
 
 static DiskHeader GCMDisk;      //Gamecube Disc Header struct
 char IPLInfo[256] __attribute__((aligned(32)));
@@ -586,6 +589,13 @@ void boot_file()
 	char *fileName = &curFile.name[0];
 	int isPrePatched = 0;
 	
+	if((curDevice==WODE)) {
+		DrawFrameStart();
+		DrawMessageBox(D_INFO, "Setup WODE ISO Please Wait ..");
+		DrawFrameFinish();
+		deviceHandler_setupFile(&curFile, 0);
+	}
+	
 	// Cheats file?
 	if(strlen(fileName)>4) {
 		if((strstr(fileName,".QCH")!=NULL) || (strstr(fileName,".qch")!=NULL)) {
@@ -655,34 +665,37 @@ void boot_file()
 			dvd_motor_off();
 		}
 	}
-  	
-	file_handle *secondDisc = NULL;
 	
-	// If we're booting from SD card or IDE hdd
-	if((curDevice == SD_CARD) || ((curDevice == IDEEXI))) {
-		// look to see if it's a two disc game
-		// set things up properly to allow disc swapping
-		// the files must be setup as so: game-disc1.xxx game-disc2.xxx
-		secondDisc = memalign(32,sizeof(file_handle));
-		memcpy(secondDisc,&curFile,sizeof(file_handle));
+  	if((curDevice!=WODE)) {
+		file_handle *secondDisc = NULL;
 		
-		// you're trying to load a disc1 of something
-		if(curFile.name[strlen(secondDisc->name)-5] == '1') {
-			secondDisc->name[strlen(secondDisc->name)-5] = '2';
-		} else if(curFile.name[strlen(secondDisc->name)-5] == '2') {
-			secondDisc->name[strlen(secondDisc->name)-5] = '1';
+		// If we're booting from SD card or IDE hdd
+		if((curDevice == SD_CARD) || ((curDevice == IDEEXI))) {
+			// look to see if it's a two disc game
+			// set things up properly to allow disc swapping
+			// the files must be setup as so: game-disc1.xxx game-disc2.xxx
+			secondDisc = memalign(32,sizeof(file_handle));
+			memcpy(secondDisc,&curFile,sizeof(file_handle));
+			
+			// you're trying to load a disc1 of something
+			if(curFile.name[strlen(secondDisc->name)-5] == '1') {
+				secondDisc->name[strlen(secondDisc->name)-5] = '2';
+			} else if(curFile.name[strlen(secondDisc->name)-5] == '2') {
+				secondDisc->name[strlen(secondDisc->name)-5] = '1';
+			}
+			else {
+				free(secondDisc);
+				secondDisc = NULL;
+			}
 		}
-		else {
+	  
+		// Call the special setup for each device (e.g. SD will set the sector(s))
+		deviceHandler_setupFile(&curFile, secondDisc);
+
+		
+		if(secondDisc) {
 			free(secondDisc);
-			secondDisc = NULL;
 		}
-	}
-  
-	// Call the special setup for each device (e.g. SD will set the sector(s))
-	deviceHandler_setupFile(&curFile, secondDisc);
-		
-	if(secondDisc) {
-		free(secondDisc);
 	}
 
 	// setup the video mode before we kill libOGC kernel
@@ -978,6 +991,12 @@ int info_game()
 		sprintf(txtbuffer,"Position on Flash: %08X",(u32)(curFile.fileBase&0xFFFFFFFF));
 		WriteCentre(190,txtbuffer);
 	}
+	else if(curDevice == WODE) {
+		sprintf(txtbuffer,"ISO: %i", (int)(curFile.fileBase>>16)&0xFF);
+		WriteCentre(160,txtbuffer);
+		sprintf(txtbuffer,"Partition: %i",(int)(curFile.fileBase&0xFFFF));
+		WriteCentre(190,txtbuffer);
+	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
 		sprintf(txtbuffer,"Region [%s] Audio Streaming [%s]",(GCMDisk.CountryCode=='P') ? "PAL":"NTSC",(GCMDisk.AudioStreaming=='\1') ? "YES":"NO");
 		WriteCentre(220,txtbuffer);
@@ -1172,7 +1191,11 @@ void select_device()
 			DrawSelectableButton(170, 230, 450, 340, "Qoob PRO",B_NOSELECT,COLOR_BLACK);
 			drawBitmap(qoob_Bitmap, 175, 245, 70,80);
 		}
-		if(curDevice != 3) {
+		else if(curDevice==WODE) {
+			DrawSelectableButton(170, 230, 450, 340, "WODE",B_NOSELECT,COLOR_BLACK);
+			drawBitmap(wodeimg_Bitmap, 145, 245, 146,72);
+		}
+		if(curDevice != 4) {
 			WriteFont(520, 300, "->");
 		}
 		if(curDevice != 0) {
@@ -1181,7 +1204,7 @@ void select_device()
 		DrawFrameFinish();
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 		u16 btns = PAD_ButtonsHeld(0);
-		if((btns & PAD_BUTTON_RIGHT) && curDevice < 3)
+		if((btns & PAD_BUTTON_RIGHT) && curDevice < 4)
 			curDevice++;
 		if((btns & PAD_BUTTON_LEFT) && curDevice > 0)
 			curDevice--;
@@ -1229,6 +1252,16 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_Qoob_setupFile;
 			deviceHandler_init     =  deviceHandler_Qoob_init;
 			deviceHandler_deinit   =  deviceHandler_Qoob_deinit;
+ 		break;
+ 		case WODE:
+			// Change all the deviceHandler pointers
+			deviceHandler_initial = &initial_WODE;
+			deviceHandler_readDir  =  deviceHandler_WODE_readDir;
+			deviceHandler_readFile =  deviceHandler_WODE_readFile;
+			deviceHandler_seekFile =  deviceHandler_WODE_seekFile;
+			deviceHandler_setupFile=  deviceHandler_WODE_setupFile;
+			deviceHandler_init     =  deviceHandler_WODE_init;
+			deviceHandler_deinit   =  deviceHandler_WODE_deinit;
  		break;
 	}
 	memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
