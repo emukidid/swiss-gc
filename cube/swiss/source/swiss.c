@@ -401,6 +401,7 @@ unsigned int load_app(int mode)
 	if (!strncmp(gameID, "GPXE01", 6) || !strncmp(gameID, "GPXP01", 6) || !strncmp(gameID, "GPXJ01", 6)) {
 		useHi = 1;
 	}
+
 	// If not, setup the game for High mem patch code
 	set_base_addr(useHi);
 	if(useHi) {
@@ -519,17 +520,20 @@ unsigned int load_app(int mode)
 		print_gecko(txtbuffer);
 	}
 	
+	// Check DVD Status, make sure it's error code 0
+	sprintf(txtbuffer, "DVD: %08X",dvd_get_error());
+	print_gecko(txtbuffer);
+	
 	// Disable interrupts and exceptions
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
-	mtmsr(mfmsr() & ~0x8000);
-	mtmsr(mfmsr() | 0x2002);
+	//mtmsr(mfmsr() & ~0x8000);
+	//mtmsr(mfmsr() | 0x2002);
 	
 	if(mode == CHEATS) {
 		return (u32)app_final();
 	}
  
-	void (*entrypoint)() = app_final();
-	entrypoint();
+	__lwp_thread_stopmultitasking((void(*)())app_final());
 	
 	return 0;
 }
@@ -702,7 +706,7 @@ int check_game()
 	deviceHandler_seekFile(&curFile,0x100,DEVICE_HANDLER_SEEK_SET);
 	deviceHandler_readFile(&curFile,&isPatched,12);
 	
-	if(((isPatched[0] == 0x50617463) && (isPatched[1] == 0x68656421)) && (isPatched[2] != 0x00000002)) {
+	if(((isPatched[0] == 0x50617463) && (isPatched[1] == 0x68656421)) && (isPatched[2] != 0x00000003)) {
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,"Game is using outdated pre-patcher!");
 		DrawFrameFinish();
