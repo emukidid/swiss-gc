@@ -1,4 +1,11 @@
-Swiss 0.1 (svn revision 39)
+Swiss 0.1 (svn revision 47)
+
+New in svn revision 47:
+- Fix pre-patcher
+- Update pre-patcher version
+- Fix bugs in patch code
+- Added fast scrolling via analog stick in file selection
+- Bring up the info screen when booting a game
 
 New in svn revision 39:
 - No need to navigate to the "Boot" button anymore, just press A on a file
