@@ -119,10 +119,7 @@ static void ProperScanPADS()	{
 void print_gecko(char *string)
 {
 	if(debugUSB) {
-		int i = 0;
-		for(i=0;i<2;i++) {
-			usb_sendbuffer_safe(1,string,strlen(string));
-		}
+		usb_sendbuffer_safe(1,string,strlen(string));
 	}
 }
 
@@ -546,7 +543,7 @@ void boot_dol()
 	unsigned char *dol_buffer;
 	unsigned char *ptr;
   
-	sprintf(txtbuffer, "Loading DOL [%d/%d Kb] ..",curFile.size/1024,SYS_GetArena1Size()/1024);
+	sprintf(txtbuffer, "Loading DOL [%d/%d Kb] ..",curFile.size/1024,(SYS_GetArena1Hi()-SYS_GetArena1Lo())/1024);
 	DrawFrameStart();
 	DrawMessageBox(D_INFO,txtbuffer);
 	DrawFrameFinish();
@@ -657,7 +654,7 @@ void boot_file()
 	}
 	
 	// Start up the DVD Drive
-	if(curDevice != DVD_DISC) {
+	if((curDevice != DVD_DISC) && (curDevice != WODE)) {
 		if(initialize_disc(GCMDisk.AudioStreaming) == DRV_ERROR) {
 			return; //fail
 		}
@@ -992,10 +989,8 @@ int info_game()
 		WriteCentre(190,txtbuffer);
 	}
 	else if(curDevice == WODE) {
-		sprintf(txtbuffer,"ISO: %i", (int)(curFile.fileBase>>16)&0xFF);
+		sprintf(txtbuffer,"Partition: %i, ISO: %i", (int)(curFile.fileBase>>24)&0xFF,(int)(curFile.fileBase&0xFFFFFF));
 		WriteCentre(160,txtbuffer);
-		sprintf(txtbuffer,"Partition: %i",(int)(curFile.fileBase&0xFFFF));
-		WriteCentre(190,txtbuffer);
 	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
 		sprintf(txtbuffer,"Region [%s] Audio Streaming [%s]",(GCMDisk.CountryCode=='P') ? "PAL":"NTSC",(GCMDisk.AudioStreaming=='\1') ? "YES":"NO");

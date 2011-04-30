@@ -15,7 +15,8 @@
 #define WODE_GET_NUM_PARTS		(0x10000000)
 #define WODE_GET_PART(P)		(0x11000000 | ((P & 0xFF) << 16))
 #define WODE_GET_NUM_ISOS(P)	(0x12000000 | ((P & 0xFF) << 16))
-#define WODE_GET_ISO(P1,P2)		(0x13000000 | ((P1 & 0xFF) << 16) | ((P2 & 0xFF) << 8))
+#define WODE_GET_ISO(P1,P2)		(0x13000000 | ((P1 & 0xFF) << 16) | ((P2 & 0xFF) << 8) | ((P2 & 0x3F00) >> 6))
+
 
 #define WODE_GET_FAVORITE_INFO(P)		(0x14000000 | ((P & 0xFF) << 16))
 #define WODE_ERASE_FAVORITE(P)			(0x15000000 | ((P & 0xFF) << 16))
@@ -29,9 +30,9 @@
 #define WODE_SET_AUTOBOOT_HACK(P)		(0x22000000 | ((P & 0xFF) << 16))
 #define WODE_SET_RELOAD_HACK(P)			(0x23000000 | ((P & 0xFF) << 16))
 #define WODE_SET_WII_REGION(P)			(0x24000000 | ((P & 0xFF) << 16))
+#define WODE_SET_DISPLAY(P)				(0x25000000 | ((P & 0xFF) << 16))
 
-#define WODE_WRITE_SETTINGS				(0x25000000)
-
+#define WODE_WRITE_SETTINGS				(0x2F000000)
 
 #define WODE_GET_SETTINGS		(0x30000000)
 #define WODE_GET_VERSIONS		(0x31000000)
@@ -41,8 +42,7 @@
 
 #define WODE_GOTO_FLAT_MODE				(0x80000000)
 #define WODE_LAUNCH_GAME_PART(P)		(0x81000000 |  ((P & 0xFF) 	 << 16))
-#define WODE_LAUNCH_GAME_ISO(P)			(0x82000000 |  ((P & 0xFFFF) <<  8))
-
+#define WODE_LAUNCH_GAME_ISO(P)			(0x82000000 |  ((P & 0xFFFF) <<  11))
 
 
 static u8 dvdbuffer[0x8000] ATTRIBUTE_ALIGN (32);    // One Sector
