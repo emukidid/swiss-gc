@@ -75,7 +75,7 @@ void GCARSStartGame(u32* codelist)
     }
 
     ENTRYPOINT(); // call the GCARS executor to hook the game before starting it 
-    ((void (*)())entrypoint)(); // start the game 
+    __lwp_thread_stopmultitasking((void(*)())entrypoint);
 
     *(volatile u32*)0xCC003024 = 0; // if the game returns, reset the GC (should never happen) 
 }
