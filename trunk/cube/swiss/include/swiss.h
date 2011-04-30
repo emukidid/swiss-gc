@@ -28,10 +28,7 @@ extern char IPLInfo[256] __attribute__((aligned(32)));
 extern int iplModchip;
 extern u32 driveVersion;
 
-extern long long gettime();
 extern void udelay(int s);
-extern unsigned int diff_msec(long long start,long long end);
-extern unsigned int diff_sec(long long start,long long end);
 extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
 extern u32 sdgecko_getAddressingType(s32 drv_no);
 extern void sdgecko_setSpeed(u32 freq);

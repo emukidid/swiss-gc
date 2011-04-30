@@ -45,7 +45,7 @@ int deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir){
       if(tmp.iso_type==1) { //add gamecube only
         u64 wode_iso_info = ((tmp.iso_type<<28) | (tmp.iso_region<<24) | (i<<16) | (j&0xFFFF));
         *dir = !num_entries ? malloc( sizeof(file_handle) ) : realloc( *dir, num_entries * sizeof(file_handle) );
-        strcpy((*dir)[num_entries].name, &tmp.name[0]);
+        sprintf((*dir)[num_entries].name, "%s.gcm",&tmp.name[0]);
 		    (*dir)[num_entries].fileBase = wode_iso_info;  //we use offset to store a few things
   	    (*dir)[num_entries].fileAttrib = IS_FILE;
   	    num_entries++;
@@ -62,7 +62,7 @@ int deviceHandler_WODE_seekFile(file_handle* file, unsigned int where, unsigned 
 }
 
 int deviceHandler_WODE_readFile(file_handle* file, void* buffer, unsigned int length){
-	int bytesread = DVD_Read(buffer,file->fileBase+file->offset,length);
+	int bytesread = DVD_Read(buffer,file->offset,length);
 	if(bytesread > 0) {
 		file->offset += bytesread;
 	}

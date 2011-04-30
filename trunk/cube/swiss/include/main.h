@@ -52,7 +52,8 @@ enum deviceTypes
 	DVD_DISC=0,
 	SD_CARD,
 	IDEEXI,
-	QOOB_FLASH
+	QOOB_FLASH,
+	WODE
 };
 
 //Where on the screen are we?
