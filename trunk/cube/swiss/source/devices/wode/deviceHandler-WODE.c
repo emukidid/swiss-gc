@@ -28,13 +28,30 @@ file_handle initial_WODE =
 	  DRV_ERROR
 	};
 	
+int startupWode() {
+  if(OpenWode() == 0) {
+    DrawFrameStart();
+    DrawMessageBox(D_FAIL,"No Wode found! Press A");
+    DrawFrameFinish();
+    wait_press_A();
+    return -1;
+  }
+  return 0;
+}
+	
 int deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir){	
+
+		
+  DrawFrameStart();
+  DrawMessageBox(D_INFO,"Reading WODE");
+  DrawFrameFinish();
+	
   //we don't care about partitions, just files!
   while(!GetTotalISOs()) {
     usleep(20000);
   }
-  
-  int numPartitions = 0, numIsoInPartition = 0, i,j, num_entries = 0;
+   
+  u32 numPartitions = 0, numIsoInPartition = 0, i,j, num_entries = 0;
 
   numPartitions = GetNumPartitions();
   for(i=0;i<numPartitions;i++) {
@@ -43,12 +60,15 @@ int deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir){
       ISOInfo_t tmp;
       GetISOInfo(i, j, &tmp);
       if(tmp.iso_type==1) { //add gamecube only
-        u64 wode_iso_info = ((tmp.iso_type<<28) | (tmp.iso_region<<24) | (i<<16) | (j&0xFFFF));
+        u32 wode_iso_info = ((((i&0xFF)<<24)) | (j&0xFFFFFF));
         *dir = !num_entries ? malloc( sizeof(file_handle) ) : realloc( *dir, num_entries * sizeof(file_handle) );
         sprintf((*dir)[num_entries].name, "%s.gcm",&tmp.name[0]);
 		    (*dir)[num_entries].fileBase = wode_iso_info;  //we use offset to store a few things
   	    (*dir)[num_entries].fileAttrib = IS_FILE;
   	    num_entries++;
+  	    sprintf(txtbuffer, "Adding WODE entry: %s concat:%08X part:%08X iso:%08X\r\n",
+  	    &tmp.name[0], wode_iso_info, i, j);
+  	    print_gecko(txtbuffer);
       }
     }
   }
@@ -70,21 +90,14 @@ int deviceHandler_WODE_readFile(file_handle* file, void* buffer, unsigned int le
 }
 
 void deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2) {
-  SetISO((file->fileBase>>16)&0xFF,file->fileBase&0xFFFF);
+  SetISO((u32)((file->fileBase>>24)&0xFF),(u32)(file->fileBase&0xFFFFFF));
   sleep(2);
   DVD_Reset(DVD_RESETHARD);
   while(dvd_get_error()) {dvd_read_id();}
 }
 
 int deviceHandler_WODE_init(file_handle* file){
-  if(OpenWode() == 0) {
-    DrawFrameStart();
-    DrawMessageBox(D_FAIL,"No Wode found! Press A");
-    DrawFrameFinish();
-    wait_press_A();
-    return -1;
-  }
-  return 0;
+  return startupWode();
 }
 
 int deviceHandler_WODE_deinit(file_handle* file) {
