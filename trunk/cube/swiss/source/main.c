@@ -36,6 +36,12 @@ int debugUSB = 0;               //re-direct debug messages over usbgecko (slot b
 int needsDeviceChange = 0;
 int needsRefresh = 0;
  
+int cmpFileNames(const void *p1, const void *p2)
+{
+   return strcasecmp( (const char*) (((file_handle*)p1)->name), 
+    (const char*) (((file_handle*)p2)->name));
+}
+
 void main_loop()
 { 
 	int i = 0,max,j;	
@@ -55,6 +61,7 @@ void main_loop()
 			files = deviceHandler_readDir(&curFile, &allFiles);
 			if(files<1) { break;}
 			curMenuLocation=ON_FILLIST;
+			qsort(&allFiles[0], files, sizeof(file_handle *), cmpFileNames);
 		}
 		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
 		doBackdrop();
