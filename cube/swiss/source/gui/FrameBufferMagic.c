@@ -47,6 +47,9 @@ void _DrawBackdrop() {
   else if(curDevice == QOOB_FLASH) {
 	  sprintf(topStr, "%s - IPL Replacement",videoStr);
   }
+  else if(curDevice == WODE) {
+	  sprintf(topStr, "%s - Wode Jukebox (%08X)",videoStr,driveVersion);
+  }
   WriteFont(55,420, topStr);
 }
 

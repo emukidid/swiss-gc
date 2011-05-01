@@ -59,7 +59,7 @@ int curVideoSelection = AUTO;	  //video forcing selection (default == auto)
 int GC_SD_CHANNEL = 0;          //SD slot
 u32 GC_SD_SPEED   = EXI_SPEED16MHZ;
 int SDHCCard = 0; //0 == SDHC, 1 == normal SD
-int curDevice = 0;  //SD_CARD or DVD_DISC or IDEEXI
+int curDevice = 0;  //SD_CARD or DVD_DISC or IDEEXI or WODE
 int noVideoPatch = 0;
 char *videoStr = NULL;
 
@@ -172,9 +172,16 @@ void ogc_video__reset()
 				DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
 				break;
 			case P480:
-				*(volatile unsigned long*)0x80002F40 = VI_TVMODE_NTSC_PROG;
-				newmode = &TVNtsc480Prog;
-				DrawMessageBox(D_INFO,"Video Mode: NTSC 480p");
+				if(VIDEO_HaveComponentCable()) {
+					*(volatile unsigned long*)0x80002F40 = VI_TVMODE_NTSC_PROG;
+					newmode = &TVNtsc480Prog;
+					DrawMessageBox(D_INFO,"Video Mode: NTSC 480p");
+				}
+				else {
+					*(volatile unsigned long*)0x80002F40 = VI_TVMODE_NTSC_INT;
+					newmode = &TVNtsc480IntDf;
+					DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
+				}
 				break;
 			default:
 				*(volatile unsigned long*)0x80002F40 = VI_TVMODE_NTSC_INT;
