@@ -8,6 +8,7 @@ extern u8 _Read_original_2[38];
 extern u8 _Read_original_3[46];
 extern u32 _DVDLowReadDiskID_original[8];
 extern u32 _DVDLowSeek_original[9];
+extern u32 _DVDLowSeek_original_v2[9];
 extern u32 _AIResetStreamSampleCount_original[9];
 extern u32 _getTiming_v2[28];
 extern u32 _getTiming_v1[25];

@@ -134,6 +134,18 @@ u32 _DVDLowSeek_original[9] = {
   0x38846000   // addi        r4, r4, 24576
 };
 
+u32 _DVDLowSeek_original_v2[9] = {
+  0x7C0802A6,  // mflr        r0
+  0x90010004,  // stw         r0, 4 (sp)
+  0x38000000,  // li          r0, 0
+  0x9421FFE8,  // stwu        sp, -0x0018 (sp)
+  0x93E10014,  // stw         r31, 20 (sp)
+  0x93C10010,  // stw         r30, 16 (sp)
+  0x908DC698,  // stw         r4, -0x3968 (sd1)
+  0x3C80CC00,  // lis         r4, 0xCC00
+  0x38846000   // addi        r4, r4, 24576	
+};
+
 //aka AISetStreamPlayState
 u32 _AIResetStreamSampleCount_original[9] = {
   0x3C60CC00,  // lis         r3, 0xCC00
@@ -514,7 +526,11 @@ void dvd_patchDVDLowSeek(void *addr, u32 len) {
 	{
 		if(memcmp(addr_start,_DVDLowSeek_original,sizeof(_DVDLowSeek_original))==0) 
 		{
-      writeBranchLink((u32)addr_start+4,SEEK_JUMP_OFFSET);
+      		writeBranchLink((u32)addr_start+4,SEEK_JUMP_OFFSET);
+		}
+		if(memcmp(addr_start,_DVDLowSeek_original_v2,sizeof(_DVDLowSeek_original_v2))==0) 
+		{
+      		writeBranchLink((u32)addr_start+4,SEEK_JUMP_OFFSET);
 		}
 		addr_start += 4;
 	}
