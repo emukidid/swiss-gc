@@ -763,6 +763,9 @@ int check_game()
 	}
 		
 	int seek_patchable = check_dol(&curFile, _DVDLowSeek_original, sizeof(_DVDLowSeek_original));
+	if(seek_patchable != 1) {
+		seek_patchable = check_dol(&curFile, _DVDLowSeek_original_v2, sizeof(_DVDLowSeek_original_v2));
+	}
 	if(seek_patchable == -1)
 		WriteCentre(195,"Seek patchable: Error checking");
 	else {
