@@ -157,7 +157,12 @@ void DrawMessageBox(int type, char *message) {
   for(i = (y1+borderSize); i < (y2-borderSize); i++) {
     _DrawHLine (x1+borderSize, x2-borderSize, i, BUTTON_COLOUR_INNER); //inner
   }
-  WriteCentre(middleY, message);
+	char *tok = strtok(message,"\n");
+	while(tok != NULL) {
+		WriteCentre(middleY, tok);
+		tok = strtok(NULL,"\n");
+		middleY+=24;
+	}
   //Draw Borders
   for(i = 0; i < borderSize; i++) {
     _DrawHLine (x1+(i*1), x2-(i*1), (y1+borderSize)-i, BUTTON_COLOUR_OUTER); //top

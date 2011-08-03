@@ -146,7 +146,6 @@ extern int drive_status;
 extern int files;                  //number of files in a directory
 extern int curMenuSelection;	      //menu selection
 extern int curSelection;		        //game selection
-extern int debugUSB;               //re-direct debug messages over usbgecko (slot b)
 extern int needsDeviceChange;
 extern int needsRefresh;
 extern int curMenuLocation;

@@ -34,7 +34,13 @@ typedef struct {
 	// *Multiple DVDs must use it, to properly reside all FSTs.
 } DiskHeader __attribute__((aligned(32)));
 
-extern int numExecutables;
-extern int numEmbeddedGCMs;
-void parse_gcm(file_handle *file);
+typedef struct {
+	u32 offset;
+	u32 size;
+	char name[64];
+} ExecutableFile __attribute__((aligned(32)));
+
+int parse_gcm(file_handle *file, ExecutableFile *filesToPatch);
+int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base);
+int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch);
 #endif

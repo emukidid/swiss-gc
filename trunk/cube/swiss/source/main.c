@@ -32,10 +32,10 @@ int curMenuLocation = ON_FILLIST; //where are we on the screen?
 int files = 0;                  //number of files in a directory
 int curMenuSelection = 0;	      //menu selection
 int curSelection = 0;		        //game selection
-int debugUSB = 0;               //re-direct debug messages over usbgecko (slot b)
 int needsDeviceChange = 0;
 int needsRefresh = 0;
- 
+SwissSettings swissSettings;
+
 int cmpFileNames(const void *p1, const void *p2)
 {
    return strcasecmp( (const char*) (((file_handle*)p1)->name), 
@@ -102,8 +102,8 @@ void main_loop()
 				case 1:		
 					needsDeviceChange = 1;  //Change from SD->DVD or vice versa
 					break;
-				case 2:		// Setup
-					setup_game();
+				case 2:		// Settings
+					settings();
 					break;
 				case 3:
 					install_game(); //Dump a game
@@ -134,12 +134,23 @@ int main ()
 {
 	void *fb;   
 	fb = Initialise();
+	if(!fb) {
+		return -1;
+	}
+	
+	// Setup defaults
+	swissSettings.useHiMemArea = 0;
+	swissSettings.disableInterrupts = 0;
+	swissSettings.useHiLevelPatch = 0;
+	swissSettings.debugUSB = 1;
+	swissSettings.curVideoSelection = AUTO;
 	
 	//debugging stuff
-	if(debugUSB) {
+	if(swissSettings.debugUSB) {
 		if(usb_isgeckoalive(1)) {
 			usb_flush(1);
 		}
+		sprintf(txtbuffer, "Arena Size: %iKb\r\n",(SYS_GetArena1Hi()-SYS_GetArena1Lo())/1024);
 	}
 
 	while(1) {

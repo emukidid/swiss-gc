@@ -22,6 +22,8 @@
 #include <malloc.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/time.h>
+#include <time.h>
 
 #include "swiss.h"
 #include "main.h"
@@ -55,7 +57,6 @@ u32 driveVersion = 0;
 GXRModeObj *newmode = NULL;
 char txtbuffer[2048];           //temporary text buffer
 file_handle curFile;     //filedescriptor for current file
-int curVideoSelection = AUTO;	  //video forcing selection (default == auto)
 int GC_SD_CHANNEL = 0;          //SD slot
 u32 GC_SD_SPEED   = EXI_SPEED16MHZ;
 int SDHCCard = 0; //0 == SDHC, 1 == normal SD
@@ -95,7 +96,7 @@ char* _menu_array[] =
 
 char *getVideoString()
 {
-	switch(curVideoSelection)
+	switch(swissSettings.curVideoSelection)
 	{
 		case 0:
 			return "NTSC";
@@ -118,8 +119,16 @@ static void ProperScanPADS()	{
 
 void print_gecko(char *string)
 {
-	if(debugUSB) {
-		usb_sendbuffer_safe(1,string,strlen(string));
+	if(swissSettings.debugUSB) {
+		char tbuf[30];
+		char buffer[2048];
+		struct timeval tv;
+		time_t curtime;
+		gettimeofday(&tv, NULL); 
+		curtime=tv.tv_sec;
+		strftime(tbuf,30,"%m-%d-%Y %T.",localtime(&curtime));
+		sprintf(buffer,"%s%ld: %s",tbuf,tv.tv_usec, string);
+		usb_sendbuffer_safe(1,buffer,strlen(buffer));
 	}
 }
 
@@ -127,7 +136,7 @@ void print_gecko(char *string)
 void ogc_video__reset()
 {
     DrawFrameStart();
-    if(curVideoSelection==AUTO) {
+    if(swissSettings.curVideoSelection==AUTO) {
 		noVideoPatch = 1;
 		switch(GCMDisk.CountryCode) {
 			case 'P': // PAL
@@ -139,14 +148,14 @@ void ogc_video__reset()
 			case 'M': // American Import to PAL
 			case 'X': // PAL other languages?
 			case 'Y': // PAL other languages?
-				curVideoSelection = PAL50;
+				swissSettings.curVideoSelection = PAL50;
 				break;
 			case 'E':
 			case 'J':
-				curVideoSelection = NTSC;
+				swissSettings.curVideoSelection = NTSC;
 				break;
 			case 'U':
-				curVideoSelection = PAL60;
+				swissSettings.curVideoSelection = PAL60;
 				break;
 			default:
 				break;
@@ -154,8 +163,8 @@ void ogc_video__reset()
     }
 
     /* set TV mode for current game*/
-	if(curVideoSelection!=AUTO)	{		//if not autodetect
-		switch(curVideoSelection) {
+	if(swissSettings.curVideoSelection!=AUTO)	{		//if not autodetect
+		switch(swissSettings.curVideoSelection) {
 			case PAL60:
 				*(volatile unsigned long*)0x80002F40 = VI_TVMODE_EURGB60_INT;
 				newmode = &TVEurgb60Hz480IntDf;
@@ -176,6 +185,11 @@ void ogc_video__reset()
 					*(volatile unsigned long*)0x80002F40 = VI_TVMODE_NTSC_PROG;
 					newmode = &TVNtsc480Prog;
 					DrawMessageBox(D_INFO,"Video Mode: NTSC 480p");
+					// I don't think this is correct
+					syssram *sram;
+					sram = __SYS_LockSram();
+					sram->flags |= 2;
+					__SYS_UnlockSram(1);
 				}
 				else {
 					*(volatile unsigned long*)0x80002F40 = VI_TVMODE_NTSC_INT;
@@ -370,7 +384,7 @@ unsigned int load_app(int mode)
 	void  (*app_entry)(void(**init)(void (*report)(const char* fmt, ...)),
 	int (**main)(), void *(**final)());
 	char* gameID = (char*)0x80000000;
-	int useHi = 0, zeldaVAT = 0;
+	int zeldaVAT = 0;
 	// Apploader related variables
 	void* app_dst = 0;
 	int app_len = 0,app_offset = 0, apploader_info[3], res;
@@ -406,12 +420,12 @@ unsigned int load_app(int mode)
 	
 	// Will we use the low mem area for our patch code?
 	if (!strncmp(gameID, "GPXE01", 6) || !strncmp(gameID, "GPXP01", 6) || !strncmp(gameID, "GPXJ01", 6)) {
-		useHi = 1;
+		swissSettings.useHiMemArea = 1;
 	}
 
 	// If not, setup the game for High mem patch code
-	set_base_addr(useHi);
-	if(useHi) {
+	set_base_addr(swissSettings.useHiMemArea);
+	if(swissSettings.useHiMemArea) {
 		override_memory_limits();
 	}
 
@@ -444,7 +458,7 @@ unsigned int load_app(int mode)
 		if(!res) {
 			break;
 		}
-		if(debugUSB) {
+		if(swissSettings.debugUSB) {
 			sprintf(txtbuffer,"Apploader Reading: %dbytes from %08X to %08x\n",app_len,app_offset,(u32)app_dst);
 			print_gecko(txtbuffer);
 		}
@@ -458,10 +472,13 @@ unsigned int load_app(int mode)
 		}
 		// Patch to read from SD/HDD
 		if((curDevice == SD_CARD)||((curDevice == IDEEXI))) {
-			dvd_patchDVDRead(app_dst, app_len);
+			if(swissSettings.useHiLevelPatch) {
+				applyPatches(app_dst, app_len, swissSettings.disableInterrupts);
+			} else {
+				dvd_patchDVDRead(app_dst, app_len);
+			}
 			dvd_patchDVDReadID(app_dst, app_len);
 			dvd_patchAISCount(app_dst, app_len);
-			dvd_patchDVDLowSeek(app_dst, app_len);
 		}
 		// Fix Zelda WW on Wii
 		if(zeldaVAT) {
@@ -472,15 +489,14 @@ unsigned int load_app(int mode)
 			dvd_patchreset(app_dst,app_len);  
 		}
 		// Patch OSReport to print out over USBGecko
-		if(debugUSB) {
+		if(swissSettings.debugUSB) {
 			dvd_patchfwrite(app_dst, app_len);
 		}
-		dvd_patchVideoMode(app_dst, app_len, noVideoPatch ? AUTO:curVideoSelection);
 		DCFlushRange(app_dst, app_len);
 		ICInvalidateRange(app_dst, app_len);
 	}
 	deviceHandler_deinit(&curFile);
- 
+
 	DrawFrameStart();
 	DrawProgressBar(100, "Executing Game!");
 	DrawFrameFinish();
@@ -521,20 +537,18 @@ unsigned int load_app(int mode)
 	DCFlushRange((void*)0x80000000, 0x3100);
 	ICInvalidateRange((void*)0x80000000, 0x3100);
 	
-	if(debugUSB) {
+	if(swissSettings.debugUSB) {
 		sprintf(txtbuffer,"Sector: %08X%08X Speed: %08x\n",*(volatile unsigned int*)0x80002F00,
 		*(volatile unsigned int*)0x80002F04,*(volatile unsigned int*)0x80002F30);
 		print_gecko(txtbuffer);
 	}
 	
 	// Check DVD Status, make sure it's error code 0
-	sprintf(txtbuffer, "DVD: %08X",dvd_get_error());
+	sprintf(txtbuffer, "DVD: %08X\r\n",dvd_get_error());
 	print_gecko(txtbuffer);
 	
 	// Disable interrupts and exceptions
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
-	//mtmsr(mfmsr() & ~0x8000);
-	//mtmsr(mfmsr() | 0x2002);
 	
 	if(mode == CHEATS) {
 		return (u32)app_final();
@@ -652,6 +666,7 @@ void boot_file()
 		return;
 	}
 	
+	
 	// Report to the user the patch status of this GCM/ISO file
 	if((curDevice == SD_CARD) || ((curDevice == IDEEXI))) {
 		isPrePatched = check_game();
@@ -718,95 +733,29 @@ int check_game()
 	DrawFrameStart();
 	DrawMessageBox(D_INFO,"Checking Game ..");
 	DrawFrameFinish();
-  
-	u32 isPatched[3];
-	deviceHandler_seekFile(&curFile,0x100,DEVICE_HANDLER_SEEK_SET);
-	deviceHandler_readFile(&curFile,&isPatched,12);
-	
-	if(((isPatched[0] == 0x50617463) && (isPatched[1] == 0x68656421)) && (isPatched[2] != 0x00000003)) {
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,"Game is using outdated pre-patcher!");
-		DrawFrameFinish();
-		sleep(5);
-		return -1;
-	}
-	
-	// Check to see if it's already patched
-	if((isPatched[0] == 0x50617463) && (isPatched[1] == 0x68656421)) { //'Patched!'
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,"Game is already patched!");
-		DrawFrameFinish();
-		sleep(1);
-		return 1;
-	}
-	
-	DrawFrameStart();
-	DrawEmptyBox(75,120, vmode->fbWidth-78, 460, COLOR_BLACK);  
-	WriteCentre(130, "Checking ISO/GCM");
-	DrawFrameFinish();	// We want to draw these as they are worked out
-	
-	int read_patchable = check_dol(&curFile, (u32*)_Read_original, sizeof(_Read_original));
-	if(read_patchable != 1) {
-		read_patchable = check_dol(&curFile, (u32*)_Read_original_2, sizeof(_Read_original_2));
-	}
-	if(read_patchable != 1) {
-		read_patchable = check_dol(&curFile, (u32*)_Read_original_3, sizeof(_Read_original_3));
-	}
-	if(read_patchable == -1)
-		WriteCentre(170,"Read patchable: Error checking");
-	else {
-		WriteCentre(170,"Read patchable:");
-		if(read_patchable == 1)
-			drawBitmap(greentick_Bitmap, 240, 170, 32,24);
-		else
-			drawBitmap(redcross_Bitmap, 240, 170, 30,25);
-	}
-		
-	int seek_patchable = check_dol(&curFile, _DVDLowSeek_original, sizeof(_DVDLowSeek_original));
-	if(seek_patchable != 1) {
-		seek_patchable = check_dol(&curFile, _DVDLowSeek_original_v2, sizeof(_DVDLowSeek_original_v2));
-	}
-	if(seek_patchable == -1)
-		WriteCentre(195,"Seek patchable: Error checking");
-	else {
-		WriteCentre(195,"Seek patchable:");
-		if(seek_patchable == 1)
-			drawBitmap(greentick_Bitmap, 240, 195, 32,24);
-		else
-			drawBitmap(redcross_Bitmap, 240, 195, 30,25);
-	}
-		
-	int cover_patchable = check_dol(&curFile, _DVDLowReadDiskID_original, sizeof(_DVDLowReadDiskID_original));
-	if(cover_patchable == -1)
-		WriteCentre(220,"Disc Swap patchable: Error checking");
-	else {
-		WriteCentre(220,"Disc Swap patchable:");
-		if(cover_patchable == 1)
-			drawBitmap(greentick_Bitmap, 240, 220, 32,24);
-		else
-			drawBitmap(redcross_Bitmap, 240, 220, 30,25);
-	}
-		
-	parse_gcm(&curFile);
-	sprintf(txtbuffer,"Found %d extra executables",numExecutables);
-	WriteCentre(280,txtbuffer);
-	sprintf(txtbuffer,"Found %d embedded GCMs",numEmbeddedGCMs);
-	WriteCentre(305,txtbuffer);
-	
-	if(!read_patchable || read_patchable == -1)
-		WriteCentre(365,"ISO is unlikely to boot");
-	else {
-		WriteCentre(365,"ISO is likely to boot");  
-		drawBitmap(greentick_Bitmap, 240, 365, 32,24);
-	}
-	if(numExecutables||numEmbeddedGCMs)
-		WriteCentre(390,"Pre-Patching might be required");
-	else if(numExecutables+numEmbeddedGCMs==0)
-		WriteCentre(390,"Pre-Patching is not required");
 
-	WriteCentre(430,"Press A to continue");
-	DrawFrameFinish();	
-	wait_press_A();
+	char buffer[256];
+	deviceHandler_seekFile(&curFile,0x100,DEVICE_HANDLER_SEEK_SET);
+	deviceHandler_readFile(&curFile,&buffer,256);
+	if(!strcmp(&buffer[0],"Pre-Patched by Swiss v0.1")) {
+		return 0;
+	}
+	
+	ExecutableFile *filesToPatch = memalign(32, sizeof(ExecutableFile)*64);
+	int numToPatch = parse_gcm(&curFile, filesToPatch);
+	if(numToPatch>0) {
+		// Game requires pre-patching, lets ask to do it.
+		DrawFrameStart();
+		DrawMessageBox(D_INFO,"This Game Requires irreversible Pre-Patching\nPress A to Continue");
+		DrawFrameFinish();
+		wait_press_A();
+		
+		int res = patch_gcm(&curFile, filesToPatch, numToPatch);
+		DrawFrameStart();
+		DrawMessageBox(D_INFO,res ? "Game Patched Successfully":"Game could not be patched or not required");
+		DrawFrameFinish();
+	}
+	free(filesToPatch);
 	return 0;
 }
 
@@ -1022,7 +971,7 @@ int info_game()
 	}
 }
 
-void setup_game()
+void settings()
 { 
 	int currentSettingPos = 0/*, maxSettingPos = (curDevice==SD_CARD)?MAX_SETTING_POS:0*/;
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
@@ -1035,25 +984,47 @@ void setup_game()
 		
 		//write out all the settings (dodgy)
 		WriteFont(80, 160+(32*1), "Game Video Mode");
-		sprintf(txtbuffer,"%s",getVideoString());
-		DrawSelectableButton(vmode->fbWidth-170, 160+(32*1), -1, 160+(32*1)+30, txtbuffer, (!currentSettingPos) ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(vmode->fbWidth-170, 160+(32*1), -1, 160+(32*1)+30, getVideoString(), (!currentSettingPos) ? B_SELECTED:B_NOSELECT,-1);
+		WriteFont(80, 160+(32*2), "Patch Mode");
+		DrawSelectableButton(vmode->fbWidth-170, 160+(32*2), -1, 160+(32*2)+30, swissSettings.useHiLevelPatch ? "High Level":"Low Level", (currentSettingPos==1) ? B_SELECTED:B_NOSELECT,-1);
+		WriteFont(80, 160+(32*3), "Patch Location");
+		DrawSelectableButton(vmode->fbWidth-170, 160+(32*3), -1, 160+(32*3)+30, swissSettings.useHiMemArea ? "High Mem":"Low Mem", (currentSettingPos==2) ? B_SELECTED:B_NOSELECT,-1);
+		if(swissSettings.useHiLevelPatch) {
+			WriteFont(80, 160+(32*4), "Disable Interrupts");
+			DrawSelectableButton(vmode->fbWidth-170, 160+(32*4), -1, 160+(32*4)+30, swissSettings.disableInterrupts ? "Yes":"No", (currentSettingPos==3) ? B_SELECTED:B_NOSELECT,-1);
+		}
+		
 		WriteCentre(370,"Press B to return");
 		DrawFrameFinish();
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B));
+		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B));
 		u16 btns = PAD_ButtonsHeld(0);
 		if(btns & PAD_BUTTON_RIGHT)
 		{
-			if(currentSettingPos==0)
-				curVideoSelection = (curVideoSelection<MAX_VIDEO_MODES) ? (curVideoSelection+1):0;
+			if(!currentSettingPos)
+				swissSettings.curVideoSelection = (swissSettings.curVideoSelection<MAX_VIDEO_MODES) ? (swissSettings.curVideoSelection+1):0;
+			else if(currentSettingPos==1)
+				swissSettings.useHiLevelPatch^=1;
+			else if(currentSettingPos==2)
+				swissSettings.useHiMemArea^=1;
+			else if(currentSettingPos==3)
+				swissSettings.disableInterrupts^=1;
 		}
 		if(btns & PAD_BUTTON_LEFT)
 		{
-			if(currentSettingPos==0)
-				curVideoSelection = (curVideoSelection>0) ? (curVideoSelection-1):MAX_VIDEO_MODES;
+			if(!currentSettingPos)
+				swissSettings.curVideoSelection = (swissSettings.curVideoSelection>0) ? (swissSettings.curVideoSelection-1):MAX_VIDEO_MODES;
+			else if(currentSettingPos==1)
+				swissSettings.useHiLevelPatch^=1;
+			else if(currentSettingPos==2)
+				swissSettings.useHiMemArea^=1;
+			else if(currentSettingPos==3)
+				swissSettings.disableInterrupts^=1;
 		}
+		if(btns & PAD_BUTTON_UP)	currentSettingPos = (currentSettingPos>0) ? (currentSettingPos-1):(swissSettings.useHiLevelPatch?3:2);
+		if(btns & PAD_BUTTON_DOWN)	currentSettingPos = (currentSettingPos<(swissSettings.useHiLevelPatch?3:2)) ? (currentSettingPos+1):0;
 		if(btns & PAD_BUTTON_B)
 			break;
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) &&!(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)));
+		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || (PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || (PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) || (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B));
 	}
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_B);
 }

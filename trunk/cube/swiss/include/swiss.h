@@ -39,6 +39,8 @@ extern s32 sdgecko_readCSD(s32 drv_no);
 extern s32 sdgecko_readStatus(s32 drv_no);
 extern s32 sdgecko_setHS(s32 drv_no);
 
+extern syssram* __SYS_LockSram();
+extern u32 __SYS_UnlockSram(u32 write);
 
 extern char *getVideoString();
 extern void print_gecko(char *string);
@@ -53,12 +55,20 @@ extern int check_game();
 extern int cheats_game();
 extern void install_game();
 extern int info_game();
-extern void setup_game();
+extern void settings();
 extern void credits();
 
 extern void select_speed();
 extern void select_slot();
 extern void select_device();
 
+typedef struct {
+	int useHiLevelPatch; // Use Hi Level (DVDRead patch) or low level (Read patch)
+	int useHiMemArea; // Use Low mem or High mem for the patch to sit at
+	int disableInterrupts; // On the Hi Level patch, disable interrupts or not
+	int debugUSB; // Debug prints over USBGecko
+	int curVideoSelection; //video forcing selection (default == auto)
+} SwissSettings __attribute__((aligned(32)));
+extern SwissSettings swissSettings;
 
 #endif 

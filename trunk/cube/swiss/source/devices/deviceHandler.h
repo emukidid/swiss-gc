@@ -7,6 +7,7 @@
 #define DEVICE_HANDLER_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 typedef struct {
 	char name[1024]; // File or Folder, absolute path goes here
@@ -15,6 +16,7 @@ typedef struct {
 	unsigned int size;      // size of the file
 	int fileAttrib;        // IS_FILE or IS_DIR
 	int status;            // is the device ok
+	FILE *fp;
 } file_handle;
 
 #define DEVICE_HANDLER_SEEK_SET 0
