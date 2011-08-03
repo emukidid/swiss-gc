@@ -31,6 +31,7 @@ file_handle initial_SD0 =
 	  0,        // offset
 	  0,        // size
 	  IS_DIR,
+	  0,
 	  0
 	};
 	
@@ -40,6 +41,7 @@ file_handle initial_SD1 =
 	  0,        // offset
 	  0,        // size
 	  IS_DIR,
+	  0,
 	  0
 	};
 	
@@ -49,6 +51,7 @@ file_handle initial_IDE0 =
 	  0,        // offset
 	  0,        // size
 	  IS_DIR,
+	  0,
 	  0
 	};
 	
@@ -58,17 +61,18 @@ file_handle initial_IDE1 =
 	  0,        // offset
 	  0,        // size
 	  IS_DIR,
+	  0,
 	  0
 	};
 
 int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir){	
   
-	DIR_ITER* dp = diropen( ffile->name );
+	DIR* dp = opendir( ffile->name );
 	if(!dp) return -1;
+	struct dirent *entry;
 	struct stat fstat;
 	
 	// Set everything up to read
-	char filename[MAXPATHLEN];
 	int num_entries = 1, i = 0;
 	num_entries = i = 1;
 	*dir = malloc( num_entries * sizeof(file_handle) );
@@ -76,16 +80,18 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir){
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 	
 	// Read each entry of the directory
-	while( dirnext(dp, filename, &fstat) == 0 ){
+	while( (entry = readdir(dp)) != NULL ){
 		// Make sure we have room for this one
 		if(i == num_entries){
 			++num_entries;
 			*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 		}
-		sprintf((*dir)[i].name, "%s/%s", ffile->name, filename);
+		sprintf((*dir)[i].name, "%s/%s", ffile->name, entry->d_name);
+		stat((*dir)[i].name,&fstat);
 		(*dir)[i].offset = 0;
 		(*dir)[i].size     = fstat.st_size;
 		(*dir)[i].fileAttrib   = (fstat.st_mode & S_IFDIR) ? IS_DIR : IS_FILE;
+		(*dir)[i].fp = 0;
 		if((*dir)[i].fileAttrib == IS_FILE) {
 			get_frag_list((*dir)[i].name);
 			u32 file_base = frag_list->num > 1 ? -1 : frag_list->frag[0].sector;
@@ -97,7 +103,7 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir){
 		++i;
 	}
 	
-	dirclose(dp);
+	closedir(dp);
 
 	int isSDCard = ffile->name[0] == 's';
 	if(isSDCard) {
@@ -122,27 +128,26 @@ int deviceHandler_FAT_seekFile(file_handle* file, unsigned int where, unsigned i
 }
 
 int deviceHandler_FAT_readFile(file_handle* file, void* buffer, unsigned int length){
-  	FILE* f = fopen( file->name, "rb" );
-	if(!f) return -1;
+  	if(!file->fp) {
+		file->fp = fopen( file->name, "r+" );
+	}
+	if(!file->fp) return -1;
 	
-	fseek(f, file->offset, SEEK_SET);
-	int bytes_read = fread(buffer, 1, length, f);
+	fseek(file->fp, file->offset, SEEK_SET);
+	int bytes_read = fread(buffer, 1, length, file->fp);
 	if(bytes_read > 0) file->offset += bytes_read;
 	
-	fclose(f);
 	return bytes_read;
 }
 
-FILE *writeFile = NULL;
-
 int deviceHandler_FAT_writeFile(file_handle* file, void* buffer, unsigned int length){
-  	if(writeFile == NULL) {
-		writeFile = fopen( file->name, "wb" );
-		fseek(writeFile, file->offset, SEEK_SET);
+	if(!file->fp) {
+		file->fp = fopen( file->name, "r+" );
 	}
-	if(!writeFile) return -1;
+	if(!file->fp) return -1;
+	fseek(file->fp, file->offset, SEEK_SET);
 		
-	int bytes_written = fwrite(buffer, 1, length, writeFile);
+	int bytes_written = fwrite(buffer, 1, length, file->fp);
 	if(bytes_written > 0) file->offset += bytes_written;
 	
 	return bytes_written;
@@ -230,9 +235,8 @@ int deviceHandler_FAT_init(file_handle* file){
 }
 
 int deviceHandler_FAT_deinit(file_handle* file) {
-	if(writeFile) {
-		fclose(writeFile);
-		writeFile = NULL;
+	if(file->fp) {
+		fclose(file->fp);
 	}
 	return 0;
 }

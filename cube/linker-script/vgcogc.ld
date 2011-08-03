@@ -260,7 +260,7 @@ __stack_addr = (__bss_start + SIZEOF(.bss) + 0x80000 + 7) & (-8);
 __stack_end = (__bss_start + SIZEOF(.bss));
 __intrstack_addr = (__stack_addr + 0x4000);
 __intrstack_end = (__stack_addr);
-__Arena1Lo = (0x80A00000);
+__Arena1Lo = (0x80800000);
 __Arena1Hi = (0x811FEFF0);
 
 __gxregs = (__Arena1Hi + 31) & (-32);

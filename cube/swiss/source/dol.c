@@ -79,4 +79,3 @@ int check_dol(file_handle* disc, unsigned int *sig, int size)
 	free(dolheader);
 	return 0; //failed to find anything
 }
-

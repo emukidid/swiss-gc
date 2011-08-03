@@ -10,35 +10,11 @@
 #include <math.h>
 #include <malloc.h>
 #include "main.h"
+#include "patcher.h"
 #include "gui/FrameBufferMagic.h"
-
-/* the patches */
-extern u8 slot_a_hdd[];
-extern u32 slot_a_hdd_size;
-extern u8 slot_b_hdd[];
-extern u32 slot_b_hdd_size;
-extern u8 slot_a_sdhc[];
-extern u32 slot_a_sdhc_size;
-extern u8 slot_a_sd[];
-extern u32 slot_a_sd_size;
-extern u8 slot_b_sdhc[];
-extern u32 slot_b_sdhc_size;
-extern u8 slot_b_sd[];
-extern u32 slot_b_sd_size;
-
-#define LO_RESERVE 0x80001800
-#define HI_RESERVE 0x817F8000
+#include "gui/IPLFontWrite.h"
 
 static unsigned int base_addr = LO_RESERVE;
-
-/* Function jump locations */
-#define READ_V1_JUMP_OFFSET (base_addr)
-#define READ_V2_JUMP_OFFSET (base_addr | 0x10)
-#define READ_V3_JUMP_OFFSET (base_addr | 0x14)
-#define ID_JUMP_OFFSET (base_addr | 0x04)
-#define VI_JUMP_OFFSET (base_addr | 0x1200)
-#define SEEK_JUMP_OFFSET (base_addr | 0x0C)
-
 
 /*** externs ***/
 extern GXRModeObj *vmode;		/*** Graphics Mode Object ***/
@@ -50,12 +26,6 @@ extern int twoDisc;
 extern int GC_SD_CHANNEL;
 
 extern void animateBox(int x1,int y1, int x2, int y2, int color,char *msg);
-
-#define NTSC  0
-#define PAL50 1
-#define PAL60 2
-#define AUTO  3
-#define P480  4  
 
 static const u32 _dvdlowreset_org[12] = {
 	0x7C0802A6,0x3C80CC00,0x90010004,0x38000002,0x9421FFE0,0xBF410008,0x3BE43000,0x90046004,
@@ -226,102 +196,6 @@ static const u32 geckoPatch[31] = {
   0x4E800020
 };
 
-u32 __viInit1[10] = {
-	0x7C0802A6,
-	0x3C808000,
-	0x90010004,
-	0x5460F0BE,
-	0x9421FFD8,
-	0x93E10024,
-	0x547F07BE,
-	0x93C10020,
-	0x7C1E0378,
-	0x900400CC	
-};
-
-u32 __viInit2[12] = {
-	0x7C0802A6,
-	0x90010004,
-	0x9421FFD0,
-	0x93E1002C,
-	0x547FF0BE,
-	0x93C10028,
-	0x93A10024,
-	0x3BA30000,
-	0x3C608000,
-	0x93E300CC,
-	0x387D0000,
-	0x57BE07BC
-};
-
-u32 _getTiming_v2[28] = {
-	0x38650044,  // addi        r3, r5, 68	//VI_TVMODE_NTSC_INT
-	0x4E800020,  // blr
-	0x3865006A,  // addi        r3, r5, 106	//VI_TVMODE_NTSC_DS
-	0x4E800020,  // blr
-	0x38650090,  // addi        r3, r5, 144	//VI_TVMODE_PAL_INT
-	0x4E800020,  // blr
-	0x386500B6,  // addi        r3, r5, 182	//VI_TVMODE_PAL_DS
-	0x4E800020,  // blr
-	0x38650044,  // addi        r3, r5, 68	//VI_TVMODE_NTSC_INT
-	0x4E800020,  // blr
-	0x3865006A,  // addi        r3, r5, 106	//VI_TVMODE_NTSC_DS
-	0x4E800020,  // blr
-	0x386500DC,  // addi        r3, r5, 220	//VI_TVMODE_MPAL_INT
-	0x4E800020,  // blr
-	0x38650102,  // addi        r3, r5, 258	//VI_TVMODE_MPAL_DS
-	0x4E800020,  // blr
-	0x38650128,  // addi        r3, r5, 296	//VI_TVMODE_NTSC_PROG
-	0x4E800020,  // blr
-	0x3865014E,  // addi        r3, r5, 334	//VI_TVMODE_NTSC_PROG_DS
-	0x4E800020,  // blr
-	0x38650090,  // addi        r3, r5, 144	//VI_TVMODE_PAL_INT
-	0x4E800020,  // blr
-	0x386500B6,  // addi        r3, r5, 182	//VI_TVMODE_PAL_DS
-	0x4E800020,  // blr
-	0x38650174,  // addi        r3, r5, 372	//?
-	0x4E800020,  // blr
-	0x3865019A,  // addi        r3, r5, 410	//?
-	0x4E800020,  // blr
-	/*0x38600000,  // li          r3, 0		//fail(?)
-	0x4E800020   // blr*/
-};
-
-u32 _getTiming_v1[25] = {
-	0x7CA32B78,  // mr          r3, r5		//VI_TVMODE_NTSC_INT 
-	0x4E800020,  // blr
-	0x38650026,  // addi        r3, r5, 38	//VI_TVMODE_NTSC_DS
-	0x4E800020,  // blr
-	0x3865004C,  // addi        r3, r5, 76	//VI_TVMODE_PAL_INT
-	0x4E800020,  // blr
-	0x38650072,  // addi        r3, r5, 114	//VI_TVMODE_PAL_DS
-	0x4E800020,  // blr
-	0x7CA32B78,  // mr          r3, r5		//VI_TVMODE_NTSC_INT 
-	0x4E800020,  // blr
-	0x38650026,  // addi        r3, r5, 38	//VI_TVMODE_NTSC_DS
-	0x4E800020,  // blr
-	0x38650098,  // addi        r3, r5, 152	//VI_TVMODE_MPAL_INT
-	0x4E800020,  // blr
-	0x386500BE,  // addi        r3, r5, 190	//VI_TVMODE_MPAL_DS
-	0x4E800020,  // blr
-	0x386500E4,  // addi        r3, r5, 228	//VI_TVMODE_NTSC_PROG 
-	0x4E800020,  // blr
-	0x3865010A,  // addi        r3, r5, 266	//VI_TVMODE_NTSC_PROG_DS
-	0x4E800020,  // blr
-	0x3865004C,  // addi        r3, r5, 76	//VI_TVMODE_PAL_INT
-	0x4E800020,  // blr
-	0x38650072,  // addi        r3, r5, 114	//VI_TVMODE_PAL_DS
-	0x4E800020,  // blr
-	0x38600000   // li          r3, 0		//fail
-};
-
-u32 __viInitPatch[4] = {
-	0x7C0802A6,  //	mflr	0						# this is what we patched over, so do it here.
-	0x3C608000,  //	lis 	3,		0x8000                                          
-	0x80632F40,  //	lwz 	3,		0x2F40(3)		# load our video mode to r3 ;)       
-	0x4E800020   //	blr                                                      
-};
-
 u32 GXSETVAT_NTSC_orig[32] = {
     0x8142ce00, 0x39800000, 0x39600000, 0x3ce0cc01,
     0x48000070, 0x5589063e, 0x886a04f2, 0x38000001,
@@ -366,6 +240,112 @@ const u32 GXSETVAT_PAL_patched[32] = {
     0x4082ffa0, 0x38000000, 0x980904f2, 0x4e800020
 };
 
+int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
+{
+	u32 i;
+	FuncPattern FP;
+
+	memset( &FP, 0, sizeof(FP) );
+
+	for( i = 0; i < length; i+=4 )
+	{
+		u32 word =  *(u32*)(data + i);
+		
+		if( (word & 0xFC000003) ==  0x48000001 )
+			FP.FCalls++;
+
+		if( (word & 0xFC000003) ==  0x48000000 )
+			FP.Branch++;
+		if( (word & 0xFFFF0000) ==  0x40800000 )
+			FP.Branch++;
+		if( (word & 0xFFFF0000) ==  0x41800000 )
+			FP.Branch++;
+		if( (word & 0xFFFF0000) ==  0x40810000 )
+			FP.Branch++;
+		if( (word & 0xFFFF0000) ==  0x41820000 )
+			FP.Branch++;
+		
+		if( (word & 0xFC000000) ==  0x80000000 )
+			FP.Loads++;
+		if( (word & 0xFF000000) ==  0x38000000 )
+			FP.Loads++;
+		if( (word & 0xFF000000) ==  0x3C000000 )
+			FP.Loads++;
+		
+		if( (word & 0xFC000000) ==  0x90000000 )
+			FP.Stores++;
+		if( (word & 0xFC000000) ==  0x94000000 )
+			FP.Stores++;
+
+		if( (word & 0xFF000000) ==  0x7C000000 )
+			FP.Moves++;
+
+		if( word == 0x4E800020 )
+			break;
+	}
+
+	FP.Length = i;
+
+	//printf("Length: 0x%02X\n", FP.Length );
+	//printf("FCalls: %d\n", FP.FCalls );
+	//printf("Loads : %d\n", FP.Loads );
+	//printf("Stores: %d\n", FP.Stores );
+
+	if( memcmp( &FP, functionPattern, sizeof(u32) * 6 ) == 0 )
+		return 1;
+	else
+		return 0;
+}
+
+// Not working:
+// HANGS: Metroid Prime: << Dolphin SDK - DVD    release build: Oct 29 2002 09:56:49 (0x2301) >>
+// Smash Bros. Melee / Kirby Air Ride - r13 issue
+
+// Working: 
+// Simpsons Hit & Run: << Dolphin SDK - DVD    release build: Sep  5 2002 05:34:06 (0x2301) >>
+// Burnout 2: << Dolphin SDK - DVD    release build: Oct 29 2002 09:56:49 (0x2301) >>
+// GB Player Disc: << Dolphin SDK - DVD    release build: Dec 26 2002 21:33:56 (0x2407) >>
+// F-Zero GX: << Dolphin SDK - DVD    release build: Jul 23 2003 11:27:57 (0x2301) >>
+// Zelda: 4 Swords: << Dolphin SDK - DVD    release build: Sep 16 2003 09:50:54 (0x2301) >>
+// Dragonball Z Sagas: << Dolphin SDK - DVD.release build: Feb 12 2004 05:02:49 (0x2301) >>
+// Zelda: Twilight Princess: << Dolphin SDK - DVD    release build: Apr  5 2004 04:14:51 (0x2301) >>
+int applyPatches(u8 *data, u32 length, u32 disableInterrupts) {
+	int i, j, PatchCount = 0;
+	FuncPattern FPatterns[2] = {
+	{ 	0xBC,   20,     3,      3,      4,      7, 
+		disableInterrupts ? DVDReadAsync:DVDReadAsyncInt,  disableInterrupts ? DVDReadAsync_length:DVDReadAsyncInt_length, "DVDReadAsync" },
+	{ 	0x114,        23,     2,      6,      9,      8, 
+		disableInterrupts ? DVDRead:DVDReadInt,   disableInterrupts ? DVDRead_length:DVDReadInt_length,  "DVDRead" }};
+	
+	for( i=0; i < length; i+=4 )
+	{
+		if( *(u32*)(data + i ) != 0x7C0802A6 )
+			continue;
+
+		for( j=0; j < 2; j++ )
+		{
+			if( find_pattern( (u8*)(data+i), length, &(FPatterns[j]) ) )
+			{
+				sprintf(txtbuffer, "Found [%s] @ 0x%08X len %i\n", FPatterns[j].Name, (u32)data + i, FPatterns[j].Length);
+				print_gecko(txtbuffer);
+				
+				sprintf(txtbuffer, "Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
+						FPatterns[j].Name, (u32)FPatterns[j].Patch, (u32)data + i, FPatterns[j].PatchLength);
+				print_gecko(txtbuffer);
+							
+				memcpy( (u8*)(data+i), &FPatterns[j].Patch[0], FPatterns[j].PatchLength );
+				DCFlushRange((u8*)(data+i), FPatterns[j].Length);
+				ICInvalidateRange((u8*)(data+i), FPatterns[j].Length);
+				PatchCount++;
+			}
+		}
+
+		if( PatchCount == 2 )
+			break;
+	}
+	return PatchCount;
+}
+
 void writeBranchLink(unsigned int sourceAddr,unsigned int destAddr) {
 	unsigned int temp;
 		
@@ -405,44 +385,48 @@ void install_code()
   	
 }
 
-void dvd_patchDVDRead(void *addr, u32 len) {
+int dvd_patchDVDRead(void *addr, u32 len) {
 	void *addr_start = addr;
 	void *addr_end = addr+len;	
-	
+	int patched = 0;
 	while(addr_start<addr_end) 
 	{
 		if(memcmp(addr_start,_Read_original,sizeof(_Read_original))==0) 
 		{
-      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (READ_V1_JUMP_OFFSET >> 16); // lis		0, 0x8000 (example)   
-  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_V1_JUMP_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
+      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (READ_TYPE1_V1_OFFSET >> 16); // lis		0, 0x8000 (example)   
+  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_TYPE1_V1_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
   			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
   			*(unsigned int*)(addr_start + 92) = 0x3C60AB00; // lis         r3, 0xAB00 (make it a seek)
   			*(unsigned int*)(addr_start + 112) = 0x38000001;//  li          r0, 1 (IMM not DMA)
   			print_gecko("Read V1 patched\r\n");
+			patched = 1;
 		}		
 		if(memcmp(addr_start,_Read_original_2,sizeof(_Read_original_2))==0) 
 		{
-      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (READ_V2_JUMP_OFFSET >> 16); // lis		0, 0x8000 (example)   
-  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_V2_JUMP_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
+      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (READ_TYPE1_V2_OFFSET >> 16); // lis		0, 0x8000 (example)   
+  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_TYPE1_V2_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
   			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
   			*(unsigned int*)(addr_start + 68) = 0x3C00AB00;	//  lis         r0, 0xAB00 (make it a seek)
   			*(unsigned int*)(addr_start + 128) = 0x38000001;//  li          r0, 1 (IMM not DMA)
   			print_gecko("Read V2 patched\r\n");
+			patched = 1;
 		}
 		if(memcmp(addr_start,_Read_original_3,sizeof(_Read_original_3))==0) 
 		{
-      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (READ_V3_JUMP_OFFSET >> 16); // lis		0, 0x8000 (example)   
-  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_V3_JUMP_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
+      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (READ_TYPE1_V3_OFFSET >> 16); // lis		0, 0x8000 (example)   
+  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_TYPE1_V3_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
   			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
   			*(unsigned int*)(addr_start + 84) = 0x3C60AB00; // lis         r3, 0xAB00 (make it a seek)
   			*(unsigned int*)(addr_start + 104) = 0x38000001;//  li          r0, 1 (IMM not DMA)
   			print_gecko("Read V3 patched\r\n");
+			patched = 1;
 		}
 		addr_start += 4;
 	}
+	return patched;
 }
 
 void dvd_patchAISCount(void *addr, u32 len) {
@@ -453,7 +437,7 @@ void dvd_patchAISCount(void *addr, u32 len) {
 	{
 		if(memcmp(addr_start,_AIResetStreamSampleCount_original,sizeof(_AIResetStreamSampleCount_original))==0) 
 		{
-      *(u32*)(addr_start+12) = 0x60000000;  //NOP
+			*(u32*)(addr_start+12) = 0x60000000;  //NOP
 		}
 		addr_start += 4;
 	}
@@ -512,113 +496,7 @@ void dvd_patchDVDReadID(void *addr, u32 len) {
 	{
 		if(memcmp(addr_start,_DVDLowReadDiskID_original,sizeof(_DVDLowReadDiskID_original))==0) 
 		{
-      writeBranchLink((u32)addr_start+8,ID_JUMP_OFFSET);
-		}
-		addr_start += 4;
-	}
-}
-
-void dvd_patchDVDLowSeek(void *addr, u32 len) {
-  void *addr_start = addr;
-	void *addr_end = addr+len;	
-	
-	while(addr_start<addr_end) 
-	{
-		if(memcmp(addr_start,_DVDLowSeek_original,sizeof(_DVDLowSeek_original))==0) 
-		{
-      		writeBranchLink((u32)addr_start+4,SEEK_JUMP_OFFSET);
-		}
-		if(memcmp(addr_start,_DVDLowSeek_original_v2,sizeof(_DVDLowSeek_original_v2))==0) 
-		{
-      		writeBranchLink((u32)addr_start+4,SEEK_JUMP_OFFSET);
-		}
-		addr_start += 4;
-	}
-}
-
-void copyMode(int mode) {
-	if(mode == NTSC) {
-		*(volatile unsigned long*)0x80002F40 = 0;
-		*(volatile unsigned long*)0x800000CC = 0;
-	}
-	else if(mode == PAL50) {
-		*(volatile unsigned long*)0x80002F40 = 4;
-		*(volatile unsigned long*)0x800000CC = 1;
-	}
-	else if(mode == PAL60) {
-		*(volatile unsigned long*)0x80002F40 = 20;
-		*(volatile unsigned long*)0x800000CC = 5;
-	}
-	else if(mode == P480) {
-		*(volatile unsigned long*)0x80002F40 = 2;
-		*(volatile unsigned long*)0x800000CC = 0;
-	}
-	memcpy((void*)VI_JUMP_OFFSET,__viInitPatch,16);
-}
-
-void dvd_patchVideoMode(void *addr, u32 len,int mode)
-{
-	if(mode == AUTO) return;
-	
-	void *addr_start = addr;
-	void *addr_end = addr+len;	
-	
-	while(addr_start<addr_end) 
-	{
-		if(memcmp(addr_start,__viInit1,sizeof(__viInit1))==0) 
-		{
-			copyMode(mode);
-			writeBranchLink((u32)addr_start,VI_JUMP_OFFSET);
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Patched VI Mode v1");
-			DrawFrameFinish();
-			sleep(2);
-		}
-		
-		if(memcmp(addr_start,__viInit2,sizeof(__viInit2))==0) 
-		{
-			copyMode(mode);
-			writeBranchLink((u32)addr_start,VI_JUMP_OFFSET);
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Patched VI Mode v2");
-			DrawFrameFinish();
-			sleep(2);
-		}
-		if(memcmp(addr_start,_getTiming_v1,sizeof(_getTiming_v1))==0) 
-		{	
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Patched GetTiming v1");
-			DrawFrameFinish();
-			sleep(2);
-			
-			*(volatile unsigned int*)(addr_start-4) = 0x60000000;  //nop
-			if(mode==P480) {
-				*(volatile unsigned int*)(addr_start) = 0x386500E4;
-			}
-			if(mode == NTSC) {
-				*(volatile unsigned int*)(addr_start) = 0x7CA32B78;
-			}
-			if(mode == PAL50) {
-				*(volatile unsigned int*)(addr_start) = 0x38650090;
-			}
-		}
-		if(memcmp(addr_start,_getTiming_v2,sizeof(_getTiming_v2))==0) 
-		{	
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Patched GetTiming v2");
-			DrawFrameFinish();
-			sleep(2);
-			
-			*(volatile unsigned int*)(addr_start-4) = 0x60000000;  //nop
-			if(mode==P480) {
-				*(volatile unsigned int*)(addr_start) = 0x38650128;
-			}
-			if(mode == NTSC) {
-				*(volatile unsigned int*)(addr_start) = 0x38650044;
-			}
-			if(mode == PAL50) {
-				*(volatile unsigned int*)(addr_start) = 0x38650090;
-			}
+			writeBranchLink((u32)addr_start+8,ID_JUMP_OFFSET);
 		}
 		addr_start += 4;
 	}
