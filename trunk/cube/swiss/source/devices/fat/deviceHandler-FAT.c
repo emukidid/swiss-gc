@@ -142,7 +142,12 @@ int deviceHandler_FAT_readFile(file_handle* file, void* buffer, unsigned int len
 
 int deviceHandler_FAT_writeFile(file_handle* file, void* buffer, unsigned int length){
 	if(!file->fp) {
+		// Append
 		file->fp = fopen( file->name, "r+" );
+		if(file->fp <= 0) {
+			// Create
+			file->fp = fopen( file->name, "wb" );
+		}
 	}
 	if(!file->fp) return -1;
 	fseek(file->fp, file->offset, SEEK_SET);
@@ -237,6 +242,7 @@ int deviceHandler_FAT_init(file_handle* file){
 int deviceHandler_FAT_deinit(file_handle* file) {
 	if(file->fp) {
 		fclose(file->fp);
+		file->fp = 0;
 	}
 	return 0;
 }
