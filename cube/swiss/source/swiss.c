@@ -866,6 +866,7 @@ void install_game()
 	dumpFile->size = 0;
 	dumpFile->fileAttrib = IS_FILE;
 	dumpFile->fileBase = 0;
+	dumpFile->fp = 0;
     
 	unsigned char *dvdDumpBuffer = (unsigned char*)memalign(32,CHUNK_SIZE);
     
