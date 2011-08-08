@@ -695,6 +695,7 @@ void boot_file()
 			// the files must be setup as so: game-disc1.xxx game-disc2.xxx
 			secondDisc = memalign(32,sizeof(file_handle));
 			memcpy(secondDisc,&curFile,sizeof(file_handle));
+			secondDisc->fp = 0;
 			
 			// you're trying to load a disc1 of something
 			if(curFile.name[strlen(secondDisc->name)-5] == '1') {
