@@ -166,17 +166,11 @@ void unlockCB() {
 void deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
   	// We looked for fragments when this file was read from the directory
   	// if it's -1, it means it's fragmented - so fail it.
-	if(file->fileBase == -1) {
+	if(((u32)(file->fileBase&0xFFFFFFFF) == -1) || (file2 && ((u32)(file2->fileBase&0xFFFFFFFF) == -1))) {
 		DrawFrameStart();
-		sprintf(txtbuffer, "CANNOT RUN FRAGMENTED FILE! %s", file->name);
-		DrawMessageBox(D_INFO,txtbuffer);
+		DrawMessageBox(D_INFO,"This file is fragmented!");
 		DrawFrameFinish();
-	}
-	if(file2 && (file2->fileBase == -1)) {
-		DrawFrameStart();
-		sprintf(txtbuffer, "CANNOT RUN FRAGMENTED FILE DISC 2! %s", file2->name);
-		DrawMessageBox(D_INFO,txtbuffer);
-		DrawFrameFinish();
+		sleep(5);
 	}
 	
   // Disk 1 sector
