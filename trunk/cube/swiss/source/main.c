@@ -97,7 +97,7 @@ void main_loop()
 			//handle menu event
 			switch(curMenuSelection) {
 				case 0:		// Boot Game or DOL
-					boot_file();
+					execute_file();
 					break;
 				case 1:		
 					needsDeviceChange = 1;  //Change from SD->DVD or vice versa

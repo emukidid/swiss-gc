@@ -76,7 +76,7 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir){
 	int num_entries = 1, i = 0;
 	num_entries = i = 1;
 	*dir = malloc( num_entries * sizeof(file_handle) );
-	strcpy((*dir)[0].name,"..");
+	sprintf((*dir)[0].name,"..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 	
 	// Read each entry of the directory
