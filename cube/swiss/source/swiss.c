@@ -24,6 +24,8 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <time.h>
+#include <asndlib.h>
+#include <mp3player.h>
 
 #include "swiss.h"
 #include "main.h"
@@ -343,7 +345,7 @@ void textFileBrowser(file_handle** directory, int num_files)
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_FILE){
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
-				boot_file();
+				execute_file();
 			}
 			return;
 		}
@@ -601,8 +603,34 @@ void boot_dol()
 	DOLtoARAM(dol_buffer);
 }
 
-/* Boot currently selected game or DOL */
-void boot_file()
+int mp3Reader(void *cbdata, void *dst, int size) {
+	u32 *offset = cbdata;
+	deviceHandler_seekFile(&curFile,*offset,DEVICE_HANDLER_SEEK_SET);
+	int ret = deviceHandler_readFile(&curFile,dst,size);
+	*offset+=size;
+	return ret;
+}
+
+/* Plays a MP3 file */
+void play_mp3() {
+	// Initialise the audio subsystem
+	ASND_Init(NULL);
+	MP3Player_Init();
+	u32 offset = 0;
+	deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
+	DrawFrameStart();
+	sprintf(txtbuffer,"Playing %s",curFile.name);
+	DrawMessageBox(D_INFO,txtbuffer);
+	DrawFrameFinish();
+	MP3Player_PlayFile(&offset, &mp3Reader, NULL);
+	while(MP3Player_IsPlaying()) {
+		sleep(1);
+	}
+	MP3Player_Stop();
+}
+
+/* Execute/Load/Parse the currently selected file */
+void execute_file()
 {
 	char *fileName = &curFile.name[0];
 	int isPrePatched = 0;
@@ -639,7 +667,10 @@ void boot_file()
 				sleep(2);
 				return;
 			}
-		
+			if((strstr(fileName,".MP3")!=NULL) || (strstr(fileName,".mp3")!=NULL)) {
+				play_mp3();
+				return;
+			}		
 			if(!((strstr(fileName,".iso")!=NULL) || (strstr(fileName,".gcm")!=NULL) 
 				|| (strstr(fileName,".ISO")!=NULL) || (strstr(fileName,".GCM")!=NULL))) {
 				DrawFrameStart();
