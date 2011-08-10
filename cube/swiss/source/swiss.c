@@ -1002,7 +1002,7 @@ int info_game()
 
 void settings()
 { 
-	int currentSettingPos = 0/*, maxSettingPos = (curDevice==SD_CARD)?MAX_SETTING_POS:0*/;
+	int currentSettingPos = 0, maxSettingPos = ((curDevice == SD_CARD) || (curDevice == IDEEXI)) ? 2 : 0;
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
 	
 	while(1)
@@ -1013,14 +1013,17 @@ void settings()
 		
 		//write out all the settings (dodgy)
 		WriteFont(80, 160+(32*1), "Game Video Mode");
-		DrawSelectableButton(vmode->fbWidth-170, 160+(32*1), -1, 160+(32*1)+30, getVideoString(), (!currentSettingPos) ? B_SELECTED:B_NOSELECT,-1);
-		WriteFont(80, 160+(32*2), "Patch Mode");
-		DrawSelectableButton(vmode->fbWidth-170, 160+(32*2), -1, 160+(32*2)+30, swissSettings.useHiLevelPatch ? "High Level":"Low Level", (currentSettingPos==1) ? B_SELECTED:B_NOSELECT,-1);
-		WriteFont(80, 160+(32*3), "Patch Location");
-		DrawSelectableButton(vmode->fbWidth-170, 160+(32*3), -1, 160+(32*3)+30, swissSettings.useHiMemArea ? "High Mem":"Low Mem", (currentSettingPos==2) ? B_SELECTED:B_NOSELECT,-1);
-		if(swissSettings.useHiLevelPatch) {
-			WriteFont(80, 160+(32*4), "Disable Interrupts");
-			DrawSelectableButton(vmode->fbWidth-170, 160+(32*4), -1, 160+(32*4)+30, swissSettings.disableInterrupts ? "Yes":"No", (currentSettingPos==3) ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(vmode->fbWidth-230, 160+(32*1), -1, 160+(32*1)+30, getVideoString(), (!currentSettingPos) ? B_SELECTED:B_NOSELECT,-1);
+		if((curDevice == SD_CARD) || (curDevice == IDEEXI)) {
+			WriteFont(80, 160+(32*2), "Patch Mode");
+			DrawSelectableButton(vmode->fbWidth-230, 160+(32*2), -1, 160+(32*2)+30, swissSettings.useHiLevelPatch ? "High Level":"Low Level", (currentSettingPos==1) ? B_SELECTED:B_NOSELECT,-1);
+			if(swissSettings.useHiLevelPatch) {
+				WriteFont(80, 160+(32*3), "Disable Interrupts");
+				DrawSelectableButton(vmode->fbWidth-230, 160+(32*3), -1, 160+(32*3)+30, swissSettings.disableInterrupts ? "Yes":"No", (currentSettingPos==2) ? B_SELECTED:B_NOSELECT,-1);
+			} else {
+				WriteFont(80, 160+(32*3), "Patch Location");
+				DrawSelectableButton(vmode->fbWidth-230, 160+(32*3), -1, 160+(32*3)+30, swissSettings.useHiMemArea ? "High Mem":"Low Mem", (currentSettingPos==2) ? B_SELECTED:B_NOSELECT,-1);
+			}
 		}
 		
 		WriteCentre(370,"Press B to return");
@@ -1033,9 +1036,9 @@ void settings()
 				swissSettings.curVideoSelection = (swissSettings.curVideoSelection<MAX_VIDEO_MODES) ? (swissSettings.curVideoSelection+1):0;
 			else if(currentSettingPos==1)
 				swissSettings.useHiLevelPatch^=1;
-			else if(currentSettingPos==2)
+			else if((currentSettingPos==2) && (!swissSettings.useHiLevelPatch))
 				swissSettings.useHiMemArea^=1;
-			else if(currentSettingPos==3)
+			else if((currentSettingPos==2) && (swissSettings.useHiLevelPatch))
 				swissSettings.disableInterrupts^=1;
 		}
 		if(btns & PAD_BUTTON_LEFT)
@@ -1044,13 +1047,13 @@ void settings()
 				swissSettings.curVideoSelection = (swissSettings.curVideoSelection>0) ? (swissSettings.curVideoSelection-1):MAX_VIDEO_MODES;
 			else if(currentSettingPos==1)
 				swissSettings.useHiLevelPatch^=1;
-			else if(currentSettingPos==2)
+			else if((currentSettingPos==2) && (!swissSettings.useHiLevelPatch))
 				swissSettings.useHiMemArea^=1;
-			else if(currentSettingPos==3)
+			else if((currentSettingPos==2) && (swissSettings.useHiLevelPatch))
 				swissSettings.disableInterrupts^=1;
 		}
-		if(btns & PAD_BUTTON_UP)	currentSettingPos = (currentSettingPos>0) ? (currentSettingPos-1):(swissSettings.useHiLevelPatch?3:2);
-		if(btns & PAD_BUTTON_DOWN)	currentSettingPos = (currentSettingPos<(swissSettings.useHiLevelPatch?3:2)) ? (currentSettingPos+1):0;
+		if(btns & PAD_BUTTON_UP)	currentSettingPos = (currentSettingPos>0) ? (currentSettingPos-1):maxSettingPos;
+		if(btns & PAD_BUTTON_DOWN)	currentSettingPos = (currentSettingPos<maxSettingPos) ? (currentSettingPos+1):0;
 		if(btns & PAD_BUTTON_B)
 			break;
 		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || (PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || (PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) || (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B));

@@ -140,7 +140,7 @@ int main ()
 	
 	// Setup defaults
 	swissSettings.useHiMemArea = 0;
-	swissSettings.disableInterrupts = 0;
+	swissSettings.disableInterrupts = 1;
 	swissSettings.useHiLevelPatch = 0;
 	swissSettings.debugUSB = 1;
 	swissSettings.curVideoSelection = AUTO;
