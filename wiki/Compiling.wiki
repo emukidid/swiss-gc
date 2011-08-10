@@ -1,11 +1,11 @@
 #labels Featured
 = Compiling =
 
-Check out the code from SVN.
+1. Check out the code from SVN.
 
-We need to compile 6 separate patch codes - 4 for SD cards (2 slots - each slot can have SD or SDHC) and 2 for IDE-EXI (2 slots).
+2. We need to compile 4 separate patch codes - 2 for SD cards (2 slots) and 2 for IDE-EXI (2 slots).
 
-To build these, enter the cube\patches directory and open up sd.s.
+2A.) To build these, enter the cube\patches directory and open up sd.s.
 
 Locate the following:
 {{{
@@ -22,13 +22,6 @@ Locate the following:
 
 To build for Slot A, leave the top 3 lines uncommented as seen above, otherwise, comment these and uncomment the bottom 3.
 
-Now, to change whether this is built for SD or SDHC, look for the following line:
-{{{
-#  slwi    4, 4,9       # startSector<<=9; if normal SDcard use byteaddr 
-}}}
-
-If this is commented out as seen above, then we're building the patch for an SDHC card (because it uses Sector addressing and not Byte).
-
 Once you've setup the sd.s assembly file to which card type and slot you'd like to build for, you must run the following commands:
 {{{
 powerpc-eabi-as sd.S -o dvdcode.elf
@@ -37,9 +30,9 @@ doltool -b dvdcode.dol
 doltool -c dvdcode.bin 0x80001800 0x80001800
 bin2s dvdcode.bin > READpatch.s
 }}}
-This will build a headerless binary file which will then be turned into a static array of data. We now open up the READpatch.s file and based on which one it was, we put it into cube\swiss\source\patches\SlotA-SDHC.s (in this case and we rename the array).
+This will build a headerless binary file which will then be turned into a static array of data. We now open up the READpatch.s file and based on which one it was, we put it into cube\swiss\source\patches\SlotA-SD.s (in this case and we rename the array).
 
-To build the HDD (IDE-EXI) code, it's very similar. You simply open hdd.s and change the slot code as seen above however this time we compile it using:
+2B.) To build the HDD (IDE-EXI) code, it's very similar. You simply open hdd.s and change the slot code as seen above however this time we compile it using:
 {{{
 powerpc-eabi-as hdd.S -o dvdcode.elf
 doltool -d dvdcode.elf
@@ -49,10 +42,11 @@ bin2s dvdcode.bin > READpatch.s
 }}}
 And then we open the READpatch.s file and place the code from it into cube\swiss\source\patches\SlotA-HDD.s for example (remembering to rename the array).
 
+3.) Copy cube\linker-script\vgcogc.ld to C:\devkitPro\devkitPPC\powerpc-eabi\lib\ and override it.
 
-Copy cube\linker-script\vgcogc.ld to C:\devkitPro\devkitPPC\powerpc-eabi\lib\ and override it.
+4.) Swiss uses a custom libfat with fragmentation support. Make sure to build the latest in cube\libfat-frag\ and to use that library instead of the standard libfat lib (put it in your libogc libs dir)
 
-To build Swiss now with all the latest patch codes, we simply enter cube\swiss and execute: 
+5.) To build Swiss now with all the latest patch codes, we simply enter cube\swiss and execute: 
 {{{
 make
 elf2dol swiss.elf swiss.dol
