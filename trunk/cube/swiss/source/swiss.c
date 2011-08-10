@@ -86,9 +86,9 @@ static const u32 GC_DefaultConfig[56] =
 
 char* _menu_array[] =
 {
-	"Boot"		,
+	"Load"		,
 	"Device"	,
-	"Setup"		,
+	"Settings"	,
 	"Install"	,
 	"Info"		,
 	"Credits"	,
@@ -345,7 +345,7 @@ void textFileBrowser(file_handle** directory, int num_files)
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_FILE){
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
-				execute_file();
+				load_file();
 			}
 			return;
 		}
@@ -622,7 +622,7 @@ void play_mp3() {
 }
 
 /* Execute/Load/Parse the currently selected file */
-void execute_file()
+void load_file()
 {
 	char *fileName = &curFile.name[0];
 	int isPrePatched = 0;

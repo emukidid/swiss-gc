@@ -1,4 +1,13 @@
-Swiss 0.1 (svn revision 47)
+Swiss 0.1 (svn revision 62)
+
+New in svn revision 62:
+- New high level patch (Fixes Super Mario Sunshine and a few other games)
+- Basic Wode support added
+- Pre-Patcher integrated into Swiss
+- Consolidated SD patches to one per slot (SD & SDHC in one)
+- Use RequestError (0xE0) instead of Seek to sector 0 for Low Patch
+- Stop DVD motor after drive init for Qoob users
+- MP3 Playback (no point really)
 
 New in svn revision 47:
 - Fix pre-patcher
@@ -62,7 +71,7 @@ Current Features:
 - Multi-Disc support Original Disc/SD/SDHC/DVD-R/HDD
 - Disc Ripping to SD/SDHC/HDD (WIP)
 - Region free / Video forcing (WIP)
-- Full cheat engine for all games (update it via SD/SDHC)
+- Full cheat engine for all games (update it via device)
 *HDD features require a IDE-EXI or homemade adapter
 **SD features require a SDGecko or homemade adapter
 
@@ -71,9 +80,8 @@ Cheats are stored in a Qoob based file format, they may be edited/updated
 using the included cheats editor. You may convert action replay codes using
 GCNCrypt and then add those too.
 Swiss comes with a embedded cheats database but if you have an updated one,
-place it as device:\cheats.qch and it will picked up and loaded instead of 
-the internal cheats database.
+place it on any device that Swiss can read from and select by pressing A it to load it.
 
 IMPORTANT:
 - 480P video mode forcing is Work in Progress - it may not work at all yet!
-- Disc dumping is known to corrupt some HDD's - still work in progress!
+- Disc dumping is known to corrupt some HDD's - still WIP
