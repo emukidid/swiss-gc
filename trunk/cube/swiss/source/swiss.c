@@ -33,7 +33,6 @@
 #include "exi.h"
 #include "patcher.h"
 #include "bnr2yuv.h"
-#include "TDPATCH.h"
 #include "qchparse.h"
 #include "dvd.h"
 #include "gcm.h"
@@ -524,24 +523,16 @@ unsigned int load_app(int mode)
 		default:
 			*(volatile unsigned long*)0x800000CC = 0;
 	}
-      
-	DCFlushRange((void*)0x80001800,0x1800);
-	ICInvalidateRange((void*)0x80001800,0x1800);
-	
-	// copy sd/hdd read or 2 disc code to 0x80001800
-	if((curDevice == SD_CARD)||((curDevice == IDEEXI))) {
-		install_code();
-	}
-	else if((curDevice == DVD_DISC) && (drive_status == DEBUG_MODE)) {
-		memcpy((void*)0x80001800,TDPatch,TDPATCH_LEN);
-	} 
+
+	// install our assembly code into memory
+	install_code();
   
 	DCFlushRange((void*)0x80000000, 0x3100);
 	ICInvalidateRange((void*)0x80000000, 0x3100);
 	
 	if(swissSettings.debugUSB) {
-		sprintf(txtbuffer,"Sector: %08X%08X Speed: %08x\n",*(volatile unsigned int*)0x80002F00,
-		*(volatile unsigned int*)0x80002F04,*(volatile unsigned int*)0x80002F30);
+		sprintf(txtbuffer,"Sector: %08X%08X Speed: %08x Type: %08X\n",*(volatile unsigned int*)0x80002F00,
+		*(volatile unsigned int*)0x80002F04,*(volatile unsigned int*)0x80002F30,*(volatile unsigned int*)0x80002F34);
 		print_gecko(txtbuffer);
 	}
 	

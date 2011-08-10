@@ -77,10 +77,10 @@ setup_read_type1v1:
 	mflr	0
 	stw		0, 36(1)				# use this spot to save lr
 	bl		setup_for_read
-	li      5,  0         # offset 0
-	li      4, 0         	# len 0
-	lis     3,    0x8000  # to this dest
-	ori     3, 3, 0x2FC0  # in memory
+	# clear everything that'll go into DI regs for a 0xE0 cmd
+	li      5,	0         	# offset 0
+	li      4,	0         	# len 0
+	li		3,	0  			# to this dest
 	lwz		0, 36(1)
 	mtlr	0
 	stw		31, 36 (1)			# was patched over, do it now.
@@ -88,40 +88,40 @@ setup_read_type1v1:
 	blr
 
 setup_read_type1v2:
-  stwu		1, -0x0020 (1)	# these 4 are instructions we patched over, so do them here
-  stw 		31, 28 (1)
-  # this read stores dst and len using:
-  # stw 		3, 8 (1)  
-  # mr        31, 4    
-  # so we'll set it later to ours.
-  mflr		31
-  stw		31, 8(1)
-  bl		setup_for_read
-  li      5,  0         # offset 0
-  li      4, 0         	# len 0
-  lis     3,    0x8000  # to this dest
-  ori     3, 3, 0x2FC0  # in memory
-  lwz		31, 8(1)
-  mtlr		31
-  stw 		3, 8 (1)  	# was patched over, do it now.
-  mr        31, 4  		# was patched over, do it now.
-  blr
+	stwu		1, -0x0020 (1)	# these 4 are instructions we patched over, so do them here
+	stw 		31, 28 (1)
+	# this read stores dst and len using:
+	# stw 		3, 8 (1)  
+	# mr        31, 4    
+	# so we'll set it later to ours.
+	mflr		31
+	stw		31, 8(1)
+	bl		setup_for_read
+	# clear everything that'll go into DI regs for a 0xE0 cmd
+	li      5,	0         	# offset 0
+	li      4,	0         	# len 0
+	li		3,	0  			# to this dest
+	lwz		31, 8(1)
+	mtlr		31
+	stw 		3, 8 (1)  	# was patched over, do it now.
+	mr        31, 4  		# was patched over, do it now.
+	blr
   
 setup_read_type1v3:
-  stwu    1, -0x0028 (1)	# these are instructions we patched over, so do them here
-  stw     30, 32 (1)
-  mflr	  0
-  stw	  0, 36(1)				# use this spot to save lr
-  bl	  setup_for_read
-  li      5,  0         # offset 0
-  li      4, 0         	# len 0
-  lis     3,    0x8000  # to this dest
-  ori     3, 3, 0x2FC0  # in memory
-  lwz	  0, 36(1)
-  mtlr    0
-  stw     31, 36 (1)			# was patched over, do it now.
-  li      0, 1					# was patched over, do it now.
-  blr
+	stwu    1, -0x0028 (1)	# these are instructions we patched over, so do them here
+	stw     30, 32 (1)
+	mflr	  0
+	stw	  0, 36(1)				# use this spot to save lr
+	bl	  setup_for_read
+	# clear everything that'll go into DI regs for a 0xE0 cmd
+	li      5,	0         	# offset 0
+	li      4,	0         	# len 0
+	li		3,	0  			# to this dest
+	lwz	  0, 36(1)
+	mtlr    0
+	stw     31, 36 (1)			# was patched over, do it now.
+	li      0, 1					# was patched over, do it now.
+	blr
 	
 # FST style read - so we need to add the FP.offset to the File.offset
 setup_read_type2:

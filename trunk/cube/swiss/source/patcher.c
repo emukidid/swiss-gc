@@ -11,6 +11,7 @@
 #include <malloc.h>
 #include "main.h"
 #include "patcher.h"
+#include "TDPATCH.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 
@@ -20,9 +21,6 @@ static unsigned int base_addr = LO_RESERVE;
 extern GXRModeObj *vmode;		/*** Graphics Mode Object ***/
 extern u32 *xfb[2];			   	/*** Framebuffers ***/
 extern int SDHCCard;
-extern int jitterfix;
-extern int gamefixA;
-extern int twoDisc;
 extern int GC_SD_CHANNEL;
 
 extern void animateBox(int x1,int y1, int x2, int y2, int color,char *msg);
@@ -358,9 +356,11 @@ void writeBranchLink(unsigned int sourceAddr,unsigned int destAddr) {
 
 void install_code()
 {
+	DCFlushRange((void*)base_addr,0x1800);
+	ICInvalidateRange((void*)base_addr,0x1800);
 	
-  /* copy the right patchcode */
-  	if(curDevice == IDEEXI)	{	
+	// IDE-EXI
+  	if(curDevice == IDEEXI)	{
 	  	// IDE-EXI in slot A
   		if((GC_SD_CHANNEL==0)) {
 	  		memcpy((void*)base_addr,slot_a_hdd,slot_a_hdd_size);
@@ -370,19 +370,19 @@ void install_code()
 	  		memcpy((void*)base_addr,slot_b_hdd,slot_b_hdd_size);
   		}
   	}
-	else if((SDHCCard == 1) && (GC_SD_CHANNEL==0))	{	//byte addressing
-		memcpy((void*)base_addr,slot_a_sd,slot_a_sd_size);
+	// SD Gecko
+	else if(curDevice == SD_CARD) {
+		if(!GC_SD_CHANNEL)	{	// in Slot A
+			memcpy((void*)base_addr,slot_a_sd,slot_a_sd_size);
+		}
+		else if(GC_SD_CHANNEL)	{	// in Slot B
+			memcpy((void*)base_addr,slot_b_sd,slot_b_sd_size);
+		}
 	}
-	else if((SDHCCard == 0) && (GC_SD_CHANNEL==0))	{	//sector addressing
-		memcpy((void*)base_addr,slot_a_sdhc,slot_a_sdhc_size);
- 	}
- 	else if((SDHCCard == 1) && (GC_SD_CHANNEL==1))	{	//byte addressing
- 		memcpy((void*)base_addr,slot_b_sd,slot_b_sd_size);
- 	}
- 	else if((SDHCCard == 0) && (GC_SD_CHANNEL==1))	{	//sector addressing
- 		memcpy((void*)base_addr,slot_b_sdhc,slot_b_sdhc_size);
- 	}
-  	
+	// DVD 2 disc code
+	else if((curDevice == DVD_DISC) && (drive_status == DEBUG_MODE)) {
+		memcpy((void*)0x80001800,TDPatch,TDPATCH_LEN);
+	}
 }
 
 int dvd_patchDVDRead(void *addr, u32 len) {
@@ -397,7 +397,7 @@ int dvd_patchDVDRead(void *addr, u32 len) {
   			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_TYPE1_V1_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
   			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
-  			*(unsigned int*)(addr_start + 92) = 0x3C60AB00; // lis         r3, 0xAB00 (make it a seek)
+  			*(unsigned int*)(addr_start + 92) = 0x3C60E000; // lis         r3, 0xE000 (make it a seek)
   			*(unsigned int*)(addr_start + 112) = 0x38000001;//  li          r0, 1 (IMM not DMA)
   			print_gecko("Read V1 patched\r\n");
 			patched = 1;
@@ -408,7 +408,7 @@ int dvd_patchDVDRead(void *addr, u32 len) {
   			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_TYPE1_V2_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
   			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
-  			*(unsigned int*)(addr_start + 68) = 0x3C00AB00;	//  lis         r0, 0xAB00 (make it a seek)
+  			*(unsigned int*)(addr_start + 68) = 0x3C00E000;	//  lis         r0, 0xE000 (make it a seek)
   			*(unsigned int*)(addr_start + 128) = 0x38000001;//  li          r0, 1 (IMM not DMA)
   			print_gecko("Read V2 patched\r\n");
 			patched = 1;
@@ -419,7 +419,7 @@ int dvd_patchDVDRead(void *addr, u32 len) {
   			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_TYPE1_V3_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
   			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
   			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
-  			*(unsigned int*)(addr_start + 84) = 0x3C60AB00; // lis         r3, 0xAB00 (make it a seek)
+  			*(unsigned int*)(addr_start + 84) = 0x3C60E000; // lis         r3, 0xE000 (make it a seek)
   			*(unsigned int*)(addr_start + 104) = 0x38000001;//  li          r0, 1 (IMM not DMA)
   			print_gecko("Read V3 patched\r\n");
 			patched = 1;
