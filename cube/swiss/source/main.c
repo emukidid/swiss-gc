@@ -96,8 +96,8 @@ void main_loop()
 		else if(btns & PAD_BUTTON_A) {
 			//handle menu event
 			switch(curMenuSelection) {
-				case 0:		// Boot Game or DOL
-					execute_file();
+				case 0:		// Load
+					load_file();
 					break;
 				case 1:		
 					needsDeviceChange = 1;  //Change from SD->DVD or vice versa
@@ -142,7 +142,7 @@ int main ()
 	swissSettings.useHiMemArea = 0;
 	swissSettings.disableInterrupts = 1;
 	swissSettings.useHiLevelPatch = 0;
-	swissSettings.debugUSB = 1;
+	swissSettings.debugUSB = 0;
 	swissSettings.curVideoSelection = AUTO;
 	
 	//debugging stuff

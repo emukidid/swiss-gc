@@ -212,7 +212,7 @@ int deviceHandler_FAT_init(file_handle* file){
 	int slot = isSDCard ? (file->name[2] == 'b') : (file->name[3] == 'b');
 	
 	DrawFrameStart();
-	sprintf(txtbuffer, "Starting up %s for slot %s", isSDCard ? "SD":"IDE-EXI", !slot ? "A":"B");
+	sprintf(txtbuffer, "Reading %s in slot %s", isSDCard ? "SD":"IDE-EXI", !slot ? "A":"B");
 	DrawMessageBox(D_INFO,txtbuffer);
 	DrawFrameFinish();
 	
