@@ -21,12 +21,8 @@ extern u8 slot_a_hdd[];
 extern u32 slot_a_hdd_size;
 extern u8 slot_b_hdd[];
 extern u32 slot_b_hdd_size;
-extern u8 slot_a_sdhc[];
-extern u32 slot_a_sdhc_size;
 extern u8 slot_a_sd[];
 extern u32 slot_a_sd_size;
-extern u8 slot_b_sdhc[];
-extern u32 slot_b_sdhc_size;
 extern u8 slot_b_sd[];
 extern u32 slot_b_sd_size;
 

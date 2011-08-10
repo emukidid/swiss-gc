@@ -77,6 +77,17 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		} 
 	}
 	free(FST);
+	// if we have any to pre-patch, we must patch the main dol too
+	if(numFiles) {
+		DiskHeader *header = memalign(32,sizeof(DiskHeader));
+		deviceHandler_seekFile(file,0,DEVICE_HANDLER_SEEK_SET);
+		deviceHandler_readFile(file,header,sizeof(DiskHeader));
+		filesToPatch[numFiles].offset = header->DOLOffset;
+		filesToPatch[numFiles].size = 8*1024*1024;
+		sprintf(&filesToPatch[numFiles].name[0],"Main DOL File"); 
+		numFiles++;
+		free(header);
+	}
 	return numFiles;
 }
 
