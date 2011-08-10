@@ -282,6 +282,7 @@ void* Initialise (void)
 		DVD_Reset(DVD_RESETHARD);
 		dvd_read_id();
 		driveVersion = drive_version();
+		dvd_motor_off();
 	}
 	
 	return xfb[0];
