@@ -155,7 +155,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,txtbuffer);
 		DrawFrameFinish();
-		u8 *buffer = (u8*)memalign(32,filesToPatch[i].size);
+		u8 *buffer = (u8*)0x80003100;	// This is free
 		deviceHandler_seekFile(file,filesToPatch[i].offset,DEVICE_HANDLER_SEEK_SET);
 		deviceHandler_readFile(file,buffer,filesToPatch[i].size);
 		int patched = 0;
@@ -175,12 +175,15 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			print_gecko("Finished writing the patch\r\n");
 			pre_patched = 1;
 		}
-		free(buffer);
 	}
 	if(pre_patched) {
 		sprintf(txtbuffer, "Pre-Patched by Swiss v0.1");
 		deviceHandler_seekFile(file,0x100,DEVICE_HANDLER_SEEK_SET);
 		deviceHandler_writeFile(file,txtbuffer,strlen(txtbuffer));
+		deviceHandler_seekFile(file,0x120,DEVICE_HANDLER_SEEK_SET);
+		deviceHandler_writeFile(file,&swissSettings.useHiLevelPatch,4);
+		deviceHandler_writeFile(file,&swissSettings.useHiMemArea,4);
+		deviceHandler_writeFile(file,&swissSettings.disableInterrupts,4);
 		return 1;
 	}
 	return 0;
