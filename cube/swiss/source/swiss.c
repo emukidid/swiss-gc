@@ -761,6 +761,10 @@ int check_game()
 	deviceHandler_seekFile(&curFile,0x100,DEVICE_HANDLER_SEEK_SET);
 	deviceHandler_readFile(&curFile,&buffer,256);
 	if(!strcmp(&buffer[0],"Pre-Patched by Swiss v0.1")) {
+		deviceHandler_seekFile(&curFile,0x120,DEVICE_HANDLER_SEEK_SET);
+		deviceHandler_readFile(&curFile,&swissSettings.useHiLevelPatch,4);
+		deviceHandler_readFile(&curFile,&swissSettings.useHiMemArea,4);
+		deviceHandler_readFile(&curFile,&swissSettings.disableInterrupts,4);
 		return 0;
 	}
 	
