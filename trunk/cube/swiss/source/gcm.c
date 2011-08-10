@@ -77,6 +77,12 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		} 
 	}
 	free(FST);
+	
+	// Some games contain a single "default.dol", these do not need pre-patching.
+	if(numFiles==1 && (!strcmp(&filesToPatch[0].name[0],"default.dol"))) {
+		numFiles = 0;
+	}
+	
 	// if we have any to pre-patch, we must patch the main dol too
 	if(numFiles) {
 		DiskHeader *header = memalign(32,sizeof(DiskHeader));
