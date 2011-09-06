@@ -4,7 +4,7 @@
  a FAT partition
 
  Copyright (c) 2006 Michael "Chishm" Chisholm
-	
+
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
 
@@ -53,7 +53,7 @@ typedef unsigned short ucs2_t;
 // Long file name directory entry
 enum LFN_offset {
 	LFN_offset_ordinal = 0x00,	// Position within LFN
-	LFN_offset_char0 = 0x01,	
+	LFN_offset_char0 = 0x01,
 	LFN_offset_char1 = 0x03,
 	LFN_offset_char2 = 0x05,
 	LFN_offset_char3 = 0x07,
@@ -71,7 +71,7 @@ enum LFN_offset {
 	LFN_offset_char11 = 0x1C,
 	LFN_offset_char12 = 0x1E
 };
-static const int LFN_offset_table[13]={0x01,0x03,0x05,0x07,0x09,0x0E,0x10,0x12,0x14,0x16,0x18,0x1C,0x1E}; 
+static const int LFN_offset_table[13]={0x01,0x03,0x05,0x07,0x09,0x0E,0x10,0x12,0x14,0x16,0x18,0x1C,0x1E};
 
 #define LFN_END 0x40
 #define LFN_DEL 0x80
@@ -79,7 +79,7 @@ static const int LFN_offset_table[13]={0x01,0x03,0x05,0x07,0x09,0x0E,0x10,0x12,0
 static const char ILLEGAL_ALIAS_CHARACTERS[] = "\\/:;*?\"<>|&+,=[] ";
 static const char ILLEGAL_LFN_CHARACTERS[] = "\\/:*?\"<>|";
 
-/* 
+/*
 Returns number of UCS-2 characters needed to encode an LFN
 Returns -1 if it is an invalid LFN
 */
@@ -89,7 +89,7 @@ static int _FAT_directory_lfnLength (const char* name) {
 	size_t nameLength;
 	int ucsLength;
 	const char* tempName = name;
-	
+
 	nameLength = strnlen(name, MAX_FILENAME_LENGTH);
 	// Make sure the name is short enough to be valid
 	if ( nameLength >= MAX_FILENAME_LENGTH) {
@@ -110,7 +110,7 @@ static int _FAT_directory_lfnLength (const char* name) {
 	if (ucsLength < 0 || ucsLength >= MAX_LFN_LENGTH) {
 		return -1;
 	}
-	
+
 	// Otherwise it is valid
 	return ucsLength;
 }
@@ -153,7 +153,7 @@ static size_t _FAT_directory_ucs2tombs (char* dst, const ucs2_t* src, size_t len
 	int bytes;
 	char buff[MB_CUR_MAX];
 	int i;
-	
+
 	while (count < len - 1 && *src != '\0') {
 		bytes = wcrtomb (buff, *src, &ps);
 		if (bytes < 0) {
@@ -170,7 +170,7 @@ static size_t _FAT_directory_ucs2tombs (char* dst, const ucs2_t* src, size_t len
 		}
 	}
 	*dst = L'\0';
-	
+
 	return count;
 }
 
@@ -183,11 +183,11 @@ static int _FAT_directory_mbsncasecmp (const char* s1, const char* s2, size_t le
 	mbstate_t ps2 = {0};
 	size_t b1 = 0;
 	size_t b2 = 0;
-	
+
 	if (len1 == 0) {
 		return 0;
 	}
-	
+
 	do {
 		s1 += b1;
 		s2 += b2;
@@ -198,14 +198,16 @@ static int _FAT_directory_mbsncasecmp (const char* s1, const char* s2, size_t le
 		}
 		len1 -= b1;
 	} while (len1 > 0 && towlower(wc1) == towlower(wc2) && wc1 != 0);
-	
+
 	return towlower(wc1) - towlower(wc2);
 }
 
 
 static bool _FAT_directory_entryGetAlias (const u8* entryData, char* destName) {
-	int i=0;
-	int j=0;
+	char c;
+	bool caseInfo;
+	int i = 0;
+	int j = 0;
 
 	destName[0] = '\0';
 	if (entryData[0] != DIR_ENTRY_FREE) {
@@ -217,16 +219,20 @@ static bool _FAT_directory_entryGetAlias (const u8* entryData, char* destName) {
 			} else {
 				destName[1] = '\0';
 			}
-		} else {		
+		} else {
 			// Copy the filename from the dirEntry to the string
+			caseInfo = entryData[DIR_ENTRY_caseInfo] & CASE_LOWER_BASE;
 			for (i = 0; (i < 8) && (entryData[DIR_ENTRY_name + i] != ' '); i++) {
-				destName[i] = entryData[DIR_ENTRY_name + i];
+				c = entryData[DIR_ENTRY_name + i];
+				destName[i] = (caseInfo ? tolower((unsigned char)c) : c);
 			}
 			// Copy the extension from the dirEntry to the string
 			if (entryData[DIR_ENTRY_extension] != ' ') {
 				destName[i++] = '.';
+				caseInfo = entryData[DIR_ENTRY_caseInfo] & CASE_LOWER_EXT;
 				for ( j = 0; (j < 3) && (entryData[DIR_ENTRY_extension + j] != ' '); j++) {
-					destName[i++] = entryData[DIR_ENTRY_extension + j];
+					c = entryData[DIR_ENTRY_extension + j];
+					destName[i++] = (caseInfo ? tolower((unsigned char)c) : c);
 				}
 			}
 			destName[i] = '\0';
@@ -251,7 +257,7 @@ static bool _FAT_directory_incrementDirEntryPosition (PARTITION* partition, DIR_
 
 	// Increment offset, wrapping at the end of a sector
 	++ position.offset;
-	if (position.offset == BYTES_PER_READ / DIR_ENTRY_DATA_SIZE) {
+	if (position.offset == partition->bytesPerSector / DIR_ENTRY_DATA_SIZE) {
 		position.offset = 0;
 		// Increment sector when wrapping
 		++ position.sector;
@@ -269,7 +275,7 @@ static bool _FAT_directory_incrementDirEntryPosition (PARTITION* partition, DIR_
 				} else {
 					return false;		// Got to the end of the directory, not extending it
 				}
-			} 
+			}
 			position.cluster = tempCluster;
 		} else if ((position.cluster == FAT16_ROOT_DIR_CLUSTER) && (position.sector == (partition->dataStart - partition->rootDirStart))) {
 			return false;	// Got to end of root directory, can't extend it
@@ -329,7 +335,7 @@ bool _FAT_directory_getNextEntry (PARTITION* partition, DIR_ENTRY* entry) {
 				}
 				lfn[lfnPos] = '\0';	// Set end of lfn to null character
 				lfnChkSum = entryData[LFN_offset_checkSum];
-			} 
+			}
 			if (lfnChkSum != entryData[LFN_offset_checkSum]) {
 				lfnExists = false;
 			}
@@ -353,14 +359,14 @@ bool _FAT_directory_getNextEntry (PARTITION* partition, DIR_ENTRY* entry) {
 				chkSum = 0;
 				for (i=0; i < 11; i++) {
 					// NOTE: The operation is an unsigned char rotate right
-					chkSum = ((chkSum & 1) ? 0x80 : 0) + (chkSum >> 1) + entryData[i]; 
+					chkSum = ((chkSum & 1) ? 0x80 : 0) + (chkSum >> 1) + entryData[i];
 				}
 				if (chkSum != lfnChkSum) {
 					lfnExists = false;
 					entry->filename[0] = '\0';
 				}
 			}
-			
+
 			if (lfnExists) {
 				if (_FAT_directory_ucs2tombs (entry->filename, lfn, MAX_FILENAME_LENGTH) == (size_t)-1) {
 					// Failed to convert the file name to UTF-8. Maybe the wrong locale is set?
@@ -400,21 +406,21 @@ bool _FAT_directory_getRootEntry (PARTITION* partition, DIR_ENTRY* entry) {
 	entry->dataStart.cluster = 0;
 	entry->dataStart.sector = 0;
 	entry->dataStart.offset = 0;
-	
-	entry->dataEnd = entry->dataStart;	
-	
+
+	entry->dataEnd = entry->dataStart;
+
 	memset (entry->filename, '\0', MAX_FILENAME_LENGTH);
 	entry->filename[0] = '.';
-	
+
 	memset (entry->entryData, 0, DIR_ENTRY_DATA_SIZE);
 	memset (entry->entryData, ' ', 11);
 	entry->entryData[0] = '.';
-	
+
 	entry->entryData[DIR_ENTRY_attributes] = ATTRIB_DIR;
-	
+
 	u16_to_u8array (entry->entryData, DIR_ENTRY_cluster, partition->rootDirCluster);
 	u16_to_u8array (entry->entryData, DIR_ENTRY_clusterHigh, partition->rootDirCluster >> 16);
-	
+
 	return true;
 }
 
@@ -438,23 +444,24 @@ bool _FAT_directory_getVolumeLabel (PARTITION* partition, char *label) {
 	label[11]='\0';
 	end = false;
 	//this entry should be among the first 3 entries in the root directory table, if not, then system can have trouble displaying the right volume label
-	while(!end) {   
-		if (_FAT_directory_incrementDirEntryPosition (partition, &entryEnd, false) == false) {
-			end = true;
-		}
-
+	while(!end) {
 		if(!_FAT_cache_readPartialSector (partition->cache, entryData,
 			_FAT_fat_clusterToSector(partition, entryEnd.cluster) + entryEnd.sector,
 			entryEnd.offset * DIR_ENTRY_DATA_SIZE, DIR_ENTRY_DATA_SIZE))
 		{ //error reading
 			return false;
 		}
-		if (entryData[DIR_ENTRY_attributes] == ATTRIB_VOL && entryData[0] != DIR_ENTRY_FREE) {		
+
+		if (entryData[DIR_ENTRY_attributes] == ATTRIB_VOL && entryData[0] != DIR_ENTRY_FREE) {
 			for (i = 0; i < 11; i++) {
 				label[i] = entryData[DIR_ENTRY_name + i];
 			}
 			return true;
 		} else if (entryData[0] == DIR_ENTRY_LAST) {
+			end = true;
+		}
+
+		if (_FAT_directory_incrementDirEntryPosition (partition, &entryEnd, false) == false) {
 			end = true;
 		}
 	}
@@ -470,18 +477,18 @@ bool _FAT_directory_entryFromPosition (PARTITION* partition, DIR_ENTRY* entry) {
 	int i;
 	int lfnPos;
 	uint8_t entryData[DIR_ENTRY_DATA_SIZE];
-	
+
 	memset (entry->filename, '\0', MAX_FILENAME_LENGTH);
 
 	// Create an empty directory entry to overwrite the old ones with
-	for ( entryStillValid = true, finished = false; 
-		entryStillValid && !finished; 
+	for ( entryStillValid = true, finished = false;
+		entryStillValid && !finished;
 		entryStillValid = _FAT_directory_incrementDirEntryPosition (partition, &entryStart, false))
 	{
-		_FAT_cache_readPartialSector (partition->cache, entryData, 
+		_FAT_cache_readPartialSector (partition->cache, entryData,
 			_FAT_fat_clusterToSector(partition, entryStart.cluster) + entryStart.sector,
 			entryStart.offset * DIR_ENTRY_DATA_SIZE, DIR_ENTRY_DATA_SIZE);
-			
+
 		if ((entryStart.cluster == entryEnd.cluster)
 			&& (entryStart.sector == entryEnd.sector)
 			&& (entryStart.offset == entryEnd.offset)) {
@@ -503,7 +510,7 @@ bool _FAT_directory_entryFromPosition (PARTITION* partition, DIR_ENTRY* entry) {
 	if (!entryStillValid) {
 		return false;
 	}
-	
+
 	if ((entryStart.cluster == entryEnd.cluster)
 		&& (entryStart.sector == entryEnd.sector)
 		&& (entryStart.offset == entryEnd.offset)) {
@@ -517,7 +524,7 @@ bool _FAT_directory_entryFromPosition (PARTITION* partition, DIR_ENTRY* entry) {
 			return false;
 		}
 	}
-	
+
 	return true;
 }
 
@@ -533,7 +540,7 @@ bool _FAT_directory_entryFromPath (PARTITION* partition, DIR_ENTRY* entry, const
 	bool found, notFound;
 
 	pathPosition = path;
-	
+
 	found = false;
 	notFound = false;
 
@@ -559,13 +566,13 @@ bool _FAT_directory_entryFromPath (PARTITION* partition, DIR_ENTRY* entry, const
 		dirCluster = partition->cwdCluster;
 	}
 
-	// If the path is only specifying a directory in the form "." 
+	// If the path is only specifying a directory in the form "."
 	// and this is the root directory, return it
 	if ((dirCluster == partition->rootDirCluster) && (strcmp(".", pathPosition) == 0)) {
 		_FAT_directory_getRootEntry (partition, entry);
 		found = true;
 	}
-		
+
 	while (!found && !notFound) {
 		// Get the name of the next required subdirectory within the path
 		nextPathPosition = strchr (pathPosition, DIR_SEPARATOR);
@@ -632,7 +639,7 @@ bool _FAT_directory_entryFromPath (PARTITION* partition, DIR_ENTRY* entry, const
 
 	if (found && !notFound) {
 		if (partition->filesysType == FS_FAT32 && (entry->entryData[DIR_ENTRY_attributes] & ATTRIB_DIR) &&
-			_FAT_directory_entryGetCluster (partition, entry->entryData) == CLUSTER_ROOT) 
+			_FAT_directory_entryGetCluster (partition, entry->entryData) == CLUSTER_ROOT)
 		{
 			// On FAT32 it should specify an actual cluster for the root entry,
 			// not cluster 0 as on FAT16
@@ -652,8 +659,8 @@ bool _FAT_directory_removeEntry (PARTITION* partition, DIR_ENTRY* entry) {
 	uint8_t entryData[DIR_ENTRY_DATA_SIZE];
 
 	// Create an empty directory entry to overwrite the old ones with
-	for ( entryStillValid = true, finished = false; 
-		entryStillValid && !finished; 
+	for ( entryStillValid = true, finished = false;
+		entryStillValid && !finished;
 		entryStillValid = _FAT_directory_incrementDirEntryPosition (partition, &entryStart, false))
 	{
 		_FAT_cache_readPartialSector (partition->cache, entryData, _FAT_fat_clusterToSector(partition, entryStart.cluster) + entryStart.sector, entryStart.offset * DIR_ENTRY_DATA_SIZE, DIR_ENTRY_DATA_SIZE);
@@ -688,10 +695,10 @@ static bool _FAT_directory_findEntryGap (PARTITION* partition, DIR_ENTRY* entry,
 	entryStillValid = true;
 	dirEntryRemain = size;
 	endOfDirectory = false;
-	
+
 	while (entryStillValid && !endOfDirectory && (dirEntryRemain > 0)) {
-		_FAT_cache_readPartialSector (partition->cache, entryData, 
-			_FAT_fat_clusterToSector(partition, gapEnd.cluster) + gapEnd.sector, 
+		_FAT_cache_readPartialSector (partition->cache, entryData,
+			_FAT_fat_clusterToSector(partition, gapEnd.cluster) + gapEnd.sector,
 			gapEnd.offset * DIR_ENTRY_DATA_SIZE, DIR_ENTRY_DATA_SIZE);
 		if (entryData[0] == DIR_ENTRY_LAST) {
 			gapStart = gapEnd;
@@ -705,7 +712,7 @@ static bool _FAT_directory_findEntryGap (PARTITION* partition, DIR_ENTRY* entry,
 		} else {
 			dirEntryRemain = size;
 		}
-		
+
 		if (!endOfDirectory && (dirEntryRemain > 0)) {
 			entryStillValid = _FAT_directory_incrementDirEntryPosition (partition, &gapEnd, true);
 		}
@@ -730,7 +737,7 @@ static bool _FAT_directory_findEntryGap (PARTITION* partition, DIR_ENTRY* entry,
 			-- dirEntryRemain;
 			// Fill the entry with blanks
 			_FAT_cache_writePartialSector (partition->cache, entryData,
-				_FAT_fat_clusterToSector(partition, gapEnd.cluster) + gapEnd.sector, 
+				_FAT_fat_clusterToSector(partition, gapEnd.cluster) + gapEnd.sector,
 				gapEnd.offset * DIR_ENTRY_DATA_SIZE, DIR_ENTRY_DATA_SIZE);
 		}
 		if (!entryStillValid) {
@@ -754,7 +761,7 @@ static bool _FAT_directory_entryExists (PARTITION* partition, const char* name, 
 	if (dirnameLength >= MAX_FILENAME_LENGTH) {
 		return false;
 	}
-	
+
 	// Make sure the entry doesn't already exist
 	foundFile = _FAT_directory_getFirstEntry (partition, &tempEntry, dirCluster);
 
@@ -775,9 +782,9 @@ static bool _FAT_directory_entryExists (PARTITION* partition, const char* name, 
 	return false;
 }
 
-/* 
-Creates an alias for a long file name. If the alias is not an exact match for the 
-filename, it returns the number of characters in the alias. If the two names match, 
+/*
+Creates an alias for a long file name. If the alias is not an exact match for the
+filename, it returns the number of characters in the alias. If the two names match,
 it returns 0. If there was an error, it returns -1.
 */
 static int _FAT_directory_createAlias (char* alias, const char* lfn) {
@@ -790,13 +797,13 @@ static int _FAT_directory_createAlias (char* alias, const char* lfn) {
 	int bytesUsed = 0;
 	const char* lfnExt;
 	int aliasExtLen;
-	
+
 	// Strip leading periods
 	while (lfn[lfnPos] == '.') {
 		lfnPos ++;
 		lossyConversion = true;
 	}
-	
+
 	// Primary portion of alias
 	while (aliasPos < 8 && lfn[lfnPos] != '.' && lfn[lfnPos] != '\0') {
 		bytesUsed = mbrtowc(&lfnChar, lfn + lfnPos, MAX_FILENAME_LENGTH - lfnPos, &ps);
@@ -823,17 +830,17 @@ static int _FAT_directory_createAlias (char* alias, const char* lfn) {
 			oemChar = '_';		// Replace illegal characters with underscores
 			lossyConversion = true;
 		}
-		
+
 		alias[aliasPos] = (char)oemChar;
 		aliasPos++;
 		lfnPos += bytesUsed;
 	}
-	
+
 	if (lfn[lfnPos] != '.' && lfn[lfnPos] != '\0') {
 		// Name was more than 8 characters long
 		lossyConversion = true;
 	}
-	
+
 	// Alias extension
 	lfnExt = strrchr (lfn, '.');
 	if (lfnExt != NULL && lfnExt != strchr (lfn, '.')) {
@@ -870,7 +877,7 @@ static int _FAT_directory_createAlias (char* alias, const char* lfn) {
 				oemChar = '_';		// Replace illegal characters with underscores
 				lossyConversion = true;
 			}
-			
+
 			alias[aliasPos] = (char)oemChar;
 			aliasPos++;
 			lfnExt += bytesUsed;
@@ -880,7 +887,7 @@ static int _FAT_directory_createAlias (char* alias, const char* lfn) {
 			lossyConversion = true;
 		}
 	}
-	
+
 	alias[aliasPos] = '\0';
 	if (lossyConversion) {
 		return aliasPos;
@@ -954,14 +961,14 @@ bool _FAT_directory_addEntry (PARTITION* partition, DIR_ENTRY* entry, uint32_t d
 		} else {
 			// It's a long filename with an alias
 			entrySize = ((lfnLen + LFN_ENTRY_LENGTH - 1) / LFN_ENTRY_LENGTH) + 1;
-			
+
 			// Generate full alias for all cases except when the alias is simply an upper case version of the LFN
 			// and there isn't already a file with that name
 			if (strncasecmp (alias, entry->filename, MAX_ALIAS_LENGTH) != 0 ||
-				_FAT_directory_entryExists (partition, alias, dirCluster)) 
+				_FAT_directory_entryExists (partition, alias, dirCluster))
 			{
 				// expand primary part to 8 characters long by padding the end with underscores
-				i = MAX_ALIAS_PRI_LENGTH - 1; 
+				i = MAX_ALIAS_PRI_LENGTH - 1;
 				// Move extension to last 3 characters
 				while (alias[i] != '.' && i > 0) i--;
 				if (i > 0) {
@@ -971,7 +978,7 @@ bool _FAT_directory_addEntry (PARTITION* partition, DIR_ENTRY* entry, uint32_t d
 					memset (alias + i, '_', j - i);
 					alias[MAX_ALIAS_LENGTH-1]=0;
 				}
-				
+
 				// Generate numeric tail
 				for (i = 1; i <= MAX_NUMERIC_TAIL; i++) {
 					j = i;
@@ -1014,7 +1021,7 @@ bool _FAT_directory_addEntry (PARTITION* partition, DIR_ENTRY* entry, uint32_t d
 			entry->entryData[j] = ' ';
 			++ j;
 		}
-		
+
 		// Generate alias checksum
 		for (i=0; i < ALIAS_ENTRY_LENGTH; i++) {
 			// NOTE: The operation is an unsigned char rotate right
@@ -1035,7 +1042,7 @@ bool _FAT_directory_addEntry (PARTITION* partition, DIR_ENTRY* entry, uint32_t d
 		ucs2_t lfn[MAX_LFN_LENGTH] = {0};
 		_FAT_directory_mbstoucs2 (lfn, entry->filename, MAX_LFN_LENGTH);
 
-		for (entryStillValid = true, i = entrySize; entryStillValid && i > 0; 
+		for (entryStillValid = true, i = entrySize; entryStillValid && i > 0;
 			entryStillValid = _FAT_directory_incrementDirEntryPosition (partition, &curEntryPos, false), -- i )
 		{
 			if (i > 1) {
@@ -1065,7 +1072,7 @@ bool _FAT_directory_addEntry (PARTITION* partition, DIR_ENTRY* entry, uint32_t d
 		}
 	}
 
-	return true;	
+	return true;
 }
 
 bool _FAT_directory_chdir (PARTITION* partition, const char* path) {
@@ -1096,7 +1103,7 @@ void _FAT_directory_entryStat (PARTITION* partition, DIR_ENTRY* entry, struct st
 	st->st_uid = 1;									// Faked for FAT
 	st->st_gid = 2;									// Faked for FAT
 	st->st_rdev = st->st_dev;
-	st->st_size = u8array_to_u32 (entry->entryData, DIR_ENTRY_fileSize);		// File size 
+	st->st_size = u8array_to_u32 (entry->entryData, DIR_ENTRY_fileSize);		// File size
 	st->st_atime = _FAT_filetime_to_time_t (
 		0,
 		u8array_to_u16 (entry->entryData, DIR_ENTRY_aDate)
@@ -1112,8 +1119,8 @@ void _FAT_directory_entryStat (PARTITION* partition, DIR_ENTRY* entry, struct st
 		u8array_to_u16 (entry->entryData, DIR_ENTRY_cDate)
 	);
 	st->st_spare3 = 0;
-	st->st_blksize = BYTES_PER_READ;				// Prefered file I/O block size 
-	st->st_blocks = (st->st_size + BYTES_PER_READ - 1) / BYTES_PER_READ;	// File size in blocks
+	st->st_blksize = partition->bytesPerSector;				// Prefered file I/O block size
+	st->st_blocks = (st->st_size + partition->bytesPerSector - 1) / partition->bytesPerSector;	// File size in blocks
 	st->st_spare4[0] = 0;
 	st->st_spare4[1] = 0;
 }

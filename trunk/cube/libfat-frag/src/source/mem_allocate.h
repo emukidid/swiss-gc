@@ -33,26 +33,20 @@
 
 #include <malloc.h>
 
-#if 1
-
 static inline void* _FAT_mem_allocate (size_t size) {
 	return malloc (size);
 }
 
 static inline void* _FAT_mem_align (size_t size) {
+#ifdef __wii__
 	return memalign (32, size);
+#else
+	return malloc (size);
+#endif
 }
 
 static inline void _FAT_mem_free (void* mem) {
 	free (mem);
 }
-
-#else
-
-void* _FAT_mem_allocate (size_t size);
-void* _FAT_mem_align (size_t size);
-void _FAT_mem_free (void* mem);
-
-#endif
 
 #endif // _MEM_ALLOCATE_H

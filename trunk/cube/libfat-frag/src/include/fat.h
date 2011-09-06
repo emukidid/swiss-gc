@@ -2,10 +2,8 @@
 	fat.h
 	Simple functionality for startup, mounting and unmounting of FAT-based devices.
 	
- Copyright (c) 2006 - 2009
-	Michael "Chishm" Chisholm
-	Dave "WinterMute" Murphy
-
+ Copyright (c) 2006 Michael "Chishm" Chisholm
+	
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
 
@@ -36,24 +34,8 @@
 extern "C" {
 #endif
 
-// When compiling for NDS, make sure NDS is defined
-#ifndef NDS
- #if defined ARM9 || defined ARM7
-  #define NDS
- #endif
-#endif
-
 #include <stdint.h>
-
-#if defined(__gamecube__) || defined (__wii__)
-#  include <ogc/disc_io.h>
-#else
-#  ifdef NDS
-#    include "nds/disc_io.h"
-#  else
-#    include "disc_io.h"
-#  endif
-#endif
+#include <ogc/disc_io.h>
 
 /*
 Initialise any inserted block-devices.

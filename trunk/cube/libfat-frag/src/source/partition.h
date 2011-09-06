@@ -4,7 +4,7 @@
  on various block devices.
 
  Copyright (c) 2006 Michael "Chishm" Chisholm
-	
+
  Redistribution and use in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
 
@@ -34,8 +34,8 @@
 #include "cache.h"
 #include "lock.h"
 
-// Device name
-extern const char* DEVICE_NAME;
+#define MIN_SECTOR_SIZE     512
+#define MAX_SECTOR_SIZE     4096
 
 // Filesystem type
 typedef enum {FS_UNKNOWN, FS_FAT12, FS_FAT16, FS_FAT32} FS_TYPE;
@@ -45,6 +45,8 @@ typedef struct {
 	uint32_t sectorsPerFat;
 	uint32_t lastCluster;
 	uint32_t firstFree;
+	uint32_t numberFreeCluster;
+	uint32_t numberLastAllocCluster;
 } FAT;
 
 typedef struct {
@@ -60,6 +62,7 @@ typedef struct {
 	uint32_t              bytesPerSector;
 	uint32_t              sectorsPerCluster;
 	uint32_t              bytesPerCluster;
+	uint32_t              fsInfoSector;
 	FAT                   fat;
 	// Values that may change after construction
 	uint32_t              cwdCluster;			// Current working directory cluster
@@ -76,7 +79,7 @@ Mount the supplied device and return a pointer to the struct necessary to use it
 PARTITION* _FAT_partition_constructor (const DISC_INTERFACE* disc, uint32_t cacheSize, uint32_t SectorsPerPage, sec_t startSector);
 
 /*
-Dismount the device and free all structures used. 
+Dismount the device and free all structures used.
 Will also attempt to synchronise all open files to disc.
 */
 void _FAT_partition_destructor (PARTITION* partition);
@@ -85,5 +88,20 @@ void _FAT_partition_destructor (PARTITION* partition);
 Return the partition specified in a path, as taken from the devoptab.
 */
 PARTITION* _FAT_partition_getPartitionFromPath (const char* path);
+
+/*
+Create the fs info sector.
+*/
+void _FAT_partition_createFSinfo(PARTITION * partition);
+
+/*
+Read the fs info sector data.
+*/
+void _FAT_partition_readFSinfo(PARTITION * partition);
+
+/*
+Write the fs info sector data.
+*/
+void _FAT_partition_writeFSinfo(PARTITION * partition);
 
 #endif // _PARTITION_H
