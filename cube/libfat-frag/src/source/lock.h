@@ -60,25 +60,10 @@ static inline void _FAT_unlock(mutex_t *mutex)
 typedef int mutex_t;
 #endif
 
-static inline void _FAT_lock_init(mutex_t *mutex)
-{
-	return;
-}
-
-static inline void _FAT_lock_deinit(mutex_t *mutex)
-{
-	return;
-}
-
-static inline void _FAT_lock(mutex_t *mutex)
-{
-	return;
-}
-
-static inline void _FAT_unlock(mutex_t *mutex)
-{
-	return;
-}
+void _FAT_lock_init(mutex_t *mutex);
+void _FAT_lock_deinit(mutex_t *mutex);
+void _FAT_lock(mutex_t *mutex);
+void _FAT_unlock(mutex_t *mutex);
 
 #endif // USE_LWP_LOCK
 

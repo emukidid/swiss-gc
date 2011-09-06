@@ -29,6 +29,7 @@
 #include <sys/iosupport.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "common.h"
 #include "partition.h"
@@ -61,7 +62,9 @@ static const devoptab_t dotab_fat = {
 	_FAT_statvfs_r,
 	_FAT_ftruncate_r,
 	_FAT_fsync_r,
-	NULL	/* Device data */
+	NULL,	/* Device data */
+	NULL,
+	NULL
 };
 
 bool fatMount (const char* name, const DISC_INTERFACE* interface, sec_t startSector, uint32_t cacheSize, uint32_t SectorsPerPage) {
@@ -69,7 +72,7 @@ bool fatMount (const char* name, const DISC_INTERFACE* interface, sec_t startSec
 	devoptab_t* devops;
 	char* nameCopy;
 
-	if(!name || !interface)
+	if(!name || strlen(name) > 8 || !interface)
 		return false;
 
 	if(!interface->startup())
@@ -77,6 +80,11 @@ bool fatMount (const char* name, const DISC_INTERFACE* interface, sec_t startSec
 
 	if(!interface->isInserted())
 		return false;
+
+	char devname[10];
+	sprintf(devname, "%s:", name);
+	if(FindDevice(devname) >= 0)
+		return true;
 
 	devops = _FAT_mem_allocate (sizeof(devoptab_t) + strlen(name) + 1);
 	if (!devops) {
@@ -220,11 +228,11 @@ void fatGetVolumeLabel (const char* name, char *label) {
 
 	for(i=0;buf[i]!='\0' && buf[i]!=':';i++);  
 	if (!devops || strncasecmp(buf,devops->name,i)) {
-		free(buf);
+		_FAT_mem_free(buf);
 		return;
 	}
 
-	free(buf);
+	_FAT_mem_free(buf);
 
 	// Perform a quick check to make sure we're dealing with a libfat controlled device
 	if (devops->open_r != dotab_fat.open_r) {

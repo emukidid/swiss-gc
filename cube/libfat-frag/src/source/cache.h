@@ -39,9 +39,6 @@
 #include "common.h"
 #include "disc.h"
 
-#define PAGE_SECTORS 64
-#define CACHE_PAGE_SIZE (BYTES_PER_READ * PAGE_SECTORS)
-
 typedef struct {
 	sec_t        sector;
 	unsigned int count;
@@ -55,6 +52,7 @@ typedef struct {
 	sec_t		          endOfPartition;
 	unsigned int          numberOfPages;
 	unsigned int          sectorsPerPage;
+	unsigned int          bytesPerSector;
 	CACHE_ENTRY*          cacheEntries;
 } CACHE;
 
@@ -100,14 +98,14 @@ bool _FAT_cache_readSectors (CACHE* cache, sec_t sector, sec_t numSectors, void*
 Read a full sector from the cache
 */
 static inline bool _FAT_cache_readSector (CACHE* cache, void* buffer, sec_t sector) {
-	return _FAT_cache_readPartialSector (cache, buffer, sector, 0, BYTES_PER_READ);
+	return _FAT_cache_readPartialSector (cache, buffer, sector, 0, cache->bytesPerSector);
 }
 
 /*
 Write a full sector to the cache
 */
 static inline bool _FAT_cache_writeSector (CACHE* cache, const void* buffer, sec_t sector) {
-	return _FAT_cache_writePartialSector (cache, buffer, sector, 0, BYTES_PER_READ);
+	return _FAT_cache_writePartialSector (cache, buffer, sector, 0, cache->bytesPerSector);
 }
 
 bool _FAT_cache_writeSectors (CACHE* cache, sec_t sector, sec_t numSectors, const void* buffer);
@@ -122,7 +120,7 @@ Clear out the contents of the cache without writing any dirty sectors first
 */
 void _FAT_cache_invalidate (CACHE* cache);
 
-CACHE* _FAT_cache_constructor (unsigned int numberOfPages, unsigned int sectorsPerPage, const DISC_INTERFACE* discInterface, sec_t endOfPartition);
+CACHE* _FAT_cache_constructor (unsigned int numberOfPages, unsigned int sectorsPerPage, const DISC_INTERFACE* discInterface, sec_t endOfPartition, unsigned int bytesPerSector);
 
 void _FAT_cache_destructor (CACHE* cache);
 
