@@ -107,10 +107,11 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir){
 
 	int isSDCard = ffile->name[0] == 's';
 	if(isSDCard) {
+		int slot = (ffile->name[2] == 'b');
 	    // Set the card type (either block addressed (0) or byte addressed (1))
-	    SDHCCard = sdgecko_getAddressingType(GC_SD_CHANNEL);
+	    SDHCCard = sdgecko_getAddressingType(slot);
 	    // set the page size to 512 bytes
-	    if(sdgecko_setPageSize(GC_SD_CHANNEL, 512)!=0) {
+	    if(sdgecko_setPageSize(slot, 512)!=0) {
 	      DrawFrameStart();
 	      DrawMessageBox(D_WARN,"Failed to set the page size");
 	      DrawFrameFinish();
@@ -217,20 +218,26 @@ int deviceHandler_FAT_init(file_handle* file){
 	DrawFrameFinish();
 	
 	// Slot A - SD Card
-	if(isSDCard && !slot && EXI_ResetSD(0) && carda->startup()) {
-		return fatMountSimple ("sda", carda);
+	if(isSDCard && !slot && EXI_ResetSD(0)) {
+		carda->shutdown();
+		carda->startup();
+		return fatMountSimple ("sda", carda) ? 1 : 0;
 	}
 	// Slot B - SD Card
-	if(isSDCard && slot && EXI_ResetSD(1) && cardb->startup()) {
-		return fatMountSimple ("sdb", cardb);
+	if(isSDCard && slot && EXI_ResetSD(1)) {
+		cardb->shutdown();
+		cardb->startup();
+		return fatMountSimple ("sdb", cardb) ? 1 : 0;
 	}
 	// Slot A - IDE-EXI
-	if(!isSDCard && !slot && ideexia->startup()) {
-		return fatMountSimple ("idea", ideexia);
+	if(!isSDCard && !slot) {
+		ideexia->startup();
+		return fatMountSimple ("idea", ideexia) ? 1 : 0;
 	}
 	// Slot B - IDE-EXI
-	if(!isSDCard && slot && ideexib->startup()) {
-		return fatMountSimple ("ideb", ideexib);
+	if(!isSDCard && slot) {
+		ideexib->startup();
+		return fatMountSimple ("ideb", ideexib) ? 1 : 0;
 	}
 	return 0;
 }
@@ -239,6 +246,17 @@ int deviceHandler_FAT_deinit(file_handle* file) {
 	if(file->fp) {
 		fclose(file->fp);
 		file->fp = 0;
+	}
+	return 0;
+}
+
+int deviceHandler_FAT_deleteFile(file_handle* file) {
+	if(remove(file->name) == -1) {
+		DrawFrameStart();
+		DrawMessageBox(D_FAIL,"Error Deleting File");
+		DrawFrameFinish();
+		wait_press_A();
+		return -1;
 	}
 	return 0;
 }

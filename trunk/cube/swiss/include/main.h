@@ -53,7 +53,16 @@ enum deviceTypes
 	SD_CARD,
 	IDEEXI,
 	QOOB_FLASH,
-	WODE
+	WODE,
+	MEMCARD
+};
+
+//Destination Device Type
+enum destDeviceTypes
+{
+	DEST_SD_CARD=0,
+	DEST_IDEEXI,
+	DEST_MEMCARD
 };
 
 //Where on the screen are we?
