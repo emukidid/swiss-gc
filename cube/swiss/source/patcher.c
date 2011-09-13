@@ -14,6 +14,7 @@
 #include "TDPATCH.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
+#include "deviceHandler.h"
 
 static unsigned int base_addr = LO_RESERVE;
 
@@ -360,9 +361,10 @@ void install_code()
 	ICInvalidateRange((void*)base_addr,0x1800);
 	
 	// IDE-EXI
-  	if(curDevice == IDEEXI)	{
+  	if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
+		int slot = (deviceHandler_initial->name[3] == 'b');
 	  	// IDE-EXI in slot A
-  		if((GC_SD_CHANNEL==0)) {
+  		if(!slot) {
 	  		memcpy((void*)base_addr,slot_a_hdd,slot_a_hdd_size);
   		}
   		else {
@@ -371,16 +373,17 @@ void install_code()
   		}
   	}
 	// SD Gecko
-	else if(curDevice == SD_CARD) {
-		if(!GC_SD_CHANNEL)	{	// in Slot A
+	else if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
+		int slot = (deviceHandler_initial->name[2] == 'b');
+		if(!slot)	{	// in Slot A
 			memcpy((void*)base_addr,slot_a_sd,slot_a_sd_size);
 		}
-		else if(GC_SD_CHANNEL)	{	// in Slot B
+		else {	// in Slot B
 			memcpy((void*)base_addr,slot_b_sd,slot_b_sd_size);
 		}
 	}
 	// DVD 2 disc code
-	else if((curDevice == DVD_DISC) && (drive_status == DEBUG_MODE)) {
+	else if((deviceHandler_initial == &initial_DVD) && (drive_status == DEBUG_MODE)) {
 		memcpy((void*)0x80001800,TDPatch,TDPATCH_LEN);
 	}
 }

@@ -14,14 +14,12 @@
 #include <sdcard/card_cmn.h>
 #include <ogc/lwp_threads.h>
 #include <ogc/machine/processor.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <malloc.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <sys/time.h>
 #include <time.h>
 #include <asndlib.h>
@@ -47,10 +45,6 @@
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
-#include "devices/dvd/deviceHandler-DVD.h"
-#include "devices/fat/deviceHandler-FAT.h"
-#include "devices/Qoob/deviceHandler-Qoob.h"
-#include "devices/wode/deviceHandler-WODE.h"
 
 static DiskHeader GCMDisk;      //Gamecube Disc Header struct
 char IPLInfo[256] __attribute__((aligned(32)));
@@ -58,10 +52,10 @@ u32 driveVersion = 0;
 GXRModeObj *newmode = NULL;
 char txtbuffer[2048];           //temporary text buffer
 file_handle curFile;     //filedescriptor for current file
-int GC_SD_CHANNEL = 0;          //SD slot
 u32 GC_SD_SPEED   = EXI_SPEED16MHZ;
 int SDHCCard = 0; //0 == SDHC, 1 == normal SD
 int curDevice = 0;  //SD_CARD or DVD_DISC or IDEEXI or WODE
+int curCopyDevice = 0;  //SD_CARD or DVD_DISC or IDEEXI or WODE
 int noVideoPatch = 0;
 char *videoStr = NULL;
 
@@ -306,6 +300,17 @@ char *getRelativeName(char *str) {
 	return str;
 }
 
+char *stripInvalidChars(char *str) {
+	int i = 0;
+	for(i = 0; i < strlen(str); i++) {
+		if(str[i] == '\\' || str[i] == '/' || str[i] == ':'|| str[i] == '*'
+		|| str[i] == '?'|| str[i] == '"'|| str[i] == '<'|| str[i] == '>'|| str[i] == '|') {
+			str[i] = '_';
+		}
+	}
+	return str;
+}
+
 // textFileBrowser lives on :)
 void textFileBrowser(file_handle** directory, int num_files)
 {
@@ -345,7 +350,7 @@ void textFileBrowser(file_handle** directory, int num_files)
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_FILE){
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
-				load_file();
+				manage_file();
 			}
 			return;
 		}
@@ -362,6 +367,47 @@ void textFileBrowser(file_handle** directory, int num_files)
 			while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)));
 		}
 	}
+}
+
+void select_dest_dir(file_handle* directory, file_handle* selection)
+{
+	file_handle *directories = NULL;
+	int i = 0, j = 0, max = 0, refresh = 1, num_files =0, idx = 0;
+	
+	while(1){
+		// Read the directory
+		if(refresh) {
+			num_files = deviceHandler_dest_readDir(directory, &directories);
+			refresh = 0;
+		}
+		doBackdrop();
+		WriteFont(50, 120, "Enter directory and press X");
+		i = MIN(MAX(0,idx-4),MAX(0,num_files-8));
+		max = MIN(num_files, MAX(idx+4,8));
+		for(j = 0; i<max; ++i,++j) {
+			DrawSelectableButton(50,160+(j*30), 430, 160+(j*30)+30, getRelativeName((directories)[i].name), (i == idx) ? B_SELECTED:B_NOSELECT,-1);
+		}
+		DrawFrameFinish();
+		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN));
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) > 16){	idx = (--idx < 0) ? num_files-1 : idx;}
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || PAD_StickY(0) < -16) {idx = (idx + 1) % num_files;	}
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_A))	{
+			//go into a folder or select a file
+			if((directories)[idx].fileAttrib==IS_DIR) {
+				memcpy(directory, &(directories)[idx], sizeof(file_handle));
+				refresh=1;
+			}
+		}
+		if(PAD_StickY(0) < -16 || PAD_StickY(0) > 16) {
+			usleep(50000 - abs(PAD_StickY(0)*256));
+		}
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_X))	{
+			memcpy(selection, directory, sizeof(file_handle));
+			break;
+		}
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)));
+	}
+	free(directories);
 }
 
 void override_memory_limits() {
@@ -621,6 +667,151 @@ void play_mp3() {
 	MP3Player_Stop();
 }
 
+/* Manage file  - The user will be asked what they want to do with the currently selected file - copy/move/delete*/
+void manage_file() {
+	// If it's a file
+	if(curFile.fileAttrib == IS_FILE) {
+		// Ask the user what they want to do with it
+		DrawFrameStart();
+		DrawEmptyBox(10,150, vmode->fbWidth-10, 350, COLOR_BLACK);
+		WriteCentre(160,"Manage File:");
+		WriteCentre(200,curFile.name);
+		if(deviceHandler_deleteFile) {
+			WriteCentre(230,"(A) Load (X) Copy (Y) Move (Z) Delete");
+		}
+		else {
+			WriteCentre(230,"(A) Load (X) Copy");
+		}
+		WriteCentre(300, "Press an option to Continue, or B to return");
+		DrawFrameFinish();
+		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+		int option = 0;
+		while(1) {
+			u32 buttons = PAD_ButtonsHeld(0);
+			if(buttons & PAD_BUTTON_X) {
+				option = COPY_OPTION;
+				while(PAD_ButtonsHeld(0) & PAD_BUTTON_X);
+				break;
+			}
+			if(deviceHandler_deleteFile && (buttons & PAD_BUTTON_Y)) {
+				option = MOVE_OPTION;
+				while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
+				break;
+			}
+			if(deviceHandler_deleteFile && (buttons & PAD_TRIGGER_Z)) {
+				option = DELETE_OPTION;
+				while(PAD_ButtonsHeld(0) & PAD_TRIGGER_Z);
+				break;
+			}
+			if(buttons & PAD_BUTTON_A) {
+				load_file();
+				return;
+			}
+			if(buttons & PAD_BUTTON_B) {
+				return;
+			}
+		}
+	
+		// If delete, delete it + refresh the device
+		if(option == DELETE_OPTION) {
+			if(!deviceHandler_deleteFile(&curFile)) {
+				needsRefresh=1;
+			}
+		}
+		// If copy, ask which device is the destination device and copy
+		else if((option == COPY_OPTION) || (option == MOVE_OPTION)) {
+			int ret = 0;
+			// Show a list of destination devices (the same device is also a possibility)
+			select_copy_device();
+			// If the devices are not the same, init the second, fail on non-existing device/etc
+			if(deviceHandler_initial != deviceHandler_dest_initial) {
+				deviceHandler_dest_deinit( deviceHandler_dest_initial );
+				ret = deviceHandler_dest_init( deviceHandler_dest_initial );
+				if(!ret) {
+					DrawFrameStart();
+					sprintf(txtbuffer, "Failed to init destination device! (%i)",ret);
+					DrawMessageBox(D_FAIL,txtbuffer);
+					DrawFrameFinish();
+					wait_press_A();
+					return;
+				}
+			}
+			// Traverse this destination device and let the user select a directory to dump the file in
+			file_handle *destFile = memalign(32,sizeof(file_handle));
+			
+			// Show a directory only browser and get the destination file location
+			select_dest_dir(deviceHandler_dest_initial, destFile);
+			destFile->fp = 0;
+			destFile->fileBase = 0;
+			destFile->size = 0;
+			destFile->fileAttrib = IS_FILE;
+			destFile->status = 0;
+			destFile->offset = 0;
+			
+			// Read from one file and write to the new directory
+			u32 curOffset = 0, cancelled = 0;
+			char *readBuffer = (char*)memalign(32,0x8000);
+			sprintf(destFile->name, "%s%s",destFile->name,stripInvalidChars(getRelativeName(&curFile.name[0])));
+			while(curOffset < curFile.size) {
+				u32 buttons = PAD_ButtonsHeld(0);
+				if(buttons & PAD_BUTTON_B) {
+					cancelled = 1;
+					break;
+				}
+				sprintf(txtbuffer, "Copying to: %s",destFile->name);
+				DrawFrameStart();
+				DrawProgressBar((int)((float)((float)curOffset/(float)curFile.size)*100), txtbuffer);
+				DrawFrameFinish();
+				u32 amountToCopy = curOffset + 0x8000 > curFile.size ? curFile.size - curOffset : 0x8000;
+				ret = deviceHandler_readFile(&curFile, readBuffer, amountToCopy);
+				if(ret != amountToCopy) {
+					DrawFrameStart();
+					sprintf(txtbuffer, "Failed to Read! (%i %i)",amountToCopy,ret);
+					DrawMessageBox(D_FAIL,txtbuffer);
+					DrawFrameFinish();
+					wait_press_A();
+					return;
+				}
+				ret = deviceHandler_dest_writeFile(destFile, readBuffer, amountToCopy);
+				if(ret != amountToCopy) {
+					DrawFrameStart();
+					sprintf(txtbuffer, "Failed to Write! (%i %i)",amountToCopy,ret);
+					DrawMessageBox(D_FAIL,txtbuffer);
+					DrawFrameFinish();
+					wait_press_A();
+					return;
+				}
+				curOffset+=amountToCopy;
+			}
+			deviceHandler_dest_deinit( destFile );
+			free(destFile);
+			DrawFrameStart();
+			if(!cancelled) {
+				// If cut, delete from source device
+				if(option == MOVE_OPTION) {
+					deviceHandler_deleteFile(&curFile);
+					needsRefresh=1;
+					DrawMessageBox(D_INFO,"Move Complete!");
+				}
+				else {
+					DrawMessageBox(D_INFO,"Copy Complete!");
+				}
+			} 
+			else {
+				DrawMessageBox(D_INFO,"Operation Cancelled!");
+			}
+			DrawFrameFinish();
+			wait_press_A();
+		}
+	}
+	// Else if directory, mention support not yet implemented.
+	else {
+		DrawFrameStart();
+		DrawMessageBox(D_INFO,"Directory support not implemented");
+		DrawFrameFinish();
+	}
+}
+
 /* Execute/Load/Parse the currently selected file */
 void load_file()
 {
@@ -662,7 +853,7 @@ void load_file()
 			if((strstr(fileName,".MP3")!=NULL) || (strstr(fileName,".mp3")!=NULL)) {
 				play_mp3();
 				return;
-			}		
+			}
 			if(!((strstr(fileName,".iso")!=NULL) || (strstr(fileName,".gcm")!=NULL) 
 				|| (strstr(fileName,".ISO")!=NULL) || (strstr(fileName,".GCM")!=NULL))) {
 				DrawFrameStart();
@@ -980,6 +1171,12 @@ int info_game()
 		sprintf(txtbuffer,"Partition: %i, ISO: %i", (int)(curFile.fileBase>>24)&0xFF,(int)(curFile.fileBase&0xFFFFFF));
 		WriteCentre(160,txtbuffer);
 	}
+	else if(curDevice == MEMCARD) {
+		sprintf(txtbuffer,"Size: %.2fKb (%i blocks)", (float)curFile.size/1024, curFile.size/8192);
+		WriteCentre(160,txtbuffer);
+		sprintf(txtbuffer,"Position on Card: %08X",curFile.offset);
+		WriteCentre(190,txtbuffer);
+	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
 		sprintf(txtbuffer,"Region [%s] Audio Streaming [%s]",(GCMDisk.CountryCode=='P') ? "PAL":"NTSC",(GCMDisk.AudioStreaming=='\1') ? "YES":"NO");
 		WriteCentre(220,txtbuffer);
@@ -1154,26 +1351,100 @@ void select_speed()
 	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 }
 
-void select_slot()
+int select_slot()
 {  
-	GC_SD_CHANNEL = 0;
+	int slot = 0;
 	while(1) {
 		doBackdrop();
 		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
 		WriteCentre(215,"Select Slot and press A");
-		DrawSelectableButton(100, 280, -1, 310, "Slot A", (GC_SD_CHANNEL==0) ? B_SELECTED:B_NOSELECT,-1);
-		DrawSelectableButton(380, 280, -1, 310, "Slot B", (GC_SD_CHANNEL==1) ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(100, 280, -1, 310, "Slot A", (slot==0) ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(380, 280, -1, 310, "Slot B", (slot==1) ? B_SELECTED:B_NOSELECT,-1);
 		DrawFrameFinish();
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 		u16 btns = PAD_ButtonsHeld(0);
 		if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
-			GC_SD_CHANNEL^=1;
+			slot^=1;
 		}
 		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
 			break;
 		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
 	}
 	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	return slot;
+}
+
+void select_copy_device()
+{  
+	while(1) {
+		doBackdrop();
+		DrawEmptyBox(20,190, vmode->fbWidth-20, 355, COLOR_BLACK);
+		WriteCentre(195,"Select destination device and press A");
+		if(curCopyDevice==DEST_SD_CARD) {
+			DrawSelectableButton(170, 230, 450, 340, "SDGecko", B_NOSELECT,COLOR_BLACK);
+			drawBitmap(sdsmall_Bitmap, 180, 245, 60,80);
+		}
+		else if(curCopyDevice==DEST_IDEEXI) {
+			DrawSelectableButton(170, 230, 450, 340, "Ide-Exi", B_NOSELECT,COLOR_BLACK);
+			drawBitmap(hdd_Bitmap, 170, 245, 80,80);
+		}
+		else if(curCopyDevice==DEST_MEMCARD) {
+			DrawSelectableButton(170, 230, 450, 340, "Memory Card",B_NOSELECT,COLOR_BLACK);
+			//drawBitmap(wodeimg_Bitmap, 145, 245, 146,72);
+		}
+		if(curCopyDevice != 2) {
+			WriteFont(520, 300, "->");
+		}
+		if(curCopyDevice != 0) {
+			WriteFont(100, 300, "<-");
+		}
+		DrawFrameFinish();
+		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+		u16 btns = PAD_ButtonsHeld(0);
+		if((btns & PAD_BUTTON_RIGHT) && curCopyDevice < 2)
+			curCopyDevice++;
+		if((btns & PAD_BUTTON_LEFT) && curCopyDevice > 0)
+			curCopyDevice--;
+		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
+			break;
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
+	}
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	// Deinit any existing deviceHandler state
+	if(deviceHandler_dest_deinit) deviceHandler_dest_deinit( deviceHandler_dest_initial );
+	// Change all the deviceHandler pointers based on the current device
+	int slot = 0;
+	switch(curCopyDevice) {
+		case DEST_SD_CARD:
+		case DEST_IDEEXI:
+			select_speed();
+			slot = select_slot();
+			if(curCopyDevice==DEST_IDEEXI)
+				deviceHandler_dest_initial = !slot ? &initial_IDE0 : &initial_IDE1;
+			else
+				deviceHandler_dest_initial = !slot ? &initial_SD0 : &initial_SD1;
+			deviceHandler_dest_readDir  =  deviceHandler_FAT_readDir;
+			deviceHandler_dest_readFile =  deviceHandler_FAT_readFile;
+			deviceHandler_dest_writeFile=  deviceHandler_FAT_writeFile;
+			deviceHandler_dest_deleteFile=  deviceHandler_FAT_deleteFile;
+			deviceHandler_dest_seekFile =  deviceHandler_FAT_seekFile;
+			deviceHandler_dest_setupFile=  deviceHandler_FAT_setupFile;
+			deviceHandler_dest_init     =  deviceHandler_FAT_init;
+			deviceHandler_dest_deinit   =  deviceHandler_FAT_deinit;
+		break;
+		case DEST_MEMCARD:
+			slot = select_slot();
+			deviceHandler_dest_initial = !slot ? &initial_CARDA : &initial_CARDB;
+			deviceHandler_dest_readDir  =  deviceHandler_CARD_readDir;
+			deviceHandler_dest_readFile =  deviceHandler_CARD_readFile;
+			deviceHandler_dest_writeFile=  deviceHandler_CARD_writeFile;
+			deviceHandler_dest_deleteFile=  deviceHandler_CARD_deleteFile;
+			deviceHandler_dest_seekFile =  deviceHandler_CARD_seekFile;
+			deviceHandler_dest_setupFile=  deviceHandler_CARD_setupFile;
+			deviceHandler_dest_init     =  deviceHandler_CARD_init;
+			deviceHandler_dest_deinit   =  deviceHandler_CARD_deinit;
+		break;
+	}
 }
 
 void select_device()
@@ -1203,7 +1474,11 @@ void select_device()
 			DrawSelectableButton(170, 230, 450, 340, "WODE",B_NOSELECT,COLOR_BLACK);
 			drawBitmap(wodeimg_Bitmap, 145, 245, 146,72);
 		}
-		if(curDevice != 4) {
+		else if(curDevice==MEMCARD) {
+			DrawSelectableButton(170, 230, 450, 340, "Memory Card",B_NOSELECT,COLOR_BLACK);
+			//drawBitmap(wodeimg_Bitmap, 145, 245, 146,72);
+		}
+		if(curDevice != 5) {
 			WriteFont(520, 300, "->");
 		}
 		if(curDevice != 0) {
@@ -1212,7 +1487,7 @@ void select_device()
 		DrawFrameFinish();
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 		u16 btns = PAD_ButtonsHeld(0);
-		if((btns & PAD_BUTTON_RIGHT) && curDevice < 4)
+		if((btns & PAD_BUTTON_RIGHT) && curDevice < 5)
 			curDevice++;
 		if((btns & PAD_BUTTON_LEFT) && curDevice > 0)
 			curDevice--;
@@ -1223,26 +1498,27 @@ void select_device()
 	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 	// Deinit any existing deviceHandler state
 	if(deviceHandler_deinit) deviceHandler_deinit( deviceHandler_initial );
+	// Change all the deviceHandler pointers based on the current device
+	int slot = 0;
 	switch(curDevice) {
 		case SD_CARD:
 		case IDEEXI:
 			select_speed();
-			select_slot();
-			// Change all the deviceHandler pointers
+			slot = select_slot();
 			if(curDevice==IDEEXI)
-				deviceHandler_initial = GC_SD_CHANNEL==0 ? &initial_IDE0 : &initial_IDE1;
+				deviceHandler_initial = !slot ? &initial_IDE0 : &initial_IDE1;
 			else
-				deviceHandler_initial = GC_SD_CHANNEL==0 ? &initial_SD0 : &initial_SD1;
+				deviceHandler_initial = !slot ? &initial_SD0 : &initial_SD1;
 			deviceHandler_readDir  =  deviceHandler_FAT_readDir;
 			deviceHandler_readFile =  deviceHandler_FAT_readFile;
 			deviceHandler_writeFile=  deviceHandler_FAT_writeFile;
+			deviceHandler_deleteFile=  deviceHandler_FAT_deleteFile;
 			deviceHandler_seekFile =  deviceHandler_FAT_seekFile;
 			deviceHandler_setupFile=  deviceHandler_FAT_setupFile;
 			deviceHandler_init     =  deviceHandler_FAT_init;
 			deviceHandler_deinit   =  deviceHandler_FAT_deinit;
 		break;
 		case DVD_DISC:
-			// Change all the deviceHandler pointers
 			deviceHandler_initial = &initial_DVD;
 			deviceHandler_readDir  =  deviceHandler_DVD_readDir;
 			deviceHandler_readFile =  deviceHandler_DVD_readFile;
@@ -1250,9 +1526,9 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_DVD_setupFile;
 			deviceHandler_init     =  deviceHandler_DVD_init;
 			deviceHandler_deinit   =  deviceHandler_DVD_deinit;
+			deviceHandler_deleteFile = NULL;
  		break;
  		case QOOB_FLASH:
-			// Change all the deviceHandler pointers
 			deviceHandler_initial = &initial_Qoob;
 			deviceHandler_readDir  =  deviceHandler_Qoob_readDir;
 			deviceHandler_readFile =  deviceHandler_Qoob_readFile;
@@ -1260,9 +1536,9 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_Qoob_setupFile;
 			deviceHandler_init     =  deviceHandler_Qoob_init;
 			deviceHandler_deinit   =  deviceHandler_Qoob_deinit;
+			deviceHandler_deleteFile = NULL;
  		break;
  		case WODE:
-			// Change all the deviceHandler pointers
 			deviceHandler_initial = &initial_WODE;
 			deviceHandler_readDir  =  deviceHandler_WODE_readDir;
 			deviceHandler_readFile =  deviceHandler_WODE_readFile;
@@ -1270,7 +1546,20 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_WODE_setupFile;
 			deviceHandler_init     =  deviceHandler_WODE_init;
 			deviceHandler_deinit   =  deviceHandler_WODE_deinit;
+			deviceHandler_deleteFile = NULL;
  		break;
+		case MEMCARD:
+			slot = select_slot();
+			deviceHandler_initial = !slot ? &initial_CARDA : &initial_CARDB;
+			deviceHandler_readDir  =  deviceHandler_CARD_readDir;
+			deviceHandler_readFile =  deviceHandler_CARD_readFile;
+			deviceHandler_writeFile=  deviceHandler_CARD_writeFile;
+			deviceHandler_deleteFile=  deviceHandler_CARD_deleteFile;
+			deviceHandler_seekFile =  deviceHandler_CARD_seekFile;
+			deviceHandler_setupFile=  deviceHandler_CARD_setupFile;
+			deviceHandler_init     =  deviceHandler_CARD_init;
+			deviceHandler_deinit   =  deviceHandler_CARD_deinit;
+		break;
 	}
 	memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
 }

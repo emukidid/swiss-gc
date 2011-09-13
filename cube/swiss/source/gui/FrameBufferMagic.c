@@ -13,6 +13,7 @@
 #include <malloc.h>
 #include <gccore.h>
 #include <ogc/exi.h>
+#include "deviceHandler.h"
 #include "FrameBufferMagic.h"
 #include "IPLFontWrite.h"
 #include "bnr2yuv.h"
@@ -35,20 +36,28 @@ void _DrawBackdrop() {
 	  }
 	  WriteFont(55, 66, topStr);
   }
-  if(curDevice == SD_CARD) {
-    sprintf(topStr, "%s - %s:%s @ %s",videoStr,!GC_SD_CHANNEL?"Slot A":"Slot B",!SDHCCard?"SDHC":"SD",GC_SD_SPEED==EXI_SPEED16MHZ?"16Mhz":"32Mhz");
+  if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
+	int slot = (deviceHandler_initial->name[2] == 'b');
+    sprintf(topStr, "%s - %s Card in %s @ %s",videoStr,!SDHCCard?"SDHC":"SD",!slot?"Slot A":"Slot B",GC_SD_SPEED==EXI_SPEED16MHZ?"16Mhz":"32Mhz");
   }
-  else if(curDevice == DVD_DISC) {
+  else if(deviceHandler_initial == &initial_DVD) {
     sprintf(topStr, "%s - %s DVD Disc",videoStr,dvdDiscTypeStr);
   }
-  else if(curDevice == IDEEXI) {
-	sprintf(topStr, "%s - IDE-EXI Device (%d GB)",videoStr, ataDriveInfo.sizeInGigaBytes);
+  else if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
+	int slot = (deviceHandler_initial->name[3] == 'b');
+	sprintf(topStr, "%s - IDE-EXI Device (%d GB HDD) in %s",videoStr, ataDriveInfo.sizeInGigaBytes,!slot?"Slot A":"Slot B");
   }
-  else if(curDevice == QOOB_FLASH) {
-	  sprintf(topStr, "%s - IPL Replacement",videoStr);
+  else if(deviceHandler_initial == &initial_Qoob) {
+	  sprintf(topStr, "%s - Qoob IPL Replacement",videoStr);
   }
-  else if(curDevice == WODE) {
+  else if(deviceHandler_initial == &initial_WODE) {
 	  sprintf(topStr, "%s - Wode Jukebox (%08X)",videoStr,driveVersion);
+  }
+  else if(deviceHandler_initial == &initial_CARDA || deviceHandler_initial == &initial_CARDB) {
+	  sprintf(topStr, "%s - Memory Card in %s",videoStr,!deviceHandler_initial->fileBase?"Slot A":"Slot B");
+  }
+  else if (!deviceHandler_initial) {
+	  sprintf(topStr, "%s - No Device Selected",videoStr);
   }
   WriteFont(55,420, topStr);
 }

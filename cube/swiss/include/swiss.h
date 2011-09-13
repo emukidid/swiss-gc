@@ -50,6 +50,7 @@ extern char *getRelativeName(char *str);
 extern void textFileBrowser(file_handle** directory, int num_files);
 
 extern void boot_dol();
+extern void manage_file();
 extern void load_file();
 extern int check_game();
 extern int cheats_game();
@@ -59,8 +60,10 @@ extern void settings();
 extern void credits();
 
 extern void select_speed();
-extern void select_slot();
+extern int select_slot();
 extern void select_device();
+extern void select_copy_device();
+extern void select_dest_dir(file_handle* directory, file_handle* selection);
 
 typedef struct {
 	int useHiLevelPatch; // Use Hi Level (DVDRead patch) or low level (Read patch)
@@ -70,5 +73,12 @@ typedef struct {
 	int curVideoSelection; //video forcing selection (default == auto)
 } SwissSettings __attribute__((aligned(32)));
 extern SwissSettings swissSettings;
+
+enum fileOptions
+{
+	COPY_OPTION=0,
+	MOVE_OPTION,
+	DELETE_OPTION
+};
 
 #endif 
