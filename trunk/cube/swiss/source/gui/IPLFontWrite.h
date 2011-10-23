@@ -22,7 +22,8 @@ void WriteFontHL(int x, int y, int sx, int sy, const char *string, unsigned int 
 int GetTextSizeInPixels(const char *string);
 void WriteCentre( int y, const char *string);
 void WriteCentreHL( int y, const char *string);
-
+void WriteFont_small(int x, int y, const char *string);
+void WriteCentre_small( int y, const char *string);
 extern char txtbuffer[2048];
 extern unsigned int blit_lookup_inv[4];
 extern unsigned int blit_lookup[4];

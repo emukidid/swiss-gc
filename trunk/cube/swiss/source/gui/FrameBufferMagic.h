@@ -12,6 +12,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <gccore.h>
+#include "deviceHandler.h"
 
 extern GXRModeObj *vmode;
 extern u32 *xfb[2];
@@ -33,6 +34,14 @@ extern int whichfb;
 #define PROGRESS_BOX_BARALL COLOR_RED
 #define PROGRESS_BOX_BACK   COLOR_BLUE
 
+#define MENU_MAX 5
+#define MENU_NOSELECT -1
+#define MENU_DEVICE 0
+#define MENU_SETTINGS 1
+#define MENU_INFO 2
+#define MENU_REFRESH 3
+#define MENU_EXIT 4
+
 void DrawFrameStart();
 void DrawFrameFinish();
 void DrawProgressBar(int percent, char *message);
@@ -40,3 +49,5 @@ void DrawMessageBox(int type, char *message);
 void DrawRawFont(int x, int y, char *message);
 void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode, u32 color);
 void DrawEmptyBox(int x1, int y1, int x2, int y2, int color);
+void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode, u32 color);
+void DrawMenuButtons(int selection);

@@ -163,7 +163,7 @@ void dvd_stop_laser()
 	dvd_seek(0);
 }
 
-long drive_version()
+void drive_version(u8 *buf)
 {
 	dvd[0] = 0x2e;
 	dvd[1] = 0;
@@ -181,9 +181,11 @@ long drive_version()
 	DCFlushRange((void *)inquiryBuf, 0x20);
 	
 	if(!retries) {
-		return -1;
+		buf[0] = 0;
 	}
-	return inquiryBuf[1];
+	else {
+		memcpy(buf,&inquiryBuf[1],8);
+	}
 }
 
 /* 

@@ -168,6 +168,7 @@ int deviceHandler_CARD_readFile(file_handle* file, void* buffer, unsigned int le
 }
 
 int deviceHandler_CARD_writeFile(file_handle* file, void* buffer, unsigned int length){
+	return 0;
 }
 
 void deviceHandler_CARD_setupFile(file_handle* file, file_handle* file2) {

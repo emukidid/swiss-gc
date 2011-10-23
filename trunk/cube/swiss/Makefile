@@ -51,6 +51,7 @@ SOURCES		:=  source \
               source/cheats \
               source/patches \
               source/images \
+			  source/images/buttons \
               source/gui
 DATA		:=	data  
 INCLUDES	:= include $(SOURCES)

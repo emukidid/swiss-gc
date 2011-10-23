@@ -39,8 +39,6 @@
 #include "hddicon.h"
 #include "qoobicon.h"
 #include "wodeimg.h"
-#include "redcross.h"
-#include "greentick.h"
 #include "aram/sidestep.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
@@ -48,7 +46,6 @@
 
 static DiskHeader GCMDisk;      //Gamecube Disc Header struct
 char IPLInfo[256] __attribute__((aligned(32)));
-u32 driveVersion = 0;
 GXRModeObj *newmode = NULL;
 char txtbuffer[2048];           //temporary text buffer
 file_handle curFile;     //filedescriptor for current file
@@ -78,17 +75,6 @@ static const u32 GC_DefaultConfig[56] =
 	0x01800000, 0x817FC8C0, 0x09A7EC80, 0x1CF7C580  // 52..55 800000F0
 };
 
-char* _menu_array[] =
-{
-	"Load"		,
-	"Device"	,
-	"Settings"	,
-	"Install"	,
-	"Info"		,
-	"Credits"	,
-	"Refresh"
-};
-
 char *getVideoString()
 {
 	switch(swissSettings.curVideoSelection)
@@ -108,9 +94,6 @@ char *getVideoString()
 }
 int ask_stop_drive(); 
 int ask_set_cheats();
-static void ProperScanPADS()	{ 
-	PAD_ScanPads(); 
-}
 
 void print_gecko(char *string)
 {
@@ -212,82 +195,10 @@ void do_videomode_swap() {
 	}
 }
 
-/* Initialise Video, PAD, DVD, Font */
-void* Initialise (void)
-{
-	VIDEO_Init ();
-	PAD_Init ();  
-	DVD_Init(); 
-	*(volatile unsigned long*)0xcc00643c = 0x00000000; //allow 32mhz exi bus
-	
-	// Disable IPL modchips to allow access to IPL ROM fonts
-	ipl_set_config(6); 
-	usleep(1000); //wait for modchip to disable (overkill)
-	
-	
-	__SYS_ReadROM(IPLInfo,256,0);	// Read IPL tag
-	
-	if(VIDEO_HaveComponentCable()) {
-		vmode = &TVNtsc480Prog; //Progressive 480p
-		videoStr = ProgStr;
-	}
-	else {
-		//try to use the IPL region
-		if(strstr(IPLInfo,"PAL")!=NULL) {
-			vmode = &TVPal528IntDf;         //PAL
-			videoStr = PALStr;
-		}
-		else if(strstr(IPLInfo,"NTSC")!=NULL) {
-			vmode = &TVNtsc480IntDf;        //NTSC
-			videoStr = NTSCStr;
-		}
-		else {
-			vmode = VIDEO_GetPreferredMode(NULL); //Last mode used
-			videoStr = UnkStr;
-		}
-	}
-
-	VIDEO_Configure (vmode);
-	xfb[0] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
-	xfb[1] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
-	VIDEO_ClearFrameBuffer (vmode, xfb[0], COLOR_BLACK);
-	VIDEO_ClearFrameBuffer (vmode, xfb[1], COLOR_BLACK);
-	VIDEO_SetNextFramebuffer (xfb[0]);
-	VIDEO_SetPostRetraceCallback (ProperScanPADS);
-	VIDEO_SetBlack (0);
-	VIDEO_Flush ();
-	VIDEO_WaitVSync ();
-	if (vmode->viTVMode & VI_NON_INTERLACE) {
-		VIDEO_WaitVSync ();
-	}
-	init_font();
-	whichfb = 0;
-	
-	driveVersion = drive_version();
-	
-	if(driveVersion == -1) {
-		// Reset DVD if there was a modchip
-		whichfb ^= 1;
-		WriteFont(55,250, "Initialise DVD from cold boot.. (Qoob user?)");
-		VIDEO_SetNextFramebuffer (xfb[whichfb]);
-		VIDEO_Flush ();
-		VIDEO_WaitVSync ();
-		if(vmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
-		DVD_Reset(DVD_RESETHARD);
-		dvd_read_id();
-		driveVersion = drive_version();
-		dvd_motor_off();
-	}
-	
-	return xfb[0];
-}
-
 void doBackdrop()
 {
 	DrawFrameStart();
-	int i;
-	for(i = 0; i<MENU_MAX; i++)
-		DrawSelectableButton(458,130+(i*40),-1,140+(i*40)+24,_menu_array[i],B_NOSELECT,-1);
+	DrawMenuButtons(-1);
 }
 
 char *getRelativeName(char *str) {
@@ -315,20 +226,18 @@ char *stripInvalidChars(char *str) {
 void textFileBrowser(file_handle** directory, int num_files)
 {
 	int i = 0,j=0,max;
-	
 	memset(txtbuffer,0,sizeof(txtbuffer));
 	if(num_files<=0) return;
   
 	while(1){
 		doBackdrop();
-		WriteFont(50, 120, deviceHandler_initial->name);
-		i = MIN(MAX(0,curSelection-4),MAX(0,num_files-8));
-		max = MIN(num_files, MAX(curSelection+4,8));
+		i = MIN(MAX(0,curSelection-FILES_PER_PAGE/2),MAX(0,num_files-FILES_PER_PAGE));
+		max = MIN(num_files, MAX(curSelection+FILES_PER_PAGE/2,FILES_PER_PAGE));
 		for(j = 0; i<max; ++i,++j) {
-			DrawSelectableButton(50,160+(j*30), 430, 160+(j*30)+30, getRelativeName((*directory)[i].name), (i == curSelection) ? B_SELECTED:B_NOSELECT,-1);
+			DrawFileBrowserButton(50,90+(j*50), 550, 90+(j*50)+50, getRelativeName((*directory)[i].name),&((*directory)[i]), (i == curSelection) ? B_SELECTED:B_NOSELECT,-1);
 		}
 		DrawFrameFinish();
-		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN));
+		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN));
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) > 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || PAD_StickY(0) < -16) {curSelection = (curSelection + 1) % num_files;	}
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_A))	{
@@ -355,7 +264,7 @@ void textFileBrowser(file_handle** directory, int num_files)
 			return;
 		}
 		
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT)	{
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B)	{
 			memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
 			curMenuLocation=ON_OPTIONS;
 			return;
@@ -364,7 +273,7 @@ void textFileBrowser(file_handle** directory, int num_files)
 			usleep(50000 - abs(PAD_StickY(0)*256));
 		}
 		else {
-			while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)));
+			while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)));
 		}
 	}
 }
@@ -381,11 +290,12 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 			refresh = 0;
 		}
 		doBackdrop();
-		WriteFont(50, 120, "Enter directory and press X");
-		i = MIN(MAX(0,idx-4),MAX(0,num_files-8));
-		max = MIN(num_files, MAX(idx+4,8));
+		DrawEmptyBox(20,40, vmode->fbWidth-20, 450, COLOR_BLACK);
+		WriteFont(50, 55, "Enter directory and press X");
+		i = MIN(MAX(0,idx-FILES_PER_PAGE/2),MAX(0,num_files-FILES_PER_PAGE));
+		max = MIN(num_files, MAX(idx+FILES_PER_PAGE/2,FILES_PER_PAGE));
 		for(j = 0; i<max; ++i,++j) {
-			DrawSelectableButton(50,160+(j*30), 430, 160+(j*30)+30, getRelativeName((directories)[i].name), (i == idx) ? B_SELECTED:B_NOSELECT,-1);
+			DrawSelectableButton(50,90+(j*50), 550, 90+(j*50)+50, getRelativeName((directories)[i].name), (i == idx) ? B_SELECTED:B_NOSELECT,-1);
 		}
 		DrawFrameFinish();
 		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN));
@@ -675,7 +585,7 @@ void manage_file() {
 		DrawFrameStart();
 		DrawEmptyBox(10,150, vmode->fbWidth-10, 350, COLOR_BLACK);
 		WriteCentre(160,"Manage File:");
-		WriteCentre(200,curFile.name);
+		WriteCentre(200,getRelativeName(curFile.name));
 		if(deviceHandler_deleteFile) {
 			WriteCentre(230,"(A) Load (X) Copy (Y) Move (Z) Delete");
 		}
@@ -715,7 +625,22 @@ void manage_file() {
 		// If delete, delete it + refresh the device
 		if(option == DELETE_OPTION) {
 			if(!deviceHandler_deleteFile(&curFile)) {
+				//go up a folder
+				int len = strlen(&curFile.name[0]);
+				while(len && curFile.name[len-1]!='/') {
+      				len--;
+				}
+				curFile.name[len-1] = '\0';
+				DrawFrameStart();
+				DrawMessageBox(D_INFO,"File deleted! Press A to continue");
+				DrawFrameFinish();
+				wait_press_A();
 				needsRefresh=1;
+			}
+			else {
+				DrawFrameStart();
+				DrawMessageBox(D_INFO,"Delete Failed! Press A to continue");
+				DrawFrameFinish();
 			}
 		}
 		// If copy, ask which device is the destination device and copy
@@ -748,60 +673,80 @@ void manage_file() {
 			destFile->status = 0;
 			destFile->offset = 0;
 			
-			// Read from one file and write to the new directory
-			u32 curOffset = 0, cancelled = 0;
-			char *readBuffer = (char*)memalign(32,0x8000);
-			sprintf(destFile->name, "%s%s",destFile->name,stripInvalidChars(getRelativeName(&curFile.name[0])));
-			while(curOffset < curFile.size) {
-				u32 buttons = PAD_ButtonsHeld(0);
-				if(buttons & PAD_BUTTON_B) {
-					cancelled = 1;
-					break;
+			// Same (fat based) device and user wants to move the file, just rename ;)
+			if(deviceHandler_initial == deviceHandler_dest_initial 
+				&& option == MOVE_OPTION 
+				&& (deviceHandler_initial->name[0] =='s' || deviceHandler_initial->name[0] =='i')) {
+				sprintf(destFile->name, "%s/%s",destFile->name,getRelativeName(&curFile.name[0]));
+				ret = rename(&curFile.name[0], &destFile->name[0]);
+				//go up a folder
+				int len = strlen(&curFile.name[0]);
+				while(len && curFile.name[len-1]!='/') {
+					len--;
 				}
-				sprintf(txtbuffer, "Copying to: %s",destFile->name);
+				curFile.name[len-1] = '\0';
+				needsRefresh=1;
 				DrawFrameStart();
-				DrawProgressBar((int)((float)((float)curOffset/(float)curFile.size)*100), txtbuffer);
+				DrawMessageBox(D_INFO,ret ? "Move Failed! Press A to continue":"File moved! Press A to continue");
 				DrawFrameFinish();
-				u32 amountToCopy = curOffset + 0x8000 > curFile.size ? curFile.size - curOffset : 0x8000;
-				ret = deviceHandler_readFile(&curFile, readBuffer, amountToCopy);
-				if(ret != amountToCopy) {
-					DrawFrameStart();
-					sprintf(txtbuffer, "Failed to Read! (%i %i)",amountToCopy,ret);
-					DrawMessageBox(D_FAIL,txtbuffer);
-					DrawFrameFinish();
-					wait_press_A();
-					return;
-				}
-				ret = deviceHandler_dest_writeFile(destFile, readBuffer, amountToCopy);
-				if(ret != amountToCopy) {
-					DrawFrameStart();
-					sprintf(txtbuffer, "Failed to Write! (%i %i)",amountToCopy,ret);
-					DrawMessageBox(D_FAIL,txtbuffer);
-					DrawFrameFinish();
-					wait_press_A();
-					return;
-				}
-				curOffset+=amountToCopy;
+				wait_press_A();
 			}
-			deviceHandler_dest_deinit( destFile );
-			free(destFile);
-			DrawFrameStart();
-			if(!cancelled) {
-				// If cut, delete from source device
-				if(option == MOVE_OPTION) {
-					deviceHandler_deleteFile(&curFile);
-					needsRefresh=1;
-					DrawMessageBox(D_INFO,"Move Complete!");
-				}
-				else {
-					DrawMessageBox(D_INFO,"Copy Complete!");
-				}
-			} 
 			else {
-				DrawMessageBox(D_INFO,"Operation Cancelled!");
+				// Read from one file and write to the new directory
+				u32 curOffset = 0, cancelled = 0;
+				char *readBuffer = (char*)memalign(32,0x8000);
+				sprintf(destFile->name, "%s/%s",destFile->name,stripInvalidChars(getRelativeName(&curFile.name[0])));
+				while(curOffset < curFile.size) {
+					u32 buttons = PAD_ButtonsHeld(0);
+					if(buttons & PAD_BUTTON_B) {
+						cancelled = 1;
+						break;
+					}
+					sprintf(txtbuffer, "Copying to: %s",destFile->name);
+					DrawFrameStart();
+					DrawProgressBar((int)((float)((float)curOffset/(float)curFile.size)*100), txtbuffer);
+					DrawFrameFinish();
+					u32 amountToCopy = curOffset + 0x8000 > curFile.size ? curFile.size - curOffset : 0x8000;
+					ret = deviceHandler_readFile(&curFile, readBuffer, amountToCopy);
+					if(ret != amountToCopy) {
+						DrawFrameStart();
+						sprintf(txtbuffer, "Failed to Read! (%i %i)",amountToCopy,ret);
+						DrawMessageBox(D_FAIL,txtbuffer);
+						DrawFrameFinish();
+						wait_press_A();
+						return;
+					}
+					ret = deviceHandler_dest_writeFile(destFile, readBuffer, amountToCopy);
+					if(ret != amountToCopy) {
+						DrawFrameStart();
+						sprintf(txtbuffer, "Failed to Write! (%i %i)",amountToCopy,ret);
+						DrawMessageBox(D_FAIL,txtbuffer);
+						DrawFrameFinish();
+						wait_press_A();
+						return;
+					}
+					curOffset+=amountToCopy;
+				}
+				deviceHandler_dest_deinit( destFile );
+				free(destFile);
+				DrawFrameStart();
+				if(!cancelled) {
+					// If cut, delete from source device
+					if(option == MOVE_OPTION) {
+						deviceHandler_deleteFile(&curFile);
+						needsRefresh=1;
+						DrawMessageBox(D_INFO,"Move Complete!");
+					}
+					else {
+						DrawMessageBox(D_INFO,"Copy Complete! Press A to continue");
+					}
+				} 
+				else {
+					DrawMessageBox(D_INFO,"Operation Cancelled! Press A to continue");
+				}
+				DrawFrameFinish();
+				wait_press_A();
 			}
-			DrawFrameFinish();
-			wait_press_A();
 		}
 	}
 	// Else if directory, mention support not yet implemented.
@@ -1144,7 +1089,7 @@ int info_game()
 		}
 		showBanner(230, 270, 2);  //Convert & display game banner
 	}
-	sprintf(txtbuffer,"%s",(GCMDisk.DVDMagicWord != DVD_MAGIC)?curFile.name:GCMDisk.GameName);
+	sprintf(txtbuffer,"%s",(GCMDisk.DVDMagicWord != DVD_MAGIC)?getRelativeName(&curFile.name[0]):GCMDisk.GameName);
 	WriteCentre(130,txtbuffer);
 	if((curDevice==SD_CARD)||(curDevice == IDEEXI) ||((curDevice == DVD_DISC) && (dvdDiscTypeInt==ISO9660_DISC))) {
 		sprintf(txtbuffer,"Size: %.2fMB", (float)curFile.size/1024/1024);
@@ -1256,25 +1201,6 @@ void settings()
 		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || (PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || (PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) || (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B));
 	}
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_B);
-}
-
-void credits()
-{ 
-	DrawFrameStart();
-	DrawEmptyBox(55,120, vmode->fbWidth-58, 400, COLOR_BLACK);
-	WriteCentre(130,"Swiss ver 0.1");
-	WriteCentre(160,"by emu_kidid 2011");
-	if(!is_gamecube())
-		WriteCentre(220,"Running on a Wii");
-	else
-		WriteCentre(220,"Running on a Gamecube");
-	sprintf(txtbuffer,"ECID: %08X:%08X:%08X",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
-	WriteCentre(245,txtbuffer);
-	WriteCentre(295,"Thanks to");
-	WriteCentre(320,"Testers & libOGC/dkPPC authors");
-	WriteCentre(370,"Press A to return");
-	DrawFrameFinish();	
-	wait_press_A();
 }
 
 int ask_stop_drive()

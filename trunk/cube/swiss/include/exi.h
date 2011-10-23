@@ -16,4 +16,5 @@ void exi_imm_ex(int channel, void* data, int len, int mode);
 void exi_read(int channel, void* data, int len);
 void exi_write(int channel, void* data, int len);
 void ipl_set_config(unsigned char c);
+int exi_bba_exists();
 #endif

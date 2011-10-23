@@ -73,14 +73,17 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir){
 	struct stat fstat;
 	
 	// Set everything up to read
-	int num_entries = 1, i = 0;
-	num_entries = i = 1;
+	int num_entries = 1, i = 1;
 	*dir = malloc( num_entries * sizeof(file_handle) );
-	sprintf((*dir)[0].name,"..");
+	memset(*dir,0,sizeof(file_handle) * num_entries);
 	(*dir)[0].fileAttrib = IS_SPECIAL;
+	strcpy((*dir)[0].name, "..");
 	
 	// Read each entry of the directory
 	while( (entry = readdir(dp)) != NULL ){
+		if(strlen(entry->d_name) <= 2  && (entry->d_name[0] == '.' || entry->d_name[1] == '.')) {
+			continue;
+		}
 		// Make sure we have room for this one
 		if(i == num_entries){
 			++num_entries;

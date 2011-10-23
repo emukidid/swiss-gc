@@ -11,7 +11,7 @@
 #include <malloc.h>
 #include "main.h"
 #include "patcher.h"
-#include "TDPATCH.h"
+#include "TDPATCH.H"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "deviceHandler.h"

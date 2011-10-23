@@ -14,7 +14,7 @@
 #include <sdcard/card_cmn.h>
 #include "deviceHandler.h"
 
-#define MENU_MAX 7
+#define FILES_PER_PAGE 6
 extern char* _menu_array[];
 extern char *videoStr;
 extern file_handle curFile;
@@ -26,7 +26,7 @@ extern u8 g_CSD[MAX_DRIVE][16];
 extern u8 g_CardStatus[MAX_DRIVE][64];
 extern char IPLInfo[256] __attribute__((aligned(32)));
 extern int iplModchip;
-extern u32 driveVersion;
+extern u8 driveVersion[8];
 
 extern void udelay(int s);
 extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
@@ -44,7 +44,6 @@ extern u32 __SYS_UnlockSram(u32 write);
 
 extern char *getVideoString();
 extern void print_gecko(char *string);
-extern void* Initialise (void);
 extern void doBackdrop();
 extern char *getRelativeName(char *str);
 extern void textFileBrowser(file_handle** directory, int num_files);

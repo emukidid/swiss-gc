@@ -4,10 +4,10 @@
 #include <ogcsys.h>
 #include <stdio.h>
 #include <string.h>
-#include <ogc\dvd.h>
-#include <ogc\system.h>
-#include <sys\unistd.h>
-#include "wodeinterface.h"
+#include <ogc/dvd.h>
+#include <ogc/system.h>
+#include <sys/unistd.h>
+#include "WodeInterface.h"
 
 
 #define WODE_MAGIC				(0xFF574F44)		/* 0xFF,WOD */
