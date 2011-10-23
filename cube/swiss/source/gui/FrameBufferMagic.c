@@ -21,45 +21,11 @@
 #include "swiss.h"
 #include "main.h"
 #include "ata.h"
-
-char topStr[256];
+#include "btns.h"
 
 void _DrawBackdrop() {
   drawBitmap(backdrop_Bitmap, 0, 0, 640,480);
   WriteFont(55,40, "Swiss v0.1 for Gamecube");
-  if(is_gamecube()) {
-	  if(!IPLInfo[0x55]) {
-		sprintf(topStr, "IPL: NTSC Revision 1.0   DVD: %08X",driveVersion);
-	  }
-	  else {
-	  	sprintf(topStr, "IPL: %s   DVD: %08X", &IPLInfo[0x55],driveVersion);
-	  }
-	  WriteFont(55, 66, topStr);
-  }
-  if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
-	int slot = (deviceHandler_initial->name[2] == 'b');
-    sprintf(topStr, "%s - %s Card in %s @ %s",videoStr,!SDHCCard?"SDHC":"SD",!slot?"Slot A":"Slot B",GC_SD_SPEED==EXI_SPEED16MHZ?"16Mhz":"32Mhz");
-  }
-  else if(deviceHandler_initial == &initial_DVD) {
-    sprintf(topStr, "%s - %s DVD Disc",videoStr,dvdDiscTypeStr);
-  }
-  else if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
-	int slot = (deviceHandler_initial->name[3] == 'b');
-	sprintf(topStr, "%s - IDE-EXI Device (%d GB HDD) in %s",videoStr, ataDriveInfo.sizeInGigaBytes,!slot?"Slot A":"Slot B");
-  }
-  else if(deviceHandler_initial == &initial_Qoob) {
-	  sprintf(topStr, "%s - Qoob IPL Replacement",videoStr);
-  }
-  else if(deviceHandler_initial == &initial_WODE) {
-	  sprintf(topStr, "%s - Wode Jukebox (%08X)",videoStr,driveVersion);
-  }
-  else if(deviceHandler_initial == &initial_CARDA || deviceHandler_initial == &initial_CARDB) {
-	  sprintf(topStr, "%s - Memory Card in %s",videoStr,!deviceHandler_initial->fileBase?"Slot A":"Slot B");
-  }
-  else if (!deviceHandler_initial) {
-	  sprintf(topStr, "%s - No Device Selected",videoStr);
-  }
-  WriteFont(55,420, topStr);
 }
 
 void _DrawHLine (int x1, int x2, int y, int color)
@@ -115,11 +81,8 @@ void DrawProgressBar(int percent, char *message) {
   int y2 = ((back_frameheight/2) + (PROGRESS_BOX_HEIGHT/2));
   int i = 0, middleY, borderSize = 10;
 
-  middleY = (((y2-y1)/2)-12)+y1;
-    
-  if(middleY+24 > y2) {
-    middleY = y1+3;
-  }
+  middleY = y2-y1 < 23 ? y1+3 : (y2+y1)/2-12;
+  
   //Draw Text and backfill
   for(i = (y1+borderSize); i < (y2-borderSize); i++) {
     _DrawHLine (x1+borderSize, x2-borderSize, i, BUTTON_COLOUR_INNER); //inner
@@ -157,11 +120,8 @@ void DrawMessageBox(int type, char *message) {
   int y2 = ((back_frameheight/2) + (PROGRESS_BOX_HEIGHT/2));
   int i = 0, middleY, borderSize = 10;
   
-  middleY = (((y2-y1)/2)-12)+y1;
-    
-  if(middleY+24 > y2) {
-    middleY = y1+3;
-  }
+  middleY = y2-y1 < 23 ? y1+3 : (y2+y1)/2-12;
+  
   //Draw Text and backfill
   for(i = (y1+borderSize); i < (y2-borderSize); i++) {
     _DrawHLine (x1+borderSize, x2-borderSize, i, BUTTON_COLOUR_INNER); //inner
@@ -230,15 +190,50 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
   }
 }
 
+void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode, u32 color) {
+  int i = 0,  borderSize;
+  color = (color == -1) ? BUTTON_COLOUR_INNER : color;
+  
+  borderSize = (mode==B_SELECTED) ? 6 : 4;
+  
+  //determine length of the text ourselves if x2 == -1
+  x1 = (x2 == -1) ? x1+2:x1;
+  x2 = (x2 == -1) ? GetTextSizeInPixels(message)+x1+(borderSize*2)+6 : x2;
+  
+  //Draw Text and backfill (if selected)
+  if(mode==B_SELECTED) {
+    for(i = (y1+borderSize); i < (y2-borderSize); i++) {
+      _DrawHLine (x1+borderSize, x2-borderSize, i, BUTTON_COLOUR_INNER); //inner
+    }
+    WriteFontHL(x1 + borderSize+3, y1+borderSize, x2-borderSize-8, y1+borderSize+24 , message, blit_lookup);
+  }
+  else {
+    WriteFontHL(x1 + borderSize+3, y1+borderSize,x2-borderSize-8,y1+borderSize+24, message,blit_lookup_norm);
+  }
+  if(file->fileAttrib==IS_FILE) {
+	sprintf(txtbuffer,"Size: %i %s",file->size > 1024 ? file->size/ 1024:file->size,file->size > 1024 ? "Kb":"Bytes");
+	WriteFont_small(x1 + borderSize+3,y1+borderSize+24,txtbuffer);
+  }
+  //Draw Borders
+  for(i = 0; i < borderSize; i++) {
+    _DrawHLine (x1+(i*1), x2-(i*1), (y1+borderSize)-i, BUTTON_COLOUR_OUTER); //top
+  }
+  for(i = 0; i < borderSize; i++) {
+    _DrawHLine (x1+(i*1), x2-(i*1), (y2-borderSize)+i, BUTTON_COLOUR_OUTER); //bottom
+  }
+  for(i = 0; i < borderSize; i++) {
+    _DrawVLine ((x1+borderSize)-(i*1), y1+(i*1), y2-(i*1), BUTTON_COLOUR_OUTER); //left
+  }
+  for(i = 0; i < borderSize; i++) {
+    _DrawVLine ((x2-borderSize)+(i*1), y1+(i*1), y2-(i*1), BUTTON_COLOUR_OUTER); //right
+  }
+}
+
 void DrawEmptyBox(int x1, int y1, int x2, int y2, int color) {
-  int i = 0, middleY, borderSize;
+  int i = 0, borderSize;
   borderSize = (y2-y1) <= 30 ? 3 : 10;
   x1-=borderSize;x2+=borderSize;y1-=borderSize;y2+=borderSize;
-  middleY = (((y2-y1)/2)-12)+y1;
-    
-  if(middleY+24 > y2) {
-    middleY = y1+3;
-  }
+
   //Draw Text and backfill
   for(i = (y1+borderSize); i < (y2-borderSize); i++) {
     _DrawHLine (x1+borderSize, x2-borderSize, i, color); //inner
@@ -257,3 +252,22 @@ void DrawEmptyBox(int x1, int y1, int x2, int y2, int color) {
     _DrawVLine ((x2-borderSize)+(i*1), y1+(i*1), y2-(i*1), BUTTON_COLOUR_OUTER); //right
   }
 }
+// Buttons
+void DrawMenuButtons(int selection) {
+	// Draw the buttons
+	drawBitmap(btndevice_Bitmap, 20+(0*58), 430, BTNDEVICE_WIDTH,BTNDEVICE_HEIGHT);
+	drawBitmap(btnnohilight_Bitmap, 20+(0*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
+	drawBitmap(btnsettings_Bitmap, 20+(1*58), 430, BTNSETTINGS_WIDTH,BTNSETTINGS_HEIGHT);
+	drawBitmap(btnnohilight_Bitmap, 20+(1*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
+	drawBitmap(btninfo_Bitmap, 20+(2*58), 430, BTNINFO_WIDTH,BTNINFO_HEIGHT);
+	drawBitmap(btnnohilight_Bitmap, 20+(2*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
+	drawBitmap(btnrefresh_Bitmap, 20+(3*58), 430, BTNREFRESH_WIDTH,BTNREFRESH_HEIGHT);
+	drawBitmap(btnnohilight_Bitmap, 20+(3*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
+	drawBitmap(btnexit_Bitmap, 20+(4*58), 430, BTNEXIT_WIDTH,BTNEXIT_HEIGHT);
+	drawBitmap(btnnohilight_Bitmap, 20+(4*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
+	// Highlight selected
+	if(selection != MENU_NOSELECT) {
+		drawBitmap(btnhilight_Bitmap, 20+(selection*58), 430, BTNHILIGHT_WIDTH,BTNHILIGHT_HEIGHT);
+	}
+}
+

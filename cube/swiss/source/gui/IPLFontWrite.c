@@ -207,6 +207,56 @@ void WriteFont(int x, int y, const char *string)
 	}
 }
 
+void blit_char_small(int x, int y, unsigned char c, unsigned int *lookup)
+{
+	unsigned char *fnt = ((unsigned char*)fontFont) + font_offset[c];
+	int ay, ax;
+	unsigned int llookup;
+
+	for (ay=0; ay<fheight; ++ay)
+	{
+		int h = (ay/2 + y) * (back_framewidth/2);
+
+		for (ax=0; ax<font_size[c]; ax++)
+		{
+			int v0 = fnt[ax];
+			int p = h + (( ax/2 + x ) >> 1);
+			unsigned long o = xfb[whichfb][p];
+
+			llookup = lookup[v0];
+
+			if ((v0== 0) && (llookup == TRANSPARENCY))
+				llookup = o;
+
+			if ((ax+x) & 1)
+			{
+				o &= ~0x00FFFFFF;
+				o |= llookup & 0x00FFFFFF;
+			}
+			else
+			{
+				o &= ~0xFF000000;
+				o |= llookup & 0xFF000000;
+			}
+
+			xfb[whichfb][p] = o;
+		}
+		
+		fnt += 512;
+	}
+}
+
+void WriteFont_small(int x, int y, const char *string)
+{
+	int ox = x;
+	while (*string && (x < (ox + back_framewidth)))
+	{
+		blit_char_small(x, y, *string, norm_blit ? blit_lookup_norm : blit_lookup);
+		x += font_size[(unsigned int)*string]/2;
+		string++;
+	}
+}
+
 void WriteFontHL(int x, int y, int sx, int sy, const char *string, unsigned int *lookup)
 {
 	while ((*string) && (x < sx))
@@ -233,4 +283,11 @@ void WriteCentre( int y, const char *string)
 	WriteFont(x, y, string);
 }
 
-
+void WriteCentre_small( int y, const char *string)
+{
+	int x, t;
+	for (x=t=0; t<strlen(string); t++) x += (font_size[(unsigned int)string[t]]/2);
+	if (x>back_framewidth) x=back_framewidth;
+	x = (back_framewidth - x) >> 1;
+	WriteFont_small(x, y, string);
+}

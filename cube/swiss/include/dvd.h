@@ -62,6 +62,6 @@ void dvd_set_offset(u64 offset);
 void xeno_disable();
 void dvd_stop_laser();
 void dvd_unlock();
-long drive_version();
+void drive_version(u8 *buf);
 
 #endif

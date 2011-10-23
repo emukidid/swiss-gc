@@ -200,7 +200,7 @@ u32 _ataDriveIdentify(int chn) {
 		u16 lbaHi = *(u16*) (&buffer[ATA_IDENT_LBA48SECTORS+2]);
 		u16 lbaMid = *(u16*) (&buffer[ATA_IDENT_LBA48SECTORS+1]);
 		u16 lbaLo = *(u16*) (&buffer[ATA_IDENT_LBA48SECTORS]);
-		ataDriveInfo.sizeInSectors = (u64)((lbaHi << 32) | (lbaMid << 16) | lbaLo);
+		ataDriveInfo.sizeInSectors = (u64)(((u64)lbaHi << 32) | (lbaMid << 16) | lbaLo);
 		ataDriveInfo.sizeInGigaBytes = (u32)((ataDriveInfo.sizeInSectors<<9) / 1024 / 1024 / 1024);
 	}
 	else {

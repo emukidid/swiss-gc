@@ -31,7 +31,8 @@ void drawBitmap(const unsigned long* image, int scrX, int scrY, int w, int h)
 		if((j < vmode->xfbHeight)&&(j < vmode->efbHeight)&&(j < vmode->viHeight)) {
 			for (i = 0; i < w/2; i++)
 			{
-				xfb[whichfb][320 * j + i + scrX] = image[current];
+				if(image[current]!=0xFF80FF80)
+					xfb[whichfb][320 * j + i + scrX] = image[current];
 				current++;
 			}
 		}
