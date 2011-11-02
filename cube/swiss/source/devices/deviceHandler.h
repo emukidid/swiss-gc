@@ -35,7 +35,7 @@ extern file_handle* deviceHandler_initial;
 extern int (*deviceHandler_init)(file_handle*);
 
 /* read directory into array, return number of files found or error */
-extern int (*deviceHandler_readDir)(file_handle*, file_handle**);
+extern int (*deviceHandler_readDir)(file_handle*, file_handle**, unsigned int);
 
 /* readFile returns the status of the read and reads if it can
      arguments: handle*, buffer, length */
@@ -65,7 +65,7 @@ extern file_handle* deviceHandler_dest_initial;
 extern int (*deviceHandler_dest_init)(file_handle*);
 
 /* read directory into array, return number of files found or error */
-extern int (*deviceHandler_dest_readDir)(file_handle*, file_handle**);
+extern int (*deviceHandler_dest_readDir)(file_handle*, file_handle**, unsigned int);
 
 /* readFile returns the status of the read and reads if it can
      arguments: handle*, buffer, length */

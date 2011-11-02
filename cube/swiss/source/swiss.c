@@ -286,8 +286,8 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 	while(1){
 		// Read the directory
 		if(refresh) {
-			num_files = deviceHandler_dest_readDir(directory, &directories);
-			refresh = 0;
+			num_files = deviceHandler_dest_readDir(directory, &directories, IS_DIR);
+			refresh = idx = 0;
 		}
 		doBackdrop();
 		DrawEmptyBox(20,40, vmode->fbWidth-20, 450, COLOR_BLACK);
@@ -306,6 +306,17 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 			if((directories)[idx].fileAttrib==IS_DIR) {
 				memcpy(directory, &(directories)[idx], sizeof(file_handle));
 				refresh=1;
+			}
+			else if(directories[idx].fileAttrib==IS_SPECIAL){
+				//go up a folder
+				int len = strlen(directory->name);
+				while(len && directory->name[len-1]!='/') {
+      				len--;
+				}
+				if(len != strlen(directory->name)) {
+					directory->name[len-1] = '\0';
+					refresh=1;
+				}
 			}
 		}
 		if(PAD_StickY(0) < -16 || PAD_StickY(0) > 16) {
@@ -567,12 +578,12 @@ void play_mp3() {
 	u32 offset = 0;
 	deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
 	DrawFrameStart();
-	sprintf(txtbuffer,"Playing %s",curFile.name);
+	sprintf(txtbuffer,"Playing %s",getRelativeName(curFile.name));
 	DrawMessageBox(D_INFO,txtbuffer);
 	DrawFrameFinish();
 	MP3Player_PlayFile(&offset, &mp3Reader, NULL);
-	while(MP3Player_IsPlaying()) {
-		sleep(1);
+	while(MP3Player_IsPlaying() && (!(PAD_ButtonsHeld(0) & PAD_BUTTON_B))){
+		usleep(5000);
 	}
 	MP3Player_Stop();
 }
@@ -702,7 +713,7 @@ void manage_file() {
 						cancelled = 1;
 						break;
 					}
-					sprintf(txtbuffer, "Copying to: %s",destFile->name);
+					sprintf(txtbuffer, "Copying to: %s",getRelativeName(destFile->name));
 					DrawFrameStart();
 					DrawProgressBar((int)((float)((float)curOffset/(float)curFile.size)*100), txtbuffer);
 					DrawFrameFinish();

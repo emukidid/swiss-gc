@@ -29,7 +29,7 @@ file_handle initial_Qoob =
 	  0
 	};
 	
-int deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir){	
+int deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
   
 	// Set everything up to read
 	int num_entries = 1, i = 1, block = 0;

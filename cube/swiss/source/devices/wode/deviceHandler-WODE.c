@@ -39,7 +39,7 @@ int startupWode() {
   return 0;
 }
 	
-int deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir){	
+int deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
 
 		
   DrawFrameStart();

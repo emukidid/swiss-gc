@@ -128,7 +128,7 @@ void main_loop()
 			
 			// Read the directory/device TOC
 			if(allFiles){ free(allFiles); allFiles = NULL; }
-			files = deviceHandler_readDir(&curFile, &allFiles);
+			files = deviceHandler_readDir(&curFile, &allFiles, -1);
 			if(files<1) { break;}
 			curMenuLocation=ON_FILLIST;
 		}
@@ -169,6 +169,9 @@ void main_loop()
 				case 3:
 					needsRefresh=1;
 					break;
+				case 4:
+					
+					break;
 			}
 			
 		}
@@ -194,7 +197,7 @@ int main ()
 	swissSettings.useHiMemArea = 0;
 	swissSettings.disableInterrupts = 1;
 	swissSettings.useHiLevelPatch = 0;
-	swissSettings.debugUSB = 1;
+	swissSettings.debugUSB = 0;
 	swissSettings.curVideoSelection = AUTO;
 	
 	//debugging stuff
