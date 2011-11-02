@@ -82,7 +82,7 @@ int initialize_card(int slot) {
 }
 
 
-int deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir){	
+int deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
 
 	int num_entries = 1, ret = 0, i = 1, slot = ffile->fileBase>>24;
 	card_dir *memcard_dir = NULL;

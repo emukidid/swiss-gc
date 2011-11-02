@@ -11,7 +11,7 @@
 
 extern file_handle initial_WODE;
 
-int deviceHandler_WODE_readDir(file_handle*, file_handle**);
+int deviceHandler_WODE_readDir(file_handle*, file_handle**, unsigned int);
 int deviceHandler_WODE_readFile(file_handle*, void*, unsigned int);
 int deviceHandler_WODE_seekFile(file_handle*, unsigned int, unsigned int);
 void deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2);

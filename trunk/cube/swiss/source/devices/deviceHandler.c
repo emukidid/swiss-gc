@@ -20,7 +20,7 @@
 file_handle* deviceHandler_initial;
 
 int  (*deviceHandler_init)(file_handle*) = NULL;
-int  (*deviceHandler_readDir)(file_handle*, file_handle**) = NULL;
+int  (*deviceHandler_readDir)(file_handle*, file_handle**, unsigned int) = NULL;
 int  (*deviceHandler_readFile)(file_handle*, void*, unsigned int) = NULL;
 int  (*deviceHandler_writeFile)(file_handle*, void*, unsigned int) = NULL;
 int  (*deviceHandler_deleteFile)(file_handle*) = NULL;
@@ -32,7 +32,7 @@ int  (*deviceHandler_deinit)() = NULL;
 file_handle* deviceHandler_dest_initial;
 
 int  (*deviceHandler_dest_init)(file_handle*) = NULL;
-int  (*deviceHandler_dest_readDir)(file_handle*, file_handle**) = NULL;
+int  (*deviceHandler_dest_readDir)(file_handle*, file_handle**, unsigned int) = NULL;
 int  (*deviceHandler_dest_readFile)(file_handle*, void*, unsigned int) = NULL;
 int  (*deviceHandler_dest_writeFile)(file_handle*, void*, unsigned int) = NULL;
 int  (*deviceHandler_dest_deleteFile)(file_handle*) = NULL;

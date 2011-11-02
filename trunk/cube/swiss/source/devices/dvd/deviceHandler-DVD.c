@@ -218,7 +218,7 @@ int gettype_disc() {
   return UNKNOWN_DISC;
 }
 
-int deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir){
+int deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, unsigned int type){
 
   unsigned int i = 0, isGC = is_gamecube();
   unsigned int  *tmpTable = NULL;

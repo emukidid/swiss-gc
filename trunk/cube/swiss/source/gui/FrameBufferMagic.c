@@ -84,7 +84,7 @@ void DrawProgressBar(int percent, char *message) {
   middleY = y2-y1 < 23 ? y1+3 : (y2+y1)/2-12;
   
   //Draw Text and backfill
-  for(i = (y1+borderSize); i < (y2-borderSize); i++) {
+  for(i = (y1+borderSize); i < (y2-borderSize); i+=2) {
     _DrawHLine (x1+borderSize, x2-borderSize, i, BUTTON_COLOUR_INNER); //inner
   }
   WriteCentre(middleY, message);
@@ -123,7 +123,7 @@ void DrawMessageBox(int type, char *message) {
   middleY = y2-y1 < 23 ? y1+3 : (y2+y1)/2-12;
   
   //Draw Text and backfill
-  for(i = (y1+borderSize); i < (y2-borderSize); i++) {
+  for(i = (y1+borderSize); i < (y2-borderSize); i+=2) {
     _DrawHLine (x1+borderSize, x2-borderSize, i, BUTTON_COLOUR_INNER); //inner
   }
 	char *tok = strtok(message,"\n");
@@ -167,7 +167,7 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
   }
   //Draw Text and backfill (if selected)
   if(mode==B_SELECTED) {
-    for(i = (y1+borderSize); i < (y2-borderSize); i++) {
+    for(i = (y1+borderSize); i < (y2-borderSize); i+=2) {
       _DrawHLine (x1+borderSize, x2-borderSize, i, BUTTON_COLOUR_INNER); //inner
     }
     WriteFontHL(x1 + borderSize+3, middleY, x2-borderSize-8, middleY+24 , message, blit_lookup);
@@ -202,7 +202,7 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
   
   //Draw Text and backfill (if selected)
   if(mode==B_SELECTED) {
-    for(i = (y1+borderSize); i < (y2-borderSize); i++) {
+    for(i = (y1+borderSize); i < (y2-borderSize); i+=2) {
       _DrawHLine (x1+borderSize, x2-borderSize, i, BUTTON_COLOUR_INNER); //inner
     }
     WriteFontHL(x1 + borderSize+3, y1+borderSize, x2-borderSize-8, y1+borderSize+24 , message, blit_lookup);
@@ -235,7 +235,7 @@ void DrawEmptyBox(int x1, int y1, int x2, int y2, int color) {
   x1-=borderSize;x2+=borderSize;y1-=borderSize;y2+=borderSize;
 
   //Draw Text and backfill
-  for(i = (y1+borderSize); i < (y2-borderSize); i++) {
+  for(i = (y1+borderSize); i < (y2-borderSize); i+=2) {
     _DrawHLine (x1+borderSize, x2-borderSize, i, color); //inner
   }
   //Draw Borders

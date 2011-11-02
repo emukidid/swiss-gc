@@ -65,7 +65,7 @@ file_handle initial_IDE1 =
 	  0
 	};
 
-int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir){	
+int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
   
 	DIR* dp = opendir( ffile->name );
 	if(!dp) return -1;
@@ -74,6 +74,7 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir){
 	
 	// Set everything up to read
 	int num_entries = 1, i = 1;
+	char file_name[1024];
 	*dir = malloc( num_entries * sizeof(file_handle) );
 	memset(*dir,0,sizeof(file_handle) * num_entries);
 	(*dir)[0].fileAttrib = IS_SPECIAL;
@@ -84,26 +85,31 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir){
 		if(strlen(entry->d_name) <= 2  && (entry->d_name[0] == '.' || entry->d_name[1] == '.')) {
 			continue;
 		}
-		// Make sure we have room for this one
-		if(i == num_entries){
-			++num_entries;
-			*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
+		memset(&file_name[0],0,1024);
+		sprintf(&file_name[0], "%s/%s", ffile->name, entry->d_name);
+		stat(&file_name[0],&fstat);
+		// Do we want this one?
+		if(type == -1 || ((fstat.st_mode & S_IFDIR) ? (type==IS_DIR) : (type==IS_FILE))) {
+			// Make sure we have room for this one
+			if(i == num_entries){
+				++num_entries;
+				*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
+			}
+			sprintf((*dir)[i].name, "%s/%s", ffile->name, entry->d_name);
+			(*dir)[i].offset = 0;
+			(*dir)[i].size     = fstat.st_size;
+			(*dir)[i].fileAttrib   = (fstat.st_mode & S_IFDIR) ? IS_DIR : IS_FILE;
+			(*dir)[i].fp = 0;
+			if((*dir)[i].fileAttrib == IS_FILE) {
+				get_frag_list((*dir)[i].name);
+				u32 file_base = frag_list->num > 1 ? -1 : frag_list->frag[0].sector;
+				(*dir)[i].fileBase = file_base;
+			}
+			else {
+				(*dir)[i].fileBase = 0;
+			}		
+			++i;
 		}
-		sprintf((*dir)[i].name, "%s/%s", ffile->name, entry->d_name);
-		stat((*dir)[i].name,&fstat);
-		(*dir)[i].offset = 0;
-		(*dir)[i].size     = fstat.st_size;
-		(*dir)[i].fileAttrib   = (fstat.st_mode & S_IFDIR) ? IS_DIR : IS_FILE;
-		(*dir)[i].fp = 0;
-		if((*dir)[i].fileAttrib == IS_FILE) {
-			get_frag_list((*dir)[i].name);
-			u32 file_base = frag_list->num > 1 ? -1 : frag_list->frag[0].sector;
-			(*dir)[i].fileBase = file_base;
-		}
-		else {
-			(*dir)[i].fileBase = 0;
-		}		
-		++i;
 	}
 	
 	closedir(dp);
