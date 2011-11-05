@@ -163,11 +163,6 @@ void ogc_video__reset()
 					*(volatile unsigned long*)0x80002F40 = VI_TVMODE_NTSC_PROG;
 					newmode = &TVNtsc480Prog;
 					DrawMessageBox(D_INFO,"Video Mode: NTSC 480p");
-					// I don't think this is correct
-					syssram *sram;
-					sram = __SYS_LockSram();
-					sram->flags |= 2;
-					__SYS_UnlockSram(1);
 				}
 				else {
 					*(volatile unsigned long*)0x80002F40 = VI_TVMODE_NTSC_INT;
@@ -461,6 +456,10 @@ unsigned int load_app(int mode)
 		if(swissSettings.debugUSB) {
 			dvd_patchfwrite(app_dst, app_len);
 		}
+		// 480p Forcing
+		if(swissSettings.curVideoSelection == P480) {
+			patch_video_480p(app_dst, app_len);
+		}
 		DCFlushRange(app_dst, app_len);
 		ICInvalidateRange(app_dst, app_len);
 	}
@@ -507,7 +506,7 @@ unsigned int load_app(int mode)
 	// Check DVD Status, make sure it's error code 0
 	sprintf(txtbuffer, "DVD: %08X\r\n",dvd_get_error());
 	print_gecko(txtbuffer);
-	
+
 	// Disable interrupts and exceptions
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
 	
