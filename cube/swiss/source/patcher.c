@@ -9,6 +9,7 @@
 #include <string.h>
 #include <math.h>
 #include <malloc.h>
+#include "swiss.h"
 #include "main.h"
 #include "patcher.h"
 #include "TDPATCH.H"
@@ -239,6 +240,33 @@ const u32 GXSETVAT_PAL_patched[32] = {
     0x4082ffa0, 0x38000000, 0x980904f2, 0x4e800020
 };
 
+
+// Copy me to 0x80002808 - thx qoob
+static const u32 patch_viconfigure_480p[22] = {
+	0x00000002,
+	0x028001E0,
+	0x01E00028,
+	0x00000280,
+	0x01E00000,
+	0x00000000,
+	0x38800006,  		// li          r4, 6
+	0x7C8903A6,  		// mtctr       r4
+	0x3CC08000,  		// lis         r6, 0x8000
+	0x60C42804,  		// ori         r4, r6, 0x2804
+	0x80A40004,  		// lwz         r5, 4 (r4)
+	0x7CA51670,  		// srawi       r5, r5, 2
+	0x90A600CC,  		// stw         r5, 0x00CC (r6)
+	0x3863FFFC,  		// subi        r3, r3, 4
+	0x84A40004,  		// lwzu        r5, 4 (r4)
+	0x94A30004,  		// stwu        r5, 4 (r3)
+	0x4200FFF8,  		// bdnz+       0x80002840 ?
+	0x7C6000A6,  		// mfmsr       r3
+	0x5464045E,  		// rlwinm      r4, r3, 0, 17, 15
+	0x7C800124,  		// mtmsr       r4
+	0x54638FFE,  		// rlwinm      r3, r3, 17, 31, 31
+	0x4E800020  		// blr
+};
+
 int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 {
 	u32 i;
@@ -285,10 +313,19 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 
 	FP.Length = i;
 
-	//printf("Length: 0x%02X\n", FP.Length );
-	//printf("FCalls: %d\n", FP.FCalls );
-	//printf("Loads : %d\n", FP.Loads );
-	//printf("Stores: %d\n", FP.Stores );
+	//sprintf(txtbuffer,"Length: 0x%02X\r\n", FP.Length );
+	//print_gecko(txtbuffer);
+	//sprintf(txtbuffer,"FCalls: %d\r\n", FP.FCalls );
+	//print_gecko(txtbuffer);
+	//sprintf(txtbuffer,"Loads : %d\r\n", FP.Loads );
+	//print_gecko(txtbuffer);
+	//sprintf(txtbuffer,"Stores: %d\r\n", FP.Stores );
+	//print_gecko(txtbuffer);
+	//sprintf(txtbuffer,"Branch : %d\r\n", FP.Branch );
+	//print_gecko(txtbuffer);
+	//sprintf(txtbuffer,"Moves: %d\r\n", FP.Moves );
+	//print_gecko(txtbuffer);
+	
 
 	if( memcmp( &FP, functionPattern, sizeof(u32) * 6 ) == 0 )
 		return 1;
@@ -386,6 +423,9 @@ void install_code()
 	else if((deviceHandler_initial == &initial_DVD) && (drive_status == DEBUG_MODE)) {
 		memcpy((void*)0x80001800,TDPatch,TDPATCH_LEN);
 	}
+	if(swissSettings.curVideoSelection == P480) {
+		memcpy((void*)0x80002808,patch_viconfigure_480p,sizeof(patch_viconfigure_480p));
+	}
 }
 
 int dvd_patchDVDRead(void *addr, u32 len) {
@@ -430,6 +470,32 @@ int dvd_patchDVDRead(void *addr, u32 len) {
 		addr_start += 4;
 	}
 	return patched;
+}
+
+void patch_video_480p(u8 *data, u32 length) {
+	int i,j;
+	FuncPattern VIConfigurePatterns[2] = {	{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure_v1" },
+											{0x798, 105, 44, 12, 38, 63, 0, 0, "VIConfigure_v2"}};
+	for( i=0; i < length; i+=4 )
+	{
+		if( *(u32*)(data + i ) != 0x7C0802A6 )
+			continue;
+		for(j = 0; j < 2; j++) {
+			if( find_pattern( (u8*)(data+i), length, &VIConfigurePatterns[j] ) )
+			{
+				sprintf(txtbuffer, "Found [%s] @ 0x%08X len %i\n", VIConfigurePatterns[j].Name, (u32)data + i, VIConfigurePatterns[j].Length);
+				print_gecko(txtbuffer);
+				
+				sprintf(txtbuffer, "Writing Jump for [%s] at 0x%08X len %i\n", 
+						VIConfigurePatterns[j].Name, (u32)data + i, VIConfigurePatterns[j].PatchLength);
+				print_gecko(txtbuffer);
+
+				writeBranchLink((u32)data+i+36,0x80002820);
+				DCFlushRange((u8*)(data+i), VIConfigurePatterns[j].Length);
+				ICInvalidateRange((u8*)(data+i), VIConfigurePatterns[j].Length);	
+			}
+		}
+	}
 }
 
 void dvd_patchAISCount(void *addr, u32 len) {

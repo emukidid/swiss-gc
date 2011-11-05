@@ -72,6 +72,7 @@ void set_base_addr(int useHi);
 u32 get_base_addr();
 void patchZeldaWW(void *addr, u32 len,int mode);
 int applyPatches(u8 *data, u32 length, u32 disableInterrupts);
+void patch_video_480p(u8 *data, u32 len);
 
 #endif
 
