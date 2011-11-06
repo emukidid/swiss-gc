@@ -206,6 +206,7 @@ int main ()
 			usb_flush(1);
 		}
 		sprintf(txtbuffer, "Arena Size: %iKb\r\n",(SYS_GetArena1Hi()-SYS_GetArena1Lo())/1024);
+		print_gecko(txtbuffer);
 	}
 
 	while(1) {
