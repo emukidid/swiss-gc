@@ -117,7 +117,7 @@ int deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, unsigned i
 		(*dir)[i].name[CARD_FILENAMELEN+4] = '\0';
 		(*dir)[i].fileAttrib = IS_FILE;
 		(*dir)[i].offset = 0;
-		(*dir)[i].size     = memcard_dir->filelen;
+		(*dir)[i].size     = memcard_dir->filelen + sizeof(GCI);
 		(*dir)[i].fileBase     = ffile->fileBase | (memcard_dir->fileno & 0xFFFFFF);
 		ret = CARD_FindNext (memcard_dir);
 		++i;
@@ -133,32 +133,91 @@ int deviceHandler_CARD_seekFile(file_handle* file, unsigned int where, unsigned 
 	return file->offset;
 }
 
+// This is only called where length = file.size
 int deviceHandler_CARD_readFile(file_handle* file, void* buffer, unsigned int length){
+	unsigned int slot = file->fileBase>>24, ret = 0, file_no = file->fileBase&0xFFFFFF;
+	void *dst = buffer;
+	
+	// Get the sector size
+	u32 SectorSize = 0;
+	CARD_GetSectorSize (slot, &SectorSize);
+	
+	// Create the .gci header
+	card_stat CardStat;
+	GCI gci;
+	CARD_GetStatus(slot,file_no,&CardStat);        
+	memset(&gci, 0xFF, sizeof(GCI));
+	/*** Populate the GCI ***/
+	memcpy(&gci.gamecode, &CardStat.gamecode, 4);
+	memcpy(&gci.company, &CardStat.company, 2);
+	gci.banner_fmt = CardStat.banner_fmt;
+	memcpy(&gci.filename, &CardStat.filename, 0x20);
+	gci.time = CardStat.time;
+	gci.icon_addr = CardStat.icon_addr;
+	gci.icon_fmt = CardStat.icon_fmt;
+	gci.icon_speed = CardStat.icon_speed;
+	gci.unknown1 = gci.unknown2 = 0;
+	gci.index = 32;
+	gci.filesize8 = (CardStat.len / 8192);
+	gci.comment_addr = CardStat.comment_addr;
+	memcpy(dst, &gci, sizeof(GCI));
+	dst+= sizeof(GCI);
+	
+	// Re-init the card with the original file gamecode & company
+	char game_code[16];	
+	memcpy(&game_code[0],&gci.gamecode, 4);
+	game_code[4] = 0;
+	CARD_SetGamecode((const char *)&game_code[0]);
+	memcpy(&game_code[0],&gci.company, 2);
+	game_code[2] = 0;
+	CARD_SetCompany((const char *)&game_code[0]);
+	
+	// Use the original file name
+	char file_name[CARD_FILENAMELEN];	
+	memset(&file_name[0],0,CARD_FILENAMELEN);
+	memcpy(&file_name[0], file->name,strlen(file->name)-4);
+	
+	sprintf(txtbuffer, "Try to open: [%s]\r\n",&file_name[0]);
+	print_gecko(txtbuffer);
+
+	// Read the actual file data now
 	char *read_buffer = NULL;
 	card_file *memcard_file = NULL;
-	unsigned int slot = file->fileBase>>24, ret = 0;
-	
 	memcard_file = (card_file*)memalign(32,sizeof(card_file));
 	if(!memcard_file) {
 		return -2;
 	}
 	memset(memcard_file, 0, sizeof(card_file));
-	file->name[strlen(file->name)-5]=0;
 	
-	if(CARD_Open(slot, (const char*)txtbuffer, memcard_file) != CARD_ERROR_NOFILE){
+	// Open the Entry
+	if((ret = CARD_Open(slot, (const char*)&file_name[0], memcard_file)) != CARD_ERROR_NOFILE){
 		/* Allocate the read buffer */
-		read_buffer = memalign(32,memcard_file->len);
+		u32 readSize = ((memcard_file->len % SectorSize) != 0) ? 
+						((memcard_file->len/SectorSize)+1) * SectorSize : memcard_file->len;
+		read_buffer = memalign(32,SectorSize);
 		if(!read_buffer) {
 			free(memcard_file);
 			return -2;
 		}
 		
+		sprintf(txtbuffer, "Reading: [%i] bytes\r\n",readSize);
+		print_gecko(txtbuffer);
+		
 		/* Read the file */
-		ret = CARD_Read(memcard_file,read_buffer, memcard_file->len, 0);
-		if(!ret) {
-			memcpy(buffer,read_buffer+file->offset,length);
-			file->offset += length;
+		int i = 0;
+		for(i=0;i<(readSize/SectorSize);i++) {
+			ret = CARD_Read(memcard_file,read_buffer, SectorSize, i*SectorSize);
+			if(!ret) {
+				memcpy(dst,read_buffer,(i==(readSize/SectorSize)-1) ? (memcard_file->len % SectorSize):SectorSize);
+			}
+			dst+=SectorSize;
+			sprintf(txtbuffer, "Read: [%i] bytes ret [%i]\r\n",SectorSize,ret);
+			print_gecko(txtbuffer);
 		}
+	}
+	else {
+		sprintf(txtbuffer, "ret: [%i]\r\n",ret);
+		print_gecko(txtbuffer);
 	}
 	CARD_Close(memcard_file);
 	free(read_buffer);

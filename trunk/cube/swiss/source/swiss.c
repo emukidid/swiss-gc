@@ -703,8 +703,9 @@ void manage_file() {
 			}
 			else {
 				// Read from one file and write to the new directory
-				u32 curOffset = 0, cancelled = 0;
-				char *readBuffer = (char*)memalign(32,0x8000);
+				u32 isCard = deviceHandler_readFile == deviceHandler_CARD_readFile;
+				u32 curOffset = 0, cancelled = 0, chunkSize = isCard ? curFile.size : 0x8000;
+				char *readBuffer = (char*)memalign(32,chunkSize);
 				sprintf(destFile->name, "%s/%s",destFile->name,stripInvalidChars(getRelativeName(&curFile.name[0])));
 				while(curOffset < curFile.size) {
 					u32 buttons = PAD_ButtonsHeld(0);
@@ -716,7 +717,7 @@ void manage_file() {
 					DrawFrameStart();
 					DrawProgressBar((int)((float)((float)curOffset/(float)curFile.size)*100), txtbuffer);
 					DrawFrameFinish();
-					u32 amountToCopy = curOffset + 0x8000 > curFile.size ? curFile.size - curOffset : 0x8000;
+					u32 amountToCopy = curOffset + chunkSize > curFile.size ? curFile.size - curOffset : chunkSize;
 					ret = deviceHandler_readFile(&curFile, readBuffer, amountToCopy);
 					if(ret != amountToCopy) {
 						DrawFrameStart();
