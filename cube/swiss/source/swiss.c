@@ -702,11 +702,23 @@ void manage_file() {
 				wait_press_A();
 			}
 			else {
+				sprintf(destFile->name, "%s/%s",destFile->name,stripInvalidChars(getRelativeName(&curFile.name[0])));
+				
+				u32 isDestCard = deviceHandler_dest_writeFile == deviceHandler_CARD_writeFile;
+				if(isDestCard && strstr(destFile->name,".gci")==NULL && strstr(destFile->name,".GCI")==NULL) {
+					// Only .GCI files can go to the memcard
+					DrawFrameStart();
+					DrawMessageBox(D_INFO,"Only GCI files allowed on memcard. Press A to continue");
+					DrawFrameFinish();
+					wait_press_A();
+					return;
+				}
+			
 				// Read from one file and write to the new directory
 				u32 isCard = deviceHandler_readFile == deviceHandler_CARD_readFile;
-				u32 curOffset = 0, cancelled = 0, chunkSize = isCard ? curFile.size : 0x8000;
+				u32 curOffset = 0, cancelled = 0, chunkSize = (isCard||isDestCard) ? curFile.size : 0x8000;
 				char *readBuffer = (char*)memalign(32,chunkSize);
-				sprintf(destFile->name, "%s/%s",destFile->name,stripInvalidChars(getRelativeName(&curFile.name[0])));
+				
 				while(curOffset < curFile.size) {
 					u32 buttons = PAD_ButtonsHeld(0);
 					if(buttons & PAD_BUTTON_B) {
