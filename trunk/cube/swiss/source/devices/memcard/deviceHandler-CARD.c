@@ -226,8 +226,79 @@ int deviceHandler_CARD_readFile(file_handle* file, void* buffer, unsigned int le
 	return !ret ? length : ret;
 }
 
-int deviceHandler_CARD_writeFile(file_handle* file, void* buffer, unsigned int length){
-	return 0;
+// Only accepts a .gci file
+int deviceHandler_CARD_writeFile(file_handle* file, void* data, unsigned int length) {
+	card_stat CardStatus;
+	card_dir CardDir;
+	card_file CardFile;
+	GCI gci; 
+	int err = 0;
+	unsigned int SectorSize = 0, slot = file->fileBase>>24;
+	char tmpBuf[5];
+	
+	/*** Clear out the status ***/
+	memset(&CardStatus, 0, sizeof(card_stat));
+	memcpy(&gci, data, sizeof(GCI));
+
+	memcpy(&CardStatus.gamecode, &gci.gamecode, 4);
+	memcpy(&CardStatus.company, &gci.company, 2);
+	CardStatus.banner_fmt = gci.banner_fmt;
+	memcpy(&CardStatus.filename, &gci.filename, CARD_FILENAMELEN);
+	CardStatus.time = gci.time;
+	CardStatus.icon_addr = gci.icon_addr;
+	CardStatus.icon_fmt = gci.icon_fmt;
+	CardStatus.icon_speed = gci.icon_speed;
+	CardStatus.len = gci.filesize8 * 8192;
+	CardStatus.comment_addr = gci.comment_addr;
+	
+	CARD_Init((char*)gci.gamecode,(char*)gci.company);
+	memcpy(&tmpBuf[0],(char*)gci.gamecode,4);
+	tmpBuf[4]='\0';
+	CARD_SetGamecode(&tmpBuf[0]);
+	memcpy(&tmpBuf[0],(char*)gci.company,2);
+	tmpBuf[2]='\0';
+	CARD_SetCompany(&tmpBuf[0]);
+	err = CARD_Mount (slot, sys_area, NULL);
+	if (err) return -1;
+
+  	CARD_GetSectorSize (slot, &SectorSize);
+  	
+  	/*** If this file exists, abort ***/
+	err = CARD_FindFirst (slot, &CardDir, false);
+	while (err != CARD_ERROR_NOFILE){
+	    if (strcmp ((char *) CardDir.filename, (char *)gci.filename) == 0){
+			/*** Found the file - abort ***/
+		    CARD_Unmount (slot);
+		    return -2;
+		}
+    	err = CARD_FindNext (&CardDir);
+	}
+    /*** Now restore the file from backup ***/
+  	err = CARD_Create (slot, (char *) gci.filename, gci.filesize8 * 8192, &CardFile);
+  	if (err){
+    	CARD_Unmount (slot);
+      	return -3;
+  	}
+  	
+  	/*** Now write the file data, in sector sized chunks ***/
+  	int offset = 0;
+  	while (offset < (gci.filesize8 * 8192)){
+    	if ((offset + SectorSize) <= (gci.filesize8 * 8192)) {
+        	CARD_Write (&CardFile, data + 0x40 + offset, SectorSize, offset);
+    	}
+     	else {	
+     		CARD_Write (&CardFile, data + 0x40 + offset, ((offset + SectorSize) - (gci.filesize8 * 8192)), offset);
+     	}
+        offset += SectorSize;
+  	}
+  
+	/*** Finally, update the status ***/
+	CARD_SetStatus (slot, CardFile.filenum, &CardStatus);
+	
+	CARD_Close (&CardFile);
+	CARD_Unmount (slot);
+
+	return length;
 }
 
 void deviceHandler_CARD_setupFile(file_handle* file, file_handle* file2) {
@@ -243,7 +314,7 @@ int deviceHandler_CARD_init(file_handle* file){
 		wait_press_A();
 		return file->status;
 	}
-	return file->status;
+	return 1;
 }
 
 int deviceHandler_CARD_deinit(file_handle* file) {
