@@ -25,6 +25,11 @@ MACHDEP =  -DGEKKO -mvgc -mcpu=750 -meabi -mhard-float
 	@gxtexconv -s $< -d $(DEPSDIR)/$*.d -o $@
 
 #---------------------------------------------------------------------------------
+%.tpl.o	:	%.tpl
+	@echo $(notdir $<)
+	@$(bin2o)
+	
+#---------------------------------------------------------------------------------
 %.elf:
 	@echo linking ... $(notdir $@)
 	@$(LD)  $^ $(LDFLAGS) $(LIBPATHS) $(LIBS) -o $@
@@ -54,6 +59,8 @@ SOURCES		:=  source \
 			  source/images/buttons \
               source/gui
 DATA		:=	data  
+TEXTURES	:=	source/images \
+              source/images/buttons
 INCLUDES	:= include $(SOURCES)
 
 #---------------------------------------------------------------------------------
@@ -86,7 +93,8 @@ ifneq ($(BUILD),$(notdir $(CURDIR)))
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-			$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+					$(foreach dir,$(DATA),$(CURDIR)/$(dir)) \
+					$(foreach dir,$(TEXTURES),$(CURDIR)/$(dir))
 
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
@@ -98,6 +106,8 @@ CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+SCFFILES	:=	$(foreach dir,$(TEXTURES),$(notdir $(wildcard $(dir)/*.scf)))
+TPLFILES	:=	$(SCFFILES:.scf=.tpl)
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -109,8 +119,9 @@ else
 endif
 
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
-			$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
-			$(sFILES:.s=.o) $(SFILES:.S=.o)
+					$(addsuffix .o,$(TPLFILES)) \
+					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
+					$(sFILES:.s=.o) $(SFILES:.S=.o)
 
 #---------------------------------------------------------------------------------
 # build a list of include paths

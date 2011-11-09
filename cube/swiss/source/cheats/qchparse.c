@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <malloc.h>
 #include <sys/dir.h>
-#include "font.h"
+//#include "font.h"
 #include "qchparse.h"
 #include "main.h"
 #include "gui/FrameBufferMagic.h"
@@ -202,7 +202,7 @@ int QCH_Find(char *gamename, curGameCheats *chts)
 		for(j = 0; i < max; ++i, ++j) {
 			DrawSelectableButton(30,170+(j*32), vmode->fbWidth-33, 170+(j*32)+30, cheatGameNamesp[i], (i == curChtSelection) ? B_SELECTED:B_NOSELECT, -1);
 		}
-		WriteCentre(364, "(A) Select - (B) Return");
+		WriteFontStyled(640/2, 364, "(A) Select - (B) Return", 1.0f, true, defaultColor);
 		DrawFrameFinish();
 		while ( !(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && 
 		        !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) &&
@@ -229,7 +229,7 @@ int QCH_Find(char *gamename, curGameCheats *chts)
 	while(1) {
   	DrawFrameStart();
 		DrawEmptyBox(25,120, vmode->fbWidth-28, 400, COLOR_BLACK);
-		WriteCentre(130,&chts->GameName[0]);
+		WriteFontStyled(640/2, 130, &chts->GameName[0], 1.0f, true, defaultColor);
 		
 		i = MIN(MAX(0,curChtSelection-(CHTS_PER_PAGE/2)),MAX(0,chts->numCheats-CHTS_PER_PAGE));
 		max = MIN(chts->numCheats, MAX(curChtSelection+(CHTS_PER_PAGE/2),CHTS_PER_PAGE));
@@ -241,7 +241,7 @@ int QCH_Find(char *gamename, curGameCheats *chts)
   		  sprintf(txtbuffer,"%s",&chts->cheats[i].cht_name[0]);
 		  DrawSelectableButton(30,170+(j*32), vmode->fbWidth-33-45, 170+(j*32)+30, txtbuffer, (i == curChtSelection) ?B_SELECTED:B_NOSELECT, -1);
 		}
-	  WriteCentre(364,"(Start) Apply - (A) Toggle - (B) Abort");
+		WriteFontStyled(640/2, 364, "(Start) Apply - (A) Toggle - (B) Abort", 1.0f, true, defaultColor);
 		DrawFrameFinish();
 		while ( !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)  && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) &&
 		        !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) &&
@@ -256,7 +256,7 @@ int QCH_Find(char *gamename, curGameCheats *chts)
 	if(apply) {
   	DrawFrameStart();
   	DrawEmptyBox(25,120, vmode->fbWidth-28, 400, COLOR_BLACK);
-  	WriteCentre(130,&chts->GameName[0]);
+	WriteFontStyled(640/2, 130, &chts->GameName[0], 1.0f, true, defaultColor);
   	u32 *codez = getCodeBasePtr();
   	memset(codez,0,getCodeBaseSize());
   
@@ -271,14 +271,10 @@ int QCH_Find(char *gamename, curGameCheats *chts)
   	  }
   	}
   	sprintf(txtbuffer,"%d codes are enabled",j);
-  	WriteCentre(190,txtbuffer);
-  	WriteCentre(370,"Press A to return");
+	WriteFontStyled(640/2, 190, txtbuffer, 1.0f, true, defaultColor);
+	WriteFontStyled(640/2, 370, "Press A to return", 1.0f, true, defaultColor);
   	DrawFrameFinish();
   	wait_press_A();
 	}
   return 1; //ok
 }
-
-
-  
-

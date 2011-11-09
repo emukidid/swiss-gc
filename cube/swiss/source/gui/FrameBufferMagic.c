@@ -17,48 +17,248 @@
 #include "FrameBufferMagic.h"
 #include "IPLFontWrite.h"
 #include "bnr2yuv.h"
-#include "backdrop.h"
+//#include "backdrop.h"
 #include "swiss.h"
 #include "main.h"
 #include "ata.h"
 #include "btns.h"
 
-void _DrawBackdrop() {
-  drawBitmap(backdrop_Bitmap, 0, 0, 640,480);
-  WriteFont(55,40, "Swiss v0.1 for Gamecube");
-}
+#include "backdrop_tpl.h"
+#include "backdrop.h"
+#include "gcdvdsmall_tpl.h"
+#include "gcdvdsmall.h"
+#include "sdsmall_tpl.h"
+#include "sdsmall.h"
+#include "hdd_tpl.h"
+#include "hdd.h"
+#include "qoob_tpl.h"
+#include "qoob.h"
+#include "wodeimg_tpl.h"
+#include "wodeimg.h"
+#include "btnnohilight_tpl.h"
+#include "btnnohilight.h"
+#include "btnhilight_tpl.h"
+#include "btnhilight.h"
+#include "btndevice_tpl.h"
+#include "btndevice.h"
+#include "btnsettings_tpl.h"
+#include "btnsettings.h"
+#include "btninfo_tpl.h"
+#include "btninfo.h"
+#include "btnrefresh_tpl.h"
+#include "btnrefresh.h"
+#include "btnexit_tpl.h"
+#include "btnexit.h"
 
-void _DrawHLine (int x1, int x2, int y, int color)
+// Banner is 96 cols * 32 lines in RGBA5551 fmt
+#define BannerSize (96*32*2)
+GXTexObj bannerTexObj;
+u8 *bannerData;
+
+TPLFile backdropTPL;
+GXTexObj backdropTexObj;
+TPLFile gcdvdsmallTPL;
+GXTexObj gcdvdsmallTexObj;
+TPLFile sdsmallTPL;
+GXTexObj sdsmallTexObj;
+TPLFile hddTPL;
+GXTexObj hddTexObj;
+TPLFile qoobTPL;
+GXTexObj qoobTexObj;
+TPLFile wodeimgTPL;
+GXTexObj wodeimgTexObj;
+TPLFile btnnohilightTPL;
+GXTexObj btnnohilightTexObj;
+TPLFile btnhilightTPL;
+GXTexObj btnhilightTexObj;
+TPLFile btndeviceTPL;
+GXTexObj btndeviceTexObj;
+TPLFile btnsettingsTPL;
+GXTexObj btnsettingsTexObj;
+TPLFile btninfoTPL;
+GXTexObj btninfoTexObj;
+TPLFile btnrefreshTPL;
+GXTexObj btnrefreshTexObj;
+TPLFile btnexitTPL;
+GXTexObj btnexitTexObj;
+
+void init_textures() 
 {
-  int i;
-  y = (vmode->fbWidth/2) * y;
-  x1 >>= 1;
-  x2 >>= 1;
-  for (i = x1; i <= x2; i++) xfb[whichfb][y + i] = color;
+	bannerData = memalign(32,BannerSize);
+	memset(bannerData,0,BannerSize);
+	DCFlushRange(bannerData,BannerSize);
+	GX_InitTexObj(&bannerTexObj,bannerData,96,32,GX_TF_RGB5A3,GX_CLAMP,GX_CLAMP,GX_FALSE);
+
+	TPL_OpenTPLFromMemory(&backdropTPL, (void *)backdrop_tpl, backdrop_tpl_size);
+	TPL_GetTexture(&backdropTPL,backdrop,&backdropTexObj);
+	TPL_OpenTPLFromMemory(&gcdvdsmallTPL, (void *)gcdvdsmall_tpl, gcdvdsmall_tpl_size);
+	TPL_GetTexture(&gcdvdsmallTPL,gcdvdsmall,&gcdvdsmallTexObj);
+	TPL_OpenTPLFromMemory(&sdsmallTPL, (void *)sdsmall_tpl, sdsmall_tpl_size);
+	TPL_GetTexture(&sdsmallTPL,sdsmall,&sdsmallTexObj);
+	TPL_OpenTPLFromMemory(&hddTPL, (void *)hdd_tpl, hdd_tpl_size);
+	TPL_GetTexture(&hddTPL,hdd,&hddTexObj);
+	TPL_OpenTPLFromMemory(&qoobTPL, (void *)qoob_tpl, qoob_tpl_size);
+	TPL_GetTexture(&qoobTPL,qoob,&qoobTexObj);
+	TPL_OpenTPLFromMemory(&wodeimgTPL, (void *)wodeimg_tpl, wodeimg_tpl_size);
+	TPL_GetTexture(&wodeimgTPL,wodeimg,&wodeimgTexObj);
+	TPL_OpenTPLFromMemory(&btnnohilightTPL, (void *)btnnohilight_tpl, btnnohilight_tpl_size);
+	TPL_GetTexture(&btnnohilightTPL,btnnohilight,&btnnohilightTexObj);
+	TPL_OpenTPLFromMemory(&btnhilightTPL, (void *)btnhilight_tpl, btnhilight_tpl_size);
+	TPL_GetTexture(&btnhilightTPL,btnhilight,&btnhilightTexObj);
+	TPL_OpenTPLFromMemory(&btndeviceTPL, (void *)btndevice_tpl, btndevice_tpl_size);
+	TPL_GetTexture(&btndeviceTPL,btndevice,&btndeviceTexObj);
+	TPL_OpenTPLFromMemory(&btnsettingsTPL, (void *)btnsettings_tpl, btnsettings_tpl_size);
+	TPL_GetTexture(&btnsettingsTPL,btnsettings,&btnsettingsTexObj);
+	TPL_OpenTPLFromMemory(&btninfoTPL, (void *)btninfo_tpl, btninfo_tpl_size);
+	TPL_GetTexture(&btninfoTPL,btninfo,&btninfoTexObj);
+	TPL_OpenTPLFromMemory(&btnrefreshTPL, (void *)btnrefresh_tpl, btnrefresh_tpl_size);
+	TPL_GetTexture(&btnrefreshTPL,btnrefresh,&btnrefreshTexObj);
+	TPL_OpenTPLFromMemory(&btnexitTPL, (void *)btnexit_tpl, btnexit_tpl_size);
+	TPL_GetTexture(&btnexitTPL,btnexit,&btnexitTexObj);
 }
 
-void _DrawVLine (int x, int y1, int y2, int color)
+void drawInit()
 {
-  int i;
-  x >>= 1;
-  for (i = y1; i <= y2; i++) xfb[whichfb][x + (vmode->fbWidth * i) / 2] = color;
+	Mtx44 GXprojection2D;
+	Mtx GXmodelView2D;
+
+	// Reset various parameters from gfx plugin
+	GX_SetCoPlanar(GX_DISABLE);
+	GX_SetClipMode(GX_CLIP_ENABLE);
+//	GX_SetScissor(0,0,vmode->fbWidth,vmode->efbHeight);
+	GX_SetAlphaCompare(GX_ALWAYS,0,GX_AOP_AND,GX_ALWAYS,0);
+
+	guMtxIdentity(GXmodelView2D);
+	GX_LoadTexMtxImm(GXmodelView2D,GX_TEXMTX0,GX_MTX2x4);
+	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);
+	guOrtho(GXprojection2D, 0, 479, 0, 639, 0, 700);
+	GX_LoadProjectionMtx(GXprojection2D, GX_ORTHOGRAPHIC);
+//	GX_SetViewport (0, 0, vmode->fbWidth, vmode->efbHeight, 0, 1);
+
+	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_TRUE);
+
+	GX_ClearVtxDesc();
+	GX_SetVtxDesc(GX_VA_PTNMTXIDX, GX_PNMTX0);
+	GX_SetVtxDesc(GX_VA_TEX0MTXIDX, GX_TEXMTX0);
+	GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
+	GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+	GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+	//set vertex attribute formats here
+	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_F32, 0);
+	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+
+	//enable textures
+	GX_SetNumChans (1);
+	GX_SetNumTexGens (1);
+	GX_SetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
+
+	GX_SetNumTevStages (1);
+	GX_SetTevOrder (GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+	GX_SetTevOp (GX_TEVSTAGE0, GX_PASSCLR);
+
+	//set blend mode
+	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR); //Fix src alpha
+	GX_SetColorUpdate(GX_ENABLE);
+//	GX_SetAlphaUpdate(GX_ENABLE);
+//	GX_SetDstAlpha(GX_DISABLE, 0xFF);
+	//set cull mode
+	GX_SetCullMode (GX_CULL_NONE);
 }
 
-void _DrawBox (int x1, int y1, int x2, int y2, int color)
+void fillRect(int x, int y, int width, int height, int depth, GXColor color)
 {
-  _DrawHLine (x1, x2, y1, color);
-  _DrawHLine (x1, x2, y2, color);
-  _DrawVLine (x1, y1, y2, color);
-  _DrawVLine (x2, y1, y2, color);
+	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+		GX_Position3f32((float) x,(float) y,(float) depth );
+		GX_Color4u8(color.r, color.g, color.b, color.a);
+		GX_TexCoord2f32(0.0f,0.0f);
+		GX_Position3f32((float) (x+width),(float) y,(float) depth );
+		GX_Color4u8(color.r, color.g, color.b, color.a);
+		GX_TexCoord2f32(0.0f,0.0f);
+		GX_Position3f32((float) (x+width),(float) (y+height),(float) depth );
+		GX_Color4u8(color.r, color.g, color.b, color.a);
+		GX_TexCoord2f32(0.0f,0.0f);
+		GX_Position3f32((float) x,(float) (y+height),(float) depth );
+		GX_Color4u8(color.r, color.g, color.b, color.a);
+		GX_TexCoord2f32(0.0f,0.0f);
+	GX_End();
 }
 
-void _DrawBoxFilled (int x1, int y1, int x2, int y2, int color)
+void DrawImage(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2)
 {
-  int h;
-  for (h = y1; h <= y2; h++) _DrawHLine (x1, x2, h, color);
+	drawInit();
+	GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
+	GX_InvalidateTexAll();
+
+	switch(textureId)
+	{
+	case TEX_BACKDROP:
+		GX_LoadTexObj(&backdropTexObj, GX_TEXMAP0);
+		break;
+	case TEX_BANNER:
+		GX_LoadTexObj(&bannerTexObj, GX_TEXMAP0);
+		break;
+	case TEX_GCDVDSMALL:
+		GX_LoadTexObj(&gcdvdsmallTexObj, GX_TEXMAP0);
+		break;
+	case TEX_SDSMALL:
+		GX_LoadTexObj(&sdsmallTexObj, GX_TEXMAP0);
+		break;
+	case TEX_HDD:
+		GX_LoadTexObj(&hddTexObj, GX_TEXMAP0);
+		break;
+	case TEX_QOOB:
+		GX_LoadTexObj(&qoobTexObj, GX_TEXMAP0);
+		break;
+	case TEX_WODEIMG:
+		GX_LoadTexObj(&wodeimgTexObj, GX_TEXMAP0);
+		break;
+	case TEX_BTNNOHILIGHT:
+		GX_LoadTexObj(&btnnohilightTexObj, GX_TEXMAP0);
+		break;
+	case TEX_BTNHILIGHT:
+		GX_LoadTexObj(&btnhilightTexObj, GX_TEXMAP0);
+		break;
+	case TEX_BTNDEVICE:
+		GX_LoadTexObj(&btndeviceTexObj, GX_TEXMAP0);
+		break;
+	case TEX_BTNSETTINGS:
+		GX_LoadTexObj(&btnsettingsTexObj, GX_TEXMAP0);
+		break;
+	case TEX_BTNINFO:
+		GX_LoadTexObj(&btninfoTexObj, GX_TEXMAP0);
+		break;
+	case TEX_BTNREFRESH:
+		GX_LoadTexObj(&btnrefreshTexObj, GX_TEXMAP0);
+		break;
+	case TEX_BTNEXIT:
+		GX_LoadTexObj(&btnexitTexObj, GX_TEXMAP0);
+		break;
+	}	
+
+	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+		GX_Position3f32((float) x,(float) y,(float) depth );
+		GX_Color4u8(255, 255, 255, 255);
+		GX_TexCoord2f32(s1,t1);
+		GX_Position3f32((float) (x+width),(float) y,(float) depth );
+		GX_Color4u8(255, 255, 255, 255);
+		GX_TexCoord2f32(s2,t1);
+		GX_Position3f32((float) (x+width),(float) (y+height),(float) depth );
+		GX_Color4u8(255, 255, 255, 255);
+		GX_TexCoord2f32(s2,t2);
+		GX_Position3f32((float) x,(float) (y+height),(float) depth );
+		GX_Color4u8(255, 255, 255, 255);
+		GX_TexCoord2f32(s1,t2);
+	GX_End();
 }
 
-// Externally accessible functions
+void _DrawBackdrop() 
+{
+	DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+//  drawBitmap(backdrop_Bitmap, 0, 0, 640,480);
+	WriteFont(55,40, "Swiss v0.1 for Gamecube");
+}
 
 // Call this when starting a screen
 void DrawFrameStart() {
@@ -68,206 +268,228 @@ void DrawFrameStart() {
 
 // Call this at the end of a screen
 void DrawFrameFinish() {
-  VIDEO_SetNextFramebuffer (xfb[whichfb]);
-  VIDEO_Flush ();
-  VIDEO_WaitVSync ();
-  if(vmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
+	//Copy EFB->XFB
+	GX_SetCopyClear((GXColor){0, 0, 0, 0xFF}, GX_MAX_Z24);
+	GX_CopyDisp(xfb[whichfb],GX_TRUE);
+	GX_Flush();
+
+	VIDEO_SetNextFramebuffer(xfb[whichfb]);
+	VIDEO_Flush();
+ 	VIDEO_WaitVSync();
+	if(vmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
 }
 
 void DrawProgressBar(int percent, char *message) {
-  int x1 = ((back_framewidth/2) - (PROGRESS_BOX_WIDTH/2));
-  int x2 = ((back_framewidth/2) + (PROGRESS_BOX_WIDTH/2));
-  int y1 = ((back_frameheight/2) - (PROGRESS_BOX_HEIGHT/2));
-  int y2 = ((back_frameheight/2) + (PROGRESS_BOX_HEIGHT/2));
-  int i = 0, middleY, borderSize = 10;
+	int x1 = ((640/2) - (PROGRESS_BOX_WIDTH/2));
+	int x2 = ((640/2) + (PROGRESS_BOX_WIDTH/2));
+	int y1 = ((480/2) - (PROGRESS_BOX_HEIGHT/2));
+	int y2 = ((480/2) + (PROGRESS_BOX_HEIGHT/2));
+	int middleY, borderSize = 10;
 
-  middleY = y2-y1 < 23 ? y1+3 : (y2+y1)/2-12;
-  
-  //Draw Text and backfill
-  for(i = (y1+borderSize); i < (y2-borderSize); i+=2) {
-    _DrawHLine (x1+borderSize, x2-borderSize, i, BUTTON_COLOUR_INNER); //inner
-  }
-  WriteCentre(middleY, message);
-  sprintf(txtbuffer,"%d%% percent complete",percent);
-  WriteCentre(middleY+30, txtbuffer);
-  //Draw Borders
-  for(i = 0; i < borderSize; i++) {
-    _DrawHLine (x1+(i*1), x2-(i*1), (y1+borderSize)-i, BUTTON_COLOUR_OUTER); //top
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawHLine (x1+(i*1), x2-(i*1), (y2-borderSize)+i, BUTTON_COLOUR_OUTER); //bottom
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawVLine ((x1+borderSize)-(i*1), y1+(i*1), y2-(i*1), BUTTON_COLOUR_OUTER); //left
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawVLine ((x2-borderSize)+(i*1), y1+(i*1), y2-(i*1), BUTTON_COLOUR_OUTER); //right
-  }
-  int multiplier = (PROGRESS_BOX_WIDTH-20)/100;
-  int progressBarWidth = multiplier*100;
-  DrawEmptyBox((back_framewidth/2 - progressBarWidth/2), y1+25,
-                 ((back_framewidth/2 - progressBarWidth/2) + ((multiplier*(100)))), y1+45, 
-                 PROGRESS_BOX_BARALL);  //Progress Bar backing
-  DrawEmptyBox((back_framewidth/2 - progressBarWidth/2), y1+25,
-                 ((back_framewidth/2 - progressBarWidth/2) + ((multiplier*(percent)))), y1+45, 
-                 PROGRESS_BOX_BAR);  //Progress Bar
+	middleY = y2-y1 < 23 ? y1+3 : (y2+y1)/2-12;
+
+	//TODO: Pass these colors in?
+  	GXColor fillColor = (GXColor) {0,0,255,255}; //blue
+	GXColor borderColor = (GXColor) {200,200,200,255}; //silver
+	GXColor progressBarAllColor = (GXColor) {255,0,0,255}; //red
+	GXColor progressBarColor = (GXColor) {0,255,0,255}; //green
+	
+	//Draw Text and backfill
+	drawInit();
+	fillRect(x1+borderSize, y1+borderSize, x2-x1-(2*borderSize), y2-y1-(2*borderSize), 0, fillColor);
+	WriteFontStyled(640/2, middleY, message, 1.0f, true, defaultColor);
+	sprintf(txtbuffer,"%d%% percent complete",percent);
+	WriteFontStyled(640/2, middleY+30, txtbuffer, 1.0f, true, defaultColor);
+	//Draw Borders
+	drawInit();
+	fillRect(x1, y1, x2-x1, borderSize, 0, borderColor); 			//top
+	fillRect(x1, y2-borderSize, x2-x1, borderSize, 0, borderColor);	//bottom
+	fillRect(x1, y1, borderSize, y2-y1, 0, borderColor);			//left
+	fillRect(x2-borderSize, y1, borderSize, y2-y1, 0, borderColor);	//right
+	int multiplier = (PROGRESS_BOX_WIDTH-20)/100;
+	int progressBarWidth = multiplier*100;
+	fillRect((640/2 - progressBarWidth/2), y1+25,
+			(multiplier*100), 20, 0, progressBarAllColor); //Progress Bar backing (Red)
+	fillRect((640/2 - progressBarWidth/2), y1+25,
+			(multiplier*percent), 20, 0, progressBarColor); //Progress Bar (Green)
+/*	DrawEmptyBox((back_framewidth/2 - progressBarWidth/2), y1+25,
+				((back_framewidth/2 - progressBarWidth/2) + ((multiplier*(100)))), y1+45, 
+				PROGRESS_BOX_BARALL);  //Progress Bar backing (Red)
+	DrawEmptyBox((back_framewidth/2 - progressBarWidth/2), y1+25,
+				((back_framewidth/2 - progressBarWidth/2) + ((multiplier*(percent)))), y1+45, 
+				PROGRESS_BOX_BAR);  //Progress Bar (Green)*/
 }
 
-void DrawMessageBox(int type, char *message) {
-  int x1 = ((back_framewidth/2) - (PROGRESS_BOX_WIDTH/2));
-  int x2 = ((back_framewidth/2) + (PROGRESS_BOX_WIDTH/2));
-  int y1 = ((back_frameheight/2) - (PROGRESS_BOX_HEIGHT/2));
-  int y2 = ((back_frameheight/2) + (PROGRESS_BOX_HEIGHT/2));
-  int i = 0, middleY, borderSize = 10;
-  
-  middleY = y2-y1 < 23 ? y1+3 : (y2+y1)/2-12;
-  
-  //Draw Text and backfill
-  for(i = (y1+borderSize); i < (y2-borderSize); i+=2) {
-    _DrawHLine (x1+borderSize, x2-borderSize, i, BUTTON_COLOUR_INNER); //inner
-  }
+void DrawMessageBox(int type, char *message) 
+{
+	int x1 = ((640/2) - (PROGRESS_BOX_WIDTH/2));
+	int x2 = ((640/2) + (PROGRESS_BOX_WIDTH/2));
+	int y1 = ((480/2) - (PROGRESS_BOX_HEIGHT/2));
+	int y2 = ((480/2) + (PROGRESS_BOX_HEIGHT/2));
+	int middleY, borderSize = 10;
+
+	middleY = y2-y1 < 23 ? y1+3 : (y2+y1)/2-12;
+	
+	//TODO: Pass these colors in?
+  	GXColor fillColor = (GXColor) {0,0,255,255}; //blue?
+	GXColor borderColor = (GXColor) {200,200,200,255}; //silver
+	
+	drawInit();
+
+	//Draw Text and backfill
+	fillRect(x1+borderSize, y1+borderSize, x2-x1-(2*borderSize), y2-y1-(2*borderSize), 0, fillColor);
+
 	char *tok = strtok(message,"\n");
 	while(tok != NULL) {
-		WriteCentre(middleY, tok);
+		WriteFontStyled(640/2, middleY, tok, 1.0f, true, defaultColor);
 		tok = strtok(NULL,"\n");
 		middleY+=24;
 	}
-  //Draw Borders
-  for(i = 0; i < borderSize; i++) {
-    _DrawHLine (x1+(i*1), x2-(i*1), (y1+borderSize)-i, BUTTON_COLOUR_OUTER); //top
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawHLine (x1+(i*1), x2-(i*1), (y2-borderSize)+i, BUTTON_COLOUR_OUTER); //bottom
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawVLine ((x1+borderSize)-(i*1), y1+(i*1), y2-(i*1), BUTTON_COLOUR_OUTER); //left
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawVLine ((x2-borderSize)+(i*1), y1+(i*1), y2-(i*1), BUTTON_COLOUR_OUTER); //right
-  }
+	//Draw Borders
+	drawInit();
+	fillRect(x1, y1, x2-x1, borderSize, 0, borderColor); 			//top
+	fillRect(x1, y2-borderSize, x2-x1, borderSize, 0, borderColor);	//bottom
+	fillRect(x1, y1, borderSize, y2-y1, 0, borderColor);			//left
+	fillRect(x2-borderSize, y1, borderSize, y2-y1, 0, borderColor);	//right
 }
 
 void DrawRawFont(int x, int y, char *message) {
   WriteFont(x, y, message);
 }
 
-void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode, u32 color) {
-  int i = 0, middleY, borderSize;
-  color = (color == -1) ? BUTTON_COLOUR_INNER : color;
-  
-  borderSize = (mode==B_SELECTED) ? 6 : 4;
-  middleY = (((y2-y1)/2)-12)+y1;
-  
-  //determine length of the text ourselves if x2 == -1
-  x1 = (x2 == -1) ? x1+2:x1;
-  x2 = (x2 == -1) ? GetTextSizeInPixels(message)+x1+(borderSize*2)+6 : x2;
-  
-  if(middleY+24 > y2) {
-    middleY = y1+3;
-  }
-  //Draw Text and backfill (if selected)
-  if(mode==B_SELECTED) {
-    for(i = (y1+borderSize); i < (y2-borderSize); i+=2) {
-      _DrawHLine (x1+borderSize, x2-borderSize, i, BUTTON_COLOUR_INNER); //inner
-    }
-    WriteFontHL(x1 + borderSize+3, middleY, x2-borderSize-8, middleY+24 , message, blit_lookup);
-  }
-  else {
-    WriteFontHL(x1 + borderSize+3, middleY,x2-borderSize-8,middleY+24, message,blit_lookup_norm);
-  }
-  //Draw Borders
-  for(i = 0; i < borderSize; i++) {
-    _DrawHLine (x1+(i*1), x2-(i*1), (y1+borderSize)-i, BUTTON_COLOUR_OUTER); //top
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawHLine (x1+(i*1), x2-(i*1), (y2-borderSize)+i, BUTTON_COLOUR_OUTER); //bottom
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawVLine ((x1+borderSize)-(i*1), y1+(i*1), y2-(i*1), BUTTON_COLOUR_OUTER); //left
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawVLine ((x2-borderSize)+(i*1), y1+(i*1), y2-(i*1), BUTTON_COLOUR_OUTER); //right
-  }
+void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode, u32 color) 
+{
+	int middleY, borderSize;
+	color = (color == -1) ? BUTTON_COLOUR_INNER : color; //never used
+
+	borderSize = (mode==B_SELECTED) ? 6 : 4;
+	middleY = (((y2-y1)/2)-12)+y1;
+
+	//determine length of the text ourselves if x2 == -1
+	x1 = (x2 == -1) ? x1+2:x1;
+	x2 = (x2 == -1) ? GetTextSizeInPixels(message)+x1+(borderSize*2)+6 : x2;
+
+	if(middleY+24 > y2) {
+		middleY = y1+3;
+	}
+
+	//TODO: Pass these colors in?
+	GXColor innerColor = (GXColor) {0,0,255,255}; //selected
+//	GXColor fillColor = (GXColor) {0,0,0,255}; //black
+	GXColor borderColor = (GXColor) {200,200,200,255}; //silver
+	
+	drawInit();
+	
+	//Draw Text and backfill (if selected)
+	if(mode==B_SELECTED) {
+		fillRect(x1+borderSize, y1+borderSize, x2-x1-(2*borderSize), y2-y1-(2*borderSize), 0, innerColor);
+		//TODO: use custom color?
+		//WriteFontHL(x1 + borderSize+3, middleY, x2-borderSize-8, middleY+24 , message, blit_lookup);
+		WriteFontStyled(x1 + borderSize+3, middleY, message, 1.0f, false, defaultColor);
+	}
+	else {
+		//TODO: use custom color?
+		//WriteFontHL(x1 + borderSize+3, middleY,x2-borderSize-8,middleY+24, message,blit_lookup_norm);
+		WriteFontStyled(x1 + borderSize+3, middleY, message, 1.0f, false, defaultColor);
+	}
+	//Draw Borders
+	drawInit();
+	fillRect(x1, y1, x2-x1, borderSize, 0, borderColor); 			//top
+	fillRect(x1, y2-borderSize, x2-x1, borderSize, 0, borderColor);	//bottom
+	fillRect(x1, y1, borderSize, y2-y1, 0, borderColor);			//left
+	fillRect(x2-borderSize, y1, borderSize, y2-y1, 0, borderColor);	//right
 }
 
-void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode, u32 color) {
-  int i = 0,  borderSize;
-  color = (color == -1) ? BUTTON_COLOUR_INNER : color;
-  
-  borderSize = (mode==B_SELECTED) ? 6 : 4;
-  
-  //determine length of the text ourselves if x2 == -1
-  x1 = (x2 == -1) ? x1+2:x1;
-  x2 = (x2 == -1) ? GetTextSizeInPixels(message)+x1+(borderSize*2)+6 : x2;
-  
-  //Draw Text and backfill (if selected)
-  if(mode==B_SELECTED) {
-    for(i = (y1+borderSize); i < (y2-borderSize); i+=2) {
-      _DrawHLine (x1+borderSize, x2-borderSize, i, BUTTON_COLOUR_INNER); //inner
-    }
-    WriteFontHL(x1 + borderSize+3, y1+borderSize, x2-borderSize-8, y1+borderSize+24 , message, blit_lookup);
-  }
-  else {
-    WriteFontHL(x1 + borderSize+3, y1+borderSize,x2-borderSize-8,y1+borderSize+24, message,blit_lookup_norm);
-  }
-  if(file->fileAttrib==IS_FILE) {
-	sprintf(txtbuffer,"Size: %i %s",file->size > 1024 ? file->size/ 1024:file->size,file->size > 1024 ? "Kb":"Bytes");
-	WriteFont_small(x1 + borderSize+3,y1+borderSize+24,txtbuffer);
-  }
-  //Draw Borders
-  for(i = 0; i < borderSize; i++) {
-    _DrawHLine (x1+(i*1), x2-(i*1), (y1+borderSize)-i, BUTTON_COLOUR_OUTER); //top
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawHLine (x1+(i*1), x2-(i*1), (y2-borderSize)+i, BUTTON_COLOUR_OUTER); //bottom
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawVLine ((x1+borderSize)-(i*1), y1+(i*1), y2-(i*1), BUTTON_COLOUR_OUTER); //left
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawVLine ((x2-borderSize)+(i*1), y1+(i*1), y2-(i*1), BUTTON_COLOUR_OUTER); //right
-  }
+void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode, u32 color) 
+{
+	int borderSize;
+	color = (color == -1) ? BUTTON_COLOUR_INNER : color; //never used
+
+	borderSize = (mode==B_SELECTED) ? 6 : 4;
+
+	//determine length of the text ourselves if x2 == -1
+	x1 = (x2 == -1) ? x1+2:x1;
+	x2 = (x2 == -1) ? GetTextSizeInPixels(message)+x1+(borderSize*2)+6 : x2;
+
+	//TODO: Pass these colors in?
+	GXColor innerColor = (GXColor) {0,0,255,255}; //selected
+//	GXColor fillColor = (GXColor) {0,0,0,255}; //black
+	GXColor borderColor = (GXColor) {200,200,200,255}; //silver
+	
+	drawInit();
+	
+	//Draw Text and backfill (if selected)
+	if(mode==B_SELECTED) {
+		fillRect(x1+borderSize, y1+borderSize, x2-x1-(2*borderSize), y2-y1-(2*borderSize), 0, innerColor);
+		//TODO: use custom color?
+		//WriteFontHL(x1 + borderSize+3, y1+borderSize, x2-borderSize-8, y1+borderSize+24 , message, blit_lookup);
+		WriteFontStyled(x1 + borderSize+3, y1+borderSize, message, 1.0f, false, defaultColor);
+	}
+	else {
+		//TODO: use custom color?
+		//WriteFontHL(x1 + borderSize+3, y1+borderSize,x2-borderSize-8,y1+borderSize+24, message,blit_lookup_norm);
+		WriteFontStyled(x1 + borderSize+3, y1+borderSize, message, 1.0f, false, defaultColor);
+	}
+	if(file->fileAttrib==IS_FILE) {
+		sprintf(txtbuffer,"Size: %i %s",file->size > 1024 ? file->size/ 1024:file->size,file->size > 1024 ? "Kb":"Bytes");
+		WriteFontStyled(x1 + borderSize+3, y1+borderSize+24, txtbuffer, 0.5f, false, defaultColor);
+	}
+	//Draw Borders
+	drawInit();
+	fillRect(x1, y1, x2-x1, borderSize, 0, borderColor); 			//top
+	fillRect(x1, y2-borderSize, x2-x1, borderSize, 0, borderColor);	//bottom
+	fillRect(x1, y1, borderSize, y2-y1, 0, borderColor);			//left
+	fillRect(x2-borderSize, y1, borderSize, y2-y1, 0, borderColor);	//right
 }
 
-void DrawEmptyBox(int x1, int y1, int x2, int y2, int color) {
-  int i = 0, borderSize;
-  borderSize = (y2-y1) <= 30 ? 3 : 10;
-  x1-=borderSize;x2+=borderSize;y1-=borderSize;y2+=borderSize;
+void DrawEmptyBox(int x1, int y1, int x2, int y2, int color) 
+{
+	int borderSize;
+	borderSize = (y2-y1) <= 30 ? 3 : 10;
+	x1-=borderSize;x2+=borderSize;y1-=borderSize;y2+=borderSize;
 
-  //Draw Text and backfill
-  for(i = (y1+borderSize); i < (y2-borderSize); i+=2) {
-    _DrawHLine (x1+borderSize, x2-borderSize, i, color); //inner
-  }
-  //Draw Borders
-  for(i = 0; i < borderSize; i++) {
-    _DrawHLine (x1+(i*1), x2-(i*1), (y1+borderSize)-i, BUTTON_COLOUR_OUTER); //top
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawHLine (x1+(i*1), x2-(i*1), (y2-borderSize)+i, BUTTON_COLOUR_OUTER); //bottom
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawVLine ((x1+borderSize)-(i*1), y1+(i*1), y2-(i*1), BUTTON_COLOUR_OUTER); //left
-  }
-  for(i = 0; i < borderSize; i++) {
-    _DrawVLine ((x2-borderSize)+(i*1), y1+(i*1), y2-(i*1), BUTTON_COLOUR_OUTER); //right
-  }
+	//TODO: Pass these colors in?
+	GXColor fillColor = (GXColor) {0,0,0,255}; //Black
+	GXColor borderColor = (GXColor) {200,200,200,255}; //Silver
+	
+	drawInit();
+	
+	//Draw Text and backfill
+	fillRect(x1+borderSize, y1+borderSize, x2-x1-(2*borderSize), y2-y1-(2*borderSize), 0, fillColor);
+	//Draw Borders
+	fillRect(x1, y1, x2-x1, borderSize, 0, borderColor); 			//top
+	fillRect(x1, y2-borderSize, x2-x1, borderSize, 0, borderColor);	//bottom
+	fillRect(x1, y1, borderSize, y2-y1, 0, borderColor);			//left
+	fillRect(x2-borderSize, y1, borderSize, y2-y1, 0, borderColor);	//right
 }
+
 // Buttons
-void DrawMenuButtons(int selection) {
+void DrawMenuButtons(int selection) 
+{
 	// Draw the buttons
-	drawBitmap(btndevice_Bitmap, 20+(0*58), 430, BTNDEVICE_WIDTH,BTNDEVICE_HEIGHT);
-	drawBitmap(btnnohilight_Bitmap, 20+(0*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
-	drawBitmap(btnsettings_Bitmap, 20+(1*58), 430, BTNSETTINGS_WIDTH,BTNSETTINGS_HEIGHT);
-	drawBitmap(btnnohilight_Bitmap, 20+(1*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
-	drawBitmap(btninfo_Bitmap, 20+(2*58), 430, BTNINFO_WIDTH,BTNINFO_HEIGHT);
-	drawBitmap(btnnohilight_Bitmap, 20+(2*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
-	drawBitmap(btnrefresh_Bitmap, 20+(3*58), 430, BTNREFRESH_WIDTH,BTNREFRESH_HEIGHT);
-	drawBitmap(btnnohilight_Bitmap, 20+(3*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
-	drawBitmap(btnexit_Bitmap, 20+(4*58), 430, BTNEXIT_WIDTH,BTNEXIT_HEIGHT);
-	drawBitmap(btnnohilight_Bitmap, 20+(4*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
+	DrawImage(TEX_BTNDEVICE, 40+(0*116), 430, BTNDEVICE_WIDTH,BTNDEVICE_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+	//drawBitmap(btndevice_Bitmap, 20+(0*58), 430, BTNDEVICE_WIDTH,BTNDEVICE_HEIGHT);
+	DrawImage(TEX_BTNNOHILIGHT, 40+(0*116), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+	//drawBitmap(btnnohilight_Bitmap, 20+(0*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
+	DrawImage(TEX_BTNSETTINGS, 40+(1*116), 430, BTNSETTINGS_WIDTH,BTNSETTINGS_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+	//drawBitmap(btnsettings_Bitmap, 20+(1*58), 430, BTNSETTINGS_WIDTH,BTNSETTINGS_HEIGHT);
+	DrawImage(TEX_BTNNOHILIGHT, 40+(1*116), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+	//drawBitmap(btnnohilight_Bitmap, 20+(1*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
+	DrawImage(TEX_BTNINFO, 40+(2*116), 430, BTNINFO_WIDTH,BTNINFO_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+	//drawBitmap(btninfo_Bitmap, 20+(2*58), 430, BTNINFO_WIDTH,BTNINFO_HEIGHT);
+	DrawImage(TEX_BTNNOHILIGHT, 40+(2*116), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+	//drawBitmap(btnnohilight_Bitmap, 20+(2*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
+	DrawImage(TEX_BTNREFRESH, 40+(3*116), 430, BTNREFRESH_WIDTH,BTNREFRESH_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+	//drawBitmap(btnrefresh_Bitmap, 20+(3*58), 430, BTNREFRESH_WIDTH,BTNREFRESH_HEIGHT);
+	DrawImage(TEX_BTNNOHILIGHT, 40+(3*116), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+	//drawBitmap(btnnohilight_Bitmap, 20+(3*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
+	DrawImage(TEX_BTNEXIT, 40+(4*116), 430, BTNEXIT_WIDTH,BTNEXIT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+	//drawBitmap(btnexit_Bitmap, 20+(4*58), 430, BTNEXIT_WIDTH,BTNEXIT_HEIGHT);
+	DrawImage(TEX_BTNNOHILIGHT, 40+(4*116), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+	//drawBitmap(btnnohilight_Bitmap, 20+(4*58), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT);
 	// Highlight selected
 	if(selection != MENU_NOSELECT) {
-		drawBitmap(btnhilight_Bitmap, 20+(selection*58), 430, BTNHILIGHT_WIDTH,BTNHILIGHT_HEIGHT);
+		DrawImage(TEX_BTNHILIGHT, 40+(selection*116), 430, BTNHILIGHT_WIDTH,BTNHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+		//drawBitmap(btnhilight_Bitmap, 20+(selection*58), 430, BTNHILIGHT_WIDTH,BTNHILIGHT_HEIGHT);
 	}
 }
-

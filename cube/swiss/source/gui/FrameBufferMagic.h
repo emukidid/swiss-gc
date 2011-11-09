@@ -5,6 +5,9 @@
       Version 1.0 11/11/2009
         - Initial Code
    ----------------------------------------------------------- */
+   
+#ifndef FRAMEBUFFERMAGIC_H
+#define FRAMEBUFFERMAGIC_H
 
 #include <stdio.h>
 #include <stdint.h>
@@ -42,6 +45,26 @@ extern int whichfb;
 #define MENU_REFRESH 3
 #define MENU_EXIT 4
 
+enum TextureId
+{
+	TEX_BACKDROP=0,
+	TEX_BANNER,
+	TEX_GCDVDSMALL,
+	TEX_SDSMALL,
+	TEX_HDD,
+	TEX_QOOB,
+	TEX_WODEIMG,
+	TEX_BTNNOHILIGHT,
+	TEX_BTNHILIGHT,
+	TEX_BTNDEVICE,
+	TEX_BTNSETTINGS,
+	TEX_BTNINFO,
+	TEX_BTNREFRESH,
+	TEX_BTNEXIT
+};
+
+void init_textures();
+void DrawImage(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2);
 void DrawFrameStart();
 void DrawFrameFinish();
 void DrawProgressBar(int percent, char *message);
@@ -51,3 +74,5 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
 void DrawEmptyBox(int x1, int y1, int x2, int y2, int color);
 void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode, u32 color);
 void DrawMenuButtons(int selection);
+
+#endif

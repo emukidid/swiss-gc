@@ -115,12 +115,12 @@ void show_page(int page_num) {
 	}
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Credits (3/3):");
-		WriteCentre(115,"Swiss ver 0.1");
-		WriteCentre(150,"by emu_kidid 2011");
-		WriteCentre(210,"Visit http://www.gc-forever.com/");
-		WriteCentre(295,"Thanks to");
-		WriteCentre(320,"Testers & libOGC/dkPPC authors");
-		WriteCentre(370,"Press A to return");
+		WriteFontStyled(640/2, 115, "Swiss ver 0.1", 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 150, "by emu_kidid 2011", 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 210, "Visit http://www.gc-forever.com/", 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 295, "Thanks to", 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 320, "Testers & libOGC/dkPPC authors", 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 370, "Press A to return", 1.0f, true, defaultColor);
 	}
 	if(page_num != 2) {
 		WriteFont(520, 390, "->");
