@@ -27,18 +27,18 @@
 
 #include "swiss.h"
 #include "main.h"
-#include "font.h"
+//#include "font.h"
 #include "exi.h"
 #include "patcher.h"
 #include "bnr2yuv.h"
 #include "qchparse.h"
 #include "dvd.h"
 #include "gcm.h"
-#include "gcdvdicon.h"
-#include "sdicon.h"
-#include "hddicon.h"
-#include "qoobicon.h"
-#include "wodeimg.h"
+//#include "gcdvdicon.h"
+//#include "sdicon.h"
+//#include "hddicon.h"
+//#include "qoobicon.h"
+//#include "wodeimg.h"
 #include "aram/sidestep.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
@@ -594,15 +594,15 @@ void manage_file() {
 		// Ask the user what they want to do with it
 		DrawFrameStart();
 		DrawEmptyBox(10,150, vmode->fbWidth-10, 350, COLOR_BLACK);
-		WriteCentre(160,"Manage File:");
-		WriteCentre(200,getRelativeName(curFile.name));
+		WriteFontStyled(640/2, 160, "Manage File:", 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 200, getRelativeName(curFile.name), 1.0f, true, defaultColor);
 		if(deviceHandler_deleteFile) {
-			WriteCentre(230,"(A) Load (X) Copy (Y) Move (Z) Delete");
+			WriteFontStyled(640/2, 230, "(A) Load (X) Copy (Y) Move (Z) Delete", 1.0f, true, defaultColor);
 		}
 		else {
-			WriteCentre(230,"(A) Load (X) Copy");
+			WriteFontStyled(640/2, 230, "(A) Load (X) Copy", 1.0f, true, defaultColor);
 		}
-		WriteCentre(300, "Press an option to Continue, or B to return");
+		WriteFontStyled(640/2, 300, "Press an option to Continue, or B to return", 1.0f, true, defaultColor);
 		DrawFrameFinish();
 		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
 		int option = 0;
@@ -998,10 +998,10 @@ void install_game()
   
 	DrawFrameStart();
 	DrawEmptyBox(10,120, vmode->fbWidth-10, 470, COLOR_BLACK);
-	WriteCentre(130,"*** WARNING ***");
-	WriteCentre(200,"This program is not responsible for any");
-	WriteCentre(230,"loss of data or file system corruption");
-	WriteCentre(300, "Press A to Continue, or B to return");
+	WriteFontStyled(640/2, 130, "*** WARNING ***", 1.0f, true, defaultColor);
+	WriteFontStyled(640/2, 200, "This program is not responsible for any", 1.0f, true, defaultColor);
+	WriteFontStyled(640/2, 230, "loss of data or file system corruption", 1.0f, true, defaultColor);
+	WriteFontStyled(640/2, 300, "Press A to Continue, or B to return", 1.0f, true, defaultColor);
 	DrawFrameFinish();
 	while(1) {
 		u16 btns = PAD_ButtonsHeld(0);
@@ -1113,44 +1113,44 @@ int info_game()
 		showBanner(230, 270, 2);  //Convert & display game banner
 	}
 	sprintf(txtbuffer,"%s",(GCMDisk.DVDMagicWord != DVD_MAGIC)?getRelativeName(&curFile.name[0]):GCMDisk.GameName);
-	WriteCentre(130,txtbuffer);
+	WriteFontStyled(640/2, 130, txtbuffer, 1.0f, true, defaultColor);
 	if((curDevice==SD_CARD)||(curDevice == IDEEXI) ||((curDevice == DVD_DISC) && (dvdDiscTypeInt==ISO9660_DISC))) {
 		sprintf(txtbuffer,"Size: %.2fMB", (float)curFile.size/1024/1024);
-		WriteCentre(160,txtbuffer);
+		WriteFontStyled(640/2, 160, txtbuffer, 1.0f, true, defaultColor);
 		if((u32)(curFile.fileBase&0xFFFFFFFF) == -1) {
 			sprintf(txtbuffer,"File is Fragmented!");
 		}
 		else {
 			sprintf(txtbuffer,"Position on Disk: %08X",(u32)(curFile.fileBase&0xFFFFFFFF));
 		}
-		WriteCentre(190,txtbuffer);
+		WriteFontStyled(640/2, 190, txtbuffer, 1.0f, true, defaultColor);
 	}
 	else if(curDevice == DVD_DISC)  {
 		sprintf(txtbuffer,"%s DVD disc", dvdDiscTypeStr);
-		WriteCentre(160,txtbuffer);
+		WriteFontStyled(640/2, 160, txtbuffer, 1.0f, true, defaultColor);
 	}
 	else if(curDevice == QOOB_FLASH) {
 		sprintf(txtbuffer,"Size: %.2fKb (%i blocks)", (float)curFile.size/1024, curFile.size/0x10000);
-		WriteCentre(160,txtbuffer);
+		WriteFontStyled(640/2, 160, txtbuffer, 1.0f, true, defaultColor);
 		sprintf(txtbuffer,"Position on Flash: %08X",(u32)(curFile.fileBase&0xFFFFFFFF));
-		WriteCentre(190,txtbuffer);
+		WriteFontStyled(640/2, 190, txtbuffer, 1.0f, true, defaultColor);
 	}
 	else if(curDevice == WODE) {
 		sprintf(txtbuffer,"Partition: %i, ISO: %i", (int)(curFile.fileBase>>24)&0xFF,(int)(curFile.fileBase&0xFFFFFF));
-		WriteCentre(160,txtbuffer);
+		WriteFontStyled(640/2, 160, txtbuffer, 1.0f, true, defaultColor);
 	}
 	else if(curDevice == MEMCARD) {
 		sprintf(txtbuffer,"Size: %.2fKb (%i blocks)", (float)curFile.size/1024, curFile.size/8192);
-		WriteCentre(160,txtbuffer);
+		WriteFontStyled(640/2, 160, txtbuffer, 1.0f, true, defaultColor);
 		sprintf(txtbuffer,"Position on Card: %08X",curFile.offset);
-		WriteCentre(190,txtbuffer);
+		WriteFontStyled(640/2, 190, txtbuffer, 1.0f, true, defaultColor);
 	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
 		sprintf(txtbuffer,"Region [%s] Audio Streaming [%s]",(GCMDisk.CountryCode=='P') ? "PAL":"NTSC",(GCMDisk.AudioStreaming=='\1') ? "YES":"NO");
-		WriteCentre(220,txtbuffer);
+		WriteFontStyled(640/2, 220, txtbuffer, 1.0f, true, defaultColor);
 	}
 
-	WriteCentre(370,"Cheats(Y) - Exit(B) - Continue (A)");
+	WriteFontStyled(640/2, 370, "Cheats(Y) - Exit(B) - Continue (A)", 1.0f, true, defaultColor);
 	DrawFrameFinish();
 	while((PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 	while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
@@ -1174,7 +1174,7 @@ void settings()
 	{
 		DrawFrameStart();
 		DrawEmptyBox (75,120, vmode->fbWidth-78, 400, COLOR_BLACK);
-		WriteCentre(130,"Game Setup");
+		WriteFontStyled(640/2, 130, "Game Setup", 1.0f, true, defaultColor);
 		
 		//write out all the settings (dodgy)
 		WriteFont(80, 160+(32*1), "Game Video Mode");
@@ -1191,7 +1191,7 @@ void settings()
 			}
 		}
 		
-		WriteCentre(370,"Press B to return");
+		WriteFontStyled(640/2, 370, "Press B to return", 1.0f, true, defaultColor);
 		DrawFrameFinish();
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B));
 		u16 btns = PAD_ButtonsHeld(0);
@@ -1233,7 +1233,7 @@ int ask_stop_drive()
 	while(1) {
 		doBackdrop();
 		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
-		WriteCentre(215,"Stop DVD Motor?");
+		WriteFontStyled(640/2, 215, "Stop DVD Motor?", 1.0f, true, defaultColor);
 		DrawSelectableButton(100, 280, -1, 310, "Yes", (sel==1) ? B_SELECTED:B_NOSELECT,-1);
 		DrawSelectableButton(380, 280, -1, 310, "No", (!sel) ? B_SELECTED:B_NOSELECT,-1);
 		DrawFrameFinish();
@@ -1257,7 +1257,7 @@ int ask_set_cheats()
 	while(1) {
 		doBackdrop();
 		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
-		WriteCentre(215,"Load this cheats file?");
+		WriteFontStyled(640/2, 215, "Load this cheats file?", 1.0f, true, defaultColor);
 		DrawSelectableButton(100, 280, -1, 310, "Yes", (sel==1) ? B_SELECTED:B_NOSELECT,-1);
 		DrawSelectableButton(380, 280, -1, 310, "No", (!sel) ? B_SELECTED:B_NOSELECT,-1);
 		DrawFrameFinish();
@@ -1281,7 +1281,7 @@ void select_speed()
 	{
 		doBackdrop();
 		DrawEmptyBox (75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
-		WriteCentre(215,"Select Speed and press A");
+		WriteFontStyled(640/2, 215, "Select Speed and press A", 1.0f, true, defaultColor);
 		DrawSelectableButton(100, 280, -1, 310, "Compatible", (GC_SD_SPEED==EXI_SPEED16MHZ) ? B_SELECTED:B_NOSELECT,-1);
 		DrawSelectableButton(380, 280, -1, 310, "Fast", (GC_SD_SPEED==EXI_SPEED32MHZ) ? B_SELECTED:B_NOSELECT,-1);
 		DrawFrameFinish();
@@ -1306,7 +1306,7 @@ int select_slot()
 	while(1) {
 		doBackdrop();
 		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
-		WriteCentre(215,"Select Slot and press A");
+		WriteFontStyled(640/2, 215, "Select Slot and press A", 1.0f, true, defaultColor);
 		DrawSelectableButton(100, 280, -1, 310, "Slot A", (slot==0) ? B_SELECTED:B_NOSELECT,-1);
 		DrawSelectableButton(380, 280, -1, 310, "Slot B", (slot==1) ? B_SELECTED:B_NOSELECT,-1);
 		DrawFrameFinish();
@@ -1328,14 +1328,16 @@ void select_copy_device()
 	while(1) {
 		doBackdrop();
 		DrawEmptyBox(20,190, vmode->fbWidth-20, 355, COLOR_BLACK);
-		WriteCentre(195,"Select destination device and press A");
+		WriteFontStyled(640/2, 195, "Select destination device and press A", 1.0f, true, defaultColor);
 		if(curCopyDevice==DEST_SD_CARD) {
 			DrawSelectableButton(170, 230, 450, 340, "SDGecko", B_NOSELECT,COLOR_BLACK);
-			drawBitmap(sdsmall_Bitmap, 180, 245, 60,80);
+//			drawBitmap(sdsmall_Bitmap, 180, 245, 60,80);
+			DrawImage(TEX_SDSMALL, 360, 245, 60, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else if(curCopyDevice==DEST_IDEEXI) {
 			DrawSelectableButton(170, 230, 450, 340, "Ide-Exi", B_NOSELECT,COLOR_BLACK);
-			drawBitmap(hdd_Bitmap, 170, 245, 80,80);
+//			drawBitmap(hdd_Bitmap, 170, 245, 80,80);
+			DrawImage(TEX_HDD, 340, 245, 80, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else if(curCopyDevice==DEST_MEMCARD) {
 			DrawSelectableButton(170, 230, 450, 340, "Memory Card",B_NOSELECT,COLOR_BLACK);
@@ -1402,26 +1404,31 @@ void select_device()
 	while(1) {
 		doBackdrop();
 		DrawEmptyBox(20,190, vmode->fbWidth-20, 355, COLOR_BLACK);
-		WriteCentre(195,"Select device and press A");
+		WriteFontStyled(640/2, 195, "Select device and press A", 1.0f, true, defaultColor);
 		if(curDevice==DVD_DISC) {
 			DrawSelectableButton(170, 230, 450, 340, "DVD Disc", B_NOSELECT,COLOR_BLACK);
-			drawBitmap(gcdvdsmall_Bitmap, 170, 250, 80,79);
+//			drawBitmap(gcdvdsmall_Bitmap, 170, 250, 80,79);
+			DrawImage(TEX_GCDVDSMALL, 340, 250, 80, 79, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else if(curDevice==SD_CARD) {
 			DrawSelectableButton(170, 230, 450, 340, "SDGecko", B_NOSELECT,COLOR_BLACK);
-			drawBitmap(sdsmall_Bitmap, 180, 245, 60,80);
+//			drawBitmap(sdsmall_Bitmap, 180, 245, 60,80);
+			DrawImage(TEX_SDSMALL, 360, 245, 60, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else if(curDevice==IDEEXI) {
 			DrawSelectableButton(170, 230, 450, 340, "Ide-Exi", B_NOSELECT,COLOR_BLACK);
-			drawBitmap(hdd_Bitmap, 170, 245, 80,80);
+//			drawBitmap(hdd_Bitmap, 170, 245, 80,80);
+			DrawImage(TEX_HDD, 340, 245, 80, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else if(curDevice==QOOB_FLASH) {
 			DrawSelectableButton(170, 230, 450, 340, "Qoob PRO",B_NOSELECT,COLOR_BLACK);
-			drawBitmap(qoob_Bitmap, 175, 245, 70,80);
+//			drawBitmap(qoob_Bitmap, 175, 245, 70,80);
+			DrawImage(TEX_QOOB, 350, 245, 70, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else if(curDevice==WODE) {
 			DrawSelectableButton(170, 230, 450, 340, "WODE",B_NOSELECT,COLOR_BLACK);
-			drawBitmap(wodeimg_Bitmap, 145, 245, 146,72);
+//			drawBitmap(wodeimg_Bitmap, 145, 245, 146,72);
+			DrawImage(TEX_WODEIMG, 290, 245, 146, 72, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else if(curDevice==MEMCARD) {
 			DrawSelectableButton(170, 230, 450, 340, "Memory Card",B_NOSELECT,COLOR_BLACK);

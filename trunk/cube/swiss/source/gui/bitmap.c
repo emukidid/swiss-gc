@@ -20,8 +20,9 @@
 #include "dvd.h"
 #include "swiss.h"
 #include "main.h"
+#include "FrameBufferMagic.h"
 
-void drawBitmap(const unsigned long* image, int scrX, int scrY, int w, int h)
+/*void drawBitmap(const unsigned long* image, int scrX, int scrY, int w, int h)
 {
 	int i, j;
 	int current = 0;
@@ -37,9 +38,9 @@ void drawBitmap(const unsigned long* image, int scrX, int scrY, int w, int h)
 			}
 		}
 	}
-}
+}*/
 
-void menuDrawBanner(u32 *curFrameBuffer,u32 *banner ,int scrX, int scrY, int iZoom)
+/*void menuDrawBanner(u32 *curFrameBuffer,u32 *banner ,int scrX, int scrY, int iZoom)
 {
 	int w = 96;
 	int h = 32;
@@ -61,7 +62,7 @@ void menuDrawBanner(u32 *curFrameBuffer,u32 *banner ,int scrX, int scrY, int iZo
 		  }
 	  }
   }
-}
+}*/
 
 //Lets parse the entire game FST in search for the banner
 unsigned int getBannerOffset() {
@@ -130,7 +131,7 @@ unsigned int getBannerOffset() {
 
 /* Courtesy of Maximillionop for GCOS 1.x */
 
-static void RGB5A1TORGB888(u16 RGB5A1, RGBAPoint *RGBA, RGBPoint bgColor)
+/*static void RGB5A1TORGB888(u16 RGB5A1, RGBAPoint *RGBA, RGBPoint bgColor)
 {
 	u16 WorkPoint = RGB5A1;
 	double Alpha, bgAlpha;
@@ -199,11 +200,27 @@ void ConvertBanner(BannerData RGB5A1Array, RGBPoint BgColor,int x, int y, int zo
 	memcpy(bannerYUV,YCbYCrArray,sizeof(YCbYCrArray));
 	// Draw YCbYCrArray, it´s a 48*32 array containing the whole image
 	menuDrawBanner(xfb[whichfb],bannerYUV,x,y,zoom);
-}
+}*/
+
+extern u8 *bannerData;
 
 void showBanner(int x, int y, int zoom)
 {	
-	BannerData Banner;
+	unsigned int BNROffset = getBannerOffset();
+	if(!BNROffset) {
+		memcpy(bannerData,blankbanner+0x20,0x1800);
+	}
+	else
+	{
+		deviceHandler_seekFile(&curFile,BNROffset+0x20,DEVICE_HANDLER_SEEK_SET);
+		if(deviceHandler_readFile(&curFile,(unsigned char*)&bannerData,0x1800)!=0x1800) {
+			memcpy(bannerData,blankbanner+0x20,0x1800);
+		}
+	}
+	DCFlushRange(bannerData,0x1800);
+	DrawImage(TEX_BANNER, x, y, 96*zoom, 32*zoom, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+
+/*	BannerData Banner;
 	RGBPoint BackgroundColor;
 	unsigned int BNROffset = getBannerOffset();
 	if(!BNROffset) {
@@ -211,15 +228,15 @@ void showBanner(int x, int y, int zoom)
 	}
 	else
 	{
- 	  deviceHandler_seekFile(&curFile,BNROffset+0x20,DEVICE_HANDLER_SEEK_SET);
-  	if(deviceHandler_readFile(&curFile,(unsigned char*)&Banner,0x1800)!=0x1800) {
-  	  memcpy(Banner,blankbanner+0x20,0x1800);
-	  }
+		deviceHandler_seekFile(&curFile,BNROffset+0x20,DEVICE_HANDLER_SEEK_SET);
+		if(deviceHandler_readFile(&curFile,(unsigned char*)&Banner,0x1800)!=0x1800) {
+			memcpy(Banner,blankbanner+0x20,0x1800);
+		}
 	}
 
 	BackgroundColor.R = 0;
 	BackgroundColor.G = 0;
 	BackgroundColor.B = 0;
-	ConvertBanner(Banner, BackgroundColor,x,y,zoom);
+	ConvertBanner(Banner, BackgroundColor,x,y,zoom);*/
 }
 

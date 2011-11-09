@@ -17,12 +17,14 @@
 #include <unistd.h>
 #include "main.h"
 #include "swiss.h"
-#include "font.h"
+//#include "font.h"
 #include "exi.h"
 #include "dvd.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
+
+#define DEFAULT_FIFO_SIZE    (256*1024)//(64*1024) minimum
 
 /* SD-Boot vars */
 GXRModeObj *vmode = NULL;				//Graphics Mode Object
@@ -90,7 +92,26 @@ void* Initialise (void)
 	if (vmode->viTVMode & VI_NON_INTERLACE) {
 		VIDEO_WaitVSync ();
 	}
+	
+	// setup the fifo and then init GX
+	void *gp_fifo = NULL;
+	gp_fifo = MEM_K0_TO_K1 (memalign (32, DEFAULT_FIFO_SIZE));
+	memset (gp_fifo, 0, DEFAULT_FIFO_SIZE);
+	GX_Init (gp_fifo, DEFAULT_FIFO_SIZE);
+	// clears the bg to color and clears the z buffer
+//	GX_SetCopyClear ((GXColor){64,64,64,255}, 0x00000000);
+	GX_SetCopyClear ((GXColor){0,0,0,255}, 0x00000000);
+	// init viewport
+	GX_SetViewport (0, 0, vmode->fbWidth, vmode->efbHeight, 0, 1);
+	// Set the correct y scaling for efb->xfb copy operation
+	GX_SetDispCopyYScale ((f32) vmode->xfbHeight / (f32) vmode->efbHeight);
+	GX_SetDispCopyDst (vmode->fbWidth, vmode->xfbHeight);
+	GX_SetCullMode (GX_CULL_NONE); // default in rsp init
+	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the efb
+	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the xfb
+
 	init_font();
+	init_textures();
 	whichfb = 0;
 	
 	 drive_version(&driveVersion[0]);
@@ -111,6 +132,8 @@ void* Initialise (void)
 	
 	return xfb[0];
 }
+
+void show_info();
 
 void main_loop()
 { 

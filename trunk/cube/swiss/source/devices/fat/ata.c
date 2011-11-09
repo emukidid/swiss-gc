@@ -248,13 +248,13 @@ int ataDriveInit(int chn) {
  	DrawFrameStart();
 	DrawEmptyBox(75,120, vmode->fbWidth-78, 400, COLOR_BLACK);
 	sprintf(txtbuffer, "%d GB HDD Connected", ataDriveInfo.sizeInGigaBytes);
-	WriteCentre(130,txtbuffer);
+	WriteFontStyled(640/2, 130, txtbuffer, 1.0f, true, defaultColor);
 	sprintf(txtbuffer, "LBA 48-Bit Mode %s", ataDriveInfo.lba48Support ? "Supported" : "Not Supported");
-	WriteCentre(250,txtbuffer);
+	WriteFontStyled(640/2, 250, txtbuffer, 1.0f, true, defaultColor);
 	sprintf(txtbuffer, "Model: %s",ataDriveInfo.model);
-	WriteCentre(310,txtbuffer);
+	WriteFontStyled(640/2, 310, txtbuffer, 1.0f, true, defaultColor);
 	sprintf(txtbuffer, "Serial: %s",ataDriveInfo.serial); 
-	WriteCentre(340,txtbuffer);
+	WriteFontStyled(640/2, 340, txtbuffer, 1.0f, true, defaultColor);
 	DrawFrameFinish();
 	sleep(2);
 	
