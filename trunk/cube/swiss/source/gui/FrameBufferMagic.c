@@ -403,13 +403,10 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
 void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode, u32 color) 
 {
 	int borderSize;
+	float scale = GetTextScaleToFitInWidth(message, x2-x1);
 	color = (color == -1) ? BUTTON_COLOUR_INNER : color; //never used
 
 	borderSize = (mode==B_SELECTED) ? 6 : 4;
-
-	//determine length of the text ourselves if x2 == -1
-	x1 = (x2 == -1) ? x1+2:x1;
-	x2 = (x2 == -1) ? GetTextSizeInPixels(message)+x1+(borderSize*2)+6 : x2;
 
 	//TODO: Pass these colors in?
 	GXColor innerColor = (GXColor) {0,0,255,255}; //selected
@@ -423,12 +420,12 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 		fillRect(x1+borderSize, y1+borderSize, x2-x1-(2*borderSize), y2-y1-(2*borderSize), 0, innerColor);
 		//TODO: use custom color?
 		//WriteFontHL(x1 + borderSize+3, y1+borderSize, x2-borderSize-8, y1+borderSize+24 , message, blit_lookup);
-		WriteFontStyled(x1 + borderSize+3, y1+borderSize, message, 1.0f, false, defaultColor);
+		WriteFontStyled(x1 + borderSize+3, y1+borderSize, message, scale, false, defaultColor);
 	}
 	else {
 		//TODO: use custom color?
 		//WriteFontHL(x1 + borderSize+3, y1+borderSize,x2-borderSize-8,y1+borderSize+24, message,blit_lookup_norm);
-		WriteFontStyled(x1 + borderSize+3, y1+borderSize, message, 1.0f, false, defaultColor);
+		WriteFontStyled(x1 + borderSize+3, y1+borderSize, message, scale, false, defaultColor);
 	}
 	if(file->fileAttrib==IS_FILE) {
 		sprintf(txtbuffer,"Size: %i %s",file->size > 1024 ? file->size/ 1024:file->size,file->size > 1024 ? "Kb":"Bytes");
