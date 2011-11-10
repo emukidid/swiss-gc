@@ -316,3 +316,16 @@ int GetTextSizeInPixels(char *string)
 	}
 	return strWidth;
 }
+
+float GetTextScaleToFitInWidth(char *string, int width) {
+	int strWidth = 0;
+	char* string_work = string;
+	while(*string_work)
+	{
+		unsigned char c = *string_work;
+		strWidth += (int) fontChars.font_size[c] * 1.0f;
+		string_work++;
+	}
+	return width>strWidth ? 1.0f : (float)((float)width/(float)strWidth);
+}
+

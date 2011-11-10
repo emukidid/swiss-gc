@@ -1102,52 +1102,64 @@ void install_game()
 
 /* Show info about the game */
 int info_game()
-{  
-	
+{
 	DrawFrameStart();
 	DrawEmptyBox(75,120, vmode->fbWidth-78, 400, COLOR_BLACK);
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
-		if(GetTextSizeInPixels(GCMDisk.GameName)>((vmode->fbWidth-80)-65)) {
-			GCMDisk.GameName[32] = '\0';	//Cut what we can't fit onscreen
+		u32 bannerOffset = showBanner(215, 240, 2);  //Convert & display game banner
+		if(bannerOffset) {
+			char description[128];
+			deviceHandler_seekFile(&curFile,bannerOffset+0x18e0,DEVICE_HANDLER_SEEK_SET);
+			if(deviceHandler_readFile(&curFile,&description[0],0x80)==0x80) {
+				char * tok = strtok (&description[0],"\n");
+				int line = 0;
+				float scale = GetTextScaleToFitInWidth(tok,(vmode->fbWidth-78)-75);
+				while (tok != NULL)	{
+					WriteFontStyled(640/2, 315+(line*scale*24), tok, scale, true, defaultColor);
+					tok = strtok (NULL, "\n");
+					line++;
+				}
+			}
 		}
-		showBanner(230, 270, 2);  //Convert & display game banner
 	}
 	sprintf(txtbuffer,"%s",(GCMDisk.DVDMagicWord != DVD_MAGIC)?getRelativeName(&curFile.name[0]):GCMDisk.GameName);
-	WriteFontStyled(640/2, 130, txtbuffer, 1.0f, true, defaultColor);
+	float scale = GetTextScaleToFitInWidth(txtbuffer,(vmode->fbWidth-78)-75);
+	WriteFontStyled(640/2, 130, txtbuffer, scale, true, defaultColor);
+
 	if((curDevice==SD_CARD)||(curDevice == IDEEXI) ||((curDevice == DVD_DISC) && (dvdDiscTypeInt==ISO9660_DISC))) {
 		sprintf(txtbuffer,"Size: %.2fMB", (float)curFile.size/1024/1024);
-		WriteFontStyled(640/2, 160, txtbuffer, 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
 		if((u32)(curFile.fileBase&0xFFFFFFFF) == -1) {
 			sprintf(txtbuffer,"File is Fragmented!");
 		}
 		else {
 			sprintf(txtbuffer,"Position on Disk: %08X",(u32)(curFile.fileBase&0xFFFFFFFF));
 		}
-		WriteFontStyled(640/2, 190, txtbuffer, 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
 	}
 	else if(curDevice == DVD_DISC)  {
 		sprintf(txtbuffer,"%s DVD disc", dvdDiscTypeStr);
-		WriteFontStyled(640/2, 160, txtbuffer, 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
 	}
 	else if(curDevice == QOOB_FLASH) {
 		sprintf(txtbuffer,"Size: %.2fKb (%i blocks)", (float)curFile.size/1024, curFile.size/0x10000);
-		WriteFontStyled(640/2, 160, txtbuffer, 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
 		sprintf(txtbuffer,"Position on Flash: %08X",(u32)(curFile.fileBase&0xFFFFFFFF));
-		WriteFontStyled(640/2, 190, txtbuffer, 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
 	}
 	else if(curDevice == WODE) {
 		sprintf(txtbuffer,"Partition: %i, ISO: %i", (int)(curFile.fileBase>>24)&0xFF,(int)(curFile.fileBase&0xFFFFFF));
-		WriteFontStyled(640/2, 160, txtbuffer, 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
 	}
 	else if(curDevice == MEMCARD) {
 		sprintf(txtbuffer,"Size: %.2fKb (%i blocks)", (float)curFile.size/1024, curFile.size/8192);
-		WriteFontStyled(640/2, 160, txtbuffer, 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
 		sprintf(txtbuffer,"Position on Card: %08X",curFile.offset);
-		WriteFontStyled(640/2, 190, txtbuffer, 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
 	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
 		sprintf(txtbuffer,"Region [%s] Audio Streaming [%s]",(GCMDisk.CountryCode=='P') ? "PAL":"NTSC",(GCMDisk.AudioStreaming=='\1') ? "YES":"NO");
-		WriteFontStyled(640/2, 220, txtbuffer, 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 200, txtbuffer, 0.8f, true, defaultColor);
 	}
 
 	WriteFontStyled(640/2, 370, "Cheats(Y) - Exit(B) - Continue (A)", 1.0f, true, defaultColor);

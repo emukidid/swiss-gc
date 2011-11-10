@@ -20,5 +20,6 @@ void init_font(void);
 void WriteFont(int x, int y, char *string);
 void WriteFontStyled(int x, int y, char *string, float size, bool centered, GXColor color);
 int GetTextSizeInPixels(char *string);
+float GetTextScaleToFitInWidth(char *string, int width);
 
 #endif
