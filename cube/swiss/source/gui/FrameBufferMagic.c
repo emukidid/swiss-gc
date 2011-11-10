@@ -257,7 +257,7 @@ void _DrawBackdrop()
 {
 	DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 //  drawBitmap(backdrop_Bitmap, 0, 0, 640,480);
-	WriteFont(55,40, "Swiss v0.1 for Gamecube");
+	WriteFont(55,40, "Swiss v0.2 for Gamecube");
 }
 
 // Call this when starting a screen

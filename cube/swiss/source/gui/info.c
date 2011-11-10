@@ -18,9 +18,30 @@
 
 char topStr[256];
 
+char *getSramLang(u8 lang) {
+	switch(lang) {
+		case 5:
+			return "Dutch";
+		case 4:
+			return "Italian";
+		case 3:
+			return "Spanish";
+		case 2:
+			return "French";
+		case 1:
+			return "German";
+		case 0:
+			return "English";
+	}
+	return "Unknown";
+}
+
 void show_page(int page_num) {
 	doBackdrop();
 	DrawEmptyBox(20,60, vmode->fbWidth-20, 420, COLOR_BLACK);
+	syssram *sram;
+	sram = __SYS_LockSram();
+	__SYS_UnlockSram(0);
 	
 	// System Info (Page 1/3)
 	if(!page_num) {
@@ -63,9 +84,9 @@ void show_page(int page_num) {
 		WriteFont(30, 220, topStr);
 		sprintf(topStr,"ECID: %08X:%08X:%08X",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
 		WriteFont(30, 260, topStr);
-		sprintf(topStr,"Language: %s","English");	//TODO
+		sprintf(topStr,"Language: %s",getSramLang(sram->lang));
 		WriteFont(30, 295, topStr);
-		sprintf(topStr,"Audio: %s","Stereo");		//TODO
+		sprintf(topStr,"Audio: %s",sram->flags&4 ? "Stereo":"Mono");
 		WriteFont(30, 330, topStr);
 	}
 	else if(page_num == 1) {
@@ -115,11 +136,13 @@ void show_page(int page_num) {
 	}
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Credits (3/3):");
-		WriteFontStyled(640/2, 115, "Swiss ver 0.1", 1.0f, true, defaultColor);
-		WriteFontStyled(640/2, 150, "by emu_kidid 2011", 1.0f, true, defaultColor);
-		WriteFontStyled(640/2, 210, "Visit http://www.gc-forever.com/", 1.0f, true, defaultColor);
-		WriteFontStyled(640/2, 295, "Thanks to", 1.0f, true, defaultColor);
-		WriteFontStyled(640/2, 320, "Testers & libOGC/dkPPC authors", 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 115, "Swiss ver 0.2", 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 140, "by emu_kidid 2011", 0.75f, true, defaultColor);
+		WriteFontStyled(640/2, 210, "Thanks to", 0.75f, true, defaultColor);
+		WriteFontStyled(640/2, 228, "Testers & libOGC/dkPPC authors", 0.75f, true, defaultColor);
+		WriteFontStyled(640/2, 246, "sepp256 for the wonderful GX conversion", 0.75f, true, defaultColor);
+		WriteFontStyled(640/2, 300, "Web/Support http://www.gc-forever.com/", 0.75f, true, defaultColor);
+		WriteFontStyled(640/2, 318, "Source at http://code.google.com/p/swiss-gc/", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 370, "Press A to return", 1.0f, true, defaultColor);
 	}
 	if(page_num != 2) {
