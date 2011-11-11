@@ -226,9 +226,8 @@ int main ()
 	swissSettings.curVideoSelection = AUTO;
 	
 	// Start up the BBA if it exists
-	if(exi_bba_exists()) {
-		init_network_thread();
-	}
+	init_network_thread();
+
 	
 	//debugging stuff
 	if(swissSettings.debugUSB) {
