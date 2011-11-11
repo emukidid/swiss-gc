@@ -54,6 +54,8 @@
 #include "boxouter_tpl.h"
 #include "boxouter.h"
 
+#define GUI_MSGBOX_ALPHA 200
+
 // Banner is 96 cols * 32 lines in RGBA5551 fmt
 #define BannerSize (96*32*2)
 GXTexObj bannerTexObj;
@@ -339,20 +341,19 @@ void DrawProgressBar(int percent, char *message) {
 	int x2 = ((640/2) + (PROGRESS_BOX_WIDTH/2));
 	int y1 = ((480/2) - (PROGRESS_BOX_HEIGHT/2));
 	int y2 = ((480/2) + (PROGRESS_BOX_HEIGHT/2));
-	int middleY = y2-y1 < 23 ? y1+3 : (y2+y1)/2-12;
+	int middleY = (y2+y1)/2;
 
-  	GXColor fillColor = (GXColor) {0,0,255,255}; //blue
+  	GXColor fillColor = (GXColor) {0,0,0,GUI_MSGBOX_ALPHA}; //black
   	GXColor noColor = (GXColor) {0,0,0,0}; //blank
-	GXColor borderColor = (GXColor) {200,200,200,255}; //silver
-	GXColor progressBarAllColor = (GXColor) {255,0,0,255}; //red
-	GXColor progressBarColor = (GXColor) {0,255,0,255}; //green
+	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
+	GXColor progressBarColor = (GXColor) {255,128,0,GUI_MSGBOX_ALPHA}; //orange
 	
 	DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor); 
 	int multiplier = (PROGRESS_BOX_WIDTH-20)/100;
 	int progressBarWidth = multiplier*100;
-	DrawSimpleBox( (640/2 - progressBarWidth/2), y1+25,
-			(multiplier*100), 20, 0, progressBarAllColor, borderColor); 
-	DrawSimpleBox( (640/2 - progressBarWidth/2), y1+25,
+	DrawSimpleBox( (640/2 - progressBarWidth/2), y1+20,
+			(multiplier*100), 20, 0, noColor, borderColor); 
+	DrawSimpleBox( (640/2 - progressBarWidth/2), y1+20,
 			(multiplier*percent), 20, 0, progressBarColor, noColor); 
 
 	WriteFontStyled(640/2, middleY, message, 1.0f, true, defaultColor);
@@ -368,8 +369,8 @@ void DrawMessageBox(int type, char *message)
 	int y2 = ((480/2) + (PROGRESS_BOX_HEIGHT/2));
 	int middleY = y2-y1 < 23 ? y1+3 : (y2+y1)/2-12;
 	
-  	GXColor fillColor = (GXColor) {0,0,255,255}; //blue?
-	GXColor borderColor = (GXColor) {200,200,200,255}; //silver
+  	GXColor fillColor = (GXColor) {0,0,0,GUI_MSGBOX_ALPHA}; //black
+	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
 	
 	DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor); 
 
@@ -401,9 +402,9 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
 		middleY = y1+3;
 	}
 
-	GXColor selectColor = (GXColor) {0,0,255,255}; //selected
+	GXColor selectColor = (GXColor) {96,107,164,GUI_MSGBOX_ALPHA}; //bluish
 	GXColor noColor = (GXColor) {0,0,0,0}; //black
-	GXColor borderColor = (GXColor) {200,200,200,255}; //silver
+	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
 	
 	//Draw Text and backfill (if selected)
 	if(mode==B_SELECTED) {
@@ -424,9 +425,9 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 
 	borderSize = (mode==B_SELECTED) ? 6 : 4;
 
-	GXColor selectColor = (GXColor) {0,0,255,255}; //selected
+	GXColor selectColor = (GXColor) {96,107,164,GUI_MSGBOX_ALPHA}; //bluish
 	GXColor noColor = (GXColor) {0,0,0,0}; //black
-	GXColor borderColor = (GXColor) {200,200,200,255}; //silver
+	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
 	
 	//Draw Text and backfill (if selected)
 	if(mode==B_SELECTED) {
@@ -449,8 +450,8 @@ void DrawEmptyBox(int x1, int y1, int x2, int y2, int color)
 	borderSize = (y2-y1) <= 30 ? 3 : 10;
 	x1-=borderSize;x2+=borderSize;y1-=borderSize;y2+=borderSize;
 
-	GXColor fillColor = (GXColor) {0,0,0,255}; //Black
-	GXColor borderColor = (GXColor) {200,200,200,255}; //Silver
+	GXColor fillColor = (GXColor) {0,0,0,GUI_MSGBOX_ALPHA}; //Black
+	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //Silver
 	
 	DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor);
 }
