@@ -3,6 +3,7 @@
 #include <ogcsys.h>		/*** Needed for console support ***/
 #include <ogc/color.h>
 #include <ogc/exi.h>
+#include <ogc/lwp.h>
 #include <ogc/usbgecko.h>
 #include <ogc/video_types.h>
 #include <sdcard/card_cmn.h>
@@ -17,7 +18,7 @@
 #include <unistd.h>
 #include "main.h"
 #include "swiss.h"
-//#include "font.h"
+#include "bba.h"
 #include "exi.h"
 #include "dvd.h"
 #include "gui/FrameBufferMagic.h"
@@ -193,7 +194,7 @@ void main_loop()
 					needsRefresh=1;
 					break;
 				case 4:
-					
+					exit(0);
 					break;
 			}
 			
@@ -204,6 +205,7 @@ void main_loop()
 		}
 	}
 }
+
 
 /****************************************************************************
 * Main
@@ -222,6 +224,11 @@ int main ()
 	swissSettings.useHiLevelPatch = 0;
 	swissSettings.debugUSB = 0;
 	swissSettings.curVideoSelection = AUTO;
+	
+	// Start up the BBA if it exists
+	if(exi_bba_exists()) {
+		init_network_thread();
+	}
 	
 	//debugging stuff
 	if(swissSettings.debugUSB) {

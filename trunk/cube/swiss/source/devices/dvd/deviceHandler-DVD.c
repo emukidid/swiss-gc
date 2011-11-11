@@ -123,6 +123,7 @@ int initialize_disc(u32 streaming) {
 	DrawFrameStart();
 	DrawProgressBar(33, "DVD Is Initializing");
 	DrawFrameFinish();
+	dvd_read_id();
 	if(is_gamecube())
 	{
 		if((dvd_get_error()>>24) > 1) { //we have an error (besides open lid) Try to enable patches
