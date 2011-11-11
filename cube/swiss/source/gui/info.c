@@ -15,6 +15,7 @@
 #include "main.h"
 #include "ata.h"
 #include "exi.h"
+#include "bba.h"
 
 char topStr[256];
 
@@ -94,7 +95,7 @@ void show_page(int page_num) {
 		sprintf(topStr,"BBA: %s",exi_bba_exists() ? "Installed":"Not Present");
 		WriteFont(30, 115, topStr);
 		if(exi_bba_exists()) {
-			sprintf(topStr,"IP: %s","192.168.1.1");	//TODO
+			sprintf(topStr,"IP: %s",net_initialized ? bba_ip:"Not Available");
 		}
 		else {
 			sprintf(topStr,"IP: Not Available");
