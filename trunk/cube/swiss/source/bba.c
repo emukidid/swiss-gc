@@ -3,9 +3,11 @@
 #include <malloc.h>
 #include <network.h>
 #include <ogcsys.h>
+#include "exi.h"
 
 /* Network Globals */
 int net_initialized = 0;
+int bba_exists = 0;
 char bba_ip[16];
 
 // net init thread
@@ -74,5 +76,8 @@ static void* init_network(void *args) {
 }
 
 void init_network_thread() {
-  LWP_CreateThread (&initnetthread, init_network, NULL, NULL, 0, 40);
+	bba_exists = exi_bba_exists();
+	if(bba_exists) {
+		LWP_CreateThread (&initnetthread, init_network, NULL, NULL, 0, 40);
+	}
 }
