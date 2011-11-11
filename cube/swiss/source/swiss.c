@@ -595,7 +595,8 @@ void manage_file() {
 		DrawFrameStart();
 		DrawEmptyBox(10,150, vmode->fbWidth-10, 350, COLOR_BLACK);
 		WriteFontStyled(640/2, 160, "Manage File:", 1.0f, true, defaultColor);
-		WriteFontStyled(640/2, 200, getRelativeName(curFile.name), 1.0f, true, defaultColor);
+		float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), vmode->fbWidth-10-10);
+		WriteFontStyled(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor);
 		if(deviceHandler_deleteFile) {
 			WriteFontStyled(640/2, 230, "(A) Load (X) Copy (Y) Move (Z) Delete", 1.0f, true, defaultColor);
 		}
@@ -1343,17 +1344,14 @@ void select_copy_device()
 		WriteFontStyled(640/2, 195, "Select destination device and press A", 1.0f, true, defaultColor);
 		if(curCopyDevice==DEST_SD_CARD) {
 			DrawSelectableButton(170, 230, 450, 340, "SDGecko", B_NOSELECT,COLOR_BLACK);
-//			drawBitmap(sdsmall_Bitmap, 180, 245, 60,80);
 			DrawImage(TEX_SDSMALL, 360, 245, 60, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else if(curCopyDevice==DEST_IDEEXI) {
 			DrawSelectableButton(170, 230, 450, 340, "Ide-Exi", B_NOSELECT,COLOR_BLACK);
-//			drawBitmap(hdd_Bitmap, 170, 245, 80,80);
 			DrawImage(TEX_HDD, 340, 245, 80, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else if(curCopyDevice==DEST_MEMCARD) {
 			DrawSelectableButton(170, 230, 450, 340, "Memory Card",B_NOSELECT,COLOR_BLACK);
-			//drawBitmap(wodeimg_Bitmap, 145, 245, 146,72);
 		}
 		if(curCopyDevice != 2) {
 			WriteFont(520, 300, "->");
@@ -1419,32 +1417,26 @@ void select_device()
 		WriteFontStyled(640/2, 195, "Select device and press A", 1.0f, true, defaultColor);
 		if(curDevice==DVD_DISC) {
 			DrawSelectableButton(170, 230, 450, 340, "DVD Disc", B_NOSELECT,COLOR_BLACK);
-//			drawBitmap(gcdvdsmall_Bitmap, 170, 250, 80,79);
 			DrawImage(TEX_GCDVDSMALL, 340, 250, 80, 79, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else if(curDevice==SD_CARD) {
 			DrawSelectableButton(170, 230, 450, 340, "SDGecko", B_NOSELECT,COLOR_BLACK);
-//			drawBitmap(sdsmall_Bitmap, 180, 245, 60,80);
 			DrawImage(TEX_SDSMALL, 360, 245, 60, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else if(curDevice==IDEEXI) {
 			DrawSelectableButton(170, 230, 450, 340, "Ide-Exi", B_NOSELECT,COLOR_BLACK);
-//			drawBitmap(hdd_Bitmap, 170, 245, 80,80);
 			DrawImage(TEX_HDD, 340, 245, 80, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else if(curDevice==QOOB_FLASH) {
 			DrawSelectableButton(170, 230, 450, 340, "Qoob PRO",B_NOSELECT,COLOR_BLACK);
-//			drawBitmap(qoob_Bitmap, 175, 245, 70,80);
 			DrawImage(TEX_QOOB, 350, 245, 70, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else if(curDevice==WODE) {
 			DrawSelectableButton(170, 230, 450, 340, "WODE",B_NOSELECT,COLOR_BLACK);
-//			drawBitmap(wodeimg_Bitmap, 145, 245, 146,72);
 			DrawImage(TEX_WODEIMG, 290, 245, 146, 72, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 		else if(curDevice==MEMCARD) {
 			DrawSelectableButton(170, 230, 450, 340, "Memory Card",B_NOSELECT,COLOR_BLACK);
-			//drawBitmap(wodeimg_Bitmap, 145, 245, 146,72);
 		}
 		if(curDevice != 5) {
 			WriteFont(520, 300, "->");

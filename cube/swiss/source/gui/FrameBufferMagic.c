@@ -342,7 +342,7 @@ void DrawProgressBar(int percent, char *message) {
 	int y1 = ((480/2) - (PROGRESS_BOX_HEIGHT/2));
 	int y2 = ((480/2) + (PROGRESS_BOX_HEIGHT/2));
 	int middleY = (y2+y1)/2;
-
+	float scale = GetTextScaleToFitInWidth(message, x2-x1);
   	GXColor fillColor = (GXColor) {0,0,0,GUI_MSGBOX_ALPHA}; //black
   	GXColor noColor = (GXColor) {0,0,0,0}; //blank
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
@@ -356,7 +356,7 @@ void DrawProgressBar(int percent, char *message) {
 	DrawSimpleBox( (640/2 - progressBarWidth/2), y1+20,
 			(multiplier*percent), 20, 0, progressBarColor, noColor); 
 
-	WriteFontStyled(640/2, middleY, message, 1.0f, true, defaultColor);
+	WriteFontStyled(640/2, middleY, message, scale, true, defaultColor);
 	sprintf(txtbuffer,"%d%% percent complete",percent);
 	WriteFontStyled(640/2, middleY+30, txtbuffer, 1.0f, true, defaultColor);
 }
