@@ -21,6 +21,7 @@
 #include "bba.h"
 #include "exi.h"
 #include "dvd.h"
+#include "httpd.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
@@ -227,6 +228,7 @@ int main ()
 	
 	// Start up the BBA if it exists
 	init_network_thread();
+	init_httpd_thread();
 
 	
 	//debugging stuff
