@@ -9,8 +9,6 @@
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
 #include "IPLFontWrite.h"
-#include "bnr2yuv.h"
-#include "backdrop.h"
 #include "swiss.h"
 #include "main.h"
 #include "ata.h"
