@@ -1,13 +1,7 @@
 /****************************************************************************
-* bitmap.c
+* banner.c
 *
-* libogc example to display a Windows bitmap.
-*
-* NOTE: Windows BMP must comply to the following:
-*	24-bit uncompressed (99.99% of Windows Editor output)
-*	Be less than or equal to 640 x 480(MPAL/NTSC) 640x528(PAL)
-*
-* This example decodes a BMP file onto the linear framebuffer.
+* Functions to load and show a GC game banner using GX.
 ****************************************************************************/
 #include <gccore.h>
 #include <ogcsys.h>
@@ -15,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
-#include "bnr2yuv.h"
 #include "banner.h"
 #include "dvd.h"
 #include "swiss.h"

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------
-      FrameBufferMagic.c - Crappy framebuffer routines
-	      - by emu_kidid
-	   
+      FrameBufferMagic.c - Framebuffer routines with GX
+	      - by emu_kidid & sepp256
+
       Version 1.0 11/11/2009
         - Initial Code
    ----------------------------------------------------------- */
@@ -16,8 +16,6 @@
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
 #include "IPLFontWrite.h"
-#include "bnr2yuv.h"
-//#include "backdrop.h"
 #include "swiss.h"
 #include "main.h"
 #include "ata.h"
@@ -56,7 +54,7 @@
 
 #define GUI_MSGBOX_ALPHA 200
 
-// Banner is 96 cols * 32 lines in RGBA5551 fmt
+// Banner is 96 cols * 32 lines in RGB5A3 fmt
 #define BannerSize (96*32*2)
 GXTexObj bannerTexObj;
 u8 *bannerData;
@@ -181,24 +179,6 @@ void drawInit()
 //	GX_SetDstAlpha(GX_DISABLE, 0xFF);
 	//set cull mode
 	GX_SetCullMode (GX_CULL_NONE);
-}
-
-void fillRect(int x, int y, int width, int height, int depth, GXColor color)
-{
-	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-		GX_Position3f32((float) x,(float) y,(float) depth );
-		GX_Color4u8(color.r, color.g, color.b, color.a);
-		GX_TexCoord2f32(0.0f,0.0f);
-		GX_Position3f32((float) (x+width),(float) y,(float) depth );
-		GX_Color4u8(color.r, color.g, color.b, color.a);
-		GX_TexCoord2f32(0.0f,0.0f);
-		GX_Position3f32((float) (x+width),(float) (y+height),(float) depth );
-		GX_Color4u8(color.r, color.g, color.b, color.a);
-		GX_TexCoord2f32(0.0f,0.0f);
-		GX_Position3f32((float) x,(float) (y+height),(float) depth );
-		GX_Color4u8(color.r, color.g, color.b, color.a);
-		GX_TexCoord2f32(0.0f,0.0f);
-	GX_End();
 }
 
 void drawRect(int x, int y, int width, int height, int depth, GXColor color, float s0, float s1, float t0, float t1)

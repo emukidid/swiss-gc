@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------
-      FrameBufferMagic.h - Crappy framebuffer routines
-	      - by emu_kidid
-	   
+      FrameBufferMagic.h - Framebuffer routines with GX
+	      - by emu_kidid & sepp256
+
       Version 1.0 11/11/2009
         - Initial Code
    ----------------------------------------------------------- */
@@ -9,11 +9,6 @@
 #ifndef FRAMEBUFFERMAGIC_H
 #define FRAMEBUFFERMAGIC_H
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <malloc.h>
 #include <gccore.h>
 #include "deviceHandler.h"
 
