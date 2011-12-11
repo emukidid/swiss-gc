@@ -3,7 +3,9 @@
 
 1. Check out the code from SVN.
 
-2. We need to compile 4 separate patch codes - 2 for SD cards (2 slots) and 2 for IDE-EXI (2 slots).
+IF and only IF you change the assembly code for the SD/IDE-EXI re-directed DVD Reads, then do the following, otherwise, skip straight ahead to step 3. 
+
+2.You need to compile 4 separate patch codes - 2 for SD cards (2 slots) and 2 for IDE-EXI (2 slots).
 
 2A.) To build these, enter the cube\patches directory and open up sd.s.
 
