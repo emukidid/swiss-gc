@@ -1108,8 +1108,8 @@ int info_game()
 			if(deviceHandler_readFile(&curFile,&description[0],0x80)==0x80) {
 				char * tok = strtok (&description[0],"\n");
 				int line = 0;
-				float scale = GetTextScaleToFitInWidth(tok,(vmode->fbWidth-78)-75);
 				while (tok != NULL)	{
+					float scale = GetTextScaleToFitInWidth(tok,(vmode->fbWidth-78)-75);
 					WriteFontStyled(640/2, 315+(line*scale*24), tok, scale, true, defaultColor);
 					tok = strtok (NULL, "\n");
 					line++;
