@@ -44,11 +44,9 @@ bin2s dvdcode.bin > READpatch.s
 }}}
 And then we open the READpatch.s file and place the code from it into cube\swiss\source\patches\SlotA-HDD.s for example (remembering to rename the array).
 
-3.) Copy cube\linker-script\vgcogc.ld to C:\devkitPro\devkitPPC\powerpc-eabi\lib\ and override it.
+3.) Swiss uses a custom libfat with fragmentation support. Make sure to build the latest in cube\libfat-frag\ and to use that library instead of the standard libfat lib (put it in your libogc libs dir)
 
-4.) Swiss uses a custom libfat with fragmentation support. Make sure to build the latest in cube\libfat-frag\ and to use that library instead of the standard libfat lib (put it in your libogc libs dir)
-
-5.) To build Swiss now with all the latest patch codes, we simply enter cube\swiss and execute: 
+4.) To build Swiss now with all the latest patch codes, we simply enter cube\swiss and execute: 
 {{{
 make
 elf2dol swiss.elf swiss.dol
