@@ -101,7 +101,6 @@ void* Initialise (void)
 	memset (gp_fifo, 0, DEFAULT_FIFO_SIZE);
 	GX_Init (gp_fifo, DEFAULT_FIFO_SIZE);
 	// clears the bg to color and clears the z buffer
-//	GX_SetCopyClear ((GXColor){64,64,64,255}, 0x00000000);
 	GX_SetCopyClear ((GXColor){0,0,0,255}, 0x00000000);
 	// init viewport
 	GX_SetViewport (0, 0, vmode->fbWidth, vmode->efbHeight, 0, 1);
@@ -116,7 +115,7 @@ void* Initialise (void)
 	init_textures();
 	whichfb = 0;
 	
-	 drive_version(&driveVersion[0]);
+	drive_version(&driveVersion[0]);
 	
 	if(!driveVersion[0]) {
 		// Reset DVD if there was a modchip

@@ -525,7 +525,7 @@ void boot_dol()
   
 	dol_buffer = (unsigned char*)memalign(32,curFile.size);
 	if(!dol_buffer) {
-	DrawFrameStart();
+		DrawFrameStart();
 		DrawMessageBox(D_FAIL,"DOL is too big. Press A.");
 		DrawFrameFinish();
 		wait_press_A();
