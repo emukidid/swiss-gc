@@ -6,13 +6,13 @@
 *
 * softdev March 2007
 ***************************************************************************/
-#ifndef HW_RVL
 #include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
 #include <network.h>
+#include <asndlib.h>
 
 #include "sidestep.h"
 #include "ssaram.h"
@@ -132,6 +132,8 @@ void ARAMRun(u32 entrypoint, u32 dst, u32 src, u32 len)
   char *s = (char *) ARAMStub;
   BOOTSTUB stub;
 
+  GX_AbortFrame();
+  ASND_End();
   /*** Shutdown libOGC ***/
   SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
 
@@ -277,4 +279,3 @@ int DOLtoARAM(unsigned char *dol)
   /*** Will never return ***/
   return 1;
 }
-#endif
