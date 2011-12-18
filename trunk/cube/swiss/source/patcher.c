@@ -129,6 +129,51 @@ u32 _AIResetStreamSampleCount_original[9] = {
   0x7C0803A6   // mtlr        r0
 };
 
+static const u32 dvd_read_audio_original[1] = {
+	//0x7c0802a6,
+	//0x90010004,
+	//0x38000000,
+	//0x9421ffe0,
+	//0x93e1001c,
+	//0x93c10018,
+	//0x90cdad68,
+	//0x3cc0cc00,
+	//0x38c66000,
+	//0x900dad60,
+	0x6460e100
+};
+static const u32 dvd_audio_config_original[7] = {
+	//0x7c0802a6,
+	//0x2c030000,
+	//0x90010004,
+	//0x38000000,
+	//0x9421ffe0,
+	//0x93e1001c,
+	//0x93c10018,
+	//0x90adad68,
+	//0x900dad60,
+	0x41820008,
+	0x3c000001,
+	0x6400e400,
+	0x3c60cc00,
+	0x7c800378,
+	0x38636000,
+	0x90030008
+};
+static const u32 dvd_audio_status_original[1] = {
+	//0x7c0802a6,
+	//0x90010004,
+	//0x38000000,
+	//0x9421ffe8,
+	//0x93e10014,
+	//0x93c10010,
+	//0x908d8988,
+	//0x3c80cc00,
+	//0x38846000,
+	//0x900d8980,
+	0x6460e200,
+};
+
 u32 sig_fwrite[8] = {
   0x9421FFD0,
   0x7C0802A6,
@@ -504,10 +549,59 @@ void dvd_patchAISCount(void *addr, u32 len) {
 	
 	while(addr_start<addr_end) 
 	{
-		if(memcmp(addr_start,_AIResetStreamSampleCount_original,sizeof(_AIResetStreamSampleCount_original))==0) 
-		{
-			*(u32*)(addr_start+12) = 0x60000000;  //NOP
+		if(memcmp(addr_start,dvd_read_audio_original,sizeof(dvd_read_audio_original))==0) {
+			void *ptr = addr_start-(10*4);
+			// execute callback(1); passed in on r6 without actually touching the drive!
+			*(u32*)(ptr) 	= 0x9421FFC0;	//  stwu        sp, -0x0040 (sp)
+			*(u32*)(ptr+4) 	= 0x7C0802A6;	//  mflr        r0
+			*(u32*)(ptr+8) 	= 0x90010000;	//  stw         r0, 0 (sp)
+			*(u32*)(ptr+12) 	= 0x7CC903A6;	//  mtctr       r6
+			*(u32*)(ptr+16) 	= 0x38600001;	//  li          r3, 1
+			*(u32*)(ptr+20) 	= 0x4E800421;	//  bctr;
+			*(u32*)(ptr+24) 	= 0x80010000;	//  lwz         r0, 0 (sp)
+			*(u32*)(ptr+28) 	= 0x7C0803A6;	//  mtlr        r0
+			*(u32*)(ptr+32) 	= 0x38210040;	//  addi        sp, sp, 64
+			*(u32*)(ptr+36) 	= 0x4E800020;	//  blr
 		}
+		else if(memcmp(addr_start,dvd_audio_config_original,sizeof(dvd_audio_config_original))==0) {
+			void *ptr = addr_start-(9*4);
+			// execute callback(1); passed in on r5 without actually touching the drive!
+			*(u32*)(ptr) 	= 0x9421FFC0;	//  stwu        sp, -0x0040 (sp)
+			*(u32*)(ptr+4) 	= 0x7C0802A6;	//  mflr        r0
+			*(u32*)(ptr+8) 	= 0x90010000;	//  stw         r0, 0 (sp)
+			*(u32*)(ptr+12) 	= 0x7CA903A6;	//  mtctr       r5
+			*(u32*)(ptr+16) 	= 0x38600001;	//  li          r3, 1
+			*(u32*)(ptr+20) 	= 0x4E800421;	//  bctrl
+			*(u32*)(ptr+24) 	= 0x80010000;	//  lwz         r0, 0 (sp)
+			*(u32*)(ptr+28) 	= 0x7C0803A6;	//  mtlr        r0
+			*(u32*)(ptr+32) 	= 0x38210040;	//  addi        sp, sp, 64
+			*(u32*)(ptr+36) 	= 0x4E800020;	//  blr
+		}
+		else if(memcmp(addr_start,dvd_audio_status_original,sizeof(dvd_audio_status_original))==0) {
+			void *ptr = addr_start-(10*4);
+			// execute function(1); passed in on r4
+			*(u32*)(ptr) 	= 0x9421FFC0;	//  stwu        sp, -0x0040 (sp)
+			*(u32*)(ptr+4) 	= 0x7C0802A6;	//  mflr        r0
+			*(u32*)(ptr+8) 	= 0x90010000;	//  stw         r0, 0 (sp)
+			*(u32*)(ptr+12) 	= 0x7C8903A6;	//  mtctr       r4
+			*(u32*)(ptr+16) 	= 0x3C80CC00;	//  lis         r4, 0xCC00
+			*(u32*)(ptr+20) 	= 0x2E830000;	//  cmpwi       cr5, r3, 0
+			*(u32*)(ptr+24) 	= 0x4196000C;	//  beq-        cr5, +0xC ?
+			*(u32*)(ptr+28) 	= 0x38600001;	//  li          r3, 1
+			*(u32*)(ptr+32) 	= 0x48000008;	//  b           +0x8 ?
+			*(u32*)(ptr+36) 	= 0x38600000;	//  li          r3, 0
+			*(u32*)(ptr+40) 	= 0x90646020;	//  stw         r3, 0x6020 (r4)
+			*(u32*)(ptr+44) 	= 0x38600001;	//  li          r3, 1
+			*(u32*)(ptr+48) 	= 0x4E800421;	//  bctrl
+			*(u32*)(ptr+52) 	= 0x80010000;	//  lwz         r0, 0 (sp)
+			*(u32*)(ptr+56) 	= 0x7C0803A6;	//  mtlr        r0
+			*(u32*)(ptr+60) 	= 0x38210040;	//  addi        sp, sp, 64
+			*(u32*)(ptr+64) 	= 0x4E800020;	//  blr
+		}
+		//else if(memcmp(addr_start,_AIResetStreamSampleCount_original,sizeof(_AIResetStreamSampleCount_original))==0) 
+		//{
+		//	*(u32*)(addr_start+12) = 0x60000000;  //NOP
+		//}
 		addr_start += 4;
 	}
 }
