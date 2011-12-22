@@ -35,6 +35,9 @@ extern u32 DVDReadAsync_length;
 extern u8 DVDReadAsyncInt[];
 extern u32 DVDReadAsyncInt_length;
 
+/* Pre-patcher magic */
+#define PRE_PATCHER_MAGIC "Pre-Patched by Swiss v0.2"
+
 #define LO_RESERVE 0x80001800
 #define HI_RESERVE 0x817F8000
 
@@ -45,34 +48,17 @@ extern u32 DVDReadAsyncInt_length;
 #define READ_TYPE2_V1_OFFSET (base_addr | 0x0C)
 #define ID_JUMP_OFFSET (base_addr | 0x10)
 
-
-extern u8 _Read_original[46];
-extern u8 _Read_original_2[38];
-extern u8 _Read_original_3[46];
-extern u32 _DVDLowReadDiskID_original[8];
-extern u32 _DVDLowSeek_original[9];
-extern u32 _DVDLowSeek_original_v2[9];
-extern u32 _AIResetStreamSampleCount_original[9];
-extern u32 _getTiming_v2[28];
-extern u32 _getTiming_v1[25];
-extern u32 sig_fwrite[8];
-extern u32 sig_fwrite_alt[8];
-
-int dvd_patchDVDRead(void *addr, u32 len);
-void dvd_patchDVDReadID(void *addr, u32 len);
-void dvd_patchAISCount(void *addr, u32 len);
-void dvd_patchDVDLowSeek(void *addr, u32 len);
+int Patch_DVDHighLevelRead(u8 *data, u32 length);
+int Patch_DVDLowLevelRead(void *addr, u32 length);
+int Patch_480pVideo(u8 *data, u32 length);
+int Patch_DVDAudioStreaming(u8 *data, u32 length);
+void Patch_Fwrite(void *addr, u32 length);
+void Patch_DVDReset(void *addr,u32 length);
+void Patch_DVDLowReadDiskId(void *addr, u32 length);
+void Patch_GXSetVATZelda(void *addr, u32 length,int mode);
 void install_code();
-void patch_VIInit(void *addr, u32 len);
-void dvd_patchVideoMode(void *addr, u32 len,int mode);
-void dvd_patchfwrite(void *addr, u32 len);
-void dvd_patchreset(void *addr,u32 len);
-int check_dol(file_handle *disc, unsigned int *sig, int size);
-void set_base_addr(int useHi);
 u32 get_base_addr();
-void patchZeldaWW(void *addr, u32 len,int mode);
-int applyPatches(u8 *data, u32 length, u32 disableInterrupts);
-void patch_video_480p(u8 *data, u32 len);
+void set_base_addr(int useHi);
 
 #endif
 

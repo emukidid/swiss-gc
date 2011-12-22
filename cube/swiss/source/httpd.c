@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
-#include <ogcsys.h>
+#include <unistd.h>
 #include <gccore.h>
 #include <network.h>
 #include <debug.h>
 #include <errno.h>
 #include "bba.h"
+#include "main.h"
 
 static	lwp_t httd_handle = (lwp_t)NULL;
 const static char http_200[] = "HTTP/1.1 200 OK\r\n";

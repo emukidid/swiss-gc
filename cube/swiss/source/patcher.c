@@ -27,15 +27,6 @@ extern int GC_SD_CHANNEL;
 
 extern void animateBox(int x1,int y1, int x2, int y2, int color,char *msg);
 
-static const u32 _dvdlowreset_org[12] = {
-	0x7C0802A6,0x3C80CC00,0x90010004,0x38000002,0x9421FFE0,0xBF410008,0x3BE43000,0x90046004,
-	0x83C43024,0x57C007B8,0x60000001,0x941F0024
-};
-
-static const u32 _dvdlowreset_new[8] = {
-	0x3FE08000,0x63FF1800,0x7FE803A6,0x4E800021,0x4800006C,0x60000000,0x60000000,0x60000000
-};
-
 /* Original Read bytes (for finding and patching) */
 u8 _Read_original[46] = {
 	0x7C, 0x08, 0x02, 0xA6,  //	mflr        r0
@@ -81,41 +72,6 @@ u8 _Read_original_3[46] = {
 	0x90, 0xCD               // stw r6 to someplace in (sd1) - differs on different sdk's
 };
 
-u32 _DVDLowReadDiskID_original[8] = {
-  0x7C0802A6,  // mflr        r0
-  0x39000000,  // li          r8, 0
-  0x90010004,  // stw         r0, 4 (sp)
-  0x3CA0A800,  // lis         r5, 0xA800
-  0x38050040,  // addi        r0, r5, 64
-  0x9421FFE8,  // stwu        sp, -0x0018 (sp)
-  0x38C00020,  // li          r6, 32
-  0x3CA08000   // lis         r5, 0x8000
-};
-
-u32 _DVDLowSeek_original[9] = {
-  0x7C0802A6,  // mflr        r0
-  0x90010004,  // stw         r0, 4 (sp)
-  0x38000000,  // li          r0, 0
-  0x9421FFE8,  // stwu        sp, -0x0018 (sp)
-  0x93E10014,  // stw         r31, 20 (sp)
-  0x93C10010,  // stw         r30, 16 (sp)
-  0x908D3738,  // stw         r4, 0x3738 (sd1)
-  0x3C80CC00,  // lis         r4, 0xCC00
-  0x38846000   // addi        r4, r4, 24576
-};
-
-u32 _DVDLowSeek_original_v2[9] = {
-  0x7C0802A6,  // mflr        r0
-  0x90010004,  // stw         r0, 4 (sp)
-  0x38000000,  // li          r0, 0
-  0x9421FFE8,  // stwu        sp, -0x0018 (sp)
-  0x93E10014,  // stw         r31, 20 (sp)
-  0x93C10010,  // stw         r30, 16 (sp)
-  0x908DC698,  // stw         r4, -0x3968 (sd1)
-  0x3C80CC00,  // lis         r4, 0xCC00
-  0x38846000   // addi        r4, r4, 24576	
-};
-
 //aka AISetStreamPlayState
 u32 _AIResetStreamSampleCount_original[9] = {
   0x3C60CC00,  // lis         r3, 0xCC00
@@ -129,188 +85,56 @@ u32 _AIResetStreamSampleCount_original[9] = {
   0x7C0803A6   // mtlr        r0
 };
 
-static const u32 dvd_read_audio_original[1] = {
-	//0x7c0802a6,
-	//0x90010004,
-	//0x38000000,
-	//0x9421ffe0,
-	//0x93e1001c,
-	//0x93c10018,
-	//0x90cdad68,
-	//0x3cc0cc00,
-	//0x38c66000,
-	//0x900dad60,
-	0x6460e100
-};
-static const u32 dvd_audio_config_original[7] = {
-	//0x7c0802a6,
-	//0x2c030000,
-	//0x90010004,
-	//0x38000000,
-	//0x9421ffe0,
-	//0x93e1001c,
-	//0x93c10018,
-	//0x90adad68,
-	//0x900dad60,
-	0x41820008,
-	0x3c000001,
-	0x6400e400,
-	0x3c60cc00,
-	0x7c800378,
-	0x38636000,
-	0x90030008
-};
-static const u32 dvd_audio_status_original[1] = {
-	//0x7c0802a6,
-	//0x90010004,
-	//0x38000000,
-	//0x9421ffe8,
-	//0x93e10014,
-	//0x93c10010,
-	//0x908d8988,
-	//0x3c80cc00,
-	//0x38846000,
-	//0x900d8980,
-	0x6460e200,
-};
+void set_base_addr(int useHi) {
+	base_addr = useHi ? HI_RESERVE : LO_RESERVE;
+}
 
-u32 sig_fwrite[8] = {
-  0x9421FFD0,
-  0x7C0802A6,
-  0x90010034,
-  0xBF210014,
-  0x7C992378,
-  0x7CDA3378,
-  0x7C7B1B78,
-  0x7CBC2B78
-};
+u32 get_base_addr() {
+	return base_addr;
+}
 
-u32 sig_fwrite_alt[8] = {
-  0x7C0802A6,
-  0x90010004,
-  0x9421FFB8,
-  0xBF21002C,
-  0x3B440000,
-  0x3B660000,
-  0x3B830000,
-  0x3B250000
-};
+void writeBranchLink(unsigned int sourceAddr,unsigned int destAddr) {
+	unsigned int temp;
+		
+	//write the new instruction to the source
+	temp = ((destAddr)-(sourceAddr));	//calc addr
+	temp &= 0x03FFFFFF;					//extract only addr
+	temp |= 0x4B000001;					//make it a bl opcode
+	*(volatile unsigned int*)sourceAddr = temp;	//write it to the dest
+}
 
-u32 sig_fwrite_alt2[8] = {
-  0x7C0802A6,
-  0x90010004,
-  0x9421FFD0,
-  0xBF410018,
-  0x3BC30000,
-  0x3BE40000,
-  0x80ADB430,
-  0x3C055A01 
-};
-
-static const u32 geckoPatch[31] = {
-  0x7C8521D7,
-  0x40810070,
-  0x3CE0CC00,
-  0x38C00000,
-  0x7C0618AE,
-  0x5400A016,
-  0x6408B000,
-  0x380000D0,
-  0x90076814,
-  0x7C0006AC,
-  0x91076824,
-  0x7C0006AC,
-  0x38000019,
-  0x90076820,
-  0x7C0006AC,
-  0x80076820,
-  0x7C0004AC,
-  0x70090001,
-  0x4082FFF4,
-  0x80076824,
-  0x7C0004AC,
-  0x39200000,
-  0x91276814,
-  0x7C0006AC,
-  0x74090400,
-  0x4182FFB8,
-  0x38C60001,
-  0x7F862000,
-  0x409EFFA0,
-  0x7CA32B78,
-  0x4E800020
-};
-
-u32 GXSETVAT_PAL_orig[32] = {
-    0x8142ce00, 0x39800000, 0x39600000, 0x3ce0cc01,
-    0x48000070, 0x5589063e, 0x886a04f2, 0x38000001,
-    0x7c004830, 0x7c600039, 0x41820050, 0x39000008,
-    0x99078000, 0x61230070, 0x380b001c, 0x98678000,
-    0x61250080, 0x388b003c, 0x7cca002e, 0x61230090,
-    0x380b005c, 0x90c78000, 0x99078000, 0x98a78000,
-    0x7c8a202e, 0x90878000, 0x99078000, 0x98678000,
-    0x7c0a002e, 0x90078000, 0x396b0004, 0x398c0001
-};
-
-u32 GXSETVAT_PAL_patched[32] = {
-    0x8122ce00, 0x39400000, 0x896904f2, 0x7d284b78,
-    0x556007ff, 0x41820050, 0x38e00008, 0x3cc0cc01,
-    0x98e68000, 0x61400070, 0x61440080, 0x61430090,
-    0x98068000, 0x38000000, 0x80a8001c, 0x90a68000,
-    0x98e68000, 0x98868000, 0x8088003c, 0x90868000,
-    0x98e68000, 0x98668000, 0x8068005c, 0x90668000,
-    0x98068000, 0x556bf87f, 0x394a0001, 0x39080004,
-    0x4082ffa0, 0x38000000, 0x980904f2, 0x4e800020
-};
-
-u32 GXSETVAT_NTSC_orig[32] = {   
-    0x8142cdd0, 0x39800000, 0x39600000, 0x3ce0cc01,
-    0x48000070, 0x5589063e, 0x886a04f2, 0x38000001,
-    0x7c004830, 0x7c600039, 0x41820050, 0x39000008,
-    0x99078000, 0x61230070, 0x380b001c, 0x98678000,
-    0x61250080, 0x388b003c, 0x7cca002e, 0x61230090,
-    0x380b005c, 0x90c78000, 0x99078000, 0x98a78000,
-    0x7c8a202e, 0x90878000, 0x99078000, 0x98678000,
-    0x7c0a002e, 0x90078000, 0x396b0004, 0x398c0001
-};
-   
-const u32 GXSETVAT_NTSC_patched[32] = {
-    0x8122cdd0, 0x39400000, 0x896904f2, 0x7d284b78,
-    0x556007ff, 0x41820050, 0x38e00008, 0x3cc0cc01,
-    0x98e68000, 0x61400070, 0x61440080, 0x61430090,
-    0x98068000, 0x38000000, 0x80a8001c, 0x90a68000,
-    0x98e68000, 0x98868000, 0x8088003c, 0x90868000,
-    0x98e68000, 0x98668000, 0x8068005c, 0x90668000,
-    0x98068000, 0x556bf87f, 0x394a0001, 0x39080004,
-    0x4082ffa0, 0x38000000, 0x980904f2, 0x4e800020
-};
-
-
-// Copy me to 0x80002808 - thx qoob
-static const u32 patch_viconfigure_480p[22] = {
-	0x00000002,
-	0x028001E0,
-	0x01E00028,
-	0x00000280,
-	0x01E00000,
-	0x00000000,
-	0x38800006,  		// li          r4, 6
-	0x7C8903A6,  		// mtctr       r4
-	0x3CC08000,  		// lis         r6, 0x8000
-	0x60C42804,  		// ori         r4, r6, 0x2804
-	0x80A40004,  		// lwz         r5, 4 (r4)
-	0x7CA51670,  		// srawi       r5, r5, 2
-	0x90A600CC,  		// stw         r5, 0x00CC (r6)
-	0x3863FFFC,  		// subi        r3, r3, 4
-	0x84A40004,  		// lwzu        r5, 4 (r4)
-	0x94A30004,  		// stwu        r5, 4 (r3)
-	0x4200FFF8,  		// bdnz+       0x80002840 ?
-	0x7C6000A6,  		// mfmsr       r3
-	0x5464045E,  		// rlwinm      r4, r3, 0, 17, 15
-	0x7C800124,  		// mtmsr       r4
-	0x54638FFE,  		// rlwinm      r3, r3, 17, 31, 31
-	0x4E800020  		// blr
-};
+void install_code()
+{
+	DCFlushRange((void*)base_addr,0x1800);
+	ICInvalidateRange((void*)base_addr,0x1800);
+	
+	// IDE-EXI
+  	if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
+		int slot = (deviceHandler_initial->name[3] == 'b');
+	  	// IDE-EXI in slot A
+  		if(!slot) {
+	  		memcpy((void*)base_addr,slot_a_hdd,slot_a_hdd_size);
+  		}
+  		else {
+	  		// IDE-EXI in slot B
+	  		memcpy((void*)base_addr,slot_b_hdd,slot_b_hdd_size);
+  		}
+  	}
+	// SD Gecko
+	else if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
+		int slot = (deviceHandler_initial->name[2] == 'b');
+		if(!slot)	{	// in Slot A
+			memcpy((void*)base_addr,slot_a_sd,slot_a_sd_size);
+		}
+		else {	// in Slot B
+			memcpy((void*)base_addr,slot_b_sd,slot_b_sd_size);
+		}
+	}
+	// DVD 2 disc code
+	else if((deviceHandler_initial == &initial_DVD) && (drive_status == DEBUG_MODE)) {
+		memcpy((void*)0x80001800,TDPatch,TDPATCH_LEN);
+	}
+}
 
 int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 {
@@ -390,13 +214,13 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 // Zelda: 4 Swords: << Dolphin SDK - DVD    release build: Sep 16 2003 09:50:54 (0x2301) >>
 // Dragonball Z Sagas: << Dolphin SDK - DVD.release build: Feb 12 2004 05:02:49 (0x2301) >>
 // Zelda: Twilight Princess: << Dolphin SDK - DVD    release build: Apr  5 2004 04:14:51 (0x2301) >>
-int applyPatches(u8 *data, u32 length, u32 disableInterrupts) {
-	int i, j, PatchCount = 0;
-	FuncPattern FPatterns[2] = {
+int Patch_DVDHighLevelRead(u8 *data, u32 length) {
+	int i, j, count = 0, dis_int = swissSettings.disableInterrupts;
+	FuncPattern DVDReadSigs[2] = {
 	{ 	0xBC,   20,     3,      3,      4,      7, 
-		disableInterrupts ? DVDReadAsync:DVDReadAsyncInt,  disableInterrupts ? DVDReadAsync_length:DVDReadAsyncInt_length, "DVDReadAsync" },
+		dis_int ? DVDReadAsync:DVDReadAsyncInt,  dis_int ? DVDReadAsync_length:DVDReadAsyncInt_length, "DVDReadAsync" },
 	{ 	0x114,        23,     2,      6,      9,      8, 
-		disableInterrupts ? DVDRead:DVDReadInt,   disableInterrupts ? DVDRead_length:DVDReadInt_length,  "DVDRead" }};
+		dis_int ? DVDRead:DVDReadInt,   dis_int ? DVDRead_length:DVDReadInt_length,  "DVDRead" }};
 	
 	for( i=0; i < length; i+=4 )
 	{
@@ -405,77 +229,31 @@ int applyPatches(u8 *data, u32 length, u32 disableInterrupts) {
 
 		for( j=0; j < 2; j++ )
 		{
-			if( find_pattern( (u8*)(data+i), length, &(FPatterns[j]) ) )
+			if( find_pattern( (u8*)(data+i), length, &(DVDReadSigs[j]) ) )
 			{
-				sprintf(txtbuffer, "Found [%s] @ 0x%08X len %i\n", FPatterns[j].Name, (u32)data + i, FPatterns[j].Length);
+				sprintf(txtbuffer, "Found [%s] @ 0x%08X len %i\n", DVDReadSigs[j].Name, (u32)data + i, DVDReadSigs[j].Length);
 				print_gecko(txtbuffer);
 				
 				sprintf(txtbuffer, "Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
-						FPatterns[j].Name, (u32)FPatterns[j].Patch, (u32)data + i, FPatterns[j].PatchLength);
+						DVDReadSigs[j].Name, (u32)DVDReadSigs[j].Patch, (u32)data + i, DVDReadSigs[j].PatchLength);
 				print_gecko(txtbuffer);
 							
-				memcpy( (u8*)(data+i), &FPatterns[j].Patch[0], FPatterns[j].PatchLength );
-				DCFlushRange((u8*)(data+i), FPatterns[j].Length);
-				ICInvalidateRange((u8*)(data+i), FPatterns[j].Length);
-				PatchCount++;
+				memcpy( (u8*)(data+i), &DVDReadSigs[j].Patch[0], DVDReadSigs[j].PatchLength );
+				DCFlushRange((u8*)(data+i), DVDReadSigs[j].Length);
+				ICInvalidateRange((u8*)(data+i), DVDReadSigs[j].Length);
+				count++;
 			}
 		}
 
-		if( PatchCount == 2 )
+		if( count == 2 )
 			break;
 	}
-	return PatchCount;
+	return count;
 }
 
-void writeBranchLink(unsigned int sourceAddr,unsigned int destAddr) {
-	unsigned int temp;
-		
-	//write the new instruction to the source
-	temp = ((destAddr)-(sourceAddr));	//calc addr
-	temp &= 0x03FFFFFF;					//extract only addr
-	temp |= 0x4B000001;					//make it a bl opcode
-	*(volatile unsigned int*)sourceAddr = temp;	//write it to the dest
-}
-
-void install_code()
-{
-	DCFlushRange((void*)base_addr,0x1800);
-	ICInvalidateRange((void*)base_addr,0x1800);
-	
-	// IDE-EXI
-  	if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
-		int slot = (deviceHandler_initial->name[3] == 'b');
-	  	// IDE-EXI in slot A
-  		if(!slot) {
-	  		memcpy((void*)base_addr,slot_a_hdd,slot_a_hdd_size);
-  		}
-  		else {
-	  		// IDE-EXI in slot B
-	  		memcpy((void*)base_addr,slot_b_hdd,slot_b_hdd_size);
-  		}
-  	}
-	// SD Gecko
-	else if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
-		int slot = (deviceHandler_initial->name[2] == 'b');
-		if(!slot)	{	// in Slot A
-			memcpy((void*)base_addr,slot_a_sd,slot_a_sd_size);
-		}
-		else {	// in Slot B
-			memcpy((void*)base_addr,slot_b_sd,slot_b_sd_size);
-		}
-	}
-	// DVD 2 disc code
-	else if((deviceHandler_initial == &initial_DVD) && (drive_status == DEBUG_MODE)) {
-		memcpy((void*)0x80001800,TDPatch,TDPATCH_LEN);
-	}
-	if(swissSettings.curVideoSelection == P480) {
-		memcpy((void*)0x80002808,patch_viconfigure_480p,sizeof(patch_viconfigure_480p));
-	}
-}
-
-int dvd_patchDVDRead(void *addr, u32 len) {
+int Patch_DVDLowLevelRead(void *addr, u32 length) {
 	void *addr_start = addr;
-	void *addr_end = addr+len;	
+	void *addr_end = addr+length;	
 	int patched = 0;
 	while(addr_start<addr_end) 
 	{
@@ -517,102 +295,174 @@ int dvd_patchDVDRead(void *addr, u32 len) {
 	return patched;
 }
 
-void patch_video_480p(u8 *data, u32 length) {
+/** SDK VIConfigure patch to force 480p mode */
+
+// Copy me to 0x80002808 - thx qoob
+static const u32 patch_viconfigure_480p[22] = {
+	0x00000002,
+	0x028001E0,
+	0x01E00028,
+	0x00000280,
+	0x01E00000,
+	0x00000000,
+	0x38800006,  		// li          r4, 6
+	0x7C8903A6,  		// mtctr       r4
+	0x3CC08000,  		// lis         r6, 0x8000
+	0x60C42804,  		// ori         r4, r6, 0x2804
+	0x80A40004,  		// lwz         r5, 4 (r4)
+	0x7CA51670,  		// srawi       r5, r5, 2
+	0x90A600CC,  		// stw         r5, 0x00CC (r6)
+	0x3863FFFC,  		// subi        r3, r3, 4
+	0x84A40004,  		// lwzu        r5, 4 (r4)
+	0x94A30004,  		// stwu        r5, 4 (r3)
+	0x4200FFF8,  		// bdnz+       0x80002840 ?
+	0x7C6000A6,  		// mfmsr       r3
+	0x5464045E,  		// rlwinm      r4, r3, 0, 17, 15
+	0x7C800124,  		// mtmsr       r4
+	0x54638FFE,  		// rlwinm      r3, r3, 17, 31, 31
+	0x4E800020  		// blr
+};
+
+int Patch_480pVideo(u8 *data, u32 length) {
 	int i,j;
-	FuncPattern VIConfigurePatterns[2] = {	{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure_v1" },
-											{0x798, 105, 44, 12, 38, 63, 0, 0, "VIConfigure_v2"}};
+	FuncPattern VIConfigureSigs[2] = {	
+		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure_v1" },
+		{0x798, 105, 44, 12, 38, 63, 0, 0, "VIConfigure_v2"}
+	};
+	if(swissSettings.curVideoSelection != P480) {
+		return 0;
+	}
 	for( i=0; i < length; i+=4 )
 	{
 		if( *(u32*)(data + i ) != 0x7C0802A6 )
 			continue;
 		for(j = 0; j < 2; j++) {
-			if( find_pattern( (u8*)(data+i), length, &VIConfigurePatterns[j] ) )
+			if( find_pattern( (u8*)(data+i), length, &VIConfigureSigs[j] ) )
 			{
-				sprintf(txtbuffer, "Found [%s] @ 0x%08X len %i\n", VIConfigurePatterns[j].Name, (u32)data + i, VIConfigurePatterns[j].Length);
+				sprintf(txtbuffer, "Found [%s] @ 0x%08X len %i\n", VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].Length);
 				print_gecko(txtbuffer);
 				
 				sprintf(txtbuffer, "Writing Jump for [%s] at 0x%08X len %i\n", 
-						VIConfigurePatterns[j].Name, (u32)data + i, VIConfigurePatterns[j].PatchLength);
+						VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].PatchLength);
 				print_gecko(txtbuffer);
 
 				writeBranchLink((u32)data+i+36,0x80002820);
-				DCFlushRange((u8*)(data+i), VIConfigurePatterns[j].Length);
-				ICInvalidateRange((u8*)(data+i), VIConfigurePatterns[j].Length);	
+				DCFlushRange((u8*)(data+i), VIConfigureSigs[j].Length);
+				ICInvalidateRange((u8*)(data+i), VIConfigureSigs[j].Length);
+				memcpy((void*)0x80002808,patch_viconfigure_480p,sizeof(patch_viconfigure_480p));
+				return 1;
 			}
 		}
 	}
+	return 0;
 }
 
-void dvd_patchAISCount(void *addr, u32 len) {
-  void *addr_start = addr;
-	void *addr_end = addr+len;	
+/** SDK DVD Audio NULL Driver Replacement
+	- Allows streaming games to run with no streamed audio */
+
+u32 __dvdLowAudioStatusNULL[17] = {
+	// execute function(1); passed in on r4
+	0x9421FFC0,	//  stwu        sp, -0x0040 (sp)
+	0x7C0802A6,	//  mflr        r0
+	0x90010000,	//  stw         r0, 0 (sp)
+	0x7C8903A6,	//  mtctr       r4
+	0x3C80CC00,	//  lis         r4, 0xCC00
+	0x2E830000,	//  cmpwi       cr5, r3, 0
+	0x4196000C,	//  beq-        cr5, +0xC ?
+	0x38600001,	//  li          r3, 1
+	0x48000008,	//  b           +0x8 ?
+	0x38600000,	//  li          r3, 0
+	0x90646020,	//  stw         r3, 0x6020 (r4)
+	0x38600001,	//  li          r3, 1
+	0x4E800421,	//  bctrl
+	0x80010000,	//  lwz         r0, 0 (sp)
+	0x7C0803A6,	//  mtlr        r0
+	0x38210040,	//  addi        sp, sp, 64
+	0x4E800020	//  blr
+};
+
+u32 __dvdLowAudioConfigNULL[10] = {
+	// execute callback(1); passed in on r5 without actually touching the drive!
+	0x9421FFC0,	//  stwu        sp, -0x0040 (sp)
+	0x7C0802A6,	//  mflr        r0
+	0x90010000,	//  stw         r0, 0 (sp)
+	0x7CA903A6,	//  mtctr       r5
+	0x38600001,	//  li          r3, 1
+	0x4E800421,	//  bctrl
+	0x80010000,	//  lwz         r0, 0 (sp)
+	0x7C0803A6,	//  mtlr        r0
+	0x38210040,	//  addi        sp, sp, 64
+	0x4E800020	//  blr
+};
+
+u32 __dvdLowReadAudioNULL[] = {
+	// execute callback(1); passed in on r6 without actually touching the drive!
+	0x9421FFC0,	//  stwu        sp, -0x0040 (sp)
+	0x7C0802A6,	//  mflr        r0
+	0x90010000,	//  stw         r0, 0 (sp)
+	0x7CC903A6,	//  mtctr       r6
+	0x38600001,	//  li          r3, 1
+	0x4E800421,	//  bctr;
+	0x80010000,	//  lwz         r0, 0 (sp)
+	0x7C0803A6,	//  mtlr        r0
+	0x38210040,	//  addi        sp, sp, 64
+	0x4E800020
+};
+
+int Patch_DVDAudioStreaming(u8 *data, u32 length) {
+	int i, j, count = 0;
+	FuncPattern DVDAudioSigs[3] = {	
+		{0x94, 18, 10, 2, 0, 2, (u8*)__dvdLowReadAudioNULL, sizeof(__dvdLowReadAudioNULL), "DVDLowReadAudio" },
+		{0x88, 18, 8, 2, 0, 2, (u8*)__dvdLowAudioStatusNULL, sizeof(__dvdLowAudioStatusNULL), "DVDLowAudioStatus" },
+		{0x98, 19, 8, 2, 1, 3, (u8*)__dvdLowAudioConfigNULL, sizeof(__dvdLowAudioConfigNULL), "DVDLowAudioConfig" }
+	};
 	
-	while(addr_start<addr_end) 
+	for( i=0; i < length; i+=4 )
 	{
-		if(memcmp(addr_start,dvd_read_audio_original,sizeof(dvd_read_audio_original))==0) {
-			void *ptr = addr_start-(10*4);
-			// execute callback(1); passed in on r6 without actually touching the drive!
-			*(u32*)(ptr) 	= 0x9421FFC0;	//  stwu        sp, -0x0040 (sp)
-			*(u32*)(ptr+4) 	= 0x7C0802A6;	//  mflr        r0
-			*(u32*)(ptr+8) 	= 0x90010000;	//  stw         r0, 0 (sp)
-			*(u32*)(ptr+12) 	= 0x7CC903A6;	//  mtctr       r6
-			*(u32*)(ptr+16) 	= 0x38600001;	//  li          r3, 1
-			*(u32*)(ptr+20) 	= 0x4E800421;	//  bctr;
-			*(u32*)(ptr+24) 	= 0x80010000;	//  lwz         r0, 0 (sp)
-			*(u32*)(ptr+28) 	= 0x7C0803A6;	//  mtlr        r0
-			*(u32*)(ptr+32) 	= 0x38210040;	//  addi        sp, sp, 64
-			*(u32*)(ptr+36) 	= 0x4E800020;	//  blr
+		if( *(u32*)(data + i ) != 0x7C0802A6 )
+			continue;
+
+		for( j=0; j < 3; j++ )
+		{
+			if( find_pattern( (u8*)(data+i), length, &(DVDAudioSigs[j]) ) )
+			{
+				sprintf(txtbuffer, "Found [%s] @ 0x%08X len %i\n", DVDAudioSigs[j].Name, (u32)data + i, DVDAudioSigs[j].Length);
+				print_gecko(txtbuffer);
+				
+				sprintf(txtbuffer, "Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
+						DVDAudioSigs[j].Name, (u32)DVDAudioSigs[j].Patch, (u32)data + i, DVDAudioSigs[j].PatchLength);
+				print_gecko(txtbuffer);
+							
+				memcpy( (u8*)(data+i), &DVDAudioSigs[j].Patch[0], DVDAudioSigs[j].PatchLength );
+				DCFlushRange((u8*)(data+i), DVDAudioSigs[j].Length);
+				ICInvalidateRange((u8*)(data+i), DVDAudioSigs[j].Length);
+				count++;
+			}
 		}
-		else if(memcmp(addr_start,dvd_audio_config_original,sizeof(dvd_audio_config_original))==0) {
-			void *ptr = addr_start-(9*4);
-			// execute callback(1); passed in on r5 without actually touching the drive!
-			*(u32*)(ptr) 	= 0x9421FFC0;	//  stwu        sp, -0x0040 (sp)
-			*(u32*)(ptr+4) 	= 0x7C0802A6;	//  mflr        r0
-			*(u32*)(ptr+8) 	= 0x90010000;	//  stw         r0, 0 (sp)
-			*(u32*)(ptr+12) 	= 0x7CA903A6;	//  mtctr       r5
-			*(u32*)(ptr+16) 	= 0x38600001;	//  li          r3, 1
-			*(u32*)(ptr+20) 	= 0x4E800421;	//  bctrl
-			*(u32*)(ptr+24) 	= 0x80010000;	//  lwz         r0, 0 (sp)
-			*(u32*)(ptr+28) 	= 0x7C0803A6;	//  mtlr        r0
-			*(u32*)(ptr+32) 	= 0x38210040;	//  addi        sp, sp, 64
-			*(u32*)(ptr+36) 	= 0x4E800020;	//  blr
-		}
-		else if(memcmp(addr_start,dvd_audio_status_original,sizeof(dvd_audio_status_original))==0) {
-			void *ptr = addr_start-(10*4);
-			// execute function(1); passed in on r4
-			*(u32*)(ptr) 	= 0x9421FFC0;	//  stwu        sp, -0x0040 (sp)
-			*(u32*)(ptr+4) 	= 0x7C0802A6;	//  mflr        r0
-			*(u32*)(ptr+8) 	= 0x90010000;	//  stw         r0, 0 (sp)
-			*(u32*)(ptr+12) 	= 0x7C8903A6;	//  mtctr       r4
-			*(u32*)(ptr+16) 	= 0x3C80CC00;	//  lis         r4, 0xCC00
-			*(u32*)(ptr+20) 	= 0x2E830000;	//  cmpwi       cr5, r3, 0
-			*(u32*)(ptr+24) 	= 0x4196000C;	//  beq-        cr5, +0xC ?
-			*(u32*)(ptr+28) 	= 0x38600001;	//  li          r3, 1
-			*(u32*)(ptr+32) 	= 0x48000008;	//  b           +0x8 ?
-			*(u32*)(ptr+36) 	= 0x38600000;	//  li          r3, 0
-			*(u32*)(ptr+40) 	= 0x90646020;	//  stw         r3, 0x6020 (r4)
-			*(u32*)(ptr+44) 	= 0x38600001;	//  li          r3, 1
-			*(u32*)(ptr+48) 	= 0x4E800421;	//  bctrl
-			*(u32*)(ptr+52) 	= 0x80010000;	//  lwz         r0, 0 (sp)
-			*(u32*)(ptr+56) 	= 0x7C0803A6;	//  mtlr        r0
-			*(u32*)(ptr+60) 	= 0x38210040;	//  addi        sp, sp, 64
-			*(u32*)(ptr+64) 	= 0x4E800020;	//  blr
-		}
-		//else if(memcmp(addr_start,_AIResetStreamSampleCount_original,sizeof(_AIResetStreamSampleCount_original))==0) 
-		//{
-		//	*(u32*)(addr_start+12) = 0x60000000;  //NOP
-		//}
-		addr_start += 4;
 	}
+	return count;
+	// TODO see if Ikaruga needs this patch below?
+	//else if(memcmp(addr_start,_AIResetStreamSampleCount_original,sizeof(_AIResetStreamSampleCount_original))==0) 
+	//	*(u32*)(addr_start+12) = 0x60000000;  //NOP
 }
 
-void dvd_patchreset(void *addr,u32 len)
+/** SDK DVD Reset Replacement 
+	- Allows debug spinup for backups */
+
+static const u32 _dvdlowreset_org[12] = {
+	0x7C0802A6,0x3C80CC00,0x90010004,0x38000002,0x9421FFE0,0xBF410008,0x3BE43000,0x90046004,
+	0x83C43024,0x57C007B8,0x60000001,0x941F0024
+};
+
+static const u32 _dvdlowreset_new[8] = {
+	0x3FE08000,0x63FF1800,0x7FE803A6,0x4E800021,0x4800006C,0x60000000,0x60000000,0x60000000
+};
+	
+void Patch_DVDReset(void *addr,u32 length)
 {
 	void *copy_to,*cache_ptr;
 	void *addr_start = addr;
-	void *addr_end = addr+len;
-
-	if(len<sizeof(_dvdlowreset_org)) return;
+	void *addr_end = addr+length;
 
 	while(addr_start<addr_end) {
 		if(memcmp(addr_start,_dvdlowreset_org,sizeof(_dvdlowreset_org))==0) {
@@ -627,9 +477,77 @@ void dvd_patchreset(void *addr,u32 len)
 	}
 }
 
-void dvd_patchfwrite(void *addr, u32 len) {
+/** SDK fwrite USB Gecko Slot B redirect */
+u32 sig_fwrite[8] = {
+  0x9421FFD0,
+  0x7C0802A6,
+  0x90010034,
+  0xBF210014,
+  0x7C992378,
+  0x7CDA3378,
+  0x7C7B1B78,
+  0x7CBC2B78
+};
+
+u32 sig_fwrite_alt[8] = {
+  0x7C0802A6,
+  0x90010004,
+  0x9421FFB8,
+  0xBF21002C,
+  0x3B440000,
+  0x3B660000,
+  0x3B830000,
+  0x3B250000
+};
+
+u32 sig_fwrite_alt2[8] = {
+  0x7C0802A6,
+  0x90010004,
+  0x9421FFD0,
+  0xBF410018,
+  0x3BC30000,
+  0x3BE40000,
+  0x80ADB430,
+  0x3C055A01 
+};
+
+static const u32 geckoPatch[31] = {
+  0x7C8521D7,
+  0x40810070,
+  0x3CE0CC00,
+  0x38C00000,
+  0x7C0618AE,
+  0x5400A016,
+  0x6408B000,
+  0x380000D0,
+  0x90076814,
+  0x7C0006AC,
+  0x91076824,
+  0x7C0006AC,
+  0x38000019,
+  0x90076820,
+  0x7C0006AC,
+  0x80076820,
+  0x7C0004AC,
+  0x70090001,
+  0x4082FFF4,
+  0x80076824,
+  0x7C0004AC,
+  0x39200000,
+  0x91276814,
+  0x7C0006AC,
+  0x74090400,
+  0x4182FFB8,
+  0x38C60001,
+  0x7F862000,
+  0x409EFFA0,
+  0x7CA32B78,
+  0x4E800020
+};
+
+void Patch_Fwrite(void *addr, u32 length) {
 	void *addr_start = addr;
-	void *addr_end = addr+len;	
+	void *addr_end = addr+length;	
 	
 	while(addr_start<addr_end) 
 	{
@@ -650,10 +568,23 @@ void dvd_patchfwrite(void *addr, u32 len) {
 
 }
 
+/** SDK DVDLowReadDiskID Patch
+	- Hook into the end of this and swap the current file our read replacement code is pointing to */
 
-void dvd_patchDVDReadID(void *addr, u32 len) {
+u32 _DVDLowReadDiskID_original[8] = {
+  0x7C0802A6,  // mflr        r0
+  0x39000000,  // li          r8, 0
+  0x90010004,  // stw         r0, 4 (sp)
+  0x3CA0A800,  // lis         r5, 0xA800
+  0x38050040,  // addi        r0, r5, 64
+  0x9421FFE8,  // stwu        sp, -0x0018 (sp)
+  0x38C00020,  // li          r6, 32
+  0x3CA08000   // lis         r5, 0x8000
+};
+	
+void Patch_DVDLowReadDiskId(void *addr, u32 length) {
   void *addr_start = addr;
-	void *addr_end = addr+len;	
+	void *addr_end = addr+length;	
 	
 	while(addr_start<addr_end) 
 	{
@@ -665,17 +596,55 @@ void dvd_patchDVDReadID(void *addr, u32 len) {
 	}
 }
 
-void set_base_addr(int useHi) {
-	base_addr = useHi ? HI_RESERVE : LO_RESERVE;
-}
+/** SDK GXSetVAT patch for Wii compatibility - specific for Zelda WW */
 
-u32 get_base_addr() {
-	return base_addr;
-}
+u32 GXSETVAT_PAL_orig[32] = {
+    0x8142ce00, 0x39800000, 0x39600000, 0x3ce0cc01,
+    0x48000070, 0x5589063e, 0x886a04f2, 0x38000001,
+    0x7c004830, 0x7c600039, 0x41820050, 0x39000008,
+    0x99078000, 0x61230070, 0x380b001c, 0x98678000,
+    0x61250080, 0x388b003c, 0x7cca002e, 0x61230090,
+    0x380b005c, 0x90c78000, 0x99078000, 0x98a78000,
+    0x7c8a202e, 0x90878000, 0x99078000, 0x98678000,
+    0x7c0a002e, 0x90078000, 0x396b0004, 0x398c0001
+};
 
-void patchZeldaWW(void *addr, u32 len,int mode) {
+u32 GXSETVAT_PAL_patched[32] = {
+    0x8122ce00, 0x39400000, 0x896904f2, 0x7d284b78,
+    0x556007ff, 0x41820050, 0x38e00008, 0x3cc0cc01,
+    0x98e68000, 0x61400070, 0x61440080, 0x61430090,
+    0x98068000, 0x38000000, 0x80a8001c, 0x90a68000,
+    0x98e68000, 0x98868000, 0x8088003c, 0x90868000,
+    0x98e68000, 0x98668000, 0x8068005c, 0x90668000,
+    0x98068000, 0x556bf87f, 0x394a0001, 0x39080004,
+    0x4082ffa0, 0x38000000, 0x980904f2, 0x4e800020
+};
+
+u32 GXSETVAT_NTSC_orig[32] = {   
+    0x8142cdd0, 0x39800000, 0x39600000, 0x3ce0cc01,
+    0x48000070, 0x5589063e, 0x886a04f2, 0x38000001,
+    0x7c004830, 0x7c600039, 0x41820050, 0x39000008,
+    0x99078000, 0x61230070, 0x380b001c, 0x98678000,
+    0x61250080, 0x388b003c, 0x7cca002e, 0x61230090,
+    0x380b005c, 0x90c78000, 0x99078000, 0x98a78000,
+    0x7c8a202e, 0x90878000, 0x99078000, 0x98678000,
+    0x7c0a002e, 0x90078000, 0x396b0004, 0x398c0001
+};
+   
+const u32 GXSETVAT_NTSC_patched[32] = {
+    0x8122cdd0, 0x39400000, 0x896904f2, 0x7d284b78,
+    0x556007ff, 0x41820050, 0x38e00008, 0x3cc0cc01,
+    0x98e68000, 0x61400070, 0x61440080, 0x61430090,
+    0x98068000, 0x38000000, 0x80a8001c, 0x90a68000,
+    0x98e68000, 0x98868000, 0x8088003c, 0x90868000,
+    0x98e68000, 0x98668000, 0x8068005c, 0x90668000,
+    0x98068000, 0x556bf87f, 0x394a0001, 0x39080004,
+    0x4082ffa0, 0x38000000, 0x980904f2, 0x4e800020
+};
+
+void Patch_GXSetVATZelda(void *addr, u32 length,int mode) {
 	void *addr_start = addr;
-	void *addr_end = addr+len;	
+	void *addr_end = addr+length;	
 	
 	while(addr_start<addr_end) 
 	{

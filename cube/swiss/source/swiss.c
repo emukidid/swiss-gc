@@ -431,28 +431,28 @@ unsigned int load_app(int mode)
 		// Patch to read from SD/HDD
 		if((curDevice == SD_CARD)||((curDevice == IDEEXI))) {
 			if(swissSettings.useHiLevelPatch) {
-				applyPatches(app_dst, app_len, swissSettings.disableInterrupts);
+				Patch_DVDHighLevelRead(app_dst, app_len);
 			} else {
-				dvd_patchDVDRead(app_dst, app_len);
+				Patch_DVDLowLevelRead(app_dst, app_len);
 			}
-			dvd_patchDVDReadID(app_dst, app_len);
-			dvd_patchAISCount(app_dst, app_len);
+			Patch_DVDLowReadDiskId(app_dst, app_len);
+			Patch_DVDAudioStreaming(app_dst, app_len);
 		}
 		// Fix Zelda WW on Wii
 		if(zeldaVAT) {
-			patchZeldaWW(app_dst, app_len, zeldaVAT);
+			Patch_GXSetVATZelda(app_dst, app_len, zeldaVAT);
 		}
 		// 2 Disc support with no modchip
 		if((curDevice == DVD_DISC) && (is_gamecube()) && (drive_status == DEBUG_MODE)) {
-			dvd_patchreset(app_dst,app_len);  
+			Patch_DVDReset(app_dst,app_len);  
 		}
 		// Patch OSReport to print out over USBGecko
 		if(swissSettings.debugUSB) {
-			dvd_patchfwrite(app_dst, app_len);
+			Patch_Fwrite(app_dst, app_len);
 		}
 		// 480p Forcing
 		if(swissSettings.curVideoSelection == P480) {
-			patch_video_480p(app_dst, app_len);
+			Patch_480pVideo(app_dst, app_len);
 		}
 		DCFlushRange(app_dst, app_len);
 		ICInvalidateRange(app_dst, app_len);
@@ -915,7 +915,7 @@ int check_game()
 	char buffer[256];
 	deviceHandler_seekFile(&curFile,0x100,DEVICE_HANDLER_SEEK_SET);
 	deviceHandler_readFile(&curFile,&buffer,256);
-	if(!strcmp(&buffer[0],"Pre-Patched by Swiss v0.1")) {
+	if(!strcmp(&buffer[0],PRE_PATCHER_MAGIC)) {
 		deviceHandler_seekFile(&curFile,0x120,DEVICE_HANDLER_SEEK_SET);
 		deviceHandler_readFile(&curFile,&swissSettings.useHiLevelPatch,4);
 		deviceHandler_readFile(&curFile,&swissSettings.useHiMemArea,4);
