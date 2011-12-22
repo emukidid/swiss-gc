@@ -169,10 +169,12 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 				filesToPatch[i].name,(u32)buffer,filesToPatch[i].offset,filesToPatch[i].size);
 		print_gecko(txtbuffer);
 		if(swissSettings.useHiLevelPatch) {
-			patched = applyPatches(buffer, filesToPatch[i].size, swissSettings.disableInterrupts);
+			patched += Patch_DVDHighLevelRead(buffer, filesToPatch[i].size);
 		} else {
-			patched = dvd_patchDVDRead(buffer, filesToPatch[i].size);
+			patched += Patch_DVDLowLevelRead(buffer, filesToPatch[i].size);
 		}
+		patched += Patch_480pVideo(buffer, filesToPatch[i].size);
+		patched += Patch_DVDAudioStreaming(buffer, filesToPatch[i].size);
 		if(patched) {
 			print_gecko("Seeking in the file..\r\n");
 			deviceHandler_seekFile(file,filesToPatch[i].offset,DEVICE_HANDLER_SEEK_SET);
@@ -183,7 +185,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		}
 	}
 	if(pre_patched) {
-		sprintf(txtbuffer, "Pre-Patched by Swiss v0.1");
+		sprintf(txtbuffer, PRE_PATCHER_MAGIC);
 		deviceHandler_seekFile(file,0x100,DEVICE_HANDLER_SEEK_SET);
 		deviceHandler_writeFile(file,txtbuffer,strlen(txtbuffer));
 		deviceHandler_seekFile(file,0x120,DEVICE_HANDLER_SEEK_SET);
