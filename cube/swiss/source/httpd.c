@@ -14,9 +14,12 @@ static	lwp_t httd_handle = (lwp_t)NULL;
 const static char http_200[] = "HTTP/1.1 200 OK\r\n";
 
 const static char indexdata[] = "<html> \
-                               <head><title>A test page</title></head> \
+                               <head><title>Swiss httpd page</title></head> \
                                <body> \
-                               This small test page has had %d hits. \
+                               <a href=\"dvd\">Dump DVD Disc</a><br> \
+							   <a href=\"dvdfw\">Dump DVD Firmware</a><br> \
+							   <a href=\"ipl\">Dump IPL Mask ROM</a><br> \
+							   <a href=\"sram\">Dump SRAM</a><br> \
                                </body> \
                                </html>";
 
@@ -38,7 +41,6 @@ void *httpd (void *arg) {
 	struct sockaddr_in client;
 	struct sockaddr_in server;
 	char temp[1026];
-	static int hits=0;
 	
 	clientlen = sizeof(client);
 
@@ -78,10 +80,9 @@ void *httpd (void *arg) {
 					ret = net_recv (csock, temp, 1024, 0);
 
 					if ( !strncmp( temp, http_get_index, strlen(http_get_index) ) ) {
-						hits++;
 						net_send(csock, http_200, strlen(http_200), 0);
 						net_send(csock, http_html_hdr, strlen(http_html_hdr), 0);
-						sprintf(temp, indexdata, hits);
+						memcpy(temp, indexdata, sizeof(indexdata));
 						net_send(csock, temp, strlen(temp), 0);
 					}
 

@@ -437,6 +437,7 @@ unsigned int load_app(int mode)
 			}
 			Patch_DVDLowReadDiskId(app_dst, app_len);
 			Patch_DVDAudioStreaming(app_dst, app_len);
+			Patch_DVDStatusFunctions(app_dst, app_len);
 		}
 		// Fix Zelda WW on Wii
 		if(zeldaVAT) {
@@ -497,10 +498,13 @@ unsigned int load_app(int mode)
 		print_gecko(txtbuffer);
 	}
 	
-	// Check DVD Status, make sure it's error code 0
-	sprintf(txtbuffer, "DVD: %08X\r\n",dvd_get_error());
-	print_gecko(txtbuffer);
-
+	if(swissSettings.hasDVDDrive) {
+		// Check DVD Status, make sure it's error code 0
+		sprintf(txtbuffer, "DVD: %08X\r\n",dvd_get_error());
+		print_gecko(txtbuffer);
+	}
+	
+	print_gecko("libogc shutdown and boot game!");
 	// Disable interrupts and exceptions
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
 	
@@ -827,7 +831,10 @@ void load_file()
 			}
 		}
 	}
-	
+	DrawFrameStart();
+	DrawMessageBox(D_INFO, "Reading ...");
+	DrawFrameFinish();
+				
 	// boot the GCM/ISO file, gamecube disc or multigame selected entry
 	deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
 	if(deviceHandler_readFile(&curFile,&GCMDisk,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
@@ -853,7 +860,7 @@ void load_file()
 	}
 	
 	// Start up the DVD Drive
-	if((curDevice != DVD_DISC) && (curDevice != WODE)) {
+	if((curDevice != DVD_DISC) && (curDevice != WODE) && (swissSettings.hasDVDDrive)) {
 		if(initialize_disc(GCMDisk.AudioStreaming) == DRV_ERROR) {
 			return; //fail
 		}

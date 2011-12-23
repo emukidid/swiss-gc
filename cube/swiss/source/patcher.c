@@ -659,3 +659,42 @@ void Patch_GXSetVATZelda(void *addr, u32 length,int mode) {
 		addr_start += 4;
 	}
 }
+
+/** SDK DVD Info/Query Function patches */
+
+u32 __dvdLowInquiryNULL[] = {
+	0x38600001,	//  li          r3, 1
+	0x4E800020	//	blr
+};
+
+int Patch_DVDStatusFunctions(u8 *data, u32 length) {
+	int i, j, count = 0;
+	FuncPattern DVDStatusSigs[1] = {	
+		{0x98, 20, 11, 2, 0, 2, (u8*)__dvdLowInquiryNULL, sizeof(__dvdLowInquiryNULL), "DVDLowInquiry" }
+	};
+
+	for( i=0; i < length; i+=4 )
+	{
+		if( *(u32*)(data + i ) != 0x7C0802A6 )
+			continue;
+
+		for( j=0; j < 1; j++ )
+		{
+			if( find_pattern( (u8*)(data+i), length, &(DVDStatusSigs[j]) ) )
+			{
+				sprintf(txtbuffer, "Found [%s] @ 0x%08X len %i\n", DVDStatusSigs[j].Name, (u32)data + i, DVDStatusSigs[j].Length);
+				print_gecko(txtbuffer);
+				
+				sprintf(txtbuffer, "Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
+						DVDStatusSigs[j].Name, (u32)DVDStatusSigs[j].Patch, (u32)data + i, DVDStatusSigs[j].PatchLength);
+				print_gecko(txtbuffer);
+							
+				memcpy( (u8*)(data+i), &DVDStatusSigs[j].Patch[0], DVDStatusSigs[j].PatchLength );
+				DCFlushRange((u8*)(data+i), DVDStatusSigs[j].Length);
+				ICInvalidateRange((u8*)(data+i), DVDStatusSigs[j].Length);
+				count++;
+			}
+		}
+	}
+	return count;
+}

@@ -119,16 +119,22 @@ void* Initialise (void)
 	
 	if(!driveVersion[0]) {
 		// Reset DVD if there was a modchip
-		whichfb ^= 1;
-		WriteFont(55,250, "Initialise DVD from cold boot.. (Qoob user?)");
-		VIDEO_SetNextFramebuffer (xfb[whichfb]);
-		VIDEO_Flush ();
-		VIDEO_WaitVSync ();
-		if(vmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
-		DVD_Reset(DVD_RESETHARD);
+		DrawFrameStart();
+		WriteFontStyled(640/2, 250, "Initialise DVD .. (HOLD B if NO DVD Drive)", 0.8f, true, defaultColor);
+		DrawFrameFinish();
+		dvd_reset();	// low-level, basic
 		dvd_read_id();
 		drive_version(&driveVersion[0]);
-		dvd_motor_off();
+		swissSettings.hasDVDDrive = driveVersion[0];
+		if(swissSettings.hasDVDDrive) {
+			dvd_motor_off();
+		}
+		else {
+			DrawFrameStart();
+			DrawMessageBox(D_INFO, "No DVD Drive Detected !!");
+			DrawFrameFinish();
+			sleep(2);
+		}
 	}
 	
 	return xfb[0];
@@ -221,7 +227,7 @@ int main ()
 	// Setup defaults
 	swissSettings.useHiMemArea = 0;
 	swissSettings.disableInterrupts = 1;
-	swissSettings.useHiLevelPatch = 0;
+	swissSettings.useHiLevelPatch = swissSettings.hasDVDDrive^1;	// Hi-level works better with no DVD drive
 	swissSettings.debugUSB = 0;
 	swissSettings.curVideoSelection = AUTO;
 	
