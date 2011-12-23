@@ -52,6 +52,7 @@ int Patch_DVDHighLevelRead(u8 *data, u32 length);
 int Patch_DVDLowLevelRead(void *addr, u32 length);
 int Patch_480pVideo(u8 *data, u32 length);
 int Patch_DVDAudioStreaming(u8 *data, u32 length);
+int Patch_DVDStatusFunctions(u8 *data, u32 length);
 void Patch_Fwrite(void *addr, u32 length);
 void Patch_DVDReset(void *addr,u32 length);
 void Patch_DVDLowReadDiskId(void *addr, u32 length);

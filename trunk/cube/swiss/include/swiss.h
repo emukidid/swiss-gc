@@ -70,6 +70,7 @@ typedef struct {
 	int disableInterrupts; // On the Hi Level patch, disable interrupts or not
 	int debugUSB; // Debug prints over USBGecko
 	int curVideoSelection; //video forcing selection (default == auto)
+	int hasDVDDrive;
 } SwissSettings __attribute__((aligned(32)));
 extern SwissSettings swissSettings;
 

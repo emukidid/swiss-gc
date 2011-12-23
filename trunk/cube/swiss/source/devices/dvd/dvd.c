@@ -16,6 +16,16 @@ static int last_current_dir = -1;
 u32 inquiryBuf[2048] __attribute__((aligned(32)));
 file_entries *DVDToc = NULL; //Dynamically allocate this
 volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
+
+void dvd_reset()
+{
+	dvd[1] = 2;
+	volatile unsigned long v = *(volatile unsigned long*)0xcc003024;
+	*(volatile unsigned long*)0xcc003024 = (v & ~4) | 1;
+	sleep(1);
+	*(volatile unsigned long*)0xcc003024 = v | 5;
+}
+
 unsigned int dvd_read_id()
 {
 	dvd[0] = 0x2E;
@@ -27,7 +37,8 @@ unsigned int dvd_read_id()
 	dvd[6] = 0x20;
 	dvd[7] = 3; // enable reading!
 	
-	while (dvd[7] & 1);
+	while(( dvd[7] & 1) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B));
+	
 	if (dvd[0] & 0x4){
 		return 1;
 	}
