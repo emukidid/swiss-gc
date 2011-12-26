@@ -116,6 +116,7 @@ void* Initialise (void)
 	whichfb = 0;
 	
 	drive_version(&driveVersion[0]);
+	swissSettings.hasDVDDrive = driveVersion[0];
 	
 	if(!driveVersion[0]) {
 		// Reset DVD if there was a modchip
@@ -227,7 +228,7 @@ int main ()
 	// Setup defaults
 	swissSettings.useHiMemArea = 0;
 	swissSettings.disableInterrupts = 1;
-	swissSettings.useHiLevelPatch = swissSettings.hasDVDDrive^1;	// Hi-level works better with no DVD drive
+	swissSettings.useHiLevelPatch = swissSettings.hasDVDDrive ? 0:1;	// Hi-level works better with no DVD drive
 	swissSettings.debugUSB = 0;
 	swissSettings.curVideoSelection = AUTO;
 	
