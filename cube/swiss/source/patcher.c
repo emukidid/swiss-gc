@@ -182,18 +182,20 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 
 	FP.Length = i;
 
-	//sprintf(txtbuffer,"Length: 0x%02X\r\n", FP.Length );
-	//print_gecko(txtbuffer);
-	//sprintf(txtbuffer,"FCalls: %d\r\n", FP.FCalls );
-	//print_gecko(txtbuffer);
-	//sprintf(txtbuffer,"Loads : %d\r\n", FP.Loads );
-	//print_gecko(txtbuffer);
-	//sprintf(txtbuffer,"Stores: %d\r\n", FP.Stores );
-	//print_gecko(txtbuffer);
-	//sprintf(txtbuffer,"Branch : %d\r\n", FP.Branch );
-	//print_gecko(txtbuffer);
-	//sprintf(txtbuffer,"Moves: %d\r\n", FP.Moves );
-	//print_gecko(txtbuffer);
+	//if(!functionPattern) {
+	//	sprintf(txtbuffer,"Length: 0x%02X\r\n", FP.Length );
+	//	print_gecko(txtbuffer);
+	//	sprintf(txtbuffer,"FCalls: %d\r\n", FP.FCalls );
+	//	print_gecko(txtbuffer);
+	//	sprintf(txtbuffer,"Loads : %d\r\n", FP.Loads );
+	//	print_gecko(txtbuffer);
+	//	sprintf(txtbuffer,"Stores: %d\r\n", FP.Stores );
+	//	print_gecko(txtbuffer);
+	//	sprintf(txtbuffer,"Branch : %d\r\n", FP.Branch );
+	//	print_gecko(txtbuffer);
+	//	sprintf(txtbuffer,"Moves: %d\r\n", FP.Moves );
+	//	print_gecko(txtbuffer);
+	//}
 	
 
 	if( memcmp( &FP, functionPattern, sizeof(u32) * 6 ) == 0 )
@@ -670,7 +672,7 @@ u32 __dvdLowInquiryNULL[] = {
 int Patch_DVDStatusFunctions(u8 *data, u32 length) {
 	int i, j, count = 0;
 	FuncPattern DVDStatusSigs[1] = {	
-		{0x98, 20, 11, 2, 0, 2, (u8*)__dvdLowInquiryNULL, sizeof(__dvdLowInquiryNULL), "DVDLowInquiry" }
+		{0xCC, 17, 10, 5, 3, 2, (u8*)__dvdLowInquiryNULL, sizeof(__dvdLowInquiryNULL), "DVDInquiryAsync" }
 	};
 
 	for( i=0; i < length; i+=4 )

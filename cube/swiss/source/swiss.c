@@ -504,7 +504,7 @@ unsigned int load_app(int mode)
 		print_gecko(txtbuffer);
 	}
 	
-	print_gecko("libogc shutdown and boot game!");
+	print_gecko("libogc shutdown and boot game!\r\n");
 	// Disable interrupts and exceptions
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
 	
@@ -845,6 +845,19 @@ void load_file()
 		return;
 	}
 
+	// High Level patch only works for no DVD drive setup (for now)
+	if((curDevice == SD_CARD) || ((curDevice == IDEEXI))) {
+		if(!swissSettings.hasDVDDrive && !swissSettings.useHiLevelPatch) {
+			DrawFrameStart();
+			DrawMessageBox(D_WARN, "No DVD Drive must use High level patch!");
+			DrawFrameFinish();
+			wait_press_A();
+			return;
+		}
+	}
+	
+	
+	
 	// Show game info and allow the user to select cheats or return to the menu
 	if(!info_game()) {
 		return;
