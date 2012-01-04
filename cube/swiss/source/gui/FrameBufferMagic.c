@@ -455,3 +455,26 @@ void DrawMenuButtons(int selection)
 			DrawImage(TEX_BTNNOHILIGHT, 40+(i*116), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 	}
 }
+
+int DrawYesNoDialog(char *message) {
+	int sel = 0;
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	while(1) {
+		doBackdrop();
+		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
+		WriteFontStyled(640/2, 215, message, 1.0f, true, defaultColor);
+		DrawSelectableButton(100, 280, -1, 310, "Yes", (sel==1) ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(380, 280, -1, 310, "No", (!sel) ? B_SELECTED:B_NOSELECT,-1);
+		DrawFrameFinish();
+		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+		u16 btns = PAD_ButtonsHeld(0);
+		if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
+			sel^=1;
+		}
+		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
+			break;
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
+	}
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	return sel;
+} 

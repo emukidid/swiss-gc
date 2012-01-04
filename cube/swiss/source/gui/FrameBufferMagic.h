@@ -69,5 +69,6 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
 void DrawEmptyBox(int x1, int y1, int x2, int y2, int color);
 void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode, u32 color);
 void DrawMenuButtons(int selection);
+int DrawYesNoDialog(char *message);
 
 #endif

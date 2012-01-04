@@ -47,7 +47,6 @@ u32 GC_SD_SPEED   = EXI_SPEED16MHZ;
 int SDHCCard = 0; //0 == SDHC, 1 == normal SD
 int curDevice = 0;  //SD_CARD or DVD_DISC or IDEEXI or WODE
 int curCopyDevice = 0;  //SD_CARD or DVD_DISC or IDEEXI or WODE
-int noVideoPatch = 0;
 char *videoStr = NULL;
 
 /* The default boot up MEM1 lowmem values (from ipl when booting a game) */
@@ -86,8 +85,6 @@ char *getVideoString()
 	}
 	return "Autodetect";
 }
-int ask_stop_drive(); 
-int ask_set_cheats();
 
 void print_gecko(char *string)
 {
@@ -109,7 +106,6 @@ void ogc_video__reset()
 {
     DrawFrameStart();
     if(swissSettings.curVideoSelection==AUTO) {
-		noVideoPatch = 1;
 		switch(GCMDisk.CountryCode) {
 			case 'P': // PAL
 			case 'D': // German
@@ -138,34 +134,29 @@ void ogc_video__reset()
 	if(swissSettings.curVideoSelection!=AUTO)	{		//if not autodetect
 		switch(swissSettings.curVideoSelection) {
 			case PAL60:
-				*(volatile unsigned long*)0x80002F40 = VI_TVMODE_EURGB60_INT;
 				newmode = &TVEurgb60Hz480IntDf;
 				DrawMessageBox(D_INFO,"Video Mode: PAL 60Hz");
 				break;
 			case PAL50:
-				*(volatile unsigned long*)0x80002F40 = VI_TVMODE_PAL_INT;
 				newmode = &TVPal528IntDf;
 				DrawMessageBox(D_INFO,"Video Mode: PAL 50Hz");
 				break;
 			case NTSC:
-				*(volatile unsigned long*)0x80002F40 = VI_TVMODE_NTSC_INT;
 				newmode = &TVNtsc480IntDf;
 				DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
 				break;
 			case P480:
 				if(VIDEO_HaveComponentCable()) {
-					*(volatile unsigned long*)0x80002F40 = VI_TVMODE_NTSC_PROG;
 					newmode = &TVNtsc480Prog;
 					DrawMessageBox(D_INFO,"Video Mode: NTSC 480p");
 				}
 				else {
-					*(volatile unsigned long*)0x80002F40 = VI_TVMODE_NTSC_INT;
+					swissSettings.curVideoSelection = NTSC;	// Can't force with no cable
 					newmode = &TVNtsc480IntDf;
 					DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
 				}
 				break;
 			default:
-				*(volatile unsigned long*)0x80002F40 = VI_TVMODE_NTSC_INT;
 				newmode = &TVNtsc480IntDf;
 				DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
 		}
@@ -379,6 +370,7 @@ unsigned int load_app(int mode)
 	// Will we use the low mem area for our patch code?
 	if (!strncmp(gameID, "GPXE01", 6) || !strncmp(gameID, "GPXP01", 6) || !strncmp(gameID, "GPXJ01", 6)) {
 		swissSettings.useHiMemArea = 1;
+		swissSettings.useHiLevelPatch = 0;
 	}
 
 	// If not, setup the game for High mem patch code
@@ -795,7 +787,7 @@ void load_file()
 	// Cheats file?
 	if(strlen(fileName)>4) {
 		if((strstr(fileName,".QCH")!=NULL) || (strstr(fileName,".qch")!=NULL)) {
-			if(ask_set_cheats()) {
+			if(DrawYesNoDialog("Load this cheats file?")) {
 				DrawFrameStart();
 				DrawMessageBox(D_INFO, "Loading Cheats File ..");
 				DrawFrameFinish();
@@ -873,11 +865,12 @@ void load_file()
 	}
 	
 	// Start up the DVD Drive
-	if((curDevice != DVD_DISC) && (curDevice != WODE) && (swissSettings.hasDVDDrive)) {
+	if((curDevice != DVD_DISC) && (curDevice != WODE) 
+		&& DrawYesNoDialog("Use a DVD Disc for higher compatibility?") && (swissSettings.hasDVDDrive)) {
 		if(initialize_disc(GCMDisk.AudioStreaming) == DRV_ERROR) {
 			return; //fail
 		}
-		if(!isPrePatched && ask_stop_drive()) {
+		if(!isPrePatched && DrawYesNoDialog("Stop DVD Motor?")) {
 			dvd_motor_off();
 		}
 	}
@@ -1190,115 +1183,6 @@ int info_game()
 			return (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
 		}
 	}
-}
-
-void settings()
-{ 
-	int currentSettingPos = 0, maxSettingPos = ((curDevice == SD_CARD) || (curDevice == IDEEXI)) ? 2 : 0;
-	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
-	
-	while(1)
-	{
-		DrawFrameStart();
-		DrawEmptyBox (75,120, vmode->fbWidth-78, 400, COLOR_BLACK);
-		WriteFontStyled(640/2, 130, "Game Setup", 1.0f, true, defaultColor);
-		
-		//write out all the settings (dodgy)
-		WriteFont(80, 160+(32*1), "Game Video Mode");
-		DrawSelectableButton(vmode->fbWidth-230, 160+(32*1), -1, 160+(32*1)+30, getVideoString(), (!currentSettingPos) ? B_SELECTED:B_NOSELECT,-1);
-		if((curDevice == SD_CARD) || (curDevice == IDEEXI)) {
-			WriteFont(80, 160+(32*2), "Patch Mode");
-			DrawSelectableButton(vmode->fbWidth-230, 160+(32*2), -1, 160+(32*2)+30, swissSettings.useHiLevelPatch ? "High Level":"Low Level", (currentSettingPos==1) ? B_SELECTED:B_NOSELECT,-1);
-			if(swissSettings.useHiLevelPatch) {
-				WriteFont(80, 160+(32*3), "Disable Interrupts");
-				DrawSelectableButton(vmode->fbWidth-230, 160+(32*3), -1, 160+(32*3)+30, swissSettings.disableInterrupts ? "Yes":"No", (currentSettingPos==2) ? B_SELECTED:B_NOSELECT,-1);
-			} else {
-				WriteFont(80, 160+(32*3), "Patch Location");
-				DrawSelectableButton(vmode->fbWidth-230, 160+(32*3), -1, 160+(32*3)+30, swissSettings.useHiMemArea ? "High Mem":"Low Mem", (currentSettingPos==2) ? B_SELECTED:B_NOSELECT,-1);
-			}
-		}
-		
-		WriteFontStyled(640/2, 370, "Press B to return", 1.0f, true, defaultColor);
-		DrawFrameFinish();
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B));
-		u16 btns = PAD_ButtonsHeld(0);
-		if(btns & PAD_BUTTON_RIGHT)
-		{
-			if(!currentSettingPos)
-				swissSettings.curVideoSelection = (swissSettings.curVideoSelection<MAX_VIDEO_MODES) ? (swissSettings.curVideoSelection+1):0;
-			else if(currentSettingPos==1)
-				swissSettings.useHiLevelPatch^=1;
-			else if((currentSettingPos==2) && (!swissSettings.useHiLevelPatch))
-				swissSettings.useHiMemArea^=1;
-			else if((currentSettingPos==2) && (swissSettings.useHiLevelPatch))
-				swissSettings.disableInterrupts^=1;
-		}
-		if(btns & PAD_BUTTON_LEFT)
-		{
-			if(!currentSettingPos)
-				swissSettings.curVideoSelection = (swissSettings.curVideoSelection>0) ? (swissSettings.curVideoSelection-1):MAX_VIDEO_MODES;
-			else if(currentSettingPos==1)
-				swissSettings.useHiLevelPatch^=1;
-			else if((currentSettingPos==2) && (!swissSettings.useHiLevelPatch))
-				swissSettings.useHiMemArea^=1;
-			else if((currentSettingPos==2) && (swissSettings.useHiLevelPatch))
-				swissSettings.disableInterrupts^=1;
-		}
-		if(btns & PAD_BUTTON_UP)	currentSettingPos = (currentSettingPos>0) ? (currentSettingPos-1):maxSettingPos;
-		if(btns & PAD_BUTTON_DOWN)	currentSettingPos = (currentSettingPos<maxSettingPos) ? (currentSettingPos+1):0;
-		if(btns & PAD_BUTTON_B)
-			break;
-		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || (PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || (PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) || (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B));
-	}
-	while(PAD_ButtonsHeld(0) & PAD_BUTTON_B);
-}
-
-int ask_stop_drive()
-{  
-	int sel = 0;
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
-	while(1) {
-		doBackdrop();
-		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
-		WriteFontStyled(640/2, 215, "Stop DVD Motor?", 1.0f, true, defaultColor);
-		DrawSelectableButton(100, 280, -1, 310, "Yes", (sel==1) ? B_SELECTED:B_NOSELECT,-1);
-		DrawSelectableButton(380, 280, -1, 310, "No", (!sel) ? B_SELECTED:B_NOSELECT,-1);
-		DrawFrameFinish();
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
-		u16 btns = PAD_ButtonsHeld(0);
-		if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
-			sel^=1;
-		}
-		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
-			break;
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
-	}
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
-	return sel;
-}
-
-int ask_set_cheats()
-{  
-	int sel = 0;
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
-	while(1) {
-		doBackdrop();
-		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
-		WriteFontStyled(640/2, 215, "Load this cheats file?", 1.0f, true, defaultColor);
-		DrawSelectableButton(100, 280, -1, 310, "Yes", (sel==1) ? B_SELECTED:B_NOSELECT,-1);
-		DrawSelectableButton(380, 280, -1, 310, "No", (!sel) ? B_SELECTED:B_NOSELECT,-1);
-		DrawFrameFinish();
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
-		u16 btns = PAD_ButtonsHeld(0);
-		if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
-			sel^=1;
-		}
-		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
-			break;
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
-	}
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
-	return sel;
 }
 
 void select_speed()

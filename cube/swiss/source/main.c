@@ -17,6 +17,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "main.h"
+#include "settings.h"
+#include "info.h"
 #include "swiss.h"
 #include "bba.h"
 #include "exi.h"
@@ -116,7 +118,7 @@ void* Initialise (void)
 	whichfb = 0;
 	
 	drive_version(&driveVersion[0]);
-	swissSettings.hasDVDDrive = driveVersion[0];
+	swissSettings.hasDVDDrive = driveVersion[0] ? 1 : 0;
 	
 	if(!driveVersion[0]) {
 		// Reset DVD if there was a modchip
@@ -126,7 +128,7 @@ void* Initialise (void)
 		dvd_reset();	// low-level, basic
 		dvd_read_id();
 		drive_version(&driveVersion[0]);
-		swissSettings.hasDVDDrive = driveVersion[0];
+		swissSettings.hasDVDDrive = driveVersion[0] ? 1 : 0;
 		if(swissSettings.hasDVDDrive) {
 			dvd_motor_off();
 		}
@@ -140,8 +142,6 @@ void* Initialise (void)
 	
 	return xfb[0];
 }
-
-void show_info();
 
 void main_loop()
 { 
@@ -192,7 +192,7 @@ void main_loop()
 					needsDeviceChange = 1;  //Change from SD->DVD or vice versa
 					break;
 				case 1:		// Settings
-					settings();
+					show_settings();
 					break;
 				case 2:		// Credits
 					show_info();
@@ -206,7 +206,9 @@ void main_loop()
 			}
 			
 		}
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT)));
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT))) {
+			VIDEO_WaitVSync();
+		}
 		if(needsDeviceChange) {
 			break;
 		}
@@ -225,7 +227,8 @@ int main ()
 		return -1;
 	}
 	
-	// Setup defaults
+	// Setup defaults (if no config is found)
+	memset(&swissSettings, 0 , sizeof(SwissSettings));
 	swissSettings.useHiMemArea = 0;
 	swissSettings.disableInterrupts = 1;
 	swissSettings.useHiLevelPatch = swissSettings.hasDVDDrive ? 0:1;	// Hi-level works better with no DVD drive

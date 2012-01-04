@@ -35,11 +35,10 @@ char *getSramLang(u8 lang) {
 	return "Unknown";
 }
 
-void show_page(int page_num) {
+void info_draw_page(int page_num) {
 	doBackdrop();
 	DrawEmptyBox(20,60, vmode->fbWidth-20, 420, COLOR_BLACK);
-	syssram *sram;
-	sram = __SYS_LockSram();
+	syssram* sram = __SYS_LockSram();
 	__SYS_UnlockSram(0);
 	
 	// System Info (Page 1/3)
@@ -157,7 +156,7 @@ void show_info() {
 	int page = 0;
 	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
 	while(1) {
-		show_page(page);
+		info_draw_page(page);
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 		u16 btns = PAD_ButtonsHeld(0);
 		if((btns & PAD_BUTTON_RIGHT) && page < 2)

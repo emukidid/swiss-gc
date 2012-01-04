@@ -107,6 +107,15 @@ enum setupStream
   ENABLE_BYDISK     //Check from disc header whether to enable it
 };
 
+// Mediums we can have swiss search on boot
+enum bootDevices
+{
+	SD_SLOTA=0,
+	SD_SLOTB,
+	IDE_SLOTA,
+	IDE_SLOTB
+};
+
 #define DVD_MAGIC   0xC2339F3D
 
 //Disc Types

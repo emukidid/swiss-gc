@@ -71,6 +71,17 @@ typedef struct {
 	int debugUSB; // Debug prints over USBGecko
 	int curVideoSelection; //video forcing selection (default == auto)
 	int hasDVDDrive;
+	int defaultDevice;
+	int exiSpeed;
+	int uiVMode;
+	int gameVMode;
+	int muteAudioStreaming;
+	int muteAudioStutter;
+	int hideUnknownFileTypes;
+	int sramStereo;
+	int stopMotor;
+	int noDiscMode;
+	u8 sramLanguage;
 } SwissSettings __attribute__((aligned(32)));
 extern SwissSettings swissSettings;
 
