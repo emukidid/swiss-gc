@@ -149,12 +149,17 @@ void main_loop()
 	
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
 	select_device();
-	// Make sure the device is ready before we browse the filesystem
-	deviceHandler_deinit( deviceHandler_initial );
-	deviceHandler_init( deviceHandler_initial );
+	if(deviceHandler_initial) {
+		// If the user selected a device, make sure it's ready before we browse the filesystem
+		deviceHandler_deinit( deviceHandler_initial );
+		deviceHandler_init( deviceHandler_initial );
+	}
+	else {
+		curMenuLocation=ON_OPTIONS;
+	}
   
 	while(1) {
-		if(needsRefresh) {
+		if(deviceHandler_initial && needsRefresh) {
 			curSelection=0; files=0; curMenuSelection=0; needsRefresh = 0;
 			
 			// Read the directory/device TOC
@@ -180,7 +185,7 @@ void main_loop()
 			if(btns & PAD_BUTTON_LEFT){	curMenuSelection = (--curMenuSelection < 0) ? (MENU_MAX-1) : curMenuSelection;}
 			else if(btns & PAD_BUTTON_RIGHT){curMenuSelection = (curMenuSelection + 1) % MENU_MAX;	}
 		}
-		if((btns & PAD_BUTTON_B)||(curMenuLocation==ON_FILLIST))	{
+		if(deviceHandler_initial && ((btns & PAD_BUTTON_B)||(curMenuLocation==ON_FILLIST)))	{
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_B);
 			curMenuLocation=ON_FILLIST;
 			textFileBrowser(&allFiles, files);

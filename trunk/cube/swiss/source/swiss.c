@@ -1349,8 +1349,12 @@ void select_device()
 			curDevice++;
 		if((btns & PAD_BUTTON_LEFT) && curDevice > 0)
 			curDevice--;
-		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
+		if(btns & PAD_BUTTON_A)
 			break;
+		if(btns & PAD_BUTTON_B) {
+			deviceHandler_initial = NULL;
+			return;
+		}
 		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
 	}
 	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
