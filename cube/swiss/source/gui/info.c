@@ -107,7 +107,10 @@ void info_draw_page(int page_num) {
 			sprintf(topStr,"USB Gecko: Not Present");
 		}
 		WriteFont(30, 220, topStr);
-		if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
+		if (!deviceHandler_initial) {
+			sprintf(topStr, "Current Device: No Device Selected");
+		}
+		else if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
 			int slot = (deviceHandler_initial->name[2] == 'b');
 			sprintf(topStr, "Current Device: %s Card in %s @ %s",!SDHCCard?"SDHC":"SD",!slot?"Slot A":"Slot B",GC_SD_SPEED==EXI_SPEED16MHZ?"16Mhz":"32Mhz");
 		}
@@ -126,9 +129,6 @@ void info_draw_page(int page_num) {
 		}
 		else if(deviceHandler_initial == &initial_CARDA || deviceHandler_initial == &initial_CARDB) {
 			sprintf(topStr, "Current Device: Memory Card in %s",!deviceHandler_initial->fileBase?"Slot A":"Slot B");
-		}
-		else if (!deviceHandler_initial) {
-			sprintf(topStr, "Current Device: No Device Selected");
 		}
 		WriteFont(30, 295, topStr);
 	}
