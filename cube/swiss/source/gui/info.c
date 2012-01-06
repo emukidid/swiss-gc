@@ -49,13 +49,16 @@ void info_draw_page(int page_num) {
 			if(*(u32*)&driveVersion[0] == 0x20010831) {
 				sprintf(topStr, "Model: Panasonic Q SL-GC10-S");
 			}
-			else if(!IPLInfo[0x55] || IPLInfo[0x65]=='0') {
+			else if(!IPLInfo[0x55] || IPLInfo[0x65]=='0' || (IPLInfo[0x65]=='1')) {	
+				// NTSC 1.0,1.1 or PAL 1.0
 				sprintf(topStr, "Model: Nintendo Gamecube DOL-001");
 			}
-			else if((IPLInfo[0x65]=='1')||(IPLInfo[0x65]=='2')) {
+			else if(IPLInfo[0x65]=='2') {
+				// NTSC 1.2a/1.2b	- How can I detect PAL DOL-101's.. by drive too?
 				sprintf(topStr, "Model: Nintendo Gamecube DOL-101");
 			}
 			else if(IPLInfo[0x65]=='3') {
+				// Mythical NTSC 1.3 (Brazil)
 				sprintf(topStr, "Model: Nintendo Gamecube DOL-102");	// Exists only in Brazil?
 			}
 		}
@@ -63,7 +66,7 @@ void info_draw_page(int page_num) {
 			sprintf(topStr, "Model: Nintendo Wii");
 		}
 		WriteFont(30, 115, topStr);
-		// IPL
+		// IPL version string
 		if(is_gamecube()) {
 			if(!IPLInfo[0x55]) {
 				sprintf(topStr, "IPL: NTSC Revision 1.0");
