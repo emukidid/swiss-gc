@@ -54,7 +54,7 @@ char *videoStr = NULL;
 static const u32 GC_DefaultConfig[56] =
 {
 	0x0D15EA5E, 0x00000001, 0x01800000, 0x00000003, //  0.. 3 80000020
-	0x00000000, 0x816FFFF0, 0x817FE8C0, 0x00000024, //  4.. 7 80000030
+	0x00000000, 0x00000000, 0x00000000, 0x00000000, //  4.. 7 80000030
 	0x00000000, 0x00000000, 0x00000000, 0x00000000, //  8..11 80000040
 	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 12..15 80000050
 	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 16..19 80000060
@@ -63,10 +63,10 @@ static const u32 GC_DefaultConfig[56] =
 	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 28..31 80000090
 	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 32..35 800000A0
 	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 36..39 800000B0
-	0x015D47F8, 0xF8248360, 0x00000000, 0x00000001, // 40..43 800000C0
+	0x015D47F8, 0xF8248360, 0x00000000, 0x00000000, // 40..43 800000C0
 	0x01000000, 0x00000000, 0x00000000, 0x00000000, // 44..47 800000D0
-	0x814B7F50, 0x815D47F8, 0x00000000, 0x81800000, // 48..51 800000E0
-	0x01800000, 0x817FC8C0, 0x09A7EC80, 0x1CF7C580  // 52..55 800000F0
+	0x00000000, 0x00000000, 0x00000000, 0x81800000, // 48..51 800000E0
+	0x01800000, 0x00000000, 0x09A7EC80, 0x1CF7C580  // 52..55 800000F0
 };
 
 char *getVideoString()
@@ -361,30 +361,31 @@ unsigned int load_app(int mode)
 		top_of_main_ram = get_base_addr();
 	if(mode == CHEATS)
 		top_of_main_ram = (u32)GCARS_MEMORY_START;
-
-	// Read bi2.bin (Disk Header Information)
-	deviceHandler_seekFile(&curFile,0x440,DEVICE_HANDLER_SEEK_SET);
-	if(deviceHandler_readFile(&curFile,(void*)(top_of_main_ram-0x2000),0x2000) != 0x2000) {
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL, "Failed to read bi2.bin");
-		DrawFrameFinish();
-		while(1);
-	}
-	*(volatile u32*)0x800000F4 = top_of_main_ram-0x2000;	// bi2.bin location
 	
-	// Read FST to top of Main Memory just below bi2.bin
+	// Read FST to top of Main Memory (round to 32 byte boundary)
+	u32 fstSizeAligned = GCMDisk.MaxFSTSize + (32-(GCMDisk.MaxFSTSize%32));
 	deviceHandler_seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
-	if(deviceHandler_readFile(&curFile,(void*)(top_of_main_ram-0x2000-GCMDisk.MaxFSTSize),GCMDisk.MaxFSTSize) != GCMDisk.MaxFSTSize) {
+	if(deviceHandler_readFile(&curFile,(void*)(top_of_main_ram-fstSizeAligned),GCMDisk.MaxFSTSize) != GCMDisk.MaxFSTSize) {
 		DrawFrameStart();
 		DrawMessageBox(D_FAIL, "Failed to read fst.bin");
 		DrawFrameFinish();
 		while(1);
 	}
-	*(volatile u32*)0x80000038 = top_of_main_ram-0x2000-GCMDisk.MaxFSTSize;	//FST Location in ram
-	*(volatile u32*)0x8000003C = GCMDisk.MaxFSTSize;	//FST Max Length
-	*(volatile u32*)0x80000034 = *(volatile u32*)0x80000038;	//Arena Hi
-	*(volatile u32*)0x80000028 = top_of_main_ram & 0x01FFFFFF;	//Physical Memory Size
-    *(volatile u32*)0x800000F0 = top_of_main_ram & 0x01FFFFFF;	//Console Simulated Mem size
+	
+	// Read bi2.bin (Disk Header Information) to just under the FST
+	deviceHandler_seekFile(&curFile,0x440,DEVICE_HANDLER_SEEK_SET);
+	if(deviceHandler_readFile(&curFile,(void*)(top_of_main_ram-fstSizeAligned-0x2000),0x2000) != 0x2000) {
+		DrawFrameStart();
+		DrawMessageBox(D_FAIL, "Failed to read bi2.bin");
+		DrawFrameFinish();
+		while(1);
+	}
+	*(volatile u32*)0x800000F4 = top_of_main_ram-fstSizeAligned-0x2000;	// bi2.bin location
+	*(volatile u32*)0x80000038 = top_of_main_ram-fstSizeAligned;		// FST Location in ram
+	*(volatile u32*)0x8000003C = GCMDisk.MaxFSTSize;					// FST Max Length
+	*(volatile u32*)0x80000034 = *(volatile u32*)0x80000038;			// Arena Hi
+	*(volatile u32*)0x80000028 = top_of_main_ram & 0x01FFFFFF;			// Physical Memory Size
+    *(volatile u32*)0x800000F0 = top_of_main_ram & 0x01FFFFFF;			// Console Simulated Mem size
 	
 	sprintf(txtbuffer, "Main DOL Lives at %08X\r\n", GCMDisk.DOLOffset);
 	print_gecko(txtbuffer);
