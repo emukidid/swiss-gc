@@ -5,5 +5,6 @@ del *.elf
 make
 elf2dol swiss.elf swiss.dol
 d0lz swiss.dol swiss-lz.dol -m
-copy swiss-lz.dol dist
+mkdir dist
+copy swiss.dol dist
 pause

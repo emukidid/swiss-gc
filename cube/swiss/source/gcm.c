@@ -9,6 +9,7 @@
 #include "gcm.h"
 #include "swiss.h"
 #include "patcher.h"
+#include "sidestep.h"
 #include "devices/deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
@@ -89,7 +90,20 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		deviceHandler_seekFile(file,0,DEVICE_HANDLER_SEEK_SET);
 		deviceHandler_readFile(file,header,sizeof(DiskHeader));
 		filesToPatch[numFiles].offset = header->DOLOffset;
-		filesToPatch[numFiles].size = 8*1024*1024;
+		// Figure out the size of the main DOL
+		DOLHEADER dolhdr;
+		deviceHandler_seekFile(file,header->DOLOffset,DEVICE_HANDLER_SEEK_SET);
+		deviceHandler_readFile(file,&dolhdr,DOLHDRLENGTH);
+		u32 main_dol_size = 0, i;
+		for (i = 0; i < MAXTEXTSECTION; i++) {
+			if (dolhdr.textLength[i] + dolhdr.textOffset[i] > main_dol_size)
+				main_dol_size = dolhdr.textLength[i] + dolhdr.textOffset[i];
+		}
+		for (i = 0; i < MAXDATASECTION; i++) {
+			if (dolhdr.dataLength[i] + dolhdr.dataOffset[i] > main_dol_size)
+				main_dol_size = dolhdr.dataLength[i] + dolhdr.dataOffset[i];
+		}
+		filesToPatch[numFiles].size = main_dol_size;
 		sprintf(&filesToPatch[numFiles].name[0],"Main DOL File"); 
 		numFiles++;
 		free(header);
@@ -157,11 +171,16 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 	int i, pre_patched = 0;
 	for(i = 0; i < numToPatch; i++) {
-		sprintf(txtbuffer, "Patching: %s %iMb", filesToPatch[i].name, filesToPatch[i].size/1024/1024);
+		if(filesToPatch[i].size > 1024*1024) {
+			sprintf(txtbuffer, "Patching: %s %iMb", filesToPatch[i].name, filesToPatch[i].size/1024/1024);
+		}
+		else {
+			sprintf(txtbuffer, "Patching: %s %iKb", filesToPatch[i].name, filesToPatch[i].size/1024);
+		}
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,txtbuffer);
 		DrawFrameFinish();
-		u8 *buffer = (u8*)0x80003100;	// This is free
+		u8 *buffer = (u8*)memalign(32,filesToPatch[i].size);
 		deviceHandler_seekFile(file,filesToPatch[i].offset,DEVICE_HANDLER_SEEK_SET);
 		deviceHandler_readFile(file,buffer,filesToPatch[i].size);
 		int patched = 0;
@@ -183,6 +202,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			print_gecko("Finished writing the patch\r\n");
 			pre_patched = 1;
 		}
+		free(buffer);
 	}
 	if(pre_patched) {
 		sprintf(txtbuffer, PRE_PATCHER_MAGIC);

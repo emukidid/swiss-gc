@@ -27,6 +27,7 @@
 
 #include "swiss.h"
 #include "main.h"
+#include "gcars.h"
 #include "exi.h"
 #include "patcher.h"
 #include "banner.h"
@@ -63,7 +64,7 @@ static const u32 GC_DefaultConfig[56] =
 	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 32..35 800000A0
 	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 36..39 800000B0
 	0x015D47F8, 0xF8248360, 0x00000000, 0x00000001, // 40..43 800000C0
-	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 44..47 800000D0
+	0x01000000, 0x00000000, 0x00000000, 0x00000000, // 44..47 800000D0
 	0x814B7F50, 0x815D47F8, 0x00000000, 0x81800000, // 48..51 800000E0
 	0x01800000, 0x817FC8C0, 0x09A7EC80, 0x1CF7C580  // 52..55 800000F0
 };
@@ -311,32 +312,13 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 	free(directories);
 }
 
-void override_memory_limits() {
-	// reserve memory for patch code high up
-	u32 base = get_base_addr();
-    *(volatile u32*)0x80000028 = (u32)base & 0x01FFFFFF;	//Physical Memory Size
-    *(volatile u32*)0x8000002C = (u32)0x00000003;			//Retail GC
-    *(volatile u32*)0x80000034 = 0;							//Arena Lo
-    *(volatile u32*)0x80000038 = 0;							//Arena Hi
-    *(volatile u32*)0x800000EC = (u32)base;					//Debug Monitor Location
-    *(volatile u32*)0x800000F0 = (u32)base & 0x01FFFFFF;	//Console Simulated Mem size
-    *(volatile u32*)0x800000F4 = 0;							//DVD BI2 Location
-}
-
-static void nothing(const char* txt, ...){}
 unsigned int load_app(int mode)
 {
-	// Apploader internal function defines
-	void  (*app_init) (void (*report)(const char* fmt, ...));
-	int   (*app_main) (void** dst, int* size, int* offset);
-	void* (*app_final)();
-	void  (*app_entry)(void(**init)(void (*report)(const char* fmt, ...)),
-	int (**main)(), void *(**final)());
 	char* gameID = (char*)0x80000000;
-	int zeldaVAT = 0;
-	// Apploader related variables
-	void* app_dst = 0;
-	int app_len = 0,app_offset = 0, apploader_info[3], res;
+	int zeldaVAT = 0, i = 0;
+	u32 main_dol_size = 0;
+	u8 *main_dol_buffer = 0;
+	DOLHEADER dolhdr;
 	
 	VIDEO_SetPostRetraceCallback (NULL);
 
@@ -347,13 +329,6 @@ unsigned int load_app(int mode)
 	// Read the game header to 0x80000000 & apploader header
 	deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
 	if(deviceHandler_readFile(&curFile,(unsigned char*)0x80000000,32) != 32) {
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL, "Apploader Header Failed to read");
-		DrawFrameFinish();
-		while(1);
-	}
-	deviceHandler_seekFile(&curFile,0x2450,DEVICE_HANDLER_SEEK_SET);
-	if(deviceHandler_readFile(&curFile,(unsigned char*)apploader_info,sizeof(int)*3) != sizeof(int)*3) {
 		DrawFrameStart();
 		DrawMessageBox(D_FAIL, "Apploader Header Failed to read");
 		DrawFrameFinish();
@@ -375,81 +350,107 @@ unsigned int load_app(int mode)
 
 	// If not, setup the game for High mem patch code
 	set_base_addr(swissSettings.useHiMemArea);
-	if(swissSettings.useHiMemArea) {
-		override_memory_limits();
-	}
 
-	sprintf(txtbuffer,"Reading Apploader (%d bytes)",apploader_info[1]+apploader_info[2]);
 	DrawFrameStart();
-	DrawProgressBar(33, txtbuffer);
+	DrawProgressBar(33, "Reading Main DOL");
 	DrawFrameFinish();
+	
+	// Adjust top of memory (we reserve some for high memory location patching and cheats)
+	u32 top_of_main_ram = 0x81800000;
+	if(swissSettings.useHiMemArea) 
+		top_of_main_ram = get_base_addr();
+	if(mode == CHEATS)
+		top_of_main_ram = (u32)GCARS_MEMORY_START;
 
-	// Read the apploader itself
-	deviceHandler_seekFile(&curFile,0x2460,DEVICE_HANDLER_SEEK_SET);
-	if(deviceHandler_readFile(&curFile,(void*)0x81200000,apploader_info[1]+apploader_info[2]) != apploader_info[1]+apploader_info[2]) {
+	// Read bi2.bin (Disk Header Information)
+	deviceHandler_seekFile(&curFile,0x440,DEVICE_HANDLER_SEEK_SET);
+	if(deviceHandler_readFile(&curFile,(void*)(top_of_main_ram-0x2000),0x2000) != 0x2000) {
 		DrawFrameStart();
-		DrawMessageBox(D_FAIL, "Apploader Data Failed to read");
+		DrawMessageBox(D_FAIL, "Failed to read bi2.bin");
 		DrawFrameFinish();
 		while(1);
 	}
-	DCFlushRange((void*)0x81200000,apploader_info[1]+apploader_info[2]);
-	ICInvalidateRange((void*)0x81200000,apploader_info[1]+apploader_info[2]);
-  
-	DrawFrameStart();
-	DrawProgressBar(66, "Executing Apploader...");
-	DrawFrameFinish();
+	*(volatile u32*)0x800000F4 = top_of_main_ram-0x2000;	// bi2.bin location
 	
-	app_entry = (void (*)(void(**)(void (*)(const char*, ...)), int (**)(), void *(**)()))(apploader_info[0]);
-	app_entry(&app_init, &app_main, &app_final);
-	app_init((void (*)(const char*, ...))nothing);
-	
-	while(1) {
-		res = app_main(&app_dst, &app_len, &app_offset);
-		if(!res) {
-			break;
-		}
-		if(swissSettings.debugUSB) {
-			sprintf(txtbuffer,"Apploader Reading: %dbytes from %08X to %08x\n",app_len,app_offset,(u32)app_dst);
-			print_gecko(txtbuffer);
-		}
-		// Read app_len amount to app_dst specified by the apploader from offset app_offset
-		deviceHandler_seekFile(&curFile,app_offset,DEVICE_HANDLER_SEEK_SET);
-		if(deviceHandler_readFile(&curFile,app_dst,app_len) != app_len) {
-			DrawFrameStart();
-			DrawMessageBox(D_FAIL, "DOL Failed to read");
-			DrawFrameFinish();
-			while(1);
-		}
-		// Patch to read from SD/HDD
-		if((curDevice == SD_CARD)||((curDevice == IDEEXI))) {
-			if(swissSettings.useHiLevelPatch) {
-				Patch_DVDHighLevelRead(app_dst, app_len);
-			} else {
-				Patch_DVDLowLevelRead(app_dst, app_len);
-			}
-			Patch_DVDLowReadDiskId(app_dst, app_len);
-			Patch_DVDAudioStreaming(app_dst, app_len);
-			Patch_DVDStatusFunctions(app_dst, app_len);
-		}
-		// Fix Zelda WW on Wii
-		if(zeldaVAT) {
-			Patch_GXSetVATZelda(app_dst, app_len, zeldaVAT);
-		}
-		// 2 Disc support with no modchip
-		if((curDevice == DVD_DISC) && (is_gamecube()) && (drive_status == DEBUG_MODE)) {
-			Patch_DVDReset(app_dst,app_len);  
-		}
-		// Patch OSReport to print out over USBGecko
-		if(swissSettings.debugUSB) {
-			Patch_Fwrite(app_dst, app_len);
-		}
-		// 480p Forcing
-		if(swissSettings.curVideoSelection == P480) {
-			Patch_480pVideo(app_dst, app_len);
-		}
-		DCFlushRange(app_dst, app_len);
-		ICInvalidateRange(app_dst, app_len);
+	// Read FST to top of Main Memory just below bi2.bin
+	deviceHandler_seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
+	if(deviceHandler_readFile(&curFile,(void*)(top_of_main_ram-0x2000-GCMDisk.MaxFSTSize),GCMDisk.MaxFSTSize) != GCMDisk.MaxFSTSize) {
+		DrawFrameStart();
+		DrawMessageBox(D_FAIL, "Failed to read fst.bin");
+		DrawFrameFinish();
+		while(1);
 	}
+	*(volatile u32*)0x80000038 = top_of_main_ram-0x2000-GCMDisk.MaxFSTSize;	//FST Location in ram
+	*(volatile u32*)0x8000003C = GCMDisk.MaxFSTSize;	//FST Max Length
+	*(volatile u32*)0x80000034 = *(volatile u32*)0x80000038;	//Arena Hi
+	*(volatile u32*)0x80000028 = top_of_main_ram & 0x01FFFFFF;	//Physical Memory Size
+    *(volatile u32*)0x800000F0 = top_of_main_ram & 0x01FFFFFF;	//Console Simulated Mem size
+	
+	sprintf(txtbuffer, "Main DOL Lives at %08X\r\n", GCMDisk.DOLOffset);
+	print_gecko(txtbuffer);
+	
+	// Read the Main DOL header
+	deviceHandler_seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
+	if(deviceHandler_readFile(&curFile,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
+		DrawFrameStart();
+		DrawMessageBox(D_FAIL, "Failed to read Main DOL Header");
+		DrawFrameFinish();
+		while(1);
+	}
+	
+	// Figure out the size of the Main DOL so that we can read it all
+	for (i = 0; i < MAXTEXTSECTION; i++) {
+		if (dolhdr.textLength[i] + dolhdr.textOffset[i] > main_dol_size)
+			main_dol_size = dolhdr.textLength[i] + dolhdr.textOffset[i];
+	}
+	for (i = 0; i < MAXDATASECTION; i++) {
+		if (dolhdr.dataLength[i] + dolhdr.dataOffset[i] > main_dol_size)
+			main_dol_size = dolhdr.dataLength[i] + dolhdr.dataOffset[i];
+	}
+	sprintf(txtbuffer, "Main DOL size %i\r\n", main_dol_size);
+	print_gecko(txtbuffer);
+
+	// Read the entire Main DOL
+	main_dol_buffer = (u8*)memalign(32,main_dol_size+DOLHDRLENGTH);
+	sprintf(txtbuffer, "Main DOL buffer %08X\r\n", (u32)main_dol_buffer);
+	print_gecko(txtbuffer);
+	deviceHandler_seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
+	if(deviceHandler_readFile(&curFile,(void*)main_dol_buffer,main_dol_size+DOLHDRLENGTH) != main_dol_size+DOLHDRLENGTH) {
+		DrawFrameStart();
+		DrawMessageBox(D_FAIL, "Failed to read Main DOL");
+		DrawFrameFinish();
+		while(1);
+	}
+
+	// Patch to read from SD/HDD
+	if((curDevice == SD_CARD)||((curDevice == IDEEXI))) {
+		if(swissSettings.useHiLevelPatch) {
+			Patch_DVDHighLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		} else {
+			Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		}
+		Patch_DVDLowReadDiskId(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		Patch_DVDAudioStreaming(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		Patch_DVDStatusFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	}
+	// Fix Zelda WW on Wii
+	if(zeldaVAT) {
+		Patch_GXSetVATZelda(main_dol_buffer, main_dol_size+DOLHDRLENGTH, zeldaVAT);
+	}
+	// 2 Disc support with no modchip
+	if((curDevice == DVD_DISC) && (is_gamecube()) && (drive_status == DEBUG_MODE)) {
+		Patch_DVDReset(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	}
+	// Patch OSReport to print out over USBGecko
+	if(swissSettings.debugUSB) {
+		Patch_Fwrite(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	}
+	// 480p Forcing
+	if(swissSettings.curVideoSelection == P480) {
+		Patch_480pVideo(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	}
+	DCFlushRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	ICInvalidateRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	deviceHandler_deinit(&curFile);
 
 	DrawFrameStart();
@@ -497,15 +498,12 @@ unsigned int load_app(int mode)
 	}
 	
 	print_gecko("libogc shutdown and boot game!\r\n");
-	// Disable interrupts and exceptions
-	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
 	
 	if(mode == CHEATS) {
-		return (u32)app_final();
+		return (u32)main_dol_buffer;
 	}
- 
-	__lwp_thread_stopmultitasking((void(*)())app_final());
-	
+
+	DOLtoARAM(main_dol_buffer);
 	return 0;
 }
 
