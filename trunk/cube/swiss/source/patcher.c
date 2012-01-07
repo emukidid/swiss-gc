@@ -93,6 +93,7 @@ u32 get_base_addr() {
 	return base_addr;
 }
 
+// BROKEN THIS DOES NOT ENSURE ANYTHING ANYMORE!
 void writeBranchLink(unsigned int sourceAddr,unsigned int destAddr) {
 	unsigned int temp;
 		

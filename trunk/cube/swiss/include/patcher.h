@@ -39,7 +39,7 @@ extern u32 DVDReadAsyncInt_length;
 #define PRE_PATCHER_MAGIC "Pre-Patched by Swiss v0.2"
 
 #define LO_RESERVE 0x80001800
-#define HI_RESERVE 0x817F8000
+#define HI_RESERVE 0x817FE800
 
 /* Function jump locations */
 #define READ_TYPE1_V1_OFFSET (base_addr)

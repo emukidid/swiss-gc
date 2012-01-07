@@ -215,11 +215,11 @@ void show_settings() {
 			// Generic Save/Cancel/Back/Next button actions
 			if(option == settings_count_pp[page]-1) {
 				// Save settings to SRAM
-				sram = __SYS_LockSram();
+				/*sram = __SYS_LockSram();
 				sram->flags = swissSettings.sramStereo ? (sram->flags|4):(sram->flags&~4);
 				sram->lang = swissSettings.sramLanguage;
 				__SYS_UnlockSram(1);
-				while(!__SYS_SyncSram());
+				while(!__SYS_SyncSram());*/
 				// Save settings to current device
 				if((curDevice != SD_CARD)&&((curDevice != IDEEXI))) {
 					// If the device is Read-Only, warn/etc

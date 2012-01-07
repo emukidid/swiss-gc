@@ -118,7 +118,7 @@ void* Initialise (void)
 	whichfb = 0;
 	
 	drive_version(&driveVersion[0]);
-	swissSettings.hasDVDDrive = driveVersion[0] ? 1 : 0;
+	swissSettings.hasDVDDrive = *(u32*)&driveVersion[0] ? 1 : 0;
 	
 	if(!driveVersion[0]) {
 		// Reset DVD if there was a modchip
@@ -128,7 +128,7 @@ void* Initialise (void)
 		dvd_reset();	// low-level, basic
 		dvd_read_id();
 		drive_version(&driveVersion[0]);
-		swissSettings.hasDVDDrive = driveVersion[0] ? 1 : 0;
+		swissSettings.hasDVDDrive = *(u32*)&driveVersion[0] ? 1 : 0;
 		if(swissSettings.hasDVDDrive) {
 			dvd_motor_off();
 		}
@@ -226,14 +226,16 @@ void main_loop()
 ****************************************************************************/
 int main () 
 {
-	void *fb;   
+	// Setup defaults (if no config is found)
+	memset(&swissSettings, 0 , sizeof(SwissSettings));
+	
+	void *fb;
 	fb = Initialise();
 	if(!fb) {
 		return -1;
 	}
 	
-	// Setup defaults (if no config is found)
-	memset(&swissSettings, 0 , sizeof(SwissSettings));
+
 	swissSettings.useHiMemArea = 0;
 	swissSettings.disableInterrupts = 1;
 	swissSettings.useHiLevelPatch = swissSettings.hasDVDDrive ? 0:1;	// Hi-level works better with no DVD drive
@@ -251,6 +253,8 @@ int main ()
 			usb_flush(1);
 		}
 		sprintf(txtbuffer, "Arena Size: %iKb\r\n",(SYS_GetArena1Hi()-SYS_GetArena1Lo())/1024);
+		print_gecko(txtbuffer);
+		sprintf(txtbuffer, "DVD Drive Present? %s\r\n",swissSettings.hasDVDDrive?"Yes":"No");
 		print_gecko(txtbuffer);
 	}
 

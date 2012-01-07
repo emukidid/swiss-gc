@@ -13,6 +13,7 @@
 #include <malloc.h>
 #include <network.h>
 #include <asndlib.h>
+#include <ogc/lwp_threads.h>
 
 #include "sidestep.h"
 #include "ssaram.h"
@@ -23,6 +24,7 @@
 static DOLHEADER *dolhdr;
 static u32 minaddress = 0;
 static u32 maxaddress = 0;
+static u32 _entrypoint, _dst, _src, _len;
 
 typedef int (*BOOTSTUB) (u32 entrypoint, u32 dst, u32 src, int len, u32 invlen, u32 invaddress);
 
@@ -121,6 +123,30 @@ static void ARAMStub(void)
 
 }
 
+void *ARAMRunStub() {
+	BOOTSTUB stub;
+	char *p;
+	char *s = (char *) ARAMStub;
+ 
+	/*** Copy ARAMStub to 81300000 ***/
+	if (_dst + _len < 0x81300000) p = (void *) 0x81300000;
+	else p = (void *) 0x80003100;
+	memcpy(p, s, 256); /*** Way too much - but who cares ***/
+
+	/*** Round length to 32 bytes ***/
+	if (_len & 0x1f) _len = (_len & ~0x1f) + 0x20;
+
+ 
+	/*** Flush everything! ***/
+	DCFlushRange((void *) 0x80000000, 0x1800000);
+
+	/*** Boot the bugger :D ***/
+	stub = (BOOTSTUB) p;
+	stub((u32) _entrypoint, _dst, _src, _len | 0x80000000, _len >> 5, _dst); 
+	
+	return 0;
+}
+
 /****************************************************************************
 * ARAMRun
 *
@@ -128,29 +154,18 @@ static void ARAMStub(void)
 ****************************************************************************/
 void ARAMRun(u32 entrypoint, u32 dst, u32 src, u32 len)
 {
-  char *p;
-  char *s = (char *) ARAMStub;
-  BOOTSTUB stub;
-
-  GX_AbortFrame();
-  ASND_End();
-  /*** Shutdown libOGC ***/
-  SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
-
-  /*** Copy ARAMStub to 81300000 ***/
-  if (dst + len < 0x81300000) p = (void *) 0x81300000;
-  else p = (void *) 0x80003100;
-  memcpy(p, s, 256); /*** Way too much - but who cares ***/
-
-  /*** Round length to 32 bytes ***/
-  if (len & 0x1f) len = (len & ~0x1f) + 0x20;
- 
-  /*** Flush everything! ***/
-  DCFlushRange((void *) 0x80000000, 0x1800000);
-
-  /*** Boot the bugger :D ***/
-  stub = (BOOTSTUB) p;
-  stub((u32) entrypoint, dst, src, len | 0x80000000, len >> 5, dst);
+	_entrypoint = entrypoint;
+	_dst = dst;
+	_src = src;
+	_len = len;
+	
+	/*** Shutdown libOGC ***/
+	GX_AbortFrame();
+	ASND_End();
+	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
+	
+	/*** Shutdown all threads and exit to this method ***/
+	__lwp_thread_stopmultitasking((void(*)())ARAMRunStub());
 }
 
 /****************************************************************************

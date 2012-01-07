@@ -70,7 +70,7 @@ INCLUDES	:= include $(SOURCES)
 CFLAGS		= -g -O3 -Wall -fno-strict-aliasing $(MACHDEP) $(INCLUDE)
 CXXFLAGS	= $(CFLAGS)
 
-LDFLAGS		= -g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x81300000 -T../../linker-script/vgcogc.ld
+LDFLAGS		= -g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x80003100 -T../../linker-script/vgcogc.ld
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
