@@ -32,6 +32,7 @@ u16 frameWidth;
 CHAR_INFO fontChars;
 GXTexObj fontTexObj;
 GXColor defaultColor = (GXColor) {255,255,255,255};
+GXColor disabledColor = (GXColor) {175,175,182,255};
 GXColor fontColor = (GXColor) {255,255,255,255};
 
 /****************************************************************************

@@ -24,6 +24,7 @@
 #include "exi.h"
 #include "dvd.h"
 #include "httpd.h"
+#include "config.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
@@ -153,6 +154,29 @@ void main_loop()
 		// If the user selected a device, make sure it's ready before we browse the filesystem
 		deviceHandler_deinit( deviceHandler_initial );
 		deviceHandler_init( deviceHandler_initial );
+		if((curDevice==SD_CARD)||(curDevice == IDEEXI)) { 
+			// Try to open up the config .ini in case it hasn't been opened already (SD, IDE-EXI only)
+			if(!config_init()) {
+				if(!config_create()) {
+					DrawFrameStart();
+					DrawMessageBox(D_INFO,"Failed to create configuration file!");
+					DrawFrameFinish();
+					sleep(1);
+				}
+				else {
+					DrawFrameStart();
+					sprintf(txtbuffer,"Loaded %i entries from the config file",config_get_count());
+					DrawMessageBox(D_INFO,txtbuffer);
+					DrawFrameFinish();
+				}
+			}
+			else {
+				DrawFrameStart();
+				sprintf(txtbuffer,"Loaded %i entries from the config file",config_get_count());
+				DrawMessageBox(D_INFO,txtbuffer);
+				DrawFrameFinish();
+			}
+		}
 	}
 	else {
 		curMenuLocation=ON_OPTIONS;
@@ -161,7 +185,6 @@ void main_loop()
 	while(1) {
 		if(deviceHandler_initial && needsRefresh) {
 			curSelection=0; files=0; curMenuSelection=0; needsRefresh = 0;
-			
 			// Read the directory/device TOC
 			if(allFiles){ free(allFiles); allFiles = NULL; }
 			files = deviceHandler_readDir(&curFile, &allFiles, -1);
@@ -197,7 +220,7 @@ void main_loop()
 					needsDeviceChange = 1;  //Change from SD->DVD or vice versa
 					break;
 				case 1:		// Settings
-					show_settings();
+					show_settings(NULL, NULL);
 					break;
 				case 2:		// Credits
 					show_info();

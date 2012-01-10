@@ -12,18 +12,16 @@
 #include "swiss.h"
 #include "main.h"
 #include "info.h"
-#include "ata.h"
-#include "exi.h"
-#include "bba.h"
+#include "config.h"
 
 SwissSettings tempSettings;
 char *bootDevicesStr[] = {"SD Slot A", "SD Slot B", "IDE Slot A", "IDE Slot B"};
-char *uiVModeStr[] = {"NTSC (480i)", "PAL (576i)", "NTSC (480p)"};
+char *uiVModeStr[] = {"NTSC", "PAL", "Progressive", "Auto"};
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {7, 10, 6};
+int settings_count_pp[3] = {7, 7, 9};
 
-void settings_draw_page(int page_num, int option) {
+void settings_draw_page(int page_num, int option, file_handle *file) {
 	doBackdrop();
 	DrawEmptyBox(20,60, vmode->fbWidth-20, 460, COLOR_BLACK);
 		
@@ -35,18 +33,18 @@ void settings_draw_page(int page_num, int option) {
 	// SD/IDE Speed [16/32 MHz]
 	// Swiss Video Mode [576i (PAL 50Hz), 480i (NTSC 60Hz), 480p (NTSC 60Hz)]
 	
-	/** Current Game Settings - only if a valid GCM file is highlighted (Page 2/) */
+	/** Advanced Settings (Page 2/) */
+	// Enable USB Gecko Debug via Slot B [Yes/No]
+	// Force No DVD Drive Mode [Yes/No]
+	// Hide Unknown file types [Yes/No]	// TO BE IMPLEMENTED
+	
+	/** Current Game Settings - only if a valid GCM file is highlighted (Page 3/) */
 	// Force Video Mode [576i (PAL 50Hz), 480i (NTSC 60Hz), 480p (NTSC 60Hz), Auto]
 	// Patch Type [Low / High Level]
 	// If Low Level, Use Memory Location [Low/High]
 	// If High Level, Disable Interrupts [Yes/No]
 	// Mute Audio Streaming [Yes/No]
 	// Try to mute audio stutter [Yes/No]
-	
-	/** Advanced Settings (Page 3/) */
-	// Enable USB Gecko Debug via Slot B [Yes/No]
-	// Force No DVD Drive Mode [Yes/No]
-	// Hide Unknown file types [Yes/No]	// TO BE IMPLEMENTED
 
 	if(!page_num) {
 		WriteFont(30, 65, " Global Settings (1/3):");
@@ -62,24 +60,7 @@ void settings_draw_page(int page_num, int option) {
 		DrawSelectableButton(380, 280, -1, 310, uiVModeStr[swissSettings.uiVMode], option == 4 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	else if(page_num == 1) {
-		WriteFont(30, 65, "Current Game Settings (2/3):");
-		WriteFontStyled(30, 110, "Force Video Mode:", 1.0f, false, defaultColor);
-		DrawSelectableButton(470, 110, -1, 140, "Auto", option == 0 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 150, "Patch Type:", 1.0f, false, defaultColor);
-		DrawSelectableButton(470, 150, -1, 180, swissSettings.useHiLevelPatch ? "High":"Low", option == 1 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 190, "If Low Level, Memory Location:", 1.0f, false, defaultColor);
-		DrawSelectableButton(470, 190, -1, 220, swissSettings.useHiMemArea ? "High":"Low", option == 2 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 230, "If High Level, Disable Interrupts:", 1.0f, false, defaultColor);
-		DrawSelectableButton(470, 230, -1, 260, swissSettings.disableInterrupts ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 270, "Mute Audio Streaming:", 1.0f, false, defaultColor);
-		DrawSelectableButton(470, 270, -1, 300, swissSettings.muteAudioStreaming ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 310, "Try to mute audio stutter:", 1.0f, false, defaultColor);
-		DrawSelectableButton(470, 310, -1, 340, swissSettings.muteAudioStutter ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 350, "No Disc Mode:", 1.0f, false, defaultColor);
-		DrawSelectableButton(470, 350, -1, 380, swissSettings.noDiscMode ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
-	}
-	else if(page_num == 2) {
-		WriteFont(30, 65, "Advanced Settings (3/3):");
+		WriteFont(30, 65, "Advanced Settings (2/3):");
 		WriteFontStyled(30, 120, "Enable USB Gecko Debug via Slot B:", 1.0f, false, defaultColor);
 		DrawSelectableButton(500, 120, -1, 150, swissSettings.debugUSB ? "Yes":"No", option == 0 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 160, "Force No DVD Drive Mode:", 1.0f, false, defaultColor);
@@ -88,6 +69,23 @@ void settings_draw_page(int page_num, int option) {
 		DrawSelectableButton(450, 200, -1, 230, swissSettings.hideUnknownFileTypes ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 240, "Stop DVD Motor on startup:", 1.0f, false, defaultColor);
 		DrawSelectableButton(450, 240, -1, 270, swissSettings.stopMotor ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT,-1);
+	}
+	else if(page_num == 2) {
+		WriteFont(30, 65, "Current Game Settings (3/3):");
+		WriteFontStyled(30, 110, "Force Video Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 110, -1, 140, uiVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 150, "Patch Type:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 150, -1, 180, swissSettings.useHiLevelPatch ? "High":"Low", option == 1 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 190, "If Low Level, Memory Location:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 190, -1, 220, swissSettings.useHiMemArea ? "High":"Low", option == 2 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 230, "If High Level, Disable Interrupts:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 230, -1, 260, swissSettings.disableInterrupts ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 270, "Mute Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 270, -1, 300, swissSettings.muteAudioStreaming ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 310, "Try to mute audio stutter:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 310, -1, 340, swissSettings.muteAudioStutter ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 350, "No Disc Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 350, -1, 380, swissSettings.noDiscMode ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	if(page_num != 0) {
 		DrawSelectableButton(40, 390, -1, 420, "Back", 
@@ -102,7 +100,7 @@ void settings_draw_page(int page_num, int option) {
 	DrawFrameFinish();
 }
 
-void settings_toggle(int page, int option, int direction) {
+void settings_toggle(int page, int option, int direction, file_handle *file) {
 	if(page == 0) {
 		switch(option) {
 			case 0:
@@ -127,17 +125,37 @@ void settings_toggle(int page, int option, int direction) {
 			break;
 			case 4:
 				swissSettings.uiVMode += direction;
-				if(swissSettings.uiVMode > 2)
+				if(swissSettings.uiVMode > 3)
 					swissSettings.uiVMode = 0;
 				if(swissSettings.uiVMode < 0)
-					swissSettings.uiVMode = 2;
+					swissSettings.uiVMode = 3;
 			break;
 		}	
 	}
 	else if(page == 1) {
 		switch(option) {
 			case 0:
-				
+				swissSettings.debugUSB ^= 1;
+			break;
+			case 1:
+				swissSettings.hasDVDDrive ^= 1;
+			break;
+			case 2:
+				swissSettings.hideUnknownFileTypes ^= 1;
+			break;
+			case 3:
+				swissSettings.stopMotor ^= 1;
+			break;
+		}
+	}
+	else if(page == 2 && file != NULL) {
+		switch(option) {
+			case 0:
+				swissSettings.gameVMode += direction;
+				if(swissSettings.gameVMode > 3)
+					swissSettings.gameVMode = 0;
+				if(swissSettings.gameVMode < 0)
+					swissSettings.gameVMode = 3;
 			break;
 			case 1:
 				swissSettings.useHiLevelPatch ^= 1;
@@ -159,25 +177,11 @@ void settings_toggle(int page, int option, int direction) {
 			break;
 		}
 	}
-	else if(page == 2) {
-		switch(option) {
-			case 0:
-				swissSettings.debugUSB ^= 1;
-			break;
-			case 1:
-				swissSettings.hasDVDDrive ^= 1;
-			break;
-			case 2:
-				swissSettings.hideUnknownFileTypes ^= 1;
-			break;
-			case 3:
-				swissSettings.stopMotor ^= 1;
-			break;
-		}
-	}
 }
 
-void show_settings() {
+void show_settings(file_handle *file, ConfigEntry *config) {
+	int page = 0, option = 0;
+
 	// Refresh SRAM in case user changed it from IPL
 	syssram* sram = __SYS_LockSram();
 	swissSettings.sramStereo = sram->flags & 4;
@@ -187,10 +191,20 @@ void show_settings() {
 	// Copy current settings to a temp copy in case the user cancels out
 	memcpy((void*)&tempSettings,(void*)&swissSettings, sizeof(SwissSettings));
 	
-	int page = 0, option = 0;
+	// Setup the settings for the current game
+	if(config != NULL) {
+		swissSettings.useHiLevelPatch = config->useHiLevelPatch;
+		swissSettings.useHiMemArea = config->useHiMemArea;
+		swissSettings.disableInterrupts = config->disableInterrupts;
+		swissSettings.muteAudioStreaming = config->muteAudioStreaming;
+		swissSettings.muteAudioStutter = config->muteAudioStutter;
+		swissSettings.noDiscMode = config->noDiscMode;
+		page = 2;
+	}
+		
 	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
 	while(1) {
-		settings_draw_page(page, option);
+		settings_draw_page(page, option, file);
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
 			&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
 			&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) 
@@ -199,10 +213,10 @@ void show_settings() {
 			&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 		u16 btns = PAD_ButtonsHeld(0);
 		if(btns & PAD_BUTTON_RIGHT) {
-			settings_toggle(page, option, 1);
+			settings_toggle(page, option, 1, file);
 		}
 		if(btns & PAD_BUTTON_LEFT) {
-			settings_toggle(page, option, -1);
+			settings_toggle(page, option, -1, file);
 		}
 		if((btns & PAD_BUTTON_DOWN) && option < settings_count_pp[page])
 			option++;
@@ -214,27 +228,24 @@ void show_settings() {
 		if((btns & PAD_BUTTON_A)) {
 			// Generic Save/Cancel/Back/Next button actions
 			if(option == settings_count_pp[page]-1) {
+				DrawFrameStart();
+				DrawMessageBox(D_INFO,"Saving changes!");
+				DrawFrameFinish();
 				// Save settings to SRAM
 				/*sram = __SYS_LockSram();
 				sram->flags = swissSettings.sramStereo ? (sram->flags|4):(sram->flags&~4);
 				sram->lang = swissSettings.sramLanguage;
 				__SYS_UnlockSram(1);
 				while(!__SYS_SyncSram());*/
-				// Save settings to current device
-				if((curDevice != SD_CARD)&&((curDevice != IDEEXI))) {
-					// If the device is Read-Only, warn/etc
-					DrawFrameStart();
-					DrawMessageBox(D_INFO,"Cannot save to read-only device!");
-					DrawFrameFinish();
+				// Update our .ini
+				if(config != NULL) {
+					config->useHiLevelPatch = swissSettings.useHiLevelPatch;
+					config->useHiMemArea = swissSettings.useHiMemArea;
+					config->disableInterrupts = swissSettings.disableInterrupts;
+					config->muteAudioStreaming = swissSettings.muteAudioStreaming;
+					config->muteAudioStutter = swissSettings.muteAudioStutter;
+					config->noDiscMode = swissSettings.noDiscMode;
 				}
-				else {
-					// Save to XML
-					
-				}
-				DrawFrameStart();
-				DrawMessageBox(D_INFO,"Changes successfully saved!");
-				DrawFrameFinish();
-				sleep(1);
 				return;
 			}
 			if(option == settings_count_pp[page]) {
