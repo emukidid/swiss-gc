@@ -14,6 +14,7 @@
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 
+#define PATCH_CHUNK_SIZE 8*1024*1024
 #define FST_ENTRY_SIZE 12
 
 // Returns the number of filesToPatch and fills out the filesToPatch array passed in (pre-allocated)
@@ -180,29 +181,34 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,txtbuffer);
 		DrawFrameFinish();
-		u8 *buffer = (u8*)memalign(32,filesToPatch[i].size);
-		deviceHandler_seekFile(file,filesToPatch[i].offset,DEVICE_HANDLER_SEEK_SET);
-		deviceHandler_readFile(file,buffer,filesToPatch[i].size);
-		int patched = 0;
-		sprintf(txtbuffer, "Patch %s mem %08X ofs %08X size %08X\r\n",
-				filesToPatch[i].name,(u32)buffer,filesToPatch[i].offset,filesToPatch[i].size);
-		print_gecko(txtbuffer);
-		if(swissSettings.useHiLevelPatch) {
-			patched += Patch_DVDHighLevelRead(buffer, filesToPatch[i].size);
-		} else {
-			patched += Patch_DVDLowLevelRead(buffer, filesToPatch[i].size);
+		// Chunk it out
+		int ofs;
+		for(ofs = 0; ofs < filesToPatch[i].size; ofs+=PATCH_CHUNK_SIZE) {
+			int sizeToRead = (ofs+PATCH_CHUNK_SIZE > filesToPatch[i].size) ? (filesToPatch[i].size-ofs):PATCH_CHUNK_SIZE;
+			u8 *buffer = (u8*)memalign(32, sizeToRead);
+			deviceHandler_seekFile(file,filesToPatch[i].offset+ofs,DEVICE_HANDLER_SEEK_SET);
+			deviceHandler_readFile(file,buffer,sizeToRead);
+			int patched = 0;
+			sprintf(txtbuffer, "Patch %s mem %08X ofs %08X size %08X\r\n",
+					filesToPatch[i].name,(u32)buffer,filesToPatch[i].offset+ofs,sizeToRead);
+			print_gecko(txtbuffer);
+			if(swissSettings.useHiLevelPatch) {
+				patched += Patch_DVDHighLevelRead(buffer, sizeToRead);
+			} else {
+				patched += Patch_DVDLowLevelRead(buffer, sizeToRead);
+			}
+			patched += Patch_480pVideo(buffer, sizeToRead);
+			patched += Patch_DVDAudioStreaming(buffer, sizeToRead);
+			if(patched) {
+				print_gecko("Seeking in the file..\r\n");
+				deviceHandler_seekFile(file,filesToPatch[i].offset+ofs,DEVICE_HANDLER_SEEK_SET);
+				print_gecko("Started writing the patch\r\n");
+				deviceHandler_writeFile(file,buffer,sizeToRead);
+				print_gecko("Finished writing the patch\r\n");
+				pre_patched = 1;
+			}
+			free(buffer);
 		}
-		patched += Patch_480pVideo(buffer, filesToPatch[i].size);
-		patched += Patch_DVDAudioStreaming(buffer, filesToPatch[i].size);
-		if(patched) {
-			print_gecko("Seeking in the file..\r\n");
-			deviceHandler_seekFile(file,filesToPatch[i].offset,DEVICE_HANDLER_SEEK_SET);
-			print_gecko("Started writing the patch\r\n");
-			deviceHandler_writeFile(file,buffer,filesToPatch[i].size);
-			print_gecko("Finished writing the patch\r\n");
-			pre_patched = 1;
-		}
-		free(buffer);
 	}
 	if(pre_patched) {
 		sprintf(txtbuffer, PRE_PATCHER_MAGIC);

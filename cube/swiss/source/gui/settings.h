@@ -7,7 +7,10 @@
 #include <string.h>
 #include <malloc.h>
 #include <gccore.h>
+#include "config.h"
+#include "deviceHandler.h"
 
-void show_settings();
+extern char *uiVModeStr[];
+void show_settings(file_handle *file, ConfigEntry *config);
 
 #endif

@@ -34,6 +34,7 @@
 #include "qchparse.h"
 #include "dvd.h"
 #include "gcm.h"
+#include "settings.h"
 #include "aram/sidestep.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
@@ -1107,11 +1108,35 @@ void install_game()
 	needsRefresh=1;
 }
 
-/* Show info about the game */
+void save_config(ConfigEntry *config) {
+	// Save settings to current device
+	if((curDevice != SD_CARD)&&((curDevice != IDEEXI))) {
+		// If the device is Read-Only, warn/etc
+		DrawFrameStart();
+		DrawMessageBox(D_INFO,"Cannot save config on read-only device!");
+		DrawFrameFinish();
+	}
+	else {
+		if(config_update(config)) {
+			DrawFrameStart();
+			DrawMessageBox(D_INFO,"Config Saved Successfully!");
+			DrawFrameFinish();
+		}
+		else {
+			DrawFrameStart();
+			DrawMessageBox(D_INFO,"Config Failed to Save!");
+			DrawFrameFinish();
+		}
+	}
+}
+
+/* Show info about the game - and also load the config for it */
 int info_game()
 {
+
 	DrawFrameStart();
 	DrawEmptyBox(75,120, vmode->fbWidth-78, 400, COLOR_BLACK);
+	ConfigEntry *config = NULL;
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
 		u32 bannerOffset = showBanner(215, 240, 2);  //Convert & display game banner
 		if(bannerOffset) {
@@ -1128,6 +1153,11 @@ int info_game()
 				}
 			}
 		}
+		// Find the config for this game, or default if we don't know about it
+		config = memalign(32, sizeof(ConfigEntry));
+		*(u32*)&config->game_id[0] = *(u32*)&GCMDisk.ConsoleID;	// Lazy
+		strncpy(&config->game_name[0],&GCMDisk.GameName[0],32);
+		config_find(config);	// populate
 	}
 	sprintf(txtbuffer,"%s",(GCMDisk.DVDMagicWord != DVD_MAGIC)?getRelativeName(&curFile.name[0]):GCMDisk.GameName);
 	float scale = GetTextScaleToFitInWidth(txtbuffer,(vmode->fbWidth-78)-75);
@@ -1169,17 +1199,28 @@ int info_game()
 		WriteFontStyled(640/2, 200, txtbuffer, 0.8f, true, defaultColor);
 	}
 
-	WriteFontStyled(640/2, 370, "Cheats(Y) - Exit(B) - Continue (A)", 1.0f, true, defaultColor);
+	WriteFontStyled(640/2, 370, "Cheats(Y) - Settings(X) - Exit(B) - Continue (A)", 0.75f, true, defaultColor);
 	DrawFrameFinish();
-	while((PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A));
-	while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 	while(1){
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
+			save_config(config);
+			free(config);
 			return cheats_game();
 		}
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
+			show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC) ? &curFile : NULL, config);
+			save_config(config);
+			free(config);
+			return 1;
+		}
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){
-			return (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+			int ret = (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+			save_config(config);
+			free(config);
+			return ret;
 		}
 	}
 }

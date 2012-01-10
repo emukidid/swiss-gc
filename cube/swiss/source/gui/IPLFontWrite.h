@@ -14,6 +14,7 @@
 #define wait_press_A() ({while((PAD_ButtonsHeld(0) & PAD_BUTTON_A)); while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_A));})
 
 extern GXColor defaultColor;
+extern GXColor disabledColor;
 extern char txtbuffer[2048];
 
 void init_font(void);

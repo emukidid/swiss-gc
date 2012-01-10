@@ -45,6 +45,8 @@ TARGET		:=	swiss
 BUILD		:=	build
 SOURCES		:=  source \
               source/aram \
+			  source/gui \
+			  source/config \
               source/devices \
               source/devices/dvd \
               source/devices/fat \
@@ -56,8 +58,7 @@ SOURCES		:=  source \
               source/cheats \
               source/patches \
               source/images \
-			  source/images/buttons \
-              source/gui
+			  source/images/buttons
 DATA		:=	data  
 TEXTURES	:=	source/images \
               source/images/buttons
