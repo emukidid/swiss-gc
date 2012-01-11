@@ -332,7 +332,7 @@ int Patch_480pVideo(u8 *data, u32 length) {
 		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure_v1" },
 		{0x798, 105, 44, 12, 38, 63, 0, 0, "VIConfigure_v2"}
 	};
-	if(swissSettings.curVideoSelection != P480) {
+	if(swissSettings.gameVMode != 2) {
 		return 0;
 	}
 	for( i=0; i < length; i+=4 )

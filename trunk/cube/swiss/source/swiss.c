@@ -70,24 +70,6 @@ static const u32 GC_DefaultConfig[56] =
 	0x01800000, 0x00000000, 0x09A7EC80, 0x1CF7C580  // 52..55 800000F0
 };
 
-char *getVideoString()
-{
-	switch(swissSettings.curVideoSelection)
-	{
-		case 0:
-			return "NTSC";
-		case 1:
-			return "PAL50";
-		case 2:
-			return "PAL60";
-		case 3:
-			return "Auto";
-		case 4:
-			return "480p";
-	}
-	return "Autodetect";
-}
-
 void print_gecko(char *string)
 {
 	if(swissSettings.debugUSB) {
@@ -107,7 +89,7 @@ void print_gecko(char *string)
 void ogc_video__reset()
 {
     DrawFrameStart();
-    if(swissSettings.curVideoSelection==AUTO) {
+    if(swissSettings.gameVMode==3) {
 		switch(GCMDisk.CountryCode) {
 			case 'P': // PAL
 			case 'D': // German
@@ -118,14 +100,14 @@ void ogc_video__reset()
 			case 'M': // American Import to PAL
 			case 'X': // PAL other languages?
 			case 'Y': // PAL other languages?
-				swissSettings.curVideoSelection = PAL50;
+				swissSettings.gameVMode = 1;
 				break;
 			case 'E':
 			case 'J':
-				swissSettings.curVideoSelection = NTSC;
+				swissSettings.gameVMode = 0;
 				break;
 			case 'U':
-				swissSettings.curVideoSelection = PAL60;
+				swissSettings.gameVMode = 1;
 				break;
 			default:
 				break;
@@ -133,27 +115,23 @@ void ogc_video__reset()
     }
 
     /* set TV mode for current game*/
-	if(swissSettings.curVideoSelection!=AUTO)	{		//if not autodetect
-		switch(swissSettings.curVideoSelection) {
-			case PAL60:
-				newmode = &TVEurgb60Hz480IntDf;
-				DrawMessageBox(D_INFO,"Video Mode: PAL 60Hz");
-				break;
-			case PAL50:
+	if(swissSettings.gameVMode!=3)	{		//if not autodetect
+		switch(swissSettings.gameVMode) {
+			case 1:
 				newmode = &TVPal528IntDf;
 				DrawMessageBox(D_INFO,"Video Mode: PAL 50Hz");
 				break;
-			case NTSC:
+			case 0:
 				newmode = &TVNtsc480IntDf;
 				DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
 				break;
-			case P480:
+			case 2:
 				if(VIDEO_HaveComponentCable()) {
 					newmode = &TVNtsc480Prog;
 					DrawMessageBox(D_INFO,"Video Mode: NTSC 480p");
 				}
 				else {
-					swissSettings.curVideoSelection = NTSC;	// Can't force with no cable
+					swissSettings.gameVMode = 0;	// Can't force with no cable
 					newmode = &TVNtsc480IntDf;
 					DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
 				}
@@ -426,14 +404,15 @@ unsigned int load_app(int mode)
 
 	// Patch to read from SD/HDD
 	if((curDevice == SD_CARD)||((curDevice == IDEEXI))) {
-		if(swissSettings.useHiLevelPatch) {
+		if(swissSettings.useHiLevelPatch)
 			Patch_DVDHighLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-		} else {
+		else
 			Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-		}
 		Patch_DVDLowReadDiskId(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-		Patch_DVDAudioStreaming(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-		Patch_DVDStatusFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		if(swissSettings.muteAudioStreaming)
+			Patch_DVDAudioStreaming(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		if(swissSettings.noDiscMode)
+			Patch_DVDStatusFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	// Fix Zelda WW on Wii
 	if(zeldaVAT) {
@@ -448,7 +427,7 @@ unsigned int load_app(int mode)
 		Patch_Fwrite(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	// 480p Forcing
-	if(swissSettings.curVideoSelection == P480) {
+	if(swissSettings.gameVMode == 2) {
 		Patch_480pVideo(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	DCFlushRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
@@ -848,13 +827,10 @@ void load_file()
 		}
 	}
 	
-	
-	
 	// Show game info and allow the user to select cheats or return to the menu
 	if(!info_game()) {
 		return;
 	}
-	
 	
 	// Report to the user the patch status of this GCM/ISO file
 	if((curDevice == SD_CARD) || ((curDevice == IDEEXI))) {
@@ -866,7 +842,8 @@ void load_file()
 	
 	// Start up the DVD Drive
 	if((curDevice != DVD_DISC) && (curDevice != WODE) 
-		&& DrawYesNoDialog("Use a DVD Disc for higher compatibility?") && (swissSettings.hasDVDDrive)) {
+		&& (swissSettings.hasDVDDrive) && (!swissSettings.noDiscMode) 
+		&& DrawYesNoDialog("Use a DVD Disc for higher compatibility?")) {
 		if(initialize_disc(GCMDisk.AudioStreaming) == DRV_ERROR) {
 			return; //fail
 		}
@@ -1158,6 +1135,14 @@ int info_game()
 		*(u32*)&config->game_id[0] = *(u32*)&GCMDisk.ConsoleID;	// Lazy
 		strncpy(&config->game_name[0],&GCMDisk.GameName[0],32);
 		config_find(config);	// populate
+		// load settings
+		swissSettings.useHiLevelPatch = config->useHiLevelPatch;
+		swissSettings.useHiMemArea = config->useHiMemArea;
+		swissSettings.disableInterrupts = config->disableInterrupts;
+		swissSettings.gameVMode = config->gameVMode;
+		swissSettings.muteAudioStreaming = config->muteAudioStreaming;
+		swissSettings.muteAudioStutter = config->muteAudioStutter;
+		swissSettings.noDiscMode = config->noDiscMode;
 	}
 	sprintf(txtbuffer,"%s",(GCMDisk.DVDMagicWord != DVD_MAGIC)?getRelativeName(&curFile.name[0]):GCMDisk.GameName);
 	float scale = GetTextScaleToFitInWidth(txtbuffer,(vmode->fbWidth-78)-75);
