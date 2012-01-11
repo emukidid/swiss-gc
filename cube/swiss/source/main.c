@@ -263,7 +263,7 @@ int main ()
 	swissSettings.disableInterrupts = 1;
 	swissSettings.useHiLevelPatch = swissSettings.hasDVDDrive ? 0:1;	// Hi-level works better with no DVD drive
 	swissSettings.debugUSB = 0;
-	swissSettings.curVideoSelection = AUTO;
+	swissSettings.gameVMode = 3;
 	
 	// Start up the BBA if it exists
 	init_network_thread();

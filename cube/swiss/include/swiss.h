@@ -69,12 +69,11 @@ typedef struct {
 	int useHiMemArea; // Use Low mem or High mem for the patch to sit at
 	int disableInterrupts; // On the Hi Level patch, disable interrupts or not
 	int debugUSB; // Debug prints over USBGecko
-	int curVideoSelection; //video forcing selection (default == auto)
 	int hasDVDDrive;
 	int defaultDevice;
 	int exiSpeed;
-	int uiVMode;
-	int gameVMode;
+	int uiVMode;	// What mode to force Swiss into
+	int gameVMode;	// What mode to force a Game into
 	int muteAudioStreaming;
 	int muteAudioStutter;
 	int hideUnknownFileTypes;

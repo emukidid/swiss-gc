@@ -21,16 +21,6 @@ extern u32 *xfb[2];			/*** Framebuffers ***/
 extern int whichfb;			/*** Frame buffer toggle ***/
 
 
-//Video Modes (enum)
-enum vidTypes
-{
-	NTSC=0,
-	PAL50,
-	PAL60,
-	AUTO,
-	P480
-};
-
 //Cheats
 enum useCheats
 {

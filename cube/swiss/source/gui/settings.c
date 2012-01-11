@@ -193,12 +193,6 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 	
 	// Setup the settings for the current game
 	if(config != NULL) {
-		swissSettings.useHiLevelPatch = config->useHiLevelPatch;
-		swissSettings.useHiMemArea = config->useHiMemArea;
-		swissSettings.disableInterrupts = config->disableInterrupts;
-		swissSettings.muteAudioStreaming = config->muteAudioStreaming;
-		swissSettings.muteAudioStutter = config->muteAudioStutter;
-		swissSettings.noDiscMode = config->noDiscMode;
 		page = 2;
 	}
 		
@@ -242,6 +236,7 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 					config->useHiLevelPatch = swissSettings.useHiLevelPatch;
 					config->useHiMemArea = swissSettings.useHiMemArea;
 					config->disableInterrupts = swissSettings.disableInterrupts;
+					config->gameVMode = swissSettings.gameVMode;
 					config->muteAudioStreaming = swissSettings.muteAudioStreaming;
 					config->muteAudioStutter = swissSettings.muteAudioStutter;
 					config->noDiscMode = swissSettings.noDiscMode;

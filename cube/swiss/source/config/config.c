@@ -152,8 +152,8 @@ void config_parse(char *configData) {
 				value = strtok_r(NULL, "=", &namectx);
 			
 			if(value != NULL) {
-				// sprintf(txtbuffer, "Name [%s] Value [%s]\r\n", name, value);
-				// print_gecko(txtbuffer);
+				//sprintf(txtbuffer, "Name [%s] Value [%s]\r\n", name, value);
+				//print_gecko(txtbuffer);
 
 				if(!strcmp("ID", name)) {
 					if(!first) {
@@ -215,6 +215,8 @@ void config_parse(char *configData) {
 		line = strtok_r( NULL, "\r\n", &linectx);
 	}
 	free(configData);
+	if(configEntriesCount > 0)
+		configEntriesCount++;
 	
 	// sprintf(txtbuffer, "Found %i entries in the config file\r\n",configEntriesCount);
 	// print_gecko(txtbuffer);
