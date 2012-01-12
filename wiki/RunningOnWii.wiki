@@ -9,7 +9,7 @@ Swiss hasn't really been designed nor developed to support the Wii. The only rea
 
 These are the per-requisites to get Swiss booting on a Wii as it is going to require the Wii to boot it in "Gamecube mode":
   * cMIOS (*I don't endorse this*)
-  * WiiPower [http://www.gc-forever.com/forums/viewtopic.php?f=6&t=371 Wii Swiss booter]
+  * [http://www.gc-forever.com/forums/viewtopic.php?f=6&t=371 Wii Swiss booter]
   * Homebrew Channel
 
 Help and how to do all of the above can be found on the [http://www.gc-forever.com forums]
