@@ -12,6 +12,17 @@
 #include "config.h"
 #include "settings.h"
 
+// This is an example Swiss settings entry (sits at the top of swiss.ini)
+//!!Swiss Settings Start!!
+//Default Device=Yes
+//SD/IDE Speed=32MHz
+//Swiss Video Mode=Auto
+//Enable Debug=No
+//Force No DVD Drive Mode=No
+//Hide Unknown file types=No
+//Stop DVD Motor on startup=Yes
+//!!Swiss Settings End!!
+
 // This is an example game entry
 //ID=GAFE
 //Name=Animal Crossing (NTSC)
@@ -28,6 +39,7 @@
 static int configInit = 0;
 static ConfigEntry configEntries[2048]; // That's a lot of Games!
 static int configEntriesCount = 0;
+static SwissSettings configSwissSettings;
 
 void strnscpy(char *s1, char *s2, int num) {
 	strncpy(s1, s2, num);
@@ -75,7 +87,7 @@ int config_create() {
 	sprintf(txtbuffer, "%sswiss.ini", deviceHandler_initial->name);
 	FILE *fp = fopen( txtbuffer, "wb" );
 	if(fp) {
-		char *str = "// Swiss Configuration File!\r\n\0";
+		char *str = "# Swiss Configuration File!\r\n\0";
 		fwrite(str, 1, strlen(str), fp);
 		fclose(fp);
 		return 1;
@@ -87,8 +99,30 @@ int config_update_file() {
 	sprintf(txtbuffer, "%sswiss.ini", deviceHandler_initial->name);
 	FILE *fp = fopen( txtbuffer, "wb" );
 	if(fp) {
-		char *str = "//Swiss Configuration File!\r\n//Anything written in here will be lost!\r\n\r\n";
+		// Write out header every time
+		char *str = "# Swiss Configuration File!\r\n# Anything written in here will be lost!\r\n\r\n#!!Swiss Settings Start!!\r\n";
 		fwrite(str, 1, strlen(str), fp);
+		
+		// Write out Swiss settings
+		sprintf(txtbuffer, "Default Device=%s\r\n",(configSwissSettings.defaultDevice ? "Yes":"No"));
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		sprintf(txtbuffer, "SD/IDE Speed=%s\r\n",(configSwissSettings.exiSpeed ? "32MHz":"16MHz"));
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		sprintf(txtbuffer, "Swiss Video Mode=%s\r\n",(uiVModeStr[configSwissSettings.uiVMode]));
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		sprintf(txtbuffer, "Enable Debug=%s\r\n",(configSwissSettings.debugUSB ? "Yes":"No"));
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		sprintf(txtbuffer, "Force No DVD Drive Mode=%s\r\n",(configSwissSettings.hasDVDDrive ? "Yes":"No"));
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		sprintf(txtbuffer, "Hide Unknown file types=%s\r\n",(configSwissSettings.hideUnknownFileTypes ? "Yes":"No"));
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		sprintf(txtbuffer, "Stop DVD Motor on startup=%s\r\n",(configSwissSettings.stopMotor ? "Yes":"No"));
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		
+		
+		// Write out Game Configs
 		int i;
 		for(i = 0; i < configEntriesCount; i++) {
 			char buffer[256];
@@ -137,23 +171,23 @@ int config_update_file() {
 
 void config_parse(char *configData) {
 	// Parse each entry and put it into our array
-	char *line, *linectx;
+	char *line, *linectx = NULL;
 	int first = 1;
 	line = strtok_r( configData, "\r\n", &linectx );
 	while( line != NULL ) {
-		// sprintf(txtbuffer, "Line [%s]\r\n", line);
-		// print_gecko(txtbuffer);
+		sprintf(txtbuffer, "Line [%s]\r\n", line);
+		print_gecko(txtbuffer);
 		if(line[0] != '#') {
 			// Is this line a new game entry?
-			char *name, *namectx;
+			char *name, *namectx = NULL;
 			char *value = NULL;
 			name = strtok_r(line, "=", &namectx);
 			if(name != NULL)
 				value = strtok_r(NULL, "=", &namectx);
 			
 			if(value != NULL) {
-				//sprintf(txtbuffer, "Name [%s] Value [%s]\r\n", name, value);
-				//print_gecko(txtbuffer);
+				sprintf(txtbuffer, "Name [%s] Value [%s]\r\n", name, value);
+				print_gecko(txtbuffer);
 
 				if(!strcmp("ID", name)) {
 					if(!first) {
@@ -209,6 +243,35 @@ void config_parse(char *configData) {
 				else if(!strcmp("No Disc Mode", name)) {
 					configEntries[configEntriesCount].noDiscMode = !strcmp("Yes", value) ? 1:0;
 				}
+				// Swiss settings
+				else if(!strcmp("Default Device", name)) {
+					configSwissSettings.defaultDevice = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("SD/IDE Speed", name)) {
+					configSwissSettings.exiSpeed = !strcmp("32MHz", value) ? 1:0;
+				}
+				else if(!strcmp("Enable Debug", name)) {
+					configSwissSettings.debugUSB = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Force No DVD Drive Mode", name)) {
+					configSwissSettings.hasDVDDrive = !strcmp("No", value) ? 1:0;
+				}
+				else if(!strcmp("Hide Unknown file types", name)) {
+					configSwissSettings.hideUnknownFileTypes = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Stop DVD Motor on startup", name)) {
+					configSwissSettings.stopMotor = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Swiss Video Mode", name)) {
+					if(!strcmp(uiVModeStr[0], value))
+						configSwissSettings.uiVMode = 0;
+					else if(!strcmp(uiVModeStr[1], value))
+						configSwissSettings.uiVMode = 1;
+					else if(!strcmp(uiVModeStr[2], value))
+						configSwissSettings.uiVMode = 2;
+					else if(!strcmp(uiVModeStr[3], value))
+						configSwissSettings.uiVMode = 3;
+				}
 			}
 		}
 		// And round we go again
@@ -218,8 +281,8 @@ void config_parse(char *configData) {
 	if(configEntriesCount > 0)
 		configEntriesCount++;
 	
-	// sprintf(txtbuffer, "Found %i entries in the config file\r\n",configEntriesCount);
-	// print_gecko(txtbuffer);
+	 sprintf(txtbuffer, "Found %i entries in the config file\r\n",configEntriesCount);
+	 print_gecko(txtbuffer);
 }
 
 void config_find(ConfigEntry *entry) {
@@ -271,3 +334,10 @@ int config_get_count() {
 	return configEntriesCount;
 }
 
+void config_copy_swiss_settings(SwissSettings *settings) {
+	memcpy(&configSwissSettings, settings, sizeof(SwissSettings));
+}
+
+SwissSettings *config_get_swiss_settings() {
+	return &configSwissSettings;
+}

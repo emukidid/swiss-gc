@@ -15,7 +15,6 @@
 #include "config.h"
 
 SwissSettings tempSettings;
-char *bootDevicesStr[] = {"SD Slot A", "SD Slot B", "IDE Slot A", "IDE Slot B"};
 char *uiVModeStr[] = {"NTSC", "PAL", "Progressive", "Auto"};
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
@@ -47,13 +46,13 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 	// Try to mute audio stutter [Yes/No]
 
 	if(!page_num) {
-		WriteFont(30, 65, " Global Settings (1/3):");
+		WriteFont(30, 65, "Global Settings (1/3):");
 		WriteFontStyled(30, 120, "IPL/Game Language:", 1.0f, false, defaultColor);
 		DrawSelectableButton(380, 120, -1, 150, getSramLang(swissSettings.sramLanguage), option == 0 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 160, "IPL/Game Audio:", 1.0f, false, defaultColor);
 		DrawSelectableButton(380, 160, -1, 190, swissSettings.sramStereo ? "Stereo":"Mono", option == 1 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 200, "Default Device:", 1.0f, false, defaultColor);
-		DrawSelectableButton(380, 200, -1, 230, bootDevicesStr[swissSettings.defaultDevice], option == 2 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(380, 200, -1, 230, swissSettings.defaultDevice ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 240, "SD/IDE Speed:", 1.0f, false, defaultColor);
 		DrawSelectableButton(380, 240, -1, 270, swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == 3 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 280, "Swiss Video Mode:", 1.0f, false, defaultColor);
@@ -114,11 +113,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 				swissSettings.sramStereo ^= 4;
 			break;
 			case 2:
-				swissSettings.defaultDevice += direction;
-				if(swissSettings.defaultDevice > 3)
-					swissSettings.defaultDevice = 0;
-				if(swissSettings.defaultDevice < 0)
-					swissSettings.defaultDevice = 3;
+				swissSettings.defaultDevice ^= 1;
 			break;
 			case 3:
 				swissSettings.exiSpeed ^= 1;
@@ -226,11 +221,11 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 				DrawMessageBox(D_INFO,"Saving changes!");
 				DrawFrameFinish();
 				// Save settings to SRAM
-				/*sram = __SYS_LockSram();
+				sram = __SYS_LockSram();
 				sram->flags = swissSettings.sramStereo ? (sram->flags|4):(sram->flags&~4);
 				sram->lang = swissSettings.sramLanguage;
 				__SYS_UnlockSram(1);
-				while(!__SYS_SyncSram());*/
+				while(!__SYS_SyncSram());
 				// Update our .ini
 				if(config != NULL) {
 					config->useHiLevelPatch = swissSettings.useHiLevelPatch;
@@ -240,6 +235,31 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 					config->muteAudioStreaming = swissSettings.muteAudioStreaming;
 					config->muteAudioStutter = swissSettings.muteAudioStutter;
 					config->noDiscMode = swissSettings.noDiscMode;
+				}
+				else {
+					// Save the Swiss system settings since we're called from the main menu
+					if((curDevice != SD_CARD)&&((curDevice != IDEEXI))) {
+						// If the device is Read-Only, warn/etc
+						DrawFrameStart();
+						DrawMessageBox(D_INFO,"Cannot save config on read-only device!");
+						DrawFrameFinish();
+					}
+					else {
+						DrawFrameStart();
+						DrawMessageBox(D_INFO,"Saving Config ...");
+						DrawFrameFinish();
+						config_copy_swiss_settings(&swissSettings);
+						if(config_update_file()) {
+							DrawFrameStart();
+							DrawMessageBox(D_INFO,"Config Saved Successfully!");
+							DrawFrameFinish();
+						}
+						else {
+							DrawFrameStart();
+							DrawMessageBox(D_INFO,"Config Failed to Save!");
+							DrawFrameFinish();
+						}
+					}
 				}
 				return;
 			}

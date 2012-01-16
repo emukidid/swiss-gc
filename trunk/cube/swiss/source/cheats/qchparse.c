@@ -10,12 +10,10 @@
 #include <unistd.h>
 #include <malloc.h>
 #include <sys/dir.h>
-//#include "font.h"
 #include "qchparse.h"
 #include "main.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
-#include "cheats/cheats.h"
 
 #define CHTS_PER_PAGE 6
 /* local vars */
@@ -24,7 +22,6 @@ char *cheatGameNamesp[1024];
 char  cheatGameNames[1024][128];
 int   cheatFileSize = 0;
 int   cheatNumGames = 0;
-int   useInbuilt    = 1;
 file_handle* cheatFile;
 
 int cmpstringp(const void *p1, const void *p2)
@@ -81,11 +78,7 @@ void QCH_SetCheatsFile(file_handle* cheatFile) {
 	cheatsFileInMem = (char*)memalign(32,cheatFile->size);
 	
 	if(deviceHandler_readFile(cheatFile,cheatsFileInMem,cheatFile->size) == cheatFile->size) {
-		useInbuilt = 0;
 		cheatFileSize = cheatFile->size;
-	}
-	else {
-		useInbuilt = 1;
 	}
 }
 
@@ -95,21 +88,14 @@ int QCH_Init()
 	memset(cheatGameNamesp,0,sizeof(cheatGameNamesp));
 	memset(cheatGameNames,0,sizeof(cheatGameNames));
 
-	if(useInbuilt) {
-		cheatsFileInMem = (char*)&cheatsEmbedded[0];
-		cheatFileSize = cheatsEmbedded_size;
- 	}
 	return 1;
 }
 
 /* Call this when we launch a game to free up resources */
 void QCH_DeInit()
 {
-	if(!useInbuilt) {
-		//free cheats data
-		free(cheatsFileInMem);
-	}
-	useInbuilt = 1;
+	//free cheats data
+	free(cheatsFileInMem);
 	cheatsFileInMem = NULL;
 }
 
