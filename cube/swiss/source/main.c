@@ -163,18 +163,13 @@ void main_loop()
 					DrawFrameFinish();
 					sleep(1);
 				}
-				else {
-					DrawFrameStart();
-					sprintf(txtbuffer,"Loaded %i entries from the config file",config_get_count());
-					DrawMessageBox(D_INFO,txtbuffer);
-					DrawFrameFinish();
-				}
 			}
 			else {
 				DrawFrameStart();
 				sprintf(txtbuffer,"Loaded %i entries from the config file",config_get_count());
 				DrawMessageBox(D_INFO,txtbuffer);
 				DrawFrameFinish();
+				memcpy(&swissSettings, config_get_swiss_settings(), sizeof(SwissSettings));
 			}
 		}
 	}
@@ -257,7 +252,6 @@ int main ()
 	if(!fb) {
 		return -1;
 	}
-	
 
 	swissSettings.useHiMemArea = 0;
 	swissSettings.disableInterrupts = 1;
@@ -266,8 +260,8 @@ int main ()
 	swissSettings.gameVMode = 3;
 	
 	// Start up the BBA if it exists
-	init_network_thread();
-	init_httpd_thread();
+	//init_network_thread();
+	//init_httpd_thread();
 
 	
 	//debugging stuff
@@ -281,6 +275,21 @@ int main ()
 		print_gecko(txtbuffer);
 	}
 
+	// Try to init SD cards here
+	//deviceHandler_initial = &initial_SD0;
+	//deviceHandler_init     =  deviceHandler_FAT_init;
+	//if(deviceHandler_init(deviceHandler_initial)) {
+	//	// Load config
+	//	print_gecko("Valid SD Card found in Slot A!\r\n");
+	//}
+	//else {
+	//	deviceHandler_initial = &initial_SD1;
+	//	if(deviceHandler_init(deviceHandler_initial)) {
+	//		// Load cheats
+	//		print_gecko("Valid SD Card found in Slot B!\r\n");
+	//	}
+	//}
+	
 	while(1) {
 		needsRefresh = 1;
 		needsDeviceChange = 0;

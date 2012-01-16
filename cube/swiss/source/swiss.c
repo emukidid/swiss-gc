@@ -1094,6 +1094,9 @@ void save_config(ConfigEntry *config) {
 		DrawFrameFinish();
 	}
 	else {
+		DrawFrameStart();
+		DrawMessageBox(D_INFO,"Saving Config ...");
+		DrawFrameFinish();
 		if(config_update(config)) {
 			DrawFrameStart();
 			DrawMessageBox(D_INFO,"Config Saved Successfully!");
@@ -1110,7 +1113,6 @@ void save_config(ConfigEntry *config) {
 /* Show info about the game - and also load the config for it */
 int info_game()
 {
-
 	DrawFrameStart();
 	DrawEmptyBox(75,120, vmode->fbWidth-78, 400, COLOR_BLACK);
 	ConfigEntry *config = NULL;
