@@ -144,33 +144,41 @@ void* Initialise (void)
 	return xfb[0];
 }
 
+void load_config() {
+	// Try to open up the config .ini in case it hasn't been opened already (SD, IDE-EXI only)
+	if(!config_init()) {
+		if(!config_create()) {
+			DrawFrameStart();
+			DrawMessageBox(D_INFO,"Failed to create configuration file!");
+			DrawFrameFinish();
+			sleep(1);
+		}
+	}
+	else {
+		DrawFrameStart();
+		sprintf(txtbuffer,"Loaded %i entries from the config file",config_get_count());
+		DrawMessageBox(D_INFO,txtbuffer);
+		DrawFrameFinish();
+		memcpy(&swissSettings, config_get_swiss_settings(), sizeof(SwissSettings));
+	}
+}
+
 void main_loop()
 { 
 	int i = 0,max,j;	
 	
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+	if(needsDeviceChange) {
+		swissSettings.defaultDevice = 0;	// We don't care if a subsequent device is "default"
+		needsDeviceChange = 0;
+	}
 	select_device();
 	if(deviceHandler_initial) {
 		// If the user selected a device, make sure it's ready before we browse the filesystem
 		deviceHandler_deinit( deviceHandler_initial );
 		deviceHandler_init( deviceHandler_initial );
 		if((curDevice==SD_CARD)||(curDevice == IDEEXI)) { 
-			// Try to open up the config .ini in case it hasn't been opened already (SD, IDE-EXI only)
-			if(!config_init()) {
-				if(!config_create()) {
-					DrawFrameStart();
-					DrawMessageBox(D_INFO,"Failed to create configuration file!");
-					DrawFrameFinish();
-					sleep(1);
-				}
-			}
-			else {
-				DrawFrameStart();
-				sprintf(txtbuffer,"Loaded %i entries from the config file",config_get_count());
-				DrawMessageBox(D_INFO,txtbuffer);
-				DrawFrameFinish();
-				memcpy(&swissSettings, config_get_swiss_settings(), sizeof(SwissSettings));
-			}
+			load_config();
 		}
 	}
 	else {
@@ -253,16 +261,32 @@ int main ()
 		return -1;
 	}
 
+	// Sane defaults
 	swissSettings.useHiMemArea = 0;
 	swissSettings.disableInterrupts = 1;
 	swissSettings.useHiLevelPatch = swissSettings.hasDVDDrive ? 0:1;	// Hi-level works better with no DVD drive
 	swissSettings.debugUSB = 0;
-	swissSettings.gameVMode = 3;
+	swissSettings.gameVMode = 3;	// Auto video mode
+	swissSettings.exiSpeed = 1;		// 32MHz
 	
 	// Start up the BBA if it exists
 	//init_network_thread();
 	//init_httpd_thread();
 
+	// Try to init SD cards here and load config
+	deviceHandler_initial = &initial_SD0;
+	deviceHandler_init     =  deviceHandler_FAT_init;
+	deviceHandler_deinit     =  deviceHandler_FAT_deinit;
+	if(deviceHandler_init(deviceHandler_initial)) {
+		load_config();
+	}
+	else {
+		deviceHandler_deinit(deviceHandler_initial);
+		deviceHandler_initial = &initial_SD1;
+		if(deviceHandler_init(deviceHandler_initial)) {
+			load_config();
+		}
+	}
 	
 	//debugging stuff
 	if(swissSettings.debugUSB) {
@@ -274,25 +298,9 @@ int main ()
 		sprintf(txtbuffer, "DVD Drive Present? %s\r\n",swissSettings.hasDVDDrive?"Yes":"No");
 		print_gecko(txtbuffer);
 	}
-
-	// Try to init SD cards here
-	//deviceHandler_initial = &initial_SD0;
-	//deviceHandler_init     =  deviceHandler_FAT_init;
-	//if(deviceHandler_init(deviceHandler_initial)) {
-	//	// Load config
-	//	print_gecko("Valid SD Card found in Slot A!\r\n");
-	//}
-	//else {
-	//	deviceHandler_initial = &initial_SD1;
-	//	if(deviceHandler_init(deviceHandler_initial)) {
-	//		// Load cheats
-	//		print_gecko("Valid SD Card found in Slot B!\r\n");
-	//	}
-	//}
 	
 	while(1) {
 		needsRefresh = 1;
-		needsDeviceChange = 0;
 		main_loop();
 	}
 	return 0;

@@ -190,7 +190,7 @@ void deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
   // Currently selected disk sector
   *(volatile unsigned int*)0x80002F20 = (u32)(file->fileBase&0xFFFFFFFF);
   // Copy the current speed
-  *(volatile unsigned int*)0x80002F30 = (GC_SD_SPEED == EXI_SPEED16MHZ) ? 192:208;
+  *(volatile unsigned int*)0x80002F30 = !swissSettings.exiSpeed ? 192:208;
   // Card Type
   *(volatile unsigned int*)0x80002F34 = SDHCCard;
   // Copy disc headers
