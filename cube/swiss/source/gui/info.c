@@ -84,7 +84,9 @@ void info_draw_page(int page_num) {
 		sprintf(topStr, "Video: %s",videoStr);
 		WriteFont(30, 220, topStr);
 		sprintf(topStr,"ECID: %08X:%08X:%08X",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
-		WriteFont(30, 260, topStr);
+		WriteFontStyled(30, 260, topStr, 0.7f, false, defaultColor);
+		sprintf(topStr,"PVR: %08X",mfpvr());
+		WriteFontStyled(400, 260, topStr, 0.7f, false, defaultColor);
 		sprintf(topStr,"Language: %s",getSramLang(sram->lang));
 		WriteFont(30, 295, topStr);
 		sprintf(topStr,"Audio: %s",sram->flags&4 ? "Stereo":"Mono");
@@ -115,7 +117,7 @@ void info_draw_page(int page_num) {
 		}
 		else if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
 			int slot = (deviceHandler_initial->name[2] == 'b');
-			sprintf(topStr, "Current Device: %s Card in %s @ %s",!SDHCCard?"SDHC":"SD",!slot?"Slot A":"Slot B",GC_SD_SPEED==EXI_SPEED16MHZ?"16Mhz":"32Mhz");
+			sprintf(topStr, "Current Device: %s Card in %s @ %s",!SDHCCard?"SDHC":"SD",!slot?"Slot A":"Slot B",!swissSettings.exiSpeed?"16Mhz":"32Mhz");
 		}
 		else if(deviceHandler_initial == &initial_DVD) {
 			sprintf(topStr, "Current Device: %s DVD Disc",dvdDiscTypeStr);

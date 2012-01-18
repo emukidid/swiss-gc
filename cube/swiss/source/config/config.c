@@ -36,7 +36,6 @@
 //Mute Audio Stutter=Yes
 //No Disc Mode=Yes
 
-static int configInit = 0;
 static ConfigEntry configEntries[2048]; // That's a lot of Games!
 static int configEntriesCount = 0;
 static SwissSettings configSwissSettings;
@@ -51,33 +50,34 @@ void strnscpy(char *s1, char *s2, int num) {
 	Returns 1 on successful file open, 0 otherwise
 */
 int config_init() {
-	
-	if(!configInit) {
-		sprintf(txtbuffer, "%sswiss.ini", deviceHandler_initial->name);
-		FILE *fp = fopen(txtbuffer, "rb");
-		if (fp) {
-			fseek(fp, 0, SEEK_END);
-			int size = ftell(fp);
-			fseek(fp, 0, SEEK_SET);
-			if (size > 0) {
-				char *configData = (char*) memalign(32, size);
-				if (configData) {
-					fread(configData, 1, size, fp);
-					config_parse(configData);
-				}
+	sprintf(txtbuffer, "%sswiss.ini", deviceHandler_initial->name);
+	FILE *fp = fopen(txtbuffer, "rb");
+	if (fp) {
+		fseek(fp, 0, SEEK_END);
+		int size = ftell(fp);
+		fseek(fp, 0, SEEK_SET);
+		if (size > 0) {
+			configEntriesCount = 0;
+			char *configData = (char*) memalign(32, size);
+			if (configData) {
+				fread(configData, 1, size, fp);
+				config_parse(configData);
+				free(configData);
 			}
-			else {
-				return 0;
-			}
-			fclose(fp);
-			return 1;
 		}
 		else {
 			return 0;
 		}
+		fclose(fp);
+		return 1;
 	}
+	else {
+		return 0;
+	}
+	
 	return 1;
 }
+
 
 /**
 	Creates a configuration file on the root of the device "swiss.ini"
@@ -112,7 +112,7 @@ int config_update_file() {
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "Enable Debug=%s\r\n",(configSwissSettings.debugUSB ? "Yes":"No"));
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
-		sprintf(txtbuffer, "Force No DVD Drive Mode=%s\r\n",(configSwissSettings.hasDVDDrive ? "Yes":"No"));
+		sprintf(txtbuffer, "Force No DVD Drive Mode=%s\r\n",(!configSwissSettings.hasDVDDrive ? "Yes":"No"));
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "Hide Unknown file types=%s\r\n",(configSwissSettings.hideUnknownFileTypes ? "Yes":"No"));
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
@@ -277,7 +277,7 @@ void config_parse(char *configData) {
 		// And round we go again
 		line = strtok_r( NULL, "\r\n", &linectx);
 	}
-	free(configData);
+
 	if(configEntriesCount > 0)
 		configEntriesCount++;
 	

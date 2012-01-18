@@ -37,7 +37,7 @@ static inline u8 ataReadStatusReg(int chn)
 	// read ATA_REG_CMDSTATUS1 | 0x00 (dummy)
 	u16 dat = 0x1700;
 	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,GC_SD_SPEED);
+	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_Imm(chn,&dat,2,EXI_WRITE,NULL);
 	EXI_Sync(chn);
 	EXI_Imm(chn,&dat,1,EXI_READ,NULL);
@@ -53,7 +53,7 @@ static inline u8 ataReadErrorReg(int chn)
 	// read ATA_REG_ERROR | 0x00 (dummy)
 	u16 dat = 0x1100;
 	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,GC_SD_SPEED);
+	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_Imm(chn,&dat,2,EXI_WRITE,NULL);
 	EXI_Sync(chn);
 	EXI_Imm(chn,&dat,1,EXI_READ,NULL);
@@ -68,7 +68,7 @@ static inline void ataWriteByte(int chn, u8 addr, u8 data)
 {
 	u32 dat = 0x80000000 | (addr << 24) | (data<<16);
 	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,GC_SD_SPEED);
+	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_Imm(chn,&dat,3,EXI_WRITE,NULL);	
 	EXI_Sync(chn);
 	EXI_Deselect(chn);
@@ -81,7 +81,7 @@ static inline void ataWriteu16(int chn, u16 data)
 	// write 16 bit to ATA_REG_DATA | data LSB | data MSB | 0x00 (dummy)
 	u32 dat = 0xD0000000 | (((data>>8) & 0xff)<<16) | ((data & 0xff)<<8);
 	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,GC_SD_SPEED);
+	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_Imm(chn,&dat,4,EXI_WRITE,NULL);
 	EXI_Sync(chn);
 	EXI_Deselect(chn);
@@ -95,7 +95,7 @@ static inline u16 ataReadu16(int chn)
 	// read 16 bit from ATA_REG_DATA | 0x00 (dummy)
 	u16 dat = 0x5000;  	
 	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,GC_SD_SPEED);
+	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_Imm(chn,&dat,2,EXI_WRITE,NULL);
 	EXI_Sync(chn);
 	EXI_Imm(chn,&dat,2,EXI_READ,NULL); // read LSB & MSB
@@ -113,7 +113,7 @@ static inline void ataRead_init_mult(int chn, u16 numSectors)
 	// 011xxxxx  - read multiple (32bit words) | LSB (num dwords) | MSB (num dwords) | 0x00 (dummy)
 	u32 dat = 0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8);
 	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,GC_SD_SPEED);
+	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_Imm(chn,&dat,4,EXI_WRITE,NULL);
 	EXI_Sync(chn);
 	EXI_Deselect(chn);
@@ -125,7 +125,7 @@ static inline u32 ataRead32_mult(int chn)
 {
 	u32 dat;
 	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,GC_SD_SPEED);
+	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_Imm(chn,&dat,4,EXI_READ,NULL);	// read LSB1 MSB1 LSB0 MSB0
 	EXI_Sync(chn);
 	EXI_Deselect(chn);
