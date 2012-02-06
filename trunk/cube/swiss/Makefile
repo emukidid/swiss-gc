@@ -53,6 +53,7 @@ SOURCES		:=  source \
               source/devices/memcard \
               source/devices/qoob \
               source/devices/wode \
+			  source/devices/wiikeyfusion \
               source/elmchan \
               source/elmchan/option \
               source/cheats \

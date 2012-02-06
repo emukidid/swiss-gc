@@ -28,6 +28,7 @@ typedef struct {
 #include "devices/Qoob/deviceHandler-Qoob.h"
 #include "devices/wode/deviceHandler-WODE.h"
 #include "devices/memcard/deviceHandler-CARD.h"
+#include "devices/wiikeyfusion/deviceHandler-wiikeyfusion.h"
 
 extern file_handle* deviceHandler_initial;
 

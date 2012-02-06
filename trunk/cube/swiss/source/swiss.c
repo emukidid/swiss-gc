@@ -431,8 +431,14 @@ unsigned int load_app(int mode)
 	}
 	DCFlushRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	ICInvalidateRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-	deviceHandler_deinit(&curFile);
 
+	// Set WKF offset and fragments list (FAT/WBFS lookups cannot work after this point)
+	if(curDevice==WKF) {
+		deviceHandler_setupFile(&curFile, NULL);
+	}
+	
+	deviceHandler_deinit(&curFile);
+	
 	DrawFrameStart();
 	DrawProgressBar(100, "Executing Game!");
 	DrawFrameFinish();
@@ -491,11 +497,6 @@ void boot_dol()
 { 
 	unsigned char *dol_buffer;
 	unsigned char *ptr;
-  
-	sprintf(txtbuffer, "Loading DOL [%d/%d Kb] ..",curFile.size/1024,(SYS_GetArena1Hi()-SYS_GetArena1Lo())/1024);
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,txtbuffer);
-	DrawFrameFinish();
   
 	dol_buffer = (unsigned char*)memalign(32,curFile.size);
 	if(!dol_buffer) {
@@ -840,7 +841,7 @@ void load_file()
 	}
 	
 	// Start up the DVD Drive
-	if((curDevice != DVD_DISC) && (curDevice != WODE) 
+	if((curDevice != DVD_DISC) && (curDevice != WODE) && (curDevice != WKF) 
 		&& (swissSettings.hasDVDDrive) && (!swissSettings.noDiscMode) 
 		&& DrawYesNoDialog("Use a DVD Disc for higher compatibility?")) {
 		if(initialize_disc(GCMDisk.AudioStreaming) == DRV_ERROR) {
@@ -851,7 +852,7 @@ void load_file()
 		}
 	}
 	
-  	if((curDevice!=WODE)) {
+  	if((curDevice!=WODE) && (curDevice!=WKF)) {
 		file_handle *secondDisc = NULL;
 		
 		// If we're booting from SD card or IDE hdd
@@ -1361,7 +1362,10 @@ void select_device()
 			else if(curDevice==MEMCARD) {
 				DrawSelectableButton(170, 230, 450, 340, "Memory Card",B_NOSELECT,COLOR_BLACK);
 			}
-			if(curDevice != 5) {
+			else if(curDevice==WKF) {
+				DrawSelectableButton(170, 230, 450, 340, "Wiikey Fusion",B_NOSELECT,COLOR_BLACK);
+			}
+			if(curDevice != 6) {
 				WriteFont(520, 300, "->");
 			}
 			if(curDevice != 0) {
@@ -1370,7 +1374,7 @@ void select_device()
 			DrawFrameFinish();
 			while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 			u16 btns = PAD_ButtonsHeld(0);
-			if((btns & PAD_BUTTON_RIGHT) && curDevice < 5)
+			if((btns & PAD_BUTTON_RIGHT) && curDevice < 6)
 				curDevice++;
 			if((btns & PAD_BUTTON_LEFT) && curDevice > 0)
 				curDevice--;
@@ -1455,6 +1459,16 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_CARD_setupFile;
 			deviceHandler_init     =  deviceHandler_CARD_init;
 			deviceHandler_deinit   =  deviceHandler_CARD_deinit;
+		break;
+		case WKF:
+			deviceHandler_initial = &initial_WKF;
+			deviceHandler_readDir  =  deviceHandler_WKF_readDir;
+			deviceHandler_readFile =  deviceHandler_WKF_readFile;
+			deviceHandler_seekFile =  deviceHandler_WKF_seekFile;
+			deviceHandler_setupFile=  deviceHandler_WKF_setupFile;
+			deviceHandler_init     =  deviceHandler_WKF_init;
+			deviceHandler_deinit   =  deviceHandler_WKF_deinit;
+			deviceHandler_deleteFile = NULL;
 		break;
 	}
 	memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
