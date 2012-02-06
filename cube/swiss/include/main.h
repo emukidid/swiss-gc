@@ -44,7 +44,8 @@ enum deviceTypes
 	IDEEXI,
 	QOOB_FLASH,
 	WODE,
-	MEMCARD
+	MEMCARD,
+	WKF
 };
 
 //Destination Device Type
