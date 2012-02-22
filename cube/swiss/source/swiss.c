@@ -1295,7 +1295,7 @@ void select_copy_device()
 	}
 	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 	// Deinit any existing deviceHandler state
-	if(deviceHandler_dest_deinit) deviceHandler_dest_deinit( deviceHandler_dest_initial );
+	if(deviceHandler_dest_deinit && deviceHandler_dest_initial) deviceHandler_dest_deinit( deviceHandler_dest_initial );
 	// Change all the deviceHandler pointers based on the current device
 	int slot = 0;
 	switch(curCopyDevice) {
@@ -1388,7 +1388,7 @@ void select_device()
 		}
 		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 		// Deinit any existing deviceHandler state
-		if(deviceHandler_deinit) deviceHandler_deinit( deviceHandler_initial );
+		if(deviceHandler_deinit && deviceHandler_initial) deviceHandler_deinit( deviceHandler_initial );
 		// Change all the deviceHandler pointers based on the current device
 	}
 	else {
