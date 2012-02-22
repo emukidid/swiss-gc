@@ -252,7 +252,7 @@ int deviceHandler_FAT_init(file_handle* file){
 }
 
 int deviceHandler_FAT_deinit(file_handle* file) {
-	if(file->fp) {
+	if(file && file->fp) {
 		fclose(file->fp);
 		file->fp = 0;
 	}
