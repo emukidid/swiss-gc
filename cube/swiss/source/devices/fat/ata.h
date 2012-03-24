@@ -57,7 +57,7 @@ extern const DISC_INTERFACE __io_atab;
                                        
 // ATA commands
 #define ATA_CMD_IDENTIFY	0xEC
-#define ATA_CMD_READSECT	0x20
+#define ATA_CMD_READSECT	0x21
 #define ATA_CMD_READSECTEXT	0x24
 #define ATA_CMD_WRITESECT	0x30
 #define ATA_CMD_WRITESECTEXT 0x34

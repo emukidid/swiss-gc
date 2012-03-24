@@ -19,8 +19,12 @@
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 
+#define IDE_EXI_V1 0
+#define IDE_EXI_V2 1
+
 u16 buffer[256] ATTRIBUTE_ALIGN (32);
 static int __ata_init[2] = {0,0};
+static int _ideexi_version = IDE_EXI_V1;
 
 // Drive information struct
 typeDriveInfo ataDriveInfo;
@@ -38,10 +42,8 @@ static inline u8 ataReadStatusReg(int chn)
 	u16 dat = 0x1700;
 	EXI_Lock(chn, 0, NULL);
 	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-	EXI_Imm(chn,&dat,2,EXI_WRITE,NULL);
-	EXI_Sync(chn);
-	EXI_Imm(chn,&dat,1,EXI_READ,NULL);
-	EXI_Sync(chn);
+	EXI_ImmEx(chn,&dat,2,EXI_WRITE);
+	EXI_ImmEx(chn,&dat,1,EXI_READ);
 	EXI_Deselect(chn);
 	EXI_Unlock(chn);
     return *(u8*)&dat;
@@ -54,10 +56,8 @@ static inline u8 ataReadErrorReg(int chn)
 	u16 dat = 0x1100;
 	EXI_Lock(chn, 0, NULL);
 	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-	EXI_Imm(chn,&dat,2,EXI_WRITE,NULL);
-	EXI_Sync(chn);
-	EXI_Imm(chn,&dat,1,EXI_READ,NULL);
-	EXI_Sync(chn);
+	EXI_ImmEx(chn,&dat,2,EXI_WRITE);
+	EXI_ImmEx(chn,&dat,1,EXI_READ);
 	EXI_Deselect(chn);
 	EXI_Unlock(chn);
     return *(u8*)&dat;
@@ -69,8 +69,7 @@ static inline void ataWriteByte(int chn, u8 addr, u8 data)
 	u32 dat = 0x80000000 | (addr << 24) | (data<<16);
 	EXI_Lock(chn, 0, NULL);
 	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-	EXI_Imm(chn,&dat,3,EXI_WRITE,NULL);	
-	EXI_Sync(chn);
+	EXI_ImmEx(chn,&dat,3,EXI_WRITE);	
 	EXI_Deselect(chn);
 	EXI_Unlock(chn);
 }
@@ -82,8 +81,7 @@ static inline void ataWriteu16(int chn, u16 data)
 	u32 dat = 0xD0000000 | (((data>>8) & 0xff)<<16) | ((data & 0xff)<<8);
 	EXI_Lock(chn, 0, NULL);
 	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-	EXI_Imm(chn,&dat,4,EXI_WRITE,NULL);
-	EXI_Sync(chn);
+	EXI_ImmEx(chn,&dat,4,EXI_WRITE);
 	EXI_Deselect(chn);
 	EXI_Unlock(chn);
 }
@@ -96,43 +94,82 @@ static inline u16 ataReadu16(int chn)
 	u16 dat = 0x5000;  	
 	EXI_Lock(chn, 0, NULL);
 	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-	EXI_Imm(chn,&dat,2,EXI_WRITE,NULL);
-	EXI_Sync(chn);
-	EXI_Imm(chn,&dat,2,EXI_READ,NULL); // read LSB & MSB
-	EXI_Sync(chn);
+	EXI_ImmEx(chn,&dat,2,EXI_WRITE);
+	EXI_ImmEx(chn,&dat,2,EXI_READ); // read LSB & MSB
 	EXI_Deselect(chn);
 	EXI_Unlock(chn);
     return dat;
 }
 
 
-// Initialises the 32 bit read mode
-static inline void ataRead_init_mult(int chn, u16 numSectors) 
+// Reads up to 0xFFFF * 4 bytes of data (255kb) from the hdd at the given offset
+static inline void ata_read_blocks(int chn, u16 numSectors, u32 *dst) 
 {
 	u16 dwords = (numSectors<<7);
-	// 011xxxxx  - read multiple (32bit words) | LSB (num dwords) | MSB (num dwords) | 0x00 (dummy)
+	// (31:29) 011b | (28:24) 10000b | (23:16) <num_words_LSB> | (15:8) <num_words_MSB> | (7:0) 00h (4 bytes)
 	u32 dat = 0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8);
 	EXI_Lock(chn, 0, NULL);
 	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-	EXI_Imm(chn,&dat,4,EXI_WRITE,NULL);
-	EXI_Sync(chn);
+	EXI_ImmEx(chn,&dat,4,EXI_WRITE);
+	if(_ideexi_version == IDE_EXI_V1) {
+		// IDE_EXI_V1, select / deselect for every 4 bytes
+		EXI_Deselect(chn);
+		EXI_Unlock(chn);
+		u32 i = 0;
+		u32 *ptr = dst;
+		for(i = 0; i < dwords; i++) {
+			EXI_Lock(chn, 0, NULL);
+			EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+			EXI_ImmEx(chn,ptr,4,EXI_READ);
+			ptr+=4;
+			EXI_Deselect(chn);
+			EXI_Unlock(chn);
+		}
+	}
+	else {
+		// IDE_EXI_V2, no need to select / deselect all the time
+		EXI_ImmEx(chn,dst,numSectors*512,EXI_READ);
+		EXI_Deselect(chn);
+		EXI_Unlock(chn);
+	}
+}
+
+static inline void ata_write_blocks(int chn, u16 numSectors, u32 *src) 
+{
+	u16 dwords = (numSectors<<7);
+	// (23:21) 111b | (20:16) 10000b | (15:8) <num_words_LSB> | (7:0) <num_words_MSB> (3 bytes)
+	u32 dat = 0xF0000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8);
+	EXI_Lock(chn, 0, NULL);
+	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+	EXI_ImmEx(chn,&dat,4,EXI_WRITE);
+	EXI_ImmEx(chn, src,numSectors*512,EXI_WRITE);
+	dat = 0;
+	EXI_ImmEx(chn,&dat,1,EXI_WRITE);	// Burn an extra cycle for the IDE-EXI to know to stop serving data
 	EXI_Deselect(chn);
 	EXI_Unlock(chn);
 }
 
-// Reads 32 bits of data from the HDD
-static inline u32 ataRead32_mult(int chn) 
-{
-	u32 dat;
-	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-	EXI_Imm(chn,&dat,4,EXI_READ,NULL);	// read LSB1 MSB1 LSB0 MSB0
-	EXI_Sync(chn);
-	EXI_Deselect(chn);
-	EXI_Unlock(chn);
-    // output 32 bit read from hdd
-    return dat;
+void print_hdd_sector(u32 *dest) {
+	int i = 0;
+	for (i = 0; i < 512/4; i+=4) {
+		print_gecko("%08X:%08X %08X %08X %08X\r\n",i*4,dest[i],dest[i+1],dest[i+2],dest[i+3]);
+	}
 }
+
+int _ideExiVersion(int chn) {
+	u32 cid = 0;
+	EXI_GetID(chn,EXI_DEVICE_0,&cid);
+
+	if(cid==0x49444532) {
+		print_gecko("IDE-EXI v2 detected\r\n");
+		return IDE_EXI_V2;
+	}
+	else {
+		print_gecko("Unknown - assume IDE-EXI v1\r\n");
+		return IDE_EXI_V1;
+	}
+}
+
 
 // Sends the IDENTIFY command to the HDD
 // Returns 0 on success, -1 otherwise
@@ -141,47 +178,43 @@ u32 _ataDriveIdentify(int chn) {
   	u32 i = 0;
 
   	memset(&ataDriveInfo, 0, sizeof(typeDriveInfo));
+
+	// Get the ID to see if it's a V2
+	_ideexi_version = _ideExiVersion(chn);
   	
   	// Select the device
   	ataWriteByte(chn, ATA_REG_DEVICE, 0);
   	
 	// Wait for drive to be ready (BSY to clear) - 5 sec timeout
-	while((ataReadStatusReg(chn) & ATA_SR_BSY) && retries) {
+	do {
+		tmp = ataReadStatusReg(chn);
 		usleep(100000);	//sleep for 0.1 seconds
 		retries--;
+		print_gecko("(%08X) Waiting for BSY to clear..\r\n", tmp);
 	}
+	while((tmp & ATA_SR_BSY) && retries);
 	if(!retries) {
+		print_gecko("Exceeded retries..\r\n");
 		return -1;
 	}
     
-  	// Write to the device register (single drive)
-	ataWriteByte(chn, ATA_REG_DEVICE, 0);
 	// Write the identify command
   	ataWriteByte(chn, ATA_REG_COMMAND, ATA_CMD_IDENTIFY);
 
-  	// Wait for BSY to clear - 1 sec timeout
-  	retries = 10;
-  	do {
-	  	tmp = ataReadStatusReg(chn);
-	  	usleep(100000);	//sleep for 0.1 seconds
-		retries--;
-  	}
-	while((tmp & ATA_SR_BSY) && retries);
-	
-	// If the error bit was set, fail.
-	if(tmp & ATA_SR_ERR) {
-		return -1;
-	}
-
 	// Wait for drive to request data transfer - 1 sec timeout
 	retries = 10;
-	while((!(ataReadStatusReg(chn) & ATA_SR_DRQ)) && retries) {
+	do { 
+		tmp = ataReadStatusReg(chn); 
 		usleep(100000);	//sleep for 0.1 seconds
 		retries--;
+		print_gecko("(%08X) Waiting for DRQ to toggle..\r\n", tmp);
 	}
+	while((!(tmp & ATA_SR_DRQ)) && retries);
 	if(!retries) {
+		print_gecko("(%08X) Drive did not respond in time, failing IDE-EXI init..\r\n", tmp);
 		return -1;
 	}
+	usleep(2000);
     
 	u16 *ptr = (u16*)(&buffer[0]);
 	
@@ -226,38 +259,12 @@ u32 _ataDriveIdentify(int chn) {
 		i--;
 	}
 	
+	print_gecko("%d GB HDD Connected\r\n", ataDriveInfo.sizeInGigaBytes);
+	print_gecko("LBA 48-Bit Mode %s\r\n", ataDriveInfo.lba48Support ? "Supported" : "Not Supported");
+	print_gecko("Model: %s\r\n",ataDriveInfo.model);
+	print_gecko("Serial: %s\r\n",ataDriveInfo.serial); 
+	
 	// Return ok
-	return 0;
-}
-
-
-// High-level drive init
-// Returns 0 on success, err on failure
-int ataDriveInit(int chn) {
-
-    DrawFrameStart();
-    DrawMessageBox(D_INFO,"Scanning IDE-EXI Device...");
-    DrawFrameFinish();
-	
-    // Send the identify command
-	if(_ataDriveIdentify(chn)) {
-		return -1;
-	}
-	
-	// process and print info / drive model & serial information	
- 	DrawFrameStart();
-	DrawEmptyBox(75,120, vmode->fbWidth-78, 400, COLOR_BLACK);
-	sprintf(txtbuffer, "%d GB HDD Connected", ataDriveInfo.sizeInGigaBytes);
-	WriteFontStyled(640/2, 130, txtbuffer, 1.0f, true, defaultColor);
-	sprintf(txtbuffer, "LBA 48-Bit Mode %s", ataDriveInfo.lba48Support ? "Supported" : "Not Supported");
-	WriteFontStyled(640/2, 250, txtbuffer, 1.0f, true, defaultColor);
-	sprintf(txtbuffer, "Model: %s",ataDriveInfo.model);
-	WriteFontStyled(640/2, 310, txtbuffer, 1.0f, true, defaultColor);
-	sprintf(txtbuffer, "Serial: %s",ataDriveInfo.serial); 
-	WriteFontStyled(640/2, 340, txtbuffer, 1.0f, true, defaultColor);
-	DrawFrameFinish();
-	sleep(2);
-	
 	return 0;
 }
 
@@ -295,141 +302,176 @@ int ataUnlock(int chn, int useMaster, char *password)
 	
 	return !(ataReadErrorReg(chn) & ATA_ER_ABRT);
 }
-            		
+
 // Reads sectors from the specified lba, for the specified slot
 // Returns 0 on success, -1 on failure.
 int _ataReadSectors(int chn, u64 lba, u16 numsectors, u32 *Buffer)
 {
-	u32 i, temp;
+	u32 temp = 0;
   	
   	// Wait for drive to be ready (BSY to clear)
 	while(ataReadStatusReg(chn) & ATA_SR_BSY);
   	
-	// Select the device
-  	ataWriteByte(chn, ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
+	// Select the device differently based on 28 or 48bit mode
+	if(ataDriveInfo.lba48Support) {
+		// Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
+		ataWriteByte(chn, ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
+	}
+	else {
+		// Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
+		ataWriteByte(chn, ATA_REG_DEVICE, 0xE0 | (u8)((lba >> 24) & 0x0F));
+	}
   		
 	// check if drive supports LBA 48-bit
 	if(ataDriveInfo.lba48Support) {  		
-		ataWriteByte(chn, ATA_REG_LBALO, (u8)((lba>>24)& 0xFF));		// LBA Lo
-		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>32) & 0xFF));	// LBA Mid
-		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>40) & 0xFF));	// LBA Hi
-		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)((numsectors>>8) & 0xFF));// Sector count
-		ataWriteByte(chn, ATA_REG_LBALO, (u8)(lba & 0xFF));			// LBA Lo
-  		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));	// LBA Mid
-  		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));	// LBA Hi
-  		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));// Sector count
+		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)((numsectors>>8) & 0xFF));	// Sector count (Hi)
+		ataWriteByte(chn, ATA_REG_LBALO, (u8)((lba>>24)& 0xFF));			// LBA 4
+		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>32) & 0xFF));			// LBA 5
+		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>40) & 0xFF));			// LBA 6
+		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));		// Sector count (Lo)
+		ataWriteByte(chn, ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA 1
+  		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA 2
+  		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA 3
 	}
 	else {
-		ataWriteByte(chn, ATA_REG_LBALO, (u8)(lba & 0xFF));			// LBA Lo
-  		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));	// LBA Mid
-  		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));	// LBA Hi
-  		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));// Sector count
+		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));		// Sector count
+		ataWriteByte(chn, ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA Lo
+  		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA Mid
+  		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA Hi
 	}
 
 	// Write the appropriate read command
   	ataWriteByte(chn, ATA_REG_COMMAND, ataDriveInfo.lba48Support ? ATA_CMD_READSECTEXT : ATA_CMD_READSECT);
 
 	// Wait for BSY to clear
-  	do {
-	  	temp = ataReadStatusReg(chn);
-  	}
-	while(temp & ATA_SR_BSY);
+	while((temp = ataReadStatusReg(chn)) & ATA_SR_BSY);
 	
 	// If the error bit was set, fail.
 	if(temp & ATA_SR_ERR) {
-		DrawFrameStart();
-		sprintf(txtbuffer, "Error: %02X", ataReadErrorReg(chn));
-    	DrawMessageBox(D_FAIL,txtbuffer);
-    	DrawFrameFinish();
-		sleep(5);
+		print_gecko("Error: %02X", ataReadErrorReg(chn));
 		return 1;
 	}
 
 	// Wait for drive to request data transfer
 	while(!(ataReadStatusReg(chn) & ATA_SR_DRQ));
+	
+	// read data from drive
+	ata_read_blocks(chn, numsectors, Buffer);
 
-	// read data from drive 
-	ataRead_init_mult(chn, numsectors); 		// initialise the 32 bit read mode
-
-	for (i=0; i<(numsectors*128); i++) {
-		*Buffer++ = ataRead32_mult(chn); 	// Read 4 bytes at a time
+	temp = ataReadStatusReg(chn);
+	// If the error bit was set, fail.
+	if(temp & ATA_SR_ERR) {
+		return 1;
 	}
-	ataRead32_mult(chn); // waste an extra cycle - needed?
-	return 0;
+	return temp & ATA_SR_ERR;
 }
 
 // Writes sectors to the specified lba, for the specified slot
 // Returns 0 on success, -1 on failure.
 int _ataWriteSectors(int chn, u64 lba, u16 numsectors, u32 *Buffer)
 {
-	u32 i, temp;
+	u32 temp;
   	
   	// Wait for drive to be ready (BSY to clear)
 	while(ataReadStatusReg(chn) & ATA_SR_BSY);
   	
-	// Select the device
-  	ataWriteByte(chn, ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
+	// Select the device differently based on 28 or 48bit mode
+	if(ataDriveInfo.lba48Support) {
+		// Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
+		ataWriteByte(chn, ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
+	}
+	else {
+		// Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
+		ataWriteByte(chn, ATA_REG_DEVICE, 0xE0 | (u8)((lba >> 24) & 0x0F));
+	}
   		
 	// check if drive supports LBA 48-bit
 	if(ataDriveInfo.lba48Support) {  		
-		ataWriteByte(chn, ATA_REG_LBALO, (u8)((lba>>24)& 0xFF));		// LBA Lo
-		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>32) & 0xFF));	// LBA Mid
-		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>40) & 0xFF));	// LBA Hi
-		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)((numsectors>>8) & 0xFF));// Sector count
-		ataWriteByte(chn, ATA_REG_LBALO, (u8)(lba & 0xFF));			// LBA Lo
-  		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));	// LBA Mid
-  		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));	// LBA Hi
-  		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));// Sector count
+		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)((numsectors>>8) & 0xFF));	// Sector count (Hi)
+		ataWriteByte(chn, ATA_REG_LBALO, (u8)((lba>>24)& 0xFF));			// LBA 4
+		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>32) & 0xFF));			// LBA 4
+		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>40) & 0xFF));			// LBA 5
+  		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));		// Sector count (Lo)
+		ataWriteByte(chn, ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA 1
+  		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA 2
+  		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA 3
 	}
 	else {
-		ataWriteByte(chn, ATA_REG_LBALO, (u8)(lba & 0xFF));			// LBA Lo
-  		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));	// LBA Mid
-  		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));	// LBA Hi
-  		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));// Sector count
+  		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));		// Sector count
+		ataWriteByte(chn, ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA Lo
+  		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA Mid
+  		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA Hi
 	}
 
 	// Write the appropriate write command
   	ataWriteByte(chn, ATA_REG_COMMAND, ataDriveInfo.lba48Support ? ATA_CMD_WRITESECTEXT : ATA_CMD_WRITESECT);
 
   	// Wait for BSY to clear
-  	do {
-	  	temp = ataReadStatusReg(chn);
-  	}
-	while(temp & ATA_SR_BSY);
+	while((temp = ataReadStatusReg(chn)) & ATA_SR_BSY);
 	
+	// If the error bit was set, fail.
+	if(temp & ATA_SR_ERR) {
+		print_gecko("Error: %02X", ataReadErrorReg(chn));
+		return 1;
+	}
+	// Wait for drive to request data transfer
 	while(!(ataReadStatusReg(chn) & ATA_SR_DRQ));
 
-	// write data to the drive 
-	u16 *ptr = (u16*)Buffer;
-	for (i=0; i<(numsectors*256); i++) {
-		ataWriteu16(chn, ptr[i]);
+	// Write data to the drive
+	if(_ideexi_version == IDE_EXI_V1) {
+		// IDE_EXI_V1, select / deselect for every 4 bytes
+		u16 *ptr = (u16*)Buffer;
+		int i = 0;
+		for (i=0; i<(numsectors*256); i++) {
+			ataWriteu16(chn, ptr[i]);
+		}
+	}
+	else {
+		// IDE_EXI_V2, blocks with single select/deselect
+		ata_write_blocks(chn, numsectors, Buffer);
 	}
 	
-	// Wait for the write
+	// Wait for the write to finish
 	while(ataReadStatusReg(chn) & ATA_SR_BSY);
 	
-	return 0;
+	// Send Flush command to flush cache to hdd
+	ataWriteByte(chn, ATA_REG_COMMAND, 0xE7);
+	
+	// Wait for the cache flush
+	while(ataReadStatusReg(chn) & ATA_SR_BSY);
+	
+	temp = ataReadStatusReg(chn);
+	// If the error bit was set, fail.
+	if(temp & ATA_SR_ERR) {
+		return 1;
+	}
+	return temp & ATA_SR_ERR;
 }
 
 // Wrapper to read a number of sectors
 // 0 on Success, -1 on Error
 int ataReadSectors(int chn, u64 sector, unsigned int numSectors, unsigned char *dest) 
 {
-	while(numSectors > 127) {
-		if(_ataReadSectors(chn,sector,127,(u32*)dest)) {
+	int ret = 0;
+	int sectorchunks = ataDriveInfo.lba48Support ? 511 : 127;
+	while(numSectors > sectorchunks) {
+		//print_gecko("Reading, sec %08X, numSectors %i, dest %08X ..\r\n", (u32)(sector&0xFFFFFFFF),numSectors, (u32)dest);
+		if((ret=_ataReadSectors(chn,sector,sectorchunks,(u32*)dest))) {
+			print_gecko("(%08X) Failed to read!..\r\n", ret);
 			return -1;
 		}
-		dest+=(127*512);
-		sector+=127;
-		numSectors-=127;
+		//print_hdd_sector((u32*)dest);
+		dest+=(sectorchunks*512);
+		sector+=sectorchunks;
+		numSectors-=sectorchunks;
 	}
-	while(numSectors) {
-		if(_ataReadSectors(chn,sector,1,(u32*)dest)) {
+	if(numSectors) {
+		//print_gecko("Reading, sec %08X, numSectors %i, dest %08X ..\r\n", (u32)(sector&0xFFFFFFFF),numSectors, (u32)dest);
+		if((ret=_ataReadSectors(chn,sector,numSectors,(u32*)dest))) {
+			print_gecko("(%08X) Failed to read!..\r\n", ret);
 			return -1;
 		}
-		dest+=(512);
-		sector++;
-		numSectors-=1;
+		//print_hdd_sector((u32*)dest);
 	}
 	return 0;
 }
@@ -438,15 +480,26 @@ int ataReadSectors(int chn, u64 sector, unsigned int numSectors, unsigned char *
 // 0 on Success, -1 on Error
 int ataWriteSectors(int chn, u64 sector,unsigned int numSectors, unsigned char *src) 
 {
-	while(numSectors) {
-		if(_ataWriteSectors(chn,sector,1,(u32*)src)) {
+	return 0;
+	/*
+	int ret = 0;
+	int sectorchunks = ataDriveInfo.lba48Support ? 511 : 127;
+	while(numSectors > sectorchunks) {
+		if((ret=_ataWriteSectors(chn,sector,sectorchunks,(u32*)src))) {
+			print_gecko("(%08X) Failed to write!..\r\n", ret);
 			return -1;
 		}
-		src+=(512);
-		sector++;
-		numSectors-=1;
+		src+=(sectorchunks*512);
+		sector+=sectorchunks;
+		numSectors-=sectorchunks;
 	}
-	return 0;
+	if(numSectors) {
+		if((ret=_ataWriteSectors(chn,sector,numSectors,(u32*)src))) {
+			print_gecko("(%08X) Failed to write!..\r\n", ret);
+			return -1;
+		}
+	}
+	return 0;*/
 }
 
 // Is an ATA device inserted?
