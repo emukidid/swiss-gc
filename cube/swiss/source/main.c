@@ -145,6 +145,7 @@ void* Initialise (void)
 }
 
 void load_config() {
+
 	// Try to open up the config .ini in case it hasn't been opened already (SD, IDE-EXI only)
 	if(!config_init()) {
 		if(!config_create()) {
@@ -177,7 +178,7 @@ void main_loop()
 		// If the user selected a device, make sure it's ready before we browse the filesystem
 		deviceHandler_deinit( deviceHandler_initial );
 		deviceHandler_init( deviceHandler_initial );
-		if((curDevice==SD_CARD)||(curDevice == IDEEXI)) { 
+		if(curDevice==SD_CARD) { 
 			load_config();
 		}
 	}
