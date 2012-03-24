@@ -5,6 +5,7 @@
 */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <gccore.h>		/*** Wrapper to include common libogc headers ***/
 #include <ogcsys.h>		/*** Needed for console support ***/
 #include <ogc/color.h>
@@ -69,20 +70,19 @@ static const u32 GC_DefaultConfig[56] =
 	0x01800000, 0x00000000, 0x09A7EC80, 0x1CF7C580  // 52..55 800000F0
 };
 
-void print_gecko(char *string)
+void print_gecko(const char* fmt, ...)
 {
 	if(swissSettings.debugUSB) {
-		char tbuf[30];
-		char buffer[2048];
-		struct timeval tv;
-		time_t curtime;
-		gettimeofday(&tv, NULL); 
-		curtime=tv.tv_sec;
-		strftime(tbuf,30,"%m-%d-%Y %T.",localtime(&curtime));
-		sprintf(buffer,"%s%ld: %s",tbuf,tv.tv_usec, string);
-		usb_sendbuffer_safe(1,buffer,strlen(buffer));
+		char tempstr[2048];
+		va_list arglist;
+		va_start(arglist, fmt);
+		vsprintf(tempstr, fmt, arglist);
+		va_end(arglist);
+		// write out over usb gecko ;)
+		usb_sendbuffer_safe(1,tempstr,strlen(tempstr));
 	}
 }
+
 
 /* re-init video for a given game */
 void ogc_video__reset()

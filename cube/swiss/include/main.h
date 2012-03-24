@@ -169,7 +169,7 @@ typedef struct {
   u8   unk;
 } CIDdata __attribute__((aligned(32)));
 
-void print_gecko(char *string);
+void print_gecko(const char* fmt, ...);
 
 #endif
 
