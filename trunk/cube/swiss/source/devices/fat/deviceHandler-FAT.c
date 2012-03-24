@@ -193,6 +193,10 @@ void deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
   *(volatile unsigned int*)0x80002F30 = !swissSettings.exiSpeed ? 192:208;
   // Card Type
   *(volatile unsigned int*)0x80002F34 = SDHCCard;
+  // Copy the actual speed
+  *(volatile unsigned int*)0x80002F38 = !swissSettings.exiSpeed ? EXI_SPEED16MHZ:EXI_SPEED32MHZ;
+  // Device slot (0 or 1)
+  *(volatile unsigned int*)0x80002F40 = (file->name[0] == 's') ? (file->name[2] == 'b') : (file->name[3] == 'b');
   // Copy disc headers
   file->offset = 0;
   deviceHandler_FAT_readFile(file, (void*)0x80002F80, 32);

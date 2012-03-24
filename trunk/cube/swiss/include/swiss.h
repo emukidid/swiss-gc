@@ -43,7 +43,7 @@ extern syssram* __SYS_LockSram();
 extern u32 __SYS_UnlockSram(u32 write);
 
 extern char *getVideoString();
-extern void print_gecko(char *string);
+void print_gecko(const char* fmt, ...);
 extern void doBackdrop();
 extern char *getRelativeName(char *str);
 extern void textFileBrowser(file_handle** directory, int num_files);
