@@ -39,135 +39,6 @@
 #.set CHN_DATA,    0x6824
 
   .section .text  
-	.globl _start   
- _start:         
-
-	b		setup_read_type1v1	# low style read version 1
-	b		setup_read_type1v2	# low style read version 2
-	b		setup_read_type1v3	# low style read version 3
-	b		setup_read_type2	# read hi style
-	b		do_readdiskid		# read a disk id
-
-# Low level read
-setup_read_type1v1:
-	stwu	1, -0x0028 (1)	# these are instructions we patched over, so do them here
-	stw		30, 32 (1)
-	mflr	0
-	stw		0, 36(1)				# use this spot to save lr
-	bl		setup_for_read
-	# clear everything that'll go into DI regs for a 0xE0 cmd
-	li      5,	0         	# offset 0
-	li      4,	0         	# len 0
-	li		3,	0  			# to this dest
-	lwz		0, 36(1)
-	mtlr	0
-	stw		31, 36 (1)			# was patched over, do it now.
-	li		0, 0					# was patched over, do it now.
-	blr
-
-setup_read_type1v2:
-	stwu		1, -0x0020 (1)	# these 4 are instructions we patched over, so do them here
-	stw 		31, 28 (1)
-	# this read stores dst and len using:
-	# stw 		3, 8 (1)  
-	# mr        31, 4    
-	# so we'll set it later to ours.
-	mflr		31
-	stw		31, 8(1)
-	bl		setup_for_read
-	# clear everything that'll go into DI regs for a 0xE0 cmd
-	li      5,	0         	# offset 0
-	li      4,	0         	# len 0
-	li		3,	0  			# to this dest
-	lwz		31, 8(1)
-	mtlr		31
-	stw 		3, 8 (1)  	# was patched over, do it now.
-	mr        31, 4  		# was patched over, do it now.
-	blr
-  
-setup_read_type1v3:
-	stwu    1, -0x0028 (1)	# these are instructions we patched over, so do them here
-	stw     30, 32 (1)
-	mflr	  0
-	stw	  0, 36(1)				# use this spot to save lr
-	bl	  setup_for_read
-	# clear everything that'll go into DI regs for a 0xE0 cmd
-	li      5,	0         	# offset 0
-	li      4,	0         	# len 0
-	li		3,	0  			# to this dest
-	lwz	  0, 36(1)
-	mtlr    0
-	stw     31, 36 (1)			# was patched over, do it now.
-	li      0, 1					# was patched over, do it now.
-	blr
-	
-# FST style read - so we need to add the FP.offset to the File.offset
-setup_read_type2:
-	stwu    1,  -64(1)   	# grow stack frame 
-	mflr    0             	# move lr  
-	stw     0,    0(1)    	# save lr
-	stw		3,	12(1)
-	stw		4,	16(1)
-	stw		5,	20(1)
-	stw		6,	24(1)
-	lwz		0,	0x30(3)		# read offset and add it to file offset (r6)
-	add		6, 6, 0
-	mr		3,	4			# dst
-	mr		4,	5			# len
-	mr		5,	6			# ofs
-	bl		setup_for_read
-	lwz     0,    0(1)    	# save lr
-	lwz		3,	12(1)
-	lwz		4,	16(1)
-	lwz		5,	20(1)
-	lwz		6,	24(1)
-	addi    1,  1, 64   	# grow stack frame 
-	mtlr    0             	# move lr  
-	blr
-  
-setup_for_read:
-	cmpwi   3,  0         # no dst? return
-	beqlr
-	cmpwi   4,  0         # no len? return
-	beqlr
-	stwu    1,  -128(1)   # grow stack frame 
-	mflr    0             # move lr  
-	stw     0,    0(1)    # save lr
-	stw     3,   12(1)    # save r3
-	stw     4,   16(1)    # save r4
-	stw     5,   20(1)    # save r5
-	stw     6,   24(1)    # save r6
-	stw     7,   28(1)    # save r7
-	stmw    17,  32(1)    # save r17->r31
-  
-	# setup registers for our code
-	li      18, -1        # r18 is constant 0xFFFFFFFF
-	lis     19, 0xCC00    # r19 is constant 0xCC000000
-	li      30, 49        # r30 is constant 49
-	mr      20, 3         # r20 is saved dst (r3)
-	mr      21, 4         # r21 is saved len (r4)
-	mr      22, 5         # r22 is saved ofs (r5)
-	
-	lis     6, 0x8000   
-	lwz     17,0x2F30(6)  # load sd speed from memory to r6
-	lwz     6, 0x2F20(6)  # load sector address from memory to r6
-	
-	bl      do_read       # do_read(dst,size, offset, start_sector); 
-
-	mr      3, 20         # load dst from r20 
-	mr      4, 21         # load len from r21  
-	bl      dcache_flush_icache_inv
-
-	lwz     3,   12(1)    # load r3
-	lwz     4,   16(1)    # load r4
-	lwz     5,   20(1)    # load r5
-	lwz     6,   24(1)    # load r6
-	lwz     7,   28(1)    # load r7
-	lmw    17,   32(1)    # load r17->r31
-	lwz     0,    0(1)    # load lr 
-	mtlr    0             # restore lr 
-	addi    1, 1, 128     # kill stack frame 
-	blr
 
 # SD Functions 
 
@@ -323,11 +194,24 @@ loopE8:
   mtlr    31           # restore LR
  blr
 
-do_read:
+ 	.globl do_read   
+do_read:           
   mflr    0
   stwu    1,-32(1)     # grow stack frame            
   stw     0,  0(1)     
 
+  # setup registers for our code
+  li      18, -1        # r18 is constant 0xFFFFFFFF
+  lis     19, 0xCC00    # r19 is constant 0xCC000000
+  li      30, 49        # r30 is constant 49
+  mr      20, 3         # r20 is saved dst (r3)
+  mr      21, 4         # r21 is saved len (r4)
+  mr      22, 5         # r22 is saved ofs (r5)
+
+  lis     6, 0x8000   
+  lwz     17,0x2F30(6)  # load sd speed from memory to r6
+  lwz     6, 0x2F20(6)  # load sector address from memory to r6
+  
   andi.   27, 5, 511   # r27 = startByte = (offset%512) 
   mr      28, 4        # r28 = numbytes = len 
   mr      29, 3        # r29 = dst 
@@ -411,57 +295,3 @@ loopFend:
 
 
 # End of SD functions 
-
-dcache_flush_icache_inv:
-	clrlwi. 5, 3, 27  # check for lower bits set in address
-	beq 1f
-	addi 4, 4, 0x20 
-1:
-	addi 4, 4, 0x1f
-	srwi 4, 4, 5
-	mtctr 4
-2:
-	dcbf 0, 3
-#	icbi 0, 3
-	addi 3, 3, 0x20
-	bdnz 2b
-	sc
-	sync
-	isync
-	blr
-
-do_readdiskid:
-  stw     0, 4 (1)      # this is what we patched over, so do it here.
-  
-  # determine if we need to swap current file base sector
-  lis     5, 0x8000
-  lwz     6, 0x2F00(5)  # r6 = file base for disk 1
-  lwz     7, 0x2F20(5)  # r7 = current file file base
-  cmpw    5, 6, 7       # cur base != disk 1 base?
-  bne     5, _swap_file_base
-  
-  lwz     6, 0x2F10(5)  # r6 = file base for disk 2
-  stw     6, 0x2F20(5)  # store disk 2 file base as current
-  lis     5, 0x8000
-  ori     5, 5, 0x2FA0  # src=0x80002FA0 (disk 2 id)
-  b       _do_id_copy
-  
-_swap_file_base:  # so swap it
-  stw     6, 0x2F20(5)  # store disk 1 file base as current
-  lis     5, 0x8000
-  ori     5, 5, 0x2F80  # src=0x80002F80 (disk 1 id)
-  
-_do_id_copy:
-  li      6, 8          # rem=32/4 == 8;
-loopReadId:
-  lwz     7, 0(5)       # r7 = src[i]
-  stw     7, 0(3)       # dst[i] = r7
-  addi    3, 3, 4       # dst+=4;
-  addi    6, 6, -1      # rem--;
-  addi    5, 5, 4       # src+=4;
-  cmpwi   5, 6, 0 
-  bne     5, loopReadId   
-  
-  lis     3, 0x8000  
-  ori     3, 3, 0x2FC0
-  blr
