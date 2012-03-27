@@ -141,7 +141,7 @@ static inline void ata_write_blocks(int chn, u16 numSectors, u32 *src)
 	u32 dat = 0xF0000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8);
 	EXI_Lock(chn, 0, NULL);
 	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-	EXI_ImmEx(chn,&dat,4,EXI_WRITE);
+	EXI_ImmEx(chn,&dat,3,EXI_WRITE);
 	EXI_ImmEx(chn, src,numSectors*512,EXI_WRITE);
 	dat = 0;
 	EXI_ImmEx(chn,&dat,1,EXI_WRITE);	// Burn an extra cycle for the IDE-EXI to know to stop serving data
@@ -480,10 +480,8 @@ int ataReadSectors(int chn, u64 sector, unsigned int numSectors, unsigned char *
 // 0 on Success, -1 on Error
 int ataWriteSectors(int chn, u64 sector,unsigned int numSectors, unsigned char *src) 
 {
-	return 0;
-	/*
 	int ret = 0;
-	int sectorchunks = ataDriveInfo.lba48Support ? 511 : 127;
+	int sectorchunks = 1;
 	while(numSectors > sectorchunks) {
 		if((ret=_ataWriteSectors(chn,sector,sectorchunks,(u32*)src))) {
 			print_gecko("(%08X) Failed to write!..\r\n", ret);
@@ -493,13 +491,13 @@ int ataWriteSectors(int chn, u64 sector,unsigned int numSectors, unsigned char *
 		sector+=sectorchunks;
 		numSectors-=sectorchunks;
 	}
-	if(numSectors) {
+	/*if(numSectors) {
 		if((ret=_ataWriteSectors(chn,sector,numSectors,(u32*)src))) {
 			print_gecko("(%08X) Failed to write!..\r\n", ret);
 			return -1;
 		}
-	}
-	return 0;*/
+	}*/
+	return 0;
 }
 
 // Is an ATA device inserted?
