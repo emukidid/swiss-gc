@@ -84,15 +84,7 @@ int config_init() {
 	Returns 1 on successful creation, 0 otherwise
 */
 int config_create() {
-	sprintf(txtbuffer, "%sswiss.ini", deviceHandler_initial->name);
-	FILE *fp = fopen( txtbuffer, "wb" );
-	if(fp) {
-		char *str = "# Swiss Configuration File!\r\n\0";
-		fwrite(str, 1, strlen(str), fp);
-		fclose(fp);
-		return 1;
-	}
-	return 0;
+	return config_update_file();
 }
 
 int config_update_file() {
@@ -112,7 +104,7 @@ int config_update_file() {
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "Enable Debug=%s\r\n",(configSwissSettings.debugUSB ? "Yes":"No"));
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
-		sprintf(txtbuffer, "Force No DVD Drive Mode=%s\r\n",(!configSwissSettings.hasDVDDrive ? "Yes":"No"));
+		sprintf(txtbuffer, "Force No DVD Drive Mode=%s\r\n",(configSwissSettings.hasDVDDrive ? "No":"Yes"));
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "Hide Unknown file types=%s\r\n",(configSwissSettings.hideUnknownFileTypes ? "Yes":"No"));
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
@@ -278,7 +270,7 @@ void config_parse(char *configData) {
 		line = strtok_r( NULL, "\r\n", &linectx);
 	}
 
-	if(configEntriesCount > 0)
+	if(configEntriesCount > 0 || !first)
 		configEntriesCount++;
 	
 	 sprintf(txtbuffer, "Found %i entries in the config file\r\n",configEntriesCount);

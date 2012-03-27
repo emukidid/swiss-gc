@@ -269,7 +269,8 @@ int main ()
 	swissSettings.debugUSB = 0;
 	swissSettings.gameVMode = 3;	// Auto video mode
 	swissSettings.exiSpeed = 1;		// 32MHz
-	
+	swissSettings.uiVMode = 3; 		// Auto UI mode
+	config_copy_swiss_settings(&swissSettings);
 	// Start up the BBA if it exists
 	//init_network_thread();
 	//init_httpd_thread();
