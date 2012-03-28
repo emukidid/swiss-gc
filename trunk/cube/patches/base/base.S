@@ -1,20 +1,29 @@
 #***************************************************************************
-# HDD/SD Read code launch pad
+# Device indepentent Read code launch pad
 #
-# Patchcode to be at 0x80001800
-# To be used for Read and DVDLowReadDiskId, or DVDReadPrio/DVDReadPrioAsync
+# we have 0x1800 bytes to play with at 0x80001800 (code+data), or use above Arena Hi
+# This code is placed either at 0x80001800 or Above Arena Hi (depending on the game)
 #**************************************************************************
 
-# memory map
-# we have 0x1800 bytes to play with at 0x80001800 (code+data)
-# This code is placed at 0x80001800 and calls a C code read implementation for a specific device
-# 0x80002F00 is the base file sector for disk 1
-# 0x80002F10 is the base file sector for disk 2
-# 0x80002F20 is the currently selected disk sector
-# 0x80002F30 is the EXI bus speed (16mhz vs 32mhz)
-# 0x80002F80 is the Disc ID of the first disk
-# 0x80002FA0 is the Disc ID of the second disk
-# 0x80002FC0 is a 32 byte area to redirect reads to
+# memory map for our variables that sit at the top 0x100 of memory
+.set VAR_AREA, 			0x8180	# Base location of our variables
+.set VAR_DISC_1_LBA, 	-0x100	# is the base file sector for disk 1
+.set VAR_DISC_2_LBA, 	-0xF0	# is the base file sector for disk 2
+.set VAR_CUR_DISC_LBA, 	-0xE0	# is the currently selected disk sector
+.set VAR_EXI_BUS_SPD, 	-0xD0	# is the EXI bus speed (192 = 16mhz vs 208 = 32mhz)
+.set VAR_SD_TYPE, 		-0xCC	# is the Card Type (SDHC=0, SD=1)
+.set VAR_EXI_FREQ, 		-0xC8	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
+.set VAR_EXI_SLOT, 		-0xC4	# is the EXI slot (0 = slot a, 1 = slot b)
+.set VAR_DISC_1_ID, 	-0xC0	# is the Disc ID of the first disk
+.set VAR_DISC_2_ID, 	-0xA0	# is the Disc ID of the second disk
+.set VAR_32B_BUF,		-0x80	# is a 32 byte area to redirect reads to
+.set VAR_TMP1,  		-0x60	# space for a variable if required
+.set VAR_TMP2,  		-0x5C	# space for a variable if required
+.set VAR_TMP3,  		-0x58	# space for a variable if required
+.set VAR_TMP4,  		-0x54	# space for a variable if required
+.set VAR_CB_ADDR,		-0x50	# high level read callback addr
+.set VAR_CB_ARG1,		-0x4C	# high level read callback r3
+.set VAR_CB_ARG2,		-0x48	# high level read callback r4
 
 .section .text
 	.globl main
@@ -24,6 +33,7 @@ main:
 	b		setup_read_type1v3	# low style read version 3
 	b		setup_read_type2	# read hi style
 	b		do_readdiskid		# read a disk id
+	b		os_restore_interrupts	# custom os restore interrupts which will call the dvd callback
 	
 # Low level read
 setup_read_type1v1:
@@ -122,7 +132,7 @@ setup_for_read:
 	stw 		11, 	44(1)		# save r11
 	stmw		16, 	48(1)		# save r16->r31
 
-# Read from the device to the destination (C code called)
+# Read from the device to the destination (device specific code called)
 	bl			do_read 			# do_read(dst,size, offset);
 
 # Flush the destination - needed?
@@ -171,22 +181,22 @@ do_readdiskid:
 	stw     	0, 4 (1)      # this is what we patched over, so do it here.
 	
 	# determine if we need to swap current file base sector
-	lis     	5, 0x8000
-	lwz     	6, 0x2F00(5)  # r6 = file base for disk 1
-	lwz     	7, 0x2F20(5)  # r7 = current file file base
+	lis     	5, VAR_AREA
+	lwz     	6, VAR_DISC_1_LBA(5)	# r6 = file base for disk 1
+	lwz     	7, VAR_CUR_DISC_LBA(5)	# r7 = current file file base
 	cmpw    	5, 6, 7       # cur base != disk 1 base?
 	bne     	5, _swap_file_base
 	
-	lwz     	6, 0x2F10(5)  # r6 = file base for disk 2
-	stw     	6, 0x2F20(5)  # store disk 2 file base as current
-	lis     	5, 0x8000
-	ori     	5, 5, 0x2FA0  # src=0x80002FA0 (disk 2 id)
+	lwz     	6, VAR_DISC_2_LBA(5)	# r6 = file base for disk 2
+	stw     	6, VAR_CUR_DISC_LBA(5)	# store disk 2 file base as current
+	lis     	5, VAR_AREA
+	addi     	5, 5, VAR_DISC_2_ID  # src=disk 2 id addr
 	b       	_do_id_copy
   
 _swap_file_base:  # so swap it
-	stw     	6, 0x2F20(5)  # store disk 1 file base as current
-	lis     	5, 0x8000
-	ori     	5, 5, 0x2F80  # src=0x80002F80 (disk 1 id)
+	stw     	6, VAR_CUR_DISC_LBA(5)  # store disk 1 file base as current
+	lis     	5, VAR_AREA
+	addi     	5, 5, VAR_DISC_1_ID  # src=0x80002F80 (disk 1 id)
   
 _do_id_copy:
   li      		6, 8          # rem=32/4 == 8;
@@ -199,6 +209,49 @@ loopReadId:
 	cmpwi   	5, 6, 0 
 	bne     	5, loopReadId   
 	
-	lis     	3, 0x8000  
-	ori     	3, 3, 0x2FC0
+	lis     	3, VAR_AREA  
+	addi     	3, 3, VAR_32B_BUF	# write to our tmp area
 	blr
+
+os_restore_interrupts:
+	stwu		1,	-0x20(1) 		# grow stack frame
+	mflr		0					# move lr
+	stw 		0,	 	0(1)		# save lr
+	
+	cmpwi	3, 0
+	mfmsr	4
+	beq		disable_interrupts
+	
+	ori		5, 4, 0x8000		# enable interrupts
+	b		write_msr
+disable_interrupts:
+	rlwinm	5, 4, 0, 17, 15		# disable interrupts
+write_msr:
+	stw		5, 0x10(1)			# store msr
+	
+	cmpwi	3, 0
+	beq		skip_cb
+	
+	lis		6,	VAR_AREA
+	lwz		7,	VAR_CB_ADDR(6)	# load callback addr
+	cmpwi	7, 0
+	beq		skip_cb
+	
+	lwz		3,	VAR_CB_ARG1(6)	# load read length
+	lwz		4,	VAR_CB_ARG2(6)	# load dvdstruct addr
+	lis		5, 0
+	stw		5,	VAR_CB_ADDR(6)	# clear callback
+	stw		5,	VAR_CB_ARG1(6)	# clear read length
+	stw		5,	VAR_CB_ARG2(6)	# clear dvdstruct addr
+	mtctr	7
+	bctrl					# call the callback
+skip_cb:
+	lwz		5, 0x10(1)		# load new msr
+	mtmsr	5
+	rlwinm	3, 5, 17, 31, 31	# return if they're now enabled or not
+	mr		4, 3
+	lwz 	0,	0(1)		# load lr
+	mtlr	0				# restore lr
+	addi	1,	1, 0x20		# kill stack frame
+	blr
+	

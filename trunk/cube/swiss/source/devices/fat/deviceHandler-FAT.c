@@ -18,6 +18,7 @@
 #include "main.h"
 #include "ata.h"
 #include "frag.h"
+#include "patcher.h"
 
 const DISC_INTERFACE* carda = &__io_gcsda;
 const DISC_INTERFACE* cardb = &__io_gcsdb;
@@ -184,27 +185,27 @@ void deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	}
 	
   // Disk 1 sector
-  *(volatile unsigned int*)0x80002F00 = (u32)(file->fileBase&0xFFFFFFFF);
+  *(volatile unsigned int*)VAR_DISC_1_LBA = (u32)(file->fileBase&0xFFFFFFFF);
   // Disk 2 sector
-  *(volatile unsigned int*)0x80002F10 = file2 ? (u32)(file2->fileBase&0xFFFFFFFF):(u32)(file->fileBase&0xFFFFFFFF);
+  *(volatile unsigned int*)VAR_DISC_2_LBA = file2 ? (u32)(file2->fileBase&0xFFFFFFFF):(u32)(file->fileBase&0xFFFFFFFF);
   // Currently selected disk sector
-  *(volatile unsigned int*)0x80002F20 = (u32)(file->fileBase&0xFFFFFFFF);
+  *(volatile unsigned int*)VAR_CUR_DISC_LBA = (u32)(file->fileBase&0xFFFFFFFF);
   // Copy the current speed
-  *(volatile unsigned int*)0x80002F30 = !swissSettings.exiSpeed ? 192:208;
+  *(volatile unsigned int*)VAR_EXI_BUS_SPD = !swissSettings.exiSpeed ? 192:208;
   // Card Type
-  *(volatile unsigned int*)0x80002F34 = SDHCCard;
-  // Copy the actual speed
-  *(volatile unsigned int*)0x80002F38 = !swissSettings.exiSpeed ? EXI_SPEED16MHZ:EXI_SPEED32MHZ;
+  *(volatile unsigned int*)VAR_SD_TYPE = SDHCCard;
+  // Copy the actual freq
+  *(volatile unsigned int*)VAR_EXI_FREQ = !swissSettings.exiSpeed ? EXI_SPEED16MHZ:EXI_SPEED32MHZ;
   // Device slot (0 or 1)
-  *(volatile unsigned int*)0x80002F40 = (file->name[0] == 's') ? (file->name[2] == 'b') : (file->name[3] == 'b');
+  *(volatile unsigned int*)VAR_EXI_SLOT = (file->name[0] == 's') ? (file->name[2] == 'b') : (file->name[3] == 'b');
   // Copy disc headers
   file->offset = 0;
-  deviceHandler_FAT_readFile(file, (void*)0x80002F80, 32);
+  deviceHandler_FAT_readFile(file, (void*)VAR_DISC_1_ID, 32);
   file->offset = 0;
-  deviceHandler_FAT_readFile(file, (void*)0x80002FA0, 32);
+  deviceHandler_FAT_readFile(file, (void*)VAR_DISC_2_ID, 32);
   if(file2) {
     file2->offset = 0;
-    deviceHandler_FAT_readFile(file2, (void*)0x80002FA0, 32);
+    deviceHandler_FAT_readFile(file2, (void*)VAR_DISC_2_ID, 32);
   }
 }
 
