@@ -10,6 +10,6 @@
 #define GCARS_ENABLE_CS    (*(volatile unsigned int*) 0x817FDFF8)
 #define GCARS_CONDITIONAL  (*(volatile unsigned int*) 0x817FDFFC)
 #define GCARS_CODELIST     ((unsigned int*)           0x817FE000)
-#define MEMORY_TOP         ((void*)                   0x817FE800)
+#define MEMORY_TOP         ((void*)                   0x817FE700)
 
 #endif

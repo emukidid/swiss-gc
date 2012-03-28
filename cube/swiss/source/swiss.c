@@ -334,12 +334,12 @@ unsigned int load_app(int mode)
 	DrawFrameFinish();
 	
 	// Adjust top of memory (we reserve some for high memory location patching and cheats)
-	u32 top_of_main_ram = 0x81800000;
+	u32 top_of_main_ram = 0x81800000 - VAR_AREA_SIZE;
 	if(swissSettings.useHiMemArea) 
 		top_of_main_ram = get_base_addr();
 	if(mode == CHEATS)
 		top_of_main_ram = (u32)GCARS_MEMORY_START;
-	
+
 	// Read FST to top of Main Memory (round to 32 byte boundary)
 	u32 fstSizeAligned = GCMDisk.MaxFSTSize + (32-(GCMDisk.MaxFSTSize%32));
 	deviceHandler_seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
@@ -364,9 +364,12 @@ unsigned int load_app(int mode)
 	*(volatile u32*)0x80000034 = *(volatile u32*)0x80000038;			// Arena Hi
 	*(volatile u32*)0x80000028 = top_of_main_ram & 0x01FFFFFF;			// Physical Memory Size
     *(volatile u32*)0x800000F0 = top_of_main_ram & 0x01FFFFFF;			// Console Simulated Mem size
-	
-	sprintf(txtbuffer, "Main DOL Lives at %08X\r\n", GCMDisk.DOLOffset);
-	print_gecko(txtbuffer);
+	u32* osctxblock = (u32*)memalign(32, 1024);
+	*(volatile u32*)0x800000C0 = (u32)osctxblock | 0x7FFFFFFF;
+	*(volatile u32*)0x800000D4 = (u32)osctxblock;
+	memset(osctxblock, 0, 1024);
+		
+	print_gecko("Main DOL Lives at %08X\r\n", GCMDisk.DOLOffset);
 	
 	// Read the Main DOL header
 	deviceHandler_seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
@@ -472,17 +475,19 @@ unsigned int load_app(int mode)
 	ICInvalidateRange((void*)0x80000000, 0x3100);
 	
 	if(swissSettings.debugUSB) {
-		sprintf(txtbuffer,"Sector: %08X%08X Speed: %08x Type: %08X\n",*(volatile unsigned int*)0x80002F00,
-		*(volatile unsigned int*)0x80002F04,*(volatile unsigned int*)0x80002F30,*(volatile unsigned int*)0x80002F34);
-		print_gecko(txtbuffer);
+		print_gecko("Sector: %08X Speed: %08x Type: %08X\n",
+		*(volatile unsigned int*)VAR_CUR_DISC_LBA,*(volatile unsigned int*)VAR_EXI_BUS_SPD,*(volatile unsigned int*)VAR_SD_TYPE);
 	}
 	
 	if(swissSettings.hasDVDDrive) {
 		// Check DVD Status, make sure it's error code 0
-		sprintf(txtbuffer, "DVD: %08X\r\n",dvd_get_error());
-		print_gecko(txtbuffer);
+		print_gecko("DVD: %08X\r\n",dvd_get_error());
 	}
-	
+	if(swissSettings.useHiLevelPatch) {
+		*(volatile unsigned int*)VAR_CB_ADDR = 0;
+		*(volatile unsigned int*)VAR_CB_ARG1 = 0;
+		*(volatile unsigned int*)VAR_CB_ARG2 = 0;
+	}
 	print_gecko("libogc shutdown and boot game!\r\n");
 	
 	if(mode == CHEATS) {
@@ -922,6 +927,7 @@ int check_game()
 		DrawFrameFinish();
 		wait_press_A();
 		
+		set_base_addr(swissSettings.useHiMemArea);	// Needs to be set otherwise the patch code written can be wrong!
 		int res = patch_gcm(&curFile, filesToPatch, numToPatch);
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,res ? "Game Patched Successfully":"Game could not be patched or not required");

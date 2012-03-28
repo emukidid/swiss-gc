@@ -1,20 +1,29 @@
 #***************************************************************************
-# SDNGC
-#
-# Patchcode to be at 0x80001800 and to be called for Read and DVDLowReadDiskId
+# SD Read code for GC/Wii via SDGecko
+# emu_kidid 2007-2012
 #**************************************************************************
 
-# memory map
-# we have 0x1800 bytes to play with at 0x80001800 (code+data)
-# This code is placed at 0x80001800
-# 0x80002F00 is the base file sector for disk 1
-# 0x80002F10 is the base file sector for disk 2
-# 0x80002F20 is the currently selected disk sector
-# 0x80002F30 is the EXI bus speed (16mhz vs 32mhz)
-# 0x80002F34 is the Card Type (SDHC=0, SD=1)
-# 0x80002F80 is the Disc ID of the first disk
-# 0x80002FA0 is the Disc ID of the second disk
-# 0x80002FC0 is a 32 byte area to redirect reads to
+# we have 0x1800 bytes to play with at 0x80001800 (code+data), or use above Arena Hi
+# This code is placed either at 0x80001800 or Above Arena Hi (depending on the game)
+# memory map for our variables that sit at the top 0x100 of memory
+.set VAR_AREA, 			0x8180	# Base location of our variables
+.set VAR_DISC_1_LBA, 	-0x100	# is the base file sector for disk 1
+.set VAR_DISC_2_LBA, 	-0xF0	# is the base file sector for disk 2
+.set VAR_CUR_DISC_LBA, 	-0xE0	# is the currently selected disk sector
+.set VAR_EXI_BUS_SPD, 	-0xD0	# is the EXI bus speed (192 = 16mhz vs 208 = 32mhz)
+.set VAR_SD_TYPE, 		-0xCC	# is the Card Type (SDHC=0, SD=1)
+.set VAR_EXI_FREQ, 		-0xC8	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
+.set VAR_EXI_SLOT, 		-0xC4	# is the EXI slot (0 = slot a, 1 = slot b)
+.set VAR_DISC_1_ID, 	-0xC0	# is the Disc ID of the first disk
+.set VAR_DISC_2_ID,		-0xA0	# is the Disc ID of the second disk
+.set VAR_32B_BUF,		-0x80	# is a 32 byte area to redirect reads to
+.set VAR_TMP1,  		-0x60	# space for a variable if required
+.set VAR_TMP2,  		-0x5C	# space for a variable if required
+.set VAR_TMP3,  		-0x58	# space for a variable if required
+.set VAR_TMP4,  		-0x54	# space for a variable if required
+.set VAR_CB_ADDR,		-0x50	# high level read callback addr
+.set VAR_CB_ARG1,		-0x4C	# high level read callback r3
+.set VAR_CB_ARG2,		-0x48	# high level read callback r4
 
 # register map
 # r17 is sd card speed
@@ -208,9 +217,9 @@ do_read:
   mr      21, 4         # r21 is saved len (r4)
   mr      22, 5         # r22 is saved ofs (r5)
 
-  lis     6, 0x8000   
-  lwz     17,0x2F30(6)  # load sd speed from memory to r6
-  lwz     6, 0x2F20(6)  # load sector address from memory to r6
+  lis     6, VAR_AREA   
+  lwz     17,VAR_EXI_BUS_SPD(6)		# load sd speed from memory to r6
+  lwz     6, VAR_CUR_DISC_LBA(6)	# load sector address from memory to r6
   
   andi.   27, 5, 511   # r27 = startByte = (offset%512) 
   mr      28, 4        # r28 = numbytes = len 
@@ -218,8 +227,8 @@ do_read:
   srwi    4, 5, 9      # offset >> 9 
   add     4, 4, 6      # r4 = startSector = base_sector+offset>>9 
 
-  lis	  3, 0x8000
-  lwz	  3, 0x2F34(3)	# SD Card Type (SDHC=0, SD=1)
+  lis	  3, VAR_AREA
+  lwz	  3, VAR_SD_TYPE(3)	# SD Card Type (SDHC=0, SD=1)
   cmpwi	  5, 3, 0
   beq	  5, _skip_shift
   slwi    4, 4,9       # startSector<<=9; if normal SDcard use byteaddr 
@@ -239,7 +248,7 @@ _skip_shift:
   mr      4, 27        # move startByte 
   mr      5, 28        # move len 
   bl    rcvr_datablock # rcvr_datablock(dst,startByte, len); 
-	b       loopFend     # return 
+  b       loopFend     # return 
 
 loopF2:
   mr      3, 29        # move dst 

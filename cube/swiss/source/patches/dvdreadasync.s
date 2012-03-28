@@ -23,6 +23,12 @@ struct DVDFileInfo
 }
 */	
 
+# memory map for our variables that sit at the top 0x100 of memory
+.set VAR_AREA, 			0x8180	# Base location of our variables
+.set VAR_CB_ADDR,		-0x50	# high level read callback addr
+.set VAR_CB_ARG1,		-0x4C	# high level read callback r3
+.set VAR_CB_ARG2,		-0x48	# high level read callback r4
+
 # issue read command
 #
 #	r3	dvdstruct
@@ -73,14 +79,14 @@ skip_set_base_offset:
 	add		%r7, 	%r7, %r5	# offset += length;
 	stw     %r7,	0x10(%r3)	# offset is incremented with the read length
 
-#determine if we need to call the callback
+#store info if we'll need to call the callback on the next OSRestoreInterrupts
 	lwz     %r7,	0x38(%r3)
 	cmpwi	%r7,	0
 	beq		skip_cb
-	mtctr	%r7
-	mr		%r4,	%r3
-	mr		%r3,	%r5
-	bctrl
+	lis		%r4,	VAR_AREA
+	stw		%r7,	VAR_CB_ADDR(%r4)	# store callback addr
+	stw		%r5,	VAR_CB_ARG1(%r4)	# store read length
+	stw		%r3,	VAR_CB_ARG2(%r4)	# store dvdstruct addr
 	
 skip_cb:
 	lwz		%r7, 0x20(%sp)		# load old MSR

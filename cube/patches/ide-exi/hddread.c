@@ -1,19 +1,29 @@
-//***************************************************************************
-// HDD Read code via IDE-EXI
-//***************************************************************************
+/***************************************************************************
+* HDD Read code for GC/Wii via IDE-EXI
+* emu_kidid 2010-2012
+***************************************************************************/
 
-// memory map
-// we have 0x1800 bytes to play with at 0x80001800 (code+data)
-// This code is placed at 0x80001800 and calls a C code read implementation for a specific device
-// 0x80002F00 is the base file sector for disk 1
-// 0x80002F10 is the base file sector for disk 2
-// 0x80002F20 is the currently selected disk sector
-// 0x80002F30 is the EXI bus speed (16mhz vs 32mhz)
-// 0x80002F38 actual EXI speed (4 = 16mhz, 5 = 32mhz)
-// 0x80002F40 is the EXI device (0 or 1 are memcard slots, 2 is BBA serial port)
-// 0x80002F80 is the Disc ID of the first disk
-// 0x80002FA0 is the Disc ID of the second disk
-// 0x80002FC0 is a 32 byte area to redirect reads to
+// we have 0x1800 bytes to play with at 0x80001800 (code+data), or use above Arena Hi
+// This code is placed either at 0x80001800 or Above Arena Hi (depending on the game)
+// memory map for our variables that sit at the top 0x100 of memory
+#define VAR_AREA 			(0x81800000)		// Base location of our variables
+#define VAR_DISC_1_LBA 		(VAR_AREA-0x100)	// is the base file sector for disk 1
+#define VAR_DISC_2_LBA 		(VAR_AREA-0xF0)		// is the base file sector for disk 2
+#define VAR_CUR_DISC_LBA 	(VAR_AREA-0xE0)		// is the currently selected disk sector
+#define VAR_EXI_BUS_SPD 	(VAR_AREA-0xD0)		// is the EXI bus speed (16mhz vs 32mhz)
+#define VAR_SD_TYPE 		(VAR_AREA-0xCC)		// is the Card Type (SDHC=0, SD=1)
+#define VAR_EXI_FREQ 		(VAR_AREA-0xC8)		// is the EXI frequency (4 = 16mhz, 5 = 32mhz)
+#define VAR_EXI_SLOT 		(VAR_AREA-0xC4)		// is the EXI slot (0 = slot a, 1 = slot b)
+#define VAR_DISC_1_ID 		(VAR_AREA-0xC0)		// is the Disc ID of the first disk
+#define VAR_DISC_2_ID 		(VAR_AREA-0xA0)		// is the Disc ID of the second disk
+#define VAR_32B_BUF			(VAR_AREA-0x80)		// is a 32 byte area to redirect reads to
+#define VAR_TMP1  			(VAR_AREA-0x60)		// space for a variable if required
+#define VAR_TMP2  			(VAR_AREA-0x5C)		// space for a variable if required
+#define VAR_TMP3  			(VAR_AREA-0x58)		// space for a variable if required
+#define VAR_TMP4  			(VAR_AREA-0x54)		// space for a variable if required
+#define VAR_CB_ADDR			(VAR_AREA-0x50)		// high level read callback addr
+#define VAR_CB_ARG1			(VAR_AREA-0x4C)		// high level read callback r3
+#define VAR_CB_ARG2			(VAR_AREA-0x48)		// high level read callback r4
 
 // NOTE: cs0 then cs1!
 // ATA registers address        val  - cs0 cs1 a2 a1 a0
@@ -52,9 +62,9 @@ typedef unsigned int u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 
-#define exi_freq  		*(u32*)0x80002F58
-#define exi_device  	*(u32*)0x80002F5C
-#define exi_channel 	*(u32*)0x80002F60
+#define exi_freq  		*(u32*)VAR_TMP1
+#define exi_device  	*(u32*)VAR_TMP2
+#define exi_channel 	*(u32*)VAR_TMP3
 
 void* mymemcpy(void* dest, const void* src, u32 count)
 {
@@ -216,12 +226,12 @@ int _ataReadSectors(u32 lba, u16 numsectors, void *buffer)
 
 void do_read(void *dst,u32 size, u32 offset) {
 	u8 sector[SECTOR_SIZE];
-	u32 lba = (offset>>9) + (*(u32*)0x80002F20);
+	u32 lba = (offset>>9) + (*(u32*)VAR_CUR_DISC_LBA);
 	
 	// Load these from what Swiss set them to be
-	exi_freq = *(u32*)0x80002F38;
+	exi_freq = *(u32*)VAR_EXI_FREQ;
 	exi_device = 0; // for now until I add BBA port support
-	exi_channel = *(u32*)0x80002F40;
+	exi_channel = *(u32*)VAR_EXI_SLOT;
 	
 	// Read any half sector if we need to until we're aligned
 	if(offset % SECTOR_SIZE) {

@@ -85,6 +85,30 @@ u32 _AIResetStreamSampleCount_original[9] = {
   0x7C0803A6   // mtlr        r0
 };
 
+u32 _OSRestoreInterrupts_original[9] = {
+	0x2c030000,	// cmpwi       r3, 0
+	0x7c8000a6,	// mfmsr       r4
+	0x4182000c,	// beq-        +c
+	0x60858000,	// ori         r5, r4, 0x8000
+	0x48000008,	// b           +8
+	0x5485045e,	// rlwinm      r5, r4, 0, 17, 15
+	0x7ca00124,	// mtmsr       r5
+	0x54848ffe,	// rlwinm      r4, r4, 17, 31, 31
+	0x4e800020	// blr
+};
+
+u32 _OSRestoreInterrupts_original_v2[9] = {
+	0x2c030000,	// cmpwi       r3, 0
+	0x7c8000a6,	// mfmsr       r4
+	0x4182000c,	// beq-        +c
+	0x60858000,	// ori         r5, r4, 0x8000
+	0x48000008,	// b           +8
+	0x5485045e,	// rlwinm      r5, r4, 0, 17, 15
+	0x7ca00124,	// mtmsr       r5
+	0x54838ffe,	// rlwinm      r3, r4, 17, 31, 31
+	0x4e800020	// blr
+};
+
 void set_base_addr(int useHi) {
 	base_addr = useHi ? HI_RESERVE : LO_RESERVE;
 }
@@ -183,20 +207,14 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 
 	FP.Length = i;
 
-	//if(!functionPattern) {
-	//	sprintf(txtbuffer,"Length: 0x%02X\r\n", FP.Length );
-	//	print_gecko(txtbuffer);
-	//	sprintf(txtbuffer,"FCalls: %d\r\n", FP.FCalls );
-	//	print_gecko(txtbuffer);
-	//	sprintf(txtbuffer,"Loads : %d\r\n", FP.Loads );
-	//	print_gecko(txtbuffer);
-	//	sprintf(txtbuffer,"Stores: %d\r\n", FP.Stores );
-	//	print_gecko(txtbuffer);
-	//	sprintf(txtbuffer,"Branch : %d\r\n", FP.Branch );
-	//	print_gecko(txtbuffer);
-	//	sprintf(txtbuffer,"Moves: %d\r\n", FP.Moves );
-	//	print_gecko(txtbuffer);
-	//}
+	if(!functionPattern) {
+		//print_gecko("Length: 0x%02X\r\n", FP.Length );
+		//print_gecko("FCalls: %d\r\n", FP.FCalls );
+		//print_gecko("Loads : %d\r\n", FP.Loads );
+		//print_gecko("Stores: %d\r\n", FP.Stores );
+		//print_gecko("Branch : %d\r\n", FP.Branch);
+		//print_gecko("Moves: %d\r\n", FP.Moves);
+	}
 	
 
 	if( memcmp( &FP, functionPattern, sizeof(u32) * 6 ) == 0 )
@@ -234,12 +252,10 @@ int Patch_DVDHighLevelRead(u8 *data, u32 length) {
 		{
 			if( find_pattern( (u8*)(data+i), length, &(DVDReadSigs[j]) ) )
 			{
-				sprintf(txtbuffer, "Found [%s] @ 0x%08X len %i\n", DVDReadSigs[j].Name, (u32)data + i, DVDReadSigs[j].Length);
-				print_gecko(txtbuffer);
+				print_gecko("Found [%s] @ 0x%08X len %i\n", DVDReadSigs[j].Name, (u32)data + i, DVDReadSigs[j].Length);
 				
-				sprintf(txtbuffer, "Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
+				print_gecko("Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
 						DVDReadSigs[j].Name, (u32)DVDReadSigs[j].Patch, (u32)data + i, DVDReadSigs[j].PatchLength);
-				print_gecko(txtbuffer);
 							
 				memcpy( (u8*)(data+i), &DVDReadSigs[j].Patch[0], DVDReadSigs[j].PatchLength );
 				DCFlushRange((u8*)(data+i), DVDReadSigs[j].Length);
@@ -251,6 +267,7 @@ int Patch_DVDHighLevelRead(u8 *data, u32 length) {
 		if( count == 2 )
 			break;
 	}
+	Patch_OSRestoreInterrupts(data, length);
 	return count;
 }
 
@@ -292,6 +309,27 @@ int Patch_DVDLowLevelRead(void *addr, u32 length) {
   			*(unsigned int*)(addr_start + 104) = 0x38000001;//  li          r0, 1 (IMM not DMA)
   			print_gecko("Read V3 patched\r\n");
 			patched = 1;
+		}
+		addr_start += 4;
+	}
+	return patched;
+}
+
+int Patch_OSRestoreInterrupts(void *addr, u32 length) {
+	void *addr_start = addr;
+	void *addr_end = addr+length;	
+	int patched = 0;
+	while(addr_start<addr_end) 
+	{
+		if(	memcmp(addr_start,_OSRestoreInterrupts_original,sizeof(_OSRestoreInterrupts_original))==0  || 
+			memcmp(addr_start,_OSRestoreInterrupts_original_v2,sizeof(_OSRestoreInterrupts_original_v2))==0)
+		{
+			*(unsigned int*)(addr_start + 0) = 0x3C000000 | (OS_RESTORE_INT_OFFSET >> 16); 		// lis		0, 0x8000 (example)   
+  			*(unsigned int*)(addr_start + 4) = 0x60000000 | (OS_RESTORE_INT_OFFSET & 0xFFFF); 	// ori		0, 0, 0x1800 (example)
+  			*(unsigned int*)(addr_start + 8) = 0x7C0903A6; // mtctr	0
+  			*(unsigned int*)(addr_start + 12) = 0x4E800420; // bctr, the function we call will blr
+			patched = 1;
+			print_gecko("Patched OSRestoreInterrupts @ %08X\r\n",(u32)addr_start);
 		}
 		addr_start += 4;
 	}
@@ -405,7 +443,7 @@ u32 __dvdLowReadAudioNULL[] = {
 	0x90010000,	//  stw         r0, 0 (sp)
 	0x7CC903A6,	//  mtctr       r6
 	0x38600001,	//  li          r3, 1
-	0x4E800421,	//  bctr;
+	0x4E800421,	//  bctrl
 	0x80010000,	//  lwz         r0, 0 (sp)
 	0x7C0803A6,	//  mtlr        r0
 	0x38210040,	//  addi        sp, sp, 64
