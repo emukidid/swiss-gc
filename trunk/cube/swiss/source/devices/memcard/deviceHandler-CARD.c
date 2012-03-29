@@ -177,8 +177,7 @@ int deviceHandler_CARD_readFile(file_handle* file, void* buffer, unsigned int le
 	memset(&file_name[0],0,CARD_FILENAMELEN);
 	memcpy(&file_name[0], file->name,strlen(file->name)-4);
 	
-	sprintf(txtbuffer, "Try to open: [%s]\r\n",&file_name[0]);
-	print_gecko(txtbuffer);
+	print_gecko("Try to open: [%s]\r\n",&file_name[0]);
 
 	// Read the actual file data now
 	char *read_buffer = NULL;
@@ -200,8 +199,7 @@ int deviceHandler_CARD_readFile(file_handle* file, void* buffer, unsigned int le
 			return -2;
 		}
 		
-		sprintf(txtbuffer, "Reading: [%i] bytes\r\n",readSize);
-		print_gecko(txtbuffer);
+		print_gecko("Reading: [%i] bytes\r\n",readSize);
 		
 		/* Read the file */
 		int i = 0;
@@ -211,13 +209,13 @@ int deviceHandler_CARD_readFile(file_handle* file, void* buffer, unsigned int le
 				memcpy(dst,read_buffer,(i==(readSize/SectorSize)-1) ? (memcard_file->len % SectorSize):SectorSize);
 			}
 			dst+=SectorSize;
-			sprintf(txtbuffer, "Read: [%i] bytes ret [%i]\r\n",SectorSize,ret);
-			print_gecko(txtbuffer);
+			print_gecko("Read: [%i] bytes ret [%i]\r\n",SectorSize,ret);
+			
 		}
 	}
 	else {
-		sprintf(txtbuffer, "ret: [%i]\r\n",ret);
-		print_gecko(txtbuffer);
+		print_gecko("ret: [%i]\r\n",ret);
+		
 	}
 	CARD_Close(memcard_file);
 	free(read_buffer);
@@ -328,8 +326,8 @@ int deviceHandler_CARD_deleteFile(file_handle* file) {
 	memset(_file, 0, sizeof(card_dir));
 	_file->fileno = file->fileBase&0xFFFFFF;
 	
-	sprintf(txtbuffer, "Deleting: %s\r\n", file->name);
-	print_gecko(txtbuffer);
+	print_gecko("Deleting: %s\r\n", file->name);
+	
 	
 	file->status = CARD_DeleteEntry(file->fileBase>>24,_file);
 	if(file->status != CARD_ERROR_READY) {

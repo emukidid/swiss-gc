@@ -367,12 +367,9 @@ int Patch_480pVideo(u8 *data, u32 length) {
 		for(j = 0; j < 2; j++) {
 			if( find_pattern( (u8*)(data+i), length, &VIConfigureSigs[j] ) )
 			{
-				sprintf(txtbuffer, "Found [%s] @ 0x%08X len %i\n", VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].Length);
-				print_gecko(txtbuffer);
-				
-				sprintf(txtbuffer, "Writing Jump for [%s] at 0x%08X len %i\n", 
+				print_gecko("Found [%s] @ 0x%08X len %i\n", VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].Length);			
+				print_gecko("Writing Jump for [%s] at 0x%08X len %i\n", 
 						VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].PatchLength);
-				print_gecko(txtbuffer);
 
 				writeBranchLink((u32)data+i+36,0x80002820);
 				DCFlushRange((u8*)(data+i), VIConfigureSigs[j].Length);
@@ -454,13 +451,10 @@ int Patch_DVDAudioStreaming(u8 *data, u32 length) {
 		{
 			if( find_pattern( (u8*)(data+i), length, &(DVDAudioSigs[j]) ) )
 			{
-				sprintf(txtbuffer, "Found [%s] @ 0x%08X len %i\n", DVDAudioSigs[j].Name, (u32)data + i, DVDAudioSigs[j].Length);
-				print_gecko(txtbuffer);
-				
-				sprintf(txtbuffer, "Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
+				print_gecko("Found [%s] @ 0x%08X len %i\n", DVDAudioSigs[j].Name, (u32)data + i, DVDAudioSigs[j].Length);
+				print_gecko("Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
 						DVDAudioSigs[j].Name, (u32)DVDAudioSigs[j].Patch, (u32)data + i, DVDAudioSigs[j].PatchLength);
-				print_gecko(txtbuffer);
-							
+
 				memcpy( (u8*)(data+i), &DVDAudioSigs[j].Patch[0], DVDAudioSigs[j].PatchLength );
 				DCFlushRange((u8*)(data+i), DVDAudioSigs[j].Length);
 				ICInvalidateRange((u8*)(data+i), DVDAudioSigs[j].Length);
@@ -709,13 +703,10 @@ int Patch_DVDStatusFunctions(u8 *data, u32 length) {
 		{
 			if( find_pattern( (u8*)(data+i), length, &(DVDStatusSigs[j]) ) )
 			{
-				sprintf(txtbuffer, "Found [%s] @ 0x%08X len %i\n", DVDStatusSigs[j].Name, (u32)data + i, DVDStatusSigs[j].Length);
-				print_gecko(txtbuffer);
-				
-				sprintf(txtbuffer, "Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
+				print_gecko("Found [%s] @ 0x%08X len %i\n", DVDStatusSigs[j].Name, (u32)data + i, DVDStatusSigs[j].Length);		
+				print_gecko("Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
 						DVDStatusSigs[j].Name, (u32)DVDStatusSigs[j].Patch, (u32)data + i, DVDStatusSigs[j].PatchLength);
-				print_gecko(txtbuffer);
-							
+
 				memcpy( (u8*)(data+i), &DVDStatusSigs[j].Patch[0], DVDStatusSigs[j].PatchLength );
 				DCFlushRange((u8*)(data+i), DVDStatusSigs[j].Length);
 				ICInvalidateRange((u8*)(data+i), DVDStatusSigs[j].Length);
