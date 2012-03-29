@@ -28,7 +28,7 @@
 # register map
 # r17 is sd card speed
 # r18 is constant 0xFFFFFFFF
-# r19 is constant 0xCC000000
+# r19 is constant reg base 0xCC0068xx (either 00 or 14 depending on slot)
 # r20 is saved dst (r3)
 # r21 is saved len (r4)
 # r22 is saved ofs (r5)
@@ -38,14 +38,9 @@
 # r31 is temp LR in rcvr_datablock
 
 #SLOT A
-.set CHN_SR,      0x6800
-.set CHN_CR,      0x680C
-.set CHN_DATA,    0x6810
-
-#SLOT B
-#.set CHN_SR,      0x6814
-#.set CHN_CR,      0x6820
-#.set CHN_DATA,    0x6824
+.set CHN_SR,      0
+.set CHN_CR,      0xC
+.set CHN_DATA,    0x10
 
   .section .text  
 
@@ -211,14 +206,20 @@ do_read:
 
   # setup registers for our code
   li      18, -1        # r18 is constant 0xFFFFFFFF
-  lis     19, 0xCC00    # r19 is constant 0xCC000000
+  lis     19, 0xCC00    # r19 is constant 0xCC0068xx
+  ori     19, 19, 0x6800# slot A by default
   li      30, 49        # r30 is constant 49
   mr      20, 3         # r20 is saved dst (r3)
   mr      21, 4         # r21 is saved len (r4)
   mr      22, 5         # r22 is saved ofs (r5)
 
   lis     6, VAR_AREA   
-  lwz     17,VAR_EXI_BUS_SPD(6)		# load sd speed from memory to r6
+  lwz     17,VAR_EXI_BUS_SPD(6)		# load sd speed from memory to r17
+  lwz	  27, VAR_EXI_SLOT(6)		# setup our reg base for the slot
+  cmpwi   5, 27, 0
+  beq     5, skip_slot_b_adj
+  addi    19, 19, 0x14				# make exi reg base 0xCC006814 for slot 2
+skip_slot_b_adj:
   lwz     6, VAR_CUR_DISC_LBA(6)	# load sector address from memory to r6
   
   andi.   27, 5, 511   # r27 = startByte = (offset%512) 
