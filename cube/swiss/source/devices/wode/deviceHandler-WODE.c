@@ -67,9 +67,7 @@ int deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, unsigned i
 				(*dir)[num_entries].fileBase = wode_iso_info;  //we use offset to store a few things
 				(*dir)[num_entries].fileAttrib = IS_FILE;
 				num_entries++;
-				sprintf(txtbuffer, "Adding WODE entry: %s concat:%08X part:%08X iso:%08X\r\n",
-				&tmp.name[0], wode_iso_info, i, j);
-				print_gecko(txtbuffer);
+				print_gecko("Adding WODE entry: %s concat:%08X part:%08X iso:%08X\r\n",	&tmp.name[0], wode_iso_info, i, j);
 			}
 		}
 	}

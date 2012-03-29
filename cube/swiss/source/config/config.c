@@ -167,8 +167,7 @@ void config_parse(char *configData) {
 	int first = 1;
 	line = strtok_r( configData, "\r\n", &linectx );
 	while( line != NULL ) {
-		sprintf(txtbuffer, "Line [%s]\r\n", line);
-		print_gecko(txtbuffer);
+		//print_gecko("Line [%s]\r\n", line);
 		if(line[0] != '#') {
 			// Is this line a new game entry?
 			char *name, *namectx = NULL;
@@ -178,8 +177,7 @@ void config_parse(char *configData) {
 				value = strtok_r(NULL, "=", &namectx);
 			
 			if(value != NULL) {
-				sprintf(txtbuffer, "Name [%s] Value [%s]\r\n", name, value);
-				print_gecko(txtbuffer);
+				//print_gecko("Name [%s] Value [%s]\r\n", name, value);
 
 				if(!strcmp("ID", name)) {
 					if(!first) {
@@ -273,20 +271,17 @@ void config_parse(char *configData) {
 	if(configEntriesCount > 0 || !first)
 		configEntriesCount++;
 	
-	 sprintf(txtbuffer, "Found %i entries in the config file\r\n",configEntriesCount);
-	 print_gecko(txtbuffer);
+	 print_gecko("Found %i entries in the config file\r\n",configEntriesCount);
 }
 
 void config_find(ConfigEntry *entry) {
-	sprintf(txtbuffer, "config_find: Looking for game with ID %s\r\n",entry->game_id);
-	print_gecko(txtbuffer);
+	//print_gecko("config_find: Looking for game with ID %s\r\n",entry->game_id);
 	// Try to lookup this game based on game_id
 	int i;
 	for(i = 0; i < configEntriesCount; i++) {
 		if(!strncmp(entry->game_id, configEntries[i].game_id, 4)) {
 			memcpy(entry, &configEntries[i], sizeof(ConfigEntry));
-			sprintf(txtbuffer, "config_find: Found %s\r\n",entry->game_id);
-			print_gecko(txtbuffer);
+			//print_gecko("config_find: Found %s\r\n",entry->game_id);
 			return;
 		}
 	}
@@ -303,18 +298,15 @@ void config_find(ConfigEntry *entry) {
 	// Add this new entry to our collection
 	memcpy(&configEntries[configEntriesCount], entry, sizeof(ConfigEntry));
 	configEntriesCount++;
-	sprintf(txtbuffer, "config_find: Couldn't find, creating %s\r\n",entry->game_id);
-	print_gecko(txtbuffer);
+	//print_gecko("config_find: Couldn't find, creating %s\r\n",entry->game_id);
 }
 
 int config_update(ConfigEntry *entry) {
-	sprintf(txtbuffer, "config_update: Looking for game with ID %s\r\n",entry->game_id);
-	print_gecko(txtbuffer);
+	//print_gecko("config_update: Looking for game with ID %s\r\n",entry->game_id);
 	int i;
 	for(i = 0; i < configEntriesCount; i++) {
 		if(!strncmp(entry->game_id, configEntries[i].game_id, 4)) {
-			sprintf(txtbuffer, "config_update: Found %s\r\n",entry->game_id);
-			print_gecko(txtbuffer);
+			//print_gecko("config_update: Found %s\r\n",entry->game_id);
 			memcpy(&configEntries[i], entry, sizeof(ConfigEntry));
 			return config_update_file();	// Write out the file now
 		}

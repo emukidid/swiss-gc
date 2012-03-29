@@ -295,10 +295,8 @@ int main ()
 		if(usb_isgeckoalive(1)) {
 			usb_flush(1);
 		}
-		sprintf(txtbuffer, "Arena Size: %iKb\r\n",(SYS_GetArena1Hi()-SYS_GetArena1Lo())/1024);
-		print_gecko(txtbuffer);
-		sprintf(txtbuffer, "DVD Drive Present? %s\r\n",swissSettings.hasDVDDrive?"Yes":"No");
-		print_gecko(txtbuffer);
+		print_gecko("Arena Size: %iKb\r\n",(SYS_GetArena1Hi()-SYS_GetArena1Lo())/1024);
+		print_gecko("DVD Drive Present? %s\r\n",swissSettings.hasDVDDrive?"Yes":"No");
 	}
 	
 	while(1) {

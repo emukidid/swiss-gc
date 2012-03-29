@@ -106,8 +106,7 @@ void wkfInit() {
 	//serial[16] = 0;
    
 	unsigned int special_3 = wkfReadSpecial3();
-	sprintf(txtbuffer, "GOT Special_3: %08X", special_3);
-	print_gecko(txtbuffer);
+	print_gecko("GOT Special_3: %08X", special_3);
 
 	// New DVD (aka put it back to WKF mode)
 	__wkfReset();
@@ -120,9 +119,8 @@ void wkfInit() {
 	wkfWriteOffset(0);
 	
 	unsigned int switches = wkfReadSwitches();
-	sprintf(txtbuffer, "GOT Switches: %08X", switches);
-	print_gecko(txtbuffer);
-	
+	print_gecko("GOT Switches: %08X", switches);
+
 	// SD card detect
 	if ((wkfGetSlotStatus() & 0x000F0000)==0x00070000) {
 		DrawFrameStart();

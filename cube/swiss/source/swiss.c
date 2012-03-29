@@ -389,13 +389,11 @@ unsigned int load_app(int mode)
 		if (dolhdr.dataLength[i] + dolhdr.dataOffset[i] > main_dol_size)
 			main_dol_size = dolhdr.dataLength[i] + dolhdr.dataOffset[i];
 	}
-	sprintf(txtbuffer, "Main DOL size %i\r\n", main_dol_size);
-	print_gecko(txtbuffer);
+	print_gecko("Main DOL size %i\r\n", main_dol_size);
 
 	// Read the entire Main DOL
 	main_dol_buffer = (u8*)memalign(32,main_dol_size+DOLHDRLENGTH);
-	sprintf(txtbuffer, "Main DOL buffer %08X\r\n", (u32)main_dol_buffer);
-	print_gecko(txtbuffer);
+	print_gecko("Main DOL buffer %08X\r\n", (u32)main_dol_buffer);
 	deviceHandler_seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
 	if(deviceHandler_readFile(&curFile,(void*)main_dol_buffer,main_dol_size+DOLHDRLENGTH) != main_dol_size+DOLHDRLENGTH) {
 		DrawFrameStart();
