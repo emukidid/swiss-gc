@@ -16,11 +16,9 @@ typedef struct FuncPattern
 	char *Name;
 } FuncPattern;
 
-/* the patches */
-extern u8 slot_a_hdd[];
-extern u32 slot_a_hdd_size;
-extern u8 slot_b_hdd[];
-extern u32 slot_b_hdd_size;
+/* the SDGecko/IDE-EXI patches */
+extern u8 hdd_bin[];
+extern u32 hdd_bin_size;
 extern u8 sd_bin[];
 extern u32 sd_bin_size;
 
@@ -32,6 +30,8 @@ extern u8 DVDReadAsync[];
 extern u32 DVDReadAsync_length;
 extern u8 DVDReadAsyncInt[];
 extern u32 DVDReadAsyncInt_length;
+extern u8 DVDCompareDiskId[];
+extern u32 DVDCompareDiskId_length;
 
 /* Patch code variables block */
 #define VAR_AREA 			(0x81800000)		// Base location of our variables
@@ -65,8 +65,7 @@ extern u32 DVDReadAsyncInt_length;
 #define READ_TYPE1_V2_OFFSET (base_addr | 0x04)
 #define READ_TYPE1_V3_OFFSET (base_addr | 0x08)
 #define READ_TYPE2_V1_OFFSET (base_addr | 0x0C)
-#define ID_JUMP_OFFSET (base_addr | 0x10)
-#define OS_RESTORE_INT_OFFSET (base_addr | 0x14)
+#define OS_RESTORE_INT_OFFSET (base_addr | 0x10)
 
 int Patch_DVDHighLevelRead(u8 *data, u32 length);
 int Patch_DVDLowLevelRead(void *addr, u32 length);
@@ -75,7 +74,7 @@ int Patch_DVDAudioStreaming(u8 *data, u32 length);
 int Patch_DVDStatusFunctions(u8 *data, u32 length);
 void Patch_Fwrite(void *addr, u32 length);
 void Patch_DVDReset(void *addr,u32 length);
-void Patch_DVDLowReadDiskId(void *addr, u32 length);
+int Patch_DVDCompareDiskId(u8 *data, u32 length);
 void Patch_GXSetVATZelda(void *addr, u32 length,int mode);
 int Patch_OSRestoreInterrupts(void *addr, u32 length);
 void install_code();

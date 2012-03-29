@@ -197,6 +197,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			} else {
 				patched += Patch_DVDLowLevelRead(buffer, sizeToRead);
 			}
+			patched += Patch_DVDCompareDiskId(buffer, sizeToRead);
 			patched += Patch_480pVideo(buffer, sizeToRead);
 			patched += Patch_DVDAudioStreaming(buffer, sizeToRead);
 			if(patched) {

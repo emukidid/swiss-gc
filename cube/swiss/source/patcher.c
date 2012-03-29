@@ -135,15 +135,7 @@ void install_code()
 	
 	// IDE-EXI
   	if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
-		int slot = (deviceHandler_initial->name[3] == 'b');
-	  	// IDE-EXI in slot A
-  		if(!slot) {
-	  		memcpy((void*)base_addr,slot_a_hdd,slot_a_hdd_size);
-  		}
-  		else {
-	  		// IDE-EXI in slot B
-	  		memcpy((void*)base_addr,slot_b_hdd,slot_b_hdd_size);
-  		}
+	  	memcpy((void*)base_addr,hdd_bin,hdd_bin_size);
   	}
 	// SD Gecko
 	else if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
@@ -202,12 +194,13 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 	FP.Length = i;
 
 	if(!functionPattern) {
-		//print_gecko("Length: 0x%02X\r\n", FP.Length );
-		//print_gecko("FCalls: %d\r\n", FP.FCalls );
-		//print_gecko("Loads : %d\r\n", FP.Loads );
-		//print_gecko("Stores: %d\r\n", FP.Stores );
-		//print_gecko("Branch : %d\r\n", FP.Branch);
-		//print_gecko("Moves: %d\r\n", FP.Moves);
+		print_gecko("Length: 0x%02X\r\n", FP.Length );
+		print_gecko("FCalls: %d\r\n", FP.FCalls );
+		print_gecko("Loads : %d\r\n", FP.Loads );
+		print_gecko("Stores: %d\r\n", FP.Stores );
+		print_gecko("Branch : %d\r\n", FP.Branch);
+		print_gecko("Moves: %d\r\n", FP.Moves);
+		return 0;
 	}
 	
 
@@ -603,32 +596,31 @@ void Patch_Fwrite(void *addr, u32 length) {
 
 }
 
-/** SDK DVDLowReadDiskID Patch
-	- Hook into the end of this and swap the current file our read replacement code is pointing to */
+/** SDK DVDCompareDiskId Patch
+	- Make this function return true and also swap our file base for our read replacement to read from */
 
-u32 _DVDLowReadDiskID_original[8] = {
-  0x7C0802A6,  // mflr        r0
-  0x39000000,  // li          r8, 0
-  0x90010004,  // stw         r0, 4 (sp)
-  0x3CA0A800,  // lis         r5, 0xA800
-  0x38050040,  // addi        r0, r5, 64
-  0x9421FFE8,  // stwu        sp, -0x0018 (sp)
-  0x38C00020,  // li          r6, 32
-  0x3CA08000   // lis         r5, 0x8000
-};
+int Patch_DVDCompareDiskId(u8 *data, u32 length) {
+	int i, patched = 0;
+	FuncPattern DVDCompareDiskIdSig = 	
+		{0xF4, 15, 4, 2, 16, 9, DVDCompareDiskId, DVDCompareDiskId_length, "DVDCompareDiskId" };
 	
-void Patch_DVDLowReadDiskId(void *addr, u32 length) {
-  void *addr_start = addr;
-	void *addr_end = addr+length;	
-	
-	while(addr_start<addr_end) 
+	for( i=0; i < length; i+=4 )
 	{
-		if(memcmp(addr_start,_DVDLowReadDiskID_original,sizeof(_DVDLowReadDiskID_original))==0) 
+		if( *(u32*)(data + i ) != 0x7C0802A6 )
+			continue;
+		if( find_pattern( (u8*)(data+i), length, &DVDCompareDiskIdSig ) )
 		{
-			writeBranchLink((u32)addr_start+8,ID_JUMP_OFFSET);
+			print_gecko("Found [%s] @ 0x%08X len %i\n", DVDCompareDiskIdSig.Name, (u32)data + i, DVDCompareDiskIdSig.Length);		
+			print_gecko("Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
+					DVDCompareDiskIdSig.Name, (u32)DVDCompareDiskIdSig.Patch, (u32)data + i, DVDCompareDiskIdSig.PatchLength);
+
+			memcpy( (u8*)(data+i), &DVDCompareDiskIdSig.Patch[0], DVDCompareDiskIdSig.PatchLength );
+			DCFlushRange((u8*)(data+i), DVDCompareDiskIdSig.Length);
+			ICInvalidateRange((u8*)(data+i), DVDCompareDiskIdSig.Length);
+			patched++;
 		}
-		addr_start += 4;
 	}
+	return patched;
 }
 
 /** SDK GXSetVAT patch for Wii compatibility - specific for Zelda WW */

@@ -410,7 +410,7 @@ unsigned int load_app(int mode)
 			Patch_DVDHighLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 		else
 			Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-		Patch_DVDLowReadDiskId(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		Patch_DVDCompareDiskId(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 		if(swissSettings.muteAudioStreaming)
 			Patch_DVDAudioStreaming(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 		if(swissSettings.noDiscMode)
