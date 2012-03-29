@@ -189,9 +189,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			deviceHandler_seekFile(file,filesToPatch[i].offset+ofs,DEVICE_HANDLER_SEEK_SET);
 			deviceHandler_readFile(file,buffer,sizeToRead);
 			int patched = 0;
-			sprintf(txtbuffer, "Patch %s mem %08X ofs %08X size %08X\r\n",
+			print_gecko("Patch %s mem %08X ofs %08X size %08X\r\n",
 					filesToPatch[i].name,(u32)buffer,filesToPatch[i].offset+ofs,sizeToRead);
-			print_gecko(txtbuffer);
 			if(swissSettings.useHiLevelPatch) {
 				patched += Patch_DVDHighLevelRead(buffer, sizeToRead);
 			} else {
