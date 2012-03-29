@@ -21,10 +21,8 @@ extern u8 slot_a_hdd[];
 extern u32 slot_a_hdd_size;
 extern u8 slot_b_hdd[];
 extern u32 slot_b_hdd_size;
-extern u8 slot_a_sd[];
-extern u32 slot_a_sd_size;
-extern u8 slot_b_sd[];
-extern u32 slot_b_sd_size;
+extern u8 sd_bin[];
+extern u32 sd_bin_size;
 
 extern u8 DVDRead[];
 extern u32 DVDRead_length;

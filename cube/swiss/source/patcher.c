@@ -147,13 +147,7 @@ void install_code()
   	}
 	// SD Gecko
 	else if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
-		int slot = (deviceHandler_initial->name[2] == 'b');
-		if(!slot)	{	// in Slot A
-			memcpy((void*)base_addr,slot_a_sd,slot_a_sd_size);
-		}
-		else {	// in Slot B
-			memcpy((void*)base_addr,slot_b_sd,slot_b_sd_size);
-		}
+		memcpy((void*)base_addr,sd_bin,sd_bin_size);
 	}
 	// DVD 2 disc code
 	else if((deviceHandler_initial == &initial_DVD) && (drive_status == DEBUG_MODE)) {

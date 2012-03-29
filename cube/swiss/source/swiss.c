@@ -72,7 +72,7 @@ static const u32 GC_DefaultConfig[56] =
 
 void print_gecko(const char* fmt, ...)
 {
-	if(swissSettings.debugUSB) {
+	if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
 		char tempstr[2048];
 		va_list arglist;
 		va_start(arglist, fmt);
@@ -425,7 +425,7 @@ unsigned int load_app(int mode)
 		Patch_DVDReset(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	// Patch OSReport to print out over USBGecko
-	if(swissSettings.debugUSB) {
+	if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
 		Patch_Fwrite(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	// 480p Forcing
