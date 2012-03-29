@@ -32,7 +32,6 @@ main:
 	b		setup_read_type1v2	# low style read version 2
 	b		setup_read_type1v3	# low style read version 3
 	b		setup_read_type2	# read hi style
-	b		do_readdiskid		# read a disk id
 	b		os_restore_interrupts	# custom os restore interrupts which will call the dvd callback
 	
 # Low level read
@@ -176,42 +175,6 @@ dcache_flush_icache_inv:
 	blr
 
 # End of Cache function
-
-do_readdiskid:
-	stw     	0, 4 (1)      # this is what we patched over, so do it here.
-	
-	# determine if we need to swap current file base sector
-	lis     	5, VAR_AREA
-	lwz     	6, VAR_DISC_1_LBA(5)	# r6 = file base for disk 1
-	lwz     	7, VAR_CUR_DISC_LBA(5)	# r7 = current file file base
-	cmpw    	5, 6, 7       # cur base != disk 1 base?
-	bne     	5, _swap_file_base
-	
-	lwz     	6, VAR_DISC_2_LBA(5)	# r6 = file base for disk 2
-	stw     	6, VAR_CUR_DISC_LBA(5)	# store disk 2 file base as current
-	lis     	5, VAR_AREA
-	addi     	5, 5, VAR_DISC_2_ID  # src=disk 2 id addr
-	b       	_do_id_copy
-  
-_swap_file_base:  # so swap it
-	stw     	6, VAR_CUR_DISC_LBA(5)  # store disk 1 file base as current
-	lis     	5, VAR_AREA
-	addi     	5, 5, VAR_DISC_1_ID  # src=0x80002F80 (disk 1 id)
-  
-_do_id_copy:
-  li      		6, 8          # rem=32/4 == 8;
-loopReadId:
-	lwz     	7, 0(5)       # r7 = src[i]
-	stw     	7, 0(3)       # dst[i] = r7
-	addi    	3, 3, 4       # dst+=4;
-	addi    	6, 6, -1      # rem--;
-	addi    	5, 5, 4       # src+=4;
-	cmpwi   	5, 6, 0 
-	bne     	5, loopReadId   
-	
-	lis     	3, VAR_AREA  
-	addi     	3, 3, VAR_32B_BUF	# write to our tmp area
-	blr
 
 os_restore_interrupts:
 	stwu		1,	-0x20(1) 		# grow stack frame
