@@ -25,9 +25,9 @@ struct DVDFileInfo
 
 # memory map for our variables that sit at the top 0x100 of memory
 .set VAR_AREA, 			0x8180	# Base location of our variables
-.set VAR_CB_ADDR,		-0x50	# high level read callback addr
-.set VAR_CB_ARG1,		-0x4C	# high level read callback r3
-.set VAR_CB_ARG2,		-0x48	# high level read callback r4
+.set VAR_CB_ADDR,		-0xC4	# high level read callback addr
+.set VAR_CB_ARG1,		-0xC0	# high level read callback r3
+.set VAR_CB_ARG2,		-0xBC	# high level read callback r4
 
 # issue read command
 #

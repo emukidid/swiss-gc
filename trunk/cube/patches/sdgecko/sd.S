@@ -8,22 +8,20 @@
 # memory map for our variables that sit at the top 0x100 of memory
 .set VAR_AREA, 			0x8180	# Base location of our variables
 .set VAR_DISC_1_LBA, 	-0x100	# is the base file sector for disk 1
-.set VAR_DISC_2_LBA, 	-0xF0	# is the base file sector for disk 2
-.set VAR_CUR_DISC_LBA, 	-0xE0	# is the currently selected disk sector
-.set VAR_EXI_BUS_SPD, 	-0xD0	# is the EXI bus speed (192 = 16mhz vs 208 = 32mhz)
-.set VAR_SD_TYPE, 		-0xCC	# is the Card Type (SDHC=0, SD=1)
-.set VAR_EXI_FREQ, 		-0xC8	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
-.set VAR_EXI_SLOT, 		-0xC4	# is the EXI slot (0 = slot a, 1 = slot b)
-.set VAR_DISC_1_ID, 	-0xC0	# is the Disc ID of the first disk
-.set VAR_DISC_2_ID,		-0xA0	# is the Disc ID of the second disk
-.set VAR_32B_BUF,		-0x80	# is a 32 byte area to redirect reads to
-.set VAR_TMP1,  		-0x60	# space for a variable if required
-.set VAR_TMP2,  		-0x5C	# space for a variable if required
-.set VAR_TMP3,  		-0x58	# space for a variable if required
-.set VAR_TMP4,  		-0x54	# space for a variable if required
-.set VAR_CB_ADDR,		-0x50	# high level read callback addr
-.set VAR_CB_ARG1,		-0x4C	# high level read callback r3
-.set VAR_CB_ARG2,		-0x48	# high level read callback r4
+.set VAR_DISC_2_LBA, 	-0xFC	# is the base file sector for disk 2
+.set VAR_CUR_DISC_LBA, 	-0xF8	# is the currently selected disk sector
+.set VAR_EXI_BUS_SPD, 	-0xF4	# is the EXI bus speed (192 = 16mhz vs 208 = 32mhz)
+.set VAR_SD_TYPE, 		-0xF0	# is the Card Type (SDHC=0, SD=1)
+.set VAR_EXI_FREQ, 		-0xDC	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
+.set VAR_EXI_SLOT, 		-0xD8	# is the EXI slot (0 = slot a, 1 = slot b)
+.set VAR_TMP1,  		-0xD4	# space for a variable if required
+.set VAR_TMP2,  		-0xD0	# space for a variable if required
+.set VAR_TMP3,  		-0xCC	# space for a variable if required
+.set VAR_TMP4,  		-0xC8	# space for a variable if required
+.set VAR_CB_ADDR,		-0xC4	# high level read callback addr
+.set VAR_CB_ARG1,		-0xC0	# high level read callback r3
+.set VAR_CB_ARG2,		-0xBC	# high level read callback r4
+.set VAR_PROG_MODE,		-0xB8	# data/code to overwrite GXRMode obj with for 480p forcing
 
 # register map
 # r17 is sd card speed

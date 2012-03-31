@@ -198,15 +198,7 @@ void deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
   *(volatile unsigned int*)VAR_EXI_FREQ = !swissSettings.exiSpeed ? EXI_SPEED16MHZ:EXI_SPEED32MHZ;
   // Device slot (0 or 1)
   *(volatile unsigned int*)VAR_EXI_SLOT = (file->name[0] == 's') ? (file->name[2] == 'b') : (file->name[3] == 'b');
-  // Copy disc headers
-  file->offset = 0;
-  deviceHandler_FAT_readFile(file, (void*)VAR_DISC_1_ID, 32);
-  file->offset = 0;
-  deviceHandler_FAT_readFile(file, (void*)VAR_DISC_2_ID, 32);
-  if(file2) {
-    file2->offset = 0;
-    deviceHandler_FAT_readFile(file2, (void*)VAR_DISC_2_ID, 32);
-  }
+ 
 }
 
 int EXI_ResetSD(int drv) {
