@@ -7,23 +7,22 @@
 // This code is placed either at 0x80001800 or Above Arena Hi (depending on the game)
 // memory map for our variables that sit at the top 0x100 of memory
 #define VAR_AREA 			(0x81800000)		// Base location of our variables
+#define VAR_AREA_SIZE		(0x100)				// Size of our variables block
 #define VAR_DISC_1_LBA 		(VAR_AREA-0x100)	// is the base file sector for disk 1
-#define VAR_DISC_2_LBA 		(VAR_AREA-0xF0)		// is the base file sector for disk 2
-#define VAR_CUR_DISC_LBA 	(VAR_AREA-0xE0)		// is the currently selected disk sector
-#define VAR_EXI_BUS_SPD 	(VAR_AREA-0xD0)		// is the EXI bus speed (16mhz vs 32mhz)
-#define VAR_SD_TYPE 		(VAR_AREA-0xCC)		// is the Card Type (SDHC=0, SD=1)
-#define VAR_EXI_FREQ 		(VAR_AREA-0xC8)		// is the EXI frequency (4 = 16mhz, 5 = 32mhz)
-#define VAR_EXI_SLOT 		(VAR_AREA-0xC4)		// is the EXI slot (0 = slot a, 1 = slot b)
-#define VAR_DISC_1_ID 		(VAR_AREA-0xC0)		// is the Disc ID of the first disk
-#define VAR_DISC_2_ID 		(VAR_AREA-0xA0)		// is the Disc ID of the second disk
-#define VAR_32B_BUF			(VAR_AREA-0x80)		// is a 32 byte area to redirect reads to
-#define VAR_TMP1  			(VAR_AREA-0x60)		// space for a variable if required
-#define VAR_TMP2  			(VAR_AREA-0x5C)		// space for a variable if required
-#define VAR_TMP3  			(VAR_AREA-0x58)		// space for a variable if required
-#define VAR_TMP4  			(VAR_AREA-0x54)		// space for a variable if required
-#define VAR_CB_ADDR			(VAR_AREA-0x50)		// high level read callback addr
-#define VAR_CB_ARG1			(VAR_AREA-0x4C)		// high level read callback r3
-#define VAR_CB_ARG2			(VAR_AREA-0x48)		// high level read callback r4
+#define VAR_DISC_2_LBA 		(VAR_AREA-0xFC)		// is the base file sector for disk 2
+#define VAR_CUR_DISC_LBA 	(VAR_AREA-0xF8)		// is the currently selected disk sector
+#define VAR_EXI_BUS_SPD 	(VAR_AREA-0xF4)		// is the EXI bus speed (16mhz vs 32mhz)
+#define VAR_SD_TYPE 		(VAR_AREA-0xF0)		// is the Card Type (SDHC=0, SD=1)
+#define VAR_EXI_FREQ 		(VAR_AREA-0xDC)		// is the EXI frequency (4 = 16mhz, 5 = 32mhz)
+#define VAR_EXI_SLOT 		(VAR_AREA-0xD8)		// is the EXI slot (0 = slot a, 1 = slot b)
+#define VAR_TMP1  			(VAR_AREA-0xD4)		// space for a variable if required
+#define VAR_TMP2  			(VAR_AREA-0xD0)		// space for a variable if required
+#define VAR_TMP3  			(VAR_AREA-0xCC)		// space for a variable if required
+#define VAR_TMP4  			(VAR_AREA-0xC8)		// space for a variable if required
+#define VAR_CB_ADDR			(VAR_AREA-0xC4)		// high level read callback addr
+#define VAR_CB_ARG1			(VAR_AREA-0xC0)		// high level read callback r3
+#define VAR_CB_ARG2			(VAR_AREA-0xBC)		// high level read callback r4
+#define VAR_PROG_MODE		(VAR_AREA-0xB8)		// data/code to overwrite GXRMode obj with for 480p forcing
 
 // NOTE: cs0 then cs1!
 // ATA registers address        val  - cs0 cs1 a2 a1 a0

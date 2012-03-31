@@ -117,17 +117,6 @@ u32 get_base_addr() {
 	return base_addr;
 }
 
-// BROKEN THIS DOES NOT ENSURE ANYTHING ANYMORE!
-void writeBranchLink(unsigned int sourceAddr,unsigned int destAddr) {
-	unsigned int temp;
-		
-	//write the new instruction to the source
-	temp = ((destAddr)-(sourceAddr));	//calc addr
-	temp &= 0x03FFFFFF;					//extract only addr
-	temp |= 0x4B000001;					//make it a bl opcode
-	*(volatile unsigned int*)sourceAddr = temp;	//write it to the dest
-}
-
 void install_code()
 {
 	DCFlushRange((void*)base_addr,0x1800);
@@ -325,32 +314,6 @@ int Patch_OSRestoreInterrupts(void *addr, u32 length) {
 
 /** SDK VIConfigure patch to force 480p mode */
 
-// Copy me to 0x80002808 - thx qoob
-static const u32 patch_viconfigure_480p[22] = {
-	0x00000002,
-	0x028001E0,
-	0x01E00028,
-	0x00000280,
-	0x01E00000,
-	0x00000000,
-	0x38800006,  		// li          r4, 6
-	0x7C8903A6,  		// mtctr       r4
-	0x3CC08000,  		// lis         r6, 0x8000
-	0x60C42804,  		// ori         r4, r6, 0x2804
-	0x80A40004,  		// lwz         r5, 4 (r4)
-	0x7CA51670,  		// srawi       r5, r5, 2
-	0x90A600CC,  		// stw         r5, 0x00CC (r6)
-	0x3863FFFC,  		// subi        r3, r3, 4
-	0x84A40004,  		// lwzu        r5, 4 (r4)
-	0x94A30004,  		// stwu        r5, 4 (r3)
-	0x4200FFF8,  		// bdnz+       0x80002840 ?
-	0x7C6000A6,  		// mfmsr       r3
-	0x5464045E,  		// rlwinm      r4, r3, 0, 17, 15
-	0x7C800124,  		// mtmsr       r4
-	0x54638FFE,  		// rlwinm      r3, r3, 17, 31, 31
-	0x4E800020  		// blr
-};
-
 int Patch_480pVideo(u8 *data, u32 length) {
 	int i,j;
 	FuncPattern VIConfigureSigs[2] = {	
@@ -370,11 +333,16 @@ int Patch_480pVideo(u8 *data, u32 length) {
 				print_gecko("Found [%s] @ 0x%08X len %i\n", VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].Length);			
 				print_gecko("Writing Jump for [%s] at 0x%08X len %i\n", 
 						VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].PatchLength);
-
-				writeBranchLink((u32)data+i+36,0x80002820);
+				memcpy((void*)VAR_PROG_MODE,&ForceProgressive[0],ForceProgressive_length);	// Copy our patch
+				memcpy((void*)(VAR_PROG_MODE+24),(void*)(data+i+20),16);	// Copy what we'll overwrite here
+				DCFlushRange((void*)VAR_PROG_MODE, ForceProgressive_length);
+				ICInvalidateRange((void*)VAR_PROG_MODE, ForceProgressive_length);
+				*(unsigned int*)(data +i+ 20) = 0x3C000000 | ((VAR_PROG_MODE+24) >> 16); 		// lis		0, 0x8000 (example)   
+				*(unsigned int*)(data +i+ 24) = 0x60000000 | ((VAR_PROG_MODE+24) & 0xFFFF); 	// ori		0, 0, 0x1800 (example)
+				*(unsigned int*)(data +i+ 28) = 0x7C0903A6; // mtctr	0
+				*(unsigned int*)(data +i+ 32) = 0x4E800421; // bctrl, the function we call will blr
 				DCFlushRange((u8*)(data+i), VIConfigureSigs[j].Length);
 				ICInvalidateRange((u8*)(data+i), VIConfigureSigs[j].Length);
-				memcpy((void*)0x80002808,patch_viconfigure_480p,sizeof(patch_viconfigure_480p));
 				return 1;
 			}
 		}

@@ -1,5 +1,34 @@
 #include "asm.h"
 
+/* DVD Struct is as follows (passed in r3):
+struct DVDFileInfo
+{
+0x00	DVDCommandBlock* next;
+0x04    DVDCommandBlock* prev;
+0x08    u32          command;			-- Make me 1
+0x0C    s32          state;				-- Make me 0
+0x10    u32          offset;			-- If 0, set to startAddr + length, else, set to offset += offset
+0x14    u32          length;			-- Set to read length passed in
+0x18    void*        addr;				-- Set to dst passed in
+0x1C    u32          currTransferSize;	-- Set to read length passed in
+0x20    u32          transferredSize;	-- Set to read length passed in
+0x24    DVDDiskID*   id;
+0x28    DVDCBCallback callback;
+0x2C    void*        userData;
+
+0x30    u32             startAddr;      // disk address of file
+0x34    u32             length;         // file size in bytes
+
+0x38    DVDCallback     callback;		-- Set me to the callback function passed in
+}
+*/	
+
+# memory map for our variables that sit at the top 0x100 of memory
+.set VAR_AREA, 			0x8180	# Base location of our variables
+.set VAR_CB_ADDR,		-0xC4	# high level read callback addr
+.set VAR_CB_ARG1,		-0xC0	# high level read callback r3
+.set VAR_CB_ARG2,		-0xBC	# high level read callback r4
+
 # issue read command
 #
 #	r3	dvdstruct
@@ -11,12 +40,12 @@
 .globl DVDReadAsyncInt
 DVDReadAsyncInt:
 
-	stwu    %sp, -0x10(%sp)
+	stwu    %sp, -0x40(%sp)
 	mflr    %r0
 	stw     %r0, 8(%sp)
 
 	stw     %r7,	0x38(%r3)	# Set the callback addr
-	
+
 #Call our code to do the load instead
 	lis		%r7,	0x8000
 	ori		%r7,	%r7,	0x180C
@@ -44,21 +73,21 @@ skip_set_base_offset:
 	add		%r7, 	%r7, %r5	# offset += length;
 	stw     %r7,	0x10(%r3)	# offset is incremented with the read length
 
-#determine if we need to call the callback
+#store info if we'll need to call the callback on the next OSRestoreInterrupts
 	lwz     %r7,	0x38(%r3)
 	cmpwi	%r7,	0
 	beq		skip_cb
-	mtctr	%r7
-	mr		%r4,	%r3
-	mr		%r3,	%r5
-	bctrl
+	lis		%r4,	VAR_AREA
+	stw		%r7,	VAR_CB_ADDR(%r4)	# store callback addr
+	stw		%r5,	VAR_CB_ARG1(%r4)	# store read length
+	stw		%r3,	VAR_CB_ARG2(%r4)	# store dvdstruct addr
 	
 skip_cb:
 	li      %r3,	1
 
 	lwz     %r0, 8(%sp)
 	mtlr    %r0
-	addi    %sp, %sp, 0x10
+	addi    %sp, %sp, 0x40
 	blr
    .globl DVDReadAsyncInt_length
    DVDReadAsyncInt_length:
