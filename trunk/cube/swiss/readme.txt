@@ -1,5 +1,16 @@
 Swiss 0.1 (svn revision 62)
 
+New in svn revision 123:
+- High level type patch support significantly improved (driveless support too)
+- Disc swap code re-written (untested in anything but Tales of Symphonia - requires LOW patch type and disc in drive)
+- Re-wrote patches to use a common assembly code base
+- GX conversion
+- Fixed Luigis Mansion NTSC (from SD, DVD, etc, haven't tested Wiikey Fusion/Wode)
+- Fixed Phantasy Star Online Ep 3 (from DVD so far)
+- USB Gecko debug printing made safer
+- IDE-EXI v1 support partially broken for the time being whilst I fix it again..
+- Too much else to mention, check the SVN log :)
+
 New in svn revision 62:
 - New high level patch (Fixes Super Mario Sunshine and a few other games)
 - Basic Wode support added
