@@ -25,7 +25,7 @@ typedef struct {
 
 #include "devices/dvd/deviceHandler-DVD.h"
 #include "devices/fat/deviceHandler-FAT.h"
-#include "devices/Qoob/deviceHandler-Qoob.h"
+#include "devices/qoob/deviceHandler-Qoob.h"
 #include "devices/wode/deviceHandler-WODE.h"
 #include "devices/memcard/deviceHandler-CARD.h"
 #include "devices/wiikeyfusion/deviceHandler-wiikeyfusion.h"
