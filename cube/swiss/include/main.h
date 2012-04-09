@@ -64,7 +64,8 @@ enum guiPos
 };
 
 //Video Modes (strings)
-#define ProgStr     "NTSC (480p)"
+#define Prog480Str	"NTSC (480p)"
+#define Prog576Str	"PAL (576p)"
 #define NTSCStr     "NTSC (480i)"
 #define PALStr      "PAL (576i)"
 
