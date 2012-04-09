@@ -194,23 +194,49 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
 	while(1) {
 		settings_draw_page(page, option, file);
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
-			&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
-			&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) 
-			&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) 
-			&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)
-			&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+		while (!((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
+			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
+			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_UP) 
+			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) 
+			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_B)
+			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_A)
+			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)
+			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L)));
 		u16 btns = PAD_ButtonsHeld(0);
 		if(btns & PAD_BUTTON_RIGHT) {
-			settings_toggle(page, option, 1, file);
+			// If we're on a button (Back, Next, Save, Exit), allow left/right movement
+			if((page != 1) && (option >= settings_count_pp[page]-2) && option < settings_count_pp[page]) {
+				option++;
+			}
+			else if((page == 1) && (option >= settings_count_pp[page]-3) && option < settings_count_pp[page]) {
+				option++;
+			}
+			else {
+				settings_toggle(page, option, 1, file);
+			}
 		}
 		if(btns & PAD_BUTTON_LEFT) {
-			settings_toggle(page, option, -1, file);
+			// If we're on a button (Back, Next, Save, Exit), allow left/right movement
+			if((page != 1) && (option > settings_count_pp[page]-2)) {
+				option--;
+			}
+			else if((page == 1) && (option > settings_count_pp[page]-3)) {
+				option--;
+			}
+			else {
+				settings_toggle(page, option, -1, file);
+			}
 		}
 		if((btns & PAD_BUTTON_DOWN) && option < settings_count_pp[page])
 			option++;
 		if((btns & PAD_BUTTON_UP) && option > 0)
 			option--;
+		if((btns & PAD_TRIGGER_R) && page < 2) {
+			page++; option = 0;
+		}
+		if((btns & PAD_TRIGGER_L) && page > 0) {
+			page--; option = 0;
+		}
 		if((btns & PAD_BUTTON_B))
 			option = settings_count_pp[page];
 		// Handle all options/buttons here
@@ -275,12 +301,14 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 				page--; option = 0;
 			}
 		}
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
-				&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
-				&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) 
-				&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) 
-				&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) 
-				&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
+		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
+				|| (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
+				|| (PAD_ButtonsHeld(0) & PAD_BUTTON_UP) 
+				|| (PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) 
+				|| (PAD_ButtonsHeld(0) & PAD_BUTTON_B) 
+				|| (PAD_ButtonsHeld(0) & PAD_BUTTON_A)
+				|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)
+				|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L));
 	}
 	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
 }

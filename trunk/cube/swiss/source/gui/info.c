@@ -162,15 +162,25 @@ void show_info() {
 	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
 	while(1) {
 		info_draw_page(page);
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+		while (!((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
+			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
+			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_B)
+			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_A)
+			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)
+			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L)));
 		u16 btns = PAD_ButtonsHeld(0);
-		if((btns & PAD_BUTTON_RIGHT) && page < 2)
+		if(((btns & PAD_BUTTON_RIGHT) || (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)) && page < 2)
 			page++;
-		if((btns & PAD_BUTTON_LEFT) && page > 0)
+		if(((btns & PAD_BUTTON_LEFT) || (PAD_ButtonsHeld(0) & PAD_TRIGGER_L)) && page > 0)
 			page--;
 		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
 			break;
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
+		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
+			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
+			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_B)
+			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_A)
+			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)
+			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L));
 	}
 	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
 }
