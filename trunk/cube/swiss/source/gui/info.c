@@ -140,7 +140,7 @@ void info_draw_page(int page_num) {
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Credits (3/3):");
 		WriteFontStyled(640/2, 115, "Swiss ver 0.2", 1.0f, true, defaultColor);
-		WriteFontStyled(640/2, 140, "by emu_kidid 2011", 0.75f, true, defaultColor);
+		WriteFontStyled(640/2, 140, "by emu_kidid 2012", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 210, "Thanks to", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 228, "Testers & libOGC/dkPPC authors", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 246, "sepp256 for the wonderful GX conversion", 0.75f, true, defaultColor);

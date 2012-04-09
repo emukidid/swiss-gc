@@ -49,6 +49,24 @@ static void ProperScanPADS()	{
 	PAD_ScanPads(); 
 }
 
+void populateVideoStr(GXRModeObj *vmode) {
+	if(vmode == &TVPal576ProgScale) {
+		videoStr = Prog576Str;
+	}
+	else if(vmode == &TVNtsc480Prog) {
+		videoStr = Prog480Str;
+	}
+	else if(vmode == &TVPal576IntDfScale) {
+		videoStr = PALStr;
+	}
+	else if(vmode == &TVNtsc480IntDf) {
+		videoStr = NTSCStr;
+	}
+	else {
+		videoStr = UnkStr;
+	}
+}
+
 /* Initialise Video, PAD, DVD, Font */
 void* Initialise (void)
 {
@@ -63,26 +81,34 @@ void* Initialise (void)
 	
 	
 	__SYS_ReadROM(IPLInfo,256,0);	// Read IPL tag
-	
-	if(VIDEO_HaveComponentCable()) {
-		vmode = &TVNtsc480Prog; //Progressive 480p
-		videoStr = ProgStr;
+
+	// Wii has no IPL tags for "PAL" so let libOGC figure out the video mode
+	if(!is_gamecube()) {
+		vmode = VIDEO_GetPreferredMode(NULL); //Last mode used
 	}
-	else {
-		//try to use the IPL region
-		if(strstr(IPLInfo,"PAL")!=NULL) {
-			vmode = &TVPal528IntDf;         //PAL
-			videoStr = PALStr;
-		}
-		else if(strstr(IPLInfo,"NTSC")!=NULL) {
-			vmode = &TVNtsc480IntDf;        //NTSC
-			videoStr = NTSCStr;
+	else {	// Gamecube, determine based on IPL
+		if(VIDEO_HaveComponentCable()) {
+			if((strstr(IPLInfo,"PAL")!=NULL)) {
+				vmode = &TVPal576ProgScale; //Progressive 576p
+			}
+			else {
+				vmode = &TVNtsc480Prog; //Progressive 480p
+			}
 		}
 		else {
-			vmode = VIDEO_GetPreferredMode(NULL); //Last mode used
-			videoStr = UnkStr;
+			//try to use the IPL region
+			if(strstr(IPLInfo,"PAL")!=NULL) {
+				vmode = &TVPal576IntDfScale;         //PAL
+			}
+			else if(strstr(IPLInfo,"NTSC")!=NULL) {
+				vmode = &TVNtsc480IntDf;        //NTSC
+			}
+			else {
+				vmode = VIDEO_GetPreferredMode(NULL); //Last mode used
+			}
 		}
 	}
+	populateVideoStr(vmode);
 
 	VIDEO_Configure (vmode);
 	xfb[0] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
