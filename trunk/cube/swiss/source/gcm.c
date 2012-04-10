@@ -59,8 +59,8 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 			memcpy(&filename[0],&FST[string_table_offset+filename_offset],255); 
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
-			if(	(strstr(filename,".dol")) || (strstr(filename,".DOL")) || 
-				(strstr(filename,".elf")) || (strstr(filename,".ELF")) || (strstr(filename,"execD.img"))) {
+			if(((strstr(filename,".dol")) || (strstr(filename,".DOL")) || 
+				(strstr(filename,".elf")) || (strstr(filename,".ELF")) || (strstr(filename,"execD.img"))) && size < 24*1024*1024) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
@@ -155,8 +155,8 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 			memcpy(&filename[0],&FST[string_table_offset+filename_offset],255); 
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
-			if(	(strstr(filename,".dol")) || (strstr(filename,".DOL")) || 
-				(strstr(filename,".elf")) || (strstr(filename,".ELF")) || (strstr(filename,"execD.img"))) {
+			if(((strstr(filename,".dol")) || (strstr(filename,".DOL")) || 
+				(strstr(filename,".elf")) || (strstr(filename,".ELF")) || (strstr(filename,"execD.img"))) && size < 24*1024*1024) {
 				filesToPatch[numFiles].offset = (file_offset-fakeAmount)+(tgc_base+fileAreaStart);
 				filesToPatch[numFiles].size = size;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
