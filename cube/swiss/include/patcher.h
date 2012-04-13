@@ -34,6 +34,8 @@ extern u8 DVDCompareDiskId[];
 extern u32 DVDCompareDiskId_length;
 extern u8 ForceProgressive[];
 extern u32 ForceProgressive_length;
+extern u8 ForceProgressive576p[];
+extern u32 ForceProgressive576p_length;
 
 /* Patch code variables block */
 #define VAR_AREA 			(0x81800000)		// Base location of our variables
@@ -70,7 +72,7 @@ extern u32 ForceProgressive_length;
 
 int Patch_DVDHighLevelRead(u8 *data, u32 length);
 int Patch_DVDLowLevelRead(void *addr, u32 length);
-int Patch_480pVideo(u8 *data, u32 length);
+int Patch_ProgVideo(u8 *data, u32 length);
 int Patch_DVDAudioStreaming(u8 *data, u32 length);
 int Patch_DVDStatusFunctions(u8 *data, u32 length);
 void Patch_Fwrite(void *addr, u32 length);

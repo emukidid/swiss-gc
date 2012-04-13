@@ -197,7 +197,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 				patched += Patch_DVDLowLevelRead(buffer, sizeToRead);
 			}
 			patched += Patch_DVDCompareDiskId(buffer, sizeToRead);
-			patched += Patch_480pVideo(buffer, sizeToRead);
+			patched += Patch_ProgVideo(buffer, sizeToRead);
 			patched += Patch_DVDAudioStreaming(buffer, sizeToRead);
 			if(patched) {
 				print_gecko("Seeking in the file..\r\n");

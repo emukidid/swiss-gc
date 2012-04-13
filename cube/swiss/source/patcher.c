@@ -57,7 +57,7 @@ u8 _Read_original_2[38] = {
 };
 
 /* Luigis Mansion NTSC (not Players Choice) */
-u8 _Read_original_3[46] = {
+u8 _Read_original_3[46] = {	//0x801E2E24
 	0x7C, 0x08, 0x02, 0xA6,  // mflr        r0              
 	0x90, 0x01, 0x00, 0x04,  // stw         r0, 4 (sp)      
 	0x38, 0x00, 0x00, 0x01,  // li          r0, 1           
@@ -312,9 +312,47 @@ int Patch_OSRestoreInterrupts(void *addr, u32 length) {
 	return patched;
 }
 
-/** SDK VIConfigure patch to force 480p mode */
+/** SDK VIConfigure patch to force 480p/576p mode */
+u8 video_timing_480p[] = {
+	0x0C,0x01,0xE0,0x00,
+	0x30,0x00,0x30,0x00,
+	0x06,0x00,0x06,0x18,
+	0x18,0x18,0x18,0x04,
+	0x0E,0x04,0x0E,0x04,
+	0x0E,0x04,0x0E,0x04,
+	0x1A,0x01,0xAD,0x40,
+	0x47,0x69,0xA2,0x01,
+	0x75
+};
 
-int Patch_480pVideo(u8 *data, u32 length) {
+u8 video_timing_576p[] = {
+	0x0A,0x02,0x40,0x00,
+	0x3E,0x00,0x3E,0x00,
+	0x06,0x00,0x06,0x14,
+	0x14,0x14,0x14,0x04,
+	0xD8,0x04,0xD8,0x04,
+	0xD8,0x04,0xD8,0x04,
+	0xE2,0x01,0xB0,0x40,
+	0x4B,0x6A,0xAC,0x01,
+	0x7C
+};
+
+void Patch_ProgTiming(void *addr, u32 length) {
+	void *addr_start = addr;
+	void *addr_end = addr+length;	
+	while(addr_start<addr_end) 
+	{
+		if(	memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
+		{
+			memcpy(addr_start, video_timing_576p, sizeof(video_timing_576p));
+			print_gecko("Patched Progressive timing @ %08X\r\n",(u32)addr_start);
+			break;
+		}
+		addr_start += 4;
+	}
+}
+
+int Patch_ProgVideo(u8 *data, u32 length) {
 	int i,j;
 	FuncPattern VIConfigureSigs[2] = {	
 		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure_v1" },
@@ -333,7 +371,12 @@ int Patch_480pVideo(u8 *data, u32 length) {
 				print_gecko("Found [%s] @ 0x%08X len %i\n", VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].Length);			
 				print_gecko("Writing Jump for [%s] at 0x%08X len %i\n", 
 						VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].PatchLength);
-				memcpy((void*)VAR_PROG_MODE,&ForceProgressive[0],ForceProgressive_length);	// Copy our patch
+				if(swissSettings.gameVMode == 2) {
+					memcpy((void*)VAR_PROG_MODE,&ForceProgressive[0],ForceProgressive_length);	// Copy our patch (480p)
+				}
+				else {
+					memcpy((void*)VAR_PROG_MODE,&ForceProgressive576p[0],ForceProgressive576p_length);	// Copy our patch (576p)
+				}
 				memcpy((void*)(VAR_PROG_MODE+24),(void*)(data+i+20),16);	// Copy what we'll overwrite here
 				DCFlushRange((void*)VAR_PROG_MODE, ForceProgressive_length);
 				ICInvalidateRange((void*)VAR_PROG_MODE, ForceProgressive_length);
@@ -343,6 +386,9 @@ int Patch_480pVideo(u8 *data, u32 length) {
 				*(unsigned int*)(data +i+ 32) = 0x4E800421; // bctrl, the function we call will blr
 				DCFlushRange((u8*)(data+i), VIConfigureSigs[j].Length);
 				ICInvalidateRange((u8*)(data+i), VIConfigureSigs[j].Length);
+				if(swissSettings.gameVMode == 4) {
+					Patch_ProgTiming(data, length);	// Patch timing to 576p
+				}
 				return 1;
 			}
 		}

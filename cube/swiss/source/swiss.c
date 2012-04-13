@@ -117,7 +117,7 @@ void ogc_video__reset()
 	if(swissSettings.gameVMode!=3)	{		//if not autodetect
 		switch(swissSettings.gameVMode) {
 			case 1:
-				newmode = &TVPal528IntDf;
+				newmode = &TVPal576IntDfScale;
 				DrawMessageBox(D_INFO,"Video Mode: PAL 50Hz");
 				break;
 			case 0:
@@ -133,6 +133,17 @@ void ogc_video__reset()
 					swissSettings.gameVMode = 0;	// Can't force with no cable
 					newmode = &TVNtsc480IntDf;
 					DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
+				}
+				break;
+			case 4:
+				if(VIDEO_HaveComponentCable()) {
+					newmode = &TVPal576ProgScale;
+					DrawMessageBox(D_INFO,"Video Mode: PAL 576p");
+				}
+				else {
+					swissSettings.gameVMode = 1;	// Can't force with no cable
+					newmode = &TVPal576IntDfScale;
+					DrawMessageBox(D_INFO,"Video Mode: PAL 50Hz");
 				}
 				break;
 			default:
@@ -427,8 +438,8 @@ unsigned int load_app(int mode)
 		Patch_Fwrite(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	// 480p Forcing
-	if(swissSettings.gameVMode == 2) {
-		Patch_480pVideo(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 4)) {
+		Patch_ProgVideo(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	DCFlushRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	ICInvalidateRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
