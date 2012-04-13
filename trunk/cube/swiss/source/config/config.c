@@ -223,6 +223,8 @@ void config_parse(char *configData) {
 						configEntries[configEntriesCount].gameVMode = 2;
 					else if(!strcmp(uiVModeStr[3], value))
 						configEntries[configEntriesCount].gameVMode = 3;
+					else if(!strcmp(uiVModeStr[4], value))
+						configEntries[configEntriesCount].gameVMode = 4;
 				}
 				else if(!strcmp("Mute Audio Streaming", name)) {
 					configEntries[configEntriesCount].muteAudioStreaming = !strcmp("Yes", value) ? 1:0;
@@ -261,6 +263,8 @@ void config_parse(char *configData) {
 						configSwissSettings.uiVMode = 2;
 					else if(!strcmp(uiVModeStr[3], value))
 						configSwissSettings.uiVMode = 3;
+					else if(!strcmp(uiVModeStr[4], value))
+						configSwissSettings.uiVMode = 4;
 				}
 			}
 		}

@@ -15,7 +15,7 @@
 #include "config.h"
 
 SwissSettings tempSettings;
-char *uiVModeStr[] = {"NTSC", "PAL", "Progressive", "Auto"};
+char *uiVModeStr[] = {"NTSC", "PAL", "480p", "Auto", "576p"};
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
 int settings_count_pp[3] = {7, 7, 9};
@@ -120,10 +120,10 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 			case 4:
 				swissSettings.uiVMode += direction;
-				if(swissSettings.uiVMode > 3)
+				if(swissSettings.uiVMode > 4)
 					swissSettings.uiVMode = 0;
 				if(swissSettings.uiVMode < 0)
-					swissSettings.uiVMode = 3;
+					swissSettings.uiVMode = 4;
 			break;
 		}	
 	}
@@ -147,10 +147,10 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 		switch(option) {
 			case 0:
 				swissSettings.gameVMode += direction;
-				if(swissSettings.gameVMode > 3)
+				if(swissSettings.gameVMode > 4)
 					swissSettings.gameVMode = 0;
 				if(swissSettings.gameVMode < 0)
-					swissSettings.gameVMode = 3;
+					swissSettings.gameVMode = 4;
 			break;
 			case 1:
 				swissSettings.useHiLevelPatch ^= 1;
