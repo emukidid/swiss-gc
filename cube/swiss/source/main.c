@@ -170,6 +170,24 @@ void* Initialise (void)
 	return xfb[0];
 }
 
+void load_auto_dol() {
+	sprintf(txtbuffer, "%sboot.dol", deviceHandler_initial->name);
+	FILE *fp = fopen(txtbuffer, "rb");
+	if (fp) {
+		fseek(fp, 0, SEEK_END);
+		int size = ftell(fp);
+		fseek(fp, 0, SEEK_SET);
+		if ((size > 0) && (size < (AR_GetSize() - (64*1024)))) {
+			char *dol = (char*) memalign(32, size);
+			if (dol) {
+				fread(dol, 1, size, fp);
+				DOLtoARAM(dol);
+			}
+		}
+		fclose(fp);
+	}
+}
+
 void load_config() {
 
 	// Try to open up the config .ini in case it hasn't been opened already (SD, IDE-EXI only)
@@ -306,12 +324,14 @@ int main ()
 	deviceHandler_init     =  deviceHandler_FAT_init;
 	deviceHandler_deinit     =  deviceHandler_FAT_deinit;
 	if(deviceHandler_init(deviceHandler_initial)) {
+		load_auto_dol();
 		load_config();
 	}
 	else {
 		deviceHandler_deinit(deviceHandler_initial);
 		deviceHandler_initial = &initial_SD1;
 		if(deviceHandler_init(deviceHandler_initial)) {
+			load_auto_dol();
 			load_config();
 		}
 	}
