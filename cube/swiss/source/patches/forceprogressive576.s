@@ -7,7 +7,7 @@
 
 .globl ForceProgressive576p
 ForceProgressive576p:
-	.long (0x00000006)		# GXRModeObj 576p value
+	.long (0x00000002)		# GXRModeObj 576p value
 	.long (0x028001E0)		# GXRModeObj 576p value
 	.long (0x02400028)		# GXRModeObj 576p value
 	.long (0x00000280)		# GXRModeObj 576p value
