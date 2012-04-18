@@ -13,11 +13,20 @@ ForceProgressive:
 	.long (0x00000280)		# GXRModeObj 480p value
 	.long (0x01E00000)		# GXRModeObj 480p value
 	.long (0x00000000)		# GXRModeObj 480p value
+	.long (0x00000606)
+	.long (0x06060606)
+	.long (0x06060606)
+	.long (0x06060606)
+	.long (0x06060606)
+	.long (0x06060606)
+	.long (0x06060000)
+	.long (0x15161500)
+	.long (0x00000000)
 	nop 					# will be filled in with the instructions we wrote over
 	nop 					# will be filled in with the instructions we wrote over
 	nop 					# will be filled in with the instructions we wrote over
 	nop 					# will be filled in with the instructions we wrote over
-	li          %r4, 6
+	li          %r4, 15
 	mtctr       %r4
 	lis         %r6, VAR_AREA
 	addi        %r4, %r6, VAR_PROG_MODE-4

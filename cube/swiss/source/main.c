@@ -28,6 +28,7 @@
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
+#include "aram/sidestep.h"
 
 #define DEFAULT_FIFO_SIZE    (256*1024)//(64*1024) minimum
 
@@ -178,7 +179,7 @@ void load_auto_dol() {
 		int size = ftell(fp);
 		fseek(fp, 0, SEEK_SET);
 		if ((size > 0) && (size < (AR_GetSize() - (64*1024)))) {
-			char *dol = (char*) memalign(32, size);
+			u8 *dol = (u8*) memalign(32, size);
 			if (dol) {
 				fread(dol, 1, size, fp);
 				DOLtoARAM(dol);

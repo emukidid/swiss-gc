@@ -171,6 +171,7 @@ typedef struct {
 } CIDdata __attribute__((aligned(32)));
 
 void print_gecko(const char* fmt, ...);
-
+extern u32 __SYS_SyncSram();
+extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
 #endif
 
