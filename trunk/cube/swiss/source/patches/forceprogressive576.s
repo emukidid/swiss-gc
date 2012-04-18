@@ -8,16 +8,25 @@
 .globl ForceProgressive576p
 ForceProgressive576p:
 	.long (0x00000002)		# GXRModeObj 576p value
-	.long (0x028001E0)		# GXRModeObj 576p value
-	.long (0x02400028)		# GXRModeObj 576p value
-	.long (0x00000280)		# GXRModeObj 576p value
-	.long (0x02400000)		# GXRModeObj 576p value
+	.long (0x02800210)		# GXRModeObj 576p value
+	.long (0x02100028)		# GXRModeObj 576p value
+	.long (0x00180280)		# GXRModeObj 576p value
+	.long (0x02100000)		# GXRModeObj 576p value
 	.long (0x00000000)		# GXRModeObj 576p value
+	.long (0x00000606)
+	.long (0x06060606)
+	.long (0x06060606)
+	.long (0x06060606)
+	.long (0x06060606)
+	.long (0x06060606)
+	.long (0x06060000)
+	.long (0x15161500)
+	.long (0x00000000)
 	nop 					# will be filled in with the instructions we wrote over
 	nop 					# will be filled in with the instructions we wrote over
 	nop 					# will be filled in with the instructions we wrote over
 	nop 					# will be filled in with the instructions we wrote over
-	li          %r4, 6
+	li          %r4, 15
 	mtctr       %r4
 	lis         %r6, VAR_AREA
 	addi        %r4, %r6, VAR_PROG_MODE-4
