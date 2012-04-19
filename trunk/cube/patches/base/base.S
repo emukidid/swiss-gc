@@ -22,6 +22,7 @@
 .set VAR_CB_ARG1,		-0xC0	# high level read callback r3
 .set VAR_CB_ARG2,		-0xBC	# high level read callback r4
 .set VAR_PROG_MODE,		-0xB8	# data/code to overwrite GXRMode obj with for 480p forcing
+.set VAR_MUTE_AUDIO,	-0x20	# does the user want audio muted during reads?
 
 .section .text
 	.globl main
@@ -127,16 +128,30 @@ setup_for_read:
 	stw 		9,		36(1)		# save r9
 	stw 		10, 	40(1)		# save r10
 	stw 		11, 	44(1)		# save r11
-	stmw		16, 	48(1)		# save r16->r31
+	stmw		16, 	52(1)		# save r16->r31
 
+# Stop Audio if the user wants to	
+	bl			pause_audio
+	stw			3,		48(1)		# store the amount of audio that remained if we stopped audio
+	
 # Read from the device to the destination (device specific code called)
+	lwz			3,		12(1)		# load r3 - dst
+	lwz			4,		16(1)		# load r4 - len
+	lwz			5,		20(1)		# load r5 - offset
 	bl			do_read 			# do_read(dst,size, offset);
 
 # Flush the destination - needed?
 	lwz			3,		12(1)		# load dst
 	lwz			4,		16(1)		# load len
 	bl			dcache_flush_icache_inv
-	
+
+# Resume Audio if the user wanted it stopped
+	lwz			3,		48(1)		# load the amount of audio that remained if we stopped audio
+	cmpwi		5,	3,	0
+	beq			5, skip_resume_audio
+	bl			resume_audio
+
+skip_resume_audio:
 # Reload regs from the game
 	lwz			3,		12(1)		# load r3
 	lwz			4,		16(1)		# load r4
@@ -147,7 +162,7 @@ setup_for_read:
 	lwz 		9,		36(1)		# load r9
 	lwz 		10, 	40(1)		# load r10
 	lwz 		11, 	44(1)		# load r11
-	lmw			16, 	48(1)		# load r16->r31
+	lmw			16, 	52(1)		# load r16->r31
 	lwz 		0,		0(1)		# load lr
 	mtlr		0					# restore lr
 	addi		1,		1, 128		# kill stack frame
@@ -214,5 +229,30 @@ skip_cb:
 	lwz 	0,	0(1)		# load lr
 	mtlr	0				# restore lr
 	addi	1,	1, 0x20		# kill stack frame
+	blr
+
+pause_audio:
+	lis		3,	VAR_AREA
+	lwz		3,	VAR_MUTE_AUDIO(3)	# load user option
+	cmpwi	5, 	3, 0
+	beq		5, 	pause_audio_end		# if the user doesn't want to mute audio
+	lis		3,	0xCC00
+	lhz		4,	0x5036(3)
+	rlwinm	4,	4, 17, 30, 31
+	cmpwi	5,	4, 0
+	beq		5,	pause_audio_end		# we weren't playing anything, so return
+	li		4,	0
+	sth		4,	0x5036(3)			# stop audio
+	li		3,	1
+	blr
+pause_audio_end:
+	li		3,	0
+	blr
+
+resume_audio:
+	lis		3,	0xCC00
+	lhz		4,	0x5036(3)
+	ori		4,	4, 0x8000
+	sth		4,	0x5036(3) # 0xCC005036|0x8000
 	blr
 	

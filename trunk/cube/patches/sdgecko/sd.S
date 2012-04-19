@@ -22,6 +22,7 @@
 .set VAR_CB_ARG1,		-0xC0	# high level read callback r3
 .set VAR_CB_ARG2,		-0xBC	# high level read callback r4
 .set VAR_PROG_MODE,		-0xB8	# data/code to overwrite GXRMode obj with for 480p forcing
+.set VAR_MUTE_AUDIO,	-0x20	# does the user want audio muted during reads?
 
 # register map
 # r17 is sd card speed
