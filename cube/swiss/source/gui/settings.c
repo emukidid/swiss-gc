@@ -191,7 +191,7 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 		page = 2;
 	}
 		
-	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
 		settings_draw_page(page, option, file);
 		while (!((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
@@ -201,7 +201,8 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_B)
 			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_A)
 			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)
-			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L)));
+			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L)))
+			{ VIDEO_WaitVSync (); }
 		u16 btns = PAD_ButtonsHeld(0);
 		if(btns & PAD_BUTTON_RIGHT) {
 			// If we're on a button (Back, Next, Save, Exit), allow left/right movement
@@ -308,7 +309,8 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 				|| (PAD_ButtonsHeld(0) & PAD_BUTTON_B) 
 				|| (PAD_ButtonsHeld(0) & PAD_BUTTON_A)
 				|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)
-				|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L));
+				|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L))
+			{ VIDEO_WaitVSync (); }
 	}
-	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 }

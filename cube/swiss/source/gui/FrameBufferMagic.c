@@ -458,7 +458,7 @@ void DrawMenuButtons(int selection)
 
 int DrawYesNoDialog(char *message) {
 	int sel = 0;
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	while(1) {
 		doBackdrop();
 		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
@@ -466,15 +466,17 @@ int DrawYesNoDialog(char *message) {
 		DrawSelectableButton(100, 280, -1, 310, "Yes", (sel==1) ? B_SELECTED:B_NOSELECT,-1);
 		DrawSelectableButton(380, 280, -1, 310, "No", (!sel) ? B_SELECTED:B_NOSELECT,-1);
 		DrawFrameFinish();
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A))
+			{ VIDEO_WaitVSync (); }
 		u16 btns = PAD_ButtonsHeld(0);
 		if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
 			sel^=1;
 		}
 		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
 			break;
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)))
+			{ VIDEO_WaitVSync (); }
 	}
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	return sel;
 } 

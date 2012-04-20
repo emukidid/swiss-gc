@@ -213,7 +213,7 @@ void main_loop()
 { 
 	int i = 0,max,j;	
 	
-	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
 	if(needsDeviceChange) {
 		swissSettings.defaultDevice = 0;	// We don't care if a subsequent device is "default"
 		needsDeviceChange = 0;
@@ -240,7 +240,7 @@ void main_loop()
 			if(files<1) { break;}
 			curMenuLocation=ON_FILLIST;
 		}
-		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
 		doBackdrop();
 		// print files
 		i = MIN(MAX(0,curSelection-FILES_PER_PAGE/2),MAX(0,files-FILES_PER_PAGE));
@@ -258,7 +258,7 @@ void main_loop()
 			else if(btns & PAD_BUTTON_RIGHT){curMenuSelection = (curMenuSelection + 1) % MENU_MAX;	}
 		}
 		if(deviceHandler_initial && ((btns & PAD_BUTTON_B)||(curMenuLocation==ON_FILLIST)))	{
-			while(PAD_ButtonsHeld(0) & PAD_BUTTON_B);
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_B){ VIDEO_WaitVSync (); }
 			curMenuLocation=ON_FILLIST;
 			textFileBrowser(&allFiles, files);
 		}
@@ -311,14 +311,14 @@ int main ()
 	swissSettings.useHiMemArea = 0;
 	swissSettings.disableInterrupts = 1;
 	swissSettings.useHiLevelPatch = swissSettings.hasDVDDrive ? 0:1;	// Hi-level works better with no DVD drive
-	swissSettings.debugUSB = 0;
+	swissSettings.debugUSB = 1;
 	swissSettings.gameVMode = 3;	// Auto video mode
 	swissSettings.exiSpeed = 1;		// 32MHz
 	swissSettings.uiVMode = 3; 		// Auto UI mode
 	config_copy_swiss_settings(&swissSettings);
 	// Start up the BBA if it exists
-	//init_network_thread();
-	//init_httpd_thread();
+	init_network_thread();
+	init_httpd_thread();
 
 	// Try to init SD cards here and load config
 	deviceHandler_initial = &initial_SD0;
