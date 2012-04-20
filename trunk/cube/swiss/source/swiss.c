@@ -28,6 +28,7 @@
 
 #include "swiss.h"
 #include "main.h"
+#include "httpd.h"
 #include "gcars.h"
 #include "exi.h"
 #include "patcher.h"
@@ -1358,6 +1359,14 @@ void select_copy_device()
 
 void select_device()
 {  
+	if(is_httpd_in_use()) {
+		doBackdrop();
+		DrawMessageBox(D_INFO,"Can't load device while HTTP is processing!");
+		DrawFrameFinish();
+		sleep(5);
+		return;
+	}
+
 	if(!swissSettings.defaultDevice) {
 		dvdDiscTypeStr = NotInitStr;
 		while(1) {

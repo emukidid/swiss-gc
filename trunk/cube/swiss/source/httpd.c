@@ -12,7 +12,8 @@
 #include "main.h"
 #include "devices/dvd/deviceHandler-DVD.h"
 
-static	lwp_t httd_handle = (lwp_t)NULL;
+static int httpd_in_use = 0;
+static lwp_t httd_handle = (lwp_t)NULL;
 const static char http_200[] = "HTTP/1.1 200 OK\r\n";
 
 const static char indexdata[] = "<html> \
@@ -101,13 +102,17 @@ void *httpd (void *arg) {
 							sprintf(temp, http_len_hdr, DISC_SIZE);
 							net_send(csock, temp, strlen(temp), 0);
 							// Loop and pump DVD data out
+							httpd_in_use = 1;
 							int ofs = 0;
 							char *dvd_buffer = (char*)memalign(32,2048);
 							for(ofs = 0; ofs < DISC_SIZE; ofs+=2048) {
 								DVD_Read(dvd_buffer,ofs,2048);
-								net_send(csock, dvd_buffer, 2048, 0);
+								if(net_send(csock, dvd_buffer, 2048, 0) != 2048) {
+									break;
+								}
 							}
 							free(dvd_buffer);
+							httpd_in_use = 0;
 						}
 						else {
 							net_send(csock, http_html_hdr, strlen(http_html_hdr), 0);
@@ -121,13 +126,17 @@ void *httpd (void *arg) {
 						sprintf(temp, http_len_hdr, 2*1024*1024);
 						net_send(csock, temp, strlen(temp), 0);
 						// Loop and pump IPL data out
+						httpd_in_use = 1;
 						int i = 0;
 						char *ipl_buffer = (char*)memalign(32,2048);
 						for(i = 0; i < 2*1024*1024; i+=2048) {
 							__SYS_ReadROM(ipl_buffer,2048,i);
-							net_send(csock, ipl_buffer, 2048, 0);
+							if(net_send(csock, ipl_buffer, 2048, 0) != 2048) {
+								break;
+							}
 						}
 						free(ipl_buffer);
+						httpd_in_use = 0;
 					}
 					net_close (csock);
 				}
@@ -135,6 +144,10 @@ void *httpd (void *arg) {
 		}
 	}
 	return NULL;
+}
+
+int is_httpd_in_use() {
+	return httpd_in_use;
 }
 
 void init_httpd_thread() {
