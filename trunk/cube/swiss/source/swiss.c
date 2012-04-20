@@ -207,7 +207,8 @@ void textFileBrowser(file_handle** directory, int num_files)
 			DrawFileBrowserButton(50,90+(j*50), 550, 90+(j*50)+50, getRelativeName((*directory)[i].name),&((*directory)[i]), (i == curSelection) ? B_SELECTED:B_NOSELECT,-1);
 		}
 		DrawFrameFinish();
-		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN));
+		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN))
+			{ VIDEO_WaitVSync (); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) > 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || PAD_StickY(0) < -16) {curSelection = (curSelection + 1) % num_files;	}
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_A))	{
@@ -243,7 +244,8 @@ void textFileBrowser(file_handle** directory, int num_files)
 			usleep(50000 - abs(PAD_StickY(0)*256));
 		}
 		else {
-			while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)));
+			while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)))
+				{ VIDEO_WaitVSync (); }
 		}
 	}
 }
@@ -268,7 +270,8 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 			DrawSelectableButton(50,90+(j*50), 550, 90+(j*50)+50, getRelativeName((directories)[i].name), (i == idx) ? B_SELECTED:B_NOSELECT,-1);
 		}
 		DrawFrameFinish();
-		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN));
+		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN))
+			{ VIDEO_WaitVSync (); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) > 16){	idx = (--idx < 0) ? num_files-1 : idx;}
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || PAD_StickY(0) < -16) {idx = (idx + 1) % num_files;	}
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_A))	{
@@ -296,7 +299,8 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 			memcpy(selection, directory, sizeof(file_handle));
 			break;
 		}
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)));
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)))
+			{ VIDEO_WaitVSync (); }
 	}
 	free(directories);
 }
@@ -565,7 +569,7 @@ void play_mp3() {
 	DrawFrameFinish();
 	MP3Player_PlayFile(&offset, &mp3Reader, NULL);
 	while(MP3Player_IsPlaying() && (!(PAD_ButtonsHeld(0) & PAD_BUTTON_B))){
-		usleep(5000);
+		VIDEO_WaitVSync ();
 	}
 	MP3Player_Stop();
 }
@@ -588,23 +592,23 @@ void manage_file() {
 		}
 		WriteFontStyled(640/2, 300, "Press an option to Continue, or B to return", 1.0f, true, defaultColor);
 		DrawFrameFinish();
-		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
 		int option = 0;
 		while(1) {
 			u32 buttons = PAD_ButtonsHeld(0);
 			if(buttons & PAD_BUTTON_X) {
 				option = COPY_OPTION;
-				while(PAD_ButtonsHeld(0) & PAD_BUTTON_X);
+				while(PAD_ButtonsHeld(0) & PAD_BUTTON_X){ VIDEO_WaitVSync (); }
 				break;
 			}
 			if(deviceHandler_deleteFile && (buttons & PAD_BUTTON_Y)) {
 				option = MOVE_OPTION;
-				while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
+				while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
 				break;
 			}
 			if(deviceHandler_deleteFile && (buttons & PAD_TRIGGER_Z)) {
 				option = DELETE_OPTION;
-				while(PAD_ButtonsHeld(0) & PAD_TRIGGER_Z);
+				while(PAD_ButtonsHeld(0) & PAD_TRIGGER_Z){ VIDEO_WaitVSync (); }
 				break;
 			}
 			if(buttons & PAD_BUTTON_A) {
@@ -994,7 +998,7 @@ void install_game()
 		sleep(2);
 		return;
 	}
-	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
   
 	DrawFrameStart();
 	DrawEmptyBox(10,120, vmode->fbWidth-10, 470, COLOR_BLACK);
@@ -1006,11 +1010,11 @@ void install_game()
 	while(1) {
 		u16 btns = PAD_ButtonsHeld(0);
 		if(btns & PAD_BUTTON_A) {
-			while((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+			while((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 			break;
 		}
 		if(btns & PAD_BUTTON_B) {
-			while((PAD_ButtonsHeld(0) & PAD_BUTTON_B));
+			while((PAD_ButtonsHeld(0) & PAD_BUTTON_B)){ VIDEO_WaitVSync (); }
 			return;
 		}
 	}
@@ -1203,11 +1207,11 @@ int info_game()
 
 	WriteFontStyled(640/2, 370, "Cheats(Y) - Settings(X) - Exit(B) - Continue (A)", 0.75f, true, defaultColor);
 	DrawFrameFinish();
-	while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A));
-	while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+	while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	while(1){
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
-			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
 			save_config(config);
 			free(config);
 			return cheats_game();
@@ -1237,18 +1241,20 @@ void select_speed()
 		DrawSelectableButton(100, 280, -1, 310, "Compatible", (!swissSettings.exiSpeed) ? B_SELECTED:B_NOSELECT,-1);
 		DrawSelectableButton(380, 280, -1, 310, "Fast", (swissSettings.exiSpeed) ? B_SELECTED:B_NOSELECT,-1);
 		DrawFrameFinish();
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A))
+			{ VIDEO_WaitVSync (); }
 		u16 btns = PAD_ButtonsHeld(0);
 		if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)){
 			swissSettings.exiSpeed ^= 1;
 		 }
 		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
 			break;
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)))
+			{ VIDEO_WaitVSync (); }
 	}
 	if(curDevice == SD_CARD)
 		sdgecko_setSpeed(swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 }
 
 int select_slot()
@@ -1261,16 +1267,18 @@ int select_slot()
 		DrawSelectableButton(100, 280, -1, 310, "Slot A", (slot==0) ? B_SELECTED:B_NOSELECT,-1);
 		DrawSelectableButton(380, 280, -1, 310, "Slot B", (slot==1) ? B_SELECTED:B_NOSELECT,-1);
 		DrawFrameFinish();
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A))
+			{ VIDEO_WaitVSync (); }
 		u16 btns = PAD_ButtonsHeld(0);
 		if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
 			slot^=1;
 		}
 		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
 			break;
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)))
+			{ VIDEO_WaitVSync (); }
 	}
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	return slot;
 }
 
@@ -1298,7 +1306,8 @@ void select_copy_device()
 			WriteFont(100, 300, "<-");
 		}
 		DrawFrameFinish();
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A))
+			{ VIDEO_WaitVSync (); }
 		u16 btns = PAD_ButtonsHeld(0);
 		if((btns & PAD_BUTTON_RIGHT) && curCopyDevice < 2)
 			curCopyDevice++;
@@ -1306,9 +1315,10 @@ void select_copy_device()
 			curCopyDevice--;
 		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
 			break;
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)))
+			{ VIDEO_WaitVSync (); }
 	}
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	// Deinit any existing deviceHandler state
 	if(deviceHandler_dest_deinit && deviceHandler_dest_initial) deviceHandler_dest_deinit( deviceHandler_dest_initial );
 	// Change all the deviceHandler pointers based on the current device
@@ -1387,7 +1397,8 @@ void select_device()
 				WriteFont(100, 300, "<-");
 			}
 			DrawFrameFinish();
-			while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+			while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A))
+				{ VIDEO_WaitVSync (); }
 			u16 btns = PAD_ButtonsHeld(0);
 			if((btns & PAD_BUTTON_RIGHT) && curDevice < 6)
 				curDevice++;
@@ -1399,9 +1410,10 @@ void select_device()
 				deviceHandler_initial = NULL;
 				return;
 			}
-			while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)));
+			while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)))
+				{ VIDEO_WaitVSync (); }
 		}
-		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 		// Deinit any existing deviceHandler state
 		if(deviceHandler_deinit && deviceHandler_initial) deviceHandler_deinit( deviceHandler_initial );
 		// Change all the deviceHandler pointers based on the current device

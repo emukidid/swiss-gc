@@ -159,7 +159,7 @@ void info_draw_page(int page_num) {
 
 void show_info() {
 	int page = 0;
-	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
 		info_draw_page(page);
 		while (!((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
@@ -167,7 +167,8 @@ void show_info() {
 			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_B)
 			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_A)
 			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)
-			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L)));
+			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L)))
+			{ VIDEO_WaitVSync (); }
 		u16 btns = PAD_ButtonsHeld(0);
 		if(((btns & PAD_BUTTON_RIGHT) || (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)) && page < 2)
 			page++;
@@ -180,7 +181,8 @@ void show_info() {
 			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_B)
 			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_A)
 			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)
-			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L));
+			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L))
+			{ VIDEO_WaitVSync (); }
 	}
-	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 }

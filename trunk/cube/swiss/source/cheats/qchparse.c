@@ -177,7 +177,7 @@ int QCH_Find(char *gamename, curGameCheats *chts)
   if(!cheatNumGames) {
     return 0;
   }
-  while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+  while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
   curChtSelection=getBestMatch(gamename);
 	while(1){
   	DrawFrameStart();
@@ -192,7 +192,8 @@ int QCH_Find(char *gamename, curGameCheats *chts)
 		DrawFrameFinish();
 		while ( !(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && 
 		        !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) &&
-		        !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B));
+		        !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B))
+		{ VIDEO_WaitVSync (); }
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) curChtSelection = (--curChtSelection < 0) ? cheatNumGames-1 : curChtSelection;
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)curChtSelection = (curChtSelection + 1) % cheatNumGames;
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) curChtSelection = ((curChtSelection-=(CHTS_PER_PAGE-1)) < 0) ? cheatNumGames-1 : curChtSelection;
@@ -202,11 +203,11 @@ int QCH_Find(char *gamename, curGameCheats *chts)
       break;
 		}
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_B)) { 
-  		return 1;
+			return 1;
 		}
-		while((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || (PAD_ButtonsHeld(0) & PAD_BUTTON_UP));
+		while((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || (PAD_ButtonsHeld(0) & PAD_BUTTON_UP)) { VIDEO_WaitVSync (); }
 	}
-	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
 	
   int apply = 0;
 	int res = QCH_Parse(chts);
@@ -231,13 +232,14 @@ int QCH_Find(char *gamename, curGameCheats *chts)
 		DrawFrameFinish();
 		while ( !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)  && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) &&
 		        !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) &&
-		        !(PAD_ButtonsHeld(0) & PAD_BUTTON_START));
+		        !(PAD_ButtonsHeld(0) & PAD_BUTTON_START))
+			{ VIDEO_WaitVSync (); }
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) curChtSelection = (--curChtSelection < 0) ? chts->numCheats-1 : curChtSelection;
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)curChtSelection = (curChtSelection + 1) % chts->numCheats;
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_A)) { chts->cheats[curChtSelection].enabled^=1; while((PAD_ButtonsHeld(0) & PAD_BUTTON_A)); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_B)) break;
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_START)) {apply=1; break;}
-	  while((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || (PAD_ButtonsHeld(0) & PAD_BUTTON_UP));
+	  while((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || (PAD_ButtonsHeld(0) & PAD_BUTTON_UP)) { VIDEO_WaitVSync (); }
 	}
 	if(apply) {
   	DrawFrameStart();

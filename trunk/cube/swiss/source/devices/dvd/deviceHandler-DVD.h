@@ -20,6 +20,7 @@ int  deviceHandler_DVD_deinit(file_handle* file);
 
 int gettype_disc();
 int initialize_disc(u32 streaming);
+char *dvd_error_str();
 
 #endif
 
