@@ -354,10 +354,13 @@ void Patch_ProgTiming(void *addr, u32 length) {
 
 int Patch_ProgVideo(u8 *data, u32 length) {
 	int i,j;
-	FuncPattern VIConfigureSigs[3] = {	
-		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure_v1" },
-		{0x798, 105, 44, 12, 38, 63, 0, 0, "VIConfigure_v2"},
-		{0x73C, 100, 43, 13, 34, 61, 0, 0, "VIConfigure_v3"}
+	FuncPattern VIConfigureSigs[6] = {
+		{0x68C,  87, 41,  6, 31, 60, 0, 0, "VIConfigure_v1"},
+		{0x6AC,  90, 43,  6, 32, 60, 0, 0, "VIConfigure_v2"},
+		{0x73C, 100, 43, 13, 34, 61, 0, 0, "VIConfigure_v3"},
+		{0x798, 105, 44, 12, 38, 63, 0, 0, "VIConfigure_v4"},
+		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure_v5"},
+		{0x804, 110, 44, 13, 49, 63, 0, 0, "VIConfigure_v6"}
 	};
 	if((swissSettings.gameVMode != 2) && (swissSettings.gameVMode != 4)) {
 		return 0;
@@ -366,7 +369,7 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 	{
 		if( *(u32*)(data + i ) != 0x7C0802A6 )
 			continue;
-		for(j = 0; j < 3; j++) {
+		for(j = 0; j < 6; j++) {
 			if( find_pattern( (u8*)(data+i), length, &VIConfigureSigs[j] ) )
 			{
 				print_gecko("Found [%s] @ 0x%08X len %i\n", VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].Length);			
@@ -380,23 +383,24 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 					memcpy((void*)VAR_PROG_MODE,&ForceProgressive576p[0],ForceProgressive576p_length);	// Copy our patch (576p)
 					print_gecko("Patched 576p Progressive mode \r\n");
 				}
-				memcpy((void*)(VAR_PROG_MODE+60),(void*)(data+i+20),16);	// Copy what we'll overwrite here
+				memcpy((void*)(VAR_PROG_MODE+40),(void*)(data+i+12),16);	// Copy what we'll overwrite here
 				DCFlushRange((void*)VAR_PROG_MODE, ForceProgressive_length);
 				ICInvalidateRange((void*)VAR_PROG_MODE, ForceProgressive_length);
-				*(unsigned int*)(data +i+ 20) = 0x3C000000 | ((VAR_PROG_MODE+60) >> 16); 		// lis		0, 0x8000 (example)   
-				*(unsigned int*)(data +i+ 24) = 0x60000000 | ((VAR_PROG_MODE+60) & 0xFFFF); 	// ori		0, 0, 0x1800 (example)
-				*(unsigned int*)(data +i+ 28) = 0x7C0903A6; // mtctr	0
-				*(unsigned int*)(data +i+ 32) = 0x4E800421; // bctrl, the function we call will blr
+				*(unsigned int*)(data +i+ 12) = 0x3C000000 | ((VAR_PROG_MODE+40) >> 16); 		// lis		0, 0x8000 (example)   
+				*(unsigned int*)(data +i+ 16) = 0x60000000 | ((VAR_PROG_MODE+40) & 0xFFFF); 	// ori		0, 0, 0x1800 (example)
+				*(unsigned int*)(data +i+ 20) = 0x7C0903A6; // mtctr	0
+				*(unsigned int*)(data +i+ 24) = 0x4E800421; // bctrl, the function we call will blr
 				if(swissSettings.gameVMode == 4) {
 					switch (j) {
-						case 0: *(unsigned int*)(data+i+1160) = 0x38C00001; break;	// li		6, 1
-						case 1: *(unsigned int*)(data+i+1032) = 0x38C00001; break;	// li		6, 1
+						case 0: *(unsigned int*)(data+i+ 808) = 0x38A00001; break;	// li		5, 1
+						case 1: *(unsigned int*)(data+i+ 840) = 0x38A00001; break;	// li		5, 1
 						case 2: *(unsigned int*)(data+i+ 956) = 0x38000001; break;	// li		0, 1
+						case 3: *(unsigned int*)(data+i+1032) = 0x38C00001; break;	// li		6, 1
+						case 4: *(unsigned int*)(data+i+1160) = 0x38C00001; break;	// li		6, 1
+						case 5: *(unsigned int*)(data+i+1180) = 0x38E00001; break;	// li		7, 1
 					}
 					Patch_ProgTiming(data, length);	// Patch timing to 576p
 				}
-				DCFlushRange((u8*)(data+i), VIConfigureSigs[j].Length);
-				ICInvalidateRange((u8*)(data+i), VIConfigureSigs[j].Length);
 				return 1;
 			}
 		}
