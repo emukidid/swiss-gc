@@ -311,7 +311,7 @@ int main ()
 	swissSettings.useHiMemArea = 0;
 	swissSettings.disableInterrupts = 1;
 	swissSettings.useHiLevelPatch = swissSettings.hasDVDDrive ? 0:1;	// Hi-level works better with no DVD drive
-	swissSettings.debugUSB = 1;
+	swissSettings.debugUSB = 0;
 	swissSettings.gameVMode = 3;	// Auto video mode
 	swissSettings.exiSpeed = 1;		// 32MHz
 	swissSettings.uiVMode = 3; 		// Auto UI mode
