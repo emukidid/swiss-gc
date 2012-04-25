@@ -14,6 +14,7 @@
 #include "ata.h"
 #include "exi.h"
 #include "bba.h"
+#include "wkf.h"
 
 char topStr[256];
 
@@ -79,8 +80,12 @@ void info_draw_page(int page_num) {
 			sprintf(topStr, "IPL: Wii IPL");
 		}
 		WriteFont(30, 150, topStr);
-		sprintf(topStr, "DVD: %02X %02X%02X/%02X (%02X)",driveVersion[2],driveVersion[0],driveVersion[1],driveVersion[3],driveVersion[4]);
-		WriteFont(30, 185, topStr);
+		if(curDevice != WKF) {
+			sprintf(topStr, "DVD: %02X %02X%02X/%02X (%02X)",driveVersion[2],driveVersion[0],driveVersion[1],driveVersion[3],driveVersion[4]);
+		} else {
+			sprintf(topStr, "WKF Serial: %s",wkfGetSerial());
+		}
+			WriteFont(30, 185, topStr);
 		sprintf(topStr, "Video: %s",videoStr);
 		WriteFont(30, 220, topStr);
 		sprintf(topStr,"ECID: %08X:%08X:%08X",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));

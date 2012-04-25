@@ -36,6 +36,7 @@
 #include "qchparse.h"
 #include "dvd.h"
 #include "gcm.h"
+#include "wkf.h"
 #include "settings.h"
 #include "aram/sidestep.h"
 #include "gui/FrameBufferMagic.h"
@@ -809,6 +810,27 @@ void load_file()
 			}
 			if((strstr(fileName,".MP3")!=NULL) || (strstr(fileName,".mp3")!=NULL)) {
 				play_mp3();
+				return;
+			}
+			if((strstr(fileName,".FZN")!=NULL) || (strstr(fileName,".fzn")!=NULL)) {
+				if(curFile.size != 0x1D0000) {
+					DrawFrameStart();
+					DrawMessageBox(D_WARN, "File Size must be 0x1D0000 bytes!");
+					DrawFrameFinish();
+					sleep(2);
+					return;
+				}
+				DrawFrameStart();
+				DrawMessageBox(D_INFO, "Reading Flash File ...");
+				DrawFrameFinish();
+				u8 *flash = (u8*)memalign(32,0x1D0000);
+				deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
+				deviceHandler_readFile(&curFile,flash,0x1D0000);
+				wkfWriteFlash(flash);
+				DrawFrameStart();
+				DrawMessageBox(D_INFO, "Flashing Complete !!");
+				DrawFrameFinish();
+				sleep(2);
 				return;
 			}
 			if(!((strstr(fileName,".iso")!=NULL) || (strstr(fileName,".gcm")!=NULL) 
