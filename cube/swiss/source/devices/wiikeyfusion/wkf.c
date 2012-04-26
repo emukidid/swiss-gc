@@ -41,8 +41,11 @@ unsigned int __wkfCmdImm(unsigned int cmd, unsigned int p1, unsigned int p2) {
 	wkf[6] = 0;
 	wkf[8] = 0;
 	wkf[7] = 1;
-	while(wkf[7] & 1);	// Wait for IMM command to finish up
-	return wkf[8];
+	int retries = 1000000;
+	while(( wkf[7] & 1) && retries) {
+		retries --;						// Wait for IMM command to finish up
+	}
+	return !retries ? -1 : wkf[8];
 }
 
 // ok
@@ -125,8 +128,7 @@ void __wkfReadSectors(void* dst, unsigned int len, u32 offset) {
 int wkfSpiRead(unsigned char *buf, unsigned int addr, int len) {
 	int i;
 	for (i=0; i<len; i++) {
-		u32 ret = __wkfSpiReadUC(addr+i);
-		buf[i]  = (u8)(ret&0xFF);
+		buf[i]  = __wkfSpiReadUC(addr+i);
 		if((i%4096)==0)
 			print_gecko("Dumped %08X bytes (byte: %02X)\r\n", i, buf[i]);
 	}

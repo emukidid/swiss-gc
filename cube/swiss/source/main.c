@@ -23,6 +23,7 @@
 #include "bba.h"
 #include "exi.h"
 #include "dvd.h"
+#include "wkf.h"
 #include "httpd.h"
 #include "config.h"
 #include "gui/FrameBufferMagic.h"
@@ -157,10 +158,7 @@ void* Initialise (void)
 		dvd_read_id();
 		drive_version(&driveVersion[0]);
 		swissSettings.hasDVDDrive = *(u32*)&driveVersion[0] ? 1 : 0;
-		if(swissSettings.hasDVDDrive) {
-			dvd_motor_off();
-		}
-		else {
+		if(!swissSettings.hasDVDDrive) {
 			DrawFrameStart();
 			DrawMessageBox(D_INFO, "No DVD Drive Detected !!");
 			DrawFrameFinish();
@@ -223,7 +221,7 @@ void main_loop()
 		// If the user selected a device, make sure it's ready before we browse the filesystem
 		deviceHandler_deinit( deviceHandler_initial );
 		deviceHandler_init( deviceHandler_initial );
-		if(curDevice==SD_CARD) { 
+		if(curDevice==SD_CARD && !swissSettings.defaultDevice) { 
 			load_config();
 		}
 	}
@@ -320,20 +318,51 @@ int main ()
 	init_network_thread();
 	init_httpd_thread();
 
-	// Try to init SD cards here and load config
-	deviceHandler_initial = &initial_SD0;
-	deviceHandler_init     =  deviceHandler_FAT_init;
-	deviceHandler_deinit     =  deviceHandler_FAT_deinit;
-	if(deviceHandler_init(deviceHandler_initial)) {
-		load_auto_dol();
-		load_config();
+	// Are we working with a Wiikey Fusion?
+	if(__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF) {
+		print_gecko("Detected Wiikey Fusion with SPI Flash ID: %08X\r\n",__wkfSpiReadId());
+		// Yes, go straight to the file list!
+		swissSettings.defaultDevice = 1;
+		curDevice = WKF;
 	}
 	else {
-		deviceHandler_deinit(deviceHandler_initial);
-		deviceHandler_initial = &initial_SD1;
+		// Try to init SD cards here and load config
+		deviceHandler_initial = &initial_SD0;
+		deviceHandler_init     =  deviceHandler_FAT_init;
+		deviceHandler_deinit     =  deviceHandler_FAT_deinit;
 		if(deviceHandler_init(deviceHandler_initial)) {
+			print_gecko("Detected SDGecko in Slot A\r\n");
 			load_auto_dol();
 			load_config();
+			if(swissSettings.defaultDevice)
+				curDevice = SD_CARD;
+		}
+		else {
+			deviceHandler_deinit(deviceHandler_initial);
+			deviceHandler_initial = &initial_SD1;
+			if(deviceHandler_init(deviceHandler_initial)) {
+				print_gecko("Detected SDGecko in Slot B\r\n");
+				load_auto_dol();
+				load_config();
+				if(swissSettings.defaultDevice)
+					curDevice = SD_CARD;
+			}
+		}
+	}
+	
+	// If no device has been selected yet to browse ..
+	if(!swissSettings.defaultDevice) {
+		print_gecko("No default boot device detected, trying DVD!\r\n");
+		// Do we have a DVD drive with a ready medium we can perhaps browse then?
+		u8 driveReallyExists[8];
+		drive_version(&driveReallyExists[0]);
+		if(*(u32*)&driveReallyExists[0]) {
+			dvd_read_id();
+			if(!dvd_get_error()) {
+				print_gecko("DVD Medium is up, using it as default device\r\n");
+				swissSettings.defaultDevice = 1;
+				curDevice = DVD_DISC;
+			}
 		}
 	}
 	
