@@ -1449,9 +1449,6 @@ void select_device()
 		if(deviceHandler_deinit && deviceHandler_initial) deviceHandler_deinit( deviceHandler_initial );
 		// Change all the deviceHandler pointers based on the current device
 	}
-	else {
-		curDevice = SD_CARD;
-	}
 	int slot = 0;
 	switch(curDevice) {
 		case SD_CARD:
