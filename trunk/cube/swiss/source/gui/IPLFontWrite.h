@@ -11,7 +11,7 @@
 
 #include "FrameBufferMagic.h"
 
-#define wait_press_A() ({while((PAD_ButtonsHeld(0) & PAD_BUTTON_A)); while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_A));})
+#define wait_press_A() ({while((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){VIDEO_WaitVSync();} while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_A)){VIDEO_WaitVSync();}})
 
 extern GXColor defaultColor;
 extern GXColor disabledColor;
