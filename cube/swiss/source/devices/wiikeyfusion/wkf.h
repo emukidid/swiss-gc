@@ -18,7 +18,7 @@ void wkfWriteOffset(int offset);
 int wkfSpiRead(unsigned char *buf, unsigned int addr, int len);
 void wkfWriteFlash(unsigned char *flashImg);
 char *wkfGetSerial();
-void wkfRead(void* dst, int len, u32 offset);
+void wkfRead(void* dst, int len, u64 offset);
 unsigned int __wkfSpiReadId();
 #endif
 

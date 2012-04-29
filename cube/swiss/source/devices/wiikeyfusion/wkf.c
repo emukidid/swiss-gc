@@ -114,9 +114,9 @@ void __wkfFlashPage(const unsigned char *pageData, unsigned int addr) {
 }
 
 // Reads DVD sectors (returns 0 on success)
-void __wkfReadSectors(void* dst, unsigned int len, u32 offset) {
+void __wkfReadSectors(void* dst, unsigned int len, u32 sector) {
 	wkf[2] = 0xA8000000;
-	wkf[3] = (u32)(offset>>2);
+	wkf[3] = (u32)(sector<<9);
 	wkf[4] = len;
 	wkf[5] = (u32)dst;
 	wkf[6] = len;
@@ -177,21 +177,6 @@ void wkfWriteFlash(unsigned char *flashImg) {
 	
 	print_gecko("Should be 0x1C: %02X\r\n", __wkfSpiRdSR());
   	print_gecko("0x80000: %02X\r\n", __wkfSpiReadUC(0x80000));
-/*
-	__wkfSpiWriteEnable();
-	print_gecko("Should be 0x1E: %02X\r\n", __wkfSpiRdSR());
-	__wkfSpiUnlockFwPages(1);
-	print_gecko("Should be 0x04: %02X\r\n", __wkfSpiRdSR());
-	__wkfSpiWriteEnable();
-	print_gecko("Should be 0x04: %02X\r\n", __wkfSpiRdSR());
-	__wkfSpiAAIFirst(0, 0x55, 0xAA);	
-	__wkfSpiWriteDisable();
-  	print_gecko("%02X%02X\r\n", __wkfSpiReadUC(0), __wkfSpiReadUC(1) );
-
-	__wkfSpiUnlockFwPages(1);
-	__wkfSpiErasePage(0);
-	__wkfSpiUnlockFwPages(7);
-	print_gecko("%02X\r\n", __wkfSpiReadUC(0) );*/
 	print_gecko("Done!\r\n");
 	print_gecko("Sleeping for 2.. \r\n");
 	sleep(2);
@@ -221,13 +206,13 @@ unsigned int wkfGetSlotStatus() {
 	return __wkfCmdImm(0xDF000000, 0x00010000, 0x00000000);
 }
 
-void wkfRead(void* dst, int len, u32 offset)
+void wkfRead(void* dst, int len, u64 offset)
 {
 	u8 *sector_buffer = &wkfBuffer[0];
 	while (len)
 	{
-		u32 sector = offset / 2048;
-		__wkfReadSectors(sector_buffer, 2048, sector * 2048);
+		u32 sector = (u32)(offset >> 11);
+		__wkfReadSectors(sector_buffer, 2048, sector);
 		u32 off = offset & 2047;
 
 		int rl = 2048 - off;
@@ -260,7 +245,7 @@ void wkfInit() {
 	wkfWriteOffset(0);
 	
 	unsigned int switches = wkfReadSwitches();
-	print_gecko("GOT Switches: %08X", switches);
+	print_gecko("GOT Switches: %08X\r\n", switches);
 
 	// SD card detect
 	if ((wkfGetSlotStatus() & 0x000F0000)==0x00070000) {
@@ -303,7 +288,8 @@ void wkfInit() {
 // 0 on Success, -1 on Error
 int wkfReadSectors(int chn, u32 sector, unsigned int numSectors, unsigned char *dest) 
 {
-	wkfRead(dest, numSectors * 512, sector * 512);
+	// This is confusing as we're reading 512b sectors from a device that can only address 2048b sectors
+	wkfRead(dest, numSectors * 512, (u64)((u64)sector * 512));
 	return 0;
 }
 
