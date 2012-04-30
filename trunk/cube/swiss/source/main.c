@@ -289,7 +289,9 @@ void main_loop()
 		}
 	}
 }
-
+//#define FLASH_WKF_MODE 1
+//extern u8 _1_5fw_bin[];
+//extern u8 swiss_bin[];
 
 /****************************************************************************
 * Main
@@ -321,6 +323,21 @@ int main ()
 	// Are we working with a Wiikey Fusion?
 	if(__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF) {
 		print_gecko("Detected Wiikey Fusion with SPI Flash ID: %08X\r\n",__wkfSpiReadId());
+#ifdef FLASH_WKF_MODE
+		DrawFrameStart();
+		DrawMessageBox(D_INFO, "PRESS A TO FLASH Wiikey Fusion !!");
+		DrawFrameFinish();
+		wait_press_A();
+		DrawFrameStart();
+		DrawMessageBox(D_INFO, "I take NO responsibility for ANY BRICKS. Press A");
+		DrawFrameFinish();
+		wait_press_A();
+		wkfWriteFlash(swiss_bin, NULL);
+		DrawFrameStart();
+		DrawMessageBox(D_INFO, "Flashing Complete!! Please Reboot!!");
+		DrawFrameFinish();
+		while(1);
+#endif		
 		// Yes, go straight to the file list!
 		swissSettings.defaultDevice = 1;
 		curDevice = WKF;

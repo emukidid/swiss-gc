@@ -145,8 +145,8 @@ char *wkfGetSerial() {
 	return &wkfSerial[0];
 }
 
-// Takes a 0x1D0000 length ISO image for the wiikey fusion
-void wkfWriteFlash(unsigned char *flashImg) {
+// Takes a 0x1D0000 length ISO image for the wiikey fusion menu, and an optional firmwareImg
+void wkfWriteFlash(unsigned char *menuImg, unsigned char *firmwareImg) {
 	int page_num = 0;
 	int perc=0,prevperc=0;
 
@@ -163,23 +163,55 @@ void wkfWriteFlash(unsigned char *flashImg) {
 
 		print_gecko("Writing Flash Page at %08X\r\n",page_num<<12);
 		__wkfSpiUnlockFwPages(1);
-		__wkfFlashPage(flashImg+(page_num<<12),page_num<<12);
+		__wkfFlashPage(menuImg+(page_num<<12),page_num<<12);
 		__wkfSpiUnlockFwPages(7);
 		
 		perc = (page_num/(float)(0x1D0000/0x1000))*100;
 		if(prevperc != perc) {
 			DrawFrameStart();
-			DrawProgressBar(perc, "Flashing in Progress Do NOT Power Off !!");
+			DrawProgressBar(perc, "Menu flashing in progress. Do NOT Power Off !!");
 			DrawFrameFinish();
 		}
 		prevperc = perc;
+	}
+	sleep(1);
+	if(firmwareImg) {
+		for(page_num = 0; page_num < 3; page_num++) {
+			print_gecko("Erasing Flash Page at %08X\r\n",0x1E1000+(page_num*0x1000));
+			__wkfSpiUnlockFwPages(1);
+			__wkfSpiErasePage(0x1E1000+(page_num*0x1000));
+			__wkfSpiUnlockFwPages(7);
+
+			print_gecko("Writing Flash Page at %08X\r\n",0x1E1000+(page_num*0x1000));
+			__wkfSpiUnlockFwPages(1);
+			__wkfFlashPage(firmwareImg+(page_num*0x1000),0x1E1000+(page_num*0x1000));
+			__wkfSpiUnlockFwPages(7);
+			
+			print_gecko("Erasing Flash Page at %08X\r\n",0x1F1000+(page_num*0x1000));
+			__wkfSpiUnlockFwPages(1);
+			__wkfSpiErasePage(0x1F1000+(page_num*0x1000));
+			__wkfSpiUnlockFwPages(7);
+
+			print_gecko("Writing Flash Page at %08X\r\n",0x1F1000+(page_num*0x1000));
+			__wkfSpiUnlockFwPages(1);
+			__wkfFlashPage(firmwareImg+(page_num*0x1000),0x1F1000+(page_num*0x1000));
+			__wkfSpiUnlockFwPages(7);
+			
+			perc = (page_num/(float)(3))*100;
+			if(prevperc != perc) {
+				DrawFrameStart();
+				DrawProgressBar(perc, "Firmware flashing in progress. Do NOT Power Off !!");
+				DrawFrameFinish();
+			}
+			prevperc = perc;
+		}
 	}
 	
 	print_gecko("Should be 0x1C: %02X\r\n", __wkfSpiRdSR());
   	print_gecko("0x80000: %02X\r\n", __wkfSpiReadUC(0x80000));
 	print_gecko("Done!\r\n");
 	print_gecko("Sleeping for 2.. \r\n");
-	sleep(2);
+	sleep(1);
 }
 
 // Not sure what this does.
