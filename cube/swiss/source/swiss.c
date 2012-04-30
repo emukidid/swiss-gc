@@ -826,7 +826,7 @@ void load_file()
 				u8 *flash = (u8*)memalign(32,0x1D0000);
 				deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
 				deviceHandler_readFile(&curFile,flash,0x1D0000);
-				wkfWriteFlash(flash);
+				wkfWriteFlash(flash, NULL);
 				DrawFrameStart();
 				DrawMessageBox(D_INFO, "Flashing Complete !!");
 				DrawFrameFinish();
