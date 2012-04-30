@@ -1,0 +1,60 @@
+How it roughly works on the DVD Drive:
+Audio Streaming works by telling the DVD Drive to Start Playing a Stream from disc offset X for Y length.
+The drive will internally convert the adpcm like data to pcm and then ship it off to the DSP to be resampled/mixed in with any audio that may be playing.
+
+How we can make it work with a DMA based DVD Drive replacement:
+1. Install a custom Ext Interrupt handler which will check DVD reads if they are our Audio Streaming reads or normal.
+2. On Audio Stream command received (DVDStopStreamAtEndAsync(0xE1000000,u32 addr, u32 len);), queue read for 4096 bytes of adpcm data.
+2. On Audio Stream queued read complete (detected from our custom Ext Interrupt handler), decode the adpcm data + downsample from 48043Hz to 32000Hz.
+3. On AIStartDMA, store the memory address and length somewhere from the DSP registers.
+4. Watch out for the DSP mail message (in DSPReadMailFromDSP: 0xDCD10002) to arrive, mix in our decoded/downsampled stream in with the stream which is about to be played (the addr/len we stored in step 3). Then repeat from step 1 with stream offset+=4096;
+
+Note1: 4096 bytes of adpcm decodes to 3584 samples per channel, so 3584 * 2 channels * 2 bytes per sample = 14336 bytes.
+Note2: Implement a response to DVDLowRequestAudioStatus
+
+
+Steps to implement this:
+1. Use a standard DVD drive and an Audio streaming game (Wave Race: Blue Storm).
+2. Log the DVD Audio Streaming & Read commands via a normal disc.
+3. Disable the DVD Audio Streaming commands and then implement them with the method described above.
+4. Try this on a DVD replacement (Wode, Wiikey Fusion).
+
+
+DVD Functions from http://www.crazynation.org/GC/GC_DD_TECH/GCTech.htm:
+
+-- 
+DVDLowRequestAudioStatus E2xx0000
+
+xx=0 is stream playing?
+response: 0,0,0,y
+y=1 yes;0=no
+
+xx=1 what is the current address
+response: y,y,y,y
+y=address of current audio buffer that is burning on disk with 0x2000 granularity
+remember address is actaul byte offset>>2
+i.e. it has a granularity of 0x8000 bytes which is 0x2000
+
+xx=2 what was the start address of currently playing audio stream
+response: starting address of current audio stream >>2
+
+xx=3 what was the length of currently playing audio stream
+response: length of current audio stream
+--
+
+--
+DVDCancelStreamAsync E1010000,xxxxxxxx,yyyyyyyy
+
+response: 0,0,0,0
+cancel current audio stream
+--
+
+--
+DVDStopStreamAtEndAsync E1000000,xxxxxxxx,yyyyyyyy
+response: 0,0,0,0
+start audio stream at x with length y
+if x and y are zero then will stop audio stream at end of buffer.
+if not zero then will add another stream to queue, when current one finishes
+then next one will be played.
+Queue is only 1 level deep, and is replaced by last command issued.
+--
