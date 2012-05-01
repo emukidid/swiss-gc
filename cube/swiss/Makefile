@@ -52,6 +52,7 @@ SOURCES		:=  source \
               source/devices/fat \
               source/devices/memcard \
               source/devices/qoob \
+			  source/devices/usbgecko \
               source/devices/wode \
 			  source/devices/wiikeyfusion \
               source/elmchan \
