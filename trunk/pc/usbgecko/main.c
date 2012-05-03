@@ -231,11 +231,13 @@ int main (int argc, char **argv) {
 				// compare, open file.
 				if(strcmp((const char*)&served_file, &filename[0])) {
 					if(served_file_fp) {
+						printf("Closed File %s\n",served_file);
 						fclose(served_file_fp);
 						served_file_fp = NULL;
 					}	
 					strcpy((char*)served_file, &filename[0]);
 					served_file_fp = fopen(&served_file[0], "rb");
+					printf("Opened File %s\n",served_file);
 				}
 			}
 			else if(resp == ASK_LOCKFILE) {
