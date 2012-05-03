@@ -24,130 +24,117 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include "gecko.h"
 
 #ifndef __WIN32__
 #include <termios.h>
+#define FTDI_PACKET_SIZE 3968
 #else
 #define	WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include "FTD2XX.H"
+#define FTDI_PACKET_SIZE 0xF7D8
 #endif
-
-#include "gecko.h"
-
-#define FTDI_PACKET_SIZE 3968
-
-// TODO
-// this whole approach blocks, how do i implement a timeout with tty's?
 
 #ifndef __WIN32__
 static int fd_gecko = -1;
 #else
-static HANDLE handle_gecko = NULL;
+FT_HANDLE fthandle;	// Handle of the device to be opened and used for all functions
+FT_STATUS status;	// Variable needed for FTDI Library functions
+DWORD TxSent;
+DWORD RxSent;
+int returnvalue;
 #endif
 
 int gecko_open (const char *dev) {
 #ifndef __WIN32__
-        struct termios newtio;
+	struct termios newtio;
 
-        fd_gecko = open (dev, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
+	fd_gecko = open (dev, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
 
-        if (fd_gecko == -1) {
-                perror ("gecko_open");
-                return 1;
-        }
+	if (fd_gecko == -1) {
+			perror ("gecko_open");
+			return 1;
+	}
 
-        if (fcntl (fd_gecko, F_SETFL, 0)) {
-                perror ("F_SETFL on serial port");
-                return 1;
-        }
+	if (fcntl (fd_gecko, F_SETFL, 0)) {
+			perror ("F_SETFL on serial port");
+			return 1;
+	}
 
-        if (tcgetattr(fd_gecko, &newtio)) {
-                perror ("tcgetattr");
-                return 1;
-        }
+	if (tcgetattr(fd_gecko, &newtio)) {
+			perror ("tcgetattr");
+			return 1;
+	}
 
-        cfmakeraw (&newtio);
+	cfmakeraw (&newtio);
 
-        newtio.c_cflag |= CRTSCTS | CS8 | CLOCAL | CREAD;
+	newtio.c_cflag |= CRTSCTS | CS8 | CLOCAL | CREAD;
 
-        if (tcsetattr (fd_gecko, TCSANOW, &newtio)) {
-                perror ("tcsetattr");
-                return 1;
-        }
+	if (tcsetattr (fd_gecko, TCSANOW, &newtio)) {
+			perror ("tcsetattr");
+			return 1;
+	}
+	gecko_flush ();
 #else
-        COMMTIMEOUTS timeouts;
-		DCB config;
-        handle_gecko = CreateFile (dev, GENERIC_READ | GENERIC_WRITE, 0, 0,
-                                   OPEN_EXISTING, 0, 0);
+	// Open by Serial Number
+	status = FT_OpenEx("GECKUSB0", FT_OPEN_BY_SERIAL_NUMBER, &fthandle);
+	if(status != FT_OK) {
+		printf("Error: Couldn't connect to USB Gecko. Please check Installation\n");
+		exit(0);
+	}
+	// Reset device			
+	status = FT_ResetDevice(fthandle);
+	if(status != FT_OK) {
+		printf("Error: Couldnt Reset Device %d\n",status);
+		FT_Close(fthandle);
+		exit(0);
+	}
 
-								   config.DCBlength = sizeof(config);
-
-
-		if((GetCommState(handle_gecko, &config) == 0))
-		{
-			fprintf(stderr,"Get configuration port has a problem.");
-			return 1;
-		}
-
-		config.BaudRate = 9600;
-		config.StopBits = ONESTOPBIT;
-		config.Parity = NOPARITY; 
-		config.ByteSize = DATABITS_8;
-		config.fDtrControl = 0;
-		config.fRtsControl = 0;
-
-		if (!SetCommState(handle_gecko, &config))
-		{
-			fprintf(stderr, "Failed to Set Comm State Reason: %d\n",(unsigned int)GetLastError());
-			return 1;
-		}
-
-		printf("Current Settings\n Baud Rate %d Parity %d Byte Size %d Stop Bits %d\n", (unsigned int)config.BaudRate, 
-        (unsigned int)config.Parity, config.ByteSize, config.StopBits);
-
-								   
-        GetCommTimeouts (handle_gecko, &timeouts);
-
-        timeouts.ReadIntervalTimeout = MAXDWORD; 
-        timeouts.ReadTotalTimeoutMultiplier = 0;
-        timeouts.ReadTotalTimeoutConstant = 0;
-        timeouts.WriteTotalTimeoutMultiplier = 0;
-        timeouts.WriteTotalTimeoutConstant = 0;
-
-        if (!SetCommTimeouts (handle_gecko, &timeouts)) {
-                fprintf (stderr, "error setting timeouts on port\n");
-                return 1;
-        }
-
-        if (!SetCommMask (handle_gecko, 0)) {
-                fprintf (stderr, "error setting communications event mask\n");
-                return 1;
-        }
+	status = FT_SetTimeouts(fthandle,0,0);	// 0 Second Timeout
+	if(status != FT_OK) {
+		printf("Error: Timeouts failed to set %d\n",status);
+		FT_Close(fthandle);
+		exit(0);
+	}	
+	// Purge buffers		
+	status = FT_Purge(fthandle,FT_PURGE_RX);
+	if(status != FT_OK)	{
+		printf("Error: Problem clearing buffers %d\n",status);
+		FT_Close(fthandle);
+		exit(0);
+	}
+	status = FT_Purge(fthandle,FT_PURGE_TX);
+	if(status != FT_OK) {
+		printf("Error: Problem clearing buffers %d\n",status);
+		FT_Close(fthandle);
+		exit(0);
+	}
+	status = FT_SetUSBParameters(fthandle,65536,0);	// Set to 64K packet size (USB 2.0 Max)
+	if(status != FT_OK)	{
+		printf("Error: Couldnt Set USB Parameters %d\n",status);
+		FT_Close(fthandle);
+		exit(0);
+	}
+	Sleep(150);
 #endif
-
-        gecko_flush ();
-
-        return 0;
+	return 0;
 }
 
 void gecko_close () {
 #ifndef __WIN32__
-        if (fd_gecko > 0)
-                close (fd_gecko);
+	if (fd_gecko > 0)
+		close (fd_gecko);
 #else
-        CloseHandle (handle_gecko);
+	FT_Close(fthandle);
 #endif
 }
 
 void gecko_flush () {
 #ifndef __WIN32__
-        // TODO doesnt seem to work with ftdi-sio
-        // i need a way to check if data is actually available
-        tcflush (fd_gecko, TCIOFLUSH);
-#else
-        PurgeComm (handle_gecko, PURGE_RXCLEAR | PURGE_TXCLEAR |
-                   PURGE_TXABORT | PURGE_RXABORT);
-
+	// TODO doesnt seem to work with ftdi-sio
+	// i need a way to check if data is actually available
+	tcflush (fd_gecko, TCIOFLUSH);
 #endif
 }
 static char returnbyte = 0;
@@ -161,81 +148,96 @@ void gecko_send_byte(unsigned char *byte) {
 }
 
 int gecko_read (void *buf, size_t count) {
-        size_t left, chunk;
 #ifndef __WIN32__
-        size_t res;
+	size_t left, chunk;
+	size_t res;
+
+	left = count;
+	while (left) {
+		chunk = left;
+		if (chunk > FTDI_PACKET_SIZE)
+			chunk = FTDI_PACKET_SIZE;
+
+		res = read (fd_gecko, buf, chunk);
+		if (res < 1) {
+			perror ("gecko_read");
+			return 1;
+		}
+		left -= res;
+		buf += res;
+		usleep(100);
+	}
 #else
-        DWORD res;
+
+	size_t left, chunk;
+	left = count;
+	while (left) {
+		chunk = left;
+		if (chunk > FTDI_PACKET_SIZE)
+			chunk = FTDI_PACKET_SIZE;
+
+		status = FT_Read(fthandle, buf, chunk, &RxSent);	// Read in the data
+	
+		if (status != FT_OK) { // Check read ok
+			printf("Error: Read Error. Closing\n");
+			FT_Close(fthandle);	// Close device as fatal error
+			exit(-1);
+		}
+		left -= chunk;
+		buf += chunk;
+	}
 #endif
-
-        left = count;
-        while (left) {
-                chunk = left;
-                if (chunk > FTDI_PACKET_SIZE)
-                        chunk = FTDI_PACKET_SIZE;
-
-#ifndef __WIN32__
-                res = read (fd_gecko, buf, chunk);
-                if (res < 1) {
-                        perror ("gecko_read");
-                        return 1;
-                }
-#else
-                if (!ReadFile (handle_gecko, buf, chunk, &res, NULL)) {
-                        fprintf (stderr, "gecko_read\n");
-                        return 1;
-                }
-#endif
-
-                left -= res;
-                buf += res;
-				usleep(100);
-        }
-
-        return 0;
+	return 0;
 }
 
-int gecko_write (const void *buf, size_t count) {
-        size_t left, chunk;
+int gecko_write (void *buf, size_t count) {
 #ifndef __WIN32__
-        size_t res;
+	size_t left, chunk;
+	size_t res;
+	left = count;
+
+	while (left) {
+			chunk = left;
+			if (chunk > FTDI_PACKET_SIZE)
+					chunk = FTDI_PACKET_SIZE;
+
+			res = write (fd_gecko, buf, chunk);
+			if (res < 1) {
+					perror ("gecko_write");
+					return 1;
+			}
+
+			left -= res;
+			buf += res;
+
+			// does this work with ftdi-sio?
+			if (tcdrain (fd_gecko)) {
+					perror ("gecko_drain");
+					return 1;
+			}
+		usleep(100);
+	}
 #else
-        DWORD res;
+	size_t left, chunk;
+	left = count;
+
+	while (left) {
+		chunk = left;
+		if (chunk > FTDI_PACKET_SIZE)
+				chunk = FTDI_PACKET_SIZE;
+
+		status = FT_Write(fthandle, buf, chunk, &TxSent);	// Read in the data
+
+		if (status != FT_OK) {	// Check read ok
+			printf("Error: Write Error. Closing.\n");
+			FT_Close(fthandle);	// Close device as fatal error
+			exit(-1);
+		}
+		left -= chunk;
+		buf += chunk;
+	}
+	
 #endif
-
-        left = count;
-
-        while (left) {
-                chunk = left;
-                if (chunk > FTDI_PACKET_SIZE)
-                        chunk = FTDI_PACKET_SIZE;
-
-#ifndef __WIN32__
-                res = write (fd_gecko, buf, count);
-                if (res < 1) {
-                        perror ("gecko_write");
-                        return 1;
-                }
-#else
-                if (!WriteFile (handle_gecko, buf, chunk, &res, NULL)) {
-                        fprintf (stderr, "gecko_write\n");
-                        return 1;
-                }
-#endif
-
-                left -= res;
-                buf += res;
-
-#ifndef __WIN32__
-                // does this work with ftdi-sio?
-                if (tcdrain (fd_gecko)) {
-                        perror ("gecko_drain");
-                        return 1;
-                }
-#endif
-			usleep(100);
-        }
-
-        return 0;
+	return 0;
 }
 

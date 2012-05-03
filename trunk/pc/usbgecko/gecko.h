@@ -26,7 +26,7 @@ int gecko_open (const char *dev);
 void gecko_close ();
 void gecko_flush ();
 int gecko_read (void *buf, size_t count);
-int gecko_write (const void *buf, size_t count);
+int gecko_write (void *buf, size_t count);
 unsigned char gecko_read_byte();
 void gecko_send_byte(unsigned char *byte);
 #endif

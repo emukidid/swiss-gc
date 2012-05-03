@@ -10,7 +10,7 @@ CC = $(PREFIX)gcc
 STRIP = strip
 
 CFLAGS = -Wall -Wextra -Os -g -pipe
-LFLAGS =
+LFLAGS = -L. -lFTD2XX
 
 BIN = swissserver$(BIN_EXT)
 
@@ -27,7 +27,7 @@ strip:
 	$(STRIP) -g $(BIN)
 
 $(BIN): $(OBJS)
-	$(CC) $(LFLAGS) $(OBJS) -o $@
+	$(CC) $(LFLAGS) $(OBJS) -o $@ $(LFLAGS)
 
 %o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
