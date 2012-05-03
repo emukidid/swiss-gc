@@ -57,7 +57,7 @@ int deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, unsign
 			++num_entries;
 			*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 		}
-		sprintf((*dir)[i].name, "%s/%s", dirName, entry->name);
+		sprintf((*dir)[i].name, "%s", entry->name);
 		(*dir)[i].offset		= 0;
 		(*dir)[i].size			= entry->size;
 		(*dir)[i].fileAttrib	= entry->fileAttrib;
