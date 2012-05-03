@@ -84,8 +84,6 @@ char *default_tty = "/dev/tty.usbserial-GECKUSB0";
 #else
 char *default_tty = "/dev/ttyUSB0";
 #endif
-#else
-char *default_tty = NULL;
 #endif
 
 void wait_for_ack () {
@@ -151,7 +149,7 @@ void cache_path() {
 }
 
 void send_file_data(usb_data_req *req) {
-	printf("Read File: offset %08X, size %i      \r", req->offset, req->size);
+	printf("Read File: offset %08X, size %i          \r", req->offset, req->size);
 	if(served_file_fp) {
 		fseek(served_file_fp, req->offset, SEEK_SET);
 		// Read and Send
@@ -164,12 +162,13 @@ void send_file_data(usb_data_req *req) {
 }
 
 int main (int argc, char **argv) {
-        struct stat st;
-        char *tty;
        
         printf ("swissserver " SWISSSERVER_VERSION "\n"
                 "coded by emu_kidid for Swiss + USB Gecko\n\n");
 
+        char *tty = NULL;
+#ifndef __WIN32__
+        struct stat st;
         tty = getenv (envvar);
         if (!tty)
                 tty = default_tty;
@@ -180,17 +179,13 @@ int main (int argc, char **argv) {
         if (!tty) {
                 fprintf (stderr, "Please set the environment variable %s to "
                          "your usbgecko "
-#ifndef __WIN32__
                          "tty device (eg \"/dev/ttyUSB0\")"
-#else
-                         "COM port (eg \"COM3\")"
-#endif
                          "\n", envvar);
                 exit (EXIT_FAILURE);
         }
 
         printf ("Using: %s\n\n", tty);	
-
+#endif
         if (gecko_open (tty)) {
                 fprintf (stderr, "unable to open the device\n");
                 exit (EXIT_FAILURE);
