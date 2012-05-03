@@ -16,7 +16,7 @@
 #include "usbgecko.h"
 
 file_handle initial_USBGecko =
-	{ ".",     // directory
+	{ "./",     // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
 	  0,        // size
@@ -25,15 +25,10 @@ file_handle initial_USBGecko =
 	  0
 	};
 
+extern char *getRelativeName(char *str);
+	
 int deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
   
-	char *dirName = &ffile->name[0];
-	int len = strlen(ffile->name);
-	while(ffile->name[len-1] != '.') {
-		len--;
-	}
-	dirName = &ffile->name[len-1];
-	
 	// Set everything up to read
 	int num_entries = 0, i = 0;
 	file_handle *entry = NULL;
@@ -49,7 +44,7 @@ int deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, unsign
 	DrawMessageBox(D_INFO,"Read directory!");
 	DrawFrameFinish();
 	// Read each entry of the directory
-	int res = usbgecko_open_dir(dirName);
+	int res = usbgecko_open_dir(&ffile->name[0]);
 	if(!res) return -1;
 	while( (entry = usbgecko_get_entry()) != NULL ){
 		// Make sure we have room for this one
