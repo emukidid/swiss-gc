@@ -25,11 +25,6 @@
 #define VAR_PROG_MODE		(VAR_AREA-0xB8)		// data/code to overwrite GXRMode obj with for 480p forcing
 #define VAR_MUTE_AUDIO		(VAR_AREA-0x20)		// does the user want audio muted during reads?
 
-#define EXI_SPEED32MHZ				5			/*!< EXI device frequency 32MHz */
-#define EXI_READ					0			/*!< EXI transfer type read */
-#define EXI_WRITE					1			/*!< EXI transfer type write */
-#define EXI_READWRITE				2			/*!< EXI transfer type read-write */
-
 #define __lwbrx(base,index)			\
 ({	register u32 res;				\
 	__asm__ volatile ("lwbrx	%0,%1,%2" : "=r"(res) : "b%"(index), "r"(base) : "memory"); \
@@ -40,6 +35,7 @@
 	((u32)(((u32)(v) >> (s)) & ((0x01 << (w)) - 1)))
 
 typedef unsigned int u32;
+typedef int s32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 
@@ -53,158 +49,137 @@ inline u32 bswap32(u32 val) {
 	return __lwbrx(&tmp,0);
 }
 
-inline void exi_select()
-{
-	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
-	exi[5] = (exi[5] & 0x405) | (208);
-}
+#define EXI_CHAN1SR		*(volatile unsigned long*) 0xCC006814 // Channel 1 Status Register
+#define EXI_CHAN1CR		*(volatile unsigned long*) 0xCC006820 // Channel 1 Control Register
+#define EXI_CHAN1DATA	*(volatile unsigned long*) 0xCC006824 // Channel 1 Immediate Data
 
-inline void exi_deselect()
-{
-	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
-	exi[5] &= 0x405;
-}
+#define EXI_TSTART			1
 
-void exi_imm(void* data, int len, int mode)
-{
-	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
-	if (mode != EXI_READ)
-		exi[9] = *(unsigned long*)data;
-	else
-		exi[9] = -1;
-	// Tell EXI if this is a read or a write
-	exi[8] = ((len - 1) << 4) | (mode << 2) | 1;
-	// Wait for it to do its thing
-	while (exi[8] & 1);
 
-	if (mode != EXI_WRITE)
+static unsigned int gecko_sendbyte(s32 chn, char data)
+{
+	unsigned int i = 0;
+
+	EXI_CHAN1SR = 0x000000D0;
+	EXI_CHAN1DATA = 0xB0000000 | (data << 20);
+	EXI_CHAN1CR = 0x19;
+	
+	while((EXI_CHAN1CR) & EXI_TSTART);
+	i = EXI_CHAN1DATA;
+	EXI_CHAN1SR = 0;
+	
+	if (i&0x04000000)
 	{
-		// Read the 4 byte data off the EXI bus
-		unsigned long d = exi[9];
-		if(len == 4) {
-			*(u32*)data = d;
-		}
-		else {
-			int i;	
-			for (i = 0; i < len; ++i)
-				((unsigned char*)data)[i] = (d >> ((3 - i) * 8)) & 0xFF;
-		}
+		return 1;
 	}
 
+	return 0;
 }
 
-// simple wrapper for transfers > 4bytes 
-void exi_imm_ex(void* data, int len, int mode)
+
+static unsigned int gecko_receivebyte(s32 chn, char* data)
 {
-	unsigned char* d = (unsigned char*)data;
-	while (len)
+	unsigned int i = 0;
+	EXI_CHAN1SR = 0x000000D0;
+	EXI_CHAN1DATA = 0xA0000000;
+	EXI_CHAN1CR = 0x19;
+	
+	while((EXI_CHAN1CR) & EXI_TSTART);
+	i = EXI_CHAN1DATA;
+	EXI_CHAN1SR = 0;
+
+	if (i&0x08000000)
 	{
-		int tc = len;
-		if (tc > 4)
-			tc = 4;
-		exi_imm(d, tc, mode);
-		len -= tc;
-		d += tc;
-	}
+		*data = (i>>16)&0xff;
+		return 1;
+	} 
+	
+	return 0;
 }
 
-static __inline__ int __send_command(u16 *cmd)
+
+// return 1, it is ok to send data to PC
+// return 0, FIFO full
+static unsigned int gecko_checktx(s32 chn)
 {
-	exi_select();
-	exi_imm_ex(cmd,2,EXI_READWRITE);
-	exi_deselect();
+	unsigned int i  = 0;
+
+	EXI_CHAN1SR = 0x000000D0;
+	EXI_CHAN1DATA = 0xC0000000;
+	EXI_CHAN1CR = 0x09;
+	
+	while((EXI_CHAN1CR) & EXI_TSTART);
+	i = EXI_CHAN1DATA;
+	EXI_CHAN1SR = 0x0;
+
+	return (i&0x04000000);
 }
 
-static void __usb_sendbyte(char ch)
+
+// return 1, there is data in the FIFO to recieve
+// return 0, FIFO is empty
+static unsigned int gecko_checkrx(s32 chn)
 {
-	u16 val;
-	val = (0xB000|_SHIFTL(ch,4,8));
-	__send_command(&val);
+	unsigned int i = 0;
+	EXI_CHAN1SR = 0x000000D0;
+	EXI_CHAN1DATA = 0xD0000000;
+	EXI_CHAN1CR = 0x09;
+	
+	while((EXI_CHAN1CR) & EXI_TSTART);
+	i = EXI_CHAN1DATA;
+	EXI_CHAN1SR = 0x0;
+
+	return (i&0x04000000);
 }
 
-static int __usb_recvbyte(char *ch)
+int usb_recvbuffer_safe(s32 chn,void *buffer,int size)
 {
-	int ret;
-	u16 val;
+	char *receivebyte = (char*)buffer;
+	unsigned int ret = 0;
 
-	*ch = 0;
-	val = 0xA000;
-	__send_command(&val);
-	if(!(val&0x0800)) ret = 0;
-	*ch = (val&0xff);
-
-	return ret;
-}
-
-int __usb_checksend()
-{
-	int ret = 1;
-	u16 val;
-
-	val = 0xC000;
-	__send_command(&val);
-	if(!(val&0x0400)) ret = 0;
-
-	return ret;
-}
-
-int __usb_checkrecv()
-{
-	int ret = 1;
-	u16 val;
-
-	val = 0xD000;
-	ret = __send_command(&val);
-	if(!(val&0x0400)) ret = 0;
-
-	return ret;
-}
-
-void usb_flush()
-{
-	char tmp;
-	while(__usb_recvbyte(&tmp));
-}
-
-int usb_recvbuffer_safe(void *buffer,int size)
-{
-	int ret;
-	int left = size;
-	char *ptr = (char*)buffer;
-
-	while(left>0) {
-		if(__usb_checkrecv()) {
-			__usb_recvbyte(ptr);
-			ptr++;
-			left--;
+	while (size > 0)
+	{
+		if(gecko_checkrx(chn))
+		{
+			ret = gecko_receivebyte(chn, receivebyte);
+			if(ret == 1)
+			{
+				receivebyte++;
+				size--;
+			}
 		}
 	}
 
-	return (size - left);
+	return 0;
 }
 
-int usb_sendbuffer_safe(const void *buffer,int size)
+int usb_sendbuffer_safe(s32 chn,const void *buffer,int size)
 {
-	int ret;
-	int left = size;
-	char *ptr = (char*)buffer;
+	char *sendbyte = (char*) buffer;
+	unsigned int ret = 0;
 
-	while(left>0) {
-		if(__usb_checksend()) {
-			__usb_sendbyte(*ptr);
-			ptr++;
-			left--;
+	while (size  > 0)
+	{
+		if(gecko_checktx(chn))
+		{
+			ret = gecko_sendbyte(chn, *sendbyte);
+			if(ret == 1)
+			{
+				sendbyte++;
+				size--;
+			}
 		}
 	}
 
-	return (size - left);
+	return 0;
 }
+
 
 void do_read(void *dst,u32 size, u32 offset) {
 	if(!size) return;
 	usb_data_req req;
 	req.offset = bswap32(offset);
 	req.size = bswap32(size);
-	usb_sendbuffer_safe(&req, sizeof(usb_data_req));
-	usb_recvbuffer_safe(dst, size);
+	usb_sendbuffer_safe(1, &req, sizeof(usb_data_req));
+	usb_recvbuffer_safe(1, dst, size);
 }
