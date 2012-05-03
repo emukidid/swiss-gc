@@ -4,8 +4,8 @@
  */
 
 
-#ifndef DEVICE_HANDLER_SD_H
-#define DEVICE_HANDLER_SD_H
+#ifndef DEVICE_HANDLER_USBGECKO_H
+#define DEVICE_HANDLER_USBGECKO_H
 
 #include "../deviceHandler.h"
 

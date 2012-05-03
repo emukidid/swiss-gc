@@ -134,6 +134,10 @@ void install_code()
 	else if((deviceHandler_initial == &initial_DVD) && (drive_status == DEBUG_MODE)) {
 		memcpy((void*)0x80001800,TDPatch,TDPATCH_LEN);
 	}
+	// USB Gecko
+	else if(deviceHandler_initial == &initial_USBGecko) {
+		memcpy((void*)base_addr,usbgecko_bin,usbgecko_bin_size);
+	}
 }
 
 int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )

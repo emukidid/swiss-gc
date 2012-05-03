@@ -21,6 +21,8 @@ extern u8 hdd_bin[];
 extern u32 hdd_bin_size;
 extern u8 sd_bin[];
 extern u32 sd_bin_size;
+extern u8 usbgecko_bin[];
+extern u32 usbgecko_bin_size;
 
 extern u8 DVDRead[];
 extern u32 DVDRead_length;

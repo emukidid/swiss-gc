@@ -420,7 +420,7 @@ unsigned int load_app(int mode)
 	}
 
 	// Patch to read from SD/HDD
-	if((curDevice == SD_CARD)||((curDevice == IDEEXI))) {
+	if((curDevice == SD_CARD)||(curDevice == IDEEXI)||(curDevice == USBGECKO)) {
 		if(swissSettings.useHiLevelPatch)
 			Patch_DVDHighLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 		else
@@ -858,7 +858,7 @@ void load_file()
 	}
 
 	// High Level patch only works for no DVD drive setup (for now)
-	if((curDevice == SD_CARD) || ((curDevice == IDEEXI))) {
+	if((curDevice == SD_CARD) || (curDevice == IDEEXI) || (curDevice == USBGECKO)) {
 		if(!swissSettings.hasDVDDrive && !swissSettings.useHiLevelPatch) {
 			DrawFrameStart();
 			DrawMessageBox(D_WARN, "No DVD Drive must use High level patch!");
@@ -874,7 +874,7 @@ void load_file()
 	}
 	
 	// Report to the user the patch status of this GCM/ISO file
-	if((curDevice == SD_CARD) || ((curDevice == IDEEXI))) {
+	if((curDevice == SD_CARD) || (curDevice == IDEEXI) || (curDevice == USBGECKO)) {
 		isPrePatched = check_game();
 		if(isPrePatched < 0) {
 			return;
@@ -897,7 +897,7 @@ void load_file()
 		file_handle *secondDisc = NULL;
 		
 		// If we're booting from SD card or IDE hdd
-		if((curDevice == SD_CARD) || ((curDevice == IDEEXI))) {
+		if((curDevice == SD_CARD) || (curDevice == IDEEXI) || (curDevice == USBGECKO)) {
 			// look to see if it's a two disc game
 			// set things up properly to allow disc swapping
 			// the files must be setup as so: game-disc1.xxx game-disc2.xxx
@@ -1008,123 +1008,6 @@ int cheats_game()
   
 	QCH_DeInit();  
 	return 1;
-}
-
-void install_game()
-{
-	char dumpName[32];
-  
-	if((curDevice!=SD_CARD) && (curDevice!=IDEEXI)) {
-		DrawFrameStart();
-		DrawMessageBox(D_INFO, "Only available in SD/IDE Card mode");
-		DrawFrameFinish();
-		sleep(2);
-		return;
-	}
-	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
-  
-	DrawFrameStart();
-	DrawEmptyBox(10,120, vmode->fbWidth-10, 470, COLOR_BLACK);
-	WriteFontStyled(640/2, 130, "*** WARNING ***", 1.0f, true, defaultColor);
-	WriteFontStyled(640/2, 200, "This program is not responsible for any", 1.0f, true, defaultColor);
-	WriteFontStyled(640/2, 230, "loss of data or file system corruption", 1.0f, true, defaultColor);
-	WriteFontStyled(640/2, 300, "Press A to Continue, or B to return", 1.0f, true, defaultColor);
-	DrawFrameFinish();
-	while(1) {
-		u16 btns = PAD_ButtonsHeld(0);
-		if(btns & PAD_BUTTON_A) {
-			while((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
-			break;
-		}
-		if(btns & PAD_BUTTON_B) {
-			while((PAD_ButtonsHeld(0) & PAD_BUTTON_B)){ VIDEO_WaitVSync (); }
-			return;
-		}
-	}
-   
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,"Insert a DVD and press the A button");
-	DrawFrameFinish();
-	wait_press_A();
-    
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,"Mounting Disc");
-	DrawFrameFinish();
-
-	initialize_disc(DISABLE_AUDIO);
-	char *gameID = memalign(32,2048);
-		
-	memset(gameID,0,2048);
-	DVD_Read(gameID, 0, 32);
-	if(!gameID[0]) {
-		free(gameID);
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL,"Invalid Disc. Press A to exit");
-		DrawFrameFinish();
-		wait_press_A();
-		return;
-	}
-
-	sprintf(dumpName, "%s/disc-%s%02X.iso", deviceHandler_initial->name, gameID, gameID[6]);
-	free(gameID);
-  
-	sprintf(txtbuffer,"Creating: %s",dumpName);
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,txtbuffer);
-	DrawFrameFinish();
-  
-	file_handle* dumpFile = malloc(sizeof(file_handle));
-	
-	sprintf(dumpFile->name, "%s", (const char*)&dumpName[0]);
-	dumpFile->offset = 0;
-	dumpFile->size = 0;
-	dumpFile->fileAttrib = IS_FILE;
-	dumpFile->fileBase = 0;
-	dumpFile->fp = 0;
-    
-	unsigned char *dvdDumpBuffer = (unsigned char*)memalign(32,CHUNK_SIZE);
-    
-	long long copyTime = gettime();
-	long long startTime = gettime();
-	unsigned int writtenOffset = 0, bytesWritten = 0;
-	
-	for(writtenOffset = 0; (writtenOffset+CHUNK_SIZE) < DISC_SIZE; writtenOffset+=CHUNK_SIZE)
-	{
-		DVD_LowRead64(dvdDumpBuffer, CHUNK_SIZE, writtenOffset);
-		bytesWritten = deviceHandler_writeFile(dumpFile,&dvdDumpBuffer[0],CHUNK_SIZE);
-		long long timeNow = gettime();
-		int etaTime = (((DISC_SIZE-writtenOffset)/1024)/(CHUNK_SIZE/diff_msec(copyTime,timeNow))); //in secs
-		sprintf(txtbuffer,(bytesWritten!=CHUNK_SIZE) ? 
-                      "Write Error!!!"  :
-                      "%dMb dumped @ %.2fmb/s - ETA %02d:%02d",
-                      (int)(writtenOffset/(1024*1024)),(float)((float)((float)CHUNK_SIZE/(float)diff_msec(copyTime,timeNow))/1024),
-                      (etaTime/60),(etaTime%60));
-		DrawFrameStart();
-		DrawProgressBar((int)((float)((float)writtenOffset/(float)DISC_SIZE)*100), txtbuffer);
-		DrawFrameFinish();
-		copyTime = gettime();       
-	}
-  
-	if(writtenOffset<DISC_SIZE) {
-		DVD_LowRead64(dvdDumpBuffer, DISC_SIZE-writtenOffset, writtenOffset);
-		bytesWritten = deviceHandler_writeFile(dumpFile,&dvdDumpBuffer[0],(DISC_SIZE-writtenOffset));
-		if((bytesWritten!=(DISC_SIZE-writtenOffset))) {
-			DrawFrameStart();
-			DrawProgressBar(100.0f, "Write Error!!!");
-			DrawFrameFinish();
-		}
-		copyTime = gettime();
-	}
-	deviceHandler_deinit(dumpFile);
-	free(dumpFile);
-	free(dvdDumpBuffer);
-  
-	sprintf(txtbuffer,"Copy completed in %d mins. Press A",diff_sec(startTime, gettime())/60);
-	DrawFrameStart();
-	DrawMessageBox(D_INFO, txtbuffer);
-	DrawFrameFinish();
-	wait_press_A();
-	needsRefresh=1;
 }
 
 void save_config(ConfigEntry *config) {
@@ -1421,7 +1304,10 @@ void select_device()
 			else if(curDevice==WKF) {
 				DrawSelectableButton(170, 230, 450, 340, "Wiikey Fusion",B_NOSELECT,COLOR_BLACK);
 			}
-			if(curDevice != 6) {
+			else if(curDevice==USBGECKO) {
+				DrawSelectableButton(170, 230, 450, 340, "USB Gecko",B_NOSELECT,COLOR_BLACK);
+			}
+			if(curDevice != 7) {
 				WriteFont(520, 300, "->");
 			}
 			if(curDevice != 0) {
@@ -1431,7 +1317,7 @@ void select_device()
 			while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A))
 				{ VIDEO_WaitVSync (); }
 			u16 btns = PAD_ButtonsHeld(0);
-			if((btns & PAD_BUTTON_RIGHT) && curDevice < 6)
+			if((btns & PAD_BUTTON_RIGHT) && curDevice < 7)
 				curDevice++;
 			if((btns & PAD_BUTTON_LEFT) && curDevice > 0)
 				curDevice--;
@@ -1523,6 +1409,17 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_WKF_setupFile;
 			deviceHandler_init     =  deviceHandler_WKF_init;
 			deviceHandler_deinit   =  deviceHandler_WKF_deinit;
+			deviceHandler_deleteFile = NULL;
+		break;
+		case USBGECKO:
+			deviceHandler_initial = &initial_USBGecko;
+			deviceHandler_readDir  =  deviceHandler_USBGecko_readDir;
+			deviceHandler_readFile =  deviceHandler_USBGecko_readFile;
+			deviceHandler_writeFile = deviceHandler_USBGecko_writeFile;
+			deviceHandler_seekFile =  deviceHandler_USBGecko_seekFile;
+			deviceHandler_setupFile=  deviceHandler_USBGecko_setupFile;
+			deviceHandler_init     =  deviceHandler_USBGecko_init;
+			deviceHandler_deinit   =  deviceHandler_USBGecko_deinit;
 			deviceHandler_deleteFile = NULL;
 		break;
 	}

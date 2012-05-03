@@ -16,7 +16,7 @@
 #include "usbgecko.h"
 
 file_handle initial_USBGecko =
-	{ "./",     // directory
+	{ ".",     // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
 	  0,        // size
@@ -27,16 +27,29 @@ file_handle initial_USBGecko =
 
 int deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
   
-	// Set everything up to read
-	int num_entries = 1, i = 1;
-	file_handle *entry = NULL;
-	*dir = malloc( num_entries * sizeof(file_handle) );
-	memset(*dir,0,sizeof(file_handle) * num_entries);
-	(*dir)[0].fileAttrib = IS_SPECIAL;
-	strcpy((*dir)[0].name, "..");
+	char *dirName = &ffile->name[0];
+	int len = strlen(ffile->name);
+	while(ffile->name[len-1] != '.') {
+		len--;
+	}
+	dirName = &ffile->name[len-1];
 	
+	// Set everything up to read
+	int num_entries = 0, i = 0;
+	file_handle *entry = NULL;
+	if(strlen(ffile->name)!=1) {
+		i = num_entries = 1;
+		*dir = malloc( num_entries * sizeof(file_handle) );
+		memset(*dir,0,sizeof(file_handle) * num_entries);
+		(*dir)[0].fileAttrib = IS_SPECIAL;
+		strcpy((*dir)[0].name, "..");
+	}
+	
+	DrawFrameStart();
+	DrawMessageBox(D_INFO,"Read directory!");
+	DrawFrameFinish();
 	// Read each entry of the directory
-	int res = usbgecko_open_dir(ffile->name);
+	int res = usbgecko_open_dir(dirName);
 	if(!res) return -1;
 	while( (entry = usbgecko_get_entry()) != NULL ){
 		// Make sure we have room for this one
@@ -44,7 +57,7 @@ int deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, unsign
 			++num_entries;
 			*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 		}
-		sprintf((*dir)[i].name, "%s/%s", ffile->name, entry->name);
+		sprintf((*dir)[i].name, "%s/%s", dirName, entry->name);
 		(*dir)[i].offset		= 0;
 		(*dir)[i].size			= entry->size;
 		(*dir)[i].fileAttrib	= entry->fileAttrib;
@@ -77,8 +90,6 @@ int deviceHandler_USBGecko_writeFile(file_handle* file, void* buffer, unsigned i
 }
 
 void deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2) {
-  	// To make things faster, all future reads will come from this file
-	usbgecko_single_file_mode(file->name, 1);
 }
 
 int deviceHandler_USBGecko_init(file_handle* file) {
@@ -93,15 +104,25 @@ int deviceHandler_USBGecko_init(file_handle* file) {
 		DrawFrameFinish();
 		
 		usb_flush(1);
+		usbgecko_lock_file(0);
 		// Wait for the PC and retry 1000 times
 		while(!usbgecko_pc_ready() && retries) {
 			VIDEO_WaitVSync();
 			retries--;
 		}
-		if(!retries) return 0;	// Didn't find the PC
-		// De-init single file mode as we want to be able to find directories/etc
-		usbgecko_single_file_mode(NULL, 0);
-		return 1;
+		if(!retries) {
+			DrawFrameStart();
+			DrawMessageBox(D_INFO,"Couldn't find PC!");
+			DrawFrameFinish();
+			sleep(5);
+			return 0;	// Didn't find the PC
+		}
+		else {
+			DrawFrameStart();
+			DrawMessageBox(D_INFO,"Found PC !!");
+			DrawFrameFinish();
+			return 1;
+		}
 	}
 	else {
 		return 0;

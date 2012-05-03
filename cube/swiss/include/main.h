@@ -45,7 +45,8 @@ enum deviceTypes
 	QOOB_FLASH,
 	WODE,
 	MEMCARD,
-	WKF
+	WKF,
+	USBGECKO
 };
 
 //Destination Device Type
