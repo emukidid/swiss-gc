@@ -3,46 +3,9 @@
 
 1. Check out the code from SVN.
 
-IF and only IF you change the assembly code for the SD/IDE-EXI re-directed DVD Reads, then do the following, otherwise, skip straight ahead to step 3. 
+IF and only IF you change the assembly code for the SD/IDE-EXI/USBGecko re-directed DVD Reads, then do the following, otherwise, skip straight ahead to step 3. 
 
-2.You need to compile 4 separate patch codes - 2 for SD cards (2 slots) and 2 for IDE-EXI (2 slots).
-
-2A.) To build these, enter the cube\patches directory and open up sd.s.
-
-Locate the following:
-{{{
-#SLOT A
-.set CHN_SR,      0x6800
-.set CHN_CR,      0x680C
-.set CHN_DATA,    0x6810
-
-#SLOT B
-#.set CHN_SR,      0x6814
-#.set CHN_CR,      0x6820
-#.set CHN_DATA,    0x6824
-}}}
-
-To build for Slot A, leave the top 3 lines uncommented as seen above, otherwise, comment these and uncomment the bottom 3.
-
-Once you've setup the sd.s assembly file to which card type and slot you'd like to build for, you must run the following commands:
-{{{
-powerpc-eabi-as sd.S -o dvdcode.elf
-doltool -d dvdcode.elf
-doltool -b dvdcode.dol
-doltool -c dvdcode.bin 0x80001800 0x80001800
-bin2s dvdcode.bin > READpatch.s
-}}}
-This will build a headerless binary file which will then be turned into a static array of data. We now open up the READpatch.s file and based on which one it was, we put it into cube\swiss\source\patches\SlotA-SD.s (in this case and we rename the array).
-
-2B.) To build the HDD (IDE-EXI) code, it's very similar. You simply open hdd.s and change the slot code as seen above however this time we compile it using:
-{{{
-powerpc-eabi-as hdd.S -o dvdcode.elf
-doltool -d dvdcode.elf
-doltool -b dvdcode.dol
-doltool -c dvdcode.bin 0x80001800 0x80001800
-bin2s dvdcode.bin > READpatch.s
-}}}
-And then we open the READpatch.s file and place the code from it into cube\swiss\source\patches\SlotA-HDD.s for example (remembering to rename the array).
+2.You need to compile 3 separate patch codes - 1 for SD cards, 1 for USB Gecko, and 1 for IDE-EXI. These can be built in cube\patches using the .bat files. The built binary data is converted to .S files which will need to be copied from cube\patches\built\ into cube\swiss\source\patches and renamed to SlotAB-SD.s, SlotAB-HDD.s and USBGeckoRead.s respectively.
 
 3.) Swiss uses a custom libfat with fragmentation support. Make sure to build the latest in cube\libfat-frag\ and to use that library instead of the standard libfat lib (put it in your libogc libs dir)
 
@@ -54,3 +17,5 @@ d0lz swiss.dol swiss-lz.dol -m
 }}}
 
 (Where d0lz is softdev's Dollz compressor)
+
+Note, if you get any references to missing 576Progressive video, use the latest libOGC as you're missing certain late additions regarding 576 Progressive video.
