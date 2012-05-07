@@ -71,7 +71,14 @@ int deviceHandler_USBGecko_seekFile(file_handle* file, unsigned int where, unsig
 }
 
 int deviceHandler_USBGecko_readFile(file_handle* file, void* buffer, unsigned int length){
-  	int bytes_read = usbgecko_read_file(buffer, length, file->offset, file->name);
+	int reallength = length;
+	if(file->offset + length > file->size) {
+		reallength = file->size - file->offset;
+	}
+	if(reallength < 0) {
+		return 0;
+	}
+  	int bytes_read = usbgecko_read_file(buffer, reallength, file->offset, file->name);
 	if(bytes_read > 0) file->offset += bytes_read;
 	
 	return bytes_read;
