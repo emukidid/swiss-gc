@@ -128,11 +128,7 @@ setup_for_read:
 	stw 		9,		36(1)		# save r9
 	stw 		10, 	40(1)		# save r10
 	stw 		11, 	44(1)		# save r11
-	stmw		16, 	52(1)		# save r16->r31
-
-# Stop Audio if the user wants to	
-	bl			pause_audio
-	stw			3,		48(1)		# store the amount of audio that remained if we stopped audio
+	stmw		16, 	48(1)		# save r16->r31
 	
 # Read from the device to the destination (device specific code called)
 	lwz			3,		12(1)		# load r3 - dst
@@ -144,14 +140,9 @@ setup_for_read:
 	lwz			3,		12(1)		# load dst
 	lwz			4,		16(1)		# load len
 	bl			dcache_flush_icache_inv
-
-# Resume Audio if the user wanted it stopped
-	lwz			3,		48(1)		# load the amount of audio that remained if we stopped audio
-	cmpwi		5,	3,	0
-	beq			5, skip_resume_audio
+	
 	bl			resume_audio
-
-skip_resume_audio:
+	
 # Reload regs from the game
 	lwz			3,		12(1)		# load r3
 	lwz			4,		16(1)		# load r4
@@ -162,7 +153,7 @@ skip_resume_audio:
 	lwz 		9,		36(1)		# load r9
 	lwz 		10, 	40(1)		# load r10
 	lwz 		11, 	44(1)		# load r11
-	lmw			16, 	52(1)		# load r16->r31
+	lmw			16, 	48(1)		# load r16->r31
 	lwz 		0,		0(1)		# load lr
 	mtlr		0					# restore lr
 	addi		1,		1, 128		# kill stack frame
@@ -231,28 +222,36 @@ skip_cb:
 	addi	1,	1, 0x20		# kill stack frame
 	blr
 
+	.globl pause_audio
 pause_audio:
 	lis		3,	VAR_AREA
-	lwz		3,	VAR_MUTE_AUDIO(3)	# load user option
-	cmpwi	5, 	3, 0
-	beq		5, 	pause_audio_end		# if the user doesn't want to mute audio
+	lhz		4,	VAR_MUTE_AUDIO+2(3)	# load user option
+	cmpwi	5, 	4, 0
+	beq		5, 	pause_audio_end		# if the user doesn't want to mute audio, return
 	lis		3,	0xCC00
-	lhz		4,	0x5036(3)
-	rlwinm	4,	4, 17, 30, 31
+	lhz		4,	0x503A(3)
+	rlwinm	4,	4, 0, 17, 31
 	cmpwi	5,	4, 0
-	beq		5,	pause_audio_end		# we weren't playing anything, so return
+	bne		5,	pause_audio_end		# we weren't playing anything, so return
 	li		4,	0
 	sth		4,	0x5036(3)			# stop audio
-	li		3,	1
-	blr
+	lis		3,	VAR_AREA
+	li		4,	1
+	sth		4,	VAR_MUTE_AUDIO(3)	# save that we just disabled audio
 pause_audio_end:
-	li		3,	0
 	blr
 
+	.globl resume_audio
 resume_audio:
+	lis		3,	VAR_AREA
+	lhz		4,	VAR_MUTE_AUDIO(3)	# restore previous playing state
+	cmpwi	5,	4, 0
+	beq		5,	resume_audio_end	# no need to resume playback
+	li		5,	0
+	sth		5,	VAR_MUTE_AUDIO(3)	# clear previous playing state
 	lis		3,	0xCC00
-	lhz		4,	0x5036(3)
-	ori		4,	4, 0x8000
-	sth		4,	0x5036(3) # 0xCC005036|0x8000
+	ori		5,	5, 0x8000
+	sth		5,	0x5036(3) 			# 0xCC005036|(0x8000)
+resume_audio_end:
 	blr
 	

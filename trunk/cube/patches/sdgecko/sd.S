@@ -272,6 +272,7 @@ loopF3:
   li      4, 0         # 0 startByte 
   li      5, 512       # 512 length 
   bl    rcvr_datablock # rcvr_datablock(dst, 0,512); 
+  bl	pause_audio
   addi    29, 29, 512  # dst+=512; 
   addi    28, 28, -512 # numBytes-=512; 
   addi    8, 8 , 1     # i++; 
