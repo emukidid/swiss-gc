@@ -29,11 +29,9 @@
 #include "swiss.h"
 #include "main.h"
 #include "httpd.h"
-#include "gcars.h"
 #include "exi.h"
 #include "patcher.h"
 #include "banner.h"
-#include "qchparse.h"
 #include "dvd.h"
 #include "gcm.h"
 #include "wkf.h"
@@ -243,7 +241,7 @@ void textFileBrowser(file_handle** directory, int num_files)
 			return;
 		}
 		if(PAD_StickY(0) < -16 || PAD_StickY(0) > 16) {
-			usleep(50000 - abs(PAD_StickY(0)*256));
+			usleep((abs(PAD_StickY(0)) > 64 ? 50000:100000) - abs(PAD_StickY(0)*64));
 		}
 		else {
 			while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)))
@@ -316,10 +314,7 @@ unsigned int load_app(int mode)
 	DOLHEADER dolhdr;
 	
 	VIDEO_SetPostRetraceCallback (NULL);
-
-	if(mode == NO_CHEATS) {
-		memcpy((void*)0x80000020,GC_DefaultConfig,0xE0);
-	}
+	memcpy((void*)0x80000020,GC_DefaultConfig,0xE0);
   
 	// Read the game header to 0x80000000 & apploader header
 	deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
@@ -337,7 +332,7 @@ unsigned int load_app(int mode)
 			zeldaVAT = 2;	//NTSC-U,NTSC-J
 	}
 	
-	// Will we use the low mem area for our patch code?
+	// Will we use the high mem area for our patch code?
 	if (!strncmp(gameID, "GPXE01", 6) || !strncmp(gameID, "GPXP01", 6) || !strncmp(gameID, "GPXJ01", 6)) {
 		swissSettings.useHiMemArea = 1;
 		swissSettings.useHiLevelPatch = 0;
@@ -354,8 +349,6 @@ unsigned int load_app(int mode)
 	u32 top_of_main_ram = 0x81800000 - VAR_AREA_SIZE;
 	if(swissSettings.useHiMemArea) 
 		top_of_main_ram = get_base_addr();
-	if(mode == CHEATS)
-		top_of_main_ram = (u32)GCARS_MEMORY_START;
 
 	// Read FST to top of Main Memory (round to 32 byte boundary)
 	u32 fstSizeAligned = GCMDisk.MaxFSTSize + (32-(GCMDisk.MaxFSTSize%32));
@@ -447,6 +440,10 @@ unsigned int load_app(int mode)
 	if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 4)) {
 		Patch_ProgVideo(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
+	// Cheats hook
+	if(mode == CHEATS) {
+		//Patch_OSSleepThread(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	}
 	DCFlushRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	ICInvalidateRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 
@@ -505,10 +502,6 @@ unsigned int load_app(int mode)
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
 	
-	if(mode == CHEATS) {
-		return (u32)main_dol_buffer;
-	}
-
 	DOLtoARAM(main_dol_buffer);
 	return 0;
 }
@@ -774,26 +767,13 @@ void manage_file() {
 void load_file()
 {
 	char *fileName = &curFile.name[0];
-	int isPrePatched = 0;
+	int isPrePatched = 0, hasCheatsFile = 0;
 	
 	if((curDevice==WODE)) {
 		DrawFrameStart();
 		DrawMessageBox(D_INFO, "Setup WODE ISO Please Wait ..");
 		DrawFrameFinish();
 		deviceHandler_setupFile(&curFile, 0);
-	}
-	
-	// Cheats file?
-	if(strlen(fileName)>4) {
-		if((strstr(fileName,".QCH")!=NULL) || (strstr(fileName,".qch")!=NULL)) {
-			if(DrawYesNoDialog("Load this cheats file?")) {
-				DrawFrameStart();
-				DrawMessageBox(D_INFO, "Loading Cheats File ..");
-				DrawFrameFinish();
-				QCH_SetCheatsFile(&curFile);
-				return;
-			}
-		}
 	}
 	
 	if((curDevice != DVD_DISC) || (dvdDiscTypeInt==ISO9660_DISC)) {
@@ -873,12 +853,14 @@ void load_file()
 		return;
 	}
 	
-	// Report to the user the patch status of this GCM/ISO file
+	// Report to the user the patch status of this GCM/ISO file and look for a cheats file too
 	if((curDevice == SD_CARD) || (curDevice == IDEEXI) || (curDevice == USBGECKO)) {
 		isPrePatched = check_game();
 		if(isPrePatched < 0) {
 			return;
 		}
+		//TODO look for cheats file
+		hasCheatsFile = 0;
 	}
 	
 	// Start up the DVD Drive
@@ -929,12 +911,7 @@ void load_file()
 	// setup the video mode before we kill libOGC kernel
 	ogc_video__reset();
 	
-	if(getCodeBasePtr()[0]) {
-		GCARSStartGame(getCodeBasePtr());
-	}
-	else {
-		load_app(NO_CHEATS);
-	}
+	load_app(hasCheatsFile ? CHEATS:NO_CHEATS);
 }
 
 int check_game()
@@ -971,43 +948,6 @@ int check_game()
 	}
 	free(filesToPatch);
 	return 0;
-}
-
-int cheats_game()
-{ 
-	int ret;
-  
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,"Loading Cheat DB");
-	DrawFrameFinish();
-	ret = QCH_Init();
-	if(!ret) {
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL,"Failed to open cheats.qch. Press A.");
-		DrawFrameFinish();
-		wait_press_A();
-		return 0;
-	}
-  
-	ret = QCH_Parse(NULL);
-	if(ret <= 0) {
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL,"Failed to parse cheat DB. Press A.");
-		DrawFrameFinish();
-		wait_press_A();
-		return 0;
-	}
-	sprintf(txtbuffer,"Found %d Games",ret);
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,txtbuffer);
-	DrawFrameFinish();
-	
-	curGameCheats *selected_cheats = memalign(32,sizeof(curGameCheats));
-	QCH_Find(&GCMDisk.GameName[0],selected_cheats);
-	free(selected_cheats);
-  
-	QCH_DeInit();  
-	return 1;
 }
 
 void save_config(ConfigEntry *config) {
@@ -1111,17 +1051,11 @@ int info_game()
 		WriteFontStyled(640/2, 200, txtbuffer, 0.8f, true, defaultColor);
 	}
 
-	WriteFontStyled(640/2, 370, "Cheats(Y) - Settings(X) - Exit(B) - Continue (A)", 0.75f, true, defaultColor);
+	WriteFontStyled(640/2, 370, "Settings(X) - Exit(B) - Continue (A)", 0.75f, true, defaultColor);
 	DrawFrameFinish();
-	while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
-	while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+	while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+	while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	while(1){
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
-			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
-			save_config(config);
-			free(config);
-			return cheats_game();
-		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
 			show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC) ? &curFile : NULL, config);
 			save_config(config);
