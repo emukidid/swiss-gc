@@ -320,6 +320,15 @@ int main ()
 	init_network_thread();
 	init_httpd_thread();
 
+	//debugging stuff
+	if(swissSettings.debugUSB) {
+		if(usb_isgeckoalive(1)) {
+			usb_flush(1);
+		}
+		print_gecko("Arena Size: %iKb\r\n",(SYS_GetArena1Hi()-SYS_GetArena1Lo())/1024);
+		print_gecko("DVD Drive Present? %s\r\n",swissSettings.hasDVDDrive?"Yes":"No");
+	}
+	
 	// Are we working with a Wiikey Fusion?
 	if(__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF) {
 		print_gecko("Detected Wiikey Fusion with SPI Flash ID: %08X\r\n",__wkfSpiReadId());
@@ -383,14 +392,6 @@ int main ()
 		}
 	}
 	
-	//debugging stuff
-	if(swissSettings.debugUSB) {
-		if(usb_isgeckoalive(1)) {
-			usb_flush(1);
-		}
-		print_gecko("Arena Size: %iKb\r\n",(SYS_GetArena1Hi()-SYS_GetArena1Lo())/1024);
-		print_gecko("DVD Drive Present? %s\r\n",swissSettings.hasDVDDrive?"Yes":"No");
-	}
 	
 	while(1) {
 		needsRefresh = 1;
