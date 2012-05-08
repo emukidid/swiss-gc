@@ -44,6 +44,8 @@ typedef struct {
 	unsigned int size;      // size to read
 } usb_data_req;
 
+extern void pause_audio();
+
 inline u32 bswap32(u32 val) {
 	u32 tmp = val;
 	return __lwbrx(&tmp,0);
@@ -147,6 +149,7 @@ int usb_recvbuffer_safe(s32 chn,void *buffer,int size)
 				receivebyte++;
 				size--;
 			}
+			pause_audio();
 		}
 	}
 
