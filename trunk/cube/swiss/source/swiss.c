@@ -440,6 +440,10 @@ unsigned int load_app(int mode)
 	if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 4)) {
 		Patch_ProgVideo(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
+	// Force Widescreen
+	if(swissSettings.forceWideAspect) {
+		Patch_WideAspect(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	}
 	// Cheats hook
 	if(mode == CHEATS) {
 		//Patch_OSSleepThread(main_dol_buffer, main_dol_size+DOLHDRLENGTH);

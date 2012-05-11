@@ -58,6 +58,7 @@ extern u32 ForceProgressive576p_length;
 #define VAR_CB_ARG2			(VAR_AREA-0xBC)		// high level read callback r4
 #define VAR_PROG_MODE		(VAR_AREA-0xB8)		// data/code to overwrite GXRMode obj with for 480p forcing
 #define VAR_MUTE_AUDIO		(VAR_AREA-0x20)		// does the user want audio muted during reads?
+#define VAR_ASPECT_FLOAT	(VAR_AREA-0x1C)
 
 /* Pre-patcher magic */
 #define PRE_PATCHER_MAGIC "Pre-Patched by Swiss v0.2"
@@ -75,6 +76,7 @@ extern u32 ForceProgressive576p_length;
 int Patch_DVDHighLevelRead(u8 *data, u32 length);
 int Patch_DVDLowLevelRead(void *addr, u32 length);
 int Patch_ProgVideo(u8 *data, u32 length);
+int Patch_WideAspect(u8 *data, u32 length);
 int Patch_DVDAudioStreaming(u8 *data, u32 length);
 int Patch_DVDStatusFunctions(u8 *data, u32 length);
 void Patch_Fwrite(void *addr, u32 length);
