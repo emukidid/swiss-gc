@@ -412,6 +412,31 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 	return 0;
 }
 
+int Patch_WideAspect(u8 *data, u32 length) {
+	int i;
+	FuncPattern MTXPerspectiveSig =
+		{0xCC, 3, 3, 1, 0, 3, 0, 0, "C_MTXPerspective"};
+	
+	for( i=0; i < length; i+=4 )
+	{
+		if( *(u32*)(data + i ) != 0x7C0802A6 )
+			continue;
+		if( find_pattern( (u8*)(data+i), length, &MTXPerspectiveSig ) )
+		{
+			print_gecko("Found [%s] @ 0x%08X len %i\n", MTXPerspectiveSig.Name, (u32)data + i, MTXPerspectiveSig.Length);
+			*(volatile float *)VAR_ASPECT_FLOAT = 0.5625f;
+			memmove((void*)(data+i+ 28),(void*)(data+i+ 36),44);
+			memmove((void*)(data+i+188),(void*)(data+i+192),16);
+			*(unsigned int*)(data+i+52) = 0x48000001 | ((*(unsigned int*)(data+i+52) & 0x3FFFFFC) + 8);
+			*(unsigned int*)(data+i+72) = 0x3C600000 | (VAR_AREA >> 16);			// lis		3, 0x8180
+			*(unsigned int*)(data+i+76) = 0xC0230000 | (VAR_ASPECT_FLOAT & 0xFFFF);	// lfs		1, -0x1C (3)
+			*(unsigned int*)(data+i+80) = 0xEC240072; // fmuls	1, 4, 1
+			return 1;
+		}
+	}
+	return 0;
+}
+
 /** SDK DVD Audio NULL Driver Replacement
 	- Allows streaming games to run with no streamed audio */
 

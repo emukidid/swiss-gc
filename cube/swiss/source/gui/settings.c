@@ -18,7 +18,7 @@ SwissSettings tempSettings;
 char *uiVModeStr[] = {"NTSC", "PAL", "480p", "Auto", "576p"};
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {7, 7, 9};
+int settings_count_pp[3] = {7, 7, 10};
 
 void settings_draw_page(int page_num, int option, file_handle *file) {
 	doBackdrop();
@@ -72,19 +72,21 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Current Game Settings (3/3):");
 		WriteFontStyled(30, 110, "Force Video Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 110, -1, 140, uiVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 150, "Patch Type:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 150, -1, 180, swissSettings.useHiLevelPatch ? "High":"Low", option == 1 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 190, "If Low Level, Memory Location:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 190, -1, 220, swissSettings.useHiMemArea ? "High":"Low", option == 2 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(470, 110, -1, 135, uiVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 140, "Force Widescreen:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 140, -1, 165, swissSettings.forceWideAspect ? "Yes":"No", option == 1 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 170, "Patch Type:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 170, -1, 195, swissSettings.useHiLevelPatch ? "High":"Low", option == 2 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 200, "If Low Level, Memory Location:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 200, -1, 225, swissSettings.useHiMemArea ? "High":"Low", option == 3 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 230, "If High Level, Disable Interrupts:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 230, -1, 260, swissSettings.disableInterrupts ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 270, "Mute Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 270, -1, 300, swissSettings.muteAudioStreaming ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 310, "Try to mute audio stutter:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 310, -1, 340, swissSettings.muteAudioStutter ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 350, "No Disc Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 350, -1, 380, swissSettings.noDiscMode ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(470, 230, -1, 255, swissSettings.disableInterrupts ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 260, "Mute Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 260, -1, 285, swissSettings.muteAudioStreaming ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 290, "Try to mute audio stutter:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 290, -1, 315, swissSettings.muteAudioStutter ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 320, "No Disc Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 320, -1, 345, swissSettings.noDiscMode ? "Yes":"No", option == 7 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	if(page_num != 0) {
 		DrawSelectableButton(40, 390, -1, 420, "Back", 
@@ -153,21 +155,24 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 					swissSettings.gameVMode = 4;
 			break;
 			case 1:
-				swissSettings.useHiLevelPatch ^= 1;
+				swissSettings.forceWideAspect ^= 1;
 			break;
 			case 2:
-				swissSettings.useHiMemArea ^= 1;
+				swissSettings.useHiLevelPatch ^= 1;
 			break;
 			case 3:
-				swissSettings.disableInterrupts ^= 1;
+				swissSettings.useHiMemArea ^= 1;
 			break;
 			case 4:
-				swissSettings.muteAudioStreaming ^= 1;
+				swissSettings.disableInterrupts ^= 1;
 			break;
 			case 5:
-				swissSettings.muteAudioStutter ^= 1;
+				swissSettings.muteAudioStreaming ^= 1;
 			break;
 			case 6:
+				swissSettings.muteAudioStutter ^= 1;
+			break;
+			case 7:
 				swissSettings.noDiscMode ^= 1;
 			break;
 		}
@@ -262,6 +267,7 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 					config->muteAudioStreaming = swissSettings.muteAudioStreaming;
 					config->muteAudioStutter = swissSettings.muteAudioStutter;
 					config->noDiscMode = swissSettings.noDiscMode;
+					config->forceWideAspect = swissSettings.forceWideAspect;
 				}
 				else {
 					// Save the Swiss system settings since we're called from the main menu

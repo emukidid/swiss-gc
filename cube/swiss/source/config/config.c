@@ -35,6 +35,7 @@
 //Mute Audio Streaming=Yes
 //Mute Audio Stutter=Yes
 //No Disc Mode=Yes
+//Force Widescreen=Yes
 
 static ConfigEntry configEntries[2048]; // That's a lot of Games!
 static int configEntriesCount = 0;
@@ -152,7 +153,10 @@ int config_update_file() {
 			sprintf(txtbuffer, "Mute Audio Stutter=%s\r\n",(configEntries[i].muteAudioStutter ? "Yes":"No"));
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
-			sprintf(txtbuffer, "No Disc Mode=%s\r\n\r\n\r\n",(configEntries[i].noDiscMode ? "Yes":"No"));
+			sprintf(txtbuffer, "No Disc Mode=%s\r\n",(configEntries[i].noDiscMode ? "Yes":"No"));
+			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+			
+			sprintf(txtbuffer, "Force Widescreen=%s\r\n\r\n\r\n",(configEntries[i].forceWideAspect ? "Yes":"No"));
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		}
 		fclose(fp);
@@ -195,6 +199,7 @@ void config_parse(char *configData) {
 					configEntries[configEntriesCount].muteAudioStreaming = 1;
 					configEntries[configEntriesCount].muteAudioStutter = 0;
 					configEntries[configEntriesCount].noDiscMode = 0;
+					configEntries[configEntriesCount].forceWideAspect = 0;
 				}
 				else if(!strcmp("Name", name)) {
 					strncpy(&configEntries[configEntriesCount].game_name[0], value, 64);
@@ -235,6 +240,10 @@ void config_parse(char *configData) {
 				else if(!strcmp("No Disc Mode", name)) {
 					configEntries[configEntriesCount].noDiscMode = !strcmp("Yes", value) ? 1:0;
 				}
+				else if(!strcmp("Force Widescreen", name)) {
+					configEntries[configEntriesCount].forceWideAspect = !strcmp("Yes", value) ? 1:0;
+				}
+				
 				// Swiss settings
 				else if(!strcmp("Default Device", name)) {
 					configSwissSettings.defaultDevice = !strcmp("Yes", value) ? 1:0;
@@ -299,6 +308,7 @@ void config_find(ConfigEntry *entry) {
 	entry->muteAudioStreaming = 1;
 	entry->muteAudioStutter = 0;
 	entry->noDiscMode = 0;
+	entry->forceWideAspect = 0;
 	// Add this new entry to our collection
 	memcpy(&configEntries[configEntriesCount], entry, sizeof(ConfigEntry));
 	configEntriesCount++;
