@@ -59,6 +59,7 @@ SOURCES		:=  source \
               source/elmchan/option \
               source/cheats \
               source/patches \
+			  source/patches/card \
               source/images \
 			  source/images/buttons
 DATA		:=	data  

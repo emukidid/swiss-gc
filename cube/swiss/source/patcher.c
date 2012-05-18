@@ -771,3 +771,44 @@ int Patch_DVDStatusFunctions(u8 *data, u32 length) {
 	}
 	return count;
 }
+
+/** SDK CARD patches for memory card emulation - from DML, ported to GameCube by emu_kidid */
+void Patch_CARDFunctions() {
+	FuncPattern CPatterns[] =
+	{
+		{ 0x14C,        28,     12,     7,      12,     4,	CARDFreeBlocks,		CARDFreeBlocks_length,	"CARDFreeBlocks A"		},
+		{ 0x11C,        24,     10,     7,      10,     4,	CARDFreeBlocks,		CARDFreeBlocks_length,	"CARDFreeBlocks B"		},
+		{ 0x94,			11,     6,      3,      5,      4,	__CARDSync,			__CARDSync_length,		"__CARDSync"			},
+		{ 0x50,			6,      3,      2,      2,      2,	CARDCheck,			CARDCheck_length,		"CARDCheck"				},
+	//	{ 0x24,			4,      2,      1,      0,      2,	CARDCheckAsync,		CARDCheckAsync_length,	"CARDCheckAsync"		},
+		{ 0x58C,        82,     11,     18,     41,     57,	CARDCheckEX,		CARDCheckEX_length,		"CARDCheckExAsync"		},
+		{ 0x34,			4,      2,      1,      2,      2,	CARDProbe,			CARDProbe_length,		"CARDProbe"				},
+	//	{ 0x1C,			2,      2,      1,      0,      2,	CARDProbe,			CARDProbe_length,		"CARDProbe B"			},	//This is causing more trouble than a hack...
+		{ 0x178,        20,     6,      6,      20,     4,	CARDProbeEX,		CARDProbeEX_length,		"CARDProbeEx A"			},
+		{ 0x198,        22,     6,      5,      19,     4,	CARDProbeEX,		CARDProbeEX_length,		"CARDProbeEx B"			},
+		{ 0x160,        17,     6,      5,      18,     4,	CARDProbeEX,		CARDProbeEX_length,		"CARDProbeEx C"			},
+		{ 0x19C,        32,     14,     11,     12,     3,	CARDMountAsync,		CARDMountAsync_length,	"CARDMountAsync A"		},
+		{ 0x184,        30,     14,     11,     10,     3,	CARDMountAsync,		CARDMountAsync_length,	"CARDMountAsync B"		},	
+		{ 0x174,        23,     6,      7,      14,     5,	CARDOpen,			CARDOpen_length,		"CARDOpen A"			},	//CODE ME	2
+		{ 0x118,        14,     6,      6,      11,     4,	CARDOpen,			CARDOpen_length,		"CARDOpen B"			},	//CODE ME	2
+		{ 0x170,        23,     6,      7,      14,     5,	CARDOpen,			CARDOpen_length,		"CARDOpen C"			},	//CODE ME	2
+		{ 0x15C,        27,     6,      5,      15,     6,	CARDFastOpen,		CARDFastOpen_length,	"CARDFastOpen"			},	//CODE ME	3
+		{ 0x50,			8,      4,      2,      2,      3,	CARDClose,			CARDClose_length,		"CARDClose"				},	//CODE ME ?
+		{ 0x21C,        44,     6,      13,     19,     12,	CARDCreate,			CARDCreate_length,		"CARDCreateAsync A"		},	//CODE ME	1
+		{ 0x214,        42,     6,      13,     19,     12,	CARDCreate,			CARDCreate_length,		"CARDCreateAsync B"		},	//CODE ME	1
+		{ 0x10C,        25,     6,      9,      9,      5,	CARDDelete,			CARDDelete_length,		"CARDDeleteAsync"		},	//CODE ME	8
+		{ 0x144,        27,     3,      8,      10,     9,	CARDRead,			CARDRead_length,		"CARDReadAsync A"		},	//CODE ME	4
+		{ 0x140,        30,     7,      7,      10,     10,	CARDRead,			CARDRead_length,		"CARDReadAsync B"		},	//CODE ME	4
+		{ 0x140,        27,     3,      8,      10,     9,	CARDRead,			CARDRead_length,		"CARDReadAsync C"		},	//CODE ME	4
+		{ 0x110,        24,     4,      8,      9,      6,	CARDWrite,			CARDWrite_length,		"CARDWriteAsync A"		},	//CODE ME	5
+		{ 0x10C,        23,     4,      8,      9,      6,	CARDWrite,			CARDWrite_length,		"CARDWriteAsync B"		},	//CODE ME	5
+		{ 0x128,        25,     9,      9,      6,      5,	CARDGetStatus,		CARDGetStatus_length,	"CARDGetStatus A"		},	//CODE ME	6
+		{ 0x110,        25,     9,      8,      6,      5,	CARDGetStatus,		CARDGetStatus_length,	"CARDGetStatus B"		},	//CODE ME	6
+		{ 0x124,        25,     9,      9,      6,      5,	CARDGetStatus,		CARDGetStatus_length,	"CARDGetStatus C"		},	//CODE ME	6
+		{ 0x170,        29,     9,      9,      12,     5,	CARDSetStatus,		CARDSetStatus_length,	"CARDSetStatusAsync A"	},	//CODE ME	7
+		{ 0x16C,        29,     9,      9,      12,     5,	CARDSetStatus,		CARDSetStatus_length,	"CARDSetStatusAsync B"	},	//CODE ME	7
+		{ 0xC0,			22,     5,      2,      5,      10,	CARDGetSerialNo,	CARDGetSerialNo_length,	"CARDGetSerialNo"		},
+		{ 0x84,			12,     5,      3,      4,      2,	CARDGetEncoding,	CARDGetEncoding_length,	"CARDGetEncoding"		},
+		{ 0x80,			11,     5,      3,      4,      2,	CARDGetMemSize,		CARDGetMemSize_length,	"CARDGetMemSize"		}
+	};
+}

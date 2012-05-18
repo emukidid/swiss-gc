@@ -27,12 +27,21 @@
 .section .text
 	.globl main
 main:
-	b		setup_read_type1v1	# low style read version 1
-	b		setup_read_type1v2	# low style read version 2
-	b		setup_read_type1v3	# low style read version 3
-	b		setup_read_type2	# read hi style
+	b		setup_read_type1v1		# low style read version 1
+	b		setup_read_type1v2		# low style read version 2
+	b		setup_read_type1v3		# low style read version 3
+	b		setup_read_type2		# read hi style
 	b		os_restore_interrupts	# custom os restore interrupts which will call the dvd callback
-	
+	b		card_open				# s32 card_open(char* fileName, CARDFileInfo* fileInfo)
+	b		card_fastopen			# s32 card_fastopen(s32 fileNo, CARDFileInfo* fileInfo)
+	b		card_close				# void card_close(CARDFileInfo* fileInfo)
+	b		card_create				# s32 card_create(char* fileName, u32 size, CARDFileInfo* fileInfo)
+	b		card_delete				# s32 card_delete(char* fileName)
+	b		card_read				# s32 card_read(CARDFileInfo* fileInfo, void* buf, s32 length, s32 offset)
+	b		card_write				# s32 card_write(CARDFileInfo* fileInfo, void* buf, s32 length, s32 offset)
+	b		card_getstatus			# s32 card_getstatus(s32 fileNo, CARDStat* stat)
+	b		card_setstatus			# s32 card_setstatus(s32 fileNo, CARDStat* stat)
+
 # Low level read
 setup_read_type1v1:
 	stwu		1, -0x0028 (1)		# these are instructions we patched over, so do them here

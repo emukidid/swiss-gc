@@ -23,6 +23,9 @@
 .set VAR_CB_ARG2,		-0xBC	# high level read callback r4
 .set VAR_PROG_MODE,		-0xB8	# data/code to overwrite GXRMode obj with for 480p forcing
 .set VAR_MUTE_AUDIO,	-0x20	# does the user want audio muted during reads?
+.set VAR_ASPECT_FLOAT,	-0x1C	# Aspect ratio multiply float (8 bytes)
+.set VAR_MEMCARD_LBA,	-0x14	# Memory card file base on SD
+.set VAR_MEMCARD_WORK,	-0x10	# Memory card work area 40960 bytes big
 
 # register map
 # r17 is sd card speed
@@ -56,6 +59,17 @@ loopA1:
   bne     0, loopA1         
   lwz     0, CHN_DATA(19)	  	
   rlwinm  3, 0, 8, 24, 31   #return word >>24
+ blr
+
+xmit_spi:
+  slwi    3, 3, 24          
+  stw     3, CHN_DATA(19)   # exi[SD_CHANNEL * 5 + 4] = ((snd[d]) << 24); 
+  li      0, 5        
+  stw     0, CHN_CR(19)     # exi[SD_CHANNEL * 5 + 3] = ((0) << 4) | (1 << 2) | 1; 
+loopxmit:
+  lwz     0, CHN_CR(19)
+  andi.   0, 0, 1       
+  bne     0, loopxmit         # while (exi[SD_CHANNEL * 5 + 3] & 1); 
  blr
 
 rcvr_spi_word:  
@@ -302,6 +316,104 @@ loopFend:
   addi    1, 1, 32     # kill stack frame 
   mtlr    0 
  blr
+ 
+ 	.globl do_write   
+do_write:
+	# save registers
+	stwu		1,	-128(1) 		# grow stack frame
+	mflr		0					# move lr
+	stw 		0,	 	0(1)		# save lr
+	stw			3,		12(1)		# save r3 - dst
+	stw			4,		16(1)		# save r4 - len
+	stw			5,		20(1)		# save r5 - offset
+	stw 		6,		24(1)		# save r6
+	stw 		7,		28(1)		# save r7
+	stw 		8,		32(1)		# save r8
+	stw 		9,		36(1)		# save r9
+	stw 		10, 	40(1)		# save r10
+	stw 		11, 	44(1)		# save r11
+	stmw		16, 	48(1)		# save r16->r31
+
+  # setup registers for our code
+  li      18, -1        # r18 is constant 0xFFFFFFFF
+  lis     19, 0xCC00    # r19 is constant 0xCC0068xx
+  ori     19, 19, 0x6800# slot A by default
+  li      30, 49        # r30 is constant 49
+
+  lis     6, VAR_AREA   
+  lwz     17,VAR_EXI_BUS_SPD(6)		# load sd speed from memory to r17
+  lwz	  27, VAR_EXI_SLOT(6)		# setup our reg base for the slot
+  cmpwi   5, 27, 0
+  beq     5, skip_slot_b_adj_2
+  addi    19, 19, 0x14				# make exi reg base 0xCC006814 for slot 2
+skip_slot_b_adj_2:
+  lwz     6, VAR_MEMCARD_LBA(6)		# load sector address from memory to r6
+  
+  srwi	  28, 4, 9					# r28 = numfullblocks
+  mr      29, 3        				# r29 = dst 
+  srwi    4, 5, 9      				# offset >> 9 
+  add     4, 4, 6      				# r4 = startSector = base_sector+offset>>9 
+
+  lis	  3, VAR_AREA
+  lwz	  3, VAR_SD_TYPE(3)			# SD Card Type (SDHC=0, SD=1)
+  cmpwi	  5, 3, 0
+  beq	  5, _skip_shift_2
+  slwi    4, 4,9       				# startSector<<=9; if normal SDcard use byteaddr 
+_skip_shift_2:
+  li      3, 0x59      				# CMD25 - Write multiple block command 
+  bl      send_cmd    				# send_cmd(CMD25, startSector); 
+   
+write_loop:
+  # send start token 0xFC to start write of block
+  li	  3, 0xFC
+  bl	  xmit_spi
+
+  # send 512 bytes out
+write_512:
+  li	  4, 512
+  lwz	  3, 0(29)
+  bl	  xmit_spi
+  subi	  4, 4, 1
+  addi	  29, 29, 1
+  cmpwi	  5, 4, 0
+  bne	  5, write_512
+  
+  li	  3, 0xFF
+  bl	  xmit_spi		# dummy CRC
+  li	  3, 0xFF
+  bl	  xmit_spi		# dummy CRC
+  bl	  rcvr_spi		# read status bit, discard.
+    
+  subi    28, 28 , 1     # numFullBlocks--; 
+  cmpwi   5, 28, 0
+  bne     5, write_loop    # if numFullBlocks == 0, end
+  
+  # send end token 0xFD to stop write of block
+  li	  3, 0xFD
+  bl	  xmit_spi
+  
+  lwz     0, CHN_SR(19)
+  andi.   0, 0, 0x405 
+  stw     0, CHN_SR(19)# Deselect SDCARD from EXI bus 
+
+  bl      rcvr_spi     # one byte read req after deselect 
+  
+# Reload regs
+	lwz			3,		12(1)		# load r3
+	lwz			4,		16(1)		# load r4
+	lwz			5,		20(1)		# load r5
+	lwz 		6,		24(1)		# load r6
+	lwz 		7,		28(1)		# load r7
+	lwz 		8,		32(1)		# load r8
+	lwz 		9,		36(1)		# load r9
+	lwz 		10, 	40(1)		# load r10
+	lwz 		11, 	44(1)		# load r11
+	lmw			16, 	48(1)		# load r16->r31
+	lwz 		0,		0(1)		# load lr
+	mtlr		0					# restore lr
+	addi		1,		1, 128		# kill stack frame
+ blr
+ 
 
 
 # End of SD functions 

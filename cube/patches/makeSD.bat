@@ -2,7 +2,8 @@ del *.o
 mkdir built
 powerpc-eabi-as sdgecko\sd.S -o sd.o
 powerpc-eabi-as base\base.S -o base.o
-powerpc-eabi-ld -o sd.elf base.o sd.o 
+powerpc-eabi-gcc -O0 -c base\card.c
+powerpc-eabi-ld -o sd.elf base.o sd.o card.o
 del *.o
 doltool -d sd.elf
 doltool -b sd.dol

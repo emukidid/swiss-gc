@@ -24,6 +24,7 @@ extern u32 sd_bin_size;
 extern u8 usbgecko_bin[];
 extern u32 usbgecko_bin_size;
 
+/* SDK patches */
 extern u8 DVDRead[];
 extern u32 DVDRead_length;
 extern u8 DVDReadInt[];
@@ -38,6 +39,64 @@ extern u8 ForceProgressive[];
 extern u32 ForceProgressive_length;
 extern u8 ForceProgressive576p[];
 extern u32 ForceProgressive576p_length;
+
+/* SDK CARD library patches */
+extern u8 __CARDSync[];
+extern u32 __CARDSync_length;
+extern u8 CARDCheck[];
+extern u32 CARDCheck_length;
+extern u8 CARDCheckAsync[];
+extern u32 CARDCheckAsync_length;
+extern u8 CARDCheckEX[];
+extern u32 CARDCheckEX_length;
+extern u8 CARDCheckEXAsync[];
+extern u32 CARDCheckEXAsync_length;
+extern u8 CARDClose[];
+extern u32 CARDClose_length;
+extern u8 CARDCreate[];
+extern u32 CARDCreate_length;
+extern u8 CARDCreateAsync[];
+extern u32 CARDCreateAsync_length;
+extern u8 CARDDelete[];
+extern u32 CARDDelete_length;
+extern u8 CARDDeleteAsync[];
+extern u32 CARDDeleteAsync_length;
+extern u8 CARDFastOpen[];
+extern u32 CARDFastOpen_length;
+extern u8 CARDFreeBlocks[];
+extern u32 CARDFreeBlocks_length;
+extern u8 CARDGetEncoding[];
+extern u32 CARDGetEncoding_length;
+extern u8 CARDGetMemSize[];
+extern u32 CARDGetMemSize_length;
+extern u8 CARDGetResultCode[];
+extern u32 CARDGetResultCode_length;
+extern u8 CARDGetSerialNo[];
+extern u32 CARDGetSerialNo_length;
+extern u8 CARDGetStatus[];
+extern u32 CARDGetStatus_length;
+extern u8 CARDMount[];
+extern u32 CARDMount_length;
+extern u8 CARDMountAsync[];
+extern u32 CARDMountAsync_length;
+extern u8 CARDOpen[];
+extern u32 CARDOpen_length;
+extern u8 CARDProbe[];
+extern u32 CARDProbe_length;
+extern u8 CARDProbeEX[];
+extern u32 CARDProbeEX_length;
+extern u8 CARDRead[];
+extern u32 CARDRead_length;
+extern u8 CARDReadAsync[];
+extern u32 CARDReadAsync_length;
+extern u8 CARDSetStatus[];
+extern u32 CARDSetStatus_length;
+extern u8 CARDSetStatusAsync[];
+extern u32 CARDSetStatusAsync_length;
+extern u8 CARDWrite[];
+extern u32 CARDWrite_length;
+extern u8 CARDWriteAsync[];
+extern u32 CARDWriteAsync_length;
 
 /* Patch code variables block */
 #define VAR_AREA 			(0x81800000)		// Base location of our variables
@@ -58,7 +117,7 @@ extern u32 ForceProgressive576p_length;
 #define VAR_CB_ARG2			(VAR_AREA-0xBC)		// high level read callback r4
 #define VAR_PROG_MODE		(VAR_AREA-0xB8)		// data/code to overwrite GXRMode obj with for 480p forcing
 #define VAR_MUTE_AUDIO		(VAR_AREA-0x20)		// does the user want audio muted during reads?
-#define VAR_ASPECT_FLOAT	(VAR_AREA-0x1C)
+#define VAR_ASPECT_FLOAT	(VAR_AREA-0x1C)		// Aspect ratio multiply float (8 bytes)
 
 /* Pre-patcher magic */
 #define PRE_PATCHER_MAGIC "Pre-Patched by Swiss v0.2"
