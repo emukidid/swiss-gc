@@ -24,6 +24,7 @@
 #define VAR_CB_ARG2			(VAR_AREA-0xBC)		// high level read callback r4
 #define VAR_PROG_MODE		(VAR_AREA-0xB8)		// data/code to overwrite GXRMode obj with for 480p forcing
 #define VAR_MUTE_AUDIO		(VAR_AREA-0x20)		// does the user want audio muted during reads?
+#define VAR_ASPECT_FLOAT	(VAR_AREA-0x1C)		// Aspect ratio multiply float (8 bytes)
 
 #define __lwbrx(base,index)			\
 ({	register u32 res;				\

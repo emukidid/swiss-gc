@@ -864,7 +864,7 @@ void load_file()
 			return;
 		}
 		//TODO look for cheats file
-		hasCheatsFile = 0;
+		hasCheatsFile = 0;	
 	}
 	
 	// Start up the DVD Drive
@@ -912,6 +912,9 @@ void load_file()
 		}
 	}
 
+	// TODO: If memcard emulation is enabled, create the %game%.memcard.sav file
+	// Obtain the offset of it on SD Card and stash it somewhere
+	
 	// setup the video mode before we kill libOGC kernel
 	ogc_video__reset();
 	
