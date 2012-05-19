@@ -9,6 +9,9 @@
 #	return slot 0 CARD_RESULT_READY
 #	return slot 1 CARD_RESULT_NOCARD
 
+.set VAR_AREA, 			0x8180	# Base location of our variables
+.set VAR_MEMCARD_WORK,	-0x10	# Memory card work area 40960 bytes big
+
 .globl CARDMountAsync
 CARDMountAsync:
 
@@ -23,6 +26,12 @@ DoCode:
 	stw     %r0, 4(%sp)
 	stwu    %sp, -0x10(%sp)	
 
+	# Store the workarea ptr so that we can use it in our code
+	mtctr	%r3
+	lis		%r3, VAR_AREA
+	stw		%r4, VAR_MEMCARD_WORK(%r3)
+	mfctr	%r3
+	
 	li		%r3,	0
 	li		%r4,	0
 
@@ -35,8 +44,6 @@ DoCode:
 end:
 	li		%r3,	0
 	li		%r4,	0
-
-# TODO - Store the workarea ptr so that we can use it in our code
 	
 	lwz     %r0, 0x14(%sp)
 	addi    %sp, %sp, 0x10

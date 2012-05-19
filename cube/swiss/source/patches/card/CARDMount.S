@@ -8,6 +8,9 @@
 #	return slot 0 CARD_RESULT_READY
 #	return slot 1 CARD_RESULT_NOCARD
 
+.set VAR_AREA, 			0x8180	# Base location of our variables
+.set VAR_MEMCARD_WORK,	-0x10	# Memory card work area 40960 bytes big
+
 .globl CARDMount
 CARDMount:
 	cmpwi	%r3, 0
@@ -19,8 +22,11 @@ CARDMount:
 CARDPresent:	
 	li		%r3, 0
 
-# TODO - Store the workarea ptr so that we can use it in our code
-	
+# Store the workarea ptr so that we can use it in our code
+	mtctr	%r3
+	lis		%r3, VAR_AREA
+	stw		%r4, VAR_MEMCARD_WORK(%r3)
+	mfctr	%r3
 end:
 	blr
 
