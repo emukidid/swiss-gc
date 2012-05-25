@@ -22,8 +22,8 @@ DoCode:
 	stwu    %sp, -0x10(%sp)	
 
 #possible sizes 4,8,16,32,64,128
-	li		%r0,	8
-	sth		%r0,	0(%r4)
+	li		%r3,	8
+	sth		%r3,	0(%r4)
 
 end:
 	li		%r3,	0

@@ -10,11 +10,13 @@
 #	return slot 1 CARD_RESULT_NOCARD
 
 .set VAR_AREA, 			0x8180	# Base location of our variables
-.set VAR_MEMCARD_WORK,	-0x10	# Memory card work area 40960 bytes big
+.set VAR_MEMCARD_WORK,	-0x14	# Memory card work area 40960 bytes big
 
 .globl CARDMountAsync
 CARDMountAsync:
-
+	b		skip_cb_clear
+	li		%r6, 0
+skip_cb_clear:
 	cmpwi	%r3,	0
 	beq		DoCode
 	li		%r3,	-3

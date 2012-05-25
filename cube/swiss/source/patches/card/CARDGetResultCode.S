@@ -6,6 +6,9 @@
 #	return slot 0 CARD_RESULT_READY
 #	return slot 1 CARD_RESULT_NOCARD
 
+.set VAR_AREA, 			0x8180	# Base location of our variables
+.set VAR_MEMCARD_RESULT,-0x10	# Last memory card status from a CARD func
+
 .globl CARDGetResultCode
 CARDGetResultCode:
 
@@ -16,7 +19,8 @@ CARDGetResultCode:
 	b		end
 
 CARDPresent:
-	li		%r3,	0
+	lis		%r3,	VAR_AREA
+	lwz		%r3,	VAR_MEMCARD_RESULT(%r3)
 end:
 
 	blr

@@ -23,9 +23,13 @@
 .set VAR_CB_ARG2,		-0xBC	# high level read callback r4
 .set VAR_PROG_MODE,		-0xB8	# data/code to overwrite GXRMode obj with for 480p forcing
 .set VAR_MUTE_AUDIO,	-0x20	# does the user want audio muted during reads?
-.set VAR_ASPECT_FLOAT,	-0x1C	# Aspect ratio multiply float (8 bytes)
-.set VAR_MEMCARD_LBA,	-0x14	# Memory card file base on SD
-.set VAR_MEMCARD_WORK,	-0x10	# Memory card work area 40960 bytes big
+.set VAR_ASPECT_FLOAT,	-0x1C	# Aspect ratio multiply float (4 bytes)
+.set VAR_MEMCARD_LBA,	-0x18	# Memory card file base on SD
+.set VAR_MEMCARD_WORK,	-0x14	# Memory card work area 40960 bytes big
+.set VAR_MEMCARD_RESULT,-0x10	# Last memory card status from a CARD func
+.set VAR_MC_CB_ADDR,	-0x0C	# memcard callback addr
+.set VAR_MC_CB_ARG1,	-0x08	# memcard callback r3
+.set VAR_MC_CB_ARG2,	-0x04	# memcard callback r4
 
 # register map
 # r17 is sd card speed
@@ -81,6 +85,16 @@ loopA2:
   andi.   0, 0, 1           
   bne     0, loopA2         
   lwz     3, CHN_DATA(19)	  #return word
+ blr
+ 
+xmit_spi_word:
+  stw     3, CHN_DATA(19)   # exi[SD_CHANNEL * 5 + 4] = ((snd[d]) << 24); 
+  li      0, 53
+  stw     0, CHN_CR(19)     # exi[SD_CHANNEL * 5 + 3] = ((0) << 4) | (1 << 2) | 1; 
+loopxmitw:
+  lwz     0, CHN_CR(19)
+  andi.   0, 0, 1       
+  bne     0, loopxmitw         # while (exi[SD_CHANNEL * 5 + 3] & 1); 
  blr
 
 send_cmd:
@@ -212,10 +226,21 @@ loopE8:
  blr
 
  	.globl do_read   
-do_read:           
-  mflr    0
-  stwu    1,-32(1)     # grow stack frame            
-  stw     0,  0(1)     
+do_read:
+	# save registers
+	stwu		1,	-128(1) 		# grow stack frame
+	mflr		0					# move lr
+	stw 		0,	 	0(1)		# save lr
+	stw			3,		12(1)		# save r3 - dst
+	stw			4,		16(1)		# save r4 - len
+	stw			5,		20(1)		# save r5 - offset
+	stw 		6,		24(1)		# save r6
+	stw 		7,		28(1)		# save r7
+	stw 		8,		32(1)		# save r8
+	stw 		9,		36(1)		# save r9
+	stw 		10, 	40(1)		# save r10
+	stw 		11, 	44(1)		# save r11
+	stmw		16, 	48(1)		# save r16->r31   
 
   # setup registers for our code
   li      18, -1        # r18 is constant 0xFFFFFFFF
@@ -312,17 +337,29 @@ loopFend:
 
   bl      rcvr_spi     # one byte read req after deselect 
   
-  lwz     0, 0(1)              
-  addi    1, 1, 32     # kill stack frame 
-  mtlr    0 
+  # Reload regs
+	lwz			3,		12(1)		# load r3
+	lwz			4,		16(1)		# load r4
+	lwz			5,		20(1)		# load r5
+	lwz 		6,		24(1)		# load r6
+	lwz 		7,		28(1)		# load r7
+	lwz 		8,		32(1)		# load r8
+	lwz 		9,		36(1)		# load r9
+	lwz 		10, 	40(1)		# load r10
+	lwz 		11, 	44(1)		# load r11
+	lmw			16, 	48(1)		# load r16->r31
+	lwz 		0,		0(1)		# load lr
+	mtlr		0					# restore lr
+	addi		1,		1, 128		# kill stack frame
  blr
+
  
  	.globl do_write   
 do_write:
 	# save registers
-	stwu		1,	-128(1) 		# grow stack frame
 	mflr		0					# move lr
-	stw 		0,	 	0(1)		# save lr
+	stw 		0,	 	4(1)		# save lr
+	stwu		1,	-0xC0(1) 		# grow stack frame
 	stw			3,		12(1)		# save r3 - dst
 	stw			4,		16(1)		# save r4 - len
 	stw			5,		20(1)		# save r5 - offset
@@ -358,20 +395,27 @@ skip_slot_b_adj_2:
   lwz	  3, VAR_SD_TYPE(3)			# SD Card Type (SDHC=0, SD=1)
   cmpwi	  5, 3, 0
   beq	  5, _skip_shift_2
-  slwi    4, 4,9       				# startSector<<=9; if normal SDcard use byteaddr 
+  slwi    4, 4,9       				# startSector<<=9; if normal SDcard use byteaddr
 _skip_shift_2:
-  li      3, 0x59      				# CMD25 - Write multiple block command 
-  bl      send_cmd    				# send_cmd(CMD25, startSector); 
-   
-write_loop:
-  # send start token 0xFC to start write of block
-  li	  3, 0xFC
-  bl	  xmit_spi
+  mr	  27, 4
+write_loop_start:
+  mr	  4, 27
+  li      3, 0x58      				# CMD24 - Write single block command 
+  bl      send_cmd    				# send_cmd(CMD24, startSector); 
 
+write_wait:
+  bl      rcvr_spi    
+  cmpwi   5, 3, 0xFF  
+  bne     5, write_wait    # while (token != 0xFF); 
+  
+  # send start token 0xFE to start write of block
+  li	  3, 0xFE
+  bl	  xmit_spi
+  
   # send 512 bytes out
-write_512:
   li	  4, 512
-  lwz	  3, 0(29)
+write_512:
+  lbz	  3, 0(29)
   bl	  xmit_spi
   subi	  4, 4, 1
   addi	  29, 29, 1
@@ -383,14 +427,11 @@ write_512:
   li	  3, 0xFF
   bl	  xmit_spi		# dummy CRC
   bl	  rcvr_spi		# read status bit, discard.
-    
-  subi    28, 28 , 1     # numFullBlocks--; 
+
+  subi    28, 28, 1     # numFullBlocks--;
+  addi	  27, 27, 1		# sector ++;
   cmpwi   5, 28, 0
-  bne     5, write_loop    # if numFullBlocks == 0, end
-  
-  # send end token 0xFD to stop write of block
-  li	  3, 0xFD
-  bl	  xmit_spi
+  bne     5, write_loop_start    # if numFullBlocks == 0, end
   
   lwz     0, CHN_SR(19)
   andi.   0, 0, 0x405 
@@ -409,9 +450,9 @@ write_512:
 	lwz 		10, 	40(1)		# load r10
 	lwz 		11, 	44(1)		# load r11
 	lmw			16, 	48(1)		# load r16->r31
-	lwz 		0,		0(1)		# load lr
+	lwz 		0,		0xC4(1)		# load lr
 	mtlr		0					# restore lr
-	addi		1,		1, 128		# kill stack frame
+	addi		1,		1, 0xC0		# kill stack frame
  blr
  
 

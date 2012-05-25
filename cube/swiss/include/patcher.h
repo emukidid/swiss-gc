@@ -14,6 +14,7 @@ typedef struct FuncPattern
 	u8 *Patch;
 	u32 PatchLength;
 	char *Name;
+	u32 offsetFoundAt;
 } FuncPattern;
 
 /* the SDGecko/IDE-EXI patches */
@@ -47,10 +48,10 @@ extern u8 CARDCheck[];
 extern u32 CARDCheck_length;
 extern u8 CARDCheckAsync[];
 extern u32 CARDCheckAsync_length;
-extern u8 CARDCheckEX[];
-extern u32 CARDCheckEX_length;
-extern u8 CARDCheckEXAsync[];
-extern u32 CARDCheckEXAsync_length;
+extern u8 CARDCheckEx[];
+extern u32 CARDCheckEx_length;
+extern u8 CARDCheckExAsync[];
+extern u32 CARDCheckExAsync_length;
 extern u8 CARDClose[];
 extern u32 CARDClose_length;
 extern u8 CARDCreate[];
@@ -117,7 +118,13 @@ extern u32 CARDWriteAsync_length;
 #define VAR_CB_ARG2			(VAR_AREA-0xBC)		// high level read callback r4
 #define VAR_PROG_MODE		(VAR_AREA-0xB8)		// data/code to overwrite GXRMode obj with for 480p forcing
 #define VAR_MUTE_AUDIO		(VAR_AREA-0x20)		// does the user want audio muted during reads?
-#define VAR_ASPECT_FLOAT	(VAR_AREA-0x1C)		// Aspect ratio multiply float (8 bytes)
+#define VAR_ASPECT_FLOAT	(VAR_AREA-0x1C)		// Aspect ratio multiply float (4 bytes)
+#define VAR_MEMCARD_LBA		(VAR_AREA-0x18)		// Memory card file base on SD
+#define VAR_MEMCARD_WORK	(VAR_AREA-0x14)		// Memory card work area 40960 bytes big
+#define VAR_MEMCARD_RESULT	(VAR_AREA-0x10)		// Last memory card status from a CARD func
+#define VAR_MC_CB_ADDR		(VAR_AREA-0x0C)		// memcard callback addr
+#define VAR_MC_CB_ARG1		(VAR_AREA-0x08)		// memcard callback r3
+#define VAR_MC_CB_ARG2		(VAR_AREA-0x04)		// memcard callback r4
 
 /* Pre-patcher magic */
 #define PRE_PATCHER_MAGIC "Pre-Patched by Swiss v0.2"
@@ -125,12 +132,22 @@ extern u32 CARDWriteAsync_length;
 #define LO_RESERVE 0x80001800
 #define HI_RESERVE (0x817FE800-VAR_AREA_SIZE)
 
-/* Function jump locations */
-#define READ_TYPE1_V1_OFFSET (base_addr)
-#define READ_TYPE1_V2_OFFSET (base_addr | 0x04)
-#define READ_TYPE1_V3_OFFSET (base_addr | 0x08)
-#define READ_TYPE2_V1_OFFSET (base_addr | 0x0C)
-#define OS_RESTORE_INT_OFFSET (base_addr | 0x10)
+/* Function jump locations in our patch code */
+#define READ_TYPE1_V1_OFFSET 	(base_addr)
+#define READ_TYPE1_V2_OFFSET 	(base_addr | 0x04)
+#define READ_TYPE1_V3_OFFSET 	(base_addr | 0x08)
+#define READ_TYPE2_V1_OFFSET 	(base_addr | 0x0C)
+#define OS_RESTORE_INT_OFFSET 	(base_addr | 0x10)
+#define CARD_OPEN_OFFSET 		(base_addr | 0x14)
+#define CARD_FASTOPEN_OFFSET 	(base_addr | 0x18)
+#define CARD_CLOSE_OFFSET 		(base_addr | 0x1C)	
+#define CARD_CREATE_OFFSET 		(base_addr | 0x20)
+#define CARD_DELETE_OFFSET 		(base_addr | 0x24)
+#define CARD_READ_OFFSET 		(base_addr | 0x28)
+#define CARD_WRITE_OFFSET 		(base_addr | 0x2C)
+#define CARD_GETSTATUS_OFFSET 	(base_addr | 0x30)
+#define CARD_SETSTATUS_OFFSET 	(base_addr | 0x34)
+
 
 int Patch_DVDHighLevelRead(u8 *data, u32 length);
 int Patch_DVDLowLevelRead(void *addr, u32 length);
@@ -143,6 +160,7 @@ void Patch_DVDReset(void *addr,u32 length);
 int Patch_DVDCompareDiskId(u8 *data, u32 length);
 void Patch_GXSetVATZelda(void *addr, u32 length,int mode);
 int Patch_OSRestoreInterrupts(void *addr, u32 length);
+int Patch_CARDFunctions(u8 *data, u32 length);
 void install_code();
 u32 get_base_addr();
 void set_base_addr(int useHi);

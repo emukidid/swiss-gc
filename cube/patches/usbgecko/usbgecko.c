@@ -30,10 +30,6 @@
 ({	register u32 res;				\
 	__asm__ volatile ("lwbrx	%0,%1,%2" : "=r"(res) : "b%"(index), "r"(base) : "memory"); \
 	res; })
-#define _SHIFTL(v, s, w)	\
-	((u32) (((u32)(v) & ((0x01 << (w)) - 1)) << (s)))
-#define _SHIFTR(v, s, w)	\
-	((u32)(((u32)(v) >> (s)) & ((0x01 << (w)) - 1)))
 
 typedef unsigned int u32;
 typedef int s32;

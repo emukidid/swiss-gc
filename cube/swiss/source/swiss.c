@@ -26,6 +26,7 @@
 #include <asndlib.h>
 #include <mp3player.h>
 
+#include "frag.h"
 #include "swiss.h"
 #include "main.h"
 #include "httpd.h"
@@ -305,6 +306,54 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 	free(directories);
 }
 
+void setup_memcard_emulation() {
+	// If memcard emulation is enabled, create the %game%.memcard.sav file
+	if(swissSettings.emulatemc) {
+		// If game device isn't SDGecko, we need to set up the SDGecko and patch code here
+		// Try to init SDGecko
+		// Setup patch code
+		//memcpy((void*)0x80001800,sd_bin,sd_bin_size);
+		//*(volatile unsigned int*)VAR_EXI_BUS_SPD = 208;
+		//*(volatile unsigned int*)VAR_SD_TYPE = SDHCCard;
+		//*(volatile unsigned int*)VAR_EXI_FREQ = EXI_SPEED32MHZ;
+		//*(volatile unsigned int*)VAR_EXI_SLOT = 0;
+		// Obtain the offset of it on SD Card and stash it somewhere
+		sprintf(txtbuffer, "sda:/%s.memcard.sav", (char*)0x80000000);
+		print_gecko("Looking for %s\r\n",txtbuffer);
+		FILE *fp = fopen(txtbuffer, "r+");
+		if(!fp) {
+			print_gecko("Creating %s\r\n",txtbuffer);
+			fp = fopen( txtbuffer, "wb" );
+			if(fp) {
+				print_gecko("Writing empty buffer to %s\r\n",txtbuffer);
+				char *empty = (char*)memalign(32,2*1024*1024);
+				memset(empty,0, 2*1024*1024);
+				fwrite(empty, 1, 2*1024*1024, fp);
+				free(empty);
+			}
+		}
+		if(fp) {
+			print_gecko("Closing %s\r\n",txtbuffer);
+			fclose(fp);
+			print_gecko("Getting file base %s\r\n",txtbuffer);
+			get_frag_list(txtbuffer);
+			u32 file_base = frag_list->num > 1 ? -1 : frag_list->frag[0].sector;
+			*(u32*)VAR_MEMCARD_LBA = file_base;
+			print_gecko("File base %08X\r\n",*(u32*)VAR_MEMCARD_LBA);
+			if (file_base == -1) {
+				// fatal
+				print_gecko("File base fragmented in %i pieces!\r\n",frag_list->num);
+				while(1);
+			}
+		}
+		else {
+			// fatal
+			print_gecko("Could not create or open file %s\r\n",txtbuffer);
+			while(1);
+		}
+	}
+}
+
 unsigned int load_app(int mode)
 {
 	char* gameID = (char*)0x80000000;
@@ -324,6 +373,7 @@ unsigned int load_app(int mode)
 		DrawFrameFinish();
 		while(1);
 	}
+	setup_memcard_emulation();	
 	// Fix Zelda WW on Wii (__GXSetVAT? patch)
 	if (!is_gamecube() && (!strncmp(gameID, "GZLP01", 6) || !strncmp(gameID, "GZLE01", 6) || !strncmp(gameID, "GZLJ01", 6))) {
 		if(!strncmp(gameID, "GZLP01", 6))
@@ -424,6 +474,9 @@ unsigned int load_app(int mode)
 		if(swissSettings.noDiscMode)
 			Patch_DVDStatusFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
+	// Custom OSRestoreInterrupts that calls skipped CB funcs for memcard or high level dvd replacement
+	if(swissSettings.useHiLevelPatch || swissSettings.emulatemc)
+		Patch_OSRestoreInterrupts(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	// Fix Zelda WW on Wii
 	if(zeldaVAT) {
 		Patch_GXSetVATZelda(main_dol_buffer, main_dol_size+DOLHDRLENGTH, zeldaVAT);
@@ -443,6 +496,10 @@ unsigned int load_app(int mode)
 	// Force Widescreen
 	if(swissSettings.forceWideAspect) {
 		Patch_WideAspect(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	}
+	// Emulate memory card via SDGecko
+	if(swissSettings.emulatemc) {
+		Patch_CARDFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	// Cheats hook
 	if(mode == CHEATS) {
@@ -499,10 +556,14 @@ unsigned int load_app(int mode)
 		// Check DVD Status, make sure it's error code 0
 		print_gecko("DVD: %08X\r\n",dvd_get_error());
 	}
-	if(swissSettings.useHiLevelPatch) {
+	if(swissSettings.useHiLevelPatch || swissSettings.emulatemc) {
 		*(volatile unsigned int*)VAR_CB_ADDR = 0;
 		*(volatile unsigned int*)VAR_CB_ARG1 = 0;
 		*(volatile unsigned int*)VAR_CB_ARG2 = 0;
+		*(volatile unsigned int*)VAR_MEMCARD_RESULT = 0;
+		*(volatile unsigned int*)VAR_MC_CB_ADDR = 0;
+		*(volatile unsigned int*)VAR_MC_CB_ARG1 = 0;
+		*(volatile unsigned int*)VAR_MC_CB_ARG2 = 0;
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
 	
@@ -912,8 +973,6 @@ void load_file()
 		}
 	}
 
-	// TODO: If memcard emulation is enabled, create the %game%.memcard.sav file
-	// Obtain the offset of it on SD Card and stash it somewhere
 	
 	// setup the video mode before we kill libOGC kernel
 	ogc_video__reset();
@@ -1017,6 +1076,8 @@ int info_game()
 		swissSettings.muteAudioStreaming = config->muteAudioStreaming;
 		swissSettings.muteAudioStutter = config->muteAudioStutter;
 		swissSettings.noDiscMode = config->noDiscMode;
+		swissSettings.emulatemc = config->emulatemc;
+		swissSettings.forceWideAspect = config->forceWideAspect;
 	}
 	sprintf(txtbuffer,"%s",(GCMDisk.DVDMagicWord != DVD_MAGIC)?getRelativeName(&curFile.name[0]):GCMDisk.GameName);
 	float scale = GetTextScaleToFitInWidth(txtbuffer,(vmode->fbWidth-78)-75);
