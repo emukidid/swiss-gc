@@ -18,7 +18,7 @@ SwissSettings tempSettings;
 char *uiVModeStr[] = {"NTSC", "PAL", "480p", "Auto", "576p"};
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {7, 7, 10};
+int settings_count_pp[3] = {7, 7, 11};
 
 void settings_draw_page(int page_num, int option, file_handle *file) {
 	doBackdrop();
@@ -87,6 +87,8 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawSelectableButton(470, 290, -1, 315, swissSettings.muteAudioStutter ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 320, "No Disc Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
 		DrawSelectableButton(470, 320, -1, 345, swissSettings.noDiscMode ? "Yes":"No", option == 7 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 350, "Emulate Memory Card via SDGecko:", 1.0f, false, defaultColor);
+		DrawSelectableButton(470, 350, -1, 375, swissSettings.emulatemc ? "Yes":"No", option == 8 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	if(page_num != 0) {
 		DrawSelectableButton(40, 390, -1, 420, "Back", 
@@ -174,6 +176,9 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 			case 7:
 				swissSettings.noDiscMode ^= 1;
+			break;
+			case 8:
+				swissSettings.emulatemc ^= 1;
 			break;
 		}
 	}
@@ -268,6 +273,7 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 					config->muteAudioStutter = swissSettings.muteAudioStutter;
 					config->noDiscMode = swissSettings.noDiscMode;
 					config->forceWideAspect = swissSettings.forceWideAspect;
+					config->emulatemc = swissSettings.emulatemc;
 				}
 				else {
 					// Save the Swiss system settings since we're called from the main menu

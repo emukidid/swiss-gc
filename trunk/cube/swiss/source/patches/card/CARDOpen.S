@@ -13,21 +13,44 @@ CARDOpen:
 
 	mflr    %r0
 	stw     %r0,	4(%sp)
-	stwu    %sp,	-0x10(%sp)	
+	stwu    %sp,	-0x40(%sp)	
 
 	cmpwi	%r3,	0
 	bne		NoCard
-			
-#	CODE ME
-	b		end
+
+	#Disable external interrupts if they're not already enabled
+	mfmsr	%r3
+	stw		%r3, 0x20(%sp)
+	rlwinm	%r3,%r3,0,17,15
+	mtmsr	%r3
+	
+# Call our code instead - return value in r3 of CARD_RESULT_NOFILE OR CARD_RESULT_READY
+	lis		%r3,	0x8000
+	ori		%r3,	%r3, 0x1814
+	mtctr	%r3
+	bctrl
+	stw		%r3,	0x1C(%sp)
+	
+	#Re-enable external interrupts if they were previously
+	lwz		%r4, 0x20(%sp)		
+	rlwinm	%r4, %r4, 17, 30,31
+	cmpwi	%r4,	0
+	beq		skip_setting_msr
+	mfmsr	%r4
+	ori		%r4,%r4,0x8000
+	mtmsr	%r4
+skip_setting_msr:
+	b 		end
 	
 NoCard:
 	li		%r3,	-3
+	stw		%r3,	0x1C(%sp)
 end:
+	lwz		%r3,	0x1C(%sp)
 	mr		%r4,	%r3
 
-	lwz     %r0,	0x14(%sp)
-	addi    %sp,	%sp,	0x10
+	lwz     %r0,	0x44(%sp)
+	addi    %sp,	%sp,	0x40
 	mtlr    %r0
 	blr
 

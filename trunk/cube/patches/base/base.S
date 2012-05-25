@@ -23,6 +23,13 @@
 .set VAR_CB_ARG2,		-0xBC	# high level read callback r4
 .set VAR_PROG_MODE,		-0xB8	# data/code to overwrite GXRMode obj with for 480p forcing
 .set VAR_MUTE_AUDIO,	-0x20	# does the user want audio muted during reads?
+.set VAR_ASPECT_FLOAT,	-0x1C	# Aspect ratio multiply float (4 bytes)
+.set VAR_MEMCARD_LBA,	-0x18	# Memory card file base on SD
+.set VAR_MEMCARD_WORK,	-0x14	# Memory card work area 40960 bytes big
+.set VAR_MEMCARD_RESULT,-0x10	# Last memory card status from a CARD func
+.set VAR_MC_CB_ADDR,	-0x0C	# memcard callback addr
+.set VAR_MC_CB_ARG1,	-0x08	# memcard callback r3
+.set VAR_MC_CB_ARG2,	-0x04	# memcard callback r4
 
 .section .text
 	.globl main
@@ -131,13 +138,6 @@ setup_for_read:
 	stw			3,		12(1)		# save r3 - dst
 	stw			4,		16(1)		# save r4 - len
 	stw			5,		20(1)		# save r5 - offset
-	stw 		6,		24(1)		# save r6
-	stw 		7,		28(1)		# save r7
-	stw 		8,		32(1)		# save r8
-	stw 		9,		36(1)		# save r9
-	stw 		10, 	40(1)		# save r10
-	stw 		11, 	44(1)		# save r11
-	stmw		16, 	48(1)		# save r16->r31
 	
 # Read from the device to the destination (device specific code called)
 	lwz			3,		12(1)		# load r3 - dst
@@ -156,13 +156,6 @@ setup_for_read:
 	lwz			3,		12(1)		# load r3
 	lwz			4,		16(1)		# load r4
 	lwz			5,		20(1)		# load r5
-	lwz 		6,		24(1)		# load r6
-	lwz 		7,		28(1)		# load r7
-	lwz 		8,		32(1)		# load r8
-	lwz 		9,		36(1)		# load r9
-	lwz 		10, 	40(1)		# load r10
-	lwz 		11, 	44(1)		# load r11
-	lmw			16, 	48(1)		# load r16->r31
 	lwz 		0,		0(1)		# load lr
 	mtlr		0					# restore lr
 	addi		1,		1, 128		# kill stack frame
@@ -208,6 +201,7 @@ write_msr:
 	cmpwi	3, 0
 	beq		skip_cb
 	
+	# Execute DVD Callback if any was pending
 	lis		6,	VAR_AREA
 	lwz		7,	VAR_CB_ADDR(6)	# load callback addr
 	cmpwi	7, 0
@@ -221,6 +215,21 @@ write_msr:
 	stw		5,	VAR_CB_ARG2(6)	# clear dvdstruct addr
 	mtctr	7
 	bctrl					# call the callback
+	
+	# Execute Memcard Callback if any was pending
+	lis		6,	VAR_AREA
+	lwz		7,	VAR_MC_CB_ADDR(6)	# load callback addr
+	cmpwi	7, 0
+	beq		skip_cb
+	
+	lwz		3,	VAR_MC_CB_ARG1(6)	# load cb arg 1
+	lwz		4,	VAR_MC_CB_ARG2(6)	# load cb arg 2
+	lis		5, 0
+	stw		5,	VAR_MC_CB_ADDR(6)	# clear callback
+	stw		5,	VAR_MC_CB_ARG1(6)	# clear cb arg 1
+	stw		5,	VAR_MC_CB_ARG2(6)	# clear cb arg 2
+	mtctr	7
+	bctrl					# call the callback	
 skip_cb:
 	lwz		5, 0x10(1)		# load new msr
 	mtmsr	5

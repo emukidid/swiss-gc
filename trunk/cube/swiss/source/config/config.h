@@ -16,6 +16,7 @@ typedef struct {
 	int disableInterrupts;
 	int gameVMode;
 	int forceWideAspect;
+	int emulatemc;
 	int muteAudioStreaming;
 	int muteAudioStutter;
 	int noDiscMode;

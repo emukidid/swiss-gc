@@ -9,7 +9,9 @@
 
 .globl CARDCheckAsync
 CARDCheckAsync:
-
+	b		skip_cb_clear
+	li		%r4, 0
+skip_cb_clear:
 	mflr	%r0
 	stw     %r0, 4(%sp)
 	stwu    %sp, -0x10(%sp)	

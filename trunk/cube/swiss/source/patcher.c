@@ -219,9 +219,9 @@ int Patch_DVDHighLevelRead(u8 *data, u32 length) {
 	int i, j, count = 0, dis_int = swissSettings.disableInterrupts;
 	FuncPattern DVDReadSigs[2] = {
 	{ 	0xBC,   20,     3,      3,      4,      7, 
-		dis_int ? DVDReadAsync:DVDReadAsyncInt,  dis_int ? DVDReadAsync_length:DVDReadAsyncInt_length, "DVDReadAsync" },
+		dis_int ? DVDReadAsync:DVDReadAsyncInt,  dis_int ? DVDReadAsync_length:DVDReadAsyncInt_length, "DVDReadAsync", 0 },
 	{ 	0x114,        23,     2,      6,      9,      8, 
-		dis_int ? DVDRead:DVDReadInt,   dis_int ? DVDRead_length:DVDReadInt_length,  "DVDRead" }};
+		dis_int ? DVDRead:DVDReadInt,   dis_int ? DVDRead_length:DVDReadInt_length,  "DVDRead", 0 }};
 	
 	for( i=0; i < length; i+=4 )
 	{
@@ -247,7 +247,6 @@ int Patch_DVDHighLevelRead(u8 *data, u32 length) {
 		if( count == 2 )
 			break;
 	}
-	Patch_OSRestoreInterrupts(data, length);
 	return count;
 }
 
@@ -359,12 +358,12 @@ void Patch_ProgTiming(void *addr, u32 length) {
 int Patch_ProgVideo(u8 *data, u32 length) {
 	int i,j;
 	FuncPattern VIConfigureSigs[6] = {
-		{0x68C,  87, 41,  6, 31, 60, 0, 0, "VIConfigure_v1"},
-		{0x6AC,  90, 43,  6, 32, 60, 0, 0, "VIConfigure_v2"},
-		{0x73C, 100, 43, 13, 34, 61, 0, 0, "VIConfigure_v3"},
-		{0x798, 105, 44, 12, 38, 63, 0, 0, "VIConfigure_v4"},
-		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure_v5"},
-		{0x804, 110, 44, 13, 49, 63, 0, 0, "VIConfigure_v6"}
+		{0x68C,  87, 41,  6, 31, 60, 0, 0, "VIConfigure_v1", 0},
+		{0x6AC,  90, 43,  6, 32, 60, 0, 0, "VIConfigure_v2", 0},
+		{0x73C, 100, 43, 13, 34, 61, 0, 0, "VIConfigure_v3", 0},
+		{0x798, 105, 44, 12, 38, 63, 0, 0, "VIConfigure_v4", 0},
+		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure_v5", 0},
+		{0x804, 110, 44, 13, 49, 63, 0, 0, "VIConfigure_v6", 0}
 	};
 	if((swissSettings.gameVMode != 2) && (swissSettings.gameVMode != 4)) {
 		return 0;
@@ -415,7 +414,7 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 int Patch_WideAspect(u8 *data, u32 length) {
 	int i;
 	FuncPattern MTXPerspectiveSig =
-		{0xCC, 3, 3, 1, 0, 3, 0, 0, "C_MTXPerspective"};
+		{0xCC, 3, 3, 1, 0, 3, 0, 0, "C_MTXPerspective", 0};
 	
 	for( i=0; i < length; i+=4 )
 	{
@@ -492,9 +491,9 @@ u32 __dvdLowReadAudioNULL[] = {
 int Patch_DVDAudioStreaming(u8 *data, u32 length) {
 	int i, j, count = 0;
 	FuncPattern DVDAudioSigs[3] = {	
-		{0x94, 18, 10, 2, 0, 2, (u8*)__dvdLowReadAudioNULL, sizeof(__dvdLowReadAudioNULL), "DVDLowReadAudio" },
-		{0x88, 18, 8, 2, 0, 2, (u8*)__dvdLowAudioStatusNULL, sizeof(__dvdLowAudioStatusNULL), "DVDLowAudioStatus" },
-		{0x98, 19, 8, 2, 1, 3, (u8*)__dvdLowAudioConfigNULL, sizeof(__dvdLowAudioConfigNULL), "DVDLowAudioConfig" }
+		{0x94, 18, 10, 2, 0, 2, (u8*)__dvdLowReadAudioNULL, sizeof(__dvdLowReadAudioNULL), "DVDLowReadAudio", 0 },
+		{0x88, 18, 8, 2, 0, 2, (u8*)__dvdLowAudioStatusNULL, sizeof(__dvdLowAudioStatusNULL), "DVDLowAudioStatus", 0 },
+		{0x98, 19, 8, 2, 1, 3, (u8*)__dvdLowAudioConfigNULL, sizeof(__dvdLowAudioConfigNULL), "DVDLowAudioConfig", 0 }
 	};
 	
 	for( i=0; i < length; i+=4 )
@@ -651,7 +650,7 @@ void Patch_Fwrite(void *addr, u32 length) {
 int Patch_DVDCompareDiskId(u8 *data, u32 length) {
 	int i, patched = 0;
 	FuncPattern DVDCompareDiskIdSig = 	
-		{0xF4, 15, 4, 2, 16, 9, DVDCompareDiskId, DVDCompareDiskId_length, "DVDCompareDiskId" };
+		{0xF4, 15, 4, 2, 16, 9, DVDCompareDiskId, DVDCompareDiskId_length, "DVDCompareDiskId", 0 };
 	
 	for( i=0; i < length; i+=4 )
 	{
@@ -746,7 +745,7 @@ u32 __dvdLowInquiryNULL[] = {
 int Patch_DVDStatusFunctions(u8 *data, u32 length) {
 	int i, j, count = 0;
 	FuncPattern DVDStatusSigs[1] = {	
-		{0xCC, 17, 10, 5, 3, 2, (u8*)__dvdLowInquiryNULL, sizeof(__dvdLowInquiryNULL), "DVDInquiryAsync" }
+		{0xCC, 17, 10, 5, 3, 2, (u8*)__dvdLowInquiryNULL, sizeof(__dvdLowInquiryNULL), "DVDInquiryAsync", 0 }
 	};
 
 	for( i=0; i < length; i+=4 )
@@ -772,43 +771,187 @@ int Patch_DVDStatusFunctions(u8 *data, u32 length) {
 	return count;
 }
 
+void MakePattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
+{
+	u32 i;
+
+	memset( FunctionPattern, 0, sizeof(FuncPattern) );
+
+	for( i = 0; i < Length; i+=4 )
+	{
+		u32 word = *(u32*)(Data + i) ;
+		
+		if( (word & 0xFC000003) ==  0x48000001 )
+			FunctionPattern->FCalls++;
+
+		if( (word & 0xFC000003) ==  0x48000000 )
+			FunctionPattern->Branch++;
+		if( (word & 0xFFFF0000) ==  0x40800000 )
+			FunctionPattern->Branch++;
+		if( (word & 0xFFFF0000) ==  0x41800000 )
+			FunctionPattern->Branch++;
+		if( (word & 0xFFFF0000) ==  0x40810000 )
+			FunctionPattern->Branch++;
+		if( (word & 0xFFFF0000) ==  0x41820000 )
+			FunctionPattern->Branch++;
+		
+		if( (word & 0xFC000000) ==  0x80000000 )
+			FunctionPattern->Loads++;
+		if( (word & 0xFF000000) ==  0x38000000 )
+			FunctionPattern->Loads++;
+		if( (word & 0xFF000000) ==  0x3C000000 )
+			FunctionPattern->Loads++;
+		
+		if( (word & 0xFC000000) ==  0x90000000 )
+			FunctionPattern->Stores++;
+		if( (word & 0xFC000000) ==  0x94000000 )
+			FunctionPattern->Stores++;
+
+		if( (word & 0xFF000000) ==  0x7C000000 )
+			FunctionPattern->Moves++;
+
+		if( word == 0x4E800020 )
+			break;
+	}
+
+	FunctionPattern->Length = i;
+}
+bool ComparePattern( FuncPattern *FPatA, FuncPattern *FPatB  )
+{
+	if( memcmp( FPatA, FPatB, sizeof(u32) * 6 ) == 0 )
+		return true;
+	else
+		return false;
+}
+
 /** SDK CARD patches for memory card emulation - from DML, ported to GameCube by emu_kidid */
-void Patch_CARDFunctions() {
+int Patch_CARDFunctions(u8 *data, u32 length) {
 	FuncPattern CPatterns[] =
 	{
-		{ 0x14C,        28,     12,     7,      12,     4,	CARDFreeBlocks,		CARDFreeBlocks_length,	"CARDFreeBlocks A"		},
-		{ 0x11C,        24,     10,     7,      10,     4,	CARDFreeBlocks,		CARDFreeBlocks_length,	"CARDFreeBlocks B"		},
-		{ 0x94,			11,     6,      3,      5,      4,	__CARDSync,			__CARDSync_length,		"__CARDSync"			},
-		{ 0x50,			6,      3,      2,      2,      2,	CARDCheck,			CARDCheck_length,		"CARDCheck"				},
-	//	{ 0x24,			4,      2,      1,      0,      2,	CARDCheckAsync,		CARDCheckAsync_length,	"CARDCheckAsync"		},
-		{ 0x58C,        82,     11,     18,     41,     57,	CARDCheckEX,		CARDCheckEX_length,		"CARDCheckExAsync"		},
-		{ 0x34,			4,      2,      1,      2,      2,	CARDProbe,			CARDProbe_length,		"CARDProbe"				},
-	//	{ 0x1C,			2,      2,      1,      0,      2,	CARDProbe,			CARDProbe_length,		"CARDProbe B"			},	//This is causing more trouble than a hack...
-		{ 0x178,        20,     6,      6,      20,     4,	CARDProbeEX,		CARDProbeEX_length,		"CARDProbeEx A"			},
-		{ 0x198,        22,     6,      5,      19,     4,	CARDProbeEX,		CARDProbeEX_length,		"CARDProbeEx B"			},
-		{ 0x160,        17,     6,      5,      18,     4,	CARDProbeEX,		CARDProbeEX_length,		"CARDProbeEx C"			},
-		{ 0x19C,        32,     14,     11,     12,     3,	CARDMountAsync,		CARDMountAsync_length,	"CARDMountAsync A"		},
-		{ 0x184,        30,     14,     11,     10,     3,	CARDMountAsync,		CARDMountAsync_length,	"CARDMountAsync B"		},	
-		{ 0x174,        23,     6,      7,      14,     5,	CARDOpen,			CARDOpen_length,		"CARDOpen A"			},	//CODE ME	2
-		{ 0x118,        14,     6,      6,      11,     4,	CARDOpen,			CARDOpen_length,		"CARDOpen B"			},	//CODE ME	2
-		{ 0x170,        23,     6,      7,      14,     5,	CARDOpen,			CARDOpen_length,		"CARDOpen C"			},	//CODE ME	2
-		{ 0x15C,        27,     6,      5,      15,     6,	CARDFastOpen,		CARDFastOpen_length,	"CARDFastOpen"			},	//CODE ME	3
-		{ 0x50,			8,      4,      2,      2,      3,	CARDClose,			CARDClose_length,		"CARDClose"				},	//CODE ME ?
-		{ 0x21C,        44,     6,      13,     19,     12,	CARDCreate,			CARDCreate_length,		"CARDCreateAsync A"		},	//CODE ME	1
-		{ 0x214,        42,     6,      13,     19,     12,	CARDCreate,			CARDCreate_length,		"CARDCreateAsync B"		},	//CODE ME	1
-		{ 0x10C,        25,     6,      9,      9,      5,	CARDDelete,			CARDDelete_length,		"CARDDeleteAsync"		},	//CODE ME	8
-		{ 0x144,        27,     3,      8,      10,     9,	CARDRead,			CARDRead_length,		"CARDReadAsync A"		},	//CODE ME	4
-		{ 0x140,        30,     7,      7,      10,     10,	CARDRead,			CARDRead_length,		"CARDReadAsync B"		},	//CODE ME	4
-		{ 0x140,        27,     3,      8,      10,     9,	CARDRead,			CARDRead_length,		"CARDReadAsync C"		},	//CODE ME	4
-		{ 0x110,        24,     4,      8,      9,      6,	CARDWrite,			CARDWrite_length,		"CARDWriteAsync A"		},	//CODE ME	5
-		{ 0x10C,        23,     4,      8,      9,      6,	CARDWrite,			CARDWrite_length,		"CARDWriteAsync B"		},	//CODE ME	5
-		{ 0x128,        25,     9,      9,      6,      5,	CARDGetStatus,		CARDGetStatus_length,	"CARDGetStatus A"		},	//CODE ME	6
-		{ 0x110,        25,     9,      8,      6,      5,	CARDGetStatus,		CARDGetStatus_length,	"CARDGetStatus B"		},	//CODE ME	6
-		{ 0x124,        25,     9,      9,      6,      5,	CARDGetStatus,		CARDGetStatus_length,	"CARDGetStatus C"		},	//CODE ME	6
-		{ 0x170,        29,     9,      9,      12,     5,	CARDSetStatus,		CARDSetStatus_length,	"CARDSetStatusAsync A"	},	//CODE ME	7
-		{ 0x16C,        29,     9,      9,      12,     5,	CARDSetStatus,		CARDSetStatus_length,	"CARDSetStatusAsync B"	},	//CODE ME	7
-		{ 0xC0,			22,     5,      2,      5,      10,	CARDGetSerialNo,	CARDGetSerialNo_length,	"CARDGetSerialNo"		},
-		{ 0x84,			12,     5,      3,      4,      2,	CARDGetEncoding,	CARDGetEncoding_length,	"CARDGetEncoding"		},
-		{ 0x80,			11,     5,      3,      4,      2,	CARDGetMemSize,		CARDGetMemSize_length,	"CARDGetMemSize"		}
+		{ 0x14C,        28,     12,     7,      12,     4,	CARDFreeBlocks,		CARDFreeBlocks_length,	"CARDFreeBlocks A"		, 0},
+		{ 0x11C,        24,     10,     7,      10,     4,	CARDFreeBlocks,		CARDFreeBlocks_length,	"CARDFreeBlocks B"		, 0},
+		{ 0x94,			11,     6,      3,      5,      4,	__CARDSync,			__CARDSync_length,		"__CARDSync"			, 0},
+		{ 0x50,			6,      3,      2,      2,      2,	CARDCheck,			CARDCheck_length,		"CARDCheck"				, 0},
+	//	{ 0x24,			4,      2,      1,      0,      2,	CARDCheckAsync,		CARDCheckAsync_length,	"CARDCheckAsync"		, 0},	// Use me?
+		{ 0x58C,        82,     11,     18,     41,     57,	CARDCheckExAsync,	CARDCheckExAsync_length,"CARDCheckExAsync"		, 0},	//TODO Actually find async vs sync
+		{ 0x34,			4,      2,      1,      2,      2,	CARDProbe,			CARDProbe_length,		"CARDProbe"				, 0},
+	//	{ 0x1C,			2,      2,      1,      0,      2,	CARDProbe,			CARDProbe_length,		"CARDProbe B"			, 0},	//This is causing more trouble than a hack...
+		{ 0x178,        20,     6,      6,      20,     4,	CARDProbeEX,		CARDProbeEX_length,		"CARDProbeEx A"			, 0},
+		{ 0x198,        22,     6,      5,      19,     4,	CARDProbeEX,		CARDProbeEX_length,		"CARDProbeEx B"			, 0},
+		{ 0x160,        17,     6,      5,      18,     4,	CARDProbeEX,		CARDProbeEX_length,		"CARDProbeEx C"			, 0},
+		{ 0x19C,        32,     14,     11,     12,     3,	CARDMountAsync,		CARDMountAsync_length,	"CARDMountAsync A"		, 0},	//TODO Actually find async vs sync
+		{ 0x184,        30,     14,     11,     10,     3,	CARDMountAsync,		CARDMountAsync_length,	"CARDMountAsync B"		, 0},	//TODO Actually find async vs sync
+		{ 0x174,        23,     6,      7,      14,     5,	CARDOpen,			CARDOpen_length,		"CARDOpen A"			, 0},
+		{ 0x118,        14,     6,      6,      11,     4,	CARDOpen,			CARDOpen_length,		"CARDOpen B"			, 0},
+		{ 0x170,        23,     6,      7,      14,     5,	CARDOpen,			CARDOpen_length,		"CARDOpen C"			, 0},
+		{ 0x15C,        27,     6,      5,      15,     6,	CARDFastOpen,		CARDFastOpen_length,	"CARDFastOpen"			, 0},
+		{ 0x50,			8,      4,      2,      2,      3,	CARDClose,			CARDClose_length,		"CARDClose"				, 0},	//CODE ME ?
+		{ 0x21C,        44,     6,      13,     19,     12,	CARDCreateAsync,	CARDCreateAsync_length,	"CARDCreateAsync A"		, 0},	//TODO Actually find async vs sync
+		{ 0x214,        42,     6,      13,     19,     12,	CARDCreateAsync,	CARDCreateAsync_length,	"CARDCreateAsync B"		, 0},	//TODO Actually find async vs sync
+		{ 0x10C,        25,     6,      9,      9,      5,	CARDDeleteAsync,	CARDDeleteAsync_length,	"CARDDeleteAsync"		, 0},	//TODO Actually find async vs sync
+		{ 0x144,        27,     3,      8,      10,     9,	CARDReadAsync,		CARDReadAsync_length,	"CARDReadAsync A"		, 0},	//TODO Actually find async vs sync
+		{ 0x140,        30,     7,      7,      10,     10,	CARDReadAsync,		CARDReadAsync_length,	"CARDReadAsync B"		, 0},	//TODO Actually find async vs sync
+		{ 0x140,        27,     3,      8,      10,     9,	CARDReadAsync,		CARDReadAsync_length,	"CARDReadAsync C"		, 0},	//TODO Actually find async vs sync
+		{ 0x110,        24,     4,      8,      9,      6,	CARDWriteAsync,		CARDWriteAsync_length,	"CARDWriteAsync A"		, 0},	//TODO Actually find async vs sync
+		{ 0x10C,        23,     4,      8,      9,      6,	CARDWriteAsync,		CARDWriteAsync_length,	"CARDWriteAsync B"		, 0},	//TODO Actually find async vs sync
+		{ 0x128,        25,     9,      9,      6,      5,	CARDGetStatus,		CARDGetStatus_length,	"CARDGetStatus A"		, 0},
+		{ 0x110,        25,     9,      8,      6,      5,	CARDGetStatus,		CARDGetStatus_length,	"CARDGetStatus B"		, 0},
+		{ 0x124,        25,     9,      9,      6,      5,	CARDGetStatus,		CARDGetStatus_length,	"CARDGetStatus C"		, 0},
+		{ 0x170,        29,     9,      9,      12,     5,	CARDSetStatusAsync,	CARDSetStatusAsync_length,	"CARDSetStatusAsync A"	, 0},	//TODO Actually find async vs sync
+		{ 0x16C,        29,     9,      9,      12,     5,	CARDSetStatusAsync,	CARDSetStatusAsync_length,	"CARDSetStatusAsync B"	, 0},	//TODO Actually find async vs sync
+		{ 0xC0,			22,     5,      2,      5,      10,	CARDGetSerialNo,	CARDGetSerialNo_length,	"CARDGetSerialNo"		, 0},
+		{ 0x84,			12,     5,      3,      4,      2,	CARDGetEncoding,	CARDGetEncoding_length,	"CARDGetEncoding"		, 0},
+		{ 0x80,			11,     5,      3,      4,      2,	CARDGetMemSize,		CARDGetMemSize_length,	"CARDGetMemSize"		, 0}
 	};
+	
+	int i, j, k, count = 0, foundCardFuncStart = 0;
+	for( i=0; i < length; i+=4 )
+	{
+		if( *(u32*)(data + i ) != 0x7C0802A6 )
+			continue;
+
+		FuncPattern fp;
+		MakePattern( (u8*)(data+i), length, &fp );
+			
+		for( j=0; j < sizeof(CPatterns); j++ )
+		{
+			if( !CPatterns[j].offsetFoundAt && ComparePattern( &fp, &(CPatterns[j]) ) )	{
+				if( CPatterns[j].Patch == CARDFreeBlocks ) {
+					//Check for CARDGetResultCode which is always (when used) above CARDFreeBlocks
+					if(*(u32*)(data + i - 0x30 ) == 0x2C030000) {
+						print_gecko("Found [CARDGetResultCode] @ 0x%08X\n", (u32)data + i - 0x30 );
+						memcpy( data + i - 0x30, CARDGetResultCode, CARDGetResultCode_length );
+					}
+					foundCardFuncStart = 1;
+				}
+
+				if(!foundCardFuncStart)
+					continue;
+			
+				CPatterns[j].offsetFoundAt = (u32)data + i;
+				print_gecko("Found [%s] @ 0x%08X len %i\n", CPatterns[j].Name, CPatterns[j].offsetFoundAt, CPatterns[j].Length);
+				
+				//If by now no CARDProbe is found it won't be so set it to found to prevent CARDProbe B false hits
+				if( CPatterns[j].Patch == CARDReadAsync ) {
+					for( k=0; k < sizeof(CPatterns)/sizeof(FuncPattern); ++k ) {
+						if( CPatterns[k].Patch == CARDProbe ) {
+							if( !CPatterns[k].offsetFoundAt )	//Don't overwrite the offset!
+								CPatterns[k].offsetFoundAt = -1;
+						}
+					}
+				}
+				
+				if( strstr( CPatterns[j].Name, "Async" ) != NULL ) {
+					u32 offset = (u32)data + i;
+					int fail = 0;
+					
+					while(fail < 3)
+					{
+						if(((*(u32*) offset ) & 0xFC000003 ) == 0x48000001 ) {
+							if( (((*(u32*)( offset ) & 0x03FFFFFC ) + offset) & 0x03FFFFFC) == (u32)data+i ) 
+								break;
+						}
+
+						if(*(u32*)offset == 0x4E800020)
+							fail++;
+
+						offset+=4;
+					}
+
+					if( fail < 3 ) {
+						print_gecko("Found function call to [%s] @ 0x%08X\n", CPatterns[j].Name, offset );
+			
+						//Now find function start 
+						offset -= 4;
+						while(1)
+						{
+							if(*(u32*)offset == 0x7C0802A6)
+								break;
+
+							offset-=4;
+						}
+					
+						print_gecko("Found function start of [%s(Sync)] @ 0x%08X\n", CPatterns[j].Name, offset );
+
+						//Forge a branch to +4 in the async function which will land on an instr that clears the Callback (skipped otherwise)
+						offset += 4;
+						u32 newval = ((u32)data + i) - offset;
+						newval&= 0x03FFFFFC;
+						newval|= 0x48000000;
+						*(u32*)offset = newval;
+					} else {
+						print_gecko("No sync function found!\n");
+					}
+				}
+				
+				//print_gecko("Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
+				//		CPatterns[j].Name, (u32)CPatterns[j].Patch, (u32)data + i, CPatterns[j].PatchLength);
+							
+				memcpy( (u8*)(data+i), &CPatterns[j].Patch[0], CPatterns[j].PatchLength );
+				CPatterns[j].offsetFoundAt = 1;
+				count++;
+			}
+		}
+	}
+	return count;
 }
