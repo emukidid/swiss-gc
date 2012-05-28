@@ -199,6 +199,10 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			patched += Patch_DVDCompareDiskId(buffer, sizeToRead);
 			patched += Patch_ProgVideo(buffer, sizeToRead);
 			patched += Patch_DVDAudioStreaming(buffer, sizeToRead);
+			if(swissSettings.useHiLevelPatch || swissSettings.emulatemc)
+				Patch_OSRestoreInterrupts(buffer, sizeToRead);
+			if(swissSettings.emulatemc)
+				Patch_CARDFunctions(buffer, sizeToRead);
 			if(patched) {
 				print_gecko("Seeking in the file..\r\n");
 				deviceHandler_seekFile(file,filesToPatch[i].offset+ofs,DEVICE_HANDLER_SEEK_SET);

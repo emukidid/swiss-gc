@@ -309,14 +309,36 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 void setup_memcard_emulation() {
 	// If memcard emulation is enabled, create the %game%.memcard.sav file
 	if(swissSettings.emulatemc) {
-		// If game device isn't SDGecko, we need to set up the SDGecko and patch code here
-		// Try to init SDGecko
-		// Setup patch code
-		//memcpy((void*)0x80001800,sd_bin,sd_bin_size);
-		//*(volatile unsigned int*)VAR_EXI_BUS_SPD = 208;
-		//*(volatile unsigned int*)VAR_SD_TYPE = SDHCCard;
-		//*(volatile unsigned int*)VAR_EXI_FREQ = EXI_SPEED32MHZ;
-		//*(volatile unsigned int*)VAR_EXI_SLOT = 0;
+		if(deviceHandler_initial != &initial_SD0 && deviceHandler_initial != &initial_DVD &&
+			deviceHandler_initial != &initial_WKF && deviceHandler_initial != &initial_WODE) {
+			// Memory card emulation will only work from SD Slot A when running a game in SD Slot A or from DVD/WKF/WODE
+			DrawFrameStart();
+			DrawMessageBox(D_INFO, "Memory card emulation only works under the following setups:");	//TODO
+			DrawFrameFinish();
+			swissSettings.emulatemc = 0;
+			wait_press_A();
+			return;
+		}
+		// Check if game device isn't SDGecko in slot A, if so, we need to set up the SDGecko and the patchcode here
+		if(deviceHandler_initial != &initial_SD0) {
+			DrawFrameStart();
+			DrawMessageBox(D_INFO, "Press A when there's a SDGecko inserted in slot A");
+			DrawFrameFinish();
+			//wait_press_A();
+			// Try to init SDGecko in Slot A
+			if(deviceHandler_FAT_init(&initial_SD0)) {
+				// Setup patch code
+				memcpy((void*)0x80001800,sd_bin,sd_bin_size);
+			}
+			else {
+				DrawFrameStart();
+				DrawMessageBox(D_INFO, "SDGecko in Slot A failed to init. Memcard emulation disabled.");
+				DrawFrameFinish();
+				swissSettings.emulatemc = 0;
+				sleep(2);
+				return;
+			}
+		}
 		// Obtain the offset of it on SD Card and stash it somewhere
 		sprintf(txtbuffer, "sda:/%s.memcard.sav", (char*)0x80000000);
 		print_gecko("Looking for %s\r\n",txtbuffer);
@@ -564,6 +586,12 @@ unsigned int load_app(int mode)
 		*(volatile unsigned int*)VAR_MC_CB_ADDR = 0;
 		*(volatile unsigned int*)VAR_MC_CB_ARG1 = 0;
 		*(volatile unsigned int*)VAR_MC_CB_ARG2 = 0;
+	}
+	if(swissSettings.emulatemc && deviceHandler_initial != &initial_SD0) {
+		*(volatile unsigned int*)VAR_EXI_BUS_SPD = 208;
+		*(volatile unsigned int*)VAR_SD_TYPE = sdgecko_getAddressingType(0);
+		*(volatile unsigned int*)VAR_EXI_FREQ = EXI_SPEED32MHZ;
+		*(volatile unsigned int*)VAR_EXI_SLOT = 0;
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
 	
