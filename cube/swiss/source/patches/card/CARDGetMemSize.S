@@ -16,21 +16,10 @@ CARDGetMemSize:
 	blr
 
 DoCode:
-
-	mflr    %r0
-	stw     %r0, 4(%sp)
-	stwu    %sp, -0x10(%sp)	
-
 #possible sizes 4,8,16,32,64,128
 	li		%r3,	8
 	sth		%r3,	0(%r4)
-
-end:
 	li		%r3,	0
-
-	lwz     %r0, 0x14(%sp)
-	addi    %sp, %sp, 0x10
-	mtlr    %r0
 	blr
 
 	.globl CARDGetMemSize_length

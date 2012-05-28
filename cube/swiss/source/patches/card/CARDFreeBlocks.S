@@ -10,28 +10,23 @@
 
 .globl CARDFreeBlocks
 CARDFreeBlocks:
-
-	mflr	%r0
 	cmpwi	%r3, 0
 	beq		CARDPresent
 
 	li      %r3, -3
-	b		end
-
+	blr
 CARDPresent:
 
-	lis		%r3, 1
-	rlwinm	%r3, %r3, 20,0,31	# 1MB
+	lis		%r3, 0x7F
+	addi	%r3, %r3, 0x6000
 	stw		%r3, 0(%r4)
 
-	li		%r3, 128
+	li		%r3, 16
 	stw		%r3, 0(%r5)
 
 	li		%r3, 0
 
 end:
-
-	mtlr    %r0
 	blr
 
 	.globl CARDFreeBlocks_length

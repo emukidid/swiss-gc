@@ -833,32 +833,32 @@ int Patch_CARDFunctions(u8 *data, u32 length) {
 		{ 0x94,			11,     6,      3,      5,      4,	__CARDSync,			__CARDSync_length,		"__CARDSync"			, 0},
 		{ 0x50,			6,      3,      2,      2,      2,	CARDCheck,			CARDCheck_length,		"CARDCheck"				, 0},
 	//	{ 0x24,			4,      2,      1,      0,      2,	CARDCheckAsync,		CARDCheckAsync_length,	"CARDCheckAsync"		, 0},	// Use me?
-		{ 0x58C,        82,     11,     18,     41,     57,	CARDCheckExAsync,	CARDCheckExAsync_length,"CARDCheckExAsync"		, 0},	//TODO Actually find async vs sync
+		{ 0x58C,        82,     11,     18,     41,     57,	CARDCheckExAsync,	CARDCheckExAsync_length,"CARDCheckExAsync"		, 0},
 		{ 0x34,			4,      2,      1,      2,      2,	CARDProbe,			CARDProbe_length,		"CARDProbe"				, 0},
 	//	{ 0x1C,			2,      2,      1,      0,      2,	CARDProbe,			CARDProbe_length,		"CARDProbe B"			, 0},	//This is causing more trouble than a hack...
 		{ 0x178,        20,     6,      6,      20,     4,	CARDProbeEX,		CARDProbeEX_length,		"CARDProbeEx A"			, 0},
 		{ 0x198,        22,     6,      5,      19,     4,	CARDProbeEX,		CARDProbeEX_length,		"CARDProbeEx B"			, 0},
 		{ 0x160,        17,     6,      5,      18,     4,	CARDProbeEX,		CARDProbeEX_length,		"CARDProbeEx C"			, 0},
-		{ 0x19C,        32,     14,     11,     12,     3,	CARDMountAsync,		CARDMountAsync_length,	"CARDMountAsync A"		, 0},	//TODO Actually find async vs sync
-		{ 0x184,        30,     14,     11,     10,     3,	CARDMountAsync,		CARDMountAsync_length,	"CARDMountAsync B"		, 0},	//TODO Actually find async vs sync
+		{ 0x19C,        32,     14,     11,     12,     3,	CARDMountAsync,		CARDMountAsync_length,	"CARDMountAsync A"		, 0},
+		{ 0x184,        30,     14,     11,     10,     3,	CARDMountAsync,		CARDMountAsync_length,	"CARDMountAsync B"		, 0},
 		{ 0x174,        23,     6,      7,      14,     5,	CARDOpen,			CARDOpen_length,		"CARDOpen A"			, 0},
 		{ 0x118,        14,     6,      6,      11,     4,	CARDOpen,			CARDOpen_length,		"CARDOpen B"			, 0},
 		{ 0x170,        23,     6,      7,      14,     5,	CARDOpen,			CARDOpen_length,		"CARDOpen C"			, 0},
 		{ 0x15C,        27,     6,      5,      15,     6,	CARDFastOpen,		CARDFastOpen_length,	"CARDFastOpen"			, 0},
 		{ 0x50,			8,      4,      2,      2,      3,	CARDClose,			CARDClose_length,		"CARDClose"				, 0},	//CODE ME ?
-		{ 0x21C,        44,     6,      13,     19,     12,	CARDCreateAsync,	CARDCreateAsync_length,	"CARDCreateAsync A"		, 0},	//TODO Actually find async vs sync
-		{ 0x214,        42,     6,      13,     19,     12,	CARDCreateAsync,	CARDCreateAsync_length,	"CARDCreateAsync B"		, 0},	//TODO Actually find async vs sync
-		{ 0x10C,        25,     6,      9,      9,      5,	CARDDeleteAsync,	CARDDeleteAsync_length,	"CARDDeleteAsync"		, 0},	//TODO Actually find async vs sync
-		{ 0x144,        27,     3,      8,      10,     9,	CARDReadAsync,		CARDReadAsync_length,	"CARDReadAsync A"		, 0},	//TODO Actually find async vs sync
-		{ 0x140,        30,     7,      7,      10,     10,	CARDReadAsync,		CARDReadAsync_length,	"CARDReadAsync B"		, 0},	//TODO Actually find async vs sync
-		{ 0x140,        27,     3,      8,      10,     9,	CARDReadAsync,		CARDReadAsync_length,	"CARDReadAsync C"		, 0},	//TODO Actually find async vs sync
-		{ 0x110,        24,     4,      8,      9,      6,	CARDWriteAsync,		CARDWriteAsync_length,	"CARDWriteAsync A"		, 0},	//TODO Actually find async vs sync
-		{ 0x10C,        23,     4,      8,      9,      6,	CARDWriteAsync,		CARDWriteAsync_length,	"CARDWriteAsync B"		, 0},	//TODO Actually find async vs sync
+		{ 0x21C,        44,     6,      13,     19,     12,	CARDCreateAsync,	CARDCreateAsync_length,	"CARDCreateAsync A"		, 0},
+		{ 0x214,        42,     6,      13,     19,     12,	CARDCreateAsync,	CARDCreateAsync_length,	"CARDCreateAsync B"		, 0},
+		{ 0x10C,        25,     6,      9,      9,      5,	CARDDeleteAsync,	CARDDeleteAsync_length,	"CARDDeleteAsync"		, 0},
+		{ 0x144,        27,     3,      8,      10,     9,	CARDReadAsync,		CARDReadAsync_length,	"CARDReadAsync A"		, 0},
+		{ 0x140,        30,     7,      7,      10,     10,	CARDReadAsync,		CARDReadAsync_length,	"CARDReadAsync B"		, 0},
+		{ 0x140,        27,     3,      8,      10,     9,	CARDReadAsync,		CARDReadAsync_length,	"CARDReadAsync C"		, 0},
+		{ 0x110,        24,     4,      8,      9,      6,	CARDWriteAsync,		CARDWriteAsync_length,	"CARDWriteAsync A"		, 0},
+		{ 0x10C,        23,     4,      8,      9,      6,	CARDWriteAsync,		CARDWriteAsync_length,	"CARDWriteAsync B"		, 0},
 		{ 0x128,        25,     9,      9,      6,      5,	CARDGetStatus,		CARDGetStatus_length,	"CARDGetStatus A"		, 0},
 		{ 0x110,        25,     9,      8,      6,      5,	CARDGetStatus,		CARDGetStatus_length,	"CARDGetStatus B"		, 0},
 		{ 0x124,        25,     9,      9,      6,      5,	CARDGetStatus,		CARDGetStatus_length,	"CARDGetStatus C"		, 0},
-		{ 0x170,        29,     9,      9,      12,     5,	CARDSetStatusAsync,	CARDSetStatusAsync_length,	"CARDSetStatusAsync A"	, 0},	//TODO Actually find async vs sync
-		{ 0x16C,        29,     9,      9,      12,     5,	CARDSetStatusAsync,	CARDSetStatusAsync_length,	"CARDSetStatusAsync B"	, 0},	//TODO Actually find async vs sync
+		{ 0x170,        29,     9,      9,      12,     5,	CARDSetStatusAsync,	CARDSetStatusAsync_length,	"CARDSetStatusAsync A"	, 0},
+		{ 0x16C,        29,     9,      9,      12,     5,	CARDSetStatusAsync,	CARDSetStatusAsync_length,	"CARDSetStatusAsync B"	, 0},
 		{ 0xC0,			22,     5,      2,      5,      10,	CARDGetSerialNo,	CARDGetSerialNo_length,	"CARDGetSerialNo"		, 0},
 		{ 0x84,			12,     5,      3,      4,      2,	CARDGetEncoding,	CARDGetEncoding_length,	"CARDGetEncoding"		, 0},
 		{ 0x80,			11,     5,      3,      4,      2,	CARDGetMemSize,		CARDGetMemSize_length,	"CARDGetMemSize"		, 0}
@@ -901,14 +901,14 @@ int Patch_CARDFunctions(u8 *data, u32 length) {
 					}
 				}
 				
-				if( strstr( CPatterns[j].Name, "Async" ) != NULL ) {
+				if( strstr( CPatterns[j].Name, "Async" ) != NULL ) {	// We've found an async function, try to find the sync version branching to this async ver
 					u32 offset = (u32)data + i;
 					int fail = 0;
 					
 					while(fail < 3)
 					{
-						if(((*(u32*) offset ) & 0xFC000003 ) == 0x48000001 ) {
-							if( (((*(u32*)( offset ) & 0x03FFFFFC ) + offset) & 0x03FFFFFC) == (u32)data+i ) 
+						if(((*(u32*) offset ) & 0xFC000003 ) == 0x48000001 ) {	// Is this instr a bl opcode?
+							if(((((*(u32*)( offset ) & 0x03FFFFFC ) + offset) & 0x03FFFFFC) | 0x80000000) == (((u32)data)+i) ) // does the bl branch to this async function?
 								break;
 						}
 
@@ -921,23 +921,10 @@ int Patch_CARDFunctions(u8 *data, u32 length) {
 					if( fail < 3 ) {
 						print_gecko("Found function call to [%s] @ 0x%08X\n", CPatterns[j].Name, offset );
 			
-						//Now find function start 
-						offset -= 4;
-						while(1)
-						{
-							if(*(u32*)offset == 0x7C0802A6)
-								break;
-
-							offset-=4;
-						}
-					
-						print_gecko("Found function start of [%s(Sync)] @ 0x%08X\n", CPatterns[j].Name, offset );
-
 						//Forge a branch to +4 in the async function which will land on an instr that clears the Callback (skipped otherwise)
-						offset += 4;
-						u32 newval = ((u32)data + i) - offset;
+						u32 newval = ((u32)data + i + 4) - offset;
 						newval&= 0x03FFFFFC;
-						newval|= 0x48000000;
+						newval|= 0x48000001;
 						*(u32*)offset = newval;
 					} else {
 						print_gecko("No sync function found!\n");
