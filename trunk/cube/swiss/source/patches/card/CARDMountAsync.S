@@ -11,6 +11,9 @@
 
 .set VAR_AREA, 			0x8180	# Base location of our variables
 .set VAR_MEMCARD_WORK,	-0x14	# Memory card work area 40960 bytes big
+.set VAR_MC_CB_ADDR,	-0x0C	# memcard callback addr
+.set VAR_MC_CB_ARG1,	-0x08	# memcard callback r3
+.set VAR_MC_CB_ARG2,	-0x04	# memcard callback r4
 
 .globl CARDMountAsync
 CARDMountAsync:
@@ -26,29 +29,50 @@ DoCode:
 
 	mflr    %r0
 	stw     %r0, 4(%sp)
-	stwu    %sp, -0x10(%sp)	
+	stwu    %sp, 	-0x40(%sp)
+	stw     %r6, 	0x24(%sp)
 
+	#Disable external interrupts if they're not already enabled
+	mfmsr	%r3
+	stw		%r3, 	0x20(%sp)
+	rlwinm	%r3,%r3,0,17,15
+	mtmsr	%r3
+	
 	# Store the workarea ptr so that we can use it in our code
-	mtctr	%r3
 	lis		%r3, VAR_AREA
 	stw		%r4, VAR_MEMCARD_WORK(%r3)
-	mfctr	%r3
 	
-	li		%r3,	0
-	li		%r4,	0
-
-	cmpwi	%r6,	0
-	beq		end
-	
-	mtctr	%r6
+	# call our code to read the memory card "file table" into the work area once off
+	lis		%r3,	0x8000
+	ori		%r3,	%r3, 0x1838
+	mtctr	%r3
 	bctrl
+	
+	#Re-enable external interrupts if they were previously
+	lwz		%r3, 	0x20(%sp)		
+	rlwinm	%r3, %r3, 17, 30,31
+	cmpwi	%r3,	0
+	beq		skip_setting_msr
+	mfmsr	%r3
+	ori		%r3,%r3,0x8000
+	mtmsr	%r3
+skip_setting_msr:
+	# stash info about the callback somewhere as we'll call it later via our patched OSRestoreInterrupts
+	lis		%r4,	VAR_AREA
+	li		%r3,	0
+	lwz		%r6,	0x24(%sp)
+	cmpwi	%r6,	0
+	beq		skip_cb
+	stw		%r3,	VAR_MC_CB_ARG1(%r4)	# store callback arg 1
+	stw		%r3,	VAR_MC_CB_ARG1(%r4)	# store callback arg 2
+	stw		%r6,	VAR_MC_CB_ADDR(%r4)	# store callback address
 
-end:
+skip_cb:
 	li		%r3,	0
 	li		%r4,	0
 	
-	lwz     %r0, 0x14(%sp)
-	addi    %sp, %sp, 0x10
+	lwz     %r0, 0x44(%sp)
+	addi    %sp, %sp, 0x40 
 	mtlr    %r0
 	blr
 

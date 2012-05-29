@@ -17,12 +17,12 @@ CARDFreeBlocks:
 	blr
 CARDPresent:
 
-	lis		%r3, 0x7F
-	addi	%r3, %r3, 0x6000
+	lis		%r3, 0xFF
+	ori		%r3, %r3, 0x6000	# 16Mb
 	stw		%r3, 0(%r4)
 
-	li		%r3, 16
-	stw		%r3, 0(%r5)
+	li		%r3, 0x7F
+	stw		%r3, 0(%r5)			# 127 files
 
 	li		%r3, 0
 
