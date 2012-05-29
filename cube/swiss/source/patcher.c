@@ -864,6 +864,13 @@ int Patch_CARDFunctions(u8 *data, u32 length) {
 		{ 0x80,			11,     5,      3,      4,      2,	CARDGetMemSize,		CARDGetMemSize_length,	"CARDGetMemSize"		, 0}
 	};
 	
+	// TODO:
+	// Implement CARDFastDelete
+	// Implement CARDGetSectorSize
+	// Implement CARDGetXferredBytes
+	// Implement CARDRenameAsync
+	// Implement CARDUnmount - CARD_RESULT_READY for slot 0 and CARD_RESULT_NOCARD for slot 1
+	
 	int i, j, k, count = 0, foundCardFuncStart = 0;
 	for( i=0; i < length; i+=4 )
 	{

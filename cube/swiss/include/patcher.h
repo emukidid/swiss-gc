@@ -147,6 +147,7 @@ extern u32 CARDWriteAsync_length;
 #define CARD_WRITE_OFFSET 		(base_addr | 0x2C)
 #define CARD_GETSTATUS_OFFSET 	(base_addr | 0x30)
 #define CARD_SETSTATUS_OFFSET 	(base_addr | 0x34)
+#define CARD_SETUP_OFFSET 		(base_addr | 0x38)
 
 
 int Patch_DVDHighLevelRead(u8 *data, u32 length);

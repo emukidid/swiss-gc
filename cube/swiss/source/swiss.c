@@ -182,15 +182,17 @@ char *getRelativeName(char *str) {
 	return str;
 }
 
+char stripbuffer[1024];
 char *stripInvalidChars(char *str) {
+	strcpy(stripbuffer, str);
 	int i = 0;
-	for(i = 0; i < strlen(str); i++) {
+	for(i = 0; i < strlen(stripbuffer); i++) {
 		if(str[i] == '\\' || str[i] == '/' || str[i] == ':'|| str[i] == '*'
 		|| str[i] == '?'|| str[i] == '"'|| str[i] == '<'|| str[i] == '>'|| str[i] == '|') {
-			str[i] = '_';
+			stripbuffer[i] = '_';
 		}
 	}
-	return str;
+	return &stripbuffer[0];
 }
 
 // textFileBrowser lives on :)
@@ -306,25 +308,25 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 	free(directories);
 }
 
-void setup_memcard_emulation() {
+int setup_memcard_emulation() {
 	// If memcard emulation is enabled, create the %game%.memcard.sav file
 	if(swissSettings.emulatemc) {
 		if(deviceHandler_initial != &initial_SD0 && deviceHandler_initial != &initial_DVD &&
 			deviceHandler_initial != &initial_WKF && deviceHandler_initial != &initial_WODE) {
 			// Memory card emulation will only work from SD Slot A when running a game in SD Slot A or from DVD/WKF/WODE
 			DrawFrameStart();
-			DrawMessageBox(D_INFO, "Memory card emulation only works under the following setups:");	//TODO
+			DrawMessageBox(D_INFO, "For MC emulation, loading device must be:\nDVD, Wode, WKF or SD in Slot A\nPress A to Return ...");
 			DrawFrameFinish();
 			swissSettings.emulatemc = 0;
 			wait_press_A();
-			return;
+			return 0;
 		}
 		// Check if game device isn't SDGecko in slot A, if so, we need to set up the SDGecko and the patchcode here
 		if(deviceHandler_initial != &initial_SD0) {
 			DrawFrameStart();
-			DrawMessageBox(D_INFO, "Press A when there's a SDGecko inserted in slot A");
+			DrawMessageBox(D_INFO, "Insert a SDGecko inserted into slot A\nPress A when ready ...");
 			DrawFrameFinish();
-			//wait_press_A();
+			wait_press_A();
 			// Try to init SDGecko in Slot A
 			if(deviceHandler_FAT_init(&initial_SD0)) {
 				// Setup patch code
@@ -332,15 +334,15 @@ void setup_memcard_emulation() {
 			}
 			else {
 				DrawFrameStart();
-				DrawMessageBox(D_INFO, "SDGecko in Slot A failed to init. Memcard emulation disabled.");
+				DrawMessageBox(D_FAIL, "SDGecko in Slot A failed to init!\nMemcard emulation disabled, returning to menu.");
 				DrawFrameFinish();
 				swissSettings.emulatemc = 0;
 				sleep(2);
-				return;
+				return 0;
 			}
 		}
 		// Obtain the offset of it on SD Card and stash it somewhere
-		sprintf(txtbuffer, "sda:/%s.memcard.sav", (char*)0x80000000);
+		sprintf(txtbuffer, "sda:/%s.memcard.sav", stripInvalidChars(getRelativeName(curFile.name)));
 		print_gecko("Looking for %s\r\n",txtbuffer);
 		FILE *fp = fopen(txtbuffer, "r+");
 		if(!fp) {
@@ -364,16 +366,27 @@ void setup_memcard_emulation() {
 			print_gecko("File base %08X\r\n",*(u32*)VAR_MEMCARD_LBA);
 			if (file_base == -1) {
 				// fatal
+				DrawFrameStart();
+				DrawMessageBox(D_FAIL, "Memory Card file is fragmented!\nMemcard emulation disabled, returning to menu.");
+				DrawFrameFinish();
 				print_gecko("File base fragmented in %i pieces!\r\n",frag_list->num);
-				while(1);
+				swissSettings.emulatemc = 0;
+				sleep(2);
+				return 0;
 			}
 		}
 		else {
 			// fatal
 			print_gecko("Could not create or open file %s\r\n",txtbuffer);
-			while(1);
+			DrawFrameStart();
+			DrawMessageBox(D_FAIL, "Memory Card file failed to create!\nMemcard emulation disabled, returning to menu.");
+			DrawFrameFinish();
+			swissSettings.emulatemc = 0;
+			sleep(2);
+			return 0;
 		}
 	}
+	return 1;
 }
 
 unsigned int load_app(int mode)
@@ -384,7 +397,6 @@ unsigned int load_app(int mode)
 	u8 *main_dol_buffer = 0;
 	DOLHEADER dolhdr;
 	
-	VIDEO_SetPostRetraceCallback (NULL);
 	memcpy((void*)0x80000020,GC_DefaultConfig,0xE0);
   
 	// Read the game header to 0x80000000 & apploader header
@@ -395,7 +407,7 @@ unsigned int load_app(int mode)
 		DrawFrameFinish();
 		while(1);
 	}
-	setup_memcard_emulation();	
+	
 	// Fix Zelda WW on Wii (__GXSetVAT? patch)
 	if (!is_gamecube() && (!strncmp(gameID, "GZLP01", 6) || !strncmp(gameID, "GZLE01", 6) || !strncmp(gameID, "GZLJ01", 6))) {
 		if(!strncmp(gameID, "GZLP01", 6))
@@ -541,6 +553,7 @@ unsigned int load_app(int mode)
 	DrawProgressBar(100, "Executing Game!");
 	DrawFrameFinish();
 
+	VIDEO_SetPostRetraceCallback (NULL);
 	do_videomode_swap();
 	switch(*(char*)0x80000003) {
 		case 'P': // PAL
@@ -955,6 +968,10 @@ void load_file()
 		//TODO look for cheats file
 		hasCheatsFile = 0;	
 	}
+	
+	// Setup memory card emulation
+	if(!setup_memcard_emulation())
+		return;
 	
 	// Start up the DVD Drive
 	if((curDevice != DVD_DISC) && (curDevice != WODE) && (curDevice != WKF) 

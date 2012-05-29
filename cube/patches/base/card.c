@@ -107,7 +107,7 @@ typedef struct SwissMemcardHeader
 	CARDStatAndInfo statandinfo[NUM_STAT_BLOCK_ENTRIES];
 } SwissMemcardHeader;	// 240 entries, near 32768
 
-/************* USB GECKO */
+/************* USB GECKO */ /*
 
 #define EXI_CHAN1SR		*(volatile unsigned long*) 0xCC006814 // Channel 1 Status Register
 #define EXI_CHAN1CR		*(volatile unsigned long*) 0xCC006820 // Channel 1 Control Register
@@ -172,7 +172,7 @@ int usb_sendbuffer_safe(const void *buffer,int size)
 
 	return 0;
 }
-
+*/
 /************************/
 
 
@@ -211,30 +211,35 @@ s32 _strlen(const char* s)
 // Sync the file table to SD card
 void sync_filetable() {
 	SwissMemcardHeader *header = (SwissMemcardHeader*)(WORKAREA);
-	usb_sendbuffer_safe("sync_filetable start\r\n",22);
+	//usb_sendbuffer_safe("sync_filetable start\r\n",22);
 	do_write(header, 32768, 0);
-	usb_sendbuffer_safe("sync_filetable end\r\n",20);
+	//usb_sendbuffer_safe("sync_filetable end\r\n",20);
+}
+
+// Read our entire header into the work area.
+void card_setup() {
+	//usb_sendbuffer_safe("read header\r\n",11);
+	SwissMemcardHeader *header = (SwissMemcardHeader*)(WORKAREA);
+	read_wrapper(header, 32768, 0);	// Read 32kb
 }
 
 // Find if a file we want exists or not from our memcard image
 // Returns the block number in the header
 s32 find_file(s32 fileNo, char* fileName) {
-	usb_sendbuffer_safe("find file\r\n",11);
+	//usb_sendbuffer_safe("find file\r\n",11);
 	SwissMemcardHeader *header = (SwissMemcardHeader*)(WORKAREA);
-	// Read our entire header into the work area.
-	read_wrapper(header, 32768, 0);	// Read 32kb
-
+	
 	int i;
 	for(i = 0; i < NUM_STAT_BLOCK_ENTRIES; i++) {
-		usb_sendbuffer_safe(".",1);
+		//usb_sendbuffer_safe(".",1);
 		CARDStatAndInfo *statandinfo = &header->statandinfo[i];
 		if(fileNo && statandinfo->info.fileNo == fileNo) {
 			// we found it, return block
-			usb_sendbuffer_safe("matched on fileNo\r\n",19);
+			//usb_sendbuffer_safe("matched on fileNo\r\n",19);
 			return i;
 		}
 		else if(fileName && statandinfo->stat.fileName[0]) {
-			usb_sendbuffer_safe("comparing fileName\r\n",20);
+			//usb_sendbuffer_safe("comparing fileName\r\n",20);
 			int k, diff = 0;
 			for(k = 0; k < _strlen(fileName); k++) {
 				if(fileName[k] != statandinfo->stat.fileName[k]) {
@@ -243,12 +248,12 @@ s32 find_file(s32 fileNo, char* fileName) {
 			}
 			if(!diff) {
 				// we found it, return block
-				usb_sendbuffer_safe("matched on fileName\r\n",21);
+				//usb_sendbuffer_safe("matched on fileName\r\n",21);
 				return i;
 			}
 		}
 	}
-	usb_sendbuffer_safe("didn't find match\r\n",19);
+	//usb_sendbuffer_safe("didn't find match\r\n",19);
 	return CARD_RESULT_NOFILE;
 }
 
@@ -271,7 +276,7 @@ s32 card_genericopen(s32 chan, s32 fileNo, char* fileName, CARDFileInfo* fileInf
 
 void card_updatestats( CARDStat *CStat )
 {
-	usb_sendbuffer_safe("updatestats\r\n",13);
+	//usb_sendbuffer_safe("updatestats\r\n",13);
 	u32 iconSize,bannerSize,format,offset,i,tLut=0;
 
 	bannerSize	= CARD_BANNER_WIDTH * CARD_BANNER_HEIGHT;
@@ -330,12 +335,12 @@ void card_updatestats( CARDStat *CStat )
 }
 
 s32 card_open(s32 chan, char* fileName, CARDFileInfo* fileInfo) {
-	usb_sendbuffer_safe("card_open\r\n",11);
+	//usb_sendbuffer_safe("card_open\r\n",11);
 	return card_genericopen(chan, 0, fileName, fileInfo);
 }
 
 s32 card_fastopen(s32 chan, s32 fileNo, CARDFileInfo* fileInfo) {
-	usb_sendbuffer_safe("card_fastopen\r\n",15);
+	//usb_sendbuffer_safe("card_fastopen\r\n",15);
 	return card_genericopen(chan, fileNo, 0, fileInfo);
 }
 
@@ -383,7 +388,7 @@ s32 find_next_rawoffset(s32 size) {
 }
 
 s32 card_create(s32 chan, char* fileName, u32 size, CARDFileInfo* fileInfo) {
-	usb_sendbuffer_safe("card_create\r\n",13);
+	//usb_sendbuffer_safe("card_create\r\n",13);
 	// Try to find the file based on fileName
 	s32 statIdx = find_file(0, fileName);
 	if(statIdx >= 0) {
@@ -426,14 +431,14 @@ s32 card_create(s32 chan, char* fileName, u32 size, CARDFileInfo* fileInfo) {
 		fileInfo->offset = 0;
 		fileInfo->length = size;
 		fileInfo->iBlock = 0;
-		usb_sendbuffer_safe("card_create return\r\n",20);
+		//usb_sendbuffer_safe("card_create return\r\n",20);
 		*(volatile u32*)(VAR_MEMCARD_RESULT) = CARD_RESULT_READY;
 		return CARD_RESULT_READY;
 	}
 }
 
 s32 card_delete(s32 chan, char* fileName) {
-	usb_sendbuffer_safe("card_delete\r\n",13);
+	//usb_sendbuffer_safe("card_delete\r\n",13);
 	s32 statIdx = find_file(0, fileName);
 	if(statIdx >= 0) {
 		// Delete it and sync the FS to SD
@@ -462,7 +467,7 @@ void card_readwrite(s32 statIdx, void* buf, s32 length, s32 offset, s32 read) {
 }
 
 s32 card_read(CARDFileInfo* fileInfo, void* buf, s32 length, s32 offset) {
-	usb_sendbuffer_safe("card_read\r\n",11);
+	//usb_sendbuffer_safe("card_read\r\n",11);
 	// Try to find the file based on fileInfo->fileNo
 	s32 statIdx = find_file(fileInfo->fileNo, 0);
 	if(statIdx >= 0) {
@@ -479,7 +484,7 @@ s32 card_read(CARDFileInfo* fileInfo, void* buf, s32 length, s32 offset) {
 }
 
 s32 card_write(CARDFileInfo* fileInfo, void* buf, s32 length, s32 offset) {
-	usb_sendbuffer_safe("card_write\r\n",12);
+	//usb_sendbuffer_safe("card_write\r\n",12);
 	// Try to find the file based on fileInfo->fileNo
 	s32 statIdx = find_file(fileInfo->fileNo, 0);
 	if(statIdx >= 0) {
@@ -496,7 +501,7 @@ s32 card_write(CARDFileInfo* fileInfo, void* buf, s32 length, s32 offset) {
 }
 
 s32 card_getstatus(s32 chan, s32 fileNo, CARDStat* stat) {
-	usb_sendbuffer_safe("card_getstatus\r\n",16);
+	//usb_sendbuffer_safe("card_getstatus\r\n",16);
 	// Try to find the file based on fileNo
 	s32 statIdx = find_file(fileNo, 0);
 	if(statIdx >= 0) {
@@ -515,7 +520,7 @@ s32 card_getstatus(s32 chan, s32 fileNo, CARDStat* stat) {
 }
 
 s32 card_setstatus(s32 chan, s32 fileNo, CARDStat* stat) {
-	usb_sendbuffer_safe("card_setstatus\r\n",16);
+	//usb_sendbuffer_safe("card_setstatus\r\n",16);
 	// Try to find the file based on fileNo
 	s32 statIdx = find_file(fileNo, 0);
 	if(statIdx >= 0) {

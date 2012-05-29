@@ -48,6 +48,7 @@ main:
 	b		card_write				# s32 card_write(CARDFileInfo* fileInfo, void* buf, s32 length, s32 offset)
 	b		card_getstatus			# s32 card_getstatus(s32 fileNo, CARDStat* stat)
 	b		card_setstatus			# s32 card_setstatus(s32 fileNo, CARDStat* stat)
+	b		card_setup				# void card_setup(); // Read our virtual memcard file table into the work area
 
 # Low level read
 setup_read_type1v1:
