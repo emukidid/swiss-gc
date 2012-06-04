@@ -405,9 +405,9 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 
 	borderSize = (mode==B_SELECTED) ? 6 : 4;
 
-	GXColor selectColor = (GXColor) {96,107,164,GUI_MSGBOX_ALPHA}; //bluish
-	GXColor noColor = (GXColor) {0,0,0,0}; //black
-	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
+	GXColor selectColor = (GXColor) {96,107,164,GUI_MSGBOX_ALPHA}; 	//bluish
+	GXColor noColor 	= (GXColor) {0,0,0,0}; 						//black
+	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA};	//silver
 	
 	//Draw Text and backfill (if selected)
 	if(mode==B_SELECTED) {
@@ -419,7 +419,18 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 		WriteFontStyled(x1 + borderSize+3, y1+borderSize, message, scale, false, defaultColor);
 	}
 	if(file->fileAttrib==IS_FILE) {
-		sprintf(txtbuffer,"Size: %i %s",file->size > 1024 ? file->size/ 1024:file->size,file->size > 1024 ? "Kb":"Bytes");
+		if(curDevice == WODE) {
+			sprintf(txtbuffer,"Partition: %i, ISO: %i", (int)(file->fileBase>>24)&0xFF,(int)(file->fileBase&0xFFFFFF));
+		}
+		else if(curDevice == MEMCARD) {
+			sprintf(txtbuffer,"Size: %.2fKb (%i blocks)", (float)file->size/1024, file->size/8192);
+		}
+		else if(curDevice == QOOB_FLASH) {
+			sprintf(txtbuffer,"Size: %.2fKb (%i blocks)", (float)file->size/1024, file->size/0x10000);
+		}
+		else {
+			sprintf(txtbuffer,"Size: %i %s",file->size > 1024 ? file->size/ 1024:file->size,file->size > 1024 ? "Kb":"Bytes");
+		}
 		WriteFontStyled(x1 + borderSize+3, y1+borderSize+24, txtbuffer, 0.5f, false, defaultColor);
 	}
 }
