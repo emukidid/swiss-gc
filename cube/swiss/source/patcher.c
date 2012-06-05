@@ -140,6 +140,59 @@ void install_code()
 	}
 }
 
+void make_pattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
+{
+	u32 i;
+
+	memset( FunctionPattern, 0, sizeof(FuncPattern) );
+
+	for( i = 0; i < Length; i+=4 )
+	{
+		u32 word = *(u32*)(Data + i) ;
+		
+		if( (word & 0xFC000003) ==  0x48000001 )
+			FunctionPattern->FCalls++;
+
+		if( (word & 0xFC000003) ==  0x48000000 )
+			FunctionPattern->Branch++;
+		if( (word & 0xFFFF0000) ==  0x40800000 )
+			FunctionPattern->Branch++;
+		if( (word & 0xFFFF0000) ==  0x41800000 )
+			FunctionPattern->Branch++;
+		if( (word & 0xFFFF0000) ==  0x40810000 )
+			FunctionPattern->Branch++;
+		if( (word & 0xFFFF0000) ==  0x41820000 )
+			FunctionPattern->Branch++;
+		
+		if( (word & 0xFC000000) ==  0x80000000 )
+			FunctionPattern->Loads++;
+		if( (word & 0xFF000000) ==  0x38000000 )
+			FunctionPattern->Loads++;
+		if( (word & 0xFF000000) ==  0x3C000000 )
+			FunctionPattern->Loads++;
+		
+		if( (word & 0xFC000000) ==  0x90000000 )
+			FunctionPattern->Stores++;
+		if( (word & 0xFC000000) ==  0x94000000 )
+			FunctionPattern->Stores++;
+
+		if( (word & 0xFF000000) ==  0x7C000000 )
+			FunctionPattern->Moves++;
+
+		if( word == 0x4E800020 )
+			break;
+	}
+
+	FunctionPattern->Length = i;
+}
+bool compare_pattern( FuncPattern *FPatA, FuncPattern *FPatB  )
+{
+	if( memcmp( FPatA, FPatB, sizeof(u32) * 6 ) == 0 )
+		return true;
+	else
+		return false;
+}
+
 int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 {
 	u32 i;
@@ -218,20 +271,21 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 int Patch_DVDHighLevelRead(u8 *data, u32 length) {
 	int i, j, count = 0, dis_int = swissSettings.disableInterrupts;
 	FuncPattern DVDReadSigs[2] = {
-	{ 	0xBC,   20,     3,      3,      4,      7, 
-		dis_int ? DVDReadAsync:DVDReadAsyncInt,  dis_int ? DVDReadAsync_length:DVDReadAsyncInt_length, "DVDReadAsync", 0 },
-	{ 	0x114,        23,     2,      6,      9,      8, 
-		dis_int ? DVDRead:DVDReadInt,   dis_int ? DVDRead_length:DVDReadInt_length,  "DVDRead", 0 }};
+		{ 0xBC, 20, 3, 3, 4, 7, dis_int ? DVDReadAsync:DVDReadAsyncInt,  dis_int ? DVDReadAsync_length:DVDReadAsyncInt_length, "DVDReadAsync", 0 },
+		{ 0x114, 23, 2, 6, 9, 8, dis_int ? DVDRead:DVDReadInt,   dis_int ? DVDRead_length:DVDReadInt_length,  "DVDRead", 0 }
+	};
 	
 	for( i=0; i < length; i+=4 )
 	{
 		if( *(u32*)(data + i ) != 0x7C0802A6 )
 			continue;
-
-		for( j=0; j < 2; j++ )
+			
+		FuncPattern fp;
+		make_pattern( (u8*)(data+i), length, &fp );
+			
+		for( j=0; j < sizeof(DVDReadSigs); j++ )
 		{
-			if( find_pattern( (u8*)(data+i), length, &(DVDReadSigs[j]) ) )
-			{
+			if( !DVDReadSigs[j].offsetFoundAt && compare_pattern( &fp, &(DVDReadSigs[j]) ) ) {
 				print_gecko("Found [%s] @ 0x%08X len %i\n", DVDReadSigs[j].Name, (u32)data + i, DVDReadSigs[j].Length);
 				
 				print_gecko("Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
@@ -241,6 +295,7 @@ int Patch_DVDHighLevelRead(u8 *data, u32 length) {
 				DCFlushRange((u8*)(data+i), DVDReadSigs[j].Length);
 				ICInvalidateRange((u8*)(data+i), DVDReadSigs[j].Length);
 				count++;
+				DVDReadSigs[j].offsetFoundAt = (u32)data+i;
 			}
 		}
 
@@ -372,9 +427,13 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 	{
 		if( *(u32*)(data + i ) != 0x7C0802A6 )
 			continue;
-		for(j = 0; j < 6; j++) {
-			if( find_pattern( (u8*)(data+i), length, &VIConfigureSigs[j] ) )
-			{
+			
+		FuncPattern fp;
+		make_pattern( (u8*)(data+i), length, &fp );
+			
+		for( j=0; j < sizeof(VIConfigureSigs); j++ )
+		{
+			if( !VIConfigureSigs[j].offsetFoundAt && compare_pattern( &fp, &(VIConfigureSigs[j]) ) ) {
 				print_gecko("Found [%s] @ 0x%08X len %i\n", VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].Length);			
 				print_gecko("Writing Jump for [%s] at 0x%08X len %i\n", 
 						VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].PatchLength);
@@ -404,6 +463,7 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 					}
 					Patch_ProgTiming(data, length);	// Patch timing to 576p
 				}
+				VIConfigureSigs[j].offsetFoundAt = (u32)data+i;
 				return 1;
 			}
 		}
@@ -501,10 +561,12 @@ int Patch_DVDAudioStreaming(u8 *data, u32 length) {
 		if( *(u32*)(data + i ) != 0x7C0802A6 )
 			continue;
 
-		for( j=0; j < 3; j++ )
+		FuncPattern fp;
+		make_pattern( (u8*)(data+i), length, &fp );
+			
+		for( j=0; j < sizeof(DVDAudioSigs); j++ )
 		{
-			if( find_pattern( (u8*)(data+i), length, &(DVDAudioSigs[j]) ) )
-			{
+			if( !DVDAudioSigs[j].offsetFoundAt && compare_pattern( &fp, &(DVDAudioSigs[j]) ) )	{
 				print_gecko("Found [%s] @ 0x%08X len %i\n", DVDAudioSigs[j].Name, (u32)data + i, DVDAudioSigs[j].Length);
 				print_gecko("Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
 						DVDAudioSigs[j].Name, (u32)DVDAudioSigs[j].Patch, (u32)data + i, DVDAudioSigs[j].PatchLength);
@@ -512,6 +574,7 @@ int Patch_DVDAudioStreaming(u8 *data, u32 length) {
 				memcpy( (u8*)(data+i), &DVDAudioSigs[j].Patch[0], DVDAudioSigs[j].PatchLength );
 				DCFlushRange((u8*)(data+i), DVDAudioSigs[j].Length);
 				ICInvalidateRange((u8*)(data+i), DVDAudioSigs[j].Length);
+				DVDAudioSigs[j].offsetFoundAt = (u32)data+i;
 				count++;
 			}
 		}
@@ -743,86 +806,29 @@ u32 __dvdLowInquiryNULL[] = {
 };
 
 int Patch_DVDStatusFunctions(u8 *data, u32 length) {
-	int i, j, count = 0;
-	FuncPattern DVDStatusSigs[1] = {	
-		{0xCC, 17, 10, 5, 3, 2, (u8*)__dvdLowInquiryNULL, sizeof(__dvdLowInquiryNULL), "DVDInquiryAsync", 0 }
-	};
+	int i, count = 0;
+	FuncPattern DVDStatusSig =	
+		{0xCC, 17, 10, 5, 3, 2, (u8*)__dvdLowInquiryNULL, sizeof(__dvdLowInquiryNULL), "DVDInquiryAsync", 0 };
 
 	for( i=0; i < length; i+=4 )
 	{
 		if( *(u32*)(data + i ) != 0x7C0802A6 )
 			continue;
 
-		for( j=0; j < 1; j++ )
+		if( find_pattern( (u8*)(data+i), length, &(DVDStatusSig) ) )
 		{
-			if( find_pattern( (u8*)(data+i), length, &(DVDStatusSigs[j]) ) )
-			{
-				print_gecko("Found [%s] @ 0x%08X len %i\n", DVDStatusSigs[j].Name, (u32)data + i, DVDStatusSigs[j].Length);		
-				print_gecko("Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
-						DVDStatusSigs[j].Name, (u32)DVDStatusSigs[j].Patch, (u32)data + i, DVDStatusSigs[j].PatchLength);
-
-				memcpy( (u8*)(data+i), &DVDStatusSigs[j].Patch[0], DVDStatusSigs[j].PatchLength );
-				DCFlushRange((u8*)(data+i), DVDStatusSigs[j].Length);
-				ICInvalidateRange((u8*)(data+i), DVDStatusSigs[j].Length);
-				count++;
-			}
+			print_gecko("Found [%s] @ 0x%08X len %i\n", DVDStatusSig.Name, (u32)data + i, DVDStatusSig.Length);		
+			print_gecko("Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
+					DVDStatusSig.Name, (u32)DVDStatusSig.Patch, (u32)data + i, DVDStatusSig.PatchLength);
+			memcpy( (u8*)(data+i), &DVDStatusSig.Patch[0], DVDStatusSig.PatchLength );
+			DCFlushRange((u8*)(data+i), DVDStatusSig.Length);
+			ICInvalidateRange((u8*)(data+i), DVDStatusSig.Length);
+			count++;
 		}
 	}
 	return count;
 }
 
-void MakePattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
-{
-	u32 i;
-
-	memset( FunctionPattern, 0, sizeof(FuncPattern) );
-
-	for( i = 0; i < Length; i+=4 )
-	{
-		u32 word = *(u32*)(Data + i) ;
-		
-		if( (word & 0xFC000003) ==  0x48000001 )
-			FunctionPattern->FCalls++;
-
-		if( (word & 0xFC000003) ==  0x48000000 )
-			FunctionPattern->Branch++;
-		if( (word & 0xFFFF0000) ==  0x40800000 )
-			FunctionPattern->Branch++;
-		if( (word & 0xFFFF0000) ==  0x41800000 )
-			FunctionPattern->Branch++;
-		if( (word & 0xFFFF0000) ==  0x40810000 )
-			FunctionPattern->Branch++;
-		if( (word & 0xFFFF0000) ==  0x41820000 )
-			FunctionPattern->Branch++;
-		
-		if( (word & 0xFC000000) ==  0x80000000 )
-			FunctionPattern->Loads++;
-		if( (word & 0xFF000000) ==  0x38000000 )
-			FunctionPattern->Loads++;
-		if( (word & 0xFF000000) ==  0x3C000000 )
-			FunctionPattern->Loads++;
-		
-		if( (word & 0xFC000000) ==  0x90000000 )
-			FunctionPattern->Stores++;
-		if( (word & 0xFC000000) ==  0x94000000 )
-			FunctionPattern->Stores++;
-
-		if( (word & 0xFF000000) ==  0x7C000000 )
-			FunctionPattern->Moves++;
-
-		if( word == 0x4E800020 )
-			break;
-	}
-
-	FunctionPattern->Length = i;
-}
-bool ComparePattern( FuncPattern *FPatA, FuncPattern *FPatB  )
-{
-	if( memcmp( FPatA, FPatB, sizeof(u32) * 6 ) == 0 )
-		return true;
-	else
-		return false;
-}
 
 /** SDK CARD patches for memory card emulation - from DML, ported to GameCube by emu_kidid */
 int Patch_CARDFunctions(u8 *data, u32 length) {
@@ -878,11 +884,11 @@ int Patch_CARDFunctions(u8 *data, u32 length) {
 			continue;
 
 		FuncPattern fp;
-		MakePattern( (u8*)(data+i), length, &fp );
+		make_pattern( (u8*)(data+i), length, &fp );
 			
 		for( j=0; j < sizeof(CPatterns); j++ )
 		{
-			if( !CPatterns[j].offsetFoundAt && ComparePattern( &fp, &(CPatterns[j]) ) )	{
+			if( !CPatterns[j].offsetFoundAt && compare_pattern( &fp, &(CPatterns[j]) ) )	{
 				if( CPatterns[j].Patch == CARDFreeBlocks ) {
 					//Check for CARDGetResultCode which is always (when used) above CARDFreeBlocks
 					if(*(u32*)(data + i - 0x30 ) == 0x2C030000) {
@@ -949,3 +955,9 @@ int Patch_CARDFunctions(u8 *data, u32 length) {
 	}
 	return count;
 }
+
+// Ocarina cheat engine hook - Patch OSSleepThread
+int Patch_CheatsHook(u8 *data, u32 length) {
+	
+}
+

@@ -341,6 +341,10 @@ int setup_memcard_emulation() {
 				return 0;
 			}
 		}
+		// High level memory area, but our CARD emulation is all hardcoded for low-level patches.. :P
+		if(swissSettings.emulatemc && swissSettings.useHiMemArea) {
+			memcpy((void*)0x80001800,sd_bin,sd_bin_size);
+		}
 		// Obtain the offset of it on SD Card and stash it somewhere
 		sprintf(txtbuffer, "sda:/%s.memcard.sav", stripInvalidChars(getRelativeName(curFile.name)));
 		print_gecko("Looking for %s\r\n",txtbuffer);
@@ -537,7 +541,7 @@ unsigned int load_app(int mode)
 	}
 	// Cheats hook
 	if(mode == CHEATS) {
-		//Patch_OSSleepThread(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		Patch_CheatsHook(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	DCFlushRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	ICInvalidateRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
@@ -591,6 +595,7 @@ unsigned int load_app(int mode)
 		// Check DVD Status, make sure it's error code 0
 		print_gecko("DVD: %08X\r\n",dvd_get_error());
 	}
+	// Memcard emulation or High-Level DVD emulation, clear out some variables
 	if(swissSettings.useHiLevelPatch || swissSettings.emulatemc) {
 		*(volatile unsigned int*)VAR_CB_ADDR = 0;
 		*(volatile unsigned int*)VAR_CB_ARG1 = 0;
@@ -600,6 +605,7 @@ unsigned int load_app(int mode)
 		*(volatile unsigned int*)VAR_MC_CB_ARG1 = 0;
 		*(volatile unsigned int*)VAR_MC_CB_ARG2 = 0;
 	}
+	// Memcard emulation with read device not being SDGecko in Slot A, setup the SD variables
 	if(swissSettings.emulatemc && deviceHandler_initial != &initial_SD0) {
 		*(volatile unsigned int*)VAR_EXI_BUS_SPD = 208;
 		*(volatile unsigned int*)VAR_SD_TYPE = sdgecko_getAddressingType(0);
