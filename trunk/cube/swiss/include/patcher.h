@@ -162,6 +162,7 @@ int Patch_DVDCompareDiskId(u8 *data, u32 length);
 void Patch_GXSetVATZelda(void *addr, u32 length,int mode);
 int Patch_OSRestoreInterrupts(void *addr, u32 length);
 int Patch_CARDFunctions(u8 *data, u32 length);
+int Patch_CheatsHook(u8 *data, u32 length);
 void install_code();
 u32 get_base_addr();
 void set_base_addr(int useHi);
