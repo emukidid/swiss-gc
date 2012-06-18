@@ -38,7 +38,7 @@ GXRModeObj *vmode = NULL;				//Graphics Mode Object
 u32 *xfb[2] = { NULL, NULL };   //Framebuffers
 int whichfb = 0;       		 	    //Frame buffer toggle
 u8 driveVersion[8];
-static file_handle* allFiles;   //all the files
+file_handle* allFiles;   		//all the files in the current dir
 int curMenuLocation = ON_FILLIST; //where are we on the screen?
 int files = 0;                  //number of files in a directory
 int curMenuSelection = 0;	      //menu selection

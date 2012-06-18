@@ -149,6 +149,10 @@ extern u32 CARDWriteAsync_length;
 #define CARD_SETSTATUS_OFFSET 	(base_addr | 0x34)
 #define CARD_SETUP_OFFSET 		(base_addr | 0x38)
 
+/* Types of files we may patch */
+#define PATCH_DOL		0
+#define PATCH_ELF		1
+#define PATCH_OTHER		2
 
 int Patch_DVDHighLevelRead(u8 *data, u32 length);
 int Patch_DVDLowLevelRead(void *addr, u32 length);
@@ -162,7 +166,7 @@ int Patch_DVDCompareDiskId(u8 *data, u32 length);
 void Patch_GXSetVATZelda(void *addr, u32 length,int mode);
 int Patch_OSRestoreInterrupts(void *addr, u32 length);
 int Patch_CARDFunctions(u8 *data, u32 length);
-int Patch_CheatsHook(u8 *data, u32 length);
+int Patch_CheatsHook(u8 *data, u32 length, u32 type);
 void install_code();
 u32 get_base_addr();
 void set_base_addr(int useHi);

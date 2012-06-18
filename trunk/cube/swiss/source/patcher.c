@@ -16,6 +16,7 @@
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "deviceHandler.h"
+#include "sidestep.h"
 
 static unsigned int base_addr = LO_RESERVE;
 
@@ -956,8 +957,71 @@ int Patch_CARDFunctions(u8 *data, u32 length) {
 	return count;
 }
 
-// Ocarina cheat engine hook - Patch OSSleepThread
-int Patch_CheatsHook(u8 *data, u32 length) {
+u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt) {
+	if(type == PATCH_DOL) {
+		int i;
+		DOLHEADER *hdr = (DOLHEADER *) data;
+
+		// Doesn't look valid
+		if (hdr->textOffset[0] != DOLHDRLENGTH)
+			return 0;
+
+		// Inspect text sections to see if what we found lies in here
+		for (i = 0; i < MAXTEXTSECTION; i++) {
+			if (hdr->textAddress[i] && hdr->textLength[i]) {
+				// Does what we found lie in this section?
+				if((offsetFoundAt >= hdr->textOffset[i]) && offsetFoundAt <= (hdr->textOffset[i] + hdr->textLength[i])) {
+					// Yes it does, return the load address + offsetFoundAt as that's where it'll end up!
+					return offsetFoundAt+hdr->textAddress[i]-hdr->textOffset[i];
+				}
+			}
+		}
+
+		// Inspect data sections (shouldn't really need to unless someone was sneaky..)
+		for (i = 0; i < MAXDATASECTION; i++) {
+			if (hdr->dataAddress[i] && hdr->dataLength[i]) {
+				// Does what we found lie in this section?
+				if((offsetFoundAt >= hdr->dataOffset[i]) && offsetFoundAt <= (hdr->dataOffset[i] + hdr->dataLength[i])) {
+					// Yes it does, return the load address + offsetFoundAt as that's where it'll end up!
+					return offsetFoundAt+hdr->dataAddress[i]-hdr->dataOffset[i];
+				}
+			}
+		}
 	
+	}
+	return 0;
+}
+
+// Ocarina cheat engine hook - Patch OSSleepThread
+int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
+	int i;
+	
+	for( i=0; i < length; i+=4 )
+	{
+		// Find OSSleepThread
+		if(*(u32*)(data+i+0) == 0x3C808000 &&
+			(*(u32*)(data+i+4) == 0x38000004 || *(u32*)(data+i+4) == 0x808400E4) &&
+			(*(u32*)(data+i+8) == 0x38000004 || *(u32*)(data+i+8) == 0x808400E4)) 
+		{
+			
+			// Find the end of the function and replace the blr with a relative branch to 0x800018A8
+			int j = 12;
+			while( *(u32*)(data+i+j) != 0x4E800020 )
+				j+=4;
+			print_gecko("Patch:[Hook:OSSleepThread] at %08X\n", ((u32)data + i + j) );
+			// As the data we're looking at will not be in this exact memory location until it's placed there by our ARAM relocation stub,
+			// we'll need to work out where it will end up when it does get placed in memory to write the relative branch.
+			u32 properAddress = Calc_ProperAddress(data, type, i+j);
+			if(properAddress) {
+				print_gecko("Patch:[Hook:OSSleepThread] at %08X\n", properAddress );
+				u32 newval = (u32)(0x800018A8 - properAddress);
+				newval&= 0x03FFFFFC;
+				newval|= 0x48000000;
+				*(u32*)(data+i+j) = newval;
+				return 1;
+			}
+		}
+	}
+	return 0;
 }
 

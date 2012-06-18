@@ -26,6 +26,7 @@
 #include <asndlib.h>
 #include <mp3player.h>
 
+#include "cheats.h"
 #include "frag.h"
 #include "swiss.h"
 #include "main.h"
@@ -51,6 +52,8 @@ int SDHCCard = 0; //0 == SDHC, 1 == normal SD
 int curDevice = 0;  //SD_CARD or DVD_DISC or IDEEXI or WODE
 int curCopyDevice = 0;  //SD_CARD or DVD_DISC or IDEEXI or WODE
 char *videoStr = NULL;
+extern file_handle* allFiles;
+extern int files;
 
 /* The default boot up MEM1 lowmem values (from ipl when booting a game) */
 static const u32 GC_DefaultConfig[56] =
@@ -541,7 +544,7 @@ unsigned int load_app(int mode)
 	}
 	// Cheats hook
 	if(mode == CHEATS) {
-		Patch_CheatsHook(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		Patch_CheatsHook(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 	DCFlushRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	ICInvalidateRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
@@ -582,7 +585,9 @@ unsigned int load_app(int mode)
 
 	// install our assembly code into memory
 	install_code();
-  
+	if(mode == CHEATS) {
+		kenobi_install_engine();
+	}
 	DCFlushRange((void*)0x80000000, 0x3100);
 	ICInvalidateRange((void*)0x80000000, 0x3100);
 	
@@ -960,7 +965,7 @@ void load_file()
 		}
 	}
 	
-	// Show game info and allow the user to select cheats or return to the menu
+	// Show game info or return to the menu
 	if(!info_game()) {
 		return;
 	}
@@ -971,8 +976,48 @@ void load_file()
 		if(isPrePatched < 0) {
 			return;
 		}
-		//TODO look for cheats file
-		hasCheatsFile = 0;	
+		// Look for cheats file if the user hasn't loaded one up
+		if(!hasCheatsFile) {
+			int i = 0;
+			char *expectedFileName = (char*)memalign(32,1024);
+			strcpy(expectedFileName, getRelativeName(&curFile.name[0]));
+			strcat(expectedFileName, ".gct");
+			for(i = 0; i < files; i++) {
+				char *fileName = getRelativeName(&allFiles[i].name[0]);
+				if(!strcmp(fileName, expectedFileName)) {
+					// Check cheats size
+					if(allFiles[i].size > kenobi_get_maxsize()) {
+						sprintf(txtbuffer, "Cheats file is too big! (%i byte limit)", kenobi_get_maxsize());
+						DrawFrameStart();
+						DrawMessageBox(D_FAIL, txtbuffer);
+						DrawFrameFinish();
+						wait_press_A();
+						free(expectedFileName);
+						return;
+					}
+					
+					u8* cheatsbuffer = (u8*)memalign(32,0x8000);
+					// Found the cheats file, read it
+					deviceHandler_seekFile(&allFiles[i],0,DEVICE_HANDLER_SEEK_SET);
+					if(deviceHandler_readFile(&allFiles[i],cheatsbuffer,allFiles[i].size) == allFiles[i].size) {
+						// Try to set it
+						kenobi_set_cheats(cheatsbuffer, allFiles[i].size);
+						hasCheatsFile = 1;
+					}
+					free(cheatsbuffer);
+				}
+			}
+			free(expectedFileName);
+		}
+
+		// We can't relocate the cheats stub so we must ensure our patch code is located elsewhere
+		if(hasCheatsFile && (!(!swissSettings.useHiLevelPatch && swissSettings.useHiMemArea))) {
+			DrawFrameStart();
+			DrawMessageBox(D_FAIL, "Cheats will only work with high memory patch");
+			DrawFrameFinish();
+			wait_press_A();
+			return;
+		}
 	}
 	
 	// Setup memory card emulation

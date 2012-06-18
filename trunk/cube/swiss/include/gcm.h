@@ -38,6 +38,7 @@ typedef struct {
 	u32 offset;
 	u32 size;
 	char name[64];
+	u32 type;
 } ExecutableFile __attribute__((aligned(32)));
 
 int parse_gcm(file_handle *file, ExecutableFile *filesToPatch);
