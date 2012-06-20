@@ -18,7 +18,7 @@ SwissSettings tempSettings;
 char *uiVModeStr[] = {"NTSC", "PAL", "480p", "Auto", "576p"};
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {7, 7, 11};
+int settings_count_pp[3] = {7, 8, 11};
 
 void settings_draw_page(int page_num, int option, file_handle *file) {
 	doBackdrop();
@@ -68,6 +68,8 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawSelectableButton(450, 200, -1, 230, swissSettings.hideUnknownFileTypes ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 240, "Stop DVD Motor on startup:", 1.0f, false, defaultColor);
 		DrawSelectableButton(450, 240, -1, 270, swissSettings.stopMotor ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 280, "Enable WiiRD debugging in Games:", 1.0f, false, defaultColor);
+		DrawSelectableButton(450, 280, -1, 310, swissSettings.wiirdDebug ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Current Game Settings (3/3):");
@@ -87,7 +89,7 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawSelectableButton(470, 290, -1, 315, swissSettings.muteAudioStutter ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 320, "No Disc Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
 		DrawSelectableButton(470, 320, -1, 345, swissSettings.noDiscMode ? "Yes":"No", option == 7 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 350, "Emulate Memory Card via SDGecko:", 1.0f, false, defaultColor);
+		WriteFontStyled(30, 350, "Emulate Memory Card via SDGecko:", 1.0f, false,  file != NULL ? defaultColor : disabledColor);
 		DrawSelectableButton(470, 350, -1, 375, swissSettings.emulatemc ? "Yes":"No", option == 8 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	if(page_num != 0) {
@@ -144,6 +146,9 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 			case 3:
 				swissSettings.stopMotor ^= 1;
+			break;
+			case 4:
+				swissSettings.wiirdDebug ^=1;
 			break;
 		}
 	}

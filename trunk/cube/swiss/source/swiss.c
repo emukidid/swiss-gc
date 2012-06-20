@@ -543,7 +543,7 @@ unsigned int load_app(int mode)
 		Patch_CARDFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	// Cheats hook
-	if(mode == CHEATS) {
+	if(mode == CHEATS || swissSettings.wiirdDebug) {
 		Patch_CheatsHook(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 	DCFlushRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
@@ -585,7 +585,8 @@ unsigned int load_app(int mode)
 
 	// install our assembly code into memory
 	install_code();
-	if(mode == CHEATS) {
+	if(mode == CHEATS || swissSettings.wiirdDebug) {
+		kenobi_set_debug(swissSettings.wiirdDebug);
 		kenobi_install_engine();
 	}
 	DCFlushRange((void*)0x80000000, 0x3100);
@@ -1010,10 +1011,13 @@ void load_file()
 			free(expectedFileName);
 		}
 
-		// We can't relocate the cheats stub so we must ensure our patch code is located elsewhere
-		if(hasCheatsFile && (!(!swissSettings.useHiLevelPatch && swissSettings.useHiMemArea))) {
+	}
+	
+	// We can't relocate the cheats stub so we must ensure our patch code is located elsewhere
+	if((curDevice != DVD_DISC) && (curDevice != WODE) && (curDevice != WKF)) {
+		if((hasCheatsFile || swissSettings.wiirdDebug) && (!(!swissSettings.useHiLevelPatch && swissSettings.useHiMemArea))) {
 			DrawFrameStart();
-			DrawMessageBox(D_FAIL, "Cheats will only work with high memory patch");
+			DrawMessageBox(D_FAIL, "Cheats/WiiRD will only work with high memory patch");
 			DrawFrameFinish();
 			wait_press_A();
 			return;
