@@ -76,6 +76,7 @@ typedef struct {
 	int gameVMode;	// What mode to force a Game into
 	int forceWideAspect;	//16:9 forcing
 	int emulatemc;	// Emulate memcard via SDGecko
+	int wiirdDebug;	// Enable WiiRD debug
 	int muteAudioStreaming;
 	int muteAudioStutter;
 	int hideUnknownFileTypes;

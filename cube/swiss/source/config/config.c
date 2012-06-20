@@ -21,6 +21,7 @@
 //Force No DVD Drive Mode=No
 //Hide Unknown file types=No
 //Stop DVD Motor on startup=Yes
+//Enable WiiRD debug=Yes
 //!!Swiss Settings End!!
 
 // This is an example game entry
@@ -111,6 +112,8 @@ int config_update_file() {
 		sprintf(txtbuffer, "Hide Unknown file types=%s\r\n",(configSwissSettings.hideUnknownFileTypes ? "Yes":"No"));
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "Stop DVD Motor on startup=%s\r\n",(configSwissSettings.stopMotor ? "Yes":"No"));
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		sprintf(txtbuffer, "Enable WiiRD debug=%s\r\n",(configSwissSettings.wiirdDebug ? "Yes":"No"));
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
@@ -270,6 +273,9 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("Stop DVD Motor on startup", name)) {
 					configSwissSettings.stopMotor = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Enable WiiRD debug", name)) {
+					configSwissSettings.wiirdDebug = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("Swiss Video Mode", name)) {
 					if(!strcmp(uiVModeStr[0], value))
