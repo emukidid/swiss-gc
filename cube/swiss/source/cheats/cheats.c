@@ -51,5 +51,5 @@ void kenobi_set_debug(int useDebug) {
 }
 
 int kenobi_get_maxsize() {
-	return CHEATS_MAX_SIZE(isDebug ? kenobigc_dbg_bin_size : kenobigc_bin_size);
+	return CHEATS_MAX_SIZE((isDebug ? kenobigc_dbg_bin_size : kenobigc_bin_size));
 }
