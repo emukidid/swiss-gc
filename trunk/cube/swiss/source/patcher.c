@@ -289,9 +289,6 @@ int Patch_DVDHighLevelRead(u8 *data, u32 length) {
 			if( !DVDReadSigs[j].offsetFoundAt && compare_pattern( &fp, &(DVDReadSigs[j]) ) ) {
 				print_gecko("Found [%s] @ 0x%08X len %i\n", DVDReadSigs[j].Name, (u32)data + i, DVDReadSigs[j].Length);
 				
-				print_gecko("Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
-						DVDReadSigs[j].Name, (u32)DVDReadSigs[j].Patch, (u32)data + i, DVDReadSigs[j].PatchLength);
-							
 				memcpy( (u8*)(data+i), &DVDReadSigs[j].Patch[0], DVDReadSigs[j].PatchLength );
 				DCFlushRange((u8*)(data+i), DVDReadSigs[j].Length);
 				ICInvalidateRange((u8*)(data+i), DVDReadSigs[j].Length);
@@ -569,8 +566,6 @@ int Patch_DVDAudioStreaming(u8 *data, u32 length) {
 		{
 			if( !DVDAudioSigs[j].offsetFoundAt && compare_pattern( &fp, &(DVDAudioSigs[j]) ) )	{
 				print_gecko("Found [%s] @ 0x%08X len %i\n", DVDAudioSigs[j].Name, (u32)data + i, DVDAudioSigs[j].Length);
-				print_gecko("Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
-						DVDAudioSigs[j].Name, (u32)DVDAudioSigs[j].Patch, (u32)data + i, DVDAudioSigs[j].PatchLength);
 
 				memcpy( (u8*)(data+i), &DVDAudioSigs[j].Patch[0], DVDAudioSigs[j].PatchLength );
 				DCFlushRange((u8*)(data+i), DVDAudioSigs[j].Length);
@@ -723,8 +718,6 @@ int Patch_DVDCompareDiskId(u8 *data, u32 length) {
 		if( find_pattern( (u8*)(data+i), length, &DVDCompareDiskIdSig ) )
 		{
 			print_gecko("Found [%s] @ 0x%08X len %i\n", DVDCompareDiskIdSig.Name, (u32)data + i, DVDCompareDiskIdSig.Length);		
-			print_gecko("Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
-					DVDCompareDiskIdSig.Name, (u32)DVDCompareDiskIdSig.Patch, (u32)data + i, DVDCompareDiskIdSig.PatchLength);
 
 			memcpy( (u8*)(data+i), &DVDCompareDiskIdSig.Patch[0], DVDCompareDiskIdSig.PatchLength );
 			DCFlushRange((u8*)(data+i), DVDCompareDiskIdSig.Length);
@@ -819,8 +812,6 @@ int Patch_DVDStatusFunctions(u8 *data, u32 length) {
 		if( find_pattern( (u8*)(data+i), length, &(DVDStatusSig) ) )
 		{
 			print_gecko("Found [%s] @ 0x%08X len %i\n", DVDStatusSig.Name, (u32)data + i, DVDStatusSig.Length);		
-			print_gecko("Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
-					DVDStatusSig.Name, (u32)DVDStatusSig.Patch, (u32)data + i, DVDStatusSig.PatchLength);
 			memcpy( (u8*)(data+i), &DVDStatusSig.Patch[0], DVDStatusSig.PatchLength );
 			DCFlushRange((u8*)(data+i), DVDStatusSig.Length);
 			ICInvalidateRange((u8*)(data+i), DVDStatusSig.Length);
@@ -945,9 +936,6 @@ int Patch_CARDFunctions(u8 *data, u32 length) {
 					}
 				}
 				
-				//print_gecko("Writing Patch for [%s] from 0x%08X to 0x%08X len %i\n", 
-				//		CPatterns[j].Name, (u32)CPatterns[j].Patch, (u32)data + i, CPatterns[j].PatchLength);
-							
 				memcpy( (u8*)(data+i), &CPatterns[j].Patch[0], CPatterns[j].PatchLength );
 				CPatterns[j].offsetFoundAt = 1;
 				count++;
@@ -1008,12 +996,11 @@ int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
 			int j = 12;
 			while( *(u32*)(data+i+j) != 0x4E800020 )
 				j+=4;
-			print_gecko("Patch:[Hook:OSSleepThread] at %08X\n", ((u32)data + i + j) );
 			// As the data we're looking at will not be in this exact memory location until it's placed there by our ARAM relocation stub,
 			// we'll need to work out where it will end up when it does get placed in memory to write the relative branch.
 			u32 properAddress = Calc_ProperAddress(data, type, i+j);
 			if(properAddress) {
-				print_gecko("Patch:[Hook:OSSleepThread] at %08X\n", properAddress );
+				print_gecko("Found:[Hook:OSSleepThread] @ %08X\n", properAddress );
 				u32 newval = (u32)(0x800018A8 - properAddress);
 				newval&= 0x03FFFFFC;
 				newval|= 0x48000000;

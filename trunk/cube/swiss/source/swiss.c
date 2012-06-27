@@ -34,6 +34,7 @@
 #include "exi.h"
 #include "patcher.h"
 #include "banner.h"
+#include "qchparse.h"
 #include "dvd.h"
 #include "gcm.h"
 #include "wkf.h"
@@ -894,6 +895,22 @@ void load_file()
 		deviceHandler_setupFile(&curFile, 0);
 	}
 	
+	// Cheats file?
+	if(strlen(fileName)>4) {
+		if((strstr(fileName,".QCH")!=NULL) || (strstr(fileName,".qch")!=NULL)) {
+			if(DrawYesNoDialog("Load this cheats file?")) {
+				DrawFrameStart();
+				DrawMessageBox(D_INFO, "Loading Cheats File ..");
+				DrawFrameFinish();
+				QCH_SetCheatsFile(&curFile);
+				return;
+			}
+			else {
+				return;
+			}
+		}
+	}
+	
 	if((curDevice != DVD_DISC) || (dvdDiscTypeInt==ISO9660_DISC)) {
 		//if it's a DOL, boot it
 		if(strlen(fileName)>4) {
@@ -978,6 +995,10 @@ void load_file()
 			return;
 		}
 		// Look for cheats file if the user hasn't loaded one up
+		hasCheatsFile = getARToWiirdCheats()[0] != 0;
+		if(getARToWiirdCheats()[0] != 0) {
+			kenobi_set_cheats((u8*)getARToWiirdCheats(), getARToWiirdCheatsSize());
+		}
 		if(!hasCheatsFile) {
 			int i = 0;
 			char *expectedFileName = (char*)memalign(32,1024);
@@ -1079,6 +1100,44 @@ void load_file()
 	
 	load_app(hasCheatsFile ? CHEATS:NO_CHEATS);
 }
+
+int cheats_game()
+{ 
+	int ret;
+
+	DrawFrameStart();
+	DrawMessageBox(D_INFO,"Loading Cheat DB");
+	DrawFrameFinish();
+	ret = QCH_Init();
+	if(!ret) {
+		DrawFrameStart();
+		DrawMessageBox(D_FAIL,"Failed to open cheats.qch. Press A.");
+		DrawFrameFinish();
+		wait_press_A();
+		return 0;
+	}
+
+	ret = QCH_Parse(NULL);
+	if(ret <= 0) {
+		DrawFrameStart();
+		DrawMessageBox(D_FAIL,"Failed to parse cheat DB. Press A.");
+		DrawFrameFinish();
+		wait_press_A();
+		return 0;
+	}
+	sprintf(txtbuffer,"Found %d Games",ret);
+	DrawFrameStart();
+	DrawMessageBox(D_INFO,txtbuffer);
+	DrawFrameFinish();
+	
+	curGameCheats *selected_cheats = memalign(32,sizeof(curGameCheats));
+	QCH_Find(&GCMDisk.GameName[0],selected_cheats);
+	free(selected_cheats);
+
+	QCH_DeInit();  
+	return 1;
+}
+
 
 int check_game()
 { 	
@@ -1219,11 +1278,17 @@ int info_game()
 		WriteFontStyled(640/2, 200, txtbuffer, 0.8f, true, defaultColor);
 	}
 
-	WriteFontStyled(640/2, 370, "Settings(X) - Exit(B) - Continue (A)", 0.75f, true, defaultColor);
+	WriteFontStyled(640/2, 370, "Cheats(Y) - Settings(X) - Exit(B) - Continue (A)", 0.75f, true, defaultColor);
 	DrawFrameFinish();
-	while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
-	while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+	while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+	while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	while(1){
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
+			save_config(config);
+			free(config);
+			return cheats_game();
+		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
 			show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC) ? &curFile : NULL, config);
 			save_config(config);
