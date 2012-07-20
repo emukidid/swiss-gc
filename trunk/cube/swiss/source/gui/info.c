@@ -66,7 +66,7 @@ void info_draw_page(int page_num) {
 		else {
 			sprintf(topStr, "Model: Nintendo Wii");
 		}
-		WriteFont(30, 115, topStr);
+		WriteFont(30, 110, topStr);
 		// IPL version string
 		if(is_gamecube()) {
 			if(!IPLInfo[0x55]) {
@@ -79,44 +79,44 @@ void info_draw_page(int page_num) {
 		else {
 			sprintf(topStr, "IPL: Wii IPL");
 		}
-		WriteFont(30, 150, topStr);
+		WriteFont(30, 140, topStr);
 		if(curDevice != WKF) {
 			sprintf(topStr, "DVD: %02X %02X%02X/%02X (%02X)",driveVersion[2],driveVersion[0],driveVersion[1],driveVersion[3],driveVersion[4]);
 		} else {
 			sprintf(topStr, "WKF Serial: %s",wkfGetSerial());
 		}
-			WriteFont(30, 185, topStr);
+		WriteFont(30, 170, topStr);
 		sprintf(topStr, "Video: %s",videoStr);
-		WriteFont(30, 220, topStr);
-		sprintf(topStr,"ECID: %08X:%08X:%08X",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
-		WriteFontStyled(30, 260, topStr, 0.7f, false, defaultColor);
-		sprintf(topStr,"PVR: %08X",mfpvr());
-		WriteFontStyled(400, 260, topStr, 0.7f, false, defaultColor);
+		WriteFont(30, 200, topStr);
 		sprintf(topStr,"Language: %s",getSramLang(sram->lang));
-		WriteFont(30, 295, topStr);
+		WriteFont(30, 230, topStr);
 		sprintf(topStr,"Audio: %s",sram->flags&4 ? "Stereo":"Mono");
-		WriteFont(30, 330, topStr);
+		WriteFont(30, 260, topStr);
+		sprintf(topStr,"Console ID (ECID): %08X:%08X:%08X",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
+		WriteFontStyled(30, 290, topStr, 0.7f, false, defaultColor);
+		sprintf(topStr,"PVR: %08X",mfpvr());
+		WriteFontStyled(30, 305, topStr, 0.7f, false, defaultColor);
 	}
 	else if(page_num == 1) {
 		WriteFont(30, 65, "Device Info (2/3):");
 		sprintf(topStr,"BBA: %s", bba_exists ? "Installed":"Not Present");
-		WriteFont(30, 115, topStr);
+		WriteFont(30, 110, topStr);
 		if(exi_bba_exists()) {
 			sprintf(topStr,"IP: %s", net_initialized ? bba_ip:"Not Available");
 		}
 		else {
 			sprintf(topStr,"IP: Not Available");
 		}
-		WriteFont(30, 150, topStr);
+		WriteFont(220, 140, topStr);
 		sprintf(topStr,"Component Cable Plugged in: %s",VIDEO_HaveComponentCable()?"Yes":"No");
-		WriteFont(30, 185, topStr);
+		WriteFont(30, 170, topStr);
 		if(usb_isgeckoalive(0)||usb_isgeckoalive(1)) {
 			sprintf(topStr,"USB Gecko: Installed in %s",usb_isgeckoalive(0)?"Slot A":"Slot B");
 		}
 		else {
 			sprintf(topStr,"USB Gecko: Not Present");
 		}
-		WriteFont(30, 220, topStr);
+		WriteFont(30, 200, topStr);
 		if (!deviceHandler_initial) {
 			sprintf(topStr, "Current Device: No Device Selected");
 		}
@@ -143,18 +143,19 @@ void info_draw_page(int page_num) {
 		else if(deviceHandler_initial == &initial_USBGecko) {
 			sprintf(topStr, "Current Device: USB Gecko");
 		}
-		WriteFont(30, 295, topStr);
+		WriteFont(30, 230, topStr);
 	}
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Credits (3/3):");
-		WriteFontStyled(640/2, 115, "Swiss ver 0.2", 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 115, "Swiss ver 0.3", 1.0f, true, defaultColor);
 		WriteFontStyled(640/2, 140, "by emu_kidid 2012", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 210, "Thanks to", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 228, "Testers & libOGC/dkPPC authors", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 246, "sepp256 for the wonderful GX conversion", 0.75f, true, defaultColor);
+		WriteFontStyled(640/2, 264, "crediar for DML - Extrems for 576p/16:9", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 300, "Web/Support http://www.gc-forever.com/", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 318, "Source at http://code.google.com/p/swiss-gc/", 0.75f, true, defaultColor);
-		WriteFontStyled(640/2, 370, "Press A to return", 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 336, "Visit us at #gc-forever on EFNet", 0.75f, true, defaultColor);
 	}
 	if(page_num != 2) {
 		WriteFont(520, 390, "->");
@@ -162,6 +163,7 @@ void info_draw_page(int page_num) {
 	if(page_num != 0) {
 		WriteFont(100, 390, "<-");
 	}
+	WriteFontStyled(640/2, 400, "Press A to return", 1.0f, true, defaultColor);
 	DrawFrameFinish();
 }
 
