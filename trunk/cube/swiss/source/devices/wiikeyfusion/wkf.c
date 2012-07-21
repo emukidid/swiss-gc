@@ -18,7 +18,8 @@
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 
-u8 wkfBuffer[0x8000] ATTRIBUTE_ALIGN (32);    // One DVD Sector
+#define WKF_BUF_SIZE 0x8000
+u8 wkfBuffer[WKF_BUF_SIZE] ATTRIBUTE_ALIGN (32);    // One DVD Sector
 
 static int wkfInitialized = 0;
 static char wkfSerial[32];
@@ -114,9 +115,9 @@ void __wkfFlashPage(const unsigned char *pageData, unsigned int addr) {
 }
 
 // Reads DVD sectors (returns 0 on success)
-void __wkfReadSectors(void* dst, unsigned int len, u32 sector) {
+void __wkfReadSectors(void* dst, unsigned int len, u64 offset) {
 	wkf[2] = 0xA8000000;
-	wkf[3] = (u32)(sector<<9);
+	wkf[3] = (u32)(offset >> 2);
 	wkf[4] = len;
 	wkf[5] = (u32)dst;
 	wkf[6] = len;
@@ -243,11 +244,10 @@ void wkfRead(void* dst, int len, u64 offset)
 	u8 *sector_buffer = &wkfBuffer[0];
 	while (len)
 	{
-		u32 sector = (u32)(offset >> 11);
-		__wkfReadSectors(sector_buffer, 2048, sector);
-		u32 off = offset & 2047;
+		__wkfReadSectors(sector_buffer, WKF_BUF_SIZE, (offset-(offset%WKF_BUF_SIZE)));
+		u32 off = (u32)((u32)(offset) & (WKF_BUF_SIZE-1));
 
-		int rl = 2048 - off;
+		int rl = WKF_BUF_SIZE - off;
 		if (rl > len)
 			rl = len;
 		memcpy(dst, sector_buffer + off, rl);	
@@ -314,6 +314,21 @@ void wkfInit() {
 			wkfInitialized = 1;
 		}
 	}
+}
+
+void wkfReinit() {
+	__wkfReset();
+	udelay(300000);
+
+	// one chunk at 0, offset 0
+	wkfWriteRam(0, 0x0000);
+	wkfWriteRam(2, 0x0000);
+	// last chunk sig
+	wkfWriteRam(4, 0xFFFF);
+	wkfWriteOffset(0);
+	
+	// Read first sector of SD card
+	wkfRead(&wkfBuffer[0], 0x200, 0);
 }
 
 // Wrapper to read a number of sectors
