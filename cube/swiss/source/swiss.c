@@ -726,7 +726,19 @@ void manage_file() {
 				break;
 			}
 			if(buttons & PAD_BUTTON_A) {
+				if((curDevice==WODE) || (curDevice==WKF)) {
+					DrawFrameStart();
+					DrawMessageBox(D_INFO, "Setup base offset please Wait ..");
+					DrawFrameFinish();
+					deviceHandler_setupFile(&curFile, 0);
+				}
 				load_file();
+				if(curDevice==WKF) {
+					DrawFrameStart();
+					DrawMessageBox(D_INFO, "Reset base offset ..");
+					DrawFrameFinish();
+					deviceHandler_setupFile(0, 0);
+				}
 				return;
 			}
 			if(buttons & PAD_BUTTON_B) {
@@ -887,14 +899,7 @@ void load_file()
 {
 	char *fileName = &curFile.name[0];
 	int isPrePatched = 0, hasCheatsFile = 0;
-	
-	if((curDevice==WODE)) {
-		DrawFrameStart();
-		DrawMessageBox(D_INFO, "Setup WODE ISO Please Wait ..");
-		DrawFrameFinish();
-		deviceHandler_setupFile(&curFile, 0);
-	}
-	
+		
 	// Cheats file?
 	if(strlen(fileName)>4) {
 		if((strstr(fileName,".QCH")!=NULL) || (strstr(fileName,".qch")!=NULL)) {

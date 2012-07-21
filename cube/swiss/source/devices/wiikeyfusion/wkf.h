@@ -20,5 +20,6 @@ void wkfWriteFlash(unsigned char *menuImg, unsigned char *firmwareImg);
 char *wkfGetSerial();
 void wkfRead(void* dst, int len, u64 offset);
 unsigned int __wkfSpiReadId();
+void wkfReinit();
 #endif
 

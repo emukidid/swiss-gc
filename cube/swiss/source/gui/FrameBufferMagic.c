@@ -294,7 +294,7 @@ void DrawImage(int textureId, int x, int y, int width, int height, int depth, fl
 void _DrawBackdrop() 
 {
 	DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f);
-	WriteFont(55,40, "Swiss v0.2 for GameCube");
+	WriteFont(55,40, "Swiss v0.3 for GameCube");
 }
 
 // Call this when starting a screen

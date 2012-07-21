@@ -20,6 +20,7 @@
 #include "frag.h"
 
 const DISC_INTERFACE* wkf = &__io_wkf;
+int singleFileMode = 0;
 
 file_handle initial_WKF =
 	{ "wkf:/",       // directory
@@ -92,15 +93,22 @@ int deviceHandler_WKF_seekFile(file_handle* file, unsigned int where, unsigned i
 
 
 int deviceHandler_WKF_readFile(file_handle* file, void* buffer, unsigned int length){
-  	if(!file->fp) {
-		file->fp = fopen( file->name, "rb" );
+	if(singleFileMode) {
+		wkfRead(buffer, length, file->offset);
+		file->offset += length;
+		return length;
 	}
-	if(!file->fp) return -1;
-	
-	fseek(file->fp, file->offset, SEEK_SET);
-	int bytes_read = fread(buffer, 1, length, file->fp);
-	if(bytes_read > 0) file->offset += bytes_read;
-	return bytes_read;
+	else {
+		if(!file->fp) {
+			file->fp = fopen( file->name, "rb" );
+		}
+		if(!file->fp) return -1;
+		
+		fseek(file->fp, file->offset, SEEK_SET);
+		int bytes_read = fread(buffer, 1, length, file->fp);
+		if(bytes_read > 0) file->offset += bytes_read;
+		return bytes_read;
+	}
 }
 
 
@@ -110,27 +118,34 @@ int deviceHandler_WKF_writeFile(file_handle* file, void* buffer, unsigned int le
 
 
 void deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
-	// Lookup FAT fragments
-	get_frag_list(file->name);
+	if(file) {
+		// Lookup FAT fragments
+		get_frag_list(file->name);
 
-  	// Setup fragments if need be
-	if(frag_list->num > 1) {
-		/*// Setup the Fragments on the Wiikey Fusion
-		int i = 0;
-		for(i = 0; i < frag_list->num; i++) {		
-			wkfWriteRam(i*4, (frag_list->frag[i].sector>>16)&0xFFFF);
-			wkfWriteRam(i*4+2, frag_list->frag[i].sector&0xFFFF);
+		// Setup fragments if need be
+		if(frag_list->num > 1) {
+			/*// Setup the Fragments on the Wiikey Fusion
+			int i = 0;
+			for(i = 0; i < frag_list->num; i++) {		
+				wkfWriteRam(i*4, (frag_list->frag[i].sector>>16)&0xFFFF);
+				wkfWriteRam(i*4+2, frag_list->frag[i].sector&0xFFFF);
+			}
+			// last chunk sig
+			wkfWriteRam(frag_list->num *4, 0xFFFF);*/
 		}
-		// last chunk sig
-		wkfWriteRam(frag_list->num *4, 0xFFFF);*/
+		wkfWriteOffset(frag_list->frag[0].sector);
+		
+		if(((u32)(file->fileBase&0xFFFFFFFF) == -1)) {
+			DrawFrameStart();
+			DrawMessageBox(D_INFO,"Fragmented file support is not implemented yet.");
+			DrawFrameFinish();
+			sleep(5);
+		}
+		singleFileMode = 1;
 	}
-	wkfWriteOffset(frag_list->frag[0].sector);
-	
-	if(((u32)(file->fileBase&0xFFFFFFFF) == -1)) {
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,"Fragmented file support is not implemented yet.");
-		DrawFrameFinish();
-		sleep(5);
+	else {
+		wkfReinit();
+		singleFileMode = 0;
 	}
 }
 
