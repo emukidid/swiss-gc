@@ -34,7 +34,10 @@ file_handle initial_WKF =
 
 
 int deviceHandler_WKF_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
-  
+	if(singleFileMode) {
+		return -1;
+	}
+	
 	DIR* dp = opendir( ffile->name );
 	if(!dp) return -1;
 	struct dirent *entry;
@@ -150,17 +153,17 @@ void deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 }
 
 int deviceHandler_WKF_init(file_handle* file){
-	
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,"Init Wiikey Fusion");
-	DrawFrameFinish();
-	
-	fatMountSimple ("wkf", wkf);
+	if(!singleFileMode) {
+		DrawFrameStart();
+		DrawMessageBox(D_INFO,"Init Wiikey Fusion");
+		DrawFrameFinish();
+		fatMountSimple ("wkf", wkf);
+	}
 	return 0;
 }
 
 int deviceHandler_WKF_deinit(file_handle* file) {
-	if(file->fp) {
+	if(!singleFileMode && file->fp) {
 		fclose(file->fp);
 		file->fp = 0;
 	}
