@@ -989,6 +989,12 @@ void load_file()
 		return;
 	}
 	
+	// User may have selected cheats via the cheats database
+	hasCheatsFile = getARToWiirdCheats()[0] != 0;
+	if(getARToWiirdCheats()[0] != 0) {
+		kenobi_set_cheats((u8*)getARToWiirdCheats(), getARToWiirdCheatsSize());
+	}
+	
 	// Report to the user the patch status of this GCM/ISO file and look for a cheats file too
 	if((curDevice == SD_CARD) || (curDevice == IDEEXI) || (curDevice == USBGECKO)) {
 		isPrePatched = check_game();
@@ -996,10 +1002,6 @@ void load_file()
 			return;
 		}
 		// Look for cheats file if the user hasn't loaded one up
-		hasCheatsFile = getARToWiirdCheats()[0] != 0;
-		if(getARToWiirdCheats()[0] != 0) {
-			kenobi_set_cheats((u8*)getARToWiirdCheats(), getARToWiirdCheatsSize());
-		}
 		if(!hasCheatsFile) {
 			int i = 0;
 			char *expectedFileName = (char*)memalign(32,1024);
