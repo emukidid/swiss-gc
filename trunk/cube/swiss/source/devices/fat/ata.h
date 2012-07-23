@@ -17,6 +17,7 @@
 
 extern const DISC_INTERFACE __io_ataa;
 extern const DISC_INTERFACE __io_atab;
+extern int _ideexi_version;
 
 // ATA status register bits
 #define ATA_SR_BSY		0x80

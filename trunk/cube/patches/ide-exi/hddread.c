@@ -68,6 +68,10 @@ extern void pause_audio();
 #define exi_freq  		*(u32*)VAR_TMP1
 #define exi_device  	*(u32*)VAR_TMP2
 #define exi_channel 	*(u32*)VAR_TMP3
+#define _ideexi_version *(u32*)VAR_TMP4
+
+#define IDE_EXI_V1 0
+#define IDE_EXI_V2 1
 
 void* mymemcpy(void* dest, const void* src, u32 count)
 {
@@ -163,8 +167,25 @@ void ata_read_blocks(u16 numSectors, u8 *dst)
 	u32 dat = 0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8);
 	exi_select();
 	exi_imm_ex(&dat,4,EXI_WRITE);
-	exi_imm_ex(dst,numSectors*SECTOR_SIZE,EXI_READ);
-	exi_deselect();
+	if(_ideexi_version == IDE_EXI_V1) {
+		// IDE_EXI_V1, select / deselect for every 4 bytes
+		exi_deselect();
+		u32 i = 0;
+		u32 *ptr = (u32*)dst;
+		for(i = 0; i < dwords; i++) {
+			exi_select();
+			exi_imm_ex(ptr,4,EXI_READ);
+			ptr++;
+			exi_deselect();
+		}
+		exi_select();
+		exi_imm_ex(&dat,4,EXI_READ);
+		exi_deselect();
+	}
+	else {
+		exi_imm_ex(dst,numSectors*SECTOR_SIZE,EXI_READ);
+		exi_deselect();
+	}
 }
 
 // Reads sectors from the specified lba, for the specified slot, 511 sectors at a time max for LBA48 drives
@@ -203,20 +224,11 @@ int _ataReadSectors(u32 lba, u16 numsectors, void *buffer)
 	// Wait for drive to request data transfer
 	while(!(ataReadStatusReg() & ATA_SR_DRQ));
 	
-	// Wait for BSY to clear
-	while((temp = ataReadStatusReg()) & ATA_SR_BSY);
-	
-	// If the error bit was set, fail.
-	if(temp & ATA_SR_ERR) {
-		*(u32*)0xCC003024 = 0;
-		return 1;
-	}
-
 	// read data from drive
 	ata_read_blocks(numsectors, buffer);
 
 	// Wait for BSY to clear
-	while((temp = ataReadStatusReg()) & ATA_SR_BSY);
+	temp = ataReadStatusReg();
 	
 	// If the error bit was set, fail.
 	if(temp & ATA_SR_ERR) {
@@ -224,7 +236,7 @@ int _ataReadSectors(u32 lba, u16 numsectors, void *buffer)
 		return 1;
 	}
 	
-	return ataReadStatusReg() & ATA_SR_ERR;
+	return temp & ATA_SR_ERR;
 }
 
 void do_read(void *dst,u32 size, u32 offset) {
