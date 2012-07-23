@@ -562,11 +562,6 @@ unsigned int load_app(int mode)
 	}
 	DCFlushRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	ICInvalidateRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-
-	// Set WKF offset and fragments list (FAT/WBFS lookups cannot work after this point)
-	if(curDevice==WKF) {
-		deviceHandler_setupFile(&curFile, NULL);
-	}
 	
 	deviceHandler_deinit(&curFile);
 	
