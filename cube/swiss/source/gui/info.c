@@ -107,16 +107,16 @@ void info_draw_page(int page_num) {
 		else {
 			sprintf(topStr,"IP: Not Available");
 		}
-		WriteFont(220, 140, topStr);
+		WriteFont(270, 110, topStr);
 		sprintf(topStr,"Component Cable Plugged in: %s",VIDEO_HaveComponentCable()?"Yes":"No");
-		WriteFont(30, 170, topStr);
+		WriteFont(30, 140, topStr);
 		if(usb_isgeckoalive(0)||usb_isgeckoalive(1)) {
 			sprintf(topStr,"USB Gecko: Installed in %s",usb_isgeckoalive(0)?"Slot A":"Slot B");
 		}
 		else {
 			sprintf(topStr,"USB Gecko: Not Present");
 		}
-		WriteFont(30, 200, topStr);
+		WriteFont(30, 170, topStr);
 		if (!deviceHandler_initial) {
 			sprintf(topStr, "Current Device: No Device Selected");
 		}
@@ -129,7 +129,7 @@ void info_draw_page(int page_num) {
 		}
 		else if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
 			int slot = (deviceHandler_initial->name[3] == 'b');
-			sprintf(topStr, "Current Device: IDE-EXI Device (%d GB HDD) in %s",ataDriveInfo.sizeInGigaBytes,!slot?"Slot A":"Slot B");
+			sprintf(topStr, "Current Device: %d GB HDD in %s",ataDriveInfo.sizeInGigaBytes,!slot?"Slot A":"Slot B");
 		}
 		else if(deviceHandler_initial == &initial_Qoob) {
 			sprintf(topStr, "Current Device: Qoob IPL Replacement");
@@ -143,7 +143,7 @@ void info_draw_page(int page_num) {
 		else if(deviceHandler_initial == &initial_USBGecko) {
 			sprintf(topStr, "Current Device: USB Gecko");
 		}
-		WriteFont(30, 230, topStr);
+		WriteFont(30, 200, topStr);
 	}
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Credits (3/3):");

@@ -24,7 +24,7 @@
 
 u16 buffer[256] ATTRIBUTE_ALIGN (32);
 static int __ata_init[2] = {0,0};
-static int _ideexi_version = IDE_EXI_V1;
+int _ideexi_version = IDE_EXI_V1;
 
 // Drive information struct
 typeDriveInfo ataDriveInfo;
@@ -121,10 +121,15 @@ static inline void ata_read_blocks(int chn, u16 numSectors, u32 *dst)
 			EXI_Lock(chn, 0, NULL);
 			EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 			EXI_ImmEx(chn,ptr,4,EXI_READ);
-			ptr+=4;
+			ptr++;
 			EXI_Deselect(chn);
 			EXI_Unlock(chn);
 		}
+		EXI_Lock(chn, 0, NULL);
+		EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+		EXI_ImmEx(chn,&dat,4,EXI_READ);
+		EXI_Deselect(chn);
+		EXI_Unlock(chn);
 	}
 	else {
 		// IDE_EXI_V2, no need to select / deselect all the time
