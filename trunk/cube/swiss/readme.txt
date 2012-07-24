@@ -1,5 +1,10 @@
 Swiss 0.3 Readme file
 
+-- Usage and features list:
+http://www.gc-forever.com/wiki/index.php?title=Swiss
+
+
+-- What's New:
 New in Swiss 0.3:
 - Added 16:9 widescreen forcing for games (thx Extrems!)
 - Added WiiRD Support for Games from all devices
@@ -94,25 +99,3 @@ New in svn revision 7:
 - Fixed Zelda CE and possibly a few other games (use pre-patcher for it)
 - Fixed Audio Streaming original media on Wii
 - Fixed Other PAL titles (German/etc)
-
-Current Features:
-- Load DOL from SD/SDHC/DVD-R/HDD
-- Load GCM/ISO from Original Disc/SD/SDHC/DVD-R/HDD
-- Multi-Game DVD-R support (Cobra/GCOS)
-- Multi-Disc support Original Disc/SD/SDHC/DVD-R/HDD
-- Disc Ripping to SD/SDHC/HDD (WIP)
-- Region free / Video forcing (WIP)
-- Full cheat engine for all games (update it via device)
-*HDD features require a IDE-EXI or homemade adapter
-**SD features require a SDGecko or homemade adapter
-
-Using cheats:
-Cheats are stored in a Qoob based file format, they may be edited/updated
-using the included cheats editor. You may convert action replay codes using
-GCNCrypt and then add those too.
-Swiss comes with a embedded cheats database but if you have an updated one,
-place it on any device that Swiss can read from and select by pressing A it to load it.
-
-IMPORTANT:
-- 480P video mode forcing is Work in Progress - it may not work at all yet!
-- Disc dumping is known to corrupt some HDD's - still WIP
