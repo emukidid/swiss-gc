@@ -44,4 +44,5 @@ typedef struct {
 int parse_gcm(file_handle *file, ExecutableFile *filesToPatch);
 int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base);
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch);
+int read_fst(file_handle *file, file_handle** dir);
 #endif

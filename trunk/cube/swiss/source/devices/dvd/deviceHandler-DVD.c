@@ -14,6 +14,7 @@
 #include "gui/IPLFontWrite.h"
 #include "main.h"
 #include "dvd.h"
+#include "gcm.h"
 
 #define OFFSET_NOTSET 0
 #define OFFSET_SET    1
@@ -285,13 +286,9 @@ int deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, unsigned in
 	}
   }
   else if((dvdDiscTypeInt == GAMECUBE_DISC) || (dvdDiscTypeInt == MULTIDISC_DISC)) {
-	num_entries = 1;
-	*dir = malloc( num_entries * sizeof(file_handle) );
-	DVD_Read((*dir)[i].name, 32, 128);
-	(*dir)[i].fileBase = 0;
-	(*dir)[i].offset = 0;
-	(*dir)[i].size = DISC_SIZE;
-	(*dir)[i].fileAttrib = IS_FILE;
+	// TODO: BCA entry (dump from drive RAM on a GC, dump via BCA command on Wii)
+	// Virtual entries for FST entries :D
+	num_entries = read_fst(ffile, dir);
   }
   else if(dvdDiscTypeInt == ISO9660_DISC) {
 	// Call the corresponding DVD function
