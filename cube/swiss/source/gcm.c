@@ -7,6 +7,8 @@
 #include <math.h>
 #include <malloc.h>
 #include "gcm.h"
+#include "main.h"
+#include "dvd.h"
 #include "swiss.h"
 #include "patcher.h"
 #include "sidestep.h"
@@ -227,4 +229,112 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 	return 0;
 }
 
+// Returns the number of filesToPatch and fills out the filesToPatch array passed in (pre-allocated)
+int read_fst(file_handle *file, file_handle** dir) {
 
+	print_gecko("Read dir for directory: %s\r\n",file->name);
+	DiskHeader header;
+	char	*FST; 
+	char	filename[256];
+	int		numFiles = 1, idx = 0;
+	int		isRoot = (file->name[0] == '\\');
+	
+	// Grab disc header
+	memset(&header,0,sizeof(DiskHeader));
+	DVD_Read(&header,0,sizeof(DiskHeader));
+ 	// Alloc and read FST
+	FST=(char*)memalign(32,header.FSTSize); 
+	if(!FST) {
+		return -1;
+	}
+	// Read the FST
+ 	DVD_Read(FST,header.FSTOffset,header.FSTSize);
+	
+	// Add the disc itself as a "file"
+	*dir = malloc( numFiles * sizeof(file_handle) );
+	DVD_Read((*dir)[idx].name, 32, 128);
+	(*dir)[idx].fileBase = 0;
+	(*dir)[idx].offset = 0;
+	(*dir)[idx].size = DISC_SIZE;
+	(*dir)[idx].fileAttrib = IS_FILE;
+	idx++;
+	
+	u32 entries=*(unsigned int*)&FST[8];
+	u32 string_table_offset=FST_ENTRY_SIZE*entries;
+		
+	int i;
+	// Go through the FST and find our DIR (or ROOT)
+	int parent_dir_offset = (u32)file->fileBase;
+	int dir_end_offset = isRoot ? *(u32*)&FST[8] : 0;
+	isRoot = parent_dir_offset==0;
+	
+	u32 filename_offset=((*(u32*)&FST[parent_dir_offset*0x0C]) & 0x00FFFFFF); 
+	memset(&filename[0],0,256);
+	memcpy(&filename[0],&FST[string_table_offset+filename_offset],255); 
+	dir_end_offset = *(u32*)&FST[(parent_dir_offset*0x0C) + 8];
+	
+	if(!isRoot) {
+		// Add a special ".." dir which will take us back up a dir
+		if(idx == numFiles){
+			++numFiles;
+			*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
+		}
+		strcpy((*dir)[idx].name, "..");
+		(*dir)[idx].fileBase = *(u32*)&FST[(parent_dir_offset*0x0C)+4];
+		(*dir)[idx].offset = 0;
+		(*dir)[idx].size = 0;
+		(*dir)[idx].fileAttrib = IS_DIR;
+		idx++;
+	}
+	print_gecko("Found DIR [%03i]:%s\r\n",parent_dir_offset,isRoot ? "ROOT":filename);
+	
+	// Traverse the FST now adding all the files which come under our DIR
+	for (i=parent_dir_offset;i<dir_end_offset;i++) {
+		if(i==0) continue;
+		
+		u32 offset=i*0x0c;
+		u32 file_offset,size = 0;
+		u32 filename_offset=((*(unsigned int*)&FST[offset]) & 0x00FFFFFF); 
+		memset(&filename[0],0,256);
+		memcpy(&filename[0],&FST[string_table_offset+filename_offset],255); 
+		memcpy(&file_offset,&FST[offset+4],4);
+		memcpy(&size,&FST[offset+8],4);
+		
+		// Is this a sub dir of our dir?
+		if(FST[offset]) {
+			if(file_offset == parent_dir_offset) {
+				print_gecko("Adding: [%03i]%s:%s offset %08X length %08X\r\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
+				if(idx == numFiles){
+					++numFiles;
+					*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
+				}
+				memcpy((*dir)[idx].name, &filename[0], 255);
+				(*dir)[idx].fileBase = i;
+				(*dir)[idx].offset = 0;
+				(*dir)[idx].size = size;
+				(*dir)[idx].fileAttrib = IS_DIR;
+				idx++;
+				// Skip the entries that sit in this dir
+				i = size-1;
+			}
+		}
+		else {
+			// File, add it.
+			print_gecko("Adding: [%03i]%s:%s offset %08X length %08X\r\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
+			if(idx == numFiles){
+				++numFiles;
+				*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
+			}
+			memcpy((*dir)[idx].name, &filename[0], 255);
+			(*dir)[idx].fileBase = file_offset;
+			(*dir)[idx].offset = 0;
+			(*dir)[idx].size = size;
+			(*dir)[idx].fileAttrib = IS_FILE;
+			idx++;
+		}
+	}
+	
+	free(FST);
+
+	return numFiles;
+}
