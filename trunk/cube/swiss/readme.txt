@@ -1,4 +1,24 @@
-Swiss 0.1 (svn revision 62)
+Swiss 0.3 Readme file
+
+New in Swiss 0.3:
+- Added 16:9 widescreen forcing for games (thx Extrems!)
+- Added WiiRD Support for Games from all devices
+- Added 576p video mode support to Swiss/Games (thx Extrems!)
+- Added memory card emulation from SDGecko in slot A (WIP)
+- Added Ocarina Cheat engine support (.gct files or .qch archive still supported)
+- Added USBGecko PC browsing and game launch support (swissserver.exe)
+- Added automatic device selection priority (wiikey fusion, sd gecko (if "default device"), dvd if medium up)
+- Added Wiikey Fusion flashing support
+- Added IPL and DVD disc dumping via BBA HTTP (point browser at GC IP addr)
+- Added audio muting during reads if enabled (disabled by default)
+- Added boot.dol launching from an SD Card if detected at startup
+- Added GUI user friendly enhancements
+- Fix IDE-EXI support
+- Fix wiikey fusion and 32GB SD cards
+- Fix input scanning blocking threads (BBA now works a lot better)
+- Fix large files trying to get patched (Fifa 2004)
+- Fix Linux compiling issue
+- Removed GCARS cheat engine (in favour of Ocarina)
 
 New in svn revision 123:
 - High level type patch support significantly improved (driveless support too)
