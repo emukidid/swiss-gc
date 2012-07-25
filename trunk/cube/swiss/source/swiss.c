@@ -912,7 +912,7 @@ void load_file()
 		}
 	}
 	
-	if((curDevice != DVD_DISC) || (dvdDiscTypeInt==ISO9660_DISC)) {
+	if((curDevice != DVD_DISC) || (dvdDiscTypeInt==ISO9660_DISC) || (curDevice == DVD_DISC && curFile.fileBase != 0)) {
 		//if it's a DOL, boot it
 		if(strlen(fileName)>4) {
 			if((strstr(fileName,".DOL")!=NULL) || (strstr(fileName,".dol")!=NULL)) {
