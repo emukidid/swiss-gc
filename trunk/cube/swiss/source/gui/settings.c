@@ -16,9 +16,17 @@
 
 SwissSettings tempSettings;
 char *uiVModeStr[] = {"NTSC", "PAL", "480p", "Auto", "576p"};
+syssram* sram;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
 int settings_count_pp[3] = {7, 8, 11};
+
+void refreshSRAM() {
+	sram = __SYS_LockSram();
+	swissSettings.sramStereo = sram->flags & 4;
+	swissSettings.sramLanguage = sram->lang;
+	__SYS_UnlockSram(0);
+}
 
 void settings_draw_page(int page_num, int option, file_handle *file) {
 	doBackdrop();
@@ -193,10 +201,7 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 	int page = 0, option = 0;
 
 	// Refresh SRAM in case user changed it from IPL
-	syssram* sram = __SYS_LockSram();
-	swissSettings.sramStereo = sram->flags & 4;
-	swissSettings.sramLanguage = sram->lang;
-	__SYS_UnlockSram(0);
+	refreshSRAM();
 	
 	// Copy current settings to a temp copy in case the user cancels out
 	memcpy((void*)&tempSettings,(void*)&swissSettings, sizeof(SwissSettings));

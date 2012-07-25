@@ -308,6 +308,7 @@ int main ()
 	}
 
 	// Sane defaults
+	refreshSRAM();
 	swissSettings.useHiMemArea = 0;
 	swissSettings.disableInterrupts = 1;
 	swissSettings.useHiLevelPatch = swissSettings.hasDVDDrive ? 0:1;	// Hi-level works better with no DVD drive
