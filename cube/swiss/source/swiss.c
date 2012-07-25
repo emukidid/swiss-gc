@@ -1213,7 +1213,16 @@ int info_game()
 		u32 bannerOffset = showBanner(215, 240, 2);  //Convert & display game banner
 		if(bannerOffset) {
 			char description[128];
-			deviceHandler_seekFile(&curFile,bannerOffset+0x18e0,DEVICE_HANDLER_SEEK_SET);
+			char bnrType[8];
+			// If this is a BNR2 banner, show the proper description for the language the console is set to
+			deviceHandler_seekFile(&curFile,bannerOffset,DEVICE_HANDLER_SEEK_SET);
+			deviceHandler_readFile(&curFile,&bnrType[0],4);
+			if(!strncmp(bnrType, "BNR2", 4)) {
+				deviceHandler_seekFile(&curFile,bannerOffset+(0x18e0+(swissSettings.sramLanguage*0x0140)),DEVICE_HANDLER_SEEK_SET);
+			}
+			else {
+				deviceHandler_seekFile(&curFile,bannerOffset+0x18e0,DEVICE_HANDLER_SEEK_SET);
+			}
 			if(deviceHandler_readFile(&curFile,&description[0],0x80)==0x80) {
 				char * tok = strtok (&description[0],"\n");
 				int line = 0;

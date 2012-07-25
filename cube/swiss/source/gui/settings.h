@@ -12,5 +12,6 @@
 
 extern char *uiVModeStr[];
 void show_settings(file_handle *file, ConfigEntry *config);
+void refreshSRAM();
 
 #endif
