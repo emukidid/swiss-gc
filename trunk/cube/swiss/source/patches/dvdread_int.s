@@ -11,9 +11,9 @@
 
 .globl DVDReadInt
 DVDReadInt:
-	stwu    %sp, -0x40(%sp)
 	mflr    %r0
-	stw     %r0, 8(%sp)
+	stwu    %sp, -0x40(%sp)
+	stw     %r0, 0x44(%sp)
 	stw		%r7, 16(%sp)
 
 #Disable external interrupts
@@ -52,9 +52,9 @@ DVDReadInt:
 skip_setting_msr:		
 	mr      %r3,	%r5			# TODO: round up to nearest 32 byte??
 	lwz		%r7, 16(%sp)
-	lwz     %r0, 8(%sp)
-	mtlr    %r0
+	lwz     %r0, 0x44(%sp)
 	addi    %sp, %sp, 0x40
+	mtlr    %r0
 	blr
 
 .globl DVDReadInt_length

@@ -34,9 +34,9 @@ struct DVDFileInfo
 .globl DVDReadAsyncInt
 DVDReadAsyncInt:
 
-	stwu    %sp, -0x40(%sp)
 	mflr    %r0
-	stw     %r0, 8(%sp)
+	stwu    %sp, -0x40(%sp)
+	stw     %r0, 0x44(%sp)
 	stw		%r7, 16(%sp)
 	
 #Disable external interrupts
@@ -81,9 +81,9 @@ DVDReadAsyncInt:
 skip_setting_msr:		
 	li      %r3,	1
 	lwz		%r7, 16(%sp)
-	lwz     %r0, 8(%sp)
-	mtlr    %r0
+	lwz     %r0, 0x44(%sp)
 	addi    %sp, %sp, 0x40
+	mtlr    %r0
 	blr
    .globl DVDReadAsyncInt_length
    DVDReadAsyncInt_length:
