@@ -31,10 +31,8 @@
 //Status=Working
 //Patch Type=Low
 //Patch Location=Low
-//Disable Interrupts=Yes
 //Force Video Mode=Progressive
 //Mute Audio Streaming=Yes
-//Mute Audio Stutter=Yes
 //No Disc Mode=Yes
 //Force Widescreen=Yes
 //Emulate Memory Card via SDGecko=Yes
@@ -145,16 +143,10 @@ int config_update_file() {
 			sprintf(txtbuffer, "Patch Location=%s\r\n",(configEntries[i].useHiMemArea ? "High":"Low"));
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
-			sprintf(txtbuffer, "Disable Interrupts=%s\r\n",(configEntries[i].disableInterrupts ? "Yes":"No"));
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
-
 			sprintf(txtbuffer, "Force Video Mode=%s\r\n",uiVModeStr[configEntries[i].gameVMode]);
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
 			sprintf(txtbuffer, "Mute Audio Streaming=%s\r\n",(configEntries[i].muteAudioStreaming ? "Yes":"No"));
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
-			
-			sprintf(txtbuffer, "Mute Audio Stutter=%s\r\n",(configEntries[i].muteAudioStutter ? "Yes":"No"));
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
 			sprintf(txtbuffer, "No Disc Mode=%s\r\n",(configEntries[i].noDiscMode ? "Yes":"No"));
@@ -201,10 +193,8 @@ void config_parse(char *configData) {
 					strcpy(&configEntries[configEntriesCount].status[0],"Unknown");
 					configEntries[configEntriesCount].useHiLevelPatch = 0;
 					configEntries[configEntriesCount].useHiMemArea = 0;
-					configEntries[configEntriesCount].disableInterrupts = 1;
 					configEntries[configEntriesCount].gameVMode = 3;
 					configEntries[configEntriesCount].muteAudioStreaming = 1;
-					configEntries[configEntriesCount].muteAudioStutter = 0;
 					configEntries[configEntriesCount].noDiscMode = 0;
 					configEntries[configEntriesCount].forceWideAspect = 0;
 					configEntries[configEntriesCount].emulatemc = 0;
@@ -224,9 +214,6 @@ void config_parse(char *configData) {
 				else if(!strcmp("Patch Location", name)) {
 					configEntries[configEntriesCount].useHiMemArea = !strcmp("Low", value) ? 0:1;
 				}
-				else if(!strcmp("Disable Interrupts", name)) {
-					configEntries[configEntriesCount].disableInterrupts = !strcmp("Yes", value) ? 1:0;
-				}
 				else if(!strcmp("Force Video Mode", name)) {
 					if(!strcmp(uiVModeStr[0], value))
 						configEntries[configEntriesCount].gameVMode = 0;
@@ -241,9 +228,6 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("Mute Audio Streaming", name)) {
 					configEntries[configEntriesCount].muteAudioStreaming = !strcmp("Yes", value) ? 1:0;
-				}
-				else if(!strcmp("Mute Audio Stutter", name)) {
-					configEntries[configEntriesCount].muteAudioStutter = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("No Disc Mode", name)) {
 					configEntries[configEntriesCount].noDiscMode = !strcmp("Yes", value) ? 1:0;
@@ -317,10 +301,8 @@ void config_find(ConfigEntry *entry) {
 	strcpy(entry->status,"Unknown");
 	entry->useHiLevelPatch = 0;
 	entry->useHiMemArea = 0;
-	entry->disableInterrupts = 1;
 	entry->gameVMode = 3;
 	entry->muteAudioStreaming = 1;
-	entry->muteAudioStutter = 0;
 	entry->noDiscMode = 0;
 	entry->forceWideAspect = 0;
 	entry->emulatemc = 0;

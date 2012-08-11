@@ -26,14 +26,16 @@ extern u8 usbgecko_bin[];
 extern u32 usbgecko_bin_size;
 
 /* SDK patches */
-extern u8 DVDRead[];
-extern u32 DVDRead_length;
+extern u8 DVDCancelAsync[];
+extern u32 DVDCancelAsync_length;
+extern u8 DVDCancel[];
+extern u32 DVDCancel_length;
 extern u8 DVDReadInt[];
 extern u32 DVDReadInt_length;
-extern u8 DVDReadAsync[];
-extern u32 DVDReadAsync_length;
 extern u8 DVDReadAsyncInt[];
 extern u32 DVDReadAsyncInt_length;
+extern u8 DVDGetDriveStatus[];
+extern u32 DVDGetDriveStatus_length;
 extern u8 DVDCompareDiskId[];
 extern u32 DVDCompareDiskId_length;
 extern u8 ForceProgressive[];
@@ -101,7 +103,8 @@ extern u32 CARDWriteAsync_length;
 
 /* Patch code variables block */
 #define VAR_AREA 			(0x81800000)		// Base location of our variables
-#define VAR_AREA_SIZE		(0x100)				// Size of our variables block
+#define VAR_AREA_SIZE		(0x200)				// Size of our variables block
+#define VAR_READ_DVDSTRUCT	(VAR_AREA-0x120)	// 0x40 of ptr to DVD structs
 #define VAR_DISC_1_LBA 		(VAR_AREA-0x100)	// is the base file sector for disk 1
 #define VAR_DISC_2_LBA 		(VAR_AREA-0xFC)		// is the base file sector for disk 2
 #define VAR_CUR_DISC_LBA 	(VAR_AREA-0xF8)		// is the currently selected disk sector
@@ -113,11 +116,7 @@ extern u32 CARDWriteAsync_length;
 #define VAR_TMP2  			(VAR_AREA-0xD0)		// space for a variable if required
 #define VAR_TMP3  			(VAR_AREA-0xCC)		// space for a variable if required
 #define VAR_TMP4  			(VAR_AREA-0xC8)		// space for a variable if required
-#define VAR_CB_ADDR			(VAR_AREA-0xC4)		// high level read callback addr
-#define VAR_CB_ARG1			(VAR_AREA-0xC0)		// high level read callback r3
-#define VAR_CB_ARG2			(VAR_AREA-0xBC)		// high level read callback r4
 #define VAR_PROG_MODE		(VAR_AREA-0xB8)		// data/code to overwrite GXRMode obj with for 480p forcing
-#define VAR_MUTE_AUDIO		(VAR_AREA-0x20)		// does the user want audio muted during reads?
 #define VAR_ASPECT_FLOAT	(VAR_AREA-0x1C)		// Aspect ratio multiply float (4 bytes)
 #define VAR_MEMCARD_LBA		(VAR_AREA-0x18)		// Memory card file base on SD
 #define VAR_MEMCARD_WORK	(VAR_AREA-0x14)		// Memory card work area 40960 bytes big

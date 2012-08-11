@@ -67,7 +67,6 @@ extern void select_dest_dir(file_handle* directory, file_handle* selection);
 typedef struct {
 	int useHiLevelPatch; // Use Hi Level (DVDRead patch) or low level (Read patch)
 	int useHiMemArea; // Use Low mem or High mem for the patch to sit at
-	int disableInterrupts; // On the Hi Level patch, disable interrupts or not
 	int debugUSB; // Debug prints over USBGecko
 	int hasDVDDrive;
 	int defaultDevice;
@@ -78,7 +77,6 @@ typedef struct {
 	int emulatemc;	// Emulate memcard via SDGecko
 	int wiirdDebug;	// Enable WiiRD debug
 	int muteAudioStreaming;
-	int muteAudioStutter;
 	int hideUnknownFileTypes;
 	int sramStereo;
 	int stopMotor;

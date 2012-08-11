@@ -23,16 +23,13 @@ struct DVDFileInfo
 }
 */	
 
-# Queue read command asynchronously - and return true.
-#	We have 47 instructions to play with here only as this is the async function.
-#	r3	dvdstruct
-#	r4	dst	
-#	r5	len
-#	r6	off
-#	r7	cb
+# cancel command asynchronously - and return true.
+# BOOL DVDCancelAsync(DVDCommandBlock* block, DVDCBCallback callback);
+#	r3	block
+#	r4	cb	
 
-.globl DVDReadAsyncInt
-DVDReadAsyncInt:
+.globl DVDCancelAsync
+DVDCancelAsync:
 
 	stwu    %sp, -0x40(%sp)
 	mflr    %r0
@@ -45,30 +42,21 @@ DVDReadAsyncInt:
 	rlwinm	%r7,%r7,0,17,15
 	mtmsr	%r7
 	
-#Update dvdstruct with "waiting to enter queue" status, immediately
-	li		%r0,	2
-	stw     %r0,	0x0C(%r3)	# state: DVD_STATE_WAITING (waiting to go in the queue)
-	li		%r0,	1
-	stw     %r0,	0x08(%r3)	# command : 1
-
-#update dvdstruct with length and dst passed in
-	lwz		%r7, 	16(%sp)		# load cb
-	stw     %r5,	0x14(%r3)	# length: passed in length
-	stw     %r4,	0x18(%r3)	# dest: passed in dest
-	stw		%r6,	0x10(%r3)	# offset = offset (passed in)
-	stw     %r5,	0x1C(%r3)	# curTransferSize: length
-	li		%r0,	0
-	stw     %r0,	0x20(%r3)	# transferredSize: 0 so far
-	stw     %r7,	0x38(%r3)	# Set the callback addr in the struct
-
-#Call our method which will add this dvdstruct to our read queue. 
-#Once added, it will be read in small pieces every time OSRestoreInterrupts is run.
-#Finally, once complete, the struct state is updated to STATE_END (0) and the callback is called (if present).
-	lis		%r7,	0x8000
-	ori		%r7,	%r7,	0x183C
-	mtctr	%r7
+#Update block with "cancelled" status, if it hasn't been completed
+	lwz     %r0,	0x0C(%r3)	# get state
+	cmpwi	%r0,	0			# if this read is already completed, just call the callback and return true
+	beq		skip_cancel
+	li		%r0,	10
+	stw     %r0,	0x0C(%r3)	# state: DVD_STATE_CANCELED
+skip_cancel:
+# Call the callback if there is one
+	cmpwi	%r4,	0
+	beq		skip_callback
+	li		%r3,	0
+	mtctr	%r4					# typedef void (*DVDCBCallback)(s32 result, DVDCommandBlock* block);
 	bctrl
 
+skip_callback:
 #Enable external interrupts if we disabled them earlier
 	lwz		%r7, 0x20(%sp)		# load old MSR
 	rlwinm	%r7, %r7, 17, 30,31
@@ -85,7 +73,7 @@ skip_setting_msr:
 	mtlr    %r0
 	addi    %sp, %sp, 0x40
 	blr
-   .globl DVDReadAsyncInt_length
-   DVDReadAsyncInt_length:
-   .long (DVDReadAsyncInt_length - DVDReadAsyncInt)
+   .globl DVDCancelAsync_length
+   DVDCancelAsync_length:
+   .long (DVDCancelAsync_length - DVDCancelAsync)
    

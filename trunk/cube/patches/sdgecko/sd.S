@@ -32,16 +32,7 @@
 .set VAR_MC_CB_ARG2,	-0x04	# memcard callback r4
 
 # register map
-# r17 is sd card speed
-# r18 is constant 0xFFFFFFFF
-# r19 is constant reg base 0xCC0068xx (either 00 or 14 depending on slot)
-# r20 is saved dst (r3)
-# r21 is saved len (r4)
-# r22 is saved ofs (r5)
-# r23,r24,r25,r26 used in rcvr_datablock
-# r27,r28,r29 used in do_read
-# r30 is constant 49
-# r31 is temp LR in rcvr_datablock
+# r11 is constant reg base 0xCC0068xx (either 00 or 14 depending on slot)
 
 #SLOT A
 .set CHN_SR,      0
@@ -52,305 +43,300 @@
 
 # SD Functions 
 
+# u8 rcvr_spi() (clobbers r3, r4, r0)
 rcvr_spi:  
-  li      3,  1       
-  stw     18, CHN_DATA(19)  #write out 0xFFFFFFFF to read data reg
-  stw     3, CHN_CR(19)     #set to 1 to start xfer of 1 byte
+  li	  4,  -1
+  li      3,  1
+  stw     4, CHN_DATA(11)   #write out 0xFFFFFFFF to read data reg
+  stw     3, CHN_CR(11)     #set to 1 to start xfer of 1 byte
 
 loopA1:                     
-  lwz     0, CHN_CR(19)     #load the word if word&1, loop until xfer bit is gone
+  lwz     0, CHN_CR(11)     #load the word if word&1, loop until xfer bit is gone
   andi.   0, 0, 1           
   bne     0, loopA1         
-  lwz     0, CHN_DATA(19)	  	
+  lwz     0, CHN_DATA(11)	  	
   rlwinm  3, 0, 8, 24, 31   #return word >>24
  blr
 
+# xmit_spi(u32 byte) (clobbers r3, r0)
 xmit_spi:
   slwi    3, 3, 24          
-  stw     3, CHN_DATA(19)   # exi[SD_CHANNEL * 5 + 4] = ((snd[d]) << 24); 
+  stw     3, CHN_DATA(11)   # exi[SD_CHANNEL * 5 + 4] = ((snd[d]) << 24); 
   li      0, 5        
-  stw     0, CHN_CR(19)     # exi[SD_CHANNEL * 5 + 3] = ((0) << 4) | (1 << 2) | 1; 
+  stw     0, CHN_CR(11)     # exi[SD_CHANNEL * 5 + 3] = ((0) << 4) | (1 << 2) | 1; 
 loopxmit:
-  lwz     0, CHN_CR(19)
+  lwz     0, CHN_CR(11)
   andi.   0, 0, 1       
   bne     0, loopxmit         # while (exi[SD_CHANNEL * 5 + 3] & 1); 
  blr
 
+# u32 rcvr_spi_word() (clobbers r3,r4,r0)
 rcvr_spi_word:  
-  stw     18, CHN_DATA(19)  #write out 0xFFFFFFFF to read data reg
-  stw     30, CHN_CR(19)    #set to 49 to start xfer of 4 bytes
+  li	  4, -1
+  li	  3, 49
+  stw     4, CHN_DATA(11)  #write out 0xFFFFFFFF to read data reg
+  stw     3, CHN_CR(11)    #set to 49 to start xfer of 4 bytes
 
 loopA2:                     
-  lwz     0, CHN_CR(19)     #load the word if word&1, loop until xfer bit is gone
+  lwz     0, CHN_CR(11)     #load the word if word&1, loop until xfer bit is gone
   andi.   0, 0, 1           
   bne     0, loopA2         
-  lwz     3, CHN_DATA(19)	  #return word
- blr
- 
-xmit_spi_word:
-  stw     3, CHN_DATA(19)   # exi[SD_CHANNEL * 5 + 4] = ((snd[d]) << 24); 
-  li      0, 53
-  stw     0, CHN_CR(19)     # exi[SD_CHANNEL * 5 + 3] = ((0) << 4) | (1 << 2) | 1; 
-loopxmitw:
-  lwz     0, CHN_CR(19)
-  andi.   0, 0, 1       
-  bne     0, loopxmitw         # while (exi[SD_CHANNEL * 5 + 3] & 1); 
+  lwz     3, CHN_DATA(11)	  #return word
  blr
 
+# send_cmd (u32 cmd, u32 sector) (clobbers r3, r4, r5)
 send_cmd:
-  mflr    31                # r31 = old LR
+  mflr		0					# move lr
+  stwu		1,	-0x20(1) 		# grow stack frame
+  stw 		0,	 0x24(1)		# save lr
+  stw		3,		0x10(1)
+  stw		4,		0x14(1)
   
-  lwz     0, CHN_SR(19)     # deselect SDCard
+  lis     3, VAR_AREA   
+  lwz     4, VAR_EXI_BUS_SPD(3)	# load sd speed from memory to r4
+  
+  lwz     0, CHN_SR(11)     # deselect SDCard
   andi.   0, 0, 0x405 
-  stw     0, CHN_SR(19)
+  stw     0, CHN_SR(11)
   
-  lwz     0, CHN_SR(19)     # select SDCard 
+  lwz     0, CHN_SR(11)     # select SDCard 
   andi.   0, 0, 0x405 
-  or      0, 0, 17          # speed set by sd-boot (192 or 208)
-  stw     0, CHN_SR(19)
-  
-  mr       9, 3             # wait until ready 
-  mr      10, 4          
+  or      0, 0, 4           # speed set by sd-boot (192 or 208)
+  stw     0, CHN_SR(11)
+         
   bl      rcvr_spi          # waste one read via rcvr_spi 
 loopC1:                     
   bl      rcvr_spi          # while (res != 0xFF); 
-  cmpwi   5, 3, 0xFF  
-  bne     5, loopC1   
-  mr      3,  9     
-  mr      4, 10     
+  cmpwi   3, 0xFF  
+  bne     loopC1   
+  lwz		3,		0x10(1)
+  lwz		4,		0x14(1)
   
   slwi    3, 3, 24          # send cmd 
-  stw     3, CHN_DATA(19)   # exi[SD_CHANNEL * 5 + 4] = ((snd[d]) << 24); 
+  stw     3, CHN_DATA(11)   # exi[SD_CHANNEL * 5 + 4] = ((snd[d]) << 24); 
 
   li      0, 5        
-  stw     0, CHN_CR(19)     # exi[SD_CHANNEL * 5 + 3] = ((0) << 4) | (1 << 2) | 1; 
+  stw     0, CHN_CR(11)     # exi[SD_CHANNEL * 5 + 3] = ((0) << 4) | (1 << 2) | 1; 
 loopD1:
-  lwz     0, CHN_CR(19)
+  lwz     0, CHN_CR(11)
   andi.   0, 0, 1       
   bne     0, loopD1         # while (exi[SD_CHANNEL * 5 + 3] & 1); 
 
-  stw     4, CHN_DATA(19)   # send data (sector number) 
+  stw     4, CHN_DATA(11)   # send data (sector number) 
   li      0, 53       
-  stw     0, CHN_CR(19)     # exi[SD_CHANNEL * 5 + 3] = ((3) << 4) | (1 << 2) | 1; 
+  stw     0, CHN_CR(11)     # exi[SD_CHANNEL * 5 + 3] = ((3) << 4) | (1 << 2) | 1; 
 loopD21:
-  lwz     0, CHN_CR(19)
+  lwz     0, CHN_CR(11)
   andi.   0, 0, 1     
   bne     0, loopD21   # while (exi[SD_CHANNEL * 5 + 3] & 1); 
 
   li      0, 1         # send 0x01 
   slwi    0, 0, 24    
-  stw     0, CHN_DATA(19) # exi[SD_CHANNEL * 5 + 4] = ((snd[d]) << 24); 
+  stw     0, CHN_DATA(11) # exi[SD_CHANNEL * 5 + 4] = ((snd[d]) << 24); 
   li      0, 5        
-  stw     0, CHN_CR(19) # exi[SD_CHANNEL * 5 + 3] = ((0) << 4) | (1 << 2) | 1; 
+  stw     0, CHN_CR(11) # exi[SD_CHANNEL * 5 + 3] = ((0) << 4) | (1 << 2) | 1; 
 loopD3:
-  lwz     0, CHN_CR(19)
+  lwz     0, CHN_CR(11)
   andi.   0, 0, 1       
   bne     0, loopD3    # while (exi[SD_CHANNEL * 5 + 3] & 1); 
   
   srwi    3, 3, 24    
-  cmpwi   5, 3, 0x4C   # if (cmd == CMD12) rcvr_spi(); 
-  bne     5, loopD4   
+  cmpwi   3, 0x4C   # if (cmd == CMD12) rcvr_spi(); 
+  bne     loopD4   
   bl      rcvr_spi    
 loopD4:
 
   li      5, 10        # timeout=10; 
   
 loopD5:
-  cmpwi   5, 5, 0      
-  beq     5, loopD6    # timeout == 0, bail out 
+  cmpwi   5, 0      
+  beq     loopD6    # timeout == 0, bail out 
   bl      rcvr_spi     # res = rcvr_spi(); 
   addi    5, 5, -1     # timeout-- 
   andi.   0, 3, 0x80   # (res & 0x80) 
   bne     0, loopD5   
   
-loopD6:             
-  mtlr    31           # restore LR from r31       
+loopD6:
+  lwz 	0,	0x24(1)		# load lr
+  addi	1,	1, 0x20		# kill stack frame
+  mtlr	0				# restore lr
   blr
 
+# rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, u32 total_read)
 rcvr_datablock:
-  mflr    31           # r31 = old LR        
+	mflr		0					# move lr
+	stwu		1,	 -0x40(1) 		# grow stack frame
+	stw 		0,	  0x44(1)		# save lr
+	stw			6,		12(1)
+	stw			7,		16(1)
+	stw			8,		20(1)
+	stw			9,		24(1)
   
-  mr      23, 3        # r23 = *buff 
-  mr      24, 4        # r24 = start_byte  
-  mr      25, 5        # r25 = bytes to read 
-  add     26, 4, 5     # r26 = total_read = start_byte+btr 
+	mr      6, 3        			# r6 = *buff 
+	mr      7, 4        			# r7 = start_byte  
+	mr      8, 5        			# r8 = bytes to read 
+	add     9, 4, 5     			# r9 = total_read = start_byte+btr 
   
 loopE1:
-  bl      rcvr_spi    
-  cmpwi   5, 3, 0xFF  
-  beq     5, loopE1    # while (token == 0xFF); 
+	bl      rcvr_spi    
+	cmpwi   3, 0xFF  
+	beq     loopE1    				# while (token == 0xFF); 
   
 loopE2:
-  cmpwi   5, 24, 0     # if(start_byte) 
-  beq     5, loopE3    # get out if no start_byte 
-  bl      rcvr_spi    
-  addi    24, 24, -1   # start_byte-- 
-  b       loopE2      
+	cmpwi   7, 0     				# if(start_byte) 
+	beq     loopE3    				# get out if no start_byte 
+	bl      rcvr_spi    
+	addi    7, 7, -1   				# start_byte-- 
+	b       loopE2      
   
 loopE3:
-  cmpwi    5, 25, 4     # if(btr<4) 
-  blt      5, loopE4    # go read the rest 
-  bl       rcvr_spi_word
-  stw      3, 0(23)     # else, write one word 
-  addi     23, 23, 4    # buff+=4 
-  addi     25, 25, -4   # btr-=4 
-  b        loopE3      
+	cmpwi    8, 4     				# if(btr<4) 
+	blt      loopE4    				# go read the rest 
+	bl       rcvr_spi_word
+	stw      3, 0(6)     			# else, write one word 
+	addi     6, 6, 4    			# buff+=4 
+	addi     8, 8, -4   			# btr-=4 
+	b        loopE3      
   
 loopE4:
-  cmpwi    5, 25, 0     # anything left? 
-  beq      5, loopE5    # no, continue 
-  bl       rcvr_spi     # else, yes, read bytes til done 
-  stb      3, 0(23)    
-  addi     23, 23, 1   
-  addi     25, 25, -1  
-  b        loopE4      
+	cmpwi    8, 0     				# anything left? 
+	beq      loopE5    				# no, continue 
+	bl       rcvr_spi     			# else, yes, read bytes til done 
+	stb      3, 0(6)    
+	addi     6, 6, 1   
+	addi     8, 8, -1  
+	b        loopE4      
   
 loopE5:
-  cmpwi    5, 26, 512   # if(total_read<512) 
-  blt      5, loopE6   
-  b        loopE8       # finish 
+	cmpwi    9, 512   				# if(total_read<512) 
+	blt      loopE6   
+	b        loopE8       			# finish 
 loopE6:
-  li       6, 512       # r6 = 512 
-  sub      6, 6, 26     # r6 = remainder = 512-total_read 
-  loopE7:
-  cmpwi    5, 6, 0      # if(!remainder) 
-  beq      5, loopE8    # bail out 
-  bl       rcvr_spi     # read out and discard 
-  addi     6, 6, -1     # remainder-- 
-  b        loopE7      
+	li       7, 512       			# r7 = 512 
+	sub      7, 7, 9     			# r7 = remainder = 512-total_read 
+loopE7:
+	cmpwi    7, 0      				# if(!remainder) 
+	beq      loopE8    				# bail out 
+	bl       rcvr_spi     			# read out and discard 
+	addi     7, 7, -1     			# remainder-- 
+	b        loopE7      
   
 loopE8:
-  bl      rcvr_spi     # discard CRC 
-  bl      rcvr_spi     # discard CRC  
-  mtlr    31           # restore LR
- blr
+	bl      rcvr_spi     			# discard CRC 
+	bl      rcvr_spi     			# discard CRC  
+	lwz			6,		12(1)
+	lwz			7,		16(1)
+	lwz			8,		20(1)
+	lwz			9,		24(1)
+	lwz 		0,		0x44(1)		# load lr
+	addi		1,		1, 0x40		# kill stack frame
+	mtlr		0					# restore lr
+	blr
 
  	.globl do_read   
 do_read:
 	# save registers
-	stwu		1,	-128(1) 		# grow stack frame
 	mflr		0					# move lr
-	stw 		0,	 	0(1)		# save lr
+	stwu		1,	 -0x40(1) 		# grow stack frame
+	stw 		0,	  0x44(1)		# save lr
 	stw			3,		12(1)		# save r3 - dst
 	stw			4,		16(1)		# save r4 - len
 	stw			5,		20(1)		# save r5 - offset
-	stw 		6,		24(1)		# save r6
-	stw 		7,		28(1)		# save r7
-	stw 		8,		32(1)		# save r8
-	stw 		9,		36(1)		# save r9
-	stw 		10, 	40(1)		# save r10
-	stw 		11, 	44(1)		# save r11
-	stmw		16, 	48(1)		# save r16->r31   
-
+	stw 		11, 	24(1)		# save r11
+	
   # setup registers for our code
-  li      18, -1        # r18 is constant 0xFFFFFFFF
-  lis     19, 0xCC00    # r19 is constant 0xCC0068xx
-  ori     19, 19, 0x6800# slot A by default
-  li      30, 49        # r30 is constant 49
-  mr      20, 3         # r20 is saved dst (r3)
-  mr      21, 4         # r21 is saved len (r4)
-  mr      22, 5         # r22 is saved ofs (r5)
+  lis     11, 0xCC00    			# r11 is constant 0xCC0068xx
+  ori     11, 11, 0x6800			# slot A by default
 
-  lis     6, VAR_AREA   
-  lwz     17,VAR_EXI_BUS_SPD(6)		# load sd speed from memory to r17
-  lwz	  27, VAR_EXI_SLOT(6)		# setup our reg base for the slot
-  cmpwi   5, 27, 0
-  beq     5, skip_slot_b_adj
-  addi    19, 19, 0x14				# make exi reg base 0xCC006814 for slot 2
+  lis     6, VAR_AREA
+  lwz	  7, VAR_EXI_SLOT(6)		# setup our reg base for the slot
+  cmpwi   7, 0
+  beq     skip_slot_b_adj
+  addi    11, 11, 0x14				# make exi reg base 0xCC006814 for slot 2
 skip_slot_b_adj:
   lwz     6, VAR_CUR_DISC_LBA(6)	# load sector address from memory to r6
   
-  andi.   27, 5, 511   # r27 = startByte = (offset%512) 
-  mr      28, 4        # r28 = numbytes = len 
-  mr      29, 3        # r29 = dst 
-  srwi    4, 5, 9      # offset >> 9 
-  add     4, 4, 6      # r4 = startSector = base_sector+offset>>9 
+  andi.   7, 5, 511   				# r7 = startByte = (offset%512) 
+  mr      8, 4        				# r8 = numbytes = len 
+  mr      9, 3        				# r9 = dst 
+  srwi    4, 5, 9      				# offset >> 9 
+  add     4, 4, 6      				# r4 = startSector = base_sector+offset>>9 
 
   lis	  3, VAR_AREA
-  lwz	  3, VAR_SD_TYPE(3)	# SD Card Type (SDHC=0, SD=1)
+  lwz	  3, VAR_SD_TYPE(3)			# SD Card Type (SDHC=0, SD=1)
   cmpwi	  5, 3, 0
   beq	  5, _skip_shift
-  slwi    4, 4,9       # startSector<<=9; if normal SDcard use byteaddr 
+  slwi    4, 4,9      				# startSector<<=9; if normal SDcard use byteaddr 
 _skip_shift:
-  li      3, 0x52      # CMD18 - Read multiple block command 
-  bl      send_cmd     # send_cmd(CMD18, startSector); 
+  li      3, 0x52      				# CMD18 - Read multiple block command 
+  bl      send_cmd     				# send_cmd(CMD18, startSector); 
   
-  cmpwi   5, 27, 0    
-  beq     5, loopF1    # if(!startByte), go to main loop read 
+  cmpwi   7, 0    
+  beq     loopF1    				# if(!startByte), go to main loop read 
   
   li      0, 512      
-  sub     0, 0, 27     # (512-startByte) 
-  cmpw    5, 28, 0    
-  bgt     5, loopF2    # if(len > (512-startByte)) we need to read from mis-aligned multiple sectors 
+  sub     0, 0, 7					# (512-startByte) 
+  cmpw    8, 0    
+  bgt     loopF2    				# if(len > (512-startByte)) we need to read from mis-aligned multiple sectors 
   
-  mr      3, 29        # move dst 
-  mr      4, 27        # move startByte 
-  mr      5, 28        # move len 
-  bl    rcvr_datablock # rcvr_datablock(dst,startByte, len); 
-  b       loopFend     # return 
+  mr      3, 9        				# move dst 
+  mr      4, 7        				# move startByte 
+  mr      5, 8        				# move len 
+  bl      rcvr_datablock			# rcvr_datablock(dst,startByte, len); 
+  b       loopFend     				# return 
 
 loopF2:
-  mr      3, 29        # move dst 
-  mr      4, 27        # move startByte 
+  mr      3, 9        				# move dst 
+  mr      4, 7        				# move startByte 
   li      0, 512      
-  sub     5, 0, 27     # move 512-startByte (which in this read is the length) 
-  bl    rcvr_datablock # rcvr_datablock(dst,startByte, 512-startByte); 
+  sub     5, 0, 7     				# move 512-startByte (which in this read is the length) 
+  bl    rcvr_datablock 				# rcvr_datablock(dst,startByte, 512-startByte); 
   li      0, 512      
-  sub     0, 0, 27     # 512-startByte 
-  sub     28, 28, 0    # numBytes-=(512-startByte); 
-	add     29, 29, 0    # dst+=(512-startByte); 
+  sub     0, 0, 7     				# 512-startByte 
+  sub     8, 8, 0    				# numBytes-=(512-startByte); 
+  add     9, 9, 0    				# dst+=(512-startByte); 
 			
 loopF1:
-  srwi    27, 28, 9    # r27 = numFullBlocks = numBytes/512; 
-  li      8, 0         # r8 = i = 0; 
-  cmpwi   5, 27, 0    
-  beq     5, loopF4    # no numFullBlocks, so skip the reading part 
+  srwi    7, 8, 9    				# r7 = numFullBlocks = numBytes/512; 
+  li      10, 0         			# r10 = i = 0; 
+  cmpwi   7, 0    
+  beq     loopF4    				# no numFullBlocks, so skip the reading part 
   
 loopF3:
-  mr      3, 29        # move dst 
-  li      4, 0         # 0 startByte 
-  li      5, 512       # 512 length 
-  bl    rcvr_datablock # rcvr_datablock(dst, 0,512); 
-  bl	pause_audio
-  addi    29, 29, 512  # dst+=512; 
-  addi    28, 28, -512 # numBytes-=512; 
-  addi    8, 8 , 1     # i++; 
-  cmpw    5, 8, 27    
-  blt     5, loopF3    # if i < numFullBlocks, loop again 
+  mr      3, 9        				# move dst 
+  li      4, 0         				# 0 startByte 
+  li      5, 512       				# 512 length 
+  bl    rcvr_datablock 				# rcvr_datablock(dst, 0,512); 
+  addi    9, 9, 512  				# dst+=512; 
+  addi    8, 8, -512 				# numBytes-=512; 
+  addi    10, 10 , 1     			# i++; 
+  cmpw    5, 10, 7
+  blt     5, loopF3    				# if i < numFullBlocks, loop again 
   		
 loopF4:
-  cmpwi   5, 28, 0    
-  beq     5, loopFend  # if(!numBytes), finish up 
+  cmpwi   8, 0    
+  beq     loopFend  				# if(!numBytes), finish up 
 		  
-  mr      3, 29        # move dst 
-  li      4, 0         # 0 startByte 
-  mr      5, 28        # move numBytes 
-  bl    rcvr_datablock # rcvr_datablock(dst,0, numBytes); 
+  mr      3, 9        				# move dst 
+  li      4, 0         				# 0 startByte 
+  mr      5, 8        				# move numBytes 
+  bl    rcvr_datablock 				# rcvr_datablock(dst,0, numBytes); 
   
 loopFend:
   li      3, 0x4C     
   li      4, 0        
-  bl      send_cmd     # send_cmd(CMD12, 0); 
-  lwz     0, CHN_SR(19)
+  bl      send_cmd     				# send_cmd(CMD12, 0); 
+  lwz     0, CHN_SR(11)
   andi.   0, 0, 0x405 
-  stw     0, CHN_SR(19)# Deselect SDCARD from EXI bus 
+  stw     0, CHN_SR(11)				# Deselect SDCARD from EXI bus 
 
-  bl      rcvr_spi     # one byte read req after deselect 
+  bl      rcvr_spi    				# one byte read req after deselect 
   
   # Reload regs
-	lwz			3,		12(1)		# load r3
-	lwz			4,		16(1)		# load r4
-	lwz			5,		20(1)		# load r5
-	lwz 		6,		24(1)		# load r6
-	lwz 		7,		28(1)		# load r7
-	lwz 		8,		32(1)		# load r8
-	lwz 		9,		36(1)		# load r9
-	lwz 		10, 	40(1)		# load r10
-	lwz 		11, 	44(1)		# load r11
-	lmw			16, 	48(1)		# load r16->r31
-	lwz 		0,		0(1)		# load lr
+	lwz 		11, 	24(1)		# save r11
+	lwz 		0,		0x44(1)		# load lr
+	addi		1,		1, 0x40		# kill stack frame
 	mtlr		0					# restore lr
-	addi		1,		1, 128		# kill stack frame
  blr
 
  
@@ -358,36 +344,28 @@ loopFend:
 do_write:
 	# save registers
 	mflr		0					# move lr
-	stw 		0,	 	4(1)		# save lr
-	stwu		1,	-0xC0(1) 		# grow stack frame
+	stwu		1,	 -0x40(1) 		# grow stack frame
+	stw 		0,	  0x44(1)		# save lr
 	stw			3,		12(1)		# save r3 - dst
 	stw			4,		16(1)		# save r4 - len
 	stw			5,		20(1)		# save r5 - offset
-	stw 		6,		24(1)		# save r6
-	stw 		7,		28(1)		# save r7
-	stw 		8,		32(1)		# save r8
-	stw 		9,		36(1)		# save r9
-	stw 		10, 	40(1)		# save r10
-	stw 		11, 	44(1)		# save r11
-	stmw		16, 	48(1)		# save r16->r31
+	stw 		11, 	24(1)		# save r11
+
 
   # setup registers for our code
-  li      18, -1        # r18 is constant 0xFFFFFFFF
-  lis     19, 0xCC00    # r19 is constant 0xCC0068xx
-  ori     19, 19, 0x6800# slot A by default
-  li      30, 49        # r30 is constant 49
+  lis     11, 0xCC00    			# r11 is constant 0xCC0068xx
+  ori     11, 11, 0x6800			# slot A by default
 
   lis     6, VAR_AREA   
-  lwz     17,VAR_EXI_BUS_SPD(6)		# load sd speed from memory to r17
-  lwz	  27, VAR_EXI_SLOT(6)		# setup our reg base for the slot
-  cmpwi   5, 27, 0
+  lwz	  7, VAR_EXI_SLOT(6)		# setup our reg base for the slot
+  cmpwi   5, 7, 0
   beq     5, skip_slot_b_adj_2
-  addi    19, 19, 0x14				# make exi reg base 0xCC006814 for slot 2
+  addi    11, 11, 0x14				# make exi reg base 0xCC006814 for slot 2
 skip_slot_b_adj_2:
   lwz     6, VAR_MEMCARD_LBA(6)		# load sector address from memory to r6
   
-  srwi	  28, 4, 9					# r28 = numfullblocks
-  mr      29, 3        				# r29 = dst 
+  srwi	  8, 4, 9					# r8 = numfullblocks
+  mr      9, 3        				# r9 = dst 
   srwi    4, 5, 9      				# offset >> 9 
   add     4, 4, 6      				# r4 = startSector = base_sector+offset>>9 
 
@@ -397,9 +375,9 @@ skip_slot_b_adj_2:
   beq	  5, _skip_shift_2
   slwi    4, 4,9       				# startSector<<=9; if normal SDcard use byteaddr
 _skip_shift_2:
-  mr	  27, 4
+  mr	  7, 4
 write_loop_start:
-  mr	  4, 27
+  mr	  4, 7
   li      3, 0x58      				# CMD24 - Write single block command 
   bl      send_cmd    				# send_cmd(CMD24, startSector); 
 
@@ -415,10 +393,10 @@ write_wait:
   # send 512 bytes out
   li	  4, 512
 write_512:
-  lbz	  3, 0(29)
+  lbz	  3, 0(9)
   bl	  xmit_spi
   subi	  4, 4, 1
-  addi	  29, 29, 1
+  addi	  9, 9, 1
   cmpwi	  5, 4, 0
   bne	  5, write_512
   
@@ -428,14 +406,14 @@ write_512:
   bl	  xmit_spi		# dummy CRC
   bl	  rcvr_spi		# read status bit, discard.
 
-  subi    28, 28, 1     # numFullBlocks--;
-  addi	  27, 27, 1		# sector ++;
-  cmpwi   5, 28, 0
+  subi    8, 8, 1     # numFullBlocks--;
+  addi	  7, 7, 1		# sector ++;
+  cmpwi   5, 8, 0
   bne     5, write_loop_start    # if numFullBlocks == 0, end
   
-  lwz     0, CHN_SR(19)
+  lwz     0, CHN_SR(11)
   andi.   0, 0, 0x405 
-  stw     0, CHN_SR(19)# Deselect SDCARD from EXI bus 
+  stw     0, CHN_SR(11)# Deselect SDCARD from EXI bus 
 
   bl      rcvr_spi     # one byte read req after deselect 
   
@@ -443,16 +421,10 @@ write_512:
 	lwz			3,		12(1)		# load r3
 	lwz			4,		16(1)		# load r4
 	lwz			5,		20(1)		# load r5
-	lwz 		6,		24(1)		# load r6
-	lwz 		7,		28(1)		# load r7
-	lwz 		8,		32(1)		# load r8
-	lwz 		9,		36(1)		# load r9
-	lwz 		10, 	40(1)		# load r10
-	lwz 		11, 	44(1)		# load r11
-	lmw			16, 	48(1)		# load r16->r31
-	lwz 		0,		0xC4(1)		# load lr
+	lwz 		11, 	24(1)		# load r11
+	lwz 		0,		0x44(1)		# load lr
+	addi		1,		1, 0x40		# kill stack frame
 	mtlr		0					# restore lr
-	addi		1,		1, 0xC0		# kill stack frame
  blr
  
 

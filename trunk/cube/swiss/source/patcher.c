@@ -186,6 +186,7 @@ void make_pattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
 
 	FunctionPattern->Length = i;
 }
+
 bool compare_pattern( FuncPattern *FPatA, FuncPattern *FPatB  )
 {
 	if( memcmp( FPatA, FPatB, sizeof(u32) * 6 ) == 0 )
@@ -193,7 +194,7 @@ bool compare_pattern( FuncPattern *FPatA, FuncPattern *FPatB  )
 	else
 		return false;
 }
-
+	
 int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 {
 	u32 i;
@@ -242,9 +243,9 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 
 	if(!functionPattern) {
 		print_gecko("Length: 0x%02X\r\n", FP.Length );
-		print_gecko("FCalls: %d\r\n", FP.FCalls );
 		print_gecko("Loads : %d\r\n", FP.Loads );
 		print_gecko("Stores: %d\r\n", FP.Stores );
+		print_gecko("FCalls: %d\r\n", FP.FCalls );
 		print_gecko("Branch : %d\r\n", FP.Branch);
 		print_gecko("Moves: %d\r\n", FP.Moves);
 		return 0;
@@ -257,23 +258,16 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 		return 0;
 }
 
-// Not working:
-// HANGS: Metroid Prime: << Dolphin SDK - DVD    release build: Oct 29 2002 09:56:49 (0x2301) >>
-// Smash Bros. Melee / Kirby Air Ride - r13 issue
 
-// Working: 
-// Simpsons Hit & Run: << Dolphin SDK - DVD    release build: Sep  5 2002 05:34:06 (0x2301) >>
-// Burnout 2: << Dolphin SDK - DVD    release build: Oct 29 2002 09:56:49 (0x2301) >>
-// GB Player Disc: << Dolphin SDK - DVD    release build: Dec 26 2002 21:33:56 (0x2407) >>
-// F-Zero GX: << Dolphin SDK - DVD    release build: Jul 23 2003 11:27:57 (0x2301) >>
-// Zelda: 4 Swords: << Dolphin SDK - DVD    release build: Sep 16 2003 09:50:54 (0x2301) >>
-// Dragonball Z Sagas: << Dolphin SDK - DVD.release build: Feb 12 2004 05:02:49 (0x2301) >>
-// Zelda: Twilight Princess: << Dolphin SDK - DVD    release build: Apr  5 2004 04:14:51 (0x2301) >>
+
 int Patch_DVDHighLevelRead(u8 *data, u32 length) {
-	int i, j, count = 0, dis_int = swissSettings.disableInterrupts;
+	int i, j, count = 0;
 	FuncPattern DVDReadSigs[2] = {
-		{ 0xBC, 20, 3, 3, 4, 7, dis_int ? DVDReadAsync:DVDReadAsyncInt,  dis_int ? DVDReadAsync_length:DVDReadAsyncInt_length, "DVDReadAsync", 0 },
-		{ 0x114, 23, 2, 6, 9, 8, dis_int ? DVDRead:DVDReadInt,   dis_int ? DVDRead_length:DVDReadInt_length,  "DVDRead", 0 }
+		{ 0xBC, 20, 3, 3, 4, 7, DVDReadAsyncInt,  DVDReadAsyncInt_length, "DVDReadAsync", 0 },
+		{ 0x114, 23, 2, 6, 9, 8, DVDReadInt,   DVDReadInt_length,  "DVDRead", 0 }//,
+		//{ 0x278, 49, 17, 9, 25, 5, DVDCancelAsync,   DVDCancelAsync_length,  "DVDCancelAsync", 0 },
+		//{ 0xA8, 13, 4, 4, 7, 3, DVDCancel,   DVDCancel_length,  "DVDCancel", 0 },
+		//{ 0xA8, 10, 4, 4, 6, 3, DVDGetDriveStatus, DVDGetDriveStatus_length,  "DVDGetDriveStatus", 0 }
 	};
 	
 	for( i=0; i < length; i+=4 )
@@ -297,7 +291,7 @@ int Patch_DVDHighLevelRead(u8 *data, u32 length) {
 			}
 		}
 
-		if( count == 2 )
+		if( count == sizeof(DVDReadSigs) )
 			break;
 	}
 	return count;

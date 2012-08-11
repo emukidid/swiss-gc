@@ -63,8 +63,6 @@ typedef unsigned int u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 
-extern void pause_audio();
-
 #define exi_freq  		*(u32*)VAR_TMP1
 #define exi_device  	*(u32*)VAR_TMP2
 #define exi_channel 	*(u32*)VAR_TMP3
@@ -269,7 +267,6 @@ void do_read(void *dst,u32 size, u32 offset) {
 			size -= (ATA_READ_CHUNK_SIZE*SECTOR_SIZE);
 			dst += (ATA_READ_CHUNK_SIZE*SECTOR_SIZE);
 			lba += (ATA_READ_CHUNK_SIZE);
-			pause_audio();
 		}
 		// Read remaining whole blocks
 		if(size>>9) {

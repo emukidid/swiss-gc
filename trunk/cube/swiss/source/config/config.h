@@ -13,12 +13,10 @@ typedef struct {
 	char padding_4[1];
 	int useHiLevelPatch;
 	int useHiMemArea;
-	int disableInterrupts;
 	int gameVMode;
 	int forceWideAspect;
 	int emulatemc;
 	int muteAudioStreaming;
-	int muteAudioStutter;
 	int noDiscMode;
 } ConfigEntry __attribute__((aligned(32)));
 
