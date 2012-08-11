@@ -7,6 +7,7 @@
 
 # memory map for our variables that sit at the top 0x100 of memory
 .set VAR_AREA, 			0x8180	# Base location of our variables
+.set VAR_READ_DVDSTRUCT,-0x120	# 0x40 of ptr to DVD structs
 .set VAR_DISC_1_LBA, 	-0x100	# is the base file sector for disk 1
 .set VAR_DISC_2_LBA, 	-0xFC	# is the base file sector for disk 2
 .set VAR_CUR_DISC_LBA, 	-0xF8	# is the currently selected disk sector
@@ -18,11 +19,11 @@
 .set VAR_TMP2,  		-0xD0	# space for a variable if required
 .set VAR_TMP3,  		-0xCC	# space for a variable if required
 .set VAR_TMP4,  		-0xC8	# space for a variable if required
-.set VAR_CB_ADDR,		-0xC4	# high level read callback addr
-.set VAR_CB_ARG1,		-0xC0	# high level read callback r3
-.set VAR_CB_ARG2,		-0xBC	# high level read callback r4
+.set VAR_UNUSED2,		-0xC4	# UNUSED
+.set VAR_UNUSED3,		-0xC0	# UNUSED
+.set VAR_UNUSED4,		-0xBC	# UNUSED
 .set VAR_PROG_MODE,		-0xB8	# data/code to overwrite GXRMode obj with for 480p forcing
-.set VAR_MUTE_AUDIO,	-0x20	# does the user want audio muted during reads?
+.set VAR_UNUSED,		-0x20	# UNUSED
 .set VAR_ASPECT_FLOAT,	-0x1C	# Aspect ratio multiply float (4 bytes)
 .set VAR_MEMCARD_LBA,	-0x18	# Memory card file base on SD
 .set VAR_MEMCARD_WORK,	-0x14	# Memory card work area 40960 bytes big
@@ -37,7 +38,7 @@ main:
 	b		setup_read_type1v1		# low style read version 1
 	b		setup_read_type1v2		# low style read version 2
 	b		setup_read_type1v3		# low style read version 3
-	b		setup_read_type2		# read hi style
+	b		setup_read_type2		# read hi style, queued with callback
 	b		os_restore_interrupts	# custom os restore interrupts which will call the dvd callback
 	b		card_open				# s32 card_open(char* fileName, CARDFileInfo* fileInfo)
 	b		card_fastopen			# s32 card_fastopen(s32 fileNo, CARDFileInfo* fileInfo)
@@ -49,8 +50,10 @@ main:
 	b		card_getstatus			# s32 card_getstatus(s32 fileNo, CARDStat* stat)
 	b		card_setstatus			# s32 card_setstatus(s32 fileNo, CARDStat* stat)
 	b		card_setup				# void card_setup(); // Read our virtual memcard file table into the work area
+	b		add_read_to_queue		# void add_read_to_queue(DVDFileInfo* struct)
 
 # Low level read
+	.globl setup_read_type1v1
 setup_read_type1v1:
 	stwu		1, -0x0028 (1)		# these are instructions we patched over, so do them here
 	stw			30, 32 (1)
@@ -67,6 +70,7 @@ setup_read_type1v1:
 	li			0, 0				# was patched over, do it now.
 	blr
 
+	.globl setup_read_type1v2
 setup_read_type1v2:
 	stwu		1, -0x0020 (1)		# these 4 are instructions we patched over, so do them here
 	stw 		31, 28 (1)
@@ -86,7 +90,8 @@ setup_read_type1v2:
 	stw 		3, 8 (1)  			# was patched over, do it now.
 	mr        	31, 4  				# was patched over, do it now.
 	blr
-  
+
+	.globl setup_read_type1v3
 setup_read_type1v3:
 	stwu    	1, -0x0028 (1)		# these are instructions we patched over, so do them here
 	stw     	30, 32 (1)
@@ -103,11 +108,12 @@ setup_read_type1v3:
 	li      	0, 1				# was patched over, do it now.
 	blr
 	
-# FST style read - so we need to add the FP.offset to the File.offset
+# FST style read (immediate, no callback) - so we need to add the FP.offset to the File.offset
+	.globl setup_read_type2
 setup_read_type2:
-	stwu    	1,  -64(1)   		# grow stack frame 
 	mflr    	0             		# move lr  
-	stw     	0,    0(1)    		# save lr
+	stwu    	1,  -64(1)   		# grow stack frame 
+	stw     	0,   68(1)    		# save lr
 	stw			3,	12(1)
 	stw			4,	16(1)
 	stw			5,	20(1)
@@ -118,24 +124,25 @@ setup_read_type2:
 	mr			4,	5				# len
 	mr			5,	6				# ofs
 	bl			setup_for_read
-	lwz     	0,    0(1)    		# save lr
 	lwz			3,	12(1)
 	lwz			4,	16(1)
 	lwz			5,	20(1)
 	lwz			6,	24(1)
+	lwz     	0,	68(1)    		# load lr
 	addi    	1,  1, 64   		# grow stack frame 
 	mtlr    	0             		# move lr  
 	blr
-  
+
+	.globl setup_for_read
 setup_for_read:
 	cmpwi		3,		0			# no dst? return
 	beqlr
 	cmpwi		4,		0			# no len? return
 	beqlr
-	stwu		1,	-128(1) 		# grow stack frame
 
 	mflr		0					# move lr
-	stw 		0,	 	0(1)		# save lr
+	stwu		1,	  -128(1) 		# grow stack frame
+	stw 		0,	   132(1)		# save lr
 	stw			3,		12(1)		# save r3 - dst
 	stw			4,		16(1)		# save r4 - len
 	stw			5,		20(1)		# save r5 - offset
@@ -146,23 +153,21 @@ setup_for_read:
 	lwz			5,		20(1)		# load r5 - offset
 	bl			do_read 			# do_read(dst,size, offset);
 
-# Flush the destination - needed?
+# Flush the destination - needed only if DVDSetAutoInvalidation has been set to true. TODO
 	lwz			3,		12(1)		# load dst
 	lwz			4,		16(1)		# load len
 	bl			dcache_flush_icache_inv
-	
-	bl			resume_audio
 	
 # Reload regs from the game
 	lwz			3,		12(1)		# load r3
 	lwz			4,		16(1)		# load r4
 	lwz			5,		20(1)		# load r5
-	lwz 		0,		0(1)		# load lr
-	mtlr		0					# restore lr
+	lwz 		0,		132(1)		# load lr
 	addi		1,		1, 128		# kill stack frame
+	mtlr		0					# restore lr
 	blr
 
-# Cache function
+	.globl dcache_flush_icache_inv
 dcache_flush_icache_inv:
 	clrlwi. 	5, 3, 27  # check for lower bits set in address
 	beq 1f
@@ -173,7 +178,6 @@ dcache_flush_icache_inv:
 	mtctr 		4
 2:
 	dcbf 		0, 3
-#	icbi 		0, 3
 	addi 		3, 3, 0x20
 	bdnz 		2b
 	sc
@@ -181,12 +185,11 @@ dcache_flush_icache_inv:
 	isync
 	blr
 
-# End of Cache function
-
+	.globl os_restore_interrupts
 os_restore_interrupts:
-	stwu		1,	-0x20(1) 		# grow stack frame
 	mflr		0					# move lr
-	stw 		0,	 	0(1)		# save lr
+	stwu		1,	-0x20(1) 		# grow stack frame
+	stw 		0,	 0x24(1)		# save lr
 	
 	cmpwi	3, 0
 	mfmsr	4
@@ -198,25 +201,12 @@ disable_interrupts:
 	rlwinm	5, 4, 0, 17, 15		# disable interrupts
 write_msr:
 	stw		5, 0x10(1)			# store msr
-	
+
 	cmpwi	3, 0
-	beq		skip_cb
-	
-	# Execute DVD Callback if any was pending
-	lis		6,	VAR_AREA
-	lwz		7,	VAR_CB_ADDR(6)	# load callback addr
-	cmpwi	7, 0
-	beq		skip_cb
-	
-	lwz		3,	VAR_CB_ARG1(6)	# load read length
-	lwz		4,	VAR_CB_ARG2(6)	# load dvdstruct addr
-	lis		5, 0
-	stw		5,	VAR_CB_ADDR(6)	# clear callback
-	stw		5,	VAR_CB_ARG1(6)	# clear read length
-	stw		5,	VAR_CB_ARG2(6)	# clear dvdstruct addr
-	mtctr	7
-	bctrl					# call the callback
-	
+	beq		skip_cb					# Some games like this and play with no stutter, others hang/crash..
+	bl		process_read_queue		# process some of the dvd read queue
+		
+check_mc_cb:
 	# Execute Memcard Callback if any was pending
 	lis		6,	VAR_AREA
 	lwz		7,	VAR_MC_CB_ADDR(6)	# load callback addr
@@ -232,45 +222,78 @@ write_msr:
 	mtctr	7
 	bctrl					# call the callback	
 skip_cb:
-	lwz		5, 0x10(1)		# load new msr
-	mtmsr	5
+	lwz		5, 0x10(1)			# load new msr
+	mtmsr	5					# put MSR in place
 	rlwinm	3, 5, 17, 31, 31	# return if they're now enabled or not
 	mr		4, 3
-	lwz 	0,	0(1)		# load lr
-	mtlr	0				# restore lr
+	lwz 	0,	0x24(1)		# load lr
 	addi	1,	1, 0x20		# kill stack frame
+	mtlr	0				# restore lr
 	blr
 
-	.globl pause_audio
-pause_audio:
-	lis		3,	VAR_AREA
-	lhz		4,	VAR_MUTE_AUDIO+2(3)	# load user option
-	cmpwi	5, 	4, 0
-	beq		5, 	pause_audio_end		# if the user doesn't want to mute audio, return
-	lis		3,	0xCC00
-	lhz		4,	0x503A(3)
-	rlwinm	4,	4, 0, 17, 31
-	cmpwi	5,	4, 0
-	bne		5,	pause_audio_end		# we weren't playing anything, so return
-	li		4,	0
-	sth		4,	0x5036(3)			# stop audio
-	lis		3,	VAR_AREA
-	li		4,	1
-	sth		4,	VAR_MUTE_AUDIO(3)	# save that we just disabled audio
-pause_audio_end:
-	blr
+	.globl process_read_queue
+process_read_queue:
+	mflr		0					# move lr
+	stwu		1,	-0x40(1) 		# grow stack frame
+	stw 		0,	 0x44(1)		# save lr
 
-	.globl resume_audio
-resume_audio:
-	lis		3,	VAR_AREA
-	lhz		4,	VAR_MUTE_AUDIO(3)	# restore previous playing state
-	cmpwi	5,	4, 0
-	beq		5,	resume_audio_end	# no need to resume playback
-	li		5,	0
-	sth		5,	VAR_MUTE_AUDIO(3)	# clear previous playing state
-	lis		3,	0xCC00
-	ori		5,	5, 0x8000
-	sth		5,	0x5036(3) 			# 0xCC005036|(0x8000)
-resume_audio_end:
-	blr
+# If there is a pending DVD read, execute some of it before enabling interrupts again
+	bl		get_queued_read
+	cmpwi	3,	0
+	beq		common_exit			# nothing to read, return
+
+	li		0,	1
+	stw		0,	0x0C(3)			# this struct has entered "busy" state
+
+	lwz		7,	0x1C(3)			# load curTransferSize
+	cmpwi	7,	4096			# is this a small < 4096 byte read?
+	blt		reduced_read		# then read it
+	li		7,	4096			# else, 4096 byte read for now
+reduced_read:
+	stw		3,	0x18(1)			# store the struct we're processing
+	stw		7,	0x14(1)			# store the amount we're about to read
+	lwz		4,	0x30(3)			# File base to read from
+	lwz		5,	0x10(3)			# Offset to read from
+	add		5,	5,	4			# offset = startAddr + offset
+	mr		4,	7				# Amount to read
+	lwz		6,	0x20(3)			# transferredSize
+	lwz		3,	0x18(3)			# Destination base to read to
+	add		3,	3,	6			# Destination to read to = dest + transferredSize
+	bl		setup_for_read		# perform a small read
+# update DVD struct with how much we've transferred now
+	lwz		3,	0x18(1)			# re-load the struct we read for
+	lwz		7,	0x14(1)			# re-load the amount we read
+	lwz		6,	0x20(3)			# transferredSize
+	add		6,	6,	7			# transferredSize += read amount
+	stw     6,	0x20(3)			# store it
+	lwz		6,	0x10(3)			# offset
+	add		6,	6,	7			# offset += read amount
+	stw     6,	0x10(3)			# store it
+	lwz		6,	0x1C(3)			# curTransferSize
+	sub		6,	6, 7			# curTransferSize -= read amount
+	stw     6,	0x1C(3)			# store it
+
+	cmpwi	6,	0
+	bne		common_exit			# exit now
 	
+update_dvd_struct:
+	# Update the DVD struct to indicate the DVD read is complete
+	li		0,	0
+	stw     0,	0x0C(3)			# state: DVD_STATE_END (read complete)
+	
+	# Execute DVD Callback if this struct had one
+	lwz		7,	0x38(3)			# load callback addr
+	cmpwi	7, 0
+	beq		common_exit
+	
+	mr		4,	3				# load dvdstruct addr
+	lwz		3,	0x20(3)			# load read length
+	li		5, 0
+	mtctr	7
+	bctrl						# call the callback
+
+common_exit:
+	lwz 	0,	0x44(1)			# load lr
+	addi	1,	1, 0x40			# kill stack frame
+	mtlr	0					# restore lr
+	blr

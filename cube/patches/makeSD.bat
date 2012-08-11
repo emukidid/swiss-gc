@@ -3,7 +3,9 @@ mkdir built
 powerpc-eabi-as sdgecko\sd.S -o sd.o
 powerpc-eabi-as base\base.S -o base.o
 powerpc-eabi-gcc -O2 -c base\card.c
-powerpc-eabi-ld -o sd.elf base.o sd.o card.o --entry 0x80001800 --section-start .text=0x80001800
+powerpc-eabi-gcc -O2 -c base\usbgecko.c
+powerpc-eabi-gcc -O2 -c base\dvdqueue.c
+powerpc-eabi-ld -o sd.elf base.o sd.o card.o dvdqueue.o usbgecko.o --entry 0x80001800 --section-start .text=0x80001800
 del *.o
 doltool -d sd.elf
 doltool -b sd.dol

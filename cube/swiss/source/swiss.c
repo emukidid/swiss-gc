@@ -612,13 +612,11 @@ unsigned int load_app(int mode)
 	}
 	// Memcard emulation or High-Level DVD emulation, clear out some variables
 	if(swissSettings.useHiLevelPatch || swissSettings.emulatemc) {
-		*(volatile unsigned int*)VAR_CB_ADDR = 0;
-		*(volatile unsigned int*)VAR_CB_ARG1 = 0;
-		*(volatile unsigned int*)VAR_CB_ARG2 = 0;
 		*(volatile unsigned int*)VAR_MEMCARD_RESULT = 0;
 		*(volatile unsigned int*)VAR_MC_CB_ADDR = 0;
 		*(volatile unsigned int*)VAR_MC_CB_ARG1 = 0;
 		*(volatile unsigned int*)VAR_MC_CB_ARG2 = 0;
+		memset((void*)VAR_READ_DVDSTRUCT, 0, 0x20);
 	}
 	// Memcard emulation with read device not being SDGecko in Slot A, setup the SD variables
 	if(swissSettings.emulatemc && deviceHandler_initial != &initial_SD0) {
@@ -1155,7 +1153,6 @@ int check_game()
 		deviceHandler_seekFile(&curFile,0x120,DEVICE_HANDLER_SEEK_SET);
 		deviceHandler_readFile(&curFile,&swissSettings.useHiLevelPatch,4);
 		deviceHandler_readFile(&curFile,&swissSettings.useHiMemArea,4);
-		deviceHandler_readFile(&curFile,&swissSettings.disableInterrupts,4);
 		return 0;
 	}
 	
@@ -1242,10 +1239,8 @@ int info_game()
 		// load settings
 		swissSettings.useHiLevelPatch = config->useHiLevelPatch;
 		swissSettings.useHiMemArea = config->useHiMemArea;
-		swissSettings.disableInterrupts = config->disableInterrupts;
 		swissSettings.gameVMode = config->gameVMode;
 		swissSettings.muteAudioStreaming = config->muteAudioStreaming;
-		swissSettings.muteAudioStutter = config->muteAudioStutter;
 		swissSettings.noDiscMode = config->noDiscMode;
 		swissSettings.emulatemc = config->emulatemc;
 		swissSettings.forceWideAspect = config->forceWideAspect;

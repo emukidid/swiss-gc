@@ -49,7 +49,6 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 	// Force Video Mode [576i (PAL 50Hz), 480i (NTSC 60Hz), 480p (NTSC 60Hz), Auto]
 	// Patch Type [Low / High Level]
 	// If Low Level, Use Memory Location [Low/High]
-	// If High Level, Disable Interrupts [Yes/No]
 	// Mute Audio Streaming [Yes/No]
 	// Try to mute audio stutter [Yes/No]
 
@@ -89,16 +88,12 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawSelectableButton(470, 170, -1, 195, swissSettings.useHiLevelPatch ? "High":"Low", option == 2 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 200, "If Low Level, Memory Location:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
 		DrawSelectableButton(470, 200, -1, 225, swissSettings.useHiMemArea ? "High":"Low", option == 3 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 230, "If High Level, Disable Interrupts:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 230, -1, 255, swissSettings.disableInterrupts ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 260, "Mute Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 260, -1, 285, swissSettings.muteAudioStreaming ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 290, "Try to mute audio stutter:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 290, -1, 315, swissSettings.muteAudioStutter ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 320, "No Disc Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 320, -1, 345, swissSettings.noDiscMode ? "Yes":"No", option == 7 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 350, "Emulate Memory Card via SDGecko:", 1.0f, false,  file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 350, -1, 375, swissSettings.emulatemc ? "Yes":"No", option == 8 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 230, "Mute Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 230, -1, 255, swissSettings.muteAudioStreaming ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 260, "No Disc Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 260, -1, 285, swissSettings.noDiscMode ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 290, "Emulate Memory Card via SDGecko:", 1.0f, false,  file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(470, 290, -1, 315, swissSettings.emulatemc ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	if(page_num != 0) {
 		DrawSelectableButton(40, 390, -1, 420, "Back", 
@@ -179,18 +174,12 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 				swissSettings.useHiMemArea ^= 1;
 			break;
 			case 4:
-				swissSettings.disableInterrupts ^= 1;
-			break;
-			case 5:
 				swissSettings.muteAudioStreaming ^= 1;
 			break;
-			case 6:
-				swissSettings.muteAudioStutter ^= 1;
-			break;
-			case 7:
+			case 5:
 				swissSettings.noDiscMode ^= 1;
 			break;
-			case 8:
+			case 6:
 				swissSettings.emulatemc ^= 1;
 			break;
 		}
@@ -277,10 +266,8 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 				if(config != NULL) {
 					config->useHiLevelPatch = swissSettings.useHiLevelPatch;
 					config->useHiMemArea = swissSettings.useHiMemArea;
-					config->disableInterrupts = swissSettings.disableInterrupts;
 					config->gameVMode = swissSettings.gameVMode;
 					config->muteAudioStreaming = swissSettings.muteAudioStreaming;
-					config->muteAudioStutter = swissSettings.muteAudioStutter;
 					config->noDiscMode = swissSettings.noDiscMode;
 					config->forceWideAspect = swissSettings.forceWideAspect;
 					config->emulatemc = swissSettings.emulatemc;

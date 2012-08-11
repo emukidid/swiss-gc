@@ -223,7 +223,6 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		deviceHandler_seekFile(file,0x120,DEVICE_HANDLER_SEEK_SET);
 		deviceHandler_writeFile(file,&swissSettings.useHiLevelPatch,4);
 		deviceHandler_writeFile(file,&swissSettings.useHiMemArea,4);
-		deviceHandler_writeFile(file,&swissSettings.disableInterrupts,4);
 		return 1;
 	}
 	return 0;
