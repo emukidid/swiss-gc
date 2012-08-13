@@ -36,6 +36,8 @@ extern u8 DVDReadAsyncInt[];
 extern u32 DVDReadAsyncInt_length;
 extern u8 DVDGetDriveStatus[];
 extern u32 DVDGetDriveStatus_length;
+extern u8 DVDGetCommandBlockStatus[];
+extern u32 DVDGetCommandBlockStatus_length;
 extern u8 DVDCompareDiskId[];
 extern u32 DVDCompareDiskId_length;
 extern u8 ForceProgressive[];

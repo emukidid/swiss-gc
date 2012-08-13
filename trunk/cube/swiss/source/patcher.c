@@ -265,11 +265,12 @@ int Patch_DVDHighLevelRead(u8 *data, u32 length) {
 	FuncPattern DVDReadSigs[2] = {
 		{ 0xBC, 20, 3, 3, 4, 7, DVDReadAsyncInt,  DVDReadAsyncInt_length, "DVDReadAsync", 0 },
 		{ 0x114, 23, 2, 6, 9, 8, DVDReadInt,   DVDReadInt_length,  "DVDRead", 0 }//,
+		//{ 0x48, 4, 3, 2, 1, 4, DVDGetCommandBlockStatus, DVDGetCommandBlockStatus_length, "DVDGetCommandBlockStatus", 0},
 		//{ 0x278, 49, 17, 9, 25, 5, DVDCancelAsync,   DVDCancelAsync_length,  "DVDCancelAsync", 0 },
 		//{ 0xA8, 13, 4, 4, 7, 3, DVDCancel,   DVDCancel_length,  "DVDCancel", 0 },
 		//{ 0xA8, 10, 4, 4, 6, 3, DVDGetDriveStatus, DVDGetDriveStatus_length,  "DVDGetDriveStatus", 0 }
 	};
-	
+
 	for( i=0; i < length; i+=4 )
 	{
 		if( *(u32*)(data + i ) != 0x7C0802A6 )
