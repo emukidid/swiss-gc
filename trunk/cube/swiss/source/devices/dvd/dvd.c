@@ -199,6 +199,55 @@ void drive_version(u8 *buf)
 	}
 }
 
+
+/* 
+* NPDP Section 
+*/
+
+unsigned int npdp_inquiry(unsigned char *dst)
+{
+	static unsigned char inq[256] __attribute__((__aligned__(32)));
+	dvd[0] = 0x2e;
+	dvd[1] = 0;
+	dvd[2] = 0x12000000;
+	dvd[3] = 0;
+	dvd[4] = 0x20;
+	dvd[5] = (unsigned long)inq;
+	dvd[6] = 0x20;
+	dvd[7] = 3;
+	
+	while (dvd[7] & 1);
+	DCFlushRange((void *)inq, 0x20);
+	
+	if (dvd[6])
+		return 1;
+	memcpy(dst, inq, 0x20);
+	return 0;
+}
+
+unsigned int npdp_getid(unsigned char *dst)
+{
+	static unsigned char id[256] __attribute__((__aligned__(32)));
+	DCInvalidateRange(id, 0x40);
+
+	dvd[0] = 0x2E;
+	dvd[1] = 0;
+	
+	memcpy(dvd + 2, "NPDP-ID", 8);
+	
+	dvd[4] = 0x40;
+	dvd[5] = (unsigned long)id;
+	dvd[6] = 0x40;
+	dvd[7] = 3;
+	while (dvd[7] & 1);
+	
+	if (dvd[6])
+		return 1;
+	memcpy(dst, id, 0x40);
+	return 0;
+}
+
+
 /* 
 DVD_LowRead64(void* dst, unsigned int len, uint64_t offset)
   Read Raw, needs to be on sector boundaries (on a real DVD Drive)
