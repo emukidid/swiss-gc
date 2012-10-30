@@ -63,6 +63,7 @@ extern int _ideexi_version;
 #define ATA_CMD_WRITESECT	0x30
 #define ATA_CMD_WRITESECTEXT 0x34
 #define ATA_CMD_UNLOCK		0xF2
+#define ATA_CMD_SECURITY_DISABLE	0xF6
 
 // ATA Identity fields
 // all offsets refer to word offset (2 byte increments)
@@ -95,7 +96,7 @@ extern typeDriveInfo ataDriveInfo;
 
 // Prototypes
 int ataDriveInit(int chn);
-int ataUnlock(int chn, int useMaster, char *password);
+int ataUnlock(int chn, int useMaster, char *password, int command);
 int ataReadSectors(int chn, u64 sector, unsigned int numSectors, unsigned char *dest);
 int ataWriteSectors(int chn, u64 sector,unsigned int numSectors, unsigned char *src);
 bool ataIsInserted(int chn);

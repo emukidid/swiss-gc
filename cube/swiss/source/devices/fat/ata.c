@@ -186,10 +186,10 @@ u32 _ataDriveIdentify(int chn) {
 
 	// Get the ID to see if it's a V2
 	_ideexi_version = _ideExiVersion(chn);
-  	
+  		
   	// Select the device
-  	ataWriteByte(chn, ATA_REG_DEVICE, 0);
-  	
+  	ataWriteByte(chn, ATA_REG_DEVICE, 0/*ATA_HEAD_USE_LBA*/);
+
 	// Wait for drive to be ready (BSY to clear) - 5 sec timeout
 	do {
 		tmp = ataReadStatusReg(chn);
@@ -268,42 +268,79 @@ u32 _ataDriveIdentify(int chn) {
 	print_gecko("LBA 48-Bit Mode %s\r\n", ataDriveInfo.lba48Support ? "Supported" : "Not Supported");
 	print_gecko("Model: %s\r\n",ataDriveInfo.model);
 	print_gecko("Serial: %s\r\n",ataDriveInfo.serial); 
+	//print_hdd_sector(&buffer);
 	
+	//int unlockStatus = ataUnlock(chn, 1, "password\0", ATA_CMD_UNLOCK);
+	//print_gecko("Unlock Status was: %i\r\n",unlockStatus);
+	//unlockStatus = ataUnlock(chn, 1, "password\0", ATA_CMD_SECURITY_DISABLE);
+	//print_gecko("Disable Status was: %i\r\n",unlockStatus);
 	// Return ok
 	return 0;
 }
 
 // Unlocks a ATA HDD with a password
 // Returns 0 on success, -1 on failure.
-int ataUnlock(int chn, int useMaster, char *password)
+int ataUnlock(int chn, int useMaster, char *password, int command)
 {
 	u32 i;
-  	
-  	// Wait for drive to be ready (BSY to clear)
-	while(ataReadStatusReg(chn) & ATA_SR_BSY);
+	u16 tmp, retries = 50;
   	
 	// Select the device
-  	ataWriteByte(chn, ATA_REG_DEVICE, 0);
-
+  	ataWriteByte(chn, ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
+  	
+	// Wait for drive to be ready (BSY to clear) - 5 sec timeout
+	do {
+		tmp = ataReadStatusReg(chn);
+		usleep(100000);	//sleep for 0.1 seconds
+		retries--;
+		print_gecko("UNLOCK (%08X) Waiting for BSY to clear..\r\n", tmp);
+	}
+	while((tmp & ATA_SR_BSY) && retries);
+	if(!retries) {
+		print_gecko("UNLOCK Exceeded retries..\r\n");
+		return -1;
+	}
+    
 	// Write the appropriate unlock command
-  	ataWriteByte(chn, ATA_REG_COMMAND, ATA_CMD_UNLOCK);
+  	ataWriteByte(chn, ATA_REG_COMMAND, command);
 
-	while(!(ataReadStatusReg(chn) & ATA_SR_DRQ));
-	
+	// Wait for drive to request data transfer - 1 sec timeout
+	retries = 10;
+	do { 
+		tmp = ataReadStatusReg(chn); 
+		usleep(100000);	//sleep for 0.1 seconds
+		retries--;
+		print_gecko("UNLOCK (%08X) Waiting for DRQ to toggle..\r\n", tmp);
+	}
+	while((!(tmp & ATA_SR_DRQ)) && retries);
+	if(!retries) {
+		print_gecko("UNLOCK (%08X) Drive did not respond in time, failing IDE-EXI init..\r\n", tmp);
+		return -1;
+	}
+	usleep(2000);
+		
 	// Fill an unlock struct
 	unlockStruct unlock;
 	memset(&unlock, 0, sizeof(unlockStruct));
-	unlock.type = useMaster;
+	unlock.type = (u16)useMaster;
 	memcpy(unlock.password, password, strlen(password));
 
 	// write data to the drive 
 	u16 *ptr = (u16*)&unlock;
 	for (i=0; i<256; i++) {
+		ptr[i] = bswap16(ptr[i]);
 		ataWriteu16(chn, ptr[i]);
 	}
 	
-	// Wait for the write
-	while(ataReadStatusReg(chn) & ATA_SR_BSY);
+	// Wait for BSY to clear
+	u32 temp = 0;
+	while((temp = ataReadStatusReg(chn)) & ATA_SR_BSY);
+	
+	// If the error bit was set, fail.
+	if(temp & ATA_SR_ERR) {
+		print_gecko("Error: %02X\r\n", ataReadErrorReg(chn));
+		return 1;
+	}
 	
 	return !(ataReadErrorReg(chn) & ATA_ER_ABRT);
 }
