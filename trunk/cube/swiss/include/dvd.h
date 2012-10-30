@@ -64,5 +64,6 @@ void dvd_stop_laser();
 void dvd_unlock();
 void drive_version(u8 *buf);
 void dvd_reset();
-
+unsigned int npdp_inquiry(unsigned char *dst);
+unsigned int npdp_getid(unsigned char *dst);
 #endif
