@@ -23,8 +23,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <time.h>
-#include <asndlib.h>
-#include <mp3player.h>
 
 #include "cheats.h"
 #include "frag.h"
@@ -37,6 +35,7 @@
 #include "qchparse.h"
 #include "dvd.h"
 #include "gcm.h"
+#include "mp3.h"
 #include "wkf.h"
 #include "settings.h"
 #include "aram/sidestep.h"
@@ -668,32 +667,6 @@ void boot_dol()
 	DOLtoARAM(dol_buffer);
 }
 
-int mp3Reader(void *cbdata, void *dst, int size) {
-	u32 *offset = cbdata;
-	deviceHandler_seekFile(&curFile,*offset,DEVICE_HANDLER_SEEK_SET);
-	int ret = deviceHandler_readFile(&curFile,dst,size);
-	*offset+=size;
-	return ret;
-}
-
-/* Plays a MP3 file */
-void play_mp3() {
-	// Initialise the audio subsystem
-	ASND_Init(NULL);
-	MP3Player_Init();
-	u32 offset = 0;
-	deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
-	DrawFrameStart();
-	sprintf(txtbuffer,"Playing %s",getRelativeName(curFile.name));
-	DrawMessageBox(D_INFO,txtbuffer);
-	DrawFrameFinish();
-	MP3Player_PlayFile(&offset, &mp3Reader, NULL);
-	while(MP3Player_IsPlaying() && (!(PAD_ButtonsHeld(0) & PAD_BUTTON_B))){
-		VIDEO_WaitVSync ();
-	}
-	MP3Player_Stop();
-}
-
 /* Manage file  - The user will be asked what they want to do with the currently selected file - copy/move/delete*/
 void manage_file() {
 	// If it's a file
@@ -923,7 +896,7 @@ void load_file()
 				return;
 			}
 			if((strstr(fileName,".MP3")!=NULL) || (strstr(fileName,".mp3")!=NULL)) {
-				play_mp3();
+				mp3_player(allFiles, files, &curFile);
 				return;
 			}
 			if((strstr(fileName,".FZN")!=NULL) || (strstr(fileName,".fzn")!=NULL)) {
