@@ -7,6 +7,7 @@
 #include "gui/IPLFontWrite.h"
 
 static int useShuffle = 0;
+static int volume = 255;
 
 int mp3Reader(void *cbdata, void *dst, int size) {
 	file_handle *file = cbdata;
@@ -17,19 +18,21 @@ int mp3Reader(void *cbdata, void *dst, int size) {
 
 void updatescreen_mp3(file_handle *file, int state, int numFiles, int curMP3) {
 	DrawFrameStart();
-	DrawEmptyBox(10,150, vmode->fbWidth-10, 350, COLOR_BLACK);
-	WriteFontStyled(640/2, 160, (state == PLAYER_PAUSE ? "Paused":"Playing"), 1.0f, true, defaultColor);
+	DrawEmptyBox(10,100, vmode->fbWidth-10, 400, COLOR_BLACK);
+	sprintf(txtbuffer, "%s -  Volume (%i%%)", (state == PLAYER_PAUSE ? "Paused":"Playing"), (int)(((float)volume/(float)255)*100));
+	WriteFontStyled(640/2, 130, txtbuffer, 1.0f, true, defaultColor);
 	sprintf(txtbuffer, "(%i/%i) %s",curMP3, numFiles,getRelativeName(file->name));
 	float scale = GetTextScaleToFitInWidth(txtbuffer, vmode->fbWidth-10-10);
-	WriteFontStyled(640/2, 200, txtbuffer, scale, true, defaultColor);
+	WriteFontStyled(640/2, 160, txtbuffer, scale, true, defaultColor);
 	memset(txtbuffer, 0, 256);
 	sprintf(txtbuffer, "------------------------------");
 	float percentPlayed = (float)(((float)file->offset / (float)file->size) * 30);
 	txtbuffer[(int)percentPlayed] = '*';
-	WriteFontStyled(640/2, 240, txtbuffer, 1.0f, true, defaultColor);
-	WriteFontStyled(640/2, 300, "(B) Stop (L) Prev (R) Next (Start) Pause", 1.0f, true, defaultColor);
+	WriteFontStyled(640/2, 210, txtbuffer, 1.0f, true, defaultColor);
+	WriteFontStyled(640/2, 300, "(<-) Rewind (->) Forward (X) Vol+ (Y) Vol-", 1.0f, true, defaultColor);
+	WriteFontStyled(640/2, 330, "(B) Stop (L) Prev (R) Next (Start) Pause", 1.0f, true, defaultColor);
 	sprintf(txtbuffer, "Shuffle is currently %s press (Z) to toggle", (useShuffle ? "on":"off"));
-	WriteFontStyled(640/2, 330, txtbuffer, 1.0f, true, defaultColor);
+	WriteFontStyled(640/2, 360, txtbuffer, 1.0f, true, defaultColor);
 	DrawFrameFinish();	
 	VIDEO_WaitVSync();
 }
@@ -57,6 +60,14 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 				ret = PLAYER_NEXT;
 			}
 		}
+		else if(buttons & PAD_BUTTON_X) {		// VOL+
+			if(volume!=255) volume++;
+			MP3Player_Volume(volume);
+		}
+		else if(buttons & PAD_BUTTON_Y) {		// VOL-
+			if(volume!=0) volume--;
+			MP3Player_Volume(volume);
+		}
 		else if(buttons & PAD_TRIGGER_R) {		// Next
 			MP3Player_Stop();
 			ret = PLAYER_NEXT;
@@ -65,11 +76,29 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 			MP3Player_Stop();
 			ret = PLAYER_PREV;
 		}
+		else if(buttons & PAD_BUTTON_RIGHT) {		// Fwd
+			MP3Player_Stop();
+			if(file->offset+0x8000 < file->size) {
+				file->offset += 0x8000;
+				MP3Player_PlayFile(file, &mp3Reader, NULL);
+			}
+			else {
+				ret = PLAYER_NEXT;
+				break;
+			}
+		}
+		else if(buttons & PAD_BUTTON_LEFT) {		// Rewind
+			MP3Player_Stop();
+			if(file->offset-0x10000 > 0) file->offset -= 0x10000;
+			else file->offset = 0;
+			MP3Player_PlayFile(file, &mp3Reader, NULL);
+		}
 		else if(buttons & PAD_TRIGGER_Z) {		// Toggle Shuffle
 			while((PAD_ButtonsHeld(0) & PAD_TRIGGER_Z)){VIDEO_WaitVSync();};
 			useShuffle ^=1;
 		}
 		updatescreen_mp3(file, ret, numFiles, curMP3);
+		usleep(5000);
 	}
 	return ret;
 }
