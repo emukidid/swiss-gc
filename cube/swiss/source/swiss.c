@@ -523,13 +523,13 @@ unsigned int load_app(int mode)
 		else
 			Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 		Patch_DVDCompareDiskId(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-		if(swissSettings.muteAudioStreaming)
-			Patch_DVDAudioStreaming(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 		if(swissSettings.noDiscMode)
 			Patch_DVDStatusFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
+	if(swissSettings.muteAudioStreaming)
+			Patch_DVDAudioStreaming(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	// Custom OSRestoreInterrupts that calls skipped CB funcs for memcard or high level dvd replacement
-	if(swissSettings.useHiLevelPatch || swissSettings.emulatemc)
+	if(swissSettings.emulatemc)
 		Patch_OSRestoreInterrupts(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	// Fix Zelda WW on Wii
 	if(zeldaVAT) {
@@ -882,8 +882,8 @@ void load_file()
 			}
 		}
 	}
-	
-	if((curDevice != DVD_DISC) || (dvdDiscTypeInt==ISO9660_DISC) || (curDevice == DVD_DISC && curFile.fileBase != 0)) {
+	// If it's not a DVD Disc, or it's a DVD disc with some file structure, browse by file type
+	if((curDevice != DVD_DISC) || (curDevice == DVD_DISC && dvdDiscTypeInt==ISO9660_DISC)) {
 		//if it's a DOL, boot it
 		if(strlen(fileName)>4) {
 			if((strstr(fileName,".DOL")!=NULL) || (strstr(fileName,".dol")!=NULL)) {

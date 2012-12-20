@@ -131,14 +131,10 @@ int initialize_disc(u32 streaming) {
 			DrawFrameStart();
 			DrawProgressBar(66, "Enabling Patches");
 			DrawFrameFinish();
-			DVD_Reset(DVD_RESETHARD);	// Try an original
+			DVD_Mount();
 			dvd_read_id();
-			if(dvd_get_error()) {
-				DVD_Mount();
-				dvd_read_id();
-				if(!dvd_get_error()) {
-					patched=DEBUG_MODE;
-				}
+			if(!dvd_get_error()) {
+				patched=DEBUG_MODE;
 			}
 		}
 		else if((dvd_get_error()>>24) == 1) {  // Lid is open, tell the user!
