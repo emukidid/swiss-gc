@@ -388,6 +388,16 @@ int main ()
 				print_gecko("DVD Medium is up, using it as default device\r\n");
 				swissSettings.defaultDevice = 1;
 				curDevice = DVD_DISC;
+				
+				// If we have a GameCube (single image) bootable disc, show the banner screen here
+				if(gettype_disc() == GAMECUBE_DISC) {
+					select_device();
+					// Setup curFile and load it
+					memset(&curFile, 0, sizeof(file_handle));
+					curFile.size = DISC_SIZE;
+					curFile.fileAttrib = IS_FILE;
+					load_file();
+				}
 			}
 		}
 	}
