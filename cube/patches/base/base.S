@@ -4,37 +4,12 @@
 # we have 0x1800 bytes to play with at 0x80001800 (code+data), or use above Arena Hi
 # This code is placed either at 0x80001800 or Above Arena Hi (depending on the game)
 #**************************************************************************
-
-# memory map for our variables that sit at the top 0x100 of memory
-.set VAR_AREA, 			0x8180	# Base location of our variables
-.set VAR_READ_DVDSTRUCT,-0x120	# 0x40 of ptr to DVD structs
-.set VAR_DISC_1_LBA, 	-0x100	# is the base file sector for disk 1
-.set VAR_DISC_2_LBA, 	-0xFC	# is the base file sector for disk 2
-.set VAR_CUR_DISC_LBA, 	-0xF8	# is the currently selected disk sector
-.set VAR_EXI_BUS_SPD, 	-0xF4	# is the EXI bus speed (192 = 16mhz vs 208 = 32mhz)
-.set VAR_SD_TYPE, 		-0xF0	# is the Card Type (SDHC=0, SD=1)
-.set VAR_EXI_FREQ, 		-0xDC	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
-.set VAR_EXI_SLOT, 		-0xD8	# is the EXI slot (0 = slot a, 1 = slot b)
-.set VAR_TMP1,  		-0xD4	# space for a variable if required
-.set VAR_TMP2,  		-0xD0	# space for a variable if required
-.set VAR_TMP3,  		-0xCC	# space for a variable if required
-.set VAR_TMP4,  		-0xC8	# space for a variable if required
-.set VAR_UNUSED2,		-0xC4	# UNUSED
-.set VAR_UNUSED3,		-0xC0	# UNUSED
-.set VAR_UNUSED4,		-0xBC	# UNUSED
-.set VAR_PROG_MODE,		-0xB8	# data/code to overwrite GXRMode obj with for 480p forcing
-.set VAR_UNUSED,		-0x20	# UNUSED
-.set VAR_ASPECT_FLOAT,	-0x1C	# Aspect ratio multiply float (4 bytes)
-.set VAR_MEMCARD_LBA,	-0x18	# Memory card file base on SD
-.set VAR_MEMCARD_WORK,	-0x14	# Memory card work area 40960 bytes big
-.set VAR_MEMCARD_RESULT,-0x10	# Last memory card status from a CARD func
-.set VAR_MC_CB_ADDR,	-0x0C	# memcard callback addr
-.set VAR_MC_CB_ARG1,	-0x08	# memcard callback r3
-.set VAR_MC_CB_ARG2,	-0x04	# memcard callback r4
+#define _LANGUAGE_ASSEMBLY
+#include "../../reservedarea.h"
 
 .section .text
-	.globl main
-main:
+	.globl _start, __main
+_start:
 	b		setup_read_type1v1		# low style read version 1
 	b		setup_read_type1v2		# low style read version 2
 	b		setup_read_type1v3		# low style read version 3
@@ -59,7 +34,7 @@ setup_read_type1v1:
 	stw			30, 32 (1)
 	mflr		0
 	stw			0, 36(1)			# use this spot to save lr
-	bl			setup_for_read
+	bl			perform_read
 	# clear everything that'll go into DI regs for a 0xE0 cmd
 	li     		5,	0         		# offset 0
 	li      	4,	0         		# len 0
@@ -80,7 +55,7 @@ setup_read_type1v2:
 	# so we'll set it later to ours.
 	mflr		31
 	stw			31, 8(1)
-	bl			setup_for_read
+	bl			perform_read
 	# clear everything that'll go into DI regs for a 0xE0 cmd
 	li      	5,	0         		# offset 0
 	li      	4,	0         		# len 0
@@ -97,7 +72,7 @@ setup_read_type1v3:
 	stw     	30, 32 (1)
 	mflr	  	0
 	stw	  		0, 36(1)			# use this spot to save lr
-	bl	  		setup_for_read
+	bl	  		perform_read
 	# clear everything that'll go into DI regs for a 0xE0 cmd
 	li      	5,	0         		# offset 0
 	li      	4,	0         		# len 0
@@ -123,7 +98,7 @@ setup_read_type2:
 	mr			3,	4				# dst
 	mr			4,	5				# len
 	mr			5,	6				# ofs
-	bl			setup_for_read
+	bl			perform_read
 	lwz			3,	12(1)
 	lwz			4,	16(1)
 	lwz			5,	20(1)
@@ -131,40 +106,6 @@ setup_read_type2:
 	lwz     	0,	68(1)    		# load lr
 	addi    	1,  1, 64   		# grow stack frame 
 	mtlr    	0             		# move lr  
-	blr
-
-	.globl setup_for_read
-setup_for_read:
-	cmpwi		3,		0			# no dst? return
-	beqlr
-	cmpwi		4,		0			# no len? return
-	beqlr
-
-	mflr		0					# move lr
-	stwu		1,	  -128(1) 		# grow stack frame
-	stw 		0,	   132(1)		# save lr
-	stw			3,		12(1)		# save r3 - dst
-	stw			4,		16(1)		# save r4 - len
-	stw			5,		20(1)		# save r5 - offset
-	
-# Read from the device to the destination (device specific code called)
-	lwz			3,		12(1)		# load r3 - dst
-	lwz			4,		16(1)		# load r4 - len
-	lwz			5,		20(1)		# load r5 - offset
-	bl			do_read 			# do_read(dst,size, offset);
-
-# Flush the destination - needed only if DVDSetAutoInvalidation has been set to true. TODO
-	lwz			3,		12(1)		# load dst
-	lwz			4,		16(1)		# load len
-	bl			dcache_flush_icache_inv
-	
-# Reload regs from the game
-	lwz			3,		12(1)		# load r3
-	lwz			4,		16(1)		# load r4
-	lwz			5,		20(1)		# load r5
-	lwz 		0,		132(1)		# load lr
-	addi		1,		1, 128		# kill stack frame
-	mtlr		0					# restore lr
 	blr
 
 	.globl dcache_flush_icache_inv
@@ -259,7 +200,7 @@ reduced_read:
 	lwz		6,	0x20(3)			# transferredSize
 	lwz		3,	0x18(3)			# Destination base to read to
 	add		3,	3,	6			# Destination to read to = dest + transferredSize
-	bl		setup_for_read		# perform a small read
+	bl		perform_read		# perform a small read
 # update DVD struct with how much we've transferred now
 	lwz		3,	0x18(1)			# re-load the struct we read for
 	lwz		7,	0x14(1)			# re-load the amount we read

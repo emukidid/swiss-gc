@@ -1,10 +1,7 @@
 # Swap replacement read disk lba base between disc 1 and disc 1 (or disc 1 and disc 1 if no disc 2) and return ok status
 #include "asm.h"
-
-.set VAR_AREA, 			0x8180	# Base location of our variables
-.set VAR_DISC_1_LBA, 	-0x100	# is the base file sector for disk 1
-.set VAR_DISC_2_LBA, 	-0xFC	# is the base file sector for disk 2
-.set VAR_CUR_DISC_LBA, 	-0xF8	# is the currently selected disk sector
+#define _LANGUAGE_ASSEMBLY
+#include "../../../reservedarea.h"
 
 .globl DVDCompareDiskId
 DVDCompareDiskId:

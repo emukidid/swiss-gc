@@ -1,4 +1,6 @@
 #include "../asm.h"
+#define _LANGUAGE_ASSEMBLY
+#include "../../../../reservedarea.h"
 
 #	CARDSetStatusAsync - "Sets a file status using a file number asynchronously."
 #	r3	chan
@@ -9,10 +11,6 @@
 #	return slot 0 CARD_RESULT_NOFILE OR CARD_RESULT_READY
 #	return slot 1 CARD_RESULT_NOCARD
 
-.set VAR_AREA, 			0x8180	# Base location of our variables
-.set VAR_MC_CB_ADDR,	-0x0C	# memcard callback addr
-.set VAR_MC_CB_ARG1,	-0x08	# memcard callback r3
-.set VAR_MC_CB_ARG2,	-0x04	# memcard callback r4
 
 .globl CARDSetStatusAsync
 CARDSetStatusAsync:
