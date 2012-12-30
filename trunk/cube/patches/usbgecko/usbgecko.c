@@ -3,28 +3,7 @@
 * emu_kidid 2012
 ***************************************************************************/
 
-// we have 0x1800 bytes to play with at 0x80001800 (code+data), or use above Arena Hi
-// This code is placed either at 0x80001800 or Above Arena Hi (depending on the game)
-// memory map for our variables that sit at the top 0x100 of memory
-#define VAR_AREA 			(0x81800000)		// Base location of our variables
-#define VAR_AREA_SIZE		(0x100)				// Size of our variables block
-#define VAR_DISC_1_LBA 		(VAR_AREA-0x100)	// is the base file sector for disk 1
-#define VAR_DISC_2_LBA 		(VAR_AREA-0xFC)		// is the base file sector for disk 2
-#define VAR_CUR_DISC_LBA 	(VAR_AREA-0xF8)		// is the currently selected disk sector
-#define VAR_EXI_BUS_SPD 	(VAR_AREA-0xF4)		// is the EXI bus speed (16mhz vs 32mhz)
-#define VAR_SD_TYPE 		(VAR_AREA-0xF0)		// is the Card Type (SDHC=0, SD=1)
-#define VAR_EXI_FREQ 		(VAR_AREA-0xDC)		// is the EXI frequency (4 = 16mhz, 5 = 32mhz)
-#define VAR_EXI_SLOT 		(VAR_AREA-0xD8)		// is the EXI slot (0 = slot a, 1 = slot b)
-#define VAR_TMP1  			(VAR_AREA-0xD4)		// space for a variable if required
-#define VAR_TMP2  			(VAR_AREA-0xD0)		// space for a variable if required
-#define VAR_TMP3  			(VAR_AREA-0xCC)		// space for a variable if required
-#define VAR_TMP4  			(VAR_AREA-0xC8)		// space for a variable if required
-#define VAR_CB_ADDR			(VAR_AREA-0xC4)		// high level read callback addr
-#define VAR_CB_ARG1			(VAR_AREA-0xC0)		// high level read callback r3
-#define VAR_CB_ARG2			(VAR_AREA-0xBC)		// high level read callback r4
-#define VAR_PROG_MODE		(VAR_AREA-0xB8)		// data/code to overwrite GXRMode obj with for 480p forcing
-#define VAR_MUTE_AUDIO		(VAR_AREA-0x20)		// does the user want audio muted during reads?
-#define VAR_ASPECT_FLOAT	(VAR_AREA-0x1C)		// Aspect ratio multiply float (8 bytes)
+#include "../../reservedarea.h"
 
 #define __lwbrx(base,index)			\
 ({	register u32 res;				\

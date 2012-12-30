@@ -1,4 +1,6 @@
 #include "../asm.h"
+#define _LANGUAGE_ASSEMBLY
+#include "../../../../reservedarea.h"
 
 #	CARDGetResultCode - "CARDGetResultCode returns the result code of the previously issued CARD function call."
 #	r3	Channel
@@ -6,8 +8,6 @@
 #	return slot 0 CARD_RESULT_READY
 #	return slot 1 CARD_RESULT_NOCARD
 
-.set VAR_AREA, 			0x8180	# Base location of our variables
-.set VAR_MEMCARD_RESULT,-0x10	# Last memory card status from a CARD func
 
 .globl CARDGetResultCode
 CARDGetResultCode:

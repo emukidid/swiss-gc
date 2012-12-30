@@ -1,13 +1,11 @@
 #include "asm.h"
+#define _LANGUAGE_ASSEMBLY
+#include "../../../reservedarea.h"
 
 # Get drive status
 # return value in r3 is 
 # 0 DVD_STATE_END 	Request finished/no request.
 # 1 DVD_STATE_BUSY 	The drive is busy with processing a request.
-
-# memory map for our variables that sit at the top 0x100 of memory
-.set VAR_AREA, 			0x8180	# Base location of our variables
-.set VAR_READ_DVDSTRUCT,-0x120	# Current read DVDFileInfo
 
 .globl DVDGetDriveStatus
 DVDGetDriveStatus:

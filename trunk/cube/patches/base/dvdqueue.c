@@ -4,11 +4,7 @@
 *
 ***************************************************************************/
 
-// we have 0x1800 bytes to play with at 0x80001800 (code+data), or use above Arena Hi
-// This code is placed either at 0x80001800 or Above Arena Hi (depending on the game)
-// memory map for our variables that sit at the top 0x100 of memory
-#define VAR_AREA 			(0x81800000)		// Base location of our variables
-#define VAR_READ_DVDSTRUCT	(VAR_AREA-0x120)	// 0x40 of ptr to DVD structs
+#include "../../reservedarea.h"
 
 int usb_sendbuffer_safe(const void *buffer,int size);
 

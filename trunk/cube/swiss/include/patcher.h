@@ -2,6 +2,7 @@
 #define PATCHER_H
 
 #include "devices/deviceHandler.h"
+#include "..\..\reservedarea.h"
 
 typedef struct FuncPattern
 {
@@ -102,30 +103,6 @@ extern u8 CARDWrite[];
 extern u32 CARDWrite_length;
 extern u8 CARDWriteAsync[];
 extern u32 CARDWriteAsync_length;
-
-/* Patch code variables block */
-#define VAR_AREA 			(0x81800000)		// Base location of our variables
-#define VAR_AREA_SIZE		(0x200)				// Size of our variables block
-#define VAR_READ_DVDSTRUCT	(VAR_AREA-0x120)	// 0x40 of ptr to DVD structs
-#define VAR_DISC_1_LBA 		(VAR_AREA-0x100)	// is the base file sector for disk 1
-#define VAR_DISC_2_LBA 		(VAR_AREA-0xFC)		// is the base file sector for disk 2
-#define VAR_CUR_DISC_LBA 	(VAR_AREA-0xF8)		// is the currently selected disk sector
-#define VAR_EXI_BUS_SPD 	(VAR_AREA-0xF4)		// is the EXI bus speed (16mhz vs 32mhz)
-#define VAR_SD_TYPE 		(VAR_AREA-0xF0)		// is the Card Type (SDHC=0, SD=1)
-#define VAR_EXI_FREQ 		(VAR_AREA-0xDC)		// is the EXI frequency (4 = 16mhz, 5 = 32mhz)
-#define VAR_EXI_SLOT 		(VAR_AREA-0xD8)		// is the EXI slot (0 = slot a, 1 = slot b)
-#define VAR_TMP1  			(VAR_AREA-0xD4)		// space for a variable if required
-#define VAR_TMP2  			(VAR_AREA-0xD0)		// space for a variable if required
-#define VAR_TMP3  			(VAR_AREA-0xCC)		// space for a variable if required
-#define VAR_TMP4  			(VAR_AREA-0xC8)		// space for a variable if required
-#define VAR_PROG_MODE		(VAR_AREA-0xB8)		// data/code to overwrite GXRMode obj with for 480p forcing
-#define VAR_ASPECT_FLOAT	(VAR_AREA-0x1C)		// Aspect ratio multiply float (4 bytes)
-#define VAR_MEMCARD_LBA		(VAR_AREA-0x18)		// Memory card file base on SD
-#define VAR_MEMCARD_WORK	(VAR_AREA-0x14)		// Memory card work area 40960 bytes big
-#define VAR_MEMCARD_RESULT	(VAR_AREA-0x10)		// Last memory card status from a CARD func
-#define VAR_MC_CB_ADDR		(VAR_AREA-0x0C)		// memcard callback addr
-#define VAR_MC_CB_ARG1		(VAR_AREA-0x08)		// memcard callback r3
-#define VAR_MC_CB_ARG2		(VAR_AREA-0x04)		// memcard callback r4
 
 /* Pre-patcher magic */
 #define PRE_PATCHER_MAGIC "Pre-Patched by Swiss v0.2"

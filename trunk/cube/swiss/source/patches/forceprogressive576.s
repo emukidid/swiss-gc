@@ -1,9 +1,8 @@
 # Patches into VI Configure to change the video mode to 576p just prior to video being configured
 #include "asm.h"
+#define _LANGUAGE_ASSEMBLY
+#include "../../../reservedarea.h"
 
-# memory map for our variables that sit at the top 0x100 of memory
-.set VAR_AREA, 			0x8180	# Base location of our variables
-.set VAR_PROG_MODE,		-0xB8	# data/code to overwrite GXRMode obj with for 576p forcing
 
 .globl ForceProgressive576p
 ForceProgressive576p:
