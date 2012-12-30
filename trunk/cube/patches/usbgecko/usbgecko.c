@@ -152,7 +152,7 @@ int usb_sendbuffer_safe(s32 chn,const void *buffer,int size)
 }
 
 
-void do_read(void *dst,u32 size, u32 offset) {
+void do_read(void *dst,u32 size, u32 offset, u32 unused) {
 	if(!size) return;
 	usb_data_req req;
 	req.offset = bswap32(offset);

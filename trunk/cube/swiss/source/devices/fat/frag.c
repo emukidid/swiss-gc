@@ -36,14 +36,14 @@ void frag_init(FragList *ff, int maxnum)
 void frag_print(FragList *ff)
 {
 	int i;
-	print_gecko("frag list: %d %d %x\n", ff->num, ff->size, ff->size);
+	print_gecko("frag list: %d %d %x\r\n", ff->num, ff->size, ff->size);
 
 	for (i=0; i<ff->num; i++) {
 		if (i>10) {
-			printf("...\n");
+			print_gecko("...\n");
 			break;
 		}
-		print_gecko(" %d : %8x %8x %8x\n", i,ff->frag[i].offset,ff->frag[i].count,ff->frag[i].sector);
+		print_gecko(" %d : %8x %8x %8x (%i bytes)\r\n", i,ff->frag[i].offset,ff->frag[i].count,ff->frag[i].sector, ff->frag[i].count*512);
 	}
 }
 

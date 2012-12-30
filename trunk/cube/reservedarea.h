@@ -11,7 +11,8 @@
 #ifdef _LANGUAGE_ASSEMBLY
 .set VAR_AREA,			0x8180
 .set VAR_AREA_SIZE,		0x200	# Size of our variables block
-.set VAR_FRAG_LIST,		-0x1A0	# 0x80 of fragments (16 frags max) (u32 sector, u32 size)
+.set VAR_FRAG_SIZE,		0xE0	# Size of frag array in bytes
+.set VAR_FRAG_LIST,		-0x200	# 0xE0 of fragments (18 frags max) (u32 sector, u32 size)
 .set VAR_READ_DVDSTRUCT,-0x120	# 0x40 of ptr to DVD structs
 .set VAR_DISC_1_LBA, 	-0x100	# is the base file sector for disk 1
 .set VAR_DISC_2_LBA, 	-0xFC	# is the base file sector for disk 2
@@ -40,7 +41,8 @@
 
 #define VAR_AREA 			(0x81800000)		// Base location of our variables
 #define VAR_AREA_SIZE		(0x200)				// Size of our variables block
-#define VAR_FRAG_LIST		(VAR_AREA-0x1A0)	// 0x80 of fragments (16 frags max) (u32 sector, u32 size)
+#define VAR_FRAG_SIZE		(0xE0)				// Size of frag array in bytes
+#define VAR_FRAG_LIST		(VAR_AREA-0x200)	// 0xE0 of fragments (18 frags max) (u32 sector, u32 size)
 #define VAR_READ_DVDSTRUCT	(VAR_AREA-0x120)	// 0x40 of ptr to DVD structs
 #define VAR_DISC_1_LBA 		(VAR_AREA-0x100)	// is the base file sector for disk 1
 #define VAR_DISC_2_LBA 		(VAR_AREA-0xFC)		// is the base file sector for disk 2

@@ -124,8 +124,8 @@ void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read) {
 	exi_imm_read(2);		// discard CRC
 }
 
-void do_read(void *dst, u32 len, u32 offset) {
-	u32 lba = (offset>>9) + (*(u32*)VAR_CUR_DISC_LBA);
+void do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
+	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = len;
 
