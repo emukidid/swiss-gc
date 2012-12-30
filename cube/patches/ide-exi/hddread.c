@@ -216,9 +216,9 @@ int _ataReadSectors(u32 lba, u16 numsectors, void *buffer)
 	return temp & ATA_SR_ERR;
 }
 
-void do_read(void *dst,u32 size, u32 offset) {
+void do_read(void *dst,u32 size, u32 offset, u32 sectorLba) {
 	u8 sector[SECTOR_SIZE];
-	u32 lba = (offset>>9) + (*(u32*)VAR_CUR_DISC_LBA);
+	u32 lba = (offset>>9) + sectorLba;
 	
 	// Load these from what Swiss set them to be
 	exi_freq = *(u32*)VAR_EXI_FREQ;

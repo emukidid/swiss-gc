@@ -27,6 +27,25 @@ _start:
 	b		card_setup				# void card_setup(); // Read our virtual memcard file table into the work area
 	b		add_read_to_queue		# void add_read_to_queue(DVDFileInfo* struct)
 
+	.globl perform_read
+perform_read:
+	mflr    	0             		# move lr  
+	stwu    	1,  -64(1)   		# grow stack frame 
+	stw     	0,   68(1)    		# save lr
+	stw			3,	12(1)
+	stw			4,	16(1)
+	stw			5,	20(1)
+	stw			6,	24(1)
+	bl			device_frag_read
+	lwz			3,	12(1)
+	lwz			4,	16(1)
+	lwz			5,	20(1)
+	lwz			6,	24(1)
+	lwz     	0,	68(1)    		# load lr
+	addi    	1,  1, 64   		# grow stack frame 
+	mtlr    	0             		# move lr  
+	blr
+	
 # Low level read
 	.globl setup_read_type1v1
 setup_read_type1v1:

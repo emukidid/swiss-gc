@@ -2,7 +2,7 @@
 #define PATCHER_H
 
 #include "devices/deviceHandler.h"
-#include "..\..\reservedarea.h"
+#include "../../reservedarea.h"
 
 typedef struct FuncPattern
 {

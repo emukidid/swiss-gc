@@ -101,14 +101,7 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, unsigned in
 			(*dir)[i].size     = fstat.st_size;
 			(*dir)[i].fileAttrib   = (fstat.st_mode & S_IFDIR) ? IS_DIR : IS_FILE;
 			(*dir)[i].fp = 0;
-			if((*dir)[i].fileAttrib == IS_FILE) {
-				get_frag_list((*dir)[i].name);
-				u32 file_base = frag_list->num > 1 ? -1 : frag_list->frag[0].sector;
-				(*dir)[i].fileBase = file_base;
-			}
-			else {
-				(*dir)[i].fileBase = 0;
-			}		
+			(*dir)[i].fileBase = 0;
 			++i;
 		}
 	}
@@ -171,35 +164,74 @@ int deviceHandler_FAT_writeFile(file_handle* file, void* buffer, unsigned int le
 
 int unlockedDVD = 0;
 void unlockCB() {
-  unlockedDVD = 1;
+	unlockedDVD = 1;
 }
 
 void deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
-  	// We looked for fragments when this file was read from the directory
-  	// if it's -1, it means it's fragmented - so fail it.
-	if(((u32)(file->fileBase&0xFFFFFFFF) == -1) || (file2 && ((u32)(file2->fileBase&0xFFFFFFFF) == -1))) {
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,"This file is fragmented!");
-		DrawFrameFinish();
-		sleep(5);
-	}
+	// If there are 2 discs, we only allow 5 fragments per disc.
+	int maxFrags = file2 ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0;
+	u32 *fragList = (u32*)VAR_FRAG_LIST;
 	
-  // Disk 1 sector
-  *(volatile unsigned int*)VAR_DISC_1_LBA = (u32)(file->fileBase&0xFFFFFFFF);
-  // Disk 2 sector
-  *(volatile unsigned int*)VAR_DISC_2_LBA = file2 ? (u32)(file2->fileBase&0xFFFFFFFF):(u32)(file->fileBase&0xFFFFFFFF);
-  // Currently selected disk sector
-  *(volatile unsigned int*)VAR_CUR_DISC_LBA = (u32)(file->fileBase&0xFFFFFFFF);
-  // Copy the current speed
-  *(volatile unsigned int*)VAR_EXI_BUS_SPD = !swissSettings.exiSpeed ? 192:208;
-  // Card Type
-  *(volatile unsigned int*)VAR_SD_TYPE = SDHCCard;
-  // Copy the actual freq
-  *(volatile unsigned int*)VAR_EXI_FREQ = !swissSettings.exiSpeed ? EXI_SPEED16MHZ:EXI_SPEED32MHZ;
-  // Device slot (0 or 1)
-  *(volatile unsigned int*)VAR_EXI_SLOT = (file->name[0] == 's') ? (file->name[2] == 'b') : (file->name[3] == 'b');
-  // Is this an IDE-EXI v1 or 2?
-  *(volatile unsigned int*)VAR_TMP4 = _ideexi_version;
+	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
+	
+  	// If disc 1 is fragmented, make a note of the fragments and their sizes
+	get_frag_list(file->name);
+	if(frag_list->num < maxFrags) {
+		for(i = 0; i < frag_list->num; i++) {
+			fragList[i*3] = frag_list->frag[i].offset*512;
+			fragList[(i*3)+1] = frag_list->frag[i].count*512;
+			fragList[(i*3)+2] = frag_list->frag[i].sector;
+		}
+	}
+	else {
+		// file is too fragmented - go defrag it!
+	}
+
+	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
+	if(file2) {
+		get_frag_list(file2->name);
+		if(frag_list->num < maxFrags) {
+			for(i = 0; i < frag_list->num; i++) {
+				fragList[(i*3) + (maxFrags*3)] = frag_list->frag[i].offset*512;
+				fragList[((i*3) + 1) + (maxFrags*3)]  = frag_list->frag[i].count*512;
+				fragList[((i*3) + 2) + (maxFrags*3)] = frag_list->frag[i].sector;
+			}
+		}
+		else {
+			// file is too fragmented - go defrag it!
+		}
+	}
+
+	/*
+	for(i = 0; i < maxFrags*3; i+=3) {
+		if(*(u32*)(VAR_FRAG_LIST + ((i+1)*4)) == 0) break;
+		print_gecko("File fragment [%i]: offset %08X size %08X (bytes) sector %08X\r\n",
+			i/3, fragList[i], fragList[i+1], fragList[i+2]);
+	}
+	if(file2) {
+		for(i = 0; i < maxFrags*3; i+=3) {
+			if(*(u32*)(VAR_FRAG_LIST + (maxFrags*4) + ((i+1)*4)) == 0) break;
+			print_gecko("File 2 fragment [%i]: offset %08X size %08X (bytes) sector %08X\r\n",
+				i/3, fragList[i+(maxFrags*3)], fragList[(i+1) + (maxFrags*3)], fragList[(i+2) + (maxFrags*3)]);
+		}
+	}*/
+
+	// Disk 1 sector
+	*(volatile unsigned int*)VAR_DISC_1_LBA = fragList[3];
+	// Disk 2 sector
+	*(volatile unsigned int*)VAR_DISC_2_LBA = file2 ? fragList[3 + (maxFrags*3)]:fragList[3];
+	// Currently selected disk sector
+	*(volatile unsigned int*)VAR_CUR_DISC_LBA = fragList[3];
+	// Copy the current speed
+	*(volatile unsigned int*)VAR_EXI_BUS_SPD = !swissSettings.exiSpeed ? 192:208;
+	// Card Type
+	*(volatile unsigned int*)VAR_SD_TYPE = SDHCCard;
+	// Copy the actual freq
+	*(volatile unsigned int*)VAR_EXI_FREQ = !swissSettings.exiSpeed ? EXI_SPEED16MHZ:EXI_SPEED32MHZ;
+	// Device slot (0 or 1)
+	*(volatile unsigned int*)VAR_EXI_SLOT = (file->name[0] == 's') ? (file->name[2] == 'b') : (file->name[3] == 'b');
+	// Is this an IDE-EXI v1 or 2?
+	*(volatile unsigned int*)VAR_TMP4 = _ideexi_version;
 }
 
 int EXI_ResetSD(int drv) {

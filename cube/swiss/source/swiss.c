@@ -1225,13 +1225,6 @@ int info_game()
 	if((curDevice==SD_CARD)||(curDevice == IDEEXI) ||(curDevice == WKF) ||((curDevice == DVD_DISC) && (dvdDiscTypeInt==ISO9660_DISC))) {
 		sprintf(txtbuffer,"Size: %.2fMB", (float)curFile.size/1024/1024);
 		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
-		if((u32)(curFile.fileBase&0xFFFFFFFF) == -1) {
-			sprintf(txtbuffer,"File is Fragmented!");
-		}
-		else {
-			sprintf(txtbuffer,"Position on Disk: %08X",(u32)(curFile.fileBase&0xFFFFFFFF));
-		}
-		WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
 	}
 	else if(curDevice == DVD_DISC)  {
 		sprintf(txtbuffer,"%s DVD disc", dvdDiscTypeStr);
