@@ -207,6 +207,28 @@ void load_config() {
 	}
 }
 
+int comp(const void *a1, const void *b1)
+{
+	const file_handle* a = a1;
+	const file_handle* b = b1;
+	
+	if(!a && b) return 1;
+	if(a && !b) return -1;
+	if(!a && !b) return 0;
+	
+	if(a->fileAttrib == IS_DIR && b->fileAttrib == IS_FILE)
+		return -1;
+	if(a->fileAttrib == IS_FILE && b->fileAttrib == IS_DIR)
+		return 1;
+
+	return stricmp(a->name, b->name);
+}
+
+void sortFiles(file_handle* dir, int num_files)
+{
+	qsort(&dir[0],num_files,sizeof(file_handle),comp);
+}
+
 void main_loop()
 { 
 	int i = 0,max,j;	
@@ -235,6 +257,8 @@ void main_loop()
 			// Read the directory/device TOC
 			if(allFiles){ free(allFiles); allFiles = NULL; }
 			files = deviceHandler_readDir(&curFile, &allFiles, -1);
+			sortFiles(allFiles, files);
+			
 			if(files<1) { break;}
 			curMenuLocation=ON_FILLIST;
 		}
