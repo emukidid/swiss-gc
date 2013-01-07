@@ -278,6 +278,7 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 		// Read the directory
 		if(refresh) {
 			num_files = deviceHandler_dest_readDir(directory, &directories, IS_DIR);
+			sortFiles(directories, num_files);
 			refresh = idx = 0;
 		}
 		doBackdrop();

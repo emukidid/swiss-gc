@@ -1,4 +1,5 @@
 #include <gccore.h>
+#include <stdlib.h>
 #include <asndlib.h>
 #include <mp3player.h>
 #include "swiss.h"

@@ -232,9 +232,8 @@ unsigned int npdp_getid(unsigned char *dst)
 
 	dvd[0] = 0x2E;
 	dvd[1] = 0;
-	
-	memcpy(dvd + 2, "NPDP-ID", 8);
-	
+	dvd[2] = 0x4E504450;	//"NPDP"
+	dvd[3] = 0x2D494400;	//"-ID\0"
 	dvd[4] = 0x40;
 	dvd[5] = (unsigned long)id;
 	dvd[6] = 0x40;
