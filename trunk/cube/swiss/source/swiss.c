@@ -378,9 +378,9 @@ int setup_memcard_emulation() {
 			fp = fopen( txtbuffer, "wb" );
 			if(fp) {
 				print_gecko("Writing empty buffer to %s\r\n",txtbuffer);
-				char *empty = (char*)memalign(32,2*1024*1024);
-				memset(empty,0, 2*1024*1024);
-				fwrite(empty, 1, 2*1024*1024, fp);
+				char *empty = (char*)memalign(32,512*1024);
+				memset(empty,0, 512*1024);
+				fwrite(empty, 1, 512*1024, fp);
 				free(empty);
 			}
 		}

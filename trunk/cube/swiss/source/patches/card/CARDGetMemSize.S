@@ -17,7 +17,7 @@ CARDGetMemSize:
 
 DoCode:
 #possible sizes 4,8,16,32,64,128
-	li		%r3,	128
+	li		%r3,	4
 	sth		%r3,	0(%r4)
 	li		%r3,	0
 	blr
