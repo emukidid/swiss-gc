@@ -226,7 +226,9 @@ int comp(const void *a1, const void *b1)
 
 void sortFiles(file_handle* dir, int num_files)
 {
-	qsort(&dir[0],num_files,sizeof(file_handle),comp);
+	if(num_files > 0) {
+		qsort(&dir[0],num_files,sizeof(file_handle),comp);
+	}
 }
 
 void main_loop()
