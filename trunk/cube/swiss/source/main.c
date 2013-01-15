@@ -216,6 +216,14 @@ int comp(const void *a1, const void *b1)
 	if(a && !b) return -1;
 	if(!a && !b) return 0;
 	
+	if((curDevice == DVD_DISC) && ((dvdDiscTypeInt == GAMECUBE_DISC) || (dvdDiscTypeInt == MULTIDISC_DISC)))
+	{
+		if(a->size == DISC_SIZE && a->fileBase == 0)
+			return -1;
+		if(b->size == DISC_SIZE && b->fileBase == 0)
+			return 1;
+	}
+	
 	if(a->fileAttrib == IS_DIR && b->fileAttrib == IS_FILE)
 		return -1;
 	if(a->fileAttrib == IS_FILE && b->fileAttrib == IS_DIR)
@@ -241,6 +249,7 @@ void main_loop()
 		needsDeviceChange = 0;
 	}
 	select_device();
+	
 	if(deviceHandler_initial) {
 		// If the user selected a device, make sure it's ready before we browse the filesystem
 		deviceHandler_deinit( deviceHandler_initial );
