@@ -224,10 +224,18 @@ void textFileBrowser(file_handle** directory, int num_files)
 				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL){
-				//go up a folder
 				int len = strlen(&curFile.name[0]);
-				while(len && curFile.name[len-1]!='/') {
+				
+				// Go up a folder
+				while(len && curFile.name[len-1]!='/')
       				len--;
+				if(len != strlen(&curFile.name[0]))
+					curFile.name[len-1] = '\0';
+
+				// If we're a file, go up to the parent of the file
+				if(curFile.fileAttrib == IS_FILE) {
+					while(len && curFile.name[len-1]!='/')
+						len--;
 				}
 				if(len != strlen(&curFile.name[0])) {
 					curFile.name[len-1] = '\0';
@@ -1226,6 +1234,14 @@ int info_game()
 	if((curDevice==SD_CARD)||(curDevice == IDEEXI) ||(curDevice == WKF) ||((curDevice == DVD_DISC) && (dvdDiscTypeInt==ISO9660_DISC))) {
 		sprintf(txtbuffer,"Size: %.2fMB", (float)curFile.size/1024/1024);
 		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
+		if((curDevice==SD_CARD)||(curDevice == IDEEXI) ||(curDevice == WKF)) {
+			get_frag_list(curFile.name);
+			if(frag_list->num > 1)
+				sprintf(txtbuffer,"File is in %i fragments.", frag_list->num);
+			else
+				sprintf(txtbuffer,"File base sector 0x%08X", frag_list->frag[0].sector);
+			WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
+		}
 	}
 	else if(curDevice == DVD_DISC)  {
 		sprintf(txtbuffer,"%s DVD disc", dvdDiscTypeStr);
@@ -1252,7 +1268,7 @@ int info_game()
 		WriteFontStyled(640/2, 200, txtbuffer, 0.8f, true, defaultColor);
 	}
 
-	WriteFontStyled(640/2, 370, "Cheats(Y) - Settings(X) - Exit(B) - Continue (A)", 0.75f, true, defaultColor);
+	WriteFontStyled(640/2, 370, "Cheats (Y) - Settings (X) - Exit (B) - Continue (A)", 0.75f, true, defaultColor);
 	DrawFrameFinish();
 	while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
@@ -1465,7 +1481,6 @@ void select_device()
 			if(btns & PAD_BUTTON_A)
 				break;
 			if(btns & PAD_BUTTON_B) {
-				deviceHandler_initial = NULL;
 				return;
 			}
 			while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)))
