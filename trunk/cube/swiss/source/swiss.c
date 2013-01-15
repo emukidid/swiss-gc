@@ -237,10 +237,9 @@ void textFileBrowser(file_handle** directory, int num_files)
 					while(len && curFile.name[len-1]!='/')
 						len--;
 				}
-				if(len != strlen(&curFile.name[0])) {
+				if(len != strlen(&curFile.name[0]))
 					curFile.name[len-1] = '\0';
-					needsRefresh=1;
-				}
+				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_FILE){
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
