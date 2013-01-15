@@ -26,7 +26,7 @@
 #define	CARD_STAT_BANNER_C8		1
 #define	CARD_STAT_BANNER_RGB5A3	2
 
-#define NUM_STAT_BLOCK_ENTRIES 240
+#define NUM_STAT_BLOCK_ENTRIES 59
 
 typedef unsigned int u32;
 typedef int s32;
@@ -81,14 +81,11 @@ typedef struct SwissMemcardHeader
 } SwissMemcardHeader;	// 240 entries, near 32768
 
 
-extern void do_read(void *dst, u32 size, u32 offset);
+extern void do_read(void *dst, u32 size, u32 offset, u32 sectorLba);
 extern void do_write(void *src, u32 size, u32 offset);
 
 void read_wrapper(void *dst, u32 size, u32 offset) {
-	u32 old = *(volatile u32*)(VAR_CUR_DISC_LBA);
-	*(volatile u32*)(VAR_CUR_DISC_LBA) = *(volatile u32*)(VAR_MEMCARD_LBA);
-	do_read(dst, size, offset);
-	*(volatile u32*)(VAR_CUR_DISC_LBA) = old;
+	do_read(dst, size, offset, *(volatile u32*)(VAR_MEMCARD_LBA));
 }
 
 void _memcpy(void* dest, const void* src, int count) {

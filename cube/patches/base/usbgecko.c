@@ -1,7 +1,6 @@
+/************* USB GECKO */ 
 
-
-/************* USB GECKO */ /*
-
+/*
 #define EXI_CHAN1SR		*(volatile unsigned long*) 0xCC006814 // Channel 1 Status Register
 #define EXI_CHAN1CR		*(volatile unsigned long*) 0xCC006820 // Channel 1 Control Register
 #define EXI_CHAN1DATA	*(volatile unsigned long*) 0xCC006824 // Channel 1 Immediate Data
@@ -74,5 +73,3 @@ void print_int_hex(unsigned int num) {
 	}
 }
 */
-
-/************************/
