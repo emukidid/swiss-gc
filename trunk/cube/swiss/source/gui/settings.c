@@ -19,7 +19,7 @@ char *uiVModeStr[] = {"NTSC", "PAL", "480p", "Auto", "576p"};
 syssram* sram;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {7, 8, 11};
+int settings_count_pp[3] = {7, 8, 9};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
