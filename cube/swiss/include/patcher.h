@@ -104,9 +104,6 @@ extern u32 CARDWrite_length;
 extern u8 CARDWriteAsync[];
 extern u32 CARDWriteAsync_length;
 
-/* Pre-patcher magic */
-#define PRE_PATCHER_MAGIC "Pre-Patched by Swiss v0.2"
-
 #define LO_RESERVE 0x80001800
 #define HI_RESERVE (0x817FE800-VAR_AREA_SIZE)
 
