@@ -1126,25 +1126,14 @@ int check_game()
 	DrawFrameStart();
 	DrawMessageBox(D_INFO,"Checking Game ..");
 	DrawFrameFinish();
-
-	char buffer[256];
-	deviceHandler_seekFile(&curFile,0x100,DEVICE_HANDLER_SEEK_SET);
-	deviceHandler_readFile(&curFile,&buffer,256);
-	if(!strcmp(&buffer[0],PRE_PATCHER_MAGIC)) {
-		deviceHandler_seekFile(&curFile,0x120,DEVICE_HANDLER_SEEK_SET);
-		deviceHandler_readFile(&curFile,&swissSettings.useHiLevelPatch,4);
-		deviceHandler_readFile(&curFile,&swissSettings.useHiMemArea,4);
-		return 0;
-	}
 	
 	ExecutableFile *filesToPatch = memalign(32, sizeof(ExecutableFile)*64);
 	int numToPatch = parse_gcm(&curFile, filesToPatch);
 	if(numToPatch>0) {
 		// Game requires pre-patching, lets ask to do it.
 		DrawFrameStart();
-		DrawMessageBox(D_INFO,"This Game Requires irreversible Pre-Patching\nPress A to Continue");
+		DrawMessageBox(D_INFO,"Creating Patch File...");
 		DrawFrameFinish();
-		wait_press_A();
 		
 		set_base_addr(swissSettings.useHiMemArea);	// Needs to be set otherwise the patch code written can be wrong!
 		int res = patch_gcm(&curFile, filesToPatch, numToPatch);

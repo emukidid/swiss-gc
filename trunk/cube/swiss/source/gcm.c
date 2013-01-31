@@ -172,7 +172,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 }
 
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
-	int i, pre_patched = 0;
+	int i, patched_buf_num = 0;
 	for(i = 0; i < numToPatch; i++) {
 		if(filesToPatch[i].size > 1024*1024) {
 			sprintf(txtbuffer, "Patching: %s %iMb", filesToPatch[i].name, filesToPatch[i].size/1024/1024);
@@ -206,24 +206,26 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			if(swissSettings.emulatemc)
 				Patch_CARDFunctions(buffer, sizeToRead);
 			if(patched) {
-				print_gecko("Seeking in the file..\r\n");
-				deviceHandler_seekFile(file,filesToPatch[i].offset+ofs,DEVICE_HANDLER_SEEK_SET);
+				// Write a .patchX file out for this game with the patched buffer inside.
+				print_gecko("Creating patch file chunk: %s.patch%i\r\n", file->name, patched_buf_num);
+				file_handle patchFile;
+				memset(&patchFile, 0, sizeof(file_handle));
+				sprintf(&patchFile.name[0], "%s.patch%i",file->name, patched_buf_num);
+				
 				print_gecko("Started writing the patch\r\n");
-				deviceHandler_writeFile(file,buffer,sizeToRead);
+				print_gecko("Writing the magic/offset/size in the patch\r\n");
+				u32 magic = 0x53574953;	//SWIS
+				deviceHandler_writeFile(&patchFile,&magic,4);
+				magic = filesToPatch[i].offset+ofs;
+				deviceHandler_writeFile(&patchFile,&magic,4);
+				deviceHandler_writeFile(&patchFile,&sizeToRead,4);
+				deviceHandler_writeFile(&patchFile,buffer,sizeToRead);
+				deviceHandler_deinit(&patchFile);
 				print_gecko("Finished writing the patch\r\n");
-				pre_patched = 1;
+				patched_buf_num++;
 			}
 			free(buffer);
 		}
-	}
-	if(pre_patched) {
-		sprintf(txtbuffer, PRE_PATCHER_MAGIC);
-		deviceHandler_seekFile(file,0x100,DEVICE_HANDLER_SEEK_SET);
-		deviceHandler_writeFile(file,txtbuffer,strlen(txtbuffer));
-		deviceHandler_seekFile(file,0x120,DEVICE_HANDLER_SEEK_SET);
-		deviceHandler_writeFile(file,&swissSettings.useHiLevelPatch,4);
-		deviceHandler_writeFile(file,&swissSettings.useHiMemArea,4);
-		return 1;
 	}
 	return 0;
 }

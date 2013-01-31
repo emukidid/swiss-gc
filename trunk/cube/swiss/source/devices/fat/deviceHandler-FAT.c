@@ -186,6 +186,8 @@ void deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	else {
 		// file is too fragmented - go defrag it!
 	}
+	
+	// Look for .patchX files, if we find some, open them and add them as fragments.
 
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
@@ -202,25 +204,11 @@ void deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 		}
 	}
 
-	/*
-	for(i = 0; i < maxFrags*3; i+=3) {
-		if(*(u32*)(VAR_FRAG_LIST + ((i+1)*4)) == 0) break;
-		print_gecko("File fragment [%i]: offset %08X size %08X (bytes) sector %08X\r\n",
-			i/3, fragList[i], fragList[i+1], fragList[i+2]);
-	}
-	if(file2) {
-		for(i = 0; i < maxFrags*3; i+=3) {
-			if(*(u32*)(VAR_FRAG_LIST + (maxFrags*4) + ((i+1)*4)) == 0) break;
-			print_gecko("File 2 fragment [%i]: offset %08X size %08X (bytes) sector %08X\r\n",
-				i/3, fragList[i+(maxFrags*3)], fragList[(i+1) + (maxFrags*3)], fragList[(i+2) + (maxFrags*3)]);
-		}
-	}*/
-
-	// Disk 1 sector
+	// Disk 1 base sector
 	*(volatile unsigned int*)VAR_DISC_1_LBA = fragList[3];
-	// Disk 2 sector
+	// Disk 2 base sector
 	*(volatile unsigned int*)VAR_DISC_2_LBA = file2 ? fragList[3 + (maxFrags*3)]:fragList[3];
-	// Currently selected disk sector
+	// Currently selected disk base sector
 	*(volatile unsigned int*)VAR_CUR_DISC_LBA = fragList[3];
 	// Copy the current speed
 	*(volatile unsigned int*)VAR_EXI_BUS_SPD = !swissSettings.exiSpeed ? 192:208;
@@ -244,6 +232,8 @@ int EXI_ResetSD(int drv) {
 	*(vu32 *)0xCC006834 = 0x80A;
 	/*** Needed to re-kick after insertion etc ***/
 	EXI_ProbeEx(drv);
+	EXI_Detach(drv);
+	sdgecko_initIODefault();
 	return 1;
 }
 
@@ -282,15 +272,9 @@ int deviceHandler_FAT_init(file_handle* file){
 }
 
 int deviceHandler_FAT_deinit(file_handle* file) {
-	int isSDCard = file->name[0] == 's';
-	int slot = isSDCard ? (file->name[2] == 'b') : (file->name[3] == 'b');
 	if(file && file->fp) {
 		fclose(file->fp);
 		file->fp = 0;
-	}
-	if(isSDCard) {
-		EXI_Detach(slot);
-		sdgecko_initIODefault();
 	}
 	return 0;
 }
