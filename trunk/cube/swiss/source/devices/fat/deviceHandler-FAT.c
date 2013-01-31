@@ -24,7 +24,7 @@ const DISC_INTERFACE* carda = &__io_gcsda;
 const DISC_INTERFACE* cardb = &__io_gcsdb;
 const DISC_INTERFACE* ideexia = &__io_ataa;
 const DISC_INTERFACE* ideexib = &__io_atab;
-
+extern void sdgecko_initIODefault();
 
 file_handle initial_SD0 =
 	{ "sda:/",       // directory
@@ -282,9 +282,15 @@ int deviceHandler_FAT_init(file_handle* file){
 }
 
 int deviceHandler_FAT_deinit(file_handle* file) {
+	int isSDCard = file->name[0] == 's';
+	int slot = isSDCard ? (file->name[2] == 'b') : (file->name[3] == 'b');
 	if(file && file->fp) {
 		fclose(file->fp);
 		file->fp = 0;
+	}
+	if(isSDCard) {
+		EXI_Detach(slot);
+		sdgecko_initIODefault();
 	}
 	return 0;
 }
