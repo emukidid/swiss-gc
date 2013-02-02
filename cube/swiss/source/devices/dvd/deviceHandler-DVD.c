@@ -334,11 +334,12 @@ int deviceHandler_DVD_readFile(file_handle* file, void* buffer, unsigned int len
 	return bytesread;
 }
 
-void deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
-  if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
-  	dvd_set_offset(file->fileBase);
-  	file->status = OFFSET_SET;
+int deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
+	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
+		dvd_set_offset(file->fileBase);
+		file->status = OFFSET_SET;
 	}
+	return 1;
 }
 
 int deviceHandler_DVD_init(file_handle* file){

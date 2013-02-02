@@ -120,7 +120,7 @@ int deviceHandler_WKF_writeFile(file_handle* file, void* buffer, unsigned int le
 }
 
 
-void deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
+int deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 	if(file) {
 		// Lookup FAT fragments
 		get_frag_list(file->name);
@@ -150,6 +150,7 @@ void deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 		wkfReinit();
 		singleFileMode = 0;
 	}
+	return 1;
 }
 
 int deviceHandler_WKF_init(file_handle* file){

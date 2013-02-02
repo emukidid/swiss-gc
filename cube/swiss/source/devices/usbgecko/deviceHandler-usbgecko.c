@@ -91,7 +91,8 @@ int deviceHandler_USBGecko_writeFile(file_handle* file, void* buffer, unsigned i
 	return bytes_written;
 }
 
-void deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2) {
+int deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2) {
+	return 1;
 }
 
 int deviceHandler_USBGecko_init(file_handle* file) {

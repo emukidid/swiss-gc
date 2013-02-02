@@ -88,11 +88,12 @@ int deviceHandler_WODE_readFile(file_handle* file, void* buffer, unsigned int le
 	return bytesread;
 }
 
-void deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2) {
+int deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2) {
 	SetISO((u32)((file->fileBase>>24)&0xFF),(u32)(file->fileBase&0xFFFFFF));
 	sleep(2);
 	DVD_Reset(DVD_RESETHARD);
 	while(dvd_get_error()) {dvd_read_id();}
+	return 1;
 }
 
 int deviceHandler_WODE_init(file_handle* file){

@@ -55,7 +55,7 @@ extern int (*deviceHandler_deleteFile)(file_handle*);
 extern int (*deviceHandler_seekFile)(file_handle*, unsigned int, unsigned int);
 
 /* sets the offset and other device specific stuff */
-extern void (*deviceHandler_setupFile)(file_handle*, file_handle*);
+extern int (*deviceHandler_setupFile)(file_handle*, file_handle*);
 
 /* Shutdown the device */
 extern int (*deviceHandler_deinit)();
@@ -85,7 +85,7 @@ extern int (*deviceHandler_dest_deleteFile)(file_handle*);
 extern int (*deviceHandler_dest_seekFile)(file_handle*, unsigned int, unsigned int);
 
 /* sets the offset and other device specific stuff */
-extern void (*deviceHandler_dest_setupFile)(file_handle*, file_handle*);
+extern int (*deviceHandler_dest_setupFile)(file_handle*, file_handle*);
 
 /* Shutdown the device */
 extern int (*deviceHandler_dest_deinit)();
