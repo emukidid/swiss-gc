@@ -299,8 +299,9 @@ int deviceHandler_CARD_writeFile(file_handle* file, void* data, unsigned int len
 	return length;
 }
 
-void deviceHandler_CARD_setupFile(file_handle* file, file_handle* file2) {
-  // Nothing here for this device..
+int deviceHandler_CARD_setupFile(file_handle* file, file_handle* file2) {
+	// Nothing here for this device..
+	return 1;
 }
 
 int deviceHandler_CARD_init(file_handle* file){

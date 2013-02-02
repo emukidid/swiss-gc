@@ -167,43 +167,96 @@ void unlockCB() {
 	unlockedDVD = 1;
 }
 
-void deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
+void print_frag_list() {
+	print_gecko("== Fragments List ==\r\n");
+	u32 *fragList = (u32*)VAR_FRAG_LIST;
+	int maxFrags = (VAR_FRAG_SIZE/12), i = 0;
+	for(i = 0; i < maxFrags; i++) {
+		if(!fragList[(i*3)+1]) break;
+		
+		print_gecko("Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%08X]\r\n", 
+					i, fragList[(i*3)+0], fragList[(i*3)+1], fragList[(i*3)+2]);
+	}
+	print_gecko("== Fragments End ==\r\n");
+}
+
+int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	// If there are 2 discs, we only allow 5 fragments per disc.
 	int maxFrags = file2 ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0;
 	u32 *fragList = (u32*)VAR_FRAG_LIST;
 	
 	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
 	
-  	// If disc 1 is fragmented, make a note of the fragments and their sizes
+  	// Look for .patchX files, if we find some, open them and add them as fragments
+	file_handle patchFile;
+	int patches = 0;
+	for(i = 0; i < maxFrags; i++) {
+		u32 patchInfo[3];
+		patchInfo[0] = 0; patchInfo[1] = 0; 
+		memset(&patchFile, 0, sizeof(file_handle));
+		sprintf(&patchFile.name[0], "%s.patches/%i",file->name, i);
+
+		struct stat fstat;
+		if(stat(&patchFile.name[0],&fstat)) {
+			break;
+		}
+		deviceHandler_seekFile(&patchFile,fstat.st_size-12,DEVICE_HANDLER_SEEK_SET);
+		if((deviceHandler_readFile(&patchFile, &patchInfo, 12) == 12) && (patchInfo[2] == SWISS_MAGIC)) {
+			get_frag_list(&patchFile.name[0]);
+			print_gecko("Found patch file %i ofs 0x%08X len 0x%08X base 0x%08X\r\n", 
+							i, patchInfo[0], patchInfo[1], frag_list->frag[0].sector);
+			deviceHandler_deinit(&patchFile);
+			fragList[patches*3] = patchInfo[0];
+			fragList[(patches*3)+1] = patchInfo[1]-12;
+			fragList[(patches*3)+2] = frag_list->frag[0].sector;
+			patches++;
+		}
+		else {
+			break;
+		}
+	}
+	
+	// No fragment room left for the actual game, fail.
+	if(patches+1 == maxFrags) {
+		return 0;
+	}
+	
+	// If disc 1 is fragmented, make a note of the fragments and their sizes
 	get_frag_list(file->name);
 	if(frag_list->num < maxFrags) {
 		for(i = 0; i < frag_list->num; i++) {
-			fragList[i*3] = frag_list->frag[i].offset*512;
-			fragList[(i*3)+1] = frag_list->frag[i].count*512;
-			fragList[(i*3)+2] = frag_list->frag[i].sector;
+			fragList[patches*3] = frag_list->frag[i].offset*512;
+			fragList[(patches*3)+1] = frag_list->frag[i].count*512;
+			fragList[(patches*3)+2] = frag_list->frag[i].sector;
+			patches++;
 		}
 	}
 	else {
 		// file is too fragmented - go defrag it!
+		return 0;
 	}
-	
-	// Look for .patchX files, if we find some, open them and add them as fragments.
-
+		
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
+		// No fragment room left for the second disc, fail.
+		if(patches+1 == maxFrags) {
+			return 0;
+		}
 		get_frag_list(file2->name);
 		if(frag_list->num < maxFrags) {
 			for(i = 0; i < frag_list->num; i++) {
-				fragList[(i*3) + (maxFrags*3)] = frag_list->frag[i].offset*512;
-				fragList[((i*3) + 1) + (maxFrags*3)]  = frag_list->frag[i].count*512;
-				fragList[((i*3) + 2) + (maxFrags*3)] = frag_list->frag[i].sector;
+				fragList[(patches*3) + (maxFrags*3)] = frag_list->frag[i].offset*512;
+				fragList[((patches*3) + 1) + (maxFrags*3)]  = frag_list->frag[i].count*512;
+				fragList[((patches*3) + 2) + (maxFrags*3)] = frag_list->frag[i].sector;
+				patches++;
 			}
 		}
 		else {
 			// file is too fragmented - go defrag it!
+			return 0;
 		}
 	}
-
+	
 	// Disk 1 base sector
 	*(volatile unsigned int*)VAR_DISC_1_LBA = fragList[3];
 	// Disk 2 base sector
@@ -220,6 +273,8 @@ void deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	*(volatile unsigned int*)VAR_EXI_SLOT = (file->name[0] == 's') ? (file->name[2] == 'b') : (file->name[3] == 'b');
 	// Is this an IDE-EXI v1 or 2?
 	*(volatile unsigned int*)VAR_TMP4 = _ideexi_version;
+	print_frag_list();
+	return 1;
 }
 
 int EXI_ResetSD(int drv) {

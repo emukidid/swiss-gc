@@ -78,7 +78,8 @@ int deviceHandler_Qoob_readFile(file_handle* file, void* buffer, unsigned int le
 	return length;
 }
 
-void deviceHandler_Qoob_setupFile(file_handle* file, file_handle* file2) {
+int deviceHandler_Qoob_setupFile(file_handle* file, file_handle* file2) {
+	return 1;
 }
 
 int deviceHandler_Qoob_init(file_handle* file){

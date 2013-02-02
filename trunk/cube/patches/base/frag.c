@@ -26,16 +26,17 @@ u32 read_frag(void *dst, u32 len, u32 offset) {
 	int adjustedOffset = offset;
 	
 	// Locate this offset in the fat table and read as much as we can from a single fragment
-	for(i = 0; i < maxFrags*3; i+=3) {
-		int fragOffset = fragList[i];
-		int fragSize = fragList[i+1];
-		int fragSector = fragList[i+2];
+	for(i = 0; i < maxFrags; i++) {
+		int fragOffset = fragList[(i*3)+0];
+		int fragSize = fragList[(i*3)+1];
+		int fragSector = fragList[(i*3)+2];
+		int fragOffsetEnd = fragOffset + fragSize;
 		
 		// Find where our read starts and read as much as we can in this frag before returning
-		if(offset >= fragOffset && offset <= fragOffset + fragSize) {
+		if(offset >= fragOffset && offset <= fragOffsetEnd) {
 			// Does our read get cut off early?
-			if(offset + len > fragOffset + fragSize) {
-				amountToRead = (fragOffset+fragSize) - offset;
+			if(offset + len > fragOffsetEnd) {
+				amountToRead = fragOffsetEnd - offset;
 			}
 			if(fragOffset != 0) {
 				adjustedOffset = offset - fragOffset;

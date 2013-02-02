@@ -1068,7 +1068,13 @@ void load_file()
 		}
 	  
 		// Call the special setup for each device (e.g. SD will set the sector(s))
-		deviceHandler_setupFile(&curFile, secondDisc);
+		if(!deviceHandler_setupFile(&curFile, secondDisc)) {
+			DrawFrameStart();
+			DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)");
+			DrawFrameFinish();
+			wait_press_A();
+			return;
+		}
 
 		
 		if(secondDisc) {
@@ -1130,11 +1136,7 @@ int check_game()
 	ExecutableFile *filesToPatch = memalign(32, sizeof(ExecutableFile)*64);
 	int numToPatch = parse_gcm(&curFile, filesToPatch);
 	if(numToPatch>0) {
-		// Game requires pre-patching, lets ask to do it.
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,"Creating Patch File...");
-		DrawFrameFinish();
-		
+		// Game requires patch files, lets do it.	
 		set_base_addr(swissSettings.useHiMemArea);	// Needs to be set otherwise the patch code written can be wrong!
 		int res = patch_gcm(&curFile, filesToPatch, numToPatch);
 		DrawFrameStart();
