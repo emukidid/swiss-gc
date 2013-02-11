@@ -89,7 +89,9 @@ void* Initialise (void)
 		vmode = VIDEO_GetPreferredMode(NULL); //Last mode used
 	}
 	else {	// Gamecube, determine based on IPL
-		if(VIDEO_HaveComponentCable()) {
+		PAD_ScanPads();
+		// L Trigger held down ignores the fact that there's a component cable plugged in.
+		if(VIDEO_HaveComponentCable() && !(PAD_ButtonsDown(0) & PAD_TRIGGER_L)) {
 			if((strstr(IPLInfo,"PAL")!=NULL)) {
 				vmode = &TVPal576ProgScale; //Progressive 576p
 			}
@@ -346,7 +348,7 @@ int main ()
 	refreshSRAM();
 	swissSettings.useHiMemArea = 0;
 	swissSettings.useHiLevelPatch = swissSettings.hasDVDDrive ? 0:1;	// Hi-level works better with no DVD drive
-	swissSettings.debugUSB = 1;
+	swissSettings.debugUSB = 0;
 	swissSettings.gameVMode = 3;	// Auto video mode
 	swissSettings.exiSpeed = 1;		// 32MHz
 	swissSettings.uiVMode = 3; 		// Auto UI mode
