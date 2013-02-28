@@ -11,6 +11,7 @@
 #include "deviceHandler.h"
 
 extern char *uiVModeStr[];
+extern char *uiWHackStr[];
 void show_settings(file_handle *file, ConfigEntry *config);
 void refreshSRAM();
 

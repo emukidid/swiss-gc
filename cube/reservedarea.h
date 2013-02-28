@@ -27,9 +27,12 @@
 .set VAR_TMP4,  		-0xC8	# space for a variable if required
 .set VAR_DOL_SECTOR,	-0xC4	# In-Game-Reset DOL address
 .set VAR_DOL_SIZE,		-0xC0	# In-Game-Reset DOL size
-.set VAR_UNUSED4,		-0xBC	# UNUSED
-.set VAR_PROG_MODE,		-0xB8	# data/code to overwrite GXRMode obj with for 480p forcing
-.set VAR_ASPECT_FLOAT,	-0x1C	# Aspect ratio multiply float (4 bytes)
+.set VAR_SCREEN_WD,		-0xBC	# scissor box adjustment
+.set VAR_PROG_MODE,		-0xB8	# data to overwrite GXRMode obj with
+.set VAR_FLOAT9_16,		-0x90	# constant 9/16
+.set VAR_FLOAT7_6,		-0x8C	# constant 7/6
+.set VAR_FLOAT1_1,		-0x88	# constant one
+.set VAR_FLOAT3_4,		-0x84	# constant 3/4
 .set VAR_MEMCARD_LBA,	-0x18	# Memory card file base on SD
 .set VAR_MEMCARD_WORK,	-0x14	# Memory card work area 40960 bytes big
 .set VAR_MEMCARD_RESULT,-0x10	# Last memory card status from a CARD func
@@ -57,9 +60,12 @@
 #define VAR_TMP4  			(VAR_AREA-0xC8)		// space for a variable if required
 #define VAR_DOL_SECTOR		(VAR_AREA-0xC4)		// In-Game-Reset DOL address
 #define VAR_DOL_SIZE		(VAR_AREA-0xC0)		// In-Game-Reset DOL size
-#define VAR_UNUSED4			(VAR_AREA-0xBC)		// UNUSED
-#define VAR_PROG_MODE		(VAR_AREA-0xB8)		// data/code to overwrite GXRMode obj with for 480p forcing
-#define VAR_ASPECT_FLOAT	(VAR_AREA-0x1C)		// Aspect ratio multiply float (4 bytes)
+#define VAR_SCREEN_WD		(VAR_AREA-0xBC)		// scissor box adjustment
+#define VAR_PROG_MODE		(VAR_AREA-0xB8)		// data to overwrite GXRMode obj with
+#define VAR_FLOAT9_16		(VAR_AREA-0x90)		// constant 9/16
+#define VAR_FLOAT7_6		(VAR_AREA-0x8C)		// constant 7/6
+#define VAR_FLOAT1_1		(VAR_AREA-0x88)		// constant one
+#define VAR_FLOAT3_4		(VAR_AREA-0x84)		// constant 3/4
 #define VAR_MEMCARD_LBA		(VAR_AREA-0x18)		// Memory card file base on SD
 #define VAR_MEMCARD_WORK	(VAR_AREA-0x14)		// Memory card work area 40960 bytes big
 #define VAR_MEMCARD_RESULT	(VAR_AREA-0x10)		// Last memory card status from a CARD func

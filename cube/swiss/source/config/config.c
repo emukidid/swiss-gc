@@ -152,7 +152,7 @@ int config_update_file() {
 			sprintf(txtbuffer, "No Disc Mode=%s\r\n",(configEntries[i].noDiscMode ? "Yes":"No"));
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
-			sprintf(txtbuffer, "Force Widescreen=%s\r\n",(configEntries[i].forceWideAspect ? "Yes":"No"));
+			sprintf(txtbuffer, "Force Widescreen=%s\r\n",uiWHackStr[configEntries[i].forceWideAspect]);
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
 			sprintf(txtbuffer, "Emulate Memory Card via SDGecko=%s\r\n\r\n\r\n",(configEntries[i].emulatemc ? "Yes":"No"));
@@ -233,7 +233,12 @@ void config_parse(char *configData) {
 					configEntries[configEntriesCount].noDiscMode = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("Force Widescreen", name)) {
-					configEntries[configEntriesCount].forceWideAspect = !strcmp("Yes", value) ? 1:0;
+					if(!strcmp(uiWHackStr[0], value))
+						configEntries[configEntriesCount].forceWideAspect = 0;
+					else if(!strcmp(uiWHackStr[1], value))
+						configEntries[configEntriesCount].forceWideAspect = 1;
+					else if(!strcmp(uiWHackStr[2], value))
+						configEntries[configEntriesCount].forceWideAspect = 2;
 				}
 				else if(!strcmp("Emulate Memory Card via SDGecko", name)) {
 					configEntries[configEntriesCount].emulatemc = !strcmp("Yes", value) ? 1:0;
