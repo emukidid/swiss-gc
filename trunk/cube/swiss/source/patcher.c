@@ -19,6 +19,7 @@
 #include "sidestep.h"
 
 static unsigned int base_addr = LO_RESERVE;
+static unsigned int top_addr = LO_RESERVE + 0x1800;
 
 /*** externs ***/
 extern GXRModeObj *vmode;		/*** Graphics Mode Object ***/
@@ -112,6 +113,7 @@ u32 _OSRestoreInterrupts_original_v2[9] = {
 
 void set_base_addr(int useHi) {
 	base_addr = useHi ? HI_RESERVE : LO_RESERVE;
+	top_addr = base_addr + 0x1800;
 }
 
 u32 get_base_addr() {
@@ -167,6 +169,8 @@ void make_pattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
 		
 		if( (word & 0xFC000000) ==  0x80000000 )
 			FunctionPattern->Loads++;
+		if( (word & 0xFC000000) ==  0xC0000000 )
+			FunctionPattern->Loads++;
 		if( (word & 0xFF000000) ==  0x38000000 )
 			FunctionPattern->Loads++;
 		if( (word & 0xFF000000) ==  0x3C000000 )
@@ -176,7 +180,11 @@ void make_pattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
 			FunctionPattern->Stores++;
 		if( (word & 0xFC000000) ==  0x94000000 )
 			FunctionPattern->Stores++;
+		if( (word & 0xFC000000) ==  0xD0000000 )
+			FunctionPattern->Stores++;
 
+		if( (word & 0xFC0007FE) ==  0xFC000090 )
+			FunctionPattern->Moves++;
 		if( (word & 0xFF000000) ==  0x7C000000 )
 			FunctionPattern->Moves++;
 
@@ -222,6 +230,8 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 		
 		if( (word & 0xFC000000) ==  0x80000000 )
 			FP.Loads++;
+		if( (word & 0xFC000000) ==  0xC0000000 )
+			FP.Loads++;
 		if( (word & 0xFF000000) ==  0x38000000 )
 			FP.Loads++;
 		if( (word & 0xFF000000) ==  0x3C000000 )
@@ -231,7 +241,11 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 			FP.Stores++;
 		if( (word & 0xFC000000) ==  0x94000000 )
 			FP.Stores++;
+		if( (word & 0xFC000000) ==  0xD0000000 )
+			FP.Stores++;
 
+		if( (word & 0xFC0007FE) ==  0xFC000090 )
+			FP.Moves++;
 		if( (word & 0xFF000000) ==  0x7C000000 )
 			FP.Moves++;
 
@@ -403,6 +417,19 @@ void Patch_ProgTiming(void *addr, u32 length) {
 	}
 }
 
+u8 render_mode_nodf[] = {
+	0x00,0x00,0x00,0x00,
+	0x00,0x00,0x06,0x06,
+	0x06,0x06,0x06,0x06,
+	0x06,0x06,0x06,0x06,
+	0x06,0x06,0x06,0x06,
+	0x06,0x06,0x06,0x06,
+	0x06,0x06,0x06,0x06,
+	0x06,0x06,0x00,0x00,
+	0x15,0x16,0x15,0x00,
+	0x00,0x00,0x00,0x00
+};
+
 int Patch_ProgVideo(u8 *data, u32 length) {
 	int i,j;
 	FuncPattern VIConfigureSigs[6] = {
@@ -418,75 +445,177 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 	}
 	for( i=0; i < length; i+=4 )
 	{
-		if( *(u32*)(data + i ) != 0x7C0802A6 )
+		if( *(u32*)(data+i) != 0x7C0802A6 )
 			continue;
-			
+		
 		FuncPattern fp;
 		make_pattern( (u8*)(data+i), length, &fp );
-			
-		for( j=0; j < sizeof(VIConfigureSigs); j++ )
+		
+		for( j=0; j < sizeof(VIConfigureSigs)/sizeof(FuncPattern); j++ )
 		{
-			if( !VIConfigureSigs[j].offsetFoundAt && compare_pattern( &fp, &(VIConfigureSigs[j]) ) ) {
-				print_gecko("Found [%s] @ 0x%08X len %i\n", VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].Length);			
-				print_gecko("Writing Jump for [%s] at 0x%08X len %i\n", 
-						VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].PatchLength);
-				if(swissSettings.gameVMode == 2) {
-					memcpy((void*)VAR_PROG_MODE,&ForceProgressive[0],ForceProgressive_length);	// Copy our patch (480p)
-					print_gecko("Patched 480p Progressive mode \r\n");
-				}
-				else {
-					memcpy((void*)VAR_PROG_MODE,&ForceProgressive576p[0],ForceProgressive576p_length);	// Copy our patch (576p)
-					print_gecko("Patched 576p Progressive mode \r\n");
-				}
-				memcpy((void*)(VAR_PROG_MODE+40),(void*)(data+i+12),16);	// Copy what we'll overwrite here
-				DCFlushRange((void*)VAR_PROG_MODE, ForceProgressive_length);
-				ICInvalidateRange((void*)VAR_PROG_MODE, ForceProgressive_length);
-				*(unsigned int*)(data +i+ 12) = 0x3C000000 | ((VAR_PROG_MODE+40) >> 16); 		// lis		0, 0x8000 (example)   
-				*(unsigned int*)(data +i+ 16) = 0x60000000 | ((VAR_PROG_MODE+40) & 0xFFFF); 	// ori		0, 0, 0x1800 (example)
-				*(unsigned int*)(data +i+ 20) = 0x7C0903A6; // mtctr	0
-				*(unsigned int*)(data +i+ 24) = 0x4E800421; // bctrl, the function we call will blr
-				if(swissSettings.gameVMode == 4) {
-					switch (j) {
-						case 0: *(unsigned int*)(data+i+ 808) = 0x38A00001; break;	// li		5, 1
-						case 1: *(unsigned int*)(data+i+ 840) = 0x38A00001; break;	// li		5, 1
-						case 2: *(unsigned int*)(data+i+ 956) = 0x38000001; break;	// li		0, 1
-						case 3: *(unsigned int*)(data+i+1032) = 0x38C00001; break;	// li		6, 1
-						case 4: *(unsigned int*)(data+i+1160) = 0x38C00001; break;	// li		6, 1
-						case 5: *(unsigned int*)(data+i+1180) = 0x38E00001; break;	// li		7, 1
+			if( compare_pattern( &fp, &(VIConfigureSigs[j]) ) ) {
+				u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i);
+				print_gecko("Found [%s] @ 0x%08X len %i\n", VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].Length);
+				if(properAddress) {
+					print_gecko("Found:[Hook:%s] @ %08X\n", VIConfigureSigs[j].Name, properAddress);
+					if(swissSettings.gameVMode == 2) {
+						print_gecko("Patched 480p Progressive mode\r\n");
+						top_addr -= ForceProgressive_length;
+						memcpy((void*)top_addr,&ForceProgressive[0],ForceProgressive_length);	// Copy our patch (480p)
+						*(u32*)(top_addr+100) = 0x48000000 | (((properAddress+4) - (top_addr+100)) & 0x03FFFFFC);
+					} else {
+						print_gecko("Patched 576p Progressive mode\r\n");
+						top_addr -= ForceProgressive576p_length;
+						memcpy((void*)top_addr,&ForceProgressive576p[0],ForceProgressive576p_length);	// Copy our patch (576p)
+						*(u32*)(top_addr+72) = 0x48000000 | (((properAddress+4) - (top_addr+72)) & 0x03FFFFFC);
+						
+						switch(j) {
+							case 0: *(u32*)(data+i+ 808) = 0x38A00001; break;	// li		5, 1
+							case 1: *(u32*)(data+i+ 840) = 0x38A00001; break;	// li		5, 1
+							case 2: *(u32*)(data+i+ 956) = 0x38000001; break;	// li		0, 1
+							case 3: *(u32*)(data+i+1032) = 0x38C00001; break;	// li		6, 1
+							case 4: *(u32*)(data+i+1160) = 0x38C00001; break;	// li		6, 1
+							case 5: *(u32*)(data+i+1180) = 0x38E00001; break;	// li		7, 1
+						}
+						Patch_ProgTiming(data, length);	// Patch timing to 576p
 					}
-					Patch_ProgTiming(data, length);	// Patch timing to 576p
+					*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
+					memcpy((void*)VAR_PROG_MODE,render_mode_nodf,sizeof(render_mode_nodf));
+					return 1;
 				}
-				VIConfigureSigs[j].offsetFoundAt = (u32)data+i;
-				return 1;
 			}
 		}
 	}
 	return 0;
 }
 
-int Patch_WideAspect(u8 *data, u32 length) {
-	int i;
+void Patch_WideAspect(u8 *data, u32 length) {
+	int i,j;
+	FuncPattern MTXFrustumSig =
+		{0x98, 4, 16, 0, 0, 0, 0, 0, "C_MTXFrustum", 0};
 	FuncPattern MTXPerspectiveSig =
-		{0xCC, 3, 3, 1, 0, 3, 0, 0, "C_MTXPerspective", 0};
+		{0xCC, 8, 19, 1, 0, 6, 0, 0, "C_MTXPerspective", 0};
+	FuncPattern MTXOrthoSig =
+		{0x94, 4, 16, 0, 0, 0, 0, 0, "C_MTXOrtho", 0};
+	FuncPattern GXSetScissorSigs[3] = {
+		{0xAC, 19, 6, 0, 0, 6, 0, 0, "GXSetScissor_v1", 0},
+		{0x8C, 12, 6, 0, 0, 6, 0, 0, "GXSetScissor_v2", 0},
+		{0x74, 13, 6, 0, 0, 1, 0, 0, "GXSetScissor_v3", 0}
+	};
+	FuncPattern GXSetProjectionSigs[3] = {
+		{0xD0, 30, 17, 0, 1, 0, 0, 0, "GXSetProjection_v1", 0},
+		{0xB0, 22, 17, 0, 1, 0, 0, 0, "GXSetProjection_v2", 0},
+		{0xA0, 18, 11, 0, 1, 0, 0, 0, "GXSetProjection_v3", 0}
+	};
+	
+	top_addr -= ForceWidescreen_length;
+	memcpy((void*)top_addr,&ForceWidescreen[0],ForceWidescreen_length);
 	
 	for( i=0; i < length; i+=4 )
 	{
-		if( *(u32*)(data + i ) != 0x7C0802A6 )
+		if( *(u32*)(data+i) != 0xED241828 )
+			continue;
+		if( find_pattern( (u8*)(data+i), length, &MTXFrustumSig ) )
+		{
+			u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i);
+			print_gecko("Found [%s] @ 0x%08X len %i\n", MTXFrustumSig.Name, (u32)data + i, MTXFrustumSig.Length);
+			if(properAddress) {
+				print_gecko("Found:[Hook:%s] @ %08X\n", MTXFrustumSig.Name, properAddress);
+				*(u32*)(top_addr+84) = 0x48000000 | (((properAddress+4) - (top_addr+84)) & 0x03FFFFFC);
+				*(u32*)(data+i) = 0x48000000 | (((top_addr+52) - properAddress) & 0x03FFFFFC);
+				*(u32*)VAR_FLOAT7_6 = 0x3F955555;
+				MTXFrustumSig.offsetFoundAt = (u32)data+i;
+				break;
+			}
+		}
+	}
+	for( i=0; i < length; i+=4 )
+	{
+		if( *(u32*)(data+i) != 0x7C0802A6 )
 			continue;
 		if( find_pattern( (u8*)(data+i), length, &MTXPerspectiveSig ) )
 		{
 			print_gecko("Found [%s] @ 0x%08X len %i\n", MTXPerspectiveSig.Name, (u32)data + i, MTXPerspectiveSig.Length);
-			*(volatile float *)VAR_ASPECT_FLOAT = 0.5625f;
 			memmove((void*)(data+i+ 28),(void*)(data+i+ 36),44);
 			memmove((void*)(data+i+188),(void*)(data+i+192),16);
-			*(unsigned int*)(data+i+52) = 0x48000001 | ((*(unsigned int*)(data+i+52) & 0x3FFFFFC) + 8);
-			*(unsigned int*)(data+i+72) = 0x3C600000 | (VAR_AREA >> 16);			// lis		3, 0x8180
-			*(unsigned int*)(data+i+76) = 0xC0230000 | (VAR_ASPECT_FLOAT & 0xFFFF);	// lfs		1, -0x1C (3)
-			*(unsigned int*)(data+i+80) = 0xEC240072; // fmuls	1, 4, 1
-			return 1;
+			*(u32*)(data+i+52) += 8;
+			*(u32*)(data+i+72) = 0x3C600000 | (VAR_AREA >> 16); 		// lis		3, 0x8180
+			*(u32*)(data+i+76) = 0xC0230000 | (VAR_FLOAT9_16 & 0xFFFF); // lfs		1, -0x90 (3)
+			*(u32*)(data+i+80) = 0xEC240072; // fmuls	1, 4, 1
+			*(u32*)VAR_FLOAT9_16 = 0x3F100000;
+			MTXPerspectiveSig.offsetFoundAt = (u32)data+i;
+			break;
 		}
 	}
-	return 0;
+	if(swissSettings.forceWideAspect == 2) {
+		for( i=0; i < length; i+=4 )
+		{
+			if( *(u32*)(data+i) != 0xED041828 )
+				continue;
+			if( find_pattern( (u8*)(data+i), length, &MTXOrthoSig ) )
+			{
+				u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i);
+				print_gecko("Found [%s] @ 0x%08X len %i\n", MTXOrthoSig.Name, (u32)data + i, MTXOrthoSig.Length);
+				if(properAddress) {
+					print_gecko("Found:[Hook:%s] @ %08X\n", MTXOrthoSig.Name, properAddress);
+					*(u32*)(top_addr+52) = 0x48000000 | (((properAddress+4) - (top_addr+52)) & 0x03FFFFFC);
+					*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
+					*(u32*)VAR_FLOAT7_6 = 0x3F955555;
+					*(u32*)VAR_FLOAT1_1 = 0x3F800000;
+					break;
+				}
+			}
+		}
+		for( i=0; i < length; i+=4 )
+		{
+			if( (*(u32*)(data+i+4) & 0xFC00FFFF) != 0x38000156 )
+				continue;
+			
+			FuncPattern fp;
+			make_pattern( (u8*)(data+i), length, &fp );
+			
+			for( j=0; j < sizeof(GXSetScissorSigs)/sizeof(FuncPattern); j++ )
+			{
+				if( compare_pattern( &fp, &(GXSetScissorSigs[j]) ) ) {
+					u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i);
+					print_gecko("Found [%s] @ 0x%08X len %i\n", GXSetScissorSigs[j].Name, (u32)data + i, GXSetScissorSigs[j].Length);
+					if(properAddress) {
+						print_gecko("Found:[Hook:%s] @ %08X\n", GXSetScissorSigs[j].Name, properAddress);
+						*(u32*)(top_addr+164) = *(u32*)(data+i);
+						*(u32*)(top_addr+168) = 0x48000000 | (((properAddress+4) - (top_addr+168)) & 0x03FFFFFC);
+						*(u32*)(data+i) = 0x48000000 | (((top_addr+112) - properAddress) & 0x03FFFFFC);
+						break;
+					}
+				}
+			}
+		}
+	}
+	if( !MTXFrustumSig.offsetFoundAt && !MTXPerspectiveSig.offsetFoundAt ) {
+		for( i=0; i < length; i+=4 )
+		{
+			if( *(u32*)(data+i+4) != 0x2C040001 )
+				continue;
+			
+			FuncPattern fp;
+			make_pattern( (u8*)(data+i), length, &fp );
+			
+			for( j=0; j < sizeof(GXSetProjectionSigs)/sizeof(FuncPattern); j++ )
+			{
+				if( compare_pattern( &fp, &(GXSetProjectionSigs[j]) ) )
+				{
+					u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i+12);
+					print_gecko("Found [%s] @ 0x%08X len %i\n", GXSetProjectionSigs[j].Name, (u32)data + i, GXSetProjectionSigs[j].Length);
+					if(properAddress) {
+						print_gecko("Found:[Hook:%s] @ %08X\n", GXSetProjectionSigs[j].Name, properAddress);
+						*(u32*)(top_addr+108) = 0x48000000 | (((properAddress+4) - (top_addr+108)) & 0x03FFFFFC);
+						*(u32*)(data+i+12) = 0x48000000 | (((top_addr+88) - properAddress) & 0x03FFFFFC);
+						*(u32*)VAR_FLOAT3_4 = 0x3F400000;
+						break;
+					}
+				}
+			}
+		}
+	}
 }
 
 /** SDK DVD Audio NULL Driver Replacement

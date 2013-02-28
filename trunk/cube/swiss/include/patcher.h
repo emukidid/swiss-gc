@@ -45,6 +45,8 @@ extern u8 ForceProgressive[];
 extern u32 ForceProgressive_length;
 extern u8 ForceProgressive576p[];
 extern u32 ForceProgressive576p_length;
+extern u8 ForceWidescreen[];
+extern u32 ForceWidescreen_length;
 
 /* SDK CARD library patches */
 extern u8 __CARDSync[];
@@ -134,7 +136,7 @@ extern u32 CARDWriteAsync_length;
 int Patch_DVDHighLevelRead(u8 *data, u32 length);
 int Patch_DVDLowLevelRead(void *addr, u32 length);
 int Patch_ProgVideo(u8 *data, u32 length);
-int Patch_WideAspect(u8 *data, u32 length);
+void Patch_WideAspect(u8 *data, u32 length);
 int Patch_DVDAudioStreaming(u8 *data, u32 length);
 int Patch_DVDStatusFunctions(u8 *data, u32 length);
 void Patch_Fwrite(void *addr, u32 length);
@@ -143,6 +145,7 @@ int Patch_DVDCompareDiskId(u8 *data, u32 length);
 void Patch_GXSetVATZelda(void *addr, u32 length,int mode);
 int Patch_OSRestoreInterrupts(void *addr, u32 length);
 int Patch_CARDFunctions(u8 *data, u32 length);
+u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);
 void install_code();
 u32 get_base_addr();

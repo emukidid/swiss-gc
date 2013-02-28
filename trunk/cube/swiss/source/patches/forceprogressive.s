@@ -6,20 +6,6 @@
 
 .globl ForceProgressive
 ForceProgressive:
-	.long (0x00000000)
-	.long (0x00000606)
-	.long (0x06060606)
-	.long (0x06060606)
-	.long (0x06060606)
-	.long (0x06060606)
-	.long (0x06060606)
-	.long (0x06060000)
-	.long (0x15161500)
-	.long (0x00000000)
-	nop 					# will be filled in with the instructions we wrote over
-	nop 					# will be filled in with the instructions we wrote over
-	nop 					# will be filled in with the instructions we wrote over
-	nop 					# will be filled in with the instructions we wrote over
 	li			%r0, 0
 	lis			%r12, 0x8000
 	stw			%r0, 0x00CC (%r12)
@@ -40,12 +26,13 @@ ForceProgressive:
 	lis			%r12, VAR_AREA
 	mtctr		%r0
 	addi		%r12, %r12, VAR_PROG_MODE-4
-	addi		%r3, %r3, 16
+	addi		%r11, %r3, 20-4
 2:	lwzu		%r0, 4 (%r12)
-	stwu		%r0, 4 (%r3)
+	stwu		%r0, 4 (%r11)
 	bdnz		2b
-	blr
+	mflr		%r0
+	trap
 
-   .globl ForceProgressive_length
-   ForceProgressive_length:
-   .long (ForceProgressive_length - ForceProgressive)
+.globl ForceProgressive_length
+ForceProgressive_length:
+.long (ForceProgressive_length - ForceProgressive)
