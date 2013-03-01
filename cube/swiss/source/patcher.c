@@ -495,6 +495,8 @@ void Patch_WideAspect(u8 *data, u32 length) {
 		{0x98, 4, 16, 0, 0, 0, 0, 0, "C_MTXFrustum", 0};
 	FuncPattern MTXPerspectiveSig =
 		{0xCC, 8, 19, 1, 0, 6, 0, 0, "C_MTXPerspective", 0};
+	FuncPattern MTXLightPerspectiveSig =
+		{0xC8, 8, 15, 1, 0, 8, 0, 0, "C_MTXLightPerspective", 0};
 	FuncPattern MTXOrthoSig =
 		{0x94, 4, 16, 0, 0, 0, 0, 0, "C_MTXOrtho", 0};
 	FuncPattern GXSetScissorSigs[3] = {
@@ -544,6 +546,24 @@ void Patch_WideAspect(u8 *data, u32 length) {
 			*(u32*)(data+i+80) = 0xEC240072; // fmuls	1, 4, 1
 			*(u32*)VAR_FLOAT9_16 = 0x3F100000;
 			MTXPerspectiveSig.offsetFoundAt = (u32)data+i;
+			break;
+		}
+	}
+	for( i=0; i < length; i+=4 )
+	{
+		if( *(u32*)(data+i) != 0x7C0802A6 )
+			continue;
+		if( find_pattern( (u8*)(data+i), length, &MTXLightPerspectiveSig ) )
+		{
+			print_gecko("Found [%s] @ 0x%08X len %i\n", MTXLightPerspectiveSig.Name, (u32)data + i, MTXLightPerspectiveSig.Length);
+			*(u32*)(data+i+36) = *(u32*)(data+i+32);
+			memmove((void*)(data+i+ 28),(void*)(data+i+ 36),60);
+			memmove((void*)(data+i+184),(void*)(data+i+188),16);
+			*(u32*)(data+i+68) += 8;
+			*(u32*)(data+i+88) = 0x3C600000 | (VAR_AREA >> 16); 		// lis		3, 0x8180
+			*(u32*)(data+i+92) = 0xC0230000 | (VAR_FLOAT9_16 & 0xFFFF); // lfs		1, -0x90 (3)
+			*(u32*)(data+i+96) = 0xEC240072; // fmuls	1, 4, 1
+			*(u32*)VAR_FLOAT9_16 = 0x3F100000;
 			break;
 		}
 	}
