@@ -552,9 +552,8 @@ unsigned int load_app(int mode)
 		Patch_Fwrite(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	// Force 480p/576p
-	if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 3)) {
-		Patch_ProgVideo(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-	}
+	Patch_ProgVideo(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+
 	// Force Widescreen
 	if(swissSettings.forceWidescreen) {
 		Patch_WideAspect(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
