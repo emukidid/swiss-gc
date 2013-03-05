@@ -92,7 +92,7 @@ void print_gecko(const char* fmt, ...)
 void ogc_video__reset()
 {
     DrawFrameStart();
-    if(swissSettings.gameVMode==3) {
+    if(swissSettings.gameVMode==4) {
 		switch(GCMDisk.CountryCode) {
 			case 'P': // PAL
 			case 'D': // German
@@ -118,15 +118,15 @@ void ogc_video__reset()
     }
 
     /* set TV mode for current game*/
-	if(swissSettings.gameVMode!=3)	{		//if not autodetect
+	if(swissSettings.gameVMode!=4)	{		//if not autodetect
 		switch(swissSettings.gameVMode) {
-			case 1:
-				newmode = &TVPal576IntDfScale;
-				DrawMessageBox(D_INFO,"Video Mode: PAL 50Hz");
-				break;
 			case 0:
 				newmode = &TVNtsc480IntDf;
 				DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
+				break;
+			case 1:
+				newmode = &TVPal576IntDfScale;
+				DrawMessageBox(D_INFO,"Video Mode: PAL 50Hz");
 				break;
 			case 2:
 				if(VIDEO_HaveComponentCable()) {
@@ -139,7 +139,7 @@ void ogc_video__reset()
 					DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
 				}
 				break;
-			case 4:
+			case 3:
 				if(VIDEO_HaveComponentCable()) {
 					newmode = &TVPal576ProgScale;
 					DrawMessageBox(D_INFO,"Video Mode: PAL 576p");
@@ -551,12 +551,12 @@ unsigned int load_app(int mode)
 	if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
 		Patch_Fwrite(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
-	// 480p Forcing
-	if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 4)) {
+	// Force 480p/576p
+	if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 3)) {
 		Patch_ProgVideo(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	// Force Widescreen
-	if(swissSettings.forceWideAspect) {
+	if(swissSettings.forceWidescreen) {
 		Patch_WideAspect(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	// Emulate memory card via SDGecko
@@ -1215,7 +1215,7 @@ int info_game()
 		swissSettings.muteAudioStreaming = config->muteAudioStreaming;
 		swissSettings.noDiscMode = config->noDiscMode;
 		swissSettings.emulatemc = config->emulatemc;
-		swissSettings.forceWideAspect = config->forceWideAspect;
+		swissSettings.forceWidescreen = config->forceWidescreen;
 	}
 	sprintf(txtbuffer,"%s",(GCMDisk.DVDMagicWord != DVD_MAGIC)?getRelativeName(&curFile.name[0]):GCMDisk.GameName);
 	float scale = GetTextScaleToFitInWidth(txtbuffer,(vmode->fbWidth-78)-75);
