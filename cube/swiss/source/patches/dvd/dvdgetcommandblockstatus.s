@@ -1,4 +1,4 @@
-#include "asm.h"
+#include "../asm.h"
 
 # Return commandBlock->status
 #	s32 DVDGetCommandBlockStatus(DVDCommandBlock* commandBlock);

@@ -1,4 +1,4 @@
-#include "asm.h"
+#include "../asm.h"
 
 /* DVD Struct is as follows (passed in r3):
 struct DVDFileInfo
