@@ -152,7 +152,7 @@ int config_update_file() {
 			sprintf(txtbuffer, "No Disc Mode=%s\r\n",(configEntries[i].noDiscMode ? "Yes":"No"));
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
-			sprintf(txtbuffer, "Force Widescreen=%s\r\n",uiWHackStr[configEntries[i].forceWideAspect]);
+			sprintf(txtbuffer, "Force Widescreen=%s\r\n",forceWidescreenStr[configEntries[i].forceWidescreen]);
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
 			sprintf(txtbuffer, "Emulate Memory Card via SDGecko=%s\r\n\r\n\r\n",(configEntries[i].emulatemc ? "Yes":"No"));
@@ -193,10 +193,10 @@ void config_parse(char *configData) {
 					strcpy(&configEntries[configEntriesCount].status[0],"Unknown");
 					configEntries[configEntriesCount].useHiLevelPatch = 0;
 					configEntries[configEntriesCount].useHiMemArea = 0;
-					configEntries[configEntriesCount].gameVMode = 3;
+					configEntries[configEntriesCount].gameVMode = 4;
 					configEntries[configEntriesCount].muteAudioStreaming = 1;
 					configEntries[configEntriesCount].noDiscMode = 0;
-					configEntries[configEntriesCount].forceWideAspect = 0;
+					configEntries[configEntriesCount].forceWidescreen = 0;
 					configEntries[configEntriesCount].emulatemc = 0;
 				}
 				else if(!strcmp("Name", name)) {
@@ -233,12 +233,12 @@ void config_parse(char *configData) {
 					configEntries[configEntriesCount].noDiscMode = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("Force Widescreen", name)) {
-					if(!strcmp(uiWHackStr[0], value))
-						configEntries[configEntriesCount].forceWideAspect = 0;
-					else if(!strcmp(uiWHackStr[1], value))
-						configEntries[configEntriesCount].forceWideAspect = 1;
-					else if(!strcmp(uiWHackStr[2], value))
-						configEntries[configEntriesCount].forceWideAspect = 2;
+					if(!strcmp(forceWidescreenStr[0], value))
+						configEntries[configEntriesCount].forceWidescreen = 0;
+					else if(!strcmp(forceWidescreenStr[1], value))
+						configEntries[configEntriesCount].forceWidescreen = 1;
+					else if(!strcmp(forceWidescreenStr[2], value))
+						configEntries[configEntriesCount].forceWidescreen = 2;
 				}
 				else if(!strcmp("Emulate Memory Card via SDGecko", name)) {
 					configEntries[configEntriesCount].emulatemc = !strcmp("Yes", value) ? 1:0;
@@ -306,10 +306,10 @@ void config_find(ConfigEntry *entry) {
 	strcpy(entry->status,"Unknown");
 	entry->useHiLevelPatch = 0;
 	entry->useHiMemArea = 0;
-	entry->gameVMode = 3;
+	entry->gameVMode = 4;
 	entry->muteAudioStreaming = 1;
 	entry->noDiscMode = 0;
-	entry->forceWideAspect = 0;
+	entry->forceWidescreen = 0;
 	entry->emulatemc = 0;
 	// Add this new entry to our collection
 	memcpy(&configEntries[configEntriesCount], entry, sizeof(ConfigEntry));

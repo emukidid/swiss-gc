@@ -440,7 +440,7 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure_v5", 0},
 		{0x804, 110, 44, 13, 49, 63, 0, 0, "VIConfigure_v6", 0}
 	};
-	if((swissSettings.gameVMode != 2) && (swissSettings.gameVMode != 4)) {
+	if((swissSettings.gameVMode != 2) && (swissSettings.gameVMode != 3)) {
 		return 0;
 	}
 	for( i=0; i < length; i+=4 )
@@ -510,9 +510,6 @@ void Patch_WideAspect(u8 *data, u32 length) {
 		{0xA0, 18, 11, 0, 1, 0, 0, 0, "GXSetProjection_v3", 0}
 	};
 	
-	top_addr -= ForceWidescreen_length;
-	memcpy((void*)top_addr,&ForceWidescreen[0],ForceWidescreen_length);
-	
 	for( i=0; i < length; i+=4 )
 	{
 		if( *(u32*)(data+i) != 0xED241828 )
@@ -523,8 +520,10 @@ void Patch_WideAspect(u8 *data, u32 length) {
 			print_gecko("Found [%s] @ 0x%08X len %i\n", MTXFrustumSig.Name, (u32)data + i, MTXFrustumSig.Length);
 			if(properAddress) {
 				print_gecko("Found:[Hook:%s] @ %08X\n", MTXFrustumSig.Name, properAddress);
-				*(u32*)(top_addr+84) = 0x48000000 | (((properAddress+4) - (top_addr+84)) & 0x03FFFFFC);
-				*(u32*)(data+i) = 0x48000000 | (((top_addr+52) - properAddress) & 0x03FFFFFC);
+				top_addr -= MTXFrustumPre_length;
+				memcpy((void*)top_addr,&MTXFrustumPre[0],MTXFrustumPre_length);
+				*(u32*)(top_addr+28) = 0x48000000 | (((properAddress+4) - (top_addr+28)) & 0x03FFFFFC);
+				*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
 				*(u32*)VAR_FLOAT7_6 = 0x3F955555;
 				MTXFrustumSig.offsetFoundAt = (u32)data+i;
 				break;
@@ -567,7 +566,7 @@ void Patch_WideAspect(u8 *data, u32 length) {
 			break;
 		}
 	}
-	if(swissSettings.forceWideAspect == 2) {
+	if(swissSettings.forceWidescreen == 2) {
 		for( i=0; i < length; i+=4 )
 		{
 			if( *(u32*)(data+i) != 0xED041828 )
@@ -578,10 +577,11 @@ void Patch_WideAspect(u8 *data, u32 length) {
 				print_gecko("Found [%s] @ 0x%08X len %i\n", MTXOrthoSig.Name, (u32)data + i, MTXOrthoSig.Length);
 				if(properAddress) {
 					print_gecko("Found:[Hook:%s] @ %08X\n", MTXOrthoSig.Name, properAddress);
+					top_addr -= MTXOrthoPre_length;
+					memcpy((void*)top_addr,&MTXOrthoPre[0],MTXOrthoPre_length);
 					*(u32*)(top_addr+52) = 0x48000000 | (((properAddress+4) - (top_addr+52)) & 0x03FFFFFC);
 					*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
 					*(u32*)VAR_FLOAT7_6 = 0x3F955555;
-					*(u32*)VAR_FLOAT1_1 = 0x3F800000;
 					break;
 				}
 			}
@@ -601,9 +601,11 @@ void Patch_WideAspect(u8 *data, u32 length) {
 					print_gecko("Found [%s] @ 0x%08X len %i\n", GXSetScissorSigs[j].Name, (u32)data + i, GXSetScissorSigs[j].Length);
 					if(properAddress) {
 						print_gecko("Found:[Hook:%s] @ %08X\n", GXSetScissorSigs[j].Name, properAddress);
-						*(u32*)(top_addr+164) = *(u32*)(data+i);
-						*(u32*)(top_addr+168) = 0x48000000 | (((properAddress+4) - (top_addr+168)) & 0x03FFFFFC);
-						*(u32*)(data+i) = 0x48000000 | (((top_addr+112) - properAddress) & 0x03FFFFFC);
+						top_addr -= GXSetScissorPre_length;
+						memcpy((void*)top_addr,&GXSetScissorPre[0],GXSetScissorPre_length);
+						*(u32*)(top_addr+52) = *(u32*)(data+i);
+						*(u32*)(top_addr+56) = 0x48000000 | (((properAddress+4) - (top_addr+56)) & 0x03FFFFFC);
+						*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
 						break;
 					}
 				}
@@ -627,8 +629,10 @@ void Patch_WideAspect(u8 *data, u32 length) {
 					print_gecko("Found [%s] @ 0x%08X len %i\n", GXSetProjectionSigs[j].Name, (u32)data + i, GXSetProjectionSigs[j].Length);
 					if(properAddress) {
 						print_gecko("Found:[Hook:%s] @ %08X\n", GXSetProjectionSigs[j].Name, properAddress);
-						*(u32*)(top_addr+108) = 0x48000000 | (((properAddress+4) - (top_addr+108)) & 0x03FFFFFC);
-						*(u32*)(data+i+12) = 0x48000000 | (((top_addr+88) - properAddress) & 0x03FFFFFC);
+						top_addr -= GXSetProjectionPre_length;
+						memcpy((void*)top_addr,&GXSetProjectionPre[0],GXSetProjectionPre_length);
+						*(u32*)(top_addr+20) = 0x48000000 | (((properAddress+4) - (top_addr+20)) & 0x03FFFFFC);
+						*(u32*)(data+i+12) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
 						*(u32*)VAR_FLOAT3_4 = 0x3F400000;
 						break;
 					}

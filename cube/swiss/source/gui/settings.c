@@ -15,8 +15,8 @@
 #include "config.h"
 
 SwissSettings tempSettings;
-char *uiVModeStr[] = {"NTSC", "PAL", "480p", "Auto", "576p"};
-char *uiWHackStr[] = {"None", "Persp", "Full"};
+char *uiVModeStr[] = {"NTSC", "PAL", "480p", "576p", "Auto"};
+char *forceWidescreenStr[] = {"No", "Persp", "Full"};
 syssram* sram;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
@@ -82,19 +82,19 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Current Game Settings (3/3):");
 		WriteFontStyled(30, 110, "Force Video Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 110, -1, 135, uiVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(480, 110, -1, 135, uiVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 140, "Force Widescreen:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 140, -1, 165, uiWHackStr[swissSettings.forceWideAspect], option == 1 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(480, 140, -1, 165, forceWidescreenStr[swissSettings.forceWidescreen], option == 1 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 170, "Patch Type:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 170, -1, 195, swissSettings.useHiLevelPatch ? "High":"Low", option == 2 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(480, 170, -1, 195, swissSettings.useHiLevelPatch ? "High":"Low", option == 2 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 200, "If Low Level, Memory Location:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 200, -1, 225, swissSettings.useHiMemArea ? "High":"Low", option == 3 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(480, 200, -1, 225, swissSettings.useHiMemArea ? "High":"Low", option == 3 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 230, "Mute Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 230, -1, 255, swissSettings.muteAudioStreaming ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(480, 230, -1, 255, swissSettings.muteAudioStreaming ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 260, "No Disc Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 260, -1, 285, swissSettings.noDiscMode ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(480, 260, -1, 285, swissSettings.noDiscMode ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 290, "Emulate Memory Card via SDGecko:", 1.0f, false,  file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(470, 290, -1, 315, swissSettings.emulatemc ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(480, 290, -1, 315, swissSettings.emulatemc ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	if(page_num != 0) {
 		DrawSelectableButton(40, 390, -1, 420, "Back", 
@@ -166,11 +166,11 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 					swissSettings.gameVMode = 4;
 			break;
 			case 1:
-				swissSettings.forceWideAspect += direction;
-				if(swissSettings.forceWideAspect > 2)
-					swissSettings.forceWideAspect = 0;
-				if(swissSettings.forceWideAspect < 0)
-					swissSettings.forceWideAspect = 2;
+				swissSettings.forceWidescreen += direction;
+				if(swissSettings.forceWidescreen > 2)
+					swissSettings.forceWidescreen = 0;
+				if(swissSettings.forceWidescreen < 0)
+					swissSettings.forceWidescreen = 2;
 			break;
 			case 2:
 				swissSettings.useHiLevelPatch ^= 1;
@@ -274,7 +274,7 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 					config->gameVMode = swissSettings.gameVMode;
 					config->muteAudioStreaming = swissSettings.muteAudioStreaming;
 					config->noDiscMode = swissSettings.noDiscMode;
-					config->forceWideAspect = swissSettings.forceWideAspect;
+					config->forceWidescreen = swissSettings.forceWidescreen;
 					config->emulatemc = swissSettings.emulatemc;
 				}
 				else {

@@ -45,8 +45,14 @@ extern u8 ForceProgressive[];
 extern u32 ForceProgressive_length;
 extern u8 ForceProgressive576p[];
 extern u32 ForceProgressive576p_length;
-extern u8 ForceWidescreen[];
-extern u32 ForceWidescreen_length;
+extern u8 GXSetProjectionPre[];
+extern u32 GXSetProjectionPre_length;
+extern u8 GXSetScissorPre[];
+extern u32 GXSetScissorPre_length;
+extern u8 MTXFrustumPre[];
+extern u32 MTXFrustumPre_length;
+extern u8 MTXOrthoPre[];
+extern u32 MTXOrthoPre_length;
 
 /* SDK CARD library patches */
 extern u8 __CARDSync[];
