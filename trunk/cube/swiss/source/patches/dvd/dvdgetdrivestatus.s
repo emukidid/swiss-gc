@@ -1,6 +1,6 @@
-#include "asm.h"
+#include "../asm.h"
 #define _LANGUAGE_ASSEMBLY
-#include "../../../reservedarea.h"
+#include "../../../../reservedarea.h"
 
 # Get drive status
 # return value in r3 is 

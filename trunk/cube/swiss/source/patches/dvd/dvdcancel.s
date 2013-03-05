@@ -1,4 +1,4 @@
-#include "asm.h"
+#include "../asm.h"
 
 # Issue cancel command synchronously - and return 0.
 #	s32 DVDCancel(DVDCommandBlock* block);

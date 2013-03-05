@@ -1,7 +1,7 @@
 # Swap replacement read disk lba base between disc 1 and disc 1 (or disc 1 and disc 1 if no disc 2) and return ok status
-#include "asm.h"
+#include "../asm.h"
 #define _LANGUAGE_ASSEMBLY
-#include "../../../reservedarea.h"
+#include "../../../../reservedarea.h"
 
 .globl DVDCompareDiskId
 DVDCompareDiskId:

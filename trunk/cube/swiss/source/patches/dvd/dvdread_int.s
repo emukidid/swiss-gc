@@ -1,4 +1,4 @@
-#include "asm.h"
+#include "../asm.h"
 
 # Issue read command synchronously - and return len.
 #
