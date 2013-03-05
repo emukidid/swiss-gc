@@ -175,17 +175,23 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 	int i, patched_buf_num = 0;
+	
+	// Go through all the possible files we think need patching..
 	for(i = 0; i < numToPatch; i++) {	
-		// Chunk it out
+		int patched = 0;
+		// File handle for a patch we might need to write
+		file_handle patchFile;
+		memset(&patchFile, 0, sizeof(file_handle));
+		
+		// Chunk the file out in 8mb chunks or less
 		int ofs;
 		for(ofs = 0; ofs < filesToPatch[i].size; ofs+=PATCH_CHUNK_SIZE) {
 			int sizeToRead = (ofs+PATCH_CHUNK_SIZE > filesToPatch[i].size) ? (filesToPatch[i].size-ofs):PATCH_CHUNK_SIZE;
 			u8 *buffer = (u8*)memalign(32, sizeToRead);
+			
 			deviceHandler_seekFile(file,filesToPatch[i].offset+ofs,DEVICE_HANDLER_SEEK_SET);
 			deviceHandler_readFile(file,buffer,sizeToRead);
-			int patched = 0;
-			//print_gecko("Patch %s mem %08X ofs %08X size %08X\r\n",
-			//		filesToPatch[i].name,(u32)buffer,filesToPatch[i].offset+ofs,sizeToRead);
+
 			if(swissSettings.useHiLevelPatch) {
 				patched += Patch_DVDHighLevelRead(buffer, sizeToRead);
 			} else {
@@ -194,6 +200,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			patched += Patch_DVDCompareDiskId(buffer, sizeToRead);
 			patched += Patch_ProgVideo(buffer, sizeToRead);
 			patched += Patch_DVDAudioStreaming(buffer, sizeToRead);
+			if(swissSettings.forceWidescreen)
+				Patch_WideAspect(buffer, sizeToRead);
 			if(swissSettings.useHiLevelPatch || swissSettings.emulatemc)
 				Patch_OSRestoreInterrupts(buffer, sizeToRead);
 			if(swissSettings.emulatemc)
@@ -204,33 +212,34 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 				DrawMessageBox(D_INFO,txtbuffer);
 				DrawFrameFinish();
 
-				char parentName[1024];
-				memset(&parentName, 0, 1024);
-				sprintf(&parentName[0],"%s.patches",file->name);
+				char patchDirName[1024];
+				memset(&patchDirName, 0, 1024);
+				sprintf(&patchDirName[0],"%s.patches",file->name);
 				
 				// Make a patches dir if we don't have one already
-				if(mkdir(&parentName[0], 0777) != 0) {
+				if(mkdir(&patchDirName[0], 0777) != 0) {
 					if(errno != EEXIST) {
 						return -2;
 					}
 				}
 					
 				// Write a .patchX file out for this game with the patched buffer inside.
-				print_gecko("Creating patch file chunk: %s.patches/%i\r\n", file->name, patched_buf_num);
-				file_handle patchFile;
-				memset(&patchFile, 0, sizeof(file_handle));
-				sprintf(&patchFile.name[0], "%s.patches/%i",file->name, patched_buf_num);
+				print_gecko("Writing patch file: %s.patches/%i %i bytes\r\n", file->name, patched_buf_num, sizeToRead);
+				sprintf(&patchFile.name[0], "%s/%i",patchDirName, patched_buf_num);
 				
 				deviceHandler_writeFile(&patchFile,buffer,sizeToRead);
-				u32 magic = SWISS_MAGIC;
-				u32 fullOffset = filesToPatch[i].offset+ofs;
-				deviceHandler_writeFile(&patchFile,&fullOffset,4);
-				deviceHandler_writeFile(&patchFile,&sizeToRead,4);
-				deviceHandler_writeFile(&patchFile,&magic,4);
-				deviceHandler_deinit(&patchFile);
-				patched_buf_num++;
+				
+
 			}
 			free(buffer);
+		}
+		if(patchFile.name[0]) {
+			u32 magic = SWISS_MAGIC;
+			deviceHandler_writeFile(&patchFile,&filesToPatch[i].offset,4);
+			deviceHandler_writeFile(&patchFile,&filesToPatch[i].size,4);
+			deviceHandler_writeFile(&patchFile,&magic,4);
+			deviceHandler_deinit(&patchFile);
+			patched_buf_num++;
 		}
 	}
 	return 0;
