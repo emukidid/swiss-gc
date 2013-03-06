@@ -202,6 +202,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			patched += Patch_DVDAudioStreaming(buffer, sizeToRead);
 			if(swissSettings.forceWidescreen)
 				Patch_WideAspect(buffer, sizeToRead);
+			if(swissSettings.forceAnisotropy)
+				Patch_TexFilt(buffer, sizeToRead);
 			if(swissSettings.useHiLevelPatch || swissSettings.emulatemc)
 				Patch_OSRestoreInterrupts(buffer, sizeToRead);
 			if(swissSettings.emulatemc)
