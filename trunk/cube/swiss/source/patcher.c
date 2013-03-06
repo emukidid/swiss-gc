@@ -417,17 +417,10 @@ void Patch_ProgTiming(void *addr, u32 length) {
 	}
 }
 
-u8 render_mode_nodf[] = {
-	0x00,0x00,0x00,0x00,
-	0x00,0x00,0x06,0x06,
-	0x06,0x06,0x06,0x06,
-	0x06,0x06,0x06,0x06,
-	0x06,0x06,0x06,0x06,
-	0x06,0x06,0x06,0x06,
-	0x06,0x06,0x06,0x06,
-	0x06,0x06,0x00,0x00,
-	0x15,0x16,0x15,0x00,
-	0x00,0x00,0x00,0x00
+u32 render_mode_objs[3][10] = {
+	{0x00000000,0x00000606,0x06060606,0x06060606,0x06060606,0x06060606,0x06060606,0x06060000,0x15161500,0x00000000},
+	{0x00000000,0x00000606,0x06060606,0x06060606,0x06060606,0x06060606,0x06060606,0x06060408,0x0C100C08,0x04000000},
+	{0x00000000,0x00000606,0x06060606,0x06060606,0x06060606,0x06060606,0x06060606,0x06060808,0x0A0C0A08,0x08000000}
 };
 
 int Patch_ProgVideo(u8 *data, u32 length) {
@@ -480,7 +473,7 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 						Patch_ProgTiming(data, length);	// Patch timing to 576p
 					}
 					*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
-					memcpy((void*)VAR_PROG_MODE,render_mode_nodf,sizeof(render_mode_nodf));
+					memcpy((void*)VAR_PROG_MODE,render_mode_objs[swissSettings.softProgressive],sizeof(u32)*10);
 					return 1;
 				}
 			}
@@ -640,6 +633,42 @@ void Patch_WideAspect(u8 *data, u32 length) {
 			}
 		}
 	}
+}
+
+int Patch_TexFilt(u8 *data, u32 length)
+{
+	int i,j;
+	FuncPattern GXInitTexObjLODSigs[2] = {
+		{0x190, 29, 11, 0, 11, 11, 0, 0, "GXInitTexObjLOD_v1", 0},
+		{0x160, 30, 11, 0, 11,  6, 0, 0, "GXInitTexObjLOD_v2", 0}
+	};
+	
+	for( i=0; i < length; i+=4 )
+	{
+		if( *(u32*)(data+i+8) != 0xFC030040 )
+			continue;
+		
+		FuncPattern fp;
+		make_pattern( (u8*)(data+i), length, &fp );
+		
+		for( j=0; j < sizeof(GXInitTexObjLODSigs)/sizeof(FuncPattern); j++ )
+		{
+			if( compare_pattern( &fp, &(GXInitTexObjLODSigs[j]) ) )
+			{
+				u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i+8);
+				print_gecko("Found [%s] @ 0x%08X len %i\n", GXInitTexObjLODSigs[j].Name, (u32)data + i, GXInitTexObjLODSigs[j].Length);
+				if(properAddress) {
+					print_gecko("Found:[Hook:%s] @ %08X\n", GXInitTexObjLODSigs[j].Name, properAddress);
+					top_addr -= GXInitTexObjLODPre_length;
+					memcpy((void*)top_addr,&GXInitTexObjLODPre[0],GXInitTexObjLODPre_length);
+					*(u32*)(top_addr+32) = 0x48000000 | (((properAddress+4) - (top_addr+32)) & 0x03FFFFFC);
+					*(u32*)(data+i+8) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
+					return 1;
+				}
+			}
+		}
+	}
+	return 0;
 }
 
 /** SDK DVD Audio NULL Driver Replacement

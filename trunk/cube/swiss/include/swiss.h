@@ -73,7 +73,9 @@ typedef struct {
 	int exiSpeed;
 	int uiVMode;	// What mode to force Swiss into
 	int gameVMode;	// What mode to force a Game into
+	int softProgressive;
 	int forceWidescreen;
+	int forceAnisotropy;
 	int emulatemc;	// Emulate memcard via SDGecko
 	int wiirdDebug;	// Enable WiiRD debug
 	int muteAudioStreaming;

@@ -14,7 +14,9 @@ typedef struct {
 	int useHiLevelPatch;
 	int useHiMemArea;
 	int gameVMode;
+	int softProgressive;
 	int forceWidescreen;
+	int forceAnisotropy;
 	int emulatemc;
 	int muteAudioStreaming;
 	int noDiscMode;

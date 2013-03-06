@@ -146,6 +146,9 @@ int config_update_file() {
 			sprintf(txtbuffer, "Force Video Mode=%s\r\n",uiVModeStr[configEntries[i].gameVMode]);
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
+			sprintf(txtbuffer, "Soft Progressive=%s\r\n",softProgressiveStr[configEntries[i].softProgressive]);
+			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+			
 			sprintf(txtbuffer, "Mute Audio Streaming=%s\r\n",(configEntries[i].muteAudioStreaming ? "Yes":"No"));
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
@@ -153,6 +156,9 @@ int config_update_file() {
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
 			sprintf(txtbuffer, "Force Widescreen=%s\r\n",forceWidescreenStr[configEntries[i].forceWidescreen]);
+			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+			
+			sprintf(txtbuffer, "Force Anisotropy=%s\r\n",(configEntries[i].forceAnisotropy ? "Yes":"No"));
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
 			sprintf(txtbuffer, "Emulate Memory Card via SDGecko=%s\r\n\r\n\r\n",(configEntries[i].emulatemc ? "Yes":"No"));
@@ -194,9 +200,11 @@ void config_parse(char *configData) {
 					configEntries[configEntriesCount].useHiLevelPatch = 0;
 					configEntries[configEntriesCount].useHiMemArea = 0;
 					configEntries[configEntriesCount].gameVMode = 4;
+					configEntries[configEntriesCount].softProgressive = 0;
 					configEntries[configEntriesCount].muteAudioStreaming = 1;
 					configEntries[configEntriesCount].noDiscMode = 0;
 					configEntries[configEntriesCount].forceWidescreen = 0;
+					configEntries[configEntriesCount].forceAnisotropy = 0;
 					configEntries[configEntriesCount].emulatemc = 0;
 				}
 				else if(!strcmp("Name", name)) {
@@ -226,6 +234,14 @@ void config_parse(char *configData) {
 					else if(!strcmp(uiVModeStr[4], value))
 						configEntries[configEntriesCount].gameVMode = 4;
 				}
+				else if(!strcmp("Soft Progressive", name)) {
+					if(!strcmp(softProgressiveStr[0], value))
+						configEntries[configEntriesCount].softProgressive = 0;
+					else if(!strcmp(softProgressiveStr[1], value))
+						configEntries[configEntriesCount].softProgressive = 1;
+					else if(!strcmp(softProgressiveStr[2], value))
+						configEntries[configEntriesCount].softProgressive = 2;
+				}
 				else if(!strcmp("Mute Audio Streaming", name)) {
 					configEntries[configEntriesCount].muteAudioStreaming = !strcmp("Yes", value) ? 1:0;
 				}
@@ -239,6 +255,9 @@ void config_parse(char *configData) {
 						configEntries[configEntriesCount].forceWidescreen = 1;
 					else if(!strcmp(forceWidescreenStr[2], value))
 						configEntries[configEntriesCount].forceWidescreen = 2;
+				}
+				else if(!strcmp("Force Anisotropy", name)) {
+					configEntries[configEntriesCount].forceAnisotropy = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("Emulate Memory Card via SDGecko", name)) {
 					configEntries[configEntriesCount].emulatemc = !strcmp("Yes", value) ? 1:0;
@@ -307,9 +326,11 @@ void config_find(ConfigEntry *entry) {
 	entry->useHiLevelPatch = 0;
 	entry->useHiMemArea = 0;
 	entry->gameVMode = 4;
+	entry->softProgressive = 0;
 	entry->muteAudioStreaming = 1;
 	entry->noDiscMode = 0;
 	entry->forceWidescreen = 0;
+	entry->forceAnisotropy = 0;
 	entry->emulatemc = 0;
 	// Add this new entry to our collection
 	memcpy(&configEntries[configEntriesCount], entry, sizeof(ConfigEntry));

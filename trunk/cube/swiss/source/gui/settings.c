@@ -16,11 +16,12 @@
 
 SwissSettings tempSettings;
 char *uiVModeStr[] = {"NTSC", "PAL", "480p", "576p", "Auto"};
-char *forceWidescreenStr[] = {"No", "Persp", "Full"};
+char *softProgressiveStr[] = {"No", "Light", "Yes"};
+char *forceWidescreenStr[] = {"No", "Persp", "Yes"};
 syssram* sram;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {7, 8, 9};
+int settings_count_pp[3] = {7, 8, 11};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
@@ -83,18 +84,22 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 		WriteFont(30, 65, "Current Game Settings (3/3):");
 		WriteFontStyled(30, 110, "Force Video Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
 		DrawSelectableButton(480, 110, -1, 135, uiVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 140, "Force Widescreen:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 140, -1, 165, forceWidescreenStr[swissSettings.forceWidescreen], option == 1 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 170, "Patch Type:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 170, -1, 195, swissSettings.useHiLevelPatch ? "High":"Low", option == 2 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 200, "If Low Level, Memory Location:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 200, -1, 225, swissSettings.useHiMemArea ? "High":"Low", option == 3 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 230, "Mute Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 230, -1, 255, swissSettings.muteAudioStreaming ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 260, "No Disc Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 260, -1, 285, swissSettings.noDiscMode ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 290, "Emulate Memory Card via SDGecko:", 1.0f, false,  file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 290, -1, 315, swissSettings.emulatemc ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 140, "If Progressive, Soften:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 140, -1, 165, softProgressiveStr[swissSettings.softProgressive], option == 1 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 170, "Force Widescreen:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 170, -1, 195, forceWidescreenStr[swissSettings.forceWidescreen], option == 2 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 200, "Force Anisotropy:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 200, -1, 225, swissSettings.forceAnisotropy ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 230, "Patch Type:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 230, -1, 255, swissSettings.useHiLevelPatch ? "High":"Low", option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 260, "If Low Level, Memory Location:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 260, -1, 285, swissSettings.useHiMemArea ? "High":"Low", option == 5 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 290, "Mute Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 290, -1, 315, swissSettings.muteAudioStreaming ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 320, "No Disc Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 320, -1, 345, swissSettings.noDiscMode ? "Yes":"No", option == 7 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 350, "Emulate Memory Card via SDGecko:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 350, -1, 375, swissSettings.emulatemc ? "Yes":"No", option == 8 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	if(page_num != 0) {
 		DrawSelectableButton(40, 390, -1, 420, "Back", 
@@ -166,25 +171,35 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 					swissSettings.gameVMode = 4;
 			break;
 			case 1:
+				swissSettings.softProgressive += direction;
+				if(swissSettings.softProgressive > 2)
+					swissSettings.softProgressive = 0;
+				if(swissSettings.softProgressive < 0)
+					swissSettings.softProgressive = 2;
+			break;
+			case 2:
 				swissSettings.forceWidescreen += direction;
 				if(swissSettings.forceWidescreen > 2)
 					swissSettings.forceWidescreen = 0;
 				if(swissSettings.forceWidescreen < 0)
 					swissSettings.forceWidescreen = 2;
 			break;
-			case 2:
-				swissSettings.useHiLevelPatch ^= 1;
-			break;
 			case 3:
-				swissSettings.useHiMemArea ^= 1;
+				swissSettings.forceAnisotropy ^= 1;
 			break;
 			case 4:
-				swissSettings.muteAudioStreaming ^= 1;
+				swissSettings.useHiLevelPatch ^= 1;
 			break;
 			case 5:
-				swissSettings.noDiscMode ^= 1;
+				swissSettings.useHiMemArea ^= 1;
 			break;
 			case 6:
+				swissSettings.muteAudioStreaming ^= 1;
+			break;
+			case 7:
+				swissSettings.noDiscMode ^= 1;
+			break;
+			case 8:
 				swissSettings.emulatemc ^= 1;
 			break;
 		}
@@ -272,9 +287,11 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 					config->useHiLevelPatch = swissSettings.useHiLevelPatch;
 					config->useHiMemArea = swissSettings.useHiMemArea;
 					config->gameVMode = swissSettings.gameVMode;
+					config->softProgressive = swissSettings.softProgressive;
 					config->muteAudioStreaming = swissSettings.muteAudioStreaming;
 					config->noDiscMode = swissSettings.noDiscMode;
 					config->forceWidescreen = swissSettings.forceWidescreen;
+					config->forceAnisotropy = swissSettings.forceAnisotropy;
 					config->emulatemc = swissSettings.emulatemc;
 				}
 				else {

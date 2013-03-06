@@ -558,6 +558,10 @@ unsigned int load_app(int mode)
 	if(swissSettings.forceWidescreen) {
 		Patch_WideAspect(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
+	// Force Anisotropy
+	if(swissSettings.forceAnisotropy) {
+		Patch_TexFilt(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	}
 	// Emulate memory card via SDGecko
 	if(swissSettings.emulatemc) {
 		Patch_CARDFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
@@ -1211,10 +1215,12 @@ int info_game()
 		swissSettings.useHiLevelPatch = config->useHiLevelPatch;
 		swissSettings.useHiMemArea = config->useHiMemArea;
 		swissSettings.gameVMode = config->gameVMode;
+		swissSettings.softProgressive = config->softProgressive;
 		swissSettings.muteAudioStreaming = config->muteAudioStreaming;
 		swissSettings.noDiscMode = config->noDiscMode;
 		swissSettings.emulatemc = config->emulatemc;
 		swissSettings.forceWidescreen = config->forceWidescreen;
+		swissSettings.forceAnisotropy = config->forceAnisotropy;
 	}
 	sprintf(txtbuffer,"%s",(GCMDisk.DVDMagicWord != DVD_MAGIC)?getRelativeName(&curFile.name[0]):GCMDisk.GameName);
 	float scale = GetTextScaleToFitInWidth(txtbuffer,(vmode->fbWidth-78)-75);
