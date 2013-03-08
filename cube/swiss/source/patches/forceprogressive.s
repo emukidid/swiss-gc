@@ -12,10 +12,9 @@ ForceProgressive:
 	li			%r0, 2
 	stw			%r0, 0 (%r3)
 	lhz			%r0, 8 (%r3)
-	cmplwi		%r0, 480
+	cmpwi		%r0, 480
 	ble			1f
 	li			%r0, 480
-	sth			%r0, 6 (%r3)
 	sth			%r0, 8 (%r3)
 	sth			%r0, 16 (%r3)
 1:	lhz			%r0, 16 (%r3)
