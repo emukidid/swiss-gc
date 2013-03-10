@@ -11,11 +11,11 @@ MTXOrthoPre:
 	crorc		4*%cr0+eq, 4*%cr0+eq, 4*%cr1+eq
 	beq			1f
 	lis			%r12, VAR_AREA
-	lfs			%f0, VAR_FLOAT7_6 (%r12)
-	fmr			%f13, %f4
-	fmuls		%f4, %f4, %f0
-	fsubs		%f0, %f4, %f13
-	fsubs		%f3, %f3, %f0
+	lfs			%f0, VAR_FLOAT1_6 (%r12)
+	fsubs		%f8, %f4, %f3
+	fmuls		%f13, %f8, %f0
+	fadds		%f4, %f4, %f13
+	fsubs		%f3, %f3, %f13
 1:	fsubs		%f8, %f4, %f3
 	trap
 
