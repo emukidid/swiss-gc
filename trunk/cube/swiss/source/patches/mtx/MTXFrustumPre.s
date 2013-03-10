@@ -5,11 +5,11 @@
 .globl MTXFrustumPre
 MTXFrustumPre:
 	lis			%r12, VAR_AREA
-	lfs			%f0, VAR_FLOAT7_6 (%r12)
-	fmr			%f13, %f4
-	fmuls		%f4, %f4, %f0
-	fsubs		%f0, %f4, %f13
-	fsubs		%f3, %f3, %f0
+	lfs			%f0, VAR_FLOAT1_6 (%r12)
+	fsubs		%f9, %f4, %f3
+	fmuls		%f13, %f9, %f0
+	fadds		%f4, %f4, %f13
+	fsubs		%f3, %f3, %f13
 	fsubs		%f9, %f4, %f3
 	trap
 

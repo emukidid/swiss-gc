@@ -517,7 +517,7 @@ void Patch_WideAspect(u8 *data, u32 length) {
 				memcpy((void*)top_addr,&MTXFrustumPre[0],MTXFrustumPre_length);
 				*(u32*)(top_addr+28) = 0x48000000 | (((properAddress+4) - (top_addr+28)) & 0x03FFFFFC);
 				*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
-				*(u32*)VAR_FLOAT7_6 = 0x3F955555;
+				*(u32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
 				MTXFrustumSig.offsetFoundAt = (u32)data+i;
 				break;
 			}
@@ -574,7 +574,7 @@ void Patch_WideAspect(u8 *data, u32 length) {
 					memcpy((void*)top_addr,&MTXOrthoPre[0],MTXOrthoPre_length);
 					*(u32*)(top_addr+52) = 0x48000000 | (((properAddress+4) - (top_addr+52)) & 0x03FFFFFC);
 					*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
-					*(u32*)VAR_FLOAT7_6 = 0x3F955555;
+					*(u32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
 					break;
 				}
 			}
@@ -596,8 +596,8 @@ void Patch_WideAspect(u8 *data, u32 length) {
 						print_gecko("Found:[Hook:%s] @ %08X\n", GXSetScissorSigs[j].Name, properAddress);
 						top_addr -= GXSetScissorPre_length;
 						memcpy((void*)top_addr,&GXSetScissorPre[0],GXSetScissorPre_length);
-						*(u32*)(top_addr+52) = *(u32*)(data+i);
-						*(u32*)(top_addr+56) = 0x48000000 | (((properAddress+4) - (top_addr+56)) & 0x03FFFFFC);
+						*(u32*)(top_addr+44) = *(u32*)(data+i);
+						*(u32*)(top_addr+48) = 0x48000000 | (((properAddress+4) - (top_addr+48)) & 0x03FFFFFC);
 						*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
 						break;
 					}
