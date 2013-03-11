@@ -486,6 +486,8 @@ void Patch_WideAspect(u8 *data, u32 length) {
 	int i,j;
 	FuncPattern MTXFrustumSig =
 		{0x98, 4, 16, 0, 0, 0, 0, 0, "C_MTXFrustum", 0};
+	FuncPattern MTXLightFrustumSig =
+		{0x90, 6, 13, 0, 0, 0, 0, 0, "C_MTXLightFrustum", 0};
 	FuncPattern MTXPerspectiveSig =
 		{0xCC, 8, 19, 1, 0, 6, 0, 0, "C_MTXPerspective", 0};
 	FuncPattern MTXLightPerspectiveSig =
@@ -519,6 +521,25 @@ void Patch_WideAspect(u8 *data, u32 length) {
 				*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
 				*(u32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
 				MTXFrustumSig.offsetFoundAt = (u32)data+i;
+				break;
+			}
+		}
+	}
+	for( i=0; i < length; i+=4 )
+	{
+		if( *(u32*)(data+i+8) != 0xED441828 )
+			continue;
+		if( find_pattern( (u8*)(data+i), length, &MTXLightFrustumSig ) )
+		{
+			u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i+8);
+			print_gecko("Found [%s] @ 0x%08X len %i\n", MTXLightFrustumSig.Name, (u32)data + i, MTXLightFrustumSig.Length);
+			if(properAddress) {
+				print_gecko("Found:[Hook:%s] @ %08X\n", MTXLightFrustumSig.Name, properAddress);
+				top_addr -= MTXLightFrustumPre_length;
+				memcpy((void*)top_addr,&MTXLightFrustumPre[0],MTXLightFrustumPre_length);
+				*(u32*)(top_addr+28) = 0x48000000 | (((properAddress+4) - (top_addr+28)) & 0x03FFFFFC);
+				*(u32*)(data+i+8) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
+				*(u32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
 				break;
 			}
 		}

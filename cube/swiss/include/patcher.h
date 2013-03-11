@@ -53,6 +53,8 @@ extern u8 GXSetScissorPre[];
 extern u32 GXSetScissorPre_length;
 extern u8 MTXFrustumPre[];
 extern u32 MTXFrustumPre_length;
+extern u8 MTXLightFrustumPre[];
+extern u32 MTXLightFrustumPre_length;
 extern u8 MTXOrthoPre[];
 extern u32 MTXOrthoPre_length;
 
