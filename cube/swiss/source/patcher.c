@@ -593,9 +593,10 @@ void Patch_WideAspect(u8 *data, u32 length) {
 					print_gecko("Found:[Hook:%s] @ %08X\n", MTXOrthoSig.Name, properAddress);
 					top_addr -= MTXOrthoPre_length;
 					memcpy((void*)top_addr,&MTXOrthoPre[0],MTXOrthoPre_length);
-					*(u32*)(top_addr+52) = 0x48000000 | (((properAddress+4) - (top_addr+52)) & 0x03FFFFFC);
+					*(u32*)(top_addr+128) = 0x48000000 | (((properAddress+4) - (top_addr+128)) & 0x03FFFFFC);
 					*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
 					*(u32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
+					*(u32*)VAR_FLOATM_1 = 0xBF800000;
 					break;
 				}
 			}
