@@ -463,12 +463,32 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 						*(u32*)(top_addr+72) = 0x48000000 | (((properAddress+4) - (top_addr+72)) & 0x03FFFFFC);
 						
 						switch(j) {
-							case 0: *(u32*)(data+i+ 808) = 0x38A00001; break;	// li		5, 1
-							case 1: *(u32*)(data+i+ 840) = 0x38A00001; break;	// li		5, 1
-							case 2: *(u32*)(data+i+ 956) = 0x38000001; break;	// li		0, 1
-							case 3: *(u32*)(data+i+1032) = 0x38C00001; break;	// li		6, 1
-							case 4: *(u32*)(data+i+1160) = 0x38C00001; break;	// li		6, 1
-							case 5: *(u32*)(data+i+1180) = 0x38E00001; break;	// li		7, 1
+							case 0:
+								*(u32*)(data+i+ 272) = 0x807C0000;	// lwz		3, 0 (28)
+								*(u32*)(data+i+ 864) = 0x2C000006;	// cmpwi	0, 6
+								break;
+							case 1:
+								*(u32*)(data+i+  40) = 0x2C040006;	// cmpwi	4, 6
+								*(u32*)(data+i+ 304) = 0x807B0000;	// lwz		3, 0 (27)
+								*(u32*)(data+i+ 896) = 0x2C000006;	// cmpwi	0, 6
+								break;
+							case 2:
+								*(u32*)(data+i+ 412) = 0x807C0000;	// lwz		3, 0 (28)
+								*(u32*)(data+i+1040) = 0x2C000006;	// cmpwi	0, 6
+								break;
+							case 3:
+								*(u32*)(data+i+ 476) = 0x38600000;	// li		3, 0
+								*(u32*)(data+i+1128) = 0x2C000006;	// cmpwi	0, 6
+								*(u32*)(data+i+1136) = 0x2C000007;	// cmpwi	0, 7
+								break;
+							case 4: 
+								*(u32*)(data+i+ 604) = 0x38600000;	// li		3, 0
+								*(u32*)(data+i+1260) = 0x2C000006;	// cmpwi	0, 6
+								*(u32*)(data+i+1268) = 0x2C000007;	// cmpwi	0, 7
+								break;
+							case 5:
+								*(u32*)(data+i+ 604) = 0x38600000;	// li		3, 0
+								break;
 						}
 						Patch_ProgTiming(data, length);	// Patch timing to 576p
 					}
