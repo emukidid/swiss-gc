@@ -4,10 +4,9 @@
 
 .globl GXInitTexObjLODPre
 GXInitTexObjLODPre:
-	lwz			%r12, 20 (%r3)
-	subi		%r0, %r12, 8
-	cmplwi		%r0, 2
-	ble			1f
+	lbz			%r0, 31 (%r3)
+	andi.		%r0, %r0, 2
+	beq			1f
 	li			%r6, 1
 	li			%r7, 1
 	li			%r8, 2

@@ -638,8 +638,9 @@ void Patch_WideAspect(u8 *data, u32 length) {
 						print_gecko("Found:[Hook:%s] @ %08X\n", GXSetScissorSigs[j].Name, properAddress);
 						top_addr -= GXSetScissorPre_length;
 						memcpy((void*)top_addr,&GXSetScissorPre[0],GXSetScissorPre_length);
-						*(u32*)(top_addr+44) = *(u32*)(data+i);
-						*(u32*)(top_addr+48) = 0x48000000 | (((properAddress+4) - (top_addr+48)) & 0x03FFFFFC);
+						*(u32*)(top_addr+ 0) = *(u32*)(data+i);
+						*(u32*)(top_addr+ 4) = j == 1 ? 0x800801E8:0x800701E8;
+						*(u32*)(top_addr+64) = 0x48000000 | (((properAddress+4) - (top_addr+64)) & 0x03FFFFFC);
 						*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
 						break;
 					}
@@ -703,7 +704,7 @@ int Patch_TexFilt(u8 *data, u32 length)
 					print_gecko("Found:[Hook:%s] @ %08X\n", GXInitTexObjLODSigs[j].Name, properAddress);
 					top_addr -= GXInitTexObjLODPre_length;
 					memcpy((void*)top_addr,&GXInitTexObjLODPre[0],GXInitTexObjLODPre_length);
-					*(u32*)(top_addr+32) = 0x48000000 | (((properAddress+4) - (top_addr+32)) & 0x03FFFFFC);
+					*(u32*)(top_addr+28) = 0x48000000 | (((properAddress+4) - (top_addr+28)) & 0x03FFFFFC);
 					*(u32*)(data+i+8) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
 					return 1;
 				}

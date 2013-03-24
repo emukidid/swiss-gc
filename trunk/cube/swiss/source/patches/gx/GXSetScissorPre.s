@@ -4,19 +4,23 @@
 
 .globl GXSetScissorPre
 GXSetScissorPre:
-	or.			%r0, %r3, %r4
+	nop
+	nop			#r0 = gx->dispCopyDst
+	clrlslwi	%r12, %r0, 22, 4
+	cmpwi		%r3, 0
 	beq			1f
 	add			%r0, %r3, %r5
-	cmpwi		%r0, 640
+	cmpw		%r0, %r12
 	beq			1f
-	subi		%r3, %r3, 320
+	srwi		%r0, %r12, 1
+	sub			%r3, %r3, %r0
 	mulli		%r3, %r3, 3
 	mulli		%r5, %r5, 3
 	srawi		%r3, %r3, 2
 	srwi		%r5, %r5, 2
-	addi		%r3, %r3, 320
-1:	nop
-	trap
+	addze		%r3, %r3
+	add			%r3, %r3, %r0
+1:	trap
 
 .globl GXSetScissorPre_length
 GXSetScissorPre_length:
