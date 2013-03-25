@@ -581,26 +581,7 @@ unsigned int load_app(int mode)
 
 	VIDEO_SetPostRetraceCallback (NULL);
 	do_videomode_swap();
-	switch(*(char*)0x80000003) {
-		case 'P': // PAL
-		case 'D': // German
-		case 'F': // French
-		case 'S': // Spanish
-		case 'I': // Italian
-		case 'L': // Japanese Import to PAL
-		case 'M': // American Import to PAL
-		case 'X': // PAL other languages?
-		case 'Y': // PAL other languages?
-		case 'U':
-			*(volatile unsigned long*)0x800000CC = 1;
-			break;
-		case 'E':
-		case 'J':
-			*(volatile unsigned long*)0x800000CC = 0;
-			break;
-		default:
-			*(volatile unsigned long*)0x800000CC = 0;
-	}
+	*(volatile u32*)0x800000CC = VIDEO_GetCurrentTvMode();
 
 	// install our assembly code into memory
 	install_code();
@@ -1020,14 +1001,12 @@ void load_file()
 	}
 	
 	// We can't relocate the cheats stub so we must ensure our patch code is located elsewhere
-	if((curDevice != DVD_DISC) && (curDevice != WODE) && (curDevice != WKF)) {
-		if((hasCheatsFile || swissSettings.wiirdDebug) && (!(!swissSettings.useHiLevelPatch && swissSettings.useHiMemArea))) {
-			DrawFrameStart();
-			DrawMessageBox(D_FAIL, "Cheats/WiiRD will only work with high memory patch");
-			DrawFrameFinish();
-			wait_press_A();
-			return;
-		}
+	if((hasCheatsFile || swissSettings.wiirdDebug) && (!(!swissSettings.useHiLevelPatch && swissSettings.useHiMemArea))) {
+		DrawFrameStart();
+		DrawMessageBox(D_FAIL, "Cheats/WiiRD will only work with high memory patch");
+		DrawFrameFinish();
+		wait_press_A();
+		return;
 	}
 	
 	// Setup memory card emulation

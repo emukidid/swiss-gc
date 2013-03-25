@@ -115,8 +115,8 @@ enum bootDevices
 #define CobraStr    "Cobra MultiGame"
 #define GCOSD5Str   "GCOS MultiGame"
 #define GCOSD9Str   "GCOS MultiGame"
-#define MDStr       "2-Disc Gamecube"
-#define GCDStr      "Gamecube"
+#define MDStr       "2-Disc GameCube"
+#define GCDStr      "GameCube"
 #define ISO9660Str  "ISO9660"
 
 #define UnkStr      "Unknown"
