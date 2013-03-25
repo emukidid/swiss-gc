@@ -455,12 +455,12 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 						print_gecko("Patched 480p Progressive mode\r\n");
 						top_addr -= ForceProgressive_length;
 						memcpy((void*)top_addr,&ForceProgressive[0],ForceProgressive_length);	// Copy our patch (480p)
-						*(u32*)(top_addr+96) = 0x48000000 | (((properAddress+4) - (top_addr+96)) & 0x03FFFFFC);
+						*(u32*)(top_addr+84) = 0x48000000 | (((properAddress+4) - (top_addr+84)) & 0x03FFFFFC);
 					} else {
 						print_gecko("Patched 576p Progressive mode\r\n");
 						top_addr -= ForceProgressive576p_length;
 						memcpy((void*)top_addr,&ForceProgressive576p[0],ForceProgressive576p_length);	// Copy our patch (576p)
-						*(u32*)(top_addr+72) = 0x48000000 | (((properAddress+4) - (top_addr+72)) & 0x03FFFFFC);
+						*(u32*)(top_addr+60) = 0x48000000 | (((properAddress+4) - (top_addr+60)) & 0x03FFFFFC);
 						
 						switch(j) {
 							case 0:

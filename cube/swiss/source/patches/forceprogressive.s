@@ -3,12 +3,8 @@
 #define _LANGUAGE_ASSEMBLY
 #include "../../../reservedarea.h"
 
-
 .globl ForceProgressive
 ForceProgressive:
-	li			%r0, 0
-	lis			%r12, 0x8000
-	stw			%r0, 0x00CC (%r12)
 	li			%r0, 2
 	stw			%r0, 0 (%r3)
 	lhz			%r0, 8 (%r3)

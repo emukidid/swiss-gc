@@ -3,12 +3,8 @@
 #define _LANGUAGE_ASSEMBLY
 #include "../../../reservedarea.h"
 
-
 .globl ForceProgressive576p
 ForceProgressive576p:
-	li			%r0, 1
-	lis			%r12, 0x8000
-	stw			%r0, 0x00CC (%r12)
 	li			%r0, 6
 	stw			%r0, 0 (%r3)
 	lhz			%r0, 16 (%r3)
