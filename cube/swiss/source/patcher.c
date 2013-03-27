@@ -417,11 +417,56 @@ void Patch_ProgTiming(void *addr, u32 length) {
 	}
 }
 
-u32 render_mode_objs[3][10] = {
-	{0x00000000,0x00000606,0x06060606,0x06060606,0x06060606,0x06060606,0x06060606,0x06060000,0x15161500,0x00000000},
-	{0x00000000,0x00000606,0x06060606,0x06060606,0x06060606,0x06060606,0x06060606,0x06060408,0x0C100C08,0x04000000},
-	{0x00000000,0x00000606,0x06060606,0x06060606,0x06060606,0x06060606,0x06060606,0x06060808,0x0A0C0A08,0x08000000}
+u8 vertical_filters[3][7] = {
+	{0, 0, 21, 22, 21, 0, 0},
+	{4, 8, 12, 16, 12, 8, 4},
+	{8, 8, 10, 12, 10, 8, 8}
 };
+
+int Patch_ProgCopy(u8 *data, u32 length) {
+	int i,j;
+	FuncPattern GXSetCopyFilterSigs[2] = {
+		{0x224, 15, 7, 0, 4, 5, 0, 0, "GXSetCopyFilter_v1", 0},
+		{0x204, 25, 7, 0, 4, 0, 0, 0, "GXSetCopyFilter_v2", 0}
+	};
+	
+	for( i=0; i < length; i+=4 )
+	{
+		if( *(u32*)(data+i+4) != 0x5460063F )
+			continue;
+		
+		FuncPattern fp;
+		make_pattern( (u8*)(data+i), length, &fp );
+		
+		for( j=0; j < sizeof(GXSetCopyFilterSigs)/sizeof(FuncPattern); j++ )
+		{
+			if( compare_pattern( &fp, &(GXSetCopyFilterSigs[j]) ) )
+			{
+				u8 *vfilter = vertical_filters[swissSettings.softProgressive];
+				print_gecko("Found [%s] @ 0x%08X len %i\n", GXSetCopyFilterSigs[j].Name, (u32)data + i, GXSetCopyFilterSigs[j].Length);
+				if(j == 0) {
+					*(u32*)(data+i+388) = 0x38000000 | vfilter[0];
+					*(u32*)(data+i+392) = 0x38600000 | vfilter[1];
+					*(u32*)(data+i+400) = 0x38000000 | vfilter[4];
+					*(u32*)(data+i+404) = 0x38800000 | vfilter[2];
+					*(u32*)(data+i+416) = 0x38600000 | vfilter[5];
+					*(u32*)(data+i+428) = 0x38A00000 | vfilter[3];
+					*(u32*)(data+i+432) = 0x38000000 | vfilter[6];
+				} else {
+					*(u32*)(data+i+372) = 0x38800000 | vfilter[0];
+					*(u32*)(data+i+376) = 0x38600000 | vfilter[4];
+					*(u32*)(data+i+384) = 0x38800000 | vfilter[1];
+					*(u32*)(data+i+392) = 0x38E00000 | vfilter[2];
+					*(u32*)(data+i+400) = 0x38800000 | vfilter[5];
+					*(u32*)(data+i+404) = 0x38A00000 | vfilter[3];
+					*(u32*)(data+i+412) = 0x38600000 | vfilter[6];
+				}
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
 
 int Patch_ProgVideo(u8 *data, u32 length) {
 	int i,j;
@@ -455,12 +500,12 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 						print_gecko("Patched 480p Progressive mode\r\n");
 						top_addr -= ForceProgressive_length;
 						memcpy((void*)top_addr,&ForceProgressive[0],ForceProgressive_length);	// Copy our patch (480p)
-						*(u32*)(top_addr+84) = 0x48000000 | (((properAddress+4) - (top_addr+84)) & 0x03FFFFFC);
+						*(u32*)(top_addr+60) = 0x48000000 | (((properAddress+4) - (top_addr+60)) & 0x03FFFFFC);
 					} else {
 						print_gecko("Patched 576p Progressive mode\r\n");
 						top_addr -= ForceProgressive576p_length;
 						memcpy((void*)top_addr,&ForceProgressive576p[0],ForceProgressive576p_length);	// Copy our patch (576p)
-						*(u32*)(top_addr+60) = 0x48000000 | (((properAddress+4) - (top_addr+60)) & 0x03FFFFFC);
+						*(u32*)(top_addr+36) = 0x48000000 | (((properAddress+4) - (top_addr+36)) & 0x03FFFFFC);
 						
 						switch(j) {
 							case 0:
@@ -493,7 +538,7 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 						Patch_ProgTiming(data, length);	// Patch timing to 576p
 					}
 					*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
-					memcpy((void*)VAR_PROG_MODE,render_mode_objs[swissSettings.softProgressive],sizeof(u32)*10);
+					Patch_ProgCopy(data, length);
 					return 1;
 				}
 			}
