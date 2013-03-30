@@ -423,13 +423,35 @@ u8 vertical_filters[3][7] = {
 	{8, 8, 10, 12, 10, 8, 8}
 };
 
-int Patch_ProgCopy(u8 *data, u32 length) {
+void Patch_ProgCopy(u8 *data, u32 length) {
 	int i,j;
+	FuncPattern GXGetYScaleFactorSig = 
+		{0x234, 16, 14, 3, 18, 27, 0, 0, "GXGetYScaleFactor", 0};
 	FuncPattern GXSetCopyFilterSigs[2] = {
 		{0x224, 15, 7, 0, 4, 5, 0, 0, "GXSetCopyFilter_v1", 0},
 		{0x204, 25, 7, 0, 4, 0, 0, 0, "GXSetCopyFilter_v2", 0}
 	};
 	
+	if(swissSettings.gameVMode == 2) {
+		for( i=0; i < length; i+=4 )
+		{
+			if( *(u32*)(data+i) != 0x7C0802A6 )
+				continue;
+			if( find_pattern( (u8*)(data+i), length, &GXGetYScaleFactorSig ) )
+			{
+				u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i);
+				print_gecko("Found [%s] @ 0x%08X len %i\n", GXGetYScaleFactorSig.Name, (u32)data + i, GXGetYScaleFactorSig.Length);
+				if(properAddress) {
+					print_gecko("Found:[Hook:%s] @ %08X\n", GXGetYScaleFactorSig.Name, properAddress);
+					top_addr -= GXGetYScaleFactorPre_length;
+					memcpy((void*)top_addr,&GXGetYScaleFactorPre[0],GXGetYScaleFactorPre_length);
+					*(u32*)(top_addr+16) = 0x48000000 | (((properAddress+4) - (top_addr+16)) & 0x03FFFFFC);
+					*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
+					break;
+				}
+			}
+		}
+	}
 	for( i=0; i < length; i+=4 )
 	{
 		if( *(u32*)(data+i+4) != 0x5460063F )
@@ -461,11 +483,10 @@ int Patch_ProgCopy(u8 *data, u32 length) {
 					*(u32*)(data+i+404) = 0x38A00000 | vfilter[3];
 					*(u32*)(data+i+412) = 0x38600000 | vfilter[6];
 				}
-				return 1;
+				break;
 			}
 		}
 	}
-	return 0;
 }
 
 int Patch_ProgVideo(u8 *data, u32 length) {
@@ -500,7 +521,7 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 						print_gecko("Patched 480p Progressive mode\r\n");
 						top_addr -= ForceProgressive_length;
 						memcpy((void*)top_addr,&ForceProgressive[0],ForceProgressive_length);	// Copy our patch (480p)
-						*(u32*)(top_addr+60) = 0x48000000 | (((properAddress+4) - (top_addr+60)) & 0x03FFFFFC);
+						*(u32*)(top_addr+80) = 0x48000000 | (((properAddress+4) - (top_addr+80)) & 0x03FFFFFC);
 					} else {
 						print_gecko("Patched 576p Progressive mode\r\n");
 						top_addr -= ForceProgressive576p_length;

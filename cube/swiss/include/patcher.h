@@ -45,6 +45,8 @@ extern u8 ForceProgressive[];
 extern u32 ForceProgressive_length;
 extern u8 ForceProgressive576p[];
 extern u32 ForceProgressive576p_length;
+extern u8 GXGetYScaleFactorPre[];
+extern u32 GXGetYScaleFactorPre_length;
 extern u8 GXInitTexObjLODPre[];
 extern u32 GXInitTexObjLODPre_length;
 extern u8 GXSetProjectionPre[];
