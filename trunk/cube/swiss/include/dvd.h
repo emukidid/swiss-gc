@@ -52,6 +52,7 @@ unsigned int dvd_get_error(void);
 void dvd_set_streaming(char stream);
 unsigned int dvd_read_id();
 void dvd_motor_off();
+void dvd_motor_on_extra();
 int read_safe(void* dst, int offset, int len);
 extern void load_dol_fn_inmem(void* dol, int size);
 int DVD_ReadID(dvddiskid *diskID);
@@ -66,4 +67,7 @@ void drive_version(u8 *buf);
 void dvd_reset();
 unsigned int npdp_inquiry(unsigned char *dst);
 unsigned int npdp_getid(unsigned char *dst);
+void dvd_enable_patches();
+void dvd_setstatus();
+void dvd_setextension();
 #endif

@@ -327,7 +327,7 @@ void config_find(ConfigEntry *entry) {
 	entry->useHiMemArea = 0;
 	entry->gameVMode = 4;
 	entry->softProgressive = 0;
-	entry->muteAudioStreaming = 1;
+	entry->muteAudioStreaming = 0;
 	entry->noDiscMode = 0;
 	entry->forceWidescreen = 0;
 	entry->forceAnisotropy = 0;
