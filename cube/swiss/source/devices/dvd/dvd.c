@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include "main.h"
 #include "dvd.h"
+#include "drivecodes.h"
 
 /* Simple DVD functions */
 int is_unicode,files;
@@ -127,7 +128,7 @@ void dvd_setstatus()
 	while (dvd[7] & 1);
 }
 
-void dvd_SetExtension()
+void dvd_setextension()
 {
 	dvd[0] = 0x2E;
 	dvd[1] = 0;
@@ -141,6 +142,60 @@ void dvd_SetExtension()
 	while (dvd[7] & 1);
 }
 
+void dvd_unlock()
+{
+	dvd[0] |= 0x00000014;
+	dvd[1] = 0;
+	dvd[2] = 0xFF014D41;
+	dvd[3] = 0x54534849;	//MATS
+	dvd[4] = 0x54410200;	//HITA
+	dvd[7] = 1;
+	while (dvd[7] & 1);
+	
+	dvd[0] |= 0x00000014;
+	dvd[1] = 0;
+	dvd[2] = 0xFF004456;
+	dvd[3] = 0x442D4741;	//DVD-
+	dvd[4] = 0x4D450300;	//GAME
+	dvd[7] = 1;
+	while (dvd[7] & 1);
+}
+
+int dvd_writemem_32(u32 addr, u32 dat)
+{
+	dvd[0] = 0x2e;
+	dvd[1] = 0;
+	dvd[2] = 0xFE010100;	
+	dvd[3] = addr;
+	dvd[4] = 0x00040000;	
+	dvd[5] = 0;
+	dvd[6] = 0;
+	dvd[7] = 3;
+	while (dvd[7] & 1);
+
+	dvd[0] = 0x2e;
+	dvd[1] = 0;
+	dvd[2] = dat;
+	dvd[7] = 1;
+	while (dvd[7] & 1);
+
+	return 0;
+}
+
+int dvd_writemem_array(u32 addr, void* buf, u32 size)
+{
+	u32* ptr = (u32*)buf;
+	int rem = size;
+
+	while (rem > 0)
+	{
+		dvd_writemem_32(addr, *ptr++);
+		addr += 4;
+		rem -= 4;
+	}
+	return 0;
+}
+
 #define DEBUG_STOP_DRIVE 0
 #define DEBUG_START_DRIVE 0x100
 #define DEBUG_ACCEPT_COPY 0x4000
@@ -150,13 +205,58 @@ void dvd_motor_on_extra()
 {
 	dvd[0] = 0x2e;
 	dvd[1] = 1;
-	dvd[2] = 0xfe110000;
+	dvd[2] = (0xfe110000 | DEBUG_ACCEPT_COPY | DEBUG_START_DRIVE);
 	dvd[3] = 0;
 	dvd[4] = 0;
 	dvd[5] = 0;
 	dvd[6] = 0;
 	dvd[7] = 1;
 	while (dvd[7] & 1);
+}
+
+void* drive_patch_ptr(u32 driveVersion)
+{
+	if(driveVersion == 0x20020402)
+		return &Drive04;
+	if(driveVersion == 0x20010608)
+		return &Drive06;
+	if(driveVersion == 0x20010831)
+		return &DriveQ;
+	if(driveVersion == 0x20020823)
+		return &Drive08;
+	return 0;
+}
+
+void dvd_enable_patches() 
+{
+	// Get the drive date
+	u8* driveDate = (u8*)memalign(32,32);
+	memset(driveDate,0,32);
+	drive_version(driveDate);
+	
+	u32 driveVersion = *(u32*)&driveDate[0];
+	free(driveDate);
+	
+	if(!driveVersion) return;	// Unsupported drive
+
+	void* patchCode = drive_patch_ptr(driveVersion);
+	
+	print_gecko("Drive date %08X\r\nUnlocking DVD\r\n",driveVersion);
+	dvd_unlock();
+	print_gecko("Unlocking DVD - done\r\nWrite patch\r\n");
+	dvd_writemem_array(0xff40d000, patchCode, 0x1F0);
+	dvd_writemem_32(0x804c, 0x00d04000);
+	print_gecko("Write patch - done\r\nSet extension %08X\r\n",dvd_get_error());
+	dvd_setextension();
+	print_gecko("Set extension - done\r\nUnlock again %08X\r\n",dvd_get_error());
+	dvd_unlock();
+	print_gecko("Unlock again - done\r\nDebug Motor On %08X\r\n",dvd_get_error());
+	dvd_motor_on_extra();
+	print_gecko("Debug Motor On - done\r\nSet Status %08X\r\n",dvd_get_error());
+	dvd_setstatus();
+	print_gecko("Set Status - done %08X\r\n",dvd_get_error());
+	dvd_read_id();
+	print_gecko("Read ID %08X\r\n",dvd_get_error());
 }
 
 

@@ -532,7 +532,7 @@ unsigned int load_app(int mode)
 		if(swissSettings.noDiscMode)
 			Patch_DVDStatusFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
-	if(swissSettings.muteAudioStreaming)
+	if(swissSettings.muteAudioStreaming || curDevice != DVD_DISC)
 			Patch_DVDAudioStreaming(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	// Custom OSRestoreInterrupts that calls skipped CB funcs for memcard or high level dvd replacement
 	if(swissSettings.emulatemc)

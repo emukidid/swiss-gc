@@ -131,7 +131,7 @@ int initialize_disc(u32 streaming) {
 			DrawFrameStart();
 			DrawProgressBar(66, "Enabling Patches");
 			DrawFrameFinish();
-			DVD_Mount();
+			dvd_enable_patches();
 			dvd_read_id();
 			if(!dvd_get_error()) {
 				patched=DEBUG_MODE;
@@ -336,8 +336,29 @@ int deviceHandler_DVD_readFile(file_handle* file, void* buffer, unsigned int len
 
 int deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
+		deviceHandler_readFile(file,(unsigned char*)0x80000000,32);
+		char streaming = *(char*)0x80000008;
+		if(streaming) {
+			DrawFrameStart();
+			DrawMessageBox(D_INFO,"One moment, setting up audio streaming.");
+			DrawFrameFinish();
+			dvd_motor_off();
+			print_gecko("Set extension %08X\r\n",dvd_get_error());
+			dvd_setextension();
+			print_gecko("Set extension - done\r\nUnlock %08X\r\n",dvd_get_error());
+			dvd_unlock();
+			print_gecko("Unlock - done\r\nDebug Motor On %08X\r\n",dvd_get_error());
+			dvd_motor_on_extra();
+			print_gecko("Debug Motor On - done\r\nSet Status %08X\r\n",dvd_get_error());
+			dvd_setstatus();
+			print_gecko("Set Status - done %08X\r\n",dvd_get_error());
+			dvd_read_id();
+			print_gecko("Read ID %08X\r\n",dvd_get_error());
+			dvd_set_streaming(streaming);
+		}
 		dvd_set_offset(file->fileBase);
 		file->status = OFFSET_SET;
+		print_gecko("Streaming %s %08X\r\n",streaming?"Enabled":"Disabled",dvd_get_error());
 	}
 	return 1;
 }
