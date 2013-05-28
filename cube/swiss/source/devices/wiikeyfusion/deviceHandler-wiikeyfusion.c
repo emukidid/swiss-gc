@@ -158,7 +158,7 @@ int deviceHandler_WKF_init(file_handle* file){
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,"Init Wiikey Fusion");
 		DrawFrameFinish();
-		fatMountSimple ("wkf", wkf);
+		return fatMountSimple ("wkf", wkf) ? 1 : 0;
 	}
 	return 0;
 }

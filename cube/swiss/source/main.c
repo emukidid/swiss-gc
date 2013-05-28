@@ -47,7 +47,7 @@ int needsDeviceChange = 0;
 int needsRefresh = 0;
 SwissSettings swissSettings;
 
-static void ProperScanPADS()	{ 
+static void ProperScanPADS()	{
 	PAD_ScanPads(); 
 }
 
@@ -255,7 +255,10 @@ void main_loop()
 	if(deviceHandler_initial) {
 		// If the user selected a device, make sure it's ready before we browse the filesystem
 		deviceHandler_deinit( deviceHandler_initial );
-		deviceHandler_init( deviceHandler_initial );
+		if(!deviceHandler_init( deviceHandler_initial )) {
+			needsDeviceChange = 1;
+			return;
+		}
 		if(curDevice==SD_CARD && !swissSettings.defaultDevice) { 
 			load_config();
 		}
