@@ -15,6 +15,7 @@
 #include "main.h"
 #include "dvd.h"
 #include "gcm.h"
+#include "wkf.h"
 
 #define OFFSET_NOTSET 0
 #define OFFSET_SET    1
@@ -33,6 +34,7 @@ static int dvd_init = 0;
 char *dvdDiscTypeStr = NotInitStr;
 int dvdDiscTypeInt = 0;
 int drive_status = 0;
+int wkfDetected = 0;
 
 char *dvd_error_str()
 {
@@ -124,18 +126,29 @@ int initialize_disc(u32 streaming) {
 	DrawFrameStart();
 	DrawProgressBar(33, "DVD Is Initializing");
 	DrawFrameFinish();
-	dvd_read_id();
 	if(is_gamecube())
 	{
-		if((dvd_get_error()>>24) > 1) { //we have an error (besides open lid) Try to enable patches
+		// Reset WKF hard to allow for a real disc to be read if SD is removed
+		if(wkfDetected || (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF)) {
+			print_gecko("Detected Wiikey Fusion with SPI Flash ID: %08X\r\n",__wkfSpiReadId());
+			__wkfReset();
+			print_gecko("WKF RESET\r\n");
+			wkfDetected = 1;
+		}
+
+		DrawFrameStart();
+		DrawProgressBar(40, "Resetting DVD drive - Detect Media");
+		DrawFrameFinish();
+		dvd_reset();
+		dvd_read_id();
+		// Avoid lid open scenario
+		if((dvd_get_error()>>24) && (dvd_get_error()>>24 != 1)) {
 			DrawFrameStart();
-			DrawProgressBar(66, "Enabling Patches");
+			DrawProgressBar(75, "Possible DVD Backup - Enabling Patches");
 			DrawFrameFinish();
 			dvd_enable_patches();
-			dvd_read_id();
-			if(!dvd_get_error()) {
+			if(!dvd_get_error())
 				patched=DEBUG_MODE;
-			}
 		}
 		else if((dvd_get_error()>>24) == 1) {  // Lid is open, tell the user!
 			DrawFrameStart();
@@ -163,12 +176,14 @@ int initialize_disc(u32 streaming) {
 			dvd_set_streaming(*(char*)0x80000008);
 		}
 	}
+	dvd_read_id();
 	if(dvd_get_error()) { //no disc, or no game id.
 		DrawFrameStart();
 		sprintf(txtbuffer, "Error: %s",dvd_error_str());
 		DrawMessageBox(D_FAIL, txtbuffer);
 		DrawFrameFinish();
 		wait_press_A();
+		dvd_reset();	// for good measure
 		return DRV_ERROR;
 	}
 	DrawFrameStart();
@@ -335,6 +350,7 @@ int deviceHandler_DVD_readFile(file_handle* file, void* buffer, unsigned int len
 }
 
 int deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
+
 	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
 		deviceHandler_readFile(file,(unsigned char*)0x80000000,32);
 		char streaming = *(char*)0x80000008;
@@ -355,6 +371,7 @@ int deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 			dvd_read_id();
 			print_gecko("Read ID %08X\r\n",dvd_get_error());
 			dvd_set_streaming(streaming);
+			
 		}
 		dvd_set_offset(file->fileBase);
 		file->status = OFFSET_SET;

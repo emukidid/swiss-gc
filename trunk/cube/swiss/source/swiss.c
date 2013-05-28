@@ -903,7 +903,22 @@ void load_file()
 				u8 *flash = (u8*)memalign(32,0x1D0000);
 				deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
 				deviceHandler_readFile(&curFile,flash,0x1D0000);
-				wkfWriteFlash(flash, NULL);
+				// Try to read a .fw file too.
+				file_handle fwFile;
+				memset(&fwFile, 0, sizeof(file_handle));
+				sprintf(&fwFile.name[0],"%s.fw", &curFile.name[0]);
+				u8 *firmware = (u8*)memalign(32, 0x3000);
+				DrawFrameStart();
+				if(curDevice == DVD_DISC || deviceHandler_readFile(&fwFile,firmware,0x3000) != 0x3000) {
+					free(firmware); firmware = NULL;
+					DrawMessageBox(D_WARN, "Didn't find a firmware file, flashing menu only.");
+				}
+				else {
+					DrawMessageBox(D_INFO, "Found firmware file, this will be flashed too.");
+				}
+				DrawFrameFinish();
+				sleep(1);
+				wkfWriteFlash(flash, firmware);
 				DrawFrameStart();
 				DrawMessageBox(D_INFO, "Flashing Complete !!");
 				DrawFrameFinish();

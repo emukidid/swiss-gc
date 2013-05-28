@@ -211,8 +211,6 @@ void wkfWriteFlash(unsigned char *menuImg, unsigned char *firmwareImg) {
 	print_gecko("Should be 0x1C: %02X\r\n", __wkfSpiRdSR());
   	print_gecko("0x80000: %02X\r\n", __wkfSpiReadUC(0x80000));
 	print_gecko("Done!\r\n");
-	print_gecko("Sleeping for 2.. \r\n");
-	sleep(1);
 }
 
 // Not sure what this does.
@@ -307,7 +305,7 @@ void wkfInit() {
 			DrawFrameStart();
 			DrawMessageBox(D_INFO,"No FAT Formatted SD found in Wiikey Fusion!");
 			DrawFrameFinish();
-			sleep(5);
+			print_gecko("No FAT Formatted SD found in Wiikey Fusion!\r\n");
 			wkfInitialized = 0;
 		} 
 		else {
