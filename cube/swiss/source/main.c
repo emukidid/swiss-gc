@@ -430,7 +430,8 @@ int main ()
 				curDevice = DVD_DISC;
 				
 				// If we have a GameCube (single image) bootable disc, show the banner screen here
-				if(gettype_disc() == GAMECUBE_DISC) {
+				dvdDiscTypeInt = gettype_disc();
+				if(dvdDiscTypeInt == GAMECUBE_DISC) {
 					select_device();
 					// Setup curFile and load it
 					memset(&curFile, 0, sizeof(file_handle));

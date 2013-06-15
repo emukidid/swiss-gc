@@ -193,46 +193,47 @@ int initialize_disc(u32 streaming) {
 }
 
 int gettype_disc() {
-  const char *dvdid = (const char*)0x80000000;
-
-  //Attempt to determine the disc type from the 32 byte header at 0x80000000
-  if (strncmp(dvdid, "COBRAM", 6) == 0) {
-	dvdDiscTypeStr = CobraStr;
-	return COBRA_MULTIGAME_DISC;  //"COBRAM" is Cobra MultiBoot
-  }
-
-  if ((strncmp(dvdid, "GGCOSD", 6) == 0) || (strncmp(dvdid, "RGCOSD", 6) == 0)) {
-	dvdDiscTypeStr = GCOSD5Str;
-	return GCOSD5_MULTIGAME_DISC;  //"RGCOSD" or "GGCOSD" is GCOS Single Layer MultiGame Disc
-  }
-
-  if (strncmp(dvdid, "GCOPDVD9", 8) == 0) {
-	dvdDiscTypeStr = GCOSD9Str;
-	return GCOSD9_MULTIGAME_DISC;  //"GCOPDVD9" is GCOS Dual Layer MultiGame Disc
-  }
-
-  //Attempt to identify a ISO9660 disc
   char *checkBuf = (char*)memalign(32,32);
-  DVD_Read((void*)checkBuf,32769,32);
-  if (strncmp(checkBuf, "CD001", 5) == 0) {
-	dvdDiscTypeStr = ISO9660Str;
-	return ISO9660_DISC;  //"CD001" at 32769 is iso9660
+  char *iso9660Buf = (char*)memalign(32,32);
+  int type = UNKNOWN_DISC;
+  dvdDiscTypeStr = UnkStr;
+  
+  // Don't assume there will be a valid disc ID at 0x80000000. 
+  // Lets read the first 32b off the disc.
+  DVD_Read((void*)checkBuf,0,32);
+  DVD_Read((void*)iso9660Buf,32769,32);
+  
+  // Attempt to determine the disc type from the 32 byte header at 0x80000000
+  if (strncmp(checkBuf, "COBRAM", 6) == 0) {
+	dvdDiscTypeStr = CobraStr;
+	type = COBRA_MULTIGAME_DISC;  //"COBRAM" is Cobra MultiBoot
   }
-  free(checkBuf);
-
-  if ((*(volatile unsigned int*)(0x8000001C)) == DVD_MAGIC) {
-	if(dvdid[6]) {
+  else if ((strncmp(checkBuf, "GGCOSD", 6) == 0) || (strncmp(checkBuf, "RGCOSD", 6) == 0)) {
+	dvdDiscTypeStr = GCOSD5Str;
+	type = GCOSD5_MULTIGAME_DISC;  //"RGCOSD" or "GGCOSD" is GCOS Single Layer MultiGame Disc
+  }
+  else if (strncmp(checkBuf, "GCOPDVD9", 8) == 0) {
+	dvdDiscTypeStr = GCOSD9Str;
+	type = GCOSD9_MULTIGAME_DISC;  //"GCOPDVD9" is GCOS Dual Layer MultiGame Disc
+  }
+  else if (strncmp(iso9660Buf, "CD001", 5) == 0) {
+	dvdDiscTypeStr = ISO9660Str;
+	type = ISO9660_DISC;  //"CD001" at 32769 is iso9660
+  }
+  else if ((*(volatile unsigned int*)(&checkBuf[0x1C])) == DVD_MAGIC) {
+	if(checkBuf[6]) {
 	  dvdDiscTypeStr = MDStr;
-	  return MULTIDISC_DISC;  //Gamecube 2 Disc (or more?) Game
+	  type = MULTIDISC_DISC;  //Gamecube 2 Disc (or more?) Game
 	}
 	else {
 	  dvdDiscTypeStr = GCDStr;
-	  return GAMECUBE_DISC;   //Gamecube Game
+	  type = GAMECUBE_DISC;   //Gamecube Game
 	}
   }
 
-  dvdDiscTypeStr = UnkStr;
-  return UNKNOWN_DISC;
+  free(iso9660Buf);
+  free(checkBuf);  
+  return type;
 }
 
 int deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, unsigned int type){
