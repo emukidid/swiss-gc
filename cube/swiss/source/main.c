@@ -244,13 +244,15 @@ void sortFiles(file_handle* dir, int num_files)
 void main_loop()
 { 
 	int i = 0,max,j;	
+	file_handle curDir;
 	
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
+	// We don't care if a subsequent device is "default"
 	if(needsDeviceChange) {
-		swissSettings.defaultDevice = 0;	// We don't care if a subsequent device is "default"
+		swissSettings.defaultDevice = 0;
 		needsDeviceChange = 0;
+		select_device();	// Will automatically return if we have defaultDevice = 1
 	}
-	select_device();
 	
 	if(deviceHandler_initial) {
 		// If the user selected a device, make sure it's ready before we browse the filesystem
@@ -269,12 +271,15 @@ void main_loop()
   
 	while(1) {
 		if(deviceHandler_initial && needsRefresh) {
+			curMenuLocation=ON_OPTIONS;
 			curSelection=0; files=0; curMenuSelection=0; needsRefresh = 0;
 			// Read the directory/device TOC
 			if(allFiles){ free(allFiles); allFiles = NULL; }
+			print_gecko("Reading directory: %s\r\n",curFile.name);
 			files = deviceHandler_readDir(&curFile, &allFiles, -1);
+			memcpy(&curDir, &curFile, sizeof(file_handle));
 			sortFiles(allFiles, files);
-			
+			print_gecko("Found %i entries\r\n",files);
 			if(files<1) { break;}
 			curMenuLocation=ON_FILLIST;
 		}
@@ -304,7 +309,9 @@ void main_loop()
 			//handle menu event
 			switch(curMenuSelection) {
 				case 0:		// Device change
+					deviceHandler_initial = NULL;
 					needsDeviceChange = 1;  //Change from SD->DVD or vice versa
+					needsRefresh = 1;
 					break;
 				case 1:		// Settings
 					show_settings(NULL, NULL);
@@ -313,6 +320,7 @@ void main_loop()
 					show_info();
 					break;
 				case 3:
+					memcpy(&curFile, &curDir, sizeof(file_handle));
 					needsRefresh=1;
 					break;
 				case 4:
@@ -443,9 +451,15 @@ int main ()
 		}
 	}
 	
+	needsRefresh = needsDeviceChange = ((swissSettings.defaultDevice == 0) ? 1 : 0);
+	deviceHandler_initial = (swissSettings.defaultDevice == 0) ? NULL : deviceHandler_initial;
 	
 	while(1) {
-		needsRefresh = 1;
+		if(needsRefresh || needsDeviceChange) {
+			free(allFiles); 
+			allFiles = NULL;
+			files = 0;
+		}
 		main_loop();
 	}
 	return 0;

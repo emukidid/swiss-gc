@@ -17,7 +17,7 @@
 #define NULL 0
 #endif
 
-file_handle* deviceHandler_initial;
+file_handle* deviceHandler_initial = NULL;
 
 int  (*deviceHandler_init)(file_handle*) = NULL;
 int  (*deviceHandler_readDir)(file_handle*, file_handle**, unsigned int) = NULL;
