@@ -88,7 +88,7 @@ int deviceHandler_Qoob_init(file_handle* file){
 	DrawMessageBox(D_INFO,"Reading Qoob");
 	DrawFrameFinish();
 	ipl_set_config(0);
-	return 0;
+	return 1;
 }
 
 int deviceHandler_Qoob_deinit(file_handle* file) {

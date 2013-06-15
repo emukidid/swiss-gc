@@ -251,8 +251,10 @@ void main_loop()
 	if(needsDeviceChange) {
 		swissSettings.defaultDevice = 0;
 		needsDeviceChange = 0;
-		select_device();	// Will automatically return if we have defaultDevice = 1
+		deviceHandler_initial = NULL;
+		needsRefresh = 1;
 	}
+	select_device();	// Will automatically return if we have defaultDevice = 1
 	
 	if(deviceHandler_initial) {
 		// If the user selected a device, make sure it's ready before we browse the filesystem
@@ -447,16 +449,16 @@ int main ()
 					curFile.fileAttrib = IS_FILE;
 					load_file();
 				}
+				swissSettings.defaultDevice = 0;
 			}
 		}
 	}
 	
-	needsRefresh = needsDeviceChange = ((swissSettings.defaultDevice == 0) ? 1 : 0);
-	deviceHandler_initial = (swissSettings.defaultDevice == 0) ? NULL : deviceHandler_initial;
-	
+	needsRefresh = swissSettings.defaultDevice;
 	while(1) {
 		if(needsRefresh || needsDeviceChange) {
-			free(allFiles); 
+			if(allFiles)
+				free(allFiles); 
 			allFiles = NULL;
 			files = 0;
 		}
