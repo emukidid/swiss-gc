@@ -254,12 +254,15 @@ void main_loop()
 		deviceHandler_initial = NULL;
 		needsRefresh = 1;
 	}
+
 	select_device();	// Will automatically return if we have defaultDevice = 1
+	needsRefresh = 1;
 	
 	if(deviceHandler_initial) {
 		// If the user selected a device, make sure it's ready before we browse the filesystem
 		deviceHandler_deinit( deviceHandler_initial );
 		if(!deviceHandler_init( deviceHandler_initial )) {
+			print_gecko("Device Failed to initialize!\r\n",files);
 			needsDeviceChange = 1;
 			return;
 		}
@@ -274,7 +277,7 @@ void main_loop()
 	while(1) {
 		if(deviceHandler_initial && needsRefresh) {
 			curMenuLocation=ON_OPTIONS;
-			curSelection=0; files=0; curMenuSelection=0; needsRefresh = 0;
+			curSelection=0; files=0; curMenuSelection=0;
 			// Read the directory/device TOC
 			if(allFiles){ free(allFiles); allFiles = NULL; }
 			print_gecko("Reading directory: %s\r\n",curFile.name);
@@ -283,6 +286,7 @@ void main_loop()
 			sortFiles(allFiles, files);
 			print_gecko("Found %i entries\r\n",files);
 			if(files<1) { break;}
+			needsRefresh = 0;
 			curMenuLocation=ON_FILLIST;
 		}
 		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
@@ -382,22 +386,6 @@ int main ()
 	// Are we working with a Wiikey Fusion?
 	if(__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF) {
 		print_gecko("Detected Wiikey Fusion with SPI Flash ID: %08X\r\n",__wkfSpiReadId());
-#ifdef FLASH_WKF_MODE
-		DrawFrameStart();
-		DrawMessageBox(D_INFO, "PRESS A TO FLASH Wiikey Fusion !!");
-		DrawFrameFinish();
-		wait_press_A();
-		DrawFrameStart();
-		DrawMessageBox(D_INFO, "I take NO responsibility for ANY BRICKS. Press A");
-		DrawFrameFinish();
-		wait_press_A();
-		wkfWriteFlash(swiss_bin, NULL);
-		DrawFrameStart();
-		DrawMessageBox(D_INFO, "Flashing Complete!! Please Reboot!!");
-		DrawFrameFinish();
-		while(1);
-#endif		
-		// Yes, go straight to the file list!
 		swissSettings.defaultDevice = 1;
 		curDevice = WKF;
 	}
@@ -410,6 +398,7 @@ int main ()
 			print_gecko("Detected SDGecko in Slot A\r\n");
 			load_auto_dol();
 			load_config();
+			print_gecko("Autoselecting SDA %s\r\n", swissSettings.defaultDevice ? "Yes":"No");
 			if(swissSettings.defaultDevice)
 				curDevice = SD_CARD;
 		}
@@ -420,6 +409,7 @@ int main ()
 				print_gecko("Detected SDGecko in Slot B\r\n");
 				load_auto_dol();
 				load_config();
+				print_gecko("Autoselecting SDB %s\r\n", swissSettings.defaultDevice ? "Yes":"No");
 				if(swissSettings.defaultDevice)
 					curDevice = SD_CARD;
 			}
@@ -448,13 +438,14 @@ int main ()
 					curFile.size = DISC_SIZE;
 					curFile.fileAttrib = IS_FILE;
 					load_file();
+					swissSettings.defaultDevice = 0;
+					deviceHandler_initial = NULL;
 				}
-				swissSettings.defaultDevice = 0;
 			}
 		}
 	}
 	
-	needsRefresh = swissSettings.defaultDevice;
+	needsRefresh = (swissSettings.defaultDevice != 0);
 	while(1) {
 		if(needsRefresh || needsDeviceChange) {
 			if(allFiles)
