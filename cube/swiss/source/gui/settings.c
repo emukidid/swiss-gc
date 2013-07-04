@@ -21,7 +21,7 @@ char *forceWidescreenStr[] = {"No", "Persp", "Yes"};
 syssram* sram;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {7, 8, 11};
+int settings_count_pp[3] = {7, 8, 9};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
@@ -49,8 +49,6 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 	
 	/** Current Game Settings - only if a valid GCM file is highlighted (Page 3/) */
 	// Force Video Mode [576i (PAL 50Hz), 480i (NTSC 60Hz), 480p (NTSC 60Hz), Auto]
-	// Patch Type [Low / High Level]
-	// If Low Level, Use Memory Location [Low/High]
 	// Mute Audio Streaming [Yes/No]
 	// Try to mute audio stutter [Yes/No]
 
@@ -90,16 +88,10 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawSelectableButton(480, 170, -1, 195, forceWidescreenStr[swissSettings.forceWidescreen], option == 2 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 200, "Force Anisotropy:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
 		DrawSelectableButton(480, 200, -1, 225, swissSettings.forceAnisotropy ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 230, "Patch Type:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 230, -1, 255, swissSettings.useHiLevelPatch ? "High":"Low", option == 4 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 260, "If Low Level, Memory Location:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 260, -1, 285, swissSettings.useHiMemArea ? "High":"Low", option == 5 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 290, "Mute Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 290, -1, 315, swissSettings.muteAudioStreaming ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 320, "No Disc Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 320, -1, 345, swissSettings.noDiscMode ? "Yes":"No", option == 7 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 350, "Emulate Memory Card via SDGecko:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 350, -1, 375, swissSettings.emulatemc ? "Yes":"No", option == 8 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 230, "Mute Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 230, -1, 255, swissSettings.muteAudioStreaming ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 260, "Emulate Memory Card via SDGecko:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 260, -1, 285, swissSettings.emulatemc ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	if(page_num != 0) {
 		DrawSelectableButton(40, 390, -1, 420, "Back", 
@@ -188,18 +180,9 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 				swissSettings.forceAnisotropy ^= 1;
 			break;
 			case 4:
-				swissSettings.useHiLevelPatch ^= 1;
-			break;
-			case 5:
-				swissSettings.useHiMemArea ^= 1;
-			break;
-			case 6:
 				swissSettings.muteAudioStreaming ^= 1;
 			break;
-			case 7:
-				swissSettings.noDiscMode ^= 1;
-			break;
-			case 8:
+			case 5:
 				swissSettings.emulatemc ^= 1;
 			break;
 		}
@@ -284,12 +267,9 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 				while(!__SYS_SyncSram());
 				// Update our .ini
 				if(config != NULL) {
-					config->useHiLevelPatch = swissSettings.useHiLevelPatch;
-					config->useHiMemArea = swissSettings.useHiMemArea;
 					config->gameVMode = swissSettings.gameVMode;
 					config->softProgressive = swissSettings.softProgressive;
 					config->muteAudioStreaming = swissSettings.muteAudioStreaming;
-					config->noDiscMode = swissSettings.noDiscMode;
 					config->forceWidescreen = swissSettings.forceWidescreen;
 					config->forceAnisotropy = swissSettings.forceAnisotropy;
 					config->emulatemc = swissSettings.emulatemc;

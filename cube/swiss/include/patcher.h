@@ -31,10 +31,6 @@ extern u8 DVDCancelAsync[];
 extern u32 DVDCancelAsync_length;
 extern u8 DVDCancel[];
 extern u32 DVDCancel_length;
-extern u8 DVDReadInt[];
-extern u32 DVDReadInt_length;
-extern u8 DVDReadAsyncInt[];
-extern u32 DVDReadAsyncInt_length;
 extern u8 DVDGetDriveStatus[];
 extern u32 DVDGetDriveStatus_length;
 extern u8 DVDGetCommandBlockStatus[];
@@ -121,22 +117,21 @@ extern u32 CARDWriteAsync_length;
 #define SWISS_MAGIC 0x53574953 /* "SWIS" */
 
 #define LO_RESERVE 0x80001800
-#define HI_RESERVE (0x817FE800-VAR_AREA_SIZE)
 
 /* Function jump locations in our patch code */
-#define QUEUE_READ_OFFSET	 	(base_addr)
-#define PATCHED_MEMCPY		 	(base_addr | 0x04)
-#define FAKE_IRQ			 	(base_addr | 0x08)
-#define CARD_OPEN_OFFSET 		(base_addr | 0x0C)
-#define CARD_FASTOPEN_OFFSET 	(base_addr | 0x10)
-#define CARD_CLOSE_OFFSET 		(base_addr | 0x14)	
-#define CARD_CREATE_OFFSET 		(base_addr | 0x18)
-#define CARD_DELETE_OFFSET 		(base_addr | 0x1C)
-#define CARD_READ_OFFSET 		(base_addr | 0x20)
-#define CARD_WRITE_OFFSET 		(base_addr | 0x24)
-#define CARD_GETSTATUS_OFFSET 	(base_addr | 0x28)
-#define CARD_SETSTATUS_OFFSET 	(base_addr | 0x2C)
-#define CARD_SETUP_OFFSET 		(base_addr | 0x30)
+#define QUEUE_READ_OFFSET	 	(LO_RESERVE)
+#define PATCHED_MEMCPY		 	(LO_RESERVE | 0x04)
+#define FAKE_IRQ			 	(LO_RESERVE | 0x08)
+#define CARD_OPEN_OFFSET 		(LO_RESERVE | 0x0C)
+#define CARD_FASTOPEN_OFFSET 	(LO_RESERVE | 0x10)
+#define CARD_CLOSE_OFFSET 		(LO_RESERVE | 0x14)	
+#define CARD_CREATE_OFFSET 		(LO_RESERVE | 0x18)
+#define CARD_DELETE_OFFSET 		(LO_RESERVE | 0x1C)
+#define CARD_READ_OFFSET 		(LO_RESERVE | 0x20)
+#define CARD_WRITE_OFFSET 		(LO_RESERVE | 0x24)
+#define CARD_GETSTATUS_OFFSET 	(LO_RESERVE | 0x28)
+#define CARD_SETSTATUS_OFFSET 	(LO_RESERVE | 0x2C)
+#define CARD_SETUP_OFFSET 		(LO_RESERVE | 0x30)
 
 #define READ_PATCHED_ALL 		(0x11111)
 
@@ -145,7 +140,6 @@ extern u32 CARDWriteAsync_length;
 #define PATCH_ELF		1
 #define PATCH_OTHER		2
 
-int Patch_DVDHighLevelRead(u8 *data, u32 length);
 u32 Patch_DVDLowLevelRead(void *addr, u32 length);
 int Patch_ProgVideo(u8 *data, u32 length);
 void Patch_WideAspect(u8 *data, u32 length);
@@ -161,8 +155,7 @@ int Patch_CARDFunctions(u8 *data, u32 length);
 u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);
 void install_code();
-u32 get_base_addr();
-void set_base_addr(int useHi);
+
 
 #endif
 

@@ -363,8 +363,6 @@ int main ()
 
 	// Sane defaults
 	refreshSRAM();
-	swissSettings.useHiMemArea = 0;
-	swissSettings.useHiLevelPatch = swissSettings.hasDVDDrive ? 0:1;	// Hi-level works better with no DVD drive
 	swissSettings.debugUSB = 0;
 	swissSettings.gameVMode = 4;	// Auto video mode
 	swissSettings.exiSpeed = 1;		// 32MHz

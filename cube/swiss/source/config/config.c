@@ -29,8 +29,6 @@
 //Name=Animal Crossing (NTSC)
 //Comment=Playable without issues
 //Status=Working
-//Patch Type=Low
-//Patch Location=Low
 //Force Video Mode=Progressive
 //Mute Audio Streaming=Yes
 //No Disc Mode=Yes
@@ -137,12 +135,6 @@ int config_update_file() {
 			sprintf(txtbuffer, "Status=%s\r\n",buffer);
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
-			sprintf(txtbuffer, "Patch Type=%s\r\n",(configEntries[i].useHiLevelPatch ? "High":"Low"));
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
-
-			sprintf(txtbuffer, "Patch Location=%s\r\n",(configEntries[i].useHiMemArea ? "High":"Low"));
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
-			
 			sprintf(txtbuffer, "Force Video Mode=%s\r\n",uiVModeStr[configEntries[i].gameVMode]);
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
@@ -151,10 +143,7 @@ int config_update_file() {
 			
 			sprintf(txtbuffer, "Mute Audio Streaming=%s\r\n",(configEntries[i].muteAudioStreaming ? "Yes":"No"));
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
-			
-			sprintf(txtbuffer, "No Disc Mode=%s\r\n",(configEntries[i].noDiscMode ? "Yes":"No"));
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
-			
+					
 			sprintf(txtbuffer, "Force Widescreen=%s\r\n",forceWidescreenStr[configEntries[i].forceWidescreen]);
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
@@ -197,12 +186,9 @@ void config_parse(char *configData) {
 					// Fill this entry with defaults incase some values are missing..
 					strcpy(&configEntries[configEntriesCount].comment[0],"No Comment");
 					strcpy(&configEntries[configEntriesCount].status[0],"Unknown");
-					configEntries[configEntriesCount].useHiLevelPatch = 0;
-					configEntries[configEntriesCount].useHiMemArea = 0;
 					configEntries[configEntriesCount].gameVMode = 4;
 					configEntries[configEntriesCount].softProgressive = 0;
 					configEntries[configEntriesCount].muteAudioStreaming = 1;
-					configEntries[configEntriesCount].noDiscMode = 0;
 					configEntries[configEntriesCount].forceWidescreen = 0;
 					configEntries[configEntriesCount].forceAnisotropy = 0;
 					configEntries[configEntriesCount].emulatemc = 0;
@@ -215,12 +201,6 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("Status", name)) {
 					strncpy(&configEntries[configEntriesCount].status[0], value, 32);
-				}
-				else if(!strcmp("Patch Type", name)) {
-					configEntries[configEntriesCount].useHiLevelPatch = !strcmp("Low", value) ? 0:1;
-				}
-				else if(!strcmp("Patch Location", name)) {
-					configEntries[configEntriesCount].useHiMemArea = !strcmp("Low", value) ? 0:1;
 				}
 				else if(!strcmp("Force Video Mode", name)) {
 					if(!strcmp(uiVModeStr[0], value))
@@ -244,9 +224,6 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("Mute Audio Streaming", name)) {
 					configEntries[configEntriesCount].muteAudioStreaming = !strcmp("Yes", value) ? 1:0;
-				}
-				else if(!strcmp("No Disc Mode", name)) {
-					configEntries[configEntriesCount].noDiscMode = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("Force Widescreen", name)) {
 					if(!strcmp(forceWidescreenStr[0], value))
@@ -323,12 +300,9 @@ void config_find(ConfigEntry *entry) {
 	// Didn't find it, setup defaults and add this entry
 	strcpy(entry->comment,"No Comment");
 	strcpy(entry->status,"Unknown");
-	entry->useHiLevelPatch = 0;
-	entry->useHiMemArea = 0;
 	entry->gameVMode = 4;
 	entry->softProgressive = 0;
 	entry->muteAudioStreaming = 0;
-	entry->noDiscMode = 0;
 	entry->forceWidescreen = 0;
 	entry->forceAnisotropy = 0;
 	entry->emulatemc = 0;

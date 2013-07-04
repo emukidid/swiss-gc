@@ -11,15 +11,12 @@ typedef struct {
 	char padding_3[1];
 	char status[32];
 	char padding_4[1];
-	int useHiLevelPatch;
-	int useHiMemArea;
 	int gameVMode;
 	int softProgressive;
 	int forceWidescreen;
 	int forceAnisotropy;
 	int emulatemc;
 	int muteAudioStreaming;
-	int noDiscMode;
 } ConfigEntry __attribute__((aligned(32)));
 
 void config_parse(char *configData);

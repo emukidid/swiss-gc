@@ -14,6 +14,7 @@
 #include "swiss.h"
 #include "main.h"
 #include "usbgecko.h"
+#include "patcher.h"
 
 file_handle initial_USBGecko =
 	{ "./",     // directory
@@ -92,6 +93,12 @@ int deviceHandler_USBGecko_writeFile(file_handle* file, void* buffer, unsigned i
 }
 
 int deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2) {
+	u32 *fragList = (u32*)VAR_FRAG_LIST;
+	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
+	fragList[1] = file->size;
+	*(volatile unsigned int*)VAR_DISC_1_LBA = 0;
+	*(volatile unsigned int*)VAR_DISC_2_LBA = 0;
+	*(volatile unsigned int*)VAR_CUR_DISC_LBA = 0;
 	return 1;
 }
 
