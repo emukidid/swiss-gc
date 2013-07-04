@@ -79,6 +79,10 @@ u32 _memcpy_original_v2[12] = {
 	0x98090000,	0x39290001,	0x4200FFF0,	0x4E800020	
 };
 
+u32 _memcpy_original_v3[4] = {
+	0x7C691B78, 0x2805000F, 0x40810070, 0x7C801B78
+};
+
 void set_base_addr(int useHi) {
 	base_addr = useHi ? HI_RESERVE : LO_RESERVE;
 	top_addr = base_addr + 0x1800;
@@ -312,7 +316,8 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length) {
 		}
 		// Patch memcpy to copy our code to 0x80000500
 		if(!memcmp(addr_start,_memcpy_original,sizeof(_memcpy_original))
-			|| !memcmp(addr_start,_memcpy_original_v2,sizeof(_memcpy_original_v2)))
+			|| !memcmp(addr_start,_memcpy_original_v2,sizeof(_memcpy_original_v2))
+			|| !memcmp(addr_start,_memcpy_original_v3,sizeof(_memcpy_original_v3)))
 		{
 			u32 properAddress = Calc_ProperAddress(addr, PATCH_DOL, (u32)(addr_start)-(u32)(addr));
 			*(unsigned int*)(addr_start + 0) = 0x3C000000 | (PATCHED_MEMCPY >> 16); // lis		0, 0x8000 (example)   
