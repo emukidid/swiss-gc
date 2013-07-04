@@ -65,24 +65,6 @@ u32 _osdispatch_part_b[1] = {
 	0x4E800021
 };
 
-u32 _memcpy_original[20] = {
-	0x7C041840, 0x41800028, 0x3884FFFF, 0x38C3FFFF,
-	0x38A50001, 0x4800000C, 0x8C040001, 0x9C060001,
-	0x34A5FFFF, 0x4082FFF4, 0x4E800020, 0x7C842A14,
-	0x7CC32A14, 0x38A50001, 0x4800000C, 0x8C04FFFF,
-	0x9C06FFFF, 0x34A5FFFF, 0x4082FFF4, 0x4E800020
-};
-
-u32 _memcpy_original_v2[12] = {
-	0x2C050000,	0x7C691B78,	0x38A5FFFF,	0x4D820020,	
-	0x38A50001,	0x7CA903A6,	0x88040000,	0x38840001,	
-	0x98090000,	0x39290001,	0x4200FFF0,	0x4E800020	
-};
-
-u32 _memcpy_original_v3[4] = {
-	0x7C691B78, 0x2805000F, 0x40810070, 0x7C801B78
-};
-
 void set_base_addr(int useHi) {
 	base_addr = useHi ? HI_RESERVE : LO_RESERVE;
 	top_addr = base_addr + 0x1800;
@@ -249,6 +231,8 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length) {
 	void *addr_start = addr;
 	void *addr_end = addr+length;	
 	int patched = 0;
+	FuncPattern OSExceptionInitSig =
+		{0x27C, 39, 14, 14, 20, 7, 0, 0, "OSExceptionInit", 0};
 	while(addr_start<addr_end) 
 	{
 		// Patch Read (called from DVDLowLevelRead)
@@ -314,18 +298,21 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length) {
 			*(u32*)(addr_start + 4 ) = 0x38800000; // li r4, 0
 			patched |= 0x1000;
 		}
-		// Patch memcpy to copy our code to 0x80000500
-		if(!memcmp(addr_start,_memcpy_original,sizeof(_memcpy_original))
-			|| !memcmp(addr_start,_memcpy_original_v2,sizeof(_memcpy_original_v2))
-			|| !memcmp(addr_start,_memcpy_original_v3,sizeof(_memcpy_original_v3)))
+		// Patch the memcpy call to copy our code to 0x80000500
+		if( *(u32*)(addr_start) == 0x7C0802A6 )
 		{
-			u32 properAddress = Calc_ProperAddress(addr, PATCH_DOL, (u32)(addr_start)-(u32)(addr));
-			*(unsigned int*)(addr_start + 0) = 0x3C000000 | (PATCHED_MEMCPY >> 16); // lis		0, 0x8000 (example)   
-  			*(unsigned int*)(addr_start + 4) = 0x60000000 | (PATCHED_MEMCPY & 0xFFFF); // ori		0, 0, 0x1800 (example)
-  			*(unsigned int*)(addr_start + 8) = 0x7C0903A6; // mtctr	0          
-  			*(unsigned int*)(addr_start + 12) = 0x4E800420; // bctr
-			print_gecko("Found:[memcpy] @ %08X\r\n", properAddress);
-			patched |= 0x10000;
+			if( find_pattern( (u8*)(addr_start), length, &OSExceptionInitSig ) )
+			{
+				u32 properAddress = Calc_ProperAddress(addr, PATCH_DOL, (u32)(addr_start + 472)-(u32)(addr));
+				if(properAddress) {
+					print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
+					u32 newval = (u32)(PATCHED_MEMCPY - properAddress);
+					newval&= 0x03FFFFFC;
+					newval|= 0x48000001;
+					*(u32*)(addr_start + 472) = newval;
+					patched |= 0x10000;
+				}
+			}
 		}
 		
 		addr_start += 4;

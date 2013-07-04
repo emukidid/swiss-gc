@@ -129,24 +129,11 @@ process_read_queue:
 
 .globl patched_memcpy
 patched_memcpy:
-	mtctr   5
-	cmpwi   5,0
-	beqlr
-	lis		5, 0x8000
-	ori		5, 5, 0x0500
-	cmpw	4, 5, 3
-	bne		4, copy
+	cmpwi	3, 0x0500
+	mr		4, 24
+	bnelr
 	lis		4, ext_handler_custom@h
 	ori		4, 4, ext_handler_custom@l
-	li		5, (ext_handler_custom_end-ext_handler_custom)
-	mtctr   5
-copy:
-	addi    4,4,-1
-	addi    3,3,-1
-loopy:
-	lbzu    0,1(4)
-	stbu    0,1(3)
-	bdnz+   loopy
 	blr
 
 .globl ext_handler_custom
