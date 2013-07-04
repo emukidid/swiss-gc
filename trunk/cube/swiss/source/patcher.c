@@ -18,8 +18,7 @@
 #include "deviceHandler.h"
 #include "sidestep.h"
 
-static unsigned int base_addr = LO_RESERVE;
-static unsigned int top_addr = LO_RESERVE + 0x1800;
+static u32 top_addr = VAR_PATCHES_BASE;
 
 /*** externs ***/
 extern GXRModeObj *vmode;		/*** Graphics Mode Object ***/
@@ -65,35 +64,26 @@ u32 _osdispatch_part_b[1] = {
 	0x4E800021
 };
 
-void set_base_addr(int useHi) {
-	base_addr = useHi ? HI_RESERVE : LO_RESERVE;
-	top_addr = base_addr + 0x1800;
-}
-
-u32 get_base_addr() {
-	return base_addr;
-}
-
 void install_code()
 {
-	DCFlushRange((void*)base_addr,0x1800);
-	ICInvalidateRange((void*)base_addr,0x1800);
+	DCFlushRange((void*)LO_RESERVE,0x1800);
+	ICInvalidateRange((void*)LO_RESERVE,0x1800);
 	
 	// IDE-EXI
   	if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
-	  	memcpy((void*)base_addr,hdd_bin,hdd_bin_size);
+	  	memcpy((void*)LO_RESERVE,hdd_bin,hdd_bin_size);
   	}
 	// SD Gecko
 	else if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
-		memcpy((void*)base_addr,sd_bin,sd_bin_size);
+		memcpy((void*)LO_RESERVE,sd_bin,sd_bin_size);
 	}
 	// DVD 2 disc code
 	else if((deviceHandler_initial == &initial_DVD) && (drive_status == DEBUG_MODE)) {
-		memcpy((void*)0x80001800,TDPatch,TDPATCH_LEN);
+		memcpy((void*)LO_RESERVE,TDPatch,TDPATCH_LEN);
 	}
 	// USB Gecko
 	else if(deviceHandler_initial == &initial_USBGecko) {
-		memcpy((void*)base_addr,usbgecko_bin,usbgecko_bin_size);
+		memcpy((void*)LO_RESERVE,usbgecko_bin,usbgecko_bin_size);
 	}
 }
 
@@ -435,8 +425,8 @@ void Patch_ProgCopy(u8 *data, u32 length) {
 int Patch_ProgVideo(u8 *data, u32 length) {
 	int i,j;
 	FuncPattern VIConfigureSigs[6] = {
-		{0x68C,  87, 41,  6, 31, 60, 0, 0, "VIConfigure_v1", 0},
-		{0x6AC,  90, 43,  6, 32, 60, 0, 0, "VIConfigure_v2", 0},
+		{0x6AC,  90, 43,  6, 32, 60, 0, 0, "VIConfigure_v1", 0},
+		{0x68C,  87, 41,  6, 31, 60, 0, 0, "VIConfigure_v2", 0},
 		{0x73C, 100, 43, 13, 34, 61, 0, 0, "VIConfigure_v3", 0},
 		{0x798, 105, 44, 12, 38, 63, 0, 0, "VIConfigure_v4", 0},
 		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure_v5", 0},
@@ -473,13 +463,13 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 						
 						switch(j) {
 							case 0:
-								*(u32*)(data+i+ 272) = 0x807C0000;	// lwz		3, 0 (28)
-								*(u32*)(data+i+ 864) = 0x2C000006;	// cmpwi	0, 6
-								break;
-							case 1:
 								*(u32*)(data+i+  40) = 0x2C040006;	// cmpwi	4, 6
 								*(u32*)(data+i+ 304) = 0x807B0000;	// lwz		3, 0 (27)
 								*(u32*)(data+i+ 896) = 0x2C000006;	// cmpwi	0, 6
+							case 1:
+								*(u32*)(data+i+ 272) = 0x807C0000;	// lwz		3, 0 (28)
+								*(u32*)(data+i+ 864) = 0x2C000006;	// cmpwi	0, 6
+								break;
 								break;
 							case 2:
 								*(u32*)(data+i+ 412) = 0x807C0000;	// lwz		3, 0 (28)

@@ -363,10 +363,6 @@ int setup_memcard_emulation() {
 				return 0;
 			}
 		}
-		// High level memory area, but our CARD emulation is all hardcoded for low-level patches.. :P
-		if(swissSettings.emulatemc && swissSettings.useHiMemArea) {
-			memcpy((void*)0x80001800,sd_bin,sd_bin_size);
-		}
 		// Obtain the offset of it on SD Card and stash it somewhere
 		sprintf(txtbuffer, "sda:/%s.memcard.sav", stripInvalidChars(getRelativeName(curFile.name)));
 		print_gecko("Looking for %s\r\n",txtbuffer);
@@ -442,23 +438,17 @@ unsigned int load_app(int mode)
 			zeldaVAT = 2;	//NTSC-U,NTSC-J
 	}
 	
-	// Will we use the high mem area for our patch code?
+	// Game in the ID list below wants to write over 0x80001800
 	if (!strncmp(gameID, "GPXE01", 6) || !strncmp(gameID, "GPXP01", 6) || !strncmp(gameID, "GPXJ01", 6)) {
-		swissSettings.useHiMemArea = 1;
-		swissSettings.useHiLevelPatch = 0;
+		// TODO Fix this game with a individual patch
 	}
-
-	// If not, setup the game for High mem patch code
-	set_base_addr(swissSettings.useHiMemArea);
 
 	DrawFrameStart();
 	DrawProgressBar(33, "Reading Main DOL");
 	DrawFrameFinish();
 	
 	// Adjust top of memory (we reserve some for high memory location patching and cheats)
-	u32 top_of_main_ram = 0x81800000 - VAR_AREA_SIZE;
-	if(swissSettings.useHiMemArea) 
-		top_of_main_ram = get_base_addr();
+	u32 top_of_main_ram = 0x81800000;
 
 	// Read FST to top of Main Memory (round to 32 byte boundary)
 	u32 fstSizeAligned = GCMDisk.MaxFSTSize + (32-(GCMDisk.MaxFSTSize%32));
@@ -532,8 +522,7 @@ unsigned int load_app(int mode)
 			sleep(5);
 		}
 		Patch_DVDCompareDiskId(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-		if(swissSettings.noDiscMode)
-			Patch_DVDStatusFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		Patch_DVDStatusFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	if(swissSettings.muteAudioStreaming || curDevice != DVD_DISC)
 			Patch_DVDAudioStreaming(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
@@ -591,16 +580,11 @@ unsigned int load_app(int mode)
 	DCFlushRange((void*)0x80000000, 0x3100);
 	ICInvalidateRange((void*)0x80000000, 0x3100);
 	
-	if(swissSettings.debugUSB) {
-		print_gecko("Sector: %08X Speed: %08x Type: %08X\n",
-		*(volatile unsigned int*)VAR_CUR_DISC_LBA,*(volatile unsigned int*)VAR_EXI_BUS_SPD,*(volatile unsigned int*)VAR_SD_TYPE);
-	}
-	
 	if(swissSettings.hasDVDDrive) {
 		// Check DVD Status, make sure it's error code 0
 		print_gecko("DVD: %08X\r\n",dvd_get_error());
 	}
-	// Memcard emulation or High-Level DVD emulation, clear out some variables
+	// Clear out some patch variables
 	*(volatile unsigned int*)VAR_MEMCARD_RESULT = 0;
 	*(volatile unsigned int*)VAR_MC_CB_ADDR = 0;
 	*(volatile unsigned int*)VAR_MC_CB_ARG1 = 0;
@@ -950,17 +934,6 @@ void load_file()
 		return;
 	}
 
-	// High Level patch only works for no DVD drive setup (for now)
-	if((curDevice == SD_CARD) || (curDevice == IDEEXI) || (curDevice == USBGECKO)) {
-		if(!swissSettings.hasDVDDrive && !swissSettings.useHiLevelPatch) {
-			DrawFrameStart();
-			DrawMessageBox(D_WARN, "No DVD Drive must use High level patch!");
-			DrawFrameFinish();
-			wait_press_A();
-			return;
-		}
-	}
-	
 	// Show game info or return to the menu
 	if(!info_game()) {
 		return;
@@ -973,7 +946,7 @@ void load_file()
 	}
 	
 	// Report to the user the patch status of this GCM/ISO file and look for a cheats file too
-	if((curDevice == SD_CARD) || (curDevice == IDEEXI) || (curDevice == USBGECKO)) {
+	if((curDevice == SD_CARD) || (curDevice == IDEEXI)) {
 		isPrePatched = check_game();
 		if(isPrePatched < 0) {
 			return;
@@ -1015,13 +988,7 @@ void load_file()
 	}
 	
 	// We can't relocate the cheats stub so we must ensure our patch code is located elsewhere
-	if((hasCheatsFile || swissSettings.wiirdDebug) && (!(!swissSettings.useHiLevelPatch && swissSettings.useHiMemArea))) {
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL, "Cheats/WiiRD will only work with high memory patch");
-		DrawFrameFinish();
-		wait_press_A();
-		return;
-	}
+	// TODO: FIX
 	
 	// Setup memory card emulation
 	if(!setup_memcard_emulation())
@@ -1029,7 +996,7 @@ void load_file()
 	
 	// Start up the DVD Drive
 	if((curDevice != DVD_DISC) && (curDevice != WODE) && (curDevice != WKF) 
-		&& (swissSettings.hasDVDDrive) && (!swissSettings.noDiscMode) 
+		&& (swissSettings.hasDVDDrive)
 		&& DrawYesNoDialog("Use a DVD Disc for higher compatibility?")) {
 		if(initialize_disc(GCMDisk.AudioStreaming) == DRV_ERROR) {
 			return; //fail
@@ -1043,7 +1010,7 @@ void load_file()
 		file_handle *secondDisc = NULL;
 		
 		// If we're booting from SD card or IDE hdd
-		if((curDevice == SD_CARD) || (curDevice == IDEEXI) || (curDevice == USBGECKO)) {
+		if((curDevice == SD_CARD) || (curDevice == IDEEXI)) {
 			// look to see if it's a two disc game
 			// set things up properly to allow disc swapping
 			// the files must be setup as so: game-disc1.xxx game-disc2.xxx
@@ -1133,7 +1100,6 @@ int check_game()
 	int numToPatch = parse_gcm(&curFile, filesToPatch);
 	if(numToPatch>0) {
 		// Game requires patch files, lets do it.	
-		set_base_addr(swissSettings.useHiMemArea);	// Needs to be set otherwise the patch code written can be wrong!
 		int res = patch_gcm(&curFile, filesToPatch, numToPatch);
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,res ? "Game Patched Successfully":"Game could not be patched or not required");
@@ -1205,12 +1171,9 @@ int info_game()
 		strncpy(&config->game_name[0],&GCMDisk.GameName[0],32);
 		config_find(config);	// populate
 		// load settings
-		swissSettings.useHiLevelPatch = config->useHiLevelPatch;
-		swissSettings.useHiMemArea = config->useHiMemArea;
 		swissSettings.gameVMode = config->gameVMode;
 		swissSettings.softProgressive = config->softProgressive;
 		swissSettings.muteAudioStreaming = config->muteAudioStreaming;
-		swissSettings.noDiscMode = config->noDiscMode;
 		swissSettings.emulatemc = config->emulatemc;
 		swissSettings.forceWidescreen = config->forceWidescreen;
 		swissSettings.forceAnisotropy = config->forceAnisotropy;
