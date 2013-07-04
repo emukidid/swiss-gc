@@ -124,21 +124,21 @@ extern u32 CARDWriteAsync_length;
 #define HI_RESERVE (0x817FE800-VAR_AREA_SIZE)
 
 /* Function jump locations in our patch code */
-#define READ_TYPE1_V1_OFFSET 	(base_addr)
-#define READ_TYPE1_V2_OFFSET 	(base_addr | 0x04)
-#define READ_TYPE1_V3_OFFSET 	(base_addr | 0x08)
-#define READ_TYPE2_V1_OFFSET 	(base_addr | 0x0C)
-#define OS_RESTORE_INT_OFFSET 	(base_addr | 0x10)
-#define CARD_OPEN_OFFSET 		(base_addr | 0x14)
-#define CARD_FASTOPEN_OFFSET 	(base_addr | 0x18)
-#define CARD_CLOSE_OFFSET 		(base_addr | 0x1C)	
-#define CARD_CREATE_OFFSET 		(base_addr | 0x20)
-#define CARD_DELETE_OFFSET 		(base_addr | 0x24)
-#define CARD_READ_OFFSET 		(base_addr | 0x28)
-#define CARD_WRITE_OFFSET 		(base_addr | 0x2C)
-#define CARD_GETSTATUS_OFFSET 	(base_addr | 0x30)
-#define CARD_SETSTATUS_OFFSET 	(base_addr | 0x34)
-#define CARD_SETUP_OFFSET 		(base_addr | 0x38)
+#define QUEUE_READ_OFFSET	 	(base_addr)
+#define PATCHED_MEMCPY		 	(base_addr | 0x04)
+#define FAKE_IRQ			 	(base_addr | 0x08)
+#define CARD_OPEN_OFFSET 		(base_addr | 0x0C)
+#define CARD_FASTOPEN_OFFSET 	(base_addr | 0x10)
+#define CARD_CLOSE_OFFSET 		(base_addr | 0x14)	
+#define CARD_CREATE_OFFSET 		(base_addr | 0x18)
+#define CARD_DELETE_OFFSET 		(base_addr | 0x1C)
+#define CARD_READ_OFFSET 		(base_addr | 0x20)
+#define CARD_WRITE_OFFSET 		(base_addr | 0x24)
+#define CARD_GETSTATUS_OFFSET 	(base_addr | 0x28)
+#define CARD_SETSTATUS_OFFSET 	(base_addr | 0x2C)
+#define CARD_SETUP_OFFSET 		(base_addr | 0x30)
+
+#define READ_PATCHED_ALL 		(0x11111)
 
 /* Types of files we may patch */
 #define PATCH_DOL		0
@@ -146,7 +146,7 @@ extern u32 CARDWriteAsync_length;
 #define PATCH_OTHER		2
 
 int Patch_DVDHighLevelRead(u8 *data, u32 length);
-int Patch_DVDLowLevelRead(void *addr, u32 length);
+u32 Patch_DVDLowLevelRead(void *addr, u32 length);
 int Patch_ProgVideo(u8 *data, u32 length);
 void Patch_WideAspect(u8 *data, u32 length);
 int Patch_TexFilt(u8 *data, u32 length);

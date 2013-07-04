@@ -13,7 +13,9 @@
 .set VAR_AREA_SIZE,		0x200	# Size of our variables block
 .set VAR_FRAG_SIZE,		0xE0	# Size of frag array in bytes
 .set VAR_FRAG_LIST,		-0x200	# 0xE0 of fragments (18 frags max) (u32 sector, u32 size)
-.set VAR_READ_DVDSTRUCT,-0x120	# 0x40 of ptr to DVD structs
+.set VAR_READ_DVDSTRUCT,-0x120	# 0x18 for our dvd structure
+.set VAR_FAKE_IRQ_SET,	-0x108	# flag to say we are ready to fake irq.
+.set VAR_DVDIRQ_HNDLR,	-0x104	# ptr to __DVDInterruptHandler
 .set VAR_DISC_1_LBA, 	-0x100	# is the base file sector for disk 1
 .set VAR_DISC_2_LBA, 	-0xFC	# is the base file sector for disk 2
 .set VAR_CUR_DISC_LBA, 	-0xF8	# is the currently selected disk sector
@@ -44,7 +46,9 @@
 #define VAR_AREA_SIZE		(0x200)				// Size of our variables block
 #define VAR_FRAG_SIZE		(0xE0)				// Size of frag array in bytes
 #define VAR_FRAG_LIST		(VAR_AREA-0x200)	// 0xE0 of fragments (18 frags max) (u32 sector, u32 size)
-#define VAR_READ_DVDSTRUCT	(VAR_AREA-0x120)	// 0x40 of ptr to DVD structs
+#define VAR_READ_DVDSTRUCT	(VAR_AREA-0x120)	// 0x18 for our dvd structure
+#define VAR_FAKE_IRQ_SET	(VAR_AREA-0x108)	// flag to say we're ready to fake irq.
+#define VAR_DVDIRQ_HNDLR	(VAR_AREA-0x104)	// ptr to __DVDInterruptHandler
 #define VAR_DISC_1_LBA 		(VAR_AREA-0x100)	// is the base file sector for disk 1
 #define VAR_DISC_2_LBA 		(VAR_AREA-0xFC)		// is the base file sector for disk 2
 #define VAR_CUR_DISC_LBA 	(VAR_AREA-0xF8)		// is the currently selected disk sector

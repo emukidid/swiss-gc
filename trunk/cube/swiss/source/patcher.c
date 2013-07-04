@@ -29,51 +29,6 @@ extern int GC_SD_CHANNEL;
 
 extern void animateBox(int x1,int y1, int x2, int y2, int color,char *msg);
 
-/* Original Read bytes (for finding and patching) */
-u8 _Read_original[46] = {
-	0x7C, 0x08, 0x02, 0xA6,  //	mflr        r0
-	0x90, 0x01, 0x00, 0x04,  //	stw         r0, 4 (sp)
-	0x38, 0x00, 0x00, 0x00,  //	li          r0, 0
-	0x94, 0x21, 0xFF, 0xD8,  //	stwu        sp, -0x0028 (sp)
-	0x93, 0xE1, 0x00, 0x24,  //	stw         r31, 36 (sp)
-	0x93, 0xC1, 0x00, 0x20,  //	stw         r30, 32 (sp)
-	0x3B, 0xC5, 0x00, 0x00,  //	addi        r30, r5, 0
-	0x93, 0xA1, 0x00, 0x1C,  //	stw         r29, 28 (sp)
-	0x3B, 0xA4, 0x00, 0x00,  //	addi        r29, r4, 0
-	0x93, 0x81, 0x00, 0x18,  //	stw         r28, 24 (sp)
-	0x3B, 0x83, 0x00, 0x00,  //	addi        r28, r3, 0
-	0x90, 0x0D               // stw r0 to someplace in (sd1) - differs on different sdk's
-};
-
-u8 _Read_original_2[38] = {
-	0x7C, 0x08, 0x02, 0xA6,  	//	mflr        r0               
-	0x90, 0x01, 0x00, 0x04,  	//	stw         r0, 4 (sp)       
-	0x94, 0x21, 0xFF, 0xE0,  	//	stwu        sp, -0x0020 (sp) 
-	0x93, 0xE1, 0x00, 0x1C,  	//	stw         r31, 28 (sp)     
-	0x90, 0x61, 0x00, 0x08,  	//	stw         r3, 8 (sp)       
-	0x7C, 0x9F, 0x23, 0x78,  	//	mr          r31, r4          
-	0x90, 0xA1, 0x00, 0x10,  	//	stw         r5, 16 (sp)      
-	0x90, 0xC1, 0x00, 0x14,  	//	stw         r6, 20 (sp)      
-	0x80, 0x01, 0x00, 0x14,  	//	lwz         r0, 20 (sp)      
-	0x90, 0x0D					//	stw r0 to someplace in (sd1) - differs on different sdk's
-};
-
-/* Luigis Mansion NTSC (not Players Choice) */
-u8 _Read_original_3[46] = {	//0x801E2E24
-	0x7C, 0x08, 0x02, 0xA6,  // mflr        r0              
-	0x90, 0x01, 0x00, 0x04,  // stw         r0, 4 (sp)      
-	0x38, 0x00, 0x00, 0x01,  // li          r0, 1           
-	0x94, 0x21, 0xFF, 0xD8,  // stwu        sp, -0x0028 (sp)
-	0x93, 0xE1, 0x00, 0x24,  // stw         r31, 36 (sp)    
-	0x93, 0xC1, 0x00, 0x20,  // stw         r30, 32 (sp)    
-	0x3B, 0xC5, 0x00, 0x00,  // addi        r30, r5, 0      
-	0x93, 0xA1, 0x00, 0x1C,  // stw         r29, 28 (sp)    
-	0x3B, 0xA4, 0x00, 0x00,  // addi        r29, r4, 0      
-	0x93, 0x81, 0x00, 0x18,  // stw         r28, 24 (sp)    
-	0x3B, 0x83, 0x00, 0x00,  // addi        r28, r3, 0      
-	0x90, 0xCD               // stw r6 to someplace in (sd1) - differs on different sdk's
-};
-
 //aka AISetStreamPlayState
 u32 _AIResetStreamSampleCount_original[9] = {
   0x3C60CC00,  // lis         r3, 0xCC00
@@ -87,28 +42,41 @@ u32 _AIResetStreamSampleCount_original[9] = {
   0x7C0803A6   // mtlr        r0
 };
 
-u32 _OSRestoreInterrupts_original[9] = {
-	0x2c030000,	// cmpwi       r3, 0
-	0x7c8000a6,	// mfmsr       r4
-	0x4182000c,	// beq-        +c
-	0x60858000,	// ori         r5, r4, 0x8000
-	0x48000008,	// b           +8
-	0x5485045e,	// rlwinm      r5, r4, 0, 17, 15
-	0x7ca00124,	// mtmsr       r5
-	0x54848ffe,	// rlwinm      r4, r4, 17, 31, 31
-	0x4e800020	// blr
+u32 _read_original_part_a[1] = {
+	0x3C60A800
+};
+u32 _read_original_part_b[1] = {
+	0x9004001C
 };
 
-u32 _OSRestoreInterrupts_original_v2[9] = {
-	0x2c030000,	// cmpwi       r3, 0
-	0x7c8000a6,	// mfmsr       r4
-	0x4182000c,	// beq-        +c
-	0x60858000,	// ori         r5, r4, 0x8000
-	0x48000008,	// b           +8
-	0x5485045e,	// rlwinm      r5, r4, 0, 17, 15
-	0x7ca00124,	// mtmsr       r5
-	0x54838ffe,	// rlwinm      r3, r4, 17, 31, 31
-	0x4e800020	// blr
+u16 _dvdinterrupthandler_part[3] = {
+	0x6000, 0x002A, 0x0054
+};
+
+u16 _cbforstatebusy_part[4] = {
+	0x6000, 0x0018, 0x001C, 0x0020
+};
+
+u32 _osdispatch_part_a[2] = {
+	0x3C60CC00, 0x83E33000
+};
+
+u32 _osdispatch_part_b[1] = {
+	0x4E800021
+};
+
+u32 _memcpy_original[20] = {
+	0x7C041840, 0x41800028, 0x3884FFFF, 0x38C3FFFF,
+	0x38A50001, 0x4800000C, 0x8C040001, 0x9C060001,
+	0x34A5FFFF, 0x4082FFF4, 0x4E800020, 0x7C842A14,
+	0x7CC32A14, 0x38A50001, 0x4800000C, 0x8C04FFFF,
+	0x9C06FFFF, 0x34A5FFFF, 0x4082FFF4, 0x4E800020
+};
+
+u32 _memcpy_original_v2[12] = {
+	0x2C050000,	0x7C691B78,	0x38A5FFFF,	0x4D820020,	
+	0x38A50001,	0x7CA903A6,	0x88040000,	0x38840001,	
+	0x98090000,	0x39290001,	0x4200FFF0,	0x4E800020	
 };
 
 void set_base_addr(int useHi) {
@@ -273,105 +241,88 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 }
 
 
-
-int Patch_DVDHighLevelRead(u8 *data, u32 length) {
-	int i, j, count = 0;
-	FuncPattern DVDReadSigs[2] = {
-		{ 0xBC, 20, 3, 3, 4, 7, DVDReadAsyncInt,  DVDReadAsyncInt_length, "DVDReadAsync", 0 },
-		{ 0x114, 23, 2, 6, 9, 8, DVDReadInt,   DVDReadInt_length,  "DVDRead", 0 }//,
-		//{ 0x48, 4, 3, 2, 1, 4, DVDGetCommandBlockStatus, DVDGetCommandBlockStatus_length, "DVDGetCommandBlockStatus", 0},
-		//{ 0x278, 49, 17, 9, 25, 5, DVDCancelAsync,   DVDCancelAsync_length,  "DVDCancelAsync", 0 },
-		//{ 0xA8, 13, 4, 4, 7, 3, DVDCancel,   DVDCancel_length,  "DVDCancel", 0 },
-		//{ 0xA8, 10, 4, 4, 6, 3, DVDGetDriveStatus, DVDGetDriveStatus_length,  "DVDGetDriveStatus", 0 }
-	};
-
-	for( i=0; i < length; i+=4 )
+u32 Patch_DVDLowLevelRead(void *addr, u32 length) {
+	void *addr_start = addr;
+	void *addr_end = addr+length;	
+	int patched = 0;
+	while(addr_start<addr_end) 
 	{
-		if( *(u32*)(data + i ) != 0x7C0802A6 )
-			continue;
-			
-		FuncPattern fp;
-		make_pattern( (u8*)(data+i), length, &fp );
-			
-		for( j=0; j < sizeof(DVDReadSigs); j++ )
+		// Patch Read (called from DVDLowLevelRead)
+		if(memcmp(addr_start,_read_original_part_a,sizeof(_read_original_part_a))==0) 
 		{
-			if( !DVDReadSigs[j].offsetFoundAt && compare_pattern( &fp, &(DVDReadSigs[j]) ) ) {
-				print_gecko("Found [%s] @ 0x%08X len %i\n", DVDReadSigs[j].Name, (u32)data + i, DVDReadSigs[j].Length);
-				
-				memcpy( (u8*)(data+i), &DVDReadSigs[j].Patch[0], DVDReadSigs[j].PatchLength );
-				DCFlushRange((u8*)(data+i), DVDReadSigs[j].Length);
-				ICInvalidateRange((u8*)(data+i), DVDReadSigs[j].Length);
-				count++;
-				DVDReadSigs[j].offsetFoundAt = (u32)data+i;
+			int i = 0;
+			while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
+			u32 properAddress = Calc_ProperAddress(addr, PATCH_DOL, (u32)((addr_start-i)+12)-(u32)(addr));
+			u32 newval = (u32)(QUEUE_READ_OFFSET - properAddress);
+			newval&= 0x03FFFFFC;
+			newval|= 0x48000001;
+			*(u32*)((addr_start - i) + 12) = newval;
+			
+			// Patch the DI start
+			i = 0;
+			while((*(u32*)(addr_start + i)) != _read_original_part_b[0]) i+=4;
+			*(u32*)(addr_start + i) = 0x60000000;
+			*(u32*)(addr_start + i + 4) = 0x48000000 | (*(u32*)(addr_start + i + 4) & 0xFFFF);	// skip timeout
+      		print_gecko("Found:[Read] @ %08X\r\n", properAddress);
+			patched |= 0x01;
+		}
+		// Patch __OSDispatchInterrupt to launch our fake IRQ
+		if(memcmp(addr_start,_osdispatch_part_a,sizeof(_osdispatch_part_a))==0)
+		{
+			int i = 0;
+			while((*(u32*)(addr_start + i)) != _osdispatch_part_b[0]) i+=4;
+			
+			u32 properAddress = Calc_ProperAddress(addr, PATCH_DOL, (u32)(addr_start+i)-(u32)(addr));
+			if(properAddress) {
+				print_gecko("Found:[__OSDispatchInterrupts] @ %08X\r\n", properAddress );
+				u32 newval = (u32)(FAKE_IRQ - properAddress);
+				newval&= 0x03FFFFFC;
+				newval|= 0x48000001;
+				*(u32*)(addr_start + i) = newval;
+				patched |= 0x10;
 			}
 		}
-
-		if( count == sizeof(DVDReadSigs) )
-			break;
-	}
-	return count;
-}
-
-int Patch_DVDLowLevelRead(void *addr, u32 length) {
-	void *addr_start = addr;
-	void *addr_end = addr+length;	
-	int patched = 0;
-	while(addr_start<addr_end) 
-	{
-		if(memcmp(addr_start,_Read_original,sizeof(_Read_original))==0) 
+		// Note down the location of the __DVDInterruptHandler so we can call it for our fake IRQ
+		if( ((*(u32*)(addr_start + 0 )) & 0xFFFF) == _dvdinterrupthandler_part[0]
+			&& ((*(u32*)(addr_start + 4 )) & 0xFFFF) == _dvdinterrupthandler_part[1]
+			&& ((*(u32*)(addr_start + 8 )) & 0xFFFF) == _dvdinterrupthandler_part[2] ) 
 		{
-      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (READ_TYPE1_V1_OFFSET >> 16); // lis		0, 0x8000 (example)   
-  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_TYPE1_V1_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
-  			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
-  			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
-  			*(unsigned int*)(addr_start + 92) = 0x3C60E000; // lis         r3, 0xE000 (make it a seek)
-  			*(unsigned int*)(addr_start + 112) = 0x38000001;//  li          r0, 1 (IMM not DMA)
-  			print_gecko("Read V1 patched\r\n");
-			patched = 1;
-		}		
-		if(memcmp(addr_start,_Read_original_2,sizeof(_Read_original_2))==0) 
-		{
-      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (READ_TYPE1_V2_OFFSET >> 16); // lis		0, 0x8000 (example)   
-  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_TYPE1_V2_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
-  			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
-  			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
-  			*(unsigned int*)(addr_start + 68) = 0x3C00E000;	//  lis         r0, 0xE000 (make it a seek)
-  			*(unsigned int*)(addr_start + 128) = 0x38000001;//  li          r0, 1 (IMM not DMA)
-  			print_gecko("Read V2 patched\r\n");
-			patched = 1;
+			int i = 0;
+			while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
+			
+			u32 properAddress = Calc_ProperAddress(addr, PATCH_DOL, (u32)((addr_start-i)+4)-(u32)(addr));
+			if(properAddress) {
+				print_gecko("Found:[__DVDInterruptHandler] @ %08X\r\n", properAddress );
+				*(unsigned int*)VAR_DVDIRQ_HNDLR = properAddress;
+				patched |= 0x100;
+			}
+			// Fake the DVD DISR register value
+			*(u32*)(addr_start + 0 ) = 0x3800003A; // li r0, 0x3A
 		}
-		if(memcmp(addr_start,_Read_original_3,sizeof(_Read_original_3))==0) 
+		// Patch the statebusy callback to see the DILENGTH register with a zero value
+		if( ((*(u32*)(addr_start + 0 )) & 0xFFFF) == _cbforstatebusy_part[0]
+			&& ((*(u32*)(addr_start + 4 )) & 0xFFFF) == _cbforstatebusy_part[1]
+			&& ((*(u32*)(addr_start + 8 )) & 0xFFFF) == _cbforstatebusy_part[2]
+			&& ((*(u32*)(addr_start + 12 )) & 0xFFFF) == _cbforstatebusy_part[3]) 
 		{
-      		*(unsigned int*)(addr_start + 8) = 0x3C000000 | (READ_TYPE1_V3_OFFSET >> 16); // lis		0, 0x8000 (example)   
-  			*(unsigned int*)(addr_start + 12) = 0x60000000 | (READ_TYPE1_V3_OFFSET & 0xFFFF); // ori		0, 0, 0x1800 (example)
-  			*(unsigned int*)(addr_start + 16) = 0x7C0903A6; // mtctr	0          
-  			*(unsigned int*)(addr_start + 20) = 0x4E800421; // bctrl  
-  			*(unsigned int*)(addr_start + 84) = 0x3C60E000; // lis         r3, 0xE000 (make it a seek)
-  			*(unsigned int*)(addr_start + 104) = 0x38000001;//  li          r0, 1 (IMM not DMA)
-  			print_gecko("Read V3 patched\r\n");
-			patched = 1;
+			u32 properAddress = Calc_ProperAddress(addr, PATCH_DOL, (u32)(addr_start)-(u32)(addr));
+			print_gecko("Found:[cbStateBusy] @ %08X\r\n", properAddress );
+			*(u32*)(addr_start + 4 ) = 0x38800000; // li r4, 0
+			patched |= 0x1000;
 		}
-		addr_start += 4;
-	}
-	return patched;
-}
-
-int Patch_OSRestoreInterrupts(void *addr, u32 length) {
-	void *addr_start = addr;
-	void *addr_end = addr+length;	
-	int patched = 0;
-	while(addr_start<addr_end) 
-	{
-		if(	memcmp(addr_start,_OSRestoreInterrupts_original,sizeof(_OSRestoreInterrupts_original))==0  || 
-			memcmp(addr_start,_OSRestoreInterrupts_original_v2,sizeof(_OSRestoreInterrupts_original_v2))==0)
+		// Patch memcpy to copy our code to 0x80000500
+		if(!memcmp(addr_start,_memcpy_original,sizeof(_memcpy_original))
+			|| !memcmp(addr_start,_memcpy_original_v2,sizeof(_memcpy_original_v2)))
 		{
-			*(unsigned int*)(addr_start + 0) = 0x3C000000 | (OS_RESTORE_INT_OFFSET >> 16); 		// lis		0, 0x8000 (example)   
-  			*(unsigned int*)(addr_start + 4) = 0x60000000 | (OS_RESTORE_INT_OFFSET & 0xFFFF); 	// ori		0, 0, 0x1800 (example)
-  			*(unsigned int*)(addr_start + 8) = 0x7C0903A6; // mtctr	0
-  			*(unsigned int*)(addr_start + 12) = 0x4E800420; // bctr, the function we call will blr
-			patched = 1;
-			print_gecko("Patched OSRestoreInterrupts @ %08X\r\n",(u32)addr_start);
+			u32 properAddress = Calc_ProperAddress(addr, PATCH_DOL, (u32)(addr_start)-(u32)(addr));
+			*(unsigned int*)(addr_start + 0) = 0x3C000000 | (PATCHED_MEMCPY >> 16); // lis		0, 0x8000 (example)   
+  			*(unsigned int*)(addr_start + 4) = 0x60000000 | (PATCHED_MEMCPY & 0xFFFF); // ori		0, 0, 0x1800 (example)
+  			*(unsigned int*)(addr_start + 8) = 0x7C0903A6; // mtctr	0          
+  			*(unsigned int*)(addr_start + 12) = 0x4E800420; // bctr
+			print_gecko("Found:[memcpy] @ %08X\r\n", properAddress);
+			patched |= 0x10000;
 		}
+		
 		addr_start += 4;
 	}
 	return patched;

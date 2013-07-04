@@ -13,124 +13,68 @@ typedef int s32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 
-typedef struct DVDDiskID DVDDiskID;
-
-struct DVDDiskID
+typedef struct DVDQueuedRead DVDQueuedRead;
+//typedef void (*DVDCallback)(s32 result, DVDFileInfo* fileInfo);
+struct DVDQueuedRead
 {
-    char      gameName[4];
-    char      company[2];
-    u8        diskNumber;
-    u8        gameVersion;
-    u8        streaming;
-    u8        streamingBufSize; // 0 = default
-    u8        padding[22];      // 0's are stored
-
+	void*	dst;
+    u32		len;
+    u32		ofs;
+	void*	oldDst;
+	u32		oldLen;
+	u32		oldOfs;
+//	void*	cb;
 };
 
-typedef struct DVDCommandBlock DVDCommandBlock;
-
-typedef void (*DVDCBCallback)(s32 result, DVDCommandBlock* block);
-
-struct DVDCommandBlock
-{
-    DVDCommandBlock* next;
-    DVDCommandBlock* prev;
-    u32          command;
-    s32          state;
-    u32          offset;
-    u32          length;
-    void*        addr;
-    u32          currTransferSize;
-    u32          transferredSize;
-    DVDDiskID*   id;
-    DVDCBCallback callback;
-    void*        userData;
-};
-
-typedef struct DVDFileInfo  DVDFileInfo;
-typedef void (*DVDCallback)(s32 result, DVDFileInfo* fileInfo);
-
-struct DVDFileInfo
-{
-	DVDCommandBlock cb;
-
-    u32             startAddr;      // disk address of file
-    u32             length;         // file size in bytes
-
-    DVDCallback     callback;
-};
-
-typedef struct StructQueue
-{
-	DVDFileInfo *block[8];
-} StructQueue;
-/*
-void print_struct(DVDFileInfo* ptr) {
-	if(ptr->cb.state == 0 || ptr->cb.state == 1) {
-		usb_sendbuffer_safe(ptr->cb.state == 0 ? "DONE":"BUSY",4);
-	}
-	else {
-		usb_sendbuffer_safe("UNK",3);
-	}
-	usb_sendbuffer_safe(": dst[",6);
-	print_int_hex((u32)ptr->cb.addr);
+#ifdef DEBUG
+void print_read(void* dst, u32 len, u32 ofs) {
+	usb_sendbuffer_safe("dst[",4);
+	print_int_hex((u32)dst);
 	usb_sendbuffer_safe("] ofs[",6);
-	print_int_hex(ptr->cb.offset);
+	print_int_hex(ofs);
 	usb_sendbuffer_safe("] len[",6);
-	print_int_hex(ptr->cb.length);
-	usb_sendbuffer_safe("] base[",7);
-	print_int_hex(ptr->startAddr);
-	usb_sendbuffer_safe("] size[",7);
-	print_int_hex(ptr->length);
+	print_int_hex(len);
 	usb_sendbuffer_safe("]\r\n",3);
-}*/
+}
+#endif
 
-extern void process_read_queue();
-
-void add_read_to_queue(DVDFileInfo* ptr) {
-	//usb_sendbuffer_safe("ADD:",4);
-	//usb_sendbuffer_safe(ptr->callback ? "CB\r\n":"NO\r\n",4);
-	//print_struct(ptr);
-	StructQueue *queue = (StructQueue*)(VAR_READ_DVDSTRUCT);
-	int i;
-	for(i = 0; i < 8; i++) {
-		if(!queue->block[i] || queue->block[i] == ptr) {
-			queue->block[i] = ptr;
-			return;					// Found a spot in our queue for this, we're ok
-		}
-	}
-	
-	while(queue->block[0]) {
-		process_read_queue();		// Queue overwhelmed, process it all.. NOW!
-	}
-	queue->block[0] = ptr;
+void add_read_to_queue(void* dst, u32 len, u32 ofs) {
+	DVDQueuedRead *store = (DVDQueuedRead*)(VAR_READ_DVDSTRUCT);
+	store->dst = dst;
+	store->len = len;
+	store->ofs = ofs;
+#ifdef DEBUG
+	usb_sendbuffer_safe("New Read!\r\n",11);
+	print_read(dst, len, ofs);
+#endif
 }
 
-DVDFileInfo* get_queued_read() {
-	StructQueue *queue = (StructQueue*)(VAR_READ_DVDSTRUCT);
-	int i, emptyslot = 0;
-	
-	// Clear any which are complete or have been marked as cancelled
-	for(i = 0; i < 8; i++) {
-		if(queue->block[i]) {
-			if(!queue->block[i]->cb.state || queue->block[i]->cb.state == 10 ) {
-				/*usb_sendbuffer_safe("CLR:",4);
-				usb_sendbuffer_safe(queue->block[i]->callback ? "CB\r\n":"NO\r\n",4);
-				print_struct(queue->block[i]);*/
-				queue->block[i] = 0;
-			}
-		}
-	}
+void process_queue() {
 
-	// return first available struct
-	for(i = 0; i < 8; i++) {
-		if(queue->block[i]) {
-			/*usb_sendbuffer_safe("RET:",4);
-			usb_sendbuffer_safe(queue->block[i]->callback ? "CB\r\n":"NO\r\n",4);
-			print_struct(queue->block[i]);*/
-			return queue->block[i];
+	DVDQueuedRead *store = (DVDQueuedRead*)(VAR_READ_DVDSTRUCT);
+	if(store->len) {
+		// read a bit
+		int amountToRead = store->len > 0x400 ? 0x400 : store->len;
+#ifdef DEBUG
+		usb_sendbuffer_safe("Start Read:",11);
+		print_read(store->dst, amountToRead, store->ofs);
+#endif
+		device_frag_read(store->dst, amountToRead, store->ofs);
+#ifdef DEBUG
+		usb_sendbuffer_safe("End Read\r\n",10);
+#endif
+		store->dst += amountToRead;
+		store->ofs += amountToRead;
+		store->len -= amountToRead;
+		
+		if(!store->len) {
+#ifdef DEBUG
+			usb_sendbuffer_safe("FinishedA\r\n",11);
+#endif
+			*(volatile unsigned long*)VAR_FAKE_IRQ_SET = 1;
+#ifdef DEBUG
+			usb_sendbuffer_safe("FinishedB\r\n",11);
+#endif
 		}
 	}
-	return 0;
 }
-

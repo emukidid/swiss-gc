@@ -38,12 +38,7 @@ DVDReadAsyncInt:
 	stwu    %sp, -0x40(%sp)
 	stw     %r0, 0x44(%sp)
 	stw		%r7, 16(%sp)
-	
-#Disable external interrupts
-	mfmsr	%r7
-	stw		%r7, 0x20(%sp)		# store old MSR
-	rlwinm	%r7,%r7,0,17,15
-	mtmsr	%r7
+	stw		%r3, 20(%sp)
 	
 #Update dvdstruct with "waiting to enter queue" status, immediately
 	li		%r0,	2
@@ -68,17 +63,7 @@ DVDReadAsyncInt:
 	ori		%r7,	%r7,	0x183C
 	mtctr	%r7
 	bctrl
-
-#Enable external interrupts if we disabled them earlier
-	lwz		%r7, 0x20(%sp)		# load old MSR
-	rlwinm	%r7, %r7, 17, 30,31
-	cmpwi	%r7,	0
-	beq		skip_setting_msr
-	mfmsr	%r7
-	ori		%r7,%r7,0x8000
-	mtmsr	%r7
-
-skip_setting_msr:		
+	
 	li      %r3,	1
 	lwz		%r7, 16(%sp)
 	lwz     %r0, 0x44(%sp)

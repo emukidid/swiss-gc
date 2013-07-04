@@ -192,20 +192,20 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			deviceHandler_seekFile(file,filesToPatch[i].offset+ofs,DEVICE_HANDLER_SEEK_SET);
 			deviceHandler_readFile(file,buffer,sizeToRead);
 
-			if(swissSettings.useHiLevelPatch) {
-				patched += Patch_DVDHighLevelRead(buffer, sizeToRead);
-			} else {
-				patched += Patch_DVDLowLevelRead(buffer, sizeToRead);
+			u32 ret = Patch_DVDLowLevelRead(buffer, sizeToRead);
+			if(READ_PATCHED_ALL != ret)	{
+				DrawFrameStart();
+				DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
+				DrawFrameFinish();
+				sleep(5);
 			}
 			patched += Patch_DVDCompareDiskId(buffer, sizeToRead);
 			patched += Patch_ProgVideo(buffer, sizeToRead);
 			patched += Patch_DVDAudioStreaming(buffer, sizeToRead);
 			if(swissSettings.forceWidescreen)
-				Patch_WideAspect(buffer, sizeToRead);
+				Patch_WideAspect(buffer, sizeToRead); // if found in a chunk this will break due to address calculation expecting a DOL Header
 			if(swissSettings.forceAnisotropy)
 				Patch_TexFilt(buffer, sizeToRead);
-			if(swissSettings.useHiLevelPatch || swissSettings.emulatemc)
-				Patch_OSRestoreInterrupts(buffer, sizeToRead);
 			if(swissSettings.emulatemc)
 				Patch_CARDFunctions(buffer, sizeToRead);
 			if(patched) {

@@ -524,19 +524,20 @@ unsigned int load_app(int mode)
 
 	// Patch to read from SD/HDD
 	if((curDevice == SD_CARD)||(curDevice == IDEEXI)||(curDevice == USBGECKO)) {
-		if(swissSettings.useHiLevelPatch)
-			Patch_DVDHighLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-		else
-			Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		if(READ_PATCHED_ALL != ret)	{
+			DrawFrameStart();
+			DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
+			DrawFrameFinish();
+			sleep(5);
+		}
 		Patch_DVDCompareDiskId(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 		if(swissSettings.noDiscMode)
 			Patch_DVDStatusFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	if(swissSettings.muteAudioStreaming || curDevice != DVD_DISC)
 			Patch_DVDAudioStreaming(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-	// Custom OSRestoreInterrupts that calls skipped CB funcs for memcard or high level dvd replacement
-	if(swissSettings.emulatemc)
-		Patch_OSRestoreInterrupts(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		
 	// Fix Zelda WW on Wii
 	if(zeldaVAT) {
 		Patch_GXSetVATZelda(main_dol_buffer, main_dol_size+DOLHDRLENGTH, zeldaVAT);
@@ -600,13 +601,13 @@ unsigned int load_app(int mode)
 		print_gecko("DVD: %08X\r\n",dvd_get_error());
 	}
 	// Memcard emulation or High-Level DVD emulation, clear out some variables
-	if(swissSettings.useHiLevelPatch || swissSettings.emulatemc) {
-		*(volatile unsigned int*)VAR_MEMCARD_RESULT = 0;
-		*(volatile unsigned int*)VAR_MC_CB_ADDR = 0;
-		*(volatile unsigned int*)VAR_MC_CB_ARG1 = 0;
-		*(volatile unsigned int*)VAR_MC_CB_ARG2 = 0;
-		memset((void*)VAR_READ_DVDSTRUCT, 0, 0x20);
-	}
+	*(volatile unsigned int*)VAR_MEMCARD_RESULT = 0;
+	*(volatile unsigned int*)VAR_MC_CB_ADDR = 0;
+	*(volatile unsigned int*)VAR_MC_CB_ARG1 = 0;
+	*(volatile unsigned int*)VAR_MC_CB_ARG2 = 0;
+	*(volatile unsigned int*)VAR_FAKE_IRQ_SET = 0;
+	memset((void*)VAR_READ_DVDSTRUCT, 0, 0x18);
+
 	// Memcard emulation with read device not being SDGecko in Slot A, setup the SD variables
 	if(swissSettings.emulatemc && deviceHandler_initial != &initial_SD0) {
 		*(volatile unsigned int*)VAR_EXI_BUS_SPD = 208;
