@@ -165,8 +165,8 @@ void do_read(void *dst,u32 size, u32 offset, u32 unused) {
 	usb_data_req req;
 	req.offset = __builtin_bswap32(offset);
 	req.size = __builtin_bswap32(size);
-	_CPU_ISR_Enable();
+	//_CPU_ISR_Enable();
 	gecko_send(&req, sizeof(usb_data_req));
 	gecko_receive(dst, size);
-	_CPU_ISR_Disable();
+	//_CPU_ISR_Disable();
 }
