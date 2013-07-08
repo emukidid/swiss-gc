@@ -466,10 +466,10 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 								*(u32*)(data+i+  40) = 0x2C040006;	// cmpwi	4, 6
 								*(u32*)(data+i+ 304) = 0x807B0000;	// lwz		3, 0 (27)
 								*(u32*)(data+i+ 896) = 0x2C000006;	// cmpwi	0, 6
+								break;
 							case 1:
 								*(u32*)(data+i+ 272) = 0x807C0000;	// lwz		3, 0 (28)
 								*(u32*)(data+i+ 864) = 0x2C000006;	// cmpwi	0, 6
-								break;
 								break;
 							case 2:
 								*(u32*)(data+i+ 412) = 0x807C0000;	// lwz		3, 0 (28)
