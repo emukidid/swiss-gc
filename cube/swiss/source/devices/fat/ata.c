@@ -495,7 +495,8 @@ int _ataWriteSectors(int chn, u64 lba, u16 numsectors, u32 *Buffer)
 int ataReadSectors(int chn, u64 sector, unsigned int numSectors, unsigned char *dest) 
 {
 	int ret = 0;
-	int sectorchunks = ataDriveInfo.lba48Support ? 511 : 127;
+	// TODO: Confirm if this is an issue in the v1 VHDL or v2 as well.
+	int sectorchunks = (_ideexi_version == IDE_EXI_V1) ? 1 : (ataDriveInfo.lba48Support ? 511 : 127);
 	while(numSectors > sectorchunks) {
 		//print_gecko("Reading, sec %08X, numSectors %i, dest %08X ..\r\n", (u32)(sector&0xFFFFFFFF),numSectors, (u32)dest);
 		if((ret=_ataReadSectors(chn,sector,sectorchunks,(u32*)dest))) {
