@@ -21,5 +21,6 @@ char *wkfGetSerial();
 void wkfRead(void* dst, int len, u64 offset);
 unsigned int __wkfSpiReadId();
 void wkfReinit();
+void __wkfReset();
 #endif
 
