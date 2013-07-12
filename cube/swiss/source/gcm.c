@@ -63,10 +63,24 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 			memcpy(&filename[0],&FST[string_table_offset+filename_offset],255); 
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
-			if(((strstr(filename,".dol")) || (strstr(filename,".DOL")) || 
-				(strstr(filename,".elf")) || (strstr(filename,".ELF")) || (strstr(filename,"execD.img"))) && size < 24*1024*1024) {
+			if((strstr(filename,".dol")) || (strstr(filename,".DOL"))) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
+				filesToPatch[numFiles].type = PATCH_DOL;
+				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
+				numFiles++;
+			}
+			if(((strstr(filename,".elf")) || (strstr(filename,".ELF"))) && size < 12*1024*1024) {
+				filesToPatch[numFiles].offset = file_offset;
+				filesToPatch[numFiles].size = size;
+				filesToPatch[numFiles].type = PATCH_ELF;
+				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
+				numFiles++;
+			}
+			if(strstr(filename,"execD.img")) {
+				filesToPatch[numFiles].offset = file_offset;
+				filesToPatch[numFiles].size = size;
+				filesToPatch[numFiles].type = PATCH_LOADER;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
@@ -84,34 +98,10 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 	}
 	free(FST);
 	
-	// Some games contain a single "default.dol", these do not need pre-patching.
+	// Some games contain a single "default.dol", these do not need 
+	// pre-patching because they are what is actually pointed to by the apploader (and loaded by us)
 	if(numFiles==1 && (!strcmp(&filesToPatch[0].name[0],"default.dol"))) {
 		numFiles = 0;
-	}
-	
-	// if we have any to pre-patch, we must patch the main dol too
-	if(numFiles) {
-		DiskHeader *header = memalign(32,sizeof(DiskHeader));
-		deviceHandler_seekFile(file,0,DEVICE_HANDLER_SEEK_SET);
-		deviceHandler_readFile(file,header,sizeof(DiskHeader));
-		filesToPatch[numFiles].offset = header->DOLOffset;
-		// Figure out the size of the main DOL
-		DOLHEADER dolhdr;
-		deviceHandler_seekFile(file,header->DOLOffset,DEVICE_HANDLER_SEEK_SET);
-		deviceHandler_readFile(file,&dolhdr,DOLHDRLENGTH);
-		u32 main_dol_size = 0, i;
-		for (i = 0; i < MAXTEXTSECTION; i++) {
-			if (dolhdr.textLength[i] + dolhdr.textOffset[i] > main_dol_size)
-				main_dol_size = dolhdr.textLength[i] + dolhdr.textOffset[i];
-		}
-		for (i = 0; i < MAXDATASECTION; i++) {
-			if (dolhdr.dataLength[i] + dolhdr.dataOffset[i] > main_dol_size)
-				main_dol_size = dolhdr.dataLength[i] + dolhdr.dataOffset[i];
-		}
-		filesToPatch[numFiles].size = main_dol_size;
-		sprintf(&filesToPatch[numFiles].name[0],"Main DOL File"); 
-		numFiles++;
-		free(header);
 	}
 	return numFiles;
 }
@@ -159,10 +149,24 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 			memcpy(&filename[0],&FST[string_table_offset+filename_offset],255); 
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
-			if(((strstr(filename,".dol")) || (strstr(filename,".DOL")) || 
-				(strstr(filename,".elf")) || (strstr(filename,".ELF")) || (strstr(filename,"execD.img"))) && size < 24*1024*1024) {
+			if((strstr(filename,".dol")) || (strstr(filename,".DOL"))) {
 				filesToPatch[numFiles].offset = (file_offset-fakeAmount)+(tgc_base+fileAreaStart);
 				filesToPatch[numFiles].size = size;
+				filesToPatch[numFiles].type = PATCH_DOL;
+				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
+				numFiles++;
+			}
+			if(((strstr(filename,".elf")) || (strstr(filename,".ELF"))) && size < 12*1024*1024) {
+				filesToPatch[numFiles].offset = (file_offset-fakeAmount)+(tgc_base+fileAreaStart);
+				filesToPatch[numFiles].size = size;
+				filesToPatch[numFiles].type = PATCH_ELF;
+				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
+				numFiles++;
+			}
+			if(strstr(filename,"execD.img")) {
+				filesToPatch[numFiles].offset = (file_offset-fakeAmount)+(tgc_base+fileAreaStart);
+				filesToPatch[numFiles].size = size;
+				filesToPatch[numFiles].type = PATCH_LOADER;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
@@ -186,13 +190,14 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		// Chunk the file out in 8mb chunks or less
 		int ofs;
 		for(ofs = 0; ofs < filesToPatch[i].size; ofs+=PATCH_CHUNK_SIZE) {
+			print_gecko("Checking %s %iKb\r\n", filesToPatch[i].name, filesToPatch[i].size/1024);
 			int sizeToRead = (ofs+PATCH_CHUNK_SIZE > filesToPatch[i].size) ? (filesToPatch[i].size-ofs):PATCH_CHUNK_SIZE;
 			u8 *buffer = (u8*)memalign(32, sizeToRead);
 			
 			deviceHandler_seekFile(file,filesToPatch[i].offset+ofs,DEVICE_HANDLER_SEEK_SET);
 			deviceHandler_readFile(file,buffer,sizeToRead);
 
-			u32 ret = Patch_DVDLowLevelRead(buffer, sizeToRead);
+			u32 ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
 			if(READ_PATCHED_ALL != ret)	{
 				DrawFrameStart();
 				DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
@@ -200,12 +205,12 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 				sleep(5);
 			}
 			patched += Patch_DVDCompareDiskId(buffer, sizeToRead);
-			patched += Patch_ProgVideo(buffer, sizeToRead);
+			patched += Patch_ProgVideo(buffer, sizeToRead, filesToPatch[i].type);
 			patched += Patch_DVDAudioStreaming(buffer, sizeToRead);
 			if(swissSettings.forceWidescreen)
-				Patch_WideAspect(buffer, sizeToRead); // if found in a chunk this will break due to address calculation expecting a DOL Header
+				Patch_WideAspect(buffer, sizeToRead, filesToPatch[i].type);
 			if(swissSettings.forceAnisotropy)
-				Patch_TexFilt(buffer, sizeToRead);
+				Patch_TexFilt(buffer, sizeToRead, filesToPatch[i].type);
 			if(swissSettings.emulatemc)
 				Patch_CARDFunctions(buffer, sizeToRead);
 			if(patched) {

@@ -35,21 +35,26 @@ fake_interrupt:
 	mr		21,	4
 	mr		22,	12
 
-#check if we've set our fake IRQ
+#check if we've set our fake IRQ & we have our handler address ready.
 	lis		3,	VAR_AREA
 	lwz		0,	VAR_FAKE_IRQ_SET(3)	# r3 = our fake IRQ
 	cmpwi	0,	0
 	beq		no_fake_irq
+	lwz		0,	VAR_DVDIRQ_HNDLR(3)	# r3 = addr of __DVDInterruptHandler
+	cmpwi	0,	0
+	beq		not_ready_yet
 	li		0,	0
 	stw		0,	VAR_FAKE_IRQ_SET(3)	# zero out our fake IRQ
 	
 	lwz		12,	VAR_DVDIRQ_HNDLR(3)	# r12 = addr of __DVDInterruptHandler
+	stw		0,	VAR_DVDIRQ_HNDLR(3)	# zero out our addr of __DVDInterruptHandler in case the next DOL is loaded
 	mtlr	12
 
 	mr		4,	21
 	mr		3,	20
 	blrl							# jump to the handler
 
+not_ready_yet:
 no_fake_irq:
 	mr		12,	22
 	mr		4,	21
