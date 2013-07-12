@@ -1,7 +1,6 @@
 #ifndef PATCHER_H
 #define PATCHER_H
 
-#include "devices/deviceHandler.h"
 #include "../../reservedarea.h"
 
 typedef struct FuncPattern
@@ -138,19 +137,18 @@ extern u32 CARDWriteAsync_length;
 /* Types of files we may patch */
 #define PATCH_DOL		0
 #define PATCH_ELF		1
-#define PATCH_OTHER		2
+#define PATCH_LOADER	2
 
-u32 Patch_DVDLowLevelRead(void *addr, u32 length);
-int Patch_ProgVideo(u8 *data, u32 length);
-void Patch_WideAspect(u8 *data, u32 length);
-int Patch_TexFilt(u8 *data, u32 length);
+u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType);
+int Patch_ProgVideo(u8 *data, u32 length, int dataType);
+void Patch_WideAspect(u8 *data, u32 length, int dataType);
+int Patch_TexFilt(u8 *data, u32 length, int dataType);
 int Patch_DVDAudioStreaming(u8 *data, u32 length);
 int Patch_DVDStatusFunctions(u8 *data, u32 length);
 void Patch_Fwrite(void *addr, u32 length);
 void Patch_DVDReset(void *addr,u32 length);
 int Patch_DVDCompareDiskId(u8 *data, u32 length);
 void Patch_GXSetVATZelda(void *addr, u32 length,int mode);
-int Patch_OSRestoreInterrupts(void *addr, u32 length);
 int Patch_CARDFunctions(u8 *data, u32 length);
 u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);

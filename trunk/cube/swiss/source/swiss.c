@@ -514,7 +514,7 @@ unsigned int load_app(int mode)
 
 	// Patch to read from SD/HDD
 	if((curDevice == SD_CARD)||(curDevice == IDEEXI)||(curDevice == USBGECKO)) {
-		u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 		if(READ_PATCHED_ALL != ret)	{
 			DrawFrameStart();
 			DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
@@ -540,15 +540,15 @@ unsigned int load_app(int mode)
 		Patch_Fwrite(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	// Force 480p/576p
-	Patch_ProgVideo(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	Patch_ProgVideo(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 
 	// Force Widescreen
 	if(swissSettings.forceWidescreen) {
-		Patch_WideAspect(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		Patch_WideAspect(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 	// Force Anisotropy
 	if(swissSettings.forceAnisotropy) {
-		Patch_TexFilt(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		Patch_TexFilt(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 	// Emulate memory card via SDGecko
 	if(swissSettings.emulatemc) {

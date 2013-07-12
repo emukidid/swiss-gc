@@ -17,6 +17,7 @@
 #include "gui/IPLFontWrite.h"
 #include "deviceHandler.h"
 #include "sidestep.h"
+#include "elf.h"
 
 static u32 top_addr = VAR_PATCHES_BASE;
 
@@ -44,6 +45,7 @@ u32 _AIResetStreamSampleCount_original[9] = {
 u32 _read_original_part_a[1] = {
 	0x3C60A800
 };
+
 u32 _read_original_part_b[1] = {
 	0x9004001C
 };
@@ -217,20 +219,42 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 }
 
 
-u32 Patch_DVDLowLevelRead(void *addr, u32 length) {
+u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 	void *addr_start = addr;
 	void *addr_end = addr+length;	
 	int patched = 0;
 	FuncPattern OSExceptionInitSig =
 		{0x27C, 39, 14, 14, 20, 7, 0, 0, "OSExceptionInit", 0};
+	u32 dvdIntHandlerAddr = 0;
 	while(addr_start<addr_end) 
 	{
-		// Patch Read (called from DVDLowLevelRead)
-		if(memcmp(addr_start,_read_original_part_a,sizeof(_read_original_part_a))==0) 
+		// Note down the location of the __DVDInterruptHandler so we can call it for our fake IRQ
+		if( ((*(u32*)(addr_start + 0 )) & 0xFFFF) == _dvdinterrupthandler_part[0]
+			&& ((*(u32*)(addr_start + 4 )) & 0xFFFF) == _dvdinterrupthandler_part[1]
+			&& ((*(u32*)(addr_start + 8 )) & 0xFFFF) == _dvdinterrupthandler_part[2] ) 
 		{
 			int i = 0;
 			while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
-			u32 properAddress = Calc_ProperAddress(addr, PATCH_DOL, (u32)((addr_start-i)+12)-(u32)(addr));
+			
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr_start-i)+4)-(u32)(addr));
+			if(properAddress) {
+				print_gecko("Found:[__DVDInterruptHandler] @ %08X\r\n", properAddress );
+				dvdIntHandlerAddr = properAddress;
+				patched |= 0x100;
+			}
+			// Fake the DVD DISR register value
+			*(u32*)(addr_start + 0 ) = 0x3800003A; // li r0, 0x3A
+		}
+		// Patch Read (called from DVDLowLevelRead)
+		if(memcmp(addr_start,_read_original_part_a,sizeof(_read_original_part_a))==0) 
+		{
+			if(!dvdIntHandlerAddr) {
+				print_gecko("Found Read without finding the DVDInterruptHandler first!\r\n");
+				return patched;
+			}
+			int i = 0;
+			while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr_start-i)+12)-(u32)(addr));
 			u32 newval = (u32)(QUEUE_READ_OFFSET - properAddress);
 			newval&= 0x03FFFFFC;
 			newval|= 0x48000001;
@@ -240,7 +264,18 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length) {
 			i = 0;
 			while((*(u32*)(addr_start + i)) != _read_original_part_b[0]) i+=4;
 			*(u32*)(addr_start + i) = 0x60000000;
-			*(u32*)(addr_start + i + 4) = 0x48000000 | (*(u32*)(addr_start + i + 4) & 0xFFFF);	// skip timeout
+			// Write some code that will write where the DVDIRQHandler is for this Read/DOL
+			*(u32*)(addr_start + i+4) = 0x3c600000 | ((VAR_DVDIRQ_HNDLR>>16) & 0xFFFF);		// lis r3, VAR_DVDIRQ_HNDLR@hi
+			*(u32*)(addr_start + i+8) = 0x3c800000 | ((dvdIntHandlerAddr>>16) & 0xFFFF);	// lis r4, dvdIntHandlerAddr@hi
+			*(u32*)(addr_start + i+12) = 0x60840000 | ((dvdIntHandlerAddr) & 0xFFFF);		// ori r4, r4, dvdIntHandlerAddr@lo
+			*(u32*)(addr_start + i+16) = 0x90830000 | ((VAR_DVDIRQ_HNDLR) & 0xFFFF);		// stw r4, VAR_DVDIRQ_HNDLR@lo(r3)
+
+			// Cut all the alarm/timeout setup for reads.
+			while((*(u32*)(addr_start + i)) != 0x4E800020 ) {
+				if((*(u32*)(addr_start + i) & 0xF0000000) == 0x40000000)
+					*(u32*)(addr_start + i) = 0x60000000;
+				i+=4;
+			}
       		print_gecko("Found:[Read] @ %08X\r\n", properAddress);
 			patched |= 0x01;
 		}
@@ -250,7 +285,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length) {
 			int i = 0;
 			while((*(u32*)(addr_start + i)) != _osdispatch_part_b[0]) i+=4;
 			
-			u32 properAddress = Calc_ProperAddress(addr, PATCH_DOL, (u32)(addr_start+i)-(u32)(addr));
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start+i)-(u32)(addr));
 			if(properAddress) {
 				print_gecko("Found:[__OSDispatchInterrupts] @ %08X\r\n", properAddress );
 				u32 newval = (u32)(FAKE_IRQ - properAddress);
@@ -260,30 +295,13 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length) {
 				patched |= 0x10;
 			}
 		}
-		// Note down the location of the __DVDInterruptHandler so we can call it for our fake IRQ
-		if( ((*(u32*)(addr_start + 0 )) & 0xFFFF) == _dvdinterrupthandler_part[0]
-			&& ((*(u32*)(addr_start + 4 )) & 0xFFFF) == _dvdinterrupthandler_part[1]
-			&& ((*(u32*)(addr_start + 8 )) & 0xFFFF) == _dvdinterrupthandler_part[2] ) 
-		{
-			int i = 0;
-			while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
-			
-			u32 properAddress = Calc_ProperAddress(addr, PATCH_DOL, (u32)((addr_start-i)+4)-(u32)(addr));
-			if(properAddress) {
-				print_gecko("Found:[__DVDInterruptHandler] @ %08X\r\n", properAddress );
-				*(unsigned int*)VAR_DVDIRQ_HNDLR = properAddress;
-				patched |= 0x100;
-			}
-			// Fake the DVD DISR register value
-			*(u32*)(addr_start + 0 ) = 0x3800003A; // li r0, 0x3A
-		}
 		// Patch the statebusy callback to see the DILENGTH register with a zero value
 		if( ((*(u32*)(addr_start + 0 )) & 0xFFFF) == _cbforstatebusy_part[0]
 			&& ((*(u32*)(addr_start + 4 )) & 0xFFFF) == _cbforstatebusy_part[1]
 			&& ((*(u32*)(addr_start + 8 )) & 0xFFFF) == _cbforstatebusy_part[2]
 			&& ((*(u32*)(addr_start + 12 )) & 0xFFFF) == _cbforstatebusy_part[3]) 
 		{
-			u32 properAddress = Calc_ProperAddress(addr, PATCH_DOL, (u32)(addr_start)-(u32)(addr));
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start)-(u32)(addr));
 			print_gecko("Found:[cbStateBusy] @ %08X\r\n", properAddress );
 			*(u32*)(addr_start + 4 ) = 0x38800000; // li r4, 0
 			patched |= 0x1000;
@@ -293,7 +311,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length) {
 		{
 			if( find_pattern( (u8*)(addr_start), length, &OSExceptionInitSig ) )
 			{
-				u32 properAddress = Calc_ProperAddress(addr, PATCH_DOL, (u32)(addr_start + 472)-(u32)(addr));
+				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 472)-(u32)(addr));
 				if(properAddress) {
 					print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
 					u32 newval = (u32)(PATCHED_MEMCPY - properAddress);
@@ -356,7 +374,7 @@ u8 vertical_filters[3][7] = {
 	{8, 8, 10, 12, 10, 8, 8}
 };
 
-void Patch_ProgCopy(u8 *data, u32 length) {
+void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 	int i,j;
 	FuncPattern GXGetYScaleFactorSig = 
 		{0x234, 16, 14, 3, 18, 27, 0, 0, "GXGetYScaleFactor", 0};
@@ -372,7 +390,7 @@ void Patch_ProgCopy(u8 *data, u32 length) {
 				continue;
 			if( find_pattern( (u8*)(data+i), length, &GXGetYScaleFactorSig ) )
 			{
-				u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i);
+				u32 properAddress = Calc_ProperAddress(data, dataType, i);
 				print_gecko("Found [%s] @ 0x%08X len %i\n", GXGetYScaleFactorSig.Name, (u32)data + i, GXGetYScaleFactorSig.Length);
 				if(properAddress) {
 					print_gecko("Found:[Hook:%s] @ %08X\n", GXGetYScaleFactorSig.Name, properAddress);
@@ -422,7 +440,7 @@ void Patch_ProgCopy(u8 *data, u32 length) {
 	}
 }
 
-int Patch_ProgVideo(u8 *data, u32 length) {
+int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
 	int i,j;
 	FuncPattern VIConfigureSigs[6] = {
 		{0x6AC,  90, 43,  6, 32, 60, 0, 0, "VIConfigure_v1", 0},
@@ -446,7 +464,7 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 		for( j=0; j < sizeof(VIConfigureSigs)/sizeof(FuncPattern); j++ )
 		{
 			if( compare_pattern( &fp, &(VIConfigureSigs[j]) ) ) {
-				u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i);
+				u32 properAddress = Calc_ProperAddress(data, dataType, i);
 				print_gecko("Found [%s] @ 0x%08X len %i\n", VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].Length);
 				if(properAddress) {
 					print_gecko("Found:[Hook:%s] @ %08X\n", VIConfigureSigs[j].Name, properAddress);
@@ -492,7 +510,7 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 						Patch_ProgTiming(data, length);	// Patch timing to 576p
 					}
 					*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
-					Patch_ProgCopy(data, length);
+					Patch_ProgCopy(data, length, dataType);
 					return 1;
 				}
 			}
@@ -501,7 +519,7 @@ int Patch_ProgVideo(u8 *data, u32 length) {
 	return 0;
 }
 
-void Patch_WideAspect(u8 *data, u32 length) {
+void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 	int i,j;
 	FuncPattern MTXFrustumSig =
 		{0x98, 4, 16, 0, 0, 0, 0, 0, "C_MTXFrustum", 0};
@@ -530,7 +548,7 @@ void Patch_WideAspect(u8 *data, u32 length) {
 			continue;
 		if( find_pattern( (u8*)(data+i), length, &MTXFrustumSig ) )
 		{
-			u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i);
+			u32 properAddress = Calc_ProperAddress(data, dataType, i);
 			print_gecko("Found [%s] @ 0x%08X len %i\n", MTXFrustumSig.Name, (u32)data + i, MTXFrustumSig.Length);
 			if(properAddress) {
 				print_gecko("Found:[Hook:%s] @ %08X\n", MTXFrustumSig.Name, properAddress);
@@ -550,7 +568,7 @@ void Patch_WideAspect(u8 *data, u32 length) {
 			continue;
 		if( find_pattern( (u8*)(data+i), length, &MTXLightFrustumSig ) )
 		{
-			u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i+8);
+			u32 properAddress = Calc_ProperAddress(data, dataType, i+8);
 			print_gecko("Found [%s] @ 0x%08X len %i\n", MTXLightFrustumSig.Name, (u32)data + i, MTXLightFrustumSig.Length);
 			if(properAddress) {
 				print_gecko("Found:[Hook:%s] @ %08X\n", MTXLightFrustumSig.Name, properAddress);
@@ -606,7 +624,7 @@ void Patch_WideAspect(u8 *data, u32 length) {
 				continue;
 			if( find_pattern( (u8*)(data+i), length, &MTXOrthoSig ) )
 			{
-				u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i);
+				u32 properAddress = Calc_ProperAddress(data, dataType, i);
 				print_gecko("Found [%s] @ 0x%08X len %i\n", MTXOrthoSig.Name, (u32)data + i, MTXOrthoSig.Length);
 				if(properAddress) {
 					print_gecko("Found:[Hook:%s] @ %08X\n", MTXOrthoSig.Name, properAddress);
@@ -631,7 +649,7 @@ void Patch_WideAspect(u8 *data, u32 length) {
 			for( j=0; j < sizeof(GXSetScissorSigs)/sizeof(FuncPattern); j++ )
 			{
 				if( compare_pattern( &fp, &(GXSetScissorSigs[j]) ) ) {
-					u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i);
+					u32 properAddress = Calc_ProperAddress(data, dataType, i);
 					print_gecko("Found [%s] @ 0x%08X len %i\n", GXSetScissorSigs[j].Name, (u32)data + i, GXSetScissorSigs[j].Length);
 					if(properAddress) {
 						print_gecko("Found:[Hook:%s] @ %08X\n", GXSetScissorSigs[j].Name, properAddress);
@@ -660,7 +678,7 @@ void Patch_WideAspect(u8 *data, u32 length) {
 			{
 				if( compare_pattern( &fp, &(GXSetProjectionSigs[j]) ) )
 				{
-					u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i+12);
+					u32 properAddress = Calc_ProperAddress(data, dataType, i+12);
 					print_gecko("Found [%s] @ 0x%08X len %i\n", GXSetProjectionSigs[j].Name, (u32)data + i, GXSetProjectionSigs[j].Length);
 					if(properAddress) {
 						print_gecko("Found:[Hook:%s] @ %08X\n", GXSetProjectionSigs[j].Name, properAddress);
@@ -677,7 +695,7 @@ void Patch_WideAspect(u8 *data, u32 length) {
 	}
 }
 
-int Patch_TexFilt(u8 *data, u32 length)
+int Patch_TexFilt(u8 *data, u32 length, int dataType)
 {
 	int i,j;
 	FuncPattern GXInitTexObjLODSigs[2] = {
@@ -697,7 +715,7 @@ int Patch_TexFilt(u8 *data, u32 length)
 		{
 			if( compare_pattern( &fp, &(GXInitTexObjLODSigs[j]) ) )
 			{
-				u32 properAddress = Calc_ProperAddress(data, PATCH_DOL, i+8);
+				u32 properAddress = Calc_ProperAddress(data, dataType, i+8);
 				print_gecko("Found [%s] @ 0x%08X len %i\n", GXInitTexObjLODSigs[j].Name, (u32)data + i, GXInitTexObjLODSigs[j].Length);
 				if(properAddress) {
 					print_gecko("Found:[Hook:%s] @ %08X\n", GXInitTexObjLODSigs[j].Name, properAddress);
@@ -1195,6 +1213,37 @@ u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt) {
 			}
 		}
 	
+	}
+	else if(type == PATCH_ELF) {
+		if(!valid_elf_image((u32)data))
+			return 0;
+			
+		Elf32_Ehdr* ehdr;
+		Elf32_Shdr* shdr;
+		int i;
+
+		ehdr = (Elf32_Ehdr *)data;
+
+		// Search through each appropriate section
+		for (i = 0; i < ehdr->e_shnum; ++i) {
+			shdr = (Elf32_Shdr *)(data + ehdr->e_shoff + (i * sizeof(Elf32_Shdr)));
+
+			if (!(shdr->sh_flags & SHF_ALLOC) || shdr->sh_addr == 0 || shdr->sh_size == 0)
+				continue;
+
+			shdr->sh_addr &= 0x3FFFFFFF;
+			shdr->sh_addr |= 0x80000000;
+
+			if (shdr->sh_type != SHT_NOBITS) {
+				if((offsetFoundAt >= shdr->sh_offset) && offsetFoundAt <= (shdr->sh_offset + shdr->sh_size)) {
+					// Yes it does, return the load address + offsetFoundAt as that's where it'll end up!
+					return offsetFoundAt+shdr->sh_addr-shdr->sh_offset;
+				}
+			}
+		}	
+	}
+	else if(type == PATCH_LOADER) {
+		return offsetFoundAt+0x81300000;
 	}
 	return 0;
 }
