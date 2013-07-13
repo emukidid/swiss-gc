@@ -54,7 +54,8 @@ void process_queue() {
 	DVDQueuedRead *store = (DVDQueuedRead*)(VAR_READ_DVDSTRUCT);
 	if(store->len) {
 		// read a bit
-		int amountToRead = store->len > 0x400 ? 0x400 : store->len;
+		int audioPlaying = ((*(volatile u16*)0xCC00503A) & 0x7FFF);
+		int amountToRead = store->len > 0x800 ? (audioPlaying ? 0x800:store->len) : store->len;
 #ifdef DEBUG
 		usb_sendbuffer_safe("Start Read:",11);
 		print_read(store->dst, amountToRead, store->ofs);

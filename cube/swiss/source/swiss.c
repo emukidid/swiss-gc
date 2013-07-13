@@ -934,6 +934,14 @@ void load_file()
 		return;
 	}
 
+	if(GCMDisk.DVDMagicWord != DVD_MAGIC) {
+		DrawFrameStart();
+		DrawMessageBox(D_FAIL, "Disc does not contain valid word at 0x1C");
+		DrawFrameFinish();
+		sleep(2);
+		return;
+	}
+	
 	// Show game info or return to the menu
 	if(!info_game()) {
 		return;
