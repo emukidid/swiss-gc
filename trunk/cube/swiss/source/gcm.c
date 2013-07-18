@@ -204,6 +204,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 				DrawFrameFinish();
 				sleep(5);
 			}
+			if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
+				Patch_Fwrite(buffer, sizeToRead);
+			}
 			patched += Patch_DVDCompareDiskId(buffer, sizeToRead);
 			patched += Patch_ProgVideo(buffer, sizeToRead, filesToPatch[i].type);
 			patched += Patch_DVDAudioStreaming(buffer, sizeToRead);
