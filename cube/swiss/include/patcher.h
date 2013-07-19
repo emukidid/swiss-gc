@@ -132,7 +132,7 @@ extern u32 CARDWriteAsync_length;
 #define CARD_SETSTATUS_OFFSET 	(LO_RESERVE | 0x2C)
 #define CARD_SETUP_OFFSET 		(LO_RESERVE | 0x30)
 
-#define READ_PATCHED_ALL 		(0x11111)
+#define READ_PATCHED_ALL 		(0x111111)
 
 /* Types of files we may patch */
 #define PATCH_DOL		0

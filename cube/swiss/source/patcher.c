@@ -50,6 +50,10 @@ u32 _read_original_part_b[1] = {
 	0x9004001C
 };
 
+u32 _seek_original_part_a[1] = {
+	0x3C00AB00
+};
+
 u16 _dvdinterrupthandler_part[3] = {
 	0x6000, 0x002A, 0x0054
 };
@@ -258,6 +262,9 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 			u32 newval = (u32)(QUEUE_READ_OFFSET - properAddress);
 			newval&= 0x03FFFFFC;
 			newval|= 0x48000001;
+			if(*(u32*)((addr_start - i) + 12) != 0x38000000) {
+				print_gecko("Unknown Read type!\r\n");
+			}
 			*(u32*)((addr_start - i) + 12) = newval;
 			
 			// Patch the DI start
@@ -321,6 +328,13 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 					patched |= 0x10000;
 				}
 			}
+		}
+		// Patch DVDLowSeek
+		if(memcmp(addr_start,_seek_original_part_a,sizeof(_seek_original_part_a))==0) 
+		{
+			*(u32*)(addr_start) = 0x3C00E000;
+      		print_gecko("Found:[DVDLowSeek] @ %08X\r\n", Calc_ProperAddress(addr, dataType, (u32)(addr_start)-(u32)(addr)));
+			patched |= 0x100000;
 		}
 		
 		addr_start += 4;
