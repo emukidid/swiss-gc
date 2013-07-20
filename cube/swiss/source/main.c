@@ -330,7 +330,7 @@ void main_loop()
 					needsRefresh=1;
 					break;
 				case 4:
-					exit(0);
+					SYS_ResetSystem(SYS_HOTRESET, 0, 1);
 					break;
 			}
 			
