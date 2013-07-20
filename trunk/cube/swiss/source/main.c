@@ -443,7 +443,8 @@ int main ()
 			}
 		}
 	}
-	
+
+	deviceHandler_initial = !swissSettings.defaultDevice ? NULL:deviceHandler_initial;
 	needsRefresh = (swissSettings.defaultDevice != 0);
 	while(1) {
 		if(needsRefresh || needsDeviceChange) {
