@@ -241,20 +241,7 @@ void textFileBrowser(file_handle** directory, int num_files)
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_FILE){
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
-				// Special condition for Wiikey Fusion
-				if((curDevice==WODE) || (curDevice==WKF)) {
-					DrawFrameStart();
-					DrawMessageBox(D_INFO, "Setup base offset please Wait ..");
-					DrawFrameFinish();
-					deviceHandler_setupFile(&curFile, 0);
-				}
 				manage_file();
-				if(curDevice==WKF) {
-					DrawFrameStart();
-					DrawMessageBox(D_INFO, "Reset base offset ..");
-					DrawFrameFinish();
-					deviceHandler_setupFile(0, 0);
-				}
 			}
 			return;
 		}
@@ -923,7 +910,14 @@ void load_file()
 	DrawFrameStart();
 	DrawMessageBox(D_INFO, "Reading ...");
 	DrawFrameFinish();
-				
+	
+	if((curDevice==WODE)) {
+		DrawFrameStart();
+		DrawMessageBox(D_INFO, "Setup base offset please Wait ..");
+		DrawFrameFinish();
+		deviceHandler_setupFile(&curFile, 0);
+	}
+	
 	// boot the GCM/ISO file, gamecube disc or multigame selected entry
 	deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
 	if(deviceHandler_readFile(&curFile,&GCMDisk,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
@@ -955,10 +949,8 @@ void load_file()
 	
 	// Report to the user the patch status of this GCM/ISO file and look for a cheats file too
 	if((curDevice == SD_CARD) || (curDevice == IDEEXI)) {
-		isPrePatched = check_game();
-		if(isPrePatched < 0) {
-			return;
-		}
+		check_game();
+		
 		// Look for cheats file if the user hasn't loaded one up
 		if(!hasCheatsFile) {
 			int i = 0;
@@ -1056,7 +1048,12 @@ void load_file()
 	
 	// setup the video mode before we kill libOGC kernel
 	ogc_video__reset();
-	
+	if(curDevice==WKF) {
+		DrawFrameStart();
+		DrawMessageBox(D_INFO, "Setup base offset please Wait ..");
+		DrawFrameFinish();
+		deviceHandler_setupFile(&curFile, 0);
+	}
 	load_app(hasCheatsFile ? CHEATS:NO_CHEATS);
 }
 
