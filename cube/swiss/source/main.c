@@ -33,7 +33,8 @@
 
 #define DEFAULT_FIFO_SIZE    (256*1024)//(64*1024) minimum
 
-/* SD-Boot vars */
+extern void __libogc_exit(int status);
+
 GXRModeObj *vmode = NULL;				//Graphics Mode Object
 u32 *xfb[2] = { NULL, NULL };   //Framebuffers
 int whichfb = 0;       		 	    //Frame buffer toggle
@@ -330,7 +331,7 @@ void main_loop()
 					needsRefresh=1;
 					break;
 				case 4:
-					SYS_ResetSystem(SYS_HOTRESET, 0, 1);
+					__libogc_exit(0);
 					break;
 			}
 			
