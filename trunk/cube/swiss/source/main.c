@@ -344,9 +344,7 @@ void main_loop()
 		}
 	}
 }
-//#define FLASH_WKF_MODE 1
-//extern u8 _1_5fw_bin[];
-//extern u8 swiss_bin[];
+
 
 /****************************************************************************
 * Main
@@ -380,6 +378,7 @@ int main ()
 		}
 		print_gecko("Arena Size: %iKb\r\n",(SYS_GetArena1Hi()-SYS_GetArena1Lo())/1024);
 		print_gecko("DVD Drive Present? %s\r\n",swissSettings.hasDVDDrive?"Yes":"No");
+		print_gecko("SVN Revision: %s\r\n", SVNREVISION);
 	}
 	
 	// Are we working with a Wiikey Fusion?
