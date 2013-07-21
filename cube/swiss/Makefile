@@ -74,7 +74,7 @@ INCLUDES	:= include $(SOURCES)
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS		= -g -O3 -Wall -flto=jobserver -fno-strict-aliasing $(MACHDEP) $(INCLUDE)
+CFLAGS		= -g -O3 -Wall -fno-strict-aliasing $(MACHDEP) $(INCLUDE) -D'SVNREVISION="$(shell svnversion -n $(RUNDIR))"'
 CXXFLAGS	= $(CFLAGS)
 
 LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x80003100 -T../../linker-script/vgcogc.ld
@@ -149,8 +149,10 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 
 #---------------------------------------------------------------------------------
 $(BUILD):
+	@echo Current Directory $(CURDIR)
+	@echo SVN Revision $(shell svnversion -n $(CURDIR))
 	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile RUNDIR=$(CURDIR)
 
 #---------------------------------------------------------------------------------
 clean:
