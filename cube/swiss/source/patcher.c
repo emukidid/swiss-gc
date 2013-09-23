@@ -746,7 +746,7 @@ int Patch_TexFilt(u8 *data, u32 length, int dataType)
 }
 
 /** SDK DVD Audio NULL Driver Replacement
-	- Allows streaming games to run with no streamed audio */
+	- Allows streaming games to run with out streaming audio */
 
 u32 __dvdLowAudioStatusNULL[17] = {
 	// execute function(1); passed in on r4
@@ -807,6 +807,12 @@ int Patch_DVDAudioStreaming(u8 *data, u32 length) {
 	
 	for( i=0; i < length; i+=4 )
 	{
+		// Ikaruga needs this patch below to avoid looping to main menu
+		if(memcmp((void*)(data+i),_AIResetStreamSampleCount_original,sizeof(_AIResetStreamSampleCount_original))==0) { 
+			 *(u32*)(data + i + 12) = 0x60000000;  //NOP
+			 print_gecko("Found AIResetStreamSampleCount\r\n");
+		}
+
 		if( *(u32*)(data + i ) != 0x7C0802A6 )
 			continue;
 
@@ -827,9 +833,6 @@ int Patch_DVDAudioStreaming(u8 *data, u32 length) {
 		}
 	}
 	return count;
-	// TODO see if Ikaruga needs this patch below?
-	//else if(memcmp(addr_start,_AIResetStreamSampleCount_original,sizeof(_AIResetStreamSampleCount_original))==0) 
-	//	*(u32*)(addr_start+12) = 0x60000000;  //NOP
 }
 
 /** SDK DVD Reset Replacement 
