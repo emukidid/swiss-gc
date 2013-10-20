@@ -18,9 +18,9 @@
 #include "main.h"
 #include "wkf.h"
 #include "frag.h"
+#include "patcher.h"
 
 const DISC_INTERFACE* wkf = &__io_wkf;
-int singleFileMode = 0;
 
 file_handle initial_WKF =
 	{ "wkf:/",       // directory
@@ -34,10 +34,7 @@ file_handle initial_WKF =
 
 
 int deviceHandler_WKF_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
-	if(singleFileMode) {
-		return -1;
-	}
-	
+
 	DIR* dp = opendir( ffile->name );
 	if(!dp) return -1;
 	struct dirent *entry;
@@ -96,22 +93,15 @@ int deviceHandler_WKF_seekFile(file_handle* file, unsigned int where, unsigned i
 
 
 int deviceHandler_WKF_readFile(file_handle* file, void* buffer, unsigned int length){
-	if(singleFileMode) {
-		wkfRead(buffer, length, file->offset);
-		file->offset += length;
-		return length;
+	if(!file->fp) {
+		file->fp = fopen( file->name, "rb" );
 	}
-	else {
-		if(!file->fp) {
-			file->fp = fopen( file->name, "rb" );
-		}
-		if(!file->fp) return -1;
-		
-		fseek(file->fp, file->offset, SEEK_SET);
-		int bytes_read = fread(buffer, 1, length, file->fp);
-		if(bytes_read > 0) file->offset += bytes_read;
-		return bytes_read;
-	}
+	if(!file->fp) return -1;
+	
+	fseek(file->fp, file->offset, SEEK_SET);
+	int bytes_read = fread(buffer, 1, length, file->fp);
+	if(bytes_read > 0) file->offset += bytes_read;
+	return bytes_read;
 }
 
 
@@ -121,50 +111,71 @@ int deviceHandler_WKF_writeFile(file_handle* file, void* buffer, unsigned int le
 
 
 int deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
-	if(file) {
-		// Lookup FAT fragments
-		get_frag_list(file->name);
-
-		// Setup fragments if need be
-		if(frag_list->num > 1) {
-			/*// Setup the Fragments on the Wiikey Fusion
-			int i = 0;
-			for(i = 0; i < frag_list->num; i++) {		
-				wkfWriteRam(i*4, (frag_list->frag[i].sector>>16)&0xFFFF);
-				wkfWriteRam(i*4+2, frag_list->frag[i].sector&0xFFFF);
-			}
-			// last chunk sig
-			wkfWriteRam(frag_list->num *4, 0xFFFF);*/
+	// If there are 2 discs, we only allow 5 fragments per disc.
+	int maxFrags = file2 ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0, frags = 0;
+	u32 *fragList = (u32*)VAR_FRAG_LIST;
+	
+	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
+	
+	// If disc 1 is fragmented, make a note of the fragments and their sizes
+	get_frag_list(file->name);
+	if(frag_list->num < maxFrags) {
+		for(i = 0; i < frag_list->num; i++) {
+			fragList[frags*3] = frag_list->frag[i].offset*512;
+			fragList[(frags*3)+1] = frag_list->frag[i].count*512;
+			fragList[(frags*3)+2] = frag_list->frag[i].sector;
+			print_gecko("Wrote Frag: ofs: %08X count: %08X sector: %08X\r\n",
+						fragList[frags*3],fragList[(frags*3)+1],fragList[(frags*3)+2]);
+			frags++;
 		}
-		wkfWriteOffset(frag_list->frag[0].sector);
-		
-		if(((u32)(file->fileBase&0xFFFFFFFF) == -1)) {
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Fragmented file support is not implemented yet.");
-			DrawFrameFinish();
-			sleep(5);
-		}
-		singleFileMode = 1;
 	}
 	else {
-		wkfReinit();
-		singleFileMode = 0;
+		// file is too fragmented - go defrag it!
+		return 0;
 	}
+		
+	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
+	if(file2) {
+		// No fragment room left for the second disc, fail.
+		if(frags+1 == maxFrags) {
+			return 0;
+		}
+		get_frag_list(file2->name);
+		if(frag_list->num < maxFrags) {
+			for(i = 0; i < frag_list->num; i++) {
+				fragList[(frags*3) + (maxFrags*3)] = frag_list->frag[i].offset*512;
+				fragList[((frags*3) + 1) + (maxFrags*3)]  = frag_list->frag[i].count*512;
+				fragList[((frags*3) + 2) + (maxFrags*3)] = frag_list->frag[i].sector;
+				print_gecko("Wrote Frag: ofs: %08X count: %08X sector: %08X\r\n",
+						fragList[frags*3],fragList[(frags*3)+1],fragList[(frags*3)+2]);
+				frags++;
+			}
+		}
+		else {
+			// file is too fragmented - go defrag it!
+			return 0;
+		}
+	}
+	
+	// Disk 1 base sector
+	*(volatile unsigned int*)VAR_DISC_1_LBA = fragList[2];
+	// Disk 2 base sector
+	*(volatile unsigned int*)VAR_DISC_2_LBA = file2 ? fragList[2 + (maxFrags*3)]:fragList[2];
+	// Currently selected disk base sector
+	*(volatile unsigned int*)VAR_CUR_DISC_LBA = fragList[2];
+	
 	return 1;
 }
 
 int deviceHandler_WKF_init(file_handle* file){
-	if(!singleFileMode) {
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,"Init Wiikey Fusion");
-		DrawFrameFinish();
-		return fatMountSimple ("wkf", wkf) ? 1 : 0;
-	}
-	return 0;
+	DrawFrameStart();
+	DrawMessageBox(D_INFO,"Init Wiikey Fusion");
+	DrawFrameFinish();
+	return fatMountSimple ("wkf", wkf) ? 1 : 0;
 }
 
 int deviceHandler_WKF_deinit(file_handle* file) {
-	if(!singleFileMode && file->fp) {
+	if(file->fp) {
 		fclose(file->fp);
 		file->fp = 0;
 	}

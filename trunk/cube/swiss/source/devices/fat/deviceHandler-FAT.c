@@ -258,11 +258,11 @@ int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	}
 	
 	// Disk 1 base sector
-	*(volatile unsigned int*)VAR_DISC_1_LBA = fragList[3];
+	*(volatile unsigned int*)VAR_DISC_1_LBA = fragList[2];
 	// Disk 2 base sector
 	*(volatile unsigned int*)VAR_DISC_2_LBA = file2 ? fragList[3 + (maxFrags*3)]:fragList[3];
 	// Currently selected disk base sector
-	*(volatile unsigned int*)VAR_CUR_DISC_LBA = fragList[3];
+	*(volatile unsigned int*)VAR_CUR_DISC_LBA = fragList[2];
 	// Copy the current speed
 	*(volatile unsigned int*)VAR_EXI_BUS_SPD = !swissSettings.exiSpeed ? 192:208;
 	// Card Type
