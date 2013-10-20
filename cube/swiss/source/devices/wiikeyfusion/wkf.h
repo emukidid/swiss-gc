@@ -14,7 +14,7 @@
 
 extern const DISC_INTERFACE __io_wkf;
 void wkfWriteRam(int offset, int data);
-void wkfWriteOffset(int offset);
+void wkfWriteOffset(u32 offset);
 int wkfSpiRead(unsigned char *buf, unsigned int addr, int len);
 void wkfWriteFlash(unsigned char *menuImg, unsigned char *firmwareImg);
 char *wkfGetSerial();

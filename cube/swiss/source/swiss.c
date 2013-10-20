@@ -511,6 +511,15 @@ unsigned int load_app(int mode)
 		Patch_DVDCompareDiskId(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 		Patch_DVDStatusFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
+	if(curDevice == WKF) {
+		u32 ret = Patch_DVDLowLevelReadForWKF(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+		if(1 != ret) {
+			DrawFrameStart();
+			DrawMessageBox(D_FAIL, "Fragmentation patch failed to apply!");
+			DrawFrameFinish();
+			sleep(5);
+		}
+	}
 	if(swissSettings.muteAudioStreaming || curDevice != DVD_DISC)
 			Patch_DVDAudioStreaming(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 		
@@ -587,7 +596,6 @@ unsigned int load_app(int mode)
 		*(volatile unsigned int*)VAR_EXI_SLOT = 0;
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
-	
 	DOLtoARAM(main_dol_buffer);
 	return 0;
 }
@@ -1006,11 +1014,11 @@ void load_file()
 		}
 	}
 	
-  	if((curDevice!=WODE) && (curDevice!=WKF)) {
+  	if(curDevice!=WODE) {
 		file_handle *secondDisc = NULL;
 		
 		// If we're booting from SD card or IDE hdd
-		if((curDevice == SD_CARD) || (curDevice == IDEEXI)) {
+		if((curDevice == SD_CARD) || (curDevice == IDEEXI) || (curDevice == WKF)) {
 			// look to see if it's a two disc game
 			// set things up properly to allow disc swapping
 			// the files must be setup as so: game-disc1.xxx game-disc2.xxx
@@ -1048,12 +1056,6 @@ void load_file()
 	
 	// setup the video mode before we kill libOGC kernel
 	ogc_video__reset();
-	if(curDevice==WKF) {
-		DrawFrameStart();
-		DrawMessageBox(D_INFO, "Setup base offset please Wait ..");
-		DrawFrameFinish();
-		deviceHandler_setupFile(&curFile, 0);
-	}
 	load_app(hasCheatsFile ? CHEATS:NO_CHEATS);
 }
 

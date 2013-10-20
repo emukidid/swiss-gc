@@ -91,6 +91,10 @@ void install_code()
 	else if(deviceHandler_initial == &initial_USBGecko) {
 		memcpy((void*)LO_RESERVE,usbgecko_bin,usbgecko_bin_size);
 	}
+	// Wiikey Fusion
+	else if(deviceHandler_initial == &initial_WKF) {
+		memcpy((void*)LO_RESERVE,wkf_bin,wkf_bin_size);
+	}
 }
 
 void make_pattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
@@ -222,6 +226,34 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 		return 0;
 }
 
+u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
+	void *addr_start = addr;
+	void *addr_end = addr+length;	
+	int patched = 0;
+
+	while(addr_start<addr_end) 
+	{
+		// Patch Read to adjust the offset for fragmented files
+		if(memcmp(addr_start,_read_original_part_a,sizeof(_read_original_part_a))==0) 
+		{
+			int i = 0;
+			// Patch the DI start
+			while((*(u32*)(addr_start + i)) != _read_original_part_b[0]) i+=4;
+			
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + i)-(u32)(addr));
+			u32 newval = (u32)(ADJUST_LBA_OFFSET - properAddress);
+			newval&= 0x03FFFFFC;
+			newval|= 0x48000001;
+			*(u32*)(addr_start + i) = newval;
+
+      		print_gecko("Found:[Read] @ %08X for WKF\r\n", properAddress);
+			patched = 1;
+			break;
+		}	
+		addr_start += 4;
+	}
+	return patched;
+}
 
 u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 	void *addr_start = addr;

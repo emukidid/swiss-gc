@@ -116,8 +116,14 @@ void __wkfFlashPage(const unsigned char *pageData, unsigned int addr) {
 
 // Reads DVD sectors (returns 0 on success)
 void __wkfReadSectors(void* dst, unsigned int len, u64 offset) {
+	if(offset > 0x3FFFFFFFFLL) {
+		wkfWriteOffset((u32)(offset >> 9));
+	}
+	else {
+		wkfWriteOffset(0);
+	}
 	wkf[2] = 0xA8000000;
-	wkf[3] = (u32)(offset >> 2);
+	wkf[3] = (offset > 0x3FFFFFFFFLL) ? 0:((u32)(offset >> 2));
 	wkf[4] = len;
 	wkf[5] = (u32)dst;
 	wkf[6] = len;
@@ -228,7 +234,7 @@ void wkfWriteRam(int offset, int data) {
 }
 
 // Write the WKF base offset to base all reads from
-void wkfWriteOffset(int offset) {
+void wkfWriteOffset(u32 offset) {
 	__wkfCmdImm(0xDE000000, offset, 0x5A000000);
 }
 

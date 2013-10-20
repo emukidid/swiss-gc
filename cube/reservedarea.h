@@ -5,7 +5,7 @@
 	It contains hardcoded locations where Swiss and the patch 
 	codes will store/retrieve certain values that are stashed away.
 	
-	Offsets are all relative to top of Main RAM on GameCube, 0x81800000.
+	Offsets are all relative to top of Main RAM reserved area on GameCube, 0x80001800-0x80003000.
 */
 
 #ifdef _LANGUAGE_ASSEMBLY

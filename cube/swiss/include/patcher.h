@@ -24,6 +24,8 @@ extern u8 sd_bin[];
 extern u32 sd_bin_size;
 extern u8 usbgecko_bin[];
 extern u32 usbgecko_bin_size;
+extern u8 wkf_bin[];
+extern u32 wkf_bin_size;
 
 /* SDK patches */
 extern u8 DVDCancelAsync[];
@@ -134,11 +136,15 @@ extern u32 CARDWriteAsync_length;
 
 #define READ_PATCHED_ALL 		(0x111111)
 
+/* WKF Patch file jump locations in our patch code */
+#define ADJUST_LBA_OFFSET	 	(LO_RESERVE)
+
 /* Types of files we may patch */
 #define PATCH_DOL		0
 #define PATCH_ELF		1
 #define PATCH_LOADER	2
 
+u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType);
 int Patch_ProgVideo(u8 *data, u32 length, int dataType);
 void Patch_WideAspect(u8 *data, u32 length, int dataType);
