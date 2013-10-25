@@ -511,7 +511,8 @@ unsigned int load_app(int mode)
 		Patch_DVDCompareDiskId(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 		Patch_DVDStatusFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
-	if(curDevice == WKF) {
+	// Only set up the WKF fragmentation patch if we have to.
+	if(curDevice == WKF && wkfFragSetupReq) {
 		u32 ret = Patch_DVDLowLevelReadForWKF(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 		if(1 != ret) {
 			DrawFrameStart();
@@ -594,6 +595,10 @@ unsigned int load_app(int mode)
 		*(volatile unsigned int*)VAR_SD_TYPE = sdgecko_getAddressingType(0);
 		*(volatile unsigned int*)VAR_EXI_FREQ = EXI_SPEED32MHZ;
 		*(volatile unsigned int*)VAR_EXI_SLOT = 0;
+	}
+	// Set WKF base offset if not using the frag patch
+	if(curDevice == WKF && !wkfFragSetupReq) {
+		wkfWriteOffset(*(volatile unsigned int*)VAR_DISC_1_LBA);
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
 	DOLtoARAM(main_dol_buffer);

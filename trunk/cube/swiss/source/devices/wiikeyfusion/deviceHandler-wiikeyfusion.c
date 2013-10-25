@@ -21,6 +21,7 @@
 #include "patcher.h"
 
 const DISC_INTERFACE* wkf = &__io_wkf;
+int wkfFragSetupReq = 0;
 
 file_handle initial_WKF =
 	{ "wkf:/",       // directory
@@ -124,8 +125,8 @@ int deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 			fragList[frags*3] = frag_list->frag[i].offset*512;
 			fragList[(frags*3)+1] = frag_list->frag[i].count*512;
 			fragList[(frags*3)+2] = frag_list->frag[i].sector;
-			print_gecko("Wrote Frag: ofs: %08X count: %08X sector: %08X\r\n",
-						fragList[frags*3],fragList[(frags*3)+1],fragList[(frags*3)+2]);
+			//print_gecko("Wrote Frag: ofs: %08X count: %08X sector: %08X\r\n",
+			//			fragList[frags*3],fragList[(frags*3)+1],fragList[(frags*3)+2]);
 			frags++;
 		}
 	}
@@ -146,8 +147,8 @@ int deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 				fragList[(frags*3) + (maxFrags*3)] = frag_list->frag[i].offset*512;
 				fragList[((frags*3) + 1) + (maxFrags*3)]  = frag_list->frag[i].count*512;
 				fragList[((frags*3) + 2) + (maxFrags*3)] = frag_list->frag[i].sector;
-				print_gecko("Wrote Frag: ofs: %08X count: %08X sector: %08X\r\n",
-						fragList[frags*3],fragList[(frags*3)+1],fragList[(frags*3)+2]);
+				//print_gecko("Wrote Frag: ofs: %08X count: %08X sector: %08X\r\n",
+				//		fragList[frags*3],fragList[(frags*3)+1],fragList[(frags*3)+2]);
 				frags++;
 			}
 		}
@@ -163,6 +164,8 @@ int deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 	*(volatile unsigned int*)VAR_DISC_2_LBA = file2 ? fragList[2 + (maxFrags*3)]:fragList[2];
 	// Currently selected disk base sector
 	*(volatile unsigned int*)VAR_CUR_DISC_LBA = fragList[2];
+	
+	wkfFragSetupReq = (file2 && frags > 2) ? 1 : frags>1;
 	
 	return 1;
 }
