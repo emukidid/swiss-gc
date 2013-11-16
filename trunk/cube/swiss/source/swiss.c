@@ -1146,12 +1146,9 @@ void save_config(ConfigEntry *config) {
 	}
 }
 
-/* Show info about the game - and also load the config for it */
-int info_game()
-{
+void draw_game_info() {
 	DrawFrameStart();
 	DrawEmptyBox(75,120, vmode->fbWidth-78, 400, COLOR_BLACK);
-	ConfigEntry *config = NULL;
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
 		u32 bannerOffset = showBanner(215, 240, 2);  //Convert & display game banner
 		if(bannerOffset) {
@@ -1177,18 +1174,6 @@ int info_game()
 				}
 			}
 		}
-		// Find the config for this game, or default if we don't know about it
-		config = memalign(32, sizeof(ConfigEntry));
-		*(u32*)&config->game_id[0] = *(u32*)&GCMDisk.ConsoleID;	// Lazy
-		strncpy(&config->game_name[0],&GCMDisk.GameName[0],32);
-		config_find(config);	// populate
-		// load settings
-		swissSettings.gameVMode = config->gameVMode;
-		swissSettings.softProgressive = config->softProgressive;
-		swissSettings.muteAudioStreaming = config->muteAudioStreaming;
-		swissSettings.emulatemc = config->emulatemc;
-		swissSettings.forceWidescreen = config->forceWidescreen;
-		swissSettings.forceAnisotropy = config->forceAnisotropy;
 	}
 	sprintf(txtbuffer,"%s",(GCMDisk.DVDMagicWord != DVD_MAGIC)?getRelativeName(&curFile.name[0]):GCMDisk.GameName);
 	float scale = GetTextScaleToFitInWidth(txtbuffer,(vmode->fbWidth-78)-75);
@@ -1233,28 +1218,43 @@ int info_game()
 
 	WriteFontStyled(640/2, 370, "Cheats (Y) - Settings (X) - Exit (B) - Continue (A)", 0.75f, true, defaultColor);
 	DrawFrameFinish();
-	while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
-	while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
-	while(1){
+}
+
+/* Show info about the game - and also load the config for it */
+int info_game()
+{
+	int ret = 0;
+	ConfigEntry *config = NULL;
+	// Find the config for this game, or default if we don't know about it
+	config = memalign(32, sizeof(ConfigEntry));
+	*(u32*)&config->game_id[0] = *(u32*)&GCMDisk.ConsoleID;	// Lazy
+	strncpy(&config->game_name[0],&GCMDisk.GameName[0],32);
+	config_find(config);	// populate
+	// load settings
+	swissSettings.gameVMode = config->gameVMode;
+	swissSettings.softProgressive = config->softProgressive;
+	swissSettings.muteAudioStreaming = config->muteAudioStreaming;
+	swissSettings.emulatemc = config->emulatemc;
+	swissSettings.forceWidescreen = config->forceWidescreen;
+	swissSettings.forceAnisotropy = config->forceAnisotropy;
+	while(1) {
+		draw_game_info();
+		while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+		while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
-			save_config(config);
-			free(config);
-			return cheats_game();
+			cheats_game();
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
 			show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC) ? &curFile : NULL, config);
-			save_config(config);
-			free(config);
-			return 1;
 		}
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){
-			int ret = (PAD_ButtonsHeld(0) & PAD_BUTTON_A);
-			save_config(config);
-			free(config);
-			return ret;
+			ret = (PAD_ButtonsHeld(0) & PAD_BUTTON_A) ? 1:0;
 		}
 	}
+	save_config(config);
+	free(config);
+	return ret;
 }
 
 void select_speed()
