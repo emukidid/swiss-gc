@@ -42,9 +42,6 @@ typedef unsigned int u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 
-#define exi_freq  		*(u32*)VAR_TMP1
-#define exi_device  	*(u32*)VAR_TMP2
-#define exi_channel 	*(u32*)VAR_TMP3
 #define _ideexi_version *(u32*)VAR_TMP4
 
 #define IDE_EXI_V1 0
@@ -63,31 +60,31 @@ void* mymemcpy(void* dest, const void* src, u32 count)
 void exi_select()
 {
 	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
-	exi[exi_channel * 5] = (exi[exi_channel * 5] & 0x405) | ((1<<exi_device)<<7) | (exi_freq << 4);
+	exi[*(u32*)VAR_EXI_SLOT * 5] = (exi[*(u32*)VAR_EXI_SLOT * 5] & 0x405) | ((1<<0)<<7) | (*(u32*)VAR_EXI_FREQ << 4);
 }
 
 void exi_deselect()
 {
 	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
-	exi[exi_channel * 5] &= 0x405;
+	exi[*(u32*)VAR_EXI_SLOT * 5] &= 0x405;
 }
 
 void exi_imm(void* data, int len, int mode)
 {
 	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
 	if (mode == EXI_WRITE)
-		exi[exi_channel * 5 + 4] = *(unsigned long*)data;
+		exi[*(u32*)VAR_EXI_SLOT * 5 + 4] = *(unsigned long*)data;
 	else
-		exi[exi_channel * 5 + 4] = -1;
+		exi[*(u32*)VAR_EXI_SLOT * 5 + 4] = -1;
 	// Tell EXI if this is a read or a write
-	exi[exi_channel * 5 + 3] = ((len - 1) << 4) | (mode << 2) | 1;
+	exi[*(u32*)VAR_EXI_SLOT * 5 + 3] = ((len - 1) << 4) | (mode << 2) | 1;
 	// Wait for it to do its thing
-	while (exi[exi_channel * 5 + 3] & 1);
+	while (exi[*(u32*)VAR_EXI_SLOT * 5 + 3] & 1);
 
 	if (mode == EXI_READ)
 	{
 		// Read the 4 byte data off the EXI bus
-		unsigned long d = exi[exi_channel * 5 + 4];
+		unsigned long d = exi[*(u32*)VAR_EXI_SLOT * 5 + 4];
 		if(len == 4) {
 			*(u32*)data = d;
 		}
@@ -219,11 +216,6 @@ int _ataReadSectors(u32 lba, u16 numsectors, void *buffer)
 void do_read(void *dst,u32 size, u32 offset, u32 sectorLba) {
 	u8 sector[SECTOR_SIZE];
 	u32 lba = (offset>>9) + sectorLba;
-	
-	// Load these from what Swiss set them to be
-	exi_freq = *(u32*)VAR_EXI_FREQ;
-	exi_device = 0; // for now until I add BBA port support
-	exi_channel = *(u32*)VAR_EXI_SLOT;
 	
 	// Read any half sector if we need to until we're aligned
 	if(offset % SECTOR_SIZE) {

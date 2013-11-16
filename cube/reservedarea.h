@@ -25,7 +25,7 @@
 .set VAR_EXI_SLOT, 		0x2F18	# is the EXI slot (0 = slot a, 1 = slot b)
 .set VAR_TMP1,  		0x2F1C	# space for a variable if required
 .set VAR_TMP2,  		0x2F20	# space for a variable if required
-.set VAR_TMP3,  		0x2F24	# space for a variable if required
+.set VAR_MC_FUNC,  		0x2F24	# which MC Function do we want to call?
 .set VAR_TMP4,  		0x2F28	# space for a variable if required
 .set VAR_DOL_SECTOR,	0x2F2C	# In-Game-Reset DOL address
 .set VAR_DOL_SIZE,		0x2F30	# In-Game-Reset DOL size
@@ -39,6 +39,18 @@
 .set VAR_MC_CB_ADDR,	0x2F50	# memcard callback addr
 .set VAR_MC_CB_ARG1,	0x2F54	# memcard callback r3
 .set VAR_MC_CB_ARG2,	0x2F58	# memcard callback r4
+.set VAR_MUTE_AUDIO,	0x2F5C	# mute audio?
+
+.set _CARD_OPEN,		0x1
+.set _CARD_FASTOPEN,	0x2
+.set _CARD_CLOSE,		0x3
+.set _CARD_CREATE,		0x4
+.set _CARD_DELETE,		0x5
+.set _CARD_READ,		0x6
+.set _CARD_WRITE,		0x7
+.set _CARD_GETSTATUS,	0x8
+.set _CARD_SETSTATUS,	0x9
+.set _CARD_SETUP,		0xA
 
 #else
 
@@ -58,7 +70,7 @@
 #define VAR_EXI_SLOT 		(VAR_AREA+0x2F18)	// is the EXI slot (0 = slot a, 1 = slot b)
 #define VAR_TMP1  			(VAR_AREA+0x2F1C)	// space for a variable if required
 #define VAR_TMP2  			(VAR_AREA+0x2F20)	// space for a variable if required
-#define VAR_TMP3  			(VAR_AREA+0x2F24)	// space for a variable if required
+#define VAR_MC_FUNC  		(VAR_AREA+0x2F24)	// which MC Function do we want to call?
 #define VAR_TMP4  			(VAR_AREA+0x2F28)	// space for a variable if required
 #define VAR_DOL_SECTOR		(VAR_AREA+0x2F2C)	// In-Game-Reset DOL address
 #define VAR_DOL_SIZE		(VAR_AREA+0x2F30)	// In-Game-Reset DOL size
@@ -72,6 +84,18 @@
 #define VAR_MC_CB_ADDR		(VAR_AREA+0x2F50)	// memcard callback addr
 #define VAR_MC_CB_ARG1		(VAR_AREA+0x2F54)	// memcard callback r3
 #define VAR_MC_CB_ARG2		(VAR_AREA+0x2F58)	// memcard callback r4
+#define VAR_MUTE_AUDIO		(VAR_AREA+0x2F5C)	// mute audio?
+
+#define _CARD_OPEN			(0x1)
+#define _CARD_FASTOPEN		(0x2)
+#define _CARD_CLOSE			(0x3)
+#define _CARD_CREATE		(0x4)
+#define _CARD_DELETE		(0x5)
+#define _CARD_READ			(0x6)
+#define _CARD_WRITE			(0x7)
+#define _CARD_GETSTATUS		(0x8)
+#define _CARD_SETSTATUS		(0x9)
+#define _CARD_SETUP			(0xA)
 
 #endif
 

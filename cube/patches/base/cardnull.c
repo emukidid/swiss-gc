@@ -8,4 +8,5 @@ void card_read() {}
 void card_write() {}
 void card_getstatus() {}
 void card_setstatus() {}
+void handle_card() {}
 

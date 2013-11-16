@@ -53,6 +53,9 @@ void device_frag_read(void *dst, u32 len, u32 offset)
 	void *oDst = dst;
 	u32 oLen = len;
 	
+	if(VAR_MUTE_AUDIO)
+		*(volatile u16*)0xCC005036 = 0;
+		
 	while(len != 0) {
 		int amountRead = read_frag(dst, len, offset);
 		len-=amountRead;
@@ -61,4 +64,8 @@ void device_frag_read(void *dst, u32 len, u32 offset)
 	}
 	
 	dcache_flush_icache_inv(oDst, oLen);
+	if(VAR_MUTE_AUDIO) {
+		*(volatile u16*)0xCC005036 |= 0x8000;
+		*(u32*)VAR_MUTE_AUDIO = 0;
+	}
 }

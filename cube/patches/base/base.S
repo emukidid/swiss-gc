@@ -13,16 +13,7 @@ _start:
 	b		queue_read
 	b		patched_memcpy			# void patched_memcpy(dst,src,size)
 	b		fake_interrupt
-	b		card_open				# s32 card_open(char* fileName, CARDFileInfo* fileInfo)
-	b		card_fastopen			# s32 card_fastopen(s32 fileNo, CARDFileInfo* fileInfo)
-	b		card_close				# void card_close(CARDFileInfo* fileInfo)
-	b		card_create				# s32 card_create(char* fileName, u32 size, CARDFileInfo* fileInfo)
-	b		card_delete				# s32 card_delete(char* fileName)
-	b		card_read				# s32 card_read(CARDFileInfo* fileInfo, void* buf, s32 length, s32 offset)
-	b		card_write				# s32 card_write(CARDFileInfo* fileInfo, void* buf, s32 length, s32 offset)
-	b		card_getstatus			# s32 card_getstatus(s32 fileNo, CARDStat* stat)
-	b		card_setstatus			# s32 card_setstatus(s32 fileNo, CARDStat* stat)
-	b		card_setup				# void card_setup(); // Read our virtual memcard file table into the work area
+	b		handle_card				# Looks at VAR_MC_FUNC to see what function to call
 
 	.globl fake_interrupt
 fake_interrupt:

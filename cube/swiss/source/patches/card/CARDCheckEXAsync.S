@@ -55,7 +55,7 @@ CardZeroPtr:
 	# stash info about the callback somewhere as we'll call it later via our patched OSRestoreInterrupts
 	lis		%r4,	VAR_AREA
 	stw		%r3,	VAR_MC_CB_ARG1(%r4)	# store callback arg 1
-	stw		%r3,	VAR_MC_CB_ARG1(%r4)	# store callback arg 2
+	stw		%r3,	VAR_MC_CB_ARG2(%r4)	# store callback arg 2
 	stw		%r5,	VAR_MC_CB_ADDR(%r4)	# store callback address
 
 CardNoCB:

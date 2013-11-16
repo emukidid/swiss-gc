@@ -80,6 +80,43 @@ typedef struct SwissMemcardHeader
 	CARDStatAndInfo statandinfo[NUM_STAT_BLOCK_ENTRIES];
 } SwissMemcardHeader;	// 240 entries, near 32768
 
+void card_setup();
+
+void handle_card(u32 arg1,u32 arg2, u32 arg3, u32 arg4) {
+	switch(*(u32*)VAR_MC_FUNC) {
+		case _CARD_OPEN:
+			card_open((s32) arg1, (char*) arg2, (CARDFileInfo*) arg3);
+			break;
+		case _CARD_FASTOPEN:
+			card_open((s32) arg1, (s32) arg2, (CARDFileInfo*) arg3);
+			break;
+		case _CARD_CLOSE:
+			break;
+		case _CARD_CREATE:
+			card_create((s32) arg1, (char*) arg2, (s32) arg3, (CARDFileInfo*) arg4);
+			break;
+		case _CARD_DELETE:
+			card_delete((s32) arg1, (char*) arg2);
+			break;
+		case _CARD_READ:
+			card_read((CARDFileInfo*) arg1, (void*) arg2, (s32) arg3, (s32) arg4);
+			break;
+		case _CARD_WRITE:
+			card_write((CARDFileInfo*) arg1, (void*) arg2, (s32) arg3, (s32) arg4);
+			break;
+		case _CARD_GETSTATUS:
+			card_getstatus((s32) arg1, (s32) arg2, (CARDStat*) arg3);
+			break;
+		case _CARD_SETSTATUS:
+			card_setstatus((s32) arg1, (s32) arg2, (CARDStat*) arg3);
+			break;
+		case _CARD_SETUP:
+			card_setup();
+			break;
+		default:
+			break;
+	}
+} 
 
 extern void do_read(void *dst, u32 size, u32 offset, u32 sectorLba);
 extern void do_write(void *src, u32 size, u32 offset);

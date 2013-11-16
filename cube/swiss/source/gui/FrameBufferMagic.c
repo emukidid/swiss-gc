@@ -33,6 +33,12 @@
 #include "qoob.h"
 #include "wodeimg_tpl.h"
 #include "wodeimg.h"
+#include "wiikeyimg_tpl.h"
+#include "wiikeyimg.h"
+#include "usbgeckoimg_tpl.h"
+#include "usbgeckoimg.h"
+#include "memcardimg_tpl.h"
+#include "memcardimg.h"
 #include "btnnohilight_tpl.h"
 #include "btnnohilight.h"
 #include "btnhilight_tpl.h"
@@ -71,6 +77,12 @@ TPLFile qoobTPL;
 GXTexObj qoobTexObj;
 TPLFile wodeimgTPL;
 GXTexObj wodeimgTexObj;
+TPLFile usbgeckoTPL;
+GXTexObj usbgeckoTexObj;
+TPLFile memcardTPL;
+GXTexObj memcardTexObj;
+TPLFile wiikeyTPL;
+GXTexObj wiikeyTexObj;
 TPLFile btnnohilightTPL;
 GXTexObj btnnohilightTexObj;
 TPLFile btnhilightTPL;
@@ -109,6 +121,12 @@ void init_textures()
 	TPL_GetTexture(&qoobTPL,qoob,&qoobTexObj);
 	TPL_OpenTPLFromMemory(&wodeimgTPL, (void *)wodeimg_tpl, wodeimg_tpl_size);
 	TPL_GetTexture(&wodeimgTPL,wodeimg,&wodeimgTexObj);
+	TPL_OpenTPLFromMemory(&wiikeyTPL, (void *)wiikeyimg_tpl, wiikeyimg_tpl_size);
+	TPL_GetTexture(&wiikeyTPL,wiikeyimg,&wiikeyTexObj);
+	TPL_OpenTPLFromMemory(&memcardTPL, (void *)memcardimg_tpl, memcardimg_tpl_size);
+	TPL_GetTexture(&memcardTPL,memcardimg,&memcardTexObj);
+	TPL_OpenTPLFromMemory(&usbgeckoTPL, (void *)usbgeckoimg_tpl, usbgeckoimg_tpl_size);
+	TPL_GetTexture(&usbgeckoTPL,usbgeckoimg,&usbgeckoTexObj);
 	TPL_OpenTPLFromMemory(&btnnohilightTPL, (void *)btnnohilight_tpl, btnnohilight_tpl_size);
 	TPL_GetTexture(&btnnohilightTPL,btnnohilight,&btnnohilightTexObj);
 	TPL_OpenTPLFromMemory(&btnhilightTPL, (void *)btnhilight_tpl, btnhilight_tpl_size);
@@ -223,7 +241,7 @@ void DrawSimpleBox(int x, int y, int width, int height, int depth, GXColor fillC
 	drawRect(x+(width/2), y+(height/2), width/2, height/2, depth, borderColor, ((float)width/32), 0.0f, ((float)height/32), 0.0f);
 }
 
-void DrawImage(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2)
+void DrawImage(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered)
 {
 	drawInit();
 	GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
@@ -252,6 +270,15 @@ void DrawImage(int textureId, int x, int y, int width, int height, int depth, fl
 	case TEX_WODEIMG:
 		GX_LoadTexObj(&wodeimgTexObj, GX_TEXMAP0);
 		break;
+	case TEX_USBGECKO:
+		GX_LoadTexObj(&usbgeckoTexObj, GX_TEXMAP0);
+		break;
+	case TEX_WIIKEY:
+		GX_LoadTexObj(&wiikeyTexObj, GX_TEXMAP0);
+		break;
+	case TEX_MEMCARD:
+		GX_LoadTexObj(&memcardTexObj, GX_TEXMAP0);
+		break;
 	case TEX_BTNNOHILIGHT:
 		GX_LoadTexObj(&btnnohilightTexObj, GX_TEXMAP0);
 		break;
@@ -275,6 +302,10 @@ void DrawImage(int textureId, int x, int y, int width, int height, int depth, fl
 		break;
 	}	
 
+	if(centered)
+	{
+		x = (int) x - width/2;
+	}
 	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 		GX_Position3f32((float) x,(float) y,(float) depth );
 		GX_Color4u8(255, 255, 255, 255);
@@ -293,7 +324,7 @@ void DrawImage(int textureId, int x, int y, int width, int height, int depth, fl
 
 void _DrawBackdrop() 
 {
-	DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+	DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	WriteFont(55,40, "Swiss v0.3 for GameCube");
 }
 
@@ -451,19 +482,19 @@ void DrawEmptyBox(int x1, int y1, int x2, int y2, int color)
 void DrawMenuButtons(int selection) 
 {
 	// Draw the buttons
-	DrawImage(TEX_BTNDEVICE, 40+(0*116), 430, BTNDEVICE_WIDTH,BTNDEVICE_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
-	DrawImage(TEX_BTNSETTINGS, 40+(1*116), 430, BTNSETTINGS_WIDTH,BTNSETTINGS_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
-	DrawImage(TEX_BTNINFO, 40+(2*116), 430, BTNINFO_WIDTH,BTNINFO_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
-	DrawImage(TEX_BTNREFRESH, 40+(3*116), 430, BTNREFRESH_WIDTH,BTNREFRESH_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
-	DrawImage(TEX_BTNEXIT, 40+(4*116), 430, BTNEXIT_WIDTH,BTNEXIT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+	DrawImage(TEX_BTNDEVICE, 40+(0*116), 430, BTNDEVICE_WIDTH,BTNDEVICE_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	DrawImage(TEX_BTNSETTINGS, 40+(1*116), 430, BTNSETTINGS_WIDTH,BTNSETTINGS_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	DrawImage(TEX_BTNINFO, 40+(2*116), 430, BTNINFO_WIDTH,BTNINFO_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	DrawImage(TEX_BTNREFRESH, 40+(3*116), 430, BTNREFRESH_WIDTH,BTNREFRESH_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	DrawImage(TEX_BTNEXIT, 40+(4*116), 430, BTNEXIT_WIDTH,BTNEXIT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	// Highlight selected
 	int i;
 	for(i=0;i<5;i++)
 	{
 		if(selection==i)
-			DrawImage(TEX_BTNHILIGHT, 40+(i*116), 430, BTNHILIGHT_WIDTH,BTNHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+			DrawImage(TEX_BTNHILIGHT, 40+(i*116), 430, BTNHILIGHT_WIDTH,BTNHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 		else
-			DrawImage(TEX_BTNNOHILIGHT, 40+(i*116), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+			DrawImage(TEX_BTNNOHILIGHT, 40+(i*116), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	}
 }
 

@@ -4,7 +4,7 @@
 
 #	CARDMountAsync - "Mounts a memory card asynchronously."
 #	r3	Channel
-#	r4	workarea	-	 5 * 8 * 1024 bytess
+#	r4	workarea	-	 5 * 8 * 1024 bytes
 #	r5	detachCallback
 #	r6	attachCallback
 
@@ -40,8 +40,11 @@ DoCode:
 	
 	# call our code to read the memory card "file table" into the work area once off
 	lis		%r3,	0x8000
-	ori		%r3,	%r3, 0x1838
+	ori		%r3,	%r3, 0x180C
 	mtctr	%r3
+	lis		%r3,	VAR_AREA
+	li		%r0,	_CARD_SETUP
+	stw		%r0,	VAR_MC_FUNC(%r3)
 	bctrl
 	
 	#Re-enable external interrupts if they were previously
@@ -60,7 +63,7 @@ skip_setting_msr:
 	cmpwi	%r6,	0
 	beq		skip_cb
 	stw		%r3,	VAR_MC_CB_ARG1(%r4)	# store callback arg 1
-	stw		%r3,	VAR_MC_CB_ARG1(%r4)	# store callback arg 2
+	stw		%r3,	VAR_MC_CB_ARG2(%r4)	# store callback arg 2
 	stw		%r6,	VAR_MC_CB_ADDR(%r4)	# store callback address
 
 skip_cb:
