@@ -1223,7 +1223,7 @@ void draw_game_info() {
 /* Show info about the game - and also load the config for it */
 int info_game()
 {
-	int ret = 0;
+	int ret = -1;
 	ConfigEntry *config = NULL;
 	// Find the config for this game, or default if we don't know about it
 	config = memalign(32, sizeof(ConfigEntry));
@@ -1237,7 +1237,7 @@ int info_game()
 	swissSettings.emulatemc = config->emulatemc;
 	swissSettings.forceWidescreen = config->forceWidescreen;
 	swissSettings.forceAnisotropy = config->forceAnisotropy;
-	while(1) {
+	while(ret == -1) {
 		draw_game_info();
 		while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 		while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
@@ -1313,23 +1313,24 @@ void select_copy_device()
 	while(1) {
 		doBackdrop();
 		DrawEmptyBox(20,190, vmode->fbWidth-20, 355, COLOR_BLACK);
-		WriteFontStyled(640/2, 195, "Select destination device and press A", 1.0f, true, defaultColor);
+		WriteFontStyled(640/2, 195, "Destination device selection", 1.0f, true, defaultColor);
 		if(curCopyDevice==DEST_SD_CARD) {
-			DrawSelectableButton(170, 230, 450, 340, "SDGecko", B_NOSELECT,COLOR_BLACK);
-			DrawImage(TEX_SDSMALL, 360, 245, 60, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+			DrawImage(TEX_SDSMALL, 640/2, 230, 60, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+			WriteFontStyled(640/2, 330, "SD Card via SD Gecko", 0.85f, true, defaultColor);
 		}
 		else if(curCopyDevice==DEST_IDEEXI) {
-			DrawSelectableButton(170, 230, 450, 340, "Ide-Exi", B_NOSELECT,COLOR_BLACK);
-			DrawImage(TEX_HDD, 340, 245, 80, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+			DrawImage(TEX_HDD, 640/2, 230, 80, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+			WriteFontStyled(640/2, 330, "IDE HDD via IDE-EXI", 0.85f, true, defaultColor);
 		}
 		else if(curCopyDevice==DEST_MEMCARD) {
-			DrawSelectableButton(170, 230, 450, 340, "Memory Card",B_NOSELECT,COLOR_BLACK);
+			DrawImage(TEX_MEMCARD, 640/2, 230, 107, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+			WriteFontStyled(640/2, 330, "Memory Card", 0.85f, true, defaultColor);
 		}
 		if(curCopyDevice != 2) {
-			WriteFont(520, 300, "->");
+			WriteFont(520, 270, "->");
 		}
 		if(curCopyDevice != 0) {
-			WriteFont(100, 300, "<-");
+			WriteFont(100, 270, "<-");
 		}
 		DrawFrameFinish();
 		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A))
@@ -1397,41 +1398,44 @@ void select_device()
 		while(1) {
 			doBackdrop();
 			DrawEmptyBox(20,190, vmode->fbWidth-20, 355, COLOR_BLACK);
-			WriteFontStyled(640/2, 195, "Select device and press A", 1.0f, true, defaultColor);
+			WriteFontStyled(640/2, 195, "Device Selection", 1.0f, true, defaultColor);
 			if(curDevice==DVD_DISC) {
-				DrawSelectableButton(170, 230, 450, 340, "DVD Disc", B_NOSELECT,COLOR_BLACK);
-				DrawImage(TEX_GCDVDSMALL, 340, 250, 80, 79, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+				DrawImage(TEX_GCDVDSMALL, 640/2, 230, 80, 79, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+				WriteFontStyled(640/2, 330, "DVD Disc (GCM, ISO9660, MultiGame)", 0.85f, true, defaultColor);
 			}
 			else if(curDevice==SD_CARD) {
-				DrawSelectableButton(170, 230, 450, 340, "SDGecko", B_NOSELECT,COLOR_BLACK);
-				DrawImage(TEX_SDSMALL, 360, 245, 60, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+				DrawImage(TEX_SDSMALL, 640/2, 230, 60, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+				WriteFontStyled(640/2, 330, "SD Card via SD Gecko", 0.85f, true, defaultColor);
 			}
 			else if(curDevice==IDEEXI) {
-				DrawSelectableButton(170, 230, 450, 340, "Ide-Exi", B_NOSELECT,COLOR_BLACK);
-				DrawImage(TEX_HDD, 340, 245, 80, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+				DrawImage(TEX_HDD, 640/2, 230, 80, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+				WriteFontStyled(640/2, 330, "IDE HDD via IDE-EXI", 0.85f, true, defaultColor);
 			}
 			else if(curDevice==QOOB_FLASH) {
-				DrawSelectableButton(170, 230, 450, 340, "Qoob PRO",B_NOSELECT,COLOR_BLACK);
-				DrawImage(TEX_QOOB, 350, 245, 70, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+				DrawImage(TEX_QOOB, 640/2, 230, 70, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+				WriteFontStyled(640/2, 330, "Qoob PRO Flash", 0.85f, true, defaultColor);
 			}
 			else if(curDevice==WODE) {
-				DrawSelectableButton(170, 230, 450, 340, "WODE",B_NOSELECT,COLOR_BLACK);
-				DrawImage(TEX_WODEIMG, 290, 245, 146, 72, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+				DrawImage(TEX_WODEIMG, 640/2, 230, 146, 72, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+				WriteFontStyled(640/2, 330, "WODE Jukebox", 0.85f, true, defaultColor);
 			}
 			else if(curDevice==MEMCARD) {
-				DrawSelectableButton(170, 230, 450, 340, "Memory Card",B_NOSELECT,COLOR_BLACK);
+				DrawImage(TEX_MEMCARD, 640/2, 230, 107, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+				WriteFontStyled(640/2, 330, "Memory Card", 0.85f, true, defaultColor);
 			}
 			else if(curDevice==WKF) {
-				DrawSelectableButton(170, 230, 450, 340, "Wiikey Fusion",B_NOSELECT,COLOR_BLACK);
+				DrawImage(TEX_WIIKEY, 640/2, 230, 108, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+				WriteFontStyled(640/2, 330, "Wiikey Fusion", 0.85f, true, defaultColor);
 			}
 			else if(curDevice==USBGECKO) {
-				DrawSelectableButton(170, 230, 450, 340, "USB Gecko",B_NOSELECT,COLOR_BLACK);
+				DrawImage(TEX_USBGECKO, 640/2, 230, 129, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+				WriteFontStyled(640/2, 330, "USB Gecko (req. PC app)", 0.85f, true, defaultColor);
 			}
 			if(curDevice != 7) {
-				WriteFont(520, 300, "->");
+				WriteFont(520, 270, "->");
 			}
 			if(curDevice != 0) {
-				WriteFont(100, 300, "<-");
+				WriteFont(100, 270, "<-");
 			}
 			DrawFrameFinish();
 			while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A))

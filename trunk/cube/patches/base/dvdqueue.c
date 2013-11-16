@@ -55,7 +55,11 @@ void process_queue() {
 	if(store->len) {
 		// read a bit
 		int audioPlaying = ((*(volatile u16*)0xCC00503A) & 0x7FFF);
-		int amountToRead = store->len > 0x800 ? (audioPlaying ? 0x800:store->len) : store->len;
+		int amountToRead = store->len > 0x10000 ? 0x10000 : store->len;
+		// Stop audio if length is > 0x8000
+		if(audioPlaying && store->len >= 0x10000)
+			*(u32*)VAR_MUTE_AUDIO = 1;
+
 #ifdef DEBUG
 		usb_sendbuffer_safe("Start Read:",11);
 		print_read(store->dst, amountToRead, store->ofs);

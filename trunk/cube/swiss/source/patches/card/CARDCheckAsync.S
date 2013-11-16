@@ -41,7 +41,7 @@ CARDPresent:
 	mtctr	%r4
 	lis		%r4,	VAR_AREA
 	stw		%r3,	VAR_MC_CB_ARG1(%r4)	# store callback arg 1
-	stw		%r3,	VAR_MC_CB_ARG1(%r4)	# store callback arg 2
+	stw		%r3,	VAR_MC_CB_ARG2(%r4)	# store callback arg 2
 	mfctr	%r3
 	stw		%r3,	VAR_MC_CB_ADDR(%r4)	# store callback address
 

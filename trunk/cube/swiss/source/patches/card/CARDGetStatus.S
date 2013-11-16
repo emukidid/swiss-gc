@@ -1,4 +1,6 @@
 #include "../asm.h"
+#define _LANGUAGE_ASSEMBLY
+#include "../../../../reservedarea.h"
 
 #	CARDGetStatus - "Gets a file status using a file number."
 #	r3	chan
@@ -31,8 +33,11 @@ DoCode:
 			
 # Call our code instead - return value in r3 of CARD_RESULT_NOFILE OR CARD_RESULT_READY
 	lis		%r3,	0x8000
-	ori		%r3,	%r3, 0x1830
+	ori		%r3,	%r3, 0x180C
 	mtctr	%r3
+	lis		%r3,	VAR_AREA
+	li		%r0,	_CARD_GETSTATUS
+	stw		%r0,	VAR_MC_FUNC(%r3)
 	bctrl
 	stw		%r3,	0x1C(%sp)
 

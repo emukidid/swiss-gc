@@ -10,7 +10,7 @@
 	.globl _start, __main
 _start:
 	b		adjust_read
-	nop
-	nop
+	b		swap_disc
+	b		fake_lid_interrupt
 	nop
 	nop

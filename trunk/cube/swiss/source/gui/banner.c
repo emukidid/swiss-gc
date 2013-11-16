@@ -98,7 +98,7 @@ u32 showBanner(int x, int y, int zoom)
 		}
 	}
 	DCFlushRange(bannerData,0x1800);
-	DrawImage(TEX_BANNER, x, y, 96*zoom, 32*zoom, 0, 0.0f, 1.0f, 0.0f, 1.0f);
+	DrawImage(TEX_BANNER, x, y, 96*zoom, 32*zoom, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	return BNROffset;
 }
 

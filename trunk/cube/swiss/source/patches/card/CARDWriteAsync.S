@@ -30,8 +30,11 @@ skip_cb_clear:
 	
 # Call our code instead - return value in r3 of CARD_RESULT_NOFILE OR CARD_RESULT_READY
 	lis		%r7,	0x8000
-	ori		%r7,	%r7, 0x182C
+	ori		%r7,	%r7, 0x180C
 	mtctr	%r7
+	lis		%r3,	VAR_AREA
+	li		%r0,	_CARD_WRITE
+	stw		%r0,	VAR_MC_FUNC(%r3)
 	bctrl
 	stw     %r3,	0x1C(%sp)
 	
@@ -51,7 +54,7 @@ skip_setting_msr:
 	cmpwi	%r7,	0
 	beq		skip_cb
 	stw		%r3,	VAR_MC_CB_ARG1(%r4)	# store callback arg 1
-	stw		%r3,	VAR_MC_CB_ARG1(%r4)	# store callback arg 2
+	stw		%r3,	VAR_MC_CB_ARG2(%r4)	# store callback arg 2
 	stw		%r7,	VAR_MC_CB_ADDR(%r4)	# store callback address
 
 skip_cb:
