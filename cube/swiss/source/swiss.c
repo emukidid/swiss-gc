@@ -1424,8 +1424,8 @@ void select_device()
 				WriteFontStyled(640/2, 330, "Memory Card", 0.85f, true, defaultColor);
 			}
 			else if(curDevice==WKF) {
-				DrawImage(TEX_WIIKEY, 640/2, 230, 108, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-				WriteFontStyled(640/2, 330, "Wiikey Fusion", 0.85f, true, defaultColor);
+				DrawImage(TEX_WIIKEY, 640/2, 230, 150, 75, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+				WriteFontStyled(640/2, 330, "Wiikey / Wasp Fusion", 0.85f, true, defaultColor);
 			}
 			else if(curDevice==USBGECKO) {
 				DrawImage(TEX_USBGECKO, 640/2, 230, 129, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);

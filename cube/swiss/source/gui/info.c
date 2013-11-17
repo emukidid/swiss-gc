@@ -48,54 +48,54 @@ void info_draw_page(int page_num) {
 		// Model
 		if(is_gamecube()) {
 			if(*(u32*)&driveVersion[0] == 0x20010831) {
-				sprintf(topStr, "Model: Panasonic Q SL-GC10-S");
+				sprintf(topStr, "Panasonic Q SL-GC10-S");
 			}
 			else if(!IPLInfo[0x55] || IPLInfo[0x65]=='0' || (IPLInfo[0x65]=='1')) {	
 				// NTSC 1.0,1.1 or PAL 1.0
-				sprintf(topStr, "Model: Nintendo GameCube DOL-001");
+				sprintf(topStr, "Nintendo GameCube DOL-001");
 			}
 			else if(IPLInfo[0x65]=='2') {
 				// NTSC 1.2a/1.2b	- How can I detect PAL DOL-101's.. by drive too?
-				sprintf(topStr, "Model: Nintendo GameCube DOL-101");
+				sprintf(topStr, "Nintendo GameCube DOL-101");
 			}
 			else if(IPLInfo[0x65]=='3') {
 				// Mythical NTSC 1.3 (Brazil)
-				sprintf(topStr, "Model: Nintendo GameCube DOL-102");	// Exists only in Brazil?
+				sprintf(topStr, "Nintendo GameCube DOL-102");	// Exists only in Brazil?
 			}
 		}
 		else {
-			sprintf(topStr, "Model: Nintendo Wii");
+			sprintf(topStr, "Nintendo Wii");
 		}
-		WriteFont(30, 110, topStr);
+		WriteFontStyled(640/2, 110, topStr, 1.0f, true, defaultColor);
 		// IPL version string
 		if(is_gamecube()) {
 			if(!IPLInfo[0x55]) {
-				sprintf(topStr, "IPL: NTSC Revision 1.0");
+				sprintf(topStr, "NTSC Revision 1.0");
 			}
 			else {
-				sprintf(topStr, "IPL: %s", &IPLInfo[0x55]);
+				sprintf(topStr, "%s", &IPLInfo[0x55]);
 			}
 		}
 		else {
-			sprintf(topStr, "IPL: Wii IPL");
+			sprintf(topStr, "Wii IPL");
 		}
-		WriteFont(30, 140, topStr);
-		if(curDevice != WKF) {
-			sprintf(topStr, "DVD: %02X %02X%02X/%02X (%02X)",driveVersion[2],driveVersion[0],driveVersion[1],driveVersion[3],driveVersion[4]);
-		} else {
-			sprintf(topStr, "WKF Serial: %s",wkfGetSerial());
+		WriteFontStyled(640/2, 140, topStr, 1.0f, true, defaultColor);
+		if(swissSettings.hasDVDDrive) {
+			if((!__wkfSpiReadId() || (__wkfSpiReadId() == 0xFFFFFFFF))) {
+				sprintf(topStr, "DVD Drive %02X %02X%02X/%02X (%02X)",driveVersion[2],driveVersion[0],driveVersion[1],driveVersion[3],driveVersion[4]);
+			} else {
+				sprintf(topStr, "WKF Serial %s",wkfGetSerial());
+			}
 		}
-		WriteFont(30, 170, topStr);
-		sprintf(topStr, "Video: %s",videoStr);
-		WriteFont(30, 200, topStr);
-		sprintf(topStr,"Language: %s",getSramLang(sram->lang));
-		WriteFont(30, 230, topStr);
-		sprintf(topStr,"Audio: %s",sram->flags&4 ? "Stereo":"Mono");
-		WriteFont(30, 260, topStr);
-		sprintf(topStr,"Console ID (ECID): %08X:%08X:%08X",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
-		WriteFontStyled(30, 290, topStr, 0.7f, false, defaultColor);
-		sprintf(topStr,"PVR: %08X",mfpvr());
-		WriteFontStyled(30, 305, topStr, 0.7f, false, defaultColor);
+		else
+			sprintf(topStr, "No DVD Drive present");
+		WriteFontStyled(640/2, 170, topStr, 1.0f, true, defaultColor);
+		sprintf(topStr, "%s",videoStr);
+		WriteFontStyled(640/2, 200, topStr, 1.0f, true, defaultColor);
+		sprintf(topStr,"%s / %s",getSramLang(sram->lang), sram->flags&4 ? "Stereo":"Mono");
+		WriteFontStyled(640/2, 230, topStr, 1.0f, true, defaultColor);
+		sprintf(topStr,"PVR %08X ECID %08X:%08X:%08X",mfpvr(),mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
+		WriteFontStyled(640/2, 260, topStr, 0.75f, true, defaultColor);
 	}
 	else if(page_num == 1) {
 		WriteFont(30, 65, "Device Info (2/3):");
