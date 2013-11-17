@@ -1244,9 +1244,11 @@ int info_game()
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
 			cheats_game();
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
 			show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC) ? &curFile : NULL, config);
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 		}
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){
 			ret = (PAD_ButtonsHeld(0) & PAD_BUTTON_A) ? 1:0;
