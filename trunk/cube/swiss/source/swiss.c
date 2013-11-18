@@ -1259,63 +1259,23 @@ int info_game()
 	return ret;
 }
 
-void select_speed()
-{ 	
-	while(1)
-	{
-		doBackdrop();
-		DrawEmptyBox (75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
-		WriteFontStyled(640/2, 215, "Select Speed and press A", 1.0f, true, defaultColor);
-		DrawSelectableButton(100, 280, -1, 310, "Compatible", (!swissSettings.exiSpeed) ? B_SELECTED:B_NOSELECT,-1);
-		DrawSelectableButton(380, 280, -1, 310, "Fast", (swissSettings.exiSpeed) ? B_SELECTED:B_NOSELECT,-1);
-		DrawFrameFinish();
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A))
-			{ VIDEO_WaitVSync (); }
-		u16 btns = PAD_ButtonsHeld(0);
-		if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)){
-			swissSettings.exiSpeed ^= 1;
-		 }
-		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
-			break;
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)))
-			{ VIDEO_WaitVSync (); }
-	}
-	if(curDevice == SD_CARD)
-		sdgecko_setSpeed(swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
-}
-
-int select_slot()
-{  
-	int slot = 0;
-	while(1) {
-		doBackdrop();
-		DrawEmptyBox(75,190, vmode->fbWidth-78, 330, COLOR_BLACK);
-		WriteFontStyled(640/2, 215, "Select Slot and press A", 1.0f, true, defaultColor);
-		DrawSelectableButton(100, 280, -1, 310, "Slot A", (slot==0) ? B_SELECTED:B_NOSELECT,-1);
-		DrawSelectableButton(380, 280, -1, 310, "Slot B", (slot==1) ? B_SELECTED:B_NOSELECT,-1);
-		DrawFrameFinish();
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A))
-			{ VIDEO_WaitVSync (); }
-		u16 btns = PAD_ButtonsHeld(0);
-		if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
-			slot^=1;
-		}
-		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
-			break;
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)))
-			{ VIDEO_WaitVSync (); }
-	}
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
-	return slot;
-}
 
 void select_copy_device()
 {  
+	int inAdvanced = 0;
+	int inAdvancedPos = 0;
+	int slot = 0;
 	while(1) {
 		doBackdrop();
 		DrawEmptyBox(20,190, vmode->fbWidth-20, 355, COLOR_BLACK);
 		WriteFontStyled(640/2, 195, "Destination device selection", 1.0f, true, defaultColor);
+		if(inAdvanced) {
+			// Draw slot / speed selection if advanced menu is showing.
+			DrawEmptyBox(vmode->fbWidth-170, 370, vmode->fbWidth-20, 405, COLOR_BLACK);
+			WriteFontStyled(vmode->fbWidth-165, 370, slot ? "Slot: B":"Slot: A", 0.65f, false, !inAdvancedPos ? defaultColor:deSelectedColor);
+			WriteFontStyled(vmode->fbWidth-165, 385, swissSettings.exiSpeed ? "Speed: Fast":"Speed: Compatible", 0.65f, false, inAdvancedPos ? defaultColor:deSelectedColor);
+		}
+		WriteFontStyled(vmode->fbWidth-120, 345, "(X) Advanced", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
 		if(curCopyDevice==DEST_SD_CARD) {
 			DrawImage(TEX_SDSMALL, 640/2, 230, 60, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 			WriteFontStyled(640/2, 330, "SD Card via SD Gecko", 0.85f, true, defaultColor);
@@ -1335,28 +1295,55 @@ void select_copy_device()
 			WriteFont(100, 270, "<-");
 		}
 		DrawFrameFinish();
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A))
+		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
+				&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)
+				&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_X)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) )
 			{ VIDEO_WaitVSync (); }
 		u16 btns = PAD_ButtonsHeld(0);
-		if((btns & PAD_BUTTON_RIGHT) && curCopyDevice < 2)
-			curCopyDevice++;
-		if((btns & PAD_BUTTON_LEFT) && curCopyDevice > 0)
-			curCopyDevice--;
-		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
-			break;
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)))
+		if(btns & PAD_BUTTON_X)
+			inAdvanced ^= 1;
+		if(inAdvanced) {
+			if((btns & PAD_BUTTON_DOWN) || (btns & PAD_BUTTON_UP)) {
+				inAdvancedPos = inAdvancedPos + ((btns & PAD_BUTTON_DOWN) ? 1:-1);
+				if(inAdvancedPos > 1) inAdvancedPos = 0;
+				if(inAdvancedPos < 0) inAdvancedPos = 1;
+			}
+			if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
+				if(!inAdvancedPos) {
+					slot ^= 1;
+				}
+				else {
+					swissSettings.exiSpeed^=1;
+				}
+			}
+		}
+		else {
+			if((btns & PAD_BUTTON_RIGHT) && curCopyDevice < 2)
+				curCopyDevice++;
+			if((btns & PAD_BUTTON_LEFT) && curCopyDevice > 0)
+				curCopyDevice--;
+			if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
+				break;
+		}
+		if(btns & PAD_BUTTON_A) {
+			if(!inAdvanced)
+				break;
+			else 
+				inAdvanced = 0;
+		}
+		if(btns & PAD_BUTTON_B) break;
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
+				&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) 
+				&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) ))
 			{ VIDEO_WaitVSync (); }
 	}
 	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	// Deinit any existing deviceHandler state
 	if(deviceHandler_dest_deinit && deviceHandler_dest_initial) deviceHandler_dest_deinit( deviceHandler_dest_initial );
 	// Change all the deviceHandler pointers based on the current device
-	int slot = 0;
 	switch(curCopyDevice) {
 		case DEST_SD_CARD:
 		case DEST_IDEEXI:
-			select_speed();
-			slot = select_slot();
 			if(curCopyDevice==DEST_IDEEXI)
 				deviceHandler_dest_initial = !slot ? &initial_IDE0 : &initial_IDE1;
 			else
@@ -1371,7 +1358,6 @@ void select_copy_device()
 			deviceHandler_dest_deinit   =  deviceHandler_FAT_deinit;
 		break;
 		case DEST_MEMCARD:
-			slot = select_slot();
 			deviceHandler_dest_initial = !slot ? &initial_CARDA : &initial_CARDB;
 			deviceHandler_dest_readDir  =  deviceHandler_CARD_readDir;
 			deviceHandler_dest_readFile =  deviceHandler_CARD_readFile;
@@ -1395,12 +1381,21 @@ void select_device()
 		return;
 	}
 
+	int slot = 0;
 	if(!swissSettings.defaultDevice) {
 		dvdDiscTypeStr = NotInitStr;
+		int inAdvanced = 0;
+		int inAdvancedPos = 0;
 		while(1) {
 			doBackdrop();
 			DrawEmptyBox(20,190, vmode->fbWidth-20, 355, COLOR_BLACK);
-			WriteFontStyled(640/2, 195, "Device Selection", 1.0f, true, defaultColor);
+			WriteFontStyled(640/2, 195, "Device Selection", 1.0f, true, defaultColor);		
+			if(inAdvanced) {
+				// Draw slot / speed selection if advanced menu is showing.
+				DrawEmptyBox(vmode->fbWidth-170, 370, vmode->fbWidth-20, 405, COLOR_BLACK);
+				WriteFontStyled(vmode->fbWidth-165, 370, slot ? "Slot: B":"Slot: A", 0.65f, false, !inAdvancedPos ? defaultColor:deSelectedColor);
+				WriteFontStyled(vmode->fbWidth-165, 385, swissSettings.exiSpeed ? "Speed: Fast":"Speed: Compatible", 0.65f, false, inAdvancedPos ? defaultColor:deSelectedColor);
+			}
 			if(curDevice==DVD_DISC) {
 				DrawImage(TEX_GCDVDSMALL, 640/2, 230, 80, 79, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "DVD Disc (GCM, ISO9660, MultiGame)", 0.85f, true, defaultColor);
@@ -1408,10 +1403,12 @@ void select_device()
 			else if(curDevice==SD_CARD) {
 				DrawImage(TEX_SDSMALL, 640/2, 230, 60, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "SD Card via SD Gecko", 0.85f, true, defaultColor);
+				WriteFontStyled(vmode->fbWidth-120, 345, "(X) Advanced", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
 			}
 			else if(curDevice==IDEEXI) {
 				DrawImage(TEX_HDD, 640/2, 230, 80, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "IDE HDD via IDE-EXI", 0.85f, true, defaultColor);
+				WriteFontStyled(vmode->fbWidth-120, 345, "(X) Advanced", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
 			}
 			else if(curDevice==QOOB_FLASH) {
 				DrawImage(TEX_QOOB, 640/2, 230, 70, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
@@ -1424,9 +1421,10 @@ void select_device()
 			else if(curDevice==MEMCARD) {
 				DrawImage(TEX_MEMCARD, 640/2, 230, 107, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "Memory Card", 0.85f, true, defaultColor);
+				WriteFontStyled(vmode->fbWidth-120, 345, "(X) Advanced", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
 			}
 			else if(curDevice==WKF) {
-				DrawImage(TEX_WIIKEY, 640/2, 230, 150, 75, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+				DrawImage(TEX_WIIKEY, 640/2, 230, 200, 75, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "Wiikey / Wasp Fusion", 0.85f, true, defaultColor);
 			}
 			else if(curDevice==USBGECKO) {
@@ -1440,19 +1438,46 @@ void select_device()
 				WriteFont(100, 270, "<-");
 			}
 			DrawFrameFinish();
-			while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A))
+			while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
+					&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)
+					&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_X)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) )
 				{ VIDEO_WaitVSync (); }
 			u16 btns = PAD_ButtonsHeld(0);
-			if((btns & PAD_BUTTON_RIGHT) && curDevice < 7)
-				curDevice++;
-			if((btns & PAD_BUTTON_LEFT) && curDevice > 0)
-				curDevice--;
-			if(btns & PAD_BUTTON_A)
-				break;
+			if(btns & PAD_BUTTON_X && ((curDevice == SD_CARD) || (curDevice == IDEEXI) ||(curDevice == MEMCARD)))
+				inAdvanced ^= 1;
+			if(inAdvanced) {
+				if((btns & PAD_BUTTON_DOWN) || (btns & PAD_BUTTON_UP)) {
+					inAdvancedPos = inAdvancedPos + ((btns & PAD_BUTTON_DOWN) ? 1:-1);
+					if(inAdvancedPos > 1) inAdvancedPos = 0;
+					if(inAdvancedPos < 0) inAdvancedPos = 1;
+				}
+				if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
+					if(!inAdvancedPos) {
+						slot ^= 1;
+					}
+					else {
+						swissSettings.exiSpeed^=1;
+					}
+				}
+			}
+			else {
+				if((btns & PAD_BUTTON_RIGHT) && curDevice < 7)
+					curDevice++;
+				if((btns & PAD_BUTTON_LEFT) && curDevice > 0)
+					curDevice--;
+			}
+			if(btns & PAD_BUTTON_A) {
+				if(!inAdvanced)
+					break;
+				else 
+					inAdvanced = 0;
+			}
 			if(btns & PAD_BUTTON_B) {
 				return;
 			}
-			while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)))
+			while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
+					&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) 
+					&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) ))
 				{ VIDEO_WaitVSync (); }
 		}
 		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
@@ -1460,15 +1485,11 @@ void select_device()
 		if(deviceHandler_deinit && deviceHandler_initial) deviceHandler_deinit( deviceHandler_initial );
 		// Change all the deviceHandler pointers based on the current device
 	}
-	int slot = 0;
+	
 	switch(curDevice) {
 		case SD_CARD:
 		case IDEEXI:
-			if(!swissSettings.defaultDevice) {
-				select_speed();
-				slot = select_slot();
-			}
-			else {
+			if(swissSettings.defaultDevice) {
 				slot = (deviceHandler_initial->name[2] == 'b');
 			}
 			if(curDevice==IDEEXI)
@@ -1515,7 +1536,6 @@ void select_device()
 			deviceHandler_deleteFile = NULL;
  		break;
 		case MEMCARD:
-			slot = select_slot();
 			deviceHandler_initial = !slot ? &initial_CARDA : &initial_CARDB;
 			deviceHandler_readDir  =  deviceHandler_CARD_readDir;
 			deviceHandler_readFile =  deviceHandler_CARD_readFile;
