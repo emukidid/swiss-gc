@@ -34,6 +34,7 @@ GXTexObj fontTexObj;
 GXColor defaultColor = (GXColor) {255,255,255,255};
 GXColor disabledColor = (GXColor) {175,175,182,255};
 GXColor fontColor = (GXColor) {255,255,255,255};
+GXColor deSelectedColor = (GXColor) {80,80,73,255};
 
 /****************************************************************************
  * YAY0 Decoding
