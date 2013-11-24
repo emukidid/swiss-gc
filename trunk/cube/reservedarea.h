@@ -39,7 +39,7 @@
 .set VAR_MC_CB_ADDR,	0x2F50	# memcard callback addr
 .set VAR_MC_CB_ARG1,	0x2F54	# memcard callback r3
 .set VAR_MC_CB_ARG2,	0x2F58	# memcard callback r4
-.set VAR_MUTE_AUDIO,	0x2F5C	# mute audio?
+.set VAR_INTERRUPT_TIMES,	0x2F5C	# how many times have we called the dvd queue
 
 .set _CARD_OPEN,		0x1
 .set _CARD_FASTOPEN,	0x2
@@ -84,7 +84,7 @@
 #define VAR_MC_CB_ADDR		(VAR_AREA+0x2F50)	// memcard callback addr
 #define VAR_MC_CB_ARG1		(VAR_AREA+0x2F54)	// memcard callback r3
 #define VAR_MC_CB_ARG2		(VAR_AREA+0x2F58)	// memcard callback r4
-#define VAR_MUTE_AUDIO		(VAR_AREA+0x2F5C)	// mute audio?
+#define VAR_INTERRUPT_TIMES	(VAR_AREA+0x2F5C)	// how many times have we called the dvd queue
 
 #define _CARD_OPEN			(0x1)
 #define _CARD_FASTOPEN		(0x2)

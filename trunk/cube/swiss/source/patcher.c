@@ -280,7 +280,12 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 			}
 			// Fake the DVD DISR register value
 			*(u32*)(addr_start + 0 ) = 0x3800003A; // li r0, 0x3A
+			break;
 		}
+		addr_start += 4;
+	}
+	addr_start = addr;
+	while(addr_start<addr_end) {
 		// Patch Read (called from DVDLowLevelRead)
 		if(memcmp(addr_start,_read_original_part_a,sizeof(_read_original_part_a))==0) 
 		{

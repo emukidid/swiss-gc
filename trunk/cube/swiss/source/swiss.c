@@ -587,6 +587,7 @@ unsigned int load_app(int mode)
 	*(volatile unsigned int*)VAR_MC_CB_ARG1 = 0;
 	*(volatile unsigned int*)VAR_MC_CB_ARG2 = 0;
 	*(volatile unsigned int*)VAR_FAKE_IRQ_SET = 0;
+	*(volatile unsigned int*)VAR_INTERRUPT_TIMES = 0;
 	memset((void*)VAR_READ_DVDSTRUCT, 0, 0x18);
 
 	// Memcard emulation with read device not being SDGecko in Slot A, setup the SD variables
