@@ -17,6 +17,7 @@ int  deviceHandler_DVD_seekFile(file_handle*, unsigned int, unsigned int);
 int  deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2);
 int  deviceHandler_DVD_init(file_handle* file);
 int  deviceHandler_DVD_deinit(file_handle* file);
+device_info *deviceHandler_DVD_info();
 
 int gettype_disc();
 int initialize_disc(u32 streaming);

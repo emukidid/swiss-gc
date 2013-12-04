@@ -26,7 +26,17 @@ file_handle initial_USBGecko =
 	  0
 	};
 
+device_info initial_USBGecko_info = {
+	TEX_USBGECKO,
+	0,
+	0
+};
+
 extern char *getRelativeName(char *str);
+	
+device_info* deviceHandler_USBGecko_info() {
+	return &initial_USBGecko_info;
+}
 	
 int deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
   

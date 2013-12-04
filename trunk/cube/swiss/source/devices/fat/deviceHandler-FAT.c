@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <ogc/dvd.h>
 #include <sys/dir.h>
+#include <sys/statvfs.h>
 #include <ogc/machine/processor.h>
 #include <sdcard/gcsd.h>
 #include "deviceHandler.h"
@@ -66,8 +67,40 @@ file_handle initial_IDE1 =
 	  0
 	};
 
+device_info initial_FAT_info = {
+	0,
+	0,
+	0
+};
+	
+device_info* deviceHandler_FAT_info() {
+	return &initial_FAT_info;
+}
+
+void readDeviceInfo(file_handle* file) {
+	if(deviceHandler_getStatEnabled()) {
+		struct statvfs buf;
+		int isSDCard = file->name[0] == 's';
+		int slot = isSDCard ? (file->name[2] == 'b') : (file->name[3] == 'b');
+		
+		memset(&buf, 0, sizeof(statvfs));
+		DrawFrameStart();
+		sprintf(txtbuffer, "Reading filesystem info for %s%s:/",isSDCard ? "sd":"ide", slot ? "b":"a");
+		DrawMessageBox(D_INFO,txtbuffer);
+		DrawFrameFinish();
+		
+		sprintf(txtbuffer, "%s%s:/",isSDCard ? "sd":"ide", slot ? "b":"a");
+		statvfs(txtbuffer, &buf);
+		initial_FAT_info.freeSpaceInKB = (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_bfree)/1024LL);
+		initial_FAT_info.totalSpaceInKB =(u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_blocks)/1024LL);
+	}
+}
+	
 int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
-  
+	if(!deviceHandler_getStatEnabled()) {
+		deviceHandler_setStatEnabled(1);
+		readDeviceInfo(ffile);
+	}
 	DIR* dp = opendir( ffile->name );
 	if(!dp) return -1;
 	struct dirent *entry;
@@ -292,10 +325,10 @@ int EXI_ResetSD(int drv) {
 	return 1;
 }
 
-int deviceHandler_FAT_init(file_handle* file){
+int deviceHandler_FAT_init(file_handle* file) {
 	int isSDCard = file->name[0] == 's';
 	int slot = isSDCard ? (file->name[2] == 'b') : (file->name[3] == 'b');
-	
+	int ret = 0;
 	DrawFrameStart();
 	sprintf(txtbuffer, "Reading %s in slot %s", isSDCard ? "SD":"IDE-EXI", !slot ? "A":"B");
 	DrawMessageBox(D_INFO,txtbuffer);
@@ -305,28 +338,33 @@ int deviceHandler_FAT_init(file_handle* file){
 	if(isSDCard && !slot && EXI_ResetSD(0)) {
 		carda->shutdown();
 		carda->startup();
-		return fatMountSimple ("sda", carda) ? 1 : 0;
+		ret = fatMount ("sda", carda, 0, 16, 128) ? 1 : 0;
 	}
 	// Slot B - SD Card
 	if(isSDCard && slot && EXI_ResetSD(1)) {
 		cardb->shutdown();
 		cardb->startup();
-		return fatMountSimple ("sdb", cardb) ? 1 : 0;
+		ret = fatMount ("sdb", cardb, 0, 16, 128) ? 1 : 0;
 	}
 	// Slot A - IDE-EXI
 	if(!isSDCard && !slot) {
 		ideexia->startup();
-		return fatMountSimple ("idea", ideexia) ? 1 : 0;
+		ret = fatMount ("idea", ideexia, 0, 16, 128) ? 1 : 0;
 	}
 	// Slot B - IDE-EXI
 	if(!isSDCard && slot) {
 		ideexib->startup();
-		return fatMountSimple ("ideb", ideexib) ? 1 : 0;
+		ret = fatMount ("ideb", ideexib, 0, 16, 128) ? 1 : 0;
 	}
-	return 0;
+	if(ret)
+		readDeviceInfo(file);
+	initial_FAT_info.textureId = isSDCard ? TEX_SDSMALL:TEX_HDD;
+	return ret;
 }
 
 int deviceHandler_FAT_deinit(file_handle* file) {
+	initial_FAT_info.freeSpaceInKB = 0;
+	initial_FAT_info.totalSpaceInKB = 0;
 	if(file && file->fp) {
 		fclose(file->fp);
 		file->fp = 0;

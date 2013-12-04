@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <ogc/dvd.h>
 #include <sys/dir.h>
+#include <sys/statvfs.h>
 #include <ogc/machine/processor.h>
 #include <sdcard/gcsd.h>
 #include "deviceHandler.h"
@@ -33,6 +34,16 @@ file_handle initial_WKF =
 	  0
 	};
 
+
+device_info initial_WKF_info = {
+	TEX_WIIKEY,
+	0,
+	0
+};
+	
+device_info* deviceHandler_WKF_info() {
+	return &initial_WKF_info;
+}
 
 int deviceHandler_WKF_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
 
@@ -171,10 +182,18 @@ int deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 }
 
 int deviceHandler_WKF_init(file_handle* file){
+	struct statvfs buf;
+	
 	DrawFrameStart();
 	DrawMessageBox(D_INFO,"Init Wiikey Fusion");
 	DrawFrameFinish();
-	return fatMountSimple ("wkf", wkf) ? 1 : 0;
+	int ret = fatMountSimple ("wkf", wkf) ? 1 : 0;
+	if(ret)
+		statvfs("wkf", &buf);
+
+	initial_WKF_info.freeSpaceInKB = ret ? (u32)((uint64_t)(buf.f_bsize*buf.f_bfree)/1024):0;
+	initial_WKF_info.totalSpaceInKB = ret ? (u32)((uint64_t)(buf.f_bsize*buf.f_blocks)/1024):0;
+	return ret;
 }
 
 int deviceHandler_WKF_deinit(file_handle* file) {

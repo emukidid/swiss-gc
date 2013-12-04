@@ -33,6 +33,12 @@ file_handle initial_CARDB =
 	  0
 };
 
+device_info initial_CARD_info = {
+	TEX_MEMCARD,
+	0,
+	0
+};
+
 static unsigned char *sys_area = NULL;
 static unsigned int sector_size = 0;
 static int card_init[2] = {0,0};
@@ -81,6 +87,9 @@ int initialize_card(int slot) {
 	return slot_error;
 }
 
+device_info* deviceHandler_CARD_info() {
+	return &initial_CARD_info;
+}
 
 int deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
 
@@ -104,6 +113,7 @@ int deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, unsigned i
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 	(*dir)[0].fileBase     = ffile->fileBase;
 	
+	int usedSpace = 0;
 	ret = CARD_FindFirst (slot, memcard_dir, true);
 	while (CARD_ERROR_NOFILE != ret) {
 		// Make sure we have room for this one
@@ -121,8 +131,12 @@ int deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, unsigned i
 		(*dir)[i].fileBase     = ffile->fileBase | (memcard_dir->fileno & 0xFFFFFF);
 		ret = CARD_FindNext (memcard_dir);
 		++i;
+		usedSpace += memcard_dir->filelen;
 	}
 	free(memcard_dir);
+	
+	usedSpace >>= 10;
+	initial_CARD_info.freeSpaceInKB = initial_CARD_info.totalSpaceInKB-usedSpace;
 
 	return num_entries;
 }
@@ -306,6 +320,11 @@ int deviceHandler_CARD_setupFile(file_handle* file, file_handle* file2) {
 
 int deviceHandler_CARD_init(file_handle* file){
 	file->status = initialize_card(file->fileBase>>24);
+	int memSize = 0, sectSize = 0;
+	if(CARD_ProbeEx(file->fileBase>>24,&memSize,&sectSize)==CARD_ERROR_READY)
+		initial_CARD_info.totalSpaceInKB = (memSize*sectSize) >> 10;
+	initial_CARD_info.freeSpaceInKB = 0;
+	
 	if(file->status < CARD_ERROR_READY){
 		DrawFrameStart();
 		DrawMessageBox(D_FAIL,cardError(file->status));

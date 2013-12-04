@@ -431,10 +431,10 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
 void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode, u32 color) 
 {
 	int borderSize;
-	float scale = GetTextScaleToFitInWidth(message, x2-x1);
 	color = (color == -1) ? BUTTON_COLOUR_INNER : color; //never used
 
 	borderSize = (mode==B_SELECTED) ? 6 : 4;
+	float scale = GetTextScaleToFitInWidth(message, (x2-x1)-(borderSize*2));
 
 	GXColor selectColor = (GXColor) {96,107,164,GUI_MSGBOX_ALPHA}; 	//bluish
 	GXColor noColor 	= (GXColor) {0,0,0,0}; 						//black
@@ -454,15 +454,15 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 			sprintf(txtbuffer,"Partition: %i, ISO: %i", (int)(file->fileBase>>24)&0xFF,(int)(file->fileBase&0xFFFFFF));
 		}
 		else if(curDevice == MEMCARD) {
-			sprintf(txtbuffer,"Size: %.2fKb (%i blocks)", (float)file->size/1024, file->size/8192);
+			sprintf(txtbuffer,"%.2fKB (%i blocks)", (float)file->size/1024, file->size/8192);
 		}
 		else if(curDevice == QOOB_FLASH) {
-			sprintf(txtbuffer,"Size: %.2fKb (%i blocks)", (float)file->size/1024, file->size/0x10000);
+			sprintf(txtbuffer,"%.2fKB (%i blocks)", (float)file->size/1024, file->size/0x10000);
 		}
 		else {
-			sprintf(txtbuffer,"Size: %i %s",file->size > 1024 ? file->size/ 1024:file->size,file->size > 1024 ? "Kb":"Bytes");
+			sprintf(txtbuffer,"%.2f %s",file->size > (1024*1024) ? (float)file->size/(1024*1024):(float)file->size/1024,file->size > (1024*1024) ? "MB":"KB");
 		}
-		WriteFontStyled(x1 + borderSize+3, y1+borderSize+24, txtbuffer, 0.5f, false, defaultColor);
+		WriteFontStyled(x2 - ((borderSize+3) + (GetTextSizeInPixels(txtbuffer)*0.5)), y1+borderSize+20, txtbuffer, 0.5f, false, defaultColor);
 	}
 }
 
@@ -476,6 +476,18 @@ void DrawEmptyBox(int x1, int y1, int x2, int y2, int color)
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //Silver
 	
 	DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor);
+}
+
+void DrawTransparentBox(int x1, int y1, int x2, int y2) 
+{
+	int borderSize;
+	borderSize = (y2-y1) <= 30 ? 3 : 10;
+	x1-=borderSize;x2+=borderSize;y1-=borderSize;y2+=borderSize;
+
+	GXColor noColor 	= (GXColor) {0,0,0,0};
+	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //Silver
+	
+	DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, noColor, borderColor);
 }
 
 // Buttons

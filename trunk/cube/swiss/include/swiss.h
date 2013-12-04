@@ -14,7 +14,7 @@
 #include <sdcard/card_cmn.h>
 #include "deviceHandler.h"
 
-#define FILES_PER_PAGE 6
+#define FILES_PER_PAGE 8
 extern char* _menu_array[];
 extern char *videoStr;
 extern file_handle curFile;
@@ -57,6 +57,7 @@ extern void install_game();
 extern int info_game();
 extern void settings();
 extern void credits();
+extern void drawFiles(file_handle** directory, int num_files);
 
 extern void select_speed();
 extern int select_slot();

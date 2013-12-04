@@ -10,6 +10,7 @@
 #include "../deviceHandler.h"
 
 extern file_handle initial_Qoob;
+extern device_info* deviceHandler_Qoob_info();
 
 int  deviceHandler_Qoob_readDir(file_handle*, file_handle**, unsigned int);
 int  deviceHandler_Qoob_readFile(file_handle*, void*, unsigned int);

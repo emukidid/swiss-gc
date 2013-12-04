@@ -28,6 +28,11 @@ file_handle initial_WODE =
 	  IS_DIR,
 	  DRV_ERROR
 	};
+device_info initial_WODE_info = {
+	TEX_WODEIMG,
+	0,
+	0
+};
 	
 int startupWode() {
 	if(OpenWode() == 0) {
@@ -38,6 +43,10 @@ int startupWode() {
 		return -1;
 	}
 	return 0;
+}
+
+device_info* deviceHandler_WODE_info() {
+	return &initial_WODE_info;
 }
 	
 int deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
@@ -71,6 +80,7 @@ int deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, unsigned i
 			}
 		}
 	}
+	initial_WODE_info.totalSpaceInKB = num_entries;
 	return num_entries;
 }
 
@@ -98,6 +108,7 @@ int deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2) {
 
 int deviceHandler_WODE_init(file_handle* file){
 	wodeInited = startupWode() == 0 ? 1:0;
+	initial_WODE_info.totalSpaceInKB = 0;
 	return wodeInited;
 }
 

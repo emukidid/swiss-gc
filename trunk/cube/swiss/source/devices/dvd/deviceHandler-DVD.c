@@ -29,6 +29,12 @@ file_handle initial_DVD =
 	  DRV_ERROR
 };
 
+device_info initial_DVD_info = {
+	TEX_GCDVDSMALL,
+	1425760,
+	1425760
+};
+
 static char error_str[256];
 static int dvd_init = 0;
 char *dvdDiscTypeStr = NotInitStr;
@@ -234,6 +240,10 @@ int gettype_disc() {
   free(iso9660Buf);
   free(checkBuf);  
   return type;
+}
+
+device_info* deviceHandler_DVD_info() {
+	return &initial_DVD_info;
 }
 
 int deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, unsigned int type){

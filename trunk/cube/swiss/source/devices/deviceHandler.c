@@ -18,6 +18,11 @@
 #endif
 
 file_handle* deviceHandler_initial = NULL;
+device_info* (*deviceHandler_info)(void) = NULL;
+
+static int statEnabled = 0;
+void deviceHandler_setStatEnabled(int enable) {statEnabled = enable;}
+int deviceHandler_getStatEnabled() {return statEnabled;}
 
 int  (*deviceHandler_init)(file_handle*) = NULL;
 int  (*deviceHandler_readDir)(file_handle*, file_handle**, unsigned int) = NULL;
