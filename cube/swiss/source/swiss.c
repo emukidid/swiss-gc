@@ -170,7 +170,7 @@ void do_videomode_swap() {
 void doBackdrop()
 {
 	DrawFrameStart();
-	DrawMenuButtons(-1);
+	DrawMenuButtons((curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
 }
 
 char *getRelativeName(char *str) {
@@ -196,21 +196,76 @@ char *stripInvalidChars(char *str) {
 	return &stripbuffer[0];
 }
 
+void drawCurrentDevice() {
+	if(deviceHandler_initial == NULL)
+		return;
+	device_info* info = deviceHandler_info();
+	int slot = -1;
+	
+	DrawTransparentBox(30, 100, 135, 180);	// Device icon + slot box
+	DrawImage(info->textureId, 50, 95, 64, 64, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);	
+	if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1)
+		slot = (deviceHandler_initial->name[2] == 'b');
+	else if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1)
+		slot = (deviceHandler_initial->name[3] == 'b');
+	else if(deviceHandler_initial == &initial_CARDA || deviceHandler_initial == &initial_CARDB)
+		slot = (int)deviceHandler_initial->fileBase;
+	if(slot != -1)
+		WriteFontStyled(50, 160, slot?"SLOT B":"SLOT A", 0.65f, false, defaultColor);
+
+	if((curDevice == SD_CARD)||(curDevice == IDEEXI)||(curDevice == WKF)||(curDevice == QOOB_FLASH)||(curDevice == MEMCARD)) {
+		DrawTransparentBox(30, 200, 135, 305);	// Device size/extra info box
+		WriteFontStyled(30, 200, "Total:", 0.6f, false, defaultColor);
+		if(info->totalSpaceInKB < 1024)	// < 1 MB
+			sprintf(txtbuffer,"%iKB", info->totalSpaceInKB);
+		if(info->totalSpaceInKB < 1024*1024)	// < 1 GB
+			sprintf(txtbuffer,"%.2fMB", (float)info->totalSpaceInKB/1024);
+		else
+			sprintf(txtbuffer,"%.2fGB", (float)info->totalSpaceInKB/(1024*1024));
+		WriteFontStyled(60, 215, txtbuffer, 0.6f, false, defaultColor);
+		
+		WriteFontStyled(30, 235, "Free:", 0.6f, false, defaultColor);
+		if(info->freeSpaceInKB < 1024)	// < 1 MB
+			sprintf(txtbuffer,"%iKB", info->freeSpaceInKB);
+		if(info->freeSpaceInKB < 1024*1024)	// < 1 GB
+			sprintf(txtbuffer,"%.2fMB", (float)info->freeSpaceInKB/1024);
+		else
+			sprintf(txtbuffer,"%.2fGB", (float)info->freeSpaceInKB/(1024*1024));
+		WriteFontStyled(60, 250, txtbuffer, 0.6f, false, defaultColor);
+		
+		WriteFontStyled(30, 270, "Used:", 0.6f, false, defaultColor);
+		u32 usedSpaceInKB = (info->totalSpaceInKB)-(info->freeSpaceInKB);
+		if(usedSpaceInKB < 1024)	// < 1 MB
+			sprintf(txtbuffer,"%iKB", usedSpaceInKB);
+		if(usedSpaceInKB < 1024*1024)	// < 1 GB
+			sprintf(txtbuffer,"%.2fMB", (float)usedSpaceInKB/1024);
+		else
+			sprintf(txtbuffer,"%.2fGB", (float)usedSpaceInKB/(1024*1024));
+		WriteFontStyled(60, 285, txtbuffer, 0.6f, false, defaultColor);
+	}
+}
+
+// Draws all the files in the current dir.
+void drawFiles(file_handle** directory, int num_files) {
+	int j = 0;
+	int i = MIN(MAX(0,curSelection-FILES_PER_PAGE/2),MAX(0,num_files-FILES_PER_PAGE));
+	int max = MIN(num_files, MAX(curSelection+FILES_PER_PAGE/2,FILES_PER_PAGE));
+	doBackdrop();
+	drawCurrentDevice();
+	for(j = 0; i<max; ++i,++j) {
+		DrawFileBrowserButton(150,90+(j*40), vmode->fbWidth-30, 90+(j*40)+40, getRelativeName((*directory)[i].name),&((*directory)[i]), (i == curSelection) ? B_SELECTED:B_NOSELECT,-1);
+	}
+	DrawFrameFinish();
+}
+
 // textFileBrowser lives on :)
 void textFileBrowser(file_handle** directory, int num_files)
 {
-	int i = 0,j=0,max;
 	memset(txtbuffer,0,sizeof(txtbuffer));
 	if(num_files<=0) return;
   
 	while(1){
-		doBackdrop();
-		i = MIN(MAX(0,curSelection-FILES_PER_PAGE/2),MAX(0,num_files-FILES_PER_PAGE));
-		max = MIN(num_files, MAX(curSelection+FILES_PER_PAGE/2,FILES_PER_PAGE));
-		for(j = 0; i<max; ++i,++j) {
-			DrawFileBrowserButton(50,90+(j*50), 550, 90+(j*50)+50, getRelativeName((*directory)[i].name),&((*directory)[i]), (i == curSelection) ? B_SELECTED:B_NOSELECT,-1);
-		}
-		DrawFrameFinish();
+		drawFiles(directory, num_files);
 		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN))
 			{ VIDEO_WaitVSync (); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) > 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
@@ -1484,9 +1539,9 @@ void select_device()
 		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 		// Deinit any existing deviceHandler state
 		if(deviceHandler_deinit && deviceHandler_initial) deviceHandler_deinit( deviceHandler_initial );
-		// Change all the deviceHandler pointers based on the current device
 	}
 	
+	// Change all the deviceHandler pointers based on the current device
 	switch(curDevice) {
 		case SD_CARD:
 		case IDEEXI:
@@ -1505,6 +1560,7 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_FAT_setupFile;
 			deviceHandler_init     =  deviceHandler_FAT_init;
 			deviceHandler_deinit   =  deviceHandler_FAT_deinit;
+			deviceHandler_info 	   =  deviceHandler_FAT_info;
 		break;
 		case DVD_DISC:
 			deviceHandler_initial = &initial_DVD;
@@ -1514,6 +1570,7 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_DVD_setupFile;
 			deviceHandler_init     =  deviceHandler_DVD_init;
 			deviceHandler_deinit   =  deviceHandler_DVD_deinit;
+			deviceHandler_info 	   =  deviceHandler_DVD_info;
 			deviceHandler_deleteFile = NULL;
  		break;
  		case QOOB_FLASH:
@@ -1524,6 +1581,7 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_Qoob_setupFile;
 			deviceHandler_init     =  deviceHandler_Qoob_init;
 			deviceHandler_deinit   =  deviceHandler_Qoob_deinit;
+			deviceHandler_info 	   =  deviceHandler_Qoob_info;
 			deviceHandler_deleteFile = NULL;
  		break;
  		case WODE:
@@ -1534,6 +1592,7 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_WODE_setupFile;
 			deviceHandler_init     =  deviceHandler_WODE_init;
 			deviceHandler_deinit   =  deviceHandler_WODE_deinit;
+			deviceHandler_info 	   =  deviceHandler_WODE_info;
 			deviceHandler_deleteFile = NULL;
  		break;
 		case MEMCARD:
@@ -1546,6 +1605,7 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_CARD_setupFile;
 			deviceHandler_init     =  deviceHandler_CARD_init;
 			deviceHandler_deinit   =  deviceHandler_CARD_deinit;
+			deviceHandler_info 	   =  deviceHandler_CARD_info;
 		break;
 		case WKF:
 			deviceHandler_initial = &initial_WKF;
@@ -1555,6 +1615,7 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_WKF_setupFile;
 			deviceHandler_init     =  deviceHandler_WKF_init;
 			deviceHandler_deinit   =  deviceHandler_WKF_deinit;
+			deviceHandler_info 	   =  deviceHandler_WKF_info;
 			deviceHandler_deleteFile = NULL;
 		break;
 		case USBGECKO:
@@ -1566,6 +1627,7 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_USBGecko_setupFile;
 			deviceHandler_init     =  deviceHandler_USBGecko_init;
 			deviceHandler_deinit   =  deviceHandler_USBGecko_deinit;
+			deviceHandler_info 	   =  deviceHandler_USBGecko_info;
 			deviceHandler_deleteFile = NULL;
 		break;
 	}

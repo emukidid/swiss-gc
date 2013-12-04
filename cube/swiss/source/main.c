@@ -244,7 +244,6 @@ void sortFiles(file_handle* dir, int num_files)
 
 void main_loop()
 { 
-	int i = 0,max,j;	
 	file_handle curDir;
 	
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
@@ -291,16 +290,7 @@ void main_loop()
 			curMenuLocation=ON_FILLIST;
 		}
 		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
-		doBackdrop();
-		// print files
-		i = MIN(MAX(0,curSelection-FILES_PER_PAGE/2),MAX(0,files-FILES_PER_PAGE));
-		max = MIN(files, MAX(curSelection+FILES_PER_PAGE/2,FILES_PER_PAGE));
-		for(j = 0; i<max; ++i,++j){
-			DrawFileBrowserButton(50,90+(j*50), 550, 90+(j*50)+50, getRelativeName(&allFiles[i].name[0]), &allFiles[i], (i == curSelection)?((curMenuLocation==ON_FILLIST)?B_SELECTED:B_NOSELECT):B_NOSELECT, -1);
-		}
-		// print menu
-		DrawMenuButtons((curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
-		DrawFrameFinish();
+		drawFiles(&allFiles, files);
 
 		u16 btns = PAD_ButtonsHeld(0);
 		if(curMenuLocation==ON_OPTIONS) {
@@ -388,6 +378,7 @@ int main ()
 		curDevice = WKF;
 	}
 	else {
+		deviceHandler_setStatEnabled(0);
 		// Try to init SD cards here and load config
 		deviceHandler_initial = &initial_SD0;
 		deviceHandler_init     =  deviceHandler_FAT_init;
@@ -412,6 +403,7 @@ int main ()
 					curDevice = SD_CARD;
 			}
 		}
+		deviceHandler_setStatEnabled(1);
 	}
 	
 	// If no device has been selected yet to browse ..

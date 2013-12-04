@@ -20,6 +20,12 @@ typedef struct {
 	FILE *fp;				// file pointer
 } file_handle;
 
+typedef struct {
+	int textureId;
+	u32 freeSpaceInKB;		// 4TB Max
+	u32 totalSpaceInKB;		// 4TB Max
+} device_info;
+
 #define DEVICE_HANDLER_SEEK_SET 0
 #define DEVICE_HANDLER_SEEK_CUR 1
 
@@ -32,6 +38,9 @@ typedef struct {
 #include "devices/usbgecko/deviceHandler-usbgecko.h"
 
 extern file_handle* deviceHandler_initial;
+extern device_info*	(*deviceHandler_info)(void);
+extern void deviceHandler_setStatEnabled(int enable);
+extern int deviceHandler_getStatEnabled();
 
 /* Initialize the device */
 extern int (*deviceHandler_init)(file_handle*);

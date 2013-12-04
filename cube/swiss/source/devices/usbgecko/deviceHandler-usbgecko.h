@@ -10,6 +10,7 @@
 #include "../deviceHandler.h"
 
 extern file_handle initial_USBGecko;
+extern device_info*	deviceHandler_USBGecko_info();
 
 int		deviceHandler_USBGecko_readDir(file_handle*, file_handle**, unsigned int);
 int		deviceHandler_USBGecko_readFile(file_handle*, void*, unsigned int);

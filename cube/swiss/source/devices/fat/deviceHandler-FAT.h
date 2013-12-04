@@ -13,6 +13,7 @@ extern file_handle initial_SD0;
 extern file_handle initial_SD1;
 extern file_handle initial_IDE0;
 extern file_handle initial_IDE1;
+extern device_info* deviceHandler_FAT_info();
 
 int  deviceHandler_FAT_readDir(file_handle*, file_handle**, unsigned int);
 int  deviceHandler_FAT_readFile(file_handle*, void*, unsigned int);

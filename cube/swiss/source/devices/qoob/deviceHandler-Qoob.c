@@ -29,6 +29,16 @@ file_handle initial_Qoob =
 	  0
 	};
 	
+device_info initial_Qoob_info = {
+	TEX_QOOB,
+	0,
+	2048
+};
+	
+device_info* deviceHandler_Qoob_info() {
+	return &initial_Qoob_info;
+}
+	
 int deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
   
 	// Set everything up to read
@@ -36,6 +46,7 @@ int deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, unsigned i
 	*dir = malloc( num_entries * sizeof(file_handle) );
 	strcpy((*dir)[0].name,"..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
+	u32 usedSpace = 0;
 	
 	for(block = 0; block <0x200000; block+=0x10000) {
 		char dolName[64];
@@ -59,11 +70,13 @@ int deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, unsigned i
 				(*dir)[i].fileAttrib = IS_FILE;
 				(*dir)[i].fileBase = block+0x100;
 				++i;
+				usedSpace += dolSize;
 			}
 		}	
 	}
-	
-  return num_entries;
+	usedSpace >>= 10;
+	initial_Qoob_info.freeSpaceInKB = initial_Qoob_info.totalSpaceInKB - usedSpace;
+	return num_entries;
 }
 
 int deviceHandler_Qoob_seekFile(file_handle* file, unsigned int where, unsigned int type){
