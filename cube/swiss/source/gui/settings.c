@@ -21,7 +21,7 @@ char *forceWidescreenStr[] = {"No", "Persp", "Yes"};
 syssram* sram;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {7, 8, 9};
+int settings_count_pp[3] = {7, 8, 8};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();

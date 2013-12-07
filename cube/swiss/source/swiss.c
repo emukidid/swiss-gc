@@ -574,6 +574,7 @@ unsigned int load_app(int mode)
 			DrawMessageBox(D_FAIL, "Fragmentation patch failed to apply!");
 			DrawFrameFinish();
 			sleep(5);
+			return 0;
 		}
 	}
 	if(swissSettings.muteAudioStreaming || curDevice != DVD_DISC)
@@ -613,6 +614,15 @@ unsigned int load_app(int mode)
 	DCFlushRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	ICInvalidateRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	
+	// See if the combination of our patches has exhausted our play area.
+	if(!install_code()) {
+		DrawFrameStart();
+		DrawMessageBox(D_FAIL, "Too many patches enabled memory limit reached!");
+		DrawFrameFinish();
+		wait_press_A();
+		return 0;
+	}
+	
 	deviceHandler_deinit(&curFile);
 	
 	DrawFrameStart();
@@ -622,9 +632,6 @@ unsigned int load_app(int mode)
 	VIDEO_SetPostRetraceCallback (NULL);
 	do_videomode_swap();
 	*(volatile u32*)0x800000CC = VIDEO_GetCurrentTvMode();
-
-	// install our assembly code into memory
-	install_code();
 	if(mode == CHEATS || swissSettings.wiirdDebug) {
 		kenobi_set_debug(swissSettings.wiirdDebug);
 		kenobi_install_engine();

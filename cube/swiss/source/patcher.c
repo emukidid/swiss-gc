@@ -70,31 +70,39 @@ u32 _osdispatch_part_b[1] = {
 	0x4E800021
 };
 
-void install_code()
+int install_code()
 {
 	DCFlushRange((void*)LO_RESERVE,0x1800);
 	ICInvalidateRange((void*)LO_RESERVE,0x1800);
 	
+	u8 *patch = NULL; u32 patchSize = 0;
+	
 	// IDE-EXI
   	if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
-	  	memcpy((void*)LO_RESERVE,hdd_bin,hdd_bin_size);
+		patch = &hdd_bin[0]; patchSize = hdd_bin_size;
   	}
 	// SD Gecko
 	else if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
-		memcpy((void*)LO_RESERVE,sd_bin,sd_bin_size);
+		patch = &sd_bin[0]; patchSize = sd_bin_size;
 	}
 	// DVD 2 disc code
 	else if((deviceHandler_initial == &initial_DVD) && (drive_status == DEBUG_MODE)) {
-		memcpy((void*)LO_RESERVE,TDPatch,TDPATCH_LEN);
+		patch = &TDPatch[0]; patchSize = TDPATCH_LEN;
 	}
 	// USB Gecko
 	else if(deviceHandler_initial == &initial_USBGecko) {
-		memcpy((void*)LO_RESERVE,usbgecko_bin,usbgecko_bin_size);
+		patch = &usbgecko_bin[0]; patchSize = usbgecko_bin_size;
 	}
 	// Wiikey Fusion
 	else if(deviceHandler_initial == &initial_WKF) {
-		memcpy((void*)LO_RESERVE,wkf_bin,wkf_bin_size);
+		patch = &wkf_bin[0]; patchSize = wkf_bin_size;
 	}
+	print_gecko("Space for patch remaining: %i\r\n",top_addr - LO_RESERVE);
+	print_gecko("Space taken by vars/video patches: %i\r\n",VAR_PATCHES_BASE-top_addr);
+	if(top_addr - LO_RESERVE < patchSize)
+		return 0;
+	memcpy((void*)LO_RESERVE,patch,patchSize);
+	return 1;
 }
 
 void make_pattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
