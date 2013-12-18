@@ -14,6 +14,7 @@ _start:
 	b		patched_memcpy			# void patched_memcpy(dst,src,size)
 	b		fake_interrupt
 	b		handle_card				# Looks at VAR_MC_FUNC to see what function to call
+	b		calculate_speed			# Calculates how long it takes to read 2048 bytes from the device
 
 	.globl fake_interrupt
 fake_interrupt:
@@ -173,6 +174,5 @@ ext_h:
 	ori			5, 5, process_read_queue@l
 	mtsrr0      5
 	rfi
-.globl ext_handler_custom_end
-	ext_handler_custom_end:
+
 	

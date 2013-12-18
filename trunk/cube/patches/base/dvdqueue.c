@@ -49,17 +49,40 @@ void add_read_to_queue(void* dst, u32 len, u32 ofs) {
 #endif
 }
 
+#define SAMPLE_SIZE_32KHZ_1MS 128
+#define SAMPLE_SIZE_32KHZ_1MS_SHIFT 7
+
 void process_queue() {
 
 	DVDQueuedRead *store = (DVDQueuedRead*)(VAR_READ_DVDSTRUCT);
 	if(store->len) {
 		// read a bit
-		int amountToRead = store->len > 0x2000 ? 0x2000 : store->len;
-
-		*(volatile u32*)VAR_INTERRUPT_TIMES += 1;
-		if((*(volatile u32*)VAR_INTERRUPT_TIMES) < 4)
-			return;
-		*(volatile u32*)VAR_INTERRUPT_TIMES = 0;
+		int amountToRead;
+		// Assume 32KHz, ~128 bytes @ 32KHz is going to play for 1000us
+		int dmaBytesLeft = (((*(volatile u16*)0xCC00503A) & 0x7FFF)<<5);
+#ifdef DEBUG
+		usb_sendbuffer_safe("\r\n\r\ndmal: ",10);
+		print_int_hex(dmaBytesLeft);
+#endif
+		int usecToPlay = ((dmaBytesLeft >> SAMPLE_SIZE_32KHZ_1MS_SHIFT) << 10) >> 2;
+		// Is there enough audio playing at least to make up for 1000us?
+		if(usecToPlay > *(u32*)VAR_DEVICE_SPEED) {
+			// TODO Thresholds via if/else for amountAllowedToRead
+			u32 amountAllowedToRead = (int)((usecToPlay / *(u32*)VAR_DEVICE_SPEED) * 1024); // lets only take up 1/4 the time reading.
+			amountToRead = store->len > amountAllowedToRead ? amountAllowedToRead:store->len;
+#ifdef DEBUG
+			usb_sendbuffer_safe("\r\nusec: ",8);
+			print_int_hex(usecToPlay);
+			usb_sendbuffer_safe("\r\nCut Read: ",12);
+			print_int_hex(amountAllowedToRead);
+#endif
+		}
+		else if(dmaBytesLeft != 0)
+			return;	// Tiny slice of audio is playing, don't try to read here.
+		else
+			amountToRead = store->len > 0x2000 ? 0x2000:store->len;	// No audio playing, read 0x2000
+		
+			
 #ifdef DEBUG
 		usb_sendbuffer_safe("Start Read:",11);
 		print_read(store->dst, amountToRead, store->ofs);
