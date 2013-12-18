@@ -124,6 +124,7 @@ extern u32 CARDWriteAsync_length;
 #define PATCHED_MEMCPY		 	(LO_RESERVE | 0x04)
 #define FAKE_IRQ			 	(LO_RESERVE | 0x08)
 #define HANDLE_CARD		 		(LO_RESERVE | 0x0C)
+#define CALC_SPEED		 		(LO_RESERVE | 0x10)
 
 #define READ_PATCHED_ALL 		(0x111111)
 

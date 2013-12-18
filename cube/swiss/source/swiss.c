@@ -625,6 +625,7 @@ unsigned int load_app(int mode)
 	
 	deviceHandler_deinit(&curFile);
 	
+
 	DrawFrameStart();
 	DrawProgressBar(100, "Executing Game!");
 	DrawFrameFinish();
@@ -638,6 +639,21 @@ unsigned int load_app(int mode)
 	}
 	DCFlushRange((void*)0x80000000, 0x3100);
 	ICInvalidateRange((void*)0x80000000, 0x3100);
+	
+	// Try a device speed test using the actual in-game read code
+	if((curDevice == SD_CARD)||(curDevice == IDEEXI)||(curDevice == USBGECKO)) {
+		char *buffer = memalign(32,1024*1024);
+		typedef u32 (*_calc_speed) (void* dst, u32 len);
+		_calc_speed calculate_speed = (_calc_speed) (void*)(CALC_SPEED);
+		u32 speed = calculate_speed(buffer, 1024*1024);
+		float timeTakenInSec = (float)speed/1000000;
+		print_gecko("Speed is %i usec %.2f sec for 1MB\r\n",speed,timeTakenInSec);
+		float bytePerSec = (1024*1024) / timeTakenInSec;
+		print_gecko("Speed is %.2f KB/s\r\n",bytePerSec/1024);
+		print_gecko("Speed for 1024 bytes is: %i usec\r\n",speed/1024);
+		*(unsigned int*)VAR_DEVICE_SPEED = speed/1024;
+		free(buffer);
+	}
 	
 	if(swissSettings.hasDVDDrive) {
 		// Check DVD Status, make sure it's error code 0
