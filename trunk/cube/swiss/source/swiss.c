@@ -1343,7 +1343,7 @@ void select_copy_device()
 {  
 	int inAdvanced = 0;
 	int inAdvancedPos = 0;
-	int slot = 0;
+	int slot = 1;
 	while(1) {
 		doBackdrop();
 		DrawEmptyBox(20,190, vmode->fbWidth-20, 355, COLOR_BLACK);
@@ -1460,7 +1460,7 @@ void select_device()
 		return;
 	}
 
-	int slot = 0;
+	int slot = 1;
 	if(!swissSettings.defaultDevice) {
 		dvdDiscTypeStr = NotInitStr;
 		int inAdvanced = 0;
