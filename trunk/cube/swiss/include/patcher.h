@@ -38,10 +38,6 @@ extern u8 DVDGetCommandBlockStatus[];
 extern u32 DVDGetCommandBlockStatus_length;
 extern u8 DVDCompareDiskId[];
 extern u32 DVDCompareDiskId_length;
-extern u8 ForceProgressive[];
-extern u32 ForceProgressive_length;
-extern u8 ForceProgressive576p[];
-extern u32 ForceProgressive576p_length;
 extern u8 GXGetYScaleFactorPre[];
 extern u32 GXGetYScaleFactorPre_length;
 extern u8 GXInitTexObjLODPre[];
@@ -56,6 +52,16 @@ extern u8 MTXLightFrustumPre[];
 extern u32 MTXLightFrustumPre_length;
 extern u8 MTXOrthoPre[];
 extern u32 MTXOrthoPre_length;
+extern u8 VIConfigure240p[];
+extern u32 VIConfigure240p_length;
+extern u8 VIConfigure288p[];
+extern u32 VIConfigure288p_length;
+extern u8 VIConfigure480p[];
+extern u32 VIConfigure480p_length;
+extern u8 VIConfigure576p[];
+extern u32 VIConfigure576p_length;
+extern u8 VIConfigurePanPre[];
+extern u32 VIConfigurePanPre_length;
 
 /* SDK CARD library patches */
 extern u8 __CARDSync[];

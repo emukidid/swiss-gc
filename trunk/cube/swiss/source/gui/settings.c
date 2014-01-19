@@ -15,7 +15,7 @@
 #include "config.h"
 
 SwissSettings tempSettings;
-char *uiVModeStr[] = {"NTSC", "PAL", "480p", "576p", "Auto"};
+char *uiVModeStr[] = {"Auto", "NTSC", "240p", "480p", "PAL", "288p", "576p"};
 char *softProgressiveStr[] = {"No", "Light", "Yes"};
 char *forceWidescreenStr[] = {"No", "Persp", "Yes"};
 syssram* sram;
@@ -127,10 +127,10 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 			case 4:
 				swissSettings.uiVMode += direction;
-				if(swissSettings.uiVMode > 4)
+				if(swissSettings.uiVMode > 6)
 					swissSettings.uiVMode = 0;
 				if(swissSettings.uiVMode < 0)
-					swissSettings.uiVMode = 4;
+					swissSettings.uiVMode = 6;
 			break;
 		}	
 	}
@@ -157,10 +157,10 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 		switch(option) {
 			case 0:
 				swissSettings.gameVMode += direction;
-				if(swissSettings.gameVMode > 4)
+				if(swissSettings.gameVMode > 6)
 					swissSettings.gameVMode = 0;
 				if(swissSettings.gameVMode < 0)
-					swissSettings.gameVMode = 4;
+					swissSettings.gameVMode = 6;
 			break;
 			case 1:
 				swissSettings.softProgressive += direction;

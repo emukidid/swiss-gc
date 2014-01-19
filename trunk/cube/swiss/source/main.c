@@ -353,9 +353,9 @@ int main ()
 	// Sane defaults
 	refreshSRAM();
 	swissSettings.debugUSB = 0;
-	swissSettings.gameVMode = 4;	// Auto video mode
+	swissSettings.gameVMode = 0;	// Auto video mode
 	swissSettings.exiSpeed = 1;		// 32MHz
-	swissSettings.uiVMode = 4; 		// Auto UI mode
+	swissSettings.uiVMode = 0; 		// Auto UI mode
 	config_copy_swiss_settings(&swissSettings);
 	// Start up the BBA if it exists
 	init_network_thread();

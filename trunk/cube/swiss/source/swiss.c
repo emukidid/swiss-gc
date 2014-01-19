@@ -92,7 +92,7 @@ void print_gecko(const char* fmt, ...)
 void ogc_video__reset()
 {
 	DrawFrameStart();
-	if(swissSettings.gameVMode == 4) {
+	if(swissSettings.gameVMode == 0) {
 		switch(GCMDisk.CountryCode) {
 			case 'P': // PAL
 			case 'D': // German
@@ -104,47 +104,55 @@ void ogc_video__reset()
 			case 'X': // PAL other languages?
 			case 'Y': // PAL other languages?
 			case 'U':
-				swissSettings.gameVMode = 1;
+				swissSettings.gameVMode = 4;
 				break;
 			case 'E':
 			case 'J':
-				swissSettings.gameVMode = 0;
+				swissSettings.gameVMode = 1;
 				break;
 		}
 	} else {
 		syssram* sram = __SYS_LockSram();
-		sram->ntd = (swissSettings.gameVMode == 0) || (swissSettings.gameVMode == 2) ? (sram->ntd|0x40):(sram->ntd&~0x40);
-		sram->flags = (swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 3) ? (sram->flags|0x80):(sram->flags&~0x80);
+		sram->ntd = (swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 3) ? (sram->ntd|0x40):(sram->ntd&~0x40);
+		sram->flags = (swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 6) ? (sram->flags|0x80):(sram->flags&~0x80);
 		__SYS_UnlockSram(1);
 		while(!__SYS_SyncSram());
 	}
 	
 	/* set TV mode for current game */
 	switch(swissSettings.gameVMode) {
-		case 0:
+		case 1:
 			newmode = &TVNtsc480IntDf;
 			DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
 			break;
-		case 1:
-			newmode = &TVPal576IntDfScale;
-			DrawMessageBox(D_INFO,"Video Mode: PAL 50Hz");
-			break;
 		case 2:
+			newmode = &TVNtsc480IntDf;
+			DrawMessageBox(D_INFO,"Video Mode: NTSC 240p");
+			break;
+		case 3:
 			if(VIDEO_HaveComponentCable()) {
 				newmode = &TVNtsc480Prog;
 				DrawMessageBox(D_INFO,"Video Mode: NTSC 480p");
 			} else {
-				swissSettings.gameVMode = 0;	// Can't force with no cable
+				swissSettings.gameVMode = 1;	// Can't force with no cable
 				newmode = &TVNtsc480IntDf;
 				DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
 			}
 			break;
-		case 3:
+		case 4:
+			newmode = &TVPal576IntDfScale;
+			DrawMessageBox(D_INFO,"Video Mode: PAL 50Hz");
+			break;
+		case 5:
+			newmode = &TVPal576IntDfScale;
+			DrawMessageBox(D_INFO,"Video Mode: PAL 288p");
+			break;
+		case 6:
 			if(VIDEO_HaveComponentCable()) {
 				newmode = &TVPal576ProgScale;
 				DrawMessageBox(D_INFO,"Video Mode: PAL 576p");
 			} else {
-				swissSettings.gameVMode = 1;	// Can't force with no cable
+				swissSettings.gameVMode = 4;	// Can't force with no cable
 				newmode = &TVPal576IntDfScale;
 				DrawMessageBox(D_INFO,"Video Mode: PAL 50Hz");
 			}
