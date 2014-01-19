@@ -186,7 +186,7 @@ void config_parse(char *configData) {
 					// Fill this entry with defaults incase some values are missing..
 					strcpy(&configEntries[configEntriesCount].comment[0],"No Comment");
 					strcpy(&configEntries[configEntriesCount].status[0],"Unknown");
-					configEntries[configEntriesCount].gameVMode = 4;
+					configEntries[configEntriesCount].gameVMode = 0;
 					configEntries[configEntriesCount].softProgressive = 0;
 					configEntries[configEntriesCount].muteAudioStreaming = 1;
 					configEntries[configEntriesCount].forceWidescreen = 0;
@@ -213,6 +213,10 @@ void config_parse(char *configData) {
 						configEntries[configEntriesCount].gameVMode = 3;
 					else if(!strcmp(uiVModeStr[4], value))
 						configEntries[configEntriesCount].gameVMode = 4;
+					else if(!strcmp(uiVModeStr[5], value))
+						configEntries[configEntriesCount].gameVMode = 5;
+					else if(!strcmp(uiVModeStr[6], value))
+						configEntries[configEntriesCount].gameVMode = 6;
 				}
 				else if(!strcmp("Soft Progressive", name)) {
 					if(!strcmp(softProgressiveStr[0], value))
@@ -273,6 +277,10 @@ void config_parse(char *configData) {
 						configSwissSettings.uiVMode = 3;
 					else if(!strcmp(uiVModeStr[4], value))
 						configSwissSettings.uiVMode = 4;
+					else if(!strcmp(uiVModeStr[5], value))
+						configSwissSettings.uiVMode = 5;
+					else if(!strcmp(uiVModeStr[6], value))
+						configSwissSettings.uiVMode = 6;
 				}
 			}
 		}
@@ -300,7 +308,7 @@ void config_find(ConfigEntry *entry) {
 	// Didn't find it, setup defaults and add this entry
 	strcpy(entry->comment,"No Comment");
 	strcpy(entry->status,"Unknown");
-	entry->gameVMode = 4;
+	entry->gameVMode = 0;
 	entry->softProgressive = 0;
 	entry->muteAudioStreaming = 0;
 	entry->forceWidescreen = 0;

@@ -63,6 +63,7 @@ SOURCES		:=  source \
 			  source/patches/dvd \
 			  source/patches/gx \
 			  source/patches/mtx \
+			  source/patches/vi \
               source/images \
 			  source/images/buttons
 DATA		:=	data  

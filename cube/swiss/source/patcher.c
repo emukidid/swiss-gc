@@ -397,19 +397,21 @@ u8 video_timing_480p[] = {
 	0x04,0x0E,0x04,0x0E,
 	0x04,0x1A,0x01,0xAD,
 	0x40,0x47,0x69,0xA2,
-	0x01,0x75
+	0x01,0x75,0x7A,0x00,
+	0x01,0x9C
 };
 
 u8 video_timing_576p[] = {
 	0x0A,0x00,0x02,0x40,
-	0x00,0x3E,0x00,0x3E,
-	0x00,0x06,0x00,0x06,
+	0x00,0x44,0x00,0x44,
+	0x00,0x00,0x00,0x00,
 	0x14,0x14,0x14,0x14,
 	0x04,0xD8,0x04,0xD8,
 	0x04,0xD8,0x04,0xD8,
 	0x04,0xE2,0x01,0xB0,
 	0x40,0x4B,0x6A,0xAC,
-	0x01,0x7C
+	0x01,0x7C,0x85,0x00,
+	0x01,0xA4
 };
 
 void Patch_ProgTiming(void *addr, u32 length) {
@@ -427,22 +429,61 @@ void Patch_ProgTiming(void *addr, u32 length) {
 	}
 }
 
-u8 vertical_filters[3][7] = {
+u8 vertical_filters[][7] = {
 	{0, 0, 21, 22, 21, 0, 0},
 	{4, 8, 12, 16, 12, 8, 4},
 	{8, 8, 10, 12, 10, 8, 8}
 };
 
+u8 vertical_reduction[][7] = {
+	{ 0,  0,  0, 16, 16, 16, 16},	// GX_COPY_INTLC_EVEN
+	{16, 16, 16, 16,  0,  0,  0}	// GX_COPY_INTLC_ODD
+};
+
 void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 	int i,j;
+	u8 *vfilter = vertical_filters[swissSettings.softProgressive];
+	FuncPattern VIConfigurePanSig = 
+		{0x390, 40, 11, 4, 25, 35, 0, 0, "VIConfigurePan", 0};
 	FuncPattern GXGetYScaleFactorSig = 
 		{0x234, 16, 14, 3, 18, 27, 0, 0, "GXGetYScaleFactor", 0};
+	FuncPattern GXInitGXSigs[5] = {
+		{0xF3C, 454, 81, 119, 43, 36, 0, 0, "__GXInitGX_v1", 0},
+		{0x844, 307, 35, 107, 18, 10, 0, 0, "__GXInitGX_v2", 0},
+		{0x880, 310, 35, 108, 24, 11, 0, 0, "__GXInitGX_v3", 0},
+		{0x8C0, 313, 36, 110, 28, 11, 0, 0, "__GXInitGX_v4", 0},
+		{0x934, 333, 34, 119, 28, 11, 0, 0, "__GXInitGX_v5", 0}
+	};
 	FuncPattern GXSetCopyFilterSigs[2] = {
 		{0x224, 15, 7, 0, 4, 5, 0, 0, "GXSetCopyFilter_v1", 0},
 		{0x204, 25, 7, 0, 4, 0, 0, 0, "GXSetCopyFilter_v2", 0}
 	};
 	
-	if(swissSettings.gameVMode == 2) {
+	for( i=0; i < length; i+=4 )
+	{
+		if( *(u32*)(data+i) != 0x7C0802A6 )
+			continue;
+		if( find_pattern( (u8*)(data+i), length, &VIConfigurePanSig ) )
+		{
+			u32 properAddress = Calc_ProperAddress(data, dataType, i+36);
+			print_gecko("Found [%s] @ 0x%08X len %i\n", VIConfigurePanSig.Name, (u32)data + i, VIConfigurePanSig.Length);
+			if(properAddress) {
+				print_gecko("Found:[Hook:%s] @ %08X\n", VIConfigurePanSig.Name, properAddress);
+				top_addr -= VIConfigurePanPre_length;
+				memcpy((void*)top_addr,&VIConfigurePanPre[0],VIConfigurePanPre_length);
+				*(u32*)(top_addr+ 0) = *(u32*)(data+i+36);
+				*(u32*)(top_addr+24) = 0x48000000 | (((properAddress+4) - (top_addr+24)) & 0x03FFFFFC);
+				
+				if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 5)) {
+					*(u32*)(data+i+24) = 0x5499F87E;	// srwi		25, 4, 1
+					*(u32*)(data+i+32) = 0x54D7F87E;	// srwi		23, 6, 1
+				}
+				*(u32*)(data+i+36) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
+				break;
+			}
+		}
+	}
+	if((swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 3)) {
 		for( i=0; i < length; i+=4 )
 		{
 			if( *(u32*)(data+i) != 0x7C0802A6 )
@@ -462,6 +503,33 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 			}
 		}
 	}
+	if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 5)) {
+		for( i=0; i < length; i+=4 )
+		{
+			if( *(u32*)(data+i) != 0x7C0802A6 )
+				continue;
+			
+			FuncPattern fp;
+			make_pattern( (u8*)(data+i), length, &fp );
+			
+			for( j=0; j < sizeof(GXInitGXSigs)/sizeof(FuncPattern); j++ )
+			{
+				if( compare_pattern( &fp, &(GXInitGXSigs[j]) ) )
+				{
+					print_gecko("Found [%s] @ 0x%08X len %i\n", GXInitGXSigs[j].Name, (u32)data + i, GXInitGXSigs[j].Length);
+					switch(j) {
+						case 0: *(u32*)(data+i+3776) = 0x38600003; break;
+						case 1: *(u32*)(data+i+1976) = 0x38600003; break;
+						case 2: *(u32*)(data+i+2036) = 0x38600003; break;
+						case 3: *(u32*)(data+i+2096) = 0x38600003; break;
+						case 4: *(u32*)(data+i+2212) = 0x38600003; break;
+					}
+					vfilter = vertical_reduction[1];
+					break;
+				}
+			}
+		}
+	}
 	for( i=0; i < length; i+=4 )
 	{
 		if( *(u32*)(data+i+4) != 0x5460063F )
@@ -474,7 +542,6 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 		{
 			if( compare_pattern( &fp, &(GXSetCopyFilterSigs[j]) ) )
 			{
-				u8 *vfilter = vertical_filters[swissSettings.softProgressive];
 				print_gecko("Found [%s] @ 0x%08X len %i\n", GXSetCopyFilterSigs[j].Name, (u32)data + i, GXSetCopyFilterSigs[j].Length);
 				if(j == 0) {
 					*(u32*)(data+i+388) = 0x38000000 | vfilter[0];
@@ -509,9 +576,7 @@ int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
 		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure_v5", 0},
 		{0x804, 110, 44, 13, 49, 63, 0, 0, "VIConfigure_v6", 0}
 	};
-	if((swissSettings.gameVMode != 2) && (swissSettings.gameVMode != 3)) {
-		return 0;
-	}
+	
 	for( i=0; i < length; i+=4 )
 	{
 		if( *(u32*)(data+i) != 0x7C0802A6 )
@@ -527,46 +592,71 @@ int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
 				print_gecko("Found [%s] @ 0x%08X len %i\n", VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].Length);
 				if(properAddress) {
 					print_gecko("Found:[Hook:%s] @ %08X\n", VIConfigureSigs[j].Name, properAddress);
-					if(swissSettings.gameVMode == 2) {
-						print_gecko("Patched 480p Progressive mode\r\n");
-						top_addr -= ForceProgressive_length;
-						memcpy((void*)top_addr,&ForceProgressive[0],ForceProgressive_length);	// Copy our patch (480p)
-						*(u32*)(top_addr+80) = 0x48000000 | (((properAddress+4) - (top_addr+80)) & 0x03FFFFFC);
-					} else {
-						print_gecko("Patched 576p Progressive mode\r\n");
-						top_addr -= ForceProgressive576p_length;
-						memcpy((void*)top_addr,&ForceProgressive576p[0],ForceProgressive576p_length);	// Copy our patch (576p)
-						*(u32*)(top_addr+36) = 0x48000000 | (((properAddress+4) - (top_addr+36)) & 0x03FFFFFC);
-						
-						switch(j) {
-							case 0:
-								*(u32*)(data+i+  40) = 0x2C040006;	// cmpwi	4, 6
-								*(u32*)(data+i+ 304) = 0x807B0000;	// lwz		3, 0 (27)
-								*(u32*)(data+i+ 896) = 0x2C000006;	// cmpwi	0, 6
-								break;
-							case 1:
-								*(u32*)(data+i+ 272) = 0x807C0000;	// lwz		3, 0 (28)
-								*(u32*)(data+i+ 864) = 0x2C000006;	// cmpwi	0, 6
-								break;
-							case 2:
-								*(u32*)(data+i+ 412) = 0x807C0000;	// lwz		3, 0 (28)
-								*(u32*)(data+i+1040) = 0x2C000006;	// cmpwi	0, 6
-								break;
-							case 3:
-								*(u32*)(data+i+ 476) = 0x38600000;	// li		3, 0
-								*(u32*)(data+i+1128) = 0x2C000006;	// cmpwi	0, 6
-								*(u32*)(data+i+1136) = 0x2C000007;	// cmpwi	0, 7
-								break;
-							case 4: 
-								*(u32*)(data+i+ 604) = 0x38600000;	// li		3, 0
-								*(u32*)(data+i+1260) = 0x2C000006;	// cmpwi	0, 6
-								*(u32*)(data+i+1268) = 0x2C000007;	// cmpwi	0, 7
-								break;
-							case 5:
-								*(u32*)(data+i+ 604) = 0x38600000;	// li		3, 0
-								break;
-						}
-						Patch_ProgTiming(data, length);	// Patch timing to 576p
+					switch(swissSettings.gameVMode) {
+						case 2:
+							print_gecko("Patched 240p Double-Strike mode\r\n");
+							top_addr -= VIConfigure240p_length;
+							memcpy((void*)top_addr,&VIConfigure240p[0],VIConfigure240p_length);
+							*(u32*)(top_addr+80) = 0x48000000 | (((properAddress+4) - (top_addr+80)) & 0x03FFFFFC);
+							break;
+						case 3:
+							print_gecko("Patched 480p Progressive mode\r\n");
+							top_addr -= VIConfigure480p_length;
+							memcpy((void*)top_addr,&VIConfigure480p[0],VIConfigure480p_length);
+							*(u32*)(top_addr+76) = 0x48000000 | (((properAddress+4) - (top_addr+76)) & 0x03FFFFFC);
+							break;
+						case 5:
+							print_gecko("Patched 288p Double-Strike mode\r\n");
+							top_addr -= VIConfigure288p_length;
+							memcpy((void*)top_addr,&VIConfigure288p[0],VIConfigure288p_length);
+							*(u32*)(top_addr+44) = 0x48000000 | (((properAddress+4) - (top_addr+44)) & 0x03FFFFFC);
+							break;
+						case 6:
+							print_gecko("Patched 576p Progressive mode\r\n");
+							top_addr -= VIConfigure576p_length;
+							memcpy((void*)top_addr,&VIConfigure576p[0],VIConfigure576p_length);
+							*(u32*)(top_addr+40) = 0x48000000 | (((properAddress+4) - (top_addr+40)) & 0x03FFFFFC);
+							
+							switch(j) {
+								case 0:
+									*(u32*)(data+i+  40) = 0x2C040006;	// cmpwi	4, 6
+									*(u32*)(data+i+ 304) = 0x807B0000;	// lwz		3, 0 (27)
+									*(u32*)(data+i+ 896) = 0x2C000006;	// cmpwi	0, 6
+									break;
+								case 1:
+									*(u32*)(data+i+ 272) = 0x807C0000;	// lwz		3, 0 (28)
+									*(u32*)(data+i+ 864) = 0x2C000006;	// cmpwi	0, 6
+									break;
+								case 2:
+									*(u32*)(data+i+ 412) = 0x807C0000;	// lwz		3, 0 (28)
+									*(u32*)(data+i+1040) = 0x2C000006;	// cmpwi	0, 6
+									break;
+								case 3:
+									*(u32*)(data+i+ 476) = 0x38600000;	// li		3, 0
+									*(u32*)(data+i+1128) = 0x2C000006;	// cmpwi	0, 6
+									*(u32*)(data+i+1136) = 0x2C000007;	// cmpwi	0, 7
+									break;
+								case 4: 
+									*(u32*)(data+i+ 604) = 0x38600000;	// li		3, 0
+									*(u32*)(data+i+1260) = 0x2C000006;	// cmpwi	0, 6
+									*(u32*)(data+i+1268) = 0x2C000007;	// cmpwi	0, 7
+									break;
+								case 5:
+									*(u32*)(data+i+ 604) = 0x38600000;	// li		3, 0
+									break;
+							}
+							Patch_ProgTiming(data, length);
+							break;
+						default:
+							return 0;
+					}
+					switch(j) {
+						case 0: *(u32*)(data+i+208) = 0xA07F0010; break;
+						case 1: *(u32*)(data+i+176) = 0xA07F0010; break;
+						case 2: *(u32*)(data+i+316) = 0xA07F0010; break;
+						case 3: *(u32*)(data+i+328) = 0xA07F0010; break;
+						case 4: *(u32*)(data+i+456) = 0xA07F0010; break;
+						case 5: *(u32*)(data+i+456) = 0xA0730010; break;
 					}
 					*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
 					Patch_ProgCopy(data, length, dataType);
