@@ -81,11 +81,11 @@ unsigned long tb_diff_usec(tb_t* end, tb_t* start)
 	return ((upper * ((unsigned long)0x80000000 / (TB_CLOCK / 2000000))) + (lower / (TB_CLOCK / 1000000)));
 }
 
-u32 calculate_speed(void* dst, u32 len)
+void calculate_speed(void* dst, u32 len, u32 *speed)
 {
 	tb_t start, end;
 	mftb(&start);
 	read_frag(dst, len, 0);
 	mftb(&end);
-	return tb_diff_usec(&end, &start);
+	*speed = tb_diff_usec(&end, &start);
 }

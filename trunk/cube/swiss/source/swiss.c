@@ -651,9 +651,10 @@ unsigned int load_app(int mode, int multiDol)
 	// Try a device speed test using the actual in-game read code
 	if((curDevice == SD_CARD)||(curDevice == IDEEXI)||(curDevice == USBGECKO)) {
 		char *buffer = memalign(32,1024*1024);
-		typedef u32 (*_calc_speed) (void* dst, u32 len);
+		typedef u32 (*_calc_speed) (void* dst, u32 len, u32 *speed);
 		_calc_speed calculate_speed = (_calc_speed) (void*)(CALC_SPEED);
-		u32 speed = calculate_speed(buffer, 1024*1024);
+		u32 speed = 0;
+		calculate_speed(buffer, 1024*1024, &speed);
 		float timeTakenInSec = (float)speed/1000000;
 		print_gecko("Speed is %i usec %.2f sec for 1MB\r\n",speed,timeTakenInSec);
 		float bytePerSec = (1024*1024) / timeTakenInSec;
