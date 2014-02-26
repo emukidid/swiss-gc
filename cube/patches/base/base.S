@@ -15,6 +15,7 @@ _start:
 	b		fake_interrupt
 	b		handle_card				# Looks at VAR_MC_FUNC to see what function to call
 	b		calculate_speed			# Calculates how long it takes to read 2048 bytes from the device
+	b		read_immediately		# Performs a blocking read.
 
 	.globl fake_interrupt
 fake_interrupt:
@@ -37,9 +38,13 @@ fake_interrupt:
 	beq		not_ready_yet
 	li		0,	0
 	stw		0,	VAR_FAKE_IRQ_SET(3)	# zero out our fake IRQ
-	
 	lwz		12,	VAR_DVDIRQ_HNDLR(3)	# r12 = addr of __DVDInterruptHandler
 	stw		0,	VAR_DVDIRQ_HNDLR(3)	# zero out our addr of __DVDInterruptHandler in case the next DOL is loaded
+		
+	lwz		4, VAR_READ_DVDSTRUCT+16(3)	# load length of last read
+	lwz		3, VAR_READ_DVDSTRUCT+12(3)	# load dst of last read
+	bl		dcache_flush_icache_inv		# **TODO** ctr is mangled here, but should be OK?
+	
 	mtlr	12
 
 	mr		4,	21
@@ -81,6 +86,29 @@ queue_read:
 	li			0, 	0				# patched over this
 	blr
 	
+	.globl read_immediately
+read_immediately:
+	stw         0, 4 (1)			# overwritten, so lets do it here.
+	mflr    	0             		# move lr  
+	stwu    	1,  -64(1)   		# grow stack frame 
+	stw     	0,   28(1)    		# save lr
+	stw			3,	12(1)
+	stw			4,	16(1)
+	stw			5,	20(1)
+	stw			6,	24(1)
+	bl			read_entire
+	lwz			3,	12(1)
+	lwz			4,	16(1)
+	lwz			5,	20(1)
+	lwz			6,	24(1)
+	lwz     	0,	28(1)    		# load lr
+	addi    	1,  1, 64   		# grow stack frame 
+	mtlr    	0             		# move lr  
+	li			3, 	0				# dst = 0
+	li			4, 	0				# len = 0
+	li			5, 	0				# ofs = 0
+	blr
+	
 	.globl dcache_flush_icache_inv
 dcache_flush_icache_inv:
 	clrlwi. 	5, 3, 27  # check for lower bits set in address
@@ -92,6 +120,7 @@ dcache_flush_icache_inv:
 	mtctr 		4
 2:
 	dcbf 		0, 3
+	icbi		0, 3
 	addi 		3, 3, 0x20
 	bdnz 		2b
 	sc

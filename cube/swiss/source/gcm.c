@@ -177,7 +177,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 	
 }
 
-int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
+int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, int multiDol) {
 	int i, patched_buf_num = 0;
 	
 	// Go through all the possible files we think need patching..
@@ -186,6 +186,11 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		// File handle for a patch we might need to write
 		file_handle patchFile;
 		memset(&patchFile, 0, sizeof(file_handle));
+		
+		// Round up to 32 bytes
+		if(filesToPatch[i].size % 0x20) {
+			filesToPatch[i].size += (0x20-(filesToPatch[i].size%0x20));
+		}
 		
 		// Chunk the file out in 8mb chunks or less
 		int ofs;
@@ -197,13 +202,15 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			deviceHandler_seekFile(file,filesToPatch[i].offset+ofs,DEVICE_HANDLER_SEEK_SET);
 			deviceHandler_readFile(file,buffer,sizeToRead);
 
-			u32 ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
+			u32 ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type, multiDol);
 			if(READ_PATCHED_ALL != ret)	{
 				DrawFrameStart();
 				DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
 				DrawFrameFinish();
 				sleep(5);
 			}
+			else
+				patched += 1;
 			if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
 				Patch_Fwrite(buffer, sizeToRead);
 			}
@@ -234,9 +241,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 				}
 					
 				// Write a .patchX file out for this game with the patched buffer inside.
-				print_gecko("Writing patch file: %s.patches/%i %i bytes\r\n", file->name, patched_buf_num, sizeToRead);
+				print_gecko("Writing patch file: %s.patches/%i %i bytes (disc offset %08X)\r\n", file->name, patched_buf_num, sizeToRead, filesToPatch[i].offset+ofs);
 				sprintf(&patchFile.name[0], "%s/%i",patchDirName, patched_buf_num);
-				
+				deviceHandler_deleteFile(&patchFile);
 				deviceHandler_writeFile(&patchFile,buffer,sizeToRead);
 				
 
