@@ -50,6 +50,14 @@ u32 _read_original_part_b[1] = {
 	0x9004001C
 };
 
+u32 _read2_original_part_a[1] = {
+	0x3C00A800
+};
+
+u32 _read2_original_part_b[1] = {
+	0x38000003
+};
+
 u32 _seek_original_part_a[1] = {
 	0x3C00AB00
 };
@@ -242,7 +250,7 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 	while(addr_start<addr_end) 
 	{
 		// Patch Read to adjust the offset for fragmented files
-		if(memcmp(addr_start,_read_original_part_a,sizeof(_read_original_part_a))==0) 
+		if(memcmp(addr_start,_read_original_part_a,sizeof(_read_original_part_a))==0)
 		{
 			int i = 0;
 			// Patch the DI start
@@ -263,126 +271,165 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 	return patched;
 }
 
-u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
+u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int multiDol) {
 	void *addr_start = addr;
 	void *addr_end = addr+length;	
 	int patched = 0;
-	FuncPattern OSExceptionInitSig =
-		{0x27C, 39, 14, 14, 20, 7, 0, 0, "OSExceptionInit", 0};
-	u32 dvdIntHandlerAddr = 0;
-	while(addr_start<addr_end) 
-	{
-		// Note down the location of the __DVDInterruptHandler so we can call it for our fake IRQ
-		if( ((*(u32*)(addr_start + 0 )) & 0xFFFF) == _dvdinterrupthandler_part[0]
-			&& ((*(u32*)(addr_start + 4 )) & 0xFFFF) == _dvdinterrupthandler_part[1]
-			&& ((*(u32*)(addr_start + 8 )) & 0xFFFF) == _dvdinterrupthandler_part[2] ) 
-		{
-			int i = 0;
-			while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
-			
-			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr_start-i)+4)-(u32)(addr));
-			if(properAddress) {
-				print_gecko("Found:[__DVDInterruptHandler] @ %08X\r\n", properAddress );
-				dvdIntHandlerAddr = properAddress;
-				patched |= 0x100;
-			}
-			// Fake the DVD DISR register value
-			*(u32*)(addr_start + 0 ) = 0x3800003A; // li r0, 0x3A
-			break;
-		}
-		addr_start += 4;
-	}
-	addr_start = addr;
-	while(addr_start<addr_end) {
-		// Patch Read (called from DVDLowLevelRead)
-		if(memcmp(addr_start,_read_original_part_a,sizeof(_read_original_part_a))==0) 
-		{
-			if(!dvdIntHandlerAddr) {
-				print_gecko("Found Read without finding the DVDInterruptHandler first!\r\n");
-				return patched;
-			}
-			int i = 0;
-			while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
-			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr_start-i)+12)-(u32)(addr));
-			u32 newval = (u32)(QUEUE_READ_OFFSET - properAddress);
-			newval&= 0x03FFFFFC;
-			newval|= 0x48000001;
-			if(*(u32*)((addr_start - i) + 12) != 0x38000000) {
-				print_gecko("Unknown Read type!\r\n");
-			}
-			*(u32*)((addr_start - i) + 12) = newval;
-			
-			// Patch the DI start
-			i = 0;
-			while((*(u32*)(addr_start + i)) != _read_original_part_b[0]) i+=4;
-			*(u32*)(addr_start + i) = 0x60000000;
-			// Write some code that will write where the DVDIRQHandler is for this Read/DOL
-			*(u32*)(addr_start + i+4) = 0x3c600000 | ((VAR_DVDIRQ_HNDLR>>16) & 0xFFFF);		// lis r3, VAR_DVDIRQ_HNDLR@hi
-			*(u32*)(addr_start + i+8) = 0x3c800000 | ((dvdIntHandlerAddr>>16) & 0xFFFF);	// lis r4, dvdIntHandlerAddr@hi
-			*(u32*)(addr_start + i+12) = 0x60840000 | ((dvdIntHandlerAddr) & 0xFFFF);		// ori r4, r4, dvdIntHandlerAddr@lo
-			*(u32*)(addr_start + i+16) = 0x90830000 | ((VAR_DVDIRQ_HNDLR) & 0xFFFF);		// stw r4, VAR_DVDIRQ_HNDLR@lo(r3)
-
-			// Cut all the alarm/timeout setup for reads.
-			while((*(u32*)(addr_start + i)) != 0x4E800020 ) {
-				if((*(u32*)(addr_start + i) & 0xF0000000) == 0x40000000)
-					*(u32*)(addr_start + i) = 0x60000000;
-				i+=4;
-			}
-      		print_gecko("Found:[Read] @ %08X\r\n", properAddress);
-			patched |= 0x01;
-		}
-		// Patch __OSDispatchInterrupt to launch our fake IRQ
-		if(memcmp(addr_start,_osdispatch_part_a,sizeof(_osdispatch_part_a))==0)
-		{
-			int i = 0;
-			while((*(u32*)(addr_start + i)) != _osdispatch_part_b[0]) i+=4;
-			
-			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start+i)-(u32)(addr));
-			if(properAddress) {
-				print_gecko("Found:[__OSDispatchInterrupts] @ %08X\r\n", properAddress );
-				u32 newval = (u32)(FAKE_IRQ - properAddress);
+	
+	if(multiDol) {	// execD.img games are a special case.
+		while(addr_start<addr_end) {
+			// Patch Read (called from DVDLowLevelRead) to perform an immediate read
+			if((*(u32*)addr_start == _read_original_part_a[0]) 
+				|| (*(u32*)addr_start == _read2_original_part_a[0]))
+			{
+				// Make the read that was going to occur into a 0xE000
+				*(u32*)(addr_start) = ((*(u32*)(addr_start)) & 0xFFFF0000) | 0xE000;
+				
+				int i = 0;
+				while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
+				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr_start-i)+8)-(u32)(addr));
+				u32 newval = (u32)((READ_IMMED_OFFSET) - properAddress);
 				newval&= 0x03FFFFFC;
 				newval|= 0x48000001;
-				*(u32*)(addr_start + i) = newval;
-				patched |= 0x10;
+				if(*(u32*)((addr_start - i) + 8) != 0x90010004) {
+					print_gecko("Unknown Read type! %08X\r\n",*(u32*)((addr_start - i) + 8));
+				}
+				*(u32*)((addr_start - i) + 8) = newval;
+
+				// Patch the DI start (make it a IMM 0xE0 for execD.img)
+				i = 0;
+				while((*(u32*)(addr_start + i)) != _read2_original_part_b[0]) i+=4;
+				*(u32*)(addr_start + i) = 0x38000001;
+
+				print_gecko("Found:[Read (blocking)] @ %08X\r\n", properAddress);
+				patched = READ_PATCHED_ALL;
+				break;
 			}
+			addr_start+=4;
 		}
-		// Patch the statebusy callback to see the DILENGTH register with a zero value
-		if( ((*(u32*)(addr_start + 0 )) & 0xFFFF) == _cbforstatebusy_part[0]
-			&& ((*(u32*)(addr_start + 4 )) & 0xFFFF) == _cbforstatebusy_part[1]
-			&& ((*(u32*)(addr_start + 8 )) & 0xFFFF) == _cbforstatebusy_part[2]
-			&& ((*(u32*)(addr_start + 12 )) & 0xFFFF) == _cbforstatebusy_part[3]) 
+	}
+	else {
+		FuncPattern OSExceptionInitSig =
+			{0x27C, 39, 14, 14, 20, 7, 0, 0, "OSExceptionInit", 0};
+		u32 dvdIntHandlerAddr = 0;
+		while(addr_start<addr_end) 
 		{
-			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start)-(u32)(addr));
-			print_gecko("Found:[cbStateBusy] @ %08X\r\n", properAddress );
-			*(u32*)(addr_start + 4 ) = 0x38800000; // li r4, 0
-			patched |= 0x1000;
-		}
-		// Patch the memcpy call to copy our code to 0x80000500
-		if( *(u32*)(addr_start) == 0x7C0802A6 )
-		{
-			if( find_pattern( (u8*)(addr_start), length, &OSExceptionInitSig ) )
+			// Note down the location of the __DVDInterruptHandler so we can call it for our fake IRQ
+			if( ((*(u32*)(addr_start + 0 )) & 0xFFFF) == _dvdinterrupthandler_part[0]
+				&& ((*(u32*)(addr_start + 4 )) & 0xFFFF) == _dvdinterrupthandler_part[1]
+				&& ((*(u32*)(addr_start + 8 )) & 0xFFFF) == _dvdinterrupthandler_part[2] ) 
 			{
-				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 472)-(u32)(addr));
+				int i = 0;
+				while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
+				
+				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr_start-i)+4)-(u32)(addr));
 				if(properAddress) {
-					print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
-					u32 newval = (u32)(PATCHED_MEMCPY - properAddress);
+					print_gecko("Found:[__DVDInterruptHandler] @ %08X\r\n", properAddress );
+					dvdIntHandlerAddr = properAddress;
+					patched |= 0x100;
+				}
+				// Fake the DVD DISR register value
+				*(u32*)(addr_start + 0 ) = 0x3800003A; // li r0, 0x3A
+				break;
+			}
+			addr_start += 4;
+		}
+		addr_start = addr;
+		
+		while(addr_start<addr_end) {
+			// Patch Read (called from DVDLowLevelRead)
+			if(memcmp(addr_start,_read_original_part_a,sizeof(_read_original_part_a))==0)
+			{
+				if(!dvdIntHandlerAddr) {
+					print_gecko("Found Read without finding the DVDInterruptHandler first!\r\n");
+					return patched;
+				}
+
+				int i = 0;
+				while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
+				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr_start-i)+12)-(u32)(addr));
+				u32 newval = (u32)((QUEUE_READ_OFFSET) - properAddress);
+				newval&= 0x03FFFFFC;
+				newval|= 0x48000001;
+				if(*(u32*)((addr_start - i) + 12) != 0x38000000) {
+					print_gecko("Unknown Read type! %08X\r\n",*(u32*)((addr_start - i) + 12));
+				}
+				*(u32*)((addr_start - i) + 12) = newval;
+
+				// Patch the DI start (make it a IMM 0xE0 for execD.img)
+				i = 0;
+				while((*(u32*)(addr_start + i)) != _read_original_part_b[0]) i+=4;
+				*(u32*)(addr_start + i) = 0x60000000;
+
+				// Write some code that will write where the DVDIRQHandler is for this Read/DOL
+				*(u32*)(addr_start + i+4) = 0x3c600000 | ((VAR_DVDIRQ_HNDLR>>16) & 0xFFFF);		// lis r3, VAR_DVDIRQ_HNDLR@hi
+				*(u32*)(addr_start + i+8) = 0x3c800000 | ((dvdIntHandlerAddr>>16) & 0xFFFF);	// lis r4, dvdIntHandlerAddr@hi
+				*(u32*)(addr_start + i+12) = 0x60840000 | ((dvdIntHandlerAddr) & 0xFFFF);		// ori r4, r4, dvdIntHandlerAddr@lo
+				*(u32*)(addr_start + i+16) = 0x90830000 | ((VAR_DVDIRQ_HNDLR) & 0xFFFF);		// stw r4, VAR_DVDIRQ_HNDLR@lo(r3)
+
+				// Cut all the alarm/timeout setup for reads.
+				while((*(u32*)(addr_start + i)) != 0x4E800020 ) {
+					if((*(u32*)(addr_start + i) & 0xF0000000) == 0x40000000)
+						*(u32*)(addr_start + i) = 0x60000000;
+					i+=4;
+				}
+
+				print_gecko("Found:[Read] @ %08X\r\n", properAddress);
+				patched |= 0x01;
+			}
+			// Patch __OSDispatchInterrupt to launch our fake IRQ
+			if(memcmp(addr_start,_osdispatch_part_a,sizeof(_osdispatch_part_a))==0)
+			{
+				int i = 0;
+				while((*(u32*)(addr_start + i)) != _osdispatch_part_b[0]) i+=4;
+				
+				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start+i)-(u32)(addr));
+				if(properAddress) {
+					print_gecko("Found:[__OSDispatchInterrupts] @ %08X\r\n", properAddress );
+					u32 newval = (u32)(FAKE_IRQ - properAddress);
 					newval&= 0x03FFFFFC;
 					newval|= 0x48000001;
-					*(u32*)(addr_start + 472) = newval;
-					patched |= 0x10000;
+					*(u32*)(addr_start + i) = newval;
+					patched |= 0x10;
 				}
 			}
+			// Patch the statebusy callback to see the DILENGTH register with a zero value
+			if(((*(u32*)(addr_start + 0 )) & 0xFFFF) == _cbforstatebusy_part[0]
+				&& ((*(u32*)(addr_start + 4 )) & 0xFFFF) == _cbforstatebusy_part[1]
+				&& ((*(u32*)(addr_start + 8 )) & 0xFFFF) == _cbforstatebusy_part[2]
+				&& ((*(u32*)(addr_start + 12 )) & 0xFFFF) == _cbforstatebusy_part[3]) 
+			{
+				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start)-(u32)(addr));
+				print_gecko("Found:[cbStateBusy] @ %08X\r\n", properAddress );
+				*(u32*)(addr_start + 4 ) = 0x38800000; // li r4, 0
+				patched |= 0x1000;
+			}
+			// Patch the memcpy call to copy our code to 0x80000500
+			if(*(u32*)(addr_start) == 0x7C0802A6)
+			{
+				if( find_pattern( (u8*)(addr_start), length, &OSExceptionInitSig ) )
+				{
+					u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 472)-(u32)(addr));
+					if(properAddress) {
+						print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
+						u32 newval = (u32)(PATCHED_MEMCPY - properAddress);
+						newval&= 0x03FFFFFC;
+						newval|= 0x48000001;
+						*(u32*)(addr_start + 472) = newval;
+						patched |= 0x10000;
+					}
+				}
+			}
+			// Patch DVDLowSeek
+			if(memcmp(addr_start,_seek_original_part_a,sizeof(_seek_original_part_a))==0)
+			{
+				*(u32*)(addr_start) = 0x3C00E000;
+				print_gecko("Found:[DVDLowSeek] @ %08X\r\n", Calc_ProperAddress(addr, dataType, (u32)(addr_start)-(u32)(addr)));
+				patched |= 0x100000;
+			}
+			
+			addr_start += 4;
 		}
-		// Patch DVDLowSeek
-		if(memcmp(addr_start,_seek_original_part_a,sizeof(_seek_original_part_a))==0) 
-		{
-			*(u32*)(addr_start) = 0x3C00E000;
-      		print_gecko("Found:[DVDLowSeek] @ %08X\r\n", Calc_ProperAddress(addr, dataType, (u32)(addr_start)-(u32)(addr)));
-			patched |= 0x100000;
-		}
-		
-		addr_start += 4;
 	}
 	return patched;
 }
@@ -466,7 +513,7 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 		if( find_pattern( (u8*)(data+i), length, &VIConfigurePanSig ) )
 		{
 			u32 properAddress = Calc_ProperAddress(data, dataType, i+36);
-			print_gecko("Found [%s] @ 0x%08X len %i\n", VIConfigurePanSig.Name, (u32)data + i, VIConfigurePanSig.Length);
+			print_gecko("Found:[%s] @ 0x%08X len %i\n", VIConfigurePanSig.Name, (u32)data + i, VIConfigurePanSig.Length);
 			if(properAddress) {
 				print_gecko("Found:[Hook:%s] @ %08X\n", VIConfigurePanSig.Name, properAddress);
 				top_addr -= VIConfigurePanPre_length;
@@ -491,7 +538,7 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 			if( find_pattern( (u8*)(data+i), length, &GXGetYScaleFactorSig ) )
 			{
 				u32 properAddress = Calc_ProperAddress(data, dataType, i);
-				print_gecko("Found [%s] @ 0x%08X len %i\n", GXGetYScaleFactorSig.Name, (u32)data + i, GXGetYScaleFactorSig.Length);
+				print_gecko("Found:[%s] @ 0x%08X len %i\n", GXGetYScaleFactorSig.Name, (u32)data + i, GXGetYScaleFactorSig.Length);
 				if(properAddress) {
 					print_gecko("Found:[Hook:%s] @ %08X\n", GXGetYScaleFactorSig.Name, properAddress);
 					top_addr -= GXGetYScaleFactorPre_length;
@@ -516,7 +563,7 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 			{
 				if( compare_pattern( &fp, &(GXInitGXSigs[j]) ) )
 				{
-					print_gecko("Found [%s] @ 0x%08X len %i\n", GXInitGXSigs[j].Name, (u32)data + i, GXInitGXSigs[j].Length);
+					print_gecko("Found:[%s] @ 0x%08X len %i\n", GXInitGXSigs[j].Name, (u32)data + i, GXInitGXSigs[j].Length);
 					switch(j) {
 						case 0: *(u32*)(data+i+3776) = 0x38600003; break;
 						case 1: *(u32*)(data+i+1976) = 0x38600003; break;
@@ -542,7 +589,7 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 		{
 			if( compare_pattern( &fp, &(GXSetCopyFilterSigs[j]) ) )
 			{
-				print_gecko("Found [%s] @ 0x%08X len %i\n", GXSetCopyFilterSigs[j].Name, (u32)data + i, GXSetCopyFilterSigs[j].Length);
+				print_gecko("Found:[%s] @ 0x%08X len %i\n", GXSetCopyFilterSigs[j].Name, (u32)data + i, GXSetCopyFilterSigs[j].Length);
 				if(j == 0) {
 					*(u32*)(data+i+388) = 0x38000000 | vfilter[0];
 					*(u32*)(data+i+392) = 0x38600000 | vfilter[1];
@@ -589,7 +636,7 @@ int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
 		{
 			if( compare_pattern( &fp, &(VIConfigureSigs[j]) ) ) {
 				u32 properAddress = Calc_ProperAddress(data, dataType, i);
-				print_gecko("Found [%s] @ 0x%08X len %i\n", VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].Length);
+				print_gecko("Found:[%s] @ 0x%08X len %i\n", VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].Length);
 				if(properAddress) {
 					print_gecko("Found:[Hook:%s] @ %08X\n", VIConfigureSigs[j].Name, properAddress);
 					switch(swissSettings.gameVMode) {
@@ -698,7 +745,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 		if( find_pattern( (u8*)(data+i), length, &MTXFrustumSig ) )
 		{
 			u32 properAddress = Calc_ProperAddress(data, dataType, i);
-			print_gecko("Found [%s] @ 0x%08X len %i\n", MTXFrustumSig.Name, (u32)data + i, MTXFrustumSig.Length);
+			print_gecko("Found:[%s] @ 0x%08X len %i\n", MTXFrustumSig.Name, (u32)data + i, MTXFrustumSig.Length);
 			if(properAddress) {
 				print_gecko("Found:[Hook:%s] @ %08X\n", MTXFrustumSig.Name, properAddress);
 				top_addr -= MTXFrustumPre_length;
@@ -718,7 +765,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 		if( find_pattern( (u8*)(data+i), length, &MTXLightFrustumSig ) )
 		{
 			u32 properAddress = Calc_ProperAddress(data, dataType, i+8);
-			print_gecko("Found [%s] @ 0x%08X len %i\n", MTXLightFrustumSig.Name, (u32)data + i, MTXLightFrustumSig.Length);
+			print_gecko("Found:[%s] @ 0x%08X len %i\n", MTXLightFrustumSig.Name, (u32)data + i, MTXLightFrustumSig.Length);
 			if(properAddress) {
 				print_gecko("Found:[Hook:%s] @ %08X\n", MTXLightFrustumSig.Name, properAddress);
 				top_addr -= MTXLightFrustumPre_length;
@@ -736,7 +783,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			continue;
 		if( find_pattern( (u8*)(data+i), length, &MTXPerspectiveSig ) )
 		{
-			print_gecko("Found [%s] @ 0x%08X len %i\n", MTXPerspectiveSig.Name, (u32)data + i, MTXPerspectiveSig.Length);
+			print_gecko("Found:[%s] @ 0x%08X len %i\n", MTXPerspectiveSig.Name, (u32)data + i, MTXPerspectiveSig.Length);
 			memmove((void*)(data+i+ 28),(void*)(data+i+ 36),44);
 			memmove((void*)(data+i+188),(void*)(data+i+192),16);
 			*(u32*)(data+i+52) += 8;
@@ -754,7 +801,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			continue;
 		if( find_pattern( (u8*)(data+i), length, &MTXLightPerspectiveSig ) )
 		{
-			print_gecko("Found [%s] @ 0x%08X len %i\n", MTXLightPerspectiveSig.Name, (u32)data + i, MTXLightPerspectiveSig.Length);
+			print_gecko("Found:[%s] @ 0x%08X len %i\n", MTXLightPerspectiveSig.Name, (u32)data + i, MTXLightPerspectiveSig.Length);
 			*(u32*)(data+i+36) = *(u32*)(data+i+32);
 			memmove((void*)(data+i+ 28),(void*)(data+i+ 36),60);
 			memmove((void*)(data+i+184),(void*)(data+i+188),16);
@@ -774,7 +821,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			if( find_pattern( (u8*)(data+i), length, &MTXOrthoSig ) )
 			{
 				u32 properAddress = Calc_ProperAddress(data, dataType, i);
-				print_gecko("Found [%s] @ 0x%08X len %i\n", MTXOrthoSig.Name, (u32)data + i, MTXOrthoSig.Length);
+				print_gecko("Found:[%s] @ 0x%08X len %i\n", MTXOrthoSig.Name, (u32)data + i, MTXOrthoSig.Length);
 				if(properAddress) {
 					print_gecko("Found:[Hook:%s] @ %08X\n", MTXOrthoSig.Name, properAddress);
 					top_addr -= MTXOrthoPre_length;
@@ -799,7 +846,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			{
 				if( compare_pattern( &fp, &(GXSetScissorSigs[j]) ) ) {
 					u32 properAddress = Calc_ProperAddress(data, dataType, i);
-					print_gecko("Found [%s] @ 0x%08X len %i\n", GXSetScissorSigs[j].Name, (u32)data + i, GXSetScissorSigs[j].Length);
+					print_gecko("Found:[%s] @ 0x%08X len %i\n", GXSetScissorSigs[j].Name, (u32)data + i, GXSetScissorSigs[j].Length);
 					if(properAddress) {
 						print_gecko("Found:[Hook:%s] @ %08X\n", GXSetScissorSigs[j].Name, properAddress);
 						top_addr -= GXSetScissorPre_length;
@@ -828,7 +875,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 				if( compare_pattern( &fp, &(GXSetProjectionSigs[j]) ) )
 				{
 					u32 properAddress = Calc_ProperAddress(data, dataType, i+12);
-					print_gecko("Found [%s] @ 0x%08X len %i\n", GXSetProjectionSigs[j].Name, (u32)data + i, GXSetProjectionSigs[j].Length);
+					print_gecko("Found:[%s] @ 0x%08X len %i\n", GXSetProjectionSigs[j].Name, (u32)data + i, GXSetProjectionSigs[j].Length);
 					if(properAddress) {
 						print_gecko("Found:[Hook:%s] @ %08X\n", GXSetProjectionSigs[j].Name, properAddress);
 						top_addr -= GXSetProjectionPre_length;
@@ -865,7 +912,7 @@ int Patch_TexFilt(u8 *data, u32 length, int dataType)
 			if( compare_pattern( &fp, &(GXInitTexObjLODSigs[j]) ) )
 			{
 				u32 properAddress = Calc_ProperAddress(data, dataType, i+8);
-				print_gecko("Found [%s] @ 0x%08X len %i\n", GXInitTexObjLODSigs[j].Name, (u32)data + i, GXInitTexObjLODSigs[j].Length);
+				print_gecko("Found:[%s] @ 0x%08X len %i\n", GXInitTexObjLODSigs[j].Name, (u32)data + i, GXInitTexObjLODSigs[j].Length);
 				if(properAddress) {
 					print_gecko("Found:[Hook:%s] @ %08X\n", GXInitTexObjLODSigs[j].Name, properAddress);
 					top_addr -= GXInitTexObjLODPre_length;
@@ -957,7 +1004,7 @@ int Patch_DVDAudioStreaming(u8 *data, u32 length) {
 		for( j=0; j < sizeof(DVDAudioSigs); j++ )
 		{
 			if( !DVDAudioSigs[j].offsetFoundAt && compare_pattern( &fp, &(DVDAudioSigs[j]) ) )	{
-				print_gecko("Found [%s] @ 0x%08X len %i\n", DVDAudioSigs[j].Name, (u32)data + i, DVDAudioSigs[j].Length);
+				print_gecko("Found:[%s] @ 0x%08X len %i\n", DVDAudioSigs[j].Name, (u32)data + i, DVDAudioSigs[j].Length);
 
 				memcpy( (u8*)(data+i), &DVDAudioSigs[j].Patch[0], DVDAudioSigs[j].PatchLength );
 				DCFlushRange((u8*)(data+i), DVDAudioSigs[j].Length);
@@ -1106,7 +1153,7 @@ int Patch_DVDCompareDiskId(u8 *data, u32 length) {
 			continue;
 		if( find_pattern( (u8*)(data+i), length, &DVDCompareDiskIdSig ) )
 		{
-			print_gecko("Found [%s] @ 0x%08X len %i\n", DVDCompareDiskIdSig.Name, (u32)data + i, DVDCompareDiskIdSig.Length);		
+			print_gecko("Found:[%s] @ 0x%08X len %i\n", DVDCompareDiskIdSig.Name, (u32)data + i, DVDCompareDiskIdSig.Length);		
 
 			memcpy( (u8*)(data+i), &DVDCompareDiskIdSig.Patch[0], DVDCompareDiskIdSig.PatchLength );
 			DCFlushRange((u8*)(data+i), DVDCompareDiskIdSig.Length);
@@ -1200,7 +1247,7 @@ int Patch_DVDStatusFunctions(u8 *data, u32 length) {
 
 		if( find_pattern( (u8*)(data+i), length, &(DVDStatusSig) ) )
 		{
-			print_gecko("Found [%s] @ 0x%08X len %i\n", DVDStatusSig.Name, (u32)data + i, DVDStatusSig.Length);		
+			print_gecko("Found:[%s] @ 0x%08X len %i\n", DVDStatusSig.Name, (u32)data + i, DVDStatusSig.Length);		
 			memcpy( (u8*)(data+i), &DVDStatusSig.Patch[0], DVDStatusSig.PatchLength );
 			DCFlushRange((u8*)(data+i), DVDStatusSig.Length);
 			ICInvalidateRange((u8*)(data+i), DVDStatusSig.Length);
@@ -1273,7 +1320,7 @@ int Patch_CARDFunctions(u8 *data, u32 length) {
 				if( CPatterns[j].Patch == CARDFreeBlocks ) {
 					//Check for CARDGetResultCode which is always (when used) above CARDFreeBlocks
 					if(*(u32*)(data + i - 0x30 ) == 0x2C030000) {
-						print_gecko("Found [CARDGetResultCode] @ 0x%08X\n", (u32)data + i - 0x30 );
+						print_gecko("Found:[CARDGetResultCode] @ 0x%08X\n", (u32)data + i - 0x30 );
 						memcpy( data + i - 0x30, CARDGetResultCode, CARDGetResultCode_length );
 					}
 					foundCardFuncStart = 1;
@@ -1283,7 +1330,7 @@ int Patch_CARDFunctions(u8 *data, u32 length) {
 					continue;
 			
 				CPatterns[j].offsetFoundAt = (u32)data + i;
-				print_gecko("Found [%s] @ 0x%08X len %i\n", CPatterns[j].Name, CPatterns[j].offsetFoundAt, CPatterns[j].Length);
+				print_gecko("Found:[%s] @ 0x%08X len %i\n", CPatterns[j].Name, CPatterns[j].offsetFoundAt, CPatterns[j].Length);
 				
 				//If by now no CARDProbe is found it won't be so set it to found to prevent CARDProbe B false hits
 				if( CPatterns[j].Patch == CARDReadAsync ) {

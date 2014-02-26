@@ -240,7 +240,7 @@ int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 							i, patchInfo[0], patchInfo[1], frag_list->frag[0].sector);
 			deviceHandler_deinit(&patchFile);
 			fragList[patches*3] = patchInfo[0];
-			fragList[(patches*3)+1] = patchInfo[1]-12;
+			fragList[(patches*3)+1] = patchInfo[1];
 			fragList[(patches*3)+2] = frag_list->frag[0].sector;
 			patches++;
 		}
@@ -373,13 +373,6 @@ int deviceHandler_FAT_deinit(file_handle* file) {
 }
 
 int deviceHandler_FAT_deleteFile(file_handle* file) {
-	if(remove(file->name) == -1) {
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL,"Error Deleting File");
-		DrawFrameFinish();
-		wait_press_A();
-		return -1;
-	}
-	return 0;
+	return (remove(file->name) == -1) ? -1:0;
 }
 

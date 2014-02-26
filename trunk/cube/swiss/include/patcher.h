@@ -131,6 +131,7 @@ extern u32 CARDWriteAsync_length;
 #define FAKE_IRQ			 	(LO_RESERVE | 0x08)
 #define HANDLE_CARD		 		(LO_RESERVE | 0x0C)
 #define CALC_SPEED		 		(LO_RESERVE | 0x10)
+#define READ_IMMED_OFFSET 		(LO_RESERVE | 0x14)
 
 #define READ_PATCHED_ALL 		(0x111111)
 
@@ -143,7 +144,7 @@ extern u32 CARDWriteAsync_length;
 #define PATCH_LOADER	2
 
 u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType);
-u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType);
+u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int multiDol);
 int Patch_ProgVideo(u8 *data, u32 length, int dataType);
 void Patch_WideAspect(u8 *data, u32 length, int dataType);
 int Patch_TexFilt(u8 *data, u32 length, int dataType);

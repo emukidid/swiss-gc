@@ -12,7 +12,6 @@ typedef unsigned int u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 
-extern void dcache_flush_icache_inv(void*, u32);
 extern void do_read(void*, u32, u32, u32);
 
 // Returns the amount read from the given offset until a frag is hit
@@ -59,8 +58,6 @@ void device_frag_read(void *dst, u32 len, u32 offset)
 		dst+=amountRead;
 		offset+=amountRead;
 	}
-	
-	dcache_flush_icache_inv(oDst, oLen);
 }
 
 #define mftb(rval) ({unsigned long u; do { \

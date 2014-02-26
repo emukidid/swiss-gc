@@ -461,7 +461,7 @@ int setup_memcard_emulation() {
 	return 1;
 }
 
-unsigned int load_app(int mode)
+unsigned int load_app(int mode, int multiDol)
 {
 	char* gameID = (char*)0x80000000;
 	int zeldaVAT = 0, i = 0;
@@ -564,7 +564,7 @@ unsigned int load_app(int mode)
 
 	// Patch to read from SD/HDD
 	if((curDevice == SD_CARD)||(curDevice == IDEEXI)||(curDevice == USBGECKO)) {
-		u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+		u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL, multiDol);
 		if(READ_PATCHED_ALL != ret)	{
 			DrawFrameStart();
 			DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
@@ -1046,10 +1046,10 @@ void load_file()
 	if(getARToWiirdCheats()[0] != 0) {
 		kenobi_set_cheats((u8*)getARToWiirdCheats(), getARToWiirdCheatsSize());
 	}
-	
+	int multiDol = 0;
 	// Report to the user the patch status of this GCM/ISO file and look for a cheats file too
 	if((curDevice == SD_CARD) || (curDevice == IDEEXI)) {
-		check_game();
+		multiDol = check_game();
 		
 		// Look for cheats file if the user hasn't loaded one up
 		if(!hasCheatsFile) {
@@ -1148,7 +1148,7 @@ void load_file()
 	
 	// setup the video mode before we kill libOGC kernel
 	ogc_video__reset();
-	load_app(hasCheatsFile ? CHEATS:NO_CHEATS);
+	load_app(hasCheatsFile ? CHEATS:NO_CHEATS, multiDol);
 }
 
 int cheats_game()
@@ -1191,21 +1191,31 @@ int cheats_game()
 
 int check_game()
 { 	
+	int multiDol = 0;
 	DrawFrameStart();
 	DrawMessageBox(D_INFO,"Checking Game ..");
 	DrawFrameFinish();
 	
 	ExecutableFile *filesToPatch = memalign(32, sizeof(ExecutableFile)*64);
-	int numToPatch = parse_gcm(&curFile, filesToPatch);
+	int numToPatch = parse_gcm(&curFile, filesToPatch), i =0;
+	for(i=0; i<numToPatch; i++) {
+		if(strstr(filesToPatch[i].name,"execD.img") && 
+			(!strncmp((char*)&GCMDisk, "D43U01", 6) || !strncmp((char*)&GCMDisk, "D43E01", 6))) {
+			print_gecko("OOT Multi Disc Detected\r\n");
+			multiDol = 1;
+			break;
+		}
+	}
+	
 	if(numToPatch>0) {
 		// Game requires patch files, lets do it.	
-		int res = patch_gcm(&curFile, filesToPatch, numToPatch);
+		int res = patch_gcm(&curFile, filesToPatch, numToPatch, multiDol);
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,res ? "Game Patched Successfully":"Game could not be patched or not required");
 		DrawFrameFinish();
 	}
 	free(filesToPatch);
-	return 0;
+	return multiDol;
 }
 
 void save_config(ConfigEntry *config) {
