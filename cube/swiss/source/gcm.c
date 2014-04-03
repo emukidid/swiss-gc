@@ -21,6 +21,71 @@
 #define PATCH_CHUNK_SIZE 8*1024*1024
 #define FST_ENTRY_SIZE 12
 
+//Lets parse the entire game FST in search for the banner
+unsigned int getBannerOffset(file_handle *file) {
+	unsigned int   	buffer[2]; 
+	unsigned long   fst_offset=0,filename_offset=0,entries=0,string_table_offset=0,fst_size=0; 
+	unsigned long   i,offset; 
+	char   filename[256]; 
+	
+	// lets just quickly check if this is a valid GCM (contains magic)
+	deviceHandler_seekFile(file,0x1C,DEVICE_HANDLER_SEEK_SET);
+	if((deviceHandler_readFile(file,(unsigned char*)buffer,sizeof(int))!=sizeof(int)) || (buffer[0]!=0xC2339F3D)) {
+		return 0;
+	}
+
+	// get FST offset and size
+	deviceHandler_seekFile(file,0x424,DEVICE_HANDLER_SEEK_SET);
+	if(deviceHandler_readFile(file,(unsigned char*)buffer,sizeof(int)*2)!=sizeof(int)*2) {
+		return 0;
+	}  
+  
+	fst_offset	=buffer[0];
+	fst_size	=buffer[1];
+
+	if((!fst_offset) || (!fst_size)) {
+		return 0;
+	}
+      
+	// allocate space for FST table
+	char* FST = (char*)memalign(32,fst_size);		//malloc dies on NTSC for some reason.. bad libogc! 
+	if(!FST) {
+		return 0;	//didn't fit, doesn't matter it's just for a banner
+	}
+	
+	// read the FST
+	deviceHandler_seekFile(file,fst_offset,DEVICE_HANDLER_SEEK_SET);
+	if(deviceHandler_readFile(file,FST,fst_size)!=fst_size) {
+		free(FST);
+		return 0;
+	}
+  
+	// number of entries and string table location
+	entries = *(unsigned int*)&FST[8];
+	string_table_offset=12*entries; 
+    
+	// go through every entry
+	for (i=1;i<entries;i++) 
+	{ 
+		offset=i*0x0c; 
+		if(FST[offset]==0) //skip directories
+		{ 
+			filename_offset=(unsigned int)FST[offset+1]*256*256+(unsigned int)FST[offset+2]*256+(unsigned int)FST[offset+3]; 
+			memset(filename,0,256);
+			strcpy(filename,&FST[string_table_offset+filename_offset]); 
+			unsigned int loc = 0;
+			memcpy(&loc,&FST[offset+4],4);
+			if((!stricmp(filename,"opening.bnr")) || (!stricmp(filename,"OPENING.BNR"))) 
+			{
+				free(FST);
+				return loc;
+			}		
+		} 
+	}
+	free(FST);
+	return 0;
+}
+
 // Returns the number of filesToPatch and fills out the filesToPatch array passed in (pre-allocated)
 int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 
@@ -262,8 +327,22 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 	return 0;
 }
 
+u32 calc_fst_entries_size(char *FST) {
+	
+	u32 totalSize = 0;
+	u32 entries=*(unsigned int*)&FST[8];
+	int i;
+	for (i=1;i<entries;i++)	// go through every entry
+	{ 
+		if(!FST[i*0x0c]) {	// Skip directories
+			totalSize += *(u32*)&FST[(i*0x0c)+8];
+		} 
+	}
+	return totalSize;
+}
+
 // Returns the number of filesToPatch and fills out the filesToPatch array passed in (pre-allocated)
-int read_fst(file_handle *file, file_handle** dir) {
+int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
 
 	print_gecko("Read dir for directory: %s\r\n",file->name);
 	DiskHeader header;
@@ -283,13 +362,18 @@ int read_fst(file_handle *file, file_handle** dir) {
 	// Read the FST
  	DVD_Read(FST,header.FSTOffset,header.FSTSize);
 	
+	// Get the space taken up by this disc
+	if(usedSpace) *usedSpace = calc_fst_entries_size(FST);
+		
 	// Add the disc itself as a "file"
 	*dir = malloc( numFiles * sizeof(file_handle) );
 	DVD_Read((*dir)[idx].name, 32, 128);
+	strcat((*dir)[idx].name, ".gcm");
 	(*dir)[idx].fileBase = 0;
 	(*dir)[idx].offset = 0;
 	(*dir)[idx].size = DISC_SIZE;
 	(*dir)[idx].fileAttrib = IS_FILE;
+	(*dir)[idx].meta = 0;
 	idx++;
 	
 	u32 entries=*(unsigned int*)&FST[8];
@@ -317,9 +401,10 @@ int read_fst(file_handle *file, file_handle** dir) {
 		(*dir)[idx].offset = 0;
 		(*dir)[idx].size = 0;
 		(*dir)[idx].fileAttrib = IS_DIR;
+		(*dir)[idx].meta = 0;
 		idx++;
 	}
-	print_gecko("Found DIR [%03i]:%s\r\n",parent_dir_offset,isRoot ? "ROOT":filename);
+	//print_gecko("Found DIR [%03i]:%s\r\n",parent_dir_offset,isRoot ? "ROOT":filename);
 	
 	// Traverse the FST now adding all the files which come under our DIR
 	for (i=parent_dir_offset;i<dir_end_offset;i++) {
@@ -336,7 +421,7 @@ int read_fst(file_handle *file, file_handle** dir) {
 		// Is this a sub dir of our dir?
 		if(FST[offset]) {
 			if(file_offset == parent_dir_offset) {
-				print_gecko("Adding: [%03i]%s:%s offset %08X length %08X\r\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
+				//print_gecko("Adding: [%03i]%s:%s offset %08X length %08X\r\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
 				if(idx == numFiles){
 					++numFiles;
 					*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
@@ -346,6 +431,7 @@ int read_fst(file_handle *file, file_handle** dir) {
 				(*dir)[idx].offset = 0;
 				(*dir)[idx].size = size;
 				(*dir)[idx].fileAttrib = IS_DIR;
+				(*dir)[idx].meta = 0;
 				idx++;
 				// Skip the entries that sit in this dir
 				i = size-1;
@@ -353,7 +439,7 @@ int read_fst(file_handle *file, file_handle** dir) {
 		}
 		else {
 			// File, add it.
-			print_gecko("Adding: [%03i]%s:%s offset %08X length %08X\r\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
+			//print_gecko("Adding: [%03i]%s:%s offset %08X length %08X\r\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
 			if(idx == numFiles){
 				++numFiles;
 				*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
@@ -363,6 +449,7 @@ int read_fst(file_handle *file, file_handle** dir) {
 			(*dir)[idx].offset = 0;
 			(*dir)[idx].size = size;
 			(*dir)[idx].fileAttrib = IS_FILE;
+			(*dir)[idx].meta = 0;
 			idx++;
 		}
 	}

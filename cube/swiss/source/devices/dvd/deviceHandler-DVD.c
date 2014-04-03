@@ -37,6 +37,7 @@ device_info initial_DVD_info = {
 
 static char error_str[256];
 static int dvd_init = 0;
+static int toc_read = 0;
 char *dvdDiscTypeStr = NotInitStr;
 int dvdDiscTypeInt = 0;
 int drive_status = 0;
@@ -248,40 +249,46 @@ device_info* deviceHandler_DVD_info() {
 
 int deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, unsigned int type){
 
-  unsigned int i = 0, isGC = is_gamecube();
-  unsigned int  *tmpTable = NULL;
-  char *tmpName  = NULL;
-  u64 tmpOffset = 0LL;
+	unsigned int i = 0, isGC = is_gamecube();
+	unsigned int  *tmpTable = NULL;
+	char *tmpName  = NULL;
+	u64 tmpOffset = 0LL;
+	u32 usedSpace = 0;
 
-  int num_entries = 0, ret = 0, num = 0;
-
-  if(dvd_get_error() || !dvd_init) { //if some error
-	ret = initialize_disc(ENABLE_BYDISK);
-	if(ret == DRV_ERROR) {    //try init
-	  return -1; //fail
+	int num_entries = 0, ret = 0, num = 0;
+	
+	if(dvd_get_error() || !dvd_init) { //if some error
+		ret = initialize_disc(ENABLE_BYDISK);
+		if(ret == DRV_ERROR) {    //try init
+			return -1; //fail
+		}
+		dvd_init = 1;
+		toc_read = 0;
 	}
-	dvd_init = 1;
-  }
 
-  dvdDiscTypeInt = gettype_disc();
-  if(dvdDiscTypeInt == UNKNOWN_DISC) {
-	return -1;
-  }
+	dvdDiscTypeInt = gettype_disc();
+	if(dvdDiscTypeInt == UNKNOWN_DISC) {
+		return -1;
+	}
 
-  //GCOS or Cobra MultiGame DVD Disc
-  if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
+	//GCOS or Cobra MultiGame DVD Disc
+	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
 
-	//Read in the whole table of offsets
-	tmpTable = (unsigned int*)memalign(32,MAX_MULTIGAME*4);
-	tmpName = (char*)memalign(32,512);
-	memset(tmpTable,0,sizeof(tmpTable));
-	memset(tmpName,0,sizeof(tmpName));
-	DVD_Read(&tmpTable[0],MULTIGAME_TABLE_OFFSET,MAX_MULTIGAME*4);
+		if(ret!=DEBUG_MODE) {
+			// This means we're using a drivechip, so our multigame command will be different.
+			isXenoGC = 1;
+		}
+		//Read in the whole table of offsets
+		tmpTable = (unsigned int*)memalign(32,MAX_MULTIGAME*4);
+		tmpName = (char*)memalign(32,512);
+		memset(tmpTable,0,sizeof(tmpTable));
+		memset(tmpName,0,sizeof(tmpName));
+		DVD_Read(&tmpTable[0],MULTIGAME_TABLE_OFFSET,MAX_MULTIGAME*4);
 
-	// count entries
-	for(i = 0; i < MAX_MULTIGAME; i++) {
-	    tmpOffset = (dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC) ? (tmpTable[i]<<2):(tmpTable[i]);
-	    if((tmpOffset) && (tmpOffset%(isGC?0x8000:0x20000)==0) && (tmpOffset<(isGC?DISC_SIZE:WII_D9_SIZE))) {
+		// count entries
+		for(i = 0; i < MAX_MULTIGAME; i++) {
+			tmpOffset = (dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC) ? (tmpTable[i]<<2):(tmpTable[i]);
+			if((tmpOffset) && (tmpOffset%(isGC?0x8000:0x20000)==0) && (tmpOffset<(isGC?DISC_SIZE:WII_D9_SIZE))) {
 				num_entries++;
 			}
 		}
@@ -293,52 +300,58 @@ int deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, unsigned in
 
 		// parse entries
 		for(i = 0; i < MAX_MULTIGAME; i++) {
-	    tmpOffset = (dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC) ? (tmpTable[i]<<2):(tmpTable[i]);
-	    if((tmpOffset) && (tmpOffset%(isGC?0x8000:0x20000)==0) && (tmpOffset<(isGC?DISC_SIZE:WII_D9_SIZE))) {
+			tmpOffset = (dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC) ? (tmpTable[i]<<2):(tmpTable[i]);
+			if((tmpOffset) && (tmpOffset%(isGC?0x8000:0x20000)==0) && (tmpOffset<(isGC?DISC_SIZE:WII_D9_SIZE))) {
 				DVD_Read(&tmpName[0],tmpOffset+32, 512);
-				strcpy( (*dir)[num].name, &tmpName[0] );
+				sprintf( (*dir)[num].name,"%s.gcm", &tmpName[0] );
 				(*dir)[num].fileBase = tmpOffset;
-		    (*dir)[num].offset = 0;
-		    (*dir)[num].size   = DISC_SIZE;
-		    (*dir)[num].fileAttrib	 = IS_FILE;
-		    num++;
+				(*dir)[num].offset = 0;
+				(*dir)[num].size   = DISC_SIZE;
+				(*dir)[num].fileAttrib	 = IS_FILE;
+				(*dir)[num].meta = 0;
+				(*dir)[num].status = OFFSET_NOTSET;
+				num++;
+			}
+			free(tmpTable);
+			free(tmpName);
 		}
-		free(tmpTable);
-		free(tmpName);
 	}
-  }
-  else if((dvdDiscTypeInt == GAMECUBE_DISC) || (dvdDiscTypeInt == MULTIDISC_DISC)) {
-	// TODO: BCA entry (dump from drive RAM on a GC, dump via BCA command on Wii)
-	// Virtual entries for FST entries :D
-	num_entries = read_fst(ffile, dir);
-  }
-  else if(dvdDiscTypeInt == ISO9660_DISC) {
-	// Call the corresponding DVD function
-	  num_entries = dvd_read_directoryentries(ffile->fileBase,ffile->size);
-	  // If it was not successful, just return the error
-	  if(num_entries <= 0) return -1;
-	  // Convert the DVD "file" data to fileBrowser_files
-  	*dir = malloc( num_entries * sizeof(file_handle) );
-  	int i;
-  	for(i=0; i<num_entries; ++i){
-  		strcpy( (*dir)[i].name, DVDToc->file[i].name );
-  		(*dir)[i].fileBase = (uint64_t)(((uint64_t)DVDToc->file[i].sector)*2048);
-  		(*dir)[i].offset = 0;
-  		(*dir)[i].size   = DVDToc->file[i].size;
-  		(*dir)[i].fileAttrib	 = IS_FILE;
-  		if(DVDToc->file[i].flags == 2)//on DVD, 2 is a dir
-  			(*dir)[i].fileAttrib   = IS_DIR;
-  		if((*dir)[i].name[strlen((*dir)[i].name)-1] == '/' )
-  			(*dir)[i].name[strlen((*dir)[i].name)-1] = 0;	//get rid of trailing '/'
-  	}
-  	//kill the large TOC so we can have a lot more memory ingame (256k more)
-  	free(DVDToc);
-	DVDToc = NULL;
+	else if((dvdDiscTypeInt == GAMECUBE_DISC) || (dvdDiscTypeInt == MULTIDISC_DISC)) {
+		// TODO: BCA entry (dump from drive RAM on a GC, dump via BCA command on Wii)
+		// Virtual entries for FST entries :D
+		num_entries = read_fst(ffile, dir, !toc_read ? &usedSpace:NULL);
+	}
+	else if(dvdDiscTypeInt == ISO9660_DISC) {
+		// Call the corresponding DVD function
+		num_entries = dvd_read_directoryentries(ffile->fileBase,ffile->size);
+		// If it was not successful, just return the error
+		if(num_entries <= 0) return -1;
+		// Convert the DVD "file" data to fileBrowser_files
+		*dir = malloc( num_entries * sizeof(file_handle) );
+		int i;
+		for(i=0; i<num_entries; ++i){
+			strcpy( (*dir)[i].name, DVDToc->file[i].name );
+			(*dir)[i].fileBase = (uint64_t)(((uint64_t)DVDToc->file[i].sector)*2048);
+			(*dir)[i].offset = 0;
+			(*dir)[i].size   = DVDToc->file[i].size;
+			(*dir)[i].fileAttrib	 = IS_FILE;
+			if(DVDToc->file[i].flags == 2)//on DVD, 2 is a dir
+			(*dir)[i].fileAttrib   = IS_DIR;
+			if((*dir)[i].name[strlen((*dir)[i].name)-1] == '/' )
+			(*dir)[i].name[strlen((*dir)[i].name)-1] = 0;	//get rid of trailing '/'
+			(*dir)[i].meta = 0;
+			usedSpace += (*dir)[i].size;
+		}
+		//kill the large TOC so we can have a lot more memory ingame (256k more)
+		free(DVDToc);
+		DVDToc = NULL;
 
-  	if(strlen((*dir)[0].name) == 0)
-  		strcpy( (*dir)[0].name, ".." );
-  }
-  return num_entries;
+		if(strlen((*dir)[0].name) == 0)
+			strcpy( (*dir)[0].name, ".." );
+	}
+	usedSpace >>= 10;
+	initial_DVD_info.freeSpaceInKB = initial_DVD_info.totalSpaceInKB - usedSpace;
+	return num_entries;
 }
 
 int deviceHandler_DVD_seekFile(file_handle* file, unsigned int where, unsigned int type){
@@ -348,12 +361,14 @@ int deviceHandler_DVD_seekFile(file_handle* file, unsigned int where, unsigned i
 }
 
 int deviceHandler_DVD_readFile(file_handle* file, void* buffer, unsigned int length){
+	print_gecko("read: status:%08X dst:%08X ofs:%08X base:%08X len:%08X\r\n"
+							,file->status,(u32)buffer,file->offset,(u32)((file->fileBase) & 0xFFFFFFFF),length);
 	u64 actualOffset = file->fileBase+file->offset;
 
-  if(file->status == OFFSET_SET) {
-  	actualOffset = file->offset;
+	if(file->status == OFFSET_SET) {
+		actualOffset = file->offset;
 	}
-  int bytesread = DVD_Read(buffer,actualOffset,length);
+	int bytesread = DVD_Read(buffer,actualOffset,length);
 	if(bytesread > 0) {
 		file->offset += bytesread;
 	}
@@ -365,7 +380,7 @@ int deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
 		deviceHandler_readFile(file,(unsigned char*)0x80000000,32);
 		char streaming = *(char*)0x80000008;
-		if(streaming) {
+		if(streaming && !isXenoGC) {
 			DrawFrameStart();
 			DrawMessageBox(D_INFO,"One moment, setting up audio streaming.");
 			DrawFrameFinish();

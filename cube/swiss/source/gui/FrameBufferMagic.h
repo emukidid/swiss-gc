@@ -63,6 +63,7 @@ enum TextureId
 
 void init_textures();
 void DrawImage(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
+void DrawTexObj(GXTexObj *texObj, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
 void DrawFrameStart();
 void DrawFrameFinish();
 void DrawProgressBar(int percent, char *message);

@@ -46,7 +46,7 @@ struct pvd_s
 }  __attribute__((packed));
 
 extern file_entries *DVDToc;
-
+extern int isXenoGC;
 int dvd_read_directoryentries(u64 offset, int size);
 unsigned int dvd_get_error(void);
 void dvd_set_streaming(char stream);

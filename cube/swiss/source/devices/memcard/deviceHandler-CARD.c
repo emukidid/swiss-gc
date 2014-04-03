@@ -129,6 +129,7 @@ int deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, unsigned i
 		(*dir)[i].offset = 0;
 		(*dir)[i].size     = memcard_dir->filelen + sizeof(GCI);
 		(*dir)[i].fileBase     = ffile->fileBase | (memcard_dir->fileno & 0xFFFFFF);
+		(*dir)[i].meta = 0;
 		ret = CARD_FindNext (memcard_dir);
 		++i;
 		usedSpace += memcard_dir->filelen;

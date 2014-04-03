@@ -69,6 +69,7 @@ int deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, unsign
 		(*dir)[i].fileAttrib	= entry->fileAttrib;
 		(*dir)[i].fp 			= 0;
 		(*dir)[i].fileBase		= 0;
+		(*dir)[i].meta = 0;
 		++i;
 	}
 	
