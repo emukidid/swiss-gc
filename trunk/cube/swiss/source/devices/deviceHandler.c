@@ -20,7 +20,7 @@
 file_handle* deviceHandler_initial = NULL;
 device_info* (*deviceHandler_info)(void) = NULL;
 
-static int statEnabled = 0;
+static int statEnabled = 1;
 void deviceHandler_setStatEnabled(int enable) {statEnabled = enable;}
 int deviceHandler_getStatEnabled() {return statEnabled;}
 

@@ -6,18 +6,26 @@
 #ifndef DEVICE_HANDLER_H
 #define DEVICE_HANDLER_H
 
-#include <stdint.h>
+#include <gccore.h>
 #include <stdio.h>
 
+typedef struct {
+	int fileTypeTexId;
+	int regionTexId;
+	u8 *banner;
+	GXTexObj bannerTexObj;
+	char description[128];
+} file_meta;
 
 typedef struct {
-	char name[1024]; // File or Folder, absolute path goes here
-	uint64_t fileBase;   // Raw sector on device
+	char name[1024]; 		// File or Folder, absolute path goes here
+	uint64_t fileBase;   	// Raw sector on device
 	unsigned int offset;    // Offset in the file
 	unsigned int size;      // size of the file
-	int fileAttrib;        // IS_FILE or IS_DIR
-	int status;            // is the device ok
+	int fileAttrib;        	// IS_FILE or IS_DIR
+	int status;            	// is the device ok
 	FILE *fp;				// file pointer
+	file_meta *meta;
 } file_handle;
 
 typedef struct {

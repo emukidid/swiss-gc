@@ -80,6 +80,7 @@ int deviceHandler_WKF_readDir(file_handle* ffile, file_handle** dir, unsigned in
 			(*dir)[i].size     = fstat.st_size;
 			(*dir)[i].fileAttrib   = (fstat.st_mode & S_IFDIR) ? IS_DIR : IS_FILE;
 			(*dir)[i].fp = 0;
+			(*dir)[i].meta = 0;
 			if((*dir)[i].fileAttrib == IS_FILE) {
 				get_frag_list((*dir)[i].name);
 				u32 file_base = frag_list->num > 1 ? -1 : frag_list->frag[0].sector;
@@ -188,11 +189,23 @@ int deviceHandler_WKF_init(file_handle* file){
 	DrawMessageBox(D_INFO,"Init Wiikey Fusion");
 	DrawFrameFinish();
 	int ret = fatMountSimple ("wkf", wkf) ? 1 : 0;
-	if(ret)
-		statvfs("wkf", &buf);
+	initial_WKF_info.freeSpaceInKB = initial_WKF_info.totalSpaceInKB = 0;	
+	if(ret) {
+		memset(&buf, 0, sizeof(statvfs));
+		DrawFrameStart();
+		DrawMessageBox(D_INFO,"Reading filesystem info for wkf:/");
+		DrawFrameFinish();
+		
+		if(!statvfs("wkf:/", &buf)) {
+			initial_WKF_info.freeSpaceInKB = (u32)((uint64_t)(buf.f_bsize*buf.f_bfree)/1024);
+			initial_WKF_info.totalSpaceInKB = (u32)((uint64_t)(buf.f_bsize*buf.f_blocks)/1024);		
+		}
+		if(initial_WKF_info.totalSpaceInKB < initial_WKF_info.freeSpaceInKB) {
+			initial_WKF_info.freeSpaceInKB = initial_WKF_info.totalSpaceInKB = 0;
+		}
+		
+	}
 
-	initial_WKF_info.freeSpaceInKB = ret ? (u32)((uint64_t)(buf.f_bsize*buf.f_bfree)/1024):0;
-	initial_WKF_info.totalSpaceInKB = ret ? (u32)((uint64_t)(buf.f_bsize*buf.f_blocks)/1024):0;
 	return ret;
 }
 

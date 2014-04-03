@@ -90,17 +90,14 @@ void readDeviceInfo(file_handle* file) {
 		DrawFrameFinish();
 		
 		sprintf(txtbuffer, "%s%s:/",isSDCard ? "sd":"ide", slot ? "b":"a");
-		statvfs(txtbuffer, &buf);
-		initial_FAT_info.freeSpaceInKB = (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_bfree)/1024LL);
-		initial_FAT_info.totalSpaceInKB =(u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_blocks)/1024LL);
+		int res = statvfs(txtbuffer, &buf);
+		initial_FAT_info.freeSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_bfree)/1024LL):0;
+		initial_FAT_info.totalSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_blocks)/1024LL):0;
 	}
 }
 	
 int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
-	if(!deviceHandler_getStatEnabled()) {
-		deviceHandler_setStatEnabled(1);
-		readDeviceInfo(ffile);
-	}
+
 	DIR* dp = opendir( ffile->name );
 	if(!dp) return -1;
 	struct dirent *entry;
@@ -135,6 +132,7 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, unsigned in
 			(*dir)[i].fileAttrib   = (fstat.st_mode & S_IFDIR) ? IS_DIR : IS_FILE;
 			(*dir)[i].fp = 0;
 			(*dir)[i].fileBase = 0;
+			(*dir)[i].meta = 0;
 			++i;
 		}
 	}

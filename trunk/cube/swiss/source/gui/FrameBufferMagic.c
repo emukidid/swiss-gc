@@ -60,11 +60,6 @@
 
 #define GUI_MSGBOX_ALPHA 200
 
-// Banner is 96 cols * 32 lines in RGB5A3 fmt
-#define BannerSize (96*32*2)
-GXTexObj bannerTexObj;
-u8 *bannerData;
-
 TPLFile backdropTPL;
 GXTexObj backdropTexObj;
 TPLFile gcdvdsmallTPL;
@@ -104,11 +99,6 @@ GXTexObj boxouterTexObj;
 
 void init_textures() 
 {
-	bannerData = memalign(32,BannerSize);
-	memset(bannerData,0,BannerSize);
-	DCFlushRange(bannerData,BannerSize);
-	GX_InitTexObj(&bannerTexObj,bannerData,96,32,GX_TF_RGB5A3,GX_CLAMP,GX_CLAMP,GX_FALSE);
-
 	TPL_OpenTPLFromMemory(&backdropTPL, (void *)backdrop_tpl, backdrop_tpl_size);
 	TPL_GetTexture(&backdropTPL,backdrop,&backdropTexObj);
 	TPL_OpenTPLFromMemory(&gcdvdsmallTPL, (void *)gcdvdsmall_tpl, gcdvdsmall_tpl_size);
@@ -252,9 +242,6 @@ void DrawImage(int textureId, int x, int y, int width, int height, int depth, fl
 	case TEX_BACKDROP:
 		GX_LoadTexObj(&backdropTexObj, GX_TEXMAP0);
 		break;
-	case TEX_BANNER:
-		GX_LoadTexObj(&bannerTexObj, GX_TEXMAP0);
-		break;
 	case TEX_GCDVDSMALL:
 		GX_LoadTexObj(&gcdvdsmallTexObj, GX_TEXMAP0);
 		break;
@@ -306,6 +293,30 @@ void DrawImage(int textureId, int x, int y, int width, int height, int depth, fl
 	{
 		x = (int) x - width/2;
 	}
+	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+		GX_Position3f32((float) x,(float) y,(float) depth );
+		GX_Color4u8(255, 255, 255, 255);
+		GX_TexCoord2f32(s1,t1);
+		GX_Position3f32((float) (x+width),(float) y,(float) depth );
+		GX_Color4u8(255, 255, 255, 255);
+		GX_TexCoord2f32(s2,t1);
+		GX_Position3f32((float) (x+width),(float) (y+height),(float) depth );
+		GX_Color4u8(255, 255, 255, 255);
+		GX_TexCoord2f32(s2,t2);
+		GX_Position3f32((float) x,(float) (y+height),(float) depth );
+		GX_Color4u8(255, 255, 255, 255);
+		GX_TexCoord2f32(s1,t2);
+	GX_End();
+}
+
+void DrawTexObj(GXTexObj *texObj, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered)
+{
+	drawInit();
+	GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
+	GX_InvalidateTexAll();
+	GX_LoadTexObj(texObj, GX_TEXMAP0);
+	if(centered)
+		x = (int) x - width/2;
 	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 		GX_Position3f32((float) x,(float) y,(float) depth );
 		GX_Color4u8(255, 255, 255, 255);
@@ -434,21 +445,26 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 	color = (color == -1) ? BUTTON_COLOUR_INNER : color; //never used
 
 	borderSize = (mode==B_SELECTED) ? 6 : 4;
-	float scale = GetTextScaleToFitInWidth(message, (x2-x1)-(borderSize*2));
+	float scale = GetTextScaleToFitInWidth(message, (x2-x1-96)-(borderSize*2));
 
-	GXColor selectColor = (GXColor) {96,107,164,GUI_MSGBOX_ALPHA}; 	//bluish
+	GXColor selectColor = (GXColor) {86,97,154,GUI_MSGBOX_ALPHA}; 	//bluish
 	GXColor noColor 	= (GXColor) {0,0,0,0}; 						//black
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA};	//silver
-	
+
 	//Draw Text and backfill (if selected)
 	if(mode==B_SELECTED) {
 		DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, selectColor, borderColor);
-		WriteFontStyled(x1 + borderSize+3, y1+borderSize, message, scale, false, defaultColor);
 	}
 	else {
 		DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, noColor, borderColor);
-		WriteFontStyled(x1 + borderSize+3, y1+borderSize, message, scale, false, defaultColor);
 	}
+	// Draw banner if there is one
+	if(file->meta && file->meta->banner) {
+		DrawTexObj(&file->meta->bannerTexObj, x1+5, y1+3, 96, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	}
+	WriteFontStyled(x1 + borderSize+3+96, y1+borderSize, message, scale, false, defaultColor);
+	
+	// Print specific stats
 	if(file->fileAttrib==IS_FILE) {
 		if(curDevice == WODE) {
 			sprintf(txtbuffer,"Partition: %i, ISO: %i", (int)(file->fileBase>>24)&0xFF,(int)(file->fileBase&0xFFFFFF));

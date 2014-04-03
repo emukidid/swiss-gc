@@ -221,36 +221,34 @@ void drawCurrentDevice() {
 	if(slot != -1)
 		WriteFontStyled(50, 160, slot?"SLOT B":"SLOT A", 0.65f, false, defaultColor);
 
-	if((curDevice == SD_CARD)||(curDevice == IDEEXI)||(curDevice == WKF)||(curDevice == QOOB_FLASH)||(curDevice == MEMCARD)) {
-		DrawTransparentBox(30, 200, 135, 305);	// Device size/extra info box
-		WriteFontStyled(30, 200, "Total:", 0.6f, false, defaultColor);
-		if(info->totalSpaceInKB < 1024)	// < 1 MB
-			sprintf(txtbuffer,"%iKB", info->totalSpaceInKB);
-		if(info->totalSpaceInKB < 1024*1024)	// < 1 GB
-			sprintf(txtbuffer,"%.2fMB", (float)info->totalSpaceInKB/1024);
-		else
-			sprintf(txtbuffer,"%.2fGB", (float)info->totalSpaceInKB/(1024*1024));
-		WriteFontStyled(60, 215, txtbuffer, 0.6f, false, defaultColor);
-		
-		WriteFontStyled(30, 235, "Free:", 0.6f, false, defaultColor);
-		if(info->freeSpaceInKB < 1024)	// < 1 MB
-			sprintf(txtbuffer,"%iKB", info->freeSpaceInKB);
-		if(info->freeSpaceInKB < 1024*1024)	// < 1 GB
-			sprintf(txtbuffer,"%.2fMB", (float)info->freeSpaceInKB/1024);
-		else
-			sprintf(txtbuffer,"%.2fGB", (float)info->freeSpaceInKB/(1024*1024));
-		WriteFontStyled(60, 250, txtbuffer, 0.6f, false, defaultColor);
-		
-		WriteFontStyled(30, 270, "Used:", 0.6f, false, defaultColor);
-		u32 usedSpaceInKB = (info->totalSpaceInKB)-(info->freeSpaceInKB);
-		if(usedSpaceInKB < 1024)	// < 1 MB
-			sprintf(txtbuffer,"%iKB", usedSpaceInKB);
-		if(usedSpaceInKB < 1024*1024)	// < 1 GB
-			sprintf(txtbuffer,"%.2fMB", (float)usedSpaceInKB/1024);
-		else
-			sprintf(txtbuffer,"%.2fGB", (float)usedSpaceInKB/(1024*1024));
-		WriteFontStyled(60, 285, txtbuffer, 0.6f, false, defaultColor);
-	}
+	DrawTransparentBox(30, 200, 135, 305);	// Device size/extra info box
+	WriteFontStyled(30, 200, "Total:", 0.6f, false, defaultColor);
+	if(info->totalSpaceInKB < 1024)	// < 1 MB
+		sprintf(txtbuffer,"%iKB", info->totalSpaceInKB);
+	if(info->totalSpaceInKB < 1024*1024)	// < 1 GB
+		sprintf(txtbuffer,"%.2fMB", (float)info->totalSpaceInKB/1024);
+	else
+		sprintf(txtbuffer,"%.2fGB", (float)info->totalSpaceInKB/(1024*1024));
+	WriteFontStyled(60, 215, txtbuffer, 0.6f, false, defaultColor);
+	
+	WriteFontStyled(30, 235, "Free:", 0.6f, false, defaultColor);
+	if(info->freeSpaceInKB < 1024)	// < 1 MB
+		sprintf(txtbuffer,"%iKB", info->freeSpaceInKB);
+	if(info->freeSpaceInKB < 1024*1024)	// < 1 GB
+		sprintf(txtbuffer,"%.2fMB", (float)info->freeSpaceInKB/1024);
+	else
+		sprintf(txtbuffer,"%.2fGB", (float)info->freeSpaceInKB/(1024*1024));
+	WriteFontStyled(60, 250, txtbuffer, 0.6f, false, defaultColor);
+	
+	WriteFontStyled(30, 270, "Used:", 0.6f, false, defaultColor);
+	u32 usedSpaceInKB = (info->totalSpaceInKB)-(info->freeSpaceInKB);
+	if(usedSpaceInKB < 1024)	// < 1 MB
+		sprintf(txtbuffer,"%iKB", usedSpaceInKB);
+	if(usedSpaceInKB < 1024*1024)	// < 1 GB
+		sprintf(txtbuffer,"%.2fMB", (float)usedSpaceInKB/1024);
+	else
+		sprintf(txtbuffer,"%.2fGB", (float)usedSpaceInKB/(1024*1024));
+	WriteFontStyled(60, 285, txtbuffer, 0.6f, false, defaultColor);
 }
 
 // Draws all the files in the current dir.
@@ -261,6 +259,7 @@ void drawFiles(file_handle** directory, int num_files) {
 	doBackdrop();
 	drawCurrentDevice();
 	for(j = 0; i<max; ++i,++j) {
+		populate_meta(&((*directory)[i]));
 		DrawFileBrowserButton(150,90+(j*40), vmode->fbWidth-30, 90+(j*40)+40, getRelativeName((*directory)[i].name),&((*directory)[i]), (i == curSelection) ? B_SELECTED:B_NOSELECT,-1);
 	}
 	DrawFrameFinish();
@@ -1247,37 +1246,12 @@ void save_config(ConfigEntry *config) {
 void draw_game_info() {
 	DrawFrameStart();
 	DrawEmptyBox(75,120, vmode->fbWidth-78, 400, COLOR_BLACK);
-	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
-		u32 bannerOffset = showBanner(215, 240, 2);  //Convert & display game banner
-		if(bannerOffset) {
-			char description[128];
-			char bnrType[8];
-			// If this is a BNR2 banner, show the proper description for the language the console is set to
-			deviceHandler_seekFile(&curFile,bannerOffset,DEVICE_HANDLER_SEEK_SET);
-			deviceHandler_readFile(&curFile,&bnrType[0],4);
-			if(!strncmp(bnrType, "BNR2", 4)) {
-				deviceHandler_seekFile(&curFile,bannerOffset+(0x18e0+(swissSettings.sramLanguage*0x0140)),DEVICE_HANDLER_SEEK_SET);
-			}
-			else {
-				deviceHandler_seekFile(&curFile,bannerOffset+0x18e0,DEVICE_HANDLER_SEEK_SET);
-			}
-			if(deviceHandler_readFile(&curFile,&description[0],0x80)==0x80) {
-				char * tok = strtok (&description[0],"\n");
-				int line = 0;
-				while (tok != NULL)	{
-					float scale = GetTextScaleToFitInWidth(tok,(vmode->fbWidth-78)-75);
-					WriteFontStyled(640/2, 315+(line*scale*24), tok, scale, true, defaultColor);
-					tok = strtok (NULL, "\n");
-					line++;
-				}
-			}
-		}
-	}
+
 	sprintf(txtbuffer,"%s",(GCMDisk.DVDMagicWord != DVD_MAGIC)?getRelativeName(&curFile.name[0]):GCMDisk.GameName);
 	float scale = GetTextScaleToFitInWidth(txtbuffer,(vmode->fbWidth-78)-75);
 	WriteFontStyled(640/2, 130, txtbuffer, scale, true, defaultColor);
 
-	if((curDevice==SD_CARD)||(curDevice == IDEEXI) ||(curDevice == WKF) ||((curDevice == DVD_DISC) && (dvdDiscTypeInt==ISO9660_DISC))) {
+	if((curDevice==SD_CARD)||(curDevice == IDEEXI) ||(curDevice == WKF) ||(curDevice == DVD_DISC)) {
 		sprintf(txtbuffer,"Size: %.2fMB", (float)curFile.size/1024/1024);
 		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
 		if((curDevice==SD_CARD)||(curDevice == IDEEXI) ||(curDevice == WKF)) {
@@ -1288,10 +1262,18 @@ void draw_game_info() {
 				sprintf(txtbuffer,"File base sector 0x%08X", frag_list->frag[0].sector);
 			WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
 		}
-	}
-	else if(curDevice == DVD_DISC)  {
-		sprintf(txtbuffer,"%s DVD disc", dvdDiscTypeStr);
-		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
+		if(curFile.meta) {
+			if(curFile.meta->banner)
+				DrawTexObj(&curFile.meta->bannerTexObj, 215, 240, 192, 64, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+			char * tok = strtok (&curFile.meta->description[0],"\n");
+			int line = 0;
+			while (tok != NULL)	{
+				float scale = GetTextScaleToFitInWidth(tok,(vmode->fbWidth-78)-75);
+				WriteFontStyled(640/2, 315+(line*scale*24), tok, scale, true, defaultColor);
+				tok = strtok (NULL, "\n");
+				line++;
+			}
+		}
 	}
 	else if(curDevice == QOOB_FLASH) {
 		sprintf(txtbuffer,"Size: %.2fKb (%i blocks)", (float)curFile.size/1024, curFile.size/0x10000);
@@ -1522,7 +1504,7 @@ void select_device()
 				WriteFontStyled(vmode->fbWidth-120, 345, "(X) Advanced", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
 			}
 			else if(curDevice==WKF) {
-				DrawImage(TEX_WIIKEY, 640/2, 230, 200, 75, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+				DrawImage(TEX_WIIKEY, 640/2, 230, 102, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "Wiikey / Wasp Fusion", 0.85f, true, defaultColor);
 			}
 			else if(curDevice==USBGECKO) {

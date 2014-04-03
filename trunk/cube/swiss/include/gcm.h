@@ -44,5 +44,6 @@ typedef struct {
 int parse_gcm(file_handle *file, ExecutableFile *filesToPatch);
 int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base);
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, int multiDol);
-int read_fst(file_handle *file, file_handle** dir);
+int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace);
+unsigned int getBannerOffset(file_handle *f);
 #endif

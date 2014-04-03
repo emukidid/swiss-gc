@@ -12,7 +12,7 @@
 #include "drivecodes.h"
 
 /* Simple DVD functions */
-int is_unicode,files;
+int is_unicode,files,isXenoGC = 0;
 static int last_current_dir = -1;
 u32 inquiryBuf[2048] __attribute__((aligned(32)));
 file_entries *DVDToc = NULL; //Dynamically allocate this
@@ -89,13 +89,30 @@ void dvd_motor_off()
 
 void dvd_set_offset(u64 offset)
 {
-	dvd[0] = 0x2E;
-	dvd[1] = 0;
-	dvd[2] = (is_gamecube())?(0x32000000):(0xD9000000);
-	dvd[3] = ((offset>>2)&0xFFFFFFFF);
-	dvd[4] = 0;
-	dvd[7] = 1;
-	while (dvd[7] & 1);
+	if(is_gamecube() && isXenoGC) {
+		print_gecko("XenoGC offset set\r\n");
+		dvd[0] = 0x2e;
+		dvd[1] = 0;
+		dvd[2] = 0x28000000;
+		dvd[3] = (u32)((offset>>2)&0xFFFFFFFF);
+		dvd[4] = 0;
+		dvd[5] = 0;
+		dvd[6] = 0;
+		dvd[7] = 1;
+		
+		while (dvd[7] & 1);
+		sleep(1);
+		dvd_read_id();
+	}
+	else {
+		dvd[0] = 0x2E;
+		dvd[1] = 0;
+		dvd[2] = (is_gamecube())?(0x32000000):(0xD9000000);
+		dvd[3] = ((offset>>2)&0xFFFFFFFF);
+		dvd[4] = 0;
+		dvd[7] = 1;
+		while (dvd[7] & 1);
+	}
 }
 
 int dvd_seek(int offset)

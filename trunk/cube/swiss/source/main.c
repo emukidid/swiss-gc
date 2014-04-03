@@ -262,9 +262,24 @@ void main_loop()
 		// If the user selected a device, make sure it's ready before we browse the filesystem
 		deviceHandler_deinit( deviceHandler_initial );
 		if(!deviceHandler_init( deviceHandler_initial )) {
-			print_gecko("Device Failed to initialize!\r\n",files);
-			needsDeviceChange = 1;
-			return;
+			print_gecko("Device Failed to initialize!\r\n");
+			
+			// Try the alternate slot for SDGecko or IDE-EXI
+			if((deviceHandler_initial->name[0] == 's')||(deviceHandler_initial->name[0] == 'i')) {
+				print_gecko("Changing slot\r\n");
+				if(deviceHandler_initial->name[0] == 's')
+					deviceHandler_initial = (deviceHandler_initial == &initial_SD0) ?
+											&initial_SD1:&initial_SD0;
+				else
+					deviceHandler_initial = (deviceHandler_initial == &initial_IDE0) ?
+											&initial_IDE1:&initial_IDE0;
+				memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
+			}
+			print_gecko("Trying again ...\r\n");
+			if(!deviceHandler_init( deviceHandler_initial )) {
+				needsDeviceChange = 1;
+				return;
+			}
 		}
 		if(curDevice==SD_CARD && !swissSettings.defaultDevice) { 
 			load_config();
@@ -277,6 +292,18 @@ void main_loop()
 	while(1) {
 		if(deviceHandler_initial && needsRefresh) {
 			curMenuLocation=ON_OPTIONS;
+			int i;
+			for(i = 0; i < files; i++) {
+				if(allFiles[i].meta) {
+					if(allFiles[i].meta->banner) {
+						free(allFiles[i].meta->banner);
+						allFiles[i].meta->banner = NULL;
+					}
+					memset(allFiles[i].meta, 0, sizeof(file_meta));
+					free(allFiles[i].meta);
+					allFiles[i].meta = NULL;
+				}
+			}
 			curSelection=0; files=0; curMenuSelection=0;
 			// Read the directory/device TOC
 			if(allFiles){ free(allFiles); allFiles = NULL; }
@@ -425,8 +452,10 @@ int main ()
 					select_device();
 					// Setup curFile and load it
 					memset(&curFile, 0, sizeof(file_handle));
+					strcpy(&curFile.name[0], "game.gcm");
 					curFile.size = DISC_SIZE;
 					curFile.fileAttrib = IS_FILE;
+					populate_meta(&curFile);
 					load_file();
 					swissSettings.defaultDevice = 0;
 					deviceHandler_initial = NULL;
