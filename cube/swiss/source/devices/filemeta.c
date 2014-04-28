@@ -20,10 +20,27 @@
 #include "deviceHandler.h"
 #include "mp3img_tpl.h"
 #include "dolimg_tpl.h"
+#include "dirimg_tpl.h"
+#include "fileimg_tpl.h"
 
 
 // Banner is 96 cols * 32 lines in RGB5A3 fmt
 #define BannerSize (96*32*2)
+
+
+file_meta* create_basic_meta(const u8* img, const u32 img_size) {
+	file_meta* _meta = (file_meta*)memalign(32,sizeof(file_meta));
+	memset(_meta, 0, sizeof(file_meta));
+	TPLFile *tplFile = (TPLFile*) memalign(32,sizeof(TPLFile));
+	memset(tplFile,0,sizeof(TPLFile));				
+	_meta->banner = memalign(32,img_size);
+	memcpy(_meta->banner,(void *)img, img_size);
+	DCFlushRange(_meta->banner, img_size);
+	TPL_OpenTPLFromMemory(tplFile, (void *)_meta->banner, img_size);
+	TPL_GetTexture(tplFile,0,&_meta->bannerTexObj);
+	free(tplFile);
+	return _meta;
+}
 
 void populate_meta(file_handle *f) {
 	// If the meta hasn't been created, lets read it.
@@ -82,36 +99,18 @@ void populate_meta(file_handle *f) {
 				if(header) free(header);
 			}
 			else if((strstr(f->name,".MP3")!=NULL) || (strstr(f->name,".mp3")!=NULL)) {	//MP3
-				f->meta = (file_meta*)memalign(32,sizeof(file_meta));
-				memset(f->meta, 0, sizeof(file_meta));
-				TPLFile *tplFile = (TPLFile*) memalign(32,sizeof(TPLFile));
-				memset(tplFile,0,sizeof(TPLFile));				
-				f->meta->banner = memalign(32,mp3img_tpl_size);
-				memcpy(f->meta->banner,(void *)mp3img_tpl, mp3img_tpl_size);
-				DCFlushRange(f->meta->banner, mp3img_tpl_size);
-				TPL_OpenTPLFromMemory(tplFile, (void *)f->meta->banner, mp3img_tpl_size);
-				TPL_GetTexture(tplFile,0,&f->meta->bannerTexObj);
-				free(tplFile);
+				f->meta = create_basic_meta(mp3img_tpl, mp3img_tpl_size);
 			}
 			else if((strstr(f->name,".DOL")!=NULL) || (strstr(f->name,".dol")!=NULL)) {	//DOL
-				f->meta = (file_meta*)memalign(32,sizeof(file_meta));
-				memset(f->meta, 0, sizeof(file_meta));
-				TPLFile *tplFile = (TPLFile*) memalign(32,sizeof(TPLFile));
-				memset(tplFile,0,sizeof(TPLFile));				
-				f->meta->banner = memalign(32,dolimg_tpl_size);
-				memcpy(f->meta->banner,(void *)dolimg_tpl, dolimg_tpl_size);
-				DCFlushRange(f->meta->banner, dolimg_tpl_size);
-				TPL_OpenTPLFromMemory(tplFile, (void *)f->meta->banner, dolimg_tpl_size);
-				TPL_GetTexture(tplFile,0,&f->meta->bannerTexObj);
-				free(tplFile);
+				f->meta = create_basic_meta(dolimg_tpl, dolimg_tpl_size);
 			}
 			else {
-				//Unknown, no meta.
-				if(f->meta) {
-					free(f->meta);
-					f->meta = 0;
-				}
+				f->meta = create_basic_meta(fileimg_tpl, fileimg_tpl_size);
 			}
+		}
+		else if (f->fileAttrib == IS_DIR) {
+			f->meta = create_basic_meta(dirimg_tpl, dirimg_tpl_size);
 		}
 	}
 }
+
