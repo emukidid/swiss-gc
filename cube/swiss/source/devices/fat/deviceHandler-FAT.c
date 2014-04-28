@@ -146,10 +146,7 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, unsigned in
 	    SDHCCard = sdgecko_getAddressingType(slot);
 	    // set the page size to 512 bytes
 	    if(sdgecko_setPageSize(slot, 512)!=0) {
-	      DrawFrameStart();
-	      DrawMessageBox(D_WARN,"Failed to set the page size");
-	      DrawFrameFinish();
-	      sleep(2);
+	      return -1;
 	    }
 	}
 	
