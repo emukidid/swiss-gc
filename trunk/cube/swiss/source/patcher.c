@@ -1001,7 +1001,7 @@ int Patch_DVDAudioStreaming(u8 *data, u32 length) {
 		FuncPattern fp;
 		make_pattern( (u8*)(data+i), length, &fp );
 			
-		for( j=0; j < sizeof(DVDAudioSigs); j++ )
+		for( j=0; j < sizeof(DVDAudioSigs)/sizeof(FuncPattern); j++ )
 		{
 			if( !DVDAudioSigs[j].offsetFoundAt && compare_pattern( &fp, &(DVDAudioSigs[j]) ) )	{
 				print_gecko("Found:[%s] @ 0x%08X len %i\n", DVDAudioSigs[j].Name, (u32)data + i, DVDAudioSigs[j].Length);
@@ -1314,7 +1314,7 @@ int Patch_CARDFunctions(u8 *data, u32 length) {
 		FuncPattern fp;
 		make_pattern( (u8*)(data+i), length, &fp );
 			
-		for( j=0; j < sizeof(CPatterns); j++ )
+		for( j=0; j < sizeof(CPatterns)/sizeof(FuncPattern); j++ )
 		{
 			if( !CPatterns[j].offsetFoundAt && compare_pattern( &fp, &(CPatterns[j]) ) )	{
 				if( CPatterns[j].Patch == CARDFreeBlocks ) {
