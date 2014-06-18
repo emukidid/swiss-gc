@@ -281,8 +281,8 @@ int deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, unsigned in
 		//Read in the whole table of offsets
 		tmpTable = (unsigned int*)memalign(32,MAX_MULTIGAME*4);
 		tmpName = (char*)memalign(32,512);
-		memset(tmpTable,0,sizeof(tmpTable));
-		memset(tmpName,0,sizeof(tmpName));
+		memset(tmpTable,0,MAX_MULTIGAME*4);
+		memset(tmpName,0,512);
 		DVD_Read(&tmpTable[0],MULTIGAME_TABLE_OFFSET,MAX_MULTIGAME*4);
 
 		// count entries
