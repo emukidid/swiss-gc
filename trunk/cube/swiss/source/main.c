@@ -385,8 +385,8 @@ int main ()
 	swissSettings.uiVMode = 0; 		// Auto UI mode
 	config_copy_swiss_settings(&swissSettings);
 	// Start up the BBA if it exists
-	init_network_thread();
-	init_httpd_thread();
+	//init_network_thread();
+	//init_httpd_thread();
 
 	//debugging stuff
 	if(swissSettings.debugUSB) {
