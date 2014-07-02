@@ -262,23 +262,25 @@ void main_loop()
 		// If the user selected a device, make sure it's ready before we browse the filesystem
 		deviceHandler_deinit( deviceHandler_initial );
 		if(!deviceHandler_init( deviceHandler_initial )) {
-			print_gecko("Device Failed to initialize!\r\n");
-			
-			// Try the alternate slot for SDGecko or IDE-EXI
-			if((deviceHandler_initial->name[0] == 's')||(deviceHandler_initial->name[0] == 'i')) {
-				print_gecko("Changing slot\r\n");
-				if(deviceHandler_initial->name[0] == 's')
-					deviceHandler_initial = (deviceHandler_initial == &initial_SD0) ?
-											&initial_SD1:&initial_SD0;
-				else
-					deviceHandler_initial = (deviceHandler_initial == &initial_IDE0) ?
-											&initial_IDE1:&initial_IDE0;
-				memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
-			}
-			print_gecko("Trying again ...\r\n");
-			if(!deviceHandler_init( deviceHandler_initial )) {
-				needsDeviceChange = 1;
-				return;
+			print_gecko("Device Failed to initialize!\r\nTrying again once ...\r\n");
+			if(!deviceHandler_init(deviceHandler_initial)) {
+				
+				// Try the alternate slot for SDGecko or IDE-EXI
+				if((deviceHandler_initial->name[0] == 's')||(deviceHandler_initial->name[0] == 'i')) {
+					print_gecko("Changing slot\r\n");
+					if(deviceHandler_initial->name[0] == 's')
+						deviceHandler_initial = (deviceHandler_initial == &initial_SD0) ?
+												&initial_SD1:&initial_SD0;
+					else
+						deviceHandler_initial = (deviceHandler_initial == &initial_IDE0) ?
+												&initial_IDE1:&initial_IDE0;
+					memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
+				}
+				print_gecko("Trying alternate slot ...\r\n");
+				if(!deviceHandler_init( deviceHandler_initial )) {
+					needsDeviceChange = 1;
+					return;
+				}
 			}
 		}
 		if(curDevice==SD_CARD && !swissSettings.defaultDevice) { 
