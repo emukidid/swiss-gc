@@ -132,6 +132,7 @@ extern u32 CARDWriteAsync_length;
 #define HANDLE_CARD		 		(LO_RESERVE | 0x0C)
 #define CALC_SPEED		 		(LO_RESERVE | 0x10)
 #define READ_IMMED_OFFSET 		(LO_RESERVE | 0x14)
+#define ENABLE_BACKUP_DISC 		(LO_RESERVE | 0x18)
 
 #define READ_PATCHED_ALL 		(0x111111)
 

@@ -40,7 +40,7 @@ static int dvd_init = 0;
 static int toc_read = 0;
 char *dvdDiscTypeStr = NotInitStr;
 int dvdDiscTypeInt = 0;
-int drive_status = 0;
+int drive_status = NORMAL_MODE;
 int wkfDetected = 0;
 
 char *dvd_error_str()
@@ -154,8 +154,10 @@ int initialize_disc(u32 streaming) {
 			DrawProgressBar(75, "Possible DVD Backup - Enabling Patches");
 			DrawFrameFinish();
 			dvd_enable_patches();
-			if(!dvd_get_error())
+			if(!dvd_get_error()) {
 				patched=DEBUG_MODE;
+				drive_status = DEBUG_MODE;
+			}
 		}
 		else if((dvd_get_error()>>24) == 1) {  // Lid is open, tell the user!
 			DrawFrameStart();

@@ -9,6 +9,7 @@
 */
 
 #ifdef _LANGUAGE_ASSEMBLY
+#include "asm.h"
 .set VAR_AREA,			0x8000
 .set VAR_PATCHES_BASE,	0x2E00	# Patches get copied to below this area.
 .set VAR_FRAG_SIZE,		0xE0	# Size of frag array in bytes
