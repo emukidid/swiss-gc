@@ -361,8 +361,8 @@ int deviceHandler_DVD_seekFile(file_handle* file, unsigned int where, unsigned i
 }
 
 int deviceHandler_DVD_readFile(file_handle* file, void* buffer, unsigned int length){
-	print_gecko("read: status:%08X dst:%08X ofs:%08X base:%08X len:%08X\r\n"
-							,file->status,(u32)buffer,file->offset,(u32)((file->fileBase) & 0xFFFFFFFF),length);
+	//print_gecko("read: status:%08X dst:%08X ofs:%08X base:%08X len:%08X\r\n"
+	//						,file->status,(u32)buffer,file->offset,(u32)((file->fileBase) & 0xFFFFFFFF),length);
 	u64 actualOffset = file->fileBase+file->offset;
 
 	if(file->status == OFFSET_SET) {

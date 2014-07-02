@@ -58,45 +58,32 @@ void process_queue(void) {
 	DVDQueuedRead *store = (DVDQueuedRead*)(VAR_READ_DVDSTRUCT);
 	if(store->len) {
 		// read a bit
-		int amountToRead;
+		int amountToRead = 0;
 		// Assume 32KHz, ~128 bytes @ 32KHz is going to play for 1000us
 		int dmaBytesLeft = (((*(volatile u16*)0xCC00503A) & 0x7FFF)<<5);
 
 		int usecToPlay = ((dmaBytesLeft >> SAMPLE_SIZE_32KHZ_1MS_SHIFT) << 10) >> 1;
+		u32 amountAllowedToRead;
 		// Is there enough audio playing at least to make up for 1024 bytes to be read?
 		if(usecToPlay > *(u32*)VAR_DEVICE_SPEED) {
 			// Thresholds based on SD speed tests on 5 different cards (EXI limit reached before SPI)
-			u32 amountAllowedToRead = 0;
-			if(usecToPlay>8000)
-				amountAllowedToRead = 16384;
-			else if(usecToPlay>7000)
-				amountAllowedToRead = 14336;
-			else if(usecToPlay>6000)
-				amountAllowedToRead = 12288;
-			else if(usecToPlay>5000)
-				amountAllowedToRead = 10240;
-			else if(usecToPlay>4000)
-				amountAllowedToRead = 8192;
-			else if(usecToPlay>3000)
-				amountAllowedToRead = 6144;
-			else if(usecToPlay>2000)
-				amountAllowedToRead = 4096;
-			else if(usecToPlay>1000)
-				amountAllowedToRead = 2048;
-			else {
-				*(volatile u32*)VAR_INTERRUPT_TIMES += 1;
-				if((*(volatile u32*)VAR_INTERRUPT_TIMES) < 4)
-					return;
-				*(volatile u32*)VAR_INTERRUPT_TIMES = 0;
-				amountAllowedToRead = 1024;
-			}
-			amountToRead = store->len > amountAllowedToRead ? amountAllowedToRead:store->len;
+			amountAllowedToRead = usecToPlay<<1;
 		}
-		else if(dmaBytesLeft != 0)
-			return;	// Tiny slice of audio is playing, don't try to read here.
-		else
-			amountToRead = store->len > 0x2000 ? 0x2000:store->len;	// No audio playing
-
+		if(dmaBytesLeft == 0) {
+			amountAllowedToRead = 8192;
+		}
+		if(dmaBytesLeft != 0 && amountToRead == 0) {
+			*(volatile u32*)VAR_INTERRUPT_TIMES += 1;
+			if((*(volatile u32*)VAR_INTERRUPT_TIMES) < 4)
+				return;
+			*(volatile u32*)VAR_INTERRUPT_TIMES = 0;
+			amountAllowedToRead = 8192;
+		}
+		amountToRead = store->len > amountAllowedToRead ? amountAllowedToRead:store->len;
+		
+		if(amountToRead == 0)
+			return;
+		
 		device_frag_read(store->dst, amountToRead, store->ofs);
 
 		store->dst += amountToRead;
