@@ -12,7 +12,6 @@
 #include "swiss.h"
 #include "main.h"
 #include "patcher.h"
-#include "TDPATCH.H"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "deviceHandler.h"
@@ -94,8 +93,8 @@ int install_code()
 		patch = &sd_bin[0]; patchSize = sd_bin_size;
 	}
 	// DVD 2 disc code
-	else if((deviceHandler_initial == &initial_DVD) && (drive_status == DEBUG_MODE)) {
-		patch = &TDPatch[0]; patchSize = TDPATCH_LEN;
+	else if((deviceHandler_initial == &initial_DVD)) {
+		patch = &sd_bin[0]; patchSize = sd_bin_size;
 	}
 	// USB Gecko
 	else if(deviceHandler_initial == &initial_USBGecko) {
@@ -1026,7 +1025,7 @@ static const u32 _dvdlowreset_org[12] = {
 };
 
 static const u32 _dvdlowreset_new[8] = {
-	0x3FE08000,0x63FF1800,0x7FE803A6,0x4E800021,0x4800006C,0x60000000,0x60000000,0x60000000
+	0x3FE08000,0x63FF0000,0x7FE803A6,0x4E800021,0x4800006C,0x60000000,0x60000000,0x60000000
 };
 	
 void Patch_DVDReset(void *addr,u32 length)
@@ -1043,6 +1042,11 @@ void Patch_DVDReset(void *addr,u32 length)
 
 			ICInvalidateRange(cache_ptr,sizeof(_dvdlowreset_new)*2);
 			memcpy(copy_to,_dvdlowreset_new,sizeof(_dvdlowreset_new));
+			// Adjust the offset of where to jump to
+			u32 *ptr = copy_to;
+			ptr[1] = _dvdlowreset_new[1] | (ENABLE_BACKUP_DISC&0xFFFF);
+			print_gecko("Found:[DVDLowReset] @ 0x%08X\r\n", (u32)ptr);
+			break;
 		}
 		addr_start += 4;
 	}
