@@ -30,6 +30,7 @@
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
 #include "aram/sidestep.h"
+#include "devices/filemeta.h"
 
 #define DEFAULT_FIFO_SIZE    (256*1024)//(64*1024) minimum
 
@@ -242,6 +243,26 @@ void sortFiles(file_handle* dir, int num_files)
 	}
 }
 
+void free_files() {
+	if(allFiles) {
+		int i;
+		for(i = 0; i < files; i++) {
+			if(allFiles[i].meta) {
+				if(allFiles[i].meta->banner) {
+					free(allFiles[i].meta->banner);
+					allFiles[i].meta->banner = NULL;
+				}
+				memset(allFiles[i].meta, 0, sizeof(file_meta));
+				free(allFiles[i].meta);
+				allFiles[i].meta = NULL;
+			}
+		}
+		free(allFiles);
+		allFiles = NULL;
+		files = 0;
+	}
+}
+
 void main_loop()
 { 
 	file_handle curDir;
@@ -249,25 +270,25 @@ void main_loop()
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
 	// We don't care if a subsequent device is "default"
 	if(needsDeviceChange) {
+		free_files();
+		if(deviceHandler_deinit) {
+			deviceHandler_deinit(deviceHandler_initial);
+		}
 		swissSettings.defaultDevice = 0;
 		needsDeviceChange = 0;
 		deviceHandler_initial = NULL;
 		needsRefresh = 1;
+		select_device();
 	}
-
-	select_device();	// Will automatically return if we have defaultDevice = 1
-	needsRefresh = 1;
 	
 	if(deviceHandler_initial) {
 		// If the user selected a device, make sure it's ready before we browse the filesystem
 		deviceHandler_deinit( deviceHandler_initial );
 		if(!deviceHandler_init( deviceHandler_initial )) {
-			print_gecko("Device Failed to initialize!\r\nTrying again once ...\r\n");
-			if(!deviceHandler_init(deviceHandler_initial)) {
-				
+			if((deviceHandler_initial->name[0] == 's')||(deviceHandler_initial->name[0] == 'i')) {
+				print_gecko("SD/IDE-EXI Device Failed to initialize!\r\nTrying again once ...\r\n");
+				if(!deviceHandler_init(deviceHandler_initial)) {				
 				// Try the alternate slot for SDGecko or IDE-EXI
-				if((deviceHandler_initial->name[0] == 's')||(deviceHandler_initial->name[0] == 'i')) {
-					print_gecko("Changing slot\r\n");
 					if(deviceHandler_initial->name[0] == 's')
 						deviceHandler_initial = (deviceHandler_initial == &initial_SD0) ?
 												&initial_SD1:&initial_SD0;
@@ -278,8 +299,12 @@ void main_loop()
 				}
 				print_gecko("Trying alternate slot ...\r\n");
 				if(!deviceHandler_init( deviceHandler_initial )) {
-					needsDeviceChange = 1;
-					return;
+					print_gecko("Alternate slot failed once ... \r\n");
+					if(!deviceHandler_init( deviceHandler_initial )) {
+						print_gecko("Both slots failed twice\r\n");
+						needsDeviceChange = 1;
+						return;
+					}
 				}
 			}
 		}
@@ -294,18 +319,7 @@ void main_loop()
 	while(1) {
 		if(deviceHandler_initial && needsRefresh) {
 			curMenuLocation=ON_OPTIONS;
-			int i;
-			for(i = 0; i < files; i++) {
-				if(allFiles[i].meta) {
-					if(allFiles[i].meta->banner) {
-						free(allFiles[i].meta->banner);
-						allFiles[i].meta->banner = NULL;
-					}
-					memset(allFiles[i].meta, 0, sizeof(file_meta));
-					free(allFiles[i].meta);
-					allFiles[i].meta = NULL;
-				}
-			}
+			free_files();
 			curSelection=0; files=0; curMenuSelection=0;
 			// Read the directory/device TOC
 			if(allFiles){ free(allFiles); allFiles = NULL; }
@@ -314,7 +328,7 @@ void main_loop()
 			memcpy(&curDir, &curFile, sizeof(file_handle));
 			sortFiles(allFiles, files);
 			print_gecko("Found %i entries\r\n",files);
-			if(files<1) { break;}
+			if(files<1) { deviceHandler_deinit(deviceHandler_initial); break;}
 			needsRefresh = 0;
 			curMenuLocation=ON_FILLIST;
 		}
@@ -335,9 +349,7 @@ void main_loop()
 			//handle menu event
 			switch(curMenuSelection) {
 				case 0:		// Device change
-					deviceHandler_initial = NULL;
 					needsDeviceChange = 1;  //Change from SD->DVD or vice versa
-					needsRefresh = 1;
 					break;
 				case 1:		// Settings
 					show_settings(NULL, NULL);
@@ -346,7 +358,7 @@ void main_loop()
 					show_info();
 					break;
 				case 3:
-					memcpy(&curFile, &curDir, sizeof(file_handle));
+					memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
 					needsRefresh=1;
 					break;
 				case 4:
@@ -386,7 +398,10 @@ int main ()
 	swissSettings.exiSpeed = 1;		// 32MHz
 	swissSettings.uiVMode = 0; 		// Auto UI mode
 	config_copy_swiss_settings(&swissSettings);
-	// Start up the BBA if it exists
+	needsDeviceChange = 1;
+	needsRefresh = 1;
+	
+	// Start up the BBA if it exists (commented out until libOGC is fixed)
 	//init_network_thread();
 	//init_httpd_thread();
 
@@ -465,16 +480,12 @@ int main ()
 			}
 		}
 	}
-
+	if(swissSettings.defaultDevice) {
+		needsDeviceChange = 0;
+		select_device(); // to setup deviceHandler_ ptrs
+	}
 	deviceHandler_initial = !swissSettings.defaultDevice ? NULL:deviceHandler_initial;
-	needsRefresh = (swissSettings.defaultDevice != 0);
 	while(1) {
-		if(needsRefresh || needsDeviceChange) {
-			if(allFiles)
-				free(allFiles); 
-			allFiles = NULL;
-			files = 0;
-		}
 		main_loop();
 	}
 	return 0;

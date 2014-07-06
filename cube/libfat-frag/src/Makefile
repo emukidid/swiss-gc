@@ -6,45 +6,49 @@ export TOPDIR	:=	$(CURDIR)
  
 export LIBFAT_MAJOR	:= 1
 export LIBFAT_MINOR	:= 0
-export LIBFAT_PATCH	:= 7
+export LIBFAT_PATCH	:= 12
 
 export VERSTRING	:=	$(LIBFAT_MAJOR).$(LIBFAT_MINOR).$(LIBFAT_PATCH)
 
 
-default: cube-release
+default: release
 
 all: release dist
 
-release: include/libfatversion.h nds-release gba-release cube-release
+release: nds-release gba-release cube-release wii-release
 
-ogc-release: cube-release
+ogc-release: include/libfatversion.h cube-release wii-release
 
-nds-release:
+nds-release: include/libfatversion.h
 	$(MAKE) -C nds BUILD=release
 
-gba-release:
+gba-release: include/libfatversion.h
 	$(MAKE) -C gba BUILD=release
 
-cube-release:
+cube-release: include/libfatversion.h
 	$(MAKE) -C libogc PLATFORM=cube BUILD=cube_release
 
-debug: nds-debug gba-debug cube-debug
+wii-release: include/libfatversion.h
+	$(MAKE) -C libogc PLATFORM=wii BUILD=wii_release
 
-ogc-debug: cube-debug
+debug: nds-debug gba-debug cube-debug wii-debug
 
-nds-debug:
+ogc-debug: cube-debug wii-debug
+
+nds-debug: include/libfatversion.h
 	$(MAKE) -C nds BUILD=debug
 
-gba-debug:
+gba-debug: include/libfatversion.h
 	$(MAKE) -C gba BUILD=debug
 
 
-cube-debug:
-	$(MAKE) -C libogc PLATFORM=cube BUILD=cube_debug
+cube-debug: include/libfatversion.h
+	$(MAKE) -C libogc PLATFORM=cube BUILD=wii_debug
 
+wii-debug: include/libfatversion.h
+	$(MAKE) -C libogc PLATFORM=wii BUILD=cube_debug
 
-#clean: nds-clean gba-clean ogc-clean
-clean: ogc-clean
+clean: nds-clean gba-clean ogc-clean
 
 nds-clean:
 	$(MAKE) -C nds clean
@@ -57,23 +61,23 @@ ogc-clean:
 
 dist-bin: nds-dist-bin gba-dist-bin ogc-dist-bin
 
-nds-dist-bin: nds-release distribute/$(VERSTRING)
+nds-dist-bin: include/libfatversion.h nds-release distribute/$(VERSTRING)
 	$(MAKE) -C nds dist-bin
 
-gba-dist-bin: gba-release distribute/$(VERSTRING)
+gba-dist-bin: include/libfatversion.h gba-release distribute/$(VERSTRING)
 	$(MAKE) -C gba dist-bin
 
-ogc-dist-bin: ogc-release distribute/$(VERSTRING)
+ogc-dist-bin: include/libfatversion.h ogc-release distribute/$(VERSTRING)
 	$(MAKE) -C libogc dist-bin
 
 dist-src: distribute/$(VERSTRING)
 	@tar --exclude=.svn --exclude=*CVS* -cvjf distribute/$(VERSTRING)/libfat-src-$(VERSTRING).tar.bz2 \
 	source include Makefile \
-	nds/Makefile nds/include \
-	gba/Makefile gba/include \
-	libogc/Makefile libogc/include
+	nds/Makefile \
+	gba/Makefile \
+	libogc/Makefile
 
-dist: include/libfatversion.h dist-bin dist-src
+dist: dist-bin dist-src
 
 distribute/$(VERSTRING):
 	@[ -d $@ ] || mkdir -p $@
@@ -90,7 +94,7 @@ include/libfatversion.h : Makefile
 	@echo >> $@
 	@echo "#endif // __LIBFATVERSION_H__" >> $@
 
-# install: nds-install gba-install ogc-install
+install: nds-install gba-install ogc-install
 
 nds-install: nds-release
 	$(MAKE) -C nds install
@@ -98,16 +102,5 @@ nds-install: nds-release
 gba-install: gba-release
 	$(MAKE) -C gba install
 
-ogc-install: cube-release
+ogc-install: cube-release wii-release
 	$(MAKE) -C libogc install
-
-include $(DEVKITPPC)/gamecube_rules
-DKV			:= $(shell $(DEVKITPPC)/bin/$(CC) --version | sed 's/^.*(devkitPPC release \([0-9]*\)).*$$/\1/;q')
-DEST_INC	:=	../include
-DEST_LIB	:=	../lib$(DKV)
-
-install: cube-release
-	mkdir -p $(DEST_LIB) $(DEST_INC)
-	cp libogc/lib/cube/libfat.a $(DEST_LIB)
-	cp include/*.h $(DEST_INC)
-

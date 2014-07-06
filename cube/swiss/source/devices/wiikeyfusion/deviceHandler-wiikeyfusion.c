@@ -210,6 +210,7 @@ int deviceHandler_WKF_init(file_handle* file){
 }
 
 int deviceHandler_WKF_deinit(file_handle* file) {
+	fatUnmount(deviceHandler_initial->name);
 	if(file->fp) {
 		fclose(file->fp);
 		file->fp = 0;

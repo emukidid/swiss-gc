@@ -429,3 +429,13 @@ void _FAT_partition_writeFSinfo(PARTITION * partition)
 	_FAT_disc_writeSectors (partition->disc, partition->fsInfoSector, 1, sectorBuffer);
 	_FAT_mem_free(sectorBuffer);
 }
+
+uint32_t* _FAT_getCwdClusterPtr(const char* name) {
+	PARTITION *partition = _FAT_partition_getPartitionFromPath(name);
+
+	if (!partition) {
+		return NULL;
+	}
+
+	return &partition->cwdCluster;
+}
