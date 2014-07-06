@@ -5,6 +5,10 @@ ifeq ($(strip $(DEVKITPPC)),)
 $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC)
 endif
 
+ifeq ($(PLATFORM),wii)
+include $(DEVKITPPC)/wii_rules
+endif
+
 ifeq ($(PLATFORM),cube)
 include $(DEVKITPPC)/gamecube_rules
 endif
@@ -17,7 +21,7 @@ endif
 # LIBDIR is where the built library will be placed
 # all directories are relative to this makefile
 #---------------------------------------------------------------------------------
-BUILD		?=	cube_release
+BUILD		?=	wii_release
 SOURCES		:=	../source
 INCLUDES	:=	../include
 DATA		:=
@@ -26,7 +30,6 @@ LIBDIR		:=	$(TOPDIR)/libogc/lib
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-#CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE)
 CFLAGS	= -g -Os -Wall $(MACHDEP) $(INCLUDE)
 CXXFLAGS	=	$(CFLAGS)
 
@@ -93,16 +96,19 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr cube_debug cube_release $(LIBDIR)
+	@rm -fr wii_debug wii_release cube_debug cube_release $(LIBDIR) include
 
 all: $(CUBEBIN)
 
 dist-bin:
+	@mkdir -p include
+	@cp $(TOPDIR)/include/fat.h $(TOPDIR)/include/libfatversion.h include
 	@tar --exclude=.svn --exclude=*CVS* -cvjf $(TOPDIR)/distribute/$(VERSTRING)/libfat-ogc-$(VERSTRING).tar.bz2 include lib
 
 install:
-	cp lib/cube/libfat.a $(DEVKITPRO)/libogc/lib/cube
-	cp include/fat.h $(DEVKITPRO)/libogc/include
+	@cp lib/wii/libfat.a $(DEVKITPRO)/libogc/lib/wii
+	@cp lib/cube/libfat.a $(DEVKITPRO)/libogc/lib/cube
+	@cp $(TOPDIR)/include/fat.h $(TOPDIR)/include/libfatversion.h $(DEVKITPRO)/libogc/include
 
 #---------------------------------------------------------------------------------
 else

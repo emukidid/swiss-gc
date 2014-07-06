@@ -566,13 +566,6 @@ bool _FAT_directory_entryFromPath (PARTITION* partition, DIR_ENTRY* entry, const
 		dirCluster = partition->cwdCluster;
 	}
 
-	// If the path is only specifying a directory in the form "."
-	// and this is the root directory, return it
-	if ((dirCluster == partition->rootDirCluster) && (strcmp(".", pathPosition) == 0)) {
-		_FAT_directory_getRootEntry (partition, entry);
-		found = true;
-	}
-
 	while (!found && !notFound) {
 		// Get the name of the next required subdirectory within the path
 		nextPathPosition = strchr (pathPosition, DIR_SEPARATOR);
@@ -587,30 +580,39 @@ bool _FAT_directory_entryFromPath (PARTITION* partition, DIR_ENTRY* entry, const
 			return false;
 		}
 
-		// Look for the directory within the path
-		foundFile = _FAT_directory_getFirstEntry (partition, entry, dirCluster);
+		// Check for "." or ".." when the dirCluster is root cluster
+		// These entries do not exist, so we must fake it
+		if ((dirCluster == partition->rootDirCluster)
+		&&  ((strncmp(".", pathPosition, dirnameLength) == 0)
+		  || (strncmp("..", pathPosition, dirnameLength) == 0))) {
+			foundFile = true;
+			_FAT_directory_getRootEntry(partition, entry);
+		} else {
+			// Look for the directory within the path
+			foundFile = _FAT_directory_getFirstEntry (partition, entry, dirCluster);
 
-		while (foundFile && !found && !notFound) {			// It hasn't already found the file
-			// Check if the filename matches
-			if ((dirnameLength == strnlen(entry->filename, MAX_FILENAME_LENGTH))
-				&& (_FAT_directory_mbsncasecmp(pathPosition, entry->filename, dirnameLength) == 0)) {
-					found = true;
-			}
+			while (foundFile && !found && !notFound) {			// It hasn't already found the file
+				// Check if the filename matches
+				if ((dirnameLength == strnlen(entry->filename, MAX_FILENAME_LENGTH))
+					&& (_FAT_directory_mbsncasecmp(pathPosition, entry->filename, dirnameLength) == 0)) {
+						found = true;
+				}
 
-			// Check if the alias matches
-			_FAT_directory_entryGetAlias (entry->entryData, alias);
-			if ((dirnameLength == strnlen(alias, MAX_ALIAS_LENGTH))
-				&& (strncasecmp(pathPosition, alias, dirnameLength) == 0)) {
-					found = true;
-			}
+				// Check if the alias matches
+				_FAT_directory_entryGetAlias (entry->entryData, alias);
+				if ((dirnameLength == strnlen(alias, MAX_ALIAS_LENGTH))
+					&& (strncasecmp(pathPosition, alias, dirnameLength) == 0)) {
+						found = true;
+				}
 
-			if (found && !(entry->entryData[DIR_ENTRY_attributes] & ATTRIB_DIR) && (nextPathPosition != NULL)) {
-				// Make sure that we aren't trying to follow a file instead of a directory in the path
-				found = false;
-			}
+				if (found && !(entry->entryData[DIR_ENTRY_attributes] & ATTRIB_DIR) && (nextPathPosition != NULL)) {
+					// Make sure that we aren't trying to follow a file instead of a directory in the path
+					found = false;
+				}
 
-			if (!found) {
-				foundFile = _FAT_directory_getNextEntry (partition, entry);
+				if (!found) {
+					foundFile = _FAT_directory_getNextEntry (partition, entry);
+				}
 			}
 		}
 
@@ -623,6 +625,8 @@ bool _FAT_directory_entryFromPath (PARTITION* partition, DIR_ENTRY* entry, const
 			found = true;
 		} else if (entry->entryData[DIR_ENTRY_attributes] & ATTRIB_DIR) {
 			dirCluster = _FAT_directory_entryGetCluster (partition, entry->entryData);
+			if (dirCluster == CLUSTER_ROOT)
+				dirCluster = partition->rootDirCluster;
 			pathPosition = nextPathPosition;
 			// Consume separator(s)
 			while (pathPosition[0] == DIR_SEPARATOR) {
