@@ -439,15 +439,39 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
 	}
 }
 
+int endsWith(char *str, char *end) {
+	if(strlen(str) < strlen(end))
+		return 0;
+	int i;
+	for(i = 0; i < strlen(end); i++)
+		if(str[strlen(str)-i] != end[strlen(end)-i])
+			return 0;
+	return 1;
+}
+
 void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode, u32 color) 
 {
+	char file_name[1024];
 	int borderSize;
+	
 	color = (color == -1) ? BUTTON_COLOUR_INNER : color; //never used
-
+	memset(file_name, 0, 1024);
+	strcpy(&file_name[0], message);
+	
 	borderSize = (mode==B_SELECTED) ? 6 : 4;
-	float scale = GetTextScaleToFitInWidth(message, (x2-x1-96)-(borderSize*2));
+	// Hide extension when rendering ISO/GCM files
+	if(file->fileAttrib == IS_FILE) {
+		if(endsWith(file_name,".gcm") || endsWith(file_name,".GCM") 
+			|| endsWith(file_name,".iso")|| endsWith(file_name,".ISO")
+			|| endsWith(file_name,".dol")|| endsWith(file_name,".DOL")) {
+			if(strlen(file_name) > 4) {
+				file_name[strlen(file_name)-4] = '\0';
+			}
+		}
+	}
+	float scale = GetTextScaleToFitInWidth(file_name, (x2-x1-96)-(borderSize*2));
 
-	GXColor selectColor = (GXColor) {86,97,154,GUI_MSGBOX_ALPHA}; 	//bluish
+	GXColor selectColor = (GXColor) {46,57,104,GUI_MSGBOX_ALPHA}; 	//bluish
 	GXColor noColor 	= (GXColor) {0,0,0,0}; 						//black
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA};	//silver
 
@@ -460,9 +484,9 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 	}
 	// Draw banner if there is one
 	if(file->meta && file->meta->banner) {
-		DrawTexObj(&file->meta->bannerTexObj, x1+5, y1+3, 96, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+		DrawTexObj(&file->meta->bannerTexObj, x1+7, y1+4, 96, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	}
-	WriteFontStyled(x1 + borderSize+3+96, y1+borderSize, message, scale, false, defaultColor);
+	WriteFontStyled(x1 + borderSize+5+96, y1+borderSize, file_name, scale, false, defaultColor);
 	
 	// Print specific stats
 	if(file->fileAttrib==IS_FILE) {
