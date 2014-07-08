@@ -196,14 +196,9 @@ int deviceHandler_WKF_init(file_handle* file){
 		DrawMessageBox(D_INFO,"Reading filesystem info for wkf:/");
 		DrawFrameFinish();
 		
-		if(!statvfs("wkf:/", &buf)) {
-			initial_WKF_info.freeSpaceInKB = (u32)((uint64_t)(buf.f_bsize*buf.f_bfree)/1024);
-			initial_WKF_info.totalSpaceInKB = (u32)((uint64_t)(buf.f_bsize*buf.f_blocks)/1024);		
-		}
-		if(initial_WKF_info.totalSpaceInKB < initial_WKF_info.freeSpaceInKB) {
-			initial_WKF_info.freeSpaceInKB = initial_WKF_info.totalSpaceInKB = 0;
-		}
-		
+		int res = statvfs("wkf:/", &buf);
+		initial_WKF_info.freeSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_bfree)/1024LL):0;
+		initial_WKF_info.totalSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_blocks)/1024LL):0;		
 	}
 
 	return ret;
