@@ -219,7 +219,15 @@ void wkfWriteFlash(unsigned char *menuImg, unsigned char *firmwareImg) {
 	print_gecko("Done!\r\n");
 }
 
-// Not sure what this does.
+/* Returns this:
+	Switch Bits are bits 16-18
+	[001] 0x00410201 //PAL
+	[011] 0x00430201 //USA
+	[101] 0x00450201 //JAPAN
+	[111] 0x00470201 //KOR
+	SW3 ON is bit 19
+	SW4 ON is bit 20
+	Other bits are unknown*/
 unsigned int wkfReadSpecial3() {
 	return __wkfCmdImm(0xDF000000,	0x00030000, 0x00000000);
 }
@@ -241,6 +249,37 @@ void wkfWriteOffset(u32 offset) {
 // Returns SD slot status
 unsigned int wkfGetSlotStatus() {
 	return __wkfCmdImm(0xDF000000, 0x00010000, 0x00000000);
+}
+
+void wkfCheckSwitches() {
+	u32 regionSwitch = (wkfReadSpecial3() >> 16) & 0xFF;
+	switch(regionSwitch) {
+		case 0x41: //PAL
+			print_gecko("Valid PAL Swich config detected\r\n");
+		break;
+		case 0x43: //NTSC
+			print_gecko("Valid NTSC Swich config detected\r\n");
+		break;
+		case 0x45: //NTSC-J
+			print_gecko("Valid JAP Swich config detected\r\n");
+		break;
+		case 0x47: //KOR
+			print_gecko("Valid KOR Swich config detected\r\n");
+		break;
+		default: 
+		{
+			print_gecko("Invalid Swich config detected: [0x%08X]\r\n", wkfReadSpecial3());		
+			DrawFrameStart();
+			WriteFontStyled(640/2, 200, "*** WKF / WASP WARNING ***", 1.5f, true, defaultColor);
+			sprintf(txtbuffer,"Invalid WKF/WASP Switch config detected: [0x%08X]", wkfReadSpecial3());
+			WriteFontStyled(640/2, 250, txtbuffer, 0.75f, true, defaultColor);
+			WriteFontStyled(640/2, 280, "This will cause slowdown in games!", 0.8f, true, defaultColor);
+			WriteFontStyled(640/2, 310, "Please set SW3 & SW4 to ON to fix this", 0.8f, true, defaultColor);
+			DrawFrameFinish();
+			sleep(5);
+		}
+		break;
+	}
 }
 
 void wkfRead(void* dst, int len, u64 offset)
@@ -318,6 +357,7 @@ void wkfInit() {
 			wkfInitialized = 1;
 		}
 	}
+	wkfCheckSwitches();
 }
 
 void wkfReinit() {
