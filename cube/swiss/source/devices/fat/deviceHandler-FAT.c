@@ -358,13 +358,13 @@ int deviceHandler_FAT_init(file_handle* file) {
 }
 
 int deviceHandler_FAT_deinit(file_handle* file) {
-	fatUnmount(deviceHandler_initial->name);
 	initial_FAT_info.freeSpaceInKB = 0;
 	initial_FAT_info.totalSpaceInKB = 0;
 	if(file && file->fp) {
 		fclose(file->fp);
 		file->fp = 0;
 	}
+	fatUnmount(deviceHandler_initial->name);
 	return 0;
 }
 
