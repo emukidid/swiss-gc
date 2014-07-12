@@ -337,8 +337,11 @@ int deviceHandler_CARD_init(file_handle* file){
 }
 
 int deviceHandler_CARD_deinit(file_handle* file) {
-	card_init[file->fileBase] = 0;
-	return CARD_Unmount(file->fileBase>>24);
+	if(file) {
+		card_init[file->fileBase] = 0;
+		CARD_Unmount(file->fileBase>>24);
+	}
+	return 0;
 }
 
 int deviceHandler_CARD_deleteFile(file_handle* file) {
