@@ -359,6 +359,7 @@ void main_loop()
 					break;
 				case 3:
 					memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
+					if(curDevice == WKF) { wkfReinit(); deviceHandler_deinit(deviceHandler_initial);}
 					needsRefresh=1;
 					break;
 				case 4:
