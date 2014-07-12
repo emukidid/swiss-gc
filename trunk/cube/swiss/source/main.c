@@ -278,7 +278,9 @@ void main_loop()
 		needsDeviceChange = 0;
 		deviceHandler_initial = NULL;
 		needsRefresh = 1;
+		curMenuLocation = ON_FILLIST;
 		select_device();
+		curMenuLocation = ON_OPTIONS;
 	}
 	
 	if(deviceHandler_initial) {
@@ -358,8 +360,12 @@ void main_loop()
 					show_info();
 					break;
 				case 3:
-					memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
-					if(curDevice == WKF) { wkfReinit(); deviceHandler_deinit(deviceHandler_initial);}
+					if(deviceHandler_initial) {
+						memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
+						if(curDevice == WKF) { 
+							wkfReinit(); deviceHandler_deinit(deviceHandler_initial);
+						}
+					}
 					needsRefresh=1;
 					break;
 				case 4:
