@@ -188,6 +188,7 @@ int deviceHandler_WKF_init(file_handle* file){
 	DrawFrameStart();
 	DrawMessageBox(D_INFO,"Init Wiikey Fusion");
 	DrawFrameFinish();
+	wkfReinit();
 	int ret = fatMountSimple ("wkf", wkf) ? 1 : 0;
 	initial_WKF_info.freeSpaceInKB = initial_WKF_info.totalSpaceInKB = 0;	
 	if(ret) {
