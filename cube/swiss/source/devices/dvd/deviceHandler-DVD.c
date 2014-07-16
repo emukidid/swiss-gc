@@ -276,7 +276,7 @@ int deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, unsigned in
 	//GCOS or Cobra MultiGame DVD Disc
 	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
 
-		if(ret!=DEBUG_MODE) {
+		if(drive_status == NORMAL_MODE) {
 			// This means we're using a drivechip, so our multigame command will be different.
 			isXenoGC = 1;
 		}

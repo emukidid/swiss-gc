@@ -443,16 +443,6 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
 	}
 }
 
-int endsWith(char *str, char *end) {
-	if(strlen(str) < strlen(end))
-		return 0;
-	int i;
-	for(i = 0; i < strlen(end); i++)
-		if(str[strlen(str)-i] != end[strlen(end)-i])
-			return 0;
-	return 1;
-}
-
 void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode, u32 color) 
 {
 	char file_name[1024];

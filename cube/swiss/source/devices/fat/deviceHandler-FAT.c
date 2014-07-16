@@ -120,7 +120,7 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, unsigned in
 		sprintf(&file_name[0], "%s/%s", ffile->name, entry->d_name);
 		stat(&file_name[0],&fstat);
 		// Do we want this one?
-		if(type == -1 || ((fstat.st_mode & S_IFDIR) ? (type==IS_DIR) : (type==IS_FILE))) {
+		if((type == -1 || ((fstat.st_mode & S_IFDIR) ? (type==IS_DIR) : (type==IS_FILE))) && !endsWith(entry->d_name, ".patches")) {
 			// Make sure we have room for this one
 			if(i == num_entries){
 				++num_entries;
@@ -190,11 +190,6 @@ int deviceHandler_FAT_writeFile(file_handle* file, void* buffer, unsigned int le
 	return bytes_written;
 }
 
-int unlockedDVD = 0;
-void unlockCB() {
-	unlockedDVD = 1;
-}
-
 void print_frag_list() {
 	print_gecko("== Fragments List ==\r\n");
 	u32 *fragList = (u32*)VAR_FRAG_LIST;
@@ -233,7 +228,7 @@ int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 			get_frag_list(&patchFile.name[0]);
 			print_gecko("Found patch file %i ofs 0x%08X len 0x%08X base 0x%08X\r\n", 
 							i, patchInfo[0], patchInfo[1], frag_list->frag[0].sector);
-			deviceHandler_deinit(&patchFile);
+			fclose(patchFile.fp);
 			fragList[patches*3] = patchInfo[0];
 			fragList[(patches*3)+1] = patchInfo[1];
 			fragList[(patches*3)+2] = frag_list->frag[0].sector;
@@ -251,6 +246,7 @@ int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
 	get_frag_list(file->name);
+	print_gecko("Found disc 1 [%s] %i fragments\r\n",file->name, frag_list->num);
 	if(frag_list->num < maxFrags) {
 		for(i = 0; i < frag_list->num; i++) {
 			fragList[patches*3] = frag_list->frag[i].offset*512;
@@ -271,6 +267,7 @@ int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 			return 0;
 		}
 		get_frag_list(file2->name);
+		print_gecko("Found disc 2 [%s] %i fragments\r\n",file2->name, frag_list->num);
 		if(frag_list->num < maxFrags) {
 			for(i = 0; i < frag_list->num; i++) {
 				fragList[(patches*3) + (maxFrags*3)] = frag_list->frag[i].offset*512;
@@ -357,6 +354,18 @@ int deviceHandler_FAT_init(file_handle* file) {
 	return ret;
 }
 
+char *getDeviceMountPath(char *str) {
+	char *path = (char*)memalign(32, 64);
+	memset(path, 0, 64);
+	
+	int i;
+	for(i = 0; i < strlen(str); i++)
+		if(str[i] == '/')
+			break;
+	memcpy(path, str, ++i);
+	return path;
+}
+
 int deviceHandler_FAT_deinit(file_handle* file) {
 	initial_FAT_info.freeSpaceInKB = 0;
 	initial_FAT_info.totalSpaceInKB = 0;
@@ -364,8 +373,12 @@ int deviceHandler_FAT_deinit(file_handle* file) {
 		fclose(file->fp);
 		file->fp = 0;
 	}
-	if(deviceHandler_initial)
-		fatUnmount(deviceHandler_initial->name);
+	if(file) {
+		char *mountPath = getDeviceMountPath(deviceHandler_initial->name);
+		print_gecko("Unmounting [%s]\r\n", mountPath);
+		fatUnmount(mountPath);
+		free(mountPath);
+	}
 	return 0;
 }
 

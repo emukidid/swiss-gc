@@ -128,14 +128,14 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 			memcpy(&filename[0],&FST[string_table_offset+filename_offset],255); 
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
-			if((strstr(filename,".dol")) || (strstr(filename,".DOL"))) {
+			if(endsWith(filename,".dol") || endsWith(filename,".DOL")) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if(((strstr(filename,".elf")) || (strstr(filename,".ELF"))) && size < 12*1024*1024) {
+			if((endsWith(filename,".elf") || endsWith(filename,".ELF")) && size < 12*1024*1024) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_ELF;
@@ -149,7 +149,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if((strstr(filename,".tgc")) || (strstr(filename,".TGC"))) {
+			if(endsWith(filename,".tgc") || endsWith(filename,".TGC")) {
 				// Go through all the TGC's internal files
 				ExecutableFile *filesInTGCToPatch = memalign(32, sizeof(ExecutableFile)*32);
 				int numTGCFilesToPatch = parse_tgc(file, filesInTGCToPatch, file_offset), j;
@@ -214,14 +214,14 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 			memcpy(&filename[0],&FST[string_table_offset+filename_offset],255); 
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
-			if((strstr(filename,".dol")) || (strstr(filename,".DOL"))) {
+			if(endsWith(filename,".dol") || endsWith(filename,".DOL")) {
 				filesToPatch[numFiles].offset = (file_offset-fakeAmount)+(tgc_base+fileAreaStart);
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if(((strstr(filename,".elf")) || (strstr(filename,".ELF"))) && size < 12*1024*1024) {
+			if((endsWith(filename,".elf") || endsWith(filename,".ELF")) && size < 12*1024*1024) {
 				filesToPatch[numFiles].offset = (file_offset-fakeAmount)+(tgc_base+fileAreaStart);
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_ELF;
@@ -272,7 +272,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 				DrawFrameStart();
 				DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
 				DrawFrameFinish();
-				sleep(5);
+				//sleep(5);
 			}
 			else
 				patched += 1;
@@ -320,7 +320,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			deviceHandler_writeFile(&patchFile,&filesToPatch[i].offset,4);
 			deviceHandler_writeFile(&patchFile,&filesToPatch[i].size,4);
 			deviceHandler_writeFile(&patchFile,&magic,4);
-			deviceHandler_deinit(&patchFile);
+			fclose(patchFile.fp);
 			patched_buf_num++;
 		}
 	}
