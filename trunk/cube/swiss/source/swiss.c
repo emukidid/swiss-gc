@@ -518,6 +518,7 @@ unsigned int load_app(int mode, int multiDol)
 		DrawFrameFinish();
 		while(1);
 	}
+
 	*(volatile u32*)0x800000F4 = top_of_main_ram-fstSizeAligned-0x2000;	// bi2.bin location
 	*(volatile u32*)0x80000038 = top_of_main_ram-fstSizeAligned;		// FST Location in ram
 	*(volatile u32*)0x8000003C = GCMDisk.MaxFSTSize;					// FST Max Length
@@ -633,7 +634,6 @@ unsigned int load_app(int mode, int multiDol)
 	
 	deviceHandler_deinit(&curFile);
 	
-
 	DrawFrameStart();
 	DrawProgressBar(100, "Executing Game!");
 	DrawFrameFinish();
@@ -803,7 +803,7 @@ void manage_file() {
 			// Show a list of destination devices (the same device is also a possibility)
 			select_copy_device();
 			// If the devices are not the same, init the second, fail on non-existing device/etc
-			if(deviceHandler_initial != deviceHandler_dest_initial) {
+			if(deviceHandler_initial != deviceHandler_dest_initial) {				
 				deviceHandler_dest_deinit( deviceHandler_dest_initial );
 				ret = deviceHandler_dest_init( deviceHandler_dest_initial );
 				if(!ret) {
@@ -849,7 +849,7 @@ void manage_file() {
 				sprintf(destFile->name, "%s/%s",destFile->name,stripInvalidChars(getRelativeName(&curFile.name[0])));
 				
 				u32 isDestCard = deviceHandler_dest_writeFile == deviceHandler_CARD_writeFile;
-				if(isDestCard && strstr(destFile->name,".gci")==NULL && strstr(destFile->name,".GCI")==NULL) {
+				if(isDestCard && (!endsWith(destFile->name,".gci") || !endsWith(destFile->name,".GCI"))) {
 					// Only .GCI files can go to the memcard
 					DrawFrameStart();
 					DrawMessageBox(D_INFO,"Only GCI files allowed on memcard. Press A to continue");
@@ -894,7 +894,9 @@ void manage_file() {
 					}
 					curOffset+=amountToCopy;
 				}
-				deviceHandler_dest_deinit( destFile );
+				if(deviceHandler_dest_initial->name[0] == 'i' || deviceHandler_dest_initial->name[0] == 's') {
+					fclose(destFile->fp);
+				}
 				free(destFile);
 				DrawFrameStart();
 				if(!cancelled) {
@@ -932,7 +934,7 @@ void load_file()
 		
 	// Cheats file?
 	if(strlen(fileName)>4) {
-		if((strstr(fileName,".QCH")!=NULL) || (strstr(fileName,".qch")!=NULL)) {
+		if(endsWith(fileName,".QCH") || endsWith(fileName,".qch")) {
 			if(DrawYesNoDialog("Load this cheats file?")) {
 				DrawFrameStart();
 				DrawMessageBox(D_INFO, "Loading Cheats File ..");
@@ -949,7 +951,7 @@ void load_file()
 	if((curDevice != DVD_DISC) || (curDevice == DVD_DISC && dvdDiscTypeInt==ISO9660_DISC)) {
 		//if it's a DOL, boot it
 		if(strlen(fileName)>4) {
-			if((strstr(fileName,".DOL")!=NULL) || (strstr(fileName,".dol")!=NULL)) {
+			if(endsWith(fileName,".DOL") || endsWith(fileName,".dol")) {
 				boot_dol();
 				// if it was invalid (overlaps sections, too large, etc..) it'll return
 				DrawFrameStart();
@@ -958,11 +960,11 @@ void load_file()
 				sleep(2);
 				return;
 			}
-			if((strstr(fileName,".MP3")!=NULL) || (strstr(fileName,".mp3")!=NULL)) {
+			if(endsWith(fileName,".MP3") || endsWith(fileName,".mp3")) {
 				mp3_player(allFiles, files, &curFile);
 				return;
 			}
-			if((strstr(fileName,".FZN")!=NULL) || (strstr(fileName,".fzn")!=NULL)) {
+			if(endsWith(fileName,".FZN") || endsWith(fileName,".fzn")) {
 				if(curFile.size != 0x1D0000) {
 					DrawFrameStart();
 					DrawMessageBox(D_WARN, "File Size must be 0x1D0000 bytes!");
@@ -998,8 +1000,8 @@ void load_file()
 				sleep(2);
 				return;
 			}
-			if(!((strstr(fileName,".iso")!=NULL) || (strstr(fileName,".gcm")!=NULL) 
-				|| (strstr(fileName,".ISO")!=NULL) || (strstr(fileName,".GCM")!=NULL))) {
+			if(!(endsWith(fileName,".iso") || endsWith(fileName,".gcm") 
+				|| endsWith(fileName,".ISO") || endsWith(fileName,".GCM"))) {
 				DrawFrameStart();
 				DrawMessageBox(D_WARN, "Unknown File Type!");
 				DrawFrameFinish();
@@ -1197,7 +1199,7 @@ int check_game()
 	DrawMessageBox(D_INFO,"Checking Game ..");
 	DrawFrameFinish();
 	
-	ExecutableFile *filesToPatch = memalign(32, sizeof(ExecutableFile)*64);
+	ExecutableFile *filesToPatch = memalign(32, sizeof(ExecutableFile)*512);
 	int numToPatch = parse_gcm(&curFile, filesToPatch), i =0;
 	for(i=0; i<numToPatch; i++) {
 		if(strstr(filesToPatch[i].name,"execD.img") && 
@@ -1210,7 +1212,7 @@ int check_game()
 	
 	if(numToPatch>0) {
 		// Game requires patch files, lets do it.	
-		int res = patch_gcm(&curFile, filesToPatch, numToPatch, multiDol);
+		int res = patch_gcm(&curFile, filesToPatch, numToPatch, numToPatch>0);
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,res ? "Game Patched Successfully":"Game could not be patched or not required");
 		DrawFrameFinish();
@@ -1420,7 +1422,7 @@ void select_copy_device()
 	}
 	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	// Deinit any existing deviceHandler state
-	if(deviceHandler_dest_deinit && deviceHandler_dest_initial) deviceHandler_dest_deinit( deviceHandler_dest_initial );
+	if((deviceHandler_dest_deinit && deviceHandler_dest_initial) && (deviceHandler_dest_initial != deviceHandler_initial)) deviceHandler_dest_deinit( deviceHandler_dest_initial );
 	// Change all the deviceHandler pointers based on the current device
 	switch(curCopyDevice) {
 		case DEST_SD_CARD:

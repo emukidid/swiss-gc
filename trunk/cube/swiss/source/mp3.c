@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <asndlib.h>
 #include <mp3player.h>
+#include "main.h"
 #include "swiss.h"
 #include "mp3.h"
 #include "gui/FrameBufferMagic.h"
@@ -127,7 +128,7 @@ void mp3_player(file_handle* allFiles, int numFiles, file_handle* curFile) {
 			i = (rand() % numFiles);
 		}
 		// if it's .mp3
-		if((strlen(allFiles[i].name)>4) && ((strstr(allFiles[i].name,".MP3")!=NULL) || (strstr(allFiles[i].name,".mp3")!=NULL))) {
+		if((strlen(allFiles[i].name)>4) && (endsWith(allFiles[i].name,".MP3") || endsWith(allFiles[i].name,".mp3"))) {
 			ret = play_mp3(&allFiles[i], numFiles, i);
 		}
 		if(ret == PLAYER_STOP) {

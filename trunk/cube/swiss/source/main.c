@@ -49,6 +49,16 @@ int needsDeviceChange = 0;
 int needsRefresh = 0;
 SwissSettings swissSettings;
 
+int endsWith(char *str, char *end) {
+	if(strlen(str) < strlen(end))
+		return 0;
+	int i;
+	for(i = 0; i < strlen(end); i++)
+		if(str[strlen(str)-i] != end[strlen(end)-i])
+			return 0;
+	return 1;
+}
+
 static void ProperScanPADS()	{
 	PAD_ScanPads(); 
 }
@@ -286,10 +296,12 @@ void main_loop()
 	if(deviceHandler_initial) {
 		// If the user selected a device, make sure it's ready before we browse the filesystem
 		deviceHandler_deinit( deviceHandler_initial );
+		sdgecko_setSpeed(EXI_SPEED32MHZ);
 		if(!deviceHandler_init( deviceHandler_initial )) {
 			if((deviceHandler_initial->name[0] == 's')||(deviceHandler_initial->name[0] == 'i')) {
-				print_gecko("SD/IDE-EXI Device Failed to initialize!\r\nTrying again once ...\r\n");
-				if(!deviceHandler_init(deviceHandler_initial)) {				
+				print_gecko("SD/IDE-EXI Device Failed to initialize @ 32MHz!\r\nTrying again once @ 16MHz...\r\n");
+				sdgecko_setSpeed(EXI_SPEED16MHZ);
+				if(!deviceHandler_init(deviceHandler_initial)) {
 				// Try the alternate slot for SDGecko or IDE-EXI
 					if(deviceHandler_initial->name[0] == 's')
 						deviceHandler_initial = (deviceHandler_initial == &initial_SD0) ?
@@ -299,9 +311,11 @@ void main_loop()
 												&initial_IDE1:&initial_IDE0;
 					memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
 				}
-				print_gecko("Trying alternate slot ...\r\n");
+				print_gecko("Trying alternate slot @ 32MHz...\r\n");
+				sdgecko_setSpeed(EXI_SPEED32MHZ);
 				if(!deviceHandler_init( deviceHandler_initial )) {
-					print_gecko("Alternate slot failed once ... \r\n");
+					print_gecko("Alternate slot failed once @ 16MHz... \r\n");
+					sdgecko_setSpeed(EXI_SPEED16MHZ);
 					if(!deviceHandler_init( deviceHandler_initial )) {
 						print_gecko("Both slots failed twice\r\n");
 						needsDeviceChange = 1;

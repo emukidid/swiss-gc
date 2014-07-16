@@ -301,8 +301,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int multiDol) {
 				*(u32*)(addr_start + i) = 0x38000001;
 
 				print_gecko("Found:[Read (blocking)] @ %08X\r\n", properAddress);
-				patched = READ_PATCHED_ALL;
-				break;
+				return READ_PATCHED_ALL;
 			}
 			addr_start+=4;
 		}
@@ -335,15 +334,14 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int multiDol) {
 		}
 		addr_start = addr;
 		
+		if(!dvdIntHandlerAddr) {
+			print_gecko("Found Read without finding the DVDInterruptHandler first, trying blocking read patch\r\n");
+			return Patch_DVDLowLevelRead(addr_start, length, dataType, 1);
+		}
 		while(addr_start<addr_end) {
 			// Patch Read (called from DVDLowLevelRead)
 			if(memcmp(addr_start,_read_original_part_a,sizeof(_read_original_part_a))==0)
 			{
-				if(!dvdIntHandlerAddr) {
-					print_gecko("Found Read without finding the DVDInterruptHandler first!\r\n");
-					return patched;
-				}
-
 				int i = 0;
 				while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
 				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr_start-i)+12)-(u32)(addr));
