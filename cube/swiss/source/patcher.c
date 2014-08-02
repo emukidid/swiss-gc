@@ -612,13 +612,14 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 
 int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
 	int i,j;
-	FuncPattern VIConfigureSigs[6] = {
+	FuncPattern VIConfigureSigs[7] = {
 		{0x6AC,  90, 43,  6, 32, 60, 0, 0, "VIConfigure_v1", 0},
 		{0x68C,  87, 41,  6, 31, 60, 0, 0, "VIConfigure_v2", 0},
 		{0x73C, 100, 43, 13, 34, 61, 0, 0, "VIConfigure_v3", 0},
 		{0x798, 105, 44, 12, 38, 63, 0, 0, "VIConfigure_v4", 0},
 		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure_v5", 0},
-		{0x804, 110, 44, 13, 49, 63, 0, 0, "VIConfigure_v6", 0}
+		{0x8B4, 112, 43, 14, 53, 48, 0, 0, "VIConfigure_v6", 0},
+		{0x804, 110, 44, 13, 49, 63, 0, 0, "VIConfigure_v7", 0}
 	};
 	
 	for( i=0; i < length; i+=4 )
@@ -686,6 +687,11 @@ int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
 									*(u32*)(data+i+1268) = 0x2C000007;	// cmpwi	0, 7
 									break;
 								case 5:
+									*(u32*)(data+i+ 544) = 0x38000000;	// li		0, 0
+									*(u32*)(data+i+1340) = 0x2C0A0006;	// cmpwi	10, 6
+									*(u32*)(data+i+1368) = 0x2C0A0007;	// cmpwi	10, 7
+									break;
+								case 6:
 									*(u32*)(data+i+ 604) = 0x38600000;	// li		3, 0
 									break;
 							}
@@ -695,12 +701,13 @@ int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
 							return 0;
 					}
 					switch(j) {
-						case 0: *(u32*)(data+i+208) = 0xA07F0010; break;
-						case 1: *(u32*)(data+i+176) = 0xA07F0010; break;
-						case 2: *(u32*)(data+i+316) = 0xA07F0010; break;
-						case 3: *(u32*)(data+i+328) = 0xA07F0010; break;
-						case 4: *(u32*)(data+i+456) = 0xA07F0010; break;
-						case 5: *(u32*)(data+i+456) = 0xA0730010; break;
+						case 0: *(u32*)(data+i+208) = 0xA07F0010; break;	// lhz		3, 16 (31)
+						case 1: *(u32*)(data+i+176) = 0xA07F0010; break;	// lhz		3, 16 (31)
+						case 2: *(u32*)(data+i+316) = 0xA07F0010; break;	// lhz		3, 16 (31)
+						case 3: *(u32*)(data+i+328) = 0xA07F0010; break;	// lhz		3, 16 (31)
+						case 4: *(u32*)(data+i+456) = 0xA07F0010; break;	// lhz		3, 16 (31)
+						case 5: *(u32*)(data+i+436) = 0xA09B0010; break;	// lhz		4, 16 (27)
+						case 6: *(u32*)(data+i+456) = 0xA0730010; break;	// lhz		3, 16 (19)
 					}
 					*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
 					Patch_ProgCopy(data, length, dataType);
