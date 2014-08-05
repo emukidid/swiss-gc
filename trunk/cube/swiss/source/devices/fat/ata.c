@@ -164,7 +164,7 @@ void print_hdd_sector(u32 *dest) {
 int _ideExiVersion(int chn) {
 	u32 cid = 0;
 	EXI_GetID(chn,EXI_DEVICE_0,&cid);
-
+	print_gecko("IDE-EXI ID: %08X\r\n",cid);
 	if(cid==0x49444532) {
 		print_gecko("IDE-EXI v2 detected\r\n");
 		return IDE_EXI_V2;

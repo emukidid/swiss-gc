@@ -294,10 +294,15 @@ int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	*(volatile unsigned int*)VAR_SD_TYPE = SDHCCard;
 	// Copy the actual freq
 	*(volatile unsigned int*)VAR_EXI_FREQ = !swissSettings.exiSpeed ? EXI_SPEED16MHZ:EXI_SPEED32MHZ;
-	// Device slot (0 or 1)
-	*(volatile unsigned int*)VAR_EXI_SLOT = (file->name[0] == 's') ? (file->name[2] == 'b') : (file->name[3] == 'b');
-	// Is this an IDE-EXI v1 or 2?
-	*(volatile unsigned int*)VAR_TMP4 = _ideexi_version;
+	// Device slot (0 or 1) // This represents 0xCC0068xx in number of u32's so, slot A = 0xCC006800, B = 0xCC006814
+	*(volatile unsigned int*)VAR_EXI_SLOT = ((file->name[0] == 's') ? (file->name[2] == 'b') : (file->name[3] == 'b')) * 5;
+	// IDE-EXI only settings
+	if(!(file->name[0] == 's')) {
+		// Is this an IDE-EXI v1 or 2?
+		*(volatile unsigned int*)VAR_TMP4 = _ideexi_version;
+		// Is the HDD in use a 48 bit LBA supported HDD?
+		*(volatile unsigned int*)VAR_TMP1 = ataDriveInfo.lba48Support;
+	}
 	print_frag_list();
 	return 1;
 }

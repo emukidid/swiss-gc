@@ -21,42 +21,43 @@ typedef unsigned char u8;
 
 #define SECTOR_SIZE 		512
 #define exi_freq  			(*(u32*)VAR_EXI_FREQ)
+// exi_channel is stored as number of u32's to index into the exi bus (0xCC006800)
 #define exi_channel 		(*(u32*)VAR_EXI_SLOT)
 
 // EXI Functions
-void exi_select()
+static inline void exi_select()
 {
 	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
-	exi[exi_channel * 5] = (exi[exi_channel * 5] & 0x405) | ((1<<0)<<7) | (exi_freq << 4);
+	exi[exi_channel] = (exi[exi_channel] & 0x405) | ((1<<0)<<7) | (exi_freq << 4);
 }
 
-void exi_deselect()
+static inline void exi_deselect()
 {
 	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
-	exi[exi_channel * 5] &= 0x405;
+	exi[exi_channel] &= 0x405;
 }
 
 void exi_imm_write(u32 data, int len) 
 {
 	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
-	exi[exi_channel * 5 + 4] = data;
+	exi[exi_channel + 4] = data;
 	// Tell EXI if this is a read or a write
-	exi[exi_channel * 5 + 3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
+	exi[exi_channel + 3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
 	// Wait for it to do its thing
-	while (exi[exi_channel * 5 + 3] & 1);
+	while (exi[exi_channel + 3] & 1);
 }
 
 u32 exi_imm_read(int len)
 {
 	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
-	exi[exi_channel * 5 + 4] = -1;
+	exi[exi_channel + 4] = -1;
 	// Tell EXI if this is a read or a write
-	exi[exi_channel * 5 + 3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
+	exi[exi_channel + 3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
 	// Wait for it to do its thing
-	while (exi[exi_channel * 5 + 3] & 1);
+	while (exi[exi_channel + 3] & 1);
 
 	// Read the 4 byte data off the EXI bus
-	u32 d = exi[exi_channel * 5 + 4];
+	u32 d = exi[exi_channel + 4];
 	if(len == 4) return d;
 	return (d >> ((4 - len) * 8));
 	
@@ -123,8 +124,6 @@ void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read) {
 	}
 	exi_imm_read(2);		// discard CRC
 }
-
-#define usb_endl() (usb_sendbuffer_safe("\r\n",2))
 
 void do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u32 lba = (offset>>9) + sectorLba;

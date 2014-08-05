@@ -29,8 +29,6 @@
 #define ATA_SR_DRQ		0x08
 #define ATA_SR_ERR		0x01
 
-#define EXI_SPEED16MHZ				4			/*!< EXI device frequency 16MHz */
-#define EXI_SPEED32MHZ				5			/*!< EXI device frequency 32MHz */
 #define EXI_READ					0			/*!< EXI transfer type read */
 #define EXI_WRITE					1			/*!< EXI transfer type write */
 
@@ -43,9 +41,14 @@ typedef unsigned short u16;
 typedef unsigned char u8;
 
 #define _ideexi_version *(u32*)VAR_TMP4
+#define _ata48bit *(u32*)VAR_TMP1
 
 #define IDE_EXI_V1 0
 #define IDE_EXI_V2 1
+
+#define exi_freq  			(*(u32*)VAR_EXI_FREQ)
+// exi_channel is stored as number of u32's to index into the exi bus (0xCC006800)
+#define exi_channel 		(*(u32*)VAR_EXI_SLOT)
 
 void* mymemcpy(void* dest, const void* src, u32 count)
 {
@@ -60,106 +63,82 @@ void* mymemcpy(void* dest, const void* src, u32 count)
 void exi_select()
 {
 	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
-	exi[*(u32*)VAR_EXI_SLOT * 5] = (exi[*(u32*)VAR_EXI_SLOT * 5] & 0x405) | ((1<<0)<<7) | (*(u32*)VAR_EXI_FREQ << 4);
+	exi[exi_channel] = (exi[exi_channel] & 0x405) | ((1<<0)<<7) | (exi_freq << 4);
 }
 
 void exi_deselect()
 {
 	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
-	exi[*(u32*)VAR_EXI_SLOT * 5] &= 0x405;
+	exi[exi_channel] &= 0x405;
 }
 
-void exi_imm(void* data, int len, int mode)
+void exi_imm_write(u32 data, int len) 
 {
 	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
-	if (mode == EXI_WRITE)
-		exi[*(u32*)VAR_EXI_SLOT * 5 + 4] = *(unsigned long*)data;
-	else
-		exi[*(u32*)VAR_EXI_SLOT * 5 + 4] = -1;
+	exi[exi_channel + 4] = data;
 	// Tell EXI if this is a read or a write
-	exi[*(u32*)VAR_EXI_SLOT * 5 + 3] = ((len - 1) << 4) | (mode << 2) | 1;
+	exi[exi_channel + 3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
 	// Wait for it to do its thing
-	while (exi[*(u32*)VAR_EXI_SLOT * 5 + 3] & 1);
-
-	if (mode == EXI_READ)
-	{
-		// Read the 4 byte data off the EXI bus
-		unsigned long d = exi[*(u32*)VAR_EXI_SLOT * 5 + 4];
-		if(len == 4) {
-			*(u32*)data = d;
-		}
-		else {
-			int i;	
-			for (i = 0; i < len; ++i)
-				((unsigned char*)data)[i] = (d >> ((3 - i) * 8)) & 0xFF;
-		}
-	}
-
+	while (exi[exi_channel + 3] & 1);
 }
 
-/* simple wrapper for transfers > 4bytes */
-void exi_imm_ex(void* data, int len, int mode)
+u32 exi_imm_read()
 {
-	unsigned char* d = (unsigned char*)data;
-	while (len)
-	{
-		int tc = len;
-		if (tc > 4)
-			tc = 4;
-		exi_imm(d, tc, mode);
-		len -= tc;
-		d += tc;
-	}
+	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
+	exi[exi_channel + 4] = -1;
+	// Tell EXI if this is a read or a write
+	exi[exi_channel + 3] = ((4 - 1) << 4) | (EXI_READ << 2) | 1;
+	// Wait for it to do its thing
+	while (exi[exi_channel + 3] & 1);
+	return exi[exi_channel + 4];
 }
 
 // Returns 8 bits from the ATA Status register
 u8 ataReadStatusReg()
 {
 	// read ATA_REG_CMDSTATUS1 | 0x00 (dummy)
-	u16 dat = 0x1700;
+	u8 dat;
 	exi_select();
-	exi_imm_ex(&dat,2,EXI_WRITE);
-	exi_imm_ex(&dat,1,EXI_READ);
+	exi_imm_write(0x17000000, 2);
+	dat=exi_imm_read()>>24;
 	exi_deselect();
-	return *(u8*)&dat;
+	return dat;
 }
 
 // Writes 8 bits of data out to the specified ATA Register
 void ataWriteByte(u8 addr, u8 data)
 {
-	u32 dat = 0x80000000 | (addr << 24) | (data<<16);
 	exi_select();
-	exi_imm_ex(&dat,3,EXI_WRITE);	
+	exi_imm_write(0x80000000 | (addr << 24) | (data<<16), 3);
 	exi_deselect();
 }
 
 // Reads up to 0xFFFF * 4 bytes of data (~255kb) from the hdd at the given offset
 void ata_read_blocks(u16 numSectors, u8 *dst) 
 {
+	u32 i = 0;
+	u32 *ptr = (u32*)dst;
 	u16 dwords = (numSectors<<7);
 	// (31:29) 011b | (28:24) 10000b | (23:16) <num_words_LSB> | (15:8) <num_words_MSB> | (7:0) 00h (4 bytes)
-	u32 dat = 0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8);
 	exi_select();
-	exi_imm_ex(&dat,4,EXI_WRITE);
-	if(_ideexi_version == IDE_EXI_V1) {
-		// IDE_EXI_V1, select / deselect for every 4 bytes
+	exi_imm_write(0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8), 4);
+	
+	if(!_ideexi_version) {
 		exi_deselect();
-		u32 i = 0;
-		u32 *ptr = (u32*)dst;
 		for(i = 0; i < dwords; i++) {
 			exi_select();
-			exi_imm_ex(ptr,4,EXI_READ);
-			ptr++;
+			*ptr++ = exi_imm_read();
 			exi_deselect();
 		}
 		exi_select();
-		exi_imm_ex(&dat,4,EXI_READ);
-		exi_deselect();
+		exi_imm_read();
 	}
-	else {
-		exi_imm_ex(dst,numSectors*SECTOR_SIZE,EXI_READ);
-		exi_deselect();
+	else {	// v2, no deselect or extra read required.
+		for(i = 0; i < dwords; i++) {
+			*ptr++ = exi_imm_read();
+		}
 	}
+	exi_deselect();
 }
 
 // Reads sectors from the specified lba, for the specified slot, 511 sectors at a time max for LBA48 drives
@@ -172,26 +151,36 @@ int _ataReadSectors(u32 lba, u16 numsectors, void *buffer)
 	while(ataReadStatusReg() & ATA_SR_BSY);
 
 	// Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
-	ataWriteByte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
 
-	ataWriteByte(ATA_REG_SECCOUNT, (u8)((numsectors>>8) & 0xFF));	// Sector count (Hi)
-	ataWriteByte(ATA_REG_LBALO, (u8)((lba>>24)& 0xFF));				// LBA 4
-	ataWriteByte(ATA_REG_LBAMID, 0);								// LBA 5
-	ataWriteByte(ATA_REG_LBAHI, 0);									// LBA 6
-	ataWriteByte(ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));		// Sector count (Lo)
-	ataWriteByte(ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA 1
-	ataWriteByte(ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA 2
-	ataWriteByte(ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA 3
-
-	// Write the appropriate read command
-  	ataWriteByte(ATA_REG_COMMAND, ATA_CMD_READSECTEXT );
-
+	// Non LBA48
+	if(!_ata48bit) {
+		ataWriteByte(ATA_REG_DEVICE, 0xE0 | (u8)((lba >> 24) & 0x0F));
+		ataWriteByte(ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));		// Sector count (Lo)
+		ataWriteByte(ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA 1
+		ataWriteByte(ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA 2
+		ataWriteByte(ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA 3
+		ataWriteByte(ATA_REG_COMMAND, ATA_CMD_READSECT);
+	}
+	// LBA48
+	else {
+		ataWriteByte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
+		ataWriteByte(ATA_REG_SECCOUNT, (u8)((numsectors>>8) & 0xFF));	// Sector count (Hi)
+		ataWriteByte(ATA_REG_LBALO, (u8)((lba>>24)& 0xFF));				// LBA 4
+		ataWriteByte(ATA_REG_LBAMID, 0);								// LBA 5
+		ataWriteByte(ATA_REG_LBAHI, 0);									// LBA 6
+		ataWriteByte(ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));		// Sector count (Lo)
+		ataWriteByte(ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA 1
+		ataWriteByte(ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA 2
+		ataWriteByte(ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA 3
+		ataWriteByte(ATA_REG_COMMAND, ATA_CMD_READSECTEXT );
+	}
 	// Wait for BSY to clear
 	while((temp = ataReadStatusReg()) & ATA_SR_BSY);
 	
 	// If the error bit was set, fail.
 	if(temp & ATA_SR_ERR) {
-		*(u32*)0xCC003024 = 0;
+		//*(u32*)0xCC003024 = 0;
+		*(u32*)buffer = 0x13370001;
 		return 1;
 	}
 
@@ -206,7 +195,8 @@ int _ataReadSectors(u32 lba, u16 numsectors, void *buffer)
 	
 	// If the error bit was set, fail.
 	if(temp & ATA_SR_ERR) {
-		*(u32*)0xCC003024 = 0;
+		//*(u32*)0xCC003024 = 0;
+		*(u32*)buffer = 0x13370002;
 		return 1;
 	}
 	
@@ -221,7 +211,9 @@ void do_read(void *dst,u32 size, u32 offset, u32 sectorLba) {
 	if(offset % SECTOR_SIZE) {
 		u32 size_to_copy = MIN(size, SECTOR_SIZE-(offset%SECTOR_SIZE));
 		if(_ataReadSectors(lba, 1, sector)) {
-			*(u32*)0xCC003024 = 0;
+			//*(u32*)0xCC003024 = 0;
+			*(u32*)dst = 0x13370003;
+			return;
 		}
 		mymemcpy(dst, &(sector[offset%SECTOR_SIZE]), size_to_copy);
 		size -= size_to_copy;
@@ -233,7 +225,9 @@ void do_read(void *dst,u32 size, u32 offset, u32 sectorLba) {
 		// Read in 255k blocks
 		while((size>>9) >= ATA_READ_CHUNK_SIZE) {
 			if(_ataReadSectors(lba, ATA_READ_CHUNK_SIZE, dst)) {
-				*(u32*)0xCC003024 = 0;
+				//*(u32*)0xCC003024 = 0;
+				*(u32*)dst = 0x13370004;
+				return;
 			}
 			size -= (ATA_READ_CHUNK_SIZE*SECTOR_SIZE);
 			dst += (ATA_READ_CHUNK_SIZE*SECTOR_SIZE);
@@ -242,7 +236,9 @@ void do_read(void *dst,u32 size, u32 offset, u32 sectorLba) {
 		// Read remaining whole blocks
 		if(size>>9) {
 			if(_ataReadSectors(lba, (size>>9), dst)) {
-				*(u32*)0xCC003024 = 0;
+				//*(u32*)0xCC003024 = 0;
+				*(u32*)dst = 0x13370005;
+				return;
 			}
 			size -= ((size>>9)*SECTOR_SIZE);
 			dst += ((size>>9)*SECTOR_SIZE);
@@ -252,7 +248,9 @@ void do_read(void *dst,u32 size, u32 offset, u32 sectorLba) {
 	// Read the last block if there's any half block
 	if(size) {
 		if(_ataReadSectors(lba, 1, sector)) {
-			*(u32*)0xCC003024 = 0;
+			//*(u32*)0xCC003024 = 0;
+			*(u32*)dst = 0x13370006;
+			return;
 		}
 		mymemcpy(dst, &(sector[0]), size);
 	}	
