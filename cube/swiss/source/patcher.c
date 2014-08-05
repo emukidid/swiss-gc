@@ -87,22 +87,27 @@ int install_code()
 	// IDE-EXI
   	if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
 		patch = &hdd_bin[0]; patchSize = hdd_bin_size;
+		print_gecko("Installing Patch for IDE-EXI\r\n");
   	}
 	// SD Gecko
 	else if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
 		patch = &sd_bin[0]; patchSize = sd_bin_size;
+		print_gecko("Installing Patch for SD Gecko\r\n");
 	}
 	// DVD 2 disc code
 	else if((deviceHandler_initial == &initial_DVD)) {
 		patch = &sd_bin[0]; patchSize = sd_bin_size;
+		print_gecko("Installing Patch for DVD\r\n");
 	}
 	// USB Gecko
 	else if(deviceHandler_initial == &initial_USBGecko) {
 		patch = &usbgecko_bin[0]; patchSize = usbgecko_bin_size;
+		print_gecko("Installing Patch for USB Gecko\r\n");
 	}
 	// Wiikey Fusion
 	else if(deviceHandler_initial == &initial_WKF) {
 		patch = &wkf_bin[0]; patchSize = wkf_bin_size;
+		print_gecko("Installing Patch for WKF\r\n");
 	}
 	print_gecko("Space for patch remaining: %i\r\n",top_addr - LO_RESERVE);
 	print_gecko("Space taken by vars/video patches: %i\r\n",VAR_PATCHES_BASE-top_addr);

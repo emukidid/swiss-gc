@@ -84,7 +84,7 @@ typedef struct
 	char model[48];
 	char serial[24];
 } typeDriveInfo ATTRIBUTE_ALIGN (32);
-
+extern typeDriveInfo ataDriveInfo;
 typedef struct
 {
 	u16 type; //1 = master pw, 0 = user
