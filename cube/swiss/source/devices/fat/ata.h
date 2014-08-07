@@ -51,8 +51,11 @@ extern int _ideexi_version;
 #define ATA_REG_ERROR			0x11	//1 0001b
 #define ATA_REG_FEATURES		0x11	//1 0001b
 #define ATA_REG_LBAHI			0x15	//1 0101b
+#define ATA_REG_CYLHI			0x15    //1 0101b 
 #define ATA_REG_LBAMID			0x14	//1 0100b
+#define ATA_REG_CYLLO			0x14    //1 0100b 
 #define ATA_REG_LBALO			0x13	//1 0011b
+#define ATA_REG_STARTSEC		0x13    //1 0011b 
 #define ATA_REG_SECCOUNT		0x12	//1 0010b
 #define ATA_REG_STATUS			0x17	//1 0111b
                                        
@@ -67,6 +70,9 @@ extern int _ideexi_version;
 
 // ATA Identity fields
 // all offsets refer to word offset (2 byte increments)
+#define ATA_IDENT_CYLINDERS	1			// number of logical cylinders
+#define ATA_IDENT_HEADS		3			// number of logical heads
+#define ATA_IDENT_SECTORS	6			// number of sectors per track
 #define ATA_IDENT_SERIAL		10		// Drive serial (20 characters)
 #define ATA_IDENT_MODEL			27		// Drive model name (40 characters)
 #define ATA_IDENT_LBASECTORS	60		// Number of sectors in LBA translation mode
@@ -80,6 +86,9 @@ typedef struct
 {
 	u64  sizeInSectors;
 	u32  sizeInGigaBytes;
+	u32  cylinders;
+	u32  heads;		// per cylinder
+	u32  sectors;	// per track
 	int  lba48Support;
 	char model[48];
 	char serial[24];
