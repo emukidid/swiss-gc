@@ -242,6 +242,9 @@ u32 _ataDriveIdentify(int chn) {
 		ataDriveInfo.sizeInGigaBytes = (u32)((ataDriveInfo.sizeInSectors<<9) / 1024 / 1024 / 1024);
 	}
 	else {
+		ataDriveInfo.cylinders =	*(u16*) (&buffer[ATA_IDENT_CYLINDERS]);
+		ataDriveInfo.heads =		*(u16*) (&buffer[ATA_IDENT_HEADS]);
+		ataDriveInfo.sectors =		*(u16*) (&buffer[ATA_IDENT_SECTORS]);
 		ataDriveInfo.sizeInSectors =	((*(u16*) &buffer[ATA_IDENT_LBASECTORS+1])<<16) | 
 										(*(u16*) &buffer[ATA_IDENT_LBASECTORS]);
 		ataDriveInfo.sizeInGigaBytes = (u32)((ataDriveInfo.sizeInSectors<<9) / 1024 / 1024 / 1024);
@@ -266,6 +269,11 @@ u32 _ataDriveIdentify(int chn) {
 	
 	print_gecko("%d GB HDD Connected\r\n", ataDriveInfo.sizeInGigaBytes);
 	print_gecko("LBA 48-Bit Mode %s\r\n", ataDriveInfo.lba48Support ? "Supported" : "Not Supported");
+	if(!ataDriveInfo.lba48Support) {
+		print_gecko("Cylinders: %i\r\n",ataDriveInfo.cylinders);
+		print_gecko("Heads Per Cylinder: %i\r\n",ataDriveInfo.heads);
+		print_gecko("Sectors Per Track: %i\r\n",ataDriveInfo.sectors);
+	}
 	print_gecko("Model: %s\r\n",ataDriveInfo.model);
 	print_gecko("Serial: %s\r\n",ataDriveInfo.serial); 
 	//print_hdd_sector(&buffer);
@@ -496,7 +504,7 @@ int ataReadSectors(int chn, u64 sector, unsigned int numSectors, unsigned char *
 {
 	int ret = 0;
 	// TODO: Confirm if this is an issue in the v1 VHDL or v2 as well.
-	int sectorchunks = (_ideexi_version == IDE_EXI_V1) ? 1 : (ataDriveInfo.lba48Support ? 511 : 127);
+	int sectorchunks = (_ideexi_version == IDE_EXI_V1) ? 1 : 1;
 	while(numSectors > sectorchunks) {
 		//print_gecko("Reading, sec %08X, numSectors %i, dest %08X ..\r\n", (u32)(sector&0xFFFFFFFF),numSectors, (u32)dest);
 		if((ret=_ataReadSectors(chn,sector,sectorchunks,(u32*)dest))) {
