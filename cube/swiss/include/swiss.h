@@ -84,6 +84,7 @@ typedef struct {
 	int sramStereo;
 	int stopMotor;
 	int noDiscMode;
+	int enableFileManagement;
 	u8 sramLanguage;
 } SwissSettings __attribute__((aligned(32)));
 extern SwissSettings swissSettings;
