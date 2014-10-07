@@ -194,7 +194,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 	}
 }
 
-void show_settings(file_handle *file, ConfigEntry *config) {
+int show_settings(file_handle *file, ConfigEntry *config) {
 	int page = 0, option = 0;
 
 	// Refresh SRAM in case user changed it from IPL
@@ -304,12 +304,12 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 						}
 					}
 				}
-				return;
+				return 1;
 			}
 			if(option == settings_count_pp[page]) {
 				// Exit without saving (revert)
 				memcpy((void*)&swissSettings, (void*)&tempSettings, sizeof(SwissSettings));
-				return;
+				return 0;
 			}
 			if((page != 2) && (option == settings_count_pp[page]-2)) {
 				page++; option = 0;
@@ -328,5 +328,4 @@ void show_settings(file_handle *file, ConfigEntry *config) {
 				|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L))
 			{ VIDEO_WaitVSync (); }
 	}
-	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 }

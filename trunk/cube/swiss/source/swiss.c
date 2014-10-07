@@ -1333,24 +1333,25 @@ int info_game()
 	swissSettings.emulatemc = config->emulatemc;
 	swissSettings.forceWidescreen = config->forceWidescreen;
 	swissSettings.forceAnisotropy = config->forceAnisotropy;
-	while(ret == -1) {
+	while(1) {
 		draw_game_info();
 		while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 		while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
-			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
-			cheats_game();
-			while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
-		}
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
-			show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC) ? &curFile : NULL, config);
-			while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
-		}
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){
 			ret = (PAD_ButtonsHeld(0) & PAD_BUTTON_A) ? 1:0;
+			break;
 		}
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
+			cheats_game();
+		}
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
+			if(show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC) ? &curFile : NULL, config)) {
+				save_config(config);
+			}
+		}
+		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	}
-	save_config(config);
+	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	free(config);
 	return ret;
 }
