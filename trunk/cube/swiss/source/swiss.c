@@ -469,6 +469,9 @@ unsigned int load_app(int mode, int multiDol)
 	u8 *main_dol_buffer = 0;
 	DOLHEADER dolhdr;
 	
+	// If there's no drive, we need to use blocking patches.
+	if(!swissSettings.hasDVDDrive) multiDol = 1;
+	
 	memcpy((void*)0x80000020,GC_DefaultConfig,0xE0);
   
 	// Read the game header to 0x80000000 & apploader header
@@ -739,6 +742,10 @@ void boot_dol()
 void manage_file() {
 	// If it's a file
 	if(curFile.fileAttrib == IS_FILE) {
+		if(!swissSettings.enableFileManagement) {
+			load_file();
+			return;
+		}
 		// Ask the user what they want to do with it
 		DrawFrameStart();
 		DrawEmptyBox(10,150, vmode->fbWidth-10, 350, COLOR_BLACK);
@@ -1302,6 +1309,7 @@ void draw_game_info() {
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
 		sprintf(txtbuffer,"Region [%s] Audio Streaming [%s]",(GCMDisk.CountryCode=='P') ? "PAL":"NTSC",(GCMDisk.AudioStreaming=='\1') ? "YES":"NO");
 		WriteFontStyled(640/2, 200, txtbuffer, 0.8f, true, defaultColor);
+		WriteFontStyled(640/2, 220, (GCMDisk.DiscID ? "Disc 2":""), 0.8f, true, defaultColor);
 	}
 
 	WriteFontStyled(640/2, 370, "Cheats (Y) - Settings (X) - Exit (B) - Continue (A)", 0.75f, true, defaultColor);

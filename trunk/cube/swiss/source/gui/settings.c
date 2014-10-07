@@ -21,7 +21,7 @@ char *forceWidescreenStr[] = {"No", "Persp", "Yes"};
 syssram* sram;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {7, 8, 8};
+int settings_count_pp[3] = {7, 9, 8};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
@@ -77,6 +77,8 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawSelectableButton(500, 240, -1, 270, swissSettings.stopMotor ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 280, "Enable WiiRD debugging in Games:", 1.0f, false, defaultColor);
 		DrawSelectableButton(500, 280, -1, 310, swissSettings.wiirdDebug ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 320, "Enable File Management:", 1.0f, false, defaultColor);
+		DrawSelectableButton(500, 320, -1, 350, swissSettings.enableFileManagement ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Current Game Settings (3/3):");
@@ -150,6 +152,9 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 			case 4:
 				swissSettings.wiirdDebug ^=1;
+			break;
+			case 5:
+				swissSettings.enableFileManagement ^=1;
 			break;
 		}
 	}
