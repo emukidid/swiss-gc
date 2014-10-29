@@ -21,7 +21,7 @@ char *forceWidescreenStr[] = {"No", "Persp", "Yes"};
 syssram* sram;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {7, 9, 8};
+int settings_count_pp[3] = {8, 9, 8};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
@@ -41,7 +41,8 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 	// Default Device [SD A/SD B/IDE A/IDE B/Qoob/Ask]
 	// SD/IDE Speed [16/32 MHz]
 	// Swiss Video Mode [576i (PAL 50Hz), 480i (NTSC 60Hz), 480p (NTSC 60Hz)]
-	
+	// Stop DVD Motor on startup [Yes/No]
+
 	/** Advanced Settings (Page 2/) */
 	// Enable USB Gecko Debug via Slot B [Yes/No]
 	// Force No DVD Drive Mode [Yes/No]
@@ -55,15 +56,17 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 	if(!page_num) {
 		WriteFont(30, 65, "Global Settings (1/3):");
 		WriteFontStyled(30, 120, "IPL/Game Language:", 1.0f, false, defaultColor);
-		DrawSelectableButton(380, 120, -1, 150, getSramLang(swissSettings.sramLanguage), option == 0 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(400, 120, -1, 150, getSramLang(swissSettings.sramLanguage), option == 0 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 160, "IPL/Game Audio:", 1.0f, false, defaultColor);
-		DrawSelectableButton(380, 160, -1, 190, swissSettings.sramStereo ? "Stereo":"Mono", option == 1 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(400, 160, -1, 190, swissSettings.sramStereo ? "Stereo":"Mono", option == 1 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 200, "Default Device:", 1.0f, false, defaultColor);
-		DrawSelectableButton(380, 200, -1, 230, swissSettings.defaultDevice ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(400, 200, -1, 230, swissSettings.defaultDevice ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 240, "SD/IDE Speed:", 1.0f, false, defaultColor);
-		DrawSelectableButton(380, 240, -1, 270, swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == 3 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(400, 240, -1, 270, swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == 3 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 280, "Swiss Video Mode:", 1.0f, false, defaultColor);
-		DrawSelectableButton(380, 280, -1, 310, uiVModeStr[swissSettings.uiVMode], option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(400, 280, -1, 310, uiVModeStr[swissSettings.uiVMode], option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 320, "Stop DVD Motor on startup:", 1.0f, false, defaultColor);
+		DrawSelectableButton(400, 320, -1, 350, swissSettings.stopMotor ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	else if(page_num == 1) {
 		WriteFont(30, 65, "Advanced Settings (2/3):");
@@ -129,10 +132,15 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 			case 4:
 				swissSettings.uiVMode += direction;
+				if(swissSettings.uiVMode == 2 || swissSettings.uiVMode == 5)
+				swissSettings.uiVMode += direction;
 				if(swissSettings.uiVMode > 6)
 					swissSettings.uiVMode = 0;
 				if(swissSettings.uiVMode < 0)
 					swissSettings.uiVMode = 6;
+			break;
+			case 5:
+				swissSettings.stopMotor ^= 1;
 			break;
 		}	
 	}

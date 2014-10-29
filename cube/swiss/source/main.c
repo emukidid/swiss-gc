@@ -37,6 +37,7 @@
 extern void __libogc_exit(int status);
 
 GXRModeObj *vmode = NULL;				//Graphics Mode Object
+void *gp_fifo = NULL;
 u32 *xfb[2] = { NULL, NULL };   //Framebuffers
 int whichfb = 0;       		 	    //Frame buffer toggle
 u8 driveVersion[8];
@@ -81,6 +82,41 @@ void populateVideoStr(GXRModeObj *vmode) {
 	}
 }
 
+void initialise_video(GXRModeObj *m) {
+	VIDEO_Configure (m);
+	if(xfb[0]) free(MEM_K1_TO_K0(xfb[0]));
+	if(xfb[1]) free(MEM_K1_TO_K0(xfb[1]));
+	xfb[0] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (m));
+	xfb[1] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (m));
+	VIDEO_ClearFrameBuffer (m, xfb[0], COLOR_BLACK);
+	VIDEO_ClearFrameBuffer (m, xfb[1], COLOR_BLACK);
+	VIDEO_SetNextFramebuffer (xfb[0]);
+	VIDEO_SetPostRetraceCallback (ProperScanPADS);
+	VIDEO_SetBlack (0);
+	VIDEO_Flush ();
+	VIDEO_WaitVSync ();
+	if (m->viTVMode & VI_NON_INTERLACE) {
+		VIDEO_WaitVSync ();
+	}
+	
+	// setup the fifo and then init GX
+	if(gp_fifo == NULL) {
+		gp_fifo = MEM_K0_TO_K1 (memalign (32, DEFAULT_FIFO_SIZE));
+		memset (gp_fifo, 0, DEFAULT_FIFO_SIZE);
+		GX_Init (gp_fifo, DEFAULT_FIFO_SIZE);
+	}
+	// clears the bg to color and clears the z buffer
+	GX_SetCopyClear ((GXColor){0,0,0,255}, 0x00000000);
+	// init viewport
+	GX_SetViewport (0, 0, m->fbWidth, m->efbHeight, 0, 1);
+	// Set the correct y scaling for efb->xfb copy operation
+	GX_SetDispCopyYScale ((f32) m->xfbHeight / (f32) m->efbHeight);
+	GX_SetDispCopyDst (m->fbWidth, m->xfbHeight);
+	GX_SetCullMode (GX_CULL_NONE); // default in rsp init
+	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the efb
+	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the xfb
+}
+
 /* Initialise Video, PAD, DVD, Font */
 void* Initialise (void)
 {
@@ -101,7 +137,8 @@ void* Initialise (void)
 		vmode = VIDEO_GetPreferredMode(NULL); //Last mode used
 	}
 	else {	// Gamecube, determine based on IPL
-		PAD_ScanPads();
+		int retPAD = 0;
+		while(retPAD <= 0) { retPAD = PAD_ScanPads(); usleep(100); }
 		// L Trigger held down ignores the fact that there's a component cable plugged in.
 		if(VIDEO_HaveComponentCable() && !(PAD_ButtonsDown(0) & PAD_TRIGGER_L)) {
 			if((strstr(IPLInfo,"PAL")!=NULL)) {
@@ -124,37 +161,8 @@ void* Initialise (void)
 			}
 		}
 	}
+	initialise_video(vmode);
 	populateVideoStr(vmode);
-
-	VIDEO_Configure (vmode);
-	xfb[0] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
-	xfb[1] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
-	VIDEO_ClearFrameBuffer (vmode, xfb[0], COLOR_BLACK);
-	VIDEO_ClearFrameBuffer (vmode, xfb[1], COLOR_BLACK);
-	VIDEO_SetNextFramebuffer (xfb[0]);
-	VIDEO_SetPostRetraceCallback (ProperScanPADS);
-	VIDEO_SetBlack (0);
-	VIDEO_Flush ();
-	VIDEO_WaitVSync ();
-	if (vmode->viTVMode & VI_NON_INTERLACE) {
-		VIDEO_WaitVSync ();
-	}
-	
-	// setup the fifo and then init GX
-	void *gp_fifo = NULL;
-	gp_fifo = MEM_K0_TO_K1 (memalign (32, DEFAULT_FIFO_SIZE));
-	memset (gp_fifo, 0, DEFAULT_FIFO_SIZE);
-	GX_Init (gp_fifo, DEFAULT_FIFO_SIZE);
-	// clears the bg to color and clears the z buffer
-	GX_SetCopyClear ((GXColor){0,0,0,255}, 0x00000000);
-	// init viewport
-	GX_SetViewport (0, 0, vmode->fbWidth, vmode->efbHeight, 0, 1);
-	// Set the correct y scaling for efb->xfb copy operation
-	GX_SetDispCopyYScale ((f32) vmode->xfbHeight / (f32) vmode->efbHeight);
-	GX_SetDispCopyDst (vmode->fbWidth, vmode->xfbHeight);
-	GX_SetCullMode (GX_CULL_NONE); // default in rsp init
-	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the efb
-	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the xfb
 
 	init_font();
 	init_textures();
@@ -508,6 +516,41 @@ int main ()
 		select_device(); // to setup deviceHandler_ ptrs
 	}
 	deviceHandler_initial = !swissSettings.defaultDevice ? NULL:deviceHandler_initial;
+
+	// DVD Motor off
+	if(swissSettings.stopMotor && swissSettings.hasDVDDrive) {
+		dvd_motor_off();
+	}
+
+	GXRModeObj *forcedMode = NULL;
+	// Swiss video mode force
+	switch(swissSettings.uiVMode) {
+		case 1:
+			forcedMode = &TVNtsc480IntDf;
+			break;
+		case 3:
+			if(VIDEO_HaveComponentCable()) {
+				forcedMode = &TVNtsc480Prog;
+			} else {
+				forcedMode = &TVNtsc480IntDf;
+			}
+			break;
+		case 4:
+			forcedMode = &TVPal576IntDfScale;
+			break;
+		case 6:
+			if(VIDEO_HaveComponentCable()) {
+				forcedMode = &TVPal576ProgScale;
+			} else {
+				forcedMode = &TVPal576IntDfScale;
+			}
+			break;
+	}
+	if((forcedMode != NULL) && (forcedMode != vmode)) {
+		initialise_video(forcedMode);
+		vmode = forcedMode;
+	}
+
 	while(1) {
 		main_loop();
 	}
