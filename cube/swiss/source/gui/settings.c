@@ -18,10 +18,11 @@ SwissSettings tempSettings;
 char *uiVModeStr[] = {"Auto", "NTSC", "240p", "480p", "PAL", "288p", "576p"};
 char *softProgressiveStr[] = {"No", "Light", "Yes"};
 char *forceWidescreenStr[] = {"No", "Persp", "Yes"};
+char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS"};
 syssram* sram;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {8, 9, 8};
+int settings_count_pp[3] = {8, 9, 9};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
@@ -97,6 +98,8 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawSelectableButton(480, 230, -1, 255, swissSettings.muteAudioStreaming ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 260, "Emulate Memory Card via SDGecko:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
 		DrawSelectableButton(480, 260, -1, 285, swissSettings.emulatemc ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 290, "Force Encoding:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 290, -1, 315, forceEncodingStr[swissSettings.forceEncoding], option == 6 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	if(page_num != 0) {
 		DrawSelectableButton(40, 390, -1, 420, "Back", 
@@ -198,6 +201,13 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			case 5:
 				swissSettings.emulatemc ^= 1;
 			break;
+			case 6:
+				swissSettings.forceEncoding += direction;
+				if(swissSettings.forceEncoding > 2)
+					swissSettings.forceEncoding = 0;
+				if(swissSettings.forceEncoding < 0)
+					swissSettings.forceEncoding = 2;
+			break;
 		}
 	}
 }
@@ -285,6 +295,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 					config->muteAudioStreaming = swissSettings.muteAudioStreaming;
 					config->forceWidescreen = swissSettings.forceWidescreen;
 					config->forceAnisotropy = swissSettings.forceAnisotropy;
+					config->forceEncoding = swissSettings.forceEncoding;
 					config->emulatemc = swissSettings.emulatemc;
 				}
 				else {

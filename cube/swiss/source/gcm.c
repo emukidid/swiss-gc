@@ -281,6 +281,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			}
 			patched += Patch_DVDCompareDiskId(buffer, sizeToRead);
 			patched += Patch_ProgVideo(buffer, sizeToRead, filesToPatch[i].type);
+			patched += Patch_FontEnc(buffer, sizeToRead);
 			patched += Patch_DVDAudioStreaming(buffer, sizeToRead);
 			if(swissSettings.forceWidescreen)
 				Patch_WideAspect(buffer, sizeToRead, filesToPatch[i].type);

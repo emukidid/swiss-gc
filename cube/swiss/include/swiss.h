@@ -77,6 +77,7 @@ typedef struct {
 	int softProgressive;
 	int forceWidescreen;
 	int forceAnisotropy;
+	int forceEncoding;
 	int emulatemc;	// Emulate memcard via SDGecko
 	int wiirdDebug;	// Enable WiiRD debug
 	int muteAudioStreaming;

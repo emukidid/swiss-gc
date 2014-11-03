@@ -149,6 +149,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int multiDol);
 int Patch_ProgVideo(u8 *data, u32 length, int dataType);
 void Patch_WideAspect(u8 *data, u32 length, int dataType);
 int Patch_TexFilt(u8 *data, u32 length, int dataType);
+int Patch_FontEnc(void *addr, u32 length);
 int Patch_DVDAudioStreaming(u8 *data, u32 length);
 int Patch_DVDStatusFunctions(u8 *data, u32 length);
 void Patch_Fwrite(void *addr, u32 length);

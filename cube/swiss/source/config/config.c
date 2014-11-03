@@ -153,7 +153,10 @@ int config_update_file() {
 			sprintf(txtbuffer, "Force Anisotropy=%s\r\n",(configEntries[i].forceAnisotropy ? "Yes":"No"));
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
-			sprintf(txtbuffer, "Emulate Memory Card via SDGecko=%s\r\n\r\n\r\n",(configEntries[i].emulatemc ? "Yes":"No"));
+			sprintf(txtbuffer, "Emulate Memory Card via SDGecko=%s\r\n",(configEntries[i].emulatemc ? "Yes":"No"));
+			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+			
+			sprintf(txtbuffer, "Force Encoding=%s\r\n\r\n\r\n",forceEncodingStr[configEntries[i].forceEncoding]);
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		}
 		fclose(fp);
@@ -194,6 +197,7 @@ void config_parse(char *configData) {
 					configEntries[configEntriesCount].muteAudioStreaming = 1;
 					configEntries[configEntriesCount].forceWidescreen = 0;
 					configEntries[configEntriesCount].forceAnisotropy = 0;
+					configEntries[configEntriesCount].forceEncoding = 0;
 					configEntries[configEntriesCount].emulatemc = 0;
 				}
 				else if(!strcmp("Name", name)) {
@@ -245,7 +249,15 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("Emulate Memory Card via SDGecko", name)) {
 					configEntries[configEntriesCount].emulatemc = !strcmp("Yes", value) ? 1:0;
-				}				
+				}
+				else if(!strcmp("Force Encoding", name)) {
+					if(!strcmp(forceEncodingStr[0], value))
+						configEntries[configEntriesCount].forceEncoding = 0;
+					else if(!strcmp(forceEncodingStr[1], value))
+						configEntries[configEntriesCount].forceEncoding = 1;
+					else if(!strcmp(forceEncodingStr[2], value))
+						configEntries[configEntriesCount].forceEncoding = 2;
+				}
 				
 				// Swiss settings
 				else if(!strcmp("Default Device", name)) {
@@ -319,6 +331,7 @@ void config_find(ConfigEntry *entry) {
 	entry->muteAudioStreaming = 0;
 	entry->forceWidescreen = 0;
 	entry->forceAnisotropy = 0;
+	entry->forceEncoding = 0;
 	entry->emulatemc = 0;
 	// Add this new entry to our collection
 	memcpy(&configEntries[configEntriesCount], entry, sizeof(ConfigEntry));
