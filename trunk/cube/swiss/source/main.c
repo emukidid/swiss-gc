@@ -137,8 +137,8 @@ void* Initialise (void)
 		vmode = VIDEO_GetPreferredMode(NULL); //Last mode used
 	}
 	else {	// Gamecube, determine based on IPL
-		int retPAD = 0;
-		while(retPAD <= 0) { retPAD = PAD_ScanPads(); usleep(100); }
+		int retPAD = 0, retCnt = 10000;
+		while(retPAD <= 0 && retCnt >= 0) { retPAD = PAD_ScanPads(); usleep(100); retCnt--; }
 		// L Trigger held down ignores the fact that there's a component cable plugged in.
 		if(VIDEO_HaveComponentCable() && !(PAD_ButtonsDown(0) & PAD_TRIGGER_L)) {
 			if((strstr(IPLInfo,"PAL")!=NULL)) {
