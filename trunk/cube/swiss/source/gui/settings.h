@@ -13,6 +13,7 @@
 extern char *uiVModeStr[];
 extern char *softProgressiveStr[];
 extern char *forceWidescreenStr[];
+extern char *forceEncodingStr[];
 int show_settings(file_handle *file, ConfigEntry *config);
 void refreshSRAM();
 

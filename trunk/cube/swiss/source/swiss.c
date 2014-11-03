@@ -93,6 +93,13 @@ void print_gecko(const char* fmt, ...)
 void ogc_video__reset()
 {
 	DrawFrameStart();
+	if(swissSettings.forceEncoding == 0) {
+		if(GCMDisk.CountryCode == 'J')
+			swissSettings.forceEncoding = 2;
+		else
+			swissSettings.forceEncoding = 1;
+	}
+	
 	if(swissSettings.gameVMode == 0) {
 		switch(GCMDisk.CountryCode) {
 			case 'P': // PAL
@@ -615,6 +622,9 @@ unsigned int load_app(int mode, int multiDol)
 	if(swissSettings.forceAnisotropy) {
 		Patch_TexFilt(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
+	// Force Encoding
+	Patch_FontEnc(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+
 	// Emulate memory card via SDGecko
 	if(swissSettings.emulatemc) {
 		Patch_CARDFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
@@ -1333,6 +1343,7 @@ int info_game()
 	swissSettings.emulatemc = config->emulatemc;
 	swissSettings.forceWidescreen = config->forceWidescreen;
 	swissSettings.forceAnisotropy = config->forceAnisotropy;
+	swissSettings.forceEncoding = config->forceEncoding;
 	while(1) {
 		draw_game_info();
 		while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }

@@ -936,6 +936,43 @@ int Patch_TexFilt(u8 *data, u32 length, int dataType)
 	return 0;
 }
 
+u32 _fontencode_part_a[3] = {
+	0x3C608000, 0x800300CC, 0x2C000000
+};
+
+u32 _fontencode_part_b[3] = {
+	0x3C60CC00, 0xA003206E, 0x540007BD
+};
+
+int Patch_FontEnc(void *addr, u32 length)
+{
+	void *addr_start = addr;
+	void *addr_end = addr+length;
+	int patched = 0;
+	
+	while(addr_start<addr_end) {
+		if(memcmp(addr_start,_fontencode_part_a,sizeof(_fontencode_part_a))==0
+			&& memcmp(addr_start+24,_fontencode_part_b,sizeof(_fontencode_part_b))==0)
+		{
+			switch(swissSettings.forceEncoding) {
+				case 1:
+					*(u32*)(addr_start+40) = 0x38000000;
+					*(u32*)(addr_start+48) = 0x38000000;
+					*(u32*)(addr_start+60) = 0x38000000;
+					break;
+				case 2:
+					*(u32*)(addr_start+40) = 0x38000001;
+					*(u32*)(addr_start+48) = 0x38000001;
+					*(u32*)(addr_start+60) = 0x38000001;
+					break;
+			}
+			patched++;
+		}
+		addr_start += 4;
+	}
+	return patched;
+}
+
 /** SDK DVD Audio NULL Driver Replacement
 	- Allows streaming games to run with out streaming audio */
 
