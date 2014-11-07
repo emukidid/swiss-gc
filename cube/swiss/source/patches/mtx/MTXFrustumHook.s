@@ -2,8 +2,8 @@
 #define _LANGUAGE_ASSEMBLY
 #include "../../../../reservedarea.h"
 
-.globl MTXFrustumPre
-MTXFrustumPre:
+.globl MTXFrustumHook
+MTXFrustumHook:
 	lis			%r12, VAR_AREA
 	lfs			%f0, VAR_FLOAT1_6 (%r12)
 	fsubs		%f9, %f4, %f3
@@ -13,6 +13,6 @@ MTXFrustumPre:
 	fsubs		%f9, %f4, %f3
 	trap
 
-.globl MTXFrustumPre_length
-MTXFrustumPre_length:
-.long (MTXFrustumPre_length - MTXFrustumPre)
+.globl MTXFrustumHook_length
+MTXFrustumHook_length:
+.long (MTXFrustumHook_length - MTXFrustumHook)

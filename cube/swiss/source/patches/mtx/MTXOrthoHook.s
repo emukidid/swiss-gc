@@ -2,8 +2,8 @@
 #define _LANGUAGE_ASSEMBLY
 #include "../../../../reservedarea.h"
 
-.globl MTXOrthoPre
-MTXOrthoPre:
+.globl MTXOrthoHook
+MTXOrthoHook:
 	fabs		%f12, %f2
 	fabs		%f13, %f3
 	fcmpu		%cr0, %f1, %f12
@@ -38,6 +38,6 @@ MTXOrthoPre:
 1:	fsubs		%f8, %f4, %f3
 	trap
 
-.globl MTXOrthoPre_length
-MTXOrthoPre_length:
-.long (MTXOrthoPre_length - MTXOrthoPre)
+.globl MTXOrthoHook_length
+MTXOrthoHook_length:
+.long (MTXOrthoHook_length - MTXOrthoHook)
