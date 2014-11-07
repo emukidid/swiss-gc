@@ -2,8 +2,8 @@
 #define _LANGUAGE_ASSEMBLY
 #include "../../../../reservedarea.h"
 
-.globl GXSetScissorPre
-GXSetScissorPre:
+.globl GXSetScissorHook
+GXSetScissorHook:
 	nop
 	nop			#r0 = gx->dispCopyDst
 	clrlslwi	%r12, %r0, 22, 4
@@ -22,6 +22,6 @@ GXSetScissorPre:
 	add			%r3, %r3, %r0
 1:	trap
 
-.globl GXSetScissorPre_length
-GXSetScissorPre_length:
-.long (GXSetScissorPre_length - GXSetScissorPre)
+.globl GXSetScissorHook_length
+GXSetScissorHook_length:
+.long (GXSetScissorHook_length - GXSetScissorHook)

@@ -246,6 +246,14 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 		return 0;
 }
 
+u32 branch(u32 dst, u32 src)
+{
+	u32 newval = dst - src;
+	newval &= 0x03FFFFFC;
+	newval |= 0x48000000;
+	return newval;
+}
+
 u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 	void *addr_start = addr;
 	void *addr_end = addr+length;	
@@ -465,13 +473,13 @@ u8 video_timing_576p[] = {
 
 void Patch_ProgTiming(void *addr, u32 length) {
 	void *addr_start = addr;
-	void *addr_end = addr+length;	
-	while(addr_start<addr_end) 
-	{
-		if(	memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
+	void *addr_end = addr+length;
+	
+	while(addr_start<addr_end) {
+		if(memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
 		{
+			print_gecko("Patched PAL Progressive timing\n");
 			memcpy(addr_start, video_timing_576p, sizeof(video_timing_576p));
-			print_gecko("Patched Progressive timing to 576p @ %08X\r\n",(u32)addr_start);
 			break;
 		}
 		addr_start += 4;
@@ -494,18 +502,22 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 	u8 *vfilter = vertical_filters[swissSettings.softProgressive];
 	FuncPattern VIConfigurePanSig = 
 		{0x390, 40, 11, 4, 25, 35, 0, 0, "VIConfigurePan", 0};
-	FuncPattern GXGetYScaleFactorSig = 
-		{0x234, 16, 14, 3, 18, 27, 0, 0, "GXGetYScaleFactor", 0};
-	FuncPattern GXInitGXSigs[5] = {
-		{0xF3C, 454, 81, 119, 43, 36, 0, 0, "__GXInitGX_v1", 0},
-		{0x844, 307, 35, 107, 18, 10, 0, 0, "__GXInitGX_v2", 0},
-		{0x880, 310, 35, 108, 24, 11, 0, 0, "__GXInitGX_v3", 0},
-		{0x8C0, 313, 36, 110, 28, 11, 0, 0, "__GXInitGX_v4", 0},
-		{0x934, 333, 34, 119, 28, 11, 0, 0, "__GXInitGX_v5", 0}
+	FuncPattern GXGetYScaleFactorSigs[2] = {
+		{0x234, 16, 14, 3, 18, 27, 0, 0, "GXGetYScaleFactor A", 0},
+		{0x228, 20, 19, 3,  9, 14, 0, 0, "GXGetYScaleFactor B", 0}	// SN Systems ProDG
 	};
-	FuncPattern GXSetCopyFilterSigs[2] = {
-		{0x224, 15, 7, 0, 4, 5, 0, 0, "GXSetCopyFilter_v1", 0},
-		{0x204, 25, 7, 0, 4, 0, 0, 0, "GXSetCopyFilter_v2", 0}
+	FuncPattern GXInitGXSigs[6] = {
+		{0xF3C, 454, 81, 119, 43, 36, 0, 0, "__GXInitGX A", 0},
+		{0x844, 307, 35, 107, 18, 10, 0, 0, "__GXInitGX B", 0},
+		{0x880, 310, 35, 108, 24, 11, 0, 0, "__GXInitGX C", 0},
+		{0x880, 293, 36, 110,  7,  9, 0, 0, "__GXInitGX D", 0},		// SN Systems ProDG
+		{0x8C0, 313, 36, 110, 28, 11, 0, 0, "__GXInitGX E", 0},
+		{0x934, 333, 34, 119, 28, 11, 0, 0, "__GXInitGX F", 0}
+	};
+	FuncPattern GXSetCopyFilterSigs[3] = {
+		{0x224, 15,  7, 0, 4,  5, 0, 0, "GXSetCopyFilter A", 0},
+		{0x288, 19, 23, 0, 3, 14, 0, 0, "GXSetCopyFilter B", 0},	// SN Systems ProDG
+		{0x204, 25,  7, 0, 4,  0, 0, 0, "GXSetCopyFilter C", 0}
 	};
 	
 	for( i=0; i < length; i+=4 )
@@ -514,20 +526,19 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 			continue;
 		if( find_pattern( (u8*)(data+i), length, &VIConfigurePanSig ) )
 		{
-			u32 properAddress = Calc_ProperAddress(data, dataType, i+36);
-			print_gecko("Found:[%s] @ 0x%08X len %i\n", VIConfigurePanSig.Name, (u32)data + i, VIConfigurePanSig.Length);
+			u32 properAddress = Calc_ProperAddress(data, dataType, i);
 			if(properAddress) {
-				print_gecko("Found:[Hook:%s] @ %08X\n", VIConfigurePanSig.Name, properAddress);
-				top_addr -= VIConfigurePanPre_length;
-				memcpy((void*)top_addr,&VIConfigurePanPre[0],VIConfigurePanPre_length);
+				print_gecko("Found:[%s] @ %08X\n", VIConfigurePanSig.Name, properAddress);
+				top_addr -= VIConfigurePanHook_length;
+				memcpy((void*)top_addr, VIConfigurePanHook, VIConfigurePanHook_length);
 				*(u32*)(top_addr+ 0) = *(u32*)(data+i+36);
-				*(u32*)(top_addr+24) = 0x48000000 | (((properAddress+4) - (top_addr+24)) & 0x03FFFFFC);
+				*(u32*)(top_addr+24) = branch(properAddress+40, top_addr+24);
 				
 				if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 5)) {
 					*(u32*)(data+i+24) = 0x5499F87E;	// srwi		25, 4, 1
 					*(u32*)(data+i+32) = 0x54D7F87E;	// srwi		23, 6, 1
 				}
-				*(u32*)(data+i+36) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
+				*(u32*)(data+i+36) = branch(top_addr, properAddress+36);
 				break;
 			}
 		}
@@ -537,18 +548,24 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 		{
 			if( *(u32*)(data+i) != 0x7C0802A6 )
 				continue;
-			if( find_pattern( (u8*)(data+i), length, &GXGetYScaleFactorSig ) )
+			
+			FuncPattern fp;
+			make_pattern( (u8*)(data+i), length, &fp );
+			
+			for( j=0; j < sizeof(GXGetYScaleFactorSigs)/sizeof(FuncPattern); j++ )
 			{
-				u32 properAddress = Calc_ProperAddress(data, dataType, i);
-				print_gecko("Found:[%s] @ 0x%08X len %i\n", GXGetYScaleFactorSig.Name, (u32)data + i, GXGetYScaleFactorSig.Length);
-				if(properAddress) {
-					print_gecko("Found:[Hook:%s] @ %08X\n", GXGetYScaleFactorSig.Name, properAddress);
-					top_addr -= GXGetYScaleFactorPre_length;
-					memcpy((void*)top_addr,&GXGetYScaleFactorPre[0],GXGetYScaleFactorPre_length);
-					*(u32*)(top_addr+16) = 0x48000000 | (((properAddress+4) - (top_addr+16)) & 0x03FFFFFC);
-					*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
-					break;
-				}
+				if( compare_pattern( &fp, &(GXGetYScaleFactorSigs[j]) ) )
+				{
+					u32 properAddress = Calc_ProperAddress(data, dataType, i);
+					if(properAddress) {
+						print_gecko("Found:[%s] @ %08X\n", GXGetYScaleFactorSigs[j].Name, properAddress);
+						top_addr -= GXGetYScaleFactorHook_length;
+						memcpy((void*)top_addr, GXGetYScaleFactorHook, GXGetYScaleFactorHook_length);
+						*(u32*)(top_addr+16) = branch(properAddress+4, top_addr+16);
+						*(u32*)(data+i) = branch(top_addr, properAddress);
+						break;
+					}
+ 				}
 			}
 		}
 	}
@@ -565,23 +582,27 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 			{
 				if( compare_pattern( &fp, &(GXInitGXSigs[j]) ) )
 				{
-					print_gecko("Found:[%s] @ 0x%08X len %i\n", GXInitGXSigs[j].Name, (u32)data + i, GXInitGXSigs[j].Length);
-					switch(j) {
-						case 0: *(u32*)(data+i+3776) = 0x38600003; break;
-						case 1: *(u32*)(data+i+1976) = 0x38600003; break;
-						case 2: *(u32*)(data+i+2036) = 0x38600003; break;
-						case 3: *(u32*)(data+i+2096) = 0x38600003; break;
-						case 4: *(u32*)(data+i+2212) = 0x38600003; break;
+					u32 properAddress = Calc_ProperAddress(data, dataType, i);
+					if(properAddress) {
+						print_gecko("Found:[%s] @ %08X\n", GXInitGXSigs[j].Name, properAddress);
+						switch(j) {
+							case 0: *(u32*)(data+i+3776) = 0x38600003; break;
+							case 1: *(u32*)(data+i+1976) = 0x38600003; break;
+							case 2: *(u32*)(data+i+2036) = 0x38600003; break;
+							case 3: *(u32*)(data+i+2004) = 0x38600003; break;
+							case 4: *(u32*)(data+i+2096) = 0x38600003; break;
+							case 5: *(u32*)(data+i+2212) = 0x38600003; break;
+						}
+						vfilter = vertical_reduction[1];
+						break;
 					}
-					vfilter = vertical_reduction[1];
-					break;
 				}
 			}
 		}
 	}
 	for( i=0; i < length; i+=4 )
 	{
-		if( *(u32*)(data+i+4) != 0x5460063F )
+		if( *(u32*)(data+i) != 0x2C030000 && *(u32*)(data+i+4) != 0x5460063F )
 			continue;
 		
 		FuncPattern fp;
@@ -591,25 +612,40 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 		{
 			if( compare_pattern( &fp, &(GXSetCopyFilterSigs[j]) ) )
 			{
-				print_gecko("Found:[%s] @ 0x%08X len %i\n", GXSetCopyFilterSigs[j].Name, (u32)data + i, GXSetCopyFilterSigs[j].Length);
-				if(j == 0) {
-					*(u32*)(data+i+388) = 0x38000000 | vfilter[0];
-					*(u32*)(data+i+392) = 0x38600000 | vfilter[1];
-					*(u32*)(data+i+400) = 0x38000000 | vfilter[4];
-					*(u32*)(data+i+404) = 0x38800000 | vfilter[2];
-					*(u32*)(data+i+416) = 0x38600000 | vfilter[5];
-					*(u32*)(data+i+428) = 0x38A00000 | vfilter[3];
-					*(u32*)(data+i+432) = 0x38000000 | vfilter[6];
-				} else {
-					*(u32*)(data+i+372) = 0x38800000 | vfilter[0];
-					*(u32*)(data+i+376) = 0x38600000 | vfilter[4];
-					*(u32*)(data+i+384) = 0x38800000 | vfilter[1];
-					*(u32*)(data+i+392) = 0x38E00000 | vfilter[2];
-					*(u32*)(data+i+400) = 0x38800000 | vfilter[5];
-					*(u32*)(data+i+404) = 0x38A00000 | vfilter[3];
-					*(u32*)(data+i+412) = 0x38600000 | vfilter[6];
+				u32 properAddress = Calc_ProperAddress(data, dataType, i);
+				if(properAddress) {
+					print_gecko("Found:[%s] @ %08X\n", GXSetCopyFilterSigs[j].Name, properAddress);
+					switch(j) {
+						case 0:
+							*(u32*)(data+i+388) = 0x38000000 | vfilter[0];
+							*(u32*)(data+i+392) = 0x38600000 | vfilter[1];
+							*(u32*)(data+i+400) = 0x38000000 | vfilter[4];
+							*(u32*)(data+i+404) = 0x38800000 | vfilter[2];
+							*(u32*)(data+i+416) = 0x38600000 | vfilter[5];
+							*(u32*)(data+i+428) = 0x38A00000 | vfilter[3];
+							*(u32*)(data+i+432) = 0x38000000 | vfilter[6];
+							break;
+						case 1:
+							*(u32*)(data+i+492) = 0x38000000 | vfilter[0];
+							*(u32*)(data+i+496) = 0x39200000 | vfilter[1];
+							*(u32*)(data+i+504) = 0x39400000 | vfilter[4];
+							*(u32*)(data+i+508) = 0x39600000 | vfilter[2];
+							*(u32*)(data+i+516) = 0x39000000 | vfilter[5];
+							*(u32*)(data+i+536) = 0x39400000 | vfilter[6];
+							*(u32*)(data+i+540) = 0x39200000 | vfilter[3];
+							break;
+						case 2:
+							*(u32*)(data+i+372) = 0x38800000 | vfilter[0];
+							*(u32*)(data+i+376) = 0x38600000 | vfilter[4];
+							*(u32*)(data+i+384) = 0x38800000 | vfilter[1];
+							*(u32*)(data+i+392) = 0x38E00000 | vfilter[2];
+							*(u32*)(data+i+400) = 0x38800000 | vfilter[5];
+							*(u32*)(data+i+404) = 0x38A00000 | vfilter[3];
+							*(u32*)(data+i+412) = 0x38600000 | vfilter[6];
+							break;
+					}
+					break;
 				}
-				break;
 			}
 		}
 	}
@@ -618,13 +654,13 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
 	int i,j;
 	FuncPattern VIConfigureSigs[7] = {
-		{0x6AC,  90, 43,  6, 32, 60, 0, 0, "VIConfigure_v1", 0},
-		{0x68C,  87, 41,  6, 31, 60, 0, 0, "VIConfigure_v2", 0},
-		{0x73C, 100, 43, 13, 34, 61, 0, 0, "VIConfigure_v3", 0},
-		{0x798, 105, 44, 12, 38, 63, 0, 0, "VIConfigure_v4", 0},
-		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure_v5", 0},
-		{0x8B4, 112, 43, 14, 53, 48, 0, 0, "VIConfigure_v6", 0},
-		{0x804, 110, 44, 13, 49, 63, 0, 0, "VIConfigure_v7", 0}
+		{0x6AC,  90, 43,  6, 32, 60, 0, 0, "VIConfigure A", 0},
+		{0x68C,  87, 41,  6, 31, 60, 0, 0, "VIConfigure B", 0},
+		{0x73C, 100, 43, 13, 34, 61, 0, 0, "VIConfigure C", 0},
+		{0x798, 105, 44, 12, 38, 63, 0, 0, "VIConfigure D", 0},
+		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure E", 0},
+		{0x8B4, 112, 43, 14, 53, 48, 0, 0, "VIConfigure F", 0},		// SN Systems ProDG
+		{0x804, 110, 44, 13, 49, 63, 0, 0, "VIConfigure G", 0}
 	};
 	
 	for( i=0; i < length; i+=4 )
@@ -639,33 +675,32 @@ int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
 		{
 			if( compare_pattern( &fp, &(VIConfigureSigs[j]) ) ) {
 				u32 properAddress = Calc_ProperAddress(data, dataType, i);
-				print_gecko("Found:[%s] @ 0x%08X len %i\n", VIConfigureSigs[j].Name, (u32)data + i, VIConfigureSigs[j].Length);
 				if(properAddress) {
-					print_gecko("Found:[Hook:%s] @ %08X\n", VIConfigureSigs[j].Name, properAddress);
+					print_gecko("Found:[%s] @ %08X\n", VIConfigureSigs[j].Name, properAddress);
 					switch(swissSettings.gameVMode) {
 						case 2:
-							print_gecko("Patched 240p Double-Strike mode\r\n");
+							print_gecko("Patched NTSC Double-Strike mode\n");
 							top_addr -= VIConfigure240p_length;
-							memcpy((void*)top_addr,&VIConfigure240p[0],VIConfigure240p_length);
-							*(u32*)(top_addr+80) = 0x48000000 | (((properAddress+4) - (top_addr+80)) & 0x03FFFFFC);
+							memcpy((void*)top_addr, VIConfigure240p, VIConfigure240p_length);
+							*(u32*)(top_addr+80) = branch(properAddress+4, top_addr+80);
 							break;
 						case 3:
-							print_gecko("Patched 480p Progressive mode\r\n");
+							print_gecko("Patched NTSC Progressive mode\n");
 							top_addr -= VIConfigure480p_length;
-							memcpy((void*)top_addr,&VIConfigure480p[0],VIConfigure480p_length);
-							*(u32*)(top_addr+76) = 0x48000000 | (((properAddress+4) - (top_addr+76)) & 0x03FFFFFC);
+							memcpy((void*)top_addr, VIConfigure480p, VIConfigure480p_length);
+							*(u32*)(top_addr+76) = branch(properAddress+4, top_addr+76);
 							break;
 						case 5:
-							print_gecko("Patched 288p Double-Strike mode\r\n");
+							print_gecko("Patched PAL Double-Strike mode\n");
 							top_addr -= VIConfigure288p_length;
-							memcpy((void*)top_addr,&VIConfigure288p[0],VIConfigure288p_length);
-							*(u32*)(top_addr+44) = 0x48000000 | (((properAddress+4) - (top_addr+44)) & 0x03FFFFFC);
+							memcpy((void*)top_addr, VIConfigure288p, VIConfigure288p_length);
+							*(u32*)(top_addr+44) = branch(properAddress+4, top_addr+44);
 							break;
 						case 6:
-							print_gecko("Patched 576p Progressive mode\r\n");
+							print_gecko("Patched PAL Progressive mode\n");
 							top_addr -= VIConfigure576p_length;
-							memcpy((void*)top_addr,&VIConfigure576p[0],VIConfigure576p_length);
-							*(u32*)(top_addr+40) = 0x48000000 | (((properAddress+4) - (top_addr+40)) & 0x03FFFFFC);
+							memcpy((void*)top_addr, VIConfigure576p, VIConfigure576p_length);
+							*(u32*)(top_addr+40) = branch(properAddress+4, top_addr+40);
 							
 							switch(j) {
 								case 0:
@@ -714,7 +749,7 @@ int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
 						case 5: *(u32*)(data+i+436) = 0xA09B0010; break;	// lhz		4, 16 (27)
 						case 6: *(u32*)(data+i+456) = 0xA0730010; break;	// lhz		3, 16 (19)
 					}
-					*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
+					*(u32*)(data+i) = branch(top_addr, properAddress);
 					Patch_ProgCopy(data, length, dataType);
 					return 1;
 				}
@@ -737,14 +772,14 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 	FuncPattern MTXOrthoSig =
 		{0x94, 4, 16, 0, 0, 0, 0, 0, "C_MTXOrtho", 0};
 	FuncPattern GXSetScissorSigs[3] = {
-		{0xAC, 19, 6, 0, 0, 6, 0, 0, "GXSetScissor_v1", 0},
-		{0x8C, 12, 6, 0, 0, 6, 0, 0, "GXSetScissor_v2", 0},
-		{0x74, 13, 6, 0, 0, 1, 0, 0, "GXSetScissor_v3", 0}
+		{0xAC, 19, 6, 0, 0, 6, 0, 0, "GXSetScissor A", 0},
+		{0x8C, 12, 6, 0, 0, 6, 0, 0, "GXSetScissor B", 0},
+		{0x74, 13, 6, 0, 0, 1, 0, 0, "GXSetScissor C", 0}
 	};
 	FuncPattern GXSetProjectionSigs[3] = {
-		{0xD0, 30, 17, 0, 1, 0, 0, 0, "GXSetProjection_v1", 0},
-		{0xB0, 22, 17, 0, 1, 0, 0, 0, "GXSetProjection_v2", 0},
-		{0xA0, 18, 11, 0, 1, 0, 0, 0, "GXSetProjection_v3", 0}
+		{0xD0, 30, 17, 0, 1, 0, 0, 0, "GXSetProjection A", 0},
+		{0xB0, 22, 17, 0, 1, 0, 0, 0, "GXSetProjection B", 0},
+		{0xA0, 18, 11, 0, 1, 0, 0, 0, "GXSetProjection C", 0}
 	};
 	
 	for( i=0; i < length; i+=4 )
@@ -754,13 +789,12 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 		if( find_pattern( (u8*)(data+i), length, &MTXFrustumSig ) )
 		{
 			u32 properAddress = Calc_ProperAddress(data, dataType, i);
-			print_gecko("Found:[%s] @ 0x%08X len %i\n", MTXFrustumSig.Name, (u32)data + i, MTXFrustumSig.Length);
 			if(properAddress) {
-				print_gecko("Found:[Hook:%s] @ %08X\n", MTXFrustumSig.Name, properAddress);
-				top_addr -= MTXFrustumPre_length;
-				memcpy((void*)top_addr,&MTXFrustumPre[0],MTXFrustumPre_length);
-				*(u32*)(top_addr+28) = 0x48000000 | (((properAddress+4) - (top_addr+28)) & 0x03FFFFFC);
-				*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
+				print_gecko("Found:[%s] @ %08X\n", MTXFrustumSig.Name, properAddress);
+				top_addr -= MTXFrustumHook_length;
+				memcpy((void*)top_addr, MTXFrustumHook, MTXFrustumHook_length);
+				*(u32*)(top_addr+28) = branch(properAddress+4, top_addr+28);
+				*(u32*)(data+i) = branch(top_addr, properAddress);
 				*(u32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
 				MTXFrustumSig.offsetFoundAt = (u32)data+i;
 				break;
@@ -773,14 +807,13 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			continue;
 		if( find_pattern( (u8*)(data+i), length, &MTXLightFrustumSig ) )
 		{
-			u32 properAddress = Calc_ProperAddress(data, dataType, i+8);
-			print_gecko("Found:[%s] @ 0x%08X len %i\n", MTXLightFrustumSig.Name, (u32)data + i, MTXLightFrustumSig.Length);
+			u32 properAddress = Calc_ProperAddress(data, dataType, i);
 			if(properAddress) {
-				print_gecko("Found:[Hook:%s] @ %08X\n", MTXLightFrustumSig.Name, properAddress);
-				top_addr -= MTXLightFrustumPre_length;
-				memcpy((void*)top_addr,&MTXLightFrustumPre[0],MTXLightFrustumPre_length);
-				*(u32*)(top_addr+28) = 0x48000000 | (((properAddress+4) - (top_addr+28)) & 0x03FFFFFC);
-				*(u32*)(data+i+8) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
+				print_gecko("Found:[%s] @ %08X\n", MTXLightFrustumSig.Name, properAddress);
+				top_addr -= MTXLightFrustumHook_length;
+				memcpy((void*)top_addr, MTXLightFrustumHook, MTXLightFrustumHook_length);
+				*(u32*)(top_addr+28) = branch(properAddress+12, top_addr+28);
+				*(u32*)(data+i+8) = branch(top_addr, properAddress+8);
 				*(u32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
 				break;
 			}
@@ -792,16 +825,19 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			continue;
 		if( find_pattern( (u8*)(data+i), length, &MTXPerspectiveSig ) )
 		{
-			print_gecko("Found:[%s] @ 0x%08X len %i\n", MTXPerspectiveSig.Name, (u32)data + i, MTXPerspectiveSig.Length);
-			memmove((void*)(data+i+ 28),(void*)(data+i+ 36),44);
-			memmove((void*)(data+i+188),(void*)(data+i+192),16);
-			*(u32*)(data+i+52) += 8;
-			*(u32*)(data+i+72) = 0x3C600000 | (VAR_AREA >> 16); 		// lis		3, 0x8180
-			*(u32*)(data+i+76) = 0xC0230000 | (VAR_FLOAT9_16 & 0xFFFF); // lfs		1, -0x90 (3)
-			*(u32*)(data+i+80) = 0xEC240072; // fmuls	1, 4, 1
-			*(u32*)VAR_FLOAT9_16 = 0x3F100000;
-			MTXPerspectiveSig.offsetFoundAt = (u32)data+i;
-			break;
+			u32 properAddress = Calc_ProperAddress(data, dataType, i);
+			if(properAddress) {
+				print_gecko("Found:[%s] @ %08X\n", MTXPerspectiveSig.Name, properAddress);
+				memmove((void*)(data+i+ 28),(void*)(data+i+ 36),44);
+				memmove((void*)(data+i+188),(void*)(data+i+192),16);
+				*(u32*)(data+i+52) += 8;
+				*(u32*)(data+i+72) = 0x3C600000 | (VAR_AREA >> 16); 		// lis		3, 0x8180
+				*(u32*)(data+i+76) = 0xC0230000 | (VAR_FLOAT9_16 & 0xFFFF); // lfs		1, -0x90 (3)
+				*(u32*)(data+i+80) = 0xEC240072; // fmuls	1, 4, 1
+				*(u32*)VAR_FLOAT9_16 = 0x3F100000;
+				MTXPerspectiveSig.offsetFoundAt = (u32)data+i;
+				break;
+			}
 		}
 	}
 	for( i=0; i < length; i+=4 )
@@ -810,16 +846,19 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			continue;
 		if( find_pattern( (u8*)(data+i), length, &MTXLightPerspectiveSig ) )
 		{
-			print_gecko("Found:[%s] @ 0x%08X len %i\n", MTXLightPerspectiveSig.Name, (u32)data + i, MTXLightPerspectiveSig.Length);
-			*(u32*)(data+i+36) = *(u32*)(data+i+32);
-			memmove((void*)(data+i+ 28),(void*)(data+i+ 36),60);
-			memmove((void*)(data+i+184),(void*)(data+i+188),16);
-			*(u32*)(data+i+68) += 8;
-			*(u32*)(data+i+88) = 0x3C600000 | (VAR_AREA >> 16); 		// lis		3, 0x8180
-			*(u32*)(data+i+92) = 0xC0230000 | (VAR_FLOAT9_16 & 0xFFFF); // lfs		1, -0x90 (3)
-			*(u32*)(data+i+96) = 0xEC240072; // fmuls	1, 4, 1
-			*(u32*)VAR_FLOAT9_16 = 0x3F100000;
-			break;
+			u32 properAddress = Calc_ProperAddress(data, dataType, i);
+			if(properAddress) {
+				print_gecko("Found:[%s] @ %08X\n", MTXLightPerspectiveSig.Name, properAddress);
+				*(u32*)(data+i+36) = *(u32*)(data+i+32);
+				memmove((void*)(data+i+ 28),(void*)(data+i+ 36),60);
+				memmove((void*)(data+i+184),(void*)(data+i+188),16);
+				*(u32*)(data+i+68) += 8;
+				*(u32*)(data+i+88) = 0x3C600000 | (VAR_AREA >> 16); 		// lis		3, 0x8180
+				*(u32*)(data+i+92) = 0xC0230000 | (VAR_FLOAT9_16 & 0xFFFF); // lfs		1, -0x90 (3)
+				*(u32*)(data+i+96) = 0xEC240072; // fmuls	1, 4, 1
+				*(u32*)VAR_FLOAT9_16 = 0x3F100000;
+				break;
+			}
 		}
 	}
 	if(swissSettings.forceWidescreen == 2) {
@@ -830,13 +869,12 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			if( find_pattern( (u8*)(data+i), length, &MTXOrthoSig ) )
 			{
 				u32 properAddress = Calc_ProperAddress(data, dataType, i);
-				print_gecko("Found:[%s] @ 0x%08X len %i\n", MTXOrthoSig.Name, (u32)data + i, MTXOrthoSig.Length);
 				if(properAddress) {
-					print_gecko("Found:[Hook:%s] @ %08X\n", MTXOrthoSig.Name, properAddress);
-					top_addr -= MTXOrthoPre_length;
-					memcpy((void*)top_addr,&MTXOrthoPre[0],MTXOrthoPre_length);
-					*(u32*)(top_addr+128) = 0x48000000 | (((properAddress+4) - (top_addr+128)) & 0x03FFFFFC);
-					*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
+					print_gecko("Found:[%s] @ %08X\n", MTXOrthoSig.Name, properAddress);
+					top_addr -= MTXOrthoHook_length;
+					memcpy((void*)top_addr, MTXOrthoHook, MTXOrthoHook_length);
+					*(u32*)(top_addr+128) = branch(properAddress+4, top_addr+128);
+					*(u32*)(data+i) = branch(top_addr, properAddress);
 					*(u32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
 					*(u32*)VAR_FLOATM_1 = 0xBF800000;
 					break;
@@ -855,15 +893,14 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			{
 				if( compare_pattern( &fp, &(GXSetScissorSigs[j]) ) ) {
 					u32 properAddress = Calc_ProperAddress(data, dataType, i);
-					print_gecko("Found:[%s] @ 0x%08X len %i\n", GXSetScissorSigs[j].Name, (u32)data + i, GXSetScissorSigs[j].Length);
 					if(properAddress) {
-						print_gecko("Found:[Hook:%s] @ %08X\n", GXSetScissorSigs[j].Name, properAddress);
-						top_addr -= GXSetScissorPre_length;
-						memcpy((void*)top_addr,&GXSetScissorPre[0],GXSetScissorPre_length);
+						print_gecko("Found:[%s] @ %08X\n", GXSetScissorSigs[j].Name, properAddress);
+						top_addr -= GXSetScissorHook_length;
+						memcpy((void*)top_addr, GXSetScissorHook, GXSetScissorHook_length);
 						*(u32*)(top_addr+ 0) = *(u32*)(data+i);
 						*(u32*)(top_addr+ 4) = j == 1 ? 0x800801E8:0x800701E8;
-						*(u32*)(top_addr+64) = 0x48000000 | (((properAddress+4) - (top_addr+64)) & 0x03FFFFFC);
-						*(u32*)(data+i) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
+						*(u32*)(top_addr+64) = branch(properAddress+4, top_addr+64);
+						*(u32*)(data+i) = branch(top_addr, properAddress);
 						break;
 					}
 				}
@@ -883,14 +920,13 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			{
 				if( compare_pattern( &fp, &(GXSetProjectionSigs[j]) ) )
 				{
-					u32 properAddress = Calc_ProperAddress(data, dataType, i+12);
-					print_gecko("Found:[%s] @ 0x%08X len %i\n", GXSetProjectionSigs[j].Name, (u32)data + i, GXSetProjectionSigs[j].Length);
+					u32 properAddress = Calc_ProperAddress(data, dataType, i);
 					if(properAddress) {
-						print_gecko("Found:[Hook:%s] @ %08X\n", GXSetProjectionSigs[j].Name, properAddress);
-						top_addr -= GXSetProjectionPre_length;
-						memcpy((void*)top_addr,&GXSetProjectionPre[0],GXSetProjectionPre_length);
-						*(u32*)(top_addr+20) = 0x48000000 | (((properAddress+4) - (top_addr+20)) & 0x03FFFFFC);
-						*(u32*)(data+i+12) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
+						print_gecko("Found:[%s] @ %08X\n", GXSetProjectionSigs[j].Name, properAddress);
+						top_addr -= GXSetProjectionHook_length;
+						memcpy((void*)top_addr, GXSetProjectionHook, GXSetProjectionHook_length);
+						*(u32*)(top_addr+20) = branch(properAddress+16, top_addr+20);
+						*(u32*)(data+i+12) = branch(top_addr, properAddress+12);
 						*(u32*)VAR_FLOAT3_4 = 0x3F400000;
 						break;
 					}
@@ -903,14 +939,15 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 int Patch_TexFilt(u8 *data, u32 length, int dataType)
 {
 	int i,j;
-	FuncPattern GXInitTexObjLODSigs[2] = {
-		{0x190, 29, 11, 0, 11, 11, 0, 0, "GXInitTexObjLOD_v1", 0},
-		{0x160, 30, 11, 0, 11,  6, 0, 0, "GXInitTexObjLOD_v2", 0}
+	FuncPattern GXInitTexObjLODSigs[3] = {
+		{0x190, 29, 11, 0, 11, 11, 0, 0, "GXInitTexObjLOD A", 0},
+		{0x160, 16,  4, 0,  8,  6, 0, 0, "GXInitTexObjLOD B", 0},	// SN Systems ProDG
+		{0x160, 30, 11, 0, 11,  6, 0, 0, "GXInitTexObjLOD C", 0}
 	};
 	
 	for( i=0; i < length; i+=4 )
 	{
-		if( *(u32*)(data+i+8) != 0xFC030040 )
+		if( *(u32*)(data+i+8) != 0xFC030040 && *(u32*)(data+i+16) != 0xFC030000 )
 			continue;
 		
 		FuncPattern fp;
@@ -920,14 +957,14 @@ int Patch_TexFilt(u8 *data, u32 length, int dataType)
 		{
 			if( compare_pattern( &fp, &(GXInitTexObjLODSigs[j]) ) )
 			{
-				u32 properAddress = Calc_ProperAddress(data, dataType, i+8);
-				print_gecko("Found:[%s] @ 0x%08X len %i\n", GXInitTexObjLODSigs[j].Name, (u32)data + i, GXInitTexObjLODSigs[j].Length);
+				u32 properAddress = Calc_ProperAddress(data, dataType, i);
 				if(properAddress) {
-					print_gecko("Found:[Hook:%s] @ %08X\n", GXInitTexObjLODSigs[j].Name, properAddress);
-					top_addr -= GXInitTexObjLODPre_length;
-					memcpy((void*)top_addr,&GXInitTexObjLODPre[0],GXInitTexObjLODPre_length);
-					*(u32*)(top_addr+28) = 0x48000000 | (((properAddress+4) - (top_addr+28)) & 0x03FFFFFC);
-					*(u32*)(data+i+8) = 0x48000000 | ((top_addr - properAddress) & 0x03FFFFFC);
+					print_gecko("Found:[%s] @ %08X\n", GXInitTexObjLODSigs[j].Name, properAddress);
+					top_addr -= GXInitTexObjLODHook_length;
+					memcpy((void*)top_addr, GXInitTexObjLODHook, GXInitTexObjLODHook_length);
+					*(u32*)(top_addr+24) = *(u32*)(data+i);
+					*(u32*)(top_addr+28) = branch(properAddress+4, top_addr+28);
+					*(u32*)(data+i) = branch(top_addr, properAddress);
 					return 1;
 				}
 			}
@@ -957,11 +994,8 @@ int Patch_FontEnc(void *addr, u32 length)
 			switch(swissSettings.forceEncoding) {
 				case 1:
 					*(u32*)(addr_start+40) = 0x38000000;
-					*(u32*)(addr_start+48) = 0x38000000;
-					*(u32*)(addr_start+60) = 0x38000000;
 					break;
 				case 2:
-					*(u32*)(addr_start+40) = 0x38000001;
 					*(u32*)(addr_start+48) = 0x38000001;
 					*(u32*)(addr_start+60) = 0x38000001;
 					break;

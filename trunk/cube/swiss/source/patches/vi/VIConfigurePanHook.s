@@ -2,8 +2,8 @@
 #define _LANGUAGE_ASSEMBLY
 #include "../../../../reservedarea.h"
 
-.globl VIConfigurePanPre
-VIConfigurePanPre:
+.globl VIConfigurePanHook
+VIConfigurePanHook:
 	nop
 	lhz			%r0, 260 (%r29)
 	add			%r12, %r23, %r25
@@ -12,6 +12,6 @@ VIConfigurePanPre:
 	subf		%r23, %r25, %r0
 1:	trap
 
-.globl VIConfigurePanPre_length
-VIConfigurePanPre_length:
-.long (VIConfigurePanPre_length - VIConfigurePanPre)
+.globl VIConfigurePanHook_length
+VIConfigurePanHook_length:
+.long (VIConfigurePanHook_length - VIConfigurePanHook)
