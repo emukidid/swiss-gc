@@ -828,12 +828,10 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			u32 properAddress = Calc_ProperAddress(data, dataType, i);
 			if(properAddress) {
 				print_gecko("Found:[%s] @ %08X\n", MTXPerspectiveSig.Name, properAddress);
-				memmove((void*)(data+i+ 28),(void*)(data+i+ 36),44);
-				memmove((void*)(data+i+188),(void*)(data+i+192),16);
-				*(u32*)(data+i+52) += 8;
-				*(u32*)(data+i+72) = 0x3C600000 | (VAR_AREA >> 16); 		// lis		3, 0x8180
-				*(u32*)(data+i+76) = 0xC0230000 | (VAR_FLOAT9_16 & 0xFFFF); // lfs		1, -0x90 (3)
-				*(u32*)(data+i+80) = 0xEC240072; // fmuls	1, 4, 1
+				top_addr -= MTXPerspectiveHook_length;
+				memcpy((void*)top_addr, MTXPerspectiveHook, MTXPerspectiveHook_length);
+				*(u32*)(top_addr+20) = branch(properAddress+84, top_addr+20);
+				*(u32*)(data+i+80) = branch(top_addr, properAddress+80);
 				*(u32*)VAR_FLOAT9_16 = 0x3F100000;
 				MTXPerspectiveSig.offsetFoundAt = (u32)data+i;
 				break;
@@ -849,13 +847,10 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			u32 properAddress = Calc_ProperAddress(data, dataType, i);
 			if(properAddress) {
 				print_gecko("Found:[%s] @ %08X\n", MTXLightPerspectiveSig.Name, properAddress);
-				*(u32*)(data+i+36) = *(u32*)(data+i+32);
-				memmove((void*)(data+i+ 28),(void*)(data+i+ 36),60);
-				memmove((void*)(data+i+184),(void*)(data+i+188),16);
-				*(u32*)(data+i+68) += 8;
-				*(u32*)(data+i+88) = 0x3C600000 | (VAR_AREA >> 16); 		// lis		3, 0x8180
-				*(u32*)(data+i+92) = 0xC0230000 | (VAR_FLOAT9_16 & 0xFFFF); // lfs		1, -0x90 (3)
-				*(u32*)(data+i+96) = 0xEC240072; // fmuls	1, 4, 1
+				top_addr -= MTXLightPerspectiveHook_length;
+				memcpy((void*)top_addr, MTXLightPerspectiveHook, MTXLightPerspectiveHook_length);
+				*(u32*)(top_addr+20) = branch(properAddress+100, top_addr+20);
+				*(u32*)(data+i+96) = branch(top_addr, properAddress+96);
 				*(u32*)VAR_FLOAT9_16 = 0x3F100000;
 				break;
 			}
