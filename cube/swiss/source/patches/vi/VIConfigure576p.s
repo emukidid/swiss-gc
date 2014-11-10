@@ -5,14 +5,14 @@
 .globl VIConfigure576p
 VIConfigure576p:
 	li			%r0, 6
+	li			%r6, 0
+	lhz			%r5, 8 (%r3)
+	subfic		%r4, %r5, 576
+	srwi		%r4, %r4, 1
+	sth			%r4, 12 (%r3)
+	sth			%r5, 16 (%r3)
+	stw			%r6, 20 (%r3)
 	stw			%r0, 0 (%r3)
-	lhz			%r0, 8 (%r3)
-	sth			%r0, 16 (%r3)
-	subfic		%r0, %r0, 576
-	srwi		%r0, %r0, 1
-	sth			%r0, 12 (%r3)
-	li			%r0, 0
-	stw			%r0, 20 (%r3)
 	mflr		%r0
 	trap
 
