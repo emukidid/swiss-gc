@@ -15,7 +15,7 @@
 #include "config.h"
 
 SwissSettings tempSettings;
-char *uiVModeStr[] = {"Auto", "NTSC", "240p", "480p", "PAL", "288p", "576p"};
+char *uiVModeStr[] = {"Auto", "480i", "240p", "480p", "576i", "288p", "576p"};
 char *softProgressiveStr[] = {"No", "Light", "Yes"};
 char *forceWidescreenStr[] = {"No", "Persp", "Yes"};
 char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS"};

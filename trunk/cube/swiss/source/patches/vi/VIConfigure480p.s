@@ -5,23 +5,23 @@
 .globl VIConfigure480p
 VIConfigure480p:
 	li			%r0, 2
-	stw			%r0, 0 (%r3)
-	lhz			%r0, 8 (%r3)
-	cmpwi		%r0, 480
+	li			%r6, 0
+	lhz			%r5, 8 (%r3)
+	cmpwi		%r5, 480
 	ble			2f
-	lhz			%r0, 6 (%r3)
-	clrrwi		%r0, %r0, 1
-	cmpwi		%r0, 480
+	lhz			%r5, 6 (%r3)
+	clrrwi		%r5, %r5, 1
+	cmpwi		%r5, 480
 	ble			1f
-	li			%r0, 480
-	sth			%r0, 6 (%r3)
-1:	sth			%r0, 8 (%r3)
-2:	sth			%r0, 16 (%r3)
-	subfic		%r0, %r0, 480
-	srwi		%r0, %r0, 1
-	sth			%r0, 12 (%r3)
-	li			%r0, 0
-	stw			%r0, 20 (%r3)
+	li			%r5, 480
+	sth			%r5, 6 (%r3)
+1:	sth			%r5, 8 (%r3)
+2:	subfic		%r4, %r5, 480
+	srwi		%r4, %r4, 1
+	sth			%r4, 12 (%r3)
+	sth			%r5, 16 (%r3)
+	stw			%r6, 20 (%r3)
+	stw			%r0, 0 (%r3)
 	mflr		%r0
 	trap
 

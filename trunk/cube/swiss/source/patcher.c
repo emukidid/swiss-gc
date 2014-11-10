@@ -471,7 +471,7 @@ u8 video_timing_576p[] = {
 	0x01,0xA4
 };
 
-void Patch_ProgTiming(void *addr, u32 length) {
+void Patch_VidTiming(void *addr, u32 length) {
 	void *addr_start = addr;
 	void *addr_end = addr+length;
 	
@@ -497,7 +497,7 @@ u8 vertical_reduction[][7] = {
 	{16, 16, 16, 16,  0,  0,  0}	// GX_COPY_INTLC_ODD
 };
 
-void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
+void Patch_FrameBuf(u8 *data, u32 length, int dataType) {
 	int i,j;
 	u8 *vfilter = vertical_filters[swissSettings.softProgressive];
 	FuncPattern VIConfigurePanSig = 
@@ -510,8 +510,8 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 		{0xF3C, 454, 81, 119, 43, 36, 0, 0, "__GXInitGX A", 0},
 		{0x844, 307, 35, 107, 18, 10, 0, 0, "__GXInitGX B", 0},
 		{0x880, 310, 35, 108, 24, 11, 0, 0, "__GXInitGX C", 0},
-		{0x880, 293, 36, 110,  7,  9, 0, 0, "__GXInitGX D", 0},		// SN Systems ProDG
-		{0x8C0, 313, 36, 110, 28, 11, 0, 0, "__GXInitGX E", 0},
+		{0x8C0, 313, 36, 110, 28, 11, 0, 0, "__GXInitGX D", 0},
+		{0x880, 293, 36, 110,  7,  9, 0, 0, "__GXInitGX E", 0},		// SN Systems ProDG
 		{0x934, 333, 34, 119, 28, 11, 0, 0, "__GXInitGX F", 0}
 	};
 	FuncPattern GXSetCopyFilterSigs[3] = {
@@ -589,8 +589,8 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 							case 0: *(u32*)(data+i+3776) = 0x38600003; break;
 							case 1: *(u32*)(data+i+1976) = 0x38600003; break;
 							case 2: *(u32*)(data+i+2036) = 0x38600003; break;
-							case 3: *(u32*)(data+i+2004) = 0x38600003; break;
-							case 4: *(u32*)(data+i+2096) = 0x38600003; break;
+							case 3: *(u32*)(data+i+2096) = 0x38600003; break;
+							case 4: *(u32*)(data+i+2004) = 0x38600003; break;
 							case 5: *(u32*)(data+i+2212) = 0x38600003; break;
 						}
 						vfilter = vertical_reduction[1];
@@ -600,58 +600,60 @@ void Patch_ProgCopy(u8 *data, u32 length, int dataType) {
 			}
 		}
 	}
-	for( i=0; i < length; i+=4 )
-	{
-		if( *(u32*)(data+i) != 0x2C030000 && *(u32*)(data+i+4) != 0x5460063F )
-			continue;
-		
-		FuncPattern fp;
-		make_pattern( (u8*)(data+i), length, &fp );
-		
-		for( j=0; j < sizeof(GXSetCopyFilterSigs)/sizeof(FuncPattern); j++ )
+	if((swissSettings.gameVMode != 1) && (swissSettings.gameVMode != 4)) {
+		for( i=0; i < length; i+=4 )
 		{
-			if( compare_pattern( &fp, &(GXSetCopyFilterSigs[j]) ) )
+			if( *(u32*)(data+i) != 0x2C030000 && *(u32*)(data+i+4) != 0x5460063F )
+				continue;
+			
+			FuncPattern fp;
+			make_pattern( (u8*)(data+i), length, &fp );
+			
+			for( j=0; j < sizeof(GXSetCopyFilterSigs)/sizeof(FuncPattern); j++ )
 			{
-				u32 properAddress = Calc_ProperAddress(data, dataType, i);
-				if(properAddress) {
-					print_gecko("Found:[%s] @ %08X\n", GXSetCopyFilterSigs[j].Name, properAddress);
-					switch(j) {
-						case 0:
-							*(u32*)(data+i+388) = 0x38000000 | vfilter[0];
-							*(u32*)(data+i+392) = 0x38600000 | vfilter[1];
-							*(u32*)(data+i+400) = 0x38000000 | vfilter[4];
-							*(u32*)(data+i+404) = 0x38800000 | vfilter[2];
-							*(u32*)(data+i+416) = 0x38600000 | vfilter[5];
-							*(u32*)(data+i+428) = 0x38A00000 | vfilter[3];
-							*(u32*)(data+i+432) = 0x38000000 | vfilter[6];
-							break;
-						case 1:
-							*(u32*)(data+i+492) = 0x38000000 | vfilter[0];
-							*(u32*)(data+i+496) = 0x39200000 | vfilter[1];
-							*(u32*)(data+i+504) = 0x39400000 | vfilter[4];
-							*(u32*)(data+i+508) = 0x39600000 | vfilter[2];
-							*(u32*)(data+i+516) = 0x39000000 | vfilter[5];
-							*(u32*)(data+i+536) = 0x39400000 | vfilter[6];
-							*(u32*)(data+i+540) = 0x39200000 | vfilter[3];
-							break;
-						case 2:
-							*(u32*)(data+i+372) = 0x38800000 | vfilter[0];
-							*(u32*)(data+i+376) = 0x38600000 | vfilter[4];
-							*(u32*)(data+i+384) = 0x38800000 | vfilter[1];
-							*(u32*)(data+i+392) = 0x38E00000 | vfilter[2];
-							*(u32*)(data+i+400) = 0x38800000 | vfilter[5];
-							*(u32*)(data+i+404) = 0x38A00000 | vfilter[3];
-							*(u32*)(data+i+412) = 0x38600000 | vfilter[6];
-							break;
+				if( compare_pattern( &fp, &(GXSetCopyFilterSigs[j]) ) )
+				{
+					u32 properAddress = Calc_ProperAddress(data, dataType, i);
+					if(properAddress) {
+						print_gecko("Found:[%s] @ %08X\n", GXSetCopyFilterSigs[j].Name, properAddress);
+						switch(j) {
+							case 0:
+								*(u32*)(data+i+388) = 0x38000000 | vfilter[0];
+								*(u32*)(data+i+392) = 0x38600000 | vfilter[1];
+								*(u32*)(data+i+400) = 0x38000000 | vfilter[4];
+								*(u32*)(data+i+404) = 0x38800000 | vfilter[2];
+								*(u32*)(data+i+416) = 0x38600000 | vfilter[5];
+								*(u32*)(data+i+428) = 0x38A00000 | vfilter[3];
+								*(u32*)(data+i+432) = 0x38000000 | vfilter[6];
+								break;
+							case 1:
+								*(u32*)(data+i+492) = 0x38000000 | vfilter[0];
+								*(u32*)(data+i+496) = 0x39200000 | vfilter[1];
+								*(u32*)(data+i+504) = 0x39400000 | vfilter[4];
+								*(u32*)(data+i+508) = 0x39600000 | vfilter[2];
+								*(u32*)(data+i+516) = 0x39000000 | vfilter[5];
+								*(u32*)(data+i+536) = 0x39400000 | vfilter[6];
+								*(u32*)(data+i+540) = 0x39200000 | vfilter[3];
+								break;
+							case 2:
+								*(u32*)(data+i+372) = 0x38800000 | vfilter[0];
+								*(u32*)(data+i+376) = 0x38600000 | vfilter[4];
+								*(u32*)(data+i+384) = 0x38800000 | vfilter[1];
+								*(u32*)(data+i+392) = 0x38E00000 | vfilter[2];
+								*(u32*)(data+i+400) = 0x38800000 | vfilter[5];
+								*(u32*)(data+i+404) = 0x38A00000 | vfilter[3];
+								*(u32*)(data+i+412) = 0x38600000 | vfilter[6];
+								break;
+						}
+						break;
 					}
-					break;
 				}
 			}
 		}
 	}
 }
 
-int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
+int Patch_VidMode(u8 *data, u32 length, int dataType) {
 	int i,j;
 	FuncPattern VIConfigureSigs[7] = {
 		{0x6AC,  90, 43,  6, 32, 60, 0, 0, "VIConfigure A", 0},
@@ -678,6 +680,12 @@ int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
 				if(properAddress) {
 					print_gecko("Found:[%s] @ %08X\n", VIConfigureSigs[j].Name, properAddress);
 					switch(swissSettings.gameVMode) {
+						case 1:
+							print_gecko("Patched NTSC Interlaced mode\n");
+							top_addr -= VIConfigure480i_length;
+							memcpy((void*)top_addr, VIConfigure480i, VIConfigure480i_length);
+							*(u32*)(top_addr+92) = branch(properAddress+4, top_addr+92);
+							break;
 						case 2:
 							print_gecko("Patched NTSC Double-Strike mode\n");
 							top_addr -= VIConfigure240p_length;
@@ -689,6 +697,12 @@ int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
 							top_addr -= VIConfigure480p_length;
 							memcpy((void*)top_addr, VIConfigure480p, VIConfigure480p_length);
 							*(u32*)(top_addr+76) = branch(properAddress+4, top_addr+76);
+							break;
+						case 4:
+							print_gecko("Patched PAL Interlaced mode\n");
+							top_addr -= VIConfigure576i_length;
+							memcpy((void*)top_addr, VIConfigure576i, VIConfigure576i_length);
+							*(u32*)(top_addr+56) = branch(properAddress+4, top_addr+56);
 							break;
 						case 5:
 							print_gecko("Patched PAL Double-Strike mode\n");
@@ -735,7 +749,7 @@ int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
 									*(u32*)(data+i+ 604) = 0x38600000;	// li		3, 0
 									break;
 							}
-							Patch_ProgTiming(data, length);
+							Patch_VidTiming(data, length);
 							break;
 						default:
 							return 0;
@@ -750,7 +764,7 @@ int Patch_ProgVideo(u8 *data, u32 length, int dataType) {
 						case 6: *(u32*)(data+i+456) = 0xA0730010; break;	// lhz		3, 16 (19)
 					}
 					*(u32*)(data+i) = branch(top_addr, properAddress);
-					Patch_ProgCopy(data, length, dataType);
+					Patch_FrameBuf(data, length, dataType);
 					return 1;
 				}
 			}

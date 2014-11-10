@@ -92,7 +92,6 @@ void print_gecko(const char* fmt, ...)
 /* re-init video for a given game */
 void ogc_video__reset()
 {
-	DrawFrameStart();
 	if(swissSettings.forceEncoding == 0) {
 		if(GCMDisk.CountryCode == 'J')
 			swissSettings.forceEncoding = 2;
@@ -112,11 +111,11 @@ void ogc_video__reset()
 			case 'X': // PAL other languages?
 			case 'Y': // PAL other languages?
 			case 'U':
-				swissSettings.gameVMode = 4;
+				swissSettings.gameVMode = -2;
 				break;
 			case 'E':
 			case 'J':
-				swissSettings.gameVMode = 1;
+				swissSettings.gameVMode = -1;
 				break;
 		}
 	} else {
@@ -129,47 +128,75 @@ void ogc_video__reset()
 	
 	/* set TV mode for current game */
 	switch(swissSettings.gameVMode) {
-		case 1:
-			newmode = &TVNtsc480IntDf;
+		case -1:
+			DrawFrameStart();
 			DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
+			DrawFrameFinish();
+			newmode = &TVNtsc480IntDf;
+			break;
+		case -2:
+			DrawFrameStart();
+			DrawMessageBox(D_INFO,"Video Mode: PAL 50Hz");
+			DrawFrameFinish();
+			newmode = &TVPal576IntDfScale;
+			break;
+		case 1:
+			DrawFrameStart();
+			DrawMessageBox(D_INFO, "Video Mode: NTSC 480i");
+			DrawFrameFinish();
+			newmode = &TVNtsc480IntDf;
 			break;
 		case 2:
+			DrawFrameStart();
+			DrawMessageBox(D_INFO, "Video Mode: NTSC 240p");
+			DrawFrameFinish();
 			newmode = &TVNtsc480IntDf;
-			DrawMessageBox(D_INFO,"Video Mode: NTSC 240p");
 			break;
 		case 3:
 			if(VIDEO_HaveComponentCable()) {
+				DrawFrameStart();
+				DrawMessageBox(D_INFO, "Video Mode: NTSC 480p");
+				DrawFrameFinish();
 				newmode = &TVNtsc480Prog;
-				DrawMessageBox(D_INFO,"Video Mode: NTSC 480p");
 			} else {
-				swissSettings.gameVMode = 1;	// Can't force with no cable
+				DrawFrameStart();
+				DrawMessageBox(D_WARN, "Video Mode: NTSC 480i");
+				DrawFrameFinish();
+				swissSettings.gameVMode = 1;
 				newmode = &TVNtsc480IntDf;
-				DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
+				sleep(5);
 			}
 			break;
 		case 4:
+			DrawFrameStart();
+			DrawMessageBox(D_INFO, "Video Mode: PAL 576i");
+			DrawFrameFinish();
 			newmode = &TVPal576IntDfScale;
-			DrawMessageBox(D_INFO,"Video Mode: PAL 50Hz");
 			break;
 		case 5:
+			DrawFrameStart();
+			DrawMessageBox(D_INFO, "Video Mode: PAL 288p");
+			DrawFrameFinish();
 			newmode = &TVPal576IntDfScale;
-			DrawMessageBox(D_INFO,"Video Mode: PAL 288p");
 			break;
 		case 6:
 			if(VIDEO_HaveComponentCable()) {
+				DrawFrameStart();
+				DrawMessageBox(D_INFO, "Video Mode: PAL 576p");
+				DrawFrameFinish();
 				newmode = &TVPal576ProgScale;
-				DrawMessageBox(D_INFO,"Video Mode: PAL 576p");
 			} else {
-				swissSettings.gameVMode = 4;	// Can't force with no cable
+				DrawFrameStart();
+				DrawMessageBox(D_WARN, "Video Mode: PAL 576i");
+				DrawFrameFinish();
+				swissSettings.gameVMode = 4;
 				newmode = &TVPal576IntDfScale;
-				DrawMessageBox(D_INFO,"Video Mode: PAL 50Hz");
+				sleep(5);
 			}
 			break;
 		default:
-			newmode = &TVNtsc480IntDf;
-			DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
+			newmode = vmode;
 	}
-	DrawFrameFinish();
 }
 
 void do_videomode_swap() {
@@ -611,8 +638,8 @@ unsigned int load_app(int mode, int multiDol)
 	if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
 		Patch_Fwrite(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
-	// Force 480p/576p
-	Patch_ProgVideo(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+	// Force Video Mode
+	Patch_VidMode(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 
 	// Force Widescreen
 	if(swissSettings.forceWidescreen) {
