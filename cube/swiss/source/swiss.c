@@ -202,9 +202,7 @@ void ogc_video__reset()
 void do_videomode_swap() {
 	if(vmode!=newmode) {
 		vmode = newmode;
-		VIDEO_Configure (vmode);
-		VIDEO_Flush();
-		VIDEO_WaitVSync();
+		initialise_video(vmode);
 		if (vmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
 		else while (VIDEO_GetNextField())  VIDEO_WaitVSync();
 	}
