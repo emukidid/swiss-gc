@@ -39,6 +39,8 @@
 #include "usbgeckoimg.h"
 #include "memcardimg_tpl.h"
 #include "memcardimg.h"
+#include "sambaimg_tpl.h"
+#include "sambaimg.h"
 #include "btnnohilight_tpl.h"
 #include "btnnohilight.h"
 #include "btnhilight_tpl.h"
@@ -76,6 +78,8 @@ TPLFile usbgeckoTPL;
 GXTexObj usbgeckoTexObj;
 TPLFile memcardTPL;
 GXTexObj memcardTexObj;
+TPLFile sambaTPL;
+GXTexObj sambaTexObj;
 TPLFile wiikeyTPL;
 GXTexObj wiikeyTexObj;
 TPLFile btnnohilightTPL;
@@ -117,6 +121,8 @@ void init_textures()
 	TPL_GetTexture(&memcardTPL,memcardimg,&memcardTexObj);
 	TPL_OpenTPLFromMemory(&usbgeckoTPL, (void *)usbgeckoimg_tpl, usbgeckoimg_tpl_size);
 	TPL_GetTexture(&usbgeckoTPL,usbgeckoimg,&usbgeckoTexObj);
+	TPL_OpenTPLFromMemory(&sambaTPL, (void *)sambaimg_tpl, sambaimg_tpl_size);
+	TPL_GetTexture(&sambaTPL,sambaimg,&sambaTexObj);
 	TPL_OpenTPLFromMemory(&btnnohilightTPL, (void *)btnnohilight_tpl, btnnohilight_tpl_size);
 	TPL_GetTexture(&btnnohilightTPL,btnnohilight,&btnnohilightTexObj);
 	TPL_OpenTPLFromMemory(&btnhilightTPL, (void *)btnhilight_tpl, btnhilight_tpl_size);
@@ -265,6 +271,9 @@ void DrawImage(int textureId, int x, int y, int width, int height, int depth, fl
 		break;
 	case TEX_MEMCARD:
 		GX_LoadTexObj(&memcardTexObj, GX_TEXMAP0);
+		break;
+	case TEX_SAMBA:
+		GX_LoadTexObj(&sambaTexObj, GX_TEXMAP0);
 		break;
 	case TEX_BTNNOHILIGHT:
 		GX_LoadTexObj(&btnnohilightTexObj, GX_TEXMAP0);

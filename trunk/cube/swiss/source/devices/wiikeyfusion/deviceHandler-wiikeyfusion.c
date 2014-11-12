@@ -205,13 +205,14 @@ int deviceHandler_WKF_init(file_handle* file){
 	return ret;
 }
 
+extern char *getDeviceMountPath(char *str);
 int deviceHandler_WKF_deinit(file_handle* file) {
 	if(file && file->fp) {
 		fclose(file->fp);
 		file->fp = 0;
 	}
 	if(deviceHandler_initial)
-		fatUnmount(deviceHandler_initial->name);
+		fatUnmount(getDeviceMountPath(file->name));
 	return 0;
 }
 

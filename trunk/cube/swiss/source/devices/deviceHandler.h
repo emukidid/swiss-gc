@@ -42,6 +42,7 @@ typedef struct {
 #include "devices/qoob/deviceHandler-Qoob.h"
 #include "devices/wode/deviceHandler-WODE.h"
 #include "devices/memcard/deviceHandler-CARD.h"
+#include "devices/smb/deviceHandler-SMB.h"
 #include "devices/wiikeyfusion/deviceHandler-wiikeyfusion.h"
 #include "devices/usbgecko/deviceHandler-usbgecko.h"
 

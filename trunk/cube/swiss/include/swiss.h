@@ -87,6 +87,10 @@ typedef struct {
 	int noDiscMode;
 	int enableFileManagement;
 	u8 sramLanguage;
+	char smbUser[32];		//20
+	char smbPassword[32];	//16
+	char smbShare[128];		//80
+	char smbServerIp[128];	//80
 } SwissSettings __attribute__((aligned(32)));
 extern SwissSettings swissSettings;
 

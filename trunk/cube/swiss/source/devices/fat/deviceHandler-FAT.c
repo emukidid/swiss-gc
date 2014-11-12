@@ -379,7 +379,7 @@ int deviceHandler_FAT_deinit(file_handle* file) {
 		file->fp = 0;
 	}
 	if(file) {
-		char *mountPath = getDeviceMountPath(deviceHandler_initial->name);
+		char *mountPath = getDeviceMountPath(file->name);
 		print_gecko("Unmounting [%s]\r\n", mountPath);
 		fatUnmount(mountPath);
 		free(mountPath);

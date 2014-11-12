@@ -22,7 +22,7 @@ char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS"};
 syssram* sram;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {8, 9, 9};
+int settings_count_pp[3] = {7, 9, 9};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
@@ -66,8 +66,6 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawSelectableButton(400, 240, -1, 270, swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == 3 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 280, "Swiss Video Mode:", 1.0f, false, defaultColor);
 		DrawSelectableButton(400, 280, -1, 310, uiVModeStr[swissSettings.uiVMode], option == 4 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 320, "Stop DVD Motor on startup:", 1.0f, false, defaultColor);
-		DrawSelectableButton(400, 320, -1, 350, swissSettings.stopMotor ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	else if(page_num == 1) {
 		WriteFont(30, 65, "Advanced Settings (2/3):");
@@ -141,9 +139,6 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 					swissSettings.uiVMode = 0;
 				if(swissSettings.uiVMode < 0)
 					swissSettings.uiVMode = 6;
-			break;
-			case 5:
-				swissSettings.stopMotor ^= 1;
 			break;
 		}	
 	}
