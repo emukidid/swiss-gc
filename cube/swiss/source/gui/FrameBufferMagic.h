@@ -58,7 +58,8 @@ enum TextureId
 	TEX_BTNEXIT,
 	TEX_MEMCARD,
 	TEX_WIIKEY,
-	TEX_USBGECKO
+	TEX_USBGECKO,
+	TEX_SAMBA
 };
 
 void init_textures();

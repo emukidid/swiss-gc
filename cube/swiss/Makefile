@@ -52,6 +52,7 @@ SOURCES		:=  source \
               source/devices/fat \
               source/devices/memcard \
               source/devices/qoob \
+			  source/devices/smb \
 			  source/devices/usbgecko \
               source/devices/wode \
 			  source/devices/wiikeyfusion \
@@ -83,7 +84,7 @@ LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x80003
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lbba -logc -lm -lfat -lmad -lasnd -lm -logc -ldb 
+LIBS	:=	-lbba -logc -lm -lfat -lmad -lasnd -lm -logc -ltinysmb -ldb 
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

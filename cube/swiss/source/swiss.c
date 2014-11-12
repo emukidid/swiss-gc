@@ -359,12 +359,14 @@ void textFileBrowser(file_handle** directory, int num_files)
 void select_dest_dir(file_handle* directory, file_handle* selection)
 {
 	file_handle *directories = NULL;
+	file_handle curDir;
+	memcpy(&curDir, directory, sizeof(file_entry));
 	int i = 0, j = 0, max = 0, refresh = 1, num_files =0, idx = 0;
 	
 	while(1){
 		// Read the directory
 		if(refresh) {
-			num_files = deviceHandler_dest_readDir(directory, &directories, IS_DIR);
+			num_files = deviceHandler_dest_readDir(&curDir, &directories, IS_DIR);
 			sortFiles(directories, num_files);
 			refresh = idx = 0;
 		}
@@ -384,17 +386,17 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_A))	{
 			//go into a folder or select a file
 			if((directories)[idx].fileAttrib==IS_DIR) {
-				memcpy(directory, &(directories)[idx], sizeof(file_handle));
+				memcpy(&curDir, &(directories)[idx], sizeof(file_handle));
 				refresh=1;
 			}
 			else if(directories[idx].fileAttrib==IS_SPECIAL){
 				//go up a folder
-				int len = strlen(directory->name);
-				while(len && directory->name[len-1]!='/') {
+				int len = strlen(&curDir.name[0]);
+				while(len && curDir.name[len-1]!='/') {
       				len--;
 				}
-				if(len != strlen(directory->name)) {
-					directory->name[len-1] = '\0';
+				if(len != strlen(&curDir.name[0])) {
+					curDir.name[len-1] = '\0';
 					refresh=1;
 				}
 			}
@@ -403,7 +405,7 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 			usleep(50000 - abs(PAD_StickY(0)*256));
 		}
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_X))	{
-			memcpy(selection, directory, sizeof(file_handle));
+			memcpy(selection, &curDir, sizeof(file_handle));
 			break;
 		}
 		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)))
@@ -850,16 +852,26 @@ void manage_file() {
 			// Show a list of destination devices (the same device is also a possibility)
 			select_copy_device();
 			// If the devices are not the same, init the second, fail on non-existing device/etc
-			if(deviceHandler_initial != deviceHandler_dest_initial) {				
+			if(deviceHandler_initial != deviceHandler_dest_initial) {
 				deviceHandler_dest_deinit( deviceHandler_dest_initial );
-				ret = deviceHandler_dest_init( deviceHandler_dest_initial );
-				if(!ret) {
-					DrawFrameStart();
-					sprintf(txtbuffer, "Failed to init destination device! (%i)",ret);
-					DrawMessageBox(D_FAIL,txtbuffer);
-					DrawFrameFinish();
-					wait_press_A();
-					return;
+				if(!deviceHandler_dest_init( deviceHandler_dest_initial )) {
+					// Try the alternate slot for SDGecko or IDE-EXI
+					if(deviceHandler_dest_initial->name[0] == 's')
+						deviceHandler_dest_initial = (deviceHandler_dest_initial == &initial_SD0) ?
+												&initial_SD1:&initial_SD0;
+					else
+						deviceHandler_dest_initial = (deviceHandler_dest_initial == &initial_IDE0) ?
+												&initial_IDE1:&initial_IDE0;
+
+					print_gecko("Trying alternate slot...\r\n");
+					if(!deviceHandler_dest_init( deviceHandler_dest_initial )) {
+						DrawFrameStart();
+						sprintf(txtbuffer, "Failed to init destination device! (%i)",ret);
+						DrawMessageBox(D_FAIL,txtbuffer);
+						DrawFrameFinish();
+						wait_press_A();
+						return;
+					}
 				}
 			}
 			// Traverse this destination device and let the user select a directory to dump the file in
@@ -907,7 +919,7 @@ void manage_file() {
 			
 				// Read from one file and write to the new directory
 				u32 isCard = deviceHandler_readFile == deviceHandler_CARD_readFile;
-				u32 curOffset = 0, cancelled = 0, chunkSize = (isCard||isDestCard) ? curFile.size : 0x8000;
+				u32 curOffset = 0, cancelled = 0, chunkSize = (isCard||isDestCard) ? curFile.size : (256*1024);
 				char *readBuffer = (char*)memalign(32,chunkSize);
 				
 				while(curOffset < curFile.size) {
@@ -922,18 +934,22 @@ void manage_file() {
 					DrawFrameFinish();
 					u32 amountToCopy = curOffset + chunkSize > curFile.size ? curFile.size - curOffset : chunkSize;
 					ret = deviceHandler_readFile(&curFile, readBuffer, amountToCopy);
-					if(ret != amountToCopy) {
-						DrawFrameStart();
-						sprintf(txtbuffer, "Failed to Read! (%i %i)",amountToCopy,ret);
-						DrawMessageBox(D_FAIL,txtbuffer);
-						DrawFrameFinish();
-						wait_press_A();
-						return;
+					if(ret != amountToCopy) {	// Retry the read.
+						deviceHandler_seekFile(&curFile, curFile.offset-ret, DEVICE_HANDLER_SEEK_SET);
+						ret = deviceHandler_readFile(&curFile, readBuffer, amountToCopy);
+						if(ret != amountToCopy) {
+							DrawFrameStart();
+							sprintf(txtbuffer, "Failed to Read! (%i %i)\n%s",amountToCopy,ret, &curFile.name[0]);
+							DrawMessageBox(D_FAIL,txtbuffer);
+							DrawFrameFinish();
+							wait_press_A();
+							return;
+						}
 					}
 					ret = deviceHandler_dest_writeFile(destFile, readBuffer, amountToCopy);
 					if(ret != amountToCopy) {
 						DrawFrameStart();
-						sprintf(txtbuffer, "Failed to Write! (%i %i)",amountToCopy,ret);
+						sprintf(txtbuffer, "Failed to Write! (%i %i)\n%s",amountToCopy,ret,destFile->name);
 						DrawMessageBox(D_FAIL,txtbuffer);
 						DrawFrameFinish();
 						wait_press_A();
@@ -1050,11 +1066,20 @@ void load_file()
 			if(!(endsWith(fileName,".iso") || endsWith(fileName,".gcm") 
 				|| endsWith(fileName,".ISO") || endsWith(fileName,".GCM"))) {
 				DrawFrameStart();
-				DrawMessageBox(D_WARN, "Unknown File Type!");
+				DrawMessageBox(D_WARN, "Unknown File Type");
 				DrawFrameFinish();
 				sleep(1);
 				return;
 			}
+			if((endsWith(fileName,".iso") || endsWith(fileName,".gcm") 
+				|| endsWith(fileName,".ISO") || endsWith(fileName,".GCM")) && (curDevice == SAMBA)) {
+				DrawFrameStart();
+				DrawMessageBox(D_WARN, "Not Supported");
+				DrawFrameFinish();
+				sleep(1);
+				return;
+			}
+			
 		}
 	}
 	DrawFrameStart();
@@ -1564,7 +1589,11 @@ void select_device()
 				DrawImage(TEX_USBGECKO, 640/2, 230, 129, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "USB Gecko (req. PC app)", 0.85f, true, defaultColor);
 			}
-			if(curDevice != 7) {
+			else if(curDevice==SAMBA) {
+				DrawImage(TEX_SAMBA, 640/2, 230, 160, 85, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+				WriteFontStyled(640/2, 330, "Samba", 0.85f, true, defaultColor);
+			}
+			if(curDevice != 8) {
 				WriteFont(520, 270, "->");
 			}
 			if(curDevice != 0) {
@@ -1594,7 +1623,7 @@ void select_device()
 				}
 			}
 			else {
-				if((btns & PAD_BUTTON_RIGHT) && curDevice < 7)
+				if((btns & PAD_BUTTON_RIGHT) && curDevice < 8)
 					curDevice++;
 				if((btns & PAD_BUTTON_LEFT) && curDevice > 0)
 					curDevice--;
@@ -1705,6 +1734,16 @@ void select_device()
 			deviceHandler_init     =  deviceHandler_USBGecko_init;
 			deviceHandler_deinit   =  deviceHandler_USBGecko_deinit;
 			deviceHandler_info 	   =  deviceHandler_USBGecko_info;
+			deviceHandler_deleteFile = NULL;
+		break;
+		case SAMBA:
+			deviceHandler_initial = &initial_SMB;
+			deviceHandler_readDir  =  deviceHandler_SMB_readDir;
+			deviceHandler_readFile =  deviceHandler_SMB_readFile;
+			deviceHandler_seekFile =  deviceHandler_SMB_seekFile;
+			deviceHandler_init     =  deviceHandler_SMB_init;
+			deviceHandler_deinit   =  deviceHandler_SMB_deinit;
+			deviceHandler_info 	   =  deviceHandler_SMB_info;
 			deviceHandler_deleteFile = NULL;
 		break;
 	}

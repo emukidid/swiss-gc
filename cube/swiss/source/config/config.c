@@ -23,6 +23,10 @@
 //Stop DVD Motor on startup=Yes
 //Enable WiiRD debug=Yes
 //Enable File Management=No
+//SMBUserName=user
+//SMBPassword=password
+//SMBShareName=nas
+//SMBHostIP=192.168.1.32
 //!!Swiss Settings End!!
 
 // This is an example game entry
@@ -113,6 +117,14 @@ int config_update_file() {
 		sprintf(txtbuffer, "Enable WiiRD debug=%s\r\n",(configSwissSettings.wiirdDebug ? "Yes":"No"));
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "Enable File Management=%s\r\n",(configSwissSettings.enableFileManagement ? "Yes":"No"));
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		sprintf(txtbuffer, "SMBUserName=%s\r\n",configSwissSettings.smbUser);
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		sprintf(txtbuffer, "SMBPassword=%s\r\n",configSwissSettings.smbPassword);
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		sprintf(txtbuffer, "SMBShareName=%s\r\n",configSwissSettings.smbShare);
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		sprintf(txtbuffer, "SMBHostIP=%s\r\n",configSwissSettings.smbServerIp);
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
@@ -299,6 +311,18 @@ void config_parse(char *configData) {
 						configSwissSettings.uiVMode = 5;
 					else if(!strcmp(uiVModeStr[6], value))
 						configSwissSettings.uiVMode = 6;
+				}
+				else if(!strcmp("SMBUserName", name)) {
+					strncpy(configSwissSettings.smbUser, value, 20);
+				}
+				else if(!strcmp("SMBPassword", name)) {
+					strncpy(configSwissSettings.smbPassword, value, 16);
+				}
+				else if(!strcmp("SMBShareName", name)) {
+					strncpy(configSwissSettings.smbShare, value, 80);
+				}
+				else if(!strcmp("SMBHostIP", name)) {
+					strncpy(configSwissSettings.smbServerIp, value, 80);
 				}
 			}
 		}

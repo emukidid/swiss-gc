@@ -306,7 +306,7 @@ void main_loop()
 		deviceHandler_deinit( deviceHandler_initial );
 		sdgecko_setSpeed(EXI_SPEED32MHZ);
 		if(!deviceHandler_init( deviceHandler_initial )) {
-			if((deviceHandler_initial->name[0] == 's')||(deviceHandler_initial->name[0] == 'i')) {
+			if(((deviceHandler_initial->name[0] == 's')&&(deviceHandler_initial->name[1] == 'd'))||(deviceHandler_initial->name[0] == 'i')) {
 				print_gecko("SD/IDE-EXI Device Failed to initialize @ 32MHz!\r\nTrying again once @ 16MHz...\r\n");
 				sdgecko_setSpeed(EXI_SPEED16MHZ);
 				if(!deviceHandler_init(deviceHandler_initial)) {
@@ -352,7 +352,7 @@ void main_loop()
 			memcpy(&curDir, &curFile, sizeof(file_handle));
 			sortFiles(allFiles, files);
 			print_gecko("Found %i entries\r\n",files);
-			if(files<1) { deviceHandler_deinit(deviceHandler_initial); break;}
+			if(files<1) { deviceHandler_deinit(deviceHandler_initial); needsDeviceChange=1; break;}
 			needsRefresh = 0;
 			curMenuLocation=ON_FILLIST;
 		}
@@ -433,8 +433,8 @@ int main ()
 	needsRefresh = 1;
 	
 	// Start up the BBA if it exists (commented out until libOGC is fixed)
-	//init_network_thread();
-	//init_httpd_thread();
+	init_network_thread();
+	init_httpd_thread();
 
 	//debugging stuff
 	if(swissSettings.debugUSB) {
@@ -477,6 +477,9 @@ int main ()
 				if(swissSettings.defaultDevice)
 					curDevice = SD_CARD;
 			}
+		}
+		if(!swissSettings.defaultDevice) {
+			deviceHandler_deinit(deviceHandler_initial);
 		}
 		deviceHandler_setStatEnabled(1);
 	}
