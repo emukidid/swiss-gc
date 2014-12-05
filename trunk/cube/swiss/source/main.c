@@ -524,31 +524,10 @@ int main ()
 	if(swissSettings.stopMotor && swissSettings.hasDVDDrive) {
 		dvd_motor_off();
 	}
-
-	GXRModeObj *forcedMode = NULL;
+	
 	// Swiss video mode force
-	switch(swissSettings.uiVMode) {
-		case 1:
-			forcedMode = &TVNtsc480IntDf;
-			break;
-		case 3:
-			if(VIDEO_HaveComponentCable()) {
-				forcedMode = &TVNtsc480Prog;
-			} else {
-				forcedMode = &TVNtsc480IntDf;
-			}
-			break;
-		case 4:
-			forcedMode = &TVPal576IntDfScale;
-			break;
-		case 6:
-			if(VIDEO_HaveComponentCable()) {
-				forcedMode = &TVPal576ProgScale;
-			} else {
-				forcedMode = &TVPal576IntDfScale;
-			}
-			break;
-	}
+	GXRModeObj *forcedMode = getModeFromSwissSetting(swissSettings.uiVMode);
+	
 	if((forcedMode != NULL) && (forcedMode != vmode)) {
 		initialise_video(forcedMode);
 		vmode = forcedMode;
@@ -558,4 +537,26 @@ int main ()
 		main_loop();
 	}
 	return 0;
+}
+
+GXRModeObj *getModeFromSwissSetting(int uiVMode) {
+	switch(uiVMode) {
+		case 1:
+			return &TVNtsc480IntDf;
+		case 3:
+			if(VIDEO_HaveComponentCable()) {
+				return &TVNtsc480Prog;
+			} else {
+				return &TVNtsc480IntDf;
+			}
+		case 4:
+			return &TVPal576IntDfScale;
+		case 6:
+			if(VIDEO_HaveComponentCable()) {
+				return &TVPal576ProgScale;
+			} else {
+				return &TVPal576IntDfScale;
+			}
+	}
+	return vmode;
 }
