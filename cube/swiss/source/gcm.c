@@ -265,7 +265,13 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			u8 *buffer = (u8*)memalign(32, sizeToRead);
 			
 			deviceHandler_seekFile(file,filesToPatch[i].offset+ofs,DEVICE_HANDLER_SEEK_SET);
-			deviceHandler_readFile(file,buffer,sizeToRead);
+			if(deviceHandler_readFile(file,buffer,sizeToRead)!= sizeToRead) {
+				DrawFrameStart();
+				DrawMessageBox(D_FAIL, "Failed to read!");
+				DrawFrameFinish();
+				sleep(5);
+				return 0;
+			}
 
 			u32 ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type, multiDol);
 			if(READ_PATCHED_ALL != ret)	{

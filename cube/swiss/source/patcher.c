@@ -1481,8 +1481,10 @@ u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt) {
 		DOLHEADER *hdr = (DOLHEADER *) data;
 
 		// Doesn't look valid
-		if (hdr->textOffset[0] != DOLHDRLENGTH)
+		if (hdr->textOffset[0] != DOLHDRLENGTH) {
+			print_gecko("DOL Header doesn't look valid %08X\r\n",hdr->textOffset[0]);
 			return 0;
+		}
 
 		// Inspect text sections to see if what we found lies in here
 		for (i = 0; i < MAXTEXTSECTION; i++) {
@@ -1538,6 +1540,7 @@ u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt) {
 	else if(type == PATCH_LOADER) {
 		return offsetFoundAt+0x81300000;
 	}
+	print_gecko("No cases matched, returning 0 for proper address\r\n");
 	return 0;
 }
 

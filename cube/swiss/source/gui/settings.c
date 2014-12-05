@@ -277,6 +277,12 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				DrawFrameStart();
 				DrawMessageBox(D_INFO,"Saving changes!");
 				DrawFrameFinish();
+				// Change Swiss video mode if it was modified.
+				if(tempSettings.uiVMode != swissSettings.uiVMode) {
+					GXRModeObj *newmode = getModeFromSwissSetting(swissSettings.uiVMode);
+					initialise_video(newmode);
+					vmode = newmode;
+				}
 				// Save settings to SRAM
 				sram = __SYS_LockSram();
 				sram->flags = swissSettings.sramStereo ? (sram->flags|4):(sram->flags&~4);
