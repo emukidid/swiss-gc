@@ -293,8 +293,6 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 				Patch_WideAspect(buffer, sizeToRead, filesToPatch[i].type);
 			if(swissSettings.forceAnisotropy)
 				Patch_TexFilt(buffer, sizeToRead, filesToPatch[i].type);
-			if(swissSettings.emulatemc)
-				Patch_CARDFunctions(buffer, sizeToRead);
 			if(patched) {
 				sprintf(txtbuffer, "Writing patch for %s %iKb", filesToPatch[i].name, filesToPatch[i].size/1024);
 				DrawFrameStart();
