@@ -38,7 +38,6 @@
 //Mute Audio Streaming=Yes
 //No Disc Mode=Yes
 //Force Widescreen=Yes
-//Emulate Memory Card via SDGecko=Yes
 
 static ConfigEntry configEntries[2048]; // That's a lot of Games!
 static int configEntriesCount = 0;
@@ -164,10 +163,7 @@ int config_update_file() {
 			
 			sprintf(txtbuffer, "Force Anisotropy=%s\r\n",(configEntries[i].forceAnisotropy ? "Yes":"No"));
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
-			
-			sprintf(txtbuffer, "Emulate Memory Card via SDGecko=%s\r\n",(configEntries[i].emulatemc ? "Yes":"No"));
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
-			
+	
 			sprintf(txtbuffer, "Force Encoding=%s\r\n\r\n\r\n",forceEncodingStr[configEntries[i].forceEncoding]);
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		}
@@ -210,7 +206,6 @@ void config_parse(char *configData) {
 					configEntries[configEntriesCount].forceWidescreen = 0;
 					configEntries[configEntriesCount].forceAnisotropy = 0;
 					configEntries[configEntriesCount].forceEncoding = 0;
-					configEntries[configEntriesCount].emulatemc = 0;
 				}
 				else if(!strcmp("Name", name)) {
 					strncpy(&configEntries[configEntriesCount].game_name[0], value, 64);
@@ -258,9 +253,6 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("Force Anisotropy", name)) {
 					configEntries[configEntriesCount].forceAnisotropy = !strcmp("Yes", value) ? 1:0;
-				}
-				else if(!strcmp("Emulate Memory Card via SDGecko", name)) {
-					configEntries[configEntriesCount].emulatemc = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("Force Encoding", name)) {
 					if(!strcmp(forceEncodingStr[0], value))
@@ -356,7 +348,6 @@ void config_find(ConfigEntry *entry) {
 	entry->forceWidescreen = 0;
 	entry->forceAnisotropy = 0;
 	entry->forceEncoding = 0;
-	entry->emulatemc = 0;
 	// Add this new entry to our collection
 	memcpy(&configEntries[configEntriesCount], entry, sizeof(ConfigEntry));
 	configEntriesCount++;

@@ -24,7 +24,6 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include "cheats.h"
 #include "frag.h"
 #include "swiss.h"
 #include "main.h"
@@ -32,7 +31,6 @@
 #include "exi.h"
 #include "patcher.h"
 #include "banner.h"
-#include "qchparse.h"
 #include "dvd.h"
 #include "gcm.h"
 #include "mp3.h"
@@ -414,88 +412,7 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 	free(directories);
 }
 
-int setup_memcard_emulation() {
-	// If memcard emulation is enabled, create the %game%.memcard.sav file
-	if(swissSettings.emulatemc) {
-		if(deviceHandler_initial != &initial_SD0 && deviceHandler_initial != &initial_DVD &&
-			deviceHandler_initial != &initial_WKF && deviceHandler_initial != &initial_WODE) {
-			// Memory card emulation will only work from SD Slot A when running a game in SD Slot A or from DVD/WKF/WODE
-			DrawFrameStart();
-			DrawMessageBox(D_INFO, "For MC emulation, loading device must be:\nDVD, Wode, WKF or SD in Slot A\nPress A to Return ...");
-			DrawFrameFinish();
-			swissSettings.emulatemc = 0;
-			wait_press_A();
-			return 0;
-		}
-		// Check if game device isn't SDGecko in slot A, if so, we need to set up the SDGecko and the patchcode here
-		if(deviceHandler_initial != &initial_SD0) {
-			DrawFrameStart();
-			DrawMessageBox(D_INFO, "Insert a SDGecko inserted into slot A\nPress A when ready ...");
-			DrawFrameFinish();
-			wait_press_A();
-			// Try to init SDGecko in Slot A
-			if(deviceHandler_FAT_init(&initial_SD0)) {
-				// Setup patch code
-				memcpy((void*)0x80001800,sd_bin,sd_bin_size);
-			}
-			else {
-				DrawFrameStart();
-				DrawMessageBox(D_FAIL, "SDGecko in Slot A failed to init!\nMemcard emulation disabled, returning to menu.");
-				DrawFrameFinish();
-				swissSettings.emulatemc = 0;
-				sleep(2);
-				return 0;
-			}
-		}
-		// Obtain the offset of it on SD Card and stash it somewhere
-		sprintf(txtbuffer, "sda:/%s.memcard.sav", stripInvalidChars(getRelativeName(curFile.name)));
-		print_gecko("Looking for %s\r\n",txtbuffer);
-		FILE *fp = fopen(txtbuffer, "r+");
-		if(!fp) {
-			print_gecko("Creating %s\r\n",txtbuffer);
-			fp = fopen( txtbuffer, "wb" );
-			if(fp) {
-				print_gecko("Writing empty buffer to %s\r\n",txtbuffer);
-				char *empty = (char*)memalign(32,512*1024);
-				memset(empty,0, 512*1024);
-				fwrite(empty, 1, 512*1024, fp);
-				free(empty);
-			}
-		}
-		if(fp) {
-			print_gecko("Closing %s\r\n",txtbuffer);
-			fclose(fp);
-			print_gecko("Getting file base %s\r\n",txtbuffer);
-			get_frag_list(txtbuffer);
-			u32 file_base = frag_list->num > 1 ? -1 : frag_list->frag[0].sector;
-			*(u32*)VAR_MEMCARD_LBA = file_base;
-			print_gecko("File base %08X\r\n",*(u32*)VAR_MEMCARD_LBA);
-			if (file_base == -1) {
-				// fatal
-				DrawFrameStart();
-				DrawMessageBox(D_FAIL, "Memory Card file is fragmented!\nMemcard emulation disabled, returning to menu.");
-				DrawFrameFinish();
-				print_gecko("File base fragmented in %i pieces!\r\n",frag_list->num);
-				swissSettings.emulatemc = 0;
-				sleep(2);
-				return 0;
-			}
-		}
-		else {
-			// fatal
-			print_gecko("Could not create or open file %s\r\n",txtbuffer);
-			DrawFrameStart();
-			DrawMessageBox(D_FAIL, "Memory Card file failed to create!\nMemcard emulation disabled, returning to menu.");
-			DrawFrameFinish();
-			swissSettings.emulatemc = 0;
-			sleep(2);
-			return 0;
-		}
-	}
-	return 1;
-}
-
-unsigned int load_app(int mode, int multiDol)
+unsigned int load_app(int multiDol)
 {
 	char* gameID = (char*)0x80000000;
 	int zeldaVAT = 0, i = 0;
@@ -534,7 +451,7 @@ unsigned int load_app(int mode, int multiDol)
 	DrawProgressBar(33, "Reading Main DOL");
 	DrawFrameFinish();
 	
-	// Adjust top of memory (we reserve some for high memory location patching and cheats)
+	// Adjust top of memory
 	u32 top_of_main_ram = 0x81800000;
 
 	// Read FST to top of Main Memory (round to 32 byte boundary)
@@ -652,14 +569,6 @@ unsigned int load_app(int mode, int multiDol)
 	// Force Encoding
 	Patch_FontEnc(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 
-	// Emulate memory card via SDGecko
-	if(swissSettings.emulatemc) {
-		Patch_CARDFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-	}
-	// Cheats hook
-	if(mode == CHEATS || swissSettings.wiirdDebug) {
-		Patch_CheatsHook(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
-	}
 	DCFlushRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	ICInvalidateRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	
@@ -681,10 +590,6 @@ unsigned int load_app(int mode, int multiDol)
 	VIDEO_SetPostRetraceCallback (NULL);
 	do_videomode_swap();
 	*(volatile u32*)0x800000CC = VIDEO_GetCurrentTvMode();
-	if(mode == CHEATS || swissSettings.wiirdDebug) {
-		kenobi_set_debug(swissSettings.wiirdDebug);
-		kenobi_install_engine();
-	}
 	DCFlushRange((void*)0x80000000, 0x3100);
 	ICInvalidateRange((void*)0x80000000, 0x3100);
 	
@@ -722,13 +627,6 @@ unsigned int load_app(int mode, int multiDol)
 	*(volatile unsigned int*)VAR_INTERRUPT_TIMES = 0;
 	memset((void*)VAR_READ_DVDSTRUCT, 0, 0x18);
 
-	// Memcard emulation with read device not being SDGecko in Slot A, setup the SD variables
-	if(swissSettings.emulatemc && deviceHandler_initial != &initial_SD0) {
-		*(volatile unsigned int*)VAR_EXI_BUS_SPD = 208;
-		*(volatile unsigned int*)VAR_SD_TYPE = sdgecko_getAddressingType(0);
-		*(volatile unsigned int*)VAR_EXI_FREQ = EXI_SPEED32MHZ;
-		*(volatile unsigned int*)VAR_EXI_SLOT = 0;
-	}
 	// Set WKF base offset if not using the frag patch
 	if(curDevice == WKF && !wkfFragSetupReq) {
 		wkfWriteOffset(*(volatile unsigned int*)VAR_DISC_1_LBA);
@@ -993,23 +891,8 @@ void manage_file() {
 void load_file()
 {
 	char *fileName = &curFile.name[0];
-	int isPrePatched = 0, hasCheatsFile = 0;
+	int isPrePatched = 0;
 		
-	// Cheats file?
-	if(strlen(fileName)>4) {
-		if(endsWith(fileName,".QCH") || endsWith(fileName,".qch")) {
-			if(DrawYesNoDialog("Load this cheats file?")) {
-				DrawFrameStart();
-				DrawMessageBox(D_INFO, "Loading Cheats File ..");
-				DrawFrameFinish();
-				QCH_SetCheatsFile(&curFile);
-				return;
-			}
-			else {
-				return;
-			}
-		}
-	}
 	// If it's not a DVD Disc, or it's a DVD disc with some file structure, browse by file type
 	if((curDevice != DVD_DISC) || (curDevice == DVD_DISC && dvdDiscTypeInt==ISO9660_DISC)) {
 		//if it's a DOL, boot it
@@ -1116,58 +999,11 @@ void load_file()
 		return;
 	}
 	
-	// User may have selected cheats via the cheats database
-	hasCheatsFile = getARToWiirdCheats()[0] != 0;
-	if(getARToWiirdCheats()[0] != 0) {
-		kenobi_set_cheats((u8*)getARToWiirdCheats(), getARToWiirdCheatsSize());
-	}
 	int multiDol = 0;
-	// Report to the user the patch status of this GCM/ISO file and look for a cheats file too
+	// Report to the user the patch status of this GCM/ISO file
 	if((curDevice == SD_CARD) || (curDevice == IDEEXI)) {
 		multiDol = check_game();
-		
-		// Look for cheats file if the user hasn't loaded one up
-		if(!hasCheatsFile) {
-			int i = 0;
-			char *expectedFileName = (char*)memalign(32,1024);
-			strcpy(expectedFileName, getRelativeName(&curFile.name[0]));
-			strcat(expectedFileName, ".gct");
-			for(i = 0; i < files; i++) {
-				char *fileName = getRelativeName(&allFiles[i].name[0]);
-				if(!strcmp(fileName, expectedFileName)) {
-					// Check cheats size
-					if(allFiles[i].size > kenobi_get_maxsize()) {
-						sprintf(txtbuffer, "Cheats file is too big! (%i byte limit)", kenobi_get_maxsize());
-						DrawFrameStart();
-						DrawMessageBox(D_FAIL, txtbuffer);
-						DrawFrameFinish();
-						wait_press_A();
-						free(expectedFileName);
-						return;
-					}
-					
-					u8* cheatsbuffer = (u8*)memalign(32,0x8000);
-					// Found the cheats file, read it
-					deviceHandler_seekFile(&allFiles[i],0,DEVICE_HANDLER_SEEK_SET);
-					if(deviceHandler_readFile(&allFiles[i],cheatsbuffer,allFiles[i].size) == allFiles[i].size) {
-						// Try to set it
-						kenobi_set_cheats(cheatsbuffer, allFiles[i].size);
-						hasCheatsFile = 1;
-					}
-					free(cheatsbuffer);
-				}
-			}
-			free(expectedFileName);
-		}
-
 	}
-	
-	// We can't relocate the cheats stub so we must ensure our patch code is located elsewhere
-	// TODO: FIX
-	
-	// Setup memory card emulation
-	if(!setup_memcard_emulation())
-		return;
 	
 	// Start up the DVD Drive
 	if((curDevice != DVD_DISC) && (curDevice != WODE) && (curDevice != WKF) 
@@ -1223,46 +1059,8 @@ void load_file()
 	
 	// setup the video mode before we kill libOGC kernel
 	ogc_video__reset();
-	load_app(hasCheatsFile ? CHEATS:NO_CHEATS, multiDol);
+	load_app(multiDol);
 }
-
-int cheats_game()
-{ 
-	int ret;
-
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,"Loading Cheat DB");
-	DrawFrameFinish();
-	ret = QCH_Init();
-	if(!ret) {
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL,"Failed to open cheats.qch. Press A.");
-		DrawFrameFinish();
-		wait_press_A();
-		return 0;
-	}
-
-	ret = QCH_Parse(NULL);
-	if(ret <= 0) {
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL,"Failed to parse cheat DB. Press A.");
-		DrawFrameFinish();
-		wait_press_A();
-		return 0;
-	}
-	sprintf(txtbuffer,"Found %d Games",ret);
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,txtbuffer);
-	DrawFrameFinish();
-	
-	curGameCheats *selected_cheats = memalign(32,sizeof(curGameCheats));
-	QCH_Find(&GCMDisk.GameName[0],selected_cheats);
-	free(selected_cheats);
-
-	QCH_DeInit();  
-	return 1;
-}
-
 
 int check_game()
 { 	
@@ -1372,7 +1170,7 @@ void draw_game_info() {
 		WriteFontStyled(640/2, 220, (GCMDisk.DiscID ? "Disc 2":""), 0.8f, true, defaultColor);
 	}
 
-	WriteFontStyled(640/2, 370, "Cheats (Y) - Settings (X) - Exit (B) - Continue (A)", 0.75f, true, defaultColor);
+	WriteFontStyled(640/2, 370, "Settings (X) - Exit (B) - Continue (A)", 0.75f, true, defaultColor);
 	DrawFrameFinish();
 }
 
@@ -1390,20 +1188,16 @@ int info_game()
 	swissSettings.gameVMode = config->gameVMode;
 	swissSettings.softProgressive = config->softProgressive;
 	swissSettings.muteAudioStreaming = config->muteAudioStreaming;
-	swissSettings.emulatemc = config->emulatemc;
 	swissSettings.forceWidescreen = config->forceWidescreen;
 	swissSettings.forceAnisotropy = config->forceAnisotropy;
 	swissSettings.forceEncoding = config->forceEncoding;
 	while(1) {
 		draw_game_info();
-		while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
-		while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+		while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+		while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){
 			ret = (PAD_ButtonsHeld(0) & PAD_BUTTON_A) ? 1:0;
 			break;
-		}
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
-			cheats_game();
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
 			if(show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC) ? &curFile : NULL, config)) {

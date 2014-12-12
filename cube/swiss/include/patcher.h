@@ -71,64 +71,6 @@ extern u32 VIConfigure576p_length;
 extern u8 VIConfigurePanHook[];
 extern u32 VIConfigurePanHook_length;
 
-/* SDK CARD library patches */
-extern u8 __CARDSync[];
-extern u32 __CARDSync_length;
-extern u8 CARDCheck[];
-extern u32 CARDCheck_length;
-extern u8 CARDCheckAsync[];
-extern u32 CARDCheckAsync_length;
-extern u8 CARDCheckEx[];
-extern u32 CARDCheckEx_length;
-extern u8 CARDCheckExAsync[];
-extern u32 CARDCheckExAsync_length;
-extern u8 CARDClose[];
-extern u32 CARDClose_length;
-extern u8 CARDCreate[];
-extern u32 CARDCreate_length;
-extern u8 CARDCreateAsync[];
-extern u32 CARDCreateAsync_length;
-extern u8 CARDDelete[];
-extern u32 CARDDelete_length;
-extern u8 CARDDeleteAsync[];
-extern u32 CARDDeleteAsync_length;
-extern u8 CARDFastOpen[];
-extern u32 CARDFastOpen_length;
-extern u8 CARDFreeBlocks[];
-extern u32 CARDFreeBlocks_length;
-extern u8 CARDGetEncoding[];
-extern u32 CARDGetEncoding_length;
-extern u8 CARDGetMemSize[];
-extern u32 CARDGetMemSize_length;
-extern u8 CARDGetResultCode[];
-extern u32 CARDGetResultCode_length;
-extern u8 CARDGetSerialNo[];
-extern u32 CARDGetSerialNo_length;
-extern u8 CARDGetStatus[];
-extern u32 CARDGetStatus_length;
-extern u8 CARDMount[];
-extern u32 CARDMount_length;
-extern u8 CARDMountAsync[];
-extern u32 CARDMountAsync_length;
-extern u8 CARDOpen[];
-extern u32 CARDOpen_length;
-extern u8 CARDProbe[];
-extern u32 CARDProbe_length;
-extern u8 CARDProbeEX[];
-extern u32 CARDProbeEX_length;
-extern u8 CARDRead[];
-extern u32 CARDRead_length;
-extern u8 CARDReadAsync[];
-extern u32 CARDReadAsync_length;
-extern u8 CARDSetStatus[];
-extern u32 CARDSetStatus_length;
-extern u8 CARDSetStatusAsync[];
-extern u32 CARDSetStatusAsync_length;
-extern u8 CARDWrite[];
-extern u32 CARDWrite_length;
-extern u8 CARDWriteAsync[];
-extern u32 CARDWriteAsync_length;
-
 #define SWISS_MAGIC 0x53574953 /* "SWIS" */
 
 #define LO_RESERVE 0x80001800
@@ -137,10 +79,9 @@ extern u32 CARDWriteAsync_length;
 #define QUEUE_READ_OFFSET	 	(LO_RESERVE)
 #define PATCHED_MEMCPY		 	(LO_RESERVE | 0x04)
 #define FAKE_IRQ			 	(LO_RESERVE | 0x08)
-#define HANDLE_CARD		 		(LO_RESERVE | 0x0C)
-#define CALC_SPEED		 		(LO_RESERVE | 0x10)
-#define READ_IMMED_OFFSET 		(LO_RESERVE | 0x14)
-#define ENABLE_BACKUP_DISC 		(LO_RESERVE | 0x18)
+#define CALC_SPEED		 		(LO_RESERVE | 0x0C)
+#define READ_IMMED_OFFSET 		(LO_RESERVE | 0x10)
+#define ENABLE_BACKUP_DISC 		(LO_RESERVE | 0x14)
 
 #define READ_PATCHED_ALL 		(0x111111)
 
@@ -164,7 +105,6 @@ void Patch_Fwrite(void *addr, u32 length);
 void Patch_DVDReset(void *addr,u32 length);
 int Patch_DVDCompareDiskId(u8 *data, u32 length);
 void Patch_GXSetVATZelda(void *addr, u32 length,int mode);
-int Patch_CARDFunctions(u8 *data, u32 length);
 u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);
 int install_code();

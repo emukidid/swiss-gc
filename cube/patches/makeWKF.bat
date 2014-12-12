@@ -8,7 +8,7 @@ del *.o
 powerpc-eabi-objdump -D wkf.elf > built\wkf_disasm.txt
 powerpc-eabi-objcopy -O binary wkf.elf wkf.bin
 bin2s wkf.bin > wkfPatch.s
-mv wkfPatch.s built
+mv wkfPatch.s built\wkfPatch.s
 del *.bin
 del *.elf
 pause

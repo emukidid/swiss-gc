@@ -174,34 +174,4 @@ void do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	*(u32*)VAR_TMP1 = lba + ((len + SECTOR_SIZE-startByte) >> lbaShift);
 }
 
-void do_write(void *src, u32 len, u32 offset)
-{
-	u32 lba = (offset>>9) + (*(u32*)VAR_MEMCARD_LBA);
-	// SDHC uses sector addressing, SD uses byte
-	lba <<= (9*(*(u32*)VAR_SD_TYPE));	// SD Card Type (SDHC=0, SD=1)
-
-	int numFullBlocks = len >> 9;
-	u32* ptr = (u32*)src;
-	while(numFullBlocks)
-	{
-		// Send single block write command for the sector we want to overwriting at.
-		send_cmd(CMD24, lba); 
-		
-		while(rcvr_spi() != 0xFF);
-		
-		// send start token 0xFE to start write of block
-		exi_imm_write(0xFE<<24, 1);
-		int i;
-		for(i = 0; i < 128; i++) {
-			exi_imm_write(*ptr++, 4);
-		}
-		exi_imm_write(0xFFFF<<16, 2);	// Dummy CRC
-		rcvr_spi(); // discard status bit here
-		numFullBlocks--;
-		lba += (1<<(9*(*(u32*)VAR_SD_TYPE)));
-	}
-	exi_deselect();
-	rcvr_spi();
-}
-
 /* End of SD functions */

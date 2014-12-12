@@ -13,7 +13,6 @@ _start:
 	b		queue_read
 	b		patched_memcpy			# void patched_memcpy(dst,src,size)
 	b		fake_interrupt
-	b		handle_card				# Looks at VAR_MC_FUNC to see what function to call
 	b		calculate_speed			# Calculates how long it takes to read 2048 bytes from the device
 	b		read_immediately		# Performs a blocking read.
 	b		enable_backup_disc		# Re-authenticates a DVD-R disc
