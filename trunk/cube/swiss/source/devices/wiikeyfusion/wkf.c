@@ -255,15 +255,19 @@ void wkfCheckSwitches() {
 	u32 regionSwitch = (wkfReadSpecial3() >> 16) & 0xFF;
 	switch(regionSwitch) {
 		case 0x41: //PAL
+		case 0x01:
 			print_gecko("Valid PAL Swich config detected\r\n");
 		break;
 		case 0x43: //NTSC
+		case 0x03:
 			print_gecko("Valid NTSC Swich config detected\r\n");
 		break;
 		case 0x45: //NTSC-J
+		case 0x05:
 			print_gecko("Valid JAP Swich config detected\r\n");
 		break;
 		case 0x47: //KOR
+		case 0x07:
 			print_gecko("Valid KOR Swich config detected\r\n");
 		break;
 		default: 
