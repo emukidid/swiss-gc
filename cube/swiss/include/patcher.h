@@ -94,7 +94,7 @@ extern u32 VIConfigurePanHook_length;
 #define PATCH_LOADER	2
 
 u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType);
-u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int multiDol);
+u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int simplePatch);
 int Patch_VidMode(u8 *data, u32 length, int dataType);
 void Patch_WideAspect(u8 *data, u32 length, int dataType);
 int Patch_TexFilt(u8 *data, u32 length, int dataType);

@@ -102,6 +102,13 @@ void process_queue(void) {
 
 // Reads immediately, no pseudo queuing.
 void read_entire(void* dst, u32 len, u32 ofs) {
+#ifdef DEBUG
+	usb_sendbuffer_safe("Full Read: ",11);
+	print_read(dst, len, ofs);
+#endif
 	device_frag_read(dst, len, ofs);
 	dcache_flush_icache_inv(dst, len);
+#ifdef DEBUG
+	usb_sendbuffer_safe("Finished Read\r\n",15);
+#endif
 }	
