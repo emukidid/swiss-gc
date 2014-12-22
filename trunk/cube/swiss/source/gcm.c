@@ -243,10 +243,15 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 }
 
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, int multiDol) {
-	int i, patched_buf_num = 0;
+	int i, patched_buf_num = 0, num_patched = 0;
 	
 	// Go through all the possible files we think need patching..
-	for(i = 0; i < numToPatch; i++) {	
+	for(i = 0; i < numToPatch; i++) {
+		sprintf(txtbuffer, "Patching File %i/%i",i+1,numToPatch);
+		DrawFrameStart();
+		DrawProgressBar((int)(((float)(i+1)/(float)numToPatch)*100), txtbuffer);
+		DrawFrameFinish();
+	
 		int patched = 0;
 		// File handle for a patch we might need to write
 		file_handle patchFile;
@@ -294,11 +299,6 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			if(swissSettings.forceAnisotropy)
 				Patch_TexFilt(buffer, sizeToRead, filesToPatch[i].type);
 			if(patched) {
-				sprintf(txtbuffer, "Writing patch for %s %iKb", filesToPatch[i].name, filesToPatch[i].size/1024);
-				DrawFrameStart();
-				DrawMessageBox(D_INFO,txtbuffer);
-				DrawFrameFinish();
-
 				char patchDirName[1024];
 				memset(&patchDirName, 0, 1024);
 				sprintf(&patchDirName[0],"%s.patches",file->name);
@@ -315,8 +315,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 				sprintf(&patchFile.name[0], "%s/%i",patchDirName, patched_buf_num);
 				deviceHandler_deleteFile(&patchFile);
 				deviceHandler_writeFile(&patchFile,buffer,sizeToRead);
-				
-
+				num_patched++;
 			}
 			free(buffer);
 		}
@@ -329,7 +328,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			patched_buf_num++;
 		}
 	}
-	return 0;
+	return num_patched;
 }
 
 u32 calc_fst_entries_size(char *FST) {

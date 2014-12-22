@@ -15,7 +15,8 @@ _start:
 	b		fake_interrupt
 	b		calculate_speed			# Calculates how long it takes to read 2048 bytes from the device
 	b		read_immediately		# Performs a blocking read.
-	b		enable_backup_disc		# Re-authenticates a DVD-R disc
+	b		handle_disc_swap		# Re-authenticates a DVD-R disc
+	b		dvd_read_frag			# Either reads from SD, or allows the DVD read to occur.
 
 	.globl fake_interrupt
 fake_interrupt:
@@ -68,6 +69,7 @@ no_fake_irq:
 	
 	.globl queue_read
 queue_read:
+	stw         r0, 4 (1)			# overwritten, so lets do it here.
 	mflr    	r0             		# move lr  
 	stwu    	sp,  -64(sp)   		# grow stack frame 
 	stw     	r0,   28(sp)    	# save lr
@@ -83,7 +85,6 @@ queue_read:
 	lwz     	r0,	28(sp)    		# load lr
 	addi    	sp,  sp, 64   		# grow stack frame 
 	mtlr    	r0             		# move lr  
-	li			r0, 	0			# patched over this
 	blr
 	
 	.globl read_immediately
@@ -203,148 +204,3 @@ ext_h:
 	ori			r5, r5, process_read_queue@l
 	mtsrr0      r5
 	rfi
-
-	
-	.globl enable_backup_disc
-enable_backup_disc:
-	mflr	r0
-	stw		r0,4(sp)
-	stwu	sp,-40(sp)
-	stmw	r26,8(sp)
-
-	mfmsr	r5
-	rlwinm	r5,r5,0,17,15
-	mtmsr	r5
-
-	bl		_unlockdvd
-
-	li		r3,1
-	bl		_enableextensions
-
-	li		r3,0x4100
-	bl		_spinmotor
-
-	lis		r3,0x0006
-	ori		r3,r3,0x0300
-	bl		_setstatus
-
-	mfmsr	r5
-	ori		r5,r5,0x8000
-	mtmsr	r5
-
-	lmw		r26,8(sp)
-	lwz		r0,44(sp)
-	addi	sp,sp,40
-	mtlr	r0
-	blr
-
-	.globl _unlockdvd
-_unlockdvd:
-	lis		r3,0xcc00
-	ori		r3,r3,0x6000
-	lwz		r5,0(r3)
-	ori		r5,r5,0x14
-	stw		r5,0(r3)
-	lwz		r5,4(r3)
-	stw		r5,4(r3)
-	lis		r5,0xff01
-	ori		r5,r5,0x4d41
-	stw		r5,8(r3)
-	lis		r5,0x5453
-	ori		r5,r5,0x4849
-	stw		r5,12(r3)
-	lis		r5,0x5441
-	ori		r5,r5,0x0200
-	stw		r5,16(r3)
-	li		r5,0x01
-	stw		r5,28(r3)
-1:	lwz		r5,0(r3)
-	andi.	r5,r5,0x14
-	beq+	1b
-
-	lwz		r5,0(r3)
-	ori		r5,r5,0x14
-	stw		r5,0(r3)
-	lwz		r5,4(r3)
-	stw		r5,4(r3)
-	lis		r5,0xff00
-	ori		r5,r5,0x4456
-	stw		r5,8(r3)
-	lis		r5,0x442d
-	ori		r5,r5,0x4741
-	stw		r5,12(r3)
-	lis		r5,0x4d45
-	ori		r5,r5,0x0300
-	stw		r5,16(r3)
-	li		r5,0x01
-	stw		r5,28(r3)
-2:	lwz		r5,0(r3)
-	andi.	r5,r5,0x14
-	beq+	2b
-	blr
-
-	.globl _spinmotor
-_spinmotor:
-	lis		r4,0xcc00
-	ori		r4,r4,0x6000
-	lwz		r5,0(r4)
-	ori		r5,r5,0x14
-	stw		r5,0(r4)
-	lwz		r5,4(r4)
-	stw		r5,4(r4)
-	lis		r5,0xfe11
-	or		r5,r5,r3
-	stw		r5,8(r4)
-	li		r5,0
-	stw		r5,12(r4)
-	stw		r5,16(r4)
-	li		r5,0x01
-	stw		r5,28(r4)
-1:	lwz		r5,0(r4)
-	andi.	r5,r5,0x14
-	beq+	1b
-	blr
-
-	.globl _enableextensions
-_enableextensions:
-	lis		r4,0xcc00
-	ori		r4,r4,0x6000
-	lwz		r5,0(r4)
-	ori		r5,r5,0x14
-	stw		r5,0(r4)
-	lwz		r5,4(r4)
-	stw		r5,4(r4)
-	lis		r5,0x5500
-	insrwi	r5,r3,8,8 
-	stw		r5,8(r4)
-	li		r5,0
-	stw		r5,12(r4)
-	stw		r5,16(r4)
-	li		r5,0x01
-	stw		r5,28(r4)
-1:	lwz		r5,0(r4)
-	andi.	r5,r5,0x14
-	beq+	1b
-	blr
-
-	.globl _setstatus
-_setstatus:
-	lis		r4,0xcc00
-	ori		r4,r4,0x6000
-	lwz		r5,0(r4)
-	ori		r5,r5,0x14
-	stw		r5,0(r4)
-	lwz		r5,4(r4)
-	stw		r5,4(r4)
-	lis		r5,0xEE00
-	insrwi	r5,r3,24,8
-	stw		r5,8(r4)
-	li		r5,0
-	stw		r5,12(r4)
-	stw		r5,16(r4)
-	li		r5,0x01
-	stw		r5,28(r4)
-1:	lwz		r5,0(r4)
-	andi.	r5,r5,0x14
-	beq+	1b
-	blr

@@ -519,7 +519,12 @@ unsigned int load_app(int multiDol)
 
 	// Patch to read from SD/HDD
 	if((curDevice == SD_CARD)||(curDevice == IDEEXI)||(curDevice == USBGECKO)) {
-		u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL, multiDol);
+		int useSimpleReads = 0;
+		if(!strncmp((char*)&GCMDisk, "D43", 3)) {
+			print_gecko("OOT Multi Disc Detected\r\n");
+			useSimpleReads = 1;
+		}
+		u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL, useSimpleReads);
 		if(READ_PATCHED_ALL != ret)	{
 			DrawFrameStart();
 			DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
@@ -555,6 +560,7 @@ unsigned int load_app(int multiDol)
 	if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
 		Patch_Fwrite(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
+	
 	// Force Video Mode
 	Patch_VidMode(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 
@@ -1070,22 +1076,11 @@ int check_game()
 	DrawFrameFinish();
 	
 	ExecutableFile *filesToPatch = memalign(32, sizeof(ExecutableFile)*512);
-	int numToPatch = parse_gcm(&curFile, filesToPatch), i =0;
-	for(i=0; i<numToPatch; i++) {
-		if(strstr(filesToPatch[i].name,"execD.img") && 
-			(!strncmp((char*)&GCMDisk, "D43U01", 6) || !strncmp((char*)&GCMDisk, "D43E01", 6))) {
-			print_gecko("OOT Multi Disc Detected\r\n");
-			multiDol = 1;
-			break;
-		}
-	}
+	int numToPatch = parse_gcm(&curFile, filesToPatch);
 	
 	if(numToPatch>0) {
 		// Game requires patch files, lets do it.	
-		int res = patch_gcm(&curFile, filesToPatch, numToPatch, numToPatch>0);
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,res ? "Game Patched Successfully":"Game could not be patched or not required");
-		DrawFrameFinish();
+		multiDol = patch_gcm(&curFile, filesToPatch, numToPatch, 0);
 	}
 	free(filesToPatch);
 	return multiDol;

@@ -41,21 +41,9 @@ u32 _AIResetStreamSampleCount_original[9] = {
   0x7C0803A6   // mtlr        r0
 };
 
-u32 _read_original_part_a[1] = {
-	0x3C60A800
-};
-
-u32 _read_original_part_b[1] = {
-	0x9004001C
-};
-
-u32 _read2_original_part_a[1] = {
-	0x3C00A800
-};
-
-u32 _read2_original_part_b[1] = {
-	0x38000003
-};
+FuncPattern ReadDebug = {0xDC, 23, 18, 3, 2, 4, 0, 0, "Read (Debug)", 0};
+FuncPattern ReadCommon = {0x10C, 30, 18, 5, 2, 3, 0, 0, "Read (Common)", 0};
+FuncPattern ReadUncommon = {0x104, 29, 17, 5, 2, 3, 0, 0, "Read (Uncommon)", 0};
 
 u32 _seek_original_part_a[1] = {
 	0x3C00AB00
@@ -255,74 +243,210 @@ u32 branch(u32 dst, u32 src)
 }
 
 u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
-	void *addr_start = addr;
-	void *addr_end = addr+length;	
-	int patched = 0;
+	int i = 0;
 
-	while(addr_start<addr_end) 
-	{
+	for(i = 0; i < length; i+=4) {
 		// Patch Read to adjust the offset for fragmented files
-		if(memcmp(addr_start,_read_original_part_a,sizeof(_read_original_part_a))==0)
-		{
-			int i = 0;
-			// Patch the DI start
-			while((*(u32*)(addr_start + i)) != _read_original_part_b[0]) i+=4;
-			
-			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + i)-(u32)(addr));
+		if( *(u32*)(addr+i) != 0x7C0802A6 )
+			continue;
+		
+		FuncPattern fp;
+		make_pattern( (u8*)(addr+i), length, &fp );
+		
+		if(compare_pattern(&fp, &ReadCommon)) {
+			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x84)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadCommon.Name, properAddress - 0x84);
 			u32 newval = (u32)(ADJUST_LBA_OFFSET - properAddress);
 			newval&= 0x03FFFFFC;
 			newval|= 0x48000001;
-			*(u32*)(addr_start + i) = newval;
-
-      		print_gecko("Found:[Read] @ %08X for WKF\r\n", properAddress);
-			patched = 1;
-			break;
-		}	
-		addr_start += 4;
+			*(u32*)(addr + i + 0x84) = newval;
+			return 1;
+		}
+		if(compare_pattern(&fp, &ReadDebug)) {	// As above, for debug read now.
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x88)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadDebug.Name, properAddress - 0x88);
+			u32 newval = (u32)(ADJUST_LBA_OFFSET - properAddress);
+			newval&= 0x03FFFFFC;
+			newval|= 0x48000001;
+			*(u32*)(addr + i + 0x88) = newval;
+			return 1;
+		}
+		if(compare_pattern(&fp, &ReadUncommon)) {	// Same, for the less common read type.
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x7C)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadUncommon.Name, properAddress - 0x7C);
+			u32 newval = (u32)(ADJUST_LBA_OFFSET - properAddress);
+			newval&= 0x03FFFFFC;
+			newval|= 0x48000001;
+			*(u32*)(addr + i + 0x7C) = newval;
+			return 1;
+		}
 	}
-	return patched;
+	return 0;
 }
 
-u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int multiDol) {
+/** Used for Multi-DOL games that require patches to be stored on SD *//*
+u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType) {
 	void *addr_start = addr;
 	void *addr_end = addr+length;	
 	int patched = 0;
-	
-	if(multiDol) {	// execD.img games are a special case.
-		while(addr_start<addr_end) {
-			// Patch Read (called from DVDLowLevelRead) to perform an immediate read
-			if((*(u32*)addr_start == _read_original_part_a[0]) 
-				|| (*(u32*)addr_start == _read2_original_part_a[0]))
-			{
-				// Make the read that was going to occur into a 0xE000
-				*(u32*)(addr_start) = ((*(u32*)(addr_start)) & 0xFFFF0000) | 0xE000;
+	while(addr_start<addr_end) {
+		// Patch Read (called from DVDLowLevelRead) to read data from SD if it has been patched.
+		if((*(u32*)addr_start == _read_original_part_a[0]) 
+			|| (*(u32*)addr_start == _read2_original_part_a[0]))
+		{
+			// Where the DVD_DMA | DVD_START are about to be written to the DI reg,
+			// add in a jump over it to our handler which will either allow the read to happen
+			// or mark it as a 0xE000 command with DVD_START only (no DMA) and read a fragment from SD.
+			
+			// This fragment that is read will only be a patched bit of PPC code, 
+			// it will be small so a blocking read will be used.
+			
+			// Make the read that was going to occur into a 0xE000
+			*(u32*)(addr_start) = ((*(u32*)(addr_start)) & 0xFFFF0000) | 0xE000;
 				
-				int i = 0;
-				while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
-				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr_start-i)+8)-(u32)(addr));
+			int i = 0;
+			while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr_start-i)+8)-(u32)(addr));
+			u32 newval = (u32)((READ_IMMED_OFFSET) - properAddress);
+			newval&= 0x03FFFFFC;
+			newval|= 0x48000001;
+			if(*(u32*)((addr_start - i) + 8) != 0x90010004) {
+				print_gecko("Unknown Read type! %08X\r\n",*(u32*)((addr_start - i) + 8));
+			}
+			*(u32*)((addr_start - i) + 8) = newval;
+
+			// Patch the DI start (make it a IMM 0xE0 for execD.img)
+			i = 0;
+			while((*(u32*)(addr_start + i)) != _read2_original_part_b[0]) i+=4;
+			*(u32*)(addr_start + i) = 0x38000001;
+
+			print_gecko("Found:[Read (blocking)] @ %08X\r\n", properAddress);
+			return READ_PATCHED_ALL;
+		}
+		addr_start+=4;
+	}
+}*/
+
+u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int simplePatch) {
+	void *addr_start = addr;
+	void *addr_end = addr+length;	
+	int patched = 0, i = 0;
+
+	while(addr_start<addr_end) {
+		// Patch DVDLowSeek
+		if(memcmp(addr_start,_seek_original_part_a,sizeof(_seek_original_part_a))==0)
+		{
+			*(u32*)(addr_start) = 0x3C00E000;
+			print_gecko("Found:[DVDLowSeek] @ %08X\r\n", Calc_ProperAddress(addr, dataType, (u32)(addr_start)-(u32)(addr)));
+			patched |= 0x100000;
+		}
+		
+		addr_start += 4;
+	}
+	
+	if(simplePatch) {	// IF we fail to patch using our complex patches, just try a simple full read
+		print_gecko("Blocking Read Patch will be used\r\n");
+		for(i = 0; i < length; i+=4) {
+			// Patch Read (called from DVDLowLevelRead) to perform an immediate read
+			if( *(u32*)(addr+i) != 0x7C0802A6 )
+				continue;
+			
+			FuncPattern fp;
+			make_pattern( (u8*)(addr+i), length, &fp );
+			
+			if(compare_pattern(&fp, &ReadCommon)) {
+				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr+i+4)-(u32)(addr)));
+				print_gecko("Found:[%s] @ %08X\r\n", ReadCommon.Name, properAddress-4);
+				// Make the read command (0xA800) that was going to occur into a status check (0xE000).
+				*(u32*)(addr+i+0x5C) = ((*(u32*)(addr+i+0x5C)) & 0xFFFF0000) | 0xE000;
+				// Patch a branch & link to our SD read handler
 				u32 newval = (u32)((READ_IMMED_OFFSET) - properAddress);
 				newval&= 0x03FFFFFC;
 				newval|= 0x48000001;
-				if(*(u32*)((addr_start - i) + 8) != 0x90010004) {
-					print_gecko("Unknown Read type! %08X\r\n",*(u32*)((addr_start - i) + 8));
+				if(*(u32*)((addr + i) + 4) != 0x90010004) {
+					print_gecko("Unknown Read type! %08X\r\n",*(u32*)((addr + i) + 4));
 				}
-				*(u32*)((addr_start - i) + 8) = newval;
-
-				// Patch the DI start (make it a IMM 0xE0 for execD.img)
-				i = 0;
-				while((*(u32*)(addr_start + i)) != _read2_original_part_b[0]) i+=4;
-				*(u32*)(addr_start + i) = 0x38000001;
-
-				print_gecko("Found:[Read (blocking)] @ %08X\r\n", properAddress);
+				*(u32*)((addr + i) + 4) = newval;
+				// Patch the DI start to not be DMA (no callback)
+				*(u32*)(addr + i + 0x70) = 0x38000001;
 				return READ_PATCHED_ALL;
 			}
-			addr_start+=4;
+			if(compare_pattern(&fp, &ReadDebug)) { // Same as above, different offsets for debug read.
+				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr+i+4)-(u32)(addr)));
+				print_gecko("Found:[%s] @ %08X\r\n", ReadDebug.Name, properAddress-4);
+				*(u32*)(addr+i+0x44) = ((*(u32*)(addr+i+0x44)) & 0xFFFF0000) | 0xE000;
+				u32 newval = (u32)((READ_IMMED_OFFSET) - properAddress);
+				newval&= 0x03FFFFFC;
+				newval|= 0x48000001;
+				if(*(u32*)((addr + i) + 4) != 0x90010004) {
+					print_gecko("Unknown Read type! %08X\r\n",*(u32*)((addr + i) + 4));
+				}
+				*(u32*)((addr + i) + 4) = newval;
+				*(u32*)(addr + i + 0x68) = 0x38000001;
+				return READ_PATCHED_ALL;
+			}
+			if(compare_pattern(&fp, &ReadUncommon)) { // Same as above, different offsets for less common Read func.
+				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr+i+4)-(u32)(addr)));
+				print_gecko("Found:[%s] @ %08X\r\n", ReadUncommon.Name, properAddress-4);
+				*(u32*)(addr+i+0x54) = ((*(u32*)(addr+i+0x54)) & 0xFFFF0000) | 0xE000;
+				u32 newval = (u32)((READ_IMMED_OFFSET) - properAddress);
+				newval&= 0x03FFFFFC;
+				newval|= 0x48000001;
+				if(*(u32*)((addr + i) + 4) != 0x90010004) {
+					print_gecko("Unknown Read type! %08X\r\n",*(u32*)((addr + i) + 4));
+				}
+				*(u32*)((addr + i) + 4) = newval;
+				*(u32*)(addr + i + 0x80) = 0x38000001;
+				return READ_PATCHED_ALL;
+			}
 		}
 	}
 	else {
 		FuncPattern OSExceptionInitSig =
 			{0x27C, 39, 14, 14, 20, 7, 0, 0, "OSExceptionInit", 0};
+			
+		// Find everything first before we attempt our complex patch.
+		addr_start = addr;
+		while(addr_start<addr_end) 
+		{
+			// Note down the location of the __DVDInterruptHandler so we can call it for our fake IRQ
+			if( ((*(u32*)(addr_start + 0 )) & 0xFFFF) == _dvdinterrupthandler_part[0]
+				&& ((*(u32*)(addr_start + 4 )) & 0xFFFF) == _dvdinterrupthandler_part[1]
+				&& ((*(u32*)(addr_start + 8 )) & 0xFFFF) == _dvdinterrupthandler_part[2] ) 
+			{
+				patched |= 0x100;
+			}
+			// Patch __OSDispatchInterrupt to launch our fake IRQ
+			else if(memcmp(addr_start,_osdispatch_part_a,sizeof(_osdispatch_part_a))==0)
+			{	
+				patched |= 0x10;
+			}
+			// Patch the statebusy callback to see the DILENGTH register with a zero value
+			else if(((*(u32*)(addr_start + 0 )) & 0xFFFF) == _cbforstatebusy_part[0]
+				&& ((*(u32*)(addr_start + 4 )) & 0xFFFF) == _cbforstatebusy_part[1]
+				&& ((*(u32*)(addr_start + 8 )) & 0xFFFF) == _cbforstatebusy_part[2]
+				&& ((*(u32*)(addr_start + 12 )) & 0xFFFF) == _cbforstatebusy_part[3]) 
+			{
+				patched |= 0x1000;
+			}
+			// Patch the memcpy call to copy our code to 0x80000500
+			else if(*(u32*)(addr_start) == 0x7C0802A6)
+			{
+				if( find_pattern( (u8*)(addr_start), length, &OSExceptionInitSig ) )
+				{
+					patched |= 0x10000;
+				}
+			}
+			addr_start += 4;
+		}
+		if(((patched & 0x11110)!=0x11110)) {
+			print_gecko("Failed to find the extra functions for partitioned DVD Read patching to occur.\r\n");
+			return Patch_DVDLowLevelRead(addr, length, dataType, 1);
+		}
+		
 		u32 dvdIntHandlerAddr = 0;
+		addr_start = addr;
 		while(addr_start<addr_end) 
 		{
 			// Note down the location of the __DVDInterruptHandler so we can call it for our fake IRQ
@@ -345,48 +469,9 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int multiDol) {
 			}
 			addr_start += 4;
 		}
-		addr_start = addr;
 		
-		if(!dvdIntHandlerAddr) {
-			print_gecko("Found Read without finding the DVDInterruptHandler first, trying blocking read patch\r\n");
-			return Patch_DVDLowLevelRead(addr_start, length, dataType, 1);
-		}
+		addr_start = addr;	
 		while(addr_start<addr_end) {
-			// Patch Read (called from DVDLowLevelRead)
-			if(memcmp(addr_start,_read_original_part_a,sizeof(_read_original_part_a))==0)
-			{
-				int i = 0;
-				while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
-				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr_start-i)+12)-(u32)(addr));
-				u32 newval = (u32)((QUEUE_READ_OFFSET) - properAddress);
-				newval&= 0x03FFFFFC;
-				newval|= 0x48000001;
-				if(*(u32*)((addr_start - i) + 12) != 0x38000000) {
-					print_gecko("Unknown Read type! %08X\r\n",*(u32*)((addr_start - i) + 12));
-				}
-				*(u32*)((addr_start - i) + 12) = newval;
-
-				// Patch the DI start (make it a IMM 0xE0 for execD.img)
-				i = 0;
-				while((*(u32*)(addr_start + i)) != _read_original_part_b[0]) i+=4;
-				*(u32*)(addr_start + i) = 0x60000000;
-
-				// Write some code that will write where the DVDIRQHandler is for this Read/DOL
-				*(u32*)(addr_start + i+4) = 0x3c600000 | ((VAR_DVDIRQ_HNDLR>>16) & 0xFFFF);		// lis r3, VAR_DVDIRQ_HNDLR@hi
-				*(u32*)(addr_start + i+8) = 0x3c800000 | ((dvdIntHandlerAddr>>16) & 0xFFFF);	// lis r4, dvdIntHandlerAddr@hi
-				*(u32*)(addr_start + i+12) = 0x60840000 | ((dvdIntHandlerAddr) & 0xFFFF);		// ori r4, r4, dvdIntHandlerAddr@lo
-				*(u32*)(addr_start + i+16) = 0x90830000 | ((VAR_DVDIRQ_HNDLR) & 0xFFFF);		// stw r4, VAR_DVDIRQ_HNDLR@lo(r3)
-
-				// Cut all the alarm/timeout setup for reads.
-				while((*(u32*)(addr_start + i)) != 0x4E800020 ) {
-					if((*(u32*)(addr_start + i) & 0xF0000000) == 0x40000000)
-						*(u32*)(addr_start + i) = 0x60000000;
-					i+=4;
-				}
-
-				print_gecko("Found:[Read] @ %08X\r\n", properAddress);
-				patched |= 0x01;
-			}
 			// Patch __OSDispatchInterrupt to launch our fake IRQ
 			if(memcmp(addr_start,_osdispatch_part_a,sizeof(_osdispatch_part_a))==0)
 			{
@@ -430,15 +515,96 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int multiDol) {
 					}
 				}
 			}
-			// Patch DVDLowSeek
-			if(memcmp(addr_start,_seek_original_part_a,sizeof(_seek_original_part_a))==0)
-			{
-				*(u32*)(addr_start) = 0x3C00E000;
-				print_gecko("Found:[DVDLowSeek] @ %08X\r\n", Calc_ProperAddress(addr, dataType, (u32)(addr_start)-(u32)(addr)));
-				patched |= 0x100000;
-			}
-			
 			addr_start += 4;
+		}
+		
+		for(i = 0; i < length; i+=4) {
+			// Patch Read (called from DVDLowLevelRead)
+			if( *(u32*)(addr + i) != 0x7C0802A6 )
+				continue;
+			
+			FuncPattern fp;
+			make_pattern( (u8*)(addr + i), length, &fp );
+			
+			if(compare_pattern(&fp, &ReadCommon)) {
+				// Place a jump to our queue function, this will queue up the requested DVD Read
+				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 4)-(u32)(addr));
+				print_gecko("Found:[%s] @ %08X\r\n", ReadCommon.Name, properAddress-4);
+				u32 newval = (u32)((QUEUE_READ_OFFSET) - properAddress);
+				newval&= 0x03FFFFFC;
+				newval|= 0x48000001;
+				if(*(u32*)((addr + i) + 4) != 0x90010004) {
+					print_gecko("Unknown Read type! %08X\r\n",*(u32*)((addr + i) + 4));
+				}
+				*(u32*)(addr + i + 4) = newval;
+				// NOP the DI start from happening
+				*(u32*)(addr + i + 0x84) = 0x60000000;
+				// Write some code that will write where the DVDIRQHandler is for this Read/DOL
+				*(u32*)(addr + i + 0x88) = 0x3c600000 | ((VAR_DVDIRQ_HNDLR>>16) & 0xFFFF);		// lis r3, VAR_DVDIRQ_HNDLR@hi
+				*(u32*)(addr + i + 0x8C) = 0x3c800000 | ((dvdIntHandlerAddr>>16) & 0xFFFF);	// lis r4, dvdIntHandlerAddr@hi
+				*(u32*)(addr + i + 0x90) = 0x60840000 | ((dvdIntHandlerAddr) & 0xFFFF);		// ori r4, r4, dvdIntHandlerAddr@lo
+				*(u32*)(addr + i + 0x94) = 0x90830000 | ((VAR_DVDIRQ_HNDLR) & 0xFFFF);		// stw r4, VAR_DVDIRQ_HNDLR@lo(r3)
+				// Cut all the alarm/timeout setup for reads.
+				int j = 0x98;
+				while((*(u32*)(addr + i + j)) != 0x4E800020 ) {
+					if((*(u32*)(addr + i + j) & 0xF0000000) == 0x40000000)
+						*(u32*)(addr + i + j) = 0x60000000;
+					j+=4;
+				}
+				patched |= 0x01;
+			}
+			if(compare_pattern(&fp, &ReadDebug)) {	// Same as above but different offsets for Debug
+				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 4)-(u32)(addr));
+				print_gecko("Found:[%s] @ %08X\r\n", ReadDebug.Name, properAddress-4);
+				u32 newval = (u32)((QUEUE_READ_OFFSET) - properAddress);
+				newval&= 0x03FFFFFC;
+				newval|= 0x48000001;
+				if(*(u32*)((addr + i) + 4) != 0x90010004) {
+					print_gecko("Unknown Read type! %08X\r\n",*(u32*)((addr + i) + 4));
+				}
+				*(u32*)(addr + i + 4) = newval;
+				// NOP the DI start from happening
+				*(u32*)(addr + i + 0x88) = 0x60000000;
+				// Write some code that will write where the DVDIRQHandler is for this Read/DOL
+				*(u32*)(addr + i + 0x8C) = 0x3c600000 | ((VAR_DVDIRQ_HNDLR>>16) & 0xFFFF);		// lis r3, VAR_DVDIRQ_HNDLR@hi
+				*(u32*)(addr + i + 0x90) = 0x3c800000 | ((dvdIntHandlerAddr>>16) & 0xFFFF);	// lis r4, dvdIntHandlerAddr@hi
+				*(u32*)(addr + i + 0x94) = 0x60840000 | ((dvdIntHandlerAddr) & 0xFFFF);		// ori r4, r4, dvdIntHandlerAddr@lo
+				*(u32*)(addr + i + 0x98) = 0x90830000 | ((VAR_DVDIRQ_HNDLR) & 0xFFFF);		// stw r4, VAR_DVDIRQ_HNDLR@lo(r3)
+				// Cut all the alarm/timeout setup for reads.
+				int j = 0x9C;
+				while((*(u32*)(addr + i + j)) != 0x4E800020 ) {
+					if((*(u32*)(addr + i + j) & 0xF0000000) == 0x40000000)
+						*(u32*)(addr + i + j) = 0x60000000;
+					j+=4;
+				}
+				patched |= 0x01;
+			}
+			if(compare_pattern(&fp, &ReadUncommon)) {	// Same as above, but for less common read method.
+				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 4)-(u32)(addr));
+				print_gecko("Found:[%s] @ %08X\r\n", ReadUncommon.Name, properAddress-4);
+				u32 newval = (u32)((QUEUE_READ_OFFSET) - properAddress);
+				newval&= 0x03FFFFFC;
+				newval|= 0x48000001;
+				if(*(u32*)((addr + i) + 4) != 0x90010004) {
+					print_gecko("Unknown Read type! %08X\r\n",*(u32*)((addr + i) + 4));
+				}
+				*(u32*)(addr + i + 4) = newval;
+				// NOP the DI start from happening
+				*(u32*)(addr + i + 0x7C) = 0x60000000;
+				// Write some code that will write where the DVDIRQHandler is for this Read/DOL
+				*(u32*)(addr + i + 0x80) = 0x3c600000 | ((VAR_DVDIRQ_HNDLR>>16) & 0xFFFF);		// lis r3, VAR_DVDIRQ_HNDLR@hi
+				*(u32*)(addr + i + 0x84) = 0x3c800000 | ((dvdIntHandlerAddr>>16) & 0xFFFF);	// lis r4, dvdIntHandlerAddr@hi
+				*(u32*)(addr + i + 0x88) = 0x60840000 | ((dvdIntHandlerAddr) & 0xFFFF);		// ori r4, r4, dvdIntHandlerAddr@lo
+				*(u32*)(addr + i + 0x8C) = 0x90830000 | ((VAR_DVDIRQ_HNDLR) & 0xFFFF);		// stw r4, VAR_DVDIRQ_HNDLR@lo(r3)
+				// Cut all the alarm/timeout setup for reads.
+				int j = 0x90;
+				while((*(u32*)(addr + i + j)) != 0x4E800020 ) {
+					if((*(u32*)(addr + i + j) & 0xF0000000) == 0x40000000)
+						*(u32*)(addr + i + j) = 0x60000000;
+					j+=4;
+				}
+				patched |= 0x01;
+			}
 		}
 	}
 	return patched;
