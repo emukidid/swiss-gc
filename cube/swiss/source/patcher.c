@@ -383,7 +383,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int simplePatch)
 					print_gecko("Unknown Read type! %08X\r\n",*(u32*)((addr + i) + 4));
 				}
 				*(u32*)((addr + i) + 4) = newval;
-				*(u32*)(addr + i + 0x68) = 0x38000001;
+				*(u32*)(addr + i + 0x80) = 0x38000001;
 				return READ_PATCHED_ALL;
 			}
 			if(compare_pattern(&fp, &ReadUncommon)) { // Same as above, different offsets for less common Read func.
@@ -397,7 +397,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int simplePatch)
 					print_gecko("Unknown Read type! %08X\r\n",*(u32*)((addr + i) + 4));
 				}
 				*(u32*)((addr + i) + 4) = newval;
-				*(u32*)(addr + i + 0x80) = 0x38000001;
+				*(u32*)(addr + i + 0x68) = 0x38000001;
 				return READ_PATCHED_ALL;
 			}
 		}
