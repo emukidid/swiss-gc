@@ -124,6 +124,13 @@ int deviceHandler_WKF_writeFile(file_handle* file, void* buffer, unsigned int le
 
 
 int deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
+	// Check if file2 exists
+	if(file2) {
+		get_frag_list(file2->name);
+		if(frag_list->num <= 0)
+			file2 = NULL;
+	}
+
 	// If there are 2 discs, we only allow 5 fragments per disc.
 	int maxFrags = file2 ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0, frags = 0;
 	u32 *fragList = (u32*)VAR_FRAG_LIST;
