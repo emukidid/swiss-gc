@@ -20,9 +20,9 @@ void patch_region()
 void handle_disc_swap()
 {
 
-	//mfmsr	r5
-	//rlwinm	r5,r5,0,17,15
-	//mtmsr	r5
+	asm("mfmsr	5");
+	asm("rlwinm	5,5,0,17,15");
+	asm("mtmsr	5");
 	
 	volatile u32* dvd = (volatile u32*)0xCC006000;
 	// Unlock
@@ -76,9 +76,9 @@ void handle_disc_swap()
 	dvd[7] = 1;
 	while ((dvd[0] & 0x14) == 0);
 	
-	//mfmsr	r5
-	//ori		r5,r5,0x8000
-	//mtmsr	r5
+	asm("mfmsr	5");
+	asm("ori	5,5,0x8000");
+	asm("mtmsr	5");
 }
 
 void dvd_read_patched_section() {
@@ -110,3 +110,5 @@ void enable_drive()
 	//laser_control(1);
 	//laser = 1;
 }
+
+void dvd_read_frag(void) {}
