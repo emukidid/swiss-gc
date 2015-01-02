@@ -128,13 +128,13 @@ void ogc_video__reset()
 	switch(swissSettings.gameVMode) {
 		case -1:
 			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Video Mode: NTSC 60Hz");
+			DrawMessageBox(D_INFO, "Video Mode: NTSC 60Hz");
 			DrawFrameFinish();
 			newmode = &TVNtsc480IntDf;
 			break;
 		case -2:
 			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Video Mode: PAL 50Hz");
+			DrawMessageBox(D_INFO, "Video Mode: PAL 50Hz");
 			DrawFrameFinish();
 			newmode = &TVPal576IntDfScale;
 			break;
@@ -192,17 +192,13 @@ void ogc_video__reset()
 				sleep(5);
 			}
 			break;
-		default:
-			newmode = vmode;
 	}
 }
 
 void do_videomode_swap() {
-	if(vmode!=newmode) {
+	if((newmode != NULL) && (newmode != vmode)) {
+		initialise_video(newmode);
 		vmode = newmode;
-		initialise_video(vmode);
-		if (vmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
-		else while (VIDEO_GetNextField())  VIDEO_WaitVSync();
 	}
 }
 
@@ -593,8 +589,8 @@ unsigned int load_app(int multiDol)
 	DrawProgressBar(100, "Executing Game!");
 	DrawFrameFinish();
 
-	VIDEO_SetPostRetraceCallback (NULL);
 	do_videomode_swap();
+	VIDEO_SetPostRetraceCallback (NULL);
 	*(volatile u32*)0x800000CC = VIDEO_GetCurrentTvMode();
 	DCFlushRange((void*)0x80000000, 0x3100);
 	ICInvalidateRange((void*)0x80000000, 0x3100);
