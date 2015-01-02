@@ -65,20 +65,17 @@ static void ProperScanPADS()	{
 }
 
 void populateVideoStr(GXRModeObj *vmode) {
-	if(vmode == &TVPal576ProgScale) {
-		videoStr = Prog576Str;
-	}
-	else if(vmode == &TVNtsc480Prog) {
-		videoStr = Prog480Str;
-	}
-	else if(vmode == &TVPal576IntDfScale) {
-		videoStr = PALStr;
-	}
-	else if(vmode == &TVNtsc480IntDf) {
-		videoStr = NTSCStr;
-	}
-	else {
-		videoStr = UnkStr;
+	switch(vmode->viTVMode) {
+		case VI_TVMODE_NTSC_INT:  videoStr = NtscIntStr;  break;
+		case VI_TVMODE_NTSC_DS:   videoStr = NtscDsStr;   break;
+		case VI_TVMODE_NTSC_PROG: videoStr = NtscProgStr; break;
+		case VI_TVMODE_PAL_INT:   videoStr = PalIntStr;   break;
+		case VI_TVMODE_PAL_DS:    videoStr = PalDsStr;    break;
+		case VI_TVMODE_PAL_PROG:  videoStr = PalProgStr;  break;
+		case VI_TVMODE_MPAL_INT:  videoStr = MpalIntStr;  break;
+		case VI_TVMODE_MPAL_DS:   videoStr = MpalDsStr;   break;
+		case VI_TVMODE_MPAL_PROG: videoStr = MpalProgStr; break;
+		default:                  videoStr = UnkStr;
 	}
 }
 
@@ -95,9 +92,8 @@ void initialise_video(GXRModeObj *m) {
 	VIDEO_SetBlack (0);
 	VIDEO_Flush ();
 	VIDEO_WaitVSync ();
-	if (m->viTVMode & VI_NON_INTERLACE) {
-		VIDEO_WaitVSync ();
-	}
+	if (m->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
+	else while (VIDEO_GetNextField())   VIDEO_WaitVSync();
 	
 	// setup the fifo and then init GX
 	if(gp_fifo == NULL) {
@@ -106,12 +102,19 @@ void initialise_video(GXRModeObj *m) {
 		GX_Init (gp_fifo, DEFAULT_FIFO_SIZE);
 	}
 	// clears the bg to color and clears the z buffer
-	GX_SetCopyClear ((GXColor){0,0,0,255}, 0x00000000);
+	GX_SetCopyClear ((GXColor) {0, 0, 0, 0xFF}, GX_MAX_Z24);
 	// init viewport
 	GX_SetViewport (0, 0, m->fbWidth, m->efbHeight, 0, 1);
 	// Set the correct y scaling for efb->xfb copy operation
 	GX_SetDispCopyYScale ((f32) m->xfbHeight / (f32) m->efbHeight);
+	GX_SetDispCopySrc (0, 0, m->fbWidth, m->efbHeight);
 	GX_SetDispCopyDst (m->fbWidth, m->xfbHeight);
+	GX_SetCopyFilter (m->aa, m->sample_pattern, GX_TRUE, m->vfilter);
+	GX_SetFieldMode (m->field_rendering, ((vmode->viHeight == 2 * vmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
+	if (m->aa)
+		GX_SetPixelFmt(GX_PF_RGB565_Z16, GX_ZC_LINEAR);
+	else
+		GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
 	GX_SetCullMode (GX_CULL_NONE); // default in rsp init
 	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the efb
 	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the xfb
@@ -141,7 +144,10 @@ void* Initialise (void)
 		while(retPAD <= 0 && retCnt >= 0) { retPAD = PAD_ScanPads(); usleep(100); retCnt--; }
 		// L Trigger held down ignores the fact that there's a component cable plugged in.
 		if(VIDEO_HaveComponentCable() && !(PAD_ButtonsDown(0) & PAD_TRIGGER_L)) {
-			if((strstr(IPLInfo,"PAL")!=NULL)) {
+			if(strstr(IPLInfo,"MPAL")!=NULL) {
+				vmode = &TVMpal480Prog; //Progressive 480p
+			}
+			else if((strstr(IPLInfo,"PAL")!=NULL)) {
 				vmode = &TVPal576ProgScale; //Progressive 576p
 			}
 			else {
@@ -150,14 +156,14 @@ void* Initialise (void)
 		}
 		else {
 			//try to use the IPL region
-			if(strstr(IPLInfo,"PAL")!=NULL) {
+			if(strstr(IPLInfo,"MPAL")!=NULL) {
+				vmode = &TVMpal480IntDf;        //PAL-M
+			}
+			else if(strstr(IPLInfo,"PAL")!=NULL) {
 				vmode = &TVPal576IntDfScale;         //PAL
 			}
-			else if(strstr(IPLInfo,"NTSC")!=NULL) {
-				vmode = &TVNtsc480IntDf;        //NTSC
-			}
 			else {
-				vmode = VIDEO_GetPreferredMode(NULL); //Last mode used
+				vmode = &TVNtsc480IntDf;        //NTSC
 			}
 		}
 	}
@@ -524,7 +530,7 @@ int main ()
 	if(swissSettings.stopMotor && swissSettings.hasDVDDrive) {
 		dvd_motor_off();
 	}
-	
+
 	// Swiss video mode force
 	GXRModeObj *forcedMode = getModeFromSwissSetting(swissSettings.uiVMode);
 	

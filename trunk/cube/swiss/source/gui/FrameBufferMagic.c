@@ -368,7 +368,6 @@ void DrawFrameFinish() {
 	VIDEO_SetNextFramebuffer(xfb[whichfb]);
 	VIDEO_Flush();
  	VIDEO_WaitVSync();
-	if(vmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
 }
 
 void DrawProgressBar(int percent, char *message) {
