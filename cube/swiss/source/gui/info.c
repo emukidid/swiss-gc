@@ -50,17 +50,17 @@ void info_draw_page(int page_num) {
 			if(*(u32*)&driveVersion[0] == 0x20010831) {
 				sprintf(topStr, "Panasonic Q SL-GC10-S");
 			}
-			else if(!IPLInfo[0x55] || IPLInfo[0x65]=='0' || (IPLInfo[0x65]=='1')) {	
-				// NTSC 1.0,1.1 or PAL 1.0
+			else if(IPLInfo[0x55]=='M') {							// MPAL 1.1 (Brazil)
+				sprintf(topStr, "Nintendo GameCube DOL-002 (BRA)");
+			}
+			else if((!IPLInfo[0x55])									// NTSC 1.0 
+					|| (IPLInfo[0x55] == 'P' && IPLInfo[0x65]=='0')		// PAL 1.0 
+					|| (IPLInfo[0x55] != 'P' && IPLInfo[0x65]=='1')) {	// NTSC 1.1
 				sprintf(topStr, "Nintendo GameCube DOL-001");
 			}
-			else if(IPLInfo[0x65]=='2') {
-				// NTSC 1.2a/1.2b	- How can I detect PAL DOL-101's.. by drive too?
+			else if((IPLInfo[0x55] == 'P' && IPLInfo[0x65]=='0')	// PAL 1.1
+					|| IPLInfo[0x65]=='2') {						// NTSC 1.2
 				sprintf(topStr, "Nintendo GameCube DOL-101");
-			}
-			else if(IPLInfo[0x65]=='3') {
-				// Mythical NTSC 1.3 (Brazil)
-				sprintf(topStr, "Nintendo GameCube DOL-102");	// Exists only in Brazil?
 			}
 		}
 		else {
@@ -151,16 +151,16 @@ void info_draw_page(int page_num) {
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Credits (3/3):");
 		WriteFontStyled(640/2, 115, "Swiss ver 0.3", 1.0f, true, defaultColor);
-		WriteFontStyled(640/2, 140, "by emu_kidid 2013", 0.75f, true, defaultColor);
+		WriteFontStyled(640/2, 140, "by emu_kidid 2015", 0.75f, true, defaultColor);
 		sprintf(txtbuffer, "SVN Revision: %s", SVNREVISION);
 		WriteFontStyled(640/2, 165, txtbuffer, 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 210, "Thanks to", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 228, "Testers & libOGC/dkPPC authors", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 246, "sepp256 for the wonderful GX conversion", 0.75f, true, defaultColor);
-		WriteFontStyled(640/2, 264, "crediar for DML - Extrems for 576p/16:9", 0.75f, true, defaultColor);
+		WriteFontStyled(640/2, 264, "Extrems for video patches / Megalomaniac for builds", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 300, "Web/Support http://www.gc-forever.com/", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 318, "Source at http://code.google.com/p/swiss-gc/", 0.75f, true, defaultColor);
-		WriteFontStyled(640/2, 336, "Visit us at #gc-forever on EFNet", 0.75f, true, defaultColor);
+		WriteFontStyled(640/2, 354, "Visit us at #gc-forever on EFNet", 0.75f, true, defaultColor);
 	}
 	if(page_num != 2) {
 		WriteFont(520, 390, "->");
