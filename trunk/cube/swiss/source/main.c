@@ -200,7 +200,7 @@ void* Initialise (void)
 void load_auto_dol() {
 	sprintf(txtbuffer, "%sboot.dol", deviceHandler_initial->name);
 	FILE *fp = fopen(txtbuffer, "rb");
-	if (fp) {
+	if (fp && (*(volatile u32*)0x80001800 != 0x00B0073D)) {
 		fseek(fp, 0, SEEK_END);
 		int size = ftell(fp);
 		fseek(fp, 0, SEEK_SET);
@@ -417,6 +417,7 @@ void main_loop()
 ****************************************************************************/
 int main () 
 {
+	*(volatile u32*)0x80001800 = 0x00B0073D;	// b0073d (we booted)
 	// Setup defaults (if no config is found)
 	memset(&swissSettings, 0 , sizeof(SwissSettings));
 	
@@ -462,8 +463,8 @@ int main ()
 		deviceHandler_setStatEnabled(0);
 		// Try to init SD cards here and load config
 		deviceHandler_initial = &initial_SD0;
-		deviceHandler_init     =  deviceHandler_FAT_init;
-		deviceHandler_deinit     =  deviceHandler_FAT_deinit;
+		deviceHandler_init		=  deviceHandler_FAT_init;
+		deviceHandler_deinit	=  deviceHandler_FAT_deinit;
 		if(deviceHandler_init(deviceHandler_initial)) {
 			print_gecko("Detected SDGecko in Slot A\r\n");
 			load_auto_dol();

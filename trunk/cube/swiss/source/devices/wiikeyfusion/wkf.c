@@ -19,7 +19,7 @@
 #include "gui/IPLFontWrite.h"
 
 #define WKF_BUF_SIZE 0x8000
-u8 wkfBuffer[WKF_BUF_SIZE] ATTRIBUTE_ALIGN (32);    // One DVD Sector
+u8 wkfBuffer[WKF_BUF_SIZE] ATTRIBUTE_ALIGN (32);    // 16 DVD Sectors
 
 static int wkfInitialized = 0;
 static char wkfSerial[32];
@@ -129,7 +129,11 @@ void __wkfReadSectors(void* dst, unsigned int len, u64 offset) {
 	wkf[6] = len;
 	wkf[7] = 3; // DMA | START
 	DCInvalidateRange(dst, len);
-	while (wkf[7] & 1);
+	
+	int retries = 1000000;
+	while(( wkf[7] & 1) && retries) {
+		retries --;						// Wait for IMM command to finish up
+	}
 }
 
 int wkfSpiRead(unsigned char *buf, unsigned int addr, int len) {
@@ -311,7 +315,7 @@ void wkfInit() {
 	print_gecko("WKF Serial: %s\r\n", wkfGetSerial());
    
 	unsigned int special_3 = wkfReadSpecial3();
-	print_gecko("GOT Special_3: %08X", special_3);
+	print_gecko("GOT Special_3: %08X\r\n", special_3);
 
 	// New DVD (aka put it back to WKF mode)
 	__wkfReset();
@@ -327,7 +331,7 @@ void wkfInit() {
 	print_gecko("GOT Switches: %08X\r\n", switches);
 
 	// SD card detect
-	if ((wkfGetSlotStatus() & 0x000F0000)==0x00070000) {
+	if ((wkfGetSlotStatus() & 0x000F0000)==0x00070000 || special_3 == 0xFFFFFFFF) {
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,"No SD Card");
 		DrawFrameFinish();
@@ -348,6 +352,7 @@ void wkfInit() {
 		wkfWriteOffset(0);
 
 		// Read first sector of SD card
+		memset(&wkfBuffer[0], 0x200, 0);
 		wkfRead(&wkfBuffer[0], 0x200, 0);
 		if((wkfBuffer[0x1FF] != 0xAA)) {
 			// No FAT!
@@ -355,13 +360,16 @@ void wkfInit() {
 			DrawMessageBox(D_INFO,"No FAT Formatted SD found in Wiikey Fusion!");
 			DrawFrameFinish();
 			print_gecko("No FAT Formatted SD found in Wiikey Fusion!\r\n");
+			sleep(5);
 			wkfInitialized = 0;
 		} 
 		else {
+			print_gecko("FAT detected\r\n");
 			wkfInitialized = 1;
 		}
 	}
-	wkfCheckSwitches();
+	if(wkfInitialized)
+		wkfCheckSwitches();
 }
 
 void wkfReinit() {
@@ -377,6 +385,8 @@ void wkfReinit() {
 	
 	// Read first sector of SD card
 	wkfRead(&wkfBuffer[0], 0x200, 0);
+	print_gecko("Reinit complete\r\n");
+	wkfInitialized = 0;
 }
 
 // Wrapper to read a number of sectors
