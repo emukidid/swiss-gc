@@ -27,6 +27,7 @@ extern int SDHCCard;
 extern int GC_SD_CHANNEL;
 
 extern void animateBox(int x1,int y1, int x2, int y2, int color,char *msg);
+int savePatchDevice = -1;
 
 //aka AISetStreamPlayState
 u32 _AIResetStreamSampleCount_original[9] = {
@@ -84,7 +85,7 @@ int install_code()
 	}
 	// DVD 2 disc code
 	else if((deviceHandler_initial == &initial_DVD)) {
-		patch = &sd_bin[0]; patchSize = sd_bin_size;
+		patch = &dvd_bin[0]; patchSize = dvd_bin_size;
 		print_gecko("Installing Patch for DVD\r\n");
 	}
 	// USB Gecko
@@ -285,48 +286,56 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 	return 0;
 }
 
-/** Used for Multi-DOL games that require patches to be stored on SD *//*
+/** Used for Multi-DOL games that require patches to be stored on SD */
 u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType) {
-	void *addr_start = addr;
-	void *addr_end = addr+length;	
-	int patched = 0;
-	while(addr_start<addr_end) {
+	int i = 0;
+	
+	// Where the DVD_DMA | DVD_START are about to be written to the DI reg,
+	// overwrite it with a jump to our handler which will either allow the read to happen
+	// or mark it as a 0xE000 command with DVD_START only (no DMA) and read a fragment from SD.
+			
+	// This fragment that is read will only be a patched bit of PPC code, 
+	// it will be small so a blocking read will be used.
+
+	for(i = 0; i < length; i+=4) {
 		// Patch Read (called from DVDLowLevelRead) to read data from SD if it has been patched.
-		if((*(u32*)addr_start == _read_original_part_a[0]) 
-			|| (*(u32*)addr_start == _read2_original_part_a[0]))
-		{
-			// Where the DVD_DMA | DVD_START are about to be written to the DI reg,
-			// add in a jump over it to our handler which will either allow the read to happen
-			// or mark it as a 0xE000 command with DVD_START only (no DMA) and read a fragment from SD.
-			
-			// This fragment that is read will only be a patched bit of PPC code, 
-			// it will be small so a blocking read will be used.
-			
-			// Make the read that was going to occur into a 0xE000
-			*(u32*)(addr_start) = ((*(u32*)(addr_start)) & 0xFFFF0000) | 0xE000;
-				
-			int i = 0;
-			while((*(u32*)(addr_start - i)) != 0x4E800020) i+=4;
-			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)((addr_start-i)+8)-(u32)(addr));
-			u32 newval = (u32)((READ_IMMED_OFFSET) - properAddress);
+		if( *(u32*)(addr+i) != 0x7C0802A6 )
+			continue;
+		
+		FuncPattern fp;
+		make_pattern( (u8*)(addr+i), length, &fp );
+		
+		if(compare_pattern(&fp, &ReadCommon)) {
+			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x84)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for DVD\r\n", ReadCommon.Name, properAddress - 0x84);
+			u32 newval = (u32)(READ_REAL_OR_PATCHED - properAddress);
 			newval&= 0x03FFFFFC;
 			newval|= 0x48000001;
-			if(*(u32*)((addr_start - i) + 8) != 0x90010004) {
-				print_gecko("Unknown Read type! %08X\r\n",*(u32*)((addr_start - i) + 8));
-			}
-			*(u32*)((addr_start - i) + 8) = newval;
-
-			// Patch the DI start (make it a IMM 0xE0 for execD.img)
-			i = 0;
-			while((*(u32*)(addr_start + i)) != _read2_original_part_b[0]) i+=4;
-			*(u32*)(addr_start + i) = 0x38000001;
-
-			print_gecko("Found:[Read (blocking)] @ %08X\r\n", properAddress);
-			return READ_PATCHED_ALL;
+			*(u32*)(addr + i + 0x84) = newval;
+			return 1;
 		}
-		addr_start+=4;
+		if(compare_pattern(&fp, &ReadDebug)) {	// As above, for debug read now.
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x88)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for DVD\r\n", ReadDebug.Name, properAddress - 0x88);
+			u32 newval = (u32)(READ_REAL_OR_PATCHED - properAddress);
+			newval&= 0x03FFFFFC;
+			newval|= 0x48000001;
+			*(u32*)(addr + i + 0x88) = newval;
+			return 1;
+		}
+		if(compare_pattern(&fp, &ReadUncommon)) {	// Same, for the less common read type.
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x7C)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for DVD\r\n", ReadUncommon.Name, properAddress - 0x7C);
+			u32 newval = (u32)(READ_REAL_OR_PATCHED - properAddress);
+			newval&= 0x03FFFFFC;
+			newval|= 0x48000001;
+			*(u32*)(addr + i + 0x7C) = newval;
+			return 1;
+		}
 	}
-}*/
+	return 0;
+}
 
 u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int simplePatch) {
 	void *addr_start = addr;
@@ -1284,7 +1293,7 @@ static const u32 _dvdlowreset_new[8] = {
 	0x3FE08000,0x63FF0000,0x7FE803A6,0x4E800021,0x4800006C,0x60000000,0x60000000,0x60000000
 };
 	
-void Patch_DVDReset(void *addr,u32 length)
+int Patch_DVDReset(void *addr,u32 length)
 {
 	void *copy_to,*cache_ptr;
 	void *addr_start = addr;
@@ -1302,10 +1311,11 @@ void Patch_DVDReset(void *addr,u32 length)
 			u32 *ptr = copy_to;
 			ptr[1] = _dvdlowreset_new[1] | (ENABLE_BACKUP_DISC&0xFFFF);
 			print_gecko("Found:[DVDLowReset] @ 0x%08X\r\n", (u32)ptr);
-			break;
+			return 1;
 		}
 		addr_start += 4;
 	}
+	return 0;
 }
 
 /** SDK fwrite USB Gecko Slot B redirect */
@@ -1376,7 +1386,7 @@ static const u32 geckoPatch[31] = {
   0x4E800020
 };
 
-void Patch_Fwrite(void *addr, u32 length) {
+int Patch_Fwrite(void *addr, u32 length) {
 	void *addr_start = addr;
 	void *addr_end = addr+length;	
 	
@@ -1384,19 +1394,25 @@ void Patch_Fwrite(void *addr, u32 length) {
 	{
 		if(memcmp(addr_start,&sig_fwrite[0],sizeof(sig_fwrite))==0) 
 		{
+			print_gecko("Found:[fwrite]\r\n");
  			memcpy(addr_start,&geckoPatch[0],sizeof(geckoPatch));	
+			return 1;
 		}
 		if(memcmp(addr_start,&sig_fwrite_alt[0],sizeof(sig_fwrite_alt))==0) 
 		{
+			print_gecko("Found:[fwrite1]\r\n");
  			memcpy(addr_start,&geckoPatch[0],sizeof(geckoPatch));	
+			return 1;
 		}
 		if(memcmp(addr_start,&sig_fwrite_alt2[0],sizeof(sig_fwrite_alt2))==0) 
 		{
- 			memcpy(addr_start,&geckoPatch[0],sizeof(geckoPatch));	
+			print_gecko("Found:[fwrite2]\r\n");
+ 			memcpy(addr_start,&geckoPatch[0],sizeof(geckoPatch));
+			return 1;
 		}
 		addr_start += 4;
 	}
-
+	return 0;
 }
 
 /** SDK DVDCompareDiskId Patch
@@ -1618,4 +1634,5 @@ int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
 	}
 	return 0;
 }
+
 

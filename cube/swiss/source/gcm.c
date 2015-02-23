@@ -168,6 +168,48 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 	if(numFiles==1 && (!strcmp(&filesToPatch[0].name[0],"default.dol"))) {
 		numFiles = 0;
 	}
+	// Multi-DOL games may re-load the main DOL, so make sure we patch it too.
+	if(numFiles>0) {
+		DOLHEADER dolhdr;
+		u32 main_dol_size = 0;
+		// Calc size
+		deviceHandler_seekFile(file,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
+		if(deviceHandler_readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
+			DrawFrameStart();
+			DrawMessageBox(D_FAIL, "Failed to read Main DOL Header");
+			DrawFrameFinish();
+			while(1);
+		}
+		for (i = 0; i < MAXTEXTSECTION; i++) {
+			if (dolhdr.textLength[i] + dolhdr.textOffset[i] > main_dol_size)
+				main_dol_size = dolhdr.textLength[i] + dolhdr.textOffset[i];
+		}
+		for (i = 0; i < MAXDATASECTION; i++) {
+			if (dolhdr.dataLength[i] + dolhdr.dataOffset[i] > main_dol_size)
+				main_dol_size = dolhdr.dataLength[i] + dolhdr.dataOffset[i];
+		}
+		filesToPatch[numFiles].offset = GCMDisk.DOLOffset;
+		filesToPatch[numFiles].size = main_dol_size;
+		filesToPatch[numFiles].type = PATCH_DOL;
+		sprintf(filesToPatch[numFiles].name, "Main DOL");
+		numFiles++;
+		
+		// Patch the apploader too!
+		// Calc Apploader trailer size
+		u32 appldr_info[2];
+		deviceHandler_seekFile(file,0x2454,DEVICE_HANDLER_SEEK_SET);
+		if(deviceHandler_readFile(file,&appldr_info,8) != 8) {
+			DrawFrameStart();
+			DrawMessageBox(D_FAIL, "Failed to read Apploader info");
+			DrawFrameFinish();
+			while(1);
+		}
+		filesToPatch[numFiles].size = appldr_info[1];
+		filesToPatch[numFiles].offset = 0x2460 + appldr_info[0];
+		filesToPatch[numFiles].type = PATCH_LOADER;
+		sprintf(filesToPatch[numFiles].name, "Apploader Trailer");
+		numFiles++;
+	}
 	return numFiles;
 }
 
@@ -185,6 +227,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 	deviceHandler_readFile(file, &fakeAmount, 4);
 	filesToPatch[numFiles].offset = offset+tgc_base;
 	filesToPatch[numFiles].size = size;
+	filesToPatch[numFiles].type = PATCH_DOL;
 	strcpy(&filesToPatch[numFiles].name[0],"TGC Main DOL");
 	numFiles++;
 	
@@ -245,6 +288,31 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, int multiDol) {
 	int i, patched_buf_num = 0, num_patched = 0;
 	
+	// If the current device isn't SD Gecko, init SD Gecko Slot A or B to write patches.
+	if(deviceHandler_initial != &initial_SD0 && deviceHandler_initial != &initial_SD1) {
+		deviceHandler_setStatEnabled(0);
+		if(deviceHandler_FAT_init(&initial_SD0)) {
+			savePatchDevice = 0;
+		}
+		else if(deviceHandler_FAT_init(&initial_SD1)) {
+			savePatchDevice = 1;
+		}
+		deviceHandler_setStatEnabled(1);
+	}
+	// Already using SD Gecko
+	if(deviceHandler_initial == &initial_SD0)
+		savePatchDevice = 0;
+	else if(deviceHandler_initial == &initial_SD1)
+		savePatchDevice = 1;
+		
+	if(savePatchDevice == -1) {
+		DrawFrameStart();
+		DrawMessageBox(D_FAIL, "No writable device present\nA SD Gecko must be inserted in\n order to utilise patches for this game.");
+		DrawFrameFinish();
+		sleep(5);
+		return 0;
+	}
+
 	// Go through all the possible files we think need patching..
 	for(i = 0; i < numToPatch; i++) {
 		sprintf(txtbuffer, "Patching File %i/%i",i+1,numToPatch);
@@ -254,8 +322,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 	
 		int patched = 0;
 		// File handle for a patch we might need to write
-		file_handle patchFile;
-		memset(&patchFile, 0, sizeof(file_handle));
+		FILE *patchFile = 0;
+		char patchFileName[1024];
+		memset(patchFileName, 0, 1024);
 		
 		// Round up to 32 bytes
 		if(filesToPatch[i].size % 0x20) {
@@ -277,23 +346,32 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 				sleep(5);
 				return 0;
 			}
-
-			u32 ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type, multiDol);
-			if(READ_PATCHED_ALL != ret)	{
-				DrawFrameStart();
-				DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
-				DrawFrameFinish();
-				//sleep(5);
+			
+			if(curDevice != DVD_DISC) {
+				u32 ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type, multiDol);
+				if(READ_PATCHED_ALL != ret)	{
+					DrawFrameStart();
+					DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
+					DrawFrameFinish();
+					//sleep(5);
+				}
+				else
+					patched += 1;
+				patched += Patch_DVDCompareDiskId(buffer, sizeToRead);
+				patched += Patch_DVDAudioStreaming(buffer, sizeToRead);
 			}
-			else
-				patched += 1;
+					
 			if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
-				Patch_Fwrite(buffer, sizeToRead);
+				patched += Patch_Fwrite(buffer, sizeToRead);
 			}
-			patched += Patch_DVDCompareDiskId(buffer, sizeToRead);
+			
+			if(curDevice == DVD_DISC && is_gamecube()) {
+				patched += Patch_DVDLowLevelReadForDVD(buffer, sizeToRead, filesToPatch[i].type);
+				patched += Patch_DVDReset(buffer, sizeToRead);
+			}
+			
 			patched += Patch_VidMode(buffer, sizeToRead, filesToPatch[i].type);
 			patched += Patch_FontEnc(buffer, sizeToRead);
-			patched += Patch_DVDAudioStreaming(buffer, sizeToRead);
 			if(swissSettings.forceWidescreen)
 				Patch_WideAspect(buffer, sizeToRead, filesToPatch[i].type);
 			if(swissSettings.forceAnisotropy)
@@ -301,7 +379,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			if(patched) {
 				char patchDirName[1024];
 				memset(&patchDirName, 0, 1024);
-				sprintf(&patchDirName[0],"%s.patches",file->name);
+				sprintf(&patchDirName[0],"%s:/swiss_patches",(savePatchDevice ? "sdb":"sda"));
 				
 				// Make a patches dir if we don't have one already
 				if(mkdir(&patchDirName[0], 0777) != 0) {
@@ -310,21 +388,22 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 					}
 				}
 					
-				// Write a .patchX file out for this game with the patched buffer inside.
-				print_gecko("Writing patch file: %s.patches/%i %i bytes (disc offset %08X)\r\n", file->name, patched_buf_num, sizeToRead, filesToPatch[i].offset+ofs);
-				sprintf(&patchFile.name[0], "%s/%i",patchDirName, patched_buf_num);
-				deviceHandler_deleteFile(&patchFile);
-				deviceHandler_writeFile(&patchFile,buffer,sizeToRead);
+				// Write a file out for this game with the patched buffer inside.
+				sprintf(patchFileName, "%s/%i",patchDirName, patched_buf_num);
+				remove(patchFileName);
+				print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", patchFileName, sizeToRead, filesToPatch[i].offset+ofs);
+				patchFile = fopen(patchFileName, "wb");
+				fwrite(buffer, 1, sizeToRead, patchFile);
 				num_patched++;
 			}
 			free(buffer);
 		}
-		if(patchFile.name[0]) {
+		if(patchFile) {
 			u32 magic = SWISS_MAGIC;
-			deviceHandler_writeFile(&patchFile,&filesToPatch[i].offset,4);
-			deviceHandler_writeFile(&patchFile,&filesToPatch[i].size,4);
-			deviceHandler_writeFile(&patchFile,&magic,4);
-			fclose(patchFile.fp);
+			fwrite(&filesToPatch[i].offset, 1, 4, patchFile);
+			fwrite(&filesToPatch[i].size, 1, 4, patchFile);
+			fwrite(&magic, 1, 4, patchFile);
+			fclose(patchFile);
 			patched_buf_num++;
 		}
 	}

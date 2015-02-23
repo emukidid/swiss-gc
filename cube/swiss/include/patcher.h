@@ -26,6 +26,8 @@ extern u8 usbgecko_bin[];
 extern u32 usbgecko_bin_size;
 extern u8 wkf_bin[];
 extern u32 wkf_bin_size;
+extern u8 dvd_bin[];
+extern u32 dvd_bin_size;
 
 /* SDK patches */
 extern u8 DVDCancelAsync[];
@@ -81,18 +83,26 @@ extern u32 VIConfigurePanHook_length;
 #define FAKE_IRQ			 	(LO_RESERVE | 0x08)
 #define CALC_SPEED		 		(LO_RESERVE | 0x0C)
 #define READ_IMMED_OFFSET 		(LO_RESERVE | 0x10)
-#define ENABLE_BACKUP_DISC 		(LO_RESERVE | 0x14)
 
 #define READ_PATCHED_ALL 		(0x111111)
 
 /* WKF Patch file jump locations in our patch code */
 #define ADJUST_LBA_OFFSET	 	(LO_RESERVE)
 
+/* DVD file jump locations in our patch code */
+#define ENABLE_BACKUP_DISC 		(LO_RESERVE)
+#define READ_REAL_OR_PATCHED	(LO_RESERVE | 0x04)
+
 /* Types of files we may patch */
 #define PATCH_DOL		0
 #define PATCH_ELF		1
 #define PATCH_LOADER	2
 
+/* The device patches for a particular game were written to */
+// -1 no device, 0 slot a, 1 slot b.
+extern int savePatchDevice;
+
+u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int simplePatch);
 int Patch_VidMode(u8 *data, u32 length, int dataType);
@@ -101,8 +111,8 @@ int Patch_TexFilt(u8 *data, u32 length, int dataType);
 int Patch_FontEnc(void *addr, u32 length);
 int Patch_DVDAudioStreaming(u8 *data, u32 length);
 int Patch_DVDStatusFunctions(u8 *data, u32 length);
-void Patch_Fwrite(void *addr, u32 length);
-void Patch_DVDReset(void *addr,u32 length);
+int Patch_Fwrite(void *addr, u32 length);
+int Patch_DVDReset(void *addr,u32 length);
 int Patch_DVDCompareDiskId(u8 *data, u32 length);
 void Patch_GXSetVATZelda(void *addr, u32 length,int mode);
 u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt);

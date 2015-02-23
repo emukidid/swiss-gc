@@ -5,8 +5,7 @@ powerpc-eabi-gcc -O2 -c sdgecko\sd.c
 powerpc-eabi-gcc -O2 -c base\frag.c
 powerpc-eabi-gcc -O2 -c base\usbgecko.c
 powerpc-eabi-gcc -O2 -c base\dvdqueue.c
-powerpc-eabi-gcc -O2 -c base\dvdnull.c
-powerpc-eabi-ld -o sd.elf base.o dvdnull.o frag.o sd.o dvdqueue.o usbgecko.o --section-start .text=0x80001800
+powerpc-eabi-ld -o sd.elf base.o frag.o sd.o dvdqueue.o usbgecko.o --section-start .text=0x80001800
 del *.o
 powerpc-eabi-objdump -D sd.elf > built\sd_disasm.txt
 powerpc-eabi-objcopy -O binary sd.elf sd.bin

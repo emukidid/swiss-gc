@@ -9,13 +9,17 @@
 #include <malloc.h>
 #include <ogc/dvd.h>
 #include <ogc/machine/processor.h>
+#include <sys/dir.h>
+#include <sys/statvfs.h>
 #include "deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "main.h"
+#include "patcher.h"
 #include "dvd.h"
 #include "gcm.h"
 #include "wkf.h"
+#include "frag.h"
 
 #define OFFSET_NOTSET 0
 #define OFFSET_SET    1
@@ -379,6 +383,7 @@ int deviceHandler_DVD_readFile(file_handle* file, void* buffer, unsigned int len
 
 int deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 
+	// Multi-Game disc audio streaming setup
 	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
 		deviceHandler_readFile(file,(unsigned char*)0x80000000,32);
 		char streaming = *(char*)0x80000008;
@@ -404,6 +409,62 @@ int deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 		dvd_set_offset(file->fileBase);
 		file->status = OFFSET_SET;
 		print_gecko("Streaming %s %08X\r\n",streaming?"Enabled":"Disabled",dvd_get_error());
+	}
+	// Check if there are any fragments in our patch location for this game
+	if(savePatchDevice>=0) {
+		print_gecko("Save Patch device found\r\n");
+		// If there are 2 discs, we only allow 5 fragments per disc.
+		int maxFrags = (VAR_FRAG_SIZE/12), i = 0;
+		u32 *fragList = (u32*)VAR_FRAG_LIST;
+		
+		memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
+		
+		// Look for .patchX files, if we find some, open them and add them as fragments
+		file_handle patchFile;
+		int patches = 0;
+		for(i = 0; i < maxFrags; i++) {
+			u32 patchInfo[3];
+			patchInfo[0] = 0; patchInfo[1] = 0; 
+			memset(&patchFile, 0, sizeof(file_handle));
+			sprintf(&patchFile.name[0], "%s:/swiss_patches/%i",(savePatchDevice ? "sdb":"sda"), i);
+
+			struct stat fstat;
+			if(stat(&patchFile.name[0],&fstat)) {
+				break;
+			}
+			patchFile.fp = fopen(&patchFile.name[0], "rb");
+			if(patchFile.fp) {
+				fseek(patchFile.fp, fstat.st_size-12, SEEK_SET);
+				
+				if((fread(&patchInfo, 1, 12, patchFile.fp) == 12) && (patchInfo[2] == SWISS_MAGIC)) {
+					get_frag_list(&patchFile.name[0]);
+					print_gecko("Found patch file %i ofs 0x%08X len 0x%08X base 0x%08X\r\n", 
+									i, patchInfo[0], patchInfo[1], frag_list->frag[0].sector);
+					fclose(patchFile.fp);
+					fragList[patches*3] = patchInfo[0];
+					fragList[(patches*3)+1] = patchInfo[1];
+					fragList[(patches*3)+2] = frag_list->frag[0].sector;
+					patches++;
+				}
+				else {
+					break;
+				}
+			}
+		}
+		// Disk 1 base sector
+		*(volatile unsigned int*)VAR_DISC_1_LBA = fragList[2];
+		// Disk 2 base sector
+		*(volatile unsigned int*)VAR_DISC_2_LBA = fragList[2];
+		// Currently selected disk base sector
+		*(volatile unsigned int*)VAR_CUR_DISC_LBA = fragList[2];
+		// Copy the current speed
+		*(volatile unsigned int*)VAR_EXI_BUS_SPD = 192;
+		// Card Type
+		*(volatile unsigned int*)VAR_SD_TYPE = sdgecko_getAddressingType(savePatchDevice);
+		// Copy the actual freq
+		*(volatile unsigned int*)VAR_EXI_FREQ = EXI_SPEED16MHZ;
+		// Device slot (0 or 1) // This represents 0xCC0068xx in number of u32's so, slot A = 0xCC006800, B = 0xCC006814
+		*(volatile unsigned int*)VAR_EXI_SLOT = savePatchDevice * 5;
 	}
 	return 1;
 }

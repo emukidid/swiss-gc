@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <ogcsys.h>
 #include <ogc/exi.h>
+#include "gcm.h"
 #include <sdcard/card_cmn.h>
 #include "deviceHandler.h"
 
@@ -27,6 +28,7 @@ extern u8 g_CardStatus[MAX_DRIVE][64];
 extern char IPLInfo[256] __attribute__((aligned(32)));
 extern int iplModchip;
 extern u8 driveVersion[8];
+extern DiskHeader GCMDisk;
 
 extern void udelay(int s);
 extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);

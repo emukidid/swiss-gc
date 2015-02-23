@@ -224,7 +224,7 @@ int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 		u32 patchInfo[3];
 		patchInfo[0] = 0; patchInfo[1] = 0; 
 		memset(&patchFile, 0, sizeof(file_handle));
-		sprintf(&patchFile.name[0], "%s.patches/%i",file->name, i);
+		sprintf(&patchFile.name[0], "%s:/swiss_patches/%i",(savePatchDevice ? "sdb":"sda"), i);
 
 		struct stat fstat;
 		if(stat(&patchFile.name[0],&fstat)) {
