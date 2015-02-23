@@ -15,8 +15,6 @@ _start:
 	b		fake_interrupt
 	b		calculate_speed			# Calculates how long it takes to read 2048 bytes from the device
 	b		read_immediately		# Performs a blocking read.
-	b		handle_disc_swap		# Re-authenticates a DVD-R disc
-	b		dvd_read_frag			# Either reads from SD, or allows the DVD read to occur.
 
 	.globl fake_interrupt
 fake_interrupt:

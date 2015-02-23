@@ -42,7 +42,7 @@
 #include "devices/deviceHandler.h"
 #include "devices/filemeta.h"
 
-static DiskHeader GCMDisk;      //Gamecube Disc Header struct
+DiskHeader GCMDisk;      //Gamecube Disc Header struct
 char IPLInfo[256] __attribute__((aligned(32)));
 GXRModeObj *newmode = NULL;
 char txtbuffer[2048];           //temporary text buffer
@@ -552,6 +552,11 @@ unsigned int load_app(int multiDol)
 	if((curDevice == DVD_DISC) && (is_gamecube()) && (drive_status == DEBUG_MODE)) {
 		Patch_DVDReset(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
+	// Support patches for multi-dol discs that need to read patched data from SD
+	if(multiDol && curDevice == DVD_DISC && is_gamecube()) {
+		Patch_DVDLowLevelReadForDVD(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+	}
+	
 	// Patch OSReport to print out over USBGecko
 	if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
 		Patch_Fwrite(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
@@ -1003,7 +1008,7 @@ void load_file()
 	
 	int multiDol = 0;
 	// Report to the user the patch status of this GCM/ISO file
-	if((curDevice == SD_CARD) || (curDevice == IDEEXI)) {
+	if((curDevice == SD_CARD) || (curDevice == IDEEXI) || (curDevice == DVD_DISC)) {
 		multiDol = check_game();
 	}
 	

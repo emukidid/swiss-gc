@@ -85,10 +85,9 @@ void send_cmd(u32 cmd, u32 sector) {
 }
 
 void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read) {
-	u8 res = rcvr_spi();
 	int bytesRead = start_byte+bytes_to_read;
 	
-	while(rcvr_spi() == 0xFF);
+	while(rcvr_spi() != 0xFE);
 	
 	// Skip the start if it's a misaligned read
 	while(start_byte>4) {
