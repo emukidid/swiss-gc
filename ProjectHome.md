@@ -1,0 +1,1 @@
+Swiss aims to be the ultimate utility Gamecube homebrew application.
