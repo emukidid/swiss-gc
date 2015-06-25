@@ -1,0 +1,16 @@
+cube/swiss/build/
+cube/swiss/dist/
+
+cube/actionreplay/SDLOADER.BIN
+
+pc/usbgecko/swissserver
+pc/usbgecko/swissserver.exe
+pc/usbgecko/core
+pc/usbgecko/core.*
+
+*.dol
+*.elf
+*.o
+*.d
+*.map
+*.gcm
