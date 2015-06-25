@@ -200,7 +200,7 @@ void* Initialise (void)
 void load_auto_dol() {
 	sprintf(txtbuffer, "%sboot.dol", deviceHandler_initial->name);
 	FILE *fp = fopen(txtbuffer, "rb");
-	if (fp && (*(volatile u32*)0x80001800 != 0x00B0073D)) {
+	if (fp) {
 		fseek(fp, 0, SEEK_END);
 		int size = ftell(fp);
 		fseek(fp, 0, SEEK_SET);
@@ -208,7 +208,9 @@ void load_auto_dol() {
 			u8 *dol = (u8*) memalign(32, size);
 			if (dol) {
 				fread(dol, 1, size, fp);
-				DOLtoARAM(dol);
+				if (!memmem(dol, size, GITREVISION, sizeof(GITREVISION))) {
+					DOLtoARAM(dol);
+				}
 			}
 		}
 		fclose(fp);
@@ -417,7 +419,6 @@ void main_loop()
 ****************************************************************************/
 int main () 
 {
-	*(volatile u32*)0x80001800 = 0x00B0073D;	// b0073d (we booted)
 	// Setup defaults (if no config is found)
 	memset(&swissSettings, 0 , sizeof(SwissSettings));
 	
