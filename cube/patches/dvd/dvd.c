@@ -115,7 +115,8 @@ void dvd_read_patched_section() {
 		}
 		usb_sendbuffer_safe("FRAG READ!\r\n",12);
 #endif
-		read_entire(dst | 0x80000000, len, offset);
+		device_frag_read(dst | 0x80000000, len, offset);
+		dcache_flush_icache_inv(dst | 0x80000000, len);
 		dvd[3] = 0;
 		dvd[4] = 0x20;
 		dvd[5] = 0;

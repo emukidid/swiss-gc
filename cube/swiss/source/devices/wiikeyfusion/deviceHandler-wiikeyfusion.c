@@ -185,7 +185,7 @@ int deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 	*(volatile unsigned int*)VAR_CUR_DISC_LBA = fragList[2];
 	
 	wkfFragSetupReq = (file2 && frags > 2) ? 1 : frags>1;
-	
+	print_frag_list(file2 != 0);
 	return 1;
 }
 

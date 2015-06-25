@@ -347,8 +347,8 @@ void _DrawBackdrop()
 	char ver[16];
 	memset(ver,0,16);
 	DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	WriteFontStyled(40,30, "Swiss v0.3", 1.5f, false, defaultColor);
-	sprintf(ver, "Rev: %s", SVNREVISION);
+	WriteFontStyled(40,30, "Swiss v0.4", 1.5f, false, defaultColor);
+	sprintf(ver, "Rev: %s", GITREVISION);
 	WriteFontStyled(250,60, ver, 0.55f, false, defaultColor);
 }
 

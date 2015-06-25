@@ -447,9 +447,16 @@ unsigned int load_app(int multiDol)
 	DrawProgressBar(33, "Reading Main DOL");
 	DrawFrameFinish();
 	
+	// Don't needlessly apply audio streaming if the game doesn't want it
+	if(!GCMDisk.AudioStreaming) {
+		swissSettings.muteAudioStreaming = 1;
+	}
+	
 	// Adjust top of memory
-	u32 top_of_main_ram = 0x81800000;
+	u32 top_of_main_ram = swissSettings.muteAudioStreaming ? 0x81800000 : DECODED_BUFFER_0;
 
+	print_gecko("Top of RAM simulated as: 0x%08X\r\n", top_of_main_ram);
+	
 	// Read FST to top of Main Memory (round to 32 byte boundary)
 	u32 fstSizeAligned = GCMDisk.MaxFSTSize + (32-(GCMDisk.MaxFSTSize%32));
 	deviceHandler_seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
@@ -513,36 +520,19 @@ unsigned int load_app(int multiDol)
 		while(1);
 	}
 
-	// Patch to read from SD/HDD
-	if((curDevice == SD_CARD)||(curDevice == IDEEXI)||(curDevice == USBGECKO)) {
-		int useSimpleReads = 0;
-		if(!strncmp((char*)&GCMDisk, "D43", 3)) {
-			print_gecko("OOT Multi Disc Detected\r\n");
-			useSimpleReads = 1;
-		}
-		u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL, useSimpleReads);
+	// Patch to read from SD/HDD/USBGecko/WKF (if frag req or audio streaming)
+	if((curDevice == SD_CARD)
+		||(curDevice == IDEEXI)
+		||(curDevice == USBGECKO) 
+		|| ((curDevice == WKF) && (wkfFragSetupReq || !swissSettings.muteAudioStreaming))) {
+		u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 		if(READ_PATCHED_ALL != ret)	{
 			DrawFrameStart();
 			DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
 			DrawFrameFinish();
 			sleep(5);
 		}
-		Patch_DVDCompareDiskId(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-		Patch_DVDStatusFunctions(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
-	// Only set up the WKF fragmentation patch if we have to.
-	if(curDevice == WKF && wkfFragSetupReq) {
-		u32 ret = Patch_DVDLowLevelReadForWKF(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
-		if(1 != ret) {
-			DrawFrameStart();
-			DrawMessageBox(D_FAIL, "Fragmentation patch failed to apply!");
-			DrawFrameFinish();
-			sleep(5);
-			return 0;
-		}
-	}
-	if(swissSettings.muteAudioStreaming || curDevice != DVD_DISC)
-			Patch_DVDAudioStreaming(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 		
 	// Fix Zelda WW on Wii
 	if(zeldaVAT) {
@@ -626,16 +616,17 @@ unsigned int load_app(int multiDol)
 		print_gecko("DVD: %08X\r\n",dvd_get_error());
 	}
 	// Clear out some patch variables
-	*(volatile unsigned int*)VAR_MEMCARD_RESULT = 0;
-	*(volatile unsigned int*)VAR_MC_CB_ADDR = 0;
-	*(volatile unsigned int*)VAR_MC_CB_ARG1 = 0;
-	*(volatile unsigned int*)VAR_MC_CB_ARG2 = 0;
 	*(volatile unsigned int*)VAR_FAKE_IRQ_SET = 0;
 	*(volatile unsigned int*)VAR_INTERRUPT_TIMES = 0;
-	memset((void*)VAR_READ_DVDSTRUCT, 0, 0x18);
+	*(volatile unsigned int*)VAR_READS_IN_AS = 0;
+	*(volatile unsigned int*)VAR_LAST_OFFSET = 0xBEEFCAFE;
+	*(volatile unsigned int*)VAR_AS_ENABLED = !swissSettings.muteAudioStreaming;
+	memset((void*)VAR_DI_REGS, 0, 0x24);
+	memset((void*)VAR_STREAM_START, 0, 0xA0);
+	print_gecko("Audio Streaming is %s\r\n",*(volatile unsigned int*)VAR_AS_ENABLED?"Enabled":"Disabled");
 
-	// Set WKF base offset if not using the frag patch
-	if(curDevice == WKF && !wkfFragSetupReq) {
+	// Set WKF base offset if not using the frag or audio streaming patch
+	if(curDevice == WKF && !wkfFragSetupReq && swissSettings.muteAudioStreaming) {
 		wkfWriteOffset(*(volatile unsigned int*)VAR_DISC_1_LBA);
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
@@ -1012,18 +1003,6 @@ void load_file()
 		multiDol = check_game();
 	}
 	
-	// Start up the DVD Drive
-	if((curDevice != DVD_DISC) && (curDevice != WODE) && (curDevice != WKF) 
-		&& (swissSettings.hasDVDDrive)
-		&& DrawYesNoDialog("Use a DVD Disc for higher compatibility?")) {
-		if(initialize_disc(GCMDisk.AudioStreaming) == DRV_ERROR) {
-			return; //fail
-		}
-		if(!isPrePatched && DrawYesNoDialog("Stop DVD Motor?")) {
-			dvd_motor_off();
-		}
-	}
-	
   	if(curDevice!=WODE) {
 		file_handle *secondDisc = NULL;
 		
@@ -1063,7 +1042,6 @@ void load_file()
 		}
 	}
 
-	
 	// setup the video mode before we kill libOGC kernel
 	ogc_video__reset();
 	load_app(multiDol);

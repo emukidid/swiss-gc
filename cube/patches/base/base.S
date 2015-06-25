@@ -1,113 +1,66 @@
 #***************************************************************************
 # Device indepentent Read code launch pad
 #
-# we have 0x1800 bytes to play with at 0x80001800 (code+data), or use above Arena Hi
-# This code is placed either at 0x80001800 or Above Arena Hi (depending on the game)
+# we have 0x1800 bytes to play with at 0x80001800 (code+data)
+# This code is placed at 0x80001800
 #**************************************************************************
 #define _LANGUAGE_ASSEMBLY
 #include "../../reservedarea.h"
 
+.extern __DSPHandler
 .section .text
 	.globl _start, __main
 _start:
-	b		queue_read
 	b		patched_memcpy			# void patched_memcpy(dst,src,size)
-	b		fake_interrupt
 	b		calculate_speed			# Calculates how long it takes to read 2048 bytes from the device
-	b		read_immediately		# Performs a blocking read.
+	b		stop_di_irq
+	b		trigger_di_irq
+	b		__DSPHandler
+	b		patched_memcpy_dbg
 
-	.globl fake_interrupt
-fake_interrupt:
-	mflr    r0
-	stw     r0, 4(sp)
-	stwu    sp, -0x60(sp)
-	stmw    r19, 0x2C(sp)
+	.globl trigger_di_irq
+trigger_di_irq:
+	stwu	sp,	-64(sp) 		# grow stack frame
+	mflr	r0
+	stw		r0,   12(sp)		# store lr
+
+	mfmsr	r5
+	stw		r5,	  32(sp)		# store old msr
+	rlwinm	r5,r5,0,17,15
+	mtmsr	r5
 	
-	mr		r20,	r3
-	mr		r21,	r4
-	mr		r22,	r12
+	bl		DIUpdateRegisters
 
-#check if we've set our fake IRQ & we have our handler address ready.
-	lis		r3,	VAR_AREA
-	lwz		r0,	VAR_FAKE_IRQ_SET(r3)	# r3 = our fake IRQ
-	cmpwi	r0,	0
-	beq		no_fake_irq
-	lwz		r0,	VAR_DVDIRQ_HNDLR(r3)	# r3 = addr of __DVDInterruptHandler
-	cmpwi	r0,	0
-	beq		not_ready_yet
-	li		r0,	0
-	stw		r0,	VAR_FAKE_IRQ_SET(r3)	# zero out our fake IRQ
-	lwz		r12,VAR_DVDIRQ_HNDLR(r3)	# r12 = addr of __DVDInterruptHandler
-	stw		r0,	VAR_DVDIRQ_HNDLR(r3)	# zero out our addr of __DVDInterruptHandler in case the next DOL is loaded
-		
-	lwz		r4, VAR_READ_DVDSTRUCT+16(r3)	# load length of last read
-	lwz		r3, VAR_READ_DVDSTRUCT+12(r3)	# load dst of last read
-	bl		dcache_flush_icache_inv			# **TODO** ctr is mangled here, but should be OK?
-	
-	mtlr	r12
-
-	mr		r4,	r21
-	mr		r3,	r20
-	blrl							# jump to the handler
-
-not_ready_yet:
-no_fake_irq:
-	mr		r12,r22
-	mr		r4,	r21
-	mr		r3,	r20
-
-	mtlr	r12
-	blrl
-	
-	lmw     r19,0x2C(sp)
-	lwz     r0,	0x64(sp)
-	addi    sp,	sp,	0x60
-	mtlr    r0
+	lwz		r5,	  32(sp)		# restore old msr
+	mtmsr	r5
+	lwz		r0,   12(sp)		# restore lr
+	mtlr	r0
+	addi	sp, sp, 64
 	blr
-	
-	.globl queue_read
-queue_read:
-	stw         r0, 4 (1)			# overwritten, so lets do it here.
-	mflr    	r0             		# move lr  
-	stwu    	sp,  -64(sp)   		# grow stack frame 
-	stw     	r0,   28(sp)    	# save lr
-	stw			r3,	12(sp)
-	stw			r4,	16(sp)
-	stw			r5,	20(sp)
-	stw			r6,	24(sp)
-	bl			add_read_to_queue
-	lwz			r3,	12(sp)
-	lwz			r4,	16(sp)
-	lwz			r5,	20(sp)
-	lwz			r6,	24(sp)
-	lwz     	r0,	28(sp)    		# load lr
-	addi    	sp,  sp, 64   		# grow stack frame 
-	mtlr    	r0             		# move lr  
+
+	.globl stop_di_irq
+stop_di_irq:
+	lis		r3, 0xCC00
+	lwz		r0, 0x6000(r3)
+	stw		r0, 0x6000(r3)
+	li		r0, 0
+	lis		r3, VAR_AREA
+	stw		r0, VAR_FAKE_IRQ_SET(r3)
 	blr
-	
-	.globl read_immediately
-read_immediately:
-	stw         r0, 4 (1)			# overwritten, so lets do it here.
-	mflr    	r0             		# move lr  
-	stwu    	r1,  -64(sp)   		# grow stack frame 
-	stw     	r0,   28(sp)    	# save lr
-	stw			r3,	12(sp)
-	stw			r4,	16(sp)
-	stw			r5,	20(sp)
-	stw			r6,	24(sp)
-	bl			read_entire
-	lwz			r3,	12(sp)
-	lwz			r4,	16(sp)
-	lwz			r5,	20(sp)
-	lwz			r6,	24(sp)
-	lwz     	r0,	28(sp)    		# load lr
-	addi    	sp,  sp, 64   		# grow stack frame 
-	mtlr    	r0             		# move lr  
-	li			r3, 0				# dst = 0
-	li			r4,	0				# len = 0
-	li			r5,	0				# ofs = 0
+
+	.globl dcache_store
+dcache_store:
+	addi	r4, r4, 0x1F
+	srwi	r4, r4, 5
+	mtctr	r4
+	li		r0, 0
+dcache_store_loop:
+	dcbst	r0, r3
+	addi	r3, r3, 0x20
+	bdnz	dcache_store_loop
+	sync
 	blr
-	
+
 	.globl dcache_flush_icache_inv
 dcache_flush_icache_inv:
 	clrlwi. 	5, 3, 27  # check for lower bits set in address
@@ -119,7 +72,7 @@ dcache_flush_icache_inv:
 	mtctr 		r4
 2:
 	dcbf 		r0, r3
-	icbi		r0, r3
+	icbi		r0, r3		#todo kill this off
 	addi 		r3, r3, 0x20
 	bdnz 		2b
 	sc
@@ -129,11 +82,21 @@ dcache_flush_icache_inv:
 
 	.globl process_read_queue
 process_read_queue:
-	stwu	sp,	-160(sp) 		# grow stack frame
+	stwu	sp,	-64(sp) 		# grow stack frame
 	stw		r0,   12(sp)		# store r0
-	stmw	r3,   16(sp)		# store r3-r31
+	stw		r3,   16(sp)		# store r3
+	stw		r4,   20(sp)		# store r4
+	stw		r5,   24(sp)		# store r5
+	stw		r6,   28(sp)		# store r6
+	stw		r7,   32(sp)		# store r7
+	stw		r8,   36(sp)		# store r8
+	stw		r9,   40(sp)		# store r9
+	stw		r10,   44(sp)		# store r10
+	stw		r11,   48(sp)		# store r11
+	stw		r12,   52(sp)		# store r12
 
-	bl		process_queue
+	bl		StreamUpdateRegisters
+	bl		DIUpdateRegisters
 
 	lwz		r0, 12(sp)			# restore r0
 	lwz		r4,	20(sp)			# restore r4 (context)
@@ -145,8 +108,16 @@ process_read_queue:
 	mtctr   r3					# restore ctr
 	lwz     r3, 0x008C (r4)
 	mtxer   r3					# restore xer
-	lmw 	r3, 16(sp)			# restore r3-r31
-	addi	r1,	r1, 160			# kill stack frame
+	lwz		r3,   16(sp)		# restore r3
+	lwz		r5,   24(sp)		# restore r5
+	lwz		r6,   28(sp)		# restore r6
+	lwz		r7,   32(sp)		# restore r7
+	lwz		r8,   36(sp)		# restore r8
+	lwz		r9,   40(sp)		# restore r9
+	lwz		r10,   44(sp)		# restore r10
+	lwz		r11,   48(sp)		# restore r11
+	lwz		r12,   52(sp)		# restore r12
+	addi	r1,	r1, 64			# kill stack frame
 	lis		r5,	0x8000
 	lwz		r5, 0x3010(r5)
 	mtsrr0	r5					# setup for the rfi
@@ -154,11 +125,38 @@ process_read_queue:
 
 .globl patched_memcpy
 patched_memcpy:
-	cmpwi	r3, 0x0500
 	mr		r4, r24
-	bnelr
+	cmpwi	r3, 0x0500
+	beq		customhandler
+	cmpwi	r3, 0xF00
+	bgt		redirecthandler
+	blr
+customhandler:
 	lis		r4, ext_handler_custom@h
 	ori		r4, r4, ext_handler_custom@l
+	blr
+redirecthandler:
+	li		r3, 0xF00
+	blr
+	
+.globl patched_memcpy_dbg
+patched_memcpy_dbg:
+	mr		r4, r24
+	rlwinm	r3, r3, 0, 16, 31
+	cmpwi	r3, 0x0500
+	beq		customhandlerdbg
+	cmpwi	r3, 0xF00
+	bgt		redirecthandlerdbg
+	addis	r3, r3, 0x8000
+	blr
+customhandlerdbg:
+	lis		r4, ext_handler_custom@h
+	ori		r4, r4, ext_handler_custom@l
+	addis	r3, r3, 0x8000
+	blr
+redirecthandlerdbg:
+	li		r3, 0xF00
+	addis	r3, r3, 0x8000
 	blr
 
 .globl ext_handler_custom

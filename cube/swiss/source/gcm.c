@@ -12,13 +12,13 @@
 #include "swiss.h"
 #include "patcher.h"
 #include "sidestep.h"
+#include "crc32/crc32.h"
 #include "devices/deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include <sys/stat.h>
 #include <errno.h>
 
-#define PATCH_CHUNK_SIZE 8*1024*1024
 #define FST_ENTRY_SIZE 12
 
 //Lets parse the entire game FST in search for the banner
@@ -286,7 +286,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 }
 
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, int multiDol) {
-	int i, patched_buf_num = 0, num_patched = 0;
+	int i, num_patched = 0;
 	
 	// If the current device isn't SD Gecko, init SD Gecko Slot A or B to write patches.
 	if(deviceHandler_initial != &initial_SD0 && deviceHandler_initial != &initial_SD1) {
@@ -313,100 +313,140 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		return 0;
 	}
 
+	char patchFileName[256];
+	char patchDirName[256];
+	char patchBaseDirName[256];
+	char gameID[8];
+	memset(&gameID, 0, 8);
+	memset(&patchDirName, 0, 256);
+	memset(&patchBaseDirName, 0, 256);
+	strncpy((char*)&gameID, (char*)&GCMDisk, 4);
+	sprintf(&patchDirName[0],"%s:/swiss_patches/%s",(savePatchDevice ? "sdb":"sda"), &gameID[0]);
+	sprintf(&patchBaseDirName[0],"%s:/swiss_patches",(savePatchDevice ? "sdb":"sda"));
+	print_gecko("Patch dir will be: %s if required\r\n", patchDirName);
+	*(u32*)VAR_EXECD_OFFSET = 0xFFFFFFFF;
 	// Go through all the possible files we think need patching..
 	for(i = 0; i < numToPatch; i++) {
+		u32 patched = 0, crc32 = 0;
+
 		sprintf(txtbuffer, "Patching File %i/%i",i+1,numToPatch);
 		DrawFrameStart();
 		DrawProgressBar((int)(((float)(i+1)/(float)numToPatch)*100), txtbuffer);
 		DrawFrameFinish();
-	
-		int patched = 0;
-		// File handle for a patch we might need to write
-		FILE *patchFile = 0;
-		char patchFileName[1024];
-		memset(patchFileName, 0, 1024);
-		
+			
 		// Round up to 32 bytes
 		if(filesToPatch[i].size % 0x20) {
 			filesToPatch[i].size += (0x20-(filesToPatch[i].size%0x20));
 		}
 		
-		// Chunk the file out in 8mb chunks or less
-		int ofs;
-		for(ofs = 0; ofs < filesToPatch[i].size; ofs+=PATCH_CHUNK_SIZE) {
-			print_gecko("Checking %s %iKb\r\n", filesToPatch[i].name, filesToPatch[i].size/1024);
-			int sizeToRead = (ofs+PATCH_CHUNK_SIZE > filesToPatch[i].size) ? (filesToPatch[i].size-ofs):PATCH_CHUNK_SIZE;
-			u8 *buffer = (u8*)memalign(32, sizeToRead);
-			
-			deviceHandler_seekFile(file,filesToPatch[i].offset+ofs,DEVICE_HANDLER_SEEK_SET);
-			if(deviceHandler_readFile(file,buffer,sizeToRead)!= sizeToRead) {
+		if(filesToPatch[i].size > 8*1024*1024) {
+			print_gecko("Skipping %s %iKB too large\r\n", filesToPatch[i].name, filesToPatch[i].size/1024);
+			continue;
+		}
+		print_gecko("Checking %s %iKb\r\n", filesToPatch[i].name, filesToPatch[i].size/1024);
+		if(strstr(filesToPatch[i].name, "execD.")) {
+			*(u32*)VAR_EXECD_OFFSET = filesToPatch[i].offset;
+		}
+		if(strstr(filesToPatch[i].name, "iwanagaD.dol") || strstr(filesToPatch[i].name, "switcherD.dol")) {
+			continue;	// skip unused PSO files
+		}
+		int sizeToRead = filesToPatch[i].size;
+		u8 *buffer = (u8*)memalign(32, sizeToRead);
+		
+		deviceHandler_seekFile(file,filesToPatch[i].offset, DEVICE_HANDLER_SEEK_SET);
+		if(deviceHandler_readFile(file,buffer,sizeToRead)!= sizeToRead) {
+			DrawFrameStart();
+			DrawMessageBox(D_FAIL, "Failed to read!");
+			DrawFrameFinish();
+			sleep(5);
+			return 0;
+		}
+		
+		if(curDevice != DVD_DISC) {
+			u32 ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
+			if(READ_PATCHED_ALL != ret)	{
 				DrawFrameStart();
-				DrawMessageBox(D_FAIL, "Failed to read!");
+				DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
 				DrawFrameFinish();
 				sleep(5);
-				return 0;
 			}
-			
-			if(curDevice != DVD_DISC) {
-				u32 ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type, multiDol);
-				if(READ_PATCHED_ALL != ret)	{
-					DrawFrameStart();
-					DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
-					DrawFrameFinish();
-					//sleep(5);
-				}
-				else
-					patched += 1;
-				patched += Patch_DVDCompareDiskId(buffer, sizeToRead);
-				patched += Patch_DVDAudioStreaming(buffer, sizeToRead);
-			}
-					
-			if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
-				patched += Patch_Fwrite(buffer, sizeToRead);
-			}
-			
-			if(curDevice == DVD_DISC && is_gamecube()) {
-				patched += Patch_DVDLowLevelReadForDVD(buffer, sizeToRead, filesToPatch[i].type);
-				patched += Patch_DVDReset(buffer, sizeToRead);
-			}
-			
-			patched += Patch_VidMode(buffer, sizeToRead, filesToPatch[i].type);
-			patched += Patch_FontEnc(buffer, sizeToRead);
-			if(swissSettings.forceWidescreen)
-				Patch_WideAspect(buffer, sizeToRead, filesToPatch[i].type);
-			if(swissSettings.forceAnisotropy)
-				Patch_TexFilt(buffer, sizeToRead, filesToPatch[i].type);
-			if(patched) {
-				char patchDirName[1024];
-				memset(&patchDirName, 0, 1024);
-				sprintf(&patchDirName[0],"%s:/swiss_patches",(savePatchDevice ? "sdb":"sda"));
-				
-				// Make a patches dir if we don't have one already
-				if(mkdir(&patchDirName[0], 0777) != 0) {
-					if(errno != EEXIST) {
-						return -2;
-					}
-				}
-					
-				// Write a file out for this game with the patched buffer inside.
-				sprintf(patchFileName, "%s/%i",patchDirName, patched_buf_num);
-				remove(patchFileName);
-				print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", patchFileName, sizeToRead, filesToPatch[i].offset+ofs);
-				patchFile = fopen(patchFileName, "wb");
-				fwrite(buffer, 1, sizeToRead, patchFile);
-				num_patched++;
-			}
-			free(buffer);
+			else
+				patched += 1;
 		}
-		if(patchFile) {
+				
+		if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
+			patched += Patch_Fwrite(buffer, sizeToRead);
+		}
+		
+		if(curDevice == DVD_DISC && is_gamecube()) {
+			patched += Patch_DVDLowLevelReadForDVD(buffer, sizeToRead, filesToPatch[i].type);
+			patched += Patch_DVDReset(buffer, sizeToRead);
+		}
+		
+		patched += Patch_VidMode(buffer, sizeToRead, filesToPatch[i].type);
+		patched += Patch_FontEnc(buffer, sizeToRead);
+		if(swissSettings.forceWidescreen)
+			Patch_WideAspect(buffer, sizeToRead, filesToPatch[i].type);
+		if(swissSettings.forceAnisotropy)
+			Patch_TexFilt(buffer, sizeToRead, filesToPatch[i].type);
+		if(patched) {
+			// File handle for a patch we might need to write
+			FILE *patchFile = 0;
+			memset(patchFileName, 0, 256);
+		
+			// Make a base patches dir if we don't have one already
+			if(mkdir(&patchBaseDirName[0], 0777) != 0) {
+				if(errno != EEXIST) {
+					return -2;
+				}
+			}
+			if(mkdir(&patchDirName[0], 0777) != 0) {
+				if(errno != EEXIST) {
+					return -2;
+				}
+			}
+			sprintf(patchFileName, "%s/%i",patchDirName, num_patched);
+
+			// Work out the crc32
+			crc32 = Crc32_ComputeBuf( 0, buffer, (u32) sizeToRead);
+
+			// See if this file already exists, if it does, match crc
+			patchFile = fopen( patchFileName, "rb" );
+			if(patchFile) {
+				//print_gecko("Old Patch exists\r\n");
+				u32 oldCrc32 = 0;
+				fseek(patchFile, 0L, SEEK_END);
+				u32 file_size = ftell(patchFile);
+				fseek(patchFile, file_size-4, SEEK_SET);
+				fread(&oldCrc32, 1, 4, patchFile);
+				if(oldCrc32 == crc32) {
+					num_patched++;
+					fclose(patchFile);
+					free(buffer);
+					print_gecko("CRC matched, no need to patch again\r\n");
+					continue;
+				}
+				else {
+					remove(patchFileName);
+					fclose(patchFile);
+					print_gecko("CRC mismatch, writing patch again\r\n");
+				}
+			}
+			// Otherwise, write a file out for this game with the patched buffer inside.
+			print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", patchFileName, sizeToRead, filesToPatch[i].offset);
+			patchFile = fopen(patchFileName, "wb");
+			fwrite(buffer, 1, sizeToRead, patchFile);
 			u32 magic = SWISS_MAGIC;
 			fwrite(&filesToPatch[i].offset, 1, 4, patchFile);
 			fwrite(&filesToPatch[i].size, 1, 4, patchFile);
 			fwrite(&magic, 1, 4, patchFile);
+			fwrite(&crc32, 1, 4, patchFile);
 			fclose(patchFile);
-			patched_buf_num++;
+			num_patched++;
 		}
+		free(buffer);
 	}
+
 	return num_patched;
 }
 

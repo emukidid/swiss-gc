@@ -40,7 +40,7 @@ typedef unsigned int u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 
-#define _ideexi_version *(u32*)VAR_TMP4
+#define _ideexi_version *(u32*)VAR_TMP2
 #define _ata48bit *(u32*)VAR_TMP1
 
 #define IDE_EXI_V1 0

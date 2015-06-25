@@ -120,7 +120,7 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, unsigned in
 		sprintf(&file_name[0], "%s/%s", ffile->name, entry->d_name);
 		stat(&file_name[0],&fstat);
 		// Do we want this one?
-		if((type == -1 || ((fstat.st_mode & S_IFDIR) ? (type==IS_DIR) : (type==IS_FILE))) && !endsWith(entry->d_name, ".patches")) {
+		if((type == -1 || ((fstat.st_mode & S_IFDIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
 			// Make sure we have room for this one
 			if(i == num_entries){
 				++num_entries;
@@ -190,15 +190,23 @@ int deviceHandler_FAT_writeFile(file_handle* file, void* buffer, unsigned int le
 	return bytes_written;
 }
 
-void print_frag_list() {
+void print_frag_list(int hasDisc2) {
 	print_gecko("== Fragments List ==\r\n");
 	u32 *fragList = (u32*)VAR_FRAG_LIST;
-	int maxFrags = (VAR_FRAG_SIZE/12), i = 0;
+	int maxFrags = hasDisc2 ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0;
 	for(i = 0; i < maxFrags; i++) {
 		if(!fragList[(i*3)+1]) break;
 		
-		print_gecko("Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%08X]\r\n", 
+		print_gecko("Disc 1 Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%08X]\r\n", 
 					i, fragList[(i*3)+0], fragList[(i*3)+1], fragList[(i*3)+2]);
+	}
+	if(hasDisc2) {
+		for(i = 0; i < maxFrags; i++) {
+			if(!fragList[(i*3)+1+(maxFrags*3)]) break;
+		
+			print_gecko("Disc 2 Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%08X]\r\n", 
+					i, fragList[(i*3)+0+(maxFrags*3)], fragList[(i*3)+1+(maxFrags*3)], fragList[(i*3)+2+(maxFrags*3)]);
+		}
 	}
 	print_gecko("== Fragments End ==\r\n");
 }
@@ -211,7 +219,7 @@ int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 			file2 = NULL;
 	}
 	
-	// If there are 2 discs, we only allow 5 fragments per disc.
+	// If there are 2 discs, we only allow 21 fragments per disc.
 	int maxFrags = file2 ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0;
 	u32 *fragList = (u32*)VAR_FRAG_LIST;
 	
@@ -221,25 +229,36 @@ int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	file_handle patchFile;
 	int patches = 0;
 	for(i = 0; i < maxFrags; i++) {
-		u32 patchInfo[3];
+		u32 patchInfo[4];
 		patchInfo[0] = 0; patchInfo[1] = 0; 
+		char gameID[8];
+		memset(&gameID, 0, 8);
+		strncpy((char*)&gameID, (char*)&GCMDisk, 4);
 		memset(&patchFile, 0, sizeof(file_handle));
-		sprintf(&patchFile.name[0], "%s:/swiss_patches/%i",(savePatchDevice ? "sdb":"sda"), i);
+		sprintf(&patchFile.name[0], "%s:/swiss_patches/%s/%i",(savePatchDevice ? "sdb":"sda"),&gameID[0], i);
 
 		struct stat fstat;
 		if(stat(&patchFile.name[0],&fstat)) {
 			break;
 		}
-		deviceHandler_seekFile(&patchFile,fstat.st_size-12,DEVICE_HANDLER_SEEK_SET);
-		if((deviceHandler_readFile(&patchFile, &patchInfo, 12) == 12) && (patchInfo[2] == SWISS_MAGIC)) {
+		deviceHandler_seekFile(&patchFile,fstat.st_size-16,DEVICE_HANDLER_SEEK_SET);
+		if((deviceHandler_readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
 			get_frag_list(&patchFile.name[0]);
-			print_gecko("Found patch file %i ofs 0x%08X len 0x%08X base 0x%08X\r\n", 
-							i, patchInfo[0], patchInfo[1], frag_list->frag[0].sector);
+			print_gecko("Found patch file %i ofs 0x%08X len 0x%08X base 0x%08X (%i pieces)\r\n", 
+							i, patchInfo[0], patchInfo[1], frag_list->frag[0].sector,frag_list->num );
 			fclose(patchFile.fp);
-			fragList[patches*3] = patchInfo[0];
-			fragList[(patches*3)+1] = patchInfo[1];
-			fragList[(patches*3)+2] = frag_list->frag[0].sector;
-			patches++;
+			int j = 0;
+			u32 totalSize = patchInfo[1];
+			for(j = 0; j < frag_list->num; j++) {
+				u32 fragmentSize = frag_list->frag[j].count*512;
+				if(j+1 == frag_list->num)
+					fragmentSize = totalSize;
+				fragList[patches*3] = patchInfo[0] + frag_list->frag[j].offset*512;
+				fragList[(patches*3)+1] = fragmentSize;
+				fragList[(patches*3)+2] = frag_list->frag[j].sector;
+				patches++;
+				totalSize -= fragmentSize;
+			}
 		}
 		else {
 			break;
@@ -306,11 +325,11 @@ int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	// IDE-EXI only settings
 	if(!(file->name[0] == 's')) {
 		// Is this an IDE-EXI v1 or 2?
-		*(volatile unsigned int*)VAR_TMP4 = _ideexi_version;
+		*(volatile unsigned int*)VAR_TMP2 = _ideexi_version;
 		// Is the HDD in use a 48 bit LBA supported HDD?
 		*(volatile unsigned int*)VAR_TMP1 = ataDriveInfo.lba48Support;
 	}
-	print_frag_list();
+	print_frag_list(file2 != 0);
 	return 1;
 }
 

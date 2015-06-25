@@ -11,12 +11,14 @@
 #ifdef _LANGUAGE_ASSEMBLY
 #include "asm.h"
 .set VAR_AREA,			0x8000
-.set VAR_PATCHES_BASE,	0x2E00	# Patches get copied to below this area.
-.set VAR_FRAG_SIZE,		0xE0	# Size of frag array in bytes
-.set VAR_FRAG_LIST,		0x2E00	# 0xE0 of fragments (18 frags max) (u32 sector, u32 size)
-.set VAR_READ_DVDSTRUCT,0x2EE0	# 0x18 for our dvd structure
+.set VAR_PATCHES_BASE,	0x2D00	# Patches get copied to below this area.
+.set VAR_FRAG_SIZE,		0x1E0	# Size of frag array in bytes
+.set VAR_FRAG_LIST,		0x2D00	# 0x1E0 of fragments (40 frags max) (u32 sector, u32 size, u32 rawsector)
+.set VAR_LAST_OFFSET,	0x2EE0	# The last offset we read from
+.set VAR_READS_IN_AS,	0x2EE4	# How many times have we tried to read while streaming is on?
+.set VAR_AS_ENABLED,	0x2EE8	# Is Audio streaming enabled by the user?
 .set VAR_FAKE_IRQ_SET,	0x2EF8	# flag to say we are ready to fake irq.
-.set VAR_DVDIRQ_HNDLR,	0x2EFC	# ptr to __DVDInterruptHandler
+.set VAR_EXECD_OFFSET,	0x2EFC	# offset of execD.bin on multi-dol discs
 .set VAR_DISC_1_LBA, 	0x2F00	# is the base file sector for disk 1
 .set VAR_DISC_2_LBA, 	0x2F04	# is the base file sector for disk 2
 .set VAR_CUR_DISC_LBA, 	0x2F08	# is the currently selected disk sector
@@ -24,45 +26,54 @@
 .set VAR_SD_TYPE, 		0x2F10	# is the Card Type (SDHC=0, SD=1)
 .set VAR_EXI_FREQ, 		0x2F14	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
 .set VAR_EXI_SLOT, 		0x2F18	# is the EXI slot (0 = slot a, 1 = slot b)
-.set VAR_TMP1,  		0x2F1C	# space for a variable if required
-.set VAR_TMP2,  		0x2F20	# space for a variable if required
-.set VAR_MC_FUNC,  		0x2F24	# which MC Function do we want to call?
-.set VAR_TMP4,  		0x2F28	# space for a variable if required
-.set VAR_DOL_SECTOR,	0x2F2C	# In-Game-Reset DOL address
-.set VAR_DOL_SIZE,		0x2F30	# In-Game-Reset DOL size
-.set VAR_FLOAT9_16,		0x2F34	# constant 9/16
-.set VAR_FLOAT1_6,		0x2F38	# constant 1/6
-.set VAR_FLOAT3_4,		0x2F3C	# constant 3/4
-.set VAR_FLOATM_1,		0x2F40	# constant -1
-.set VAR_MEMCARD_LBA,	0x2F44	# Memory card file base on SD
-.set VAR_MEMCARD_WORK,	0x2F48	# ptr to memory card work area (40960 bytes big)
-.set VAR_MEMCARD_RESULT,0x2F4C	# Last memory card status from a CARD func
-.set VAR_MC_CB_ADDR,	0x2F50	# memcard callback addr
-.set VAR_MC_CB_ARG1,	0x2F54	# memcard callback r3
-.set VAR_MC_CB_ARG2,	0x2F58	# memcard callback r4
-.set VAR_INTERRUPT_TIMES,0x2F5C	# how many times have we called the dvd queue
-.set VAR_DEVICE_SPEED,	0x2F60	# How long in usec does it take to read 1024 bytes
+.set VAR_TMP1,  		0x2F1C  # space for a variable if required
+.set VAR_TMP2,  		0x2F20  # space for a variable if required
+.set VAR_FLOAT9_16,		0x2F24  # constant 9/16
+.set VAR_FLOAT1_6,		0x2F28  # constant 1/6
+.set VAR_FLOAT3_4,		0x2F2C  # constant 3/4
+.set VAR_FLOATM_1,		0x2F30  # constant -1
+.set VAR_DI_REGS,		0x2F34  # DI Regs are mapped to here...
+.set VAR_INTERRUPT_TIMES,	0x2F58 # how many times have we called the dvd queue
+.set VAR_DEVICE_SPEED,	0x2F5C	# How long in usec does it take to read 1024 bytes
+.set VAR_STREAM_START,	0x2F60	# AS Start
+.set VAR_STREAM_CUR,	0x2F64	# AS Current Location
+.set VAR_STREAM_END,	0x2F68	# AS End
+.set VAR_STREAM_SIZE,	0x2F6C	# AS Size
+.set VAR_STREAM_UPDATE,	0x2F70	# AS Update Request
+.set VAR_STREAM_ENDING,	0x2F71	# AS Ending
+.set VAR_STREAM_LOOPING,0x2F72	# AS Looping
+.set VAR_AS_SAMPLECNT,	0x2F73	# AS Sample Counter
+.set VAR_STREAM_CURBUF,	0x2F74	# AS Current Main Buffer
+.set VAR_STREAM_DI,		0x2F75	# AS DI Status
+.set VAR_STREAM_BUFLOC,	0x2F78	# AS Buffer Location
+.set VAR_AS_HIST_0,		0x2F7C
+.set VAR_AS_HIST_1,		0x2F80
+.set VAR_AS_HIST_2,		0x2F84
+.set VAR_AS_HIST_3,		0x2F88
+.set VAR_AS_TMP_LSAMPLE,0x2F8C
+.set VAR_AS_TMP_RSAMPLE,0x2F8E
+.set VAR_AS_OUTL,		0x2F90
+.set VAR_AS_OUTR,		0x2FC8
 
-.set _CARD_OPEN,		0x1
-.set _CARD_FASTOPEN,	0x2
-.set _CARD_CLOSE,		0x3
-.set _CARD_CREATE,		0x4
-.set _CARD_DELETE,		0x5
-.set _CARD_READ,		0x6
-.set _CARD_WRITE,		0x7
-.set _CARD_GETSTATUS,	0x8
-.set _CARD_SETSTATUS,	0x9
-.set _CARD_SETUP,		0xA
+# Audio Streaming buffers	(these live above ArenaHi...)
+.set 	BUFSIZE, 		0xE00
+.set 	CHUNK_48, 		0x400
+.set 	CHUNK_48to32, 	0x600
+.set 	DECODE_WORK_AREA, (0x81800000-CHUNK_48to32)
+.set 	DECODED_BUFFER_0, (DECODE_WORK_AREA-(BUFSIZE*2))
+.set 	DECODED_BUFFER_1, (DECODE_WORK_AREA-(BUFSIZE*1))
 
 #else
 
 #define VAR_AREA			(0x80000000)
-#define VAR_PATCHES_BASE	(VAR_AREA+0x2E00)	// Patches get copied to below this area.
-#define VAR_FRAG_SIZE		(0xE0)				// Size of frag array in bytes
-#define VAR_FRAG_LIST		(VAR_AREA+0x2E00)	// 0xE0 of fragments (18 frags max) (u32 sector, u32 size)
-#define VAR_READ_DVDSTRUCT	(VAR_AREA+0x2EE0)	// 0x18 for our dvd structure
+#define VAR_PATCHES_BASE	(VAR_AREA+0x2D00)	// Patches get copied to below this area.
+#define VAR_FRAG_SIZE		(0x1E0)				// Size of frag array in bytes
+#define VAR_FRAG_LIST		(VAR_AREA+0x2D00)	// 0x1E0 of fragments (40 frags max) (u32 sector, u32 size, u32 rawsector)
+#define VAR_LAST_OFFSET		(VAR_AREA+0x2EE0)	// The last offset we read from
+#define VAR_READS_IN_AS		(VAR_AREA+0x2EE4)	// How many times have we tried to read while streaming is on?
+#define VAR_AS_ENABLED		(VAR_AREA+0x2EE8)	// Is Audio streaming enabled by the user?
 #define VAR_FAKE_IRQ_SET	(VAR_AREA+0x2EF8)	// flag to say we are ready to fake irq.
-#define VAR_DVDIRQ_HNDLR	(VAR_AREA+0x2EFC)	// ptr to __DVDInterruptHandler
+#define VAR_EXECD_OFFSET	(VAR_AREA+0x2EFC)	// offset of execD.bin on multi-dol discs
 #define VAR_DISC_1_LBA 		(VAR_AREA+0x2F00)	// is the base file sector for disk 1
 #define VAR_DISC_2_LBA 		(VAR_AREA+0x2F04)	// is the base file sector for disk 2
 #define VAR_CUR_DISC_LBA 	(VAR_AREA+0x2F08)	// is the currently selected disk sector
@@ -72,33 +83,40 @@
 #define VAR_EXI_SLOT 		(VAR_AREA+0x2F18)	// is the EXI slot (0 = slot a, 1 = slot b)
 #define VAR_TMP1  			(VAR_AREA+0x2F1C)	// space for a variable if required
 #define VAR_TMP2  			(VAR_AREA+0x2F20)	// space for a variable if required
-#define VAR_MC_FUNC  		(VAR_AREA+0x2F24)	// which MC Function do we want to call?
-#define VAR_TMP4  			(VAR_AREA+0x2F28)	// space for a variable if required
-#define VAR_DOL_SECTOR		(VAR_AREA+0x2F2C)	// In-Game-Reset DOL address
-#define VAR_DOL_SIZE		(VAR_AREA+0x2F30)	// In-Game-Reset DOL size
-#define VAR_FLOAT9_16		(VAR_AREA+0x2F34)	// constant 9/16
-#define VAR_FLOAT1_6		(VAR_AREA+0x2F38)	// constant 1/6
-#define VAR_FLOAT3_4		(VAR_AREA+0x2F3C)	// constant 3/4
-#define VAR_FLOATM_1		(VAR_AREA+0x2F40)	// constant -1
-#define VAR_MEMCARD_LBA		(VAR_AREA+0x2F44)	// Memory card file base on SD
-#define VAR_MEMCARD_WORK	(VAR_AREA+0x2F48)	// ptr to memory card work area (40960 bytes big)
-#define VAR_MEMCARD_RESULT	(VAR_AREA+0x2F4C)	// Last memory card status from a CARD func
-#define VAR_MC_CB_ADDR		(VAR_AREA+0x2F50)	// memcard callback addr
-#define VAR_MC_CB_ARG1		(VAR_AREA+0x2F54)	// memcard callback r3
-#define VAR_MC_CB_ARG2		(VAR_AREA+0x2F58)	// memcard callback r4
-#define VAR_INTERRUPT_TIMES	(VAR_AREA+0x2F5C)	// how many times have we called the dvd queue
-#define VAR_DEVICE_SPEED	(VAR_AREA+0x2F60)	// How long in usec does it take to read 1024 bytes
+#define VAR_FLOAT9_16		(VAR_AREA+0x2F24)	// constant 9/16
+#define VAR_FLOAT1_6		(VAR_AREA+0x2F28)	// constant 1/6
+#define VAR_FLOAT3_4		(VAR_AREA+0x2F2C)	// constant 3/4
+#define VAR_FLOATM_1		(VAR_AREA+0x2F30)	// constant -1
+#define VAR_DI_REGS			(VAR_AREA+0x2F34)	// DI Regs are mapped to here...
+#define VAR_INTERRUPT_TIMES	(VAR_AREA+0x2F58)	// how many times have we called the dvd queue
+#define VAR_DEVICE_SPEED	(VAR_AREA+0x2F5C)	// How long in usec does it take to read 1024 bytes
+#define VAR_STREAM_START	(VAR_AREA+0x2F60)	// AS Start
+#define VAR_STREAM_CUR		(VAR_AREA+0x2F64)	// AS Current Location
+#define VAR_STREAM_END		(VAR_AREA+0x2F68)	// AS End
+#define VAR_STREAM_SIZE		(VAR_AREA+0x2F6C)	// AS Size
+#define VAR_STREAM_UPDATE	(VAR_AREA+0x2F70)	// AS Update Request
+#define VAR_STREAM_ENDING	(VAR_AREA+0x2F71)	// AS Ending
+#define VAR_STREAM_LOOPING	(VAR_AREA+0x2F72)	// AS Looping
+#define VAR_AS_SAMPLECNT	(VAR_AREA+0x2F73)	// AS Sample Counter
+#define VAR_STREAM_CURBUF	(VAR_AREA+0x2F74)	// AS Current Main Buffer
+#define VAR_STREAM_DI		(VAR_AREA+0x2F75)	// AS DI Status
+#define VAR_STREAM_BUFLOC	(VAR_AREA+0x2F78)
+#define VAR_AS_HIST_0		(VAR_AREA+0x2F7C)
+#define VAR_AS_HIST_1		(VAR_AREA+0x2F80)
+#define VAR_AS_HIST_2		(VAR_AREA+0x2F84)
+#define VAR_AS_HIST_3		(VAR_AREA+0x2F88)
+#define VAR_AS_TMP_LSAMPLE	(VAR_AREA+0x2F8C)
+#define VAR_AS_TMP_RSAMPLE	(VAR_AREA+0x2F8E)
+#define VAR_AS_OUTL			(VAR_AREA+0x2F90)
+#define VAR_AS_OUTR			(VAR_AREA+0x2FC8)
 
-#define _CARD_OPEN			(0x1)
-#define _CARD_FASTOPEN		(0x2)
-#define _CARD_CLOSE			(0x3)
-#define _CARD_CREATE		(0x4)
-#define _CARD_DELETE		(0x5)
-#define _CARD_READ			(0x6)
-#define _CARD_WRITE			(0x7)
-#define _CARD_GETSTATUS		(0x8)
-#define _CARD_SETSTATUS		(0x9)
-#define _CARD_SETUP			(0xA)
+// Audio Streaming buffers	(these live above ArenaHi...)
+#define BUFSIZE 0xE00
+#define CHUNK_48 0x400
+#define CHUNK_48to32 0x600
+#define DECODE_WORK_AREA (0x81800000-CHUNK_48to32)
+#define DECODED_BUFFER_0 (DECODE_WORK_AREA-(BUFSIZE*2))
+#define DECODED_BUFFER_1 (DECODE_WORK_AREA-(BUFSIZE*1))
 
 #endif
 

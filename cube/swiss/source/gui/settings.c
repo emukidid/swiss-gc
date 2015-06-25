@@ -92,7 +92,7 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawSelectableButton(480, 170, -1, 195, forceWidescreenStr[swissSettings.forceWidescreen], option == 2 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 200, "Force Anisotropy:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
 		DrawSelectableButton(480, 200, -1, 225, swissSettings.forceAnisotropy ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 230, "Mute Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		WriteFontStyled(30, 230, "Disable Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
 		DrawSelectableButton(480, 230, -1, 255, swissSettings.muteAudioStreaming ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 260, "Force Encoding:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
 		DrawSelectableButton(480, 260, -1, 285, forceEncodingStr[swissSettings.forceEncoding], option == 5 ? B_SELECTED:B_NOSELECT,-1);

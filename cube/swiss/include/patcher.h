@@ -75,23 +75,21 @@ extern u32 VIConfigurePanHook_length;
 
 #define SWISS_MAGIC 0x53574953 /* "SWIS" */
 
-#define LO_RESERVE 0x80001800
+#define LO_RESERVE 0x80001000
 
-/* Function jump locations in our patch code */
-#define QUEUE_READ_OFFSET	 	(LO_RESERVE)
-#define PATCHED_MEMCPY		 	(LO_RESERVE | 0x04)
-#define FAKE_IRQ			 	(LO_RESERVE | 0x08)
-#define CALC_SPEED		 		(LO_RESERVE | 0x0C)
-#define READ_IMMED_OFFSET 		(LO_RESERVE | 0x10)
+/* Function jump locations for the SD/IDE/USBGecko patch */
+#define PATCHED_MEMCPY			(LO_RESERVE)
+#define CALC_SPEED				(LO_RESERVE | 0x04)
+#define STOP_DI_IRQ				(LO_RESERVE | 0x08)
+#define READ_TRIGGER_INTERRUPT	(LO_RESERVE | 0x0C)
+#define DSP_HANDLER_HOOK		(LO_RESERVE | 0x10)
+#define PATCHED_MEMCPY_DBG		(LO_RESERVE | 0x14)
 
-#define READ_PATCHED_ALL 		(0x111111)
-
-/* WKF Patch file jump locations in our patch code */
-#define ADJUST_LBA_OFFSET	 	(LO_RESERVE)
-
-/* DVD file jump locations in our patch code */
-#define ENABLE_BACKUP_DISC 		(LO_RESERVE)
+/* Function jump locations for the DVD patch */
+#define ENABLE_BACKUP_DISC 		(LO_RESERVE | 0x00)
 #define READ_REAL_OR_PATCHED	(LO_RESERVE | 0x04)
+
+#define READ_PATCHED_ALL 		(0x111)
 
 /* Types of files we may patch */
 #define PATCH_DOL		0
@@ -103,17 +101,13 @@ extern u32 VIConfigurePanHook_length;
 extern int savePatchDevice;
 
 u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType);
-u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType);
-u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType, int simplePatch);
+u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType);
 int Patch_VidMode(u8 *data, u32 length, int dataType);
 void Patch_WideAspect(u8 *data, u32 length, int dataType);
 int Patch_TexFilt(u8 *data, u32 length, int dataType);
 int Patch_FontEnc(void *addr, u32 length);
-int Patch_DVDAudioStreaming(u8 *data, u32 length);
-int Patch_DVDStatusFunctions(u8 *data, u32 length);
 int Patch_Fwrite(void *addr, u32 length);
 int Patch_DVDReset(void *addr,u32 length);
-int Patch_DVDCompareDiskId(u8 *data, u32 length);
 void Patch_GXSetVATZelda(void *addr, u32 length,int mode);
 u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);

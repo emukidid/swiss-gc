@@ -92,9 +92,6 @@ static void ARAMStub(void)
     asm("stw 5,0xC00(8)");
     asm("stw 5,0xD00(8)");
     asm("stw 5,0xF00(8)");
-    asm("stw 5,0x1300(8)");
-    asm("stw 5,0x1400(8)");
-    asm("stw 5,0x1700(8)");
 
     /*** Flush it all again ***/
     asm("lis 7,0x30");
@@ -169,7 +166,7 @@ void ARAMRun(u32 entrypoint, u32 dst, u32 src, u32 len)
 	*(volatile u32*)0x800000F4 = bi2Addr;
 	*(volatile u32*)0x800000C0 = osctxphys;
 	*(volatile u32*)0x800000D4 = osctxvirt;
-
+	install_code();	// Must happen here because libOGC likes to write over all exception handlers.
 	/*** Shutdown all threads and exit to this method ***/
 	__lwp_thread_stopmultitasking((void(*)())ARAMRunStub());
 }
