@@ -17,6 +17,7 @@
 
 #include "sidestep.h"
 #include "ssaram.h"
+#include "patcher.h"
 
 #define ARAMSTART 0x8000
 

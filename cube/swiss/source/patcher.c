@@ -75,10 +75,10 @@ int install_code()
 		print_gecko("Installing Patch for USB Gecko\r\n");
 	}
 	// Wiikey Fusion
-	else if(deviceHandler_initial == &initial_WKF) {
+	/*else if(deviceHandler_initial == &initial_WKF) {
 		patch = &wkf_bin[0]; patchSize = wkf_bin_size;
 		print_gecko("Installing Patch for WKF\r\n");
-	}
+	}*/
 	print_gecko("Space for patch remaining: %i\r\n",top_addr - LO_RESERVE);
 	print_gecko("Space taken by vars/video patches: %i\r\n",VAR_PATCHES_BASE-top_addr);
 	if(top_addr - LO_RESERVE < patchSize)
@@ -317,7 +317,7 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 		if (((op & 0xF8000000) == 0x80000000) || ( (op & 0xF8000000 ) == 0x90000000 ) || ( (op & 0xF8000000 ) == 0xA0000000 ) )
 		{
 			u32 src = (op >> 16) & 0x1F;
-			u32 dstR = (op >> 21) & 0x1F;
+			//u32 dstR = (op >> 21) & 0x1F;
 			u32 val = op & 0xFFFF;
 
 			if( regs[src][REG_0xCC00] && ((val & 0xFF00) == 0x6000)) // case with 0x60XY(rZ) (di)
@@ -403,7 +403,7 @@ u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType) {
 u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 	void *addr_start = addr;
 	void *addr_end = addr+length;
-	int patched = 0, i = 0;
+	int patched = 0;
 	FuncPattern DSPHandler = {0x420,103,23,34,32, 9, 0, 0, "__DSPHandler", 0};
 	while(addr_start<addr_end) {
 		// Patch the memcpy call in OSExceptionInit to copy our code to 0x80000500 instead of anything else.

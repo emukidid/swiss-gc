@@ -108,5 +108,7 @@ extern int (*deviceHandler_dest_setupFile)(file_handle*, file_handle*);
 /* Shutdown the device */
 extern int (*deviceHandler_dest_deinit)();
 
+extern void print_frag_list(int hasDisc2);
+
 #endif
 

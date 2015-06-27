@@ -524,7 +524,7 @@ unsigned int load_app(int multiDol)
 	if((curDevice == SD_CARD)
 		||(curDevice == IDEEXI)
 		||(curDevice == USBGECKO) 
-		|| ((curDevice == WKF) && (wkfFragSetupReq || !swissSettings.muteAudioStreaming))) {
+		/*|| ((curDevice == WKF) && (wkfFragSetupReq || !swissSettings.muteAudioStreaming))*/) {
 		u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 		if(READ_PATCHED_ALL != ret)	{
 			DrawFrameStart();
@@ -626,7 +626,7 @@ unsigned int load_app(int multiDol)
 	print_gecko("Audio Streaming is %s\r\n",*(volatile unsigned int*)VAR_AS_ENABLED?"Enabled":"Disabled");
 
 	// Set WKF base offset if not using the frag or audio streaming patch
-	if(curDevice == WKF && !wkfFragSetupReq && swissSettings.muteAudioStreaming) {
+	if(curDevice == WKF /*&& !wkfFragSetupReq && swissSettings.muteAudioStreaming*/) {
 		wkfWriteOffset(*(volatile unsigned int*)VAR_DISC_1_LBA);
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
@@ -889,7 +889,6 @@ void manage_file() {
 void load_file()
 {
 	char *fileName = &curFile.name[0];
-	int isPrePatched = 0;
 		
 	// If it's not a DVD Disc, or it's a DVD disc with some file structure, browse by file type
 	if((curDevice != DVD_DISC) || (curDevice == DVD_DISC && dvdDiscTypeInt==ISO9660_DISC)) {
