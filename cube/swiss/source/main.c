@@ -451,7 +451,8 @@ int main ()
 		}
 		print_gecko("Arena Size: %iKb\r\n",(SYS_GetArena1Hi()-SYS_GetArena1Lo())/1024);
 		print_gecko("DVD Drive Present? %s\r\n",swissSettings.hasDVDDrive?"Yes":"No");
-		print_gecko("GIT Revision: %s\r\n", GITREVISION);
+		print_gecko("GIT Commit: %s\r\n", GITREVISION);
+		print_gecko("GIT Revision: %s\r\n", GITVERSION);
 	}
 	
 	// Are we working with a Wiikey Fusion?

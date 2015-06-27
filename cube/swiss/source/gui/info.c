@@ -152,7 +152,7 @@ void info_draw_page(int page_num) {
 		WriteFont(30, 65, "Credits (3/3):");
 		WriteFontStyled(640/2, 115, "Swiss ver 0.4", 1.0f, true, defaultColor);
 		WriteFontStyled(640/2, 140, "by emu_kidid 2015", 0.75f, true, defaultColor);
-		sprintf(txtbuffer, "GIT Revision: %s", GITREVISION);
+		sprintf(txtbuffer, "Commit %s Revision %s", GITREVISION, GITVERSION);
 		WriteFontStyled(640/2, 165, txtbuffer, 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 210, "Thanks to", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 228, "Testers & libOGC/dkPPC authors", 0.75f, true, defaultColor);

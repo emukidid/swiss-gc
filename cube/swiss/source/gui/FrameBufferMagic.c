@@ -344,12 +344,12 @@ void DrawTexObj(GXTexObj *texObj, int x, int y, int width, int height, int depth
 
 void _DrawBackdrop() 
 {
-	char ver[16];
+	char ver[32];
 	memset(ver,0,16);
 	DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	WriteFontStyled(40,30, "Swiss v0.4", 1.5f, false, defaultColor);
-	sprintf(ver, "Rev: %s", GITREVISION);
-	WriteFontStyled(250,60, ver, 0.55f, false, defaultColor);
+	WriteFontStyled(40,27, "Swiss v0.4", 1.5f, false, defaultColor);
+	sprintf(ver, "commit: %s rev: %s", GITREVISION, GITVERSION);
+	WriteFontStyled(210,60, ver, 0.55f, false, defaultColor);
 }
 
 // Call this when starting a screen
