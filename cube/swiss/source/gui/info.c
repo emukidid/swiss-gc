@@ -156,10 +156,10 @@ void info_draw_page(int page_num) {
 		WriteFontStyled(640/2, 165, txtbuffer, 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 210, "Thanks to", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 228, "Testers & libOGC/dkPPC authors", 0.75f, true, defaultColor);
-		WriteFontStyled(640/2, 246, "sepp256 for the wonderful GX conversion", 0.75f, true, defaultColor);
+		WriteFontStyled(640/2, 246, "sepp256 for GX / FIX94 for Audio Streaming", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 264, "Extrems for video patches / Megalomaniac for builds", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 300, "Web/Support http://www.gc-forever.com/", 0.75f, true, defaultColor);
-		WriteFontStyled(640/2, 318, "Source at http://code.google.com/p/swiss-gc/", 0.75f, true, defaultColor);
+		WriteFontStyled(640/2, 318, "Source at https://github.com/emukidid/swiss-gc", 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 354, "Visit us at #gc-forever on EFNet", 0.75f, true, defaultColor);
 	}
 	if(page_num != 2) {
