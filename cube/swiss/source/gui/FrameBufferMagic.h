@@ -76,5 +76,6 @@ void DrawTransparentBox(int x1, int y1, int x2, int y2);
 void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode, u32 color);
 void DrawMenuButtons(int selection);
 int DrawYesNoDialog(char *message);
+void DrawVertScrollBar(int x, int y, int width, int height, float scrollPercent, int scrollHeight);
 
 #endif

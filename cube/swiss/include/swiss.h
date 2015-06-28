@@ -48,7 +48,7 @@ extern char *getVideoString();
 void print_gecko(const char* fmt, ...);
 extern void doBackdrop();
 extern char *getRelativeName(char *str);
-extern void textFileBrowser(file_handle** directory, int num_files);
+extern void renderFileBrowser(file_handle** directory, int num_files);
 
 extern void boot_dol();
 extern void manage_file();

@@ -375,7 +375,7 @@ void main_loop()
 		if(deviceHandler_initial && ((btns & PAD_BUTTON_B)||(curMenuLocation==ON_FILLIST)))	{
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_B){ VIDEO_WaitVSync (); }
 			curMenuLocation=ON_FILLIST;
-			textFileBrowser(&allFiles, files);
+			renderFileBrowser(&allFiles, files);
 		}
 		else if(btns & PAD_BUTTON_A) {
 			//handle menu event

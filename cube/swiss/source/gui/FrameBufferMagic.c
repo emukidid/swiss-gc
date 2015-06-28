@@ -576,3 +576,24 @@ int DrawYesNoDialog(char *message) {
 	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	return sel;
 } 
+
+void DrawVertScrollBar(int x, int y, int width, int height, float scrollPercent, int scrollHeight) {
+	int x1 = x;
+	int x2 = x+width;
+	int y1 = y;
+	int y2 = y+height;
+	int scrollStartY = y+3 + (int)(height*scrollPercent);
+	scrollHeight = scrollHeight < 10 ? 10:scrollHeight;
+
+	if(scrollStartY + scrollHeight +3 > y2)
+		scrollStartY = y2-scrollHeight-3;
+	
+	GXColor fillColor = (GXColor) {46,57,104,GUI_MSGBOX_ALPHA}; 	//bluish
+  	GXColor noColor = (GXColor) {0,0,0,0}; //blank
+	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
+	
+	DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, noColor, borderColor);
+	
+	DrawSimpleBox( x1, scrollStartY,
+			width, scrollHeight, 0, fillColor, borderColor); 
+}

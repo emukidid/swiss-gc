@@ -96,7 +96,7 @@ void populate_meta(file_handle *f) {
 						}
 						DCFlushRange(f->meta->banner,BannerSize);
 						GX_InitTexObj(&f->meta->bannerTexObj,f->meta->banner,96,32,GX_TF_RGB5A3,GX_CLAMP,GX_CLAMP,GX_FALSE);
-						print_gecko("Meta Gathering complete\r\n\r\n");
+						//print_gecko("Meta Gathering complete\r\n\r\n");
 						// TODO region regionTextureId
 						// TODO GCM file type fileTypeTexId
 					}

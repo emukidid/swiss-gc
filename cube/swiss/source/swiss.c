@@ -285,6 +285,9 @@ void drawFiles(file_handle** directory, int num_files) {
 	int max = MIN(num_files, MAX(curSelection+FILES_PER_PAGE/2,FILES_PER_PAGE));
 	doBackdrop();
 	drawCurrentDevice();
+	int scrollBarHeight = 90+(FILES_PER_PAGE*20)+70;
+	int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
+	DrawVertScrollBar(vmode->fbWidth-25, 90, 16, scrollBarHeight, (float)((float)curSelection/(float)(num_files-1)),scrollBarTabHeight);
 	for(j = 0; i<max; ++i,++j) {
 		populate_meta(&((*directory)[i]));
 		DrawFileBrowserButton(150,90+(j*40), vmode->fbWidth-30, 90+(j*40)+40, getRelativeName((*directory)[i].name),&((*directory)[i]), (i == curSelection) ? B_SELECTED:B_NOSELECT,-1);
@@ -292,8 +295,7 @@ void drawFiles(file_handle** directory, int num_files) {
 	DrawFrameFinish();
 }
 
-// textFileBrowser lives on :)
-void textFileBrowser(file_handle** directory, int num_files)
+void renderFileBrowser(file_handle** directory, int num_files)
 {
 	memset(txtbuffer,0,sizeof(txtbuffer));
 	if(num_files<=0) return;
