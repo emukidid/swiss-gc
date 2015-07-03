@@ -184,6 +184,9 @@ void* Initialise (void)
 		DrawFrameFinish();
 		dvd_reset();	// low-level, basic
 		dvd_read_id();
+		if(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B)) {
+			dvd_set_streaming(*(char*)0x80000008);
+		}
 		drive_version(&driveVersion[0]);
 		swissSettings.hasDVDDrive = *(u32*)&driveVersion[0] ? 1 : 0;
 		if(!swissSettings.hasDVDDrive) {
