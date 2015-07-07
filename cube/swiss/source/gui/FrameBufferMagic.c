@@ -21,45 +21,6 @@
 #include "ata.h"
 #include "btns.h"
 
-#include "backdrop_tpl.h"
-#include "backdrop.h"
-#include "gcdvdsmall_tpl.h"
-#include "gcdvdsmall.h"
-#include "sdsmall_tpl.h"
-#include "sdsmall.h"
-#include "hdd_tpl.h"
-#include "hdd.h"
-#include "qoob_tpl.h"
-#include "qoob.h"
-#include "wodeimg_tpl.h"
-#include "wodeimg.h"
-#include "wiikeyimg_tpl.h"
-#include "wiikeyimg.h"
-#include "usbgeckoimg_tpl.h"
-#include "usbgeckoimg.h"
-#include "memcardimg_tpl.h"
-#include "memcardimg.h"
-#include "sambaimg_tpl.h"
-#include "sambaimg.h"
-#include "btnnohilight_tpl.h"
-#include "btnnohilight.h"
-#include "btnhilight_tpl.h"
-#include "btnhilight.h"
-#include "btndevice_tpl.h"
-#include "btndevice.h"
-#include "btnsettings_tpl.h"
-#include "btnsettings.h"
-#include "btninfo_tpl.h"
-#include "btninfo.h"
-#include "btnrefresh_tpl.h"
-#include "btnrefresh.h"
-#include "btnexit_tpl.h"
-#include "btnexit.h"
-#include "boxinner_tpl.h"
-#include "boxinner.h"
-#include "boxouter_tpl.h"
-#include "boxouter.h"
-
 #define GUI_MSGBOX_ALPHA 200
 
 TPLFile backdropTPL;
@@ -100,6 +61,12 @@ TPLFile boxinnerTPL;
 GXTexObj boxinnerTexObj;
 TPLFile boxouterTPL;
 GXTexObj boxouterTexObj;
+TPLFile ntscjTPL;
+GXTexObj ntscjTexObj;
+TPLFile ntscuTPL;
+GXTexObj ntscuTexObj;
+TPLFile palTPL;
+GXTexObj palTexObj;
 
 void init_textures() 
 {
@@ -143,6 +110,12 @@ void init_textures()
 	TPL_OpenTPLFromMemory(&boxouterTPL, (void *)boxouter_tpl, boxouter_tpl_size);
 	TPL_GetTexture(&boxouterTPL,boxouter,&boxouterTexObj);
 	GX_InitTexObjWrapMode(&boxouterTexObj, GX_CLAMP, GX_CLAMP);
+	TPL_OpenTPLFromMemory(&ntscjTPL, (void *)ntscj_tpl, ntscj_tpl_size);
+	TPL_GetTexture(&ntscjTPL,ntscjimg,&ntscjTexObj);
+	TPL_OpenTPLFromMemory(&ntscuTPL, (void *)ntscu_tpl, ntscu_tpl_size);
+	TPL_GetTexture(&ntscuTPL,ntscuimg,&ntscuTexObj);
+	TPL_OpenTPLFromMemory(&palTPL, (void *)pal_tpl, pal_tpl_size);
+	TPL_GetTexture(&palTPL,palimg,&palTexObj);
 }
 
 void drawInit()
@@ -295,6 +268,15 @@ void DrawImage(int textureId, int x, int y, int width, int height, int depth, fl
 		break;
 	case TEX_BTNEXIT:
 		GX_LoadTexObj(&btnexitTexObj, GX_TEXMAP0);
+		break;
+	case TEX_NTSCJ:
+		GX_LoadTexObj(&ntscjTexObj, GX_TEXMAP0);
+		break;
+	case TEX_NTSCU:
+		GX_LoadTexObj(&ntscuTexObj, GX_TEXMAP0);
+		break;
+	case TEX_PAL:
+		GX_LoadTexObj(&palTexObj, GX_TEXMAP0);
 		break;
 	}	
 
@@ -454,13 +436,12 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
 void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode, u32 color) 
 {
 	char file_name[1024];
-	int borderSize;
+	int borderSize = 4;
 	
 	color = (color == -1) ? BUTTON_COLOUR_INNER : color; //never used
 	memset(file_name, 0, 1024);
 	strcpy(&file_name[0], message);
 	
-	borderSize = (mode==B_SELECTED) ? 6 : 4;
 	// Hide extension when rendering ISO/GCM files
 	if(file->fileAttrib == IS_FILE) {
 		if(endsWith(file_name,".gcm") || endsWith(file_name,".GCM") 
@@ -471,7 +452,7 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 			}
 		}
 	}
-	float scale = GetTextScaleToFitInWidth(file_name, (x2-x1-96)-(borderSize*2));
+	float scale = GetTextScaleToFitInWidth(file_name, (x2-x1-96-35)-(borderSize*2));
 
 	GXColor selectColor = (GXColor) {46,57,104,GUI_MSGBOX_ALPHA}; 	//bluish
 	GXColor noColor 	= (GXColor) {0,0,0,0}; 						//black
@@ -488,6 +469,9 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 	if(file->meta && file->meta->banner) {
 		DrawTexObj(&file->meta->bannerTexObj, x1+7, y1+4, 96, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	}
+	if(file->meta && file->meta->regionTexId != -1 && file->meta->regionTexId != 0) {
+		DrawImage(file->meta->regionTexId, x2 - 37, y1+borderSize+2, 30,20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	}	
 	WriteFontStyled(x1 + borderSize+5+96, y1+borderSize, file_name, scale, false, defaultColor);
 	
 	// Print specific stats
@@ -504,7 +488,7 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 		else {
 			sprintf(txtbuffer,"%.2f %s",file->size > (1024*1024) ? (float)file->size/(1024*1024):(float)file->size/1024,file->size > (1024*1024) ? "MB":"KB");
 		}
-		WriteFontStyled(x2 - ((borderSize+3) + (GetTextSizeInPixels(txtbuffer)*0.5)), y1+borderSize+20, txtbuffer, 0.5f, false, defaultColor);
+		WriteFontStyled(x2 - ((borderSize+3) + (GetTextSizeInPixels(txtbuffer)*0.45)), y1+borderSize+24, txtbuffer, 0.45f, false, defaultColor);
 	}
 }
 

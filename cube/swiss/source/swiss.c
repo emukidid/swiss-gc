@@ -1113,6 +1113,9 @@ void draw_game_info() {
 		if(curFile.meta) {
 			if(curFile.meta->banner)
 				DrawTexObj(&curFile.meta->bannerTexObj, 215, 240, 192, 64, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+			if(curFile.meta->regionTexId != -1 && curFile.meta->regionTexId != 0)
+				DrawImage(curFile.meta->regionTexId, 450, 262, 30,20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+
 			char * tok = strtok (&curFile.meta->description[0],"\n");
 			int line = 0;
 			while (tok != NULL)	{

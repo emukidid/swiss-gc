@@ -18,10 +18,7 @@
 #include "dvd.h"
 #include "swiss.h"
 #include "deviceHandler.h"
-#include "mp3img_tpl.h"
-#include "dolimg_tpl.h"
-#include "dirimg_tpl.h"
-#include "fileimg_tpl.h"
+#include "FrameBufferMagic.h"
 
 
 // Banner is 96 cols * 32 lines in RGB5A3 fmt
@@ -97,7 +94,16 @@ void populate_meta(file_handle *f) {
 						DCFlushRange(f->meta->banner,BannerSize);
 						GX_InitTexObj(&f->meta->bannerTexObj,f->meta->banner,96,32,GX_TF_RGB5A3,GX_CLAMP,GX_CLAMP,GX_FALSE);
 						//print_gecko("Meta Gathering complete\r\n\r\n");
-						// TODO region regionTextureId
+						// Assign GCM region texture
+						if(header->CountryCode == 'E')
+							f->meta->regionTexId = TEX_NTSCU;
+						else if(header->CountryCode == 'J')
+							f->meta->regionTexId = TEX_NTSCJ;
+						else if(header->CountryCode == 'P')
+							f->meta->regionTexId = TEX_PAL;
+						else if(header->CountryCode == 'E')
+							f->meta->regionTexId = -1;
+							
 						// TODO GCM file type fileTypeTexId
 					}
 					if(header) free(header);
