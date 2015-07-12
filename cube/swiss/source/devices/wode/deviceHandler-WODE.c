@@ -72,6 +72,7 @@ int deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, unsigned i
 			if(tmp.iso_type==1) { //add gamecube only
 				u32 wode_iso_info = ((((i&0xFF)<<24)) | (j&0xFFFFFF));
 				*dir = !num_entries ? malloc( sizeof(file_handle) ) : realloc( *dir, num_entries * sizeof(file_handle) );
+				memset(&(*dir)[num_entries], 0, sizeof(file_handle));
 				sprintf((*dir)[num_entries].name, "%s.gcm",&tmp.name[0]);
 				(*dir)[num_entries].fileBase = wode_iso_info;  //we use offset to store a few things
 				(*dir)[num_entries].fileAttrib = IS_FILE;
