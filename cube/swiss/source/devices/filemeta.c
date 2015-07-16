@@ -43,6 +43,12 @@ file_meta* create_basic_meta(const u8* img, const u32 img_size) {
 	return _meta;
 }
 
+void meta_free(void* ptr) {
+	if(meta_cache && ptr) {
+		__lwp_heap_free(meta_cache, ptr);
+	}
+}
+
 void* meta_alloc(unsigned int size){
 	if(!meta_cache){
 		meta_cache = memalign(32,sizeof(heap_cntrl));
@@ -56,7 +62,7 @@ void* meta_alloc(unsigned int size){
 		for (i = 0; i < files; i++) {
 			if(!(i >= current_view_start && i <= current_view_end)) {
 				if(allFiles[i].meta) {
-					__lwp_heap_free(meta_cache, allFiles[i].meta);
+					meta_free(allFiles[i].meta);
 					allFiles[i].meta = NULL;
 					break;
 				}
