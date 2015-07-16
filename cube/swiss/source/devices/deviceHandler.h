@@ -8,6 +8,7 @@
 
 #include <gccore.h>
 #include <stdio.h>
+#include "wode/WodeInterface.h"
 
 typedef struct {
 	int fileTypeTexId;
@@ -18,7 +19,7 @@ typedef struct {
 } file_meta;
 
 typedef struct {
-	char name[1024]; 		// File or Folder, absolute path goes here
+	char name[768]; 		// File or Folder, absolute path goes here
 	uint64_t fileBase;   	// Raw sector on device
 	unsigned int offset;    // Offset in the file
 	unsigned int size;      // size of the file
@@ -26,6 +27,7 @@ typedef struct {
 	int status;            	// is the device ok
 	FILE *fp;				// file pointer
 	file_meta *meta;
+	u8 other[128];			// Store anything else we want here
 } file_handle;
 
 typedef struct {

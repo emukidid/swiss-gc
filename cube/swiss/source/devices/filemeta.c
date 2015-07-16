@@ -14,16 +14,20 @@
 #include <malloc.h>
 #include <gcm.h>
 #include <main.h>
+#include <ogc/lwp_heap.h>
 #include "banner.h"
 #include "dvd.h"
 #include "swiss.h"
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
 
-
 // Banner is 96 cols * 32 lines in RGB5A3 fmt
 #define BannerSize (96*32*2)
 
+#define NUM_META_MAX (32)
+#define META_CACHE_SIZE (sizeof(file_meta) * NUM_META_MAX)
+
+static heap_cntrl* meta_cache = NULL;
 
 file_meta* create_basic_meta(const u8* img, const u32 img_size) {
 	file_meta* _meta = (file_meta*)memalign(32,sizeof(file_meta));
@@ -37,6 +41,31 @@ file_meta* create_basic_meta(const u8* img, const u32 img_size) {
 	TPL_GetTexture(tplFile,0,&_meta->bannerTexObj);
 	free(tplFile);
 	return _meta;
+}
+
+void* meta_alloc(unsigned int size){
+	if(!meta_cache){
+		meta_cache = memalign(32,sizeof(heap_cntrl));
+		__lwp_heap_init(meta_cache, memalign(32,META_CACHE_SIZE), META_CACHE_SIZE, 32);
+	}
+
+	void* ptr = __lwp_heap_allocate(meta_cache, size);
+	// While there's no room to allocate, call release
+	while(!ptr) {
+		int i = 0;
+		for (i = 0; i < files; i++) {
+			if(!(i >= current_view_start && i <= current_view_end)) {
+				if(allFiles[i].meta) {
+					__lwp_heap_free(meta_cache, allFiles[i].meta);
+					allFiles[i].meta = NULL;
+					break;
+				}
+			}
+		}
+		ptr = __lwp_heap_allocate(meta_cache, size);
+	}
+	
+	return ptr;
 }
 
 void populate_meta(file_handle *f) {
@@ -53,10 +82,22 @@ void populate_meta(file_handle *f) {
 				|| endsWith(f->name,".ISO") || endsWith(f->name,".GCM")) {
 				
 				if(curDevice == WODE) {
-				
+					f->meta = (file_meta*)meta_alloc(sizeof(file_meta));
+					memset(f->meta, 0, sizeof(file_meta));
+					// Assign GCM region texture
+					ISOInfo_t* isoInfo = (ISOInfo_t*)&f->other;
+					char region = wodeRegionToChar(isoInfo->iso_region);
+					if(region == 'E')
+						f->meta->regionTexId = TEX_NTSCU;
+					else if(region == 'J')
+						f->meta->regionTexId = TEX_NTSCJ;
+					else if(region == 'P')
+						f->meta->regionTexId = TEX_PAL;
+					else if(region == 'E')
+						f->meta->regionTexId = TEX_PAL;
 				}
 				else {
-					f->meta = (file_meta*)memalign(32,sizeof(file_meta));
+					f->meta = (file_meta*)meta_alloc(sizeof(file_meta));
 					memset(f->meta, 0, sizeof(file_meta));
 					DiskHeader *header = memalign(32, sizeof(DiskHeader));
 					deviceHandler_seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
@@ -101,8 +142,8 @@ void populate_meta(file_handle *f) {
 							f->meta->regionTexId = TEX_NTSCJ;
 						else if(header->CountryCode == 'P')
 							f->meta->regionTexId = TEX_PAL;
-						else if(header->CountryCode == 'E')
-							f->meta->regionTexId = -1;
+						else if(header->CountryCode == 'U')
+							f->meta->regionTexId = TEX_PAL;
 							
 						// TODO GCM file type fileTypeTexId
 					}
