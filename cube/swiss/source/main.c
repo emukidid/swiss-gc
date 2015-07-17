@@ -282,7 +282,7 @@ void free_files() {
 					allFiles[i].meta->banner = NULL;
 				}
 				memset(allFiles[i].meta, 0, sizeof(file_meta));
-				free(allFiles[i].meta);
+				meta_free(allFiles[i].meta);
 				allFiles[i].meta = NULL;
 			}
 		}

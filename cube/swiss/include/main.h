@@ -151,6 +151,9 @@ enum bootDevices
 #define MULTIGAME_TABLE_OFFSET 64
 
 /* Externs */
+extern file_handle* allFiles;
+extern int files;
+
 extern void GCARSStartGame(u32* codelist);
 extern u32 *getCodeBasePtr();
 extern u32 getCodeBaseSize();

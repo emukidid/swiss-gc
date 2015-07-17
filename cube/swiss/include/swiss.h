@@ -16,6 +16,8 @@
 #include "deviceHandler.h"
 
 #define FILES_PER_PAGE 8
+extern int current_view_start;
+extern int current_view_end;
 extern char* _menu_array[];
 extern char *videoStr;
 extern file_handle curFile;

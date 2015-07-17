@@ -51,8 +51,8 @@ int SDHCCard = 0; //0 == SDHC, 1 == normal SD
 int curDevice = 0;  //SD_CARD or DVD_DISC or IDEEXI or WODE
 int curCopyDevice = 0;  //SD_CARD or DVD_DISC or IDEEXI or WODE
 char *videoStr = NULL;
-extern file_handle* allFiles;
-extern int files;
+int current_view_start = 0;
+int current_view_end = 0;
 
 /* The default boot up MEM1 lowmem values (from ipl when booting a game) */
 static const u32 GC_DefaultConfig[56] =
@@ -281,16 +281,19 @@ void drawCurrentDevice() {
 // Draws all the files in the current dir.
 void drawFiles(file_handle** directory, int num_files) {
 	int j = 0;
-	int i = MIN(MAX(0,curSelection-FILES_PER_PAGE/2),MAX(0,num_files-FILES_PER_PAGE));
-	int max = MIN(num_files, MAX(curSelection+FILES_PER_PAGE/2,FILES_PER_PAGE));
+	current_view_start = MIN(MAX(0,curSelection-FILES_PER_PAGE/2),MAX(0,num_files-FILES_PER_PAGE));
+	current_view_end = MIN(num_files, MAX(curSelection+FILES_PER_PAGE/2,FILES_PER_PAGE));
 	doBackdrop();
 	drawCurrentDevice();
 	int scrollBarHeight = 90+(FILES_PER_PAGE*20)+70;
 	int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
 	DrawVertScrollBar(vmode->fbWidth-25, 90, 16, scrollBarHeight, (float)((float)curSelection/(float)(num_files-1)),scrollBarTabHeight);
-	for(j = 0; i<max; ++i,++j) {
-		populate_meta(&((*directory)[i]));
-		DrawFileBrowserButton(150,90+(j*40), vmode->fbWidth-30, 90+(j*40)+40, getRelativeName((*directory)[i].name),&((*directory)[i]), (i == curSelection) ? B_SELECTED:B_NOSELECT,-1);
+	for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
+		populate_meta(&((*directory)[current_view_start]));
+		DrawFileBrowserButton(150, 90+(j*40), vmode->fbWidth-30, 90+(j*40)+40, 
+								getRelativeName((*directory)[current_view_start].name),
+								&((*directory)[current_view_start]), 
+								(current_view_start == curSelection) ? B_SELECTED:B_NOSELECT,-1);
 	}
 	DrawFrameFinish();
 }
@@ -1133,7 +1136,8 @@ void draw_game_info() {
 		WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
 	}
 	else if(curDevice == WODE) {
-		sprintf(txtbuffer,"Partition: %i, ISO: %i", (int)(curFile.fileBase>>24)&0xFF,(int)(curFile.fileBase&0xFFFFFF));
+		ISOInfo_t* isoInfo = (ISOInfo_t*)&curFile.other;
+		sprintf(txtbuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
 		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
 	}
 	else if(curDevice == MEMCARD) {

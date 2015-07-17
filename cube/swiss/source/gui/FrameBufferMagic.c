@@ -477,7 +477,8 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 	// Print specific stats
 	if(file->fileAttrib==IS_FILE) {
 		if(curDevice == WODE) {
-			sprintf(txtbuffer,"Partition: %i, ISO: %i", (int)(file->fileBase>>24)&0xFF,(int)(file->fileBase&0xFFFFFF));
+			ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
+			sprintf(txtbuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
 		}
 		else if(curDevice == MEMCARD) {
 			sprintf(txtbuffer,"%.2fKB (%i blocks)", (float)file->size/1024, file->size/8192);

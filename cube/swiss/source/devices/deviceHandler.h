@@ -8,6 +8,7 @@
 
 #include <gccore.h>
 #include <stdio.h>
+#include "wode/WodeInterface.h"
 
 typedef struct {
 	int fileTypeTexId;
@@ -26,6 +27,7 @@ typedef struct {
 	int status;            	// is the device ok
 	FILE *fp;				// file pointer
 	file_meta *meta;
+	u8 other[128];			// Store anything else we want here
 } file_handle;
 
 typedef struct {

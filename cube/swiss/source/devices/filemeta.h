@@ -11,6 +11,6 @@
 #include "deviceHandler.h"
 
 void populate_meta(file_handle *f);
-
+void meta_free(void* ptr);
 #endif
 

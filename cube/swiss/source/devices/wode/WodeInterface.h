@@ -48,8 +48,10 @@ typedef struct
 typedef struct
 {
 	char name[64];
-	unsigned long  iso_type;
-	unsigned long  iso_region;
+	unsigned long iso_type;
+	unsigned long iso_region;
+	int iso_partition;
+	int iso_number;
 }ISOInfo_t;
 
 /* Favorite States */
@@ -100,5 +102,5 @@ void SetISO(unsigned long Partition, unsigned long Iso);
 unsigned long GotoFlatMode( void );
 
 //unsigned long GetJoystick( void );
-
+char wodeRegionToChar(int region);
 #endif
