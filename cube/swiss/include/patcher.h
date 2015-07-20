@@ -75,7 +75,8 @@ extern u32 VIConfigurePanHook_length;
 
 #define SWISS_MAGIC 0x53574953 /* "SWIS" */
 
-#define LO_RESERVE 0x80001000
+#define LO_RESERVE 		0x80001000
+#define LO_RESERVE_DVD 	0x80001800
 
 /* Function jump locations for the SD/IDE/USBGecko patch */
 #define PATCHED_MEMCPY			(LO_RESERVE)
@@ -86,8 +87,8 @@ extern u32 VIConfigurePanHook_length;
 #define PATCHED_MEMCPY_DBG		(LO_RESERVE | 0x14)
 
 /* Function jump locations for the DVD patch */
-#define ENABLE_BACKUP_DISC 		(LO_RESERVE | 0x00)
-#define READ_REAL_OR_PATCHED	(LO_RESERVE | 0x04)
+#define ENABLE_BACKUP_DISC 		(LO_RESERVE_DVD | 0x00)
+#define READ_REAL_OR_PATCHED	(LO_RESERVE_DVD | 0x04)
 
 #define READ_PATCHED_ALL 		(0x111)
 

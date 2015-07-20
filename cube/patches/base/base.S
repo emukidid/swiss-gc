@@ -146,8 +146,8 @@ patched_memcpy_dbg:
 	cmpwi	r3, 0x0500
 	beq		customhandlerdbg
 	cmpwi	r3, 0xF00
-	bgt		redirecthandlerdbg
 	addis	r3, r3, 0x8000
+	bgt		redirecthandlerdbg
 	blr
 customhandlerdbg:
 	lis		r4, ext_handler_custom@h
@@ -156,7 +156,6 @@ customhandlerdbg:
 	blr
 redirecthandlerdbg:
 	li		r3, 0xF00
-	addis	r3, r3, 0x8000
 	blr
 
 .globl ext_handler_custom

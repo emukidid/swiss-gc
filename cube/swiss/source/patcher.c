@@ -49,10 +49,12 @@ u32 _osdispatch_part_a[2] = {
 
 int install_code()
 {
-	DCFlushRange((void*)LO_RESERVE,0x80003100-LO_RESERVE);
-	ICInvalidateRange((void*)LO_RESERVE,0x80003100-LO_RESERVE);
-	
+	void *location = (void*)LO_RESERVE;
 	u8 *patch = NULL; u32 patchSize = 0;
+	
+	DCFlushRange(location,0x80003100-LO_RESERVE);
+	ICInvalidateRange(location,0x80003100-LO_RESERVE);
+	
 	
 	// IDE-EXI
   	if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
@@ -67,6 +69,7 @@ int install_code()
 	// DVD 2 disc code
 	else if((deviceHandler_initial == &initial_DVD)) {
 		patch = &dvd_bin[0]; patchSize = dvd_bin_size;
+		location = (void*)LO_RESERVE_DVD;
 		print_gecko("Installing Patch for DVD\r\n");
 	}
 	// USB Gecko
@@ -83,7 +86,7 @@ int install_code()
 	print_gecko("Space taken by vars/video patches: %i\r\n",VAR_PATCHES_BASE-top_addr);
 	if(top_addr - LO_RESERVE < patchSize)
 		return 0;
-	memcpy((void*)LO_RESERVE,patch,patchSize);
+	memcpy(location,patch,patchSize);
 	return 1;
 }
 
@@ -1053,32 +1056,27 @@ static const u32 _dvdlowreset_org[12] = {
 	0x83C43024,0x57C007B8,0x60000001,0x941F0024
 };
 
-static const u32 _dvdlowreset_new[8] = {
-	0x3FE08000,0x63FF0000,0x7FE803A6,0x4E800021,0x4800006C,0x60000000,0x60000000,0x60000000
+static const u32 _dvdlowreset_new[5] = {
+	0x3FE08000,0x63FF0000,0x7FE803A6,0x4E800021,0x4800006C
 };
 	
 int Patch_DVDReset(void *addr,u32 length)
 {
-	/*void *copy_to,*cache_ptr;
 	void *addr_start = addr;
 	void *addr_end = addr+length;
 
 	while(addr_start<addr_end) {
 		if(memcmp(addr_start,_dvdlowreset_org,sizeof(_dvdlowreset_org))==0) {
 			// we found the DVDLowReset
-			copy_to = (addr_start+0x18);
-			cache_ptr = (void*)((u32)addr_start&~0x1f);
-
-			ICInvalidateRange(cache_ptr,sizeof(_dvdlowreset_new)*2);
-			memcpy(copy_to,_dvdlowreset_new,sizeof(_dvdlowreset_new));
+			memcpy((addr_start+0x18),_dvdlowreset_new,sizeof(_dvdlowreset_new));
 			// Adjust the offset of where to jump to
-			u32 *ptr = copy_to;
+			u32 *ptr = (addr_start+0x18);
 			ptr[1] = _dvdlowreset_new[1] | (ENABLE_BACKUP_DISC&0xFFFF);
 			print_gecko("Found:[DVDLowReset] @ 0x%08X\r\n", (u32)ptr);
 			return 1;
 		}
 		addr_start += 4;
-	}*/
+	}
 	return 0;
 }
 
