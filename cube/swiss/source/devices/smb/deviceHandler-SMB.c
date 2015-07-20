@@ -153,13 +153,11 @@ int deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, unsigned in
 				++num_entries;
 				*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 			}
+			memset(&(*dir)[i], 0, sizeof(file_handle));
 			sprintf((*dir)[i].name, "%s/%s", ffile->name, entry->d_name);
 			(*dir)[i].offset = 0;
 			(*dir)[i].size     = fstat.st_size;
 			(*dir)[i].fileAttrib   = (fstat.st_mode & S_IFDIR) ? IS_DIR : IS_FILE;
-			(*dir)[i].fp = 0;
-			(*dir)[i].fileBase = 0;
-			(*dir)[i].meta = 0;
 			++i;
 		}
 	}

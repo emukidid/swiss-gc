@@ -44,9 +44,10 @@ int deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, unsigned i
 	// Set everything up to read
 	int num_entries = 1, i = 1, block = 0;
 	*dir = malloc( num_entries * sizeof(file_handle) );
+	memset(&(*dir)[0], 0, sizeof(file_handle));
 	strcpy((*dir)[0].name,"..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
-	(*dir)[0].meta = 0;
+	
 	u32 usedSpace = 0;
 	
 	for(block = 0; block <0x200000; block+=0x10000) {
@@ -65,12 +66,11 @@ int deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, unsigned i
 					++num_entries;
 					*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 				}
+				memset(&(*dir)[i], 0, sizeof(file_handle));
 				sprintf((*dir)[i].name, "%s/%s", ffile->name, (char*)dolName);
-				(*dir)[i].offset	= 0;
 				(*dir)[i].size		= dolSize;
 				(*dir)[i].fileAttrib = IS_FILE;
 				(*dir)[i].fileBase = block+0x100;
-				(*dir)[i].meta = 0;
 				++i;
 				usedSpace += dolSize;
 			}

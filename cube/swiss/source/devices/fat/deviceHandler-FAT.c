@@ -110,7 +110,7 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, unsigned in
 	memset(*dir,0,sizeof(file_handle) * num_entries);
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 	strcpy((*dir)[0].name, "..");
-	
+
 	// Read each entry of the directory
 	while( (entry = readdir(dp)) != NULL ){
 		if(strlen(entry->d_name) <= 2  && (entry->d_name[0] == '.' || entry->d_name[1] == '.')) {
@@ -126,13 +126,10 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, unsigned in
 				++num_entries;
 				*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 			}
+			memset(&(*dir)[i], 0, sizeof(file_handle));
 			sprintf((*dir)[i].name, "%s/%s", ffile->name, entry->d_name);
-			(*dir)[i].offset = 0;
 			(*dir)[i].size     = fstat.st_size;
 			(*dir)[i].fileAttrib   = (fstat.st_mode & S_IFDIR) ? IS_DIR : IS_FILE;
-			(*dir)[i].fp = 0;
-			(*dir)[i].fileBase = 0;
-			(*dir)[i].meta = 0;
 			++i;
 		}
 	}

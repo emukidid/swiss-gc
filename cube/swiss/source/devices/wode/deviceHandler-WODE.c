@@ -76,7 +76,6 @@ int deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, unsigned i
 				memset(&(*dir)[num_entries], 0, sizeof(file_handle));
 				sprintf((*dir)[num_entries].name, "%s.gcm",&tmp.name[0]);
 				(*dir)[num_entries].fileAttrib = IS_FILE;
-				(*dir)[i].meta = 0;
 				memcpy(&(*dir)[num_entries].other, &tmp, sizeof(ISOInfo_t));
 				num_entries++;
 				print_gecko("Adding WODE entry: %s part:%08X iso:%08X region:%08X\r\n",

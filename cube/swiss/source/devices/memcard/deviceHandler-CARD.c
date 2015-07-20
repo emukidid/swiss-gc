@@ -109,10 +109,11 @@ int deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, unsigned i
 	/* Convert the Memory Card "file" data to fileBrowser_files */
 	*dir = malloc( num_entries * sizeof(file_handle) );
 	// Virtual Entry for entire card.
+	memset(&(*dir)[0], 0, sizeof(file_handle));
 	sprintf((*dir)[0].name,"RAW Image");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 	(*dir)[0].fileBase     = ffile->fileBase;
-	
+
 	int usedSpace = 0;
 	ret = CARD_FindFirst (slot, memcard_dir, true);
 	while (CARD_ERROR_NOFILE != ret) {
@@ -121,15 +122,14 @@ int deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, unsigned i
 			++num_entries;
 			*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 		}
+		memset(&(*dir)[i], 0, sizeof(file_handle));
 		strcpy( (*dir)[i].name, (char*)memcard_dir->filename);
 		(*dir)[i].name[CARD_FILENAMELEN] = '\0';
 		strcat( (*dir)[i].name, ".gci");
 		(*dir)[i].name[CARD_FILENAMELEN+4] = '\0';
 		(*dir)[i].fileAttrib = IS_FILE;
-		(*dir)[i].offset = 0;
 		(*dir)[i].size     = memcard_dir->filelen + sizeof(GCI);
 		(*dir)[i].fileBase     = ffile->fileBase | (memcard_dir->fileno & 0xFFFFFF);
-		(*dir)[i].meta = 0;
 		ret = CARD_FindNext (memcard_dir);
 		++i;
 		usedSpace += memcard_dir->filelen;
