@@ -188,13 +188,6 @@ ext_handler_custom:
 	mtsrr1      r3
 	li          r3, 4
 	lwz         r4, 0x00D4 (r0)
-	rlwinm.     r5, r5, 0, 30, 30
-	bne-        ext_h
-	lis         r5, 0x8008
-	subi        r5, r5, 28720			#hmmm? this should be set per game.
-	mtsrr0      r5
-	rfi
-ext_h:
 	lis			r5, process_read_queue@h
 	ori			r5, r5, process_read_queue@l
 	mtsrr0      r5
