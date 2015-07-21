@@ -15,6 +15,8 @@
 #include <sdcard/card_cmn.h>
 #include "deviceHandler.h"
 
+#define in_range(x, a, b) (((x) >= (a)) && ((x) < (b)))
+
 #define FILES_PER_PAGE 8
 extern int current_view_start;
 extern int current_view_end;

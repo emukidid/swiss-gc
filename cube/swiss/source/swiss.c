@@ -780,18 +780,116 @@ void manage_file() {
 			
 			// Show a directory only browser and get the destination file location
 			select_dest_dir(deviceHandler_dest_initial, destFile);
+			sprintf(destFile->name, "%s/%s",destFile->name,getRelativeName(&curFile.name[0]));
 			destFile->fp = 0;
 			destFile->fileBase = 0;
 			destFile->size = 0;
 			destFile->fileAttrib = IS_FILE;
 			destFile->status = 0;
 			destFile->offset = 0;
+
+			// If the destination file already exists, ask the user what to do
+			u8 nothing[1];
+			if(deviceHandler_dest_readFile(destFile, nothing, 1) >= 0) {
+				DrawFrameStart();
+				DrawEmptyBox(10,150, vmode->fbWidth-10, 350, COLOR_BLACK);
+				WriteFontStyled(640/2, 160, "File exists:", 1.0f, true, defaultColor);
+				float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), vmode->fbWidth-10-10);
+				WriteFontStyled(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor);
+				WriteFontStyled(640/2, 230, "(A) Rename (Z) Overwrite", 1.0f, true, defaultColor);
+				WriteFontStyled(640/2, 300, "Press an option to Continue, or B to return", 1.0f, true, defaultColor);
+				DrawFrameFinish();
+
+				while(PAD_ButtonsHeld(0) & (PAD_BUTTON_A | PAD_TRIGGER_Z)) { VIDEO_WaitVSync (); }
+				while(1) {
+					u32 buttons = PAD_ButtonsHeld(0);
+					if(buttons & PAD_TRIGGER_Z) {
+						if(!strcmp(curFile.name, destFile->name)) {
+							DrawFrameStart();
+							DrawMessageBox(D_INFO, "Can't overwrite a file with itself!");
+							DrawFrameFinish();
+							wait_press_A();
+							return; 
+						}
+						else {
+							deviceHandler_dest_deleteFile(destFile);
+						}
+
+						while(PAD_ButtonsHeld(0) & PAD_TRIGGER_Z){ VIDEO_WaitVSync (); }
+						break;
+					}
+					if(buttons & PAD_BUTTON_A) {
+						int cursor, extension_start = -1, copy_num = 0;
+						char name_backup[1024];
+						for(cursor = 0; destFile->name[cursor]; cursor++) {
+							if(destFile->name[cursor] == '.' && destFile->name[cursor - 1] != '/'
+								&& cursor > 0)
+								extension_start = cursor;
+							if(destFile->name[cursor] == '/')
+								extension_start = -1;
+							name_backup[cursor] = destFile->name[cursor];
+						}
+
+						deviceHandler_dest_closeFile(destFile);
+
+						if(extension_start >= 0) {
+							destFile->name[extension_start] = 0;
+							cursor = extension_start;
+						}
+
+						if(destFile->name[cursor - 3] == '_' && in_range(destFile->name[cursor - 2], '0', '9')
+							    && in_range(destFile->name[cursor - 1], '0', '9')) {
+							copy_num = (int) strtol(destFile->name + cursor - 2, 0, 10);
+						}
+						else {
+							cursor += 3;
+							if((strlen(name_backup) + 4) >= 1024) {
+								DrawFrameStart();
+								DrawMessageBox(D_INFO, "File name too long!");
+								DrawFrameFinish();
+								wait_press_A();
+								return;
+							}
+							destFile->name[cursor - 3] = '_';
+							sprintf(destFile->name + cursor - 2, "%02i", copy_num);
+						}
+
+						if(extension_start >= 0) {
+							strcpy(destFile->name + cursor, name_backup + extension_start);
+						}
+
+						while(deviceHandler_dest_readFile(destFile, nothing, 1) >= 0) {
+							deviceHandler_dest_closeFile(destFile);
+							copy_num++;
+							if(copy_num > 99) {
+								DrawFrameStart();
+								DrawMessageBox(D_INFO, "Too many copies!");
+								DrawFrameFinish();
+								wait_press_A();
+								return;
+							}
+							sprintf(destFile->name + cursor - 2, "%02i", copy_num);
+							if(extension_start >= 0) {
+								strcpy(destFile->name + cursor, name_backup + extension_start);
+							}
+						}
+
+						while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
+						break;
+					}
+					if(buttons & PAD_BUTTON_B) {
+						return;
+					}
+				}
+			}
+
+			// Seek back to 0 after all these reads
+			deviceHandler_dest_seekFile(destFile, 0, DEVICE_HANDLER_SEEK_SET);
 			
 			// Same (fat based) device and user wants to move the file, just rename ;)
 			if(deviceHandler_initial == deviceHandler_dest_initial 
 				&& option == MOVE_OPTION 
 				&& (deviceHandler_initial->name[0] =='s' || deviceHandler_initial->name[0] =='i')) {
-				sprintf(destFile->name, "%s/%s",destFile->name,getRelativeName(&curFile.name[0]));
 				ret = rename(&curFile.name[0], &destFile->name[0]);
 				//go up a folder
 				int len = strlen(&curFile.name[0]);
@@ -806,8 +904,6 @@ void manage_file() {
 				wait_press_A();
 			}
 			else {
-				sprintf(destFile->name, "%s/%s",destFile->name,stripInvalidChars(getRelativeName(&curFile.name[0])));
-				
 				u32 isDestCard = deviceHandler_dest_writeFile == deviceHandler_CARD_writeFile;
 				if(isDestCard && (!endsWith(destFile->name,".gci") || !endsWith(destFile->name,".GCI"))) {
 					// Only .GCI files can go to the memcard
