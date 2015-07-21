@@ -954,6 +954,20 @@ void manage_file() {
 					}
 					curOffset+=amountToCopy;
 				}
+
+				// Handle empty files as a special case
+				if(curFile.size == 0) {
+					ret = deviceHandler_dest_writeFile(destFile, readBuffer, 0);
+					if(ret != 0) {
+						DrawFrameStart();
+						sprintf(txtbuffer, "Failed to Write! (%i %i)\n%s",0,ret,destFile->name);
+						DrawMessageBox(D_FAIL,txtbuffer);
+						DrawFrameFinish();
+						wait_press_A();
+						return;
+					}
+				}
+					
 				if(deviceHandler_dest_initial->name[0] == 'i' || deviceHandler_dest_initial->name[0] == 's') {
 					fclose(destFile->fp);
 				}
