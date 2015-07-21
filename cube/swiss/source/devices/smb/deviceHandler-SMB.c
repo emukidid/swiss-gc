@@ -210,3 +210,7 @@ int deviceHandler_SMB_deinit(file_handle* file) {
 	return 0;
 }
 
+int deviceHandler_SMB_closeFile(file_handle* file) {
+    return 0;
+}
+

@@ -17,6 +17,7 @@ int deviceHandler_WODE_seekFile(file_handle*, unsigned int, unsigned int);
 int deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2);
 int deviceHandler_WODE_init(file_handle* file);
 int deviceHandler_WODE_deinit(file_handle* file);
+int deviceHandler_WODE_closeFile(file_handle* file);
 
 #endif
 

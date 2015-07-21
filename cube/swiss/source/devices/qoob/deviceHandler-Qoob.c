@@ -110,3 +110,7 @@ int deviceHandler_Qoob_deinit(file_handle* file) {
 	return 0;
 }
 
+int deviceHandler_Qoob_closeFile(file_handle* file) {
+    return 0;
+}
+

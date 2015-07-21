@@ -23,6 +23,7 @@ int  deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2);
 int  deviceHandler_FAT_init(file_handle* file);
 int  deviceHandler_FAT_deinit(file_handle* file);
 int  deviceHandler_FAT_deleteFile(file_handle* file);
+int  deviceHandler_FAT_closeFile(file_handle* file);
 
 #endif
 

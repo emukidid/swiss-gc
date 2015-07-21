@@ -1290,6 +1290,7 @@ void select_copy_device()
 			deviceHandler_dest_setupFile=  deviceHandler_FAT_setupFile;
 			deviceHandler_dest_init     =  deviceHandler_FAT_init;
 			deviceHandler_dest_deinit   =  deviceHandler_FAT_deinit;
+			deviceHandler_dest_closeFile=  deviceHandler_FAT_closeFile;
 		break;
 		case DEST_MEMCARD:
 			deviceHandler_dest_initial = !slot ? &initial_CARDA : &initial_CARDB;
@@ -1301,6 +1302,7 @@ void select_copy_device()
 			deviceHandler_dest_setupFile=  deviceHandler_CARD_setupFile;
 			deviceHandler_dest_init     =  deviceHandler_CARD_init;
 			deviceHandler_dest_deinit   =  deviceHandler_CARD_deinit;
+			deviceHandler_dest_closeFile=  deviceHandler_CARD_closeFile;
 		break;
 	}
 }
@@ -1442,6 +1444,7 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_FAT_setupFile;
 			deviceHandler_init     =  deviceHandler_FAT_init;
 			deviceHandler_deinit   =  deviceHandler_FAT_deinit;
+			deviceHandler_closeFile=  deviceHandler_FAT_closeFile;
 			deviceHandler_info 	   =  deviceHandler_FAT_info;
 		break;
 		case DVD_DISC:
@@ -1452,6 +1455,7 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_DVD_setupFile;
 			deviceHandler_init     =  deviceHandler_DVD_init;
 			deviceHandler_deinit   =  deviceHandler_DVD_deinit;
+			deviceHandler_closeFile=  deviceHandler_DVD_closeFile;
 			deviceHandler_info 	   =  deviceHandler_DVD_info;
 			deviceHandler_deleteFile = NULL;
  		break;
@@ -1463,6 +1467,7 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_Qoob_setupFile;
 			deviceHandler_init     =  deviceHandler_Qoob_init;
 			deviceHandler_deinit   =  deviceHandler_Qoob_deinit;
+			deviceHandler_closeFile=  deviceHandler_Qoob_closeFile;
 			deviceHandler_info 	   =  deviceHandler_Qoob_info;
 			deviceHandler_deleteFile = NULL;
  		break;
@@ -1474,6 +1479,7 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_WODE_setupFile;
 			deviceHandler_init     =  deviceHandler_WODE_init;
 			deviceHandler_deinit   =  deviceHandler_WODE_deinit;
+			deviceHandler_closeFile=  deviceHandler_WODE_closeFile;
 			deviceHandler_info 	   =  deviceHandler_WODE_info;
 			deviceHandler_deleteFile = NULL;
  		break;
@@ -1487,6 +1493,7 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_CARD_setupFile;
 			deviceHandler_init     =  deviceHandler_CARD_init;
 			deviceHandler_deinit   =  deviceHandler_CARD_deinit;
+			deviceHandler_closeFile=  deviceHandler_CARD_closeFile;
 			deviceHandler_info 	   =  deviceHandler_CARD_info;
 		break;
 		case WKF:
@@ -1497,6 +1504,7 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_WKF_setupFile;
 			deviceHandler_init     =  deviceHandler_WKF_init;
 			deviceHandler_deinit   =  deviceHandler_WKF_deinit;
+			deviceHandler_closeFile=  deviceHandler_WKF_closeFile;
 			deviceHandler_info 	   =  deviceHandler_WKF_info;
 			deviceHandler_deleteFile = NULL;
 		break;
@@ -1509,6 +1517,7 @@ void select_device()
 			deviceHandler_setupFile=  deviceHandler_USBGecko_setupFile;
 			deviceHandler_init     =  deviceHandler_USBGecko_init;
 			deviceHandler_deinit   =  deviceHandler_USBGecko_deinit;
+			deviceHandler_closeFile=  deviceHandler_USBGecko_closeFile;
 			deviceHandler_info 	   =  deviceHandler_USBGecko_info;
 			deviceHandler_deleteFile = NULL;
 		break;
@@ -1519,6 +1528,7 @@ void select_device()
 			deviceHandler_seekFile =  deviceHandler_SMB_seekFile;
 			deviceHandler_init     =  deviceHandler_SMB_init;
 			deviceHandler_deinit   =  deviceHandler_SMB_deinit;
+			deviceHandler_closeFile=  deviceHandler_SMB_closeFile;
 			deviceHandler_info 	   =  deviceHandler_SMB_info;
 			deviceHandler_deleteFile = NULL;
 		break;

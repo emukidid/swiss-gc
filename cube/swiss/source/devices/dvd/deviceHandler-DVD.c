@@ -486,3 +486,7 @@ int deviceHandler_DVD_deinit(file_handle* file) {
 	return 0;
 }
 
+int deviceHandler_DVD_closeFile(file_handle* file){
+	return 0;
+}
+

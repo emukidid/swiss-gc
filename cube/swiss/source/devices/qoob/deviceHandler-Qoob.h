@@ -18,6 +18,7 @@ int  deviceHandler_Qoob_seekFile(file_handle*, unsigned int, unsigned int);
 int  deviceHandler_Qoob_setupFile(file_handle* file, file_handle* file2);
 int  deviceHandler_Qoob_init(file_handle* file);
 int  deviceHandler_Qoob_deinit(file_handle* file);
+int  deviceHandler_Qoob_closeFile(file_handle* file);
 
 #endif
 

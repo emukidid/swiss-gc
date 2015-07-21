@@ -40,6 +40,7 @@ int deviceHandler_SMB_readFile(file_handle*, void*, unsigned int);
 int deviceHandler_SMB_seekFile(file_handle*, unsigned int, unsigned int);
 int deviceHandler_SMB_init(file_handle* file);
 int deviceHandler_SMB_deinit(file_handle* file);
+int deviceHandler_SMB_closeFile(file_handle* file);
 
 
 #endif

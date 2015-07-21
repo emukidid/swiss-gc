@@ -418,3 +418,12 @@ int deviceHandler_FAT_deleteFile(file_handle* file) {
 	return (remove(file->name) == -1) ? -1:0;
 }
 
+int deviceHandler_FAT_closeFile(file_handle* file) {
+	int ret = 0;
+	if(file->fp) {
+		ret = fclose(file->fp);
+		file->fp = 0;
+	}
+	return ret;
+}
+

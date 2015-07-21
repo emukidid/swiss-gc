@@ -31,6 +31,7 @@ int  (*deviceHandler_writeFile)(file_handle*, void*, unsigned int) = NULL;
 int  (*deviceHandler_deleteFile)(file_handle*) = NULL;
 int  (*deviceHandler_seekFile)(file_handle*, unsigned int, unsigned int) = NULL;
 int  (*deviceHandler_setupFile)(file_handle*, file_handle*) = NULL;
+int  (*deviceHandler_closeFile)(file_handle*) = NULL;
 int  (*deviceHandler_deinit)() = NULL;
 
 // Destination Device
@@ -43,4 +44,5 @@ int  (*deviceHandler_dest_writeFile)(file_handle*, void*, unsigned int) = NULL;
 int  (*deviceHandler_dest_deleteFile)(file_handle*) = NULL;
 int  (*deviceHandler_dest_seekFile)(file_handle*, unsigned int, unsigned int) = NULL;
 int  (*deviceHandler_dest_setupFile)(file_handle*, file_handle*) = NULL;
+int  (*deviceHandler_dest_closeFile)(file_handle*) = NULL;
 int  (*deviceHandler_dest_deinit)() = NULL;

@@ -123,3 +123,7 @@ int deviceHandler_WODE_deinit(file_handle* file) {
 char wodeRegionToChar(int region) {
 	return wode_regions[region];
 }
+
+int deviceHandler_WODE_closeFile(file_handle* file) {
+    return 0;
+}

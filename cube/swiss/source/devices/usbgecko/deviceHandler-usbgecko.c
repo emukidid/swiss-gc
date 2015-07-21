@@ -154,3 +154,7 @@ int deviceHandler_USBGecko_deinit(file_handle* file) {
 int deviceHandler_USBGecko_deleteFile(file_handle* file) {
 	return -1;
 }
+
+int deviceHandler_USBGecko_closeFile(file_handle* file) {
+    return 0;
+}

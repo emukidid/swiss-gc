@@ -40,6 +40,7 @@ int  deviceHandler_CARD_setupFile(file_handle* file, file_handle* file2);
 int  deviceHandler_CARD_init(file_handle* file);
 int  deviceHandler_CARD_deinit(file_handle* file);
 int deviceHandler_CARD_deleteFile(file_handle* file);
+int  deviceHandler_CARD_closeFile(file_handle* file);
 
 int initialize_card(int slot);
 

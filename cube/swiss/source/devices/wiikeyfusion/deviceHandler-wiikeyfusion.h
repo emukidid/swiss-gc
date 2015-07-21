@@ -19,6 +19,7 @@ int deviceHandler_WKF_seekFile(file_handle*, unsigned int, unsigned int);
 int deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2);
 int deviceHandler_WKF_init(file_handle* file);
 int deviceHandler_WKF_deinit(file_handle* file);
+int deviceHandler_WKF_closeFile(file_handle* file);
 
 #endif
 

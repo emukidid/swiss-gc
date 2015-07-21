@@ -364,3 +364,7 @@ int deviceHandler_CARD_deleteFile(file_handle* file) {
 	return file->status;
 }
 
+int deviceHandler_CARD_closeFile(file_handle* file) {
+    return 0;
+}
+

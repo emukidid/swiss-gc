@@ -20,6 +20,7 @@ int		deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2);
 int		deviceHandler_USBGecko_init(file_handle* file);
 int		deviceHandler_USBGecko_deinit(file_handle* file);
 int		deviceHandler_USBGecko_deleteFile(file_handle* file);
+int             deviceHandler_USBGecko_closeFile(file_handle* file);
 
 #endif
 

@@ -225,3 +225,7 @@ int deviceHandler_WKF_deleteFile(file_handle* file) {
 	return -1;
 }
 
+int deviceHandler_WKF_closeFile(file_handle* file) {
+    return 0;
+}
+
