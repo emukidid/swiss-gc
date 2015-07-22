@@ -54,6 +54,8 @@ extern int whichfb;
 #include "wodeimg.h"
 #include "wiikeyimg_tpl.h"
 #include "wiikeyimg.h"
+#include "systemimg_tpl.h"
+#include "systemimg.h"
 #include "usbgeckoimg_tpl.h"
 #include "usbgeckoimg.h"
 #include "memcardimg_tpl.h"
@@ -107,6 +109,7 @@ enum TextureId
 	TEX_BTNEXIT,
 	TEX_MEMCARD,
 	TEX_WIIKEY,
+	TEX_SYSTEM,
 	TEX_USBGECKO,
 	TEX_SAMBA,
 	TEX_NTSCJ,
