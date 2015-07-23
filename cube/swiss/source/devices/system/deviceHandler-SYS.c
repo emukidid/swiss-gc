@@ -8,6 +8,11 @@
 #include "main.h"
 #include "gui/FrameBufferMagic.h"
 
+int read_rom_ipl(unsigned int offset, void* buffer, unsigned int length);
+int read_rom_ipl_clear(unsigned int offset, void* buffer, unsigned int length);
+int read_rom_sram(unsigned int offset, void* buffer, unsigned int length);
+int read_rom_stub(unsigned int offset, void* buffer, unsigned int length);
+
 #define NUM_ROMS 7
 
 const char* rom_names[] =
