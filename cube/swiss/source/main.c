@@ -212,7 +212,7 @@ void load_auto_dol() {
 			if (dol) {
 				fread(dol, 1, size, fp);
 				if (!memmem(dol, size, GITREVISION, sizeof(GITREVISION))) {
-					DOLtoARAM(dol);
+					DOLtoARAM(dol, 0, NULL);
 				}
 			}
 		}

@@ -14,6 +14,7 @@
 #include <network.h>
 #include <asndlib.h>
 #include <ogc/lwp_threads.h>
+#include <gctypes.h>
 
 #include "sidestep.h"
 #include "ssaram.h"
@@ -250,10 +251,11 @@ static void DOLMinMax(DOLHEADER * dol)
 *
 * Pass in a memory pointer to a previously loaded DOL
 ****************************************************************************/
-int DOLtoARAM(unsigned char *dol)
+int DOLtoARAM(unsigned char *dol, int argc, char *argv[])
 {
   u32 sizeinbytes;
   int i;
+  struct __argv dolargs;
 
   /*** Make sure ARAM subsystem is alive! ***/
   AR_Init(NULL, 0); /*** No stack - we need it all ***/
@@ -290,6 +292,33 @@ int DOLtoARAM(unsigned char *dol)
       ARAMPut(dol + dolhdr->dataOffset[i], (char *) ((dolhdr->dataAddress[i] - minaddress) + ARAMSTART),
               dolhdr->dataLength[i]);
     }
+  }
+
+  /*** Pass a command line ***/
+  if (argc)
+  {
+    dolargs.argvMagic = ARGV_MAGIC;
+    dolargs.argc = argc;
+    dolargs.length = 1;
+
+    for (i = 0; i < argc; i++)
+    {
+      size_t argLength = strlen(argv[i]) + 1;
+      dolargs.length += argLength;
+    }
+    dolargs.commandLine = malloc(dolargs.length);
+
+    unsigned int position = 0;
+    for (i = 0; i < argc; i++)
+    {
+      size_t argLength = strlen(argv[i]) + 1;
+      memcpy(dolargs.commandLine + position, argv[i], argLength);
+      position += argLength;
+    }
+    dolargs.commandLine[dolargs.length - 1] = '\0';
+    DCStoreRange(dolargs.commandLine, dolargs.length);
+
+    ARAMPut((unsigned char *) &dolargs, (char *) (dolhdr->entryPoint - minaddress + 8 + ARAMSTART), sizeof(struct __argv));
   }
 
   /*** Now go run it ***/
