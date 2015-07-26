@@ -295,13 +295,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				}
 				else {
 					// Save the Swiss system settings since we're called from the main menu
-					if((curDevice != SD_CARD)&&((curDevice != IDEEXI))) {
-						// If the device is Read-Only, warn/etc
-						DrawFrameStart();
-						DrawMessageBox(D_INFO,"Cannot save config on read-only device!");
-						DrawFrameFinish();
-					}
-					else {
+					if((curDevice == SD_CARD)||(curDevice == IDEEXI)) {
 						DrawFrameStart();
 						DrawMessageBox(D_INFO,"Saving Config ...");
 						DrawFrameFinish();

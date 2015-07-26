@@ -224,11 +224,13 @@ void load_config() {
 
 	// Try to open up the config .ini in case it hasn't been opened already (SD, IDE-EXI only)
 	if(!config_init()) {
-		if(!config_create()) {
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Failed to create configuration file!");
-			DrawFrameFinish();
-			sleep(1);
+		if(curDevice == SD_CARD || curDevice == IDEEXI) {
+			if(!config_create()) {
+				DrawFrameStart();
+				DrawMessageBox(D_INFO,"Failed to create configuration file!");
+				DrawFrameFinish();
+				sleep(1);
+			}
 		}
 	}
 	else {
@@ -343,7 +345,7 @@ void main_loop()
 				}
 			}
 		}
-		if(curDevice==SD_CARD && !swissSettings.defaultDevice) { 
+		if(curDevice==SD_CARD || curDevice==WKF || curDevice==IDEEXI) { 
 			load_config();
 		}
 	}

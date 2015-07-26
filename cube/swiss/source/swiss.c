@@ -1220,13 +1220,7 @@ int check_game()
 
 void save_config(ConfigEntry *config) {
 	// Save settings to current device
-	if(curDevice != SD_CARD) {
-		// If the device is Read-Only, warn/etc
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,"Cannot save config on read-only device!");
-		DrawFrameFinish();
-	}
-	else {
+	if(curDevice == SD_CARD || curDevice == IDEEXI) {
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,"Saving Config ...");
 		DrawFrameFinish();
