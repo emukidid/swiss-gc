@@ -11,7 +11,10 @@
 int read_rom_ipl(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_ipl_clear(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_sram(unsigned int offset, void* buffer, unsigned int length);
-int read_rom_stub(unsigned int offset, void* buffer, unsigned int length);
+int read_rom_dsp_rom(unsigned int offset, void* buffer, unsigned int length);
+int read_rom_dsp_coef(unsigned int offset, void* buffer, unsigned int length);
+int read_rom_dvd_ram(unsigned int offset, void* buffer, unsigned int length);
+int read_rom_dvd_rom(unsigned int offset, void* buffer, unsigned int length);
 
 #define NUM_ROMS 7
 
@@ -41,10 +44,10 @@ int (*read_rom[])(unsigned int offset, void* buffer, unsigned int length) =
 {
 	read_rom_ipl,
 	read_rom_ipl_clear,
-	read_rom_stub,
-	read_rom_stub,
-	read_rom_stub,
-	read_rom_stub,
+	read_rom_dsp_rom,
+	read_rom_dsp_coef,
+	read_rom_dvd_ram,
+	read_rom_dvd_rom,
 	read_rom_sram
 };
 
@@ -174,7 +177,32 @@ int read_rom_sram(unsigned int offset, void* buffer, unsigned int length) {
 	return length;
 }
 
-int read_rom_stub(unsigned int offset, void* buffer, unsigned int length) {
+int read_rom_dsp_rom(unsigned int offset, void* buffer, unsigned int length) {
+	// TODO
+	(void) offset;
+	(void) buffer;
+	(void) length;
+	return 0;
+}
+
+int read_rom_dsp_coef(unsigned int offset, void* buffer, unsigned int length) {
+	// TODO
+	(void) offset;
+	(void) buffer;
+	(void) length;
+	return 0;
+}
+
+int read_rom_dvd_ram(unsigned int offset, void* buffer, unsigned int length) {
+	// TODO
+	(void) offset;
+	(void) buffer;
+	(void) length;
+	return 0;
+}
+
+int read_rom_dvd_rom(unsigned int offset, void* buffer, unsigned int length) {
+	// TODO
 	(void) offset;
 	(void) buffer;
 	(void) length;
