@@ -674,45 +674,50 @@ void boot_dol()
 	}
 	
 	// Build a command line to pass to the DOL
-	int argc = 1;
-	char *argv[1024] = { curFile.name };
+	int argc = 0;
+	char *argv[1024];
 
 	char argFileName[1024];
 	strcpy(argFileName, curFile.name);
 	sprintf(argFileName + strlen(argFileName) - 3, "cli");
-
 	// If there's a .cli file next to the DOL, use that as a source for arguments
-	if(!strcmp(argFileName, allFiles[curSelection - 1].name)) {
-		file_handle *argFile = &allFiles[curSelection - 1];
-		char *cli_buffer = memalign(32, argFile->size);
-		if(cli_buffer) {
-			deviceHandler_seekFile(argFile, 0, DEVICE_HANDLER_SEEK_SET);
-			deviceHandler_readFile(argFile, cli_buffer, argFile->size);
+	for(i = 0; i < files; i++) {
+		if (i == curSelection) continue;
+		if(!strcmp(argFileName, allFiles[i].name)) {
+			argv[argc] = (char*)&curFile.name;
+			argc++;
 
-			// First argument is at the beginning of the file
-			if(cli_buffer[0] != '\r' && cli_buffer[0] != '\n') {
-				argv[argc] = cli_buffer;
-				argc++;
-			}
+			file_handle *argFile = &allFiles[i - 1];
+			char *cli_buffer = memalign(32, argFile->size);
+			if(cli_buffer) {
+				deviceHandler_seekFile(argFile, 0, DEVICE_HANDLER_SEEK_SET);
+				deviceHandler_readFile(argFile, cli_buffer, argFile->size);
 
-			// Search for the others after each newline
-			for(i = 0; i < argFile->size; i++) {
-				if(cli_buffer[i] == '\r' || cli_buffer[i] == '\n') {
-					cli_buffer[i] = '\0';
-				}
-				else if(cli_buffer[i - 1] == '\0') {
-					argv[argc] = cli_buffer + i;
+				// First argument is at the beginning of the file
+				if(cli_buffer[0] != '\r' && cli_buffer[0] != '\n') {
+					argv[argc] = cli_buffer;
 					argc++;
+				}
 
-					if(argc >= 1024)
-						break;
+				// Search for the others after each newline
+				for(i = 0; i < argFile->size; i++) {
+					if(cli_buffer[i] == '\r' || cli_buffer[i] == '\n') {
+						cli_buffer[i] = '\0';
+					}
+					else if(cli_buffer[i - 1] == '\0') {
+						argv[argc] = cli_buffer + i;
+						argc++;
+
+						if(argc >= 1024)
+							break;
+					}
 				}
 			}
 		}
 	}
 
 	// Boot
-	DOLtoARAM(dol_buffer, argc, argv);
+	DOLtoARAM(dol_buffer, argc, argc == 0 ? NULL : argv);
 }
 
 /* Manage file  - The user will be asked what they want to do with the currently selected file - copy/move/delete*/
