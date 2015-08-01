@@ -33,7 +33,7 @@ typedef struct {
     unsigned int unused[MAXTEXTSECTION];
 } DOLHEADER;
 
-int DOLtoARAM(unsigned char *dol);
+int DOLtoARAM(unsigned char *dol, int argc, char *argv[]);
 
 #endif
 #endif

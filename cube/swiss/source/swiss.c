@@ -635,7 +635,7 @@ unsigned int load_app(int multiDol)
 		wkfWriteOffset(*(volatile unsigned int*)VAR_DISC_1_LBA);
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
-	DOLtoARAM(main_dol_buffer);
+	DOLtoARAM(main_dol_buffer, 0, NULL);
 	return 0;
 }
 
@@ -673,7 +673,46 @@ void boot_dol()
   		ptr+=size;
 	}
 	
-	DOLtoARAM(dol_buffer);
+	// Build a command line to pass to the DOL
+	int argc = 1;
+	char *argv[1024] = { curFile.name };
+
+	char argFileName[1024];
+	strcpy(argFileName, curFile.name);
+	sprintf(argFileName + strlen(argFileName) - 3, "cli");
+
+	// If there's a .cli file next to the DOL, use that as a source for arguments
+	if(!strcmp(argFileName, allFiles[curSelection - 1].name)) {
+		file_handle *argFile = &allFiles[curSelection - 1];
+		char *cli_buffer = memalign(32, argFile->size);
+		if(cli_buffer) {
+			deviceHandler_seekFile(argFile, 0, DEVICE_HANDLER_SEEK_SET);
+			deviceHandler_readFile(argFile, cli_buffer, argFile->size);
+
+			// First argument is at the beginning of the file
+			if(cli_buffer[0] != '\r' && cli_buffer[0] != '\n') {
+				argv[argc] = cli_buffer;
+				argc++;
+			}
+
+			// Search for the others after each newline
+			for(i = 0; i < argFile->size; i++) {
+				if(cli_buffer[i] == '\r' || cli_buffer[i] == '\n') {
+					cli_buffer[i] = '\0';
+				}
+				else if(cli_buffer[i - 1] == '\0') {
+					argv[argc] = cli_buffer + i;
+					argc++;
+
+					if(argc >= 1024)
+						break;
+				}
+			}
+		}
+	}
+
+	// Boot
+	DOLtoARAM(dol_buffer, argc, argv);
 }
 
 /* Manage file  - The user will be asked what they want to do with the currently selected file - copy/move/delete*/
@@ -1181,13 +1220,7 @@ int check_game()
 
 void save_config(ConfigEntry *config) {
 	// Save settings to current device
-	if(curDevice != SD_CARD) {
-		// If the device is Read-Only, warn/etc
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,"Cannot save config on read-only device!");
-		DrawFrameFinish();
-	}
-	else {
+	if(curDevice == SD_CARD || curDevice == IDEEXI) {
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,"Saving Config ...");
 		DrawFrameFinish();
