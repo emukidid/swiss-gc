@@ -49,6 +49,7 @@ SOURCES		:=  source \
 			  source/config \
 			  source/crc32 \
               source/devices \
+              source/devices/system \
               source/devices/dvd \
               source/devices/fat \
               source/devices/memcard \

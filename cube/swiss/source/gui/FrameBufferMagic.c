@@ -43,6 +43,8 @@ TPLFile sambaTPL;
 GXTexObj sambaTexObj;
 TPLFile wiikeyTPL;
 GXTexObj wiikeyTexObj;
+TPLFile systemTPL;
+GXTexObj systemTexObj;
 TPLFile btnnohilightTPL;
 GXTexObj btnnohilightTexObj;
 TPLFile btnhilightTPL;
@@ -84,6 +86,8 @@ void init_textures()
 	TPL_GetTexture(&wodeimgTPL,wodeimg,&wodeimgTexObj);
 	TPL_OpenTPLFromMemory(&wiikeyTPL, (void *)wiikeyimg_tpl, wiikeyimg_tpl_size);
 	TPL_GetTexture(&wiikeyTPL,wiikeyimg,&wiikeyTexObj);
+	TPL_OpenTPLFromMemory(&systemTPL, (void *)systemimg_tpl, systemimg_tpl_size);
+	TPL_GetTexture(&systemTPL,systemimg,&systemTexObj);
 	TPL_OpenTPLFromMemory(&memcardTPL, (void *)memcardimg_tpl, memcardimg_tpl_size);
 	TPL_GetTexture(&memcardTPL,memcardimg,&memcardTexObj);
 	TPL_OpenTPLFromMemory(&usbgeckoTPL, (void *)usbgeckoimg_tpl, usbgeckoimg_tpl_size);
@@ -241,6 +245,9 @@ void DrawImage(int textureId, int x, int y, int width, int height, int depth, fl
 		break;
 	case TEX_WIIKEY:
 		GX_LoadTexObj(&wiikeyTexObj, GX_TEXMAP0);
+		break;
+	case TEX_SYSTEM:
+		GX_LoadTexObj(&systemTexObj, GX_TEXMAP0);
 		break;
 	case TEX_MEMCARD:
 		GX_LoadTexObj(&memcardTexObj, GX_TEXMAP0);

@@ -47,6 +47,7 @@ typedef struct {
 #include "devices/smb/deviceHandler-SMB.h"
 #include "devices/wiikeyfusion/deviceHandler-wiikeyfusion.h"
 #include "devices/usbgecko/deviceHandler-usbgecko.h"
+#include "devices/system/deviceHandler-SYS.h"
 
 extern file_handle* deviceHandler_initial;
 extern device_info*	(*deviceHandler_info)(void);

@@ -47,7 +47,8 @@ enum deviceTypes
 	MEMCARD,
 	WKF,
 	USBGECKO,
-	SAMBA
+	SAMBA,
+	SYS
 };
 
 //Destination Device Type
