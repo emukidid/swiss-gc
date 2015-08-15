@@ -1529,7 +1529,11 @@ void select_device()
 				DrawImage(TEX_SAMBA, 640/2, 230, 160, 85, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "Samba", 0.85f, true, defaultColor);
 			}
-			if(curDevice != 8) {
+			else if(curDevice==SYS) {
+				DrawImage(TEX_SYSTEM, 640/2, 230, 160, 85, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+				WriteFontStyled(640/2, 330, "System", 0.85f, true, defaultColor);
+			}
+			if(curDevice != 9) {
 				WriteFont(520, 270, "->");
 			}
 			if(curDevice != 0) {
@@ -1559,7 +1563,7 @@ void select_device()
 				}
 			}
 			else {
-				if((btns & PAD_BUTTON_RIGHT) && curDevice < 8)
+				if((btns & PAD_BUTTON_RIGHT) && curDevice < 9)
 					curDevice++;
 				if((btns & PAD_BUTTON_LEFT) && curDevice > 0)
 					curDevice--;
@@ -1688,6 +1692,17 @@ void select_device()
 			deviceHandler_deinit   =  deviceHandler_SMB_deinit;
 			deviceHandler_closeFile=  deviceHandler_SMB_closeFile;
 			deviceHandler_info 	   =  deviceHandler_SMB_info;
+			deviceHandler_deleteFile = NULL;
+		break;
+		case SYS:
+			deviceHandler_initial = &initial_SYS;
+			deviceHandler_readDir  =  deviceHandler_SYS_readDir;
+			deviceHandler_readFile =  deviceHandler_SYS_readFile;
+			deviceHandler_seekFile =  deviceHandler_SYS_seekFile;
+			deviceHandler_init     =  deviceHandler_SYS_init;
+			deviceHandler_deinit   =  deviceHandler_SYS_deinit;
+			deviceHandler_closeFile=  deviceHandler_SYS_closeFile;
+			deviceHandler_info 	   =  deviceHandler_SYS_info;
 			deviceHandler_deleteFile = NULL;
 		break;
 	}
