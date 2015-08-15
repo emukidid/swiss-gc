@@ -52,31 +52,14 @@ void* mymemcpy(void* dest, const void* src, u32 count)
 	return dest;
 }
 
-void wkfRead(void* dst, int len, u32 offset)
-{
-	/*asm("mfmsr	5");
-	asm("lis 3, 0x8000");
-	asm("stw 5, 0x9FC(3)");
-	asm("rlwinm	5,5,0,17,15");
-	asm("mtmsr	5");*/
-	u8 *sector_buffer = (u8*)READ_SECTOR;
-	while (len)
-	{
-		__wkfReadSector(sector_buffer, (offset-(offset%READ_SECTOR_SIZE)));
-		u32 off = offset & (READ_SECTOR_SIZE-1);
-
-		int rl = READ_SECTOR_SIZE - off;
-		if (rl > len)
-			rl = len;
-		mymemcpy(dst, sector_buffer + off, rl);	
-
-		offset += rl;
-		len -= rl;
-		dst += rl;
-	}
-	/*asm("lis 3, 0x8000");
-	asm("lwz 5, 0x9FC(3)");
-	asm("mtmsr	5");*/
+void wkfRead(void* dst, int len, u32 offset) {
+	volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
+	dvd[2] = 0xA8000000;
+	dvd[3] = offset >> 2;
+	dvd[4] = len;
+	dvd[5] = (unsigned long)dst;
+	dvd[6] = len;
+	dvd[7] = 3; // enable reading!
 }
 
 // Adjusts the offset on the WKF for fragmented reads

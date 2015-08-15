@@ -79,6 +79,7 @@ int install_code()
 	}
 	// Wiikey Fusion
 	else if(deviceHandler_initial == &initial_WKF) {
+		location = (void*)LO_RESERVE_DVD;
 		patch = &wkf_bin[0]; patchSize = wkf_bin_size;
 		print_gecko("Installing Patch for WKF\r\n");
 	}
