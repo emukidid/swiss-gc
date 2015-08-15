@@ -9,6 +9,7 @@
 #include <sdcard/card_cmn.h>
 #include <ogc/machine/processor.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,7 +56,7 @@ int endsWith(char *str, char *end) {
 		return 0;
 	int i;
 	for(i = 0; i < strlen(end); i++)
-		if(str[strlen(str)-i] != end[strlen(end)-i])
+		if(tolower((int)str[strlen(str)-i]) != tolower((int)end[strlen(end)-i]))
 			return 0;
 	return 1;
 }

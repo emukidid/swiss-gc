@@ -13,6 +13,7 @@
 #include <malloc.h>
 #include <gccore.h>
 #include <ogc/exi.h>
+#include <gctypes.h>
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
 #include "IPLFontWrite.h"
@@ -20,6 +21,7 @@
 #include "main.h"
 #include "ata.h"
 #include "btns.h"
+#include "dolparameters.h"
 
 #define GUI_MSGBOX_ALPHA 200
 
@@ -67,6 +69,10 @@ TPLFile ntscuTPL;
 GXTexObj ntscuTexObj;
 TPLFile palTPL;
 GXTexObj palTexObj;
+TPLFile checkedTPL;
+GXTexObj checkedTexObj;
+TPLFile uncheckedTPL;
+GXTexObj uncheckedTexObj;
 
 void init_textures() 
 {
@@ -116,6 +122,10 @@ void init_textures()
 	TPL_GetTexture(&ntscuTPL,ntscuimg,&ntscuTexObj);
 	TPL_OpenTPLFromMemory(&palTPL, (void *)pal_tpl, pal_tpl_size);
 	TPL_GetTexture(&palTPL,palimg,&palTexObj);
+	TPL_OpenTPLFromMemory(&checkedTPL, (void *)checked_32_tpl, checked_32_tpl_size);
+	TPL_GetTexture(&checkedTPL,checked_32,&checkedTexObj);
+	TPL_OpenTPLFromMemory(&uncheckedTPL, (void *)unchecked_32_tpl, unchecked_32_tpl_size);
+	TPL_GetTexture(&uncheckedTPL,unchecked_32,&uncheckedTexObj);
 }
 
 void drawInit()
@@ -277,6 +287,12 @@ void DrawImage(int textureId, int x, int y, int width, int height, int depth, fl
 		break;
 	case TEX_PAL:
 		GX_LoadTexObj(&palTexObj, GX_TEXMAP0);
+		break;
+	case TEX_CHECKED:
+		GX_LoadTexObj(&checkedTexObj, GX_TEXMAP0);
+		break;
+	case TEX_UNCHECKED:
+		GX_LoadTexObj(&uncheckedTexObj, GX_TEXMAP0);
 		break;
 	}	
 
@@ -581,4 +597,89 @@ void DrawVertScrollBar(int x, int y, int width, int height, float scrollPercent,
 	
 	DrawSimpleBox( x1, scrollStartY,
 			width, scrollHeight, 0, fillColor, borderColor); 
+}
+
+void drawParameterForArgsSelector(Parameter *param, int x, int y, int selected) {
+
+	char *name = &param->arg.name[0];
+	char *selValue = &param->values[param->currentValueIdx].name[0];
+	
+	int chkWidth = 32, nameWidth = 300, gapWidth = 13, paramWidth = 120;
+	// [32px 10px 250px 10px 5px 80px 5px]
+	// If not selected and not enabled, use greyed out font for everything
+	GXColor fontColor = (param->enable || selected) ? defaultColor : deSelectedColor;
+
+	// If selected draw that it's selected
+	if(selected) DrawSimpleBox( x+chkWidth+gapWidth-5, y, nameWidth, 35, 0, deSelectedColor, defaultColor);
+	DrawImage(param->enable ? TEX_CHECKED:TEX_UNCHECKED, x, y, 32, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	// Draw the parameter Name
+	WriteFontStyled(x+chkWidth+gapWidth+5, y+4, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor);
+	// If enabled, draw arrows indicating where in the param list we are
+	if(selected && param->enable && param->num_values > 1) {
+		if(param->currentValueIdx != 0) {
+			WriteFontStyled(x+(chkWidth+nameWidth+(gapWidth*4)), y+5, "<-", .8f, false, defaultColor);
+		}
+		if(param->currentValueIdx != param->num_values-1) {
+			WriteFontStyled(x+(chkWidth+nameWidth+paramWidth+(gapWidth*6)), y+5, "->", .8f, false, defaultColor);
+		}
+	}
+	// Draw the current value
+	WriteFontStyled(x+chkWidth+nameWidth+(gapWidth*6), y+2, selValue, GetTextScaleToFitInWidth(selValue, paramWidth), false, fontColor);
+}
+
+void DrawArgsSelector(char *fileName) {
+
+	Parameters* params = getParameters();
+	int param_selection = 0;
+	int params_per_page = 6;
+	
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+	while(1) {
+		doBackdrop();
+		DrawEmptyBox(20,60, vmode->fbWidth-20, 460, COLOR_BLACK);
+		sprintf(txtbuffer, "%s Parameters:", fileName);
+		WriteFontStyled(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, vmode->fbWidth-50), false, defaultColor);
+
+		int j = 0;
+		int current_view_start = MIN(MAX(0,param_selection-params_per_page/2),MAX(0,params->num_params-params_per_page));
+		int current_view_end = MIN(params->num_params, MAX(param_selection+params_per_page/2,params_per_page));
+	
+		int scrollBarHeight = 90+(params_per_page*20);
+		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)params->num_params);
+		DrawVertScrollBar(vmode->fbWidth-45, 120, 25, scrollBarHeight, (float)((float)param_selection/(float)(params->num_params-1)),scrollBarTabHeight);
+		for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
+			drawParameterForArgsSelector(&params->parameters[current_view_start], 25, 120+j*35, current_view_start==param_selection);
+		}
+		// Write about the default if there is any
+		DrawTransparentBox( 35, 350, vmode->fbWidth-35, 400);
+		WriteFontStyled(33, 345, "Default values will be used by the DOL being loaded if a", 0.8f, false, defaultColor);
+		WriteFontStyled(33, 365, "parameter is not enabled. Please check the documentation", 0.8f, false, defaultColor);
+		WriteFontStyled(33, 385, "for this DOL if you are unsure of the default values.", 0.8f, false, defaultColor);
+		WriteFontStyled(640/2, 440, "(A) Toggle Param - (Start) Load the DOL", 1.0f, true, defaultColor);
+		DrawFrameFinish();
+
+		while (!(PAD_ButtonsHeld(0) & (PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_START|PAD_BUTTON_A)))
+			{ VIDEO_WaitVSync (); }
+		u16 btns = PAD_ButtonsHeld(0);
+		if((btns & (PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT)) && params->parameters[param_selection].enable) {
+			int curValIdx = params->parameters[param_selection].currentValueIdx;
+			int maxValIdx = params->parameters[param_selection].num_values;
+			curValIdx = btns & PAD_BUTTON_LEFT ? 
+				((--curValIdx < 0) ? maxValIdx-1 : curValIdx):((curValIdx + 1) % maxValIdx);
+			params->parameters[param_selection].currentValueIdx = curValIdx;
+		}
+		if(btns & (PAD_BUTTON_UP|PAD_BUTTON_DOWN)) {
+			param_selection = btns & PAD_BUTTON_UP ? 
+				((--param_selection < 0) ? params->num_params-1 : param_selection)
+				:((param_selection + 1) % params->num_params);
+		}
+		if(btns & PAD_BUTTON_A) {
+			params->parameters[param_selection].enable ^= 1;
+		}
+		if(btns & PAD_BUTTON_START) {
+			break;
+		}
+		while (PAD_ButtonsHeld(0) & (PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_START|PAD_BUTTON_A))
+			{ VIDEO_WaitVSync (); }
+	}
 }

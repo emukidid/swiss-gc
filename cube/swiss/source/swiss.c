@@ -41,6 +41,7 @@
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
 #include "devices/filemeta.h"
+#include "dolparameters.h"
 
 DiskHeader GCMDisk;      //Gamecube Disc Header struct
 char IPLInfo[256] __attribute__((aligned(32)));
@@ -677,39 +678,50 @@ void boot_dol()
 	int argc = 0;
 	char *argv[1024];
 
-	char argFileName[1024];
-	strcpy(argFileName, curFile.name);
-	sprintf(argFileName + strlen(argFileName) - 3, "cli");
 	// If there's a .cli file next to the DOL, use that as a source for arguments
 	for(i = 0; i < files; i++) {
 		if (i == curSelection) continue;
-		if(!strcmp(argFileName, allFiles[i].name)) {
-			argv[argc] = (char*)&curFile.name;
-			argc++;
-
-			file_handle *argFile = &allFiles[i - 1];
+		int eq = !strncmp(allFiles[i].name, allFiles[curSelection].name, strlen(allFiles[curSelection].name)-3);
+		if(eq && (endsWith(allFiles[i].name,".cli") || endsWith(allFiles[i].name,".dcp"))) {
+			
+			file_handle *argFile = &allFiles[i];
 			char *cli_buffer = memalign(32, argFile->size);
 			if(cli_buffer) {
 				deviceHandler_seekFile(argFile, 0, DEVICE_HANDLER_SEEK_SET);
 				deviceHandler_readFile(argFile, cli_buffer, argFile->size);
 
-				// First argument is at the beginning of the file
-				if(cli_buffer[0] != '\r' && cli_buffer[0] != '\n') {
-					argv[argc] = cli_buffer;
+				// CLI support
+				if(endsWith(allFiles[i].name,".cli")) {
+					argv[argc] = (char*)&curFile.name;
 					argc++;
-				}
-
-				// Search for the others after each newline
-				for(i = 0; i < argFile->size; i++) {
-					if(cli_buffer[i] == '\r' || cli_buffer[i] == '\n') {
-						cli_buffer[i] = '\0';
-					}
-					else if(cli_buffer[i - 1] == '\0') {
-						argv[argc] = cli_buffer + i;
+					// First argument is at the beginning of the file
+					if(cli_buffer[0] != '\r' && cli_buffer[0] != '\n') {
+						argv[argc] = cli_buffer;
 						argc++;
+					}
 
-						if(argc >= 1024)
-							break;
+					// Search for the others after each newline
+					for(i = 0; i < argFile->size; i++) {
+						if(cli_buffer[i] == '\r' || cli_buffer[i] == '\n') {
+							cli_buffer[i] = '\0';
+						}
+						else if(cli_buffer[i - 1] == '\0') {
+							argv[argc] = cli_buffer + i;
+							argc++;
+
+							if(argc >= 1024)
+								break;
+						}
+					}
+				}
+				// DCP support
+				if(endsWith(allFiles[i].name,".dcp")) {
+					parseParameters(cli_buffer);
+					Parameters *params = (Parameters*)getParameters();
+					if(params->num_params > 0) {
+						DrawArgsSelector(getRelativeName(allFiles[curSelection].name));
+						// Get an argv back or none.
+						populateArgv(&argc, argv, (char*)&curFile.name);
 					}
 				}
 			}
@@ -949,7 +961,7 @@ void manage_file() {
 			}
 			else {
 				u32 isDestCard = deviceHandler_dest_writeFile == deviceHandler_CARD_writeFile;
-				if(isDestCard && (!endsWith(destFile->name,".gci") || !endsWith(destFile->name,".GCI"))) {
+				if(isDestCard && (!endsWith(destFile->name,".gci"))) {
 					// Only .GCI files can go to the memcard
 					DrawFrameStart();
 					DrawMessageBox(D_INFO,"Only GCI files allowed on memcard. Press A to continue");
@@ -1053,7 +1065,7 @@ void load_file()
 	if((curDevice != DVD_DISC) || (curDevice == DVD_DISC && dvdDiscTypeInt==ISO9660_DISC)) {
 		//if it's a DOL, boot it
 		if(strlen(fileName)>4) {
-			if(endsWith(fileName,".DOL") || endsWith(fileName,".dol")) {
+			if(endsWith(fileName,".dol")) {
 				boot_dol();
 				// if it was invalid (overlaps sections, too large, etc..) it'll return
 				DrawFrameStart();
@@ -1062,11 +1074,11 @@ void load_file()
 				sleep(2);
 				return;
 			}
-			if(endsWith(fileName,".MP3") || endsWith(fileName,".mp3")) {
+			if(endsWith(fileName,".mp3")) {
 				mp3_player(allFiles, files, &curFile);
 				return;
 			}
-			if(endsWith(fileName,".FZN") || endsWith(fileName,".fzn")) {
+			if(endsWith(fileName,".fzn")) {
 				if(curFile.size != 0x1D0000) {
 					DrawFrameStart();
 					DrawMessageBox(D_WARN, "File Size must be 0x1D0000 bytes!");
@@ -1102,16 +1114,14 @@ void load_file()
 				sleep(2);
 				return;
 			}
-			if(!(endsWith(fileName,".iso") || endsWith(fileName,".gcm") 
-				|| endsWith(fileName,".ISO") || endsWith(fileName,".GCM"))) {
+			if(!(endsWith(fileName,".iso") || endsWith(fileName,".gcm"))) {
 				DrawFrameStart();
 				DrawMessageBox(D_WARN, "Unknown File Type");
 				DrawFrameFinish();
 				sleep(1);
 				return;
 			}
-			if((endsWith(fileName,".iso") || endsWith(fileName,".gcm") 
-				|| endsWith(fileName,".ISO") || endsWith(fileName,".GCM")) && (curDevice == SAMBA)) {
+			if((endsWith(fileName,".iso") || endsWith(fileName,".gcm")) && (curDevice == SAMBA)) {
 				DrawFrameStart();
 				DrawMessageBox(D_WARN, "Not Supported");
 				DrawFrameFinish();

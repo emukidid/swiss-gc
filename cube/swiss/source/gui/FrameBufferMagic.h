@@ -88,6 +88,10 @@ extern int whichfb;
 #include "dolimg_tpl.h"
 #include "dirimg_tpl.h"
 #include "fileimg_tpl.h"
+#include "checked_32_tpl.h"
+#include "checked_32.h"
+#include "unchecked_32_tpl.h"
+#include "unchecked_32.h"
 
 enum TextureId
 {
@@ -111,7 +115,9 @@ enum TextureId
 	TEX_SAMBA,
 	TEX_NTSCJ,
 	TEX_NTSCU,
-	TEX_PAL
+	TEX_PAL,
+	TEX_CHECKED,
+	TEX_UNCHECKED
 };
 
 void init_textures();
@@ -129,5 +135,6 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 void DrawMenuButtons(int selection);
 int DrawYesNoDialog(char *message);
 void DrawVertScrollBar(int x, int y, int width, int height, float scrollPercent, int scrollHeight);
+void DrawArgsSelector(char *fileName);
 
 #endif
