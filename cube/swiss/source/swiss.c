@@ -529,14 +529,25 @@ unsigned int load_app(int multiDol)
 	// Patch to read from SD/HDD/USBGecko/WKF (if frag req or audio streaming)
 	if((curDevice == SD_CARD)
 		||(curDevice == IDEEXI)
-		||(curDevice == USBGECKO) 
-		/*|| ((curDevice == WKF) && (wkfFragSetupReq || !swissSettings.muteAudioStreaming))*/) {
+		||(curDevice == USBGECKO)) {
 		u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 		if(READ_PATCHED_ALL != ret)	{
 			DrawFrameStart();
 			DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
 			DrawFrameFinish();
 			sleep(5);
+		}
+	}
+	
+	// Only set up the WKF fragmentation patch if we have to.
+	if(curDevice == WKF && wkfFragSetupReq) {
+		u32 ret = Patch_DVDLowLevelReadForWKF(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+		if(1 != ret) {
+			DrawFrameStart();
+			DrawMessageBox(D_FAIL, "Fragmentation patch failed to apply!");
+			DrawFrameFinish();
+			sleep(5);
+			return 0;
 		}
 	}
 		

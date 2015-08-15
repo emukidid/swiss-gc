@@ -67,7 +67,7 @@ int install_code()
 		print_gecko("Installing Patch for SD Gecko\r\n");
 	}
 	// DVD 2 disc code
-	else if((deviceHandler_initial == &initial_DVD)) {
+	else if(deviceHandler_initial == &initial_DVD) {
 		patch = &dvd_bin[0]; patchSize = dvd_bin_size;
 		location = (void*)LO_RESERVE_DVD;
 		print_gecko("Installing Patch for DVD\r\n");
@@ -78,10 +78,10 @@ int install_code()
 		print_gecko("Installing Patch for USB Gecko\r\n");
 	}
 	// Wiikey Fusion
-	/*else if(deviceHandler_initial == &initial_WKF) {
+	else if(deviceHandler_initial == &initial_WKF) {
 		patch = &wkf_bin[0]; patchSize = wkf_bin_size;
 		print_gecko("Installing Patch for WKF\r\n");
-	}*/
+	}
 	print_gecko("Space for patch remaining: %i\r\n",top_addr - LO_RESERVE);
 	print_gecko("Space taken by vars/video patches: %i\r\n",VAR_PATCHES_BASE-top_addr);
 	if(top_addr - LO_RESERVE < patchSize)
@@ -350,6 +350,49 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 	}
 
 	print_gecko("Patch:[DI] applied %u times\r\n", DIPatched);
+}
+
+u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
+	int i = 0;
+
+	for(i = 0; i < length; i+=4) {
+		// Patch Read to adjust the offset for fragmented files
+		if( *(u32*)(addr+i) != 0x7C0802A6 )
+			continue;
+		
+		FuncPattern fp;
+		make_pattern( (u8*)(addr+i), length, &fp );
+		
+		if(compare_pattern(&fp, &ReadCommon)) {
+			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x84)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadCommon.Name, properAddress - 0x84);
+			u32 newval = (u32)(ADJUST_LBA_OFFSET - properAddress);
+			newval&= 0x03FFFFFC;
+			newval|= 0x48000001;
+			*(u32*)(addr + i + 0x84) = newval;
+			return 1;
+		}
+		if(compare_pattern(&fp, &ReadDebug)) {	// As above, for debug read now.
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x88)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadDebug.Name, properAddress - 0x88);
+			u32 newval = (u32)(ADJUST_LBA_OFFSET - properAddress);
+			newval&= 0x03FFFFFC;
+			newval|= 0x48000001;
+			*(u32*)(addr + i + 0x88) = newval;
+			return 1;
+		}
+		if(compare_pattern(&fp, &ReadUncommon)) {	// Same, for the less common read type.
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x7C)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadUncommon.Name, properAddress - 0x7C);
+			u32 newval = (u32)(ADJUST_LBA_OFFSET - properAddress);
+			newval&= 0x03FFFFFC;
+			newval|= 0x48000001;
+			*(u32*)(addr + i + 0x7C) = newval;
+			return 1;
+		}
+	}
+	return 0;
 }
 
 /** Used for Multi-DOL games that require patches to be stored on SD */

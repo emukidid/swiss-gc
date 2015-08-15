@@ -90,6 +90,9 @@ extern u32 VIConfigurePanHook_length;
 #define ENABLE_BACKUP_DISC 		(LO_RESERVE_DVD | 0x00)
 #define READ_REAL_OR_PATCHED	(LO_RESERVE_DVD | 0x04)
 
+/* Function jump locations for the WKF/WASP patch */
+#define ADJUST_LBA_OFFSET	 	(LO_RESERVE_DVD)
+
 #define READ_PATCHED_ALL 		(0x111)
 
 /* Types of files we may patch */
@@ -101,6 +104,7 @@ extern u32 VIConfigurePanHook_length;
 // -1 no device, 0 slot a, 1 slot b.
 extern int savePatchDevice;
 
+u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType);
 int Patch_VidMode(u8 *data, u32 length, int dataType);
