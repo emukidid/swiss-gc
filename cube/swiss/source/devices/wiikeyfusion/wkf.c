@@ -357,9 +357,9 @@ void wkfInit() {
 		if((wkfBuffer[0x1FF] != 0xAA)) {
 			// No FAT!
 			DrawFrameStart();
-			DrawMessageBox(D_INFO,"No FAT Formatted SD found in Wiikey Fusion!");
+			DrawMessageBox(D_INFO,"SD Card detected but failed to initialise.\nPlease try again");
 			DrawFrameFinish();
-			print_gecko("No FAT Formatted SD found in Wiikey Fusion!\r\n");
+			print_gecko("SD Card detected but failed to initialise.\nPlease try again\r\n");
 			sleep(5);
 			wkfInitialized = 0;
 		} 
