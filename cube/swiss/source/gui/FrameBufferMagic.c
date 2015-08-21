@@ -22,6 +22,7 @@
 #include "ata.h"
 #include "btns.h"
 #include "dolparameters.h"
+#include "cheats.h"
 
 #define GUI_MSGBOX_ALPHA 200
 
@@ -690,3 +691,77 @@ void DrawArgsSelector(char *fileName) {
 			{ VIDEO_WaitVSync (); }
 	}
 }
+
+void drawCheatForCheatsSelector(CheatEntry *cheat, int x, int y, int selected) {
+
+	char *name = &cheat->name[0];
+	
+	int chkWidth = 32, nameWidth = 525, gapWidth = 13;
+	// If not selected and not enabled, use greyed out font for everything
+	GXColor fontColor = (cheat->enabled || selected) ? defaultColor : deSelectedColor;
+
+	// If selected draw that it's selected
+	if(selected) DrawSimpleBox( x+chkWidth+gapWidth-5, y, nameWidth, 35, 0, deSelectedColor, defaultColor);
+	DrawImage(cheat->enabled ? TEX_CHECKED:TEX_UNCHECKED, x, y, 32, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	// Draw the cheat Name
+	WriteFontStyled(x+chkWidth+gapWidth+5, y+4, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor);
+}
+
+void DrawCheatsSelector(char *fileName) {
+
+	CheatEntries* cheats = getCheats();
+	int cheat_selection = 0;
+	int cheats_per_page = 6;
+	
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+	while(1) {
+		doBackdrop();
+		DrawEmptyBox(20,60, vmode->fbWidth-20, 460, COLOR_BLACK);
+		sprintf(txtbuffer, "%s Cheats:", fileName);
+		WriteFontStyled(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, vmode->fbWidth-50), false, defaultColor);
+
+		int j = 0;
+		int current_view_start = MIN(MAX(0,cheat_selection-cheats_per_page/2),MAX(0,cheats->num_cheats-cheats_per_page));
+		int current_view_end = MIN(cheats->num_cheats, MAX(cheat_selection+cheats_per_page/2,cheats_per_page));
+	
+		int scrollBarHeight = 90+(cheats_per_page*20);
+		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)cheats->num_cheats);
+		DrawVertScrollBar(vmode->fbWidth-45, 120, 25, scrollBarHeight, (float)((float)cheat_selection/(float)(cheats->num_cheats-1)),scrollBarTabHeight);
+		for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
+			drawCheatForCheatsSelector(&cheats->cheat[current_view_start], 25, 120+j*35, current_view_start==cheat_selection);
+		}
+		// Write about how many cheats are enabled
+		DrawTransparentBox( 35, 350, vmode->fbWidth-35, 390);
+		WriteFontStyled(33, 345, "Space taken by cheats:", 0.8f, false, defaultColor);
+		GXColor noColor = (GXColor) {0,0,0,0}; //blank
+		GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
+		GXColor progressBarColor = (GXColor) {255,128,0,GUI_MSGBOX_ALPHA}; //orange
+		
+		float multiplier = (float)getEnabledCheatsSize() / (float)kenobi_get_maxsize();
+		DrawSimpleBox( 33, 372, vmode->fbWidth-66, 20, 0, noColor, borderColor); 
+		DrawSimpleBox( 33, 372,	(int)((vmode->fbWidth-66)*multiplier), 20, 0, progressBarColor, noColor); 
+		
+		WriteFontStyled(640/2, 440, "(A) Toggle Cheat - (B) Return", 1.0f, true, defaultColor);
+		DrawFrameFinish();
+
+		while (!(PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_B|PAD_BUTTON_A)))
+			{ VIDEO_WaitVSync (); }
+		u16 btns = PAD_ButtonsHeld(0);
+		if(btns & (PAD_BUTTON_UP|PAD_BUTTON_DOWN)) {
+			cheat_selection = btns & PAD_BUTTON_UP ? 
+				((--cheat_selection < 0) ? cheats->num_cheats-1 : cheat_selection)
+				:((cheat_selection + 1) % cheats->num_cheats);
+		}
+		if(btns & PAD_BUTTON_A) {
+			cheats->cheat[cheat_selection].enabled ^= 1;
+			if(getEnabledCheatsSize() > kenobi_get_maxsize())	// No room
+				cheats->cheat[cheat_selection].enabled = 0;
+		}
+		if(btns & PAD_BUTTON_B) {
+			break;
+		}
+		while (PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_B|PAD_BUTTON_A))
+			{ VIDEO_WaitVSync (); }
+	}
+}
+

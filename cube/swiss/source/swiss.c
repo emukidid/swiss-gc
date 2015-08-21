@@ -460,6 +460,10 @@ unsigned int load_app(int multiDol)
 	
 	// Adjust top of memory
 	u32 top_of_main_ram = swissSettings.muteAudioStreaming ? 0x81800000 : DECODED_BUFFER_0;
+	// Steal even more if there's cheats!
+	if(getEnabledCheatsSize() > 0) {
+		top_of_main_ram = WIIRD_ENGINE;
+	}
 
 	print_gecko("Top of RAM simulated as: 0x%08X\r\n", top_of_main_ram);
 	
@@ -582,6 +586,11 @@ unsigned int load_app(int multiDol)
 	}
 	// Force Encoding
 	Patch_FontEnc(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	
+	// Cheats
+	if(getEnabledCheatsSize() > 0) {
+		Patch_CheatsHook(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+	}
 
 	DCFlushRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	ICInvalidateRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
@@ -642,6 +651,10 @@ unsigned int load_app(int multiDol)
 	memset((void*)VAR_STREAM_START, 0, 0xA0);
 	print_gecko("Audio Streaming is %s\r\n",*(volatile unsigned int*)VAR_AS_ENABLED?"Enabled":"Disabled");
 
+	if(getEnabledCheatsSize() > 0) {
+		kenobi_install_engine();
+	}
+		
 	// Set WKF base offset if not using the frag or audio streaming patch
 	if(curDevice == WKF /*&& !wkfFragSetupReq && swissSettings.muteAudioStreaming*/) {
 		wkfWriteOffset(*(volatile unsigned int*)VAR_DISC_1_LBA);
@@ -1288,6 +1301,7 @@ void draw_game_info() {
 			if(curFile.meta->regionTexId != -1 && curFile.meta->regionTexId != 0)
 				DrawImage(curFile.meta->regionTexId, 450, 262, 30,20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 
+			// TODO why is this tok failing after 1 when I return here
 			char * tok = strtok (&curFile.meta->description[0],"\n");
 			int line = 0;
 			while (tok != NULL)	{
@@ -1321,7 +1335,7 @@ void draw_game_info() {
 		WriteFontStyled(640/2, 220, (GCMDisk.DiscID ? "Disc 2":""), 0.8f, true, defaultColor);
 	}
 
-	WriteFontStyled(640/2, 370, "Settings (X) - Exit (B) - Continue (A)", 0.75f, true, defaultColor);
+	WriteFontStyled(640/2, 370, "Settings (X) - Cheats (Y) - Exit (B) - Continue (A)", 0.75f, true, defaultColor);
 	DrawFrameFinish();
 }
 
@@ -1344,15 +1358,39 @@ int info_game()
 	swissSettings.forceEncoding = config->forceEncoding;
 	while(1) {
 		draw_game_info();
-		while((PAD_ButtonsHeld(0) & PAD_BUTTON_X) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
-		while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
-		if((PAD_ButtonsHeld(0) & PAD_BUTTON_B) || (PAD_ButtonsHeld(0) & PAD_BUTTON_A)){
+		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y)){ VIDEO_WaitVSync (); }
+		while(!(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y))){ VIDEO_WaitVSync (); }
+		if(PAD_ButtonsHeld(0) & (PAD_BUTTON_B|PAD_BUTTON_A)){
 			ret = (PAD_ButtonsHeld(0) & PAD_BUTTON_A) ? 1:0;
 			break;
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
 			if(show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC) ? &curFile : NULL, config)) {
 				save_config(config);
+			}
+		}
+		// Look for a cheats file based on the GameID
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
+			char trimmedGameId[8];
+			memset(trimmedGameId, 0, 8);
+			memcpy(trimmedGameId, (char*)&GCMDisk, 6);
+			file_handle *cheatsFile = memalign(32,sizeof(file_handle));
+			memcpy(cheatsFile, deviceHandler_initial, sizeof(file_handle));
+			sprintf(cheatsFile->name, "%s/cheats/%s.txt", deviceHandler_initial->name, trimmedGameId);
+			print_gecko("Looking for cheats file @ %s\r\n", cheatsFile->name);
+			cheatsFile->size = -1;
+			
+			if(deviceHandler_readFile(cheatsFile, &trimmedGameId, 8) != 8) {
+				print_gecko("Cheats file not found!\r\n");
+			}
+			print_gecko("Cheats file found with size %i\r\n", cheatsFile->size);
+			char *cheats_buffer = memalign(32, cheatsFile->size);
+			if(cheats_buffer) {
+				deviceHandler_seekFile(cheatsFile, 0, DEVICE_HANDLER_SEEK_SET);
+				deviceHandler_readFile(cheatsFile, cheats_buffer, cheatsFile->size);
+				parseCheats(cheats_buffer);
+				free(cheats_buffer);
+				DrawCheatsSelector(getRelativeName(allFiles[curSelection].name));
 			}
 		}
 		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }

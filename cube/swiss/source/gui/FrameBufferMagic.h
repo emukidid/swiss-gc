@@ -139,5 +139,6 @@ void DrawMenuButtons(int selection);
 int DrawYesNoDialog(char *message);
 void DrawVertScrollBar(int x, int y, int width, int height, float scrollPercent, int scrollHeight);
 void DrawArgsSelector(char *fileName);
+void DrawCheatsSelector(char *fileName);
 
 #endif

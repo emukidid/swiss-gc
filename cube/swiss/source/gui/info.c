@@ -146,6 +146,9 @@ void info_draw_page(int page_num) {
 		else if(deviceHandler_initial == &initial_WKF) {
 			sprintf(topStr, "Current Device: Wiikey Fusion");
 		}
+		else if(deviceHandler_initial == &initial_SYS) {
+			sprintf(topStr, "Current Device: System");
+		}
 		WriteFont(30, 200, topStr);
 	}
 	else if(page_num == 2) {

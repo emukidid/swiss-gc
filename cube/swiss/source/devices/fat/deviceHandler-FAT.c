@@ -159,6 +159,11 @@ int deviceHandler_FAT_seekFile(file_handle* file, unsigned int where, unsigned i
 int deviceHandler_FAT_readFile(file_handle* file, void* buffer, unsigned int length){
   	if(!file->fp) {
 		file->fp = fopen( file->name, "r+" );
+		if(file->size == -1) {
+			struct stat fstat;
+			stat(file->name,&fstat);
+			file->size = fstat.st_size;
+		}
 	}
 	if(!file->fp) return -1;
 	

@@ -17,6 +17,7 @@
 #include "deviceHandler.h"
 #include "sidestep.h"
 #include "elf.h"
+#include "cheats.h"
 
 static u32 top_addr = VAR_PATCHES_BASE;
 
@@ -1366,7 +1367,7 @@ int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
 			(*(u32*)(data+i+8) == 0x38000004 || *(u32*)(data+i+8) == 0x808400E4)) 
 		{
 			
-			// Find the end of the function and replace the blr with a relative branch to 0x800018A8
+			// Find the end of the function and replace the blr with a relative branch to CHEATS_ENGINE_START
 			int j = 12;
 			while( *(u32*)(data+i+j) != 0x4E800020 )
 				j+=4;
@@ -1375,7 +1376,7 @@ int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
 			u32 properAddress = Calc_ProperAddress(data, type, i+j);
 			if(properAddress) {
 				print_gecko("Found:[Hook:OSSleepThread] @ %08X\n", properAddress );
-				u32 newval = (u32)(0x800018A8 - properAddress);
+				u32 newval = (u32)(CHEATS_ENGINE_START - properAddress);
 				newval&= 0x03FFFFFC;
 				newval|= 0x48000000;
 				*(u32*)(data+i+j) = newval;

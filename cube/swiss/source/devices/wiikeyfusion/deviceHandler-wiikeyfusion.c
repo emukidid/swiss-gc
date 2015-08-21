@@ -106,6 +106,11 @@ int deviceHandler_WKF_seekFile(file_handle* file, unsigned int where, unsigned i
 int deviceHandler_WKF_readFile(file_handle* file, void* buffer, unsigned int length){
 	if(!file->fp) {
 		file->fp = fopen( file->name, "rb" );
+		if(file->size == -1) {
+			struct stat fstat;
+			stat(file->name,&fstat);
+			file->size = fstat.st_size;
+		}
 	}
 	if(!file->fp) return -1;
 	
