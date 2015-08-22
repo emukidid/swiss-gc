@@ -378,6 +378,10 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			patched += Patch_Fwrite(buffer, sizeToRead);
 		}
 		
+		if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
+			Patch_CheatsHook(buffer, sizeToRead, filesToPatch[i].type);
+		}
+		
 		if(curDevice == DVD_DISC && is_gamecube()) {
 			patched += Patch_DVDLowLevelReadForDVD(buffer, sizeToRead, filesToPatch[i].type);
 			patched += Patch_DVDReset(buffer, sizeToRead);
