@@ -35,6 +35,7 @@
 #include "gcm.h"
 #include "mp3.h"
 #include "wkf.h"
+#include "cheats.h"
 #include "settings.h"
 #include "aram/sidestep.h"
 #include "gui/FrameBufferMagic.h"
@@ -1381,7 +1382,13 @@ int info_game()
 			cheatsFile->size = -1;
 			
 			if(deviceHandler_readFile(cheatsFile, &trimmedGameId, 8) != 8) {
-				print_gecko("Cheats file not found!\r\n");
+				while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
+				DrawFrameStart();
+				DrawMessageBox(D_INFO,"No cheats file found.\nPress A to continue.");
+				DrawFrameFinish();
+				while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+				while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+				return 0;
 			}
 			print_gecko("Cheats file found with size %i\r\n", cheatsFile->size);
 			char *cheats_buffer = memalign(32, cheatsFile->size);

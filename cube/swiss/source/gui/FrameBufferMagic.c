@@ -731,20 +731,21 @@ void DrawCheatsSelector(char *fileName) {
 			drawCheatForCheatsSelector(&cheats->cheat[current_view_start], 25, 120+j*35, current_view_start==cheat_selection);
 		}
 		// Write about how many cheats are enabled
-		DrawTransparentBox( 35, 350, vmode->fbWidth-35, 390);
+		DrawTransparentBox( 35, 350, vmode->fbWidth-35, 410);
 		WriteFontStyled(33, 345, "Space taken by cheats:", 0.8f, false, defaultColor);
 		GXColor noColor = (GXColor) {0,0,0,0}; //blank
 		GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
 		GXColor progressBarColor = (GXColor) {255,128,0,GUI_MSGBOX_ALPHA}; //orange
 		
 		float multiplier = (float)getEnabledCheatsSize() / (float)kenobi_get_maxsize();
-		DrawSimpleBox( 33, 372, vmode->fbWidth-66, 20, 0, noColor, borderColor); 
-		DrawSimpleBox( 33, 372,	(int)((vmode->fbWidth-66)*multiplier), 20, 0, progressBarColor, noColor); 
-		
-		WriteFontStyled(640/2, 440, "(A) Toggle Cheat - (B) Return", 1.0f, true, defaultColor);
+		DrawSimpleBox( 33, 370, vmode->fbWidth-66, 20, 0, noColor, borderColor); 
+		DrawSimpleBox( 33, 370,	(int)((vmode->fbWidth-66)*multiplier), 20, 0, progressBarColor, noColor);
+		sprintf(txtbuffer, "WiiRD Debug %s", kenobi_get_debug() ? "Enabled":"Disabled");
+		WriteFontStyled(33, 395, txtbuffer, 0.8f, false, defaultColor);
+		WriteFontStyled(640/2, 440, "(A) Toggle Cheat - (X) WiiRD Debug - (B) Return", 0.9f, true, defaultColor);
 		DrawFrameFinish();
 
-		while (!(PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_B|PAD_BUTTON_A)))
+		while (!(PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X)))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = PAD_ButtonsHeld(0);
 		if(btns & (PAD_BUTTON_UP|PAD_BUTTON_DOWN)) {
@@ -757,10 +758,13 @@ void DrawCheatsSelector(char *fileName) {
 			if(getEnabledCheatsSize() > kenobi_get_maxsize())	// No room
 				cheats->cheat[cheat_selection].enabled = 0;
 		}
+		if(btns & PAD_BUTTON_X) {
+			kenobi_set_debug(kenobi_get_debug()^1);
+		}
 		if(btns & PAD_BUTTON_B) {
 			break;
 		}
-		while (PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_B|PAD_BUTTON_A))
+		while (PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X))
 			{ VIDEO_WaitVSync (); }
 	}
 }

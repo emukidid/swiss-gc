@@ -159,7 +159,6 @@ void kenobi_install_engine() {
 	}
 	CHEATS_START_PAUSED = isDebug ? CHEATS_TRUE : CHEATS_FALSE;
 	memset(CHEATS_LOCATION(size), 0, kenobi_get_maxsize());
-	// Fix cheats that want to jump to the old cheat engine location 0x800018A8 -> CHEATS_ENGINE+0xA8
 	print_gecko("Copying %i bytes of cheats to %08X\r\n", getEnabledCheatsSize(),(u32)CHEATS_LOCATION(size));
 	u32 *cheatsLocation = (u32*)CHEATS_LOCATION(size);
 	cheatsLocation[0] = 0x00D0C0DE;
@@ -171,8 +170,9 @@ void kenobi_install_engine() {
 		CheatEntry *cheat = &_cheats.cheat[i];
 		if(cheat->enabled) {
 			for(j = 0; j < cheat->num_codes; j++) {
+				// Copy & fix cheats that want to jump to the old cheat engine location 0x800018A8 -> CHEATS_ENGINE+0xA8
 				cheatsLocation[0] = cheat->codes[j][0];
-				cheatsLocation[1] = cheat->codes[j][1];
+				cheatsLocation[1] = cheat->codes[j][1] == 0x800018A8 ? (u32)(CHEATS_ENGINE+0xA8) : cheat->codes[j][1];
 				cheatsLocation+=2;
 			}
 		}
@@ -184,6 +184,10 @@ void kenobi_install_engine() {
 
 void kenobi_set_debug(int useDebug) {
 	isDebug = useDebug;
+}
+
+int kenobi_get_debug() {
+	return isDebug;
 }
 
 int kenobi_get_maxsize() {
