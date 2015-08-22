@@ -53,8 +53,6 @@ void kenobi_install_engine();
 // Copy the cheats to somewhere we know about
 void kenobi_set_cheats(u8 *buffer, u32 size);
 int kenobi_get_maxsize();
-void kenobi_set_debug(int useDebug);
-int kenobi_get_debug();
 void parseCheats(char *filecontents);
 int getEnabledCheatsSize(void);
 CheatEntries* getCheats();

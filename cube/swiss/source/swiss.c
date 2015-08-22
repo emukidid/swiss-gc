@@ -462,7 +462,7 @@ unsigned int load_app(int multiDol)
 	// Adjust top of memory
 	u32 top_of_main_ram = swissSettings.muteAudioStreaming ? 0x81800000 : DECODED_BUFFER_0;
 	// Steal even more if there's cheats!
-	if(getEnabledCheatsSize() > 0) {
+	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 		top_of_main_ram = WIIRD_ENGINE;
 	}
 
@@ -570,7 +570,7 @@ unsigned int load_app(int multiDol)
 	}
 	
 	// Patch OSReport to print out over USBGecko
-	if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
+	if(swissSettings.debugUSB && usb_isgeckoalive(1) && !swissSettings.wiirdDebug) {
 		Patch_Fwrite(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	
@@ -589,7 +589,7 @@ unsigned int load_app(int multiDol)
 	Patch_FontEnc(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	
 	// Cheats
-	if(getEnabledCheatsSize() > 0) {
+	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 		Patch_CheatsHook(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 
@@ -652,7 +652,7 @@ unsigned int load_app(int multiDol)
 	memset((void*)VAR_STREAM_START, 0, 0xA0);
 	print_gecko("Audio Streaming is %s\r\n",*(volatile unsigned int*)VAR_AS_ENABLED?"Enabled":"Disabled");
 
-	if(getEnabledCheatsSize() > 0) {
+	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 		kenobi_install_engine();
 	}
 		

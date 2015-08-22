@@ -374,7 +374,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 				patched += 1;
 		}
 				
-		if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
+		if(swissSettings.debugUSB && usb_isgeckoalive(1) && !swissSettings.wiirdDebug) {
 			patched += Patch_Fwrite(buffer, sizeToRead);
 		}
 		

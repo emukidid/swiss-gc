@@ -740,7 +740,7 @@ void DrawCheatsSelector(char *fileName) {
 		float multiplier = (float)getEnabledCheatsSize() / (float)kenobi_get_maxsize();
 		DrawSimpleBox( 33, 370, vmode->fbWidth-66, 20, 0, noColor, borderColor); 
 		DrawSimpleBox( 33, 370,	(int)((vmode->fbWidth-66)*multiplier), 20, 0, progressBarColor, noColor);
-		sprintf(txtbuffer, "WiiRD Debug %s", kenobi_get_debug() ? "Enabled":"Disabled");
+		sprintf(txtbuffer, "WiiRD Debug %s", swissSettings.wiirdDebug ? "Enabled":"Disabled");
 		WriteFontStyled(33, 395, txtbuffer, 0.8f, false, defaultColor);
 		WriteFontStyled(640/2, 440, "(A) Toggle Cheat - (X) WiiRD Debug - (B) Return", 0.9f, true, defaultColor);
 		DrawFrameFinish();
@@ -759,7 +759,7 @@ void DrawCheatsSelector(char *fileName) {
 				cheats->cheat[cheat_selection].enabled = 0;
 		}
 		if(btns & PAD_BUTTON_X) {
-			kenobi_set_debug(kenobi_get_debug()^1);
+			swissSettings.wiirdDebug ^=1;
 		}
 		if(btns & PAD_BUTTON_B) {
 			break;

@@ -15,13 +15,13 @@
 #include <math.h>
 #include <errno.h>
 #include <malloc.h>
+#include <ctype.h>
 #include "swiss.h"
 #include "main.h"
 #include "cheats.h"
 #include "patcher.h"
 
 static CheatEntries _cheats;
-static int isDebug = 0;
 
 void printCheats(void) {
 	int i = 0, j = 0;
@@ -72,7 +72,7 @@ int isValidCode(char *code) {
 }
 
 int containsXX(char *line) {
-	return (strlen(line)>=16 && tolower(line[15]) == 'x');
+	return (strlen(line)>=16 && tolower((int)line[15]) == 'x');
 }
 
 /** 
@@ -147,6 +147,7 @@ CheatEntries* getCheats() {
 
 // Installs the GeckoOS (kenobiGC) cheats engine and sets up variables/copies cheats
 void kenobi_install_engine() {
+	int isDebug = swissSettings.wiirdDebug;
 	// If high memory is in use, we'll use low, otherwise high.
 	u8 *ptr = isDebug ? kenobigc_dbg_bin : kenobigc_bin;
 	u32 size = isDebug ? kenobigc_dbg_bin_size : kenobigc_bin_size;
@@ -182,14 +183,6 @@ void kenobi_install_engine() {
 	ICInvalidateRange((void*)CHEATS_ENGINE, WIIRD_ENGINE_SPACE);
 }
 
-void kenobi_set_debug(int useDebug) {
-	isDebug = useDebug;
-}
-
-int kenobi_get_debug() {
-	return isDebug;
-}
-
 int kenobi_get_maxsize() {
-	return CHEATS_MAX_SIZE((isDebug ? kenobigc_dbg_bin_size : kenobigc_bin_size));
+	return CHEATS_MAX_SIZE((swissSettings.wiirdDebug ? kenobigc_dbg_bin_size : kenobigc_bin_size));
 }
