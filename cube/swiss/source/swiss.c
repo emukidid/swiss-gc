@@ -289,7 +289,8 @@ void drawFiles(file_handle** directory, int num_files) {
 	drawCurrentDevice();
 	int scrollBarHeight = 90+(FILES_PER_PAGE*20)+70;
 	int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
-	DrawVertScrollBar(vmode->fbWidth-25, 90, 16, scrollBarHeight, (float)((float)curSelection/(float)(num_files-1)),scrollBarTabHeight);
+	if(num_files > 0)
+		DrawVertScrollBar(vmode->fbWidth-25, 90, 16, scrollBarHeight, (float)((float)curSelection/(float)(num_files-1)),scrollBarTabHeight);
 	for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
 		populate_meta(&((*directory)[current_view_start]));
 		DrawFileBrowserButton(150, 90+(j*40), vmode->fbWidth-30, 90+(j*40)+40, 
