@@ -100,7 +100,7 @@ void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read) {
 	}
 	u32 *destu = (u32*)dest;
 	// Read however much we need to in this block
-	while(bytes_to_read > 4) {
+	while(bytes_to_read >= 4) {
 		*destu++ = exi_imm_read(4);
 		bytes_to_read-=4;
 	}
@@ -113,7 +113,7 @@ void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read) {
 
 	// Read out the rest from the SD as we've requested it anyway and can't have it hanging off the bus
 	int remainder = SECTOR_SIZE-bytesRead;
-	while(remainder>4) {
+	while(remainder>=4) {
 		exi_imm_read(4);
 		remainder-=4;
 	}
