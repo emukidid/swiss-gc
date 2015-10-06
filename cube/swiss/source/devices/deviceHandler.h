@@ -117,6 +117,19 @@ int  (*deviceHandler_dest_closeFile)(file_handle*);
 /* Shutdown the device */
 extern int (*deviceHandler_dest_deinit)();
 
+// Temporary device
+extern file_handle* deviceHandler_temp_initial;
+extern int (*deviceHandler_temp_init)(file_handle*);
+extern int (*deviceHandler_temp_readDir)(file_handle*, file_handle**, unsigned int);
+extern int (*deviceHandler_temp_readFile)(file_handle*, void*, unsigned int);
+extern int (*deviceHandler_temp_writeFile)(file_handle*, void*, unsigned int);
+extern int (*deviceHandler_temp_deleteFile)(file_handle*);
+extern int (*deviceHandler_temp_seekFile)(file_handle*, unsigned int, unsigned int);
+extern int (*deviceHandler_temp_setupFile)(file_handle*, file_handle*);
+int  (*deviceHandler_temp_closeFile)(file_handle*);
+extern int (*deviceHandler_temp_deinit)();
+
+
 extern void print_frag_list(int hasDisc2);
 
 #endif
