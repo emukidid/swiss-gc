@@ -34,7 +34,6 @@
 
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 #define SECTOR_SIZE 		512
-#define ATA_READ_CHUNK_SIZE	1
 
 typedef unsigned int u32;
 typedef unsigned short u16;
@@ -114,11 +113,11 @@ void ataWriteByte(u8 addr, u8 data)
 }
 
 // Reads up to 0xFFFF * 4 bytes of data (~255kb) from the hdd at the given offset
-void ata_read_blocks(u16 numSectors, u8 *dst) 
+void ata_read_buffer(u8 *dst) 
 {
 	u32 i = 0;
 	u32 *ptr = (u32*)dst;
-	u16 dwords = (numSectors<<7);
+	u16 dwords = 128;
 	// (31:29) 011b | (28:24) 10000b | (23:16) <num_words_LSB> | (15:8) <num_words_MSB> | (7:0) 00h (4 bytes)
 	exi_select();
 	exi_imm_write(0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8), 4);
@@ -143,7 +142,7 @@ void ata_read_blocks(u16 numSectors, u8 *dst)
 
 // Reads sectors from the specified lba, for the specified slot, 511 sectors at a time max for LBA48 drives
 // Returns 0 on success, -1 on failure.
-int _ataReadSectors(u32 lba, u16 numsectors, void *buffer)
+int _ataReadSector(u32 lba, void *buffer)
 {
 	u32 temp = 0;
   	
@@ -155,7 +154,7 @@ int _ataReadSectors(u32 lba, u16 numsectors, void *buffer)
 	// Non LBA48
 	if(!_ata48bit) {
 		ataWriteByte(ATA_REG_DEVICE, 0xE0 | (u8)((lba >> 24) & 0x0F));
-		ataWriteByte(ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));		// Sector count (Lo)
+		ataWriteByte(ATA_REG_SECCOUNT, 1);								// Sector count (Lo)
 		ataWriteByte(ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA 1
 		ataWriteByte(ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA 2
 		ataWriteByte(ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA 3
@@ -164,11 +163,11 @@ int _ataReadSectors(u32 lba, u16 numsectors, void *buffer)
 	// LBA48
 	else {
 		ataWriteByte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
-		ataWriteByte(ATA_REG_SECCOUNT, (u8)((numsectors>>8) & 0xFF));	// Sector count (Hi)
+		ataWriteByte(ATA_REG_SECCOUNT, 0);								// Sector count (Hi)
 		ataWriteByte(ATA_REG_LBALO, (u8)((lba>>24)& 0xFF));				// LBA 4
 		ataWriteByte(ATA_REG_LBAMID, 0);								// LBA 5
 		ataWriteByte(ATA_REG_LBAHI, 0);									// LBA 6
-		ataWriteByte(ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));		// Sector count (Lo)
+		ataWriteByte(ATA_REG_SECCOUNT, 1);								// Sector count (Lo)
 		ataWriteByte(ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA 1
 		ataWriteByte(ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA 2
 		ataWriteByte(ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA 3
@@ -188,7 +187,7 @@ int _ataReadSectors(u32 lba, u16 numsectors, void *buffer)
 	while(!(ataReadStatusReg() & ATA_SR_DRQ));
 	
 	// read data from drive
-	ata_read_blocks(numsectors, buffer);
+	ata_read_buffer(buffer);
 
 	// Wait for BSY to clear
 	temp = ataReadStatusReg();
@@ -210,7 +209,7 @@ void do_read(void *dst,u32 size, u32 offset, u32 sectorLba) {
 	// Read any half sector if we need to until we're aligned
 	if(offset % SECTOR_SIZE) {
 		u32 size_to_copy = MIN(size, SECTOR_SIZE-(offset%SECTOR_SIZE));
-		if(_ataReadSectors(lba, 1, sector)) {
+		if(_ataReadSector(lba, sector)) {
 			//*(u32*)0xCC003024 = 0;
 			*(u32*)dst = 0x13370003;
 			return;
@@ -220,34 +219,20 @@ void do_read(void *dst,u32 size, u32 offset, u32 sectorLba) {
 		dst += size_to_copy;
 		lba += 1;
 	}
-	// Read any whole blocks
-	if(size>>9) {
-		// Read in 255k blocks
-		while((size>>9) >= ATA_READ_CHUNK_SIZE) {
-			if(_ataReadSectors(lba, ATA_READ_CHUNK_SIZE, dst)) {
-				//*(u32*)0xCC003024 = 0;
-				*(u32*)dst = 0x13370004;
-				return;
-			}
-			size -= (ATA_READ_CHUNK_SIZE*SECTOR_SIZE);
-			dst += (ATA_READ_CHUNK_SIZE*SECTOR_SIZE);
-			lba += (ATA_READ_CHUNK_SIZE);
+	// Read any whole sectors
+	while(size >= 512) {
+		if(_ataReadSector(lba, dst)) {
+			//*(u32*)0xCC003024 = 0;
+			*(u32*)dst = 0x13370004;
+			return;
 		}
-		// Read remaining whole blocks
-		if(size>>9) {
-			if(_ataReadSectors(lba, (size>>9), dst)) {
-				//*(u32*)0xCC003024 = 0;
-				*(u32*)dst = 0x13370005;
-				return;
-			}
-			size -= ((size>>9)*SECTOR_SIZE);
-			dst += ((size>>9)*SECTOR_SIZE);
-			lba += (size>>9);
-		}
+		size -= SECTOR_SIZE;
+		dst += SECTOR_SIZE;
+		lba ++;
 	}
-	// Read the last block if there's any half block
+	// Read the last sector if there's any half sector
 	if(size) {
-		if(_ataReadSectors(lba, 1, sector)) {
+		if(_ataReadSector(lba, sector)) {
 			//*(u32*)0xCC003024 = 0;
 			*(u32*)dst = 0x13370006;
 			return;
