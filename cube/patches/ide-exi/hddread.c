@@ -92,6 +92,16 @@ u32 exi_imm_read()
 	return exi[exi_channel + 4];
 }
 
+void exi_dma_sync(void* data, int len, int mode)
+{
+	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
+
+	exi[exi_channel + 1] = (unsigned long)data;
+	exi[exi_channel + 2] = len;
+	exi[exi_channel + 3] = (mode << 2) | 3;
+	while (exi[exi_channel + 3] & 1);	// Yeah.
+}
+
 // Returns 8 bits from the ATA Status register
 u8 ataReadStatusReg()
 {
@@ -115,6 +125,7 @@ void ataWriteByte(u8 addr, u8 data)
 // Reads up to 0xFFFF * 4 bytes of data (~255kb) from the hdd at the given offset
 void ata_read_buffer(u8 *dst) 
 {
+	u8 alignedBuf[512] __attribute__((aligned(32)));
 	u32 i = 0;
 	u32 *ptr = (u32*)dst;
 	u16 dwords = 128;
@@ -133,8 +144,17 @@ void ata_read_buffer(u8 *dst)
 		exi_imm_read();
 	}
 	else {	// v2, no deselect or extra read required.
-		for(i = 0; i < dwords; i++) {
-			*ptr++ = exi_imm_read();
+		//for(i = 0; i < dwords; i++) {
+		//	*ptr++ = exi_imm_read();
+		//}
+		u32 *ptr = (u32*)dst;
+		if(((u32)dst)%32) {
+			ptr = (u32*)&alignedBuf;
+		}
+		dcache_flush_icache_inv(ptr, 512);
+		exi_dma_sync(ptr, 512, EXI_READ);
+		if(((u32)dst)%32) {
+			mymemcpy(dst, ptr, 512);
 		}
 	}
 	exi_deselect();
