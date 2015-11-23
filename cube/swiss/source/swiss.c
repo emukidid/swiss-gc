@@ -456,7 +456,7 @@ unsigned int load_app(int multiDol)
 	DrawFrameFinish();
 	
 	// Don't needlessly apply audio streaming if the game doesn't want it
-	if(!GCMDisk.AudioStreaming || curDevice == WKF) {
+	if(!GCMDisk.AudioStreaming || curDevice == WKF || curDevice == DVD_DISC) {
 		swissSettings.muteAudioStreaming = 1;
 	}
 	
