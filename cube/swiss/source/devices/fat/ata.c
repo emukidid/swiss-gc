@@ -102,10 +102,10 @@ static inline u16 ataReadu16(int chn)
 }
 
 
-// Reads up to 0xFFFF * 4 bytes of data (255kb) from the hdd at the given offset
-static inline void ata_read_blocks(int chn, u16 numSectors, u32 *dst) 
+// Reads 512 bytes
+static inline void ata_read_buffer(int chn, u32 *dst) 
 {
-	u16 dwords = (numSectors<<7);
+	u16 dwords = 128;	// 128 * 4 = 512 bytes
 	// (31:29) 011b | (28:24) 10000b | (23:16) <num_words_LSB> | (15:8) <num_words_MSB> | (7:0) 00h (4 bytes)
 	u32 dat = 0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8);
 	EXI_Lock(chn, 0, NULL);
@@ -133,7 +133,19 @@ static inline void ata_read_blocks(int chn, u16 numSectors, u32 *dst)
 	}
 	else {
 		// IDE_EXI_V2, no need to select / deselect all the time
-		EXI_ImmEx(chn,dst,numSectors*512,EXI_READ);
+		u32 *ptr = dst;
+		if(((u32)dst)%32) {
+			ptr = (u32*)memalign(32, 512);
+		}
+		
+		DCInvalidateRange(ptr,512);
+		EXI_Dma(chn,ptr,512,EXI_READ,NULL);
+		EXI_Sync(chn);
+		if(((u32)dst)%32) {
+			memcpy(dst, ptr, 512);
+			free(ptr);
+		}
+		//EXI_ImmEx(chn,dst,512,EXI_READ);
 		EXI_Deselect(chn);
 		EXI_Unlock(chn);
 	}
@@ -355,7 +367,7 @@ int ataUnlock(int chn, int useMaster, char *password, int command)
 
 // Reads sectors from the specified lba, for the specified slot
 // Returns 0 on success, -1 on failure.
-int _ataReadSectors(int chn, u64 lba, u16 numsectors, u32 *Buffer)
+int _ataReadSector(int chn, u64 lba, u32 *Buffer)
 {
 	u32 temp = 0;
   	
@@ -374,17 +386,17 @@ int _ataReadSectors(int chn, u64 lba, u16 numsectors, u32 *Buffer)
   		
 	// check if drive supports LBA 48-bit
 	if(ataDriveInfo.lba48Support) {  		
-		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)((numsectors>>8) & 0xFF));	// Sector count (Hi)
+		ataWriteByte(chn, ATA_REG_SECCOUNT, 0);								// Sector count (Hi)
 		ataWriteByte(chn, ATA_REG_LBALO, (u8)((lba>>24)& 0xFF));			// LBA 4
 		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>32) & 0xFF));			// LBA 5
 		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>40) & 0xFF));			// LBA 6
-		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));		// Sector count (Lo)
+		ataWriteByte(chn, ATA_REG_SECCOUNT, 1);								// Sector count (Lo)
 		ataWriteByte(chn, ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA 1
   		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA 2
   		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA 3
 	}
 	else {
-		ataWriteByte(chn, ATA_REG_SECCOUNT, (u8)(numsectors & 0xFF));		// Sector count
+		ataWriteByte(chn, ATA_REG_SECCOUNT, 1);								// Sector count
 		ataWriteByte(chn, ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA Lo
   		ataWriteByte(chn, ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA Mid
   		ataWriteByte(chn, ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA Hi
@@ -406,7 +418,7 @@ int _ataReadSectors(int chn, u64 lba, u16 numsectors, u32 *Buffer)
 	while(!(ataReadStatusReg(chn) & ATA_SR_DRQ));
 	
 	// read data from drive
-	ata_read_blocks(chn, numsectors, Buffer);
+	ata_read_buffer(chn, Buffer);
 
 	temp = ataReadStatusReg(chn);
 	// If the error bit was set, fail.
@@ -503,26 +515,16 @@ int _ataWriteSectors(int chn, u64 lba, u16 numsectors, u32 *Buffer)
 int ataReadSectors(int chn, u64 sector, unsigned int numSectors, unsigned char *dest) 
 {
 	int ret = 0;
-	// TODO: Confirm if this is an issue in the v1 VHDL or v2 as well.
-	int sectorchunks = (_ideexi_version == IDE_EXI_V1) ? 1 : 1;
-	while(numSectors > sectorchunks) {
+	while(numSectors) {
 		//print_gecko("Reading, sec %08X, numSectors %i, dest %08X ..\r\n", (u32)(sector&0xFFFFFFFF),numSectors, (u32)dest);
-		if((ret=_ataReadSectors(chn,sector,sectorchunks,(u32*)dest))) {
+		if((ret=_ataReadSector(chn,sector,(u32*)dest))) {
 			print_gecko("(%08X) Failed to read!..\r\n", ret);
 			return -1;
 		}
 		//print_hdd_sector((u32*)dest);
-		dest+=(sectorchunks*512);
-		sector+=sectorchunks;
-		numSectors-=sectorchunks;
-	}
-	if(numSectors) {
-		//print_gecko("Reading, sec %08X, numSectors %i, dest %08X ..\r\n", (u32)(sector&0xFFFFFFFF),numSectors, (u32)dest);
-		if((ret=_ataReadSectors(chn,sector,numSectors,(u32*)dest))) {
-			print_gecko("(%08X) Failed to read!..\r\n", ret);
-			return -1;
-		}
-		//print_hdd_sector((u32*)dest);
+		dest+=512;
+		sector++;
+		numSectors--;
 	}
 	return 0;
 }
