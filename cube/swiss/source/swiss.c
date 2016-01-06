@@ -48,7 +48,8 @@ DiskHeader GCMDisk;      //Gamecube Disc Header struct
 char IPLInfo[256] __attribute__((aligned(32)));
 GXRModeObj *newmode = NULL;
 char txtbuffer[2048];           //temporary text buffer
-file_handle curFile;     //filedescriptor for current file
+file_handle curFile;    //filedescriptor for current file
+file_handle curDir;     //filedescriptor for current directory
 int SDHCCard = 0; //0 == SDHC, 1 == normal SD
 int curDevice = 0;  //SD_CARD or DVD_DISC or IDEEXI or WODE
 int curCopyDevice = 0;  //SD_CARD or DVD_DISC or IDEEXI or WODE
@@ -287,16 +288,22 @@ void drawFiles(file_handle** directory, int num_files) {
 	current_view_end = MIN(num_files, MAX(curSelection+FILES_PER_PAGE/2,FILES_PER_PAGE));
 	doBackdrop();
 	drawCurrentDevice();
-	int scrollBarHeight = 90+(FILES_PER_PAGE*20)+70;
+	int fileListBase = 105;
+	int scrollBarHeight = fileListBase+(FILES_PER_PAGE*20)+50;
 	int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
-	if(num_files > 0)
-		DrawVertScrollBar(vmode->fbWidth-25, 90, 16, scrollBarHeight, (float)((float)curSelection/(float)(num_files-1)),scrollBarTabHeight);
-	for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
-		populate_meta(&((*directory)[current_view_start]));
-		DrawFileBrowserButton(150, 90+(j*40), vmode->fbWidth-30, 90+(j*40)+40, 
-								getRelativeName((*directory)[current_view_start].name),
-								&((*directory)[current_view_start]), 
-								(current_view_start == curSelection) ? B_SELECTED:B_NOSELECT,-1);
+	if(num_files > 0) {
+		// Draw which directory we're in
+		sprintf(txtbuffer, "%s", &curFile.name[0]);
+		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, ((vmode->fbWidth-150)-20), .85);
+		WriteFontStyled(150, 85, txtbuffer, scale, false, defaultColor);
+		DrawVertScrollBar(vmode->fbWidth-25, fileListBase, 16, scrollBarHeight, (float)((float)curSelection/(float)(num_files-1)),scrollBarTabHeight);
+		for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
+			populate_meta(&((*directory)[current_view_start]));
+			DrawFileBrowserButton(150, fileListBase+(j*40), vmode->fbWidth-30, fileListBase+(j*40)+40, 
+									getRelativeName((*directory)[current_view_start].name),
+									&((*directory)[current_view_start]), 
+									(current_view_start == curSelection) ? B_SELECTED:B_NOSELECT,-1);
+		}
 	}
 	DrawFrameFinish();
 }
@@ -337,14 +344,17 @@ void renderFileBrowser(file_handle** directory, int num_files)
 				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_FILE){
+				memcpy(&curDir, &curFile, sizeof(file_handle));
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
 				manage_file();
+				// If we return from doing something with a file, refresh the device in the same dir we were at
+				memcpy(&curFile, &curDir, sizeof(file_handle));
+				needsRefresh=1;
 			}
 			return;
 		}
 		
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B)	{
-			memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
 			curMenuLocation=ON_OPTIONS;
 			return;
 		}

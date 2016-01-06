@@ -297,7 +297,6 @@ void free_files() {
 
 void main_loop()
 { 
-	file_handle curDir;
 	
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
 	// We don't care if a subsequent device is "default"

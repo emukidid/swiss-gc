@@ -14,6 +14,7 @@
 #include <debug.h>
 #include <ogc/exi.h>
 #include <ata.h>
+#include <malloc.h>
 #include "main.h"
 #include "swiss.h"
 #include "gui/FrameBufferMagic.h"

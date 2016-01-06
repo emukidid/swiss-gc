@@ -11,6 +11,7 @@
 #include <ogc/machine/processor.h>
 #include <sys/dir.h>
 #include <sys/statvfs.h>
+#include "swiss.h"
 #include "deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
@@ -25,7 +26,7 @@
 #define OFFSET_SET    1
 
 file_handle initial_DVD =
-	{ "\\",     // directory
+	{ "dvd:/",     // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
 	  0,        // size
@@ -385,6 +386,7 @@ int deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 
 	// Multi-Game disc audio streaming setup
 	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
+		deviceHandler_seekFile(file, 0, DEVICE_HANDLER_SEEK_SET);
 		deviceHandler_readFile(file,(unsigned char*)0x80000000,32);
 		char streaming = *(char*)0x80000008;
 		if(streaming && !isXenoGC) {

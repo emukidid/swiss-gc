@@ -331,3 +331,8 @@ float GetTextScaleToFitInWidth(char *string, int width) {
 	return width>strWidth ? 1.0f : (float)((float)width/(float)strWidth);
 }
 
+float GetTextScaleToFitInWidthWithMax(char *string, int width, float max) {
+	float scale = GetTextScaleToFitInWidth(string, width);
+	return max < scale ? max:scale;
+}
+

@@ -23,6 +23,7 @@ extern int current_view_end;
 extern char* _menu_array[];
 extern char *videoStr;
 extern file_handle curFile;
+extern file_handle curDir;
 extern int GC_SD_CHANNEL;
 extern u32 GC_SD_SPEED;
 extern int SDHCCard;

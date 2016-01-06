@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ogc/exi.h>
-#include <exi.h>
+#include "exi.h"
 
 static void* exi_last_addr;
 static int exi_last_len;
