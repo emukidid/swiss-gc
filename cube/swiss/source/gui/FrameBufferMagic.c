@@ -414,7 +414,8 @@ void DrawMessageBox(int type, char *message)
 	
 	DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor); 
 
-	char *tok = strtok(message,"\n");
+	sprintf(txtbuffer, "%s", message);
+	char *tok = strtok(txtbuffer,"\n");
 	while(tok != NULL) {
 		WriteFontStyled(640/2, middleY, tok, 1.0f, true, defaultColor);
 		tok = strtok(NULL,"\n");

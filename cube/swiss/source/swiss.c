@@ -1152,7 +1152,7 @@ void load_file()
 			}
 			if(!(endsWith(fileName,".iso") || endsWith(fileName,".gcm"))) {
 				DrawFrameStart();
-				DrawMessageBox(D_WARN, "Unknown File Type");
+				DrawMessageBox(D_WARN, "Unknown File Type\nEnable file management to manage this file.");
 				DrawFrameFinish();
 				sleep(1);
 				return;
@@ -1313,8 +1313,8 @@ void draw_game_info() {
 			if(curFile.meta->regionTexId != -1 && curFile.meta->regionTexId != 0)
 				DrawImage(curFile.meta->regionTexId, 450, 262, 30,20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 
-			// TODO why is this tok failing after 1 when I return here
-			char * tok = strtok (&curFile.meta->description[0],"\n");
+			printf(txtbuffer, "%s", &curFile.meta->description[0]);
+			char * tok = strtok (txtbuffer,"\n");
 			int line = 0;
 			while (tok != NULL)	{
 				float scale = GetTextScaleToFitInWidth(tok,(vmode->fbWidth-78)-75);
