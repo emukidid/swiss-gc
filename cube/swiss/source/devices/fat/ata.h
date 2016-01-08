@@ -110,7 +110,7 @@ int ataReadSectors(int chn, u64 sector, unsigned int numSectors, unsigned char *
 int ataWriteSectors(int chn, u64 sector,unsigned int numSectors, unsigned char *src);
 bool ataIsInserted(int chn);
 int ataShutdown(int chn);
-
+int ide_exi_inserted(int chn);
 // Swap defines
 #define __lhbrx(base,index)			\
 ({	register u16 res;				\

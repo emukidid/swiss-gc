@@ -67,21 +67,21 @@ char *cardError(int error_code) {
 }
 
 int initialize_card(int slot) {
-  int slot_error = CARD_ERROR_READY, i = 0;
+	int slot_error = CARD_ERROR_READY, i = 0;
   
-  if(!card_init[slot]) {
-    /* Pass company identifier and number */
-    CARD_Init ("SWIE", "SS");
-  	if(!sys_area) sys_area = memalign(32,CARD_WORKAREA);
-      
-    /* Lets try 50 times to mount it. Sometimes it takes a while */
-   	for(i = 0; i<50; i++) {
-   		slot_error = CARD_Mount (slot, sys_area, card_removed_cb);
-   		if(slot_error == CARD_ERROR_READY) {
-        CARD_GetSectorSize (slot, &sector_size);
-     		break;
-   		}
-   	}
+	if(!card_init[slot]) {
+		/* Pass company identifier and number */
+		CARD_Init ("SWIE", "SS");
+		if(!sys_area) sys_area = memalign(32,CARD_WORKAREA);
+		  
+		/* Lets try 50 times to mount it. Sometimes it takes a while */
+		for(i = 0; i<50; i++) {
+			slot_error = CARD_Mount (slot, sys_area, card_removed_cb);
+			if(slot_error == CARD_ERROR_READY) {
+			CARD_GetSectorSize (slot, &sector_size);
+				break;
+			}
+		}
 	}
 	card_init[slot] = slot_error == CARD_ERROR_READY ? 1 : 0;
 	return slot_error;

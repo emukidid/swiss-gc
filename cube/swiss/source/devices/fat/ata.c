@@ -16,6 +16,7 @@
 #include <ata.h>
 #include <malloc.h>
 #include "main.h"
+#include "exi.h"
 #include "swiss.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
@@ -174,11 +175,15 @@ void print_hdd_sector(u32 *dest) {
 	}
 }
 
+// works for V2 IDE-EXI only
+int ide_exi_inserted(int chn) {
+	return exi_get_id(chn,EXI_DEVICE_0) == EXI_IDEEXIV2_ID;
+}
+
 int _ideExiVersion(int chn) {
-	u32 cid = 0;
-	EXI_GetID(chn,EXI_DEVICE_0,&cid);
+	u32 cid = exi_get_id(chn,EXI_DEVICE_0);
 	print_gecko("IDE-EXI ID: %08X\r\n",cid);
-	if(cid==0x49444532) {
+	if(cid==EXI_IDEEXIV2_ID) {
 		print_gecko("IDE-EXI v2 detected\r\n");
 		return IDE_EXI_V2;
 	}

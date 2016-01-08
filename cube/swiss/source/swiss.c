@@ -10,6 +10,7 @@
 #include <ogcsys.h>		/*** Needed for console support ***/
 #include <ogc/color.h>
 #include <ogc/exi.h>
+#include <sdcard/gcsd.h>
 #include <ogc/usbgecko.h>
 #include <ogc/video_types.h>
 #include <sdcard/card_cmn.h>
@@ -41,6 +42,7 @@
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
+#include "devices/fat/ata.h"
 #include "devices/filemeta.h"
 #include "dolparameters.h"
 
@@ -1559,8 +1561,44 @@ void select_copy_device()
 	}
 }
 
+int deviceAvailable(int dev) {
+	if(curDevice==DVD_DISC) {
+		return swissSettings.hasDVDDrive;
+	}
+	else if(curDevice==SD_CARD) {
+		const DISC_INTERFACE* carda = &__io_gcsda;
+		const DISC_INTERFACE* cardb = &__io_gcsdb;
+		return carda->isInserted() || cardb->isInserted();
+	}
+	else if(curDevice==IDEEXI) {
+		return ide_exi_inserted(0) || ide_exi_inserted(1) ;
+	}
+	else if(curDevice==QOOB_FLASH) {
+		return 0;	// Hidden by default, add auto detect at some point
+	}
+	else if(curDevice==WODE) {
+		return 0;	// Hidden by default, add auto detect at some point
+	}
+	else if(curDevice==MEMCARD) {
+		return (initialize_card(0)==CARD_ERROR_READY) || (initialize_card(1)==CARD_ERROR_READY);
+	}
+	else if(curDevice==WKF) {
+		return swissSettings.hasDVDDrive && (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF);
+	}
+	else if(curDevice==USBGECKO) {
+		return usb_isgeckoalive(1);
+	}
+	else if(curDevice==SAMBA) {
+		return exi_bba_exists();
+	}
+	else if(curDevice==SYS) {
+		return 1;
+	}
+	return 0;
+}
+
 void select_device()
-{  
+{
 	if(is_httpd_in_use()) {
 		doBackdrop();
 		DrawMessageBox(D_INFO,"Can't load device while HTTP is processing!");
@@ -1572,75 +1610,79 @@ void select_device()
 	int slot = 1;
 	if(!swissSettings.defaultDevice) {
 		dvdDiscTypeStr = NotInitStr;
-		int inAdvanced = 0;
-		int inAdvancedPos = 0;
+		int inAdvanced = 0, showAllDevices = 0, inAdvancedPos = 0;
 		while(1) {
 			doBackdrop();
-			DrawEmptyBox(20,190, vmode->fbWidth-20, 355, COLOR_BLACK);
+			DrawEmptyBox(20,190, vmode->fbWidth-20, 410, COLOR_BLACK);
 			WriteFontStyled(640/2, 195, "Device Selection", 1.0f, true, defaultColor);		
 			if(inAdvanced) {
 				// Draw slot / speed selection if advanced menu is showing.
-				DrawEmptyBox(vmode->fbWidth-170, 370, vmode->fbWidth-20, 405, COLOR_BLACK);
-				WriteFontStyled(vmode->fbWidth-165, 370, slot ? "Slot: B":"Slot: A", 0.65f, false, !inAdvancedPos ? defaultColor:deSelectedColor);
-				WriteFontStyled(vmode->fbWidth-165, 385, swissSettings.exiSpeed ? "Speed: Fast":"Speed: Compatible", 0.65f, false, inAdvancedPos ? defaultColor:deSelectedColor);
+				WriteFontStyled(vmode->fbWidth-160, 370, slot ? "Slot: B":"Slot: A", 0.65f, false, !inAdvancedPos ? defaultColor:deSelectedColor);
+				WriteFontStyled(vmode->fbWidth-160, 385, swissSettings.exiSpeed ? "Speed: Fast":"Speed: Compatible", 0.65f, false, inAdvancedPos ? defaultColor:deSelectedColor);
 			}
 			if(curDevice==DVD_DISC) {
 				DrawImage(TEX_GCDVDSMALL, 640/2, 230, 80, 79, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-				WriteFontStyled(640/2, 330, "DVD Disc (GCM, ISO9660, MultiGame)", 0.85f, true, defaultColor);
+				WriteFontStyled(640/2, 330, "DVD", 0.85f, true, defaultColor);
+				WriteFontStyled(640/2, 350, "Supported File System(s): GCM, ISO 9660, Multi-Game", 0.65f, true, defaultColor);
 			}
 			else if(curDevice==SD_CARD) {
 				DrawImage(TEX_SDSMALL, 640/2, 230, 60, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "SD Card via SD Gecko", 0.85f, true, defaultColor);
-				WriteFontStyled(vmode->fbWidth-120, 345, "(X) Advanced", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
+				WriteFontStyled(640/2, 350, "Supported File System(s): FAT16, FAT32", 0.65f, true, defaultColor);
+				WriteFontStyled(vmode->fbWidth-190, 400, "(X) Advanced Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
 			}
 			else if(curDevice==IDEEXI) {
 				DrawImage(TEX_HDD, 640/2, 230, 80, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "IDE HDD via IDE-EXI", 0.85f, true, defaultColor);
-				WriteFontStyled(vmode->fbWidth-120, 345, "(X) Advanced", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
+				WriteFontStyled(640/2, 350, "Supported File System(s): FAT16, FAT32", 0.65f, true, defaultColor);
+				WriteFontStyled(vmode->fbWidth-190, 400, "(X) Advanced Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
 			}
 			else if(curDevice==QOOB_FLASH) {
 				DrawImage(TEX_QOOB, 640/2, 230, 70, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-				WriteFontStyled(640/2, 330, "Qoob PRO Flash", 0.85f, true, defaultColor);
+				WriteFontStyled(640/2, 330, "Qoob PRO", 0.85f, true, defaultColor);
+				WriteFontStyled(640/2, 350, "Supported File System(s): QOOB Flash", 0.65f, true, defaultColor);
 			}
 			else if(curDevice==WODE) {
 				DrawImage(TEX_WODEIMG, 640/2, 230, 146, 72, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "WODE Jukebox", 0.85f, true, defaultColor);
+				WriteFontStyled(640/2, 350, "Supported File System(s): FAT32, NTFS, EXT2/3, HPFS", 0.65f, true, defaultColor);
 			}
 			else if(curDevice==MEMCARD) {
 				DrawImage(TEX_MEMCARD, 640/2, 230, 107, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "Memory Card", 0.85f, true, defaultColor);
-				WriteFontStyled(vmode->fbWidth-120, 345, "(X) Advanced", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
+				WriteFontStyled(vmode->fbWidth-190, 400, "(X) Advanced Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
 			}
 			else if(curDevice==WKF) {
 				DrawImage(TEX_WIIKEY, 640/2, 230, 102, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "Wiikey / Wasp Fusion", 0.85f, true, defaultColor);
+				WriteFontStyled(640/2, 350, "Supported File System(s): FAT16, FAT32", 0.65f, true, defaultColor);
 			}
 			else if(curDevice==USBGECKO) {
 				DrawImage(TEX_USBGECKO, 640/2, 230, 129, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "USB Gecko (req. PC app)", 0.85f, true, defaultColor);
+				WriteFontStyled(640/2, 350, "Slot B only", 0.65f, true, defaultColor);
 			}
 			else if(curDevice==SAMBA) {
 				DrawImage(TEX_SAMBA, 640/2, 230, 160, 85, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-				WriteFontStyled(640/2, 330, "Samba", 0.85f, true, defaultColor);
+				WriteFontStyled(640/2, 330, "Samba via BBA", 0.85f, true, defaultColor);
 			}
 			else if(curDevice==SYS) {
 				DrawImage(TEX_SYSTEM, 640/2, 230, 160, 85, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 				WriteFontStyled(640/2, 330, "System", 0.85f, true, defaultColor);
 			}
-			if(curDevice != 9) {
-				WriteFont(520, 270, "->");
-			}
-			if(curDevice != 0) {
-				WriteFont(100, 270, "<-");
-			}
+			WriteFont(520, 270, "->");
+			WriteFont(100, 270, "<-");
+			WriteFontStyled(20, 400, "(Z) Show all devices", 0.65f, false, showAllDevices ? defaultColor:deSelectedColor);
 			DrawFrameFinish();
-			while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
-					&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)
-					&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_X)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) )
+			while (!(PAD_ButtonsHeld(0) & 
+				(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A
+				|PAD_BUTTON_X|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_TRIGGER_Z) ))
 				{ VIDEO_WaitVSync (); }
 			u16 btns = PAD_ButtonsHeld(0);
 			if(btns & PAD_BUTTON_X && ((curDevice == SD_CARD) || (curDevice == IDEEXI) ||(curDevice == MEMCARD)))
 				inAdvanced ^= 1;
+			if(btns & PAD_TRIGGER_Z)
+				showAllDevices ^= 1;
 			if(inAdvanced) {
 				if((btns & PAD_BUTTON_DOWN) || (btns & PAD_BUTTON_UP)) {
 					inAdvancedPos = inAdvancedPos + ((btns & PAD_BUTTON_DOWN) ? 1:-1);
@@ -1657,10 +1699,24 @@ void select_device()
 				}
 			}
 			else {
-				if((btns & PAD_BUTTON_RIGHT) && curDevice < 9)
-					curDevice++;
-				if((btns & PAD_BUTTON_LEFT) && curDevice > 0)
-					curDevice--;
+				if(btns & PAD_BUTTON_RIGHT) {
+					curDevice = curDevice < 9 ? curDevice+1 : 0;
+					while(!showAllDevices && !deviceAvailable(curDevice)) {
+						if(curDevice == 9)
+							curDevice = 0;
+						else
+							curDevice ++;
+					}
+				}
+				if(btns & PAD_BUTTON_LEFT) {
+					curDevice = curDevice > 0 ? curDevice-1 : 9;
+					while(!showAllDevices && !deviceAvailable(curDevice)) {
+						if(curDevice == 0)
+							curDevice = 9;
+						else
+							curDevice --;
+					}
+				}
 			}
 			if(btns & PAD_BUTTON_A) {
 				if(!inAdvanced)
@@ -1671,9 +1727,9 @@ void select_device()
 			if(btns & PAD_BUTTON_B) {
 				return;
 			}
-			while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
-					&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) 
-					&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) ))
+			while ((PAD_ButtonsHeld(0) & 
+				(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A
+				|PAD_BUTTON_X|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_TRIGGER_Z) ))
 				{ VIDEO_WaitVSync (); }
 		}
 		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }

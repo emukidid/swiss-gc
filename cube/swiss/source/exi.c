@@ -124,11 +124,12 @@ void ipl_set_config(unsigned char c)
 
 int exi_bba_exists()
 {
-	u32 cid = 0;
-	EXI_GetID(EXI_CHANNEL_0,EXI_DEVICE_2,&cid);
+	return exi_get_id(EXI_CHANNEL_0,EXI_DEVICE_2) == EXI_BBA_ID;
+}
 
-	if(cid==0x04020200) {
-		return 1;
-	}
-	return 0;
+unsigned int exi_get_id(int chn, int dev) 
+{
+	u32 cid = 0;
+	EXI_GetID(chn,dev,&cid);
+	return cid;
 }
