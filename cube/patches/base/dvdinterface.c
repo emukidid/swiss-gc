@@ -19,6 +19,16 @@
 
 #define AGGRESSIVE_INT 1
 
+typedef struct {
+	unsigned long l, u;
+} tb_t;
+
+#define mftb(rval) ({unsigned long u; do { \
+	 asm volatile ("mftbu %0" : "=r" (u)); \
+	 asm volatile ("mftb %0" : "=r" ((rval)->l)); \
+	 asm volatile ("mftbu %0" : "=r" ((rval)->u)); \
+	 } while(u != ((rval)->u)); })
+
 //int usb_sendbuffer_safe(const void *buffer,int size);
 
 typedef unsigned int u32;
@@ -58,11 +68,22 @@ void DIUpdateRegisters() {
 	if(*(u32*)VAR_FAKE_IRQ_SET) {
 		return;
 	}
-
+	u32 diOpCompleted = 0;
+	int discChanging = *(u32*)VAR_DISC_CHANGING;
+	
+	if(discChanging == 1) {
+		*(u32*)VAR_DISC_CHANGING = 2;
+		
+		if(*(u32*)VAR_CUR_DISC_LBA == *(u32*)VAR_DISC_1_LBA)
+			*(u32*)VAR_CUR_DISC_LBA = *(u32*)VAR_DISC_2_LBA;
+		else
+			*(u32*)VAR_CUR_DISC_LBA = *(u32*)VAR_DISC_1_LBA;
+		mftb((tb_t*)VAR_TIMER_START);
+	}
+	
 	// If we have something, IMM or DMA command
-	if(dvd[DI_CR] & 1)
+	if((dvd[DI_CR] & 1))
 	{
-		u32 diOpCompleted = 0;
 
 		u32 DIcommand = dvd[DI_CMD]>>24;
 		switch( DIcommand )
@@ -130,16 +151,13 @@ void DIUpdateRegisters() {
 				diOpCompleted = 1;
 				break;
 			case 0xE0:	// Get error status
-				dvd[DI_IMM] = 0;
+				dvd[DI_IMM] = 0;	// All OK
 				diOpCompleted = 1;
 				break;
 			case 0xE3:	// Stop motor
-				//usb_sendbuffer_safe("0xE3\r\n",6);
-				// Swap ISO here
-				if(*(u32*)VAR_CUR_DISC_LBA == *(u32*)VAR_DISC_1_LBA)
-					*(u32*)VAR_CUR_DISC_LBA = *(u32*)VAR_DISC_2_LBA;
-				else
-					*(u32*)VAR_CUR_DISC_LBA = *(u32*)VAR_DISC_1_LBA;
+				if(!discChanging) {
+					*(u32*)VAR_DISC_CHANGING = 1;	// Lid is open
+				}
 				diOpCompleted = 1;
 				break;
 			case 0xA8:	// Read!
@@ -151,13 +169,13 @@ void DIUpdateRegisters() {
 					u32 dst	= dvd[DI_DMAADDR];
 					u32 len	= dvd[DI_DMALEN];
 					u32 offset	= dvd[DI_LBA] << 2;
-					
+
 					// The only time we readComplete=1 is when reading the arguments for 
 					// execD, since interrupts are off after this point and our handler isn't called again.
 					int readComplete = *(u32*)VAR_LAST_OFFSET == *(u32*)VAR_EXECD_OFFSET;
 					*(u32*)VAR_LAST_OFFSET = offset;
 
-					if(offset == *(u32*)VAR_EXECD_OFFSET)
+					if(offset && (offset == *(u32*)VAR_EXECD_OFFSET))
 					{
 						//execD, jump to our own handler
 						*(u32*)dst = branch((u32)appldr_start, dst);
@@ -185,12 +203,24 @@ void DIUpdateRegisters() {
 			} 
 				break;
 		}
-		if(diOpCompleted == 1) {
-			// Keep mask on SR but also set our TC INT to indicate operation complete
-			dvd[DI_SR] |= 0x10;
-			dvd[DI_CR] &= 2;
-			*(u32*)VAR_FAKE_IRQ_SET = 1;
-			trigger_dvd_interrupt();
+	}
+	// We're faking lid open, end it here.
+	if(discChanging == 2) {
+		tb_t* start = (tb_t*)VAR_TIMER_START;
+		tb_t end;
+		mftb(&end);
+		u32 diff = tb_diff_usec(&end, start);
+		if(diff > 2000000) {	//~2 sec
+			*(u32*)VAR_DISC_CHANGING = 0;
+			diOpCompleted = 1;
 		}
+	}
+	
+	if(diOpCompleted == 1) {
+		// Keep mask on SR but also set our TC INT to indicate operation complete
+		dvd[DI_SR] |= 0x10;
+		dvd[DI_CR] &= 2;
+		*(u32*)VAR_FAKE_IRQ_SET = 1;
+		trigger_dvd_interrupt();
 	}
 }

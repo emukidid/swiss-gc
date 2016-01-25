@@ -12,8 +12,11 @@
 #include "asm.h"
 .set VAR_AREA,			0x8000
 .set VAR_PATCHES_BASE,	0x2D00	# Patches get copied to below this area.
-.set VAR_FRAG_SIZE,		0x1E0	# Size of frag array in bytes
-.set VAR_FRAG_LIST,		0x2D00	# 0x1E0 of fragments (40 frags max) (u32 sector, u32 size, u32 rawsector)
+.set VAR_FRAG_SIZE,		0x1C8	# Size of frag array in bytes
+.set VAR_FRAG_LIST,		0x2D00	# 0x1C8 of fragments (38 frags max) (u32 offset, u32 size, u32 rawsector)
+.set VAR_TIMER_START,	0x2EC8	# Use this as a timer start (tbu,tb)
+.set VAR_DISC_CHANGING,	0x2ED0	# Are we changing discs?
+.set VAR_SPARE,			0x2ED4	########## SPARE until 0x2EE0
 .set VAR_LAST_OFFSET,	0x2EE0	# The last offset we read from
 .set VAR_READS_IN_AS,	0x2EE4	# How many times have we tried to read while streaming is on?
 .set VAR_AS_ENABLED,	0x2EE8	# Is Audio streaming enabled by the user?
@@ -71,8 +74,11 @@
 
 #define VAR_AREA			(0x80000000)
 #define VAR_PATCHES_BASE	(VAR_AREA+0x2D00)	// Patches get copied to below this area.
-#define VAR_FRAG_SIZE		(0x1E0)				// Size of frag array in bytes
-#define VAR_FRAG_LIST		(VAR_AREA+0x2D00)	// 0x1E0 of fragments (40 frags max) (u32 sector, u32 size, u32 rawsector)
+#define VAR_FRAG_SIZE		(0x1C8)				// Size of frag array in bytes
+#define VAR_FRAG_LIST		(VAR_AREA+0x2D00)	// 0x1C8 of fragments (40 frags max) (u32 offset, u32 size, u32 rawsector)
+#define VAR_TIMER_START		(VAR_AREA+0x2EC8)	// Use this as a timer start (tbu,tb)
+#define VAR_DISC_CHANGING	(VAR_AREA+0x2ED0)	// Are we changing discs?
+#define VAR_SPARE			(VAR_AREA+0x2ED4)	// ######### SPARE until 0x2EE0
 #define VAR_LAST_OFFSET		(VAR_AREA+0x2EE0)	// The last offset we read from
 #define VAR_READS_IN_AS		(VAR_AREA+0x2EE4)	// How many times have we tried to read while streaming is on?
 #define VAR_AS_ENABLED		(VAR_AREA+0x2EE8)	// Is Audio streaming enabled by the user?

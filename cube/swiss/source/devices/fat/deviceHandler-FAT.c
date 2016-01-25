@@ -296,6 +296,7 @@ int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 		}
 		get_frag_list(file2->name);
 		print_gecko("Found disc 2 [%s] %i fragments\r\n",file2->name, frag_list->num);
+		patches = 0;	// This breaks 2 disc games with patches (do any exist?)
 		if(frag_list->num < maxFrags) {
 			for(i = 0; i < frag_list->num; i++) {
 				fragList[(patches*3) + (maxFrags*3)] = frag_list->frag[i].offset*512;

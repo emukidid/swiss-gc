@@ -659,6 +659,7 @@ unsigned int load_app(int multiDol)
 	*(volatile unsigned int*)VAR_FAKE_IRQ_SET = 0;
 	*(volatile unsigned int*)VAR_INTERRUPT_TIMES = 0;
 	*(volatile unsigned int*)VAR_READS_IN_AS = 0;
+	*(volatile unsigned int*)VAR_DISC_CHANGING = 0;
 	*(volatile unsigned int*)VAR_LAST_OFFSET = 0xBEEFCAFE;
 	*(volatile unsigned int*)VAR_AS_ENABLED = !swissSettings.muteAudioStreaming;
 	memset((void*)VAR_DI_REGS, 0, 0x24);
