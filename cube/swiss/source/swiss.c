@@ -431,7 +431,7 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 unsigned int load_app(int multiDol)
 {
 	char* gameID = (char*)0x80000000;
-	int zeldaVAT = 0, i = 0;
+	int i = 0;
 	u32 main_dol_size = 0;
 	u8 *main_dol_buffer = 0;
 	DOLHEADER dolhdr;
@@ -448,19 +448,6 @@ unsigned int load_app(int multiDol)
 		DrawMessageBox(D_FAIL, "Apploader Header Failed to read");
 		DrawFrameFinish();
 		while(1);
-	}
-	
-	// Fix Zelda WW on Wii (__GXSetVAT? patch)
-	if (!is_gamecube() && (!strncmp(gameID, "GZLP01", 6) || !strncmp(gameID, "GZLE01", 6) || !strncmp(gameID, "GZLJ01", 6))) {
-		if(!strncmp(gameID, "GZLP01", 6))
-			zeldaVAT = 1;	//PAL
-		else 
-			zeldaVAT = 2;	//NTSC-U,NTSC-J
-	}
-	
-	// Game in the ID list below wants to write over 0x80001800
-	if (!strncmp(gameID, "GPXE01", 6) || !strncmp(gameID, "GPXP01", 6) || !strncmp(gameID, "GPXJ01", 6)) {
-		// TODO Fix this game with a individual patch
 	}
 
 	DrawFrameStart();
@@ -569,10 +556,9 @@ unsigned int load_app(int multiDol)
 		}
 	}
 		
-	// Fix Zelda WW on Wii
-	if(zeldaVAT) {
-		Patch_GXSetVATZelda(main_dol_buffer, main_dol_size+DOLHDRLENGTH, zeldaVAT);
-	}
+	// Patch specific game hacks
+	Patch_GameSpecific(main_dol_buffer, main_dol_size+DOLHDRLENGTH, gameID);
+
 	// 2 Disc support with no modchip
 	if((curDevice == DVD_DISC) && (is_gamecube()) && (drive_status == DEBUG_MODE)) {
 		Patch_DVDReset(main_dol_buffer, main_dol_size+DOLHDRLENGTH);

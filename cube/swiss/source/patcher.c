@@ -56,6 +56,18 @@ int install_code()
 	DCFlushRange(location,0x80003100-LO_RESERVE);
 	ICInvalidateRange(location,0x80003100-LO_RESERVE);
 	
+	// Pokemon XD / Colosseum tiny stub for memset testing
+	if(!strncmp((char*)0x80000000, "GXX", 3) || !strncmp((char*)0x80000000, "GC6", 3)) 
+	{
+		print_gecko("Patch:[Pokemon memset] applied\r\n");
+		// patch in test < 0x3000 function at an empty spot in RAM
+		*(u32*)0x80000088 = 0x3D008000;
+		*(u32*)0x8000008C = 0x61083000;
+		*(u32*)0x80000090 = 0x7C044000;
+		*(u32*)0x80000094 = 0x4180542C;
+		*(u32*)0x80000098 = 0x90E40004;
+		*(u32*)0x8000009C = 0x48005400;
+	}
 	
 	// IDE-EXI
   	if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
@@ -1268,21 +1280,47 @@ const u32 GXSETVAT_NTSC_patched[32] = {
     0x4082ffa0, 0x38000000, 0x980904f2, 0x4e800020
 };
 
-void Patch_GXSetVATZelda(void *addr, u32 length,int mode) {
+// Apply specific per-game hacks/workarounds
+void Patch_GameSpecific(void *addr, u32 length, const char* gameID) {
 	void *addr_start = addr;
 	void *addr_end = addr+length;	
 	
-	while(addr_start<addr_end) 
+	// Fix Zelda WW on Wii (__GXSetVAT patch)
+	if (!is_gamecube() && (!strncmp(gameID, "GZLP01", 6) || !strncmp(gameID, "GZLE01", 6) || !strncmp(gameID, "GZLJ01", 6))) {
+		int mode;
+		if(!strncmp(gameID, "GZLP01", 6))
+			mode = 1;	//PAL
+		else 
+			mode = 2;	//NTSC-U,NTSC-J
+
+		while(addr_start<addr_end) 
+		{
+			if(mode == 1 && memcmp(addr_start,GXSETVAT_PAL_orig,sizeof(GXSETVAT_PAL_orig))==0) 
+			{
+				memcpy(addr_start, GXSETVAT_PAL_patched, sizeof(GXSETVAT_PAL_patched));
+				print_gecko("Found:[__GXSetVAT] PAL\r\n");
+			}
+			if(mode == 2 && memcmp(addr_start,GXSETVAT_NTSC_orig,sizeof(GXSETVAT_NTSC_orig))==0) 
+			{
+				memcpy(addr_start, GXSETVAT_NTSC_patched, sizeof(GXSETVAT_NTSC_patched));
+				print_gecko("Found:[__GXSetVAT] NTSC\r\n");
+			}
+			addr_start += 4;
+		}
+	}
+	else if(!strncmp(gameID, "GXX", 3) || !strncmp(gameID, "GC6", 3))
 	{
-		if(mode == 1 && memcmp(addr_start,GXSETVAT_PAL_orig,sizeof(GXSETVAT_PAL_orig))==0) 
-		{
-			memcpy(addr_start, GXSETVAT_PAL_patched, sizeof(GXSETVAT_PAL_patched));
-		}
-		if(mode == 2 && memcmp(addr_start,GXSETVAT_NTSC_orig,sizeof(GXSETVAT_NTSC_orig))==0) 
-		{
-			memcpy(addr_start, GXSETVAT_NTSC_patched, sizeof(GXSETVAT_NTSC_patched));
-		}
-		addr_start += 4;
+		print_gecko("Found:[Pokemon memset]\r\n");
+		// patch out initial memset(0x1800, 0, 0x1800)
+		if(gameID[3] == 'J' )	// JAP
+			*(u32*)(addr+0x260C) = 0x60000000;
+		else					// EUR/USA
+			*(u32*)(addr+0x2614) = 0x60000000;
+
+		// patch memset to jump to test function
+		*(u32*)(addr+0x2498) = 0x4BFFABF0;
+		// skips __start init of debugger mem
+		*(u32*)(addr+0x194) = 0x48000028;
 	}
 }
 

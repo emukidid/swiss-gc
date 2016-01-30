@@ -113,7 +113,7 @@ int Patch_TexFilt(u8 *data, u32 length, int dataType);
 int Patch_FontEnc(void *addr, u32 length);
 int Patch_Fwrite(void *addr, u32 length);
 int Patch_DVDReset(void *addr,u32 length);
-void Patch_GXSetVATZelda(void *addr, u32 length,int mode);
+void Patch_GameSpecific(void *addr, u32 length, const char* gameID);
 u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);
 int install_code();
