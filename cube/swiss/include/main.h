@@ -42,11 +42,11 @@ enum deviceTypes
 	DVD_DISC=0,
 	SD_CARD,
 	IDEEXI,
-	QOOB_FLASH,
-	WODE,
-	MEMCARD,
 	WKF,
+	WODE,
+	QOOB_FLASH,
 	USBGECKO,
+	MEMCARD,
 	SAMBA,
 	SYS
 };
@@ -188,5 +188,6 @@ extern void sortFiles(file_handle* dir, int num_files);
 extern int endsWith(char *str, char *end);
 extern void initialise_video(GXRModeObj *m);
 GXRModeObj *getModeFromSwissSetting(int uiVMode);
+extern void populateDeviceAvailability();
 #endif
 

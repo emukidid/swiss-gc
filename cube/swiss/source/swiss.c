@@ -10,7 +10,6 @@
 #include <ogcsys.h>		/*** Needed for console support ***/
 #include <ogc/color.h>
 #include <ogc/exi.h>
-#include <sdcard/gcsd.h>
 #include <ogc/usbgecko.h>
 #include <ogc/video_types.h>
 #include <sdcard/card_cmn.h>
@@ -42,7 +41,6 @@
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
-#include "devices/fat/ata.h"
 #include "devices/filemeta.h"
 #include "dolparameters.h"
 
@@ -1548,42 +1546,6 @@ void select_copy_device()
 	}
 }
 
-int deviceAvailable(int dev) {
-	if(curDevice==DVD_DISC) {
-		return swissSettings.hasDVDDrive;
-	}
-	else if(curDevice==SD_CARD) {
-		const DISC_INTERFACE* carda = &__io_gcsda;
-		const DISC_INTERFACE* cardb = &__io_gcsdb;
-		return carda->isInserted() || cardb->isInserted();
-	}
-	else if(curDevice==IDEEXI) {
-		return ide_exi_inserted(0) || ide_exi_inserted(1) ;
-	}
-	else if(curDevice==QOOB_FLASH) {
-		return 0;	// Hidden by default, add auto detect at some point
-	}
-	else if(curDevice==WODE) {
-		return 0;	// Hidden by default, add auto detect at some point
-	}
-	else if(curDevice==MEMCARD) {
-		return (initialize_card(0)==CARD_ERROR_READY) || (initialize_card(1)==CARD_ERROR_READY);
-	}
-	else if(curDevice==WKF) {
-		return swissSettings.hasDVDDrive && (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF);
-	}
-	else if(curDevice==USBGECKO) {
-		return usb_isgeckoalive(1);
-	}
-	else if(curDevice==SAMBA) {
-		return exi_bba_exists();
-	}
-	else if(curDevice==SYS) {
-		return 1;
-	}
-	return 0;
-}
-
 void select_device()
 {
 	if(is_httpd_in_use()) {
@@ -1688,7 +1650,7 @@ void select_device()
 			else {
 				if(btns & PAD_BUTTON_RIGHT) {
 					curDevice = curDevice < 9 ? curDevice+1 : 0;
-					while(!showAllDevices && !deviceAvailable(curDevice)) {
+					while(!showAllDevices && !deviceHandler_getDeviceAvailable(curDevice)) {
 						if(curDevice == 9)
 							curDevice = 0;
 						else
@@ -1697,7 +1659,7 @@ void select_device()
 				}
 				if(btns & PAD_BUTTON_LEFT) {
 					curDevice = curDevice > 0 ? curDevice-1 : 9;
-					while(!showAllDevices && !deviceAvailable(curDevice)) {
+					while(!showAllDevices && !deviceHandler_getDeviceAvailable(curDevice)) {
 						if(curDevice == 0)
 							curDevice = 9;
 						else

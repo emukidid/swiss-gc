@@ -17,6 +17,7 @@
 #include <malloc.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sdcard/gcsd.h>
 #include "main.h"
 #include "settings.h"
 #include "info.h"
@@ -30,6 +31,7 @@
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
+#include "devices/fat/ata.h"
 #include "aram/sidestep.h"
 #include "devices/filemeta.h"
 
@@ -352,6 +354,10 @@ void main_loop()
 	else {
 		curMenuLocation=ON_OPTIONS;
 	}
+	// If a previously undetected device has been successfully init'd, mark it as available from now on
+	if(!deviceHandler_getDeviceAvailable(curDevice)) {
+		deviceHandler_setDeviceAvailable(curDevice, 1);
+	}
   
 	while(1) {
 		if(deviceHandler_initial && needsRefresh) {
@@ -445,9 +451,6 @@ int main ()
 	needsDeviceChange = 1;
 	needsRefresh = 1;
 	
-	// Start up the BBA if it exists (commented out until libOGC is fixed)
-	init_network_thread();
-	init_httpd_thread();
 
 	//debugging stuff
 	if(swissSettings.debugUSB) {
@@ -459,6 +462,9 @@ int main ()
 		print_gecko("GIT Commit: %s\r\n", GITREVISION);
 		print_gecko("GIT Revision: %s\r\n", GITVERSION);
 	}
+	
+	// Detect devices
+	populateDeviceAvailability();
 	
 	// Are we working with a Wiikey Fusion?
 	if(__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF) {
@@ -534,6 +540,10 @@ int main ()
 	}
 	deviceHandler_initial = !swissSettings.defaultDevice ? NULL:deviceHandler_initial;
 
+	// Start up the BBA if it exists
+	init_network_thread();
+	init_httpd_thread();
+	
 	// DVD Motor off
 	if(swissSettings.stopMotor && swissSettings.hasDVDDrive) {
 		dvd_motor_off();
@@ -573,4 +583,49 @@ GXRModeObj *getModeFromSwissSetting(int uiVMode) {
 			}
 	}
 	return vmode;
+}
+
+// Checks if devices are available, prints name of device being detected for slow init devices
+void populateDeviceAvailability() {
+	DrawFrameStart();
+	DrawMessageBox(D_INFO, "Detecting devices ...\nThis can be skipped by holding B next time");
+	DrawFrameFinish();
+	if(PAD_ButtonsHeld(0) & PAD_BUTTON_B) {
+		deviceHandler_setAllDevicesAvailable();
+		return;
+	}
+	const DISC_INTERFACE* carda = &__io_gcsda;
+	const DISC_INTERFACE* cardb = &__io_gcsdb;
+	// DVD
+	deviceHandler_setDeviceAvailable(DVD_DISC, swissSettings.hasDVDDrive);
+	// SD Gecko
+	DrawFrameStart();
+	DrawMessageBox(D_INFO, "Detecting devices [SD] ...\nThis can be skipped by holding B next time");
+	DrawFrameFinish();
+	deviceHandler_setDeviceAvailable(SD_CARD, carda->isInserted() || cardb->isInserted());
+	// IDE-EXI
+	DrawFrameStart();
+	DrawMessageBox(D_INFO, "Detecting devices [IDE-EXI] ...\nThis can be skipped by holding B next time");
+	DrawFrameFinish();
+	deviceHandler_setDeviceAvailable(IDEEXI, ide_exi_inserted(0) || ide_exi_inserted(1));
+	// Qoob
+	deviceHandler_setDeviceAvailable(QOOB_FLASH, 0);	// Hidden by default, add auto detect at some point
+	// WODE
+	deviceHandler_setDeviceAvailable(WODE, 0);	// Hidden by default, add auto detect at some point
+	// Memory card
+	DrawFrameStart();
+	DrawMessageBox(D_INFO, "Detecting devices [Memory Card] ...\nThis can be skipped by holding B next time");
+	DrawFrameFinish();
+	deviceHandler_setDeviceAvailable(MEMCARD, (initialize_card(0)==CARD_ERROR_READY) || (initialize_card(1)==CARD_ERROR_READY));
+	// WKF/WASP
+	DrawFrameStart();
+	DrawMessageBox(D_INFO, "Detecting devices [WKF/WASP] ...\nThis can be skipped by holding B next time");
+	DrawFrameFinish();
+	deviceHandler_setDeviceAvailable(WKF, swissSettings.hasDVDDrive && (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF));
+	// USB Gecko
+	deviceHandler_setDeviceAvailable(USBGECKO, usb_isgeckoalive(1));
+	// BBA/SAMBA
+	deviceHandler_setDeviceAvailable(SAMBA, exi_bba_exists());
+	// System, always there
+	deviceHandler_setDeviceAvailable(SYS, 1);
 }

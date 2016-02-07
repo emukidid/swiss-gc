@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include "wode/WodeInterface.h"
 
+#define MAX_DEVICES 15
+
 typedef struct {
 	int fileTypeTexId;
 	int regionTexId;
@@ -53,6 +55,9 @@ extern file_handle* deviceHandler_initial;
 extern device_info*	(*deviceHandler_info)(void);
 extern void deviceHandler_setStatEnabled(int enable);
 extern int deviceHandler_getStatEnabled();
+extern int deviceHandler_getDeviceAvailable(int dev);
+extern void deviceHandler_setDeviceAvailable(int dev, int a);
+extern void deviceHandler_setAllDevicesAvailable();
 
 /* Initialize the device */
 extern int (*deviceHandler_init)(file_handle*);
@@ -128,7 +133,6 @@ extern int (*deviceHandler_temp_seekFile)(file_handle*, unsigned int, unsigned i
 extern int (*deviceHandler_temp_setupFile)(file_handle*, file_handle*);
 int  (*deviceHandler_temp_closeFile)(file_handle*);
 extern int (*deviceHandler_temp_deinit)();
-
 
 extern void print_frag_list(int hasDisc2);
 

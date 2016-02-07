@@ -20,9 +20,13 @@
 file_handle* deviceHandler_initial = NULL;
 device_info* (*deviceHandler_info)(void) = NULL;
 
+static int device_availability[MAX_DEVICES];
 static int statEnabled = 1;
 void deviceHandler_setStatEnabled(int enable) {statEnabled = enable;}
 int deviceHandler_getStatEnabled() {return statEnabled;}
+int deviceHandler_getDeviceAvailable(int dev) { return device_availability[dev]; }
+void deviceHandler_setDeviceAvailable(int dev, int a) { device_availability[dev] = a; }
+void deviceHandler_setAllDevicesAvailable() {memset(&device_availability[0], 1, MAX_DEVICES);}
 
 int  (*deviceHandler_init)(file_handle*) = NULL;
 int  (*deviceHandler_readDir)(file_handle*, file_handle**, unsigned int) = NULL;
