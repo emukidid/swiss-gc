@@ -68,7 +68,7 @@ extern void drawFiles(file_handle** directory, int num_files);
 
 extern void select_speed();
 extern int select_slot();
-extern void select_device();
+extern void select_device(int skipPrompts);
 extern void select_copy_device();
 extern void select_dest_dir(file_handle* directory, file_handle* selection);
 
@@ -77,7 +77,6 @@ typedef struct {
 	int useHiMemArea; // Use Low mem or High mem for the patch to sit at
 	int debugUSB; // Debug prints over USBGecko
 	int hasDVDDrive;
-	int defaultDevice;
 	int exiSpeed;
 	int uiVMode;	// What mode to force Swiss into
 	int gameVMode;	// What mode to force a Game into

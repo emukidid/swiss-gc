@@ -1546,7 +1546,7 @@ void select_copy_device()
 	}
 }
 
-void select_device()
+void select_device(int skipPrompts)
 {
 	if(is_httpd_in_use()) {
 		doBackdrop();
@@ -1557,7 +1557,18 @@ void select_device()
 	}
 
 	int slot = 1;
-	if(!swissSettings.defaultDevice) {
+	if(curDevice < 0) {
+		curDevice = SD_CARD;
+		// Go to the first device after SD Gecko if it's not avail
+		if(!deviceHandler_getDeviceAvailable(curDevice)) {
+			int i;
+			for(i=curDevice+1;i<9;i++) {
+				if(deviceHandler_getDeviceAvailable(i)) {
+					curDevice = i;
+					break;
+				}
+			}
+		}
 		dvdDiscTypeStr = NotInitStr;
 		int inAdvanced = 0, showAllDevices = 0, inAdvancedPos = 0;
 		while(1) {
@@ -1690,7 +1701,7 @@ void select_device()
 	switch(curDevice) {
 		case SD_CARD:
 		case IDEEXI:
-			if(swissSettings.defaultDevice) {
+			if(skipPrompts) {
 				slot = (deviceHandler_initial->name[2] == 'b');
 			}
 			if(curDevice==IDEEXI)

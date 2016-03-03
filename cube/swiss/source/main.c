@@ -307,12 +307,12 @@ void main_loop()
 		if(deviceHandler_deinit) {
 			deviceHandler_deinit(deviceHandler_initial);
 		}
-		swissSettings.defaultDevice = 0;
+		curDevice = -1;
 		needsDeviceChange = 0;
 		deviceHandler_initial = NULL;
 		needsRefresh = 1;
 		curMenuLocation = ON_FILLIST;
-		select_device();
+		select_device(0);
 		curMenuLocation = ON_OPTIONS;
 	}
 	
@@ -466,10 +466,10 @@ int main ()
 	// Detect devices
 	populateDeviceAvailability();
 	
+	curDevice = -1;
 	// Are we working with a Wiikey Fusion?
 	if(__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF) {
 		print_gecko("Detected Wiikey Fusion with SPI Flash ID: %08X\r\n",__wkfSpiReadId());
-		swissSettings.defaultDevice = 1;
 		curDevice = WKF;
 	}
 	else {
@@ -481,10 +481,7 @@ int main ()
 		if(deviceHandler_init(deviceHandler_initial)) {
 			print_gecko("Detected SDGecko in Slot A\r\n");
 			load_auto_dol();
-			load_config();
-			print_gecko("Autoselecting SDA %s\r\n", swissSettings.defaultDevice ? "Yes":"No");
-			if(swissSettings.defaultDevice)
-				curDevice = SD_CARD;
+			curDevice = SD_CARD;
 		}
 		else {
 			deviceHandler_deinit(deviceHandler_initial);
@@ -492,20 +489,14 @@ int main ()
 			if(deviceHandler_init(deviceHandler_initial)) {
 				print_gecko("Detected SDGecko in Slot B\r\n");
 				load_auto_dol();
-				load_config();
-				print_gecko("Autoselecting SDB %s\r\n", swissSettings.defaultDevice ? "Yes":"No");
-				if(swissSettings.defaultDevice)
-					curDevice = SD_CARD;
+				curDevice = SD_CARD;
 			}
-		}
-		if(!swissSettings.defaultDevice) {
-			deviceHandler_deinit(deviceHandler_initial);
 		}
 		deviceHandler_setStatEnabled(1);
 	}
 	
 	// If no device has been selected yet to browse ..
-	if(!swissSettings.defaultDevice) {
+	if(curDevice < 0) {
 		print_gecko("No default boot device detected, trying DVD!\r\n");
 		// Do we have a DVD drive with a ready medium we can perhaps browse then?
 		u8 driveReallyExists[8];
@@ -514,13 +505,12 @@ int main ()
 			dvd_read_id();
 			if(!dvd_get_error()) {
 				print_gecko("DVD Medium is up, using it as default device\r\n");
-				swissSettings.defaultDevice = 1;
 				curDevice = DVD_DISC;
 				
 				// If we have a GameCube (single image) bootable disc, show the banner screen here
 				dvdDiscTypeInt = gettype_disc();
 				if(dvdDiscTypeInt == GAMECUBE_DISC) {
-					select_device();
+					select_device(1);
 					// Setup curFile and load it
 					memset(&curFile, 0, sizeof(file_handle));
 					strcpy(&curFile.name[0], "game.gcm");
@@ -528,17 +518,17 @@ int main ()
 					curFile.fileAttrib = IS_FILE;
 					populate_meta(&curFile);
 					load_file();
-					swissSettings.defaultDevice = 0;
+					curDevice = -1;
 					deviceHandler_initial = NULL;
 				}
 			}
 		}
 	}
-	if(swissSettings.defaultDevice) {
+	if(curDevice) {
 		needsDeviceChange = 0;
-		select_device(); // to setup deviceHandler_ ptrs
+		select_device(1); // to setup deviceHandler_ ptrs
+		load_config();
 	}
-	deviceHandler_initial = !swissSettings.defaultDevice ? NULL:deviceHandler_initial;
 
 	// Start up the BBA if it exists
 	init_network_thread();

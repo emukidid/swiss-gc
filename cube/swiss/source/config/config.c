@@ -14,7 +14,6 @@
 
 // This is an example Swiss settings entry (sits at the top of swiss.ini)
 //!!Swiss Settings Start!!
-//Default Device=Yes
 //SD/IDE Speed=32MHz
 //Swiss Video Mode=Auto
 //Enable Debug=No
@@ -99,8 +98,6 @@ int config_update_file() {
 		fwrite(str, 1, strlen(str), fp);
 		
 		// Write out Swiss settings
-		sprintf(txtbuffer, "Default Device=%s\r\n",(configSwissSettings.defaultDevice ? "Yes":"No"));
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "SD/IDE Speed=%s\r\n",(configSwissSettings.exiSpeed ? "32MHz":"16MHz"));
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "Swiss Video Mode=%s\r\n",(uiVModeStr[configSwissSettings.uiVMode]));
@@ -264,9 +261,6 @@ void config_parse(char *configData) {
 				}
 				
 				// Swiss settings
-				else if(!strcmp("Default Device", name)) {
-					configSwissSettings.defaultDevice = !strcmp("Yes", value) ? 1:0;
-				}
 				else if(!strcmp("SD/IDE Speed", name)) {
 					configSwissSettings.exiSpeed = !strcmp("32MHz", value) ? 1:0;
 				}
