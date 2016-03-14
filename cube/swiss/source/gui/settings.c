@@ -15,7 +15,8 @@
 #include "config.h"
 
 SwissSettings tempSettings;
-char *uiVModeStr[] = {"Auto", "480i", "240p", "480p", "576i", "288p", "576p"};
+char *uiVModeStr[] = {"Auto", "480i", "480p", "576i", "576p"};
+char *gameVModeStr[] = {"Auto", "480i", "240p", "960i", "480p", "576i", "288p", "1152i", "576p"};
 char *softProgressiveStr[] = {"No", "Light", "Yes"};
 char *forceWidescreenStr[] = {"No", "Persp", "Yes"};
 char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS"};
@@ -82,7 +83,7 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Current Game Settings (3/3):");
 		WriteFontStyled(30, 110, "Force Video Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 110, -1, 135, uiVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(480, 110, -1, 135, gameVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 140, "If Progressive, Soften:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
 		DrawSelectableButton(480, 140, -1, 165, softProgressiveStr[swissSettings.softProgressive], option == 1 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 170, "Force Widescreen:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
@@ -125,12 +126,10 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 			case 3:
 				swissSettings.uiVMode += direction;
-				if(swissSettings.uiVMode == 2 || swissSettings.uiVMode == 5)
-				swissSettings.uiVMode += direction;
-				if(swissSettings.uiVMode > 6)
+				if(swissSettings.uiVMode > 4)
 					swissSettings.uiVMode = 0;
 				if(swissSettings.uiVMode < 0)
-					swissSettings.uiVMode = 6;
+					swissSettings.uiVMode = 4;
 			break;
 		}	
 	}
@@ -160,10 +159,10 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 		switch(option) {
 			case 0:
 				swissSettings.gameVMode += direction;
-				if(swissSettings.gameVMode > 6)
+				if(swissSettings.gameVMode > 8)
 					swissSettings.gameVMode = 0;
 				if(swissSettings.gameVMode < 0)
-					swissSettings.gameVMode = 6;
+					swissSettings.gameVMode = 8;
 			break;
 			case 1:
 				swissSettings.softProgressive += direction;
