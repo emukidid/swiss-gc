@@ -146,7 +146,7 @@ int config_update_file() {
 			sprintf(txtbuffer, "Status=%s\r\n",buffer);
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
-			sprintf(txtbuffer, "Force Video Mode=%s\r\n",uiVModeStr[configEntries[i].gameVMode]);
+			sprintf(txtbuffer, "Force Video Mode=%s\r\n",gameVModeStr[configEntries[i].gameVMode]);
 			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 			
 			sprintf(txtbuffer, "Soft Progressive=%s\r\n",softProgressiveStr[configEntries[i].softProgressive]);
@@ -214,20 +214,24 @@ void config_parse(char *configData) {
 					strncpy(&configEntries[configEntriesCount].status[0], value, 32);
 				}
 				else if(!strcmp("Force Video Mode", name)) {
-					if(!strcmp(uiVModeStr[0], value))
+					if(!strcmp(gameVModeStr[0], value))
 						configEntries[configEntriesCount].gameVMode = 0;
-					else if(!strcmp(uiVModeStr[1], value))
+					else if(!strcmp(gameVModeStr[1], value))
 						configEntries[configEntriesCount].gameVMode = 1;
-					else if(!strcmp(uiVModeStr[2], value))
+					else if(!strcmp(gameVModeStr[2], value))
 						configEntries[configEntriesCount].gameVMode = 2;
-					else if(!strcmp(uiVModeStr[3], value))
+					else if(!strcmp(gameVModeStr[3], value))
 						configEntries[configEntriesCount].gameVMode = 3;
-					else if(!strcmp(uiVModeStr[4], value))
+					else if(!strcmp(gameVModeStr[4], value))
 						configEntries[configEntriesCount].gameVMode = 4;
-					else if(!strcmp(uiVModeStr[5], value))
+					else if(!strcmp(gameVModeStr[5], value))
 						configEntries[configEntriesCount].gameVMode = 5;
-					else if(!strcmp(uiVModeStr[6], value))
+					else if(!strcmp(gameVModeStr[6], value))
 						configEntries[configEntriesCount].gameVMode = 6;
+					else if(!strcmp(gameVModeStr[7], value))
+						configEntries[configEntriesCount].gameVMode = 7;
+					else if(!strcmp(gameVModeStr[8], value))
+						configEntries[configEntriesCount].gameVMode = 8;
 				}
 				else if(!strcmp("Soft Progressive", name)) {
 					if(!strcmp(softProgressiveStr[0], value))
@@ -293,10 +297,6 @@ void config_parse(char *configData) {
 						configSwissSettings.uiVMode = 3;
 					else if(!strcmp(uiVModeStr[4], value))
 						configSwissSettings.uiVMode = 4;
-					else if(!strcmp(uiVModeStr[5], value))
-						configSwissSettings.uiVMode = 5;
-					else if(!strcmp(uiVModeStr[6], value))
-						configSwissSettings.uiVMode = 6;
 				}
 				else if(!strcmp("SMBUserName", name)) {
 					strncpy(configSwissSettings.smbUser, value, 20);

@@ -557,15 +557,15 @@ GXRModeObj *getModeFromSwissSetting(int uiVMode) {
 	switch(uiVMode) {
 		case 1:
 			return &TVNtsc480IntDf;
-		case 3:
+		case 2:
 			if(VIDEO_HaveComponentCable()) {
 				return &TVNtsc480Prog;
 			} else {
 				return &TVNtsc480IntDf;
 			}
-		case 4:
+		case 3:
 			return &TVPal576IntDfScale;
-		case 6:
+		case 4:
 			if(VIDEO_HaveComponentCable()) {
 				return &TVPal576ProgScale;
 			} else {

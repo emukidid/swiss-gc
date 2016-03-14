@@ -11,6 +11,7 @@
 #include "deviceHandler.h"
 
 extern char *uiVModeStr[];
+extern char *gameVModeStr[];
 extern char *softProgressiveStr[];
 extern char *forceWidescreenStr[];
 extern char *forceEncodingStr[];
