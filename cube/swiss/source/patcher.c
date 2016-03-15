@@ -540,7 +540,19 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 	return patched;
 }
 
-/** SDK VIConfigure patch to force 480p/576p mode */
+u8 video_timing_480i[] = {
+	0x06,0x00,0x00,0xF0,
+	0x00,0x18,0x00,0x19,
+	0x00,0x03,0x00,0x02,
+	0x0C,0x0D,0x0C,0x0D,
+	0x02,0x08,0x02,0x07,
+	0x02,0x08,0x02,0x07,
+	0x02,0x0D,0x01,0xAD,
+	0x40,0x47,0x69,0xA2,
+	0x01,0x75,0x7A,0x00,
+	0x01,0x9C
+};
+
 u8 video_timing_480p[] = {
 	0x0C,0x00,0x01,0xE0,
 	0x00,0x30,0x00,0x30,
@@ -552,6 +564,19 @@ u8 video_timing_480p[] = {
 	0x40,0x47,0x69,0xA2,
 	0x01,0x75,0x7A,0x00,
 	0x01,0x9C
+};
+
+u8 video_timing_576i[] = {
+	0x05,0x00,0x01,0x20,
+	0x00,0x21,0x00,0x22,
+	0x00,0x01,0x00,0x00,
+	0x0D,0x0C,0x0B,0x0A,
+	0x02,0x6B,0x02,0x6A,
+	0x02,0x69,0x02,0x6C,
+	0x02,0x71,0x01,0xB0,
+	0x40,0x4B,0x6A,0xAC,
+	0x01,0x7C,0x85,0x00,
+	0x01,0xA4
 };
 
 u8 video_timing_576p[] = {
@@ -572,13 +597,21 @@ void Patch_VidTiming(void *addr, u32 length) {
 	void *addr_end = addr+length;
 	
 	while(addr_start<addr_end) {
+		if(memcmp(addr_start,video_timing_480i,sizeof(video_timing_480i))==0)
+		{
+			print_gecko("Patched PAL Interlaced timing\n");
+			memcpy(addr_start, video_timing_576i, sizeof(video_timing_576i));
+			addr_start += sizeof(video_timing_576i);
+			continue;
+		}
 		if(memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
 		{
 			print_gecko("Patched PAL Progressive timing\n");
 			memcpy(addr_start, video_timing_576p, sizeof(video_timing_576p));
+			addr_start += sizeof(video_timing_576p);
 			break;
 		}
-		addr_start += 4;
+		addr_start += 2;
 	}
 }
 
@@ -678,14 +711,14 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							print_gecko("Patched NTSC Field Rendering mode\n");
 							top_addr -= VIConfigure960i_length;
 							memcpy((void*)top_addr, VIConfigure960i, VIConfigure960i_length);
-							*(u32*)(top_addr+84) = branch(VIConfigureAddr+4, top_addr+84);
+							*(u32*)(top_addr+100) = branch(VIConfigureAddr+4, top_addr+100);
 							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
 						case 4:
 							print_gecko("Patched NTSC Progressive mode\n");
 							top_addr -= VIConfigure480p_length;
 							memcpy((void*)top_addr, VIConfigure480p, VIConfigure480p_length);
-							*(u32*)(top_addr+76) = branch(VIConfigureAddr+4, top_addr+76);
+							*(u32*)(top_addr+92) = branch(VIConfigureAddr+4, top_addr+92);
 							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
 						case 5:
@@ -706,7 +739,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							print_gecko("Patched PAL Field Rendering mode\n");
 							top_addr -= VIConfigure1152i_length;
 							memcpy((void*)top_addr, VIConfigure1152i, VIConfigure1152i_length);
-							*(u32*)(top_addr+48) = branch(VIConfigureAddr+4, top_addr+48);
+							*(u32*)(top_addr+64) = branch(VIConfigureAddr+4, top_addr+64);
 							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							Patch_VidTiming(data, length);
 							break;
@@ -714,7 +747,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							print_gecko("Patched PAL Progressive mode\n");
 							top_addr -= VIConfigure576p_length;
 							memcpy((void*)top_addr, VIConfigure576p, VIConfigure576p_length);
-							*(u32*)(top_addr+40) = branch(VIConfigureAddr+4, top_addr+40);
+							*(u32*)(top_addr+56) = branch(VIConfigureAddr+4, top_addr+56);
 							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							Patch_VidTiming(data, length);
 							break;
