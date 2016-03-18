@@ -16,7 +16,7 @@
 
 SwissSettings tempSettings;
 char *uiVModeStr[] = {"Auto", "480i", "480p", "576i", "576p"};
-char *gameVModeStr[] = {"Auto", "480i", "240p", "960i", "480p", "576i", "288p", "1152i", "576p"};
+char *gameVModeStr[] = {"Auto", "480i", "480sf", "240p", "960i", "480p", "576i", "576sf", "288p", "1152i", "576p"};
 char *softProgressiveStr[] = {"No", "Light", "Yes"};
 char *forceWidescreenStr[] = {"No", "Persp", "Yes"};
 char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS"};
@@ -159,10 +159,10 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 		switch(option) {
 			case 0:
 				swissSettings.gameVMode += direction;
-				if(swissSettings.gameVMode > 8)
+				if(swissSettings.gameVMode > 10)
 					swissSettings.gameVMode = 0;
 				if(swissSettings.gameVMode < 0)
-					swissSettings.gameVMode = 8;
+					swissSettings.gameVMode = 10;
 			break;
 			case 1:
 				swissSettings.softProgressive += direction;

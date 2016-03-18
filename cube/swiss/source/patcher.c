@@ -637,6 +637,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 		{0x248, 46, 13, 10, 15, 15, 0, 0, "__VIRetraceHandler E", 0},	// SN Systems ProDG
 		{0x270, 50, 10, 15, 16, 13, 0, 0, "__VIRetraceHandler F", 0}
 	};
+	FuncPattern VIWaitForRetraceSig = 
+		{0x50, 7, 4, 3, 1, 4, 0, 0, "VIWaitForRetrace", 0};
 	FuncPattern VIConfigureSigs[7] = {
 		{0x6AC,  90, 43,  6, 32, 60, 0, 0, "VIConfigure A", 0},
 		{0x68C,  87, 41,  6, 31, 60, 0, 0, "VIConfigure B", 0},
@@ -709,10 +711,46 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 						case 4: getCurrentFieldEvenOddSigs[1].offsetFoundAt = branchResolve(data, i + 272); break;
 						case 5: getCurrentFieldEvenOddSigs[0].offsetFoundAt = branchResolve(data, i + 320); break;
 					}
+					if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 7)) {
+						switch(j) {
+							case 0:
+							case 1: *(u32*)(data+i+228) = 0x38000001; break;
+							case 2:
+							case 3: *(u32*)(data+i+240) = 0x38000001; break;
+							case 4: *(u32*)(data+i+260) = 0x38000001; break;
+							case 5: *(u32*)(data+i+308) = 0x38000001; break;
+						}
+					}
 					__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 					i += __VIRetraceHandlerSigs[j].Length;
 					break;
 				}
+			}
+		}
+		if( !VIWaitForRetraceSig.offsetFoundAt && compare_pattern( &fp, &VIWaitForRetraceSig ) )
+		{
+			u32 VIWaitForRetraceAddr = Calc_ProperAddress(data, dataType, i);
+			if(VIWaitForRetraceAddr) {
+				print_gecko("Found:[%s] @ %08X\n", VIWaitForRetraceSig.Name, VIWaitForRetraceAddr);
+				if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 7)) {
+					for( k=0; k < sizeof(getCurrentFieldEvenOddSigs)/sizeof(FuncPattern); k++ )
+					{
+						if( getCurrentFieldEvenOddSigs[k].offsetFoundAt )
+						{
+							u32 getCurrentFieldEvenOddAddr = Calc_ProperAddress(data, dataType, getCurrentFieldEvenOddSigs[k].offsetFoundAt);
+							if(getCurrentFieldEvenOddAddr) {
+								print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOddAddr);
+								*(u32*)(data+i+24) = *(u32*)(data+i+28);
+								*(u32*)(data+i+28) = 0x4800000C;	// b		+12
+								*(u32*)(data+i+40) = branchAndLink(getCurrentFieldEvenOddAddr, VIWaitForRetraceAddr+40);
+								*(u32*)(data+i+44) = 0x28030000;	// cmplwi	r3, 0
+								break;
+							}
+						}
+					}
+				}
+				VIWaitForRetraceSig.offsetFoundAt = i;
+				i += VIWaitForRetraceSig.Length;
 			}
 		}
 		for( j=0; j < sizeof(VIConfigureSigs)/sizeof(FuncPattern); j++ )
@@ -724,48 +762,50 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					print_gecko("Found:[%s] @ %08X\n", VIConfigureSigs[j].Name, VIConfigureAddr);
 					switch(swissSettings.gameVMode) {
 						case 1:
+						case 2:
 							print_gecko("Patched NTSC Interlaced mode\n");
 							top_addr -= VIConfigure480i_length;
 							memcpy((void*)top_addr, VIConfigure480i, VIConfigure480i_length);
 							*(u32*)(top_addr+92) = branch(VIConfigureAddr+4, top_addr+92);
 							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
-						case 2:
+						case 3:
 							print_gecko("Patched NTSC Double-Strike mode\n");
 							top_addr -= VIConfigure240p_length;
 							memcpy((void*)top_addr, VIConfigure240p, VIConfigure240p_length);
 							*(u32*)(top_addr+80) = branch(VIConfigureAddr+4, top_addr+80);
 							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
-						case 3:
+						case 4:
 							print_gecko("Patched NTSC Field Rendering mode\n");
 							top_addr -= VIConfigure960i_length;
 							memcpy((void*)top_addr, VIConfigure960i, VIConfigure960i_length);
 							*(u32*)(top_addr+100) = branch(VIConfigureAddr+4, top_addr+100);
 							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
-						case 4:
+						case 5:
 							print_gecko("Patched NTSC Progressive mode\n");
 							top_addr -= VIConfigure480p_length;
 							memcpy((void*)top_addr, VIConfigure480p, VIConfigure480p_length);
 							*(u32*)(top_addr+92) = branch(VIConfigureAddr+4, top_addr+92);
 							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
-						case 5:
+						case 6:
+						case 7:
 							print_gecko("Patched PAL Interlaced mode\n");
 							top_addr -= VIConfigure576i_length;
 							memcpy((void*)top_addr, VIConfigure576i, VIConfigure576i_length);
 							*(u32*)(top_addr+56) = branch(VIConfigureAddr+4, top_addr+56);
 							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
-						case 6:
+						case 8:
 							print_gecko("Patched PAL Double-Strike mode\n");
 							top_addr -= VIConfigure288p_length;
 							memcpy((void*)top_addr, VIConfigure288p, VIConfigure288p_length);
 							*(u32*)(top_addr+44) = branch(VIConfigureAddr+4, top_addr+44);
 							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
-						case 7:
+						case 9:
 							print_gecko("Patched PAL Field Rendering mode\n");
 							top_addr -= VIConfigure1152i_length;
 							memcpy((void*)top_addr, VIConfigure1152i, VIConfigure1152i_length);
@@ -773,7 +813,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							Patch_VidTiming(data, length);
 							break;
-						case 8:
+						case 10:
 							print_gecko("Patched PAL Progressive mode\n");
 							top_addr -= VIConfigure576p_length;
 							memcpy((void*)top_addr, VIConfigure576p, VIConfigure576p_length);
@@ -812,7 +852,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1980);
 							break;
 					}
-					if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 7)) {
+					if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
 						switch(j) {
 							case 0:
 								*(u32*)(data+i+ 820) = 0x54A607B8;	// rlwinm	r6, r5, 0, 30, 28
@@ -845,7 +885,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 								break;
 						}
 					}
-					if((swissSettings.gameVMode == 7) || (swissSettings.gameVMode == 8)) {
+					if((swissSettings.gameVMode == 9) || (swissSettings.gameVMode == 10)) {
 						switch(j) {
 							case 0:
 								*(u32*)(data+i+  40) = 0x2C040006;	// cmpwi	r4, 6
@@ -896,7 +936,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 				*(u32*)(top_addr+ 0) = *(u32*)(data+i+36);
 				*(u32*)(top_addr+24) = branch(VIConfigurePanAddr+40, top_addr+24);
 				
-				if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 6)) {
+				if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 8)) {
 					*(u32*)(data+i+24) = 0x5499F87E;	// srwi		r25, r4, 1
 					*(u32*)(data+i+32) = 0x54D7F87E;	// srwi		r23, r6, 1
 				}
@@ -939,7 +979,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							GXSetViewportSigs[3].offsetFoundAt = branchResolve(data, i + 860);
 							break;
 					}
-					if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 6)) {
+					if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 8)) {
 						switch(j) {
 							case 0: *(u32*)(data+i+3776) = 0x38600003; break;
 							case 1: *(u32*)(data+i+1976) = 0x38600003; break;
@@ -950,7 +990,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 						}
 						vfilter = vertical_reduction[1];
 					}
-					else if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 7)) {
+					else if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
 						switch(j) {
 							case 0: *(u32*)(data+i+3644) = 0x38600001; break;
 							case 1: *(u32*)(data+i+1844) = 0x38600001; break;
@@ -974,7 +1014,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 				u32 GXGetYScaleFactorAddr = Calc_ProperAddress(data, dataType, i);
 				if(GXGetYScaleFactorAddr) {
 					print_gecko("Found:[%s] @ %08X\n", GXGetYScaleFactorSigs[j].Name, GXGetYScaleFactorAddr);
-					if((swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 4)) {
+					if((swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 5)) {
 						top_addr -= GXGetYScaleFactorHook_length;
 						memcpy((void*)top_addr, GXGetYScaleFactorHook, GXGetYScaleFactorHook_length);
 						*(u32*)(top_addr+16) = branch(GXGetYScaleFactorAddr+4, top_addr+16);
@@ -987,7 +1027,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 			}
 		}
 	}
-	if((swissSettings.gameVMode != 1) && (swissSettings.gameVMode != 5)) {
+	if((swissSettings.gameVMode != 1) && (swissSettings.gameVMode != 6)) {
 		for( j=0; j < sizeof(GXSetCopyFilterSigs)/sizeof(FuncPattern); j++ )
 		{
 			if( (i=GXSetCopyFilterSigs[j].offsetFoundAt) )
@@ -1029,7 +1069,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 			}
 		}
 	}
-	if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 7)) {
+	if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
 		for( j=0; j < sizeof(GXSetViewportSigs)/sizeof(FuncPattern); j++ )
 		{
 			if( (i=GXSetViewportSigs[j].offsetFoundAt) )
