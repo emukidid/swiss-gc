@@ -69,16 +69,19 @@ static void ProperScanPADS()	{
 
 void populateVideoStr(GXRModeObj *vmode) {
 	switch(vmode->viTVMode) {
-		case VI_TVMODE_NTSC_INT:  videoStr = NtscIntStr;  break;
-		case VI_TVMODE_NTSC_DS:   videoStr = NtscDsStr;   break;
-		case VI_TVMODE_NTSC_PROG: videoStr = NtscProgStr; break;
-		case VI_TVMODE_PAL_INT:   videoStr = PalIntStr;   break;
-		case VI_TVMODE_PAL_DS:    videoStr = PalDsStr;    break;
-		case VI_TVMODE_PAL_PROG:  videoStr = PalProgStr;  break;
-		case VI_TVMODE_MPAL_INT:  videoStr = MpalIntStr;  break;
-		case VI_TVMODE_MPAL_DS:   videoStr = MpalDsStr;   break;
-		case VI_TVMODE_MPAL_PROG: videoStr = MpalProgStr; break;
-		default:                  videoStr = UnkStr;
+		case VI_TVMODE_NTSC_INT:     videoStr = NtscIntStr;     break;
+		case VI_TVMODE_NTSC_DS:      videoStr = NtscDsStr;      break;
+		case VI_TVMODE_NTSC_PROG:    videoStr = NtscProgStr;    break;
+		case VI_TVMODE_PAL_INT:      videoStr = PalIntStr;      break;
+		case VI_TVMODE_PAL_DS:       videoStr = PalDsStr;       break;
+		case VI_TVMODE_PAL_PROG:     videoStr = PalProgStr;     break;
+		case VI_TVMODE_MPAL_INT:     videoStr = MpalIntStr;     break;
+		case VI_TVMODE_MPAL_DS:      videoStr = MpalDsStr;      break;
+		case VI_TVMODE_MPAL_PROG:    videoStr = MpalProgStr;    break;
+		case VI_TVMODE_EURGB60_INT:  videoStr = Eurgb60IntStr;  break;
+		case VI_TVMODE_EURGB60_DS:   videoStr = Eurgb60DsStr;   break;
+		case VI_TVMODE_EURGB60_PROG: videoStr = Eurgb60ProgStr; break;
+		default:                     videoStr = UnkStr;
 	}
 }
 
@@ -113,7 +116,7 @@ void initialise_video(GXRModeObj *m) {
 	GX_SetDispCopySrc (0, 0, m->fbWidth, m->efbHeight);
 	GX_SetDispCopyDst (m->fbWidth, m->xfbHeight);
 	GX_SetCopyFilter (m->aa, m->sample_pattern, GX_TRUE, m->vfilter);
-	GX_SetFieldMode (m->field_rendering, ((vmode->viHeight == 2 * vmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
+	GX_SetFieldMode (m->field_rendering, ((m->viHeight == 2 * m->xfbHeight) ? GX_ENABLE : GX_DISABLE));
 	if (m->aa)
 		GX_SetPixelFmt(GX_PF_RGB565_Z16, GX_ZC_LINEAR);
 	else
@@ -148,24 +151,30 @@ void* Initialise (void)
 		// L Trigger held down ignores the fact that there's a component cable plugged in.
 		if(VIDEO_HaveComponentCable() && !(PAD_ButtonsDown(0) & PAD_TRIGGER_L)) {
 			if(strstr(IPLInfo,"MPAL")!=NULL) {
+				swissSettings.sramVideo = 2;
 				vmode = &TVMpal480Prog; //Progressive 480p
 			}
 			else if((strstr(IPLInfo,"PAL")!=NULL)) {
+				swissSettings.sramVideo = 1;
 				vmode = &TVPal576ProgScale; //Progressive 576p
 			}
 			else {
+				swissSettings.sramVideo = 0;
 				vmode = &TVNtsc480Prog; //Progressive 480p
 			}
 		}
 		else {
 			//try to use the IPL region
 			if(strstr(IPLInfo,"MPAL")!=NULL) {
+				swissSettings.sramVideo = 2;
 				vmode = &TVMpal480IntDf;        //PAL-M
 			}
 			else if(strstr(IPLInfo,"PAL")!=NULL) {
+				swissSettings.sramVideo = 1;
 				vmode = &TVPal576IntDfScale;         //PAL
 			}
 			else {
+				swissSettings.sramVideo = 0;
 				vmode = &TVNtsc480IntDf;        //NTSC
 			}
 		}
@@ -556,12 +565,24 @@ int main ()
 GXRModeObj *getModeFromSwissSetting(int uiVMode) {
 	switch(uiVMode) {
 		case 1:
-			return &TVNtsc480IntDf;
+			switch(swissSettings.sramVideo) {
+				case 2:  return &TVMpal480IntDf;
+				case 1:  return &TVEurgb60Hz480IntDf;
+				default: return &TVNtsc480IntDf;
+			}
 		case 2:
 			if(VIDEO_HaveComponentCable()) {
-				return &TVNtsc480Prog;
+				switch(swissSettings.sramVideo) {
+					case 2:  return &TVMpal480Prog;
+					case 1:  return &TVEurgb60Hz480Prog;
+					default: return &TVNtsc480Prog;
+				}
 			} else {
-				return &TVNtsc480IntDf;
+				switch(swissSettings.sramVideo) {
+					case 2:  return &TVMpal480IntDf;
+					case 1:  return &TVEurgb60Hz480IntDf;
+					default: return &TVNtsc480IntDf;
+				}
 			}
 		case 3:
 			return &TVPal576IntDfScale;

@@ -93,6 +93,7 @@ typedef struct {
 	int noDiscMode;
 	int enableFileManagement;
 	u8 sramLanguage;
+	u8 sramVideo;
 	char smbUser[32];		//20
 	char smbPassword[32];	//16
 	char smbShare[128];		//80

@@ -119,6 +119,13 @@ void ogc_video__reset()
 				swissSettings.gameVMode = -1;
 				break;
 		}
+		if(swissSettings.uiVMode > 0) {
+			syssram* sram = __SYS_LockSram();
+			sram->ntd = (swissSettings.uiVMode >= 1) && (swissSettings.uiVMode <= 2) ? (sram->ntd|0x40):(sram->ntd&~0x40);
+			sram->flags = (swissSettings.uiVMode == 2) || (swissSettings.uiVMode == 4) ? (sram->flags|0x80):(sram->flags&~0x80);
+			__SYS_UnlockSram(1);
+			while(!__SYS_SyncSram());
+		}
 	} else {
 		syssram* sram = __SYS_LockSram();
 		sram->ntd = (swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 5) ? (sram->ntd|0x40):(sram->ntd&~0x40);

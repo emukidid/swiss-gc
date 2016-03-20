@@ -273,8 +273,9 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				}
 				// Save settings to SRAM
 				sram = __SYS_LockSram();
-				sram->flags = swissSettings.sramStereo ? (sram->flags|4):(sram->flags&~4);
 				sram->lang = swissSettings.sramLanguage;
+				sram->flags = swissSettings.sramStereo ? (sram->flags|0x04):(sram->flags&~0x04);
+				sram->flags = (swissSettings.sramVideo&0x03)|(sram->flags&~0x03);
 				__SYS_UnlockSram(1);
 				while(!__SYS_SyncSram());
 				// Update our .ini
