@@ -645,7 +645,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 		{0x73C, 100, 43, 13, 34, 61, 0, 0, "VIConfigure C", 0},
 		{0x798, 105, 44, 12, 38, 63, 0, 0, "VIConfigure D", 0},
 		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure E", 0},
-		{0x8B4, 112, 43, 14, 53, 48, 0, 0, "VIConfigure F", 0},			// SN Systems ProDG
+		{0x8B8, 112, 44, 14, 53, 48, 0, 0, "VIConfigure F", 0},			// SN Systems ProDG
 		{0x804, 110, 44, 13, 49, 63, 0, 0, "VIConfigure G", 0}
 	};
 	FuncPattern VIConfigurePanSig = 
@@ -742,7 +742,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 								print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOddAddr);
 								*(u32*)(data+i+24) = *(u32*)(data+i+28);
 								*(u32*)(data+i+28) = 0x4800000C;	// b		+12
-								*(u32*)(data+i+40) = branchAndLink(getCurrentFieldEvenOddAddr, VIWaitForRetraceAddr+40);
+								*(u32*)(data+i+40) = branchAndLink(getCurrentFieldEvenOddAddr, VIWaitForRetraceAddr + 40);
 								*(u32*)(data+i+44) = 0x28030000;	// cmplwi	r3, 0
 								break;
 							}
@@ -766,89 +766,112 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							print_gecko("Patched NTSC Interlaced mode\n");
 							top_addr -= VIConfigure480i_length;
 							memcpy((void*)top_addr, VIConfigure480i, VIConfigure480i_length);
-							*(u32*)(top_addr+92) = branch(VIConfigureAddr+4, top_addr+92);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
 						case 3:
 							print_gecko("Patched NTSC Double-Strike mode\n");
 							top_addr -= VIConfigure240p_length;
 							memcpy((void*)top_addr, VIConfigure240p, VIConfigure240p_length);
-							*(u32*)(top_addr+80) = branch(VIConfigureAddr+4, top_addr+80);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
 						case 4:
 							print_gecko("Patched NTSC Field Rendering mode\n");
 							top_addr -= VIConfigure960i_length;
 							memcpy((void*)top_addr, VIConfigure960i, VIConfigure960i_length);
-							*(u32*)(top_addr+100) = branch(VIConfigureAddr+4, top_addr+100);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
 						case 5:
 							print_gecko("Patched NTSC Progressive mode\n");
 							top_addr -= VIConfigure480p_length;
 							memcpy((void*)top_addr, VIConfigure480p, VIConfigure480p_length);
-							*(u32*)(top_addr+92) = branch(VIConfigureAddr+4, top_addr+92);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
 						case 6:
 						case 7:
 							print_gecko("Patched PAL Interlaced mode\n");
 							top_addr -= VIConfigure576i_length;
 							memcpy((void*)top_addr, VIConfigure576i, VIConfigure576i_length);
-							*(u32*)(top_addr+56) = branch(VIConfigureAddr+4, top_addr+56);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
 						case 8:
 							print_gecko("Patched PAL Double-Strike mode\n");
 							top_addr -= VIConfigure288p_length;
 							memcpy((void*)top_addr, VIConfigure288p, VIConfigure288p_length);
-							*(u32*)(top_addr+44) = branch(VIConfigureAddr+4, top_addr+44);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
 						case 9:
 							print_gecko("Patched PAL Field Rendering mode\n");
 							top_addr -= VIConfigure1152i_length;
 							memcpy((void*)top_addr, VIConfigure1152i, VIConfigure1152i_length);
-							*(u32*)(top_addr+64) = branch(VIConfigureAddr+4, top_addr+64);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							Patch_VidTiming(data, length);
 							break;
 						case 10:
 							print_gecko("Patched PAL Progressive mode\n");
 							top_addr -= VIConfigure576p_length;
 							memcpy((void*)top_addr, VIConfigure576p, VIConfigure576p_length);
-							*(u32*)(top_addr+56) = branch(VIConfigureAddr+4, top_addr+56);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							Patch_VidTiming(data, length);
 							break;
 					}
 					switch(j) {
 						case 0:
-							*(u32*)(data+i+208) = 0xA07F0010;	// lhz		r3, 16 (r31)
+							*(u32*)(data+i+ 28) = branchAndLink(top_addr, VIConfigureAddr + 28);
+							*(u32*)(data+i+140) = 0x60000000;	// nop
+							*(u32*)(data+i+260) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+280) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+284) = 0x60000000;	// nop
+							*(u32*)(data+i+292) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1636);
 							break;
 						case 1:
-							*(u32*)(data+i+176) = 0xA07F0010;	// lhz		r3, 16 (r31)
+							*(u32*)(data+i+ 28) = branchAndLink(top_addr, VIConfigureAddr + 28);
+							*(u32*)(data+i+108) = 0x60000000;	// nop
+							*(u32*)(data+i+228) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+248) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+252) = 0x60000000;	// nop
+							*(u32*)(data+i+260) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1604);
 							break;
 						case 2:
-							*(u32*)(data+i+316) = 0xA07F0010;	// lhz		r3, 16 (r31)
+							*(u32*)(data+i+ 36) = branchAndLink(top_addr, VIConfigureAddr + 36);
+							*(u32*)(data+i+248) = 0x60000000;	// nop
+							*(u32*)(data+i+368) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+388) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+392) = 0x60000000;	// nop
+							*(u32*)(data+i+400) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1780);
 							break;
 						case 3:
-							*(u32*)(data+i+328) = 0xA07F0010;	// lhz		r3, 16 (r31)
+							*(u32*)(data+i+ 36) = branchAndLink(top_addr, VIConfigureAddr + 36);
+							*(u32*)(data+i+260) = 0x60000000;	// nop
+							*(u32*)(data+i+380) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+396) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+416) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+420) = 0x60000000;	// nop
+							*(u32*)(data+i+428) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1872);
 							break;
 						case 4:
-							*(u32*)(data+i+456) = 0xA07F0010;	// lhz		r3, 16 (r31)
+							*(u32*)(data+i+ 36) = branchAndLink(top_addr, VIConfigureAddr + 36);
+							*(u32*)(data+i+388) = 0x60000000;	// nop
+							*(u32*)(data+i+508) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+524) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+544) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+548) = 0x60000000;	// nop
+							*(u32*)(data+i+556) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 2012);
 							break;
 						case 5:
-							*(u32*)(data+i+436) = 0xA09B0010;	// lhz		r4, 16 (r27)
-							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2144);
+							*(u32*)(data+i+ 32) = branchAndLink(top_addr, VIConfigureAddr + 32);
+							*(u32*)(data+i+400) = 0xA11B000C;	// lhz		r8, 12 (r27)
+							*(u32*)(data+i+404) = 0x60000000;	// nop
+							*(u32*)(data+i+492) = 0xA0FB0010;	// lhz		r7, 16 (r27)
+							*(u32*)(data+i+508) = 0xA0FB0010;	// lhz		r7, 16 (r27)
+							*(u32*)(data+i+524) = 0xA0FB0010;	// lhz		r7, 16 (r27)
+							*(u32*)(data+i+532) = 0xA0FB0010;	// lhz		r7, 16 (r27)
+							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2148);
 							break;
 						case 6:
-							*(u32*)(data+i+456) = 0xA0730010;	// lhz		r3, 16 (r19)
+							*(u32*)(data+i+ 36) = branchAndLink(top_addr, VIConfigureAddr + 36);
+							*(u32*)(data+i+388) = 0x60000000;	// nop
+							*(u32*)(data+i+508) = 0xA0130010;	// lhz		r0, 16 (r19)
+							*(u32*)(data+i+524) = 0xA0130010;	// lhz		r0, 16 (r19)
+							*(u32*)(data+i+544) = 0xA0130010;	// lhz		r0, 16 (r19)
+							*(u32*)(data+i+548) = 0x60000000;	// nop
+							*(u32*)(data+i+556) = 0xA0130010;	// lhz		r0, 16 (r19)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1980);
 							break;
 					}
@@ -875,8 +898,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 								*(u32*)(data+i+1144) = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
 								break;
 							case 5:
-								*(u32*)(data+i+1232) = 0x7D004378;	// mr		r0, r8
-								*(u32*)(data+i+1236) = 0x5160177A;	// rlwimi	r0, r11, 2, 29, 29
+								*(u32*)(data+i+1236) = 0x7D004378;	// mr		r0, r8
+								*(u32*)(data+i+1240) = 0x5160177A;	// rlwimi	r0, r11, 2, 29, 29
 								break;
 							case 6:
 								*(u32*)(data+i+1152) = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
@@ -911,9 +934,9 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 								*(u32*)(data+i+1268) = 0x2C000007;	// cmpwi	r0, 7
 								break;
 							case 5:
-								*(u32*)(data+i+ 544) = 0x38000000;	// li		r0, 0
-								*(u32*)(data+i+1340) = 0x2C0A0006;	// cmpwi	r10, 6
-								*(u32*)(data+i+1368) = 0x2C0A0007;	// cmpwi	r10, 7
+								*(u32*)(data+i+ 548) = 0x38000000;	// li		r0, 0
+								*(u32*)(data+i+1344) = 0x2C0A0006;	// cmpwi	r10, 6
+								*(u32*)(data+i+1372) = 0x2C0A0007;	// cmpwi	r10, 7
 								break;
 							case 6:
 								*(u32*)(data+i+ 604) = 0x38600000;	// li		r3, 0
@@ -931,17 +954,14 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 			u32 VIConfigurePanAddr = Calc_ProperAddress(data, dataType, i);
 			if(VIConfigurePanAddr) {
 				print_gecko("Found:[%s] @ %08X\n", VIConfigurePanSig.Name, VIConfigurePanAddr);
-				top_addr -= VIConfigurePanHook_length;
-				memcpy((void*)top_addr, VIConfigurePanHook, VIConfigurePanHook_length);
-				*(u32*)(top_addr+ 0) = *(u32*)(data+i+36);
-				*(u32*)(top_addr+24) = branch(VIConfigurePanAddr+40, top_addr+24);
-				
 				if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 8)) {
-					*(u32*)(data+i+24) = 0x5499F87E;	// srwi		r25, r4, 1
-					*(u32*)(data+i+32) = 0x54D7F87E;	// srwi		r23, r6, 1
+					top_addr -= VIConfigurePanHookDs_length;
+					memcpy((void*)top_addr, VIConfigurePanHookDs, VIConfigurePanHookDs_length);
+				} else {
+					top_addr -= VIConfigurePanHook_length;
+					memcpy((void*)top_addr, VIConfigurePanHook, VIConfigurePanHook_length);
 				}
-				*(u32*)(data+i+36) = branch(top_addr, VIConfigurePanAddr+36);
-				
+				*(u32*)(data+i+40) = branchAndLink(top_addr, VIConfigurePanAddr + 40);
 				VIConfigurePanSig.offsetFoundAt = i;
 				i += VIConfigurePanSig.Length;
 			}
@@ -1017,7 +1037,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					if((swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 5)) {
 						top_addr -= GXGetYScaleFactorHook_length;
 						memcpy((void*)top_addr, GXGetYScaleFactorHook, GXGetYScaleFactorHook_length);
-						*(u32*)(top_addr+16) = branch(GXGetYScaleFactorAddr+4, top_addr+16);
+						*(u32*)(top_addr+16) = branch(GXGetYScaleFactorAddr + 4, top_addr + 16);
 						*(u32*)(data+i) = branch(top_addr, GXGetYScaleFactorAddr);
 					}
 					GXGetYScaleFactorSigs[j].offsetFoundAt = i;
@@ -1136,8 +1156,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 								print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOddAddr);
 								top_addr -= setFbbRegsHook_length;
 								memcpy((void*)top_addr, setFbbRegsHook, setFbbRegsHook_length);
-								*(u32*)(top_addr+12) = branchAndLink(getCurrentFieldEvenOddAddr, top_addr+12);
-								*(u32*)(data+i+setFbbRegsSigs[j].Length) = branch(top_addr, setFbbRegsAddr+setFbbRegsSigs[j].Length);
+								*(u32*)(top_addr+12) = branchAndLink(getCurrentFieldEvenOddAddr, top_addr + 12);
+								*(u32*)(data+i+setFbbRegsSigs[j].Length) = branch(top_addr, setFbbRegsAddr + setFbbRegsSigs[j].Length);
 								break;
 							}
 						}
