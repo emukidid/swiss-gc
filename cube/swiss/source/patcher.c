@@ -540,7 +540,19 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 	return patched;
 }
 
-/** SDK VIConfigure patch to force 480p/576p mode */
+u8 video_timing_480i[] = {
+	0x06,0x00,0x00,0xF0,
+	0x00,0x18,0x00,0x19,
+	0x00,0x03,0x00,0x02,
+	0x0C,0x0D,0x0C,0x0D,
+	0x02,0x08,0x02,0x07,
+	0x02,0x08,0x02,0x07,
+	0x02,0x0D,0x01,0xAD,
+	0x40,0x47,0x69,0xA2,
+	0x01,0x75,0x7A,0x00,
+	0x01,0x9C
+};
+
 u8 video_timing_480p[] = {
 	0x0C,0x00,0x01,0xE0,
 	0x00,0x30,0x00,0x30,
@@ -552,6 +564,19 @@ u8 video_timing_480p[] = {
 	0x40,0x47,0x69,0xA2,
 	0x01,0x75,0x7A,0x00,
 	0x01,0x9C
+};
+
+u8 video_timing_576i[] = {
+	0x05,0x00,0x01,0x20,
+	0x00,0x21,0x00,0x22,
+	0x00,0x01,0x00,0x00,
+	0x0D,0x0C,0x0B,0x0A,
+	0x02,0x6B,0x02,0x6A,
+	0x02,0x69,0x02,0x6C,
+	0x02,0x71,0x01,0xB0,
+	0x40,0x4B,0x6A,0xAC,
+	0x01,0x7C,0x85,0x00,
+	0x01,0xA4
 };
 
 u8 video_timing_576p[] = {
@@ -572,13 +597,21 @@ void Patch_VidTiming(void *addr, u32 length) {
 	void *addr_end = addr+length;
 	
 	while(addr_start<addr_end) {
+		if(memcmp(addr_start,video_timing_480i,sizeof(video_timing_480i))==0)
+		{
+			print_gecko("Patched PAL Interlaced timing\n");
+			memcpy(addr_start, video_timing_576i, sizeof(video_timing_576i));
+			addr_start += sizeof(video_timing_576i);
+			continue;
+		}
 		if(memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
 		{
 			print_gecko("Patched PAL Progressive timing\n");
 			memcpy(addr_start, video_timing_576p, sizeof(video_timing_576p));
+			addr_start += sizeof(video_timing_576p);
 			break;
 		}
-		addr_start += 4;
+		addr_start += 2;
 	}
 }
 
@@ -595,63 +628,131 @@ u8 vertical_reduction[][7] = {
 
 void Patch_VidMode(u8 *data, u32 length, int dataType) {
 	int i, j, k;
+	u8 *vfilter = vertical_filters[swissSettings.softProgressive];
+	FuncPattern __VIRetraceHandlerSigs[6] = {
+		{0x20C, 39,  7, 10, 15, 13, 0, 0, "__VIRetraceHandler A", 0},
+		{0x220, 42,  8, 11, 15, 13, 0, 0, "__VIRetraceHandler B", 0},
+		{0x224, 42,  9, 11, 15, 13, 0, 0, "__VIRetraceHandler C", 0},
+		{0x22C, 43, 10, 11, 15, 13, 0, 0, "__VIRetraceHandler D", 0},
+		{0x248, 46, 13, 10, 15, 15, 0, 0, "__VIRetraceHandler E", 0},	// SN Systems ProDG
+		{0x270, 50, 10, 15, 16, 13, 0, 0, "__VIRetraceHandler F", 0}
+	};
+	FuncPattern VIWaitForRetraceSig = 
+		{0x50, 7, 4, 3, 1, 4, 0, 0, "VIWaitForRetrace", 0};
 	FuncPattern VIConfigureSigs[7] = {
 		{0x6AC,  90, 43,  6, 32, 60, 0, 0, "VIConfigure A", 0},
 		{0x68C,  87, 41,  6, 31, 60, 0, 0, "VIConfigure B", 0},
 		{0x73C, 100, 43, 13, 34, 61, 0, 0, "VIConfigure C", 0},
 		{0x798, 105, 44, 12, 38, 63, 0, 0, "VIConfigure D", 0},
 		{0x824, 111, 44, 13, 53, 64, 0, 0, "VIConfigure E", 0},
-		{0x8B4, 112, 43, 14, 53, 48, 0, 0, "VIConfigure F", 0},		// SN Systems ProDG
+		{0x8B8, 112, 44, 14, 53, 48, 0, 0, "VIConfigure F", 0},			// SN Systems ProDG
 		{0x804, 110, 44, 13, 49, 63, 0, 0, "VIConfigure G", 0}
 	};
 	FuncPattern VIConfigurePanSig = 
 		{0x390, 40, 11, 4, 25, 35, 0, 0, "VIConfigurePan", 0};
-	FuncPattern GXGetYScaleFactorSigs[2] = {
-		{0x234, 16, 14, 3, 18, 27, 0, 0, "GXGetYScaleFactor A", 0},
-		{0x228, 20, 19, 3,  9, 14, 0, 0, "GXGetYScaleFactor B", 0}	// SN Systems ProDG
-	};
 	FuncPattern __GXInitGXSigs[6] = {
 		{0xF3C, 454, 81, 119, 43, 36, 0, 0, "__GXInitGX A", 0},
 		{0x844, 307, 35, 107, 18, 10, 0, 0, "__GXInitGX B", 0},
 		{0x880, 310, 35, 108, 24, 11, 0, 0, "__GXInitGX C", 0},
 		{0x8C0, 313, 36, 110, 28, 11, 0, 0, "__GXInitGX D", 0},
-		{0x880, 293, 36, 110,  7,  9, 0, 0, "__GXInitGX E", 0},		// SN Systems ProDG
+		{0x884, 293, 37, 110,  7,  9, 0, 0, "__GXInitGX E", 0},			// SN Systems ProDG
 		{0x934, 333, 34, 119, 28, 11, 0, 0, "__GXInitGX F", 0}
+	};
+	FuncPattern GXGetYScaleFactorSigs[2] = {
+		{0x234, 16, 14, 3, 18, 27, 0, 0, "GXGetYScaleFactor A", 0},
+		{0x228, 20, 19, 3,  9, 14, 0, 0, "GXGetYScaleFactor B", 0}		// SN Systems ProDG
 	};
 	FuncPattern GXSetCopyFilterSigs[3] = {
 		{0x224, 15,  7, 0, 4,  5, 0, 0, "GXSetCopyFilter A", 0},
-		{0x288, 19, 23, 0, 3, 14, 0, 0, "GXSetCopyFilter B", 0},	// SN Systems ProDG
+		{0x288, 19, 23, 0, 3, 14, 0, 0, "GXSetCopyFilter B", 0},		// SN Systems ProDG
 		{0x204, 25,  7, 0, 4,  0, 0, 0, "GXSetCopyFilter C", 0}
 	};
 	FuncPattern GXSetViewportSigs[4] = {
 		{0x20, 3, 2, 1, 0, 2, 0, 0, "GXSetViewport A", 0},
 		{0x20, 3, 2, 1, 0, 2, 0, 0, "GXSetViewport B", 0},
-		{0x38, 7, 6, 0, 1, 0, 0, 0, "GXSetViewport C", 0},			// SN Systems ProDG
+		{0x38, 7, 6, 0, 1, 0, 0, 0, "GXSetViewport C", 0},				// SN Systems ProDG
 		{0x44, 5, 8, 1, 0, 2, 0, 0, "GXSetViewport D", 0}
 	};
 	FuncPattern GXSetViewportJitterSigs[4] = {
 		{0x118, 20, 15, 1, 1, 3, 0, 0, "GXSetViewportJitter A", 0},
 		{0x100, 14, 15, 1, 1, 3, 0, 0, "GXSetViewportJitter B", 0},
-		{0x078,  6, 10, 1, 0, 4, 0, 0, "GXSetViewportJitter C", 0},	// SN Systems ProDG
+		{0x078,  6, 10, 1, 0, 4, 0, 0, "GXSetViewportJitter C", 0},		// SN Systems ProDG
 		{0x054,  6,  8, 1, 0, 2, 0, 0, "GXSetViewportJitter D", 0}
 	};
 	FuncPattern getCurrentFieldEvenOddSigs[2] = {
 		{0xB8, 14, 2, 2, 4, 8, 0, 0, "getCurrentFieldEvenOdd A", 0},
-		{0x5C,  7, 0, 0, 1, 5, 0, 0, "getCurrentFieldEvenOdd B", 0}	// SN Systems ProDG
+		{0x5C,  7, 0, 0, 1, 5, 0, 0, "getCurrentFieldEvenOdd B", 0}		// SN Systems ProDG
 	};
 	FuncPattern setFbbRegsSigs[2] = {
 		{0x2D0, 54, 34, 0, 10, 16, 0, 0, "setFbbRegs A", 0},
-		{0x2C0, 51, 34, 0, 10, 16, 0, 0, "setFbbRegs B", 0}			// SN Systems ProDG
+		{0x2C0, 51, 34, 0, 10, 16, 0, 0, "setFbbRegs B", 0}				// SN Systems ProDG
 	};
 	
 	for( i=0; i < length; i+=4 )
 	{
-		if( *(u32*)(data+i) != 0x7C0802A6 )
+		if( *(u32*)(data+i) != 0x7C0802A6 && *(u32*)(data+i+4) != 0x7C0802A6 )
 			continue;
 		
 		FuncPattern fp;
 		make_pattern( (u8*)(data+i), length, &fp );
 		
+		for( j=0; j < sizeof(__VIRetraceHandlerSigs)/sizeof(FuncPattern); j++ )
+		{
+			if( !__VIRetraceHandlerSigs[j].offsetFoundAt && compare_pattern( &fp, &(__VIRetraceHandlerSigs[j]) ) )
+			{
+				u32 __VIRetraceHandlerAddr = Calc_ProperAddress(data, dataType, i);
+				if(__VIRetraceHandlerAddr) {
+					print_gecko("Found:[%s] @ %08X\n", __VIRetraceHandlerSigs[j].Name, __VIRetraceHandlerAddr);
+					switch(j) {
+						case 0:
+						case 1: getCurrentFieldEvenOddSigs[0].offsetFoundAt = branchResolve(data, i + 240); break;
+						case 2:
+						case 3: getCurrentFieldEvenOddSigs[0].offsetFoundAt = branchResolve(data, i + 252); break;
+						case 4: getCurrentFieldEvenOddSigs[1].offsetFoundAt = branchResolve(data, i + 272); break;
+						case 5: getCurrentFieldEvenOddSigs[0].offsetFoundAt = branchResolve(data, i + 320); break;
+					}
+					if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 7)) {
+						switch(j) {
+							case 0:
+							case 1: *(u32*)(data+i+228) = 0x38000001; break;
+							case 2:
+							case 3: *(u32*)(data+i+240) = 0x38000001; break;
+							case 4: *(u32*)(data+i+260) = 0x38000001; break;
+							case 5: *(u32*)(data+i+308) = 0x38000001; break;
+						}
+					}
+					__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+					i += __VIRetraceHandlerSigs[j].Length;
+					break;
+				}
+			}
+		}
+		if( !VIWaitForRetraceSig.offsetFoundAt && compare_pattern( &fp, &VIWaitForRetraceSig ) )
+		{
+			u32 VIWaitForRetraceAddr = Calc_ProperAddress(data, dataType, i);
+			if(VIWaitForRetraceAddr) {
+				print_gecko("Found:[%s] @ %08X\n", VIWaitForRetraceSig.Name, VIWaitForRetraceAddr);
+				if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 7)) {
+					for( k=0; k < sizeof(getCurrentFieldEvenOddSigs)/sizeof(FuncPattern); k++ )
+					{
+						if( getCurrentFieldEvenOddSigs[k].offsetFoundAt )
+						{
+							u32 getCurrentFieldEvenOddAddr = Calc_ProperAddress(data, dataType, getCurrentFieldEvenOddSigs[k].offsetFoundAt);
+							if(getCurrentFieldEvenOddAddr) {
+								print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOddAddr);
+								*(u32*)(data+i+24) = *(u32*)(data+i+28);
+								*(u32*)(data+i+28) = 0x4800000C;	// b		+12
+								*(u32*)(data+i+40) = branchAndLink(getCurrentFieldEvenOddAddr, VIWaitForRetraceAddr + 40);
+								*(u32*)(data+i+44) = 0x28030000;	// cmplwi	r3, 0
+								break;
+							}
+						}
+					}
+				}
+				VIWaitForRetraceSig.offsetFoundAt = i;
+				i += VIWaitForRetraceSig.Length;
+			}
+		}
 		for( j=0; j < sizeof(VIConfigureSigs)/sizeof(FuncPattern); j++ )
 		{
 			if( !VIConfigureSigs[j].offsetFoundAt && compare_pattern( &fp, &(VIConfigureSigs[j]) ) )
@@ -661,95 +762,120 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					print_gecko("Found:[%s] @ %08X\n", VIConfigureSigs[j].Name, VIConfigureAddr);
 					switch(swissSettings.gameVMode) {
 						case 1:
+						case 2:
 							print_gecko("Patched NTSC Interlaced mode\n");
 							top_addr -= VIConfigure480i_length;
 							memcpy((void*)top_addr, VIConfigure480i, VIConfigure480i_length);
-							*(u32*)(top_addr+92) = branch(VIConfigureAddr+4, top_addr+92);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
-						case 2:
+						case 3:
 							print_gecko("Patched NTSC Double-Strike mode\n");
 							top_addr -= VIConfigure240p_length;
 							memcpy((void*)top_addr, VIConfigure240p, VIConfigure240p_length);
-							*(u32*)(top_addr+80) = branch(VIConfigureAddr+4, top_addr+80);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
-						case 3:
+						case 4:
 							print_gecko("Patched NTSC Field Rendering mode\n");
 							top_addr -= VIConfigure960i_length;
 							memcpy((void*)top_addr, VIConfigure960i, VIConfigure960i_length);
-							*(u32*)(top_addr+84) = branch(VIConfigureAddr+4, top_addr+84);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
-						case 4:
+						case 5:
 							print_gecko("Patched NTSC Progressive mode\n");
 							top_addr -= VIConfigure480p_length;
 							memcpy((void*)top_addr, VIConfigure480p, VIConfigure480p_length);
-							*(u32*)(top_addr+76) = branch(VIConfigureAddr+4, top_addr+76);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
-						case 5:
+						case 6:
+						case 7:
 							print_gecko("Patched PAL Interlaced mode\n");
 							top_addr -= VIConfigure576i_length;
 							memcpy((void*)top_addr, VIConfigure576i, VIConfigure576i_length);
-							*(u32*)(top_addr+56) = branch(VIConfigureAddr+4, top_addr+56);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
-						case 6:
+						case 8:
 							print_gecko("Patched PAL Double-Strike mode\n");
 							top_addr -= VIConfigure288p_length;
 							memcpy((void*)top_addr, VIConfigure288p, VIConfigure288p_length);
-							*(u32*)(top_addr+44) = branch(VIConfigureAddr+4, top_addr+44);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							break;
-						case 7:
+						case 9:
 							print_gecko("Patched PAL Field Rendering mode\n");
 							top_addr -= VIConfigure1152i_length;
 							memcpy((void*)top_addr, VIConfigure1152i, VIConfigure1152i_length);
-							*(u32*)(top_addr+48) = branch(VIConfigureAddr+4, top_addr+48);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							Patch_VidTiming(data, length);
 							break;
-						case 8:
+						case 10:
 							print_gecko("Patched PAL Progressive mode\n");
 							top_addr -= VIConfigure576p_length;
 							memcpy((void*)top_addr, VIConfigure576p, VIConfigure576p_length);
-							*(u32*)(top_addr+40) = branch(VIConfigureAddr+4, top_addr+40);
-							*(u32*)(data+i) = branch(top_addr, VIConfigureAddr);
 							Patch_VidTiming(data, length);
 							break;
 					}
 					switch(j) {
 						case 0:
-							*(u32*)(data+i+208) = 0xA07F0010;	// lhz		r3, 16 (r31)
+							*(u32*)(data+i+ 28) = branchAndLink(top_addr, VIConfigureAddr + 28);
+							*(u32*)(data+i+140) = 0x60000000;	// nop
+							*(u32*)(data+i+260) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+280) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+284) = 0x60000000;	// nop
+							*(u32*)(data+i+292) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1636);
 							break;
 						case 1:
-							*(u32*)(data+i+176) = 0xA07F0010;	// lhz		r3, 16 (r31)
+							*(u32*)(data+i+ 28) = branchAndLink(top_addr, VIConfigureAddr + 28);
+							*(u32*)(data+i+108) = 0x60000000;	// nop
+							*(u32*)(data+i+228) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+248) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+252) = 0x60000000;	// nop
+							*(u32*)(data+i+260) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1604);
 							break;
 						case 2:
-							*(u32*)(data+i+316) = 0xA07F0010;	// lhz		r3, 16 (r31)
+							*(u32*)(data+i+ 36) = branchAndLink(top_addr, VIConfigureAddr + 36);
+							*(u32*)(data+i+248) = 0x60000000;	// nop
+							*(u32*)(data+i+368) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+388) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+392) = 0x60000000;	// nop
+							*(u32*)(data+i+400) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1780);
 							break;
 						case 3:
-							*(u32*)(data+i+328) = 0xA07F0010;	// lhz		r3, 16 (r31)
+							*(u32*)(data+i+ 36) = branchAndLink(top_addr, VIConfigureAddr + 36);
+							*(u32*)(data+i+260) = 0x60000000;	// nop
+							*(u32*)(data+i+380) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+396) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+416) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+420) = 0x60000000;	// nop
+							*(u32*)(data+i+428) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1872);
 							break;
 						case 4:
-							*(u32*)(data+i+456) = 0xA07F0010;	// lhz		r3, 16 (r31)
+							*(u32*)(data+i+ 36) = branchAndLink(top_addr, VIConfigureAddr + 36);
+							*(u32*)(data+i+388) = 0x60000000;	// nop
+							*(u32*)(data+i+508) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+524) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+544) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(u32*)(data+i+548) = 0x60000000;	// nop
+							*(u32*)(data+i+556) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 2012);
 							break;
 						case 5:
-							*(u32*)(data+i+436) = 0xA09B0010;	// lhz		r4, 16 (r27)
-							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2144);
+							*(u32*)(data+i+ 32) = branchAndLink(top_addr, VIConfigureAddr + 32);
+							*(u32*)(data+i+400) = 0xA11B000C;	// lhz		r8, 12 (r27)
+							*(u32*)(data+i+404) = 0x60000000;	// nop
+							*(u32*)(data+i+492) = 0xA0FB0010;	// lhz		r7, 16 (r27)
+							*(u32*)(data+i+508) = 0xA0FB0010;	// lhz		r7, 16 (r27)
+							*(u32*)(data+i+524) = 0xA0FB0010;	// lhz		r7, 16 (r27)
+							*(u32*)(data+i+532) = 0xA0FB0010;	// lhz		r7, 16 (r27)
+							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2148);
 							break;
 						case 6:
-							*(u32*)(data+i+456) = 0xA0730010;	// lhz		r3, 16 (r19)
+							*(u32*)(data+i+ 36) = branchAndLink(top_addr, VIConfigureAddr + 36);
+							*(u32*)(data+i+388) = 0x60000000;	// nop
+							*(u32*)(data+i+508) = 0xA0130010;	// lhz		r0, 16 (r19)
+							*(u32*)(data+i+524) = 0xA0130010;	// lhz		r0, 16 (r19)
+							*(u32*)(data+i+544) = 0xA0130010;	// lhz		r0, 16 (r19)
+							*(u32*)(data+i+548) = 0x60000000;	// nop
+							*(u32*)(data+i+556) = 0xA0130010;	// lhz		r0, 16 (r19)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1980);
 							break;
 					}
-					if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 7)) {
+					if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
 						switch(j) {
 							case 0:
 								*(u32*)(data+i+ 820) = 0x54A607B8;	// rlwinm	r6, r5, 0, 30, 28
@@ -772,8 +898,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 								*(u32*)(data+i+1144) = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
 								break;
 							case 5:
-								*(u32*)(data+i+1232) = 0x7D004378;	// mr		r0, r8
-								*(u32*)(data+i+1236) = 0x5160177A;	// rlwimi	r0, r11, 2, 29, 29
+								*(u32*)(data+i+1236) = 0x7D004378;	// mr		r0, r8
+								*(u32*)(data+i+1240) = 0x5160177A;	// rlwimi	r0, r11, 2, 29, 29
 								break;
 							case 6:
 								*(u32*)(data+i+1152) = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
@@ -782,7 +908,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 								break;
 						}
 					}
-					if((swissSettings.gameVMode == 7) || (swissSettings.gameVMode == 8)) {
+					if((swissSettings.gameVMode == 9) || (swissSettings.gameVMode == 10)) {
 						switch(j) {
 							case 0:
 								*(u32*)(data+i+  40) = 0x2C040006;	// cmpwi	r4, 6
@@ -808,9 +934,9 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 								*(u32*)(data+i+1268) = 0x2C000007;	// cmpwi	r0, 7
 								break;
 							case 5:
-								*(u32*)(data+i+ 544) = 0x38000000;	// li		r0, 0
-								*(u32*)(data+i+1340) = 0x2C0A0006;	// cmpwi	r10, 6
-								*(u32*)(data+i+1368) = 0x2C0A0007;	// cmpwi	r10, 7
+								*(u32*)(data+i+ 548) = 0x38000000;	// li		r0, 0
+								*(u32*)(data+i+1344) = 0x2C0A0006;	// cmpwi	r10, 6
+								*(u32*)(data+i+1372) = 0x2C0A0007;	// cmpwi	r10, 7
 								break;
 							case 6:
 								*(u32*)(data+i+ 604) = 0x38600000;	// li		r3, 0
@@ -828,125 +954,100 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 			u32 VIConfigurePanAddr = Calc_ProperAddress(data, dataType, i);
 			if(VIConfigurePanAddr) {
 				print_gecko("Found:[%s] @ %08X\n", VIConfigurePanSig.Name, VIConfigurePanAddr);
-				top_addr -= VIConfigurePanHook_length;
-				memcpy((void*)top_addr, VIConfigurePanHook, VIConfigurePanHook_length);
-				*(u32*)(top_addr+ 0) = *(u32*)(data+i+36);
-				*(u32*)(top_addr+24) = branch(VIConfigurePanAddr+40, top_addr+24);
-				
-				if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 6)) {
-					*(u32*)(data+i+24) = 0x5499F87E;	// srwi		r25, r4, 1
-					*(u32*)(data+i+32) = 0x54D7F87E;	// srwi		r23, r6, 1
+				if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 8)) {
+					top_addr -= VIConfigurePanHookDs_length;
+					memcpy((void*)top_addr, VIConfigurePanHookDs, VIConfigurePanHookDs_length);
+				} else {
+					top_addr -= VIConfigurePanHook_length;
+					memcpy((void*)top_addr, VIConfigurePanHook, VIConfigurePanHook_length);
 				}
-				*(u32*)(data+i+36) = branch(top_addr, VIConfigurePanAddr+36);
-				
+				*(u32*)(data+i+40) = branchAndLink(top_addr, VIConfigurePanAddr + 40);
 				VIConfigurePanSig.offsetFoundAt = i;
 				i += VIConfigurePanSig.Length;
-				break;
 			}
 		}
-	}
-	if((swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 4)) {
-		for( i=0; i < length; i+=4 )
+		for( j=0; j < sizeof(__GXInitGXSigs)/sizeof(FuncPattern); j++ )
 		{
-			if( *(u32*)(data+i) != 0x7C0802A6 )
-				continue;
-			
-			FuncPattern fp;
-			make_pattern( (u8*)(data+i), length, &fp );
-			
-			for( j=0; j < sizeof(GXGetYScaleFactorSigs)/sizeof(FuncPattern); j++ )
+			if( !__GXInitGXSigs[j].offsetFoundAt && compare_pattern( &fp, &(__GXInitGXSigs[j]) ) )
 			{
-				if( !GXGetYScaleFactorSigs[j].offsetFoundAt && compare_pattern( &fp, &(GXGetYScaleFactorSigs[j]) ) )
-				{
-					u32 GXGetYScaleFactorAddr = Calc_ProperAddress(data, dataType, i);
-					if(GXGetYScaleFactorAddr) {
-						print_gecko("Found:[%s] @ %08X\n", GXGetYScaleFactorSigs[j].Name, GXGetYScaleFactorAddr);
-						top_addr -= GXGetYScaleFactorHook_length;
-						memcpy((void*)top_addr, GXGetYScaleFactorHook, GXGetYScaleFactorHook_length);
-						*(u32*)(top_addr+16) = branch(GXGetYScaleFactorAddr+4, top_addr+16);
-						*(u32*)(data+i) = branch(top_addr, GXGetYScaleFactorAddr);
-						
-						GXGetYScaleFactorSigs[j].offsetFoundAt = i;
-						i += GXGetYScaleFactorSigs[j].Length;
-						break;
+				u32 __GXInitGXAddr = Calc_ProperAddress(data, dataType, i);
+				if(__GXInitGXAddr) {
+					print_gecko("Found:[%s] @ %08X\n", __GXInitGXSigs[j].Name, __GXInitGXAddr);
+					switch(j) {
+						case 0:
+							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 3764);
+							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 2212);
+							break;
+						case 1:
+							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 1964);
+							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 744);
+							break;
+						case 2:
+							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 2024);
+							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 808);
+							break;
+						case 3:
+							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 2084);
+							GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 860);
+							break;
+						case 4:
+							GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 1996);
+							GXSetViewportSigs[2].offsetFoundAt = branchResolve(data, i + 808);
+							break;
+						case 5:
+							GXSetCopyFilterSigs[2].offsetFoundAt = branchResolve(data, i + 2200);
+							GXSetViewportSigs[3].offsetFoundAt = branchResolve(data, i + 860);
+							break;
 					}
- 				}
-			}
-		}
-	}
-	if((swissSettings.gameVMode != 1) && (swissSettings.gameVMode != 5)) {
-		u8 *vfilter = vertical_filters[swissSettings.softProgressive];
-		
-		for( i=0; i < length; i+=4 )
-		{
-			if( *(u32*)(data+i) != 0x7C0802A6 )
-				continue;
-			
-			FuncPattern fp;
-			make_pattern( (u8*)(data+i), length, &fp );
-			
-			for( j=0; j < sizeof(__GXInitGXSigs)/sizeof(FuncPattern); j++ )
-			{
-				if( !__GXInitGXSigs[j].offsetFoundAt && compare_pattern( &fp, &(__GXInitGXSigs[j]) ) )
-				{
-					u32 __GXInitGXAddr = Calc_ProperAddress(data, dataType, i);
-					if(__GXInitGXAddr) {
-						print_gecko("Found:[%s] @ %08X\n", __GXInitGXSigs[j].Name, __GXInitGXAddr);
+					if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 8)) {
 						switch(j) {
-							case 0:
-								GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 3764);
-								GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 2212);
-								break;
-							case 1:
-								GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 1964);
-								GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 744);
-								break;
-							case 2:
-								GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 2024);
-								GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 808);
-								break;
-							case 3:
-								GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 2084);
-								GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 860);
-								break;
-							case 4:
-								GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 1992);
-								GXSetViewportSigs[2].offsetFoundAt = branchResolve(data, i + 804);
-								break;
-							case 5:
-								GXSetCopyFilterSigs[2].offsetFoundAt = branchResolve(data, i + 2200);
-								GXSetViewportSigs[3].offsetFoundAt = branchResolve(data, i + 860);
-								break;
+							case 0: *(u32*)(data+i+3776) = 0x38600003; break;
+							case 1: *(u32*)(data+i+1976) = 0x38600003; break;
+							case 2: *(u32*)(data+i+2036) = 0x38600003; break;
+							case 3: *(u32*)(data+i+2096) = 0x38600003; break;
+							case 4: *(u32*)(data+i+2008) = 0x38600003; break;
+							case 5: *(u32*)(data+i+2212) = 0x38600003; break;
 						}
-						if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 6)) {
-							switch(j) {
-								case 0: *(u32*)(data+i+3776) = 0x38600003; break;
-								case 1: *(u32*)(data+i+1976) = 0x38600003; break;
-								case 2: *(u32*)(data+i+2036) = 0x38600003; break;
-								case 3: *(u32*)(data+i+2096) = 0x38600003; break;
-								case 4: *(u32*)(data+i+2004) = 0x38600003; break;
-								case 5: *(u32*)(data+i+2212) = 0x38600003; break;
-							}
-							vfilter = vertical_reduction[1];
-						}
-						else if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 7)) {
-							switch(j) {
-								case 0: *(u32*)(data+i+3644) = 0x38600001; break;
-								case 1: *(u32*)(data+i+1844) = 0x38600001; break;
-								case 2: *(u32*)(data+i+1904) = 0x38600001; break;
-								case 3: *(u32*)(data+i+1964) = 0x38600001; break;
-								case 4: *(u32*)(data+i+1840) = 0x38600001; break;
-								case 5: *(u32*)(data+i+2080) = 0x38600001; break;
-							}
-							vfilter = vertical_filters[0];
-						}
-						__GXInitGXSigs[j].offsetFoundAt = i;
-						i += __GXInitGXSigs[j].Length;
-						break;
+						vfilter = vertical_reduction[1];
 					}
+					else if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
+						switch(j) {
+							case 0: *(u32*)(data+i+3644) = 0x38600001; break;
+							case 1: *(u32*)(data+i+1844) = 0x38600001; break;
+							case 2: *(u32*)(data+i+1904) = 0x38600001; break;
+							case 3: *(u32*)(data+i+1964) = 0x38600001; break;
+							case 4: *(u32*)(data+i+1844) = 0x38600001; break;
+							case 5: *(u32*)(data+i+2080) = 0x38600001; break;
+						}
+						vfilter = vertical_filters[0];
+					}
+					__GXInitGXSigs[j].offsetFoundAt = i;
+					i += __GXInitGXSigs[j].Length;
+					break;
 				}
 			}
 		}
+		for( j=0; j < sizeof(GXGetYScaleFactorSigs)/sizeof(FuncPattern); j++ )
+		{
+			if( !GXGetYScaleFactorSigs[j].offsetFoundAt && compare_pattern( &fp, &(GXGetYScaleFactorSigs[j]) ) )
+			{
+				u32 GXGetYScaleFactorAddr = Calc_ProperAddress(data, dataType, i);
+				if(GXGetYScaleFactorAddr) {
+					print_gecko("Found:[%s] @ %08X\n", GXGetYScaleFactorSigs[j].Name, GXGetYScaleFactorAddr);
+					if((swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 5)) {
+						top_addr -= GXGetYScaleFactorHook_length;
+						memcpy((void*)top_addr, GXGetYScaleFactorHook, GXGetYScaleFactorHook_length);
+						*(u32*)(top_addr+16) = branch(GXGetYScaleFactorAddr + 4, top_addr + 16);
+						*(u32*)(data+i) = branch(top_addr, GXGetYScaleFactorAddr);
+					}
+					GXGetYScaleFactorSigs[j].offsetFoundAt = i;
+					i += GXGetYScaleFactorSigs[j].Length;
+					break;
+				}
+			}
+		}
+	}
+	if((swissSettings.gameVMode != 1) && (swissSettings.gameVMode != 6)) {
 		for( j=0; j < sizeof(GXSetCopyFilterSigs)/sizeof(FuncPattern); j++ )
 		{
 			if( (i=GXSetCopyFilterSigs[j].offsetFoundAt) )
@@ -988,7 +1089,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 			}
 		}
 	}
-	if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 7)) {
+	if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
 		for( j=0; j < sizeof(GXSetViewportSigs)/sizeof(FuncPattern); j++ )
 		{
 			if( (i=GXSetViewportSigs[j].offsetFoundAt) )
@@ -1039,42 +1140,29 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 				}
 			}
 		}
-		for( i=0; i < length; i+=4 )
+		for( j=0; j < sizeof(setFbbRegsSigs)/sizeof(FuncPattern); j++ )
 		{
-			if( *(u32*)(data+i) != 0x3C60CC00 && *(u32*)(data+i+4) != 0x3C60CC00 )
-				continue;
-			
-			FuncPattern fp;
-			make_pattern( (u8*)(data+i), length, &fp );
-			
-			for( j=0; j < sizeof(getCurrentFieldEvenOddSigs)/sizeof(FuncPattern); j++ )
+			if( (i=setFbbRegsSigs[j].offsetFoundAt) )
 			{
-				if( !getCurrentFieldEvenOddSigs[j].offsetFoundAt && compare_pattern( &fp, &(getCurrentFieldEvenOddSigs[j]) ) )
-				{
-					u32 getCurrentFieldEvenOddAddr = Calc_ProperAddress(data, dataType, i);
-					if(getCurrentFieldEvenOddAddr) {
-						print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[j].Name, getCurrentFieldEvenOddAddr);
-						for( k=0; k < sizeof(setFbbRegsSigs)/sizeof(FuncPattern); k++ )
+				u32 setFbbRegsAddr = Calc_ProperAddress(data, dataType, i);
+				if(setFbbRegsAddr) {
+					print_gecko("Found:[%s] @ %08X\n", setFbbRegsSigs[j].Name, setFbbRegsAddr);
+					for( k=0; k < sizeof(getCurrentFieldEvenOddSigs)/sizeof(FuncPattern); k++ )
+					{
+						if( getCurrentFieldEvenOddSigs[k].offsetFoundAt )
 						{
-							if( setFbbRegsSigs[k].offsetFoundAt )
-							{
-								u32 setFbbRegsAddr = Calc_ProperAddress(data, dataType, setFbbRegsSigs[k].offsetFoundAt);
-								if(setFbbRegsAddr) {
-									print_gecko("Found:[%s] @ %08X\n", setFbbRegsSigs[k].Name, setFbbRegsAddr);
-									top_addr -= setFbbRegsHook_length;
-									memcpy((void*)top_addr, setFbbRegsHook, setFbbRegsHook_length);
-									*(u32*)(top_addr+12) = branchAndLink(getCurrentFieldEvenOddAddr, top_addr+12);
-									*(u32*)(data+setFbbRegsSigs[k].offsetFoundAt+setFbbRegsSigs[k].Length) = branch(top_addr, setFbbRegsAddr+setFbbRegsSigs[k].Length);
-									
-									setFbbRegsSigs[k].offsetFoundAt = 0;
-									break;
-								}
+							u32 getCurrentFieldEvenOddAddr = Calc_ProperAddress(data, dataType, getCurrentFieldEvenOddSigs[k].offsetFoundAt);
+							if(getCurrentFieldEvenOddAddr) {
+								print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOddAddr);
+								top_addr -= setFbbRegsHook_length;
+								memcpy((void*)top_addr, setFbbRegsHook, setFbbRegsHook_length);
+								*(u32*)(top_addr+12) = branchAndLink(getCurrentFieldEvenOddAddr, top_addr + 12);
+								*(u32*)(data+i+setFbbRegsSigs[j].Length) = branch(top_addr, setFbbRegsAddr + setFbbRegsSigs[j].Length);
+								break;
 							}
 						}
-						getCurrentFieldEvenOddSigs[j].offsetFoundAt = i;
-						i += getCurrentFieldEvenOddSigs[j].Length;
-						break;
 					}
+					break;
 				}
 			}
 		}

@@ -78,6 +78,8 @@ extern u8 VIConfigure1152i[];
 extern u32 VIConfigure1152i_length;
 extern u8 VIConfigurePanHook[];
 extern u32 VIConfigurePanHook_length;
+extern u8 VIConfigurePanHookDs[];
+extern u32 VIConfigurePanHookDs_length;
 
 #define SWISS_MAGIC 0x53574953 /* "SWIS" */
 
