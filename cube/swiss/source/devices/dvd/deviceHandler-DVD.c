@@ -485,6 +485,7 @@ int deviceHandler_DVD_init(file_handle* file){
 }
 
 int deviceHandler_DVD_deinit(file_handle* file) {
+	dvd_motor_off();
 	return 0;
 }
 
