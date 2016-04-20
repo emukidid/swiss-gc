@@ -119,10 +119,17 @@ void ogc_video__reset()
 				swissSettings.gameVMode = -1;
 				break;
 		}
+		if(swissSettings.uiVMode > 0) {
+			syssram* sram = __SYS_LockSram();
+			sram->ntd = (swissSettings.uiVMode >= 1) && (swissSettings.uiVMode <= 2) ? (sram->ntd|0x40):(sram->ntd&~0x40);
+			sram->flags = (swissSettings.uiVMode == 2) || (swissSettings.uiVMode == 4) ? (sram->flags|0x80):(sram->flags&~0x80);
+			__SYS_UnlockSram(1);
+			while(!__SYS_SyncSram());
+		}
 	} else {
 		syssram* sram = __SYS_LockSram();
-		sram->ntd = (swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 4) ? (sram->ntd|0x40):(sram->ntd&~0x40);
-		sram->flags = (swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 8) ? (sram->flags|0x80):(sram->flags&~0x80);
+		sram->ntd = (swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 5) ? (sram->ntd|0x40):(sram->ntd&~0x40);
+		sram->flags = (swissSettings.gameVMode == 5) || (swissSettings.gameVMode == 10) ? (sram->flags|0x80):(sram->flags&~0x80);
 		__SYS_UnlockSram(1);
 		while(!__SYS_SyncSram());
 	}
@@ -149,11 +156,17 @@ void ogc_video__reset()
 			break;
 		case 2:
 			DrawFrameStart();
-			DrawMessageBox(D_INFO, "Video Mode: NTSC 240p");
+			DrawMessageBox(D_INFO, "Video Mode: NTSC 480sf");
 			DrawFrameFinish();
 			newmode = &TVNtsc480IntDf;
 			break;
 		case 3:
+			DrawFrameStart();
+			DrawMessageBox(D_INFO, "Video Mode: NTSC 240p");
+			DrawFrameFinish();
+			newmode = &TVNtsc480IntDf;
+			break;
+		case 4:
 			if(VIDEO_HaveComponentCable()) {
 				DrawFrameStart();
 				DrawMessageBox(D_INFO, "Video Mode: NTSC 960i");
@@ -168,7 +181,7 @@ void ogc_video__reset()
 				sleep(5);
 			}
 			break;
-		case 4:
+		case 5:
 			if(VIDEO_HaveComponentCable()) {
 				DrawFrameStart();
 				DrawMessageBox(D_INFO, "Video Mode: NTSC 480p");
@@ -176,26 +189,32 @@ void ogc_video__reset()
 				newmode = &TVNtsc480Prog;
 			} else {
 				DrawFrameStart();
-				DrawMessageBox(D_WARN, "Video Mode: NTSC 480i");
+				DrawMessageBox(D_WARN, "Video Mode: NTSC 240p");
 				DrawFrameFinish();
-				swissSettings.gameVMode = 1;
+				swissSettings.gameVMode = 3;
 				newmode = &TVNtsc480IntDf;
 				sleep(5);
 			}
 			break;
-		case 5:
+		case 6:
 			DrawFrameStart();
 			DrawMessageBox(D_INFO, "Video Mode: PAL 576i");
 			DrawFrameFinish();
 			newmode = &TVPal576IntDfScale;
 			break;
-		case 6:
+		case 7:
+			DrawFrameStart();
+			DrawMessageBox(D_INFO, "Video Mode: PAL 576sf");
+			DrawFrameFinish();
+			newmode = &TVPal576IntDfScale;
+			break;
+		case 8:
 			DrawFrameStart();
 			DrawMessageBox(D_INFO, "Video Mode: PAL 288p");
 			DrawFrameFinish();
 			newmode = &TVPal576IntDfScale;
 			break;
-		case 7:
+		case 9:
 			if(VIDEO_HaveComponentCable()) {
 				DrawFrameStart();
 				DrawMessageBox(D_INFO, "Video Mode: PAL 1152i");
@@ -205,12 +224,12 @@ void ogc_video__reset()
 				DrawFrameStart();
 				DrawMessageBox(D_WARN, "Video Mode: PAL 576i");
 				DrawFrameFinish();
-				swissSettings.gameVMode = 5;
+				swissSettings.gameVMode = 6;
 				newmode = &TVPal576IntDfScale;
 				sleep(5);
 			}
 			break;
-		case 8:
+		case 10:
 			if(VIDEO_HaveComponentCable()) {
 				DrawFrameStart();
 				DrawMessageBox(D_INFO, "Video Mode: PAL 576p");
@@ -218,9 +237,9 @@ void ogc_video__reset()
 				newmode = &TVPal576ProgScale;
 			} else {
 				DrawFrameStart();
-				DrawMessageBox(D_WARN, "Video Mode: PAL 576i");
+				DrawMessageBox(D_WARN, "Video Mode: PAL 288p");
 				DrawFrameFinish();
-				swissSettings.gameVMode = 5;
+				swissSettings.gameVMode = 8;
 				newmode = &TVPal576IntDfScale;
 				sleep(5);
 			}

@@ -4,9 +4,14 @@
 
 .globl VIConfigure960i
 VIConfigure960i:
-	li			%r0, 2
+	li			%r0, 0
 	li			%r7, 1
 	li			%r6, 0
+	lhz			%r5, 8 (%r3)
+	slwi		%r5, %r5, 1
+	cmpwi		%r5, 480
+	ble			2f
+	li			%r0, 2
 	lhz			%r5, 8 (%r3)
 	cmpwi		%r5, 480
 	ble			2f
@@ -24,8 +29,11 @@ VIConfigure960i:
 	stw			%r6, 20 (%r3)
 	stb			%r7, 24 (%r3)
 	stw			%r0, 0 (%r3)
-	mflr		%r0
-	trap
+	mfmsr		%r3
+	rlwinm		%r4, %r3, 0, 17, 15
+	mtmsr		%r4
+	extrwi		%r3, %r3, 1, 16
+	blr
 
 .globl VIConfigure960i_length
 VIConfigure960i_length:

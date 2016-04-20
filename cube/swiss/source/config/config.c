@@ -232,6 +232,10 @@ void config_parse(char *configData) {
 						configEntries[configEntriesCount].gameVMode = 7;
 					else if(!strcmp(gameVModeStr[8], value))
 						configEntries[configEntriesCount].gameVMode = 8;
+					else if(!strcmp(gameVModeStr[9], value))
+						configEntries[configEntriesCount].gameVMode = 9;
+					else if(!strcmp(gameVModeStr[10], value))
+						configEntries[configEntriesCount].gameVMode = 10;
 				}
 				else if(!strcmp("Soft Progressive", name)) {
 					if(!strcmp(softProgressiveStr[0], value))
