@@ -476,6 +476,8 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 	free(directories);
 }
 
+char *DiscIDNoASRequired[14] = {"GMP", "GFZ", "GPO", "GGS", "GSN", "GEO", "GR2", "GXG", "GM8", "G2M", "GMO", "G9S", "GHQ", "GTK"};
+
 unsigned int load_app(int multiDol)
 {
 	char* gameID = (char*)0x80000000;
@@ -501,6 +503,15 @@ unsigned int load_app(int multiDol)
 	DrawFrameStart();
 	DrawProgressBar(33, "Reading Main DOL");
 	DrawFrameFinish();
+
+	// False alarm audio streaming list games here
+	for(i = 0; i < sizeof(DiscIDNoASRequired)/3; i++) {
+		if(!strncmp(gameID, DiscIDNoASRequired[i], 3) ) {
+			GCMDisk.AudioStreaming = 0;
+			print_gecko("This game doesn't really need Audio Streaming but has it set!\r\n");
+			break;
+		}
+	}
 	
 	// Don't needlessly apply audio streaming if the game doesn't want it
 	if(!GCMDisk.AudioStreaming || curDevice == WKF || curDevice == DVD_DISC) {
