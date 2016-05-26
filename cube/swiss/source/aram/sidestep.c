@@ -265,7 +265,7 @@ int DOLtoARAM(unsigned char *dol, int argc, char *argv[])
   dolhdr = (DOLHEADER *) dol;
 
   /*** First, does this look like a DOL? ***/
-  if (dolhdr->textOffset[0] != DOLHDRLENGTH)
+  if (dolhdr->textOffset[0] != DOLHDRLENGTH && dolhdr->textOffset[0] != 0x0620)	// DOLX style 
     return 0;
 
   /*** Get DOL stats ***/

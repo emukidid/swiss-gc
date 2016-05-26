@@ -43,6 +43,7 @@ int deviceHandler_CARD_deleteFile(file_handle* file);
 int  deviceHandler_CARD_closeFile(file_handle* file);
 
 int initialize_card(int slot);
-
+void setCopyGCIMode(bool _isCopyGCIMode);
+void setGCIInfo(void *buffer);
 #endif
 

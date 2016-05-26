@@ -345,7 +345,8 @@ void drawFiles(file_handle** directory, int num_files) {
 		sprintf(txtbuffer, "%s", &curFile.name[0]);
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, ((vmode->fbWidth-150)-20), .85);
 		WriteFontStyled(150, 85, txtbuffer, scale, false, defaultColor);
-		DrawVertScrollBar(vmode->fbWidth-25, fileListBase, 16, scrollBarHeight, (float)((float)curSelection/(float)(num_files-1)),scrollBarTabHeight);
+		if(num_files > FILES_PER_PAGE)
+			DrawVertScrollBar(vmode->fbWidth-25, fileListBase, 16, scrollBarHeight, (float)((float)curSelection/(float)(num_files-1)),scrollBarTabHeight);
 		for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
 			populate_meta(&((*directory)[current_view_start]));
 			DrawFileBrowserButton(150, fileListBase+(j*40), vmode->fbWidth-30, fileListBase+(j*40)+40, 
@@ -800,6 +801,7 @@ void boot_dol()
 		}
 	}
 
+	if(deviceHandler_deinit && deviceHandler_initial) deviceHandler_deinit( deviceHandler_initial );
 	// Boot
 	DOLtoARAM(dol_buffer, argc, argc == 0 ? NULL : argv);
 }
@@ -908,6 +910,10 @@ void manage_file() {
 			
 			// Show a directory only browser and get the destination file location
 			select_dest_dir(deviceHandler_dest_initial, destFile);
+			
+			u32 isDestCard = deviceHandler_dest_writeFile == deviceHandler_CARD_writeFile;
+			u32 isSrcCard = deviceHandler_readFile == deviceHandler_CARD_readFile;
+			
 			sprintf(destFile->name, "%s/%s",destFile->name,getRelativeName(&curFile.name[0]));
 			destFile->fp = 0;
 			destFile->fileBase = 0;
@@ -915,6 +921,10 @@ void manage_file() {
 			destFile->fileAttrib = IS_FILE;
 			destFile->status = 0;
 			destFile->offset = 0;
+			// Create a GCI if something is coming out from CARD to another device
+			if(isSrcCard && !isDestCard) {
+				sprintf(destFile->name, "%s.gci",destFile->name);
+			}
 
 			// If the destination file already exists, ask the user what to do
 			u8 nothing[1];
@@ -1032,16 +1042,22 @@ void manage_file() {
 				wait_press_A();
 			}
 			else {
-				u32 isDestCard = deviceHandler_dest_writeFile == deviceHandler_CARD_writeFile;
-				if(isDestCard && (!endsWith(destFile->name,".gci"))) {
-					// Only .GCI files can go to the memcard
-					DrawFrameStart();
-					DrawMessageBox(D_INFO,"Only GCI files allowed on memcard. Press A to continue");
-					DrawFrameFinish();
-					wait_press_A();
-					return;
+				// If we're copying out from memory card, make a .GCI
+				if(isSrcCard) {
+					setCopyGCIMode(TRUE);
+					curFile.size += sizeof(GCI);
 				}
-			
+				// If we're copying a .gci to a memory card, do it properly
+				if(isDestCard && (endsWith(destFile->name,".gci"))) {
+					// Read the header
+					char *gciHeader = memalign(32, sizeof(GCI));
+					deviceHandler_seekFile(&curFile, 0, DEVICE_HANDLER_SEEK_SET);
+					deviceHandler_readFile(&curFile, gciHeader, sizeof(GCI));
+					deviceHandler_seekFile(&curFile, 0, DEVICE_HANDLER_SEEK_SET);
+					setGCIInfo(gciHeader);
+					free(gciHeader);
+				}
+				
 				// Read from one file and write to the new directory
 				u32 isCard = deviceHandler_readFile == deviceHandler_CARD_readFile;
 				u32 curOffset = 0, cancelled = 0, chunkSize = (isCard||isDestCard) ? curFile.size : (256*1024);
@@ -1063,21 +1079,27 @@ void manage_file() {
 						deviceHandler_seekFile(&curFile, curFile.offset-ret, DEVICE_HANDLER_SEEK_SET);
 						ret = deviceHandler_readFile(&curFile, readBuffer, amountToCopy);
 						if(ret != amountToCopy) {
+							free(readBuffer);
 							DrawFrameStart();
 							sprintf(txtbuffer, "Failed to Read! (%i %i)\n%s",amountToCopy,ret, &curFile.name[0]);
 							DrawMessageBox(D_FAIL,txtbuffer);
 							DrawFrameFinish();
 							wait_press_A();
+							setGCIInfo(NULL);
+							setCopyGCIMode(FALSE);
 							return;
 						}
 					}
 					ret = deviceHandler_dest_writeFile(destFile, readBuffer, amountToCopy);
 					if(ret != amountToCopy) {
+						free(readBuffer);
 						DrawFrameStart();
 						sprintf(txtbuffer, "Failed to Write! (%i %i)\n%s",amountToCopy,ret,destFile->name);
 						DrawMessageBox(D_FAIL,txtbuffer);
 						DrawFrameFinish();
 						wait_press_A();
+						setGCIInfo(NULL);
+						setCopyGCIMode(FALSE);
 						return;
 					}
 					curOffset+=amountToCopy;
@@ -1087,18 +1109,23 @@ void manage_file() {
 				if(curFile.size == 0) {
 					ret = deviceHandler_dest_writeFile(destFile, readBuffer, 0);
 					if(ret != 0) {
+						free(readBuffer);
 						DrawFrameStart();
 						sprintf(txtbuffer, "Failed to Write! (%i %i)\n%s",0,ret,destFile->name);
 						DrawMessageBox(D_FAIL,txtbuffer);
 						DrawFrameFinish();
 						wait_press_A();
+						setGCIInfo(NULL);
+						setCopyGCIMode(FALSE);
 						return;
 					}
 				}
-					
+				free(readBuffer);
 				if(deviceHandler_dest_initial->name[0] == 'i' || deviceHandler_dest_initial->name[0] == 's') {
 					fclose(destFile->fp);
 				}
+				setGCIInfo(NULL);
+				setCopyGCIMode(FALSE);
 				free(destFile);
 				DrawFrameStart();
 				if(!cancelled) {
@@ -1805,6 +1832,9 @@ void select_device(int skipPrompts)
 			deviceHandler_deleteFile = NULL;
  		break;
 		case MEMCARD:
+			if(skipPrompts) {
+				slot = (deviceHandler_initial->name[4] == 'b');
+			}
 			deviceHandler_initial = !slot ? &initial_CARDA : &initial_CARDB;
 			deviceHandler_readDir  =  deviceHandler_CARD_readDir;
 			deviceHandler_readFile =  deviceHandler_CARD_readFile;

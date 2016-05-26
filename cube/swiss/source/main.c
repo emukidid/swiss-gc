@@ -493,7 +493,6 @@ int main ()
 			curDevice = SD_CARD;
 		}
 		else {
-			deviceHandler_deinit(deviceHandler_initial);
 			deviceHandler_initial = &initial_SD1;
 			if(deviceHandler_init(deviceHandler_initial)) {
 				print_gecko("Detected SDGecko in Slot B\r\n");
@@ -502,6 +501,23 @@ int main ()
 			}
 		}
 		deviceHandler_setStatEnabled(1);
+		// If there's still no device, try memory card
+		if(curDevice < 0) {
+			deviceHandler_initial = &initial_CARDA;
+			deviceHandler_init		=  deviceHandler_CARD_init;
+			deviceHandler_deinit	=  deviceHandler_CARD_deinit;
+			if(deviceHandler_init(deviceHandler_initial)) {
+				print_gecko("Detected Memory Card in Slot A\r\n");
+				curDevice = MEMCARD;
+			}
+			else {
+				deviceHandler_initial = &initial_CARDB;
+				if(deviceHandler_init(deviceHandler_initial)) {
+					print_gecko("Detected Memory Card in Slot B\r\n");
+					curDevice = MEMCARD;
+				}
+			}
+		}
 	}
 	
 	// If no device has been selected yet to browse ..
