@@ -506,7 +506,7 @@ unsigned int load_app(int multiDol)
 
 	// False alarm audio streaming list games here
 	for(i = 0; i < sizeof(DiscIDNoASRequired)/3; i++) {
-		if(!strncmp(gameID, DiscIDNoASRequired[i], 3) ) {
+		if(!strncmp(gameID, (const char*)&DiscIDNoASRequired[i], 3) ) {
 			GCMDisk.AudioStreaming = 0;
 			print_gecko("This game doesn't really need Audio Streaming but has it set!\r\n");
 			break;
@@ -1416,7 +1416,7 @@ void draw_game_info() {
 		WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
 	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
-		sprintf(txtbuffer,"Region [%s] Audio Streaming [%s]",(GCMDisk.CountryCode=='P') ? "PAL":"NTSC",(GCMDisk.AudioStreaming=='\1') ? "YES":"NO");
+		sprintf(txtbuffer,"GameID: [%s] Audio Streaming [%s]", (const char*)&GCMDisk ,(GCMDisk.AudioStreaming==1) ? "YES":"NO");
 		WriteFontStyled(640/2, 200, txtbuffer, 0.8f, true, defaultColor);
 		WriteFontStyled(640/2, 220, (GCMDisk.DiscID ? "Disc 2":""), 0.8f, true, defaultColor);
 	}
