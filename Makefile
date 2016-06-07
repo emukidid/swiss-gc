@@ -27,8 +27,7 @@ GECKOSERVER   = pc/usbgecko
 
 #all: clean update build build-AR package
 #rev: clean user build build-AR package
-all: clean update compile build recovery-iso build-AR build-geckoserver package
-rev: clean user build build-AR build-geckoserver package
+all: clean compile build recovery-iso build-AR build-geckoserver package
 
 clean:
 	@rm -rf $(DIST)
@@ -36,15 +35,7 @@ clean:
 	@cd $(GECKOSERVER) && make clean
 
 #------------------------------------------------------------------
-
-update: # update swiss from git
-	@git pull
-
 compile: # compile
-	@cd $(SOURCES)/swiss && make
-
-user:   # BROKEN for now! checkout specific revision and compile << broken due to github migration
-	@echo;echo "Type Revision number and Press Enter:";read -p "  (ex. rev 0094  rev 0174 )     rev 0" REVISION; svn checkout -r 0$$REVISION http://swiss-gc.googlecode.com/svn/trunk/ swiss
 	@cd $(SOURCES)/swiss && make
 
 #------------------------------------------------------------------
