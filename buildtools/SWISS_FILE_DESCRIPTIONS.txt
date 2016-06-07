@@ -1,0 +1,64 @@
+
+----------------------------------------------------------
+SWISS FILE DESCRIPTION:
+----------------------------------------------------------
+
+- swiss.dol : main executable file
+This file is most commmonly used for booting swiss.
+
+----------------------------------------------------------
+
+- swiss-compressed.dol :  same as swiss.dol
+This file is shrunk to fit for upload into Qoob Pro flash.
+
+----------------------------------------------------------
+
+- swiss-lz-viper.dol : same as swiss.dol
+This file shrunk and formatted for upload into Viper Extreme flash.
+
+----------------------------------------------------------
+
+- swiss.iso : properly formatted iso image ready to burn for DVD loading. 
+Use with DVD burner software (imageburn or other) to make bootable DVD. 
+
+----------------------------------------------------------
+
+- swiss.fzn : for use with Wiikey Fusion / WASP Fusion only.
+This file is most commonly used to update the swiss menu version on flash.
+NOTE: FZN update can be performed from WKF/WASP SD slot.
+
+----------------------------------------------------------
+
+- swiss.fzn.fw : for use with Wiikey Fusion / WASP Fusion only
+This file is only used to restore WKF/WASP firmware v1.0 for autoboot. 
+NOTE: Must be used in conjunction with swiss.fzn and can only be performed 
+from SDGecko Slot.
+
+----------------------------------------------------------
+
+- swissRecovery.iso: replaces original 1.2 recovery.
+Used to load swiss in recovery mode to allow reflashing firmware.
+
+----------------------------------------------------------
+
+- SDLOADER.BIN : allows Action Replay to direct boot swiss.dol
+Copy this file over original SDLOADER.BIN
+NOTE: Must use properly set up Action Replay SD Card to allow boot.
+NOTE: Must have swiss.dol on SD Card also
+
+----------------------------------------------------------
+
+- swiss.elf : contains debugging information for coders
+
+----------------------------------------------------------
+
+- swissserver : for use with USBGecko 
+Allows for serving files from PC to Gamecube over USBGecko.
+
+
+
+
+
+
+
+
