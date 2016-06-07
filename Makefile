@@ -12,12 +12,7 @@ OBJCOPY = $(DIR)/powerpc-eabi-objcopy
 DIST          = dist
 SOURCES       = cube
 BUILDTOOLS    = buildtools
-BASE          = $(SOURCES)/patches/base
-DVD_SOURCES   = $(SOURCES)/patches/dvd
-HDD_SOURCES   = $(SOURCES)/patches/ide-exi
-SD_SOURCES    = $(SOURCES)/patches/sdgecko
-USB_SOURCES   = $(SOURCES)/patches/usbgecko
-WKF_SOURCES   = $(SOURCES)/patches/wkf
+PATCHES       = $(SOURCES)/patches
 AR_SOURCES    = $(SOURCES)/actionreplay
 
 BUILT_PATCHES = patches
@@ -25,9 +20,11 @@ GECKOSERVER   = pc/usbgecko
 
 #------------------------------------------------------------------
 
-#all: clean update build build-AR package
-#rev: clean user build build-AR package
-all: clean compile build recovery-iso build-AR build-geckoserver package
+# Ready to go .7z file with every type of DOL we can think of
+all: clean compile-patches compile build recovery-iso build-AR build-geckoserver package
+
+# For dev use only, avoid the unnecessary fluff
+dev: clean compile-patches compile
 
 clean:
 	@rm -rf $(DIST)
@@ -35,6 +32,9 @@ clean:
 	@cd $(GECKOSERVER) && make clean
 
 #------------------------------------------------------------------
+compile-patches:
+	@cd $(PATCHES) && make
+
 compile: # compile
 	@cd $(SOURCES)/swiss && make
 
@@ -117,98 +117,6 @@ build-geckoserver:
 	@mkdir $(DIST)/USBGeckoRemoteServer
 	@mv $(GECKOSERVER)/swissserver* $(DIST)/USBGeckoRemoteServer/
 	
-
-
-#------------------------------------------------------------------
-
-# Make individual patches
-build-dvd: #clean
-	@mkdir $(BUILT_PATCHES)
-	@$(CC) -O2 -c $(DVD_SOURCES)/base.S
-	@$(CC) -O2 -c $(DVD_SOURCES)/dvd.c
-	@$(CC) -O2 -c $(SD_SOURCES)/sd.c
-	@$(CC) -O2 -c $(BASE)/frag.c
-	@$(CC) -O2 -c $(BASE)/usbgecko.c
-	@$(CC) -O2 -c $(BASE)/dvdqueue.c
-	@$(LD) -o dvd.elf base.o frag.o sd.o dvd.o dvdqueue.o usbgecko.o --section-start .text=0x80001800
-	@$(OBJDUMP) -D dvd.elf > $(BUILT_PATCHES)/dvd_disasm.txt
-	@$(OBJCOPY) -O binary dvd.elf dvd.bin
-	@$(BIN2S) dvd.bin > dvd_final.s
-	@mv dvd_final.s $(BUILT_PATCHES)/DVDPatch.s
-	@rm -rf *.o *.bin *.elf
-
-build-hdd: clean
-	@mkdir $(BUILT_PATCHES)
-	@$(CC) -O2 -c $(BASE)/base.S
-	@$(CC) -O2 -c $(HDD_SOURCES)/hddread.c
-	@$(CC) -O2 -c $(BASE)/frag.c
-	@$(CC) -O2 -c $(BASE)/usbgecko.c
-	@$(CC) -O2 -c $(BASE)/dvdqueue.c
-	@$(CC) -O2 -c $(BASE)/dvdinterface.c
-	@$(CC) -O2 -c $(BASE)/adp.c
-	@$(CC) -O1 -c $(BASE)/Stream.c
-	@$(CC) -O2 -c $(BASE)/__DSPHandler.S
-	@$(CC) -O1 -c $(BASE)/appldr_start.S
-	@$(CC) -O1 -c $(BASE)/appldr.c
-	@$(LD) -o hdd.elf base.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o --section-start .text=0x80001000
-	@$(OBJDUMP) -D hdd.elf > $(BUILT_PATCHES)/hdd_disasm.txt
-	@$(OBJCOPY) -O binary hdd.elf hdd.bin
-	@$(BIN2S) hdd.bin > hdd_final.s
-	@mv hdd_final.s $(BUILT_PATCHES)/SlotAB-HDD.s
-	@rm -rf *.o *.bin *.elf
-
-build-sd: clean
-	@mkdir $(BUILT_PATCHES)
-	@$(CC) -O2 -c $(BASE)/base.S
-	@$(CC) -O2 -c $(SD_SOURCES)/sd.c
-	@$(CC) -O2 -c $(BASE)/frag.c
-	@$(CC) -O2 -c $(BASE)/usbgecko.c
-	@$(CC) -O2 -c $(BASE)/dvdqueue.c
-	@$(CC) -O2 -c $(BASE)/dvdinterface.c
-	@$(CC) -O2 -c $(BASE)/adp.c
-	@$(CC) -O1 -c $(BASE)/Stream.c
-	@$(CC) -O2 -c $(BASE)/__DSPHandler.S
-	@$(CC) -O1 -c $(BASE)/appldr_start.S
-	@$(CC) -O1 -c $(BASE)/appldr.c
-	@$(LD) -o sd.elf base.o frag.o sd.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o --section-start .text=0x80001000
-	@$(OBJDUMP) -D sd.elf > $(BUILT_PATCHES)/sd_disasm.txt
-	@$(OBJCOPY) -O binary sd.elf sd.bin
-	@$(BIN2S) sd.bin > sd_final.s
-	@mv sd_final.s $(BUILT_PATCHES)/SlotAB-SD.s
-	@rm -rf *.o *.bin *.elf
-
-build-usb: clean
-	@mkdir $(BUILT_PATCHES)
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c $(BASE)/base.S
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c $(USB_SOURCES)/usbgecko.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c $(BASE)/frag.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c $(BASE)/dvdqueue.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c $(BASE)/dvdinterface.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c $(BASE)/adp.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c $(BASE)/Stream.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c $(BASE)/__DSPHandler.S
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c $(BASE)/appldr_start.S
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c $(BASE)/appldr.c
-	@$(LD) -o usbgecko.elf base.o usbgecko.o dvdqueue.o dvdinterface.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o frag.o --section-start .text=0x80001000 --gc-sections
-	@$(OBJDUMP) -D usbgecko.elf > $(BUILT_PATCHES)/usb_disasm.txt
-	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
-	@$(BIN2S) usbgecko.bin > usbgecko_final.s
-	@mv usbgecko_final.s $(BUILT_PATCHES)/USBGeckoRead.s
-	@rm -rf *.o *.bin *.elf
-
-build-wkf: clean
-	@mkdir $(BUILT_PATCHES)
-	@$(CC) -O2 -c $(WKF_SOURCES)/base.S
-	@$(CC) -O2 -c $(WKF_SOURCES)/wkf.c
-	@$(CC) -O2 -DDEBUG -c $(BASE)/usbgecko.c
-	@$(LD) -o wkf.elf base.o wkf.o usbgecko.o --section-start .text=0x80001800
-	@$(OBJDUMP) -D wkf.elf > $(BUILT_PATCHES)/wkf_disasm.txt
-	@$(OBJCOPY) -O binary wkf.elf wkf.bin
-	@$(BIN2S) wkf.bin > wkfPatch.s
-	@mv wkfPatch.s $(BUILT_PATCHES)/wkfPatch.s
-	@rm -f *.o *.bin *.elf
-
-
 #------------------------------------------------------------------
 
 build-libfat-frag:
