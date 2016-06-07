@@ -107,7 +107,7 @@ build-usb:
 
 build-wkf:
 	@echo Building WKF Patch ...
-	@$(CC) -O2 -c wkf/base.s
+	@$(CC) -O2 -c wkf/base.S
 	@$(CC) -O2 -c wkf/wkf.c
 	@$(CC) -O2 -c base/usbgecko.c
 	@$(LD) -o wkf.elf base.o wkf.o usbgecko.o --section-start .text=0x80001800
