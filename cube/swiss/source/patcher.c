@@ -496,8 +496,8 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 					patched |= 0x100;
 				}
 			}
-			// Audio Streaming Hook
-			else if( find_pattern( (u8*)(addr_start), length, &DSPHandler ) )
+			// Audio Streaming Hook (only if required)
+			else if(!swissSettings.muteAudioStreaming && find_pattern( (u8*)(addr_start), length, &DSPHandler ) )
 			{
 				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start+0xF8)-(u32)(addr));
 				print_gecko("Found:[__DSPHandler] @ %08X\r\n", properAddress);

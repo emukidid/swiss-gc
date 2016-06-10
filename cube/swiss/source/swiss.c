@@ -495,7 +495,7 @@ unsigned int load_app(int multiDol)
 	deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
 	if(deviceHandler_readFile(&curFile,(unsigned char*)0x80000000,32) != 32) {
 		DrawFrameStart();
-		DrawMessageBox(D_FAIL, "Apploader Header Failed to read");
+		DrawMessageBox(D_FAIL, "Game Header Failed to read");
 		DrawFrameFinish();
 		while(1);
 	}
@@ -505,8 +505,8 @@ unsigned int load_app(int multiDol)
 	DrawFrameFinish();
 
 	// False alarm audio streaming list games here
-	for(i = 0; i < sizeof(DiscIDNoASRequired)/3; i++) {
-		if(!strncmp(gameID, (const char*)&DiscIDNoASRequired[i], 3) ) {
+	for(i = 0; i < 14; i++) {
+		if(!strncmp(gameID, DiscIDNoASRequired[i], 3) ) {
 			GCMDisk.AudioStreaming = 0;
 			print_gecko("This game doesn't really need Audio Streaming but has it set!\r\n");
 			break;
@@ -663,7 +663,10 @@ unsigned int load_app(int multiDol)
 		return 0;
 	}
 	
-	deviceHandler_deinit(&curFile);
+	// Don't spin down the drive when running something from it...
+	if(curDevice != DVD_DISC) {
+		deviceHandler_deinit(&curFile);
+	}
 	
 	DrawFrameStart();
 	DrawProgressBar(100, "Executing Game!");
