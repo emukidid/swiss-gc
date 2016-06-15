@@ -472,9 +472,6 @@ int main ()
 		print_gecko("GIT Revision: %s\r\n", GITVERSION);
 	}
 	
-	// Detect devices
-	populateDeviceAvailability();
-	
 	curDevice = -1;
 	// Are we working with a Wiikey Fusion?
 	if(__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF) {
@@ -549,11 +546,14 @@ int main ()
 			}
 		}
 	}
-	if(curDevice) {
+	// Default device detected, use it
+	if(curDevice >= 0) {
 		needsDeviceChange = 0;
 		select_device(1); // to setup deviceHandler_ ptrs
 		load_config();
 	}
+	// Scan here since some devices would already be initialised (faster)
+	populateDeviceAvailability();
 
 	// Start up the BBA if it exists
 	init_network_thread();
