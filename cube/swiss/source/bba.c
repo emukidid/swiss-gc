@@ -53,7 +53,7 @@ static void* init_network(void *args) {
 	while(1) {
 		if(!net_initialized) {
 			netInitPending = 1;
-			res = if_config(bba_ip, NULL, NULL, true);
+			res = if_config(bba_ip, NULL, NULL, true, 20);
 			if(res >= 0) {
 				net_initialized = 1;
 			}
