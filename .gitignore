@@ -1,5 +1,10 @@
+/dist
+
 cube/swiss/build/
 cube/swiss/dist/
+
+cube/swiss/source/patches/*.s
+cube/patches/disassembly
 
 cube/actionreplay/SDLOADER.BIN
 
