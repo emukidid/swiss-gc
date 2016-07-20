@@ -252,6 +252,7 @@ u32 branchResolve(u8 *data, u32 offsetFoundAt)
 // Redirects 0xCC0060xx reads to VAR_DI_REGS
 void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 {
+	PatchDetectLowMemUsage(dst, Length, dataType);
 	u32 DIPatched = 0;
 	int i;
 
@@ -373,6 +374,64 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 
 	print_gecko("Patch:[DI] applied %u times\r\n", DIPatched);
 }
+
+void PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType )
+{
+	u32 LowMemPatched = 0;
+	int i;
+
+#define REG_0x8000 0
+#define REG_USED   1
+	
+	u32 regs[32][2];
+	memset(regs, 0, 32*4*2);
+	
+	for( i=0; i < Length; i+=4 )
+	{
+		u32 op = *(u32*)(dst + i);
+			
+		// lis rX, 0x8000
+		if( (op & 0xFC1FFFFF) == 0x3C008000 ) {
+			u32 dstR = (op >> 21) & 0x1F;
+			regs[dstR][REG_0x8000]	=	1;	// this reg is now 0x80000000
+			continue;
+		}
+
+		// li rX, x or lis rX, x
+		if( (op & 0xFC1F0000) == 0x38000000 || (op & 0xFC1F0000) == 0x3C000000 ) {
+			u32 dstR = (op >> 21) & 0x1F;
+			if (regs[dstR][REG_0x8000]) {
+				regs[dstR][REG_0x8000] = 0;	// reg is no longer 0x80000000
+			}
+			continue;
+		}
+
+		// lwz and lwzu, stw and stwu
+		if (((op & 0xF8000000) == 0x80000000) || ( (op & 0xF8000000 ) == 0x90000000 ) || ( (op & 0xF8000000 ) == 0xA0000000 ) )
+		{
+			u32 src = (op >> 16) & 0x1F;
+			u32 dstR = (op >> 21) & 0x1F;
+			u32 val = op & 0xFFFF;
+			if(dstR == src) {regs[src][REG_0x8000] = 0; continue; }
+			if( regs[src][REG_0x8000] && (((val & 0xFFFF) >= 0x1000) && ((val & 0xFFFF) < 0x3000))) // case with load in our range(rZ)
+			{
+				u32 properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
+				print_gecko("LowMem:[%08X] %08X: mem r%u, %04X\r\n", properAddress, *(u32*)(dst + i), src, *(u32*)(dst + i) &0xFFFF);
+				*(u32*)(dst + i) = 0x60000000;	// We could redirect ...
+				regs[src][REG_USED]=1;	// was used in a 0x80001000->0x80003000 load/store
+				LowMemPatched++;
+			}
+			continue;
+		}
+		// blr, flush out and reset
+		if(op == 0x4E800020) {
+			memset(regs, 0, 32*4*2);
+		}
+	}
+
+	print_gecko("Patch:[LowMem] applied %u times\r\n", LowMemPatched);
+}
+
 
 u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 	int i = 0;
