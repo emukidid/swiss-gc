@@ -97,6 +97,7 @@ recovery-iso:
 package:   # create distribution package
 	@mkdir $(SVN_REVISION)
 	@mv $(DIST)/DOL $(SVN_REVISION)
+	@mv $(DIST)/GCI $(SVN_REVISION)
 	@mv $(DIST)/ISO $(SVN_REVISION)
 	@mv $(DIST)/WiikeyFusion $(SVN_REVISION)
 	@mv $(DIST)/ActionReplay $(SVN_REVISION)
