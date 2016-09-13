@@ -15,18 +15,29 @@ BUILDTOOLS    = buildtools
 PATCHES       = $(SOURCES)/patches
 AR_SOURCES    = $(SOURCES)/actionreplay
 
+ifeq ($(OS),Windows_NT)
+DOLLZ         = $(BUILDTOOLS)/dollz3.exe
+DOL2GCI       = $(BUILDTOOLS)/dol2gci.exe
+MKISOFS       = $(BUILDTOOLS)/mkisofs.exe
+else
+DOLLZ         = $(BUILDTOOLS)/dollz3
+DOL2GCI       = wine $(BUILDTOOLS)/dol2gci.exe
+MKISOFS       = mkisofs
+endif
+
 BUILT_PATCHES = patches
 GECKOSERVER   = pc/usbgecko
 
 #------------------------------------------------------------------
 
 # Ready to go .7z file with every type of DOL we can think of
-all: clean compile-patches compile build recovery-iso build-AR build-geckoserver package
+all: clean compile-patches compile build recovery-iso build-gci build-AR build-geckoserver package
 
 # For dev use only, avoid the unnecessary fluff
 dev: clean compile-patches compile
 
 clean:
+	@echo Building on $(OS)
 	@rm -rf $(DIST)
 	@cd $(SOURCES)/swiss && make clean
 	@cd $(GECKOSERVER) && make clean
@@ -50,24 +61,25 @@ build:
 	@mkdir $(DIST)/WiikeyFusion
 	@mkdir $(DIST)/WiikeyFusion/RecoveryISO
 	@mkdir $(DIST)/ActionReplay
+	@mkdir $(DIST)/GCI
 	@cp $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/$(SVN_REVISION).dol
 	@cp $(SOURCES)/swiss/swiss.elf $(DIST)/DOL/$(SVN_REVISION).elf
-	@$(BUILDTOOLS)/dollz3 $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/Viper/$(SVN_REVISION)\-lz-viper.dol -m -v
-	@$(BUILDTOOLS)/dollz3 $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/$(SVN_REVISION)\-compressed.dol -m
-	@cp $(DIST)/DOL/$(SVN_REVISION)\-compressed.dol $(DIST)/ActionReplay/swiss-lz.dol
-	@cp $(DIST)/DOL/$(SVN_REVISION)\-compressed.dol $(DIST)/ISO/DOL/$(SVN_REVISION)\-compressed.dol
+	@$(DOLLZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol -m -v
+	@$(DOLLZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol -m
+	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/swiss-lz.dol
+	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ISO/DOL/$(SVN_REVISION)-compressed.dol
 	# make ISOs and WKF firmware
 	# NTSC
-	@mkisofs -R -J -G $(BUILDTOOLS)/iso/eltorito-u.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-u)".iso $(DIST)/ISO/DOL/
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-u.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-u)".iso $(DIST)/ISO/DOL/
 	## NTSC-J
-	@mkisofs -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/ISO/DOL/
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/ISO/DOL/
 	# PAL
-	@mkisofs -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/ISO/DOL/
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/ISO/DOL/
 	@cp $(BUILDTOOLS)/wkf/wkf_menu.fzn $(SVN_REVISION).fzn
 	@dd if=$(DIST)/ISO/$(SVN_REVISION)"(pal)".iso of=$(SVN_REVISION).fzn conv=notrunc
 	@mv $(SVN_REVISION).fzn $(DIST)/WiikeyFusion
 	@cp $(BUILDTOOLS)/wkf/autoboot.fzn.fw $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn.fw
-	@rm $(DIST)/ISO/DOL/$(SVN_REVISION)\-compressed.dol
+	@rm $(DIST)/ISO/DOL/$(SVN_REVISION)-compressed.dol
 	@rmdir $(DIST)/ISO/DOL
 
 #------------------------------------------------------------------
@@ -109,6 +121,13 @@ build-AR: # make ActionReplay
 	@$(OBJCOPY) -O binary $(AR_SOURCES)/sdloader.elf $(DIST)/ActionReplay/SDLOADER.BIN
 	@rm -f $(AR_SOURCES)/*.o $(AR_SOURCES)/*.elf $(DIST)/ActionReplay/*swiss-lz.dol $(AR_SOURCES)/swiss-lz.s
 
+#------------------------------------------------------------------
+
+build-gci: # make GCI for memory cards
+	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol boot.dol
+	@$(DOL2GCI) boot.dol $(DIST)/GCI/boot.gci
+	@rm boot.dol
+	
 #------------------------------------------------------------------
 
 
