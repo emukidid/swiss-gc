@@ -30,16 +30,6 @@ extern u8 dvd_bin[];
 extern u32 dvd_bin_size;
 
 /* SDK patches */
-extern u8 DVDCancelAsync[];
-extern u32 DVDCancelAsync_length;
-extern u8 DVDCancel[];
-extern u32 DVDCancel_length;
-extern u8 DVDGetDriveStatus[];
-extern u32 DVDGetDriveStatus_length;
-extern u8 DVDGetCommandBlockStatus[];
-extern u32 DVDGetCommandBlockStatus_length;
-extern u8 DVDCompareDiskId[];
-extern u32 DVDCompareDiskId_length;
 extern u8 GXGetYScaleFactorHook[];
 extern u32 GXGetYScaleFactorHook_length;
 extern u8 GXInitTexObjLODHook[];
@@ -80,6 +70,39 @@ extern u8 VIConfigurePanHook[];
 extern u32 VIConfigurePanHook_length;
 extern u8 VIConfigurePanHookDs[];
 extern u32 VIConfigurePanHookDs_length;
+extern u8 MajoraSaveRegs[];
+extern u32 MajoraSaveRegs_length;
+extern u8 MajoraAudioStream[];
+extern u32 MajoraAudioStream_length;
+extern u8 MajoraLoadRegs[];
+extern u32 MajoraLoadRegs_length;
+
+enum patchIds {
+	GX_GETYSCALEFACTORHOOK = 0,
+	GX_INITTEXOBJLODHOOK,
+	GX_SETPROJECTIONHOOK,
+	GX_SETSCISSORHOOK,
+	MTX_FRUSTUMHOOK,
+	MTX_LIGHTFRUSTUMHOOK,
+	MTX_LIGHTPERSPECTIVEHOOK,
+	MTX_ORTHOHOOK,
+	MTX_PERSPECTIVEHOOK,
+	SETFBBREGSHOOK,
+	VI_CONFIGURE240P,
+	VI_CONFIGURE288P,
+	VI_CONFIGURE480I,
+	VI_CONFIGURE480P,
+	VI_CONFIGURE576I,
+	VI_CONFIGURE576P,
+	VI_CONFIGURE960I,
+	VI_CONFIGURE1152I,
+	VI_CONFIGUREPANHOOK,
+	VI_CONFIGUREPANHOOKDS,
+	MAJORA_SAVEREGS,
+	MAJORA_AUDIOSTREAM,
+	MAJORA_LOADREGS,
+	PATCHES_MAX
+};
 
 #define SWISS_MAGIC 0x53574953 /* "SWIS" */
 
@@ -121,7 +144,8 @@ int Patch_TexFilt(u8 *data, u32 length, int dataType);
 int Patch_FontEnc(void *addr, u32 length);
 int Patch_Fwrite(void *addr, u32 length);
 int Patch_DVDReset(void *addr,u32 length);
-void Patch_GameSpecific(void *addr, u32 length, const char* gameID);
+int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType);
+int PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType );
 u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);
 int install_code();

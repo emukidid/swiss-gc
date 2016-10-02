@@ -517,6 +517,8 @@ unsigned int load_app(int multiDol)
 	if(!GCMDisk.AudioStreaming || curDevice == WKF || curDevice == DVD_DISC) {
 		swissSettings.muteAudioStreaming = 1;
 	}
+	if(!strncmp((const char*)0x80000000, "PZL", 3))
+		swissSettings.muteAudioStreaming = 0;
 	
 	// Adjust top of memory
 	u32 top_of_main_ram = swissSettings.muteAudioStreaming ? 0x81800000 : DECODED_BUFFER_0;
@@ -616,7 +618,7 @@ unsigned int load_app(int multiDol)
 	}
 		
 	// Patch specific game hacks
-	Patch_GameSpecific(main_dol_buffer, main_dol_size+DOLHDRLENGTH, gameID);
+	Patch_GameSpecific(main_dol_buffer, main_dol_size+DOLHDRLENGTH, gameID, PATCH_DOL);
 
 	// 2 Disc support with no modchip
 	if((curDevice == DVD_DISC) && (is_gamecube()) && (drive_status == DEBUG_MODE)) {

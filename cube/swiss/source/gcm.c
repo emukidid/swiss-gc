@@ -351,11 +351,13 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		if(strstr(filesToPatch[i].name, "iwanagaD.dol") || strstr(filesToPatch[i].name, "switcherD.dol")) {
 			continue;	// skip unused PSO files
 		}
-		int sizeToRead = filesToPatch[i].size;
+		int sizeToRead = filesToPatch[i].size, ret = 0;
 		u8 *buffer = (u8*)memalign(32, sizeToRead);
 		
 		deviceHandler_seekFile(file,filesToPatch[i].offset, DEVICE_HANDLER_SEEK_SET);
-		if(deviceHandler_readFile(file,buffer,sizeToRead)!= sizeToRead) {
+		ret = deviceHandler_readFile(file,buffer,sizeToRead);
+		print_gecko("Read from %08X Size %08X - Result: %08X\r\n", filesToPatch[i].offset, sizeToRead, ret);
+		if(ret != sizeToRead) {
 			DrawFrameStart();
 			DrawMessageBox(D_FAIL, "Failed to read!");
 			DrawFrameFinish();
@@ -364,7 +366,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		}
 		
 		if(curDevice != DVD_DISC) {
-			u32 ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
+			ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
 			if(READ_PATCHED_ALL != ret)	{
 				DrawFrameStart();
 				DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
@@ -373,6 +375,11 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			}
 			else
 				patched += 1;
+		}
+		
+		// Patch specific game hacks
+		if(curDevice != DVD_DISC) {
+			patched += Patch_GameSpecific(buffer, sizeToRead, &gameID[0], filesToPatch[i].type);
 		}
 				
 		if(swissSettings.debugUSB && usb_isgeckoalive(1) && !swissSettings.wiirdDebug) {

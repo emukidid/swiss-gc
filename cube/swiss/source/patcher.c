@@ -375,14 +375,15 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 	print_gecko("Patch:[DI] applied %u times\r\n", DIPatched);
 }
 
-void PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType )
+int PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType )
 {
+
+#define REG_0x8000 0
+#define REG_INUSE  1
+
 	u32 LowMemPatched = 0;
 	int i;
 
-#define REG_0x8000 0
-#define REG_USED   1
-	
 	u32 regs[32][2];
 	memset(regs, 0, 32*4*2);
 	
@@ -418,7 +419,7 @@ void PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType )
 				u32 properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
 				print_gecko("LowMem:[%08X] %08X: mem r%u, %04X\r\n", properAddress, *(u32*)(dst + i), src, *(u32*)(dst + i) &0xFFFF);
 				*(u32*)(dst + i) = 0x60000000;	// We could redirect ...
-				regs[src][REG_USED]=1;	// was used in a 0x80001000->0x80003000 load/store
+				regs[src][REG_INUSE]=1;	// was used in a 0x80001000->0x80003000 load/store
 				LowMemPatched++;
 			}
 			continue;
@@ -430,6 +431,7 @@ void PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType )
 	}
 
 	print_gecko("Patch:[LowMem] applied %u times\r\n", LowMemPatched);
+	return LowMemPatched;
 }
 
 
@@ -557,10 +559,12 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 			}
 			// Audio Streaming Hook (only if required)
 			else if(!swissSettings.muteAudioStreaming && find_pattern( (u8*)(addr_start), length, &DSPHandler ) )
-			{
-				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start+0xF8)-(u32)(addr));
-				print_gecko("Found:[__DSPHandler] @ %08X\r\n", properAddress);
-				*(u32*)(addr_start+0xF8) = branchAndLink(DSP_HANDLER_HOOK, properAddress);
+			{	
+				if(strncmp((const char*)0x80000000, "PZL", 3)) {	// ZeldaCE uses a special case for MM
+					u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start+0xF8)-(u32)(addr));
+					print_gecko("Found:[__DSPHandler] @ %08X\r\n", properAddress);
+					*(u32*)(addr_start+0xF8) = branchAndLink(DSP_HANDLER_HOOK, properAddress);
+				}
 			}
 			// Read variations
 			FuncPattern fp;
@@ -684,6 +688,89 @@ u8 vertical_reduction[][7] = {
 	{ 0,  0,  0, 16, 16, 16, 16},	// GX_COPY_INTLC_EVEN
 	{16, 16, 16, 16,  0,  0,  0}	// GX_COPY_INTLC_ODD
 };
+
+static u32 patch_locations[PATCHES_MAX];
+
+void checkPatchAddr() {
+	if(top_addr < 0x80001800) {
+		print_gecko("Too many patches applied, top_addr has gone below the reserved area\r\n");
+		// Display something on screen
+		while(1);
+	}
+}
+
+// Returns where the ASM patch has been copied to
+u32 installPatch(int patchId) {
+	u32 patchSize = 0;
+	void* patchLocation = 0;
+	switch(patchId) {
+		case GX_GETYSCALEFACTORHOOK:
+			patchSize = GXGetYScaleFactorHook_length; patchLocation = GXGetYScaleFactorHook; break;
+		case GX_INITTEXOBJLODHOOK:
+			patchSize = GXInitTexObjLODHook_length; patchLocation = GXInitTexObjLODHook; break;
+		case GX_SETPROJECTIONHOOK:
+			patchSize = GXSetProjectionHook_length; patchLocation = GXSetProjectionHook; break;
+		case GX_SETSCISSORHOOK:
+			patchSize = GXSetScissorHook_length; patchLocation = GXSetScissorHook; break;
+		case MTX_FRUSTUMHOOK:
+			patchSize = MTXFrustumHook_length; patchLocation = MTXFrustumHook; break;
+		case MTX_LIGHTFRUSTUMHOOK:
+			patchSize = MTXLightFrustumHook_length; patchLocation = MTXLightFrustumHook; break;
+		case MTX_LIGHTPERSPECTIVEHOOK:
+			patchSize = MTXLightPerspectiveHook_length; patchLocation = MTXLightPerspectiveHook; break;
+		case MTX_ORTHOHOOK:
+			patchSize = MTXOrthoHook_length; patchLocation = MTXOrthoHook; break;
+		case MTX_PERSPECTIVEHOOK:
+			patchSize = MTXPerspectiveHook_length; patchLocation = MTXPerspectiveHook; break;
+		case SETFBBREGSHOOK:
+			patchSize = setFbbRegsHook_length; patchLocation = setFbbRegsHook; break;
+		case VI_CONFIGURE240P:
+			patchSize = VIConfigure240p_length; patchLocation = VIConfigure240p; break;
+		case VI_CONFIGURE288P:
+			patchSize = VIConfigure288p_length; patchLocation = VIConfigure288p; break;
+		case VI_CONFIGURE480I:
+			patchSize = VIConfigure480i_length; patchLocation = VIConfigure480i; break;
+		case VI_CONFIGURE480P:
+			patchSize = VIConfigure480p_length; patchLocation = VIConfigure480p; break;
+		case VI_CONFIGURE576I:
+			patchSize = VIConfigure576i_length; patchLocation = VIConfigure576i; break;
+		case VI_CONFIGURE576P:
+			patchSize = VIConfigure576p_length; patchLocation = VIConfigure576p; break;
+		case VI_CONFIGURE960I:
+			patchSize = VIConfigure960i_length; patchLocation = VIConfigure960i; break;
+		case VI_CONFIGURE1152I:
+			patchSize = VIConfigure1152i_length; patchLocation = VIConfigure1152i; break;
+		case VI_CONFIGUREPANHOOK:
+			patchSize = VIConfigurePanHook_length; patchLocation = VIConfigurePanHook; break;
+		case VI_CONFIGUREPANHOOKDS:
+			patchSize = VIConfigurePanHookDs_length; patchLocation = VIConfigurePanHookDs; break;
+		case MAJORA_SAVEREGS:
+			patchSize = MajoraSaveRegs_length; patchLocation = MajoraSaveRegs; break;
+		case MAJORA_AUDIOSTREAM:
+			patchSize = MajoraAudioStream_length; patchLocation = MajoraAudioStream; break;
+		case MAJORA_LOADREGS:
+			patchSize = MajoraLoadRegs_length; patchLocation = MajoraLoadRegs; break;
+		default:
+			break;
+	}
+	top_addr -= patchSize;
+	checkPatchAddr();
+	memcpy((void*)top_addr, patchLocation, patchSize);
+	print_gecko("Installed patch %i to %08X\r\n", patchId, top_addr);
+	return top_addr;
+}
+
+// See patchIds enum in patcher.h
+u32 getPatchAddr(int patchId) {
+	if(patchId > PATCHES_MAX || patchId < 0) {
+		print_gecko("Invalid Patch location requested\r\n");
+		return -1;
+	}
+	if(!patch_locations[patchId]) {
+		patch_locations[patchId] = installPatch(patchId);
+	}
+	return patch_locations[patchId];
+}
 
 void Patch_VidMode(u8 *data, u32 length, int dataType) {
 	int i, j, k;
@@ -817,57 +904,50 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 			if( !VIConfigureSigs[j].offsetFoundAt && compare_pattern( &fp, &(VIConfigureSigs[j]) ) )
 			{
 				u32 VIConfigureAddr = Calc_ProperAddress(data, dataType, i);
+				u32 VIConfigurePatchAddr = 0;
 				if(VIConfigureAddr) {
 					print_gecko("Found:[%s] @ %08X\n", VIConfigureSigs[j].Name, VIConfigureAddr);
 					switch(swissSettings.gameVMode) {
 						case 1:
 						case 2:
 							print_gecko("Patched NTSC Interlaced mode\n");
-							top_addr -= VIConfigure480i_length;
-							memcpy((void*)top_addr, VIConfigure480i, VIConfigure480i_length);
+							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE480I);
 							break;
 						case 3:
 							print_gecko("Patched NTSC Double-Strike mode\n");
-							top_addr -= VIConfigure240p_length;
-							memcpy((void*)top_addr, VIConfigure240p, VIConfigure240p_length);
+							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE240P);
 							break;
 						case 4:
 							print_gecko("Patched NTSC Field Rendering mode\n");
-							top_addr -= VIConfigure960i_length;
-							memcpy((void*)top_addr, VIConfigure960i, VIConfigure960i_length);
+							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE960I);
 							break;
 						case 5:
 							print_gecko("Patched NTSC Progressive mode\n");
-							top_addr -= VIConfigure480p_length;
-							memcpy((void*)top_addr, VIConfigure480p, VIConfigure480p_length);
+							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE480P);
 							break;
 						case 6:
 						case 7:
 							print_gecko("Patched PAL Interlaced mode\n");
-							top_addr -= VIConfigure576i_length;
-							memcpy((void*)top_addr, VIConfigure576i, VIConfigure576i_length);
+							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE576I);
 							break;
 						case 8:
 							print_gecko("Patched PAL Double-Strike mode\n");
-							top_addr -= VIConfigure288p_length;
-							memcpy((void*)top_addr, VIConfigure288p, VIConfigure288p_length);
+							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE288P);
 							break;
 						case 9:
 							print_gecko("Patched PAL Field Rendering mode\n");
-							top_addr -= VIConfigure1152i_length;
-							memcpy((void*)top_addr, VIConfigure1152i, VIConfigure1152i_length);
+							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE1152I);
 							Patch_VidTiming(data, length);
 							break;
 						case 10:
 							print_gecko("Patched PAL Progressive mode\n");
-							top_addr -= VIConfigure576p_length;
-							memcpy((void*)top_addr, VIConfigure576p, VIConfigure576p_length);
+							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE576P);
 							Patch_VidTiming(data, length);
 							break;
 					}
 					switch(j) {
 						case 0:
-							*(u32*)(data+i+ 28) = branchAndLink(top_addr, VIConfigureAddr + 28);
+							*(u32*)(data+i+ 28) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 28);
 							*(u32*)(data+i+140) = 0x60000000;	// nop
 							*(u32*)(data+i+260) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(u32*)(data+i+280) = 0xA01F0010;	// lhz		r0, 16 (r31)
@@ -876,7 +956,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1636);
 							break;
 						case 1:
-							*(u32*)(data+i+ 28) = branchAndLink(top_addr, VIConfigureAddr + 28);
+							*(u32*)(data+i+ 28) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 28);
 							*(u32*)(data+i+108) = 0x60000000;	// nop
 							*(u32*)(data+i+228) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(u32*)(data+i+248) = 0xA01F0010;	// lhz		r0, 16 (r31)
@@ -885,7 +965,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1604);
 							break;
 						case 2:
-							*(u32*)(data+i+ 36) = branchAndLink(top_addr, VIConfigureAddr + 36);
+							*(u32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
 							*(u32*)(data+i+248) = 0x60000000;	// nop
 							*(u32*)(data+i+368) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(u32*)(data+i+388) = 0xA01F0010;	// lhz		r0, 16 (r31)
@@ -894,7 +974,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1780);
 							break;
 						case 3:
-							*(u32*)(data+i+ 36) = branchAndLink(top_addr, VIConfigureAddr + 36);
+							*(u32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
 							*(u32*)(data+i+260) = 0x60000000;	// nop
 							*(u32*)(data+i+380) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(u32*)(data+i+396) = 0xA01F0010;	// lhz		r0, 16 (r31)
@@ -904,7 +984,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1872);
 							break;
 						case 4:
-							*(u32*)(data+i+ 36) = branchAndLink(top_addr, VIConfigureAddr + 36);
+							*(u32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
 							*(u32*)(data+i+388) = 0x60000000;	// nop
 							*(u32*)(data+i+508) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(u32*)(data+i+524) = 0xA01F0010;	// lhz		r0, 16 (r31)
@@ -914,7 +994,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 2012);
 							break;
 						case 5:
-							*(u32*)(data+i+ 32) = branchAndLink(top_addr, VIConfigureAddr + 32);
+							*(u32*)(data+i+ 32) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 32);
 							*(u32*)(data+i+400) = 0xA11B000C;	// lhz		r8, 12 (r27)
 							*(u32*)(data+i+404) = 0x60000000;	// nop
 							*(u32*)(data+i+492) = 0xA0FB0010;	// lhz		r7, 16 (r27)
@@ -924,7 +1004,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2148);
 							break;
 						case 6:
-							*(u32*)(data+i+ 36) = branchAndLink(top_addr, VIConfigureAddr + 36);
+							*(u32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
 							*(u32*)(data+i+388) = 0x60000000;	// nop
 							*(u32*)(data+i+508) = 0xA0130010;	// lhz		r0, 16 (r19)
 							*(u32*)(data+i+524) = 0xA0130010;	// lhz		r0, 16 (r19)
@@ -1011,16 +1091,15 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 		if( !VIConfigurePanSig.offsetFoundAt && compare_pattern( &fp, &VIConfigurePanSig ) )
 		{
 			u32 VIConfigurePanAddr = Calc_ProperAddress(data, dataType, i);
+			u32 VIConfigurePanPatchAddr = 0;
 			if(VIConfigurePanAddr) {
 				print_gecko("Found:[%s] @ %08X\n", VIConfigurePanSig.Name, VIConfigurePanAddr);
 				if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 8)) {
-					top_addr -= VIConfigurePanHookDs_length;
-					memcpy((void*)top_addr, VIConfigurePanHookDs, VIConfigurePanHookDs_length);
+					VIConfigurePanPatchAddr = getPatchAddr(VI_CONFIGUREPANHOOKDS);
 				} else {
-					top_addr -= VIConfigurePanHook_length;
-					memcpy((void*)top_addr, VIConfigurePanHook, VIConfigurePanHook_length);
+					VIConfigurePanPatchAddr = getPatchAddr(VI_CONFIGUREPANHOOK);
 				}
-				*(u32*)(data+i+40) = branchAndLink(top_addr, VIConfigurePanAddr + 40);
+				*(u32*)(data+i+40) = branchAndLink(VIConfigurePanPatchAddr, VIConfigurePanAddr + 40);
 				VIConfigurePanSig.offsetFoundAt = i;
 				i += VIConfigurePanSig.Length;
 			}
@@ -1095,6 +1174,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					print_gecko("Found:[%s] @ %08X\n", GXGetYScaleFactorSigs[j].Name, GXGetYScaleFactorAddr);
 					if((swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 5)) {
 						top_addr -= GXGetYScaleFactorHook_length;
+						checkPatchAddr();
 						memcpy((void*)top_addr, GXGetYScaleFactorHook, GXGetYScaleFactorHook_length);
 						*(u32*)(top_addr+16) = branch(GXGetYScaleFactorAddr + 4, top_addr + 16);
 						*(u32*)(data+i) = branch(top_addr, GXGetYScaleFactorAddr);
@@ -1214,6 +1294,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							if(getCurrentFieldEvenOddAddr) {
 								print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOddAddr);
 								top_addr -= setFbbRegsHook_length;
+								checkPatchAddr();
 								memcpy((void*)top_addr, setFbbRegsHook, setFbbRegsHook_length);
 								*(u32*)(top_addr+12) = branchAndLink(getCurrentFieldEvenOddAddr, top_addr + 12);
 								*(u32*)(data+i+setFbbRegsSigs[j].Length) = branch(top_addr, setFbbRegsAddr + setFbbRegsSigs[j].Length);
@@ -1261,6 +1342,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			if(properAddress) {
 				print_gecko("Found:[%s] @ %08X\n", MTXFrustumSig.Name, properAddress);
 				top_addr -= MTXFrustumHook_length;
+				checkPatchAddr();
 				memcpy((void*)top_addr, MTXFrustumHook, MTXFrustumHook_length);
 				*(u32*)(top_addr+28) = branch(properAddress+4, top_addr+28);
 				*(u32*)(data+i) = branch(top_addr, properAddress);
@@ -1280,6 +1362,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			if(properAddress) {
 				print_gecko("Found:[%s] @ %08X\n", MTXLightFrustumSig.Name, properAddress);
 				top_addr -= MTXLightFrustumHook_length;
+				checkPatchAddr();
 				memcpy((void*)top_addr, MTXLightFrustumHook, MTXLightFrustumHook_length);
 				*(u32*)(top_addr+28) = branch(properAddress+12, top_addr+28);
 				*(u32*)(data+i+8) = branch(top_addr, properAddress+8);
@@ -1298,6 +1381,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			if(properAddress) {
 				print_gecko("Found:[%s] @ %08X\n", MTXPerspectiveSig.Name, properAddress);
 				top_addr -= MTXPerspectiveHook_length;
+				checkPatchAddr();
 				memcpy((void*)top_addr, MTXPerspectiveHook, MTXPerspectiveHook_length);
 				*(u32*)(top_addr+20) = branch(properAddress+84, top_addr+20);
 				*(u32*)(data+i+80) = branch(top_addr, properAddress+80);
@@ -1317,6 +1401,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 			if(properAddress) {
 				print_gecko("Found:[%s] @ %08X\n", MTXLightPerspectiveSig.Name, properAddress);
 				top_addr -= MTXLightPerspectiveHook_length;
+				checkPatchAddr();
 				memcpy((void*)top_addr, MTXLightPerspectiveHook, MTXLightPerspectiveHook_length);
 				*(u32*)(top_addr+20) = branch(properAddress+100, top_addr+20);
 				*(u32*)(data+i+96) = branch(top_addr, properAddress+96);
@@ -1336,6 +1421,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 				if(properAddress) {
 					print_gecko("Found:[%s] @ %08X\n", MTXOrthoSig.Name, properAddress);
 					top_addr -= MTXOrthoHook_length;
+					checkPatchAddr();
 					memcpy((void*)top_addr, MTXOrthoHook, MTXOrthoHook_length);
 					*(u32*)(top_addr+128) = branch(properAddress+4, top_addr+128);
 					*(u32*)(data+i) = branch(top_addr, properAddress);
@@ -1360,6 +1446,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 					if(properAddress) {
 						print_gecko("Found:[%s] @ %08X\n", GXSetScissorSigs[j].Name, properAddress);
 						top_addr -= GXSetScissorHook_length;
+						checkPatchAddr();
 						memcpy((void*)top_addr, GXSetScissorHook, GXSetScissorHook_length);
 						*(u32*)(top_addr+ 0) = *(u32*)(data+i);
 						*(u32*)(top_addr+ 4) = j == 1 ? 0x800801E8:0x800701E8;
@@ -1388,6 +1475,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 					if(properAddress) {
 						print_gecko("Found:[%s] @ %08X\n", GXSetProjectionSigs[j].Name, properAddress);
 						top_addr -= GXSetProjectionHook_length;
+						checkPatchAddr();
 						memcpy((void*)top_addr, GXSetProjectionHook, GXSetProjectionHook_length);
 						*(u32*)(top_addr+20) = branch(properAddress+16, top_addr+20);
 						*(u32*)(data+i+12) = branch(top_addr, properAddress+12);
@@ -1425,6 +1513,7 @@ int Patch_TexFilt(u8 *data, u32 length, int dataType)
 				if(properAddress) {
 					print_gecko("Found:[%s] @ %08X\n", GXInitTexObjLODSigs[j].Name, properAddress);
 					top_addr -= GXInitTexObjLODHook_length;
+					checkPatchAddr();
 					memcpy((void*)top_addr, GXInitTexObjLODHook, GXInitTexObjLODHook_length);
 					*(u32*)(top_addr+24) = *(u32*)(data+i);
 					*(u32*)(top_addr+28) = branch(properAddress+4, top_addr+28);
@@ -1648,9 +1737,8 @@ const u32 GXSETVAT_NTSC_patched[32] = {
 };
 
 // Apply specific per-game hacks/workarounds
-void Patch_GameSpecific(void *addr, u32 length, const char* gameID) {
-	void *addr_start = addr;
-	void *addr_end = addr+length;	
+int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType) {
+	int patched = 0;
 	
 	// Fix Zelda WW on Wii (__GXSetVAT patch)
 	if (!is_gamecube() && (!strncmp(gameID, "GZLP01", 6) || !strncmp(gameID, "GZLE01", 6) || !strncmp(gameID, "GZLJ01", 6))) {
@@ -1659,18 +1747,21 @@ void Patch_GameSpecific(void *addr, u32 length, const char* gameID) {
 			mode = 1;	//PAL
 		else 
 			mode = 2;	//NTSC-U,NTSC-J
-
+		void *addr_start = addr;
+		void *addr_end = addr+length;
 		while(addr_start<addr_end) 
 		{
 			if(mode == 1 && memcmp(addr_start,GXSETVAT_PAL_orig,sizeof(GXSETVAT_PAL_orig))==0) 
 			{
 				memcpy(addr_start, GXSETVAT_PAL_patched, sizeof(GXSETVAT_PAL_patched));
 				print_gecko("Found:[__GXSetVAT] PAL\r\n");
+				patched=1;
 			}
 			if(mode == 2 && memcmp(addr_start,GXSETVAT_NTSC_orig,sizeof(GXSETVAT_NTSC_orig))==0) 
 			{
 				memcpy(addr_start, GXSETVAT_NTSC_patched, sizeof(GXSETVAT_NTSC_patched));
 				print_gecko("Found:[__GXSetVAT] NTSC\r\n");
+				patched=1;
 			}
 			addr_start += 4;
 		}
@@ -1688,7 +1779,31 @@ void Patch_GameSpecific(void *addr, u32 length, const char* gameID) {
 		*(u32*)(addr+0x2498) = 0x4BFFABF0;
 		// skips __start init of debugger mem
 		*(u32*)(addr+0x194) = 0x48000028;
+		patched=1;
 	}
+	else if(!strncmp(gameID, "PZL", 3))
+	{
+		if(*(u32*)(addr+0xDE6D8) == 0x2F6D616A) { // PAL
+			print_gecko("Found:[Majoras Mask (Zelda CE) PAL]\r\n");
+			//save up regs
+			u32 patchAddr = getPatchAddr(MAJORA_SAVEREGS);
+			*(u32*)(addr+0x1A6B4) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A6B4));
+			*(u32*)(patchAddr+MajoraSaveRegs_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A6B8), patchAddr+MajoraSaveRegs_length-4);
+			//frees r28 and secures r10 for us
+			*(u32*)(addr+0x1A76C) = 0x60000000;
+			*(u32*)(addr+0x1A770) = 0x839D0000;
+			*(u32*)(addr+0x1A774) = 0x7D3C4AAE;
+			//do audio streaming injection
+			patchAddr = getPatchAddr(MAJORA_AUDIOSTREAM);
+			*(u32*)(addr+0x1A784) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A784));
+			*(u32*)(patchAddr+MajoraAudioStream_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A788), patchAddr+MajoraAudioStream_length-4);
+			//load up regs (and jump back)
+			patchAddr = getPatchAddr(MAJORA_LOADREGS);
+			*(u32*)(addr+0x1A878) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A878));
+			patched=1;
+		}
+	}
+	return patched;
 }
 
 u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt) {

@@ -63,7 +63,7 @@ SOURCES		:=  source \
               source/cheats \
               source/patches \
 			  source/patches/card \
-			  source/patches/dvd \
+			  source/patches/misc \
 			  source/patches/gx \
 			  source/patches/mtx \
 			  source/patches/vi \
