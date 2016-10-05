@@ -26,6 +26,7 @@
 //SMBPassword=password
 //SMBShareName=nas
 //SMBHostIP=192.168.1.32
+//AutoCheats=Yes
 //!!Swiss Settings End!!
 
 // This is an example game entry
@@ -121,6 +122,8 @@ int config_update_file() {
 		sprintf(txtbuffer, "SMBShareName=%s\r\n",configSwissSettings.smbShare);
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "SMBHostIP=%s\r\n",configSwissSettings.smbServerIp);
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		sprintf(txtbuffer, "AutoCheats=%s\r\n", (configSwissSettings.autoCheats ? "Yes":"No"));
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
@@ -313,6 +316,9 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("SMBHostIP", name)) {
 					strncpy(configSwissSettings.smbServerIp, value, 80);
+				}
+				else if(!strcmp("AutoCheats", name)) {
+					configSwissSettings.autoCheats = !strcmp("Yes", value) ? 1:0;
 				}
 			}
 		}

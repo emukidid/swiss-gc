@@ -1280,6 +1280,18 @@ void load_file()
 		return;
 	}
 	
+	// Auto load cheats if the set to auto load and if any are found
+	if(swissSettings.autoCheats) {
+		if(findCheats(true) > 0) {
+			int appliedCount = applyAllCheats();
+			DrawFrameStart();
+			sprintf(txtbuffer, "Applied %i cheats", appliedCount);
+			DrawMessageBox(D_INFO, txtbuffer);
+			DrawFrameFinish();
+			sleep(1);
+		}
+	}
+	
 	int multiDol = 0;
 	// Report to the user the patch status of this GCM/ISO file
 	if((curDevice == SD_CARD) || (curDevice == IDEEXI) || (curDevice == DVD_DISC)) {
@@ -1462,60 +1474,9 @@ int info_game()
 		}
 		// Look for a cheats file based on the GameID
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
-			char trimmedGameId[8];
-			memset(trimmedGameId, 0, 8);
-			memcpy(trimmedGameId, (char*)&GCMDisk, 6);
-			file_handle *cheatsFile = memalign(32,sizeof(file_handle));
-			memcpy(cheatsFile, deviceHandler_initial, sizeof(file_handle));
-			sprintf(cheatsFile->name, "%s/cheats/%s.txt", deviceHandler_initial->name, trimmedGameId);
-			print_gecko("Looking for cheats file @ %s\r\n", cheatsFile->name);
-			cheatsFile->size = -1;
-			
-			deviceHandler_temp_readFile =  deviceHandler_readFile;
-			deviceHandler_temp_seekFile =  deviceHandler_seekFile;
-			
-			// Check SD in both slots if we're not already running from SD, or if we fail from SD
-			if((curDevice != SD_CARD && curDevice != IDEEXI && curDevice != WKF) || deviceHandler_temp_readFile(cheatsFile, &trimmedGameId, 8) != 8) {
-				if(deviceHandler_initial != &initial_SD0 && deviceHandler_initial != &initial_SD1) {
-					int slot = 0;
-					deviceHandler_temp_init     =  deviceHandler_FAT_init;
-					deviceHandler_temp_readFile =  deviceHandler_FAT_readFile;
-					deviceHandler_temp_seekFile =  deviceHandler_FAT_seekFile;
-					deviceHandler_temp_deinit   =  deviceHandler_FAT_deinit;
-					while(slot < 2) {
-						file_handle *slotFile = slot ? &initial_SD1:&initial_SD0;
-						// Try SD slots now
-						memcpy(cheatsFile, slotFile, sizeof(file_handle));
-						sprintf(cheatsFile->name, "%s/cheats/%s.txt", slotFile->name, trimmedGameId);
-						print_gecko("Looking for cheats file @ %s\r\n", cheatsFile->name);
-						cheatsFile->size = -1;
-						deviceHandler_temp_init(cheatsFile);
-						if(deviceHandler_temp_readFile(cheatsFile, &trimmedGameId, 8) == 8) {
-							break;
-						}
-						slot++;
-					}
-				}
-				// Still fail?
-				if(deviceHandler_temp_readFile(cheatsFile, &trimmedGameId, 8) != 8) {
-					while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
-					DrawFrameStart();
-					DrawMessageBox(D_INFO,"No cheats file found.\nPress A to continue.");
-					DrawFrameFinish();
-					while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
-					while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
-					return 0;
-				}
-			}
-			print_gecko("Cheats file found with size %i\r\n", cheatsFile->size);
-			char *cheats_buffer = memalign(32, cheatsFile->size);
-			if(cheats_buffer) {
-				deviceHandler_temp_seekFile(cheatsFile, 0, DEVICE_HANDLER_SEEK_SET);
-				deviceHandler_temp_readFile(cheatsFile, cheats_buffer, cheatsFile->size);
-				parseCheats(cheats_buffer);
-				free(cheats_buffer);
-				DrawCheatsSelector(getRelativeName(allFiles[curSelection].name));
-			}
+			int num_cheats = findCheats(false);
+			if(num_cheats == 0) return 0;
+			DrawCheatsSelector(getRelativeName(allFiles[curSelection].name));
 		}
 		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	}

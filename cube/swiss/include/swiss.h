@@ -73,8 +73,6 @@ extern void select_copy_device();
 extern void select_dest_dir(file_handle* directory, file_handle* selection);
 
 typedef struct {
-	int useHiLevelPatch; // Use Hi Level (DVDRead patch) or low level (Read patch)
-	int useHiMemArea; // Use Low mem or High mem for the patch to sit at
 	int debugUSB; // Debug prints over USBGecko
 	int hasDVDDrive;
 	int exiSpeed;
@@ -84,13 +82,11 @@ typedef struct {
 	int forceWidescreen;
 	int forceAnisotropy;
 	int forceEncoding;
-	int emulatemc;	// Emulate memcard via SDGecko
 	int wiirdDebug;	// Enable WiiRD debug
 	int muteAudioStreaming;
 	int hideUnknownFileTypes;
 	int sramStereo;
 	int stopMotor;
-	int noDiscMode;
 	int enableFileManagement;
 	u8 sramLanguage;
 	u8 sramVideo;
@@ -98,6 +94,7 @@ typedef struct {
 	char smbPassword[32];	//16
 	char smbShare[128];		//80
 	char smbServerIp[128];	//80
+	int autoCheats;
 } SwissSettings __attribute__((aligned(32)));
 extern SwissSettings swissSettings;
 
