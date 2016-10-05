@@ -16,11 +16,11 @@ PATCHES       = $(SOURCES)/patches
 AR_SOURCES    = $(SOURCES)/actionreplay
 
 ifeq ($(OS),Windows_NT)
-DOLLZ         = $(BUILDTOOLS)/dollz3.exe
+DOLXZ         = $(BUILDTOOLS)/dolxz.exe
 DOL2GCI       = $(BUILDTOOLS)/dol2gci.exe
 MKISOFS       = $(BUILDTOOLS)/mkisofs.exe
 else
-DOLLZ         = $(BUILDTOOLS)/dollz3
+DOLXZ         = wine $(BUILDTOOLS)/dolxz.exe
 DOL2GCI       = wine $(BUILDTOOLS)/dol2gci.exe
 MKISOFS       = mkisofs
 endif
@@ -64,9 +64,9 @@ build:
 	@mkdir $(DIST)/GCI
 	@cp $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/$(SVN_REVISION).dol
 	@cp $(SOURCES)/swiss/swiss.elf $(DIST)/DOL/$(SVN_REVISION).elf
-	@$(DOLLZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol -m -v
-	@$(DOLLZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol -m
-	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/swiss-lz.dol
+	@$(DOLXZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/Viper/$(SVN_REVISION)-xz-viper.dol -cube
+	@$(DOLXZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol -cube
+	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/swiss-xz.dol
 	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ISO/DOL/$(SVN_REVISION)-compressed.dol
 	# make ISOs and WKF firmware
 	# NTSC
@@ -114,13 +114,13 @@ package:   # create distribution package
 #------------------------------------------------------------------
 
 build-AR: # make ActionReplay
-	@$(BIN2S) $(DIST)/ActionReplay/swiss-lz.dol > $(AR_SOURCES)/swiss-lz.s
+	@$(BIN2S) $(DIST)/ActionReplay/swiss-xz.dol > $(AR_SOURCES)/swiss-xz.s
 	@$(CC) -O2 -c $(AR_SOURCES)/startup.s -o $(AR_SOURCES)/startup.o
-	@$(CC) -O2 -c $(AR_SOURCES)/swiss-lz.s -o $(AR_SOURCES)/swiss-lz.o
+	@$(CC) -O2 -c $(AR_SOURCES)/swiss-xz.s -o $(AR_SOURCES)/swiss-xz.o
 	@$(CC) -O2 -c $(AR_SOURCES)/main.c -o $(AR_SOURCES)/main.o
-	@$(LD) -o $(AR_SOURCES)/sdloader.elf $(AR_SOURCES)/startup.o $(AR_SOURCES)/main.o $(AR_SOURCES)/swiss-lz.o --section-start .text=0x81700000
+	@$(LD) -o $(AR_SOURCES)/sdloader.elf $(AR_SOURCES)/startup.o $(AR_SOURCES)/main.o $(AR_SOURCES)/swiss-xz.o --section-start .text=0x81700000
 	@$(OBJCOPY) -O binary $(AR_SOURCES)/sdloader.elf $(DIST)/ActionReplay/SDLOADER.BIN
-	@rm -f $(AR_SOURCES)/*.o $(AR_SOURCES)/*.elf $(DIST)/ActionReplay/*swiss-lz.dol $(AR_SOURCES)/swiss-lz.s
+	@rm -f $(AR_SOURCES)/*.o $(AR_SOURCES)/*.elf $(DIST)/ActionReplay/*swiss-xz.dol $(AR_SOURCES)/swiss-xz.s
 
 #------------------------------------------------------------------
 

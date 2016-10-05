@@ -55,7 +55,11 @@ NOTE: Must have swiss.dol on SD Card also
 - swissserver : for use with USBGecko 
 Allows for serving files from PC to Gamecube over USBGecko.
 
+----------------------------------------------------------
 
+- boot.gci : Swiss in memory card format to be loaded via memory card save game exploits.
+
+----------------------------------------------------------
 
 
 

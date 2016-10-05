@@ -19,8 +19,8 @@ typedef struct {
     unsigned int unused[MAXTEXTSECTION];
 } DOLHEADER;
 
-extern unsigned char swiss_lz_dol[];
-extern unsigned long swiss_lz_dol_size;
+extern unsigned char swiss_xz_dol[];
+extern unsigned long swiss_xz_dol_size;
 
 void _memcpy(void* dest, const void* src, int count) {
 	char* tmp = (char*)dest,* s = (char*)src;
@@ -37,19 +37,19 @@ void _memset(void* s, int c, int count) {
 void boot_dol() 
 {
 	int i;
-	DOLHEADER *hdr = (DOLHEADER *) swiss_lz_dol;
+	DOLHEADER *hdr = (DOLHEADER *) swiss_xz_dol;
 
 	// Inspect text sections to see if what we found lies in here
 	for (i = 0; i < MAXTEXTSECTION; i++) {
 		if (hdr->textAddress[i] && hdr->textLength[i]) {
-			_memcpy((void*)hdr->textAddress[i], ((unsigned char*)swiss_lz_dol) + hdr->textOffset[i], hdr->textLength[i]);
+			_memcpy((void*)hdr->textAddress[i], ((unsigned char*)swiss_xz_dol) + hdr->textOffset[i], hdr->textLength[i]);
 		}
 	}
 
 	// Inspect data sections (shouldn't really need to unless someone was sneaky..)
 	for (i = 0; i < MAXDATASECTION; i++) {
 		if (hdr->dataAddress[i] && hdr->dataLength[i]) {
-			_memcpy((void*)hdr->dataAddress[i], ((unsigned char*)swiss_lz_dol) + hdr->dataOffset[i], hdr->dataLength[i]);
+			_memcpy((void*)hdr->dataAddress[i], ((unsigned char*)swiss_xz_dol) + hdr->dataOffset[i], hdr->dataLength[i]);
 		}
 	}
 	
