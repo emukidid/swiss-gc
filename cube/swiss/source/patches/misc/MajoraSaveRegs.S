@@ -21,6 +21,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define _LANGUAGE_ASSEMBLY
 #include "../../../../reservedarea.h"
 
+.set	STREAMING,		VAR_STREAM_DI
+.set	AI_ADP_LOC,		VAR_STREAM_BUFLOC
+
 .set	tmp,			28
 .set	buf,			27
 .set	loc,			26
@@ -35,10 +38,10 @@ MajoraSaveRegs:
 	stw		loc,	0x8(%r1)
 	stw		tmp,	0x4(%r1)
 	lis		glob,	VAR_AREA
-	lwz		tmp,	VAR_STREAM_DI(glob)
+	lbz		tmp,	STREAMING(glob)
 	cmpwi	cmpstrm,tmp,	0
 	beq		cmpstrm,end
-	lwz		loc,	VAR_STREAM_BUFLOC(glob)
+	lwz		loc,	AI_ADP_LOC(glob)
 end:
 	nop		#b ori
 

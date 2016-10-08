@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define _LANGUAGE_ASSEMBLY
 #include "../../../../reservedarea.h"
 
+.set	AI_ADP_LOC,		VAR_STREAM_BUFLOC
+
 .set	tmp,			28
 .set	buf,			27
 .set	loc,			26
@@ -31,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 .globl MajoraLoadRegs
 MajoraLoadRegs:
 	beq		cmpstrm,end
-	stw		loc,	VAR_STREAM_BUFLOC(glob)
+	stw		loc,	AI_ADP_LOC(glob)
 end:
 	lwz		%r27,	0xC(%r1)
 	lwz		%r26,	0x8(%r1)

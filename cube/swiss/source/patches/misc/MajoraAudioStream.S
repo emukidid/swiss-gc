@@ -16,10 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-
 #include "../asm.h"
 #define _LANGUAGE_ASSEMBLY
 #include "../../../../reservedarea.h"
+
+.set	AI_ADP_BUF,		DECODED_BUFFER_0
+
+.set	UPDATE_STREAM,	VAR_STREAM_UPDATE
 
 .set	audl,			10
 .set	audr,			9
@@ -41,7 +44,7 @@ check1:
 	cmplw	cmpr,	loc,	tmp
 	beq		cmpr,	updateStream
 check2:
-	slwi	tmp,	tmp,	1		#go to next buffer
+	slwi	tmp,	tmp,	1		#MAXBUF=0x1C00
 	cmplw	cmpr,	loc,	tmp
 	beq		cmpr,	resetLoc
 	b		checkInv
@@ -50,14 +53,12 @@ resetLoc:
 
 updateStream:
 	li		tmp,	1
-	stw		tmp,	VAR_STREAM_UPDATE(glob)
+	stb		tmp,	UPDATE_STREAM(glob)
 
 checkInv:
-	lis		buf,	DECODE_WORK_AREA@h
-	li		tmp,	BUFSIZE
-	slwi	tmp,	tmp,	1
-	sub		buf,	buf, 	tmp
-	add		buf,	buf,	loc
+	lis		buf,	AI_ADP_BUF@h
+	ori		buf,	buf,	AI_ADP_BUF@l
+	add		buf,	loc,	buf
 	rlwinm	tmp,	buf,	0,27,31
 	cmpwi	cmpr,	tmp,	0
 	bne		cmpr,	insertL
