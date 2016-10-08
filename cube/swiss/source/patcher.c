@@ -1754,13 +1754,13 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 			if(mode == 1 && memcmp(addr_start,GXSETVAT_PAL_orig,sizeof(GXSETVAT_PAL_orig))==0) 
 			{
 				memcpy(addr_start, GXSETVAT_PAL_patched, sizeof(GXSETVAT_PAL_patched));
-				print_gecko("Found:[__GXSetVAT] PAL\r\n");
+				print_gecko("Patched:[__GXSetVAT] PAL\r\n");
 				patched=1;
 			}
 			if(mode == 2 && memcmp(addr_start,GXSETVAT_NTSC_orig,sizeof(GXSETVAT_NTSC_orig))==0) 
 			{
 				memcpy(addr_start, GXSETVAT_NTSC_patched, sizeof(GXSETVAT_NTSC_patched));
-				print_gecko("Found:[__GXSetVAT] NTSC\r\n");
+				print_gecko("Patched:[__GXSetVAT] NTSC\r\n");
 				patched=1;
 			}
 			addr_start += 4;
@@ -1768,7 +1768,7 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 	}
 	else if(!strncmp(gameID, "GXX", 3) || !strncmp(gameID, "GC6", 3))
 	{
-		print_gecko("Found:[Pokemon memset]\r\n");
+		print_gecko("Patched:[Pokemon memset]\r\n");
 		// patch out initial memset(0x1800, 0, 0x1800)
 		if(gameID[3] == 'J' )	// JAP
 			*(u32*)(addr+0x260C) = 0x60000000;
@@ -1783,8 +1783,9 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 	}
 	else if(!strncmp(gameID, "PZL", 3))
 	{
-		if(*(u32*)(addr+0xDE6D8) == 0x2F6D616A) { // PAL
-			print_gecko("Found:[Majoras Mask (Zelda CE) PAL]\r\n");
+		if(*(u32*)(addr+0xDE6D8) == 0x2F6D616A) // PAL
+		{
+			print_gecko("Patched:[Majoras Mask (Zelda CE) PAL]\r\n");
 			//save up regs
 			u32 patchAddr = getPatchAddr(MAJORA_SAVEREGS);
 			*(u32*)(addr+0x1A6B4) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A6B4));
@@ -1800,6 +1801,68 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 			//load up regs (and jump back)
 			patchAddr = getPatchAddr(MAJORA_LOADREGS);
 			*(u32*)(addr+0x1A878) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A878));
+			patched=1;
+		}
+		else if(*(u32*)(addr+0xEF78C) == 0x2F6D616A) // NTSC-U
+		{
+			print_gecko("Patched:[Majoras Mask (Zelda CE) NTSC-U]\r\n");
+			//save up regs
+			u32 patchAddr = getPatchAddr(MAJORA_SAVEREGS);
+			*(u32*)(addr+0x19DD4) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x19DD4));
+			*(u32*)(patchAddr+MajoraSaveRegs_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x19DD8), patchAddr+MajoraSaveRegs_length-4);
+			//frees r28 and secures r10 for us
+			*(u32*)(addr+0x19E8C) = 0x60000000;
+			*(u32*)(addr+0x19E90) = 0x839D0000;
+			*(u32*)(addr+0x19E94) = 0x7D3C4AAE;
+			//do audio streaming injection
+			patchAddr = getPatchAddr(MAJORA_AUDIOSTREAM);
+			*(u32*)(addr+0x19EA4) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x19EA4));
+			*(u32*)(patchAddr+MajoraAudioStream_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x19EA8), patchAddr+MajoraAudioStream_length-4);
+			//load up regs (and jump back)
+			patchAddr = getPatchAddr(MAJORA_LOADREGS);
+			*(u32*)(addr+0x19F98) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x19F98));
+			patched=1;
+		}
+		else if(*(u32*)(addr+0xF324C) == 0x2F6D616A) // NTSC-J
+		{
+			print_gecko("Patched:[Majoras Mask (Zelda CE) NTSC-J]\r\n");
+			//save up regs
+			u32 patchAddr = getPatchAddr(MAJORA_SAVEREGS);
+			*(u32*)(addr+0x1A448) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A448));
+			*(u32*)(patchAddr+MajoraSaveRegs_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A44C), patchAddr+MajoraSaveRegs_length-4);
+			//frees r28 and secures r10 for us
+			*(u32*)(addr+0x1A500) = 0x60000000;
+			*(u32*)(addr+0x1A504) = 0x839D0000;
+			*(u32*)(addr+0x1A508) = 0x7D3C4AAE;
+			//do audio streaming injection
+			patchAddr = getPatchAddr(MAJORA_AUDIOSTREAM);
+			*(u32*)(addr+0x1A518) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A518));
+			*(u32*)(patchAddr+MajoraAudioStream_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A51C), patchAddr+MajoraAudioStream_length-4);
+			//load up regs (and jump back)
+			patchAddr = getPatchAddr(MAJORA_LOADREGS);
+			*(u32*)(addr+0x1A60C) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A60C));
+			patched=1;
+		}
+	}
+	else if(!strncmp(gameID, "GPQ", 3))
+	{
+		// Audio Stream force DMA to get Video Sound
+		if(*(u32*)(addr+0xF03D8) == 0x4E800020 && *(u32*)(addr+0xF0494) == 0x4E800020)
+		{
+			//Call AXInit after DVDPrepareStreamAbsAsync
+			*(u32*)(addr+0xF03D8) = branch(Calc_ProperAddress(addr, dataType, 0xF6E80), Calc_ProperAddress(addr, dataType, 0xF03D8));
+			//Call AXQuit after DVDCancelStreamAsync
+			*(u32*)(addr+0xF0494) = branch(Calc_ProperAddress(addr, dataType, 0xF6EB4), Calc_ProperAddress(addr, dataType, 0xF0494));
+			print_gecko("Patched:[Powerpuff Girls NTSC-U]\r\n");
+			patched=1;
+		}
+		else if(*(u32*)(addr+0xF0EC0) == 0x4E800020 && *(u32*)(addr+0xF0F7C) == 0x4E800020)
+		{
+			//Call AXInit after DVDPrepareStreamAbsAsync
+			*(u32*)(addr+0xF0EC0) = branch(Calc_ProperAddress(addr, dataType, 0xF8340), Calc_ProperAddress(addr, dataType, 0xF0EC0));
+			//Call AXQuit after DVDCancelStreamAsync
+			*(u32*)(addr+0xF0F7C) = branch(Calc_ProperAddress(addr, dataType, 0xF83B0), Calc_ProperAddress(addr, dataType, 0xF0F7C));
+			print_gecko("Patched:[Powerpuff Girls PAL]\r\n");
 			patched=1;
 		}
 	}
