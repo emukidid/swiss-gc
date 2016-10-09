@@ -178,9 +178,24 @@ void dvd_unlock()
 	while (dvd[7] & 1);
 }
 
+
+u32 dvd_readmem_32(u32 addr)
+{
+	dvd[0] = 0x2E;
+	dvd[1] = 0;
+	dvd[2] = 0xFE010000;	
+	dvd[3] = addr;
+	dvd[4] = 0x00010000;	
+	dvd[8] = 0;
+	dvd[7] = 1;
+
+	while (dvd[7] & 1);
+	return dvd[8];
+}
+
 int dvd_writemem_32(u32 addr, u32 dat)
 {
-	dvd[0] = 0x2e;
+	dvd[0] = 0x2E;
 	dvd[1] = 0;
 	dvd[2] = 0xFE010100;	
 	dvd[3] = addr;
@@ -190,12 +205,26 @@ int dvd_writemem_32(u32 addr, u32 dat)
 	dvd[7] = 3;
 	while (dvd[7] & 1);
 
-	dvd[0] = 0x2e;
+	dvd[0] = 0x2E;
 	dvd[1] = 0;
 	dvd[2] = dat;
 	dvd[7] = 1;
 	while (dvd[7] & 1);
 
+	return 0;
+}
+
+int dvd_readmem_array(u32 addr, void* buf, u32 size)
+{
+	u32* ptr = (u32*)buf;
+	int rem = size;
+
+	while (rem>0)
+	{
+		*ptr++ = dvd_readmem_32(addr);
+		addr += 4;
+		rem -= 4;
+	}
 	return 0;
 }
 

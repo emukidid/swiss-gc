@@ -450,28 +450,19 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x84)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadCommon.Name, properAddress - 0x84);
-			u32 newval = (u32)(ADJUST_LBA_OFFSET - properAddress);
-			newval&= 0x03FFFFFC;
-			newval|= 0x48000001;
-			*(u32*)(addr + i + 0x84) = newval;
+			*(u32*)(addr + i + 0x84) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
 			return 1;
 		}
 		if(compare_pattern(&fp, &ReadDebug)) {	// As above, for debug read now.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x88)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadDebug.Name, properAddress - 0x88);
-			u32 newval = (u32)(ADJUST_LBA_OFFSET - properAddress);
-			newval&= 0x03FFFFFC;
-			newval|= 0x48000001;
-			*(u32*)(addr + i + 0x88) = newval;
+			*(u32*)(addr + i + 0x88) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
 			return 1;
 		}
 		if(compare_pattern(&fp, &ReadUncommon)) {	// Same, for the less common read type.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x7C)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadUncommon.Name, properAddress - 0x7C);
-			u32 newval = (u32)(ADJUST_LBA_OFFSET - properAddress);
-			newval&= 0x03FFFFFC;
-			newval|= 0x48000001;
-			*(u32*)(addr + i + 0x7C) = newval;
+			*(u32*)(addr + i + 0x7C) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
 			return 1;
 		}
 	}
@@ -501,28 +492,19 @@ u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType) {
 			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x84)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for DVD\r\n", ReadCommon.Name, properAddress - 0x84);
-			u32 newval = (u32)(READ_REAL_OR_PATCHED - properAddress);
-			newval&= 0x03FFFFFC;
-			newval|= 0x48000001;
-			*(u32*)(addr + i + 0x84) = newval;
+			*(u32*)(addr + i + 0x84) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
 			return 1;
 		}
 		if(compare_pattern(&fp, &ReadDebug)) {	// As above, for debug read now.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x88)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for DVD\r\n", ReadDebug.Name, properAddress - 0x88);
-			u32 newval = (u32)(READ_REAL_OR_PATCHED - properAddress);
-			newval&= 0x03FFFFFC;
-			newval|= 0x48000001;
-			*(u32*)(addr + i + 0x88) = newval;
+			*(u32*)(addr + i + 0x88) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
 			return 1;
 		}
 		if(compare_pattern(&fp, &ReadUncommon)) {	// Same, for the less common read type.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x7C)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for DVD\r\n", ReadUncommon.Name, properAddress - 0x7C);
-			u32 newval = (u32)(READ_REAL_OR_PATCHED - properAddress);
-			newval&= 0x03FFFFFC;
-			newval|= 0x48000001;
-			*(u32*)(addr + i + 0x7C) = newval;
+			*(u32*)(addr + i + 0x7C) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
 			return 1;
 		}
 	}
@@ -541,21 +523,17 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 			if( find_pattern( (u8*)(addr_start), length, &OSExceptionInitSig ) )
 			{
 				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 472)-(u32)(addr));
-				if(properAddress) {
-					print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
-					*(u32*)(addr_start + 472) = branchAndLink(PATCHED_MEMCPY, properAddress);
-					patched |= 0x100;
-				}
+				print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
+				*(u32*)(addr_start + 472) = branchAndLink(PATCHED_MEMCPY, properAddress);
+				patched |= 0x100;
 			}
 			// Debug version of the above
 			else if( find_pattern( (u8*)(addr_start), length, &OSExceptionInitSigDBG ) )
 			{
 				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 512)-(u32)(addr));
-				if(properAddress) {
-					print_gecko("Found:[OSExceptionInitDBG] @ %08X\r\n", properAddress);
-					*(u32*)(addr_start + 512) = branchAndLink(PATCHED_MEMCPY_DBG, properAddress);
-					patched |= 0x100;
-				}
+				print_gecko("Found:[OSExceptionInitDBG] @ %08X\r\n", properAddress);
+				*(u32*)(addr_start + 512) = branchAndLink(PATCHED_MEMCPY_DBG, properAddress);
+				patched |= 0x100;
 			}
 			// Audio Streaming Hook (only if required)
 			else if(!swissSettings.muteAudioStreaming && find_pattern( (u8*)(addr_start), length, &DSPHandler ) )
@@ -572,7 +550,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 			if(compare_pattern(&fp, &ReadCommon) 			// Common Read function
 				|| compare_pattern(&fp, &ReadDebug)			// Debug Read function
 				|| compare_pattern(&fp, &ReadUncommon)) 	// Uncommon Read function
-			{	
+			{
 				u32 iEnd = 4;
 				while(*(u32*)(addr_start + iEnd) != 0x4E800020) iEnd += 4;	// branch relative from the end
 				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + iEnd)-(u32)(addr));

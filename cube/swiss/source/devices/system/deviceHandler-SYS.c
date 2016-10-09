@@ -6,6 +6,7 @@
 #include <malloc.h>
 #include "deviceHandler-SYS.h"
 #include "main.h"
+#include "dvd.h"
 #include "gui/FrameBufferMagic.h"
 
 int read_rom_ipl(unsigned int offset, void* buffer, unsigned int length);
@@ -13,10 +14,12 @@ int read_rom_ipl_clear(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_sram(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_dsp_rom(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_dsp_coef(unsigned int offset, void* buffer, unsigned int length);
-int read_rom_dvd_ram(unsigned int offset, void* buffer, unsigned int length);
+int read_rom_dvd_ram_low(unsigned int offset, void* buffer, unsigned int length);
+int read_rom_dvd_ram_high(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_dvd_rom(unsigned int offset, void* buffer, unsigned int length);
 
-#define NUM_ROMS 7
+
+#define NUM_ROMS 8
 
 const char* rom_names[] =
 {
@@ -24,7 +27,8 @@ const char* rom_names[] =
 	"ipl_clear.bin",
 	"dsp_rom.bin",
 	"dsp_coef.bin",
-	"dvd_ram.bin",
+	"dvd_ram_low.bin",
+	"dvd_ram_high.bin",
 	"dvd_rom.bin",
 	"sram.bin"
 };
@@ -36,6 +40,7 @@ const int rom_sizes[] =
 	8 * 1024,
 	4 * 1024,
 	32 * 1024,
+	192 * 1024,
 	128 * 1024,
 	64
 };
@@ -46,7 +51,8 @@ int (*read_rom[])(unsigned int offset, void* buffer, unsigned int length) =
 	read_rom_ipl_clear,
 	read_rom_dsp_rom,
 	read_rom_dsp_coef,
-	read_rom_dvd_ram,
+	read_rom_dvd_ram_low,
+	read_rom_dvd_ram_high,
 	read_rom_dvd_rom,
 	read_rom_sram
 };
@@ -193,20 +199,31 @@ int read_rom_dsp_coef(unsigned int offset, void* buffer, unsigned int length) {
 	return 0;
 }
 
-int read_rom_dvd_ram(unsigned int offset, void* buffer, unsigned int length) {
-	// TODO
-	(void) offset;
-	(void) buffer;
-	(void) length;
-	return 0;
+int read_rom_dvd_ram_low(unsigned int offset, void* buffer, unsigned int length) {
+	dvd_enable_patches();
+	void *ram = (void*)memalign(32, 32*1024);
+	dvd_readmem_array(0x8000, ram, 32*1024);
+	memcpy(buffer, ram + offset, length);
+	free(ram);
+	return length;
+}
+
+int read_rom_dvd_ram_high(unsigned int offset, void* buffer, unsigned int length) {
+	dvd_enable_patches();
+	void *ram = (void*)memalign(32, 192*1024);
+	dvd_readmem_array(0x400000, ram, 192*1024);
+	memcpy(buffer, ram + offset, length);
+	free(ram);
+	return length;
 }
 
 int read_rom_dvd_rom(unsigned int offset, void* buffer, unsigned int length) {
-	// TODO
-	(void) offset;
-	(void) buffer;
-	(void) length;
-	return 0;
+	dvd_enable_patches();
+	void *rom = (void*)memalign(32, 128*1024);
+	dvd_readmem_array(0xA0000, rom, 128*1024);
+	memcpy(buffer, rom + offset, length);
+	free(rom);
+	return length;
 }
 
 int deviceHandler_SYS_init(file_handle* file) {

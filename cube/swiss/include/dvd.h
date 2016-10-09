@@ -70,4 +70,5 @@ unsigned int npdp_getid(unsigned char *dst);
 void dvd_enable_patches();
 void dvd_setstatus();
 void dvd_setextension();
+int dvd_readmem_array(u32 addr, void* buf, u32 size);
 #endif
