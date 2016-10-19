@@ -15,6 +15,7 @@ extern char *gameVModeStr[];
 extern char *softProgressiveStr[];
 extern char *forceWidescreenStr[];
 extern char *forceEncodingStr[];
+extern char *igrTypeStr[];
 int show_settings(file_handle *file, ConfigEntry *config);
 void refreshSRAM();
 

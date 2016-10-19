@@ -18,8 +18,10 @@ typedef struct FuncPattern
 } FuncPattern;
 
 /* the SDGecko/IDE-EXI patches */
-extern u8 hdd_bin[];
-extern u32 hdd_bin_size;
+extern u8 ideexi_v1_bin[];
+extern u32 ideexi_v1_bin_size;
+extern u8 ideexi_v2_bin[];
+extern u32 ideexi_v2_bin_size;
 extern u8 sd_bin[];
 extern u32 sd_bin_size;
 extern u8 usbgecko_bin[];
@@ -116,6 +118,7 @@ enum patchIds {
 #define READ_TRIGGER_INTERRUPT	(LO_RESERVE | 0x0C)
 #define DSP_HANDLER_HOOK		(LO_RESERVE | 0x10)
 #define PATCHED_MEMCPY_DBG		(LO_RESERVE | 0x14)
+#define IGR_CHECK				(LO_RESERVE | 0x18)
 
 /* Function jump locations for the DVD patch */
 #define ENABLE_BACKUP_DISC 		(LO_RESERVE_DVD | 0x00)
@@ -145,6 +148,7 @@ int Patch_FontEnc(void *addr, u32 length);
 int Patch_Fwrite(void *addr, u32 length);
 int Patch_DVDReset(void *addr,u32 length);
 int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType);
+int Patch_IGR(void *data, u32 length, int dataType);
 int PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType );
 u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);

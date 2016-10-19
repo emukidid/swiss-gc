@@ -20,10 +20,11 @@ char *gameVModeStr[] = {"Auto", "480i", "480sf", "240p", "960i", "480p", "576i",
 char *softProgressiveStr[] = {"No", "Light", "Yes"};
 char *forceWidescreenStr[] = {"No", "Persp", "Yes"};
 char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS"};
+char *igrTypeStr[] = {"Disabled", "Reboot", "boot.bin", "USB Flash"};
 syssram* sram;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {6, 10, 8};
+int settings_count_pp[3] = {7, 10, 8};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
@@ -64,6 +65,8 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawSelectableButton(400, 200, -1, 230, swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == 2 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 240, "Swiss Video Mode:", 1.0f, false, defaultColor);
 		DrawSelectableButton(400, 240, -1, 270, uiVModeStr[swissSettings.uiVMode], option == 3 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 280, "In-Game-Reset:", 1.0f, false, defaultColor);
+		DrawSelectableButton(400, 280, -1, 310, igrTypeStr[swissSettings.igrType], option == 4 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	else if(page_num == 1) {
 		WriteFont(30, 65, "Advanced Settings (2/3):");
@@ -132,6 +135,13 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 					swissSettings.uiVMode = 0;
 				if(swissSettings.uiVMode < 0)
 					swissSettings.uiVMode = 4;
+			break;
+			case 4:
+				swissSettings.igrType += direction;
+				if(swissSettings.igrType > 3)
+					swissSettings.igrType = 0;
+				if(swissSettings.igrType < 0)
+					swissSettings.igrType = 3;
 			break;
 		}	
 	}

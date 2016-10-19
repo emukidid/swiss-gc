@@ -43,6 +43,7 @@
 #include "devices/deviceHandler.h"
 #include "devices/filemeta.h"
 #include "dolparameters.h"
+#include "../../reservedarea.h"
 
 DiskHeader GCMDisk;      //Gamecube Disc Header struct
 char IPLInfo[256] __attribute__((aligned(32)));
@@ -629,6 +630,11 @@ unsigned int load_app(int multiDol)
 		Patch_DVDLowLevelReadForDVD(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 	
+	// Patch IGR
+	if(swissSettings.igrType != IGR_OFF) {
+		Patch_IGR(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+	}
+	
 	// Patch OSReport to print out over USBGecko
 	if(swissSettings.debugUSB && usb_isgeckoalive(1) && !swissSettings.wiirdDebug) {
 		Patch_Fwrite(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
@@ -712,6 +718,7 @@ unsigned int load_app(int multiDol)
 	*(volatile unsigned int*)VAR_DISC_CHANGING = 0;
 	*(volatile unsigned int*)VAR_LAST_OFFSET = 0xBEEFCAFE;
 	*(volatile unsigned int*)VAR_AS_ENABLED = !swissSettings.muteAudioStreaming;
+	*(volatile unsigned char*)VAR_IGR_EXIT_TYPE = (u8)swissSettings.igrType;
 	memset((void*)VAR_DI_REGS, 0, 0x24);
 	memset((void*)VAR_STREAM_START, 0, 0xA0);
 	print_gecko("Audio Streaming is %s\r\n",*(volatile unsigned int*)VAR_AS_ENABLED?"Enabled":"Disabled");

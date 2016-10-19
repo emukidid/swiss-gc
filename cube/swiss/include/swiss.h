@@ -95,6 +95,7 @@ typedef struct {
 	char smbShare[128];		//80
 	char smbServerIp[128];	//80
 	int autoCheats;
+	int igrType;
 } SwissSettings __attribute__((aligned(32)));
 extern SwissSettings swissSettings;
 

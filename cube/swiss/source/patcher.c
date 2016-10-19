@@ -17,6 +17,7 @@
 #include "deviceHandler.h"
 #include "sidestep.h"
 #include "elf.h"
+#include "ata.h"
 #include "cheats.h"
 
 static u32 top_addr = VAR_PATCHES_BASE;
@@ -70,8 +71,9 @@ int install_code()
 	}
 	
 	// IDE-EXI
-  	if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
-		patch = &hdd_bin[0]; patchSize = hdd_bin_size;
+  	if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {	
+		patch = (!_ideexi_version)?&ideexi_v1_bin[0]:&ideexi_v2_bin[0]; 
+		patchSize = (!_ideexi_version)?ideexi_v1_bin_size:ideexi_v2_bin_size;
 		print_gecko("Installing Patch for IDE-EXI\r\n");
   	}
 	// SD Gecko
@@ -1845,6 +1847,30 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 		}
 	}
 	return patched;
+}
+
+const u32 SPEC2_MakeStatusA[8] = {
+	0x80050000,0x540084BE,0xB0040000,0x80050000,
+	0x5400C23E,0x7C000774,0x98040002,0x80050000};
+
+// Hook into PAD for IGR
+int Patch_IGR(void *data, u32 length, int dataType) {
+	int i;
+	
+	for( i=0; i < length; i+=4 )
+	{
+		if( *(u32*)(data+i) != 0x80050000 &&  *(u32*)(data+i+4) != 0x540084BE)
+			continue;
+		
+		if(!memcmp((void*)(data+i),SPEC2_MakeStatusA,sizeof(SPEC2_MakeStatusA)))
+		{
+			u32 properAddress = Calc_ProperAddress(data, dataType, (u32)(data + i + 0x46C) -(u32)(data));
+			print_gecko("Found:[SPEC2_MakeStatusA] @ %08X (%08X)\n", properAddress, i +0x46C);
+			*(u32*)(data+i+0x46C) = branch(IGR_CHECK, properAddress);
+			return 1;
+		}
+	}
+	return 0;
 }
 
 u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt) {

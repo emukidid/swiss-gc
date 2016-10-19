@@ -17,6 +17,18 @@ _start:
 	b		trigger_di_irq
 	b		__DSPHandler
 	b		patched_memcpy_dbg
+	b		check_exit				# checks for a button combo and exits if true
+
+	.globl check_exit
+check_exit:
+	lwz		r5, 0(r4)
+	rlwinm	r5, r5, 16, 16, 31
+	andi.	r5, r5, 0x0234				# B,Z,R,D-Pad Down
+	cmplwi	r5, 0x0234
+	beq		do_exit
+	blr
+do_exit:
+	b		exit_to_pref
 
 	.globl trigger_di_irq
 trigger_di_irq:
@@ -85,39 +97,27 @@ process_read_queue:
 	stwu	sp,	-64(sp) 		# grow stack frame
 	stw		r0,   12(sp)		# store r0
 	stw		r3,   16(sp)		# store r3
-	stw		r4,   20(sp)		# store r4
-	stw		r5,   24(sp)		# store r5
-	stw		r6,   28(sp)		# store r6
-	stw		r7,   32(sp)		# store r7
-	stw		r8,   36(sp)		# store r8
-	stw		r9,   40(sp)		# store r9
-	stw		r10,   44(sp)		# store r10
-	stw		r11,   48(sp)		# store r11
-	stw		r12,   52(sp)		# store r12
-
+	addi	sp,	sp,	20
+	stswi	r4,	sp,	(12-4)*4# store r4-r12
+	addi	sp,	sp,	-20
+	
 	bl		StreamUpdateRegisters
 	bl		DIUpdateRegisters
 
 	lwz		r0, 12(sp)			# restore r0
 	lwz		r4,	20(sp)			# restore r4 (context)
 	lwz     r3, 128 (r4)
-	mtcr    r3					# restore cr
-	lwz     r3, 0x0084 (r4)
-	mtlr    r3					# restore lr
-	lwz     r3, 0x0088 (r4)
-	mtctr   r3					# restore ctr
-	lwz     r3, 0x008C (r4)
-	mtxer   r3					# restore xer
-	lwz		r3,   16(sp)		# restore r3
-	lwz		r5,   24(sp)		# restore r5
-	lwz		r6,   28(sp)		# restore r6
-	lwz		r7,   32(sp)		# restore r7
-	lwz		r8,   36(sp)		# restore r8
-	lwz		r9,   40(sp)		# restore r9
-	lwz		r10,   44(sp)		# restore r10
-	lwz		r11,   48(sp)		# restore r11
-	lwz		r12,   52(sp)		# restore r12
-	addi	r1,	r1, 64			# kill stack frame
+	mtcr    r3					# restore cr	# Necessary?
+	lwz     r3, 0x0084 (r4)                     # Necessary?
+	mtlr    r3					# restore lr    # Necessary?
+	lwz     r3, 0x0088 (r4)                     # Necessary?
+	mtctr   r3					# restore ctr   # Necessary?
+	lwz     r3, 0x008C (r4)                     # Necessary?
+	mtxer   r3					# restore xer   # Necessary?
+	lwz		r3,	16(sp)			# restore r3
+	addi	sp,		sp,	20
+	lswi	r4,	sp,	(12-4)*4	# restore r4-r12
+	addi	sp,	sp, 64-20		# kill stack frame
 	lis		r5,	0x8000
 	lwz		r5, 0x3010(r5)
 	mtsrr0	r5					# setup for the rfi

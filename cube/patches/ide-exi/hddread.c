@@ -39,11 +39,7 @@ typedef unsigned int u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 
-#define _ideexi_version *(u32*)VAR_TMP2
 #define _ata48bit *(u32*)VAR_TMP1
-
-#define IDE_EXI_V1 0
-#define IDE_EXI_V2 1
 
 #define exi_freq  			(*(u32*)VAR_EXI_FREQ)
 // exi_channel is stored as number of u32's to index into the exi bus (0xCC006800)
@@ -133,7 +129,7 @@ void ata_read_buffer(u8 *dst)
 	exi_select();
 	exi_imm_write(0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8), 4);
 	
-	if(!_ideexi_version) {
+#ifdef IDE_EXI_V1
 		exi_deselect();
 		for(i = 0; i < dwords; i++) {
 			exi_select();
@@ -142,12 +138,8 @@ void ata_read_buffer(u8 *dst)
 		}
 		exi_select();
 		exi_imm_read();
-	}
-	else {	// v2, no deselect or extra read required.
-		//for(i = 0; i < dwords; i++) {
-		//	*ptr++ = exi_imm_read();
-		//}
-		u32 *ptr = (u32*)dst;
+#else
+		// v2, no deselect or extra read required.
 		if(((u32)dst)%32) {
 			ptr = (u32*)&alignedBuf;
 		}
@@ -156,7 +148,7 @@ void ata_read_buffer(u8 *dst)
 		if(((u32)dst)%32) {
 			mymemcpy(dst, ptr, 512);
 		}
-	}
+#endif
 	exi_deselect();
 }
 
@@ -260,5 +252,3 @@ void do_read(void *dst,u32 size, u32 offset, u32 sectorLba) {
 		mymemcpy(dst, &(sector[0]), size);
 	}	
 }
-
-

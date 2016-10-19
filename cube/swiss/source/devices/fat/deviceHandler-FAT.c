@@ -327,8 +327,6 @@ int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	*(volatile unsigned int*)VAR_EXI_SLOT = ((file->name[0] == 's') ? (file->name[2] == 'b') : (file->name[3] == 'b')) * 5;
 	// IDE-EXI only settings
 	if(!(file->name[0] == 's')) {
-		// Is this an IDE-EXI v1 or 2?
-		*(volatile unsigned int*)VAR_TMP2 = _ideexi_version;
 		// Is the HDD in use a 48 bit LBA supported HDD?
 		*(volatile unsigned int*)VAR_TMP1 = ataDriveInfo.lba48Support;
 	}

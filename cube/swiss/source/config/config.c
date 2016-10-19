@@ -27,6 +27,7 @@
 //SMBShareName=nas
 //SMBHostIP=192.168.1.32
 //AutoCheats=Yes
+//IGRType=Disabled
 //!!Swiss Settings End!!
 
 // This is an example game entry
@@ -124,6 +125,8 @@ int config_update_file() {
 		sprintf(txtbuffer, "SMBHostIP=%s\r\n",configSwissSettings.smbServerIp);
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "AutoCheats=%s\r\n", (configSwissSettings.autoCheats ? "Yes":"No"));
+		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		sprintf(txtbuffer, "IGRType=%s\r\n", (igrTypeStr[swissSettings.igrType]));
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
@@ -319,6 +322,16 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("AutoCheats", name)) {
 					configSwissSettings.autoCheats = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("IGRType", name)) {
+					if(!strcmp(igrTypeStr[0], value))
+						configSwissSettings.igrType = 0;
+					else if(!strcmp(igrTypeStr[1], value))
+						configSwissSettings.igrType = 1;
+					else if(!strcmp(igrTypeStr[2], value))
+						configSwissSettings.igrType = 2;
+					else if(!strcmp(igrTypeStr[3], value))
+						configSwissSettings.igrType = 3;
 				}
 			}
 		}

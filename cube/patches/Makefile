@@ -12,7 +12,7 @@ DISASM    = disassembly
 all: dvdpatch hddpatch sdpatch usbpatch wkfpatch
 
 dvdpatch: clean build-dvd
-hddpatch: clean build-hdd
+hddpatch: clean build-ideexi-v1 clean build-ideexi-v2
 sdpatch: clean build-sd
 usbpatch: clean build-usb
 wkfpatch: clean build-wkf
@@ -28,6 +28,7 @@ build-sd:
 	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/base.S
 	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c sdgecko/sd.c
 	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/frag.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/igr.c
 	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/usbgecko.c
 	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
 	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdinterface.c
@@ -36,7 +37,7 @@ build-sd:
 	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/__DSPHandler.S
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr_start.S
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr.c
-	@$(LD) -o sd.elf base.o frag.o sd.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o --section-start .text=0x80001000 --gc-sections
+	@$(LD) -o sd.elf base.o igr.o frag.o sd.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o --section-start .text=0x80001000 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D sd.elf > $(DISASM)/sd_disasm.txt
 	@$(OBJCOPY) -O binary sd.elf sd.bin
@@ -45,11 +46,12 @@ build-sd:
 	@rm *.bin
 	@rm *.elf
 
-build-hdd:
-	@echo Building HDD Patch ...
+build-ideexi-v1:
+	@echo Building IDE-EXI-v1 Patch ...
 	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/base.S
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c ide-exi/hddread.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c ide-exi/hddread.c -DIDE_EXI_V1
 	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/frag.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/igr.c
 	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/usbgecko.c
 	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
 	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdinterface.c
@@ -58,24 +60,48 @@ build-hdd:
 	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/__DSPHandler.S
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr_start.S
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr.c
-	@$(LD) -o hdd.elf base.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o --section-start .text=0x80001000 -gc-sections 
+	@$(LD) -o ideexi_v1.elf base.o igr.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o --section-start .text=0x80001000 -gc-sections 
 	@rm -rf *.o
-	@$(OBJDUMP) -D hdd.elf > $(DISASM)/hdd_disasm.txt
-	@$(OBJCOPY) -O binary hdd.elf hdd.bin
-	@$(BIN2S) hdd.bin > hdd_final.s
-	@mv -f hdd_final.s $(DEST)/SlotAB-HDD.s
+	@$(OBJDUMP) -D ideexi_v1.elf > $(DISASM)/ideexi_v1_disasm.txt
+	@$(OBJCOPY) -O binary ideexi_v1.elf ideexi_v1.bin
+	@$(BIN2S) ideexi_v1.bin > ideexi_v1_final.s
+	@mv -f ideexi_v1_final.s $(DEST)/SlotAB-IDEEXI_V1.s
+	@rm *.bin
+	@rm *.elf
+	
+build-ideexi-v2:
+	@echo Building IDE-EXI-v2 Patch ...
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/base.S
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c ide-exi/hddread.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/frag.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/igr.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/usbgecko.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdinterface.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/adp.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/Stream.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/__DSPHandler.S
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr_start.S
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr.c
+	@$(LD) -o ideexi_v2.elf base.o igr.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o --section-start .text=0x80001000 -gc-sections 
+	@rm -rf *.o
+	@$(OBJDUMP) -D ideexi_v2.elf > $(DISASM)/ideexi_v2_disasm.txt
+	@$(OBJCOPY) -O binary ideexi_v2.elf ideexi_v2.bin
+	@$(BIN2S) ideexi_v2.bin > ideexi_v2_final.s
+	@mv -f ideexi_v2_final.s $(DEST)/SlotAB-IDEEXI_V2.s
 	@rm *.bin
 	@rm *.elf
 
 build-dvd:
 	@echo Building DVD Patch ...
-	@$(CC) -O2 -c dvd/base.S
-	@$(CC) -O2 -c dvd/dvd.c
-	@$(CC) -O2 -c sdgecko/sd.c
-	@$(CC) -O2 -c base/frag.c
-	@$(CC) -O2 -c base/usbgecko.c
-	@$(CC) -O2 -c base/dvdqueue.c
-	@$(LD) -o dvd.elf base.o frag.o sd.o dvd.o dvdqueue.o usbgecko.o --section-start .text=0x80001800
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c dvd/base.S
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c dvd/dvd.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c sdgecko/sd.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/frag.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/usbgecko.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/igr.c
+	@$(LD) -o dvd.elf base.o igr.o frag.o sd.o dvd.o dvdqueue.o usbgecko.o --section-start .text=0x80001800
 	@rm -rf *.o
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd_disasm.txt
 	@$(OBJCOPY) -O binary dvd.elf dvd.bin
@@ -96,7 +122,8 @@ build-usb:
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr_start.S
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr.c
 	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/frag.c
-	@$(LD) -o usbgecko.elf base.o usbgecko.o dvdqueue.o dvdinterface.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o frag.o --section-start .text=0x80001000 --gc-sections
+	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/igr.c
+	@$(LD) -o usbgecko.elf base.o igr.o usbgecko.o dvdqueue.o dvdinterface.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o frag.o --section-start .text=0x80001000 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin

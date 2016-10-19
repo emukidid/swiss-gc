@@ -17,6 +17,7 @@
 #include "devices/deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
+#include "../../reservedarea.h"
 #include <sys/stat.h>
 #include <errno.h>
 
@@ -380,6 +381,11 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		// Patch specific game hacks
 		if(curDevice != DVD_DISC) {
 			patched += Patch_GameSpecific(buffer, sizeToRead, &gameID[0], filesToPatch[i].type);
+		}
+		
+		// Patch IGR
+		if(swissSettings.igrType != IGR_OFF) {
+			patched += Patch_IGR(buffer, sizeToRead, filesToPatch[i].type);
 		}
 				
 		if(swissSettings.debugUSB && usb_isgeckoalive(1) && !swissSettings.wiirdDebug) {
