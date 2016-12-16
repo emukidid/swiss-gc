@@ -94,7 +94,7 @@ void info_draw_page(int page_num) {
 		WriteFontStyled(640/2, 200, topStr, 1.0f, true, defaultColor);
 		sprintf(topStr,"%s / %s",getSramLang(sram->lang), sram->flags&4 ? "Stereo":"Mono");
 		WriteFontStyled(640/2, 230, topStr, 1.0f, true, defaultColor);
-		sprintf(topStr,"PVR %08X ECID %08X:%08X:%08X",mfpvr(),mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
+		sprintf(topStr,"PVR %08lX ECID %08lX:%08lX:%08lX",mfpvr(),mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
 		WriteFontStyled(640/2, 260, topStr, 0.75f, true, defaultColor);
 	}
 	else if(page_num == 1) {
@@ -129,7 +129,7 @@ void info_draw_page(int page_num) {
 		}
 		else if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
 			int slot = (deviceHandler_initial->name[3] == 'b');
-			sprintf(topStr, "Current Device: %d GB HDD in %s",ataDriveInfo.sizeInGigaBytes,!slot?"Slot A":"Slot B");
+			sprintf(topStr, "Current Device: %ld GB HDD in %s",ataDriveInfo.sizeInGigaBytes,!slot?"Slot A":"Slot B");
 		}
 		else if(deviceHandler_initial == &initial_Qoob) {
 			sprintf(topStr, "Current Device: Qoob IPL Replacement");

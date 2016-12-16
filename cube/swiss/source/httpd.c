@@ -97,6 +97,7 @@ void *httpd (void *arg) {
 					// download a disc image
 					else if ( !strncmp( temp, http_get_dvd, strlen(http_get_dvd) ) ) {
 						net_send(csock, http_200, strlen(http_200), 0);
+						net_send(csock, http_data_hdr, strlen(http_data_hdr), 0);
 						// See if there's a valid disc in the drive
 						if(initialize_disc(DISABLE_AUDIO) != DRV_ERROR) {
 							sprintf(temp, http_len_hdr, DISC_SIZE);

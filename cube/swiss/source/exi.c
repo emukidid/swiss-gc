@@ -48,7 +48,7 @@ static int exi_last_len;
 
 /* mode?Read:Write len bytes to/from channel */
 /* when read, data will be written back in exi_sync */
-inline void exi_imm(int channel, void* data, int len, int mode, int zero)
+void exi_imm(int channel, void* data, int len, int mode, int zero)
 {
 	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
 	if (mode == EXI_WRITE)

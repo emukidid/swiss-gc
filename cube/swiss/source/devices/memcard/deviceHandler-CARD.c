@@ -403,7 +403,7 @@ int deviceHandler_CARD_setupFile(file_handle* file, file_handle* file2) {
 int deviceHandler_CARD_init(file_handle* file){
 	int slot = (!strncmp((const char*)initial_CARDB.name, file->name, 7));
 	file->status = initialize_card(slot);
-	int memSize = 0, sectSize = 0;
+	s32 memSize = 0, sectSize = 0;
 	int ret = CARD_ProbeEx(slot,&memSize,&sectSize);
 	if(ret==CARD_ERROR_READY) {
 		initial_CARD_info.totalSpaceInKB = (memSize<<7);

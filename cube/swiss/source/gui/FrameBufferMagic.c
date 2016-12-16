@@ -506,10 +506,10 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 			sprintf(txtbuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
 		}
 		else if(curDevice == MEMCARD) {
-			sprintf(txtbuffer,"%.2fKB (%i blocks)", (float)file->size/1024, file->size/8192);
+			sprintf(txtbuffer,"%.2fKB (%ld blocks)", (float)file->size/1024, file->size/8192);
 		}
 		else if(curDevice == QOOB_FLASH) {
-			sprintf(txtbuffer,"%.2fKB (%i blocks)", (float)file->size/1024, file->size/0x10000);
+			sprintf(txtbuffer,"%.2fKB (%ld blocks)", (float)file->size/1024, file->size/0x10000);
 		}
 		else {
 			sprintf(txtbuffer,"%.2f %s",file->size > (1024*1024) ? (float)file->size/(1024*1024):(float)file->size/1024,file->size > (1024*1024) ? "MB":"KB");

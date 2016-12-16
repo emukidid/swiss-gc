@@ -304,7 +304,7 @@ void drawCurrentDevice() {
 	DrawTransparentBox(30, 200, 135, 305);	// Device size/extra info box
 	WriteFontStyled(30, 200, "Total:", 0.6f, false, defaultColor);
 	if(info->totalSpaceInKB < 1024)	// < 1 MB
-		sprintf(txtbuffer,"%iKB", info->totalSpaceInKB);
+		sprintf(txtbuffer,"%ldKB", info->totalSpaceInKB);
 	if(info->totalSpaceInKB < 1024*1024)	// < 1 GB
 		sprintf(txtbuffer,"%.2fMB", (float)info->totalSpaceInKB/1024);
 	else
@@ -313,7 +313,7 @@ void drawCurrentDevice() {
 	
 	WriteFontStyled(30, 235, "Free:", 0.6f, false, defaultColor);
 	if(info->freeSpaceInKB < 1024)	// < 1 MB
-		sprintf(txtbuffer,"%iKB", info->freeSpaceInKB);
+		sprintf(txtbuffer,"%ldKB", info->freeSpaceInKB);
 	if(info->freeSpaceInKB < 1024*1024)	// < 1 GB
 		sprintf(txtbuffer,"%.2fMB", (float)info->freeSpaceInKB/1024);
 	else
@@ -323,7 +323,7 @@ void drawCurrentDevice() {
 	WriteFontStyled(30, 270, "Used:", 0.6f, false, defaultColor);
 	u32 usedSpaceInKB = (info->totalSpaceInKB)-(info->freeSpaceInKB);
 	if(usedSpaceInKB < 1024)	// < 1 MB
-		sprintf(txtbuffer,"%iKB", usedSpaceInKB);
+		sprintf(txtbuffer,"%ldKB", usedSpaceInKB);
 	if(usedSpaceInKB < 1024*1024)	// < 1 GB
 		sprintf(txtbuffer,"%.2fMB", (float)usedSpaceInKB/1024);
 	else
@@ -753,7 +753,7 @@ void boot_dol()
 	int i=0;
 	ptr = dol_buffer;
 	for(i = 0; i < curFile.size; i+= 131072) {
-		sprintf(txtbuffer, "Loading DOL [%d/%d Kb] ..",curFile.size/1024,(SYS_GetArena1Size()+curFile.size)/1024);
+		sprintf(txtbuffer, "Loading DOL [%ld/%ld Kb] ..",curFile.size>>10,(SYS_GetArena1Size()+curFile.size)>>10);
 		DrawFrameStart();
 		DrawProgressBar((int)((float)((float)i/(float)curFile.size)*100), txtbuffer);
 		DrawFrameFinish();
@@ -902,7 +902,7 @@ void manage_file() {
 		}
 		// If copy, ask which device is the destination device and copy
 		else if((option == COPY_OPTION) || (option == MOVE_OPTION)) {
-			int ret = 0;
+			u32 ret = 0;
 			// Show a list of destination devices (the same device is also a possibility)
 			select_copy_device();
 			// If the devices are not the same, init the second, fail on non-existing device/etc
@@ -920,7 +920,7 @@ void manage_file() {
 					print_gecko("Trying alternate slot...\r\n");
 					if(!deviceHandler_dest_init( deviceHandler_dest_initial )) {
 						DrawFrameStart();
-						sprintf(txtbuffer, "Failed to init destination device! (%i)",ret);
+						sprintf(txtbuffer, "Failed to init destination device! (%ld)",ret);
 						DrawMessageBox(D_FAIL,txtbuffer);
 						DrawFrameFinish();
 						wait_press_A();
@@ -1104,7 +1104,7 @@ void manage_file() {
 						if(ret != amountToCopy) {
 							free(readBuffer);
 							DrawFrameStart();
-							sprintf(txtbuffer, "Failed to Read! (%i %i)\n%s",amountToCopy,ret, &curFile.name[0]);
+							sprintf(txtbuffer, "Failed to Read! (%ld %ld)\n%s",amountToCopy,ret, &curFile.name[0]);
 							DrawMessageBox(D_FAIL,txtbuffer);
 							DrawFrameFinish();
 							wait_press_A();
@@ -1117,7 +1117,7 @@ void manage_file() {
 					if(ret != amountToCopy) {
 						free(readBuffer);
 						DrawFrameStart();
-						sprintf(txtbuffer, "Failed to Write! (%i %i)\n%s",amountToCopy,ret,destFile->name);
+						sprintf(txtbuffer, "Failed to Write! (%ld %ld)\n%s",amountToCopy,ret,destFile->name);
 						DrawMessageBox(D_FAIL,txtbuffer);
 						DrawFrameFinish();
 						wait_press_A();
@@ -1134,7 +1134,7 @@ void manage_file() {
 					if(ret != 0) {
 						free(readBuffer);
 						DrawFrameStart();
-						sprintf(txtbuffer, "Failed to Write! (%i %i)\n%s",0,ret,destFile->name);
+						sprintf(txtbuffer, "Failed to Write! (%ld)\n%s",ret,destFile->name);
 						DrawMessageBox(D_FAIL,txtbuffer);
 						DrawFrameFinish();
 						wait_press_A();
@@ -1400,9 +1400,9 @@ void draw_game_info() {
 		if((curDevice==SD_CARD)||(curDevice == IDEEXI) ||(curDevice == WKF)) {
 			get_frag_list(curFile.name);
 			if(frag_list->num > 1)
-				sprintf(txtbuffer,"File is in %i fragments.", frag_list->num);
+				sprintf(txtbuffer,"File is in %ld fragments.", frag_list->num);
 			else
-				sprintf(txtbuffer,"File base sector 0x%08X", frag_list->frag[0].sector);
+				sprintf(txtbuffer,"File base sector 0x%08lX", frag_list->frag[0].sector);
 			WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
 		}
 		if(curFile.meta) {
@@ -1423,9 +1423,9 @@ void draw_game_info() {
 		}
 	}
 	else if(curDevice == QOOB_FLASH) {
-		sprintf(txtbuffer,"Size: %.2fKb (%i blocks)", (float)curFile.size/1024, curFile.size/0x10000);
+		sprintf(txtbuffer,"Size: %.2fKb (%ld blocks)", (float)curFile.size/1024, curFile.size/0x10000);
 		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
-		sprintf(txtbuffer,"Position on Flash: %08X",(u32)(curFile.fileBase&0xFFFFFFFF));
+		sprintf(txtbuffer,"Position on Flash: %08lX",(u32)(curFile.fileBase&0xFFFFFFFF));
 		WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
 	}
 	else if(curDevice == WODE) {
@@ -1434,9 +1434,9 @@ void draw_game_info() {
 		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
 	}
 	else if(curDevice == MEMCARD) {
-		sprintf(txtbuffer,"Size: %.2fKb (%i blocks)", (float)curFile.size/1024, curFile.size/8192);
+		sprintf(txtbuffer,"Size: %.2fKb (%ld blocks)", (float)curFile.size/1024, curFile.size/8192);
 		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
-		sprintf(txtbuffer,"Position on Card: %08X",curFile.offset);
+		sprintf(txtbuffer,"Position on Card: %08lX",curFile.offset);
 		WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
 	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {

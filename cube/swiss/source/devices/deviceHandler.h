@@ -23,8 +23,8 @@ typedef struct {
 typedef struct {
 	char name[1024]; 		// File or Folder, absolute path goes here
 	uint64_t fileBase;   	// Raw sector on device
-	unsigned int offset;    // Offset in the file
-	unsigned int size;      // size of the file
+	u32 offset;    			// Offset in the file
+	u32 size;      			// size of the file
 	int fileAttrib;        	// IS_FILE or IS_DIR
 	int status;            	// is the device ok
 	FILE *fp;				// file pointer

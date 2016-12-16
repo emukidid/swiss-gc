@@ -352,7 +352,7 @@ void wkfInit() {
 		wkfWriteOffset(0);
 
 		// Read first sector of SD card
-		memset(&wkfBuffer[0], 0x200, 0);
+		memset(&wkfBuffer[0], 0, 0x200);
 		wkfRead(&wkfBuffer[0], 0x200, 0);
 		if((wkfBuffer[0x1FF] != 0xAA)) {
 			// No FAT!
