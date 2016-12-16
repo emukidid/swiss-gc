@@ -13,7 +13,7 @@ extern int GCN_SD_SPEED;
 
 void exi_select(int channel, int device, int freq);
 void exi_deselect(int channel);
-inline void exi_imm(int channel, void* data, int len, int mode, int zero);
+void exi_imm(int channel, void* data, int len, int mode, int zero);
 void exi_sync(int channel);
 void exi_imm_ex(int channel, void* data, int len, int mode);
 void exi_read(int channel, void* data, int len);
