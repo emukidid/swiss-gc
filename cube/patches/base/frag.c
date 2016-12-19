@@ -7,12 +7,7 @@
 */
 
 #include "../../reservedarea.h"
-
-typedef unsigned int u32;
-typedef unsigned short u16;
-typedef unsigned char u8;
-
-extern void do_read(void*, u32, u32, u32);
+#include "common.h"
 
 // Returns the amount read from the given offset until a frag is hit
 u32 read_frag(void *dst, u32 len, u32 offset) {
@@ -61,17 +56,6 @@ void device_frag_read(void *dst, u32 len, u32 offset)
 	}
 }
 
-#define mftb(rval) ({unsigned long u; do { \
-	 asm volatile ("mftbu %0" : "=r" (u)); \
-	 asm volatile ("mftb %0" : "=r" ((rval)->l)); \
-	 asm volatile ("mftbu %0" : "=r" ((rval)->u)); \
-	 } while(u != ((rval)->u)); })
-	 
-typedef struct {
-	unsigned long l, u;
-} tb_t;
-
-#define TB_CLOCK  40500000
 unsigned long tb_diff_usec(tb_t* end, tb_t* start)
 {
 	unsigned long upper, lower;

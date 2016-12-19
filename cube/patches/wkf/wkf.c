@@ -4,17 +4,13 @@
 ***************************************************************************/
 
 #include "../../reservedarea.h"
-
-typedef unsigned int u32;
-typedef unsigned short u16;
-typedef unsigned char u8;
+#include "../base/common.h"
 
 extern char _readsector[];
 extern int _readsectorsize;
 
 #define READ_SECTOR ((char*)&_readsector)
 #define READ_SECTOR_SIZE ((int)_readsectorsize)
-extern int usb_sendbuffer_safe(const void *buffer,int size);
 extern void print_int_hex(unsigned int num);
 
 void wkfWriteOffset(u32 offset) {

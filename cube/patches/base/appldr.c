@@ -3,12 +3,8 @@ appldr.c for Swiss
 Copyright (C) 2015 FIX94
 */
 #include "../../reservedarea.h"
+#include "common.h"
 
-typedef volatile unsigned int vu32;
-typedef unsigned int u32;
-typedef int s32;
-typedef unsigned short u16;
-typedef unsigned char u8;
 
 typedef int   (*app_main)(char **dst, u32 *size, u32 *offset);
 typedef void  (*app_init)(int (*report)(const char *fmt, ...),u32 args);

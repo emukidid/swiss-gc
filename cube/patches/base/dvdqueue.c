@@ -5,19 +5,13 @@
 ***************************************************************************/
 
 #include "../../reservedarea.h"
-
-int usb_sendbuffer_safe(const void *buffer,int size);
-
-typedef unsigned int u32;
-typedef int s32;
-typedef unsigned short u16;
-typedef unsigned char u8;
+#include "common.h"
 
 #define SAMPLE_SIZE_32KHZ_1MS 128
 #define SAMPLE_SIZE_32KHZ_1MS_SHIFT 7
 
 // Returns how much was read.
-u32 process_queue(u32 dst, u32 len, u32 offset, int readComplete) {
+u32 process_queue(void* dst, u32 len, u32 offset, int readComplete) {
 	
 	if(len) {
 		// read a bit

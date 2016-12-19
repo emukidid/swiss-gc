@@ -4,6 +4,7 @@
 ***************************************************************************/
 
 #include "../../reservedarea.h"
+#include "../base/common.h"
 
 // NOTE: cs0 then cs1!
 // ATA registers address        val  - cs0 cs1 a2 a1 a0

@@ -5,6 +5,7 @@
 ***************************************************************************/
 
 #include "../../reservedarea.h"
+#include "common.h"
 
 #define DI_SR 		(0)
 #define DI_CVR		(1)
@@ -18,23 +19,6 @@
 #define DI_CFG		(9)
 
 #define AGGRESSIVE_INT 1
-
-typedef struct {
-	unsigned long l, u;
-} tb_t;
-
-#define mftb(rval) ({unsigned long u; do { \
-	 asm volatile ("mftbu %0" : "=r" (u)); \
-	 asm volatile ("mftb %0" : "=r" ((rval)->l)); \
-	 asm volatile ("mftbu %0" : "=r" ((rval)->u)); \
-	 } while(u != ((rval)->u)); })
-
-//int usb_sendbuffer_safe(const void *buffer,int size);
-
-typedef unsigned int u32;
-typedef int s32;
-typedef unsigned short u16;
-typedef unsigned char u8;
 
 void trigger_dvd_interrupt() {
 	volatile u32* realDVD = (volatile u32*)0xCC006000;
@@ -179,16 +163,16 @@ void DIUpdateRegisters() {
 					{
 						//execD, jump to our own handler
 						*(u32*)dst = branch((u32)appldr_start, dst);
-						dcache_flush_icache_inv(dst, 0x20);
+						dcache_flush_icache_inv((void*)dst, 0x20);
 						dvd[DI_DMALEN] = 0;
 						diOpCompleted = 1;
 					}
 					else
 					{
 						// Read. We might not do the full read, depends how busy the game is
-						u32 amountRead = process_queue(dst, len, offset, readComplete);
+						u32 amountRead = process_queue((void*)dst, len, offset, readComplete);
 						if(amountRead) {
-							dcache_flush_icache_inv(dst, amountRead);
+							dcache_flush_icache_inv((void*)dst, amountRead);
 							dvd[DI_DMALEN] -= amountRead;
 							dvd[DI_DMAADDR] += amountRead;
 							dvd[DI_LBA] += amountRead>>2;

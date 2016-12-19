@@ -25,16 +25,16 @@ clean:
 
 build-sd:
 	@echo Building SD Patch ...
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/base.S
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c sdgecko/sd.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/frag.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/igr.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/usbgecko.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdinterface.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/adp.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/base.S
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c sdgecko/sd.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/frag.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/igr.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/usbgecko.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/dvdinterface.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/adp.c
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/Stream.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/__DSPHandler.S
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/__DSPHandler.S
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr_start.S
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr.c
 	@$(LD) -o sd.elf base.o igr.o frag.o sd.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o --section-start .text=0x80001000 --gc-sections
@@ -48,16 +48,16 @@ build-sd:
 
 build-ideexi-v1:
 	@echo Building IDE-EXI-v1 Patch ...
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/base.S
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c ide-exi/hddread.c -DIDE_EXI_V1
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/frag.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/igr.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/usbgecko.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdinterface.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/adp.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/base.S
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c ide-exi/hddread.c -DIDE_EXI_V1
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/frag.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/igr.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/usbgecko.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/dvdinterface.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/adp.c
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/Stream.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/__DSPHandler.S
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/__DSPHandler.S
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr_start.S
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr.c
 	@$(LD) -o ideexi_v1.elf base.o igr.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o --section-start .text=0x80001000 -gc-sections 
@@ -71,16 +71,16 @@ build-ideexi-v1:
 	
 build-ideexi-v2:
 	@echo Building IDE-EXI-v2 Patch ...
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/base.S
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c ide-exi/hddread.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/frag.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/igr.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/usbgecko.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdinterface.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/adp.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/base.S
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c ide-exi/hddread.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/frag.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/igr.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/usbgecko.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/dvdinterface.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/adp.c
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/Stream.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/__DSPHandler.S
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/__DSPHandler.S
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr_start.S
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr.c
 	@$(LD) -o ideexi_v2.elf base.o igr.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o --section-start .text=0x80001000 -gc-sections 
@@ -94,13 +94,13 @@ build-ideexi-v2:
 
 build-dvd:
 	@echo Building DVD Patch ...
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c dvd/base.S
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c dvd/dvd.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c sdgecko/sd.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/frag.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/usbgecko.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/igr.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c dvd/base.S
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c dvd/dvd.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c sdgecko/sd.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/frag.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/usbgecko.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/igr.c
 	@$(LD) -o dvd.elf base.o igr.o frag.o sd.o dvd.o dvdqueue.o usbgecko.o --section-start .text=0x80001800
 	@rm -rf *.o
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd_disasm.txt
@@ -112,17 +112,17 @@ build-dvd:
 
 build-usb:
 	@echo Building USBGecko Patch ...
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/base.S
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c usbgecko/usbgecko.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/dvdinterface.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/adp.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/base.S
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c usbgecko/usbgecko.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/dvdinterface.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/adp.c
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/Stream.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/__DSPHandler.S
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/__DSPHandler.S
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr_start.S
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/frag.c
-	@$(CC) -O2 -ffunction-sections -mmultiple -mstring -c base/igr.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/frag.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/igr.c
 	@$(LD) -o usbgecko.elf base.o igr.o usbgecko.o dvdqueue.o dvdinterface.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o frag.o --section-start .text=0x80001000 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
@@ -134,9 +134,9 @@ build-usb:
 
 build-wkf:
 	@echo Building WKF Patch ...
-	@$(CC) -O2 -c wkf/base.S
-	@$(CC) -O2 -c wkf/wkf.c
-	@$(CC) -O2 -c base/usbgecko.c
+	@$(CC) -O1 -c wkf/base.S
+	@$(CC) -O1 -c wkf/wkf.c
+	@$(CC) -O1 -c base/usbgecko.c
 	@$(LD) -o wkf.elf base.o wkf.o usbgecko.o --section-start .text=0x80001800
 	@rm -rf *.o
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf_disasm.txt

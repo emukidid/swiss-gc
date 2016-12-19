@@ -19,16 +19,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 #include "../../reservedarea.h"
-
-typedef unsigned int u32;
-typedef unsigned short u16;
-typedef unsigned char u8;
-typedef signed short s16;
+#include "common.h"
 
 #define ONE_BLOCK_SIZE 32
 #define SAMPLES_PER_BLOCK  28
 
-void device_frag_read(void *dst, u32 len, u32 offset);
 void WritePCM48to32(u32 *buf_loc);
 void WritePCM48(u32 *buf_loc);
 
@@ -66,7 +61,7 @@ void StreamUpdate()
 	u32 r32k = ((*(u32*)(AI_CR)) & AI_32K);
 	for(i = 0; i < (r32k ? CHUNK_48to32 : CHUNK_48); i += ONE_BLOCK_SIZE)
 	{
-		ADPdecodebuffer((u8*)DECODE_WORK_AREA+i,(s16*)VAR_AS_OUTL,(s16*)VAR_AS_OUTR,(u32*)VAR_AS_HIST_0,(u32*)VAR_AS_HIST_1,(u32*)VAR_AS_HIST_2,(u32*)VAR_AS_HIST_3);
+		ADPdecodebuffer((u8*)DECODE_WORK_AREA+i,(s16*)VAR_AS_OUTL,(s16*)VAR_AS_OUTR,(long*)VAR_AS_HIST_0,(long*)VAR_AS_HIST_1,(long*)VAR_AS_HIST_2,(long*)VAR_AS_HIST_3);
 		if(r32k) WritePCM48to32(&buf_loc); else WritePCM48(&buf_loc);
 	}
 	*(u8*)VAR_STREAM_CURBUF = *(u8*)VAR_STREAM_CURBUF ^ 1;
@@ -168,7 +163,7 @@ void StreamStartStream(u32 CurrentStart, u32 CurrentSize)
 		*(u8*)VAR_STREAM_LOOPING = 0;
 }
 
-void StreamEndStream()
+void StreamEndStream(void)
 {
 	*(u32*)VAR_STREAM_CUR = 0;
 }
