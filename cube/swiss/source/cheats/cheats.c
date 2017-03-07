@@ -49,7 +49,7 @@ int getEnabledCheatsSize(void) {
 	return size;
 }
 
-char *validCodeValues = "0123456789ABCDEF";
+static char *validCodeValues = "0123456789AaBbCcDdEeFf";
 // Checks that the line contains a valid code in the format of "01234567 89ABCDEF"
 int isValidCode(char *code) {
 	int i, j;
@@ -61,7 +61,7 @@ int isValidCode(char *code) {
 		if(i == 8)
 			continue;
 		int found = 0;
-		for(j = 0; j < 16; j++) {
+		for(j = 0; j < strlen(validCodeValues); j++) {
 			if(code[i] == validCodeValues[j]) {
 				found = 1;
 				break;
@@ -74,7 +74,7 @@ int isValidCode(char *code) {
 }
 
 int containsXX(char *line) {
-	return (strlen(line)>=16 && tolower((int)line[15]) == 'x');
+	return (strlen(line)>=16 && (tolower((int)line[15]) == 'x'||tolower((int)line[15]) == 'y'));
 }
 
 /** 
