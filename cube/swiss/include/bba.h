@@ -3,6 +3,7 @@
 
 extern char bba_ip[16];
 extern int net_initialized;
+extern int netInitPending;
 extern int bba_exists;
 
 void resume_netinit_thread();

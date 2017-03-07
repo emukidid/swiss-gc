@@ -43,8 +43,12 @@ void *httpd (void *arg) {
 //---------------------------------------------------------------------------------
 	
 	print_gecko("httpd Waiting\r\n");
-	while(!net_initialized) {
+	while(netInitPending) {
 		sleep(1);
+	}
+	if(!net_initialized) {
+		print_gecko("httpd thread exiting, no IP\r\n");
+		return NULL;
 	}
 	print_gecko("httpd Alive\r\n");
 	s32 sock, csock;

@@ -324,7 +324,7 @@ void main_loop()
 		select_device(0);
 		curMenuLocation = ON_OPTIONS;
 	}
-	
+	pause_netinit_thread();
 	if(deviceHandler_initial) {
 		// If the user selected a device, make sure it's ready before we browse the filesystem
 		deviceHandler_deinit( deviceHandler_initial );
@@ -367,7 +367,8 @@ void main_loop()
 	if(!deviceHandler_getDeviceAvailable(curDevice)) {
 		deviceHandler_setDeviceAvailable(curDevice, 1);
 	}
-  
+
+	resume_netinit_thread();
 	while(1) {
 		if(deviceHandler_initial && needsRefresh) {
 			curMenuLocation=ON_OPTIONS;
@@ -376,7 +377,9 @@ void main_loop()
 			// Read the directory/device TOC
 			if(allFiles){ free(allFiles); allFiles = NULL; }
 			print_gecko("Reading directory: %s\r\n",curFile.name);
+			pause_netinit_thread();
 			files = deviceHandler_readDir(&curFile, &allFiles, -1);
+			resume_netinit_thread();
 			memcpy(&curDir, &curFile, sizeof(file_handle));
 			sortFiles(allFiles, files);
 			print_gecko("Found %i entries\r\n",files);

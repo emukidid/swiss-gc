@@ -8,12 +8,12 @@
 /* Network Globals */
 int net_initialized = 0;
 int bba_exists = 0;
+int netInitPending = 1;
 char bba_ip[16];
 
 // net init thread
 static lwp_t initnetthread = LWP_THREAD_NULL;
 static int netInitHalted = 0;
-static int netInitPending = 0;
 
 void resume_netinit_thread() {
 	if(initnetthread != LWP_THREAD_NULL) {
@@ -26,13 +26,13 @@ void pause_netinit_thread() {
 	if(initnetthread != LWP_THREAD_NULL) {
 		netInitHalted = 1;
 		
-		if(netInitPending) {
+		if(!netInitPending) {
 			return;
 		}
 	  
 		// until it's completed for this iteration.
 		while(!LWP_ThreadIsSuspended(initnetthread)) {
-			usleep(100);
+			usleep(1000);
 		}
 	}
 }
@@ -50,28 +50,18 @@ static void* init_network(void *args) {
         netsleep -= 100;
 	}
 
-	while(1) {
-		if(!net_initialized) {
-			netInitPending = 1;
-			res = if_config(bba_ip, NULL, NULL, true, 20);
-			if(res >= 0) {
-				net_initialized = 1;
-			}
-			else {
-				net_initialized = 0;
-			}
-			netInitPending = 0;
+	if(!net_initialized) {
+		res = if_config(bba_ip, NULL, NULL, true, 20);
+		if(res >= 0 && strcmp("255.255.255.255", bba_ip)) {
+			net_initialized = 1;
 		}
-
-		netsleep = 1000*1000; // 1 sec
-		while(netsleep > 0) {
-			if(netInitHalted) {
-				LWP_SuspendThread(initnetthread);
-			}
-			usleep(100);
-			netsleep -= 100;
+		else {
+			memset(bba_ip, 0, sizeof(bba_ip));
+			net_initialized = 0;
 		}
+		netInitPending = 0;
 	}
+
 	return NULL;
 }
 
