@@ -95,14 +95,14 @@ void parseParameters(char *filecontents) {
 				//print_gecko("Key [%s] Value [%s]\r\n", key, value);
 			}
 			
-			if(!stricmp("Name", key)) {
+			if(!strcasecmp("Name", key)) {
 				curParam = (Parameter*)&_parameters.parameters[numParameters];
 				memset(curParam, 0, sizeof(Parameter));
 				//print_gecko("Current Param %08X\r\n", curParam);
 				parseParameterValue(value, &curParam->arg);
 				numParameters++;
 			}
-			else if(!stricmp("Values", key)) {
+			else if(!strcasecmp("Values", key)) {
 				char *valuePairStart = strchr(value, '{');
 				int numValues = 0;
 				while(valuePairStart != NULL) {

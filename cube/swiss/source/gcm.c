@@ -77,7 +77,7 @@ unsigned int getBannerOffset(file_handle *file) {
 			strcpy(filename,&FST[string_table_offset+filename_offset]); 
 			unsigned int loc = 0;
 			memcpy(&loc,&FST[offset+4],4);
-			if((!stricmp(filename,"opening.bnr")) || (!stricmp(filename,"OPENING.BNR"))) 
+			if((!strcasecmp(filename,"opening.bnr")) || (!strcasecmp(filename,"OPENING.BNR"))) 
 			{
 				free(FST);
 				return loc;
