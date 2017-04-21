@@ -106,8 +106,6 @@ int config_update_file() {
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "Enable Debug=%s\r\n",(configSwissSettings.debugUSB ? "Yes":"No"));
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
-		sprintf(txtbuffer, "Force No DVD Drive Mode=%s\r\n",(configSwissSettings.hasDVDDrive ? "No":"Yes"));
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "Hide Unknown file types=%s\r\n",(configSwissSettings.hideUnknownFileTypes ? "Yes":"No"));
 		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
 		sprintf(txtbuffer, "Stop DVD Motor on startup=%s\r\n",(configSwissSettings.stopMotor ? "Yes":"No"));
@@ -280,9 +278,6 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("Enable Debug", name)) {
 					configSwissSettings.debugUSB = !strcmp("Yes", value) ? 1:0;
-				}
-				else if(!strcmp("Force No DVD Drive Mode", name)) {
-					configSwissSettings.hasDVDDrive = !strcmp("No", value) ? 1:0;
 				}
 				else if(!strcmp("Hide Unknown file types", name)) {
 					configSwissSettings.hideUnknownFileTypes = !strcmp("Yes", value) ? 1:0;

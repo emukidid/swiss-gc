@@ -24,7 +24,7 @@ char *igrTypeStr[] = {"Disabled", "Reboot", "boot.bin", "USB Flash"};
 syssram* sram;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {7, 10, 8};
+int settings_count_pp[3] = {7, 9, 8};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
@@ -72,18 +72,16 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 		WriteFont(30, 65, "Advanced Settings (2/3):");
 		WriteFontStyled(30, 110, "Enable USB Gecko Debug via Slot B:", 1.0f, false, defaultColor);
 		DrawSelectableButton(500, 110, -1, 135, swissSettings.debugUSB ? "Yes":"No", option == 0 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 140, "Force No DVD Drive Mode:", 1.0f, false, defaultColor);
-		DrawSelectableButton(500, 140, -1, 165, swissSettings.hasDVDDrive ? "No":"Yes", option == 1 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 170, "Hide Unknown file types:", 1.0f, false, defaultColor);
-		DrawSelectableButton(500, 170, -1, 195, swissSettings.hideUnknownFileTypes ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 200, "Stop DVD Motor on startup:", 1.0f, false, defaultColor);
-		DrawSelectableButton(500, 200, -1, 225, swissSettings.stopMotor ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 230, "Enable WiiRD debugging in Games:", 1.0f, false, defaultColor);
-		DrawSelectableButton(500, 230, -1, 255, swissSettings.wiirdDebug ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 260, "Enable File Management:", 1.0f, false, defaultColor);
-		DrawSelectableButton(500, 260, -1, 285, swissSettings.enableFileManagement ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 290, "Auto-load all cheats:", 1.0f, false, defaultColor);
-		DrawSelectableButton(500, 290, -1, 315, swissSettings.autoCheats ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 140, "Hide Unknown file types:", 1.0f, false, defaultColor);
+		DrawSelectableButton(500, 140, -1, 165, swissSettings.hideUnknownFileTypes ? "Yes":"No", option == 1 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 170, "Stop DVD Motor on startup:", 1.0f, false, defaultColor);
+		DrawSelectableButton(500, 170, -1, 195, swissSettings.stopMotor ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 200, "Enable WiiRD debugging in Games:", 1.0f, false, defaultColor);
+		DrawSelectableButton(500, 200, -1, 225, swissSettings.wiirdDebug ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 230, "Enable File Management:", 1.0f, false, defaultColor);
+		DrawSelectableButton(500, 230, -1, 255, swissSettings.enableFileManagement ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 260, "Auto-load all cheats:", 1.0f, false, defaultColor);
+		DrawSelectableButton(500, 260, -1, 285, swissSettings.autoCheats ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Current Game Settings (3/3):");
@@ -151,21 +149,18 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 				swissSettings.debugUSB ^= 1;
 			break;
 			case 1:
-				swissSettings.hasDVDDrive ^= 1;
-			break;
-			case 2:
 				swissSettings.hideUnknownFileTypes ^= 1;
 			break;
-			case 3:
+			case 2:
 				swissSettings.stopMotor ^= 1;
 			break;
-			case 4:
+			case 3:
 				swissSettings.wiirdDebug ^=1;
 			break;
-			case 5:
+			case 4:
 				swissSettings.enableFileManagement ^=1;
 			break;
-			case 6:
+			case 5:
 				swissSettings.autoCheats ^=1;
 			break;
 		}
