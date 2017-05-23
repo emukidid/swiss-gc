@@ -17,49 +17,59 @@
 #define NULL 0
 #endif
 
-file_handle* deviceHandler_initial = NULL;
-device_info* (*deviceHandler_info)(void) = NULL;
+DEVICEHANDLER_INTERFACE* allDevices[MAX_DEVICES];	// All devices registered in Swiss
+DEVICEHANDLER_INTERFACE* devices[MAX_DEVICES];		// Currently used devices
 
-static int device_availability[MAX_DEVICES];
+
+// Device stat global disable status
 static int statEnabled = 1;
 void deviceHandler_setStatEnabled(int enable) {statEnabled = enable;}
 int deviceHandler_getStatEnabled() {return statEnabled;}
-int deviceHandler_getDeviceAvailable(int dev) { return device_availability[dev]; }
-void deviceHandler_setDeviceAvailable(int dev, int a) { device_availability[dev] = a; }
-void deviceHandler_setAllDevicesAvailable() {memset(&device_availability[0], 1, MAX_DEVICES);}
 
-int  (*deviceHandler_init)(file_handle*) = NULL;
-int  (*deviceHandler_readDir)(file_handle*, file_handle**, unsigned int) = NULL;
-int  (*deviceHandler_readFile)(file_handle*, void*, unsigned int) = NULL;
-int  (*deviceHandler_writeFile)(file_handle*, void*, unsigned int) = NULL;
-int  (*deviceHandler_deleteFile)(file_handle*) = NULL;
-int  (*deviceHandler_seekFile)(file_handle*, unsigned int, unsigned int) = NULL;
-int  (*deviceHandler_setupFile)(file_handle*, file_handle*) = NULL;
-int  (*deviceHandler_closeFile)(file_handle*) = NULL;
-int  (*deviceHandler_deinit)() = NULL;
 
-// Destination Device
-file_handle* deviceHandler_dest_initial = NULL;
+// Device availability
+typedef struct {
+	DEVICEHANDLER_INTERFACE* device;
+	bool available;
+} _device_availability;
+static _device_availability device_availability[MAX_DEVICES];
 
-int  (*deviceHandler_dest_init)(file_handle*) = NULL;
-int  (*deviceHandler_dest_readDir)(file_handle*, file_handle**, unsigned int) = NULL;
-int  (*deviceHandler_dest_readFile)(file_handle*, void*, unsigned int) = NULL;
-int  (*deviceHandler_dest_writeFile)(file_handle*, void*, unsigned int) = NULL;
-int  (*deviceHandler_dest_deleteFile)(file_handle*) = NULL;
-int  (*deviceHandler_dest_seekFile)(file_handle*, unsigned int, unsigned int) = NULL;
-int  (*deviceHandler_dest_setupFile)(file_handle*, file_handle*) = NULL;
-int  (*deviceHandler_dest_closeFile)(file_handle*) = NULL;
-int  (*deviceHandler_dest_deinit)() = NULL;
+bool deviceHandler_getDeviceAvailable(DEVICEHANDLER_INTERFACE *dev) {
+	int i;
+	for(i = 0; i < MAX_DEVICES; i++) {
+		if(device_availability[i].device == dev) {
+			return device_availability[i].available;
+		}
+	}
+	return false; 
+}
 
-// Temporary Device
-file_handle* deviceHandler_temp_initial = NULL;
+void deviceHandler_setDeviceAvailable(DEVICEHANDLER_INTERFACE *dev, bool availability) { 
+	int i, empty_slot = -1;
+	for(i = 0; i < MAX_DEVICES; i++) {
+		if(device_availability[i].device == dev) {
+			device_availability[i].available = availability;
+			return;
+		}
+		if(device_availability[i].device == NULL && empty_slot < 0) {
+			empty_slot = i;
+		}
+	}
+	device_availability[empty_slot].device = dev;
+	device_availability[empty_slot].available = availability;
+}
 
-int  (*deviceHandler_temp_init)(file_handle*) = NULL;
-int  (*deviceHandler_temp_readDir)(file_handle*, file_handle**, unsigned int) = NULL;
-int  (*deviceHandler_temp_readFile)(file_handle*, void*, unsigned int) = NULL;
-int  (*deviceHandler_temp_writeFile)(file_handle*, void*, unsigned int) = NULL;
-int  (*deviceHandler_temp_deleteFile)(file_handle*) = NULL;
-int  (*deviceHandler_temp_seekFile)(file_handle*, unsigned int, unsigned int) = NULL;
-int  (*deviceHandler_temp_setupFile)(file_handle*, file_handle*) = NULL;
-int  (*deviceHandler_temp_closeFile)(file_handle*) = NULL;
-int  (*deviceHandler_temp_deinit)() = NULL;
+void deviceHandler_setAllDevicesAvailable() {
+	int i;
+	for(i = 0; i < MAX_DEVICES; i++) {
+		if(allDevices[i] != NULL) {
+			device_availability[i].device = allDevices[i];
+			device_availability[i].available = true;
+		}
+	}
+}
+
+int deviceHandler_test(DEVICEHANDLER_INTERFACE *device) {
+	return device->init(device->initial);
+}
+

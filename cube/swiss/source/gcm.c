@@ -31,14 +31,14 @@ unsigned int getBannerOffset(file_handle *file) {
 	char   filename[256]; 
 	
 	// lets just quickly check if this is a valid GCM (contains magic)
-	deviceHandler_seekFile(file,0x1C,DEVICE_HANDLER_SEEK_SET);
-	if((deviceHandler_readFile(file,(unsigned char*)buffer,sizeof(int))!=sizeof(int)) || (buffer[0]!=0xC2339F3D)) {
+	devices[DEVICE_CUR]->seekFile(file,0x1C,DEVICE_HANDLER_SEEK_SET);
+	if((devices[DEVICE_CUR]->readFile(file,(unsigned char*)buffer,sizeof(int))!=sizeof(int)) || (buffer[0]!=0xC2339F3D)) {
 		return 0;
 	}
 
 	// get FST offset and size
-	deviceHandler_seekFile(file,0x424,DEVICE_HANDLER_SEEK_SET);
-	if(deviceHandler_readFile(file,(unsigned char*)buffer,sizeof(int)*2)!=sizeof(int)*2) {
+	devices[DEVICE_CUR]->seekFile(file,0x424,DEVICE_HANDLER_SEEK_SET);
+	if(devices[DEVICE_CUR]->readFile(file,(unsigned char*)buffer,sizeof(int)*2)!=sizeof(int)*2) {
 		return 0;
 	}  
   
@@ -56,8 +56,8 @@ unsigned int getBannerOffset(file_handle *file) {
 	}
 	
 	// read the FST
-	deviceHandler_seekFile(file,fst_offset,DEVICE_HANDLER_SEEK_SET);
-	if(deviceHandler_readFile(file,FST,fst_size)!=fst_size) {
+	devices[DEVICE_CUR]->seekFile(file,fst_offset,DEVICE_HANDLER_SEEK_SET);
+	if(devices[DEVICE_CUR]->readFile(file,FST,fst_size)!=fst_size) {
 		free(FST);
 		return 0;
 	}
@@ -98,8 +98,8 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		
 	// Grab disc header
 	memset(&header,0,sizeof(DiskHeader));
- 	deviceHandler_seekFile(file,0,DEVICE_HANDLER_SEEK_SET);
- 	if(deviceHandler_readFile(file,&header,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
+ 	devices[DEVICE_CUR]->seekFile(file,0,DEVICE_HANDLER_SEEK_SET);
+ 	if(devices[DEVICE_CUR]->readFile(file,&header,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
 		return -1;
 	}
  	  
@@ -108,8 +108,8 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 	if(!FST) {
 		return -1;
 	}
-	deviceHandler_seekFile(file,header.FSTOffset,DEVICE_HANDLER_SEEK_SET);
- 	if(deviceHandler_readFile(file,FST,header.FSTSize) != header.FSTSize) {
+	devices[DEVICE_CUR]->seekFile(file,header.FSTOffset,DEVICE_HANDLER_SEEK_SET);
+ 	if(devices[DEVICE_CUR]->readFile(file,FST,header.FSTSize) != header.FSTSize) {
 		free(FST); 
 		return -1;
 	}
@@ -175,8 +175,8 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		DOLHEADER dolhdr;
 		u32 main_dol_size = 0;
 		// Calc size
-		deviceHandler_seekFile(file,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
-		if(deviceHandler_readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
+		devices[DEVICE_CUR]->seekFile(file,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
 			DrawFrameStart();
 			DrawMessageBox(D_FAIL, "Failed to read Main DOL Header");
 			DrawFrameFinish();
@@ -199,8 +199,8 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		// Patch the apploader too!
 		// Calc Apploader trailer size
 		u32 appldr_info[2];
-		deviceHandler_seekFile(file,0x2454,DEVICE_HANDLER_SEEK_SET);
-		if(deviceHandler_readFile(file,&appldr_info,8) != 8) {
+		devices[DEVICE_CUR]->seekFile(file,0x2454,DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(file,&appldr_info,8) != 8) {
 			DrawFrameStart();
 			DrawMessageBox(D_FAIL, "Failed to read Apploader info");
 			DrawFrameFinish();
@@ -221,12 +221,12 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 	u32 fileAreaStart, fakeAmount, offset, size, numFiles = 0;
 	
 	// add this embedded GCM's main DOL
-	deviceHandler_seekFile(file,tgc_base+0x1C,DEVICE_HANDLER_SEEK_SET);
-	deviceHandler_readFile(file,&offset,4);
-	deviceHandler_readFile(file,&size,4);
-	deviceHandler_readFile(file, &fileAreaStart, 4);
-	deviceHandler_seekFile(file,tgc_base+0x34,DEVICE_HANDLER_SEEK_SET);
-	deviceHandler_readFile(file, &fakeAmount, 4);
+	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x1C,DEVICE_HANDLER_SEEK_SET);
+	devices[DEVICE_CUR]->readFile(file,&offset,4);
+	devices[DEVICE_CUR]->readFile(file,&size,4);
+	devices[DEVICE_CUR]->readFile(file, &fileAreaStart, 4);
+	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x34,DEVICE_HANDLER_SEEK_SET);
+	devices[DEVICE_CUR]->readFile(file, &fakeAmount, 4);
 	filesToPatch[numFiles].offset = offset+tgc_base;
 	filesToPatch[numFiles].size = size;
 	filesToPatch[numFiles].type = PATCH_DOL;
@@ -235,13 +235,13 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 	
 	// Grab FST Offset & Size
 	u32 fstOfsAndSize[2];
- 	deviceHandler_seekFile(file,tgc_base+0x10,DEVICE_HANDLER_SEEK_SET);
- 	deviceHandler_readFile(file,&fstOfsAndSize,2*sizeof(u32));
+ 	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x10,DEVICE_HANDLER_SEEK_SET);
+ 	devices[DEVICE_CUR]->readFile(file,&fstOfsAndSize,2*sizeof(u32));
 
  	// Alloc and read FST
 	FST=(char*)memalign(32,fstOfsAndSize[1]); 
-	deviceHandler_seekFile(file,tgc_base+fstOfsAndSize[0],DEVICE_HANDLER_SEEK_SET);
- 	deviceHandler_readFile(file,FST,fstOfsAndSize[1]);
+	devices[DEVICE_CUR]->seekFile(file,tgc_base+fstOfsAndSize[0],DEVICE_HANDLER_SEEK_SET);
+ 	devices[DEVICE_CUR]->readFile(file,FST,fstOfsAndSize[1]);
 
 	u32 entries=*(unsigned int*)&FST[8];
 	u32 string_table_offset=FST_ENTRY_SIZE*entries;
@@ -291,23 +291,21 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 	int i, num_patched = 0;
 	
 	// If the current device isn't SD Gecko, init SD Gecko Slot A or B to write patches.
-	if(deviceHandler_initial != &initial_SD0 && deviceHandler_initial != &initial_SD1) {
+	if(devices[DEVICE_CUR] != &__device_sd_a && devices[DEVICE_CUR] != &__device_sd_b) {
 		deviceHandler_setStatEnabled(0);
-		if(deviceHandler_FAT_init(&initial_SD0)) {
-			savePatchDevice = 0;
+		if(deviceHandler_test(&__device_sd_a)) {
+			devices[DEVICE_PATCHES] = &__device_sd_a;
 		}
-		else if(deviceHandler_FAT_init(&initial_SD1)) {
-			savePatchDevice = 1;
+		else if(deviceHandler_test(&__device_sd_b)) {
+			devices[DEVICE_PATCHES] = &__device_sd_b;
 		}
 		deviceHandler_setStatEnabled(1);
 	}
-	// Already using SD Gecko
-	if(deviceHandler_initial == &initial_SD0)
-		savePatchDevice = 0;
-	else if(deviceHandler_initial == &initial_SD1)
-		savePatchDevice = 1;
+	else {
+		devices[DEVICE_PATCHES] = devices[DEVICE_CUR];
+	}
 		
-	if(savePatchDevice == -1) {
+	if(devices[DEVICE_PATCHES] == NULL) {
 		DrawFrameStart();
 		DrawMessageBox(D_FAIL, "No writable device present\nA SD Gecko must be inserted in\n order to utilise patches for this game.");
 		DrawFrameFinish();
@@ -323,8 +321,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 	memset(&patchDirName, 0, 256);
 	memset(&patchBaseDirName, 0, 256);
 	strncpy((char*)&gameID, (char*)&GCMDisk, 4);
-	sprintf(&patchDirName[0],"%s:/swiss_patches/%s",(savePatchDevice ? "sdb":"sda"), &gameID[0]);
-	sprintf(&patchBaseDirName[0],"%s:/swiss_patches",(savePatchDevice ? "sdb":"sda"));
+	sprintf(&patchDirName[0],"%s/swiss_patches/%s",devices[DEVICE_PATCHES]->initial->name, &gameID[0]);
+	sprintf(&patchBaseDirName[0],"%s/swiss_patches",devices[DEVICE_PATCHES]->initial->name);
 	print_gecko("Patch dir will be: %s if required\r\n", patchDirName);
 	*(u32*)VAR_EXECD_OFFSET = 0xFFFFFFFF;
 	// Go through all the possible files we think need patching..
@@ -355,8 +353,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		int sizeToRead = filesToPatch[i].size, ret = 0;
 		u8 *buffer = (u8*)memalign(32, sizeToRead);
 		
-		deviceHandler_seekFile(file,filesToPatch[i].offset, DEVICE_HANDLER_SEEK_SET);
-		ret = deviceHandler_readFile(file,buffer,sizeToRead);
+		devices[DEVICE_PATCHES]->seekFile(file,filesToPatch[i].offset, DEVICE_HANDLER_SEEK_SET);
+		ret = devices[DEVICE_PATCHES]->readFile(file,buffer,sizeToRead);
 		print_gecko("Read from %08X Size %08X - Result: %08X\r\n", filesToPatch[i].offset, sizeToRead, ret);
 		if(ret != sizeToRead) {
 			DrawFrameStart();
@@ -366,7 +364,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			return 0;
 		}
 		
-		if(curDevice != DVD_DISC) {
+		if(devices[DEVICE_CUR] != &__device_dvd) {
 			ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
 			if(READ_PATCHED_ALL != ret)	{
 				DrawFrameStart();
@@ -379,7 +377,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		}
 		
 		// Patch specific game hacks
-		if(curDevice != DVD_DISC) {
+		if(devices[DEVICE_CUR] != &__device_dvd) {
 			patched += Patch_GameSpecific(buffer, sizeToRead, &gameID[0], filesToPatch[i].type);
 		}
 		
@@ -396,7 +394,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			Patch_CheatsHook(buffer, sizeToRead, filesToPatch[i].type);
 		}
 		
-		if(curDevice == DVD_DISC && is_gamecube()) {
+		if(devices[DEVICE_CUR] == &__device_dvd && is_gamecube()) {
 			patched += Patch_DVDLowLevelReadForDVD(buffer, sizeToRead, filesToPatch[i].type);
 			patched += Patch_DVDReset(buffer, sizeToRead);
 		}

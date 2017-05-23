@@ -71,29 +71,29 @@ int install_code()
 	}
 	
 	// IDE-EXI
-  	if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {	
+  	if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b) {	
 		patch = (!_ideexi_version)?&ideexi_v1_bin[0]:&ideexi_v2_bin[0]; 
 		patchSize = (!_ideexi_version)?ideexi_v1_bin_size:ideexi_v2_bin_size;
 		print_gecko("Installing Patch for IDE-EXI\r\n");
   	}
 	// SD Gecko
-	else if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
+	else if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b) {
 		patch = &sd_bin[0]; patchSize = sd_bin_size;
 		print_gecko("Installing Patch for SD Gecko\r\n");
 	}
 	// DVD 2 disc code
-	else if(deviceHandler_initial == &initial_DVD) {
+	else if(devices[DEVICE_CUR] == &__device_dvd) {
 		patch = &dvd_bin[0]; patchSize = dvd_bin_size;
 		location = (void*)LO_RESERVE_DVD;
 		print_gecko("Installing Patch for DVD\r\n");
 	}
 	// USB Gecko
-	else if(deviceHandler_initial == &initial_USBGecko) {
+	else if(devices[DEVICE_CUR] == &__device_usbgecko) {
 		patch = &usbgecko_bin[0]; patchSize = usbgecko_bin_size;
 		print_gecko("Installing Patch for USB Gecko\r\n");
 	}
 	// Wiikey Fusion
-	else if(deviceHandler_initial == &initial_WKF) {
+	else if(devices[DEVICE_CUR] == &__device_wkf) {
 		location = (void*)LO_RESERVE_DVD;
 		patch = &wkf_bin[0]; patchSize = wkf_bin_size;
 		print_gecko("Installing Patch for WKF\r\n");

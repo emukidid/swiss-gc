@@ -45,7 +45,7 @@ device_info* deviceHandler_WKF_info() {
 	return &initial_WKF_info;
 }
 
-int deviceHandler_WKF_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
+s32 deviceHandler_WKF_readDir(file_handle* ffile, file_handle** dir, u32 type){	
 
 	DIR* dp = opendir( ffile->name );
 	if(!dp) return -1;
@@ -96,14 +96,14 @@ int deviceHandler_WKF_readDir(file_handle* ffile, file_handle** dir, unsigned in
 }
 
 
-int deviceHandler_WKF_seekFile(file_handle* file, unsigned int where, unsigned int type){
+s32 deviceHandler_WKF_seekFile(file_handle* file, u32 where, u32 type){
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
 	return file->offset;
 }
 
 
-int deviceHandler_WKF_readFile(file_handle* file, void* buffer, unsigned int length){
+s32 deviceHandler_WKF_readFile(file_handle* file, void* buffer, u32 length){
 	if(!file->fp) {
 		file->fp = fopen( file->name, "rb" );
 		if(file->size == -1) {
@@ -121,12 +121,12 @@ int deviceHandler_WKF_readFile(file_handle* file, void* buffer, unsigned int len
 }
 
 
-int deviceHandler_WKF_writeFile(file_handle* file, void* buffer, unsigned int length){
+s32 deviceHandler_WKF_writeFile(file_handle* file, void* buffer, u32 length){
 	return -1;
 }
 
 
-int deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 	// Check if file2 exists
 	if(file2) {
 		get_frag_list(file2->name);
@@ -192,7 +192,7 @@ int deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 	return 1;
 }
 
-int deviceHandler_WKF_init(file_handle* file){
+s32 deviceHandler_WKF_init(file_handle* file){
 	struct statvfs buf;
 	
 	DrawFrameStart();
@@ -216,21 +216,44 @@ int deviceHandler_WKF_init(file_handle* file){
 }
 
 extern char *getDeviceMountPath(char *str);
-int deviceHandler_WKF_deinit(file_handle* file) {
+s32 deviceHandler_WKF_deinit(file_handle* file) {
 	if(file && file->fp) {
 		fclose(file->fp);
 		file->fp = 0;
 	}
-	if(deviceHandler_initial)
+	if(file)
 		fatUnmount(getDeviceMountPath(file->name));
 	return 0;
 }
 
-int deviceHandler_WKF_deleteFile(file_handle* file) {
+s32 deviceHandler_WKF_deleteFile(file_handle* file) {
 	return -1;
 }
 
-int deviceHandler_WKF_closeFile(file_handle* file) {
+s32 deviceHandler_WKF_closeFile(file_handle* file) {
     return 0;
 }
 
+bool deviceHandler_WKF_test() {
+	return swissSettings.hasDVDDrive && (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF);
+}
+
+DEVICEHANDLER_INTERFACE __device_wkf = {
+	"Wiikey / Wasp Fusion",
+	"Supported File System(s): FAT16, FAT32",
+	{TEX_WIIKEY, 102, 80},
+	FEAT_READ|FEAT_BOOT_GCM|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS/*|FEAT_BOOT_DEVICE*/,	// TODO re-write init to be silent and re-enable this.
+	LOC_DVD_CONNECTOR,
+	&initial_WKF,
+	(_fn_test)&deviceHandler_WKF_test,
+	(_fn_info)&deviceHandler_WKF_info,
+	(_fn_init)&deviceHandler_WKF_init,
+	(_fn_readDir)&deviceHandler_WKF_readDir,
+	(_fn_readFile)&deviceHandler_WKF_readFile,
+	(_fn_writeFile)NULL,
+	(_fn_deleteFile)NULL,
+	(_fn_seekFile)&deviceHandler_WKF_seekFile,
+	(_fn_setupFile)&deviceHandler_WKF_setupFile,
+	(_fn_closeFile)&deviceHandler_WKF_closeFile,
+	(_fn_deinit)&deviceHandler_WKF_deinit
+};

@@ -54,7 +54,7 @@ void strnscpy(char *s1, char *s2, int num) {
 	Returns 1 on successful file open, 0 otherwise
 */
 int config_init() {
-	sprintf(txtbuffer, "%sswiss.ini", deviceHandler_initial->name);
+	sprintf(txtbuffer, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
 	FILE *fp = fopen(txtbuffer, "rb");
 	if (fp) {
 		fseek(fp, 0, SEEK_END);
@@ -92,7 +92,7 @@ int config_create() {
 }
 
 int config_update_file() {
-	sprintf(txtbuffer, "%sswiss.ini", deviceHandler_initial->name);
+	sprintf(txtbuffer, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
 	FILE *fp = fopen( txtbuffer, "wb" );
 	if(fp) {
 		// Write out header every time

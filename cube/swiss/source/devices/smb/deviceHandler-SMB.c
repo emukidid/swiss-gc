@@ -36,6 +36,7 @@
 #include "deviceHandler.h"
 #include "deviceHandler-FAT.h"
 #include "deviceHandler-SMB.h"
+#include "exi.h"
 
 /* SMB Globals */
 extern int net_initialized;
@@ -91,7 +92,7 @@ void init_samba() {
 	}
 }
 
-int deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
+s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){	
    
 	// We need at least a share name and ip addr in the settings filled out
 	if(!strlen(&swissSettings.smbShare[0]) || !strlen(&swissSettings.smbServerIp[0])) {
@@ -166,13 +167,13 @@ int deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, unsigned in
 	return num_entries;
 }
 
-int deviceHandler_SMB_seekFile(file_handle* file, unsigned int where, unsigned int type){
+s32 deviceHandler_SMB_seekFile(file_handle* file, u32 where, u32 type){
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
 	return file->offset;
 }
 
-int deviceHandler_SMB_readFile(file_handle* file, void* buffer, unsigned int length){
+s32 deviceHandler_SMB_readFile(file_handle* file, void* buffer, u32 length){
 	if(!file->fp) {
 		file->fp = fopen( file->name, "rb" );
 	}
@@ -184,13 +185,13 @@ int deviceHandler_SMB_readFile(file_handle* file, void* buffer, unsigned int len
 	return bytes_read;
 }
 
-int deviceHandler_SMB_init(file_handle* file){
+s32 deviceHandler_SMB_init(file_handle* file){
 	return 0;
 }
 
 extern char *getDeviceMountPath(char *str);
 
-int deviceHandler_SMB_deinit(file_handle* file) {
+s32 deviceHandler_SMB_deinit(file_handle* file) {
 	if(smb_initialized) {
 		smbClose("smb");
 		smb_initialized = 0;
@@ -210,7 +211,30 @@ int deviceHandler_SMB_deinit(file_handle* file) {
 	return 0;
 }
 
-int deviceHandler_SMB_closeFile(file_handle* file) {
+s32 deviceHandler_SMB_closeFile(file_handle* file) {
     return 0;
 }
 
+bool deviceHandler_SMB_test() {
+	return exi_bba_exists();
+}
+
+DEVICEHANDLER_INTERFACE __device_smb = {
+	"Samba via BBA",
+	"Must be pre-configured via swiss.ini",
+	{TEX_SAMBA, 160, 85},
+	FEAT_READ,
+	LOC_SERIAL_PORT_1,
+	&initial_SMB,
+	(_fn_test)&deviceHandler_SMB_test,
+	(_fn_info)&deviceHandler_SMB_info,
+	(_fn_init)&deviceHandler_SMB_init,
+	(_fn_readDir)&deviceHandler_SMB_readDir,
+	(_fn_readFile)&deviceHandler_SMB_readFile,
+	(_fn_writeFile)NULL,
+	(_fn_deleteFile)NULL,
+	(_fn_seekFile)&deviceHandler_SMB_seekFile,
+	(_fn_setupFile)NULL,
+	(_fn_closeFile)&deviceHandler_SMB_closeFile,
+	(_fn_deinit)&deviceHandler_SMB_deinit
+};

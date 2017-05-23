@@ -254,7 +254,7 @@ device_info* deviceHandler_DVD_info() {
 	return &initial_DVD_info;
 }
 
-int deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, unsigned int type){
+s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 
 	unsigned int i = 0, isGC = is_gamecube();
 	unsigned int  *tmpTable = NULL;
@@ -361,13 +361,13 @@ int deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, unsigned in
 	return num_entries;
 }
 
-int deviceHandler_DVD_seekFile(file_handle* file, unsigned int where, unsigned int type){
+s32 deviceHandler_DVD_seekFile(file_handle* file, u32 where, u32 type){
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
 	return file->offset;
 }
 
-int deviceHandler_DVD_readFile(file_handle* file, void* buffer, unsigned int length){
+s32 deviceHandler_DVD_readFile(file_handle* file, void* buffer, u32 length){
 	//print_gecko("read: status:%08X dst:%08X ofs:%08X base:%08X len:%08X\r\n"
 	//						,file->status,(u32)buffer,file->offset,(u32)((file->fileBase) & 0xFFFFFFFF),length);
 	u64 actualOffset = file->fileBase+file->offset;
@@ -382,12 +382,12 @@ int deviceHandler_DVD_readFile(file_handle* file, void* buffer, unsigned int len
 	return bytesread;
 }
 
-int deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 
 	// Multi-Game disc audio streaming setup
 	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
-		deviceHandler_seekFile(file, 0, DEVICE_HANDLER_SEEK_SET);
-		deviceHandler_readFile(file,(unsigned char*)0x80000000,32);
+		devices[DEVICE_CUR]->seekFile(file, 0, DEVICE_HANDLER_SEEK_SET);
+		devices[DEVICE_CUR]->readFile(file,(unsigned char*)0x80000000,32);
 		char streaming = *(char*)0x80000008;
 		if(streaming && !isXenoGC) {
 			DrawFrameStart();
@@ -471,7 +471,7 @@ int deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 	return 1;
 }
 
-int deviceHandler_DVD_init(file_handle* file){
+s32 deviceHandler_DVD_init(file_handle* file){
   file->status = initialize_disc(ENABLE_BYDISK);
   if(file->status == DRV_ERROR){
 	  DrawFrameStart();
@@ -484,12 +484,36 @@ int deviceHandler_DVD_init(file_handle* file){
   return file->status;
 }
 
-int deviceHandler_DVD_deinit(file_handle* file) {
+s32 deviceHandler_DVD_deinit(file_handle* file) {
 	dvd_motor_off();
+	dvdDiscTypeStr = NotInitStr;
 	return 0;
 }
 
-int deviceHandler_DVD_closeFile(file_handle* file){
+s32 deviceHandler_DVD_closeFile(file_handle* file){
 	return 0;
 }
 
+bool deviceHandler_DVD_test() {
+	return swissSettings.hasDVDDrive != 0;
+}
+
+DEVICEHANDLER_INTERFACE __device_dvd = {
+	"DVD",
+	"Supported File System(s): GCM, ISO 9660, Multi-Game",
+	{TEX_GCDVDSMALL, 80, 79},
+	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE,
+	LOC_DVD_CONNECTOR,
+	&initial_DVD,
+	(_fn_test)&deviceHandler_DVD_test,
+	(_fn_info)&deviceHandler_DVD_info,
+	(_fn_init)&deviceHandler_DVD_init,
+	(_fn_readDir)&deviceHandler_DVD_readDir,
+	(_fn_readFile)&deviceHandler_DVD_readFile,
+	(_fn_writeFile)NULL,
+	(_fn_deleteFile)NULL,
+	(_fn_seekFile)&deviceHandler_DVD_seekFile,
+	(_fn_setupFile)&deviceHandler_DVD_setupFile,
+	(_fn_closeFile)&deviceHandler_DVD_closeFile,
+	(_fn_deinit)&deviceHandler_DVD_deinit
+};

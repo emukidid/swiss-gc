@@ -27,7 +27,7 @@ const DISC_INTERFACE* ideexia = &__io_ataa;
 const DISC_INTERFACE* ideexib = &__io_atab;
 extern void sdgecko_initIODefault();
 
-file_handle initial_SD0 =
+file_handle initial_SD_A =
 	{ "sda:/",       // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
@@ -37,7 +37,7 @@ file_handle initial_SD0 =
 	  0
 	};
 	
-file_handle initial_SD1 =
+file_handle initial_SD_B =
 	{ "sdb:/",       // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
@@ -47,7 +47,7 @@ file_handle initial_SD1 =
 	  0
 	};
 	
-file_handle initial_IDE0 =
+file_handle initial_IDE_A =
 	{ "idea:/",       // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
@@ -57,7 +57,7 @@ file_handle initial_IDE0 =
 	  0
 	};
 	
-file_handle initial_IDE1 =
+file_handle initial_IDE_B =
 	{ "ideb:/",       // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
@@ -96,7 +96,7 @@ void readDeviceInfo(file_handle* file) {
 	}
 }
 	
-int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
+s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type){	
 
 	DIR* dp = opendir( ffile->name );
 	if(!dp) return -1;
@@ -150,13 +150,13 @@ int deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, unsigned in
   return num_entries;
 }
 
-int deviceHandler_FAT_seekFile(file_handle* file, unsigned int where, unsigned int type){
+s32 deviceHandler_FAT_seekFile(file_handle* file, u32 where, u32 type){
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
 	return file->offset;
 }
 
-int deviceHandler_FAT_readFile(file_handle* file, void* buffer, unsigned int length){
+s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length){
   	if(!file->fp) {
 		file->fp = fopen( file->name, "r+" );
 		if(file->size == -1) {
@@ -174,7 +174,7 @@ int deviceHandler_FAT_readFile(file_handle* file, void* buffer, unsigned int len
 	return bytes_read;
 }
 
-int deviceHandler_FAT_writeFile(file_handle* file, void* buffer, unsigned int length){
+s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length){
 	if(!file->fp) {
 		// Append
 		file->fp = fopen( file->name, "r+" );
@@ -213,7 +213,7 @@ void print_frag_list(int hasDisc2) {
 	print_gecko("== Fragments End ==\r\n");
 }
 
-int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	// Check if file2 exists
 	if(file2) {
 		get_frag_list(file2->name);
@@ -243,8 +243,8 @@ int deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 		if(stat(&patchFile.name[0],&fstat)) {
 			break;
 		}
-		deviceHandler_seekFile(&patchFile,fstat.st_size-16,DEVICE_HANDLER_SEEK_SET);
-		if((deviceHandler_readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
+		devices[DEVICE_CUR]->seekFile(&patchFile,fstat.st_size-16,DEVICE_HANDLER_SEEK_SET);
+		if((devices[DEVICE_CUR]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
 			get_frag_list(&patchFile.name[0]);
 			print_gecko("Found patch file %i ofs 0x%08X len 0x%08X base 0x%08X (%i pieces)\r\n", 
 							i, patchInfo[0], patchInfo[1], frag_list->frag[0].sector,frag_list->num );
@@ -349,7 +349,7 @@ int EXI_ResetSD(int drv) {
 	return 1;
 }
 
-int deviceHandler_FAT_init(file_handle* file) {
+s32 deviceHandler_FAT_init(file_handle* file) {
 	int isSDCard = file->name[0] == 's';
 	int slot = isSDCard ? (file->name[2] == 'b') : (file->name[3] == 'b');
 	int ret = 0;
@@ -398,7 +398,7 @@ char *getDeviceMountPath(char *str) {
 	return path;
 }
 
-int deviceHandler_FAT_deinit(file_handle* file) {
+s32 deviceHandler_FAT_deinit(file_handle* file) {
 	initial_FAT_info.freeSpaceInKB = 0;
 	initial_FAT_info.totalSpaceInKB = 0;
 	if(file && file->fp) {
@@ -414,7 +414,7 @@ int deviceHandler_FAT_deinit(file_handle* file) {
 	return 0;
 }
 
-int deviceHandler_FAT_deleteFile(file_handle* file) {
+s32 deviceHandler_FAT_deleteFile(file_handle* file) {
 	if(file->fp) {
 		fclose(file->fp);
 		file->fp = 0;
@@ -422,7 +422,7 @@ int deviceHandler_FAT_deleteFile(file_handle* file) {
 	return (remove(file->name) == -1) ? -1:0;
 }
 
-int deviceHandler_FAT_closeFile(file_handle* file) {
+s32 deviceHandler_FAT_closeFile(file_handle* file) {
 	int ret = 0;
 	if(file->fp) {
 		ret = fclose(file->fp);
@@ -431,3 +431,99 @@ int deviceHandler_FAT_closeFile(file_handle* file) {
 	return ret;
 }
 
+bool deviceHandler_FAT_test_sd_a(int slot, bool isSdCard, char *mountPath) {
+	carda->shutdown();
+	carda->startup();
+	return carda->isInserted();
+}
+bool deviceHandler_FAT_test_sd_b(int slot, bool isSdCard, char *mountPath) {
+	cardb->shutdown();
+	cardb->startup();
+	return cardb->isInserted();
+}
+bool deviceHandler_FAT_test_ide_a(int slot, bool isSdCard, char *mountPath) {
+	return ide_exi_inserted(0);
+}
+bool deviceHandler_FAT_test_ide_b(int slot, bool isSdCard, char *mountPath) {
+	return ide_exi_inserted(1);
+}
+
+DEVICEHANDLER_INTERFACE __device_sd_a = {
+	"SD Card via SD Adapter - Slot A",
+	"Supported File System(s): FAT16, FAT32",
+	{TEX_SDSMALL, 60, 80},
+	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_REPLACES_DVD_FUNCS,
+	LOC_MEMCARD_SLOT_A,
+	&initial_SD_A,
+	(_fn_test)&deviceHandler_FAT_test_sd_a,
+	(_fn_info)&deviceHandler_FAT_info,
+	(_fn_init)&deviceHandler_FAT_init,
+	(_fn_readDir)&deviceHandler_FAT_readDir,
+	(_fn_readFile)&deviceHandler_FAT_readFile,
+	(_fn_writeFile)&deviceHandler_FAT_writeFile,
+	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_seekFile)&deviceHandler_FAT_seekFile,
+	(_fn_setupFile)&deviceHandler_FAT_setupFile,
+	(_fn_closeFile)&deviceHandler_FAT_closeFile,
+	(_fn_deinit)&deviceHandler_FAT_deinit
+};
+
+DEVICEHANDLER_INTERFACE __device_sd_b = {
+	"SD Card via SD Adapter - Slot B",
+	"Supported File System(s): FAT16, FAT32",
+	{TEX_SDSMALL, 60, 80},
+	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_REPLACES_DVD_FUNCS,
+	LOC_MEMCARD_SLOT_B,
+	&initial_SD_B,
+	(_fn_test)&deviceHandler_FAT_test_sd_b,
+	(_fn_info)&deviceHandler_FAT_info,
+	(_fn_init)&deviceHandler_FAT_init,
+	(_fn_readDir)&deviceHandler_FAT_readDir,
+	(_fn_readFile)&deviceHandler_FAT_readFile,
+	(_fn_writeFile)&deviceHandler_FAT_writeFile,
+	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_seekFile)&deviceHandler_FAT_seekFile,
+	(_fn_setupFile)&deviceHandler_FAT_setupFile,
+	(_fn_closeFile)&deviceHandler_FAT_closeFile,
+	(_fn_deinit)&deviceHandler_FAT_deinit
+};
+
+DEVICEHANDLER_INTERFACE __device_ide_a = {
+	"IDE HDD via IDE-EXI - Slot A",
+	"Supported File System(s): FAT16, FAT32",
+	{TEX_HDD, 80, 80},
+	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_REPLACES_DVD_FUNCS,
+	LOC_MEMCARD_SLOT_A,
+	&initial_IDE_A,
+	(_fn_test)&deviceHandler_FAT_test_ide_a,
+	(_fn_info)&deviceHandler_FAT_info,
+	(_fn_init)&deviceHandler_FAT_init,
+	(_fn_readDir)&deviceHandler_FAT_readDir,
+	(_fn_readFile)&deviceHandler_FAT_readFile,
+	(_fn_writeFile)&deviceHandler_FAT_writeFile,
+	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_seekFile)&deviceHandler_FAT_seekFile,
+	(_fn_setupFile)&deviceHandler_FAT_setupFile,
+	(_fn_closeFile)&deviceHandler_FAT_closeFile,
+	(_fn_deinit)&deviceHandler_FAT_deinit
+};
+
+DEVICEHANDLER_INTERFACE __device_ide_b = {
+	"IDE HDD via IDE-EXI - Slot B",
+	"Supported File System(s): FAT16, FAT32",
+	{TEX_HDD, 80, 80},
+	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_REPLACES_DVD_FUNCS,
+	LOC_MEMCARD_SLOT_B,
+	&initial_IDE_B,
+	(_fn_test)&deviceHandler_FAT_test_ide_b,
+	(_fn_info)&deviceHandler_FAT_info,
+	(_fn_init)&deviceHandler_FAT_init,
+	(_fn_readDir)&deviceHandler_FAT_readDir,
+	(_fn_readFile)&deviceHandler_FAT_readFile,
+	(_fn_writeFile)&deviceHandler_FAT_writeFile,
+	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_seekFile)&deviceHandler_FAT_seekFile,
+	(_fn_setupFile)&deviceHandler_FAT_setupFile,
+	(_fn_closeFile)&deviceHandler_FAT_closeFile,
+	(_fn_deinit)&deviceHandler_FAT_deinit
+};

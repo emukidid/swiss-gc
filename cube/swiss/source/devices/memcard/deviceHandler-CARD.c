@@ -99,7 +99,7 @@ device_info* deviceHandler_CARD_info() {
 	return &initial_CARD_info;
 }
 
-int deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
+s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){	
 
 	int num_entries = 1, ret = 0, i = 0, slot = (!strncmp((const char*)initial_CARDB.name, ffile->name, 7));
 	card_dir *memcard_dir = NULL;
@@ -144,7 +144,7 @@ int deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, unsigned i
 	return num_entries;
 }
 
-int deviceHandler_CARD_seekFile(file_handle* file, unsigned int where, unsigned int type){
+s32 deviceHandler_CARD_seekFile(file_handle* file, u32 where, u32 type){
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
 	return file->offset;
@@ -186,7 +186,7 @@ int CARD_ReadUnaligned(card_file *cardfile, void *buffer, unsigned int length, u
 }
 
 
-int deviceHandler_CARD_readFile(file_handle* file, void* buffer, unsigned int length){
+s32 deviceHandler_CARD_readFile(file_handle* file, void* buffer, u32 length){
 	card_file cardfile;
 	void *dst = buffer;
 	card_dir* cd = (card_dir*)&file->other;
@@ -279,7 +279,7 @@ int deviceHandler_CARD_readFile(file_handle* file, void* buffer, unsigned int le
 }
 
 // This function should always be called for the FULL length cause CARD is lame like that.
-int deviceHandler_CARD_writeFile(file_handle* file, void* data, unsigned int length) {
+s32 deviceHandler_CARD_writeFile(file_handle* file, void* data, u32 length) {
 	
 	if(gciInfo == NULL) {	// Swiss ID for this
 		CARD_SetGameAndCompany();
@@ -396,11 +396,11 @@ void setGCIInfo(void *buffer) {
 	}
 }
 
-int deviceHandler_CARD_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_CARD_setupFile(file_handle* file, file_handle* file2) {
 	return 1;
 }
 
-int deviceHandler_CARD_init(file_handle* file){
+s32 deviceHandler_CARD_init(file_handle* file){
 	int slot = (!strncmp((const char*)initial_CARDB.name, file->name, 7));
 	file->status = initialize_card(slot);
 	s32 memSize = 0, sectSize = 0;
@@ -415,7 +415,7 @@ int deviceHandler_CARD_init(file_handle* file){
 	return file->status == CARD_ERROR_READY ? 1 : 0;
 }
 
-int deviceHandler_CARD_deinit(file_handle* file) {
+s32 deviceHandler_CARD_deinit(file_handle* file) {
 	if(file) {
 		int slot = (!strncmp((const char*)initial_CARDB.name, file->name, 7));
 		card_init[slot] = 0;
@@ -424,7 +424,7 @@ int deviceHandler_CARD_deinit(file_handle* file) {
 	return 0;
 }
 
-int deviceHandler_CARD_deleteFile(file_handle* file) {
+s32 deviceHandler_CARD_deleteFile(file_handle* file) {
 	int slot = (!strncmp((const char*)initial_CARDB.name, file->name, 7));
 	char *filename = getRelativeName(file->name);
 	card_dir* cd = (card_dir*)&file->other;
@@ -444,7 +444,54 @@ int deviceHandler_CARD_deleteFile(file_handle* file) {
 	return ret;
 }
 
-int deviceHandler_CARD_closeFile(file_handle* file) {
+s32 deviceHandler_CARD_closeFile(file_handle* file) {
     return 0;
 }
 
+bool deviceHandler_CARD_test_a() {
+	return (initialize_card(0)==CARD_ERROR_READY);
+}
+
+bool deviceHandler_CARD_test_b() {
+	return (initialize_card(1)==CARD_ERROR_READY);
+}
+
+DEVICEHANDLER_INTERFACE __device_card_a = {
+	"Memory Card - Slot A",
+	"Backup & Restore save games",
+	{TEX_MEMCARD, 107, 80},
+	FEAT_READ|FEAT_WRITE|FEAT_BOOT_DEVICE,
+	LOC_MEMCARD_SLOT_A,
+	&initial_CARDA,
+	(_fn_test)&deviceHandler_CARD_test_a,
+	(_fn_info)&deviceHandler_CARD_info,
+	(_fn_init)&deviceHandler_CARD_init,
+	(_fn_readDir)&deviceHandler_CARD_readDir,
+	(_fn_readFile)&deviceHandler_CARD_readFile,
+	(_fn_writeFile)&deviceHandler_CARD_writeFile,
+	(_fn_deleteFile)&deviceHandler_CARD_deleteFile,
+	(_fn_seekFile)&deviceHandler_CARD_seekFile,
+	(_fn_setupFile)&deviceHandler_CARD_setupFile,
+	(_fn_closeFile)&deviceHandler_CARD_closeFile,
+	(_fn_deinit)&deviceHandler_CARD_deinit
+};
+
+DEVICEHANDLER_INTERFACE __device_card_b = {
+	"Memory Card - Slot B",
+	"Backup & Restore save games",
+	{TEX_MEMCARD, 107, 80},
+	FEAT_READ|FEAT_WRITE|FEAT_BOOT_DEVICE,
+	LOC_MEMCARD_SLOT_B,
+	&initial_CARDB,
+	(_fn_test)&deviceHandler_CARD_test_b,
+	(_fn_info)&deviceHandler_CARD_info,
+	(_fn_init)&deviceHandler_CARD_init,
+	(_fn_readDir)&deviceHandler_CARD_readDir,
+	(_fn_readFile)&deviceHandler_CARD_readFile,
+	(_fn_writeFile)&deviceHandler_CARD_writeFile,
+	(_fn_deleteFile)&deviceHandler_CARD_deleteFile,
+	(_fn_seekFile)&deviceHandler_CARD_seekFile,
+	(_fn_setupFile)&deviceHandler_CARD_setupFile,
+	(_fn_closeFile)&deviceHandler_CARD_closeFile,
+	(_fn_deinit)&deviceHandler_CARD_deinit
+};

@@ -117,7 +117,7 @@ void info_draw_page(int page_num) {
 			sprintf(topStr,"USB Gecko: Not Present");
 		}
 		WriteFont(30, 170, topStr);
-		if (!deviceHandler_initial) {
+		/*if (!deviceHandler_initial) {
 			sprintf(topStr, "Current Device: No Device Selected");
 		}
 		else if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
@@ -149,7 +149,7 @@ void info_draw_page(int page_num) {
 		else if(deviceHandler_initial == &initial_SYS) {
 			sprintf(topStr, "Current Device: System");
 		}
-		WriteFont(30, 200, topStr);
+		WriteFont(30, 200, topStr); TODO*/
 	}
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Credits (3/3):");

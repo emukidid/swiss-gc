@@ -23,9 +23,9 @@
 #include "info.h"
 #include "swiss.h"
 #include "bba.h"
-#include "exi.h"
 #include "dvd.h"
 #include "wkf.h"
+#include "exi.h"
 #include "httpd.h"
 #include "config.h"
 #include "gui/FrameBufferMagic.h"
@@ -213,7 +213,8 @@ void* Initialise (void)
 }
 
 void load_auto_dol() {
-	sprintf(txtbuffer, "%sboot.dol", deviceHandler_initial->name);
+	sprintf(txtbuffer, "%sboot.dol", devices[DEVICE_CUR]->initial->name);
+	// TODO use devicehandler stuff here so we can support more devices
 	FILE *fp = fopen(txtbuffer, "rb");
 	if (fp) {
 		fseek(fp, 0, SEEK_END);
@@ -235,17 +236,7 @@ void load_auto_dol() {
 void load_config() {
 
 	// Try to open up the config .ini in case it hasn't been opened already (SD, IDE-EXI only)
-	if(!config_init()) {
-		if(curDevice == SD_CARD || curDevice == IDEEXI) {
-			if(!config_create()) {
-				DrawFrameStart();
-				DrawMessageBox(D_INFO,"Failed to create configuration file!");
-				DrawFrameFinish();
-				sleep(1);
-			}
-		}
-	}
-	else {
+	if(config_init()) {
 		DrawFrameStart();
 		sprintf(txtbuffer,"Loaded %i entries from the config file",config_get_count());
 		DrawMessageBox(D_INFO,txtbuffer);
@@ -263,7 +254,7 @@ int comp(const void *a1, const void *b1)
 	if(a && !b) return -1;
 	if(!a && !b) return 0;
 	
-	if((curDevice == DVD_DISC) && ((dvdDiscTypeInt == GAMECUBE_DISC) || (dvdDiscTypeInt == MULTIDISC_DISC)))
+	if((devices[DEVICE_CUR] == &__device_dvd) && ((dvdDiscTypeInt == GAMECUBE_DISC) || (dvdDiscTypeInt == MULTIDISC_DISC)))
 	{
 		if(a->size == DISC_SIZE && a->fileBase == 0)
 			return -1;
@@ -313,64 +304,43 @@ void main_loop()
 	// We don't care if a subsequent device is "default"
 	if(needsDeviceChange) {
 		free_files();
-		if(deviceHandler_deinit) {
-			deviceHandler_deinit(deviceHandler_initial);
+		if(devices[DEVICE_CUR]) {
+			devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 		}
-		curDevice = -1;
+		devices[DEVICE_CUR] = NULL;
 		needsDeviceChange = 0;
-		deviceHandler_initial = NULL;
 		needsRefresh = 1;
 		curMenuLocation = ON_FILLIST;
-		select_device(0);
+		select_device(DEVICE_CUR);
+		if(devices[DEVICE_CUR] != NULL) {
+			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+		}
 		curMenuLocation = ON_OPTIONS;
 	}
 	pause_netinit_thread();
-	if(deviceHandler_initial) {
+	if(devices[DEVICE_CUR] != NULL) {
 		// If the user selected a device, make sure it's ready before we browse the filesystem
-		deviceHandler_deinit( deviceHandler_initial );
+		devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 		sdgecko_setSpeed(EXI_SPEED32MHZ);
-		if(!deviceHandler_init( deviceHandler_initial )) {
-			if(((deviceHandler_initial->name[0] == 's')&&(deviceHandler_initial->name[1] == 'd'))||(deviceHandler_initial->name[0] == 'i')) {
-				print_gecko("SD/IDE-EXI Device Failed to initialize @ 32MHz!\r\nTrying again once @ 16MHz...\r\n");
-				sdgecko_setSpeed(EXI_SPEED16MHZ);
-				if(!deviceHandler_init(deviceHandler_initial)) {
-				// Try the alternate slot for SDGecko or IDE-EXI
-					if(deviceHandler_initial->name[0] == 's')
-						deviceHandler_initial = (deviceHandler_initial == &initial_SD0) ?
-												&initial_SD1:&initial_SD0;
-					else
-						deviceHandler_initial = (deviceHandler_initial == &initial_IDE0) ?
-												&initial_IDE1:&initial_IDE0;
-					memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
-				}
-				print_gecko("Trying alternate slot @ 32MHz...\r\n");
-				sdgecko_setSpeed(EXI_SPEED32MHZ);
-				if(!deviceHandler_init( deviceHandler_initial )) {
-					print_gecko("Alternate slot failed once @ 16MHz... \r\n");
-					sdgecko_setSpeed(EXI_SPEED16MHZ);
-					if(!deviceHandler_init( deviceHandler_initial )) {
-						print_gecko("Both slots failed twice\r\n");
-						needsDeviceChange = 1;
-						return;
-					}
-				}
-			}
+		if(!devices[DEVICE_CUR]->init( devices[DEVICE_CUR]->initial )) {
+			needsDeviceChange = 1;
+			return;
 		}
-		if(curDevice==SD_CARD || curDevice==WKF || curDevice==IDEEXI) { 
-			load_config();
-		}
+		// TODO load config from current device or if it's not there, try from devices[DEVICE_CONFIG]
+			//load_config();
+		
 	}
 	else {
 		curMenuLocation=ON_OPTIONS;
 	}
 	// If a previously undetected device has been successfully init'd, mark it as available from now on
-	if(!deviceHandler_getDeviceAvailable(curDevice)) {
-		deviceHandler_setDeviceAvailable(curDevice, 1);
+	if(!deviceHandler_getDeviceAvailable(devices[DEVICE_CUR])) {
+		deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], true);
 	}
 
 	resume_netinit_thread();
 	while(1) {
-		if(deviceHandler_initial && needsRefresh) {
+		if(devices[DEVICE_CUR] != NULL && needsRefresh) {
 			curMenuLocation=ON_OPTIONS;
 			free_files();
 			curSelection=0; files=0; curMenuSelection=0;
@@ -378,12 +348,12 @@ void main_loop()
 			if(allFiles){ free(allFiles); allFiles = NULL; }
 			print_gecko("Reading directory: %s\r\n",curFile.name);
 			pause_netinit_thread();
-			files = deviceHandler_readDir(&curFile, &allFiles, -1);
+			files = devices[DEVICE_CUR]->readDir(&curFile, &allFiles, -1);
 			resume_netinit_thread();
 			memcpy(&curDir, &curFile, sizeof(file_handle));
 			sortFiles(allFiles, files);
 			print_gecko("Found %i entries\r\n",files);
-			if(files<1) { deviceHandler_deinit(deviceHandler_initial); needsDeviceChange=1; break;}
+			if(files<1) { devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial); needsDeviceChange=1; break;}
 			needsRefresh = 0;
 			curMenuLocation=ON_FILLIST;
 		}
@@ -395,7 +365,7 @@ void main_loop()
 			if(btns & PAD_BUTTON_LEFT){	curMenuSelection = (--curMenuSelection < 0) ? (MENU_MAX-1) : curMenuSelection;}
 			else if(btns & PAD_BUTTON_RIGHT){curMenuSelection = (curMenuSelection + 1) % MENU_MAX;	}
 		}
-		if(deviceHandler_initial && ((btns & PAD_BUTTON_B)||(curMenuLocation==ON_FILLIST)))	{
+		if(devices[DEVICE_CUR] != NULL && ((btns & PAD_BUTTON_B)||(curMenuLocation==ON_FILLIST)))	{
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_B){ VIDEO_WaitVSync (); }
 			curMenuLocation=ON_FILLIST;
 			renderFileBrowser(&allFiles, files);
@@ -413,10 +383,10 @@ void main_loop()
 					show_info();
 					break;
 				case 3:
-					if(deviceHandler_initial) {
-						memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
-						if(curDevice == WKF) { 
-							wkfReinit(); deviceHandler_deinit(deviceHandler_initial);
+					if(devices[DEVICE_CUR] != NULL) {
+						memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+						if(devices[DEVICE_CUR] == &__device_wkf) { 
+							wkfReinit(); devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 						}
 					}
 					needsRefresh=1;
@@ -444,6 +414,30 @@ int main ()
 {
 	// Setup defaults (if no config is found)
 	memset(&swissSettings, 0 , sizeof(SwissSettings));
+
+	// Register all devices supported (order matters for boot devices)
+	int i = 0;
+	allDevices[i++] = &__device_wkf;
+	allDevices[i++] = &__device_wode;
+	allDevices[i++] = &__device_sd_a;
+	allDevices[i++] = &__device_sd_b;
+	allDevices[i++] = &__device_card_a;
+	allDevices[i++] = &__device_card_b;
+	allDevices[i++] = &__device_dvd;
+	allDevices[i++] = &__device_ide_a;
+	allDevices[i++] = &__device_ide_b;
+	allDevices[i++] = &__device_qoob;
+	allDevices[i++] = &__device_smb;
+	allDevices[i++] = &__device_sys;
+	allDevices[i++] = &__device_usbgecko;
+	allDevices[i++] = NULL;
+	
+	// Set current devices
+	devices[DEVICE_CUR] = NULL;
+	devices[DEVICE_DEST] = NULL;
+	devices[DEVICE_TEMP] = NULL;
+	devices[DEVICE_CONFIG] = NULL;
+	devices[DEVICE_PATCHES] = NULL;
 	
 	void *fb;
 	fb = Initialise();
@@ -463,7 +457,6 @@ int main ()
 	needsDeviceChange = 1;
 	needsRefresh = 1;
 	
-
 	//debugging stuff
 	if(swissSettings.debugUSB) {
 		if(usb_isgeckoalive(1)) {
@@ -475,86 +468,37 @@ int main ()
 		print_gecko("GIT Revision: %s\r\n", GITVERSION);
 	}
 	
-	curDevice = -1;
 	// Are we working with a Wiikey Fusion?
 	if(__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF) {
 		print_gecko("Detected Wiikey Fusion with SPI Flash ID: %08X\r\n",__wkfSpiReadId());
-		curDevice = WKF;
+		devices[DEVICE_CUR] = &__device_wkf;
 	}
 	else {
 		deviceHandler_setStatEnabled(0);
-		// Try to init SD cards here and load config
-		deviceHandler_initial = &initial_SD0;
-		deviceHandler_init		=  deviceHandler_FAT_init;
-		deviceHandler_deinit	=  deviceHandler_FAT_deinit;
-		if(deviceHandler_init(deviceHandler_initial)) {
-			print_gecko("Detected SDGecko in Slot A\r\n");
-			load_auto_dol();
-			curDevice = SD_CARD;
+		// Go through all devices with FEAT_BOOT_DEVICE feature and set it as current if one is available
+		for(i = 0; i < MAX_DEVICES; i++) {
+			if(allDevices[i] != NULL && (allDevices[i]->features & FEAT_BOOT_DEVICE)) {
+				print_gecko("Testing device %s\r\n", allDevices[i]->deviceName);
+				if(allDevices[i]->test()) {
+					devices[DEVICE_CUR] = allDevices[i];
+					break;
+				}
+			}
 		}
-		else {
-			deviceHandler_initial = &initial_SD1;
-			if(deviceHandler_init(deviceHandler_initial)) {
-				print_gecko("Detected SDGecko in Slot B\r\n");
+		if(devices[DEVICE_CUR] != NULL) {
+			print_gecko("Detected %s\r\n", devices[DEVICE_CUR]->deviceName);
+			if(devices[DEVICE_CUR]->features & FEAT_AUTOLOAD_DOL) {
 				load_auto_dol();
-				curDevice = SD_CARD;
 			}
+			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+			needsDeviceChange = 0;
+			// TODO: re-add if dvd && gcm type disc, show banner/boot screen
 		}
-		deviceHandler_setStatEnabled(1);
-		// If there's still no device, try memory card
-		if(curDevice < 0) {
-			deviceHandler_initial = &initial_CARDA;
-			deviceHandler_init		=  deviceHandler_CARD_init;
-			deviceHandler_deinit	=  deviceHandler_CARD_deinit;
-			if(deviceHandler_init(deviceHandler_initial)) {
-				print_gecko("Detected Memory Card in Slot A\r\n");
-				curDevice = MEMCARD;
-			}
-			else {
-				deviceHandler_initial = &initial_CARDB;
-				if(deviceHandler_init(deviceHandler_initial)) {
-					print_gecko("Detected Memory Card in Slot B\r\n");
-					curDevice = MEMCARD;
-				}
-			}
-		}
+		deviceHandler_setStatEnabled(1);	
 	}
-	
-	// If no device has been selected yet to browse ..
-	if(curDevice < 0) {
-		print_gecko("No default boot device detected, trying DVD!\r\n");
-		// Do we have a DVD drive with a ready medium we can perhaps browse then?
-		u8 driveReallyExists[8];
-		drive_version(&driveReallyExists[0]);
-		if(*(u32*)&driveReallyExists[0]) {
-			dvd_read_id();
-			if(!dvd_get_error()) {
-				print_gecko("DVD Medium is up, using it as default device\r\n");
-				curDevice = DVD_DISC;
-				
-				// If we have a GameCube (single image) bootable disc, show the banner screen here
-				dvdDiscTypeInt = gettype_disc();
-				if(dvdDiscTypeInt == GAMECUBE_DISC) {
-					select_device(1);
-					// Setup curFile and load it
-					memset(&curFile, 0, sizeof(file_handle));
-					strcpy(&curFile.name[0], "game.gcm");
-					curFile.size = DISC_SIZE;
-					curFile.fileAttrib = IS_FILE;
-					populate_meta(&curFile);
-					load_file();
-					curDevice = -1;
-					deviceHandler_initial = NULL;
-				}
-			}
-		}
-	}
-	// Default device detected, use it
-	if(curDevice >= 0) {
-		needsDeviceChange = 0;
-		select_device(1); // to setup deviceHandler_ ptrs
-		load_config();
-	}
+
+	// TODO: load config
+
 	// Scan here since some devices would already be initialised (faster)
 	populateDeviceAvailability();
 
@@ -624,38 +568,15 @@ void populateDeviceAvailability() {
 		deviceHandler_setAllDevicesAvailable();
 		return;
 	}
-	const DISC_INTERFACE* carda = &__io_gcsda;
-	const DISC_INTERFACE* cardb = &__io_gcsdb;
-	// DVD
-	deviceHandler_setDeviceAvailable(DVD_DISC, swissSettings.hasDVDDrive);
-	// SD Gecko
-	DrawFrameStart();
-	DrawMessageBox(D_INFO, "Detecting devices [SD] ...\nThis can be skipped by holding B next time");
-	DrawFrameFinish();
-	deviceHandler_setDeviceAvailable(SD_CARD, carda->isInserted() || cardb->isInserted());
-	// IDE-EXI
-	DrawFrameStart();
-	DrawMessageBox(D_INFO, "Detecting devices [IDE-EXI] ...\nThis can be skipped by holding B next time");
-	DrawFrameFinish();
-	deviceHandler_setDeviceAvailable(IDEEXI, ide_exi_inserted(0) || ide_exi_inserted(1));
-	// Qoob
-	deviceHandler_setDeviceAvailable(QOOB_FLASH, 0);	// Hidden by default, add auto detect at some point
-	// WODE
-	deviceHandler_setDeviceAvailable(WODE, 0);	// Hidden by default, add auto detect at some point
-	// Memory card
-	DrawFrameStart();
-	DrawMessageBox(D_INFO, "Detecting devices [Memory Card] ...\nThis can be skipped by holding B next time");
-	DrawFrameFinish();
-	deviceHandler_setDeviceAvailable(MEMCARD, (initialize_card(0)==CARD_ERROR_READY) || (initialize_card(1)==CARD_ERROR_READY));
-	// WKF/WASP
-	DrawFrameStart();
-	DrawMessageBox(D_INFO, "Detecting devices [WKF/WASP] ...\nThis can be skipped by holding B next time");
-	DrawFrameFinish();
-	deviceHandler_setDeviceAvailable(WKF, swissSettings.hasDVDDrive && (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF));
-	// USB Gecko
-	deviceHandler_setDeviceAvailable(USBGECKO, usb_isgeckoalive(1));
-	// BBA/SAMBA
-	deviceHandler_setDeviceAvailable(SAMBA, exi_bba_exists());
-	// System, always there
-	deviceHandler_setDeviceAvailable(SYS, 1);
+	int i;
+	for(i = 0; i < MAX_DEVICES; i++) {
+		if(allDevices[i] != NULL) {
+			print_gecko("Checking device availability for device %s\r\n", allDevices[i]->deviceName);
+			deviceHandler_setDeviceAvailable(allDevices[i], allDevices[i]->test());
+		}
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B) {
+			deviceHandler_setAllDevicesAvailable();
+			break;
+		}
+	}
 }

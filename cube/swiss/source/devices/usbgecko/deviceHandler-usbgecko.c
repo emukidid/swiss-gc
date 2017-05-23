@@ -38,7 +38,7 @@ device_info* deviceHandler_USBGecko_info() {
 	return &initial_USBGecko_info;
 }
 	
-int deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
+s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 type){	
   
 	// Set everything up to read
 	int num_entries = 0, i = 0;
@@ -73,13 +73,13 @@ int deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, unsign
   return num_entries;
 }
 
-int deviceHandler_USBGecko_seekFile(file_handle* file, unsigned int where, unsigned int type){
+s32 deviceHandler_USBGecko_seekFile(file_handle* file, s32 where, s32 type){
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
 	return file->offset;
 }
 
-int deviceHandler_USBGecko_readFile(file_handle* file, void* buffer, unsigned int length){
+s32 deviceHandler_USBGecko_readFile(file_handle* file, void* buffer, u32 length){
 	int reallength = length;
 	if(file->offset + length > file->size) {
 		reallength = file->size - file->offset;
@@ -93,14 +93,14 @@ int deviceHandler_USBGecko_readFile(file_handle* file, void* buffer, unsigned in
 	return bytes_read;
 }
 
-int deviceHandler_USBGecko_writeFile(file_handle* file, void* buffer, unsigned int length) {	
+s32 deviceHandler_USBGecko_writeFile(file_handle* file, void* buffer, u32 length) {	
 	int bytes_written = usbgecko_write_file(buffer, length, file->offset, file->name);
 	if(bytes_written > 0) file->offset += bytes_written;
 	
 	return bytes_written;
 }
 
-int deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2) {
 	u32 *fragList = (u32*)VAR_FRAG_LIST;
 	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
 	fragList[1] = file->size;
@@ -110,7 +110,7 @@ int deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2) {
 	return 1;
 }
 
-int deviceHandler_USBGecko_init(file_handle* file) {
+s32 deviceHandler_USBGecko_init(file_handle* file) {
 	DrawFrameStart();
 	DrawMessageBox(D_INFO,"Looking for USBGecko in Slot B");
 	DrawFrameFinish();
@@ -147,14 +147,38 @@ int deviceHandler_USBGecko_init(file_handle* file) {
 	}
 }
 
-int deviceHandler_USBGecko_deinit(file_handle* file) {
+s32 deviceHandler_USBGecko_deinit(file_handle* file) {
 	return 0;
 }
 
-int deviceHandler_USBGecko_deleteFile(file_handle* file) {
+s32 deviceHandler_USBGecko_deleteFile(file_handle* file) {
 	return -1;
 }
 
-int deviceHandler_USBGecko_closeFile(file_handle* file) {
+s32 deviceHandler_USBGecko_closeFile(file_handle* file) {
     return 0;
 }
+
+bool deviceHandler_USBGecko_test() {
+	return usb_isgeckoalive(1);
+}
+
+DEVICEHANDLER_INTERFACE __device_usbgecko = {
+	"USB Gecko - Slot B only",
+	"Requires PC application to be up",
+	{TEX_USBGECKO, 129, 80},
+	FEAT_READ|FEAT_BOOT_GCM|FEAT_REPLACES_DVD_FUNCS,
+	LOC_MEMCARD_SLOT_B,
+	&initial_USBGecko,
+	(_fn_test)&deviceHandler_USBGecko_test,
+	(_fn_info)&deviceHandler_USBGecko_info,
+	(_fn_init)&deviceHandler_USBGecko_init,
+	(_fn_readDir)&deviceHandler_USBGecko_readDir,
+	(_fn_readFile)&deviceHandler_USBGecko_readFile,
+	(_fn_writeFile)NULL,
+	(_fn_deleteFile)NULL,
+	(_fn_seekFile)&deviceHandler_USBGecko_seekFile,
+	(_fn_setupFile)&deviceHandler_USBGecko_setupFile,
+	(_fn_closeFile)&deviceHandler_USBGecko_closeFile,
+	(_fn_deinit)&deviceHandler_USBGecko_deinit
+};

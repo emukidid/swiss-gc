@@ -31,16 +31,7 @@
 #define SMB_SMBCFGERR  -111
 #define SMB_SMBERR -112
 
-extern file_handle initial_SMB;
-
-extern device_info* deviceHandler_SMB_info();
-
-int deviceHandler_SMB_readDir(file_handle*, file_handle**, unsigned int type);
-int deviceHandler_SMB_readFile(file_handle*, void*, unsigned int);
-int deviceHandler_SMB_seekFile(file_handle*, unsigned int, unsigned int);
-int deviceHandler_SMB_init(file_handle* file);
-int deviceHandler_SMB_deinit(file_handle* file);
-int deviceHandler_SMB_closeFile(file_handle* file);
+extern DEVICEHANDLER_INTERFACE __device_smb;
 
 
 #endif
