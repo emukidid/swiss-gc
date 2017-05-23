@@ -468,33 +468,24 @@ int main ()
 		print_gecko("GIT Revision: %s\r\n", GITVERSION);
 	}
 	
-	// Are we working with a Wiikey Fusion?
-	if(__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF) {
-		print_gecko("Detected Wiikey Fusion with SPI Flash ID: %08X\r\n",__wkfSpiReadId());
-		devices[DEVICE_CUR] = &__device_wkf;
+	// Go through all devices with FEAT_BOOT_DEVICE feature and set it as current if one is available
+	for(i = 0; i < MAX_DEVICES; i++) {
+		if(allDevices[i] != NULL && (allDevices[i]->features & FEAT_BOOT_DEVICE)) {
+			print_gecko("Testing device %s\r\n", allDevices[i]->deviceName);
+			if(allDevices[i]->test()) {
+				devices[DEVICE_CUR] = allDevices[i];
+				break;
+			}
+		}
 	}
-	else {
-		deviceHandler_setStatEnabled(0);
-		// Go through all devices with FEAT_BOOT_DEVICE feature and set it as current if one is available
-		for(i = 0; i < MAX_DEVICES; i++) {
-			if(allDevices[i] != NULL && (allDevices[i]->features & FEAT_BOOT_DEVICE)) {
-				print_gecko("Testing device %s\r\n", allDevices[i]->deviceName);
-				if(allDevices[i]->test()) {
-					devices[DEVICE_CUR] = allDevices[i];
-					break;
-				}
-			}
+	if(devices[DEVICE_CUR] != NULL) {
+		print_gecko("Detected %s\r\n", devices[DEVICE_CUR]->deviceName);
+		if(devices[DEVICE_CUR]->features & FEAT_AUTOLOAD_DOL) {
+			load_auto_dol();
 		}
-		if(devices[DEVICE_CUR] != NULL) {
-			print_gecko("Detected %s\r\n", devices[DEVICE_CUR]->deviceName);
-			if(devices[DEVICE_CUR]->features & FEAT_AUTOLOAD_DOL) {
-				load_auto_dol();
-			}
-			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
-			needsDeviceChange = 0;
-			// TODO: re-add if dvd && gcm type disc, show banner/boot screen
-		}
-		deviceHandler_setStatEnabled(1);	
+		memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+		needsDeviceChange = 0;
+		// TODO: re-add if dvd && gcm type disc, show banner/boot screen
 	}
 
 	// TODO: load config
