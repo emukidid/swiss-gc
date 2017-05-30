@@ -44,91 +44,109 @@ static ConfigEntry configEntries[2048]; // That's a lot of Games!
 static int configEntriesCount = 0;
 static SwissSettings configSwissSettings;
 
+
 void strnscpy(char *s1, char *s2, int num) {
 	strncpy(s1, s2, num);
 	s1[num] = 0;
 }
+
+/** Crappy dynamic string appender */
+#define APPEND_BLOCKSIZE 256
+typedef struct {
+	char *mem;
+	u32 memlen;
+} appended_string;
+
+appended_string *string_append(appended_string *appstr, char* str) {
+
+	if(appstr == NULL) {
+		appstr = calloc(1, sizeof(appended_string));
+		appstr->memlen = (str != NULL) ? strlen(str) : APPEND_BLOCKSIZE;
+		appstr->memlen += APPEND_BLOCKSIZE-(appstr->memlen % APPEND_BLOCKSIZE);	// 64b sized blocks
+		appstr->mem = calloc(1, appstr->memlen);
+		if(appstr->mem != NULL && str != NULL) {
+			strcpy(appstr->mem, str);
+		}
+	}
+	else {
+		if(str != NULL) {
+			u32 oldlen = strlen(appstr->mem);
+			u32 newlenreq = strlen(str) + strlen(appstr->mem);
+			if(newlenreq >= appstr->memlen) {
+				newlenreq += APPEND_BLOCKSIZE-(newlenreq%APPEND_BLOCKSIZE);
+				appstr->mem = realloc(appstr->mem, newlenreq);
+				appstr->memlen = newlenreq;
+				memset(appstr->mem + oldlen, 0, newlenreq-oldlen);
+			}
+			strcpy(appstr->mem + oldlen, str);
+		}
+	}
+	return appstr;
+}
+
 
 /** 
 	Initialises the configuration file
 	Returns 1 on successful file open, 0 otherwise
 */
 int config_init() {
-	sprintf(txtbuffer, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
-	FILE *fp = fopen(txtbuffer, "rb");
-	if (fp) {
-		fseek(fp, 0, SEEK_END);
-		int size = ftell(fp);
-		fseek(fp, 0, SEEK_SET);
-		if (size > 0) {
-			configEntriesCount = 0;
-			char *configData = (char*) memalign(32, size);
-			if (configData) {
-				fread(configData, 1, size, fp);
-				config_parse(configData);
-				free(configData);
-			}
-		}
-		else {
-			return 0;
-		}
-		fclose(fp);
-		return 1;
-	}
-	else {
+	if(devices[DEVICE_CONFIG] == NULL) {
 		return 0;
 	}
+	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
+	sprintf(configFile->name, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
 	
-	return 1;
-}
-
-
-/**
-	Creates a configuration file on the root of the device "swiss.ini"
-	Returns 1 on successful creation, 0 otherwise
-*/
-int config_create() {
-	return config_update_file();
+	if(devices[DEVICE_CONFIG]->readFile(configFile, txtbuffer, 1) == 1) {
+		devices[DEVICE_CONFIG]->seekFile(configFile, 0, DEVICE_HANDLER_SEEK_SET);
+		char *configData = (char*) memalign(32, configFile->size);
+		configEntriesCount = 0;
+		if (configData) {
+			memset(configData, 0, configFile->size);
+			devices[DEVICE_CONFIG]->readFile(configFile, configData, configFile->size);
+			devices[DEVICE_CONFIG]->closeFile(configFile);
+			config_parse(configData);
+			free(configData);
+			return 1;
+		}
+	}
+	return 0;
 }
 
 int config_update_file() {
-	sprintf(txtbuffer, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
-	FILE *fp = fopen( txtbuffer, "wb" );
-	if(fp) {
+
+	if(devices[DEVICE_CONFIG] != NULL) {
 		// Write out header every time
 		char *str = "# Swiss Configuration File!\r\n# Anything written in here will be lost!\r\n\r\n#!!Swiss Settings Start!!\r\n";
-		fwrite(str, 1, strlen(str), fp);
-		
+		appended_string *configString = string_append(NULL, str);
 		// Write out Swiss settings
 		sprintf(txtbuffer, "SD/IDE Speed=%s\r\n",(configSwissSettings.exiSpeed ? "32MHz":"16MHz"));
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		string_append(configString, txtbuffer);
 		sprintf(txtbuffer, "Swiss Video Mode=%s\r\n",(uiVModeStr[configSwissSettings.uiVMode]));
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		string_append(configString, txtbuffer);
 		sprintf(txtbuffer, "Enable Debug=%s\r\n",(configSwissSettings.debugUSB ? "Yes":"No"));
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		string_append(configString, txtbuffer);
 		sprintf(txtbuffer, "Hide Unknown file types=%s\r\n",(configSwissSettings.hideUnknownFileTypes ? "Yes":"No"));
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		string_append(configString, txtbuffer);
 		sprintf(txtbuffer, "Stop DVD Motor on startup=%s\r\n",(configSwissSettings.stopMotor ? "Yes":"No"));
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		string_append(configString, txtbuffer);
 		sprintf(txtbuffer, "Enable WiiRD debug=%s\r\n",(configSwissSettings.wiirdDebug ? "Yes":"No"));
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		string_append(configString, txtbuffer);
 		sprintf(txtbuffer, "Enable File Management=%s\r\n",(configSwissSettings.enableFileManagement ? "Yes":"No"));
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		string_append(configString, txtbuffer);
 		sprintf(txtbuffer, "SMBUserName=%s\r\n",configSwissSettings.smbUser);
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		string_append(configString, txtbuffer);
 		sprintf(txtbuffer, "SMBPassword=%s\r\n",configSwissSettings.smbPassword);
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		string_append(configString, txtbuffer);
 		sprintf(txtbuffer, "SMBShareName=%s\r\n",configSwissSettings.smbShare);
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		string_append(configString, txtbuffer);
 		sprintf(txtbuffer, "SMBHostIP=%s\r\n",configSwissSettings.smbServerIp);
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		string_append(configString, txtbuffer);
 		sprintf(txtbuffer, "AutoCheats=%s\r\n", (configSwissSettings.autoCheats ? "Yes":"No"));
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		string_append(configString, txtbuffer);
 		sprintf(txtbuffer, "IGRType=%s\r\n", (igrTypeStr[swissSettings.igrType]));
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+		string_append(configString, txtbuffer);
 		sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
-		fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
-		
+		string_append(configString, txtbuffer);
 		
 		// Write out Game Configs
 		int i;
@@ -136,42 +154,52 @@ int config_update_file() {
 			char buffer[256];
 			strnscpy(buffer, &configEntries[i].game_id[0], 4);
 			sprintf(txtbuffer, "ID=%s\r\n",buffer);
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+			string_append(configString, txtbuffer);
 			
 			strnscpy(buffer, &configEntries[i].game_name[0], 32);
 			sprintf(txtbuffer, "Name=%s\r\n",buffer);
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+			string_append(configString, txtbuffer);
 			
 			strnscpy(buffer, &configEntries[i].comment[0], 128);
 			sprintf(txtbuffer, "Comment=%s\r\n",buffer);
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+			string_append(configString, txtbuffer);
 			
 			strnscpy(buffer, &configEntries[i].status[0], 32);
 			sprintf(txtbuffer, "Status=%s\r\n",buffer);
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+			string_append(configString, txtbuffer);
 			
 			sprintf(txtbuffer, "Force Video Mode=%s\r\n",gameVModeStr[configEntries[i].gameVMode]);
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+			string_append(configString, txtbuffer);
 			
 			sprintf(txtbuffer, "Soft Progressive=%s\r\n",softProgressiveStr[configEntries[i].softProgressive]);
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+			string_append(configString, txtbuffer);
 			
 			sprintf(txtbuffer, "Mute Audio Streaming=%s\r\n",(configEntries[i].muteAudioStreaming ? "Yes":"No"));
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+			string_append(configString, txtbuffer);
 					
 			sprintf(txtbuffer, "Force Widescreen=%s\r\n",forceWidescreenStr[configEntries[i].forceWidescreen]);
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+			string_append(configString, txtbuffer);
 			
 			sprintf(txtbuffer, "Force Anisotropy=%s\r\n",(configEntries[i].forceAnisotropy ? "Yes":"No"));
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
-	
+			string_append(configString, txtbuffer);
+
 			sprintf(txtbuffer, "Force Encoding=%s\r\n\r\n\r\n",forceEncodingStr[configEntries[i].forceEncoding]);
-			fwrite(txtbuffer, 1, strlen(txtbuffer), fp);
+			string_append(configString, txtbuffer);
 		}
-		fclose(fp);
-		return 1;
+
+		file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
+		sprintf(configFile->name, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
+
+		u32 len = strlen(configString->mem);
+		if(devices[DEVICE_CONFIG]->writeFile(configFile, configString->mem, len) == len) {
+			devices[DEVICE_CONFIG]->closeFile(configFile);
+			return 1;
+		}
+		else {
+			return 0;
+		}
 	}
-	return 0;
+	return 1;
 }
 
 void config_parse(char *configData) {

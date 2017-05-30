@@ -235,7 +235,7 @@ void load_auto_dol() {
 
 void load_config() {
 
-	// Try to open up the config .ini in case it hasn't been opened already (SD, IDE-EXI only)
+	// Try to open up the config .ini in case it hasn't been opened already
 	if(config_init()) {
 		DrawFrameStart();
 		sprintf(txtbuffer,"Loaded %i entries from the config file",config_get_count());
@@ -326,8 +326,8 @@ void main_loop()
 			needsDeviceChange = 1;
 			return;
 		}
-		// TODO load config from current device or if it's not there, try from devices[DEVICE_CONFIG]
-			//load_config();
+		// load config from current device or if it's not there, try from devices[DEVICE_CONFIG]
+		load_config();
 		
 	}
 	else {
@@ -486,9 +486,16 @@ int main ()
 		memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 		needsDeviceChange = 0;
 		// TODO: re-add if dvd && gcm type disc, show banner/boot screen
+		// If this device can write, set it as the config device for now
+		if(devices[DEVICE_CUR]->features & FEAT_WRITE) {
+			devices[DEVICE_CONFIG] = devices[DEVICE_CUR];
+		}
 	}
 
-	// TODO: load config
+	// load config if we got a device
+	if(devices[DEVICE_CONFIG] != NULL) {
+		load_config();
+	}
 
 	// Scan here since some devices would already be initialised (faster)
 	populateDeviceAvailability();

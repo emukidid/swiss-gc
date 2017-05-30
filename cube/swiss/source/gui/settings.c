@@ -299,22 +299,20 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				}
 				else {
 					// Save the Swiss system settings since we're called from the main menu
-					/*TODO if((curDevice == SD_CARD)||(curDevice == IDEEXI)) {
+					DrawFrameStart();
+					DrawMessageBox(D_INFO,"Saving Config ...");
+					DrawFrameFinish();
+					config_copy_swiss_settings(&swissSettings);
+					if(config_update_file()) {
 						DrawFrameStart();
-						DrawMessageBox(D_INFO,"Saving Config ...");
+						DrawMessageBox(D_INFO,"Config Saved Successfully!");
 						DrawFrameFinish();
-						config_copy_swiss_settings(&swissSettings);
-						if(config_update_file()) {
-							DrawFrameStart();
-							DrawMessageBox(D_INFO,"Config Saved Successfully!");
-							DrawFrameFinish();
-						}
-						else {
-							DrawFrameStart();
-							DrawMessageBox(D_INFO,"Config Failed to Save!");
-							DrawFrameFinish();
-						}
-					}*/
+					}
+					else {
+						DrawFrameStart();
+						DrawMessageBox(D_INFO,"Config Failed to Save!");
+						DrawFrameFinish();
+					}
 				}
 				return 1;
 			}

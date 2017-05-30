@@ -159,7 +159,7 @@ s32 deviceHandler_FAT_seekFile(file_handle* file, u32 where, u32 type){
 s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length){
   	if(!file->fp) {
 		file->fp = fopen( file->name, "r+" );
-		if(file->size == -1) {
+		if(file->size == 0) {
 			struct stat fstat;
 			stat(file->name,&fstat);
 			file->size = fstat.st_size;

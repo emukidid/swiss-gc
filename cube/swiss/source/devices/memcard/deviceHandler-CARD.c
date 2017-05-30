@@ -75,6 +75,7 @@ char *cardError(int error_code) {
 
 
 int initialize_card(int slot) {
+	EXI_Detach(slot);
 	int slot_error = CARD_ERROR_READY, i = 0;
   
 	if(!card_init[slot]) {
@@ -144,6 +145,29 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	return num_entries;
 }
 
+// Finds a file based on file->name and populates file->size if found.
+bool findFile(file_handle* file) {
+	unsigned int slot = (!strncmp((const char*)initial_CARDB.name, file->name, 7)), ret = 0;
+	char *filename = getRelativeName(file->name);
+	bool found = false;
+	CARD_SetGameAndCompany();
+  
+	card_dir* memcard_dir = (card_dir*)memalign(32,sizeof(card_dir));
+	memset(memcard_dir, 0, sizeof(card_dir));
+ 	
+	ret = CARD_FindFirst (slot, memcard_dir, true);
+	while (CARD_ERROR_NOFILE != ret && !found) {
+		if(!strcasecmp((const char*)filename, (char*)memcard_dir->filename)) {
+			file->size = memcard_dir->filelen;
+			memcpy( file->other, memcard_dir, sizeof(card_dir));
+			found = true;
+ 		}
+		ret = CARD_FindNext (memcard_dir);
+	}
+	free(memcard_dir);
+	return found;
+}
+
 s32 deviceHandler_CARD_seekFile(file_handle* file, u32 where, u32 type){
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
@@ -192,11 +216,21 @@ s32 deviceHandler_CARD_readFile(file_handle* file, void* buffer, u32 length){
 	card_dir* cd = (card_dir*)&file->other;
 	char *filename = getRelativeName(file->name);
 	unsigned int slot = (!strncmp((const char*)initial_CARDB.name, file->name, 7)), ret = 0;
+
+	if(cd->company[0] == '\0' && cd->gamecode[0] == '\0') {
+		// Find the file we don't know about and populate this file_handle if we find it.
+		if(!findFile(file)) {
+			return CARD_ERROR_NOFILE;
+		}
+		CARD_SetCompany((const char*)cd->company);
+		CARD_SetGamecode((const char*)cd->gamecode);
+	} 
+	else {
+		CARD_SetCompany((const char*)cd->company);
+		CARD_SetGamecode((const char*)cd->gamecode);
+	}
 	int swissFile = !strncmp((const char*)cd->gamecode, "SWIS", 4)
 				 && !strncmp((const char*)cd->company, "S0", 2);
-
-	CARD_SetCompany((const char*)cd->company);
-	CARD_SetGamecode((const char*)cd->gamecode);
 	
 	// Open the file based on the slot & file name
 	ret = CARD_Open(slot,filename, &cardfile);
@@ -272,6 +306,7 @@ s32 deviceHandler_CARD_readFile(file_handle* file, void* buffer, u32 length){
 	if(swissFile && length != 0) {
 		amountRead+= length;
 	}
+	DCFlushRange(dst, amountRead);
 	CARD_Close(&cardfile);
 	free(read_buffer);   
 

@@ -1361,22 +1361,20 @@ int check_game()
 }
 
 void save_config(ConfigEntry *config) {
-	// Save settings to current device
-	/*if(curDevice == SD_CARD || curDevice == IDEEXI) {
+	// Save settings to current config device
+	DrawFrameStart();
+	DrawMessageBox(D_INFO,"Saving Config ...");
+	DrawFrameFinish();
+	if(config_update(config)) {
 		DrawFrameStart();
-		DrawMessageBox(D_INFO,"Saving Config ...");
+		DrawMessageBox(D_INFO,"Config Saved Successfully!");
 		DrawFrameFinish();
-		if(config_update(config)) {
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Config Saved Successfully!");
-			DrawFrameFinish();
-		}
-		else {
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Config Failed to Save!");
-			DrawFrameFinish();
-		}
-	}*/
+	}
+	else {
+		DrawFrameStart();
+		DrawMessageBox(D_INFO,"Config Failed to Save!");
+		DrawFrameFinish();
+	}
 }
 
 void draw_game_info() {
@@ -1500,7 +1498,7 @@ void select_device(int type)
 		
 	while(1) {
 		// Go to the first device available
-		if(!deviceHandler_getDeviceAvailable(allDevices[curDevice])) {
+		if(!showAllDevices && !deviceHandler_getDeviceAvailable(allDevices[curDevice])) {
 			int i = 0;
 			while(allDevices[i] != NULL) {
 				if(deviceHandler_getDeviceAvailable(allDevices[i])) {
