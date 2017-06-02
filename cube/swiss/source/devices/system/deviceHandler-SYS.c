@@ -295,6 +295,7 @@ bool deviceHandler_SYS_test() {
 }
 
 DEVICEHANDLER_INTERFACE __device_sys = {
+	DEVICE_ID_9,
 	"System",
 	"Backup IPL, DSP, DVD, SRAM",
 	{TEX_SYSTEM, 160, 85}, 

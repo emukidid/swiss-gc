@@ -324,18 +324,16 @@ void main_loop()
 		sdgecko_setSpeed(EXI_SPEED32MHZ);
 		if(!devices[DEVICE_CUR]->init( devices[DEVICE_CUR]->initial )) {
 			needsDeviceChange = 1;
+			deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], false);
 			return;
 		}
+		deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], true);
 		// load config from current device or if it's not there, try from devices[DEVICE_CONFIG]
 		load_config();
 		
 	}
 	else {
 		curMenuLocation=ON_OPTIONS;
-	}
-	// If a previously undetected device has been successfully init'd, mark it as available from now on
-	if(!deviceHandler_getDeviceAvailable(devices[DEVICE_CUR])) {
-		deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], true);
 	}
 
 	resume_netinit_thread();
@@ -487,19 +485,14 @@ int main ()
 		needsDeviceChange = 0;
 		// TODO: re-add if dvd && gcm type disc, show banner/boot screen
 		// If this device can write, set it as the config device for now
-		if(devices[DEVICE_CUR]->features & FEAT_WRITE) {
-			devices[DEVICE_CONFIG] = devices[DEVICE_CUR];
-		}
-	}
-
-	// load config if we got a device
-	if(devices[DEVICE_CONFIG] != NULL) {
-		load_config();
 	}
 
 	// Scan here since some devices would already be initialised (faster)
 	populateDeviceAvailability();
-
+	
+	// load config if we got a device
+	load_config();
+	
 	// Start up the BBA if it exists
 	init_network_thread();
 	init_httpd_thread();

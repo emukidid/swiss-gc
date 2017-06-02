@@ -73,3 +73,11 @@ int deviceHandler_test(DEVICEHANDLER_INTERFACE *device) {
 	return device->init(device->initial);
 }
 
+DEVICEHANDLER_INTERFACE* getDeviceByUniqueId(u8 id) {
+	for(int i = 0; i < MAX_DEVICES; i++) {
+		if(allDevices[i] != NULL && allDevices[i]->deviceUniqueId == id) {
+			return allDevices[i];
+		}
+	}
+	return NULL;
+}

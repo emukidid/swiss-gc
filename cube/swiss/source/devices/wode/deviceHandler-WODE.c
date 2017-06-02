@@ -133,6 +133,7 @@ bool deviceHandler_WODE_test() {
 }
 
 DEVICEHANDLER_INTERFACE __device_wode = {
+	DEVICE_ID_C,
 	"WODE Jukebox",
 	"Supported File System(s): FAT32, NTFS, EXT2/3, HPFS",
 	{TEX_WODEIMG, 146, 72},

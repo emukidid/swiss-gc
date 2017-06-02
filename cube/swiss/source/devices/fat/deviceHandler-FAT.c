@@ -449,8 +449,9 @@ bool deviceHandler_FAT_test_ide_b(int slot, bool isSdCard, char *mountPath) {
 }
 
 DEVICEHANDLER_INTERFACE __device_sd_a = {
-	"SD Card via SD Adapter - Slot A",
-	"Supported File System(s): FAT16, FAT32",
+	DEVICE_ID_1,
+	"SD Gecko - Slot A",
+	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32",
 	{TEX_SDSMALL, 60, 80},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_REPLACES_DVD_FUNCS,
 	LOC_MEMCARD_SLOT_A,
@@ -469,8 +470,9 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 };
 
 DEVICEHANDLER_INTERFACE __device_sd_b = {
-	"SD Card via SD Adapter - Slot B",
-	"Supported File System(s): FAT16, FAT32",
+	DEVICE_ID_2,
+	"SD Gecko - Slot B",
+	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32",
 	{TEX_SDSMALL, 60, 80},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_REPLACES_DVD_FUNCS,
 	LOC_MEMCARD_SLOT_B,
@@ -489,8 +491,9 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 };
 
 DEVICEHANDLER_INTERFACE __device_ide_a = {
-	"IDE HDD via IDE-EXI - Slot A",
-	"Supported File System(s): FAT16, FAT32",
+	DEVICE_ID_3,
+	"IDE-EXI - Slot A",
+	"IDE HDD - Supported File System(s): FAT16, FAT32",
 	{TEX_HDD, 80, 80},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_REPLACES_DVD_FUNCS,
 	LOC_MEMCARD_SLOT_A,
@@ -509,8 +512,9 @@ DEVICEHANDLER_INTERFACE __device_ide_a = {
 };
 
 DEVICEHANDLER_INTERFACE __device_ide_b = {
-	"IDE HDD via IDE-EXI - Slot B",
-	"Supported File System(s): FAT16, FAT32",
+	DEVICE_ID_4,
+	"IDE-EXI - Slot B",
+	"IDE HDD - Supported File System(s): FAT16, FAT32",
 	{TEX_HDD, 80, 80},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_REPLACES_DVD_FUNCS,
 	LOC_MEMCARD_SLOT_B,

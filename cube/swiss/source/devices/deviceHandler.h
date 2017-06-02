@@ -81,7 +81,25 @@ typedef device_info* (* _fn_deviceInfo)(void);
 #define LOC_HSP				0x4000
 #define LOC_SYSTEM			0x8000
 
+// Device unique Id (used to store last used config device in SRAM - configDeviceId)
+#define DEVICE_ID_0			0x00
+#define DEVICE_ID_1			0x01
+#define DEVICE_ID_2			0x02
+#define DEVICE_ID_3			0x03
+#define DEVICE_ID_4			0x04
+#define DEVICE_ID_5			0x05
+#define DEVICE_ID_6			0x06
+#define DEVICE_ID_7			0x07
+#define DEVICE_ID_8			0x08
+#define DEVICE_ID_9			0x09
+#define DEVICE_ID_A			0x0A
+#define DEVICE_ID_B			0x0B
+#define DEVICE_ID_C			0x0C
+#define DEVICE_ID_MAX		DEVICE_ID_C
+#define DEVICE_ID_UNK		(DEVICE_ID_MAX + 1)
+
 struct DEVICEHANDLER_STRUCT {
+	u8 				deviceUniqueId;
 	const char*		deviceName;
 	const char*		deviceDescription;
 	textureImage	deviceTexture;
@@ -132,6 +150,7 @@ extern DEVICEHANDLER_INTERFACE* allDevices[MAX_DEVICES];
 extern DEVICEHANDLER_INTERFACE* devices[MAX_DEVICES];
 
 extern int deviceHandler_test(DEVICEHANDLER_INTERFACE *device);
+extern DEVICEHANDLER_INTERFACE* getDeviceByUniqueId(u8 id);
 
 extern void print_frag_list(int hasDisc2);
 

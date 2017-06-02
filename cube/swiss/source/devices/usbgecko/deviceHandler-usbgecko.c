@@ -164,6 +164,7 @@ bool deviceHandler_USBGecko_test() {
 }
 
 DEVICEHANDLER_INTERFACE __device_usbgecko = {
+	DEVICE_ID_A,
 	"USB Gecko - Slot B only",
 	"Requires PC application to be up",
 	{TEX_USBGECKO, 129, 80},

@@ -120,6 +120,7 @@ bool deviceHandler_Qoob_test() {
 }
 
 DEVICEHANDLER_INTERFACE __device_qoob = {
+	DEVICE_ID_7,
 	"Qoob Pro",
 	"Qoob Pro Flash File System",
 	{TEX_QOOB, 70, 80},

@@ -499,6 +499,7 @@ bool deviceHandler_DVD_test() {
 }
 
 DEVICEHANDLER_INTERFACE __device_dvd = {
+	DEVICE_ID_0,
 	"DVD",
 	"Supported File System(s): GCM, ISO 9660, Multi-Game",
 	{TEX_GCDVDSMALL, 80, 79},

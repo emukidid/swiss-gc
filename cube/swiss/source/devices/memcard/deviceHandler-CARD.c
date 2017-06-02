@@ -492,6 +492,7 @@ bool deviceHandler_CARD_test_b() {
 }
 
 DEVICEHANDLER_INTERFACE __device_card_a = {
+	DEVICE_ID_5,
 	"Memory Card - Slot A",
 	"Backup & Restore save games",
 	{TEX_MEMCARD, 107, 80},
@@ -512,6 +513,7 @@ DEVICEHANDLER_INTERFACE __device_card_a = {
 };
 
 DEVICEHANDLER_INTERFACE __device_card_b = {
+	DEVICE_ID_6,
 	"Memory Card - Slot B",
 	"Backup & Restore save games",
 	{TEX_MEMCARD, 107, 80},

@@ -84,18 +84,41 @@ appended_string *string_append(appended_string *appstr, char* str) {
 	return appstr;
 }
 
+// Tries to init the current config device
+bool config_set_device() {
+	// Set the current config device to whatever the current configDeviceId is
+	DEVICEHANDLER_INTERFACE *configDevice = getDeviceByUniqueId(swissSettings.configDeviceId);
+	devices[DEVICE_CONFIG] = NULL;
+	if(configDevice != NULL) {
+		if((configDevice->features & FEAT_WRITE) && deviceHandler_getDeviceAvailable(configDevice)) {
+			devices[DEVICE_CONFIG] = configDevice;
+		}
+	}
+	
+	// Not available or not a writable device? That's too bad.
+	if(devices[DEVICE_CONFIG] == NULL) {
+		return false;
+	}
+	
+	// If we're not using this device already, init it.
+	if(devices[DEVICE_CONFIG] != devices[DEVICE_CUR]) {
+		if(!devices[DEVICE_CONFIG]->init(devices[DEVICE_CONFIG]->initial)) {
+			return false;
+		}
+	}
+	return true;
+}
 
 /** 
 	Initialises the configuration file
 	Returns 1 on successful file open, 0 otherwise
 */
 int config_init() {
-	if(devices[DEVICE_CONFIG] == NULL) {
-		return 0;
-	}
+	if(!config_set_device()) return 0;
 	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
 	sprintf(configFile->name, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
 	
+	// Read config
 	if(devices[DEVICE_CONFIG]->readFile(configFile, txtbuffer, 1) == 1) {
 		devices[DEVICE_CONFIG]->seekFile(configFile, 0, DEVICE_HANDLER_SEEK_SET);
 		char *configData = (char*) memalign(32, configFile->size);
@@ -104,6 +127,9 @@ int config_init() {
 			memset(configData, 0, configFile->size);
 			devices[DEVICE_CONFIG]->readFile(configFile, configData, configFile->size);
 			devices[DEVICE_CONFIG]->closeFile(configFile);
+			if(devices[DEVICE_CONFIG] != devices[DEVICE_CUR]) {
+				devices[DEVICE_CONFIG]->deinit(devices[DEVICE_CONFIG]->initial);
+			}
 			config_parse(configData);
 			free(configData);
 			return 1;
@@ -113,92 +139,96 @@ int config_init() {
 }
 
 int config_update_file() {
+	if(!config_set_device()) return 0;
 
-	if(devices[DEVICE_CONFIG] != NULL) {
-		// Write out header every time
-		char *str = "# Swiss Configuration File!\r\n# Anything written in here will be lost!\r\n\r\n#!!Swiss Settings Start!!\r\n";
-		appended_string *configString = string_append(NULL, str);
-		// Write out Swiss settings
-		sprintf(txtbuffer, "SD/IDE Speed=%s\r\n",(configSwissSettings.exiSpeed ? "32MHz":"16MHz"));
-		string_append(configString, txtbuffer);
-		sprintf(txtbuffer, "Swiss Video Mode=%s\r\n",(uiVModeStr[configSwissSettings.uiVMode]));
-		string_append(configString, txtbuffer);
-		sprintf(txtbuffer, "Enable Debug=%s\r\n",(configSwissSettings.debugUSB ? "Yes":"No"));
-		string_append(configString, txtbuffer);
-		sprintf(txtbuffer, "Hide Unknown file types=%s\r\n",(configSwissSettings.hideUnknownFileTypes ? "Yes":"No"));
-		string_append(configString, txtbuffer);
-		sprintf(txtbuffer, "Stop DVD Motor on startup=%s\r\n",(configSwissSettings.stopMotor ? "Yes":"No"));
-		string_append(configString, txtbuffer);
-		sprintf(txtbuffer, "Enable WiiRD debug=%s\r\n",(configSwissSettings.wiirdDebug ? "Yes":"No"));
-		string_append(configString, txtbuffer);
-		sprintf(txtbuffer, "Enable File Management=%s\r\n",(configSwissSettings.enableFileManagement ? "Yes":"No"));
-		string_append(configString, txtbuffer);
-		sprintf(txtbuffer, "SMBUserName=%s\r\n",configSwissSettings.smbUser);
-		string_append(configString, txtbuffer);
-		sprintf(txtbuffer, "SMBPassword=%s\r\n",configSwissSettings.smbPassword);
-		string_append(configString, txtbuffer);
-		sprintf(txtbuffer, "SMBShareName=%s\r\n",configSwissSettings.smbShare);
-		string_append(configString, txtbuffer);
-		sprintf(txtbuffer, "SMBHostIP=%s\r\n",configSwissSettings.smbServerIp);
-		string_append(configString, txtbuffer);
-		sprintf(txtbuffer, "AutoCheats=%s\r\n", (configSwissSettings.autoCheats ? "Yes":"No"));
-		string_append(configString, txtbuffer);
-		sprintf(txtbuffer, "IGRType=%s\r\n", (igrTypeStr[swissSettings.igrType]));
-		string_append(configString, txtbuffer);
-		sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
+	// Write out header every time
+	char *str = "# Swiss Configuration File!\r\n# Anything written in here will be lost!\r\n\r\n#!!Swiss Settings Start!!\r\n";
+	appended_string *configString = string_append(NULL, str);
+	// Write out Swiss settings
+	sprintf(txtbuffer, "SD/IDE Speed=%s\r\n",(configSwissSettings.exiSpeed ? "32MHz":"16MHz"));
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "Swiss Video Mode=%s\r\n",(uiVModeStr[configSwissSettings.uiVMode]));
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "Enable Debug=%s\r\n",(configSwissSettings.debugUSB ? "Yes":"No"));
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "Hide Unknown file types=%s\r\n",(configSwissSettings.hideUnknownFileTypes ? "Yes":"No"));
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "Stop DVD Motor on startup=%s\r\n",(configSwissSettings.stopMotor ? "Yes":"No"));
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "Enable WiiRD debug=%s\r\n",(configSwissSettings.wiirdDebug ? "Yes":"No"));
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "Enable File Management=%s\r\n",(configSwissSettings.enableFileManagement ? "Yes":"No"));
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "SMBUserName=%s\r\n",configSwissSettings.smbUser);
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "SMBPassword=%s\r\n",configSwissSettings.smbPassword);
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "SMBShareName=%s\r\n",configSwissSettings.smbShare);
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "SMBHostIP=%s\r\n",configSwissSettings.smbServerIp);
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "AutoCheats=%s\r\n", (configSwissSettings.autoCheats ? "Yes":"No"));
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "IGRType=%s\r\n", (igrTypeStr[swissSettings.igrType]));
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
+	string_append(configString, txtbuffer);
+	
+	// Write out Game Configs
+	int i;
+	for(i = 0; i < configEntriesCount; i++) {
+		char buffer[256];
+		strnscpy(buffer, &configEntries[i].game_id[0], 4);
+		sprintf(txtbuffer, "ID=%s\r\n",buffer);
 		string_append(configString, txtbuffer);
 		
-		// Write out Game Configs
-		int i;
-		for(i = 0; i < configEntriesCount; i++) {
-			char buffer[256];
-			strnscpy(buffer, &configEntries[i].game_id[0], 4);
-			sprintf(txtbuffer, "ID=%s\r\n",buffer);
-			string_append(configString, txtbuffer);
-			
-			strnscpy(buffer, &configEntries[i].game_name[0], 32);
-			sprintf(txtbuffer, "Name=%s\r\n",buffer);
-			string_append(configString, txtbuffer);
-			
-			strnscpy(buffer, &configEntries[i].comment[0], 128);
-			sprintf(txtbuffer, "Comment=%s\r\n",buffer);
-			string_append(configString, txtbuffer);
-			
-			strnscpy(buffer, &configEntries[i].status[0], 32);
-			sprintf(txtbuffer, "Status=%s\r\n",buffer);
-			string_append(configString, txtbuffer);
-			
-			sprintf(txtbuffer, "Force Video Mode=%s\r\n",gameVModeStr[configEntries[i].gameVMode]);
-			string_append(configString, txtbuffer);
-			
-			sprintf(txtbuffer, "Soft Progressive=%s\r\n",softProgressiveStr[configEntries[i].softProgressive]);
-			string_append(configString, txtbuffer);
-			
-			sprintf(txtbuffer, "Mute Audio Streaming=%s\r\n",(configEntries[i].muteAudioStreaming ? "Yes":"No"));
-			string_append(configString, txtbuffer);
-					
-			sprintf(txtbuffer, "Force Widescreen=%s\r\n",forceWidescreenStr[configEntries[i].forceWidescreen]);
-			string_append(configString, txtbuffer);
-			
-			sprintf(txtbuffer, "Force Anisotropy=%s\r\n",(configEntries[i].forceAnisotropy ? "Yes":"No"));
-			string_append(configString, txtbuffer);
+		strnscpy(buffer, &configEntries[i].game_name[0], 32);
+		sprintf(txtbuffer, "Name=%s\r\n",buffer);
+		string_append(configString, txtbuffer);
+		
+		strnscpy(buffer, &configEntries[i].comment[0], 128);
+		sprintf(txtbuffer, "Comment=%s\r\n",buffer);
+		string_append(configString, txtbuffer);
+		
+		strnscpy(buffer, &configEntries[i].status[0], 32);
+		sprintf(txtbuffer, "Status=%s\r\n",buffer);
+		string_append(configString, txtbuffer);
+		
+		sprintf(txtbuffer, "Force Video Mode=%s\r\n",gameVModeStr[configEntries[i].gameVMode]);
+		string_append(configString, txtbuffer);
+		
+		sprintf(txtbuffer, "Soft Progressive=%s\r\n",softProgressiveStr[configEntries[i].softProgressive]);
+		string_append(configString, txtbuffer);
+		
+		sprintf(txtbuffer, "Mute Audio Streaming=%s\r\n",(configEntries[i].muteAudioStreaming ? "Yes":"No"));
+		string_append(configString, txtbuffer);
+				
+		sprintf(txtbuffer, "Force Widescreen=%s\r\n",forceWidescreenStr[configEntries[i].forceWidescreen]);
+		string_append(configString, txtbuffer);
+		
+		sprintf(txtbuffer, "Force Anisotropy=%s\r\n",(configEntries[i].forceAnisotropy ? "Yes":"No"));
+		string_append(configString, txtbuffer);
 
-			sprintf(txtbuffer, "Force Encoding=%s\r\n\r\n\r\n",forceEncodingStr[configEntries[i].forceEncoding]);
-			string_append(configString, txtbuffer);
-		}
-
-		file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
-		sprintf(configFile->name, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
-
-		u32 len = strlen(configString->mem);
-		if(devices[DEVICE_CONFIG]->writeFile(configFile, configString->mem, len) == len) {
-			devices[DEVICE_CONFIG]->closeFile(configFile);
-			return 1;
-		}
-		else {
-			return 0;
-		}
+		sprintf(txtbuffer, "Force Encoding=%s\r\n\r\n\r\n",forceEncodingStr[configEntries[i].forceEncoding]);
+		string_append(configString, txtbuffer);
 	}
+
+	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
+	sprintf(configFile->name, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
+
+	u32 len = strlen(configString->mem);
+
+	if(devices[DEVICE_CONFIG]->writeFile(configFile, configString->mem, len) == len) {
+		devices[DEVICE_CONFIG]->closeFile(configFile);
+		if(devices[DEVICE_CONFIG] != devices[DEVICE_CUR]) {
+			devices[DEVICE_CONFIG]->deinit(devices[DEVICE_CONFIG]->initial);
+		}
+		return 1;
+	}
+	else {
+		return 0;
+	}
+
 	return 1;
 }
 

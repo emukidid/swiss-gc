@@ -22,15 +22,27 @@ char *forceWidescreenStr[] = {"No", "Persp", "Yes"};
 char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "boot.bin", "USB Flash"};
 syssram* sram;
+syssramex* sramex;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {7, 9, 8};
+int settings_count_pp[3] = {8, 9, 8};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
 	swissSettings.sramStereo = sram->flags & 4;
 	swissSettings.sramLanguage = sram->lang;
 	__SYS_UnlockSram(0);
+	sramex = __SYS_LockSramEx();
+	swissSettings.configDeviceId = sramex->__padding0;
+	if(swissSettings.configDeviceId > DEVICE_ID_MAX || !(allDevices[swissSettings.configDeviceId]->features & FEAT_WRITE)) {
+		swissSettings.configDeviceId = DEVICE_ID_UNK;
+	}
+	__SYS_UnlockSramEx(0);
+}
+
+char* getConfigDeviceName() {
+	DEVICEHANDLER_INTERFACE *configDevice = getDeviceByUniqueId(swissSettings.configDeviceId);
+	return configDevice != NULL ? (configDevice->deviceName) : "None";
 }
 
 void settings_draw_page(int page_num, int option, file_handle *file) {
@@ -42,31 +54,40 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 	// IPL/Game Language [English/German/French/Spanish/Italian/Dutch]
 	// IPL/Game Audio [Mono/Stereo]
 	// SD/IDE Speed [16/32 MHz]
-	// Swiss Video Mode [576i (PAL 50Hz), 480i (NTSC 60Hz), 480p (NTSC 60Hz)]
-	// Stop DVD Motor on startup [Yes/No]
+	// Swiss Video Mode [576i (PAL 50Hz), 480i (NTSC 60Hz), 480p (NTSC 60Hz), etc]
+	// In Game Reset [Yes/No]
+	// Configuration Device [Writable device name]
 
 	/** Advanced Settings (Page 2/) */
 	// Enable USB Gecko Debug via Slot B [Yes/No]
-	// Force No DVD Drive Mode [Yes/No]
-	// Hide Unknown file types [Yes/No]	// TO BE IMPLEMENTED
+	// Hide Unknown file types [Yes/No]	// TODO Implement
+	// Stop DVD Motor on startup [Yes/No]
+	// Enable WiiRD debugging in Games [Yes/No]
+	// Enable File Management [Yes/No]
+	// Auto-load all cheats [Yes/No]
 	
 	/** Current Game Settings - only if a valid GCM file is highlighted (Page 3/) */
-	// Force Video Mode [576i (PAL 50Hz), 480i (NTSC 60Hz), 480p (NTSC 60Hz), Auto]
-	// Mute Audio Streaming [Yes/No]
-	// Try to mute audio stutter [Yes/No]
+	// Force Video Mode [576i (PAL 50Hz), 480i (NTSC 60Hz), 480p (NTSC 60Hz), Auto, etc]
+	// If Progressive, Soften [No/Yes/Soften]
+	// Force Widescreen [Yes/No/Persp]
+	// Force Anistropy [Yes/No]
+	// Disable Audio Streaming [Yes/No]
+	// Force Encoding [Auto/SJIS]
 
 	if(!page_num) {
 		WriteFont(30, 65, "Global Settings (1/3):");
 		WriteFontStyled(30, 120, "IPL/Game Language:", 1.0f, false, defaultColor);
-		DrawSelectableButton(400, 120, -1, 150, getSramLang(swissSettings.sramLanguage), option == 0 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(320, 120, -1, 150, getSramLang(swissSettings.sramLanguage), option == 0 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 160, "IPL/Game Audio:", 1.0f, false, defaultColor);
-		DrawSelectableButton(400, 160, -1, 190, swissSettings.sramStereo ? "Stereo":"Mono", option == 1 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(320, 160, -1, 190, swissSettings.sramStereo ? "Stereo":"Mono", option == 1 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 200, "SD/IDE Speed:", 1.0f, false, defaultColor);
-		DrawSelectableButton(400, 200, -1, 230, swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == 2 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(320, 200, -1, 230, swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == 2 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 240, "Swiss Video Mode:", 1.0f, false, defaultColor);
-		DrawSelectableButton(400, 240, -1, 270, uiVModeStr[swissSettings.uiVMode], option == 3 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(320, 240, -1, 270, uiVModeStr[swissSettings.uiVMode], option == 3 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 280, "In-Game-Reset:", 1.0f, false, defaultColor);
-		DrawSelectableButton(400, 280, -1, 310, igrTypeStr[swissSettings.igrType], option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(320, 280, -1, 310, igrTypeStr[swissSettings.igrType], option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 320, "Config Device:", 1.0f, false, defaultColor);
+		DrawSelectableButton(320, 320, -1, 350, getConfigDeviceName(), option == 5 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	else if(page_num == 1) {
 		WriteFont(30, 65, "Advanced Settings (2/3):");
@@ -140,6 +161,48 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 					swissSettings.igrType = 0;
 				if(swissSettings.igrType < 0)
 					swissSettings.igrType = 3;
+			break;
+			case 5:
+			{
+				int curDevicePos = -1;
+				
+				// Set it to the first writable device available
+				if(swissSettings.configDeviceId == DEVICE_ID_UNK) {
+					for(int i = 0; i < MAX_DEVICES; i++) {
+						if(allDevices[i] != NULL && (allDevices[i]->features & FEAT_WRITE)) {
+							swissSettings.configDeviceId = allDevices[i]->deviceUniqueId;
+							return;
+						}
+					}
+				}
+				
+				// get position in allDevices for current save device
+				for(int i = 0; i < MAX_DEVICES; i++) {
+					if(allDevices[i] != NULL && allDevices[i]->deviceUniqueId == swissSettings.configDeviceId) {
+						curDevicePos = i;
+						break;
+					}
+				}
+
+				if(curDevicePos >= 0) {
+					if(direction > 0) {
+						curDevicePos = allDevices[curDevicePos+1] == NULL ? 0 : curDevicePos+1;
+					}
+					else {
+						curDevicePos = curDevicePos > 0 ? curDevicePos-1 : 0;
+					}
+					// Go to next writable device
+					while(!(allDevices[curDevicePos] != NULL && allDevices[curDevicePos]->features & FEAT_WRITE)) {
+						if((curDevicePos == 0 && direction < 0) || allDevices[curDevicePos] == NULL)
+							curDevicePos = direction > 0 ? 0 : MAX_DEVICES;
+						else
+							curDevicePos += direction;
+					}
+					if(allDevices[curDevicePos] != NULL) {
+						swissSettings.configDeviceId = allDevices[curDevicePos]->deviceUniqueId;
+					}
+				}
+			}
 			break;
 		}	
 	}
@@ -287,6 +350,9 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				sram->flags = swissSettings.sramStereo ? (sram->flags|0x04):(sram->flags&~0x04);
 				sram->flags = (swissSettings.sramVideo&0x03)|(sram->flags&~0x03);
 				__SYS_UnlockSram(1);
+				sramex = __SYS_LockSramEx();
+				sramex->__padding0 = swissSettings.configDeviceId;
+				__SYS_UnlockSramEx(1);
 				while(!__SYS_SyncSram());
 				// Update our .ini
 				if(config != NULL) {

@@ -48,6 +48,8 @@ extern s32 sdgecko_setHS(s32 drv_no);
 
 extern syssram* __SYS_LockSram();
 extern u32 __SYS_UnlockSram(u32 write);
+extern syssramex* __SYS_LockSramEx();
+extern u32 __SYS_UnlockSramEx(u32 write);
 
 extern char *getVideoString();
 void print_gecko(const char* fmt, ...);
@@ -95,6 +97,7 @@ typedef struct {
 	char smbServerIp[128];	//80
 	int autoCheats;
 	int igrType;
+	u8 configDeviceId;	// see deviceHandler.h 
 } SwissSettings __attribute__((aligned(32)));
 extern SwissSettings swissSettings;
 
