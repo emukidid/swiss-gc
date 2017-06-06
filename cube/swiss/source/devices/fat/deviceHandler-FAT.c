@@ -69,7 +69,6 @@ file_handle initial_IDE_B =
 
 device_info initial_FAT_info = {
 	0,
-	0,
 	0
 };
 	
@@ -382,7 +381,6 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 	}
 	if(ret)
 		readDeviceInfo(file);
-	initial_FAT_info.textureId = isSDCard ? TEX_SDSMALL:TEX_HDD;
 	return ret;
 }
 

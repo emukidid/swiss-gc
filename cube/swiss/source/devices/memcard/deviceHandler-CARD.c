@@ -36,7 +36,6 @@ file_handle initial_CARDB =
 };
 
 device_info initial_CARD_info = {
-	TEX_MEMCARD,
 	0,
 	0
 };

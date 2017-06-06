@@ -327,10 +327,7 @@ void main_loop()
 			deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], false);
 			return;
 		}
-		deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], true);
-		// load config from current device or if it's not there, try from devices[DEVICE_CONFIG]
-		load_config();
-		
+		deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], true);	
 	}
 	else {
 		curMenuLocation=ON_OPTIONS;
@@ -490,7 +487,7 @@ int main ()
 	// Scan here since some devices would already be initialised (faster)
 	populateDeviceAvailability();
 	
-	// load config if we got a device
+	// load config
 	load_config();
 	
 	// Start up the BBA if it exists

@@ -35,7 +35,6 @@ typedef struct {
 } file_handle;
 
 typedef struct {
-	int textureId;
 	u32 freeSpaceInKB;		// 4TB Max
 	u32 totalSpaceInKB;		// 4TB Max
 } device_info;

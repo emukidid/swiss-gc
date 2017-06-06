@@ -13,6 +13,7 @@
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "main.h"
+#include "swiss.h"
 #include "dvd.h"
 #include "WodeInterface.h"
 
@@ -29,7 +30,6 @@ file_handle initial_WODE =
 	  DRV_ERROR
 	};
 device_info initial_WODE_info = {
-	TEX_WODEIMG,
 	0,
 	0
 };
@@ -129,7 +129,7 @@ s32 deviceHandler_WODE_closeFile(file_handle* file) {
 }
 
 bool deviceHandler_WODE_test() {
-	return true;
+	return swissSettings.hasDVDDrive && (*(u32*)&driveVersion[0] == 0x20080714);
 }
 
 DEVICEHANDLER_INTERFACE __device_wode = {
@@ -137,7 +137,7 @@ DEVICEHANDLER_INTERFACE __device_wode = {
 	"WODE Jukebox",
 	"Supported File System(s): FAT32, NTFS, EXT2/3, HPFS",
 	{TEX_WODEIMG, 146, 72},
-	FEAT_READ|FEAT_BOOT_GCM/*|FEAT_BOOT_DEVICE*/,	// TODO re-write init to be silent and re-enable this.;
+	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE,
 	LOC_DVD_CONNECTOR,
 	&initial_WODE,
 	(_fn_test)&deviceHandler_WODE_test,

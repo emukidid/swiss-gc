@@ -35,7 +35,6 @@ file_handle initial_DVD =
 };
 
 device_info initial_DVD_info = {
-	TEX_GCDVDSMALL,
 	1425760,
 	1425760
 };

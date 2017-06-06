@@ -27,7 +27,6 @@ file_handle initial_USBGecko =
 	};
 
 device_info initial_USBGecko_info = {
-	TEX_USBGECKO,
 	0,
 	0
 };

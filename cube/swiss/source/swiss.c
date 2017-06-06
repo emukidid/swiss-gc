@@ -287,41 +287,49 @@ void drawCurrentDevice() {
 		return;
 	device_info* info = (device_info*)devices[DEVICE_CUR]->info();
 
-	DrawTransparentBox(30, 100, 135, 180);	// Device icon + slot box
-	DrawImage(info->textureId, 50, 95, 64, 64, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);	
+	DrawTransparentBox(30, 100, 135, 200);	// Device icon + slot box
+	// Draw the device image
+	float scale = 80.0f / (float)MAX(devices[DEVICE_CUR]->deviceTexture.width, devices[DEVICE_CUR]->deviceTexture.height);
+	int scaledWidth = devices[DEVICE_CUR]->deviceTexture.width*scale;
+	int scaledHeight = devices[DEVICE_CUR]->deviceTexture.height*scale;
+	DrawImage(devices[DEVICE_CUR]->deviceTexture.textureId
+				, 30 + ((135-30) / 2) - (scaledWidth/2), 95 + ((200-100) /2) - (scaledHeight/2)	// center x,y
+				, scaledWidth, scaledHeight, // scaled image
+				0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	if(devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)
-		WriteFontStyled(50, 160, "Slot A", 0.65f, false, defaultColor);
-	if(devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_B)
-		WriteFontStyled(50, 160, "Slot B", 0.65f, false, defaultColor);
-	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR)
-		WriteFontStyled(50, 160, "DVD Device", 0.65f, false, defaultColor);
-	if(devices[DEVICE_CUR]->location == LOC_SERIAL_PORT_1)
-		WriteFontStyled(50, 160, "Serial Port 1", 0.65f, false, defaultColor);
-	if(devices[DEVICE_CUR]->location == LOC_SERIAL_PORT_2)
-		WriteFontStyled(50, 160, "Serial Port 2", 0.65f, false, defaultColor);
-	if(devices[DEVICE_CUR]->location == LOC_SYSTEM)
-		WriteFontStyled(50, 160, "System", 0.65f, false, defaultColor);
-
-	DrawTransparentBox(30, 200, 135, 305);	// Device size/extra info box
-	WriteFontStyled(30, 200, "Total:", 0.6f, false, defaultColor);
+		sprintf(txtbuffer, "%s", "Slot A");
+	else if(devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_B)
+		sprintf(txtbuffer, "%s", "Slot B");
+	else if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR)
+		sprintf(txtbuffer, "%s", "DVD Device");
+	else if(devices[DEVICE_CUR]->location == LOC_SERIAL_PORT_1)
+		sprintf(txtbuffer, "%s", "Serial Port 1");
+	else if(devices[DEVICE_CUR]->location == LOC_SERIAL_PORT_2)
+		sprintf(txtbuffer, "%s", "Serial Port 2");
+	else if(devices[DEVICE_CUR]->location == LOC_SYSTEM)
+		sprintf(txtbuffer, "%s", "System");
+	
+	WriteFontStyled(30 + ((135-30) / 2), 190, txtbuffer, 0.65f, true, defaultColor);
+	DrawTransparentBox(30, 220, 135, 325);	// Device size/extra info box
+	WriteFontStyled(30, 220, "Total:", 0.6f, false, defaultColor);
 	if(info->totalSpaceInKB < 1024)	// < 1 MB
 		sprintf(txtbuffer,"%ldKB", info->totalSpaceInKB);
 	if(info->totalSpaceInKB < 1024*1024)	// < 1 GB
 		sprintf(txtbuffer,"%.2fMB", (float)info->totalSpaceInKB/1024);
 	else
 		sprintf(txtbuffer,"%.2fGB", (float)info->totalSpaceInKB/(1024*1024));
-	WriteFontStyled(60, 215, txtbuffer, 0.6f, false, defaultColor);
+	WriteFontStyled(60, 235, txtbuffer, 0.6f, false, defaultColor);
 	
-	WriteFontStyled(30, 235, "Free:", 0.6f, false, defaultColor);
+	WriteFontStyled(30, 255, "Free:", 0.6f, false, defaultColor);
 	if(info->freeSpaceInKB < 1024)	// < 1 MB
 		sprintf(txtbuffer,"%ldKB", info->freeSpaceInKB);
 	if(info->freeSpaceInKB < 1024*1024)	// < 1 GB
 		sprintf(txtbuffer,"%.2fMB", (float)info->freeSpaceInKB/1024);
 	else
 		sprintf(txtbuffer,"%.2fGB", (float)info->freeSpaceInKB/(1024*1024));
-	WriteFontStyled(60, 250, txtbuffer, 0.6f, false, defaultColor);
+	WriteFontStyled(60, 270, txtbuffer, 0.6f, false, defaultColor);
 	
-	WriteFontStyled(30, 270, "Used:", 0.6f, false, defaultColor);
+	WriteFontStyled(30, 290, "Used:", 0.6f, false, defaultColor);
 	u32 usedSpaceInKB = (info->totalSpaceInKB)-(info->freeSpaceInKB);
 	if(usedSpaceInKB < 1024)	// < 1 MB
 		sprintf(txtbuffer,"%ldKB", usedSpaceInKB);
@@ -329,7 +337,7 @@ void drawCurrentDevice() {
 		sprintf(txtbuffer,"%.2fMB", (float)usedSpaceInKB/1024);
 	else
 		sprintf(txtbuffer,"%.2fGB", (float)usedSpaceInKB/(1024*1024));
-	WriteFontStyled(60, 285, txtbuffer, 0.6f, false, defaultColor);
+	WriteFontStyled(60, 305, txtbuffer, 0.6f, false, defaultColor);
 }
 
 // Draws all the files in the current dir.

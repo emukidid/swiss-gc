@@ -36,7 +36,6 @@ file_handle initial_WKF =
 
 
 device_info initial_WKF_info = {
-	TEX_WIIKEY,
 	0,
 	0
 };

@@ -30,7 +30,6 @@ file_handle initial_Qoob =
 	};
 	
 device_info initial_Qoob_info = {
-	TEX_QOOB,
 	0,
 	2048
 };

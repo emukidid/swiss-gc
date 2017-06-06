@@ -53,7 +53,6 @@ file_handle initial_SMB =
 	};
 
 device_info initial_SMB_info = {
-	TEX_SAMBA,
 	0,
 	0
 };

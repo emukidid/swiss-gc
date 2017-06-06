@@ -71,7 +71,6 @@ file_handle initial_SYS =
 
 device_info initial_SYS_info =
 {
-	TEX_SYSTEM,
 	0,
 	0
 };
