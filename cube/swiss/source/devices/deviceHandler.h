@@ -27,12 +27,12 @@ typedef struct {
 	uint64_t fileBase;   	// Raw sector on device
 	u32 offset;    			// Offset in the file
 	u32 size;      			// size of the file
-	int fileAttrib;        	// IS_FILE or IS_DIR
-	int status;            	// is the device ok
+	s32 fileAttrib;        	// IS_FILE or IS_DIR
+	s32 status;            	// is the device ok
 	FILE *fp;				// file pointer
 	file_meta *meta;
 	u8 other[128];			// Store anything else we want here
-} file_handle;
+} file_handle;	// Note: If the contents of this change, recompile pc/usbgecko/main.c
 
 typedef struct {
 	u32 freeSpaceInKB;		// 4TB Max

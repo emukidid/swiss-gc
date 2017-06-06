@@ -17,21 +17,21 @@
 	res; })
 
 // Returns 1 if the PC side is ready, 0 otherwise
-int usbgecko_pc_ready();
+s32 usbgecko_pc_ready();
 
 // Read from the remote file, returns amount read
-int usbgecko_read_file(void *buffer, u32 length, u32 offset, char* filename);
+s32 usbgecko_read_file(void *buffer, u32 length, u32 offset, char* filename);
 
 // Write to the remote file, returns amount written
-int usbgecko_write_file(void *buffer, u32 length, u32 offset, char* filename);
+s32 usbgecko_write_file(void *buffer, u32 length, u32 offset, char* filename);
 
 // Opens a directory on the PC end
-int usbgecko_open_dir(char *filename);
+s32 usbgecko_open_dir(char *filename);
 
 // Returns the next file in the directory opened with usbgecko_open_dir, NULL on end.
 file_handle* usbgecko_get_entry();
 
-void usbgecko_lock_file(int lock);
+void usbgecko_lock_file(s32 lock);
 
 #endif
 

@@ -42,7 +42,7 @@ void refreshSRAM() {
 
 char* getConfigDeviceName() {
 	DEVICEHANDLER_INTERFACE *configDevice = getDeviceByUniqueId(swissSettings.configDeviceId);
-	return configDevice != NULL ? (configDevice->deviceName) : "None";
+	return configDevice != NULL ? (char*)(configDevice->deviceName) : "None";
 }
 
 void settings_draw_page(int page_num, int option, file_handle *file) {

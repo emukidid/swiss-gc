@@ -309,7 +309,7 @@ void drawCurrentDevice() {
 	else if(devices[DEVICE_CUR]->location == LOC_SYSTEM)
 		sprintf(txtbuffer, "%s", "System");
 	
-	WriteFontStyled(30 + ((135-30) / 2), 190, txtbuffer, 0.65f, true, defaultColor);
+	WriteFontStyled(30 + ((135-30) / 2), 195, txtbuffer, 0.65f, true, defaultColor);
 	DrawTransparentBox(30, 220, 135, 325);	// Device size/extra info box
 	WriteFontStyled(30, 220, "Total:", 0.6f, false, defaultColor);
 	if(info->totalSpaceInKB < 1024)	// < 1 MB
@@ -1444,7 +1444,7 @@ void draw_game_info() {
 		WriteFontStyled(640/2, 220, (GCMDisk.DiscID ? "Disc 2":""), 0.8f, true, defaultColor);
 	}
 
-	WriteFontStyled(640/2, 370, "Settings (X) - Cheats (Y) - Exit (B) - Continue (A)", 0.75f, true, defaultColor);
+	WriteFontStyled(640/2, 370, "Settings (X) - Cheats (Y) - Exit (B) - Boot (A)", 0.75f, true, defaultColor);
 	DrawFrameFinish();
 }
 
@@ -1481,8 +1481,9 @@ int info_game()
 		// Look for a cheats file based on the GameID
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
 			int num_cheats = findCheats(false);
-			if(num_cheats == 0) return 0;
-			DrawCheatsSelector(getRelativeName(allFiles[curSelection].name));
+			if(num_cheats != 0) {
+				DrawCheatsSelector(getRelativeName(allFiles[curSelection].name));
+			}
 		}
 		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	}
@@ -1519,12 +1520,12 @@ void select_device(int type)
 
 		doBackdrop();
 		DrawEmptyBox(20,190, vmode->fbWidth-20, 410, COLOR_BLACK);
-		WriteFontStyled(640/2, 195, "Device Selection", 1.0f, true, defaultColor);	// TODO change based on type	
+		WriteFontStyled(640/2, 195, type == DEVICE_DEST ? "Destination Device" : "Device Selection", 1.0f, true, defaultColor);
 
 		textureImage *deviceImage = &allDevices[curDevice]->deviceTexture;
 		DrawImage(deviceImage->textureId, 640/2, 230, deviceImage->width, deviceImage->height, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-		WriteFontStyled(640/2, 330, allDevices[curDevice]->deviceName, 0.85f, true, defaultColor);
-		WriteFontStyled(640/2, 350, allDevices[curDevice]->deviceDescription, 0.65f, true, defaultColor);
+		WriteFontStyled(640/2, 330, (char*)allDevices[curDevice]->deviceName, 0.85f, true, defaultColor);
+		WriteFontStyled(640/2, 350, (char*)allDevices[curDevice]->deviceDescription, 0.65f, true, defaultColor);
 
 		// Memory card port devices, allow for speed selection
 		if(allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B)) {

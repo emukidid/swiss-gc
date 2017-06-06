@@ -34,8 +34,8 @@ file_handle filehndl;
 char served_file[1024];		// The file we're currently being served by the PC
 
 typedef struct {
-	unsigned int offset;    // Offset in the file
-	unsigned int size;      // size to read
+	u32 offset;    // Offset in the file
+	u32 size;      // size to read
 } usb_data_req;
 
 static inline u32 bswap32(u32 val) {
@@ -51,7 +51,7 @@ u8 *get_buffer() {
 }
 
 // Returns 1 if the PC side is ready, 0 otherwise
-int usbgecko_pc_ready() {
+s32 usbgecko_pc_ready() {
 	// Ask PC, are you ready?
 	usb_sendbuffer_safe(1, &ASK_READY, 1);
 	
@@ -63,7 +63,7 @@ int usbgecko_pc_ready() {
 	return 0;
 }
 
-void usbgecko_lock_file(int lock) {
+void usbgecko_lock_file(s32 lock) {
 	
 	if(!lock) {	// Send a zero byte read to end locked mode
 		usb_data_req req;
@@ -101,7 +101,7 @@ void usbgecko_served_file(char *filename) {
 }
 
 // Read from the remote file, returns amount read
-int usbgecko_read_file(void *buffer, u32 length, u32 offset, char* filename) {
+s32 usbgecko_read_file(void *buffer, u32 length, u32 offset, char* filename) {
 	if(!length) return 0;
 	usbgecko_served_file(filename);
 
@@ -114,12 +114,12 @@ int usbgecko_read_file(void *buffer, u32 length, u32 offset, char* filename) {
 }
 
 // Write to the remote file, returns amount written
-int usbgecko_write_file(void *buffer, u32 length, u32 offset, char* filename) {
+s32 usbgecko_write_file(void *buffer, u32 length, u32 offset, char* filename) {
 	return 0;
 }
 
 // Opens a directory on the PC end
-int usbgecko_open_dir(char *filename) {
+s32 usbgecko_open_dir(char *filename) {
 	usbgecko_lock_file(0);
 	// Tell PC, I'm ready to send a path name
 	usb_sendbuffer_safe(1, &ASK_OPENPATH, 1);

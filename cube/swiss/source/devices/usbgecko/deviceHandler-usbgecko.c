@@ -40,7 +40,7 @@ device_info* deviceHandler_USBGecko_info() {
 s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 type){	
   
 	// Set everything up to read
-	int num_entries = 0, i = 0;
+	s32 num_entries = 0, i = 0;
 	file_handle *entry = NULL;
 	if(strlen(ffile->name)!=1) {
 		i = num_entries = 1;
@@ -54,7 +54,7 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 	DrawMessageBox(D_INFO,"Read directory!");
 	DrawFrameFinish();
 	// Read each entry of the directory
-	int res = usbgecko_open_dir(&ffile->name[0]);
+	s32 res = usbgecko_open_dir(&ffile->name[0]);
 	if(!res) return -1;
 	while( (entry = usbgecko_get_entry()) != NULL ){
 		// Make sure we have room for this one
@@ -79,21 +79,21 @@ s32 deviceHandler_USBGecko_seekFile(file_handle* file, s32 where, s32 type){
 }
 
 s32 deviceHandler_USBGecko_readFile(file_handle* file, void* buffer, u32 length){
-	int reallength = length;
+	s32 reallength = length;
 	if(file->offset + length > file->size) {
 		reallength = file->size - file->offset;
 	}
 	if(reallength < 0) {
 		return 0;
 	}
-  	int bytes_read = usbgecko_read_file(buffer, reallength, file->offset, file->name);
+  	s32 bytes_read = usbgecko_read_file(buffer, reallength, file->offset, file->name);
 	if(bytes_read > 0) file->offset += bytes_read;
 	
 	return bytes_read;
 }
 
 s32 deviceHandler_USBGecko_writeFile(file_handle* file, void* buffer, u32 length) {	
-	int bytes_written = usbgecko_write_file(buffer, length, file->offset, file->name);
+	s32 bytes_written = usbgecko_write_file(buffer, length, file->offset, file->name);
 	if(bytes_written > 0) file->offset += bytes_written;
 	
 	return bytes_written;
@@ -103,9 +103,9 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2) {
 	u32 *fragList = (u32*)VAR_FRAG_LIST;
 	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
 	fragList[1] = file->size;
-	*(volatile unsigned int*)VAR_DISC_1_LBA = 0;
-	*(volatile unsigned int*)VAR_DISC_2_LBA = 0;
-	*(volatile unsigned int*)VAR_CUR_DISC_LBA = 0;
+	*(volatile u32*)VAR_DISC_1_LBA = 0;
+	*(volatile u32*)VAR_DISC_2_LBA = 0;
+	*(volatile u32*)VAR_CUR_DISC_LBA = 0;
 	return 1;
 }
 
@@ -114,7 +114,7 @@ s32 deviceHandler_USBGecko_init(file_handle* file) {
 	DrawMessageBox(D_INFO,"Looking for USBGecko in Slot B");
 	DrawFrameFinish();
 	if(usb_isgeckoalive(1)) {
-		int retries = 1000;
+		s32 retries = 1000;
 		
 		DrawFrameStart();
 		DrawMessageBox(D_INFO,"Waiting for PC ...");
