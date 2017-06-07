@@ -34,7 +34,7 @@ void refreshSRAM() {
 	__SYS_UnlockSram(0);
 	sramex = __SYS_LockSramEx();
 	swissSettings.configDeviceId = sramex->__padding0;
-	if(swissSettings.configDeviceId > DEVICE_ID_MAX || !(allDevices[swissSettings.configDeviceId]->features & FEAT_WRITE)) {
+	if(swissSettings.configDeviceId > DEVICE_ID_MAX || !(getDeviceByUniqueId(swissSettings.configDeviceId)->features & FEAT_WRITE)) {
 		swissSettings.configDeviceId = DEVICE_ID_UNK;
 	}
 	__SYS_UnlockSramEx(0);
@@ -350,6 +350,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				sram->flags = swissSettings.sramStereo ? (sram->flags|0x04):(sram->flags&~0x04);
 				sram->flags = (swissSettings.sramVideo&0x03)|(sram->flags&~0x03);
 				__SYS_UnlockSram(1);
+				while(!__SYS_SyncSram());
 				sramex = __SYS_LockSramEx();
 				sramex->__padding0 = swissSettings.configDeviceId;
 				__SYS_UnlockSramEx(1);

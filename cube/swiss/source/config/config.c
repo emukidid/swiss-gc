@@ -124,6 +124,7 @@ int config_init() {
 		char *configData = (char*) memalign(32, configFile->size);
 		configEntriesCount = 0;
 		if (configData) {
+			print_gecko("Config Size %i\r\n", configFile->size);
 			memset(configData, 0, configFile->size);
 			devices[DEVICE_CONFIG]->readFile(configFile, configData, configFile->size);
 			devices[DEVICE_CONFIG]->closeFile(configFile);
@@ -217,7 +218,7 @@ int config_update_file() {
 	sprintf(configFile->name, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
 
 	u32 len = strlen(configString->mem);
-
+	// TODO ask overwrite?
 	if(devices[DEVICE_CONFIG]->writeFile(configFile, configString->mem, len) == len) {
 		devices[DEVICE_CONFIG]->closeFile(configFile);
 		if(devices[DEVICE_CONFIG] != devices[DEVICE_CUR]) {
