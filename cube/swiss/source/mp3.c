@@ -13,8 +13,8 @@ static int volume = 255;
 
 s32 mp3Reader(void *cbdata, void *dst, s32 size) {
 	file_handle *file = cbdata;
-	deviceHandler_seekFile(file,file->offset,DEVICE_HANDLER_SEEK_SET);
-	int ret = deviceHandler_readFile(file,dst,size);
+	devices[DEVICE_CUR]->seekFile(file,file->offset,DEVICE_HANDLER_SEEK_SET);
+	int ret = devices[DEVICE_CUR]->readFile(file,dst,size);
 	return ret;
 }
 

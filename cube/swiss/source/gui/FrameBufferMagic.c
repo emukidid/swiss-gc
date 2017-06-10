@@ -501,14 +501,14 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 	
 	// Print specific stats
 	if(file->fileAttrib==IS_FILE) {
-		if(curDevice == WODE) {
+		if(devices[DEVICE_CUR] == &__device_wode) {
 			ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
 			sprintf(txtbuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
 		}
-		else if(curDevice == MEMCARD) {
+		else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
 			sprintf(txtbuffer,"%.2fKB (%ld blocks)", (float)file->size/1024, file->size/8192);
 		}
-		else if(curDevice == QOOB_FLASH) {
+		else if(devices[DEVICE_CUR] == &__device_qoob) {
 			sprintf(txtbuffer,"%.2fKB (%ld blocks)", (float)file->size/1024, file->size/0x10000);
 		}
 		else {

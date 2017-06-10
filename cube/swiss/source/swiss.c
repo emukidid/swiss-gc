@@ -52,8 +52,6 @@ char txtbuffer[2048];           //temporary text buffer
 file_handle curFile;    //filedescriptor for current file
 file_handle curDir;     //filedescriptor for current directory
 int SDHCCard = 0; //0 == SDHC, 1 == normal SD
-int curDevice = 0;  //SD_CARD or DVD_DISC or IDEEXI or WODE
-int curCopyDevice = 0;  //SD_CARD or DVD_DISC or IDEEXI or WODE
 char *videoStr = NULL;
 int current_view_start = 0;
 int current_view_end = 0;
@@ -285,42 +283,53 @@ char *stripInvalidChars(char *str) {
 }
 
 void drawCurrentDevice() {
-	if(deviceHandler_initial == NULL)
+	if(devices[DEVICE_CUR] == NULL)
 		return;
-	device_info* info = deviceHandler_info();
-	int slot = -1;
-	
-	DrawTransparentBox(30, 100, 135, 180);	// Device icon + slot box
-	DrawImage(info->textureId, 50, 95, 64, 64, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);	
-	if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1)
-		slot = (deviceHandler_initial->name[2] == 'b');
-	else if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1)
-		slot = (deviceHandler_initial->name[3] == 'b');
-	else if(deviceHandler_initial == &initial_CARDA || deviceHandler_initial == &initial_CARDB)
-		slot = (int)deviceHandler_initial->fileBase;
-	if(slot != -1)
-		WriteFontStyled(50, 160, slot?"SLOT B":"SLOT A", 0.65f, false, defaultColor);
+	device_info* info = (device_info*)devices[DEVICE_CUR]->info();
 
-	DrawTransparentBox(30, 200, 135, 305);	// Device size/extra info box
-	WriteFontStyled(30, 200, "Total:", 0.6f, false, defaultColor);
+	DrawTransparentBox(30, 100, 135, 200);	// Device icon + slot box
+	// Draw the device image
+	float scale = 80.0f / (float)MAX(devices[DEVICE_CUR]->deviceTexture.width, devices[DEVICE_CUR]->deviceTexture.height);
+	int scaledWidth = devices[DEVICE_CUR]->deviceTexture.width*scale;
+	int scaledHeight = devices[DEVICE_CUR]->deviceTexture.height*scale;
+	DrawImage(devices[DEVICE_CUR]->deviceTexture.textureId
+				, 30 + ((135-30) / 2) - (scaledWidth/2), 95 + ((200-100) /2) - (scaledHeight/2)	// center x,y
+				, scaledWidth, scaledHeight, // scaled image
+				0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	if(devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)
+		sprintf(txtbuffer, "%s", "Slot A");
+	else if(devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_B)
+		sprintf(txtbuffer, "%s", "Slot B");
+	else if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR)
+		sprintf(txtbuffer, "%s", "DVD Device");
+	else if(devices[DEVICE_CUR]->location == LOC_SERIAL_PORT_1)
+		sprintf(txtbuffer, "%s", "Serial Port 1");
+	else if(devices[DEVICE_CUR]->location == LOC_SERIAL_PORT_2)
+		sprintf(txtbuffer, "%s", "Serial Port 2");
+	else if(devices[DEVICE_CUR]->location == LOC_SYSTEM)
+		sprintf(txtbuffer, "%s", "System");
+	
+	WriteFontStyled(30 + ((135-30) / 2), 195, txtbuffer, 0.65f, true, defaultColor);
+	DrawTransparentBox(30, 220, 135, 325);	// Device size/extra info box
+	WriteFontStyled(30, 220, "Total:", 0.6f, false, defaultColor);
 	if(info->totalSpaceInKB < 1024)	// < 1 MB
 		sprintf(txtbuffer,"%ldKB", info->totalSpaceInKB);
 	if(info->totalSpaceInKB < 1024*1024)	// < 1 GB
 		sprintf(txtbuffer,"%.2fMB", (float)info->totalSpaceInKB/1024);
 	else
 		sprintf(txtbuffer,"%.2fGB", (float)info->totalSpaceInKB/(1024*1024));
-	WriteFontStyled(60, 215, txtbuffer, 0.6f, false, defaultColor);
+	WriteFontStyled(60, 235, txtbuffer, 0.6f, false, defaultColor);
 	
-	WriteFontStyled(30, 235, "Free:", 0.6f, false, defaultColor);
+	WriteFontStyled(30, 255, "Free:", 0.6f, false, defaultColor);
 	if(info->freeSpaceInKB < 1024)	// < 1 MB
 		sprintf(txtbuffer,"%ldKB", info->freeSpaceInKB);
 	if(info->freeSpaceInKB < 1024*1024)	// < 1 GB
 		sprintf(txtbuffer,"%.2fMB", (float)info->freeSpaceInKB/1024);
 	else
 		sprintf(txtbuffer,"%.2fGB", (float)info->freeSpaceInKB/(1024*1024));
-	WriteFontStyled(60, 250, txtbuffer, 0.6f, false, defaultColor);
+	WriteFontStyled(60, 270, txtbuffer, 0.6f, false, defaultColor);
 	
-	WriteFontStyled(30, 270, "Used:", 0.6f, false, defaultColor);
+	WriteFontStyled(30, 290, "Used:", 0.6f, false, defaultColor);
 	u32 usedSpaceInKB = (info->totalSpaceInKB)-(info->freeSpaceInKB);
 	if(usedSpaceInKB < 1024)	// < 1 MB
 		sprintf(txtbuffer,"%ldKB", usedSpaceInKB);
@@ -328,7 +337,7 @@ void drawCurrentDevice() {
 		sprintf(txtbuffer,"%.2fMB", (float)usedSpaceInKB/1024);
 	else
 		sprintf(txtbuffer,"%.2fGB", (float)usedSpaceInKB/(1024*1024));
-	WriteFontStyled(60, 285, txtbuffer, 0.6f, false, defaultColor);
+	WriteFontStyled(60, 305, txtbuffer, 0.6f, false, defaultColor);
 }
 
 // Draws all the files in the current dir.
@@ -429,7 +438,7 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 	while(1){
 		// Read the directory
 		if(refresh) {
-			num_files = deviceHandler_dest_readDir(&curDir, &directories, IS_DIR);
+			num_files = devices[DEVICE_DEST]->readDir(&curDir, &directories, IS_DIR);
 			sortFiles(directories, num_files);
 			refresh = idx = 0;
 		}
@@ -493,8 +502,8 @@ unsigned int load_app(int multiDol)
 	memcpy((void*)0x80000020,GC_DefaultConfig,0xE0);
   
 	// Read the game header to 0x80000000 & apploader header
-	deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
-	if(deviceHandler_readFile(&curFile,(unsigned char*)0x80000000,32) != 32) {
+	devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
+	if(devices[DEVICE_CUR]->readFile(&curFile,(unsigned char*)0x80000000,32) != 32) {
 		DrawFrameStart();
 		DrawMessageBox(D_FAIL, "Game Header Failed to read");
 		DrawFrameFinish();
@@ -515,7 +524,7 @@ unsigned int load_app(int multiDol)
 	}
 	
 	// Don't needlessly apply audio streaming if the game doesn't want it
-	if(!GCMDisk.AudioStreaming || curDevice == WKF || curDevice == DVD_DISC) {
+	if(!GCMDisk.AudioStreaming || devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR] == &__device_dvd) {
 		swissSettings.muteAudioStreaming = 1;
 	}
 	if(!strncmp((const char*)0x80000000, "PZL", 3))
@@ -532,8 +541,8 @@ unsigned int load_app(int multiDol)
 	
 	// Read FST to top of Main Memory (round to 32 byte boundary)
 	u32 fstSizeAligned = GCMDisk.MaxFSTSize + (32-(GCMDisk.MaxFSTSize%32));
-	deviceHandler_seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
-	if(deviceHandler_readFile(&curFile,(void*)(top_of_main_ram-fstSizeAligned),GCMDisk.MaxFSTSize) != GCMDisk.MaxFSTSize) {
+	devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
+	if(devices[DEVICE_CUR]->readFile(&curFile,(void*)(top_of_main_ram-fstSizeAligned),GCMDisk.MaxFSTSize) != GCMDisk.MaxFSTSize) {
 		DrawFrameStart();
 		DrawMessageBox(D_FAIL, "Failed to read fst.bin");
 		DrawFrameFinish();
@@ -541,8 +550,8 @@ unsigned int load_app(int multiDol)
 	}
 	
 	// Read bi2.bin (Disk Header Information) to just under the FST
-	deviceHandler_seekFile(&curFile,0x440,DEVICE_HANDLER_SEEK_SET);
-	if(deviceHandler_readFile(&curFile,(void*)(top_of_main_ram-fstSizeAligned-0x2000),0x2000) != 0x2000) {
+	devices[DEVICE_CUR]->seekFile(&curFile,0x440,DEVICE_HANDLER_SEEK_SET);
+	if(devices[DEVICE_CUR]->readFile(&curFile,(void*)(top_of_main_ram-fstSizeAligned-0x2000),0x2000) != 0x2000) {
 		DrawFrameStart();
 		DrawMessageBox(D_FAIL, "Failed to read bi2.bin");
 		DrawFrameFinish();
@@ -563,8 +572,8 @@ unsigned int load_app(int multiDol)
 	print_gecko("Main DOL Lives at %08X\r\n", GCMDisk.DOLOffset);
 	
 	// Read the Main DOL header
-	deviceHandler_seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
-	if(deviceHandler_readFile(&curFile,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
+	devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
+	if(devices[DEVICE_CUR]->readFile(&curFile,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
 		DrawFrameStart();
 		DrawMessageBox(D_FAIL, "Failed to read Main DOL Header");
 		DrawFrameFinish();
@@ -585,8 +594,8 @@ unsigned int load_app(int multiDol)
 	// Read the entire Main DOL
 	main_dol_buffer = (u8*)memalign(32,main_dol_size+DOLHDRLENGTH);
 	print_gecko("Main DOL buffer %08X\r\n", (u32)main_dol_buffer);
-	deviceHandler_seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
-	if(deviceHandler_readFile(&curFile,(void*)main_dol_buffer,main_dol_size+DOLHDRLENGTH) != main_dol_size+DOLHDRLENGTH) {
+	devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
+	if(devices[DEVICE_CUR]->readFile(&curFile,(void*)main_dol_buffer,main_dol_size+DOLHDRLENGTH) != main_dol_size+DOLHDRLENGTH) {
 		DrawFrameStart();
 		DrawMessageBox(D_FAIL, "Failed to read Main DOL");
 		DrawFrameFinish();
@@ -594,9 +603,7 @@ unsigned int load_app(int multiDol)
 	}
 
 	// Patch to read from SD/HDD/USBGecko/WKF (if frag req or audio streaming)
-	if((curDevice == SD_CARD)
-		||(curDevice == IDEEXI)
-		||(curDevice == USBGECKO)) {
+	if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
 		u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 		if(READ_PATCHED_ALL != ret)	{
 			DrawFrameStart();
@@ -607,7 +614,7 @@ unsigned int load_app(int multiDol)
 	}
 	
 	// Only set up the WKF fragmentation patch if we have to.
-	if(curDevice == WKF && wkfFragSetupReq) {
+	if(devices[DEVICE_CUR] == &__device_wkf && wkfFragSetupReq) {
 		u32 ret = Patch_DVDLowLevelReadForWKF(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 		if(1 != ret) {
 			DrawFrameStart();
@@ -622,11 +629,11 @@ unsigned int load_app(int multiDol)
 	Patch_GameSpecific(main_dol_buffer, main_dol_size+DOLHDRLENGTH, gameID, PATCH_DOL);
 
 	// 2 Disc support with no modchip
-	if((curDevice == DVD_DISC) && (is_gamecube()) && (drive_status == DEBUG_MODE)) {
+	if((devices[DEVICE_CUR] == &__device_dvd) && (is_gamecube()) && (drive_status == DEBUG_MODE)) {
 		Patch_DVDReset(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	// Support patches for multi-dol discs that need to read patched data from SD
-	if(multiDol && curDevice == DVD_DISC && is_gamecube()) {
+	if(multiDol && devices[DEVICE_CUR] == &__device_dvd && is_gamecube()) {
 		Patch_DVDLowLevelReadForDVD(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 	
@@ -672,8 +679,8 @@ unsigned int load_app(int multiDol)
 	}
 	
 	// Don't spin down the drive when running something from it...
-	if(curDevice != DVD_DISC) {
-		deviceHandler_deinit(&curFile);
+	if(devices[DEVICE_CUR] != &__device_dvd) {
+		devices[DEVICE_CUR]->deinit(&curFile);
 	}
 	
 	DrawFrameStart();
@@ -687,13 +694,13 @@ unsigned int load_app(int multiDol)
 	ICInvalidateRange((void*)0x80000000, 0x3100);
 	
 	// Try a device speed test using the actual in-game read code
-	if((curDevice == SD_CARD)||(curDevice == IDEEXI)||(curDevice == USBGECKO)) {
+	if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
 		print_gecko("Attempting speed test\r\n");
 		char *buffer = memalign(32,1024*1024);
 		typedef u32 (*_calc_speed) (void* dst, u32 len, u32 *speed);
 		_calc_speed calculate_speed = (_calc_speed) (void*)(CALC_SPEED);
 		u32 speed = 0;
-		if(curDevice == IDEEXI) {
+		if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b) {
 			calculate_speed(buffer, 1024*1024, &speed);	//Once more for HDD seek
 			speed = 0;
 		}
@@ -728,7 +735,7 @@ unsigned int load_app(int multiDol)
 	}
 		
 	// Set WKF base offset if not using the frag or audio streaming patch
-	if(curDevice == WKF /*&& !wkfFragSetupReq && swissSettings.muteAudioStreaming*/) {
+	if(devices[DEVICE_CUR] == &__device_wkf /*&& !wkfFragSetupReq && swissSettings.muteAudioStreaming*/) {
 		wkfWriteOffset(*(volatile unsigned int*)VAR_DISC_1_LBA);
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
@@ -758,9 +765,9 @@ void boot_dol()
 		DrawProgressBar((int)((float)((float)i/(float)curFile.size)*100), txtbuffer);
 		DrawFrameFinish();
     
-		deviceHandler_seekFile(&curFile,i,DEVICE_HANDLER_SEEK_SET);
+		devices[DEVICE_CUR]->seekFile(&curFile,i,DEVICE_HANDLER_SEEK_SET);
 		int size = i+131072 > curFile.size ? curFile.size-i : 131072; 
-		if(deviceHandler_readFile(&curFile,ptr,size)!=size) {
+		if(devices[DEVICE_CUR]->readFile(&curFile,ptr,size)!=size) {
 			DrawFrameStart();
 			DrawMessageBox(D_FAIL,"Failed to read DOL. Press A.");
 			DrawFrameFinish();
@@ -783,8 +790,8 @@ void boot_dol()
 			file_handle *argFile = &allFiles[i];
 			char *cli_buffer = memalign(32, argFile->size);
 			if(cli_buffer) {
-				deviceHandler_seekFile(argFile, 0, DEVICE_HANDLER_SEEK_SET);
-				deviceHandler_readFile(argFile, cli_buffer, argFile->size);
+				devices[DEVICE_CUR]->seekFile(argFile, 0, DEVICE_HANDLER_SEEK_SET);
+				devices[DEVICE_CUR]->readFile(argFile, cli_buffer, argFile->size);
 
 				// CLI support
 				if(endsWith(allFiles[i].name,".cli")) {
@@ -824,7 +831,7 @@ void boot_dol()
 		}
 	}
 
-	if(deviceHandler_deinit && deviceHandler_initial) deviceHandler_deinit( deviceHandler_initial );
+	if(devices[DEVICE_CUR] != NULL) devices[DEVICE_CUR]->deinit( devices[DEVICE_CUR]->initial );
 	// Boot
 	DOLtoARAM(dol_buffer, argc, argc == 0 ? NULL : argv);
 }
@@ -843,7 +850,7 @@ void manage_file() {
 		WriteFontStyled(640/2, 160, "Manage File:", 1.0f, true, defaultColor);
 		float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), vmode->fbWidth-10-10);
 		WriteFontStyled(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor);
-		if(deviceHandler_deleteFile) {
+		if(devices[DEVICE_CUR]->features & FEAT_WRITE) {
 			WriteFontStyled(640/2, 230, "(A) Load (X) Copy (Y) Move (Z) Delete", 1.0f, true, defaultColor);
 		}
 		else {
@@ -860,12 +867,12 @@ void manage_file() {
 				while(PAD_ButtonsHeld(0) & PAD_BUTTON_X){ VIDEO_WaitVSync (); }
 				break;
 			}
-			if(deviceHandler_deleteFile && (buttons & PAD_BUTTON_Y)) {
+			if((devices[DEVICE_CUR]->features & FEAT_WRITE) && (buttons & PAD_BUTTON_Y)) {
 				option = MOVE_OPTION;
 				while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
 				break;
 			}
-			if(deviceHandler_deleteFile && (buttons & PAD_TRIGGER_Z)) {
+			if((devices[DEVICE_CUR]->features & FEAT_WRITE) && (buttons & PAD_TRIGGER_Z)) {
 				option = DELETE_OPTION;
 				while(PAD_ButtonsHeld(0) & PAD_TRIGGER_Z){ VIDEO_WaitVSync (); }
 				break;
@@ -881,7 +888,7 @@ void manage_file() {
 	
 		// If delete, delete it + refresh the device
 		if(option == DELETE_OPTION) {
-			if(!deviceHandler_deleteFile(&curFile)) {
+			if(!devices[DEVICE_CUR]->deleteFile(&curFile)) {
 				//go up a folder
 				int len = strlen(&curFile.name[0]);
 				while(len && curFile.name[len-1]!='/') {
@@ -904,38 +911,29 @@ void manage_file() {
 		else if((option == COPY_OPTION) || (option == MOVE_OPTION)) {
 			u32 ret = 0;
 			// Show a list of destination devices (the same device is also a possibility)
-			select_copy_device();
-			// If the devices are not the same, init the second, fail on non-existing device/etc
-			if(deviceHandler_initial != deviceHandler_dest_initial) {
-				deviceHandler_dest_deinit( deviceHandler_dest_initial );
-				if(!deviceHandler_dest_init( deviceHandler_dest_initial )) {
-					// Try the alternate slot for SDGecko or IDE-EXI
-					if(deviceHandler_dest_initial->name[0] == 's')
-						deviceHandler_dest_initial = (deviceHandler_dest_initial == &initial_SD0) ?
-												&initial_SD1:&initial_SD0;
-					else
-						deviceHandler_dest_initial = (deviceHandler_dest_initial == &initial_IDE0) ?
-												&initial_IDE1:&initial_IDE0;
+			select_device(DEVICE_DEST);
+			if(devices[DEVICE_DEST] == NULL) return;
 
-					print_gecko("Trying alternate slot...\r\n");
-					if(!deviceHandler_dest_init( deviceHandler_dest_initial )) {
-						DrawFrameStart();
-						sprintf(txtbuffer, "Failed to init destination device! (%ld)",ret);
-						DrawMessageBox(D_FAIL,txtbuffer);
-						DrawFrameFinish();
-						wait_press_A();
-						return;
-					}
+			// If the devices are not the same, init the destination, fail on non-existing device/etc
+			if(devices[DEVICE_CUR] != devices[DEVICE_DEST]) {
+				devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );				
+				if(!devices[DEVICE_DEST]->init( devices[DEVICE_DEST]->initial )) {
+					DrawFrameStart();
+					sprintf(txtbuffer, "Failed to init destination device! (%ld)",ret);
+					DrawMessageBox(D_FAIL,txtbuffer);
+					DrawFrameFinish();
+					wait_press_A();
+					return;
 				}
 			}
 			// Traverse this destination device and let the user select a directory to dump the file in
 			file_handle *destFile = memalign(32,sizeof(file_handle));
 			
 			// Show a directory only browser and get the destination file location
-			select_dest_dir(deviceHandler_dest_initial, destFile);
+			select_dest_dir(devices[DEVICE_DEST]->initial, destFile);
 			
-			u32 isDestCard = deviceHandler_dest_writeFile == deviceHandler_CARD_writeFile;
-			u32 isSrcCard = deviceHandler_readFile == deviceHandler_CARD_readFile;
+			u32 isDestCard = devices[DEVICE_DEST] == &__device_card_a || devices[DEVICE_DEST] == &__device_card_b;
+			u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
 			
 			sprintf(destFile->name, "%s/%s",destFile->name,getRelativeName(&curFile.name[0]));
 			destFile->fp = 0;
@@ -951,7 +949,7 @@ void manage_file() {
 
 			// If the destination file already exists, ask the user what to do
 			u8 nothing[1];
-			if(deviceHandler_dest_readFile(destFile, nothing, 1) >= 0) {
+			if(devices[DEVICE_DEST]->readFile(destFile, nothing, 1) >= 0) {
 				DrawFrameStart();
 				DrawEmptyBox(10,150, vmode->fbWidth-10, 350, COLOR_BLACK);
 				WriteFontStyled(640/2, 160, "File exists:", 1.0f, true, defaultColor);
@@ -973,7 +971,7 @@ void manage_file() {
 							return; 
 						}
 						else {
-							deviceHandler_dest_deleteFile(destFile);
+							devices[DEVICE_DEST]->deleteFile(destFile);
 						}
 
 						while(PAD_ButtonsHeld(0) & PAD_TRIGGER_Z){ VIDEO_WaitVSync (); }
@@ -991,7 +989,7 @@ void manage_file() {
 							name_backup[cursor] = destFile->name[cursor];
 						}
 
-						deviceHandler_dest_closeFile(destFile);
+						devices[DEVICE_DEST]->closeFile(destFile);
 
 						if(extension_start >= 0) {
 							destFile->name[extension_start] = 0;
@@ -1019,8 +1017,8 @@ void manage_file() {
 							strcpy(destFile->name + cursor, name_backup + extension_start);
 						}
 
-						while(deviceHandler_dest_readFile(destFile, nothing, 1) >= 0) {
-							deviceHandler_dest_closeFile(destFile);
+						while(devices[DEVICE_DEST]->readFile(destFile, nothing, 1) >= 0) {
+							devices[DEVICE_DEST]->closeFile(destFile);
 							copy_num++;
 							if(copy_num > 99) {
 								DrawFrameStart();
@@ -1045,12 +1043,12 @@ void manage_file() {
 			}
 
 			// Seek back to 0 after all these reads
-			deviceHandler_dest_seekFile(destFile, 0, DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_DEST]->seekFile(destFile, 0, DEVICE_HANDLER_SEEK_SET);
 			
 			// Same (fat based) device and user wants to move the file, just rename ;)
-			if(deviceHandler_initial == deviceHandler_dest_initial 
+			if(devices[DEVICE_CUR] == devices[DEVICE_DEST]
 				&& option == MOVE_OPTION 
-				&& (deviceHandler_initial->name[0] =='s' || deviceHandler_initial->name[0] =='i')) {
+				&& (devices[DEVICE_CUR]->features & FEAT_FAT_FUNCS)) {
 				ret = rename(&curFile.name[0], &destFile->name[0]);
 				//go up a folder
 				int len = strlen(&curFile.name[0]);
@@ -1074,15 +1072,15 @@ void manage_file() {
 				if(isDestCard && (endsWith(destFile->name,".gci"))) {
 					// Read the header
 					char *gciHeader = memalign(32, sizeof(GCI));
-					deviceHandler_seekFile(&curFile, 0, DEVICE_HANDLER_SEEK_SET);
-					deviceHandler_readFile(&curFile, gciHeader, sizeof(GCI));
-					deviceHandler_seekFile(&curFile, 0, DEVICE_HANDLER_SEEK_SET);
+					devices[DEVICE_CUR]->seekFile(&curFile, 0, DEVICE_HANDLER_SEEK_SET);
+					devices[DEVICE_CUR]->readFile(&curFile, gciHeader, sizeof(GCI));
+					devices[DEVICE_CUR]->seekFile(&curFile, 0, DEVICE_HANDLER_SEEK_SET);
 					setGCIInfo(gciHeader);
 					free(gciHeader);
 				}
 				
 				// Read from one file and write to the new directory
-				u32 isCard = deviceHandler_readFile == deviceHandler_CARD_readFile;
+				u32 isCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
 				u32 curOffset = 0, cancelled = 0, chunkSize = (isCard||isDestCard) ? curFile.size : (256*1024);
 				char *readBuffer = (char*)memalign(32,chunkSize);
 				
@@ -1097,10 +1095,10 @@ void manage_file() {
 					DrawProgressBar((int)((float)((float)curOffset/(float)curFile.size)*100), txtbuffer);
 					DrawFrameFinish();
 					u32 amountToCopy = curOffset + chunkSize > curFile.size ? curFile.size - curOffset : chunkSize;
-					ret = deviceHandler_readFile(&curFile, readBuffer, amountToCopy);
+					ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
 					if(ret != amountToCopy) {	// Retry the read.
-						deviceHandler_seekFile(&curFile, curFile.offset-ret, DEVICE_HANDLER_SEEK_SET);
-						ret = deviceHandler_readFile(&curFile, readBuffer, amountToCopy);
+						devices[DEVICE_CUR]->seekFile(&curFile, curFile.offset-ret, DEVICE_HANDLER_SEEK_SET);
+						ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
 						if(ret != amountToCopy) {
 							free(readBuffer);
 							DrawFrameStart();
@@ -1113,7 +1111,7 @@ void manage_file() {
 							return;
 						}
 					}
-					ret = deviceHandler_dest_writeFile(destFile, readBuffer, amountToCopy);
+					ret = devices[DEVICE_DEST]->writeFile(destFile, readBuffer, amountToCopy);
 					if(ret != amountToCopy) {
 						free(readBuffer);
 						DrawFrameStart();
@@ -1130,7 +1128,7 @@ void manage_file() {
 
 				// Handle empty files as a special case
 				if(curFile.size == 0) {
-					ret = deviceHandler_dest_writeFile(destFile, readBuffer, 0);
+					ret = devices[DEVICE_DEST]->writeFile(destFile, readBuffer, 0);
 					if(ret != 0) {
 						free(readBuffer);
 						DrawFrameStart();
@@ -1144,7 +1142,7 @@ void manage_file() {
 					}
 				}
 				free(readBuffer);
-				if(deviceHandler_dest_initial->name[0] == 'i' || deviceHandler_dest_initial->name[0] == 's') {
+				if(devices[DEVICE_DEST]->features & FEAT_FAT_FUNCS) {
 					fclose(destFile->fp);
 				}
 				setGCIInfo(NULL);
@@ -1154,7 +1152,7 @@ void manage_file() {
 				if(!cancelled) {
 					// If cut, delete from source device
 					if(option == MOVE_OPTION) {
-						deviceHandler_deleteFile(&curFile);
+						devices[DEVICE_CUR]->deleteFile(&curFile);
 						needsRefresh=1;
 						DrawMessageBox(D_INFO,"Move Complete!");
 					}
@@ -1178,95 +1176,21 @@ void manage_file() {
 	}
 }
 
-/* Execute/Load/Parse the currently selected file */
-void load_file()
-{
-	char *fileName = &curFile.name[0];
-		
-	// If it's not a DVD Disc, or it's a DVD disc with some file structure, browse by file type
-	if((curDevice != DVD_DISC) || (curDevice == DVD_DISC && dvdDiscTypeInt==ISO9660_DISC)) {
-		//if it's a DOL, boot it
-		if(strlen(fileName)>4) {
-			if(endsWith(fileName,".dol")) {
-				boot_dol();
-				// if it was invalid (overlaps sections, too large, etc..) it'll return
-				DrawFrameStart();
-				DrawMessageBox(D_WARN, "Invalid DOL");
-				DrawFrameFinish();
-				sleep(2);
-				return;
-			}
-			if(endsWith(fileName,".mp3")) {
-				mp3_player(allFiles, files, &curFile);
-				return;
-			}
-			if(endsWith(fileName,".fzn")) {
-				if(curFile.size != 0x1D0000) {
-					DrawFrameStart();
-					DrawMessageBox(D_WARN, "File Size must be 0x1D0000 bytes!");
-					DrawFrameFinish();
-					sleep(2);
-					return;
-				}
-				DrawFrameStart();
-				DrawMessageBox(D_INFO, "Reading Flash File ...");
-				DrawFrameFinish();
-				u8 *flash = (u8*)memalign(32,0x1D0000);
-				deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
-				deviceHandler_readFile(&curFile,flash,0x1D0000);
-				// Try to read a .fw file too.
-				file_handle fwFile;
-				memset(&fwFile, 0, sizeof(file_handle));
-				sprintf(&fwFile.name[0],"%s.fw", &curFile.name[0]);
-				u8 *firmware = (u8*)memalign(32, 0x3000);
-				DrawFrameStart();
-				if(curDevice == DVD_DISC || deviceHandler_readFile(&fwFile,firmware,0x3000) != 0x3000) {
-					free(firmware); firmware = NULL;
-					DrawMessageBox(D_WARN, "Didn't find a firmware file, flashing menu only.");
-				}
-				else {
-					DrawMessageBox(D_INFO, "Found firmware file, this will be flashed too.");
-				}
-				DrawFrameFinish();
-				sleep(1);
-				wkfWriteFlash(flash, firmware);
-				DrawFrameStart();
-				DrawMessageBox(D_INFO, "Flashing Complete !!");
-				DrawFrameFinish();
-				sleep(2);
-				return;
-			}
-			if(!(endsWith(fileName,".iso") || endsWith(fileName,".gcm"))) {
-				DrawFrameStart();
-				DrawMessageBox(D_WARN, "Unknown File Type\nEnable file management to manage this file.");
-				DrawFrameFinish();
-				sleep(1);
-				return;
-			}
-			if((endsWith(fileName,".iso") || endsWith(fileName,".gcm")) && (curDevice == SAMBA)) {
-				DrawFrameStart();
-				DrawMessageBox(D_WARN, "Not Supported");
-				DrawFrameFinish();
-				sleep(1);
-				return;
-			}
-			
-		}
-	}
+void load_game() {
 	DrawFrameStart();
 	DrawMessageBox(D_INFO, "Reading ...");
 	DrawFrameFinish();
 	
-	if((curDevice==WODE)) {
+	if(devices[DEVICE_CUR] == &__device_wode) {
 		DrawFrameStart();
 		DrawMessageBox(D_INFO, "Setup base offset please Wait ..");
 		DrawFrameFinish();
-		deviceHandler_setupFile(&curFile, 0);
+		devices[DEVICE_CUR]->setupFile(&curFile, 0);
 	}
 	
 	// boot the GCM/ISO file, gamecube disc or multigame selected entry
-	deviceHandler_seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
-	if(deviceHandler_readFile(&curFile,&GCMDisk,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
+	devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
+	if(devices[DEVICE_CUR]->readFile(&curFile,&GCMDisk,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
 		DrawFrameStart();
 		DrawMessageBox(D_WARN, "Invalid or Corrupt File!");
 		DrawFrameFinish();
@@ -1301,15 +1225,15 @@ void load_file()
 	
 	int multiDol = 0;
 	// Report to the user the patch status of this GCM/ISO file
-	if((curDevice == SD_CARD) || (curDevice == IDEEXI) || (curDevice == DVD_DISC)) {
+	if(devices[DEVICE_CUR]->features & FEAT_CAN_READ_PATCHES) {
 		multiDol = check_game();
 	}
 	
-  	if(curDevice!=WODE) {
+  	if(devices[DEVICE_CUR] != &__device_wode) {
 		file_handle *secondDisc = NULL;
 		
 		// If we're booting from SD card or IDE hdd
-		if((curDevice == SD_CARD) || (curDevice == IDEEXI) || (curDevice == WKF)) {
+		if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
 			// look to see if it's a two disc game
 			// set things up properly to allow disc swapping
 			// the files must be setup as so: game-disc1.xxx game-disc2.xxx
@@ -1330,7 +1254,7 @@ void load_file()
 		}
 	  
 		// Call the special setup for each device (e.g. SD will set the sector(s))
-		if(!deviceHandler_setupFile(&curFile, secondDisc)) {
+		if(!devices[DEVICE_CUR]->setupFile(&curFile, secondDisc)) {
 			DrawFrameStart();
 			DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)");
 			DrawFrameFinish();
@@ -1347,6 +1271,82 @@ void load_file()
 	// setup the video mode before we kill libOGC kernel
 	ogc_video__reset();
 	load_app(multiDol);
+}
+
+/* Execute/Load/Parse the currently selected file */
+void load_file()
+{
+	char *fileName = &curFile.name[0];
+		
+	//if it's a DOL, boot it
+	if(strlen(fileName)>4) {
+		if(endsWith(fileName,".dol")) {
+			boot_dol();
+			// if it was invalid (overlaps sections, too large, etc..) it'll return
+			DrawFrameStart();
+			DrawMessageBox(D_WARN, "Invalid DOL");
+			DrawFrameFinish();
+			sleep(2);
+			return;
+		}
+		if(endsWith(fileName,".mp3")) {
+			mp3_player(allFiles, files, &curFile);
+			return;
+		}
+		if(endsWith(fileName,".fzn")) {
+			if(curFile.size != 0x1D0000) {
+				DrawFrameStart();
+				DrawMessageBox(D_WARN, "File Size must be 0x1D0000 bytes!");
+				DrawFrameFinish();
+				sleep(2);
+				return;
+			}
+			DrawFrameStart();
+			DrawMessageBox(D_INFO, "Reading Flash File ...");
+			DrawFrameFinish();
+			u8 *flash = (u8*)memalign(32,0x1D0000);
+			devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_CUR]->readFile(&curFile,flash,0x1D0000);
+			// Try to read a .fw file too.
+			file_handle fwFile;
+			memset(&fwFile, 0, sizeof(file_handle));
+			sprintf(&fwFile.name[0],"%s.fw", &curFile.name[0]);
+			u8 *firmware = (u8*)memalign(32, 0x3000);
+			DrawFrameStart();
+			if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR]->readFile(&fwFile,firmware,0x3000) != 0x3000) {
+				free(firmware); firmware = NULL;
+				DrawMessageBox(D_WARN, "Didn't find a firmware file, flashing menu only.");
+			}
+			else {
+				DrawMessageBox(D_INFO, "Found firmware file, this will be flashed too.");
+			}
+			DrawFrameFinish();
+			sleep(1);
+			wkfWriteFlash(flash, firmware);
+			DrawFrameStart();
+			DrawMessageBox(D_INFO, "Flashing Complete !!");
+			DrawFrameFinish();
+			sleep(2);
+			return;
+		}
+		if(endsWith(fileName,".iso") || endsWith(fileName,".gcm")) {
+			if(devices[DEVICE_CUR]->features & FEAT_BOOT_GCM)
+				load_game();
+			else {
+				DrawFrameStart();
+				DrawMessageBox(D_WARN, "This device does not support booting of images.");
+				DrawFrameFinish();
+				sleep(2);
+			}
+			return;
+		}
+		DrawFrameStart();
+		DrawMessageBox(D_WARN, "Unknown File Type\nEnable file management to manage this file.");
+		DrawFrameFinish();
+		sleep(1);
+		return;			
+	}
+
 }
 
 int check_game()
@@ -1368,21 +1368,19 @@ int check_game()
 }
 
 void save_config(ConfigEntry *config) {
-	// Save settings to current device
-	if(curDevice == SD_CARD || curDevice == IDEEXI) {
+	// Save settings to current config device
+	DrawFrameStart();
+	DrawMessageBox(D_INFO,"Saving Config ...");
+	DrawFrameFinish();
+	if(config_update(config)) {
 		DrawFrameStart();
-		DrawMessageBox(D_INFO,"Saving Config ...");
+		DrawMessageBox(D_INFO,"Config Saved Successfully!");
 		DrawFrameFinish();
-		if(config_update(config)) {
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Config Saved Successfully!");
-			DrawFrameFinish();
-		}
-		else {
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Config Failed to Save!");
-			DrawFrameFinish();
-		}
+	}
+	else {
+		DrawFrameStart();
+		DrawMessageBox(D_INFO,"Config Failed to Save!");
+		DrawFrameFinish();
 	}
 }
 
@@ -1394,10 +1392,27 @@ void draw_game_info() {
 	float scale = GetTextScaleToFitInWidth(txtbuffer,(vmode->fbWidth-78)-75);
 	WriteFontStyled(640/2, 130, txtbuffer, scale, true, defaultColor);
 
-	if((curDevice==SD_CARD)||(curDevice == IDEEXI) ||(curDevice == WKF) ||(curDevice == DVD_DISC)) {
+	if(devices[DEVICE_CUR] == &__device_qoob) {
+		sprintf(txtbuffer,"Size: %.2fKb (%ld blocks)", (float)curFile.size/1024, curFile.size/0x10000);
+		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
+		sprintf(txtbuffer,"Position on Flash: %08lX",(u32)(curFile.fileBase&0xFFFFFFFF));
+		WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
+	}
+	else if(devices[DEVICE_CUR] == &__device_wode) {
+		ISOInfo_t* isoInfo = (ISOInfo_t*)&curFile.other;
+		sprintf(txtbuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
+		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
+	}
+	else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
+		sprintf(txtbuffer,"Size: %.2fKb (%ld blocks)", (float)curFile.size/1024, curFile.size/8192);
+		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
+		sprintf(txtbuffer,"Position on Card: %08lX",curFile.offset);
+		WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
+	}
+	else {
 		sprintf(txtbuffer,"Size: %.2fMB", (float)curFile.size/1024/1024);
 		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
-		if((curDevice==SD_CARD)||(curDevice == IDEEXI) ||(curDevice == WKF)) {
+		if(devices[DEVICE_CUR]->features & FEAT_FAT_FUNCS) {
 			get_frag_list(curFile.name);
 			if(frag_list->num > 1)
 				sprintf(txtbuffer,"File is in %ld fragments.", frag_list->num);
@@ -1422,30 +1437,13 @@ void draw_game_info() {
 			}
 		}
 	}
-	else if(curDevice == QOOB_FLASH) {
-		sprintf(txtbuffer,"Size: %.2fKb (%ld blocks)", (float)curFile.size/1024, curFile.size/0x10000);
-		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
-		sprintf(txtbuffer,"Position on Flash: %08lX",(u32)(curFile.fileBase&0xFFFFFFFF));
-		WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
-	}
-	else if(curDevice == WODE) {
-		ISOInfo_t* isoInfo = (ISOInfo_t*)&curFile.other;
-		sprintf(txtbuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
-		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
-	}
-	else if(curDevice == MEMCARD) {
-		sprintf(txtbuffer,"Size: %.2fKb (%ld blocks)", (float)curFile.size/1024, curFile.size/8192);
-		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
-		sprintf(txtbuffer,"Position on Card: %08lX",curFile.offset);
-		WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
-	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
 		sprintf(txtbuffer,"GameID: [%s] Audio Streaming [%s]", (const char*)&GCMDisk ,(GCMDisk.AudioStreaming==1) ? "YES":"NO");
 		WriteFontStyled(640/2, 200, txtbuffer, 0.8f, true, defaultColor);
 		WriteFontStyled(640/2, 220, (GCMDisk.DiscID ? "Disc 2":""), 0.8f, true, defaultColor);
 	}
 
-	WriteFontStyled(640/2, 370, "Settings (X) - Cheats (Y) - Exit (B) - Continue (A)", 0.75f, true, defaultColor);
+	WriteFontStyled(640/2, 370, "Settings (X) - Cheats (Y) - Exit (B) - Boot (A)", 0.75f, true, defaultColor);
 	DrawFrameFinish();
 }
 
@@ -1482,8 +1480,9 @@ int info_game()
 		// Look for a cheats file based on the GameID
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
 			int num_cheats = findCheats(false);
-			if(num_cheats == 0) return 0;
-			DrawCheatsSelector(getRelativeName(allFiles[curSelection].name));
+			if(num_cheats != 0) {
+				DrawCheatsSelector(getRelativeName(allFiles[curSelection].name));
+			}
 		}
 		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	}
@@ -1492,122 +1491,10 @@ int info_game()
 	return ret;
 }
 
-
-void select_copy_device()
-{  
-	int inAdvanced = 0;
-	int inAdvancedPos = 0;
-	int slot = 1;
-	while(1) {
-		doBackdrop();
-		DrawEmptyBox(20,190, vmode->fbWidth-20, 355, COLOR_BLACK);
-		WriteFontStyled(640/2, 195, "Destination device selection", 1.0f, true, defaultColor);
-		if(inAdvanced) {
-			// Draw slot / speed selection if advanced menu is showing.
-			DrawEmptyBox(vmode->fbWidth-170, 370, vmode->fbWidth-20, 405, COLOR_BLACK);
-			WriteFontStyled(vmode->fbWidth-165, 370, slot ? "Slot: B":"Slot: A", 0.65f, false, !inAdvancedPos ? defaultColor:deSelectedColor);
-			WriteFontStyled(vmode->fbWidth-165, 385, swissSettings.exiSpeed ? "Speed: Fast":"Speed: Compatible", 0.65f, false, inAdvancedPos ? defaultColor:deSelectedColor);
-		}
-		WriteFontStyled(vmode->fbWidth-120, 345, "(X) Advanced", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
-		if(curCopyDevice==DEST_SD_CARD) {
-			DrawImage(TEX_SDSMALL, 640/2, 230, 60, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-			WriteFontStyled(640/2, 330, "SD Card via SD Gecko", 0.85f, true, defaultColor);
-		}
-		else if(curCopyDevice==DEST_IDEEXI) {
-			DrawImage(TEX_HDD, 640/2, 230, 80, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-			WriteFontStyled(640/2, 330, "IDE HDD via IDE-EXI", 0.85f, true, defaultColor);
-		}
-		else if(curCopyDevice==DEST_MEMCARD) {
-			DrawImage(TEX_MEMCARD, 640/2, 230, 107, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-			WriteFontStyled(640/2, 330, "Memory Card", 0.85f, true, defaultColor);
-		}
-		if(curCopyDevice != 2) {
-			WriteFont(520, 270, "->");
-		}
-		if(curCopyDevice != 0) {
-			WriteFont(100, 270, "<-");
-		}
-		DrawFrameFinish();
-		while (!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
-				&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_B)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_A)
-				&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_X)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP)&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) )
-			{ VIDEO_WaitVSync (); }
-		u16 btns = PAD_ButtonsHeld(0);
-		if(btns & PAD_BUTTON_X)
-			inAdvanced ^= 1;
-		if(inAdvanced) {
-			if((btns & PAD_BUTTON_DOWN) || (btns & PAD_BUTTON_UP)) {
-				inAdvancedPos = inAdvancedPos + ((btns & PAD_BUTTON_DOWN) ? 1:-1);
-				if(inAdvancedPos > 1) inAdvancedPos = 0;
-				if(inAdvancedPos < 0) inAdvancedPos = 1;
-			}
-			if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
-				if(!inAdvancedPos) {
-					slot ^= 1;
-				}
-				else {
-					swissSettings.exiSpeed^=1;
-				}
-			}
-		}
-		else {
-			if((btns & PAD_BUTTON_RIGHT) && curCopyDevice < 2)
-				curCopyDevice++;
-			if((btns & PAD_BUTTON_LEFT) && curCopyDevice > 0)
-				curCopyDevice--;
-			if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
-				break;
-		}
-		if(btns & PAD_BUTTON_A) {
-			if(!inAdvanced)
-				break;
-			else 
-				inAdvanced = 0;
-		}
-		if(btns & PAD_BUTTON_B) break;
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
-				&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) 
-				&& !(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) ))
-			{ VIDEO_WaitVSync (); }
-	}
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
-	// Deinit any existing deviceHandler state
-	if((deviceHandler_dest_deinit && deviceHandler_dest_initial) && (deviceHandler_dest_initial != deviceHandler_initial)) deviceHandler_dest_deinit( deviceHandler_dest_initial );
-	// Change all the deviceHandler pointers based on the current device
-	switch(curCopyDevice) {
-		case DEST_SD_CARD:
-		case DEST_IDEEXI:
-			if(curCopyDevice==DEST_IDEEXI)
-				deviceHandler_dest_initial = !slot ? &initial_IDE0 : &initial_IDE1;
-			else
-				deviceHandler_dest_initial = !slot ? &initial_SD0 : &initial_SD1;
-			deviceHandler_dest_readDir  =  deviceHandler_FAT_readDir;
-			deviceHandler_dest_readFile =  deviceHandler_FAT_readFile;
-			deviceHandler_dest_writeFile=  deviceHandler_FAT_writeFile;
-			deviceHandler_dest_deleteFile=  deviceHandler_FAT_deleteFile;
-			deviceHandler_dest_seekFile =  deviceHandler_FAT_seekFile;
-			deviceHandler_dest_setupFile=  deviceHandler_FAT_setupFile;
-			deviceHandler_dest_init     =  deviceHandler_FAT_init;
-			deviceHandler_dest_deinit   =  deviceHandler_FAT_deinit;
-			deviceHandler_dest_closeFile=  deviceHandler_FAT_closeFile;
-		break;
-		case DEST_MEMCARD:
-			deviceHandler_dest_initial = !slot ? &initial_CARDA : &initial_CARDB;
-			deviceHandler_dest_readDir  =  deviceHandler_CARD_readDir;
-			deviceHandler_dest_readFile =  deviceHandler_CARD_readFile;
-			deviceHandler_dest_writeFile=  deviceHandler_CARD_writeFile;
-			deviceHandler_dest_deleteFile=  deviceHandler_CARD_deleteFile;
-			deviceHandler_dest_seekFile =  deviceHandler_CARD_seekFile;
-			deviceHandler_dest_setupFile=  deviceHandler_CARD_setupFile;
-			deviceHandler_dest_init     =  deviceHandler_CARD_init;
-			deviceHandler_dest_deinit   =  deviceHandler_CARD_deinit;
-			deviceHandler_dest_closeFile=  deviceHandler_CARD_closeFile;
-		break;
-	}
-}
-
-void select_device(int skipPrompts)
+void select_device(int type)
 {
+	u32 requiredFeatures = (type == DEVICE_DEST) ? FEAT_WRITE:FEAT_READ;
+
 	if(is_httpd_in_use()) {
 		doBackdrop();
 		DrawMessageBox(D_INFO,"Can't load device while HTTP is processing!");
@@ -1616,269 +1503,102 @@ void select_device(int skipPrompts)
 		return;
 	}
 
-	int slot = 1;
-	if(curDevice < 0) {
-		curDevice = SD_CARD;
-		// Go to the first device after SD Gecko if it's not avail
-		if(!deviceHandler_getDeviceAvailable(curDevice)) {
-			int i;
-			for(i=curDevice+1;i<9;i++) {
-				if(deviceHandler_getDeviceAvailable(i)) {
-					curDevice = i;
-					break;
-				}
+	int curDevice = 0;
+	int inAdvanced = 0, showAllDevices = 0;
+	int direction = 1;
+
+	while(1) {
+		// Go to the first device available if we're not showing all devices
+		int i = curDevice;
+		i+= direction;
+
+		if(i < 0) i = MAX_DEVICES;
+		else if (i > MAX_DEVICES) i = 0;
+		while(1) {
+			if(allDevices[i] != NULL && (deviceHandler_getDeviceAvailable(allDevices[i])||showAllDevices) && (allDevices[i]->features & requiredFeatures)) {
+				curDevice = i;
+				break;
+			}
+			i+=direction;
+			if(i < 0) i = MAX_DEVICES;
+			else if (i > MAX_DEVICES) i = 0;
+		}
+
+		doBackdrop();
+		DrawEmptyBox(20,190, vmode->fbWidth-20, 410, COLOR_BLACK);
+		WriteFontStyled(640/2, 195, type == DEVICE_DEST ? "Destination Device" : "Device Selection", 1.0f, true, defaultColor);
+
+		textureImage *deviceImage = &allDevices[curDevice]->deviceTexture;
+		DrawImage(deviceImage->textureId, 640/2, 230, deviceImage->width, deviceImage->height, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+		WriteFontStyled(640/2, 330, (char*)allDevices[curDevice]->deviceName, 0.85f, true, defaultColor);
+		WriteFontStyled(640/2, 350, (char*)allDevices[curDevice]->deviceDescription, 0.65f, true, defaultColor);
+
+		// Memory card port devices, allow for speed selection
+		if(allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B)) {
+			WriteFontStyled(vmode->fbWidth-190, 400, "(X) EXI Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
+			if(inAdvanced) {
+				// Draw speed selection if advanced menu is showing.
+				WriteFontStyled(vmode->fbWidth-160, 385, swissSettings.exiSpeed ? "Speed: Fast":"Speed: Compatible", 0.65f, false, defaultColor);
 			}
 		}
-		dvdDiscTypeStr = NotInitStr;
-		int inAdvanced = 0, showAllDevices = 0, inAdvancedPos = 0;
-		while(1) {
-			doBackdrop();
-			DrawEmptyBox(20,190, vmode->fbWidth-20, 410, COLOR_BLACK);
-			WriteFontStyled(640/2, 195, "Device Selection", 1.0f, true, defaultColor);		
-			if(inAdvanced) {
-				// Draw slot / speed selection if advanced menu is showing.
-				WriteFontStyled(vmode->fbWidth-160, 370, slot ? "Slot: B":"Slot: A", 0.65f, false, !inAdvancedPos ? defaultColor:deSelectedColor);
-				WriteFontStyled(vmode->fbWidth-160, 385, swissSettings.exiSpeed ? "Speed: Fast":"Speed: Compatible", 0.65f, false, inAdvancedPos ? defaultColor:deSelectedColor);
+		WriteFont(520, 270, "->");
+		WriteFont(100, 270, "<-");
+		
+		WriteFontStyled(20, 400, "(Z) Show all devices", 0.65f, false, showAllDevices ? defaultColor:deSelectedColor);
+		DrawFrameFinish();
+		while (!(PAD_ButtonsHeld(0) & 
+			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A
+			|PAD_BUTTON_X|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_TRIGGER_Z) ))
+			{ VIDEO_WaitVSync (); }
+		u16 btns = PAD_ButtonsHeld(0);
+		if((btns & PAD_BUTTON_X) && (allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B)))
+			inAdvanced ^= 1;
+		if(btns & PAD_TRIGGER_Z) {
+			showAllDevices ^= 1;
+			direction = 0;
+		}
+		if(inAdvanced) {
+			if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
+				swissSettings.exiSpeed^=1;
 			}
-			if(curDevice==DVD_DISC) {
-				DrawImage(TEX_GCDVDSMALL, 640/2, 230, 80, 79, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-				WriteFontStyled(640/2, 330, "DVD", 0.85f, true, defaultColor);
-				WriteFontStyled(640/2, 350, "Supported File System(s): GCM, ISO 9660, Multi-Game", 0.65f, true, defaultColor);
+		}
+		else {
+			if(btns & PAD_BUTTON_RIGHT) {
+				direction = 1;
 			}
-			else if(curDevice==SD_CARD) {
-				DrawImage(TEX_SDSMALL, 640/2, 230, 60, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-				WriteFontStyled(640/2, 330, "SD Card via SD Gecko", 0.85f, true, defaultColor);
-				WriteFontStyled(640/2, 350, "Supported File System(s): FAT16, FAT32", 0.65f, true, defaultColor);
-				WriteFontStyled(vmode->fbWidth-190, 400, "(X) Advanced Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
+			if(btns & PAD_BUTTON_LEFT) {
+				direction = -1;
 			}
-			else if(curDevice==IDEEXI) {
-				DrawImage(TEX_HDD, 640/2, 230, 80, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-				WriteFontStyled(640/2, 330, "IDE HDD via IDE-EXI", 0.85f, true, defaultColor);
-				WriteFontStyled(640/2, 350, "Supported File System(s): FAT16, FAT32", 0.65f, true, defaultColor);
-				WriteFontStyled(vmode->fbWidth-190, 400, "(X) Advanced Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
-			}
-			else if(curDevice==QOOB_FLASH) {
-				DrawImage(TEX_QOOB, 640/2, 230, 70, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-				WriteFontStyled(640/2, 330, "Qoob PRO", 0.85f, true, defaultColor);
-				WriteFontStyled(640/2, 350, "Supported File System(s): QOOB Flash", 0.65f, true, defaultColor);
-			}
-			else if(curDevice==WODE) {
-				DrawImage(TEX_WODEIMG, 640/2, 230, 146, 72, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-				WriteFontStyled(640/2, 330, "WODE Jukebox", 0.85f, true, defaultColor);
-				WriteFontStyled(640/2, 350, "Supported File System(s): FAT32, NTFS, EXT2/3, HPFS", 0.65f, true, defaultColor);
-			}
-			else if(curDevice==MEMCARD) {
-				DrawImage(TEX_MEMCARD, 640/2, 230, 107, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-				WriteFontStyled(640/2, 330, "Memory Card", 0.85f, true, defaultColor);
-				WriteFontStyled(vmode->fbWidth-190, 400, "(X) Advanced Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
-			}
-			else if(curDevice==WKF) {
-				DrawImage(TEX_WIIKEY, 640/2, 230, 102, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-				WriteFontStyled(640/2, 330, "Wiikey / Wasp Fusion", 0.85f, true, defaultColor);
-				WriteFontStyled(640/2, 350, "Supported File System(s): FAT16, FAT32", 0.65f, true, defaultColor);
-			}
-			else if(curDevice==USBGECKO) {
-				DrawImage(TEX_USBGECKO, 640/2, 230, 129, 80, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-				WriteFontStyled(640/2, 330, "USB Gecko (req. PC app)", 0.85f, true, defaultColor);
-				WriteFontStyled(640/2, 350, "Slot B only", 0.65f, true, defaultColor);
-			}
-			else if(curDevice==SAMBA) {
-				DrawImage(TEX_SAMBA, 640/2, 230, 160, 85, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-				WriteFontStyled(640/2, 330, "Samba via BBA", 0.85f, true, defaultColor);
-			}
-			else if(curDevice==SYS) {
-				DrawImage(TEX_SYSTEM, 640/2, 230, 160, 85, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-				WriteFontStyled(640/2, 330, "System", 0.85f, true, defaultColor);
-			}
-			WriteFont(520, 270, "->");
-			WriteFont(100, 270, "<-");
-			WriteFontStyled(20, 400, "(Z) Show all devices", 0.65f, false, showAllDevices ? defaultColor:deSelectedColor);
-			DrawFrameFinish();
-			while (!(PAD_ButtonsHeld(0) & 
-				(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A
-				|PAD_BUTTON_X|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_TRIGGER_Z) ))
-				{ VIDEO_WaitVSync (); }
-			u16 btns = PAD_ButtonsHeld(0);
-			if(btns & PAD_BUTTON_X && ((curDevice == SD_CARD) || (curDevice == IDEEXI) ||(curDevice == MEMCARD)))
-				inAdvanced ^= 1;
-			if(btns & PAD_TRIGGER_Z)
-				showAllDevices ^= 1;
-			if(inAdvanced) {
-				if((btns & PAD_BUTTON_DOWN) || (btns & PAD_BUTTON_UP)) {
-					inAdvancedPos = inAdvancedPos + ((btns & PAD_BUTTON_DOWN) ? 1:-1);
-					if(inAdvancedPos > 1) inAdvancedPos = 0;
-					if(inAdvancedPos < 0) inAdvancedPos = 1;
-				}
-				if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
-					if(!inAdvancedPos) {
-						slot ^= 1;
+		}
+		if(btns & PAD_BUTTON_A) {
+			if(!inAdvanced) {
+				if(type == DEVICE_CUR)
+					break;
+				else {
+					if(!(allDevices[curDevice]->features & FEAT_WRITE)) {
+						// TODO don't break cause read only device
 					}
 					else {
-						swissSettings.exiSpeed^=1;
+						break;
 					}
 				}
 			}
-			else {
-				if(btns & PAD_BUTTON_RIGHT) {
-					curDevice = curDevice < 9 ? curDevice+1 : 0;
-					while(!showAllDevices && !deviceHandler_getDeviceAvailable(curDevice)) {
-						if(curDevice == 9)
-							curDevice = 0;
-						else
-							curDevice ++;
-					}
-				}
-				if(btns & PAD_BUTTON_LEFT) {
-					curDevice = curDevice > 0 ? curDevice-1 : 9;
-					while(!showAllDevices && !deviceHandler_getDeviceAvailable(curDevice)) {
-						if(curDevice == 0)
-							curDevice = 9;
-						else
-							curDevice --;
-					}
-				}
-			}
-			if(btns & PAD_BUTTON_A) {
-				if(!inAdvanced)
-					break;
-				else 
-					inAdvanced = 0;
-			}
-			if(btns & PAD_BUTTON_B) {
-				return;
-			}
-			while ((PAD_ButtonsHeld(0) & 
-				(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A
-				|PAD_BUTTON_X|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_TRIGGER_Z) ))
-				{ VIDEO_WaitVSync (); }
+			else 
+				inAdvanced = 0;
 		}
-		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
-		// Deinit any existing deviceHandler state
-		if(deviceHandler_deinit && deviceHandler_initial) deviceHandler_deinit( deviceHandler_initial );
+		if(btns & PAD_BUTTON_B) {
+			devices[type] = NULL;
+			return;
+		}
+		while ((PAD_ButtonsHeld(0) & 
+			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A
+			|PAD_BUTTON_X|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_TRIGGER_Z) ))
+			{ VIDEO_WaitVSync (); }
 	}
+	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+	// Deinit any existing device
+	if(devices[type] != NULL) devices[type]->deinit( devices[type]->initial );
 	
-	// Change all the deviceHandler pointers based on the current device
-	switch(curDevice) {
-		case SD_CARD:
-		case IDEEXI:
-			if(skipPrompts) {
-				slot = (deviceHandler_initial->name[2] == 'b');
-			}
-			if(curDevice==IDEEXI)
-				deviceHandler_initial = !slot ? &initial_IDE0 : &initial_IDE1;
-			else
-				deviceHandler_initial = !slot ? &initial_SD0 : &initial_SD1;
-			deviceHandler_readDir  =  deviceHandler_FAT_readDir;
-			deviceHandler_readFile =  deviceHandler_FAT_readFile;
-			deviceHandler_writeFile=  deviceHandler_FAT_writeFile;
-			deviceHandler_deleteFile=  deviceHandler_FAT_deleteFile;
-			deviceHandler_seekFile =  deviceHandler_FAT_seekFile;
-			deviceHandler_setupFile=  deviceHandler_FAT_setupFile;
-			deviceHandler_init     =  deviceHandler_FAT_init;
-			deviceHandler_deinit   =  deviceHandler_FAT_deinit;
-			deviceHandler_closeFile=  deviceHandler_FAT_closeFile;
-			deviceHandler_info 	   =  deviceHandler_FAT_info;
-		break;
-		case DVD_DISC:
-			deviceHandler_initial = &initial_DVD;
-			deviceHandler_readDir  =  deviceHandler_DVD_readDir;
-			deviceHandler_readFile =  deviceHandler_DVD_readFile;
-			deviceHandler_seekFile =  deviceHandler_DVD_seekFile;
-			deviceHandler_setupFile=  deviceHandler_DVD_setupFile;
-			deviceHandler_init     =  deviceHandler_DVD_init;
-			deviceHandler_deinit   =  deviceHandler_DVD_deinit;
-			deviceHandler_closeFile=  deviceHandler_DVD_closeFile;
-			deviceHandler_info 	   =  deviceHandler_DVD_info;
-			deviceHandler_deleteFile = NULL;
- 		break;
- 		case QOOB_FLASH:
-			deviceHandler_initial = &initial_Qoob;
-			deviceHandler_readDir  =  deviceHandler_Qoob_readDir;
-			deviceHandler_readFile =  deviceHandler_Qoob_readFile;
-			deviceHandler_seekFile =  deviceHandler_Qoob_seekFile;
-			deviceHandler_setupFile=  deviceHandler_Qoob_setupFile;
-			deviceHandler_init     =  deviceHandler_Qoob_init;
-			deviceHandler_deinit   =  deviceHandler_Qoob_deinit;
-			deviceHandler_closeFile=  deviceHandler_Qoob_closeFile;
-			deviceHandler_info 	   =  deviceHandler_Qoob_info;
-			deviceHandler_deleteFile = NULL;
- 		break;
- 		case WODE:
-			deviceHandler_initial = &initial_WODE;
-			deviceHandler_readDir  =  deviceHandler_WODE_readDir;
-			deviceHandler_readFile =  deviceHandler_WODE_readFile;
-			deviceHandler_seekFile =  deviceHandler_WODE_seekFile;
-			deviceHandler_setupFile=  deviceHandler_WODE_setupFile;
-			deviceHandler_init     =  deviceHandler_WODE_init;
-			deviceHandler_deinit   =  deviceHandler_WODE_deinit;
-			deviceHandler_closeFile=  deviceHandler_WODE_closeFile;
-			deviceHandler_info 	   =  deviceHandler_WODE_info;
-			deviceHandler_deleteFile = NULL;
- 		break;
-		case MEMCARD:
-			if(skipPrompts) {
-				slot = (deviceHandler_initial->name[4] == 'b');
-			}
-			deviceHandler_initial = !slot ? &initial_CARDA : &initial_CARDB;
-			deviceHandler_readDir  =  deviceHandler_CARD_readDir;
-			deviceHandler_readFile =  deviceHandler_CARD_readFile;
-			deviceHandler_writeFile=  deviceHandler_CARD_writeFile;
-			deviceHandler_deleteFile=  deviceHandler_CARD_deleteFile;
-			deviceHandler_seekFile =  deviceHandler_CARD_seekFile;
-			deviceHandler_setupFile=  deviceHandler_CARD_setupFile;
-			deviceHandler_init     =  deviceHandler_CARD_init;
-			deviceHandler_deinit   =  deviceHandler_CARD_deinit;
-			deviceHandler_closeFile=  deviceHandler_CARD_closeFile;
-			deviceHandler_info 	   =  deviceHandler_CARD_info;
-		break;
-		case WKF:
-			deviceHandler_initial = &initial_WKF;
-			deviceHandler_readDir  =  deviceHandler_WKF_readDir;
-			deviceHandler_readFile =  deviceHandler_WKF_readFile;
-			deviceHandler_seekFile =  deviceHandler_WKF_seekFile;
-			deviceHandler_setupFile=  deviceHandler_WKF_setupFile;
-			deviceHandler_init     =  deviceHandler_WKF_init;
-			deviceHandler_deinit   =  deviceHandler_WKF_deinit;
-			deviceHandler_closeFile=  deviceHandler_WKF_closeFile;
-			deviceHandler_info 	   =  deviceHandler_WKF_info;
-			deviceHandler_deleteFile = NULL;
-		break;
-		case USBGECKO:
-			deviceHandler_initial = &initial_USBGecko;
-			deviceHandler_readDir  =  deviceHandler_USBGecko_readDir;
-			deviceHandler_readFile =  deviceHandler_USBGecko_readFile;
-			deviceHandler_writeFile = deviceHandler_USBGecko_writeFile;
-			deviceHandler_seekFile =  deviceHandler_USBGecko_seekFile;
-			deviceHandler_setupFile=  deviceHandler_USBGecko_setupFile;
-			deviceHandler_init     =  deviceHandler_USBGecko_init;
-			deviceHandler_deinit   =  deviceHandler_USBGecko_deinit;
-			deviceHandler_closeFile=  deviceHandler_USBGecko_closeFile;
-			deviceHandler_info 	   =  deviceHandler_USBGecko_info;
-			deviceHandler_deleteFile = NULL;
-		break;
-		case SAMBA:
-			deviceHandler_initial = &initial_SMB;
-			deviceHandler_readDir  =  deviceHandler_SMB_readDir;
-			deviceHandler_readFile =  deviceHandler_SMB_readFile;
-			deviceHandler_seekFile =  deviceHandler_SMB_seekFile;
-			deviceHandler_init     =  deviceHandler_SMB_init;
-			deviceHandler_deinit   =  deviceHandler_SMB_deinit;
-			deviceHandler_closeFile=  deviceHandler_SMB_closeFile;
-			deviceHandler_info 	   =  deviceHandler_SMB_info;
-			deviceHandler_deleteFile = NULL;
-		break;
-		case SYS:
-			deviceHandler_initial = &initial_SYS;
-			deviceHandler_readDir  =  deviceHandler_SYS_readDir;
-			deviceHandler_readFile =  deviceHandler_SYS_readFile;
-			deviceHandler_seekFile =  deviceHandler_SYS_seekFile;
-			deviceHandler_init     =  deviceHandler_SYS_init;
-			deviceHandler_deinit   =  deviceHandler_SYS_deinit;
-			deviceHandler_closeFile=  deviceHandler_SYS_closeFile;
-			deviceHandler_info 	   =  deviceHandler_SYS_info;
-			deviceHandler_deleteFile = NULL;
-		break;
-	}
-	memcpy(&curFile, deviceHandler_initial, sizeof(file_handle));
+	devices[type] = allDevices[curDevice];
 }
 

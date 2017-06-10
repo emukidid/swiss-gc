@@ -13,6 +13,7 @@
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "main.h"
+#include "swiss.h"
 #include "dvd.h"
 #include "WodeInterface.h"
 
@@ -29,7 +30,6 @@ file_handle initial_WODE =
 	  DRV_ERROR
 	};
 device_info initial_WODE_info = {
-	TEX_WODEIMG,
 	0,
 	0
 };
@@ -49,7 +49,7 @@ device_info* deviceHandler_WODE_info() {
 	return &initial_WODE_info;
 }
 	
-int deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
+s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){	
 
 	if(!wodeInited) return 0;
 	DrawFrameStart();
@@ -87,13 +87,13 @@ int deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, unsigned i
 	return num_entries;
 }
 
-int deviceHandler_WODE_seekFile(file_handle* file, unsigned int where, unsigned int type){
+s32 deviceHandler_WODE_seekFile(file_handle* file, unsigned int where, u32 type){
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
 	return file->offset;
 }
 
-int deviceHandler_WODE_readFile(file_handle* file, void* buffer, unsigned int length){
+s32 deviceHandler_WODE_readFile(file_handle* file, void* buffer, u32 length){
 	int bytesread = DVD_Read(buffer,file->offset,length);
 	if(bytesread > 0) {
 		file->offset += bytesread;
@@ -101,7 +101,7 @@ int deviceHandler_WODE_readFile(file_handle* file, void* buffer, unsigned int le
 	return bytesread;
 }
 
-int deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2) {
 	ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
 	SetISO(isoInfo->iso_partition,isoInfo->iso_number);
 	sleep(2);
@@ -110,13 +110,13 @@ int deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2) {
 	return 1;
 }
 
-int deviceHandler_WODE_init(file_handle* file){
+s32 deviceHandler_WODE_init(file_handle* file){
 	wodeInited = startupWode() == 0 ? 1:0;
 	initial_WODE_info.totalSpaceInKB = 0;
 	return wodeInited;
 }
 
-int deviceHandler_WODE_deinit(file_handle* file) {
+s32 deviceHandler_WODE_deinit(file_handle* file) {
 	return 0;
 }
 
@@ -124,6 +124,31 @@ char wodeRegionToChar(int region) {
 	return wode_regions[region];
 }
 
-int deviceHandler_WODE_closeFile(file_handle* file) {
+s32 deviceHandler_WODE_closeFile(file_handle* file) {
     return 0;
 }
+
+bool deviceHandler_WODE_test() {
+	return swissSettings.hasDVDDrive && (*(u32*)&driveVersion[0] == 0x20080714);
+}
+
+DEVICEHANDLER_INTERFACE __device_wode = {
+	DEVICE_ID_C,
+	"WODE Jukebox",
+	"Supported File System(s): FAT32, NTFS, EXT2/3, HPFS",
+	{TEX_WODEIMG, 146, 72},
+	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE,
+	LOC_DVD_CONNECTOR,
+	&initial_WODE,
+	(_fn_test)&deviceHandler_WODE_test,
+	(_fn_info)&deviceHandler_WODE_info,
+	(_fn_init)&deviceHandler_WODE_init,
+	(_fn_readDir)&deviceHandler_WODE_readDir,
+	(_fn_readFile)&deviceHandler_WODE_readFile,
+	(_fn_writeFile)NULL,
+	(_fn_deleteFile)NULL,
+	(_fn_seekFile)&deviceHandler_WODE_seekFile,
+	(_fn_setupFile)&deviceHandler_WODE_setupFile,
+	(_fn_closeFile)&deviceHandler_WODE_closeFile,
+	(_fn_deinit)&deviceHandler_WODE_deinit
+};

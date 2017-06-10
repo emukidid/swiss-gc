@@ -1,6 +1,6 @@
 ifeq ($(OS),Windows_NT)
-CC =
-WIN-CC= mingw32-gcc
+CC = i686-w64-mingw32-gcc
+WIN-CC= i686-w64-mingw32-gcc
 else
 CC = gcc
 WIN-CC= i586-mingw32msvc-gcc

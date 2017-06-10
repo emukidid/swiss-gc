@@ -194,38 +194,39 @@ int findCheats(bool silent) {
 	memset(trimmedGameId, 0, 8);
 	memcpy(trimmedGameId, (char*)&GCMDisk, 6);
 	file_handle *cheatsFile = memalign(32,sizeof(file_handle));
-	memcpy(cheatsFile, deviceHandler_initial, sizeof(file_handle));
-	sprintf(cheatsFile->name, "%s/cheats/%s.txt", deviceHandler_initial->name, trimmedGameId);
+	memcpy(cheatsFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+	sprintf(cheatsFile->name, "%s/cheats/%s.txt", devices[DEVICE_CUR]->initial->name, trimmedGameId);
 	print_gecko("Looking for cheats file @ %s\r\n", cheatsFile->name);
 	cheatsFile->size = -1;
-	
-	deviceHandler_temp_readFile =  deviceHandler_readFile;
-	deviceHandler_temp_seekFile =  deviceHandler_seekFile;
-	
-	// Check SD in both slots if we're not already running from SD, or if we fail from SD
-	if((curDevice != SD_CARD && curDevice != IDEEXI && curDevice != WKF) || deviceHandler_temp_readFile(cheatsFile, &trimmedGameId, 8) != 8) {
-		if(deviceHandler_initial != &initial_SD0 && deviceHandler_initial != &initial_SD1) {
-			int slot = 0;
-			deviceHandler_temp_init     =  deviceHandler_FAT_init;
-			deviceHandler_temp_readFile =  deviceHandler_FAT_readFile;
-			deviceHandler_temp_seekFile =  deviceHandler_FAT_seekFile;
-			deviceHandler_temp_deinit   =  deviceHandler_FAT_deinit;
-			while(slot < 2) {
-				file_handle *slotFile = slot ? &initial_SD1:&initial_SD0;
-				// Try SD slots now
-				memcpy(cheatsFile, slotFile, sizeof(file_handle));
-				sprintf(cheatsFile->name, "%s/cheats/%s.txt", slotFile->name, trimmedGameId);
-				print_gecko("Looking for cheats file @ %s\r\n", cheatsFile->name);
-				cheatsFile->size = -1;
-				deviceHandler_temp_init(cheatsFile);
-				if(deviceHandler_temp_readFile(cheatsFile, &trimmedGameId, 8) == 8) {
-					break;
-				}
-				slot++;
-			}
+
+	devices[DEVICE_TEMP] = devices[DEVICE_CUR];
+
+	// Check SD in both slots if we're not already running from SD, or if we fail from current device
+	if(devices[DEVICE_TEMP]->readFile(cheatsFile, &trimmedGameId, 8) != 8) {
+		// Try SD slots now
+		devices[DEVICE_TEMP] = &__device_sd_a;
+		file_handle *slotFile = devices[DEVICE_TEMP]->initial;
+		memcpy(cheatsFile, slotFile, sizeof(file_handle));
+		sprintf(cheatsFile->name, "%s/cheats/%s.txt", slotFile->name, trimmedGameId);
+		print_gecko("Looking for cheats file @ %s\r\n", cheatsFile->name);
+		cheatsFile->size = -1;
+		devices[DEVICE_TEMP]->init(cheatsFile);
+		if(devices[DEVICE_TEMP]->readFile(cheatsFile, &trimmedGameId, 8) != 8) {
+			devices[DEVICE_TEMP] = NULL;
 		}
+		devices[DEVICE_TEMP] = &__device_sd_b;
+		slotFile = devices[DEVICE_TEMP]->initial;
+		memcpy(cheatsFile, slotFile, sizeof(file_handle));
+		sprintf(cheatsFile->name, "%s/cheats/%s.txt", slotFile->name, trimmedGameId);
+		print_gecko("Looking for cheats file @ %s\r\n", cheatsFile->name);
+		cheatsFile->size = -1;
+		devices[DEVICE_TEMP]->init(cheatsFile);
+		if(devices[DEVICE_TEMP]->readFile(cheatsFile, &trimmedGameId, 8) != 8) {
+			devices[DEVICE_TEMP] = NULL;
+		}
+
 		// Still fail?
-		if(deviceHandler_temp_readFile(cheatsFile, &trimmedGameId, 8) != 8) {
+		if(devices[DEVICE_TEMP] == NULL) {
 			if(!silent) {
 				while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
 				DrawFrameStart();
@@ -241,8 +242,8 @@ int findCheats(bool silent) {
 	print_gecko("Cheats file found with size %i\r\n", cheatsFile->size);
 	char *cheats_buffer = memalign(32, cheatsFile->size);
 	if(cheats_buffer) {
-		deviceHandler_temp_seekFile(cheatsFile, 0, DEVICE_HANDLER_SEEK_SET);
-		deviceHandler_temp_readFile(cheatsFile, cheats_buffer, cheatsFile->size);
+		devices[DEVICE_TEMP]->seekFile(cheatsFile, 0, DEVICE_HANDLER_SEEK_SET);
+		devices[DEVICE_TEMP]->readFile(cheatsFile, cheats_buffer, cheatsFile->size);
 		parseCheats(cheats_buffer);
 		free(cheats_buffer);
 		free(cheatsFile);

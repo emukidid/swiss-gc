@@ -9,21 +9,10 @@
 
 #include "../deviceHandler.h"
 
-extern file_handle initial_SD0;
-extern file_handle initial_SD1;
-extern file_handle initial_IDE0;
-extern file_handle initial_IDE1;
-extern device_info* deviceHandler_FAT_info();
-
-int  deviceHandler_FAT_readDir(file_handle*, file_handle**, unsigned int);
-int  deviceHandler_FAT_readFile(file_handle*, void*, unsigned int);
-int  deviceHandler_FAT_writeFile(file_handle*, void*, unsigned int);
-int  deviceHandler_FAT_seekFile(file_handle*, unsigned int, unsigned int);
-int  deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2);
-int  deviceHandler_FAT_init(file_handle* file);
-int  deviceHandler_FAT_deinit(file_handle* file);
-int  deviceHandler_FAT_deleteFile(file_handle* file);
-int  deviceHandler_FAT_closeFile(file_handle* file);
+extern DEVICEHANDLER_INTERFACE __device_sd_a;
+extern DEVICEHANDLER_INTERFACE __device_sd_b;
+extern DEVICEHANDLER_INTERFACE __device_ide_a;
+extern DEVICEHANDLER_INTERFACE __device_ide_b;
 
 #endif
 

@@ -71,7 +71,6 @@ file_handle initial_SYS =
 
 device_info initial_SYS_info =
 {
-	TEX_SYSTEM,
 	0,
 	0
 };
@@ -226,8 +225,8 @@ int read_rom_dvd_rom(unsigned int offset, void* buffer, unsigned int length) {
 	return length;
 }
 
-int deviceHandler_SYS_init(file_handle* file) {
-	int i;
+s32 deviceHandler_SYS_init(file_handle* file) {
+	s32 i;
 
 	for(i = 0; i < NUM_ROMS; i++) {
 		initial_SYS_info.totalSpaceInKB += rom_sizes[i];
@@ -238,7 +237,7 @@ int deviceHandler_SYS_init(file_handle* file) {
 	return 1;
 }
 
-int deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, unsigned int type) {
+s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	int num_entries = 1, i;
 	*dir = malloc(num_entries * sizeof(file_handle));
 	memset(&(*dir)[0], 0, sizeof(file_handle));
@@ -258,34 +257,59 @@ int deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, unsigned in
 	return num_entries;
 }
 
-int deviceHandler_SYS_readFile(file_handle* file, void* buffer, unsigned int length) {
+s32 deviceHandler_SYS_readFile(file_handle* file, void* buffer, u32 length) {
 	int ret = read_rom[file->fileBase](file->offset, buffer, length);
 	file->offset += ret;
 	return ret;
 }
 
-int deviceHandler_SYS_writeFile(file_handle* file, void* buffer, unsigned int length) {
+s32 deviceHandler_SYS_writeFile(file_handle* file, void* buffer, u32 length) {
 	return 1;
 }
 
-int deviceHandler_SYS_deleteFile(file_handle* file) {
+s32 deviceHandler_SYS_deleteFile(file_handle* file) {
 	return 1;
 }
 
-int deviceHandler_SYS_seekFile(file_handle* file, unsigned int where, unsigned int type) {
+s32 deviceHandler_SYS_seekFile(file_handle* file, u32 where, u32 type) {
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
 	return file->offset;
 }
 
-int deviceHandler_SYS_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_SYS_setupFile(file_handle* file, file_handle* file2) {
 	return 1;
 }
 
-int deviceHandler_SYS_closeFile(file_handle* file) {
+s32 deviceHandler_SYS_closeFile(file_handle* file) {
 	return 0;
 }
 
-int deviceHandler_SYS_deinit() {
+s32 deviceHandler_SYS_deinit() {
 	return 0;
 }
+
+bool deviceHandler_SYS_test() {
+	return true;
+}
+
+DEVICEHANDLER_INTERFACE __device_sys = {
+	DEVICE_ID_9,
+	"System",
+	"Backup IPL, DSP, DVD, SRAM",
+	{TEX_SYSTEM, 160, 85}, 
+	FEAT_READ,
+	LOC_SYSTEM,
+	&initial_SYS,
+	(_fn_test)&deviceHandler_SYS_test,
+	(_fn_info)&deviceHandler_SYS_info,
+	(_fn_init)&deviceHandler_SYS_init,
+	(_fn_readDir)&deviceHandler_SYS_readDir,
+	(_fn_readFile)&deviceHandler_SYS_readFile,
+	(_fn_writeFile)NULL,
+	(_fn_deleteFile)NULL,
+	(_fn_seekFile)&deviceHandler_SYS_seekFile,
+	(_fn_setupFile)&deviceHandler_SYS_setupFile,
+	(_fn_closeFile)&deviceHandler_SYS_closeFile,
+	(_fn_deinit)&deviceHandler_SYS_deinit
+};

@@ -87,7 +87,7 @@ void populate_meta(file_handle *f) {
 			if(endsWith(f->name,".iso") || endsWith(f->name,".gcm") 
 				|| endsWith(f->name,".ISO") || endsWith(f->name,".GCM")) {
 				
-				if(curDevice == WODE) {
+				if(devices[DEVICE_CUR] == &__device_wode) {
 					f->meta = (file_meta*)meta_alloc(sizeof(file_meta));
 					memset(f->meta, 0, sizeof(file_meta));
 					// Assign GCM region texture
@@ -106,8 +106,8 @@ void populate_meta(file_handle *f) {
 					f->meta = (file_meta*)meta_alloc(sizeof(file_meta));
 					memset(f->meta, 0, sizeof(file_meta));
 					DiskHeader *header = memalign(32, sizeof(DiskHeader));
-					deviceHandler_seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
-					deviceHandler_readFile(f, header, sizeof(DiskHeader));
+					devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
+					devices[DEVICE_CUR]->readFile(f, header, sizeof(DiskHeader));
 					
 					if(header->DVDMagicWord == DVD_MAGIC) {
 						//print_gecko("FILE identifed as valid GCM\r\n");
@@ -119,23 +119,23 @@ void populate_meta(file_handle *f) {
 						}
 						else
 						{
-							deviceHandler_seekFile(f,bannerOffset+0x20,DEVICE_HANDLER_SEEK_SET);
-							if(deviceHandler_readFile(f,f->meta->banner,BannerSize)!=BannerSize) {
+							devices[DEVICE_CUR]->seekFile(f,bannerOffset+0x20,DEVICE_HANDLER_SEEK_SET);
+							if(devices[DEVICE_CUR]->readFile(f,f->meta->banner,BannerSize)!=BannerSize) {
 								memcpy(f->meta->banner,blankbanner+0x20,BannerSize);
 							}
 							//print_gecko("Read banner from %08X+0x20\r\n", bannerOffset);
 							
 							char bnrType[8];
 							// If this is a BNR2 banner, show the proper description for the language the console is set to
-							deviceHandler_seekFile(f,bannerOffset,DEVICE_HANDLER_SEEK_SET);
-							deviceHandler_readFile(f,&bnrType[0],4);
+							devices[DEVICE_CUR]->seekFile(f,bannerOffset,DEVICE_HANDLER_SEEK_SET);
+							devices[DEVICE_CUR]->readFile(f,&bnrType[0],4);
 							if(!strncmp(bnrType, "BNR2", 4)) {
-								deviceHandler_seekFile(f,bannerOffset+(0x18e0+(swissSettings.sramLanguage*0x0140)),DEVICE_HANDLER_SEEK_SET);
+								devices[DEVICE_CUR]->seekFile(f,bannerOffset+(0x18e0+(swissSettings.sramLanguage*0x0140)),DEVICE_HANDLER_SEEK_SET);
 							}
 							else {
-								deviceHandler_seekFile(f,bannerOffset+0x18e0,DEVICE_HANDLER_SEEK_SET);
+								devices[DEVICE_CUR]->seekFile(f,bannerOffset+0x18e0,DEVICE_HANDLER_SEEK_SET);
 							}
-							deviceHandler_readFile(f,&f->meta->description[0],0x80);
+							devices[DEVICE_CUR]->readFile(f,&f->meta->description[0],0x80);
 							//print_gecko("Meta Description: [%s]\r\n",&f->meta->description[0]);
 						}
 						DCFlushRange(f->meta->banner,BannerSize);

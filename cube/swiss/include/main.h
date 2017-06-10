@@ -36,29 +36,6 @@ enum fileTypes
   IS_SPECIAL
 };
 
-//Device Type
-enum deviceTypes
-{
-	DVD_DISC=0,
-	SD_CARD,
-	IDEEXI,
-	WKF,
-	WODE,
-	QOOB_FLASH,
-	USBGECKO,
-	MEMCARD,
-	SAMBA,
-	SYS
-};
-
-//Destination Device Type
-enum destDeviceTypes
-{
-	DEST_SD_CARD=0,
-	DEST_IDEEXI,
-	DEST_MEMCARD
-};
-
 //Where on the screen are we?
 enum guiPos
 {
@@ -91,7 +68,7 @@ enum dvdDiscTypes
 	MULTIDISC_DISC,         //Multi Disc Gamecube Game
 	GAMECUBE_DISC,          //Single Disc Gamecube Game
 	ISO9660_DISC,           //ISO9660 Filesystem Disc
-	UNKNOWN_DISC	          //Unknown
+	UNKNOWN_DISC	        //Unknown
 };
 
 //DVD Drive Status (enum)
@@ -108,15 +85,6 @@ enum setupStream
   DISABLE_AUDIO=0,  //Don't enable audio streaming on the drive
   ENABLE_AUDIO,     //Enable it
   ENABLE_BYDISK     //Check from disc header whether to enable it
-};
-
-// Mediums we can have swiss search on boot
-enum bootDevices
-{
-	SD_SLOTA=0,
-	SD_SLOTB,
-	IDE_SLOTA,
-	IDE_SLOTB
 };
 
 #define DVD_MAGIC   0xC2339F3D
@@ -164,7 +132,6 @@ extern u32 getCodeBaseSize();
 
 extern char *dvdDiscTypeStr;
 extern int dvdDiscTypeInt;
-extern int curDevice;  //SD_CARD or DVD_DISC
 extern int drive_status;
 
 extern int files;                  //number of files in a directory

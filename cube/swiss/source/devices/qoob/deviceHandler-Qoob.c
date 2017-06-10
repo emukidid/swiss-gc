@@ -30,7 +30,6 @@ file_handle initial_Qoob =
 	};
 	
 device_info initial_Qoob_info = {
-	TEX_QOOB,
 	0,
 	2048
 };
@@ -39,7 +38,7 @@ device_info* deviceHandler_Qoob_info() {
 	return &initial_Qoob_info;
 }
 	
-int deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, unsigned int type){	
+s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type){	
   
 	// Set everything up to read
 	int num_entries = 1, i = 1, block = 0;
@@ -81,23 +80,23 @@ int deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, unsigned i
 	return num_entries;
 }
 
-int deviceHandler_Qoob_seekFile(file_handle* file, unsigned int where, unsigned int type){
+s32 deviceHandler_Qoob_seekFile(file_handle* file, u32 where, u32 type){
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
 	return file->offset;
 }
 
-int deviceHandler_Qoob_readFile(file_handle* file, void* buffer, unsigned int length){
+s32 deviceHandler_Qoob_readFile(file_handle* file, void* buffer, u32 length){
 	
 	__SYS_ReadROM(buffer,length,file->fileBase+file->offset);
 	return length;
 }
 
-int deviceHandler_Qoob_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_Qoob_setupFile(file_handle* file, file_handle* file2) {
 	return 1;
 }
 
-int deviceHandler_Qoob_init(file_handle* file){
+s32 deviceHandler_Qoob_init(file_handle* file){
 		
 	DrawFrameStart();
 	DrawMessageBox(D_INFO,"Reading Qoob");
@@ -106,11 +105,36 @@ int deviceHandler_Qoob_init(file_handle* file){
 	return 1;
 }
 
-int deviceHandler_Qoob_deinit(file_handle* file) {
+s32 deviceHandler_Qoob_deinit(file_handle* file) {
+	ipl_set_config(6);
 	return 0;
 }
 
-int deviceHandler_Qoob_closeFile(file_handle* file) {
+s32 deviceHandler_Qoob_closeFile(file_handle* file) {
     return 0;
 }
 
+bool deviceHandler_Qoob_test() {
+	return true; // TODO proper detection
+}
+
+DEVICEHANDLER_INTERFACE __device_qoob = {
+	DEVICE_ID_7,
+	"Qoob Pro",
+	"Qoob Pro Flash File System",
+	{TEX_QOOB, 70, 80},
+	FEAT_READ,
+	LOC_SYSTEM,
+	&initial_Qoob,
+	(_fn_test)&deviceHandler_Qoob_test,
+	(_fn_info)&deviceHandler_Qoob_info,
+	(_fn_init)&deviceHandler_Qoob_init,
+	(_fn_readDir)&deviceHandler_Qoob_readDir,
+	(_fn_readFile)&deviceHandler_Qoob_readFile,
+	(_fn_writeFile)NULL,
+	(_fn_deleteFile)NULL,
+	(_fn_seekFile)&deviceHandler_Qoob_seekFile,
+	(_fn_setupFile)NULL,
+	(_fn_closeFile)&deviceHandler_Qoob_closeFile,
+	(_fn_deinit)&deviceHandler_Qoob_deinit
+};

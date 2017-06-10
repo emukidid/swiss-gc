@@ -28,19 +28,8 @@ typedef struct {
 	u32 comment_addr;
 } __attribute__((__packed__)) GCI;
 
-extern file_handle initial_CARDA;
-extern file_handle initial_CARDB;
-extern device_info* deviceHandler_CARD_info();
-
-int  deviceHandler_CARD_readDir(file_handle*, file_handle**, unsigned int);
-int  deviceHandler_CARD_readFile(file_handle*, void*, unsigned int);
-int  deviceHandler_CARD_writeFile(file_handle*, void*, unsigned int);
-int  deviceHandler_CARD_seekFile(file_handle*, unsigned int, unsigned int);
-int  deviceHandler_CARD_setupFile(file_handle* file, file_handle* file2);
-int  deviceHandler_CARD_init(file_handle* file);
-int  deviceHandler_CARD_deinit(file_handle* file);
-int deviceHandler_CARD_deleteFile(file_handle* file);
-int  deviceHandler_CARD_closeFile(file_handle* file);
+extern DEVICEHANDLER_INTERFACE __device_card_a;
+extern DEVICEHANDLER_INTERFACE __device_card_b;
 
 int initialize_card(int slot);
 void setCopyGCIMode(bool _isCopyGCIMode);

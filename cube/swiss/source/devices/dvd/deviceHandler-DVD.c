@@ -35,7 +35,6 @@ file_handle initial_DVD =
 };
 
 device_info initial_DVD_info = {
-	TEX_GCDVDSMALL,
 	1425760,
 	1425760
 };
@@ -254,7 +253,7 @@ device_info* deviceHandler_DVD_info() {
 	return &initial_DVD_info;
 }
 
-int deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, unsigned int type){
+s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 
 	unsigned int i = 0, isGC = is_gamecube();
 	unsigned int  *tmpTable = NULL;
@@ -361,13 +360,13 @@ int deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, unsigned in
 	return num_entries;
 }
 
-int deviceHandler_DVD_seekFile(file_handle* file, unsigned int where, unsigned int type){
+s32 deviceHandler_DVD_seekFile(file_handle* file, u32 where, u32 type){
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
 	return file->offset;
 }
 
-int deviceHandler_DVD_readFile(file_handle* file, void* buffer, unsigned int length){
+s32 deviceHandler_DVD_readFile(file_handle* file, void* buffer, u32 length){
 	//print_gecko("read: status:%08X dst:%08X ofs:%08X base:%08X len:%08X\r\n"
 	//						,file->status,(u32)buffer,file->offset,(u32)((file->fileBase) & 0xFFFFFFFF),length);
 	u64 actualOffset = file->fileBase+file->offset;
@@ -382,12 +381,12 @@ int deviceHandler_DVD_readFile(file_handle* file, void* buffer, unsigned int len
 	return bytesread;
 }
 
-int deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 
 	// Multi-Game disc audio streaming setup
 	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
-		deviceHandler_seekFile(file, 0, DEVICE_HANDLER_SEEK_SET);
-		deviceHandler_readFile(file,(unsigned char*)0x80000000,32);
+		devices[DEVICE_CUR]->seekFile(file, 0, DEVICE_HANDLER_SEEK_SET);
+		devices[DEVICE_CUR]->readFile(file,(unsigned char*)0x80000000,32);
 		char streaming = *(char*)0x80000008;
 		if(streaming && !isXenoGC) {
 			DrawFrameStart();
@@ -413,7 +412,7 @@ int deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 		print_gecko("Streaming %s %08X\r\n",streaming?"Enabled":"Disabled",dvd_get_error());
 	}
 	// Check if there are any fragments in our patch location for this game
-	if(savePatchDevice>=0) {
+	if(devices[DEVICE_PATCHES] != NULL) {
 		print_gecko("Save Patch device found\r\n");
 		// If there are 2 discs, we only allow 5 fragments per disc.
 		int maxFrags = (VAR_FRAG_SIZE/12), i = 0;
@@ -424,21 +423,25 @@ int deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 		// Look for .patchX files, if we find some, open them and add them as fragments
 		file_handle patchFile;
 		int patches = 0;
+		char gameID[8];
+		memset(&gameID, 0, 8);
+		strncpy((char*)&gameID, (char*)&GCMDisk, 4);
+		
 		for(i = 0; i < maxFrags; i++) {
-			u32 patchInfo[3];
+			u32 patchInfo[4];
 			patchInfo[0] = 0; patchInfo[1] = 0; 
 			memset(&patchFile, 0, sizeof(file_handle));
-			sprintf(&patchFile.name[0], "%s:/swiss_patches/%i",(savePatchDevice ? "sdb":"sda"), i);
-
+			sprintf(&patchFile.name[0], "%sswiss_patches/%s/%i",devices[DEVICE_PATCHES]->initial->name,gameID, i);
+			print_gecko("Looking for file %s\r\n", &patchFile.name);
 			struct stat fstat;
 			if(stat(&patchFile.name[0],&fstat)) {
 				break;
 			}
 			patchFile.fp = fopen(&patchFile.name[0], "rb");
 			if(patchFile.fp) {
-				fseek(patchFile.fp, fstat.st_size-12, SEEK_SET);
+				fseek(patchFile.fp, fstat.st_size-16, SEEK_SET);
 				
-				if((fread(&patchInfo, 1, 12, patchFile.fp) == 12) && (patchInfo[2] == SWISS_MAGIC)) {
+				if((fread(&patchInfo, 1, 16, patchFile.fp) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
 					get_frag_list(&patchFile.name[0]);
 					print_gecko("Found patch file %i ofs 0x%08X len 0x%08X base 0x%08X\r\n", 
 									i, patchInfo[0], patchInfo[1], frag_list->frag[0].sector);
@@ -462,16 +465,17 @@ int deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 		// Copy the current speed
 		*(volatile unsigned int*)VAR_EXI_BUS_SPD = 192;
 		// Card Type
-		*(volatile unsigned int*)VAR_SD_TYPE = sdgecko_getAddressingType(savePatchDevice);
+		*(volatile unsigned int*)VAR_SD_TYPE = sdgecko_getAddressingType(((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1));
 		// Copy the actual freq
-		*(volatile unsigned int*)VAR_EXI_FREQ = EXI_SPEED16MHZ;
+		*(volatile unsigned int*)VAR_EXI_FREQ = EXI_SPEED16MHZ;	// play it safe
 		// Device slot (0 or 1) // This represents 0xCC0068xx in number of u32's so, slot A = 0xCC006800, B = 0xCC006814
-		*(volatile unsigned int*)VAR_EXI_SLOT = savePatchDevice * 5;
+		*(volatile unsigned int*)VAR_EXI_SLOT = ((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1) * 5;
 	}
+
 	return 1;
 }
 
-int deviceHandler_DVD_init(file_handle* file){
+s32 deviceHandler_DVD_init(file_handle* file){
   file->status = initialize_disc(ENABLE_BYDISK);
   if(file->status == DRV_ERROR){
 	  DrawFrameStart();
@@ -484,12 +488,37 @@ int deviceHandler_DVD_init(file_handle* file){
   return file->status;
 }
 
-int deviceHandler_DVD_deinit(file_handle* file) {
+s32 deviceHandler_DVD_deinit(file_handle* file) {
 	dvd_motor_off();
+	dvdDiscTypeStr = NotInitStr;
 	return 0;
 }
 
-int deviceHandler_DVD_closeFile(file_handle* file){
+s32 deviceHandler_DVD_closeFile(file_handle* file){
 	return 0;
 }
 
+bool deviceHandler_DVD_test() {
+	return swissSettings.hasDVDDrive != 0;
+}
+
+DEVICEHANDLER_INTERFACE __device_dvd = {
+	DEVICE_ID_0,
+	"DVD",
+	"Supported File System(s): GCM, ISO 9660, Multi-Game",
+	{TEX_GCDVDSMALL, 80, 79},
+	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CAN_READ_PATCHES,
+	LOC_DVD_CONNECTOR,
+	&initial_DVD,
+	(_fn_test)&deviceHandler_DVD_test,
+	(_fn_info)&deviceHandler_DVD_info,
+	(_fn_init)&deviceHandler_DVD_init,
+	(_fn_readDir)&deviceHandler_DVD_readDir,
+	(_fn_readFile)&deviceHandler_DVD_readFile,
+	(_fn_writeFile)NULL,
+	(_fn_deleteFile)NULL,
+	(_fn_seekFile)&deviceHandler_DVD_seekFile,
+	(_fn_setupFile)&deviceHandler_DVD_setupFile,
+	(_fn_closeFile)&deviceHandler_DVD_closeFile,
+	(_fn_deinit)&deviceHandler_DVD_deinit
+};

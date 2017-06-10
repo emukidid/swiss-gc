@@ -41,16 +41,18 @@
 typedef struct {
 	char name[1024]; // File or Folder, absolute path goes here
 	uint64_t fileBase;   // Raw sector on device
-	unsigned int offset;    // Offset in the file
-	unsigned int size;      // size of the file
-	int fileAttrib;        // IS_FILE or IS_DIR
-	int status;            // is the device ok
+	uint32_t offset;    			// Offset in the file
+	uint32_t size;      			// size of the file
+	int32_t fileAttrib;        // IS_FILE or IS_DIR
+	int32_t status;            // is the device ok
 	FILE *fp;				// file pointer
+	int32_t metaptr; // not used in usbgecko server side
+	uint8_t other[128]; // not used in usbgecko server side
 } file_handle;
 
 typedef struct {
-	unsigned int offset;    // Offset in the file
-	unsigned int size;      // size to read
+	uint32_t offset;    // Offset in the file
+	uint32_t size;      // size to read
 } usb_data_req;
 
 FILE *served_file_fp;
