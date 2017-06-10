@@ -679,7 +679,7 @@ unsigned int load_app(int multiDol)
 	}
 	
 	// Don't spin down the drive when running something from it...
-	if(devices[DEVICE_CUR] == &__device_dvd) {
+	if(devices[DEVICE_CUR] != &__device_dvd) {
 		devices[DEVICE_CUR]->deinit(&curFile);
 	}
 	
@@ -912,6 +912,8 @@ void manage_file() {
 			u32 ret = 0;
 			// Show a list of destination devices (the same device is also a possibility)
 			select_device(DEVICE_DEST);
+			if(devices[DEVICE_DEST] == NULL) return;
+
 			// If the devices are not the same, init the destination, fail on non-existing device/etc
 			if(devices[DEVICE_CUR] != devices[DEVICE_DEST]) {
 				devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );				
@@ -1223,7 +1225,7 @@ void load_game() {
 	
 	int multiDol = 0;
 	// Report to the user the patch status of this GCM/ISO file
-	if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
+	if(devices[DEVICE_CUR]->features & FEAT_CAN_READ_PATCHES) {
 		multiDol = check_game();
 	}
 	
@@ -1276,78 +1278,75 @@ void load_file()
 {
 	char *fileName = &curFile.name[0];
 		
-	// If it's not a DVD Disc, or it's a DVD disc with some file structure, browse by file type
-	if((devices[DEVICE_CUR] != &__device_dvd) 
-			|| (devices[DEVICE_CUR] == &__device_dvd && dvdDiscTypeInt==ISO9660_DISC)) {
-		//if it's a DOL, boot it
-		if(strlen(fileName)>4) {
-			if(endsWith(fileName,".dol")) {
-				boot_dol();
-				// if it was invalid (overlaps sections, too large, etc..) it'll return
+	//if it's a DOL, boot it
+	if(strlen(fileName)>4) {
+		if(endsWith(fileName,".dol")) {
+			boot_dol();
+			// if it was invalid (overlaps sections, too large, etc..) it'll return
+			DrawFrameStart();
+			DrawMessageBox(D_WARN, "Invalid DOL");
+			DrawFrameFinish();
+			sleep(2);
+			return;
+		}
+		if(endsWith(fileName,".mp3")) {
+			mp3_player(allFiles, files, &curFile);
+			return;
+		}
+		if(endsWith(fileName,".fzn")) {
+			if(curFile.size != 0x1D0000) {
 				DrawFrameStart();
-				DrawMessageBox(D_WARN, "Invalid DOL");
+				DrawMessageBox(D_WARN, "File Size must be 0x1D0000 bytes!");
 				DrawFrameFinish();
 				sleep(2);
-				return;
-			}
-			if(endsWith(fileName,".mp3")) {
-				mp3_player(allFiles, files, &curFile);
-				return;
-			}
-			if(endsWith(fileName,".fzn")) {
-				if(curFile.size != 0x1D0000) {
-					DrawFrameStart();
-					DrawMessageBox(D_WARN, "File Size must be 0x1D0000 bytes!");
-					DrawFrameFinish();
-					sleep(2);
-					return;
-				}
-				DrawFrameStart();
-				DrawMessageBox(D_INFO, "Reading Flash File ...");
-				DrawFrameFinish();
-				u8 *flash = (u8*)memalign(32,0x1D0000);
-				devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
-				devices[DEVICE_CUR]->readFile(&curFile,flash,0x1D0000);
-				// Try to read a .fw file too.
-				file_handle fwFile;
-				memset(&fwFile, 0, sizeof(file_handle));
-				sprintf(&fwFile.name[0],"%s.fw", &curFile.name[0]);
-				u8 *firmware = (u8*)memalign(32, 0x3000);
-				DrawFrameStart();
-				if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR]->readFile(&fwFile,firmware,0x3000) != 0x3000) {
-					free(firmware); firmware = NULL;
-					DrawMessageBox(D_WARN, "Didn't find a firmware file, flashing menu only.");
-				}
-				else {
-					DrawMessageBox(D_INFO, "Found firmware file, this will be flashed too.");
-				}
-				DrawFrameFinish();
-				sleep(1);
-				wkfWriteFlash(flash, firmware);
-				DrawFrameStart();
-				DrawMessageBox(D_INFO, "Flashing Complete !!");
-				DrawFrameFinish();
-				sleep(2);
-				return;
-			}
-			if(endsWith(fileName,".iso") || endsWith(fileName,".gcm")) {
-				if(devices[DEVICE_CUR]->features & FEAT_BOOT_GCM)
-					load_game();
-				else {
-					DrawFrameStart();
-					DrawMessageBox(D_WARN, "This device does not support booting of images.");
-					DrawFrameFinish();
-					sleep(2);
-				}
 				return;
 			}
 			DrawFrameStart();
-			DrawMessageBox(D_WARN, "Unknown File Type\nEnable file management to manage this file.");
+			DrawMessageBox(D_INFO, "Reading Flash File ...");
+			DrawFrameFinish();
+			u8 *flash = (u8*)memalign(32,0x1D0000);
+			devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_CUR]->readFile(&curFile,flash,0x1D0000);
+			// Try to read a .fw file too.
+			file_handle fwFile;
+			memset(&fwFile, 0, sizeof(file_handle));
+			sprintf(&fwFile.name[0],"%s.fw", &curFile.name[0]);
+			u8 *firmware = (u8*)memalign(32, 0x3000);
+			DrawFrameStart();
+			if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR]->readFile(&fwFile,firmware,0x3000) != 0x3000) {
+				free(firmware); firmware = NULL;
+				DrawMessageBox(D_WARN, "Didn't find a firmware file, flashing menu only.");
+			}
+			else {
+				DrawMessageBox(D_INFO, "Found firmware file, this will be flashed too.");
+			}
 			DrawFrameFinish();
 			sleep(1);
-			return;			
+			wkfWriteFlash(flash, firmware);
+			DrawFrameStart();
+			DrawMessageBox(D_INFO, "Flashing Complete !!");
+			DrawFrameFinish();
+			sleep(2);
+			return;
 		}
+		if(endsWith(fileName,".iso") || endsWith(fileName,".gcm")) {
+			if(devices[DEVICE_CUR]->features & FEAT_BOOT_GCM)
+				load_game();
+			else {
+				DrawFrameStart();
+				DrawMessageBox(D_WARN, "This device does not support booting of images.");
+				DrawFrameFinish();
+				sleep(2);
+			}
+			return;
+		}
+		DrawFrameStart();
+		DrawMessageBox(D_WARN, "Unknown File Type\nEnable file management to manage this file.");
+		DrawFrameFinish();
+		sleep(1);
+		return;			
 	}
+
 }
 
 int check_game()
@@ -1494,6 +1493,8 @@ int info_game()
 
 void select_device(int type)
 {
+	u32 requiredFeatures = (type == DEVICE_DEST) ? FEAT_WRITE:FEAT_READ;
+
 	if(is_httpd_in_use()) {
 		doBackdrop();
 		DrawMessageBox(D_INFO,"Can't load device while HTTP is processing!");
@@ -1504,18 +1505,23 @@ void select_device(int type)
 
 	int curDevice = 0;
 	int inAdvanced = 0, showAllDevices = 0;
-		
+	int direction = 1;
+
 	while(1) {
-		// Go to the first device available
-		if(!showAllDevices && !deviceHandler_getDeviceAvailable(allDevices[curDevice])) {
-			int i = 0;
-			while(allDevices[i] != NULL) {
-				if(deviceHandler_getDeviceAvailable(allDevices[i])) {
-					curDevice = i;
-					break;
-				}
-				i++;
+		// Go to the first device available if we're not showing all devices
+		int i = curDevice;
+		i+= direction;
+
+		if(i < 0) i = MAX_DEVICES;
+		else if (i > MAX_DEVICES) i = 0;
+		while(1) {
+			if(allDevices[i] != NULL && (deviceHandler_getDeviceAvailable(allDevices[i])||showAllDevices) && (allDevices[i]->features & requiredFeatures)) {
+				curDevice = i;
+				break;
 			}
+			i+=direction;
+			if(i < 0) i = MAX_DEVICES;
+			else if (i > MAX_DEVICES) i = 0;
 		}
 
 		doBackdrop();
@@ -1547,8 +1553,10 @@ void select_device(int type)
 		u16 btns = PAD_ButtonsHeld(0);
 		if((btns & PAD_BUTTON_X) && (allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B)))
 			inAdvanced ^= 1;
-		if(btns & PAD_TRIGGER_Z)
+		if(btns & PAD_TRIGGER_Z) {
 			showAllDevices ^= 1;
+			direction = 0;
+		}
 		if(inAdvanced) {
 			if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
 				swissSettings.exiSpeed^=1;
@@ -1556,27 +1564,10 @@ void select_device(int type)
 		}
 		else {
 			if(btns & PAD_BUTTON_RIGHT) {
-				if(allDevices[curDevice+1] == NULL)
-					curDevice = 0;
-				else
-					curDevice++;
-				// Go to the next available device
-				while(!showAllDevices && !deviceHandler_getDeviceAvailable(allDevices[curDevice])) {
-					if(allDevices[curDevice] == NULL)
-						curDevice = 0;
-					else
-						curDevice ++;
-				}
+				direction = 1;
 			}
 			if(btns & PAD_BUTTON_LEFT) {
-				curDevice = curDevice > 0 ? curDevice-1 : 0;
-				// Go to the next available device
-				while(!showAllDevices && (allDevices[curDevice] == NULL || !deviceHandler_getDeviceAvailable(allDevices[curDevice]))) {
-					if(curDevice == 0)
-						curDevice = MAX_DEVICES;
-					else
-						curDevice --;
-				}
+				direction = -1;
 			}
 		}
 		if(btns & PAD_BUTTON_A) {
@@ -1596,6 +1587,7 @@ void select_device(int type)
 				inAdvanced = 0;
 		}
 		if(btns & PAD_BUTTON_B) {
+			devices[type] = NULL;
 			return;
 		}
 		while ((PAD_ButtonsHeld(0) & 

@@ -242,7 +242,7 @@ DEVICEHANDLER_INTERFACE __device_wkf = {
 	"Wiikey / Wasp Fusion",
 	"Supported File System(s): FAT16, FAT32",
 	{TEX_WIIKEY, 102, 80},
-	FEAT_READ|FEAT_BOOT_GCM|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS/*|FEAT_BOOT_DEVICE*/,	// TODO re-write init to be silent and re-enable this.
+	FEAT_READ|FEAT_BOOT_GCM|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_BOOT_DEVICE/*|FEAT_CAN_READ_PATCHES*/,
 	LOC_DVD_CONNECTOR,
 	&initial_WKF,
 	(_fn_test)&deviceHandler_WKF_test,

@@ -226,7 +226,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	
 	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
 	
-  	// Look for .patchX files, if we find some, open them and add them as fragments
+  	// Look for patch files, if we find some, open them and add them as fragments
 	file_handle patchFile;
 	int patches = 0;
 	for(i = 0; i < maxFrags; i++) {
@@ -236,7 +236,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 		memset(&gameID, 0, 8);
 		strncpy((char*)&gameID, (char*)&GCMDisk, 4);
 		memset(&patchFile, 0, sizeof(file_handle));
-		sprintf(&patchFile.name[0], "%s:/swiss_patches/%s/%i",(savePatchDevice ? "sdb":"sda"),&gameID[0], i);
+		sprintf(&patchFile.name[0], "%sswiss_patches/%s/%i", devices[DEVICE_CUR]->initial->name,&gameID[0], i);
 
 		struct stat fstat;
 		if(stat(&patchFile.name[0],&fstat)) {
@@ -323,9 +323,9 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	// Copy the actual freq
 	*(volatile unsigned int*)VAR_EXI_FREQ = !swissSettings.exiSpeed ? EXI_SPEED16MHZ:EXI_SPEED32MHZ;
 	// Device slot (0 or 1) // This represents 0xCC0068xx in number of u32's so, slot A = 0xCC006800, B = 0xCC006814
-	*(volatile unsigned int*)VAR_EXI_SLOT = ((file->name[0] == 's') ? (file->name[2] == 'b') : (file->name[3] == 'b')) * 5;
+	*(volatile unsigned int*)VAR_EXI_SLOT = ((devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)? 0:1) * 5;
 	// IDE-EXI only settings
-	if(!(file->name[0] == 's')) {
+	if((devices[DEVICE_CUR] == &__device_ide_a) || (devices[DEVICE_CUR] == &__device_ide_b)) {
 		// Is the HDD in use a 48 bit LBA supported HDD?
 		*(volatile unsigned int*)VAR_TMP1 = ataDriveInfo.lba48Support;
 	}
@@ -451,7 +451,7 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 	"SD Gecko - Slot A",
 	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32",
 	{TEX_SDSMALL, 60, 80},
-	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_REPLACES_DVD_FUNCS,
+	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_CAN_READ_PATCHES|FEAT_REPLACES_DVD_FUNCS,
 	LOC_MEMCARD_SLOT_A,
 	&initial_SD_A,
 	(_fn_test)&deviceHandler_FAT_test_sd_a,
@@ -472,7 +472,7 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 	"SD Gecko - Slot B",
 	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32",
 	{TEX_SDSMALL, 60, 80},
-	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_REPLACES_DVD_FUNCS,
+	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_CAN_READ_PATCHES|FEAT_REPLACES_DVD_FUNCS,
 	LOC_MEMCARD_SLOT_B,
 	&initial_SD_B,
 	(_fn_test)&deviceHandler_FAT_test_sd_b,
@@ -493,7 +493,7 @@ DEVICEHANDLER_INTERFACE __device_ide_a = {
 	"IDE-EXI - Slot A",
 	"IDE HDD - Supported File System(s): FAT16, FAT32",
 	{TEX_HDD, 80, 80},
-	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_REPLACES_DVD_FUNCS,
+	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_CAN_READ_PATCHES|FEAT_REPLACES_DVD_FUNCS,
 	LOC_MEMCARD_SLOT_A,
 	&initial_IDE_A,
 	(_fn_test)&deviceHandler_FAT_test_ide_a,
@@ -514,7 +514,7 @@ DEVICEHANDLER_INTERFACE __device_ide_b = {
 	"IDE-EXI - Slot B",
 	"IDE HDD - Supported File System(s): FAT16, FAT32",
 	{TEX_HDD, 80, 80},
-	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_REPLACES_DVD_FUNCS,
+	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_CAN_READ_PATCHES|FEAT_REPLACES_DVD_FUNCS,
 	LOC_MEMCARD_SLOT_B,
 	&initial_IDE_B,
 	(_fn_test)&deviceHandler_FAT_test_ide_b,

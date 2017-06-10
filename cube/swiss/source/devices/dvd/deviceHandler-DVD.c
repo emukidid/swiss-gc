@@ -412,7 +412,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 		print_gecko("Streaming %s %08X\r\n",streaming?"Enabled":"Disabled",dvd_get_error());
 	}
 	// Check if there are any fragments in our patch location for this game
-	if(savePatchDevice>=0) {
+	if(devices[DEVICE_PATCHES] != NULL) {
 		print_gecko("Save Patch device found\r\n");
 		// If there are 2 discs, we only allow 5 fragments per disc.
 		int maxFrags = (VAR_FRAG_SIZE/12), i = 0;
@@ -423,21 +423,25 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 		// Look for .patchX files, if we find some, open them and add them as fragments
 		file_handle patchFile;
 		int patches = 0;
+		char gameID[8];
+		memset(&gameID, 0, 8);
+		strncpy((char*)&gameID, (char*)&GCMDisk, 4);
+		
 		for(i = 0; i < maxFrags; i++) {
-			u32 patchInfo[3];
+			u32 patchInfo[4];
 			patchInfo[0] = 0; patchInfo[1] = 0; 
 			memset(&patchFile, 0, sizeof(file_handle));
-			sprintf(&patchFile.name[0], "%s:/swiss_patches/%i",(savePatchDevice ? "sdb":"sda"), i);
-
+			sprintf(&patchFile.name[0], "%sswiss_patches/%s/%i",devices[DEVICE_PATCHES]->initial->name,gameID, i);
+			print_gecko("Looking for file %s\r\n", &patchFile.name);
 			struct stat fstat;
 			if(stat(&patchFile.name[0],&fstat)) {
 				break;
 			}
 			patchFile.fp = fopen(&patchFile.name[0], "rb");
 			if(patchFile.fp) {
-				fseek(patchFile.fp, fstat.st_size-12, SEEK_SET);
+				fseek(patchFile.fp, fstat.st_size-16, SEEK_SET);
 				
-				if((fread(&patchInfo, 1, 12, patchFile.fp) == 12) && (patchInfo[2] == SWISS_MAGIC)) {
+				if((fread(&patchInfo, 1, 16, patchFile.fp) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
 					get_frag_list(&patchFile.name[0]);
 					print_gecko("Found patch file %i ofs 0x%08X len 0x%08X base 0x%08X\r\n", 
 									i, patchInfo[0], patchInfo[1], frag_list->frag[0].sector);
@@ -461,12 +465,13 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 		// Copy the current speed
 		*(volatile unsigned int*)VAR_EXI_BUS_SPD = 192;
 		// Card Type
-		*(volatile unsigned int*)VAR_SD_TYPE = sdgecko_getAddressingType(savePatchDevice);
+		*(volatile unsigned int*)VAR_SD_TYPE = sdgecko_getAddressingType(((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1));
 		// Copy the actual freq
-		*(volatile unsigned int*)VAR_EXI_FREQ = EXI_SPEED16MHZ;
+		*(volatile unsigned int*)VAR_EXI_FREQ = EXI_SPEED16MHZ;	// play it safe
 		// Device slot (0 or 1) // This represents 0xCC0068xx in number of u32's so, slot A = 0xCC006800, B = 0xCC006814
-		*(volatile unsigned int*)VAR_EXI_SLOT = savePatchDevice * 5;
+		*(volatile unsigned int*)VAR_EXI_SLOT = ((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1) * 5;
 	}
+
 	return 1;
 }
 
@@ -502,7 +507,7 @@ DEVICEHANDLER_INTERFACE __device_dvd = {
 	"DVD",
 	"Supported File System(s): GCM, ISO 9660, Multi-Game",
 	{TEX_GCDVDSMALL, 80, 79},
-	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE,
+	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CAN_READ_PATCHES,
 	LOC_DVD_CONNECTOR,
 	&initial_DVD,
 	(_fn_test)&deviceHandler_DVD_test,

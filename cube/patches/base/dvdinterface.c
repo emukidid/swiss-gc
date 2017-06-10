@@ -204,7 +204,9 @@ void DIUpdateRegisters() {
 		// Keep mask on SR but also set our TC INT to indicate operation complete
 		dvd[DI_SR] |= 0x10;
 		dvd[DI_CR] &= 2;
-		*(u32*)VAR_FAKE_IRQ_SET = 1;
-		trigger_dvd_interrupt();
+		if(dvd[DI_SR] & 0x8) { // TC Interrupt Enabled
+ 			*(u32*)VAR_FAKE_IRQ_SET = 4;
+ 			trigger_dvd_interrupt();
+ 		}
 	}
 }

@@ -29,7 +29,6 @@ extern int SDHCCard;
 extern int GC_SD_CHANNEL;
 
 extern void animateBox(int x1,int y1, int x2, int y2, int color,char *msg);
-int savePatchDevice = -1;
 
 // Read
 FuncPattern ReadDebug = {0xDC, 23, 18, 3, 2, 4, 0, 0, "Read (Debug)", 0};

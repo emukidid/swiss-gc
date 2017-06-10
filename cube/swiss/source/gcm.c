@@ -289,20 +289,21 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, int multiDol) {
 	int i, num_patched = 0;
-	
-	// If the current device isn't SD Gecko, init SD Gecko Slot A or B to write patches.
+
+	// If the current device isn't SD Gecko, init one slot to write patches.
+	// TODO expand this to support IDE-EXI and other writable devices (requires dvd patch re-write/modularity)
+	bool patchDeviceReady = false;
 	if(devices[DEVICE_CUR] != &__device_sd_a && devices[DEVICE_CUR] != &__device_sd_b) {
-		deviceHandler_setStatEnabled(0);
 		if(deviceHandler_test(&__device_sd_a)) {
 			devices[DEVICE_PATCHES] = &__device_sd_a;
 		}
 		else if(deviceHandler_test(&__device_sd_b)) {
 			devices[DEVICE_PATCHES] = &__device_sd_b;
 		}
-		deviceHandler_setStatEnabled(1);
 	}
 	else {
 		devices[DEVICE_PATCHES] = devices[DEVICE_CUR];
+		patchDeviceReady = true;
 	}
 		
 	if(devices[DEVICE_PATCHES] == NULL) {
@@ -321,8 +322,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 	memset(&patchDirName, 0, 256);
 	memset(&patchBaseDirName, 0, 256);
 	strncpy((char*)&gameID, (char*)&GCMDisk, 4);
-	sprintf(&patchDirName[0],"%s/swiss_patches/%s",devices[DEVICE_PATCHES]->initial->name, &gameID[0]);
-	sprintf(&patchBaseDirName[0],"%s/swiss_patches",devices[DEVICE_PATCHES]->initial->name);
+	sprintf(&patchDirName[0],"%sswiss_patches/%s",devices[DEVICE_PATCHES]->initial->name, &gameID[0]);
+	sprintf(&patchBaseDirName[0],"%sswiss_patches",devices[DEVICE_PATCHES]->initial->name);
 	print_gecko("Patch dir will be: %s if required\r\n", patchDirName);
 	*(u32*)VAR_EXECD_OFFSET = 0xFFFFFFFF;
 	// Go through all the possible files we think need patching..
@@ -353,8 +354,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		int sizeToRead = filesToPatch[i].size, ret = 0;
 		u8 *buffer = (u8*)memalign(32, sizeToRead);
 		
-		devices[DEVICE_PATCHES]->seekFile(file,filesToPatch[i].offset, DEVICE_HANDLER_SEEK_SET);
-		ret = devices[DEVICE_PATCHES]->readFile(file,buffer,sizeToRead);
+		devices[DEVICE_CUR]->seekFile(file,filesToPatch[i].offset, DEVICE_HANDLER_SEEK_SET);
+		ret = devices[DEVICE_CUR]->readFile(file,buffer,sizeToRead);
 		print_gecko("Read from %08X Size %08X - Result: %08X\r\n", filesToPatch[i].offset, sizeToRead, ret);
 		if(ret != sizeToRead) {
 			DrawFrameStart();
@@ -407,6 +408,15 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		if(swissSettings.forceAnisotropy)
 			Patch_TexFilt(buffer, sizeToRead, filesToPatch[i].type);
 		if(patched) {
+			if(!patchDeviceReady) {
+				deviceHandler_setStatEnabled(0);
+				if(!devices[DEVICE_PATCHES]->init(devices[DEVICE_PATCHES]->initial)) {
+					deviceHandler_setStatEnabled(1);
+					return false;
+				}
+				deviceHandler_setStatEnabled(1);
+				patchDeviceReady = true;
+			}
 			// File handle for a patch we might need to write
 			FILE *patchFile = 0;
 			memset(patchFileName, 0, 256);

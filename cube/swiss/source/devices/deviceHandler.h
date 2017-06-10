@@ -63,22 +63,23 @@ typedef s32 (* _fn_deinit)(file_handle*);
 typedef device_info* (* _fn_deviceInfo)(void);
 
 // Device features
-#define FEAT_READ				0x100
-#define FEAT_WRITE				0x200
-#define FEAT_BOOT_GCM 			0x4000
-#define FEAT_BOOT_DEVICE		0x8000
-#define FEAT_AUTOLOAD_DOL		0xC000
-#define FEAT_FAT_FUNCS			0x10000
-#define FEAT_REPLACES_DVD_FUNCS	0x20000
+#define FEAT_READ				0x1
+#define FEAT_WRITE				0x2
+#define FEAT_BOOT_GCM 			0x4
+#define FEAT_BOOT_DEVICE		0x8
+#define FEAT_AUTOLOAD_DOL		0x10
+#define FEAT_FAT_FUNCS			0x20
+#define FEAT_REPLACES_DVD_FUNCS	0x40
+#define FEAT_CAN_READ_PATCHES	0x80
 
 // Device locations
 #define LOC_MEMCARD_SLOT_A 	0x1
-#define LOC_MEMCARD_SLOT_B 	0x10
-#define LOC_DVD_CONNECTOR	0x100
-#define LOC_SERIAL_PORT_1	0x1000
-#define LOC_SERIAL_PORT_2	0x2000
-#define LOC_HSP				0x4000
-#define LOC_SYSTEM			0x8000
+#define LOC_MEMCARD_SLOT_B 	0x2
+#define LOC_DVD_CONNECTOR	0x4
+#define LOC_SERIAL_PORT_1	0x8
+#define LOC_SERIAL_PORT_2	0x10
+#define LOC_HSP				0x20
+#define LOC_SYSTEM			0x40
 
 // Device unique Id (used to store last used config device in SRAM - configDeviceId)
 #define DEVICE_ID_0			0x00

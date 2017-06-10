@@ -99,13 +99,15 @@ bool config_set_device() {
 	if(devices[DEVICE_CONFIG] == NULL) {
 		return false;
 	}
-	
+	deviceHandler_setStatEnabled(0);
 	// If we're not using this device already, init it.
 	if(devices[DEVICE_CONFIG] != devices[DEVICE_CUR]) {
 		if(!devices[DEVICE_CONFIG]->init(devices[DEVICE_CONFIG]->initial)) {
+			deviceHandler_setStatEnabled(1);
 			return false;
 		}
 	}
+	deviceHandler_setStatEnabled(1);
 	return true;
 }
 
