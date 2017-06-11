@@ -23,7 +23,7 @@ u32 read_frag(void *dst, u32 len, u32 offset) {
 	for(i = 0; i < maxFrags; i++) {
 		int fragTableIdx = fragTableStart +(i*3);
 		int fragOffset = fragList[fragTableIdx+0];
-		int fragSize = fragList[fragTableIdx+1];
+		int fragSize = fragList[fragTableIdx+1] & 0x7FFFFFFF;
 		int fragSector = fragList[fragTableIdx+2];
 		int fragOffsetEnd = fragOffset + fragSize;
 

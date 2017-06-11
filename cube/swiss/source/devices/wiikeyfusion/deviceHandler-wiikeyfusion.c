@@ -126,6 +126,63 @@ s32 deviceHandler_WKF_writeFile(file_handle* file, void* buffer, u32 length){
 
 
 s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
+	
+	
+	int maxFrags = (VAR_FRAG_SIZE/12), i = 0;
+	u32 *fragList = (u32*)VAR_FRAG_LIST;
+	int patches = 0;
+	
+	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
+
+	// Check if there are any fragments in our patch location for this game
+	if(devices[DEVICE_PATCHES] != NULL) {
+		print_gecko("Save Patch device found\r\n");
+		
+		// Look for patch files, if we find some, open them and add them as fragments
+		file_handle patchFile;
+		char gameID[8];
+		memset(&gameID, 0, 8);
+		strncpy((char*)&gameID, (char*)&GCMDisk, 4);
+		
+		for(i = 0; i < maxFrags; i++) {
+			u32 patchInfo[4];
+			patchInfo[0] = 0; patchInfo[1] = 0; 
+			memset(&patchFile, 0, sizeof(file_handle));
+			sprintf(&patchFile.name[0], "%sswiss_patches/%s/%i",devices[DEVICE_PATCHES]->initial->name,gameID, i);
+			print_gecko("Looking for file %s\r\n", &patchFile.name);
+			struct stat fstat;
+			if(stat(&patchFile.name[0],&fstat)) {
+				break;
+			}
+			patchFile.fp = fopen(&patchFile.name[0], "rb");
+			if(patchFile.fp) {
+				fseek(patchFile.fp, fstat.st_size-16, SEEK_SET);
+				
+				if((fread(&patchInfo, 1, 16, patchFile.fp) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
+					get_frag_list(&patchFile.name[0]);
+					print_gecko("Found patch file %i ofs 0x%08X len 0x%08X base 0x%08X\r\n", 
+									i, patchInfo[0], patchInfo[1], frag_list->frag[0].sector);
+					fclose(patchFile.fp);
+					fragList[patches*3] = patchInfo[0];
+					fragList[(patches*3)+1] = patchInfo[1] | 0x80000000;
+					fragList[(patches*3)+2] = frag_list->frag[0].sector;
+					patches++;
+				}
+				else {
+					break;
+				}
+			}
+		}
+		// Copy the current speed
+		*(volatile unsigned int*)VAR_EXI_BUS_SPD = 192;
+		// Card Type
+		*(volatile unsigned int*)VAR_SD_TYPE = sdgecko_getAddressingType(((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1));
+		// Copy the actual freq
+		*(volatile unsigned int*)VAR_EXI_FREQ = EXI_SPEED16MHZ;	// play it safe
+		// Device slot (0 or 1) // This represents 0xCC0068xx in number of u32's so, slot A = 0xCC006800, B = 0xCC006814
+		*(volatile unsigned int*)VAR_EXI_SLOT = ((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1) * 5;
+	}
+	
 	// Check if file2 exists
 	if(file2) {
 		get_frag_list(file2->name);
@@ -134,10 +191,8 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 	}
 
 	// If there are 2 discs, we only allow 5 fragments per disc.
-	int maxFrags = file2 ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0, frags = 0;
-	u32 *fragList = (u32*)VAR_FRAG_LIST;
-	
-	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
+	int frags = patches;
+	maxFrags = file2 ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12);
 	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
 	get_frag_list(file->name);
@@ -242,7 +297,7 @@ DEVICEHANDLER_INTERFACE __device_wkf = {
 	"Wiikey / Wasp Fusion",
 	"Supported File System(s): FAT16, FAT32",
 	{TEX_WIIKEY, 102, 80},
-	FEAT_READ|FEAT_BOOT_GCM|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_BOOT_DEVICE/*|FEAT_CAN_READ_PATCHES*/,
+	FEAT_READ|FEAT_BOOT_GCM|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_BOOT_DEVICE|FEAT_CAN_READ_PATCHES,
 	LOC_DVD_CONNECTOR,
 	&initial_WKF,
 	(_fn_test)&deviceHandler_WKF_test,

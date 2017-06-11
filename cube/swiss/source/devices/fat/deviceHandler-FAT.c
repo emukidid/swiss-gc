@@ -352,10 +352,6 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 	int isSDCard = file->name[0] == 's';
 	int slot = isSDCard ? (file->name[2] == 'b') : (file->name[3] == 'b');
 	int ret = 0;
-	DrawFrameStart();
-	sprintf(txtbuffer, "Reading %s in slot %s", isSDCard ? "SD":"IDE-EXI", !slot ? "A":"B");
-	DrawMessageBox(D_INFO,txtbuffer);
-	DrawFrameFinish();
 	
 	// Slot A - SD Card
 	if(isSDCard && !slot && EXI_ResetSD(0)) {

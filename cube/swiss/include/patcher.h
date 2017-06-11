@@ -125,7 +125,9 @@ enum patchIds {
 #define READ_REAL_OR_PATCHED	(LO_RESERVE_DVD | 0x04)
 
 /* Function jump locations for the WKF/WASP patch */
-#define ADJUST_LBA_OFFSET	 	(LO_RESERVE_DVD)
+#define PATCHED_MEMCPY_WKF		(LO_RESERVE)
+#define PATCHED_MEMCPY_DBG_WKF	(LO_RESERVE | 0x04)
+#define ADJUST_LBA_OFFSET	 	(LO_RESERVE | 0x08)
 
 #define READ_PATCHED_ALL 		(0x111)
 

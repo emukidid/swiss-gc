@@ -9,11 +9,9 @@
 .section .text
 	.globl _start, __main
 _start:
+	b		patched_memcpy			# void patched_memcpy(dst,src,size)
+	b		patched_memcpy_dbg
 	b		adjust_read
-	b		swap_disc
-	b		fake_lid_interrupt
-	nop
-	nop
 	
 	.globl dcache_flush_icache_inv
 dcache_flush_icache_inv:
@@ -34,8 +32,25 @@ dcache_flush_icache_inv:
 	isync
 	blr
 	
-	.globl _readsectorsize
-_readsectorsize: .long 2048
+.globl patched_memcpy
+patched_memcpy:
+	mr		r4, r24
+	cmpwi	r3, 0xF00
+	bgt		redirecthandler
+	blr
+redirecthandler:
+	li		r3, 0xF00
+	blr
+	
+.globl patched_memcpy_dbg
+patched_memcpy_dbg:
+	mr		r4, r24
+	rlwinm	r3, r3, 0, 16, 31
+	cmpwi	r3, 0xF00
+	addis	r3, r3, 0x8000
+	bgt		redirecthandlerdbg
+	blr
+redirecthandlerdbg:
+	li		r3, 0xF00
+	blr
 
-	.globl _readsector
-_readsector: .space 2048

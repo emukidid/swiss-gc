@@ -616,7 +616,7 @@ unsigned int load_app(int multiDol)
 	// Only set up the WKF fragmentation patch if we have to.
 	if(devices[DEVICE_CUR] == &__device_wkf && wkfFragSetupReq) {
 		u32 ret = Patch_DVDLowLevelReadForWKF(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
-		if(1 != ret) {
+		if(ret == 0) {
 			DrawFrameStart();
 			DrawMessageBox(D_FAIL, "Fragmentation patch failed to apply!");
 			DrawFrameFinish();

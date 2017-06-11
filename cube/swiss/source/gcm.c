@@ -365,7 +365,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			return 0;
 		}
 		
-		if(devices[DEVICE_CUR] != &__device_dvd) {
+		if(devices[DEVICE_CUR] != &__device_dvd && devices[DEVICE_CUR] != &__device_wkf) {
 			ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
 			if(READ_PATCHED_ALL != ret)	{
 				DrawFrameStart();
@@ -378,7 +378,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		}
 		
 		// Patch specific game hacks
-		if(devices[DEVICE_CUR] != &__device_dvd) {
+		if(devices[DEVICE_CUR] != &__device_dvd && devices[DEVICE_CUR] != &__device_wkf) {
 			patched += Patch_GameSpecific(buffer, sizeToRead, &gameID[0], filesToPatch[i].type);
 		}
 		
@@ -398,6 +398,10 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		if(devices[DEVICE_CUR] == &__device_dvd && is_gamecube()) {
 			patched += Patch_DVDLowLevelReadForDVD(buffer, sizeToRead, filesToPatch[i].type);
 			patched += Patch_DVDReset(buffer, sizeToRead);
+		}
+		
+		if(devices[DEVICE_CUR] == &__device_wkf) {
+			patched += Patch_DVDLowLevelReadForWKF(buffer, sizeToRead, filesToPatch[i].type);
 		}
 		
 		patched += Patch_FontEnc(buffer, sizeToRead);

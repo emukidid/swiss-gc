@@ -6,11 +6,6 @@
 #include "../../reservedarea.h"
 #include "../base/common.h"
 
-extern char _readsector[];
-extern int _readsectorsize;
-
-#define READ_SECTOR ((char*)&_readsector)
-#define READ_SECTOR_SIZE ((int)_readsectorsize)
 extern void print_int_hex(unsigned int num);
 
 void wkfWriteOffset(u32 offset) {
@@ -22,30 +17,6 @@ void wkfWriteOffset(u32 offset) {
 	wkf[8] = 0;
 	wkf[7] = 1;
 	while( wkf[7] & 1);
-}
-
-// Length is always 0x800
-void __wkfReadSector(void* dst, u32 offset) {
-	static volatile unsigned int* const wkf = (unsigned int*)0xCC006000;
-
-	wkf[2] = 0xA8000000;
-	wkf[3] = offset >> 2;
-	wkf[4] = READ_SECTOR_SIZE;
-	wkf[5] = (u32)dst&0x01FFFFFF;
-	wkf[6] = READ_SECTOR_SIZE;
-	wkf[7] = 3; // DMA | START
-	dcache_flush_icache_inv(dst, READ_SECTOR_SIZE);
-	while(wkf[7] & 1);
-}
-
-void* mymemcpy(void* dest, const void* src, u32 count)
-{
-	char* tmp = (char*)dest,* s = (char*)src;
-
-	while (count--)
-		*tmp++ = *s++;
-
-	return dest;
 }
 
 void wkfRead(void* dst, int len, u32 offset) {
@@ -69,37 +40,77 @@ void adjust_read() {
 	u32 *fragList = (u32*)VAR_FRAG_LIST;
 	int isDisc2 = (*(u32*)(VAR_DISC_2_LBA)) == (*(u32*)VAR_CUR_DISC_LBA);
 	int maxFrags = (*(u32*)(VAR_DISC_2_LBA)) ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0, j = 0;
-	int fragTableStart = isDisc2 ? (maxFrags*4) : 0;
+	int fragTableStart = isDisc2 ? (maxFrags*3) : 0;
 	u32 adjustedOffset = offset;
 
 	// Locate this offset in the fat table
 	for(i = 0; i < maxFrags; i++) {
-		int fragOffset = fragList[(i*3)+0];
-		int fragSize = fragList[(i*3)+1];
-		int fragSector = fragList[(i*3)+2];
-		int fragOffsetEnd = fragOffset + fragSize;
+		u32 fragOffset = fragList[(i*3)+0];
+		u32 fragSize = fragList[(i*3)+1] & 0x7FFFFFFF;
+		u32 fragSector = fragList[(i*3)+2];
+		u32 fragOffsetEnd = fragOffset + fragSize;
+		u32 isPatchFrag = fragList[(i*3)+1] >> 31;
 		
 		// Find where our read starts
-		if(offset >= fragOffset && offset <= fragOffsetEnd) {
-			if(fragOffset != 0) {
-				adjustedOffset = offset - fragOffset;
+		if(offset >= fragOffset && offset < fragOffsetEnd) {
+			if(isPatchFrag) {
+#ifdef DEBUG
+				usb_sendbuffer_safe("FRAG INFO: ofs: ",16);
+				print_int_hex(fragOffset);
+				usb_sendbuffer_safe(" len: ",6);
+				print_int_hex(fragSize);
+				usb_sendbuffer_safe(" sec: ",6);
+				print_int_hex(fragSector);
+				usb_sendbuffer_safe(" end: ",6);
+				print_int_hex(fragOffsetEnd);
+				usb_sendbuffer_safe(" frg? ",6);
+				print_int_hex(isPatchFrag);
+				usb_sendbuffer_safe("\r\n",2);
+
+				usb_sendbuffer_safe("PATCH READ: dst: ",17);
+				print_int_hex(dst);
+				usb_sendbuffer_safe(" len: ",6);
+				print_int_hex(len);
+				usb_sendbuffer_safe(" ofs: ",6);
+				print_int_hex(offset);
+				usb_sendbuffer_safe("\r\n",2);
+#endif
+				device_frag_read((void*)(dst | 0x80000000), len, offset);
+				dcache_flush_icache_inv((void*)(dst | 0x80000000), len);
+#ifdef DEBUG				
+				usb_sendbuffer_safe("data: \r\n",8);
+				print_int_hex(*(u32*)((dst+0)| 0x80000000));
+				print_int_hex(*(u32*)((dst+4)| 0x80000000));
+				print_int_hex(*(u32*)((dst+len-4)| 0x80000000));
+#endif
+				dvd[3] = 0;
+				dvd[4] = 0x20;
+				dvd[5] = 0;
+				dvd[6] = 0x20;
+				dvd[7] = 3;
+				break;
 			}
-			fragSector = fragSector + (adjustedOffset>>9);
-			if(*(volatile unsigned int*)VAR_TMP1 != fragSector) {
-				wkfWriteOffset(fragSector);
-				*(volatile unsigned int*)VAR_TMP1 = fragSector;
+			else {
+#ifdef DEBUG
+				usb_sendbuffer_safe("NORM READ!\r\n",12);
+#endif
+				if(fragOffset != 0) {
+					adjustedOffset = offset - fragOffset;
+				}
+				fragSector = fragSector + (adjustedOffset>>9);
+				if(*(volatile unsigned int*)VAR_TMP1 != fragSector) {
+					wkfWriteOffset(fragSector);
+					*(volatile unsigned int*)VAR_TMP1 = fragSector;
+				}
+				wkfRead((void*)dst, len, adjustedOffset & 511);
+				break;
 			}
-			wkfRead((void*)dst, len, adjustedOffset & 511);
-			break;
 		}
 	}
 }
 
-void swap_disc() {
-	int isDisc1 = (*(u32*)(VAR_DISC_1_LBA)) == (*(u32*)VAR_CUR_DISC_LBA);
-	*(u32*)VAR_CUR_DISC_LBA = isDisc1 ? *(u32*)(VAR_DISC_2_LBA) : *(u32*)(VAR_DISC_1_LBA);
-}
+//void swap_disc() {
+//	int isDisc1 = (*(u32*)(VAR_DISC_1_LBA)) == (*(u32*)VAR_CUR_DISC_LBA);
+//	*(u32*)VAR_CUR_DISC_LBA = isDisc1 ? *(u32*)(VAR_DISC_2_LBA) : *(u32*)(VAR_DISC_1_LBA);
+//}
 
-void fake_lid_interrupt() {
-
-}

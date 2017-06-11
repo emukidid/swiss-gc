@@ -134,10 +134,13 @@ build-usb:
 
 build-wkf:
 	@echo Building WKF Patch ...
-	@$(CC) -O1 -c wkf/base.S
-	@$(CC) -O1 -c wkf/wkf.c
-	@$(CC) -O1 -c base/usbgecko.c
-	@$(LD) -o wkf.elf base.o wkf.o usbgecko.o --section-start .text=0x80001800
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c wkf/base.S
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c wkf/wkf.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/usbgecko.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c sdgecko/sd.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/frag.c
+	
+	@$(LD) -o wkf.elf base.o wkf.o usbgecko.o sd.o frag.o --section-start .text=0x80001000 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf_disasm.txt
 	@$(OBJCOPY) -O binary wkf.elf wkf.bin
