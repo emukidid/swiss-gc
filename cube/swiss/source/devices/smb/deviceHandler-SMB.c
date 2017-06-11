@@ -185,7 +185,7 @@ s32 deviceHandler_SMB_readFile(file_handle* file, void* buffer, u32 length){
 }
 
 s32 deviceHandler_SMB_init(file_handle* file){
-	return 0;
+	return 1;
 }
 
 extern char *getDeviceMountPath(char *str);
@@ -207,7 +207,7 @@ s32 deviceHandler_SMB_deinit(file_handle* file) {
 		fatUnmount(mountPath);
 		free(mountPath);
 	}
-	return 0;
+	return 1;
 }
 
 s32 deviceHandler_SMB_closeFile(file_handle* file) {

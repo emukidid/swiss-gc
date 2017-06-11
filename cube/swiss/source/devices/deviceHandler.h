@@ -95,7 +95,8 @@ typedef device_info* (* _fn_deviceInfo)(void);
 #define DEVICE_ID_A			0x0A
 #define DEVICE_ID_B			0x0B
 #define DEVICE_ID_C			0x0C
-#define DEVICE_ID_MAX		DEVICE_ID_C
+#define DEVICE_ID_D			0x0D
+#define DEVICE_ID_MAX		DEVICE_ID_D
 #define DEVICE_ID_UNK		(DEVICE_ID_MAX + 1)
 
 struct DEVICEHANDLER_STRUCT {
@@ -139,6 +140,7 @@ enum DEVICE_SLOTS {
 #include "devices/wiikeyfusion/deviceHandler-wiikeyfusion.h"
 #include "devices/usbgecko/deviceHandler-usbgecko.h"
 #include "devices/system/deviceHandler-SYS.h"
+#include "devices/ftp/deviceHandler-FTP.h"
 
 extern void deviceHandler_setStatEnabled(int enable);
 extern int deviceHandler_getStatEnabled();

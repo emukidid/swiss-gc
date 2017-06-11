@@ -52,6 +52,7 @@ SOURCES		:=  source \
               source/devices/system \
               source/devices/dvd \
               source/devices/fat \
+			  source/devices/ftp \
               source/devices/memcard \
               source/devices/qoob \
 			  source/devices/smb \
