@@ -129,6 +129,11 @@ enum patchIds {
 #define PATCHED_MEMCPY_DBG_WKF	(LO_RESERVE | 0x04)
 #define ADJUST_LBA_OFFSET	 	(LO_RESERVE | 0x08)
 
+/* Function jump locations for the USBGecko patch */
+#define PATCHED_MEMCPY_USB		(LO_RESERVE)
+#define PATCHED_MEMCPY_DBG_USB	(LO_RESERVE | 0x04)
+#define PERFORM_READ_USBGECKO	(LO_RESERVE | 0x08)
+
 #define READ_PATCHED_ALL 		(0x111)
 
 /* Types of files we may patch */
@@ -140,6 +145,7 @@ enum patchIds {
 // -1 no device, 0 slot a, 1 slot b.
 extern int savePatchDevice;
 
+u32 Patch_DVDLowLevelReadForUSBGecko(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType);

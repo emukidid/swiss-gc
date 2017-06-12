@@ -487,6 +487,60 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 	return patched;
 }
 
+u32 Patch_DVDLowLevelReadForUSBGecko(void *addr, u32 length, int dataType) {
+	int i = 0;
+	int patched = 0;
+	patched = PatchDetectLowMemUsage(addr, length, dataType);
+	for(i = 0; i < length; i+=4) {
+		if(patched == 0x11) break;	// we're done
+
+		// Patch Read to adjust the offset for fragmented files
+		if( *(u32*)(addr+i) != 0x7C0802A6 )
+			continue;
+		
+		FuncPattern fp;
+		make_pattern( (u8*)(addr+i), length, &fp );
+		
+		if(compare_pattern(&fp, &OSExceptionInitSig))
+		{
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 472)-(u32)(addr));
+			print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
+			*(u32*)(addr + i + 472) = branchAndLink(PATCHED_MEMCPY_USB, properAddress);
+			patched |= 0x10;
+		}
+		// Debug version of the above
+		if(compare_pattern(&fp, &OSExceptionInitSigDBG))
+		{
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 512)-(u32)(addr));
+			print_gecko("Found:[OSExceptionInitDBG] @ %08X\r\n", properAddress);
+			*(u32*)(addr + i + 512) = branchAndLink(PATCHED_MEMCPY_DBG_USB, properAddress);
+			patched |= 0x10;
+		}		
+		if(compare_pattern(&fp, &ReadCommon)) {
+			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x84)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadCommon.Name, properAddress - 0x84);
+			*(u32*)(addr + i + 0x84) = branchAndLink(PERFORM_READ_USBGECKO, properAddress);
+			*(u32*)(addr + i + 0xB8) = 0x60000000;
+			*(u32*)(addr + i + 0xEC) = 0x60000000;
+			patched |= 0x100;
+		}
+		if(compare_pattern(&fp, &ReadDebug)) {	// As above, for debug read now.
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x88)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadDebug.Name, properAddress - 0x88);
+			*(u32*)(addr + i + 0x88) = branchAndLink(PERFORM_READ_USBGECKO, properAddress);
+			patched |= 0x100;
+		}
+		if(compare_pattern(&fp, &ReadUncommon)) {	// Same, for the less common read type.
+			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x7C)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadUncommon.Name, properAddress - 0x7C);
+			*(u32*)(addr + i + 0x7C) = branchAndLink(PERFORM_READ_USBGECKO, properAddress);
+			patched |= 0x100;
+		}
+	}
+	return patched;
+}
+
 /** Used for Multi-DOL games that require patches to be stored on SD */
 u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType) {
 	int i = 0;

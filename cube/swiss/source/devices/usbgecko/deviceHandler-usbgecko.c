@@ -167,7 +167,7 @@ DEVICEHANDLER_INTERFACE __device_usbgecko = {
 	"USB Gecko - Slot B only",
 	"Requires PC application to be up",
 	{TEX_USBGECKO, 129, 80},
-	FEAT_READ|FEAT_BOOT_GCM|FEAT_REPLACES_DVD_FUNCS,
+	FEAT_READ|FEAT_BOOT_GCM,
 	LOC_MEMCARD_SLOT_B,
 	&initial_USBGecko,
 	(_fn_test)&deviceHandler_USBGecko_test,

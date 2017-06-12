@@ -624,6 +624,10 @@ unsigned int load_app(int multiDol)
 			return 0;
 		}
 	}
+	
+	if(devices[DEVICE_CUR] == &__device_usbgecko) {
+		Patch_DVDLowLevelReadForUSBGecko(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+	}
 		
 	// Patch specific game hacks
 	Patch_GameSpecific(main_dol_buffer, main_dol_size+DOLHDRLENGTH, gameID, PATCH_DOL);

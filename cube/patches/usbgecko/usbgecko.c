@@ -160,13 +160,24 @@ static void gecko_receive(void *buffer,unsigned int size)
 }
 
 
-void do_read(void *dst,u32 size, u32 offset, u32 unused) {
-	if(!size) return;
+void perform_read() {
+	// Check if this read offset+size lies in our patched area, if so, we write a 0xE000 cmd to the drive and read from SDGecko.
+	volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
+	u32 dst = dvd[5];
+	u32 len = dvd[4];
+	u32 offset = (dvd[3]<<2);
+	
 	usb_data_req req;
 	req.offset = __builtin_bswap32(offset);
-	req.size = __builtin_bswap32(size);
+	req.size = __builtin_bswap32(len);
 	//_CPU_ISR_Enable();
 	gecko_send(&req, sizeof(usb_data_req));
-	gecko_receive(dst, size);
+	gecko_receive((void*)(dst | 0x80000000), len);
 	//_CPU_ISR_Disable();
+	dcache_flush_icache_inv((void*)(dst | 0x80000000), len);
+	dvd[3] = 0;
+	dvd[4] = 0x20;
+	dvd[5] = 0;
+	dvd[6] = 0x20;
+	dvd[7] = 3;
 }

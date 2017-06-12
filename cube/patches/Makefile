@@ -112,18 +112,9 @@ build-dvd:
 
 build-usb:
 	@echo Building USBGecko Patch ...
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/base.S
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c usbgecko/base.S
 	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c usbgecko/usbgecko.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/dvdqueue.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/dvdinterface.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/adp.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/Stream.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/__DSPHandler.S
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr_start.S
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/appldr.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/frag.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/igr.c
-	@$(LD) -o usbgecko.elf base.o igr.o usbgecko.o dvdqueue.o dvdinterface.o adp.o Stream.o __DSPHandler.o appldr_start.o appldr.o frag.o --section-start .text=0x80001000 --gc-sections
+	@$(LD) -o usbgecko.elf base.o usbgecko.o --section-start .text=0x80001000 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
