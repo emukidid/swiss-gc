@@ -52,6 +52,7 @@ int curSelection = 0;		        //game selection
 int needsDeviceChange = 0;
 int needsRefresh = 0;
 SwissSettings swissSettings;
+char *knownExtensions[] = {".dol\0", ".iso\0", ".gcm\0", ".mp3\0", ".fzn\0"};
 
 int endsWith(char *str, char *end) {
 	if(strlen(str) < strlen(end))
@@ -61,6 +62,18 @@ int endsWith(char *str, char *end) {
 		if(tolower((int)str[strlen(str)-i]) != tolower((int)end[strlen(end)-i]))
 			return 0;
 	return 1;
+}
+
+bool checkExtension(char *filename) {
+	if(!swissSettings.hideUnknownFileTypes)
+		return true;
+	int i;
+	for(i = 0; i < sizeof(knownExtensions)/sizeof(char*); i++) {
+		if(endsWith(filename, knownExtensions[i])) {
+			return true;
+		}
+	}
+	return false;
 }
 
 static void ProperScanPADS()	{

@@ -120,6 +120,9 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		stat(&file_name[0],&fstat);
 		// Do we want this one?
 		if((type == -1 || ((fstat.st_mode & S_IFDIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
+			if(!(fstat.st_mode & S_IFDIR)) {
+				if(!checkExtension(entry->d_name)) continue;
+			}
 			// Make sure we have room for this one
 			if(i == num_entries){
 				++num_entries;

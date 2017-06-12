@@ -130,14 +130,14 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 			memcpy(&filename[0],&FST[string_table_offset+filename_offset],255); 
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
-			if(endsWith(filename,".dol") || endsWith(filename,".DOL")) {
+			if(endsWith(filename,".dol")) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if((endsWith(filename,".elf") || endsWith(filename,".ELF")) && size < 12*1024*1024) {
+			if(endsWith(filename,".elf") && size < 12*1024*1024) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_ELF;
@@ -151,7 +151,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if(endsWith(filename,".tgc") || endsWith(filename,".TGC")) {
+			if(endsWith(filename,".tgc")) {
 				// Go through all the TGC's internal files
 				ExecutableFile *filesInTGCToPatch = memalign(32, sizeof(ExecutableFile)*32);
 				int numTGCFilesToPatch = parse_tgc(file, filesInTGCToPatch, file_offset), j;
@@ -259,14 +259,14 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 			memcpy(&filename[0],&FST[string_table_offset+filename_offset],255); 
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
-			if(endsWith(filename,".dol") || endsWith(filename,".DOL")) {
+			if(endsWith(filename,".dol")) {
 				filesToPatch[numFiles].offset = (file_offset-fakeAmount)+(tgc_base+fileAreaStart);
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if((endsWith(filename,".elf") || endsWith(filename,".ELF")) && size < 12*1024*1024) {
+			if(endsWith(filename,".elf") && size < 12*1024*1024) {
 				filesToPatch[numFiles].offset = (file_offset-fakeAmount)+(tgc_base+fileAreaStart);
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_ELF;

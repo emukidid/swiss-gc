@@ -143,7 +143,10 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		sprintf(&file_name[0], "%s/%s", ffile->name, entry->d_name);
 		stat(&file_name[0],&fstat);
 		// Do we want this one?
-		if((type == -1 || ((fstat.st_mode & S_IFDIR) ? (type==IS_DIR) : (type==IS_FILE))) && !endsWith(entry->d_name, ".patches")) {
+		if((type == -1 || ((fstat.st_mode & S_IFDIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
+			if(!(fstat.st_mode & S_IFDIR)) {
+				if(!checkExtension(entry->d_name)) continue;
+			}
 			// Make sure we have room for this one
 			if(i == num_entries){
 				++num_entries;

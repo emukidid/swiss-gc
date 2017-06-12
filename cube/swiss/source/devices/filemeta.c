@@ -84,8 +84,7 @@ void populate_meta(file_handle *f) {
 			//print_gecko("Creating Meta for FILE %s\r\n", f->name);
 			
 			// If it's a GCM or ISO or DVD Disc
-			if(endsWith(f->name,".iso") || endsWith(f->name,".gcm") 
-				|| endsWith(f->name,".ISO") || endsWith(f->name,".GCM")) {
+			if(endsWith(f->name,".iso") || endsWith(f->name,".gcm")) {
 				
 				if(devices[DEVICE_CUR] == &__device_wode) {
 					f->meta = (file_meta*)meta_alloc(sizeof(file_meta));
@@ -156,10 +155,10 @@ void populate_meta(file_handle *f) {
 					if(header) free(header);
 				}
 			}
-			else if(endsWith(f->name,".MP3") || endsWith(f->name,".mp3")) {	//MP3
+			else if(endsWith(f->name,".mp3")) {	//MP3
 				f->meta = create_basic_meta(mp3img_tpl, mp3img_tpl_size);
 			}
-			else if(endsWith(f->name,".DOL") || endsWith(f->name,".dol")) {	//DOL
+			else if(endsWith(f->name,".dol")) {	//DOL
 				f->meta = create_basic_meta(dolimg_tpl, dolimg_tpl_size);
 			}
 			else {

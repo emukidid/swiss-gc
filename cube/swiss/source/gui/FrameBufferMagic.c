@@ -469,9 +469,9 @@ void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_h
 	
 	// Hide extension when rendering ISO/GCM files
 	if(file->fileAttrib == IS_FILE) {
-		if(endsWith(file_name,".gcm") || endsWith(file_name,".GCM") 
-			|| endsWith(file_name,".iso")|| endsWith(file_name,".ISO")
-			|| endsWith(file_name,".dol")|| endsWith(file_name,".DOL")) {
+		if(endsWith(file_name,".gcm") 
+			|| endsWith(file_name,".iso")
+			|| endsWith(file_name,".dol")) {
 			if(strlen(file_name) > 4) {
 				file_name[strlen(file_name)-4] = '\0';
 			}

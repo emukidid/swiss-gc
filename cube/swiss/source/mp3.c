@@ -128,7 +128,7 @@ void mp3_player(file_handle* allFiles, int numFiles, file_handle* curFile) {
 			i = (rand() % numFiles);
 		}
 		// if it's .mp3
-		if((strlen(allFiles[i].name)>4) && (endsWith(allFiles[i].name,".MP3") || endsWith(allFiles[i].name,".mp3"))) {
+		if((strlen(allFiles[i].name)>4) && endsWith(allFiles[i].name,".mp3")) {
 			ret = play_mp3(&allFiles[i], numFiles, i);
 		}
 		if(ret == PLAYER_STOP) {

@@ -57,6 +57,9 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 	s32 res = usbgecko_open_dir(&ffile->name[0]);
 	if(!res) return -1;
 	while( (entry = usbgecko_get_entry()) != NULL ){
+		if(entry->fileAttrib == IS_FILE) {
+			if(!checkExtension(entry->name)) continue;
+		}		
 		// Make sure we have room for this one
 		if(i == num_entries) {
 			++num_entries;
