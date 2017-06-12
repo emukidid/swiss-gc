@@ -175,9 +175,11 @@ void perform_read() {
 	gecko_receive((void*)(dst | 0x80000000), len);
 	//_CPU_ISR_Disable();
 	dcache_flush_icache_inv((void*)(dst | 0x80000000), len);
+	dvd[2] = 0xE0000000;
 	dvd[3] = 0;
-	dvd[4] = 0x20;
+	dvd[4] = 0;
 	dvd[5] = 0;
-	dvd[6] = 0x20;
-	dvd[7] = 3;
+	dvd[6] = 0;
+	dvd[8] = 0;
+	dvd[7] = 1;
 }
