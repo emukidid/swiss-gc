@@ -94,7 +94,12 @@ typedef struct {
 	char smbUser[32];		//20
 	char smbPassword[32];	//16
 	char smbShare[128];		//80
-	char smbServerIp[128];	//80
+	char smbServerIp[32];	//80
+	char ftpUserName[64];
+	char ftpPassword[32];
+	char ftpHostIp[32];
+	u32 ftpPort;
+	bool ftpUsePasv;
 	int autoCheats;
 	int igrType;
 	u8 configDeviceId;	// see deviceHandler.h 

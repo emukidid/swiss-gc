@@ -28,6 +28,11 @@
 //SMBHostIP=192.168.1.32
 //AutoCheats=Yes
 //IGRType=Disabled
+//FTPUserName=user
+//FTPPassword=password
+//FTPHostIP=192.168.1.32
+//FTPPort=21
+//FTPUsePasv=No
 //!!Swiss Settings End!!
 
 // This is an example game entry
@@ -173,6 +178,16 @@ int config_update_file() {
 	sprintf(txtbuffer, "AutoCheats=%s\r\n", (configSwissSettings.autoCheats ? "Yes":"No"));
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "IGRType=%s\r\n", (igrTypeStr[swissSettings.igrType]));
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "FTPUserName=%s\r\n",configSwissSettings.ftpUserName);
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "FTPPassword=%s\r\n",configSwissSettings.ftpPassword);
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "FTPHostIP=%s\r\n",configSwissSettings.ftpHostIp);
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "FTPPort=%li\r\n",configSwissSettings.ftpPort);
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "FTPUsePasv=%s\r\n",configSwissSettings.ftpUsePasv ? "Yes":"No");
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
 	string_append(configString, txtbuffer);
@@ -388,6 +403,21 @@ void config_parse(char *configData) {
 						configSwissSettings.igrType = 2;
 					else if(!strcmp(igrTypeStr[3], value))
 						configSwissSettings.igrType = 3;
+				}
+				else if(!strcmp("FTPUserName", name)) {
+					strncpy(configSwissSettings.ftpUserName, value, sizeof(((SwissSettings*)0)->ftpUserName));
+				}
+				else if(!strcmp("FTPPassword", name)) {
+					strncpy(configSwissSettings.ftpPassword, value, sizeof(((SwissSettings*)0)->ftpPassword));
+				}
+				else if(!strcmp("FTPHostIP", name)) {
+					strncpy(configSwissSettings.ftpHostIp, value, sizeof(((SwissSettings*)0)->ftpHostIp));
+				}
+				else if(!strcmp("FTPPort", name)) {
+					configSwissSettings.ftpPort = atoi(value);
+				}
+				else if(!strcmp("FTPUsePasv", name)) {
+					configSwissSettings.ftpUsePasv = !strcmp("Yes", value);
 				}
 			}
 		}

@@ -77,10 +77,7 @@ void init_ftp() {
 	if(ftp_initialized) {
 		return;
 	}
-
-	//const char* name, const char *user, const char *password, const char *share, const char *hostname, unsigned short port, bool ftp_passive
-	//res = ftpInitDevice("ftp", &swissSettings.smbUser[0], &swissSettings.smbPassword[0], &swissSettings.smbShare[0], &swissSettings.smbServerIp[0]);
-	res = ftpInitDevice("ftp", "anonymous", "1234", "/", "137.99.26.52", 21, false);
+	res = ftpInitDevice("ftp", swissSettings.ftpUserName, swissSettings.ftpPassword, "/", swissSettings.ftpHostIp, swissSettings.ftpPort, swissSettings.ftpUsePasv);
 	print_gecko("ftpInitDevice %i \r\n",res);
 	if(res) {
 		ftp_initialized = 1;
@@ -93,14 +90,14 @@ void init_ftp() {
 s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){	
    
 	// We need at least a share name and ip addr in the settings filled out
-	//if(!strlen(&swissSettings.smbShare[0]) || !strlen(&swissSettings.smbServerIp[0])) {
-	//	DrawFrameStart();
-	//	sprintf(txtbuffer, "Check Samba Configuration");
-	//	DrawMessageBox(D_FAIL,txtbuffer);
-	//	DrawFrameFinish();
-	//	wait_press_A();
-	//	return SMB_SMBCFGERR;
-	//}
+	if(!strlen(&swissSettings.ftpHostIp[0])) {
+		DrawFrameStart();
+		sprintf(txtbuffer, "Check FTP Configuration in swiss.ini");
+		DrawMessageBox(D_FAIL,txtbuffer);
+		DrawFrameFinish();
+		wait_press_A();
+		return SMB_SMBCFGERR;
+	}
 
 	if(!net_initialized) {       //Init if we have to
 		DrawFrameStart();
