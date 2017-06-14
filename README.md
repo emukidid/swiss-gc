@@ -9,7 +9,7 @@
             - [Windows](#windows)
             - [Linux and Mac](#linux-and-mac)
         - [Launch](#launch)
-
+- [Navigating Swiss](#navigating-swiss)
 
 ## Purpose
 
@@ -68,3 +68,22 @@ Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
 7. Power on the GameCube, and you will see the Action Replay boot screen. If you renamed the Swiss DOL file to AUTOEXEC.dol, then from there it should boot directly into the Swiss menu. Otherwise, select the Swiss DOL from the list of files.
 
 If the above steps do not work, try using the non-compressed Swiss DOL file.
+
+## Navigating Swiss
+
+### Controls
+
+<table>
+    <tr>
+        <td>Up or Down on the Left Joysitck or D-Pad</td>
+        <td>Navigate up or down through the file syste</td>
+    </tr>
+    <tr>
+        <td>A</td>
+        <td>Select</td>
+    </tr>
+    <tr>
+        <td>B</td>
+        <td>Enter/Exit Bottom Menu</td>
+    </tr>
+</table>
