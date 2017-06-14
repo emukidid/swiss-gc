@@ -87,3 +87,15 @@ If the above steps do not work, try using the non-compressed Swiss DOL file.
         <td>Enter/Exit Bottom Menu</td>
     </tr>
 </table>
+
+### Swiss UI
+
+- The top heading shows the version number, commit number, and revision number.
+- The left panes show what device you are using.
+- The largest portion is the Swiss fie system, through which you can navigate files and folders. The top of every folder includes a `..` option, and selecting this moves you back up a folder.
+- The bottom pane, from the left:
+    - Device Selection
+    - Global Settings, Advanced Settings, and Current Game Settings
+    - System Information, Device Info, and Credits
+    - Return to top of file system
+    - Restart GameCube
