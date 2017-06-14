@@ -1,19 +1,33 @@
 # Swiss
 
-## Launching Swiss...
+## Table of Contents
+- [Purpose](#purpose)
+- [Launching Swiss](#launching-swiss)
+    - [Using SDGecko](#using-sdgecko)
+        - [Requirements](#requirements)
+        - [Formatting your SD card](#formatting-your-sd-card)
+            - [Windows](#windows)
+            - [Linux and Mac](#linux-and-mac)
+        - [Launch](#launch)
+
+
+## Purpose
+
+Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
+
+## Launching Swiss
 
 ### Using SDGecko
 
 #### Requirements
 - GameCube with controller
-- Game Boy Player (Official Game Boy Player disc not needed)
 - Action Replay (Preferably the newest version you can find)
 - SD card/Memory Card adaptor (Commonly referred to as SDGecko, but any generic adapter should work)
 - SD, SDHC, or SDXC card with <4GB of maximum storage
 - A Computer with an SD card slot, a USB SD card adaptor, or some other means of accessing the SD card from your computer
 - Software on the computer which can extract 7z compressed archive files, such as [7-Zip](http://www.7-zip.org/).
 
-#### Preparing your SD card
+#### Formatting your SD card
 
 ##### Windows
 1. Connect your SD card to your computer.
@@ -25,7 +39,7 @@
 7. Leave Quick Format checked.
 8. Press Start.
 
-##### Linux/Mac (From Terminal)
+##### Linux and Mac
 
 1. Connect your SD card to your computer.
 2. Open a terminal, run `sudo fdisk -l`
@@ -42,7 +56,7 @@
 13. Run `sudo mlabel -i <device-name> ::<new-label>` to set the Volume Label. I personally use `sudo mlabel -i <device-name> ::GAMECUBE_SD`.
 14. Remove and reinsert the SD card. It should remount and you should be able to move files to it.
 
-#### Booting Swiss
+#### Launch
 
 1. [Download latest Swiss release](https://github.com/emukidid/swiss-gc/releases) and extract its contents.
 2. Copy the compressed Swiss DOL file found in the DOL folder to the root of the SD card. It's name will follow the format swiss_r###-compressed.dol
