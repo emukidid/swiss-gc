@@ -2,20 +2,20 @@
 
 ## Table of Contents
 - [Purpose](#purpose)
-- [Launching Swiss](#launching-swiss)
+- [Launching Swiss](#swiss-on-gamecube)
     - [Using SDGecko](#using-sdgecko)
         - [Requirements](#requirements)
         - [Formatting your SD card](#formatting-your-sd-card)
             - [Windows](#windows)
             - [Linux and Mac](#linux-and-mac)
-        - [Launch](#launch)
+        - [Launch](#launching-swiss)
 - [Navigating Swiss](#navigating-swiss)
 
 ## Purpose
 
 Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
 
-## Launching Swiss
+## Swiss on GameCube
 
 ### Using SDGecko
 
@@ -56,7 +56,7 @@ Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
 13. Run `sudo mlabel -i <device-name> ::<new-label>` to set the Volume Label. I personally use `sudo mlabel -i <device-name> ::GAMECUBE_SD`.
 14. Remove and reinsert the SD card. It should remount and you should be able to move files to it.
 
-#### Launch
+#### Launching Swiss
 
 1. [Download latest Swiss release](https://github.com/emukidid/swiss-gc/releases) and extract its contents.
 2. Copy the compressed Swiss DOL file found in the DOL folder to the root of the SD card. It's name will follow the format swiss_r###-compressed.dol
