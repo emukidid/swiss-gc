@@ -79,12 +79,12 @@ typedef struct {
 	int exiSpeed;
 	int uiVMode;	// What mode to force Swiss into
 	int gameVMode;	// What mode to force a Game into
-	int softProgressive;
-	int forceWidescreen;
+	int forceVFilter;
 	int forceAnisotropy;
+	int forceWidescreen;
 	int forceEncoding;
-	int wiirdDebug;	// Enable WiiRD debug
 	int muteAudioStreaming;
+	int wiirdDebug;	// Enable WiiRD debug
 	int hideUnknownFileTypes;
 	int sramStereo;
 	int stopMotor;

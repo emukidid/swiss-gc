@@ -16,9 +16,9 @@
 
 SwissSettings tempSettings;
 char *uiVModeStr[] = {"Auto", "480i", "480p", "576i", "576p"};
-char *gameVModeStr[] = {"Auto", "480i", "480sf", "240p", "960i", "480p", "576i", "576sf", "288p", "1152i", "576p"};
-char *softProgressiveStr[] = {"No", "Light", "Yes"};
-char *forceWidescreenStr[] = {"No", "Persp", "Yes"};
+char *gameVModeStr[] = {"No", "480i", "480sf", "240p", "960i", "480p", "576i", "576sf", "288p", "1152i", "576p"};
+char *forceVFilterStr[] = {"0", "1", "2"};
+char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "boot.bin", "USB Flash"};
 syssram* sram;
@@ -108,16 +108,16 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 		WriteFont(30, 65, "Current Game Settings (3/3):");
 		WriteFontStyled(30, 110, "Force Video Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
 		DrawSelectableButton(480, 110, -1, 135, gameVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 140, "If Progressive, Soften:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 140, -1, 165, softProgressiveStr[swissSettings.softProgressive], option == 1 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 170, "Force Widescreen:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 170, -1, 195, forceWidescreenStr[swissSettings.forceWidescreen], option == 2 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 200, "Force Anisotropy:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 200, -1, 225, swissSettings.forceAnisotropy ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 230, "Disable Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 230, -1, 255, swissSettings.muteAudioStreaming ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
-		WriteFontStyled(30, 260, "Force Encoding:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 260, -1, 285, forceEncodingStr[swissSettings.forceEncoding], option == 5 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 140, "Force Vertical Filter:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 140, -1, 165, forceVFilterStr[swissSettings.forceVFilter], option == 1 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 170, "Force Anisotropic Filter:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 170, -1, 195, swissSettings.forceAnisotropy ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 200, "Force Widescreen:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 200, -1, 225, forceWidescreenStr[swissSettings.forceWidescreen], option == 3 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 230, "Force Text Encoding:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 230, -1, 255, forceEncodingStr[swissSettings.forceEncoding], option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 260, "Disable Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
+		DrawSelectableButton(480, 260, -1, 285, swissSettings.muteAudioStreaming ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	if(page_num != 0) {
 		DrawSelectableButton(40, 390, -1, 420, "Back", 
@@ -238,31 +238,31 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 					swissSettings.gameVMode = 10;
 			break;
 			case 1:
-				swissSettings.softProgressive += direction;
-				if(swissSettings.softProgressive > 2)
-					swissSettings.softProgressive = 0;
-				if(swissSettings.softProgressive < 0)
-					swissSettings.softProgressive = 2;
+				swissSettings.forceVFilter += direction;
+				if(swissSettings.forceVFilter > 2)
+					swissSettings.forceVFilter = 0;
+				if(swissSettings.forceVFilter < 0)
+					swissSettings.forceVFilter = 2;
 			break;
 			case 2:
+				swissSettings.forceAnisotropy ^= 1;
+			break;
+			case 3:
 				swissSettings.forceWidescreen += direction;
 				if(swissSettings.forceWidescreen > 2)
 					swissSettings.forceWidescreen = 0;
 				if(swissSettings.forceWidescreen < 0)
 					swissSettings.forceWidescreen = 2;
 			break;
-			case 3:
-				swissSettings.forceAnisotropy ^= 1;
-			break;
 			case 4:
-				swissSettings.muteAudioStreaming ^= 1;
-			break;
-			case 5:
 				swissSettings.forceEncoding += direction;
 				if(swissSettings.forceEncoding > 2)
 					swissSettings.forceEncoding = 0;
 				if(swissSettings.forceEncoding < 0)
 					swissSettings.forceEncoding = 2;
+			break;
+			case 5:
+				swissSettings.muteAudioStreaming ^= 1;
 			break;
 		}
 	}
@@ -358,11 +358,11 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				// Update our .ini
 				if(config != NULL) {
 					config->gameVMode = swissSettings.gameVMode;
-					config->softProgressive = swissSettings.softProgressive;
-					config->muteAudioStreaming = swissSettings.muteAudioStreaming;
-					config->forceWidescreen = swissSettings.forceWidescreen;
+					config->forceVFilter = swissSettings.forceVFilter;
 					config->forceAnisotropy = swissSettings.forceAnisotropy;
+					config->forceWidescreen = swissSettings.forceWidescreen;
 					config->forceEncoding = swissSettings.forceEncoding;
+					config->muteAudioStreaming = swissSettings.muteAudioStreaming;
 				}
 				else {
 					// Save the Swiss system settings since we're called from the main menu

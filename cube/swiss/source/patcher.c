@@ -824,7 +824,7 @@ u32 getPatchAddr(int patchId) {
 
 void Patch_VidMode(u8 *data, u32 length, int dataType) {
 	int i, j, k;
-	u8 *vfilter = vertical_filters[swissSettings.softProgressive];
+	u8 *vfilter = vertical_filters[swissSettings.forceVFilter];
 	FuncPattern __VIRetraceHandlerSigs[6] = {
 		{0x20C, 39,  7, 10, 15, 13, 0, 0, "__VIRetraceHandler A", 0},
 		{0x220, 42,  8, 11, 15, 13, 0, 0, "__VIRetraceHandler B", 0},

@@ -12,7 +12,7 @@
 
 extern char *uiVModeStr[];
 extern char *gameVModeStr[];
-extern char *softProgressiveStr[];
+extern char *forceVFilterStr[];
 extern char *forceWidescreenStr[];
 extern char *forceEncodingStr[];
 extern char *igrTypeStr[];

@@ -1463,11 +1463,11 @@ int info_game()
 	config_find(config);	// populate
 	// load settings
 	swissSettings.gameVMode = config->gameVMode;
-	swissSettings.softProgressive = config->softProgressive;
-	swissSettings.muteAudioStreaming = config->muteAudioStreaming;
-	swissSettings.forceWidescreen = config->forceWidescreen;
+	swissSettings.forceVFilter = config->forceVFilter;
 	swissSettings.forceAnisotropy = config->forceAnisotropy;
+	swissSettings.forceWidescreen = config->forceWidescreen;
 	swissSettings.forceEncoding = config->forceEncoding;
+	swissSettings.muteAudioStreaming = config->muteAudioStreaming;
 	while(1) {
 		draw_game_info();
 		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y)){ VIDEO_WaitVSync (); }

@@ -12,9 +12,9 @@ typedef struct {
 	char status[32];
 	char padding_4[1];
 	int gameVMode;
-	int softProgressive;
-	int forceWidescreen;
+	int forceVFilter;
 	int forceAnisotropy;
+	int forceWidescreen;
 	int forceEncoding;
 	int muteAudioStreaming;
 } ConfigEntry __attribute__((aligned(32)));
