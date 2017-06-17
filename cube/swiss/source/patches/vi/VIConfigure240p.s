@@ -5,7 +5,13 @@
 .globl VIConfigure240p
 VIConfigure240p:
 	li			%r0, 1
+	li			%r7, 0
 	li			%r6, 0
+	lhz			%r5, 8 (%r3)
+	slwi		%r5, %r5, 1
+	cmpwi		%r5, 480
+	ble			2f
+	li			%r6, 1
 	lhz			%r5, 8 (%r3)
 	cmpwi		%r5, 480
 	ble			2f
@@ -21,7 +27,7 @@ VIConfigure240p:
 	sth			%r4, 12 (%r3)
 	sth			%r5, 16 (%r3)
 	stw			%r6, 20 (%r3)
-	stb			%r6, 24 (%r3)
+	stb			%r7, 24 (%r3)
 	stw			%r0, 0 (%r3)
 	mfmsr		%r3
 	rlwinm		%r4, %r3, 0, 17, 15
