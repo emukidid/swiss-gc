@@ -728,17 +728,6 @@ void Patch_VidTiming(void *addr, u32 length) {
 	}
 }
 
-u8 vertical_filters[][7] = {
-	{0, 0, 21, 22, 21, 0, 0},
-	{4, 8, 12, 16, 12, 8, 4},
-	{8, 8, 10, 12, 10, 8, 8}
-};
-
-u8 vertical_reduction[][7] = {
-	{ 0,  0,  0, 16, 16, 16, 16},	// GX_COPY_INTLC_EVEN
-	{16, 16, 16, 16,  0,  0,  0}	// GX_COPY_INTLC_ODD
-};
-
 static u32 patch_locations[PATCHES_MAX];
 
 void checkPatchAddr() {
@@ -822,9 +811,21 @@ u32 getPatchAddr(int patchId) {
 	return patch_locations[patchId];
 }
 
+u8 vertical_filters[][7] = {
+	{0, 0, 21, 22, 21, 0, 0},
+	{0, 0, 21, 22, 21, 0, 0},
+	{4, 8, 12, 16, 12, 8, 4},
+	{8, 8, 10, 12, 10, 8, 8}
+};
+
+u8 vertical_reduction[][7] = {
+	{ 0,  0,  0, 16, 16, 16, 16},	// GX_COPY_INTLC_EVEN
+	{16, 16, 16, 16,  0,  0,  0}	// GX_COPY_INTLC_ODD
+};
+
 void Patch_VidMode(u8 *data, u32 length, int dataType) {
 	int i, j, k;
-	u8 *vfilter = vertical_filters[swissSettings.forceVFilter];
+	u8 *vfilter = NULL;
 	FuncPattern __VIRetraceHandlerSigs[6] = {
 		{0x20C, 39,  7, 10, 15, 13, 0, 0, "__VIRetraceHandler A", 0},
 		{0x220, 42,  8, 11, 15, 13, 0, 0, "__VIRetraceHandler B", 0},
@@ -962,36 +963,46 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 						case 2:
 							print_gecko("Patched NTSC Interlaced mode\n");
 							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE480I);
+							if(swissSettings.forceVFilter > 0)
+								vfilter = vertical_filters[swissSettings.forceVFilter];
 							break;
 						case 3:
 							print_gecko("Patched NTSC Double-Strike mode\n");
 							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE240P);
+							vfilter = vertical_reduction[1];
 							break;
 						case 4:
 							print_gecko("Patched NTSC Field Rendering mode\n");
 							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE960I);
+							vfilter = vertical_filters[1];
 							break;
 						case 5:
 							print_gecko("Patched NTSC Progressive mode\n");
 							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE480P);
+							vfilter = vertical_filters[swissSettings.forceVFilter];
 							break;
 						case 6:
 						case 7:
 							print_gecko("Patched PAL Interlaced mode\n");
 							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE576I);
+							if(swissSettings.forceVFilter > 0)
+								vfilter = vertical_filters[swissSettings.forceVFilter];
 							break;
 						case 8:
 							print_gecko("Patched PAL Double-Strike mode\n");
 							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE288P);
+							vfilter = vertical_reduction[1];
 							break;
 						case 9:
 							print_gecko("Patched PAL Field Rendering mode\n");
 							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE1152I);
+							vfilter = vertical_filters[1];
 							Patch_VidTiming(data, length);
 							break;
 						case 10:
 							print_gecko("Patched PAL Progressive mode\n");
 							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE576P);
+							vfilter = vertical_filters[swissSettings.forceVFilter];
 							Patch_VidTiming(data, length);
 							break;
 					}
@@ -1196,7 +1207,6 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							case 4: *(u32*)(data+i+2008) = 0x38600003; break;
 							case 5: *(u32*)(data+i+2212) = 0x38600003; break;
 						}
-						vfilter = vertical_reduction[1];
 					}
 					else if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
 						switch(j) {
@@ -1207,7 +1217,6 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							case 4: *(u32*)(data+i+1844) = 0x38600001; break;
 							case 5: *(u32*)(data+i+2080) = 0x38600001; break;
 						}
-						vfilter = vertical_filters[0];
 					}
 					__GXInitGXSigs[j].offsetFoundAt = i;
 					i += __GXInitGXSigs[j].Length;
@@ -1236,7 +1245,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 			}
 		}
 	}
-	if((swissSettings.gameVMode != 1) && (swissSettings.gameVMode != 6)) {
+	if(vfilter != NULL) {
 		for( j=0; j < sizeof(GXSetCopyFilterSigs)/sizeof(FuncPattern); j++ )
 		{
 			if( (i=GXSetCopyFilterSigs[j].offsetFoundAt) )

@@ -324,6 +324,8 @@ void config_parse(char *configData) {
 						configEntries[configEntriesCount].forceVFilter = 1;
 					else if(!strcmp(forceVFilterStr[2], value))
 						configEntries[configEntriesCount].forceVFilter = 2;
+					else if(!strcmp(forceVFilterStr[3], value))
+						configEntries[configEntriesCount].forceVFilter = 3;
 				}
 				else if(!strcmp("Force Anisotropic Filter", name)) {
 					configEntries[configEntriesCount].forceAnisotropy = !strcmp("Yes", value) ? 1:0;

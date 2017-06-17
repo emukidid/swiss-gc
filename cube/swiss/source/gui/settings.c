@@ -17,7 +17,7 @@
 SwissSettings tempSettings;
 char *uiVModeStr[] = {"Auto", "480i", "480p", "576i", "576p"};
 char *gameVModeStr[] = {"No", "480i", "480sf", "240p", "960i", "480p", "576i", "576sf", "288p", "1152i", "576p"};
-char *forceVFilterStr[] = {"0", "1", "2"};
+char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "boot.bin", "USB Flash"};
@@ -239,10 +239,10 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 			case 1:
 				swissSettings.forceVFilter += direction;
-				if(swissSettings.forceVFilter > 2)
+				if(swissSettings.forceVFilter > 3)
 					swissSettings.forceVFilter = 0;
 				if(swissSettings.forceVFilter < 0)
-					swissSettings.forceVFilter = 2;
+					swissSettings.forceVFilter = 3;
 			break;
 			case 2:
 				swissSettings.forceAnisotropy ^= 1;
