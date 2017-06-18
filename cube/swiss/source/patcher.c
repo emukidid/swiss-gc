@@ -781,8 +781,6 @@ u32 installPatch(int patchId) {
 			patchSize = VIConfigure1152i_length; patchLocation = VIConfigure1152i; break;
 		case VI_CONFIGUREPANHOOK:
 			patchSize = VIConfigurePanHook_length; patchLocation = VIConfigurePanHook; break;
-		case VI_CONFIGUREPANHOOKDS:
-			patchSize = VIConfigurePanHookDs_length; patchLocation = VIConfigurePanHookDs; break;
 		case MAJORA_SAVEREGS:
 			patchSize = MajoraSaveRegs_length; patchLocation = MajoraSaveRegs; break;
 		case MAJORA_AUDIOSTREAM:
@@ -1157,11 +1155,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 			u32 VIConfigurePanPatchAddr = 0;
 			if(VIConfigurePanAddr) {
 				print_gecko("Found:[%s] @ %08X\n", VIConfigurePanSig.Name, VIConfigurePanAddr);
-				if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 8)) {
-					VIConfigurePanPatchAddr = getPatchAddr(VI_CONFIGUREPANHOOKDS);
-				} else {
-					VIConfigurePanPatchAddr = getPatchAddr(VI_CONFIGUREPANHOOK);
-				}
+				VIConfigurePanPatchAddr = getPatchAddr(VI_CONFIGUREPANHOOK);
 				*(u32*)(data+i+40) = branchAndLink(VIConfigurePanPatchAddr, VIConfigurePanAddr + 40);
 				VIConfigurePanSig.offsetFoundAt = i;
 				i += VIConfigurePanSig.Length;
