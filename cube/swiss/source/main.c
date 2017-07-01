@@ -225,27 +225,6 @@ void* Initialise (void)
 	return xfb[0];
 }
 
-void load_auto_dol() {
-	sprintf(txtbuffer, "%sboot.dol", devices[DEVICE_CUR]->initial->name);
-	// TODO use devicehandler stuff here so we can support more devices
-	FILE *fp = fopen(txtbuffer, "rb");
-	if (fp) {
-		fseek(fp, 0, SEEK_END);
-		int size = ftell(fp);
-		fseek(fp, 0, SEEK_SET);
-		if ((size > 0) && (size < (AR_GetSize() - (64*1024)))) {
-			u8 *dol = (u8*) memalign(32, size);
-			if (dol) {
-				fread(dol, 1, size, fp);
-				if (!memmem(dol, size, GITREVISION, sizeof(GITREVISION))) {
-					DOLtoARAM(dol, 0, NULL);
-				}
-			}
-		}
-		fclose(fp);
-	}
-}
-
 void load_config() {
 
 	// Try to open up the config .ini in case it hasn't been opened already
@@ -310,6 +289,54 @@ void free_files() {
 	}
 }
 
+void scan_files() {
+	free_files();
+	// Read the directory/device TOC
+	if(allFiles){ free(allFiles); allFiles = NULL; }
+	print_gecko("Reading directory: %s\r\n",curFile.name);
+	pause_netinit_thread();
+	files = devices[DEVICE_CUR]->readDir(&curFile, &allFiles, -1);
+	resume_netinit_thread();
+	memcpy(&curDir, &curFile, sizeof(file_handle));
+	sortFiles(allFiles, files);
+	print_gecko("Found %i entries\r\n",files);
+}
+
+// Keep this list sorted
+char *autoboot_dols[] = { "/boot.dol", "/boot2.dol" };
+void load_auto_dol() {
+	u8 rev_buf[sizeof(GITREVISION) - 1]; // Don't include the NUL termination in the comparison
+
+	memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+	scan_files();
+	for (int i = 0; i < files; i++) {
+		for (int f = 0; f < (sizeof(autoboot_dols) / sizeof(char *)); f++) {
+			if (endsWith(allFiles[i].name, autoboot_dols[f])) {
+				// Official Swiss releases have the short commit hash appended to
+				// the end of the DOL, compare it to our own to make sure we don't
+				// bootloop the same version
+				devices[DEVICE_CUR]->seekFile(&allFiles[i],
+						allFiles[i].size - sizeof(rev_buf),
+						DEVICE_HANDLER_SEEK_SET);
+				devices[DEVICE_CUR]->readFile(&allFiles[i], rev_buf, sizeof(rev_buf));
+				if (memcmp(GITREVISION, rev_buf, sizeof(rev_buf)) != 0) {
+					// Emulate some of the menu's behavior to satisfy boot_dol
+					curSelection = i;
+					memcpy(&curFile, &allFiles[i], sizeof(file_handle));
+					boot_dol();
+				}
+
+				// If we've made it this far, we've already found an autoboot DOL,
+				// the first one (boot.dol) is not cancellable, but the rest of the
+				// list is
+				if (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
+					return;
+				}
+			}
+		}
+	}
+}
+
 void main_loop()
 { 
 	
@@ -350,17 +377,8 @@ void main_loop()
 	while(1) {
 		if(devices[DEVICE_CUR] != NULL && needsRefresh) {
 			curMenuLocation=ON_OPTIONS;
-			free_files();
-			curSelection=0; files=0; curMenuSelection=0;
-			// Read the directory/device TOC
-			if(allFiles){ free(allFiles); allFiles = NULL; }
-			print_gecko("Reading directory: %s\r\n",curFile.name);
-			pause_netinit_thread();
-			files = devices[DEVICE_CUR]->readDir(&curFile, &allFiles, -1);
-			resume_netinit_thread();
-			memcpy(&curDir, &curFile, sizeof(file_handle));
-			sortFiles(allFiles, files);
-			print_gecko("Found %i entries\r\n",files);
+			curSelection=0; curMenuSelection=0;
+			scan_files();
 			if(files<1) { devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial); needsDeviceChange=1; break;}
 			needsRefresh = 0;
 			curMenuLocation=ON_FILLIST;

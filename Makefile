@@ -63,9 +63,12 @@ build:
 	@mkdir $(DIST)/ActionReplay
 	@mkdir $(DIST)/GCI
 	@cp $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/$(SVN_REVISION).dol
+	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION).dol
 	@cp $(SOURCES)/swiss/swiss.elf $(DIST)/DOL/$(SVN_REVISION).elf
 	@$(DOLXZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/Viper/$(SVN_REVISION)-xz-viper.dol -cube
+	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-xz-viper.dol
 	@$(DOLXZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol -cube
+	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/swiss-xz.dol
 	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ISO/DOL/$(SVN_REVISION)-compressed.dol
 	# make ISOs and WKF firmware

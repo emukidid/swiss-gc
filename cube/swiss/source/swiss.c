@@ -764,7 +764,7 @@ void boot_dol()
 	int i=0;
 	ptr = dol_buffer;
 	for(i = 0; i < curFile.size; i+= 131072) {
-		sprintf(txtbuffer, "Loading DOL [%ld/%ld Kb] ..",curFile.size>>10,(SYS_GetArena1Size()+curFile.size)>>10);
+		sprintf(txtbuffer, "Loading DOL [%ld/%ld Kb]...",curFile.size>>10,(SYS_GetArena1Size()+curFile.size)>>10);
 		DrawFrameStart();
 		DrawProgressBar((int)((float)((float)i/(float)curFile.size)*100), txtbuffer);
 		DrawFrameFinish();
