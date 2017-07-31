@@ -102,6 +102,7 @@ typedef struct {
 	bool ftpUsePasv;
 	int autoCheats;
 	int igrType;
+	int initNetworkAtStart;
 	u8 configDeviceId;	// see deviceHandler.h 
 } SwissSettings __attribute__((aligned(32)));
 extern SwissSettings swissSettings;

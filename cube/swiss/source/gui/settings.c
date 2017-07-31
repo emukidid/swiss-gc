@@ -25,7 +25,7 @@ syssram* sram;
 syssramex* sramex;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {8, 9, 8};
+int settings_count_pp[3] = {8, 10, 8};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
@@ -65,6 +65,7 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 	// Enable WiiRD debugging in Games [Yes/No]
 	// Enable File Management [Yes/No]
 	// Auto-load all cheats [Yes/No]
+	// Init network at startup [Yes/No]
 	
 	/** Current Game Settings - only if a valid GCM file is highlighted (Page 3/) */
 	// Force Video Mode [576i (PAL 50Hz), 480i (NTSC 60Hz), 480p (NTSC 60Hz), Auto, etc]
@@ -103,6 +104,8 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawSelectableButton(500, 230, -1, 255, swissSettings.enableFileManagement ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
 		WriteFontStyled(30, 260, "Auto-load all cheats:", 1.0f, false, defaultColor);
 		DrawSelectableButton(500, 260, -1, 285, swissSettings.autoCheats ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
+		WriteFontStyled(30, 290, "Init network at startup:", 1.0f, false, defaultColor);
+		DrawSelectableButton(500, 290, -1, 315, swissSettings.initNetworkAtStart ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
 	}
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Current Game Settings (3/3):");
@@ -226,6 +229,8 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			case 5:
 				swissSettings.autoCheats ^=1;
 			break;
+			case 6:
+				swissSettings.initNetworkAtStart ^= 1;
 		}
 	}
 	else if(page == 2 && file != NULL) {

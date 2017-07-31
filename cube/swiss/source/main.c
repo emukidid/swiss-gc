@@ -294,9 +294,7 @@ void scan_files() {
 	// Read the directory/device TOC
 	if(allFiles){ free(allFiles); allFiles = NULL; }
 	print_gecko("Reading directory: %s\r\n",curFile.name);
-	pause_netinit_thread();
 	files = devices[DEVICE_CUR]->readDir(&curFile, &allFiles, -1);
-	resume_netinit_thread();
 	memcpy(&curDir, &curFile, sizeof(file_handle));
 	sortFiles(allFiles, files);
 	print_gecko("Found %i entries\r\n",files);
@@ -357,8 +355,10 @@ void main_loop()
 		}
 		curMenuLocation = ON_OPTIONS;
 	}
-	pause_netinit_thread();
 	if(devices[DEVICE_CUR] != NULL) {
+		DrawFrameStart();
+		DrawMessageBox(D_INFO,"Setting up device");
+		DrawFrameFinish();
 		// If the user selected a device, make sure it's ready before we browse the filesystem
 		devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 		sdgecko_setSpeed(EXI_SPEED32MHZ);
@@ -373,7 +373,6 @@ void main_loop()
 		curMenuLocation=ON_OPTIONS;
 	}
 
-	resume_netinit_thread();
 	while(1) {
 		if(devices[DEVICE_CUR] != NULL && needsRefresh) {
 			curMenuLocation=ON_OPTIONS;
@@ -523,9 +522,14 @@ int main ()
 	// load config
 	load_config();
 	
-	// Start up the BBA if it exists
-	init_network_thread();
-	init_httpd_thread();
+	if(swissSettings.initNetworkAtStart) {
+		// Start up the BBA if it exists
+		DrawFrameStart();
+		DrawMessageBox(D_INFO,"Initialising Network");
+		DrawFrameFinish();
+		init_network();
+		init_httpd_thread();
+	}
 	
 	// DVD Motor off
 	if(swissSettings.stopMotor && swissSettings.hasDVDDrive) {

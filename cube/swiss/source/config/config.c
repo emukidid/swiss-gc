@@ -27,6 +27,7 @@
 //SMBShareName=nas
 //SMBHostIP=192.168.1.32
 //AutoCheats=Yes
+//InitNetwork=No
 //IGRType=Disabled
 //FTPUserName=user
 //FTPPassword=password
@@ -176,6 +177,8 @@ int config_update_file() {
 	sprintf(txtbuffer, "SMBHostIP=%s\r\n",configSwissSettings.smbServerIp);
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "AutoCheats=%s\r\n", (configSwissSettings.autoCheats ? "Yes":"No"));
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "InitNetwork=%s\r\n", (configSwissSettings.initNetworkAtStart ? "Yes":"No"));
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "IGRType=%s\r\n", (igrTypeStr[swissSettings.igrType]));
 	string_append(configString, txtbuffer);
@@ -395,6 +398,9 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("AutoCheats", name)) {
 					configSwissSettings.autoCheats = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("InitNetwork", name)) {
+					configSwissSettings.initNetworkAtStart = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("IGRType", name)) {
 					if(!strcmp(igrTypeStr[0], value))

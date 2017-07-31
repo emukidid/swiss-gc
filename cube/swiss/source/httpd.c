@@ -41,11 +41,7 @@ const static char http_get_ipl[] = "GET /ipl.bin HTTP/1.1\r\n";
 //---------------------------------------------------------------------------------
 void *httpd (void *arg) {
 //---------------------------------------------------------------------------------
-	
-	print_gecko("httpd Waiting\r\n");
-	while(netInitPending) {
-		sleep(1);
-	}
+
 	if(!net_initialized) {
 		print_gecko("httpd thread exiting, no IP\r\n");
 		return NULL;

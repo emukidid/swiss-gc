@@ -37,6 +37,7 @@
 #include "deviceHandler-FAT.h"
 #include "deviceHandler-SMB.h"
 #include "exi.h"
+#include "bba.h"
 
 /* SMB Globals */
 extern int net_initialized;
@@ -187,7 +188,8 @@ s32 deviceHandler_SMB_readFile(file_handle* file, void* buffer, u32 length){
 	return bytes_read;
 }
 
-s32 deviceHandler_SMB_init(file_handle* file){
+s32 deviceHandler_SMB_init(file_handle* file) {
+	init_network();
 	return 1;
 }
 
