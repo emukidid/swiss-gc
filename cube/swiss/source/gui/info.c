@@ -99,7 +99,7 @@ void info_draw_page(int page_num) {
 	}
 	else if(page_num == 1) {
 		WriteFont(30, 65, "Device Info (2/3):");
-		sprintf(topStr,"BBA: %s", bba_exists ? "Installed":"Not Present");
+		sprintf(topStr,"BBA: %s", exi_bba_exists() ? "Installed":"Not Present");
 		WriteFont(30, 110, topStr);
 		if(exi_bba_exists()) {
 			sprintf(topStr,"IP: %s", net_initialized ? bba_ip:"Not Available");
