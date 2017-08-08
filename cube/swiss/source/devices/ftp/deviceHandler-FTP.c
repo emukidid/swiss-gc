@@ -35,6 +35,7 @@
 #include "deviceHandler-FAT.h"
 #include "exi.h"
 #include "ftp_devoptab.h"
+#include "bba.h"
 
 /* FTP Globals */
 extern int net_initialized;
@@ -184,6 +185,7 @@ s32 deviceHandler_FTP_readFile(file_handle* file, void* buffer, u32 length){
 }
 
 s32 deviceHandler_FTP_init(file_handle* file){
+	init_network();
 	return 1;
 }
 
