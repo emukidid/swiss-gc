@@ -108,7 +108,7 @@ s32 deviceHandler_WKF_seekFile(file_handle* file, u32 where, u32 type){
 s32 deviceHandler_WKF_readFile(file_handle* file, void* buffer, u32 length){
 	if(!file->fp) {
 		file->fp = fopen( file->name, "rb" );
-		if(file->size == -1) {
+		if(file->size <= 0) {
 			struct stat fstat;
 			stat(file->name,&fstat);
 			file->size = fstat.st_size;
