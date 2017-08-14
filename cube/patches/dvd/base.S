@@ -12,6 +12,18 @@
 _start:
 	b		handle_disc_swap			# Re-authenticates a DVD-R disc
 	b		dvd_read_patched_section	# Either reads from SD, or allows the DVD read to occur.
+	b		check_exit				# checks for a button combo and exits if true
+	
+	.globl check_exit
+check_exit:
+	lwz		r5, 0(r4)
+	rlwinm	r5, r5, 16, 16, 31
+	andi.	r5, r5, 0x0234				# B,Z,R,D-Pad Down
+	cmplwi	r5, 0x0234
+	beq		do_exit
+	blr
+do_exit:
+	b		exit_to_pref
 	
 	.globl dcache_flush_icache_inv
 dcache_flush_icache_inv:

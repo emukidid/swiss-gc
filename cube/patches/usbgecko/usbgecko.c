@@ -4,6 +4,7 @@
 ***************************************************************************/
 
 #include "../../reservedarea.h"
+#include "../base/common.h"
 
 typedef unsigned int u32;
 typedef int s32;

@@ -9,7 +9,7 @@
 extern void print_int_hex(unsigned int num);
 
 void wkfWriteOffset(u32 offset) {
-	static volatile u32* const wkf = (u32*)0xCC006000;
+	volatile u32* wkf = (volatile u32*)0xCC006000;
 	wkf[2] = 0xDE000000;
 	wkf[3] = offset;
 	wkf[4] = 0x5A000000;
@@ -19,8 +19,9 @@ void wkfWriteOffset(u32 offset) {
 	while( wkf[7] & 1);
 }
 
+
 void wkfRead(void* dst, int len, u32 offset) {
-	volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
+	volatile u32* dvd = (volatile u32*)0xCC006000;
 	dvd[2] = 0xA8000000;
 	dvd[3] = offset >> 2;
 	dvd[4] = len;
@@ -31,7 +32,7 @@ void wkfRead(void* dst, int len, u32 offset) {
 
 // Adjusts the offset on the WKF for fragmented reads
 void adjust_read() {
-	volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
+	volatile u32* dvd = (volatile u32*)0xCC006000;
 	
 	u32 dst = dvd[5];
 	u32 len = dvd[4];
@@ -107,6 +108,13 @@ void adjust_read() {
 			}
 		}
 	}
+}
+
+void wkfReinit(void) {
+	asm("mfmsr	5");
+	asm("rlwinm	5,5,0,17,15");
+	asm("mtmsr	5");
+	// TODO re-init WKF
 }
 
 //void swap_disc() {

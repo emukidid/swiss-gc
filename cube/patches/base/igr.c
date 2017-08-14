@@ -11,6 +11,10 @@ typedef int s32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 
+#ifdef WKF
+extern void wkfReinit();
+#endif
+
 #define DOLHDRLENGTH 256
 #define MAXTEXTSECTION 7
 #define MAXDATASECTION 11
@@ -67,6 +71,10 @@ void load_dol() {
 void exit_to_pref(void) {
 	u8 igr_exit_type = *(u8*)VAR_IGR_EXIT_TYPE;
 	
+#ifdef WKF
+	wkfReinit();
+#endif
+	
 	if(igr_exit_type == IGR_HARDRESET) {
 		// int i = 0;
 		// for (i = 0; i < 10; i++) {
@@ -88,16 +96,16 @@ void exit_to_pref(void) {
 		// R = 00200000
 		// Z = 00100000
 		// D = 00040000
-		volatile u16* const _memReg = (u16*)0xCC004000;
-		volatile u16* const _dspReg = (u16*)0xCC005000;
+		//volatile u16* const _memReg = (u16*)0xCC004000;
+		//volatile u16* const _dspReg = (u16*)0xCC005000;
 		/* stop audio dma */
-		_dspReg[27] = (_dspReg[27]&~0x8000);
+		//_dspReg[27] = (_dspReg[27]&~0x8000);
 		/* disable dcache and icache */
-		asm volatile("sync ; isync ; mfspr 3,1008 ; rlwinm 3,3,0,18,15 ; mtspr 1008,3");
+		//asm volatile("sync ; isync ; mfspr 3,1008 ; rlwinm 3,3,0,18,15 ; mtspr 1008,3");
 		/* disable memory protection */
-		_memReg[15] = 0xF;
-		_memReg[16] = 0;
-		_memReg[8] = 0xFF;
+		//_memReg[15] = 0xF;
+		//_memReg[16] = 0;
+		//_memReg[8] = 0xFF;
 		//load_dol();
 	}
 	else if (igr_exit_type == IGR_USBGKOFLASH) {

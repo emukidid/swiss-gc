@@ -120,11 +120,13 @@ enum patchIds {
 /* Function jump locations for the DVD patch */
 #define ENABLE_BACKUP_DISC 		(LO_RESERVE_DVD | 0x00)
 #define READ_REAL_OR_PATCHED	(LO_RESERVE_DVD | 0x04)
+#define IGR_CHECK_DVD			(LO_RESERVE_DVD | 0x08)
 
 /* Function jump locations for the WKF/WASP patch */
 #define PATCHED_MEMCPY_WKF		(LO_RESERVE)
 #define PATCHED_MEMCPY_DBG_WKF	(LO_RESERVE | 0x04)
 #define ADJUST_LBA_OFFSET	 	(LO_RESERVE | 0x08)
+#define IGR_CHECK_WKF			(LO_RESERVE | 0x0C)
 
 /* Function jump locations for the USBGecko patch */
 #define PATCHED_MEMCPY_USB		(LO_RESERVE)

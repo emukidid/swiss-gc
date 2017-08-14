@@ -12,6 +12,18 @@ _start:
 	b		patched_memcpy			# void patched_memcpy(dst,src,size)
 	b		patched_memcpy_dbg
 	b		adjust_read
+	b		check_exit				# checks for a button combo and exits if true
+	
+	.globl check_exit
+check_exit:
+	lwz		r5, 0(r4)
+	rlwinm	r5, r5, 16, 16, 31
+	andi.	r5, r5, 0x0234				# B,Z,R,D-Pad Down
+	cmplwi	r5, 0x0234
+	beq		do_exit
+	blr
+do_exit:
+	b		exit_to_pref
 	
 	.globl dcache_flush_icache_inv
 dcache_flush_icache_inv:

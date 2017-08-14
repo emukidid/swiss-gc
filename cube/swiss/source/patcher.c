@@ -1960,7 +1960,9 @@ int Patch_IGR(void *data, u32 length, int dataType) {
 			while(*(u32*)(data + i + iEnd) != 0x4E800020) iEnd += 4;	// branch relative from the end
 			u32 properAddress = Calc_ProperAddress(data, dataType, (u32)(data + i + iEnd) -(u32)(data));
 			print_gecko("Found:[SPEC2_MakeStatusA] @ %08X (%08X)\n", properAddress, i + iEnd);
-			*(u32*)(data+i+iEnd) = branch(IGR_CHECK, properAddress);
+			u32 igrJump = (devices[DEVICE_CUR] == &__device_wkf) ? IGR_CHECK_WKF : IGR_CHECK;
+			if(devices[DEVICE_CUR] == &__device_dvd) igrJump = IGR_CHECK_DVD;
+			*(u32*)(data+i+iEnd) = branch(igrJump, properAddress);
 			return 1;
 		}
 	}
