@@ -36,10 +36,6 @@
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 #define SECTOR_SIZE 		512
 
-typedef unsigned int u32;
-typedef unsigned short u16;
-typedef unsigned char u8;
-
 #define _ata48bit *(u32*)VAR_TMP1
 
 #define exi_freq  			(*(u32*)VAR_EXI_FREQ)

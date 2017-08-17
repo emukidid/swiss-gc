@@ -70,7 +70,7 @@ void StreamUpdate()
 void WritePCM48to32(u32 *buf_loc)
 {
 	u32 CurBuf = (*(u8*)VAR_STREAM_CURBUF == 0) ? DECODED_BUFFER_0 : DECODED_BUFFER_1;
-	unsigned int j;
+	u32 j;
 	for(j = 0; j < SAMPLES_PER_BLOCK; j++)
 	{
 		*(u8*)VAR_AS_SAMPLECNT = *(u8*)VAR_AS_SAMPLECNT+1;
@@ -92,7 +92,7 @@ void WritePCM48to32(u32 *buf_loc)
 void WritePCM48(u32 *buf_loc)
 {
 	u32 CurBuf = (*(u8*)VAR_STREAM_CURBUF == 0) ? DECODED_BUFFER_0 : DECODED_BUFFER_1;
-	unsigned int j;
+	u32 j;
 	for(j = 0; j < SAMPLES_PER_BLOCK; j++)
 	{
 		write16INC(CurBuf, buf_loc, *(((s16*)VAR_AS_OUTL)+j));

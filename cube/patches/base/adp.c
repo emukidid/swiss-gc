@@ -11,10 +11,13 @@
 // uses same algorithm as XA, apparently
 // ADP decoder function by hcs, reversed from dtkmake (trkmake v1.4)
 
+#include "../../reservedarea.h"
+#include "common.h"
+
 #define ONE_BLOCK_SIZE		32
 #define SAMPLES_PER_BLOCK	28
 
-short ADPDecodeSample( int bits, int q, long * hist1p, long * hist2p) {
+short ADPDecodeSample( s32 bits, s32 q, long * hist1p, long * hist2p) {
 	long hist=0,cur;
 	long hist1=*hist1p,hist2=*hist2p;
 
@@ -53,12 +56,11 @@ short ADPDecodeSample( int bits, int q, long * hist1p, long * hist2p) {
 }
 
 // decode 32 bytes of input (28 samples), assume stereo
-int ADPdecodebuffer(unsigned char *input, short *outl, short * outr, long *histl1, long *histl2, long *histr1, long *histr2) {
-	int i;
+void ADPdecodebuffer(unsigned char *input, short *outl, short * outr, long *histl1, long *histl2, long *histr1, long *histr2) {
+	u32 i;
 	for( i = 0; i < SAMPLES_PER_BLOCK; i++ )
 	{
 		outl[i] = ADPDecodeSample( input[i + (ONE_BLOCK_SIZE - SAMPLES_PER_BLOCK)] & 0xf, input[0], histl1, histl2 );
 		outr[i] = ADPDecodeSample( input[i + (ONE_BLOCK_SIZE - SAMPLES_PER_BLOCK)] >> 4, input[1], histr1, histr2 );
 	}
-	return 0;
 }
