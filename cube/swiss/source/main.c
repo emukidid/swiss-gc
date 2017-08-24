@@ -442,6 +442,9 @@ int main ()
 
 	// Register all devices supported (order matters for boot devices)
 	int i = 0;
+	for(i = 0; i < MAX_DEVICES; i++)
+		allDevices[i] = NULL;
+	i = 0;
 	allDevices[i++] = &__device_wkf;
 	allDevices[i++] = &__device_wode;
 	allDevices[i++] = &__device_sd_a;

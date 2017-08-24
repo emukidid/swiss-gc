@@ -195,11 +195,11 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 						curDevicePos = curDevicePos > 0 ? curDevicePos-1 : 0;
 					}
 					// Go to next writable device
-					while(!(allDevices[curDevicePos] != NULL && allDevices[curDevicePos]->features & FEAT_WRITE)) {
-						if((curDevicePos == 0 && direction < 0) || allDevices[curDevicePos] == NULL)
-							curDevicePos = direction > 0 ? 0 : MAX_DEVICES;
-						else
-							curDevicePos += direction;
+					while((allDevices[curDevicePos] == NULL) || !(allDevices[curDevicePos]->features & FEAT_WRITE)) {
+						curDevicePos += direction;
+						if((curDevicePos < 0) || (curDevicePos >= MAX_DEVICES)){
+							curDevicePos = direction > 0 ? 0 : MAX_DEVICES-1;
+						}
 					}
 					if(allDevices[curDevicePos] != NULL) {
 						swissSettings.configDeviceId = allDevices[curDevicePos]->deviceUniqueId;
