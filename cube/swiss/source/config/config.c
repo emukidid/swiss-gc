@@ -96,7 +96,8 @@ bool config_set_device() {
 	DEVICEHANDLER_INTERFACE *configDevice = getDeviceByUniqueId(swissSettings.configDeviceId);
 	devices[DEVICE_CONFIG] = NULL;
 	if(configDevice != NULL) {
-		if((configDevice->features & FEAT_WRITE) && deviceHandler_getDeviceAvailable(configDevice)) {
+		if((configDevice->features & FEAT_WRITE) && (configDevice->test())) {
+			deviceHandler_setDeviceAvailable(configDevice, true);
 			devices[DEVICE_CONFIG] = configDevice;
 		}
 	}
@@ -105,10 +106,13 @@ bool config_set_device() {
 	if(devices[DEVICE_CONFIG] == NULL) {
 		return false;
 	}
+	print_gecko("Save device is %s\r\n", devices[DEVICE_CONFIG]->deviceName);
 	deviceHandler_setStatEnabled(0);
 	// If we're not using this device already, init it.
 	if(devices[DEVICE_CONFIG] != devices[DEVICE_CUR]) {
+		print_gecko("Save device is not current, current is (%s)\r\n", devices[DEVICE_CUR] == NULL ? "NULL":devices[DEVICE_CUR]->deviceName);
 		if(!devices[DEVICE_CONFIG]->init(devices[DEVICE_CONFIG]->initial)) {
+			print_gecko("Save device failed to init\r\n");
 			deviceHandler_setStatEnabled(1);
 			return false;
 		}

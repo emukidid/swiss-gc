@@ -502,6 +502,7 @@ int main ()
 		if(allDevices[i] != NULL && (allDevices[i]->features & FEAT_BOOT_DEVICE)) {
 			print_gecko("Testing device %s\r\n", allDevices[i]->deviceName);
 			if(allDevices[i]->test()) {
+				deviceHandler_setDeviceAvailable(allDevices[i], true);
 				devices[DEVICE_CUR] = allDevices[i];
 				break;
 			}
@@ -598,7 +599,7 @@ void populateDeviceAvailability() {
 	}
 	int i;
 	for(i = 0; i < MAX_DEVICES; i++) {
-		if(allDevices[i] != NULL) {
+		if(allDevices[i] != NULL && !deviceHandler_getDeviceAvailable(allDevices[i])) {
 			print_gecko("Checking device availability for device %s\r\n", allDevices[i]->deviceName);
 			deviceHandler_setDeviceAvailable(allDevices[i], allDevices[i]->test());
 		}

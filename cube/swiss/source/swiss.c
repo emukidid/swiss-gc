@@ -1509,25 +1509,37 @@ void select_device(int type)
 
 	int curDevice = 0;
 	int inAdvanced = 0, showAllDevices = 0;
-	int direction = 1;
+	int direction = 0;
 
-	while(1) {
-		// Go to the first device available if we're not showing all devices
-		int i = curDevice;
-		i+= direction;
-
-		if(i < 0) i = MAX_DEVICES;
-		else if (i > MAX_DEVICES) i = 0;
-		while(1) {
-			if(allDevices[i] != NULL && (deviceHandler_getDeviceAvailable(allDevices[i])||showAllDevices) && (allDevices[i]->features & requiredFeatures)) {
-				curDevice = i;
-				break;
-			}
-			i+=direction;
-			if(i < 0) i = MAX_DEVICES;
-			else if (i > MAX_DEVICES) i = 0;
+	// Find the first device that meets the requiredFeatures and is available
+	while((allDevices[curDevice] == NULL) || !(deviceHandler_getDeviceAvailable(allDevices[curDevice])||showAllDevices) || !(allDevices[curDevice]->features & requiredFeatures)) {
+		curDevice ++;
+		if( (curDevice >= MAX_DEVICES)){
+			curDevice = 0;
 		}
+	}
+	
+	while(1) {
 
+		if(direction != 0) {
+			if(direction > 0) {
+				curDevice = allDevices[curDevice+1] == NULL ? 0 : curDevice+1;
+			}
+			else {
+				curDevice = curDevice > 0 ? curDevice-1 : MAX_DEVICES-1;
+			}
+			// Go to next available device that meets the requiredFeatures
+			while((allDevices[curDevice] == NULL) || !(deviceHandler_getDeviceAvailable(allDevices[curDevice])) || !(allDevices[curDevice]->features & requiredFeatures)) {
+				if(allDevices[curDevice] != NULL && showAllDevices && (allDevices[curDevice]->features & requiredFeatures)) {
+					break;	// Show all devices? then continue
+				}
+				curDevice += direction;
+				if((curDevice < 0) || (curDevice >= MAX_DEVICES)){
+					curDevice = direction > 0 ? 0 : MAX_DEVICES-1;
+				}
+			}
+		}
+	
 		doBackdrop();
 		DrawEmptyBox(20,190, vmode->fbWidth-20, 410, COLOR_BLACK);
 		WriteFontStyled(640/2, 195, type == DEVICE_DEST ? "Destination Device" : "Device Selection", 1.0f, true, defaultColor);
@@ -1559,7 +1571,12 @@ void select_device(int type)
 			inAdvanced ^= 1;
 		if(btns & PAD_TRIGGER_Z) {
 			showAllDevices ^= 1;
-			direction = 0;
+			if(!showAllDevices && !deviceHandler_getDeviceAvailable(allDevices[curDevice])) {
+				direction = 1;
+			}
+			else {
+				direction = 0;
+			}
 		}
 		if(inAdvanced) {
 			if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
@@ -1574,6 +1591,7 @@ void select_device(int type)
 				direction = -1;
 			}
 		}
+			
 		if(btns & PAD_BUTTON_A) {
 			if(!inAdvanced) {
 				if(type == DEVICE_CUR)

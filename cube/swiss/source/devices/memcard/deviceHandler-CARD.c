@@ -483,11 +483,13 @@ s32 deviceHandler_CARD_closeFile(file_handle* file) {
 }
 
 bool deviceHandler_CARD_test_a() {
-	return (initialize_card(0)==CARD_ERROR_READY);
+	s32 memSize = 0, sectSize = 0;
+	return ((initialize_card(0)==CARD_ERROR_READY) && (CARD_ProbeEx(0, &memSize,&sectSize)==CARD_ERROR_READY));
 }
 
 bool deviceHandler_CARD_test_b() {
-	return (initialize_card(1)==CARD_ERROR_READY);
+	s32 memSize = 0, sectSize = 0;
+	return ((initialize_card(1)==CARD_ERROR_READY) && (CARD_ProbeEx(1, &memSize,&sectSize)==CARD_ERROR_READY));
 }
 
 DEVICEHANDLER_INTERFACE __device_card_a = {
