@@ -16,11 +16,11 @@ PATCHES       = $(SOURCES)/patches
 AR_SOURCES    = $(SOURCES)/actionreplay
 
 ifeq ($(OS),Windows_NT)
-DOLXZ         = $(BUILDTOOLS)/dolxz.exe
+DOLLZ         = $(BUILDTOOLS)/dollz3.exe
 DOL2GCI       = $(BUILDTOOLS)/dol2gci.exe
 MKISOFS       = $(BUILDTOOLS)/mkisofs.exe
 else
-DOLXZ         = wine $(BUILDTOOLS)/dolxz.exe
+DOLLZ         = wine $(BUILDTOOLS)/dollz3.exe
 DOL2GCI       = wine $(BUILDTOOLS)/dol2gci.exe
 MKISOFS       = mkisofs
 endif
@@ -65,11 +65,11 @@ build:
 	@cp $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/$(SVN_REVISION).dol
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION).dol
 	@cp $(SOURCES)/swiss/swiss.elf $(DIST)/DOL/$(SVN_REVISION).elf
-	@$(DOLXZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/Viper/$(SVN_REVISION)-xz-viper.dol -cube
-	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-xz-viper.dol
-	@$(DOLXZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol -cube
+	@$(DOLLZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol -v -m
+	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol
+	@$(DOLLZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol -m
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
-	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/swiss-xz.dol
+	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/swiss-lz.dol
 	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ISO/DOL/$(SVN_REVISION)-compressed.dol
 	# make ISOs and WKF firmware
 	# NTSC
@@ -117,13 +117,13 @@ package:   # create distribution package
 #------------------------------------------------------------------
 
 build-AR: # make ActionReplay
-	@$(BIN2S) $(DIST)/ActionReplay/swiss-xz.dol > $(AR_SOURCES)/swiss-xz.s
+	@$(BIN2S) $(DIST)/ActionReplay/swiss-lz.dol > $(AR_SOURCES)/swiss-lz.s
 	@$(CC) -O2 -c $(AR_SOURCES)/startup.s -o $(AR_SOURCES)/startup.o
-	@$(CC) -O2 -c $(AR_SOURCES)/swiss-xz.s -o $(AR_SOURCES)/swiss-xz.o
+	@$(CC) -O2 -c $(AR_SOURCES)/swiss-lz.s -o $(AR_SOURCES)/swiss-lz.o
 	@$(CC) -O2 -c $(AR_SOURCES)/main.c -o $(AR_SOURCES)/main.o
-	@$(LD) -o $(AR_SOURCES)/sdloader.elf $(AR_SOURCES)/startup.o $(AR_SOURCES)/main.o $(AR_SOURCES)/swiss-xz.o --section-start .text=0x81700000
+	@$(LD) -o $(AR_SOURCES)/sdloader.elf $(AR_SOURCES)/startup.o $(AR_SOURCES)/main.o $(AR_SOURCES)/swiss-lz.o --section-start .text=0x81700000
 	@$(OBJCOPY) -O binary $(AR_SOURCES)/sdloader.elf $(DIST)/ActionReplay/SDLOADER.BIN
-	@rm -f $(AR_SOURCES)/*.o $(AR_SOURCES)/*.elf $(DIST)/ActionReplay/*swiss-xz.dol $(AR_SOURCES)/swiss-xz.s
+	@rm -f $(AR_SOURCES)/*.o $(AR_SOURCES)/*.elf $(DIST)/ActionReplay/*swiss-lz.dol $(AR_SOURCES)/swiss-lz.s
 
 #------------------------------------------------------------------
 
