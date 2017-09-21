@@ -190,53 +190,51 @@ int kenobi_get_maxsize() {
 }
 
 int findCheats(bool silent) {
-	char trimmedGameId[8];
+	char trimmedGameId[8], testBuffer[8];
 	memset(trimmedGameId, 0, 8);
 	memcpy(trimmedGameId, (char*)&GCMDisk, 6);
 	file_handle *cheatsFile = memalign(32,sizeof(file_handle));
 	memset(cheatsFile, 0, sizeof(file_handle));
 	sprintf(cheatsFile->name, "%s/cheats/%s.txt", devices[DEVICE_CUR]->initial->name, trimmedGameId);
-	print_gecko("Looking for cheats file @ %s\r\n", cheatsFile->name);
+	print_gecko("Looking for cheats file @ [%s]\r\n", cheatsFile->name);
 
 	devices[DEVICE_TEMP] = devices[DEVICE_CUR];
 
 	// Check SD in both slots if we're not already running from SD, or if we fail from current device
-	if(devices[DEVICE_TEMP]->readFile(cheatsFile, &trimmedGameId, 8) != 8) {
+	if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 		// Try SD slots now
 		devices[DEVICE_TEMP] = &__device_sd_a;
 		file_handle *slotFile = devices[DEVICE_TEMP]->initial;
 		memset(cheatsFile, 0, sizeof(file_handle));
 		sprintf(cheatsFile->name, "%s/cheats/%s.txt", slotFile->name, trimmedGameId);
-		print_gecko("Looking for cheats file @ %s\r\n", cheatsFile->name);
+		print_gecko("Looking for cheats file @ [%s]\r\n", cheatsFile->name);
 
 		devices[DEVICE_TEMP]->init(cheatsFile);
-		if(devices[DEVICE_TEMP]->readFile(cheatsFile, &trimmedGameId, 8) != 8) {
-			devices[DEVICE_TEMP] = NULL;
-		}
-		devices[DEVICE_TEMP] = &__device_sd_b;
-		slotFile = devices[DEVICE_TEMP]->initial;
-		memset(cheatsFile, 0, sizeof(file_handle));
-		sprintf(cheatsFile->name, "%s/cheats/%s.txt", slotFile->name, trimmedGameId);
-		print_gecko("Looking for cheats file @ %s\r\n", cheatsFile->name);
+		if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
+			devices[DEVICE_TEMP] = &__device_sd_b;
+			slotFile = devices[DEVICE_TEMP]->initial;
+			memset(cheatsFile, 0, sizeof(file_handle));
+			sprintf(cheatsFile->name, "%s/cheats/%s.txt", slotFile->name, trimmedGameId);
+			print_gecko("Looking for cheats file @[%s]\r\n", cheatsFile->name);
 
-		devices[DEVICE_TEMP]->init(cheatsFile);
-		if(devices[DEVICE_TEMP]->readFile(cheatsFile, &trimmedGameId, 8) != 8) {
-			devices[DEVICE_TEMP] = NULL;
-		}
-
-		// Still fail?
-		if(devices[DEVICE_TEMP] == NULL) {
-			if(!silent) {
-				while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
-				DrawFrameStart();
-				DrawMessageBox(D_INFO,"No cheats file found.\nPress A to continue.");
-				DrawFrameFinish();
-				while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
-				while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+			devices[DEVICE_TEMP]->init(cheatsFile);
+			if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
+				devices[DEVICE_TEMP] = NULL;
 			}
-			free(cheatsFile);
-			return 0;
 		}
+	}
+	// Still fail?
+	if(devices[DEVICE_TEMP] == NULL) {
+		if(!silent) {
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
+			DrawFrameStart();
+			DrawMessageBox(D_INFO,"No cheats file found.\nPress A to continue.");
+			DrawFrameFinish();
+			while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+		}
+		free(cheatsFile);
+		return 0;
 	}
 	print_gecko("Cheats file found with size %i\r\n", cheatsFile->size);
 	char *cheats_buffer = memalign(32, cheatsFile->size);

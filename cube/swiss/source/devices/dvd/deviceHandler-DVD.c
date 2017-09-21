@@ -369,6 +369,7 @@ s32 deviceHandler_DVD_seekFile(file_handle* file, u32 where, u32 type){
 s32 deviceHandler_DVD_readFile(file_handle* file, void* buffer, u32 length){
 	//print_gecko("read: status:%08X dst:%08X ofs:%08X base:%08X len:%08X\r\n"
 	//						,file->status,(u32)buffer,file->offset,(u32)((file->fileBase) & 0xFFFFFFFF),length);
+	if(file->size == 0) return 0;	// Don't read garbage
 	u64 actualOffset = file->fileBase+file->offset;
 
 	if(file->status == OFFSET_SET) {
