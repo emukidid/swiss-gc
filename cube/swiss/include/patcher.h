@@ -30,6 +30,8 @@ extern u8 wkf_bin[];
 extern u32 wkf_bin_size;
 extern u8 dvd_bin[];
 extern u32 dvd_bin_size;
+extern u8 bba_bin[];
+extern u32 bba_bin_size;
 
 /* SDK patches */
 extern u8 GXGetYScaleFactorHook[];

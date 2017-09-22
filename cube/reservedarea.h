@@ -11,6 +11,12 @@
 #ifdef _LANGUAGE_ASSEMBLY
 #include "asm.h"
 .set VAR_AREA,				0x8000
+.set VAR_FILENAME_LEN,		0x0E00	# filename length
+.set VAR_FILENAME,			0x0E01	# filename
+.set VAR_CLIENT_MAC,		0x0EEC	# client MAC address
+.set VAR_CLIENT_IP,			0x0EF2	# client IPv4 address
+.set VAR_SERVER_MAC,		0x0EF6	# server MAC address
+.set VAR_SERVER_IP,			0x0EFC	# server IPv4 address
 .set VAR_PATCHES_BASE,		0x2D00	# Patches get copied to below this area.
 .set VAR_FRAG_SIZE,			0x1C8	# Size of frag array in bytes
 .set VAR_FRAG_LIST,			0x2D00	# 0x1C8 of fragments (38 frags max) (u32 offset, u32 size, u32 rawsector)
@@ -18,7 +24,10 @@
 .set VAR_DISC_CHANGING,		0x2ED0	# Are we changing discs?
 .set VAR_CURRENT_FIELD,		0x2ED4	# current video field
 .set VAR_IGR_EXIT_TYPE,		0x2ED5	# IGR exit type
-.set VAR_SPARE,				0x2ED6	########## SPARE until 0x2EE0
+.set VAR_IPV4_ID,			0x2ED6	# IPv4 fragment identifier
+.set VAR_FSP_KEY,			0x2ED8	# FSP session key
+.set VAR_FSP_DATA_LENGTH,	0x2EDA	# FSP payload size
+.set VAR_FSP_POSITION,		0x2EDC	# FSP file position
 .set VAR_LAST_OFFSET,		0x2EE0	# The last offset we read from
 .set VAR_READS_IN_AS,		0x2EE4	# How many times have we tried to read while streaming is on?
 .set VAR_AS_ENABLED,		0x2EE8	# Is Audio streaming enabled by the user?
@@ -81,6 +90,12 @@
 #else
 
 #define VAR_AREA			(0x80000000)
+#define VAR_FILENAME_LEN	(VAR_AREA+0x0E00)	// filename length
+#define VAR_FILENAME		(VAR_AREA+0x0E01)	// filename
+#define VAR_CLIENT_MAC		(VAR_AREA+0x0EEC)	// client MAC address
+#define VAR_CLIENT_IP		(VAR_AREA+0x0EF2)	// client IPv4 address
+#define VAR_SERVER_MAC		(VAR_AREA+0x0EF6)	// server MAC address
+#define VAR_SERVER_IP		(VAR_AREA+0x0EFC)	// server IPv4 address
 #define VAR_PATCHES_BASE	(VAR_AREA+0x2D00)	// Patches get copied to below this area.
 #define VAR_FRAG_SIZE		(0x1C8)				// Size of frag array in bytes
 #define VAR_FRAG_LIST		(VAR_AREA+0x2D00)	// 0x1C8 of fragments (40 frags max) (u32 offset, u32 size, u32 rawsector)
@@ -88,7 +103,10 @@
 #define VAR_DISC_CHANGING	(VAR_AREA+0x2ED0)	// Are we changing discs?
 #define VAR_CURRENT_FIELD	(VAR_AREA+0x2ED4)	// current video field
 #define VAR_IGR_EXIT_TYPE	(VAR_AREA+0x2ED5)	// IGR exit type
-#define VAR_SPARE			(VAR_AREA+0x2ED6)	// ######### SPARE until 0x2EE0
+#define VAR_IPV4_ID			(VAR_AREA+0x2ED6)	// IPv4 fragment identifier
+#define VAR_FSP_KEY			(VAR_AREA+0x2ED8)	// FSP session key
+#define VAR_FSP_DATA_LENGTH	(VAR_AREA+0x2EDA)	// FSP payload size
+#define VAR_FSP_POSITION	(VAR_AREA+0x2EDC)	// FSP file position
 #define VAR_LAST_OFFSET		(VAR_AREA+0x2EE0)	// The last offset we read from
 #define VAR_READS_IN_AS		(VAR_AREA+0x2EE4)	// How many times have we tried to read while streaming is on?
 #define VAR_AS_ENABLED		(VAR_AREA+0x2EE8)	// Is Audio streaming enabled by the user?

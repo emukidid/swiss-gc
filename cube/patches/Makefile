@@ -9,13 +9,14 @@ DEST    = ../swiss/source/patches
 
 DISASM    = disassembly
 
-all: dvdpatch hddpatch sdpatch usbpatch wkfpatch
+all: dvdpatch hddpatch sdpatch usbpatch wkfpatch bbapatch
 
 dvdpatch: clean build-dvd
 hddpatch: clean build-ideexi-v1 clean build-ideexi-v2
 sdpatch: clean build-sd
 usbpatch: clean build-usb
 wkfpatch: clean build-wkf
+bbapatch: clean build-bba
 
 clean:
 	@rm -rf *.o
@@ -140,3 +141,19 @@ build-wkf:
 	@mv -f wkf.s $(DEST)/wkfPatch.s
 	@rm *.bin
 	@rm *.elf
+
+build-bba:
+	@echo Building BBA Patch ...
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c usbgecko/base.S
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c bba/bba.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c bba/tcpip.c
+	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -c base/usbgecko.c
+	@$(LD) -o bba.elf base.o bba.o tcpip.o usbgecko.o --section-start .text=0x80001000 --gc-sections
+	@rm -rf *.o
+	@$(OBJDUMP) -D bba.elf > $(DISASM)/bba_disasm.txt
+	@$(OBJCOPY) -O binary bba.elf bba.bin
+	@$(BIN2S) bba.bin > bba.s
+	@mv -f bba.s $(DEST)/BBAPatch.s
+	@rm *.bin
+	@rm *.elf
+	

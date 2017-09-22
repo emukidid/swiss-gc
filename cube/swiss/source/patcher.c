@@ -96,6 +96,11 @@ int install_code()
 		patch = &wkf_bin[0]; patchSize = wkf_bin_size;
 		print_gecko("Installing Patch for WKF\r\n");
 	}
+	// Broadband Adapter
+	else if(devices[DEVICE_CUR] == &__device_smb) {
+		patch = &bba_bin[0]; patchSize = bba_bin_size;
+		print_gecko("Installing Patch for Broadband Adapter\r\n");
+	}
 	print_gecko("Space for patch remaining: %i\r\n",top_addr - LO_RESERVE);
 	print_gecko("Space taken by vars/video patches: %i\r\n",VAR_PATCHES_BASE-top_addr);
 	if(top_addr - LO_RESERVE < patchSize)

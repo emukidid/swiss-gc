@@ -625,7 +625,7 @@ unsigned int load_app(int multiDol)
 		}
 	}
 	
-	if(devices[DEVICE_CUR] == &__device_usbgecko) {
+	if(devices[DEVICE_CUR] == &__device_usbgecko || devices[DEVICE_CUR] == &__device_smb) {
 		Patch_DVDLowLevelReadForUSBGecko(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 		

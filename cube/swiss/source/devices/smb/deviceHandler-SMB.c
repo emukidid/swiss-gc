@@ -38,6 +38,7 @@
 #include "deviceHandler-SMB.h"
 #include "exi.h"
 #include "bba.h"
+#include "patcher.h"
 
 /* SMB Globals */
 extern int net_initialized;
@@ -223,12 +224,36 @@ bool deviceHandler_SMB_test() {
 	return exi_bba_exists();
 }
 
+s32 deviceHandler_SMB_setupFile(file_handle* file, file_handle* file2) {
+	u32 *fragList = (u32*)VAR_FRAG_LIST;
+	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
+	fragList[1] = file->size;
+	*(volatile u32*)VAR_DISC_1_LBA = 0;
+	*(volatile u32*)VAR_DISC_2_LBA = 0;
+	*(volatile u32*)VAR_CUR_DISC_LBA = 0;
+	*(volatile u8*)VAR_FILENAME_LEN = strlcpy((char*)VAR_FILENAME, strchr(file->name, '/') + 1, 235) + 1;
+	net_get_mac_address((void*)VAR_CLIENT_MAC);
+	*(volatile u32*)VAR_CLIENT_IP = net_gethostip();
+	((volatile u8*)VAR_SERVER_MAC)[0] = 0xFF;
+	((volatile u8*)VAR_SERVER_MAC)[1] = 0xFF;
+	((volatile u8*)VAR_SERVER_MAC)[2] = 0xFF;
+	((volatile u8*)VAR_SERVER_MAC)[3] = 0xFF;
+	((volatile u8*)VAR_SERVER_MAC)[4] = 0xFF;
+	((volatile u8*)VAR_SERVER_MAC)[5] = 0xFF;
+	*(volatile u32*)VAR_SERVER_IP = inet_addr(swissSettings.smbServerIp);
+	*(volatile u16*)VAR_IPV4_ID = 0;
+	*(volatile u16*)VAR_FSP_KEY = 0;
+	*(volatile u16*)VAR_FSP_DATA_LENGTH = 0;
+	*(volatile u32*)VAR_FSP_POSITION = EOF;
+	return 1;
+}
+
 DEVICEHANDLER_INTERFACE __device_smb = {
 	DEVICE_ID_8,
 	"Samba via BBA",
 	"Must be pre-configured via swiss.ini",
 	{TEX_SAMBA, 160, 85},
-	FEAT_READ,
+	FEAT_READ|FEAT_BOOT_GCM,
 	LOC_SERIAL_PORT_1,
 	&initial_SMB,
 	(_fn_test)&deviceHandler_SMB_test,
@@ -239,7 +264,7 @@ DEVICEHANDLER_INTERFACE __device_smb = {
 	(_fn_writeFile)NULL,
 	(_fn_deleteFile)NULL,
 	(_fn_seekFile)&deviceHandler_SMB_seekFile,
-	(_fn_setupFile)NULL,
+	(_fn_setupFile)&deviceHandler_SMB_setupFile,
 	(_fn_closeFile)&deviceHandler_SMB_closeFile,
 	(_fn_deinit)&deviceHandler_SMB_deinit
 };
