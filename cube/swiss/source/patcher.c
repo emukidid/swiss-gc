@@ -61,12 +61,12 @@ int install_code()
 	{
 		print_gecko("Patch:[Pokemon memset] applied\r\n");
 		// patch in test < 0x3000 function at an empty spot in RAM
-		*(u32*)0x80000088 = 0x3D008000;
-		*(u32*)0x8000008C = 0x61083000;
-		*(u32*)0x80000090 = 0x7C044000;
-		*(u32*)0x80000094 = 0x4180542C;
-		*(u32*)0x80000098 = 0x90E40004;
-		*(u32*)0x8000009C = 0x48005400;
+		*(u32*)0x80000088 = 0x3CC08000;
+		*(u32*)0x8000008C = 0x60C63000;
+		*(u32*)0x80000090 = 0x7C033000;
+		*(u32*)0x80000094 = 0x41800008;
+		*(u32*)0x80000098 = 0x480053A5;
+		*(u32*)0x8000009C = 0x48005388;
 	}
 	
 	// IDE-EXI
@@ -1846,16 +1846,8 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 	else if(!strncmp(gameID, "GXX", 3) || !strncmp(gameID, "GC6", 3))
 	{
 		print_gecko("Patched:[Pokemon memset]\r\n");
-		// patch out initial memset(0x1800, 0, 0x1800)
-		if(gameID[3] == 'J' )	// JAP
-			*(u32*)(addr+0x260C) = 0x60000000;
-		else					// EUR/USA
-			*(u32*)(addr+0x2614) = 0x60000000;
-
 		// patch memset to jump to test function
-		*(u32*)(addr+0x2498) = 0x4BFFABF0;
-		// skips __start init of debugger mem
-		*(u32*)(addr+0x194) = 0x48000028;
+		*(u32*)(addr+0x2420) = 0x4BFFAC68;
 		patched=1;
 	}
 	else if(!strncmp(gameID, "PZL", 3))
