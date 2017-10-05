@@ -128,11 +128,11 @@ process_read_queue:
 	lwz		r9,   40(sp)		# restore r9
 	lwz		r10,   44(sp)		# restore r10
 	lwz		r11,   48(sp)		# restore r11
+	lis		r12, 0x8000
+	lwz		r12, 0x3010(r12)
+	mtsrr0	r12					# setup for the rfi
 	lwz		r12,   52(sp)		# restore r12
 	addi	r1,	r1, 64			# kill stack frame
-	lis		r5,	0x8000
-	lwz		r5, 0x3010(r5)
-	mtsrr0	r5					# setup for the rfi
 	rfi							# jump to handler
 
 .globl patched_memcpy
