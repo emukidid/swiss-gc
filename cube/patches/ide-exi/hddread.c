@@ -36,11 +36,11 @@
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 #define SECTOR_SIZE 		512
 
-#define _ata48bit *(u32*)VAR_TMP1
+#define _ata48bit *(vu32*)VAR_TMP1
 
-#define exi_freq  			(*(u32*)VAR_EXI_FREQ)
+#define exi_freq  			(*(vu32*)VAR_EXI_FREQ)
 // exi_channel is stored as number of u32's to index into the exi bus (0xCC006800)
-#define exi_channel 		(*(u32*)VAR_EXI_SLOT)
+#define exi_channel 		(*(vu32*)VAR_EXI_SLOT)
 
 void* mymemcpy(void* dest, const void* src, u32 count)
 {

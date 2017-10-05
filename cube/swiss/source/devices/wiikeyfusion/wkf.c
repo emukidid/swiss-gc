@@ -23,8 +23,8 @@ u8 wkfBuffer[WKF_BUF_SIZE] ATTRIBUTE_ALIGN (32);    // 16 DVD Sectors
 
 static int wkfInitialized = 0;
 static char wkfSerial[32];
-static volatile unsigned int* const wkf = (unsigned int*)0xCC006000;
-static volatile unsigned int* const pireg = (unsigned int*)0xCC003000;
+static vu32* const wkf = (vu32*)0xCC006000;
+static vu32* const pireg = (vu32*)0xCC003000;
 
 void __wkfReset() {
 	u32 val;

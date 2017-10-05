@@ -51,7 +51,7 @@ GXRModeObj *newmode = NULL;
 char txtbuffer[2048];           //temporary text buffer
 file_handle curFile;    //filedescriptor for current file
 file_handle curDir;     //filedescriptor for current directory
-int SDHCCard = 0; //0 == SDHC, 1 == normal SD
+u32 SDHCCard = 0; //0 == SDHC, 1 == normal SD
 char *videoStr = NULL;
 int current_view_start = 0;
 int current_view_end = 0;
@@ -714,7 +714,7 @@ unsigned int load_app(int multiDol)
 		float bytePerSec = (1024*1024) / timeTakenInSec;
 		print_gecko("Speed is %.2f KB/s\r\n",bytePerSec/1024);
 		print_gecko("Speed for 1024 bytes is: %i usec\r\n",speed/1024);
-		*(unsigned int*)VAR_DEVICE_SPEED = speed/1024;
+		*(vu32*)VAR_DEVICE_SPEED = speed/1024;
 		free(buffer);
 	}
 	
@@ -723,16 +723,16 @@ unsigned int load_app(int multiDol)
 		print_gecko("DVD: %08X\r\n",dvd_get_error());
 	}
 	// Clear out some patch variables
-	*(volatile unsigned int*)VAR_FAKE_IRQ_SET = 0;
-	*(volatile unsigned int*)VAR_INTERRUPT_TIMES = 0;
-	*(volatile unsigned int*)VAR_READS_IN_AS = 0;
-	*(volatile unsigned int*)VAR_DISC_CHANGING = 0;
-	*(volatile unsigned int*)VAR_LAST_OFFSET = 0xBEEFCAFE;
-	*(volatile unsigned int*)VAR_AS_ENABLED = !swissSettings.muteAudioStreaming;
-	*(volatile unsigned char*)VAR_IGR_EXIT_TYPE = (u8)swissSettings.igrType;
+	*(vu32*)VAR_FAKE_IRQ_SET = 0;
+	*(vu32*)VAR_INTERRUPT_TIMES = 0;
+	*(vu32*)VAR_READS_IN_AS = 0;
+	*(vu32*)VAR_DISC_CHANGING = 0;
+	*(vu32*)VAR_LAST_OFFSET = 0xBEEFCAFE;
+	*(vu32*)VAR_AS_ENABLED = !swissSettings.muteAudioStreaming;
+	*(vu8*)VAR_IGR_EXIT_TYPE = (u8)swissSettings.igrType;
 	memset((void*)VAR_DI_REGS, 0, 0x24);
 	memset((void*)VAR_STREAM_START, 0, 0xA0);
-	print_gecko("Audio Streaming is %s\r\n",*(volatile unsigned int*)VAR_AS_ENABLED?"Enabled":"Disabled");
+	print_gecko("Audio Streaming is %s\r\n",*(vu32*)VAR_AS_ENABLED?"Enabled":"Disabled");
 
 	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 		kenobi_install_engine();
@@ -740,7 +740,7 @@ unsigned int load_app(int multiDol)
 		
 	// Set WKF base offset if not using the frag or audio streaming patch
 	if(devices[DEVICE_CUR] == &__device_wkf /*&& !wkfFragSetupReq && swissSettings.muteAudioStreaming*/) {
-		wkfWriteOffset(*(volatile unsigned int*)VAR_DISC_1_LBA);
+		wkfWriteOffset(*(vu32*)VAR_DISC_1_LBA);
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
 	DOLtoARAM(main_dol_buffer, 0, NULL);

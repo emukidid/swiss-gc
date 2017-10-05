@@ -25,8 +25,7 @@ static u32 top_addr = VAR_PATCHES_BASE;
 /*** externs ***/
 extern GXRModeObj *vmode;		/*** Graphics Mode Object ***/
 extern u32 *xfb[2];			   	/*** Framebuffers ***/
-extern int SDHCCard;
-extern int GC_SD_CHANNEL;
+extern u32 SDHCCard;
 
 extern void animateBox(int x1,int y1, int x2, int y2, int color,char *msg);
 
@@ -61,12 +60,12 @@ int install_code()
 	{
 		print_gecko("Patch:[Pokemon memset] applied\r\n");
 		// patch in test < 0x3000 function at an empty spot in RAM
-		*(u32*)0x80000088 = 0x3CC08000;
-		*(u32*)0x8000008C = 0x60C63000;
-		*(u32*)0x80000090 = 0x7C033000;
-		*(u32*)0x80000094 = 0x41800008;
-		*(u32*)0x80000098 = 0x480053A5;
-		*(u32*)0x8000009C = 0x48005388;
+		*(vu32*)0x80000088 = 0x3CC08000;
+		*(vu32*)0x8000008C = 0x60C63000;
+		*(vu32*)0x80000090 = 0x7C033000;
+		*(vu32*)0x80000094 = 0x41800008;
+		*(vu32*)0x80000098 = 0x480053A5;
+		*(vu32*)0x8000009C = 0x48005388;
 	}
 	
 	// IDE-EXI
@@ -117,7 +116,7 @@ void make_pattern( u8 *Data, u32 Length, FuncPattern *FunctionPattern )
 
 	for( i = 0; i < Length; i+=4 )
 	{
-		u32 word = *(u32*)(Data + i) ;
+		u32 word = *(vu32*)(Data + i) ;
 		
 		if( (word & 0xFC000003) ==  0x48000001 )
 			FunctionPattern->FCalls++;
@@ -175,7 +174,7 @@ int find_pattern( u8 *data, u32 length, FuncPattern *functionPattern )
 
 	for( i = 0; i < length; i+=4 )
 	{
-		u32 word =  *(u32*)(data + i);
+		u32 word =  *(vu32*)(data + i);
 		
 		if( (word & 0xFC000003) ==  0x48000001 )
 			FP.FCalls++;
@@ -249,7 +248,7 @@ u32 branchAndLink(u32 dst, u32 src)
 
 u32 branchResolve(u8 *data, u32 offsetFoundAt)
 {
-	u32 newval = *(u32*)(data + offsetFoundAt);
+	u32 newval = *(vu32*)(data + offsetFoundAt);
 	newval = ((s32)((newval & 0x03FFFFFC) << 6) >> 6) + offsetFoundAt;
 	return newval;
 }
@@ -270,16 +269,16 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 	
 	for( i=0; i < Length; i+=4 )
 	{
-		u32 op = *(u32*)(dst + i);
+		u32 op = *(vu32*)(dst + i);
 			
 		// lis rX, 0xCC00
 		if( (op & 0xFC1FFFFF) == 0x3C00CC00 ) {
 			u32 dstR = (op >> 21) & 0x1F;
 			if(regs[dstR][REG_USED]) {
 				u32 lisOffset = regs[dstR][REG_OFFSET];
-				*(u32*)lisOffset = (((*(u32*)lisOffset) & 0xFFFF0000) | (VAR_DI_REGS>>16));
+				*(vu32*)lisOffset = (((*(vu32*)lisOffset) & 0xFFFF0000) | (VAR_DI_REGS>>16));
 				//u32 properAddress = Calc_ProperAddress(dst, dataType, (u32)(lisOffset)-(u32)(dst));
-				//print_gecko("DI:[%08X] %08X: lis r%u, %04X\r\n", properAddress, *(u32*)regs[dstR][REG_OFFSET], dstR, (*(u32*)lisOffset) &0xFFFF);
+				//print_gecko("DI:[%08X] %08X: lis r%u, %04X\r\n", properAddress, *(vu32*)regs[dstR][REG_OFFSET], dstR, (*(vu32*)lisOffset) &0xFFFF);
 				DIPatched++;
 				regs[dstR][REG_USED] = 0;	// This might not eventuate to a 0xCC006000 write
 			}
@@ -294,9 +293,9 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 			if (regs[dstR][REG_0xCC00]) {
 				if(regs[dstR][REG_USED]) {
 					u32 lisOffset = regs[dstR][REG_OFFSET];
-					*(u32*)lisOffset = (((*(u32*)lisOffset) & 0xFFFF0000) | (VAR_DI_REGS>>16));
+					*(vu32*)lisOffset = (((*(vu32*)lisOffset) & 0xFFFF0000) | (VAR_DI_REGS>>16));
 					//u32 properAddress = Calc_ProperAddress(dst, dataType, (u32)(lisOffset)-(u32)(dst));
-					//print_gecko("DI:[%08X] %08X: lis r%u, %04X\r\n", properAddress, *(u32*)regs[dstR][REG_OFFSET], dstR, (*(u32*)lisOffset) &0xFFFF);
+					//print_gecko("DI:[%08X] %08X: lis r%u, %04X\r\n", properAddress, *(vu32*)regs[dstR][REG_OFFSET], dstR, (*(vu32*)lisOffset) &0xFFFF);
 					DIPatched++;
 				}
 				regs[dstR][REG_0xCC00] = 0;	// reg is no longer 0xCC00
@@ -310,7 +309,7 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 			if( regs[src][REG_0xCC00] )	{	// The source register is 0xCC00, patch this addi
 				// Hack to fix a few games
 				// If the next instruction is a lhz
-				u32 nextOp = *(u32*)(dst + i+4);
+				u32 nextOp = *(vu32*)(dst + i+4);
 				if(( (nextOp & 0xF8000000 ) == 0xA0000000 )) {
 					u32 nextOpSrc = (nextOp >> 16) & 0x1F;
 					if(nextOpSrc == src) {
@@ -321,9 +320,9 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 				
 				// else just patch.
 				if( (op & 0xFC00FF00) == 0x38006000 ) {
-					*(u32*)(dst + i) = op - (0x6000 - (VAR_DI_REGS&0xFFFF));
+					*(vu32*)(dst + i) = op - (0x6000 - (VAR_DI_REGS&0xFFFF));
 					//u32 properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
-					//print_gecko("DI:[%08X] %08X: addi r%u, %04X\r\n", properAddress, *(u32*)(dst + i), src, *(u32*)(dst + i) &0xFFFF);
+					//print_gecko("DI:[%08X] %08X: addi r%u, %04X\r\n", properAddress, *(vu32*)(dst + i), src, *(vu32*)(dst + i) &0xFFFF);
 					regs[src][REG_USED]=1;	// was used in a 0xCC006000 addi
 					DIPatched++;
 				}
@@ -336,9 +335,9 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 			u32 src = (op >> 16) & 0x1F;
 			if( regs[src][REG_0xCC00] )		// The source register is 0xCC00, patch this ori
 			{
-				*(u32*)(dst + i) -= (0x6000 - (VAR_DI_REGS&0xFFFF));
+				*(vu32*)(dst + i) -= (0x6000 - (VAR_DI_REGS&0xFFFF));
 				//u32 properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
-				//print_gecko("DI:[%08X] %08X: ori r%u, %04X\r\n", properAddress, *(u32*)(dst + i), src, *(u32*)(dst + i) &0xFFFF);
+				//print_gecko("DI:[%08X] %08X: ori r%u, %04X\r\n", properAddress, *(vu32*)(dst + i), src, *(vu32*)(dst + i) &0xFFFF);
 				regs[src][REG_USED]=1;	// was used in a 0xCC006000 ori
 				DIPatched++;
 			}
@@ -353,9 +352,9 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 
 			if( regs[src][REG_0xCC00] && ((val & 0xFF00) == 0x6000)) // case with 0x60XY(rZ) (di)
 			{
-				*(u32*)(dst + i) -= (0x6000 - (VAR_DI_REGS&0xFFFF));
+				*(vu32*)(dst + i) -= (0x6000 - (VAR_DI_REGS&0xFFFF));
 				//u32 properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
-				//print_gecko("DI:[%08X] %08X: mem r%u, %04X\r\n", properAddress, *(u32*)(dst + i), src, *(u32*)(dst + i) &0xFFFF);
+				//print_gecko("DI:[%08X] %08X: mem r%u, %04X\r\n", properAddress, *(vu32*)(dst + i), src, *(vu32*)(dst + i) &0xFFFF);
 				regs[src][REG_USED]=1;	// was used in a 0xCC006000 load/store
 				DIPatched++;
 			}
@@ -367,9 +366,9 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 			for (x = 0; x < 32; x++) {
 				if(regs[x][REG_0xCC00] && regs[x][REG_USED]) {
 					u32 lisOffset = regs[x][REG_OFFSET];
-					*(u32*)lisOffset = (((*(u32*)lisOffset) & 0xFFFF0000) | (VAR_DI_REGS>>16));
+					*(vu32*)lisOffset = (((*(vu32*)lisOffset) & 0xFFFF0000) | (VAR_DI_REGS>>16));
 					//u32 properAddress = Calc_ProperAddress(dst, dataType, (u32)(lisOffset)-(u32)(dst));
-					//print_gecko("DI:[%08X] %08X: lis r%u, %04X\r\n", properAddress, *(u32*)regs[x][REG_OFFSET], x, (*(u32*)lisOffset) &0xFFFF);
+					//print_gecko("DI:[%08X] %08X: lis r%u, %04X\r\n", properAddress, *(vu32*)regs[x][REG_OFFSET], x, (*(vu32*)lisOffset) &0xFFFF);
 					DIPatched++;
 				}
 			}
@@ -394,7 +393,7 @@ int PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType )
 	
 	for( i=0; i < Length; i+=4 )
 	{
-		u32 op = *(u32*)(dst + i);
+		u32 op = *(vu32*)(dst + i);
 			
 		// lis rX, 0x8000
 		if( (op & 0xFC1FFFFF) == 0x3C008000 ) {
@@ -422,8 +421,8 @@ int PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType )
 			if( regs[src][REG_0x8000] && (((val & 0xFFFF) >= 0x1000) && ((val & 0xFFFF) < 0x3000))) // case with load in our range(rZ)
 			{
 				u32 properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
-				print_gecko("LowMem:[%08X] %08X: mem r%u, %04X\r\n", properAddress, *(u32*)(dst + i), src, *(u32*)(dst + i) &0xFFFF);
-				*(u32*)(dst + i) = 0x60000000;	// We could redirect ...
+				print_gecko("LowMem:[%08X] %08X: mem r%u, %04X\r\n", properAddress, *(vu32*)(dst + i), src, *(vu32*)(dst + i) &0xFFFF);
+				*(vu32*)(dst + i) = 0x60000000;	// We could redirect ...
 				regs[src][REG_INUSE]=1;	// was used in a 0x80001000->0x80003000 load/store
 				LowMemPatched++;
 			}
@@ -448,7 +447,7 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 		if(patched == 0x11) break;	// we're done
 
 		// Patch Read to adjust the offset for fragmented files
-		if( *(u32*)(addr+i) != 0x7C0802A6 )
+		if( *(vu32*)(addr+i) != 0x7C0802A6 )
 			continue;
 		
 		FuncPattern fp;
@@ -458,7 +457,7 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 		{
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 472)-(u32)(addr));
 			print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
-			*(u32*)(addr + i + 472) = branchAndLink(PATCHED_MEMCPY_WKF, properAddress);
+			*(vu32*)(addr + i + 472) = branchAndLink(PATCHED_MEMCPY_WKF, properAddress);
 			patched |= 0x10;
 		}
 		// Debug version of the above
@@ -466,26 +465,26 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 		{
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 512)-(u32)(addr));
 			print_gecko("Found:[OSExceptionInitDBG] @ %08X\r\n", properAddress);
-			*(u32*)(addr + i + 512) = branchAndLink(PATCHED_MEMCPY_DBG_WKF, properAddress);
+			*(vu32*)(addr + i + 512) = branchAndLink(PATCHED_MEMCPY_DBG_WKF, properAddress);
 			patched |= 0x10;
 		}		
 		if(compare_pattern(&fp, &ReadCommon)) {
 			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x84)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadCommon.Name, properAddress - 0x84);
-			*(u32*)(addr + i + 0x84) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
+			*(vu32*)(addr + i + 0x84) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
 			patched |= 0x100;
 		}
 		if(compare_pattern(&fp, &ReadDebug)) {	// As above, for debug read now.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x88)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadDebug.Name, properAddress - 0x88);
-			*(u32*)(addr + i + 0x88) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
+			*(vu32*)(addr + i + 0x88) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
 			patched |= 0x100;
 		}
 		if(compare_pattern(&fp, &ReadUncommon)) {	// Same, for the less common read type.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x7C)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadUncommon.Name, properAddress - 0x7C);
-			*(u32*)(addr + i + 0x7C) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
+			*(vu32*)(addr + i + 0x7C) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
 			patched |= 0x100;
 		}
 	}
@@ -500,7 +499,7 @@ u32 Patch_DVDLowLevelReadForUSBGecko(void *addr, u32 length, int dataType) {
 		if(patched == 0x11) break;	// we're done
 
 		// Patch Read to adjust the offset for fragmented files
-		if( *(u32*)(addr+i) != 0x7C0802A6 )
+		if( *(vu32*)(addr+i) != 0x7C0802A6 )
 			continue;
 		
 		FuncPattern fp;
@@ -510,7 +509,7 @@ u32 Patch_DVDLowLevelReadForUSBGecko(void *addr, u32 length, int dataType) {
 		{
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 472)-(u32)(addr));
 			print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
-			*(u32*)(addr + i + 472) = branchAndLink(PATCHED_MEMCPY_USB, properAddress);
+			*(vu32*)(addr + i + 472) = branchAndLink(PATCHED_MEMCPY_USB, properAddress);
 			patched |= 0x10;
 		}
 		// Debug version of the above
@@ -518,28 +517,28 @@ u32 Patch_DVDLowLevelReadForUSBGecko(void *addr, u32 length, int dataType) {
 		{
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 512)-(u32)(addr));
 			print_gecko("Found:[OSExceptionInitDBG] @ %08X\r\n", properAddress);
-			*(u32*)(addr + i + 512) = branchAndLink(PATCHED_MEMCPY_DBG_USB, properAddress);
+			*(vu32*)(addr + i + 512) = branchAndLink(PATCHED_MEMCPY_DBG_USB, properAddress);
 			patched |= 0x10;
 		}		
 		if(compare_pattern(&fp, &ReadCommon)) {
 			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x84)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadCommon.Name, properAddress - 0x84);
-			*(u32*)(addr + i + 0x84) = branchAndLink(PERFORM_READ_USBGECKO, properAddress);
-			*(u32*)(addr + i + 0xB8) = 0x60000000;
-			*(u32*)(addr + i + 0xEC) = 0x60000000;
+			*(vu32*)(addr + i + 0x84) = branchAndLink(PERFORM_READ_USBGECKO, properAddress);
+			*(vu32*)(addr + i + 0xB8) = 0x60000000;
+			*(vu32*)(addr + i + 0xEC) = 0x60000000;
 			patched |= 0x100;
 		}
 		if(compare_pattern(&fp, &ReadDebug)) {	// As above, for debug read now.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x88)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadDebug.Name, properAddress - 0x88);
-			*(u32*)(addr + i + 0x88) = branchAndLink(PERFORM_READ_USBGECKO, properAddress);
+			*(vu32*)(addr + i + 0x88) = branchAndLink(PERFORM_READ_USBGECKO, properAddress);
 			patched |= 0x100;
 		}
 		if(compare_pattern(&fp, &ReadUncommon)) {	// Same, for the less common read type.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x7C)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadUncommon.Name, properAddress - 0x7C);
-			*(u32*)(addr + i + 0x7C) = branchAndLink(PERFORM_READ_USBGECKO, properAddress);
+			*(vu32*)(addr + i + 0x7C) = branchAndLink(PERFORM_READ_USBGECKO, properAddress);
 			patched |= 0x100;
 		}
 	}
@@ -559,7 +558,7 @@ u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType) {
 
 	for(i = 0; i < length; i+=4) {
 		// Patch Read (called from DVDLowLevelRead) to read data from SD if it has been patched.
-		if( *(u32*)(addr+i) != 0x7C0802A6 )
+		if( *(vu32*)(addr+i) != 0x7C0802A6 )
 			continue;
 		
 		FuncPattern fp;
@@ -569,19 +568,19 @@ u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType) {
 			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x84)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for DVD\r\n", ReadCommon.Name, properAddress - 0x84);
-			*(u32*)(addr + i + 0x84) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
+			*(vu32*)(addr + i + 0x84) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
 			return 1;
 		}
 		if(compare_pattern(&fp, &ReadDebug)) {	// As above, for debug read now.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x88)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for DVD\r\n", ReadDebug.Name, properAddress - 0x88);
-			*(u32*)(addr + i + 0x88) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
+			*(vu32*)(addr + i + 0x88) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
 			return 1;
 		}
 		if(compare_pattern(&fp, &ReadUncommon)) {	// Same, for the less common read type.
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x7C)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for DVD\r\n", ReadUncommon.Name, properAddress - 0x7C);
-			*(u32*)(addr + i + 0x7C) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
+			*(vu32*)(addr + i + 0x7C) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
 			return 1;
 		}
 	}
@@ -595,13 +594,13 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 	FuncPattern DSPHandler = {0x420,103,23,34,32, 9, 0, 0, "__DSPHandler", 0};
 	while(addr_start<addr_end) {
 		// Patch the memcpy call in OSExceptionInit to copy our code to 0x80000500 instead of anything else.
-		if(*(u32*)(addr_start) == 0x7C0802A6)
+		if(*(vu32*)(addr_start) == 0x7C0802A6)
 		{
 			if( find_pattern( (u8*)(addr_start), length, &OSExceptionInitSig ) )
 			{
 				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 472)-(u32)(addr));
 				print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
-				*(u32*)(addr_start + 472) = branchAndLink(PATCHED_MEMCPY, properAddress);
+				*(vu32*)(addr_start + 472) = branchAndLink(PATCHED_MEMCPY, properAddress);
 				patched |= 0x100;
 			}
 			// Debug version of the above
@@ -609,7 +608,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 			{
 				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 512)-(u32)(addr));
 				print_gecko("Found:[OSExceptionInitDBG] @ %08X\r\n", properAddress);
-				*(u32*)(addr_start + 512) = branchAndLink(PATCHED_MEMCPY_DBG, properAddress);
+				*(vu32*)(addr_start + 512) = branchAndLink(PATCHED_MEMCPY_DBG, properAddress);
 				patched |= 0x100;
 			}
 			// Audio Streaming Hook (only if required)
@@ -618,7 +617,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 				if(strncmp((const char*)0x80000000, "PZL", 3)) {	// ZeldaCE uses a special case for MM
 					u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start+0xF8)-(u32)(addr));
 					print_gecko("Found:[__DSPHandler] @ %08X\r\n", properAddress);
-					*(u32*)(addr_start+0xF8) = branchAndLink(DSP_HANDLER_HOOK, properAddress);
+					*(vu32*)(addr_start+0xF8) = branchAndLink(DSP_HANDLER_HOOK, properAddress);
 				}
 			}
 			// Read variations
@@ -629,23 +628,23 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 				|| compare_pattern(&fp, &ReadUncommon)) 	// Uncommon Read function
 			{
 				u32 iEnd = 4;
-				while(*(u32*)(addr_start + iEnd) != 0x4E800020) iEnd += 4;	// branch relative from the end
+				while(*(vu32*)(addr_start + iEnd) != 0x4E800020) iEnd += 4;	// branch relative from the end
 				u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + iEnd)-(u32)(addr));
 				print_gecko("Found:[Read] @ %08X\r\n", properAddress-iEnd);
-				*(u32*)(addr_start + iEnd) = branch(READ_TRIGGER_INTERRUPT, properAddress);
+				*(vu32*)(addr_start + iEnd) = branch(READ_TRIGGER_INTERRUPT, properAddress);
 				patched |= 0x10;
 			}
 		}
 		// __DVDInterruptHandler
-		else if( ((*(u32*)(addr_start + 0 )) & 0xFFFF) == _dvdinterrupthandler_part[0]
-			&& ((*(u32*)(addr_start + 4 )) & 0xFFFF) == _dvdinterrupthandler_part[1]
-			&& ((*(u32*)(addr_start + 8 )) & 0xFFFF) == _dvdinterrupthandler_part[2] ) 
+		else if( ((*(vu32*)(addr_start + 0 )) & 0xFFFF) == _dvdinterrupthandler_part[0]
+			&& ((*(vu32*)(addr_start + 4 )) & 0xFFFF) == _dvdinterrupthandler_part[1]
+			&& ((*(vu32*)(addr_start + 8 )) & 0xFFFF) == _dvdinterrupthandler_part[2] ) 
 		{
 			u32 iEnd = 12;
-			while(*(u32*)(addr_start + iEnd) != 0x4E800020) iEnd += 4;	// branch relative from the end
+			while(*(vu32*)(addr_start + iEnd) != 0x4E800020) iEnd += 4;	// branch relative from the end
 			u32 properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start+iEnd)-(u32)(addr));
 			print_gecko("Found:[__DVDInterruptHandler] end @ %08X\r\n", properAddress );
-			*(u32*)(addr_start+iEnd) = branch(STOP_DI_IRQ, properAddress);
+			*(vu32*)(addr_start+iEnd) = branch(STOP_DI_IRQ, properAddress);
 			patched |= 0x1;
 		}
 		addr_start += 4;
@@ -892,7 +891,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 	
 	for( i=0; i < length; i+=4 )
 	{
-		if( *(u32*)(data+i) != 0x7C0802A6 && *(u32*)(data+i+4) != 0x7C0802A6 )
+		if( *(vu32*)(data+i) != 0x7C0802A6 && *(vu32*)(data+i+4) != 0x7C0802A6 )
 			continue;
 		
 		FuncPattern fp;
@@ -916,11 +915,11 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 7)) {
 						switch(j) {
 							case 0:
-							case 1: *(u32*)(data+i+228) = 0x38000001; break;
+							case 1: *(vu32*)(data+i+228) = 0x38000001; break;
 							case 2:
-							case 3: *(u32*)(data+i+240) = 0x38000001; break;
-							case 4: *(u32*)(data+i+260) = 0x38000001; break;
-							case 5: *(u32*)(data+i+308) = 0x38000001; break;
+							case 3: *(vu32*)(data+i+240) = 0x38000001; break;
+							case 4: *(vu32*)(data+i+260) = 0x38000001; break;
+							case 5: *(vu32*)(data+i+308) = 0x38000001; break;
 						}
 					}
 					__VIRetraceHandlerSigs[j].offsetFoundAt = i;
@@ -942,10 +941,10 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							u32 getCurrentFieldEvenOddAddr = Calc_ProperAddress(data, dataType, getCurrentFieldEvenOddSigs[k].offsetFoundAt);
 							if(getCurrentFieldEvenOddAddr) {
 								print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOddAddr);
-								*(u32*)(data+i+24) = *(u32*)(data+i+28);
-								*(u32*)(data+i+28) = 0x4800000C;	// b		+12
-								*(u32*)(data+i+40) = branchAndLink(getCurrentFieldEvenOddAddr, VIWaitForRetraceAddr + 40);
-								*(u32*)(data+i+44) = 0x28030000;	// cmplwi	r3, 0
+								*(vu32*)(data+i+24) = *(vu32*)(data+i+28);
+								*(vu32*)(data+i+28) = 0x4800000C;	// b		+12
+								*(vu32*)(data+i+40) = branchAndLink(getCurrentFieldEvenOddAddr, VIWaitForRetraceAddr + 40);
+								*(vu32*)(data+i+44) = 0x28030000;	// cmplwi	r3, 0
 								break;
 							}
 						}
@@ -1013,138 +1012,138 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					}
 					switch(j) {
 						case 0:
-							*(u32*)(data+i+ 28) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 28);
-							*(u32*)(data+i+140) = 0x60000000;	// nop
-							*(u32*)(data+i+260) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							*(u32*)(data+i+280) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							*(u32*)(data+i+284) = 0x60000000;	// nop
-							*(u32*)(data+i+292) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+ 28) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 28);
+							*(vu32*)(data+i+140) = 0x60000000;	// nop
+							*(vu32*)(data+i+260) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+280) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+284) = 0x60000000;	// nop
+							*(vu32*)(data+i+292) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1636);
 							break;
 						case 1:
-							*(u32*)(data+i+ 28) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 28);
-							*(u32*)(data+i+108) = 0x60000000;	// nop
-							*(u32*)(data+i+228) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							*(u32*)(data+i+248) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							*(u32*)(data+i+252) = 0x60000000;	// nop
-							*(u32*)(data+i+260) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+ 28) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 28);
+							*(vu32*)(data+i+108) = 0x60000000;	// nop
+							*(vu32*)(data+i+228) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+248) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+252) = 0x60000000;	// nop
+							*(vu32*)(data+i+260) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1604);
 							break;
 						case 2:
-							*(u32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
-							*(u32*)(data+i+248) = 0x60000000;	// nop
-							*(u32*)(data+i+368) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							*(u32*)(data+i+388) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							*(u32*)(data+i+392) = 0x60000000;	// nop
-							*(u32*)(data+i+400) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
+							*(vu32*)(data+i+248) = 0x60000000;	// nop
+							*(vu32*)(data+i+368) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+388) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+392) = 0x60000000;	// nop
+							*(vu32*)(data+i+400) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1780);
 							break;
 						case 3:
-							*(u32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
-							*(u32*)(data+i+260) = 0x60000000;	// nop
-							*(u32*)(data+i+380) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							*(u32*)(data+i+396) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							*(u32*)(data+i+416) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							*(u32*)(data+i+420) = 0x60000000;	// nop
-							*(u32*)(data+i+428) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
+							*(vu32*)(data+i+260) = 0x60000000;	// nop
+							*(vu32*)(data+i+380) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+396) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+416) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+420) = 0x60000000;	// nop
+							*(vu32*)(data+i+428) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1872);
 							break;
 						case 4:
-							*(u32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
-							*(u32*)(data+i+388) = 0x60000000;	// nop
-							*(u32*)(data+i+508) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							*(u32*)(data+i+524) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							*(u32*)(data+i+544) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							*(u32*)(data+i+548) = 0x60000000;	// nop
-							*(u32*)(data+i+556) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
+							*(vu32*)(data+i+388) = 0x60000000;	// nop
+							*(vu32*)(data+i+508) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+524) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+544) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+548) = 0x60000000;	// nop
+							*(vu32*)(data+i+556) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 2012);
 							break;
 						case 5:
-							*(u32*)(data+i+ 32) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 32);
-							*(u32*)(data+i+400) = 0xA11B000C;	// lhz		r8, 12 (r27)
-							*(u32*)(data+i+404) = 0x60000000;	// nop
-							*(u32*)(data+i+492) = 0xA0FB0010;	// lhz		r7, 16 (r27)
-							*(u32*)(data+i+508) = 0xA0FB0010;	// lhz		r7, 16 (r27)
-							*(u32*)(data+i+524) = 0xA0FB0010;	// lhz		r7, 16 (r27)
-							*(u32*)(data+i+532) = 0xA0FB0010;	// lhz		r7, 16 (r27)
+							*(vu32*)(data+i+ 32) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 32);
+							*(vu32*)(data+i+400) = 0xA11B000C;	// lhz		r8, 12 (r27)
+							*(vu32*)(data+i+404) = 0x60000000;	// nop
+							*(vu32*)(data+i+492) = 0xA0FB0010;	// lhz		r7, 16 (r27)
+							*(vu32*)(data+i+508) = 0xA0FB0010;	// lhz		r7, 16 (r27)
+							*(vu32*)(data+i+524) = 0xA0FB0010;	// lhz		r7, 16 (r27)
+							*(vu32*)(data+i+532) = 0xA0FB0010;	// lhz		r7, 16 (r27)
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2148);
 							break;
 						case 6:
-							*(u32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
-							*(u32*)(data+i+388) = 0x60000000;	// nop
-							*(u32*)(data+i+508) = 0xA0130010;	// lhz		r0, 16 (r19)
-							*(u32*)(data+i+524) = 0xA0130010;	// lhz		r0, 16 (r19)
-							*(u32*)(data+i+544) = 0xA0130010;	// lhz		r0, 16 (r19)
-							*(u32*)(data+i+548) = 0x60000000;	// nop
-							*(u32*)(data+i+556) = 0xA0130010;	// lhz		r0, 16 (r19)
+							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
+							*(vu32*)(data+i+388) = 0x60000000;	// nop
+							*(vu32*)(data+i+508) = 0xA0130010;	// lhz		r0, 16 (r19)
+							*(vu32*)(data+i+524) = 0xA0130010;	// lhz		r0, 16 (r19)
+							*(vu32*)(data+i+544) = 0xA0130010;	// lhz		r0, 16 (r19)
+							*(vu32*)(data+i+548) = 0x60000000;	// nop
+							*(vu32*)(data+i+556) = 0xA0130010;	// lhz		r0, 16 (r19)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1980);
 							break;
 					}
 					if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
 						switch(j) {
 							case 0:
-								*(u32*)(data+i+ 820) = 0x54A607B8;	// rlwinm	r6, r5, 0, 30, 28
-								*(u32*)(data+i+ 824) = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
+								*(vu32*)(data+i+ 820) = 0x54A607B8;	// rlwinm	r6, r5, 0, 30, 28
+								*(vu32*)(data+i+ 824) = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
 								break;
 							case 1:
-								*(u32*)(data+i+ 788) = 0x54A607B8;	// rlwinm	r6, r5, 0, 30, 28
-								*(u32*)(data+i+ 792) = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
+								*(vu32*)(data+i+ 788) = 0x54A607B8;	// rlwinm	r6, r5, 0, 30, 28
+								*(vu32*)(data+i+ 792) = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
 								break;
 							case 2:
-								*(u32*)(data+i+ 928) = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
-								*(u32*)(data+i+ 932) = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
+								*(vu32*)(data+i+ 928) = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
+								*(vu32*)(data+i+ 932) = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
 								break;
 							case 3:
-								*(u32*)(data+i+1012) = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
-								*(u32*)(data+i+1016) = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
+								*(vu32*)(data+i+1012) = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
+								*(vu32*)(data+i+1016) = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
 								break;
 							case 4:
-								*(u32*)(data+i+1140) = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
-								*(u32*)(data+i+1144) = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
+								*(vu32*)(data+i+1140) = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
+								*(vu32*)(data+i+1144) = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
 								break;
 							case 5:
-								*(u32*)(data+i+1236) = 0x7D004378;	// mr		r0, r8
-								*(u32*)(data+i+1240) = 0x5160177A;	// rlwimi	r0, r11, 2, 29, 29
+								*(vu32*)(data+i+1236) = 0x7D004378;	// mr		r0, r8
+								*(vu32*)(data+i+1240) = 0x5160177A;	// rlwimi	r0, r11, 2, 29, 29
 								break;
 							case 6:
-								*(u32*)(data+i+1152) = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
-								*(u32*)(data+i+1156) = 0x54E9003C;	// rlwinm	r9, r7, 0, 0, 30
-								*(u32*)(data+i+1160) = 0x61290001;	// ori		r9, r9, 1
+								*(vu32*)(data+i+1152) = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
+								*(vu32*)(data+i+1156) = 0x54E9003C;	// rlwinm	r9, r7, 0, 0, 30
+								*(vu32*)(data+i+1160) = 0x61290001;	// ori		r9, r9, 1
 								break;
 						}
 					}
 					if((swissSettings.gameVMode == 9) || (swissSettings.gameVMode == 10)) {
 						switch(j) {
 							case 0:
-								*(u32*)(data+i+  40) = 0x2C040006;	// cmpwi	r4, 6
-								*(u32*)(data+i+ 304) = 0x807B0000;	// lwz		r3, 0 (r27)
-								*(u32*)(data+i+ 896) = 0x2C000006;	// cmpwi	r0, 6
+								*(vu32*)(data+i+  40) = 0x2C040006;	// cmpwi	r4, 6
+								*(vu32*)(data+i+ 304) = 0x807B0000;	// lwz		r3, 0 (r27)
+								*(vu32*)(data+i+ 896) = 0x2C000006;	// cmpwi	r0, 6
 								break;
 							case 1:
-								*(u32*)(data+i+ 272) = 0x807C0000;	// lwz		r3, 0 (r28)
-								*(u32*)(data+i+ 864) = 0x2C000006;	// cmpwi	r0, 6
+								*(vu32*)(data+i+ 272) = 0x807C0000;	// lwz		r3, 0 (r28)
+								*(vu32*)(data+i+ 864) = 0x2C000006;	// cmpwi	r0, 6
 								break;
 							case 2:
-								*(u32*)(data+i+ 412) = 0x807C0000;	// lwz		r3, 0 (r28)
-								*(u32*)(data+i+1040) = 0x2C000006;	// cmpwi	r0, 6
+								*(vu32*)(data+i+ 412) = 0x807C0000;	// lwz		r3, 0 (r28)
+								*(vu32*)(data+i+1040) = 0x2C000006;	// cmpwi	r0, 6
 								break;
 							case 3:
-								*(u32*)(data+i+ 476) = 0x38600000;	// li		r3, 0
-								*(u32*)(data+i+1128) = 0x2C000006;	// cmpwi	r0, 6
-								*(u32*)(data+i+1136) = 0x2C000007;	// cmpwi	r0, 7
+								*(vu32*)(data+i+ 476) = 0x38600000;	// li		r3, 0
+								*(vu32*)(data+i+1128) = 0x2C000006;	// cmpwi	r0, 6
+								*(vu32*)(data+i+1136) = 0x2C000007;	// cmpwi	r0, 7
 								break;
 							case 4: 
-								*(u32*)(data+i+ 604) = 0x38600000;	// li		r3, 0
-								*(u32*)(data+i+1260) = 0x2C000006;	// cmpwi	r0, 6
-								*(u32*)(data+i+1268) = 0x2C000007;	// cmpwi	r0, 7
+								*(vu32*)(data+i+ 604) = 0x38600000;	// li		r3, 0
+								*(vu32*)(data+i+1260) = 0x2C000006;	// cmpwi	r0, 6
+								*(vu32*)(data+i+1268) = 0x2C000007;	// cmpwi	r0, 7
 								break;
 							case 5:
-								*(u32*)(data+i+ 548) = 0x38000000;	// li		r0, 0
-								*(u32*)(data+i+1344) = 0x2C0A0006;	// cmpwi	r10, 6
-								*(u32*)(data+i+1372) = 0x2C0A0007;	// cmpwi	r10, 7
+								*(vu32*)(data+i+ 548) = 0x38000000;	// li		r0, 0
+								*(vu32*)(data+i+1344) = 0x2C0A0006;	// cmpwi	r10, 6
+								*(vu32*)(data+i+1372) = 0x2C0A0007;	// cmpwi	r10, 7
 								break;
 							case 6:
-								*(u32*)(data+i+ 604) = 0x38600000;	// li		r3, 0
+								*(vu32*)(data+i+ 604) = 0x38600000;	// li		r3, 0
 								break;
 						}
 					}
@@ -1161,7 +1160,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 			if(VIConfigurePanAddr) {
 				print_gecko("Found:[%s] @ %08X\n", VIConfigurePanSig.Name, VIConfigurePanAddr);
 				VIConfigurePanPatchAddr = getPatchAddr(VI_CONFIGUREPANHOOK);
-				*(u32*)(data+i+40) = branchAndLink(VIConfigurePanPatchAddr, VIConfigurePanAddr + 40);
+				*(vu32*)(data+i+40) = branchAndLink(VIConfigurePanPatchAddr, VIConfigurePanAddr + 40);
 				VIConfigurePanSig.offsetFoundAt = i;
 				i += VIConfigurePanSig.Length;
 			}
@@ -1201,12 +1200,12 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					}
 					if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
 						switch(j) {
-							case 0: *(u32*)(data+i+3644) = 0x38600001; break;
-							case 1: *(u32*)(data+i+1844) = 0x38600001; break;
-							case 2: *(u32*)(data+i+1904) = 0x38600001; break;
-							case 3: *(u32*)(data+i+1964) = 0x38600001; break;
-							case 4: *(u32*)(data+i+1844) = 0x38600001; break;
-							case 5: *(u32*)(data+i+2080) = 0x38600001; break;
+							case 0: *(vu32*)(data+i+3644) = 0x38600001; break;
+							case 1: *(vu32*)(data+i+1844) = 0x38600001; break;
+							case 2: *(vu32*)(data+i+1904) = 0x38600001; break;
+							case 3: *(vu32*)(data+i+1964) = 0x38600001; break;
+							case 4: *(vu32*)(data+i+1844) = 0x38600001; break;
+							case 5: *(vu32*)(data+i+2080) = 0x38600001; break;
 						}
 					}
 					__GXInitGXSigs[j].offsetFoundAt = i;
@@ -1226,8 +1225,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 						top_addr -= GXGetYScaleFactorHook_length;
 						checkPatchAddr();
 						memcpy((void*)top_addr, GXGetYScaleFactorHook, GXGetYScaleFactorHook_length);
-						*(u32*)(top_addr+16) = branch(GXGetYScaleFactorAddr + 4, top_addr + 16);
-						*(u32*)(data+i) = branch(top_addr, GXGetYScaleFactorAddr);
+						*(vu32*)(top_addr+16) = branch(GXGetYScaleFactorAddr + 4, top_addr + 16);
+						*(vu32*)(data+i) = branch(top_addr, GXGetYScaleFactorAddr);
 					}
 					GXGetYScaleFactorSigs[j].offsetFoundAt = i;
 					i += GXGetYScaleFactorSigs[j].Length;
@@ -1246,31 +1245,31 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					print_gecko("Found:[%s] @ %08X\n", GXSetCopyFilterSigs[j].Name, GXSetCopyFilterAddr);
 					switch(j) {
 						case 0:
-							*(u32*)(data+i+388) = 0x38000000 | vfilter[0];
-							*(u32*)(data+i+392) = 0x38600000 | vfilter[1];
-							*(u32*)(data+i+400) = 0x38000000 | vfilter[4];
-							*(u32*)(data+i+404) = 0x38800000 | vfilter[2];
-							*(u32*)(data+i+416) = 0x38600000 | vfilter[5];
-							*(u32*)(data+i+428) = 0x38A00000 | vfilter[3];
-							*(u32*)(data+i+432) = 0x38000000 | vfilter[6];
+							*(vu32*)(data+i+388) = 0x38000000 | vfilter[0];
+							*(vu32*)(data+i+392) = 0x38600000 | vfilter[1];
+							*(vu32*)(data+i+400) = 0x38000000 | vfilter[4];
+							*(vu32*)(data+i+404) = 0x38800000 | vfilter[2];
+							*(vu32*)(data+i+416) = 0x38600000 | vfilter[5];
+							*(vu32*)(data+i+428) = 0x38A00000 | vfilter[3];
+							*(vu32*)(data+i+432) = 0x38000000 | vfilter[6];
 							break;
 						case 1:
-							*(u32*)(data+i+492) = 0x38000000 | vfilter[0];
-							*(u32*)(data+i+496) = 0x39200000 | vfilter[1];
-							*(u32*)(data+i+504) = 0x39400000 | vfilter[4];
-							*(u32*)(data+i+508) = 0x39600000 | vfilter[2];
-							*(u32*)(data+i+516) = 0x39000000 | vfilter[5];
-							*(u32*)(data+i+536) = 0x39400000 | vfilter[6];
-							*(u32*)(data+i+540) = 0x39200000 | vfilter[3];
+							*(vu32*)(data+i+492) = 0x38000000 | vfilter[0];
+							*(vu32*)(data+i+496) = 0x39200000 | vfilter[1];
+							*(vu32*)(data+i+504) = 0x39400000 | vfilter[4];
+							*(vu32*)(data+i+508) = 0x39600000 | vfilter[2];
+							*(vu32*)(data+i+516) = 0x39000000 | vfilter[5];
+							*(vu32*)(data+i+536) = 0x39400000 | vfilter[6];
+							*(vu32*)(data+i+540) = 0x39200000 | vfilter[3];
 							break;
 						case 2:
-							*(u32*)(data+i+372) = 0x38800000 | vfilter[0];
-							*(u32*)(data+i+376) = 0x38600000 | vfilter[4];
-							*(u32*)(data+i+384) = 0x38800000 | vfilter[1];
-							*(u32*)(data+i+392) = 0x38E00000 | vfilter[2];
-							*(u32*)(data+i+400) = 0x38800000 | vfilter[5];
-							*(u32*)(data+i+404) = 0x38A00000 | vfilter[3];
-							*(u32*)(data+i+412) = 0x38600000 | vfilter[6];
+							*(vu32*)(data+i+372) = 0x38800000 | vfilter[0];
+							*(vu32*)(data+i+376) = 0x38600000 | vfilter[4];
+							*(vu32*)(data+i+384) = 0x38800000 | vfilter[1];
+							*(vu32*)(data+i+392) = 0x38E00000 | vfilter[2];
+							*(vu32*)(data+i+400) = 0x38800000 | vfilter[5];
+							*(vu32*)(data+i+404) = 0x38A00000 | vfilter[3];
+							*(vu32*)(data+i+412) = 0x38600000 | vfilter[6];
 							break;
 					}
 					break;
@@ -1288,16 +1287,16 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					print_gecko("Found:[%s] @ %08X\n", setFbbRegsSigs[j].Name, setFbbRegsAddr);
 					switch (j) {
 						case 0:
-							*(u32*)(data+i+ 80) = 0x81040000;	// lwz		r8, 0 (r4)
-							*(u32*)(data+i+ 84) = 0x60000000;	// nop
-							*(u32*)(data+i+232) = 0x81060000;	// lwz		r8, 0 (r6)
-							*(u32*)(data+i+236) = 0x60000000;	// nop
+							*(vu32*)(data+i+ 80) = 0x81040000;	// lwz		r8, 0 (r4)
+							*(vu32*)(data+i+ 84) = 0x60000000;	// nop
+							*(vu32*)(data+i+232) = 0x81060000;	// lwz		r8, 0 (r6)
+							*(vu32*)(data+i+236) = 0x60000000;	// nop
 							break;
 						case 1:
-							*(u32*)(data+i+ 72) = 0x81240000;	// lwz		r9, 0 (r4)
-							*(u32*)(data+i+ 76) = 0x60000000;	// nop
-							*(u32*)(data+i+224) = 0x81260000;	// lwz		r9, 0 (r6)
-							*(u32*)(data+i+228) = 0x60000000;	// nop
+							*(vu32*)(data+i+ 72) = 0x81240000;	// lwz		r9, 0 (r4)
+							*(vu32*)(data+i+ 76) = 0x60000000;	// nop
+							*(vu32*)(data+i+224) = 0x81260000;	// lwz		r9, 0 (r6)
+							*(vu32*)(data+i+228) = 0x60000000;	// nop
 							break;
 					}
 					break;
@@ -1332,22 +1331,22 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					switch(j) {
 						case 0:
 							memmove(data+i+36, data+i+52, 104);
-							*(u32*)(data+i+140) = 0x3C600000 | (VAR_AREA >> 16);
-							*(u32*)(data+i+144) = 0x88030000 | (VAR_CURRENT_FIELD & 0xFFFF);
-							*(u32*)(data+i+148) = 0x28000000;	// cmplwi	r0, 0
-							*(u32*)(data+i+152) = 0x41820008;	// beq		+8
-							*(u32*)(data+i+156) = 0xEF5A582A;	// fadds	f26, f26, f11
+							*(vu32*)(data+i+140) = 0x3C600000 | (VAR_AREA >> 16);
+							*(vu32*)(data+i+144) = 0x88030000 | (VAR_CURRENT_FIELD & 0xFFFF);
+							*(vu32*)(data+i+148) = 0x28000000;	// cmplwi	r0, 0
+							*(vu32*)(data+i+152) = 0x41820008;	// beq		+8
+							*(vu32*)(data+i+156) = 0xEF5A582A;	// fadds	f26, f26, f11
 							memmove(data+i+160, data+i+184, 100);
 							memset(data+i+260, 0, 24);
 							break;
 						case 1:
 							memmove(data+i+ 4, data+i+ 8, 32);
 							memmove(data+i+36, data+i+52, 84);
-							*(u32*)(data+i+120) = 0x3C600000 | (VAR_AREA >> 16);
-							*(u32*)(data+i+124) = 0x88030000 | (VAR_CURRENT_FIELD & 0xFFFF);
-							*(u32*)(data+i+128) = 0x28000000;	// cmplwi	r0, 0
-							*(u32*)(data+i+132) = 0x41820008;	// beq		+8
-							*(u32*)(data+i+136) = 0xEF5A582A;	// fadds	f26, f26, f11
+							*(vu32*)(data+i+120) = 0x3C600000 | (VAR_AREA >> 16);
+							*(vu32*)(data+i+124) = 0x88030000 | (VAR_CURRENT_FIELD & 0xFFFF);
+							*(vu32*)(data+i+128) = 0x28000000;	// cmplwi	r0, 0
+							*(vu32*)(data+i+132) = 0x41820008;	// beq		+8
+							*(vu32*)(data+i+136) = 0xEF5A582A;	// fadds	f26, f26, f11
 							memmove(data+i+140, data+i+160, 100);
 							memset(data+i+240, 0, 20);
 							break;
@@ -1373,8 +1372,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 								top_addr -= setFbbRegsHook_length;
 								checkPatchAddr();
 								memcpy((void*)top_addr, setFbbRegsHook, setFbbRegsHook_length);
-								*(u32*)(top_addr+12) = branchAndLink(getCurrentFieldEvenOddAddr, top_addr + 12);
-								*(u32*)(data+i+setFbbRegsSigs[j].Length) = branch(top_addr, setFbbRegsAddr + setFbbRegsSigs[j].Length);
+								*(vu32*)(top_addr+12) = branchAndLink(getCurrentFieldEvenOddAddr, top_addr + 12);
+								*(vu32*)(data+i+setFbbRegsSigs[j].Length) = branch(top_addr, setFbbRegsAddr + setFbbRegsSigs[j].Length);
 								break;
 							}
 						}
@@ -1411,7 +1410,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 	
 	for( i=0; i < length; i+=4 )
 	{
-		if( *(u32*)(data+i) != 0xED241828 )
+		if( *(vu32*)(data+i) != 0xED241828 )
 			continue;
 		if( find_pattern( (u8*)(data+i), length, &MTXFrustumSig ) )
 		{
@@ -1421,9 +1420,9 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 				top_addr -= MTXFrustumHook_length;
 				checkPatchAddr();
 				memcpy((void*)top_addr, MTXFrustumHook, MTXFrustumHook_length);
-				*(u32*)(top_addr+28) = branch(properAddress+4, top_addr+28);
-				*(u32*)(data+i) = branch(top_addr, properAddress);
-				*(u32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
+				*(vu32*)(top_addr+28) = branch(properAddress+4, top_addr+28);
+				*(vu32*)(data+i) = branch(top_addr, properAddress);
+				*(vu32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
 				MTXFrustumSig.offsetFoundAt = (u32)data+i;
 				break;
 			}
@@ -1431,7 +1430,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 	}
 	for( i=0; i < length; i+=4 )
 	{
-		if( *(u32*)(data+i+8) != 0xED441828 )
+		if( *(vu32*)(data+i+8) != 0xED441828 )
 			continue;
 		if( find_pattern( (u8*)(data+i), length, &MTXLightFrustumSig ) )
 		{
@@ -1441,16 +1440,16 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 				top_addr -= MTXLightFrustumHook_length;
 				checkPatchAddr();
 				memcpy((void*)top_addr, MTXLightFrustumHook, MTXLightFrustumHook_length);
-				*(u32*)(top_addr+28) = branch(properAddress+12, top_addr+28);
-				*(u32*)(data+i+8) = branch(top_addr, properAddress+8);
-				*(u32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
+				*(vu32*)(top_addr+28) = branch(properAddress+12, top_addr+28);
+				*(vu32*)(data+i+8) = branch(top_addr, properAddress+8);
+				*(vu32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
 				break;
 			}
 		}
 	}
 	for( i=0; i < length; i+=4 )
 	{
-		if( *(u32*)(data+i) != 0x7C0802A6 )
+		if( *(vu32*)(data+i) != 0x7C0802A6 )
 			continue;
 		if( find_pattern( (u8*)(data+i), length, &MTXPerspectiveSig ) )
 		{
@@ -1460,9 +1459,9 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 				top_addr -= MTXPerspectiveHook_length;
 				checkPatchAddr();
 				memcpy((void*)top_addr, MTXPerspectiveHook, MTXPerspectiveHook_length);
-				*(u32*)(top_addr+20) = branch(properAddress+84, top_addr+20);
-				*(u32*)(data+i+80) = branch(top_addr, properAddress+80);
-				*(u32*)VAR_FLOAT9_16 = 0x3F100000;
+				*(vu32*)(top_addr+20) = branch(properAddress+84, top_addr+20);
+				*(vu32*)(data+i+80) = branch(top_addr, properAddress+80);
+				*(vu32*)VAR_FLOAT9_16 = 0x3F100000;
 				MTXPerspectiveSig.offsetFoundAt = (u32)data+i;
 				break;
 			}
@@ -1470,7 +1469,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 	}
 	for( i=0; i < length; i+=4 )
 	{
-		if( *(u32*)(data+i) != 0x7C0802A6 )
+		if( *(vu32*)(data+i) != 0x7C0802A6 )
 			continue;
 		if( find_pattern( (u8*)(data+i), length, &MTXLightPerspectiveSig ) )
 		{
@@ -1480,9 +1479,9 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 				top_addr -= MTXLightPerspectiveHook_length;
 				checkPatchAddr();
 				memcpy((void*)top_addr, MTXLightPerspectiveHook, MTXLightPerspectiveHook_length);
-				*(u32*)(top_addr+20) = branch(properAddress+100, top_addr+20);
-				*(u32*)(data+i+96) = branch(top_addr, properAddress+96);
-				*(u32*)VAR_FLOAT9_16 = 0x3F100000;
+				*(vu32*)(top_addr+20) = branch(properAddress+100, top_addr+20);
+				*(vu32*)(data+i+96) = branch(top_addr, properAddress+96);
+				*(vu32*)VAR_FLOAT9_16 = 0x3F100000;
 				break;
 			}
 		}
@@ -1490,7 +1489,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 	if(swissSettings.forceWidescreen == 2) {
 		for( i=0; i < length; i+=4 )
 		{
-			if( *(u32*)(data+i) != 0xED041828 )
+			if( *(vu32*)(data+i) != 0xED041828 )
 				continue;
 			if( find_pattern( (u8*)(data+i), length, &MTXOrthoSig ) )
 			{
@@ -1500,17 +1499,17 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 					top_addr -= MTXOrthoHook_length;
 					checkPatchAddr();
 					memcpy((void*)top_addr, MTXOrthoHook, MTXOrthoHook_length);
-					*(u32*)(top_addr+128) = branch(properAddress+4, top_addr+128);
-					*(u32*)(data+i) = branch(top_addr, properAddress);
-					*(u32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
-					*(u32*)VAR_FLOATM_1 = 0xBF800000;
+					*(vu32*)(top_addr+128) = branch(properAddress+4, top_addr+128);
+					*(vu32*)(data+i) = branch(top_addr, properAddress);
+					*(vu32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
+					*(vu32*)VAR_FLOATM_1 = 0xBF800000;
 					break;
 				}
 			}
 		}
 		for( i=0; i < length; i+=4 )
 		{
-			if( (*(u32*)(data+i+4) & 0xFC00FFFF) != 0x38000156 )
+			if( (*(vu32*)(data+i+4) & 0xFC00FFFF) != 0x38000156 )
 				continue;
 			
 			FuncPattern fp;
@@ -1525,10 +1524,10 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 						top_addr -= GXSetScissorHook_length;
 						checkPatchAddr();
 						memcpy((void*)top_addr, GXSetScissorHook, GXSetScissorHook_length);
-						*(u32*)(top_addr+ 0) = *(u32*)(data+i);
-						*(u32*)(top_addr+ 4) = j == 1 ? 0x800801E8:0x800701E8;
-						*(u32*)(top_addr+64) = branch(properAddress+4, top_addr+64);
-						*(u32*)(data+i) = branch(top_addr, properAddress);
+						*(vu32*)(top_addr+ 0) = *(vu32*)(data+i);
+						*(vu32*)(top_addr+ 4) = j == 1 ? 0x800801E8:0x800701E8;
+						*(vu32*)(top_addr+64) = branch(properAddress+4, top_addr+64);
+						*(vu32*)(data+i) = branch(top_addr, properAddress);
 						break;
 					}
 				}
@@ -1538,7 +1537,7 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 	if( !MTXFrustumSig.offsetFoundAt && !MTXPerspectiveSig.offsetFoundAt ) {
 		for( i=0; i < length; i+=4 )
 		{
-			if( *(u32*)(data+i+4) != 0x2C040001 )
+			if( *(vu32*)(data+i+4) != 0x2C040001 )
 				continue;
 			
 			FuncPattern fp;
@@ -1554,9 +1553,9 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 						top_addr -= GXSetProjectionHook_length;
 						checkPatchAddr();
 						memcpy((void*)top_addr, GXSetProjectionHook, GXSetProjectionHook_length);
-						*(u32*)(top_addr+20) = branch(properAddress+16, top_addr+20);
-						*(u32*)(data+i+12) = branch(top_addr, properAddress+12);
-						*(u32*)VAR_FLOAT3_4 = 0x3F400000;
+						*(vu32*)(top_addr+20) = branch(properAddress+16, top_addr+20);
+						*(vu32*)(data+i+12) = branch(top_addr, properAddress+12);
+						*(vu32*)VAR_FLOAT3_4 = 0x3F400000;
 						break;
 					}
 				}
@@ -1576,7 +1575,7 @@ int Patch_TexFilt(u8 *data, u32 length, int dataType)
 	
 	for( i=0; i < length; i+=4 )
 	{
-		if( *(u32*)(data+i+8) != 0xFC030040 && *(u32*)(data+i+16) != 0xFC030000 )
+		if( *(vu32*)(data+i+8) != 0xFC030040 && *(vu32*)(data+i+16) != 0xFC030000 )
 			continue;
 		
 		FuncPattern fp;
@@ -1592,9 +1591,9 @@ int Patch_TexFilt(u8 *data, u32 length, int dataType)
 					top_addr -= GXInitTexObjLODHook_length;
 					checkPatchAddr();
 					memcpy((void*)top_addr, GXInitTexObjLODHook, GXInitTexObjLODHook_length);
-					*(u32*)(top_addr+24) = *(u32*)(data+i);
-					*(u32*)(top_addr+28) = branch(properAddress+4, top_addr+28);
-					*(u32*)(data+i) = branch(top_addr, properAddress);
+					*(vu32*)(top_addr+24) = *(vu32*)(data+i);
+					*(vu32*)(top_addr+28) = branch(properAddress+4, top_addr+28);
+					*(vu32*)(data+i) = branch(top_addr, properAddress);
 					return 1;
 				}
 			}
@@ -1623,11 +1622,11 @@ int Patch_FontEnc(void *addr, u32 length)
 		{
 			switch(swissSettings.forceEncoding) {
 				case 1:
-					*(u32*)(addr_start+40) = 0x38000000;
+					*(vu32*)(addr_start+40) = 0x38000000;
 					break;
 				case 2:
-					*(u32*)(addr_start+48) = 0x38000001;
-					*(u32*)(addr_start+60) = 0x38000001;
+					*(vu32*)(addr_start+48) = 0x38000001;
+					*(vu32*)(addr_start+60) = 0x38000001;
 					break;
 			}
 			patched++;
@@ -1847,90 +1846,90 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 	{
 		print_gecko("Patched:[Pokemon memset]\r\n");
 		// patch memset to jump to test function
-		*(u32*)(addr+0x2420) = 0x4BFFAC68;
+		*(vu32*)(addr+0x2420) = 0x4BFFAC68;
 		patched=1;
 	}
 	else if(!strncmp(gameID, "PZL", 3))
 	{
-		if(*(u32*)(addr+0xDE6D8) == 0x2F6D616A) // PAL
+		if(*(vu32*)(addr+0xDE6D8) == 0x2F6D616A) // PAL
 		{
 			print_gecko("Patched:[Majoras Mask (Zelda CE) PAL]\r\n");
 			//save up regs
 			u32 patchAddr = getPatchAddr(MAJORA_SAVEREGS);
-			*(u32*)(addr+0x1A6B4) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A6B4));
-			*(u32*)(patchAddr+MajoraSaveRegs_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A6B8), patchAddr+MajoraSaveRegs_length-4);
+			*(vu32*)(addr+0x1A6B4) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A6B4));
+			*(vu32*)(patchAddr+MajoraSaveRegs_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A6B8), patchAddr+MajoraSaveRegs_length-4);
 			//frees r28 and secures r10 for us
-			*(u32*)(addr+0x1A76C) = 0x60000000;
-			*(u32*)(addr+0x1A770) = 0x839D0000;
-			*(u32*)(addr+0x1A774) = 0x7D3C4AAE;
+			*(vu32*)(addr+0x1A76C) = 0x60000000;
+			*(vu32*)(addr+0x1A770) = 0x839D0000;
+			*(vu32*)(addr+0x1A774) = 0x7D3C4AAE;
 			//do audio streaming injection
 			patchAddr = getPatchAddr(MAJORA_AUDIOSTREAM);
-			*(u32*)(addr+0x1A784) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A784));
-			*(u32*)(patchAddr+MajoraAudioStream_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A788), patchAddr+MajoraAudioStream_length-4);
+			*(vu32*)(addr+0x1A784) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A784));
+			*(vu32*)(patchAddr+MajoraAudioStream_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A788), patchAddr+MajoraAudioStream_length-4);
 			//load up regs (and jump back)
 			patchAddr = getPatchAddr(MAJORA_LOADREGS);
-			*(u32*)(addr+0x1A878) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A878));
+			*(vu32*)(addr+0x1A878) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A878));
 			patched=1;
 		}
-		else if(*(u32*)(addr+0xEF78C) == 0x2F6D616A) // NTSC-U
+		else if(*(vu32*)(addr+0xEF78C) == 0x2F6D616A) // NTSC-U
 		{
 			print_gecko("Patched:[Majoras Mask (Zelda CE) NTSC-U]\r\n");
 			//save up regs
 			u32 patchAddr = getPatchAddr(MAJORA_SAVEREGS);
-			*(u32*)(addr+0x19DD4) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x19DD4));
-			*(u32*)(patchAddr+MajoraSaveRegs_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x19DD8), patchAddr+MajoraSaveRegs_length-4);
+			*(vu32*)(addr+0x19DD4) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x19DD4));
+			*(vu32*)(patchAddr+MajoraSaveRegs_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x19DD8), patchAddr+MajoraSaveRegs_length-4);
 			//frees r28 and secures r10 for us
-			*(u32*)(addr+0x19E8C) = 0x60000000;
-			*(u32*)(addr+0x19E90) = 0x839D0000;
-			*(u32*)(addr+0x19E94) = 0x7D3C4AAE;
+			*(vu32*)(addr+0x19E8C) = 0x60000000;
+			*(vu32*)(addr+0x19E90) = 0x839D0000;
+			*(vu32*)(addr+0x19E94) = 0x7D3C4AAE;
 			//do audio streaming injection
 			patchAddr = getPatchAddr(MAJORA_AUDIOSTREAM);
-			*(u32*)(addr+0x19EA4) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x19EA4));
-			*(u32*)(patchAddr+MajoraAudioStream_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x19EA8), patchAddr+MajoraAudioStream_length-4);
+			*(vu32*)(addr+0x19EA4) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x19EA4));
+			*(vu32*)(patchAddr+MajoraAudioStream_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x19EA8), patchAddr+MajoraAudioStream_length-4);
 			//load up regs (and jump back)
 			patchAddr = getPatchAddr(MAJORA_LOADREGS);
-			*(u32*)(addr+0x19F98) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x19F98));
+			*(vu32*)(addr+0x19F98) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x19F98));
 			patched=1;
 		}
-		else if(*(u32*)(addr+0xF324C) == 0x2F6D616A) // NTSC-J
+		else if(*(vu32*)(addr+0xF324C) == 0x2F6D616A) // NTSC-J
 		{
 			print_gecko("Patched:[Majoras Mask (Zelda CE) NTSC-J]\r\n");
 			//save up regs
 			u32 patchAddr = getPatchAddr(MAJORA_SAVEREGS);
-			*(u32*)(addr+0x1A448) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A448));
-			*(u32*)(patchAddr+MajoraSaveRegs_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A44C), patchAddr+MajoraSaveRegs_length-4);
+			*(vu32*)(addr+0x1A448) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A448));
+			*(vu32*)(patchAddr+MajoraSaveRegs_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A44C), patchAddr+MajoraSaveRegs_length-4);
 			//frees r28 and secures r10 for us
-			*(u32*)(addr+0x1A500) = 0x60000000;
-			*(u32*)(addr+0x1A504) = 0x839D0000;
-			*(u32*)(addr+0x1A508) = 0x7D3C4AAE;
+			*(vu32*)(addr+0x1A500) = 0x60000000;
+			*(vu32*)(addr+0x1A504) = 0x839D0000;
+			*(vu32*)(addr+0x1A508) = 0x7D3C4AAE;
 			//do audio streaming injection
 			patchAddr = getPatchAddr(MAJORA_AUDIOSTREAM);
-			*(u32*)(addr+0x1A518) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A518));
-			*(u32*)(patchAddr+MajoraAudioStream_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A51C), patchAddr+MajoraAudioStream_length-4);
+			*(vu32*)(addr+0x1A518) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A518));
+			*(vu32*)(patchAddr+MajoraAudioStream_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A51C), patchAddr+MajoraAudioStream_length-4);
 			//load up regs (and jump back)
 			patchAddr = getPatchAddr(MAJORA_LOADREGS);
-			*(u32*)(addr+0x1A60C) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A60C));
+			*(vu32*)(addr+0x1A60C) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A60C));
 			patched=1;
 		}
 	}
 	else if(!strncmp(gameID, "GPQ", 3))
 	{
 		// Audio Stream force DMA to get Video Sound
-		if(*(u32*)(addr+0xF03D8) == 0x4E800020 && *(u32*)(addr+0xF0494) == 0x4E800020)
+		if(*(vu32*)(addr+0xF03D8) == 0x4E800020 && *(vu32*)(addr+0xF0494) == 0x4E800020)
 		{
 			//Call AXInit after DVDPrepareStreamAbsAsync
-			*(u32*)(addr+0xF03D8) = branch(Calc_ProperAddress(addr, dataType, 0xF6E80), Calc_ProperAddress(addr, dataType, 0xF03D8));
+			*(vu32*)(addr+0xF03D8) = branch(Calc_ProperAddress(addr, dataType, 0xF6E80), Calc_ProperAddress(addr, dataType, 0xF03D8));
 			//Call AXQuit after DVDCancelStreamAsync
-			*(u32*)(addr+0xF0494) = branch(Calc_ProperAddress(addr, dataType, 0xF6EB4), Calc_ProperAddress(addr, dataType, 0xF0494));
+			*(vu32*)(addr+0xF0494) = branch(Calc_ProperAddress(addr, dataType, 0xF6EB4), Calc_ProperAddress(addr, dataType, 0xF0494));
 			print_gecko("Patched:[Powerpuff Girls NTSC-U]\r\n");
 			patched=1;
 		}
-		else if(*(u32*)(addr+0xF0EC0) == 0x4E800020 && *(u32*)(addr+0xF0F7C) == 0x4E800020)
+		else if(*(vu32*)(addr+0xF0EC0) == 0x4E800020 && *(vu32*)(addr+0xF0F7C) == 0x4E800020)
 		{
 			//Call AXInit after DVDPrepareStreamAbsAsync
-			*(u32*)(addr+0xF0EC0) = branch(Calc_ProperAddress(addr, dataType, 0xF8340), Calc_ProperAddress(addr, dataType, 0xF0EC0));
+			*(vu32*)(addr+0xF0EC0) = branch(Calc_ProperAddress(addr, dataType, 0xF8340), Calc_ProperAddress(addr, dataType, 0xF0EC0));
 			//Call AXQuit after DVDCancelStreamAsync
-			*(u32*)(addr+0xF0F7C) = branch(Calc_ProperAddress(addr, dataType, 0xF83B0), Calc_ProperAddress(addr, dataType, 0xF0F7C));
+			*(vu32*)(addr+0xF0F7C) = branch(Calc_ProperAddress(addr, dataType, 0xF83B0), Calc_ProperAddress(addr, dataType, 0xF0F7C));
 			print_gecko("Patched:[Powerpuff Girls PAL]\r\n");
 			patched=1;
 		}
@@ -1948,18 +1947,18 @@ int Patch_IGR(void *data, u32 length, int dataType) {
 	
 	for( i=0; i < length; i+=4 )
 	{
-		if( *(u32*)(data+i) != 0x80050000 &&  *(u32*)(data+i+4) != 0x540084BE)
+		if( *(vu32*)(data+i) != 0x80050000 &&  *(vu32*)(data+i+4) != 0x540084BE)
 			continue;
 		
 		if(!memcmp((void*)(data+i),SPEC2_MakeStatusA,sizeof(SPEC2_MakeStatusA)))
 		{
 			u32 iEnd = 0;
-			while(*(u32*)(data + i + iEnd) != 0x4E800020) iEnd += 4;	// branch relative from the end
+			while(*(vu32*)(data + i + iEnd) != 0x4E800020) iEnd += 4;	// branch relative from the end
 			u32 properAddress = Calc_ProperAddress(data, dataType, (u32)(data + i + iEnd) -(u32)(data));
 			print_gecko("Found:[SPEC2_MakeStatusA] @ %08X (%08X)\n", properAddress, i + iEnd);
 			u32 igrJump = (devices[DEVICE_CUR] == &__device_wkf) ? IGR_CHECK_WKF : IGR_CHECK;
 			if(devices[DEVICE_CUR] == &__device_dvd) igrJump = IGR_CHECK_DVD;
-			*(u32*)(data+i+iEnd) = branch(igrJump, properAddress);
+			*(vu32*)(data+i+iEnd) = branch(igrJump, properAddress);
 			return 1;
 		}
 	}
@@ -2042,14 +2041,14 @@ int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
 	for( i=0; i < length; i+=4 )
 	{
 		// Find OSSleepThread
-		if(*(u32*)(data+i+0) == 0x3C808000 &&
-			(*(u32*)(data+i+4) == 0x38000004 || *(u32*)(data+i+4) == 0x808400E4) &&
-			(*(u32*)(data+i+8) == 0x38000004 || *(u32*)(data+i+8) == 0x808400E4)) 
+		if(*(vu32*)(data+i+0) == 0x3C808000 &&
+			(*(vu32*)(data+i+4) == 0x38000004 || *(vu32*)(data+i+4) == 0x808400E4) &&
+			(*(vu32*)(data+i+8) == 0x38000004 || *(vu32*)(data+i+8) == 0x808400E4)) 
 		{
 			
 			// Find the end of the function and replace the blr with a relative branch to CHEATS_ENGINE_START
 			int j = 12;
-			while( *(u32*)(data+i+j) != 0x4E800020 )
+			while( *(vu32*)(data+i+j) != 0x4E800020 )
 				j+=4;
 			// As the data we're looking at will not be in this exact memory location until it's placed there by our ARAM relocation stub,
 			// we'll need to work out where it will end up when it does get placed in memory to write the relative branch.
@@ -2059,7 +2058,7 @@ int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
 				u32 newval = (u32)(CHEATS_ENGINE_START - properAddress);
 				newval&= 0x03FFFFFC;
 				newval|= 0x48000000;
-				*(u32*)(data+i+j) = newval;
+				*(vu32*)(data+i+j) = newval;
 				break;
 			}
 		}
@@ -2067,27 +2066,27 @@ int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
 	// try GX DrawDone and its variants
 	for( i=0; i < length; i+=4 )
 	{
-		if(( *(u32*)(data+i+0) == 0x3CC0CC01 &&
-			*(u32*)(data+i+4) == 0x3CA04500 &&
-			*(u32*)(data+i+12) == 0x38050002 &&
-			*(u32*)(data+i+16) == 0x90068000 ) ||
-			( *(u32*)(data+i+0) == 0x3CA0CC01 &&
-			*(u32*)(data+i+4) == 0x3C804500 &&
-			*(u32*)(data+i+12) == 0x38040002 &&
-			*(u32*)(data+i+16) == 0x90058000 ) ||
-			( *(u32*)(data+i+0) == 0x3FE04500 &&
-			*(u32*)(data+i+4) == 0x3BFF0002 &&
-			*(u32*)(data+i+20) == 0x3C60CC01  &&
-			*(u32*)(data+i+24) == 0x93E38000  ) ||
-			( *(u32*)(data+i+0) == 0x3C804500  &&
-			*(u32*)(data+i+12) == 0x3CA0CC01  &&
-			*(u32*)(data+i+28) == 0x38040002  &&
-			*(u32*)(data+i+40) == 0x90058000  ) )
+		if(( *(vu32*)(data+i+0) == 0x3CC0CC01 &&
+			*(vu32*)(data+i+4) == 0x3CA04500 &&
+			*(vu32*)(data+i+12) == 0x38050002 &&
+			*(vu32*)(data+i+16) == 0x90068000 ) ||
+			( *(vu32*)(data+i+0) == 0x3CA0CC01 &&
+			*(vu32*)(data+i+4) == 0x3C804500 &&
+			*(vu32*)(data+i+12) == 0x38040002 &&
+			*(vu32*)(data+i+16) == 0x90058000 ) ||
+			( *(vu32*)(data+i+0) == 0x3FE04500 &&
+			*(vu32*)(data+i+4) == 0x3BFF0002 &&
+			*(vu32*)(data+i+20) == 0x3C60CC01  &&
+			*(vu32*)(data+i+24) == 0x93E38000  ) ||
+			( *(vu32*)(data+i+0) == 0x3C804500  &&
+			*(vu32*)(data+i+12) == 0x3CA0CC01  &&
+			*(vu32*)(data+i+28) == 0x38040002  &&
+			*(vu32*)(data+i+40) == 0x90058000  ) )
 		{
 			
 			// Find the end of the function and replace the blr with a relative branch to CHEATS_ENGINE_START
 			int j = 16;
-			while( *(u32*)(data+i+j) != 0x4E800020 )
+			while( *(vu32*)(data+i+j) != 0x4E800020 )
 				j+=4;
 			// As the data we're looking at will not be in this exact memory location until it's placed there by our ARAM relocation stub,
 			// we'll need to work out where it will end up when it does get placed in memory to write the relative branch.
@@ -2097,7 +2096,7 @@ int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
 				u32 newval = (u32)(CHEATS_ENGINE_START - properAddress);
 				newval&= 0x03FFFFFC;
 				newval|= 0x48000000;
-				*(u32*)(data+i+j) = newval;
+				*(vu32*)(data+i+j) = newval;
 				break;
 			}
 		}

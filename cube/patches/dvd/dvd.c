@@ -66,7 +66,7 @@ void handle_disc_swap()
 }
 
 int is_frag_read(unsigned int offset, unsigned int len) {
-	u32 *fragList = (u32*)VAR_FRAG_LIST;
+	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
 	int maxFrags = (VAR_FRAG_SIZE/12), i = 0, j = 0;
 	
 	// If we locate that this read lies in our frag area, return true

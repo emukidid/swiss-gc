@@ -38,9 +38,9 @@ void adjust_read() {
 	u32 len = dvd[4];
 	u32 offset = (dvd[3]<<2);
 	
-	u32 *fragList = (u32*)VAR_FRAG_LIST;
-	int isDisc2 = (*(u32*)(VAR_DISC_2_LBA)) == (*(u32*)VAR_CUR_DISC_LBA);
-	int maxFrags = (*(u32*)(VAR_DISC_2_LBA)) ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0, j = 0;
+	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
+	int isDisc2 = (*(vu32*)(VAR_DISC_2_LBA)) == (*(vu32*)VAR_CUR_DISC_LBA);
+	int maxFrags = (*(vu32*)(VAR_DISC_2_LBA)) ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0, j = 0;
 	int fragTableStart = isDisc2 ? (maxFrags*3) : 0;
 	u32 adjustedOffset = offset;
 
@@ -80,9 +80,9 @@ void adjust_read() {
 				dcache_flush_icache_inv((void*)(dst | 0x80000000), len);
 #ifdef DEBUG				
 				usb_sendbuffer_safe("data: \r\n",8);
-				print_int_hex(*(u32*)((dst+0)| 0x80000000));
-				print_int_hex(*(u32*)((dst+4)| 0x80000000));
-				print_int_hex(*(u32*)((dst+len-4)| 0x80000000));
+				print_int_hex(*(vu32*)((dst+0)| 0x80000000));
+				print_int_hex(*(vu32*)((dst+4)| 0x80000000));
+				print_int_hex(*(vu32*)((dst+len-4)| 0x80000000));
 #endif
 				dvd[3] = 0;
 				dvd[4] = 0x20;
@@ -99,9 +99,9 @@ void adjust_read() {
 					adjustedOffset = offset - fragOffset;
 				}
 				fragSector = fragSector + (adjustedOffset>>9);
-				if(*(volatile unsigned int*)VAR_TMP1 != fragSector) {
+				if(*(vu32*)VAR_TMP1 != fragSector) {
 					wkfWriteOffset(fragSector);
-					*(volatile unsigned int*)VAR_TMP1 = fragSector;
+					*(vu32*)VAR_TMP1 = fragSector;
 				}
 				wkfRead((void*)dst, len, adjustedOffset & 511);
 				break;

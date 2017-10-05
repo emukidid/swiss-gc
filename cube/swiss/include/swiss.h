@@ -24,14 +24,8 @@ extern char* _menu_array[];
 extern char *videoStr;
 extern file_handle curFile;
 extern file_handle curDir;
-extern int GC_SD_CHANNEL;
-extern u32 GC_SD_SPEED;
-extern int SDHCCard;
-extern u8 g_CID[MAX_DRIVE][16];
-extern u8 g_CSD[MAX_DRIVE][16];
-extern u8 g_CardStatus[MAX_DRIVE][64];
+extern u32 SDHCCard;
 extern char IPLInfo[256] __attribute__((aligned(32)));
-extern int iplModchip;
 extern u8 driveVersion[8];
 extern DiskHeader GCMDisk;
 

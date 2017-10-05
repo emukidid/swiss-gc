@@ -47,21 +47,21 @@ void appldr_start();
 // DVD Drive command wrapper
 void DIUpdateRegisters() {
 
-	volatile u32 *dvd = (volatile u32*)VAR_DI_REGS;
+	vu32 *dvd = (vu32*)VAR_DI_REGS;
 	
-	if(*(u32*)VAR_FAKE_IRQ_SET) {
+	if(*(vu32*)VAR_FAKE_IRQ_SET) {
 		return;
 	}
 	u32 diOpCompleted = 0;
-	int discChanging = *(u32*)VAR_DISC_CHANGING;
+	u32 discChanging = *(vu32*)VAR_DISC_CHANGING;
 	
 	if(discChanging == 1) {
-		*(u32*)VAR_DISC_CHANGING = 2;
+		*(vu32*)VAR_DISC_CHANGING = 2;
 		
-		if(*(u32*)VAR_CUR_DISC_LBA == *(u32*)VAR_DISC_1_LBA)
-			*(u32*)VAR_CUR_DISC_LBA = *(u32*)VAR_DISC_2_LBA;
+		if(*(vu32*)VAR_CUR_DISC_LBA == *(vu32*)VAR_DISC_1_LBA)
+			*(vu32*)VAR_CUR_DISC_LBA = *(vu32*)VAR_DISC_2_LBA;
 		else
-			*(u32*)VAR_CUR_DISC_LBA = *(u32*)VAR_DISC_1_LBA;
+			*(vu32*)VAR_CUR_DISC_LBA = *(vu32*)VAR_DISC_1_LBA;
 		mftb((tb_t*)VAR_TIMER_START);
 	}
 	
@@ -76,16 +76,16 @@ void DIUpdateRegisters() {
 				diOpCompleted = 1;
 				break;
 			case 0xE1:	// play Audio Stream
-				if(*(u32*)VAR_AS_ENABLED) {
+				if(*(vu32*)VAR_AS_ENABLED) {
 					switch( (dvd[DI_CMD] >> 16) & 0xFF )
 					{
 						case 0x00:
 							StreamStartStream(dvd[DI_LBA] << 2, dvd[DI_SRCLEN]);
-							*(u8*)VAR_STREAM_DI = 1;
+							*(vu8*)VAR_STREAM_DI = 1;
 							break;
 						case 0x01:
 							StreamEndStream();
-							*(u8*)VAR_STREAM_DI = 0;
+							*(vu8*)VAR_STREAM_DI = 0;
 							break;
 						default:
 							break;
@@ -94,29 +94,29 @@ void DIUpdateRegisters() {
 				diOpCompleted = 1;
 				break;
 			case 0xE2:	// request Audio Status
-				if(*(u32*)VAR_AS_ENABLED) {
+				if(*(vu32*)VAR_AS_ENABLED) {
 					switch( (dvd[DI_CMD] >> 16) & 0xFF )
 					{
 						case 0x00:	// Streaming?
-							*(u8*)VAR_STREAM_DI = !!(*(u32*)VAR_STREAM_CUR);
-							dvd[DI_IMM] = *(u8*)VAR_STREAM_DI;
+							*(vu8*)VAR_STREAM_DI = (u8)(!!(*(vu32*)VAR_STREAM_CUR));
+							dvd[DI_IMM] = *(vu8*)VAR_STREAM_DI;
 							break;
 						case 0x01:	// What is the current address?
-							if(*(u8*)VAR_STREAM_DI)
+							if(*(vu8*)VAR_STREAM_DI)
 							{
-								if((*(u32*)VAR_STREAM_CUR))
-									dvd[DI_IMM] = ALIGN_BACKWARD((*(u32*)VAR_STREAM_CUR), 0x800) >> 2;
+								if((*(vu32*)VAR_STREAM_CUR))
+									dvd[DI_IMM] = ALIGN_BACKWARD((*(vu32*)VAR_STREAM_CUR), 0x800) >> 2;
 								else
-									dvd[DI_IMM] = (*(u32*)VAR_STREAM_END) >> 2;
+									dvd[DI_IMM] = (*(vu32*)VAR_STREAM_END) >> 2;
 							}
 							else
 								dvd[DI_IMM] = 0;
 							break;
 						case 0x02:	// disc offset of file
-							dvd[DI_IMM] = (*(u32*)VAR_STREAM_START) >> 2;
+							dvd[DI_IMM] = (*(vu32*)VAR_STREAM_START) >> 2;
 							break;
 						case 0x03:	// Size of file
-							dvd[DI_IMM] = *(u32*)VAR_STREAM_SIZE;
+							dvd[DI_IMM] = *(vu32*)VAR_STREAM_SIZE;
 							break;
 						default:
 							break;
@@ -128,8 +128,8 @@ void DIUpdateRegisters() {
 				diOpCompleted = 1;
 				break;
 			case 0x12:
-				*(u32*)(dvd[DI_DMAADDR]+4) = 0x20010608;
-				*(u32*)(dvd[DI_DMAADDR]+8) = 0x61000000;
+				*(vu32*)(dvd[DI_DMAADDR]+4) = 0x20010608;
+				*(vu32*)(dvd[DI_DMAADDR]+8) = 0x61000000;
 				dvd[DI_DMAADDR] += 0x20;
 				dvd[DI_DMALEN] = 0;
 				diOpCompleted = 1;
@@ -140,15 +140,15 @@ void DIUpdateRegisters() {
 				break;
 			case 0xE3:	// Stop motor
 				if(!discChanging) {
-					*(u32*)VAR_DISC_CHANGING = 1;	// Lid is open
+					*(vu32*)VAR_DISC_CHANGING = 1;	// Lid is open
 				}
 				diOpCompleted = 1;
 				break;
 			case 0xA8:	// Read!
 			{
 				// If audio streaming is on, we give it a chance to read twice before we read data once
-				if(!*(u8*)VAR_STREAM_DI || *(u32*)VAR_READS_IN_AS ==2) {
-					*(u32*)VAR_READS_IN_AS = 0;
+				if(!*(vu8*)VAR_STREAM_DI || *(vu32*)VAR_READS_IN_AS ==2) {
+					*(vu32*)VAR_READS_IN_AS = 0;
 				
 					u32 dst	= dvd[DI_DMAADDR];
 					u32 len	= dvd[DI_DMALEN];
@@ -156,13 +156,13 @@ void DIUpdateRegisters() {
 
 					// The only time we readComplete=1 is when reading the arguments for 
 					// execD, since interrupts are off after this point and our handler isn't called again.
-					int readComplete = *(u32*)VAR_LAST_OFFSET == *(u32*)VAR_EXECD_OFFSET;
-					*(u32*)VAR_LAST_OFFSET = offset;
+					int readComplete = *(vu32*)VAR_LAST_OFFSET == *(vu32*)VAR_EXECD_OFFSET;
+					*(vu32*)VAR_LAST_OFFSET = offset;
 
-					if(offset && (offset == *(u32*)VAR_EXECD_OFFSET))
+					if(offset && (offset == *(vu32*)VAR_EXECD_OFFSET))
 					{
 						//execD, jump to our own handler
-						*(u32*)dst = branch((u32)appldr_start, dst);
+						*(vu32*)dst = branch((u32)appldr_start, dst);
 						dcache_flush_icache_inv((void*)dst, 0x20);
 						dvd[DI_DMALEN] = 0;
 						diOpCompleted = 1;
@@ -183,7 +183,7 @@ void DIUpdateRegisters() {
 						}
 					}
 				}
-				*(u32*)VAR_READS_IN_AS += 1;
+				*(vu32*)VAR_READS_IN_AS += 1;
 			} 
 				break;
 		}
@@ -195,7 +195,7 @@ void DIUpdateRegisters() {
 		mftb(&end);
 		u32 diff = tb_diff_usec(&end, start);
 		if(diff > 2000000) {	//~2 sec
-			*(u32*)VAR_DISC_CHANGING = 0;
+			*(vu32*)VAR_DISC_CHANGING = 0;
 			diOpCompleted = 1;
 		}
 	}
@@ -205,7 +205,7 @@ void DIUpdateRegisters() {
 		dvd[DI_SR] |= 0x10;
 		dvd[DI_CR] &= 2;
 		if(dvd[DI_SR] & 0x8) { // TC Interrupt Enabled
- 			*(u32*)VAR_FAKE_IRQ_SET = 4;
+ 			*(vu32*)VAR_FAKE_IRQ_SET = 4;
  			trigger_dvd_interrupt();
  		}
 	}

@@ -132,7 +132,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 	
 	
 	int maxFrags = (VAR_FRAG_SIZE/12), i = 0;
-	u32 *fragList = (u32*)VAR_FRAG_LIST;
+	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
 	int patches = 0;
 	
 	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
@@ -177,13 +177,13 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 			}
 		}
 		// Copy the current speed
-		*(volatile unsigned int*)VAR_EXI_BUS_SPD = 192;
+		*(vu32*)VAR_EXI_BUS_SPD = 192;
 		// Card Type
-		*(volatile unsigned int*)VAR_SD_TYPE = sdgecko_getAddressingType(((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1));
+		*(vu32*)VAR_SD_TYPE = sdgecko_getAddressingType(((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1));
 		// Copy the actual freq
-		*(volatile unsigned int*)VAR_EXI_FREQ = EXI_SPEED16MHZ;	// play it safe
+		*(vu32*)VAR_EXI_FREQ = EXI_SPEED16MHZ;	// play it safe
 		// Device slot (0 or 1) // This represents 0xCC0068xx in number of u32's so, slot A = 0xCC006800, B = 0xCC006814
-		*(volatile unsigned int*)VAR_EXI_SLOT = ((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1) * 5;
+		*(vu32*)VAR_EXI_SLOT = ((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1) * 5;
 	}
 	
 	// Check if file2 exists
@@ -238,11 +238,11 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 	}
 	
 	// Disk 1 base sector
-	*(volatile unsigned int*)VAR_DISC_1_LBA = fragList[2];
+	*(vu32*)VAR_DISC_1_LBA = fragList[2];
 	// Disk 2 base sector
-	*(volatile unsigned int*)VAR_DISC_2_LBA = file2 ? fragList[2 + (maxFrags*3)]:fragList[2];
+	*(vu32*)VAR_DISC_2_LBA = file2 ? fragList[2 + (maxFrags*3)]:fragList[2];
 	// Currently selected disk base sector
-	*(volatile unsigned int*)VAR_CUR_DISC_LBA = fragList[2];
+	*(vu32*)VAR_CUR_DISC_LBA = fragList[2];
 	
 	wkfFragSetupReq = (file2 && frags > 2) ? 1 : frags>1;
 	print_frag_list(file2 != 0);

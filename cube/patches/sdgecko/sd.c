@@ -4,10 +4,7 @@
 #**************************************************************************/
 
 #include "../../reservedarea.h"
-
-typedef unsigned int u32;
-typedef unsigned short u16;
-typedef unsigned char u8;
+#include "../base/common.h"
 
 #define EXI_READ			0
 #define EXI_WRITE			1
@@ -20,9 +17,9 @@ typedef unsigned char u8;
 #define CMD24				(0x58)
 
 #define SECTOR_SIZE 		512
-#define exi_freq  			(*(u32*)VAR_EXI_FREQ)
+#define exi_freq  			(*(vu32*)VAR_EXI_FREQ)
 // exi_channel is stored as number of u32's to index into the exi bus (0xCC006800)
-#define exi_channel 		(*(u32*)VAR_EXI_SLOT)
+#define exi_channel 		(*(vu32*)VAR_EXI_SLOT)
 
 // EXI Functions
 static inline void exi_select()
@@ -129,14 +126,14 @@ void do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = len;
 	
-	int lbaShift = 9 * (*(u32*)VAR_SD_TYPE);	// SD Card Type (SDHC=0, SD=1)
+	int lbaShift = 9 * (*(vu32*)VAR_SD_TYPE);	// SD Card Type (SDHC=0, SD=1)
 	
 	// SDHC uses sector addressing, SD uses byte
 	lba <<= lbaShift;	
 
 	// If we weren't just reading this sector
-	if(lba != *(u32*)VAR_TMP1) {
-		if(*(u32*)VAR_TMP2) {
+	if(lba != *(vu32*)VAR_TMP1) {
+		if(*(vu32*)VAR_TMP2) {
 			// End the read by sending CMD12 + Deselect SD + Burn a cycle after it
 			send_cmd(CMD12, 0);
 			exi_deselect();
@@ -144,7 +141,7 @@ void do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 		}
 		// Send multiple block read command and the LBA we want to start reading at
 		send_cmd(CMD18, lba);
-		*(u32*)VAR_TMP2 = 1;
+		*(vu32*)VAR_TMP2 = 1;
 	}
 	
 	// Read block crossing a boundary
@@ -170,7 +167,7 @@ void do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 		rcvr_datablock(dst,0, numBytes);
 	}
 		
-	*(u32*)VAR_TMP1 = lba + ((len + SECTOR_SIZE-startByte) >> lbaShift);
+	*(vu32*)VAR_TMP1 = lba + ((len + SECTOR_SIZE-startByte) >> lbaShift);
 }
 
 /* End of SD functions */

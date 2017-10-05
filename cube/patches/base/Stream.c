@@ -32,11 +32,11 @@ void WritePCM48(u32 *buf_loc);
 
 void StreamPrepare()
 {
-	*(u32*)VAR_AS_HIST_0 = 0;
-	*(u32*)VAR_AS_HIST_1 = 0;
-	*(u32*)VAR_AS_HIST_2 = 0;
-	*(u32*)VAR_AS_HIST_3 = 0;
-	*(u8*)VAR_AS_SAMPLECNT = 0;
+	*(vu32*)VAR_AS_HIST_0 = 0;
+	*(vu32*)VAR_AS_HIST_1 = 0;
+	*(vu32*)VAR_AS_HIST_2 = 0;
+	*(vu32*)VAR_AS_HIST_3 = 0;
+	*(vu8*)VAR_AS_SAMPLECNT = 0;
 }
 
 static inline void write16INC(u32 buf, u32 *loc, s16 val)
@@ -46,13 +46,13 @@ static inline void write16INC(u32 buf, u32 *loc, s16 val)
 }
 static inline void SaveSamples(const u32 j, s16 *bufl, s16 *bufr)
 {
-	*(s16*)VAR_AS_TMP_LSAMPLE = bufl[j];
-	*(s16*)VAR_AS_TMP_RSAMPLE = bufr[j];
+	*(vs16*)VAR_AS_TMP_LSAMPLE = bufl[j];
+	*(vs16*)VAR_AS_TMP_RSAMPLE = bufr[j];
 }
 static inline void CombineSamples(const u32 j, s16 *bufl, s16 *bufr)
 {	/* average samples to keep quality about the same */
-	bufl[j] = (bufl[j] + *(s16*)VAR_AS_TMP_LSAMPLE)>>1;
-	bufr[j] = (bufr[j] + *(s16*)VAR_AS_TMP_RSAMPLE)>>1;
+	bufl[j] = (bufl[j] + *(vs16*)VAR_AS_TMP_LSAMPLE)>>1;
+	bufr[j] = (bufr[j] + *(vs16*)VAR_AS_TMP_RSAMPLE)>>1;
 }
 void StreamUpdate()
 {
@@ -64,7 +64,7 @@ void StreamUpdate()
 		ADPdecodebuffer((u8*)DECODE_WORK_AREA+i,(s16*)VAR_AS_OUTL,(s16*)VAR_AS_OUTR,(long*)VAR_AS_HIST_0,(long*)VAR_AS_HIST_1,(long*)VAR_AS_HIST_2,(long*)VAR_AS_HIST_3);
 		if(r32k) WritePCM48to32(&buf_loc); else WritePCM48(&buf_loc);
 	}
-	*(u8*)VAR_STREAM_CURBUF = *(u8*)VAR_STREAM_CURBUF ^ 1;
+	*(vu8*)VAR_STREAM_CURBUF = *(vu8*)VAR_STREAM_CURBUF ^ 1;
 }
 
 void WritePCM48to32(u32 *buf_loc)
@@ -73,16 +73,16 @@ void WritePCM48to32(u32 *buf_loc)
 	u32 j;
 	for(j = 0; j < SAMPLES_PER_BLOCK; j++)
 	{
-		*(u8*)VAR_AS_SAMPLECNT = *(u8*)VAR_AS_SAMPLECNT+1;
-		if(*(u8*)VAR_AS_SAMPLECNT == 2)
+		*(vu8*)VAR_AS_SAMPLECNT = *(vu8*)VAR_AS_SAMPLECNT+1;
+		if(*(vu8*)VAR_AS_SAMPLECNT == 2)
 		{
 			SaveSamples(j, (s16*)VAR_AS_OUTL, (s16*)VAR_AS_OUTR);
 			continue;
 		}
-		if(*(u8*)VAR_AS_SAMPLECNT == 3)
+		if(*(vu8*)VAR_AS_SAMPLECNT == 3)
 		{
 			CombineSamples(j, (s16*)VAR_AS_OUTL, (s16*)VAR_AS_OUTR);
-			*(u8*)VAR_AS_SAMPLECNT = 0;
+			*(vu8*)VAR_AS_SAMPLECNT = 0;
 		}
 		write16INC(CurBuf, buf_loc, *(((s16*)VAR_AS_OUTL)+j));
 		write16INC(CurBuf, buf_loc, *(((s16*)VAR_AS_OUTR)+j));
@@ -107,30 +107,30 @@ u32 StreamGetChunkSize()
 
 void StreamUpdateRegisters()
 {
-	if(*(u32*)VAR_AS_ENABLED && *(u8*)VAR_STREAM_UPDATE)		//decoder update, it WILL update
+	if(*(vu32*)VAR_AS_ENABLED && *(vu8*)VAR_STREAM_UPDATE)		//decoder update, it WILL update
 	{
-		if(*(u8*)VAR_STREAM_ENDING)
+		if(*(vu8*)VAR_STREAM_ENDING)
 		{
-			*(u32*)VAR_STREAM_CUR = 0;
-			*(u8*)VAR_STREAM_ENDING = 0;
+			*(vu32*)VAR_STREAM_CUR = 0;
+			*(vu8*)VAR_STREAM_ENDING = 0;
 		}
 		else if(*(u32*)VAR_STREAM_CUR > 0)
 		{
-			device_frag_read((u8*)DECODE_WORK_AREA, StreamGetChunkSize(), *(u32*)VAR_STREAM_CUR);
-			*(u32*)VAR_STREAM_CUR += StreamGetChunkSize();
-			if(*(u32*)VAR_STREAM_CUR >= *(u32*)VAR_STREAM_END)
+			device_frag_read((u8*)DECODE_WORK_AREA, StreamGetChunkSize(), *(vu32*)VAR_STREAM_CUR);
+			*(vu32*)VAR_STREAM_CUR += StreamGetChunkSize();
+			if(*(vu32*)VAR_STREAM_CUR >= *(vu32*)VAR_STREAM_END)
 			{
-				if(*(u8*)VAR_STREAM_LOOPING == 1)
+				if(*(vu8*)VAR_STREAM_LOOPING == 1)
 				{
-					*(u32*)VAR_STREAM_CUR = *(u32*)VAR_STREAM_START;
+					*(vu32*)VAR_STREAM_CUR = *(vu32*)VAR_STREAM_START;
 					StreamPrepare();
 				}
 				else
-					*(u8*)VAR_STREAM_ENDING = 1;
+					*(vu8*)VAR_STREAM_ENDING = 1;
 			}
 			StreamUpdate();
 		}
-		*(u8*)VAR_STREAM_UPDATE = 0; //clear status
+		*(vu8*)VAR_STREAM_UPDATE = 0; //clear status
 	}
 }
 
@@ -138,32 +138,32 @@ void StreamStartStream(u32 CurrentStart, u32 CurrentSize)
 {
 	if(CurrentStart > 0 && CurrentSize > 0)
 	{
-		*(u32*)VAR_STREAM_SIZE = CurrentSize;
-		*(u32*)VAR_STREAM_START = CurrentStart;
+		*(vu32*)VAR_STREAM_SIZE = CurrentSize;
+		*(vu32*)VAR_STREAM_START = CurrentStart;
 		u32 StreamCurrent = CurrentStart;
-		*(u32*)VAR_STREAM_END = CurrentStart + CurrentSize;
+		*(vu32*)VAR_STREAM_END = CurrentStart + CurrentSize;
 		StreamPrepare();
 		device_frag_read((u8*)DECODE_WORK_AREA, StreamGetChunkSize(), StreamCurrent);
 		StreamCurrent += StreamGetChunkSize();
-		*(u8*)VAR_STREAM_CURBUF = 0; //reset adp buffer
+		*(vu8*)VAR_STREAM_CURBUF = 0; //reset adp buffer
 		StreamUpdate();
 		/* Directly read in the second buffer */
 		device_frag_read((u8*)DECODE_WORK_AREA, StreamGetChunkSize(), StreamCurrent);
 		StreamCurrent += StreamGetChunkSize();
 		StreamUpdate();
 		/* Send stream signal to PPC */
-		*(u32*)VAR_STREAM_BUFLOC = 0; //reset adp read pos
-		*(u8*)VAR_STREAM_UPDATE = 0; //clear status
+		*(vu32*)VAR_STREAM_BUFLOC = 0; //reset adp read pos
+		*(vu8*)VAR_STREAM_UPDATE = 0; //clear status
 		//dbgprintf("Streaming %08x %08x\n", StreamStart, StreamSize);
-		*(u8*)VAR_STREAM_LOOPING = 1;
-		*(u8*)VAR_STREAM_ENDING = 0;
-		*(u32*)VAR_STREAM_CUR = StreamCurrent; //actually start
+		*(vu8*)VAR_STREAM_LOOPING = 1;
+		*(vu8*)VAR_STREAM_ENDING = 0;
+		*(vu32*)VAR_STREAM_CUR = StreamCurrent; //actually start
 	}
 	else //both offset and length=0 disables loop
-		*(u8*)VAR_STREAM_LOOPING = 0;
+		*(vu8*)VAR_STREAM_LOOPING = 0;
 }
 
 void StreamEndStream(void)
 {
-	*(u32*)VAR_STREAM_CUR = 0;
+	*(vu32*)VAR_STREAM_CUR = 0;
 }

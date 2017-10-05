@@ -5,11 +5,7 @@
 ***************************************************************************/
 
 #include "../../reservedarea.h"
-
-typedef unsigned int u32;
-typedef int s32;
-typedef unsigned short u16;
-typedef unsigned char u8;
+#include "common.h"
 
 #ifdef WKF
 extern void wkfReinit();
@@ -69,7 +65,7 @@ void load_dol() {
 */
 // exits to user preferred method
 void exit_to_pref(void) {
-	u8 igr_exit_type = *(u8*)VAR_IGR_EXIT_TYPE;
+	u8 igr_exit_type = *(vu8*)VAR_IGR_EXIT_TYPE;
 	
 #ifdef WKF
 	wkfReinit();
