@@ -3,13 +3,10 @@
 	by emu_kidid
  */
 
-#include <fat.h>
 #include <string.h>
 #include <unistd.h>
 #include <malloc.h>
 #include <ogc/dvd.h>
-#include <sys/dir.h>
-#include <sys/statvfs.h>
 #include <ogc/machine/processor.h>
 #include <sdcard/gcsd.h>
 #include "deviceHandler.h"
@@ -18,14 +15,18 @@
 #include "swiss.h"
 #include "main.h"
 #include "ata.h"
-#include "frag.h"
 #include "patcher.h"
 
 const DISC_INTERFACE* carda = &__io_gcsda;
 const DISC_INTERFACE* cardb = &__io_gcsdb;
 const DISC_INTERFACE* ideexia = &__io_ataa;
 const DISC_INTERFACE* ideexib = &__io_atab;
+extern FATFS *wkffs;
+FATFS *fs[4] = {NULL, NULL, NULL, NULL};
 extern void sdgecko_initIODefault();
+
+#define IS_SDCARD(v) (v[0] == 's')
+#define GET_SLOT(v) (IS_SDCARD(v) ? v[2] == 'b' : v[3] == 'b')
 
 file_handle initial_SD_A =
 	{ "sda:/",       // directory
@@ -78,50 +79,60 @@ device_info* deviceHandler_FAT_info() {
 
 void readDeviceInfo(file_handle* file) {
 	if(deviceHandler_getStatEnabled()) {
-		struct statvfs buf;
-		int isSDCard = file->name[0] == 's';
-		int slot = isSDCard ? (file->name[2] == 'b') : (file->name[3] == 'b');
+		int isSDCard = IS_SDCARD(file->name);
+		int slot = GET_SLOT(file->name);
 		
-		memset(&buf, 0, sizeof(statvfs));
 		DrawFrameStart();
 		sprintf(txtbuffer, "Reading filesystem info for %s%s:/",isSDCard ? "sd":"ide", slot ? "b":"a");
 		DrawMessageBox(D_INFO,txtbuffer);
 		DrawFrameFinish();
 		
 		sprintf(txtbuffer, "%s%s:/",isSDCard ? "sd":"ide", slot ? "b":"a");
-		int res = statvfs(txtbuffer, &buf);
-		initial_FAT_info.freeSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_bfree)/1024LL):0;
-		initial_FAT_info.totalSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_blocks)/1024LL):0;
+		DWORD free_clusters, free_sectors, total_sectors = 0;
+		FATFS *fsptr = fs[(isSDCard ? slot : 2 + slot)];
+		if(f_getfree(txtbuffer, &free_clusters, &fsptr) == FR_OK) {
+			total_sectors = (fsptr->n_fatent - 2) * fsptr->csize;
+			free_sectors = free_clusters * fsptr->csize;
+			initial_FAT_info.freeSpaceInKB = (u32)((free_sectors)>>1);
+			initial_FAT_info.totalSpaceInKB = (u32)((total_sectors)>>1);
+		}
+		else {
+			initial_FAT_info.freeSpaceInKB = initial_FAT_info.totalSpaceInKB = 0;
+		}
 	}
 }
 	
-s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type){	
+s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {	
 
-	DIR* dp = opendir( ffile->name );
-	if(!dp) return -1;
-	struct dirent *entry;
-	struct stat fstat;
+	DIRF* dp = malloc(sizeof(DIRF));
+	memset(dp, 0, sizeof(DIRF));
+	if(f_opendir(dp, ffile->name) != FR_OK) return -1;
+	FILINFO entry;
+	FILINFO fno;
 	
 	// Set everything up to read
 	int num_entries = 1, i = 1;
 	char file_name[1024];
-	*dir = malloc( num_entries * sizeof(file_handle) );
-	memset(*dir,0,sizeof(file_handle) * num_entries);
+	*dir = malloc( sizeof(file_handle) );
+	memset(*dir,0,sizeof(file_handle));
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 	strcpy((*dir)[0].name, "..");
+	memset(&entry, 0, sizeof(FILINFO));
 
 	// Read each entry of the directory
-	while( (entry = readdir(dp)) != NULL ){
-		if(strlen(entry->d_name) <= 2  && (entry->d_name[0] == '.' || entry->d_name[1] == '.')) {
+	while( f_readdir(dp, &entry) == FR_OK && entry.fname[0] != '\0') {
+		if(strlen(entry.fname) <= 2  && (entry.fname[0] == '.' || entry.fname[1] == '.')) {
 			continue;
 		}
 		memset(&file_name[0],0,1024);
-		sprintf(&file_name[0], "%s/%s", ffile->name, entry->d_name);
-		stat(&file_name[0],&fstat);
+		sprintf(&file_name[0], "%s/%s", ffile->name, entry.fname);
+		if(f_stat(file_name, &fno) != FR_OK || (fno.fattrib & AM_HID)) {
+			continue;
+		}
 		// Do we want this one?
-		if((type == -1 || ((fstat.st_mode & S_IFDIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
-			if(!(fstat.st_mode & S_IFDIR)) {
-				if(!checkExtension(entry->d_name)) continue;
+		if((type == -1 || ((fno.fattrib & AM_DIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
+			if(!(fno.fattrib & AM_DIR)) {
+				if(!checkExtension(entry.fname)) continue;
 			}
 			// Make sure we have room for this one
 			if(i == num_entries){
@@ -129,18 +140,17 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
-			sprintf((*dir)[i].name, "%s/%s", ffile->name, entry->d_name);
-			(*dir)[i].size     = fstat.st_size;
-			(*dir)[i].fileAttrib   = (fstat.st_mode & S_IFDIR) ? IS_DIR : IS_FILE;
+			sprintf((*dir)[i].name, "%s/%s", ffile->name, entry.fname);
+			(*dir)[i].size     = fno.fsize;
+			(*dir)[i].fileAttrib   = (fno.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
 			++i;
 		}
 	}
 	
-	closedir(dp);
-
-	int isSDCard = ffile->name[0] == 's';
-	if(isSDCard) {
-		int slot = (ffile->name[2] == 'b');
+	f_closedir(dp);
+	free(dp);
+	if(IS_SDCARD(ffile->name)) {
+		int slot = GET_SLOT(ffile->name);
 	    // Set the card type (either block addressed (0) or byte addressed (1))
 	    SDHCCard = sdgecko_getAddressingType(slot);
 	    // set the page size to 512 bytes
@@ -158,39 +168,57 @@ s32 deviceHandler_FAT_seekFile(file_handle* file, u32 where, u32 type){
 	return file->offset;
 }
 
-s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length){
-  	if(!file->fp) {
-		file->fp = fopen( file->name, "r+" );
+s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
+  	if(!file->ffsFp) {
+		file->ffsFp = malloc(sizeof(FIL));
+		if(f_open(file->ffsFp, file->name, FA_READ | FA_WRITE ) != FR_OK) {
+			free(file->ffsFp);
+			file->ffsFp = 0;
+			return -1;
+		}
 		if(file->size <= 0) {
-			struct stat fstat;
-			stat(file->name,&fstat);
-			file->size = fstat.st_size;
+			FILINFO fno;
+			if(f_stat(file->name, &fno) != FR_OK) {
+				free(file->ffsFp);
+				file->ffsFp = 0;
+				return -1;
+			}
+			file->size = fno.fsize;
 		}
 	}
-	if(!file->fp) return -1;
 	
-	fseek(file->fp, file->offset, SEEK_SET);
-	int bytes_read = fread(buffer, 1, length, file->fp);
-	if(bytes_read > 0) file->offset += bytes_read;
-	
-	return bytes_read;
+	f_lseek(file->ffsFp, file->offset);
+	if(length > 0) {
+		UINT bytes_read = 0;
+		if(f_read(file->ffsFp, buffer, length, &bytes_read) != FR_OK || bytes_read != length) {
+			return -1;
+		}
+		file->offset += bytes_read;
+		return bytes_read;
+	}
+	return 0;
 }
 
-s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length){
-	if(!file->fp) {
+s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length) {
+	if(!file->ffsFp) {
+		file->ffsFp = malloc(sizeof(FIL));
 		// Append
-		file->fp = fopen( file->name, "r+" );
-		if(file->fp <= 0) {
-			// Create
-			file->fp = fopen( file->name, "wb" );
+		if(f_open(file->ffsFp, file->name, FA_READ | FA_WRITE ) != FR_OK) {
+			// Try to create
+			if(f_open(file->ffsFp, file->name, FA_CREATE_NEW | FA_WRITE | FA_READ ) != FR_OK) {
+				free(file->ffsFp);
+				file->ffsFp = 0;
+				return -1;
+			}
 		}
 	}
-	if(!file->fp) return -1;
-	fseek(file->fp, file->offset, SEEK_SET);
+	f_lseek(file->ffsFp, file->offset);
 		
-	int bytes_written = fwrite(buffer, 1, length, file->fp);
-	if(bytes_written > 0) file->offset += bytes_written;
-	
+	UINT bytes_written = 0;
+	if(f_write(file->ffsFp, buffer, length, &bytes_written) != FR_OK || bytes_written != length) {
+		return -1;
+	}
+	file->offset += bytes_written;
 	return bytes_written;
 }
 
@@ -215,13 +243,57 @@ void print_frag_list(int hasDisc2) {
 	print_gecko("== Fragments End ==\r\n");
 }
 
-s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
-	// Check if file2 exists
-	if(file2) {
-		get_frag_list(file2->name);
-		if(frag_list->num <= 0)
-			file2 = NULL;
+
+/* 
+	file: the file to get the fragments for
+	fragTbl: a table of u32's {offsetInFile, size, sector},...
+	maxFrags: maximum number of fragments allowed
+	forceBaseOffset: only use this if the fragments need to fake a position in a larger file (e.g. patch files)
+	forceSize: only use this to fake a total size (e.g. patch files again)
+	
+	return numfrags on success, 0 on failure
+*/ 
+s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOffset, u32 forceSize) {
+	int i;
+	if(file->ffsFp != NULL && file->ffsFp->cltbl != NULL) {
+		devices[DEVICE_CUR]->closeFile(file);	// If we've already read fragments, reopen it
 	}
+	if(!file->ffsFp) {
+		devices[DEVICE_CUR]->readFile(file, NULL, 0);	// open the file (should be open already)
+	}
+
+	// fatfs - Cluster link table map buffer
+	DWORD clmt[(maxFrags*2) + 1];
+	clmt[0] = maxFrags;
+	file->ffsFp->cltbl = &clmt[0];
+	if(f_lseek(file->ffsFp, CREATE_LINKMAP) != FR_OK) return 0;	// Too many fragments for our buffer
+	
+	print_gecko("getFragments [%s] - found %i fragments\r\n",file->name, (clmt[0] >> 1)-1);
+	
+	// WKF also uses this, make sure we use the right fs obj
+	FATFS* fatFS = NULL;
+	if(file->name[0] == 'w') {
+		fatFS = wkffs;
+	}
+	else {
+		int slot = GET_SLOT(file->name);
+		fatFS = fs[IS_SDCARD(file->name) ? slot : 2+slot];
+	}
+	s32 numFrags = 0;
+	for(i = 1; i < (clmt[0] >> 1); i+=2) {
+		if(clmt[i] == 0) break;	// No more
+		DWORD size = (clmt[i]) * fatFS->csize * 512;
+		DWORD sector = clust2sect(fatFS, clmt[i+1]);
+		// this frag offset in the file is the last frag offset+size
+		fragTbl[numFrags*3] = forceBaseOffset + (i > 1 ? fragTbl[((numFrags-1)*3)+1]+(fragTbl[((numFrags-1)*3)]) : 0);
+		fragTbl[(numFrags*3)+1] = (clmt[0] >> 1)-1 == 1 ? (forceSize!= 0?forceSize:file->size) : size;
+		fragTbl[(numFrags*3)+2] = sector;
+		numFrags++;
+	}
+	return numFrags;
+}
+
+s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	
 	// If there are 2 discs, we only allow 21 fragments per disc.
 	int maxFrags = file2 ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0;
@@ -231,7 +303,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	
   	// Look for patch files, if we find some, open them and add them as fragments
 	file_handle patchFile;
-	int patches = 0;
+	s32 frags = 0, totFrags = 0;
 	for(i = 0; i < maxFrags; i++) {
 		u32 patchInfo[4];
 		patchInfo[0] = 0; patchInfo[1] = 0; 
@@ -241,28 +313,18 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 		memset(&patchFile, 0, sizeof(file_handle));
 		sprintf(&patchFile.name[0], "%sswiss_patches/%s/%i", devices[DEVICE_CUR]->initial->name,&gameID[0], i);
 
-		struct stat fstat;
-		if(stat(&patchFile.name[0],&fstat)) {
-			break;
+		FILINFO fno;
+		if(f_stat(&patchFile.name[0], &fno) != FR_OK) {
+			break;	// Patch file doesn't exist, don't bother with fragments
 		}
-		devices[DEVICE_CUR]->seekFile(&patchFile,fstat.st_size-16,DEVICE_HANDLER_SEEK_SET);
+
+		devices[DEVICE_CUR]->seekFile(&patchFile,fno.fsize-16,DEVICE_HANDLER_SEEK_SET);
 		if((devices[DEVICE_CUR]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-			get_frag_list(&patchFile.name[0]);
-			print_gecko("Found patch file %i ofs 0x%08X len 0x%08X base 0x%08X (%i pieces)\r\n", 
-							i, patchInfo[0], patchInfo[1], frag_list->frag[0].sector,frag_list->num );
-			fclose(patchFile.fp);
-			int j = 0;
-			u32 totalSize = patchInfo[1];
-			for(j = 0; j < frag_list->num; j++) {
-				u32 fragmentSize = frag_list->frag[j].count*512;
-				if(j+1 == frag_list->num)
-					fragmentSize = totalSize;
-				fragList[patches*3] = patchInfo[0] + frag_list->frag[j].offset*512;
-				fragList[(patches*3)+1] = fragmentSize;
-				fragList[(patches*3)+2] = frag_list->frag[j].sector;
-				patches++;
-				totalSize -= fragmentSize;
+			if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, patchInfo[0], patchInfo[1]))) {
+				return 0;
 			}
+			totFrags+=frags;
+			devices[DEVICE_CUR]->closeFile(&patchFile);
 		}
 		else {
 			break;
@@ -270,47 +332,27 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	}
 	
 	// No fragment room left for the actual game, fail.
-	if(patches+1 == maxFrags) {
+	if(totFrags+1 == maxFrags) {
 		return 0;
 	}
 	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	get_frag_list(file->name);
-	print_gecko("Found disc 1 [%s] %i fragments\r\n",file->name, frag_list->num);
-	if(frag_list->num < maxFrags) {
-		for(i = 0; i < frag_list->num; i++) {
-			fragList[patches*3] = frag_list->frag[i].offset*512;
-			fragList[(patches*3)+1] = frag_list->frag[i].count*512;
-			fragList[(patches*3)+2] = frag_list->frag[i].sector;
-			patches++;
-		}
-	}
-	else {
-		// file is too fragmented - go defrag it!
+	if(!(frags = getFragments(file, &fragList[totFrags*3], maxFrags, 0, 0))) {
 		return 0;
 	}
-		
+	totFrags += frags;
+
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
 		// No fragment room left for the second disc, fail.
-		if(patches+1 == maxFrags) {
+		if(totFrags+1 == maxFrags) {
 			return 0;
 		}
-		get_frag_list(file2->name);
-		print_gecko("Found disc 2 [%s] %i fragments\r\n",file2->name, frag_list->num);
-		patches = 0;	// This breaks 2 disc games with patches (do any exist?)
-		if(frag_list->num < maxFrags) {
-			for(i = 0; i < frag_list->num; i++) {
-				fragList[(patches*3) + (maxFrags*3)] = frag_list->frag[i].offset*512;
-				fragList[((patches*3) + 1) + (maxFrags*3)]  = frag_list->frag[i].count*512;
-				fragList[((patches*3) + 2) + (maxFrags*3)] = frag_list->frag[i].sector;
-				patches++;
-			}
-		}
-		else {
-			// file is too fragmented - go defrag it!
+		// TODO fix 2 disc patched games
+		if(!(frags = getFragments(file2, &fragList[(maxFrags*3)], maxFrags, 0, 0))) {
 			return 0;
 		}
+		totFrags += frags;
 	}
 	
 	// Disk 1 base sector
@@ -351,32 +393,43 @@ int EXI_ResetSD(int drv) {
 	return 1;
 }
 
+s32 fatFs_Mount(u8 devNum, char *path) {
+	if(fs[devNum] != NULL) {
+		disk_flush(devNum);
+		f_mount(0, path, 0);	// Unmount
+		free(fs[devNum]);
+		fs[devNum] = NULL;
+	}
+	fs[devNum] = (FATFS*)malloc(sizeof(FATFS));
+	return f_mount(fs[devNum], path, 0) == FR_OK;
+}
+
 s32 deviceHandler_FAT_init(file_handle* file) {
-	int isSDCard = file->name[0] == 's';
-	int slot = isSDCard ? (file->name[2] == 'b') : (file->name[3] == 'b');
+	int isSDCard = IS_SDCARD(file->name);
+	int slot = GET_SLOT(file->name);
 	int ret = 0;
 	
 	// Slot A - SD Card
 	if(isSDCard && !slot && EXI_ResetSD(0)) {
 		carda->shutdown();
 		carda->startup();
-		ret = fatMount ("sda", carda, 0, 16, 128) ? 1 : 0;
+		ret = fatFs_Mount(0, "sda:\0");
 	}
 	// Slot B - SD Card
 	if(isSDCard && slot && EXI_ResetSD(1)) {
 		cardb->shutdown();
 		cardb->startup();
-		ret = fatMount ("sdb", cardb, 0, 16, 128) ? 1 : 0;
+		ret = fatFs_Mount(1, "sdb:\0");
 	}
 	// Slot A - IDE-EXI
 	if(!isSDCard && !slot) {
 		ideexia->startup();
-		ret = fatMount ("idea", ideexia, 0, 16, 128) ? 1 : 0;
+		ret = fatFs_Mount(2, "idea:\0");
 	}
 	// Slot B - IDE-EXI
 	if(!isSDCard && slot) {
 		ideexib->startup();
-		ret = fatMount ("ideb", ideexib, 0, 16, 128) ? 1 : 0;
+		ret = fatFs_Mount(3, "ideb:\0");
 	}
 	if(ret)
 		readDeviceInfo(file);
@@ -395,37 +448,39 @@ char *getDeviceMountPath(char *str) {
 	return path;
 }
 
+s32 deviceHandler_FAT_closeFile(file_handle* file) {
+	int ret = 0;
+	if(file && file->ffsFp) {
+		ret = f_close(file->ffsFp);
+		free(file->ffsFp);
+		file->ffsFp = 0;
+		int slot = GET_SLOT(file->name);
+		disk_flush(IS_SDCARD(file->name) ? slot : 2+slot);
+	}
+	return ret;
+}
+
 s32 deviceHandler_FAT_deinit(file_handle* file) {
 	initial_FAT_info.freeSpaceInKB = 0;
 	initial_FAT_info.totalSpaceInKB = 0;
-	if(file && file->fp) {
-		fclose(file->fp);
-		file->fp = 0;
-	}
 	if(file) {
+		deviceHandler_FAT_closeFile(file);
 		char *mountPath = getDeviceMountPath(file->name);
-		print_gecko("Unmounting [%s]\r\n", mountPath);
-		fatUnmount(mountPath);
+		int slot = GET_SLOT(file->name);
+		disk_flush(IS_SDCARD(file->name) ? slot : 2+slot);
+		f_mount(0, mountPath, 0);
+		fs[IS_SDCARD(file->name) ? slot : 2+slot] = NULL;
 		free(mountPath);
 	}
 	return 0;
 }
 
 s32 deviceHandler_FAT_deleteFile(file_handle* file) {
-	if(file->fp) {
-		fclose(file->fp);
-		file->fp = 0;
-	}
-	return (remove(file->name) == -1) ? -1:0;
-}
-
-s32 deviceHandler_FAT_closeFile(file_handle* file) {
-	int ret = 0;
-	if(file->fp) {
-		ret = fclose(file->fp);
-		file->fp = 0;
-	}
-	return ret;
+	deviceHandler_FAT_closeFile(file);
+	int res = f_unlink(file->name) == FR_OK;
+	int slot = GET_SLOT(file->name);
+	disk_flush(IS_SDCARD(file->name) ? slot : 2+slot);
+	return res;
 }
 
 bool deviceHandler_FAT_test_sd_a(int slot, bool isSdCard, char *mountPath) {

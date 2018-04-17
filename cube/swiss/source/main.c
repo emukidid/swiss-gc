@@ -510,14 +510,15 @@ int main ()
 	}
 	if(devices[DEVICE_CUR] != NULL) {
 		print_gecko("Detected %s\r\n", devices[DEVICE_CUR]->deviceName);
-		devices[DEVICE_CUR]->init(devices[DEVICE_CUR]->initial);
-		if(devices[DEVICE_CUR]->features & FEAT_AUTOLOAD_DOL) {
-			load_auto_dol();
+		if(devices[DEVICE_CUR]->init(devices[DEVICE_CUR]->initial)) {
+			if(devices[DEVICE_CUR]->features & FEAT_AUTOLOAD_DOL) {
+				load_auto_dol();
+			}
+			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+			needsDeviceChange = 0;
+			// TODO: re-add if dvd && gcm type disc, show banner/boot screen
+			// If this device can write, set it as the config device for now
 		}
-		memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
-		needsDeviceChange = 0;
-		// TODO: re-add if dvd && gcm type disc, show banner/boot screen
-		// If this device can write, set it as the config device for now
 	}
 
 	// Scan here since some devices would already be initialised (faster)

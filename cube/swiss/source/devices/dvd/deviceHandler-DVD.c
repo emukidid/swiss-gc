@@ -9,8 +9,6 @@
 #include <malloc.h>
 #include <ogc/dvd.h>
 #include <ogc/machine/processor.h>
-#include <sys/dir.h>
-#include <sys/statvfs.h>
 #include "swiss.h"
 #include "deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
@@ -20,7 +18,7 @@
 #include "dvd.h"
 #include "gcm.h"
 #include "wkf.h"
-#include "frag.h"
+#include "deviceHandler-FAT.h"
 
 #define OFFSET_NOTSET 0
 #define OFFSET_SET    1
@@ -415,7 +413,6 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
 		print_gecko("Save Patch device found\r\n");
-		// If there are 2 discs, we only allow 5 fragments per disc.
 		int maxFrags = (VAR_FRAG_SIZE/12), i = 0;
 		vu32 *fragList = (vu32*)VAR_FRAG_LIST;
 		
@@ -423,7 +420,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 		
 		// Look for .patchX files, if we find some, open them and add them as fragments
 		file_handle patchFile;
-		int patches = 0;
+		int totFrags = 0, frags = 0;
 		char gameID[8];
 		memset(&gameID, 0, 8);
 		strncpy((char*)&gameID, (char*)&GCMDisk, 4);
@@ -434,29 +431,24 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 			memset(&patchFile, 0, sizeof(file_handle));
 			sprintf(&patchFile.name[0], "%sswiss_patches/%s/%i",devices[DEVICE_PATCHES]->initial->name,gameID, i);
 			print_gecko("Looking for file %s\r\n", &patchFile.name);
-			struct stat fstat;
-			if(stat(&patchFile.name[0],&fstat)) {
+			
+			FILINFO fno;
+			if(f_stat(&patchFile.name[0], &fno) != FR_OK) {
+				break;	// Patch file doesn't exist, don't bother with fragments
+			}
+			devices[DEVICE_PATCHES]->seekFile(&patchFile,fno.fsize-16,DEVICE_HANDLER_SEEK_SET);
+			if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
+				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, patchInfo[0], patchInfo[1]))) {
+					return 0;
+				}
+				totFrags+=frags;
+				devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			}
+			else {
 				break;
 			}
-			patchFile.fp = fopen(&patchFile.name[0], "rb");
-			if(patchFile.fp) {
-				fseek(patchFile.fp, fstat.st_size-16, SEEK_SET);
-				
-				if((fread(&patchInfo, 1, 16, patchFile.fp) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-					get_frag_list(&patchFile.name[0]);
-					print_gecko("Found patch file %i ofs 0x%08X len 0x%08X base 0x%08X\r\n", 
-									i, patchInfo[0], patchInfo[1], frag_list->frag[0].sector);
-					fclose(patchFile.fp);
-					fragList[patches*3] = patchInfo[0];
-					fragList[(patches*3)+1] = patchInfo[1];
-					fragList[(patches*3)+2] = frag_list->frag[0].sector;
-					patches++;
-				}
-				else {
-					break;
-				}
-			}
 		}
+		print_frag_list(0);
 		// Disk 1 base sector
 		*(vu32*)VAR_DISC_1_LBA = fragList[2];
 		// Disk 2 base sector

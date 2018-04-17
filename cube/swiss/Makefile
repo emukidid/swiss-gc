@@ -69,7 +69,9 @@ SOURCES		:=  source \
 			  source/patches/mtx \
 			  source/patches/vi \
               source/images \
-			  source/images/buttons
+			  source/images/buttons \
+			  source/fatfs \
+			  source/fatfs/option
 DATA		:=	data  
 TEXTURES	:=	source/images \
               source/images/buttons
