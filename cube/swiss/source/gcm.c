@@ -314,7 +314,6 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		return 0;
 	}
 
-	char patchFileName[256];
 	char patchDirName[256];
 	char patchBaseDirName[256];
 	char gameID[8];
@@ -422,57 +421,54 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 				patchDeviceReady = true;
 			}
 			// File handle for a patch we might need to write
-			FILE *patchFile = 0;
-			memset(patchFileName, 0, 256);
+			file_handle patchFile;
+			memset(&patchFile, 0, sizeof(file_handle));
 		
+			int res;
 			// Make a base patches dir if we don't have one already
-			if(mkdir(&patchBaseDirName[0], 0777) != 0) {
-				if(errno != EEXIST) {
-					return -2;
+			if((res=f_mkdir(&patchBaseDirName[0])) != FR_OK) {
+				if(res != FR_EXIST) {
+					print_gecko("Warning: %i [%s]\r\n",res, patchBaseDirName);
 				}
 			}
-			if(mkdir(&patchDirName[0], 0777) != 0) {
-				if(errno != EEXIST) {
-					return -2;
+			if((res=f_mkdir(&patchDirName[0])) != FR_OK) {
+				if(res != FR_EXIST) {
+					print_gecko("Warning: %i [%s]\r\n",res, patchDirName);
 				}
 			}
-			sprintf(patchFileName, "%s/%i",patchDirName, num_patched);
+			sprintf(patchFile.name, "%s/%i",patchDirName, num_patched);
 
 			// Work out the crc32
 			crc32 = Crc32_ComputeBuf( 0, buffer, (u32) sizeToRead);
 
 			// See if this file already exists, if it does, match crc
-			patchFile = fopen( patchFileName, "rb" );
-			if(patchFile) {
+			if(!devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0)) {
 				//print_gecko("Old Patch exists\r\n");
 				u32 oldCrc32 = 0;
-				fseek(patchFile, 0L, SEEK_END);
-				u32 file_size = ftell(patchFile);
-				fseek(patchFile, file_size-4, SEEK_SET);
-				fread(&oldCrc32, 1, 4, patchFile);
+				devices[DEVICE_PATCHES]->seekFile(&patchFile, patchFile.size-4, DEVICE_HANDLER_SEEK_SET);
+				devices[DEVICE_PATCHES]->readFile(&patchFile, &oldCrc32, 4);
 				if(oldCrc32 == crc32) {
 					num_patched++;
-					fclose(patchFile);
+					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 					free(buffer);
 					print_gecko("CRC matched, no need to patch again\r\n");
 					continue;
 				}
 				else {
-					remove(patchFileName);
-					fclose(patchFile);
+					devices[DEVICE_PATCHES]->deleteFile(&patchFile);
 					print_gecko("CRC mismatch, writing patch again\r\n");
 				}
 			}
 			// Otherwise, write a file out for this game with the patched buffer inside.
-			print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", patchFileName, sizeToRead, filesToPatch[i].offset);
-			patchFile = fopen(patchFileName, "wb");
-			fwrite(buffer, 1, sizeToRead, patchFile);
+			print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", patchFile.name, sizeToRead, filesToPatch[i].offset);
+			devices[DEVICE_PATCHES]->seekFile(&patchFile, 0, DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, buffer, sizeToRead);
 			u32 magic = SWISS_MAGIC;
-			fwrite(&filesToPatch[i].offset, 1, 4, patchFile);
-			fwrite(&filesToPatch[i].size, 1, 4, patchFile);
-			fwrite(&magic, 1, 4, patchFile);
-			fwrite(&crc32, 1, 4, patchFile);
-			fclose(patchFile);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, &filesToPatch[i].offset, 4);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, &filesToPatch[i].size, 4);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, &magic, 4);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, &crc32, 4);
+			devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			num_patched++;
 		}
 		free(buffer);

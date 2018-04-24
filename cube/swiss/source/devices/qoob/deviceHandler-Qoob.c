@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include <malloc.h>
 #include <ogc/dvd.h>
-#include <sys/dir.h>
 #include <ogc/machine/processor.h>
 #include <sdcard/gcsd.h>
 #include "deviceHandler.h"

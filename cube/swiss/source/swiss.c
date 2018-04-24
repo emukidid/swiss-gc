@@ -932,6 +932,7 @@ void manage_file() {
 			}
 			// Traverse this destination device and let the user select a directory to dump the file in
 			file_handle *destFile = memalign(32,sizeof(file_handle));
+			memset(destFile, 0, sizeof(file_handle));
 			
 			// Show a directory only browser and get the destination file location
 			select_dest_dir(devices[DEVICE_DEST]->initial, destFile);
@@ -939,13 +940,12 @@ void manage_file() {
 			u32 isDestCard = devices[DEVICE_DEST] == &__device_card_a || devices[DEVICE_DEST] == &__device_card_b;
 			u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
 			
-			sprintf(destFile->name, "%s/%s",destFile->name,getRelativeName(&curFile.name[0]));
+			sprintf(destFile->name, "%s/%s",destFile->name,stripInvalidChars(getRelativeName(&curFile.name[0])));
 			destFile->fp = 0;
+			destFile->ffsFp = 0;
 			destFile->fileBase = 0;
 			destFile->size = 0;
 			destFile->fileAttrib = IS_FILE;
-			destFile->status = 0;
-			destFile->offset = 0;
 			// Create a GCI if something is coming out from CARD to another device
 			if(isSrcCard && !isDestCard) {
 				sprintf(destFile->name, "%s.gci",destFile->name);
@@ -1053,7 +1053,7 @@ void manage_file() {
 			if(devices[DEVICE_CUR] == devices[DEVICE_DEST]
 				&& option == MOVE_OPTION 
 				&& (devices[DEVICE_CUR]->features & FEAT_FAT_FUNCS)) {
-				ret = rename(&curFile.name[0], &destFile->name[0]);
+				ret = f_rename(&curFile.name[0], &destFile->name[0]);
 				//go up a folder
 				int len = strlen(&curFile.name[0]);
 				while(len && curFile.name[len-1]!='/') {
@@ -1105,6 +1105,8 @@ void manage_file() {
 						ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
 						if(ret != amountToCopy) {
 							free(readBuffer);
+							devices[DEVICE_CUR]->closeFile(&curFile);
+							devices[DEVICE_DEST]->closeFile(destFile);
 							DrawFrameStart();
 							sprintf(txtbuffer, "Failed to Read! (%ld %ld)\n%s",amountToCopy,ret, &curFile.name[0]);
 							DrawMessageBox(D_FAIL,txtbuffer);
@@ -1118,6 +1120,8 @@ void manage_file() {
 					ret = devices[DEVICE_DEST]->writeFile(destFile, readBuffer, amountToCopy);
 					if(ret != amountToCopy) {
 						free(readBuffer);
+						devices[DEVICE_CUR]->closeFile(&curFile);
+						devices[DEVICE_DEST]->closeFile(destFile);
 						DrawFrameStart();
 						sprintf(txtbuffer, "Failed to Write! (%ld %ld)\n%s",amountToCopy,ret,destFile->name);
 						DrawMessageBox(D_FAIL,txtbuffer);
@@ -1146,9 +1150,8 @@ void manage_file() {
 					}
 				}
 				free(readBuffer);
-				if(devices[DEVICE_DEST]->features & FEAT_FAT_FUNCS) {
-					fclose(destFile->fp);
-				}
+				devices[DEVICE_CUR]->closeFile(&curFile);
+				devices[DEVICE_DEST]->closeFile(destFile);
 				setGCIInfo(NULL);
 				setCopyGCIMode(FALSE);
 				free(destFile);
@@ -1416,14 +1419,6 @@ void draw_game_info() {
 	else {
 		sprintf(txtbuffer,"Size: %.2fMB", (float)curFile.size/1024/1024);
 		WriteFontStyled(640/2, 160, txtbuffer, 0.8f, true, defaultColor);
-		if(devices[DEVICE_CUR]->features & FEAT_FAT_FUNCS) {
-			get_frag_list(curFile.name);
-			if(frag_list->num > 1)
-				sprintf(txtbuffer,"File is in %ld fragments.", frag_list->num);
-			else
-				sprintf(txtbuffer,"File base sector 0x%08lX", frag_list->frag[0].sector);
-			WriteFontStyled(640/2, 180, txtbuffer, 0.8f, true, defaultColor);
-		}
 		if(curFile.meta) {
 			if(curFile.meta->banner)
 				DrawTexObj(&curFile.meta->bannerTexObj, 215, 240, 192, 64, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);

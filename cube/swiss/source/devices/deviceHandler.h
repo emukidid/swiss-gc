@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include <gctypes.h>
 #include <stdio.h>
+#include "ff.h"
+#include "diskio.h"
 #include "wode/WodeInterface.h"
 
 #define MAX_DEVICES 15
@@ -30,6 +32,7 @@ typedef struct {
 	s32 fileAttrib;        	// IS_FILE or IS_DIR
 	s32 status;            	// is the device ok
 	FILE *fp;				// file pointer
+	FIL* ffsFp;				// file pointer (FATFS)
 	file_meta *meta;
 	u8 other[128];			// Store anything else we want here
 } file_handle;	// Note: If the contents of this change, recompile pc/usbgecko/main.c

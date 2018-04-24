@@ -8,21 +8,20 @@
 #include <unistd.h>
 #include <malloc.h>
 #include <ogc/dvd.h>
-#include <sys/dir.h>
-#include <sys/statvfs.h>
 #include <ogc/machine/processor.h>
 #include <sdcard/gcsd.h>
 #include "deviceHandler.h"
+#include "deviceHandler-FAT.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "swiss.h"
 #include "main.h"
 #include "wkf.h"
-#include "frag.h"
 #include "patcher.h"
 
 const DISC_INTERFACE* wkf = &__io_wkf;
 int wkfFragSetupReq = 0;
+FATFS *wkffs = NULL;
 
 file_handle initial_WKF =
 	{ "wkf:/",       // directory
@@ -45,56 +44,7 @@ device_info* deviceHandler_WKF_info() {
 }
 
 s32 deviceHandler_WKF_readDir(file_handle* ffile, file_handle** dir, u32 type){	
-
-	DIR* dp = opendir( ffile->name );
-	if(!dp) return -1;
-	struct dirent *entry;
-	struct stat fstat;
-	
-	// Set everything up to read
-	int num_entries = 1, i = 1;
-	char file_name[1024];
-	*dir = malloc( num_entries * sizeof(file_handle) );
-	memset(*dir,0,sizeof(file_handle) * num_entries);
-	(*dir)[0].fileAttrib = IS_SPECIAL;
-	strcpy((*dir)[0].name, "..");
-	
-	// Read each entry of the directory
-	while( (entry = readdir(dp)) != NULL ){
-		if(strlen(entry->d_name) <= 2  && (entry->d_name[0] == '.' || entry->d_name[1] == '.')) {
-			continue;
-		}
-		memset(&file_name[0],0,1024);
-		sprintf(&file_name[0], "%s/%s", ffile->name, entry->d_name);
-		stat(&file_name[0],&fstat);
-		// Do we want this one?
-		if(type == -1 || ((fstat.st_mode & S_IFDIR) ? (type==IS_DIR) : (type==IS_FILE))) {
-			if(!(fstat.st_mode & S_IFDIR)) {
-				if(!checkExtension(entry->d_name)) continue;
-			}
-			// Make sure we have room for this one
-			if(i == num_entries){
-				++num_entries;
-				*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
-			}
-			memset(&(*dir)[i], 0, sizeof(file_handle));
-			sprintf((*dir)[i].name, "%s/%s", ffile->name, entry->d_name);
-			(*dir)[i].size     = fstat.st_size;
-			(*dir)[i].fileAttrib   = (fstat.st_mode & S_IFDIR) ? IS_DIR : IS_FILE;
-			if((*dir)[i].fileAttrib == IS_FILE) {
-				get_frag_list((*dir)[i].name);
-				u32 file_base = frag_list->num > 1 ? -1 : frag_list->frag[0].sector;
-				(*dir)[i].fileBase = file_base;
-			}
-			else {
-				(*dir)[i].fileBase = 0;
-			}		
-			++i;
-		}
-	}
-	
-	closedir(dp);
-	return num_entries;
+	return deviceHandler_FAT_readDir(ffile, dir, type);
 }
 
 
@@ -106,20 +56,7 @@ s32 deviceHandler_WKF_seekFile(file_handle* file, u32 where, u32 type){
 
 
 s32 deviceHandler_WKF_readFile(file_handle* file, void* buffer, u32 length){
-	if(!file->fp) {
-		file->fp = fopen( file->name, "rb" );
-		if(file->size <= 0) {
-			struct stat fstat;
-			stat(file->name,&fstat);
-			file->size = fstat.st_size;
-		}
-	}
-	if(!file->fp) return -1;
-	
-	fseek(file->fp, file->offset, SEEK_SET);
-	int bytes_read = fread(buffer, 1, length, file->fp);
-	if(bytes_read > 0) file->offset += bytes_read;
-	return bytes_read;
+	return deviceHandler_FAT_readFile(file, buffer, length);	// Same as FAT
 }
 
 
@@ -130,10 +67,10 @@ s32 deviceHandler_WKF_writeFile(file_handle* file, void* buffer, u32 length){
 
 s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 	
-	
+	// If there are 2 discs, we only allow 21 fragments per disc.
 	int maxFrags = (VAR_FRAG_SIZE/12), i = 0;
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-	int patches = 0;
+	s32 frags = 0, totFrags = 0;
 	
 	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
 
@@ -153,27 +90,21 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 			memset(&patchFile, 0, sizeof(file_handle));
 			sprintf(&patchFile.name[0], "%sswiss_patches/%s/%i",devices[DEVICE_PATCHES]->initial->name,gameID, i);
 			print_gecko("Looking for file %s\r\n", &patchFile.name);
-			struct stat fstat;
-			if(stat(&patchFile.name[0],&fstat)) {
-				break;
+			FILINFO fno;
+			if(f_stat(&patchFile.name[0], &fno) != FR_OK) {
+				break;	// Patch file doesn't exist, don't bother with fragments
 			}
-			patchFile.fp = fopen(&patchFile.name[0], "rb");
-			if(patchFile.fp) {
-				fseek(patchFile.fp, fstat.st_size-16, SEEK_SET);
-				
-				if((fread(&patchInfo, 1, 16, patchFile.fp) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-					get_frag_list(&patchFile.name[0]);
-					print_gecko("Found patch file %i ofs 0x%08X len 0x%08X base 0x%08X\r\n", 
-									i, patchInfo[0], patchInfo[1], frag_list->frag[0].sector);
-					fclose(patchFile.fp);
-					fragList[patches*3] = patchInfo[0];
-					fragList[(patches*3)+1] = patchInfo[1] | 0x80000000;
-					fragList[(patches*3)+2] = frag_list->frag[0].sector;
-					patches++;
+			
+			devices[DEVICE_PATCHES]->seekFile(&patchFile,fno.fsize-16,DEVICE_HANDLER_SEEK_SET);
+			if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
+				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, patchInfo[0], patchInfo[1] | 0x80000000))) {
+					return 0;
 				}
-				else {
-					break;
-				}
+				totFrags+=frags;
+				devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			}
+			else {
+				break;
 			}
 		}
 		// Copy the current speed
@@ -185,58 +116,32 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 		// Device slot (0 or 1) // This represents 0xCC0068xx in number of u32's so, slot A = 0xCC006800, B = 0xCC006814
 		*(vu32*)VAR_EXI_SLOT = ((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1) * 5;
 	}
-	
-	// Check if file2 exists
-	if(file2) {
-		get_frag_list(file2->name);
-		if(frag_list->num <= 0)
-			file2 = NULL;
-	}
 
-	// If there are 2 discs, we only allow 5 fragments per disc.
-	int frags = patches;
-	maxFrags = file2 ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12);
 	
-	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	get_frag_list(file->name);
-	if(frag_list->num < maxFrags) {
-		for(i = 0; i < frag_list->num; i++) {
-			fragList[frags*3] = frag_list->frag[i].offset*512;
-			fragList[(frags*3)+1] = frag_list->frag[i].count*512;
-			fragList[(frags*3)+2] = frag_list->frag[i].sector;
-			//print_gecko("Wrote Frag: ofs: %08X count: %08X sector: %08X\r\n",
-			//			fragList[frags*3],fragList[(frags*3)+1],fragList[(frags*3)+2]);
-			frags++;
-		}
-	}
-	else {
-		// file is too fragmented - go defrag it!
+	// No fragment room left for the actual game, fail.
+	if(totFrags+1 == maxFrags) {
 		return 0;
 	}
-		
+	
+	// If disc 1 is fragmented, make a note of the fragments and their sizes
+	if(!(frags = getFragments(file, &fragList[totFrags*3], maxFrags, 0, 0))) {
+		return 0;
+	}
+	totFrags += frags;
+	
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
 		// No fragment room left for the second disc, fail.
-		if(frags+1 == maxFrags) {
+		if(totFrags+1 == maxFrags) {
 			return 0;
 		}
-		get_frag_list(file2->name);
-		if(frag_list->num < maxFrags) {
-			for(i = 0; i < frag_list->num; i++) {
-				fragList[(frags*3) + (maxFrags*3)] = frag_list->frag[i].offset*512;
-				fragList[((frags*3) + 1) + (maxFrags*3)]  = frag_list->frag[i].count*512;
-				fragList[((frags*3) + 2) + (maxFrags*3)] = frag_list->frag[i].sector;
-				//print_gecko("Wrote Frag: ofs: %08X count: %08X sector: %08X\r\n",
-				//		fragList[frags*3],fragList[(frags*3)+1],fragList[(frags*3)+2]);
-				frags++;
-			}
-		}
-		else {
-			// file is too fragmented - go defrag it!
+		// TODO fix 2 disc patched games
+		if(!(frags = getFragments(file2, &fragList[(maxFrags*3)], maxFrags, 0, 0))) {
 			return 0;
 		}
+		totFrags += frags;
 	}
-	
+		
 	// Disk 1 base sector
 	*(vu32*)VAR_DISC_1_LBA = fragList[2];
 	// Disk 2 base sector
@@ -250,36 +155,45 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 }
 
 s32 deviceHandler_WKF_init(file_handle* file){
-	struct statvfs buf;
 	
 	wkfReinit();
-	int ret = fatMountSimple ("wkf", wkf) ? 1 : 0;
-	initial_WKF_info.freeSpaceInKB = initial_WKF_info.totalSpaceInKB = 0;	
-	if(ret) {
-		if(deviceHandler_getStatEnabled()) {
-			memset(&buf, 0, sizeof(statvfs));
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Reading filesystem info for wkf:/");
-			DrawFrameFinish();
-			
-			int res = statvfs("wkf:/", &buf);
-			initial_WKF_info.freeSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_bfree)/1024LL):0;
-			initial_WKF_info.totalSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_blocks)/1024LL):0;		
+	if(wkffs != NULL) {
+		f_mount(0, "wkf:/", 0);	// Unmount
+		free(wkffs);
+		wkffs = NULL;
+	}
+	wkffs = (FATFS*)malloc(sizeof(FATFS));
+	int ret = 0;
+	
+	if(((ret=f_mount(wkffs, "wkf:/", 0)) == FR_OK) && deviceHandler_getStatEnabled()) {	
+		DrawFrameStart();
+		sprintf(txtbuffer, "Reading filesystem info for wkf:/");
+		DrawMessageBox(D_INFO,txtbuffer);
+		DrawFrameFinish();
+		
+		DWORD free_clusters, free_sectors, total_sectors = 0;
+		if(f_getfree("wkf:/", &free_clusters, &wkffs) == FR_OK) {
+			total_sectors = (wkffs->n_fatent - 2) * wkffs->csize;
+			free_sectors = free_clusters * wkffs->csize;
+			initial_WKF_info.freeSpaceInKB = (u32)((free_sectors)>>1);
+			initial_WKF_info.totalSpaceInKB = (u32)((total_sectors)>>1);
 		}
 	}
+	else {
+		initial_WKF_info.freeSpaceInKB = initial_WKF_info.totalSpaceInKB = 0;	
+	}
 
-	return ret;
+	return ret == FR_OK;
 }
 
-extern char *getDeviceMountPath(char *str);
 s32 deviceHandler_WKF_deinit(file_handle* file) {
-	if(file && file->fp) {
-		fclose(file->fp);
-		file->fp = 0;
+	int ret = 0;
+	if(file && file->ffsFp) {
+		ret = f_close(file->ffsFp);
+		free(file->ffsFp);
+		file->ffsFp = 0;
 	}
-	if(file)
-		fatUnmount(getDeviceMountPath(file->name));
-	return 0;
+	return ret;
 }
 
 s32 deviceHandler_WKF_deleteFile(file_handle* file) {

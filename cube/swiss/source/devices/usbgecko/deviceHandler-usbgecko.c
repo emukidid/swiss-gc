@@ -6,7 +6,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <malloc.h>
-#include <sys/dir.h>
 #include <ogc/machine/processor.h>
 #include "deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
