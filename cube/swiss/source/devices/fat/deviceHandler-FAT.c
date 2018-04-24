@@ -280,10 +280,10 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 		fatFS = fs[IS_SDCARD(file->name) ? slot : 2+slot];
 	}
 	s32 numFrags = 0;
-	for(i = 1; i < (clmt[0] >> 1); i+=2) {
+	for(i = 1; i <= (clmt[0] >> 1); i+=2) {
 		if(clmt[i] == 0) break;	// No more
 		DWORD size = (clmt[i]) * fatFS->csize * 512;
-		DWORD sector = clust2sect(fatFS, clmt[i+1]);
+		DWORD sector = clst2sect(fatFS, clmt[i+1]);
 		// this frag offset in the file is the last frag offset+size
 		fragTbl[numFrags*3] = forceBaseOffset + (i > 1 ? fragTbl[((numFrags-1)*3)+1]+(fragTbl[((numFrags-1)*3)]) : 0);
 		fragTbl[(numFrags*3)+1] = (clmt[0] >> 1)-1 == 1 ? (forceSize!= 0?forceSize:file->size) : size;

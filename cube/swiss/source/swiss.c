@@ -940,7 +940,7 @@ void manage_file() {
 			u32 isDestCard = devices[DEVICE_DEST] == &__device_card_a || devices[DEVICE_DEST] == &__device_card_b;
 			u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
 			
-			sprintf(destFile->name, "%s/%s",destFile->name,getRelativeName(stripInvalidChars(&curFile.name[0])));
+			sprintf(destFile->name, "%s/%s",destFile->name,stripInvalidChars(getRelativeName(&curFile.name[0])));
 			destFile->fp = 0;
 			destFile->ffsFp = 0;
 			destFile->fileBase = 0;
@@ -1106,6 +1106,7 @@ void manage_file() {
 						if(ret != amountToCopy) {
 							free(readBuffer);
 							devices[DEVICE_CUR]->closeFile(&curFile);
+							devices[DEVICE_DEST]->closeFile(destFile);
 							DrawFrameStart();
 							sprintf(txtbuffer, "Failed to Read! (%ld %ld)\n%s",amountToCopy,ret, &curFile.name[0]);
 							DrawMessageBox(D_FAIL,txtbuffer);
@@ -1120,6 +1121,7 @@ void manage_file() {
 					if(ret != amountToCopy) {
 						free(readBuffer);
 						devices[DEVICE_CUR]->closeFile(&curFile);
+						devices[DEVICE_DEST]->closeFile(destFile);
 						DrawFrameStart();
 						sprintf(txtbuffer, "Failed to Write! (%ld %ld)\n%s",amountToCopy,ret,destFile->name);
 						DrawMessageBox(D_FAIL,txtbuffer);
@@ -1149,6 +1151,7 @@ void manage_file() {
 				}
 				free(readBuffer);
 				devices[DEVICE_CUR]->closeFile(&curFile);
+				devices[DEVICE_DEST]->closeFile(destFile);
 				setGCIInfo(NULL);
 				setCopyGCIMode(FALSE);
 				free(destFile);
