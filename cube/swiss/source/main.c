@@ -52,7 +52,7 @@ int curSelection = 0;		        //game selection
 int needsDeviceChange = 0;
 int needsRefresh = 0;
 SwissSettings swissSettings;
-char *knownExtensions[] = {".dol\0", ".iso\0", ".gcm\0", ".mp3\0", ".fzn\0", ".gci\0"};
+char *knownExtensions[] = {".dol\0", ".iso\0", ".gcm\0", ".mp3\0", ".fzn\0", ".gci\0", ".dol+cli\0"};
 
 int endsWith(char *str, char *end) {
 	if(strlen(str) < strlen(end))

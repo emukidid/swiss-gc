@@ -1287,7 +1287,7 @@ void load_file()
 		
 	//if it's a DOL, boot it
 	if(strlen(fileName)>4) {
-		if(endsWith(fileName,".dol")) {
+		if(endsWith(fileName,".dol") || endsWith(fileName,".dol+cli")) {
 			boot_dol();
 			// if it was invalid (overlaps sections, too large, etc..) it'll return
 			DrawFrameStart();

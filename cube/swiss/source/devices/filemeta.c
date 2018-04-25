@@ -161,6 +161,9 @@ void populate_meta(file_handle *f) {
 			else if(endsWith(f->name,".dol")) {	//DOL
 				f->meta = create_basic_meta(dolimg_tpl, dolimg_tpl_size);
 			}
+			else if(endsWith(f->name,".dol+cli")) {	//DOL+CLI
+				f->meta = create_basic_meta(dolcliimg_tpl, dolcliimg_tpl_size);
+			}
 			else {
 				f->meta = create_basic_meta(fileimg_tpl, fileimg_tpl_size);
 			}

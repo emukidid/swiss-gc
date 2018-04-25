@@ -88,6 +88,7 @@ extern int whichfb;
 #include "pal.h"
 #include "mp3img_tpl.h"
 #include "dolimg_tpl.h"
+#include "dolcliimg_tpl.h"
 #include "dirimg_tpl.h"
 #include "fileimg_tpl.h"
 #include "checked_32_tpl.h"
