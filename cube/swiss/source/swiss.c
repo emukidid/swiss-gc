@@ -24,7 +24,6 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include "frag.h"
 #include "swiss.h"
 #include "main.h"
 #include "httpd.h"
