@@ -268,7 +268,7 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 	file->ffsFp->cltbl = &clmt[0];
 	if(f_lseek(file->ffsFp, CREATE_LINKMAP) != FR_OK) return 0;	// Too many fragments for our buffer
 	
-	print_gecko("getFragments [%s] - found %i fragments\r\n",file->name, (clmt[0] >> 1)-1);
+	print_gecko("getFragments [%s] - found %i fragments [%i arr]\r\n",file->name, (clmt[0] >> 1)-1, clmt[0]);
 	
 	// WKF also uses this, make sure we use the right fs obj
 	FATFS* fatFS = NULL;
@@ -280,7 +280,7 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 		fatFS = fs[IS_SDCARD(file->name) ? slot : 2+slot];
 	}
 	s32 numFrags = 0;
-	for(i = 1; i <= (clmt[0] >> 1); i+=2) {
+	for(i = 1; i < (clmt[0]); i+=2) {
 		if(clmt[i] == 0) break;	// No more
 		DWORD size = (clmt[i]) * fatFS->csize * 512;
 		DWORD sector = clst2sect(fatFS, clmt[i+1]);
@@ -503,7 +503,7 @@ bool deviceHandler_FAT_test_ide_b(int slot, bool isSdCard, char *mountPath) {
 DEVICEHANDLER_INTERFACE __device_sd_a = {
 	DEVICE_ID_1,
 	"SD Gecko - Slot A",
-	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32",
+	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_SDSMALL, 60, 80},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_CAN_READ_PATCHES|FEAT_REPLACES_DVD_FUNCS,
 	LOC_MEMCARD_SLOT_A,
@@ -524,7 +524,7 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 DEVICEHANDLER_INTERFACE __device_sd_b = {
 	DEVICE_ID_2,
 	"SD Gecko - Slot B",
-	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32",
+	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_SDSMALL, 60, 80},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_CAN_READ_PATCHES|FEAT_REPLACES_DVD_FUNCS,
 	LOC_MEMCARD_SLOT_B,
@@ -545,7 +545,7 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 DEVICEHANDLER_INTERFACE __device_ide_a = {
 	DEVICE_ID_3,
 	"IDE-EXI - Slot A",
-	"IDE HDD - Supported File System(s): FAT16, FAT32",
+	"IDE HDD - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_HDD, 80, 80},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_CAN_READ_PATCHES|FEAT_REPLACES_DVD_FUNCS,
 	LOC_MEMCARD_SLOT_A,
@@ -566,7 +566,7 @@ DEVICEHANDLER_INTERFACE __device_ide_a = {
 DEVICEHANDLER_INTERFACE __device_ide_b = {
 	DEVICE_ID_4,
 	"IDE-EXI - Slot B",
-	"IDE HDD - Supported File System(s): FAT16, FAT32",
+	"IDE HDD - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_HDD, 80, 80},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_CAN_READ_PATCHES|FEAT_REPLACES_DVD_FUNCS,
 	LOC_MEMCARD_SLOT_B,
