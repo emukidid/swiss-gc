@@ -87,15 +87,19 @@ void info_draw_page(int page_num) {
 				sprintf(topStr, "WKF Serial %s",wkfGetSerial());
 			}
 		}
-		else
+		else {
 			sprintf(topStr, "No DVD Drive present");
+		}
 		WriteFontStyled(640/2, 170, topStr, 1.0f, true, defaultColor);
 		sprintf(topStr, "%s",videoStr);
 		WriteFontStyled(640/2, 200, topStr, 1.0f, true, defaultColor);
 		sprintf(topStr,"%s / %s",getSramLang(sram->lang), sram->flags&4 ? "Stereo":"Mono");
 		WriteFontStyled(640/2, 230, topStr, 1.0f, true, defaultColor);
-		sprintf(topStr,"PVR %08lX ECID %08lX:%08lX:%08lX",mfpvr(),mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
-		WriteFontStyled(640/2, 260, topStr, 0.75f, true, defaultColor);
+		// GC 00083214, 00083410
+		sprintf(topStr,"CPU Revision/Version (%08lX)",mfpvr());
+		WriteFontStyled(640/2, 290, topStr, 0.75f, true, defaultColor);
+		sprintf(topStr,"CPU Unique ECID %08lX:%08lX:%08lX",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
+		WriteFontStyled(640/2, 320, topStr, 0.75f, true, defaultColor);
 	}
 	else if(page_num == 1) {
 		WriteFont(30, 65, "Device Info (2/3):");
@@ -117,44 +121,15 @@ void info_draw_page(int page_num) {
 			sprintf(topStr,"USB Gecko: Not Present");
 		}
 		WriteFont(30, 170, topStr);
-		/*if (!deviceHandler_initial) {
-			sprintf(topStr, "Current Device: No Device Selected");
-		}
-		else if(deviceHandler_initial == &initial_SD0 || deviceHandler_initial == &initial_SD1) {
-			int slot = (deviceHandler_initial->name[2] == 'b');
-			sprintf(topStr, "Current Device: %s Card in %s @ %s",!SDHCCard?"SDHC":"SD",!slot?"Slot A":"Slot B",!swissSettings.exiSpeed?"16Mhz":"32Mhz");
-		}
-		else if(deviceHandler_initial == &initial_DVD) {
-			sprintf(topStr, "Current Device: %s DVD Disc",dvdDiscTypeStr);
-		}
-		else if(deviceHandler_initial == &initial_IDE0 || deviceHandler_initial == &initial_IDE1) {
-			int slot = (deviceHandler_initial->name[3] == 'b');
-			sprintf(topStr, "Current Device: %ld GB HDD in %s",ataDriveInfo.sizeInGigaBytes,!slot?"Slot A":"Slot B");
-		}
-		else if(deviceHandler_initial == &initial_Qoob) {
-			sprintf(topStr, "Current Device: Qoob IPL Replacement");
-		}
-		else if(deviceHandler_initial == &initial_WODE) {
-			sprintf(topStr, "Current Device: Wode Jukebox");
-		}
-		else if(deviceHandler_initial == &initial_CARDA || deviceHandler_initial == &initial_CARDB) {
-			sprintf(topStr, "Current Device: Memory Card in %s",!deviceHandler_initial->fileBase?"Slot A":"Slot B");
-		}
-		else if(deviceHandler_initial == &initial_USBGecko) {
-			sprintf(topStr, "Current Device: USB Gecko");
-		}
-		else if(deviceHandler_initial == &initial_WKF) {
-			sprintf(topStr, "Current Device: Wiikey Fusion");
-		}
-		else if(deviceHandler_initial == &initial_SYS) {
-			sprintf(topStr, "Current Device: System");
-		}
-		WriteFont(30, 200, topStr); TODO*/
+		sprintf(topStr, "Current Device: %s", (devices[DEVICE_CUR] != NULL ? devices[DEVICE_CUR]->deviceName : "None"));
+		WriteFont(30, 200, topStr);
+		sprintf(topStr, "Config Device: %s", (devices[DEVICE_CONFIG] != NULL ? devices[DEVICE_CONFIG]->deviceName : "None"));
+		WriteFont(30, 230, topStr);
 	}
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Credits (3/3):");
 		WriteFontStyled(640/2, 115, "Swiss ver 0.4", 1.0f, true, defaultColor);
-		WriteFontStyled(640/2, 140, "by emu_kidid 2017", 0.75f, true, defaultColor);
+		WriteFontStyled(640/2, 140, "by emu_kidid 2018", 0.75f, true, defaultColor);
 		sprintf(txtbuffer, "Commit %s Revision %s", GITREVISION, GITVERSION);
 		WriteFontStyled(640/2, 165, txtbuffer, 0.75f, true, defaultColor);
 		WriteFontStyled(640/2, 210, "Thanks to", 0.75f, true, defaultColor);

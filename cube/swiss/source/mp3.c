@@ -108,7 +108,7 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 /* Plays a MP3 file */
 void mp3_player(file_handle* allFiles, int numFiles, file_handle* curFile) {
 	// Initialise the audio subsystem
-	ASND_Init(NULL);
+	ASND_Init();
 	MP3Player_Init();
 	
 	// Find all the .mp3 files in the set of allFiles, and also where our file is.
