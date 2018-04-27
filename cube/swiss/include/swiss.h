@@ -69,7 +69,7 @@ extern void select_dest_dir(file_handle* directory, file_handle* selection);
 
 typedef struct {
 	int debugUSB; // Debug prints over USBGecko
-	int hasDVDDrive;
+	int hasDVDDrive;	// 0 if none, 1 if something, 2 if present and init'd from cold boot
 	int exiSpeed;
 	int uiVMode;	// What mode to force Swiss into
 	int gameVMode;	// What mode to force a Game into

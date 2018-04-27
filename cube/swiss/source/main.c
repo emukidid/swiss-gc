@@ -203,7 +203,7 @@ void* Initialise (void)
 	swissSettings.hasDVDDrive = *(u32*)&driveVersion[0] ? 1 : 0;
 	
 	if(!driveVersion[0]) {
-		// Reset DVD if there was a modchip
+		// Reset DVD if there was a IPL replacement that hasn't done that for us yet
 		DrawFrameStart();
 		WriteFontStyled(640/2, 250, "Initialise DVD .. (HOLD B if NO DVD Drive)", 0.8f, true, defaultColor);
 		DrawFrameFinish();
@@ -213,7 +213,7 @@ void* Initialise (void)
 			dvd_set_streaming(*(char*)0x80000008);
 		}
 		drive_version(&driveVersion[0]);
-		swissSettings.hasDVDDrive = *(u32*)&driveVersion[0] ? 1 : 0;
+		swissSettings.hasDVDDrive = *(u32*)&driveVersion[0] ? 2 : 0;
 		if(!swissSettings.hasDVDDrive) {
 			DrawFrameStart();
 			DrawMessageBox(D_INFO, "No DVD Drive Detected !!");
@@ -352,25 +352,20 @@ void main_loop()
 		select_device(DEVICE_CUR);
 		if(devices[DEVICE_CUR] != NULL) {
 			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+			DrawFrameStart();
+			DrawMessageBox(D_INFO,"Setting up device");
+			DrawFrameFinish();
+			// If the user selected a device, make sure it's ready before we browse the filesystem
+			sdgecko_setSpeed(EXI_SPEED32MHZ);
+			if(!devices[DEVICE_CUR]->init( devices[DEVICE_CUR]->initial )) {
+				needsDeviceChange = 1;
+				deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], false);
+				return;
+			}
+			deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], true);	
 		}
 		curMenuLocation = ON_OPTIONS;
-	}
-	if(devices[DEVICE_CUR] != NULL) {
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,"Setting up device");
-		DrawFrameFinish();
-		// If the user selected a device, make sure it's ready before we browse the filesystem
-		devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
-		sdgecko_setSpeed(EXI_SPEED32MHZ);
-		if(!devices[DEVICE_CUR]->init( devices[DEVICE_CUR]->initial )) {
-			needsDeviceChange = 1;
-			deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], false);
-			return;
-		}
-		deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], true);	
-	}
-	else {
-		curMenuLocation=ON_OPTIONS;
+
 	}
 
 	while(1) {
@@ -516,8 +511,6 @@ int main ()
 			}
 			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 			needsDeviceChange = 0;
-			// TODO: re-add if dvd && gcm type disc, show banner/boot screen
-			// If this device can write, set it as the config device for now
 		}
 	}
 
@@ -536,8 +529,8 @@ int main ()
 		init_httpd_thread();
 	}
 	
-	// DVD Motor off
-	if(swissSettings.stopMotor && swissSettings.hasDVDDrive) {
+	// DVD Motor off setting; Always stop the drive if we only started it to read the ID out
+	if((swissSettings.stopMotor && swissSettings.hasDVDDrive) || (swissSettings.hasDVDDrive == 2)) {
 		dvd_motor_off();
 	}
 
