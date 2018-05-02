@@ -434,20 +434,26 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 	memcpy(&curDir, directory, sizeof(file_entry));
 	int i = 0, j = 0, max = 0, refresh = 1, num_files =0, idx = 0;
 	
+	int fileListBase = 90;
+	int scrollBarHeight = (FILES_PER_PAGE*40);
+	int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
 	while(1){
 		// Read the directory
 		if(refresh) {
 			num_files = devices[DEVICE_DEST]->readDir(&curDir, &directories, IS_DIR);
 			sortFiles(directories, num_files);
 			refresh = idx = 0;
+			scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
 		}
 		doBackdrop();
 		DrawEmptyBox(20,40, vmode->fbWidth-20, 450, COLOR_BLACK);
 		WriteFont(50, 55, "Enter directory and press X");
 		i = MIN(MAX(0,idx-FILES_PER_PAGE/2),MAX(0,num_files-FILES_PER_PAGE));
 		max = MIN(num_files, MAX(idx+FILES_PER_PAGE/2,FILES_PER_PAGE));
+		if(num_files > FILES_PER_PAGE)
+			DrawVertScrollBar(vmode->fbWidth-30, fileListBase, 16, scrollBarHeight, (float)((float)idx/(float)(num_files-1)),scrollBarTabHeight);
 		for(j = 0; i<max; ++i,++j) {
-			DrawSelectableButton(50,90+(j*50), 550, 90+(j*50)+50, getRelativeName((directories)[i].name), (i == idx) ? B_SELECTED:B_NOSELECT,-1);
+			DrawSelectableButton(50,fileListBase+(j*40), vmode->fbWidth-35, fileListBase+(j*40)+40, getRelativeName((directories)[i].name), (i == idx) ? B_SELECTED:B_NOSELECT,-1);
 		}
 		DrawFrameFinish();
 		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN))
