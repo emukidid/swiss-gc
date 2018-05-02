@@ -37,12 +37,18 @@ typedef struct {
 typedef struct {
 	u32 offset;
 	u32 size;
-	char name[64];
+	char name[256];
 	u32 type;
+	u32 tgcFstOffset;
+	u32 tgcFstSize;
+	u32 tgcBase;
+	u32 tgcFileStartArea;
+	u32 tgcFakeOffset;
 } ExecutableFile __attribute__((aligned(32)));
 
 int parse_gcm(file_handle *file, ExecutableFile *filesToPatch);
-int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base);
+void adjust_tgc_fst(char* FST, u32 tgc_base, u32 fileAreaStart, u32 fakeAmount);
+int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, char* tgcname);
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, int multiDol);
 int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace);
 unsigned int getBannerOffset(file_handle *f);

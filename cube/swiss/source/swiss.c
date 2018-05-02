@@ -487,16 +487,78 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 
 char *DiscIDNoASRequired[14] = {"GMP", "GFZ", "GPO", "GGS", "GSN", "GEO", "GR2", "GXG", "GM8", "G2M", "GMO", "G9S", "GHQ", "GTK"};
 
-unsigned int load_app(int multiDol)
+// Alt DOL sorting/selecting code
+int exccomp(const void *a1, const void *b1)
+{
+	const ExecutableFile* a = a1;
+	const ExecutableFile* b = b1;
+	
+	if(!a && b) return 1;
+	if(a && !b) return -1;
+	if(!a && !b) return 0;
+	
+	if(a->type == PATCH_DOL && b->type != PATCH_DOL)
+		return -1;
+	if(a->type != PATCH_DOL && b->type == PATCH_DOL)
+		return 1;
+
+	return strcasecmp(a->name, b->name);
+}
+
+void sortDols(ExecutableFile *filesToPatch, int num_files)
+{
+	if(num_files > 0) {
+		qsort(filesToPatch, num_files, sizeof(ExecutableFile), exccomp);
+	}
+}
+
+// Allow the user to select an alternate DOL
+ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch) {
+	int i = 0, j = 0, max = 0, idx = 0, page = 4;
+	for(i = 0; i < 64; i++) if(filesToPatch[i].offset == 0) break;
+	sortDols(filesToPatch, i);	// Sort DOL to the top
+	for(i = 0; i < 64; i++) if(filesToPatch[i].offset == 0 || filesToPatch[i].type != PATCH_DOL) break;
+	int num_files = i;
+	if(num_files < 2) return 0;
+	
+	int fileListBase = 175;
+	int scrollBarHeight = (page*40);
+	int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
+	while(1) {
+		doBackdrop();
+		DrawEmptyBox(20,fileListBase-30, vmode->fbWidth-20, 340, COLOR_BLACK);
+		WriteFont(50, fileListBase-30, "Select DOL or Press B to boot normally");
+		i = MIN(MAX(0,idx-(page/2)),MAX(0,num_files-page));
+		max = MIN(num_files, MAX(idx+(page/2),page));
+		if(num_files > page)
+			DrawVertScrollBar(vmode->fbWidth-30, fileListBase, 16, scrollBarHeight, (float)((float)idx/(float)(num_files-1)),scrollBarTabHeight);
+		for(j = 0; i<max; ++i,++j) {
+			DrawSelectableButton(50,fileListBase+(j*40), vmode->fbWidth-35, fileListBase+(j*40)+40, filesToPatch[i].name, (i == idx) ? B_SELECTED:B_NOSELECT,-1);
+		}
+		DrawFrameFinish();
+		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN))
+			{ VIDEO_WaitVSync (); }
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) > 16){	idx = (--idx < 0) ? num_files-1 : idx;}
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || PAD_StickY(0) < -16) {idx = (idx + 1) % num_files;	}
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_A))	break;
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_B))	{ idx = -1; break; }
+		if(PAD_StickY(0) < -16 || PAD_StickY(0) > 16) {
+			usleep(50000 - abs(PAD_StickY(0)*256));
+		}
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)))
+			{ VIDEO_WaitVSync (); }
+	}
+	return idx >= 0 ? &filesToPatch[idx] : NULL;
+	
+}
+
+unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 {
 	char* gameID = (char*)0x80000000;
 	int i = 0;
 	u32 main_dol_size = 0;
 	u8 *main_dol_buffer = 0;
 	DOLHEADER dolhdr;
-	
-	// If there's no drive, we need to use blocking patches.
-	if(!swissSettings.hasDVDDrive) multiDol = 1;
 	
 	memcpy((void*)0x80000020,GC_DefaultConfig,0xE0);
   
@@ -509,10 +571,6 @@ unsigned int load_app(int multiDol)
 		while(1);
 	}
 
-	DrawFrameStart();
-	DrawProgressBar(33, "Reading Main DOL");
-	DrawFrameFinish();
-
 	// False alarm audio streaming list games here
 	for(i = 0; i < 14; i++) {
 		if(!strncmp(gameID, DiscIDNoASRequired[i], 3) ) {
@@ -521,6 +579,25 @@ unsigned int load_app(int multiDol)
 			break;
 		}
 	}
+	
+	// Prompt for DOL selection if multi-dol
+	ExecutableFile* altDol = NULL;
+	if(filesToPatch != NULL && multiDol) {
+		altDol = select_alt_dol(filesToPatch);
+		if(altDol != NULL) {
+			print_gecko("Alt DOL selected :%08X\r\n", altDol->offset);
+			GCMDisk.DOLOffset = altDol->offset;
+			// For a DOL from a TGC, redirect the FST to the TGC FST.
+			if(altDol->tgcFstSize > 0) {
+				GCMDisk.MaxFSTSize = altDol->tgcFstSize;
+				GCMDisk.FSTOffset = altDol->tgcFstOffset;
+			}
+		}
+	}
+
+	DrawFrameStart();
+	DrawProgressBar(33, "Loading DOL");
+	DrawFrameFinish();
 	
 	// Don't needlessly apply audio streaming if the game doesn't want it
 	if(!GCMDisk.AudioStreaming || devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR] == &__device_dvd) {
@@ -547,6 +624,9 @@ unsigned int load_app(int multiDol)
 		DrawFrameFinish();
 		while(1);
 	}
+	if(altDol != NULL && altDol->tgcFstSize > 0) {
+		adjust_tgc_fst((void*)(top_of_main_ram-fstSizeAligned), altDol->tgcBase, altDol->tgcFileStartArea, altDol->tgcFakeOffset);
+	}
 	
 	// Read bi2.bin (Disk Header Information) to just under the FST
 	devices[DEVICE_CUR]->seekFile(&curFile,0x440,DEVICE_HANDLER_SEEK_SET);
@@ -567,14 +647,14 @@ unsigned int load_app(int multiDol)
 	*(volatile u32*)0x800000C0 = (u32)osctxblock | 0x7FFFFFFF;
 	*(volatile u32*)0x800000D4 = (u32)osctxblock;
 	memset(osctxblock, 0, 1024);
-		
-	print_gecko("Main DOL Lives at %08X\r\n", GCMDisk.DOLOffset);
+
+	print_gecko("DOL Lives at %08X\r\n", GCMDisk.DOLOffset);
 	
 	// Read the Main DOL header
 	devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
 	if(devices[DEVICE_CUR]->readFile(&curFile,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
 		DrawFrameStart();
-		DrawMessageBox(D_FAIL, "Failed to read Main DOL Header");
+		DrawMessageBox(D_FAIL, "Failed to read DOL Header");
 		DrawFrameFinish();
 		while(1);
 	}
@@ -588,15 +668,15 @@ unsigned int load_app(int multiDol)
 		if (dolhdr.dataLength[i] + dolhdr.dataOffset[i] > main_dol_size)
 			main_dol_size = dolhdr.dataLength[i] + dolhdr.dataOffset[i];
 	}
-	print_gecko("Main DOL size %i\r\n", main_dol_size);
+	print_gecko("DOL size %i\r\n", main_dol_size);
 
 	// Read the entire Main DOL
 	main_dol_buffer = (u8*)memalign(32,main_dol_size+DOLHDRLENGTH);
-	print_gecko("Main DOL buffer %08X\r\n", (u32)main_dol_buffer);
+	print_gecko("DOL buffer %08X\r\n", (u32)main_dol_buffer);
 	devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
 	if(devices[DEVICE_CUR]->readFile(&curFile,(void*)main_dol_buffer,main_dol_size+DOLHDRLENGTH) != main_dol_size+DOLHDRLENGTH) {
 		DrawFrameStart();
-		DrawMessageBox(D_FAIL, "Failed to read Main DOL");
+		DrawMessageBox(D_FAIL, "Failed to read DOL");
 		DrawFrameFinish();
 		while(1);
 	}
@@ -675,7 +755,7 @@ unsigned int load_app(int multiDol)
 	// See if the combination of our patches has exhausted our play area.
 	if(!install_code()) {
 		DrawFrameStart();
-		DrawMessageBox(D_FAIL, "Too many patches enabled memory limit reached!");
+		DrawMessageBox(D_FAIL, "Too many patches enabled, memory limit reached!");
 		DrawFrameFinish();
 		wait_press_A();
 		return 0;
@@ -1230,9 +1310,11 @@ void load_game() {
 	}
 	
 	int multiDol = 0;
+	ExecutableFile *filesToPatch = memalign(32, sizeof(ExecutableFile)*512);
+	memset(filesToPatch, 0, sizeof(ExecutableFile)*512);
 	// Report to the user the patch status of this GCM/ISO file
 	if(devices[DEVICE_CUR]->features & FEAT_CAN_READ_PATCHES) {
-		multiDol = check_game();
+		multiDol = check_game(filesToPatch);
 	}
 	
   	if(devices[DEVICE_CUR] != &__device_wode) {
@@ -1265,6 +1347,7 @@ void load_game() {
 			DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)");
 			DrawFrameFinish();
 			wait_press_A();
+			free(filesToPatch);
 			return;
 		}
 
@@ -1276,7 +1359,7 @@ void load_game() {
 
 	// setup the video mode before we kill libOGC kernel
 	ogc_video__reset();
-	load_app(multiDol);
+	load_app(multiDol, filesToPatch);
 }
 
 /* Execute/Load/Parse the currently selected file */
@@ -1355,21 +1438,19 @@ void load_file()
 
 }
 
-int check_game()
+int check_game(ExecutableFile *filesToPatch)
 { 	
 	int multiDol = 0;
 	DrawFrameStart();
 	DrawMessageBox(D_INFO,"Checking Game ..");
 	DrawFrameFinish();
 	
-	ExecutableFile *filesToPatch = memalign(32, sizeof(ExecutableFile)*512);
 	int numToPatch = parse_gcm(&curFile, filesToPatch);
 	
 	if(numToPatch>0) {
 		// Game requires patch files, lets do it.	
 		multiDol = patch_gcm(&curFile, filesToPatch, numToPatch, 0);
 	}
-	free(filesToPatch);
 	return multiDol;
 }
 

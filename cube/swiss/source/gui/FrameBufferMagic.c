@@ -443,6 +443,7 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
 		middleY = y1+3;
 	}
 
+	float scale = GetTextScaleToFitInWidth(message, (x2-x1)-(borderSize*2));
 	GXColor selectColor = (GXColor) {96,107,164,GUI_MSGBOX_ALPHA}; //bluish
 	GXColor noColor = (GXColor) {0,0,0,0}; //black
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
@@ -450,11 +451,11 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
 	//Draw Text and backfill (if selected)
 	if(mode==B_SELECTED) {
 		DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, selectColor, borderColor);
-		WriteFontStyled(x1 + borderSize+3, middleY, message, 1.0f, false, defaultColor);
+		WriteFontStyled(x1 + borderSize+3, middleY, message, scale, false, defaultColor);
 	}
 	else {
 		DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, noColor, borderColor);
-		WriteFontStyled(x1 + borderSize+3, middleY, message, 1.0f, false, defaultColor);
+		WriteFontStyled(x1 + borderSize+3, middleY, message, scale, false, defaultColor);
 	}
 }
 

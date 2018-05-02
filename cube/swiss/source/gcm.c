@@ -154,7 +154,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 			if(endsWith(filename,".tgc")) {
 				// Go through all the TGC's internal files
 				ExecutableFile *filesInTGCToPatch = memalign(32, sizeof(ExecutableFile)*32);
-				int numTGCFilesToPatch = parse_tgc(file, filesInTGCToPatch, file_offset), j;
+				int numTGCFilesToPatch = parse_tgc(file, filesInTGCToPatch, file_offset, filename), j;
 				for(j=0; j<numTGCFilesToPatch; j++) {
 					memcpy(&filesToPatch[numFiles], &filesInTGCToPatch[j], sizeof(ExecutableFile));
 					numFiles++;
@@ -215,7 +215,25 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 	return numFiles;
 }
 
-int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
+// Adjust TGC FST entries in case we load a DOL from one directly
+void adjust_tgc_fst(char* FST, u32 tgc_base, u32 fileAreaStart, u32 fakeAmount) {
+	u32 entries=*(unsigned int*)&FST[8];
+		
+	int i;
+	// go through every entry
+	for (i=1;i<entries;i++) 
+	{ 
+		u32 offset=i*0x0c; 
+		if(FST[offset]==0) //skip directories
+		{ 
+			u32 file_offset = 0;
+			memcpy(&file_offset, &FST[offset+4], 4);
+			*(unsigned int*)&FST[offset+4] = (file_offset-fakeAmount) + (tgc_base+fileAreaStart);
+		} 
+	}
+}
+
+int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, char* tgcname) {
 	char	*FST; 
 	char	filename[256];
 	u32 fileAreaStart, fakeAmount, offset, size, numFiles = 0;
@@ -227,22 +245,32 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 	devices[DEVICE_CUR]->readFile(file, &fileAreaStart, 4);
 	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x34,DEVICE_HANDLER_SEEK_SET);
 	devices[DEVICE_CUR]->readFile(file, &fakeAmount, 4);
-	filesToPatch[numFiles].offset = offset+tgc_base;
-	filesToPatch[numFiles].size = size;
-	filesToPatch[numFiles].type = PATCH_DOL;
-	strcpy(&filesToPatch[numFiles].name[0],"TGC Main DOL");
-	numFiles++;
 	
 	// Grab FST Offset & Size
 	u32 fstOfsAndSize[2];
  	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x10,DEVICE_HANDLER_SEEK_SET);
  	devices[DEVICE_CUR]->readFile(file,&fstOfsAndSize,2*sizeof(u32));
+	
+	// The TGC main DOL entry
+	filesToPatch[numFiles].offset = offset+tgc_base;
+	filesToPatch[numFiles].size = size;
+	filesToPatch[numFiles].tgcFstOffset = tgc_base+fstOfsAndSize[0];
+	filesToPatch[numFiles].tgcFstSize = fstOfsAndSize[1];
+	filesToPatch[numFiles].tgcBase = tgc_base;
+	filesToPatch[numFiles].tgcFileStartArea = fileAreaStart;
+	filesToPatch[numFiles].tgcFakeOffset = fakeAmount;
+	filesToPatch[numFiles].type = PATCH_DOL;
+	sprintf(&filesToPatch[numFiles].name[0], "%s Main DOL", tgcname);
+	numFiles++;
 
  	// Alloc and read FST
 	FST=(char*)memalign(32,fstOfsAndSize[1]); 
 	devices[DEVICE_CUR]->seekFile(file,tgc_base+fstOfsAndSize[0],DEVICE_HANDLER_SEEK_SET);
  	devices[DEVICE_CUR]->readFile(file,FST,fstOfsAndSize[1]);
 
+	// Adjust TGC FST offsets
+	adjust_tgc_fst(FST, tgc_base, fileAreaStart, fakeAmount);
+	
 	u32 entries=*(unsigned int*)&FST[8];
 	u32 string_table_offset=FST_ENTRY_SIZE*entries;
 		
@@ -260,21 +288,26 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
 			if(endsWith(filename,".dol")) {
-				filesToPatch[numFiles].offset = (file_offset-fakeAmount)+(tgc_base+fileAreaStart);
+				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL;
+				filesToPatch[numFiles].tgcFstOffset = tgc_base+fstOfsAndSize[0];
+				filesToPatch[numFiles].tgcFstSize = fstOfsAndSize[1];
+				filesToPatch[numFiles].tgcBase = tgc_base;
+				filesToPatch[numFiles].tgcFileStartArea = fileAreaStart;
+				filesToPatch[numFiles].tgcFakeOffset = fakeAmount;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
 			if(endsWith(filename,".elf") && size < 12*1024*1024) {
-				filesToPatch[numFiles].offset = (file_offset-fakeAmount)+(tgc_base+fileAreaStart);
+				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_ELF;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
 			if(strstr(filename,"execD.img")) {
-				filesToPatch[numFiles].offset = (file_offset-fakeAmount)+(tgc_base+fileAreaStart);
+				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_LOADER;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
@@ -284,7 +317,6 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base) {
 	}
 	free(FST);
 	return numFiles;
-	
 }
 
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, int multiDol) {
