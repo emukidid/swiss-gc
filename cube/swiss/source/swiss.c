@@ -268,7 +268,7 @@ char *getRelativeName(char *str) {
 	return str;
 }
 
-char stripbuffer[1024];
+char stripbuffer[PATHNAME_MAX];
 char *stripInvalidChars(char *str) {
 	strcpy(stripbuffer, str);
 	int i = 0;
@@ -1334,19 +1334,28 @@ void load_game() {
 			secondDisc = memalign(32,sizeof(file_handle));
 			memcpy(secondDisc,&curFile,sizeof(file_handle));
 			secondDisc->fp = 0;
+			secondDisc->ffsFp = NULL;
 			
 			// you're trying to load a disc1 of something
 			if(curFile.name[strlen(secondDisc->name)-5] == '1') {
 				secondDisc->name[strlen(secondDisc->name)-5] = '2';
 			} else if(curFile.name[strlen(secondDisc->name)-5] == '2') {
 				secondDisc->name[strlen(secondDisc->name)-5] = '1';
+			} else if(!strcasecmp(getRelativeName(curFile.name), "game.iso")) {
+				memset(secondDisc->name, 0, PATHNAME_MAX);
+				strncpy(secondDisc->name, curFile.name, strlen(curFile.name)-strlen(getRelativeName(curFile.name)));
+				strcat(secondDisc->name, "disc2.iso\0");	// Nintendont style
+			} else if(!strcasecmp(getRelativeName(curFile.name), "disc2.iso")) {
+				memset(secondDisc->name, 0, PATHNAME_MAX);
+				strncpy(secondDisc->name, curFile.name, strlen(curFile.name)-strlen(getRelativeName(curFile.name)));
+				strcat(secondDisc->name, "game.iso\0");		// Nintendont style
 			}
 			else {
 				free(secondDisc);
 				secondDisc = NULL;
 			}
 		}
-	  
+
 		// Call the special setup for each device (e.g. SD will set the sector(s))
 		if(!devices[DEVICE_CUR]->setupFile(&curFile, secondDisc)) {
 			DrawFrameStart();

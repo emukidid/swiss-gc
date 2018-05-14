@@ -529,7 +529,7 @@ int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
 	print_gecko("Read dir for directory: %s\r\n",file->name);
 	DiskHeader header;
 	char	*FST; 
-	char	filename[1024];
+	char	filename[PATHNAME_MAX];
 	int		numFiles = 1, idx = 0;
 	int		isRoot = !strcmp((const char*)&file->name[0], "dvd:/");
 	
@@ -576,7 +576,7 @@ int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
 	}
 	
 	u32 filename_offset=((*(u32*)&FST[parent_dir_offset*0x0C]) & 0x00FFFFFF); 
-	memset(&filename[0],0,1024);
+	memset(&filename[0],0,PATHNAME_MAX);
 	sprintf(&filename[0], "%s/%s", file->name, &FST[string_table_offset+filename_offset]);
 	dir_end_offset = *(u32*)&FST[(parent_dir_offset*0x0C) + 8];
 	
@@ -603,7 +603,7 @@ int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
 		u32 offset=i*0x0c;
 		u32 file_offset,size = 0;
 		u32 filename_offset=((*(unsigned int*)&FST[offset]) & 0x00FFFFFF); 
-		memset(&filename[0],0,1024);
+		memset(&filename[0],0,PATHNAME_MAX);
 		sprintf(&filename[0], "%s/%s", file->name, &FST[string_table_offset+filename_offset]);
 		memcpy(&file_offset,&FST[offset+4],4);
 		memcpy(&size,&FST[offset+8],4);
@@ -616,7 +616,7 @@ int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
 					++numFiles;
 					*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
 				}
-				memcpy((*dir)[idx].name, &filename[0], 1024);
+				memcpy((*dir)[idx].name, &filename[0], PATHNAME_MAX);
 				(*dir)[idx].fileBase = i;
 				(*dir)[idx].offset = 0;
 				(*dir)[idx].size = size;
@@ -634,7 +634,7 @@ int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
 				++numFiles;
 				*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
 			}
-			memcpy((*dir)[idx].name, &filename[0], 1024);
+			memcpy((*dir)[idx].name, &filename[0], PATHNAME_MAX);
 			(*dir)[idx].fileBase = file_offset;
 			(*dir)[idx].offset = 0;
 			(*dir)[idx].size = size;

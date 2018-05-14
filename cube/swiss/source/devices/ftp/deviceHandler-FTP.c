@@ -129,7 +129,7 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	
 	// Set everything up to read
 	int num_entries = 1, i = 1;
-	char file_name[1024];
+	char file_name[PATHNAME_MAX];
 	*dir = malloc( num_entries * sizeof(file_handle) );
 	memset(*dir,0,sizeof(file_handle) * num_entries);
 	(*dir)[0].fileAttrib = IS_SPECIAL;
@@ -140,7 +140,7 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		if(strlen(entry->d_name) <= 2  && (entry->d_name[0] == '.' || entry->d_name[1] == '.')) {
 			continue;
 		}
-		memset(&file_name[0],0,1024);
+		memset(&file_name[0],0, PATHNAME_MAX);
 		sprintf(&file_name[0], "%s/%s", ffile->name, entry->d_name);
 		stat(&file_name[0],&fstat);
 		// Do we want this one?

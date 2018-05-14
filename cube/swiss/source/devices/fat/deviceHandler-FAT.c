@@ -112,7 +112,7 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	
 	// Set everything up to read
 	int num_entries = 1, i = 1;
-	char file_name[1024];
+	char file_name[PATHNAME_MAX];
 	*dir = malloc( sizeof(file_handle) );
 	memset(*dir,0,sizeof(file_handle));
 	(*dir)[0].fileAttrib = IS_SPECIAL;
@@ -124,7 +124,7 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 		if(strlen(entry.fname) <= 2  && (entry.fname[0] == '.' || entry.fname[1] == '.')) {
 			continue;
 		}
-		memset(&file_name[0],0,1024);
+		memset(&file_name[0],0,PATHNAME_MAX);
 		sprintf(&file_name[0], "%s/%s", ffile->name, entry.fname);
 		if(f_stat(file_name, &fno) != FR_OK || (fno.fattrib & AM_HID)) {
 			continue;

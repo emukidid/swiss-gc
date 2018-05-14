@@ -15,6 +15,7 @@
 #include "wode/WodeInterface.h"
 
 #define MAX_DEVICES 15
+#define PATHNAME_MAX 1024
 
 typedef struct {
 	int fileTypeTexId;
@@ -25,7 +26,7 @@ typedef struct {
 } file_meta;
 
 typedef struct {
-	char name[1024]; 		// File or Folder, absolute path goes here
+	char name[PATHNAME_MAX]; 		// File or Folder, absolute path goes here
 	uint64_t fileBase;   	// Raw sector on device
 	u32 offset;    			// Offset in the file
 	u32 size;      			// size of the file

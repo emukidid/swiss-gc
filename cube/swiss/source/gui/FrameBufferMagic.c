@@ -461,11 +461,11 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
 
 void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode, u32 color) 
 {
-	char file_name[1024];
+	char file_name[PATHNAME_MAX];
 	int borderSize = 4;
 	
 	color = (color == -1) ? BUTTON_COLOUR_INNER : color; //never used
-	memset(file_name, 0, 1024);
+	memset(file_name, 0, PATHNAME_MAX);
 	strcpy(&file_name[0], message);
 	
 	// Hide extension when rendering certain files
