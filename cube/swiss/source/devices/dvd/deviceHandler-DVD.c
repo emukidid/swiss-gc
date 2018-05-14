@@ -175,7 +175,6 @@ int initialize_disc(u32 streaming) {
 		else {
 			dvd_set_streaming(*(char*)0x80000008);
 		}
-		xeno_disable();
 	}
 	else {  //Wii, in GC Mode
 		DVD_Reset(DVD_RESETHARD);
