@@ -261,6 +261,10 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 	if(!file->ffsFp) {
 		devices[DEVICE_CUR]->readFile(file, NULL, 0);	// open the file (should be open already)
 	}
+	
+	if(!file->ffsFp) {
+		return 0;
+	}
 
 	// fatfs - Cluster link table map buffer
 	DWORD clmt[(maxFrags*2) + 1];
@@ -349,10 +353,9 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 			return 0;
 		}
 		// TODO fix 2 disc patched games
-		if(!(frags = getFragments(file2, &fragList[(maxFrags*3)], maxFrags, 0, 0))) {
-			return 0;
+		if((frags = getFragments(file2, &fragList[(maxFrags*3)], maxFrags, 0, 0))) {
+			totFrags += frags;
 		}
-		totFrags += frags;
 	}
 	
 	// Disk 1 base sector

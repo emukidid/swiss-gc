@@ -1339,7 +1339,7 @@ void load_game() {
 			// you're trying to load a disc1 of something
 			if(curFile.name[strlen(secondDisc->name)-5] == '1') {
 				secondDisc->name[strlen(secondDisc->name)-5] = '2';
-			} else if(curFile.name[strlen(secondDisc->name)-5] == '2') {
+			} else if(curFile.name[strlen(secondDisc->name)-5] == '2' && strcasecmp(getRelativeName(curFile.name), "disc2.iso")) {
 				secondDisc->name[strlen(secondDisc->name)-5] = '1';
 			} else if(!strcasecmp(getRelativeName(curFile.name), "game.iso")) {
 				memset(secondDisc->name, 0, PATHNAME_MAX);
