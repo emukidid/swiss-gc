@@ -348,12 +348,13 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 
 	char patchDirName[256];
 	char patchBaseDirName[256];
-	char gameID[8];
-	memset(&gameID, 0, 8);
+	char gameID[16];
+	memset(&gameID, 0, 16);
 	memset(&patchDirName, 0, 256);
 	memset(&patchBaseDirName, 0, 256);
 	strncpy((char*)&gameID, (char*)&GCMDisk, 4);
 	sprintf(&patchDirName[0],"%sswiss_patches/%s",devices[DEVICE_PATCHES]->initial->name, &gameID[0]);
+	memcpy((char*)&gameID, (char*)&GCMDisk, 12);
 	sprintf(&patchBaseDirName[0],"%sswiss_patches",devices[DEVICE_PATCHES]->initial->name);
 	print_gecko("Patch dir will be: %s if required\r\n", patchDirName);
 	*(vu32*)VAR_EXECD_OFFSET = 0xFFFFFFFF;

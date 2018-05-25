@@ -438,6 +438,56 @@ int PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType )
 	return LowMemPatched;
 }
 
+// HACK: PSO 0x80001800 move to 0x817F1800
+u32 PatchPatchBuffer(char *dst)
+{
+	int i;
+	int patched = 0;
+	u32 LISReg = -1;
+	u32 LISOff = -1;
+
+	for (i = 0;; i += 4)
+	{
+		u32 op = *(vu32*)(dst + i);
+
+		if ((op & 0xFC1FFFFF) == 0x3C008000)	// lis rX, 0x8000
+		{
+			LISReg = (op & 0x3E00000) >> 21;
+			LISOff = (u32)dst + i;
+		}
+
+		if ((op & 0xFC000000) == 0x38000000)	// li rX, x
+		{
+			u32 src = (op >> 16) & 0x1F;
+			u32 dst = (op >> 21) & 0x1F;
+			if ((src != LISReg) && (dst == LISReg))
+			{
+				LISReg = -1;
+				LISOff = (u32)dst + i;
+			}
+		}
+
+		if ((op & 0xFC00FFFF) == 0x38001800) // addi rX, rY, 0x1800 (patch buffer)
+		{
+			u32 src = (op >> 16) & 0x1F;
+			if (src == LISReg)
+			{
+				*(vu32*)(LISOff) = (LISReg << 21) | 0x3C00817F;
+				print_gecko("Patch:[%08X] %08X: lis r%u, 0x817F\r\n", (u32)LISOff, *(u32*)LISOff, LISReg );
+				LISReg = -1;
+				patched++;
+			}
+			u32 dst = (op >> 21) & 0x1F;
+			if (dst == LISReg)
+				LISReg = -1;
+		}
+		if (op == 0x4E800020)	// blr
+			break;
+	}
+	return patched;
+}
+
+
 
 u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 	int i = 0;
@@ -1840,6 +1890,23 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 				patched=1;
 			}
 			addr_start += 4;
+		}
+	}
+	else if((*(u32*)&gameID[0] == 0x47504F45) 
+		&& (*(u32*)&gameID[4] == 0x38500002) 
+		&& (*(u32*)&gameID[8] == 0x01000000)) {
+		// Nasty PSO 1 & 2+ hack to redirect a lowmem buffer to highmem 
+		void *addr_start = addr;
+		void *addr_end = addr+length;
+		while(addr_start<addr_end) 
+		{
+			addr_start += 4;
+			if( *(vu32*)(addr_start) != 0x7C0802A6 )
+				continue;
+			if(PatchPatchBuffer(addr_start)) {
+				print_gecko("Patched: PSO 1 & 2 +\r\n");
+				patched=1;
+			}
 		}
 	}
 	else if(!strncmp(gameID, "GXX", 3) || !strncmp(gameID, "GC6", 3))
