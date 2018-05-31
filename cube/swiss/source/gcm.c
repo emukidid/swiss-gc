@@ -144,13 +144,6 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if(strstr(filename,"execD.img")) {
-				filesToPatch[numFiles].offset = file_offset;
-				filesToPatch[numFiles].size = size;
-				filesToPatch[numFiles].type = PATCH_LOADER;
-				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
-				numFiles++;
-			}
 			if(endsWith(filename,".tgc")) {
 				// Go through all the TGC's internal files
 				ExecutableFile *filesInTGCToPatch = memalign(32, sizeof(ExecutableFile)*32);
@@ -306,13 +299,6 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if(strstr(filename,"execD.img")) {
-				filesToPatch[numFiles].offset = file_offset;
-				filesToPatch[numFiles].size = size;
-				filesToPatch[numFiles].type = PATCH_LOADER;
-				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
-				numFiles++;
-			}
 		} 
 	}
 	free(FST);
@@ -357,7 +343,6 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 	memcpy((char*)&gameID, (char*)&GCMDisk, 12);
 	sprintf(&patchBaseDirName[0],"%sswiss_patches",devices[DEVICE_PATCHES]->initial->name);
 	print_gecko("Patch dir will be: %s if required\r\n", patchDirName);
-	*(vu32*)VAR_EXECD_OFFSET = 0xFFFFFFFF;
 	// Go through all the possible files we think need patching..
 	for(i = 0; i < numToPatch; i++) {
 		u32 patched = 0, crc32 = 0;
@@ -377,9 +362,6 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			continue;
 		}
 		print_gecko("Checking %s %iKb\r\n", filesToPatch[i].name, filesToPatch[i].size/1024);
-		if(strstr(filesToPatch[i].name, "execD.")) {
-			*(vu32*)VAR_EXECD_OFFSET = filesToPatch[i].offset;
-		}
 		if(strstr(filesToPatch[i].name, "iwanagaD.dol") || strstr(filesToPatch[i].name, "switcherD.dol")) {
 			continue;	// skip unused PSO files
 		}

@@ -60,19 +60,6 @@ stop_di_irq:
 	stw		r0, VAR_FAKE_IRQ_SET(r3)
 	blr
 
-	.globl dcache_store
-dcache_store:
-	addi	r4, r4, 0x1F
-	srwi	r4, r4, 5
-	mtctr	r4
-	li		r0, 0
-dcache_store_loop:
-	dcbst	r0, r3
-	addi	r3, r3, 0x20
-	bdnz	dcache_store_loop
-	sync
-	blr
-
 	.globl dcache_flush_icache_inv
 dcache_flush_icache_inv:
 	clrlwi. 	5, 3, 27  # check for lower bits set in address

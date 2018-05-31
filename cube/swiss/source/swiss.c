@@ -819,7 +819,6 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	*(vu32*)VAR_INTERRUPT_TIMES = 0;
 	*(vu32*)VAR_READS_IN_AS = 0;
 	*(vu32*)VAR_DISC_CHANGING = 0;
-	*(vu32*)VAR_LAST_OFFSET = 0xBEEFCAFE;
 	*(vu32*)VAR_AS_ENABLED = !swissSettings.muteAudioStreaming;
 	*(vu8*)VAR_IGR_EXIT_TYPE = (u8)swissSettings.igrType;
 	memset((void*)VAR_DI_REGS, 0, 0x24);

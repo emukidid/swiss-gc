@@ -36,14 +36,6 @@ void trigger_dvd_interrupt() {
 #define ALIGN_BACKWARD(x,align) \
 	((typeof(x))(((u32)(x)) & (~(align-1))))
 
-u32 branch(u32 dst, u32 src)
-{
-	u32 newval = dst - src;
-	newval &= 0x03FFFFFC;
-	return newval | 0x48000000;
-}
-void appldr_start();
-
 // DVD Drive command wrapper
 void DIUpdateRegisters() {
 
@@ -154,34 +146,18 @@ void DIUpdateRegisters() {
 					u32 len	= dvd[DI_DMALEN];
 					u32 offset	= dvd[DI_LBA] << 2;
 
-					// The only time we readComplete=1 is when reading the arguments for 
-					// execD, since interrupts are off after this point and our handler isn't called again.
-					int readComplete = *(vu32*)VAR_LAST_OFFSET == *(vu32*)VAR_EXECD_OFFSET;
-					*(vu32*)VAR_LAST_OFFSET = offset;
-
-					if(offset && (offset == *(vu32*)VAR_EXECD_OFFSET))
-					{
-						//execD, jump to our own handler
-						*(vu32*)dst = branch((u32)appldr_start, dst);
-						dcache_flush_icache_inv((void*)dst, 0x20);
-						dvd[DI_DMALEN] = 0;
-						diOpCompleted = 1;
-					}
-					else
-					{
-						// Read. We might not do the full read, depends how busy the game is
-						u32 amountRead = process_queue((void*)dst, len, offset, readComplete);
-						if(amountRead) {
-							dcache_flush_icache_inv((void*)dst, amountRead);
-							dvd[DI_DMALEN] -= amountRead;
-							dvd[DI_DMAADDR] += amountRead;
-							dvd[DI_LBA] += amountRead>>2;
-						}
+					// Read. We might not do the full read, depends how busy the game is
+					u32 amountRead = process_queue((void*)dst, len, offset);
+					if(amountRead) {
+						dcache_flush_icache_inv((void*)dst, amountRead);
+						dvd[DI_DMALEN] -= amountRead;
+						dvd[DI_DMAADDR] += amountRead;
+						dvd[DI_LBA] += amountRead>>2;
 					}
 				}
 				*(vu32*)VAR_READS_IN_AS += 1;
-			} 
 				break;
+			}
 		}
 	}
 	// We're faking lid open, end it here.
