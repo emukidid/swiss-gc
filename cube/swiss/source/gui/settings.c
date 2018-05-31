@@ -20,7 +20,7 @@ char *gameVModeStr[] = {"No", "480i", "480sf", "240p", "960i", "480p", "576i", "
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS"};
-char *igrTypeStr[] = {"Disabled", "Reboot", "boot.bin", "USB Flash"};
+char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol", "USB Flash"};
 syssram* sram;
 syssramex* sramex;
 

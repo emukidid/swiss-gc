@@ -16,6 +16,6 @@ extern DEVICEHANDLER_INTERFACE __device_ide_b;
 
 extern s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type);
 extern s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length);
-extern s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOffset, u32 forceSize);
+extern s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOffset, u32 forceSize, u32 dev);
 #endif
 

@@ -28,7 +28,7 @@
 .set VAR_FSP_KEY,			0x2ED8	# FSP session key
 .set VAR_FSP_DATA_LENGTH,	0x2EDA	# FSP payload size
 .set VAR_FSP_POSITION,		0x2EDC	# FSP file position
-.set VAR_UNUSED2,			0x2EE0	# UNUSED 2
+.set VAR_IGR_DOL_SIZE,		0x2EE0	# IGR DOL Size
 .set VAR_READS_IN_AS,		0x2EE4	# How many times have we tried to read while streaming is on?
 .set VAR_AS_ENABLED,		0x2EE8	# Is Audio streaming enabled by the user?
 .set VAR_FAKE_IRQ_SET,		0x2EF8	# flag to say we are ready to fake irq.
@@ -107,7 +107,7 @@
 #define VAR_FSP_KEY			(VAR_AREA+0x2ED8)	// FSP session key
 #define VAR_FSP_DATA_LENGTH	(VAR_AREA+0x2EDA)	// FSP payload size
 #define VAR_FSP_POSITION	(VAR_AREA+0x2EDC)	// FSP file position
-#define VAR_UNUSED2			(VAR_AREA+0x2EE0)	// UNUSED 2
+#define VAR_IGR_DOL_SIZE	(VAR_AREA+0x2EE0)	// IGR DOL Size
 #define VAR_READS_IN_AS		(VAR_AREA+0x2EE4)	// How many times have we tried to read while streaming is on?
 #define VAR_AS_ENABLED		(VAR_AREA+0x2EE8)	// Is Audio streaming enabled by the user?
 #define VAR_FAKE_IRQ_SET	(VAR_AREA+0x2EF8)	// flag to say we are ready to fake irq.

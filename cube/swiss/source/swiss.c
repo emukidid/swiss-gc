@@ -1362,6 +1362,7 @@ void load_game() {
 			}
 		}
 
+		*(vu32*)VAR_IGR_DOL_SIZE = 0;
 		// Call the special setup for each device (e.g. SD will set the sector(s))
 		if(!devices[DEVICE_CUR]->setupFile(&curFile, secondDisc)) {
 			DrawFrameStart();

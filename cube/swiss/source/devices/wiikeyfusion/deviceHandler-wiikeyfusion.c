@@ -97,7 +97,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 			
 			devices[DEVICE_PATCHES]->seekFile(&patchFile,fno.fsize-16,DEVICE_HANDLER_SEEK_SET);
 			if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, patchInfo[0], patchInfo[1] | 0x80000000))) {
+				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, patchInfo[0], patchInfo[1] | 0x80000000, DEVICE_PATCHES))) {
 					return 0;
 				}
 				totFrags+=frags;
@@ -105,6 +105,19 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 			}
 			else {
 				break;
+			}
+		}
+		// Check for igr.dol
+		memset(&patchFile, 0, sizeof(file_handle));
+		sprintf(&patchFile.name[0], "%sigr.dol", devices[DEVICE_PATCHES]->initial->name);
+
+		FILINFO fno;
+		if(f_stat(&patchFile.name[0], &fno) == FR_OK) {
+			print_gecko("IGR Boot DOL exists\r\n");
+			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, 0x60000000, 0, DEVICE_PATCHES))) {
+				totFrags+=frags;
+				devices[DEVICE_PATCHES]->closeFile(&patchFile);
+				*(vu32*)VAR_IGR_DOL_SIZE = fno.fsize;
 			}
 		}
 		// Copy the current speed
@@ -124,7 +137,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 	}
 	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!(frags = getFragments(file, &fragList[totFrags*3], maxFrags, 0, 0))) {
+	if(!(frags = getFragments(file, &fragList[totFrags*3], maxFrags, 0, 0, DEVICE_CUR))) {
 		return 0;
 	}
 	totFrags += frags;
@@ -136,7 +149,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 			return 0;
 		}
 		// TODO fix 2 disc patched games
-		if(!(frags = getFragments(file2, &fragList[(maxFrags*3)], maxFrags, 0, 0))) {
+		if(!(frags = getFragments(file2, &fragList[(maxFrags*3)], maxFrags, 0, 0, DEVICE_CUR))) {
 			return 0;
 		}
 		totFrags += frags;
