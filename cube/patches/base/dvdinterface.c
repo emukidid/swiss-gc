@@ -52,7 +52,7 @@ void DIUpdateRegisters() {
 	if(*(vu32*)VAR_FAKE_IRQ_SET) {
 		return;
 	}
-	u32 diOpCompleted = 0;
+	u32 diOpCompleted = (dvd[DI_DMALEN] == 0 && dvd[DI_CMD] == 0xA8000000);
 	u32 discChanging = *(vu32*)VAR_DISC_CHANGING;
 	
 	if(discChanging == 1) {
@@ -66,7 +66,7 @@ void DIUpdateRegisters() {
 	}
 	
 	// If we have something, IMM or DMA command
-	if((dvd[DI_CR] & 1))
+	if(!diOpCompleted && (dvd[DI_CR] & 1))
 	{
 
 		u32 DIcommand = dvd[DI_CMD]>>24;
@@ -176,10 +176,6 @@ void DIUpdateRegisters() {
 							dvd[DI_DMALEN] -= amountRead;
 							dvd[DI_DMAADDR] += amountRead;
 							dvd[DI_LBA] += amountRead>>2;
-						}
-
-						if(dvd[DI_DMALEN] == 0) {
-							diOpCompleted = 1;
 						}
 					}
 				}
