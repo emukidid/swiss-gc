@@ -36,15 +36,14 @@ char *getSramLang(u8 lang) {
 	return "Unknown";
 }
 
-void info_draw_page(int page_num) {
-	doBackdrop();
-	DrawEmptyBox(20,60, vmode->fbWidth-20, 420, COLOR_BLACK);
+uiDrawObj_t * info_draw_page(int page_num) {
+	uiDrawObj_t *container = DrawEmptyBox(20,60, vmode->fbWidth-20, 420);
 	syssram* sram = __SYS_LockSram();
 	__SYS_UnlockSram(0);
 	
 	// System Info (Page 1/3)
 	if(!page_num) {
-		WriteFont(30, 65, "System Info (1/3):");
+		DrawAddChild(container, DrawLabel(30, 65, "System Info (1/3):"));
 		// Model
 		if(is_gamecube()) {
 			if(*(u32*)&driveVersion[0] == 0x20010831) {
@@ -66,7 +65,7 @@ void info_draw_page(int page_num) {
 		else {
 			sprintf(topStr, "Nintendo Wii");
 		}
-		WriteFontStyled(640/2, 110, topStr, 1.0f, true, defaultColor);
+		DrawAddChild(container, DrawStyledLabel(640/2, 110, topStr, 1.0f, true, defaultColor));
 		// IPL version string
 		if(is_gamecube()) {
 			if(!IPLInfo[0x55]) {
@@ -79,7 +78,7 @@ void info_draw_page(int page_num) {
 		else {
 			sprintf(topStr, "Wii IPL");
 		}
-		WriteFontStyled(640/2, 140, topStr, 1.0f, true, defaultColor);
+		DrawAddChild(container, DrawStyledLabel(640/2, 140, topStr, 1.0f, true, defaultColor));
 		if(swissSettings.hasDVDDrive) {
 			if((!__wkfSpiReadId() || (__wkfSpiReadId() == 0xFFFFFFFF))) {
 				sprintf(topStr, "DVD Drive %02X %02X%02X/%02X (%02X)",driveVersion[2],driveVersion[0],driveVersion[1],driveVersion[3],driveVersion[4]);
@@ -90,71 +89,77 @@ void info_draw_page(int page_num) {
 		else {
 			sprintf(topStr, "No DVD Drive present");
 		}
-		WriteFontStyled(640/2, 170, topStr, 1.0f, true, defaultColor);
+		DrawAddChild(container, DrawStyledLabel(640/2, 170, topStr, 1.0f, true, defaultColor));
 		sprintf(topStr, "%s",videoStr);
-		WriteFontStyled(640/2, 200, topStr, 1.0f, true, defaultColor);
+		DrawAddChild(container, DrawStyledLabel(640/2, 200, topStr, 1.0f, true, defaultColor));
 		sprintf(topStr,"%s / %s",getSramLang(sram->lang), sram->flags&4 ? "Stereo":"Mono");
-		WriteFontStyled(640/2, 230, topStr, 1.0f, true, defaultColor);
+		DrawAddChild(container, DrawStyledLabel(640/2, 230, topStr, 1.0f, true, defaultColor));
 		// GC 00083214, 00083410
 		sprintf(topStr,"CPU Revision/Version (%08lX)",mfpvr());
-		WriteFontStyled(640/2, 290, topStr, 0.75f, true, defaultColor);
+		DrawAddChild(container, DrawStyledLabel(640/2, 290, topStr, 0.75f, true, defaultColor));
 		sprintf(topStr,"CPU Unique ECID %08lX:%08lX:%08lX",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
-		WriteFontStyled(640/2, 320, topStr, 0.75f, true, defaultColor);
+		DrawAddChild(container, DrawStyledLabel(640/2, 320, topStr, 0.75f, true, defaultColor));
 	}
 	else if(page_num == 1) {
-		WriteFont(30, 65, "Device Info (2/3):");
+		DrawAddChild(container, DrawLabel(30, 65, "Device Info (2/3):"));
 		sprintf(topStr,"BBA: %s", exi_bba_exists() ? "Installed":"Not Present");
-		WriteFont(30, 110, topStr);
+		DrawAddChild(container, DrawLabel(30, 110, topStr));
 		if(exi_bba_exists()) {
 			sprintf(topStr,"IP: %s", net_initialized ? bba_ip:"Not Available");
 		}
 		else {
 			sprintf(topStr,"IP: Not Available");
 		}
-		WriteFont(270, 110, topStr);
+		DrawAddChild(container, DrawLabel(270, 110, topStr));
 		sprintf(topStr,"Component Cable Plugged in: %s",VIDEO_HaveComponentCable()?"Yes":"No");
-		WriteFont(30, 140, topStr);
+		DrawAddChild(container, DrawLabel(30, 140, topStr));
 		if(usb_isgeckoalive(0)||usb_isgeckoalive(1)) {
 			sprintf(topStr,"USB Gecko: Installed in %s",usb_isgeckoalive(0)?"Slot A":"Slot B");
 		}
 		else {
 			sprintf(topStr,"USB Gecko: Not Present");
 		}
-		WriteFont(30, 170, topStr);
+		DrawAddChild(container, DrawLabel(30, 170, topStr));
 		sprintf(topStr, "Current Device: %s", (devices[DEVICE_CUR] != NULL ? devices[DEVICE_CUR]->deviceName : "None"));
-		WriteFont(30, 200, topStr);
+		DrawAddChild(container, DrawLabel(30, 200, topStr));
 		sprintf(topStr, "Config Device: %s", (devices[DEVICE_CONFIG] != NULL ? devices[DEVICE_CONFIG]->deviceName : "None"));
-		WriteFont(30, 230, topStr);
+		DrawAddChild(container, DrawLabel(30, 230, topStr));
 	}
 	else if(page_num == 2) {
-		WriteFont(30, 65, "Credits (3/3):");
-		WriteFontStyled(640/2, 115, "Swiss ver 0.4", 1.0f, true, defaultColor);
-		WriteFontStyled(640/2, 140, "by emu_kidid 2018", 0.75f, true, defaultColor);
+		DrawAddChild(container, DrawLabel(30, 65, "Credits (3/3):"));
+		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss ver 0.4", 1.0f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid 2018", 0.75f, true, defaultColor));
 		sprintf(txtbuffer, "Commit %s Revision %s", GITREVISION, GITVERSION);
-		WriteFontStyled(640/2, 165, txtbuffer, 0.75f, true, defaultColor);
-		WriteFontStyled(640/2, 210, "Thanks to", 0.75f, true, defaultColor);
-		WriteFontStyled(640/2, 228, "Testers & libOGC/dkPPC authors", 0.75f, true, defaultColor);
-		WriteFontStyled(640/2, 246, "sepp256 for GX / FIX94 for Audio Streaming", 0.75f, true, defaultColor);
-		WriteFontStyled(640/2, 264, "Extrems for video patches / Megalomaniac for builds", 0.75f, true, defaultColor);
-		WriteFontStyled(640/2, 300, "Web/Support http://www.gc-forever.com/", 0.75f, true, defaultColor);
-		WriteFontStyled(640/2, 318, "Source at https://github.com/emukidid/swiss-gc", 0.75f, true, defaultColor);
-		WriteFontStyled(640/2, 354, "Visit us at #gc-forever on EFNet", 0.75f, true, defaultColor);
+		DrawAddChild(container, DrawStyledLabel(640/2, 165, txtbuffer, 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 210, "Thanks to", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 228, "Testers & libOGC/dkPPC authors", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 246, "sepp256 for GX / FIX94 for Audio Streaming", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 264, "Extrems for video patches / Megalomaniac for builds", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 300, "Web/Support http://www.gc-forever.com/", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 318, "Source at https://github.com/emukidid/swiss-gc", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 354, "Visit us at #gc-forever on EFNet", 0.75f, true, defaultColor));
 	}
 	if(page_num != 2) {
-		WriteFont(520, 390, "->");
+		DrawAddChild(container, DrawLabel(520, 390, "->"));
 	}
 	if(page_num != 0) {
-		WriteFont(100, 390, "<-");
+		DrawAddChild(container, DrawLabel(100, 390, "<-"));
 	}
-	WriteFontStyled(640/2, 400, "Press A to return", 1.0f, true, defaultColor);
-	DrawFrameFinish();
+	DrawAddChild(container, DrawStyledLabel(640/2, 400, "Press A to return", 1.0f, true, defaultColor));
+	return container;
 }
 
 void show_info() {
 	int page = 0;
+	uiDrawObj_t* pagePanel = NULL;
 	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
-		info_draw_page(page);
+		uiDrawObj_t* newPanel = info_draw_page(page);
+		if(pagePanel != NULL) {
+			DrawDispose(pagePanel);
+		}
+		pagePanel = newPanel;
+		DrawPublish(pagePanel);
 		while (!((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
 			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
 			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_B)
@@ -177,5 +182,6 @@ void show_info() {
 			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L))
 			{ VIDEO_WaitVSync (); }
 	}
+	DrawDispose(pagePanel);
 	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 }

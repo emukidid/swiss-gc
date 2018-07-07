@@ -96,6 +96,13 @@ extern int whichfb;
 #include "unchecked_32_tpl.h"
 #include "unchecked_32.h"
 
+typedef struct uiDrawObj {
+    int type;
+	void *data;
+	struct uiDrawObj *child;
+	bool disposed;
+} uiDrawObj_t;
+
 enum TextureId
 {
 	TEX_BACKDROP=0,
@@ -125,20 +132,24 @@ enum TextureId
 };
 
 void init_textures();
-void DrawImage(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
-void DrawTexObj(GXTexObj *texObj, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
-void DrawFrameStart();
-void DrawFrameFinish();
-void DrawProgressBar(int percent, char *message);
-void DrawMessageBox(int type, char *message);
-void DrawRawFont(int x, int y, char *message);
-void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode, u32 color);
-void DrawEmptyBox(int x1, int y1, int x2, int y2, int color);
-void DrawTransparentBox(int x1, int y1, int x2, int y2);
-void DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode, u32 color);
-void DrawMenuButtons(int selection);
-int DrawYesNoDialog(char *message);
-void DrawVertScrollBar(int x, int y, int width, int height, float scrollPercent, int scrollHeight);
+uiDrawObj_t* DrawImage(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
+uiDrawObj_t* DrawTexObj(GXTexObj *texObj, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
+uiDrawObj_t* DrawProgressBar(int percent, char *message);
+uiDrawObj_t* DrawContainer();
+uiDrawObj_t* DrawMessageBox(int type, char *message);
+uiDrawObj_t* DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode);
+uiDrawObj_t* DrawEmptyBox(int x1, int y1, int x2, int y2);
+uiDrawObj_t* DrawTransparentBox(int x1, int y1, int x2, int y2);
+uiDrawObj_t* DrawStyledLabel(int x, int y, char *string, float size, bool centered, GXColor color);
+uiDrawObj_t* DrawHighlightedBox(int x1, int y1, int x2, int y2);
+uiDrawObj_t* DrawLabel(int x, int y, char *string);
+uiDrawObj_t* DrawMenuButtons(int selection);
+void DrawUpdateMenuButtons(uiDrawObj_t *evt, int selection);
+void DrawAddChild(uiDrawObj_t *parent, uiDrawObj_t *child);
+uiDrawObj_t* DrawPublish(uiDrawObj_t *evt);
+void DrawDispose(uiDrawObj_t *evt);
+uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode);
+uiDrawObj_t* DrawVertScrollBar(int x, int y, int width, int height, float scrollPercent, int scrollHeight);
 void DrawArgsSelector(char *fileName);
 void DrawCheatsSelector(char *fileName);
 

@@ -170,9 +170,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		// Calc size
 		devices[DEVICE_CUR]->seekFile(file,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
-			DrawFrameStart();
-			DrawMessageBox(D_FAIL, "Failed to read Main DOL Header");
-			DrawFrameFinish();
+			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Main DOL Header"));
 			while(1);
 		}
 		for (i = 0; i < MAXTEXTSECTION; i++) {
@@ -194,9 +192,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		u32 appldr_info[2];
 		devices[DEVICE_CUR]->seekFile(file,0x2454,DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(file,&appldr_info,8) != 8) {
-			DrawFrameStart();
-			DrawMessageBox(D_FAIL, "Failed to read Apploader info");
-			DrawFrameFinish();
+			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Apploader info"));
 			while(1);
 		}
 		filesToPatch[numFiles].size = appldr_info[1];
@@ -325,10 +321,10 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 	}
 		
 	if(devices[DEVICE_PATCHES] == NULL) {
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL, "No writable device present\nA SD Gecko must be inserted in\n order to utilise patches for this game.");
-		DrawFrameFinish();
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "No writable device present\nA SD Gecko must be inserted in\n order to utilise patches for this game.");
+		DrawPublish(msgBox);
 		sleep(5);
+		DrawDispose(msgBox);
 		return 0;
 	}
 
@@ -348,9 +344,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		u32 patched = 0, crc32 = 0;
 
 		sprintf(txtbuffer, "Patching File %i/%i",i+1,numToPatch);
-		DrawFrameStart();
 		DrawProgressBar((int)(((float)(i+1)/(float)numToPatch)*100), txtbuffer);
-		DrawFrameFinish();
 			
 		// Round up to 32 bytes
 		if(filesToPatch[i].size % 0x20) {
@@ -372,20 +366,20 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		ret = devices[DEVICE_CUR]->readFile(file,buffer,sizeToRead);
 		print_gecko("Read from %08X Size %08X - Result: %08X\r\n", filesToPatch[i].offset, sizeToRead, ret);
 		if(ret != sizeToRead) {
-			DrawFrameStart();
-			DrawMessageBox(D_FAIL, "Failed to read!");
-			DrawFrameFinish();
+			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Failed to read!");
+			DrawPublish(msgBox);
 			sleep(5);
+			DrawDispose(msgBox);
 			return 0;
 		}
 		
 		if(devices[DEVICE_CUR] != &__device_dvd && devices[DEVICE_CUR] != &__device_wkf) {
 			ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
 			if(READ_PATCHED_ALL != ret)	{
-				DrawFrameStart();
-				DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
-				DrawFrameFinish();
+				uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
+				DrawPublish(msgBox);
 				sleep(5);
+				DrawDispose(msgBox);
 			}
 			else
 				patched += 1;

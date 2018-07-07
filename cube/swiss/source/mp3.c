@@ -19,8 +19,7 @@ s32 mp3Reader(void *cbdata, void *dst, s32 size) {
 }
 
 void updatescreen_mp3(file_handle *file, int state, int numFiles, int curMP3) {
-	DrawFrameStart();
-	DrawEmptyBox(10,100, vmode->fbWidth-10, 400, COLOR_BLACK);
+	DrawEmptyBox(10,100, vmode->fbWidth-10, 400);
 	sprintf(txtbuffer, "%s -  Volume (%i%%)", (state == PLAYER_PAUSE ? "Paused":"Playing"), (int)(((float)volume/(float)255)*100));
 	WriteFontStyled(640/2, 130, txtbuffer, 1.0f, true, defaultColor);
 	sprintf(txtbuffer, "(%i/%i) %s",curMP3, numFiles,getRelativeName(file->name));
@@ -35,8 +34,6 @@ void updatescreen_mp3(file_handle *file, int state, int numFiles, int curMP3) {
 	WriteFontStyled(640/2, 330, "(B) Stop (L) Prev (R) Next (Start) Pause", 1.0f, true, defaultColor);
 	sprintf(txtbuffer, "Shuffle is currently %s press (Z) to toggle", (useShuffle ? "on":"off"));
 	WriteFontStyled(640/2, 360, txtbuffer, 1.0f, true, defaultColor);
-	DrawFrameFinish();	
-	VIDEO_WaitVSync();
 }
 
 int play_mp3(file_handle *file, int numFiles, int curMP3) {

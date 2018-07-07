@@ -197,6 +197,7 @@ void* Initialise (void)
 
 	init_font();
 	init_textures();
+	init_video_thread();
 	whichfb = 0;
 	
 	drive_version(&driveVersion[0]);
@@ -204,9 +205,9 @@ void* Initialise (void)
 	
 	if(!driveVersion[0]) {
 		// Reset DVD if there was a IPL replacement that hasn't done that for us yet
-		DrawFrameStart();
-		WriteFontStyled(640/2, 250, "Initialise DVD .. (HOLD B if NO DVD Drive)", 0.8f, true, defaultColor);
-		DrawFrameFinish();
+		// TODO make progress box
+		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Initialise DVD .. (HOLD B if NO DVD Drive)");
+		DrawPublish(msgBox);
 		dvd_reset();	// low-level, basic
 		dvd_read_id();
 		if(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B)) {
@@ -215,11 +216,12 @@ void* Initialise (void)
 		drive_version(&driveVersion[0]);
 		swissSettings.hasDVDDrive = *(u32*)&driveVersion[0] ? 2 : 0;
 		if(!swissSettings.hasDVDDrive) {
-			DrawFrameStart();
-			DrawMessageBox(D_INFO, "No DVD Drive Detected !!");
-			DrawFrameFinish();
+			DrawDispose(msgBox);
+			msgBox = DrawMessageBox(D_INFO, "No DVD Drive Detected !!");
+			DrawPublish(msgBox);
 			sleep(2);
 		}
+		DrawDispose(msgBox);
 	}
 	
 	return xfb[0];
@@ -229,11 +231,11 @@ void load_config() {
 
 	// Try to open up the config .ini in case it hasn't been opened already
 	if(config_init()) {
-		DrawFrameStart();
 		sprintf(txtbuffer,"Loaded %i entries from the config file",config_get_count());
-		DrawMessageBox(D_INFO,txtbuffer);
-		DrawFrameFinish();
+		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,txtbuffer);	// TODO notification area this
+		DrawPublish(msgBox);
 		memcpy(&swissSettings, config_get_swiss_settings(), sizeof(SwissSettings));
+		DrawDispose(msgBox);
 	}
 }
 
@@ -352,22 +354,29 @@ void main_loop()
 		select_device(DEVICE_CUR);
 		if(devices[DEVICE_CUR] != NULL) {
 			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Setting up device");
-			DrawFrameFinish();
+			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Setting up device");	// TODO progress box
+			DrawPublish(msgBox);
 			// If the user selected a device, make sure it's ready before we browse the filesystem
 			sdgecko_setSpeed(EXI_SPEED32MHZ);
 			if(!devices[DEVICE_CUR]->init( devices[DEVICE_CUR]->initial )) {
 				needsDeviceChange = 1;
 				deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], false);
+				DrawDispose(msgBox);
 				return;
 			}
+			DrawDispose(msgBox);
 			deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], true);	
 		}
-		curMenuLocation = ON_OPTIONS;
-
+		else {
+			curMenuLocation=ON_OPTIONS;
+		}
 	}
 
+	uiDrawObj_t *backPanel = DrawContainer();
+	uiDrawObj_t *buttonPanel = DrawMenuButtons((curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
+	uiDrawObj_t *filePanel = NULL;
+	DrawAddChild(backPanel, buttonPanel);
+	DrawPublish(backPanel);
 	while(1) {
 		if(devices[DEVICE_CUR] != NULL && needsRefresh) {
 			curMenuLocation=ON_OPTIONS;
@@ -376,54 +385,67 @@ void main_loop()
 			if(files<1) { devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial); needsDeviceChange=1; break;}
 			needsRefresh = 0;
 			curMenuLocation=ON_FILLIST;
+			print_gecko("Refreshed\r\n");
 		}
-		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
-		drawFiles(&allFiles, files);
-
-		u16 btns = PAD_ButtonsHeld(0);
-		if(curMenuLocation==ON_OPTIONS) {
-			if(btns & PAD_BUTTON_LEFT){	curMenuSelection = (--curMenuSelection < 0) ? (MENU_MAX-1) : curMenuSelection;}
-			else if(btns & PAD_BUTTON_RIGHT){curMenuSelection = (curMenuSelection + 1) % MENU_MAX;	}
+		DrawUpdateMenuButtons(buttonPanel, (curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
+		if(devices[DEVICE_CUR] != NULL && curMenuLocation==ON_FILLIST) {
+			filePanel = renderFileBrowser(&allFiles, files);
+			print_gecko("after renderFileBrowser\r\n");
+			while(PAD_ButtonsHeld(0) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT)) {
+				VIDEO_WaitVSync (); 
+			}
 		}
-		if(devices[DEVICE_CUR] != NULL && ((btns & PAD_BUTTON_B)||(curMenuLocation==ON_FILLIST)))	{
-			while(PAD_ButtonsHeld(0) & PAD_BUTTON_B){ VIDEO_WaitVSync (); }
-			curMenuLocation=ON_FILLIST;
-			renderFileBrowser(&allFiles, files);
-		}
-		else if(btns & PAD_BUTTON_A) {
-			//handle menu event
-			switch(curMenuSelection) {
-				case 0:		// Device change
-					needsDeviceChange = 1;  //Change from SD->DVD or vice versa
-					break;
-				case 1:		// Settings
-					show_settings(NULL, NULL);
-					break;
-				case 2:		// Credits
-					show_info();
-					break;
-				case 3:
-					if(devices[DEVICE_CUR] != NULL) {
-						memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
-						if(devices[DEVICE_CUR] == &__device_wkf) { 
-							wkfReinit(); devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
-						}
-					}
-					needsRefresh=1;
-					break;
-				case 4:
-					__libogc_exit(0);
-					break;
+		else if (curMenuLocation==ON_OPTIONS) {
+			print_gecko("on options\r\n");
+			u16 btns = PAD_ButtonsHeld(0);
+			while (!((btns=PAD_ButtonsHeld(0)) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT))) {
+				VIDEO_WaitVSync();
 			}
 			
-		}
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT))) {
-			VIDEO_WaitVSync();
+			if(btns & PAD_BUTTON_LEFT){	curMenuSelection = (--curMenuSelection < 0) ? (MENU_MAX-1) : curMenuSelection;}
+			else if(btns & PAD_BUTTON_RIGHT){curMenuSelection = (curMenuSelection + 1) % MENU_MAX;	}
+
+			if(btns & PAD_BUTTON_A) {
+				//handle menu event
+				switch(curMenuSelection) {
+					case 0:		// Device change
+						needsDeviceChange = 1;  //Change from SD->DVD or vice versa
+						break;
+					case 1:		// Settings
+						show_settings(NULL, NULL);
+						break;
+					case 2:		// Credits
+						show_info();
+						break;
+					case 3:
+						if(devices[DEVICE_CUR] != NULL) {
+							memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+							if(devices[DEVICE_CUR] == &__device_wkf) { 
+								wkfReinit(); devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
+							}
+						}
+						needsRefresh=1;
+						break;
+					case 4:
+						__libogc_exit(0);
+						break;
+				}
+			}
+			if((btns & PAD_BUTTON_B) && devices[DEVICE_CUR] != NULL) {
+				curMenuLocation = ON_FILLIST;
+			}
+			while(PAD_ButtonsHeld(0) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT)) {
+				VIDEO_WaitVSync (); 
+			}
 		}
 		if(needsDeviceChange) {
 			break;
 		}
 	}
+	if(filePanel != NULL) {
+		DrawDispose(filePanel);
+	}
+	DrawDispose(backPanel);
 }
 
 
@@ -471,7 +493,7 @@ int main ()
 
 	// Sane defaults
 	refreshSRAM();
-	swissSettings.debugUSB = 0;
+	swissSettings.debugUSB = 1;
 	swissSettings.gameVMode = 0;	// Auto video mode
 	swissSettings.exiSpeed = 1;		// 32MHz
 	swissSettings.uiVMode = 0; 		// Auto UI mode
@@ -522,11 +544,11 @@ int main ()
 	
 	if(swissSettings.initNetworkAtStart) {
 		// Start up the BBA if it exists
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,"Initialising Network");
-		DrawFrameFinish();
+		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Initialising Network");	// TODO progress box
+		DrawPublish(msgBox);
 		init_network();
 		init_httpd_thread();
+		DrawDispose(msgBox);
 	}
 	
 	// DVD Motor off setting; Always stop the drive if we only started it to read the ID out
@@ -584,13 +606,12 @@ GXRModeObj *getModeFromSwissSetting(int uiVMode) {
 
 // Checks if devices are available, prints name of device being detected for slow init devices
 void populateDeviceAvailability() {
-	DrawFrameStart();
-	DrawMessageBox(D_INFO, "Detecting devices ...\nThis can be skipped by holding B next time");
-	DrawFrameFinish();
 	if(PAD_ButtonsHeld(0) & PAD_BUTTON_B) {
 		deviceHandler_setAllDevicesAvailable();
 		return;
 	}
+	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Detecting devices ...\nThis can be skipped by holding B next time");	// TODO progress box
+	DrawPublish(msgBox);
 	int i;
 	for(i = 0; i < MAX_DEVICES; i++) {
 		if(allDevices[i] != NULL && !deviceHandler_getDeviceAvailable(allDevices[i])) {
@@ -602,4 +623,5 @@ void populateDeviceAvailability() {
 			break;
 		}
 	}
+	DrawDispose(msgBox);
 }

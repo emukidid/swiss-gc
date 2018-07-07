@@ -179,9 +179,7 @@ void wkfWriteFlash(unsigned char *menuImg, unsigned char *firmwareImg) {
 		
 		perc = (page_num/(float)(0x1D0000/0x1000))*100;
 		if(prevperc != perc) {
-			DrawFrameStart();
 			DrawProgressBar(perc, "Menu flashing in progress. Do NOT Power Off !!");
-			DrawFrameFinish();
 		}
 		prevperc = perc;
 	}
@@ -210,9 +208,7 @@ void wkfWriteFlash(unsigned char *menuImg, unsigned char *firmwareImg) {
 			
 			perc = (page_num/(float)(3))*100;
 			if(prevperc != perc) {
-				DrawFrameStart();
 				DrawProgressBar(perc, "Firmware flashing in progress. Do NOT Power Off !!");
-				DrawFrameFinish();
 			}
 			prevperc = perc;
 		}
@@ -277,13 +273,11 @@ void wkfCheckSwitches() {
 		default: 
 		{
 			print_gecko("Invalid Swich config detected: [0x%08X]\r\n", wkfReadSpecial3());		
-			DrawFrameStart();
 			WriteFontStyled(640/2, 200, "*** WKF / WASP WARNING ***", 1.5f, true, defaultColor);
 			sprintf(txtbuffer,"Invalid WKF/WASP Switch config detected: [0x%08X]", wkfReadSpecial3());
 			WriteFontStyled(640/2, 250, txtbuffer, 0.75f, true, defaultColor);
 			WriteFontStyled(640/2, 280, "This will cause slowdown in games!", 0.8f, true, defaultColor);
 			WriteFontStyled(640/2, 310, "Please set SW3 & SW4 to ON to fix this", 0.8f, true, defaultColor);
-			DrawFrameFinish();
 			sleep(5);
 		}
 		break;
@@ -332,10 +326,10 @@ void wkfInit() {
 
 	// SD card detect
 	if ((wkfGetSlotStatus() & 0x000F0000)==0x00070000 || special_3 == 0xFFFFFFFF) {
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,"No SD Card");
-		DrawFrameFinish();
+		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"No SD Card");
+		DrawPublish(msgBox);
 		sleep(3);
+		DrawDispose(msgBox);
 		// no SD card
 		wkfInitialized = 0;
 	}
@@ -356,11 +350,11 @@ void wkfInit() {
 		wkfRead(&wkfBuffer[0], 0x200, 0);
 		if((wkfBuffer[0x1FF] != 0xAA)) {
 			// No FAT!
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"SD Card detected but failed to initialise.\nPlease try again");
-			DrawFrameFinish();
+			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"SD Card detected but failed to initialise.\nPlease try again");
 			print_gecko("SD Card detected but failed to initialise.\nPlease try again\r\n");
+			DrawPublish(msgBox);
 			sleep(5);
+			DrawDispose(msgBox);
 			wkfInitialized = 0;
 		} 
 		else {
