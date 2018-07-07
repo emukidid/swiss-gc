@@ -63,13 +63,12 @@ device_info* deviceHandler_FTP_info() {
 void readDeviceInfoFTP() {
 	struct statvfs buf;
 	memset(&buf, 0, sizeof(statvfs));
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,"Reading filesystem info for ftp:/");
-	DrawFrameFinish();
-	
+	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Reading filesystem info for ftp:/");	// TODO progress box
+	DrawPublish(msgBox);
 	int res = statvfs("ftp:/", &buf);
 	initial_FTP_info.freeSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_bfree)/1024LL):0;
 	initial_FTP_info.totalSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_blocks)/1024LL):0;
+	DrawDispose(msgBox);
 }
 	
 // Connect to the ftp specified in swiss.ini
@@ -92,31 +91,31 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
    
 	// We need at least a share name and ip addr in the settings filled out
 	if(!strlen(&swissSettings.ftpHostIp[0])) {
-		DrawFrameStart();
 		sprintf(txtbuffer, "Check FTP Configuration in swiss.ini");
-		DrawMessageBox(D_FAIL,txtbuffer);
-		DrawFrameFinish();
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+		DrawPublish(msgBox);
 		wait_press_A();
+		DrawDispose(msgBox);
 		return SMB_SMBCFGERR;
 	}
 
 	if(!net_initialized) {       //Init if we have to
-		DrawFrameStart();
 		sprintf(txtbuffer, "Network has not been initialised yet");
-		DrawMessageBox(D_FAIL,txtbuffer);
-		DrawFrameFinish();
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+		DrawPublish(msgBox);
 		wait_press_A();
+		DrawDispose(msgBox);
 		return SMB_NETINITERR;
 	} 
 
 	if(!ftp_initialized) {       //Connect to the FTP
 		init_ftp();
 		if(!ftp_initialized) {
-			DrawFrameStart();
 			sprintf(txtbuffer, "Error initialising FTP");
-			DrawMessageBox(D_FAIL,txtbuffer);
-			DrawFrameFinish();
+			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+			DrawPublish(msgBox);
 			wait_press_A();
+			DrawDispose(msgBox);
 			return SMB_SMBERR; //fail
 		}
 		readDeviceInfoFTP();

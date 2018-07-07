@@ -49,9 +49,8 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 		strcpy((*dir)[0].name, "..");
 	}
 	
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,"Read directory!");
-	DrawFrameFinish();
+	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Reading directory");	// TODO progress box
+	DrawPublish(msgBox);
 	// Read each entry of the directory
 	s32 res = usbgecko_open_dir(&ffile->name[0]);
 	if(!res) return -1;
@@ -70,8 +69,8 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 		(*dir)[i].fileAttrib	= entry->fileAttrib;
 		++i;
 	}
-	
-  return num_entries;
+	DrawDispose(msgBox);
+	return num_entries;
 }
 
 s32 deviceHandler_USBGecko_seekFile(file_handle* file, s32 where, s32 type){
@@ -112,34 +111,29 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2) {
 }
 
 s32 deviceHandler_USBGecko_init(file_handle* file) {
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,"Looking for USBGecko in Slot B");
-	DrawFrameFinish();
+	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Looking for USBGecko in Slot B");
+	DrawPublish(msgBox);
 	if(usb_isgeckoalive(1)) {
 		s32 retries = 1000;
-		
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,"Waiting for PC ...");
-		DrawFrameFinish();
+		DrawDispose(msgBox);
+		msgBox = DrawMessageBox(D_INFO,"Waiting for PC ...");	// TODO progress box
 		
 		usb_flush(1);
 		usbgecko_lock_file(0);
+		DrawDispose(msgBox);
 		// Wait for the PC and retry 1000 times
 		while(!usbgecko_pc_ready() && retries) {
 			VIDEO_WaitVSync();
 			retries--;
 		}
 		if(!retries) {
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Couldn't find PC!");
-			DrawFrameFinish();
+			msgBox = DrawMessageBox(D_INFO,"Couldn't find PC!");
+			DrawPublish(msgBox);
 			sleep(5);
+			DrawDispose(msgBox);
 			return 0;	// Didn't find the PC
 		}
 		else {
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Found PC !!");
-			DrawFrameFinish();
 			return 1;
 		}
 	}

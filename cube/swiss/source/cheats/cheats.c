@@ -227,11 +227,11 @@ int findCheats(bool silent) {
 	if(devices[DEVICE_TEMP] == NULL) {
 		if(!silent) {
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"No cheats file found.\nPress A to continue.");
-			DrawFrameFinish();
+			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"No cheats file found.\nPress A to continue.");
+			DrawPublish(msgBox);
 			while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+			DrawDispose(msgBox);
 		}
 		free(cheatsFile);
 		return 0;

@@ -37,8 +37,10 @@ device_info* deviceHandler_Qoob_info() {
 	return &initial_Qoob_info;
 }
 	
-s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type){	
+s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) {	
   
+	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Reading Qoob");	// TODO Progress Box
+	DrawPublish(msgBox);
 	// Set everything up to read
 	int num_entries = 1, i = 1, block = 0;
 	*dir = malloc( num_entries * sizeof(file_handle) );
@@ -76,17 +78,17 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	}
 	usedSpace >>= 10;
 	initial_Qoob_info.freeSpaceInKB = initial_Qoob_info.totalSpaceInKB - usedSpace;
+	DrawDispose(msgBox);
 	return num_entries;
 }
 
-s32 deviceHandler_Qoob_seekFile(file_handle* file, u32 where, u32 type){
+s32 deviceHandler_Qoob_seekFile(file_handle* file, u32 where, u32 type) {
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
 	return file->offset;
 }
 
-s32 deviceHandler_Qoob_readFile(file_handle* file, void* buffer, u32 length){
-	
+s32 deviceHandler_Qoob_readFile(file_handle* file, void* buffer, u32 length) {
 	__SYS_ReadROM(buffer,length,file->fileBase+file->offset);
 	return length;
 }
@@ -95,11 +97,7 @@ s32 deviceHandler_Qoob_setupFile(file_handle* file, file_handle* file2) {
 	return 1;
 }
 
-s32 deviceHandler_Qoob_init(file_handle* file){
-		
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,"Reading Qoob");
-	DrawFrameFinish();
+s32 deviceHandler_Qoob_init(file_handle* file) {
 	ipl_set_config(0);
 	return 1;
 }

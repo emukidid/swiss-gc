@@ -132,9 +132,7 @@ char *dvd_error_str()
 
 int initialize_disc(u32 streaming) {
 	int patched = NORMAL_MODE;
-	DrawFrameStart();
-	DrawProgressBar(33, "DVD Is Initializing");
-	DrawFrameFinish();
+	uiDrawObj_t* progBar = DrawPublish(DrawProgressBar(33, "DVD Is Initializing"));
 	if(is_gamecube())
 	{
 		// Reset WKF hard to allow for a real disc to be read if SD is removed
@@ -145,16 +143,14 @@ int initialize_disc(u32 streaming) {
 			wkfDetected = 1;
 		}
 
-		DrawFrameStart();
-		DrawProgressBar(40, "Resetting DVD drive - Detect Media");
-		DrawFrameFinish();
+		DrawDispose(progBar);
+		progBar = DrawPublish(DrawProgressBar(40, "Resetting DVD drive - Detect Media"));
 		dvd_reset();
 		dvd_read_id();
 		// Avoid lid open scenario
 		if((dvd_get_error()>>24) && (dvd_get_error()>>24 != 1)) {
-			DrawFrameStart();
-			DrawProgressBar(75, "Possible DVD Backup - Enabling Patches");
-			DrawFrameFinish();
+			DrawDispose(progBar);
+			progBar = DrawPublish(DrawProgressBar(75, "Possible DVD Backup - Enabling Patches"));
 			dvd_enable_patches();
 			if(!dvd_get_error()) {
 				patched=DEBUG_MODE;
@@ -162,11 +158,11 @@ int initialize_disc(u32 streaming) {
 			}
 		}
 		else if((dvd_get_error()>>24) == 1) {  // Lid is open, tell the user!
-			DrawFrameStart();
 			sprintf(txtbuffer, "Error %s. Press A.",dvd_error_str());
-			DrawMessageBox(D_FAIL, txtbuffer);
-			DrawFrameFinish();
+			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, txtbuffer);
+			DrawPublish(msgBox);
 			wait_press_A();
+			DrawDispose(msgBox);
 			return DRV_ERROR;
 		}
 		if((streaming == ENABLE_AUDIO) || (streaming == DISABLE_AUDIO)) {
@@ -188,17 +184,18 @@ int initialize_disc(u32 streaming) {
 	}
 	dvd_read_id();
 	if(dvd_get_error()) { //no disc, or no game id.
-		DrawFrameStart();
 		sprintf(txtbuffer, "Error: %s",dvd_error_str());
-		DrawMessageBox(D_FAIL, txtbuffer);
-		DrawFrameFinish();
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, txtbuffer);
+		DrawPublish(msgBox);
 		wait_press_A();
 		dvd_reset();	// for good measure
+		DrawDispose(msgBox);
 		return DRV_ERROR;
 	}
-	DrawFrameStart();
-	DrawProgressBar(100, "Initialization Complete");
-	DrawFrameFinish();
+	DrawDispose(progBar);
+	progBar = DrawPublish(DrawProgressBar(100, "Initialization Complete"));
+	sleep(1);
+	DrawDispose(progBar);
 	return patched;
 }
 
@@ -387,9 +384,8 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 		devices[DEVICE_CUR]->readFile(file,(unsigned char*)0x80000000,32);
 		char streaming = *(char*)0x80000008;
 		if(streaming && !isXenoGC) {
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"One moment, setting up audio streaming.");
-			DrawFrameFinish();
+			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"One moment, setting up audio streaming.");	// TODO progress box
+			DrawPublish(msgBox);
 			dvd_motor_off();
 			print_gecko("Set extension %08X\r\n",dvd_get_error());
 			dvd_setextension();
@@ -403,7 +399,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 			dvd_read_id();
 			print_gecko("Read ID %08X\r\n",dvd_get_error());
 			dvd_set_streaming(streaming);
-			
+			DrawDispose(msgBox);
 		}
 		dvd_set_offset(file->fileBase);
 		file->status = OFFSET_SET;
@@ -484,10 +480,10 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 s32 deviceHandler_DVD_init(file_handle* file){
   file->status = initialize_disc(ENABLE_BYDISK);
   if(file->status == DRV_ERROR){
-	  DrawFrameStart();
-	  DrawMessageBox(D_FAIL,"Failed to mount DVD. Press A");
-	  DrawFrameFinish();
+	  uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"Failed to mount DVD. Press A");
+	  DrawPublish(msgBox);
 	  wait_press_A();
+	  DrawDispose(msgBox);
 	  return file->status;
   }
   dvd_init=1;

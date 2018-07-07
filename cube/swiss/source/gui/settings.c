@@ -46,8 +46,7 @@ char* getConfigDeviceName() {
 }
 
 void settings_draw_page(int page_num, int option, file_handle *file) {
-	doBackdrop();
-	DrawEmptyBox(20,60, vmode->fbWidth-20, 460, COLOR_BLACK);
+	DrawEmptyBox(20,60, vmode->fbWidth-20, 460);
 		
 	// Save Settings to current device (**Shown on all tabs**)
 	/** Global Settings (Page 1/) */
@@ -78,61 +77,60 @@ void settings_draw_page(int page_num, int option, file_handle *file) {
 	if(!page_num) {
 		WriteFont(30, 65, "Global Settings (1/3):");
 		WriteFontStyled(30, 120, "IPL/Game Language:", 1.0f, false, defaultColor);
-		DrawSelectableButton(320, 120, -1, 150, getSramLang(swissSettings.sramLanguage), option == 0 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(320, 120, -1, 150, getSramLang(swissSettings.sramLanguage), option == 0 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 160, "IPL/Game Audio:", 1.0f, false, defaultColor);
-		DrawSelectableButton(320, 160, -1, 190, swissSettings.sramStereo ? "Stereo":"Mono", option == 1 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(320, 160, -1, 190, swissSettings.sramStereo ? "Stereo":"Mono", option == 1 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 200, "SD/IDE Speed:", 1.0f, false, defaultColor);
-		DrawSelectableButton(320, 200, -1, 230, swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == 2 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(320, 200, -1, 230, swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == 2 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 240, "Swiss Video Mode:", 1.0f, false, defaultColor);
-		DrawSelectableButton(320, 240, -1, 270, uiVModeStr[swissSettings.uiVMode], option == 3 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(320, 240, -1, 270, uiVModeStr[swissSettings.uiVMode], option == 3 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 280, "In-Game-Reset:", 1.0f, false, defaultColor);
-		DrawSelectableButton(320, 280, -1, 310, igrTypeStr[swissSettings.igrType], option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(320, 280, -1, 310, igrTypeStr[swissSettings.igrType], option == 4 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 320, "Config Device:", 1.0f, false, defaultColor);
-		DrawSelectableButton(320, 320, -1, 350, getConfigDeviceName(), option == 5 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(320, 320, -1, 350, getConfigDeviceName(), option == 5 ? B_SELECTED:B_NOSELECT);
 	}
 	else if(page_num == 1) {
 		WriteFont(30, 65, "Advanced Settings (2/3):");
 		WriteFontStyled(30, 110, "Enable USB Gecko Debug via Slot B:", 1.0f, false, defaultColor);
-		DrawSelectableButton(500, 110, -1, 135, swissSettings.debugUSB ? "Yes":"No", option == 0 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(500, 110, -1, 135, swissSettings.debugUSB ? "Yes":"No", option == 0 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 140, "Hide Unknown file types:", 1.0f, false, defaultColor);
-		DrawSelectableButton(500, 140, -1, 165, swissSettings.hideUnknownFileTypes ? "Yes":"No", option == 1 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(500, 140, -1, 165, swissSettings.hideUnknownFileTypes ? "Yes":"No", option == 1 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 170, "Stop DVD Motor on startup:", 1.0f, false, defaultColor);
-		DrawSelectableButton(500, 170, -1, 195, swissSettings.stopMotor ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(500, 170, -1, 195, swissSettings.stopMotor ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 200, "Enable WiiRD debugging in Games:", 1.0f, false, defaultColor);
-		DrawSelectableButton(500, 200, -1, 225, swissSettings.wiirdDebug ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(500, 200, -1, 225, swissSettings.wiirdDebug ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 230, "Enable File Management:", 1.0f, false, defaultColor);
-		DrawSelectableButton(500, 230, -1, 255, swissSettings.enableFileManagement ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(500, 230, -1, 255, swissSettings.enableFileManagement ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 260, "Auto-load all cheats:", 1.0f, false, defaultColor);
-		DrawSelectableButton(500, 260, -1, 285, swissSettings.autoCheats ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(500, 260, -1, 285, swissSettings.autoCheats ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 290, "Init network at startup:", 1.0f, false, defaultColor);
-		DrawSelectableButton(500, 290, -1, 315, swissSettings.initNetworkAtStart ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(500, 290, -1, 315, swissSettings.initNetworkAtStart ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT);
 	}
 	else if(page_num == 2) {
 		WriteFont(30, 65, "Current Game Settings (3/3):");
 		WriteFontStyled(30, 110, "Force Video Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 110, -1, 135, gameVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(480, 110, -1, 135, gameVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 140, "Force Vertical Filter:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 140, -1, 165, forceVFilterStr[swissSettings.forceVFilter], option == 1 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(480, 140, -1, 165, forceVFilterStr[swissSettings.forceVFilter], option == 1 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 170, "Force Anisotropic Filter:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 170, -1, 195, swissSettings.forceAnisotropy ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(480, 170, -1, 195, swissSettings.forceAnisotropy ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 200, "Force Widescreen:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 200, -1, 225, forceWidescreenStr[swissSettings.forceWidescreen], option == 3 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(480, 200, -1, 225, forceWidescreenStr[swissSettings.forceWidescreen], option == 3 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 230, "Force Text Encoding:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 230, -1, 255, forceEncodingStr[swissSettings.forceEncoding], option == 4 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(480, 230, -1, 255, forceEncodingStr[swissSettings.forceEncoding], option == 4 ? B_SELECTED:B_NOSELECT);
 		WriteFontStyled(30, 260, "Disable Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor);
-		DrawSelectableButton(480, 260, -1, 285, swissSettings.muteAudioStreaming ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT,-1);
+		DrawSelectableButton(480, 260, -1, 285, swissSettings.muteAudioStreaming ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT);
 	}
 	if(page_num != 0) {
 		DrawSelectableButton(40, 390, -1, 420, "Back", 
-		option == settings_count_pp[page_num]-(page_num != 2 ? 3:2) ? B_SELECTED:B_NOSELECT,-1);
+		option == settings_count_pp[page_num]-(page_num != 2 ? 3:2) ? B_SELECTED:B_NOSELECT);
 	}
 	if(page_num != 2) {
 		DrawSelectableButton(510, 390, -1, 420, "Next", 
-		option == settings_count_pp[page_num]-2 ? B_SELECTED:B_NOSELECT,-1);
+		option == settings_count_pp[page_num]-2 ? B_SELECTED:B_NOSELECT);
 	}
-	DrawSelectableButton(100, 425, -1, 455, "Save & Exit", option == settings_count_pp[page_num]-1 ? B_SELECTED:B_NOSELECT,-1);
-	DrawSelectableButton(320, 425, -1, 455, "Discard & Exit", option ==  settings_count_pp[page_num] ? B_SELECTED:B_NOSELECT,-1);
-	DrawFrameFinish();
+	DrawSelectableButton(100, 425, -1, 455, "Save & Exit", option == settings_count_pp[page_num]-1 ? B_SELECTED:B_NOSELECT);
+	DrawSelectableButton(320, 425, -1, 455, "Discard & Exit", option ==  settings_count_pp[page_num] ? B_SELECTED:B_NOSELECT);
 }
 
 void settings_toggle(int page, int option, int direction, file_handle *file) {
@@ -340,9 +338,8 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 		if((btns & PAD_BUTTON_A)) {
 			// Generic Save/Cancel/Back/Next button actions
 			if(option == settings_count_pp[page]-1) {
-				DrawFrameStart();
-				DrawMessageBox(D_INFO,"Saving changes!");
-				DrawFrameFinish();
+				uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Saving changes!");	// TODO progress box
+				DrawPublish(msgBox);
 				// Change Swiss video mode if it was modified.
 				if(tempSettings.uiVMode != swissSettings.uiVMode) {
 					GXRModeObj *newmode = getModeFromSwissSetting(swissSettings.uiVMode);
@@ -368,22 +365,26 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 					config->forceWidescreen = swissSettings.forceWidescreen;
 					config->forceEncoding = swissSettings.forceEncoding;
 					config->muteAudioStreaming = swissSettings.muteAudioStreaming;
+					DrawDispose(msgBox);
 				}
 				else {
+					DrawDispose(msgBox);
 					// Save the Swiss system settings since we're called from the main menu
-					DrawFrameStart();
-					DrawMessageBox(D_INFO,"Saving Config ...");
-					DrawFrameFinish();
+					msgBox = DrawMessageBox(D_INFO,"Saving Config ...");		// TODO progress box
+					DrawPublish(msgBox);
 					config_copy_swiss_settings(&swissSettings);
 					if(config_update_file()) {
-						DrawFrameStart();
-						DrawMessageBox(D_INFO,"Config Saved Successfully!");
-						DrawFrameFinish();
+						DrawDispose(msgBox);
+						msgBox = DrawMessageBox(D_INFO,"Config Saved Successfully!");
+						DrawPublish(msgBox);
+						sleep(1);
+						DrawDispose(msgBox);
 					}
 					else {
-						DrawFrameStart();
-						DrawMessageBox(D_INFO,"Config Failed to Save!");
-						DrawFrameFinish();
+						msgBox = DrawMessageBox(D_INFO,"Config Failed to Save!");
+						DrawPublish(msgBox);
+						sleep(1);
+						DrawDispose(msgBox);
 					}
 				}
 				return 1;

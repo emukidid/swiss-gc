@@ -470,10 +470,10 @@ s32 deviceHandler_CARD_deleteFile(file_handle* file) {
 	
 	int ret = CARD_DeleteEntry(slot, cd);
 	if(ret != CARD_ERROR_READY) {
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL,cardError(ret));
-		DrawFrameFinish();
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,cardError(ret));
+		DrawPublish(msgBox);
 		wait_press_A();
+		DrawDispose(msgBox);
 	}
 	return ret;
 }
