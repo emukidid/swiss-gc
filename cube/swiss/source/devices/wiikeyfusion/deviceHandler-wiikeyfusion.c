@@ -180,8 +180,7 @@ s32 deviceHandler_WKF_init(file_handle* file){
 	
 	if(((ret=f_mount(wkffs, "wkf:/", 0)) == FR_OK) && deviceHandler_getStatEnabled()) {	
 		sprintf(txtbuffer, "Reading filesystem info for wkf:/");
-		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,txtbuffer);	// TODO progress box
-		DrawPublish(msgBox);
+		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
 		
 		DWORD free_clusters, free_sectors, total_sectors = 0;
 		if(f_getfree("wkf:/", &free_clusters, &wkffs) == FR_OK) {

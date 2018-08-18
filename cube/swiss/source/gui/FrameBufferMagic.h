@@ -134,7 +134,7 @@ enum TextureId
 void init_textures();
 uiDrawObj_t* DrawImage(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
 uiDrawObj_t* DrawTexObj(GXTexObj *texObj, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
-uiDrawObj_t* DrawProgressBar(int percent, char *message);
+uiDrawObj_t* DrawProgressBar(bool indeterminate, int percent, char *message);
 uiDrawObj_t* DrawContainer();
 uiDrawObj_t* DrawMessageBox(int type, char *message);
 uiDrawObj_t* DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode);
@@ -144,6 +144,7 @@ uiDrawObj_t* DrawStyledLabel(int x, int y, char *string, float size, bool center
 uiDrawObj_t* DrawHighlightedBox(int x1, int y1, int x2, int y2);
 uiDrawObj_t* DrawLabel(int x, int y, char *string);
 uiDrawObj_t* DrawMenuButtons(int selection);
+void DrawUpdateProgressBar(uiDrawObj_t *evt, int percent);
 void DrawUpdateMenuButtons(uiDrawObj_t *evt, int selection);
 void DrawAddChild(uiDrawObj_t *parent, uiDrawObj_t *child);
 uiDrawObj_t* DrawPublish(uiDrawObj_t *evt);
@@ -152,5 +153,7 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message
 uiDrawObj_t* DrawVertScrollBar(int x, int y, int width, int height, float scrollPercent, int scrollHeight);
 void DrawArgsSelector(char *fileName);
 void DrawCheatsSelector(char *fileName);
+void DrawInit();
+void DrawShutdown();
 
 #endif

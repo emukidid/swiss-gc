@@ -83,8 +83,7 @@ void readDeviceInfo(file_handle* file) {
 		int slot = GET_SLOT(file->name);
 		
 		sprintf(txtbuffer, "Reading filesystem info for %s%s:/",isSDCard ? "sd":"ide", slot ? "b":"a");
-		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,txtbuffer);	// TODO progress box
-		DrawPublish(msgBox);
+		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
 		sprintf(txtbuffer, "%s%s:/",isSDCard ? "sd":"ide", slot ? "b":"a");
 		DWORD free_clusters, free_sectors, total_sectors = 0;
 		FATFS *fsptr = fs[(isSDCard ? slot : 2 + slot)];

@@ -39,8 +39,7 @@ device_info* deviceHandler_Qoob_info() {
 	
 s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) {	
   
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Reading Qoob");	// TODO Progress Box
-	DrawPublish(msgBox);
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading Qoob"));
 	// Set everything up to read
 	int num_entries = 1, i = 1, block = 0;
 	*dir = malloc( num_entries * sizeof(file_handle) );

@@ -12,6 +12,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <gccore.h>
+#include <math.h>
 #include <ogc/exi.h>
 #include <gctypes.h>
 #include <ogc/semaphore.h>
@@ -87,6 +88,7 @@ static char version[64];
 static char  video_thread_stack[VIDEO_STACK_SIZE];
 static lwp_t video_thread;
 static sem_t _videosema = LWP_SEM_NULL;
+static int threadAlive = 0;
 
 enum VideoEventType
 {
@@ -183,10 +185,10 @@ typedef struct drawMenuButtonsEvent {
 
 typedef struct drawMsgBoxEvent {
 	int type;
-	char *msg;
 } drawMsgBoxEvent_t;
 
 typedef struct drawProgressEvent {
+	bool indeterminate;
 	int percent;
 	char *msg;
 } drawProgressEvent_t;
@@ -240,6 +242,11 @@ static void clearNestedEvent(uiDrawObj_t *event) {
 		else if(event->type == EV_FILEBROWSERBUTTON) {
 			if(((drawFileBrowserButtonEvent_t*)event->data)->displayName) {
 				free(((drawFileBrowserButtonEvent_t*)event->data)->displayName);
+			}
+		}
+		else if(event->type == EV_PROGRESS) {
+			if(((drawProgressEvent_t*)event->data)->msg) {
+				free(((drawProgressEvent_t*)event->data)->msg);
 			}
 		}
 		free(event->data);
@@ -613,35 +620,74 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
   	GXColor noColor = (GXColor) {0,0,0,0}; //blank
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
 	GXColor progressBarColor = (GXColor) {255,128,0,GUI_MSGBOX_ALPHA}; //orange
+	GXColor progressBarIndColor = (GXColor) {0xb3,0xd9,0xff,GUI_MSGBOX_ALPHA}; //orange
 	
 	_DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor);
-	int multiplier = (PROGRESS_BOX_WIDTH-20)/100;
-	int progressBarWidth = multiplier*100;
-	_DrawSimpleBox( (640/2 - progressBarWidth/2), y1+20,
-			(multiplier*100), 20, 0, noColor, borderColor); 
-	_DrawSimpleBox( (640/2 - progressBarWidth/2), y1+20,
-			(multiplier*data->percent), 20, 0, progressBarColor, noColor); 
+	
+	// Label
+	int middleY = (y2+y1)/2;
+	float scale = GetTextScaleToFitInWidth(data->msg, x2-x1);
+	drawString(640/2, middleY, data->msg, scale, true, defaultColor);
+
+	if(data->indeterminate) {
+		data->percent += (data->percent + 2 == 400 ? -398 : 2);
+		int multiplier = (PROGRESS_BOX_WIDTH-20)/100;
+		int progressBarWidth = multiplier*100;
+		int progressStart = 0;
+		int progressSize = 0;
+		if(data->percent < 100) {
+			progressStart = 0;
+			progressSize = data->percent%100;
+		}
+		else if(data->percent >= 100 && data->percent < 200) {
+			progressStart = (data->percent%100);
+			progressSize = 100-progressStart;
+		}
+		else if(data->percent >= 200 && data->percent < 300) {
+			progressStart = 100-(data->percent%100);
+			progressSize = 100-progressStart;
+		}
+		else {
+			progressStart = 0;
+			progressSize = 100-(data->percent%100);
+		}
+		
+		_DrawSimpleBox( (640/2 - progressBarWidth/2), y1+20,
+				(multiplier*100), 20, 0, noColor, borderColor); 
+		_DrawSimpleBox( (640/2 - progressBarWidth/2) + (progressStart*multiplier),
+				y1+20,
+				(multiplier*progressSize),
+				20, 0, progressBarIndColor, noColor);
+	}
+	else {
+		int multiplier = (PROGRESS_BOX_WIDTH-20)/100;
+		int progressBarWidth = multiplier*100;
+		_DrawSimpleBox( (640/2 - progressBarWidth/2), y1+20,
+				(multiplier*100), 20, 0, noColor, borderColor); 
+		_DrawSimpleBox( (640/2 - progressBarWidth/2), y1+20,
+				(multiplier*data->percent), 20, 0, progressBarColor, noColor); 
+		char *percentString = calloc(1, 8);
+		sprintf(percentString,"%d%%", data->percent);
+		drawString(640/2, middleY+30, percentString, 1.0f, true, defaultColor);
+		free(percentString);
+	}	
 }
 
 // External
-uiDrawObj_t* DrawProgressBar(int percent, char *message) {
+uiDrawObj_t* DrawProgressBar(bool indeterminate, int percent, char *message) {
 	drawProgressEvent_t *eventData = calloc(1, sizeof(drawProgressEvent_t));
 	eventData->percent = percent;
-	eventData->msg = message;
+	eventData->indeterminate = indeterminate;
+	if(message && strlen(message) > 0) {
+		eventData->msg = malloc(strlen(message));
+		strcpy(eventData->msg, message);
+	}
+	else {
+		eventData->msg = NULL;
+	}
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_PROGRESS;
 	event->data = eventData;
-	
-	int x1 = ((640/2) - (PROGRESS_BOX_WIDTH/2));
-	int x2 = ((640/2) + (PROGRESS_BOX_WIDTH/2));
-	int y1 = ((480/2) - (PROGRESS_BOX_HEIGHT/2));
-	int y2 = ((480/2) + (PROGRESS_BOX_HEIGHT/2));
-	
-	int middleY = (y2+y1)/2;
-	float scale = GetTextScaleToFitInWidth(message, x2-x1);
-	DrawAddChild(event, DrawStyledLabel(640/2, middleY, message, scale, true, defaultColor));
-	sprintf(txtbuffer,"%d%% percent complete",percent);
-	DrawAddChild(event, DrawStyledLabel(640/2, middleY+30, txtbuffer, 1.0f, true, defaultColor));
 	return event;
 }
 
@@ -664,7 +710,6 @@ uiDrawObj_t* DrawMessageBox(int type, char *msg)
 {
 	drawMsgBoxEvent_t *eventData = calloc(1, sizeof(drawMsgBoxEvent_t));
 	eventData->type = type;
-	eventData->msg = msg;
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_MSGBOX;
 	event->data = eventData;
@@ -958,9 +1003,20 @@ uiDrawObj_t* DrawMenuButtons(int selection)
 	return event;
 }
 
+void DrawUpdateProgressBar(uiDrawObj_t *evt, int percent) {
+	if(_videosema != LWP_SEM_NULL)
+		LWP_SemWait(_videosema);
+	drawProgressEvent_t *data = (drawProgressEvent_t*)evt->data;
+	data->percent = percent;
+	LWP_SemPost(_videosema);
+}
+
 void DrawUpdateMenuButtons(uiDrawObj_t *evt, int selection) {
+	if(_videosema != LWP_SEM_NULL)
+		LWP_SemWait(_videosema);
 	drawMenuButtonsEvent_t *data = (drawMenuButtonsEvent_t*)evt->data;
 	data->selection = selection;
+	LWP_SemPost(_videosema);
 }
 
 // Internal
@@ -1212,7 +1268,7 @@ static void *videoUpdate(void *videoEventQueue) {
 	int frames = 0;
 	int framerate = 0;
 	u32 lasttime = gettick();
-	while(1) {
+	while(threadAlive) {
 		whichfb ^= 1;
 		frames++;
 		// Draw out every event
@@ -1285,7 +1341,7 @@ void DrawDispose(uiDrawObj_t *evt)
 	evt->disposed = true;
 }
 
-void init_video_thread() {
+void DrawInit() {
 	uiDrawObj_t *container = DrawContainer();
 	DrawAddChild(container, DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 	DrawAddChild(container, DrawStyledLabel(40,27, "Swiss v0.4", 1.5f, false, defaultColor));
@@ -1293,5 +1349,12 @@ void init_video_thread() {
 	DrawAddChild(container, DrawStyledLabel(210,60, version, 0.55f, false, defaultColor));
 	DrawPublish(container);
 	LWP_SemInit(&_videosema, 1, 1);
+	threadAlive = 1;
 	LWP_CreateThread(&video_thread, videoUpdate, videoEventQueue, video_thread_stack, VIDEO_STACK_SIZE, VIDEO_PRIORITY);
+}
+
+void DrawShutdown() {
+	threadAlive = 0;
+	LWP_JoinThread(video_thread, NULL);
+	GX_SetCurrentGXThread();
 }

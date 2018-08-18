@@ -132,7 +132,7 @@ char *dvd_error_str()
 
 int initialize_disc(u32 streaming) {
 	int patched = NORMAL_MODE;
-	uiDrawObj_t* progBar = DrawPublish(DrawProgressBar(33, "DVD Is Initializing"));
+	uiDrawObj_t* progBar = DrawPublish(DrawProgressBar(true, 0, "DVD Is Initializing"));
 	if(is_gamecube())
 	{
 		// Reset WKF hard to allow for a real disc to be read if SD is removed
@@ -144,13 +144,13 @@ int initialize_disc(u32 streaming) {
 		}
 
 		DrawDispose(progBar);
-		progBar = DrawPublish(DrawProgressBar(40, "Resetting DVD drive - Detect Media"));
+		progBar = DrawPublish(DrawProgressBar(true, 0, "Resetting DVD drive - Detect Media"));
 		dvd_reset();
 		dvd_read_id();
 		// Avoid lid open scenario
 		if((dvd_get_error()>>24) && (dvd_get_error()>>24 != 1)) {
 			DrawDispose(progBar);
-			progBar = DrawPublish(DrawProgressBar(75, "Possible DVD Backup - Enabling Patches"));
+			progBar = DrawPublish(DrawProgressBar(true, 0, "Possible DVD Backup - Enabling Patches"));
 			dvd_enable_patches();
 			if(!dvd_get_error()) {
 				patched=DEBUG_MODE;
@@ -193,7 +193,7 @@ int initialize_disc(u32 streaming) {
 		return DRV_ERROR;
 	}
 	DrawDispose(progBar);
-	progBar = DrawPublish(DrawProgressBar(100, "Initialization Complete"));
+	progBar = DrawPublish(DrawProgressBar(true, 0, "Initialization Complete"));
 	sleep(1);
 	DrawDispose(progBar);
 	return patched;
@@ -384,8 +384,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 		devices[DEVICE_CUR]->readFile(file,(unsigned char*)0x80000000,32);
 		char streaming = *(char*)0x80000008;
 		if(streaming && !isXenoGC) {
-			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"One moment, setting up audio streaming.");	// TODO progress box
-			DrawPublish(msgBox);
+			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "One moment, setting up audio streaming."));
 			dvd_motor_off();
 			print_gecko("Set extension %08X\r\n",dvd_get_error());
 			dvd_setextension();

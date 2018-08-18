@@ -63,8 +63,7 @@ device_info* deviceHandler_FTP_info() {
 void readDeviceInfoFTP() {
 	struct statvfs buf;
 	memset(&buf, 0, sizeof(statvfs));
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Reading filesystem info for ftp:/");	// TODO progress box
-	DrawPublish(msgBox);
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading filesystem info for ftp:/"));
 	int res = statvfs("ftp:/", &buf);
 	initial_FTP_info.freeSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_bfree)/1024LL):0;
 	initial_FTP_info.totalSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_blocks)/1024LL):0;

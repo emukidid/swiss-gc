@@ -52,8 +52,7 @@ device_info* deviceHandler_WODE_info() {
 s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){	
 
 	if(!wodeInited) return 0;
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Reading WODE");	// TODO progress box
-	DrawPublish(msgBox);
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading WODE"));
 	
 	//we don't care about partitions, just files!
 	while(!GetTotalISOs()) {

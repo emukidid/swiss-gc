@@ -321,8 +321,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 	}
 		
 	if(devices[DEVICE_PATCHES] == NULL) {
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "No writable device present\nA SD Gecko must be inserted in\n order to utilise patches for this game.");
-		DrawPublish(msgBox);
+		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "No writable device present\nA SD Gecko must be inserted in\n order to utilise patches for this game."));
 		sleep(5);
 		DrawDispose(msgBox);
 		return 0;
@@ -344,7 +343,6 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		u32 patched = 0, crc32 = 0;
 
 		sprintf(txtbuffer, "Patching File %i/%i",i+1,numToPatch);
-		DrawProgressBar((int)(((float)(i+1)/(float)numToPatch)*100), txtbuffer);
 			
 		// Round up to 32 bytes
 		if(filesToPatch[i].size % 0x20) {
@@ -359,6 +357,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		if(strstr(filesToPatch[i].name, "iwanagaD.dol") || strstr(filesToPatch[i].name, "switcherD.dol")) {
 			continue;	// skip unused PSO files
 		}
+		uiDrawObj_t* progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
 		int sizeToRead = filesToPatch[i].size, ret = 0;
 		void *buffer = memalign(32, sizeToRead);
 		
@@ -366,8 +365,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		ret = devices[DEVICE_CUR]->readFile(file,buffer,sizeToRead);
 		print_gecko("Read from %08X Size %08X - Result: %08X\r\n", filesToPatch[i].offset, sizeToRead, ret);
 		if(ret != sizeToRead) {
-			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Failed to read!");
-			DrawPublish(msgBox);
+			DrawDispose(progBox);			
+			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to read!"));
 			sleep(5);
 			DrawDispose(msgBox);
 			return 0;
@@ -376,8 +375,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		if(devices[DEVICE_CUR] != &__device_dvd && devices[DEVICE_CUR] != &__device_wkf) {
 			ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
 			if(READ_PATCHED_ALL != ret)	{
-				uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
-				DrawPublish(msgBox);
+				DrawDispose(progBox);	
+				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!"));
 				sleep(5);
 				DrawDispose(msgBox);
 			}
@@ -424,6 +423,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 				deviceHandler_setStatEnabled(0);
 				if(!devices[DEVICE_PATCHES]->init(devices[DEVICE_PATCHES]->initial)) {
 					deviceHandler_setStatEnabled(1);
+					DrawDispose(progBox);
 					return false;
 				}
 				deviceHandler_setStatEnabled(1);
@@ -461,6 +461,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 					free(buffer);
 					print_gecko("CRC matched, no need to patch again\r\n");
+					DrawDispose(progBox);
 					continue;
 				}
 				else {
@@ -479,6 +480,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			devices[DEVICE_PATCHES]->writeFile(&patchFile, &crc32, 4);
 			devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			num_patched++;
+			DrawDispose(progBox);
 		}
 		free(buffer);
 	}

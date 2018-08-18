@@ -197,7 +197,7 @@ void* Initialise (void)
 
 	init_font();
 	init_textures();
-	init_video_thread();
+	DrawInit();
 	whichfb = 0;
 	
 	drive_version(&driveVersion[0]);
@@ -205,9 +205,7 @@ void* Initialise (void)
 	
 	if(!driveVersion[0]) {
 		// Reset DVD if there was a IPL replacement that hasn't done that for us yet
-		// TODO make progress box
-		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Initialise DVD .. (HOLD B if NO DVD Drive)");
-		DrawPublish(msgBox);
+		uiDrawObj_t *progBox = DrawPublish(DrawProgressBar(true, 0, "Initialise DVD .. (HOLD B if NO DVD Drive)"));
 		dvd_reset();	// low-level, basic
 		dvd_read_id();
 		if(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B)) {
@@ -216,12 +214,11 @@ void* Initialise (void)
 		drive_version(&driveVersion[0]);
 		swissSettings.hasDVDDrive = *(u32*)&driveVersion[0] ? 2 : 0;
 		if(!swissSettings.hasDVDDrive) {
-			DrawDispose(msgBox);
-			msgBox = DrawMessageBox(D_INFO, "No DVD Drive Detected !!");
-			DrawPublish(msgBox);
+			DrawDispose(progBox);
+			progBox = DrawPublish(DrawMessageBox(D_INFO, "No DVD Drive Detected !!"));
 			sleep(2);
 		}
-		DrawDispose(msgBox);
+		DrawDispose(progBox);
 	}
 	
 	return xfb[0];
@@ -232,8 +229,8 @@ void load_config() {
 	// Try to open up the config .ini in case it hasn't been opened already
 	if(config_init()) {
 		sprintf(txtbuffer,"Loaded %i entries from the config file",config_get_count());
-		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,txtbuffer);	// TODO notification area this
-		DrawPublish(msgBox);
+		// TODO notification area this
+		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO,txtbuffer));
 		memcpy(&swissSettings, config_get_swiss_settings(), sizeof(SwissSettings));
 		DrawDispose(msgBox);
 	}
@@ -354,8 +351,7 @@ void main_loop()
 		select_device(DEVICE_CUR);
 		if(devices[DEVICE_CUR] != NULL) {
 			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
-			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Setting up device");	// TODO progress box
-			DrawPublish(msgBox);
+			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Setting up device"));
 			// If the user selected a device, make sure it's ready before we browse the filesystem
 			sdgecko_setSpeed(EXI_SPEED32MHZ);
 			if(!devices[DEVICE_CUR]->init( devices[DEVICE_CUR]->initial )) {
@@ -514,6 +510,14 @@ int main ()
 		print_gecko("GIT Revision: %s\r\n", GITVERSION);
 	}
 	
+/*	uiDrawObj_t* progBar = DrawProgressBar(true, 0, "Testing");
+	DrawPublish(progBar);
+	int prog = 0;
+	while(prog<100) {
+		//DrawUpdateProgressBar(progBar, ++prog);
+		sleep(1);
+	}*/
+	
 	// Go through all devices with FEAT_BOOT_DEVICE feature and set it as current if one is available
 	for(i = 0; i < MAX_DEVICES; i++) {
 		if(allDevices[i] != NULL && (allDevices[i]->features & FEAT_BOOT_DEVICE)) {
@@ -544,8 +548,7 @@ int main ()
 	
 	if(swissSettings.initNetworkAtStart) {
 		// Start up the BBA if it exists
-		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Initialising Network");	// TODO progress box
-		DrawPublish(msgBox);
+		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Initialising Network"));
 		init_network();
 		init_httpd_thread();
 		DrawDispose(msgBox);
@@ -610,8 +613,7 @@ void populateDeviceAvailability() {
 		deviceHandler_setAllDevicesAvailable();
 		return;
 	}
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Detecting devices ...\nThis can be skipped by holding B next time");	// TODO progress box
-	DrawPublish(msgBox);
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Detecting devices ...\nThis can be skipped by holding B next time"));
 	int i;
 	for(i = 0; i < MAX_DEVICES; i++) {
 		if(allDevices[i] != NULL && !deviceHandler_getDeviceAvailable(allDevices[i])) {
