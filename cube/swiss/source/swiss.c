@@ -591,7 +591,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 		}
 	}
 
-	DrawProgressBar(33, "Loading DOL");	// TODO Progress Box
+	uiDrawObj_t* loadDolProg = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
 	
 	// Don't needlessly apply audio streaming if the game doesn't want it
 	if(!GCMDisk.AudioStreaming || devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR] == &__device_dvd) {
@@ -759,7 +759,8 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 		devices[DEVICE_CUR]->deinit(&curFile);
 	}
 	
-	DrawProgressBar(100, "Executing Game!");
+	DrawDispose(loadDolProg);
+	DrawShutdown();
 	
 	do_videomode_swap();
 	VIDEO_SetPostRetraceCallback (NULL);
@@ -832,9 +833,10 @@ void boot_dol()
 		
 	int i=0;
 	ptr = dol_buffer;
+	uiDrawObj_t* progBar = DrawProgressBar(false, 0, "Loading DOL");
+	DrawPublish(progBar);
 	for(i = 0; i < curFile.size; i+= 131072) {
-		sprintf(txtbuffer, "Loading DOL [%ld/%ld Kb]...",curFile.size>>10,(SYS_GetArena1Size()+curFile.size)>>10);
-		DrawProgressBar((int)((float)((float)i/(float)curFile.size)*100), txtbuffer);
+		DrawUpdateProgressBar(progBar, (int)((float)((float)i/(float)curFile.size)*100));
 		
 		devices[DEVICE_CUR]->seekFile(&curFile,i,DEVICE_HANDLER_SEEK_SET);
 		int size = i+131072 > curFile.size ? curFile.size-i : 131072; 
@@ -847,6 +849,7 @@ void boot_dol()
 		}
   		ptr+=size;
 	}
+	DrawDispose(progBar);
 	
 	// Build a command line to pass to the DOL
 	int argc = 0;
@@ -1159,7 +1162,7 @@ void manage_file() {
 						break;
 					}
 					sprintf(txtbuffer, "Copying to: %s",getRelativeName(destFile->name));
-					DrawProgressBar((int)((float)((float)curOffset/(float)curFile.size)*100), txtbuffer);
+					DrawProgressBar(false, (int)((float)((float)curOffset/(float)curFile.size)*100), txtbuffer);
 					u32 amountToCopy = curOffset + chunkSize > curFile.size ? curFile.size - curOffset : chunkSize;
 					ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
 					if(ret != amountToCopy) {	// Retry the read.
@@ -1249,20 +1252,17 @@ void manage_file() {
 
 void load_game() {
 	if(devices[DEVICE_CUR] == &__device_wode) {
-		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Setup base offset please Wait ..");
-		DrawPublish(msgBox);
+		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Setup base offset please Wait .."));
 		devices[DEVICE_CUR]->setupFile(&curFile, 0);
 		DrawDispose(msgBox);
 	}
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Reading ...");	// TODO progess box this?
-	DrawPublish(msgBox);
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading ..."));
 	
 	// boot the GCM/ISO file, gamecube disc or multigame selected entry
 	devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
 	if(devices[DEVICE_CUR]->readFile(&curFile,&GCMDisk,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_WARN, "Invalid or Corrupt File!");
-		DrawPublish(msgBox);
+		msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
 		sleep(2);
 		DrawDispose(msgBox);
 		return;
@@ -1270,8 +1270,7 @@ void load_game() {
 
 	if(GCMDisk.DVDMagicWord != DVD_MAGIC) {
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Disc does not contain valid word at 0x1C");
-		DrawPublish(msgBox);
+		msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Disc does not contain valid word at 0x1C"));
 		sleep(2);
 		DrawDispose(msgBox);
 		return;
@@ -1288,8 +1287,7 @@ void load_game() {
 		if(findCheats(true) > 0) {
 			int appliedCount = applyAllCheats();
 			sprintf(txtbuffer, "Applied %i cheats", appliedCount);
-			msgBox = DrawMessageBox(D_INFO, txtbuffer);
-			DrawPublish(msgBox);
+			msgBox = DrawPublish(DrawMessageBox(D_INFO, txtbuffer));
 			sleep(1);
 			DrawDispose(msgBox);
 		}
@@ -1339,8 +1337,7 @@ void load_game() {
 		*(vu32*)VAR_IGR_DOL_SIZE = 0;
 		// Call the special setup for each device (e.g. SD will set the sector(s))
 		if(!devices[DEVICE_CUR]->setupFile(&curFile, secondDisc)) {
-			msgBox = DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)");
-			DrawPublish(msgBox);
+			msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
 			wait_press_A();
 			free(filesToPatch);
 			DrawDispose(msgBox);
@@ -1368,8 +1365,7 @@ void load_file()
 		if(endsWith(fileName,".dol") || endsWith(fileName,".dol+cli")) {
 			boot_dol();
 			// if it was invalid (overlaps sections, too large, etc..) it'll return
-			uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, "Invalid DOL");
-			DrawPublish(msgBox);
+			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid DOL"));
 			sleep(2);
 			DrawDispose(msgBox);
 			return;
@@ -1380,14 +1376,12 @@ void load_file()
 		}
 		if(endsWith(fileName,".fzn")) {
 			if(curFile.size != 0x1D0000) {
-				uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, "File Size must be 0x1D0000 bytes!");
-				DrawPublish(msgBox);
+				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "File Size must be 0x1D0000 bytes!"));
 				sleep(2);
 				DrawDispose(msgBox);
 				return;
 			}
-			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Reading Flash File ...");	// TODO Progress box
-			DrawPublish(msgBox);
+			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading Flash File ..."));
 			u8 *flash = (u8*)memalign(32,0x1D0000);
 			devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
 			devices[DEVICE_CUR]->readFile(&curFile,flash,0x1D0000);
@@ -1399,17 +1393,15 @@ void load_file()
 			DrawDispose(msgBox);
 			if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR]->readFile(&fwFile,firmware,0x3000) != 0x3000) {
 				free(firmware); firmware = NULL;
-				msgBox = DrawMessageBox(D_WARN, "Didn't find a firmware file, flashing menu only.");
+				msgBox = DrawPublish(DrawMessageBox(D_WARN, "Didn't find a firmware file, flashing menu only."));
 			}
 			else {
-				msgBox = DrawMessageBox(D_INFO, "Found firmware file, this will be flashed too.");
+				msgBox = DrawPublish(DrawMessageBox(D_INFO, "Found firmware file, this will be flashed too."));
 			}
-			DrawPublish(msgBox);
 			sleep(1);
 			DrawDispose(msgBox);
 			wkfWriteFlash(flash, firmware);
-			msgBox = DrawMessageBox(D_INFO, "Flashing Complete !!");
-			DrawPublish(msgBox);
+			msgBox = DrawPublish(DrawMessageBox(D_INFO, "Flashing Complete !!"));
 			sleep(2);
 			DrawDispose(msgBox);
 			return;
@@ -1418,15 +1410,13 @@ void load_file()
 			if(devices[DEVICE_CUR]->features & FEAT_BOOT_GCM)
 				load_game();
 			else {
-				uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, "This device does not support booting of images.");
-				DrawPublish(msgBox);
+				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "This device does not support booting of images."));
 				sleep(2);
 				DrawDispose(msgBox);
 			}
 			return;
 		}
-		uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, "Unknown File Type\nEnable file management to manage this file.");
-		DrawPublish(msgBox);
+		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Unknown File Type\nEnable file management to manage this file."));
 		sleep(1);
 		DrawDispose(msgBox);
 		return;			
@@ -1437,8 +1427,7 @@ void load_file()
 int check_game(ExecutableFile *filesToPatch)
 { 	
 	int multiDol = 0;
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Checking Game ..");	// TODO progress box
-	DrawPublish(msgBox);
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Checking Game .."));
 	
 	int numToPatch = parse_gcm(&curFile, filesToPatch);
 	
@@ -1452,17 +1441,15 @@ int check_game(ExecutableFile *filesToPatch)
 
 void save_config(ConfigEntry *config) {
 	// Save settings to current config device
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Saving Config ...");	// TODO progress box
-	DrawPublish(msgBox);
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving Config ..."));
 	if(config_update(config)) {
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_INFO,"Config Saved Successfully!");
+		msgBox = DrawPublish(DrawMessageBox(D_INFO,"Config Saved Successfully!"));
 	}
 	else {
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_INFO,"Config Failed to Save!");
+		msgBox = DrawPublish(DrawMessageBox(D_INFO,"Config Failed to Save!"));
 	}
-	DrawPublish(msgBox);
 	sleep(1);
 	DrawDispose(msgBox);
 }
@@ -1538,8 +1525,7 @@ int info_game()
 	swissSettings.forceWidescreen = config->forceWidescreen;
 	swissSettings.forceEncoding = config->forceEncoding;
 	swissSettings.muteAudioStreaming = config->muteAudioStreaming;
-	uiDrawObj_t *infoPanel = draw_game_info();
-	DrawPublish(infoPanel);
+	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
 	while(1) {
 		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y)){ VIDEO_WaitVSync (); }
 		while(!(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y))){ VIDEO_WaitVSync (); }
@@ -1572,8 +1558,7 @@ void select_device(int type)
 	u32 requiredFeatures = (type == DEVICE_DEST) ? FEAT_WRITE:FEAT_READ;
 
 	if(is_httpd_in_use()) {
-		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Can't load device while HTTP is processing!");
-		DrawPublish(msgBox);
+		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO,"Can't load device while HTTP is processing!"));
 		sleep(5);
 		DrawDispose(msgBox);
 		return;

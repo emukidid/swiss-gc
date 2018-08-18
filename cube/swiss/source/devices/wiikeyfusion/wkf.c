@@ -179,7 +179,7 @@ void wkfWriteFlash(unsigned char *menuImg, unsigned char *firmwareImg) {
 		
 		perc = (page_num/(float)(0x1D0000/0x1000))*100;
 		if(prevperc != perc) {
-			DrawProgressBar(perc, "Menu flashing in progress. Do NOT Power Off !!");
+			DrawProgressBar(false, perc, "Menu flashing in progress. Do NOT Power Off !!");
 		}
 		prevperc = perc;
 	}
@@ -208,7 +208,7 @@ void wkfWriteFlash(unsigned char *menuImg, unsigned char *firmwareImg) {
 			
 			perc = (page_num/(float)(3))*100;
 			if(prevperc != perc) {
-				DrawProgressBar(perc, "Firmware flashing in progress. Do NOT Power Off !!");
+				DrawProgressBar(false, perc, "Firmware flashing in progress. Do NOT Power Off !!");
 			}
 			prevperc = perc;
 		}
