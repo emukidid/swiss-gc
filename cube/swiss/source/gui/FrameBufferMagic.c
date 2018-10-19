@@ -27,7 +27,7 @@
 #include "dolparameters.h"
 #include "cheats.h"
 
-#define GUI_MSGBOX_ALPHA 200
+#define GUI_MSGBOX_ALPHA 220
 
 TPLFile backdropTPL;
 GXTexObj backdropTexObj;
@@ -249,6 +249,11 @@ static void clearNestedEvent(uiDrawObj_t *event) {
 				free(((drawProgressEvent_t*)event->data)->msg);
 			}
 		}
+		else if(event->type == EV_SELECTABLEBUTTON) {
+			if(((drawSelectableButtonEvent_t*)event->data)->msg) {
+				free(((drawSelectableButtonEvent_t*)event->data)->msg);
+			}
+		}
 		free(event->data);
 	}
 	free(event);
@@ -286,7 +291,7 @@ static void disposeEvent(uiDrawObj_t *event) {
 }
 
 
-void init_textures() 
+static void init_textures() 
 {
 	TPL_OpenTPLFromMemory(&backdropTPL, (void *)backdrop_tpl, backdrop_tpl_size);
 	TPL_GetTexture(&backdropTPL,backdrop,&backdropTexObj);
@@ -739,6 +744,19 @@ static void _DrawSelectableButton(uiDrawObj_t *evt) {
 	GXColor noColor = (GXColor) {0,0,0,0}; //black
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
 	
+	if(data->msg) {
+		int borderSize = 4;
+		int middleY = (((data->y2-data->y1)/2)-12)+data->y1;
+		//determine length of the text ourselves if x2 == -1
+		x1 = (x2 == -1) ? x1+2:x1;
+		x2 = (x2 == -1) ? GetTextSizeInPixels(data->msg)+x1+(borderSize*2)+6 : x2;
+
+		if(middleY+24 > data->y2) {
+			middleY = data->y1+3;
+		}
+		float scale = GetTextScaleToFitInWidth(data->msg, (x2-x1)-(borderSize*2));	
+		drawString(data->x1 + borderSize+3, data->y1+2, data->msg, scale, false, defaultColor);
+	}
 	//Draw Text and backfill (if selected)
 	if(data->mode==B_SELECTED) {
 		_DrawSimpleBox( x1, data->y1, x2-x1, data->y2-data->y1, 0, selectColor, borderColor);
@@ -757,23 +775,13 @@ uiDrawObj_t* DrawSelectableButton(int x1, int y1, int x2, int y2, char *message,
 	eventData->x2 = x2;
 	eventData->y2 = y2;
 	eventData->mode = mode;
-	eventData->msg = message;
+	if(message) {
+		eventData->msg = malloc(strlen(message));
+		strcpy(eventData->msg, message);
+	}
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_SELECTABLEBUTTON;
 	event->data = eventData;
-	
-	int borderSize = (mode==B_SELECTED) ? 6 : 4;
-	int middleY = (((y2-y1)/2)-12)+y1;
-	//determine length of the text ourselves if x2 == -1
-	x1 = (x2 == -1) ? x1+2:x1;
-	x2 = (x2 == -1) ? GetTextSizeInPixels(message)+x1+(borderSize*2)+6 : x2;
-
-	if(middleY+24 > y2) {
-		middleY = y1+3;
-	}
-	float scale = GetTextScaleToFitInWidth(message, (x2-x1)-(borderSize*2));
-		
-	DrawAddChild(event, DrawStyledLabel(x1 + borderSize+3, middleY, message, scale, false, defaultColor));
 	return event;
 }
 
@@ -862,8 +870,8 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 	drawString(data->x1 + borderSize+5+96, data->y1+borderSize, data->displayName, scale, false, defaultColor);
 	
 	// Print specific stats
-	char* spaceTxt = calloc(1, 64);
 	if(file->fileAttrib==IS_FILE) {
+		char* spaceTxt = calloc(1, 64);
 		if(devices[DEVICE_CUR] == &__device_wode) {
 			ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
 			sprintf(spaceTxt,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
@@ -879,9 +887,8 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 		}
 		drawString(data->x2 - ((borderSize+3) + (GetTextSizeInPixels(spaceTxt)*0.45)), 
 			data->y1+borderSize+24, spaceTxt, 0.45f, false, defaultColor);
-		free(spaceTxt);
+		free(spaceTxt);	
 	}
-	
 }
 
 // External
@@ -1057,8 +1064,9 @@ uiDrawObj_t* DrawVertScrollBar(int x, int y, int width, int height, float scroll
 	return event;
 }
 
-static void drawParameterForArgsSelector(Parameter *param, int x, int y, int selected) {
+static uiDrawObj_t* drawParameterForArgsSelector(Parameter *param, int x, int y, int selected) {
 
+	uiDrawObj_t* container = DrawContainer();
 	char *name = &param->arg.name[0];
 	char *selValue = &param->values[param->currentValueIdx].name[0];
 	
@@ -1068,35 +1076,36 @@ static void drawParameterForArgsSelector(Parameter *param, int x, int y, int sel
 	GXColor fontColor = (param->enable || selected) ? defaultColor : deSelectedColor;
 
 	// If selected draw that it's selected
-	if(selected) _DrawSimpleBox( x+chkWidth+gapWidth-5, y, nameWidth, 35, 0, deSelectedColor, defaultColor);
-	DrawImage(param->enable ? TEX_CHECKED:TEX_UNCHECKED, x, y, 32, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	if(selected) DrawAddChild(container, DrawTransparentBox( x+chkWidth+gapWidth, y, vmode->fbWidth-52, y+30));
+	DrawAddChild(container, DrawImage(param->enable ? TEX_CHECKED:TEX_UNCHECKED, x, y, 32, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 	// Draw the parameter Name
-	WriteFontStyled(x+chkWidth+gapWidth+5, y+4, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor);
+	DrawAddChild(container, DrawStyledLabel(x+chkWidth+gapWidth+5, y+4, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor));
 	// If enabled, draw arrows indicating where in the param list we are
 	if(selected && param->enable && param->num_values > 1) {
 		if(param->currentValueIdx != 0) {
-			WriteFontStyled(x+(chkWidth+nameWidth+(gapWidth*4)), y+5, "<-", .8f, false, defaultColor);
+			DrawAddChild(container, DrawStyledLabel(x+(chkWidth+nameWidth+(gapWidth*4)), y+5, "<-", .8f, false, defaultColor));
 		}
 		if(param->currentValueIdx != param->num_values-1) {
-			WriteFontStyled(x+(chkWidth+nameWidth+paramWidth+(gapWidth*6)), y+5, "->", .8f, false, defaultColor);
+			DrawAddChild(container, DrawStyledLabel(x+(chkWidth+nameWidth+paramWidth+(gapWidth*6)), y+5, "->", .8f, false, defaultColor));
 		}
 	}
 	// Draw the current value
-	WriteFontStyled(x+chkWidth+nameWidth+(gapWidth*6), y+2, selValue, GetTextScaleToFitInWidth(selValue, paramWidth), false, fontColor);
+	DrawAddChild(container, DrawStyledLabel(x+chkWidth+nameWidth+(gapWidth*6), y+2, selValue, GetTextScaleToFitInWidth(selValue, paramWidth), false, fontColor));
+	return container;
 }
 
 // External
 void DrawArgsSelector(char *fileName) {
-	return;
 	Parameters* params = getParameters();
 	int param_selection = 0;
 	int params_per_page = 6;
 	
 	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+	uiDrawObj_t *container = NULL;
 	while(1) {
-		DrawEmptyBox(20,60, vmode->fbWidth-20, 460);
+		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, vmode->fbWidth-20, 460);
 		sprintf(txtbuffer, "%s Parameters:", fileName);
-		WriteFontStyled(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, vmode->fbWidth-50), false, defaultColor);
+		DrawAddChild(newPanel, DrawStyledLabel(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, vmode->fbWidth-50), false, defaultColor));
 
 		int j = 0;
 		int current_view_start = MIN(MAX(0,param_selection-params_per_page/2),MAX(0,params->num_params-params_per_page));
@@ -1104,17 +1113,23 @@ void DrawArgsSelector(char *fileName) {
 	
 		int scrollBarHeight = 90+(params_per_page*20);
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)params->num_params);
-		DrawVertScrollBar(vmode->fbWidth-45, 120, 25, scrollBarHeight, (float)((float)param_selection/(float)(params->num_params-1)),scrollBarTabHeight);
+		DrawAddChild(newPanel, DrawVertScrollBar(vmode->fbWidth-45, 120, 25, scrollBarHeight, (float)((float)param_selection/(float)(params->num_params-1)),scrollBarTabHeight));
 		for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
-			drawParameterForArgsSelector(&params->parameters[current_view_start], 25, 120+j*35, current_view_start==param_selection);
+			DrawAddChild(newPanel, drawParameterForArgsSelector(&params->parameters[current_view_start], 25, 120+j*35, current_view_start==param_selection));
 		}
 		// Write about the default if there is any
-		DrawTransparentBox( 35, 350, vmode->fbWidth-35, 400);
-		WriteFontStyled(33, 345, "Default values will be used by the DOL being loaded if a", 0.8f, false, defaultColor);
-		WriteFontStyled(33, 365, "parameter is not enabled. Please check the documentation", 0.8f, false, defaultColor);
-		WriteFontStyled(33, 385, "for this DOL if you are unsure of the default values.", 0.8f, false, defaultColor);
-		WriteFontStyled(640/2, 440, "(A) Toggle Param - (Start) Load the DOL", 1.0f, true, defaultColor);
-
+		DrawAddChild(newPanel, DrawTransparentBox( 35, 350, vmode->fbWidth-35, 400));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 345, "Default values will be used by the DOL being loaded if a", 0.8f, false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 365, "parameter is not enabled. Please check the documentation", 0.8f, false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 385, "for this DOL if you are unsure of the default values.", 0.8f, false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(640/2, 440, "(A) Toggle Param - (Start) Load the DOL", 1.0f, true, defaultColor));
+		
+		if(container) {
+			DrawDispose(container);
+		}
+		DrawPublish(newPanel);
+		container = newPanel;
+		
 		while (!(PAD_ButtonsHeld(0) & (PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_START|PAD_BUTTON_A)))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = PAD_ButtonsHeld(0);
@@ -1139,35 +1154,38 @@ void DrawArgsSelector(char *fileName) {
 		while (PAD_ButtonsHeld(0) & (PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_START|PAD_BUTTON_A))
 			{ VIDEO_WaitVSync (); }
 	}
+	DrawDispose(container);
 }
 
-static void drawCheatForCheatsSelector(CheatEntry *cheat, int x, int y, int selected) {
+static uiDrawObj_t* drawCheatForCheatsSelector(CheatEntry *cheat, int x, int y, int selected) {
 
 	char *name = &cheat->name[0];
+	uiDrawObj_t* container = DrawContainer();
 	
 	int chkWidth = 32, nameWidth = 525, gapWidth = 13;
 	// If not selected and not enabled, use greyed out font for everything
 	GXColor fontColor = (cheat->enabled || selected) ? defaultColor : deSelectedColor;
 
 	// If selected draw that it's selected
-	if(selected) _DrawSimpleBox( x+chkWidth+gapWidth-5, y, nameWidth, 35, 0, deSelectedColor, defaultColor);
-	DrawImage(cheat->enabled ? TEX_CHECKED:TEX_UNCHECKED, x, y, 32, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	if(selected) DrawAddChild(container, DrawTransparentBox( x+chkWidth+gapWidth, y, vmode->fbWidth-52, y+30));
+	DrawAddChild(container, DrawImage(cheat->enabled ? TEX_CHECKED:TEX_UNCHECKED, x, y, 32, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 	// Draw the cheat Name
-	WriteFontStyled(x+chkWidth+gapWidth+5, y+4, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor);
+	DrawAddChild(container, DrawStyledLabel(x+chkWidth+gapWidth+5, y+4, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor));
+	return container;
 }
 
 // External
 void DrawCheatsSelector(char *fileName) {
-	return;
 	CheatEntries* cheats = getCheats();
 	int cheat_selection = 0;
 	int cheats_per_page = 6;
 
 	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+	uiDrawObj_t *container = NULL;		
 	while(1) {
-		DrawEmptyBox(20,60, vmode->fbWidth-20, 460);
+		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, vmode->fbWidth-20, 460);
 		sprintf(txtbuffer, "%s Cheats:", fileName);
-		WriteFontStyled(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, vmode->fbWidth-50), false, defaultColor);
+		DrawAddChild(newPanel, DrawStyledLabel(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, vmode->fbWidth-50), false, defaultColor));
 
 		int j = 0;
 		int current_view_start = MIN(MAX(0,cheat_selection-cheats_per_page/2),MAX(0,cheats->num_cheats-cheats_per_page));
@@ -1175,24 +1193,31 @@ void DrawCheatsSelector(char *fileName) {
 	
 		int scrollBarHeight = 90+(cheats_per_page*20);
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)cheats->num_cheats);
-		DrawVertScrollBar(vmode->fbWidth-45, 120, 25, scrollBarHeight, (float)((float)cheat_selection/(float)(cheats->num_cheats-1)),scrollBarTabHeight);
+		DrawAddChild(newPanel, DrawVertScrollBar(vmode->fbWidth-45, 120, 25, scrollBarHeight, (float)((float)cheat_selection/(float)(cheats->num_cheats-1)),scrollBarTabHeight));
 		for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
-			drawCheatForCheatsSelector(&cheats->cheat[current_view_start], 25, 120+j*35, current_view_start==cheat_selection);
+			DrawAddChild(newPanel, drawCheatForCheatsSelector(&cheats->cheat[current_view_start], 25, 120+j*35, current_view_start==cheat_selection));
 		}
 		// Write about how many cheats are enabled
-		DrawTransparentBox( 35, 350, vmode->fbWidth-35, 410);
-		WriteFontStyled(33, 345, "Space taken by cheats:", 0.8f, false, defaultColor);
-		GXColor noColor = (GXColor) {0,0,0,0}; //blank
-		GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
-		GXColor progressBarColor = (GXColor) {255,128,0,GUI_MSGBOX_ALPHA}; //orange
+		DrawAddChild(newPanel, DrawTransparentBox( 35, 350, vmode->fbWidth-35, 410));
 		
-		float multiplier = (float)getEnabledCheatsSize() / (float)kenobi_get_maxsize();
-		_DrawSimpleBox( 33, 370, vmode->fbWidth-66, 20, 0, noColor, borderColor); 
-		_DrawSimpleBox( 33, 370,	(int)((vmode->fbWidth-66)*multiplier), 20, 0, progressBarColor, noColor);
+		float percent = (((float)getEnabledCheatsSize() / (float)kenobi_get_maxsize()) * 100.0f);
+		sprintf(txtbuffer, "Space taken by cheats: %i/%i bytes (%.1f%% free)"
+			, getEnabledCheatsSize(), kenobi_get_maxsize(), 100.0f-percent);
+		DrawAddChild(newPanel, DrawStyledLabel(33, 345, txtbuffer, 0.8f, false, defaultColor));
+		
+		sprintf(txtbuffer, "Number of cheats enabled: %i", getEnabledCheatsCount());
+		DrawAddChild(newPanel, DrawStyledLabel(33, 370, txtbuffer, 0.8f, false, defaultColor));
+		
 		sprintf(txtbuffer, "WiiRD Debug %s", swissSettings.wiirdDebug ? "Enabled":"Disabled");
-		WriteFontStyled(33, 395, txtbuffer, 0.8f, false, defaultColor);
-		WriteFontStyled(640/2, 440, "(A) Toggle Cheat - (X) WiiRD Debug - (B) Return", 0.9f, true, defaultColor);
+		DrawAddChild(newPanel, DrawStyledLabel(33, 395, txtbuffer, 0.8f, false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(640/2, 440, "(A) Toggle Cheat - (X) WiiRD Debug - (B) Return", 0.9f, true, defaultColor));
 
+		if(container) {
+			DrawDispose(container);
+		}
+		DrawPublish(newPanel);
+		container = newPanel;
+		
 		while (!(PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X)))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = PAD_ButtonsHeld(0);
@@ -1215,6 +1240,7 @@ void DrawCheatsSelector(char *fileName) {
 		while (PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X))
 			{ VIDEO_WaitVSync (); }
 	}
+	DrawDispose(container);
 }
 
 static void videoDrawEvent(uiDrawObj_t *videoEvent) {
@@ -1338,10 +1364,15 @@ void DrawAddChild(uiDrawObj_t *parent, uiDrawObj_t *child)
 
 void DrawDispose(uiDrawObj_t *evt)
 {
+	if(_videosema != LWP_SEM_NULL)
+		LWP_SemWait(_videosema);
 	evt->disposed = true;
+	if(_videosema != LWP_SEM_NULL)
+		LWP_SemPost(_videosema);
 }
 
 void DrawInit() {
+	init_textures();
 	uiDrawObj_t *container = DrawContainer();
 	DrawAddChild(container, DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 	DrawAddChild(container, DrawStyledLabel(40,27, "Swiss v0.4", 1.5f, false, defaultColor));

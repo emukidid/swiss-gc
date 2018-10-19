@@ -196,7 +196,6 @@ void* Initialise (void)
 	populateVideoStr(vmode);
 
 	init_font();
-	init_textures();
 	DrawInit();
 	whichfb = 0;
 	
@@ -272,6 +271,9 @@ void free_files() {
 	if(allFiles) {
 		int i;
 		for(i = 0; i < files; i++) {
+			if(allFiles[i].uiObj) {
+				DrawDispose((uiDrawObj_t*)allFiles[i].uiObj);
+			}
 			if(allFiles[i].meta) {
 				if(allFiles[i].meta->banner) {
 					free(allFiles[i].meta->banner);
@@ -381,18 +383,15 @@ void main_loop()
 			if(files<1) { devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial); needsDeviceChange=1; break;}
 			needsRefresh = 0;
 			curMenuLocation=ON_FILLIST;
-			print_gecko("Refreshed\r\n");
 		}
 		DrawUpdateMenuButtons(buttonPanel, (curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
 		if(devices[DEVICE_CUR] != NULL && curMenuLocation==ON_FILLIST) {
 			filePanel = renderFileBrowser(&allFiles, files);
-			print_gecko("after renderFileBrowser\r\n");
 			while(PAD_ButtonsHeld(0) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT)) {
 				VIDEO_WaitVSync (); 
 			}
 		}
 		else if (curMenuLocation==ON_OPTIONS) {
-			print_gecko("on options\r\n");
 			u16 btns = PAD_ButtonsHeld(0);
 			while (!((btns=PAD_ButtonsHeld(0)) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT))) {
 				VIDEO_WaitVSync();
@@ -509,14 +508,6 @@ int main ()
 		print_gecko("GIT Commit: %s\r\n", GITREVISION);
 		print_gecko("GIT Revision: %s\r\n", GITVERSION);
 	}
-	
-/*	uiDrawObj_t* progBar = DrawProgressBar(true, 0, "Testing");
-	DrawPublish(progBar);
-	int prog = 0;
-	while(prog<100) {
-		//DrawUpdateProgressBar(progBar, ++prog);
-		sleep(1);
-	}*/
 	
 	// Go through all devices with FEAT_BOOT_DEVICE feature and set it as current if one is available
 	for(i = 0; i < MAX_DEVICES; i++) {

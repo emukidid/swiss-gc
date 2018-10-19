@@ -52,7 +52,7 @@ extern char *getRelativeName(char *str);
 extern uiDrawObj_t * renderFileBrowser(file_handle** directory, int num_files);
 
 extern void boot_dol();
-extern void manage_file();
+extern bool manage_file();
 extern void load_file();
 extern int check_game();
 extern int cheats_game();

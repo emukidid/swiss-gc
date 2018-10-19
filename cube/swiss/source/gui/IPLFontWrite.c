@@ -261,9 +261,6 @@ void drawString(int x, int y, char *string, float scale, bool centered, GXColor 
 
 }
 
-void WriteFont(int x, int y, char *string){}
-void WriteFontStyled(int x, int y, char *string, float size, bool centered, GXColor color){}
-
 int GetTextSizeInPixels(char *string)
 {
 	int strWidth = 0;

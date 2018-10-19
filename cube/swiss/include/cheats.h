@@ -55,6 +55,7 @@ void kenobi_set_cheats(u8 *buffer, u32 size);
 int kenobi_get_maxsize();
 void parseCheats(char *filecontents);
 int getEnabledCheatsSize(void);
+int getEnabledCheatsCount(void);
 CheatEntries* getCheats();
 int findCheats(bool silent);
 int applyAllCheats();

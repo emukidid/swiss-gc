@@ -342,13 +342,14 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 									getRelativeName((*directory)[current_view_start].name),
 									&((*directory)[current_view_start]), 
 									(current_view_start == curSelection) ? B_SELECTED:B_NOSELECT);
+			((*directory)[current_view_start]).uiObj = browserButton;
 			DrawAddChild(containerPanel, browserButton);
 		}
 	}
 }
 
-uiDrawObj_t *loadingBox = NULL;
-uiDrawObj_t *containerPanel = NULL;
+uiDrawObj_t* loadingBox = NULL;
+uiDrawObj_t* containerPanel = NULL;
 uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files)
 {
 	memset(txtbuffer,0,sizeof(txtbuffer));
@@ -358,7 +359,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files)
 		if(loadingBox != NULL) {
 			DrawDispose(loadingBox);
 		}
-		loadingBox = DrawMessageBox(D_INFO, "Loading ...");
+		loadingBox = DrawProgressBar(true, 0, "Loading ...");
 		DrawPublish(loadingBox);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFiles(directory, num_files, newPanel);
@@ -377,6 +378,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files)
 			//go into a folder or select a file
 			if((*directory)[curSelection].fileAttrib==IS_DIR) {
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
+				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL){
 				int len = strlen(&curFile.name[0]);
@@ -394,17 +396,18 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files)
 				}
 				if(len != strlen(&curFile.name[0]))
 					curFile.name[len-1] = '\0';
+				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_FILE){
 				memcpy(&curDir, &curFile, sizeof(file_handle));
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
-				manage_file();
+				needsRefresh= manage_file() ? 1:0;
 				// If we return from doing something with a file, refresh the device in the same dir we were at
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 			}
-			needsRefresh=1;
-			loadingBox = DrawMessageBox(D_INFO, "Loading ...");
-			DrawPublish(loadingBox);
+			if(needsRefresh) {
+				DrawDispose(containerPanel);
+			}
 			return containerPanel;
 		}
 		
@@ -433,6 +436,7 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 	int fileListBase = 90;
 	int scrollBarHeight = (FILES_PER_PAGE*40);
 	int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
+	uiDrawObj_t* destDirBox = NULL;
 	while(1){
 		// Read the directory
 		if(refresh) {
@@ -441,15 +445,20 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 			refresh = idx = 0;
 			scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
 		}
-		DrawEmptyBox(20,40, vmode->fbWidth-20, 450);
-		WriteFont(50, 55, "Enter directory and press X");
+		uiDrawObj_t* tempBox = DrawEmptyBox(20,40, vmode->fbWidth-20, 450);
+		DrawAddChild(tempBox, DrawLabel(50, 55, "Enter directory and press X"));
 		i = MIN(MAX(0,idx-FILES_PER_PAGE/2),MAX(0,num_files-FILES_PER_PAGE));
 		max = MIN(num_files, MAX(idx+FILES_PER_PAGE/2,FILES_PER_PAGE));
 		if(num_files > FILES_PER_PAGE)
-			DrawVertScrollBar(vmode->fbWidth-30, fileListBase, 16, scrollBarHeight, (float)((float)idx/(float)(num_files-1)),scrollBarTabHeight);
+			DrawAddChild(tempBox, DrawVertScrollBar(vmode->fbWidth-30, fileListBase, 16, scrollBarHeight, (float)((float)idx/(float)(num_files-1)),scrollBarTabHeight));
 		for(j = 0; i<max; ++i,++j) {
-			DrawSelectableButton(50,fileListBase+(j*40), vmode->fbWidth-35, fileListBase+(j*40)+40, getRelativeName((directories)[i].name), (i == idx) ? B_SELECTED:B_NOSELECT);
+			DrawAddChild(tempBox, DrawSelectableButton(50,fileListBase+(j*40), vmode->fbWidth-35, fileListBase+(j*40)+40, getRelativeName((directories)[i].name), (i == idx) ? B_SELECTED:B_NOSELECT));
 		}
+		if(destDirBox) {
+			DrawDispose(destDirBox);
+		}
+		destDirBox = tempBox;
+		DrawPublish(destDirBox);
 		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN))
 			{ VIDEO_WaitVSync (); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) > 16){	idx = (--idx < 0) ? num_files-1 : idx;}
@@ -482,6 +491,7 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)))
 			{ VIDEO_WaitVSync (); }
 	}
+	DrawDispose(destDirBox);
 	free(directories);
 }
 
@@ -524,16 +534,22 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch) {
 	int fileListBase = 175;
 	int scrollBarHeight = (page*40);
 	int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
+	uiDrawObj_t *container = NULL;
 	while(1) {
-		DrawEmptyBox(20,fileListBase-30, vmode->fbWidth-20, 340);
-		WriteFont(50, fileListBase-30, "Select DOL or Press B to boot normally");
+		uiDrawObj_t *newPanel = DrawEmptyBox(20,fileListBase-30, vmode->fbWidth-20, 340);
+		DrawAddChild(newPanel, DrawLabel(50, fileListBase-30, "Select DOL or Press B to boot normally"));
 		i = MIN(MAX(0,idx-(page/2)),MAX(0,num_files-page));
 		max = MIN(num_files, MAX(idx+(page/2),page));
 		if(num_files > page)
-			DrawVertScrollBar(vmode->fbWidth-30, fileListBase, 16, scrollBarHeight, (float)((float)idx/(float)(num_files-1)),scrollBarTabHeight);
+			DrawAddChild(newPanel, DrawVertScrollBar(vmode->fbWidth-30, fileListBase, 16, scrollBarHeight, (float)((float)idx/(float)(num_files-1)),scrollBarTabHeight));
 		for(j = 0; i<max; ++i,++j) {
-			DrawSelectableButton(50,fileListBase+(j*40), vmode->fbWidth-35, fileListBase+(j*40)+40, filesToPatch[i].name, (i == idx) ? B_SELECTED:B_NOSELECT);
+			DrawAddChild(newPanel, DrawSelectableButton(50,fileListBase+(j*40), vmode->fbWidth-35, fileListBase+(j*40)+40, filesToPatch[i].name, (i == idx) ? B_SELECTED:B_NOSELECT));
 		}
+		if(container) {
+			DrawDispose(container);
+		}
+		DrawPublish(newPanel);
+		container = newPanel;
 		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN))
 			{ VIDEO_WaitVSync (); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) > 16){	idx = (--idx < 0) ? num_files-1 : idx;}
@@ -546,6 +562,7 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch) {
 		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)))
 			{ VIDEO_WaitVSync (); }
 	}
+	DrawDispose(container);
 	return idx >= 0 ? &filesToPatch[idx] : NULL;
 	
 }
@@ -911,25 +928,26 @@ void boot_dol()
 }
 
 /* Manage file  - The user will be asked what they want to do with the currently selected file - copy/move/delete*/
-void manage_file() {
+bool manage_file() {
 	// If it's a file
 	if(curFile.fileAttrib == IS_FILE) {
 		if(!swissSettings.enableFileManagement) {
 			load_file();
-			return;
+			return false;
 		}
 		// Ask the user what they want to do with it
-		DrawEmptyBox(10,150, vmode->fbWidth-10, 350);
-		WriteFontStyled(640/2, 160, "Manage File:", 1.0f, true, defaultColor);
+		uiDrawObj_t* manageFileBox = DrawEmptyBox(10,150, vmode->fbWidth-10, 350);
+		DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 160, "Manage File:", 1.0f, true, defaultColor));
 		float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), vmode->fbWidth-10-10);
-		WriteFontStyled(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor);
+		DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor));
 		if(devices[DEVICE_CUR]->features & FEAT_WRITE) {
-			WriteFontStyled(640/2, 230, "(A) Load (X) Copy (Y) Move (Z) Delete", 1.0f, true, defaultColor);
+			DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 230, "(A) Load (X) Copy (Y) Move (Z) Delete", 1.0f, true, defaultColor));
 		}
 		else {
-			WriteFontStyled(640/2, 230, "(A) Load (X) Copy", 1.0f, true, defaultColor);
+			DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 230, "(A) Load (X) Copy", 1.0f, true, defaultColor));
 		}
-		WriteFontStyled(640/2, 300, "Press an option to Continue, or B to return", 1.0f, true, defaultColor);
+		DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 300, "Press an option to Continue, or B to return", 1.0f, true, defaultColor));
+		DrawPublish(manageFileBox);
 		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
 		int option = 0;
 		while(1) {
@@ -950,13 +968,16 @@ void manage_file() {
 				break;
 			}
 			if(buttons & PAD_BUTTON_A) {
+				DrawDispose(manageFileBox);
 				load_file();
-				return;
+				return false;
 			}
 			if(buttons & PAD_BUTTON_B) {
-				return;
+				DrawDispose(manageFileBox);
+				return false;
 			}
 		}
+		DrawDispose(manageFileBox);
 	
 		// If delete, delete it + refresh the device
 		if(option == DELETE_OPTION) {
@@ -985,7 +1006,7 @@ void manage_file() {
 			u32 ret = 0;
 			// Show a list of destination devices (the same device is also a possibility)
 			select_device(DEVICE_DEST);
-			if(devices[DEVICE_DEST] == NULL) return;
+			if(devices[DEVICE_DEST] == NULL) return false;
 
 			// If the devices are not the same, init the destination, fail on non-existing device/etc
 			if(devices[DEVICE_CUR] != devices[DEVICE_DEST]) {
@@ -996,7 +1017,7 @@ void manage_file() {
 					DrawPublish(msgBox);
 					wait_press_A();
 					DrawDispose(msgBox);
-					return;
+					return false;
 				}
 			}
 			// Traverse this destination device and let the user select a directory to dump the file in
@@ -1023,23 +1044,24 @@ void manage_file() {
 			// If the destination file already exists, ask the user what to do
 			u8 nothing[1];
 			if(devices[DEVICE_DEST]->readFile(destFile, nothing, 1) >= 0) {
-				DrawEmptyBox(10,150, vmode->fbWidth-10, 350);
-				WriteFontStyled(640/2, 160, "File exists:", 1.0f, true, defaultColor);
+				uiDrawObj_t* dupeBox = DrawEmptyBox(10,150, vmode->fbWidth-10, 350);
+				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 160, "File exists:", 1.0f, true, defaultColor));
 				float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), vmode->fbWidth-10-10);
-				WriteFontStyled(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor);
-				WriteFontStyled(640/2, 230, "(A) Rename (Z) Overwrite", 1.0f, true, defaultColor);
-				WriteFontStyled(640/2, 300, "Press an option to Continue, or B to return", 1.0f, true, defaultColor);
-				
+				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor));
+				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 230, "(A) Rename (Z) Overwrite", 1.0f, true, defaultColor));
+				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 300, "Press an option to Continue, or B to return", 1.0f, true, defaultColor));
+				DrawPublish(dupeBox);
 				while(PAD_ButtonsHeld(0) & (PAD_BUTTON_A | PAD_TRIGGER_Z)) { VIDEO_WaitVSync (); }
 				while(1) {
 					u32 buttons = PAD_ButtonsHeld(0);
 					if(buttons & PAD_TRIGGER_Z) {
 						if(!strcmp(curFile.name, destFile->name)) {
+							DrawDispose(dupeBox);
 							uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Can't overwrite a file with itself!");
 							DrawPublish(msgBox);
 							wait_press_A();
 							DrawDispose(msgBox);
-							return; 
+							return false; 
 						}
 						else {
 							devices[DEVICE_DEST]->deleteFile(destFile);
@@ -1074,11 +1096,12 @@ void manage_file() {
 						else {
 							cursor += 3;
 							if((strlen(name_backup) + 4) >= 1024) {
+								DrawDispose(dupeBox);
 								uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "File name too long!");
 								DrawPublish(msgBox);
 								wait_press_A();
 								DrawDispose(msgBox);
-								return;
+								return false;
 							}
 							destFile->name[cursor - 3] = '_';
 							sprintf(destFile->name + cursor - 2, "%02i", copy_num);
@@ -1092,11 +1115,12 @@ void manage_file() {
 							devices[DEVICE_DEST]->closeFile(destFile);
 							copy_num++;
 							if(copy_num > 99) {
+								DrawDispose(dupeBox);
 								uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Too many copies!");
 								DrawPublish(msgBox);
 								wait_press_A();
 								DrawDispose(msgBox);
-								return;
+								return false;
 							}
 							sprintf(destFile->name + cursor - 2, "%02i", copy_num);
 							if(extension_start >= 0) {
@@ -1108,9 +1132,11 @@ void manage_file() {
 						break;
 					}
 					if(buttons & PAD_BUTTON_B) {
-						return;
+						DrawDispose(dupeBox);
+						return false;
 					}
 				}
+				DrawDispose(dupeBox);
 			}
 
 			// Seek back to 0 after all these reads
@@ -1154,21 +1180,24 @@ void manage_file() {
 				u32 isCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
 				u32 curOffset = 0, cancelled = 0, chunkSize = (isCard||isDestCard) ? curFile.size : (256*1024);
 				char *readBuffer = (char*)memalign(32,chunkSize);
-				
+				sprintf(txtbuffer, "Copying to: %s",getRelativeName(destFile->name));
+				uiDrawObj_t* progBar = DrawProgressBar(false, 0, txtbuffer);
+				DrawPublish(progBar);
+	
 				while(curOffset < curFile.size) {
 					u32 buttons = PAD_ButtonsHeld(0);
 					if(buttons & PAD_BUTTON_B) {
 						cancelled = 1;
 						break;
 					}
-					sprintf(txtbuffer, "Copying to: %s",getRelativeName(destFile->name));
-					DrawProgressBar(false, (int)((float)((float)curOffset/(float)curFile.size)*100), txtbuffer);
+					DrawUpdateProgressBar(progBar, (int)((float)((float)curOffset/(float)curFile.size)*100));
 					u32 amountToCopy = curOffset + chunkSize > curFile.size ? curFile.size - curOffset : chunkSize;
 					ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
 					if(ret != amountToCopy) {	// Retry the read.
 						devices[DEVICE_CUR]->seekFile(&curFile, curFile.offset-ret, DEVICE_HANDLER_SEEK_SET);
 						ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
 						if(ret != amountToCopy) {
+							DrawDispose(progBar);
 							free(readBuffer);
 							devices[DEVICE_CUR]->closeFile(&curFile);
 							devices[DEVICE_DEST]->closeFile(destFile);
@@ -1179,11 +1208,12 @@ void manage_file() {
 							setGCIInfo(NULL);
 							setCopyGCIMode(FALSE);
 							DrawDispose(msgBox);
-							return;
+							return true;
 						}
 					}
 					ret = devices[DEVICE_DEST]->writeFile(destFile, readBuffer, amountToCopy);
 					if(ret != amountToCopy) {
+						DrawDispose(progBar);
 						free(readBuffer);
 						devices[DEVICE_CUR]->closeFile(&curFile);
 						devices[DEVICE_DEST]->closeFile(destFile);
@@ -1194,10 +1224,11 @@ void manage_file() {
 						setGCIInfo(NULL);
 						setCopyGCIMode(FALSE);
 						DrawDispose(msgBox);
-						return;
+						return true;
 					}
 					curOffset+=amountToCopy;
 				}
+				DrawDispose(progBar);
 
 				// Handle empty files as a special case
 				if(curFile.size == 0) {
@@ -1211,7 +1242,7 @@ void manage_file() {
 						setGCIInfo(NULL);
 						setCopyGCIMode(FALSE);
 						DrawDispose(msgBox);
-						return;
+						return true;
 					}
 				}
 				free(readBuffer);
@@ -1248,6 +1279,7 @@ void manage_file() {
 		sleep(2);
 		DrawDispose(msgBox);
 	}
+	return true;
 }
 
 void load_game() {
