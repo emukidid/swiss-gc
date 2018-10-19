@@ -36,6 +36,7 @@ typedef struct {
 	FIL* ffsFp;				// file pointer (FATFS)
 	file_meta *meta;
 	u8 other[128];			// Store anything else we want here
+	void* uiObj;			// UI associated with this file_handle
 } file_handle;	// Note: If the contents of this change, recompile pc/usbgecko/main.c
 
 typedef struct {

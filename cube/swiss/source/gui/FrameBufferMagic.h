@@ -131,7 +131,6 @@ enum TextureId
 	TEX_UNCHECKED
 };
 
-void init_textures();
 uiDrawObj_t* DrawImage(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
 uiDrawObj_t* DrawTexObj(GXTexObj *texObj, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
 uiDrawObj_t* DrawProgressBar(bool indeterminate, int percent, char *message);
@@ -141,7 +140,6 @@ uiDrawObj_t* DrawSelectableButton(int x1, int y1, int x2, int y2, char *message,
 uiDrawObj_t* DrawEmptyBox(int x1, int y1, int x2, int y2);
 uiDrawObj_t* DrawTransparentBox(int x1, int y1, int x2, int y2);
 uiDrawObj_t* DrawStyledLabel(int x, int y, char *string, float size, bool centered, GXColor color);
-uiDrawObj_t* DrawHighlightedBox(int x1, int y1, int x2, int y2);
 uiDrawObj_t* DrawLabel(int x, int y, char *string);
 uiDrawObj_t* DrawMenuButtons(int selection);
 void DrawUpdateProgressBar(uiDrawObj_t *evt, int percent);

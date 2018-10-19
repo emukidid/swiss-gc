@@ -111,8 +111,7 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	// Set everything up to read
 	int num_entries = 1, i = 1;
 	char file_name[PATHNAME_MAX];
-	*dir = malloc( sizeof(file_handle) );
-	memset(*dir,0,sizeof(file_handle));
+	*dir = calloc(sizeof(file_handle), 1);
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 	strcpy((*dir)[0].name, "..");
 	memset(&entry, 0, sizeof(FILINFO));
@@ -411,6 +410,7 @@ int EXI_ResetSD(int drv) {
 s32 fatFs_Mount(u8 devNum, char *path) {
 	if(fs[devNum] != NULL) {
 		disk_flush(devNum);
+		print_gecko("Unmount %i devnum, %s path\r\n", devNum, path);
 		f_mount(0, path, 0);	// Unmount
 		free(fs[devNum]);
 		fs[devNum] = NULL;
@@ -423,7 +423,7 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 	int isSDCard = IS_SDCARD(file->name);
 	int slot = GET_SLOT(file->name);
 	int ret = 0;
-	
+	print_gecko("Init %s %i\r\n", (isSDCard ? "SD":"IDE"), slot);
 	// Slot A - SD Card
 	if(isSDCard && !slot && EXI_ResetSD(0)) {
 		carda->shutdown();

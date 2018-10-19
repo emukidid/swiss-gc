@@ -527,7 +527,7 @@ int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
 	if(usedSpace) *usedSpace = calc_fst_entries_size(FST);
 		
 	// Add the disc itself as a "file"
-	*dir = malloc( numFiles * sizeof(file_handle) );
+	*dir = calloc( numFiles * sizeof(file_handle), 1 );
 	DVD_Read((*dir)[idx].name, 32, 128);
 	strcat((*dir)[idx].name, ".gcm");
 	(*dir)[idx].fileBase = 0;
@@ -565,6 +565,7 @@ int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
 			++numFiles;
 			*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
 		}
+		memset(&(*dir)[idx], 0, sizeof(file_handle));
 		sprintf((*dir)[idx].name, "%s/..", file->name);
 		(*dir)[idx].fileBase = *(u32*)&FST[(parent_dir_offset*0x0C)+4];
 		(*dir)[idx].offset = 0;
@@ -595,6 +596,7 @@ int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
 					++numFiles;
 					*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
 				}
+				memset(&(*dir)[idx], 0, sizeof(file_handle));
 				memcpy((*dir)[idx].name, &filename[0], PATHNAME_MAX);
 				(*dir)[idx].fileBase = i;
 				(*dir)[idx].offset = 0;
@@ -613,6 +615,7 @@ int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
 				++numFiles;
 				*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
 			}
+			memset(&(*dir)[idx], 0, sizeof(file_handle));
 			memcpy((*dir)[idx].name, &filename[0], PATHNAME_MAX);
 			(*dir)[idx].fileBase = file_offset;
 			(*dir)[idx].offset = 0;
