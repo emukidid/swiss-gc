@@ -20,6 +20,7 @@
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
 #include "IPLFontWrite.h"
+#include "filemeta.h"
 #include "swiss.h"
 #include "main.h"
 #include "ata.h"
@@ -228,34 +229,50 @@ static uiDrawObj_t* addVideoEvent(uiDrawObj_t *event) {
 }
 
 static void clearNestedEvent(uiDrawObj_t *event) {
-	if(event->child) {
+	u32 oldEvent = (u32)event;
+	if(event->child && event->child != event) {
 		clearNestedEvent(event->child);
 	}
-	//print_gecko("Dispose nested event %08X\r\n", (u32)event);
-	if(event->data) {
+	print_gecko("Dispose nested event %08X\r\n", (u32)event);
+	if(oldEvent == (u32)event && event->data) {
 		// Free any attached data
 		if(event->type == EV_STYLEDLABEL) {
 			if(((drawStyledLabelEvent_t*)event->data)->string) {
+				//printf("Clear Nested EV_STYLEDLABEL\r\n");
 				free(((drawStyledLabelEvent_t*)event->data)->string);
 			}
 		}
 		else if(event->type == EV_FILEBROWSERBUTTON) {
 			if(((drawFileBrowserButtonEvent_t*)event->data)->displayName) {
+				//printf("Clear Nested EV_FILEBROWSERBUTTON\r\n");
 				free(((drawFileBrowserButtonEvent_t*)event->data)->displayName);
+			}
+			if(((drawFileBrowserButtonEvent_t*)event->data)->file) {
+				if(((drawFileBrowserButtonEvent_t*)event->data)->file->meta) {
+					if(((drawFileBrowserButtonEvent_t*)event->data)->file->meta->banner) {
+						free(((drawFileBrowserButtonEvent_t*)event->data)->file->meta->banner);
+					}
+					free(((drawFileBrowserButtonEvent_t*)event->data)->file->meta);
+				}
+				free(((drawFileBrowserButtonEvent_t*)event->data)->file);
 			}
 		}
 		else if(event->type == EV_PROGRESS) {
 			if(((drawProgressEvent_t*)event->data)->msg) {
+				//printf("Clear Nested EV_PROGRESS\r\n");
 				free(((drawProgressEvent_t*)event->data)->msg);
 			}
 		}
 		else if(event->type == EV_SELECTABLEBUTTON) {
 			if(((drawSelectableButtonEvent_t*)event->data)->msg) {
+				//printf("Clear Nested EV_SELECTABLEBUTTON\r\n");
 				free(((drawSelectableButtonEvent_t*)event->data)->msg);
 			}
 		}
+		//printf("Clear Nested event->data\r\n");
 		free(event->data);
 	}
+	//printf("Clear event\r\n");
 	free(event);
 }
 
@@ -744,25 +761,25 @@ static void _DrawSelectableButton(uiDrawObj_t *evt) {
 	GXColor noColor = (GXColor) {0,0,0,0}; //black
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
 	
+	int borderSize = 4;
+	int middleY = (((data->y2-data->y1)/2)-12)+data->y1;
+	//determine length of the text ourselves if x2 == -1
+	x1 = (x2 == -1) ? x1+2:x1;
+	x2 = (x2 == -1) ? GetTextSizeInPixels(data->msg)+x1+(borderSize*2)+6 : x2;
+	//Draw Text and backfill (if selected)
+	if(data->mode==B_SELECTED) {
+		_DrawSimpleBox( x1, data->y1, x2-x1, data->y2-data->y1+2, 0, selectColor, borderColor);
+	}
+	else {
+		_DrawSimpleBox( x1, data->y1, x2-x1, data->y2-data->y1+2, 0, noColor, borderColor);
+	}
+	
 	if(data->msg) {
-		int borderSize = 4;
-		int middleY = (((data->y2-data->y1)/2)-12)+data->y1;
-		//determine length of the text ourselves if x2 == -1
-		x1 = (x2 == -1) ? x1+2:x1;
-		x2 = (x2 == -1) ? GetTextSizeInPixels(data->msg)+x1+(borderSize*2)+6 : x2;
-
 		if(middleY+24 > data->y2) {
 			middleY = data->y1+3;
 		}
 		float scale = GetTextScaleToFitInWidth(data->msg, (x2-x1)-(borderSize*2));	
 		drawString(data->x1 + borderSize+3, data->y1+2, data->msg, scale, false, defaultColor);
-	}
-	//Draw Text and backfill (if selected)
-	if(data->mode==B_SELECTED) {
-		_DrawSimpleBox( x1, data->y1, x2-x1, data->y2-data->y1, 0, selectColor, borderColor);
-	}
-	else {
-		_DrawSimpleBox( x1, data->y1, x2-x1, data->y2-data->y1, 0, noColor, borderColor);
 	}
 }
 
@@ -901,7 +918,16 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message
 	eventData->y2 = y2;
 	eventData->displayName = calloc(1, PATHNAME_MAX);
 	eventData->mode = mode;
-	eventData->file = file;
+	eventData->file = calloc(1, sizeof(file_handle));
+	memcpy(eventData->file, file, sizeof(file_handle));
+	if(file->meta) {
+		eventData->file->meta = calloc(1, sizeof(file_meta));
+		memcpy(eventData->file->meta, file->meta, sizeof(file_meta));
+		if(file->meta->banner) {
+			eventData->file->meta->banner = memalign(32, BannerSize);
+			memcpy(eventData->file->meta->banner, file->meta->banner, BannerSize);
+		}
+	}
 	strcpy(eventData->displayName, message);
 	// Hide extension when rendering certain files
 	if(file->fileAttrib == IS_FILE) {
@@ -1348,6 +1374,7 @@ uiDrawObj_t* DrawPublish(uiDrawObj_t *evt)
 
 void DrawAddChild(uiDrawObj_t *parent, uiDrawObj_t *child)
 {
+	//print_gecko("Added a new child event %08X (type %s)\r\n", (u32)child, typeStrings[child->type]);
 	uiDrawObj_t *current = parent;
     while (current->child != NULL) {
         current = current->child;

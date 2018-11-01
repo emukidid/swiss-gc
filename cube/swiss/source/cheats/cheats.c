@@ -226,6 +226,7 @@ int findCheats(bool silent) {
 		sprintf(cheatsFile->name, "%s/cheats/%s.txt", slotFile->name, trimmedGameId);
 		print_gecko("Looking for cheats file @ [%s]\r\n", cheatsFile->name);
 
+		deviceHandler_setStatEnabled(0);
 		devices[DEVICE_TEMP]->init(cheatsFile);
 		if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 			if(devices[DEVICE_TEMP] == &__device_sd_b) {
@@ -244,6 +245,7 @@ int findCheats(bool silent) {
 				}
 			}
 		}
+		deviceHandler_setStatEnabled(1);
 	}
 	// Still fail?
 	if(devices[DEVICE_TEMP] == NULL) {

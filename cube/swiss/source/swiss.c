@@ -1010,15 +1010,18 @@ bool manage_file() {
 
 			// If the devices are not the same, init the destination, fail on non-existing device/etc
 			if(devices[DEVICE_CUR] != devices[DEVICE_DEST]) {
-				devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );				
+				devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );	
+				deviceHandler_setStatEnabled(0);
 				if(!devices[DEVICE_DEST]->init( devices[DEVICE_DEST]->initial )) {
 					sprintf(txtbuffer, "Failed to init destination device! (%ld)\nPress A to continue.",ret);
 					uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
 					DrawPublish(msgBox);
 					wait_press_A();
 					DrawDispose(msgBox);
+					deviceHandler_setStatEnabled(1);
 					return false;
 				}
+				deviceHandler_setStatEnabled(1);
 			}
 			// Traverse this destination device and let the user select a directory to dump the file in
 			file_handle *destFile = memalign(32,sizeof(file_handle));
