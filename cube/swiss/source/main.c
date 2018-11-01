@@ -271,9 +271,6 @@ void free_files() {
 	if(allFiles) {
 		int i;
 		for(i = 0; i < files; i++) {
-			if(allFiles[i].uiObj) {
-				DrawDispose((uiDrawObj_t*)allFiles[i].uiObj);
-			}
 			if(allFiles[i].meta) {
 				if(allFiles[i].meta->banner) {
 					free(allFiles[i].meta->banner);
