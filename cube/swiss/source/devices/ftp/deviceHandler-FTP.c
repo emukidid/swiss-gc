@@ -25,6 +25,7 @@
 #include <network.h>
 #include <ogcsys.h>
 #include <sys/dir.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <fat.h>
 #include "swiss.h"
