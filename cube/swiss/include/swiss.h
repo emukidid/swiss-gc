@@ -49,7 +49,7 @@ extern u32 __SYS_UnlockSramEx(u32 write);
 extern char *getVideoString();
 void print_gecko(const char* fmt, ...);
 extern char *getRelativeName(char *str);
-extern uiDrawObj_t * renderFileBrowser(file_handle** directory, int num_files);
+extern uiDrawObj_t * renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t *container);
 
 extern void boot_dol();
 extern bool manage_file();
