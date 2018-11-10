@@ -352,7 +352,6 @@ void main_loop()
 			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Setting up device"));
 			// If the user selected a device, make sure it's ready before we browse the filesystem
-			sdgecko_setSpeed(EXI_SPEED32MHZ);
 			if(!devices[DEVICE_CUR]->init( devices[DEVICE_CUR]->initial )) {
 				needsDeviceChange = 1;
 				deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], false);
