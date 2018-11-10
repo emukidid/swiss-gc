@@ -349,8 +349,7 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 }
 
 uiDrawObj_t* loadingBox = NULL;
-uiDrawObj_t* containerPanel = NULL;
-uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files)
+uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t* filePanel)
 {
 	memset(txtbuffer,0,sizeof(txtbuffer));
 	if(num_files<=0) return NULL;
@@ -363,11 +362,11 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files)
 		DrawPublish(loadingBox);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFiles(directory, num_files, newPanel);
-		if(containerPanel != NULL) {
-			DrawDispose(containerPanel);
+		if(filePanel != NULL) {
+			DrawDispose(filePanel);
 		}
-		containerPanel = newPanel;
-		DrawPublish(containerPanel);
+		filePanel = newPanel;
+		DrawPublish(filePanel);
 		DrawDispose(loadingBox);
 		
 		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN))
@@ -405,15 +404,12 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files)
 				// If we return from doing something with a file, refresh the device in the same dir we were at
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 			}
-			if(needsRefresh) {
-				DrawDispose(containerPanel);
-			}
-			return containerPanel;
+			return filePanel;
 		}
 		
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B)	{
 			curMenuLocation=ON_OPTIONS;
-			return containerPanel;
+			return filePanel;
 		}
 		if(PAD_StickY(0) < -16 || PAD_StickY(0) > 16) {
 			usleep((abs(PAD_StickY(0)) > 64 ? 50000:100000) - abs(PAD_StickY(0)*64));
@@ -423,7 +419,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files)
 				{ VIDEO_WaitVSync (); }
 		}
 	}
-	return containerPanel;
+	return filePanel;
 }
 
 void select_dest_dir(file_handle* directory, file_handle* selection)

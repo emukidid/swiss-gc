@@ -382,7 +382,7 @@ void main_loop()
 		}
 		DrawUpdateMenuButtons(buttonPanel, (curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
 		if(devices[DEVICE_CUR] != NULL && curMenuLocation==ON_FILLIST) {
-			filePanel = renderFileBrowser(&allFiles, files);
+			filePanel = renderFileBrowser(&allFiles, files, filePanel);
 			while(PAD_ButtonsHeld(0) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT)) {
 				VIDEO_WaitVSync (); 
 			}

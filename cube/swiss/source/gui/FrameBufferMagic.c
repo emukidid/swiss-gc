@@ -15,7 +15,6 @@
 #include <math.h>
 #include <ogc/exi.h>
 #include <gctypes.h>
-#include <ogc/semaphore.h>
 #include <ogc/lwp_watchdog.h>
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
@@ -84,11 +83,11 @@ GXTexObj uncheckedTexObj;
 static char version[64];
 
 // Video threading vars
-#define VIDEO_STACK_SIZE (1024*8)
+#define VIDEO_STACK_SIZE (1024*64)
 #define VIDEO_PRIORITY 100
 static char  video_thread_stack[VIDEO_STACK_SIZE];
 static lwp_t video_thread;
-static sem_t _videosema = LWP_SEM_NULL;
+static mutex_t _videomutex;
 static int threadAlive = 0;
 
 enum VideoEventType
@@ -205,8 +204,6 @@ static uiDrawObjQueue_t *videoEventQueue = NULL;
 static uiDrawObj_t* addVideoEvent(uiDrawObj_t *event) {
 	// First entry, make it root
 	if(videoEventQueue == NULL) {
-		if(_videosema != LWP_SEM_NULL)
-			LWP_SemWait(_videosema);
 		videoEventQueue = calloc(1, sizeof(uiDrawObjQueue_t));
 		videoEventQueue->event = event;
 		//print_gecko("Added first event %08X (type %s)\r\n", (u32)videoEventQueue, typeStrings[event->type]);
@@ -217,24 +214,24 @@ static uiDrawObj_t* addVideoEvent(uiDrawObj_t *event) {
     while (current->next != NULL) {
         current = current->next;
     }
-	if(_videosema != LWP_SEM_NULL)
-		LWP_SemWait(_videosema);
     current->next = calloc(1, sizeof(uiDrawObjQueue_t));
 	current->next->event = event;
 	event->disposed = false;
 	//print_gecko("Added a new event %08X (type %s)\r\n", (u32)event, typeStrings[event->type]);
-	if(_videosema != LWP_SEM_NULL)
-		LWP_SemPost(_videosema);
 	return event;
 }
 
 static void clearNestedEvent(uiDrawObj_t *event) {
-	u32 oldEvent = (u32)event;
+	if(event && !event->disposed) {
+		print_gecko("Event was not disposed!!\r\n");
+		print_gecko("Event %08X (type %s)\r\n", (u32)event, typeStrings[event->type]);
+	}
+	
 	if(event->child && event->child != event) {
 		clearNestedEvent(event->child);
 	}
 	//print_gecko("Dispose nested event %08X\r\n", (u32)event);
-	if(oldEvent == (u32)event && event->data) {
+	if(event && event->data) {
 		// Free any attached data
 		if(event->type == EV_STYLEDLABEL) {
 			if(((drawStyledLabelEvent_t*)event->data)->string) {
@@ -1037,19 +1034,17 @@ uiDrawObj_t* DrawMenuButtons(int selection)
 }
 
 void DrawUpdateProgressBar(uiDrawObj_t *evt, int percent) {
-	if(_videosema != LWP_SEM_NULL)
-		LWP_SemWait(_videosema);
+	LWP_MutexLock(_videomutex);
 	drawProgressEvent_t *data = (drawProgressEvent_t*)evt->data;
 	data->percent = percent;
-	LWP_SemPost(_videosema);
+	LWP_MutexUnlock(_videomutex);
 }
 
 void DrawUpdateMenuButtons(uiDrawObj_t *evt, int selection) {
-	if(_videosema != LWP_SEM_NULL)
-		LWP_SemWait(_videosema);
+	LWP_MutexLock(_videomutex);
 	drawMenuButtonsEvent_t *data = (drawMenuButtonsEvent_t*)evt->data;
 	data->selection = selection;
-	LWP_SemPost(_videosema);
+	LWP_MutexUnlock(_videomutex);
 }
 
 // Internal
@@ -1314,6 +1309,16 @@ static void videoDrawEvent(uiDrawObj_t *videoEvent) {
 	}
 }
 
+static void markDisposed(uiDrawObj_t *evt)
+{
+	if(evt && evt->child && !evt->child->disposed) {
+		markDisposed(evt->child);
+	}
+	if(evt) {
+		evt->disposed = true;
+	}
+}
+
 static void *videoUpdate(void *videoEventQueue) {
 	GX_SetCurrentGXThread();
 	
@@ -1323,21 +1328,37 @@ static void *videoUpdate(void *videoEventQueue) {
 	while(threadAlive) {
 		whichfb ^= 1;
 		frames++;
-		// Draw out every event
-		LWP_SemWait(_videosema);
+		LWP_MutexLock(_videomutex);
+		// Mark events recursively as disposed
 		uiDrawObjQueue_t *videoEventQueueEntry = (uiDrawObjQueue_t*)videoEventQueue;
+		while(videoEventQueueEntry != NULL) {
+			uiDrawObj_t *videoEvent = videoEventQueueEntry->event;
+			if(videoEvent->disposed) {
+				markDisposed(videoEvent);
+			}
+			videoEventQueueEntry = videoEventQueueEntry->next;
+		}
+		// Free events
+		videoEventQueueEntry = (uiDrawObjQueue_t*)videoEventQueue;
 		while(videoEventQueueEntry != NULL) {
 			uiDrawObj_t *videoEvent = videoEventQueueEntry->event;
 			// Remove any video events marked for disposal
 			if(videoEvent->disposed) {
 				disposeEvent(videoEvent);
-				// not sure what to do here, start over?
 				videoEventQueueEntry = (uiDrawObjQueue_t*)videoEventQueue;
 				continue;
 			}
+			videoEventQueueEntry = videoEventQueueEntry->next;
+		}
+		
+		// Draw out every event
+		videoEventQueueEntry = (uiDrawObjQueue_t*)videoEventQueue;
+		while(videoEventQueueEntry != NULL) {
+			uiDrawObj_t *videoEvent = videoEventQueueEntry->event;
 			videoDrawEvent(videoEvent);
 			videoEventQueueEntry = videoEventQueueEntry->next;
 		}
+		LWP_MutexUnlock(_videomutex);
 		if(ticks_to_millisecs(gettick() - lasttime) >= 1000) {
 			framerate = frames;
 			frames = 0;
@@ -1361,7 +1382,6 @@ static void *videoUpdate(void *videoEventQueue) {
 
 		VIDEO_SetNextFramebuffer(xfb[whichfb]);
 		VIDEO_Flush();
-		LWP_SemPost(_videosema);
 		VIDEO_WaitVSync();
 	}
 	return NULL;
@@ -1369,33 +1389,32 @@ static void *videoUpdate(void *videoEventQueue) {
 
 uiDrawObj_t* DrawPublish(uiDrawObj_t *evt)
 {
-	return addVideoEvent(evt);
+	LWP_MutexLock(_videomutex);
+	uiDrawObj_t* event = addVideoEvent(evt);
+	LWP_MutexUnlock(_videomutex);
+	return event;
 }
 
 void DrawAddChild(uiDrawObj_t *parent, uiDrawObj_t *child)
 {
+	LWP_MutexLock(_videomutex);
 	//print_gecko("Added a new child event %08X (type %s)\r\n", (u32)child, typeStrings[child->type]);
 	uiDrawObj_t *current = parent;
     while (current->child != NULL) {
         current = current->child;
     }
-	if(_videosema != LWP_SEM_NULL)
-		LWP_SemWait(_videosema);
 	current->child = child;
 	child->disposed = false;
 	//print_gecko("Add child %08X (type %s) to parent %08X (type %s)\r\n", 
 	//	(u32)child, typeStrings[child->type], (u32)parent, typeStrings[parent->type]);
-	if(_videosema != LWP_SEM_NULL)
-		LWP_SemPost(_videosema);
+	LWP_MutexUnlock(_videomutex);
 }
 
 void DrawDispose(uiDrawObj_t *evt)
 {
-	if(_videosema != LWP_SEM_NULL)
-		LWP_SemWait(_videosema);
+	LWP_MutexLock(_videomutex);
 	evt->disposed = true;
-	if(_videosema != LWP_SEM_NULL)
-		LWP_SemPost(_videosema);
+	LWP_MutexUnlock(_videomutex);
 }
 
 void DrawInit() {
@@ -1406,12 +1425,13 @@ void DrawInit() {
 	sprintf(version, "commit: %s rev: %s", GITREVISION, GITVERSION);
 	DrawAddChild(container, DrawStyledLabel(210,60, version, 0.55f, false, defaultColor));
 	DrawPublish(container);
-	LWP_SemInit(&_videosema, 1, 1);
+	LWP_MutexInit(&_videomutex, 0);
 	threadAlive = 1;
 	LWP_CreateThread(&video_thread, videoUpdate, videoEventQueue, video_thread_stack, VIDEO_STACK_SIZE, VIDEO_PRIORITY);
 }
 
 void DrawShutdown() {
+	LWP_MutexDestroy(_videomutex);
 	threadAlive = 0;
 	LWP_JoinThread(video_thread, NULL);
 	GX_SetCurrentGXThread();
