@@ -233,7 +233,7 @@ static void clearNestedEvent(uiDrawObj_t *event) {
 	if(event->child && event->child != event) {
 		clearNestedEvent(event->child);
 	}
-	print_gecko("Dispose nested event %08X\r\n", (u32)event);
+	//print_gecko("Dispose nested event %08X\r\n", (u32)event);
 	if(oldEvent == (u32)event && event->data) {
 		// Free any attached data
 		if(event->type == EV_STYLEDLABEL) {
@@ -1193,8 +1193,8 @@ static uiDrawObj_t* drawCheatForCheatsSelector(CheatEntry *cheat, int x, int y, 
 	GXColor fontColor = (cheat->enabled || selected) ? defaultColor : deSelectedColor;
 
 	// If selected draw that it's selected
-	if(selected) DrawAddChild(container, DrawTransparentBox( x+chkWidth+gapWidth, y, vmode->fbWidth-52, y+30));
 	DrawAddChild(container, DrawImage(cheat->enabled ? TEX_CHECKED:TEX_UNCHECKED, x, y, 32, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+	if(selected) DrawAddChild(container, DrawTransparentBox( x+chkWidth+gapWidth, y, vmode->fbWidth-52, y+30));
 	// Draw the cheat Name
 	DrawAddChild(container, DrawStyledLabel(x+chkWidth+gapWidth+5, y+4, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor));
 	return container;

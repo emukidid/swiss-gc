@@ -28,6 +28,7 @@
 #include <smb.h>
 #include <sys/dir.h>
 #include <sys/statvfs.h>
+#include <sys/stat.h>
 #include <fat.h>
 #include "swiss.h"
 #include "main.h"
