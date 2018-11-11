@@ -158,6 +158,7 @@ int initialize_disc(u32 streaming) {
 			}
 		}
 		else if((dvd_get_error()>>24) == 1) {  // Lid is open, tell the user!
+			DrawDispose(progBar);
 			sprintf(txtbuffer, "Error %s. Press A.",dvd_error_str());
 			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, txtbuffer);
 			DrawPublish(msgBox);
@@ -192,9 +193,6 @@ int initialize_disc(u32 streaming) {
 		DrawDispose(msgBox);
 		return DRV_ERROR;
 	}
-	DrawDispose(progBar);
-	progBar = DrawPublish(DrawProgressBar(true, 0, "Initialization Complete"));
-	sleep(1);
 	DrawDispose(progBar);
 	return patched;
 }
