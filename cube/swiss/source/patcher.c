@@ -833,6 +833,8 @@ u32 installPatch(int patchId) {
 			patchSize = VIConfigure960i_length; patchLocation = VIConfigure960i; break;
 		case VI_CONFIGURE1152I:
 			patchSize = VIConfigure1152i_length; patchLocation = VIConfigure1152i; break;
+		case VI_CONFIGUREHOOK:
+			patchSize = VIConfigureHook_length; patchLocation = VIConfigureHook; break;
 		case VI_CONFIGUREPANHOOK:
 			patchSize = VIConfigurePanHook_length; patchLocation = VIConfigurePanHook; break;
 		case MAJORA_SAVEREGS:
@@ -1059,6 +1061,31 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							vfilter = vertical_filters[swissSettings.forceVFilter];
 							Patch_VidTiming(data, length);
 							break;
+					}
+					if(swissSettings.forceHScale > 0) {
+						VIConfigurePatchAddr = getPatchAddr(VI_CONFIGUREHOOK);
+						switch(swissSettings.forceHScale) {
+							case 1:
+								*(u16*)VAR_SAR_WIDTH = 1;
+								*(u8*)VAR_SAR_HEIGHT = 1;
+								break;
+							case 2:
+								*(u16*)VAR_SAR_WIDTH = 11;
+								*(u8*)VAR_SAR_HEIGHT = 10;
+								break;
+							case 3:
+								*(u16*)VAR_SAR_WIDTH = 9;
+								*(u8*)VAR_SAR_HEIGHT = 8;
+								break;
+							case 4:
+								*(u16*)VAR_SAR_WIDTH = 704;
+								*(u8*)VAR_SAR_HEIGHT = 0;
+								break;
+							case 5:
+								*(u16*)VAR_SAR_WIDTH = 720;
+								*(u8*)VAR_SAR_HEIGHT = 0;
+								break;
+						}
 					}
 					switch(j) {
 						case 0:

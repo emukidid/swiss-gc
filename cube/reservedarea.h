@@ -32,7 +32,8 @@
 .set VAR_READS_IN_AS,		0x2EE4	# How many times have we tried to read while streaming is on?
 .set VAR_AS_ENABLED,		0x2EE8	# Is Audio streaming enabled by the user?
 .set VAR_FAKE_IRQ_SET,		0x2EF8	# flag to say we are ready to fake irq.
-.set VAR_UNUSED,			0x2EFC	# UNUSED
+.set VAR_SAR_WIDTH,			0x2EFC	# sample aspect ratio width
+.set VAR_SAR_HEIGHT,		0x2EFE	# sample aspect ratio height
 .set VAR_DISC_1_LBA, 		0x2F00	# is the base file sector for disk 1
 .set VAR_DISC_2_LBA, 		0x2F04	# is the base file sector for disk 2
 .set VAR_CUR_DISC_LBA, 		0x2F08	# is the currently selected disk sector
@@ -111,7 +112,8 @@
 #define VAR_READS_IN_AS		(VAR_AREA+0x2EE4)	// How many times have we tried to read while streaming is on?
 #define VAR_AS_ENABLED		(VAR_AREA+0x2EE8)	// Is Audio streaming enabled by the user?
 #define VAR_FAKE_IRQ_SET	(VAR_AREA+0x2EF8)	// flag to say we are ready to fake irq.
-#define VAR_UNUSED			(VAR_AREA+0x2EFC)	// UNUSED
+#define VAR_SAR_WIDTH		(VAR_AREA+0x2EFC)	// sample aspect ratio width
+#define VAR_SAR_HEIGHT		(VAR_AREA+0x2EFE)	// sample aspect ratio height
 #define VAR_DISC_1_LBA 		(VAR_AREA+0x2F00)	// is the base file sector for disk 1
 #define VAR_DISC_2_LBA 		(VAR_AREA+0x2F04)	// is the base file sector for disk 2
 #define VAR_CUR_DISC_LBA 	(VAR_AREA+0x2F08)	// is the currently selected disk sector

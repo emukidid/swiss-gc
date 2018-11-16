@@ -1560,6 +1560,7 @@ int info_game()
 	config_find(config);	// populate
 	// load settings
 	swissSettings.gameVMode = config->gameVMode;
+	swissSettings.forceHScale = config->forceHScale;
 	swissSettings.forceVFilter = config->forceVFilter;
 	swissSettings.forceAnisotropy = config->forceAnisotropy;
 	swissSettings.forceWidescreen = config->forceWidescreen;

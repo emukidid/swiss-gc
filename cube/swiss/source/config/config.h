@@ -12,6 +12,7 @@ typedef struct {
 	char status[32];
 	char padding_4[1];
 	int gameVMode;
+	int forceHScale;
 	int forceVFilter;
 	int forceAnisotropy;
 	int forceWidescreen;
