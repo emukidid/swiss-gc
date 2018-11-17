@@ -167,7 +167,7 @@ void ogc_video__reset()
 		case 4:
 			if(VIDEO_HaveComponentCable()) {
 				DrawFrameStart();
-				DrawMessageBox(D_INFO, "Video Mode: NTSC 960i");
+				DrawMessageBox(D_INFO, "Video Mode: NTSC 1080i");
 				DrawFrameFinish();
 				newmode = &TVNtsc480Prog;
 			} else {
@@ -215,7 +215,7 @@ void ogc_video__reset()
 		case 9:
 			if(VIDEO_HaveComponentCable()) {
 				DrawFrameStart();
-				DrawMessageBox(D_INFO, "Video Mode: PAL 1152i");
+				DrawMessageBox(D_INFO, "Video Mode: PAL 1080i");
 				DrawFrameFinish();
 				newmode = &TVPal576ProgScale;
 			} else {

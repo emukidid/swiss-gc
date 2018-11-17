@@ -720,6 +720,19 @@ u8 video_timing_480i[] = {
 	0x01,0x9C
 };
 
+u8 video_timing_1080i60[] = {
+	0x07,0x00,0x02,0x1C,
+	0x00,0x17,0x00,0x18,
+	0x00,0x01,0x00,0x00,
+	0x28,0x29,0x28,0x29,
+	0x04,0x60,0x04,0x5F,
+	0x04,0x60,0x04,0x5F,
+	0x04,0x65,0x01,0x90,
+	0x10,0x00,0x00,0x73,
+	0x01,0x63,0x4B,0x00,
+	0x01,0x8A
+};
+
 u8 video_timing_480p[] = {
 	0x0C,0x00,0x01,0xE0,
 	0x00,0x30,0x00,0x30,
@@ -746,6 +759,19 @@ u8 video_timing_576i[] = {
 	0x01,0xA4
 };
 
+u8 video_timing_1080i50[] = {
+	0x07,0x00,0x02,0x1C,
+	0x00,0x17,0x00,0x18,
+	0x00,0x01,0x00,0x00,
+	0x28,0x29,0x28,0x29,
+	0x04,0x60,0x04,0x5F,
+	0x04,0x60,0x04,0x5F,
+	0x04,0x65,0x01,0xE0,
+	0x10,0x00,0x00,0x73,
+	0x01,0x13,0x4B,0x00,
+	0x01,0x3A
+};
+
 u8 video_timing_576p[] = {
 	0x0A,0x00,0x02,0x40,
 	0x00,0x44,0x00,0x44,
@@ -763,22 +789,57 @@ void Patch_VidTiming(void *addr, u32 length) {
 	void *addr_start = addr;
 	void *addr_end = addr+length;
 	
-	while(addr_start<addr_end) {
-		if(memcmp(addr_start,video_timing_480i,sizeof(video_timing_480i))==0)
-		{
-			print_gecko("Patched PAL Interlaced timing\n");
-			memcpy(addr_start, video_timing_576i, sizeof(video_timing_576i));
-			addr_start += sizeof(video_timing_576i);
-			continue;
-		}
-		if(memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
-		{
-			print_gecko("Patched PAL Progressive timing\n");
-			memcpy(addr_start, video_timing_576p, sizeof(video_timing_576p));
-			addr_start += sizeof(video_timing_576p);
+	switch(swissSettings.gameVMode) {
+		case 4:
+			while(addr_start<addr_end) {
+				if(memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
+				{
+					print_gecko("Patched NTSC Progressive timing\n");
+					memcpy(addr_start, video_timing_1080i60, sizeof(video_timing_1080i60));
+					addr_start += sizeof(video_timing_1080i60);
+					break;
+				}
+				addr_start += 2;
+			}
 			break;
-		}
-		addr_start += 2;
+		case 9:
+			while(addr_start<addr_end) {
+				if(memcmp(addr_start,video_timing_480i,sizeof(video_timing_480i))==0)
+				{
+					print_gecko("Patched NTSC Interlaced timing\n");
+					memcpy(addr_start, video_timing_576i, sizeof(video_timing_576i));
+					addr_start += sizeof(video_timing_576i);
+					continue;
+				}
+				if(memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
+				{
+					print_gecko("Patched NTSC Progressive timing\n");
+					memcpy(addr_start, video_timing_1080i50, sizeof(video_timing_1080i50));
+					addr_start += sizeof(video_timing_1080i50);
+					break;
+				}
+				addr_start += 2;
+			}
+			break;
+		case 10:
+			while(addr_start<addr_end) {
+				if(memcmp(addr_start,video_timing_480i,sizeof(video_timing_480i))==0)
+				{
+					print_gecko("Patched NTSC Interlaced timing\n");
+					memcpy(addr_start, video_timing_576i, sizeof(video_timing_576i));
+					addr_start += sizeof(video_timing_576i);
+					continue;
+				}
+				if(memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
+				{
+					print_gecko("Patched NTSC Progressive timing\n");
+					memcpy(addr_start, video_timing_576p, sizeof(video_timing_576p));
+					addr_start += sizeof(video_timing_576p);
+					break;
+				}
+				addr_start += 2;
+			}
+			break;
 	}
 }
 
@@ -829,10 +890,10 @@ u32 installPatch(int patchId) {
 			patchSize = VIConfigure576i_length; patchLocation = VIConfigure576i; break;
 		case VI_CONFIGURE576P:
 			patchSize = VIConfigure576p_length; patchLocation = VIConfigure576p; break;
-		case VI_CONFIGURE960I:
-			patchSize = VIConfigure960i_length; patchLocation = VIConfigure960i; break;
-		case VI_CONFIGURE1152I:
-			patchSize = VIConfigure1152i_length; patchLocation = VIConfigure1152i; break;
+		case VI_CONFIGURE1080I50:
+			patchSize = VIConfigure1080i50_length; patchLocation = VIConfigure1080i50; break;
+		case VI_CONFIGURE1080I60:
+			patchSize = VIConfigure1080i60_length; patchLocation = VIConfigure1080i60; break;
 		case VI_CONFIGUREHOOK:
 			patchSize = VIConfigureHook_length; patchLocation = VIConfigureHook; break;
 		case VI_CONFIGUREPANHOOK:
@@ -940,6 +1001,11 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 		{0x2D0, 54, 34, 0, 10, 16, 0, 0, "setFbbRegs A", 0},
 		{0x2C0, 51, 34, 0, 10, 16, 0, 0, "setFbbRegs B", 0}				// SN Systems ProDG
 	};
+	FuncPattern setVerticalRegsSigs[3] = {
+		{0x19C, 22, 14, 0, 4, 25, 0, 0, "setVerticalRegs A", 0},
+		{0x19C, 22, 14, 0, 4, 25, 0, 0, "setVerticalRegs B", 0},
+		{0x1C4, 19, 13, 0, 4, 25, 0, 0, "setVerticalRegs C", 0},		// SN Systems ProDG
+	};
 	
 	for( i=0; i < length; i+=4 )
 	{
@@ -1029,8 +1095,9 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							break;
 						case 4:
 							print_gecko("Patched NTSC Field Rendering mode\n");
-							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE960I);
+							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE1080I60);
 							vfilter = vertical_filters[1];
+							Patch_VidTiming(data, length);
 							break;
 						case 5:
 							print_gecko("Patched NTSC Progressive mode\n");
@@ -1051,7 +1118,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							break;
 						case 9:
 							print_gecko("Patched PAL Field Rendering mode\n");
-							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE1152I);
+							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE1080I50);
 							vfilter = vertical_filters[1];
 							Patch_VidTiming(data, length);
 							break;
@@ -1066,24 +1133,24 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 						VIConfigurePatchAddr = getPatchAddr(VI_CONFIGUREHOOK);
 						switch(swissSettings.forceHScale) {
 							case 1:
-								*(u16*)VAR_SAR_WIDTH = 1;
-								*(u8*)VAR_SAR_HEIGHT = 1;
+								*(vu16*)VAR_SAR_WIDTH = 1;
+								*(vu8*)VAR_SAR_HEIGHT = 1;
 								break;
 							case 2:
-								*(u16*)VAR_SAR_WIDTH = 11;
-								*(u8*)VAR_SAR_HEIGHT = 10;
+								*(vu16*)VAR_SAR_WIDTH = 11;
+								*(vu8*)VAR_SAR_HEIGHT = 10;
 								break;
 							case 3:
-								*(u16*)VAR_SAR_WIDTH = 9;
-								*(u8*)VAR_SAR_HEIGHT = 8;
+								*(vu16*)VAR_SAR_WIDTH = 9;
+								*(vu8*)VAR_SAR_HEIGHT = 8;
 								break;
 							case 4:
-								*(u16*)VAR_SAR_WIDTH = 704;
-								*(u8*)VAR_SAR_HEIGHT = 0;
+								*(vu16*)VAR_SAR_WIDTH = 704;
+								*(vu8*)VAR_SAR_HEIGHT = 0;
 								break;
 							case 5:
-								*(u16*)VAR_SAR_WIDTH = 720;
-								*(u8*)VAR_SAR_HEIGHT = 0;
+								*(vu16*)VAR_SAR_WIDTH = 720;
+								*(vu8*)VAR_SAR_HEIGHT = 0;
 								break;
 						}
 					}
@@ -1096,6 +1163,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+284) = 0x60000000;	// nop
 							*(vu32*)(data+i+292) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1636);
+							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1680);
 							break;
 						case 1:
 							*(vu32*)(data+i+ 28) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 28);
@@ -1105,6 +1173,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+252) = 0x60000000;	// nop
 							*(vu32*)(data+i+260) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1604);
+							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1648);
 							break;
 						case 2:
 							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
@@ -1114,6 +1183,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+392) = 0x60000000;	// nop
 							*(vu32*)(data+i+400) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1780);
+							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1824);
 							break;
 						case 3:
 							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
@@ -1124,6 +1194,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+420) = 0x60000000;	// nop
 							*(vu32*)(data+i+428) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1872);
+							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1916);
 							break;
 						case 4:
 							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
@@ -1134,6 +1205,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+548) = 0x60000000;	// nop
 							*(vu32*)(data+i+556) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 2012);
+							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2056);
 							break;
 						case 5:
 							*(vu32*)(data+i+ 32) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 32);
@@ -1144,6 +1216,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+524) = 0xA0FB0010;	// lhz		r7, 16 (r27)
 							*(vu32*)(data+i+532) = 0xA0FB0010;	// lhz		r7, 16 (r27)
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2148);
+							setVerticalRegsSigs[2].offsetFoundAt = branchResolve(data, i + 2200);
 							break;
 						case 6:
 							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
@@ -1154,6 +1227,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+548) = 0x60000000;	// nop
 							*(vu32*)(data+i+556) = 0xA0130010;	// lhz		r0, 16 (r19)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1980);
+							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2024);
 							break;
 					}
 					if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
@@ -1454,6 +1528,29 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 								break;
 							}
 						}
+					}
+					break;
+				}
+			}
+		}
+		for( j=0; j < sizeof(setVerticalRegsSigs)/sizeof(FuncPattern); j++ )
+		{
+			if( (i=setVerticalRegsSigs[j].offsetFoundAt) )
+			{
+				u32 setVerticalRegsAddr = Calc_ProperAddress(data, dataType, i);
+				if(setVerticalRegsAddr) {
+					print_gecko("Found:[%s] @ %08X\n", setVerticalRegsSigs[j].Name, setVerticalRegsAddr);
+					switch(j) {
+						case 0:
+							*(vu32*)(data+i+ 4) = *(vu32*)(data+i+ 8);
+							*(vu32*)(data+i+ 8) = *(vu32*)(data+i+24);
+							*(vu32*)(data+i+16) = *(vu32*)(data+i+20);
+							*(vu32*)(data+i+20) = *(vu32*)(data+i+28);
+							*(vu32*)(data+i+24) = *(vu32*)(data+i+32);
+							*(vu32*)(data+i+28) = 0xA00B006C;	// lhz		r0, 108 (r11)
+							*(vu32*)(data+i+32) = 0x540007FF;	// clrlwi.	r0, r0, 31
+							*(vu32*)(data+i+36) = 0x41820010;	// beq		+16
+							break;
 					}
 					break;
 				}
