@@ -202,13 +202,8 @@ int dvd_writemem_32(u32 addr, u32 dat)
 	dvd[4] = 0x00040000;	
 	dvd[5] = 0;
 	dvd[6] = 0;
-	dvd[7] = 3;
-	while (dvd[7] & 1);
-
-	dvd[0] = 0x2E;
-	dvd[1] = 0;
-	dvd[2] = dat;
-	dvd[7] = 1;
+	dvd[8] = dat;
+	dvd[7] = 5;
 	while (dvd[7] & 1);
 
 	return 0;
