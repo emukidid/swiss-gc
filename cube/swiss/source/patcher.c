@@ -876,8 +876,6 @@ u32 installPatch(int patchId) {
 			patchSize = MTXOrthoHook_length; patchLocation = MTXOrthoHook; break;
 		case MTX_PERSPECTIVEHOOK:
 			patchSize = MTXPerspectiveHook_length; patchLocation = MTXPerspectiveHook; break;
-		case SETFBBREGSHOOK:
-			patchSize = setFbbRegsHook_length; patchLocation = setFbbRegsHook; break;
 		case VI_CONFIGURE240P:
 			patchSize = VIConfigure240p_length; patchLocation = VIConfigure240p; break;
 		case VI_CONFIGURE288P:
@@ -898,6 +896,8 @@ u32 installPatch(int patchId) {
 			patchSize = VIConfigureHook_length; patchLocation = VIConfigureHook; break;
 		case VI_CONFIGUREPANHOOK:
 			patchSize = VIConfigurePanHook_length; patchLocation = VIConfigurePanHook; break;
+		case VI_RETRACEHANDLERHOOK:
+			patchSize = VIRetraceHandlerHook_length; patchLocation = VIRetraceHandlerHook; break;
 		case MAJORA_SAVEREGS:
 			patchSize = MajoraSaveRegs_length; patchLocation = MajoraSaveRegs; break;
 		case MAJORA_AUDIOSTREAM:
@@ -1004,7 +1004,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 	FuncPattern setVerticalRegsSigs[3] = {
 		{0x19C, 22, 14, 0, 4, 25, 0, 0, "setVerticalRegs A", 0},
 		{0x19C, 22, 14, 0, 4, 25, 0, 0, "setVerticalRegs B", 0},
-		{0x1C4, 19, 13, 0, 4, 25, 0, 0, "setVerticalRegs C", 0},		// SN Systems ProDG
+		{0x1C4, 19, 13, 0, 4, 25, 0, 0, "setVerticalRegs C", 0}			// SN Systems ProDG
 	};
 	
 	for( i=0; i < length; i+=4 )
@@ -1020,6 +1020,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 			if( !__VIRetraceHandlerSigs[j].offsetFoundAt && compare_pattern( &fp, &(__VIRetraceHandlerSigs[j]) ) )
 			{
 				u32 __VIRetraceHandlerAddr = Calc_ProperAddress(data, dataType, i);
+				u32 __VIRetraceHandlerPatchAddr = 0;
 				if(__VIRetraceHandlerAddr) {
 					print_gecko("Found:[%s] @ %08X\n", __VIRetraceHandlerSigs[j].Name, __VIRetraceHandlerAddr);
 					switch(j) {
@@ -1039,6 +1040,36 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							case 4: *(vu32*)(data+i+260) = 0x38000001; break;
 							case 5: *(vu32*)(data+i+308) = 0x38000001; break;
 						}
+					}
+					if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
+						__VIRetraceHandlerPatchAddr = getPatchAddr(VI_RETRACEHANDLERHOOK);
+						switch(j) {
+							case 0:
+								memmove(data+i+512, data+i+508, 12);
+								*(vu32*)(data+i+508) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 508);
+								break;
+							case 1:
+								memmove(data+i+532, data+i+528, 12);
+								*(vu32*)(data+i+528) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 528);
+								break;
+							case 2:
+								memmove(data+i+536, data+i+532, 12);
+								*(vu32*)(data+i+532) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 532);
+								break;
+							case 3:
+								memmove(data+i+544, data+i+540, 12);
+								*(vu32*)(data+i+540) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 540);
+								break;
+							case 4:
+								memmove(data+i+564, data+i+560, 16);
+								*(vu32*)(data+i+560) = branchAndLink(getCurrentFieldEvenOddSigs[1].offsetFoundAt, i + 560);
+								break;
+							case 5:
+								memmove(data+i+612, data+i+608, 12);
+								*(vu32*)(data+i+608) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 608);
+								break;
+						}
+						*(vu32*)(data+i+__VIRetraceHandlerSigs[j].Length) = branch(__VIRetraceHandlerPatchAddr, __VIRetraceHandlerAddr + __VIRetraceHandlerSigs[j].Length);
 					}
 					__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 					i += __VIRetraceHandlerSigs[j].Length;
@@ -1485,8 +1516,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+140) = 0x3C600000 | (VAR_AREA >> 16);
 							*(vu32*)(data+i+144) = 0x88030000 | (VAR_CURRENT_FIELD & 0xFFFF);
 							*(vu32*)(data+i+148) = 0x28000000;	// cmplwi	r0, 0
-							*(vu32*)(data+i+152) = 0x41820008;	// beq		+8
-							*(vu32*)(data+i+156) = 0xEF5A582A;	// fadds	f26, f26, f11
+							*(vu32*)(data+i+152) = 0x40820008;	// bne		+8
+							*(vu32*)(data+i+156) = 0xEF5A5828;	// fsubs	f26, f26, f11
 							memmove(data+i+160, data+i+184, 100);
 							memset(data+i+260, 0, 24);
 							break;
@@ -1496,38 +1527,11 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+120) = 0x3C600000 | (VAR_AREA >> 16);
 							*(vu32*)(data+i+124) = 0x88030000 | (VAR_CURRENT_FIELD & 0xFFFF);
 							*(vu32*)(data+i+128) = 0x28000000;	// cmplwi	r0, 0
-							*(vu32*)(data+i+132) = 0x41820008;	// beq		+8
-							*(vu32*)(data+i+136) = 0xEF5A582A;	// fadds	f26, f26, f11
+							*(vu32*)(data+i+132) = 0x40820008;	// bne		+8
+							*(vu32*)(data+i+136) = 0xEF5A5828;	// fsubs	f26, f26, f11
 							memmove(data+i+140, data+i+160, 100);
 							memset(data+i+240, 0, 20);
 							break;
-					}
-					break;
-				}
-			}
-		}
-		for( j=0; j < sizeof(setFbbRegsSigs)/sizeof(FuncPattern); j++ )
-		{
-			if( (i=setFbbRegsSigs[j].offsetFoundAt) )
-			{
-				u32 setFbbRegsAddr = Calc_ProperAddress(data, dataType, i);
-				if(setFbbRegsAddr) {
-					print_gecko("Found:[%s] @ %08X\n", setFbbRegsSigs[j].Name, setFbbRegsAddr);
-					for( k=0; k < sizeof(getCurrentFieldEvenOddSigs)/sizeof(FuncPattern); k++ )
-					{
-						if( getCurrentFieldEvenOddSigs[k].offsetFoundAt )
-						{
-							u32 getCurrentFieldEvenOddAddr = Calc_ProperAddress(data, dataType, getCurrentFieldEvenOddSigs[k].offsetFoundAt);
-							if(getCurrentFieldEvenOddAddr) {
-								print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOddAddr);
-								top_addr -= setFbbRegsHook_length;
-								checkPatchAddr();
-								memcpy((void*)top_addr, setFbbRegsHook, setFbbRegsHook_length);
-								*(vu32*)(top_addr+12) = branchAndLink(getCurrentFieldEvenOddAddr, top_addr + 12);
-								*(vu32*)(data+i+setFbbRegsSigs[j].Length) = branch(top_addr, setFbbRegsAddr + setFbbRegsSigs[j].Length);
-								break;
-							}
-						}
 					}
 					break;
 				}

@@ -52,8 +52,6 @@ extern u8 MTXOrthoHook[];
 extern u32 MTXOrthoHook_length;
 extern u8 MTXPerspectiveHook[];
 extern u32 MTXPerspectiveHook_length;
-extern u8 setFbbRegsHook[];
-extern u32 setFbbRegsHook_length;
 extern u8 VIConfigure240p[];
 extern u32 VIConfigure240p_length;
 extern u8 VIConfigure288p[];
@@ -74,6 +72,8 @@ extern u8 VIConfigureHook[];
 extern u32 VIConfigureHook_length;
 extern u8 VIConfigurePanHook[];
 extern u32 VIConfigurePanHook_length;
+extern u8 VIRetraceHandlerHook[];
+extern u32 VIRetraceHandlerHook_length;
 extern u8 MajoraSaveRegs[];
 extern u32 MajoraSaveRegs_length;
 extern u8 MajoraAudioStream[];
@@ -91,7 +91,6 @@ enum patchIds {
 	MTX_LIGHTPERSPECTIVEHOOK,
 	MTX_ORTHOHOOK,
 	MTX_PERSPECTIVEHOOK,
-	SETFBBREGSHOOK,
 	VI_CONFIGURE240P,
 	VI_CONFIGURE288P,
 	VI_CONFIGURE480I,
@@ -102,6 +101,7 @@ enum patchIds {
 	VI_CONFIGURE1080I60,
 	VI_CONFIGUREHOOK,
 	VI_CONFIGUREPANHOOK,
+	VI_RETRACEHANDLERHOOK,
 	MAJORA_SAVEREGS,
 	MAJORA_AUDIOSTREAM,
 	MAJORA_LOADREGS,
