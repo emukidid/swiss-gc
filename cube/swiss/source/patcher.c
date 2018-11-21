@@ -988,11 +988,13 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 		{0x44, 5, 8, 1, 0, 2, 0, 0, "GXSetViewport D", 0}
 	};
 	FuncPattern GXSetViewportJitterSigs[4] = {
-		{0x118, 20, 15, 1, 1, 3, 0, 0, "GXSetViewportJitter A", 0},
-		{0x100, 14, 15, 1, 1, 3, 0, 0, "GXSetViewportJitter B", 0},
-		{0x078,  6, 10, 1, 0, 4, 0, 0, "GXSetViewportJitter C", 0},		// SN Systems ProDG
-		{0x054,  6,  8, 1, 0, 2, 0, 0, "GXSetViewportJitter D", 0}
+		{0x118, 20, 15, 1, 1, 3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter A", 0},
+		{0x100, 14, 15, 1, 1, 3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter B", 0},
+		{0x078,  6, 10, 1, 0, 4,                        0,                               0, "GXSetViewportJitter C", 0},	// SN Systems ProDG
+		{0x054,  6,  8, 1, 0, 2,                        0,                               0, "GXSetViewportJitter D", 0}
 	};
+	FuncPattern __GXSetViewportSig = 
+		{0x8C, 15, 7, 0, 0, 0, GXSetViewportPatch, GXSetViewportPatch_length, "__GXSetViewport", 0};
 	FuncPattern getCurrentFieldEvenOddSigs[2] = {
 		{0xB8, 14, 2, 2, 4, 8, 0, 0, "getCurrentFieldEvenOdd A", 0},
 		{0x5C,  7, 0, 0, 1, 5, 0, 0, "getCurrentFieldEvenOdd B", 0}		// SN Systems ProDG
@@ -1498,6 +1500,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 						case 0: GXSetViewportJitterSigs[0].offsetFoundAt = branchResolve(data, i + 16); break;
 						case 1: GXSetViewportJitterSigs[1].offsetFoundAt = branchResolve(data, i + 16); break;
 						case 2: GXSetViewportJitterSigs[2].offsetFoundAt = branchResolve(data, i +  4); break;
+						case 3:         __GXSetViewportSig.offsetFoundAt = branchResolve(data, i + 40); break;
 					}
 					break;
 				}
@@ -1510,30 +1513,28 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 				u32 GXSetViewportJitterAddr = Calc_ProperAddress(data, dataType, i);
 				if(GXSetViewportJitterAddr) {
 					print_gecko("Found:[%s] @ %08X\n", GXSetViewportJitterSigs[j].Name, GXSetViewportJitterAddr);
-					switch(j) {
-						case 0:
-							memmove(data+i+36, data+i+52, 104);
-							*(vu32*)(data+i+140) = 0x3C600000 | (VAR_AREA >> 16);
-							*(vu32*)(data+i+144) = 0x88030000 | (VAR_CURRENT_FIELD & 0xFFFF);
-							*(vu32*)(data+i+148) = 0x28000000;	// cmplwi	r0, 0
-							*(vu32*)(data+i+152) = 0x40820008;	// bne		+8
-							*(vu32*)(data+i+156) = 0xEF5A5828;	// fsubs	f26, f26, f11
-							memmove(data+i+160, data+i+184, 100);
-							memset(data+i+260, 0, 24);
-							break;
-						case 1:
-							memmove(data+i+ 4, data+i+ 8, 32);
-							memmove(data+i+36, data+i+52, 84);
-							*(vu32*)(data+i+120) = 0x3C600000 | (VAR_AREA >> 16);
-							*(vu32*)(data+i+124) = 0x88030000 | (VAR_CURRENT_FIELD & 0xFFFF);
-							*(vu32*)(data+i+128) = 0x28000000;	// cmplwi	r0, 0
-							*(vu32*)(data+i+132) = 0x40820008;	// bne		+8
-							*(vu32*)(data+i+136) = 0xEF5A5828;	// fsubs	f26, f26, f11
-							memmove(data+i+140, data+i+160, 100);
-							memset(data+i+240, 0, 20);
-							break;
+					if(GXSetViewportJitterSigs[j].Patch) {
+						u32 op = *(vu32*)(data+i+72);
+						memset(data+i, 0, GXSetViewportJitterSigs[j].Length);
+						memcpy(data+i, GXSetViewportJitterSigs[j].Patch, GXSetViewportJitterSigs[j].PatchLength);
+						*(vu32*)(data+i+ 0) |= op & 0x1FFFFF;
+						*(vu32*)(data+i+ 8) |= (GXSetViewportJitterAddr + GXSetViewportJitterSigs[j].PatchLength + 0x8000) >> 16;
+						*(vu32*)(data+i+16) |= (GXSetViewportJitterAddr + GXSetViewportJitterSigs[j].PatchLength) & 0xFFFF;
 					}
 					break;
+				}
+			}
+		}
+		if( (i=__GXSetViewportSig.offsetFoundAt) )
+		{
+			u32 __GXSetViewportAddr = Calc_ProperAddress(data, dataType, i);
+			if(__GXSetViewportAddr) {
+				print_gecko("Found:[%s] @ %08X\n", __GXSetViewportSig.Name, __GXSetViewportAddr);
+				if(__GXSetViewportSig.Patch) {
+					memset(data+i, 0, __GXSetViewportSig.Length);
+					memcpy(data+i, __GXSetViewportSig.Patch, __GXSetViewportSig.PatchLength);
+					*(vu32*)(data+i+ 4) |= (__GXSetViewportAddr + __GXSetViewportSig.PatchLength + 0x8000) >> 16;
+					*(vu32*)(data+i+12) |= (__GXSetViewportAddr + __GXSetViewportSig.PatchLength) & 0xFFFF;
 				}
 			}
 		}
