@@ -113,22 +113,22 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file) {
 	else if(page_num == 2) {
 		DrawAddChild(page, DrawLabel(30, 65, "Current Game Settings (3/3):"));
 		DrawAddChild(page, DrawStyledLabel(30, 110, "Force Video Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton((480, 110, -1, 135, gameVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(480, 110, -1, 135, gameVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 140, "Force Horizontal Scale:", 1.0f, false, file != NULL && swissSettings.gameVMode > 0 ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton((480, 140, -1, 165, forceHScaleStr[swissSettings.forceHScale], option == 1 ? B_SELECTED:B_NOSELECT);
+		DrawAddChild(page, DrawSelectableButton(480, 140, -1, 165, forceHScaleStr[swissSettings.forceHScale], option == 1 ? B_SELECTED:B_NOSELECT);
 		DrawAddChild(page, DrawStyledLabel(30, 170, "Force Vertical Offset:", 1.0f, false, file != NULL && swissSettings.gameVMode > 0 ? defaultColor : disabledColor));
 		sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
-		DrawAddChild(page, DrawSelectableButton((480, 170, -1, 195, forceVOffsetStr, option == 2 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(480, 170, -1, 195, forceVOffsetStr, option == 2 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 200, "Force Vertical Filter:", 1.0f, false, file != NULL && swissSettings.gameVMode > 0 ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton((480, 200, -1, 225, forceVFilterStr[swissSettings.forceVFilter], option == 3 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(480, 200, -1, 225, forceVFilterStr[swissSettings.forceVFilter], option == 3 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 230, "Force Anisotropic Filter:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton((480, 230, -1, 255, swissSettings.forceAnisotropy ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(480, 230, -1, 255, swissSettings.forceAnisotropy ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 260, "Force Widescreen:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton((480, 260, -1, 285, forceWidescreenStr[swissSettings.forceWidescreen], option == 5 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(480, 260, -1, 285, forceWidescreenStr[swissSettings.forceWidescreen], option == 5 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 290, "Force Text Encoding:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton((480, 290, -1, 315, forceEncodingStr[swissSettings.forceEncoding], option == 6 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(480, 290, -1, 315, forceEncodingStr[swissSettings.forceEncoding], option == 6 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 320, "Disable Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton((480, 320, -1, 345, swissSettings.muteAudioStreaming ? "Yes":"No", option == 7 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(480, 320, -1, 345, swissSettings.muteAudioStreaming ? "Yes":"No", option == 7 ? B_SELECTED:B_NOSELECT));
 	}
 	if(page_num != 0) {
 		DrawAddChild(page, DrawSelectableButton(40, 390, -1, 420, "Back", 
