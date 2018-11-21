@@ -222,6 +222,9 @@ int config_update_file() {
 		sprintf(txtbuffer, "Force Video Mode=%s\r\n",gameVModeStr[configEntries[i].gameVMode]);
 		string_append(configString, txtbuffer);
 		
+		sprintf(txtbuffer, "Force Horizontal Scale=%s\r\n",forceHScaleStr[configEntries[i].forceHScale]);
+		string_append(configString, txtbuffer);
+		
 		sprintf(txtbuffer, "Force Vertical Filter=%s\r\n",forceVFilterStr[configEntries[i].forceVFilter]);
 		string_append(configString, txtbuffer);
 		
@@ -323,6 +326,20 @@ void config_parse(char *configData) {
 						configEntries[configEntriesCount].gameVMode = 9;
 					else if(!strcmp(gameVModeStr[10], value))
 						configEntries[configEntriesCount].gameVMode = 10;
+				}
+				else if(!strcmp("Force Horizontal Scale", name)) {
+					if(!strcmp(forceHScaleStr[0], value))
+						configEntries[configEntriesCount].forceHScale = 0;
+					else if(!strcmp(forceHScaleStr[1], value))
+						configEntries[configEntriesCount].forceHScale = 1;
+					else if(!strcmp(forceHScaleStr[2], value))
+						configEntries[configEntriesCount].forceHScale = 2;
+					else if(!strcmp(forceHScaleStr[3], value))
+						configEntries[configEntriesCount].forceHScale = 3;
+					else if(!strcmp(forceHScaleStr[4], value))
+						configEntries[configEntriesCount].forceHScale = 4;
+					else if(!strcmp(forceHScaleStr[5], value))
+						configEntries[configEntriesCount].forceHScale = 5;
 				}
 				else if(!strcmp("Force Vertical Filter", name)) {
 					if(!strcmp(forceVFilterStr[0], value))
@@ -458,6 +475,7 @@ void config_find(ConfigEntry *entry) {
 	strcpy(entry->comment,"No Comment");
 	strcpy(entry->status,"Unknown");
 	entry->gameVMode = 0;
+	entry->forceHScale = 0;
 	entry->forceVFilter = 0;
 	entry->forceAnisotropy = 0;
 	entry->forceWidescreen = 0;

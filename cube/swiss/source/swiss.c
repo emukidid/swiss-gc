@@ -156,7 +156,7 @@ void ogc_video__reset()
 			break;
 		case 4:
 			if(VIDEO_HaveComponentCable()) {
-				msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 960i");
+				msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 1080i");
 				newmode = &TVNtsc480Prog;
 			} else {
 				msgBox = DrawMessageBox(D_WARN, "Video Mode: NTSC 480i");
@@ -188,7 +188,7 @@ void ogc_video__reset()
 			break;
 		case 9:
 			if(VIDEO_HaveComponentCable()) {
-				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 1152i");
+				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 1080i");
 				newmode = &TVPal576ProgScale;
 			} else {
 				msgBox = DrawMessageBox(D_WARN, "Video Mode: PAL 576i");
@@ -1551,6 +1551,7 @@ int info_game()
 	config_find(config);	// populate
 	// load settings
 	swissSettings.gameVMode = config->gameVMode;
+	swissSettings.forceHScale = config->forceHScale;
 	swissSettings.forceVFilter = config->forceVFilter;
 	swissSettings.forceAnisotropy = config->forceAnisotropy;
 	swissSettings.forceWidescreen = config->forceWidescreen;

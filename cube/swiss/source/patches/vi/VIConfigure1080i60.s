@@ -2,28 +2,25 @@
 #define _LANGUAGE_ASSEMBLY
 #include "../../../../reservedarea.h"
 
-.globl VIConfigure960i
-VIConfigure960i:
+.globl VIConfigure1080i60
+VIConfigure1080i60:
 	li			%r0, 0
 	li			%r7, 1
 	li			%r6, 0
 	lhz			%r5, 8 (%r3)
 	slwi		%r5, %r5, 1
+	subfic		%r4, %r5, 480
 	cmpwi		%r5, 480
 	ble			2f
 	li			%r0, 2
 	lhz			%r5, 8 (%r3)
-	cmpwi		%r5, 480
-	ble			2f
+	cmpwi		%r5, 540
+	ble			1f
 	lhz			%r5, 6 (%r3)
 	clrrwi		%r5, %r5, 1
-	cmpwi		%r5, 480
-	ble			1f
-	li			%r5, 480
-	sth			%r5, 6 (%r3)
-1:	sth			%r5, 8 (%r3)
-2:	subfic		%r4, %r5, 480
-	srwi		%r4, %r4, 1
+	sth			%r5, 8 (%r3)
+1:	subfic		%r4, %r5, 540
+2:	srwi		%r4, %r4, 1
 	sth			%r4, 12 (%r3)
 	sth			%r5, 16 (%r3)
 	stw			%r6, 20 (%r3)
@@ -35,6 +32,6 @@ VIConfigure960i:
 	extrwi		%r3, %r3, 1, 16
 	blr
 
-.globl VIConfigure960i_length
-VIConfigure960i_length:
-.long (VIConfigure960i_length - VIConfigure960i)
+.globl VIConfigure1080i60_length
+VIConfigure1080i60_length:
+.long (VIConfigure1080i60_length - VIConfigure1080i60)

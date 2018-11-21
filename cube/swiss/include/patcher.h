@@ -42,6 +42,10 @@ extern u8 GXSetProjectionHook[];
 extern u32 GXSetProjectionHook_length;
 extern u8 GXSetScissorHook[];
 extern u32 GXSetScissorHook_length;
+extern u8 GXSetViewportJitterPatch[];
+extern u32 GXSetViewportJitterPatch_length;
+extern u8 GXSetViewportPatch[];
+extern u32 GXSetViewportPatch_length;
 extern u8 MTXFrustumHook[];
 extern u32 MTXFrustumHook_length;
 extern u8 MTXLightFrustumHook[];
@@ -52,8 +56,6 @@ extern u8 MTXOrthoHook[];
 extern u32 MTXOrthoHook_length;
 extern u8 MTXPerspectiveHook[];
 extern u32 MTXPerspectiveHook_length;
-extern u8 setFbbRegsHook[];
-extern u32 setFbbRegsHook_length;
 extern u8 VIConfigure240p[];
 extern u32 VIConfigure240p_length;
 extern u8 VIConfigure288p[];
@@ -66,12 +68,16 @@ extern u8 VIConfigure576i[];
 extern u32 VIConfigure576i_length;
 extern u8 VIConfigure576p[];
 extern u32 VIConfigure576p_length;
-extern u8 VIConfigure960i[];
-extern u32 VIConfigure960i_length;
-extern u8 VIConfigure1152i[];
-extern u32 VIConfigure1152i_length;
+extern u8 VIConfigure1080i50[];
+extern u32 VIConfigure1080i50_length;
+extern u8 VIConfigure1080i60[];
+extern u32 VIConfigure1080i60_length;
+extern u8 VIConfigureHook[];
+extern u32 VIConfigureHook_length;
 extern u8 VIConfigurePanHook[];
 extern u32 VIConfigurePanHook_length;
+extern u8 VIRetraceHandlerHook[];
+extern u32 VIRetraceHandlerHook_length;
 extern u8 MajoraSaveRegs[];
 extern u32 MajoraSaveRegs_length;
 extern u8 MajoraAudioStream[];
@@ -89,16 +95,17 @@ enum patchIds {
 	MTX_LIGHTPERSPECTIVEHOOK,
 	MTX_ORTHOHOOK,
 	MTX_PERSPECTIVEHOOK,
-	SETFBBREGSHOOK,
 	VI_CONFIGURE240P,
 	VI_CONFIGURE288P,
 	VI_CONFIGURE480I,
 	VI_CONFIGURE480P,
 	VI_CONFIGURE576I,
 	VI_CONFIGURE576P,
-	VI_CONFIGURE960I,
-	VI_CONFIGURE1152I,
+	VI_CONFIGURE1080I50,
+	VI_CONFIGURE1080I60,
+	VI_CONFIGUREHOOK,
 	VI_CONFIGUREPANHOOK,
+	VI_RETRACEHANDLERHOOK,
 	MAJORA_SAVEREGS,
 	MAJORA_AUDIOSTREAM,
 	MAJORA_LOADREGS,

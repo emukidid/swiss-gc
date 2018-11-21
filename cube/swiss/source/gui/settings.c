@@ -16,7 +16,8 @@
 
 SwissSettings tempSettings;
 char *uiVModeStr[] = {"Auto", "480i", "480p", "576i", "576p"};
-char *gameVModeStr[] = {"No", "480i", "480sf", "240p", "960i", "480p", "576i", "576sf", "288p", "1152i", "576p"};
+char *gameVModeStr[] = {"No", "480i", "480sf", "240p", "1080i60", "480p", "576i", "576sf", "288p", "1080i50", "576p"};
+char *forceHScaleStr[] = {"No", "1:1", "11:10", "9:8", "704px", "720px"};
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS"};
@@ -25,7 +26,7 @@ syssram* sram;
 syssramex* sramex;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {8, 10, 8};
+int settings_count_pp[3] = {8, 10, 9};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
@@ -109,17 +110,19 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file) {
 	else if(page_num == 2) {
 		DrawAddChild(page, DrawLabel(30, 65, "Current Game Settings (3/3):"));
 		DrawAddChild(page, DrawStyledLabel(30, 110, "Force Video Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 110, -1, 135, gameVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 140, "Force Vertical Filter:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 140, -1, 165, forceVFilterStr[swissSettings.forceVFilter], option == 1 ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 170, "Force Anisotropic Filter:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 170, -1, 195, swissSettings.forceAnisotropy ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 200, "Force Widescreen:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 200, -1, 225, forceWidescreenStr[swissSettings.forceWidescreen], option == 3 ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 230, "Force Text Encoding:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 230, -1, 255, forceEncodingStr[swissSettings.forceEncoding], option == 4 ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 260, "Disable Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 260, -1, 285, swissSettings.muteAudioStreaming ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(480, 110, -1, 135, gameVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT,-1));
+		DrawAddChild(page, DrawStyledLabel(30, 140, "Force Horizontal Scale:", 1.0f, false, file != NULL && swissSettings.gameVMode > 0 ? defaultColor : disabledColor));
+		DrawAddChild(page, DrawSelectableButton(480, 140, -1, 165, forceHScaleStr[swissSettings.forceHScale], option == 1 ? B_SELECTED:B_NOSELECT,-1));
+		DrawAddChild(page, DrawStyledLabel(30, 170, "Force Vertical Filter:", 1.0f, false, file != NULL && swissSettings.gameVMode > 0 ? defaultColor : disabledColor));
+		DrawAddChild(page, DrawSelectableButton(480, 170, -1, 195, forceVFilterStr[swissSettings.forceVFilter], option == 2 ? B_SELECTED:B_NOSELECT,-1));
+		DrawAddChild(page, DrawStyledLabel(30, 200, "Force Anisotropic Filter:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
+		DrawAddChild(page, DrawSelectableButton(480, 200, -1, 225, swissSettings.forceAnisotropy ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT,-1));
+		DrawAddChild(page, DrawStyledLabel(30, 230, "Force Widescreen:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
+		DrawAddChild(page, DrawSelectableButton(480, 230, -1, 255, forceWidescreenStr[swissSettings.forceWidescreen], option == 4 ? B_SELECTED:B_NOSELECT,-1));
+		DrawAddChild(page, DrawStyledLabel(30, 260, "Force Text Encoding:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
+		DrawAddChild(page, DrawSelectableButton(480, 260, -1, 285, forceEncodingStr[swissSettings.forceEncoding], option == 5 ? B_SELECTED:B_NOSELECT,-1));
+		DrawAddChild(page, DrawStyledLabel(30, 290, "Disable Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
+		DrawAddChild(page, DrawSelectableButton(480, 290, -1, 315, swissSettings.muteAudioStreaming ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT,-1));
 	}
 	if(page_num != 0) {
 		DrawAddChild(page, DrawSelectableButton(40, 390, -1, 420, "Back", 
@@ -243,30 +246,41 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 					swissSettings.gameVMode = 10;
 			break;
 			case 1:
+				if(swissSettings.gameVMode > 0) {
+					swissSettings.forceHScale += direction;
+					if(swissSettings.forceHScale > 5)
+						swissSettings.forceHScale = 0;
+					if(swissSettings.forceHScale < 0)
+						swissSettings.forceHScale = 5;
+				}
+			break;
+			case 2:
+				if(swissSettings.gameVMode > 0) {
 				swissSettings.forceVFilter += direction;
 				if(swissSettings.forceVFilter > 3)
 					swissSettings.forceVFilter = 0;
 				if(swissSettings.forceVFilter < 0)
 					swissSettings.forceVFilter = 3;
-			break;
-			case 2:
-				swissSettings.forceAnisotropy ^= 1;
+				}
 			break;
 			case 3:
+				swissSettings.forceAnisotropy ^= 1;
+			break;
+			case 4:
 				swissSettings.forceWidescreen += direction;
 				if(swissSettings.forceWidescreen > 2)
 					swissSettings.forceWidescreen = 0;
 				if(swissSettings.forceWidescreen < 0)
 					swissSettings.forceWidescreen = 2;
 			break;
-			case 4:
+			case 5:
 				swissSettings.forceEncoding += direction;
 				if(swissSettings.forceEncoding > 2)
 					swissSettings.forceEncoding = 0;
 				if(swissSettings.forceEncoding < 0)
 					swissSettings.forceEncoding = 2;
 			break;
-			case 5:
+			case 6:
 				swissSettings.muteAudioStreaming ^= 1;
 			break;
 		}
@@ -361,6 +375,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				// Update our .ini
 				if(config != NULL) {
 					config->gameVMode = swissSettings.gameVMode;
+					config->forceHScale = swissSettings.forceHScale;
 					config->forceVFilter = swissSettings.forceVFilter;
 					config->forceAnisotropy = swissSettings.forceAnisotropy;
 					config->forceWidescreen = swissSettings.forceWidescreen;

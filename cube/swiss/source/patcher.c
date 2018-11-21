@@ -720,6 +720,19 @@ u8 video_timing_480i[] = {
 	0x01,0x9C
 };
 
+u8 video_timing_1080i60[] = {
+	0x07,0x00,0x02,0x1C,
+	0x00,0x17,0x00,0x18,
+	0x00,0x01,0x00,0x00,
+	0x28,0x29,0x28,0x29,
+	0x04,0x60,0x04,0x5F,
+	0x04,0x60,0x04,0x5F,
+	0x04,0x65,0x01,0x90,
+	0x10,0x00,0x00,0x73,
+	0x01,0x63,0x4B,0x00,
+	0x01,0x8A
+};
+
 u8 video_timing_480p[] = {
 	0x0C,0x00,0x01,0xE0,
 	0x00,0x30,0x00,0x30,
@@ -746,6 +759,19 @@ u8 video_timing_576i[] = {
 	0x01,0xA4
 };
 
+u8 video_timing_1080i50[] = {
+	0x07,0x00,0x02,0x1C,
+	0x00,0x17,0x00,0x18,
+	0x00,0x01,0x00,0x00,
+	0x28,0x29,0x28,0x29,
+	0x04,0x60,0x04,0x5F,
+	0x04,0x60,0x04,0x5F,
+	0x04,0x65,0x01,0xE0,
+	0x10,0x00,0x00,0x73,
+	0x01,0x13,0x4B,0x00,
+	0x01,0x3A
+};
+
 u8 video_timing_576p[] = {
 	0x0A,0x00,0x02,0x40,
 	0x00,0x44,0x00,0x44,
@@ -763,22 +789,57 @@ void Patch_VidTiming(void *addr, u32 length) {
 	void *addr_start = addr;
 	void *addr_end = addr+length;
 	
-	while(addr_start<addr_end) {
-		if(memcmp(addr_start,video_timing_480i,sizeof(video_timing_480i))==0)
-		{
-			print_gecko("Patched PAL Interlaced timing\n");
-			memcpy(addr_start, video_timing_576i, sizeof(video_timing_576i));
-			addr_start += sizeof(video_timing_576i);
-			continue;
-		}
-		if(memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
-		{
-			print_gecko("Patched PAL Progressive timing\n");
-			memcpy(addr_start, video_timing_576p, sizeof(video_timing_576p));
-			addr_start += sizeof(video_timing_576p);
+	switch(swissSettings.gameVMode) {
+		case 4:
+			while(addr_start<addr_end) {
+				if(memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
+				{
+					print_gecko("Patched NTSC Progressive timing\n");
+					memcpy(addr_start, video_timing_1080i60, sizeof(video_timing_1080i60));
+					addr_start += sizeof(video_timing_1080i60);
+					break;
+				}
+				addr_start += 2;
+			}
 			break;
-		}
-		addr_start += 2;
+		case 9:
+			while(addr_start<addr_end) {
+				if(memcmp(addr_start,video_timing_480i,sizeof(video_timing_480i))==0)
+				{
+					print_gecko("Patched NTSC Interlaced timing\n");
+					memcpy(addr_start, video_timing_576i, sizeof(video_timing_576i));
+					addr_start += sizeof(video_timing_576i);
+					continue;
+				}
+				if(memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
+				{
+					print_gecko("Patched NTSC Progressive timing\n");
+					memcpy(addr_start, video_timing_1080i50, sizeof(video_timing_1080i50));
+					addr_start += sizeof(video_timing_1080i50);
+					break;
+				}
+				addr_start += 2;
+			}
+			break;
+		case 10:
+			while(addr_start<addr_end) {
+				if(memcmp(addr_start,video_timing_480i,sizeof(video_timing_480i))==0)
+				{
+					print_gecko("Patched NTSC Interlaced timing\n");
+					memcpy(addr_start, video_timing_576i, sizeof(video_timing_576i));
+					addr_start += sizeof(video_timing_576i);
+					continue;
+				}
+				if(memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
+				{
+					print_gecko("Patched NTSC Progressive timing\n");
+					memcpy(addr_start, video_timing_576p, sizeof(video_timing_576p));
+					addr_start += sizeof(video_timing_576p);
+					break;
+				}
+				addr_start += 2;
+			}
+			break;
 	}
 }
 
@@ -815,8 +876,6 @@ u32 installPatch(int patchId) {
 			patchSize = MTXOrthoHook_length; patchLocation = MTXOrthoHook; break;
 		case MTX_PERSPECTIVEHOOK:
 			patchSize = MTXPerspectiveHook_length; patchLocation = MTXPerspectiveHook; break;
-		case SETFBBREGSHOOK:
-			patchSize = setFbbRegsHook_length; patchLocation = setFbbRegsHook; break;
 		case VI_CONFIGURE240P:
 			patchSize = VIConfigure240p_length; patchLocation = VIConfigure240p; break;
 		case VI_CONFIGURE288P:
@@ -829,12 +888,16 @@ u32 installPatch(int patchId) {
 			patchSize = VIConfigure576i_length; patchLocation = VIConfigure576i; break;
 		case VI_CONFIGURE576P:
 			patchSize = VIConfigure576p_length; patchLocation = VIConfigure576p; break;
-		case VI_CONFIGURE960I:
-			patchSize = VIConfigure960i_length; patchLocation = VIConfigure960i; break;
-		case VI_CONFIGURE1152I:
-			patchSize = VIConfigure1152i_length; patchLocation = VIConfigure1152i; break;
+		case VI_CONFIGURE1080I50:
+			patchSize = VIConfigure1080i50_length; patchLocation = VIConfigure1080i50; break;
+		case VI_CONFIGURE1080I60:
+			patchSize = VIConfigure1080i60_length; patchLocation = VIConfigure1080i60; break;
+		case VI_CONFIGUREHOOK:
+			patchSize = VIConfigureHook_length; patchLocation = VIConfigureHook; break;
 		case VI_CONFIGUREPANHOOK:
 			patchSize = VIConfigurePanHook_length; patchLocation = VIConfigurePanHook; break;
+		case VI_RETRACEHANDLERHOOK:
+			patchSize = VIRetraceHandlerHook_length; patchLocation = VIRetraceHandlerHook; break;
 		case MAJORA_SAVEREGS:
 			patchSize = MajoraSaveRegs_length; patchLocation = MajoraSaveRegs; break;
 		case MAJORA_AUDIOSTREAM:
@@ -925,11 +988,13 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 		{0x44, 5, 8, 1, 0, 2, 0, 0, "GXSetViewport D", 0}
 	};
 	FuncPattern GXSetViewportJitterSigs[4] = {
-		{0x118, 20, 15, 1, 1, 3, 0, 0, "GXSetViewportJitter A", 0},
-		{0x100, 14, 15, 1, 1, 3, 0, 0, "GXSetViewportJitter B", 0},
-		{0x078,  6, 10, 1, 0, 4, 0, 0, "GXSetViewportJitter C", 0},		// SN Systems ProDG
-		{0x054,  6,  8, 1, 0, 2, 0, 0, "GXSetViewportJitter D", 0}
+		{0x118, 20, 15, 1, 1, 3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter A", 0},
+		{0x100, 14, 15, 1, 1, 3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter B", 0},
+		{0x078,  6, 10, 1, 0, 4,                        0,                               0, "GXSetViewportJitter C", 0},	// SN Systems ProDG
+		{0x054,  6,  8, 1, 0, 2,                        0,                               0, "GXSetViewportJitter D", 0}
 	};
+	FuncPattern __GXSetViewportSig = 
+		{0x8C, 15, 7, 0, 0, 0, GXSetViewportPatch, GXSetViewportPatch_length, "__GXSetViewport", 0};
 	FuncPattern getCurrentFieldEvenOddSigs[2] = {
 		{0xB8, 14, 2, 2, 4, 8, 0, 0, "getCurrentFieldEvenOdd A", 0},
 		{0x5C,  7, 0, 0, 1, 5, 0, 0, "getCurrentFieldEvenOdd B", 0}		// SN Systems ProDG
@@ -937,6 +1002,11 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 	FuncPattern setFbbRegsSigs[2] = {
 		{0x2D0, 54, 34, 0, 10, 16, 0, 0, "setFbbRegs A", 0},
 		{0x2C0, 51, 34, 0, 10, 16, 0, 0, "setFbbRegs B", 0}				// SN Systems ProDG
+	};
+	FuncPattern setVerticalRegsSigs[3] = {
+		{0x19C, 22, 14, 0, 4, 25, 0, 0, "setVerticalRegs A", 0},
+		{0x19C, 22, 14, 0, 4, 25, 0, 0, "setVerticalRegs B", 0},
+		{0x1C4, 19, 13, 0, 4, 25, 0, 0, "setVerticalRegs C", 0}			// SN Systems ProDG
 	};
 	
 	for( i=0; i < length; i+=4 )
@@ -952,6 +1022,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 			if( !__VIRetraceHandlerSigs[j].offsetFoundAt && compare_pattern( &fp, &(__VIRetraceHandlerSigs[j]) ) )
 			{
 				u32 __VIRetraceHandlerAddr = Calc_ProperAddress(data, dataType, i);
+				u32 __VIRetraceHandlerPatchAddr = 0;
 				if(__VIRetraceHandlerAddr) {
 					print_gecko("Found:[%s] @ %08X\n", __VIRetraceHandlerSigs[j].Name, __VIRetraceHandlerAddr);
 					switch(j) {
@@ -971,6 +1042,36 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							case 4: *(vu32*)(data+i+260) = 0x38000001; break;
 							case 5: *(vu32*)(data+i+308) = 0x38000001; break;
 						}
+					}
+					if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
+						__VIRetraceHandlerPatchAddr = getPatchAddr(VI_RETRACEHANDLERHOOK);
+						switch(j) {
+							case 0:
+								memmove(data+i+512, data+i+508, 12);
+								*(vu32*)(data+i+508) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 508);
+								break;
+							case 1:
+								memmove(data+i+532, data+i+528, 12);
+								*(vu32*)(data+i+528) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 528);
+								break;
+							case 2:
+								memmove(data+i+536, data+i+532, 12);
+								*(vu32*)(data+i+532) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 532);
+								break;
+							case 3:
+								memmove(data+i+544, data+i+540, 12);
+								*(vu32*)(data+i+540) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 540);
+								break;
+							case 4:
+								memmove(data+i+564, data+i+560, 16);
+								*(vu32*)(data+i+560) = branchAndLink(getCurrentFieldEvenOddSigs[1].offsetFoundAt, i + 560);
+								break;
+							case 5:
+								memmove(data+i+612, data+i+608, 12);
+								*(vu32*)(data+i+608) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 608);
+								break;
+						}
+						*(vu32*)(data+i+__VIRetraceHandlerSigs[j].Length) = branch(__VIRetraceHandlerPatchAddr, __VIRetraceHandlerAddr + __VIRetraceHandlerSigs[j].Length);
 					}
 					__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 					i += __VIRetraceHandlerSigs[j].Length;
@@ -1027,8 +1128,9 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							break;
 						case 4:
 							print_gecko("Patched NTSC Field Rendering mode\n");
-							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE960I);
+							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE1080I60);
 							vfilter = vertical_filters[1];
+							Patch_VidTiming(data, length);
 							break;
 						case 5:
 							print_gecko("Patched NTSC Progressive mode\n");
@@ -1049,7 +1151,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							break;
 						case 9:
 							print_gecko("Patched PAL Field Rendering mode\n");
-							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE1152I);
+							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE1080I50);
 							vfilter = vertical_filters[1];
 							Patch_VidTiming(data, length);
 							break;
@@ -1060,6 +1162,31 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							Patch_VidTiming(data, length);
 							break;
 					}
+					if(swissSettings.forceHScale > 0) {
+						VIConfigurePatchAddr = getPatchAddr(VI_CONFIGUREHOOK);
+						switch(swissSettings.forceHScale) {
+							case 1:
+								*(vu16*)VAR_SAR_WIDTH = 1;
+								*(vu8*)VAR_SAR_HEIGHT = 1;
+								break;
+							case 2:
+								*(vu16*)VAR_SAR_WIDTH = 11;
+								*(vu8*)VAR_SAR_HEIGHT = 10;
+								break;
+							case 3:
+								*(vu16*)VAR_SAR_WIDTH = 9;
+								*(vu8*)VAR_SAR_HEIGHT = 8;
+								break;
+							case 4:
+								*(vu16*)VAR_SAR_WIDTH = 704;
+								*(vu8*)VAR_SAR_HEIGHT = 0;
+								break;
+							case 5:
+								*(vu16*)VAR_SAR_WIDTH = 720;
+								*(vu8*)VAR_SAR_HEIGHT = 0;
+								break;
+						}
+					}
 					switch(j) {
 						case 0:
 							*(vu32*)(data+i+ 28) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 28);
@@ -1069,6 +1196,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+284) = 0x60000000;	// nop
 							*(vu32*)(data+i+292) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1636);
+							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1680);
 							break;
 						case 1:
 							*(vu32*)(data+i+ 28) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 28);
@@ -1078,6 +1206,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+252) = 0x60000000;	// nop
 							*(vu32*)(data+i+260) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1604);
+							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1648);
 							break;
 						case 2:
 							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
@@ -1087,6 +1216,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+392) = 0x60000000;	// nop
 							*(vu32*)(data+i+400) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1780);
+							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1824);
 							break;
 						case 3:
 							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
@@ -1097,6 +1227,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+420) = 0x60000000;	// nop
 							*(vu32*)(data+i+428) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1872);
+							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1916);
 							break;
 						case 4:
 							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
@@ -1107,6 +1238,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+548) = 0x60000000;	// nop
 							*(vu32*)(data+i+556) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 2012);
+							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2056);
 							break;
 						case 5:
 							*(vu32*)(data+i+ 32) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 32);
@@ -1117,6 +1249,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+524) = 0xA0FB0010;	// lhz		r7, 16 (r27)
 							*(vu32*)(data+i+532) = 0xA0FB0010;	// lhz		r7, 16 (r27)
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2148);
+							setVerticalRegsSigs[2].offsetFoundAt = branchResolve(data, i + 2200);
 							break;
 						case 6:
 							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
@@ -1127,6 +1260,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+548) = 0x60000000;	// nop
 							*(vu32*)(data+i+556) = 0xA0130010;	// lhz		r0, 16 (r19)
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1980);
+							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2024);
 							break;
 					}
 					if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
@@ -1366,6 +1500,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 						case 0: GXSetViewportJitterSigs[0].offsetFoundAt = branchResolve(data, i + 16); break;
 						case 1: GXSetViewportJitterSigs[1].offsetFoundAt = branchResolve(data, i + 16); break;
 						case 2: GXSetViewportJitterSigs[2].offsetFoundAt = branchResolve(data, i +  4); break;
+						case 3:         __GXSetViewportSig.offsetFoundAt = branchResolve(data, i + 40); break;
 					}
 					break;
 				}
@@ -1378,55 +1513,49 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 				u32 GXSetViewportJitterAddr = Calc_ProperAddress(data, dataType, i);
 				if(GXSetViewportJitterAddr) {
 					print_gecko("Found:[%s] @ %08X\n", GXSetViewportJitterSigs[j].Name, GXSetViewportJitterAddr);
-					switch(j) {
-						case 0:
-							memmove(data+i+36, data+i+52, 104);
-							*(vu32*)(data+i+140) = 0x3C600000 | (VAR_AREA >> 16);
-							*(vu32*)(data+i+144) = 0x88030000 | (VAR_CURRENT_FIELD & 0xFFFF);
-							*(vu32*)(data+i+148) = 0x28000000;	// cmplwi	r0, 0
-							*(vu32*)(data+i+152) = 0x41820008;	// beq		+8
-							*(vu32*)(data+i+156) = 0xEF5A582A;	// fadds	f26, f26, f11
-							memmove(data+i+160, data+i+184, 100);
-							memset(data+i+260, 0, 24);
-							break;
-						case 1:
-							memmove(data+i+ 4, data+i+ 8, 32);
-							memmove(data+i+36, data+i+52, 84);
-							*(vu32*)(data+i+120) = 0x3C600000 | (VAR_AREA >> 16);
-							*(vu32*)(data+i+124) = 0x88030000 | (VAR_CURRENT_FIELD & 0xFFFF);
-							*(vu32*)(data+i+128) = 0x28000000;	// cmplwi	r0, 0
-							*(vu32*)(data+i+132) = 0x41820008;	// beq		+8
-							*(vu32*)(data+i+136) = 0xEF5A582A;	// fadds	f26, f26, f11
-							memmove(data+i+140, data+i+160, 100);
-							memset(data+i+240, 0, 20);
-							break;
+					if(GXSetViewportJitterSigs[j].Patch) {
+						u32 op = *(vu32*)(data+i+72);
+						memset(data+i, 0, GXSetViewportJitterSigs[j].Length);
+						memcpy(data+i, GXSetViewportJitterSigs[j].Patch, GXSetViewportJitterSigs[j].PatchLength);
+						*(vu32*)(data+i+ 0) |= op & 0x1FFFFF;
+						*(vu32*)(data+i+ 8) |= (GXSetViewportJitterAddr + GXSetViewportJitterSigs[j].PatchLength + 0x8000) >> 16;
+						*(vu32*)(data+i+16) |= (GXSetViewportJitterAddr + GXSetViewportJitterSigs[j].PatchLength) & 0xFFFF;
 					}
 					break;
 				}
 			}
 		}
-		for( j=0; j < sizeof(setFbbRegsSigs)/sizeof(FuncPattern); j++ )
+		if( (i=__GXSetViewportSig.offsetFoundAt) )
 		{
-			if( (i=setFbbRegsSigs[j].offsetFoundAt) )
+			u32 __GXSetViewportAddr = Calc_ProperAddress(data, dataType, i);
+			if(__GXSetViewportAddr) {
+				print_gecko("Found:[%s] @ %08X\n", __GXSetViewportSig.Name, __GXSetViewportAddr);
+				if(__GXSetViewportSig.Patch) {
+					memset(data+i, 0, __GXSetViewportSig.Length);
+					memcpy(data+i, __GXSetViewportSig.Patch, __GXSetViewportSig.PatchLength);
+					*(vu32*)(data+i+ 4) |= (__GXSetViewportAddr + __GXSetViewportSig.PatchLength + 0x8000) >> 16;
+					*(vu32*)(data+i+12) |= (__GXSetViewportAddr + __GXSetViewportSig.PatchLength) & 0xFFFF;
+				}
+			}
+		}
+		for( j=0; j < sizeof(setVerticalRegsSigs)/sizeof(FuncPattern); j++ )
+		{
+			if( (i=setVerticalRegsSigs[j].offsetFoundAt) )
 			{
-				u32 setFbbRegsAddr = Calc_ProperAddress(data, dataType, i);
-				if(setFbbRegsAddr) {
-					print_gecko("Found:[%s] @ %08X\n", setFbbRegsSigs[j].Name, setFbbRegsAddr);
-					for( k=0; k < sizeof(getCurrentFieldEvenOddSigs)/sizeof(FuncPattern); k++ )
-					{
-						if( getCurrentFieldEvenOddSigs[k].offsetFoundAt )
-						{
-							u32 getCurrentFieldEvenOddAddr = Calc_ProperAddress(data, dataType, getCurrentFieldEvenOddSigs[k].offsetFoundAt);
-							if(getCurrentFieldEvenOddAddr) {
-								print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOddAddr);
-								top_addr -= setFbbRegsHook_length;
-								checkPatchAddr();
-								memcpy((void*)top_addr, setFbbRegsHook, setFbbRegsHook_length);
-								*(vu32*)(top_addr+12) = branchAndLink(getCurrentFieldEvenOddAddr, top_addr + 12);
-								*(vu32*)(data+i+setFbbRegsSigs[j].Length) = branch(top_addr, setFbbRegsAddr + setFbbRegsSigs[j].Length);
-								break;
-							}
-						}
+				u32 setVerticalRegsAddr = Calc_ProperAddress(data, dataType, i);
+				if(setVerticalRegsAddr) {
+					print_gecko("Found:[%s] @ %08X\n", setVerticalRegsSigs[j].Name, setVerticalRegsAddr);
+					switch(j) {
+						case 0:
+							*(vu32*)(data+i+ 4) = *(vu32*)(data+i+ 8);
+							*(vu32*)(data+i+ 8) = *(vu32*)(data+i+24);
+							*(vu32*)(data+i+16) = *(vu32*)(data+i+20);
+							*(vu32*)(data+i+20) = *(vu32*)(data+i+28);
+							*(vu32*)(data+i+24) = *(vu32*)(data+i+32);
+							*(vu32*)(data+i+28) = 0xA00B006C;	// lhz		r0, 108 (r11)
+							*(vu32*)(data+i+32) = 0x540007FF;	// clrlwi.	r0, r0, 31
+							*(vu32*)(data+i+36) = 0x41820010;	// beq		+16
+							break;
 					}
 					break;
 				}

@@ -12,6 +12,7 @@
 
 extern char *uiVModeStr[];
 extern char *gameVModeStr[];
+extern char *forceHScaleStr[];
 extern char *forceVFilterStr[];
 extern char *forceWidescreenStr[];
 extern char *forceEncodingStr[];
