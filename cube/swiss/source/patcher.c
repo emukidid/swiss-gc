@@ -1499,7 +1499,14 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 						case 0: GXSetViewportJitterSigs[0].offsetFoundAt = branchResolve(data, i + 16); break;
 						case 1: GXSetViewportJitterSigs[1].offsetFoundAt = branchResolve(data, i + 16); break;
 						case 2: GXSetViewportJitterSigs[2].offsetFoundAt = branchResolve(data, i +  4); break;
-						case 3:         __GXSetViewportSig.offsetFoundAt = branchResolve(data, i + 40); break;
+						case 3:
+							__GXSetViewportSig.offsetFoundAt = branchResolve(data, i + 40);
+							if((i-__GXSetViewportSig.offsetFoundAt) == 232) {
+								memset(data+i-88, 0, 88);
+								*(vu32*)(data+i-88) = branch(i, i - 88);
+								GXSetViewportJitterSigs[3].offsetFoundAt = i - 88;
+							}
+							break;
 					}
 					break;
 				}
