@@ -143,7 +143,7 @@ uiDrawObj_t* DrawStyledLabel(int x, int y, char *string, float size, bool center
 uiDrawObj_t* DrawLabel(int x, int y, char *string);
 uiDrawObj_t* DrawMenuButtons(int selection);
 void DrawUpdateProgressBar(uiDrawObj_t *evt, int percent);
-void DrawUpdateMenuButtons(uiDrawObj_t *evt, int selection);
+void DrawUpdateMenuButtons(u32 selection);
 void DrawAddChild(uiDrawObj_t *parent, uiDrawObj_t *child);
 uiDrawObj_t* DrawPublish(uiDrawObj_t *evt);
 void DrawDispose(uiDrawObj_t *evt);
