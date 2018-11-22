@@ -858,6 +858,8 @@ u32 installPatch(int patchId) {
 	u32 patchSize = 0;
 	void* patchLocation = 0;
 	switch(patchId) {
+		case GX_COPYDISPHOOK:
+			patchSize = GXCopyDispHook_length; patchLocation = GXCopyDispHook; break;
 		case GX_GETYSCALEFACTORHOOK:
 			patchSize = GXGetYScaleFactorHook_length; patchLocation = GXGetYScaleFactorHook; break;
 		case GX_INITTEXOBJLODHOOK:
@@ -981,6 +983,12 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 		{0x288, 19, 23, 0, 3, 14, 0, 0, "GXSetCopyFilter B", 0},		// SN Systems ProDG
 		{0x204, 25,  7, 0, 4,  0, 0, 0, "GXSetCopyFilter C", 0}
 	};
+	FuncPattern GXCopyDispSigs[4] = {
+		{0x16C, 34, 14, 0, 3, 1, 0, 0, "GXCopyDisp A", 0},
+		{0x158, 29, 14, 0, 3, 1, 0, 0, "GXCopyDisp B", 0},
+		{0x110, 15, 12, 0, 1, 1, 0, 0, "GXCopyDisp C", 0},				// SN Systems ProDG
+		{0x164, 35, 14, 0, 3, 0, 0, 0, "GXCopyDisp D", 0}
+	};
 	FuncPattern GXSetViewportSigs[4] = {
 		{0x20, 3, 2, 1, 0, 2, 0, 0, "GXSetViewport A", 0},
 		{0x20, 3, 2, 1, 0, 2, 0, 0, "GXSetViewport B", 0},
@@ -1015,7 +1023,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 			continue;
 		
 		FuncPattern fp;
-		make_pattern( (u8*)(data+i), length, &fp );
+		make_pattern( (u8*)(data+i), length-i, &fp );
 		
 		for( j=0; j < sizeof(__VIRetraceHandlerSigs)/sizeof(FuncPattern); j++ )
 		{
@@ -1359,26 +1367,32 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					switch(j) {
 						case 0:
 							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 3764);
+							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
 							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 2212);
 							break;
 						case 1:
 							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 1964);
+							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
 							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 744);
 							break;
 						case 2:
 							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 2024);
+							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
 							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 808);
 							break;
 						case 3:
 							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 2084);
+							GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
 							GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 860);
 							break;
 						case 4:
 							GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 1996);
+							GXCopyDispSigs[2].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 676;
 							GXSetViewportSigs[2].offsetFoundAt = branchResolve(data, i + 808);
 							break;
 						case 5:
 							GXSetCopyFilterSigs[2].offsetFoundAt = branchResolve(data, i + 2200);
+							GXCopyDispSigs[3].offsetFoundAt = GXSetCopyFilterSigs[2].offsetFoundAt + 540;
 							GXSetViewportSigs[3].offsetFoundAt = branchResolve(data, i + 860);
 							break;
 					}
@@ -1403,14 +1417,13 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 			if( !GXGetYScaleFactorSigs[j].offsetFoundAt && compare_pattern( &fp, &(GXGetYScaleFactorSigs[j]) ) )
 			{
 				u32 GXGetYScaleFactorAddr = Calc_ProperAddress(data, dataType, i);
+				u32 GXGetYScaleFactorPatchAddr = 0;
 				if(GXGetYScaleFactorAddr) {
 					print_gecko("Found:[%s] @ %08X\n", GXGetYScaleFactorSigs[j].Name, GXGetYScaleFactorAddr);
 					if((swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 5)) {
-						top_addr -= GXGetYScaleFactorHook_length;
-						checkPatchAddr();
-						memcpy((void*)top_addr, GXGetYScaleFactorHook, GXGetYScaleFactorHook_length);
-						*(vu32*)(top_addr+16) = branch(GXGetYScaleFactorAddr + 4, top_addr + 16);
-						*(vu32*)(data+i) = branch(top_addr, GXGetYScaleFactorAddr);
+						GXGetYScaleFactorPatchAddr = installPatch(GX_GETYSCALEFACTORHOOK);
+						*(vu32*)(GXGetYScaleFactorPatchAddr+16) = branch(GXGetYScaleFactorAddr + 4, GXGetYScaleFactorPatchAddr + 16);
+						*(vu32*)(data+i) = branch(GXGetYScaleFactorPatchAddr, GXGetYScaleFactorAddr);
 					}
 					GXGetYScaleFactorSigs[j].offsetFoundAt = i;
 					i += GXGetYScaleFactorSigs[j].Length;
@@ -1489,6 +1502,20 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 		}
 	}
 	if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
+		for( j=0; j < sizeof(GXCopyDispSigs)/sizeof(FuncPattern); j++ )
+		{
+			if( (i=GXCopyDispSigs[j].offsetFoundAt) )
+			{
+				u32 GXCopyDispAddr = Calc_ProperAddress(data, dataType, i);
+				u32 GXCopyDispPatchAddr = 0;
+				if(GXCopyDispAddr) {
+					print_gecko("Found:[%s] @ %08X\n", GXCopyDispSigs[j].Name, GXCopyDispAddr);
+					GXCopyDispPatchAddr = getPatchAddr(GX_COPYDISPHOOK);
+					*(vu32*)(data+i+GXCopyDispSigs[j].Length) = branch(GXCopyDispPatchAddr, GXCopyDispAddr + GXCopyDispSigs[j].Length);
+					break;
+				}
+			}
+		}
 		for( j=0; j < sizeof(GXSetViewportSigs)/sizeof(FuncPattern); j++ )
 		{
 			if( (i=GXSetViewportSigs[j].offsetFoundAt) )
@@ -1500,7 +1527,14 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 						case 0: GXSetViewportJitterSigs[0].offsetFoundAt = branchResolve(data, i + 16); break;
 						case 1: GXSetViewportJitterSigs[1].offsetFoundAt = branchResolve(data, i + 16); break;
 						case 2: GXSetViewportJitterSigs[2].offsetFoundAt = branchResolve(data, i +  4); break;
-						case 3:         __GXSetViewportSig.offsetFoundAt = branchResolve(data, i + 40); break;
+						case 3:
+							__GXSetViewportSig.offsetFoundAt = branchResolve(data, i + 40);
+							if((i-__GXSetViewportSig.offsetFoundAt) == 232) {
+								memset(data+i-88, 0, 88);
+								*(vu32*)(data+i-88) = branch(i, i - 88);
+								GXSetViewportJitterSigs[3].offsetFoundAt = i - 88;
+							}
+							break;
 					}
 					break;
 				}
@@ -1591,18 +1625,17 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 	{
 		if( *(vu32*)(data+i) != 0xED241828 )
 			continue;
-		if( find_pattern( (u8*)(data+i), length, &MTXFrustumSig ) )
+		if( find_pattern( (u8*)(data+i), length-i, &MTXFrustumSig ) )
 		{
-			u32 properAddress = Calc_ProperAddress(data, dataType, i);
-			if(properAddress) {
-				print_gecko("Found:[%s] @ %08X\n", MTXFrustumSig.Name, properAddress);
-				top_addr -= MTXFrustumHook_length;
-				checkPatchAddr();
-				memcpy((void*)top_addr, MTXFrustumHook, MTXFrustumHook_length);
-				*(vu32*)(top_addr+28) = branch(properAddress+4, top_addr+28);
-				*(vu32*)(data+i) = branch(top_addr, properAddress);
-				*(vu32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
-				MTXFrustumSig.offsetFoundAt = (u32)data+i;
+			u32 MTXFrustumAddr = Calc_ProperAddress(data, dataType, i);
+			u32 MTXFrustumPatchAddr = 0;
+			if(MTXFrustumAddr) {
+				print_gecko("Found:[%s] @ %08X\n", MTXFrustumSig.Name, MTXFrustumAddr);
+				MTXFrustumPatchAddr = installPatch(MTX_FRUSTUMHOOK);
+				*(vu32*)(MTXFrustumPatchAddr+28) = branch(MTXFrustumAddr + 4, MTXFrustumPatchAddr + 28);
+				*(vu32*)(data+i) = branch(MTXFrustumPatchAddr, MTXFrustumAddr);
+				*(vu32*)VAR_FLOAT1_6 = 0x3E2AAAAB;
+				MTXFrustumSig.offsetFoundAt = i;
 				break;
 			}
 		}
@@ -1611,17 +1644,16 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 	{
 		if( *(vu32*)(data+i+8) != 0xED441828 )
 			continue;
-		if( find_pattern( (u8*)(data+i), length, &MTXLightFrustumSig ) )
+		if( find_pattern( (u8*)(data+i), length-i, &MTXLightFrustumSig ) )
 		{
-			u32 properAddress = Calc_ProperAddress(data, dataType, i);
-			if(properAddress) {
-				print_gecko("Found:[%s] @ %08X\n", MTXLightFrustumSig.Name, properAddress);
-				top_addr -= MTXLightFrustumHook_length;
-				checkPatchAddr();
-				memcpy((void*)top_addr, MTXLightFrustumHook, MTXLightFrustumHook_length);
-				*(vu32*)(top_addr+28) = branch(properAddress+12, top_addr+28);
-				*(vu32*)(data+i+8) = branch(top_addr, properAddress+8);
-				*(vu32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
+			u32 MTXLightFrustumAddr = Calc_ProperAddress(data, dataType, i);
+			u32 MTXLightFrustumPatchAddr = 0;
+			if(MTXLightFrustumAddr) {
+				print_gecko("Found:[%s] @ %08X\n", MTXLightFrustumSig.Name, MTXLightFrustumAddr);
+				MTXLightFrustumPatchAddr = installPatch(MTX_LIGHTFRUSTUMHOOK);
+				*(vu32*)(MTXLightFrustumPatchAddr+28) = branch(MTXLightFrustumAddr + 12, MTXLightFrustumPatchAddr + 28);
+				*(vu32*)(data+i+8) = branch(MTXLightFrustumPatchAddr, MTXLightFrustumAddr + 8);
+				*(vu32*)VAR_FLOAT1_6 = 0x3E2AAAAB;
 				break;
 			}
 		}
@@ -1630,18 +1662,17 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 	{
 		if( *(vu32*)(data+i) != 0x7C0802A6 )
 			continue;
-		if( find_pattern( (u8*)(data+i), length, &MTXPerspectiveSig ) )
+		if( find_pattern( (u8*)(data+i), length-i, &MTXPerspectiveSig ) )
 		{
-			u32 properAddress = Calc_ProperAddress(data, dataType, i);
-			if(properAddress) {
-				print_gecko("Found:[%s] @ %08X\n", MTXPerspectiveSig.Name, properAddress);
-				top_addr -= MTXPerspectiveHook_length;
-				checkPatchAddr();
-				memcpy((void*)top_addr, MTXPerspectiveHook, MTXPerspectiveHook_length);
-				*(vu32*)(top_addr+20) = branch(properAddress+84, top_addr+20);
-				*(vu32*)(data+i+80) = branch(top_addr, properAddress+80);
+			u32 MTXPerspectiveAddr = Calc_ProperAddress(data, dataType, i);
+			u32 MTXPerspectivePatchAddr = 0;
+			if(MTXPerspectiveAddr) {
+				print_gecko("Found:[%s] @ %08X\n", MTXPerspectiveSig.Name, MTXPerspectiveAddr);
+				MTXPerspectivePatchAddr = installPatch(MTX_PERSPECTIVEHOOK);
+				*(vu32*)(MTXPerspectivePatchAddr+20) = branch(MTXPerspectiveAddr + 84, MTXPerspectivePatchAddr + 20);
+				*(vu32*)(data+i+80) = branch(MTXPerspectivePatchAddr, MTXPerspectiveAddr + 80);
 				*(vu32*)VAR_FLOAT9_16 = 0x3F100000;
-				MTXPerspectiveSig.offsetFoundAt = (u32)data+i;
+				MTXPerspectiveSig.offsetFoundAt = i;
 				break;
 			}
 		}
@@ -1650,16 +1681,15 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 	{
 		if( *(vu32*)(data+i) != 0x7C0802A6 )
 			continue;
-		if( find_pattern( (u8*)(data+i), length, &MTXLightPerspectiveSig ) )
+		if( find_pattern( (u8*)(data+i), length-i, &MTXLightPerspectiveSig ) )
 		{
-			u32 properAddress = Calc_ProperAddress(data, dataType, i);
-			if(properAddress) {
-				print_gecko("Found:[%s] @ %08X\n", MTXLightPerspectiveSig.Name, properAddress);
-				top_addr -= MTXLightPerspectiveHook_length;
-				checkPatchAddr();
-				memcpy((void*)top_addr, MTXLightPerspectiveHook, MTXLightPerspectiveHook_length);
-				*(vu32*)(top_addr+20) = branch(properAddress+100, top_addr+20);
-				*(vu32*)(data+i+96) = branch(top_addr, properAddress+96);
+			u32 MTXLightPerspectiveAddr = Calc_ProperAddress(data, dataType, i);
+			u32 MTXLightPerspectivePatchAddr = 0;
+			if(MTXLightPerspectiveAddr) {
+				print_gecko("Found:[%s] @ %08X\n", MTXLightPerspectiveSig.Name, MTXLightPerspectiveAddr);
+				MTXLightPerspectivePatchAddr = installPatch(MTX_LIGHTPERSPECTIVEHOOK);
+				*(vu32*)(MTXLightPerspectivePatchAddr+20) = branch(MTXLightPerspectiveAddr + 100, MTXLightPerspectivePatchAddr + 20);
+				*(vu32*)(data+i+96) = branch(MTXLightPerspectivePatchAddr, MTXLightPerspectiveAddr + 96);
 				*(vu32*)VAR_FLOAT9_16 = 0x3F100000;
 				break;
 			}
@@ -1670,17 +1700,16 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 		{
 			if( *(vu32*)(data+i) != 0xED041828 )
 				continue;
-			if( find_pattern( (u8*)(data+i), length, &MTXOrthoSig ) )
+			if( find_pattern( (u8*)(data+i), length-i, &MTXOrthoSig ) )
 			{
-				u32 properAddress = Calc_ProperAddress(data, dataType, i);
-				if(properAddress) {
-					print_gecko("Found:[%s] @ %08X\n", MTXOrthoSig.Name, properAddress);
-					top_addr -= MTXOrthoHook_length;
-					checkPatchAddr();
-					memcpy((void*)top_addr, MTXOrthoHook, MTXOrthoHook_length);
-					*(vu32*)(top_addr+128) = branch(properAddress+4, top_addr+128);
-					*(vu32*)(data+i) = branch(top_addr, properAddress);
-					*(vu32*)VAR_FLOAT1_6 = 0x3E2AAAAA;
+				u32 MTXOrthoAddr = Calc_ProperAddress(data, dataType, i);
+				u32 MTXOrthoPatchAddr = 0;
+				if(MTXOrthoAddr) {
+					print_gecko("Found:[%s] @ %08X\n", MTXOrthoSig.Name, MTXOrthoAddr);
+					MTXOrthoPatchAddr = installPatch(MTX_ORTHOHOOK);
+					*(vu32*)(MTXOrthoPatchAddr+128) = branch(MTXOrthoAddr + 4, MTXOrthoPatchAddr + 128);
+					*(vu32*)(data+i) = branch(MTXOrthoPatchAddr, MTXOrthoAddr);
+					*(vu32*)VAR_FLOAT1_6 = 0x3E2AAAAB;
 					*(vu32*)VAR_FLOATM_1 = 0xBF800000;
 					break;
 				}
@@ -1692,21 +1721,21 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 				continue;
 			
 			FuncPattern fp;
-			make_pattern( (u8*)(data+i), length, &fp );
+			make_pattern( (u8*)(data+i), length-i, &fp );
 			
 			for( j=0; j < sizeof(GXSetScissorSigs)/sizeof(FuncPattern); j++ )
 			{
-				if( compare_pattern( &fp, &(GXSetScissorSigs[j]) ) ) {
-					u32 properAddress = Calc_ProperAddress(data, dataType, i);
-					if(properAddress) {
-						print_gecko("Found:[%s] @ %08X\n", GXSetScissorSigs[j].Name, properAddress);
-						top_addr -= GXSetScissorHook_length;
-						checkPatchAddr();
-						memcpy((void*)top_addr, GXSetScissorHook, GXSetScissorHook_length);
-						*(vu32*)(top_addr+ 0) = *(vu32*)(data+i);
-						*(vu32*)(top_addr+ 4) = j == 1 ? 0x800801E8:0x800701E8;
-						*(vu32*)(top_addr+64) = branch(properAddress+4, top_addr+64);
-						*(vu32*)(data+i) = branch(top_addr, properAddress);
+				if( compare_pattern( &fp, &(GXSetScissorSigs[j]) ) )
+				{
+					u32 GXSetScissorAddr = Calc_ProperAddress(data, dataType, i);
+					u32 GXSetScissorPatchAddr = 0;
+					if(GXSetScissorAddr) {
+						print_gecko("Found:[%s] @ %08X\n", GXSetScissorSigs[j].Name, GXSetScissorAddr);
+						GXSetScissorPatchAddr = installPatch(GX_SETSCISSORHOOK);
+						*(vu32*)(GXSetScissorPatchAddr+ 0) = *(vu32*)(data+i);
+						*(vu32*)(GXSetScissorPatchAddr+ 4) = j == 1 ? 0x800801E8:0x800701E8;
+						*(vu32*)(GXSetScissorPatchAddr+64) = branch(GXSetScissorAddr + 4, GXSetScissorPatchAddr + 64);
+						*(vu32*)(data+i) = branch(GXSetScissorPatchAddr, GXSetScissorAddr);
 						break;
 					}
 				}
@@ -1720,20 +1749,19 @@ void Patch_WideAspect(u8 *data, u32 length, int dataType) {
 				continue;
 			
 			FuncPattern fp;
-			make_pattern( (u8*)(data+i), length, &fp );
+			make_pattern( (u8*)(data+i), length-i, &fp );
 			
 			for( j=0; j < sizeof(GXSetProjectionSigs)/sizeof(FuncPattern); j++ )
 			{
 				if( compare_pattern( &fp, &(GXSetProjectionSigs[j]) ) )
 				{
-					u32 properAddress = Calc_ProperAddress(data, dataType, i);
-					if(properAddress) {
-						print_gecko("Found:[%s] @ %08X\n", GXSetProjectionSigs[j].Name, properAddress);
-						top_addr -= GXSetProjectionHook_length;
-						checkPatchAddr();
-						memcpy((void*)top_addr, GXSetProjectionHook, GXSetProjectionHook_length);
-						*(vu32*)(top_addr+20) = branch(properAddress+16, top_addr+20);
-						*(vu32*)(data+i+12) = branch(top_addr, properAddress+12);
+					u32 GXSetProjectionAddr = Calc_ProperAddress(data, dataType, i);
+					u32 GXSetProjectionPatchAddr = 0;
+					if(GXSetProjectionAddr) {
+						print_gecko("Found:[%s] @ %08X\n", GXSetProjectionSigs[j].Name, GXSetProjectionAddr);
+						GXSetProjectionPatchAddr = installPatch(GX_SETPROJECTIONHOOK);
+						*(vu32*)(GXSetProjectionPatchAddr+20) = branch(GXSetProjectionAddr + 16, GXSetProjectionPatchAddr + 20);
+						*(vu32*)(data+i+12) = branch(GXSetProjectionPatchAddr, GXSetProjectionAddr + 12);
 						*(vu32*)VAR_FLOAT3_4 = 0x3F400000;
 						break;
 					}
@@ -1758,21 +1786,20 @@ int Patch_TexFilt(u8 *data, u32 length, int dataType)
 			continue;
 		
 		FuncPattern fp;
-		make_pattern( (u8*)(data+i), length, &fp );
+		make_pattern( (u8*)(data+i), length-i, &fp );
 		
 		for( j=0; j < sizeof(GXInitTexObjLODSigs)/sizeof(FuncPattern); j++ )
 		{
 			if( compare_pattern( &fp, &(GXInitTexObjLODSigs[j]) ) )
 			{
-				u32 properAddress = Calc_ProperAddress(data, dataType, i);
-				if(properAddress) {
-					print_gecko("Found:[%s] @ %08X\n", GXInitTexObjLODSigs[j].Name, properAddress);
-					top_addr -= GXInitTexObjLODHook_length;
-					checkPatchAddr();
-					memcpy((void*)top_addr, GXInitTexObjLODHook, GXInitTexObjLODHook_length);
-					*(vu32*)(top_addr+24) = *(vu32*)(data+i);
-					*(vu32*)(top_addr+28) = branch(properAddress+4, top_addr+28);
-					*(vu32*)(data+i) = branch(top_addr, properAddress);
+				u32 GXInitTexObjLODAddr = Calc_ProperAddress(data, dataType, i);
+				u32 GXInitTexObjLODPatchAddr = 0;
+				if(GXInitTexObjLODAddr) {
+					print_gecko("Found:[%s] @ %08X\n", GXInitTexObjLODSigs[j].Name, GXInitTexObjLODAddr);
+					GXInitTexObjLODPatchAddr = installPatch(GX_INITTEXOBJLODHOOK);
+					*(vu32*)(GXInitTexObjLODPatchAddr+24) = *(vu32*)(data+i);
+					*(vu32*)(GXInitTexObjLODPatchAddr+28) = branch(GXInitTexObjLODAddr + 4, GXInitTexObjLODPatchAddr + 28);
+					*(vu32*)(data+i) = branch(GXInitTexObjLODPatchAddr, GXInitTexObjLODAddr);
 					return 1;
 				}
 			}
