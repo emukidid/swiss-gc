@@ -199,6 +199,7 @@ typedef struct uiDrawObjQueue {
 } uiDrawObjQueue_t;
 
 static uiDrawObjQueue_t *videoEventQueue = NULL;
+static uiDrawObj_t *buttonPanel = NULL;
 
 // Add root level uiDrawObj_t
 static uiDrawObj_t* addVideoEvent(uiDrawObj_t *event) {
@@ -1040,9 +1041,9 @@ void DrawUpdateProgressBar(uiDrawObj_t *evt, int percent) {
 	LWP_MutexUnlock(_videomutex);
 }
 
-void DrawUpdateMenuButtons(uiDrawObj_t *evt, int selection) {
+void DrawUpdateMenuButtons(u32 selection) {
 	LWP_MutexLock(_videomutex);
-	drawMenuButtonsEvent_t *data = (drawMenuButtonsEvent_t*)evt->data;
+	drawMenuButtonsEvent_t *data = (drawMenuButtonsEvent_t*)buttonPanel->data;
 	data->selection = selection;
 	LWP_MutexUnlock(_videomutex);
 }
@@ -1424,6 +1425,8 @@ void DrawInit() {
 	DrawAddChild(container, DrawStyledLabel(40,27, "Swiss v0.4", 1.5f, false, defaultColor));
 	sprintf(version, "commit: %s rev: %s", GITREVISION, GITVERSION);
 	DrawAddChild(container, DrawStyledLabel(210,60, version, 0.55f, false, defaultColor));
+	buttonPanel = DrawMenuButtons(-1);
+	DrawAddChild(container, buttonPanel);
 	DrawPublish(container);
 	LWP_MutexInit(&_videomutex, 0);
 	threadAlive = 1;

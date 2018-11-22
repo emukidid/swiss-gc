@@ -366,12 +366,9 @@ void main_loop()
 		}
 	}
 
-	uiDrawObj_t *backPanel = DrawContainer();
-	uiDrawObj_t *buttonPanel = DrawMenuButtons((curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
 	uiDrawObj_t *filePanel = NULL;
-	DrawAddChild(backPanel, buttonPanel);
-	DrawPublish(backPanel);
 	while(1) {
+		DrawUpdateMenuButtons((curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
 		if(devices[DEVICE_CUR] != NULL && needsRefresh) {
 			curMenuLocation=ON_OPTIONS;
 			curSelection=0; curMenuSelection=0;
@@ -380,7 +377,6 @@ void main_loop()
 			needsRefresh = 0;
 			curMenuLocation=ON_FILLIST;
 		}
-		DrawUpdateMenuButtons(buttonPanel, (curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
 		if(devices[DEVICE_CUR] != NULL && curMenuLocation==ON_FILLIST) {
 			filePanel = renderFileBrowser(&allFiles, files, filePanel);
 			while(PAD_ButtonsHeld(0) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT)) {
@@ -436,7 +432,7 @@ void main_loop()
 	if(filePanel != NULL) {
 		DrawDispose(filePanel);
 	}
-	DrawDispose(backPanel);
+	DrawUpdateMenuButtons((curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
 }
 
 
