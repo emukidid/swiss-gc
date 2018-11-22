@@ -488,9 +488,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 	return num_patched;
 }
 
-u32 calc_fst_entries_size(char *FST) {
+u64 calc_fst_entries_size(char *FST) {
 	
-	u32 totalSize = 0;
+	u64 totalSize = 0LL;
 	u32 entries=*(unsigned int*)&FST[8];
 	int i;
 	for (i=1;i<entries;i++)	// go through every entry
@@ -503,7 +503,7 @@ u32 calc_fst_entries_size(char *FST) {
 }
 
 // Returns the number of filesToPatch and fills out the filesToPatch array passed in (pre-allocated)
-int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
+int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 
 	print_gecko("Read dir for directory: %s\r\n",file->name);
 	DiskHeader header;
