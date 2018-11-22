@@ -251,7 +251,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	unsigned int  *tmpTable = NULL;
 	char *tmpName  = NULL;
 	u64 tmpOffset = 0LL;
-	u32 usedSpace = 0;
+	u64 usedSpace = 0;
 
 	int num_entries = 0, ret = 0, num = 0;
 	
@@ -292,19 +292,22 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		}
 
 		if(num_entries <= 0) { return num_entries; }
-
 		// malloc the directory structure
 		*dir = calloc( num_entries * sizeof(file_handle), 1 );
 
 		// parse entries
+		u64 lastOffset = MULTIGAME_TABLE_OFFSET;
 		for(i = 0; i < MAX_MULTIGAME; i++) {
 			tmpOffset = (dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC) ? (tmpTable[i]<<2):(tmpTable[i]);
+			if(num >= 1 && tmpOffset) {
+				(*dir)[num-1].size = tmpOffset - (*dir)[num-1].fileBase;
+			}
 			if((tmpOffset) && (tmpOffset%(isGC?0x8000:0x20000)==0) && (tmpOffset<(isGC?DISC_SIZE:WII_D9_SIZE))) {
 				DVD_Read(&tmpName[0],tmpOffset+32, 512);
 				sprintf( (*dir)[num].name,"%s.gcm", &tmpName[0] );
 				(*dir)[num].fileBase = tmpOffset;
 				(*dir)[num].offset = 0;
-				(*dir)[num].size   = DISC_SIZE;
+				(*dir)[num].size   = (isGC?DISC_SIZE:WII_D9_SIZE)-tmpOffset;
 				(*dir)[num].fileAttrib	 = IS_FILE;
 				(*dir)[num].meta = 0;
 				(*dir)[num].status = OFFSET_NOTSET;
@@ -313,6 +316,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			free(tmpTable);
 			free(tmpName);
 		}
+		usedSpace = (isGC?DISC_SIZE:WII_D9_SIZE);
 	}
 	else if((dvdDiscTypeInt == GAMECUBE_DISC) || (dvdDiscTypeInt == MULTIDISC_DISC)) {
 		// TODO: BCA entry (dump from drive RAM on a GC, dump via BCA command on Wii)
@@ -348,7 +352,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			strcpy( (*dir)[0].name, ".." );
 	}
 	usedSpace >>= 10;
-	initial_DVD_info.freeSpaceInKB = initial_DVD_info.totalSpaceInKB - usedSpace;
+	initial_DVD_info.freeSpaceInKB = initial_DVD_info.totalSpaceInKB - (u32)usedSpace;
 	return num_entries;
 }
 
