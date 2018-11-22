@@ -760,6 +760,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	
 	// See if the combination of our patches has exhausted our play area.
 	if(!install_code()) {
+		DrawDispose(loadDolProg);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Too many patches enabled, memory limit reached!");
 		DrawPublish(msgBox);
 		wait_press_A();
