@@ -1678,8 +1678,7 @@ void select_device(int type)
 		}
 		DrawPublish(deviceSelectBox);	
 		while (!(PAD_ButtonsHeld(0) & 
-			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A
-			|PAD_BUTTON_X|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_TRIGGER_Z) ))
+			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_Z) ))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = PAD_ButtonsHeld(0);
 		if((btns & PAD_BUTTON_X) && (allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B)))
