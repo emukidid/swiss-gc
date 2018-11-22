@@ -858,6 +858,8 @@ u32 installPatch(int patchId) {
 	u32 patchSize = 0;
 	void* patchLocation = 0;
 	switch(patchId) {
+		case GX_COPYDISPHOOK:
+			patchSize = GXCopyDispHook_length; patchLocation = GXCopyDispHook; break;
 		case GX_GETYSCALEFACTORHOOK:
 			patchSize = GXGetYScaleFactorHook_length; patchLocation = GXGetYScaleFactorHook; break;
 		case GX_INITTEXOBJLODHOOK:
@@ -980,6 +982,12 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 		{0x224, 15,  7, 0, 4,  5, 0, 0, "GXSetCopyFilter A", 0},
 		{0x288, 19, 23, 0, 3, 14, 0, 0, "GXSetCopyFilter B", 0},		// SN Systems ProDG
 		{0x204, 25,  7, 0, 4,  0, 0, 0, "GXSetCopyFilter C", 0}
+	};
+	FuncPattern GXCopyDispSigs[4] = {
+		{0x16C, 34, 14, 0, 3, 1, 0, 0, "GXCopyDisp A", 0},
+		{0x158, 29, 14, 0, 3, 1, 0, 0, "GXCopyDisp B", 0},
+		{0x110, 15, 12, 0, 1, 1, 0, 0, "GXCopyDisp C", 0},				// SN Systems ProDG
+		{0x164, 35, 14, 0, 3, 0, 0, 0, "GXCopyDisp D", 0}
 	};
 	FuncPattern GXSetViewportSigs[4] = {
 		{0x20, 3, 2, 1, 0, 2, 0, 0, "GXSetViewport A", 0},
@@ -1359,26 +1367,32 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					switch(j) {
 						case 0:
 							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 3764);
+							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
 							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 2212);
 							break;
 						case 1:
 							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 1964);
+							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
 							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 744);
 							break;
 						case 2:
 							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 2024);
+							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
 							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 808);
 							break;
 						case 3:
 							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 2084);
+							GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
 							GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 860);
 							break;
 						case 4:
 							GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 1996);
+							GXCopyDispSigs[2].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 676;
 							GXSetViewportSigs[2].offsetFoundAt = branchResolve(data, i + 808);
 							break;
 						case 5:
 							GXSetCopyFilterSigs[2].offsetFoundAt = branchResolve(data, i + 2200);
+							GXCopyDispSigs[3].offsetFoundAt = GXSetCopyFilterSigs[2].offsetFoundAt + 540;
 							GXSetViewportSigs[3].offsetFoundAt = branchResolve(data, i + 860);
 							break;
 					}
@@ -1488,6 +1502,20 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 		}
 	}
 	if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
+		for( j=0; j < sizeof(GXCopyDispSigs)/sizeof(FuncPattern); j++ )
+		{
+			if( (i=GXCopyDispSigs[j].offsetFoundAt) )
+			{
+				u32 GXCopyDispAddr = Calc_ProperAddress(data, dataType, i);
+				u32 GXCopyDispPatchAddr = 0;
+				if(GXCopyDispAddr) {
+					print_gecko("Found:[%s] @ %08X\n", GXCopyDispSigs[j].Name, GXCopyDispAddr);
+					GXCopyDispPatchAddr = getPatchAddr(GX_COPYDISPHOOK);
+					*(vu32*)(data+i+GXCopyDispSigs[j].Length) = branch(GXCopyDispPatchAddr, GXCopyDispAddr + GXCopyDispSigs[j].Length);
+					break;
+				}
+			}
+		}
 		for( j=0; j < sizeof(GXSetViewportSigs)/sizeof(FuncPattern); j++ )
 		{
 			if( (i=GXSetViewportSigs[j].offsetFoundAt) )

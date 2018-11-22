@@ -5,7 +5,7 @@
 .globl VIRetraceHandlerHook
 VIRetraceHandlerHook:
 	lis		%r4, VAR_AREA
-	stb		%r3, VAR_CURRENT_FIELD (%r4)
+	stb		%r3, VAR_NEXT_FIELD (%r4)
 	mtlr	%r0
 	blr
 

@@ -22,7 +22,7 @@
 .set VAR_FRAG_LIST,			0x2D00	# 0x1C8 of fragments (38 frags max) (u32 offset, u32 size, u32 rawsector)
 .set VAR_TIMER_START,		0x2EC8	# Use this as a timer start (tbu,tb)
 .set VAR_DISC_CHANGING,		0x2ED0	# Are we changing discs?
-.set VAR_CURRENT_FIELD,		0x2ED4	# current video field
+.set VAR_NEXT_FIELD,		0x2ED4	# next video field
 .set VAR_IGR_EXIT_TYPE,		0x2ED5	# IGR exit type
 .set VAR_IPV4_ID,			0x2ED6	# IPv4 fragment identifier
 .set VAR_FSP_KEY,			0x2ED8	# FSP session key
@@ -34,6 +34,7 @@
 .set VAR_FAKE_IRQ_SET,		0x2EF8	# flag to say we are ready to fake irq.
 .set VAR_SAR_WIDTH,			0x2EFC	# sample aspect ratio width
 .set VAR_SAR_HEIGHT,		0x2EFE	# sample aspect ratio height
+.set VAR_CURRENT_FIELD,		0x2EFF	# current video field
 .set VAR_DISC_1_LBA, 		0x2F00	# is the base file sector for disk 1
 .set VAR_DISC_2_LBA, 		0x2F04	# is the base file sector for disk 2
 .set VAR_CUR_DISC_LBA, 		0x2F08	# is the currently selected disk sector
@@ -102,7 +103,7 @@
 #define VAR_FRAG_LIST		(VAR_AREA+0x2D00)	// 0x1C8 of fragments (40 frags max) (u32 offset, u32 size, u32 rawsector)
 #define VAR_TIMER_START		(VAR_AREA+0x2EC8)	// Use this as a timer start (tbu,tb)
 #define VAR_DISC_CHANGING	(VAR_AREA+0x2ED0)	// Are we changing discs?
-#define VAR_CURRENT_FIELD	(VAR_AREA+0x2ED4)	// current video field
+#define VAR_NEXT_FIELD		(VAR_AREA+0x2ED4)	// next video field
 #define VAR_IGR_EXIT_TYPE	(VAR_AREA+0x2ED5)	// IGR exit type
 #define VAR_IPV4_ID			(VAR_AREA+0x2ED6)	// IPv4 fragment identifier
 #define VAR_FSP_KEY			(VAR_AREA+0x2ED8)	// FSP session key
@@ -114,6 +115,7 @@
 #define VAR_FAKE_IRQ_SET	(VAR_AREA+0x2EF8)	// flag to say we are ready to fake irq.
 #define VAR_SAR_WIDTH		(VAR_AREA+0x2EFC)	// sample aspect ratio width
 #define VAR_SAR_HEIGHT		(VAR_AREA+0x2EFE)	// sample aspect ratio height
+#define VAR_CURRENT_FIELD	(VAR_AREA+0x2EFF)	// current video field
 #define VAR_DISC_1_LBA 		(VAR_AREA+0x2F00)	// is the base file sector for disk 1
 #define VAR_DISC_2_LBA 		(VAR_AREA+0x2F04)	// is the base file sector for disk 2
 #define VAR_CUR_DISC_LBA 	(VAR_AREA+0x2F08)	// is the currently selected disk sector

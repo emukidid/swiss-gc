@@ -34,6 +34,8 @@ extern u8 bba_bin[];
 extern u32 bba_bin_size;
 
 /* SDK patches */
+extern u8 GXCopyDispHook[];
+extern u32 GXCopyDispHook_length;
 extern u8 GXGetYScaleFactorHook[];
 extern u32 GXGetYScaleFactorHook_length;
 extern u8 GXInitTexObjLODHook[];
@@ -86,7 +88,8 @@ extern u8 MajoraLoadRegs[];
 extern u32 MajoraLoadRegs_length;
 
 enum patchIds {
-	GX_GETYSCALEFACTORHOOK = 0,
+	GX_COPYDISPHOOK = 0,
+	GX_GETYSCALEFACTORHOOK,
 	GX_INITTEXOBJLODHOOK,
 	GX_SETPROJECTIONHOOK,
 	GX_SETSCISSORHOOK,
