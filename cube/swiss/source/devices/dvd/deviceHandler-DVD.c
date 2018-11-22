@@ -251,7 +251,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	unsigned int  *tmpTable = NULL;
 	char *tmpName  = NULL;
 	u64 tmpOffset = 0LL;
-	u64 usedSpace = 0;
+	u64 usedSpace = 0LL;
 
 	int num_entries = 0, ret = 0, num = 0;
 	
@@ -352,7 +352,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			strcpy( (*dir)[0].name, ".." );
 	}
 	usedSpace >>= 10;
-	initial_DVD_info.freeSpaceInKB = initial_DVD_info.totalSpaceInKB - (u32)usedSpace;
+	initial_DVD_info.freeSpaceInKB = initial_DVD_info.totalSpaceInKB - (u32)(usedSpace & 0xFFFFFFFF);
 	return num_entries;
 }
 
