@@ -190,7 +190,6 @@ typedef struct drawMsgBoxEvent {
 typedef struct drawProgressEvent {
 	bool indeterminate;
 	int percent;
-	char *msg;
 } drawProgressEvent_t;
 
 typedef struct uiDrawObjQueue {
@@ -253,12 +252,6 @@ static void clearNestedEvent(uiDrawObj_t *event) {
 					free(((drawFileBrowserButtonEvent_t*)event->data)->file->meta);
 				}
 				free(((drawFileBrowserButtonEvent_t*)event->data)->file);
-			}
-		}
-		else if(event->type == EV_PROGRESS) {
-			if(((drawProgressEvent_t*)event->data)->msg) {
-				//printf("Clear Nested EV_PROGRESS\r\n");
-				free(((drawProgressEvent_t*)event->data)->msg);
 			}
 		}
 		else if(event->type == EV_SELECTABLEBUTTON) {
@@ -644,11 +637,7 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
 	
 	_DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor);
 	
-	// Label
 	int middleY = (y2+y1)/2;
-	float scale = GetTextScaleToFitInWidth(data->msg, x2-x1);
-	drawString(640/2, middleY, data->msg, scale, true, defaultColor);
-
 	if(data->indeterminate) {
 		data->percent += (data->percent + 2 == 400 ? -398 : 2);
 		int multiplier = (PROGRESS_BOX_WIDTH-20)/100;
@@ -698,16 +687,22 @@ uiDrawObj_t* DrawProgressBar(bool indeterminate, int percent, char *message) {
 	drawProgressEvent_t *eventData = calloc(1, sizeof(drawProgressEvent_t));
 	eventData->percent = percent;
 	eventData->indeterminate = indeterminate;
-	if(message && strlen(message) > 0) {
-		eventData->msg = malloc(strlen(message));
-		strcpy(eventData->msg, message);
-	}
-	else {
-		eventData->msg = NULL;
-	}
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_PROGRESS;
 	event->data = eventData;
+	if(message && strlen(message) > 0) {
+		sprintf(txtbuffer, "%s", message);
+		// Add child component(s) for label(s)
+		char *tok = strtok(txtbuffer,"\n");
+		int y1 = ((480/2) - (PROGRESS_BOX_HEIGHT/2));
+		int y2 = ((480/2) + (PROGRESS_BOX_HEIGHT/2));
+		int middleY = (y2+y1)/2;
+		while(tok != NULL) {
+			DrawAddChild(event, DrawStyledLabel(640/2, middleY, tok, 1.0f, true, defaultColor));
+			tok = strtok(NULL,"\n");
+			middleY+=24;
+		}
+	}
 	return event;
 }
 
@@ -735,7 +730,7 @@ uiDrawObj_t* DrawMessageBox(int type, char *msg)
 	event->data = eventData;
 	
 	// Add child component(s) for label(s)
-	sprintf(txtbuffer, "%s", msg);	// TODO check txtbuffer usage
+	sprintf(txtbuffer, "%s", msg);
 	char *tok = strtok(txtbuffer,"\n");
 	int y1 = ((480/2) - (PROGRESS_BOX_HEIGHT/2));
 	int y2 = ((480/2) + (PROGRESS_BOX_HEIGHT/2));
