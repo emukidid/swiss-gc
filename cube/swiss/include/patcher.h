@@ -36,10 +36,12 @@ extern u32 bba_bin_size;
 /* SDK patches */
 extern u8 GXCopyDispHook[];
 extern u32 GXCopyDispHook_length;
-extern u8 GXGetYScaleFactorHook[];
-extern u32 GXGetYScaleFactorHook_length;
 extern u8 GXInitTexObjLODHook[];
 extern u32 GXInitTexObjLODHook_length;
+extern u8 GXSetDispCopyYScalePatch1[];
+extern u32 GXSetDispCopyYScalePatch1_length;
+extern u8 GXSetDispCopyYScalePatch2[];
+extern u32 GXSetDispCopyYScalePatch2_length;
 extern u8 GXSetProjectionHook[];
 extern u32 GXSetProjectionHook_length;
 extern u8 GXSetScissorHook[];
@@ -89,7 +91,6 @@ extern u32 MajoraLoadRegs_length;
 
 enum patchIds {
 	GX_COPYDISPHOOK = 0,
-	GX_GETYSCALEFACTORHOOK,
 	GX_INITTEXOBJLODHOOK,
 	GX_SETPROJECTIONHOOK,
 	GX_SETSCISSORHOOK,

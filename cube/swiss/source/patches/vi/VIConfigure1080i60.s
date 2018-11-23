@@ -14,7 +14,7 @@ VIConfigure1080i60:
 	ble			2f
 	li			%r0, 2
 	lhz			%r5, 8 (%r3)
-	cmpwi		%r5, 540
+	cmpwi		%r5, 524
 	ble			1f
 	lhz			%r5, 6 (%r3)
 	clrrwi		%r5, %r5, 1

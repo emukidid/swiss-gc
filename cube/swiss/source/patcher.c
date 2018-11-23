@@ -860,8 +860,6 @@ u32 installPatch(int patchId) {
 	switch(patchId) {
 		case GX_COPYDISPHOOK:
 			patchSize = GXCopyDispHook_length; patchLocation = GXCopyDispHook; break;
-		case GX_GETYSCALEFACTORHOOK:
-			patchSize = GXGetYScaleFactorHook_length; patchLocation = GXGetYScaleFactorHook; break;
 		case GX_INITTEXOBJLODHOOK:
 			patchSize = GXInitTexObjLODHook_length; patchLocation = GXInitTexObjLODHook; break;
 		case GX_SETPROJECTIONHOOK:
@@ -974,9 +972,12 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 		{0x884, 293, 37, 110,  7,  9, 0, 0, "__GXInitGX E", 0},			// SN Systems ProDG
 		{0x934, 333, 34, 119, 28, 11, 0, 0, "__GXInitGX F", 0}
 	};
-	FuncPattern GXGetYScaleFactorSigs[2] = {
-		{0x234, 16, 14, 3, 18, 27, 0, 0, "GXGetYScaleFactor A", 0},
-		{0x228, 20, 19, 3,  9, 14, 0, 0, "GXGetYScaleFactor B", 0}		// SN Systems ProDG
+	FuncPattern GXSetDispCopyYScaleSigs[5] = {
+		{0xB8, 15, 8, 2, 0, 4, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale A", 0},
+		{0xD0, 17, 4, 1, 5, 8, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale B", 0},
+		{0xC4, 14, 4, 1, 5, 8, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale C", 0},
+		{0xAC,  8, 4, 1, 2, 3, GXSetDispCopyYScalePatch2, GXSetDispCopyYScalePatch2_length, "GXSetDispCopyYScale D", 0},	// SN Systems ProDG
+		{0xC8, 16, 4, 1, 5, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale E", 0}
 	};
 	FuncPattern GXSetCopyFilterSigs[3] = {
 		{0x224, 15,  7, 0, 4,  5, 0, 0, "GXSetCopyFilter A", 0},
@@ -1137,7 +1138,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 						case 4:
 							print_gecko("Patched NTSC Field Rendering mode\n");
 							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE1080I60);
-							vfilter = vertical_filters[1];
+							vfilter = vertical_filters[swissSettings.forceVFilter];
 							Patch_VidTiming(data, length);
 							break;
 						case 5:
@@ -1160,7 +1161,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 						case 9:
 							print_gecko("Patched PAL Field Rendering mode\n");
 							VIConfigurePatchAddr = getPatchAddr(VI_CONFIGURE1080I50);
-							vfilter = vertical_filters[1];
+							vfilter = vertical_filters[swissSettings.forceVFilter];
 							Patch_VidTiming(data, length);
 							break;
 						case 10:
@@ -1366,31 +1367,37 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					print_gecko("Found:[%s] @ %08X\n", __GXInitGXSigs[j].Name, __GXInitGXAddr);
 					switch(j) {
 						case 0:
+							GXSetDispCopyYScaleSigs[0].offsetFoundAt = branchResolve(data, i + 3732);
 							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 3764);
 							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
 							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 2212);
 							break;
 						case 1:
+							GXSetDispCopyYScaleSigs[0].offsetFoundAt = branchResolve(data, i + 1936);
 							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 1964);
 							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
 							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 744);
 							break;
 						case 2:
+							GXSetDispCopyYScaleSigs[1].offsetFoundAt = branchResolve(data, i + 1996);
 							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 2024);
 							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
 							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 808);
 							break;
 						case 3:
+							GXSetDispCopyYScaleSigs[2].offsetFoundAt = branchResolve(data, i + 2056);
 							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 2084);
 							GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
 							GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 860);
 							break;
 						case 4:
+							GXSetDispCopyYScaleSigs[3].offsetFoundAt = branchResolve(data, i + 1968);
 							GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 1996);
 							GXCopyDispSigs[2].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 676;
 							GXSetViewportSigs[2].offsetFoundAt = branchResolve(data, i + 808);
 							break;
 						case 5:
+							GXSetDispCopyYScaleSigs[4].offsetFoundAt = branchResolve(data, i + 2172);
 							GXSetCopyFilterSigs[2].offsetFoundAt = branchResolve(data, i + 2200);
 							GXCopyDispSigs[3].offsetFoundAt = GXSetCopyFilterSigs[2].offsetFoundAt + 540;
 							GXSetViewportSigs[3].offsetFoundAt = branchResolve(data, i + 860);
@@ -1412,21 +1419,22 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 				}
 			}
 		}
-		for( j=0; j < sizeof(GXGetYScaleFactorSigs)/sizeof(FuncPattern); j++ )
+	}
+	if((swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 5)) {
+		for( j=0; j < sizeof(GXSetDispCopyYScaleSigs)/sizeof(FuncPattern); j++ )
 		{
-			if( !GXGetYScaleFactorSigs[j].offsetFoundAt && compare_pattern( &fp, &(GXGetYScaleFactorSigs[j]) ) )
+			if( (i=GXSetDispCopyYScaleSigs[j].offsetFoundAt) )
 			{
-				u32 GXGetYScaleFactorAddr = Calc_ProperAddress(data, dataType, i);
-				u32 GXGetYScaleFactorPatchAddr = 0;
-				if(GXGetYScaleFactorAddr) {
-					print_gecko("Found:[%s] @ %08X\n", GXGetYScaleFactorSigs[j].Name, GXGetYScaleFactorAddr);
-					if((swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 5)) {
-						GXGetYScaleFactorPatchAddr = installPatch(GX_GETYSCALEFACTORHOOK);
-						*(vu32*)(GXGetYScaleFactorPatchAddr+16) = branch(GXGetYScaleFactorAddr + 4, GXGetYScaleFactorPatchAddr + 16);
-						*(vu32*)(data+i) = branch(GXGetYScaleFactorPatchAddr, GXGetYScaleFactorAddr);
+				u32 GXSetDispCopyYScaleAddr = Calc_ProperAddress(data, dataType, i);
+				if(GXSetDispCopyYScaleAddr) {
+					print_gecko("Found:[%s] @ %08X\n", GXSetDispCopyYScaleSigs[j].Name, GXSetDispCopyYScaleAddr);
+					if(GXSetDispCopyYScaleSigs[j].Patch) {
+						u32 op = *(vu32*)(data+i+28);
+						memset(data+i, 0, GXSetDispCopyYScaleSigs[j].Length);
+						memcpy(data+i, GXSetDispCopyYScaleSigs[j].Patch, GXSetDispCopyYScaleSigs[j].PatchLength);
+						if(GXSetDispCopyYScaleSigs[j].Patch == GXSetDispCopyYScalePatch1)
+							*(vu32*)(data+i) |= op & 0x1FFFFF;
 					}
-					GXGetYScaleFactorSigs[j].offsetFoundAt = i;
-					i += GXGetYScaleFactorSigs[j].Length;
 					break;
 				}
 			}
