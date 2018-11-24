@@ -169,7 +169,7 @@ void ogc_video__reset()
 				DrawFrameStart();
 				DrawMessageBox(D_INFO, "Video Mode: NTSC 1080i");
 				DrawFrameFinish();
-				newmode = &TVNtsc480Prog;
+				newmode = &TVNtsc480IntDf;
 			} else {
 				DrawFrameStart();
 				DrawMessageBox(D_WARN, "Video Mode: NTSC 480i");
@@ -217,7 +217,7 @@ void ogc_video__reset()
 				DrawFrameStart();
 				DrawMessageBox(D_INFO, "Video Mode: PAL 1080i");
 				DrawFrameFinish();
-				newmode = &TVPal576ProgScale;
+				newmode = &TVPal576IntDfScale;
 			} else {
 				DrawFrameStart();
 				DrawMessageBox(D_WARN, "Video Mode: PAL 576i");

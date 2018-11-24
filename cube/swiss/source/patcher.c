@@ -943,7 +943,9 @@ u8 vertical_reduction[][7] = {
 void Patch_VidMode(u8 *data, u32 length, int dataType) {
 	int i, j, k;
 	u8 *vfilter = NULL;
-	FuncPattern __VIRetraceHandlerSigs[6] = {
+	FuncPattern __VIRetraceHandlerSigs[8] = {
+		{0x1DC, 41,  7, 10, 13,  6, 0, 0, "__VIRetraceHandlerD A", 0},
+		{0x1E0, 41,  7, 11, 13,  6, 0, 0, "__VIRetraceHandlerD B", 0},
 		{0x20C, 39,  7, 10, 15, 13, 0, 0, "__VIRetraceHandler A", 0},
 		{0x220, 42,  8, 11, 15, 13, 0, 0, "__VIRetraceHandler B", 0},
 		{0x224, 42,  9, 11, 15, 13, 0, 0, "__VIRetraceHandler C", 0},
@@ -953,7 +955,9 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 	};
 	FuncPattern VIWaitForRetraceSig = 
 		{0x50, 7, 4, 3, 1, 4, 0, 0, "VIWaitForRetrace", 0};
-	FuncPattern VIConfigureSigs[7] = {
+	FuncPattern VIConfigureSigs[9] = {
+		{0x45C,  74, 15, 20, 21, 20, 0, 0, "VIConfigureD A", 0},
+		{0x4E4,  86, 15, 21, 27, 20, 0, 0, "VIConfigureD B", 0},
 		{0x6AC,  90, 43,  6, 32, 60, 0, 0, "VIConfigure A", 0},
 		{0x68C,  87, 41,  6, 31, 60, 0, 0, "VIConfigure B", 0},
 		{0x73C, 100, 43, 13, 34, 61, 0, 0, "VIConfigure C", 0},
@@ -964,55 +968,67 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 	};
 	FuncPattern VIConfigurePanSig = 
 		{0x390, 40, 11, 4, 25, 35, 0, 0, "VIConfigurePan", 0};
-	FuncPattern __GXInitGXSigs[6] = {
-		{0xF3C, 454, 81, 119, 43, 36, 0, 0, "__GXInitGX A", 0},
-		{0x844, 307, 35, 107, 18, 10, 0, 0, "__GXInitGX B", 0},
-		{0x880, 310, 35, 108, 24, 11, 0, 0, "__GXInitGX C", 0},
-		{0x8C0, 313, 36, 110, 28, 11, 0, 0, "__GXInitGX D", 0},
-		{0x884, 293, 37, 110,  7,  9, 0, 0, "__GXInitGX E", 0},			// SN Systems ProDG
-		{0x934, 333, 34, 119, 28, 11, 0, 0, "__GXInitGX F", 0}
+	FuncPattern __GXInitGXSigs[8] = {
+		{0x11A4, 567, 66, 133, 46, 46, 0, 0, "__GXInitGXD A", 0},
+		{0x087C, 319, 33, 109, 18,  5, 0, 0, "__GXInitGXD B", 0},
+		{0x0F3C, 454, 81, 119, 43, 36, 0, 0, "__GXInitGX A", 0},
+		{0x0844, 307, 35, 107, 18, 10, 0, 0, "__GXInitGX B", 0},
+		{0x0880, 310, 35, 108, 24, 11, 0, 0, "__GXInitGX C", 0},
+		{0x08C0, 313, 36, 110, 28, 11, 0, 0, "__GXInitGX D", 0},
+		{0x0884, 293, 37, 110,  7,  9, 0, 0, "__GXInitGX E", 0},		// SN Systems ProDG
+		{0x0934, 333, 34, 119, 28, 11, 0, 0, "__GXInitGX F", 0}
 	};
-	FuncPattern GXSetDispCopyYScaleSigs[5] = {
-		{0xB8, 15, 8, 2, 0, 4, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale A", 0},
-		{0xD0, 17, 4, 1, 5, 8, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale B", 0},
-		{0xC4, 14, 4, 1, 5, 8, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale C", 0},
-		{0xAC,  8, 4, 1, 2, 3, GXSetDispCopyYScalePatch2, GXSetDispCopyYScalePatch2_length, "GXSetDispCopyYScale D", 0},	// SN Systems ProDG
-		{0xC8, 16, 4, 1, 5, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale E", 0}
+	FuncPattern GXSetDispCopyYScaleSigs[7] = {
+		{0x18C, 33, 8, 8, 4, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScaleD A", 0},
+		{0x150, 32, 4, 6, 4, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScaleD B", 0},
+		{0x0B8, 15, 8, 2, 0, 4, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale A", 0},
+		{0x0D0, 17, 4, 1, 5, 8, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale B", 0},
+		{0x0C4, 14, 4, 1, 5, 8, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale C", 0},
+		{0x0AC,  8, 4, 1, 2, 3, GXSetDispCopyYScalePatch2, GXSetDispCopyYScalePatch2_length, "GXSetDispCopyYScale D", 0},	// SN Systems ProDG
+		{0x0C8, 16, 4, 1, 5, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale E", 0}
 	};
-	FuncPattern GXSetCopyFilterSigs[3] = {
-		{0x224, 15,  7, 0, 4,  5, 0, 0, "GXSetCopyFilter A", 0},
-		{0x288, 19, 23, 0, 3, 14, 0, 0, "GXSetCopyFilter B", 0},		// SN Systems ProDG
-		{0x204, 25,  7, 0, 4,  0, 0, 0, "GXSetCopyFilter C", 0}
+	FuncPattern GXSetCopyFilterSigs[4] = {
+		{0x8D8, 183, 44, 32, 36, 38, 0, 0, "GXSetCopyFilterD A", 0},
+		{0x224,  15,  7,  0,  4,  5, 0, 0, "GXSetCopyFilter A", 0},
+		{0x288,  19, 23,  0,  3, 14, 0, 0, "GXSetCopyFilter B", 0},		// SN Systems ProDG
+		{0x204,  25,  7,  0,  4,  0, 0, 0, "GXSetCopyFilter C", 0}
 	};
-	FuncPattern GXCopyDispSigs[4] = {
-		{0x16C, 34, 14, 0, 3, 1, 0, 0, "GXCopyDisp A", 0},
-		{0x158, 29, 14, 0, 3, 1, 0, 0, "GXCopyDisp B", 0},
-		{0x110, 15, 12, 0, 1, 1, 0, 0, "GXCopyDisp C", 0},				// SN Systems ProDG
-		{0x164, 35, 14, 0, 3, 0, 0, 0, "GXCopyDisp D", 0}
+	FuncPattern GXCopyDispSigs[5] = {
+		{0x250, 62,  3, 14, 14, 3, 0, 0, "GXCopyDispD A", 0},
+		{0x16C, 34, 14,  0,  3, 1, 0, 0, "GXCopyDisp A", 0},
+		{0x158, 29, 14,  0,  3, 1, 0, 0, "GXCopyDisp B", 0},
+		{0x110, 15, 12,  0,  1, 1, 0, 0, "GXCopyDisp C", 0},			// SN Systems ProDG
+		{0x164, 35, 14,  0,  3, 0, 0, 0, "GXCopyDisp D", 0}
 	};
-	FuncPattern GXSetViewportSigs[4] = {
+	FuncPattern __GXSetViewportSig = 
+		{0x8C, 15, 7, 0, 0, 0, GXSetViewportPatch, GXSetViewportPatch_length, "__GXSetViewport", 0};
+	FuncPattern GXSetViewportJitterSigs[5] = {
+		{0x300, 76, 22, 4, 15, 22, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitterD A", 0},
+		{0x118, 20, 15, 1,  1,  3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter A", 0},
+		{0x100, 14, 15, 1,  1,  3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter B", 0},
+		{0x078,  6, 10, 1,  0,  4,                        0,                               0, "GXSetViewportJitter C", 0},	// SN Systems ProDG
+		{0x054,  6,  8, 1,  0,  2,                        0,                               0, "GXSetViewportJitter D", 0}
+	};
+	FuncPattern GXSetViewportSigs[5] = {
+		{0x50, 9, 8, 1, 0, 2, 0, 0, "GXSetViewportD A", 0},
 		{0x20, 3, 2, 1, 0, 2, 0, 0, "GXSetViewport A", 0},
 		{0x20, 3, 2, 1, 0, 2, 0, 0, "GXSetViewport B", 0},
 		{0x38, 7, 6, 0, 1, 0, 0, 0, "GXSetViewport C", 0},				// SN Systems ProDG
 		{0x44, 5, 8, 1, 0, 2, 0, 0, "GXSetViewport D", 0}
 	};
-	FuncPattern GXSetViewportJitterSigs[4] = {
-		{0x118, 20, 15, 1, 1, 3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter A", 0},
-		{0x100, 14, 15, 1, 1, 3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter B", 0},
-		{0x078,  6, 10, 1, 0, 4,                        0,                               0, "GXSetViewportJitter C", 0},	// SN Systems ProDG
-		{0x054,  6,  8, 1, 0, 2,                        0,                               0, "GXSetViewportJitter D", 0}
-	};
-	FuncPattern __GXSetViewportSig = 
-		{0x8C, 15, 7, 0, 0, 0, GXSetViewportPatch, GXSetViewportPatch_length, "__GXSetViewport", 0};
-	FuncPattern getCurrentFieldEvenOddSigs[2] = {
+	FuncPattern getCurrentFieldEvenOddSigs[4] = {
+		{0x80,  7, 2, 3, 4, 5, 0, 0, "getCurrentFieldEvenOddD A", 0},
+		{0x38,  5, 2, 1, 2, 3, 0, 0, "getCurrentFieldEvenOddD B", 0},
 		{0xB8, 14, 2, 2, 4, 8, 0, 0, "getCurrentFieldEvenOdd A", 0},
 		{0x5C,  7, 0, 0, 1, 5, 0, 0, "getCurrentFieldEvenOdd B", 0}		// SN Systems ProDG
 	};
-	FuncPattern setFbbRegsSigs[2] = {
+	FuncPattern setFbbRegsSigs[3] = {
+		{0x298, 62, 22, 2,  8, 24, 0, 0, "setFbbRegsD A", 0},
 		{0x2D0, 54, 34, 0, 10, 16, 0, 0, "setFbbRegs A", 0},
 		{0x2C0, 51, 34, 0, 10, 16, 0, 0, "setFbbRegs B", 0}				// SN Systems ProDG
 	};
-	FuncPattern setVerticalRegsSigs[3] = {
+	FuncPattern setVerticalRegsSigs[4] = {
+		{0x1D4, 17, 11, 0, 4, 23, 0, 0, "setVerticalRegsD A", 0},
 		{0x19C, 22, 14, 0, 4, 25, 0, 0, "setVerticalRegs A", 0},
 		{0x19C, 22, 14, 0, 4, 25, 0, 0, "setVerticalRegs B", 0},
 		{0x1C4, 19, 13, 0, 4, 25, 0, 0, "setVerticalRegs C", 0}			// SN Systems ProDG
@@ -1035,49 +1051,61 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 				if(__VIRetraceHandlerAddr) {
 					print_gecko("Found:[%s] @ %08X\n", __VIRetraceHandlerSigs[j].Name, __VIRetraceHandlerAddr);
 					switch(j) {
-						case 0:
-						case 1: getCurrentFieldEvenOddSigs[0].offsetFoundAt = branchResolve(data, i + 240); break;
+						case 0: getCurrentFieldEvenOddSigs[0].offsetFoundAt = branchResolve(data, i - 188); break;
+						case 1: getCurrentFieldEvenOddSigs[1].offsetFoundAt = branchResolve(data, i - 196); break;
 						case 2:
-						case 3: getCurrentFieldEvenOddSigs[0].offsetFoundAt = branchResolve(data, i + 252); break;
-						case 4: getCurrentFieldEvenOddSigs[1].offsetFoundAt = branchResolve(data, i + 272); break;
-						case 5: getCurrentFieldEvenOddSigs[0].offsetFoundAt = branchResolve(data, i + 320); break;
+						case 3: getCurrentFieldEvenOddSigs[2].offsetFoundAt = branchResolve(data, i + 240); break;
+						case 4:
+						case 5: getCurrentFieldEvenOddSigs[2].offsetFoundAt = branchResolve(data, i + 252); break;
+						case 6: getCurrentFieldEvenOddSigs[3].offsetFoundAt = branchResolve(data, i + 272); break;
+						case 7: getCurrentFieldEvenOddSigs[2].offsetFoundAt = branchResolve(data, i + 320); break;
 					}
 					if((swissSettings.gameVMode == 2) || (swissSettings.gameVMode == 7)) {
 						switch(j) {
-							case 0:
-							case 1: *(vu32*)(data+i+228) = 0x38000001; break;
+							case 0: *(vu32*)(data+i-200) = 0x38000001; break;
+							case 1: *(vu32*)(data+i-208) = 0x38000001; break;
 							case 2:
-							case 3: *(vu32*)(data+i+240) = 0x38000001; break;
-							case 4: *(vu32*)(data+i+260) = 0x38000001; break;
-							case 5: *(vu32*)(data+i+308) = 0x38000001; break;
+							case 3: *(vu32*)(data+i+228) = 0x38000001; break;
+							case 4:
+							case 5: *(vu32*)(data+i+240) = 0x38000001; break;
+							case 6: *(vu32*)(data+i+260) = 0x38000001; break;
+							case 7: *(vu32*)(data+i+308) = 0x38000001; break;
 						}
 					}
 					if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
 						__VIRetraceHandlerPatchAddr = getPatchAddr(VI_RETRACEHANDLERHOOK);
 						switch(j) {
 							case 0:
-								memmove(data+i+512, data+i+508, 12);
-								*(vu32*)(data+i+508) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 508);
+								memmove(data+i+464, data+i+460, 12);
+								*(vu32*)(data+i+460) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 460);
 								break;
 							case 1:
-								memmove(data+i+532, data+i+528, 12);
-								*(vu32*)(data+i+528) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 528);
+								memmove(data+i+468, data+i+464, 12);
+								*(vu32*)(data+i+464) = branchAndLink(getCurrentFieldEvenOddSigs[1].offsetFoundAt, i + 464);
 								break;
 							case 2:
-								memmove(data+i+536, data+i+532, 12);
-								*(vu32*)(data+i+532) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 532);
+								memmove(data+i+512, data+i+508, 12);
+								*(vu32*)(data+i+508) = branchAndLink(getCurrentFieldEvenOddSigs[2].offsetFoundAt, i + 508);
 								break;
 							case 3:
-								memmove(data+i+544, data+i+540, 12);
-								*(vu32*)(data+i+540) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 540);
+								memmove(data+i+532, data+i+528, 12);
+								*(vu32*)(data+i+528) = branchAndLink(getCurrentFieldEvenOddSigs[2].offsetFoundAt, i + 528);
 								break;
 							case 4:
-								memmove(data+i+564, data+i+560, 16);
-								*(vu32*)(data+i+560) = branchAndLink(getCurrentFieldEvenOddSigs[1].offsetFoundAt, i + 560);
+								memmove(data+i+536, data+i+532, 12);
+								*(vu32*)(data+i+532) = branchAndLink(getCurrentFieldEvenOddSigs[2].offsetFoundAt, i + 532);
 								break;
 							case 5:
+								memmove(data+i+544, data+i+540, 12);
+								*(vu32*)(data+i+540) = branchAndLink(getCurrentFieldEvenOddSigs[2].offsetFoundAt, i + 540);
+								break;
+							case 6:
+								memmove(data+i+564, data+i+560, 16);
+								*(vu32*)(data+i+560) = branchAndLink(getCurrentFieldEvenOddSigs[3].offsetFoundAt, i + 560);
+								break;
+							case 7:
 								memmove(data+i+612, data+i+608, 12);
-								*(vu32*)(data+i+608) = branchAndLink(getCurrentFieldEvenOddSigs[0].offsetFoundAt, i + 608);
+								*(vu32*)(data+i+608) = branchAndLink(getCurrentFieldEvenOddSigs[2].offsetFoundAt, i + 608);
 								break;
 						}
 						*(vu32*)(data+i+__VIRetraceHandlerSigs[j].Length) = branch(__VIRetraceHandlerPatchAddr, __VIRetraceHandlerAddr + __VIRetraceHandlerSigs[j].Length);
@@ -1198,36 +1226,62 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					}
 					switch(j) {
 						case 0:
+							memmove(data+i+212, data+i+20, 8);
+							*(vu32*)(data+i+ 20) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 20);
+							*(vu32*)(data+i+ 24) = 0x7C771B78;	// mr		r23, r3
+							*(vu32*)(data+i+388) = 0x60000000;	// nop
+							*(vu32*)(data+i+480) = 0xA01E0010;	// lhz		r0, 16 (r30)
+							*(vu32*)(data+i+500) = 0xA01E0010;	// lhz		r0, 16 (r30)
+							*(vu32*)(data+i+504) = 0x60000000;	// nop
+							*(vu32*)(data+i+512) = 0xA01E0010;	// lhz		r0, 16 (r30)
+							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1044);
+							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1088);
+							break;
+						case 1:
+							memmove(data+i+236, data+i+28, 8);
+							memmove(data+i+ 28, data+i+20, 8);
+							*(vu32*)(data+i+ 20) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 20);
+							*(vu32*)(data+i+ 24) = 0x7C781B78;	// mr		r24, r3
+							*(vu32*)(data+i+360) = 0x60000000;	// nop
+							*(vu32*)(data+i+452) = 0xA01E0010;	// lhz		r0, 16 (r30)
+							*(vu32*)(data+i+472) = 0xA01E0010;	// lhz		r0, 16 (r30)
+							*(vu32*)(data+i+492) = 0xA01E0010;	// lhz		r0, 16 (r30)
+							*(vu32*)(data+i+496) = 0x60000000;	// nop
+							*(vu32*)(data+i+504) = 0xA01E0010;	// lhz		r0, 16 (r30)
+							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1180);
+							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1224);
+							break;
+						case 2:
 							*(vu32*)(data+i+ 28) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 28);
 							*(vu32*)(data+i+140) = 0x60000000;	// nop
 							*(vu32*)(data+i+260) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(vu32*)(data+i+280) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(vu32*)(data+i+284) = 0x60000000;	// nop
 							*(vu32*)(data+i+292) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1636);
-							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1680);
+							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1636);
+							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1680);
 							break;
-						case 1:
+						case 3:
 							*(vu32*)(data+i+ 28) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 28);
 							*(vu32*)(data+i+108) = 0x60000000;	// nop
 							*(vu32*)(data+i+228) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(vu32*)(data+i+248) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(vu32*)(data+i+252) = 0x60000000;	// nop
 							*(vu32*)(data+i+260) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1604);
-							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1648);
+							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1604);
+							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1648);
 							break;
-						case 2:
+						case 4:
 							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
 							*(vu32*)(data+i+248) = 0x60000000;	// nop
 							*(vu32*)(data+i+368) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(vu32*)(data+i+388) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(vu32*)(data+i+392) = 0x60000000;	// nop
 							*(vu32*)(data+i+400) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1780);
-							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1824);
+							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1780);
+							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1824);
 							break;
-						case 3:
+						case 5:
 							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
 							*(vu32*)(data+i+260) = 0x60000000;	// nop
 							*(vu32*)(data+i+380) = 0xA01F0010;	// lhz		r0, 16 (r31)
@@ -1235,10 +1289,10 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+416) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(vu32*)(data+i+420) = 0x60000000;	// nop
 							*(vu32*)(data+i+428) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1872);
-							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1916);
+							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1872);
+							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1916);
 							break;
-						case 4:
+						case 6:
 							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
 							*(vu32*)(data+i+388) = 0x60000000;	// nop
 							*(vu32*)(data+i+508) = 0xA01F0010;	// lhz		r0, 16 (r31)
@@ -1246,10 +1300,10 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+544) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(vu32*)(data+i+548) = 0x60000000;	// nop
 							*(vu32*)(data+i+556) = 0xA01F0010;	// lhz		r0, 16 (r31)
-							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 2012);
-							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2056);
+							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2012);
+							setVerticalRegsSigs[2].offsetFoundAt = branchResolve(data, i + 2056);
 							break;
-						case 5:
+						case 7:
 							*(vu32*)(data+i+ 32) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 32);
 							*(vu32*)(data+i+400) = 0xA11B000C;	// lhz		r8, 12 (r27)
 							*(vu32*)(data+i+404) = 0x60000000;	// nop
@@ -1257,10 +1311,10 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+508) = 0xA0FB0010;	// lhz		r7, 16 (r27)
 							*(vu32*)(data+i+524) = 0xA0FB0010;	// lhz		r7, 16 (r27)
 							*(vu32*)(data+i+532) = 0xA0FB0010;	// lhz		r7, 16 (r27)
-							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2148);
-							setVerticalRegsSigs[2].offsetFoundAt = branchResolve(data, i + 2200);
+							setFbbRegsSigs[2].offsetFoundAt = branchResolve(data, i + 2148);
+							setVerticalRegsSigs[3].offsetFoundAt = branchResolve(data, i + 2200);
 							break;
-						case 6:
+						case 8:
 							*(vu32*)(data+i+ 36) = branchAndLink(VIConfigurePatchAddr, VIConfigureAddr + 36);
 							*(vu32*)(data+i+388) = 0x60000000;	// nop
 							*(vu32*)(data+i+508) = 0xA0130010;	// lhz		r0, 16 (r19)
@@ -1268,37 +1322,45 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+544) = 0xA0130010;	// lhz		r0, 16 (r19)
 							*(vu32*)(data+i+548) = 0x60000000;	// nop
 							*(vu32*)(data+i+556) = 0xA0130010;	// lhz		r0, 16 (r19)
-							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1980);
-							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2024);
+							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1980);
+							setVerticalRegsSigs[2].offsetFoundAt = branchResolve(data, i + 2024);
 							break;
 					}
 					if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
 						switch(j) {
 							case 0:
+								*(vu32*)(data+i+ 724) = 0x579C07B8;	// rlwinm	r28, r28, 0, 30, 28
+								*(vu32*)(data+i+ 728) = 0x501C177A;	// rlwimi	r28, r0, 2, 29, 29
+								break;
+							case 1:
+								*(vu32*)(data+i+ 768) = 0x579C07B8;	// rlwinm	r28, r28, 0, 30, 28
+								*(vu32*)(data+i+ 772) = 0x501C177A;	// rlwimi	r28, r0, 2, 29, 29
+								break;
+							case 2:
 								*(vu32*)(data+i+ 820) = 0x54A607B8;	// rlwinm	r6, r5, 0, 30, 28
 								*(vu32*)(data+i+ 824) = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
 								break;
-							case 1:
+							case 3:
 								*(vu32*)(data+i+ 788) = 0x54A607B8;	// rlwinm	r6, r5, 0, 30, 28
 								*(vu32*)(data+i+ 792) = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
 								break;
-							case 2:
+							case 4:
 								*(vu32*)(data+i+ 928) = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
 								*(vu32*)(data+i+ 932) = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
 								break;
-							case 3:
+							case 5:
 								*(vu32*)(data+i+1012) = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
 								*(vu32*)(data+i+1016) = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
 								break;
-							case 4:
+							case 6:
 								*(vu32*)(data+i+1140) = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
 								*(vu32*)(data+i+1144) = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
 								break;
-							case 5:
+							case 7:
 								*(vu32*)(data+i+1236) = 0x7D004378;	// mr		r0, r8
 								*(vu32*)(data+i+1240) = 0x5160177A;	// rlwimi	r0, r11, 2, 29, 29
 								break;
-							case 6:
+							case 8:
 								*(vu32*)(data+i+1152) = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
 								*(vu32*)(data+i+1156) = 0x54E9003C;	// rlwinm	r9, r7, 0, 0, 30
 								*(vu32*)(data+i+1160) = 0x61290001;	// ori		r9, r9, 1
@@ -1308,34 +1370,50 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					if((swissSettings.gameVMode == 9) || (swissSettings.gameVMode == 10)) {
 						switch(j) {
 							case 0:
+								*(vu32*)(data+i+  88) = 0x2C000006;	// cmpwi	r0, 6
+								*(vu32*)(data+i+ 156) = 0x2C000006;	// cmpwi	r0, 6
+								*(vu32*)(data+i+ 224) = 0x2C000006;	// cmpwi	r0, 6
+								*(vu32*)(data+i+ 520) = 0x807F0114;	// lwz		r3, 276 (r31)
+								*(vu32*)(data+i+ 876) = 0x2C000006;	// cmpwi	r0, 6
+								break;
+							case 1:
+								*(vu32*)(data+i+  88) = 0x2C000006;	// cmpwi	r0, 6
+								*(vu32*)(data+i+ 100) = 0x2C000007;	// cmpwi	r0, 7
+								*(vu32*)(data+i+ 168) = 0x2C000006;	// cmpwi	r0, 6
+								*(vu32*)(data+i+ 180) = 0x2C000007;	// cmpwi	r0, 7
+								*(vu32*)(data+i+ 540) = 0x38000000;	// li		r0, 0
+								*(vu32*)(data+i+1000) = 0x2C000006;	// cmpwi	r0, 6
+								*(vu32*)(data+i+1012) = 0x2C000007;	// cmpwi	r0, 7
+								break;
+							case 2:
 								*(vu32*)(data+i+  40) = 0x2C040006;	// cmpwi	r4, 6
 								*(vu32*)(data+i+ 304) = 0x807B0000;	// lwz		r3, 0 (r27)
 								*(vu32*)(data+i+ 896) = 0x2C000006;	// cmpwi	r0, 6
 								break;
-							case 1:
+							case 3:
 								*(vu32*)(data+i+ 272) = 0x807C0000;	// lwz		r3, 0 (r28)
 								*(vu32*)(data+i+ 864) = 0x2C000006;	// cmpwi	r0, 6
 								break;
-							case 2:
+							case 4:
 								*(vu32*)(data+i+ 412) = 0x807C0000;	// lwz		r3, 0 (r28)
 								*(vu32*)(data+i+1040) = 0x2C000006;	// cmpwi	r0, 6
 								break;
-							case 3:
+							case 5:
 								*(vu32*)(data+i+ 476) = 0x38600000;	// li		r3, 0
 								*(vu32*)(data+i+1128) = 0x2C000006;	// cmpwi	r0, 6
 								*(vu32*)(data+i+1136) = 0x2C000007;	// cmpwi	r0, 7
 								break;
-							case 4: 
+							case 6:
 								*(vu32*)(data+i+ 604) = 0x38600000;	// li		r3, 0
 								*(vu32*)(data+i+1260) = 0x2C000006;	// cmpwi	r0, 6
 								*(vu32*)(data+i+1268) = 0x2C000007;	// cmpwi	r0, 7
 								break;
-							case 5:
+							case 7:
 								*(vu32*)(data+i+ 548) = 0x38000000;	// li		r0, 0
 								*(vu32*)(data+i+1344) = 0x2C0A0006;	// cmpwi	r10, 6
 								*(vu32*)(data+i+1372) = 0x2C0A0007;	// cmpwi	r10, 7
 								break;
-							case 6:
+							case 8:
 								*(vu32*)(data+i+ 604) = 0x38600000;	// li		r3, 0
 								break;
 						}
@@ -1367,50 +1445,64 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					print_gecko("Found:[%s] @ %08X\n", __GXInitGXSigs[j].Name, __GXInitGXAddr);
 					switch(j) {
 						case 0:
-							GXSetDispCopyYScaleSigs[0].offsetFoundAt = branchResolve(data, i + 3732);
-							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 3764);
-							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
-							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 2212);
+							GXSetDispCopyYScaleSigs[0].offsetFoundAt = branchResolve(data, i + 4352);
+							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 4380);
+							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 2404;
+							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 2908);
 							break;
 						case 1:
-							GXSetDispCopyYScaleSigs[0].offsetFoundAt = branchResolve(data, i + 1936);
-							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 1964);
-							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
-							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 744);
-							break;
-						case 2:
 							GXSetDispCopyYScaleSigs[1].offsetFoundAt = branchResolve(data, i + 1996);
 							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 2024);
-							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
+							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 2404;
 							GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 808);
 							break;
+						case 2:
+							GXSetDispCopyYScaleSigs[2].offsetFoundAt = branchResolve(data, i + 3732);
+							GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 3764);
+							GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 580;
+							GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 2212);
+							break;
 						case 3:
-							GXSetDispCopyYScaleSigs[2].offsetFoundAt = branchResolve(data, i + 2056);
-							GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 2084);
-							GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 580;
-							GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 860);
+							GXSetDispCopyYScaleSigs[2].offsetFoundAt = branchResolve(data, i + 1936);
+							GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 1964);
+							GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 580;
+							GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 744);
 							break;
 						case 4:
-							GXSetDispCopyYScaleSigs[3].offsetFoundAt = branchResolve(data, i + 1968);
-							GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 1996);
-							GXCopyDispSigs[2].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 676;
-							GXSetViewportSigs[2].offsetFoundAt = branchResolve(data, i + 808);
+							GXSetDispCopyYScaleSigs[3].offsetFoundAt = branchResolve(data, i + 1996);
+							GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 2024);
+							GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 580;
+							GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 808);
 							break;
 						case 5:
-							GXSetDispCopyYScaleSigs[4].offsetFoundAt = branchResolve(data, i + 2172);
-							GXSetCopyFilterSigs[2].offsetFoundAt = branchResolve(data, i + 2200);
-							GXCopyDispSigs[3].offsetFoundAt = GXSetCopyFilterSigs[2].offsetFoundAt + 540;
-							GXSetViewportSigs[3].offsetFoundAt = branchResolve(data, i + 860);
+							GXSetDispCopyYScaleSigs[4].offsetFoundAt = branchResolve(data, i + 2056);
+							GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 2084);
+							GXCopyDispSigs[2].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 580;
+							GXSetViewportSigs[2].offsetFoundAt = branchResolve(data, i + 860);
+							break;
+						case 6:
+							GXSetDispCopyYScaleSigs[5].offsetFoundAt = branchResolve(data, i + 1968);
+							GXSetCopyFilterSigs[2].offsetFoundAt = branchResolve(data, i + 1996);
+							GXCopyDispSigs[3].offsetFoundAt = GXSetCopyFilterSigs[2].offsetFoundAt + 676;
+							GXSetViewportSigs[3].offsetFoundAt = branchResolve(data, i + 808);
+							break;
+						case 7:
+							GXSetDispCopyYScaleSigs[6].offsetFoundAt = branchResolve(data, i + 2172);
+							GXSetCopyFilterSigs[3].offsetFoundAt = branchResolve(data, i + 2200);
+							GXCopyDispSigs[4].offsetFoundAt = GXSetCopyFilterSigs[3].offsetFoundAt + 540;
+							GXSetViewportSigs[4].offsetFoundAt = branchResolve(data, i + 860);
 							break;
 					}
 					if((swissSettings.gameVMode == 4) || (swissSettings.gameVMode == 9)) {
 						switch(j) {
-							case 0: *(vu32*)(data+i+3644) = 0x38600001; break;
-							case 1: *(vu32*)(data+i+1844) = 0x38600001; break;
-							case 2: *(vu32*)(data+i+1904) = 0x38600001; break;
-							case 3: *(vu32*)(data+i+1964) = 0x38600001; break;
-							case 4: *(vu32*)(data+i+1844) = 0x38600001; break;
-							case 5: *(vu32*)(data+i+2080) = 0x38600001; break;
+							case 0: *(vu32*)(data+i+4220) = 0x38600001; break;
+							case 1: *(vu32*)(data+i+1864) = 0x38600001; break;
+							case 2: *(vu32*)(data+i+3644) = 0x38600001; break;
+							case 3: *(vu32*)(data+i+1844) = 0x38600001; break;
+							case 4: *(vu32*)(data+i+1904) = 0x38600001; break;
+							case 5: *(vu32*)(data+i+1964) = 0x38600001; break;
+							case 6: *(vu32*)(data+i+1844) = 0x38600001; break;
+							case 7: *(vu32*)(data+i+2080) = 0x38600001; break;
 						}
 					}
 					__GXInitGXSigs[j].offsetFoundAt = i;
@@ -1429,7 +1521,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 				if(GXSetDispCopyYScaleAddr) {
 					print_gecko("Found:[%s] @ %08X\n", GXSetDispCopyYScaleSigs[j].Name, GXSetDispCopyYScaleAddr);
 					if(GXSetDispCopyYScaleSigs[j].Patch) {
-						u32 op = *(vu32*)(data+i+28);
+						u32 op = j >= 2 ? *(vu32*)(data+i+28):*(vu32*)(data+i+260);
 						memset(data+i, 0, GXSetDispCopyYScaleSigs[j].Length);
 						memcpy(data+i, GXSetDispCopyYScaleSigs[j].Patch, GXSetDispCopyYScaleSigs[j].PatchLength);
 						if(GXSetDispCopyYScaleSigs[j].Patch == GXSetDispCopyYScalePatch1)
@@ -1450,31 +1542,40 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					print_gecko("Found:[%s] @ %08X\n", GXSetCopyFilterSigs[j].Name, GXSetCopyFilterAddr);
 					switch(j) {
 						case 0:
-							*(vu32*)(data+i+388) = 0x38000000 | vfilter[0];
-							*(vu32*)(data+i+392) = 0x38600000 | vfilter[1];
-							*(vu32*)(data+i+400) = 0x38000000 | vfilter[4];
-							*(vu32*)(data+i+404) = 0x38800000 | vfilter[2];
-							*(vu32*)(data+i+416) = 0x38600000 | vfilter[5];
-							*(vu32*)(data+i+428) = 0x38A00000 | vfilter[3];
-							*(vu32*)(data+i+432) = 0x38000000 | vfilter[6];
+							*(vu32*)(data+i+1824) = 0x38000000 | vfilter[0];
+							*(vu32*)(data+i+1868) = 0x38000000 | vfilter[1];
+							*(vu32*)(data+i+1916) = 0x38000000 | vfilter[2];
+							*(vu32*)(data+i+1964) = 0x38000000 | vfilter[3];
+							*(vu32*)(data+i+2012) = 0x38000000 | vfilter[4];
+							*(vu32*)(data+i+2056) = 0x38000000 | vfilter[5];
+							*(vu32*)(data+i+2104) = 0x38000000 | vfilter[6];
 							break;
 						case 1:
-							*(vu32*)(data+i+492) = 0x38000000 | vfilter[0];
-							*(vu32*)(data+i+496) = 0x39200000 | vfilter[1];
-							*(vu32*)(data+i+504) = 0x39400000 | vfilter[4];
-							*(vu32*)(data+i+508) = 0x39600000 | vfilter[2];
-							*(vu32*)(data+i+516) = 0x39000000 | vfilter[5];
-							*(vu32*)(data+i+536) = 0x39400000 | vfilter[6];
-							*(vu32*)(data+i+540) = 0x39200000 | vfilter[3];
+							*(vu32*)(data+i+ 388) = 0x38000000 | vfilter[0];
+							*(vu32*)(data+i+ 392) = 0x38600000 | vfilter[1];
+							*(vu32*)(data+i+ 400) = 0x38000000 | vfilter[4];
+							*(vu32*)(data+i+ 404) = 0x38800000 | vfilter[2];
+							*(vu32*)(data+i+ 416) = 0x38600000 | vfilter[5];
+							*(vu32*)(data+i+ 428) = 0x38A00000 | vfilter[3];
+							*(vu32*)(data+i+ 432) = 0x38000000 | vfilter[6];
 							break;
 						case 2:
-							*(vu32*)(data+i+372) = 0x38800000 | vfilter[0];
-							*(vu32*)(data+i+376) = 0x38600000 | vfilter[4];
-							*(vu32*)(data+i+384) = 0x38800000 | vfilter[1];
-							*(vu32*)(data+i+392) = 0x38E00000 | vfilter[2];
-							*(vu32*)(data+i+400) = 0x38800000 | vfilter[5];
-							*(vu32*)(data+i+404) = 0x38A00000 | vfilter[3];
-							*(vu32*)(data+i+412) = 0x38600000 | vfilter[6];
+							*(vu32*)(data+i+ 492) = 0x38000000 | vfilter[0];
+							*(vu32*)(data+i+ 496) = 0x39200000 | vfilter[1];
+							*(vu32*)(data+i+ 504) = 0x39400000 | vfilter[4];
+							*(vu32*)(data+i+ 508) = 0x39600000 | vfilter[2];
+							*(vu32*)(data+i+ 516) = 0x39000000 | vfilter[5];
+							*(vu32*)(data+i+ 536) = 0x39400000 | vfilter[6];
+							*(vu32*)(data+i+ 540) = 0x39200000 | vfilter[3];
+							break;
+						case 3:
+							*(vu32*)(data+i+ 372) = 0x38800000 | vfilter[0];
+							*(vu32*)(data+i+ 376) = 0x38600000 | vfilter[4];
+							*(vu32*)(data+i+ 384) = 0x38800000 | vfilter[1];
+							*(vu32*)(data+i+ 392) = 0x38E00000 | vfilter[2];
+							*(vu32*)(data+i+ 400) = 0x38800000 | vfilter[5];
+							*(vu32*)(data+i+ 404) = 0x38A00000 | vfilter[3];
+							*(vu32*)(data+i+ 412) = 0x38600000 | vfilter[6];
 							break;
 					}
 					break;
@@ -1492,12 +1593,15 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					print_gecko("Found:[%s] @ %08X\n", setFbbRegsSigs[j].Name, setFbbRegsAddr);
 					switch (j) {
 						case 0:
+							*(vu32*)(data+i- 88) = 0x60000000;	// nop
+							break;
+						case 1:
 							*(vu32*)(data+i+ 80) = 0x81040000;	// lwz		r8, 0 (r4)
 							*(vu32*)(data+i+ 84) = 0x60000000;	// nop
 							*(vu32*)(data+i+232) = 0x81060000;	// lwz		r8, 0 (r6)
 							*(vu32*)(data+i+236) = 0x60000000;	// nop
 							break;
-						case 1:
+						case 2:
 							*(vu32*)(data+i+ 72) = 0x81240000;	// lwz		r9, 0 (r4)
 							*(vu32*)(data+i+ 76) = 0x60000000;	// nop
 							*(vu32*)(data+i+224) = 0x81260000;	// lwz		r9, 0 (r6)
@@ -1532,15 +1636,16 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 				if(GXSetViewportAddr) {
 					print_gecko("Found:[%s] @ %08X\n", GXSetViewportSigs[j].Name, GXSetViewportAddr);
 					switch(j) {
-						case 0: GXSetViewportJitterSigs[0].offsetFoundAt = branchResolve(data, i + 16); break;
+						case 0: GXSetViewportJitterSigs[0].offsetFoundAt = branchResolve(data, i + 64); break;
 						case 1: GXSetViewportJitterSigs[1].offsetFoundAt = branchResolve(data, i + 16); break;
-						case 2: GXSetViewportJitterSigs[2].offsetFoundAt = branchResolve(data, i +  4); break;
-						case 3:
+						case 2: GXSetViewportJitterSigs[2].offsetFoundAt = branchResolve(data, i + 16); break;
+						case 3: GXSetViewportJitterSigs[3].offsetFoundAt = branchResolve(data, i +  4); break;
+						case 4:
 							__GXSetViewportSig.offsetFoundAt = branchResolve(data, i + 40);
 							if((i-__GXSetViewportSig.offsetFoundAt) == 232) {
 								memset(data+i-88, 0, 88);
 								*(vu32*)(data+i-88) = branch(i, i - 88);
-								GXSetViewportJitterSigs[3].offsetFoundAt = i - 88;
+								GXSetViewportJitterSigs[4].offsetFoundAt = i - 88;
 							}
 							break;
 					}
@@ -1556,7 +1661,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 				if(GXSetViewportJitterAddr) {
 					print_gecko("Found:[%s] @ %08X\n", GXSetViewportJitterSigs[j].Name, GXSetViewportJitterAddr);
 					if(GXSetViewportJitterSigs[j].Patch) {
-						u32 op = *(vu32*)(data+i+72);
+						u32 op = j >= 1 ? *(vu32*)(data+i+72):*(vu32*)(data+i+216);
 						memset(data+i, 0, GXSetViewportJitterSigs[j].Length);
 						memcpy(data+i, GXSetViewportJitterSigs[j].Patch, GXSetViewportJitterSigs[j].PatchLength);
 						*(vu32*)(data+i+ 0) |= op & 0x1FFFFF;
@@ -1589,6 +1694,11 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					print_gecko("Found:[%s] @ %08X\n", setVerticalRegsSigs[j].Name, setVerticalRegsAddr);
 					switch(j) {
 						case 0:
+							*(vu32*)(data+i+16) = 0xA01D006C;	// lhz		r0, 108 (r29)
+							*(vu32*)(data+i+20) = 0x540007FF;	// clrlwi.	r0, r0, 31
+							*(vu32*)(data+i+24) = 0x41820010;	// beq		+16
+							break;
+						case 1:
 							*(vu32*)(data+i+ 4) = *(vu32*)(data+i+ 8);
 							*(vu32*)(data+i+ 8) = *(vu32*)(data+i+24);
 							*(vu32*)(data+i+16) = *(vu32*)(data+i+20);
