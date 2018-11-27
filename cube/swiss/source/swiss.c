@@ -157,7 +157,7 @@ void ogc_video__reset()
 		case 4:
 			if(VIDEO_HaveComponentCable()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 1080i");
-				newmode = &TVNtsc480Prog;
+				newmode = &TVNtsc480IntDf;
 			} else {
 				msgBox = DrawMessageBox(D_WARN, "Video Mode: NTSC 480i");
 				swissSettings.gameVMode = 1;
@@ -189,7 +189,7 @@ void ogc_video__reset()
 		case 9:
 			if(VIDEO_HaveComponentCable()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 1080i");
-				newmode = &TVPal576ProgScale;
+				newmode = &TVPal576IntDfScale;
 			} else {
 				msgBox = DrawMessageBox(D_WARN, "Video Mode: PAL 576i");
 				swissSettings.gameVMode = 6;
