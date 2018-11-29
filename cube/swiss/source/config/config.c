@@ -225,6 +225,9 @@ int config_update_file() {
 		sprintf(txtbuffer, "Force Horizontal Scale=%s\r\n",forceHScaleStr[configEntries[i].forceHScale]);
 		string_append(configString, txtbuffer);
 		
+		sprintf(txtbuffer, "Force Vertical Offset=%+hi\r\n",configEntries[i].forceVOffset);
+		string_append(configString, txtbuffer);
+		
 		sprintf(txtbuffer, "Force Vertical Filter=%s\r\n",forceVFilterStr[configEntries[i].forceVFilter]);
 		string_append(configString, txtbuffer);
 		
@@ -340,6 +343,9 @@ void config_parse(char *configData) {
 						configEntries[configEntriesCount].forceHScale = 4;
 					else if(!strcmp(forceHScaleStr[5], value))
 						configEntries[configEntriesCount].forceHScale = 5;
+				}
+				else if(!strcmp("Force Vertical Offset", name)) {
+					configEntries[configEntriesCount].forceVOffset = atoi(value);
 				}
 				else if(!strcmp("Force Vertical Filter", name)) {
 					if(!strcmp(forceVFilterStr[0], value))
@@ -476,6 +482,7 @@ void config_find(ConfigEntry *entry) {
 	strcpy(entry->status,"Unknown");
 	entry->gameVMode = 0;
 	entry->forceHScale = 0;
+	entry->forceVOffset = 0;
 	entry->forceVFilter = 0;
 	entry->forceAnisotropy = 0;
 	entry->forceWidescreen = 0;

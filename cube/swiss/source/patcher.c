@@ -1022,6 +1022,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 		{0xB8, 14, 2, 2, 4, 8, 0, 0, "getCurrentFieldEvenOdd A", 0},
 		{0x5C,  7, 0, 0, 1, 5, 0, 0, "getCurrentFieldEvenOdd B", 0}		// SN Systems ProDG
 	};
+	FuncPattern AdjustPositionSig = 
+		{0x218, 9, 1, 0, 17, 47, 0, 0, "AdjustPositionD", 0};
 	FuncPattern setFbbRegsSigs[3] = {
 		{0x298, 62, 22, 2,  8, 24, 0, 0, "setFbbRegsD A", 0},
 		{0x2D0, 54, 34, 0, 10, 16, 0, 0, "setFbbRegs A", 0},
@@ -1111,7 +1113,6 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 						*(vu32*)(data+i+__VIRetraceHandlerSigs[j].Length) = branch(__VIRetraceHandlerPatchAddr, __VIRetraceHandlerAddr + __VIRetraceHandlerSigs[j].Length);
 					}
 					__VIRetraceHandlerSigs[j].offsetFoundAt = i;
-					i += __VIRetraceHandlerSigs[j].Length;
 					break;
 				}
 			}
@@ -1139,7 +1140,6 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 					}
 				}
 				VIWaitForRetraceSig.offsetFoundAt = i;
-				i += VIWaitForRetraceSig.Length;
 			}
 		}
 		for( j=0; j < sizeof(VIConfigureSigs)/sizeof(FuncPattern); j++ )
@@ -1234,6 +1234,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+500) = 0xA01E0010;	// lhz		r0, 16 (r30)
 							*(vu32*)(data+i+504) = 0x60000000;	// nop
 							*(vu32*)(data+i+512) = 0xA01E0010;	// lhz		r0, 16 (r30)
+							AdjustPositionSig.offsetFoundAt = branchResolve(data, i + 540);
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1044);
 							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1088);
 							break;
@@ -1248,6 +1249,7 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+492) = 0xA01E0010;	// lhz		r0, 16 (r30)
 							*(vu32*)(data+i+496) = 0x60000000;	// nop
 							*(vu32*)(data+i+504) = 0xA01E0010;	// lhz		r0, 16 (r30)
+							AdjustPositionSig.offsetFoundAt = branchResolve(data, i + 572);
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1180);
 							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 1224);
 							break;
@@ -1258,6 +1260,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+280) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(vu32*)(data+i+284) = 0x60000000;	// nop
 							*(vu32*)(data+i+292) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+408) = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
+							*(vu32*)(data+i+416) = 0x7CA42B78;	// mr		r4, r5
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1636);
 							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1680);
 							break;
@@ -1268,6 +1272,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+248) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(vu32*)(data+i+252) = 0x60000000;	// nop
 							*(vu32*)(data+i+260) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+376) = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
+							*(vu32*)(data+i+384) = 0x7CA42B78;	// mr		r4, r5
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1604);
 							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1648);
 							break;
@@ -1278,6 +1284,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+388) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(vu32*)(data+i+392) = 0x60000000;	// nop
 							*(vu32*)(data+i+400) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+516) = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
+							*(vu32*)(data+i+524) = 0x7CA42B78;	// mr		r4, r5
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1780);
 							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1824);
 							break;
@@ -1289,6 +1297,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+416) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(vu32*)(data+i+420) = 0x60000000;	// nop
 							*(vu32*)(data+i+428) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+592) = 0x38C00000 | (swissSettings.forceVOffset & 0xFFFF);
+							*(vu32*)(data+i+600) = 0x7CC53378;	// mr		r5, r6
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1872);
 							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1916);
 							break;
@@ -1300,6 +1310,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+544) = 0xA01F0010;	// lhz		r0, 16 (r31)
 							*(vu32*)(data+i+548) = 0x60000000;	// nop
 							*(vu32*)(data+i+556) = 0xA01F0010;	// lhz		r0, 16 (r31)
+							*(vu32*)(data+i+720) = 0x38C00000 | (swissSettings.forceVOffset & 0xFFFF);
+							*(vu32*)(data+i+728) = 0x7CC53378;	// mr		r5, r6
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 2012);
 							setVerticalRegsSigs[2].offsetFoundAt = branchResolve(data, i + 2056);
 							break;
@@ -1311,6 +1323,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+508) = 0xA0FB0010;	// lhz		r7, 16 (r27)
 							*(vu32*)(data+i+524) = 0xA0FB0010;	// lhz		r7, 16 (r27)
 							*(vu32*)(data+i+532) = 0xA0FB0010;	// lhz		r7, 16 (r27)
+							*(vu32*)(data+i+844) = 0x38E00000 | (swissSettings.forceVOffset & 0xFFFF);
+							*(vu32*)(data+i+868) = 0x7CF93B78;	// mr		r25, r7
 							setFbbRegsSigs[2].offsetFoundAt = branchResolve(data, i + 2148);
 							setVerticalRegsSigs[3].offsetFoundAt = branchResolve(data, i + 2200);
 							break;
@@ -1322,6 +1336,8 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+544) = 0xA0130010;	// lhz		r0, 16 (r19)
 							*(vu32*)(data+i+548) = 0x60000000;	// nop
 							*(vu32*)(data+i+556) = 0xA0130010;	// lhz		r0, 16 (r19)
+							*(vu32*)(data+i+720) = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
+							*(vu32*)(data+i+728) = 0x7CA42B78;	// mr		r4, r5
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 1980);
 							setVerticalRegsSigs[2].offsetFoundAt = branchResolve(data, i + 2024);
 							break;
@@ -1419,7 +1435,6 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 						}
 					}
 					VIConfigureSigs[j].offsetFoundAt = i;
-					i += VIConfigureSigs[j].Length;
 					break;
 				}
 			}
@@ -1431,9 +1446,10 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 			if(VIConfigurePanAddr) {
 				print_gecko("Found:[%s] @ %08X\n", VIConfigurePanSig.Name, VIConfigurePanAddr);
 				VIConfigurePanPatchAddr = getPatchAddr(VI_CONFIGUREPANHOOK);
-				*(vu32*)(data+i+40) = branchAndLink(VIConfigurePanPatchAddr, VIConfigurePanAddr + 40);
+				*(vu32*)(data+i+ 40) = branchAndLink(VIConfigurePanPatchAddr, VIConfigurePanAddr + 40);
+				*(vu32*)(data+i+252) = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
+				*(vu32*)(data+i+260) = 0x7CA32B78;	// mr		r3, r5
 				VIConfigurePanSig.offsetFoundAt = i;
-				i += VIConfigurePanSig.Length;
 			}
 		}
 		for( j=0; j < sizeof(__GXInitGXSigs)/sizeof(FuncPattern); j++ )
@@ -1506,11 +1522,11 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 						}
 					}
 					__GXInitGXSigs[j].offsetFoundAt = i;
-					i += __GXInitGXSigs[j].Length;
 					break;
 				}
 			}
 		}
+		i += fp.Length;
 	}
 	if((swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 5)) {
 		for( j=0; j < sizeof(GXSetDispCopyYScaleSigs)/sizeof(FuncPattern); j++ )
@@ -1576,36 +1592,6 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 							*(vu32*)(data+i+ 400) = 0x38800000 | vfilter[5];
 							*(vu32*)(data+i+ 404) = 0x38A00000 | vfilter[3];
 							*(vu32*)(data+i+ 412) = 0x38600000 | vfilter[6];
-							break;
-					}
-					break;
-				}
-			}
-		}
-	}
-	if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 8)) {
-		for( j=0; j < sizeof(setFbbRegsSigs)/sizeof(FuncPattern); j++ )
-		{
-			if( (i=setFbbRegsSigs[j].offsetFoundAt) )
-			{
-				u32 setFbbRegsAddr = Calc_ProperAddress(data, dataType, i);
-				if(setFbbRegsAddr) {
-					print_gecko("Found:[%s] @ %08X\n", setFbbRegsSigs[j].Name, setFbbRegsAddr);
-					switch (j) {
-						case 0:
-							*(vu32*)(data+i- 88) = 0x60000000;	// nop
-							break;
-						case 1:
-							*(vu32*)(data+i+ 80) = 0x81040000;	// lwz		r8, 0 (r4)
-							*(vu32*)(data+i+ 84) = 0x60000000;	// nop
-							*(vu32*)(data+i+232) = 0x81060000;	// lwz		r8, 0 (r6)
-							*(vu32*)(data+i+236) = 0x60000000;	// nop
-							break;
-						case 2:
-							*(vu32*)(data+i+ 72) = 0x81240000;	// lwz		r9, 0 (r4)
-							*(vu32*)(data+i+ 76) = 0x60000000;	// nop
-							*(vu32*)(data+i+224) = 0x81260000;	// lwz		r9, 0 (r6)
-							*(vu32*)(data+i+228) = 0x60000000;	// nop
 							break;
 					}
 					break;
@@ -1685,32 +1671,90 @@ void Patch_VidMode(u8 *data, u32 length, int dataType) {
 				}
 			}
 		}
-		for( j=0; j < sizeof(setVerticalRegsSigs)/sizeof(FuncPattern); j++ )
+	}
+	if( (i=AdjustPositionSig.offsetFoundAt) )
+	{
+		u32 AdjustPositionAddr = Calc_ProperAddress(data, dataType, i);
+		if(AdjustPositionAddr) {
+			print_gecko("Found:[%s] @ %08X\n", AdjustPositionSig.Name, AdjustPositionAddr);
+			*(vu32*)(data+i+124) = 0x3BC00000 | (swissSettings.forceVOffset & 0xFFFF);
+			*(vu32*)(data+i+132) = 0x7FC0F378;	// mr		r0, r30
+			*(vu32*)(data+i+152) = 0x7FC0F378;	// mr		r0, r30
+			*(vu32*)(data+i+184) = 0x7FC5F378;	// mr		r5, r30
+			*(vu32*)(data+i+224) = 0x7FC5F378;	// mr		r5, r30
+			*(vu32*)(data+i+264) = 0x7FC0F378;	// mr		r0, r30
+			*(vu32*)(data+i+284) = 0x7FC0F378;	// mr		r0, r30
+			*(vu32*)(data+i+320) = 0x7FC0F378;	// mr		r0, r30
+			*(vu32*)(data+i+340) = 0x7FC0F378;	// mr		r0, r30
+			*(vu32*)(data+i+388) = 0x7FC5F378;	// mr		r5, r30
+			*(vu32*)(data+i+428) = 0x7FC5F378;	// mr		r5, r30
+			*(vu32*)(data+i+472) = 0x7FC0F378;	// mr		r0, r30
+			*(vu32*)(data+i+492) = 0x7FC0F378;	// mr		r0, r30
+		}
+	}
+	if((swissSettings.gameVMode == 3) || (swissSettings.gameVMode == 8)) {
+		for( j=0; j < sizeof(setFbbRegsSigs)/sizeof(FuncPattern); j++ )
 		{
-			if( (i=setVerticalRegsSigs[j].offsetFoundAt) )
+			if( (i=setFbbRegsSigs[j].offsetFoundAt) )
 			{
-				u32 setVerticalRegsAddr = Calc_ProperAddress(data, dataType, i);
-				if(setVerticalRegsAddr) {
-					print_gecko("Found:[%s] @ %08X\n", setVerticalRegsSigs[j].Name, setVerticalRegsAddr);
-					switch(j) {
+				u32 setFbbRegsAddr = Calc_ProperAddress(data, dataType, i);
+				if(setFbbRegsAddr) {
+					print_gecko("Found:[%s] @ %08X\n", setFbbRegsSigs[j].Name, setFbbRegsAddr);
+					switch (j) {
 						case 0:
-							*(vu32*)(data+i+16) = 0xA01D006C;	// lhz		r0, 108 (r29)
-							*(vu32*)(data+i+20) = 0x540007FF;	// clrlwi.	r0, r0, 31
-							*(vu32*)(data+i+24) = 0x41820010;	// beq		+16
+							*(vu32*)(data+i- 88) = 0x60000000;	// nop
 							break;
 						case 1:
-							*(vu32*)(data+i+ 4) = *(vu32*)(data+i+ 8);
-							*(vu32*)(data+i+ 8) = *(vu32*)(data+i+24);
-							*(vu32*)(data+i+16) = *(vu32*)(data+i+20);
-							*(vu32*)(data+i+20) = *(vu32*)(data+i+28);
-							*(vu32*)(data+i+24) = *(vu32*)(data+i+32);
-							*(vu32*)(data+i+28) = 0xA00B006C;	// lhz		r0, 108 (r11)
-							*(vu32*)(data+i+32) = 0x540007FF;	// clrlwi.	r0, r0, 31
-							*(vu32*)(data+i+36) = 0x41820010;	// beq		+16
+							*(vu32*)(data+i+ 80) = 0x81040000;	// lwz		r8, 0 (r4)
+							*(vu32*)(data+i+ 84) = 0x60000000;	// nop
+							*(vu32*)(data+i+232) = 0x81060000;	// lwz		r8, 0 (r6)
+							*(vu32*)(data+i+236) = 0x60000000;	// nop
+							break;
+						case 2:
+							*(vu32*)(data+i+ 72) = 0x81240000;	// lwz		r9, 0 (r4)
+							*(vu32*)(data+i+ 76) = 0x60000000;	// nop
+							*(vu32*)(data+i+224) = 0x81260000;	// lwz		r9, 0 (r6)
+							*(vu32*)(data+i+228) = 0x60000000;	// nop
 							break;
 					}
 					break;
 				}
+			}
+		}
+	}
+	for( j=0; j < sizeof(setVerticalRegsSigs)/sizeof(FuncPattern); j++ )
+	{
+		if( (i=setVerticalRegsSigs[j].offsetFoundAt) )
+		{
+			u32 setVerticalRegsAddr = Calc_ProperAddress(data, dataType, i);
+			if(setVerticalRegsAddr) {
+				print_gecko("Found:[%s] @ %08X\n", setVerticalRegsSigs[j].Name, setVerticalRegsAddr);
+				switch(j) {
+					case 0:
+						*(vu32*)(data+i+16) = 0xA01D006C;	// lhz		r0, 108 (r29)
+						*(vu32*)(data+i+20) = 0x540007FF;	// clrlwi.	r0, r0, 31
+						*(vu32*)(data+i+24) = 0x41820010;	// beq		+16
+						*(vu32*)(data+i+48) = 0x7C6B0734;	// extsh	r11, r3
+						break;
+					case 1:
+						*(vu32*)(data+i+ 4) = *(vu32*)(data+i+ 8);
+						*(vu32*)(data+i+ 8) = *(vu32*)(data+i+24);
+						*(vu32*)(data+i+16) = *(vu32*)(data+i+20);
+						*(vu32*)(data+i+20) = *(vu32*)(data+i+28);
+						*(vu32*)(data+i+24) = *(vu32*)(data+i+32);
+						*(vu32*)(data+i+28) = 0xA00B006C;	// lhz		r0, 108 (r11)
+						*(vu32*)(data+i+32) = 0x540007FF;	// clrlwi.	r0, r0, 31
+						*(vu32*)(data+i+36) = 0x41820010;	// beq		+16
+						*(vu32*)(data+i+60) = 0x7C7E0734;	// extsh	r30, r3
+						break;
+					case 2:
+						*(vu32*)(data+i+60) = 0x7C7E0734;	// extsh	r30, r3
+						break;
+					case 3:
+						*(vu32*)(data+i+56) = 0x7C7F0734;	// extsh	r31, r3
+						break;
+				}
+				break;
 			}
 		}
 	}
