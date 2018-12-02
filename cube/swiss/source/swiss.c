@@ -563,7 +563,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	char* gameID = (char*)0x80000000;
 	int i = 0;
 	u32 main_dol_size = 0;
-	u8 *main_dol_buffer = 0;
+	void *main_dol_buffer = 0;
 	DOLHEADER dolhdr;
 	
 	memcpy((void*)0x80000020,GC_DefaultConfig,0xE0);
@@ -684,7 +684,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	print_gecko("DOL size %i\r\n", main_dol_size);
 
 	// Read the entire Main DOL
-	main_dol_buffer = (u8*)memalign(32,main_dol_size+DOLHDRLENGTH);
+	main_dol_buffer = memalign(32,main_dol_size+DOLHDRLENGTH);
 	print_gecko("DOL buffer %08X\r\n", (u32)main_dol_buffer);
 	devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
 	if(devices[DEVICE_CUR]->readFile(&curFile,(void*)main_dol_buffer,main_dol_size+DOLHDRLENGTH) != main_dol_size+DOLHDRLENGTH) {
@@ -744,11 +744,11 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	}
 	// Force Video Mode
 	if(swissSettings.gameVMode > 0) {
-		Patch_VidMode(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+		Patch_VideoMode(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 	// Force Widescreen
 	if(swissSettings.forceWidescreen) {
-		Patch_WideAspect(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+		Patch_Widescreen(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 	// Force Anisotropy
 	if(swissSettings.forceAnisotropy) {

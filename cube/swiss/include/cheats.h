@@ -15,7 +15,7 @@ extern u8 kenobigc_dbg_bin[];
 #define CHEATS_START_PAUSED		(*(u32*)(WIIRD_ENGINE+0x08))
 #define CHEATS_TRUE				1
 #define CHEATS_FALSE			0
-#define CHEATS_ENGINE_START		(WIIRD_ENGINE + 0xA8)
+#define CHEATS_ENGINE_START		((void*)(WIIRD_ENGINE+0xA8))
 
 #define CHEATS_NAME_LEN			128
 #define CHEATS_MAX_CODES		128

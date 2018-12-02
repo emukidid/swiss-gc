@@ -122,29 +122,29 @@ enum patchIds {
 #define LO_RESERVE_DVD 	0x80001800
 
 /* Function jump locations for the SD/IDE/USBGecko patch */
-#define PATCHED_MEMCPY			(LO_RESERVE)
-#define CALC_SPEED				(LO_RESERVE | 0x04)
-#define STOP_DI_IRQ				(LO_RESERVE | 0x08)
-#define READ_TRIGGER_INTERRUPT	(LO_RESERVE | 0x0C)
-#define DSP_HANDLER_HOOK		(LO_RESERVE | 0x10)
-#define PATCHED_MEMCPY_DBG		(LO_RESERVE | 0x14)
-#define IGR_CHECK				(LO_RESERVE | 0x18)
+#define PATCHED_MEMCPY			(void*)(LO_RESERVE)
+#define CALC_SPEED				(void*)(LO_RESERVE | 0x04)
+#define STOP_DI_IRQ				(void*)(LO_RESERVE | 0x08)
+#define READ_TRIGGER_INTERRUPT	(void*)(LO_RESERVE | 0x0C)
+#define DSP_HANDLER_HOOK		(void*)(LO_RESERVE | 0x10)
+#define PATCHED_MEMCPY_DBG		(void*)(LO_RESERVE | 0x14)
+#define IGR_CHECK				(void*)(LO_RESERVE | 0x18)
 
 /* Function jump locations for the DVD patch */
-#define ENABLE_BACKUP_DISC 		(LO_RESERVE_DVD | 0x00)
-#define READ_REAL_OR_PATCHED	(LO_RESERVE_DVD | 0x04)
-#define IGR_CHECK_DVD			(LO_RESERVE_DVD | 0x08)
+#define ENABLE_BACKUP_DISC 		(void*)(LO_RESERVE_DVD | 0x00)
+#define READ_REAL_OR_PATCHED	(void*)(LO_RESERVE_DVD | 0x04)
+#define IGR_CHECK_DVD			(void*)(LO_RESERVE_DVD | 0x08)
 
 /* Function jump locations for the WKF/WASP patch */
-#define PATCHED_MEMCPY_WKF		(LO_RESERVE)
-#define PATCHED_MEMCPY_DBG_WKF	(LO_RESERVE | 0x04)
-#define ADJUST_LBA_OFFSET	 	(LO_RESERVE | 0x08)
-#define IGR_CHECK_WKF			(LO_RESERVE | 0x0C)
+#define PATCHED_MEMCPY_WKF		(void*)(LO_RESERVE)
+#define PATCHED_MEMCPY_DBG_WKF	(void*)(LO_RESERVE | 0x04)
+#define ADJUST_LBA_OFFSET	 	(void*)(LO_RESERVE | 0x08)
+#define IGR_CHECK_WKF			(void*)(LO_RESERVE | 0x0C)
 
 /* Function jump locations for the USBGecko patch */
-#define PATCHED_MEMCPY_USB		(LO_RESERVE)
-#define PATCHED_MEMCPY_DBG_USB	(LO_RESERVE | 0x04)
-#define PERFORM_READ_USBGECKO	(LO_RESERVE | 0x08)
+#define PATCHED_MEMCPY_USB		(void*)(LO_RESERVE)
+#define PATCHED_MEMCPY_DBG_USB	(void*)(LO_RESERVE | 0x04)
+#define PERFORM_READ_USBGECKO	(void*)(LO_RESERVE | 0x08)
 
 #define READ_PATCHED_ALL 		(0x111)
 
@@ -161,16 +161,16 @@ u32 Patch_DVDLowLevelReadForUSBGecko(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType);
-void Patch_VidMode(u8 *data, u32 length, int dataType);
-void Patch_WideAspect(u8 *data, u32 length, int dataType);
-int Patch_TexFilt(u8 *data, u32 length, int dataType);
+void Patch_VideoMode(u32 *data, u32 length, int dataType);
+void Patch_Widescreen(u32 *data, u32 length, int dataType);
+int Patch_TexFilt(u32 *data, u32 length, int dataType);
 int Patch_FontEnc(void *addr, u32 length);
 int Patch_Fwrite(void *addr, u32 length);
 int Patch_DVDReset(void *addr,u32 length);
 int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType);
 int Patch_IGR(void *data, u32 length, int dataType);
 int PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType );
-u32 Calc_ProperAddress(u8 *data, u32 type, u32 offsetFoundAt);
+void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);
 int install_code();
 

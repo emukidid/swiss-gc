@@ -366,7 +366,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			continue;	// skip unused PSO files
 		}
 		int sizeToRead = filesToPatch[i].size, ret = 0;
-		u8 *buffer = (u8*)memalign(32, sizeToRead);
+		void *buffer = memalign(32, sizeToRead);
 		
 		devices[DEVICE_CUR]->seekFile(file,filesToPatch[i].offset, DEVICE_HANDLER_SEEK_SET);
 		ret = devices[DEVICE_CUR]->readFile(file,buffer,sizeToRead);
@@ -420,9 +420,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		
 		patched += Patch_FontEnc(buffer, sizeToRead);
 		if(swissSettings.gameVMode > 0)
-			Patch_VidMode(buffer, sizeToRead, filesToPatch[i].type);
+			Patch_VideoMode(buffer, sizeToRead, filesToPatch[i].type);
 		if(swissSettings.forceWidescreen)
-			Patch_WideAspect(buffer, sizeToRead, filesToPatch[i].type);
+			Patch_Widescreen(buffer, sizeToRead, filesToPatch[i].type);
 		if(swissSettings.forceAnisotropy)
 			Patch_TexFilt(buffer, sizeToRead, filesToPatch[i].type);
 		if(patched) {
