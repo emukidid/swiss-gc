@@ -707,14 +707,74 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 	return patched;
 }
 
-u8 video_timing_480i[] = {
+u8 video_timing[] = {
 	0x06,0x00,0x00,0xF0,
-	0x00,0x18,0x00,0x19,
-	0x00,0x03,0x00,0x02,
+	0x00,0x1A,0x00,0x1B,
+	0x00,0x01,0x00,0x00,
 	0x0C,0x0D,0x0C,0x0D,
 	0x02,0x08,0x02,0x07,
 	0x02,0x08,0x02,0x07,
 	0x02,0x0D,0x01,0xAD,
+	0x40,0x47,0x69,0xA2,
+	0x01,0x75,0x7A,0x00,
+	0x01,0x9C,
+	0x06,0x00,0x00,0xF0,
+	0x00,0x1C,0x00,0x1C,
+	0x00,0x00,0x00,0x00,
+	0x0C,0x0C,0x0C,0x0C,
+	0x02,0x08,0x02,0x08,
+	0x02,0x08,0x02,0x08,
+	0x02,0x0E,0x01,0xAD,
+	0x40,0x47,0x69,0xA2,
+	0x01,0x75,0x7A,0x00,
+	0x01,0x9C,
+	0x05,0x00,0x01,0x20,
+	0x00,0x21,0x00,0x22,
+	0x00,0x01,0x00,0x00,
+	0x0D,0x0C,0x0B,0x0A,
+	0x02,0x6B,0x02,0x6A,
+	0x02,0x69,0x02,0x6C,
+	0x02,0x71,0x01,0xB0,
+	0x40,0x4B,0x6A,0xAC,
+	0x01,0x7C,0x85,0x00,
+	0x01,0xA4,
+	0x05,0x00,0x01,0x20,
+	0x00,0x21,0x00,0x21,
+	0x00,0x00,0x00,0x00,
+	0x0D,0x0B,0x0D,0x0B,
+	0x02,0x6B,0x02,0x6D,
+	0x02,0x6B,0x02,0x6D,
+	0x02,0x70,0x01,0xB0,
+	0x40,0x4B,0x6A,0xAC,
+	0x01,0x7C,0x85,0x00,
+	0x01,0xA4,
+	0x06,0x00,0x00,0xF0,
+	0x00,0x1A,0x00,0x1B,
+	0x00,0x01,0x00,0x00,
+	0x10,0x0F,0x0E,0x0D,
+	0x02,0x06,0x02,0x05,
+	0x02,0x04,0x02,0x07,
+	0x02,0x0D,0x01,0xAD,
+	0x40,0x4E,0x70,0xA2,
+	0x01,0x75,0x7A,0x00,
+	0x01,0x9C,
+	0x06,0x00,0x00,0xF0,
+	0x00,0x1C,0x00,0x1C,
+	0x00,0x00,0x00,0x00,
+	0x10,0x0E,0x10,0x0E,
+	0x02,0x06,0x02,0x08,
+	0x02,0x06,0x02,0x08,
+	0x02,0x0E,0x01,0xAD,
+	0x40,0x4E,0x70,0xA2,
+	0x01,0x75,0x7A,0x00,
+	0x01,0x9C,
+	0x0C,0x00,0x01,0xE0,
+	0x00,0x36,0x00,0x36,
+	0x00,0x00,0x00,0x00,
+	0x18,0x18,0x18,0x18,
+	0x04,0x0E,0x04,0x0E,
+	0x04,0x0E,0x04,0x0E,
+	0x04,0x1A,0x01,0xAD,
 	0x40,0x47,0x69,0xA2,
 	0x01,0x75,0x7A,0x00,
 	0x01,0x9C
@@ -731,32 +791,6 @@ u8 video_timing_1080i60[] = {
 	0x10,0x00,0x00,0x73,
 	0x01,0x63,0x4B,0x00,
 	0x01,0x8A
-};
-
-u8 video_timing_480p[] = {
-	0x0C,0x00,0x01,0xE0,
-	0x00,0x30,0x00,0x30,
-	0x00,0x06,0x00,0x06,
-	0x18,0x18,0x18,0x18,
-	0x04,0x0E,0x04,0x0E,
-	0x04,0x0E,0x04,0x0E,
-	0x04,0x1A,0x01,0xAD,
-	0x40,0x47,0x69,0xA2,
-	0x01,0x75,0x7A,0x00,
-	0x01,0x9C
-};
-
-u8 video_timing_576i[] = {
-	0x05,0x00,0x01,0x20,
-	0x00,0x21,0x00,0x22,
-	0x00,0x01,0x00,0x00,
-	0x0D,0x0C,0x0B,0x0A,
-	0x02,0x6B,0x02,0x6A,
-	0x02,0x69,0x02,0x6C,
-	0x02,0x71,0x01,0xB0,
-	0x40,0x4B,0x6A,0xAC,
-	0x01,0x7C,0x85,0x00,
-	0x01,0xA4
 };
 
 u8 video_timing_1080i50[] = {
@@ -784,65 +818,6 @@ u8 video_timing_576p[] = {
 	0x01,0x7C,0x85,0x00,
 	0x01,0xA4
 };
-
-void Patch_VideoTiming(void *addr, u32 length)
-{
-	void *addr_start = addr;
-	void *addr_end = addr+length;
-	
-	switch(swissSettings.gameVMode) {
-		case 4:
-			while(addr_start<addr_end) {
-				if(memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
-				{
-					print_gecko("Patched NTSC Progressive timing\n");
-					memcpy(addr_start, video_timing_1080i60, sizeof(video_timing_1080i60));
-					addr_start += sizeof(video_timing_1080i60);
-					break;
-				}
-				addr_start += 2;
-			}
-			break;
-		case 9:
-			while(addr_start<addr_end) {
-				if(memcmp(addr_start,video_timing_480i,sizeof(video_timing_480i))==0)
-				{
-					print_gecko("Patched NTSC Interlaced timing\n");
-					memcpy(addr_start, video_timing_576i, sizeof(video_timing_576i));
-					addr_start += sizeof(video_timing_576i);
-					continue;
-				}
-				if(memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
-				{
-					print_gecko("Patched NTSC Progressive timing\n");
-					memcpy(addr_start, video_timing_1080i50, sizeof(video_timing_1080i50));
-					addr_start += sizeof(video_timing_1080i50);
-					break;
-				}
-				addr_start += 2;
-			}
-			break;
-		case 10:
-			while(addr_start<addr_end) {
-				if(memcmp(addr_start,video_timing_480i,sizeof(video_timing_480i))==0)
-				{
-					print_gecko("Patched NTSC Interlaced timing\n");
-					memcpy(addr_start, video_timing_576i, sizeof(video_timing_576i));
-					addr_start += sizeof(video_timing_576i);
-					continue;
-				}
-				if(memcmp(addr_start,video_timing_480p,sizeof(video_timing_480p))==0)
-				{
-					print_gecko("Patched NTSC Progressive timing\n");
-					memcpy(addr_start, video_timing_576p, sizeof(video_timing_576p));
-					addr_start += sizeof(video_timing_576p);
-					break;
-				}
-				addr_start += 2;
-			}
-			break;
-	}
-}
 
 static void *patch_locations[PATCHES_MAX];
 
@@ -1024,6 +999,16 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 46, 14, 2, 2, 4, 8, NULL, 0, "getCurrentFieldEvenOdd A" },
 		{ 23,  7, 0, 0, 1, 5, NULL, 0, "getCurrentFieldEvenOdd B" }		// SN Systems ProDG
 	};
+	FuncPattern getTimingSigs[8] = {
+		{  29,  12,  2,  0,  7,  2, NULL, 0, "getTimingD A" },
+		{  39,  16,  2,  0, 12,  2, NULL, 0, "getTimingD B" },
+		{  11,   4,  0,  0,  0,  3, NULL, 0, "getTiming A" },
+		{  11,   4,  0,  0,  0,  3, NULL, 0, "getTiming B" },
+		{  11,   4,  0,  0,  0,  3, NULL, 0, "getTiming C" },
+		{  11,   5,  0,  0,  0,  2, NULL, 0, "getTiming D" },
+		{ 558, 112, 44, 14, 53, 48, NULL, 0, "getTiming E" },			// SN Systems ProDG
+		{  11,   5,  0,  0,  0,  2, NULL, 0, "getTiming F" }
+	};
 	FuncPattern AdjustPositionSig = 
 		{ 134, 9, 1, 0, 17, 47, NULL, 0, "AdjustPositionD" };
 	FuncPattern setFbbRegsSigs[3] = {
@@ -1178,7 +1163,6 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							print_gecko("Patched NTSC Field Rendering mode\n");
 							vfilter = vertical_filters[swissSettings.forceVFilter];
 							VIConfigureHook = getPatchAddr(VI_CONFIGURE1080I60);
-							Patch_VideoTiming(data, length);
 							break;
 						case 5:
 							print_gecko("Patched NTSC Progressive mode\n");
@@ -1201,13 +1185,11 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							print_gecko("Patched PAL Field Rendering mode\n");
 							vfilter = vertical_filters[swissSettings.forceVFilter];
 							VIConfigureHook = getPatchAddr(VI_CONFIGURE1080I50);
-							Patch_VideoTiming(data, length);
 							break;
 						case 10:
 							print_gecko("Patched PAL Progressive mode\n");
 							vfilter = vertical_filters[swissSettings.forceVFilter];
 							VIConfigureHook = getPatchAddr(VI_CONFIGURE576P);
-							Patch_VideoTiming(data, length);
 							break;
 					}
 					if (swissSettings.forceHScale > 0) {
@@ -1237,6 +1219,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					}
 					switch (j) {
 						case 0:
+							getTimingSigs[0].offsetFoundAt = branchResolve(data, i + 131);
 							AdjustPositionSig.offsetFoundAt = branchResolve(data, i + 135);
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 261);
 							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 272);
@@ -1252,6 +1235,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i + 128] = 0xA01E0010;	// lhz		r0, 16 (r30)
 							break;
 						case 1:
+							getTimingSigs[1].offsetFoundAt = branchResolve(data, i + 139);
 							AdjustPositionSig.offsetFoundAt = branchResolve(data, i + 143);
 							setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 295);
 							setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 306);
@@ -1270,6 +1254,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i + 126] = 0xA01E0010;	// lhz		r0, 16 (r30)
 							break;
 						case 2:
+							getTimingSigs[2].offsetFoundAt = branchResolve(data, i + 77);
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 409);
 							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 420);
 							
@@ -1283,6 +1268,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i + 104] = 0x7CA42B78;	// mr		r4, r5
 							break;
 						case 3:
+							getTimingSigs[2].offsetFoundAt = branchResolve(data, i + 69);
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 401);
 							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 412);
 							
@@ -1296,6 +1282,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i + 96] = 0x7CA42B78;	// mr		r4, r5
 							break;
 						case 4:
+							getTimingSigs[3].offsetFoundAt = branchResolve(data, i + 104);
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 445);
 							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 456);
 							
@@ -1309,6 +1296,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i + 131] = 0x7CA42B78;	// mr		r4, r5
 							break;
 						case 5:
+							getTimingSigs[4].offsetFoundAt = branchResolve(data, i + 123);
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 468);
 							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 479);
 							
@@ -1323,6 +1311,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i + 150] = 0x7CC53378;	// mr		r5, r6
 							break;
 						case 6:
+							getTimingSigs[5].offsetFoundAt = branchResolve(data, i + 155);
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 503);
 							setVerticalRegsSigs[2].offsetFoundAt = branchResolve(data, i + 514);
 							
@@ -1337,6 +1326,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i + 182] = 0x7CC53378;	// mr		r5, r6
 							break;
 						case 7:
+							getTimingSigs[6].offsetFoundAt = i;
 							setFbbRegsSigs[2].offsetFoundAt = branchResolve(data, i + 537);
 							setVerticalRegsSigs[3].offsetFoundAt = branchResolve(data, i + 550);
 							
@@ -1351,6 +1341,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i + 217] = 0x7CF93B78;	// mr		r25, r7
 							break;
 						case 8:
+							getTimingSigs[7].offsetFoundAt = branchResolve(data, i + 155);
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 495);
 							setVerticalRegsSigs[2].offsetFoundAt = branchResolve(data, i + 506);
 							
@@ -1412,7 +1403,6 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 								data[i +  22] = 0x2C000006;	// cmpwi	r0, 6
 								data[i +  39] = 0x2C000006;	// cmpwi	r0, 6
 								data[i +  56] = 0x2C000006;	// cmpwi	r0, 6
-								data[i + 130] = 0x807F0114;	// lwz		r3, 276 (r31)
 								data[i + 219] = 0x2C000006;	// cmpwi	r0, 6
 								break;
 							case 1:
@@ -1420,40 +1410,30 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 								data[i +  25] = 0x2C000007;	// cmpwi	r0, 7
 								data[i +  42] = 0x2C000006;	// cmpwi	r0, 6
 								data[i +  45] = 0x2C000007;	// cmpwi	r0, 7
-								data[i + 135] = 0x38000000;	// li		r0, 0
 								data[i + 250] = 0x2C000006;	// cmpwi	r0, 6
 								data[i + 253] = 0x2C000007;	// cmpwi	r0, 7
 								break;
 							case 2:
 								data[i +  10] = 0x2C040006;	// cmpwi	r4, 6
-								data[i +  76] = 0x807B0000;	// lwz		r3, 0 (r27)
 								data[i + 224] = 0x2C000006;	// cmpwi	r0, 6
 								break;
 							case 3:
-								data[i +  68] = 0x807C0000;	// lwz		r3, 0 (r28)
 								data[i + 216] = 0x2C000006;	// cmpwi	r0, 6
 								break;
 							case 4:
-								data[i + 103] = 0x807C0000;	// lwz		r3, 0 (r28)
 								data[i + 260] = 0x2C000006;	// cmpwi	r0, 6
 								break;
 							case 5:
-								data[i + 119] = 0x38600000;	// li		r3, 0
 								data[i + 282] = 0x2C000006;	// cmpwi	r0, 6
 								data[i + 284] = 0x2C000007;	// cmpwi	r0, 7
 								break;
 							case 6:
-								data[i + 151] = 0x38600000;	// li		r3, 0
 								data[i + 315] = 0x2C000006;	// cmpwi	r0, 6
 								data[i + 317] = 0x2C000007;	// cmpwi	r0, 7
 								break;
 							case 7:
-								data[i + 137] = 0x38000000;	// li		r0, 0
 								data[i + 336] = 0x2C0A0006;	// cmpwi	r10, 6
 								data[i + 343] = 0x2C0A0007;	// cmpwi	r10, 7
-								break;
-							case 8:
-								data[i + 151] = 0x38600000;	// li		r3, 0
 								break;
 						}
 					}
@@ -1678,6 +1658,67 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 1] |= ((u32)__GXSetViewport + __GXSetViewportSig.PatchLength + 0x8000) >> 16;
 					data[i + 3] |= ((u32)__GXSetViewport + __GXSetViewportSig.PatchLength) & 0xFFFF;
 				}
+			}
+		}
+	}
+	for (j = 0; j < sizeof(getTimingSigs) / sizeof(FuncPattern); j++) {
+		if ((i = getTimingSigs[j].offsetFoundAt)) {
+			u32 *getTiming = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			
+			u32 jumpTableAddr;
+			u32 *jumpTable, jump;
+			
+			u32 timingTableAddr;
+			u8 (*timingTable)[38];
+			
+			if (getTiming) {
+				print_gecko("Found:[%s] @ %08X\n", getTimingSigs[j].Name, getTiming);
+				
+				if (j == 6) {
+					timingTableAddr = (data[i +   5] << 16) + (s16)data[i +   7];
+					jumpTableAddr   = (data[i + 147] << 16) + (s16)data[i + 149];
+					k = (u16)data[i + 144];
+				} else if (j >= 2) {
+					timingTableAddr = (data[i + 1] << 16) + (s16)data[i + 2];
+					jumpTableAddr   = (data[i + 4] << 16) + (s16)data[i + 5];
+					k = (u16)data[i];
+				} else {
+					timingTableAddr = (data[i + 2] << 16) + (s16)data[i + 3];
+					jumpTableAddr   = (data[i + 6] << 16) + (s16)data[i + 7];
+					k = (u16)data[i + 4];
+				}
+				if (j > 4) timingTableAddr += 68;
+				
+				timingTable = Calc_Address(data, dataType, timingTableAddr);
+				jumpTable   = Calc_Address(data, dataType, jumpTableAddr);
+				
+				memcpy(timingTable, video_timing, sizeof(video_timing));
+				
+				if (swissSettings.gameVMode == 4)
+					memcpy(timingTable + 6, video_timing_1080i60, sizeof(video_timing_1080i60));
+				
+				if (j == 1 || j >= 4) {
+					if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 9)
+						memcpy(timingTable + 7, video_timing_1080i50, sizeof(video_timing_1080i50));
+					else
+						memcpy(timingTable + 7, video_timing_576p, sizeof(video_timing_576p));
+					
+					jump = jumpTable[3];
+					jumpTable[3] = jumpTable[6];
+					jumpTable[6] = jump;
+				} else if (swissSettings.gameVMode >= 6 && swissSettings.gameVMode <= 10) {
+					if (swissSettings.gameVMode == 9)
+						memcpy(timingTable + 6, video_timing_1080i50, sizeof(video_timing_1080i50));
+					else
+						memcpy(timingTable + 6, video_timing_576p, sizeof(video_timing_576p));
+					
+					jump = jumpTable[2];
+					jumpTable[2] = jumpTable[6];
+					jumpTable[6] = jump;
+				}
+				if (k >= 10) jumpTable[10] = jumpTable[2];
+				if (k >= 22) jumpTable[22] = jumpTable[2];
+				break;
 			}
 		}
 	}
@@ -2402,6 +2443,75 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 		return (void*)(offsetFoundAt+0x81300000);
 	}
 	print_gecko("No cases matched, returning NULL for proper address\r\n");
+	return NULL;
+}
+
+void *Calc_Address(void *data, int dataType, u32 properAddress) {
+	if(dataType == PATCH_DOL) {
+		int i;
+		DOLHEADER *hdr = (DOLHEADER *) data;
+
+		// Doesn't look valid
+		if (hdr->textOffset[0] != DOLHDRLENGTH) {
+			print_gecko("DOL Header doesn't look valid %08X\r\n",hdr->textOffset[0]);
+			return NULL;
+		}
+
+		// Inspect text sections to see if what we found lies in here
+		for (i = 0; i < MAXTEXTSECTION; i++) {
+			if (hdr->textAddress[i] && hdr->textLength[i]) {
+				// Does what we found lie in this section?
+				if((properAddress >= hdr->textAddress[i]) && properAddress <= (hdr->textAddress[i] + hdr->textLength[i])) {
+					// Yes it does, return the properAddress - load address as that's where it'll end up!
+					return data+properAddress-hdr->textAddress[i]+hdr->textOffset[i];
+				}
+			}
+		}
+
+		// Inspect data sections (shouldn't really need to unless someone was sneaky..)
+		for (i = 0; i < MAXDATASECTION; i++) {
+			if (hdr->dataAddress[i] && hdr->dataLength[i]) {
+				// Does what we found lie in this section?
+				if((properAddress >= hdr->dataAddress[i]) && properAddress <= (hdr->dataAddress[i] + hdr->dataLength[i])) {
+					// Yes it does, return the properAddress - load address as that's where it'll end up!
+					return data+properAddress-hdr->dataAddress[i]+hdr->dataOffset[i];
+				}
+			}
+		}
+	
+	}
+	else if(dataType == PATCH_ELF) {
+		if(!valid_elf_image((u32)data))
+			return NULL;
+			
+		Elf32_Ehdr* ehdr;
+		Elf32_Shdr* shdr;
+		int i;
+
+		ehdr = (Elf32_Ehdr *)data;
+
+		// Search through each appropriate section
+		for (i = 0; i < ehdr->e_shnum; ++i) {
+			shdr = (Elf32_Shdr *)(data + ehdr->e_shoff + (i * sizeof(Elf32_Shdr)));
+
+			if (!(shdr->sh_flags & SHF_ALLOC) || shdr->sh_addr == 0 || shdr->sh_size == 0)
+				continue;
+
+			shdr->sh_addr &= 0x3FFFFFFF;
+			shdr->sh_addr |= 0x80000000;
+
+			if (shdr->sh_type != SHT_NOBITS) {
+				if((properAddress >= shdr->sh_addr) && properAddress <= (shdr->sh_addr + shdr->sh_size)) {
+					// Yes it does, return the properAddress - load address as that's where it'll end up!
+					return data+properAddress-shdr->sh_addr+shdr->sh_offset;
+				}
+			}
+		}	
+	}
+	else if(dataType == PATCH_LOADER) {
+		return data+properAddress-0x81300000;
+	}
+	print_gecko("No cases matched, returning NULL for address\r\n");
 	return NULL;
 }
 

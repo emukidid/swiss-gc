@@ -171,6 +171,7 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 int Patch_IGR(void *data, u32 length, int dataType);
 int PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType );
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt);
+void *Calc_Address(void *data, int dataType, u32 properAddress);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);
 int install_code();
 
