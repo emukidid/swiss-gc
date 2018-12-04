@@ -1228,11 +1228,16 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i +  53] = data[i + 5];
 							data[i +   5] = branchAndLink(VIConfigureHook, VIConfigure + 5);
 							data[i +   6] = 0x7C771B78;	// mr		r23, r3
-							data[i +  97] = 0x60000000;	// nop
+							data[i +  64] = 0x541807BE;	// clrlwi	r24, r0, 30
+							data[i +  97] = 0x5400003C;	// clrrwi	r0, r0, 1
 							data[i + 120] = 0xA01E0010;	// lhz		r0, 16 (r30)
+							data[i + 122] = 0x801F0114;	// lwz		r0, 276 (r31)
+							data[i + 123] = 0x28000001;	// cmplwi	r0, 1
 							data[i + 125] = 0xA01E0010;	// lhz		r0, 16 (r30)
-							data[i + 126] = 0x60000000;	// nop
+							data[i + 126] = 0x5400003C;	// clrrwi	r0, r0, 1
 							data[i + 128] = 0xA01E0010;	// lhz		r0, 16 (r30)
+							data[i + 218] = 0x801F0114;	// lwz		r0, 276 (r31)
+							data[i + 219] = 0x28000002;	// cmplwi	r0, 2
 							break;
 						case 1:
 							getTimingSigs[1].offsetFoundAt = branchResolve(data, i + 139);
@@ -1246,12 +1251,18 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i +   7] = data[i + 5];
 							data[i +   5] = branchAndLink(VIConfigureHook, VIConfigure + 5);
 							data[i +   6] = 0x7C781B78;	// mr		r24, r3
-							data[i +  90] = 0x60000000;	// nop
+							data[i +  90] = 0x5400003C;	// clrrwi	r0, r0, 1
 							data[i + 113] = 0xA01E0010;	// lhz		r0, 16 (r30)
 							data[i + 118] = 0xA01E0010;	// lhz		r0, 16 (r30)
+							data[i + 120] = 0x801F0114;	// lwz		r0, 276 (r31)
+							data[i + 121] = 0x28000001;	// cmplwi	r0, 1
 							data[i + 123] = 0xA01E0010;	// lhz		r0, 16 (r30)
-							data[i + 124] = 0x60000000;	// nop
+							data[i + 124] = 0x5400003C;	// clrrwi	r0, r0, 1
 							data[i + 126] = 0xA01E0010;	// lhz		r0, 16 (r30)
+							data[i + 249] = 0x801F0114;	// lwz		r0, 276 (r31)
+							data[i + 250] = 0x28000002;	// cmplwi	r0, 2
+							data[i + 252] = 0x801F0114;	// lwz		r0, 276 (r31)
+							data[i + 253] = 0x28000003;	// cmplwi	r0, 3
 							break;
 						case 2:
 							getTimingSigs[2].offsetFoundAt = branchResolve(data, i + 77);
@@ -1259,27 +1270,36 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 420);
 							
 							data[i +   7] = branchAndLink(VIConfigureHook, VIConfigure + 7);
-							data[i +  35] = 0x60000000;	// nop
+							data[i +  19] = 0x548307BE;	// clrlwi	r3, r4, 30
+							data[i +  35] = 0x5400003C;	// clrrwi	r0, r0, 1
 							data[i +  65] = 0xA01F0010;	// lhz		r0, 16 (r31)
+							data[i +  67] = 0x801B0000;	// lwz		r0, 0 (r27)
+							data[i +  68] = 0x28000001;	// cmplwi	r0, 1
 							data[i +  70] = 0xA01F0010;	// lhz		r0, 16 (r31)
-							data[i +  71] = 0x60000000;	// nop
+							data[i +  71] = 0x5400003C;	// clrrwi	r0, r0, 1
 							data[i +  73] = 0xA01F0010;	// lhz		r0, 16 (r31)
 							data[i + 102] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
 							data[i + 104] = 0x7CA42B78;	// mr		r4, r5
+							data[i + 222] = 0x801B0000;	// lwz		r0, 0 (r27)
+							data[i + 224] = 0x28000002;	// cmplwi	r0, 2
 							break;
 						case 3:
 							getTimingSigs[2].offsetFoundAt = branchResolve(data, i + 69);
 							setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 401);
 							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 412);
 							
-							data[i +  7] = branchAndLink(VIConfigureHook, VIConfigure + 7);
-							data[i + 27] = 0x60000000;	// nop
-							data[i + 57] = 0xA01F0010;	// lhz		r0, 16 (r31)
-							data[i + 62] = 0xA01F0010;	// lhz		r0, 16 (r31)
-							data[i + 63] = 0x60000000;	// nop
-							data[i + 65] = 0xA01F0010;	// lhz		r0, 16 (r31)
-							data[i + 94] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
-							data[i + 96] = 0x7CA42B78;	// mr		r4, r5
+							data[i +   7] = branchAndLink(VIConfigureHook, VIConfigure + 7);
+							data[i +  27] = 0x5400003C;	// clrrwi	r0, r0, 1
+							data[i +  57] = 0xA01F0010;	// lhz		r0, 16 (r31)
+							data[i +  59] = 0x801C0000;	// lwz		r0, 0 (r28)
+							data[i +  60] = 0x28000001;	// cmplwi	r0, 1
+							data[i +  62] = 0xA01F0010;	// lhz		r0, 16 (r31)
+							data[i +  63] = 0x5400003C;	// clrrwi	r0, r0, 1
+							data[i +  65] = 0xA01F0010;	// lhz		r0, 16 (r31)
+							data[i +  94] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
+							data[i +  96] = 0x7CA42B78;	// mr		r4, r5
+							data[i + 214] = 0x801C0000;	// lwz		r0, 0 (r28)
+							data[i + 216] = 0x28000002;	// cmplwi	r0, 2
 							break;
 						case 4:
 							getTimingSigs[3].offsetFoundAt = branchResolve(data, i + 104);
@@ -1287,13 +1307,17 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 456);
 							
 							data[i +   9] = branchAndLink(VIConfigureHook, VIConfigure + 9);
-							data[i +  62] = 0x60000000;	// nop
+							data[i +  62] = 0x5400003C;	// clrrwi	r0, r0, 1
 							data[i +  92] = 0xA01F0010;	// lhz		r0, 16 (r31)
+							data[i +  94] = 0x801C0000;	// lwz		r0, 0 (r28)
+							data[i +  95] = 0x28000001;	// cmplwi	r0, 1
 							data[i +  97] = 0xA01F0010;	// lhz		r0, 16 (r31)
-							data[i +  98] = 0x60000000;	// nop
+							data[i +  98] = 0x5400003C;	// clrrwi	r0, r0, 1
 							data[i + 100] = 0xA01F0010;	// lhz		r0, 16 (r31)
 							data[i + 129] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
 							data[i + 131] = 0x7CA42B78;	// mr		r4, r5
+							data[i + 258] = 0x801C0000;	// lwz		r0, 0 (r28)
+							data[i + 260] = 0x28000002;	// cmplwi	r0, 2
 							break;
 						case 5:
 							getTimingSigs[4].offsetFoundAt = branchResolve(data, i + 123);
@@ -1301,14 +1325,19 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 479);
 							
 							data[i +   9] = branchAndLink(VIConfigureHook, VIConfigure + 9);
-							data[i +  65] = 0x60000000;	// nop
+							data[i +  65] = 0x5400003C;	// clrrwi	r0, r0, 1
 							data[i +  95] = 0xA01F0010;	// lhz		r0, 16 (r31)
 							data[i +  99] = 0xA01F0010;	// lhz		r0, 16 (r31)
+							data[i + 101] = 0x801C0000;	// lwz		r0, 0 (r28)
+							data[i + 102] = 0x28000001;	// cmplwi	r0, 1
 							data[i + 104] = 0xA01F0010;	// lhz		r0, 16 (r31)
-							data[i + 105] = 0x60000000;	// nop
+							data[i + 105] = 0x5400003C;	// clrrwi	r0, r0, 1
 							data[i + 107] = 0xA01F0010;	// lhz		r0, 16 (r31)
 							data[i + 148] = 0x38C00000 | (swissSettings.forceVOffset & 0xFFFF);
 							data[i + 150] = 0x7CC53378;	// mr		r5, r6
+							data[i + 280] = 0x801C0000;	// lwz		r0, 0 (r28)
+							data[i + 282] = 0x28000002;	// cmplwi	r0, 2
+							data[i + 284] = 0x28000003;	// cmplwi	r0, 3
 							break;
 						case 6:
 							getTimingSigs[5].offsetFoundAt = branchResolve(data, i + 155);
@@ -1316,14 +1345,20 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							setVerticalRegsSigs[2].offsetFoundAt = branchResolve(data, i + 514);
 							
 							data[i +   9] = branchAndLink(VIConfigureHook, VIConfigure + 9);
-							data[i +  97] = 0x60000000;	// nop
+							data[i +  97] = 0x5400003C;	// clrrwi	r0, r0, 1
 							data[i + 127] = 0xA01F0010;	// lhz		r0, 16 (r31)
 							data[i + 131] = 0xA01F0010;	// lhz		r0, 16 (r31)
+							data[i + 133] = 0x801C0000;	// lwz		r0, 0 (r28)
+							data[i + 134] = 0x28000001;	// cmplwi	r0, 1
 							data[i + 136] = 0xA01F0010;	// lhz		r0, 16 (r31)
-							data[i + 137] = 0x60000000;	// nop
+							data[i + 137] = 0x5400003C;	// clrrwi	r0, r0, 1
 							data[i + 139] = 0xA01F0010;	// lhz		r0, 16 (r31)
 							data[i + 180] = 0x38C00000 | (swissSettings.forceVOffset & 0xFFFF);
 							data[i + 182] = 0x7CC53378;	// mr		r5, r6
+							data[i + 313] = 0x801C0000;	// lwz		r0, 0 (r28)
+							data[i + 315] = 0x28000002;	// cmplwi	r0, 2
+							data[i + 317] = 0x28000003;	// cmplwi	r0, 3
+							data[i + 319] = 0x28000002;	// cmplwi	r0, 2
 							break;
 						case 7:
 							getTimingSigs[6].offsetFoundAt = i;
@@ -1331,14 +1366,18 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							setVerticalRegsSigs[3].offsetFoundAt = branchResolve(data, i + 550);
 							
 							data[i +   8] = branchAndLink(VIConfigureHook, VIConfigure + 8);
-							data[i + 100] = 0xA11B000C;	// lhz		r8, 12 (r27)
-							data[i + 101] = 0x60000000;	// nop
+							data[i + 101] = 0x5408003C;	// clrrwi	r8, r0, 1
 							data[i + 123] = 0xA0FB0010;	// lhz		r7, 16 (r27)
 							data[i + 127] = 0xA0FB0010;	// lhz		r7, 16 (r27)
+							data[i + 129] = 0x28090001;	// cmplwi	r9, 1
 							data[i + 131] = 0xA0FB0010;	// lhz		r7, 16 (r27)
 							data[i + 133] = 0xA0FB0010;	// lhz		r7, 16 (r27)
 							data[i + 211] = 0x38E00000 | (swissSettings.forceVOffset & 0xFFFF);
 							data[i + 217] = 0x7CF93B78;	// mr		r25, r7
+							data[i + 332] = 0x815D0024;	// lwz		r10, 36 (r29)
+							data[i + 336] = 0x280A0002;	// cmplwi	r10, 2
+							data[i + 343] = 0x280A0003;	// cmplwi	r10, 3
+							data[i + 345] = 0x280A0002;	// cmplwi	r10, 2
 							break;
 						case 8:
 							getTimingSigs[7].offsetFoundAt = branchResolve(data, i + 155);
@@ -1346,11 +1385,13 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							setVerticalRegsSigs[2].offsetFoundAt = branchResolve(data, i + 506);
 							
 							data[i +   9] = branchAndLink(VIConfigureHook, VIConfigure + 9);
-							data[i +  97] = 0x60000000;	// nop
+							data[i +  97] = 0x5400003C;	// clrrwi	r0, r0, 1
 							data[i + 127] = 0xA0130010;	// lhz		r0, 16 (r19)
 							data[i + 131] = 0xA0130010;	// lhz		r0, 16 (r19)
+							data[i + 133] = 0x801D0000;	// lwz		r0, 0 (r29)
+							data[i + 134] = 0x28000001;	// cmplwi	r0, 1
 							data[i + 136] = 0xA0130010;	// lhz		r0, 16 (r19)
-							data[i + 137] = 0x60000000;	// nop
+							data[i + 137] = 0x5400003C;	// clrrwi	r0, r0, 1
 							data[i + 139] = 0xA0130010;	// lhz		r0, 16 (r19)
 							data[i + 180] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
 							data[i + 182] = 0x7CA42B78;	// mr		r4, r5
@@ -1394,46 +1435,6 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 								data[i + 288] = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
 								data[i + 289] = 0x54E9003C;	// rlwinm	r9, r7, 0, 0, 30
 								data[i + 290] = 0x61290001;	// ori		r9, r9, 1
-								break;
-						}
-					}
-					if (swissSettings.gameVMode == 9 || swissSettings.gameVMode == 10) {
-						switch (j) {
-							case 0:
-								data[i +  22] = 0x2C000006;	// cmpwi	r0, 6
-								data[i +  39] = 0x2C000006;	// cmpwi	r0, 6
-								data[i +  56] = 0x2C000006;	// cmpwi	r0, 6
-								data[i + 219] = 0x2C000006;	// cmpwi	r0, 6
-								break;
-							case 1:
-								data[i +  22] = 0x2C000006;	// cmpwi	r0, 6
-								data[i +  25] = 0x2C000007;	// cmpwi	r0, 7
-								data[i +  42] = 0x2C000006;	// cmpwi	r0, 6
-								data[i +  45] = 0x2C000007;	// cmpwi	r0, 7
-								data[i + 250] = 0x2C000006;	// cmpwi	r0, 6
-								data[i + 253] = 0x2C000007;	// cmpwi	r0, 7
-								break;
-							case 2:
-								data[i +  10] = 0x2C040006;	// cmpwi	r4, 6
-								data[i + 224] = 0x2C000006;	// cmpwi	r0, 6
-								break;
-							case 3:
-								data[i + 216] = 0x2C000006;	// cmpwi	r0, 6
-								break;
-							case 4:
-								data[i + 260] = 0x2C000006;	// cmpwi	r0, 6
-								break;
-							case 5:
-								data[i + 282] = 0x2C000006;	// cmpwi	r0, 6
-								data[i + 284] = 0x2C000007;	// cmpwi	r0, 7
-								break;
-							case 6:
-								data[i + 315] = 0x2C000006;	// cmpwi	r0, 6
-								data[i + 317] = 0x2C000007;	// cmpwi	r0, 7
-								break;
-							case 7:
-								data[i + 336] = 0x2C0A0006;	// cmpwi	r10, 6
-								data[i + 343] = 0x2C0A0007;	// cmpwi	r10, 7
 								break;
 						}
 					}
@@ -1694,7 +1695,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				
 				memcpy(timingTable, video_timing, sizeof(video_timing));
 				
-				if (swissSettings.gameVMode == 4)
+				if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 9)
 					memcpy(timingTable + 6, video_timing_1080i60, sizeof(video_timing_1080i60));
 				
 				if (j == 1 || j >= 4) {

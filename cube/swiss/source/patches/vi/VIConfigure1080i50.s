@@ -4,18 +4,25 @@
 
 .globl VIConfigure1080i50
 VIConfigure1080i50:
-	li			%r0, 4
+	li			%r0, 20
 	li			%r7, 1
 	li			%r6, 0
 	lhz			%r5, 8 (%r3)
 	slwi		%r5, %r5, 1
-	subfic		%r4, %r5, 576
-	cmpwi		%r5, 576
+	subic.		%r4, %r5, 480
+	ble			2f
+	li			%r0, 4
+	subic.		%r4, %r5, 576
+	ble			2f
+	li			%r0, 22
+	lhz			%r5, 8 (%r3)
+	cmpwi		%r5, 480
 	ble			1f
 	li			%r0, 6
-	lhz			%r5, 8 (%r3)
-	subfic		%r4, %r5, 540
-1:	srwi		%r4, %r4, 1
+1:	subic		%r4, %r5, 540
+2:	srawi		%r4, %r4, 1
+	addze		%r4, %r4
+	neg			%r4, %r4
 	sth			%r4, 12 (%r3)
 	sth			%r5, 16 (%r3)
 	stw			%r6, 20 (%r3)
