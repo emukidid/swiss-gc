@@ -150,32 +150,32 @@ void ogc_video__reset()
 			DrawFrameStart();
 			DrawMessageBox(D_INFO, "Video Mode: NTSC 480i");
 			DrawFrameFinish();
-			newmode = &TVNtsc480IntDf;
+			newmode = VIDEO_GetCurrentTvMode() == VI_MPAL ? &TVMpal480IntDf : &TVNtsc480IntDf;
 			break;
 		case 2:
 			DrawFrameStart();
 			DrawMessageBox(D_INFO, "Video Mode: NTSC 480sf");
 			DrawFrameFinish();
-			newmode = &TVNtsc480IntDf;
+			newmode = VIDEO_GetCurrentTvMode() == VI_MPAL ? &TVMpal480IntDf : &TVNtsc480IntDf;
 			break;
 		case 3:
 			DrawFrameStart();
 			DrawMessageBox(D_INFO, "Video Mode: NTSC 240p");
 			DrawFrameFinish();
-			newmode = &TVNtsc480IntDf;
+			newmode = VIDEO_GetCurrentTvMode() == VI_MPAL ? &TVMpal480IntDf : &TVNtsc480IntDf;
 			break;
 		case 4:
 			if(VIDEO_HaveComponentCable()) {
 				DrawFrameStart();
 				DrawMessageBox(D_INFO, "Video Mode: NTSC 1080i");
 				DrawFrameFinish();
-				newmode = &TVNtsc480IntDf;
+				newmode = VIDEO_GetCurrentTvMode() == VI_MPAL ? &TVMpal480IntDf : &TVNtsc480IntDf;
 			} else {
 				DrawFrameStart();
 				DrawMessageBox(D_WARN, "Video Mode: NTSC 480i");
 				DrawFrameFinish();
 				swissSettings.gameVMode = 1;
-				newmode = &TVNtsc480IntDf;
+				newmode = VIDEO_GetCurrentTvMode() == VI_MPAL ? &TVMpal480IntDf : &TVNtsc480IntDf;
 				sleep(5);
 			}
 			break;
@@ -184,13 +184,13 @@ void ogc_video__reset()
 				DrawFrameStart();
 				DrawMessageBox(D_INFO, "Video Mode: NTSC 480p");
 				DrawFrameFinish();
-				newmode = &TVNtsc480Prog;
+				newmode = VIDEO_GetCurrentTvMode() == VI_MPAL ? &TVMpal480Prog : &TVNtsc480Prog;
 			} else {
 				DrawFrameStart();
 				DrawMessageBox(D_WARN, "Video Mode: NTSC 240p");
 				DrawFrameFinish();
 				swissSettings.gameVMode = 3;
-				newmode = &TVNtsc480IntDf;
+				newmode = VIDEO_GetCurrentTvMode() == VI_MPAL ? &TVMpal480IntDf : &TVNtsc480IntDf;
 				sleep(5);
 			}
 			break;
