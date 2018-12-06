@@ -87,10 +87,14 @@ void print_gecko(const char* fmt, ...)
 	}
 }
 
+char *DiscIDNoNTSC[] = {"DLSP64", "G2MP01", "GLRD64", "GLRF64", "GLRP64", "GM8P01"};
 
 /* re-init video for a given game */
 void ogc_video__reset()
 {
+	char* gameID = (char*)&GCMDisk;
+	int i;
+	
 	if(swissSettings.forceEncoding == 0) {
 		if(GCMDisk.CountryCode == 'J')
 			swissSettings.forceEncoding = 2;
@@ -99,6 +103,10 @@ void ogc_video__reset()
 	}
 	
 	if(swissSettings.gameVMode == 0) {
+		if(swissSettings.uiVMode > 0) {
+			swissSettings.sram60Hz = (swissSettings.uiVMode >= 1) && (swissSettings.uiVMode <= 2);
+			swissSettings.sramProgressive = (swissSettings.uiVMode == 2) || (swissSettings.uiVMode == 4);
+		}
 		switch(GCMDisk.CountryCode) {
 			case 'P': // PAL
 			case 'D': // German
@@ -117,19 +125,26 @@ void ogc_video__reset()
 				swissSettings.gameVMode = -1;
 				break;
 		}
-		if(swissSettings.uiVMode > 0) {
-			syssram* sram = __SYS_LockSram();
-			sram->ntd = (swissSettings.uiVMode >= 1) && (swissSettings.uiVMode <= 2) ? (sram->ntd|0x40):(sram->ntd&~0x40);
-			sram->flags = (swissSettings.uiVMode == 2) || (swissSettings.uiVMode == 4) ? (sram->flags|0x80):(sram->flags&~0x80);
-			__SYS_UnlockSram(1);
-			while(!__SYS_SyncSram());
-		}
 	} else {
-		syssram* sram = __SYS_LockSram();
-		sram->ntd = (swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 5) ? (sram->ntd|0x40):(sram->ntd&~0x40);
-		sram->flags = (swissSettings.gameVMode == 5) || (swissSettings.gameVMode == 10) ? (sram->flags|0x80):(sram->flags&~0x80);
-		__SYS_UnlockSram(1);
-		while(!__SYS_SyncSram());
+		swissSettings.sram60Hz = (swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 5);
+		swissSettings.sramProgressive = (swissSettings.gameVMode == 5) || (swissSettings.gameVMode == 10);
+	}
+	
+	if(!strncmp(gameID, "GB3E51", 6) || (!strncmp(gameID, "G2OE41", 6) && swissSettings.sramLanguage == 3))
+		swissSettings.sramProgressive = 0;
+	
+	syssram* sram = __SYS_LockSram();
+	sram->ntd = swissSettings.sram60Hz ? (sram->ntd|0x40):(sram->ntd&~0x40);
+	sram->flags = swissSettings.sramProgressive ? (sram->flags|0x80):(sram->flags&~0x80);
+	__SYS_UnlockSram(1);
+	while(!__SYS_SyncSram());
+	
+	for(i = 0; i < sizeof(DiscIDNoNTSC)/sizeof(char*); i++) {
+		if(!strncmp(gameID, DiscIDNoNTSC[i], 6)) {
+			if(swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5)
+				swissSettings.gameVMode += 5;
+			break;
+		}
 	}
 	
 	/* set TV mode for current game */

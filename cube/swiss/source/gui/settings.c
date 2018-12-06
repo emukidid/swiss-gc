@@ -30,8 +30,10 @@ int settings_count_pp[3] = {8, 10, 10};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
-	swissSettings.sramStereo = sram->flags & 4;
+	swissSettings.sram60Hz = (sram->ntd >> 6) & 1;
 	swissSettings.sramLanguage = sram->lang;
+	swissSettings.sramProgressive = (sram->flags >> 7) & 1;
+	swissSettings.sramStereo = (sram->flags >> 2) & 1;
 	__SYS_UnlockSram(0);
 	sramex = __SYS_LockSramEx();
 	swissSettings.configDeviceId = sramex->__padding0;
@@ -153,7 +155,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 					swissSettings.sramLanguage = 5;
 			break;
 			case 1:
-				swissSettings.sramStereo ^= 4;
+				swissSettings.sramStereo ^= 1;
 			break;
 			case 2:
 				swissSettings.exiSpeed ^= 1;
@@ -372,8 +374,14 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 					vmode = newmode;
 				}
 				// Save settings to SRAM
+				if(swissSettings.uiVMode > 0) {
+					swissSettings.sram60Hz = (swissSettings.uiVMode >= 1) && (swissSettings.uiVMode <= 2);
+					swissSettings.sramProgressive = (swissSettings.uiVMode == 2) || (swissSettings.uiVMode == 4);
+				}
 				sram = __SYS_LockSram();
+				sram->ntd = swissSettings.sram60Hz ? (sram->ntd|0x40):(sram->ntd&~0x40);
 				sram->lang = swissSettings.sramLanguage;
+				sram->flags = swissSettings.sramProgressive ? (sram->flags|0x80):(sram->flags&~0x80);
 				sram->flags = swissSettings.sramStereo ? (sram->flags|0x04):(sram->flags&~0x04);
 				sram->flags = (swissSettings.sramVideo&0x03)|(sram->flags&~0x03);
 				__SYS_UnlockSram(1);

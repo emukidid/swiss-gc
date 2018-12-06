@@ -82,6 +82,8 @@ typedef struct {
 	int muteAudioStreaming;
 	int wiirdDebug;	// Enable WiiRD debug
 	int hideUnknownFileTypes;
+	int sram60Hz;
+	int sramProgressive;
 	int sramStereo;
 	int stopMotor;
 	int enableFileManagement;
