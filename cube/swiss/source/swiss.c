@@ -87,7 +87,7 @@ void print_gecko(const char* fmt, ...)
 	}
 }
 
-char *DiscIDNoNTSC[] = {"DLSP64", "G2MP01", "GLRD64", "GLRF64", "GLRP64", "GM8P01"};
+char *DiscIDNoNTSC[] = {"DLSP64", "G2MP01", "GLRD64", "GLRF64", "GLRP64", "GM8P01", "GSWD64", "GSWF64", "GSWI64", "GSWP64", "GSWS64", "GWZP01"};
 
 /* re-init video for a given game */
 void ogc_video__reset()

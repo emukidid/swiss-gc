@@ -1000,14 +1000,14 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 23,  7, 0, 0, 1, 5, NULL, 0, "getCurrentFieldEvenOdd B" }		// SN Systems ProDG
 	};
 	FuncPattern getTimingSigs[8] = {
-		{  29,  12,  2,  0,  7,  2, NULL, 0, "getTimingD A" },
-		{  39,  16,  2,  0, 12,  2, NULL, 0, "getTimingD B" },
-		{  11,   4,  0,  0,  0,  3, NULL, 0, "getTiming A" },
-		{  11,   4,  0,  0,  0,  3, NULL, 0, "getTiming B" },
-		{  11,   4,  0,  0,  0,  3, NULL, 0, "getTiming C" },
-		{  11,   5,  0,  0,  0,  2, NULL, 0, "getTiming D" },
-		{ 558, 112, 44, 14, 53, 48, NULL, 0, "getTiming E" },			// SN Systems ProDG
-		{  11,   5,  0,  0,  0,  2, NULL, 0, "getTiming F" }
+		{  29,  12,  2,  0,  7,  2,           NULL,                     0, "getTimingD A" },
+		{  39,  16,  2,  0, 12,  2, getTimingPatch, getTimingPatch_length, "getTimingD B" },
+		{  11,   4,  0,  0,  0,  3,           NULL,                     0, "getTiming A" },
+		{  11,   4,  0,  0,  0,  3,           NULL,                     0, "getTiming B" },
+		{  11,   4,  0,  0,  0,  3, getTimingPatch, getTimingPatch_length, "getTiming C" },
+		{  11,   5,  0,  0,  0,  2,           NULL,                     0, "getTiming D" },
+		{ 558, 112, 44, 14, 53, 48,           NULL,                     0, "getTiming E" },	// SN Systems ProDG
+		{  11,   5,  0,  0,  0,  2,           NULL,                     0, "getTiming F" }
 	};
 	FuncPattern AdjustPositionSig = 
 		{ 134, 9, 1, 0, 17, 47, NULL, 0, "AdjustPositionD" };
@@ -1678,15 +1678,15 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				if (j == 6) {
 					timingTableAddr = (data[i +   5] << 16) + (s16)data[i +   7];
 					jumpTableAddr   = (data[i + 147] << 16) + (s16)data[i + 149];
-					k = (u16)data[i + 144];
+					k = (u16)data[i + 144] + 1;
 				} else if (j >= 2) {
 					timingTableAddr = (data[i + 1] << 16) + (s16)data[i + 2];
 					jumpTableAddr   = (data[i + 4] << 16) + (s16)data[i + 5];
-					k = (u16)data[i];
+					k = (u16)data[i] + 1;
 				} else {
 					timingTableAddr = (data[i + 2] << 16) + (s16)data[i + 3];
 					jumpTableAddr   = (data[i + 6] << 16) + (s16)data[i + 7];
-					k = (u16)data[i + 4];
+					k = (u16)data[i + 4] + 1;
 				}
 				if (j > 4) timingTableAddr += 68;
 				
@@ -1717,8 +1717,20 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					jumpTable[2] = jumpTable[6];
 					jumpTable[6] = jump;
 				}
-				if (k >= 10) jumpTable[10] = jumpTable[2];
-				if (k >= 22) jumpTable[22] = jumpTable[2];
+				if (k > 10) jumpTable[10] = jumpTable[2];
+				if (k > 22) jumpTable[22] = jumpTable[2];
+				
+				if (getTimingSigs[j].Patch) {
+					memset(jumpTable, 0, k * sizeof(u32));
+					memset(data + i, 0, getTimingSigs[j].Length * sizeof(u32));
+					memcpy(data + i, getTimingSigs[j].Patch, getTimingSigs[j].PatchLength);
+					
+					data[i + 1] |= ((u32)getTiming + getTimingSigs[j].PatchLength + 0x8000) >> 16;
+					data[i + 2] |= ((u32)getTiming + getTimingSigs[j].PatchLength) & 0xFFFF;
+					
+					for (k = 6; k < getTimingSigs[j].PatchLength / sizeof(u32); k++)
+						data[i + k] += timingTableAddr;
+				}
 				break;
 			}
 		}

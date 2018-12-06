@@ -60,6 +60,8 @@ extern u8 MTXOrthoHook[];
 extern u32 MTXOrthoHook_length;
 extern u8 MTXPerspectiveHook[];
 extern u32 MTXPerspectiveHook_length;
+extern u8 getTimingPatch[];
+extern u32 getTimingPatch_length;
 extern u8 VIConfigure240p[];
 extern u32 VIConfigure240p_length;
 extern u8 VIConfigure288p[];
