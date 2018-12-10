@@ -87,7 +87,7 @@ void print_gecko(const char* fmt, ...)
 	}
 }
 
-char *DiscIDNoNTSC[] = {"DLSP64", "G2MP01", "GLRD64", "GLRF64", "GLRP64", "GM8P01", "GSWD64", "GSWF64", "GSWI64", "GSWP64", "GSWS64", "GWZP01"};
+char *DiscIDNoNTSC[] = {"DLSP64", "G2MP01", "GLRD64", "GLRF64", "GLRP64", "GM8P01", "GSWD64", "GSWF64", "GSWI64", "GSWP64", "GSWS64"};
 
 /* re-init video for a given game */
 void ogc_video__reset()
@@ -800,7 +800,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 
 	do_videomode_swap();
 	VIDEO_SetPostRetraceCallback (NULL);
-	*(volatile u32*)0x800000CC = VIDEO_GetCurrentTvMode();
+	*(vu32*)VAR_TVMODE = VIDEO_GetCurrentTvMode();
 	DCFlushRange((void*)0x80000000, 0x3100);
 	ICInvalidateRange((void*)0x80000000, 0x3100);
 	

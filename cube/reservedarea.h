@@ -11,6 +11,7 @@
 #ifdef _LANGUAGE_ASSEMBLY
 #include "asm.h"
 .set VAR_AREA,				0x8000
+.set VAR_TVMODE,			0x00CC	# TV format
 .set VAR_FILENAME_LEN,		0x0E00	# filename length
 .set VAR_FILENAME,			0x0E01	# filename
 .set VAR_CLIENT_MAC,		0x0EEC	# client MAC address
@@ -92,6 +93,7 @@
 #else
 
 #define VAR_AREA			(0x80000000)
+#define VAR_TVMODE			(VAR_AREA+0x00CC)	// TV format
 #define VAR_FILENAME_LEN	(VAR_AREA+0x0E00)	// filename length
 #define VAR_FILENAME		(VAR_AREA+0x0E01)	// filename
 #define VAR_CLIENT_MAC		(VAR_AREA+0x0EEC)	// client MAC address
