@@ -115,7 +115,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawAddChild(page, DrawStyledLabel(30, 110, "Force Video Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
 		DrawAddChild(page, DrawSelectableButton(480, 110, -1, 135, gameVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 140, "Force Horizontal Scale:", 1.0f, false, file != NULL && swissSettings.gameVMode > 0 ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 140, -1, 165, forceHScaleStr[swissSettings.forceHScale], option == 1 ? B_SELECTED:B_NOSELECT);
+		DrawAddChild(page, DrawSelectableButton(480, 140, -1, 165, forceHScaleStr[swissSettings.forceHScale], option == 1 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 170, "Force Vertical Offset:", 1.0f, false, file != NULL && swissSettings.gameVMode > 0 ? defaultColor : disabledColor));
 		sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
 		DrawAddChild(page, DrawSelectableButton(480, 170, -1, 195, forceVOffsetStr, option == 2 ? B_SELECTED:B_NOSELECT));
