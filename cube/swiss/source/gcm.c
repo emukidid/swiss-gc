@@ -170,9 +170,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		// Calc size
 		devices[DEVICE_CUR]->seekFile(file,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
-			DrawFrameStart();
-			DrawMessageBox(D_FAIL, "Failed to read Main DOL Header");
-			DrawFrameFinish();
+			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Main DOL Header"));
 			while(1);
 		}
 		for (i = 0; i < MAXTEXTSECTION; i++) {
@@ -194,9 +192,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		u32 appldr_info[2];
 		devices[DEVICE_CUR]->seekFile(file,0x2454,DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(file,&appldr_info,8) != 8) {
-			DrawFrameStart();
-			DrawMessageBox(D_FAIL, "Failed to read Apploader info");
-			DrawFrameFinish();
+			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Apploader info"));
 			while(1);
 		}
 		filesToPatch[numFiles].size = appldr_info[1];
@@ -325,10 +321,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 	}
 		
 	if(devices[DEVICE_PATCHES] == NULL) {
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL, "No writable device present\nA SD Gecko must be inserted in\n order to utilise patches for this game.");
-		DrawFrameFinish();
+		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "No writable device present\nA SD Gecko must be inserted in\n order to utilise patches for this game."));
 		sleep(5);
+		DrawDispose(msgBox);
 		return 0;
 	}
 
@@ -348,9 +343,6 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		u32 patched = 0, crc32 = 0;
 
 		sprintf(txtbuffer, "Patching File %i/%i",i+1,numToPatch);
-		DrawFrameStart();
-		DrawProgressBar((int)(((float)(i+1)/(float)numToPatch)*100), txtbuffer);
-		DrawFrameFinish();
 			
 		// Round up to 32 bytes
 		if(filesToPatch[i].size % 0x20) {
@@ -365,6 +357,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		if(strstr(filesToPatch[i].name, "iwanagaD.dol") || strstr(filesToPatch[i].name, "switcherD.dol")) {
 			continue;	// skip unused PSO files
 		}
+		uiDrawObj_t* progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
 		int sizeToRead = filesToPatch[i].size, ret = 0;
 		void *buffer = memalign(32, sizeToRead);
 		
@@ -372,20 +365,20 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		ret = devices[DEVICE_CUR]->readFile(file,buffer,sizeToRead);
 		print_gecko("Read from %08X Size %08X - Result: %08X\r\n", filesToPatch[i].offset, sizeToRead, ret);
 		if(ret != sizeToRead) {
-			DrawFrameStart();
-			DrawMessageBox(D_FAIL, "Failed to read!");
-			DrawFrameFinish();
+			DrawDispose(progBox);			
+			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to read!"));
 			sleep(5);
+			DrawDispose(msgBox);
 			return 0;
 		}
 		
 		if(devices[DEVICE_CUR] != &__device_dvd && devices[DEVICE_CUR] != &__device_wkf) {
 			ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
 			if(READ_PATCHED_ALL != ret)	{
-				DrawFrameStart();
-				DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
-				DrawFrameFinish();
+				DrawDispose(progBox);	
+				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!"));
 				sleep(5);
+				DrawDispose(msgBox);
 			}
 			else
 				patched += 1;
@@ -430,6 +423,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 				deviceHandler_setStatEnabled(0);
 				if(!devices[DEVICE_PATCHES]->init(devices[DEVICE_PATCHES]->initial)) {
 					deviceHandler_setStatEnabled(1);
+					DrawDispose(progBox);
 					return false;
 				}
 				deviceHandler_setStatEnabled(1);
@@ -467,6 +461,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 					free(buffer);
 					print_gecko("CRC matched, no need to patch again\r\n");
+					DrawDispose(progBox);
 					continue;
 				}
 				else {
@@ -485,6 +480,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			devices[DEVICE_PATCHES]->writeFile(&patchFile, &crc32, 4);
 			devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			num_patched++;
+			DrawDispose(progBox);
 		}
 		free(buffer);
 	}
@@ -492,9 +488,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 	return num_patched;
 }
 
-u32 calc_fst_entries_size(char *FST) {
+u64 calc_fst_entries_size(char *FST) {
 	
-	u32 totalSize = 0;
+	u64 totalSize = 0LL;
 	u32 entries=*(unsigned int*)&FST[8];
 	int i;
 	for (i=1;i<entries;i++)	// go through every entry
@@ -507,7 +503,7 @@ u32 calc_fst_entries_size(char *FST) {
 }
 
 // Returns the number of filesToPatch and fills out the filesToPatch array passed in (pre-allocated)
-int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
+int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 
 	print_gecko("Read dir for directory: %s\r\n",file->name);
 	DiskHeader header;
@@ -531,7 +527,7 @@ int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
 	if(usedSpace) *usedSpace = calc_fst_entries_size(FST);
 		
 	// Add the disc itself as a "file"
-	*dir = malloc( numFiles * sizeof(file_handle) );
+	*dir = calloc( numFiles * sizeof(file_handle), 1 );
 	DVD_Read((*dir)[idx].name, 32, 128);
 	strcat((*dir)[idx].name, ".gcm");
 	(*dir)[idx].fileBase = 0;
@@ -569,6 +565,7 @@ int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
 			++numFiles;
 			*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
 		}
+		memset(&(*dir)[idx], 0, sizeof(file_handle));
 		sprintf((*dir)[idx].name, "%s/..", file->name);
 		(*dir)[idx].fileBase = *(u32*)&FST[(parent_dir_offset*0x0C)+4];
 		(*dir)[idx].offset = 0;
@@ -599,6 +596,7 @@ int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
 					++numFiles;
 					*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
 				}
+				memset(&(*dir)[idx], 0, sizeof(file_handle));
 				memcpy((*dir)[idx].name, &filename[0], PATHNAME_MAX);
 				(*dir)[idx].fileBase = i;
 				(*dir)[idx].offset = 0;
@@ -617,6 +615,7 @@ int read_fst(file_handle *file, file_handle** dir, u32 *usedSpace) {
 				++numFiles;
 				*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
 			}
+			memset(&(*dir)[idx], 0, sizeof(file_handle));
 			memcpy((*dir)[idx].name, &filename[0], PATHNAME_MAX);
 			(*dir)[idx].fileBase = file_offset;
 			(*dir)[idx].offset = 0;

@@ -49,6 +49,18 @@ int getEnabledCheatsSize(void) {
 	return size;
 }
 
+int getEnabledCheatsCount(void) {
+	int i = 0, enabled = 0;
+	for(i = 0; i < _cheats.num_cheats; i++) {
+		CheatEntry *cheat = &_cheats.cheat[i];
+		if(cheat->enabled) {
+			enabled++;
+		}
+	}
+	//print_gecko("Size of cheats: %i\r\n", size);
+	return enabled;
+}
+
 static char *validCodeValues = "0123456789AaBbCcDdEeFf";
 // Checks that the line contains a valid code in the format of "01234567 89ABCDEF"
 int isValidCode(char *code) {
@@ -203,35 +215,47 @@ int findCheats(bool silent) {
 	// Check SD in both slots if we're not already running from SD, or if we fail from current device
 	if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 		// Try SD slots now
-		devices[DEVICE_TEMP] = &__device_sd_a;
+		if(devices[DEVICE_CUR] != &__device_sd_a) {
+			devices[DEVICE_TEMP] = &__device_sd_a;
+		}
+		else {
+			devices[DEVICE_TEMP] = &__device_sd_b;
+		}
 		file_handle *slotFile = devices[DEVICE_TEMP]->initial;
 		memset(cheatsFile, 0, sizeof(file_handle));
 		sprintf(cheatsFile->name, "%s/cheats/%s.txt", slotFile->name, trimmedGameId);
 		print_gecko("Looking for cheats file @ [%s]\r\n", cheatsFile->name);
 
+		deviceHandler_setStatEnabled(0);
 		devices[DEVICE_TEMP]->init(cheatsFile);
 		if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
-			devices[DEVICE_TEMP] = &__device_sd_b;
-			slotFile = devices[DEVICE_TEMP]->initial;
-			memset(cheatsFile, 0, sizeof(file_handle));
-			sprintf(cheatsFile->name, "%s/cheats/%s.txt", slotFile->name, trimmedGameId);
-			print_gecko("Looking for cheats file @[%s]\r\n", cheatsFile->name);
+			if(devices[DEVICE_TEMP] == &__device_sd_b) {
+				devices[DEVICE_TEMP] = NULL;	// We already tried this & failed.
+			}
+			else {
+				devices[DEVICE_TEMP] = &__device_sd_b;
+				slotFile = devices[DEVICE_TEMP]->initial;
+				memset(cheatsFile, 0, sizeof(file_handle));
+				sprintf(cheatsFile->name, "%s/cheats/%s.txt", slotFile->name, trimmedGameId);
+				print_gecko("Looking for cheats file @[%s]\r\n", cheatsFile->name);
 
-			devices[DEVICE_TEMP]->init(cheatsFile);
-			if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
-				devices[DEVICE_TEMP] = NULL;
+				devices[DEVICE_TEMP]->init(cheatsFile);
+				if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
+					devices[DEVICE_TEMP] = NULL;
+				}
 			}
 		}
+		deviceHandler_setStatEnabled(1);
 	}
 	// Still fail?
 	if(devices[DEVICE_TEMP] == NULL) {
 		if(!silent) {
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"No cheats file found.\nPress A to continue.");
-			DrawFrameFinish();
+			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"No cheats file found.\nPress A to continue.");
+			DrawPublish(msgBox);
 			while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+			DrawDispose(msgBox);
 		}
 		free(cheatsFile);
 		return 0;

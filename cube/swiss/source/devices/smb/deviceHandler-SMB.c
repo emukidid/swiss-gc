@@ -28,6 +28,7 @@
 #include <smb.h>
 #include <sys/dir.h>
 #include <sys/statvfs.h>
+#include <sys/stat.h>
 #include <fat.h>
 #include "swiss.h"
 #include "main.h"
@@ -66,13 +67,11 @@ device_info* deviceHandler_SMB_info() {
 void readDeviceInfoSMB() {
 	struct statvfs buf;
 	memset(&buf, 0, sizeof(statvfs));
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,"Reading filesystem info for smb:/");
-	DrawFrameFinish();
-	
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading filesystem info for smb:/"));
 	int res = statvfs("smb:/", &buf);
 	initial_SMB_info.freeSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_bfree)/1024LL):0;
 	initial_SMB_info.totalSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_blocks)/1024LL):0;
+	DrawDispose(msgBox);
 }
 	
 // Connect to the share specified in settings.cfg
@@ -97,31 +96,31 @@ s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){
    
 	// We need at least a share name and ip addr in the settings filled out
 	if(!strlen(&swissSettings.smbShare[0]) || !strlen(&swissSettings.smbServerIp[0])) {
-		DrawFrameStart();
 		sprintf(txtbuffer, "Check Samba Configuration");
-		DrawMessageBox(D_FAIL,txtbuffer);
-		DrawFrameFinish();
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+		DrawPublish(msgBox);
 		wait_press_A();
+		DrawDispose(msgBox);
 		return SMB_SMBCFGERR;
 	}
 
 	if(!net_initialized) {       //Init if we have to
-		DrawFrameStart();
 		sprintf(txtbuffer, "Network has not been initialised");
-		DrawMessageBox(D_FAIL,txtbuffer);
-		DrawFrameFinish();
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+		DrawPublish(msgBox);
 		wait_press_A();
+		DrawDispose(msgBox);
 		return SMB_NETINITERR;
 	} 
 
 	if(!smb_initialized) {       //Connect to the share
 		init_samba();
 		if(!smb_initialized) {
-			DrawFrameStart();
 			sprintf(txtbuffer, "Error initialising Samba");
-			DrawMessageBox(D_FAIL,txtbuffer);
-			DrawFrameFinish();
+			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+			DrawPublish(msgBox);
 			wait_press_A();
+			DrawDispose(msgBox);
 			return SMB_SMBERR; //fail
 		}
 		readDeviceInfoSMB();

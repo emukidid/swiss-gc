@@ -18,31 +18,30 @@ s32 mp3Reader(void *cbdata, void *dst, s32 size) {
 	return ret;
 }
 
-void updatescreen_mp3(file_handle *file, int state, int numFiles, int curMP3) {
-	DrawFrameStart();
-	DrawEmptyBox(10,100, vmode->fbWidth-10, 400, COLOR_BLACK);
+uiDrawObj_t* updatescreen_mp3(file_handle *file, int state, int numFiles, int curMP3) {
+	uiDrawObj_t* player = DrawEmptyBox(10,100, vmode->fbWidth-10, 400);
 	sprintf(txtbuffer, "%s -  Volume (%i%%)", (state == PLAYER_PAUSE ? "Paused":"Playing"), (int)(((float)volume/(float)255)*100));
-	WriteFontStyled(640/2, 130, txtbuffer, 1.0f, true, defaultColor);
+	DrawAddChild(player, DrawStyledLabel(640/2, 130, txtbuffer, 1.0f, true, defaultColor));
 	sprintf(txtbuffer, "(%i/%i) %s",curMP3, numFiles,getRelativeName(file->name));
 	float scale = GetTextScaleToFitInWidth(txtbuffer, vmode->fbWidth-10-10);
-	WriteFontStyled(640/2, 160, txtbuffer, scale, true, defaultColor);
+	DrawAddChild(player, DrawStyledLabel(640/2, 160, txtbuffer, scale, true, defaultColor));
 	memset(txtbuffer, 0, 256);
 	sprintf(txtbuffer, "------------------------------");
 	float percentPlayed = (float)(((float)file->offset / (float)file->size) * 30);
 	txtbuffer[(int)percentPlayed] = '*';
-	WriteFontStyled(640/2, 210, txtbuffer, 1.0f, true, defaultColor);
-	WriteFontStyled(640/2, 300, "(<-) Rewind (->) Forward (X) Vol+ (Y) Vol-", 1.0f, true, defaultColor);
-	WriteFontStyled(640/2, 330, "(B) Stop (L) Prev (R) Next (Start) Pause", 1.0f, true, defaultColor);
+	DrawAddChild(player, DrawStyledLabel(640/2, 210, txtbuffer, 1.0f, true, defaultColor));
+	DrawAddChild(player, DrawStyledLabel(640/2, 300, "(<-) Rewind (->) Forward (X) Vol+ (Y) Vol-", 1.0f, true, defaultColor));
+	DrawAddChild(player, DrawStyledLabel(640/2, 330, "(B) Stop (L) Prev (R) Next (Start) Pause", 1.0f, true, defaultColor));
 	sprintf(txtbuffer, "Shuffle is currently %s press (Z) to toggle", (useShuffle ? "on":"off"));
-	WriteFontStyled(640/2, 360, txtbuffer, 1.0f, true, defaultColor);
-	DrawFrameFinish();	
-	VIDEO_WaitVSync();
+	DrawAddChild(player, DrawStyledLabel(640/2, 360, txtbuffer, 1.0f, true, defaultColor));
+	return player;
 }
 
 int play_mp3(file_handle *file, int numFiles, int curMP3) {
 	int ret = PLAYER_NEXT;
 	file->offset = 0;
 	MP3Player_PlayFile(file, &mp3Reader, NULL);
+	uiDrawObj_t* player = NULL;
 	while(MP3Player_IsPlaying() || ret == PLAYER_PAUSE ) {
 	
 		u32 buttons = PAD_ButtonsHeld(0);
@@ -99,9 +98,16 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 			while((PAD_ButtonsHeld(0) & PAD_TRIGGER_Z)){VIDEO_WaitVSync();};
 			useShuffle ^=1;
 		}
-		updatescreen_mp3(file, ret, numFiles, curMP3);
+		uiDrawObj_t* display = updatescreen_mp3(file, ret, numFiles, curMP3);
+		if(player != NULL) {
+			DrawDispose(player);
+		}
+		DrawPublish(display);
+		player = display;
 		usleep(5000);
 	}
+	if(player != NULL)
+		DrawDispose(player);
 	return ret;
 }
 

@@ -49,9 +49,7 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 		strcpy((*dir)[0].name, "..");
 	}
 	
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,"Read directory!");
-	DrawFrameFinish();
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading directory"));
 	// Read each entry of the directory
 	s32 res = usbgecko_open_dir(&ffile->name[0]);
 	if(!res) return -1;
@@ -70,8 +68,8 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 		(*dir)[i].fileAttrib	= entry->fileAttrib;
 		++i;
 	}
-	
-  return num_entries;
+	DrawDispose(msgBox);
+	return num_entries;
 }
 
 s32 deviceHandler_USBGecko_seekFile(file_handle* file, s32 where, s32 type){
@@ -112,15 +110,12 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2) {
 }
 
 s32 deviceHandler_USBGecko_init(file_handle* file) {
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,"Looking for USBGecko in Slot B");
-	DrawFrameFinish();
+	s32 success = 0;
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Looking for USBGecko in Slot B"));
 	if(usb_isgeckoalive(1)) {
 		s32 retries = 1000;
-		
-		DrawFrameStart();
-		DrawMessageBox(D_INFO,"Waiting for PC ...");
-		DrawFrameFinish();
+		DrawDispose(msgBox);
+		msgBox = DrawPublish(DrawProgressBar(true, 0, "Waiting for PC ..."));
 		
 		usb_flush(1);
 		usbgecko_lock_file(0);
@@ -129,23 +124,15 @@ s32 deviceHandler_USBGecko_init(file_handle* file) {
 			VIDEO_WaitVSync();
 			retries--;
 		}
-		if(!retries) {
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Couldn't find PC!");
-			DrawFrameFinish();
+		success = retries > 1 ? 1 : 0;
+		if(!success) {
+			DrawDispose(msgBox);
+			msgBox = DrawPublish(DrawMessageBox(D_INFO,"Couldn't find PC!"));
 			sleep(5);
-			return 0;	// Didn't find the PC
-		}
-		else {
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"Found PC !!");
-			DrawFrameFinish();
-			return 1;
 		}
 	}
-	else {
-		return 0;
-	}
+	DrawDispose(msgBox);
+	return success;
 }
 
 s32 deviceHandler_USBGecko_deinit(file_handle* file) {

@@ -14,6 +14,7 @@
 #include "gcm.h"
 #include <sdcard/card_cmn.h>
 #include "deviceHandler.h"
+#include "gui/FrameBufferMagic.h"
 
 #define in_range(x, a, b) (((x) >= (a)) && ((x) < (b)))
 
@@ -47,12 +48,11 @@ extern u32 __SYS_UnlockSramEx(u32 write);
 
 extern char *getVideoString();
 void print_gecko(const char* fmt, ...);
-extern void doBackdrop();
 extern char *getRelativeName(char *str);
-extern void renderFileBrowser(file_handle** directory, int num_files);
+extern uiDrawObj_t * renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t *container);
 
 extern void boot_dol();
-extern void manage_file();
+extern bool manage_file();
 extern void load_file();
 extern int check_game();
 extern int cheats_game();
@@ -60,7 +60,7 @@ extern void install_game();
 extern int info_game();
 extern void settings();
 extern void credits();
-extern void drawFiles(file_handle** directory, int num_files);
+extern void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *container);
 
 extern void select_speed();
 extern int select_slot();

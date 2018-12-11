@@ -15,16 +15,16 @@
 #include <gcm.h>
 #include <main.h>
 #include <ogc/lwp_heap.h>
-#include "banner.h"
 #include "dvd.h"
+#include "filemeta.h"
 #include "swiss.h"
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
 
-// Banner is 96 cols * 32 lines in RGB5A3 fmt
-#define BannerSize (96*32*2)
+//this is the blank banner that will be shown if no banner is found on a disc
+extern char blankbanner[];
 
-#define NUM_META_MAX (32)
+#define NUM_META_MAX (512)
 #define META_CACHE_SIZE (sizeof(file_meta) * NUM_META_MAX)
 
 static heap_cntrl* meta_cache = NULL;

@@ -132,9 +132,7 @@ char *dvd_error_str()
 
 int initialize_disc(u32 streaming) {
 	int patched = NORMAL_MODE;
-	DrawFrameStart();
-	DrawProgressBar(33, "DVD Is Initializing");
-	DrawFrameFinish();
+	uiDrawObj_t* progBar = DrawPublish(DrawProgressBar(true, 0, "DVD Is Initializing"));
 	if(is_gamecube())
 	{
 		// Reset WKF hard to allow for a real disc to be read if SD is removed
@@ -145,16 +143,14 @@ int initialize_disc(u32 streaming) {
 			wkfDetected = 1;
 		}
 
-		DrawFrameStart();
-		DrawProgressBar(40, "Resetting DVD drive - Detect Media");
-		DrawFrameFinish();
+		DrawDispose(progBar);
+		progBar = DrawPublish(DrawProgressBar(true, 0, "Resetting DVD drive - Detect Media"));
 		dvd_reset();
 		dvd_read_id();
 		// Avoid lid open scenario
 		if((dvd_get_error()>>24) && (dvd_get_error()>>24 != 1)) {
-			DrawFrameStart();
-			DrawProgressBar(75, "Possible DVD Backup - Enabling Patches");
-			DrawFrameFinish();
+			DrawDispose(progBar);
+			progBar = DrawPublish(DrawProgressBar(true, 0, "Possible DVD Backup - Enabling Patches"));
 			dvd_enable_patches();
 			if(!dvd_get_error()) {
 				patched=DEBUG_MODE;
@@ -162,11 +158,12 @@ int initialize_disc(u32 streaming) {
 			}
 		}
 		else if((dvd_get_error()>>24) == 1) {  // Lid is open, tell the user!
-			DrawFrameStart();
+			DrawDispose(progBar);
 			sprintf(txtbuffer, "Error %s. Press A.",dvd_error_str());
-			DrawMessageBox(D_FAIL, txtbuffer);
-			DrawFrameFinish();
+			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, txtbuffer);
+			DrawPublish(msgBox);
 			wait_press_A();
+			DrawDispose(msgBox);
 			return DRV_ERROR;
 		}
 		if((streaming == ENABLE_AUDIO) || (streaming == DISABLE_AUDIO)) {
@@ -188,17 +185,15 @@ int initialize_disc(u32 streaming) {
 	}
 	dvd_read_id();
 	if(dvd_get_error()) { //no disc, or no game id.
-		DrawFrameStart();
 		sprintf(txtbuffer, "Error: %s",dvd_error_str());
-		DrawMessageBox(D_FAIL, txtbuffer);
-		DrawFrameFinish();
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, txtbuffer);
+		DrawPublish(msgBox);
 		wait_press_A();
 		dvd_reset();	// for good measure
+		DrawDispose(msgBox);
 		return DRV_ERROR;
 	}
-	DrawFrameStart();
-	DrawProgressBar(100, "Initialization Complete");
-	DrawFrameFinish();
+	DrawDispose(progBar);
 	return patched;
 }
 
@@ -256,7 +251,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	unsigned int  *tmpTable = NULL;
 	char *tmpName  = NULL;
 	u64 tmpOffset = 0LL;
-	u32 usedSpace = 0;
+	u64 usedSpace = 0LL;
 
 	int num_entries = 0, ret = 0, num = 0;
 	
@@ -297,19 +292,22 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		}
 
 		if(num_entries <= 0) { return num_entries; }
-
 		// malloc the directory structure
-		*dir = malloc( num_entries * sizeof(file_handle) );
+		*dir = calloc( num_entries * sizeof(file_handle), 1 );
 
 		// parse entries
+		u64 lastOffset = MULTIGAME_TABLE_OFFSET;
 		for(i = 0; i < MAX_MULTIGAME; i++) {
 			tmpOffset = (dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC) ? (tmpTable[i]<<2):(tmpTable[i]);
+			if(num >= 1 && tmpOffset) {
+				(*dir)[num-1].size = tmpOffset - (*dir)[num-1].fileBase;
+			}
 			if((tmpOffset) && (tmpOffset%(isGC?0x8000:0x20000)==0) && (tmpOffset<(isGC?DISC_SIZE:WII_D9_SIZE))) {
 				DVD_Read(&tmpName[0],tmpOffset+32, 512);
 				sprintf( (*dir)[num].name,"%s.gcm", &tmpName[0] );
 				(*dir)[num].fileBase = tmpOffset;
 				(*dir)[num].offset = 0;
-				(*dir)[num].size   = DISC_SIZE;
+				(*dir)[num].size   = (isGC?DISC_SIZE:WII_D9_SIZE)-tmpOffset;
 				(*dir)[num].fileAttrib	 = IS_FILE;
 				(*dir)[num].meta = 0;
 				(*dir)[num].status = OFFSET_NOTSET;
@@ -318,6 +316,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			free(tmpTable);
 			free(tmpName);
 		}
+		usedSpace = (isGC?DISC_SIZE:WII_D9_SIZE);
 	}
 	else if((dvdDiscTypeInt == GAMECUBE_DISC) || (dvdDiscTypeInt == MULTIDISC_DISC)) {
 		// TODO: BCA entry (dump from drive RAM on a GC, dump via BCA command on Wii)
@@ -330,7 +329,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		// If it was not successful, just return the error
 		if(num_entries <= 0) return -1;
 		// Convert the DVD "file" data to fileBrowser_files
-		*dir = malloc( num_entries * sizeof(file_handle) );
+		*dir = calloc( num_entries * sizeof(file_handle), 1);
 		int i;
 		for(i=0; i<num_entries; ++i){
 			strcpy( (*dir)[i].name, DVDToc->file[i].name );
@@ -353,7 +352,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			strcpy( (*dir)[0].name, ".." );
 	}
 	usedSpace >>= 10;
-	initial_DVD_info.freeSpaceInKB = initial_DVD_info.totalSpaceInKB - usedSpace;
+	initial_DVD_info.freeSpaceInKB = initial_DVD_info.totalSpaceInKB - (u32)(usedSpace & 0xFFFFFFFF);
 	return num_entries;
 }
 
@@ -387,9 +386,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 		devices[DEVICE_CUR]->readFile(file,(unsigned char*)0x80000000,32);
 		char streaming = *(char*)0x80000008;
 		if(streaming && !isXenoGC) {
-			DrawFrameStart();
-			DrawMessageBox(D_INFO,"One moment, setting up audio streaming.");
-			DrawFrameFinish();
+			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "One moment, setting up audio streaming."));
 			dvd_motor_off();
 			print_gecko("Set extension %08X\r\n",dvd_get_error());
 			dvd_setextension();
@@ -403,7 +400,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 			dvd_read_id();
 			print_gecko("Read ID %08X\r\n",dvd_get_error());
 			dvd_set_streaming(streaming);
-			
+			DrawDispose(msgBox);
 		}
 		dvd_set_offset(file->fileBase);
 		file->status = OFFSET_SET;
@@ -484,10 +481,10 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 s32 deviceHandler_DVD_init(file_handle* file){
   file->status = initialize_disc(ENABLE_BYDISK);
   if(file->status == DRV_ERROR){
-	  DrawFrameStart();
-	  DrawMessageBox(D_FAIL,"Failed to mount DVD. Press A");
-	  DrawFrameFinish();
+	  uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"Failed to mount DVD. Press A");
+	  DrawPublish(msgBox);
 	  wait_press_A();
+	  DrawDispose(msgBox);
 	  return file->status;
   }
   dvd_init=1;

@@ -48,6 +48,7 @@ typedef struct {
 	FILE *fp;				// file pointer
 	int32_t metaptr; // not used in usbgecko server side
 	uint8_t other[128]; // not used in usbgecko server side
+	uint32_t uiObj;	// not used
 } file_handle;
 
 typedef struct {

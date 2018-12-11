@@ -36,10 +36,10 @@ device_info initial_WODE_info = {
 	
 int startupWode() {
 	if(OpenWode() == 0) {
-		DrawFrameStart();
-		DrawMessageBox(D_FAIL,"No Wode found! Press A");
-		DrawFrameFinish();
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"No Wode found! Press A");
+		DrawPublish(msgBox);
 		wait_press_A();
+		DrawDispose(msgBox);
 		return -1;
 	}
 	return 0;
@@ -52,9 +52,7 @@ device_info* deviceHandler_WODE_info() {
 s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){	
 
 	if(!wodeInited) return 0;
-	DrawFrameStart();
-	DrawMessageBox(D_INFO,"Reading WODE");
-	DrawFrameFinish();
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading WODE"));
 	
 	//we don't care about partitions, just files!
 	while(!GetTotalISOs()) {
@@ -83,6 +81,7 @@ s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			}
 		}
 	}
+	DrawDispose(msgBox);
 	initial_WODE_info.totalSpaceInKB = num_entries;
 	return num_entries;
 }
