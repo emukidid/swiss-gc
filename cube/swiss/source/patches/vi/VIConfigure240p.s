@@ -15,7 +15,8 @@ VIConfigure240p:
 	bne			2f
 	stw			%r5, VAR_TVMODE (%r4)
 1:	insrwi		%r0, %r5, 30, 0
-2:	li			%r7, 0
+2:	stw			%r3, VAR_RMODE (%r4)
+	li			%r7, 0
 	li			%r6, 0
 	lhz			%r5, 8 (%r3)
 	slwi		%r5, %r5, 1

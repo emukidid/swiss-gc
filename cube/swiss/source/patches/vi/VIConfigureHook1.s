@@ -2,8 +2,8 @@
 #define _LANGUAGE_ASSEMBLY
 #include "../../../../reservedarea.h"
 
-.globl VIConfigureHook
-VIConfigureHook:
+.globl VIConfigureHook1
+VIConfigureHook1:
 	lis			%r4, VAR_AREA
 	lhz			%r5, VAR_SAR_WIDTH (%r4)
 	lbz			%r6, VAR_SAR_HEIGHT (%r4)
@@ -20,6 +20,6 @@ VIConfigureHook:
 	sth			%r9, 10 (%r3)
 	sth			%r8, 14 (%r3)
 
-.globl VIConfigureHook_length
-VIConfigureHook_length:
-.long (VIConfigureHook_length - VIConfigureHook)
+.globl VIConfigureHook1_length
+VIConfigureHook1_length:
+.long (VIConfigureHook1_length - VIConfigureHook1)

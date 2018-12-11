@@ -78,8 +78,10 @@ extern u8 VIConfigure1080i50[];
 extern u32 VIConfigure1080i50_length;
 extern u8 VIConfigure1080i60[];
 extern u32 VIConfigure1080i60_length;
-extern u8 VIConfigureHook[];
-extern u32 VIConfigureHook_length;
+extern u8 VIConfigureHook1[];
+extern u32 VIConfigureHook1_length;
+extern u8 VIConfigureHook2[];
+extern u32 VIConfigureHook2_length;
 extern u8 VIConfigurePanHook[];
 extern u32 VIConfigurePanHook_length;
 extern u8 VIRetraceHandlerHook[];
@@ -109,7 +111,8 @@ enum patchIds {
 	VI_CONFIGURE576P,
 	VI_CONFIGURE1080I50,
 	VI_CONFIGURE1080I60,
-	VI_CONFIGUREHOOK,
+	VI_CONFIGUREHOOK1,
+	VI_CONFIGUREHOOK2,
 	VI_CONFIGUREPANHOOK,
 	VI_RETRACEHANDLERHOOK,
 	MAJORA_SAVEREGS,
