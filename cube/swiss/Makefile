@@ -34,6 +34,12 @@ MACHDEP =  -DGEKKO -mvgc -mcpu=750 -meabi -mhard-float
 	@echo linking ... $(notdir $@)
 	@$(LD)  $^ $(LDFLAGS) $(LIBPATHS) $(LIBS) -o $@
 
+#---------------------------------------------------------------------------------
+%.o: %.c
+%.o: %.c | $(TPLFILES:.tpl=.tpl.o)
+	@echo $(notdir $<)
+	@$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d $(CFLAGS) -c $< -o $@ $(ERROR_FILTER)
+
 	
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -120,7 +126,7 @@ sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
 SCFFILES	:=	$(foreach dir,$(TEXTURES),$(notdir $(wildcard $(dir)/*.scf)))
-TPLFILES	:=	$(SCFFILES:.scf=.tpl)
+export TPLFILES	:=	$(SCFFILES:.scf=.tpl)
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
