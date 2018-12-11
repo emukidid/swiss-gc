@@ -1362,8 +1362,8 @@ static void *videoUpdate(void *videoEventQueue) {
 		}
 		char fps[64];
 		memset(fps,0,64);
-		sprintf(fps, "fps %i", framerate);
-		drawString(10, 10, fps, 1.0f, false, (GXColor){255,255,255,255});
+		/*sprintf(fps, "fps %i", framerate);
+		drawString(10, 10, fps, 1.0f, false, (GXColor){255,255,255,255});*/
 		
 		time_t curtime;
 		time(&curtime);
