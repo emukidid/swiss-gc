@@ -3,7 +3,7 @@ REVISION  = git rev-list HEAD | wc -l
 SVN_REVISION = swiss_r$(shell $(REVISION))
 
 DIR     = $(DEVKITPPC)/bin
-BIN2S   = $(DIR)/bin2s
+BIN2S   = $(DEVKITPRO)/tools/bin/bin2s
 CC      = $(DIR)/powerpc-eabi-gcc
 LD      = $(DIR)/powerpc-eabi-ld
 OBJDUMP = $(DIR)/powerpc-eabi-objdump
