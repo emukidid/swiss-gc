@@ -20,8 +20,8 @@ DOLLZ         = $(BUILDTOOLS)/dollz3.exe
 DOL2GCI       = $(BUILDTOOLS)/dol2gci.exe
 MKISOFS       = $(BUILDTOOLS)/mkisofs.exe
 else
-DOLLZ         = wine $(BUILDTOOLS)/dollz3.exe
-DOL2GCI       = wine $(BUILDTOOLS)/dol2gci.exe
+DOLLZ         = $(BUILDTOOLS)/dollz3
+DOL2GCI       = $(BUILDTOOLS)/dol2gci
 MKISOFS       = mkisofs
 endif
 
@@ -29,6 +29,7 @@ BUILT_PATCHES = patches
 GECKOSERVER   = pc/usbgecko
 
 #------------------------------------------------------------------
+.NOTPARALLEL:
 
 # Ready to go .7z file with every type of DOL we can think of
 all: clean compile-patches compile build recovery-iso build-gci build-AR build-geckoserver package
@@ -39,15 +40,15 @@ dev: clean compile-patches compile
 clean:
 	@echo Building on $(OS)
 	@rm -rf $(DIST)
-	@cd $(SOURCES)/swiss && make clean
-	@cd $(GECKOSERVER) && make clean
+	@cd $(SOURCES)/swiss && $(MAKE) clean
+	@cd $(GECKOSERVER) && $(MAKE) clean
 
 #------------------------------------------------------------------
 compile-patches:
-	@cd $(PATCHES) && make
+	@cd $(PATCHES) && $(MAKE)
 
 compile: # compile
-	@cd $(SOURCES)/swiss && make
+	@cd $(SOURCES)/swiss && $(MAKE)
 
 #------------------------------------------------------------------
 
@@ -136,14 +137,14 @@ build-gci: # make GCI for memory cards
 
 
 build-geckoserver:
-	@cd $(GECKOSERVER) && make
+	@cd $(GECKOSERVER) && $(MAKE)
 	@mkdir $(DIST)/USBGeckoRemoteServer
 	@mv $(GECKOSERVER)/swissserver* $(DIST)/USBGeckoRemoteServer/
 	
 #------------------------------------------------------------------
 
 build-libfat-frag:
-	@cd $(SOURCES)/libfat-frag/src && make cube-release
+	@cd $(SOURCES)/libfat-frag/src && $(MAKE) cube-release
 	@cp $(SOURCES)/libfat-frag/src/libogc/lib/cube/libfat.a libfat.a
 	@rm -rf $(SOURCES)/libfat-frag/src/libogc/cube_release
 	@rm -rf $(SOURCES)/libfat-frag/src/libogc/lib

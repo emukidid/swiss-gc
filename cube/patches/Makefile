@@ -9,6 +9,7 @@ DEST    = ../swiss/source/patches
 
 DISASM    = disassembly
 
+.NOTPARALLEL:
 all: dvdpatch hddpatch sdpatch usbpatch wkfpatch bbapatch
 
 dvdpatch: clean build-dvd
