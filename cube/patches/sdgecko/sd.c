@@ -84,8 +84,23 @@ void send_cmd(u32 cmd, u32 sector) {
 void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read) {
 	int bytesRead = start_byte+bytes_to_read;
 	
-	while(rcvr_spi() != 0xFE);
+#ifdef DEBUG_VERBOSE
+		usb_sendbuffer_safe(" dst: ",6);
+		print_int_hex((u32)dest);
+		usb_sendbuffer_safe(" start_byte: ",13);
+		print_int_hex(start_byte);
+		usb_sendbuffer_safe(" bytes_to_read: ",17);
+		print_int_hex(bytes_to_read);
+		usb_sendbuffer_safe(" resume: ",9);
+		print_int_hex(resume);
+		usb_sendbuffer_safe(" sectorpos: ",12);
+		print_int_hex(*(vu16*)VAR_SD_SECTORPOS);
+		usb_sendbuffer_safe("\r\n",2);
+
+#endif
 	
+	while(rcvr_spi() != 0xFE);
+
 	// Skip the start if it's a misaligned read
 	while(start_byte>4) {
 		exi_imm_read(4);
@@ -109,7 +124,7 @@ void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read) {
 	}
 
 	// Read out the rest from the SD as we've requested it anyway and can't have it hanging off the bus
-	int remainder = SECTOR_SIZE-bytesRead;
+	u32 remainder = SECTOR_SIZE-bytesRead;
 	while(remainder>=4) {
 		exi_imm_read(4);
 		remainder-=4;
@@ -118,56 +133,54 @@ void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read) {
 		rcvr_spi();
 		remainder--;
 	}
-	exi_imm_read(2);		// discard CRC
+		exi_imm_read(2);		// discard CRC
 }
 
 void do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = len;
-	
-	int lbaShift = 9 * (*(vu32*)VAR_SD_TYPE);	// SD Card Type (SDHC=0, SD=1)
+	u32 lbaShift = *(vu32*)VAR_SD_SHIFT;
 	
 	// SDHC uses sector addressing, SD uses byte
 	lba <<= lbaShift;	
-
-	// If we weren't just reading this sector
-	if(lba != *(vu32*)VAR_TMP1) {
-		if(*(vu32*)VAR_TMP2) {
-			// End the read by sending CMD12 + Deselect SD + Burn a cycle after it
-			send_cmd(CMD12, 0);
-			exi_deselect();
-			rcvr_spi();
-		}
-		// Send multiple block read command and the LBA we want to start reading at
-		send_cmd(CMD18, lba);
-		*(vu32*)VAR_TMP2 = 1;
-	}
+	// Send multiple block read command and the LBA we want to start reading at
+	send_cmd(CMD18, lba);
 	
 	// Read block crossing a boundary
 	if(startByte) {
 		// amount to read in first block may vary if our read is small enough to fit in it
-		int amountInBlock = (len + startByte > SECTOR_SIZE) ? SECTOR_SIZE-startByte : len;
+		u32 amountInBlock = (len + startByte > SECTOR_SIZE) ? SECTOR_SIZE-startByte : len;
 		rcvr_datablock(dst,startByte, amountInBlock);
 		numBytes-=amountInBlock;
 		dst+=amountInBlock;
 	}
 	
 	// Read any full, aligned blocks
-	int numFullBlocks = numBytes>>9; 
+	u32 numFullBlocks = numBytes>>9; 
+	numBytes -= numFullBlocks << 9;
 	while(numFullBlocks) {
 		rcvr_datablock(dst, 0,SECTOR_SIZE);
 		dst+=SECTOR_SIZE; 
-		numBytes-=SECTOR_SIZE; 
 		numFullBlocks--;
 	}
 	
 	// Read any trailing half block
 	if(numBytes) {
 		rcvr_datablock(dst,0, numBytes);
+		dst+=numBytes;
 	}
-		
-	*(vu32*)VAR_TMP1 = lba + ((len + SECTOR_SIZE-startByte) >> lbaShift);
+	// End the read by sending CMD12 + Deselect SD + Burn a cycle after it
+	send_cmd(CMD12, 0);
+	exi_deselect();
+	rcvr_spi();
+#ifdef DEBUG_VERBOSE
+	usb_sendbuffer_safe(" u32: ",5);
+	print_int_hex(*(u32*)((u32)dst-len));
+	usb_sendbuffer_safe(" u32: ",5);
+	print_int_hex(*(u32*)(((u32)dst-len)+4));
+	usb_sendbuffer_safe("\r\n",2);
+#endif
 }
 
 /* End of SD functions */

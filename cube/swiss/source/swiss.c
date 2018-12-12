@@ -842,6 +842,10 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 		wkfWriteOffset(*(vu32*)VAR_DISC_1_LBA);
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
+	if((devices[DEVICE_CUR] == &__device_sd_a) || (devices[DEVICE_CUR] == &__device_sd_b)) {
+		print_gecko("set size\r\n");
+	    sdgecko_setPageSize(((devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)? 0:1), 512);
+	}
 	DOLtoARAM(main_dol_buffer, 0, NULL);
 	return 0;
 }

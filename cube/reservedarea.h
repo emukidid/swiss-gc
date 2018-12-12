@@ -41,7 +41,7 @@
 .set VAR_DISC_2_LBA, 		0x2F04	# is the base file sector for disk 2
 .set VAR_CUR_DISC_LBA, 		0x2F08	# is the currently selected disk sector
 .set VAR_EXI_BUS_SPD, 		0x2F0C	# is the EXI bus speed (192 = 16mhz vs 208 = 32mhz)
-.set VAR_SD_TYPE, 			0x2F10	# is the Card Type (SDHC=0, SD=1)
+.set VAR_SD_SHIFT, 			0x2F10	# is the SD Card shift amount when issueing read cmds
 .set VAR_EXI_FREQ, 			0x2F14	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
 .set VAR_EXI_SLOT, 			0x2F18	# is the EXI slot (0 = slot a, 1 = slot b)
 .set VAR_TMP1,  			0x2F1C  # space for a variable if required
@@ -124,7 +124,7 @@
 #define VAR_DISC_2_LBA 		(VAR_AREA+0x2F04)	// is the base file sector for disk 2
 #define VAR_CUR_DISC_LBA 	(VAR_AREA+0x2F08)	// is the currently selected disk sector
 #define VAR_EXI_BUS_SPD 	(VAR_AREA+0x2F0C)	// is the EXI bus speed (192 = 16mhz vs 208 = 32mhz)
-#define VAR_SD_TYPE 		(VAR_AREA+0x2F10)	// is the Card Type (SDHC=0, SD=1)
+#define VAR_SD_SHIFT 		(VAR_AREA+0x2F10)	// is the SD Card shift amount when issueing read cmds
 #define VAR_EXI_FREQ 		(VAR_AREA+0x2F14)	// is the EXI frequency (4 = 16mhz, 5 = 32mhz)
 #define VAR_EXI_SLOT 		(VAR_AREA+0x2F18)	// is the EXI slot (0 = slot a, 1 = slot b)
 #define VAR_TMP1  			(VAR_AREA+0x2F1C)	// space for a variable if required

@@ -26,7 +26,14 @@ u32 read_frag(void *dst, u32 len, u32 offset) {
 		u32 fragSize = fragList[fragTableIdx+1] & 0x7FFFFFFF;
 		u32 fragSector = fragList[fragTableIdx+2];
 		u32 fragOffsetEnd = fragOffset + fragSize;
-
+#ifdef DEBUG_VERBOSE
+		usb_sendbuffer_safe("READ: dst: ",11);
+		print_int_hex(dst);
+		usb_sendbuffer_safe(" len: ",6);
+		print_int_hex(len);
+		usb_sendbuffer_safe(" ofs: ",6);
+		print_int_hex(offset);
+#endif
 		// Find where our read starts and read as much as we can in this frag before returning
 		if(offset >= fragOffset && offset < fragOffsetEnd) {
 			// Does our read get cut off early?
@@ -37,6 +44,18 @@ u32 read_frag(void *dst, u32 len, u32 offset) {
 				adjustedOffset = offset - fragOffset;
 			}
 			do_read(dst, amountToRead, adjustedOffset, fragSector);
+#ifdef DEBUG_VERBOSE
+			u32 sz = amountToRead;
+			u8* ptr = (u8*)dst;
+			u32 hash = 5381;
+			s32 c;
+			while (c = *ptr++)
+            hash = ((hash << 5) + hash) + c;
+
+			usb_sendbuffer_safe(" checksum: ",11);
+			print_int_hex(hash);
+			usb_sendbuffer_safe("\r\n",2);
+#endif
 			return amountToRead;
 		}
 	}
@@ -44,7 +63,7 @@ u32 read_frag(void *dst, u32 len, u32 offset) {
 }
 
 void device_frag_read(void *dst, u32 len, u32 offset)
-{		
+{	
 	while(len != 0) {
 		u32 amountRead = read_frag(dst, len, offset);
 		len-=amountRead;

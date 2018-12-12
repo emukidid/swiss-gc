@@ -31,6 +31,7 @@ typedef struct {
     unsigned int unused[MAXTEXTSECTION];
 } DOLHEADER;
 
+#ifndef DEBUG
 void *memcpy(void *dest, const void *src, u32 size)
 {
 	char *d = dest;
@@ -115,3 +116,7 @@ void exit_to_pref(void) {
 		
 	}
 }
+#else
+void exit_to_pref(void) {
+}
+#endif

@@ -379,7 +379,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	// Copy the current speed
 	*(vu32*)VAR_EXI_BUS_SPD = !swissSettings.exiSpeed ? 192:208;
 	// Card Type
-	*(vu32*)VAR_SD_TYPE = SDHCCard;
+	*(vu32*)VAR_SD_SHIFT = 9 * SDHCCard;
 	// Copy the actual freq
 	*(vu32*)VAR_EXI_FREQ = !swissSettings.exiSpeed ? EXI_SPEED16MHZ:EXI_SPEED32MHZ;
 	// Device slot (0 or 1) // This represents 0xCC0068xx in number of u32's so, slot A = 0xCC006800, B = 0xCC006814

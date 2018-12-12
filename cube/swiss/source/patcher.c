@@ -22,13 +22,6 @@
 
 static u32 top_addr = VAR_PATCHES_BASE;
 
-/*** externs ***/
-extern GXRModeObj *vmode;		/*** Graphics Mode Object ***/
-extern u32 *xfb[2];			   	/*** Framebuffers ***/
-extern u32 SDHCCard;
-
-extern void animateBox(int x1,int y1, int x2, int y2, int color,char *msg);
-
 // Read
 FuncPattern ReadDebug = {55, 23, 18, 3, 2, 4, 0, 0, "Read (Debug)", 0};
 FuncPattern ReadCommon = {67, 30, 18, 5, 2, 3, 0, 0, "Read (Common)", 0};
@@ -41,10 +34,6 @@ FuncPattern OSExceptionInitSigDBG = {163, 61, 6, 18, 14, 14, 0, 0, "OSExceptionI
 // __DVDInterruptHandler
 u16 _dvdinterrupthandler_part[3] = {
 	0x6000, 0x002A, 0x0054
-};
-
-u32 _osdispatch_part_a[2] = {
-	0x3C60CC00, 0x83E33000
 };
 
 int install_code()
