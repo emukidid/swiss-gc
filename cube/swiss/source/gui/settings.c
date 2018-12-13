@@ -266,11 +266,11 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 			case 3:
 				if(swissSettings.gameVMode > 0) {
-				swissSettings.forceVFilter += direction;
-				if(swissSettings.forceVFilter > 3)
-					swissSettings.forceVFilter = 0;
-				if(swissSettings.forceVFilter < 0)
-					swissSettings.forceVFilter = 3;
+					swissSettings.forceVFilter += direction;
+					if(swissSettings.forceVFilter > 3)
+						swissSettings.forceVFilter = 0;
+					if(swissSettings.forceVFilter < 0)
+						swissSettings.forceVFilter = 3;
 				}
 			break;
 			case 4:

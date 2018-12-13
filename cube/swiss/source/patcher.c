@@ -1139,6 +1139,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				if (VIConfigure) {
 					print_gecko("Found:[%s] @ %08X\n", VIConfigureSigs[j].Name, VIConfigure);
 					VIConfigureHook2 = getPatchAddr(VI_CONFIGUREHOOK2);
+					VIConfigureHook1 = getPatchAddr(VI_CONFIGUREHOOK1);
 					switch (swissSettings.gameVMode) {
 						case 1:
 						case 2:
@@ -1149,11 +1150,13 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							break;
 						case 3:
 							print_gecko("Patched NTSC Double-Strike mode\n");
+							swissSettings.forceVOffset &= ~1;
 							vfilter = vertical_reduction[swissSettings.forceVFilter];
 							VIConfigureHook1 = getPatchAddr(VI_CONFIGURE240P);
 							break;
 						case 4:
 							print_gecko("Patched NTSC Field Rendering mode\n");
+							swissSettings.forceVOffset &= ~1;
 							vfilter = vertical_filters[swissSettings.forceVFilter];
 							VIConfigureHook1 = getPatchAddr(VI_CONFIGURE1080I60);
 							break;
@@ -1171,11 +1174,13 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							break;
 						case 8:
 							print_gecko("Patched PAL Double-Strike mode\n");
+							swissSettings.forceVOffset &= ~1;
 							vfilter = vertical_reduction[swissSettings.forceVFilter];
 							VIConfigureHook1 = getPatchAddr(VI_CONFIGURE288P);
 							break;
 						case 9:
 							print_gecko("Patched PAL Field Rendering mode\n");
+							swissSettings.forceVOffset &= ~1;
 							vfilter = vertical_filters[swissSettings.forceVFilter];
 							VIConfigureHook1 = getPatchAddr(VI_CONFIGURE1080I50);
 							break;
@@ -1185,30 +1190,31 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							VIConfigureHook1 = getPatchAddr(VI_CONFIGURE576P);
 							break;
 					}
-					if (swissSettings.forceHScale > 0) {
-						VIConfigureHook1 = getPatchAddr(VI_CONFIGUREHOOK1);
-						switch (swissSettings.forceHScale) {
-							case 1:
-								*(u16*)VAR_SAR_WIDTH = 1;
-								*(u8*)VAR_SAR_HEIGHT = 1;
-								break;
-							case 2:
-								*(u16*)VAR_SAR_WIDTH = 11;
-								*(u8*)VAR_SAR_HEIGHT = 10;
-								break;
-							case 3:
-								*(u16*)VAR_SAR_WIDTH = 9;
-								*(u8*)VAR_SAR_HEIGHT = 8;
-								break;
-							case 4:
-								*(u16*)VAR_SAR_WIDTH = 704;
-								*(u8*)VAR_SAR_HEIGHT = 0;
-								break;
-							case 5:
-								*(u16*)VAR_SAR_WIDTH = 720;
-								*(u8*)VAR_SAR_HEIGHT = 0;
-								break;
-						}
+					switch (swissSettings.forceHScale) {
+						default:
+							*(u16*)VAR_SAR_WIDTH = 0;
+							*(u8*)VAR_SAR_HEIGHT = 0;
+							break;
+						case 1:
+							*(u16*)VAR_SAR_WIDTH = 1;
+							*(u8*)VAR_SAR_HEIGHT = 1;
+							break;
+						case 2:
+							*(u16*)VAR_SAR_WIDTH = 11;
+							*(u8*)VAR_SAR_HEIGHT = 10;
+							break;
+						case 3:
+							*(u16*)VAR_SAR_WIDTH = 9;
+							*(u8*)VAR_SAR_HEIGHT = 8;
+							break;
+						case 4:
+							*(u16*)VAR_SAR_WIDTH = 704;
+							*(u8*)VAR_SAR_HEIGHT = 0;
+							break;
+						case 5:
+							*(u16*)VAR_SAR_WIDTH = 720;
+							*(u8*)VAR_SAR_HEIGHT = 0;
+							break;
 					}
 					switch (j) {
 						case 0:

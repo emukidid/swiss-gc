@@ -39,11 +39,6 @@ VIConfigure288p:
 	stw			%r6, 20 (%r3)
 	stb			%r7, 24 (%r3)
 	stw			%r0, 0 (%r3)
-	mfmsr		%r3
-	rlwinm		%r4, %r3, 0, 17, 15
-	extrwi		%r3, %r3, 1, 16
-	mtmsr		%r4
-	blr
 
 .globl VIConfigure288p_length
 VIConfigure288p_length:

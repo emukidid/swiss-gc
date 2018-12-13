@@ -127,23 +127,23 @@ void ogc_video__reset()
 	} else {
 		swissSettings.sram60Hz = (swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 5);
 		swissSettings.sramProgressive = (swissSettings.gameVMode == 5) || (swissSettings.gameVMode == 10);
-		}
+	}
 	
 	if(!strncmp(gameID, "GB3E51", 6) || (!strncmp(gameID, "G2OE41", 6) && swissSettings.sramLanguage == 3))
 		swissSettings.sramProgressive = 0;
 	
-		syssram* sram = __SYS_LockSram();
+	syssram* sram = __SYS_LockSram();
 	sram->ntd = swissSettings.sram60Hz ? (sram->ntd|0x40):(sram->ntd&~0x40);
 	sram->flags = swissSettings.sramProgressive ? (sram->flags|0x80):(sram->flags&~0x80);
-		__SYS_UnlockSram(1);
-		while(!__SYS_SyncSram());
+	__SYS_UnlockSram(1);
+	while(!__SYS_SyncSram());
 	
 	for(i = 0; i < sizeof(DiscIDNoNTSC)/sizeof(char*); i++) {
 		if(!strncmp(gameID, DiscIDNoNTSC[i], 6)) {
 			if(swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5)
 				swissSettings.gameVMode += 5;
 			break;
-	}
+		}
 	}
 	
 	/* set TV mode for current game */

@@ -34,17 +34,12 @@ VIConfigure240p:
 	sth			%r5, 6 (%r3)
 3:	sth			%r5, 8 (%r3)
 4:	subfic		%r4, %r5, 480
-	srwi		%r4, %r4, 1
+	srawi		%r4, %r4, 1
 	sth			%r4, 12 (%r3)
 	sth			%r5, 16 (%r3)
 	stw			%r6, 20 (%r3)
 	stb			%r7, 24 (%r3)
 	stw			%r0, 0 (%r3)
-	mfmsr		%r3
-	rlwinm		%r4, %r3, 0, 17, 15
-	extrwi		%r3, %r3, 1, 16
-	mtmsr		%r4
-	blr
 
 .globl VIConfigure240p_length
 VIConfigure240p_length:

@@ -482,7 +482,7 @@ void config_find(ConfigEntry *entry) {
 	strcpy(entry->status,"Unknown");
 	entry->gameVMode = 0;
 	entry->forceHScale = 0;
-	entry->forceVOffset = 0;
+	entry->forceVOffset = -3;
 	entry->forceVFilter = 0;
 	entry->forceAnisotropy = 0;
 	entry->forceWidescreen = 0;

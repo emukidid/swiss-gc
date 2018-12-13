@@ -24,7 +24,7 @@ VIConfigure1080i60:
 	ble			4f
 	xori		%r0, %r0, 2
 	lhz			%r5, 8 (%r3)
-	cmpwi		%r5, 524
+	cmpwi		%r5, 480
 	ble			3f
 	lhz			%r5, 6 (%r3)
 	clrrwi		%r5, %r5, 1
@@ -38,11 +38,6 @@ VIConfigure1080i60:
 	stw			%r6, 20 (%r3)
 	stb			%r7, 24 (%r3)
 	stw			%r0, 0 (%r3)
-	mfmsr		%r3
-	rlwinm		%r4, %r3, 0, 17, 15
-	extrwi		%r3, %r3, 1, 16
-	mtmsr		%r4
-	blr
 
 .globl VIConfigure1080i60_length
 VIConfigure1080i60_length:
