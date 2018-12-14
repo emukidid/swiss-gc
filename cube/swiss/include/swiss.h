@@ -87,6 +87,7 @@ typedef struct {
 	int sramStereo;
 	int stopMotor;
 	int enableFileManagement;
+	s8 sramHOffset;
 	u8 sramLanguage;
 	u8 sramVideo;
 	char smbUser[32];		//20
