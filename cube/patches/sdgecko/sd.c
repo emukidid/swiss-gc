@@ -81,59 +81,33 @@ void send_cmd(u32 cmd, u32 sector) {
 	}
 }
 
-void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read) {
-	int bytesRead = start_byte+bytes_to_read;
-	
-#ifdef DEBUG_VERBOSE
-		usb_sendbuffer_safe(" dst: ",6);
-		print_int_hex((u32)dest);
-		usb_sendbuffer_safe(" start_byte: ",13);
-		print_int_hex(start_byte);
-		usb_sendbuffer_safe(" bytes_to_read: ",17);
-		print_int_hex(bytes_to_read);
-		usb_sendbuffer_safe(" resume: ",9);
-		print_int_hex(resume);
-		usb_sendbuffer_safe(" sectorpos: ",12);
-		print_int_hex(*(vu16*)VAR_SD_SECTORPOS);
-		usb_sendbuffer_safe("\r\n",2);
+void exi_read_to_buffer(void *dest, u32 len) {
+	u32 *destu = (u32*)dest;
+	while(len>=4) {
+		u32 read = exi_imm_read(4);
+		if(dest) *destu++ = read;
+		len-=4;
+	}
+	u8 *destb = (u8*)destu;
+	while(len) {
+		u8 read = rcvr_spi();
+		if(dest) *destb++ = read;
+		len--;
+	}
+}
 
-#endif
-	
+void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read) {
 	while(rcvr_spi() != 0xFE);
 
 	// Skip the start if it's a misaligned read
-	while(start_byte>4) {
-		exi_imm_read(4);
-		start_byte-=4;
-	}
-	while(start_byte) {
-		rcvr_spi();
-		start_byte--;
-	}
-	u32 *destu = (u32*)dest;
+	exi_read_to_buffer(0, start_byte);
+	
 	// Read however much we need to in this block
-	while(bytes_to_read >= 4) {
-		*destu++ = exi_imm_read(4);
-		bytes_to_read-=4;
-	}
-	u8 *destb = (u8*)destu;
-	// Read the remainder
-	while(bytes_to_read) {
-		*destb++ = exi_imm_read(1);
-		bytes_to_read--;
-	}
+	exi_read_to_buffer(dest, bytes_to_read);
 
-	// Read out the rest from the SD as we've requested it anyway and can't have it hanging off the bus
-	u32 remainder = SECTOR_SIZE-bytesRead;
-	while(remainder>=4) {
-		exi_imm_read(4);
-		remainder-=4;
-	}
-	while(remainder) {
-		rcvr_spi();
-		remainder--;
-	}
-		exi_imm_read(2);		// discard CRC
+	// Read out the rest from the SD as we've requested it anyway and can't have it hanging off the bus (2 for CRC discard)
+	u32 remainder = 2 + (SECTOR_SIZE - (start_byte+bytes_to_read));
+	exi_read_to_buffer(0, remainder);
 }
 
 void do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
@@ -174,13 +148,6 @@ void do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	send_cmd(CMD12, 0);
 	exi_deselect();
 	rcvr_spi();
-#ifdef DEBUG_VERBOSE
-	usb_sendbuffer_safe(" u32: ",5);
-	print_int_hex(*(u32*)((u32)dst-len));
-	usb_sendbuffer_safe(" u32: ",5);
-	print_int_hex(*(u32*)(((u32)dst-len)+4));
-	usb_sendbuffer_safe("\r\n",2);
-#endif
 }
 
 /* End of SD functions */
