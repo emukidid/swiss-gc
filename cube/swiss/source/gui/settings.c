@@ -17,7 +17,7 @@
 SwissSettings tempSettings;
 char *uiVModeStr[] = {"Auto", "480i", "480p", "576i", "576p"};
 char *gameVModeStr[] = {"No", "480i", "480sf", "240p", "1080i60", "480p", "576i", "576sf", "288p", "1080i50", "576p"};
-char *forceHScaleStr[] = {"No", "1:1", "11:10", "9:8", "704px", "720px"};
+char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "704px", "720px"};
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS"};
