@@ -37,9 +37,9 @@ VIConfigure240p:
 	srawi		%r4, %r4, 1
 	sth			%r4, 12 (%r3)
 	sth			%r5, 16 (%r3)
-	stw			%r6, 20 (%r3)
+	sth			%r6, 20 (%r3)
 	stb			%r7, 24 (%r3)
-	stw			%r0, 0 (%r3)
+	sth			%r0, 0 (%r3)
 
 .globl VIConfigure240p_length
 VIConfigure240p_length:

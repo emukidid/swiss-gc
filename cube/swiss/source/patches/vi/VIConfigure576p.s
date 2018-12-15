@@ -34,8 +34,8 @@ VIConfigure576p:
 	neg			%r4, %r4
 	sth			%r4, 12 (%r3)
 	sth			%r5, 16 (%r3)
-	stw			%r6, 20 (%r3)
-	stw			%r0, 0 (%r3)
+	sth			%r6, 20 (%r3)
+	sth			%r0, 0 (%r3)
 
 .globl VIConfigure576p_length
 VIConfigure576p_length:
