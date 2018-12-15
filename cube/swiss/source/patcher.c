@@ -974,6 +974,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{  545, 293, 37, 110,  7,  9, NULL, 0, "__GXInitGX E" },		// SN Systems ProDG
 		{  589, 333, 34, 119, 28, 11, NULL, 0, "__GXInitGX F" }
 	};
+	FuncPattern GXAdjustForOverscanSig = 
+		{ 71, 17, 15, 0, 3, 5, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan" };
 	FuncPattern GXSetDispCopyYScaleSigs[7] = {
 		{ 99, 33, 8, 8, 4, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScaleD A" },
 		{ 84, 32, 4, 6, 4, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScaleD B" },
@@ -1052,6 +1054,9 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	}
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
+		if (!GXAdjustForOverscanSig.offsetFoundAt && !memcmp(data + i, GXAdjustForOverscan, GXAdjustForOverscan_length))
+			GXAdjustForOverscanSig.offsetFoundAt = i;
+		
 		if (data[i] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6)
 			continue;
 		
@@ -1730,6 +1735,18 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	}
 	
 	if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5) {
+		if ((i = GXAdjustForOverscanSig.offsetFoundAt)) {
+			u32 *GXAdjustForOverscan = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			
+			if (GXAdjustForOverscan) {
+				if (GXAdjustForOverscanSig.Patch) {
+					memset(data + i, 0, GXAdjustForOverscanSig.Length * sizeof(u32));
+					memcpy(data + i, GXAdjustForOverscanSig.Patch, GXAdjustForOverscanSig.PatchLength);
+				}
+				print_gecko("Found:[%s] @ %08X\n", GXAdjustForOverscanSig.Name, GXAdjustForOverscan);
+			}
+		}
+		
 		for (j = 0; j < sizeof(GXSetDispCopyYScaleSigs) / sizeof(FuncPattern); j++)
 			if (GXSetDispCopyYScaleSigs[j].offsetFoundAt) break;
 		
