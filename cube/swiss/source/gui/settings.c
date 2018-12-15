@@ -26,10 +26,11 @@ syssram* sram;
 syssramex* sramex;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {8, 10, 10};
+int settings_count_pp[3] = {9, 10, 10};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
+	swissSettings.sramHOffset = sram->display_offsetH;
 	swissSettings.sram60Hz = (sram->ntd >> 6) & 1;
 	swissSettings.sramLanguage = sram->lang;
 	swissSettings.sramProgressive = (sram->flags >> 7) & 1;
@@ -50,15 +51,17 @@ char* getConfigDeviceName() {
 
 uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file) {
 	uiDrawObj_t* page = DrawEmptyBox(20,60, vmode->fbWidth-20, 460);
+	char sramHOffsetStr[8];
 	char forceVOffsetStr[8];
-		
+	
 	// Save Settings to current device (**Shown on all tabs**)
 	/** Global Settings (Page 1/) */
-	// IPL/Game Language [English/German/French/Spanish/Italian/Dutch]
-	// IPL/Game Audio [Mono/Stereo]
+	// System Sound [Mono/Stereo]
+	// Screen Position [+/-0]
+	// System Language [English/German/French/Spanish/Italian/Dutch]
 	// SD/IDE Speed [16/32 MHz]
 	// Swiss Video Mode [576i (PAL 50Hz), 480i (NTSC 60Hz), 480p (NTSC 60Hz), etc]
-	// In Game Reset [Yes/No]
+	// In-Game Reset [Yes/No]
 	// Configuration Device [Writable device name]
 
 	/** Advanced Settings (Page 2/) */
@@ -72,43 +75,48 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file) {
 	
 	/** Current Game Settings - only if a valid GCM file is highlighted (Page 3/) */
 	// Force Video Mode [576i (PAL 50Hz), 480i (NTSC 60Hz), 480p (NTSC 60Hz), Auto, etc]
-	// If Progressive, Soften [No/Yes/Soften]
-	// Force Widescreen [Yes/No/Persp]
-	// Force Anistropy [Yes/No]
+	// Force Horizontal Scale [Auto/1:1/11:10/9:8/704px/720px]
+	// Force Vertical Offset [+/-0]
+	// Force Vertical Filter [Auto/0/1/2]
+	// Force Anisotropic Filter [Yes/No]
+	// Force Widescreen [No/3D/2D+3D]
+	// Force Text Encoding [Auto/ANSI/SJIS]
 	// Disable Audio Streaming [Yes/No]
-	// Force Encoding [Auto/SJIS]
 
 	if(!page_num) {
 		DrawAddChild(page, DrawLabel(30, 65, "Global Settings (1/3):"));
-		DrawAddChild(page, DrawStyledLabel(30, 120, "IPL/Game Language:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(320, 120, -1, 150, getSramLang(swissSettings.sramLanguage), option == 0 ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 160, "IPL/Game Audio:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(320, 160, -1, 190, swissSettings.sramStereo ? "Stereo":"Mono", option == 1 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawStyledLabel(30, 110, "System Sound:", 1.0f, false, defaultColor));
+		DrawAddChild(page, DrawSelectableButton(320, 110, -1, 135, swissSettings.sramStereo ? "Stereo":"Mono", option == 0 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawStyledLabel(30, 140, "Screen Position:", 1.0f, false, defaultColor));
+		sprintf(sramHOffsetStr, "%+hi", swissSettings.sramHOffset);
+		DrawAddChild(page, DrawSelectableButton(320, 140, -1, 165, sramHOffsetStr, option == 1 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawStyledLabel(30, 170, "System Language:", 1.0f, false, defaultColor));
+		DrawAddChild(page, DrawSelectableButton(320, 170, -1, 195, getSramLang(swissSettings.sramLanguage), option == 2 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 200, "SD/IDE Speed:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(320, 200, -1, 230, swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == 2 ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 240, "Swiss Video Mode:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(320, 240, -1, 270, uiVModeStr[swissSettings.uiVMode], option == 3 ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 280, "In-Game-Reset:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(320, 280, -1, 310, igrTypeStr[swissSettings.igrType], option == 4 ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 320, "Config Device:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(320, 320, -1, 350, getConfigDeviceName(), option == 5 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(320, 200, -1, 225, swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == 3 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawStyledLabel(30, 230, "Swiss Video Mode:", 1.0f, false, defaultColor));
+		DrawAddChild(page, DrawSelectableButton(320, 230, -1, 255, uiVModeStr[swissSettings.uiVMode], option == 4 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawStyledLabel(30, 260, "In-Game Reset:", 1.0f, false, defaultColor));
+		DrawAddChild(page, DrawSelectableButton(320, 260, -1, 285, igrTypeStr[swissSettings.igrType], option == 5 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawStyledLabel(30, 290, "Configuration Device:", 1.0f, false, defaultColor));
+		DrawAddChild(page, DrawSelectableButton(320, 290, -1, 315, getConfigDeviceName(), option == 6 ? B_SELECTED:B_NOSELECT));
 	}
 	else if(page_num == 1) {
 		DrawAddChild(page, DrawLabel(30, 65, "Advanced Settings (2/3):"));
 		DrawAddChild(page, DrawStyledLabel(30, 110, "Enable USB Gecko Debug via Slot B:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(500, 110, -1, 135, swissSettings.debugUSB ? "Yes":"No", option == 0 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(510, 110, -1, 135, swissSettings.debugUSB ? "Yes":"No", option == 0 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 140, "Hide Unknown file types:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(500, 140, -1, 165, swissSettings.hideUnknownFileTypes ? "Yes":"No", option == 1 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(510, 140, -1, 165, swissSettings.hideUnknownFileTypes ? "Yes":"No", option == 1 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 170, "Stop DVD Motor on startup:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(500, 170, -1, 195, swissSettings.stopMotor ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(510, 170, -1, 195, swissSettings.stopMotor ? "Yes":"No", option == 2 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 200, "Enable WiiRD debugging in Games:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(500, 200, -1, 225, swissSettings.wiirdDebug ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(510, 200, -1, 225, swissSettings.wiirdDebug ? "Yes":"No", option == 3 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 230, "Enable File Management:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(500, 230, -1, 255, swissSettings.enableFileManagement ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(510, 230, -1, 255, swissSettings.enableFileManagement ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 260, "Auto-load all cheats:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(500, 260, -1, 285, swissSettings.autoCheats ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(510, 260, -1, 285, swissSettings.autoCheats ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 290, "Init network at startup:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(500, 290, -1, 315, swissSettings.initNetworkAtStart ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(510, 290, -1, 315, swissSettings.initNetworkAtStart ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT));
 	}
 	else if(page_num == 2) {
 		DrawAddChild(page, DrawLabel(30, 65, "Current Game Settings (3/3):"));
@@ -131,14 +139,14 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawAddChild(page, DrawSelectableButton(480, 320, -1, 345, swissSettings.muteAudioStreaming ? "Yes":"No", option == 7 ? B_SELECTED:B_NOSELECT));
 	}
 	if(page_num != 0) {
-		DrawAddChild(page, DrawSelectableButton(40, 390, -1, 420, "Back", 
+		DrawAddChild(page, DrawSelectableButton(50, 390, -1, 420, "Back", 
 		option == settings_count_pp[page_num]-(page_num != 2 ? 3:2) ? B_SELECTED:B_NOSELECT));
 	}
 	if(page_num != 2) {
 		DrawAddChild(page, DrawSelectableButton(510, 390, -1, 420, "Next", 
 		option == settings_count_pp[page_num]-2 ? B_SELECTED:B_NOSELECT));
 	}
-	DrawAddChild(page, DrawSelectableButton(100, 425, -1, 455, "Save & Exit", option == settings_count_pp[page_num]-1 ? B_SELECTED:B_NOSELECT));
+	DrawAddChild(page, DrawSelectableButton(120, 425, -1, 455, "Save & Exit", option == settings_count_pp[page_num]-1 ? B_SELECTED:B_NOSELECT));
 	DrawAddChild(page, DrawSelectableButton(320, 425, -1, 455, "Discard & Exit", option ==  settings_count_pp[page_num] ? B_SELECTED:B_NOSELECT));
 	DrawPublish(page);
 	return page;
@@ -148,33 +156,36 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 	if(page == 0) {
 		switch(option) {
 			case 0:
+				swissSettings.sramStereo ^= 1;
+			break;
+			case 1:
+				swissSettings.sramHOffset += direction;
+			break;
+			case 2:
 				swissSettings.sramLanguage += direction;
 				if(swissSettings.sramLanguage > 5)
 					swissSettings.sramLanguage = 0;
 				if(swissSettings.sramLanguage < 0)
 					swissSettings.sramLanguage = 5;
 			break;
-			case 1:
-				swissSettings.sramStereo ^= 1;
-			break;
-			case 2:
+			case 3:
 				swissSettings.exiSpeed ^= 1;
 			break;
-			case 3:
+			case 4:
 				swissSettings.uiVMode += direction;
 				if(swissSettings.uiVMode > 4)
 					swissSettings.uiVMode = 0;
 				if(swissSettings.uiVMode < 0)
 					swissSettings.uiVMode = 4;
 			break;
-			case 4:
+			case 5:
 				swissSettings.igrType += direction;
 				if(swissSettings.igrType > 3)
 					swissSettings.igrType = 0;
 				if(swissSettings.igrType < 0)
 					swissSettings.igrType = 3;
 			break;
-			case 5:
+			case 6:
 			{
 				int curDevicePos = -1;
 				
@@ -377,6 +388,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 					swissSettings.sramProgressive = (swissSettings.uiVMode == 2) || (swissSettings.uiVMode == 4);
 				}
 				sram = __SYS_LockSram();
+				sram->display_offsetH = swissSettings.sramHOffset;
 				sram->ntd = swissSettings.sram60Hz ? (sram->ntd|0x40):(sram->ntd&~0x40);
 				sram->lang = swissSettings.sramLanguage;
 				sram->flags = swissSettings.sramProgressive ? (sram->flags|0x80):(sram->flags&~0x80);
