@@ -124,7 +124,7 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 		}
 		memset(&file_name[0],0,PATHNAME_MAX);
 		sprintf(&file_name[0], "%s/%s", ffile->name, entry.fname);
-		if(f_stat(file_name, &fno) != FR_OK || (fno.fattrib & AM_HID)) {
+		if(f_stat(file_name, &fno) != FR_OK || (fno.fattrib & AM_HID) || entry.fname[0] == '.') {
 			continue;
 		}
 		// Do we want this one?
