@@ -343,6 +343,8 @@ void config_parse(char *configData) {
 						configEntries[configEntriesCount].forceHScale = 4;
 					else if(!strcmp(forceHScaleStr[5], value))
 						configEntries[configEntriesCount].forceHScale = 5;
+					else if(!strcmp(forceHScaleStr[6], value))
+						configEntries[configEntriesCount].forceHScale = 6;
 				}
 				else if(!strcmp("Force Vertical Offset", name)) {
 					configEntries[configEntriesCount].forceVOffset = atoi(value);

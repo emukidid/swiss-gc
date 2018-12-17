@@ -1044,10 +1044,14 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			*(u8 *)VAR_SAR_HEIGHT = 8;
 			break;
 		case 4:
-			*(u16 *)VAR_SAR_WIDTH = 704;
+			*(u16 *)VAR_SAR_WIDTH = 640;
 			*(u8 *)VAR_SAR_HEIGHT = 0;
 			break;
 		case 5:
+			*(u16 *)VAR_SAR_WIDTH = 704;
+			*(u8 *)VAR_SAR_HEIGHT = 0;
+			break;
+		case 6:
 			*(u16 *)VAR_SAR_WIDTH = 720;
 			*(u8 *)VAR_SAR_HEIGHT = 0;
 			break;
