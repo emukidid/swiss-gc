@@ -959,11 +959,18 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	};
 	FuncPattern VIConfigurePanSig = 
 		{ 228, 40, 11, 4, 25, 35, NULL, 0, "VIConfigurePan" };
-	FuncPattern getCurrentFieldEvenOddSigs[4] = {
+	FuncPattern getCurrentFieldEvenOddSigs[5] = {
 		{ 32,  7, 2, 3, 4, 5, NULL, 0, "getCurrentFieldEvenOddD A" },
 		{ 14,  5, 2, 1, 2, 3, NULL, 0, "getCurrentFieldEvenOddD B" },
 		{ 46, 14, 2, 2, 4, 8, NULL, 0, "getCurrentFieldEvenOdd A" },
-		{ 23,  7, 0, 0, 1, 5, NULL, 0, "getCurrentFieldEvenOdd B" }		// SN Systems ProDG
+		{ 25,  8, 0, 0, 1, 5, NULL, 0, "getCurrentFieldEvenOdd B" },
+		{ 25,  8, 0, 0, 1, 5, NULL, 0, "getCurrentFieldEvenOdd C" }		// SN Systems ProDG
+	};
+	FuncPattern VIGetNextFieldSigs[4] = {
+		{ 19,  4, 2, 3, 0, 3, NULL, 0, "VIGetNextFieldD A" },
+		{ 60, 16, 4, 4, 4, 9, NULL, 0, "VIGetNextField A" },
+		{ 41, 10, 3, 2, 2, 8, NULL, 0, "VIGetNextField B" },
+		{ 38, 13, 4, 3, 2, 6, NULL, 0, "VIGetNextField C" }
 	};
 	FuncPattern __GXInitGXSigs[8] = {
 		{ 1129, 567, 66, 133, 46, 46, NULL, 0, "__GXInitGXD A" },
@@ -1075,12 +1082,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				switch (j) {
 					case 0: getCurrentFieldEvenOddSigs[0].offsetFoundAt = branchResolve(data, i - 47); break;
 					case 1: getCurrentFieldEvenOddSigs[1].offsetFoundAt = branchResolve(data, i - 49); break;
-					case 2:
-					case 3: getCurrentFieldEvenOddSigs[2].offsetFoundAt = branchResolve(data, i + 60); break;
+					case 2: getCurrentFieldEvenOddSigs[2].offsetFoundAt = branchResolve(data, i + 60); break;
+					case 3: getCurrentFieldEvenOddSigs[3].offsetFoundAt = branchResolve(data, i + 60); break;
 					case 4:
-					case 5: getCurrentFieldEvenOddSigs[2].offsetFoundAt = branchResolve(data, i + 63); break;
-					case 6: getCurrentFieldEvenOddSigs[3].offsetFoundAt = branchResolve(data, i + 68); break;
-					case 7: getCurrentFieldEvenOddSigs[2].offsetFoundAt = branchResolve(data, i + 80); break;
+					case 5: getCurrentFieldEvenOddSigs[3].offsetFoundAt = branchResolve(data, i + 63); break;
+					case 6: getCurrentFieldEvenOddSigs[4].offsetFoundAt = branchResolve(data, i + 68); break;
+					case 7: getCurrentFieldEvenOddSigs[3].offsetFoundAt = branchResolve(data, i + 80); break;
 				}
 				break;
 			}
@@ -1153,6 +1160,18 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		
 		if (!VIConfigurePanSig.offsetFoundAt && compare_pattern(&fp, &VIConfigurePanSig))
 			VIConfigurePanSig.offsetFoundAt = i;
+		
+		for (k = 0; k < sizeof(getCurrentFieldEvenOddSigs) / sizeof(FuncPattern); k++) {
+			if (getCurrentFieldEvenOddSigs[k].offsetFoundAt && i == getCurrentFieldEvenOddSigs[k].offsetFoundAt + getCurrentFieldEvenOddSigs[k].Length + 1) {
+				for (j = 0; j < sizeof(VIGetNextFieldSigs) / sizeof(FuncPattern); j++) {
+					if (!VIGetNextFieldSigs[j].offsetFoundAt && compare_pattern(&fp, &VIGetNextFieldSigs[j])) {
+						VIGetNextFieldSigs[j].offsetFoundAt = i;
+						break;
+					}
+				}
+				break;
+			}
+		}
 		
 		for (j = 0; j < sizeof(__GXInitGXSigs) / sizeof(FuncPattern); j++) {
 			if (!__GXInitGXSigs[j].offsetFoundAt && compare_pattern(&fp, &__GXInitGXSigs[j])) {
@@ -1782,6 +1801,24 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			data[i + 65] = 0x7CA32B78;	// mr		r3, r5
 			
 			print_gecko("Found:[%s] @ %08X\n", VIConfigurePanSig.Name, VIConfigurePan);
+		}
+	}
+	
+	if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 8) {
+		for (j = 0; j < sizeof(VIGetNextFieldSigs) / sizeof(FuncPattern); j++)
+			if (VIGetNextFieldSigs[j].offsetFoundAt) break;
+		
+		if ((i = VIGetNextFieldSigs[j].offsetFoundAt)) {
+			u32 *VIGetNextField = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			
+			if (VIGetNextField) {
+				memset(data + i, 0, VIGetNextFieldSigs[j].Length * sizeof(u32));
+				
+				data[i + 0] = 0x38600001;	// li		r3, 1
+				data[i + 1] = 0x4E800020;	// blr
+				
+				print_gecko("Found:[%s] @ %08X\n", VIGetNextFieldSigs[j].Name, VIGetNextField);
+			}
 		}
 	}
 	
