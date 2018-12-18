@@ -20,7 +20,9 @@ VIConfigure1080i60:
 	li			%r6, 0
 	lhz			%r5, 8 (%r3)
 	slwi		%r5, %r5, 1
-	subic.		%r4, %r5, 480
+	cmpwi		%r5, 480
+	ble			6f
+	cmpwi		%r5, 574
 	ble			4f
 	xori		%r0, %r0, 2
 	lhz			%r5, 8 (%r3)
@@ -29,11 +31,19 @@ VIConfigure1080i60:
 	lhz			%r5, 6 (%r3)
 	clrrwi		%r5, %r5, 1
 	sth			%r5, 8 (%r3)
-3:	subic		%r4, %r5, 540
-4:	srawi		%r4, %r4, 1
-	addze		%r4, %r4
-	neg			%r4, %r4
-	sth			%r4, 12 (%r3)
+3:	subfic		%r4, %r5, 540
+	srawi		%r4, %r4, 1
+	b			7f
+4:	lhz			%r5, 6 (%r3)
+	cmpwi		%r5, 240
+	ble			5f
+	li			%r5, 240
+	sth			%r5, 6 (%r3)
+5:	sth			%r5, 8 (%r3)
+	slwi		%r5, %r5, 1
+6:	subfic		%r4, %r5, 480
+	srwi		%r4, %r4, 1
+7:	sth			%r4, 12 (%r3)
 	sth			%r5, 16 (%r3)
 	sth			%r6, 20 (%r3)
 	stb			%r7, 24 (%r3)

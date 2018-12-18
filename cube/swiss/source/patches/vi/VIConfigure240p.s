@@ -21,11 +21,13 @@ VIConfigure240p:
 	lhz			%r5, 8 (%r3)
 	slwi		%r5, %r5, 1
 	cmpwi		%r5, 480
+	ble			6f
+	cmpwi		%r5, 574
 	ble			4f
 	li			%r6, 1
 	lhz			%r5, 8 (%r3)
 	cmpwi		%r5, 480
-	ble			4f
+	ble			6f
 	lhz			%r5, 6 (%r3)
 	clrrwi		%r5, %r5, 1
 	cmpwi		%r5, 480
@@ -33,8 +35,16 @@ VIConfigure240p:
 	li			%r5, 480
 	sth			%r5, 6 (%r3)
 3:	sth			%r5, 8 (%r3)
-4:	subfic		%r4, %r5, 480
-	srawi		%r4, %r4, 1
+	b			6f
+4:	lhz			%r5, 6 (%r3)
+	cmpwi		%r5, 240
+	ble			5f
+	li			%r5, 240
+	sth			%r5, 6 (%r3)
+5:	sth			%r5, 8 (%r3)
+	slwi		%r5, %r5, 1
+6:	subfic		%r4, %r5, 480
+	srwi		%r4, %r4, 1
 	sth			%r4, 12 (%r3)
 	sth			%r5, 16 (%r3)
 	sth			%r6, 20 (%r3)
