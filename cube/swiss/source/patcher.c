@@ -1242,11 +1242,76 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	if ((i = getCurrentFieldEvenOddSigs[k].offsetFoundAt)) {
 		u32 *getCurrentFieldEvenOdd = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
+		if (getCurrentFieldEvenOdd) {
+			switch (k) {
+				case 0:
+					data[i + 24] = 0x4180000C;	// blt		+3
+					data[i + 25] = 0x575A083C;	// slwi		r26, r26, 1
+					data[i + 26] = 0x7C7A1850;	// sub		r3, r3, r26
+					data[i + 27] = 0x7C630E70;	// srawi	r3, r3, 1
+					break;
+				case 1:
+					data[i +  7] = 0x4180000C;	// blt		+3
+					data[i +  8] = 0x5400083C;	// slwi		r0, r0, 1
+					data[i +  9] = 0x7C601850;	// sub		r3, r3, r0
+					data[i + 10] = 0x7C630E70;	// srawi	r3, r3, 1
+					break;
+				case 2:
+					data[i + 39] = 0x4180000C;	// blt		+3
+					data[i + 40] = 0x5529083C;	// slwi		r9, r9, 1
+					data[i + 41] = 0x7C090050;	// sub		r0, r0, r9
+					data[i + 42] = 0x7C030E70;	// srawi	r3, r0, 1
+					break;
+				case 3:
+				case 4:
+					data[i + 21] = 0x4180000C;	// blt		+3
+					data[i + 22] = 0x5400083C;	// slwi		r0, r0, 1
+					data[i + 23] = 0x7C601850;	// sub		r3, r3, r0
+					data[i + 24] = 0x7C630E70;	// srawi	r3, r3, 1
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOdd);
+		}
+		
 		if ((i = __VIRetraceHandlerSigs[j].offsetFoundAt)) {
 			u32 *__VIRetraceHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *__VIRetraceHandlerHook;
 			
 			if (__VIRetraceHandler && getCurrentFieldEvenOdd) {
+				switch (j) {
+					case 0:
+						data[i - 46] = 0x2C030000;	// cmpwi	r3, 0
+						data[i - 45] = 0x4082009C;	// bne		+39
+						break;
+					case 1:
+						data[i - 48] = 0x2C030000;	// cmpwi	r3, 0
+						data[i - 47] = 0x408200A4;	// bne		+41
+						break;
+					case 2:
+						data[i + 61] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 62] = 0x408200B4;	// bne		+45
+						break;
+					case 3:
+						data[i + 61] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 62] = 0x408200C4;	// bne		+49
+						break;
+					case 4:
+						data[i + 64] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 65] = 0x408200BC;	// bne		+47
+						break;
+					case 5:
+						data[i + 64] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 65] = 0x408200C4;	// bne		+49
+						break;
+					case 6:
+						data[i + 69] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 70] = 0x408200C4;	// bne		+49
+						break;
+					case 7:
+						data[i + 81] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 82] = 0x408200C4;	// bne		+49
+						break;
+				}
 				if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 7) {
 					switch (j) {
 						case 0: data[i - 50] = 0x38000001; break;
@@ -1315,7 +1380,6 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					}
 					data[i + __VIRetraceHandlerSigs[j].Length] = branch(__VIRetraceHandlerHook, __VIRetraceHandler + __VIRetraceHandlerSigs[j].Length);
 				}
-				print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOdd);
 				print_gecko("Found:[%s] @ %08X\n", __VIRetraceHandlerSigs[j].Name, __VIRetraceHandler);
 			}
 		}
@@ -1429,7 +1493,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				
 				if (VIWaitForRetrace && getCurrentFieldEvenOdd) {
 					data[i +  6] = data[i + 7];
-					data[i +  7] = 0x4800000C;	// b		+12
+					data[i +  7] = 0x4800000C;	// b		+3
 					data[i + 10] = branchAndLink(getCurrentFieldEvenOdd, VIWaitForRetrace + 10);
 					data[i + 11] = 0x28030000;	// cmplwi	r3, 0
 					
@@ -1480,7 +1544,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				case 0:
 					data[i +  4] = 0xA01D006C;	// lhz		r0, 108 (r29)
 					data[i +  5] = 0x540007FF;	// clrlwi.	r0, r0, 31
-					data[i +  6] = 0x41820010;	// beq		+16
+					data[i +  6] = 0x41820010;	// beq		+4
 					data[i + 12] = 0x7C6B0734;	// extsh	r11, r3
 					break;
 				case 1:
@@ -1491,7 +1555,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i +  6] = data[i + 8];
 					data[i +  7] = 0xA00B006C;	// lhz		r0, 108 (r11)
 					data[i +  8] = 0x540007FF;	// clrlwi.	r0, r0, 31
-					data[i +  9] = 0x41820010;	// beq		+16
+					data[i +  9] = 0x41820010;	// beq		+4
 					data[i + 15] = 0x7C7E0734;	// extsh	r30, r3
 					break;
 				case 2:
@@ -1804,21 +1868,22 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 8) {
-		for (j = 0; j < sizeof(VIGetNextFieldSigs) / sizeof(FuncPattern); j++)
-			if (VIGetNextFieldSigs[j].offsetFoundAt) break;
+	for (j = 0; j < sizeof(VIGetNextFieldSigs) / sizeof(FuncPattern); j++)
+		if (VIGetNextFieldSigs[j].offsetFoundAt) break;
+	
+	if ((i = VIGetNextFieldSigs[j].offsetFoundAt)) {
+		u32 *VIGetNextField = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		if ((i = VIGetNextFieldSigs[j].offsetFoundAt)) {
-			u32 *VIGetNextField = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		if (VIGetNextField) {
+			if (j == 0)
+				data[i + 7] = 0x547F0FFE;	// srwi		r31, r3, 31
 			
-			if (VIGetNextField) {
+			if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 8) {
 				memset(data + i, 0, VIGetNextFieldSigs[j].Length * sizeof(u32));
-				
 				data[i + 0] = 0x38600001;	// li		r3, 1
 				data[i + 1] = 0x4E800020;	// blr
-				
-				print_gecko("Found:[%s] @ %08X\n", VIGetNextFieldSigs[j].Name, VIGetNextField);
 			}
+			print_gecko("Found:[%s] @ %08X\n", VIGetNextFieldSigs[j].Name, VIGetNextField);
 		}
 	}
 	
