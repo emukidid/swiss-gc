@@ -36,6 +36,8 @@ extern u32 bba_bin_size;
 /* SDK patches */
 extern u8 GXAdjustForOverscan[];
 extern u32 GXAdjustForOverscan_length;
+extern u8 GXAdjustForOverscanD[];
+extern u32 GXAdjustForOverscanD_length;
 extern u8 GXAdjustForOverscanPatch[];
 extern u32 GXAdjustForOverscanPatch_length;
 extern u8 GXCopyDispHook[];
