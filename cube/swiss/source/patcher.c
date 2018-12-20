@@ -1203,7 +1203,11 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 186);
 						break;
 					case 4:
-						GXSetDispCopyYScaleSigs[3].offsetFoundAt = branchResolve(data, i + 499);
+						if (data[i + __GXInitGXSigs[j].Length - 1] == 0x7C0803A6)
+							GXSetDispCopyYScaleSigs[3].offsetFoundAt = branchResolve(data, i + 499);
+						else
+							GXSetDispCopyYScaleSigs[2].offsetFoundAt = branchResolve(data, i + 499);
+						
 						GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 506);
 						GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
 						GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 202);
