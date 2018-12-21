@@ -2,11 +2,11 @@
 #define _LANGUAGE_ASSEMBLY
 #include "../../../../reservedarea.h"
 
-.globl GXAdjustForOverscan
-GXAdjustForOverscan:
+.globl GXAdjustForOverscan2
+GXAdjustForOverscan2:
 	cmplw	%r3, %r4
-	clrlwi	%r7, %r5, 16
-	clrlwi	%r0, %r6, 16
+	clrlwi	%r0, %r5, 16
+	clrlwi	%r7, %r6, 16
 	rlwinm	%r5, %r5, 1, 16, 30
 	rlwinm	%r6, %r6, 1, 16, 30
 	beq		1f
@@ -41,8 +41,10 @@ GXAdjustForOverscan:
 	lwz		%r8, 56 (%r3)
 	stw		%r8, 56 (%r4)
 1:	lhz		%r8, 4 (%r3)
+	lwz		%r9, 0 (%r3)
 	sub		%r8, %r8, %r5
 	sth		%r8, 4 (%r4)
+	clrlwi	%r11, %r9, 30
 	lhz		%r10, 6 (%r3)
 	lhz		%r8, 8 (%r3)
 	mullw	%r9, %r6, %r10
@@ -52,31 +54,38 @@ GXAdjustForOverscan:
 	lwz		%r8, 20 (%r3)
 	cmpwi	%r8, 0
 	bne		2f
-	lwz		%r8, 0 (%r3)
-	rlwinm	%r8, %r8, 0, 30, 30
-	cmpwi	%r8, 2
-	beq		2f
+	cmplwi	%r11, 0
+	bne		2f
+	srawi	%r9, %r6, 1
 	lhz		%r8, 8 (%r3)
-	sub		%r8, %r8, %r0
+	addze	%r9, %r9
+	sub		%r8, %r8, %r9
 	sth		%r8, 8 (%r4)
 	b		3f
 2:	lhz		%r8, 8 (%r3)
 	sub		%r8, %r8, %r6
 	sth		%r8, 8 (%r4)
 3:	lhz		%r8, 14 (%r3)
+	cmplwi	%r11, 1
 	sub		%r5, %r8, %r5
 	sth		%r5, 14 (%r4)
+	bne		4f
 	lhz		%r5, 16 (%r3)
+	slwi	%r6, %r6, 1
 	sub		%r5, %r5, %r6
 	sth		%r5, 16 (%r4)
-	lhz		%r5, 10 (%r3)
-	add		%r5, %r5, %r7
-	sth		%r5, 10 (%r4)
-	lhz		%r3, 12 (%r3)
-	add		%r0, %r3, %r0
+	b		5f
+4:	lhz		%r5, 16 (%r3)
+	sub		%r5, %r5, %r6
+	sth		%r5, 16 (%r4)
+5:	lhz		%r5, 10 (%r3)
+	add		%r0, %r5, %r0
+	sth		%r0, 10 (%r4)
+	lhz		%r0, 12 (%r3)
+	add		%r0, %r0, %r7
 	sth		%r0, 12 (%r4)
 	blr
 
-.globl GXAdjustForOverscan_length
-GXAdjustForOverscan_length:
-.long (GXAdjustForOverscan_length - GXAdjustForOverscan)
+.globl GXAdjustForOverscan2_length
+GXAdjustForOverscan2_length:
+.long (GXAdjustForOverscan2_length - GXAdjustForOverscan2)

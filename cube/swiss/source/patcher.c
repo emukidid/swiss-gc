@@ -982,9 +982,10 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{  545, 293, 37, 110,  7,  9, NULL, 0, "__GXInitGX E" },		// SN Systems ProDG
 		{  589, 333, 34, 119, 28, 11, NULL, 0, "__GXInitGX F" }
 	};
-	FuncPattern GXAdjustForOverscanSigs[2] = {
-		{ 56,  6,  4, 0, 3, 11, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscanD" },
-		{ 71, 17, 15, 0, 3,  5, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan" }
+	FuncPattern GXAdjustForOverscanSigs[3] = {
+		{ 56,  6,  4, 0, 3, 11, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscanD A" },
+		{ 71, 17, 15, 0, 3,  5, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan A" },
+		{ 80, 17, 15, 0, 3,  7, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan B" }
 	};
 	FuncPattern GXSetDispCopyYScaleSigs[7] = {
 		{ 99, 33, 8, 8, 4, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScaleD A" },
@@ -1070,8 +1071,10 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (!GXAdjustForOverscanSigs[0].offsetFoundAt && !memcmp(data + i, GXAdjustForOverscanD, GXAdjustForOverscanD_length))
 			GXAdjustForOverscanSigs[0].offsetFoundAt = i;
-		if (!GXAdjustForOverscanSigs[1].offsetFoundAt && !memcmp(data + i, GXAdjustForOverscan, GXAdjustForOverscan_length))
+		if (!GXAdjustForOverscanSigs[1].offsetFoundAt && !memcmp(data + i, GXAdjustForOverscan1, GXAdjustForOverscan1_length))
 			GXAdjustForOverscanSigs[1].offsetFoundAt = i;
+		if (!GXAdjustForOverscanSigs[2].offsetFoundAt && !memcmp(data + i, GXAdjustForOverscan2, GXAdjustForOverscan2_length))
+			GXAdjustForOverscanSigs[2].offsetFoundAt = i;
 		
 		if (data[i] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6)
 			continue;
