@@ -37,7 +37,9 @@ VIConfigure1080i60:
 4:	lhz			%r5, 6 (%r3)
 	cmpwi		%r5, 240
 	ble			5f
-	li			%r5, 240
+	subi		%r5, %r5, 264
+	slwi		%r5, %r5, 1
+	addi		%r5, %r5, 240
 	sth			%r5, 6 (%r3)
 5:	sth			%r5, 8 (%r3)
 	slwi		%r5, %r5, 1

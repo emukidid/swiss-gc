@@ -19,12 +19,15 @@ GXAdjustForOverscanPatch:
 	srw		%r12, %r9, %r10
 	cmpwi	%r12, 240
 	ble		4f
-	clrrwi	%r6, %r6, 2
+	clrrwi.	%r6, %r6, 2
 	sub		%r7, %r12, %r11
 	mr		%r8, %r9
-	cmpwi	%r11, 240
-	ble		3f
+	cmpwi	%cr7, %r11, 240
+	ble		%cr7, 3f
 	subi	%r7, %r12, 240
+	bne		3f
+	subfic	%r6, %r11, 264
+	slwi	%r6, %r6, 1
 3:	add		%r6, %r6, %r7
 4:	slw		%r7, %r6, %r10
 	mullw	%r10, %r8, %r7
