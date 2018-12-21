@@ -4,36 +4,27 @@
 
 .globl VIConfigure288p
 VIConfigure288p:
-	li			%r0, 21
-	lwz			%r6, 0 (%r3)
+	lwz			%r0, 0 (%r3)
 	lis			%r4, VAR_AREA
-	lwz			%r5, VAR_TVMODE (%r4)
-	cmpwi		%r5, 0
+	stw			%r3, VAR_RMODE (%r4)
+	li			%r4, 576
+	clrrwi		%r0, %r0, 2
+	cmpwi		%r0, 4
 	beq			1f
-	srwi.		%r5, %r6, 2
-	bne			2f
-	stw			%r5, VAR_TVMODE (%r4)
-1:	insrwi		%r0, %r5, 30, 0
-2:	stw			%r3, VAR_RMODE (%r4)
+	cmpwi		%r0, 16
+	beq			1f
+	li			%r4, 480
+1:	ori			%r0, %r0, 1
 	li			%r7, 0
 	li			%r6, 0
 	lhz			%r5, 8 (%r3)
 	slwi		%r5, %r5, 1
-	subic.		%r4, %r5, 480
-	ble			3f
-	xori		%r0, %r0, 16
-	subic.		%r4, %r5, 576
-	ble			3f
-	xori		%r0, %r0, 16
+	cmpw		%r4, %r5
+	bge			2f
 	li			%r6, 1
 	lhz			%r5, 8 (%r3)
-	subic.		%r4, %r5, 480
-	ble			3f
-	xori		%r0, %r0, 16
-	subic		%r4, %r5, 576
-3:	srawi		%r4, %r4, 1
-	addze		%r4, %r4
-	neg			%r4, %r4
+2:	subf		%r4, %r5, %r4
+	srawi		%r4, %r4, 1
 	sth			%r4, 12 (%r3)
 	sth			%r5, 16 (%r3)
 	sth			%r6, 20 (%r3)

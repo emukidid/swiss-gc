@@ -24,7 +24,7 @@ VIConfigure1080i60:
 	ble			6f
 	cmpwi		%r5, 574
 	ble			4f
-	xori		%r0, %r0, 2
+	ori			%r0, %r0, 2
 	lhz			%r5, 8 (%r3)
 	cmpwi		%r5, 480
 	ble			3f
