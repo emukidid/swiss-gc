@@ -33,6 +33,8 @@
 .set VAR_READS_IN_AS,		0x2EE4	# How many times have we tried to read while streaming is on?
 .set VAR_AS_ENABLED,		0x2EE8	# Is Audio streaming enabled by the user?
 .set VAR_RMODE,				0x2EEC	# render mode
+.set VAR_VFILTER,			0x2EF0	# vertical filter
+.set VAR_VFILTER_ON,		0x2EF7	# vertical filter on
 .set VAR_FAKE_IRQ_SET,		0x2EF8	# flag to say we are ready to fake irq.
 .set VAR_SAR_WIDTH,			0x2EFC	# sample aspect ratio width
 .set VAR_SAR_HEIGHT,		0x2EFE	# sample aspect ratio height
@@ -116,6 +118,8 @@
 #define VAR_READS_IN_AS		(VAR_AREA+0x2EE4)	// How many times have we tried to read while streaming is on?
 #define VAR_AS_ENABLED		(VAR_AREA+0x2EE8)	// Is Audio streaming enabled by the user?
 #define VAR_RMODE			(VAR_AREA+0x2EEC)	// render mode
+#define VAR_VFILTER			(VAR_AREA+0x2EF0)	// vertical filter
+#define VAR_VFILTER_ON		(VAR_AREA+0x2EF7)	// vertical filter on
 #define VAR_FAKE_IRQ_SET	(VAR_AREA+0x2EF8)	// flag to say we are ready to fake irq.
 #define VAR_SAR_WIDTH		(VAR_AREA+0x2EFC)	// sample aspect ratio width
 #define VAR_SAR_HEIGHT		(VAR_AREA+0x2EFE)	// sample aspect ratio height

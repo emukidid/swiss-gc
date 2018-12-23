@@ -997,10 +997,10 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 50, 16, 4, 1, 5, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale E" }
 	};
 	FuncPattern GXSetCopyFilterSigs[4] = {
-		{ 566, 183, 44, 32, 36, 38, NULL, 0, "GXSetCopyFilterD A" },
-		{ 137,  15,  7,  0,  4,  5, NULL, 0, "GXSetCopyFilter A" },
-		{ 162,  19, 23,  0,  3, 14, NULL, 0, "GXSetCopyFilter B" },		// SN Systems ProDG
-		{ 129,  25,  7,  0,  4,  0, NULL, 0, "GXSetCopyFilter C" }
+		{ 566, 183, 44, 32, 36, 38, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilterD A" },
+		{ 137,  15,  7,  0,  4,  5, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter A" },
+		{ 162,  19, 23,  0,  3, 14, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter B" },	// SN Systems ProDG
+		{ 129,  25,  7,  0,  4,  0, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter C" }
 	};
 	FuncPattern GXCopyDispSigs[5] = {
 		{ 148, 62,  3, 14, 14, 3, NULL, 0, "GXCopyDispD A" },
@@ -1036,6 +1036,13 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			if (!swissSettings.forceVFilter)
 				swissSettings.forceVFilter = 1;
 	}
+	
+	if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 8)
+		memcpy((u8 *)VAR_VFILTER, vertical_reduction[swissSettings.forceVFilter], 7);
+	else
+		memcpy((u8 *)VAR_VFILTER, vertical_filters[swissSettings.forceVFilter], 7);
+	
+	*(u8 *)VAR_VFILTER_ON = !!swissSettings.forceVFilter;
 	
 	switch (swissSettings.forceHScale) {
 		default:
@@ -1957,57 +1964,17 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (swissSettings.forceVFilter > 0) {
+	if (swissSettings.forceVFilter) {
 		for (j = 0; j < sizeof(GXSetCopyFilterSigs) / sizeof(FuncPattern); j++)
 			if (GXSetCopyFilterSigs[j].offsetFoundAt) break;
 		
 		if ((i = GXSetCopyFilterSigs[j].offsetFoundAt)) {
 			u32 *GXSetCopyFilter = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			u8 *vfilter;
 			
 			if (GXSetCopyFilter) {
-				if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 8)
-					vfilter = vertical_reduction[swissSettings.forceVFilter];
-				else
-					vfilter = vertical_filters[swissSettings.forceVFilter];
-				
-				switch (j) {
-					case 0:
-						data[i + 456] = 0x38000000 | vfilter[0];
-						data[i + 467] = 0x38000000 | vfilter[1];
-						data[i + 479] = 0x38000000 | vfilter[2];
-						data[i + 491] = 0x38000000 | vfilter[3];
-						data[i + 503] = 0x38000000 | vfilter[4];
-						data[i + 514] = 0x38000000 | vfilter[5];
-						data[i + 526] = 0x38000000 | vfilter[6];
-						break;
-					case 1:
-						data[i +  97] = 0x38000000 | vfilter[0];
-						data[i +  98] = 0x38600000 | vfilter[1];
-						data[i + 100] = 0x38000000 | vfilter[4];
-						data[i + 101] = 0x38800000 | vfilter[2];
-						data[i + 104] = 0x38600000 | vfilter[5];
-						data[i + 107] = 0x38A00000 | vfilter[3];
-						data[i + 108] = 0x38000000 | vfilter[6];
-						break;
-					case 2:
-						data[i + 123] = 0x38000000 | vfilter[0];
-						data[i + 124] = 0x39200000 | vfilter[1];
-						data[i + 126] = 0x39400000 | vfilter[4];
-						data[i + 127] = 0x39600000 | vfilter[2];
-						data[i + 129] = 0x39000000 | vfilter[5];
-						data[i + 134] = 0x39400000 | vfilter[6];
-						data[i + 135] = 0x39200000 | vfilter[3];
-						break;
-					case 3:
-						data[i +  93] = 0x38800000 | vfilter[0];
-						data[i +  94] = 0x38600000 | vfilter[4];
-						data[i +  96] = 0x38800000 | vfilter[1];
-						data[i +  98] = 0x38E00000 | vfilter[2];
-						data[i + 100] = 0x38800000 | vfilter[5];
-						data[i + 101] = 0x38A00000 | vfilter[3];
-						data[i + 103] = 0x38600000 | vfilter[6];
-						break;
+				if (GXSetCopyFilterSigs[j].Patch) {
+					memset(data + i, 0, GXSetCopyFilterSigs[j].Length * sizeof(u32));
+					memcpy(data + i, GXSetCopyFilterSigs[j].Patch, GXSetCopyFilterSigs[j].PatchLength);
 				}
 				print_gecko("Found:[%s] @ %08X\n", GXSetCopyFilterSigs[j].Name, GXSetCopyFilter);
 			}

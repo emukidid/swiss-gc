@@ -46,6 +46,8 @@ extern u8 GXCopyDispHook[];
 extern u32 GXCopyDispHook_length;
 extern u8 GXInitTexObjLODHook[];
 extern u32 GXInitTexObjLODHook_length;
+extern u8 GXSetCopyFilterPatch[];
+extern u32 GXSetCopyFilterPatch_length;
 extern u8 GXSetDispCopyYScalePatch1[];
 extern u32 GXSetDispCopyYScalePatch1_length;
 extern u8 GXSetDispCopyYScalePatch2[];
