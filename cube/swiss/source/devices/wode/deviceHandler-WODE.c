@@ -35,14 +35,6 @@ device_info initial_WODE_info = {
 };
 	
 int startupWode() {
-	device_versions *wode_version_info = calloc(1, sizeof(device_versions));
-	if(GetVersions(wode_version_info)) {
-		// Wode already initialised, return success
-		print_gecko("WODE initialised: Loader:%04X WODE:%04X FPGA:%04X HW:%02X\r\n",
-			wode_version_info->loader_version, wode_version_info->wode_version,
-			wode_version_info->fpga_version, wode_version_info->hw_version);
-		return 0;
-	}
 	if(OpenWode() == 0) {
 		CloseWode();
 		if(OpenWode() == 0) {
@@ -53,7 +45,15 @@ int startupWode() {
 			return -1;
 		}
 	}
-	return 0;
+	// Wode initialised, return success
+	device_versions *wode_version_info = calloc(1, sizeof(device_versions));
+	if(GetVersions(wode_version_info)) {
+		print_gecko("WODE initialised: Loader:%04X WODE:%04X FPGA:%04X HW:%02X\r\n",
+			wode_version_info->loader_version, wode_version_info->wode_version,
+			wode_version_info->fpga_version, wode_version_info->hw_version);
+		return 0;
+	}
+	return -1;
 }
 
 device_info* deviceHandler_WODE_info() {
