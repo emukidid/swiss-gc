@@ -80,7 +80,7 @@ build:
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/ISO/DOL/
 	# PAL
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/ISO/DOL/
-	# WKF
+	# WODE
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-wode.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/WODE/$(SVN_REVISION)"(wode_extcfg)".iso $(DIST)/ISO/DOL/
 	@cp $(BUILDTOOLS)/wkf/wkf_menu.fzn $(SVN_REVISION).fzn
 	@dd if=$(DIST)/ISO/$(SVN_REVISION)"(pal)".iso of=$(SVN_REVISION).fzn conv=notrunc
@@ -106,6 +106,7 @@ package:   # create distribution package
 	@mv $(DIST)/DOL $(SVN_REVISION)
 	@mv $(DIST)/GCI $(SVN_REVISION)
 	@mv $(DIST)/ISO $(SVN_REVISION)
+	@mv $(DIST)/WODE $(SVN_REVISION)
 	@mv $(DIST)/WiikeyFusion $(SVN_REVISION)
 	@mv $(DIST)/ActionReplay $(SVN_REVISION)
 	@mv $(DIST)/USBGeckoRemoteServer $(SVN_REVISION)
