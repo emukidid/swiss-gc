@@ -7,14 +7,16 @@ VIConfigure288p:
 	lwz			%r0, 0 (%r3)
 	lis			%r4, VAR_AREA
 	stw			%r3, VAR_RMODE (%r4)
+	srwi		%r6, %r0, 2
+	stw			%r6, VAR_TVMODE (%r4)
 	li			%r5, 576
-	clrrwi		%r0, %r0, 2
-	cmpwi		%r0, 4
+	cmpwi		%r6, 1
 	beq			1f
-	cmpwi		%r0, 16
+	cmpwi		%r6, 4
 	beq			1f
 	li			%r5, 480
-1:	ori			%r0, %r0, 1
+1:	clrrwi		%r0, %r0, 2
+	ori			%r0, %r0, 1
 	li			%r8, 0
 	li			%r7, 0
 	lhz			%r6, 8 (%r3)
