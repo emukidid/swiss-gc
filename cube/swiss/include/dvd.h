@@ -56,7 +56,7 @@ void dvd_motor_on_extra();
 int read_safe(void* dst, int offset, int len);
 extern void load_dol_fn_inmem(void* dol, int size);
 int DVD_ReadID(dvddiskid *diskID);
-int DVD_Read(void* dst, u64 offset, int len);
+s32 DVD_Read(void* dst, uint64_t offset, u32 len);
 int read_sector(void* buffer, int numSectors, u32 sector);
 int DVD_LowRead64(void* dst, unsigned int len, u64 offset);
 void dvd_set_offset(u64 offset);

@@ -928,7 +928,9 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message
 			|| endsWith(eventData->displayName,".iso")
 			|| endsWith(eventData->displayName,".dol")
 			|| endsWith(eventData->displayName,".dol+cli")) {
-			eventData->displayName[((u32)strrchr(eventData->displayName, '.'))-((u32)eventData->displayName)] = '\0';
+				if((u32)strrchr(eventData->displayName, '.')) {
+				eventData->displayName[((u32)strrchr(eventData->displayName, '.'))-((u32)eventData->displayName)] = '\0';
+			}
 		}
 	}
 	

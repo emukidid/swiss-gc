@@ -22,7 +22,7 @@ char disktype[] = {'?', 'G','W','W','I' };
 int wodeInited = 0;
 
 file_handle initial_WODE =
-	{ "\\",     // directory
+	{ "wode:/",     // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
 	  0,        // size
@@ -35,12 +35,23 @@ device_info initial_WODE_info = {
 };
 	
 int startupWode() {
+	device_versions *wode_version_info = calloc(1, sizeof(device_versions));
+	if(GetVersions(wode_version_info)) {
+		// Wode already initialised, return success
+		print_gecko("WODE initialised: Loader:%04X WODE:%04X FPGA:%04X HW:%02X\r\n",
+			wode_version_info->loader_version, wode_version_info->wode_version,
+			wode_version_info->fpga_version, wode_version_info->hw_version);
+		return 0;
+	}
 	if(OpenWode() == 0) {
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"No Wode found! Press A");
-		DrawPublish(msgBox);
-		wait_press_A();
-		DrawDispose(msgBox);
-		return -1;
+		CloseWode();
+		if(OpenWode() == 0) {
+			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"No Wode found! Press A");
+			DrawPublish(msgBox);
+			wait_press_A();
+			DrawDispose(msgBox);
+			return -1;
+		}
 	}
 	return 0;
 }
@@ -59,7 +70,11 @@ s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		usleep(20000);
 	}
    
-	u32 numPartitions = 0, numIsoInPartition = 0, i,j, num_entries = 0;
+	u32 numPartitions = 0, numIsoInPartition = 0, i,j, num_entries = 1;
+	*dir = malloc( num_entries * sizeof(file_handle) );
+	memset(&(*dir)[0], 0, sizeof(file_handle));
+	strcpy((*dir)[0].name,"..");
+	(*dir)[0].fileAttrib = IS_SPECIAL;
 
 	numPartitions = GetNumPartitions();
 	for(i=0;i<numPartitions;i++) {
@@ -70,14 +85,14 @@ s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			tmp.iso_partition = i;
 			tmp.iso_number = j;
 			if(tmp.iso_type==1) { //add gamecube only
-				*dir = !num_entries ? malloc( sizeof(file_handle) ) : realloc( *dir, num_entries * sizeof(file_handle) );
+				*dir = realloc( *dir, (num_entries+1) * sizeof(file_handle) ); 
 				memset(&(*dir)[num_entries], 0, sizeof(file_handle));
 				sprintf((*dir)[num_entries].name, "%s.gcm",&tmp.name[0]);
 				(*dir)[num_entries].fileAttrib = IS_FILE;
 				memcpy(&(*dir)[num_entries].other, &tmp, sizeof(ISOInfo_t));
-				num_entries++;
 				print_gecko("Adding WODE entry: %s part:%08X iso:%08X region:%08X\r\n",
 					&tmp.name[0], tmp.iso_partition, tmp.iso_number, tmp.iso_region);
+				num_entries++;
 			}
 		}
 	}
@@ -92,8 +107,8 @@ s32 deviceHandler_WODE_seekFile(file_handle* file, unsigned int where, u32 type)
 	return file->offset;
 }
 
-s32 deviceHandler_WODE_readFile(file_handle* file, void* buffer, u32 length){
-	int bytesread = DVD_Read(buffer,file->offset,length);
+s32 deviceHandler_WODE_readFile(file_handle* file, void* buffer, u32 length) {
+	s32 bytesread = DVD_Read(buffer,file->offset,length);
 	if(bytesread > 0) {
 		file->offset += bytesread;
 	}

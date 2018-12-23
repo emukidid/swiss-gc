@@ -400,19 +400,19 @@ DVD_LowRead64(void* dst, unsigned int len, uint64_t offset)
   Synchronous function.
     return -1 if offset is out of range
 */
-int DVD_LowRead64(void* dst, unsigned int len, uint64_t offset)
+int DVD_LowRead64(void* dst, u32 len, uint64_t offset)
 {
-  volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
-  if(offset>>2 > 0xFFFFFFFF)
-    return -1;
-    
-  if ((((int)dst) & 0xC0000000) == 0x80000000) // cached?
+	vu32* dvd = (vu32*)0xCC006000;
+	if(offset>>2 > 0xFFFFFFFF)
+		return -1;
+	
+	if ((((u32)dst) & 0xC0000000) == 0x80000000) // cached?
 		dvd[0] = 0x2E;
 	dvd[1] = 0;
 	dvd[2] = 0xA8000000;
 	dvd[3] = offset >> 2;
 	dvd[4] = len;
-	dvd[5] = (unsigned long)dst;
+	dvd[5] = (u32)dst;
 	dvd[6] = len;
 	dvd[7] = 3; // enable reading!
 	DCInvalidateRange(dst, len);
@@ -429,11 +429,15 @@ DVD_Read(void* dst, uint64_t offset, int len)
   Synchronous function.
     return -1 if offset is out of range
 */
-int DVD_Read(void* dst, uint64_t offset, int len)
+s32 DVD_Read(void* dst, uint64_t offset, u32 len)
 {
-	int ol = len;
-	int ret = 0;	
-  char *sector_buffer = (char*)memalign(32,2048);
+	if(!((offset & 3) || ((u32)dst & 3))) {
+		DVD_LowRead64(dst, len, offset);
+		return len;
+	}
+	u32 ol = len;
+	s32 ret = 0;	
+	u8 *sector_buffer = (u8*)memalign(32,2048);
 	while (len)
 	{
 		uint32_t sector = offset / 2048;

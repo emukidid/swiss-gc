@@ -100,6 +100,11 @@ void populate_meta(file_handle *f) {
 						f->meta->regionTexId = TEX_PAL;
 					else if(region == 'E')
 						f->meta->regionTexId = TEX_PAL;
+					f->meta->banner = memalign(32,BannerSize);
+					memcpy(f->meta->banner,blankbanner+0x20,BannerSize);
+					DCFlushRange(f->meta->banner,BannerSize);
+					GX_InitTexObj(&f->meta->bannerTexObj,f->meta->banner,96,32,GX_TF_RGB5A3,GX_CLAMP,GX_CLAMP,GX_FALSE);
+						
 				}
 				else {
 					f->meta = (file_meta*)meta_alloc(sizeof(file_meta));

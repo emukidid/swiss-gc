@@ -104,7 +104,7 @@ void *httpd (void *arg) {
 							net_send(csock, temp, strlen(temp), 0);
 							// Loop and pump DVD data out
 							httpd_in_use = 1;
-							int ofs = 0;
+							u64 ofs = 0;
 							char *dvd_buffer = (char*)memalign(32,2048);
 							for(ofs = 0; ofs < DISC_SIZE; ofs+=2048) {
 								DVD_Read(dvd_buffer,ofs,2048);

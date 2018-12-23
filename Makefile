@@ -63,6 +63,7 @@ build:
 	@mkdir $(DIST)/WiikeyFusion/RecoveryISO
 	@mkdir $(DIST)/ActionReplay
 	@mkdir $(DIST)/GCI
+	@mkdir $(DIST)/WODE
 	@cp $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/$(SVN_REVISION).dol
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION).dol
 	@cp $(SOURCES)/swiss/swiss.elf $(DIST)/DOL/$(SVN_REVISION).elf
@@ -79,6 +80,8 @@ build:
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/ISO/DOL/
 	# PAL
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/ISO/DOL/
+	# WKF
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-wode.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/WODE/$(SVN_REVISION)"(wode_extcfg)".iso $(DIST)/ISO/DOL/
 	@cp $(BUILDTOOLS)/wkf/wkf_menu.fzn $(SVN_REVISION).fzn
 	@dd if=$(DIST)/ISO/$(SVN_REVISION)"(pal)".iso of=$(SVN_REVISION).fzn conv=notrunc
 	@mv $(SVN_REVISION).fzn $(DIST)/WiikeyFusion

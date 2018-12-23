@@ -696,6 +696,9 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	// Read the entire Main DOL
 	main_dol_buffer = memalign(32,main_dol_size+DOLHDRLENGTH);
 	print_gecko("DOL buffer %08X\r\n", (u32)main_dol_buffer);
+	if(!main_dol_buffer) {
+		return 0;
+	}
 	devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
 	if(devices[DEVICE_CUR]->readFile(&curFile,(void*)main_dol_buffer,main_dol_size+DOLHDRLENGTH) != main_dol_size+DOLHDRLENGTH) {
 		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
@@ -1554,8 +1557,12 @@ uiDrawObj_t* draw_game_info() {
 		DrawAddChild(container, DrawStyledLabel(640/2, 200, txtbuffer, 0.8f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 220, (GCMDisk.DiscID ? "Disc 2":""), 0.8f, true, defaultColor));
 	}
-
-	DrawAddChild(container, DrawStyledLabel(640/2, 370, "Settings (X) - Cheats (Y) - Exit (B) - Boot (A)", 0.75f, true, defaultColor));
+	if(devices[DEVICE_CUR] == &__device_wode) {
+		DrawAddChild(container, DrawStyledLabel(640/2, 370, "Settings (X) - Cheats (Y) - Boot (A)", 0.75f, true, defaultColor));
+	}
+	else {
+		DrawAddChild(container, DrawStyledLabel(640/2, 370, "Settings (X) - Cheats (Y) - Exit (B) - Boot (A)", 0.75f, true, defaultColor));
+	}
 	return container;
 }
 
@@ -1584,6 +1591,10 @@ int info_game()
 		while(!(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y))){ VIDEO_WaitVSync (); }
 		if(PAD_ButtonsHeld(0) & (PAD_BUTTON_B|PAD_BUTTON_A)){
 			ret = (PAD_ButtonsHeld(0) & PAD_BUTTON_A) ? 1:0;
+			// WODE can't return from here.
+			if(devices[DEVICE_CUR] == &__device_wode && !ret) {
+				continue;
+			}
 			break;
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
