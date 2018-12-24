@@ -86,7 +86,7 @@ void print_gecko(const char* fmt, ...)
 	}
 }
 
-char *DiscIDNoNTSC[] = {"DLSP64", "G2MP01", "GLRD64", "GLRF64", "GLRP64", "GM8P01", "GSWD64", "GSWF64", "GSWI64", "GSWP64", "GSWS64"};
+char *DiscIDNoNTSC[] = {"DLSP64", "G2MP01", "GBZP08", "GLRD64", "GLRF64", "GLRP64", "GM8P01", "GSWD64", "GSWF64", "GSWI64", "GSWP64", "GSWS64"};
 
 /* re-init video for a given game */
 void ogc_video__reset()
@@ -129,7 +129,7 @@ void ogc_video__reset()
 		swissSettings.sramProgressive = (swissSettings.gameVMode == 5) || (swissSettings.gameVMode == 10);
 	}
 	
-	if(!strncmp(gameID, "GB3E51", 6) || (!strncmp(gameID, "G2OE41", 6) && swissSettings.sramLanguage == 3))
+	if(!strncmp(gameID, "GB3E51", 6) || (!strncmp(gameID, "G2OE41", 6) && swissSettings.sramLanguage == 3) || !strncmp(gameID, "GMXP70", 6))
 		swissSettings.sramProgressive = 0;
 	
 	syssram* sram = __SYS_LockSram();
