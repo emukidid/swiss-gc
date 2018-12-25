@@ -76,6 +76,7 @@ typedef struct {
 	int forceHScale;
 	short forceVOffset;
 	int forceVFilter;
+	int disableDithering;
 	int forceAnisotropy;
 	int forceWidescreen;
 	int forceEncoding;

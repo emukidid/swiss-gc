@@ -1009,6 +1009,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{  68, 15, 12,  0,  1, 1, NULL, 0, "GXCopyDisp C" },			// SN Systems ProDG
 		{  89, 35, 14,  0,  3, 0, NULL, 0, "GXCopyDisp D" }
 	};
+	FuncPattern GXSetBlendModeSigs[4] = {
+		{ 153, 66, 10, 7, 9, 17, GXSetBlendModePatch1, GXSetBlendModePatch1_length, "GXSetBlendModeD A" },
+		{  64, 20,  8, 0, 2,  6, GXSetBlendModePatch1, GXSetBlendModePatch1_length, "GXSetBlendMode A" },
+		{  20,  6,  2, 0, 0,  2, GXSetBlendModePatch2, GXSetBlendModePatch2_length, "GXSetBlendMode B" },
+		{  35,  2,  2, 0, 0,  6, GXSetBlendModePatch3, GXSetBlendModePatch3_length, "GXSetBlendMode C" }	// SN Systems ProDG
+	};
 	FuncPattern __GXSetViewportSig = 
 		{ 35, 15, 7, 0, 0, 0, GXSetViewportPatch, GXSetViewportPatch_length, "__GXSetViewport" };
 	FuncPattern GXSetViewportJitterSigs[5] = {
@@ -1196,24 +1202,28 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						GXSetDispCopyYScaleSigs[0].offsetFoundAt = branchResolve(data, i + 1088);
 						GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 1095);
 						GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 601;
+						GXSetBlendModeSigs[0].offsetFoundAt = branchResolve(data, i + 1033);
 						GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 727);
 						break;
 					case 1:
 						GXSetDispCopyYScaleSigs[1].offsetFoundAt = branchResolve(data, i + 499);
 						GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 506);
 						GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 601;
+						GXSetBlendModeSigs[0].offsetFoundAt = branchResolve(data, i + 444);
 						GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 202);
 						break;
 					case 2:
 						GXSetDispCopyYScaleSigs[2].offsetFoundAt = branchResolve(data, i + 933);
 						GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 941);
 						GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
+						GXSetBlendModeSigs[1].offsetFoundAt = branchResolve(data, i + 881);
 						GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 553);
 						break;
 					case 3:
 						GXSetDispCopyYScaleSigs[2].offsetFoundAt = branchResolve(data, i + 484);
 						GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 491);
 						GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
+						GXSetBlendModeSigs[1].offsetFoundAt = branchResolve(data, i + 431);
 						GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 186);
 						break;
 					case 4:
@@ -1224,24 +1234,28 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						
 						GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 506);
 						GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
+						GXSetBlendModeSigs[1].offsetFoundAt = branchResolve(data, i + 446);
 						GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 202);
 						break;
 					case 5:
 						GXSetDispCopyYScaleSigs[4].offsetFoundAt = branchResolve(data, i + 514);
 						GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 521);
 						GXCopyDispSigs[2].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
+						GXSetBlendModeSigs[2].offsetFoundAt = branchResolve(data, i + 461);
 						GXSetViewportSigs[2].offsetFoundAt = branchResolve(data, i + 215);
 						break;
 					case 6:
 						GXSetDispCopyYScaleSigs[5].offsetFoundAt = branchResolve(data, i + 492);
 						GXSetCopyFilterSigs[2].offsetFoundAt = branchResolve(data, i + 499);
 						GXCopyDispSigs[3].offsetFoundAt = GXSetCopyFilterSigs[2].offsetFoundAt + 169;
+						GXSetBlendModeSigs[3].offsetFoundAt = branchResolve(data, i + 433);
 						GXSetViewportSigs[3].offsetFoundAt = branchResolve(data, i + 202);
 						break;
 					case 7:
 						GXSetDispCopyYScaleSigs[6].offsetFoundAt = branchResolve(data, i + 543);
 						GXSetCopyFilterSigs[3].offsetFoundAt = branchResolve(data, i + 550);
 						GXCopyDispSigs[4].offsetFoundAt = GXSetCopyFilterSigs[3].offsetFoundAt + 135;
+						GXSetBlendModeSigs[2].offsetFoundAt = branchResolve(data, i + 490);
 						GXSetViewportSigs[4].offsetFoundAt = branchResolve(data, i + 215);
 						break;
 				}
@@ -1956,7 +1970,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					memset(data + i, 0, GXSetDispCopyYScaleSigs[j].Length * sizeof(u32));
 					memcpy(data + i, GXSetDispCopyYScaleSigs[j].Patch, GXSetDispCopyYScaleSigs[j].PatchLength);
 					
-					if (GXSetDispCopyYScaleSigs[j].Patch == GXSetDispCopyYScalePatch1)
+					if (GXSetDispCopyYScaleSigs[j].Patch != GXSetDispCopyYScalePatch2)
 						data[i] |= op & 0x1FFFFF;
 				}
 				print_gecko("Found:[%s] @ %08X\n", GXSetDispCopyYScaleSigs[j].Name, GXSetDispCopyYScale);
@@ -1977,6 +1991,29 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					memcpy(data + i, GXSetCopyFilterSigs[j].Patch, GXSetCopyFilterSigs[j].PatchLength);
 				}
 				print_gecko("Found:[%s] @ %08X\n", GXSetCopyFilterSigs[j].Name, GXSetCopyFilter);
+			}
+		}
+	}
+	
+	if (swissSettings.disableDithering) {
+		for (j = 0; j < sizeof(GXSetBlendModeSigs) / sizeof(FuncPattern); j++)
+			if (GXSetBlendModeSigs[j].offsetFoundAt) break;
+		
+		if ((i = GXSetBlendModeSigs[j].offsetFoundAt)) {
+			u32 *GXSetBlendMode = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			
+			if (GXSetBlendMode) {
+				if (GXSetBlendModeSigs[j].Patch) {
+					u32 op = j >= 2 ? data[i] : data[i + 41];
+					memset(data + i, 0, GXSetBlendModeSigs[j].Length * sizeof(u32));
+					memcpy(data + i, GXSetBlendModeSigs[j].Patch, GXSetBlendModeSigs[j].PatchLength);
+					
+					if (GXSetBlendModeSigs[j].Patch != GXSetBlendModePatch3)
+						data[i +  0] |= op & 0x1FFFFF;
+					if (GXSetBlendModeSigs[j].Patch == GXSetBlendModePatch2)
+						data[i + 21] |= op & 0x1FFFFF;
+				}
+				print_gecko("Found:[%s] @ %08X\n", GXSetBlendModeSigs[j].Name, GXSetBlendMode);
 			}
 		}
 	}

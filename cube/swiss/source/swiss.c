@@ -1581,6 +1581,7 @@ int info_game()
 	swissSettings.forceHScale = config->forceHScale;
 	swissSettings.forceVOffset = config->forceVOffset;
 	swissSettings.forceVFilter = config->forceVFilter;
+	swissSettings.disableDithering = config->disableDithering;
 	swissSettings.forceAnisotropy = config->forceAnisotropy;
 	swissSettings.forceWidescreen = config->forceWidescreen;
 	swissSettings.forceEncoding = config->forceEncoding;

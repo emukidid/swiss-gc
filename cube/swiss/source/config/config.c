@@ -231,6 +231,9 @@ int config_update_file() {
 		sprintf(txtbuffer, "Force Vertical Filter=%s\r\n",forceVFilterStr[configEntries[i].forceVFilter]);
 		string_append(configString, txtbuffer);
 		
+		sprintf(txtbuffer, "Disable Alpha Dithering=%s\r\n",(configEntries[i].disableDithering ? "Yes":"No"));
+		string_append(configString, txtbuffer);
+		
 		sprintf(txtbuffer, "Force Anisotropic Filter=%s\r\n",(configEntries[i].forceAnisotropy ? "Yes":"No"));
 		string_append(configString, txtbuffer);
 		
@@ -291,7 +294,10 @@ void config_parse(char *configData) {
 					strcpy(&configEntries[configEntriesCount].comment[0],"No Comment");
 					strcpy(&configEntries[configEntriesCount].status[0],"Unknown");
 					configEntries[configEntriesCount].gameVMode = 0;
+					configEntries[configEntriesCount].forceHScale = 0;
+					configEntries[configEntriesCount].forceVOffset = -3;
 					configEntries[configEntriesCount].forceVFilter = 0;
+					configEntries[configEntriesCount].disableDithering = 0;
 					configEntries[configEntriesCount].forceAnisotropy = 0;
 					configEntries[configEntriesCount].forceWidescreen = 0;
 					configEntries[configEntriesCount].forceEncoding = 0;
@@ -358,6 +364,9 @@ void config_parse(char *configData) {
 						configEntries[configEntriesCount].forceVFilter = 2;
 					else if(!strcmp(forceVFilterStr[3], value))
 						configEntries[configEntriesCount].forceVFilter = 3;
+				}
+				else if(!strcmp("Disable Alpha Dithering", name)) {
+					configEntries[configEntriesCount].disableDithering = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("Force Anisotropic Filter", name)) {
 					configEntries[configEntriesCount].forceAnisotropy = !strcmp("Yes", value) ? 1:0;
@@ -486,6 +495,7 @@ void config_find(ConfigEntry *entry) {
 	entry->forceHScale = 0;
 	entry->forceVOffset = -3;
 	entry->forceVFilter = 0;
+	entry->disableDithering = 0;
 	entry->forceAnisotropy = 0;
 	entry->forceWidescreen = 0;
 	entry->forceEncoding = 0;
