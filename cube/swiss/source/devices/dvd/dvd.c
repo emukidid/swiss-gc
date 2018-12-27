@@ -415,9 +415,9 @@ int DVD_LowRead64(void* dst, u32 len, uint64_t offset)
 	dvd[5] = (u32)dst;
 	dvd[6] = len;
 	dvd[7] = 3; // enable reading!
-	DCInvalidateRange(dst, len);
 	while (dvd[7] & 1);
 
+	DCInvalidateRange(dst, len);
 	if (dvd[0] & 0x4)
 		return 1;
 	return 0;
@@ -431,10 +431,6 @@ DVD_Read(void* dst, uint64_t offset, int len)
 */
 s32 DVD_Read(void* dst, uint64_t offset, u32 len)
 {
-	if(!((offset & 3) || ((u32)dst & 3))) {
-		DVD_LowRead64(dst, len, offset);
-		return len;
-	}
 	u32 ol = len;
 	s32 ret = 0;	
 	u8 *sector_buffer = (u8*)memalign(32,2048);

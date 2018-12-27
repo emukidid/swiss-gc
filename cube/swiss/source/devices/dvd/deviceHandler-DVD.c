@@ -254,6 +254,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	u64 usedSpace = 0LL;
 
 	int num_entries = 0, ret = 0, num = 0;
+	dvd_get_error(); // Clear any 0x052400's
 	
 	if(dvd_get_error() || !dvd_init) { //if some error
 		ret = initialize_disc(ENABLE_BYDISK);
