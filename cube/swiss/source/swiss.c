@@ -661,6 +661,9 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read bi2.bin"));
 		while(1);
 	}
+	// Copy 0x45B from bi2.bin (0x440+0x18 region code) to 0x800000CC
+	*(volatile u8* )0x800000CC = *(u8*)((top_of_main_ram-fstSizeAligned-0x2000)+0x1B);
+	print_gecko("Region Code copied as: %02X\r\n", *(u8*)0x800000CC);
 
 	*(volatile u32*)0x800000F4 = top_of_main_ram-fstSizeAligned-0x2000;	// bi2.bin location
 	*(volatile u32*)0x80000038 = top_of_main_ram-fstSizeAligned;		// FST Location in ram
