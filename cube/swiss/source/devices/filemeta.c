@@ -92,13 +92,11 @@ void populate_meta(file_handle *f) {
 					// Assign GCM region texture
 					ISOInfo_t* isoInfo = (ISOInfo_t*)&f->other;
 					char region = wodeRegionToChar(isoInfo->iso_region);
-					if(region == 'E')
-						f->meta->regionTexId = TEX_NTSCU;
-					else if(region == 'J')
+					if(region == 'J')
 						f->meta->regionTexId = TEX_NTSCJ;
-					else if(region == 'P')
-						f->meta->regionTexId = TEX_PAL;
 					else if(region == 'E')
+						f->meta->regionTexId = TEX_NTSCU;
+					else if(region == 'P')
 						f->meta->regionTexId = TEX_PAL;
 					f->meta->banner = memalign(32,BannerSize);
 					memcpy(f->meta->banner,blankbanner+0x20,BannerSize);
@@ -146,13 +144,12 @@ void populate_meta(file_handle *f) {
 						GX_InitTexObj(&f->meta->bannerTexObj,f->meta->banner,96,32,GX_TF_RGB5A3,GX_CLAMP,GX_CLAMP,GX_FALSE);
 						//print_gecko("Meta Gathering complete\r\n\r\n");
 						// Assign GCM region texture
-						if(header->CountryCode == 'E')
-							f->meta->regionTexId = TEX_NTSCU;
-						else if(header->CountryCode == 'J')
+						char region = wodeRegionToChar(header->RegionCode);
+						if(region == 'J')
 							f->meta->regionTexId = TEX_NTSCJ;
-						else if(header->CountryCode == 'P')
-							f->meta->regionTexId = TEX_PAL;
-						else if(header->CountryCode == 'U')
+						else if(region == 'E')
+							f->meta->regionTexId = TEX_NTSCU;
+						else if(region == 'P')
 							f->meta->regionTexId = TEX_PAL;
 							
 						// TODO GCM file type fileTypeTexId

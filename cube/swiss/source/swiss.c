@@ -92,37 +92,25 @@ char *DiscIDNoNTSC[] = {"DLSP64", "G2MP01", "GBZP08", "GLRD64", "GLRF64", "GLRP6
 void ogc_video__reset()
 {
 	char* gameID = (char*)&GCMDisk;
+	char region = wodeRegionToChar(GCMDisk.RegionCode);
 	int i;
 	
 	if(swissSettings.forceEncoding == 0) {
-		if(GCMDisk.CountryCode == 'J')
+		if(region == 'J')
 			swissSettings.forceEncoding = 2;
 		else
 			swissSettings.forceEncoding = 1;
 	}
 	
 	if(swissSettings.gameVMode == 0) {
+		if(region == 'P')
+			swissSettings.gameVMode = -2;
+		else
+			swissSettings.gameVMode = -1;
+		
 		if(swissSettings.uiVMode > 0) {
 			swissSettings.sram60Hz = (swissSettings.uiVMode >= 1) && (swissSettings.uiVMode <= 2);
 			swissSettings.sramProgressive = (swissSettings.uiVMode == 2) || (swissSettings.uiVMode == 4);
-		}
-		switch(GCMDisk.CountryCode) {
-			case 'P': // PAL
-			case 'D': // German
-			case 'F': // French
-			case 'S': // Spanish
-			case 'I': // Italian
-			case 'L': // Japanese Import to PAL
-			case 'M': // American Import to PAL
-			case 'X': // PAL other languages?
-			case 'Y': // PAL other languages?
-			case 'U':
-				swissSettings.gameVMode = -2;
-				break;
-			case 'E':
-			case 'J':
-				swissSettings.gameVMode = -1;
-				break;
 		}
 	} else {
 		swissSettings.sram60Hz = (swissSettings.gameVMode >= 1) && (swissSettings.gameVMode <= 5);

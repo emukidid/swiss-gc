@@ -5,7 +5,7 @@
 
 /* 	The Retail Game DVD Disk Header 
 	Info source: YAGCD
-	Size of Struct: 0x440	*/
+	Size of Struct: 0x460	*/
 typedef struct {
 	u8  ConsoleID;		//G = Gamecube, R = Wii.
 	u8  GamecodeA;		//2 Ascii letters to indicate the GameID.
@@ -29,8 +29,16 @@ typedef struct {
 	u32	MaxFSTSize;		//maximum size of FST (usually same as FSTSize)*
 	u32 UserPos;		//user position(?)
 	u32 UserLength;		//user length(?)
-	u32 unknown;		//(?)
+	u32 unknown_1;		//(?)
 	u32 unused_3;
+	u32 DMonitorSize;
+	u32 SimMemSize;
+	u32 ArgOffset;
+	u32 DebugFlag;
+	u32 TrackLocation;
+	u32 TrackSize;
+	u32 RegionCode;
+	u32 unknown_2;
 	// *Multiple DVDs must use it, to properly reside all FSTs.
 } DiskHeader __attribute__((aligned(32)));
 
