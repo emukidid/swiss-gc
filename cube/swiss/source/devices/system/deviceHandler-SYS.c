@@ -17,9 +17,9 @@ int read_rom_dsp_coef(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_dvd_ram_low(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_dvd_ram_high(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_dvd_rom(unsigned int offset, void* buffer, unsigned int length);
+int read_rom_aram(unsigned int offset, void* buffer, unsigned int length);
 
-
-#define NUM_ROMS 8
+#define NUM_ROMS 9
 
 const char* rom_names[] =
 {
@@ -30,7 +30,8 @@ const char* rom_names[] =
 	"dvd_ram_low.bin",
 	"dvd_ram_high.bin",
 	"dvd_rom.bin",
-	"sram.bin"
+	"sram.bin",
+	"aram.bin"
 };
 
 const int rom_sizes[] =
@@ -42,7 +43,8 @@ const int rom_sizes[] =
 	32 * 1024,
 	192 * 1024,
 	128 * 1024,
-	64
+	64,
+	16 * 1024 * 1024
 };
 
 int (*read_rom[])(unsigned int offset, void* buffer, unsigned int length) =
@@ -54,7 +56,8 @@ int (*read_rom[])(unsigned int offset, void* buffer, unsigned int length) =
 	read_rom_dvd_ram_low,
 	read_rom_dvd_ram_high,
 	read_rom_dvd_rom,
-	read_rom_sram
+	read_rom_sram,
+	read_rom_aram
 };
 
 file_handle initial_SYS =
@@ -223,6 +226,32 @@ int read_rom_dvd_rom(unsigned int offset, void* buffer, unsigned int length) {
 	memcpy(buffer, rom + offset, length);
 	free(rom);
 	return length;
+}
+
+int read_rom_aram(unsigned int offset, void* buffer, unsigned int length) {
+	u32 ol = length;
+
+	u8 *sector_buffer = (u8*)memalign(32,2048);
+	while (length)
+	{
+		uint32_t sector = offset / 2048;
+		DCInvalidateRange(buffer, length);
+		AR_StartDMA(1, (u32) sector_buffer, sector * 2048, 2048);
+		while (AR_GetDMAStatus());
+		uint32_t off = offset & 2047;
+
+		int rl = 2048 - off;
+		if (rl > length)
+			rl = length;
+		memcpy(buffer, sector_buffer + off, rl);	
+
+		offset += rl;
+		length -= rl;
+		buffer += rl;
+	}
+	free(sector_buffer);
+
+	return ol;
 }
 
 s32 deviceHandler_SYS_init(file_handle* file) {
