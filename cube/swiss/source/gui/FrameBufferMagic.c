@@ -80,7 +80,7 @@ GXTexObj checkedTexObj;
 TPLFile uncheckedTPL;
 GXTexObj uncheckedTexObj;
 
-static char version[64];
+static char fbTextBuffer[64];
 
 // Video threading vars
 #define VIDEO_STACK_SIZE (1024*64)
@@ -263,8 +263,11 @@ static void clearNestedEvent(uiDrawObj_t *event) {
 		//printf("Clear Nested event->data\r\n");
 		free(event->data);
 	}
-	//printf("Clear event\r\n");
-	free(event);
+	if(event) {
+		//printf("Clear event\r\n");
+		memset(event, 0, sizeof(uiDrawObj_t));
+		free(event);
+	}
 }
 
 static void disposeEvent(uiDrawObj_t *event) {
@@ -272,13 +275,6 @@ static void disposeEvent(uiDrawObj_t *event) {
 		return;
 	}
 
-	//print_gecko("Dispose event %08X\r\n", (u32)event);
-	// Remove any child uiDrawObj_t's first
-	if(event->child) {
-		clearNestedEvent(event->child);
-		event->child = NULL;
-	}
-	
 	// See if this is in our root event queue
 	uiDrawObjQueue_t *current = videoEventQueue->next;
 	uiDrawObjQueue_t *previous = videoEventQueue;
@@ -405,7 +401,7 @@ static void drawInit()
 	GX_SetCullMode (GX_CULL_NONE);
 }
 
-static void drawRect(int x, int y, int width, int height, int depth, GXColor color, float s0, float s1, float t0, float t1)
+static void _drawRect(int x, int y, int width, int height, int depth, GXColor color, float s0, float s1, float t0, float t1)
 {
 	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 		GX_Position3f32((float) x,(float) y,(float) depth );
@@ -432,28 +428,26 @@ static void _DrawSimpleBox(int x, int y, int width, int height, int depth, GXCol
 	GX_InvalidateTexAll();
 	GX_LoadTexObj(&boxinnerTexObj, GX_TEXMAP0);
 
-	drawRect(x, y, width/2, height/2, depth, fillColor, 0.0f, ((float)width/32), 0.0f, ((float)height/32));
-	drawRect(x+(width/2), y, width/2, height/2, depth, fillColor, ((float)width/32), 0.0f, 0.0f, ((float)height/32));
-	drawRect(x, y+(height/2), width/2, height/2, depth, fillColor, 0.0f, ((float)width/32), ((float)height/32), 0.0f);
-	drawRect(x+(width/2), y+(height/2), width/2, height/2, depth, fillColor, ((float)width/32), 0.0f, ((float)height/32), 0.0f);
+	_drawRect(x, y, width/2, height/2, depth, fillColor, 0.0f, ((float)width/32), 0.0f, ((float)height/32));
+	_drawRect(x+(width/2), y, width/2, height/2, depth, fillColor, ((float)width/32), 0.0f, 0.0f, ((float)height/32));
+	_drawRect(x, y+(height/2), width/2, height/2, depth, fillColor, 0.0f, ((float)width/32), ((float)height/32), 0.0f);
+	_drawRect(x+(width/2), y+(height/2), width/2, height/2, depth, fillColor, ((float)width/32), 0.0f, ((float)height/32), 0.0f);
 
 	GX_InvalidateTexAll();
 	GX_LoadTexObj(&boxouterTexObj, GX_TEXMAP0);
 
-	drawRect(x, y, width/2, height/2, depth, borderColor, 0.0f, ((float)width/32), 0.0f, ((float)height/32));
-	drawRect(x+(width/2), y, width/2, height/2, depth, borderColor, ((float)width/32), 0.0f, 0.0f, ((float)height/32));
-	drawRect(x, y+(height/2), width/2, height/2, depth, borderColor, 0.0f, ((float)width/32), ((float)height/32), 0.0f);
-	drawRect(x+(width/2), y+(height/2), width/2, height/2, depth, borderColor, ((float)width/32), 0.0f, ((float)height/32), 0.0f);
+	_drawRect(x, y, width/2, height/2, depth, borderColor, 0.0f, ((float)width/32), 0.0f, ((float)height/32));
+	_drawRect(x+(width/2), y, width/2, height/2, depth, borderColor, ((float)width/32), 0.0f, 0.0f, ((float)height/32));
+	_drawRect(x, y+(height/2), width/2, height/2, depth, borderColor, 0.0f, ((float)width/32), ((float)height/32), 0.0f);
+	_drawRect(x+(width/2), y+(height/2), width/2, height/2, depth, borderColor, ((float)width/32), 0.0f, ((float)height/32), 0.0f);
 }
 
 // Internal
-static void _DrawImage(uiDrawObj_t *evt) {
-	drawImageEvent_t *data = (drawImageEvent_t*)evt->data;
-	
+static void _DrawImageNow(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered) {
 	GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
 	GX_InvalidateTexAll();
 
-	switch(data->textureId)
+	switch(textureId)
 	{
 		case TEX_BACKDROP:
 			GX_LoadTexObj(&backdropTexObj, GX_TEXMAP0);
@@ -526,27 +520,25 @@ static void _DrawImage(uiDrawObj_t *evt) {
 			break;
 	}
 	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-		GX_Position3f32((float) data->x,(float) data->y,(float) data->depth );
+		GX_Position3f32((float) x,(float) y,(float) depth );
 		GX_Color4u8(255, 255, 255, 255);
-		GX_TexCoord2f32(data->s1,data->t1);
-		GX_Position3f32((float) (data->x+data->width),(float) data->y,(float) data->depth );
+		GX_TexCoord2f32(s1,t1);
+		GX_Position3f32((float) (x+width), (float)y, (float)depth );
 		GX_Color4u8(255, 255, 255, 255);
-		GX_TexCoord2f32(data->s2,data->t1);
-		GX_Position3f32((float) (data->x+data->width),(float) (data->y+data->height),(float) data->depth );
+		GX_TexCoord2f32(s2,t1);
+		GX_Position3f32((float) (x+width),(float) (y+height),(float) depth );
 		GX_Color4u8(255, 255, 255, 255);
-		GX_TexCoord2f32(data->s2,data->t2);
-		GX_Position3f32((float) data->x,(float) (data->y+data->height),(float) data->depth );
+		GX_TexCoord2f32(s2,t2);
+		GX_Position3f32((float) x,(float) (y+height),(float) depth );
 		GX_Color4u8(255, 255, 255, 255);
-		GX_TexCoord2f32(data->s1,data->t2);
+		GX_TexCoord2f32(s1,t2);
 	GX_End();
 }
 
-static void _DrawImageNow(uiDrawObj_t *evt) {
-	_DrawImage(evt);
-	if(evt->data) {
-		free(evt->data);
-	}
-	free(evt);
+// Internal
+static void _DrawImage(uiDrawObj_t *evt) {
+	drawImageEvent_t *data = (drawImageEvent_t*)evt->data;
+	_DrawImageNow(data->textureId, data->x, data->y, data->width, data->height, data->depth, data->s1, data->s2, data->t1, data->t2, 0);
 }
 
 // External
@@ -590,14 +582,6 @@ static void _DrawTexObj(uiDrawObj_t *evt)
 		GX_Color4u8(255, 255, 255, 255);
 		GX_TexCoord2f32(data->s1,data->t2);
 	GX_End();
-}
-
-static void _DrawTexObjNow(uiDrawObj_t *evt) {
-	_DrawTexObj(evt);
-	if(evt->data) {
-		free(evt->data);
-	}
-	free(evt);
 }
 
 // External
@@ -675,10 +659,8 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
 				(multiplier*100), 20, 0, noColor, borderColor); 
 		_DrawSimpleBox( (640/2 - progressBarWidth/2), y1+20,
 				(multiplier*data->percent), 20, 0, progressBarColor, noColor); 
-		char *percentString = calloc(1, 8);
-		sprintf(percentString,"%d%%", data->percent);
-		drawString(640/2, middleY+30, percentString, 1.0f, true, defaultColor);
-		free(percentString);
+		sprintf(fbTextBuffer,"%d%%", data->percent);
+		drawString(640/2, middleY+30, fbTextBuffer, 1.0f, true, defaultColor);
 	}	
 }
 
@@ -869,10 +851,26 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 	// Draw banner if there is one
 	file_handle *file = data->file;
 	if(file->meta && file->meta->banner) {
-		_DrawTexObjNow(DrawTexObj(&file->meta->bannerTexObj, data->x1+7, data->y1+4, 96, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+		GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
+		GX_InvalidateTexAll();
+		GX_LoadTexObj(&file->meta->bannerTexObj, GX_TEXMAP0);
+		GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+			GX_Position3f32((float) data->x1+7,(float) data->y1+4, 0.0f );
+			GX_Color4u8(255, 255, 255, 255);
+			GX_TexCoord2f32(0.0f,0.0f);
+			GX_Position3f32((float) (data->x1+7+96),(float) data->y1+4,0.0f );
+			GX_Color4u8(255, 255, 255, 255);
+			GX_TexCoord2f32(1.0f,0.0f);
+			GX_Position3f32((float) (data->x1+7+96),(float) (data->y1+4+32),0.0f );
+			GX_Color4u8(255, 255, 255, 255);
+			GX_TexCoord2f32(1.0f,1.0f);
+			GX_Position3f32((float) data->x1+7,(float) (data->y1+4+32),0.0f );
+			GX_Color4u8(255, 255, 255, 255);
+			GX_TexCoord2f32(0.0f,1.0f);
+		GX_End();
 	}
 	if(file->meta && file->meta->regionTexId != -1 && file->meta->regionTexId != 0) {
-		_DrawImageNow(DrawImage(file->meta->regionTexId, data->x2 - 37, data->y1+borderSize+2, 30,20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+		_DrawImageNow(file->meta->regionTexId, data->x2 - 37, data->y1+borderSize+2, 30,20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	}
 	
 	float scale = GetTextScaleToFitInWidth(data->displayName, (data->x2-data->x1-96-35)-(borderSize*2));
@@ -881,23 +879,21 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 	
 	// Print specific stats
 	if(file->fileAttrib==IS_FILE) {
-		char* spaceTxt = calloc(1, 64);
 		if(devices[DEVICE_CUR] == &__device_wode) {
 			ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
-			sprintf(spaceTxt,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
+			sprintf(fbTextBuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
 		}
 		else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
-			sprintf(spaceTxt,"%.2fKB (%ld blocks)", (float)file->size/1024, file->size/8192);
+			sprintf(fbTextBuffer,"%.2fKB (%ld blocks)", (float)file->size/1024, file->size/8192);
 		}
 		else if(devices[DEVICE_CUR] == &__device_qoob) {
-			sprintf(spaceTxt,"%.2fKB (%ld blocks)", (float)file->size/1024, file->size/0x10000);
+			sprintf(fbTextBuffer,"%.2fKB (%ld blocks)", (float)file->size/1024, file->size/0x10000);
 		}
 		else {
-			sprintf(spaceTxt,"%.2f %s",file->size > (1024*1024) ? (float)file->size/(1024*1024):(float)file->size/1024,file->size > (1024*1024) ? "MB":"KB");
+			sprintf(fbTextBuffer,"%.2f %s",file->size > (1024*1024) ? (float)file->size/(1024*1024):(float)file->size/1024,file->size > (1024*1024) ? "MB":"KB");
 		}
-		drawString(data->x2 - ((borderSize+3) + (GetTextSizeInPixels(spaceTxt)*0.45)), 
-			data->y1+borderSize+24, spaceTxt, 0.45f, false, defaultColor);
-		free(spaceTxt);	
+		drawString(data->x2 - ((borderSize+3) + (GetTextSizeInPixels(fbTextBuffer)*0.45)), 
+			data->y1+borderSize+24, fbTextBuffer, 0.45f, false, defaultColor);
 	}
 }
 
@@ -1002,20 +998,20 @@ static void _DrawMenuButtons(uiDrawObj_t *evt) {
 	drawMenuButtonsEvent_t *data = (drawMenuButtonsEvent_t*)evt->data;
 	
 	// Draw the buttons	
-	_DrawImageNow(DrawImage(TEX_BTNDEVICE, 40+(0*116), 430, BTNDEVICE_WIDTH,BTNDEVICE_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-	_DrawImageNow(DrawImage(TEX_BTNSETTINGS, 40+(1*116), 430, BTNSETTINGS_WIDTH,BTNSETTINGS_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-	_DrawImageNow(DrawImage(TEX_BTNINFO, 40+(2*116), 430, BTNINFO_WIDTH,BTNINFO_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-	_DrawImageNow(DrawImage(TEX_BTNREFRESH, 40+(3*116), 430, BTNREFRESH_WIDTH,BTNREFRESH_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-	_DrawImageNow(DrawImage(TEX_BTNEXIT, 40+(4*116), 430, BTNEXIT_WIDTH,BTNEXIT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+	_DrawImageNow(TEX_BTNDEVICE, 40+(0*116), 430, BTNDEVICE_WIDTH,BTNDEVICE_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNSETTINGS, 40+(1*116), 430, BTNSETTINGS_WIDTH,BTNSETTINGS_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNINFO, 40+(2*116), 430, BTNINFO_WIDTH,BTNINFO_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNREFRESH, 40+(3*116), 430, BTNREFRESH_WIDTH,BTNREFRESH_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNEXIT, 40+(4*116), 430, BTNEXIT_WIDTH,BTNEXIT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	
 	// Highlight selected
 	int i;
 	for(i=0;i<5;i++)
 	{
 		if(data->selection==i)
-			_DrawImageNow(DrawImage(TEX_BTNHILIGHT, 40+(i*116), 430, BTNHILIGHT_WIDTH,BTNHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+			_DrawImageNow(TEX_BTNHILIGHT, 40+(i*116), 430, BTNHILIGHT_WIDTH,BTNHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 		else
-			_DrawImageNow(DrawImage(TEX_BTNNOHILIGHT, 40+(i*116), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+			_DrawImageNow(TEX_BTNNOHILIGHT, 40+(i*116), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	}
 }
 
@@ -1320,12 +1316,12 @@ static void markDisposed(uiDrawObj_t *evt)
 static void *videoUpdate(void *videoEventQueue) {
 	GX_SetCurrentGXThread();
 	
-	int frames = 0;
-	int framerate = 0;
-	u32 lasttime = gettick();
+	//int frames = 0;
+	//int framerate = 0;
+	//u32 lasttime = gettick();
 	while(threadAlive) {
 		whichfb ^= 1;
-		frames++;
+		//frames++;
 		LWP_MutexLock(_videomutex);
 		// Mark events recursively as disposed
 		uiDrawObjQueue_t *videoEventQueueEntry = (uiDrawObjQueue_t*)videoEventQueue;
@@ -1356,12 +1352,11 @@ static void *videoUpdate(void *videoEventQueue) {
 			videoDrawEvent(videoEvent);
 			videoEventQueueEntry = videoEventQueueEntry->next;
 		}
-		LWP_MutexUnlock(_videomutex);
-		if(ticks_to_millisecs(gettick() - lasttime) >= 1000) {
-			framerate = frames;
-			frames = 0;
-			lasttime = gettick();
-		}
+		//if(ticks_to_millisecs(gettick() - lasttime) >= 1000) {
+		//	framerate = frames;
+		//	frames = 0;
+		//	lasttime = gettick();
+		//}
 		char fps[64];
 		memset(fps,0,64);
 		/*sprintf(fps, "fps %i", framerate);
@@ -1378,6 +1373,7 @@ static void *videoUpdate(void *videoEventQueue) {
 		GX_CopyDisp(xfb[whichfb],GX_TRUE);
 		GX_Flush();
 
+		LWP_MutexUnlock(_videomutex);
 		VIDEO_SetNextFramebuffer(xfb[whichfb]);
 		VIDEO_Flush();
 		VIDEO_WaitVSync();
@@ -1420,8 +1416,8 @@ void DrawInit() {
 	uiDrawObj_t *container = DrawContainer();
 	DrawAddChild(container, DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 	DrawAddChild(container, DrawStyledLabel(40,27, "Swiss v0.4", 1.5f, false, defaultColor));
-	sprintf(version, "commit: %s rev: %s", GITREVISION, GITVERSION);
-	DrawAddChild(container, DrawStyledLabel(210,60, version, 0.55f, false, defaultColor));
+	sprintf(fbTextBuffer, "commit: %s rev: %s", GITREVISION, GITVERSION);
+	DrawAddChild(container, DrawStyledLabel(210,60, fbTextBuffer, 0.55f, false, defaultColor));
 	buttonPanel = DrawMenuButtons(-1);
 	DrawAddChild(container, buttonPanel);
 	DrawPublish(container);
