@@ -238,8 +238,24 @@ u32 branchAndLink(u32 *dst, u32 *src)
 u32 branchResolve(u32 *data, u32 offsetFoundAt)
 {
 	u32 newval = data[offsetFoundAt];
+	
+	if ((newval & 0xFC000000) != 0x48000000)
+		return 0;
+	
 	newval = ((s32)((newval & 0x03FFFFFC) << 6) >> 8) + offsetFoundAt;
 	return newval;
+}
+
+bool findx_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
+{
+	offsetFoundAt = branchResolve(data, offsetFoundAt);
+	
+	if (offsetFoundAt && find_pattern(data + offsetFoundAt, length, functionPattern)) {
+		functionPattern->offsetFoundAt = offsetFoundAt;
+		return true;
+	}
+	
+	return false;
 }
 
 // Redirects 0xCC0060xx reads to VAR_DI_REGS
@@ -1100,9 +1116,9 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 				
 				switch (j) {
-					case 0: getCurrentFieldEvenOddSigs[0].offsetFoundAt = branchResolve(data, i - 47); break;
-					case 1: getCurrentFieldEvenOddSigs[1].offsetFoundAt = branchResolve(data, i - 49); break;
-					case 2: getCurrentFieldEvenOddSigs[2].offsetFoundAt = branchResolve(data, i + 60); break;
+					case 0: findx_pattern(data, i - 47, length, &getCurrentFieldEvenOddSigs[0]);       break;
+					case 1: findx_pattern(data, i - 49, length, &getCurrentFieldEvenOddSigs[1]);       break;
+					case 2: findx_pattern(data, i + 60, length, &getCurrentFieldEvenOddSigs[2]);       break;
 					case 3: getCurrentFieldEvenOddSigs[3].offsetFoundAt = branchResolve(data, i + 60); break;
 					case 4:
 					case 5: getCurrentFieldEvenOddSigs[3].offsetFoundAt = branchResolve(data, i + 63); break;
@@ -1122,70 +1138,72 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				
 				switch (j) {
 					case 0:
-						getTimingSigs[0].offsetFoundAt = branchResolve(data, i + 131);
-						AdjustPositionSig.offsetFoundAt = branchResolve(data, i + 135);
-						setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 261);
-						setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 272);
+						findx_pattern(data, i + 131, length, &getTimingSigs[0]);
+						findx_pattern(data, i + 135, length, &AdjustPositionSig);
+						findx_pattern(data, i + 261, length, &setFbbRegsSigs[0]);
+						findx_pattern(data, i + 272, length, &setVerticalRegsSigs[0]);
 						break;
 					case 1:
-						getTimingSigs[1].offsetFoundAt = branchResolve(data, i + 139);
-						AdjustPositionSig.offsetFoundAt = branchResolve(data, i + 143);
-						setFbbRegsSigs[0].offsetFoundAt = branchResolve(data, i + 295);
-						setVerticalRegsSigs[0].offsetFoundAt = branchResolve(data, i + 306);
+						findx_pattern(data, i + 139, length, &getTimingSigs[1]);
+						findx_pattern(data, i + 143, length, &AdjustPositionSig);
+						findx_pattern(data, i + 295, length, &setFbbRegsSigs[0]);
+						findx_pattern(data, i + 306, length, &setVerticalRegsSigs[0]);
 						break;
 					case 2:
-						getTimingSigs[2].offsetFoundAt = branchResolve(data, i + 77);
-						setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 409);
-						setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 420);
+						findx_pattern(data, i +  77, length, &getTimingSigs[2]);
+						findx_pattern(data, i + 409, length, &setFbbRegsSigs[1]);
+						findx_pattern(data, i + 420, length, &setVerticalRegsSigs[1]);
 						break;
 					case 3:
-						getTimingSigs[2].offsetFoundAt = branchResolve(data, i + 69);
-						setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 401);
-						setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 412);
+						findx_pattern(data, i +  69, length, &getTimingSigs[2]);
+						findx_pattern(data, i + 401, length, &setFbbRegsSigs[1]);
+						findx_pattern(data, i + 412, length, &setVerticalRegsSigs[1]);
 						break;
 					case 4:
-						getTimingSigs[3].offsetFoundAt = branchResolve(data, i + 104);
-						setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 445);
-						setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 456);
+						findx_pattern(data, i + 104, length, &getTimingSigs[3]);
+						findx_pattern(data, i + 445, length, &setFbbRegsSigs[1]);
+						findx_pattern(data, i + 456, length, &setVerticalRegsSigs[1]);
 						break;
 					case 5:
-						getTimingSigs[3].offsetFoundAt = branchResolve(data, i + 107);
-						setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 443);
-						setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 454);
+						findx_pattern(data, i + 107, length, &getTimingSigs[3]);
+						findx_pattern(data, i + 443, length, &setFbbRegsSigs[1]);
+						findx_pattern(data, i + 454, length, &setVerticalRegsSigs[1]);
 						break;
 					case 6:
-						getTimingSigs[4].offsetFoundAt = branchResolve(data, i + 123);
-						setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 468);
-						setVerticalRegsSigs[1].offsetFoundAt = branchResolve(data, i + 479);
+						findx_pattern(data, i + 123, length, &getTimingSigs[4]);
+						findx_pattern(data, i + 468, length, &setFbbRegsSigs[1]);
+						findx_pattern(data, i + 479, length, &setVerticalRegsSigs[1]);
 						break;
 					case 7:
-						getTimingSigs[5].offsetFoundAt = branchResolve(data, i + 155);
-						setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 503);
-						setVerticalRegsSigs[2].offsetFoundAt = branchResolve(data, i + 514);
+						findx_pattern(data, i + 155, length, &getTimingSigs[5]);
+						findx_pattern(data, i + 503, length, &setFbbRegsSigs[1]);
+						findx_pattern(data, i + 514, length, &setVerticalRegsSigs[2]);
 						break;
 					case 8:
 						getTimingSigs[6].offsetFoundAt = i;
-						setFbbRegsSigs[2].offsetFoundAt = branchResolve(data, i + 537);
-						setVerticalRegsSigs[3].offsetFoundAt = branchResolve(data, i + 550);
+						findx_pattern(data, i + 537, length, &setFbbRegsSigs[2]);
+						findx_pattern(data, i + 550, length, &setVerticalRegsSigs[3]);
 						break;
 					case 9:
-						getTimingSigs[7].offsetFoundAt = branchResolve(data, i + 155);
-						setFbbRegsSigs[1].offsetFoundAt = branchResolve(data, i + 495);
-						setVerticalRegsSigs[2].offsetFoundAt = branchResolve(data, i + 506);
+						findx_pattern(data, i + 155, length, &getTimingSigs[7]);
+						findx_pattern(data, i + 495, length, &setFbbRegsSigs[1]);
+						findx_pattern(data, i + 506, length, &setVerticalRegsSigs[2]);
 						break;
 				}
 				break;
 			}
+			if (VIConfigureSigs[j].offsetFoundAt && i == VIConfigureSigs[j].offsetFoundAt + VIConfigureSigs[j].Length + 1) {
+				if (!VIConfigurePanSig.offsetFoundAt && compare_pattern(&fp, &VIConfigurePanSig))
+					VIConfigurePanSig.offsetFoundAt = i;
+				break;
+			}
 		}
 		
-		if (!VIConfigurePanSig.offsetFoundAt && compare_pattern(&fp, &VIConfigurePanSig))
-			VIConfigurePanSig.offsetFoundAt = i;
-		
-		for (k = 0; k < sizeof(getCurrentFieldEvenOddSigs) / sizeof(FuncPattern); k++) {
-			if (getCurrentFieldEvenOddSigs[k].offsetFoundAt && i == getCurrentFieldEvenOddSigs[k].offsetFoundAt + getCurrentFieldEvenOddSigs[k].Length + 1) {
-				for (j = 0; j < sizeof(VIGetNextFieldSigs) / sizeof(FuncPattern); j++) {
-					if (!VIGetNextFieldSigs[j].offsetFoundAt && compare_pattern(&fp, &VIGetNextFieldSigs[j])) {
-						VIGetNextFieldSigs[j].offsetFoundAt = i;
+		for (j = 0; j < sizeof(getCurrentFieldEvenOddSigs) / sizeof(FuncPattern); j++) {
+			if (getCurrentFieldEvenOddSigs[j].offsetFoundAt && i == getCurrentFieldEvenOddSigs[j].offsetFoundAt + getCurrentFieldEvenOddSigs[j].Length + 1) {
+				for (k = 0; k < sizeof(VIGetNextFieldSigs) / sizeof(FuncPattern); k++) {
+					if (!VIGetNextFieldSigs[k].offsetFoundAt && compare_pattern(&fp, &VIGetNextFieldSigs[k])) {
+						VIGetNextFieldSigs[k].offsetFoundAt = i;
 						break;
 					}
 				}
@@ -1199,64 +1217,79 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				
 				switch (j) {
 					case 0:
-						GXSetDispCopyYScaleSigs[0].offsetFoundAt = branchResolve(data, i + 1088);
-						GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 1095);
-						GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 601;
-						GXSetBlendModeSigs[0].offsetFoundAt = branchResolve(data, i + 1033);
-						GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 727);
+						findx_pattern(data, i + 1088, length, &GXSetDispCopyYScaleSigs[0]);
+						
+						if (findx_pattern(data, i + 1095, length, &GXSetCopyFilterSigs[0]))
+							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 601;
+						
+						findx_pattern(data, i + 1033, length, &GXSetBlendModeSigs[0]);
+						findx_pattern(data, i +  727, length, &GXSetViewportSigs[0]);
 						break;
 					case 1:
-						GXSetDispCopyYScaleSigs[1].offsetFoundAt = branchResolve(data, i + 499);
-						GXSetCopyFilterSigs[0].offsetFoundAt = branchResolve(data, i + 506);
-						GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 601;
-						GXSetBlendModeSigs[0].offsetFoundAt = branchResolve(data, i + 444);
-						GXSetViewportSigs[0].offsetFoundAt = branchResolve(data, i + 202);
+						findx_pattern(data, i + 499, length, &GXSetDispCopyYScaleSigs[1]);
+						
+						if (findx_pattern(data, i + 506, length, &GXSetCopyFilterSigs[0]))
+							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 601;
+						
+						findx_pattern(data, i + 444, length, &GXSetBlendModeSigs[0]);
+						findx_pattern(data, i + 202, length, &GXSetViewportSigs[0]);
 						break;
 					case 2:
-						GXSetDispCopyYScaleSigs[2].offsetFoundAt = branchResolve(data, i + 933);
-						GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 941);
-						GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
-						GXSetBlendModeSigs[1].offsetFoundAt = branchResolve(data, i + 881);
-						GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 553);
+						findx_pattern(data, i + 933, length, &GXSetDispCopyYScaleSigs[2]);
+						
+						if (findx_pattern(data, i + 941, length, &GXSetCopyFilterSigs[1]))
+							GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
+						
+						findx_pattern(data, i + 881, length, &GXSetBlendModeSigs[1]);
+						findx_pattern(data, i + 553, length, &GXSetViewportSigs[1]);
 						break;
 					case 3:
-						GXSetDispCopyYScaleSigs[2].offsetFoundAt = branchResolve(data, i + 484);
-						GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 491);
-						GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
-						GXSetBlendModeSigs[1].offsetFoundAt = branchResolve(data, i + 431);
-						GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 186);
+						findx_pattern(data, i + 484, length, &GXSetDispCopyYScaleSigs[2]);
+						
+						if (findx_pattern(data, i + 491, length, &GXSetCopyFilterSigs[1]))
+							GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
+						
+						findx_pattern(data, i + 431, length, &GXSetBlendModeSigs[1]);
+						findx_pattern(data, i + 186, length, &GXSetViewportSigs[1]);
 						break;
 					case 4:
 						if (data[i + __GXInitGXSigs[j].Length - 1] == 0x7C0803A6)
-							GXSetDispCopyYScaleSigs[3].offsetFoundAt = branchResolve(data, i + 499);
+							findx_pattern(data, i + 499, length, &GXSetDispCopyYScaleSigs[3]);
 						else
-							GXSetDispCopyYScaleSigs[2].offsetFoundAt = branchResolve(data, i + 499);
+							findx_pattern(data, i + 499, length, &GXSetDispCopyYScaleSigs[2]);
 						
-						GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 506);
-						GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
-						GXSetBlendModeSigs[1].offsetFoundAt = branchResolve(data, i + 446);
-						GXSetViewportSigs[1].offsetFoundAt = branchResolve(data, i + 202);
+						if (findx_pattern(data, i + 506, length, &GXSetCopyFilterSigs[1]))
+							GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
+						
+						findx_pattern(data, i + 446, length, &GXSetBlendModeSigs[1]);
+						findx_pattern(data, i + 202, length, &GXSetViewportSigs[1]);
 						break;
 					case 5:
-						GXSetDispCopyYScaleSigs[4].offsetFoundAt = branchResolve(data, i + 514);
-						GXSetCopyFilterSigs[1].offsetFoundAt = branchResolve(data, i + 521);
-						GXCopyDispSigs[2].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
-						GXSetBlendModeSigs[2].offsetFoundAt = branchResolve(data, i + 461);
-						GXSetViewportSigs[2].offsetFoundAt = branchResolve(data, i + 215);
+						findx_pattern(data, i + 514, length, &GXSetDispCopyYScaleSigs[4]);
+						
+						if (findx_pattern(data, i + 521, length, &GXSetCopyFilterSigs[1]))
+							GXCopyDispSigs[2].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
+						
+						findx_pattern(data, i + 461, length, &GXSetBlendModeSigs[2]);
+						findx_pattern(data, i + 215, length, &GXSetViewportSigs[2]);
 						break;
 					case 6:
-						GXSetDispCopyYScaleSigs[5].offsetFoundAt = branchResolve(data, i + 492);
-						GXSetCopyFilterSigs[2].offsetFoundAt = branchResolve(data, i + 499);
-						GXCopyDispSigs[3].offsetFoundAt = GXSetCopyFilterSigs[2].offsetFoundAt + 169;
-						GXSetBlendModeSigs[3].offsetFoundAt = branchResolve(data, i + 433);
-						GXSetViewportSigs[3].offsetFoundAt = branchResolve(data, i + 202);
+						findx_pattern(data, i + 492, length, &GXSetDispCopyYScaleSigs[5]);
+						
+						if (findx_pattern(data, i + 499, length, &GXSetCopyFilterSigs[2]))
+							GXCopyDispSigs[3].offsetFoundAt = GXSetCopyFilterSigs[2].offsetFoundAt + 169;
+						
+						findx_pattern(data, i + 433, length, &GXSetBlendModeSigs[3]);
+						findx_pattern(data, i + 202, length, &GXSetViewportSigs[3]);
 						break;
 					case 7:
-						GXSetDispCopyYScaleSigs[6].offsetFoundAt = branchResolve(data, i + 543);
-						GXSetCopyFilterSigs[3].offsetFoundAt = branchResolve(data, i + 550);
-						GXCopyDispSigs[4].offsetFoundAt = GXSetCopyFilterSigs[3].offsetFoundAt + 135;
-						GXSetBlendModeSigs[2].offsetFoundAt = branchResolve(data, i + 490);
-						GXSetViewportSigs[4].offsetFoundAt = branchResolve(data, i + 215);
+						findx_pattern(data, i + 543, length, &GXSetDispCopyYScaleSigs[6]);
+						
+						if (findx_pattern(data, i + 550, length, &GXSetCopyFilterSigs[3]))
+							GXCopyDispSigs[4].offsetFoundAt = GXSetCopyFilterSigs[3].offsetFoundAt + 135;
+						
+						findx_pattern(data, i + 490, length, &GXSetBlendModeSigs[2]);
+						findx_pattern(data, i + 215, length, &GXSetViewportSigs[4]);
 						break;
 				}
 				break;
@@ -2043,12 +2076,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			
 			if (GXSetViewport) {
 				switch (j) {
-					case 0: GXSetViewportJitterSigs[0].offsetFoundAt = branchResolve(data, i + 16); break;
-					case 1: GXSetViewportJitterSigs[1].offsetFoundAt = branchResolve(data, i +  4); break;
-					case 2: GXSetViewportJitterSigs[2].offsetFoundAt = branchResolve(data, i +  4); break;
-					case 3: GXSetViewportJitterSigs[3].offsetFoundAt = branchResolve(data, i +  1); break;
+					case 0: findx_pattern(data, i + 16, length, &GXSetViewportJitterSigs[0]); break;
+					case 1: findx_pattern(data, i +  4, length, &GXSetViewportJitterSigs[1]); break;
+					case 2: findx_pattern(data, i +  4, length, &GXSetViewportJitterSigs[2]); break;
+					case 3: findx_pattern(data, i +  1, length, &GXSetViewportJitterSigs[3]); break;
 					case 4:
-						__GXSetViewportSig.offsetFoundAt = branchResolve(data, i + 10);
+						findx_pattern(data, i + 10, length, &__GXSetViewportSig);
 						
 						if ((i - __GXSetViewportSig.offsetFoundAt) == 58) {
 							GXSetViewportJitterSigs[4].offsetFoundAt = i - 22;
