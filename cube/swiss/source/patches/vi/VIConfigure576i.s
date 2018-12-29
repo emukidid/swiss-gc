@@ -5,11 +5,10 @@
 .globl VIConfigure576i
 VIConfigure576i:
 	lwz			%r0, 0 (%r3)
-	lis			%r4, VAR_AREA
-	stw			%r3, VAR_RMODE (%r4)
 	srwi		%r6, %r0, 2
+	lis			%r4, VAR_AREA
 	stw			%r6, VAR_TVMODE (%r4)
-	li			%r5, 576
+	li			%r5, 574
 	cmpwi		%r6, 1
 	beq			1f
 	cmpwi		%r6, 4
