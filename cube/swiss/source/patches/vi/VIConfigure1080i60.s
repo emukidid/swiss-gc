@@ -4,18 +4,18 @@
 
 .globl VIConfigure1080i60
 VIConfigure1080i60:
-	li			%r0, 0
-	lwz			%r6, 0 (%r3)
-	lis			%r4, VAR_AREA
-	lwz			%r5, VAR_TVMODE (%r4)
-	cmpwi		%r5, 5
+	lhz			%r0, 2 (%r3)
+	srwi		%r5, %r0, 2
+	cmpwi		%r5, 1
 	beq			1f
-	srwi		%r5, %r6, 2
-	cmpwi		%r5, 5
+	cmpwi		%r5, 4
 	bne			2f
+1:	subi		%r5, %r5, 1
+	insrwi		%r0, %r5, 14, 16
+2:	lis			%r4, VAR_AREA
 	stw			%r5, VAR_TVMODE (%r4)
-1:	insrwi		%r0, %r5, 30, 0
-2:	li			%r8, 1
+	insrwi		%r0, %r5, 14, 0
+	li			%r8, 1
 	li			%r7, 0
 	lhz			%r6, 8 (%r3)
 	slwi		%r6, %r6, 1
@@ -23,13 +23,14 @@ VIConfigure1080i60:
 	ble			6f
 	cmpwi		%r6, 574
 	ble			4f
-	ori			%r0, %r0, 2
+	oris		%r0, %r0, 2
 	lhz			%r6, 8 (%r3)
-	cmpwi		%r6, 480
+	lhz			%r5, 6 (%r3)
+	cmpwi		%r5, 264
 	ble			3f
-	lhz			%r6, 6 (%r3)
-	clrrwi		%r6, %r6, 1
-	sth			%r6, 8 (%r3)
+	clrrwi		%r5, %r5, 1
+	sth			%r5, 8 (%r3)
+	mr			%r6, %r5
 3:	subfic		%r5, %r6, 540
 	srawi		%r5, %r5, 1
 	b			7f
@@ -48,7 +49,7 @@ VIConfigure1080i60:
 	sth			%r6, 16 (%r3)
 	stb			%r7, 22 (%r3)
 	stb			%r8, 24 (%r3)
-	sth			%r0, 0 (%r3)
+	stw			%r0, 0 (%r3)
 
 .globl VIConfigure1080i60_length
 VIConfigure1080i60_length:

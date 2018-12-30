@@ -9,7 +9,7 @@ VIConfigureHook2:
 	mtmsr	%r4
 	lis		%r3, VAR_AREA
 	lwz		%r3, VAR_RMODE (%r3)
-	lbz		%r0, 3 (%r3)
+	lhz		%r0, 2 (%r3)
 	lbz		%r4, 23 (%r3)
 	stw		%r4, 20 (%r3)
 	stw		%r0, 0 (%r3)

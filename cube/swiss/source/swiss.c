@@ -86,7 +86,7 @@ void print_gecko(const char* fmt, ...)
 	}
 }
 
-char *DiscIDNoNTSC[] = {"DLSP64", "G2MP01", "GBZP08", "GFZP01", "GLRD64", "GLRF64", "GLRP64", "GM8P01", "GMSP01", "GSWD64", "GSWF64", "GSWI64", "GSWP64", "GSWS64"};
+char *DiscIDNoNTSC[] = {"DLSP64", "GFZP01", "GLRD64", "GLRF64", "GLRP64", "GM8P01", "GMSP01", "GSWD64", "GSWF64", "GSWI64", "GSWP64", "GSWS64"};
 
 /* re-init video for a given game */
 void ogc_video__reset()
@@ -147,34 +147,34 @@ void ogc_video__reset()
 			break;
 		case 1:
 			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480i");
-			newmode = VIDEO_GetCurrentTvMode() == VI_MPAL ? &TVMpal480IntDf : &TVNtsc480IntDf;
+			newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
 			break;
 		case 2:
 			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480sf");
-			newmode = VIDEO_GetCurrentTvMode() == VI_MPAL ? &TVMpal480IntDf : &TVNtsc480IntDf;
+			newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
 			break;
 		case 3:
 			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 240p");
-			newmode = VIDEO_GetCurrentTvMode() == VI_MPAL ? &TVMpal480IntDf : &TVNtsc480IntDf;
+			newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
 			break;
 		case 4:
 			if(VIDEO_HaveComponentCable()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 1080i");
-				newmode = VIDEO_GetCurrentTvMode() == VI_MPAL ? &TVMpal480IntDf : &TVNtsc480IntDf;
+				newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
 			} else {
 				msgBox = DrawMessageBox(D_WARN, "Video Mode: NTSC 480i");
 				swissSettings.gameVMode = 1;
-				newmode = VIDEO_GetCurrentTvMode() == VI_MPAL ? &TVMpal480IntDf : &TVNtsc480IntDf;
+				newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
 			}
 			break;
 		case 5:
 			if(VIDEO_HaveComponentCable()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480p");
-				newmode = VIDEO_GetCurrentTvMode() == VI_MPAL ? &TVMpal480Prog : &TVNtsc480Prog;
+				newmode = region == 'P' ? &TVPal576ProgScale : &TVNtsc480Prog;
 			} else {
 				msgBox = DrawMessageBox(D_WARN, "Video Mode: NTSC 240p");
 				swissSettings.gameVMode = 3;
-				newmode = VIDEO_GetCurrentTvMode() == VI_MPAL ? &TVMpal480IntDf : &TVNtsc480IntDf;
+				newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
 			}
 			break;
 		case 6:
