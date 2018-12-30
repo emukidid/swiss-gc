@@ -12,7 +12,7 @@ VIConfigureHook2:
 	lwz		%r0, 0 (%r3)
 	lwz		%r4, 20 (%r3)
 	inslwi	%r0, %r0, 14, 16
-	clrlwi	%r4, %r4, 16
+	clrlwi	%r4, %r4, 24
 	clrlwi	%r0, %r0, 16
 	stw		%r4, 20 (%r3)
 	stw		%r0, 0 (%r3)

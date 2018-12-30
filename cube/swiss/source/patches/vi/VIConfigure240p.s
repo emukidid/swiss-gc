@@ -50,7 +50,7 @@ VIConfigure240p:
 	srwi		%r5, %r5, 1
 	sth			%r5, 12 (%r3)
 	sth			%r6, 16 (%r3)
-	sth			%r7, 20 (%r3)
+	stb			%r7, 22 (%r3)
 	stb			%r8, 24 (%r3)
 	stb			%r7, VAR_VFILTER_ON (%r4)
 	sth			%r0, 0 (%r3)

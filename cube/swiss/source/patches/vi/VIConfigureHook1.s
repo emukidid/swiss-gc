@@ -22,10 +22,13 @@ VIConfigureHook1:
 	clrrwi		%r9, %r9, 2
 	bne			4f
 	sth			%r9, 4 (%r3)
-4:	sth			%r9, 18 (%r3)
-	subfic		%r9, %r9, 720
+4:	sth			%r9, 20 (%r3)
+	lha			%r7, 10 (%r3)
+	subf		%r9, %r9, %r8
 	srawi		%r9, %r9, 1
-	sth			%r9, 10 (%r3)
+	adde		%r9, %r9, %r7
+	clrrwi		%r9, %r9, 1
+	sth			%r9, 18 (%r3)
 	stw			%r3, VAR_RMODE (%r4)
 	mfmsr		%r3
 	rlwinm		%r4, %r3, 0, 17, 15
