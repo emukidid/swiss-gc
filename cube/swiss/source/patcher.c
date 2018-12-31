@@ -996,7 +996,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 41, 10, 3, 2, 2, 8, NULL, 0, "VIGetNextField B" },
 		{ 38, 13, 4, 3, 2, 6, NULL, 0, "VIGetNextField C" }
 	};
-	FuncPattern __GXInitGXSigs[8] = {
+	FuncPattern __GXInitGXSigs[9] = {
 		{ 1129, 567, 66, 133, 46, 46, NULL, 0, "__GXInitGXD A" },
 		{  543, 319, 33, 109, 18,  5, NULL, 0, "__GXInitGXD B" },
 		{  975, 454, 81, 119, 43, 36, NULL, 0, "__GXInitGX A" },
@@ -1004,7 +1004,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{  544, 310, 35, 108, 24, 11, NULL, 0, "__GXInitGX C" },
 		{  560, 313, 36, 110, 28, 11, NULL, 0, "__GXInitGX D" },
 		{  545, 293, 37, 110,  7,  9, NULL, 0, "__GXInitGX E" },		// SN Systems ProDG
-		{  589, 333, 34, 119, 28, 11, NULL, 0, "__GXInitGX F" }
+		{  548, 289, 38, 110,  7,  9, NULL, 0, "__GXInitGX F" },		// SN Systems ProDG
+		{  589, 333, 34, 119, 28, 11, NULL, 0, "__GXInitGX G" }
 	};
 	FuncPattern GXAdjustForOverscanSigs[3] = {
 		{ 56,  6,  4, 0, 3, 11, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscanD A" },
@@ -1020,11 +1021,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 43,  8, 4, 1, 2, 3, GXSetDispCopyYScalePatch2, GXSetDispCopyYScalePatch2_length, "GXSetDispCopyYScale D" },	// SN Systems ProDG
 		{ 50, 16, 4, 1, 5, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale E" }
 	};
-	FuncPattern GXSetCopyFilterSigs[4] = {
+	FuncPattern GXSetCopyFilterSigs[5] = {
 		{ 566, 183, 44, 32, 36, 38, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilterD A" },
 		{ 137,  15,  7,  0,  4,  5, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter A" },
 		{ 162,  19, 23,  0,  3, 14, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter B" },	// SN Systems ProDG
-		{ 129,  25,  7,  0,  4,  0, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter C" }
+		{ 162,  19, 23,  0,  3, 14, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter C" },	// SN Systems ProDG
+		{ 129,  25,  7,  0,  4,  0, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter D" }
 	};
 	FuncPattern GXCopyDispSigs[5] = {
 		{ 148, 62,  3, 14, 14, 3, NULL, 0, "GXCopyDispD A" },
@@ -1033,11 +1035,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{  68, 15, 12,  0,  1, 1, NULL, 0, "GXCopyDisp C" },			// SN Systems ProDG
 		{  89, 35, 14,  0,  3, 0, NULL, 0, "GXCopyDisp D" }
 	};
-	FuncPattern GXSetBlendModeSigs[4] = {
+	FuncPattern GXSetBlendModeSigs[5] = {
 		{ 153, 66, 10, 7, 9, 17, GXSetBlendModePatch1, GXSetBlendModePatch1_length, "GXSetBlendModeD A" },
 		{  64, 20,  8, 0, 2,  6, GXSetBlendModePatch1, GXSetBlendModePatch1_length, "GXSetBlendMode A" },
 		{  20,  6,  2, 0, 0,  2, GXSetBlendModePatch2, GXSetBlendModePatch2_length, "GXSetBlendMode B" },
-		{  35,  2,  2, 0, 0,  6, GXSetBlendModePatch3, GXSetBlendModePatch3_length, "GXSetBlendMode C" }	// SN Systems ProDG
+		{  35,  2,  2, 0, 0,  6, GXSetBlendModePatch3, GXSetBlendModePatch3_length, "GXSetBlendMode C" },	// SN Systems ProDG
+		{  37,  2,  2, 0, 0,  8, GXSetBlendModePatch3, GXSetBlendModePatch3_length, "GXSetBlendMode D" }	// SN Systems ProDG
 	};
 	FuncPattern __GXSetViewportSig = 
 		{ 35, 15, 7, 0, 0, 0, GXSetViewportPatch, GXSetViewportPatch_length, "__GXSetViewport" };
@@ -1291,10 +1294,19 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[3]);
 						break;
 					case 7:
+						findx_pattern(data, dataType, i + 494, length, &GXSetDispCopyYScaleSigs[5]);
+						
+						if (findx_pattern(data, dataType, i + 501, length, &GXSetCopyFilterSigs[3]))
+							GXCopyDispSigs[3].offsetFoundAt = GXSetCopyFilterSigs[3].offsetFoundAt + 169;
+						
+						findx_pattern(data, dataType, i + 435, length, &GXSetBlendModeSigs[4]);
+						findx_pattern(data, dataType, i + 204, length, &GXSetViewportSigs[3]);
+						break;
+					case 8:
 						findx_pattern(data, dataType, i + 543, length, &GXSetDispCopyYScaleSigs[6]);
 						
-						if (findx_pattern(data, dataType, i + 550, length, &GXSetCopyFilterSigs[3]))
-							GXCopyDispSigs[4].offsetFoundAt = GXSetCopyFilterSigs[3].offsetFoundAt + 135;
+						if (findx_pattern(data, dataType, i + 550, length, &GXSetCopyFilterSigs[4]))
+							GXCopyDispSigs[4].offsetFoundAt = GXSetCopyFilterSigs[4].offsetFoundAt + 135;
 						
 						findx_pattern(data, dataType, i + 490, length, &GXSetBlendModeSigs[2]);
 						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[4]);
