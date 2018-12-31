@@ -969,17 +969,18 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 103, 22, 14, 0, 4, 25, NULL, 0, "setVerticalRegs B" },
 		{ 113, 19, 13, 0, 4, 25, NULL, 0, "setVerticalRegs C" }			// SN Systems ProDG
 	};
-	FuncPattern VIConfigureSigs[10] = {
+	FuncPattern VIConfigureSigs[11] = {
 		{ 279,  74, 15, 20, 21, 20, NULL, 0, "VIConfigureD A" },
 		{ 313,  86, 15, 21, 27, 20, NULL, 0, "VIConfigureD B" },
 		{ 427,  90, 43,  6, 32, 60, NULL, 0, "VIConfigure A" },
 		{ 419,  87, 41,  6, 31, 60, NULL, 0, "VIConfigure B" },
-		{ 463, 100, 43, 13, 34, 61, NULL, 0, "VIConfigure C" },
-		{ 461,  99, 43, 12, 34, 61, NULL, 0, "VIConfigure D" },
-		{ 486, 105, 44, 12, 38, 63, NULL, 0, "VIConfigure E" },
-		{ 521, 111, 44, 13, 53, 64, NULL, 0, "VIConfigure F" },
-		{ 558, 112, 44, 14, 53, 48, NULL, 0, "VIConfigure G" },			// SN Systems ProDG
-		{ 513, 110, 44, 13, 49, 63, NULL, 0, "VIConfigure H" }
+		{ 422,  88, 41,  6, 31, 61, NULL, 0, "VIConfigure C" },
+		{ 463, 100, 43, 13, 34, 61, NULL, 0, "VIConfigure D" },
+		{ 461,  99, 43, 12, 34, 61, NULL, 0, "VIConfigure E" },
+		{ 486, 105, 44, 12, 38, 63, NULL, 0, "VIConfigure F" },
+		{ 521, 111, 44, 13, 53, 64, NULL, 0, "VIConfigure G" },
+		{ 558, 112, 44, 14, 53, 48, NULL, 0, "VIConfigure H" },			// SN Systems ProDG
+		{ 513, 110, 44, 13, 49, 63, NULL, 0, "VIConfigure I" }
 	};
 	FuncPattern VIConfigurePanSig = 
 		{ 228, 40, 11, 4, 25, 35, NULL, 0, "VIConfigurePan" };
@@ -1171,31 +1172,36 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 412, length, &setVerticalRegsSigs[1]);
 						break;
 					case 4:
+						findx_pattern(data, dataType, i +  72, length, &getTimingSigs[2]);
+						findx_pattern(data, dataType, i + 404, length, &setFbbRegsSigs[1]);
+						findx_pattern(data, dataType, i + 415, length, &setVerticalRegsSigs[1]);
+						break;
+					case 5:
 						findx_pattern(data, dataType, i + 104, length, &getTimingSigs[3]);
 						findx_pattern(data, dataType, i + 445, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 456, length, &setVerticalRegsSigs[1]);
 						break;
-					case 5:
+					case 6:
 						findx_pattern(data, dataType, i + 107, length, &getTimingSigs[3]);
 						findx_pattern(data, dataType, i + 443, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 454, length, &setVerticalRegsSigs[1]);
 						break;
-					case 6:
+					case 7:
 						findx_pattern(data, dataType, i + 123, length, &getTimingSigs[4]);
 						findx_pattern(data, dataType, i + 468, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 479, length, &setVerticalRegsSigs[1]);
 						break;
-					case 7:
+					case 8:
 						findx_pattern(data, dataType, i + 155, length, &getTimingSigs[5]);
 						findx_pattern(data, dataType, i + 503, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 514, length, &setVerticalRegsSigs[2]);
 						break;
-					case 8:
+					case 9:
 						getTimingSigs[6].offsetFoundAt = i;
 						findx_pattern(data, dataType, i + 537, length, &setFbbRegsSigs[2]);
 						findx_pattern(data, dataType, i + 550, length, &setVerticalRegsSigs[3]);
 						break;
-					case 9:
+					case 10:
 						findx_pattern(data, dataType, i + 155, length, &getTimingSigs[7]);
 						findx_pattern(data, dataType, i + 495, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 506, length, &setVerticalRegsSigs[2]);
@@ -1246,7 +1252,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[0]);
 						break;
 					case 2:
-						findx_pattern(data, dataType, i + 933, length, &GXSetDispCopyYScaleSigs[2]);
+						findx_pattern(data, dataType, i + 934, length, &GXSetDispCopyYScaleSigs[2]);
 						
 						if (findx_pattern(data, dataType, i + 941, length, &GXSetCopyFilterSigs[1]))
 							GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
@@ -1736,6 +1742,17 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 414] = branchAndLink(VIConfigureHook2, VIConfigure + 414);
 					break;
 				case 4:
+					data[i +   7] = branchAndLink(VIConfigureHook1, VIConfigure + 7);
+					data[i +  21] = 0xA01F0012;	// lhz		r0, 18 (r31)
+					data[i +  33] = 0xA01F0014;	// lhz		r0, 20 (r31)
+					data[i +  46] = 0xA07F0016;	// lhz		r3, 22 (r31)
+					data[i +  97] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
+					data[i +  99] = 0x7CA42B78;	// mr		r4, r5
+					data[i + 217] = 0x801C0000;	// lwz		r0, 0 (r28)
+					data[i + 219] = 0x28000002;	// cmplwi	r0, 2
+					data[i + 417] = branchAndLink(VIConfigureHook2, VIConfigure + 417);
+					break;
+				case 5:
 					data[i +   9] = branchAndLink(VIConfigureHook1, VIConfigure + 9);
 					data[i +  56] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  68] = 0xA01F0014;	// lhz		r0, 20 (r31)
@@ -1746,7 +1763,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 260] = 0x28000002;	// cmplwi	r0, 2
 					data[i + 458] = branchAndLink(VIConfigureHook2, VIConfigure + 458);
 					break;
-				case 5:
+				case 6:
 					data[i +   9] = branchAndLink(VIConfigureHook1, VIConfigure + 9);
 					data[i +  59] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  71] = 0xA01F0014;	// lhz		r0, 20 (r31)
@@ -1757,7 +1774,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 258] = 0x28000002;	// cmplwi	r0, 2
 					data[i + 456] = branchAndLink(VIConfigureHook2, VIConfigure + 456);
 					break;
-				case 6:
+				case 7:
 					data[i +   9] = branchAndLink(VIConfigureHook1, VIConfigure + 9);
 					data[i +  59] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  71] = 0xA01F0014;	// lhz		r0, 20 (r31)
@@ -1769,7 +1786,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 284] = 0x28000003;	// cmplwi	r0, 3
 					data[i + 481] = branchAndLink(VIConfigureHook2, VIConfigure + 481);
 					break;
-				case 7:
+				case 8:
 					data[i +   9] = branchAndLink(VIConfigureHook1, VIConfigure + 9);
 					data[i +  91] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i + 103] = 0xA01F0014;	// lhz		r0, 20 (r31)
@@ -1782,7 +1799,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 319] = 0x28000002;	// cmplwi	r0, 2
 					data[i + 516] = branchAndLink(VIConfigureHook2, VIConfigure + 516);
 					break;
-				case 8:
+				case 9:
 					data[i +   8] = branchAndLink(VIConfigureHook1, VIConfigure + 8);
 					data[i +  96] = 0xA09B0012;	// lhz		r4, 18 (r27)
 					data[i + 106] = 0xA0FB0014;	// lhz		r7, 20 (r27)
@@ -1795,7 +1812,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 345] = 0x280A0002;	// cmplwi	r10, 2
 					data[i + 552] = branchAndLink(VIConfigureHook2, VIConfigure + 552);
 					break;
-				case 9:
+				case 10:
 					data[i +   9] = branchAndLink(VIConfigureHook1, VIConfigure + 9);
 					data[i +  91] = 0xA0130012;	// lhz		r0, 18 (r19)
 					data[i + 103] = 0xA0130014;	// lhz		r0, 20 (r19)
@@ -1869,6 +1886,17 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i +  68] = 0xA07F0000;	// lhz		r3, 0 (r31)
 						break;
 					case 4:
+						data[i +   8] = 0xA09F0000;	// lhz		r4, 0 (r31)
+						data[i +  27] = 0x5400003C;	// clrrwi	r0, r0, 1
+						data[i +  46] = 0x887F0016;	// lbz		r3, 22 (r31)
+						data[i +  57] = 0xA01F0010;	// lhz		r0, 16 (r31)
+						data[i +  59] = 0x801C0000;	// lwz		r0, 0 (r28)
+						data[i +  60] = 0x28000001;	// cmplwi	r0, 1
+						data[i +  62] = 0xA01F0010;	// lhz		r0, 16 (r31)
+						data[i +  63] = 0x5400003C;	// clrrwi	r0, r0, 1
+						data[i +  65] = 0xA01F0010;	// lhz		r0, 16 (r31)
+						break;
+					case 5:
 						data[i +  10] = 0xA01F0000;	// lhz		r0, 0 (r31)
 						data[i +  45] = 0xA07F0000;	// lhz		r3, 0 (r31)
 						data[i +  62] = 0x5400003C;	// clrrwi	r0, r0, 1
@@ -1882,7 +1910,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 103] = 0xA07F0000;	// lhz		r3, 0 (r31)
 						data[i + 237] = 0xA0DF0000;	// lhz		r6, 0 (r31)
 						break;
-					case 5:
+					case 6:
 						data[i +  10] = 0xA09F0000;	// lhz		r4, 0 (r31)
 						data[i +  20] = 0xA01F0000;	// lhz		r0, 0 (r31)
 						data[i +  65] = 0x5400003C;	// clrrwi	r0, r0, 1
@@ -1895,7 +1923,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 103] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i + 106] = 0xA07F0000;	// lhz		r3, 0 (r31)
 						break;
-					case 6:
+					case 7:
 						data[i +  10] = 0xA09F0000;	// lhz		r4, 0 (r31)
 						data[i +  20] = 0xA01F0000;	// lhz		r0, 0 (r31)
 						data[i +  65] = 0x5400003C;	// clrrwi	r0, r0, 1
@@ -1908,7 +1936,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 105] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 107] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						break;
-					case 7:
+					case 8:
 						data[i +  10] = 0xA09F0000;	// lhz		r4, 0 (r31)
 						data[i +  20] = 0xA01F0000;	// lhz		r0, 0 (r31)
 						data[i +  97] = 0x5400003C;	// clrrwi	r0, r0, 1
@@ -1921,7 +1949,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 137] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 139] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						break;
-					case 8:
+					case 9:
 						data[i +  10] = 0xA0BB0000;	// lhz		r5, 0 (r27)
 						data[i +  20] = 0xA01B0000;	// lhz		r0, 0 (r27)
 						data[i + 101] = 0x5408003C;	// clrrwi	r8, r0, 1
@@ -1932,7 +1960,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 131] = 0xA0FB0010;	// lhz		r7, 16 (r27)
 						data[i + 133] = 0xA0FB0010;	// lhz		r7, 16 (r27)
 						break;
-					case 9:
+					case 10:
 						data[i +  10] = 0xA0930000;	// lhz		r4, 0 (r19)
 						data[i +  20] = 0xA0130000;	// lhz		r0, 0 (r19)
 						data[i +  97] = 0x5400003C;	// clrrwi	r0, r0, 1
@@ -1966,26 +1994,30 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 198] = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
 						break;
 					case 4:
+						data[i + 200] = 0x54A607B8;	// rlwinm	r6, r5, 0, 30, 28
+						data[i + 201] = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
+						break;
+					case 5:
 						data[i + 232] = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
 						data[i + 233] = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
 						break;
-					case 5:
+					case 6:
 						data[i + 235] = 0x546307B8;	// rlwinm	r3, r3, 0, 30, 28
 						data[i + 236] = 0x5003177A;	// rlwimi	r3, r0, 2, 29, 29
 						break;
-					case 6:
+					case 7:
 						data[i + 253] = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
 						data[i + 254] = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
 						break;
-					case 7:
+					case 8:
 						data[i + 285] = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
 						data[i + 286] = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
 						break;
-					case 8:
+					case 9:
 						data[i + 309] = 0x7D004378;	// mr		r0, r8
 						data[i + 310] = 0x5160177A;	// rlwimi	r0, r11, 2, 29, 29
 						break;
-					case 9:
+					case 10:
 						data[i + 288] = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
 						data[i + 289] = 0x54E9003C;	// rlwinm	r9, r7, 0, 0, 30
 						data[i + 290] = 0x61290001;	// ori		r9, r9, 1
