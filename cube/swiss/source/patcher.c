@@ -1723,7 +1723,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i +  19] = 0x548307BE;	// clrlwi	r3, r4, 30
 					data[i +  29] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  41] = 0xA01F0014;	// lhz		r0, 20 (r31)
-					data[i +  55] = 0xA07F0016;	// lhz		r3, 22 (r31)
+					data[i +  54] = 0xA07F0016;	// lhz		r3, 22 (r31)
 					data[i + 102] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
 					data[i + 104] = 0x7CA42B78;	// mr		r4, r5
 					data[i + 222] = 0x801B0000;	// lwz		r0, 0 (r27)
@@ -1864,7 +1864,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					case 2:
 						data[i +   8] = 0xA09F0000;	// lhz		r4, 0 (r31)
 						data[i +  35] = 0x5400003C;	// clrrwi	r0, r0, 1
-						data[i +  55] = 0x887F0016;	// lbz		r3, 22 (r31)
+						data[i +  54] = 0x887F0016;	// lbz		r3, 22 (r31)
 						data[i +  65] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  67] = 0x801B0000;	// lwz		r0, 0 (r27)
 						data[i +  68] = 0x28000001;	// cmplwi	r0, 1

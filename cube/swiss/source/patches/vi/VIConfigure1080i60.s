@@ -26,6 +26,8 @@ VIConfigure1080i60:
 	oris		%r0, %r0, 2
 	lhz			%r6, 8 (%r3)
 	lhz			%r5, 6 (%r3)
+	cmpw		%r5, %r6
+	bgt			3f
 	cmpwi		%r5, 264
 	ble			3f
 	clrrwi		%r5, %r5, 1

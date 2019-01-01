@@ -25,6 +25,8 @@ VIConfigure480i:
 	li			%r7, 1
 	lhz			%r6, 8 (%r3)
 	lhz			%r5, 6 (%r3)
+	cmpw		%r5, %r6
+	bgt			6f
 	cmpwi		%r5, 264
 	ble			6f
 	clrrwi		%r5, %r5, 1
