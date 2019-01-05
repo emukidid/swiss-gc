@@ -1554,19 +1554,33 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		u32 *AdjustPosition = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (AdjustPosition) {
-			data[i +  31] = 0x3BC00000 | (swissSettings.forceVOffset & 0xFFFF);
-			data[i +  33] = 0x7FC0F378;	// mr		r0, r30
-			data[i +  38] = 0x7FC0F378;	// mr		r0, r30
-			data[i +  46] = 0x7FC5F378;	// mr		r5, r30
-			data[i +  56] = 0x7FC5F378;	// mr		r5, r30
-			data[i +  66] = 0x7FC0F378;	// mr		r0, r30
-			data[i +  71] = 0x7FC0F378;	// mr		r0, r30
-			data[i +  80] = 0x7FC0F378;	// mr		r0, r30
-			data[i +  85] = 0x7FC0F378;	// mr		r0, r30
-			data[i +  97] = 0x7FC5F378;	// mr		r5, r30
-			data[i + 107] = 0x7FC5F378;	// mr		r5, r30
-			data[i + 118] = 0x7FC0F378;	// mr		r0, r30
-			data[i + 123] = 0x7FC0F378;	// mr		r0, r30
+			data[i +  30] = 0xA89F00F2;	// lha		r4, 242 (r31)
+			data[i +  31] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
+			data[i +  32] = 0x549E07FE;	// clrlwi	r30, r4, 31
+			data[i +  33] = 0x7FC0F214;	// add		r30, r30, r0
+			data[i +  38] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
+			data[i +  43] = 0x57C007FE;	// clrlwi	r0, r30, 31
+			data[i +  44] = 0x5466083C;	// slwi		r6, r3, 1
+			data[i +  45] = 0x7CC03050;	// sub		r6, r6, r0
+			data[i +  46] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
+			data[i +  53] = 0x57C007FE;	// clrlwi	r0, r30, 31
+			data[i +  54] = 0x5466083C;	// slwi		r6, r3, 1
+			data[i +  55] = 0x7CC03050;	// sub		r6, r6, r0
+			data[i +  56] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
+			data[i +  66] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
+			data[i +  71] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
+			data[i +  80] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
+			data[i +  85] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
+			data[i +  94] = 0x57C007FE;	// clrlwi	r0, r30, 31
+			data[i +  95] = 0x5466083C;	// slwi		r6, r3, 1
+			data[i +  96] = 0x7CC03050;	// sub		r6, r6, r0
+			data[i +  97] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
+			data[i + 104] = 0x57C007FE;	// clrlwi	r0, r30, 31
+			data[i + 105] = 0x5466083C;	// slwi		r6, r3, 1
+			data[i + 106] = 0x7CC03050;	// sub		r6, r6, r0
+			data[i + 107] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
+			data[i + 118] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
+			data[i + 123] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
 			
 			print_gecko("Found:[%s] @ %08X\n", AdjustPositionSig.Name, AdjustPosition);
 		}
@@ -1724,8 +1738,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i +  29] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  41] = 0xA01F0014;	// lhz		r0, 20 (r31)
 					data[i +  54] = 0xA07F0016;	// lhz		r3, 22 (r31)
+					data[i + 101] = 0xA8F70000;	// lha		r7, 0 (r23)
 					data[i + 102] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
-					data[i + 104] = 0x7CA42B78;	// mr		r4, r5
+					data[i + 103] = 0x54E407FE;	// clrlwi	r4, r7, 31
+					data[i + 104] = 0x7C842A14;	// add		r4, r4, r5
+					data[i + 111] = 0x548807FE;	// clrlwi	r8, r4, 31
+					data[i + 114] = 0x7CC83050;	// sub		r6, r6, r8
 					data[i + 222] = 0x801B0000;	// lwz		r0, 0 (r27)
 					data[i + 224] = 0x28000002;	// cmplwi	r0, 2
 					data[i + 422] = branchAndLink(VIConfigureHook2, VIConfigure + 422);
@@ -1735,8 +1753,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i +  21] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  33] = 0xA01F0014;	// lhz		r0, 20 (r31)
 					data[i +  46] = 0xA07F0016;	// lhz		r3, 22 (r31)
+					data[i +  93] = 0xA8F70000;	// lha		r7, 0 (r23)
 					data[i +  94] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
-					data[i +  96] = 0x7CA42B78;	// mr		r4, r5
+					data[i +  95] = 0x54E407FE;	// clrlwi	r4, r7, 31
+					data[i +  96] = 0x7C842A14;	// add		r4, r4, r5
+					data[i + 103] = 0x548807FE;	// clrlwi	r8, r4, 31
+					data[i + 106] = 0x7CC83050;	// sub		r6, r6, r8
 					data[i + 214] = 0x801C0000;	// lwz		r0, 0 (r28)
 					data[i + 216] = 0x28000002;	// cmplwi	r0, 2
 					data[i + 414] = branchAndLink(VIConfigureHook2, VIConfigure + 414);
@@ -1746,8 +1768,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i +  21] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  33] = 0xA01F0014;	// lhz		r0, 20 (r31)
 					data[i +  46] = 0xA07F0016;	// lhz		r3, 22 (r31)
+					data[i +  96] = 0xA8F60000;	// lha		r7, 0 (r22)
 					data[i +  97] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
-					data[i +  99] = 0x7CA42B78;	// mr		r4, r5
+					data[i +  98] = 0x54E407FE;	// clrlwi	r4, r7, 31
+					data[i +  99] = 0x7C842A14;	// add		r4, r4, r5
+					data[i + 106] = 0x548807FE;	// clrlwi	r8, r4, 31
+					data[i + 109] = 0x7CC83050;	// sub		r6, r6, r8
 					data[i + 217] = 0x801C0000;	// lwz		r0, 0 (r28)
 					data[i + 219] = 0x28000002;	// cmplwi	r0, 2
 					data[i + 417] = branchAndLink(VIConfigureHook2, VIConfigure + 417);
@@ -1757,8 +1783,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i +  56] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  68] = 0xA01F0014;	// lhz		r0, 20 (r31)
 					data[i +  81] = 0xA07F0016;	// lhz		r3, 22 (r31)
+					data[i + 128] = 0xA8F70000;	// lha		r7, 0 (r23)
 					data[i + 129] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
-					data[i + 131] = 0x7CA42B78;	// mr		r4, r5
+					data[i + 130] = 0x54E407FE;	// clrlwi	r4, r7, 31
+					data[i + 131] = 0x7C842A14;	// add		r4, r4, r5
+					data[i + 138] = 0x548807FE;	// clrlwi	r8, r4, 31
+					data[i + 141] = 0x7CC83050;	// sub		r6, r6, r8
 					data[i + 258] = 0x801C0000;	// lwz		r0, 0 (r28)
 					data[i + 260] = 0x28000002;	// cmplwi	r0, 2
 					data[i + 458] = branchAndLink(VIConfigureHook2, VIConfigure + 458);
@@ -1768,8 +1798,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i +  59] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  71] = 0xA01F0014;	// lhz		r0, 20 (r31)
 					data[i +  84] = 0xA07F0016;	// lhz		r3, 22 (r31)
+					data[i + 131] = 0xA8D70000;	// lha		r6, 0 (r23)
 					data[i + 132] = 0x38800000 | (swissSettings.forceVOffset & 0xFFFF);
-					data[i + 134] = 0x7C832378;	// mr		r3, r4
+					data[i + 133] = 0x54C307FE;	// clrlwi	r3, r6, 31
+					data[i + 134] = 0x7C632214;	// add		r3, r3, r4
+					data[i + 141] = 0x546807FE;	// clrlwi	r8, r3, 31
+					data[i + 144] = 0x7CA82850;	// sub		r5, r5, r8
 					data[i + 256] = 0x801C0000;	// lwz		r0, 0 (r28)
 					data[i + 258] = 0x28000002;	// cmplwi	r0, 2
 					data[i + 456] = branchAndLink(VIConfigureHook2, VIConfigure + 456);
@@ -1779,8 +1813,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i +  59] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  71] = 0xA01F0014;	// lhz		r0, 20 (r31)
 					data[i +  84] = 0xA07F0016;	// lhz		r3, 22 (r31)
+					data[i + 147] = 0xA8F70000;	// lha		r7, 0 (r23)
 					data[i + 148] = 0x38C00000 | (swissSettings.forceVOffset & 0xFFFF);
-					data[i + 150] = 0x7CC53378;	// mr		r5, r6
+					data[i + 149] = 0x54E507FE;	// clrlwi	r5, r7, 31
+					data[i + 150] = 0x7CA53214;	// add		r5, r5, r6
+					data[i + 157] = 0x54A907FE;	// clrlwi	r9, r5, 31
+					data[i + 160] = 0x7C090050;	// sub		r0, r0, r9
 					data[i + 280] = 0x801C0000;	// lwz		r0, 0 (r28)
 					data[i + 282] = 0x28000002;	// cmplwi	r0, 2
 					data[i + 284] = 0x28000003;	// cmplwi	r0, 3
@@ -1791,8 +1829,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i +  91] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i + 103] = 0xA01F0014;	// lhz		r0, 20 (r31)
 					data[i + 116] = 0xA07F0016;	// lhz		r3, 22 (r31)
+					data[i + 179] = 0xA8F70000;	// lha		r7, 0 (r23)
 					data[i + 180] = 0x38C00000 | (swissSettings.forceVOffset & 0xFFFF);
-					data[i + 182] = 0x7CC53378;	// mr		r5, r6
+					data[i + 181] = 0x54E507FE;	// clrlwi	r5, r7, 31
+					data[i + 182] = 0x7CA53214;	// add		r5, r5, r6
+					data[i + 189] = 0x54A907FE;	// clrlwi	r9, r5, 31
+					data[i + 192] = 0x7C090050;	// sub		r0, r0, r9
 					data[i + 313] = 0x801C0000;	// lwz		r0, 0 (r28)
 					data[i + 315] = 0x28000002;	// cmplwi	r0, 2
 					data[i + 317] = 0x28000003;	// cmplwi	r0, 3
@@ -1804,8 +1846,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i +  96] = 0xA09B0012;	// lhz		r4, 18 (r27)
 					data[i + 106] = 0xA0FB0014;	// lhz		r7, 20 (r27)
 					data[i + 112] = 0xA07B0016;	// lhz		r3, 22 (r27)
+					data[i + 209] = 0xA8060002;	// lha		r0, 2 (r6)
 					data[i + 211] = 0x38E00000 | (swissSettings.forceVOffset & 0xFFFF);
-					data[i + 217] = 0x7CF93B78;	// mr		r25, r7
+					data[i + 213] = 0x541907FE;	// clrlwi	r25, r0, 31
+					data[i + 217] = 0x7F393A14;	// add		r25, r25, r7
+					data[i + 226] = 0x573A07FE;	// clrlwi	r26, r25, 31
+					data[i + 234] = 0x7D9A6050;	// sub		r12, r12, r26
 					data[i + 332] = 0x815D0024;	// lwz		r10, 36 (r29)
 					data[i + 336] = 0x280A0002;	// cmplwi	r10, 2
 					data[i + 343] = 0x280A0003;	// cmplwi	r10, 3
@@ -1817,8 +1863,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i +  91] = 0xA0130012;	// lhz		r0, 18 (r19)
 					data[i + 103] = 0xA0130014;	// lhz		r0, 20 (r19)
 					data[i + 116] = 0xA0730016;	// lhz		r3, 22 (r19)
+					data[i + 179] = 0xA8F80000;	// lha		r7, 0 (r24)
 					data[i + 180] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
-					data[i + 182] = 0x7CA42B78;	// mr		r4, r5
+					data[i + 181] = 0x54E407FE;	// clrlwi	r4, r7, 31
+					data[i + 182] = 0x7C842A14;	// add		r4, r4, r5
+					data[i + 189] = 0x548807FE;	// clrlwi	r8, r4, 31
+					data[i + 192] = 0x7CC83050;	// sub		r6, r6, r8
 					data[i + 508] = branchAndLink(VIConfigureHook2, VIConfigure + 508);
 					break;
 			}
