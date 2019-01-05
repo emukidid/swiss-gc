@@ -95,14 +95,14 @@ void ogc_video__reset()
 	char region = wodeRegionToChar(GCMDisk.RegionCode);
 	int i;
 	
-	if(swissSettings.forceEncoding == 0) {
+	if(!swissSettings.forceEncoding) {
 		if(region == 'J')
 			swissSettings.forceEncoding = 2;
 		else
 			swissSettings.forceEncoding = 1;
 	}
 	
-	if(swissSettings.gameVMode == 0) {
+	if(!swissSettings.gameVMode || swissSettings.disableVideoPatches) {
 		if(region == 'P')
 			swissSettings.gameVMode = -2;
 		else
@@ -138,11 +138,16 @@ void ogc_video__reset()
 	uiDrawObj_t *msgBox = NULL;
 	switch(swissSettings.gameVMode) {
 		case -1:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 60Hz");
-			newmode = &TVNtsc480IntDf;
+			if(VIDEO_GetCurrentTvMode() == VI_MPAL) {
+				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL-M 480i");
+				newmode = &TVMpal480IntDf;
+			} else {
+				msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480i");
+				newmode = &TVNtsc480IntDf;
+			}
 			break;
 		case -2:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 50Hz");
+			msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 576i");
 			newmode = &TVPal576IntDfScale;
 			break;
 		case 1:
@@ -162,8 +167,8 @@ void ogc_video__reset()
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 1080i");
 				newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
 			} else {
-				msgBox = DrawMessageBox(D_WARN, "Video Mode: NTSC 480i");
 				swissSettings.gameVMode = 1;
+				msgBox = DrawMessageBox(D_WARN, "Video Mode: NTSC 480i");
 				newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
 			}
 			break;
@@ -172,8 +177,8 @@ void ogc_video__reset()
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480p");
 				newmode = region == 'P' ? &TVPal576ProgScale : &TVNtsc480Prog;
 			} else {
-				msgBox = DrawMessageBox(D_WARN, "Video Mode: NTSC 240p");
 				swissSettings.gameVMode = 3;
+				msgBox = DrawMessageBox(D_WARN, "Video Mode: NTSC 240p");
 				newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
 			}
 			break;
@@ -194,8 +199,8 @@ void ogc_video__reset()
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 1080i");
 				newmode = &TVPal576IntDfScale;
 			} else {
-				msgBox = DrawMessageBox(D_WARN, "Video Mode: PAL 576i");
 				swissSettings.gameVMode = 6;
+				msgBox = DrawMessageBox(D_WARN, "Video Mode: PAL 576i");
 				newmode = &TVPal576IntDfScale;
 			}
 			break;
@@ -204,8 +209,8 @@ void ogc_video__reset()
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 576p");
 				newmode = &TVPal576ProgScale;
 			} else {
-				msgBox = DrawMessageBox(D_WARN, "Video Mode: PAL 288p");
 				swissSettings.gameVMode = 8;
+				msgBox = DrawMessageBox(D_WARN, "Video Mode: PAL 288p");
 				newmode = &TVPal576IntDfScale;
 			}
 			break;
@@ -742,7 +747,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 		Patch_Fwrite(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	// Force Video Mode
-	if(swissSettings.gameVMode > 0) {
+	if(!swissSettings.disableVideoPatches) {
 		Patch_VideoMode(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 	// Force Widescreen

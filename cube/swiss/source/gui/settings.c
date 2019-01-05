@@ -26,7 +26,7 @@ syssram* sram;
 syssramex* sramex;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {9, 10, 11};
+int settings_count_pp[3] = {9, 11, 11};
 
 void refreshSRAM() {
 	sram = __SYS_LockSram();
@@ -117,19 +117,21 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawAddChild(page, DrawSelectableButton(510, 260, -1, 285, swissSettings.autoCheats ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 290, "Init network at startup:", 1.0f, false, defaultColor));
 		DrawAddChild(page, DrawSelectableButton(510, 290, -1, 315, swissSettings.initNetworkAtStart ? "Yes":"No", option == 6 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawStyledLabel(30, 320, "Disable Video Patches:", 1.0f, false, defaultColor));
+		DrawAddChild(page, DrawSelectableButton(510, 320, -1, 345, swissSettings.disableVideoPatches ? "Yes":"No", option == 7 ? B_SELECTED:B_NOSELECT));
 	}
 	else if(page_num == 2) {
 		DrawAddChild(page, DrawLabel(30, 65, "Current Game Settings (3/3):"));
-		DrawAddChild(page, DrawStyledLabel(30, 110, "Force Video Mode:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
+		DrawAddChild(page, DrawStyledLabel(30, 110, "Force Video Mode:", 1.0f, false, file != NULL && !swissSettings.disableVideoPatches ? defaultColor : disabledColor));
 		DrawAddChild(page, DrawSelectableButton(480, 110, -1, 135, gameVModeStr[swissSettings.gameVMode], option == 0 ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 140, "Force Horizontal Scale:", 1.0f, false, file != NULL && swissSettings.gameVMode > 0 ? defaultColor : disabledColor));
+		DrawAddChild(page, DrawStyledLabel(30, 140, "Force Horizontal Scale:", 1.0f, false, file != NULL && !swissSettings.disableVideoPatches ? defaultColor : disabledColor));
 		DrawAddChild(page, DrawSelectableButton(480, 140, -1, 165, forceHScaleStr[swissSettings.forceHScale], option == 1 ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 170, "Force Vertical Offset:", 1.0f, false, file != NULL && swissSettings.gameVMode > 0 ? defaultColor : disabledColor));
+		DrawAddChild(page, DrawStyledLabel(30, 170, "Force Vertical Offset:", 1.0f, false, file != NULL && !swissSettings.disableVideoPatches ? defaultColor : disabledColor));
 		sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
 		DrawAddChild(page, DrawSelectableButton(480, 170, -1, 195, forceVOffsetStr, option == 2 ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 200, "Force Vertical Filter:", 1.0f, false, file != NULL && swissSettings.gameVMode > 0 ? defaultColor : disabledColor));
+		DrawAddChild(page, DrawStyledLabel(30, 200, "Force Vertical Filter:", 1.0f, false, file != NULL && !swissSettings.disableVideoPatches ? defaultColor : disabledColor));
 		DrawAddChild(page, DrawSelectableButton(480, 200, -1, 225, forceVFilterStr[swissSettings.forceVFilter], option == 3 ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 230, "Disable Alpha Dithering:", 1.0f, false, file != NULL && swissSettings.gameVMode > 0 ? defaultColor : disabledColor));
+		DrawAddChild(page, DrawStyledLabel(30, 230, "Disable Alpha Dithering:", 1.0f, false, file != NULL && !swissSettings.disableVideoPatches ? defaultColor : disabledColor));
 		DrawAddChild(page, DrawSelectableButton(480, 230, -1, 255, swissSettings.disableDithering ? "Yes":"No", option == 4 ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 260, "Force Anisotropic Filter:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
 		DrawAddChild(page, DrawSelectableButton(480, 260, -1, 285, swissSettings.forceAnisotropy ? "Yes":"No", option == 5 ? B_SELECTED:B_NOSELECT));
@@ -253,19 +255,25 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 			case 6:
 				swissSettings.initNetworkAtStart ^= 1;
+			break;
+			case 7:
+				swissSettings.disableVideoPatches ^= 1;
+			break;
 		}
 	}
 	else if(page == 2 && file != NULL) {
 		switch(option) {
 			case 0:
-				swissSettings.gameVMode += direction;
-				if(swissSettings.gameVMode > 10)
-					swissSettings.gameVMode = 0;
-				if(swissSettings.gameVMode < 0)
-					swissSettings.gameVMode = 10;
+				if(!swissSettings.disableVideoPatches) {
+					swissSettings.gameVMode += direction;
+					if(swissSettings.gameVMode > 10)
+						swissSettings.gameVMode = 0;
+					if(swissSettings.gameVMode < 0)
+						swissSettings.gameVMode = 10;
+				}
 			break;
 			case 1:
-				if(swissSettings.gameVMode > 0) {
+				if(!swissSettings.disableVideoPatches) {
 					swissSettings.forceHScale += direction;
 					if(swissSettings.forceHScale > 6)
 						swissSettings.forceHScale = 0;
@@ -274,11 +282,11 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 				}
 			break;
 			case 2:
-				if(swissSettings.gameVMode > 0)
+				if(!swissSettings.disableVideoPatches)
 					swissSettings.forceVOffset += direction;
 			break;
 			case 3:
-				if(swissSettings.gameVMode > 0) {
+				if(!swissSettings.disableVideoPatches) {
 					swissSettings.forceVFilter += direction;
 					if(swissSettings.forceVFilter > 3)
 						swissSettings.forceVFilter = 0;
@@ -287,7 +295,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 				}
 			break;
 			case 4:
-				if(swissSettings.gameVMode > 0)
+				if(!swissSettings.disableVideoPatches)
 					swissSettings.disableDithering ^= 1;
 			break;
 			case 5:

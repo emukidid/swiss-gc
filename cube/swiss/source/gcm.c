@@ -412,7 +412,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		}
 		
 		patched += Patch_FontEnc(buffer, sizeToRead);
-		if(swissSettings.gameVMode > 0)
+		if(!swissSettings.disableVideoPatches)
 			Patch_VideoMode(buffer, sizeToRead, filesToPatch[i].type);
 		if(swissSettings.forceWidescreen)
 			Patch_Widescreen(buffer, sizeToRead, filesToPatch[i].type);

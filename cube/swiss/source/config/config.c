@@ -172,6 +172,8 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "Enable File Management=%s\r\n",(configSwissSettings.enableFileManagement ? "Yes":"No"));
 	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "Disable Video Patches=%s\r\n",(configSwissSettings.disableVideoPatches ? "Yes":"No"));
+	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "SMBUserName=%s\r\n",configSwissSettings.smbUser);
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "SMBPassword=%s\r\n",configSwissSettings.smbPassword);
@@ -409,6 +411,9 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("Enable File Management", name)) {
 					configSwissSettings.enableFileManagement = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Disable Video Patches", name)) {
+					configSwissSettings.disableVideoPatches = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("Swiss Video Mode", name)) {
 					if(!strcmp(uiVModeStr[0], value))
