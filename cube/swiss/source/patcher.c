@@ -984,6 +984,11 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	};
 	FuncPattern VIConfigurePanSig = 
 		{ 228, 40, 11, 4, 25, 35, NULL, 0, "VIConfigurePan" };
+	FuncPattern VISetBlackSigs[3] = {
+		{ 29, 6, 5, 3, 0, 3, NULL, 0, "VISetBlackD A" },
+		{ 30, 7, 6, 3, 0, 3, NULL, 0, "VISetBlack A" },
+		{ 29, 7, 6, 3, 0, 4, NULL, 0, "VISetBlack B" }					// SN Systems ProDG
+	};
 	FuncPattern getCurrentFieldEvenOddSigs[5] = {
 		{ 32,  7, 2, 3, 4, 5, NULL, 0, "getCurrentFieldEvenOddD A" },
 		{ 14,  5, 2, 1, 2, 3, NULL, 0, "getCurrentFieldEvenOddD B" },
@@ -1212,6 +1217,28 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			if (VIConfigureSigs[j].offsetFoundAt && i == VIConfigureSigs[j].offsetFoundAt + VIConfigureSigs[j].Length + 1) {
 				if (!VIConfigurePanSig.offsetFoundAt && compare_pattern(&fp, &VIConfigurePanSig))
 					VIConfigurePanSig.offsetFoundAt = i;
+				break;
+			}
+		}
+		
+		for (j = 0; j < sizeof(setVerticalRegsSigs) / sizeof(FuncPattern); j++) {
+			if (setVerticalRegsSigs[j].offsetFoundAt) {
+				for (k = 0; k < sizeof(VISetBlackSigs) / sizeof(FuncPattern); k++) {
+					if (!VISetBlackSigs[k].offsetFoundAt && compare_pattern(&fp, &VISetBlackSigs[k])) {
+						switch (k) {
+							case 0:
+							case 1:
+								if (setVerticalRegsSigs[j].offsetFoundAt == branchResolve(data, dataType, i + 22))
+									VISetBlackSigs[k].offsetFoundAt = i;
+								break;
+							case 2:
+								if (setVerticalRegsSigs[j].offsetFoundAt == branchResolve(data, dataType, i + 21))
+									VISetBlackSigs[k].offsetFoundAt = i;
+								break;
+						}
+						break;
+					}
+				}
 				break;
 			}
 		}
@@ -1608,33 +1635,44 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 8) {
-		for (j = 0; j < sizeof(setFbbRegsSigs) / sizeof(FuncPattern); j++)
-			if (setFbbRegsSigs[j].offsetFoundAt) break;
+	for (j = 0; j < sizeof(setFbbRegsSigs) / sizeof(FuncPattern); j++)
+		if (setFbbRegsSigs[j].offsetFoundAt) break;
+	
+	if ((i = setFbbRegsSigs[j].offsetFoundAt)) {
+		u32 *setFbbRegs = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		if ((i = setFbbRegsSigs[j].offsetFoundAt)) {
-			u32 *setFbbRegs = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			
-			if (setFbbRegs) {
+		if (setFbbRegs) {
+			switch (j) {
+				case 0:
+					data[i - 20] = 0x7D0B0734;	// extsh	r11, r8
+					data[i + 16] = 0xA91F000A;	// lha		r8, 10 (r31)
+					data[i + 28] = 0xA91F000A;	// lha		r8, 10 (r31)
+					break;
+				case 1:
+					data[i + 11] = 0xA983000A;	// lha		r12, 10 (r3)
+					data[i + 49] = 0xA983000A;	// lha		r12, 10 (r3)
+					break;
+				case 2:
+					data[i + 10] = 0xA983000A;	// lha		r12, 10 (r3)
+					data[i + 48] = 0xA983000A;	// lha		r12, 10 (r3)
+					break;
+			}
+			if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 8) {
 				switch (j) {
 					case 0:
-						data[i - 22] = 0x60000000;	// nop
+						data[i - 22] = 0x7C000378;	// mr		r0, r0
 						break;
 					case 1:
-						data[i + 20] = 0x81040000;	// lwz		r8, 0 (r4)
-						data[i + 21] = 0x60000000;	// nop
-						data[i + 58] = 0x81060000;	// lwz		r8, 0 (r6)
-						data[i + 59] = 0x60000000;	// nop
+						data[i + 21] = 0x7C080378;	// mr		r8, r0
+						data[i + 59] = 0x7C080378;	// mr		r8, r0
 						break;
 					case 2:
-						data[i + 18] = 0x81240000;	// lwz		r9, 0 (r4)
-						data[i + 19] = 0x60000000;	// nop
-						data[i + 56] = 0x81260000;	// lwz		r9, 0 (r6)
-						data[i + 57] = 0x60000000;	// nop
+						data[i + 19] = 0x7C090378;	// mr		r9, r0
+						data[i + 57] = 0x7C090378;	// mr		r9, r0
 						break;
 				}
-				print_gecko("Found:[%s] @ %08X\n", setFbbRegsSigs[j].Name, setFbbRegs);
 			}
+			print_gecko("Found:[%s] @ %08X\n", setFbbRegsSigs[j].Name, setFbbRegs);
 		}
 	}
 	
@@ -1712,6 +1750,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 107] = 0xA01E0016;	// lhz		r0, 22 (r30)
 					data[i + 218] = 0x801F0114;	// lwz		r0, 276 (r31)
 					data[i + 219] = 0x28000002;	// cmplwi	r0, 2
+					data[i + 264] = 0xA87F00FA;	// lha		r3, 250 (r31)
 					data[i + 274] = branchAndLink(VIConfigureHook2, VIConfigure + 274);
 					break;
 				case 1:
@@ -1730,6 +1769,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 250] = 0x28000002;	// cmplwi	r0, 2
 					data[i + 252] = 0x801F0114;	// lwz		r0, 276 (r31)
 					data[i + 253] = 0x28000003;	// cmplwi	r0, 3
+					data[i + 298] = 0xA87F00FA;	// lha		r3, 250 (r31)
 					data[i + 308] = branchAndLink(VIConfigureHook2, VIConfigure + 308);
 					break;
 				case 2:
@@ -1746,6 +1786,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 114] = 0x7CC83050;	// sub		r6, r6, r8
 					data[i + 222] = 0x801B0000;	// lwz		r0, 0 (r27)
 					data[i + 224] = 0x28000002;	// cmplwi	r0, 2
+					data[i + 412] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 422] = branchAndLink(VIConfigureHook2, VIConfigure + 422);
 					break;
 				case 3:
@@ -1761,6 +1802,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 106] = 0x7CC83050;	// sub		r6, r6, r8
 					data[i + 214] = 0x801C0000;	// lwz		r0, 0 (r28)
 					data[i + 216] = 0x28000002;	// cmplwi	r0, 2
+					data[i + 404] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 414] = branchAndLink(VIConfigureHook2, VIConfigure + 414);
 					break;
 				case 4:
@@ -1776,6 +1818,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 109] = 0x7CC83050;	// sub		r6, r6, r8
 					data[i + 217] = 0x801C0000;	// lwz		r0, 0 (r28)
 					data[i + 219] = 0x28000002;	// cmplwi	r0, 2
+					data[i + 407] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 417] = branchAndLink(VIConfigureHook2, VIConfigure + 417);
 					break;
 				case 5:
@@ -1791,6 +1834,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 141] = 0x7CC83050;	// sub		r6, r6, r8
 					data[i + 258] = 0x801C0000;	// lwz		r0, 0 (r28)
 					data[i + 260] = 0x28000002;	// cmplwi	r0, 2
+					data[i + 448] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 458] = branchAndLink(VIConfigureHook2, VIConfigure + 458);
 					break;
 				case 6:
@@ -1806,6 +1850,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 144] = 0x7CA82850;	// sub		r5, r5, r8
 					data[i + 256] = 0x801C0000;	// lwz		r0, 0 (r28)
 					data[i + 258] = 0x28000002;	// cmplwi	r0, 2
+					data[i + 446] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 456] = branchAndLink(VIConfigureHook2, VIConfigure + 456);
 					break;
 				case 7:
@@ -1822,6 +1867,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 280] = 0x801C0000;	// lwz		r0, 0 (r28)
 					data[i + 282] = 0x28000002;	// cmplwi	r0, 2
 					data[i + 284] = 0x28000003;	// cmplwi	r0, 3
+					data[i + 471] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 481] = branchAndLink(VIConfigureHook2, VIConfigure + 481);
 					break;
 				case 8:
@@ -1839,6 +1885,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 315] = 0x28000002;	// cmplwi	r0, 2
 					data[i + 317] = 0x28000003;	// cmplwi	r0, 3
 					data[i + 319] = 0x28000002;	// cmplwi	r0, 2
+					data[i + 506] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 516] = branchAndLink(VIConfigureHook2, VIConfigure + 516);
 					break;
 				case 9:
@@ -1856,6 +1903,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 336] = 0x280A0002;	// cmplwi	r10, 2
 					data[i + 343] = 0x280A0003;	// cmplwi	r10, 3
 					data[i + 345] = 0x280A0002;	// cmplwi	r10, 2
+					data[i + 542] = 0xA87E000A;	// lha		r3, 10 (r30)
 					data[i + 552] = branchAndLink(VIConfigureHook2, VIConfigure + 552);
 					break;
 				case 10:
@@ -1869,6 +1917,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 182] = 0x7C842A14;	// add		r4, r4, r5
 					data[i + 189] = 0x548807FE;	// clrlwi	r8, r4, 31
 					data[i + 192] = 0x7CC83050;	// sub		r6, r6, r8
+					data[i + 498] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 508] = branchAndLink(VIConfigureHook2, VIConfigure + 508);
 					break;
 			}
@@ -2085,11 +2134,42 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		if (VIConfigurePan) {
 			VIConfigurePanHook = getPatchAddr(VI_CONFIGUREPANHOOK);
 			
-			data[i + 10] = branchAndLink(VIConfigurePanHook, VIConfigurePan + 10);
-			data[i + 63] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
-			data[i + 65] = 0x7CA32B78;	// mr		r3, r5
+			data[i +  10] = branchAndLink(VIConfigurePanHook, VIConfigurePan + 10);
+			data[i +  61] = 0xAB3D00F2;	// lha		r25, 242 (r29)
+			data[i +  63] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
+			data[i +  64] = 0x572307FE;	// clrlwi	r3, r25, 31
+			data[i +  65] = 0x7C632A14;	// add		r3, r3, r5
+			data[i +  72] = 0x547907FE;	// clrlwi	r25, r3, 31
+			data[i +  75] = 0x7CF93850;	// sub		r7, r7, r25
+			data[i + 213] = 0xA87F0000;	// lha		r3, 0 (r31)
+			data[i + 214] = 0xA09D00FC;	// lhz		r4, 252 (r29)
 			
 			print_gecko("Found:[%s] @ %08X\n", VIConfigurePanSig.Name, VIConfigurePan);
+		}
+	}
+	
+	for (j = 0; j < sizeof(VISetBlackSigs) / sizeof(FuncPattern); j++)
+		if (VISetBlackSigs[j].offsetFoundAt) break;
+	
+	if ((i = VISetBlackSigs[j].offsetFoundAt)) {
+		u32 *VISetBlack = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (VISetBlack) {
+			switch (j) {
+				case 0:
+					data[i + 14] = 0xA87E00FA;	// lha		r3, 250 (r30)
+					data[i + 15] = 0xA09E00FC;	// lhz		r4, 252 (r30)
+					break;
+				case 1:
+					data[i + 14] = 0xA87F00FA;	// lha		r3, 250 (r31)
+					data[i + 15] = 0xA09F00FC;	// lhz		r4, 252 (r31)
+					break;
+				case 2:
+					data[i + 13] = 0xA864000A;	// lha		r3, 10 (r4)
+					data[i + 14] = 0xA084000C;	// lhz		r4, 12 (r4)
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", VISetBlackSigs[j].Name, VISetBlack);
 		}
 	}
 	
