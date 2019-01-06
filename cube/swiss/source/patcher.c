@@ -97,142 +97,101 @@ int install_code()
 	return 1;
 }
 
-void make_pattern( u32 *Data, u32 Length, FuncPattern *FunctionPattern )
+void make_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
 {
 	u32 i;
-
-	memset( FunctionPattern, 0, sizeof(FuncPattern) );
-
-	for( i = 0; i < Length / sizeof(u32); i++ )
-	{
-		u32 word = Data[i];
-		
-		if( (word & 0xFC000003) ==  0x48000001 )
-			FunctionPattern->FCalls++;
-
-		if( (word & 0xFC000003) ==  0x48000000 )
-			FunctionPattern->Branch++;
-		if( (word & 0xFFFF0000) ==  0x40800000 )
-			FunctionPattern->Branch++;
-		if( (word & 0xFFFF0000) ==  0x41800000 )
-			FunctionPattern->Branch++;
-		if( (word & 0xFFFF0000) ==  0x40810000 )
-			FunctionPattern->Branch++;
-		if( (word & 0xFFFF0000) ==  0x41820000 )
-			FunctionPattern->Branch++;
-		
-		if( (word & 0xFC000000) ==  0x80000000 )
-			FunctionPattern->Loads++;
-		if( (word & 0xFC000000) ==  0xC0000000 )
-			FunctionPattern->Loads++;
-		if( (word & 0xFF000000) ==  0x38000000 )
-			FunctionPattern->Loads++;
-		if( (word & 0xFF000000) ==  0x3C000000 )
-			FunctionPattern->Loads++;
-		
-		if( (word & 0xFC000000) ==  0x90000000 )
-			FunctionPattern->Stores++;
-		if( (word & 0xFC000000) ==  0x94000000 )
-			FunctionPattern->Stores++;
-		if( (word & 0xFC000000) ==  0xD0000000 )
-			FunctionPattern->Stores++;
-
-		if( (word & 0xFC0007FE) ==  0xFC000090 )
-			FunctionPattern->Moves++;
-		if( (word & 0xFF000000) ==  0x7C000000 )
-			FunctionPattern->Moves++;
-
-		if( word == 0x4E800020 )
-			break;
-	}
-
-	FunctionPattern->Length = i;
-}
-
-bool compare_pattern( FuncPattern *FPatA, FuncPattern *FPatB  )
-{
-	return memcmp( FPatA, FPatB, sizeof(u32) * 6 ) == 0;
-}
 	
-int find_pattern( u32 *data, u32 length, FuncPattern *functionPattern )
+	memset(functionPattern, 0, sizeof(FuncPattern));
+	
+	for (i = offsetFoundAt; i < length / sizeof(u32); i++) {
+		u32 word = data[i];
+		
+		if (word == 0x4E800020)
+			break;
+		
+		functionPattern->Length++;
+		
+		if ((word & 0xFF000000) == 0x38000000)
+			functionPattern->Loads++;
+		if ((word & 0xFF000000) == 0x3C000000)
+			functionPattern->Loads++;
+		if ((word & 0xFC000000) == 0x80000000)
+			functionPattern->Loads++;
+		if ((word & 0xFC000000) == 0xC0000000)
+			functionPattern->Loads++;
+		
+		if ((word & 0xFC000000) == 0x90000000)
+			functionPattern->Stores++;
+		if ((word & 0xFC000000) == 0x94000000)
+			functionPattern->Stores++;
+		if ((word & 0xFC000000) == 0xD0000000)
+			functionPattern->Stores++;
+		
+		if ((word & 0xFC000003) == 0x48000001)
+			functionPattern->FCalls++;
+		
+		if ((word & 0xFFFF0000) == 0x40800000)
+			functionPattern->Branch++;
+		if ((word & 0xFFFF0000) == 0x40810000)
+			functionPattern->Branch++;
+		if ((word & 0xFFFF0000) == 0x41800000)
+			functionPattern->Branch++;
+		if ((word & 0xFFFF0000) == 0x41820000)
+			functionPattern->Branch++;
+		if ((word & 0xFC000003) == 0x48000000)
+			functionPattern->Branch++;
+		
+		if ((word & 0xFF000000) == 0x7C000000)
+			functionPattern->Moves++;
+		if ((word & 0xFC0007FE) == 0xFC000090)
+			functionPattern->Moves++;
+	}
+	
+	functionPattern->offsetFoundAt = offsetFoundAt;
+}
+
+bool compare_pattern(FuncPattern *FPatA, FuncPattern *FPatB)
 {
-	u32 i;
+	return memcmp(FPatA, FPatB, sizeof(u32) * 6) == 0;
+}
+
+bool find_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
+{
 	FuncPattern FP;
-
-	memset( &FP, 0, sizeof(FP) );
-
-	for( i = 0; i < length / sizeof(u32); i++ )
-	{
-		u32 word =  data[i];
-		
-		if( (word & 0xFC000003) ==  0x48000001 )
-			FP.FCalls++;
-
-		if( (word & 0xFC000003) ==  0x48000000 )
-			FP.Branch++;
-		if( (word & 0xFFFF0000) ==  0x40800000 )
-			FP.Branch++;
-		if( (word & 0xFFFF0000) ==  0x41800000 )
-			FP.Branch++;
-		if( (word & 0xFFFF0000) ==  0x40810000 )
-			FP.Branch++;
-		if( (word & 0xFFFF0000) ==  0x41820000 )
-			FP.Branch++;
-		
-		if( (word & 0xFC000000) ==  0x80000000 )
-			FP.Loads++;
-		if( (word & 0xFC000000) ==  0xC0000000 )
-			FP.Loads++;
-		if( (word & 0xFF000000) ==  0x38000000 )
-			FP.Loads++;
-		if( (word & 0xFF000000) ==  0x3C000000 )
-			FP.Loads++;
-		
-		if( (word & 0xFC000000) ==  0x90000000 )
-			FP.Stores++;
-		if( (word & 0xFC000000) ==  0x94000000 )
-			FP.Stores++;
-		if( (word & 0xFC000000) ==  0xD0000000 )
-			FP.Stores++;
-
-		if( (word & 0xFC0007FE) ==  0xFC000090 )
-			FP.Moves++;
-		if( (word & 0xFF000000) ==  0x7C000000 )
-			FP.Moves++;
-
-		if( word == 0x4E800020 )
-			break;
-	}
-
-	FP.Length = i;
-
-	if(!functionPattern) {
-		print_gecko("Length: %d\r\n", FP.Length );
-		print_gecko("Loads : %d\r\n", FP.Loads );
-		print_gecko("Stores: %d\r\n", FP.Stores );
-		print_gecko("FCalls: %d\r\n", FP.FCalls );
-		print_gecko("Branch : %d\r\n", FP.Branch);
-		print_gecko("Moves: %d\r\n", FP.Moves);
-		return 0;
+	
+	make_pattern(data, offsetFoundAt, length, &FP);
+	
+	if (functionPattern && compare_pattern(&FP, functionPattern)) {
+		functionPattern->offsetFoundAt = FP.offsetFoundAt;
+		return true;
 	}
 	
-	return memcmp( &FP, functionPattern, sizeof(u32) * 6 ) == 0;
+	if (!functionPattern) {
+		print_gecko("Length: %d\n", FP.Length);
+		print_gecko("Loads: %d\n", FP.Loads);
+		print_gecko("Stores: %d\n", FP.Stores);
+		print_gecko("FCalls: %d\n", FP.FCalls);
+		print_gecko("Branch: %d\n", FP.Branch);
+		print_gecko("Moves: %d\n", FP.Moves);
+	}
+	
+	return false;
 }
 
 u32 branch(u32 *dst, u32 *src)
 {
-	u32 newval = (u32)dst - (u32)src;
-	newval &= 0x03FFFFFC;
-	newval |= 0x48000000;
-	return newval;
+	u32 word = (u32)dst - (u32)src;
+	word &= 0x03FFFFFC;
+	word |= 0x48000000;
+	return word;
 }
 
 u32 branchAndLink(u32 *dst, u32 *src)
 {
-	u32 newval = (u32)dst - (u32)src;
-	newval &= 0x03FFFFFC;
-	newval |= 0x48000001;
-	return newval;
+	u32 word = (u32)dst - (u32)src;
+	word &= 0x03FFFFFC;
+	word |= 0x48000001;
+	return word;
 }
 
 u32 branchResolve(u32 *data, int dataType, u32 offsetFoundAt)
@@ -258,12 +217,10 @@ bool findx_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 length, FuncP
 {
 	offsetFoundAt = branchResolve(data, dataType, offsetFoundAt);
 	
-	if (offsetFoundAt && find_pattern(data + offsetFoundAt, length, functionPattern)) {
-		functionPattern->offsetFoundAt = offsetFoundAt;
-		return true;
-	}
+	if (functionPattern->offsetFoundAt)
+		return offsetFoundAt == functionPattern->offsetFoundAt;
 	
-	return false;
+	return offsetFoundAt && find_pattern(data, offsetFoundAt, length, functionPattern);
 }
 
 // Redirects 0xCC0060xx reads to VAR_DI_REGS
@@ -514,7 +471,7 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 			continue;
 		
 		FuncPattern fp;
-		make_pattern( (u32*)(addr+i), length, &fp );
+		make_pattern( addr, i / 4, length, &fp );
 		
 		if(compare_pattern(&fp, &OSExceptionInitSig))
 		{
@@ -566,7 +523,7 @@ u32 Patch_DVDLowLevelReadForUSBGecko(void *addr, u32 length, int dataType) {
 			continue;
 		
 		FuncPattern fp;
-		make_pattern( (u32*)(addr+i), length, &fp );
+		make_pattern( addr, i / 4, length, &fp );
 		
 		if(compare_pattern(&fp, &OSExceptionInitSig))
 		{
@@ -625,7 +582,7 @@ u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType) {
 			continue;
 		
 		FuncPattern fp;
-		make_pattern( (u32*)(addr+i), length, &fp );
+		make_pattern( addr, i / 4, length, &fp );
 		
 		if(compare_pattern(&fp, &ReadCommon)) {
 			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
@@ -659,7 +616,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 		// Patch the memcpy call in OSExceptionInit to copy our code to 0x80000500 instead of anything else.
 		if(*(vu32*)(addr_start) == 0x7C0802A6)
 		{
-			if( find_pattern( (u32*)(addr_start), length, &OSExceptionInitSig ) )
+			if( find_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &OSExceptionInitSig ) )
 			{
 				void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 472)-(u32)(addr));
 				print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
@@ -667,7 +624,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 				patched |= 0x100;
 			}
 			// Debug version of the above
-			else if( find_pattern( (u32*)(addr_start), length, &OSExceptionInitSigDBG ) )
+			else if( find_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &OSExceptionInitSigDBG ) )
 			{
 				void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 512)-(u32)(addr));
 				print_gecko("Found:[OSExceptionInitDBG] @ %08X\r\n", properAddress);
@@ -675,7 +632,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 				patched |= 0x100;
 			}
 			// Audio Streaming Hook (only if required)
-			else if(!swissSettings.muteAudioStreaming && find_pattern( (u32*)(addr_start), length, &DSPHandler ) )
+			else if(!swissSettings.muteAudioStreaming && find_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &DSPHandler ) )
 			{	
 				if(strncmp((const char*)0x80000000, "PZL", 3)) {	// ZeldaCE uses a special case for MM
 					void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start+0xF8)-(u32)(addr));
@@ -685,7 +642,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 			}
 			// Read variations
 			FuncPattern fp;
-			make_pattern( (u32*)(addr_start), length, &fp );
+			make_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &fp );
 			if(compare_pattern(&fp, &ReadCommon) 			// Common Read function
 				|| compare_pattern(&fp, &ReadDebug)			// Debug Read function
 				|| compare_pattern(&fp, &ReadUncommon)) 	// Uncommon Read function
@@ -1126,7 +1083,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			continue;
 		
 		FuncPattern fp;
-		make_pattern(data + i, length, &fp);
+		make_pattern(data, i, length, &fp);
 		
 		for (j = 0; j < sizeof(__VIRetraceHandlerSigs) / sizeof(FuncPattern); j++) {
 			if (!__VIRetraceHandlerSigs[j].offsetFoundAt && compare_pattern(&fp, &__VIRetraceHandlerSigs[j])) {
@@ -1264,7 +1221,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 1088, length, &GXSetDispCopyYScaleSigs[0]);
 						
 						if (findx_pattern(data, dataType, i + 1095, length, &GXSetCopyFilterSigs[0]))
-							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 601;
+							find_pattern(data, GXSetCopyFilterSigs[0].offsetFoundAt + 601, length, &GXCopyDispSigs[0]);
 						
 						findx_pattern(data, dataType, i + 1033, length, &GXSetBlendModeSigs[0]);
 						findx_pattern(data, dataType, i +  727, length, &GXSetViewportSigs[0]);
@@ -1273,7 +1230,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 499, length, &GXSetDispCopyYScaleSigs[1]);
 						
 						if (findx_pattern(data, dataType, i + 506, length, &GXSetCopyFilterSigs[0]))
-							GXCopyDispSigs[0].offsetFoundAt = GXSetCopyFilterSigs[0].offsetFoundAt + 601;
+							find_pattern(data, GXSetCopyFilterSigs[0].offsetFoundAt + 601, length, &GXCopyDispSigs[0]);
 						
 						findx_pattern(data, dataType, i + 444, length, &GXSetBlendModeSigs[0]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[0]);
@@ -1282,7 +1239,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 934, length, &GXSetDispCopyYScaleSigs[2]);
 						
 						if (findx_pattern(data, dataType, i + 941, length, &GXSetCopyFilterSigs[1]))
-							GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
+							find_pattern(data, GXSetCopyFilterSigs[1].offsetFoundAt + 145, length, &GXCopyDispSigs[1]);
 						
 						findx_pattern(data, dataType, i + 881, length, &GXSetBlendModeSigs[1]);
 						findx_pattern(data, dataType, i + 553, length, &GXSetViewportSigs[1]);
@@ -1291,7 +1248,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 484, length, &GXSetDispCopyYScaleSigs[2]);
 						
 						if (findx_pattern(data, dataType, i + 491, length, &GXSetCopyFilterSigs[1]))
-							GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
+							find_pattern(data, GXSetCopyFilterSigs[1].offsetFoundAt + 145, length, &GXCopyDispSigs[1]);
 						
 						findx_pattern(data, dataType, i + 431, length, &GXSetBlendModeSigs[1]);
 						findx_pattern(data, dataType, i + 186, length, &GXSetViewportSigs[1]);
@@ -1303,7 +1260,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 499, length, &GXSetDispCopyYScaleSigs[2]);
 						
 						if (findx_pattern(data, dataType, i + 506, length, &GXSetCopyFilterSigs[1]))
-							GXCopyDispSigs[1].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
+							find_pattern(data, GXSetCopyFilterSigs[1].offsetFoundAt + 145, length, &GXCopyDispSigs[1]);
 						
 						findx_pattern(data, dataType, i + 446, length, &GXSetBlendModeSigs[1]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[1]);
@@ -1312,7 +1269,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 514, length, &GXSetDispCopyYScaleSigs[4]);
 						
 						if (findx_pattern(data, dataType, i + 521, length, &GXSetCopyFilterSigs[1]))
-							GXCopyDispSigs[2].offsetFoundAt = GXSetCopyFilterSigs[1].offsetFoundAt + 145;
+							find_pattern(data, GXSetCopyFilterSigs[1].offsetFoundAt + 145, length, &GXCopyDispSigs[2]);
 						
 						findx_pattern(data, dataType, i + 461, length, &GXSetBlendModeSigs[2]);
 						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[2]);
@@ -1321,7 +1278,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 492, length, &GXSetDispCopyYScaleSigs[5]);
 						
 						if (findx_pattern(data, dataType, i + 499, length, &GXSetCopyFilterSigs[2]))
-							GXCopyDispSigs[3].offsetFoundAt = GXSetCopyFilterSigs[2].offsetFoundAt + 169;
+							find_pattern(data, GXSetCopyFilterSigs[2].offsetFoundAt + 169, length, &GXCopyDispSigs[3]);
 						
 						findx_pattern(data, dataType, i + 433, length, &GXSetBlendModeSigs[3]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[3]);
@@ -1330,7 +1287,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 494, length, &GXSetDispCopyYScaleSigs[5]);
 						
 						if (findx_pattern(data, dataType, i + 501, length, &GXSetCopyFilterSigs[3]))
-							GXCopyDispSigs[3].offsetFoundAt = GXSetCopyFilterSigs[3].offsetFoundAt + 169;
+							find_pattern(data, GXSetCopyFilterSigs[3].offsetFoundAt + 169, length, &GXCopyDispSigs[3]);
 						
 						findx_pattern(data, dataType, i + 435, length, &GXSetBlendModeSigs[4]);
 						findx_pattern(data, dataType, i + 204, length, &GXSetViewportSigs[3]);
@@ -1339,7 +1296,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 543, length, &GXSetDispCopyYScaleSigs[6]);
 						
 						if (findx_pattern(data, dataType, i + 550, length, &GXSetCopyFilterSigs[4]))
-							GXCopyDispSigs[4].offsetFoundAt = GXSetCopyFilterSigs[4].offsetFoundAt + 135;
+							find_pattern(data, GXSetCopyFilterSigs[4].offsetFoundAt + 135, length, &GXCopyDispSigs[4]);
 						
 						findx_pattern(data, dataType, i + 490, length, &GXSetBlendModeSigs[2]);
 						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[4]);
@@ -2399,7 +2356,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (data[i] != 0xED241828)
 			continue;
-		if (find_pattern(data + i, length, &MTXFrustumSig)) {
+		if (find_pattern(data, i, length, &MTXFrustumSig)) {
 			u32 *MTXFrustum = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *MTXFrustumHook = NULL;
 			if (MTXFrustum) {
@@ -2408,7 +2365,6 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 				MTXFrustumHook[7] = branch(MTXFrustum + 1, MTXFrustumHook + 7);
 				data[i] = branch(MTXFrustumHook, MTXFrustum);
 				*(u32*)VAR_FLOAT1_6 = 0x3E2AAAAB;
-				MTXFrustumSig.offsetFoundAt = i;
 				break;
 			}
 		}
@@ -2416,7 +2372,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (data[i + 2] != 0xED441828)
 			continue;
-		if (find_pattern(data + i, length, &MTXLightFrustumSig)) {
+		if (find_pattern(data, i, length, &MTXLightFrustumSig)) {
 			u32 *MTXLightFrustum = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *MTXLightFrustumHook = NULL;
 			if (MTXLightFrustum) {
@@ -2432,7 +2388,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (data[i] != 0x7C0802A6)
 			continue;
-		if (find_pattern(data + i, length, &MTXPerspectiveSig)) {
+		if (find_pattern(data, i, length, &MTXPerspectiveSig)) {
 			u32 *MTXPerspective = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *MTXPerspectiveHook = NULL;
 			if (MTXPerspective) {
@@ -2441,7 +2397,6 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 				MTXPerspectiveHook[5] = branch(MTXPerspective + 21, MTXPerspectiveHook + 5);
 				data[i + 20] = branch(MTXPerspectiveHook, MTXPerspective + 20);
 				*(u32*)VAR_FLOAT9_16 = 0x3F100000;
-				MTXPerspectiveSig.offsetFoundAt = i;
 				break;
 			}
 		}
@@ -2449,7 +2404,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (data[i] != 0x7C0802A6)
 			continue;
-		if (find_pattern(data + i, length, &MTXLightPerspectiveSig)) {
+		if (find_pattern(data, i, length, &MTXLightPerspectiveSig)) {
 			u32 *MTXLightPerspective = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *MTXLightPerspectiveHook = NULL;
 			if (MTXLightPerspective) {
@@ -2466,7 +2421,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 		for (i = 0; i < length / sizeof(u32); i++) {
 			if (data[i] != 0xED041828)
 				continue;
-			if (find_pattern(data + i, length, &MTXOrthoSig)) {
+			if (find_pattern(data, i, length, &MTXOrthoSig)) {
 				u32 *MTXOrtho = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 				u32 *MTXOrthoHook = NULL;
 				if (MTXOrtho) {
@@ -2485,7 +2440,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 				continue;
 			
 			FuncPattern fp;
-			make_pattern(data + i, length, &fp);
+			make_pattern(data, i, length, &fp);
 			
 			for (j = 0; j < sizeof(GXSetScissorSigs) / sizeof(FuncPattern); j++) {
 				if (compare_pattern(&fp, &GXSetScissorSigs[j])) {
@@ -2510,7 +2465,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 				continue;
 			
 			FuncPattern fp;
-			make_pattern(data + i, length, &fp);
+			make_pattern(data, i, length, &fp);
 			
 			for (j = 0; j < sizeof(GXSetProjectionSigs) / sizeof(FuncPattern); j++) {
 				if (compare_pattern(&fp, &GXSetProjectionSigs[j])) {
@@ -2544,7 +2499,7 @@ int Patch_TexFilt(u32 *data, u32 length, int dataType)
 			continue;
 		
 		FuncPattern fp;
-		make_pattern(data + i, length, &fp);
+		make_pattern(data, i, length, &fp);
 		
 		for (j = 0; j < sizeof(GXInitTexObjLODSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &GXInitTexObjLODSigs[j])) {
