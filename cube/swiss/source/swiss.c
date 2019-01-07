@@ -168,7 +168,7 @@ void ogc_video__reset()
 				newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
 			} else {
 				swissSettings.gameVMode = 1;
-				msgBox = DrawMessageBox(D_WARN, "Video Mode: NTSC 480i");
+				msgBox = DrawMessageBox(D_WARN, "Video Mode: NTSC 480i\nComponent Cable not detected.");
 				newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
 			}
 			break;
@@ -178,7 +178,7 @@ void ogc_video__reset()
 				newmode = region == 'P' ? &TVPal576ProgScale : &TVNtsc480Prog;
 			} else {
 				swissSettings.gameVMode = 3;
-				msgBox = DrawMessageBox(D_WARN, "Video Mode: NTSC 240p");
+				msgBox = DrawMessageBox(D_WARN, "Video Mode: NTSC 240p\nComponent Cable not detected.");
 				newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
 			}
 			break;
@@ -200,7 +200,7 @@ void ogc_video__reset()
 				newmode = &TVPal576IntDfScale;
 			} else {
 				swissSettings.gameVMode = 6;
-				msgBox = DrawMessageBox(D_WARN, "Video Mode: PAL 576i");
+				msgBox = DrawMessageBox(D_WARN, "Video Mode: PAL 576i\nComponent Cable not detected.");
 				newmode = &TVPal576IntDfScale;
 			}
 			break;
@@ -210,7 +210,7 @@ void ogc_video__reset()
 				newmode = &TVPal576ProgScale;
 			} else {
 				swissSettings.gameVMode = 8;
-				msgBox = DrawMessageBox(D_WARN, "Video Mode: PAL 288p");
+				msgBox = DrawMessageBox(D_WARN, "Video Mode: PAL 288p\nComponent Cable not detected.");
 				newmode = &TVPal576IntDfScale;
 			}
 			break;
