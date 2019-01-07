@@ -1602,12 +1602,18 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			switch (j) {
 				case 0:
 					data[i - 20] = 0x7D0B0734;	// extsh	r11, r8
+					data[i - 15] = 0x2C000000;	// cmpwi	r0, 0
+					data[i - 14] = 0x41820014;	// beq		+5
 					data[i + 16] = 0xA91F000A;	// lha		r8, 10 (r31)
 					data[i + 28] = 0xA91F000A;	// lha		r8, 10 (r31)
 					break;
 				case 1:
 					data[i + 11] = 0xA983000A;	// lha		r12, 10 (r3)
+					data[i + 27] = 0x2C000000;	// cmpwi	r0, 0
+					data[i + 28] = 0x41820014;	// beq		+5
 					data[i + 49] = 0xA983000A;	// lha		r12, 10 (r3)
+					data[i + 65] = 0x2C000000;	// cmpwi	r0, 0
+					data[i + 66] = 0x41820014;	// beq		+5
 					break;
 				case 2:
 					data[i + 10] = 0xA983000A;	// lha		r12, 10 (r3)
