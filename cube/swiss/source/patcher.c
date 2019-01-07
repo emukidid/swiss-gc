@@ -217,7 +217,7 @@ bool findx_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 length, FuncP
 {
 	offsetFoundAt = branchResolve(data, dataType, offsetFoundAt);
 	
-	if (functionPattern->offsetFoundAt)
+	if (functionPattern && functionPattern->offsetFoundAt)
 		return offsetFoundAt == functionPattern->offsetFoundAt;
 	
 	return offsetFoundAt && find_pattern(data, offsetFoundAt, length, functionPattern);
@@ -891,6 +891,10 @@ u8 vertical_reduction[][7] = {
 void Patch_VideoMode(u32 *data, u32 length, int dataType)
 {
 	int i, j, k;
+	FuncPattern OSDisableInterruptsSig = 
+		{ 4, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
+	FuncPattern OSRestoreInterruptsSig = 
+		{ 8, 0, 0, 0, 2, 2, NULL, 0, "OSRestoreInterrupts" };
 	FuncPattern __VIRetraceHandlerSigs[8] = {
 		{ 119, 41,  7, 10, 13,  6, NULL, 0, "__VIRetraceHandlerD A" },
 		{ 120, 41,  7, 11, 13,  6, NULL, 0, "__VIRetraceHandlerD B" },
@@ -1103,67 +1107,111 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			}
 		}
 		
-		if (!VIWaitForRetraceSig.offsetFoundAt && compare_pattern(&fp, &VIWaitForRetraceSig))
-			VIWaitForRetraceSig.offsetFoundAt = i;
+		if (!VIWaitForRetraceSig.offsetFoundAt && compare_pattern(&fp, &VIWaitForRetraceSig)) {
+			if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+				findx_pattern(data, dataType, i + 14, length, &OSRestoreInterruptsSig))
+				VIWaitForRetraceSig.offsetFoundAt = i;
+		}
 		
 		for (j = 0; j < sizeof(VIConfigureSigs) / sizeof(FuncPattern); j++) {
 			if (!VIConfigureSigs[j].offsetFoundAt && compare_pattern(&fp, &VIConfigureSigs[j])) {
-				VIConfigureSigs[j].offsetFoundAt = i;
-				
 				switch (j) {
 					case 0:
+						if (findx_pattern(data, dataType, i +  53, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 274, length, &OSRestoreInterruptsSig))
+							VIConfigureSigs[j].offsetFoundAt = i;
+						
 						findx_pattern(data, dataType, i + 131, length, &getTimingSigs[0]);
 						findx_pattern(data, dataType, i + 135, length, &AdjustPositionSig);
 						findx_pattern(data, dataType, i + 261, length, &setFbbRegsSigs[0]);
 						findx_pattern(data, dataType, i + 272, length, &setVerticalRegsSigs[0]);
 						break;
 					case 1:
+						if (findx_pattern(data, dataType, i +  59, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 308, length, &OSRestoreInterruptsSig))
+							VIConfigureSigs[j].offsetFoundAt = i;
+						
 						findx_pattern(data, dataType, i + 139, length, &getTimingSigs[1]);
 						findx_pattern(data, dataType, i + 143, length, &AdjustPositionSig);
 						findx_pattern(data, dataType, i + 295, length, &setFbbRegsSigs[0]);
 						findx_pattern(data, dataType, i + 306, length, &setVerticalRegsSigs[0]);
 						break;
 					case 2:
+						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 422, length, &OSRestoreInterruptsSig))
+							VIConfigureSigs[j].offsetFoundAt = i;
+						
 						findx_pattern(data, dataType, i +  77, length, &getTimingSigs[2]);
 						findx_pattern(data, dataType, i + 409, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 420, length, &setVerticalRegsSigs[1]);
 						break;
 					case 3:
+						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 414, length, &OSRestoreInterruptsSig))
+							VIConfigureSigs[j].offsetFoundAt = i;
+						
 						findx_pattern(data, dataType, i +  69, length, &getTimingSigs[2]);
 						findx_pattern(data, dataType, i + 401, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 412, length, &setVerticalRegsSigs[1]);
 						break;
 					case 4:
+						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 417, length, &OSRestoreInterruptsSig))
+							VIConfigureSigs[j].offsetFoundAt = i;
+						
 						findx_pattern(data, dataType, i +  72, length, &getTimingSigs[2]);
 						findx_pattern(data, dataType, i + 404, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 415, length, &setVerticalRegsSigs[1]);
 						break;
 					case 5:
+						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 458, length, &OSRestoreInterruptsSig))
+							VIConfigureSigs[j].offsetFoundAt = i;
+						
 						findx_pattern(data, dataType, i + 104, length, &getTimingSigs[3]);
 						findx_pattern(data, dataType, i + 445, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 456, length, &setVerticalRegsSigs[1]);
 						break;
 					case 6:
+						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 456, length, &OSRestoreInterruptsSig))
+							VIConfigureSigs[j].offsetFoundAt = i;
+						
 						findx_pattern(data, dataType, i + 107, length, &getTimingSigs[3]);
 						findx_pattern(data, dataType, i + 443, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 454, length, &setVerticalRegsSigs[1]);
 						break;
 					case 7:
+						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 481, length, &OSRestoreInterruptsSig))
+							VIConfigureSigs[j].offsetFoundAt = i;
+						
 						findx_pattern(data, dataType, i + 123, length, &getTimingSigs[4]);
 						findx_pattern(data, dataType, i + 468, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 479, length, &setVerticalRegsSigs[1]);
 						break;
 					case 8:
+						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 516, length, &OSRestoreInterruptsSig))
+							VIConfigureSigs[j].offsetFoundAt = i;
+						
 						findx_pattern(data, dataType, i + 155, length, &getTimingSigs[5]);
 						findx_pattern(data, dataType, i + 503, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 514, length, &setVerticalRegsSigs[2]);
 						break;
 					case 9:
-						getTimingSigs[6].offsetFoundAt = i;
+						if (findx_pattern(data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 552, length, &OSRestoreInterruptsSig))
+							VIConfigureSigs[j].offsetFoundAt = getTimingSigs[6].offsetFoundAt = i;
+						
 						findx_pattern(data, dataType, i + 537, length, &setFbbRegsSigs[2]);
 						findx_pattern(data, dataType, i + 550, length, &setVerticalRegsSigs[3]);
 						break;
 					case 10:
+						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 508, length, &OSRestoreInterruptsSig))
+							VIConfigureSigs[j].offsetFoundAt = i;
+						
 						findx_pattern(data, dataType, i + 155, length, &getTimingSigs[7]);
 						findx_pattern(data, dataType, i + 495, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 506, length, &setVerticalRegsSigs[2]);
@@ -1172,8 +1220,11 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				break;
 			}
 			if (VIConfigureSigs[j].offsetFoundAt && i == VIConfigureSigs[j].offsetFoundAt + VIConfigureSigs[j].Length + 1) {
-				if (!VIConfigurePanSig.offsetFoundAt && compare_pattern(&fp, &VIConfigurePanSig))
-					VIConfigurePanSig.offsetFoundAt = i;
+				if (!VIConfigurePanSig.offsetFoundAt && compare_pattern(&fp, &VIConfigurePanSig)) {
+					if (findx_pattern(data, dataType, i +  10, length, &OSDisableInterruptsSig) &&
+						findx_pattern(data, dataType, i + 223, length, &OSRestoreInterruptsSig))
+						VIConfigurePanSig.offsetFoundAt = i;
+				}
 				break;
 			}
 		}
@@ -1184,12 +1235,21 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					if (!VISetBlackSigs[k].offsetFoundAt && compare_pattern(&fp, &VISetBlackSigs[k])) {
 						switch (k) {
 							case 0:
+								if (findx_pattern(data, dataType, i +  7, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i + 24, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i + 22, length, &setVerticalRegsSigs[j]))
+									VISetBlackSigs[k].offsetFoundAt = i;
+								break;
 							case 1:
-								if (setVerticalRegsSigs[j].offsetFoundAt == branchResolve(data, dataType, i + 22))
+								if (findx_pattern(data, dataType, i +  8, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i + 24, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i + 22, length, &setVerticalRegsSigs[j]))
 									VISetBlackSigs[k].offsetFoundAt = i;
 								break;
 							case 2:
-								if (setVerticalRegsSigs[j].offsetFoundAt == branchResolve(data, dataType, i + 21))
+								if (findx_pattern(data, dataType, i +  6, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i + 23, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i + 21, length, &setVerticalRegsSigs[j]))
 									VISetBlackSigs[k].offsetFoundAt = i;
 								break;
 						}
@@ -1204,7 +1264,29 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			if (getCurrentFieldEvenOddSigs[j].offsetFoundAt && i == getCurrentFieldEvenOddSigs[j].offsetFoundAt + getCurrentFieldEvenOddSigs[j].Length + 1) {
 				for (k = 0; k < sizeof(VIGetNextFieldSigs) / sizeof(FuncPattern); k++) {
 					if (!VIGetNextFieldSigs[k].offsetFoundAt && compare_pattern(&fp, &VIGetNextFieldSigs[k])) {
-						VIGetNextFieldSigs[k].offsetFoundAt = i;
+						switch (k) {
+							case 0:
+								if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  9, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  6, length, &getCurrentFieldEvenOddSigs[j]))
+									VIGetNextFieldSigs[k].offsetFoundAt = i;
+								break;
+							case 1:
+								if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i + 48, length, &OSRestoreInterruptsSig))
+									VIGetNextFieldSigs[k].offsetFoundAt = i;
+								break;
+							case 2:
+								if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i + 30, length, &OSRestoreInterruptsSig))
+									VIGetNextFieldSigs[k].offsetFoundAt = i;
+								break;
+							case 3:
+								if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i + 26, length, &OSRestoreInterruptsSig))
+									VIGetNextFieldSigs[k].offsetFoundAt = i;
+								break;
+						}
 						break;
 					}
 				}
