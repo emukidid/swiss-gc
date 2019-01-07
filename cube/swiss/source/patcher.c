@@ -99,51 +99,45 @@ int install_code()
 
 void make_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
 {
-	u32 i;
+	u32 i, j;
 	
 	memset(functionPattern, 0, sizeof(FuncPattern));
 	
-	for (i = offsetFoundAt; i < length / sizeof(u32); i++) {
+	for (j = i = offsetFoundAt; j >= offsetFoundAt && i < length / sizeof(u32); i++) {
 		u32 word = data[i];
 		
-		if (word == 0x4E800020)
+		if (word == 0x4E800020 && j <= i)
 			break;
+		if ((word & 0xFC000003) == 0x40000000)
+			j = i + ((s32)((word & 0x0000FFFC) << 16) >> 18);
+		if ((word & 0xFC000003) == 0x48000000)
+			j = i + ((s32)((word & 0x03FFFFFC) << 6) >> 8);
 		
 		functionPattern->Length++;
 		
-		if ((word & 0xFF000000) == 0x38000000)
-			functionPattern->Loads++;
-		if ((word & 0xFF000000) == 0x3C000000)
-			functionPattern->Loads++;
-		if ((word & 0xFC000000) == 0x80000000)
-			functionPattern->Loads++;
-		if ((word & 0xFC000000) == 0xC0000000)
+		if ((word & 0xFF000000) == 0x38000000 ||
+			(word & 0xFF000000) == 0x3C000000 ||
+			(word & 0xFC000000) == 0x80000000 ||
+			(word & 0xFC000000) == 0xC0000000)
 			functionPattern->Loads++;
 		
-		if ((word & 0xFC000000) == 0x90000000)
-			functionPattern->Stores++;
-		if ((word & 0xFC000000) == 0x94000000)
-			functionPattern->Stores++;
-		if ((word & 0xFC000000) == 0xD0000000)
+		if ((word & 0xFC000000) == 0x90000000 ||
+			(word & 0xFC000000) == 0x94000000 ||
+			(word & 0xFC000000) == 0xD0000000)
 			functionPattern->Stores++;
 		
 		if ((word & 0xFC000003) == 0x48000001)
 			functionPattern->FCalls++;
 		
-		if ((word & 0xFFFF0000) == 0x40800000)
-			functionPattern->Branch++;
-		if ((word & 0xFFFF0000) == 0x40810000)
-			functionPattern->Branch++;
-		if ((word & 0xFFFF0000) == 0x41800000)
-			functionPattern->Branch++;
-		if ((word & 0xFFFF0000) == 0x41820000)
-			functionPattern->Branch++;
-		if ((word & 0xFC000003) == 0x48000000)
+		if ((word & 0xFFFF0000) == 0x40800000 ||
+			(word & 0xFFFF0000) == 0x40810000 ||
+			(word & 0xFFFF0000) == 0x41800000 ||
+			(word & 0xFFFF0000) == 0x41820000 ||
+			(word & 0xFC000003) == 0x48000000)
 			functionPattern->Branch++;
 		
-		if ((word & 0xFF000000) == 0x7C000000)
-			functionPattern->Moves++;
-		if ((word & 0xFC0007FE) == 0xFC000090)
+		if ((word & 0xFF000000) == 0x7C000000 ||
+			(word & 0xFC0007FE) == 0xFC000090)
 			functionPattern->Moves++;
 	}
 	
@@ -908,12 +902,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	FuncPattern getTimingSigs[8] = {
 		{  29,  12,  2,  0,  7,  2,           NULL,                     0, "getTimingD A" },
 		{  39,  16,  2,  0, 12,  2, getTimingPatch, getTimingPatch_length, "getTimingD B" },
-		{  11,   4,  0,  0,  0,  3,           NULL,                     0, "getTiming A" },
-		{  11,   4,  0,  0,  0,  3,           NULL,                     0, "getTiming B" },
-		{  11,   4,  0,  0,  0,  3, getTimingPatch, getTimingPatch_length, "getTiming C" },
-		{  11,   5,  0,  0,  0,  2,           NULL,                     0, "getTiming D" },
+		{  25,  11,  0,  0,  0,  3,           NULL,                     0, "getTiming A" },
+		{  29,  13,  0,  0,  0,  3,           NULL,                     0, "getTiming B" },
+		{  35,  15,  0,  0,  0,  4, getTimingPatch, getTimingPatch_length, "getTiming C" },
+		{  39,  19,  0,  0,  0,  2,           NULL,                     0, "getTiming D" },
 		{ 558, 112, 44, 14, 53, 48,           NULL,                     0, "getTiming E" },	// SN Systems ProDG
-		{  11,   5,  0,  0,  0,  2,           NULL,                     0, "getTiming F" }
+		{  41,  20,  0,  0,  0,  2,           NULL,                     0, "getTiming F" }
 	};
 	FuncPattern AdjustPositionSig = 
 		{ 134, 9, 1, 0, 17, 47, NULL, 0, "AdjustPositionD" };
@@ -1022,7 +1016,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 20, 9, 8, 1, 0, 2, NULL, 0, "GXSetViewportD A" },
 		{  8, 3, 2, 1, 0, 2, NULL, 0, "GXSetViewport A" },
 		{  8, 3, 2, 1, 0, 2, NULL, 0, "GXSetViewport B" },
-		{ 14, 7, 6, 0, 1, 0, NULL, 0, "GXSetViewport C" },				// SN Systems ProDG
+		{  2, 1, 0, 0, 1, 0, NULL, 0, "GXSetViewport C" },				// SN Systems ProDG
 		{ 17, 5, 8, 1, 0, 2, NULL, 0, "GXSetViewport D" }
 	};
 	
@@ -1076,6 +1070,9 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	}
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
+		if (data[i - 1] != 0x4E800020)
+			continue;
+		
 		if (!GXAdjustForOverscanSigs[0].offsetFoundAt && !memcmp(data + i, GXAdjustForOverscanD, GXAdjustForOverscanD_length))
 			GXAdjustForOverscanSigs[0].offsetFoundAt = i;
 		if (!GXAdjustForOverscanSigs[1].offsetFoundAt && !memcmp(data + i, GXAdjustForOverscan1, GXAdjustForOverscan1_length))
@@ -1094,14 +1091,14 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 				
 				switch (j) {
-					case 0: findx_pattern(data, dataType, i - 47, length, &getCurrentFieldEvenOddSigs[0]);       break;
-					case 1: findx_pattern(data, dataType, i - 49, length, &getCurrentFieldEvenOddSigs[1]);       break;
-					case 2: findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[2]);       break;
-					case 3: getCurrentFieldEvenOddSigs[3].offsetFoundAt = branchResolve(data, dataType, i + 60); break;
+					case 0: findx_pattern(data, dataType, i - 47, length, &getCurrentFieldEvenOddSigs[0]); break;
+					case 1: findx_pattern(data, dataType, i - 49, length, &getCurrentFieldEvenOddSigs[1]); break;
+					case 2: findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[2]); break;
+					case 3: findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[3]); break;
 					case 4:
-					case 5: getCurrentFieldEvenOddSigs[3].offsetFoundAt = branchResolve(data, dataType, i + 63); break;
-					case 6: getCurrentFieldEvenOddSigs[4].offsetFoundAt = branchResolve(data, dataType, i + 68); break;
-					case 7: getCurrentFieldEvenOddSigs[3].offsetFoundAt = branchResolve(data, dataType, i + 80); break;
+					case 5: findx_pattern(data, dataType, i + 63, length, &getCurrentFieldEvenOddSigs[3]); break;
+					case 6: findx_pattern(data, dataType, i + 68, length, &getCurrentFieldEvenOddSigs[4]); break;
+					case 7: findx_pattern(data, dataType, i + 80, length, &getCurrentFieldEvenOddSigs[3]); break;
 				}
 				break;
 			}
