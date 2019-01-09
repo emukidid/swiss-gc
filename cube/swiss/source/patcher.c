@@ -2997,32 +2997,138 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 	return patched;
 }
 
-const u32 SPEC2_MakeStatusA[8] = {
-	0x80050000,0x540084BE,0xB0040000,0x80050000,
-	0x5400C23E,0x7C000774,0x98040002,0x80050000};
-
-// Hook into PAD for IGR
-int Patch_IGR(void *data, u32 length, int dataType) {
-	int i;
+void Patch_IGR(u32 *data, u32 length, int dataType)
+{
+	int i, j;
+	FuncPattern OSDisableInterruptsSig = 
+		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
+	FuncPattern OSRestoreInterruptsSig = 
+		{ 9, 0, 0, 0, 2, 2, NULL, 0, "OSRestoreInterrupts" };
+	FuncPattern PADReadSigs[7] = {
+		{ 172, 65,  3, 15, 16, 18, NULL, 0, "PADReadD A" },
+		{ 171, 66,  4, 20, 17, 14, NULL, 0, "PADReadD B" },
+		{ 206, 78,  7, 20, 17, 19, NULL, 0, "PADRead A" },
+		{ 237, 87, 13, 27, 17, 25, NULL, 0, "PADRead B" },
+		{ 235, 86, 13, 27, 17, 24, NULL, 0, "PADRead C" },
+		{ 233, 71, 13, 29, 17, 27, NULL, 0, "PADRead D" },	// SN Systems ProDG
+		{ 192, 73,  8, 23, 16, 15, NULL, 0, "PADRead E" }
+	};
 	
-	for( i=0; i < length; i+=4 )
-	{
-		if( *(vu32*)(data+i) != 0x80050000 &&  *(vu32*)(data+i+4) != 0x540084BE)
+	for (i = 0; i < length / sizeof(u32); i++) {
+		if (data[i - 1] != 0x4E800020 || (data[i] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6))
 			continue;
 		
-		if(!memcmp((void*)(data+i),SPEC2_MakeStatusA,sizeof(SPEC2_MakeStatusA)))
-		{
-			u32 iEnd = 0;
-			while(*(vu32*)(data + i + iEnd) != 0x4E800020) iEnd += 4;	// branch relative from the end
-			void *properAddress = Calc_ProperAddress(data, dataType, (u32)(data + i + iEnd) -(u32)(data));
-			print_gecko("Found:[SPEC2_MakeStatusA] @ %08X (%08X)\n", properAddress, i + iEnd);
-			void *igrJump = (devices[DEVICE_CUR] == &__device_wkf) ? IGR_CHECK_WKF : IGR_CHECK;
-			if(devices[DEVICE_CUR] == &__device_dvd) igrJump = IGR_CHECK_DVD;
-			*(vu32*)(data+i+iEnd) = branch(igrJump, properAddress);
-			return 1;
+		FuncPattern fp;
+		make_pattern(data, i, length, &fp);
+		
+		for (j = 0; j < sizeof(PADReadSigs) / sizeof(FuncPattern); j++) {
+			if (!PADReadSigs[j].offsetFoundAt && compare_pattern(&fp, &PADReadSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  55, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  75, length, &OSRestoreInterruptsSig))
+							PADReadSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 164, length, &OSRestoreInterruptsSig))
+							PADReadSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  64, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  81, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  83, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 114, length, &OSRestoreInterruptsSig))
+							PADReadSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  26, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 159, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 230, length, &OSRestoreInterruptsSig))
+							PADReadSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  24, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 157, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 228, length, &OSRestoreInterruptsSig))
+							PADReadSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 225, length, &OSRestoreInterruptsSig))
+							PADReadSigs[j].offsetFoundAt = i;
+						break;
+					case 6:
+						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  90, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 114, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 185, length, &OSRestoreInterruptsSig))
+							PADReadSigs[j].offsetFoundAt = i;
+						break;
+				}
+				break;
+			}
+		}
+		i += fp.Length - 1;
+	}
+	
+	for (j = 0; j < sizeof(PADReadSigs) / sizeof(FuncPattern); j++)
+		if (PADReadSigs[j].offsetFoundAt) break;
+	
+	if ((i = PADReadSigs[j].offsetFoundAt)) {
+		u32 *PADRead = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		u32 *PADReadHook;
+		
+		if (PADRead) {
+			if (devices[DEVICE_CUR] == &__device_dvd)
+				PADReadHook = IGR_CHECK_DVD;
+			else if (devices[DEVICE_CUR] == &__device_wkf)
+				PADReadHook = IGR_CHECK_WKF;
+			else
+				PADReadHook = IGR_CHECK;
+			
+			switch (j) {
+				case 0:
+					data[i + 159] = 0x387E0000;	// addi		r3, r30, 0
+					data[i + 160] = 0x389F0000;	// addi		r4, r31, 0
+					data[i + 161] = branchAndLink(PADReadHook, PADRead + 161);
+					break;
+				case 1:
+					data[i + 156] = 0x387E0000;	// addi		r3, r30, 0
+					data[i + 157] = 0x389F0000;	// addi		r4, r31, 0
+					data[i + 158] = branchAndLink(PADReadHook, PADRead + 158);
+					break;
+				case 2:
+					data[i + 190] = 0x38770000;	// addi		r3, r23, 0
+					data[i + 191] = 0x38950000;	// addi		r4, r21, 0
+					data[i + 192] = branchAndLink(PADReadHook, PADRead + 192);
+					break;
+				case 3:
+					data[i + 221] = 0x38750000;	// addi		r3, r21, 0
+					data[i + 222] = 0x389F0000;	// addi		r4, r31, 0
+					data[i + 223] = branchAndLink(PADReadHook, PADRead + 223);
+					break;
+				case 4:
+					data[i + 219] = 0x38750000;	// addi		r3, r21, 0
+					data[i + 220] = 0x389F0000;	// addi		r4, r31, 0
+					data[i + 221] = branchAndLink(PADReadHook, PADRead + 221);
+					break;
+				case 5:
+					data[i + 216] = 0x7F63DB78;	// mr		r3, r27
+					data[i + 217] = 0x7F24CB78;	// mr		r4, r25
+					data[i + 218] = branchAndLink(PADReadHook, PADRead + 218);
+					break;
+				case 6:
+					data[i + 176] = 0x38790000;	// addi		r3, r25, 0
+					data[i + 177] = 0x38970000;	// addi		r4, r23, 0
+					data[i + 178] = branchAndLink(PADReadHook, PADRead + 178);
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", PADReadSigs[j].Name, PADRead);
 		}
 	}
-	return 0;
 }
 
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {

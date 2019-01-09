@@ -183,7 +183,7 @@ int Patch_FontEnc(void *addr, u32 length);
 int Patch_Fwrite(void *addr, u32 length);
 int Patch_DVDReset(void *addr,u32 length);
 int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType);
-int Patch_IGR(void *data, u32 length, int dataType);
+void Patch_IGR(u32 *data, u32 length, int dataType);
 int PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType );
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt);
 void *Calc_Address(void *data, int dataType, u32 properAddress);

@@ -1,11 +1,13 @@
 #ifndef _COMMON_H_
 
 typedef unsigned char u8;
+typedef signed char s8;
 typedef unsigned short u16;
 typedef signed short s16;
 typedef unsigned long u32;
 typedef long s32;
 typedef volatile u8 vu8;
+typedef volatile s8 vs8;
 typedef volatile u16 vu16;
 typedef volatile s16 vs16;
 typedef volatile u32 vu32;

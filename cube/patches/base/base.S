@@ -17,18 +17,7 @@ _start:
 	b		trigger_di_irq
 	b		__DSPHandler
 	b		patched_memcpy_dbg
-	b		check_exit				# checks for a button combo and exits if true
-
-	.globl check_exit
-check_exit:
-	lwz		r5, 0(r4)
-	rlwinm	r5, r5, 16, 16, 31
-	andi.	r5, r5, 0x0234				# B,Z,R,D-Pad Down
-	cmplwi	r5, 0x0234
-	beq		do_exit
-	blr
-do_exit:
-	b		exit_to_pref
+	b		exit_to_pref			# checks for a button combo and exits if true
 
 	.globl trigger_di_irq
 trigger_di_irq:
