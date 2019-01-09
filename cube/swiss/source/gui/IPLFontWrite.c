@@ -240,6 +240,7 @@ void drawString(int x, int y, char *string, float scale, bool centered, GXColor 
 	while (*string)
 	{
 		unsigned char c = *string;
+		if(c == '\n') break;
 		int i;
 		GX_Begin(GX_QUADS, GX_VTXFMT1, 4);
 		for (i=0; i<4; i++) {
@@ -281,6 +282,7 @@ float GetTextScaleToFitInWidth(char *string, int width) {
 	while(*string_work)
 	{
 		unsigned char c = *string_work;
+		if(c == '\n') break;
 		strWidth += (int) fontChars.font_size[c] * 1.0f;
 		string_work++;
 	}

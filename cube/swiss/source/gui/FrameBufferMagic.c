@@ -103,11 +103,12 @@ enum VideoEventType
 	EV_VERTSCROLLBAR,
 	EV_STYLEDLABEL,
 	EV_CONTAINER,
-	EV_MENUBUTTONS
+	EV_MENUBUTTONS,
+	EV_TOOLTIP
 };
 
 char * typeStrings[] = {"TexObj", "MsgBox", "Image", "Progress", "SelectableButton", "EmptyBox", "TransparentBox",
-						"FileBrowserButton", "VertScrollbar", "StyledLabel", "Container", "MenuButtons"};
+						"FileBrowserButton", "VertScrollbar", "StyledLabel", "Container", "MenuButtons", "Tooltip"};
 
 typedef struct drawTexObjEvent {
 	GXTexObj *texObj;
@@ -151,6 +152,8 @@ typedef struct drawStyledLabelEvent {
 	float size;
 	bool centered;
 	GXColor color;
+	int fading;
+	int fadingDirection;
 } drawStyledLabelEvent_t;
 
 typedef struct drawSelectableButtonEvent {
@@ -182,6 +185,10 @@ typedef struct drawFileBrowserButtonEvent {
 typedef struct drawMenuButtonsEvent {
 	int selection;
 } drawMenuButtonsEvent_t;
+
+typedef struct drawTooltipEvent {
+	char *tooltip;
+} drawTooltipEvent_t;
 
 typedef struct drawMsgBoxEvent {
 	int type;
@@ -258,6 +265,12 @@ static void clearNestedEvent(uiDrawObj_t *event) {
 			if(((drawSelectableButtonEvent_t*)event->data)->msg) {
 				//printf("Clear Nested EV_SELECTABLEBUTTON\r\n");
 				free(((drawSelectableButtonEvent_t*)event->data)->msg);
+			}
+		}
+		else if(event->type == EV_TOOLTIP) {
+			if(((drawTooltipEvent_t*)event->data)->tooltip) {
+				//printf("Clear Nested EV_TOOLTIP\r\n");
+				free(((drawTooltipEvent_t*)event->data)->tooltip);
 			}
 		}
 		//printf("Clear Nested event->data\r\n");
@@ -737,7 +750,6 @@ static void _DrawSelectableButton(uiDrawObj_t *evt) {
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
 	
 	int borderSize = 4;
-	int middleY = (((data->y2-data->y1)/2)-12)+data->y1;
 	//determine length of the text ourselves if x2 == -1
 	x1 = (x2 == -1) ? x1+2:x1;
 	x2 = (x2 == -1) ? GetTextSizeInPixels(data->msg)+x1+(borderSize*2)+6 : x2;
@@ -750,9 +762,6 @@ static void _DrawSelectableButton(uiDrawObj_t *evt) {
 	}
 	
 	if(data->msg) {
-		if(middleY+24 > data->y2) {
-			middleY = data->y1+3;
-		}
 		float scale = GetTextScaleToFitInWidth(data->msg, (x2-x1)-(borderSize*2));	
 		drawString(data->x1 + borderSize+3, data->y1+2, data->msg, scale, false, defaultColor);
 	}
@@ -778,8 +787,66 @@ uiDrawObj_t* DrawSelectableButton(int x1, int y1, int x2, int y2, char *message,
 }
 
 // Internal
+static void _DrawTooltip(uiDrawObj_t *evt) {
+
+	drawTooltipEvent_t *data = (drawTooltipEvent_t*)evt->data;
+
+	if(data->tooltip/* && data->tooltiptime >= 50*/) {
+		//int alpha = data->tooltiptime*4 > 255 ? 255 : data->tooltiptime;
+		int alpha = 255;
+		int borderSize = 4;
+		GXColor borderColorTT = (GXColor) {255,255,255,alpha};
+		GXColor backColorTT = (GXColor) {122,122,122,alpha}; //grey
+		int numLines = 1;
+		char *strPtr = data->tooltip;
+		for (numLines=1; strPtr[numLines]; strPtr[numLines]=='\n' ? numLines++ : *strPtr++);
+		int height = numLines*26;
+		int tooltipY1 = (vmode->efbHeight / 2) - (height/2);
+		// TODO centre on Y based on total size.
+		int tooltipX1 = 25, tooltipX2 = vmode->fbWidth-25, tooltipY2 = tooltipY1+height;
+		_DrawSimpleBox( tooltipX1, tooltipY1-6, tooltipX2-tooltipX1, (tooltipY2-tooltipY1)+6, 0, backColorTT, borderColorTT);
+		
+		// Write each line
+		strPtr = data->tooltip;
+		int curLine = 0;
+		while(numLines) {
+			float scale = GetTextScaleToFitInWidthWithMax(strPtr, (tooltipX2-tooltipX1)-(borderSize*2), 0.75f);
+			drawString(tooltipX1 + borderSize+3, tooltipY1+2+(curLine*25), strPtr, scale, false, borderColorTT);
+			numLines--;
+			curLine++;
+			// Increment to the next line if we have one.
+			if(numLines > 0) {
+				while(*strPtr != '\n') strPtr++;
+				strPtr++;
+			}
+		}
+	}
+}
+
+// External
+uiDrawObj_t* DrawTooltip(char *tooltip) {
+	drawTooltipEvent_t *eventData = calloc(1, sizeof(drawTooltipEvent_t));
+	if(tooltip && strlen(tooltip) > 0) {
+		eventData->tooltip = malloc(strlen(tooltip));
+		strcpy(eventData->tooltip, tooltip);
+	}
+	else {
+		eventData->tooltip = NULL;
+	}
+	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
+	event->type = EV_TOOLTIP;
+	event->data = eventData;
+	return event;
+}
+
+// Internal
 static void _DrawStyledLabel(uiDrawObj_t *evt) {
 	drawStyledLabelEvent_t *data = (drawStyledLabelEvent_t*)evt->data;
+	if(data->fadingDirection) {
+		data->color.a += data->fadingDirection;
+		if(data->color.a >= 255) data->fadingDirection = -1;
+		else if(data->color.a <= 15) data->fadingDirection = 1;
+	}
 	drawString(data->x, data->y, data->string, data->size, data->centered, data->color);
 }
 
@@ -821,6 +888,29 @@ uiDrawObj_t* DrawLabel(int x, int y, char *string)
 	eventData->size = 1.0f;
 	eventData->centered = false;
 	eventData->color = (GXColor) {255, 255, 255, 255};
+	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
+	event->type = EV_STYLEDLABEL;
+	event->data = eventData;
+	return event;
+}
+
+// External
+uiDrawObj_t* DrawFadingLabel(int x, int y, char *string, float size) 
+{	
+	drawStyledLabelEvent_t *eventData = calloc(1, sizeof(drawStyledLabelEvent_t));
+	eventData->x = x;
+	eventData->y = y;
+	if(string && strlen(string) > 0) {
+		eventData->string = malloc(strlen(string));
+		strcpy(eventData->string, string);
+	}
+	else {
+		eventData->string = NULL;
+	}
+	eventData->size = size;
+	eventData->centered = false;
+	eventData->color = (GXColor) {255, 255, 255, 0};
+	eventData->fadingDirection = 1;
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_STYLEDLABEL;
 	event->data = eventData;
@@ -1294,6 +1384,9 @@ static void videoDrawEvent(uiDrawObj_t *videoEvent) {
 			break;
 		case EV_MENUBUTTONS:
 			_DrawMenuButtons(videoEvent);
+			break;
+		case EV_TOOLTIP:
+			_DrawTooltip(videoEvent);
 			break;
 		default:
 			break;
