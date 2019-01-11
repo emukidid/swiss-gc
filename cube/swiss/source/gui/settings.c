@@ -46,7 +46,7 @@ char *tooltips_advanced[PAGE_ADVANCED_MAX+1] = {
 	"Enable File Management:\n\nNo - Known files will load immediately instead (default)\nYes - A file management prompt will be displayed for all files",
 	"Auto-load all cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. sd:/cheats/GPOP8D.txt (on a compatible device)\nthen all cheats in the file will be enabled",
 	"Init network at startup:\n\nYes - If a BBA is present, it will be initialised at startup\nNo - Do not initialise the BBA even if present (default)\n\nIf initialised, navigate to the IP in a web browser to backup various data",
-	"Disable Video Patches:\n\nYes - Some video forcing options will be disabled\nNo - Allow all video options to be configured (default)",
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -54,15 +54,15 @@ char *tooltips_advanced[PAGE_ADVANCED_MAX+1] = {
 };
 
 char *tooltips_game[PAGE_GAME_MAX+1] = {
-	"Force Video Mode:\n\nNo - Game default mode (default)\n240p - Progressive 240 lines 60Hz\n288p - Progressive 288 lines 50Hz\n480i - Interlaced 480 lines 60Hz\n480p - Progressive 480 lines 60Hz\n576i - Interlaced 576 lines 50Hz\n576p - Progressive 576 lines 50Hz\n480sf - Progressive Segmented Frame 480 lines 60Hz\n576sf - Progressive Segmented Frame 576 lines 50Hz\n1080i50 - Interlaced 1080 lines 50Hz\n1080i60 - Interlaced 1080 lines 60Hz\n\nSome modes are incompatible with certain TVs\nwhile others may require the original component cable.",
-	"Force Horizontal Scale:\n\nAuto - Game default scaling (default)\n1:1 - Disables scaling and maximizes quality *\n11:10 & 9:8 - Mostly intended for force widescreen option\n640px - Reverses the default behaviour of 1080i\n704/720px - Used to fill the screen *\n\n* At the cost of having an improper aspect ratio",
-	"Force Vertical Offset:\n\nAdjusts the vertical offset +/-\nMostly useful for certain HDMI solutions or capture devices",
-	"Force Vertical Filter:\n\nAuto - Game default filtering (default)\nUseful under the following conditions:\n * Deflickering (480i)\n * 2:1 downsampling (240p)\n * Resolving MSAA samples\n * General smoothing\n\nSome games also use it for contrast adjustment.",
 	NULL,
 	NULL,
 	NULL,
-	"Force Text Encoding:\n\nAuto - Game default text encoding (default)\nANSI - Force English on a Japanese title\nSJIS - Force Japanese on a US title\n\nThis effectively behaves the same as the US/JPN region switch.",
-	"Invert Camera Stick:\n\nNo - Leave C-stick as-is (default)\n\nX - Invert the X-axis of the C-stick\nY - Invert the Y-axis of the C-stick\nX&Y - Invert both axis of the C-stick",
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	"Force Text Encoding:\n\nAuto - Game default format (default)\nANSI - Force International format on a Japanese region game\nSJIS - Force Japanese format on an International region game\n\nThis effectively behaves the same as the USA/JPN region switch.",
+	"Invert Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Invert X-axis of the C Stick\nY - Invert Y-axis of the C Stick\nX&Y - Invert both axes of the C Stick",
 	NULL,
 	NULL,
 	NULL
