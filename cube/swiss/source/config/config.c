@@ -466,8 +466,6 @@ void config_parse(char *configData) {
 						configSwissSettings.igrType = 1;
 					else if(!strcmp(igrTypeStr[2], value))
 						configSwissSettings.igrType = 2;
-					else if(!strcmp(igrTypeStr[3], value))
-						configSwissSettings.igrType = 3;
 				}
 				else if(!strcmp("FTPUserName", name)) {
 					strncpy(configSwissSettings.ftpUserName, value, sizeof(((SwissSettings*)0)->ftpUserName));
