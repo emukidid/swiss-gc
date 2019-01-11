@@ -22,6 +22,7 @@ char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "704px", "720p
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS"};
+char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
 
 char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
@@ -217,8 +218,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawAddChild(page, DrawSelectableButton(480, 290, -1, 315, forceWidescreenStr[swissSettings.forceWidescreen], option == SET_WIDESCREEN ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 320, "Force Text Encoding:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
 		DrawAddChild(page, DrawSelectableButton(480, 320, -1, 345, forceEncodingStr[swissSettings.forceEncoding], option == SET_TEXT_ENCODING ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 350, "Disable Audio Streaming:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 350, -1, 375, swissSettings.muteAudioStreaming ? "Yes":"No", option == SET_AUDIO_STREAM ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawStyledLabel(30, 350, "Invert Camera Stick:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
+		DrawAddChild(page, DrawSelectableButton(480, 350, -1, 375, invertCStickStr[swissSettings.invertCStick], option == SET_INVERT_CAMERA ? B_SELECTED:B_NOSELECT));
 	}
 	// If we have a tooltip for this page/option, add a fading label telling the user to press Y for help
 	add_tooltip_label(page, page_num, option);
@@ -386,8 +387,12 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 				if(swissSettings.forceEncoding < 0)
 					swissSettings.forceEncoding = 2;
 			break;
-			case SET_AUDIO_STREAM:
-				swissSettings.muteAudioStreaming ^= 1;
+			case SET_INVERT_CAMERA:
+				swissSettings.invertCStick += direction;
+				if(swissSettings.invertCStick > 3)
+					swissSettings.invertCStick = 0;
+				if(swissSettings.invertCStick < 0)
+					swissSettings.invertCStick = 3;
 			break;
 		}
 	}
@@ -505,6 +510,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 					config->forceAnisotropy = swissSettings.forceAnisotropy;
 					config->forceWidescreen = swissSettings.forceWidescreen;
 					config->forceEncoding = swissSettings.forceEncoding;
+					config->invertCStick = swissSettings.invertCStick;
 					config->muteAudioStreaming = swissSettings.muteAudioStreaming;
 					DrawDispose(msgBox);
 				}

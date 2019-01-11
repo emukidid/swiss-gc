@@ -390,8 +390,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		}
 		
 		// Patch IGR
-		if(swissSettings.igrType != IGR_OFF) {
-			Patch_IGR(buffer, sizeToRead, filesToPatch[i].type);
+		if(swissSettings.igrType != IGR_OFF || swissSettings.invertCStick) {
+			Patch_PADStatus(buffer, sizeToRead, filesToPatch[i].type);
 		}
 				
 		if(swissSettings.debugUSB && usb_isgeckoalive(1) && !swissSettings.wiirdDebug) {

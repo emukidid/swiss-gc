@@ -245,6 +245,9 @@ int config_update_file() {
 		sprintf(txtbuffer, "Force Text Encoding=%s\r\n",forceEncodingStr[configEntries[i].forceEncoding]);
 		string_append(configString, txtbuffer);
 		
+		sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[configEntries[i].invertCStick]);
+		string_append(configString, txtbuffer);
+		
 		sprintf(txtbuffer, "Mute Audio Streaming=%s\r\n\r\n\r\n",(configEntries[i].muteAudioStreaming ? "Yes":"No"));
 		string_append(configString, txtbuffer);
 	}
@@ -303,6 +306,7 @@ void config_parse(char *configData) {
 					configEntries[configEntriesCount].forceAnisotropy = 0;
 					configEntries[configEntriesCount].forceWidescreen = 0;
 					configEntries[configEntriesCount].forceEncoding = 0;
+					configEntries[configEntriesCount].invertCStick = 0;
 					configEntries[configEntriesCount].muteAudioStreaming = 0;
 				}
 				else if(!strcmp("Name", name)) {
@@ -388,6 +392,16 @@ void config_parse(char *configData) {
 						configEntries[configEntriesCount].forceEncoding = 1;
 					else if(!strcmp(forceEncodingStr[2], value))
 						configEntries[configEntriesCount].forceEncoding = 2;
+				}
+				else if(!strcmp("Invert Camera Stick", name)) {
+					if(!strcmp(invertCStickStr[0], value))
+						configEntries[configEntriesCount].invertCStick = 0;
+					else if(!strcmp(invertCStickStr[1], value))
+						configEntries[configEntriesCount].invertCStick = 1;
+					else if(!strcmp(invertCStickStr[2], value))
+						configEntries[configEntriesCount].invertCStick = 2;
+					else if(!strcmp(invertCStickStr[3], value))
+						configEntries[configEntriesCount].invertCStick = 3;
 				}
 				else if(!strcmp("Mute Audio Streaming", name)) {
 					configEntries[configEntriesCount].muteAudioStreaming = !strcmp("Yes", value) ? 1:0;
@@ -504,6 +518,7 @@ void config_find(ConfigEntry *entry) {
 	entry->forceAnisotropy = 0;
 	entry->forceWidescreen = 0;
 	entry->forceEncoding = 0;
+	entry->invertCStick = 0;
 	entry->muteAudioStreaming = 0;
 	// Add this new entry to our collection
 	memcpy(&configEntries[configEntriesCount], entry, sizeof(ConfigEntry));

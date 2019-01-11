@@ -738,8 +738,8 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	}
 	
 	// Patch IGR
-	if(swissSettings.igrType != IGR_OFF) {
-		Patch_IGR(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+	if(swissSettings.igrType != IGR_OFF || swissSettings.invertCStick) {
+		Patch_PADStatus(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 	
 	// Patch OSReport to print out over USBGecko
@@ -1578,6 +1578,7 @@ int info_game()
 	swissSettings.forceAnisotropy = config->forceAnisotropy;
 	swissSettings.forceWidescreen = config->forceWidescreen;
 	swissSettings.forceEncoding = config->forceEncoding;
+	swissSettings.invertCStick = config->invertCStick;
 	swissSettings.muteAudioStreaming = config->muteAudioStreaming;
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
 	while(1) {

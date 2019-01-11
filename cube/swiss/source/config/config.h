@@ -19,6 +19,7 @@ typedef struct {
 	int forceAnisotropy;
 	int forceWidescreen;
 	int forceEncoding;
+	int invertCStick;
 	int muteAudioStreaming;
 } ConfigEntry __attribute__((aligned(32)));
 

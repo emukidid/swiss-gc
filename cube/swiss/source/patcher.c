@@ -2997,13 +2997,45 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 	return patched;
 }
 
-void Patch_IGR(u32 *data, u32 length, int dataType)
+void Patch_PADStatus(u32 *data, u32 length, int dataType)
 {
-	int i, j;
+	int i, j, k;
 	FuncPattern OSDisableInterruptsSig = 
 		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
 	FuncPattern OSRestoreInterruptsSig = 
 		{ 9, 0, 0, 0, 2, 2, NULL, 0, "OSRestoreInterrupts" };
+	FuncPattern UpdateOriginSigs[4] = {
+		{ 105, 15, 1, 0, 20, 4, NULL, 0, "UpdateOriginD A" },
+		{ 107, 13, 2, 1, 20, 6, NULL, 0, "UpdateOriginD B" },
+		{ 101, 14, 0, 0, 18, 5, NULL, 0, "UpdateOrigin A" },
+		{ 105, 14, 3, 1, 20, 5, NULL, 0, "UpdateOrigin B" }
+	};
+	FuncPattern PADOriginCallbackSigs[4] = {
+		{  39, 17,  4, 5,  3,  3, NULL, 0, "PADOriginCallbackD A" },
+		{  71, 27, 10, 6,  2,  9, NULL, 0, "PADOriginCallback A" },
+		{  49, 21,  6, 6,  1,  8, NULL, 0, "PADOriginCallback B" },
+		{ 143, 30,  6, 6, 21, 11, NULL, 0, "PADOriginCallback C" }	// SN Systems ProDG
+	};
+	FuncPattern PADOriginUpdateCallbackSigs[6] = {
+		{  31, 10,  4, 2,  3,  5, NULL, 0, "PADOriginUpdateCallbackD A" },
+		{  34,  8,  2, 3,  4,  4, NULL, 0, "PADOriginUpdateCallbackD B" },
+		{  15,  4,  2, 1,  1,  4, NULL, 0, "PADOriginUpdateCallback A" },
+		{  48, 13,  9, 5,  2,  9, NULL, 0, "PADOriginUpdateCallback B" },
+		{ 143, 23, 10, 5, 22, 13, NULL, 0, "PADOriginUpdateCallback C" },	// SN Systems ProDG
+		{  51, 14, 10, 5,  2, 10, NULL, 0, "PADOriginUpdateCallback D" }
+	};
+	FuncPattern PADInitSigs[10] = {
+		{  88, 37,  4,  8, 3, 11, NULL, 0, "PADInitD A" },
+		{  90, 37,  5,  8, 6, 11, NULL, 0, "PADInitD B" },
+		{ 113, 31, 11, 11, 1, 17, NULL, 0, "PADInit A" },
+		{ 129, 42, 13, 12, 2, 18, NULL, 0, "PADInit B" },
+		{ 132, 43, 14, 12, 5, 18, NULL, 0, "PADInit C" },
+		{ 133, 43, 14, 12, 5, 18, NULL, 0, "PADInit D" },
+		{ 132, 42, 14, 12, 5, 18, NULL, 0, "PADInit E" },
+		{ 134, 43, 14, 13, 5, 18, NULL, 0, "PADInit F" },
+		{ 123, 38, 16, 10, 5, 27, NULL, 0, "PADInit G" },	// SN Systems ProDG
+		{  84, 24,  8,  9, 4,  9, NULL, 0, "PADInit H" }
+	};
 	FuncPattern PADReadSigs[7] = {
 		{ 172, 65,  3, 15, 16, 18, NULL, 0, "PADReadD A" },
 		{ 171, 66,  4, 20, 17, 14, NULL, 0, "PADReadD B" },
@@ -3013,6 +3045,26 @@ void Patch_IGR(u32 *data, u32 length, int dataType)
 		{ 233, 71, 13, 29, 17, 27, NULL, 0, "PADRead D" },	// SN Systems ProDG
 		{ 192, 73,  8, 23, 16, 15, NULL, 0, "PADRead E" }
 	};
+	FuncPattern PADSetSpecSigs[2] = {
+		{ 42, 15, 8, 1, 9, 3, NULL, 0, "PADSetSpecD" },
+		{ 24,  7, 5, 0, 8, 0, NULL, 0, "PADSetSpec" }
+	};
+	FuncPattern SPEC0_MakeStatusSigs[3] = {
+		{ 96, 28, 0, 0, 12, 9, NULL, 0, "SPEC0_MakeStatusD A" },
+		{ 93, 26, 0, 0, 11, 9, NULL, 0, "SPEC0_MakeStatus A" },
+		{ 85, 18, 0, 0,  2, 8, NULL, 0, "SPEC0_MakeStatus B" }	// SN Systems ProDG
+	};
+	FuncPattern SPEC1_MakeStatusSigs[3] = {
+		{ 96, 28, 0, 0, 12, 9, NULL, 0, "SPEC1_MakeStatusD A" },
+		{ 93, 26, 0, 0, 11, 9, NULL, 0, "SPEC1_MakeStatus A" },
+		{ 85, 18, 0, 0,  2, 8, NULL, 0, "SPEC1_MakeStatus B" }	// SN Systems ProDG
+	};
+	FuncPattern SPEC2_MakeStatusSigs[4] = {
+		{ 186, 43, 3, 6, 20, 14, NULL, 0, "SPEC2_MakeStatusD A" },
+		{ 254, 46, 0, 0, 42, 71, NULL, 0, "SPEC2_MakeStatus A" },
+		{ 234, 46, 0, 0, 42, 51, NULL, 0, "SPEC2_MakeStatus B" },	// SN Systems ProDG
+		{ 284, 55, 2, 0, 43, 76, NULL, 0, "SPEC2_MakeStatus C" }
+	};
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (data[i - 1] != 0x4E800020 || (data[i] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6))
@@ -3020,6 +3072,131 @@ void Patch_IGR(u32 *data, u32 length, int dataType)
 		
 		FuncPattern fp;
 		make_pattern(data, i, length, &fp);
+		
+		for (j = 0; j < sizeof(PADOriginCallbackSigs) / sizeof(FuncPattern); j++) {
+			if (!PADOriginCallbackSigs[j].offsetFoundAt && compare_pattern(&fp, &PADOriginCallbackSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i + 31, length, &UpdateOriginSigs[0]) ||
+							findx_pattern(data, dataType, i + 31, length, &UpdateOriginSigs[1]))
+							PADOriginCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i + 10, length, &UpdateOriginSigs[2]))
+							PADOriginCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  7, length, &UpdateOriginSigs[3]))
+							PADOriginCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						PADOriginCallbackSigs[j].offsetFoundAt = i;
+						break;
+				}
+				break;
+			}
+			if (PADOriginCallbackSigs[j].offsetFoundAt && i == PADOriginCallbackSigs[j].offsetFoundAt + PADOriginCallbackSigs[j].Length) {
+				for (k = 0; k < sizeof(PADOriginUpdateCallbackSigs) / sizeof(FuncPattern); k++) {
+					if (!PADOriginUpdateCallbackSigs[k].offsetFoundAt && compare_pattern(&fp, &PADOriginUpdateCallbackSigs[k])) {
+						switch (k) {
+							case 0:
+								if (findx_pattern(data, dataType, i +  25, length, &UpdateOriginSigs[0]))
+									PADOriginUpdateCallbackSigs[k].offsetFoundAt = i;
+								break;
+							case 1:
+								if (findx_pattern(data, dataType, i +  24, length, &UpdateOriginSigs[1]))
+									PADOriginUpdateCallbackSigs[k].offsetFoundAt = i;
+								break;
+							case 2:
+								if (findx_pattern(data, dataType, i +  10, length, &UpdateOriginSigs[2]))
+									PADOriginUpdateCallbackSigs[k].offsetFoundAt = i;
+								break;
+							case 3:
+								if (findx_pattern(data, dataType, i +  19, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  40, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  16, length, &UpdateOriginSigs[3]))
+									PADOriginUpdateCallbackSigs[k].offsetFoundAt = i;
+								break;
+							case 4:
+								if (findx_pattern(data, dataType, i + 113, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i + 134, length, &OSRestoreInterruptsSig))
+									PADOriginUpdateCallbackSigs[k].offsetFoundAt = i;
+								break;
+							case 5:
+								if (findx_pattern(data, dataType, i +  19, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  43, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  16, length, &UpdateOriginSigs[3]))
+									PADOriginUpdateCallbackSigs[k].offsetFoundAt = i;
+								break;
+						}
+						break;
+					}
+				}
+				break;
+			}
+		}
+		
+		for (j = 0; j < sizeof(PADInitSigs) / sizeof(FuncPattern); j++) {
+			if (!PADInitSigs[j].offsetFoundAt && compare_pattern(&fp, &PADInitSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  11, length, &PADSetSpecSigs[0]))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  13, length, &PADSetSpecSigs[0]))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  75, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 106, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  12, length, &PADSetSpecSigs[1]))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 122, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  12, length, &PADSetSpecSigs[1]))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 125, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 126, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+					case 6:
+						if (findx_pattern(data, dataType, i +  76, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 125, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+					case 7:
+						if (findx_pattern(data, dataType, i +  78, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 127, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  16, length, &PADSetSpecSigs[1]))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+					case 8:
+						if (findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 115, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  15, length, &PADSetSpecSigs[1]))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+					case 9:
+						if (findx_pattern(data, dataType, i +  16, length, &PADSetSpecSigs[1]))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+				}
+				break;
+			}
+		}
 		
 		for (j = 0; j < sizeof(PADReadSigs) / sizeof(FuncPattern); j++) {
 			if (!PADReadSigs[j].offsetFoundAt && compare_pattern(&fp, &PADReadSigs[j])) {
@@ -3074,10 +3251,85 @@ void Patch_IGR(u32 *data, u32 length, int dataType)
 		i += fp.Length - 1;
 	}
 	
-	for (j = 0; j < sizeof(PADReadSigs) / sizeof(FuncPattern); j++)
-		if (PADReadSigs[j].offsetFoundAt) break;
+	for (j = 0; j < sizeof(UpdateOriginSigs) / sizeof(FuncPattern); j++)
+		if (UpdateOriginSigs[j].offsetFoundAt) break;
 	
-	if ((i = PADReadSigs[j].offsetFoundAt)) {
+	if ((i = UpdateOriginSigs[j].offsetFoundAt)) {
+		u32 *UpdateOrigin = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (UpdateOrigin) {
+			if (swissSettings.invertCStick & 1) {
+				switch (j) {
+					case 0: data[i + 79] = 0x2004007F; break;	// subfic	r0, r4, 127
+					case 1: data[i + 82] = 0x2003007F; break;	// subfic	r0, r3, 127
+					case 2: data[i + 77] = 0x20A5007F; break;	// subfic	r5, r5, 127
+					case 3: data[i + 81] = 0x2084007F; break;	// subfic	r4, r4, 127
+				}
+			}
+			if (swissSettings.invertCStick & 2) {
+				switch (j) {
+					case 0: data[i + 82] = 0x2004007F; break;	// subfic	r0, r4, 127
+					case 1: data[i + 85] = 0x2003007F; break;	// subfic	r0, r3, 127
+					case 2: data[i + 80] = 0x20A5007F; break;	// subfic	r5, r5, 127
+					case 3: data[i + 84] = 0x2084007F; break;	// subfic	r4, r4, 127
+				}
+			}
+			print_gecko("Found:[%s] @ %08X\n", UpdateOriginSigs[j].Name, UpdateOrigin);
+		}
+	}
+	
+	for (j = 0; j < sizeof(PADOriginCallbackSigs) / sizeof(FuncPattern); j++)
+		if (PADOriginCallbackSigs[j].offsetFoundAt) break;
+	
+	if ((i = PADOriginCallbackSigs[j].offsetFoundAt)) {
+		u32 *PADOriginCallback = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (PADOriginCallback) {
+			if (j == 3) {
+				if (swissSettings.invertCStick & 1)
+					data[i + 86] = 0x2004007F;	// subfic	r0, r4, 127
+				if (swissSettings.invertCStick & 2)
+					data[i + 89] = 0x2004007F;	// subfic	r0, r4, 127
+			}
+			print_gecko("Found:[%s] @ %08X\n", PADOriginCallbackSigs[j].Name, PADOriginCallback);
+		}
+	}
+	
+	for (j = 0; j < sizeof(PADOriginUpdateCallbackSigs) / sizeof(FuncPattern); j++)
+		if (PADOriginUpdateCallbackSigs[j].offsetFoundAt) break;
+	
+	if ((i = PADOriginUpdateCallbackSigs[j].offsetFoundAt)) {
+		u32 *PADOriginUpdateCallback = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (PADOriginUpdateCallback) {
+			if (j == 4) {
+				if (swissSettings.invertCStick & 1)
+					data[i + 93] = 0x2003007F;	// subfic	r0, r3, 127
+				if (swissSettings.invertCStick & 2)
+					data[i + 96] = 0x2003007F;	// subfic	r0, r3, 127
+			}
+			print_gecko("Found:[%s] @ %08X\n", PADOriginUpdateCallbackSigs[j].Name, PADOriginUpdateCallback);
+		}
+	}
+	
+	for (j = 0; j < sizeof(PADInitSigs) / sizeof(FuncPattern); j++)
+		if (PADInitSigs[j].offsetFoundAt) break;
+	
+	if ((i = PADInitSigs[j].offsetFoundAt)) {
+		u32 *PADInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (PADInit) {
+			print_gecko("Found:[%s] @ %08X\n", PADInitSigs[j].Name, PADInit);
+		}
+	}
+	
+	for (k = 0; k < sizeof(PADReadSigs) / sizeof(FuncPattern); k++)
+		if (PADReadSigs[k].offsetFoundAt) break;
+	
+	for (j = 0; j < sizeof(PADSetSpecSigs) / sizeof(FuncPattern); j++)
+		if (PADSetSpecSigs[j].offsetFoundAt) break;
+	
+	if ((i = PADReadSigs[k].offsetFoundAt)) {
 		u32 *PADRead = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		u32 *PADReadHook;
 		
@@ -3089,7 +3341,7 @@ void Patch_IGR(u32 *data, u32 length, int dataType)
 			else
 				PADReadHook = IGR_CHECK;
 			
-			switch (j) {
+			switch (k) {
 				case 0:
 					data[i + 159] = 0x387E0000;	// addi		r3, r30, 0
 					data[i + 160] = 0x389F0000;	// addi		r4, r31, 0
@@ -3126,7 +3378,135 @@ void Patch_IGR(u32 *data, u32 length, int dataType)
 					data[i + 178] = branchAndLink(PADReadHook, PADRead + 178);
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", PADReadSigs[j].Name, PADRead);
+			print_gecko("Found:[%s] @ %08X\n", PADReadSigs[k].Name, PADRead);
+		}
+		
+		if ((i = PADSetSpecSigs[j].offsetFoundAt)) {
+			u32 *PADSetSpec = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			
+			u32 SPEC0_MakeStatusAddr, *SPEC0_MakeStatus;
+			u32 SPEC1_MakeStatusAddr, *SPEC1_MakeStatus;
+			u32 SPEC2_MakeStatusAddr, *SPEC2_MakeStatus;
+			
+			if (PADSetSpec && PADRead) {
+				if (j >= 1) {
+					SPEC0_MakeStatusAddr = (data[i + 11] << 16) + (s16)data[i + 12];
+					SPEC1_MakeStatusAddr = (data[i + 15] << 16) + (s16)data[i + 16];
+					SPEC2_MakeStatusAddr = (data[i + 19] << 16) + (s16)data[i + 20];
+				} else {
+					SPEC0_MakeStatusAddr = (data[i + 25] << 16) + (s16)data[i + 26];
+					SPEC1_MakeStatusAddr = (data[i + 29] << 16) + (s16)data[i + 30];
+					SPEC2_MakeStatusAddr = (data[i + 33] << 16) + (s16)data[i + 34];
+				}
+				
+				SPEC0_MakeStatus = Calc_Address(data, dataType, SPEC0_MakeStatusAddr);
+				SPEC1_MakeStatus = Calc_Address(data, dataType, SPEC1_MakeStatusAddr);
+				SPEC2_MakeStatus = Calc_Address(data, dataType, SPEC2_MakeStatusAddr);
+				
+				switch (k) {
+					case 0:
+					case 1:
+						find_pattern(data, SPEC0_MakeStatus - data, length, &SPEC0_MakeStatusSigs[0]);
+						find_pattern(data, SPEC1_MakeStatus - data, length, &SPEC1_MakeStatusSigs[0]);
+						find_pattern(data, SPEC2_MakeStatus - data, length, &SPEC2_MakeStatusSigs[0]);
+						break;
+					case 2:
+					case 3:
+					case 4:
+						find_pattern(data, SPEC0_MakeStatus - data, length, &SPEC0_MakeStatusSigs[1]);
+						find_pattern(data, SPEC1_MakeStatus - data, length, &SPEC1_MakeStatusSigs[1]);
+						find_pattern(data, SPEC2_MakeStatus - data, length, &SPEC2_MakeStatusSigs[1]);
+						break;
+					case 5:
+						find_pattern(data, SPEC0_MakeStatus - data, length, &SPEC0_MakeStatusSigs[2]);
+						find_pattern(data, SPEC1_MakeStatus - data, length, &SPEC1_MakeStatusSigs[2]);
+						find_pattern(data, SPEC2_MakeStatus - data, length, &SPEC2_MakeStatusSigs[2]);
+						break;
+					case 6:
+						find_pattern(data, SPEC0_MakeStatus - data, length, &SPEC0_MakeStatusSigs[1]);
+						find_pattern(data, SPEC1_MakeStatus - data, length, &SPEC1_MakeStatusSigs[1]);
+						find_pattern(data, SPEC2_MakeStatus - data, length, &SPEC2_MakeStatusSigs[3]);
+						break;
+				}
+				print_gecko("Found:[%s] @ %08X\n", PADSetSpecSigs[j].Name, PADSetSpec);
+			}
+		}
+	}
+	
+	for (j = 0; j < sizeof(SPEC0_MakeStatusSigs) / sizeof(FuncPattern); j++)
+		if (SPEC0_MakeStatusSigs[j].offsetFoundAt) break;
+	
+	if ((i = SPEC0_MakeStatusSigs[j].offsetFoundAt)) {
+		u32 *SPEC0_MakeStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (SPEC0_MakeStatus) {
+			if (swissSettings.invertCStick & 1) {
+				switch (j) {
+					case 0: data[i + 90] = 0x20030080; break;	// subfic	r0, r3, 128
+					case 1: data[i + 87] = 0x20030080; break;	// subfic	r0, r3, 128
+					case 2: data[i + 79] = 0x20030080; break;	// subfic	r0, r3, 128
+				}
+			}
+			if (swissSettings.invertCStick & 2) {
+				switch (j) {
+					case 0: data[i + 93] = 0x20030080; break;	// subfic	r0, r3, 128
+					case 1: data[i + 90] = 0x20030080; break;	// subfic	r0, r3, 128
+					case 2: data[i + 82] = 0x20030080; break;	// subfic	r0, r3, 128
+				}
+			}
+			print_gecko("Found:[%s] @ %08X\n", SPEC0_MakeStatusSigs[j].Name, SPEC0_MakeStatus);
+		}
+	}
+	
+	for (j = 0; j < sizeof(SPEC1_MakeStatusSigs) / sizeof(FuncPattern); j++)
+		if (SPEC1_MakeStatusSigs[j].offsetFoundAt) break;
+	
+	if ((i = SPEC1_MakeStatusSigs[j].offsetFoundAt)) {
+		u32 *SPEC1_MakeStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (SPEC1_MakeStatus) {
+			if (swissSettings.invertCStick & 1) {
+				switch (j) {
+					case 0: data[i + 90] = 0x20030080; break;	// subfic	r0, r3, 128
+					case 1: data[i + 87] = 0x20030080; break;	// subfic	r0, r3, 128
+					case 2: data[i + 79] = 0x20030080; break;	// subfic	r0, r3, 128
+				}
+			}
+			if (swissSettings.invertCStick & 2) {
+				switch (j) {
+					case 0: data[i + 93] = 0x20030080; break;	// subfic	r0, r3, 128
+					case 1: data[i + 90] = 0x20030080; break;	// subfic	r0, r3, 128
+					case 2: data[i + 82] = 0x20030080; break;	// subfic	r0, r3, 128
+				}
+			}
+			print_gecko("Found:[%s] @ %08X\n", SPEC1_MakeStatusSigs[j].Name, SPEC1_MakeStatus);
+		}
+	}
+	
+	for (j = 0; j < sizeof(SPEC2_MakeStatusSigs) / sizeof(FuncPattern); j++)
+		if (SPEC2_MakeStatusSigs[j].offsetFoundAt) break;
+	
+	if ((i = SPEC2_MakeStatusSigs[j].offsetFoundAt)) {
+		u32 *SPEC2_MakeStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (SPEC2_MakeStatus) {
+			if (swissSettings.invertCStick & 1) {
+				switch (j) {
+					case 0: data[i + 147] = 0x2003007F; break;	// subfic	r0, r3, 127
+					case 1: data[i + 142] = 0x2005007F; break;	// subfic	r0, r5, 127
+					case 2: data[i + 130] = 0x2005007F; break;	// subfic	r0, r5, 127
+					case 3: data[i + 142] = 0x2006007F; break;	// subfic	r0, r6, 127
+				}
+			}
+			if (swissSettings.invertCStick & 2) {
+				switch (j) {
+					case 0: data[i + 150] = 0x2003007F; break;	// subfic	r0, r3, 127
+					case 1: data[i + 145] = 0x2005007F; break;	// subfic	r0, r5, 127
+					case 2: data[i + 133] = 0x2005007F; break;	// subfic	r0, r5, 127
+					case 3: data[i + 145] = 0x2006007F; break;	// subfic	r0, r6, 127
+				}
+			}
+			print_gecko("Found:[%s] @ %08X\n", SPEC2_MakeStatusSigs[j].Name, SPEC2_MakeStatus);
 		}
 	}
 }

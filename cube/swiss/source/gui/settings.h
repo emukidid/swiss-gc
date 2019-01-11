@@ -57,7 +57,7 @@ enum SETTINGS_GAME {
 	SET_ANISO_FILTER,
 	SET_WIDESCREEN,
 	SET_TEXT_ENCODING,
-	SET_AUDIO_STREAM,
+	SET_INVERT_CAMERA,
 	SET_PAGE_3_BACK,
 	SET_PAGE_3_SAVE,
 	SET_PAGE_3_CANCEL
@@ -70,6 +70,7 @@ extern char *forceHScaleStr[];
 extern char *forceVFilterStr[];
 extern char *forceWidescreenStr[];
 extern char *forceEncodingStr[];
+extern char *invertCStickStr[];
 extern char *igrTypeStr[];
 int show_settings(file_handle *file, ConfigEntry *config);
 void refreshSRAM();
