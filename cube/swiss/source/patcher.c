@@ -838,6 +838,8 @@ void *installPatch(int patchId) {
 			patchSize = VIConfigureHook2_length; patchLocation = VIConfigureHook2; break;
 		case VI_CONFIGUREPANHOOK:
 			patchSize = VIConfigurePanHook_length; patchLocation = VIConfigurePanHook; break;
+		case VI_CONFIGUREPANHOOKD:
+			patchSize = VIConfigurePanHookD_length; patchLocation = VIConfigurePanHookD; break;
 		case VI_RETRACEHANDLERHOOK:
 			patchSize = VIRetraceHandlerHook_length; patchLocation = VIRetraceHandlerHook; break;
 		case MAJORA_SAVEREGS:
@@ -937,8 +939,10 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 559, 112, 44, 14, 53, 48, NULL, 0, "VIConfigure H" },	// SN Systems ProDG
 		{ 514, 110, 44, 13, 49, 63, NULL, 0, "VIConfigure I" }
 	};
-	FuncPattern VIConfigurePanSig = 
-		{ 229, 40, 11, 4, 25, 35, NULL, 0, "VIConfigurePan" };
+	FuncPattern VIConfigurePanSigs[2] = {
+		{ 100, 26,  3, 9,  6,  4, NULL, 0, "VIConfigurePanD" },
+		{ 229, 40, 11, 4, 25, 35, NULL, 0, "VIConfigurePan" }
+	};
 	FuncPattern VISetBlackSigs[3] = {
 		{ 30, 6, 5, 3, 0, 3, NULL, 0, "VISetBlackD A" },
 		{ 31, 7, 6, 3, 0, 3, NULL, 0, "VISetBlack A" },
@@ -1119,21 +1123,21 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i +  53, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 274, length, &OSRestoreInterruptsSig))
+							findx_pattern(data, dataType, i + 274, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 135, length, &AdjustPositionSig))
 							VIConfigureSigs[j].offsetFoundAt = i;
 						
 						findx_pattern(data, dataType, i + 131, length, &getTimingSigs[0]);
-						findx_pattern(data, dataType, i + 135, length, &AdjustPositionSig);
 						findx_pattern(data, dataType, i + 261, length, &setFbbRegsSigs[0]);
 						findx_pattern(data, dataType, i + 272, length, &setVerticalRegsSigs[0]);
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i +  59, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 308, length, &OSRestoreInterruptsSig))
+							findx_pattern(data, dataType, i + 308, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 143, length, &AdjustPositionSig))
 							VIConfigureSigs[j].offsetFoundAt = i;
 						
 						findx_pattern(data, dataType, i + 139, length, &getTimingSigs[1]);
-						findx_pattern(data, dataType, i + 143, length, &AdjustPositionSig);
 						findx_pattern(data, dataType, i + 295, length, &setFbbRegsSigs[0]);
 						findx_pattern(data, dataType, i + 306, length, &setVerticalRegsSigs[0]);
 						break;
@@ -1221,10 +1225,23 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				break;
 			}
 			if (VIConfigureSigs[j].offsetFoundAt && i == VIConfigureSigs[j].offsetFoundAt + VIConfigureSigs[j].Length) {
-				if (!VIConfigurePanSig.offsetFoundAt && compare_pattern(&fp, &VIConfigurePanSig)) {
-					if (findx_pattern(data, dataType, i +  10, length, &OSDisableInterruptsSig) &&
-						findx_pattern(data, dataType, i + 223, length, &OSRestoreInterruptsSig))
-						VIConfigurePanSig.offsetFoundAt = i;
+				for (k = 0; k < sizeof(VIConfigurePanSigs) / sizeof(FuncPattern); k++) {
+					if (!VIConfigurePanSigs[k].offsetFoundAt && compare_pattern(&fp, &VIConfigurePanSigs[k])) {
+						switch (k) {
+							case 0:
+								if (findx_pattern(data, dataType, i +  31, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  94, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  59, length, &AdjustPositionSig))
+									VIConfigurePanSigs[k].offsetFoundAt = i;
+								break;
+							case 1:
+								if (findx_pattern(data, dataType, i +  10, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i + 223, length, &OSRestoreInterruptsSig))
+									VIConfigurePanSigs[k].offsetFoundAt = i;
+								break;
+						}
+						break;
+					}
 				}
 				break;
 			}
@@ -2210,24 +2227,37 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if ((i = VIConfigurePanSig.offsetFoundAt)) {
+	for (j = 0; j < sizeof(VIConfigurePanSigs) / sizeof(FuncPattern); j++)
+		if (VIConfigurePanSigs[j].offsetFoundAt) break;
+	
+	if ((i = VIConfigurePanSigs[j].offsetFoundAt)) {
 		u32 *VIConfigurePan = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		u32 *VIConfigurePanHook;
 		
 		if (VIConfigurePan) {
-			VIConfigurePanHook = getPatchAddr(VI_CONFIGUREPANHOOK);
-			
-			data[i +  10] = branchAndLink(VIConfigurePanHook, VIConfigurePan + 10);
-			data[i +  61] = 0xAB3D00F2;	// lha		r25, 242 (r29)
-			data[i +  63] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
-			data[i +  64] = 0x572307FE;	// clrlwi	r3, r25, 31
-			data[i +  65] = 0x7C632A14;	// add		r3, r3, r5
-			data[i +  72] = 0x547907FE;	// clrlwi	r25, r3, 31
-			data[i +  75] = 0x7CF93850;	// sub		r7, r7, r25
-			data[i + 213] = 0xA87F0000;	// lha		r3, 0 (r31)
-			data[i + 214] = 0xA09D00FC;	// lhz		r4, 252 (r29)
-			
-			print_gecko("Found:[%s] @ %08X\n", VIConfigurePanSig.Name, VIConfigurePan);
+			switch (j) {
+				case 0:
+					VIConfigurePanHook = getPatchAddr(VI_CONFIGUREPANHOOKD);
+					
+					data[i +  31] = branchAndLink(VIConfigurePanHook, VIConfigurePan + 31);
+					data[i +  84] = 0xA87F00FA;	// lha		r3, 250 (r31)
+					data[i +  85] = 0xA09F00FC;	// lhz		r4, 252 (r31)
+					break;
+				case 1:
+					VIConfigurePanHook = getPatchAddr(VI_CONFIGUREPANHOOK);
+					
+					data[i +  10] = branchAndLink(VIConfigurePanHook, VIConfigurePan + 10);
+					data[i +  61] = 0xAB3D00F2;	// lha		r25, 242 (r29)
+					data[i +  63] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
+					data[i +  64] = 0x572307FE;	// clrlwi	r3, r25, 31
+					data[i +  65] = 0x7C632A14;	// add		r3, r3, r5
+					data[i +  72] = 0x547907FE;	// clrlwi	r25, r3, 31
+					data[i +  75] = 0x7CF93850;	// sub		r7, r7, r25
+					data[i + 213] = 0xA87F0000;	// lha		r3, 0 (r31)
+					data[i + 214] = 0xA09D00FC;	// lhz		r4, 252 (r29)
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", VIConfigurePanSigs[j].Name, VIConfigurePan);
 		}
 	}
 	

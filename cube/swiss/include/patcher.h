@@ -94,6 +94,8 @@ extern u8 VIConfigureHook2[];
 extern u32 VIConfigureHook2_length;
 extern u8 VIConfigurePanHook[];
 extern u32 VIConfigurePanHook_length;
+extern u8 VIConfigurePanHookD[];
+extern u32 VIConfigurePanHookD_length;
 extern u8 VIRetraceHandlerHook[];
 extern u32 VIRetraceHandlerHook_length;
 extern u8 MajoraSaveRegs[];
@@ -124,6 +126,7 @@ enum patchIds {
 	VI_CONFIGUREHOOK1,
 	VI_CONFIGUREHOOK2,
 	VI_CONFIGUREPANHOOK,
+	VI_CONFIGUREPANHOOKD,
 	VI_RETRACEHANDLERHOOK,
 	MAJORA_SAVEREGS,
 	MAJORA_AUDIOSTREAM,

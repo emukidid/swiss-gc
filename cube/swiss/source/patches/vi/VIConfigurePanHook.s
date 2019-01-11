@@ -9,10 +9,10 @@ VIConfigurePanHook:
 	extrwi		%r3, %r3, 1, 16
 	mtmsr		%r4
 	lhz			%r0, 260 (%r29)
-	add			%r4, %r23, %r25
-	cmpw		%r4, %r0
-	blelr
-	subf		%r23, %r25, %r0
+	sub			%r0, %r0, %r25
+	sub.		%r0, %r0, %r23
+	bgelr
+	add			%r23, %r23, %r0
 	blr
 
 .globl VIConfigurePanHook_length
