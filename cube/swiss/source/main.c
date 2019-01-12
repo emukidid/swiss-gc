@@ -486,7 +486,6 @@ int main ()
 	swissSettings.uiVMode = 0; 		// Auto UI mode
 	swissSettings.enableFileManagement = 0;
 
-	config_copy_swiss_settings(&swissSettings);
 	needsDeviceChange = 1;
 	needsRefresh = 1;
 	
@@ -525,6 +524,22 @@ int main ()
 
 	// Scan here since some devices would already be initialised (faster)
 	populateDeviceAvailability();
+
+	// If there's no default config device, set it to the first writable device available
+	if(swissSettings.configDeviceId == DEVICE_ID_UNK) {
+		for(int i = 0; i < MAX_DEVICES; i++) {
+			if(allDevices[i] != NULL && (allDevices[i]->features & FEAT_WRITE) && deviceHandler_getDeviceAvailable(allDevices[i])) {
+				swissSettings.configDeviceId = allDevices[i]->deviceUniqueId;
+				print_gecko("No default config device found, using [%s]\r\n", allDevices[i]->deviceName);
+				syssramex* sramex = __SYS_LockSramEx();
+				sramex->__padding0 = swissSettings.configDeviceId;
+				__SYS_UnlockSramEx(1);
+				while(!__SYS_SyncSram());
+				break;
+			}
+		}
+	}
+	config_copy_swiss_settings(&swissSettings);
 	
 	// load config
 	load_config();
