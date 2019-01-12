@@ -2357,7 +2357,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					memcpy(data + i, GXSetDispCopyYScaleSigs[j].Patch, GXSetDispCopyYScaleSigs[j].PatchLength);
 					
 					if (GXSetDispCopyYScaleSigs[j].Patch != GXSetDispCopyYScalePatch2)
-						data[i] |= op & 0x1FFFFF;
+						data[i + 6] |= op & 0x1FFFFF;
 				}
 				print_gecko("Found:[%s] @ %08X\n", GXSetDispCopyYScaleSigs[j].Name, GXSetDispCopyYScale);
 			}
