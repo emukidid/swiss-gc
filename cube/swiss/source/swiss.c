@@ -748,6 +748,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	}
 	// Force Video Mode
 	if(!swissSettings.disableVideoPatches) {
+		Patch_GameSpecificVideo(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
 		Patch_VideoMode(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 	// Force Widescreen

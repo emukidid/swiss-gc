@@ -3027,6 +3027,559 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 	return patched;
 }
 
+void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dataType)
+{
+	if (!strncmp(gameID, "GAEJ01", 6)) {
+		switch (length) {
+			case 1069088:
+				*(s16 *)(data + 0x80006CBE - 0x80005760 + 0x26C0) = 0;
+				*(s16 *)(data + 0x80006CC2 - 0x80005760 + 0x26C0) = 0;
+				*(s16 *)(data + 0x80006CC6 - 0x80005760 + 0x26C0) = 640;
+				*(s16 *)(data + 0x80006CCA - 0x80005760 + 0x26C0) = 480;
+				
+				*(s16 *)(data + 0x8000774A - 0x80005760 + 0x26C0) = 0;
+				*(s16 *)(data + 0x8000774E - 0x80005760 + 0x26C0) = 0;
+				*(s16 *)(data + 0x80007752 - 0x80005760 + 0x26C0) = 640;
+				*(s16 *)(data + 0x80007756 - 0x80005760 + 0x26C0) = 480;
+				
+				*(s16 *)(data + 0x8000775E - 0x80005760 + 0x26C0) = 0;
+				*(s16 *)(data + 0x80007762 - 0x80005760 + 0x26C0) = 0;
+				*(s16 *)(data + 0x80007766 - 0x80005760 + 0x26C0) = 640;
+				*(s16 *)(data + 0x8000776A - 0x80005760 + 0x26C0) = 480;
+				
+				*(u16 *)(data + 0x800D6DBA - 0x800D67E0 + 0xD37E0) = 40;
+				*(u16 *)(data + 0x800D6DBE - 0x800D67E0 + 0xD37E0) = 640;
+				
+				*(u16 *)(data + 0x800D6DF6 - 0x800D67E0 + 0xD37E0) = 40;
+				*(u16 *)(data + 0x800D6DFA - 0x800D67E0 + 0xD37E0) = 640;
+				
+				*(u16 *)(data + 0x800D6E32 - 0x800D67E0 + 0xD37E0) = 40;
+				*(u16 *)(data + 0x800D6E36 - 0x800D67E0 + 0xD37E0) = 640;
+				
+				*(u16 *)(data + 0x800D6E6E - 0x800D67E0 + 0xD37E0) = 8;
+				*(u16 *)(data + 0x800D6E72 - 0x800D67E0 + 0xD37E0) = 704;
+				
+				*(u16 *)(data + 0x800D6EAA - 0x800D67E0 + 0xD37E0) = 8;
+				*(u16 *)(data + 0x800D6EAE - 0x800D67E0 + 0xD37E0) = 704;
+				
+				*(u16 *)(data + 0x80105DEA - 0x800D67E0 + 0xD37E0) = 8;
+				*(u16 *)(data + 0x80105DEE - 0x800D67E0 + 0xD37E0) = 704;
+				
+				*(u16 *)(data + 0x80105E26 - 0x800D67E0 + 0xD37E0) = 8;
+				*(u16 *)(data + 0x80105E2A - 0x800D67E0 + 0xD37E0) = 704;
+				
+				*(u16 *)(data + 0x80105E62 - 0x800D67E0 + 0xD37E0) = 8;
+				*(u16 *)(data + 0x80105E66 - 0x800D67E0 + 0xD37E0) = 704;
+				
+				*(u16 *)(data + 0x80105EDA - 0x800D67E0 + 0xD37E0) = 8;
+				*(u16 *)(data + 0x80105EDE - 0x800D67E0 + 0xD37E0) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+			case 1076832:
+				*(s16 *)(data + 0x80006BFE - 0x800056A0 + 0x2600) = 0;
+				*(s16 *)(data + 0x80006C02 - 0x800056A0 + 0x2600) = 0;
+				*(s16 *)(data + 0x80006C06 - 0x800056A0 + 0x2600) = 640;
+				*(s16 *)(data + 0x80006C0A - 0x800056A0 + 0x2600) = 480;
+				
+				*(s16 *)(data + 0x8000769A - 0x800056A0 + 0x2600) = 0;
+				*(s16 *)(data + 0x8000769E - 0x800056A0 + 0x2600) = 0;
+				*(s16 *)(data + 0x800076A2 - 0x800056A0 + 0x2600) = 640;
+				*(s16 *)(data + 0x800076A6 - 0x800056A0 + 0x2600) = 480;
+				
+				*(s16 *)(data + 0x800076AE - 0x800056A0 + 0x2600) = 0;
+				*(s16 *)(data + 0x800076B2 - 0x800056A0 + 0x2600) = 0;
+				*(s16 *)(data + 0x800076B6 - 0x800056A0 + 0x2600) = 640;
+				*(s16 *)(data + 0x800076BA - 0x800056A0 + 0x2600) = 480;
+				
+				*(u16 *)(data + 0x800D8982 - 0x800D83A0 + 0xD53A0) = 40;
+				*(u16 *)(data + 0x800D8986 - 0x800D83A0 + 0xD53A0) = 640;
+				
+				*(u16 *)(data + 0x800D89BE - 0x800D83A0 + 0xD53A0) = 40;
+				*(u16 *)(data + 0x800D89C2 - 0x800D83A0 + 0xD53A0) = 640;
+				
+				*(u16 *)(data + 0x800D89FA - 0x800D83A0 + 0xD53A0) = 40;
+				*(u16 *)(data + 0x800D89FE - 0x800D83A0 + 0xD53A0) = 640;
+				
+				*(u16 *)(data + 0x800D8A36 - 0x800D83A0 + 0xD53A0) = 8;
+				*(u16 *)(data + 0x800D8A3A - 0x800D83A0 + 0xD53A0) = 704;
+				
+				*(u16 *)(data + 0x800D8A72 - 0x800D83A0 + 0xD53A0) = 8;
+				*(u16 *)(data + 0x800D8A76 - 0x800D83A0 + 0xD53A0) = 704;
+				
+				*(u16 *)(data + 0x80107BAA - 0x800D83A0 + 0xD53A0) = 8;
+				*(u16 *)(data + 0x80107BAE - 0x800D83A0 + 0xD53A0) = 704;
+				
+				*(u16 *)(data + 0x80107BE6 - 0x800D83A0 + 0xD53A0) = 8;
+				*(u16 *)(data + 0x80107BEA - 0x800D83A0 + 0xD53A0) = 704;
+				
+				*(u16 *)(data + 0x80107C22 - 0x800D83A0 + 0xD53A0) = 8;
+				*(u16 *)(data + 0x80107C26 - 0x800D83A0 + 0xD53A0) = 704;
+				
+				*(u16 *)(data + 0x80107C9A - 0x800D83A0 + 0xD53A0) = 8;
+				*(u16 *)(data + 0x80107C9E - 0x800D83A0 + 0xD53A0) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GAFE01", 6)) {
+		switch (length) {
+			case 918720:
+				*(s16 *)(data + 0x8000672E - 0x800056C0 + 0x2620) = 0;
+				*(s16 *)(data + 0x80006732 - 0x800056C0 + 0x2620) = 0;
+				*(s16 *)(data + 0x80006736 - 0x800056C0 + 0x2620) = 640;
+				*(s16 *)(data + 0x8000673A - 0x800056C0 + 0x2620) = 480;
+				
+				*(s16 *)(data + 0x80006EF2 - 0x800056C0 + 0x2620) = 0;
+				*(s16 *)(data + 0x80006EF6 - 0x800056C0 + 0x2620) = 0;
+				*(s16 *)(data + 0x80006EFA - 0x800056C0 + 0x2620) = 640;
+				*(s16 *)(data + 0x80006EFE - 0x800056C0 + 0x2620) = 480;
+				
+				*(u16 *)(data + 0x800AFE62 - 0x800AF860 + 0xAC860) = 40;
+				*(u16 *)(data + 0x800AFE66 - 0x800AF860 + 0xAC860) = 640;
+				
+				*(u16 *)(data + 0x800AFE9E - 0x800AF860 + 0xAC860) = 40;
+				*(u16 *)(data + 0x800AFEA2 - 0x800AF860 + 0xAC860) = 640;
+				
+				*(u16 *)(data + 0x800AFEDA - 0x800AF860 + 0xAC860) = 40;
+				*(u16 *)(data + 0x800AFEDE - 0x800AF860 + 0xAC860) = 640;
+				
+				*(u16 *)(data + 0x800AFF16 - 0x800AF860 + 0xAC860) = 40;
+				*(u16 *)(data + 0x800AFF1A - 0x800AF860 + 0xAC860) = 640;
+				
+				*(u16 *)(data + 0x800AFF52 - 0x800AF860 + 0xAC860) = 8;
+				*(u16 *)(data + 0x800AFF56 - 0x800AF860 + 0xAC860) = 704;
+				
+				*(u16 *)(data + 0x800AFF8E - 0x800AF860 + 0xAC860) = 8;
+				*(u16 *)(data + 0x800AFF92 - 0x800AF860 + 0xAC860) = 704;
+				
+				*(u16 *)(data + 0x800E15BA - 0x800AF860 + 0xAC860) = 8;
+				*(u16 *)(data + 0x800E15BE - 0x800AF860 + 0xAC860) = 704;
+				
+				*(u16 *)(data + 0x800E15F6 - 0x800AF860 + 0xAC860) = 8;
+				*(u16 *)(data + 0x800E15FA - 0x800AF860 + 0xAC860) = 704;
+				
+				*(u16 *)(data + 0x800E1632 - 0x800AF860 + 0xAC860) = 8;
+				*(u16 *)(data + 0x800E1636 - 0x800AF860 + 0xAC860) = 704;
+				
+				*(u16 *)(data + 0x800E16AA - 0x800AF860 + 0xAC860) = 8;
+				*(u16 *)(data + 0x800E16AE - 0x800AF860 + 0xAC860) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GAFJ01", 6)) {
+		switch (length) {
+			case 888704:
+				*(s16 *)(data + 0x80006622 - 0x800055C0 + 0x2520) = 0;
+				*(s16 *)(data + 0x80006626 - 0x800055C0 + 0x2520) = 0;
+				*(s16 *)(data + 0x8000662A - 0x800055C0 + 0x2520) = 640;
+				*(s16 *)(data + 0x8000662E - 0x800055C0 + 0x2520) = 480;
+				
+				*(s16 *)(data + 0x80006636 - 0x800055C0 + 0x2520) = 0;
+				*(s16 *)(data + 0x8000663A - 0x800055C0 + 0x2520) = 0;
+				*(s16 *)(data + 0x8000663E - 0x800055C0 + 0x2520) = 640;
+				*(s16 *)(data + 0x80006642 - 0x800055C0 + 0x2520) = 480;
+				
+				*(s16 *)(data + 0x80006896 - 0x800055C0 + 0x2520) = 256;
+				
+				*(s16 *)(data + 0x80006916 - 0x800055C0 + 0x2520) = 0;
+				*(s16 *)(data + 0x8000691E - 0x800055C0 + 0x2520) = 0;
+				*(s16 *)(data + 0x80006922 - 0x800055C0 + 0x2520) = 640;
+				*(s16 *)(data + 0x8000692A - 0x800055C0 + 0x2520) = 480;
+				
+				*(u16 *)(data + 0x800DA9AE - 0x800AC1C0 + 0xA91C0) = 8;
+				*(u16 *)(data + 0x800DA9B2 - 0x800AC1C0 + 0xA91C0) = 704;
+				
+				*(u16 *)(data + 0x800DA9EA - 0x800AC1C0 + 0xA91C0) = 8;
+				*(u16 *)(data + 0x800DA9EE - 0x800AC1C0 + 0xA91C0) = 704;
+				
+				*(u16 *)(data + 0x800DAA26 - 0x800AC1C0 + 0xA91C0) = 8;
+				*(u16 *)(data + 0x800DAA2A - 0x800AC1C0 + 0xA91C0) = 704;
+				
+				*(u16 *)(data + 0x800DAA62 - 0x800AC1C0 + 0xA91C0) = 8;
+				*(u16 *)(data + 0x800DAA66 - 0x800AC1C0 + 0xA91C0) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+			case 890048:
+				*(s16 *)(data + 0x80006622 - 0x800055C0 + 0x2520) = 0;
+				*(s16 *)(data + 0x80006626 - 0x800055C0 + 0x2520) = 0;
+				*(s16 *)(data + 0x8000662A - 0x800055C0 + 0x2520) = 640;
+				*(s16 *)(data + 0x8000662E - 0x800055C0 + 0x2520) = 480;
+				
+				*(s16 *)(data + 0x80006636 - 0x800055C0 + 0x2520) = 0;
+				*(s16 *)(data + 0x8000663A - 0x800055C0 + 0x2520) = 0;
+				*(s16 *)(data + 0x8000663E - 0x800055C0 + 0x2520) = 640;
+				*(s16 *)(data + 0x80006642 - 0x800055C0 + 0x2520) = 480;
+				
+				*(s16 *)(data + 0x80006896 - 0x800055C0 + 0x2520) = 256;
+				
+				*(s16 *)(data + 0x80006916 - 0x800055C0 + 0x2520) = 0;
+				*(s16 *)(data + 0x8000691E - 0x800055C0 + 0x2520) = 0;
+				*(s16 *)(data + 0x80006922 - 0x800055C0 + 0x2520) = 640;
+				*(s16 *)(data + 0x8000692A - 0x800055C0 + 0x2520) = 480;
+				
+				*(u16 *)(data + 0x800DAEEE - 0x800AC4E0 + 0xA94E0) = 8;
+				*(u16 *)(data + 0x800DAEF2 - 0x800AC4E0 + 0xA94E0) = 704;
+				
+				*(u16 *)(data + 0x800DAF2A - 0x800AC4E0 + 0xA94E0) = 8;
+				*(u16 *)(data + 0x800DAF2E - 0x800AC4E0 + 0xA94E0) = 704;
+				
+				*(u16 *)(data + 0x800DAF66 - 0x800AC4E0 + 0xA94E0) = 8;
+				*(u16 *)(data + 0x800DAF6A - 0x800AC4E0 + 0xA94E0) = 704;
+				
+				*(u16 *)(data + 0x800DAFA2 - 0x800AC4E0 + 0xA94E0) = 8;
+				*(u16 *)(data + 0x800DAFA6 - 0x800AC4E0 + 0xA94E0) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GAFP01", 6)) {
+		switch (length) {
+			case 971712:
+				*(s16 *)(data + 0x80006B4A - 0x80005680 + 0x25E0) = 574;
+				
+				*(s16 *)(data + 0x80006B6E - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B72 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B76 - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x80006B7A - 0x80005680 + 0x25E0) = 574;
+				
+				*(s16 *)(data + 0x80006B92 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B96 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B9A - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x80006B9E - 0x80005680 + 0x25E0) = 480;
+				
+				*(s16 *)(data + 0x800074A2 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x800074A6 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x800074AA - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x800074AE - 0x80005680 + 0x25E0) = 574;
+				
+				*(u16 *)(data + 0x800BB662 - 0x800BAFC0 + 0xB7FC0) = 40;
+				*(u16 *)(data + 0x800BB666 - 0x800BAFC0 + 0xB7FC0) = 640;
+				
+				*(u16 *)(data + 0x800BB69E - 0x800BAFC0 + 0xB7FC0) = 40;
+				*(u16 *)(data + 0x800BB6A2 - 0x800BAFC0 + 0xB7FC0) = 640;
+				
+				*(u16 *)(data + 0x800BB6DA - 0x800BAFC0 + 0xB7FC0) = 40;
+				*(u16 *)(data + 0x800BB6DE - 0x800BAFC0 + 0xB7FC0) = 640;
+				
+				*(u16 *)(data + 0x800BB714 - 0x800BAFC0 + 0xB7FC0) = 574;
+				*(u16 *)(data + 0x800BB716 - 0x800BAFC0 + 0xB7FC0) = 40;
+				*(u16 *)(data + 0x800BB718 - 0x800BAFC0 + 0xB7FC0) = 0;
+				*(u16 *)(data + 0x800BB71A - 0x800BAFC0 + 0xB7FC0) = 640;
+				*(u16 *)(data + 0x800BB71C - 0x800BAFC0 + 0xB7FC0) = 574;
+				
+				*(u16 *)(data + 0x800BB750 - 0x800BAFC0 + 0xB7FC0) = 574;
+				*(u16 *)(data + 0x800BB752 - 0x800BAFC0 + 0xB7FC0) = 8;
+				*(u16 *)(data + 0x800BB754 - 0x800BAFC0 + 0xB7FC0) = 0;
+				*(u16 *)(data + 0x800BB756 - 0x800BAFC0 + 0xB7FC0) = 704;
+				*(u16 *)(data + 0x800BB758 - 0x800BAFC0 + 0xB7FC0) = 574;
+				
+				*(u16 *)(data + 0x800BB78E - 0x800BAFC0 + 0xB7FC0) = 8;
+				*(u16 *)(data + 0x800BB792 - 0x800BAFC0 + 0xB7FC0) = 704;
+				
+				*(u16 *)(data + 0x800EE1CA - 0x800BAFC0 + 0xB7FC0) = 8;
+				*(u16 *)(data + 0x800EE1CE - 0x800BAFC0 + 0xB7FC0) = 704;
+				
+				*(u16 *)(data + 0x800EE206 - 0x800BAFC0 + 0xB7FC0) = 8;
+				*(u16 *)(data + 0x800EE20A - 0x800BAFC0 + 0xB7FC0) = 704;
+				
+				*(u16 *)(data + 0x800EE242 - 0x800BAFC0 + 0xB7FC0) = 8;
+				*(u16 *)(data + 0x800EE246 - 0x800BAFC0 + 0xB7FC0) = 704;
+				
+				*(u16 *)(data + 0x800EE2BA - 0x800BAFC0 + 0xB7FC0) = 8;
+				*(u16 *)(data + 0x800EE2BE - 0x800BAFC0 + 0xB7FC0) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+			case 974304:
+				*(s16 *)(data + 0x80006B4A - 0x80005680 + 0x25E0) = 574;
+				
+				*(s16 *)(data + 0x80006B6E - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B72 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B76 - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x80006B7A - 0x80005680 + 0x25E0) = 574;
+				
+				*(s16 *)(data + 0x80006B92 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B96 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B9A - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x80006B9E - 0x80005680 + 0x25E0) = 480;
+				
+				*(s16 *)(data + 0x800074A2 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x800074A6 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x800074AA - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x800074AE - 0x80005680 + 0x25E0) = 574;
+				
+				*(u16 *)(data + 0x800BB402 - 0x800BAD60 + 0xB7D60) = 40;
+				*(u16 *)(data + 0x800BB406 - 0x800BAD60 + 0xB7D60) = 640;
+				
+				*(u16 *)(data + 0x800BB43E - 0x800BAD60 + 0xB7D60) = 40;
+				*(u16 *)(data + 0x800BB442 - 0x800BAD60 + 0xB7D60) = 640;
+				
+				*(u16 *)(data + 0x800BB47A - 0x800BAD60 + 0xB7D60) = 40;
+				*(u16 *)(data + 0x800BB47E - 0x800BAD60 + 0xB7D60) = 640;
+				
+				*(u16 *)(data + 0x800BB4B4 - 0x800BAD60 + 0xB7D60) = 574;
+				*(u16 *)(data + 0x800BB4B6 - 0x800BAD60 + 0xB7D60) = 40;
+				*(u16 *)(data + 0x800BB4B8 - 0x800BAD60 + 0xB7D60) = 0;
+				*(u16 *)(data + 0x800BB4BA - 0x800BAD60 + 0xB7D60) = 640;
+				*(u16 *)(data + 0x800BB4BC - 0x800BAD60 + 0xB7D60) = 574;
+				
+				*(u16 *)(data + 0x800BB4F0 - 0x800BAD60 + 0xB7D60) = 574;
+				*(u16 *)(data + 0x800BB4F2 - 0x800BAD60 + 0xB7D60) = 8;
+				*(u16 *)(data + 0x800BB4F4 - 0x800BAD60 + 0xB7D60) = 0;
+				*(u16 *)(data + 0x800BB4F6 - 0x800BAD60 + 0xB7D60) = 704;
+				*(u16 *)(data + 0x800BB4F8 - 0x800BAD60 + 0xB7D60) = 574;
+				
+				*(u16 *)(data + 0x800BB52E - 0x800BAD60 + 0xB7D60) = 8;
+				*(u16 *)(data + 0x800BB532 - 0x800BAD60 + 0xB7D60) = 704;
+				
+				*(u16 *)(data + 0x800EEBEA - 0x800BAD60 + 0xB7D60) = 8;
+				*(u16 *)(data + 0x800EEBEE - 0x800BAD60 + 0xB7D60) = 704;
+				
+				*(u16 *)(data + 0x800EEC26 - 0x800BAD60 + 0xB7D60) = 8;
+				*(u16 *)(data + 0x800EEC2A - 0x800BAD60 + 0xB7D60) = 704;
+				
+				*(u16 *)(data + 0x800EEC62 - 0x800BAD60 + 0xB7D60) = 8;
+				*(u16 *)(data + 0x800EEC66 - 0x800BAD60 + 0xB7D60) = 704;
+				
+				*(u16 *)(data + 0x800EECDA - 0x800BAD60 + 0xB7D60) = 8;
+				*(u16 *)(data + 0x800EECDE - 0x800BAD60 + 0xB7D60) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+			case 978080:
+				*(s16 *)(data + 0x80006B4A - 0x80005680 + 0x25E0) = 574;
+				
+				*(s16 *)(data + 0x80006B6E - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B72 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B76 - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x80006B7A - 0x80005680 + 0x25E0) = 574;
+				
+				*(s16 *)(data + 0x80006B92 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B96 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B9A - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x80006B9E - 0x80005680 + 0x25E0) = 480;
+				
+				*(s16 *)(data + 0x800074A2 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x800074A6 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x800074AA - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x800074AE - 0x80005680 + 0x25E0) = 574;
+				
+				*(u16 *)(data + 0x800BB522 - 0x800BAE80 + 0xB7E80) = 40;
+				*(u16 *)(data + 0x800BB526 - 0x800BAE80 + 0xB7E80) = 640;
+				
+				*(u16 *)(data + 0x800BB55E - 0x800BAE80 + 0xB7E80) = 40;
+				*(u16 *)(data + 0x800BB562 - 0x800BAE80 + 0xB7E80) = 640;
+				
+				*(u16 *)(data + 0x800BB59A - 0x800BAE80 + 0xB7E80) = 40;
+				*(u16 *)(data + 0x800BB59E - 0x800BAE80 + 0xB7E80) = 640;
+				
+				*(u16 *)(data + 0x800BB5D4 - 0x800BAE80 + 0xB7E80) = 574;
+				*(u16 *)(data + 0x800BB5D6 - 0x800BAE80 + 0xB7E80) = 40;
+				*(u16 *)(data + 0x800BB5D8 - 0x800BAE80 + 0xB7E80) = 0;
+				*(u16 *)(data + 0x800BB5DA - 0x800BAE80 + 0xB7E80) = 640;
+				*(u16 *)(data + 0x800BB5DC - 0x800BAE80 + 0xB7E80) = 574;
+				
+				*(u16 *)(data + 0x800BB610 - 0x800BAE80 + 0xB7E80) = 574;
+				*(u16 *)(data + 0x800BB612 - 0x800BAE80 + 0xB7E80) = 8;
+				*(u16 *)(data + 0x800BB614 - 0x800BAE80 + 0xB7E80) = 0;
+				*(u16 *)(data + 0x800BB616 - 0x800BAE80 + 0xB7E80) = 704;
+				*(u16 *)(data + 0x800BB618 - 0x800BAE80 + 0xB7E80) = 574;
+				
+				*(u16 *)(data + 0x800BB64E - 0x800BAE80 + 0xB7E80) = 8;
+				*(u16 *)(data + 0x800BB652 - 0x800BAE80 + 0xB7E80) = 704;
+				
+				*(u16 *)(data + 0x800EFAAA - 0x800BAE80 + 0xB7E80) = 8;
+				*(u16 *)(data + 0x800EFAAE - 0x800BAE80 + 0xB7E80) = 704;
+				
+				*(u16 *)(data + 0x800EFAE6 - 0x800BAE80 + 0xB7E80) = 8;
+				*(u16 *)(data + 0x800EFAEA - 0x800BAE80 + 0xB7E80) = 704;
+				
+				*(u16 *)(data + 0x800EFB22 - 0x800BAE80 + 0xB7E80) = 8;
+				*(u16 *)(data + 0x800EFB26 - 0x800BAE80 + 0xB7E80) = 704;
+				
+				*(u16 *)(data + 0x800EFB9A - 0x800BAE80 + 0xB7E80) = 8;
+				*(u16 *)(data + 0x800EFB9E - 0x800BAE80 + 0xB7E80) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+			case 973920:
+				*(s16 *)(data + 0x80006B4A - 0x80005680 + 0x25E0) = 574;
+				
+				*(s16 *)(data + 0x80006B6E - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B72 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B76 - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x80006B7A - 0x80005680 + 0x25E0) = 574;
+				
+				*(s16 *)(data + 0x80006B92 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B96 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B9A - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x80006B9E - 0x80005680 + 0x25E0) = 480;
+				
+				*(s16 *)(data + 0x800074A2 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x800074A6 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x800074AA - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x800074AE - 0x80005680 + 0x25E0) = 574;
+				
+				*(u16 *)(data + 0x800BB282 - 0x800BABE0 + 0xB7BE0) = 40;
+				*(u16 *)(data + 0x800BB286 - 0x800BABE0 + 0xB7BE0) = 640;
+				
+				*(u16 *)(data + 0x800BB2BE - 0x800BABE0 + 0xB7BE0) = 40;
+				*(u16 *)(data + 0x800BB2C2 - 0x800BABE0 + 0xB7BE0) = 640;
+				
+				*(u16 *)(data + 0x800BB2FA - 0x800BABE0 + 0xB7BE0) = 40;
+				*(u16 *)(data + 0x800BB2FE - 0x800BABE0 + 0xB7BE0) = 640;
+				
+				*(u16 *)(data + 0x800BB334 - 0x800BABE0 + 0xB7BE0) = 574;
+				*(u16 *)(data + 0x800BB336 - 0x800BABE0 + 0xB7BE0) = 40;
+				*(u16 *)(data + 0x800BB338 - 0x800BABE0 + 0xB7BE0) = 0;
+				*(u16 *)(data + 0x800BB33A - 0x800BABE0 + 0xB7BE0) = 640;
+				*(u16 *)(data + 0x800BB33C - 0x800BABE0 + 0xB7BE0) = 574;
+				
+				*(u16 *)(data + 0x800BB370 - 0x800BABE0 + 0xB7BE0) = 574;
+				*(u16 *)(data + 0x800BB372 - 0x800BABE0 + 0xB7BE0) = 8;
+				*(u16 *)(data + 0x800BB374 - 0x800BABE0 + 0xB7BE0) = 0;
+				*(u16 *)(data + 0x800BB376 - 0x800BABE0 + 0xB7BE0) = 704;
+				*(u16 *)(data + 0x800BB378 - 0x800BABE0 + 0xB7BE0) = 574;
+				
+				*(u16 *)(data + 0x800BB3AE - 0x800BABE0 + 0xB7BE0) = 8;
+				*(u16 *)(data + 0x800BB3B2 - 0x800BABE0 + 0xB7BE0) = 704;
+				
+				*(u16 *)(data + 0x800EEA6A - 0x800BABE0 + 0xB7BE0) = 8;
+				*(u16 *)(data + 0x800EEA6E - 0x800BABE0 + 0xB7BE0) = 704;
+				
+				*(u16 *)(data + 0x800EEAA6 - 0x800BABE0 + 0xB7BE0) = 8;
+				*(u16 *)(data + 0x800EEAAA - 0x800BABE0 + 0xB7BE0) = 704;
+				
+				*(u16 *)(data + 0x800EEAE2 - 0x800BABE0 + 0xB7BE0) = 8;
+				*(u16 *)(data + 0x800EEAE6 - 0x800BABE0 + 0xB7BE0) = 704;
+				
+				*(u16 *)(data + 0x800EEB5A - 0x800BABE0 + 0xB7BE0) = 8;
+				*(u16 *)(data + 0x800EEB5E - 0x800BABE0 + 0xB7BE0) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+			case 977760:
+				*(s16 *)(data + 0x80006B4A - 0x80005680 + 0x25E0) = 574;
+				
+				*(s16 *)(data + 0x80006B6E - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B72 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B76 - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x80006B7A - 0x80005680 + 0x25E0) = 574;
+				
+				*(s16 *)(data + 0x80006B92 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B96 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006B9A - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x80006B9E - 0x80005680 + 0x25E0) = 480;
+				
+				*(s16 *)(data + 0x800074A2 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x800074A6 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x800074AA - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x800074AE - 0x80005680 + 0x25E0) = 574;
+				
+				*(u16 *)(data + 0x800BB3A2 - 0x800BAD00 + 0xB7D00) = 40;
+				*(u16 *)(data + 0x800BB3A6 - 0x800BAD00 + 0xB7D00) = 640;
+				
+				*(u16 *)(data + 0x800BB3DE - 0x800BAD00 + 0xB7D00) = 40;
+				*(u16 *)(data + 0x800BB3E2 - 0x800BAD00 + 0xB7D00) = 640;
+				
+				*(u16 *)(data + 0x800BB41A - 0x800BAD00 + 0xB7D00) = 40;
+				*(u16 *)(data + 0x800BB41E - 0x800BAD00 + 0xB7D00) = 640;
+				
+				*(u16 *)(data + 0x800BB454 - 0x800BAD00 + 0xB7D00) = 574;
+				*(u16 *)(data + 0x800BB456 - 0x800BAD00 + 0xB7D00) = 40;
+				*(u16 *)(data + 0x800BB458 - 0x800BAD00 + 0xB7D00) = 0;
+				*(u16 *)(data + 0x800BB45A - 0x800BAD00 + 0xB7D00) = 640;
+				*(u16 *)(data + 0x800BB45E - 0x800BAD00 + 0xB7D00) = 574;
+				
+				*(u16 *)(data + 0x800BB490 - 0x800BAD00 + 0xB7D00) = 574;
+				*(u16 *)(data + 0x800BB492 - 0x800BAD00 + 0xB7D00) = 8;
+				*(u16 *)(data + 0x800BB494 - 0x800BAD00 + 0xB7D00) = 0;
+				*(u16 *)(data + 0x800BB496 - 0x800BAD00 + 0xB7D00) = 704;
+				*(u16 *)(data + 0x800BB498 - 0x800BAD00 + 0xB7D00) = 574;
+				
+				*(u16 *)(data + 0x800BB4CE - 0x800BAD00 + 0xB7D00) = 8;
+				*(u16 *)(data + 0x800BB4D2 - 0x800BAD00 + 0xB7D00) = 704;
+				
+				*(u16 *)(data + 0x800EF96A - 0x800BAD00 + 0xB7D00) = 8;
+				*(u16 *)(data + 0x800EF96E - 0x800BAD00 + 0xB7D00) = 704;
+				
+				*(u16 *)(data + 0x800EF9A6 - 0x800BAD00 + 0xB7D00) = 8;
+				*(u16 *)(data + 0x800EF9AA - 0x800BAD00 + 0xB7D00) = 704;
+				
+				*(u16 *)(data + 0x800EF9E2 - 0x800BAD00 + 0xB7D00) = 8;
+				*(u16 *)(data + 0x800EF9E6 - 0x800BAD00 + 0xB7D00) = 704;
+				
+				*(u16 *)(data + 0x800EFA5A - 0x800BAD00 + 0xB7D00) = 8;
+				*(u16 *)(data + 0x800EFA5E - 0x800BAD00 + 0xB7D00) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GAFU01", 6)) {
+		switch (length) {
+			case 964128:
+				*(s16 *)(data + 0x80006726 - 0x80005680 + 0x25E0) = 574;
+				
+				*(s16 *)(data + 0x8000674A - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x8000674E - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006752 - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x80006756 - 0x80005680 + 0x25E0) = 574;
+				
+				*(s16 *)(data + 0x8000676E - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006772 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006776 - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x8000677A - 0x80005680 + 0x25E0) = 480;
+				
+				*(s16 *)(data + 0x80006FBE - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006FC2 - 0x80005680 + 0x25E0) = 0;
+				*(s16 *)(data + 0x80006FC6 - 0x80005680 + 0x25E0) = 640;
+				*(s16 *)(data + 0x80006FCA - 0x80005680 + 0x25E0) = 574;
+				
+				*(u16 *)(data + 0x800BA3A2 - 0x800B9DA0 + 0xB6DA0) = 40;
+				*(u16 *)(data + 0x800BA3A6 - 0x800B9DA0 + 0xB6DA0) = 640;
+				
+				*(u16 *)(data + 0x800BA3DE - 0x800B9DA0 + 0xB6DA0) = 40;
+				*(u16 *)(data + 0x800BA3E2 - 0x800B9DA0 + 0xB6DA0) = 640;
+				
+				*(u16 *)(data + 0x800BA41A - 0x800B9DA0 + 0xB6DA0) = 40;
+				*(u16 *)(data + 0x800BA41E - 0x800B9DA0 + 0xB6DA0) = 640;
+				
+				*(u16 *)(data + 0x800BA454 - 0x800B9DA0 + 0xB6DA0) = 574;
+				*(u16 *)(data + 0x800BA456 - 0x800B9DA0 + 0xB6DA0) = 40;
+				*(u16 *)(data + 0x800BA458 - 0x800B9DA0 + 0xB6DA0) = 0;
+				*(u16 *)(data + 0x800BA45A - 0x800B9DA0 + 0xB6DA0) = 640;
+				*(u16 *)(data + 0x800BA45C - 0x800B9DA0 + 0xB6DA0) = 574;
+				
+				*(u16 *)(data + 0x800BA490 - 0x800B9DA0 + 0xB6DA0) = 574;
+				*(u16 *)(data + 0x800BA492 - 0x800B9DA0 + 0xB6DA0) = 8;
+				*(u16 *)(data + 0x800BA494 - 0x800B9DA0 + 0xB6DA0) = 0;
+				*(u16 *)(data + 0x800BA496 - 0x800B9DA0 + 0xB6DA0) = 704;
+				*(u16 *)(data + 0x800BA498 - 0x800B9DA0 + 0xB6DA0) = 574;
+				
+				*(u16 *)(data + 0x800BA4CE - 0x800B9DA0 + 0xB6DA0) = 8;
+				*(u16 *)(data + 0x800BA4D2 - 0x800B9DA0 + 0xB6DA0) = 704;
+				
+				*(u16 *)(data + 0x800EC44A - 0x800B9DA0 + 0xB6DA0) = 8;
+				*(u16 *)(data + 0x800EC44E - 0x800B9DA0 + 0xB6DA0) = 704;
+				
+				*(u16 *)(data + 0x800EC486 - 0x800B9DA0 + 0xB6DA0) = 8;
+				*(u16 *)(data + 0x800EC48A - 0x800B9DA0 + 0xB6DA0) = 704;
+				
+				*(u16 *)(data + 0x800EC4C2 - 0x800B9DA0 + 0xB6DA0) = 8;
+				*(u16 *)(data + 0x800EC4C6 - 0x800B9DA0 + 0xB6DA0) = 704;
+				
+				*(u16 *)(data + 0x800EC53A - 0x800B9DA0 + 0xB6DA0) = 8;
+				*(u16 *)(data + 0x800EC53E - 0x800B9DA0 + 0xB6DA0) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	}
+}
+
 void Patch_PADStatus(u32 *data, u32 length, int dataType)
 {
 	int i, j, k;
