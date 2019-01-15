@@ -1037,6 +1037,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{  2, 1, 0, 0, 1, 0, NULL, 0, "GXSetViewport C" },	// SN Systems ProDG
 		{ 18, 5, 8, 1, 0, 2, NULL, 0, "GXSetViewport D" }
 	};
+	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
 	
 	switch (swissSettings.gameVMode) {
 		case 4: case 9:
@@ -1088,6 +1089,17 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	}
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
+		if (!_SDA2_BASE_ && !_SDA_BASE_) {
+			if ((data[i + 0] & 0xFFFF0000) == 0x3C400000 &&
+				(data[i + 1] & 0xFFFF0000) == 0x60420000 &&
+				(data[i + 2] & 0xFFFF0000) == 0x3DA00000 &&
+				(data[i + 3] & 0xFFFF0000) == 0x61AD0000) {
+				_SDA2_BASE_ = (data[i + 0] << 16) | (u16)data[i + 1];
+				_SDA_BASE_  = (data[i + 2] << 16) | (u16)data[i + 3];
+				i += 4;
+			}
+			continue;
+		}
 		if (data[i - 1] != 0x4E800020 || (data[i] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6))
 			continue;
 		
@@ -3675,8 +3687,20 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		{ 234, 46, 0, 0, 42, 51, NULL, 0, "SPEC2_MakeStatus B" },	// SN Systems ProDG
 		{ 284, 55, 2, 0, 43, 76, NULL, 0, "SPEC2_MakeStatus C" }
 	};
+	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
+		if (!_SDA2_BASE_ && !_SDA_BASE_) {
+			if ((data[i + 0] & 0xFFFF0000) == 0x3C400000 &&
+				(data[i + 1] & 0xFFFF0000) == 0x60420000 &&
+				(data[i + 2] & 0xFFFF0000) == 0x3DA00000 &&
+				(data[i + 3] & 0xFFFF0000) == 0x61AD0000) {
+				_SDA2_BASE_ = (data[i + 0] << 16) | (u16)data[i + 1];
+				_SDA_BASE_  = (data[i + 2] << 16) | (u16)data[i + 3];
+				i += 4;
+			}
+			continue;
+		}
 		if (data[i - 1] != 0x4E800020 || (data[i] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6))
 			continue;
 		
@@ -3943,6 +3967,8 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		u32 *PADRead = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		u32 *PADReadHook;
 		
+		u32 MakeStatusAddr, *MakeStatus;
+		
 		if (PADRead) {
 			if (devices[DEVICE_CUR] == &__device_dvd)
 				PADReadHook = IGR_CHECK_DVD;
@@ -3952,41 +3978,66 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 				PADReadHook = IGR_CHECK;
 			
 			switch (k) {
+				case 0: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 132]; break;
+				case 1: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 128]; break;
+				case 2: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 163]; break;
+				case 3: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 194]; break;
+				case 4: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 192]; break;
+				case 5: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 188]; break;
+				case 6: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 149]; break;
+			}
+			
+			MakeStatus = Calc_Address(data, dataType, MakeStatusAddr);
+			MakeStatus = Calc_Address(data, dataType, MakeStatusAddr = *MakeStatus);
+			
+			switch (k) {
 				case 0:
-					data[i + 159] = 0x387E0000;	// addi		r3, r30, 0
-					data[i + 160] = 0x389F0000;	// addi		r4, r31, 0
-					data[i + 161] = branchAndLink(PADReadHook, PADRead + 161);
-					break;
-				case 1:
-					data[i + 156] = 0x387E0000;	// addi		r3, r30, 0
-					data[i + 157] = 0x389F0000;	// addi		r4, r31, 0
-					data[i + 158] = branchAndLink(PADReadHook, PADRead + 158);
-					break;
+				case 1: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[0]); break;
 				case 2:
-					data[i + 190] = 0x38770000;	// addi		r3, r23, 0
-					data[i + 191] = 0x38950000;	// addi		r4, r21, 0
-					data[i + 192] = branchAndLink(PADReadHook, PADRead + 192);
-					break;
 				case 3:
-					data[i + 221] = 0x38750000;	// addi		r3, r21, 0
-					data[i + 222] = 0x389F0000;	// addi		r4, r31, 0
-					data[i + 223] = branchAndLink(PADReadHook, PADRead + 223);
-					break;
-				case 4:
-					data[i + 219] = 0x38750000;	// addi		r3, r21, 0
-					data[i + 220] = 0x389F0000;	// addi		r4, r31, 0
-					data[i + 221] = branchAndLink(PADReadHook, PADRead + 221);
-					break;
-				case 5:
-					data[i + 216] = 0x7F63DB78;	// mr		r3, r27
-					data[i + 217] = 0x7F24CB78;	// mr		r4, r25
-					data[i + 218] = branchAndLink(PADReadHook, PADRead + 218);
-					break;
-				case 6:
-					data[i + 176] = 0x38790000;	// addi		r3, r25, 0
-					data[i + 177] = 0x38970000;	// addi		r4, r23, 0
-					data[i + 178] = branchAndLink(PADReadHook, PADRead + 178);
-					break;
+				case 4: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[1]); break;
+				case 5: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[2]); break;
+				case 6: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[3]); break;
+			}
+			
+			if (swissSettings.igrType != IGR_OFF) {
+				switch (k) {
+					case 0:
+						data[i + 159] = 0x387E0000;	// addi		r3, r30, 0
+						data[i + 160] = 0x389F0000;	// addi		r4, r31, 0
+						data[i + 161] = branchAndLink(PADReadHook, PADRead + 161);
+						break;
+					case 1:
+						data[i + 156] = 0x387E0000;	// addi		r3, r30, 0
+						data[i + 157] = 0x389F0000;	// addi		r4, r31, 0
+						data[i + 158] = branchAndLink(PADReadHook, PADRead + 158);
+						break;
+					case 2:
+						data[i + 190] = 0x38770000;	// addi		r3, r23, 0
+						data[i + 191] = 0x38950000;	// addi		r4, r21, 0
+						data[i + 192] = branchAndLink(PADReadHook, PADRead + 192);
+						break;
+					case 3:
+						data[i + 221] = 0x38750000;	// addi		r3, r21, 0
+						data[i + 222] = 0x389F0000;	// addi		r4, r31, 0
+						data[i + 223] = branchAndLink(PADReadHook, PADRead + 223);
+						break;
+					case 4:
+						data[i + 219] = 0x38750000;	// addi		r3, r21, 0
+						data[i + 220] = 0x389F0000;	// addi		r4, r31, 0
+						data[i + 221] = branchAndLink(PADReadHook, PADRead + 221);
+						break;
+					case 5:
+						data[i + 216] = 0x7F63DB78;	// mr		r3, r27
+						data[i + 217] = 0x7F24CB78;	// mr		r4, r25
+						data[i + 218] = branchAndLink(PADReadHook, PADRead + 218);
+						break;
+					case 6:
+						data[i + 176] = 0x38790000;	// addi		r3, r25, 0
+						data[i + 177] = 0x38970000;	// addi		r4, r23, 0
+						data[i + 178] = branchAndLink(PADReadHook, PADRead + 178);
+						break;
+				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", PADReadSigs[k].Name, PADRead);
 		}
