@@ -23,44 +23,40 @@
 
 #define FST_ENTRY_SIZE 12
 
+// Parse disc header & read FST into a buffer
+void* get_fst(file_handle* file) {
+	DiskHeader header;
+	char	*FST;
+	
+	// Grab disc header
+	memset(&header,0,sizeof(DiskHeader));
+ 	devices[DEVICE_CUR]->seekFile(file,0,DEVICE_HANDLER_SEEK_SET);
+ 	if(devices[DEVICE_CUR]->readFile(file,&header,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
+		return NULL;
+	}
+	
+	if(header.DVDMagicWord != DVD_MAGIC) return NULL;
+	
+	// Alloc and read FST
+	FST=(char*)memalign(32,header.FSTSize); 
+	if(!FST) return NULL;
+
+	devices[DEVICE_CUR]->seekFile(file,header.FSTOffset,DEVICE_HANDLER_SEEK_SET);
+ 	if(devices[DEVICE_CUR]->readFile(file,FST,header.FSTSize) != header.FSTSize) {
+		free(FST); 
+		return NULL;
+	}
+	return FST;
+}
+
 //Lets parse the entire game FST in search for the banner
 unsigned int getBannerOffset(file_handle *file) {
-	unsigned int   	buffer[2]; 
-	unsigned long   fst_offset=0,filename_offset=0,entries=0,string_table_offset=0,fst_size=0; 
+	unsigned long   filename_offset=0,entries=0,string_table_offset=0; 
 	unsigned long   i,offset; 
 	char   filename[256]; 
-	
-	// lets just quickly check if this is a valid GCM (contains magic)
-	devices[DEVICE_CUR]->seekFile(file,0x1C,DEVICE_HANDLER_SEEK_SET);
-	if((devices[DEVICE_CUR]->readFile(file,(unsigned char*)buffer,sizeof(int))!=sizeof(int)) || (buffer[0]!=0xC2339F3D)) {
-		return 0;
-	}
-
-	// get FST offset and size
-	devices[DEVICE_CUR]->seekFile(file,0x424,DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(file,(unsigned char*)buffer,sizeof(int)*2)!=sizeof(int)*2) {
-		return 0;
-	}  
-  
-	fst_offset	=buffer[0];
-	fst_size	=buffer[1];
-
-	if((!fst_offset) || (!fst_size)) {
-		return 0;
-	}
       
-	// allocate space for FST table
-	char* FST = (char*)memalign(32,fst_size);		//malloc dies on NTSC for some reason.. bad libogc! 
-	if(!FST) {
-		return 0;	//didn't fit, doesn't matter it's just for a banner
-	}
-	
-	// read the FST
-	devices[DEVICE_CUR]->seekFile(file,fst_offset,DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(file,FST,fst_size)!=fst_size) {
-		free(FST);
-		return 0;
-	}
+	char *FST = get_fst(file);
+	if(!FST) return 0;
   
 	// number of entries and string table location
 	entries = *(unsigned int*)&FST[8];
@@ -91,28 +87,11 @@ unsigned int getBannerOffset(file_handle *file) {
 // Returns the number of filesToPatch and fills out the filesToPatch array passed in (pre-allocated)
 int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 
-	DiskHeader header;
-	char	*FST; 
+	char	*FST = get_fst(file);
 	char	filename[256];
 	int		numFiles = 0;
-		
-	// Grab disc header
-	memset(&header,0,sizeof(DiskHeader));
- 	devices[DEVICE_CUR]->seekFile(file,0,DEVICE_HANDLER_SEEK_SET);
- 	if(devices[DEVICE_CUR]->readFile(file,&header,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
-		return -1;
-	}
- 	  
- 	// Alloc and read FST
-	FST=(char*)memalign(32,header.FSTSize); 
-	if(!FST) {
-		return -1;
-	}
-	devices[DEVICE_CUR]->seekFile(file,header.FSTOffset,DEVICE_HANDLER_SEEK_SET);
- 	if(devices[DEVICE_CUR]->readFile(file,FST,header.FSTSize) != header.FSTSize) {
-		free(FST); 
-		return -1;
-	}
+
+	if(!FST) return -1;
 
 	u32 entries=*(unsigned int*)&FST[8];
 	u32 string_table_offset=FST_ENTRY_SIZE*entries;
@@ -510,22 +489,12 @@ u64 calc_fst_entries_size(char *FST) {
 int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 
 	print_gecko("Read dir for directory: %s\r\n",file->name);
-	DiskHeader header;
-	char	*FST; 
+	char 	*FST = get_fst(file);
 	char	filename[PATHNAME_MAX];
 	int		numFiles = 1, idx = 0;
 	int		isRoot = !strcmp((const char*)&file->name[0], "dvd:/");
 	
-	// Grab disc header
-	memset(&header,0,sizeof(DiskHeader));
-	DVD_Read(&header,0,sizeof(DiskHeader));
- 	// Alloc and read FST
-	FST=(char*)memalign(32,header.FSTSize); 
-	if(!FST) {
-		return -1;
-	}
-	// Read the FST
- 	DVD_Read(FST,header.FSTOffset,header.FSTSize);
+	if(!FST) return -1;
 	
 	// Get the space taken up by this disc
 	if(usedSpace) *usedSpace = calc_fst_entries_size(FST);
