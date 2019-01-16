@@ -3055,6 +3055,22 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 				print_gecko("Patched:[%s]\n", fileName);
 				patched++;
 			}
+		} else if (!strncmp(gameID, "GXLP52", 6)) {
+			if (!strcasecmp(fileName, "build.ini")) {
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5)
+					strncpy(data, "[BUILD]\r\nbuild=normal\r\nvideo=eur60\r\nLanguage=eng\r\n", length);
+				
+				print_gecko("Patched:[%s]\n", fileName);
+				patched++;
+			}
+		} else if (!strncmp(gameID, "GXLX52", 6)) {
+			if (!strcasecmp(fileName, "build.ini")) {
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5)
+					strncpy(data, "[BUILD]\r\nbuild=normal\r\nvideo=eur60\r\nLanguage=fog\r\n", length);
+				
+				print_gecko("Patched:[%s]\n", fileName);
+				patched++;
+			}
 		}
 	}
 	return patched;
