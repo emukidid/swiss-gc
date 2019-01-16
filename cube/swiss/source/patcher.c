@@ -2897,16 +2897,6 @@ const u32 GXSETVAT_NTSC_patched[32] = {
     0x4082ffa0, 0x38000000, 0x980904f2, 0x4e800020
 };
 
-// Overwrite game specific file content
-int Patch_GameSpecificFile(void *data, u32 length, const char* gameID, const char* fileName) {
-	int patched = 0;
-	/*if(!strncmp(gameID, "GS8E7D", 6) && !strcasecmp(fileName, "SPYROCFG_NGC.CFG") && someVideoOption ) {
-		strncpy(data + 0xA5A, "320", 3);
-		patched = 1;
-	}*/
-	return patched;
-}
-
 // Apply specific per-game hacks/workarounds
 int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType) {
 	int patched = 0;
@@ -3044,6 +3034,27 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 			*(vu32*)(addr+0xF0F7C) = branch(Calc_ProperAddress(addr, dataType, 0xF83B0), Calc_ProperAddress(addr, dataType, 0xF0F7C));
 			print_gecko("Patched:[Powerpuff Girls PAL]\r\n");
 			patched=1;
+		}
+	}
+	return patched;
+}
+
+// Overwrite game specific file content
+int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const char *fileName)
+{
+	void *addr;
+	int patched = 0;
+	
+	if (!swissSettings.disableVideoPatches) {
+		if (!strncmp(gameID, "GS8P7D", 6)) {
+			if (!strcasecmp(fileName, "SPYROCFG_NGC.CFG")) {
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5) {
+					addr = strnstr(data, "\tHeight:\t\t\t496\r\n", length);
+					if (addr) memcpy(addr, "\tHeight:\t\t\t448\r\n", 16);
+				}
+				print_gecko("Patched:[%s]\n", fileName);
+				patched++;
+			}
 		}
 	}
 	return patched;

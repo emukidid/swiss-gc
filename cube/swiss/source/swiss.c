@@ -1474,17 +1474,17 @@ void load_file()
 
 int check_game(ExecutableFile *filesToPatch)
 { 	
+	char* gameID = (char*)&GCMDisk;
 	int multiDol = 0;
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Checking Game .."));
 	
 	int numToPatch = parse_gcm(&curFile, filesToPatch);
-	/*
-	char* gameID = (char*)&GCMDisk;
-	// Spyro video cfg file hack
-	if(!strncmp(gameID, "GS8E7D", 6) && someVideoOption ) {
-		parse_gcm_add(&curFile, filesToPatch, &numToPatch, "SPYROCFG_NGC.CFG");
-	}*/
 	
+	if(!swissSettings.disableVideoPatches) {
+		if(!strncmp(gameID, "GS8P7D", 6)) {
+			parse_gcm_add(&curFile, filesToPatch, &numToPatch, "SPYROCFG_NGC.CFG");
+		}
+	}
 	DrawDispose(msgBox);
 	if(numToPatch>0) {
 		// Game requires patch files, lets do it.	
