@@ -1463,7 +1463,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(__VIRetraceHandlerSigs) / sizeof(FuncPattern); j++)
 		if (__VIRetraceHandlerSigs[j].offsetFoundAt) break;
 	
-	if ((i = getCurrentFieldEvenOddSigs[k].offsetFoundAt)) {
+	if (k < sizeof(getCurrentFieldEvenOddSigs) / sizeof(FuncPattern) && (i = getCurrentFieldEvenOddSigs[k].offsetFoundAt)) {
 		u32 *getCurrentFieldEvenOdd = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (getCurrentFieldEvenOdd) {
@@ -1497,7 +1497,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOdd);
 		}
 		
-		if ((i = __VIRetraceHandlerSigs[j].offsetFoundAt)) {
+		if (j < sizeof(__VIRetraceHandlerSigs) / sizeof(FuncPattern) && (i = __VIRetraceHandlerSigs[j].offsetFoundAt)) {
 			u32 *__VIRetraceHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *__VIRetraceHandlerHook;
 			
@@ -1612,7 +1612,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(getTimingSigs) / sizeof(FuncPattern); j++)
 		if (getTimingSigs[j].offsetFoundAt) break;
 	
-	if ((i = getTimingSigs[j].offsetFoundAt)) {
+	if (j < sizeof(getTimingSigs) / sizeof(FuncPattern) && (i = getTimingSigs[j].offsetFoundAt)) {
 		u32 *getTiming = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		u32 jumpTableAddr;
@@ -1723,7 +1723,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		for (k = 0; k < sizeof(getCurrentFieldEvenOddSigs) / sizeof(FuncPattern); k++)
 			if (getCurrentFieldEvenOddSigs[k].offsetFoundAt) break;
 		
-		if ((i = getCurrentFieldEvenOddSigs[k].offsetFoundAt)) {
+		if (k < sizeof(getCurrentFieldEvenOddSigs) / sizeof(FuncPattern) && (i = getCurrentFieldEvenOddSigs[k].offsetFoundAt)) {
 			u32 *getCurrentFieldEvenOdd = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			
 			if ((i = VIWaitForRetraceSig.offsetFoundAt)) {
@@ -1744,7 +1744,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(setFbbRegsSigs) / sizeof(FuncPattern); j++)
 		if (setFbbRegsSigs[j].offsetFoundAt) break;
 	
-	if ((i = setFbbRegsSigs[j].offsetFoundAt)) {
+	if (j < sizeof(setFbbRegsSigs) / sizeof(FuncPattern) && (i = setFbbRegsSigs[j].offsetFoundAt)) {
 		u32 *setFbbRegs = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (setFbbRegs) {
@@ -1791,7 +1791,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(setVerticalRegsSigs) / sizeof(FuncPattern); j++)
 		if (setVerticalRegsSigs[j].offsetFoundAt) break;
 	
-	if ((i = setVerticalRegsSigs[j].offsetFoundAt)) {
+	if (j < sizeof(setVerticalRegsSigs) / sizeof(FuncPattern) && (i = setVerticalRegsSigs[j].offsetFoundAt)) {
 		u32 *setVerticalRegs = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (setVerticalRegs) {
@@ -1827,7 +1827,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(VIConfigureSigs) / sizeof(FuncPattern); j++)
 		if (VIConfigureSigs[j].offsetFoundAt) break;
 	
-	if ((i = VIConfigureSigs[j].offsetFoundAt)) {
+	if (j < sizeof(VIConfigureSigs) / sizeof(FuncPattern) && (i = VIConfigureSigs[j].offsetFoundAt)) {
 		u32 *VIConfigure = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		u32 *VIConfigureHook1, *VIConfigureHook2;
 		
@@ -2242,7 +2242,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(VIConfigurePanSigs) / sizeof(FuncPattern); j++)
 		if (VIConfigurePanSigs[j].offsetFoundAt) break;
 	
-	if ((i = VIConfigurePanSigs[j].offsetFoundAt)) {
+	if (j < sizeof(VIConfigurePanSigs) / sizeof(FuncPattern) && (i = VIConfigurePanSigs[j].offsetFoundAt)) {
 		u32 *VIConfigurePan = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		u32 *VIConfigurePanHook;
 		
@@ -2276,7 +2276,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(VISetBlackSigs) / sizeof(FuncPattern); j++)
 		if (VISetBlackSigs[j].offsetFoundAt) break;
 	
-	if ((i = VISetBlackSigs[j].offsetFoundAt)) {
+	if (j < sizeof(VISetBlackSigs) / sizeof(FuncPattern) && (i = VISetBlackSigs[j].offsetFoundAt)) {
 		u32 *VISetBlack = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (VISetBlack) {
@@ -2301,7 +2301,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(VIGetNextFieldSigs) / sizeof(FuncPattern); j++)
 		if (VIGetNextFieldSigs[j].offsetFoundAt) break;
 	
-	if ((i = VIGetNextFieldSigs[j].offsetFoundAt)) {
+	if (j < sizeof(VIGetNextFieldSigs) / sizeof(FuncPattern) && (i = VIGetNextFieldSigs[j].offsetFoundAt)) {
 		u32 *VIGetNextField = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (VIGetNextField) {
@@ -2320,7 +2320,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(__GXInitGXSigs) / sizeof(FuncPattern); j++)
 		if (__GXInitGXSigs[j].offsetFoundAt) break;
 	
-	if ((i = __GXInitGXSigs[j].offsetFoundAt)) {
+	if (j < sizeof(__GXInitGXSigs) / sizeof(FuncPattern) && (i = __GXInitGXSigs[j].offsetFoundAt)) {
 		u32 *__GXInitGX = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__GXInitGX) {
@@ -2344,7 +2344,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		for (j = 0; j < sizeof(GXAdjustForOverscanSigs) / sizeof(FuncPattern); j++)
 			if (GXAdjustForOverscanSigs[j].offsetFoundAt) break;
 		
-		if ((i = GXAdjustForOverscanSigs[j].offsetFoundAt)) {
+		if (j < sizeof(GXAdjustForOverscanSigs) / sizeof(FuncPattern) && (i = GXAdjustForOverscanSigs[j].offsetFoundAt)) {
 			u32 *GXAdjustForOverscan = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			
 			if (GXAdjustForOverscan) {
@@ -2359,7 +2359,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		for (j = 0; j < sizeof(GXSetDispCopyYScaleSigs) / sizeof(FuncPattern); j++)
 			if (GXSetDispCopyYScaleSigs[j].offsetFoundAt) break;
 		
-		if ((i = GXSetDispCopyYScaleSigs[j].offsetFoundAt)) {
+		if (j < sizeof(GXSetDispCopyYScaleSigs) / sizeof(FuncPattern) && (i = GXSetDispCopyYScaleSigs[j].offsetFoundAt)) {
 			u32 *GXSetDispCopyYScale = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			
 			if (GXSetDispCopyYScale) {
@@ -2380,7 +2380,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		for (j = 0; j < sizeof(GXSetCopyFilterSigs) / sizeof(FuncPattern); j++)
 			if (GXSetCopyFilterSigs[j].offsetFoundAt) break;
 		
-		if ((i = GXSetCopyFilterSigs[j].offsetFoundAt)) {
+		if (j < sizeof(GXSetCopyFilterSigs) / sizeof(FuncPattern) && (i = GXSetCopyFilterSigs[j].offsetFoundAt)) {
 			u32 *GXSetCopyFilter = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			
 			if (GXSetCopyFilter) {
@@ -2397,7 +2397,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		for (j = 0; j < sizeof(GXSetBlendModeSigs) / sizeof(FuncPattern); j++)
 			if (GXSetBlendModeSigs[j].offsetFoundAt) break;
 		
-		if ((i = GXSetBlendModeSigs[j].offsetFoundAt)) {
+		if (j < sizeof(GXSetBlendModeSigs) / sizeof(FuncPattern) && (i = GXSetBlendModeSigs[j].offsetFoundAt)) {
 			u32 *GXSetBlendMode = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			
 			if (GXSetBlendMode) {
@@ -2420,7 +2420,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		for (j = 0; j < sizeof(GXCopyDispSigs) / sizeof(FuncPattern); j++)
 			if (GXCopyDispSigs[j].offsetFoundAt) break;
 		
-		if ((i = GXCopyDispSigs[j].offsetFoundAt)) {
+		if (j < sizeof(GXCopyDispSigs) / sizeof(FuncPattern) && (i = GXCopyDispSigs[j].offsetFoundAt)) {
 			u32 *GXCopyDisp = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *GXCopyDispHook;
 			
@@ -2436,7 +2436,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		for (j = 0; j < sizeof(GXSetViewportSigs) / sizeof(FuncPattern); j++)
 			if (GXSetViewportSigs[j].offsetFoundAt) break;
 		
-		if ((i = GXSetViewportSigs[j].offsetFoundAt)) {
+		if (j < sizeof(GXSetViewportSigs) / sizeof(FuncPattern) && (i = GXSetViewportSigs[j].offsetFoundAt)) {
 			u32 *GXSetViewport = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			
 			if (GXSetViewport) {
@@ -2463,7 +2463,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		for (j = 0; j < sizeof(GXSetViewportJitterSigs) / sizeof(FuncPattern); j++)
 			if (GXSetViewportJitterSigs[j].offsetFoundAt) break;
 		
-		if ((i = GXSetViewportJitterSigs[j].offsetFoundAt)) {
+		if (j < sizeof(GXSetViewportJitterSigs) / sizeof(FuncPattern) && (i = GXSetViewportJitterSigs[j].offsetFoundAt)) {
 			u32 *GXSetViewportJitter = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			
 			if (GXSetViewportJitter) {
@@ -3888,7 +3888,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(UpdateOriginSigs) / sizeof(FuncPattern); j++)
 		if (UpdateOriginSigs[j].offsetFoundAt) break;
 	
-	if ((i = UpdateOriginSigs[j].offsetFoundAt)) {
+	if (j < sizeof(UpdateOriginSigs) / sizeof(FuncPattern) && (i = UpdateOriginSigs[j].offsetFoundAt)) {
 		u32 *UpdateOrigin = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (UpdateOrigin) {
@@ -3915,7 +3915,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(PADOriginCallbackSigs) / sizeof(FuncPattern); j++)
 		if (PADOriginCallbackSigs[j].offsetFoundAt) break;
 	
-	if ((i = PADOriginCallbackSigs[j].offsetFoundAt)) {
+	if (j < sizeof(PADOriginCallbackSigs) / sizeof(FuncPattern) && (i = PADOriginCallbackSigs[j].offsetFoundAt)) {
 		u32 *PADOriginCallback = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (PADOriginCallback) {
@@ -3932,7 +3932,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(PADOriginUpdateCallbackSigs) / sizeof(FuncPattern); j++)
 		if (PADOriginUpdateCallbackSigs[j].offsetFoundAt) break;
 	
-	if ((i = PADOriginUpdateCallbackSigs[j].offsetFoundAt)) {
+	if (j < sizeof(PADOriginUpdateCallbackSigs) / sizeof(FuncPattern) && (i = PADOriginUpdateCallbackSigs[j].offsetFoundAt)) {
 		u32 *PADOriginUpdateCallback = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (PADOriginUpdateCallback) {
@@ -3949,7 +3949,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(PADInitSigs) / sizeof(FuncPattern); j++)
 		if (PADInitSigs[j].offsetFoundAt) break;
 	
-	if ((i = PADInitSigs[j].offsetFoundAt)) {
+	if (j < sizeof(PADInitSigs) / sizeof(FuncPattern) && (i = PADInitSigs[j].offsetFoundAt)) {
 		u32 *PADInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (PADInit) {
@@ -3963,7 +3963,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(PADSetSpecSigs) / sizeof(FuncPattern); j++)
 		if (PADSetSpecSigs[j].offsetFoundAt) break;
 	
-	if ((i = PADReadSigs[k].offsetFoundAt)) {
+	if (k < sizeof(PADReadSigs) / sizeof(FuncPattern) && (i = PADReadSigs[k].offsetFoundAt)) {
 		u32 *PADRead = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		u32 *PADReadHook;
 		
@@ -4042,7 +4042,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 			print_gecko("Found:[%s] @ %08X\n", PADReadSigs[k].Name, PADRead);
 		}
 		
-		if ((i = PADSetSpecSigs[j].offsetFoundAt)) {
+		if (j < sizeof(PADSetSpecSigs) / sizeof(FuncPattern) && (i = PADSetSpecSigs[j].offsetFoundAt)) {
 			u32 *PADSetSpec = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			
 			u32 SPEC0_MakeStatusAddr, *SPEC0_MakeStatus;
@@ -4097,7 +4097,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(SPEC0_MakeStatusSigs) / sizeof(FuncPattern); j++)
 		if (SPEC0_MakeStatusSigs[j].offsetFoundAt) break;
 	
-	if ((i = SPEC0_MakeStatusSigs[j].offsetFoundAt)) {
+	if (j < sizeof(SPEC0_MakeStatusSigs) / sizeof(FuncPattern) && (i = SPEC0_MakeStatusSigs[j].offsetFoundAt)) {
 		u32 *SPEC0_MakeStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SPEC0_MakeStatus) {
@@ -4122,7 +4122,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(SPEC1_MakeStatusSigs) / sizeof(FuncPattern); j++)
 		if (SPEC1_MakeStatusSigs[j].offsetFoundAt) break;
 	
-	if ((i = SPEC1_MakeStatusSigs[j].offsetFoundAt)) {
+	if (j < sizeof(SPEC1_MakeStatusSigs) / sizeof(FuncPattern) && (i = SPEC1_MakeStatusSigs[j].offsetFoundAt)) {
 		u32 *SPEC1_MakeStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SPEC1_MakeStatus) {
@@ -4147,7 +4147,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(SPEC2_MakeStatusSigs) / sizeof(FuncPattern); j++)
 		if (SPEC2_MakeStatusSigs[j].offsetFoundAt) break;
 	
-	if ((i = SPEC2_MakeStatusSigs[j].offsetFoundAt)) {
+	if (j < sizeof(SPEC2_MakeStatusSigs) / sizeof(FuncPattern) && (i = SPEC2_MakeStatusSigs[j].offsetFoundAt)) {
 		u32 *SPEC2_MakeStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SPEC2_MakeStatus) {
