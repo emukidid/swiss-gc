@@ -1478,6 +1478,12 @@ int check_game(ExecutableFile *filesToPatch)
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Checking Game .."));
 	
 	int numToPatch = parse_gcm(&curFile, filesToPatch);
+	/*
+	char* gameID = (char*)&GCMDisk;
+	// Spyro video cfg file hack
+	if(!strncmp(gameID, "GS8E7D", 6) && someVideoOption ) {
+		parse_gcm_add(&curFile, filesToPatch, &numToPatch, "SPYROCFG_NGC.CFG");
+	}*/
 	
 	DrawDispose(msgBox);
 	if(numToPatch>0) {

@@ -49,15 +49,10 @@ void* get_fst(file_handle* file) {
 	return FST;
 }
 
-//Lets parse the entire game FST in search for the banner
-unsigned int getBannerOffset(file_handle *file) {
-	unsigned long   filename_offset=0,entries=0,string_table_offset=0; 
-	unsigned long   i,offset; 
-	char   filename[256]; 
-      
-	char *FST = get_fst(file);
-	if(!FST) return 0;
-  
+// Populate the file_offset and file_size for searchFileName from the GCM FST
+void get_fst_details(char *FST, char *searchFileName, u32 *file_offset, u32 *file_size) {
+	u32 filename_offset, entries, string_table_offset, offset, i;
+	char filename[256];
 	// number of entries and string table location
 	entries = *(unsigned int*)&FST[8];
 	string_table_offset=12*entries; 
@@ -71,17 +66,44 @@ unsigned int getBannerOffset(file_handle *file) {
 			filename_offset=(unsigned int)FST[offset+1]*256*256+(unsigned int)FST[offset+2]*256+(unsigned int)FST[offset+3]; 
 			memset(filename,0,256);
 			strcpy(filename,&FST[string_table_offset+filename_offset]); 
-			unsigned int loc = 0;
-			memcpy(&loc,&FST[offset+4],4);
-			if((!strcasecmp(filename,"opening.bnr")) || (!strcasecmp(filename,"OPENING.BNR"))) 
+			if(!strcasecmp(filename,searchFileName)) 
 			{
-				free(FST);
-				return loc;
+				memcpy(file_offset,&FST[offset+4],4);
+				memcpy(file_size,&FST[offset+8],4);
+				return;
 			}		
 		} 
 	}
+	*file_offset = 0;
+	*file_size = 0;
+}
+
+//Lets parse the entire game FST in search for the banner
+unsigned int getBannerOffset(file_handle *file) {
+	char *FST = get_fst(file);
+	if(!FST) return 0;
+	
+	u32 file_offset, file_size;
+	get_fst_details(FST, "opening.bnr", &file_offset, &file_size);
 	free(FST);
-	return 0;
+	return file_offset;
+}
+
+// Add a file to our current filesToPatch based on fileName
+void parse_gcm_add(file_handle *file, ExecutableFile *filesToPatch, u32 *numToPatch, char *fileName) {
+	char *FST = get_fst(file);
+	if(!FST) return;
+	
+	u32 file_offset, file_size;
+	get_fst_details(FST, fileName, &file_offset, &file_size);
+	free(FST);
+	if(file_offset != 0 && file_size != 0) {
+		filesToPatch[*numToPatch].offset = file_offset;
+		filesToPatch[*numToPatch].size = file_size;
+		filesToPatch[*numToPatch].type = PATCH_OTHER;
+		memcpy(&filesToPatch[*numToPatch].name,fileName,64); 
+		*numToPatch += 1;
+	}
 }
 
 // Returns the number of filesToPatch and fills out the filesToPatch array passed in (pre-allocated)
@@ -351,56 +373,63 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			return 0;
 		}
 		
-		if(devices[DEVICE_CUR] != &__device_dvd && devices[DEVICE_CUR] != &__device_wkf) {
-			ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
-			if(READ_PATCHED_ALL != ret)	{
-				DrawDispose(progBox);	
-				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!"));
-				sleep(5);
-				DrawDispose(msgBox);
+		// Patch raw files for certain games
+		if(filesToPatch[i].type == PATCH_OTHER) {
+			patched += Patch_GameSpecificFile(buffer, sizeToRead, &gameID[0], filesToPatch[i].name);
+		}
+		else { 
+			// Patch executable files
+			if(devices[DEVICE_CUR] != &__device_dvd && devices[DEVICE_CUR] != &__device_wkf) {
+				ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
+				if(READ_PATCHED_ALL != ret)	{
+					DrawDispose(progBox);	
+					uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!"));
+					sleep(5);
+					DrawDispose(msgBox);
+				}
+				else
+					patched += 1;
 			}
-			else
-				patched += 1;
-		}
 		
-		// Patch specific game hacks
-		if(devices[DEVICE_CUR] != &__device_dvd && devices[DEVICE_CUR] != &__device_wkf) {
-			patched += Patch_GameSpecific(buffer, sizeToRead, &gameID[0], filesToPatch[i].type);
+			// Patch specific game hacks
+			if(devices[DEVICE_CUR] != &__device_dvd && devices[DEVICE_CUR] != &__device_wkf) {
+				patched += Patch_GameSpecific(buffer, sizeToRead, &gameID[0], filesToPatch[i].type);
+			}
+			
+			// Patch IGR
+			if(swissSettings.igrType != IGR_OFF || swissSettings.invertCStick) {
+				Patch_PADStatus(buffer, sizeToRead, filesToPatch[i].type);
+			}
+					
+			if(swissSettings.debugUSB && usb_isgeckoalive(1) && !swissSettings.wiirdDebug) {
+				patched += Patch_Fwrite(buffer, sizeToRead);
+			}
+			
+			if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
+				Patch_CheatsHook(buffer, sizeToRead, filesToPatch[i].type);
+			}
+			
+			if(devices[DEVICE_CUR] == &__device_dvd && is_gamecube()) {
+				patched += Patch_DVDLowLevelReadForDVD(buffer, sizeToRead, filesToPatch[i].type);
+				patched += Patch_DVDReset(buffer, sizeToRead);
+			}
+			
+			if(devices[DEVICE_CUR] == &__device_wkf) {
+				patched += Patch_DVDLowLevelReadForWKF(buffer, sizeToRead, filesToPatch[i].type);
+			}
+			
+			patched += Patch_FontEnc(buffer, sizeToRead);
+			
+			if(!swissSettings.disableVideoPatches) {
+				Patch_GameSpecificVideo(buffer, sizeToRead, gameID, filesToPatch[i].type);
+				Patch_VideoMode(buffer, sizeToRead, filesToPatch[i].type);
+			}
+			
+			if(swissSettings.forceWidescreen)
+				Patch_Widescreen(buffer, sizeToRead, filesToPatch[i].type);
+			if(swissSettings.forceAnisotropy)
+				Patch_TexFilt(buffer, sizeToRead, filesToPatch[i].type);
 		}
-		
-		// Patch IGR
-		if(swissSettings.igrType != IGR_OFF || swissSettings.invertCStick) {
-			Patch_PADStatus(buffer, sizeToRead, filesToPatch[i].type);
-		}
-				
-		if(swissSettings.debugUSB && usb_isgeckoalive(1) && !swissSettings.wiirdDebug) {
-			patched += Patch_Fwrite(buffer, sizeToRead);
-		}
-		
-		if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
-			Patch_CheatsHook(buffer, sizeToRead, filesToPatch[i].type);
-		}
-		
-		if(devices[DEVICE_CUR] == &__device_dvd && is_gamecube()) {
-			patched += Patch_DVDLowLevelReadForDVD(buffer, sizeToRead, filesToPatch[i].type);
-			patched += Patch_DVDReset(buffer, sizeToRead);
-		}
-		
-		if(devices[DEVICE_CUR] == &__device_wkf) {
-			patched += Patch_DVDLowLevelReadForWKF(buffer, sizeToRead, filesToPatch[i].type);
-		}
-		
-		patched += Patch_FontEnc(buffer, sizeToRead);
-		
-		if(!swissSettings.disableVideoPatches) {
-			Patch_GameSpecificVideo(buffer, sizeToRead, gameID, filesToPatch[i].type);
-			Patch_VideoMode(buffer, sizeToRead, filesToPatch[i].type);
-		}
-		
-		if(swissSettings.forceWidescreen)
-			Patch_Widescreen(buffer, sizeToRead, filesToPatch[i].type);
-		if(swissSettings.forceAnisotropy)
-			Patch_TexFilt(buffer, sizeToRead, filesToPatch[i].type);
 		if(patched) {
 			if(!patchDeviceReady) {
 				deviceHandler_setStatEnabled(0);

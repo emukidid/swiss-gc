@@ -2897,6 +2897,16 @@ const u32 GXSETVAT_NTSC_patched[32] = {
     0x4082ffa0, 0x38000000, 0x980904f2, 0x4e800020
 };
 
+// Overwrite game specific file content
+int Patch_GameSpecificFile(void *data, u32 length, const char* gameID, const char* fileName) {
+	int patched = 0;
+	/*if(!strncmp(gameID, "GS8E7D", 6) && !strcasecmp(fileName, "SPYROCFG_NGC.CFG") && someVideoOption ) {
+		strncpy(data + 0xA5A, "320", 3);
+		patched = 1;
+	}*/
+	return patched;
+}
+
 // Apply specific per-game hacks/workarounds
 int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType) {
 	int patched = 0;
