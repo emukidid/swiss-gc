@@ -1484,9 +1484,6 @@ int check_game(ExecutableFile *filesToPatch)
 		if(!strncmp(gameID, "GS8P7D", 6)) {
 			parse_gcm_add(&curFile, filesToPatch, &numToPatch, "SPYROCFG_NGC.CFG");
 		}
-		else if(!strncmp(gameID, "GXLP52", 6) || !strncmp(gameID, "GXLX52", 6)) {
-			parse_gcm_add(&curFile, filesToPatch, &numToPatch, "build.ini");
-		}
 	}
 	DrawDispose(msgBox);
 	if(numToPatch>0) {

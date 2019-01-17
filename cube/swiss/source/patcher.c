@@ -3055,22 +3055,6 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 				print_gecko("Patched:[%s]\n", fileName);
 				patched++;
 			}
-		} else if (!strncmp(gameID, "GXLP52", 6)) {
-			if (!strcasecmp(fileName, "build.ini")) {
-				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5)
-					strncpy(data, "[BUILD]\r\nbuild=normal\r\nvideo=eur60\r\nLanguage=eng\r\n", length);
-				
-				print_gecko("Patched:[%s]\n", fileName);
-				patched++;
-			}
-		} else if (!strncmp(gameID, "GXLX52", 6)) {
-			if (!strcasecmp(fileName, "build.ini")) {
-				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5)
-					strncpy(data, "[BUILD]\r\nbuild=normal\r\nvideo=eur60\r\nLanguage=fog\r\n", length);
-				
-				print_gecko("Patched:[%s]\n", fileName);
-				patched++;
-			}
 		}
 	}
 	return patched;
@@ -3649,6 +3633,39 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					*(s16 *)(data + 0x8002E666 - 0x8000B400 + 0x2600) = (0x80098534) & 0xFFFF;
 					*(s16 *)(data + 0x8002E676 - 0x8000B400 + 0x2600) = 40;
 					*(s16 *)(data + 0x8002E67E - 0x8000B400 + 0x2600) = 40;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GX2D52", 6) || !strncmp(gameID, "GX2P52", 6) || !strncmp(gameID, "GX2S52", 6)) {
+		switch (length) {
+			case 4055712:
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5) {
+					*(s16 *)(data + 0x80010A1A - 0x80005760 + 0x2540) = (0x80368D5C + 0x8000) >> 16;
+					*(s16 *)(data + 0x80010A1E - 0x80005760 + 0x2540) = 5;
+					*(s16 *)(data + 0x80010A22 - 0x80005760 + 0x2540) = (0x80368D5C) & 0xFFFF;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GXLP52", 6)) {
+		switch (length) {
+			case 4182304:
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5) {
+					*(s16 *)(data + 0x8000E9F6 - 0x80005760 + 0x2540) = (0x80384784 + 0x8000) >> 16;
+					*(s16 *)(data + 0x8000E9FA - 0x80005760 + 0x2540) = 5;
+					*(s16 *)(data + 0x8000E9FE - 0x80005760 + 0x2540) = (0x80384784) & 0xFFFF;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GXLX52", 6)) {
+		switch (length) {
+			case 4182624:
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5) {
+					*(s16 *)(data + 0x8000E9F6 - 0x80005760 + 0x2540) = (0x803848C4 + 0x8000) >> 16;
+					*(s16 *)(data + 0x8000E9FA - 0x80005760 + 0x2540) = 5;
+					*(s16 *)(data + 0x8000E9FE - 0x80005760 + 0x2540) = (0x803848C4) & 0xFFFF;
 				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
