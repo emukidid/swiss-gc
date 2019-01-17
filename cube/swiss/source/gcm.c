@@ -30,9 +30,16 @@ void* get_fst(file_handle* file) {
 	
 	// Grab disc header
 	memset(&header,0,sizeof(DiskHeader));
- 	devices[DEVICE_CUR]->seekFile(file,0,DEVICE_HANDLER_SEEK_SET);
- 	if(devices[DEVICE_CUR]->readFile(file,&header,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
-		return NULL;
+	if(devices[DEVICE_CUR] == &__device_dvd) {
+		if(DVD_Read(&header, 0, sizeof(DiskHeader)) != sizeof(DiskHeader)) {
+			return NULL;
+		}
+	}
+ 	else {
+		devices[DEVICE_CUR]->seekFile(file,0,DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(file,&header,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
+			return NULL;
+		}
 	}
 	
 	if(header.DVDMagicWord != DVD_MAGIC) return NULL;
@@ -41,10 +48,18 @@ void* get_fst(file_handle* file) {
 	FST=(char*)memalign(32,header.FSTSize); 
 	if(!FST) return NULL;
 
-	devices[DEVICE_CUR]->seekFile(file,header.FSTOffset,DEVICE_HANDLER_SEEK_SET);
- 	if(devices[DEVICE_CUR]->readFile(file,FST,header.FSTSize) != header.FSTSize) {
-		free(FST); 
-		return NULL;
+	if(devices[DEVICE_CUR] == &__device_dvd) {
+		if(DVD_Read(FST, header.FSTOffset, header.FSTSize) != header.FSTSize) {
+			free(FST);
+			return NULL;
+		}
+	}
+ 	else {
+		devices[DEVICE_CUR]->seekFile(file,header.FSTOffset,DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(file,FST,header.FSTSize) != header.FSTSize) {
+			free(FST); 
+			return NULL;
+		}
 	}
 	return FST;
 }
