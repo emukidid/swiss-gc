@@ -21,7 +21,7 @@ char *gameVModeStr[] = {"No", "480i", "480sf", "240p", "1080i60", "480p", "576i"
 char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "704px", "720px"};
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
-char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS"};
+char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS", "No"};
 char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
 
@@ -61,7 +61,7 @@ char *tooltips_game[PAGE_GAME_MAX+1] = {
 	NULL,
 	NULL,
 	NULL,
-	"Force Text Encoding:\n\nAuto - Game native format (default)\nANSI - Force International format on a Japanese region game\nSJIS - Force Japanese format on an International region game\n\nThis effectively behaves the same as the USA/JPN region switch.",
+	"Force Text Encoding:\n\nNo - System native format\nAuto - Game native format (default)\nANSI - Force International format on a Japanese region game\nSJIS - Force Japanese format on an International region game\n\nThis effectively behaves the same as the USA/JPN region switch.",
 	"Invert Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Invert X-axis of the C Stick\nY - Invert Y-axis of the C Stick\nX&Y - Invert both axes of the C Stick",
 	NULL,
 	NULL,
@@ -382,10 +382,10 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 			case SET_TEXT_ENCODING:
 				swissSettings.forceEncoding += direction;
-				if(swissSettings.forceEncoding > 2)
+				if(swissSettings.forceEncoding > 3)
 					swissSettings.forceEncoding = 0;
 				if(swissSettings.forceEncoding < 0)
-					swissSettings.forceEncoding = 2;
+					swissSettings.forceEncoding = 3;
 			break;
 			case SET_INVERT_CAMERA:
 				swissSettings.invertCStick += direction;

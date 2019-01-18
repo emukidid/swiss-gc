@@ -433,7 +433,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 				patched += Patch_DVDLowLevelReadForWKF(buffer, sizeToRead, filesToPatch[i].type);
 			}
 			
-			patched += Patch_FontEnc(buffer, sizeToRead);
+			patched += Patch_FontEncode(buffer, sizeToRead);
 			
 			if(!swissSettings.disableVideoPatches) {
 				Patch_GameSpecificVideo(buffer, sizeToRead, gameID, filesToPatch[i].type);

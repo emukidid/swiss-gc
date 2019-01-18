@@ -392,6 +392,8 @@ void config_parse(char *configData) {
 						configEntries[configEntriesCount].forceEncoding = 1;
 					else if(!strcmp(forceEncodingStr[2], value))
 						configEntries[configEntriesCount].forceEncoding = 2;
+					else if(!strcmp(forceEncodingStr[3], value))
+						configEntries[configEntriesCount].forceEncoding = 3;
 				}
 				else if(!strcmp("Invert Camera Stick", name)) {
 					if(!strcmp(invertCStickStr[0], value))

@@ -2687,37 +2687,37 @@ int Patch_TexFilt(u32 *data, u32 length, int dataType)
 	return 0;
 }
 
-u32 _fontencode_part_a[3] = {
-	0x3C608000, 0x800300CC, 0x2C000000
+u32 _fontencode_part[] = {
+	0x2C000000,	// cmpwi	r0, 0
+	0x4182000C,	// beq		+3
+	0x4180002C,	// blt		+11
+	0x48000028,	// b		+10
+	0x3C60CC00,	// lis		r3, 0xCC00
+	0xA003206E,	// lhz		r0, 0x206E (r3)
+	0x540007BD,	// rlwinm.	r0, r0, 0, 30, 30
+	0x4182000C	// beq		+3
 };
 
-u32 _fontencode_part_b[3] = {
-	0x3C60CC00, 0xA003206E, 0x540007BD
-};
-
-int Patch_FontEnc(void *addr, u32 length)
+int Patch_FontEncode(u32 *data, u32 length)
 {
-	void *addr_start = addr;
-	void *addr_end = addr+length;
 	int patched = 0;
+	int i;
 	
-	while(addr_start<addr_end) {
-		if(memcmp(addr_start,_fontencode_part_a,sizeof(_fontencode_part_a))==0
-			&& memcmp(addr_start+24,_fontencode_part_b,sizeof(_fontencode_part_b))==0)
-		{
-			switch(swissSettings.forceEncoding) {
+	for (i = 0; i < length / sizeof(u32); i++) {
+		if (!memcmp(data + i, _fontencode_part, sizeof(_fontencode_part))) {
+			switch (swissSettings.forceEncoding) {
 				case 1:
-					*(vu32*)(addr_start+40) = 0x38000000;
+					data[i +  8] = 0x38000000;
 					break;
 				case 2:
-					*(vu32*)(addr_start+48) = 0x38000001;
-					*(vu32*)(addr_start+60) = 0x38000001;
+					data[i + 10] = 0x38000001;
+					data[i + 13] = 0x38000001;
 					break;
 			}
 			patched++;
 		}
-		addr_start += 4;
 	}
+	print_gecko("Patch:[fontEncode] applied %d times\n", patched);
 	return patched;
 }
 

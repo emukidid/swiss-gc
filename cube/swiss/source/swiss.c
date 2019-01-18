@@ -759,8 +759,8 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	if(swissSettings.forceAnisotropy) {
 		Patch_TexFilt(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
-	// Force Encoding
-	Patch_FontEnc(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	// Force Text Encoding
+	Patch_FontEncode(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	
 	// Cheats
 	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {

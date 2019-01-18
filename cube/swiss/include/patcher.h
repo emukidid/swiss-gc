@@ -183,7 +183,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType);
 void Patch_VideoMode(u32 *data, u32 length, int dataType);
 void Patch_Widescreen(u32 *data, u32 length, int dataType);
 int Patch_TexFilt(u32 *data, u32 length, int dataType);
-int Patch_FontEnc(void *addr, u32 length);
+int Patch_FontEncode(u32 *data, u32 length);
 int Patch_Fwrite(void *addr, u32 length);
 int Patch_DVDReset(void *addr,u32 length);
 int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType);
