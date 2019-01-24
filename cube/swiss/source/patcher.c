@@ -911,8 +911,29 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 559, 112, 44, 14, 53, 48,           NULL,                     0, "getTiming E" },	// SN Systems ProDG
 		{  42,  20,  0,  0,  0,  2,           NULL,                     0, "getTiming F" }
 	};
+	FuncPattern __VIInitSigs[7] = {
+		{ 159, 44, 5, 4,  4, 16, NULL, 0, "__VIInitD A" },
+		{ 161, 44, 5, 4,  5, 16, NULL, 0, "__VIInitD B" },
+		{ 122, 21, 8, 1,  5,  5, NULL, 0, "__VIInit A" },
+		{ 126, 23, 8, 1,  6,  5, NULL, 0, "__VIInit B" },
+		{ 128, 23, 8, 1,  7,  5, NULL, 0, "__VIInit C" },
+		{ 176, 56, 4, 0, 21,  3, NULL, 0, "__VIInit D" },	// SN Systems ProDG
+		{ 129, 24, 7, 1,  8,  5, NULL, 0, "__VIInit E" }
+	};
 	FuncPattern AdjustPositionSig = 
 		{ 135, 9, 1, 0, 17, 47, NULL, 0, "AdjustPositionD" };
+	FuncPattern ImportAdjustingValuesSig = 
+		{ 26, 9, 3, 3, 0, 4, NULL, 0, "ImportAdjustingValuesD" };
+	FuncPattern VIInitSigs[8] = {
+		{ 208, 60, 18, 8,  1, 24, NULL, 0, "VIInitD A" },
+		{ 218, 64, 21, 8,  1, 22, NULL, 0, "VIInitD B" },
+		{ 269, 37, 18, 7, 18, 57, NULL, 0, "VIInit A" },
+		{ 270, 37, 19, 7, 18, 57, NULL, 0, "VIInit B" },
+		{ 283, 40, 24, 7, 18, 49, NULL, 0, "VIInit C" },
+		{ 286, 41, 25, 7, 18, 49, NULL, 0, "VIInit D" },
+		{ 300, 48, 27, 8, 17, 48, NULL, 0, "VIInit E" },
+		{ 335, 85, 23, 9, 17, 42, NULL, 0, "VIInit F" }	// SN Systems ProDG
+	};
 	FuncPattern VIWaitForRetraceSig = 
 		{ 21, 7, 4, 3, 1, 4, NULL, 0, "VIWaitForRetrace" };
 	FuncPattern setFbbRegsSigs[3] = {
@@ -1124,10 +1145,55 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			}
 		}
 		
-		if (!VIWaitForRetraceSig.offsetFoundAt && compare_pattern(&fp, &VIWaitForRetraceSig)) {
-			if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
-				findx_pattern(data, dataType, i + 14, length, &OSRestoreInterruptsSig))
-				VIWaitForRetraceSig.offsetFoundAt = i;
+		for (j = 0; j < sizeof(VIInitSigs) / sizeof(FuncPattern); j++) {
+			if (!VIInitSigs[j].offsetFoundAt && compare_pattern(&fp, &VIInitSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  15, length, &__VIInitSigs[0]) &&
+							findx_pattern(data, dataType, i + 120, length, &ImportAdjustingValuesSig) &&
+							findx_pattern(data, dataType, i + 136, length, &AdjustPositionSig))
+							VIInitSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  15, length, &__VIInitSigs[1]) &&
+							findx_pattern(data, dataType, i + 122, length, &ImportAdjustingValuesSig) &&
+							findx_pattern(data, dataType, i + 160, length, &AdjustPositionSig))
+							VIInitSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+					case 3:
+						if (findx_pattern(data, dataType, i +  16, length, &__VIInitSigs[2]))
+							VIInitSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_pattern(data, dataType, i +  19, length, &__VIInitSigs[2]))
+							VIInitSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (findx_pattern(data, dataType, i +  19, length, &__VIInitSigs[2]) ||
+							findx_pattern(data, dataType, i +  19, length, &__VIInitSigs[3]))
+							VIInitSigs[j].offsetFoundAt = i;
+						break;
+					case 6:
+						if (findx_pattern(data, dataType, i +  25, length, &__VIInitSigs[4]) ||
+							findx_pattern(data, dataType, i +  25, length, &__VIInitSigs[6]))
+							VIInitSigs[j].offsetFoundAt = i;
+						break;
+					case 7:
+						if (findx_pattern(data, dataType, i +  18, length, &__VIInitSigs[5]))
+							VIInitSigs[j].offsetFoundAt = i;
+						break;
+				}
+				break;
+			}
+			if (VIInitSigs[j].offsetFoundAt && i == VIInitSigs[j].offsetFoundAt + VIInitSigs[j].Length) {
+				if (!VIWaitForRetraceSig.offsetFoundAt && compare_pattern(&fp, &VIWaitForRetraceSig)) {
+					if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+						findx_pattern(data, dataType, i + 14, length, &OSRestoreInterruptsSig))
+						VIWaitForRetraceSig.offsetFoundAt = i;
+				}
+				break;
+			}
 		}
 		
 		for (j = 0; j < sizeof(VIConfigureSigs) / sizeof(FuncPattern); j++) {
@@ -1688,34 +1754,44 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		
 		if (AdjustPosition) {
 			data[i +  30] = 0xA89F00F2;	// lha		r4, 242 (r31)
-			data[i +  31] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
+			data[i +  31] = data[i + 33];
 			data[i +  32] = 0x549E07FE;	// clrlwi	r30, r4, 31
 			data[i +  33] = 0x7FC0F214;	// add		r30, r30, r0
-			data[i +  38] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
 			data[i +  43] = 0x57C007FE;	// clrlwi	r0, r30, 31
 			data[i +  44] = 0x5466083C;	// slwi		r6, r3, 1
 			data[i +  45] = 0x7CC03050;	// sub		r6, r6, r0
-			data[i +  46] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
 			data[i +  53] = 0x57C007FE;	// clrlwi	r0, r30, 31
 			data[i +  54] = 0x5466083C;	// slwi		r6, r3, 1
 			data[i +  55] = 0x7CC03050;	// sub		r6, r6, r0
-			data[i +  56] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
-			data[i +  66] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
-			data[i +  71] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
-			data[i +  80] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
-			data[i +  85] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
 			data[i +  94] = 0x57C007FE;	// clrlwi	r0, r30, 31
 			data[i +  95] = 0x5466083C;	// slwi		r6, r3, 1
 			data[i +  96] = 0x7CC03050;	// sub		r6, r6, r0
-			data[i +  97] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
 			data[i + 104] = 0x57C007FE;	// clrlwi	r0, r30, 31
 			data[i + 105] = 0x5466083C;	// slwi		r6, r3, 1
 			data[i + 106] = 0x7CC03050;	// sub		r6, r6, r0
-			data[i + 107] = 0x38A00000 | (swissSettings.forceVOffset & 0xFFFF);
-			data[i + 118] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
-			data[i + 123] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
 			
 			print_gecko("Found:[%s] @ %08X\n", AdjustPositionSig.Name, AdjustPosition);
+		}
+	}
+	
+	if ((i = ImportAdjustingValuesSig.offsetFoundAt)) {
+		u32 *ImportAdjustingValues = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (ImportAdjustingValues) {
+			data[i + 17] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
+			
+			print_gecko("Found:[%s] @ %08X\n", ImportAdjustingValuesSig.Name, ImportAdjustingValues);
+		}
+	}
+	
+	for (j = 0; j < sizeof(VIInitSigs) / sizeof(FuncPattern); j++)
+		if (VIInitSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(VIInitSigs) / sizeof(FuncPattern) && (i = VIInitSigs[j].offsetFoundAt)) {
+		u32 *VIInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (VIInit) {
+			print_gecko("Found:[%s] @ %08X\n", VIInitSigs[j].Name, VIInit);
 		}
 	}
 	
