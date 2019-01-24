@@ -16,7 +16,6 @@ _start:
 	b		stop_di_irq
 	b		trigger_di_irq
 	b		__DSPHandler
-	b		patched_memcpy_dbg
 	b		exit_to_pref			# checks for a button combo and exits if true
 
 	.globl trigger_di_irq
@@ -113,39 +112,15 @@ process_read_queue:
 
 .globl patched_memcpy
 patched_memcpy:
-	mr		r4, r24
-	cmpwi	r3, 0x0500
-	beq		customhandler
-	cmpwi	r3, 0xF00
-	bgt		redirecthandler
-	blr
-customhandler:
-	lis		r4, ext_handler_custom@h
-	ori		r4, r4, ext_handler_custom@l
-	blr
-redirecthandler:
-	li		r3, 0xF00
-	blr
-	
-.globl patched_memcpy_dbg
-patched_memcpy_dbg:
-	mr		r4, r24
-	rlwinm	r3, r3, 0, 16, 31
-	cmpwi	r3, 0x0500
-	beq		customhandlerdbg
-	cmpwi	r3, 0xF00
-	bgt		redirecthandlerdbg
-	addis	r3, r3, 0x8000
-	blr
-customhandlerdbg:
-	lis		r4, ext_handler_custom@h
-	ori		r4, r4, ext_handler_custom@l
-	addis	r3, r3, 0x8000
-	blr
-redirecthandlerdbg:
-	li		r3, 0xF00
-	addis	r3, r3, 0x8000
-	blr
+	subis	r0, r3, 0x8000
+	cmplwi	r0, 0x1000
+	bgelr
+	cmplwi	r0, 0x0500
+	bne		memcpy
+	lis		r4, ext_handler_custom@ha
+	addi	r4, r4, ext_handler_custom@l
+	li		r5, ext_handler_custom_end-ext_handler_custom
+	b		memcpy
 
 .globl ext_handler_custom
 ext_handler_custom:
@@ -181,3 +156,4 @@ ext_handler_custom:
 	ori			r5, r5, process_read_queue@l
 	mtsrr0      r5
 	rfi
+ext_handler_custom_end:

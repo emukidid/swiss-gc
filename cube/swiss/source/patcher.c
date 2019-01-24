@@ -26,10 +26,12 @@ static u32 top_addr = VAR_PATCHES_BASE;
 FuncPattern ReadDebug = {56, 23, 18, 3, 2, 4, 0, 0, "Read (Debug)", 0};
 FuncPattern ReadCommon = {68, 30, 18, 5, 2, 3, 0, 0, "Read (Common)", 0};
 FuncPattern ReadUncommon = {66, 29, 17, 5, 2, 3, 0, 0, "Read (Uncommon)", 0};
+FuncPattern ReadProDG = {67, 29, 17, 5, 2, 6, 0, 0, "Read (ProDG)", 0};
 
 // OSExceptionInit
 FuncPattern OSExceptionInitSig = {160, 39, 14, 14, 20, 7, 0, 0, "OSExceptionInit", 0};
-FuncPattern OSExceptionInitSigDBG = {164, 61, 6, 18, 14, 14, 0, 0, "OSExceptionInitDBG", 0};
+FuncPattern OSExceptionInitSigDebug = {164, 61, 6, 18, 14, 14, 0, 0, "OSExceptionInit (Debug)", 0};
+FuncPattern OSExceptionInitSigProDG = {151, 45, 14, 16, 13, 9, 0, 0, "OSExceptionInit (ProDG)", 0};
 
 // __DVDInterruptHandler
 u16 _dvdinterrupthandler_part[3] = {
@@ -461,7 +463,7 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 		if(patched == 0x11) break;	// we're done
 
 		// Patch Read to adjust the offset for fragmented files
-		if( *(vu32*)(addr+i) != 0x7C0802A6 )
+		if( *(vu32*)(addr+i) != 0x7C0802A6 && *(vu32*)(addr+i+4) != 0x7C0802A6 )
 			continue;
 		
 		FuncPattern fp;
@@ -469,19 +471,32 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 		
 		if(compare_pattern(&fp, &OSExceptionInitSig))
 		{
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 472)-(u32)(addr));
-			print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
-			*(vu32*)(addr + i + 472) = branchAndLink(PATCHED_MEMCPY_WKF, properAddress);
+			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 488)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for WKF\r\n", OSExceptionInitSig.Name, properAddress);
+			*(vu32*)(addr + i + 488) = branchAndLink(PATCHED_MEMCPY_WKF, properAddress);
+			*(vu32*)(addr + i + 496) = 0x38800100;
+			*(vu32*)(addr + i + 512) = 0x38800100;
 			patched |= 0x10;
 		}
 		// Debug version of the above
-		if(compare_pattern(&fp, &OSExceptionInitSigDBG))
+		if(compare_pattern(&fp, &OSExceptionInitSigDebug))
 		{
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 512)-(u32)(addr));
-			print_gecko("Found:[OSExceptionInitDBG] @ %08X\r\n", properAddress);
-			*(vu32*)(addr + i + 512) = branchAndLink(PATCHED_MEMCPY_DBG_WKF, properAddress);
+			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 520)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for WKF\r\n", OSExceptionInitSigDebug.Name, properAddress);
+			*(vu32*)(addr + i + 520) = branchAndLink(PATCHED_MEMCPY_WKF, properAddress);
+			*(vu32*)(addr + i + 528) = 0x38800100;
+			*(vu32*)(addr + i + 544) = 0x38800100;
 			patched |= 0x10;
-		}		
+		}
+		if(compare_pattern(&fp, &OSExceptionInitSigProDG))
+		{
+			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 460)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for WKF\r\n", OSExceptionInitSigProDG.Name, properAddress);
+			*(vu32*)(addr + i + 460) = branchAndLink(PATCHED_MEMCPY_WKF, properAddress);
+			*(vu32*)(addr + i + 468) = 0x38800100;
+			*(vu32*)(addr + i + 484) = 0x38800100;
+			patched |= 0x10;
+		}
 		if(compare_pattern(&fp, &ReadCommon)) {
 			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
 			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x84)-(u32)(addr));
@@ -499,6 +514,12 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x7C)-(u32)(addr));
 			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadUncommon.Name, properAddress - 0x7C);
 			*(vu32*)(addr + i + 0x7C) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
+			patched |= 0x100;
+		}
+		if(compare_pattern(&fp, &ReadProDG)) {
+			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x74)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadProDG.Name, properAddress - 0x74);
+			*(vu32*)(addr + i + 0x74) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
 			patched |= 0x100;
 		}
 	}
@@ -527,13 +548,13 @@ u32 Patch_DVDLowLevelReadForUSBGecko(void *addr, u32 length, int dataType) {
 			patched |= 0x10;
 		}
 		// Debug version of the above
-		if(compare_pattern(&fp, &OSExceptionInitSigDBG))
+		if(compare_pattern(&fp, &OSExceptionInitSigDebug))
 		{
 			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 512)-(u32)(addr));
-			print_gecko("Found:[OSExceptionInitDBG] @ %08X\r\n", properAddress);
+			print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
 			*(vu32*)(addr + i + 512) = branchAndLink(PATCHED_MEMCPY_DBG_USB, properAddress);
 			patched |= 0x10;
-		}		
+		}
 		if(compare_pattern(&fp, &ReadCommon)) {
 			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
 			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x84)-(u32)(addr));
@@ -572,7 +593,7 @@ u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType) {
 
 	for(i = 0; i < length; i+=4) {
 		// Patch Read (called from DVDLowLevelRead) to read data from SD if it has been patched.
-		if( *(vu32*)(addr+i) != 0x7C0802A6 )
+		if( *(vu32*)(addr+i) != 0x7C0802A6 && *(vu32*)(addr+i+4) != 0x7C0802A6 )
 			continue;
 		
 		FuncPattern fp;
@@ -597,6 +618,12 @@ u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType) {
 			*(vu32*)(addr + i + 0x7C) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
 			return 1;
 		}
+		if(compare_pattern(&fp, &ReadProDG)) {
+			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x74)-(u32)(addr));
+			print_gecko("Found:[%s] @ %08X for DVD\r\n", ReadProDG.Name, properAddress - 0x74);
+			*(vu32*)(addr + i + 0x74) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
+			return 1;
+		}
 	}
 	return 0;
 }
@@ -608,21 +635,34 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 	FuncPattern DSPHandler = {265, 103, 23, 34, 32, 9, 0, 0, "__DSPHandler", 0};
 	while(addr_start<addr_end) {
 		// Patch the memcpy call in OSExceptionInit to copy our code to 0x80000500 instead of anything else.
-		if(*(vu32*)(addr_start) == 0x7C0802A6)
+		if(*(vu32*)(addr_start) == 0x7C0802A6 || *(vu32*)(addr_start + 4) == 0x7C0802A6)
 		{
 			if( find_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &OSExceptionInitSig ) )
 			{
-				void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 472)-(u32)(addr));
+				void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 488)-(u32)(addr));
 				print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
-				*(vu32*)(addr_start + 472) = branchAndLink(PATCHED_MEMCPY, properAddress);
+				*(vu32*)(addr_start + 488) = branchAndLink(PATCHED_MEMCPY, properAddress);
+				*(vu32*)(addr_start + 496) = 0x38800100;
+				*(vu32*)(addr_start + 512) = 0x38800100;
 				patched |= 0x100;
 			}
 			// Debug version of the above
-			else if( find_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &OSExceptionInitSigDBG ) )
+			else if( find_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &OSExceptionInitSigDebug ) )
 			{
-				void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 512)-(u32)(addr));
-				print_gecko("Found:[OSExceptionInitDBG] @ %08X\r\n", properAddress);
-				*(vu32*)(addr_start + 512) = branchAndLink(PATCHED_MEMCPY_DBG, properAddress);
+				void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 520)-(u32)(addr));
+				print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
+				*(vu32*)(addr_start + 520) = branchAndLink(PATCHED_MEMCPY, properAddress);
+				*(vu32*)(addr_start + 528) = 0x38800100;
+				*(vu32*)(addr_start + 544) = 0x38800100;
+				patched |= 0x100;
+			}
+			else if( find_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &OSExceptionInitSigProDG ) )
+			{
+				void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 460)-(u32)(addr));
+				print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
+				*(vu32*)(addr_start + 460) = branchAndLink(PATCHED_MEMCPY, properAddress);
+				*(vu32*)(addr_start + 468) = 0x38800100;
+				*(vu32*)(addr_start + 484) = 0x38800100;
 				patched |= 0x100;
 			}
 			// Audio Streaming Hook (only if required)
@@ -639,7 +679,8 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 			make_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &fp );
 			if(compare_pattern(&fp, &ReadCommon) 			// Common Read function
 				|| compare_pattern(&fp, &ReadDebug)			// Debug Read function
-				|| compare_pattern(&fp, &ReadUncommon)) 	// Uncommon Read function
+				|| compare_pattern(&fp, &ReadUncommon)		// Uncommon Read function
+				|| compare_pattern(&fp, &ReadProDG))		// ProDG Read function
 			{
 				u32 iEnd = 4;
 				while(*(vu32*)(addr_start + iEnd) != 0x4E800020) iEnd += 4;	// branch relative from the end

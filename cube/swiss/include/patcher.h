@@ -145,8 +145,7 @@ enum patchIds {
 #define STOP_DI_IRQ				(void*)(LO_RESERVE | 0x08)
 #define READ_TRIGGER_INTERRUPT	(void*)(LO_RESERVE | 0x0C)
 #define DSP_HANDLER_HOOK		(void*)(LO_RESERVE | 0x10)
-#define PATCHED_MEMCPY_DBG		(void*)(LO_RESERVE | 0x14)
-#define IGR_CHECK				(void*)(LO_RESERVE | 0x18)
+#define IGR_CHECK				(void*)(LO_RESERVE | 0x14)
 
 /* Function jump locations for the DVD patch */
 #define ENABLE_BACKUP_DISC 		(void*)(LO_RESERVE_DVD | 0x00)
@@ -155,9 +154,8 @@ enum patchIds {
 
 /* Function jump locations for the WKF/WASP patch */
 #define PATCHED_MEMCPY_WKF		(void*)(LO_RESERVE)
-#define PATCHED_MEMCPY_DBG_WKF	(void*)(LO_RESERVE | 0x04)
-#define ADJUST_LBA_OFFSET	 	(void*)(LO_RESERVE | 0x08)
-#define IGR_CHECK_WKF			(void*)(LO_RESERVE | 0x0C)
+#define ADJUST_LBA_OFFSET	 	(void*)(LO_RESERVE | 0x04)
+#define IGR_CHECK_WKF			(void*)(LO_RESERVE | 0x08)
 
 /* Function jump locations for the USBGecko patch */
 #define PATCHED_MEMCPY_USB		(void*)(LO_RESERVE)
