@@ -27,12 +27,12 @@ GXSetCopyFilterPatch:
 	lwz		%r11, 16 (%r4)
 	rlwimi	%r6, %r10, 24, 12, 15
 	rlwimi	%r8, %r11, 24, 12, 15
-	rlwimi	%r6, %r10, 4, 8, 11
-	rlwimi	%r8, %r11, 4, 8, 11
+	rlwimi	%r6, %r10,  4,  8, 11
+	rlwimi	%r8, %r11,  4,  8, 11
 	rlwimi	%r7, %r10, 24, 28, 31
 	rlwimi	%r9, %r11, 24, 28, 31
-	rlwimi	%r7, %r10, 4, 24, 27
-	rlwimi	%r9, %r11, 4, 24, 27
+	rlwimi	%r7, %r10,  4, 24, 27
+	rlwimi	%r9, %r11,  4, 24, 27
 	lwz		%r10,  8 (%r4)
 	lwz		%r11, 20 (%r4)
 	rlwimi	%r7, %r10, 16, 20, 23

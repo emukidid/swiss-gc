@@ -928,10 +928,16 @@ u8 vertical_reduction[][7] = {
 void Patch_VideoMode(u32 *data, u32 length, int dataType)
 {
 	int i, j, k;
+	FuncPattern OSSetCurrentContextSig = 
+		{ 23, 4, 4, 0, 0, 5, NULL, 0, "OSSetCurrentContext" };
 	FuncPattern OSDisableInterruptsSig = 
 		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
 	FuncPattern OSRestoreInterruptsSig = 
 		{ 9, 0, 0, 0, 2, 2, NULL, 0, "OSRestoreInterrupts" };
+	FuncPattern OSSleepThreadSigs[2] = {
+		{ 93, 32, 14, 9, 8, 8, NULL, 0, "OSSleepThreadD" },
+		{ 59, 17, 16, 3, 7, 5, NULL, 0, "OSSleepThread" }
+	};
 	FuncPattern __VIRetraceHandlerSigs[8] = {
 		{ 120, 41,  7, 10, 13,  6, NULL, 0, "__VIRetraceHandlerD A" },
 		{ 121, 41,  7, 11, 13,  6, NULL, 0, "__VIRetraceHandlerD B" },
@@ -975,8 +981,10 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 300, 48, 27, 8, 17, 48, NULL, 0, "VIInit E" },
 		{ 335, 85, 23, 9, 17, 42, NULL, 0, "VIInit F" }	// SN Systems ProDG
 	};
-	FuncPattern VIWaitForRetraceSig = 
-		{ 21, 7, 4, 3, 1, 4, NULL, 0, "VIWaitForRetrace" };
+	FuncPattern VIWaitForRetraceSigs[2] = {
+		{ 19, 5, 2, 3, 1, 4, NULL, 0, "VIWaitForRetraceD" },
+		{ 21, 7, 4, 3, 1, 4, NULL, 0, "VIWaitForRetrace" }
+	};
 	FuncPattern setFbbRegsSigs[3] = {
 		{ 167, 62, 22, 2,  8, 24, NULL, 0, "setFbbRegsD A" },
 		{ 181, 54, 34, 0, 10, 16, NULL, 0, "setFbbRegs A" },
@@ -1170,17 +1178,72 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		
 		for (j = 0; j < sizeof(__VIRetraceHandlerSigs) / sizeof(FuncPattern); j++) {
 			if (!__VIRetraceHandlerSigs[j].offsetFoundAt && compare_pattern(&fp, &__VIRetraceHandlerSigs[j])) {
-				__VIRetraceHandlerSigs[j].offsetFoundAt = i;
-				
 				switch (j) {
-					case 0: findx_pattern(data, dataType, i - 47, length, &getCurrentFieldEvenOddSigs[0]); break;
-					case 1: findx_pattern(data, dataType, i - 49, length, &getCurrentFieldEvenOddSigs[1]); break;
-					case 2: findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[2]); break;
-					case 3: findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[3]); break;
+					case 0:
+						if (findx_pattern(data, dataType, i +  45, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  61, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 114, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						
+						findx_pattern(data, dataType, i - 47, length, &getCurrentFieldEvenOddSigs[0]);
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  45, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  61, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 115, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						
+						findx_pattern(data, dataType, i - 49, length, &getCurrentFieldEvenOddSigs[1]);
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  39, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  47, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 126, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						
+						findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[2]);
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i +  39, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  47, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 131, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						
+						findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[3]);
+						break;
 					case 4:
-					case 5: findx_pattern(data, dataType, i + 63, length, &getCurrentFieldEvenOddSigs[3]); break;
-					case 6: findx_pattern(data, dataType, i + 68, length, &getCurrentFieldEvenOddSigs[4]); break;
-					case 7: findx_pattern(data, dataType, i + 80, length, &getCurrentFieldEvenOddSigs[3]); break;
+						if (findx_pattern(data, dataType, i +  42, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  50, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 132, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						
+						findx_pattern(data, dataType, i + 63, length, &getCurrentFieldEvenOddSigs[3]);
+						break;
+					case 5:
+						if (findx_pattern(data, dataType, i +  42, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  50, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 134, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						
+						findx_pattern(data, dataType, i + 63, length, &getCurrentFieldEvenOddSigs[3]);
+						break;
+					case 6:
+						if (findx_pattern(data, dataType, i +  47, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  55, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 139, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						
+						findx_pattern(data, dataType, i + 68, length, &getCurrentFieldEvenOddSigs[4]);
+						break;
+					case 7:
+						if (findx_pattern(data, dataType, i +  44, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  59, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  67, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 151, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						
+						findx_pattern(data, dataType, i + 80, length, &getCurrentFieldEvenOddSigs[3]);
+						break;
 				}
 				break;
 			}
@@ -1228,10 +1291,24 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				break;
 			}
 			if (VIInitSigs[j].offsetFoundAt && i == VIInitSigs[j].offsetFoundAt + VIInitSigs[j].Length) {
-				if (!VIWaitForRetraceSig.offsetFoundAt && compare_pattern(&fp, &VIWaitForRetraceSig)) {
-					if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
-						findx_pattern(data, dataType, i + 14, length, &OSRestoreInterruptsSig))
-						VIWaitForRetraceSig.offsetFoundAt = i;
+				for (k = 0; k < sizeof(VIWaitForRetraceSigs) / sizeof(FuncPattern); k++) {
+					if (!VIWaitForRetraceSigs[k].offsetFoundAt && compare_pattern(&fp, &VIWaitForRetraceSigs[k])) {
+						switch (k) {
+							case 0:
+								if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i + 13, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  8, length, &OSSleepThreadSigs[0]))
+									VIWaitForRetraceSigs[k].offsetFoundAt = i;
+								break;
+							case 1:
+								if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i + 14, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  9, length, &OSSleepThreadSigs[1]))
+									VIWaitForRetraceSigs[k].offsetFoundAt = i;
+								break;
+						}
+						break;
+					}
 				}
 				break;
 			}
@@ -1825,35 +1902,48 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	for (j = 0; j < sizeof(VIInitSigs) / sizeof(FuncPattern); j++)
-		if (VIInitSigs[j].offsetFoundAt) break;
+	for (k = 0; k < sizeof(VIInitSigs) / sizeof(FuncPattern); k++)
+		if (VIInitSigs[k].offsetFoundAt) break;
 	
-	if (j < sizeof(VIInitSigs) / sizeof(FuncPattern) && (i = VIInitSigs[j].offsetFoundAt)) {
+	for (j = 0; j < sizeof(VIWaitForRetraceSigs) / sizeof(FuncPattern); j++)
+		if (VIWaitForRetraceSigs[j].offsetFoundAt) break;
+	
+	if (k < sizeof(VIInitSigs) / sizeof(FuncPattern) && (i = VIInitSigs[k].offsetFoundAt)) {
 		u32 *VIInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		if (VIInit) {
-			print_gecko("Found:[%s] @ %08X\n", VIInitSigs[j].Name, VIInit);
-		}
-	}
-	
-	if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 7) {
-		for (k = 0; k < sizeof(getCurrentFieldEvenOddSigs) / sizeof(FuncPattern); k++)
-			if (getCurrentFieldEvenOddSigs[k].offsetFoundAt) break;
+		s16 flushFlag;
 		
-		if (k < sizeof(getCurrentFieldEvenOddSigs) / sizeof(FuncPattern) && (i = getCurrentFieldEvenOddSigs[k].offsetFoundAt)) {
-			u32 *getCurrentFieldEvenOdd = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		if (VIInit) {
+			switch (k) {
+				case 0: flushFlag = (s16)data[i + 29]; break;
+				case 1: flushFlag = (s16)data[i + 31]; break;
+				case 2: flushFlag = (s16)data[i + 28]; break;
+				case 3: flushFlag = (s16)data[i + 29]; break;
+				case 4:
+				case 5: flushFlag = (s16)data[i + 31]; break;
+				case 6: flushFlag = (s16)data[i + 37]; break;
+				case 7: flushFlag = (s16)data[i + 35]; break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", VIInitSigs[k].Name, VIInit);
+		}
+		
+		if (j < sizeof(VIWaitForRetraceSigs) / sizeof(FuncPattern) && (i = VIWaitForRetraceSigs[j].offsetFoundAt)) {
+			u32 *VIWaitForRetrace = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			
-			if ((i = VIWaitForRetraceSig.offsetFoundAt)) {
-				u32 *VIWaitForRetrace = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-				
-				if (VIWaitForRetrace && getCurrentFieldEvenOdd) {
-					data[i +  6] = data[i + 7];
-					data[i +  7] = 0x4800000C;	// b		+3
-					data[i + 10] = branchAndLink(getCurrentFieldEvenOdd, VIWaitForRetrace + 10);
-					data[i + 11] = 0x28030000;	// cmplwi	r3, 0
-					
-					print_gecko("Found:[%s] @ %08X\n", VIWaitForRetraceSig.Name, VIWaitForRetrace);
+			if (VIWaitForRetrace && VIInit) {
+				if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 7) {
+					switch (j) {
+						case 0:
+							data[i +  9] = 0x800D0000 | (flushFlag & 0xFFFF);
+							data[i + 10] = 0x28000001;	// cmplwi	r0, 1
+							break;
+						case 1:
+							data[i + 10] = 0x800D0000 | (flushFlag & 0xFFFF);
+							data[i + 11] = 0x28000001;	// cmplwi	r0, 1
+							break;
+					}
 				}
+				print_gecko("Found:[%s] @ %08X\n", VIWaitForRetraceSigs[j].Name, VIWaitForRetrace);
 			}
 		}
 	}
