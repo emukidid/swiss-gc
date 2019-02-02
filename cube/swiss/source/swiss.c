@@ -630,7 +630,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 		top_of_main_ram = WIIRD_ENGINE;
 	}
 	// execD handler lives at the top of mem and is branched to via lowmem code.
-	if(*(vu32*)VAR_EXECD_OFFSET > 0) {
+	if(*(vu32*)VAR_EXECD_OFFSET != 0 && *(vu32*)VAR_EXECD_OFFSET != -1) {
 		top_of_main_ram = EXECD_RUNNER;
 	}
 	if((*(u32*)0x80000000 == 0x47504F45) 
@@ -836,7 +836,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	memset((void*)VAR_DI_REGS, 0, 0x24);
 	memset((void*)VAR_STREAM_START, 0, 0xA0);
 	print_gecko("Audio Streaming is %s\r\n",*(vu32*)VAR_AS_ENABLED?"Enabled":"Disabled");
-	if(*(vu32*)VAR_EXECD_OFFSET > 0) {
+	if(*(vu32*)VAR_EXECD_OFFSET != 0 && *(vu32*)VAR_EXECD_OFFSET != -1) {
 		print_gecko("execD offset: %08X\r\n", *(vu32*)VAR_EXECD_OFFSET);
 		memcpy((void*)EXECD_RUNNER, execdpatch_bin, execdpatch_bin_size);
 		DCFlushRange((void*)EXECD_RUNNER, EXECD_RUNNER_SPACE);
