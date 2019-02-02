@@ -174,6 +174,26 @@ bool find_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functio
 	return false;
 }
 
+bool find_pattern_before(u32 *data, u32 length, FuncPattern *FPatA, FuncPattern *FPatB)
+{
+	u32 offsetFoundAt = FPatA->offsetFoundAt - FPatB->Length;
+	
+	if (offsetFoundAt == FPatB->offsetFoundAt)
+		return true;
+	
+	return find_pattern(data, offsetFoundAt, length, FPatB);
+}
+
+bool find_pattern_after(u32 *data, u32 length, FuncPattern *FPatA, FuncPattern *FPatB)
+{
+	u32 offsetFoundAt = FPatA->offsetFoundAt + FPatA->Length;
+	
+	if (offsetFoundAt == FPatB->offsetFoundAt)
+		return true;
+	
+	return find_pattern(data, offsetFoundAt, length, FPatB);
+}
+
 u32 branch(u32 *dst, u32 *src)
 {
 	u32 word = (u32)dst - (u32)src;
@@ -881,6 +901,8 @@ void *installPatch(int patchId) {
 			patchSize = VIConfigurePanHook_length; patchLocation = VIConfigurePanHook; break;
 		case VI_CONFIGUREPANHOOKD:
 			patchSize = VIConfigurePanHookD_length; patchLocation = VIConfigurePanHookD; break;
+		case VI_GETRETRACECOUNTHOOK:
+			patchSize = VIGetRetraceCountHook_length; patchLocation = VIGetRetraceCountHook; break;
 		case VI_RETRACEHANDLERHOOK:
 			patchSize = VIRetraceHandlerHook_length; patchLocation = VIRetraceHandlerHook; break;
 		case MAJORA_SAVEREGS:
@@ -937,6 +959,10 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	FuncPattern OSSleepThreadSigs[2] = {
 		{ 93, 32, 14, 9, 8, 8, NULL, 0, "OSSleepThreadD" },
 		{ 59, 17, 16, 3, 7, 5, NULL, 0, "OSSleepThread" }
+	};
+	FuncPattern VISetRegsSigs[2] = {
+		{ 54, 21, 6, 3, 3, 12, NULL, 0, "VISetRegsD A" },
+		{ 58, 21, 7, 3, 3, 12, NULL, 0, "VISetRegsD B" }
 	};
 	FuncPattern __VIRetraceHandlerSigs[8] = {
 		{ 120, 41,  7, 10, 13,  6, NULL, 0, "__VIRetraceHandlerD A" },
@@ -1017,6 +1043,14 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 30, 6, 5, 3, 0, 3, NULL, 0, "VISetBlackD A" },
 		{ 31, 7, 6, 3, 0, 3, NULL, 0, "VISetBlack A" },
 		{ 30, 7, 6, 3, 0, 4, NULL, 0, "VISetBlack B" }	// SN Systems ProDG
+	};
+	FuncPattern VIGetRetraceCountSig = 
+		{ 2, 1, 0, 0, 0, 0, NULL, 0, "VIGetRetraceCount" };
+	FuncPattern GetCurrentDisplayPositionSig = 
+		{ 15, 3, 2, 0, 0, 1, NULL, 0, "GetCurrentDisplayPosition" };
+	FuncPattern getCurrentHalfLineSigs[2] = {
+		{ 26, 9, 1, 0, 0, 3, NULL, 0, "getCurrentHalfLineD A" },
+		{ 24, 7, 1, 0, 0, 3, NULL, 0, "getCurrentHalfLineD B" }
 	};
 	FuncPattern getCurrentFieldEvenOddSigs[5] = {
 		{ 33,  7, 2, 3, 4, 5, NULL, 0, "getCurrentFieldEvenOddD A" },
@@ -1182,18 +1216,16 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					case 0:
 						if (findx_pattern(data, dataType, i +  45, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i +  61, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i + 114, length, &OSSetCurrentContextSig))
+							findx_pattern(data, dataType, i + 114, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  74, length, &VISetRegsSigs[0]))
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
-						
-						findx_pattern(data, dataType, i - 47, length, &getCurrentFieldEvenOddSigs[0]);
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i +  45, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i +  61, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i + 115, length, &OSSetCurrentContextSig))
+							findx_pattern(data, dataType, i + 115, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  74, length, &VISetRegsSigs[1]))
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
-						
-						findx_pattern(data, dataType, i - 49, length, &getCurrentFieldEvenOddSigs[1]);
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i +  39, length, &OSSetCurrentContextSig) &&
@@ -1201,7 +1233,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 126, length, &OSSetCurrentContextSig))
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[2]);
+						if (findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[2]))
+							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[2], &VIGetRetraceCountSig);
 						break;
 					case 3:
 						if (findx_pattern(data, dataType, i +  39, length, &OSSetCurrentContextSig) &&
@@ -1209,7 +1242,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 131, length, &OSSetCurrentContextSig))
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[3]);
+						if (findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[3]))
+							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[3], &VIGetRetraceCountSig);
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i +  42, length, &OSSetCurrentContextSig) &&
@@ -1217,7 +1251,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 132, length, &OSSetCurrentContextSig))
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i + 63, length, &getCurrentFieldEvenOddSigs[3]);
+						if (findx_pattern(data, dataType, i + 63, length, &getCurrentFieldEvenOddSigs[3]))
+							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[3], &VIGetRetraceCountSig);
 						break;
 					case 5:
 						if (findx_pattern(data, dataType, i +  42, length, &OSSetCurrentContextSig) &&
@@ -1225,7 +1260,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 134, length, &OSSetCurrentContextSig))
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i + 63, length, &getCurrentFieldEvenOddSigs[3]);
+						if (findx_pattern(data, dataType, i + 63, length, &getCurrentFieldEvenOddSigs[3]))
+							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[3], &VIGetRetraceCountSig);
 						break;
 					case 6:
 						if (findx_pattern(data, dataType, i +  47, length, &OSSetCurrentContextSig) &&
@@ -1233,7 +1269,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 139, length, &OSSetCurrentContextSig))
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i + 68, length, &getCurrentFieldEvenOddSigs[4]);
+						if (findx_pattern(data, dataType, i + 68, length, &getCurrentFieldEvenOddSigs[4]))
+							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
 						break;
 					case 7:
 						if (findx_pattern(data, dataType, i +  44, length, &OSSetCurrentContextSig) &&
@@ -1242,7 +1279,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 151, length, &OSSetCurrentContextSig))
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i + 80, length, &getCurrentFieldEvenOddSigs[3]);
+						if (findx_pattern(data, dataType, i + 80, length, &getCurrentFieldEvenOddSigs[3]))
+							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[3], &VIGetRetraceCountSig);
 						break;
 				}
 				break;
@@ -1475,6 +1513,23 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		}
 		
 		for (j = 0; j < sizeof(getCurrentFieldEvenOddSigs) / sizeof(FuncPattern); j++) {
+			if (!getCurrentFieldEvenOddSigs[j].offsetFoundAt && compare_pattern(&fp, &getCurrentFieldEvenOddSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i + 22, length, &getCurrentHalfLineSigs[0])) {
+							find_pattern_before(data, length, &getCurrentHalfLineSigs[0], &VIGetRetraceCountSig);
+							getCurrentFieldEvenOddSigs[j].offsetFoundAt = i;
+						}
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  3, length, &getCurrentHalfLineSigs[1])) {
+							find_pattern_before(data, length, &getCurrentHalfLineSigs[1], &VIGetRetraceCountSig);
+							getCurrentFieldEvenOddSigs[j].offsetFoundAt = i;
+						}
+						break;
+				}
+				break;
+			}
 			if (getCurrentFieldEvenOddSigs[j].offsetFoundAt && i == getCurrentFieldEvenOddSigs[j].offsetFoundAt + getCurrentFieldEvenOddSigs[j].Length) {
 				for (k = 0; k < sizeof(VIGetNextFieldSigs) / sizeof(FuncPattern); k++) {
 					if (!VIGetNextFieldSigs[k].offsetFoundAt && compare_pattern(&fp, &VIGetNextFieldSigs[k])) {
@@ -1497,8 +1552,11 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 								break;
 							case 3:
 								if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i + 26, length, &OSRestoreInterruptsSig))
+									findx_pattern(data, dataType, i + 26, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  9, length, &GetCurrentDisplayPositionSig)) {
+									find_pattern_before(data, length, &GetCurrentDisplayPositionSig, &VIGetRetraceCountSig);
 									VIGetNextFieldSigs[k].offsetFoundAt = i;
+								}
 								break;
 						}
 						break;
@@ -1515,59 +1573,59 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i + 1069, length, &GXSetDispCopySrcSigs[0]))
-							find_pattern(data, GXSetDispCopySrcSigs[0].offsetFoundAt - GXAdjustForOverscanSigs[0].Length, length, &GXAdjustForOverscanSigs[0]);
+							find_pattern_before(data, length, &GXSetDispCopySrcSigs[0], &GXAdjustForOverscanSigs[0]);
 						
 						findx_pattern(data, dataType, i + 1088, length, &GXSetDispCopyYScaleSigs[0]);
 						findx_pattern(data, dataType, i + 1095, length, &GXSetCopyFilterSigs[0]);
 						
 						if (findx_pattern(data, dataType, i + 1097, length, &GXSetDispCopyGammaSigs[0]))
-							find_pattern(data, GXSetDispCopyGammaSigs[0].offsetFoundAt + GXSetDispCopyGammaSigs[0].Length, length, &GXCopyDispSigs[0]);
+							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[0], &GXCopyDispSigs[0]);
 						
 						findx_pattern(data, dataType, i + 1033, length, &GXSetBlendModeSigs[0]);
 						findx_pattern(data, dataType, i +  727, length, &GXSetViewportSigs[0]);
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i + 480, length, &GXSetDispCopySrcSigs[0]))
-							find_pattern(data, GXSetDispCopySrcSigs[0].offsetFoundAt - GXAdjustForOverscanSigs[0].Length, length, &GXAdjustForOverscanSigs[0]);
+							find_pattern_before(data, length, &GXSetDispCopySrcSigs[0], &GXAdjustForOverscanSigs[0]);
 						
 						findx_pattern(data, dataType, i + 499, length, &GXSetDispCopyYScaleSigs[1]);
 						findx_pattern(data, dataType, i + 506, length, &GXSetCopyFilterSigs[0]);
 						
 						if (findx_pattern(data, dataType, i + 508, length, &GXSetDispCopyGammaSigs[0]))
-							find_pattern(data, GXSetDispCopyGammaSigs[0].offsetFoundAt + GXSetDispCopyGammaSigs[0].Length, length, &GXCopyDispSigs[0]);
+							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[0], &GXCopyDispSigs[0]);
 						
 						findx_pattern(data, dataType, i + 444, length, &GXSetBlendModeSigs[0]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[0]);
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i + 917, length, &GXSetDispCopySrcSigs[1]))
-							find_pattern(data, GXSetDispCopySrcSigs[1].offsetFoundAt - GXAdjustForOverscanSigs[1].Length, length, &GXAdjustForOverscanSigs[1]);
+							find_pattern_before(data, length, &GXSetDispCopySrcSigs[1], &GXAdjustForOverscanSigs[1]);
 						
 						findx_pattern(data, dataType, i + 934, length, &GXSetDispCopyYScaleSigs[2]);
 						findx_pattern(data, dataType, i + 941, length, &GXSetCopyFilterSigs[1]);
 						
 						if (findx_pattern(data, dataType, i + 943, length, &GXSetDispCopyGammaSigs[1]))
-							find_pattern(data, GXSetDispCopyGammaSigs[1].offsetFoundAt + GXSetDispCopyGammaSigs[1].Length, length, &GXCopyDispSigs[1]);
+							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[1], &GXCopyDispSigs[1]);
 						
 						findx_pattern(data, dataType, i + 881, length, &GXSetBlendModeSigs[1]);
 						findx_pattern(data, dataType, i + 553, length, &GXSetViewportSigs[1]);
 						break;
 					case 3:
 						if (findx_pattern(data, dataType, i + 467, length, &GXSetDispCopySrcSigs[1]))
-							find_pattern(data, GXSetDispCopySrcSigs[1].offsetFoundAt - GXAdjustForOverscanSigs[1].Length, length, &GXAdjustForOverscanSigs[1]);
+							find_pattern_before(data, length, &GXSetDispCopySrcSigs[1], &GXAdjustForOverscanSigs[1]);
 						
 						findx_pattern(data, dataType, i + 484, length, &GXSetDispCopyYScaleSigs[2]);
 						findx_pattern(data, dataType, i + 491, length, &GXSetCopyFilterSigs[1]);
 						
 						if (findx_pattern(data, dataType, i + 493, length, &GXSetDispCopyGammaSigs[1]))
-							find_pattern(data, GXSetDispCopyGammaSigs[1].offsetFoundAt + GXSetDispCopyGammaSigs[1].Length, length, &GXCopyDispSigs[1]);
+							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[1], &GXCopyDispSigs[1]);
 						
 						findx_pattern(data, dataType, i + 431, length, &GXSetBlendModeSigs[1]);
 						findx_pattern(data, dataType, i + 186, length, &GXSetViewportSigs[1]);
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i + 482, length, &GXSetDispCopySrcSigs[1]))
-							find_pattern(data, GXSetDispCopySrcSigs[1].offsetFoundAt - GXAdjustForOverscanSigs[1].Length, length, &GXAdjustForOverscanSigs[1]);
+							find_pattern_before(data, length, &GXSetDispCopySrcSigs[1], &GXAdjustForOverscanSigs[1]);
 						
 						if (data[i + __GXInitGXSigs[j].Length - 2] == 0x7C0803A6)
 							findx_pattern(data, dataType, i + 499, length, &GXSetDispCopyYScaleSigs[3]);
@@ -1577,59 +1635,59 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 506, length, &GXSetCopyFilterSigs[1]);
 						
 						if (findx_pattern(data, dataType, i + 508, length, &GXSetDispCopyGammaSigs[1]))
-							find_pattern(data, GXSetDispCopyGammaSigs[1].offsetFoundAt + GXSetDispCopyGammaSigs[1].Length, length, &GXCopyDispSigs[1]);
+							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[1], &GXCopyDispSigs[1]);
 						
 						findx_pattern(data, dataType, i + 446, length, &GXSetBlendModeSigs[1]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[1]);
 						break;
 					case 5:
 						if (findx_pattern(data, dataType, i + 497, length, &GXSetDispCopySrcSigs[2]))
-							find_pattern(data, GXSetDispCopySrcSigs[2].offsetFoundAt - GXAdjustForOverscanSigs[1].Length, length, &GXAdjustForOverscanSigs[1]);
+							find_pattern_before(data, length, &GXSetDispCopySrcSigs[2], &GXAdjustForOverscanSigs[1]);
 						
 						findx_pattern(data, dataType, i + 514, length, &GXSetDispCopyYScaleSigs[4]);
 						findx_pattern(data, dataType, i + 521, length, &GXSetCopyFilterSigs[1]);
 						
 						if (findx_pattern(data, dataType, i + 523, length, &GXSetDispCopyGammaSigs[1]))
-							find_pattern(data, GXSetDispCopyGammaSigs[1].offsetFoundAt + GXSetDispCopyGammaSigs[1].Length, length, &GXCopyDispSigs[2]);
+							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[1], &GXCopyDispSigs[2]);
 						
 						findx_pattern(data, dataType, i + 461, length, &GXSetBlendModeSigs[2]);
 						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[2]);
 						break;
 					case 6:
 						if (findx_pattern(data, dataType, i + 473, length, &GXSetDispCopySrcSigs[3]))
-							find_pattern(data, GXSetDispCopySrcSigs[3].offsetFoundAt - GXAdjustForOverscanSigs[2].Length, length, &GXAdjustForOverscanSigs[2]);
+							find_pattern_before(data, length, &GXSetDispCopySrcSigs[3], &GXAdjustForOverscanSigs[2]);
 						
 						findx_pattern(data, dataType, i + 492, length, &GXSetDispCopyYScaleSigs[5]);
 						findx_pattern(data, dataType, i + 499, length, &GXSetCopyFilterSigs[2]);
 						
 						if (findx_pattern(data, dataType, i + 501, length, &GXSetDispCopyGammaSigs[2]))
-							find_pattern(data, GXSetDispCopyGammaSigs[2].offsetFoundAt + GXSetDispCopyGammaSigs[2].Length, length, &GXCopyDispSigs[3]);
+							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[3]);
 						
 						findx_pattern(data, dataType, i + 433, length, &GXSetBlendModeSigs[3]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[3]);
 						break;
 					case 7:
 						if (findx_pattern(data, dataType, i + 475, length, &GXSetDispCopySrcSigs[3]))
-							find_pattern(data, GXSetDispCopySrcSigs[3].offsetFoundAt - GXAdjustForOverscanSigs[2].Length, length, &GXAdjustForOverscanSigs[2]);
+							find_pattern_before(data, length, &GXSetDispCopySrcSigs[3], &GXAdjustForOverscanSigs[2]);
 						
 						findx_pattern(data, dataType, i + 494, length, &GXSetDispCopyYScaleSigs[5]);
 						findx_pattern(data, dataType, i + 501, length, &GXSetCopyFilterSigs[3]);
 						
 						if (findx_pattern(data, dataType, i + 503, length, &GXSetDispCopyGammaSigs[2]))
-							find_pattern(data, GXSetDispCopyGammaSigs[2].offsetFoundAt + GXSetDispCopyGammaSigs[2].Length, length, &GXCopyDispSigs[3]);
+							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[3]);
 						
 						findx_pattern(data, dataType, i + 435, length, &GXSetBlendModeSigs[4]);
 						findx_pattern(data, dataType, i + 204, length, &GXSetViewportSigs[3]);
 						break;
 					case 8:
 						if (findx_pattern(data, dataType, i + 526, length, &GXSetDispCopySrcSigs[4]))
-							find_pattern(data, GXSetDispCopySrcSigs[4].offsetFoundAt - GXAdjustForOverscanSigs[3].Length, length, &GXAdjustForOverscanSigs[3]);
+							find_pattern_before(data, length, &GXSetDispCopySrcSigs[4], &GXAdjustForOverscanSigs[3]);
 						
 						findx_pattern(data, dataType, i + 543, length, &GXSetDispCopyYScaleSigs[6]);
 						findx_pattern(data, dataType, i + 550, length, &GXSetCopyFilterSigs[4]);
 						
 						if (findx_pattern(data, dataType, i + 552, length, &GXSetDispCopyGammaSigs[3]))
-							find_pattern(data, GXSetDispCopyGammaSigs[3].offsetFoundAt + GXSetDispCopyGammaSigs[3].Length, length, &GXCopyDispSigs[4]);
+							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[3], &GXCopyDispSigs[4]);
 						
 						findx_pattern(data, dataType, i + 490, length, &GXSetBlendModeSigs[2]);
 						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[4]);
@@ -1681,20 +1739,48 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOdd);
 		}
 		
+		if (j < sizeof(VISetRegsSigs) / sizeof(FuncPattern) && (i = VISetRegsSigs[j].offsetFoundAt)) {
+			u32 *VISetRegs = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			
+			if (VISetRegs && getCurrentFieldEvenOdd) {
+				switch (j) {
+					case 0:
+						data[i +  8] = 0x2C030000;	// cmpwi	r3, 0
+						data[i +  9] = 0x4082009C;	// bne		+39
+						break;
+					case 1:
+						data[i + 10] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 11] = 0x408200A4;	// bne		+41
+						break;
+				}
+				if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 7) {
+					switch (j) {
+						case 0:
+							data[i +  4] = branchAndLink(getCurrentFieldEvenOdd, VISetRegs + 4);
+							data[i +  5] = 0x2C030000;	// cmpwi	r3, 0
+							data[i +  6] = 0x54630FFE;	// srwi		r3, r3, 31
+							data[i +  7] = 0x3C800000 | (VAR_AREA >> 16);
+							data[i +  8] = 0x98640000 | (VAR_CURRENT_FIELD & 0xFFFF);
+							break;
+						case 1:
+							data[i +  6] = branchAndLink(getCurrentFieldEvenOdd, VISetRegs + 6);
+							data[i +  7] = 0x2C030000;	// cmpwi	r3, 0
+							data[i +  8] = 0x54630FFE;	// srwi		r3, r3, 31
+							data[i +  9] = 0x3C800000 | (VAR_AREA >> 16);
+							data[i + 10] = 0x98640000 | (VAR_CURRENT_FIELD & 0xFFFF);
+							break;
+					}
+				}
+				print_gecko("Found:[%s] @ %08X\n", VISetRegsSigs[j].Name, VISetRegs);
+			}
+		}
+		
 		if (j < sizeof(__VIRetraceHandlerSigs) / sizeof(FuncPattern) && (i = __VIRetraceHandlerSigs[j].offsetFoundAt)) {
 			u32 *__VIRetraceHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *__VIRetraceHandlerHook;
 			
 			if (__VIRetraceHandler && getCurrentFieldEvenOdd) {
 				switch (j) {
-					case 0:
-						data[i - 46] = 0x2C030000;	// cmpwi	r3, 0
-						data[i - 45] = 0x4082009C;	// bne		+39
-						break;
-					case 1:
-						data[i - 48] = 0x2C030000;	// cmpwi	r3, 0
-						data[i - 47] = 0x408200A4;	// bne		+41
-						break;
 					case 2:
 						data[i + 61] = 0x2C030000;	// cmpwi	r3, 0
 						data[i + 62] = 0x408200B4;	// bne		+45
@@ -1722,14 +1808,36 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				}
 				if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 7) {
 					switch (j) {
-						case 0: data[i - 50] = 0x38000001; break;
-						case 1: data[i - 52] = 0x38000001; break;
 						case 2:
-						case 3: data[i + 57] = 0x38000001; break;
+						case 3:
+							data[i + 57] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 57);
+							data[i + 58] = 0x2C030000;	// cmpwi	r3, 0
+							data[i + 59] = 0x54630FFE;	// srwi		r3, r3, 31
+							data[i + 60] = 0x3C800000 | (VAR_AREA >> 16);
+							data[i + 61] = 0x98640000 | (VAR_CURRENT_FIELD & 0xFFFF);
+							break;
 						case 4:
-						case 5: data[i + 60] = 0x38000001; break;
-						case 6: data[i + 65] = 0x38000001; break;
-						case 7: data[i + 77] = 0x38000001; break;
+						case 5:
+							data[i + 60] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 60);
+							data[i + 61] = 0x2C030000;	// cmpwi	r3, 0
+							data[i + 62] = 0x54630FFE;	// srwi		r3, r3, 31
+							data[i + 63] = 0x3C800000 | (VAR_AREA >> 16);
+							data[i + 64] = 0x98640000 | (VAR_CURRENT_FIELD & 0xFFFF);
+							break;
+						case 6:
+							data[i + 65] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 65);
+							data[i + 66] = 0x2C030000;	// cmpwi	r3, 0
+							data[i + 67] = 0x54630FFE;	// srwi		r3, r3, 31
+							data[i + 68] = 0x3C800000 | (VAR_AREA >> 16);
+							data[i + 69] = 0x98640000 | (VAR_CURRENT_FIELD & 0xFFFF);
+							break;
+						case 7:
+							data[i + 77] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 77);
+							data[i + 78] = 0x2C030000;	// cmpwi	r3, 0
+							data[i + 79] = 0x54630FFE;	// srwi		r3, r3, 31
+							data[i + 80] = 0x3C800000 | (VAR_AREA >> 16);
+							data[i + 81] = 0x98640000 | (VAR_CURRENT_FIELD & 0xFFFF);
+							break;
 					}
 				}
 				if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 9) {
@@ -2502,6 +2610,21 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", VISetBlackSigs[j].Name, VISetBlack);
+		}
+	}
+	
+	if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 7) {
+		if ((i = VIGetRetraceCountSig.offsetFoundAt)) {
+			u32 *VIGetRetraceCount = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			u32 *VIGetRetraceCountHook;
+			
+			if (VIGetRetraceCount) {
+				VIGetRetraceCountHook = getPatchAddr(VI_GETRETRACECOUNTHOOK);
+				
+				data[i + 1] = branch(VIGetRetraceCountHook, VIGetRetraceCount + 1);
+				
+				print_gecko("Found:[%s] @ %08X\n", VIGetRetraceCountSig.Name, VIGetRetraceCount);
+			}
 		}
 	}
 	
