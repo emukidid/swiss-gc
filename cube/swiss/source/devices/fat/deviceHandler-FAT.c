@@ -376,14 +376,12 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	*(vu32*)VAR_DISC_2_LBA = file2 ? fragList[2 + (maxFrags*3)]:fragList[2];
 	// Currently selected disk base sector
 	*(vu32*)VAR_CUR_DISC_LBA = fragList[2];
-	// Copy the current speed
-	*(vu32*)VAR_EXI_BUS_SPD = !swissSettings.exiSpeed ? 192:208;
 	// Card Type
-	*(vu32*)VAR_SD_SHIFT = 9 * SDHCCard;
+	*(vu8*)VAR_SD_SHIFT = (u8)(9 * SDHCCard);
 	// Copy the actual freq
-	*(vu32*)VAR_EXI_FREQ = !swissSettings.exiSpeed ? EXI_SPEED16MHZ:EXI_SPEED32MHZ;
+	*(vu8*)VAR_EXI_FREQ = (u8)(!swissSettings.exiSpeed ? EXI_SPEED16MHZ:EXI_SPEED32MHZ);
 	// Device slot (0 or 1) // This represents 0xCC0068xx in number of u32's so, slot A = 0xCC006800, B = 0xCC006814
-	*(vu32*)VAR_EXI_SLOT = ((devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)? 0:1) * 5;
+	*(vu8*)VAR_EXI_SLOT = (u8)(((devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)? 0:1) * 5);
 	// IDE-EXI only settings
 	if((devices[DEVICE_CUR] == &__device_ide_a) || (devices[DEVICE_CUR] == &__device_ide_b)) {
 		// Is the HDD in use a 48 bit LBA supported HDD?

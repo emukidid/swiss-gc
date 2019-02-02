@@ -31,7 +31,7 @@ void dcache_flush_icache_inv(void* dst, u32 len);
 void ADPdecodebuffer(unsigned char *input, short *outl, short * outr, long *histl1, long *histl2, long *histr1, long *histr2);
 void StreamStartStream(u32 CurrentStart, u32 CurrentSize);
 void StreamEndStream(void);
-u32 process_queue(void* dst, u32 len, u32 offset);
+u32 process_queue(void* dst, u32 len, u32 offset, int readComplete);
 unsigned long tb_diff_usec(tb_t* end, tb_t* start);
 
 int usb_sendbuffer_safe(const void *buffer,int size);

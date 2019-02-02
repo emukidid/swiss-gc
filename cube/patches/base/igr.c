@@ -10,6 +10,12 @@
 #ifdef WKF
 extern void wkfReinit();
 #endif
+void memset32(u32 dst,u32 fill,u32 len)
+{
+	u32 i;
+	for(i = 0; i < len; i+=4)
+		*((vu32*)(dst+i)) = fill;
+}
 
 #define DOLHDRLENGTH 256
 #define MAXTEXTSECTION 7
@@ -62,9 +68,8 @@ void load_dol() {
 			dcache_flush_icache_inv((void*)hdr->dataAddress[i], hdr->dataLength[i]);
 		}
 	}
+	memset32(hdr->bssAddress, 0, hdr->bssLength);
 	
-	for(i = 0; i < hdr->bssLength; i+=4)
-		*(vu32*)(hdr->bssAddress+i) = 0;
 	void (*entrypoint)() = (void(*)())hdr->entryPoint;
 	entrypoint();
 }

@@ -38,19 +38,11 @@
 
 #define _ata48bit *(vu32*)VAR_TMP1
 
-#define exi_freq  			(*(vu32*)VAR_EXI_FREQ)
+#define exi_freq  			(*(vu8*)VAR_EXI_FREQ)
 // exi_channel is stored as number of u32's to index into the exi bus (0xCC006800)
-#define exi_channel 		(*(vu32*)VAR_EXI_SLOT)
+#define exi_channel 		(*(vu8*)VAR_EXI_SLOT)
 
-void* mymemcpy(void* dest, const void* src, u32 count)
-{
-	char* tmp = (char*)dest,* s = (char*)src;
-
-	while (count--)
-		*tmp++ = *s++;
-
-	return dest;
-}
+void *memcpy(void *dest, const void *src, u32 size);
 
 void exi_select()
 {
@@ -143,7 +135,7 @@ void ata_read_buffer(u8 *dst)
 		dcache_flush_icache_inv(ptr, 512);
 		exi_dma_sync(ptr, 512, EXI_READ);
 		if(((u32)dst)%32) {
-			mymemcpy(dst, ptr, 512);
+			memcpy(dst, ptr, 512);
 		}
 #endif
 	exi_deselect();
@@ -223,7 +215,7 @@ void do_read(void *dst,u32 size, u32 offset, u32 sectorLba) {
 			*(u32*)dst = 0x13370003;
 			return;
 		}
-		mymemcpy(dst, &(sector[offset%SECTOR_SIZE]), size_to_copy);
+		memcpy(dst, &(sector[offset%SECTOR_SIZE]), size_to_copy);
 		size -= size_to_copy;
 		dst += size_to_copy;
 		lba += 1;
@@ -246,6 +238,6 @@ void do_read(void *dst,u32 size, u32 offset, u32 sectorLba) {
 			*(u32*)dst = 0x13370006;
 			return;
 		}
-		mymemcpy(dst, &(sector[0]), size);
+		memcpy(dst, &(sector[0]), size);
 	}	
 }

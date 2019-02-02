@@ -11,17 +11,17 @@
 #define SAMPLE_SIZE_32KHZ_1MS_SHIFT 7
 
 // Returns how much was read.
-u32 process_queue(void* dst, u32 len, u32 offset) {
+u32 process_queue(void* dst, u32 len, u32 offset, int readComplete) {
 	
 	*(vu32*)VAR_INTERRUPT_TIMES += 1;
-	if((*(vu32*)VAR_INTERRUPT_TIMES) < 4)
+	if(!readComplete && (*(vu32*)VAR_INTERRUPT_TIMES) < 4)
 		return 0;
 	*(vu32*)VAR_INTERRUPT_TIMES = 0;
 	
 	if(len) {
 		u32 amountAllowedToRead = len;
 		u32 dmaAddr = (((*(vu16*)0xCC005030) & 0x1FFF) << 16) | ((*(vu16*)0xCC005032) & 0xFFFF);
-		if(dmaAddr) {
+		if(dmaAddr && !readComplete) {
 			vu16* dmaBuffer = (vu16*)(0x80000000|dmaAddr);
 			if(dmaBuffer[1] || dmaBuffer[3]) {
 				// Assume 32KHz, ~128 bytes @ 32KHz is going to play for 1000us

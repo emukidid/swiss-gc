@@ -466,14 +466,12 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 		*(vu32*)VAR_DISC_2_LBA = fragList[2];
 		// Currently selected disk base sector
 		*(vu32*)VAR_CUR_DISC_LBA = fragList[2];
-		// Copy the current speed
-		*(vu32*)VAR_EXI_BUS_SPD = 192;
 		// Card Type
-		*(vu32*)VAR_SD_SHIFT = 9 * sdgecko_getAddressingType(((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1));
+		*(vu8*)VAR_SD_SHIFT = (u8)(9 * sdgecko_getAddressingType(((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1)));
 		// Copy the actual freq
-		*(vu32*)VAR_EXI_FREQ = EXI_SPEED16MHZ;	// play it safe
+		*(vu8*)VAR_EXI_FREQ = (u8)(EXI_SPEED16MHZ);	// play it safe
 		// Device slot (0 or 1) // This represents 0xCC0068xx in number of u32's so, slot A = 0xCC006800, B = 0xCC006814
-		*(vu32*)VAR_EXI_SLOT = ((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1) * 5;
+		*(vu8*)VAR_EXI_SLOT = (u8)(((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1) * 5);
 	}
 
 	return 1;

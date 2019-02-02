@@ -53,6 +53,8 @@ u32 SDHCCard = 0; //0 == SDHC, 1 == normal SD
 char *videoStr = NULL;
 int current_view_start = 0;
 int current_view_end = 0;
+extern int execdpatch_bin_size;
+extern u8 execdpatch_bin[];
 
 /* The default boot up MEM1 lowmem values (from ipl when booting a game) */
 static const u32 GC_DefaultConfig[56] =
@@ -627,6 +629,10 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 		top_of_main_ram = WIIRD_ENGINE;
 	}
+	// execD handler lives at the top of mem and is branched to via lowmem code.
+	if(*(vu32*)VAR_EXECD_OFFSET > 0) {
+		top_of_main_ram = EXECD_RUNNER;
+	}
 	if((*(u32*)0x80000000 == 0x47504F45) 
 		&& (*(u32*)0x80000004 == 0x38500002) 
 		&& (*(u32*)0x80000008 == 0x01000000)) {
@@ -824,12 +830,20 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	*(vu32*)VAR_INTERRUPT_TIMES = 0;
 	*(vu32*)VAR_READS_IN_AS = 0;
 	*(vu32*)VAR_DISC_CHANGING = 0;
+	*(vu32*)VAR_LAST_OFFSET = 0xCAFEBABE;
 	*(vu32*)VAR_AS_ENABLED = !swissSettings.muteAudioStreaming;
 	*(vu8*)VAR_IGR_EXIT_TYPE = (u8)swissSettings.igrType;
 	memset((void*)VAR_DI_REGS, 0, 0x24);
 	memset((void*)VAR_STREAM_START, 0, 0xA0);
 	print_gecko("Audio Streaming is %s\r\n",*(vu32*)VAR_AS_ENABLED?"Enabled":"Disabled");
-
+	if(*(vu32*)VAR_EXECD_OFFSET > 0) {
+		print_gecko("execD offset: %08X\r\n", *(vu32*)VAR_EXECD_OFFSET);
+		memcpy((void*)EXECD_RUNNER, execdpatch_bin, execdpatch_bin_size);
+		DCFlushRange((void*)EXECD_RUNNER, EXECD_RUNNER_SPACE);
+		ICInvalidateRange((void*)EXECD_RUNNER, EXECD_RUNNER_SPACE);
+		print_gecko("Installed execD handler to %08X (%i bytes)\r\n", EXECD_RUNNER, execdpatch_bin_size);
+	}
+	
 	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 		kenobi_install_engine();
 	}

@@ -5,13 +5,16 @@ LD      = $(DIR)/powerpc-eabi-ld
 OBJDUMP = $(DIR)/powerpc-eabi-objdump
 OBJCOPY = $(DIR)/powerpc-eabi-objcopy
 
+OPTS	= -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables
+
 DEST    = ../swiss/source/patches
 
 DISASM    = disassembly
 
 .NOTPARALLEL:
-all: dvdpatch hddpatch sdpatch usbpatch wkfpatch bbapatch
+all: execdpatch dvdpatch hddpatch sdpatch usbpatch wkfpatch bbapatch
 
+execdpatch: clean build-execD
 dvdpatch: clean build-dvd
 hddpatch: clean build-ideexi-v1 clean build-ideexi-v2
 sdpatch: clean build-sd
@@ -25,18 +28,31 @@ clean:
 	@-rmdir $(DISASM)
 	@mkdir $(DISASM)
 
+build-execD:
+	@echo Building execD replacement ...
+	@$(CC) -O1 $(OPTS) -c execd/appldr_start.S
+	@$(CC) -O1 $(OPTS) -c execd/appldr.c
+	@$(LD) -o execdpatch.elf appldr_start.o appldr.o --section-start .text=0x817FA000 --gc-sections
+	@rm -rf *.o
+	@$(OBJDUMP) -D execdpatch.elf > $(DISASM)/execdpatch_disasm.txt
+	@$(OBJCOPY) -O binary execdpatch.elf execdpatch.bin
+	@$(BIN2S) execdpatch.bin > execdpatch.s
+	@mv -f execdpatch.s $(DEST)/execdpatch.s
+	@rm *.bin
+	@rm *.elf
+	
 build-sd:
 	@echo Building SD Patch ...
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/base.S
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c sdgecko/sd.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/frag.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/igr.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/usbgecko.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/dvdqueue.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/dvdinterface.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/adp.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/Stream.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/__DSPHandler.S
+	@$(CC) -O1 $(OPTS) -c base/base.S
+	@$(CC) -O1 $(OPTS) -c sdgecko/sd.c
+	@$(CC) -O1 $(OPTS) -c base/frag.c
+	@$(CC) -O1 $(OPTS) -c base/igr.c
+	@$(CC) -O1 $(OPTS) -c base/usbgecko.c
+	@$(CC) -O1 $(OPTS) -c base/dvdqueue.c
+	@$(CC) -O1 $(OPTS) -c base/dvdinterface.c
+	@$(CC) -O1 $(OPTS) -c base/adp.c
+	@$(CC) -O1 $(OPTS) -c base/Stream.c
+	@$(CC) -O1 $(OPTS) -c base/__DSPHandler.S
 	@$(LD) -o sd.elf base.o igr.o frag.o sd.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o --section-start .text=0x80001000 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D sd.elf > $(DISASM)/sd_disasm.txt
@@ -48,16 +64,16 @@ build-sd:
 
 build-ideexi-v1:
 	@echo Building IDE-EXI-v1 Patch ...
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/base.S
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c ide-exi/hddread.c -DIDE_EXI_V1
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/frag.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/igr.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/usbgecko.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/dvdqueue.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/dvdinterface.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/adp.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/Stream.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/__DSPHandler.S
+	@$(CC) -O1 $(OPTS) -c base/base.S
+	@$(CC) -O1 $(OPTS) -c ide-exi/hddread.c -DIDE_EXI_V1
+	@$(CC) -O1 $(OPTS) -c base/frag.c
+	@$(CC) -O1 $(OPTS) -c base/igr.c
+	@$(CC) -O1 $(OPTS) -c base/usbgecko.c
+	@$(CC) -O1 $(OPTS) -c base/dvdqueue.c
+	@$(CC) -O1 $(OPTS) -c base/dvdinterface.c
+	@$(CC) -O1 $(OPTS) -c base/adp.c
+	@$(CC) -O1 $(OPTS) -c base/Stream.c
+	@$(CC) -O1 $(OPTS) -c base/__DSPHandler.S
 	@$(LD) -o ideexi_v1.elf base.o igr.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o --section-start .text=0x80001000 -gc-sections 
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_v1.elf > $(DISASM)/ideexi_v1_disasm.txt
@@ -69,16 +85,16 @@ build-ideexi-v1:
 	
 build-ideexi-v2:
 	@echo Building IDE-EXI-v2 Patch ...
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/base.S
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c ide-exi/hddread.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/frag.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/igr.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/usbgecko.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/dvdqueue.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/dvdinterface.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/adp.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/Stream.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/__DSPHandler.S
+	@$(CC) -O1 $(OPTS) -c base/base.S
+	@$(CC) -O1 $(OPTS) -c ide-exi/hddread.c
+	@$(CC) -O1 $(OPTS) -c base/frag.c
+	@$(CC) -O1 $(OPTS) -c base/igr.c
+	@$(CC) -O1 $(OPTS) -c base/usbgecko.c
+	@$(CC) -O1 $(OPTS) -c base/dvdqueue.c
+	@$(CC) -O1 $(OPTS) -c base/dvdinterface.c
+	@$(CC) -O1 $(OPTS) -c base/adp.c
+	@$(CC) -O1 $(OPTS) -c base/Stream.c
+	@$(CC) -O1 $(OPTS) -c base/__DSPHandler.S
 	@$(LD) -o ideexi_v2.elf base.o igr.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o --section-start .text=0x80001000 -gc-sections 
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_v2.elf > $(DISASM)/ideexi_v2_disasm.txt
@@ -90,12 +106,12 @@ build-ideexi-v2:
 
 build-dvd:
 	@echo Building DVD Patch ...
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c dvd/base.S
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c dvd/dvd.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c sdgecko/sd.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/frag.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/usbgecko.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/igr.c
+	@$(CC) -O1 $(OPTS) -c dvd/base.S
+	@$(CC) -O1 $(OPTS) -c dvd/dvd.c
+	@$(CC) -O1 $(OPTS) -c sdgecko/sd.c
+	@$(CC) -O1 $(OPTS) -c base/frag.c
+	@$(CC) -O1 $(OPTS) -c base/usbgecko.c
+	@$(CC) -O1 $(OPTS) -c base/igr.c
 	@$(LD) -o dvd.elf base.o igr.o frag.o sd.o dvd.o usbgecko.o --section-start .text=0x80001800
 	@rm -rf *.o
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd_disasm.txt
@@ -107,8 +123,8 @@ build-dvd:
 
 build-usb:
 	@echo Building USBGecko Patch ...
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c usbgecko/base.S
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c usbgecko/usbgecko.c
+	@$(CC) -O1 $(OPTS) -c usbgecko/base.S
+	@$(CC) -O1 $(OPTS) -c usbgecko/usbgecko.c
 	@$(LD) -o usbgecko.elf base.o usbgecko.o --section-start .text=0x80001000 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
@@ -120,12 +136,12 @@ build-usb:
 
 build-wkf:
 	@echo Building WKF Patch ...
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c wkf/base.S
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c wkf/wkf.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/usbgecko.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c sdgecko/sd.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/frag.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/igr.c  -DWKF
+	@$(CC) -O1 $(OPTS) -c wkf/base.S
+	@$(CC) -O1 $(OPTS) -c wkf/wkf.c
+	@$(CC) -O1 $(OPTS) -c base/usbgecko.c
+	@$(CC) -O1 $(OPTS) -c sdgecko/sd.c
+	@$(CC) -O1 $(OPTS) -c base/frag.c
+	@$(CC) -O1 $(OPTS) -c base/igr.c  -DWKF
 	
 	@$(LD) -o wkf.elf base.o wkf.o usbgecko.o sd.o frag.o igr.o --section-start .text=0x80001000 --gc-sections
 	@rm -rf *.o
@@ -138,10 +154,10 @@ build-wkf:
 
 build-bba:
 	@echo Building BBA Patch ...
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c usbgecko/base.S
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c bba/bba.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c bba/tcpip.c
-	@$(CC) -O1 -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables -c base/usbgecko.c
+	@$(CC) -O1 $(OPTS) -c usbgecko/base.S
+	@$(CC) -O1 $(OPTS) -c bba/bba.c
+	@$(CC) -O1 $(OPTS) -c bba/tcpip.c
+	@$(CC) -O1 $(OPTS) -c base/usbgecko.c
 	@$(LD) -o bba.elf base.o bba.o tcpip.o usbgecko.o --section-start .text=0x80001000 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D bba.elf > $(DISASM)/bba_disasm.txt

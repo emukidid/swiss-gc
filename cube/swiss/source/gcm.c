@@ -160,6 +160,13 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
+			if(strstr(filename,"execD.img")) {
+				filesToPatch[numFiles].offset = file_offset;
+				filesToPatch[numFiles].size = size;
+				filesToPatch[numFiles].type = PATCH_LOADER;
+				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
+				numFiles++;
+			}
 			if(endsWith(filename,".tgc")) {
 				// Go through all the TGC's internal files
 				ExecutableFile *filesInTGCToPatch = memalign(32, sizeof(ExecutableFile)*32);
@@ -311,6 +318,13 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
+			if(strstr(filename,"execD.img")) {
+				filesToPatch[numFiles].offset = file_offset;
+				filesToPatch[numFiles].size = size;
+				filesToPatch[numFiles].type = PATCH_LOADER;
+				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
+				numFiles++;
+			}
 		} 
 	}
 	free(FST);
@@ -319,7 +333,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, int multiDol) {
 	int i, num_patched = 0;
-
+	*(vu32*)VAR_EXECD_OFFSET = 0xFFFFFFFF;
 	// If the current device isn't SD Gecko, init one slot to write patches.
 	// TODO expand this to support IDE-EXI and other writable devices (requires dvd patch re-write/modularity)
 	bool patchDeviceReady = false;
@@ -370,6 +384,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			continue;
 		}
 		print_gecko("Checking %s %iKb\r\n", filesToPatch[i].name, filesToPatch[i].size/1024);
+		if(strstr(filesToPatch[i].name, "execD.")) {
+			*(vu32*)VAR_EXECD_OFFSET = filesToPatch[i].offset;
+		}
 		if(strstr(filesToPatch[i].name, "iwanagaD.dol") || strstr(filesToPatch[i].name, "switcherD.dol")) {
 			continue;	// skip unused PSO files
 		}

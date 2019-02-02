@@ -20,6 +20,9 @@
 
 #define AGGRESSIVE_INT 1
 
+#define branch(dst, src) (0x48000000 | ((dst - src) & 0x03FFFFFC))
+void appldr_start();
+
 void trigger_dvd_interrupt() {
 	volatile u32* realDVD = (volatile u32*)0xCC006000;
 	if(!(realDVD[7]&1))
@@ -40,11 +43,12 @@ void trigger_dvd_interrupt() {
 void DIUpdateRegisters() {
 
 	vu32 *dvd = (vu32*)VAR_DI_REGS;
+	u32 audioStreamEnabled = *(vu32*)VAR_AS_ENABLED;
 	
 	if(*(vu32*)VAR_FAKE_IRQ_SET) {
 		return;
 	}
-	u32 diOpCompleted = (dvd[DI_DMALEN] == 0 && dvd[DI_CMD] == 0xA8000000);
+	u32 diOpCompleted = 0;
 	u32 discChanging = *(vu32*)VAR_DISC_CHANGING;
 	
 	if(discChanging == 1) {
@@ -58,35 +62,25 @@ void DIUpdateRegisters() {
 	}
 	
 	// If we have something, IMM or DMA command
-	if(!diOpCompleted && (dvd[DI_CR] & 1))
+	if(dvd[DI_CR] & 1)
 	{
 
 		u32 DIcommand = dvd[DI_CMD]>>24;
 		switch( DIcommand )
 		{
-			case 0xAB:	// Seek
-				diOpCompleted = 1;
-				break;
 			case 0xE1:	// play Audio Stream
-				if(*(vu32*)VAR_AS_ENABLED) {
-					switch( (dvd[DI_CMD] >> 16) & 0xFF )
-					{
-						case 0x00:
-							StreamStartStream(dvd[DI_LBA] << 2, dvd[DI_SRCLEN]);
-							*(vu8*)VAR_STREAM_DI = 1;
-							break;
-						case 0x01:
-							StreamEndStream();
-							*(vu8*)VAR_STREAM_DI = 0;
-							break;
-						default:
-							break;
-					}
+				if(audioStreamEnabled) {
+					u8 asSubCmd = (dvd[DI_CMD] >> 16) & 0xFF;
+					*(vu8*)VAR_STREAM_DI = !asSubCmd;
+					if(!asSubCmd)
+						StreamStartStream(dvd[DI_LBA] << 2, dvd[DI_SRCLEN]);
+					else
+						StreamEndStream();
 				}
 				diOpCompleted = 1;
 				break;
 			case 0xE2:	// request Audio Status
-				if(*(vu32*)VAR_AS_ENABLED) {
+				if(audioStreamEnabled) {
 					switch( (dvd[DI_CMD] >> 16) & 0xFF )
 					{
 						case 0x00:	// Streaming?
@@ -116,9 +110,6 @@ void DIUpdateRegisters() {
 				}
 				diOpCompleted = 1;
 				break;
-			case 0xE4:	// Disable Audio
-				diOpCompleted = 1;
-				break;
 			case 0x12:
 				*(vu32*)(dvd[DI_DMAADDR]+4) = 0x20010608;
 				*(vu32*)(dvd[DI_DMAADDR]+8) = 0x61000000;
@@ -126,6 +117,8 @@ void DIUpdateRegisters() {
 				dvd[DI_DMALEN] = 0;
 				diOpCompleted = 1;
 				break;
+			case 0xAB:	// Seek
+			case 0xE4:	// Disable Audio
 			case 0xE0:	// Get error status
 				dvd[DI_IMM] = 0;	// All OK
 				diOpCompleted = 1;
@@ -146,13 +139,31 @@ void DIUpdateRegisters() {
 					u32 len	= dvd[DI_DMALEN];
 					u32 offset	= dvd[DI_LBA] << 2;
 
-					// Read. We might not do the full read, depends how busy the game is
-					u32 amountRead = process_queue((void*)dst, len, offset);
-					if(amountRead) {
-						dcache_flush_icache_inv((void*)dst, amountRead);
-						dvd[DI_DMALEN] -= amountRead;
-						dvd[DI_DMAADDR] += amountRead;
-						dvd[DI_LBA] += amountRead>>2;
+					// The only time we readComplete=1 is when reading the arguments for 
+					// execD, since interrupts are off after this point and our handler isn't called again.
+					int readComplete = *(vu32*)VAR_LAST_OFFSET == *(vu32*)VAR_EXECD_OFFSET;
+					*(vu32*)VAR_LAST_OFFSET = offset;
+					
+					if(offset && (offset == *(vu32*)VAR_EXECD_OFFSET))
+					{
+						//execD, jump to our own handler
+						*(vu32*)dst = branch((u32)appldr_start, dst);
+						dcache_flush_icache_inv((void*)dst, 0x20);
+						dvd[DI_DMALEN] = 0;
+					}
+					else
+					{
+						// Read. We might not do the full read, depends how busy the game is
+						u32 amountRead = process_queue((void*)dst, len, offset, readComplete);
+						if(amountRead) {
+							dcache_flush_icache_inv((void*)dst, amountRead);
+							dvd[DI_DMALEN] -= amountRead;
+							dvd[DI_DMAADDR] += amountRead;
+							dvd[DI_LBA] += amountRead>>2;
+						}
+					}
+					if(dvd[DI_DMALEN] == 0) {
+						diOpCompleted = 1;
 					}
 				}
 				*(vu32*)VAR_READS_IN_AS += 1;

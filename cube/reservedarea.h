@@ -42,10 +42,13 @@
 .set VAR_DISC_1_LBA, 		0x2F00	# is the base file sector for disk 1
 .set VAR_DISC_2_LBA, 		0x2F04	# is the base file sector for disk 2
 .set VAR_CUR_DISC_LBA, 		0x2F08	# is the currently selected disk sector
-.set VAR_EXI_BUS_SPD, 		0x2F0C	# is the EXI bus speed (192 = 16mhz vs 208 = 32mhz)
-.set VAR_SD_SHIFT, 			0x2F10	# is the SD Card shift amount when issueing read cmds
-.set VAR_EXI_FREQ, 			0x2F14	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
-.set VAR_EXI_SLOT, 			0x2F18	# is the EXI slot (0 = slot a, 1 = slot b)
+.set VAR_FREE_U32_1,		0x2F0C	# A free u32
+.set VAR_LAST_OFFSET,		0x2F10	# the last offset a read was simulated from
+.set VAR_EXECD_OFFSET,		0x2F14	# offset of execD.bin on multi-dol discs
+.set VAR_SD_SHIFT, 			0x2F18	# is the SD Card shift amount when issueing read cmds
+.set VAR_EXI_FREQ, 			0x2F19	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
+.set VAR_EXI_SLOT, 			0x2F1A	# is the EXI slot (0 = slot a, 1 = slot b)
+.set VAR_FREE_U8_1,			0x2F1B	# A free u8
 .set VAR_TMP1,  			0x2F1C  # space for a variable if required
 .set VAR_TMP2,  			0x2F20  # space for a variable if required
 .set VAR_FLOAT9_16,			0x2F24  # constant 9/16
@@ -74,6 +77,10 @@
 .set VAR_AS_TMP_RSAMPLE,	0x2F8E
 .set VAR_AS_OUTL,			0x2F90
 .set VAR_AS_OUTR,			0x2FC8
+
+# execD replacement lives here (0x817FA000)	- if this is changed, be sure to update the patch Makefile
+.set	EXECD_RUNNER_SPACE,  (0x1000)
+.set	EXECD_RUNNER,	(WIIRD_ENGINE-EXECD_RUNNER_SPACE)
 
 # Cheat Engine + Cheats buffer	(0x817FB000)
 .set	WIIRD_ENGINE_SPACE,  (0x2E00)
@@ -127,10 +134,13 @@
 #define VAR_DISC_1_LBA 		(VAR_AREA+0x2F00)	// is the base file sector for disk 1
 #define VAR_DISC_2_LBA 		(VAR_AREA+0x2F04)	// is the base file sector for disk 2
 #define VAR_CUR_DISC_LBA 	(VAR_AREA+0x2F08)	// is the currently selected disk sector
-#define VAR_EXI_BUS_SPD 	(VAR_AREA+0x2F0C)	// is the EXI bus speed (192 = 16mhz vs 208 = 32mhz)
-#define VAR_SD_SHIFT 		(VAR_AREA+0x2F10)	// is the SD Card shift amount when issueing read cmds
-#define VAR_EXI_FREQ 		(VAR_AREA+0x2F14)	// is the EXI frequency (4 = 16mhz, 5 = 32mhz)
-#define VAR_EXI_SLOT 		(VAR_AREA+0x2F18)	// is the EXI slot (0 = slot a, 1 = slot b)
+#define VAR_FREE_U32_1		(VAR_AREA+0x2F0C)	// A free u32
+#define VAR_LAST_OFFSET		(VAR_AREA+0x2F10)	// the last offset a read was simulated from
+#define VAR_EXECD_OFFSET	(VAR_AREA+0x2F14)	// offset of execD.bin on multi-dol discs
+#define VAR_SD_SHIFT 		(VAR_AREA+0x2F18)	// is the SD Card shift amount when issueing read cmds
+#define VAR_EXI_FREQ 		(VAR_AREA+0x2F19)	// is the EXI frequency (4 = 16mhz, 5 = 32mhz)
+#define VAR_EXI_SLOT 		(VAR_AREA+0x2F1A)	// is the EXI slot (0 = slot a, 1 = slot b)
+#define VAR_FREE_U8_1		(VAR_AREA+0x2F1B)	// A free u8
 #define VAR_TMP1  			(VAR_AREA+0x2F1C)	// space for a variable if required
 #define VAR_TMP2  			(VAR_AREA+0x2F20)	// space for a variable if required
 #define VAR_FLOAT9_16		(VAR_AREA+0x2F24)	// constant 9/16
@@ -159,6 +169,10 @@
 #define VAR_AS_TMP_RSAMPLE	(VAR_AREA+0x2F8E)
 #define VAR_AS_OUTL			(VAR_AREA+0x2F90)
 #define VAR_AS_OUTR			(VAR_AREA+0x2FC8)
+
+// execD replacement lives here (0x817FA000) - if this is changed, be sure to update the patch Makefile
+#define EXECD_RUNNER_SPACE	(0x1000)
+#define EXECD_RUNNER		(WIIRD_ENGINE-EXECD_RUNNER_SPACE)
 
 // Cheat Engine + Cheats buffer (0x817FB000)
 #define WIIRD_ENGINE_SPACE  (0x2E00)

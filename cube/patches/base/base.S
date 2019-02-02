@@ -66,7 +66,7 @@ dcache_flush_icache_inv:
 	sync
 	isync
 	blr
-
+	
 	.globl process_read_queue
 process_read_queue:
 	stwu	sp,	-64(sp) 		# grow stack frame
@@ -157,3 +157,12 @@ ext_handler_custom:
 	mtsrr0      r5
 	rfi
 ext_handler_custom_end:
+
+	.globl appldr_start
+appldr_start:
+	lis			r3, device_frag_read@h
+	ori			r3, r3, device_frag_read@l
+	lis			r4, EXECD_RUNNER@h
+	ori			r4, r4, EXECD_RUNNER@l
+	mtctr		r4
+	bctr

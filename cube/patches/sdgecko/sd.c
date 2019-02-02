@@ -17,9 +17,9 @@
 #define CMD24				(0x58)
 
 #define SECTOR_SIZE 		512
-#define exi_freq  			(*(vu32*)VAR_EXI_FREQ)
+#define exi_freq  			(*(vu8*)VAR_EXI_FREQ)
 // exi_channel is stored as number of u32's to index into the exi bus (0xCC006800)
-#define exi_channel 		(*(vu32*)VAR_EXI_SLOT)
+#define exi_channel 		(*(vu8*)VAR_EXI_SLOT)
 
 // EXI Functions
 static inline void exi_select()
@@ -114,7 +114,7 @@ void do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = len;
-	u32 lbaShift = *(vu32*)VAR_SD_SHIFT;
+	u8 lbaShift = *(vu8*)VAR_SD_SHIFT;
 	
 	// SDHC uses sector addressing, SD uses byte
 	lba <<= lbaShift;	
