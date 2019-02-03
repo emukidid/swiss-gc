@@ -664,3 +664,89 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 
 	return numFiles;
 }
+
+// Returns the number of files matching the extension (in a TGC)
+int parse_tgc_for_ext(file_handle *file, u32 tgc_base, char* tgcname, char* ext) {
+	char	*FST; 
+	char	filename[256];
+	u32 fileAreaStart, fakeAmount, numFiles = 0;
+	
+	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x24,DEVICE_HANDLER_SEEK_SET);
+	devices[DEVICE_CUR]->readFile(file, &fileAreaStart, 4);
+	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x34,DEVICE_HANDLER_SEEK_SET);
+	devices[DEVICE_CUR]->readFile(file, &fakeAmount, 4);
+	
+	// Grab FST Offset & Size
+	u32 fstOfsAndSize[2];
+ 	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x10,DEVICE_HANDLER_SEEK_SET);
+ 	devices[DEVICE_CUR]->readFile(file,&fstOfsAndSize,2*sizeof(u32));
+
+ 	// Alloc and read FST
+	FST=(char*)memalign(32,fstOfsAndSize[1]); 
+	devices[DEVICE_CUR]->seekFile(file,tgc_base+fstOfsAndSize[0],DEVICE_HANDLER_SEEK_SET);
+ 	devices[DEVICE_CUR]->readFile(file,FST,fstOfsAndSize[1]);
+
+	// Adjust TGC FST offsets
+	adjust_tgc_fst(FST, tgc_base, fileAreaStart, fakeAmount);
+	
+	u32 entries=*(unsigned int*)&FST[8];
+	u32 string_table_offset=FST_ENTRY_SIZE*entries;
+		
+	int i;
+	// go through every entry
+	for (i=1;i<entries;i++) 
+	{ 
+		u32 offset=i*0x0c; 
+		if(FST[offset]==0) //skip directories
+		{ 
+			u32 size = 0;
+			u32 filename_offset=((*(unsigned int*)&FST[offset]) & 0x00FFFFFF); 
+			memset(&filename[0],0,256);
+			memcpy(&filename[0],&FST[string_table_offset+filename_offset],255);
+			memcpy(&size,&FST[offset+8],4);
+			if(endsWith(filename,ext) && size > 0) {
+				numFiles++;
+			}
+		} 
+	}
+	free(FST);
+	return numFiles;
+}
+
+// Returns the number of files matching the extension
+int parse_gcm_for_ext(file_handle *file, char *ext) {
+
+	char	*FST = get_fst(file);
+	char	filename[256];
+	int		numFiles = 0;
+
+	if(!FST) return -1;
+
+	u32 entries=*(unsigned int*)&FST[8];
+	u32 string_table_offset=FST_ENTRY_SIZE*entries;
+		
+	int i;
+	// go through every entry
+	for (i=1;i<entries;i++) 
+	{ 
+		u32 offset=i*0x0c, file_offset = 0; 
+		if(FST[offset]==0) //skip directories
+		{ 
+			u32 size = 0;
+			u32 filename_offset=((*(unsigned int*)&FST[offset]) & 0x00FFFFFF); 
+			memset(&filename[0],0,256);
+			memcpy(&file_offset,&FST[offset+4],4);
+			memcpy(&filename[0],&FST[string_table_offset+filename_offset],255);
+			memcpy(&size,&FST[offset+8],4);
+			if(endsWith(filename,ext) && size > 0) {
+				numFiles++;
+			}
+			if(endsWith(filename,".tgc")) {
+				// Go through all the TGC's internal files too
+				numFiles += parse_tgc_for_ext(file, file_offset, filename, ext);
+			}
+		} 
+	}
+	free(FST);
+	return numFiles;
+}

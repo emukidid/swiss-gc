@@ -686,7 +686,7 @@ u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
 				patched |= 0x100;
 			}
 			// Audio Streaming Hook (only if required)
-			else if(!swissSettings.muteAudioStreaming && find_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &DSPHandler ) )
+			else if(GCMDisk.AudioStreaming && find_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &DSPHandler ) )
 			{	
 				if(strncmp((const char*)0x80000000, "PZL", 3)) {	// ZeldaCE uses a special case for MM
 					void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start+0xF8)-(u32)(addr));

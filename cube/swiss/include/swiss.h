@@ -81,7 +81,6 @@ typedef struct {
 	int forceWidescreen;
 	int forceEncoding;
 	int invertCStick;
-	int muteAudioStreaming;
 	int wiirdDebug;	// Enable WiiRD debug
 	int hideUnknownFileTypes;
 	int sram60Hz;

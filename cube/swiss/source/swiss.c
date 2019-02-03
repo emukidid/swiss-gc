@@ -501,8 +501,6 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 	free(directories);
 }
 
-char *DiscIDNoASRequired[14] = {"GMP", "GFZ", "GPO", "GGS", "GSN", "GEO", "GR2", "GXG", "GM8", "G2M", "GMO", "G9S", "GHQ", "GTK"};
-
 // Alt DOL sorting/selecting code
 int exccomp(const void *a1, const void *b1)
 {
@@ -573,7 +571,7 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch) {
 	
 }
 
-unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
+unsigned int load_app(int multiDol, ExecutableFile *filesToPatch, int noASRequired)
 {
 	char* gameID = (char*)0x80000000;
 	int i = 0;
@@ -589,14 +587,9 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 		DrawPublish(DrawMessageBox(D_FAIL, "Game Header Failed to read"));
 		while(1);
 	}
-
-	// False alarm audio streaming list games here
-	for(i = 0; i < 14; i++) {
-		if(!strncmp(gameID, DiscIDNoASRequired[i], 3) ) {
-			GCMDisk.AudioStreaming = 0;
-			print_gecko("This game doesn't really need Audio Streaming but has it set!\r\n");
-			break;
-		}
+	// Disable Audio streaming if there aren't any .ADP files in the FST.
+	if(noASRequired) {
+		GCMDisk.AudioStreaming = 0;
 	}
 	
 	// Prompt for DOL selection if multi-dol
@@ -616,15 +609,14 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 
 	uiDrawObj_t* loadDolProg = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
 	
-	// Don't needlessly apply audio streaming if the game doesn't want it
-	if(!GCMDisk.AudioStreaming || devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR] == &__device_dvd) {
-		swissSettings.muteAudioStreaming = 1;
+	u32 audioStreamingBufferReq = GCMDisk.AudioStreaming;
+	// Native devices shouldn't steal memory for AS redirection
+	if(!(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS)) {
+		audioStreamingBufferReq = 0;
 	}
-	if(!strncmp((const char*)0x80000000, "PZL", 3))
-		swissSettings.muteAudioStreaming = 0;
 	
 	// Adjust top of memory
-	u32 top_of_main_ram = swissSettings.muteAudioStreaming ? 0x81800000 : DECODED_BUFFER_0;
+	u32 top_of_main_ram = !audioStreamingBufferReq ? 0x81800000 : DECODED_BUFFER_0;
 	// Steal even more if there's cheats!
 	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 		top_of_main_ram = WIIRD_ENGINE;
@@ -831,7 +823,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	*(vu32*)VAR_READS_IN_AS = 0;
 	*(vu32*)VAR_DISC_CHANGING = 0;
 	*(vu32*)VAR_LAST_OFFSET = 0xCAFEBABE;
-	*(vu32*)VAR_AS_ENABLED = !swissSettings.muteAudioStreaming;
+	*(vu32*)VAR_AS_ENABLED = GCMDisk.AudioStreaming;
 	*(vu8*)VAR_IGR_EXIT_TYPE = (u8)swissSettings.igrType;
 	memset((void*)VAR_DI_REGS, 0, 0x24);
 	memset((void*)VAR_STREAM_START, 0, 0xA0);
@@ -849,7 +841,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	}
 		
 	// Set WKF base offset if not using the frag or audio streaming patch
-	if(devices[DEVICE_CUR] == &__device_wkf /*&& !wkfFragSetupReq && swissSettings.muteAudioStreaming*/) {
+	if(devices[DEVICE_CUR] == &__device_wkf) {
 		wkfWriteOffset(*(vu32*)VAR_DISC_1_LBA);
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
@@ -1356,8 +1348,27 @@ void load_game() {
 	}
 	
 	int multiDol = 0;
+	int noASRequired = 0;
 	ExecutableFile *filesToPatch = memalign(32, sizeof(ExecutableFile)*512);
 	memset(filesToPatch, 0, sizeof(ExecutableFile)*512);
+
+	// If a device is capable of redirecting Audio Streaming, check to see if we really need it
+	if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
+		// Check that Audio streaming is really necessary before we patch anything for it
+		// GameID's with exceptions to this rule so far: GILx (.zsd files)
+		if(GCMDisk.AudioStreaming && strncmp((char*)&GCMDisk, "GIL", 3)) {
+			print_gecko("Checking game for ADP files\r\n");
+			int numAdpFiles = parse_gcm_for_ext(&curFile, ".adp");
+			if(!numAdpFiles) {
+				print_gecko("No ADP files detected in FST, disabling AudioStreaming flag\r\n");
+				noASRequired = 1;
+				GCMDisk.AudioStreaming = 0;
+			}
+			else {
+				print_gecko("Found %i ADP files\r\n", numAdpFiles);
+			}
+		}
+	}
 	// Report to the user the patch status of this GCM/ISO file
 	if(devices[DEVICE_CUR]->features & FEAT_CAN_READ_PATCHES) {
 		multiDol = check_game(filesToPatch);
@@ -1414,7 +1425,7 @@ void load_game() {
 
 	// setup the video mode before we kill libOGC kernel
 	ogc_video__reset();
-	load_app(multiDol, filesToPatch);
+	load_app(multiDol, filesToPatch, noASRequired);
 }
 
 /* Execute/Load/Parse the currently selected file */
@@ -1600,7 +1611,6 @@ int info_game()
 	swissSettings.forceWidescreen = config->forceWidescreen;
 	swissSettings.forceEncoding = config->forceEncoding;
 	swissSettings.invertCStick = config->invertCStick;
-	swissSettings.muteAudioStreaming = config->muteAudioStreaming;
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
 	while(1) {
 		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y)){ VIDEO_WaitVSync (); }

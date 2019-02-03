@@ -511,7 +511,6 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 					config->forceWidescreen = swissSettings.forceWidescreen;
 					config->forceEncoding = swissSettings.forceEncoding;
 					config->invertCStick = swissSettings.invertCStick;
-					config->muteAudioStreaming = swissSettings.muteAudioStreaming;
 					DrawDispose(msgBox);
 				}
 				else {
