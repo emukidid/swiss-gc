@@ -185,6 +185,7 @@ int initialize_disc(u32 streaming) {
 	}
 	dvd_read_id();
 	if(dvd_get_error()) { //no disc, or no game id.
+		DrawDispose(progBar);
 		sprintf(txtbuffer, "Error: %s",dvd_error_str());
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, txtbuffer);
 		DrawPublish(msgBox);
