@@ -173,13 +173,13 @@ static ftp_env* FindFTPEnv(const char *name)
 
 static s32 set_blocking(s32 s, bool blocking)
 {
-	u32 nodelay;
+	//u32 nodelay;
 
 // Switch off Nagle, ON TCP_NODELAY ***/
 
 //  review: do we need this? lack of documentation
 //	nodelay = blocking?0:1;
-	nodelay = 1;
+	//nodelay = 1;
 	// Line below crashes on GameCube
 	//net_setsockopt(s,IPPROTO_TCP,TCP_NODELAY,&nodelay,sizeof(nodelay));
 
@@ -786,7 +786,7 @@ execute_open_actv_retry:
 
 		addr.sin_addr.s_addr = inet_addr(bba_ip);
 
-		sprintf(buf, "PORT %lu,%lu,%lu,%lu,%u,%u",
+		sprintf(buf, "PORT %ul,%ul,%ul,%ul,%u,%u",
 			(ntohl(addr.sin_addr.s_addr) >> 24) & 0xff,
 			(ntohl(addr.sin_addr.s_addr) >> 16) & 0xff,
 			(ntohl(addr.sin_addr.s_addr) >> 8) & 0xff,
@@ -848,7 +848,7 @@ execute_open_actv_retry:
 
 			NET_PRINTF("offset=%u:%u\n", (u32)(offset >> 32), (u32)(offset & 0xffffFFFF));
 
-			sprintf(buf, "REST %lu%lu", high_part, low_part );
+			sprintf(buf, "REST %ul%ul", high_part, low_part );
 			NET_PRINTF("REST=%s\n",buf);
 			if((res = ftp_execute(env, buf, 350, 1)) < 0)
 			{
@@ -1057,7 +1057,7 @@ execute_open_retry:
 
 			NET_PRINTF("offset=%u:%u\n", (u32)(offset >> 32), (u32)(offset & 0xffffFFFF));
 
-			sprintf(buf, "REST %lu%lu", high_part, low_part );
+			sprintf(buf, "REST %ul%ul", high_part, low_part );
 			NET_PRINTF("REST=%s\n",buf);
 			if((res = ftp_execute(env, buf, 350, 1)) < 0)
 			{

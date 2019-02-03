@@ -194,7 +194,7 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "FTPHostIP=%s\r\n",configSwissSettings.ftpHostIp);
 	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "FTPPort=%li\r\n",configSwissSettings.ftpPort);
+	sprintf(txtbuffer, "FTPPort=%ul\r\n",configSwissSettings.ftpPort);
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "FTPUsePasv=%s\r\n",configSwissSettings.ftpUsePasv ? "Yes":"No");
 	string_append(configString, txtbuffer);

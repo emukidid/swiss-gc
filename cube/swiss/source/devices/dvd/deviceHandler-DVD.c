@@ -298,7 +298,6 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		*dir = calloc( num_entries * sizeof(file_handle), 1 );
 
 		// parse entries
-		u64 lastOffset = MULTIGAME_TABLE_OFFSET;
 		for(i = 0; i < MAX_MULTIGAME; i++) {
 			tmpOffset = (dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC) ? (tmpTable[i]<<2):(tmpTable[i]);
 			if(num >= 1 && tmpOffset) {

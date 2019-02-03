@@ -95,9 +95,9 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		sprintf(topStr,"%s / %s",getSramLang(sram->lang), sram->flags&4 ? "Stereo":"Mono");
 		DrawAddChild(container, DrawStyledLabel(640/2, 230, topStr, 1.0f, true, defaultColor));
 		// GC 00083214, 00083410
-		sprintf(topStr,"CPU Revision/Version (%08lX)",mfpvr());
+		sprintf(topStr,"CPU Revision/Version (%08X)",mfpvr());
 		DrawAddChild(container, DrawStyledLabel(640/2, 290, topStr, 0.75f, true, defaultColor));
-		sprintf(topStr,"CPU Unique ECID %08lX:%08lX:%08lX",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
+		sprintf(topStr,"CPU Unique ECID %08X:%08X:%08X",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
 		DrawAddChild(container, DrawStyledLabel(640/2, 320, topStr, 0.75f, true, defaultColor));
 	}
 	else if(page_num == 1) {
@@ -127,15 +127,14 @@ uiDrawObj_t * info_draw_page(int page_num) {
 	}
 	else if(page_num == 2) {
 		DrawAddChild(container, DrawLabel(30, 65, "Credits (3/3):"));
-		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss ver 0.4", 1.0f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid 2018", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version 0.4", 1.0f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid 2019", 0.75f, true, defaultColor));
 		sprintf(txtbuffer, "Commit %s Revision %s", GITREVISION, GITVERSION);
 		DrawAddChild(container, DrawStyledLabel(640/2, 165, txtbuffer, 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 210, "Thanks to", 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 228, "Testers & libOGC/dkPPC authors", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 246, "sepp256 for GX / FIX94 for Audio Streaming", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 264, "Extrems for video patches / Megalomaniac for builds", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 300, "Web/Support http://www.gc-forever.com/", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 246, "Extrems, FIX94, megalomaniac, sepp256", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 300, "Web/Support https://www.gc-forever.com/", 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 318, "Source at https://github.com/emukidid/swiss-gc", 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 354, "Visit us at #gc-forever on EFNet", 0.75f, true, defaultColor));
 	}
