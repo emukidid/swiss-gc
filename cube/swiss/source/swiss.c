@@ -1356,16 +1356,16 @@ void load_game() {
 	if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
 		// Check that Audio streaming is really necessary before we patch anything for it
 		// GameID's with exceptions to this rule so far: GILx (.zsd files)
-		if(GCMDisk.AudioStreaming && strncmp((char*)&GCMDisk, "GIL", 3)) {
-			print_gecko("Checking game for ADP files\r\n");
-			int numAdpFiles = parse_gcm_for_ext(&curFile, ".adp");
+		if(GCMDisk.AudioStreaming) {
+			print_gecko("Checking game for 32K files\r\n");
+			int numAdpFiles = parse_gcm_for_ext(&curFile, NULL, true);
 			if(!numAdpFiles) {
-				print_gecko("No ADP files detected in FST, disabling AudioStreaming flag\r\n");
+				print_gecko("No 32K files detected in FST, disabling AudioStreaming flag\r\n");
 				noASRequired = 1;
 				GCMDisk.AudioStreaming = 0;
 			}
 			else {
-				print_gecko("Found %i ADP files\r\n", numAdpFiles);
+				print_gecko("Found %i 32K files\r\n", numAdpFiles);
 			}
 		}
 	}

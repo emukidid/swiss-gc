@@ -59,7 +59,7 @@ void adjust_tgc_fst(char* FST, u32 tgc_base, u32 fileAreaStart, u32 fakeAmount);
 int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, char* tgcname);
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, int multiDol);
 void parse_gcm_add(file_handle *file, ExecutableFile *filesToPatch, u32 *numToPatch, char *fileName);
-int parse_gcm_for_ext(file_handle *file, char *ext);
+int parse_gcm_for_ext(file_handle *file, char *ext, bool find32k);
 int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace);
 unsigned int getBannerOffset(file_handle *f);
 #endif

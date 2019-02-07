@@ -666,7 +666,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 }
 
 // Returns the number of files matching the extension (in a TGC)
-int parse_tgc_for_ext(file_handle *file, u32 tgc_base, char* tgcname, char* ext) {
+int parse_tgc_for_ext(file_handle *file, u32 tgc_base, char* tgcname, char* ext, bool find32k) {
 	char	*FST; 
 	char	filename[256];
 	u32 fileAreaStart, fakeAmount, numFiles = 0;
@@ -699,12 +699,20 @@ int parse_tgc_for_ext(file_handle *file, u32 tgc_base, char* tgcname, char* ext)
 		u32 offset=i*0x0c; 
 		if(FST[offset]==0) //skip directories
 		{ 
-			u32 size = 0;
+			u32 size = 0, file_offset = 0;
 			u32 filename_offset=((*(unsigned int*)&FST[offset]) & 0x00FFFFFF); 
 			memset(&filename[0],0,256);
 			memcpy(&filename[0],&FST[string_table_offset+filename_offset],255);
 			memcpy(&size,&FST[offset+8],4);
-			if(endsWith(filename,ext) && size > 0) {
+			memcpy(&file_offset,&FST[offset+4],4);
+			// Match on file extension
+			if(ext && size && endsWith(filename,ext)) {
+				print_gecko("File matched ext (%s): %s/%s\r\n", ext, tgcname, filename);
+				numFiles++;
+			}
+			// Match on file offset + size being a multiple of 32K
+			if(find32k && size && !(size & 0x7FFF) && !(file_offset & 0x7FFF)) {
+				print_gecko("File matched 32K size + alignment: %s/%s\r\n", tgcname, filename);
 				numFiles++;
 			}
 		} 
@@ -714,7 +722,7 @@ int parse_tgc_for_ext(file_handle *file, u32 tgc_base, char* tgcname, char* ext)
 }
 
 // Returns the number of files matching the extension
-int parse_gcm_for_ext(file_handle *file, char *ext) {
+int parse_gcm_for_ext(file_handle *file, char *ext, bool find32k) {
 
 	char	*FST = get_fst(file);
 	char	filename[256];
@@ -738,12 +746,19 @@ int parse_gcm_for_ext(file_handle *file, char *ext) {
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&filename[0],&FST[string_table_offset+filename_offset],255);
 			memcpy(&size,&FST[offset+8],4);
-			if(endsWith(filename,ext) && size > 0) {
+			// Match on file extension
+			if(ext && endsWith(filename,ext) && size) {
+				print_gecko("File matched ext (%s): %s\r\n", ext, filename);
+				numFiles++;
+			}
+			// Match on file offset + size being a multiple of 32K
+			if(find32k && size && !(size & 0x7FFF) && !(file_offset & 0x7FFF)) {
+				print_gecko("File matched 32K size + alignment: %s\r\n", filename);
 				numFiles++;
 			}
 			if(endsWith(filename,".tgc")) {
 				// Go through all the TGC's internal files too
-				numFiles += parse_tgc_for_ext(file, file_offset, filename, ext);
+				numFiles += parse_tgc_for_ext(file, file_offset, filename, ext, find32k);
 			}
 		} 
 	}
