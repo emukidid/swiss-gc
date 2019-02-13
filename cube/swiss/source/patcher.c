@@ -716,19 +716,35 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 		if (SelectThread) {
 			switch (j) {
 				case 0:
-					data[i + 58] = branchAndLink(TICKLE_READ_USB, SelectThread + 58);
+					data[i + 12] = branchAndLink(TICKLE_READ, SelectThread + 12);
+					data[i + 20] = branchAndLink(TICKLE_READ, SelectThread + 20);
+					data[i + 35] = branchAndLink(TICKLE_READ, SelectThread + 35);
+					data[i + 48] = branchAndLink(TICKLE_READ, SelectThread + 48);
+					data[i + 58] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 58);
 					data[i + 61] = 0x4182FFF4;	// beq		-3
 					break;
 				case 1:
-					data[i + 77] = branchAndLink(TICKLE_READ_USB, SelectThread + 77);
+					data[i + 11] = branchAndLink(TICKLE_READ, SelectThread + 11);
+					data[i + 19] = branchAndLink(TICKLE_READ, SelectThread + 19);
+					data[i + 33] = branchAndLink(TICKLE_READ, SelectThread + 33);
+					data[i + 67] = branchAndLink(TICKLE_READ, SelectThread + 67);
+					data[i + 77] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 77);
 					data[i + 80] = 0x4182FFF4;	// beq		-3
 					break;
 				case 2:
-					data[i + 82] = branchAndLink(TICKLE_READ_USB, SelectThread + 82);
+					data[i + 11] = branchAndLink(TICKLE_READ, SelectThread + 11);
+					data[i + 19] = branchAndLink(TICKLE_READ, SelectThread + 19);
+					data[i + 33] = branchAndLink(TICKLE_READ, SelectThread + 33);
+					data[i + 67] = branchAndLink(TICKLE_READ, SelectThread + 67);
+					data[i + 82] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 82);
 					data[i + 85] = 0x4182FFF4;	// beq		-3
 					break;
 				case 3:
-					data[i + 83] = branchAndLink(TICKLE_READ_USB, SelectThread + 83);
+					data[i +  8] = branchAndLink(TICKLE_READ, SelectThread +  8);
+					data[i + 15] = branchAndLink(TICKLE_READ, SelectThread + 15);
+					data[i + 29] = branchAndLink(TICKLE_READ, SelectThread + 29);
+					data[i + 66] = branchAndLink(TICKLE_READ, SelectThread + 66);
+					data[i + 83] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 83);
 					data[i + 86] = 0x4182FFF4;	// beq		-3
 					break;
 			}
@@ -746,7 +762,10 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 			switch (j) {
 				case 0:
 					data[i + 33] = 0x38600001;	// li		r3, 1
-					data[i + 34] = branchAndLink(PERFORM_READ_USB, Read + 34);
+					data[i + 34] = branchAndLink(PERFORM_READ, Read + 34);
+					data[i + 35] = 0x3C000010;	// lis		r0, 16
+					data[i + 41] = 0x1C80003C;	// mulli	r4, r0, 60
+					data[i + 48] = 0x1C800014;	// mulli	r4, r0, 20
 					break;
 				case 1:
 					data[i + 18] = data[i + 17];
@@ -761,9 +780,11 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 					data[i + 26] = data[i + 29];
 					data[i + 27] = data[i + 30];
 					data[i + 28] = 0x38600001;	// li		r3, 1
-					data[i + 29] = branchAndLink(PERFORM_READ_USB, Read + 29);
-					data[i + 30] = 0x3C0000A0;	// lis		r0, 160
+					data[i + 29] = branchAndLink(PERFORM_READ, Read + 29);
+					data[i + 30] = 0x3C000010;	// lis		r0, 16
 					data[i + 31] = 0x7C1D0040;	// cmplw	r29, r0
+					data[i + 37] = 0x1FC0003C;	// mulli	r30, r0, 60
+					data[i + 50] = 0x1FC00014;	// mulli	r30, r0, 20
 					break;
 				case 2:
 					data[i + 20] = data[i + 19];
@@ -778,9 +799,11 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 					data[i + 28] = data[i + 31];
 					data[i + 29] = data[i + 32];
 					data[i + 30] = 0x38600001;	// li		r3, 1
-					data[i + 31] = branchAndLink(PERFORM_READ_USB, Read + 31);
-					data[i + 32] = 0x3C0000A0;	// lis		r0, 160
+					data[i + 31] = branchAndLink(PERFORM_READ, Read + 31);
+					data[i + 32] = 0x3C000010;	// lis		r0, 16
 					data[i + 33] = 0x7C1D0040;	// cmplw	r29, r0
+					data[i + 39] = 0x1FC0003C;	// mulli	r30, r0, 60
+					data[i + 52] = 0x1FC00014;	// mulli	r30, r0, 20
 					break;
 				case 3:
 					data[i + 16] = data[i + 19];
@@ -792,9 +815,11 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 					data[i + 24] = data[i + 27];
 					data[i + 25] = data[i + 28];
 					data[i + 26] = 0x38600001;	// li		r3, 1
-					data[i + 27] = branchAndLink(PERFORM_READ_USB, Read + 27);
-					data[i + 28] = 0x3C0000A0;	// lis		r0, 160
+					data[i + 27] = branchAndLink(PERFORM_READ, Read + 27);
+					data[i + 28] = 0x3C000010;	// lis		r0, 16
 					data[i + 29] = 0x7C1E0040;	// cmplw	r30, r0
+					data[i + 36] = 0x1FE0003C;	// mulli	r31, r0, 60
+					data[i + 51] = 0x1FE00014;	// mulli	r31, r0, 20
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", ReadSigs[j].Name, Read);
@@ -809,8 +834,8 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 		
 		if (DVDGetCommandBlockStatus) {
 			switch (j) {
-				case 0: data[i + 22] = branchAndLink(TICKLE_READ_USB, DVDGetCommandBlockStatus + 22); break;
-				case 1: data[i + 12] = branchAndLink(TICKLE_READ_USB, DVDGetCommandBlockStatus + 12); break;
+				case 0: data[i + 22] = branchAndLink(TICKLE_READ_IDLE, DVDGetCommandBlockStatus + 22); break;
+				case 1: data[i + 12] = branchAndLink(TICKLE_READ_IDLE, DVDGetCommandBlockStatus + 12); break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", DVDGetCommandBlockStatusSigs[j].Name, DVDGetCommandBlockStatus);
 		}
@@ -825,7 +850,7 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 		if (DVDGetDriveStatus) {
 			switch (j) {
 				case 1:
-				case 2: data[i + 33] = branchAndLink(TICKLE_READ_USB, DVDGetDriveStatus + 33); break;
+				case 2: data[i + 33] = branchAndLink(TICKLE_READ_IDLE, DVDGetDriveStatus + 33); break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", DVDGetDriveStatusSigs[j].Name, DVDGetDriveStatus);
 		}

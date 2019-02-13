@@ -341,7 +341,14 @@ void perform_read(void)
 	dvd[7] = 1;
 }
 
-void tickle_read(void)
+void *tickle_read(void)
 {
+	return NULL;
+}
+
+void tickle_read_idle(void)
+{
+	disable_interrupts();
+	tickle_read();
 	enable_interrupts();
 }

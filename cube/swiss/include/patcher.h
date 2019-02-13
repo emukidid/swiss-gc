@@ -162,9 +162,10 @@ enum patchIds {
 
 /* Function jump locations for the USBGecko patch */
 #define PATCHED_MEMCPY_USB		(void*)(LO_RESERVE)
-#define PERFORM_READ_USB		(void*)(LO_RESERVE | 0x04)
-#define TICKLE_READ_USB			(void*)(LO_RESERVE | 0x08)
-#define IGR_CHECK_USB			(void*)(LO_RESERVE | 0x0C)
+#define PERFORM_READ			(void*)(LO_RESERVE | 0x04)
+#define TICKLE_READ				(void*)(LO_RESERVE | 0x08)
+#define TICKLE_READ_IDLE		(void*)(LO_RESERVE | 0x0C)
+#define IGR_CHECK_USB			(void*)(LO_RESERVE | 0x10)
 
 #define READ_PATCHED_ALL 		(0x111)
 

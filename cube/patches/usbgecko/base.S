@@ -12,6 +12,7 @@ _start:
 	b		patched_memcpy			# void patched_memcpy(dst,src,size)
 	b		perform_read
 	b		tickle_read
+	b		tickle_read_idle
 	b		exit_to_pref			# checks for a button combo and exits if true
 
 	.globl dcache_flush_icache_inv

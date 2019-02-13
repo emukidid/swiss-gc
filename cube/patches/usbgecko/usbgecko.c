@@ -176,10 +176,8 @@ void perform_read()
 	gecko_send(&req, sizeof(usb_data_req));
 }
 
-void tickle_read()
+void *tickle_read()
 {
-	disable_interrupts();
-	
 	u32 *dest = *(u32 **)VAR_TMP1;
 	u32  size = *(u32  *)VAR_TMP2;
 	
@@ -195,5 +193,12 @@ void tickle_read()
 		if (!size) trigger_dvd_interrupt();
 	}
 	
+	return 0;
+}
+
+void tickle_read_idle()
+{
+	disable_interrupts();
+	tickle_read();
 	enable_interrupts();
 }
