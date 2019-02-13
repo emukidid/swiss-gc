@@ -106,6 +106,8 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2) {
 	*(vu32*)VAR_DISC_1_LBA = 0;
 	*(vu32*)VAR_DISC_2_LBA = 0;
 	*(vu32*)VAR_CUR_DISC_LBA = 0;
+	*(vu32*)VAR_TMP1 = 0;
+	*(vu32*)VAR_TMP2 = 0;
 	return 1;
 }
 

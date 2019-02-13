@@ -138,8 +138,7 @@ void exit_to_pref(s32 chan, PADStatus *status) {
 		// R = 00200000
 		// Z = 00100000
 		// D = 00040000
-		/* disable interrupts */
-		asm volatile("mfmsr 3 ; rlwinm 3,3,0,17,15 ; mtmsr 3");
+		disable_interrupts();
 		volatile u16* const _memReg = (u16*)0xCC004000;
 		volatile u16* const _dspReg = (u16*)0xCC005000;
 		/* stop audio dma */

@@ -365,7 +365,7 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 	print_gecko("Patch:[DI] applied %u times\r\n", DIPatched);
 }
 
-int PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType )
+int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType )
 {
 
 #define REG_0x8000 0
@@ -546,58 +546,292 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 	return patched;
 }
 
-u32 Patch_DVDLowLevelReadForUSBGecko(void *addr, u32 length, int dataType) {
-	int i = 0;
-	int patched = 0;
-	patched = PatchDetectLowMemUsage(addr, length, dataType);
-	for(i = 0; i < length; i+=4) {
-		if(patched == 0x11) break;	// we're done
-
-		// Patch Read to adjust the offset for fragmented files
-		if( *(vu32*)(addr+i) != 0x7C0802A6 )
+void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
+{
+	int i, j;
+	FuncPattern OSSetCurrentContextSig = 
+		{ 23, 4, 4, 0, 0, 5, NULL, 0, "OSSetCurrentContext" };
+	FuncPattern OSDisableInterruptsSig = 
+		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
+	FuncPattern OSEnableInterruptsSig = 
+		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSEnableInterrupts" };
+	FuncPattern OSRestoreInterruptsSig = 
+		{ 9, 0, 0, 0, 2, 2, NULL, 0, "OSRestoreInterrupts" };
+	FuncPattern OSExceptionInitSigs[3] = {
+		{ 164, 61,  6, 18, 14, 14, NULL, 0, "OSExceptionInitD A" },
+		{ 160, 39, 14, 14, 20,  7, NULL, 0, "OSExceptionInit A" },
+		{ 151, 45, 14, 16, 13,  9, NULL, 0, "OSExceptionInit B" }	// SN Systems ProDG
+	};
+	FuncPattern SelectThreadSigs[4] = {
+		{ 123, 39, 10, 11, 14, 12, NULL, 0, "SelectThreadD A" },
+		{ 128, 41, 20,  8, 12, 12, NULL, 0, "SelectThread A" },
+		{ 138, 44, 20,  8, 12, 12, NULL, 0, "SelectThread B" },
+		{ 141, 51, 19,  8, 12, 14, NULL, 0, "SelectThread C" }	// SN Systems ProDG
+	};
+	FuncPattern ReadSigs[4] = {
+		{ 56, 23, 18, 3, 2, 4, NULL, 0, "ReadD A" },
+		{ 66, 29, 17, 5, 2, 3, NULL, 0, "Read A" },
+		{ 68, 30, 18, 5, 2, 3, NULL, 0, "Read B" },
+		{ 67, 29, 17, 5, 2, 6, NULL, 0, "Read C" }	// SN Systems ProDG
+	};
+	FuncPattern DVDGetCommandBlockStatusSigs[2] = {
+		{ 29, 8, 2, 3, 1, 4, NULL, 0, "DVDGetCommandBlockStatusD" },
+		{ 19, 4, 3, 2, 1, 4, NULL, 0, "DVDGetCommandBlockStatus" }
+	};
+	FuncPattern DVDGetDriveStatusSigs[3] = {
+		{ 40, 10, 2, 3, 6, 6, NULL, 0, "DVDGetDriveStatusD A" },
+		{ 43, 10, 4, 4, 6, 3, NULL, 0, "DVDGetDriveStatus A" },
+		{ 43, 10, 4, 4, 6, 4, NULL, 0, "DVDGetDriveStatus B" }	// SN Systems ProDG
+	};
+	
+	for (i = 0; i < length / sizeof(u32); i++) {
+		if (data[i - 1] != 0x4E800020 || (data[i] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6))
 			continue;
 		
 		FuncPattern fp;
-		make_pattern( addr, i / 4, length, &fp );
+		make_pattern(data, i, length, &fp);
 		
-		if(compare_pattern(&fp, &OSExceptionInitSig))
-		{
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 472)-(u32)(addr));
-			print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
-			*(vu32*)(addr + i + 472) = branchAndLink(PATCHED_MEMCPY_USB, properAddress);
-			patched |= 0x10;
+		for (j = 0; j < sizeof(OSExceptionInitSigs) / sizeof(FuncPattern); j++) {
+			if (!OSExceptionInitSigs[j].offsetFoundAt && compare_pattern(&fp, &OSExceptionInitSigs[j])) {
+				OSExceptionInitSigs[j].offsetFoundAt = i;
+				break;
+			}
 		}
-		// Debug version of the above
-		if(compare_pattern(&fp, &OSExceptionInitSigDebug))
-		{
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 512)-(u32)(addr));
-			print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
-			*(vu32*)(addr + i + 512) = branchAndLink(PATCHED_MEMCPY_DBG_USB, properAddress);
-			patched |= 0x10;
+		
+		for (j = 0; j < sizeof(SelectThreadSigs) / sizeof(FuncPattern); j++) {
+			if (!SelectThreadSigs[j].offsetFoundAt && compare_pattern(&fp, &SelectThreadSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i + 57, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 58, length, &OSEnableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 62, length, &OSDisableInterruptsSig))
+							SelectThreadSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i + 76, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 77, length, &OSEnableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 81, length, &OSDisableInterruptsSig))
+							SelectThreadSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i + 81, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 82, length, &OSEnableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 86, length, &OSDisableInterruptsSig))
+							SelectThreadSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i + 82, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 83, length, &OSEnableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 87, length, &OSDisableInterruptsSig))
+							SelectThreadSigs[j].offsetFoundAt = i;
+						break;
+				}
+				break;
+			}
 		}
-		if(compare_pattern(&fp, &ReadCommon)) {
-			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x84)-(u32)(addr));
-			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadCommon.Name, properAddress - 0x84);
-			*(vu32*)(addr + i + 0x84) = branchAndLink(PERFORM_READ_USBGECKO, properAddress);
-			*(vu32*)(addr + i + 0xB8) = 0x60000000;
-			*(vu32*)(addr + i + 0xEC) = 0x60000000;
-			patched |= 0x100;
+		
+		for (j = 0; j < sizeof(ReadSigs) / sizeof(FuncPattern); j++) {
+			if (!ReadSigs[j].offsetFoundAt && compare_pattern(&fp, &ReadSigs[j])) {
+				ReadSigs[j].offsetFoundAt = i;
+				break;
+			}
 		}
-		if(compare_pattern(&fp, &ReadDebug)) {	// As above, for debug read now.
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x88)-(u32)(addr));
-			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadDebug.Name, properAddress - 0x88);
-			*(vu32*)(addr + i + 0x88) = branchAndLink(PERFORM_READ_USBGECKO, properAddress);
-			patched |= 0x100;
+		
+		for (j = 0; j < sizeof(DVDGetCommandBlockStatusSigs) / sizeof(FuncPattern); j++) {
+			if (!DVDGetCommandBlockStatusSigs[j].offsetFoundAt && compare_pattern(&fp, &DVDGetCommandBlockStatusSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i + 13, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 22, length, &OSRestoreInterruptsSig))
+							DVDGetCommandBlockStatusSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 12, length, &OSRestoreInterruptsSig))
+							DVDGetCommandBlockStatusSigs[j].offsetFoundAt = i;
+						break;
+				}
+				break;
+			}
 		}
-		if(compare_pattern(&fp, &ReadUncommon)) {	// Same, for the less common read type.
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x7C)-(u32)(addr));
-			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadUncommon.Name, properAddress - 0x7C);
-			*(vu32*)(addr + i + 0x7C) = branchAndLink(PERFORM_READ_USBGECKO, properAddress);
-			patched |= 0x100;
+		
+		for (j = 0; j < sizeof(DVDGetDriveStatusSigs) / sizeof(FuncPattern); j++) {
+			if (!DVDGetDriveStatusSigs[j].offsetFoundAt && compare_pattern(&fp, &DVDGetDriveStatusSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 33, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 30, length, &DVDGetCommandBlockStatusSigs[0]))
+							DVDGetDriveStatusSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+					case 2:
+						if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 28, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 33, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 35, length, &OSRestoreInterruptsSig))
+							DVDGetDriveStatusSigs[j].offsetFoundAt = i;
+						break;
+				}
+				break;
+			}
+		}
+		i += fp.Length - 1;
+	}
+	
+	for (j = 0; j < sizeof(OSExceptionInitSigs) / sizeof(FuncPattern); j++)
+		if (OSExceptionInitSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(OSExceptionInitSigs) / sizeof(FuncPattern) && (i = OSExceptionInitSigs[j].offsetFoundAt)) {
+		u32 *OSExceptionInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (OSExceptionInit) {
+			switch (j) {
+				case 0:
+					data[i + 130] = branchAndLink(PATCHED_MEMCPY_USB, OSExceptionInit + 130);
+					data[i + 132] = 0x38800100;	// li		r4, 256
+					data[i + 136] = 0x38800100;	// li		r4, 256
+					break;
+				case 1:
+					data[i + 122] = branchAndLink(PATCHED_MEMCPY_USB, OSExceptionInit + 122);
+					data[i + 124] = 0x38800100;	// li		r4, 256
+					data[i + 128] = 0x38800100;	// li		r4, 256
+					break;
+				case 2:
+					data[i + 115] = branchAndLink(PATCHED_MEMCPY_USB, OSExceptionInit + 115);
+					data[i + 117] = 0x38800100;	// li		r4, 256
+					data[i + 121] = 0x38800100;	// li		r4, 256
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", OSExceptionInitSigs[j].Name, OSExceptionInit);
 		}
 	}
-	return patched;
+	
+	for (j = 0; j < sizeof(SelectThreadSigs) / sizeof(FuncPattern); j++)
+		if (SelectThreadSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(SelectThreadSigs) / sizeof(FuncPattern) && (i = SelectThreadSigs[j].offsetFoundAt)) {
+		u32 *SelectThread = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (SelectThread) {
+			switch (j) {
+				case 0:
+					data[i + 58] = branchAndLink(TICKLE_READ_USB, SelectThread + 58);
+					data[i + 61] = 0x4182FFF4;	// beq		-3
+					break;
+				case 1:
+					data[i + 77] = branchAndLink(TICKLE_READ_USB, SelectThread + 77);
+					data[i + 80] = 0x4182FFF4;	// beq		-3
+					break;
+				case 2:
+					data[i + 82] = branchAndLink(TICKLE_READ_USB, SelectThread + 82);
+					data[i + 85] = 0x4182FFF4;	// beq		-3
+					break;
+				case 3:
+					data[i + 83] = branchAndLink(TICKLE_READ_USB, SelectThread + 83);
+					data[i + 86] = 0x4182FFF4;	// beq		-3
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", SelectThreadSigs[j].Name, SelectThread);
+		}
+	}
+	
+	for (j = 0; j < sizeof(ReadSigs) / sizeof(FuncPattern); j++)
+		if (ReadSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(ReadSigs) / sizeof(FuncPattern) && (i = ReadSigs[j].offsetFoundAt)) {
+		u32 *Read = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (Read) {
+			switch (j) {
+				case 0:
+					data[i + 33] = 0x38600001;	// li		r3, 1
+					data[i + 34] = branchAndLink(PERFORM_READ_USB, Read + 34);
+					break;
+				case 1:
+					data[i + 18] = data[i + 17];
+					data[i + 17] = data[i + 19];
+					data[i + 19] = data[i + 20];
+					data[i + 20] = data[i + 21];
+					data[i + 21] = data[i + 22];
+					data[i + 22] = data[i + 23];
+					data[i + 23] = data[i + 25];
+					data[i + 24] = data[i + 27];
+					data[i + 25] = data[i + 28];
+					data[i + 26] = data[i + 29];
+					data[i + 27] = data[i + 30];
+					data[i + 28] = 0x38600001;	// li		r3, 1
+					data[i + 29] = branchAndLink(PERFORM_READ_USB, Read + 29);
+					data[i + 30] = 0x3C0000A0;	// lis		r0, 160
+					data[i + 31] = 0x7C1D0040;	// cmplw	r29, r0
+					break;
+				case 2:
+					data[i + 20] = data[i + 19];
+					data[i + 19] = data[i + 21];
+					data[i + 21] = data[i + 22];
+					data[i + 22] = data[i + 23];
+					data[i + 23] = data[i + 24];
+					data[i + 24] = data[i + 25];
+					data[i + 25] = data[i + 27];
+					data[i + 26] = data[i + 29];
+					data[i + 27] = data[i + 30];
+					data[i + 28] = data[i + 31];
+					data[i + 29] = data[i + 32];
+					data[i + 30] = 0x38600001;	// li		r3, 1
+					data[i + 31] = branchAndLink(PERFORM_READ_USB, Read + 31);
+					data[i + 32] = 0x3C0000A0;	// lis		r0, 160
+					data[i + 33] = 0x7C1D0040;	// cmplw	r29, r0
+					break;
+				case 3:
+					data[i + 16] = data[i + 19];
+					data[i + 19] = data[i + 20];
+					data[i + 20] = data[i + 23];
+					data[i + 21] = data[i + 24];
+					data[i + 22] = data[i + 25];
+					data[i + 23] = data[i + 26];
+					data[i + 24] = data[i + 27];
+					data[i + 25] = data[i + 28];
+					data[i + 26] = 0x38600001;	// li		r3, 1
+					data[i + 27] = branchAndLink(PERFORM_READ_USB, Read + 27);
+					data[i + 28] = 0x3C0000A0;	// lis		r0, 160
+					data[i + 29] = 0x7C1E0040;	// cmplw	r30, r0
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", ReadSigs[j].Name, Read);
+		}
+	}
+	
+	for (j = 0; j < sizeof(DVDGetCommandBlockStatusSigs) / sizeof(FuncPattern); j++)
+		if (DVDGetCommandBlockStatusSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(DVDGetCommandBlockStatusSigs) / sizeof(FuncPattern) && (i = DVDGetCommandBlockStatusSigs[j].offsetFoundAt)) {
+		u32 *DVDGetCommandBlockStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (DVDGetCommandBlockStatus) {
+			switch (j) {
+				case 0: data[i + 22] = branchAndLink(TICKLE_READ_USB, DVDGetCommandBlockStatus + 22); break;
+				case 1: data[i + 12] = branchAndLink(TICKLE_READ_USB, DVDGetCommandBlockStatus + 12); break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", DVDGetCommandBlockStatusSigs[j].Name, DVDGetCommandBlockStatus);
+		}
+	}
+	
+	for (j = 0; j < sizeof(DVDGetDriveStatusSigs) / sizeof(FuncPattern); j++)
+		if (DVDGetDriveStatusSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(DVDGetDriveStatusSigs) / sizeof(FuncPattern) && (i = DVDGetDriveStatusSigs[j].offsetFoundAt)) {
+		u32 *DVDGetDriveStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (DVDGetDriveStatus) {
+			switch (j) {
+				case 1:
+				case 2: data[i + 33] = branchAndLink(TICKLE_READ_USB, DVDGetDriveStatus + 33); break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", DVDGetDriveStatusSigs[j].Name, DVDGetDriveStatus);
+		}
+	}
+	
+	PatchDetectLowMemUsage(data, length, dataType);
 }
 
 /** Used for Multi-DOL games that require patches to be stored on SD */
@@ -4356,6 +4590,8 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		if (PADRead) {
 			if (devices[DEVICE_CUR] == &__device_dvd)
 				PADReadHook = IGR_CHECK_DVD;
+			else if (devices[DEVICE_CUR] == &__device_usbgecko || devices[DEVICE_CUR] == &__device_smb)
+				PADReadHook = IGR_CHECK_USB;
 			else if (devices[DEVICE_CUR] == &__device_wkf)
 				PADReadHook = IGR_CHECK_WKF;
 			else

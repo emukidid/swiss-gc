@@ -125,7 +125,10 @@ build-usb:
 	@echo Building USBGecko Patch ...
 	@$(CC) -O1 $(OPTS) -c usbgecko/base.S
 	@$(CC) -O1 $(OPTS) -c usbgecko/usbgecko.c
-	@$(LD) -o usbgecko.elf base.o usbgecko.o --section-start .text=0x80001000 --gc-sections
+	@$(CC) -O1 $(OPTS) -c sdgecko/sd.c
+	@$(CC) -O1 $(OPTS) -c base/frag.c
+	@$(CC) -O1 $(OPTS) -c base/igr.c
+	@$(LD) -o usbgecko.elf base.o usbgecko.o sd.o frag.o igr.o --section-start .text=0x80001000 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
@@ -157,8 +160,11 @@ build-bba:
 	@$(CC) -O1 $(OPTS) -c usbgecko/base.S
 	@$(CC) -O1 $(OPTS) -c bba/bba.c
 	@$(CC) -O1 $(OPTS) -c bba/tcpip.c
+	@$(CC) -O1 $(OPTS) -c sdgecko/sd.c
+	@$(CC) -O1 $(OPTS) -c base/frag.c
 	@$(CC) -O1 $(OPTS) -c base/usbgecko.c
-	@$(LD) -o bba.elf base.o bba.o tcpip.o usbgecko.o --section-start .text=0x80001000 --gc-sections
+	@$(CC) -O1 $(OPTS) -c base/igr.c
+	@$(LD) -o bba.elf base.o bba.o tcpip.o usbgecko.o sd.o frag.o igr.o --section-start .text=0x80001000 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D bba.elf > $(DISASM)/bba_disasm.txt
 	@$(OBJCOPY) -O binary bba.elf bba.bin

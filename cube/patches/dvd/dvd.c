@@ -9,10 +9,7 @@
 // Perform a debug spinup/etc instead of a hard dvd reset
 void handle_disc_swap()
 {
-
-	asm("mfmsr	5");
-	asm("rlwinm	5,5,0,17,15");
-	asm("mtmsr	5");
+	disable_interrupts();
 	
 	volatile u32* dvd = (volatile u32*)0xCC006000;
 	// Unlock
@@ -60,9 +57,7 @@ void handle_disc_swap()
 	dvd[7] = 1;
 	while (!(dvd[0] & 0x14));
 	
-	asm("mfmsr	5");
-	asm("ori	5,5,0x8000");
-	asm("mtmsr	5");
+	enable_interrupts();
 }
 
 int is_frag_read(unsigned int offset, unsigned int len) {

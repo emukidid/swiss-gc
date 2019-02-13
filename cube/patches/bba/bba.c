@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "../../reservedarea.h"
+#include "../base/common.h"
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
@@ -74,17 +75,6 @@ typedef struct {
 	uint32_t next   : 12;
 	uint8_t data[];
 } __attribute((packed)) bba_header_t;
-
-void *memcpy(void *dest, const void *src, size_t size)
-{
-	char *d = dest;
-	const char *s = src;
-
-	while (size--)
-		*d++ = *s++;
-
-	return dest;
-}
 
 static void exi_select(void)
 {
@@ -325,8 +315,6 @@ static void bba_poll(void)
 	}
 }
 
-extern void dcache_flush_icache_inv(void* dst, uint32_t len);
-
 void perform_read(void)
 {
 	volatile unsigned long *dvd = (void *)0xCC006000;
@@ -351,4 +339,9 @@ void perform_read(void)
 	dvd[6] = 0;
 	dvd[8] = 0;
 	dvd[7] = 1;
+}
+
+void tickle_read(void)
+{
+	enable_interrupts();
 }

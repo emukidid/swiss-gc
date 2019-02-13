@@ -111,9 +111,7 @@ void adjust_read() {
 }
 
 void wkfReinit(void) {
-	asm("mfmsr	5");
-	asm("rlwinm	5,5,0,17,15");
-	asm("mtmsr	5");
+	disable_interrupts();
 	// TODO re-init WKF
 }
 

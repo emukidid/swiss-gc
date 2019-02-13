@@ -13,6 +13,20 @@ typedef volatile s16 vs16;
 typedef volatile u32 vu32;
 typedef volatile s32 vs32;
 
+#define disable_interrupts() ({ \
+	unsigned long msr; \
+	asm volatile ("mfmsr %0" : "=r" (msr)); \
+	asm volatile ("rlwinm %0,%0,0,17,15" : "+r" (msr)); \
+	asm volatile ("mtmsr %0" :: "r" (msr)); \
+})
+
+#define enable_interrupts() ({ \
+	unsigned long msr; \
+	asm volatile ("mfmsr %0" : "=r" (msr)); \
+	asm volatile ("ori %0,%0,0x8000" : "+r" (msr)); \
+	asm volatile ("mtmsr %0" :: "r" (msr)); \
+})
+
 #define mftb(rval) ({unsigned long u; do { \
 	 asm volatile ("mftbu %0" : "=r" (u)); \
 	 asm volatile ("mftb %0" : "=r" ((rval)->l)); \

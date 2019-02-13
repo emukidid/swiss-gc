@@ -162,8 +162,9 @@ enum patchIds {
 
 /* Function jump locations for the USBGecko patch */
 #define PATCHED_MEMCPY_USB		(void*)(LO_RESERVE)
-#define PATCHED_MEMCPY_DBG_USB	(void*)(LO_RESERVE | 0x04)
-#define PERFORM_READ_USBGECKO	(void*)(LO_RESERVE | 0x08)
+#define PERFORM_READ_USB		(void*)(LO_RESERVE | 0x04)
+#define TICKLE_READ_USB			(void*)(LO_RESERVE | 0x08)
+#define IGR_CHECK_USB			(void*)(LO_RESERVE | 0x0C)
 
 #define READ_PATCHED_ALL 		(0x111)
 
@@ -177,7 +178,7 @@ enum patchIds {
 // -1 no device, 0 slot a, 1 slot b.
 extern int savePatchDevice;
 
-u32 Patch_DVDLowLevelReadForUSBGecko(void *addr, u32 length, int dataType);
+void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType);
 u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType);
@@ -191,7 +192,7 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 int Patch_GameSpecificFile(void *data, u32 length, const char* gameID, const char* fileName);
 void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dataType);
 void Patch_PADStatus(u32 *data, u32 length, int dataType);
-int PatchDetectLowMemUsage( u8 *dst, u32 Length, int dataType );
+int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType );
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt);
 void *Calc_Address(void *data, int dataType, u32 properAddress);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);

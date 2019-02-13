@@ -17,29 +17,6 @@ typedef struct {
 
 #define EXI_TSTART			1
 
-#define _CPU_ISR_Enable() \
-	{ register u32 _val, _enable_mask; \
-	  __asm__ __volatile__ ( \
-		"mfmsr %0\n" \
-		"andi. %1,%0,0x2\n" \
-		"beq 1f\n" \
-		"ori %0,%0,0x8000\n" \
-		"mtmsr %0\n" \
-		"1:" \
-		: "=r" (_val), "=r" (_enable_mask) \
-	  ); \
-	}
-
-#define _CPU_ISR_Disable() \
-  { register u32 _val; \
-    __asm__ __volatile__ ( \
-	  "mfmsr %0\n" \
-	  "rlwinm %0,%0,0,17,15\n" \
-	  "mtmsr %0\n" \
-	  : "=r" (_val) \
-	); \
-  }
-
 
 static unsigned int gecko_sendbyte(char data)
 {
@@ -80,6 +57,19 @@ static unsigned int gecko_receivebyte(char* data)
 	} 
 	
 	return 0;
+}
+
+static void gecko_receiveword(unsigned long* data)
+{
+	unsigned long receiveword = 0;
+	unsigned int i = 0;
+	
+	while (i < 4)
+	{
+		i += gecko_receivebyte((char*)&receiveword + i);
+	}
+	
+	*data = receiveword;
 }
 
 
@@ -156,21 +146,10 @@ static void gecko_receive(void *buffer,unsigned int size)
 }
 
 
-void perform_read() {
-	// Check if this read offset+size lies in our patched area, if so, we write a 0xE000 cmd to the drive and read from SDGecko.
-	volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
-	u32 dst = dvd[5];
-	u32 len = dvd[4];
-	u32 offset = (dvd[3]<<2);
+void trigger_dvd_interrupt()
+{
+	vu32 *dvd = (vu32 *)0xCC006000;
 	
-	usb_data_req req;
-	req.offset = __builtin_bswap32(offset);
-	req.size = __builtin_bswap32(len);
-	//_CPU_ISR_Enable();
-	gecko_send(&req, sizeof(usb_data_req));
-	gecko_receive((void*)(dst | 0x80000000), len);
-	//_CPU_ISR_Disable();
-	dcache_flush_icache_inv((void*)(dst | 0x80000000), len);
 	dvd[2] = 0xE0000000;
 	dvd[3] = 0;
 	dvd[4] = 0;
@@ -178,4 +157,43 @@ void perform_read() {
 	dvd[6] = 0;
 	dvd[8] = 0;
 	dvd[7] = 1;
+}
+
+void perform_read()
+{
+	vu32 *dvd = (vu32 *)0xCC006000;
+	
+	u32 dest = dvd[5] | 0xC0000000;
+	u32 size = dvd[4];
+	u32 offset = dvd[3] << 2;
+	
+	*(u32 *)VAR_TMP1 = dest;
+	*(u32 *)VAR_TMP2 = size;
+	
+	usb_data_req req;
+	req.offset = __builtin_bswap32(offset);
+	req.size = __builtin_bswap32(size);
+	gecko_send(&req, sizeof(usb_data_req));
+}
+
+void tickle_read()
+{
+	disable_interrupts();
+	
+	u32 *dest = *(u32 **)VAR_TMP1;
+	u32  size = *(u32  *)VAR_TMP2;
+	
+	while (size && gecko_checkrx()) {
+		gecko_receiveword(dest);
+		
+		dest++;
+		size -= sizeof(u32);
+		
+		*(u32 **)VAR_TMP1 = dest;
+		*(u32  *)VAR_TMP2 = size;
+		
+		if (!size) trigger_dvd_interrupt();
+	}
+	
+	enable_interrupts();
 }
