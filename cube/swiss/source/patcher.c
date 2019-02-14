@@ -568,11 +568,20 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 		{ 138, 44, 20,  8, 12, 12, NULL, 0, "SelectThread B" },
 		{ 141, 51, 19,  8, 12, 14, NULL, 0, "SelectThread C" }	// SN Systems ProDG
 	};
+	FuncPattern __OSGetSystemTimeSigs[2] = {
+		{ 22, 4, 2, 3, 0, 3, NULL, 0, "__OSGetSystemTimeD" },
+		{ 25, 8, 5, 3, 0, 3, NULL, 0, "__OSGetSystemTime" }
+	};
 	FuncPattern ReadSigs[4] = {
 		{ 56, 23, 18, 3, 2, 4, NULL, 0, "ReadD A" },
 		{ 66, 29, 17, 5, 2, 3, NULL, 0, "Read A" },
 		{ 68, 30, 18, 5, 2, 3, NULL, 0, "Read B" },
 		{ 67, 29, 17, 5, 2, 6, NULL, 0, "Read C" }	// SN Systems ProDG
+	};
+	FuncPattern DVDLowReadSigs[3] = {
+		{ 157,  70,  6, 13, 12, 13, NULL, 0, "DVDLowReadD A" },
+		{ 166,  68, 19,  9, 14, 18, NULL, 0, "DVDLowRead A" },
+		{ 321, 113, 75, 23, 17, 34, NULL, 0, "DVDLowRead B" }	// SN Systems ProDG
 	};
 	FuncPattern DVDGetCommandBlockStatusSigs[2] = {
 		{ 29, 8, 2, 3, 1, 4, NULL, 0, "DVDGetCommandBlockStatusD" },
@@ -632,7 +641,47 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 		
 		for (j = 0; j < sizeof(ReadSigs) / sizeof(FuncPattern); j++) {
 			if (!ReadSigs[j].offsetFoundAt && compare_pattern(&fp, &ReadSigs[j])) {
-				ReadSigs[j].offsetFoundAt = i;
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i + 14, length, &__OSGetSystemTimeSigs[0]))
+							ReadSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i + 15, length, &__OSGetSystemTimeSigs[1]))
+							ReadSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i + 17, length, &__OSGetSystemTimeSigs[1]))
+							ReadSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i + 14, length, &__OSGetSystemTimeSigs[1]))
+							ReadSigs[j].offsetFoundAt = i;
+						break;
+				}
+				break;
+			}
+		}
+		
+		for (j = 0; j < sizeof(DVDLowReadSigs) / sizeof(FuncPattern); j++) {
+			if (!DVDLowReadSigs[j].offsetFoundAt && compare_pattern(&fp, &DVDLowReadSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  89, length, &__OSGetSystemTimeSigs[0]))
+							DVDLowReadSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  97, length, &__OSGetSystemTimeSigs[1]))
+							DVDLowReadSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  28, length, &__OSGetSystemTimeSigs[1]) &&
+							findx_pattern(data, dataType, i + 136, length, &__OSGetSystemTimeSigs[1]) &&
+							findx_pattern(data, dataType, i + 191, length, &__OSGetSystemTimeSigs[1]) &&
+							findx_pattern(data, dataType, i + 219, length, &__OSGetSystemTimeSigs[1]))
+							DVDLowReadSigs[j].offsetFoundAt = i;
+						break;
+				}
 				break;
 			}
 		}
@@ -823,6 +872,63 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", ReadSigs[j].Name, Read);
+		}
+	}
+	
+	for (j = 0; j < sizeof(DVDLowReadSigs) / sizeof(FuncPattern); j++)
+		if (DVDLowReadSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(DVDLowReadSigs) / sizeof(FuncPattern) && (i = DVDLowReadSigs[j].offsetFoundAt)) {
+		u32 *DVDLowRead = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (DVDLowRead) {
+			if (j == 2) {
+				data[i +  30] = data[i +  33];
+				data[i +  33] = data[i +  34];
+				data[i +  34] = data[i +  37];
+				data[i +  35] = data[i +  38];
+				data[i +  36] = data[i +  39];
+				data[i +  37] = data[i +  40];
+				data[i +  38] = data[i +  41];
+				data[i +  39] = data[i +  42];
+				data[i +  40] = 0x38600001;	// li		r3, 1
+				data[i +  41] = branchAndLink(PERFORM_READ, DVDLowRead + 41);
+				data[i +  42] = 0x3C000010;	// lis		r0, 16
+				data[i +  43] = 0x7C180040;	// cmplw	r24, r0
+				data[i +  49] = 0x1EC0003C;	// mulli	r22, r0, 60
+				data[i +  62] = 0x1EC00014;	// mulli	r22, r0, 20
+				
+				data[i + 138] = data[i + 141];
+				data[i + 141] = data[i + 142];
+				data[i + 142] = data[i + 145];
+				data[i + 143] = data[i + 146];
+				data[i + 144] = data[i + 147];
+				data[i + 145] = data[i + 148];
+				data[i + 146] = data[i + 149];
+				data[i + 147] = data[i + 150];
+				data[i + 148] = 0x38600001;	// li		r3, 1
+				data[i + 149] = branchAndLink(PERFORM_READ, DVDLowRead + 149);
+				data[i + 150] = 0x3C000010;	// lis		r0, 16
+				data[i + 151] = 0x7C180040;	// cmplw	r24, r0
+				data[i + 157] = 0x1EC0003C;	// mulli	r22, r0, 60
+				data[i + 170] = 0x1EC00014;	// mulli	r22, r0, 20
+				
+				data[i + 221] = data[i + 224];
+				data[i + 224] = data[i + 225];
+				data[i + 225] = data[i + 228];
+				data[i + 226] = data[i + 229];
+				data[i + 227] = data[i + 230];
+				data[i + 228] = data[i + 231];
+				data[i + 229] = data[i + 232];
+				data[i + 230] = data[i + 233];
+				data[i + 231] = 0x38600001;	// li		r3, 1
+				data[i + 232] = branchAndLink(PERFORM_READ, DVDLowRead + 232);
+				data[i + 233] = 0x3C000010;	// lis		r0, 16
+				data[i + 234] = 0x7C180040;	// cmplw	r24, r0
+				data[i + 240] = 0x1EC0003C;	// mulli	r22, r0, 60
+				data[i + 253] = 0x1EC00014;	// mulli	r22, r0, 20
+			}
+			print_gecko("Found:[%s] @ %08X\n", DVDLowReadSigs[j].Name, DVDLowRead);
 		}
 	}
 	
