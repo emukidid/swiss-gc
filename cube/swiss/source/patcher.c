@@ -38,6 +38,99 @@ u16 _dvdinterrupthandler_part[3] = {
 	0x6000, 0x002A, 0x0054
 };
 
+static void *patch_locations[PATCHES_MAX];
+
+void checkPatchAddr() {
+	if(top_addr < 0x80001800) {
+		print_gecko("Too many patches applied, top_addr has gone below the reserved area\r\n");
+		// Display something on screen
+		while(1);
+	}
+}
+
+// Returns where the ASM patch has been copied to
+void *installPatch(int patchId) {
+	u32 patchSize = 0;
+	void* patchLocation = 0;
+	switch(patchId) {
+		case EXI_LOCKHOOK:
+			patchSize = EXILockHook_length; patchLocation = EXILockHook; break;
+		case EXI_LOCKHOOKD:
+			patchSize = EXILockHookD_length; patchLocation = EXILockHookD; break;
+		case GX_COPYDISPHOOK:
+			patchSize = GXCopyDispHook_length; patchLocation = GXCopyDispHook; break;
+		case GX_INITTEXOBJLODHOOK:
+			patchSize = GXInitTexObjLODHook_length; patchLocation = GXInitTexObjLODHook; break;
+		case GX_SETPROJECTIONHOOK:
+			patchSize = GXSetProjectionHook_length; patchLocation = GXSetProjectionHook; break;
+		case GX_SETSCISSORHOOK:
+			patchSize = GXSetScissorHook_length; patchLocation = GXSetScissorHook; break;
+		case MTX_FRUSTUMHOOK:
+			patchSize = MTXFrustumHook_length; patchLocation = MTXFrustumHook; break;
+		case MTX_LIGHTFRUSTUMHOOK:
+			patchSize = MTXLightFrustumHook_length; patchLocation = MTXLightFrustumHook; break;
+		case MTX_LIGHTPERSPECTIVEHOOK:
+			patchSize = MTXLightPerspectiveHook_length; patchLocation = MTXLightPerspectiveHook; break;
+		case MTX_ORTHOHOOK:
+			patchSize = MTXOrthoHook_length; patchLocation = MTXOrthoHook; break;
+		case MTX_PERSPECTIVEHOOK:
+			patchSize = MTXPerspectiveHook_length; patchLocation = MTXPerspectiveHook; break;
+		case VI_CONFIGURE240P:
+			patchSize = VIConfigure240p_length; patchLocation = VIConfigure240p; break;
+		case VI_CONFIGURE288P:
+			patchSize = VIConfigure288p_length; patchLocation = VIConfigure288p; break;
+		case VI_CONFIGURE480I:
+			patchSize = VIConfigure480i_length; patchLocation = VIConfigure480i; break;
+		case VI_CONFIGURE480P:
+			patchSize = VIConfigure480p_length; patchLocation = VIConfigure480p; break;
+		case VI_CONFIGURE576I:
+			patchSize = VIConfigure576i_length; patchLocation = VIConfigure576i; break;
+		case VI_CONFIGURE576P:
+			patchSize = VIConfigure576p_length; patchLocation = VIConfigure576p; break;
+		case VI_CONFIGURE1080I50:
+			patchSize = VIConfigure1080i50_length; patchLocation = VIConfigure1080i50; break;
+		case VI_CONFIGURE1080I60:
+			patchSize = VIConfigure1080i60_length; patchLocation = VIConfigure1080i60; break;
+		case VI_CONFIGUREHOOK1:
+			patchSize = VIConfigureHook1_length; patchLocation = VIConfigureHook1; break;
+		case VI_CONFIGUREHOOK2:
+			patchSize = VIConfigureHook2_length; patchLocation = VIConfigureHook2; break;
+		case VI_CONFIGUREPANHOOK:
+			patchSize = VIConfigurePanHook_length; patchLocation = VIConfigurePanHook; break;
+		case VI_CONFIGUREPANHOOKD:
+			patchSize = VIConfigurePanHookD_length; patchLocation = VIConfigurePanHookD; break;
+		case VI_GETRETRACECOUNTHOOK:
+			patchSize = VIGetRetraceCountHook_length; patchLocation = VIGetRetraceCountHook; break;
+		case VI_RETRACEHANDLERHOOK:
+			patchSize = VIRetraceHandlerHook_length; patchLocation = VIRetraceHandlerHook; break;
+		case MAJORA_SAVEREGS:
+			patchSize = MajoraSaveRegs_length; patchLocation = MajoraSaveRegs; break;
+		case MAJORA_AUDIOSTREAM:
+			patchSize = MajoraAudioStream_length; patchLocation = MajoraAudioStream; break;
+		case MAJORA_LOADREGS:
+			patchSize = MajoraLoadRegs_length; patchLocation = MajoraLoadRegs; break;
+		default:
+			break;
+	}
+	top_addr -= patchSize;
+	checkPatchAddr();
+	memcpy((void*)top_addr, patchLocation, patchSize);
+	print_gecko("Installed patch %i to %08X\r\n", patchId, top_addr);
+	return (void*)top_addr;
+}
+
+// See patchIds enum in patcher.h
+void *getPatchAddr(int patchId) {
+	if(patchId > PATCHES_MAX || patchId < 0) {
+		print_gecko("Invalid Patch location requested\r\n");
+		return NULL;
+	}
+	if(!patch_locations[patchId]) {
+		patch_locations[patchId] = installPatch(patchId);
+	}
+	return patch_locations[patchId];
+}
+
 int install_code()
 {
 	void *location = (void*)LO_RESERVE;
@@ -572,6 +665,11 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 		{ 22, 4, 2, 3, 0, 3, NULL, 0, "__OSGetSystemTimeD" },
 		{ 25, 8, 5, 3, 0, 3, NULL, 0, "__OSGetSystemTime" }
 	};
+	FuncPattern EXILockSigs[3] = {
+		{ 106, 35, 5, 9, 13, 6, NULL, 0, "EXILockD A" },
+		{  61, 18, 7, 5,  5, 6, NULL, 0, "EXILock A" },
+		{  61, 17, 7, 5,  5, 7, NULL, 0, "EXILock B" }
+	};
 	FuncPattern ReadSigs[4] = {
 		{ 56, 23, 18, 3, 2, 4, NULL, 0, "ReadD A" },
 		{ 66, 29, 17, 5, 2, 3, NULL, 0, "Read A" },
@@ -633,6 +731,29 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 83, length, &OSEnableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 87, length, &OSDisableInterruptsSig))
 							SelectThreadSigs[j].offsetFoundAt = i;
+						break;
+				}
+				break;
+			}
+		}
+		
+		for (j = 0; j < sizeof(EXILockSigs) / sizeof(FuncPattern); j++) {
+			if (!EXILockSigs[j].offsetFoundAt && compare_pattern(&fp, &EXILockSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i + 33, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 61, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 80, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 99, length, &OSRestoreInterruptsSig))
+							EXILockSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+					case 2:
+						if (findx_pattern(data, dataType, i + 11, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 43, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 54, length, &OSRestoreInterruptsSig))
+							EXILockSigs[j].offsetFoundAt = i;
 						break;
 				}
 				break;
@@ -798,6 +919,46 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", SelectThreadSigs[j].Name, SelectThread);
+		}
+	}
+	
+	if (devices[DEVICE_CUR] == &__device_smb) {
+		for (j = 0; j < sizeof(EXILockSigs) / sizeof(FuncPattern); j++)
+			if (EXILockSigs[j].offsetFoundAt) break;
+		
+		if (j < sizeof(EXILockSigs) / sizeof(FuncPattern) && (i = EXILockSigs[j].offsetFoundAt)) {
+			u32 *EXILock = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			u32 *EXILockHook;
+			
+			if (EXILock) {
+				switch (j) {
+					case 0:
+						EXILockHook = getPatchAddr(EXI_LOCKHOOKD);
+						
+						EXILockHook[0] |= (data[i + 4] >> 5) & 0x1F0000;
+						EXILockHook[2] |= (data[i + 5] >> 5) & 0x1F0000;
+						
+						data[i + 33] = branchAndLink(EXILockHook, EXILock + 33);
+						break;
+					case 1:
+						EXILockHook = getPatchAddr(EXI_LOCKHOOK);
+						
+						EXILockHook[0] |= (data[i + 4] >> 5) & 0x1F0000;
+						EXILockHook[2] |= (data[i + 9] >> 5) & 0x1F0000;
+						
+						data[i + 11] = branchAndLink(EXILockHook, EXILock + 11);
+						break;
+					case 2:
+						EXILockHook = getPatchAddr(EXI_LOCKHOOK);
+						
+						EXILockHook[0] |= (data[i + 4] >> 5) & 0x1F0000;
+						EXILockHook[2] |= (data[i + 5] >> 5) & 0x1F0000;
+						
+						data[i + 11] = branchAndLink(EXILockHook, EXILock + 11);
+						break;
+				}
+				print_gecko("Found:[%s] @ %08X\n", EXILockSigs[j].Name, EXILock);
+			}
 		}
 	}
 	
@@ -1208,95 +1369,6 @@ u8 video_timing_576p[] = {
 	0x01,0x7C,0x85,0x00,
 	0x01,0xA4
 };
-
-static void *patch_locations[PATCHES_MAX];
-
-void checkPatchAddr() {
-	if(top_addr < 0x80001800) {
-		print_gecko("Too many patches applied, top_addr has gone below the reserved area\r\n");
-		// Display something on screen
-		while(1);
-	}
-}
-
-// Returns where the ASM patch has been copied to
-void *installPatch(int patchId) {
-	u32 patchSize = 0;
-	void* patchLocation = 0;
-	switch(patchId) {
-		case GX_COPYDISPHOOK:
-			patchSize = GXCopyDispHook_length; patchLocation = GXCopyDispHook; break;
-		case GX_INITTEXOBJLODHOOK:
-			patchSize = GXInitTexObjLODHook_length; patchLocation = GXInitTexObjLODHook; break;
-		case GX_SETPROJECTIONHOOK:
-			patchSize = GXSetProjectionHook_length; patchLocation = GXSetProjectionHook; break;
-		case GX_SETSCISSORHOOK:
-			patchSize = GXSetScissorHook_length; patchLocation = GXSetScissorHook; break;
-		case MTX_FRUSTUMHOOK:
-			patchSize = MTXFrustumHook_length; patchLocation = MTXFrustumHook; break;
-		case MTX_LIGHTFRUSTUMHOOK:
-			patchSize = MTXLightFrustumHook_length; patchLocation = MTXLightFrustumHook; break;
-		case MTX_LIGHTPERSPECTIVEHOOK:
-			patchSize = MTXLightPerspectiveHook_length; patchLocation = MTXLightPerspectiveHook; break;
-		case MTX_ORTHOHOOK:
-			patchSize = MTXOrthoHook_length; patchLocation = MTXOrthoHook; break;
-		case MTX_PERSPECTIVEHOOK:
-			patchSize = MTXPerspectiveHook_length; patchLocation = MTXPerspectiveHook; break;
-		case VI_CONFIGURE240P:
-			patchSize = VIConfigure240p_length; patchLocation = VIConfigure240p; break;
-		case VI_CONFIGURE288P:
-			patchSize = VIConfigure288p_length; patchLocation = VIConfigure288p; break;
-		case VI_CONFIGURE480I:
-			patchSize = VIConfigure480i_length; patchLocation = VIConfigure480i; break;
-		case VI_CONFIGURE480P:
-			patchSize = VIConfigure480p_length; patchLocation = VIConfigure480p; break;
-		case VI_CONFIGURE576I:
-			patchSize = VIConfigure576i_length; patchLocation = VIConfigure576i; break;
-		case VI_CONFIGURE576P:
-			patchSize = VIConfigure576p_length; patchLocation = VIConfigure576p; break;
-		case VI_CONFIGURE1080I50:
-			patchSize = VIConfigure1080i50_length; patchLocation = VIConfigure1080i50; break;
-		case VI_CONFIGURE1080I60:
-			patchSize = VIConfigure1080i60_length; patchLocation = VIConfigure1080i60; break;
-		case VI_CONFIGUREHOOK1:
-			patchSize = VIConfigureHook1_length; patchLocation = VIConfigureHook1; break;
-		case VI_CONFIGUREHOOK2:
-			patchSize = VIConfigureHook2_length; patchLocation = VIConfigureHook2; break;
-		case VI_CONFIGUREPANHOOK:
-			patchSize = VIConfigurePanHook_length; patchLocation = VIConfigurePanHook; break;
-		case VI_CONFIGUREPANHOOKD:
-			patchSize = VIConfigurePanHookD_length; patchLocation = VIConfigurePanHookD; break;
-		case VI_GETRETRACECOUNTHOOK:
-			patchSize = VIGetRetraceCountHook_length; patchLocation = VIGetRetraceCountHook; break;
-		case VI_RETRACEHANDLERHOOK:
-			patchSize = VIRetraceHandlerHook_length; patchLocation = VIRetraceHandlerHook; break;
-		case MAJORA_SAVEREGS:
-			patchSize = MajoraSaveRegs_length; patchLocation = MajoraSaveRegs; break;
-		case MAJORA_AUDIOSTREAM:
-			patchSize = MajoraAudioStream_length; patchLocation = MajoraAudioStream; break;
-		case MAJORA_LOADREGS:
-			patchSize = MajoraLoadRegs_length; patchLocation = MajoraLoadRegs; break;
-		default:
-			break;
-	}
-	top_addr -= patchSize;
-	checkPatchAddr();
-	memcpy((void*)top_addr, patchLocation, patchSize);
-	print_gecko("Installed patch %i to %08X\r\n", patchId, top_addr);
-	return (void*)top_addr;
-}
-
-// See patchIds enum in patcher.h
-void *getPatchAddr(int patchId) {
-	if(patchId > PATCHES_MAX || patchId < 0) {
-		print_gecko("Invalid Patch location requested\r\n");
-		return NULL;
-	}
-	if(!patch_locations[patchId]) {
-		patch_locations[patchId] = installPatch(patchId);
-	}
-	return patch_locations[patchId];
-}
 
 u8 vertical_filters[][7] = {
 	{0, 0, 21, 22, 21, 0, 0},

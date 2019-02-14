@@ -34,6 +34,10 @@ extern u8 bba_bin[];
 extern u32 bba_bin_size;
 
 /* SDK patches */
+extern u8 EXILockHook[];
+extern u32 EXILockHook_length;
+extern u8 EXILockHookD[];
+extern u32 EXILockHookD_length;
 extern u8 GXAdjustForOverscanPatch[];
 extern u32 GXAdjustForOverscanPatch_length;
 extern u8 GXCopyDispHook[];
@@ -108,7 +112,9 @@ extern u8 MajoraLoadRegs[];
 extern u32 MajoraLoadRegs_length;
 
 enum patchIds {
-	GX_COPYDISPHOOK = 0,
+	EXI_LOCKHOOK = 0,
+	EXI_LOCKHOOKD,
+	GX_COPYDISPHOOK,
 	GX_INITTEXOBJLODHOOK,
 	GX_SETPROJECTIONHOOK,
 	GX_SETSCISSORHOOK,

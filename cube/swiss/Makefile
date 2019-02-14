@@ -71,6 +71,7 @@ SOURCES		:=  source \
               source/patches \
 			  source/patches/card \
 			  source/patches/misc \
+			  source/patches/exi \
 			  source/patches/gx \
 			  source/patches/mtx \
 			  source/patches/vi \
