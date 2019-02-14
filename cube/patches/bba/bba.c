@@ -78,19 +78,19 @@ typedef struct {
 
 static void exi_select(void)
 {
-	volatile unsigned long *exi = (void *)0xCC006800;
+	volatile uint32_t *exi = (uint32_t *)0xCC006800;
 	exi[0] = (exi[0] & 0x405) | ((1 << EXI_DEVICE_2) << 7) | (EXI_SPEED_32MHZ << 4);
 }
 
 static void exi_deselect(void)
 {
-	volatile unsigned long *exi = (void *)0xCC006800;
+	volatile uint32_t *exi = (uint32_t *)0xCC006800;
 	exi[0] &= 0x405;
 }
 
-static void exi_imm_write_le(unsigned long val, int len) 
+static void exi_imm_write_le(unsigned long val, int len)
 {
-	volatile unsigned long *exi = (void *)0xCC006800;
+	volatile uint32_t *exi = (uint32_t *)0xCC006800;
 	exi[4] = __builtin_bswap32(val);
 	// Tell EXI if this is a read or a write
 	exi[3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
@@ -98,9 +98,9 @@ static void exi_imm_write_le(unsigned long val, int len)
 	while (exi[3] & 1);
 }
 
-static void exi_imm_write(unsigned long val, int len) 
+static void exi_imm_write(unsigned long val, int len)
 {
-	volatile unsigned long *exi = (void *)0xCC006800;
+	volatile uint32_t *exi = (uint32_t *)0xCC006800;
 	exi[4] = val;
 	// Tell EXI if this is a read or a write
 	exi[3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
@@ -110,7 +110,7 @@ static void exi_imm_write(unsigned long val, int len)
 
 static unsigned long exi_imm_read_le(int len)
 {
-	volatile unsigned long *exi = (void *)0xCC006800;
+	volatile uint32_t *exi = (uint32_t *)0xCC006800;
 	// Tell EXI if this is a read or a write
 	exi[3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
 	// Wait for it to do its thing
@@ -121,7 +121,7 @@ static unsigned long exi_imm_read_le(int len)
 
 static unsigned long exi_imm_read(int len)
 {
-	volatile unsigned long *exi = (void *)0xCC006800;
+	volatile uint32_t *exi = (uint32_t *)0xCC006800;
 	// Tell EXI if this is a read or a write
 	exi[3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
 	// Wait for it to do its thing
@@ -315,9 +315,27 @@ static void bba_poll(void)
 	}
 }
 
+void trigger_dvd_interrupt(void)
+{
+	volatile uint32_t *dvd = (uint32_t *)0xCC006000;
+
+	uint32_t dest = dvd[5] | 0x80000000;
+	uint32_t size = dvd[6];
+
+	dvd[2] = 0xE0000000;
+	dvd[3] = 0;
+	dvd[4] = 0;
+	dvd[5] = 0;
+	dvd[6] = 0;
+	dvd[8] = 0;
+	dvd[7] = 1;
+
+	dcache_flush_icache_inv((void *)dest, size);
+}
+
 void perform_read(void)
 {
-	volatile unsigned long *dvd = (void *)0xCC006000;
+	volatile uint32_t *dvd = (uint32_t *)0xCC006000;
 
 	uint32_t dest = dvd[5] | 0x80000000;
 	uint32_t size = dvd[4];
@@ -327,22 +345,11 @@ void perform_read(void)
 	*(uint32_t *)VAR_TMP2 = size;
 
 	fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, offset, size);
-
-	while (*(uint32_t *)VAR_TMP2)
-		bba_poll();
-
-	dcache_flush_icache_inv((void*)dest, size);
-	dvd[2] = 0xE0000000;
-	dvd[3] = 0;
-	dvd[4] = 0;
-	dvd[5] = 0;
-	dvd[6] = 0;
-	dvd[8] = 0;
-	dvd[7] = 1;
 }
 
 void *tickle_read(void)
 {
+	bba_poll();
 	return NULL;
 }
 

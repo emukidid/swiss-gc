@@ -178,6 +178,8 @@ void fsp_output(const char *file, uint8_t filelen, uint32_t offset, uint32_t siz
 	bba_transmit(eth, sizeof(*eth) + ipv4->length);
 }
 
+void trigger_dvd_interrupt(void);
+
 static void fsp_input(eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, uint16_t size)
 {
 	if (size < sizeof(*fsp))
@@ -242,6 +244,7 @@ static void udp_input(eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp,
 					*(uint32_t *)VAR_TMP2 = left;
 
 					if (left) fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, position + data_length, left);
+					else trigger_dvd_interrupt();
 
 					*(uint32_t *)VAR_FSP_POSITION    = EOF;
 					*(uint16_t *)VAR_FSP_DATA_LENGTH = 0;
