@@ -4,9 +4,9 @@
 ***************************************************************************/
 
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 #include "../../reservedarea.h"
+#include "../base/common.h"
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
@@ -176,6 +176,8 @@ void fsp_output(const char *file, uint8_t filelen, uint32_t offset, uint32_t siz
 	eth->type = ETH_TYPE_IPV4;
 
 	bba_transmit(eth, sizeof(*eth) + ipv4->length);
+
+	mftb((tb_t *)VAR_TIMER_START);
 }
 
 void trigger_dvd_interrupt(void);
@@ -194,7 +196,6 @@ static void fsp_input(eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp,
 			break;
 		case CC_GET_FILE:
 			*(uint16_t *)VAR_IPV4_ID         = ipv4->id;
-			*(uint32_t *)VAR_FSP_POSITION    = fsp->position;
 			*(uint16_t *)VAR_FSP_DATA_LENGTH = fsp->data_length;
 			break;
 	}
@@ -223,31 +224,30 @@ static void udp_input(eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp,
 		}
 
 		if (ipv4->id == *(uint16_t *)VAR_IPV4_ID) {
-			uint32_t position    = *(uint32_t *)VAR_FSP_POSITION;
+			uint8_t *data        = *(uint8_t **)VAR_TMP1;
 			uint16_t data_length = *(uint16_t *)VAR_FSP_DATA_LENGTH;
+			uint32_t position    = *(uint32_t *)VAR_FSP_POSITION;
+			uint32_t remainder   = *(uint32_t *)VAR_TMP2;
 
-			if (position != EOF) {
-				uint32_t data = *(uint32_t *)VAR_TMP1;
-				uint32_t left = *(uint32_t *)VAR_TMP2;
-
+			if (data_length) {
 				int offset = ipv4->offset * 8 - sizeof(udp_header_t) - sizeof(fsp_header_t);
 				int ipv4_offset = MIN(offset, 0);
 				int data_offset = MAX(offset, 0);
 
-				memcpy((void *)data + data_offset, ipv4->data - ipv4_offset, MIN(data_length - data_offset, size));
+				memcpy(data + data_offset, ipv4->data - ipv4_offset, MIN(data_length - data_offset, size));
 
 				if (!(ipv4->flags & 0b001)) {
-					data += data_length;
-					left -= data_length;
+					data      += data_length;
+					position  += data_length;
+					remainder -= data_length;
 
-					*(uint32_t *)VAR_TMP1 = data;
-					*(uint32_t *)VAR_TMP2 = left;
-
-					if (left) fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, position + data_length, left);
-					else trigger_dvd_interrupt();
-
-					*(uint32_t *)VAR_FSP_POSITION    = EOF;
+					*(uint8_t **)VAR_TMP1 = data;
+					*(uint32_t *)VAR_TMP2 = remainder;
+					*(uint32_t *)VAR_FSP_POSITION = position;
 					*(uint16_t *)VAR_FSP_DATA_LENGTH = 0;
+
+					if (remainder) fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, position, remainder);
+					else trigger_dvd_interrupt();
 				}
 			}
 		}
