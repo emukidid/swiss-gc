@@ -9,7 +9,7 @@
 typedef struct {
 	unsigned int offset;    // Offset in the file
 	unsigned int size;      // size to read
-} usb_data_req;
+} __attribute((packed, scalar_storage_order("little-endian"))) usb_data_req;
 
 #define EXI_CHAN1SR		*(volatile unsigned int*) 0xCC006814 // Channel 1 Status Register
 #define EXI_CHAN1CR		*(volatile unsigned int*) 0xCC006820 // Channel 1 Control Register
@@ -170,9 +170,7 @@ void perform_read()
 	*(u32 *)VAR_TMP1 = dest;
 	*(u32 *)VAR_TMP2 = size;
 	
-	usb_data_req req;
-	req.offset = __builtin_bswap32(offset);
-	req.size = __builtin_bswap32(size);
+	usb_data_req req = {offset, size};
 	gecko_send(&req, sizeof(usb_data_req));
 }
 

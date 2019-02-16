@@ -70,11 +70,11 @@ enum {
 };
 
 typedef struct {
-	uint32_t status : 8;
-	uint32_t length : 12;
 	uint32_t next   : 12;
+	uint32_t length : 12;
+	uint32_t status : 8;
 	uint8_t data[];
-} __attribute((packed)) bba_header_t;
+} __attribute((packed, scalar_storage_order("little-endian"))) bba_header_t;
 
 static void exi_select(void)
 {
@@ -88,46 +88,20 @@ static void exi_deselect(void)
 	exi[0] &= 0x405;
 }
 
-static void exi_imm_write_le(unsigned long val, int len)
+static void exi_imm_write(uint32_t data, int len)
 {
 	volatile uint32_t *exi = (uint32_t *)0xCC006800;
-	exi[4] = __builtin_bswap32(val);
-	// Tell EXI if this is a read or a write
+	exi[4] = data;
 	exi[3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
-	// Wait for it to do its thing
 	while (exi[3] & 1);
 }
 
-static void exi_imm_write(unsigned long val, int len)
+static uint32_t exi_imm_read(int len)
 {
 	volatile uint32_t *exi = (uint32_t *)0xCC006800;
-	exi[4] = val;
-	// Tell EXI if this is a read or a write
-	exi[3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
-	// Wait for it to do its thing
-	while (exi[3] & 1);
-}
-
-static unsigned long exi_imm_read_le(int len)
-{
-	volatile uint32_t *exi = (uint32_t *)0xCC006800;
-	// Tell EXI if this is a read or a write
 	exi[3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
-	// Wait for it to do its thing
 	while (exi[3] & 1);
-	// Read the 4 byte data off the EXI bus
-	return __builtin_bswap32(exi[4]);
-}
-
-static unsigned long exi_imm_read(int len)
-{
-	volatile uint32_t *exi = (uint32_t *)0xCC006800;
-	// Tell EXI if this is a read or a write
-	exi[3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
-	// Wait for it to do its thing
-	while (exi[3] & 1);
-	// Read the 4 byte data off the EXI bus
-	return exi[4];
+	return exi[4] >> ((4 - len) * 8);
 }
 
 static void exi_immex_write(void *buffer, int length)
@@ -142,33 +116,13 @@ static void exi_immex_write(void *buffer, int length)
 	} while (length);
 }
 
-static void exi_immex_read(void *buffer, int length)
+static void exi_dma_read(void *data, int len)
 {
-	do {
-		int count = MIN(length, 4);
-
-		asm (
-			"mtxer  %2 \n"
-			"stswx  %1, %y0 \n"
-			: "=Z" (*(uint32_t *)buffer)
-			: "r" (exi_imm_read(count)), "r" (count)
-		);
-
-		buffer += count;
-		length -= count;
-	} while (length);
-}
-
-static uint32_t bba_in32(uint16_t reg)
-{
-	uint32_t val;
-
-	exi_select();
-	exi_imm_write(0x80 << 24 | reg << 8, 4);
-	val = exi_imm_read_le(4);
-	exi_deselect();
-
-	return val;
+	volatile uint32_t *exi = (uint32_t *)0xCC006800;
+	exi[1] = (uint32_t)data;
+	exi[2] = len;
+	exi[3] = (EXI_READ << 2) | 3;
+	while (exi[3] & 1);
 }
 
 static uint8_t bba_in8(uint16_t reg)
@@ -177,7 +131,7 @@ static uint8_t bba_in8(uint16_t reg)
 
 	exi_select();
 	exi_imm_write(0x80 << 24 | reg << 8, 4);
-	val = exi_imm_read_le(1);
+	val = exi_imm_read(1);
 	exi_deselect();
 
 	return val;
@@ -187,7 +141,7 @@ static void bba_out8(uint16_t reg, uint8_t val)
 {
 	exi_select();
 	exi_imm_write(0xC0 << 24 | reg << 8, 4);
-	exi_imm_write_le(val, 1);
+	exi_imm_write(val << 24, 1);
 	exi_deselect();
 }
 
@@ -196,8 +150,8 @@ static uint8_t bba_cmd_in8(uint8_t reg)
 	uint8_t val;
 
 	exi_select();
-	exi_imm_write_le(reg, 2);
-	val = exi_imm_read_le(1);
+	exi_imm_write(0x00 << 24 | reg << 24, 2);
+	val = exi_imm_read(1);
 	exi_deselect();
 
 	return val;
@@ -206,8 +160,8 @@ static uint8_t bba_cmd_in8(uint8_t reg)
 static void bba_cmd_out8(uint8_t reg, uint8_t val)
 {
 	exi_select();
-	exi_imm_write_le(reg | 0x40, 2);
-	exi_imm_write_le(val, 1);
+	exi_imm_write(0x40 << 24 | reg << 24, 2);
+	exi_imm_write(val << 24, 1);
 	exi_deselect();
 }
 
@@ -223,7 +177,7 @@ static void bba_outsregister(uint16_t reg)
 
 static void bba_insdata(void *data, int size)
 {
-	exi_immex_read(data, size);
+	exi_dma_read(data, size);
 }
 
 static void bba_outsdata(void *data, int size)
@@ -252,38 +206,54 @@ static void bba_receive(void)
 	uint8_t rrp = bba_in8(BBA_RRP);
 
 	while (rrp != rwp) {
-		uint32_t val = bba_in32(rrp << 8);
-		bba_header_t *bba = (bba_header_t *)&val;
+		uint8_t buffer[8][256] __attribute((aligned(32)));
+		uint8_t (*page)[256] = buffer;
+		bba_header_t *bba = (bba_header_t *)page;
+
+		dcache_flush_icache_inv(page, sizeof(*page));
+
+		exi_select();
+		bba_insregister(rrp << 8);
+		bba_insdata(page, sizeof(*page));
+		exi_deselect();
+
+		rrp = rrp == BBA_INIT_RHBP ? BBA_INIT_RRP : rrp + 1;
+		page++;
 
 		if (bba->status & (BBA_RX_STATUS_RERR | BBA_RX_STATUS_FAE)) {
 			rwp = bba_in8(BBA_RWP);
 			rrp = bba_in8(BBA_RRP);
 		} else {
-			uint16_t size = bba->length - sizeof(*bba);
-			uint8_t data[size];
+			int count = (bba->length - 1) / sizeof(*page);
+			int left = BBA_INIT_RHBP + 1 - rrp;
 
-			uint16_t pos = (rrp << 8) + sizeof(*bba);
-			uint16_t top = (BBA_INIT_RHBP + 1) << 8;
-
-			exi_select();
-			bba_insregister(pos);
-
-			if (pos + size < top) {
-				bba_insdata(data, size);
-			} else {
-				int chunk = top - pos;
-				bba_insdata(data, chunk);
-				exi_deselect();
+			if (count > 0) {
+				dcache_flush_icache_inv(page, sizeof(*page) * count);
 
 				exi_select();
-				bba_insregister(BBA_INIT_RRP << 8);
-				bba_insdata(data + chunk, size - chunk);
+				bba_insregister(rrp << 8);
+
+				if (count > left) {
+					bba_insdata(page, sizeof(*page) * left);
+					exi_deselect();
+
+					rrp    = BBA_INIT_RRP;
+					page  += left;
+					count -= left;
+
+					exi_select();
+					bba_insregister(rrp << 8);
+				}
+
+				bba_insdata(page, sizeof(*page) * count);
+				exi_deselect();
+
+				rrp  += count;
+				page += count;
 			}
 
-			exi_deselect();
-
 			bba_out8(BBA_RRP, rrp = bba->next);
-			eth_input((void *)data, size);
+			eth_input((void *)bba->data, bba->length - sizeof(*bba));
 			rwp = bba_in8(BBA_RWP);
 		}
 	}
