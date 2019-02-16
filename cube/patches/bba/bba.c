@@ -76,6 +76,12 @@ typedef struct {
 	uint8_t data[];
 } __attribute((packed, scalar_storage_order("little-endian"))) bba_header_t;
 
+static int exi_selected(void)
+{
+	volatile uint32_t *exi = (uint32_t *)0xCC006800;
+	return !!(exi[0] & 0x380);
+}
+
 static void exi_select(void)
 {
 	volatile uint32_t *exi = (uint32_t *)0xCC006800;
@@ -316,22 +322,25 @@ void perform_read(void)
 	*(uint32_t *)VAR_FSP_POSITION = offset;
 	*(uint16_t *)VAR_FSP_DATA_LENGTH = 0;
 
-	fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, offset, size);
+	if (!exi_selected())
+		fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, offset, size);
 }
 
 void *tickle_read(void)
 {
-	bba_poll();
+	if (!exi_selected()) {
+		bba_poll();
 
-	uint32_t position  = *(uint32_t *)VAR_FSP_POSITION;
-	uint32_t remainder = *(uint32_t *)VAR_TMP2;
+		uint32_t position  = *(uint32_t *)VAR_FSP_POSITION;
+		uint32_t remainder = *(uint32_t *)VAR_TMP2;
 
-	if (remainder) {
-		tb_t end, *start = (tb_t *)VAR_TIMER_START;
-		mftb(&end);
+		if (remainder) {
+			tb_t end, *start = (tb_t *)VAR_TIMER_START;
+			mftb(&end);
 
-		if (tb_diff_usec(&end, start) > 1000000)
-			fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, position, remainder);
+			if (tb_diff_usec(&end, start) > 1000000)
+				fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, position, remainder);
+		}
 	}
 
 	return NULL;
