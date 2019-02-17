@@ -27,6 +27,13 @@ typedef volatile s32 vs32;
 	asm volatile ("mtmsr %0" :: "r" (msr)); \
 })
 
+#define restore_interrupts(enable) ({ \
+	unsigned long msr; \
+	asm volatile ("mfmsr %0" : "=r" (msr)); \
+	asm volatile ("insrwi %0,%1,1,16" : "+r" (msr) : "r" (enable)); \
+	asm volatile ("mtmsr %0" :: "r" (msr)); \
+})
+
 #define mftb(rval) ({unsigned long u; do { \
 	 asm volatile ("mftbu %0" : "=r" (u)); \
 	 asm volatile ("mftb %0" : "=r" ((rval)->l)); \
@@ -40,6 +47,8 @@ typedef struct {
 #define TB_CLOCK  40500000
 
 void do_read(void* dst, u32 len, u32 offset, u32 sector);
+u32 read_frag(void *dst, u32 len, u32 offset);
+int is_frag_read(unsigned int offset, unsigned int len);
 void device_frag_read(void* dst, u32 len, u32 offset);
 void dcache_flush_icache_inv(void* dst, u32 len);
 void ADPdecodebuffer(unsigned char *input, short *outl, short * outr, long *histl1, long *histl2, long *histr1, long *histr2);

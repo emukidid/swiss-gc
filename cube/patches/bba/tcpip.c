@@ -224,10 +224,10 @@ static void udp_input(eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp,
 		}
 
 		if (ipv4->id == *(uint16_t *)VAR_IPV4_ID) {
-			uint8_t *data        = *(uint8_t **)VAR_TMP1;
-			uint16_t data_length = *(uint16_t *)VAR_FSP_DATA_LENGTH;
 			uint32_t position    = *(uint32_t *)VAR_FSP_POSITION;
 			uint32_t remainder   = *(uint32_t *)VAR_TMP2;
+			uint8_t *data        = *(uint8_t **)VAR_TMP1;
+			uint16_t data_length = *(uint16_t *)VAR_FSP_DATA_LENGTH;
 
 			if (data_length) {
 				int offset = ipv4->offset * 8 - sizeof(udp_header_t) - sizeof(fsp_header_t);
@@ -241,9 +241,9 @@ static void udp_input(eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp,
 					position  += data_length;
 					remainder -= data_length;
 
-					*(uint8_t **)VAR_TMP1 = data;
-					*(uint32_t *)VAR_TMP2 = remainder;
 					*(uint32_t *)VAR_FSP_POSITION = position;
+					*(uint32_t *)VAR_TMP2 = remainder;
+					*(uint8_t **)VAR_TMP1 = data;
 					*(uint16_t *)VAR_FSP_DATA_LENGTH = 0;
 
 					if (remainder) fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, position, remainder);

@@ -60,28 +60,6 @@ void handle_disc_swap()
 	enable_interrupts();
 }
 
-int is_frag_read(unsigned int offset, unsigned int len) {
-	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-	int maxFrags = (VAR_FRAG_SIZE/12), i = 0, j = 0;
-	
-	// If we locate that this read lies in our frag area, return true
-	for(i = 0; i < maxFrags; i++) {
-		int fragOffset = fragList[(i*3)+0];
-		int fragSize = fragList[(i*3)+1];
-		int fragSector = fragList[(i*3)+2];
-		int fragOffsetEnd = fragOffset + fragSize;
-		
-		if(offset >= fragOffset && offset < fragOffsetEnd) {
-			// Does our read get cut off early?
-			if(offset + len > fragOffsetEnd) {
-				return 2; // TODO Disable DVD Interrupts, perform a read for the overhang, clear interrupts.
-			}
-			return 1;
-		}
-	}
-	return 0;
-}
-
 #ifdef DEBUG
 extern void print_read(void* dst, u32 len, u32 ofs);
 #endif 

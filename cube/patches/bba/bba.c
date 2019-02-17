@@ -295,8 +295,8 @@ void trigger_dvd_interrupt(void)
 {
 	volatile uint32_t *dvd = (uint32_t *)0xCC006000;
 
-	uint32_t dest = dvd[5] | 0x80000000;
-	uint32_t size = dvd[6];
+	uint32_t dst = dvd[5] | 0x80000000;
+	uint32_t len = dvd[6];
 
 	dvd[2] = 0xE0000000;
 	dvd[3] = 0;
@@ -306,24 +306,24 @@ void trigger_dvd_interrupt(void)
 	dvd[8] = 0;
 	dvd[7] = 1;
 
-	dcache_flush_icache_inv((void *)dest, size);
+	dcache_flush_icache_inv((void *)dst, len);
 }
 
 void perform_read(void)
 {
 	volatile uint32_t *dvd = (uint32_t *)0xCC006000;
 
-	uint32_t dest = dvd[5] | 0x80000000;
-	uint32_t size = dvd[4];
-	uint32_t offset = dvd[3] << 2;
+	uint32_t off = dvd[3] << 2;
+	uint32_t len = dvd[4];
+	uint32_t dst = dvd[5] | 0x80000000;
 
-	*(uint32_t *)VAR_TMP1 = dest;
-	*(uint32_t *)VAR_TMP2 = size;
-	*(uint32_t *)VAR_FSP_POSITION = offset;
+	*(uint32_t *)VAR_FSP_POSITION = off;
+	*(uint32_t *)VAR_TMP2 = len;
+	*(uint32_t *)VAR_TMP1 = dst;
 	*(uint16_t *)VAR_FSP_DATA_LENGTH = 0;
 
-	if (!exi_selected())
-		fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, offset, size);
+	if (!is_frag_read(off, len) && !exi_selected())
+		fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, off, len);
 }
 
 void *tickle_read(void)
@@ -331,10 +331,23 @@ void *tickle_read(void)
 	if (!exi_selected()) {
 		bba_poll();
 
-		uint32_t position  = *(uint32_t *)VAR_FSP_POSITION;
-		uint32_t remainder = *(uint32_t *)VAR_TMP2;
+		uint32_t position    = *(uint32_t *)VAR_FSP_POSITION;
+		uint32_t remainder   = *(uint32_t *)VAR_TMP2;
+		uint8_t *data        = *(uint8_t **)VAR_TMP1;
+		uint32_t data_length = read_frag(data, remainder, position);
 
-		if (remainder) {
+		if (data_length) {
+			data      += data_length;
+			position  += data_length;
+			remainder -= data_length;
+
+			*(uint32_t *)VAR_FSP_POSITION = position;
+			*(uint32_t *)VAR_TMP2 = remainder;
+			*(uint8_t **)VAR_TMP1 = data;
+			*(uint16_t *)VAR_FSP_DATA_LENGTH = 0;
+
+			if (!remainder) trigger_dvd_interrupt();
+		} else if (remainder) {
 			tb_t end, *start = (tb_t *)VAR_TIMER_START;
 			mftb(&end);
 
@@ -344,6 +357,12 @@ void *tickle_read(void)
 	}
 
 	return NULL;
+}
+
+void tickle_read_hook(uint32_t enable)
+{
+	tickle_read();
+	restore_interrupts(enable);
 }
 
 void tickle_read_idle(void)

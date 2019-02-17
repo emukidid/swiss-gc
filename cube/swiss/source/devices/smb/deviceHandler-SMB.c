@@ -224,12 +224,76 @@ bool deviceHandler_SMB_test() {
 }
 
 s32 deviceHandler_SMB_setupFile(file_handle* file, file_handle* file2) {
+	
+	// If there are 2 discs, we only allow 21 fragments per disc.
+	int maxFrags = (VAR_FRAG_SIZE/12), i = 0;
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
+	s32 frags = 0, totFrags = 0;
+	
 	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
-	fragList[1] = file->size;
-	*(vu32*)VAR_DISC_1_LBA = 0;
-	*(vu32*)VAR_DISC_2_LBA = 0;
-	*(vu32*)VAR_CUR_DISC_LBA = 0;
+
+	// Check if there are any fragments in our patch location for this game
+	if(devices[DEVICE_PATCHES] != NULL) {
+		print_gecko("Save Patch device found\r\n");
+		
+		// Look for patch files, if we find some, open them and add them as fragments
+		file_handle patchFile;
+		char gameID[8];
+		memset(&gameID, 0, 8);
+		strncpy((char*)&gameID, (char*)&GCMDisk, 4);
+		
+		for(i = 0; i < maxFrags; i++) {
+			u32 patchInfo[4];
+			patchInfo[0] = 0; patchInfo[1] = 0; 
+			memset(&patchFile, 0, sizeof(file_handle));
+			sprintf(&patchFile.name[0], "%sswiss_patches/%s/%i",devices[DEVICE_PATCHES]->initial->name,gameID, i);
+			print_gecko("Looking for file %s\r\n", &patchFile.name);
+			FILINFO fno;
+			if(f_stat(&patchFile.name[0], &fno) != FR_OK) {
+				break;	// Patch file doesn't exist, don't bother with fragments
+			}
+			
+			devices[DEVICE_PATCHES]->seekFile(&patchFile,fno.fsize-16,DEVICE_HANDLER_SEEK_SET);
+			if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
+				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
+					return 0;
+				}
+				totFrags+=frags;
+				devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			}
+			else {
+				break;
+			}
+		}
+		// Check for igr.dol
+		memset(&patchFile, 0, sizeof(file_handle));
+		sprintf(&patchFile.name[0], "%sigr.dol", devices[DEVICE_PATCHES]->initial->name);
+
+		FILINFO fno;
+		if(f_stat(&patchFile.name[0], &fno) == FR_OK) {
+			print_gecko("IGR Boot DOL exists\r\n");
+			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, 0x60000000, 0, DEVICE_PATCHES))) {
+				totFrags+=frags;
+				devices[DEVICE_PATCHES]->closeFile(&patchFile);
+				*(vu32*)VAR_IGR_DOL_SIZE = fno.fsize;
+			}
+		}
+		// Card Type
+		*(vu8*)VAR_SD_SHIFT = (u8)(9 * sdgecko_getAddressingType(((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1)));
+		// Copy the actual freq
+		*(vu8*)VAR_EXI_FREQ = (u8)(EXI_SPEED16MHZ);	// play it safe
+		// Device slot (0 or 1) // This represents 0xCC0068xx in number of u32's so, slot A = 0xCC006800, B = 0xCC006814
+		*(vu8*)VAR_EXI_SLOT = (u8)(((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1) * 5);
+	}
+	
+	print_frag_list(0);
+	// Disk 1 base sector
+	*(vu32*)VAR_DISC_1_LBA = fragList[2];
+	// Disk 2 base sector
+	*(vu32*)VAR_DISC_2_LBA = fragList[2];
+	// Currently selected disk base sector
+	*(vu32*)VAR_CUR_DISC_LBA = fragList[2];
+	
 	*(vu8*)VAR_FILENAME_LEN = strlcpy((char*)VAR_FILENAME, strchr(file->name, '/') + 1, 235) + 1;
 	net_get_mac_address((void*)VAR_CLIENT_MAC);
 	*(vu32*)VAR_CLIENT_IP = net_gethostip();
@@ -249,10 +313,10 @@ s32 deviceHandler_SMB_setupFile(file_handle* file, file_handle* file2) {
 
 DEVICEHANDLER_INTERFACE __device_smb = {
 	DEVICE_ID_8,
-	"Samba via BBA",
+	"SMB 1.0 + FSP via BBA",
 	"Must be pre-configured via swiss.ini",
 	{TEX_SAMBA, 160, 85},
-	FEAT_READ|FEAT_BOOT_GCM,
+	FEAT_READ|FEAT_BOOT_GCM|FEAT_CAN_READ_PATCHES,
 	LOC_SERIAL_PORT_1,
 	&initial_SMB,
 	(_fn_test)&deviceHandler_SMB_test,

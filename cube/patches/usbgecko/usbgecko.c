@@ -194,6 +194,12 @@ void *tickle_read()
 	return 0;
 }
 
+void tickle_read_hook(u32 enable)
+{
+	tickle_read();
+	restore_interrupts(enable);
+}
+
 void tickle_read_idle()
 {
 	disable_interrupts();

@@ -170,8 +170,9 @@ enum patchIds {
 #define PATCHED_MEMCPY_USB		(void*)(LO_RESERVE)
 #define PERFORM_READ			(void*)(LO_RESERVE | 0x04)
 #define TICKLE_READ				(void*)(LO_RESERVE | 0x08)
-#define TICKLE_READ_IDLE		(void*)(LO_RESERVE | 0x0C)
-#define IGR_CHECK_USB			(void*)(LO_RESERVE | 0x10)
+#define TICKLE_READ_HOOK		(void*)(LO_RESERVE | 0x0C)
+#define TICKLE_READ_IDLE		(void*)(LO_RESERVE | 0x10)
+#define IGR_CHECK_USB			(void*)(LO_RESERVE | 0x14)
 
 #define READ_PATCHED_ALL 		(0x111)
 

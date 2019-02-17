@@ -1101,8 +1101,8 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 		
 		if (DVDGetCommandBlockStatus) {
 			switch (j) {
-				case 0: data[i + 22] = branchAndLink(TICKLE_READ_IDLE, DVDGetCommandBlockStatus + 22); break;
-				case 1: data[i + 12] = branchAndLink(TICKLE_READ_IDLE, DVDGetCommandBlockStatus + 12); break;
+				case 0: data[i + 22] = branchAndLink(TICKLE_READ_HOOK, DVDGetCommandBlockStatus + 22); break;
+				case 1: data[i + 12] = branchAndLink(TICKLE_READ_HOOK, DVDGetCommandBlockStatus + 12); break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", DVDGetCommandBlockStatusSigs[j].Name, DVDGetCommandBlockStatus);
 		}
@@ -1117,7 +1117,7 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 		if (DVDGetDriveStatus) {
 			switch (j) {
 				case 1:
-				case 2: data[i + 33] = branchAndLink(TICKLE_READ_IDLE, DVDGetDriveStatus + 33); break;
+				case 2: data[i + 33] = branchAndLink(TICKLE_READ_HOOK, DVDGetDriveStatus + 33); break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", DVDGetDriveStatusSigs[j].Name, DVDGetDriveStatus);
 		}

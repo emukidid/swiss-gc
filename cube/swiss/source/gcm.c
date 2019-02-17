@@ -411,7 +411,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		}
 		else { 
 			// Patch executable files
-			if(devices[DEVICE_CUR] != &__device_dvd && devices[DEVICE_CUR] != &__device_wkf) {
+			if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
 				ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
 				if(READ_PATCHED_ALL != ret)	{
 					DrawDispose(progBox);	
@@ -444,6 +444,10 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			if(devices[DEVICE_CUR] == &__device_dvd && is_gamecube()) {
 				patched += Patch_DVDLowLevelReadForDVD(buffer, sizeToRead, filesToPatch[i].type);
 				patched += Patch_DVDReset(buffer, sizeToRead);
+			}
+			
+			if(devices[DEVICE_CUR] == &__device_usbgecko || devices[DEVICE_CUR] == &__device_smb) {
+				Patch_DVDLowLevelReadForUSBGecko(buffer, sizeToRead, filesToPatch[i].type);
 			}
 			
 			if(devices[DEVICE_CUR] == &__device_wkf) {
