@@ -171,35 +171,26 @@ static void bba_cmd_out8(uint8_t reg, uint8_t val)
 	exi_deselect();
 }
 
-static void bba_insregister(uint16_t reg)
+static void bba_ins(uint16_t reg, void *val, int len)
 {
+	exi_select();
 	exi_imm_write(0x80 << 24 | reg << 8, 4);
+	exi_dma_read(val, len);
+	exi_deselect();
 }
 
-static void bba_outsregister(uint16_t reg)
+static void bba_outs(uint16_t reg, void *val, int len)
 {
+	exi_select();
 	exi_imm_write(0xC0 << 24 | reg << 8, 4);
-}
-
-static void bba_insdata(void *data, int size)
-{
-	exi_dma_read(data, size);
-}
-
-static void bba_outsdata(void *data, int size)
-{
-	exi_immex_write(data, size);
+	exi_immex_write(val, len);
+	exi_deselect();
 }
 
 void bba_transmit(void *data, int size)
 {
 	while (bba_in8(BBA_NCRA) & (BBA_NCRA_ST0 | BBA_NCRA_ST1));
-
-	exi_select();
-	bba_outsregister(BBA_WRTXFIFOD);
-	bba_outsdata(data, size);
-	exi_deselect();
-
+	bba_outs(BBA_WRTXFIFOD, data, size);
 	bba_out8(BBA_NCRA, (bba_in8(BBA_NCRA) & ~BBA_NCRA_ST0) | BBA_NCRA_ST1);
 }
 
@@ -212,56 +203,46 @@ static void bba_receive(void)
 	uint8_t rrp = bba_in8(BBA_RRP);
 
 	while (rrp != rwp) {
-		uint8_t buffer[8][256] __attribute((aligned(32)));
-		uint8_t (*page)[256] = buffer;
+		uint8_t buffer[6][0x100] __attribute((aligned(32)));
+		uint8_t (*page)[0x100] = buffer;
+
 		bba_header_t *bba = (bba_header_t *)page;
+		uint16_t size = sizeof(*page);
 
 		dcache_flush_icache_inv(page, sizeof(*page));
 
-		exi_select();
-		bba_insregister(rrp << 8);
-		bba_insdata(page, sizeof(*page));
-		exi_deselect();
-
-		rrp = rrp == BBA_INIT_RHBP ? BBA_INIT_RRP : rrp + 1;
+		bba_ins(rrp << 8, page, sizeof(*page));
 		page++;
+		rrp = rrp == BBA_INIT_RHBP ? BBA_INIT_RRP : rrp + 1;
 
-		if (bba->status & (BBA_RX_STATUS_RERR | BBA_RX_STATUS_FAE)) {
-			rwp = bba_in8(BBA_RWP);
-			rrp = bba_in8(BBA_RRP);
-		} else {
-			int count = (bba->length - 1) / sizeof(*page);
+		if (bba->length <= sizeof(buffer)) {
+			size = bba->length;
+
+			int count = (bba->length - 1) >> 8;
 			int left = BBA_INIT_RHBP + 1 - rrp;
 
 			if (count > 0) {
 				dcache_flush_icache_inv(page, sizeof(*page) * count);
 
-				exi_select();
-				bba_insregister(rrp << 8);
-
 				if (count > left) {
-					bba_insdata(page, sizeof(*page) * left);
-					exi_deselect();
+					bba_out8(BBA_RRP, rrp);
+					bba_ins(rrp << 8, page, sizeof(*page) * left);
 
-					rrp    = BBA_INIT_RRP;
 					page  += left;
 					count -= left;
-
-					exi_select();
-					bba_insregister(rrp << 8);
+					rrp    = BBA_INIT_RRP;
 				}
 
-				bba_insdata(page, sizeof(*page) * count);
-				exi_deselect();
-
-				rrp  += count;
-				page += count;
+				bba_out8(BBA_RRP, rrp);
+				bba_ins(rrp << 8, page, sizeof(*page) * count);
 			}
-
-			bba_out8(BBA_RRP, rrp = bba->next);
-			eth_input((void *)bba->data, bba->length - sizeof(*bba));
-			rwp = bba_in8(BBA_RWP);
 		}
+
+		size -= sizeof(*bba);
+
+		bba_out8(BBA_RRP, rrp = bba->next);
+		eth_input((void *)bba->data, size);
+		rwp = bba_in8(BBA_RWP);
 	}
 }
 
