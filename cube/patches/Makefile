@@ -5,7 +5,7 @@ LD      = $(DIR)/powerpc-eabi-ld
 OBJDUMP = $(DIR)/powerpc-eabi-objdump
 OBJCOPY = $(DIR)/powerpc-eabi-objcopy
 
-OPTS	= -ffunction-sections -mmultiple -mstring -fno-asynchronous-unwind-tables
+OPTS	= -ffunction-sections -fno-asynchronous-unwind-tables
 
 DEST    = ../swiss/source/patches
 
@@ -157,13 +157,13 @@ build-wkf:
 
 build-bba:
 	@echo Building BBA Patch ...
-	@$(CC) -O1 $(OPTS) -c usbgecko/base.S
-	@$(CC) -O1 $(OPTS) -c bba/bba.c
-	@$(CC) -O1 $(OPTS) -c bba/tcpip.c
-	@$(CC) -O1 $(OPTS) -c sdgecko/sd.c
-	@$(CC) -O1 $(OPTS) -c base/frag.c
-	@$(CC) -O1 $(OPTS) -c base/usbgecko.c
-	@$(CC) -O1 $(OPTS) -c base/igr.c
+	@$(CC) -O2 $(OPTS) -c usbgecko/base.S
+	@$(CC) -O2 $(OPTS) -c bba/bba.c
+	@$(CC) -O2 $(OPTS) -c bba/tcpip.c
+	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c
+	@$(CC) -O2 $(OPTS) -c base/frag.c
+	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
+	@$(CC) -O2 $(OPTS) -c base/igr.c
 	@$(LD) -o bba.elf base.o bba.o tcpip.o usbgecko.o sd.o frag.o igr.o --section-start .text=0x80001000 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D bba.elf > $(DISASM)/bba_disasm.txt

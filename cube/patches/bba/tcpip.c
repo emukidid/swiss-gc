@@ -7,6 +7,7 @@
 #include <string.h>
 #include "../../reservedarea.h"
 #include "../base/common.h"
+#include "bba.h"
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
@@ -132,8 +133,6 @@ static uint8_t fsp_checksum(fsp_header_t *header, uint16_t size)
 	return sum;
 }
 
-void bba_transmit(void *buffer, int size);
-
 void fsp_output(const char *file, uint8_t filelen, uint32_t offset, uint32_t size)
 {
 	uint8_t data[MIN_FRAME_SIZE + filelen];
@@ -182,7 +181,7 @@ void fsp_output(const char *file, uint8_t filelen, uint32_t offset, uint32_t siz
 
 void trigger_dvd_interrupt(void);
 
-static void fsp_input(eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, uint16_t size)
+static void fsp_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, uint16_t size)
 {
 	if (size < sizeof(*fsp))
 		return;
@@ -195,15 +194,17 @@ static void fsp_input(eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp,
 		case CC_ERR:
 			break;
 		case CC_GET_FILE:
-			*(uint16_t *)VAR_IPV4_ID         = ipv4->id;
-			*(uint16_t *)VAR_FSP_DATA_LENGTH = fsp->data_length;
+			if (*(uint32_t *)VAR_FSP_POSITION   == fsp->position) {
+				*(uint16_t *)VAR_FSP_DATA_LENGTH = fsp->data_length;
+				*(uint16_t *)VAR_IPV4_ID         = ipv4->id;
+			}
 			break;
 	}
 
 	*(uint16_t *)VAR_FSP_KEY = fsp->key;
 }
 
-static void udp_input(eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, uint16_t size)
+static void udp_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, uint16_t size)
 {
 	if (ipv4->src_addr.addr == (*(struct ipv4_addr *)VAR_SERVER_IP).addr &&
 		ipv4->dst_addr.addr == (*(struct ipv4_addr *)VAR_CLIENT_IP).addr) {
@@ -220,7 +221,7 @@ static void udp_input(eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp,
 
 			if (udp->src_port == 21 &&
 				udp->dst_port == 21)
-				fsp_input(eth, ipv4, udp, (void *)udp->data, size);
+				fsp_input(bba, eth, ipv4, udp, (void *)udp->data, size);
 		}
 
 		if (ipv4->id == *(uint16_t *)VAR_IPV4_ID) {
@@ -230,31 +231,35 @@ static void udp_input(eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp,
 			uint16_t data_length = *(uint16_t *)VAR_FSP_DATA_LENGTH;
 
 			if (data_length) {
+				data_length = MIN(data_length, remainder);
+
+				if (!(ipv4->flags & 0b001)) {
+					position  += data_length;
+					remainder -= data_length;
+
+					*(uint32_t *)VAR_FSP_POSITION = position;
+					*(uint32_t *)VAR_TMP2 = remainder;
+					*(uint8_t **)VAR_TMP1 = data + data_length;
+					*(uint16_t *)VAR_FSP_DATA_LENGTH = 0;
+
+					if (remainder) fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, position, remainder);
+				}
+
+				bba_receive_end(bba);
+
 				int offset = ipv4->offset * 8 - sizeof(udp_header_t) - sizeof(fsp_header_t);
 				int ipv4_offset = MIN(offset, 0);
 				int data_offset = MAX(offset, 0);
 
 				memcpy(data + data_offset, ipv4->data - ipv4_offset, MIN(data_length - data_offset, size));
 
-				if (!(ipv4->flags & 0b001)) {
-					data      += data_length;
-					position  += data_length;
-					remainder -= data_length;
-
-					*(uint32_t *)VAR_FSP_POSITION = position;
-					*(uint32_t *)VAR_TMP2 = remainder;
-					*(uint8_t **)VAR_TMP1 = data;
-					*(uint16_t *)VAR_FSP_DATA_LENGTH = 0;
-
-					if (remainder) fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, position, remainder);
-					else trigger_dvd_interrupt();
-				}
+				if (!remainder) trigger_dvd_interrupt();
 			}
 		}
 	}
 }
 
-static void ipv4_input(eth_header_t *eth, ipv4_header_t *ipv4, uint16_t size)
+static void ipv4_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4, uint16_t size)
 {
 	if (ipv4->version != 4)
 		return;
@@ -269,12 +274,12 @@ static void ipv4_input(eth_header_t *eth, ipv4_header_t *ipv4, uint16_t size)
 
 	switch (ipv4->protocol) {
 		case IP_PROTO_UDP:
-			udp_input(eth, ipv4, (void *)ipv4->data, size);
+			udp_input(bba, eth, ipv4, (void *)ipv4->data, size);
 			break;
 	}
 }
 
-static void arp_input(eth_header_t *eth, arp_packet_t *arp, uint16_t size)
+static void arp_input(bba_header_t *bba, eth_header_t *eth, arp_packet_t *arp, uint16_t size)
 {
 	if (arp->hardware_type != HW_ETHERNET || arp->hardware_length != sizeof(struct eth_addr))
 		return;
@@ -312,7 +317,7 @@ static void arp_input(eth_header_t *eth, arp_packet_t *arp, uint16_t size)
 	}
 }
 
-void eth_input(eth_header_t *eth, uint16_t size)
+void eth_input(bba_header_t *bba, eth_header_t *eth, uint16_t size)
 {
 	if (size < MIN_FRAME_SIZE)
 		return;
@@ -321,10 +326,10 @@ void eth_input(eth_header_t *eth, uint16_t size)
 
 	switch (eth->type) {
 		case ETH_TYPE_ARP:
-			arp_input(eth, (void *)eth->data, size);
+			arp_input(bba, eth, (void *)eth->data, size);
 			break;
 		case ETH_TYPE_IPV4:
-			ipv4_input(eth, (void *)eth->data, size);
+			ipv4_input(bba, eth, (void *)eth->data, size);
 			break;
 	}
 }

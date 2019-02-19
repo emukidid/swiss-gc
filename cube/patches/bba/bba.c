@@ -7,6 +7,7 @@
 #include <string.h>
 #include "../../reservedarea.h"
 #include "../base/common.h"
+#include "bba.h"
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
@@ -68,13 +69,6 @@ enum {
 	EXI_SPEED_16MHZ,
 	EXI_SPEED_32MHZ,
 };
-
-typedef struct {
-	uint32_t next   : 12;
-	uint32_t length : 12;
-	uint32_t status : 8;
-	uint8_t data[];
-} __attribute((packed, scalar_storage_order("little-endian"))) bba_header_t;
 
 static int exi_selected(void)
 {
@@ -195,7 +189,26 @@ void bba_transmit(void *data, int size)
 }
 
 void fsp_output(const char *file, uint8_t filelen, uint32_t offset, uint32_t size);
-void eth_input(void *eth, uint16_t size);
+void eth_input(void *bba, void *eth, uint16_t size);
+
+void bba_receive_end(bba_header_t *bba)
+{
+	bba_page_t *page = (bba_page_t *)bba + 1;
+	int count = (bba->length - 1) / sizeof(*page);
+	int rrp;
+
+	if (count > 0) {
+		dcache_flush_icache_inv(page, sizeof(*page) * count);
+
+		rrp = bba_in8(BBA_RRP);
+
+		do {
+			rrp = rrp % BBA_INIT_RHBP + 1;
+			bba_out8(BBA_RRP, rrp);
+			bba_ins(rrp << 8, page++, sizeof(*page));
+		} while (--count);
+	}
+}
 
 static void bba_receive(void)
 {
@@ -203,45 +216,21 @@ static void bba_receive(void)
 	uint8_t rrp = bba_in8(BBA_RRP);
 
 	while (rrp != rwp) {
-		uint8_t buffer[6][0x100] __attribute((aligned(32)));
-		uint8_t (*page)[0x100] = buffer;
+		bba_page_t buffer[6];
+		bba_header_t *bba = (bba_header_t *)buffer;
+		uint16_t size = sizeof(*buffer);
 
-		bba_header_t *bba = (bba_header_t *)page;
-		uint16_t size = sizeof(*page);
+		dcache_flush_icache_inv(buffer, size);
 
-		dcache_flush_icache_inv(page, sizeof(*page));
+		bba_ins(rrp << 8, buffer, size);
 
-		bba_ins(rrp << 8, page, sizeof(*page));
-		page++;
-		rrp = rrp == BBA_INIT_RHBP ? BBA_INIT_RRP : rrp + 1;
-
-		if (bba->length <= sizeof(buffer)) {
+		if (bba->length <= sizeof(buffer))
 			size = bba->length;
-
-			int count = (bba->length - 1) >> 8;
-			int left = BBA_INIT_RHBP + 1 - rrp;
-
-			if (count > 0) {
-				dcache_flush_icache_inv(page, sizeof(*page) * count);
-
-				if (count > left) {
-					bba_out8(BBA_RRP, rrp);
-					bba_ins(rrp << 8, page, sizeof(*page) * left);
-
-					page  += left;
-					count -= left;
-					rrp    = BBA_INIT_RRP;
-				}
-
-				bba_out8(BBA_RRP, rrp);
-				bba_ins(rrp << 8, page, sizeof(*page) * count);
-			}
-		}
 
 		size -= sizeof(*bba);
 
+		eth_input(bba, (void *)bba->data, size);
 		bba_out8(BBA_RRP, rrp = bba->next);
-		eth_input((void *)bba->data, size);
 		rwp = bba_in8(BBA_RWP);
 	}
 }
