@@ -11,6 +11,8 @@
 
 //CMD12 - Stop multiple block read command
 #define CMD12				0x4C
+//CMD17 - Read single block command
+#define CMD17				(0x51)
 //CMD18 - Read multiple block command
 #define CMD18				(0x52)
 //CMD24 - Write single block command 
@@ -110,7 +112,8 @@ void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read) {
 	exi_read_to_buffer(0, remainder);
 }
 
-void do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
+#ifndef SINGLE_SECTOR
+u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = len;
@@ -148,6 +151,26 @@ void do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	send_cmd(CMD12, 0);
 	exi_deselect();
 	rcvr_spi();
+	return len;
 }
+#else
+u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
+	u32 lba = (offset>>9) + sectorLba;
+	u32 startByte = (offset%SECTOR_SIZE);
+	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);
+	u8 lbaShift = *(vu8*)VAR_SD_SHIFT;
+	
+	// SDHC uses sector addressing, SD uses byte
+	lba <<= lbaShift;
+	// Send single block read command and the LBA we want to read at
+	send_cmd(CMD17, lba);
+	// Read block
+	rcvr_datablock(dst, startByte, numBytes);
+	// Deselect SD + Burn a cycle after it
+	exi_deselect();
+	rcvr_spi();
+	return numBytes;
+}
+#endif
 
 /* End of SD functions */

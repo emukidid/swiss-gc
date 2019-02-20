@@ -43,7 +43,7 @@ u32 read_frag(void *dst, u32 len, u32 offset) {
 			if(fragOffset != 0) {
 				adjustedOffset = offset - fragOffset;
 			}
-			do_read(dst, amountToRead, adjustedOffset, fragSector);
+			amountToRead = do_read(dst, amountToRead, adjustedOffset, fragSector);
 #ifdef DEBUG_VERBOSE
 			u32 sz = amountToRead;
 			u8* ptr = (u8*)dst;

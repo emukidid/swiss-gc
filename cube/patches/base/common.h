@@ -13,6 +13,9 @@ typedef volatile s16 vs16;
 typedef volatile u32 vu32;
 typedef volatile s32 vs32;
 
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+
 #define disable_interrupts() ({ \
 	unsigned long msr; \
 	asm volatile ("mfmsr %0" : "=r" (msr)); \
@@ -46,7 +49,7 @@ typedef struct {
 
 #define TB_CLOCK  40500000
 
-void do_read(void* dst, u32 len, u32 offset, u32 sector);
+u32 do_read(void *dst, u32 len, u32 offset, u32 sector);
 u32 read_frag(void *dst, u32 len, u32 offset);
 int is_frag_read(unsigned int offset, unsigned int len);
 void device_frag_read(void* dst, u32 len, u32 offset);

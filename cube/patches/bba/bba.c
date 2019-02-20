@@ -9,9 +9,6 @@
 #include "../base/common.h"
 #include "bba.h"
 
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
-
 #define BBA_NCRA				0x00		/* Network Control Register A, RW */
 #define BBA_NCRA_RESET			(1<<0)	/* RESET */
 #define BBA_NCRA_ST0			(1<<1)	/* ST0, Start transmit command/status */

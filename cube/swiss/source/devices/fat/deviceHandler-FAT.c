@@ -385,7 +385,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	// IDE-EXI only settings
 	if((devices[DEVICE_CUR] == &__device_ide_a) || (devices[DEVICE_CUR] == &__device_ide_b)) {
 		// Is the HDD in use a 48 bit LBA supported HDD?
-		*(vu32*)VAR_TMP1 = ataDriveInfo.lba48Support;
+		*(vu8*)VAR_ATA_LBA48 = ataDriveInfo.lba48Support;
 	}
 	print_frag_list(file2 != 0);
 	return 1;

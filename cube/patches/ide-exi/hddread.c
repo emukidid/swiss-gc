@@ -33,10 +33,9 @@
 #define EXI_READ					0			/*!< EXI transfer type read */
 #define EXI_WRITE					1			/*!< EXI transfer type write */
 
-#define MIN(x,y) ((x) < (y) ? (x) : (y))
 #define SECTOR_SIZE 		512
 
-#define _ata48bit *(vu32*)VAR_TMP1
+#define _ata48bit *(vu8*)VAR_ATA_LBA48
 
 #define exi_freq  			(*(vu8*)VAR_EXI_FREQ)
 // exi_channel is stored as number of u32's to index into the exi bus (0xCC006800)
@@ -203,41 +202,62 @@ int _ataReadSector(u32 lba, void *buffer)
 	return temp & ATA_SR_ERR;
 }
 
-void do_read(void *dst,u32 size, u32 offset, u32 sectorLba) {
+#ifndef SINGLE_SECTOR
+u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u8 sector[SECTOR_SIZE];
 	u32 lba = (offset>>9) + sectorLba;
+	u32 startByte = (offset%SECTOR_SIZE);
+	u32 numBytes = len;
 	
 	// Read any half sector if we need to until we're aligned
-	if(offset % SECTOR_SIZE) {
-		u32 size_to_copy = MIN(size, SECTOR_SIZE-(offset%SECTOR_SIZE));
+	if(startByte) {
+		u32 size_to_copy = MIN(numBytes, SECTOR_SIZE-startByte);
 		if(_ataReadSector(lba, sector)) {
 			//*(u32*)0xCC003024 = 0;
 			*(u32*)dst = 0x13370003;
-			return;
+			return len-numBytes;
 		}
-		memcpy(dst, &(sector[offset%SECTOR_SIZE]), size_to_copy);
-		size -= size_to_copy;
+		memcpy(dst, &(sector[startByte]), size_to_copy);
+		numBytes -= size_to_copy;
 		dst += size_to_copy;
 		lba += 1;
 	}
 	// Read any whole sectors
-	while(size >= 512) {
+	while(numBytes >= 512) {
 		if(_ataReadSector(lba, dst)) {
 			//*(u32*)0xCC003024 = 0;
 			*(u32*)dst = 0x13370004;
-			return;
+			return len-numBytes;
 		}
-		size -= SECTOR_SIZE;
+		numBytes -= SECTOR_SIZE;
 		dst += SECTOR_SIZE;
 		lba ++;
 	}
 	// Read the last sector if there's any half sector
-	if(size) {
+	if(numBytes) {
 		if(_ataReadSector(lba, sector)) {
 			//*(u32*)0xCC003024 = 0;
 			*(u32*)dst = 0x13370006;
-			return;
+			return len-numBytes;
 		}
-		memcpy(dst, &(sector[0]), size);
+		memcpy(dst, &(sector[0]), numBytes);
 	}	
+	return len;
 }
+#else
+u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
+	u8 sector[SECTOR_SIZE];
+	u32 lba = (offset>>9) + sectorLba;
+	u32 startByte = (offset%SECTOR_SIZE);
+	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);
+	
+	// Read sector
+	if(_ataReadSector(lba, sector)) {
+		//*(u32*)0xCC003024 = 0;
+		*(u32*)dst = 0x13370003;
+		return 0;
+	}
+	memcpy(dst, &(sector[startByte]), numBytes);
+	return numBytes;
+}
+#endif

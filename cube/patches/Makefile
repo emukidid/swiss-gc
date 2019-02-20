@@ -123,11 +123,11 @@ build-dvd:
 
 build-usb:
 	@echo Building USBGecko Patch ...
-	@$(CC) -O1 $(OPTS) -c usbgecko/base.S
-	@$(CC) -O1 $(OPTS) -c usbgecko/usbgecko.c
-	@$(CC) -O1 $(OPTS) -c sdgecko/sd.c
-	@$(CC) -O1 $(OPTS) -c base/frag.c
-	@$(CC) -O1 $(OPTS) -c base/igr.c
+	@$(CC) -O2 $(OPTS) -c usbgecko/base.S
+	@$(CC) -O2 $(OPTS) -c usbgecko/usbgecko.c
+	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR
+	@$(CC) -O2 $(OPTS) -c base/frag.c
+	@$(CC) -O2 $(OPTS) -c base/igr.c
 	@$(LD) -o usbgecko.elf base.o usbgecko.o sd.o frag.o igr.o --section-start .text=0x80001000 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
@@ -160,7 +160,7 @@ build-bba:
 	@$(CC) -O2 $(OPTS) -c usbgecko/base.S
 	@$(CC) -O2 $(OPTS) -c bba/bba.c
 	@$(CC) -O2 $(OPTS) -c bba/tcpip.c
-	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c
+	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c

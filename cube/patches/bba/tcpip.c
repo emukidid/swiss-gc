@@ -9,9 +9,6 @@
 #include "../base/common.h"
 #include "bba.h"
 
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
-
 #define MIN_FRAME_SIZE 60
 
 #define ETH_TYPE_IPV4 0x0800

@@ -48,7 +48,7 @@
 .set VAR_SD_SHIFT, 			0x2F18	# is the SD Card shift amount when issueing read cmds
 .set VAR_EXI_FREQ, 			0x2F19	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
 .set VAR_EXI_SLOT, 			0x2F1A	# is the EXI slot (0 = slot a, 1 = slot b)
-.set VAR_FREE_U8_1,			0x2F1B	# A free u8
+.set VAR_ATA_LBA48,			0x2F1B	# Is the HDD in use a 48 bit LBA supported HDD?
 .set VAR_TMP1,  			0x2F1C  # space for a variable if required
 .set VAR_TMP2,  			0x2F20  # space for a variable if required
 .set VAR_FLOAT9_16,			0x2F24  # constant 9/16
@@ -140,7 +140,7 @@
 #define VAR_SD_SHIFT 		(VAR_AREA+0x2F18)	// is the SD Card shift amount when issueing read cmds
 #define VAR_EXI_FREQ 		(VAR_AREA+0x2F19)	// is the EXI frequency (4 = 16mhz, 5 = 32mhz)
 #define VAR_EXI_SLOT 		(VAR_AREA+0x2F1A)	// is the EXI slot (0 = slot a, 1 = slot b)
-#define VAR_FREE_U8_1		(VAR_AREA+0x2F1B)	// A free u8
+#define VAR_ATA_LBA48		(VAR_AREA+0x2F1B)	// Is the HDD in use a 48 bit LBA supported HDD?
 #define VAR_TMP1  			(VAR_AREA+0x2F1C)	// space for a variable if required
 #define VAR_TMP2  			(VAR_AREA+0x2F20)	// space for a variable if required
 #define VAR_FLOAT9_16		(VAR_AREA+0x2F24)	// constant 9/16
