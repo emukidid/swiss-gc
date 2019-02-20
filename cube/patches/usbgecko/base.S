@@ -9,6 +9,7 @@
 .section .text
 	.globl _start, __main
 _start:
+	b		exi_handler
 	b		patched_memcpy			# void patched_memcpy(dst,src,size)
 	b		perform_read
 	b		tickle_read

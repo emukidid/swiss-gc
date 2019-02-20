@@ -145,6 +145,7 @@ static void gecko_receive(void *buffer,unsigned int size)
 	}
 }
 
+void exi_handler() {}
 
 void trigger_dvd_interrupt()
 {

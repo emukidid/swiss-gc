@@ -665,6 +665,10 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 		{ 22, 4, 2, 3, 0, 3, NULL, 0, "__OSGetSystemTimeD" },
 		{ 25, 8, 5, 3, 0, 3, NULL, 0, "__OSGetSystemTime" }
 	};
+	FuncPattern SetExiInterruptMaskSigs[2] = {
+		{ 63, 18, 3, 7, 17, 3, NULL, 0, "SetExiInterruptMaskD" },
+		{ 61, 19, 3, 7, 17, 2, NULL, 0, "SetExiInterruptMask" }
+	};
 	FuncPattern EXILockSigs[3] = {
 		{ 106, 35, 5, 9, 13, 6, NULL, 0, "EXILockD A" },
 		{  61, 18, 7, 5,  5, 6, NULL, 0, "EXILock A" },
@@ -744,7 +748,8 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 						if (findx_pattern(data, dataType, i + 33, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 61, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 80, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 99, length, &OSRestoreInterruptsSig))
+							findx_pattern(data, dataType, i + 99, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 97, length, &SetExiInterruptMaskSigs[0]))
 							EXILockSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
@@ -752,7 +757,8 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 						if (findx_pattern(data, dataType, i + 11, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 43, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 54, length, &OSRestoreInterruptsSig))
+							findx_pattern(data, dataType, i + 54, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 52, length, &SetExiInterruptMaskSigs[1]))
 							EXILockSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -923,6 +929,29 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 	}
 	
 	if (devices[DEVICE_CUR] == &__device_smb) {
+		for (j = 0; j < sizeof(SetExiInterruptMaskSigs) / sizeof(FuncPattern); j++)
+			if (SetExiInterruptMaskSigs[j].offsetFoundAt) break;
+		
+		if (j < sizeof(SetExiInterruptMaskSigs) / sizeof(FuncPattern) && (i = SetExiInterruptMaskSigs[j].offsetFoundAt)) {
+			u32 *SetExiInterruptMask = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			
+			if (SetExiInterruptMask) {
+				switch (j) {
+					case 0:
+						data[i + 22] = 0x3C000000 | ((u32)EXI_HANDLER >> 16);
+						data[i + 23] = 0x60000000 | ((u32)EXI_HANDLER & 0xFFFF);
+						data[i + 24] = 0x901E0000;	// stw		r0, 0 (r30)
+						break;
+					case 1:
+						data[i + 20] = 0x3C000000 | ((u32)EXI_HANDLER >> 16);
+						data[i + 21] = 0x60000000 | ((u32)EXI_HANDLER & 0xFFFF);
+						data[i + 22] = 0x90040000;	// stw		r0, 0 (r4)
+						break;
+				}
+				print_gecko("Found:[%s] @ %08X\n", SetExiInterruptMaskSigs[j].Name, SetExiInterruptMask);
+			}
+		}
+		
 		for (j = 0; j < sizeof(EXILockSigs) / sizeof(FuncPattern); j++)
 			if (EXILockSigs[j].offsetFoundAt) break;
 		

@@ -5,9 +5,12 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "../../reservedarea.h"
 #include "../base/common.h"
 #include "bba.h"
+#include "globals.h"
+
+#define BBA_CMD_IRMASKALL		0x00
+#define BBA_CMD_IRMASKNONE		0xF8
 
 #define BBA_NCRA				0x00		/* Network Control Register A, RW */
 #define BBA_NCRA_RESET			(1<<0)	/* RESET */
@@ -205,12 +208,16 @@ void bba_receive_end(bba_header_t *bba)
 			bba_ins(rrp << 8, page++, sizeof(*page));
 		} while (--count);
 	}
+
+	(*_received)++;
 }
 
 static void bba_receive(void)
 {
 	uint8_t rwp = bba_in8(BBA_RWP);
 	uint8_t rrp = bba_in8(BBA_RRP);
+
+	*_received = 0;
 
 	while (rrp != rwp) {
 		bba_page_t buffer[6];
@@ -236,26 +243,22 @@ static void bba_interrupt(void)
 {
 	uint8_t ir = bba_in8(BBA_IR);
 
-	while (ir) {
-		if (ir & BBA_IR_RI)
-			bba_receive();
+	if (ir & BBA_IR_RI)
+		bba_receive();
 
-		bba_out8(BBA_IR, ir);
-		ir = bba_in8(BBA_IR);
-	}
+	bba_out8(BBA_IR, ir);
 }
 
-static void bba_poll(void)
+void exi_handler(int32_t channel, uint32_t device)
 {
 	uint8_t status = bba_cmd_in8(0x03);
+	bba_cmd_out8(0x02, BBA_CMD_IRMASKALL);
 
-	while (status) {
-		if (status & 0x80)
-			bba_interrupt();
+	if (status & 0x80)
+		bba_interrupt();
 
-		bba_cmd_out8(0x03, status);
-		status = bba_cmd_in8(0x03);
-	}
+	bba_cmd_out8(0x03, status);
+	bba_cmd_out8(0x02, BBA_CMD_IRMASKNONE);
 }
 
 void trigger_dvd_interrupt(void)
@@ -284,43 +287,38 @@ void perform_read(void)
 	uint32_t len = dvd[4];
 	uint32_t dst = dvd[5] | 0x80000000;
 
-	*(uint32_t *)VAR_FSP_POSITION = off;
-	*(uint32_t *)VAR_TMP2 = len;
-	*(uint32_t *)VAR_TMP1 = dst;
-	*(uint16_t *)VAR_FSP_DATA_LENGTH = 0;
+	*_position  = off;
+	*_remainder = len;
+	*_data = (void *)dst;
+	*_data_size = 0;
 
 	if (!is_frag_read(off, len) && !exi_selected())
-		fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, off, len);
+		fsp_output(_file, *_filelen, off, len);
 }
 
 void *tickle_read(void)
 {
-	if (!exi_selected()) {
-		bba_poll();
+	uint32_t position  = *_position;
+	uint32_t remainder = *_remainder;
+	uint8_t *data      = *_data;
+	uint32_t data_size = read_frag(data, remainder, position);
 
-		uint32_t position    = *(uint32_t *)VAR_FSP_POSITION;
-		uint32_t remainder   = *(uint32_t *)VAR_TMP2;
-		uint8_t *data        = *(uint8_t **)VAR_TMP1;
-		uint32_t data_length = read_frag(data, remainder, position);
+	if (data_size) {
+		position  += data_size;
+		remainder -= data_size;
 
-		if (data_length) {
-			data      += data_length;
-			position  += data_length;
-			remainder -= data_length;
+		*_position  = position;
+		*_remainder = remainder;
+		*_data = data + data_size;
+		*_data_size = 0;
 
-			*(uint32_t *)VAR_FSP_POSITION = position;
-			*(uint32_t *)VAR_TMP2 = remainder;
-			*(uint8_t **)VAR_TMP1 = data;
-			*(uint16_t *)VAR_FSP_DATA_LENGTH = 0;
+		if (!remainder) trigger_dvd_interrupt();
+	} else if (remainder) {
+		tb_t end;
+		mftb(&end);
 
-			if (!remainder) trigger_dvd_interrupt();
-		} else if (remainder) {
-			tb_t end, *start = (tb_t *)VAR_TIMER_START;
-			mftb(&end);
-
-			if (tb_diff_usec(&end, start) > 1000000)
-				fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, position, remainder);
-		}
+		if (tb_diff_usec(&end, _start) > 1000000 && !exi_selected())
+			fsp_output(_file, *_filelen, position, remainder);
 	}
 
 	return NULL;

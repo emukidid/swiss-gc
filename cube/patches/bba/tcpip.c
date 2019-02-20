@@ -5,9 +5,9 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "../../reservedarea.h"
 #include "../base/common.h"
 #include "bba.h"
+#include "globals.h"
 
 #define MIN_FRAME_SIZE 60
 
@@ -103,6 +103,11 @@ typedef struct {
 	uint8_t data[];
 } __attribute((packed)) fsp_header_t;
 
+static struct eth_addr  *const _client_mac = (struct eth_addr  *)VAR_CLIENT_MAC;
+static struct ipv4_addr *const _client_ip  = (struct ipv4_addr *)VAR_CLIENT_IP;
+static struct eth_addr  *const _server_mac = (struct eth_addr  *)VAR_SERVER_MAC;
+static struct ipv4_addr *const _server_ip  = (struct ipv4_addr *)VAR_SERVER_IP;
+
 static uint16_t ipv4_checksum(ipv4_header_t *header)
 {
 	uint16_t *data = (uint16_t *)header;
@@ -140,7 +145,7 @@ void fsp_output(const char *file, uint8_t filelen, uint32_t offset, uint32_t siz
 
 	fsp->command = CC_GET_FILE;
 	fsp->checksum = 0x00;
-	fsp->key = *(uint16_t *)VAR_FSP_KEY;
+	fsp->key = *_key;
 	fsp->sequence = 0;
 	fsp->data_length = filelen;
 	fsp->position = offset;
@@ -163,17 +168,17 @@ void fsp_output(const char *file, uint8_t filelen, uint32_t offset, uint32_t siz
 	ipv4->ttl = 64;
 	ipv4->protocol = IP_PROTO_UDP;
 	ipv4->checksum = 0x0000;
-	ipv4->src_addr.addr = (*(struct ipv4_addr *)VAR_CLIENT_IP).addr;
-	ipv4->dst_addr.addr = (*(struct ipv4_addr *)VAR_SERVER_IP).addr;
+	ipv4->src_addr.addr = (*_client_ip).addr;
+	ipv4->dst_addr.addr = (*_server_ip).addr;
 	ipv4->checksum = ipv4_checksum(ipv4);
 
-	eth->dst_addr.addr = (*(struct eth_addr *)VAR_SERVER_MAC).addr;
-	eth->src_addr.addr = (*(struct eth_addr *)VAR_CLIENT_MAC).addr;
+	eth->dst_addr.addr = (*_server_mac).addr;
+	eth->src_addr.addr = (*_client_mac).addr;
 	eth->type = ETH_TYPE_IPV4;
 
 	bba_transmit(eth, sizeof(*eth) + ipv4->length);
 
-	mftb((tb_t *)VAR_TIMER_START);
+	mftb(_start);
 }
 
 void trigger_dvd_interrupt(void);
@@ -191,22 +196,22 @@ static void fsp_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4,
 		case CC_ERR:
 			break;
 		case CC_GET_FILE:
-			if (*(uint32_t *)VAR_FSP_POSITION   == fsp->position) {
-				*(uint16_t *)VAR_FSP_DATA_LENGTH = fsp->data_length;
-				*(uint16_t *)VAR_IPV4_ID         = ipv4->id;
+			if (*_position == fsp->position) {
+				*_data_size = fsp->data_length;
+				*_id        = ipv4->id;
 			}
 			break;
 	}
 
-	*(uint16_t *)VAR_FSP_KEY = fsp->key;
+	*_key = fsp->key;
 }
 
 static void udp_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, uint16_t size)
 {
-	if (ipv4->src_addr.addr == (*(struct ipv4_addr *)VAR_SERVER_IP).addr &&
-		ipv4->dst_addr.addr == (*(struct ipv4_addr *)VAR_CLIENT_IP).addr) {
+	if (ipv4->src_addr.addr == (*_server_ip).addr &&
+		ipv4->dst_addr.addr == (*_client_ip).addr) {
 
-		(*(struct eth_addr *)VAR_SERVER_MAC).addr = eth->src_addr.addr;
+		(*_server_mac).addr = eth->src_addr.addr;
 
 		if (ipv4->offset == 0) {
 			if (size < sizeof(*udp))
@@ -221,34 +226,36 @@ static void udp_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4,
 				fsp_input(bba, eth, ipv4, udp, (void *)udp->data, size);
 		}
 
-		if (ipv4->id == *(uint16_t *)VAR_IPV4_ID) {
-			uint32_t position    = *(uint32_t *)VAR_FSP_POSITION;
-			uint32_t remainder   = *(uint32_t *)VAR_TMP2;
-			uint8_t *data        = *(uint8_t **)VAR_TMP1;
-			uint16_t data_length = *(uint16_t *)VAR_FSP_DATA_LENGTH;
+		if (ipv4->id == *_id) {
+			uint32_t position  = *_position;
+			uint32_t remainder = *_remainder;
+			uint8_t *data      = *_data;
+			uint16_t data_size = *_data_size;
 
-			if (data_length) {
-				data_length = MIN(data_length, remainder);
+			if (data_size) {
+				data_size = MIN(data_size, remainder);
+
+				if (*_received) bba_receive_end(bba);
 
 				if (!(ipv4->flags & 0b001)) {
-					position  += data_length;
-					remainder -= data_length;
+					position  += data_size;
+					remainder -= data_size;
 
-					*(uint32_t *)VAR_FSP_POSITION = position;
-					*(uint32_t *)VAR_TMP2 = remainder;
-					*(uint8_t **)VAR_TMP1 = data + data_length;
-					*(uint16_t *)VAR_FSP_DATA_LENGTH = 0;
+					*_position  = position;
+					*_remainder = remainder;
+					*_data = data + data_size;
+					*_data_size = 0;
 
-					if (remainder) fsp_output((const char *)VAR_FILENAME, *(uint8_t *)VAR_FILENAME_LEN, position, remainder);
+					if (remainder) fsp_output(_file, *_filelen, position, remainder);
 				}
 
-				bba_receive_end(bba);
+				if (!*_received) bba_receive_end(bba);
 
 				int offset = ipv4->offset * 8 - sizeof(udp_header_t) - sizeof(fsp_header_t);
 				int ipv4_offset = MIN(offset, 0);
 				int data_offset = MAX(offset, 0);
 
-				memcpy(data + data_offset, ipv4->data - ipv4_offset, MIN(data_length - data_offset, size));
+				memcpy(data + data_offset, ipv4->data - ipv4_offset, MIN(data_size - data_offset, size));
 
 				if (!remainder) trigger_dvd_interrupt();
 			}
@@ -286,16 +293,16 @@ static void arp_input(bba_header_t *bba, eth_header_t *eth, arp_packet_t *arp, u
 	switch (arp->operation) {
 		case ARP_REQUEST:
 			if ((!arp->dst_mac.addr ||
-				arp->dst_mac.addr == (*(struct eth_addr *)VAR_CLIENT_MAC).addr) &&
-				arp->dst_ip.addr == (*(struct ipv4_addr *)VAR_CLIENT_IP).addr) {
+				arp->dst_mac.addr == (*_client_mac).addr) &&
+				arp->dst_ip.addr  == (*_client_ip).addr) {
 
 				arp->operation = ARP_REPLY;
 
 				arp->dst_mac.addr = arp->src_mac.addr;
-				arp->dst_ip.addr = arp->src_ip.addr;
+				arp->dst_ip.addr  = arp->src_ip.addr;
 
-				arp->src_mac.addr = (*(struct eth_addr *)VAR_CLIENT_MAC).addr;
-				arp->src_ip.addr = (*(struct ipv4_addr *)VAR_CLIENT_IP).addr;
+				arp->src_mac.addr = (*_client_mac).addr;
+				arp->src_ip.addr  = (*_client_ip).addr;
 
 				eth->dst_addr.addr = arp->dst_mac.addr;
 				eth->src_addr.addr = arp->src_mac.addr;
@@ -304,11 +311,11 @@ static void arp_input(bba_header_t *bba, eth_header_t *eth, arp_packet_t *arp, u
 			}
 			break;
 		case ARP_REPLY:
-			if (arp->dst_mac.addr == (*(struct eth_addr *)VAR_CLIENT_MAC).addr &&
-				arp->dst_ip.addr == (*(struct ipv4_addr *)VAR_CLIENT_IP).addr &&
-				arp->src_ip.addr == (*(struct ipv4_addr *)VAR_SERVER_IP).addr) {
+			if (arp->dst_mac.addr == (*_client_mac).addr &&
+				arp->dst_ip.addr  == (*_client_ip).addr &&
+				arp->src_ip.addr  == (*_server_ip).addr) {
 
-				(*(struct eth_addr *)VAR_SERVER_MAC).addr = arp->src_mac.addr;
+				(*_server_mac).addr = arp->src_mac.addr;
 			}
 			break;
 	}
