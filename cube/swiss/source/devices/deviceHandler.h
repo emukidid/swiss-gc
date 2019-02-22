@@ -14,7 +14,7 @@
 #include "diskio.h"
 #include "wode/WodeInterface.h"
 
-#define MAX_DEVICES 15
+#define MAX_DEVICES 16
 #define PATHNAME_MAX 1024
 
 typedef struct {
@@ -32,7 +32,7 @@ typedef struct {
 	u32 size;      			// size of the file
 	s32 fileAttrib;        	// IS_FILE or IS_DIR
 	s32 status;            	// is the device ok
-	FILE *fp;				// file pointer
+	void *fp;				// file pointer
 	FIL* ffsFp;				// file pointer (FATFS)
 	file_meta *meta;
 	u8 other[128];			// Store anything else we want here
@@ -101,7 +101,8 @@ typedef device_info* (* _fn_deviceInfo)(void);
 #define DEVICE_ID_B			0x0B
 #define DEVICE_ID_C			0x0C
 #define DEVICE_ID_D			0x0D
-#define DEVICE_ID_MAX		DEVICE_ID_D
+#define DEVICE_ID_E			0x0E
+#define DEVICE_ID_MAX		DEVICE_ID_E
 #define DEVICE_ID_UNK		(DEVICE_ID_MAX + 1)
 
 struct DEVICEHANDLER_STRUCT {
@@ -146,6 +147,7 @@ enum DEVICE_SLOTS {
 #include "devices/usbgecko/deviceHandler-usbgecko.h"
 #include "devices/system/deviceHandler-SYS.h"
 #include "devices/ftp/deviceHandler-FTP.h"
+#include "devices/fsp/deviceHandler-FSP.h"
 
 extern void deviceHandler_setStatEnabled(int enable);
 extern int deviceHandler_getStatEnabled();

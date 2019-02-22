@@ -463,6 +463,7 @@ int main ()
 	allDevices[i++] = &__device_sys;
 	allDevices[i++] = &__device_usbgecko;
 	allDevices[i++] = &__device_ftp;
+	allDevices[i++] = &__device_fsp;
 	allDevices[i++] = NULL;
 	
 	// Set current devices

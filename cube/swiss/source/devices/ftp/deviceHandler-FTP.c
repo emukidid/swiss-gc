@@ -220,7 +220,7 @@ bool deviceHandler_FTP_test() {
 
 DEVICEHANDLER_INTERFACE __device_ftp = {
 	DEVICE_ID_D,
-	"FTP via BBA",
+	"File Transfer Protocol",
 	"Must be pre-configured via swiss.ini",
 	{TEX_SAMBA, 160, 85},
 	FEAT_READ,

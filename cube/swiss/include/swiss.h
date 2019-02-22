@@ -99,8 +99,11 @@ typedef struct {
 	char ftpUserName[64];
 	char ftpPassword[32];
 	char ftpHostIp[32];
-	u32 ftpPort;
+	u16 ftpPort;
 	bool ftpUsePasv;
+	char fspHostIp[32];
+	u16 fspPort;
+	char fspPassword[32];
 	int autoCheats;
 	int igrType;
 	int initNetworkAtStart;

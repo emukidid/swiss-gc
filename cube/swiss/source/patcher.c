@@ -180,7 +180,7 @@ int install_code()
 		print_gecko("Installing Patch for WKF\r\n");
 	}
 	// Broadband Adapter
-	else if(devices[DEVICE_CUR] == &__device_smb) {
+	else if(devices[DEVICE_CUR] == &__device_fsp) {
 		patch = &bba_bin[0]; patchSize = bba_bin_size;
 		print_gecko("Installing Patch for Broadband Adapter\r\n");
 	}
@@ -928,7 +928,7 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (devices[DEVICE_CUR] == &__device_smb) {
+	if (devices[DEVICE_CUR] == &__device_fsp) {
 		for (j = 0; j < sizeof(SetExiInterruptMaskSigs) / sizeof(FuncPattern); j++)
 			if (SetExiInterruptMaskSigs[j].offsetFoundAt) break;
 		
@@ -4822,7 +4822,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		if (PADRead) {
 			if (devices[DEVICE_CUR] == &__device_dvd)
 				PADReadHook = IGR_CHECK_DVD;
-			else if (devices[DEVICE_CUR] == &__device_usbgecko || devices[DEVICE_CUR] == &__device_smb)
+			else if (devices[DEVICE_CUR] == &__device_usbgecko || devices[DEVICE_CUR] == &__device_fsp)
 				PADReadHook = IGR_CHECK_USB;
 			else if (devices[DEVICE_CUR] == &__device_wkf)
 				PADReadHook = IGR_CHECK_WKF;

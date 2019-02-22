@@ -446,7 +446,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 				patched += Patch_DVDReset(buffer, sizeToRead);
 			}
 			
-			if(devices[DEVICE_CUR] == &__device_usbgecko || devices[DEVICE_CUR] == &__device_smb) {
+			if(devices[DEVICE_CUR] == &__device_usbgecko || devices[DEVICE_CUR] == &__device_fsp) {
 				Patch_DVDLowLevelReadForUSBGecko(buffer, sizeToRead, filesToPatch[i].type);
 			}
 			

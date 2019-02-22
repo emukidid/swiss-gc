@@ -194,9 +194,15 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "FTPHostIP=%s\r\n",configSwissSettings.ftpHostIp);
 	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "FTPPort=%ul\r\n",configSwissSettings.ftpPort);
+	sprintf(txtbuffer, "FTPPort=%hu\r\n",configSwissSettings.ftpPort);
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "FTPUsePasv=%s\r\n",configSwissSettings.ftpUsePasv ? "Yes":"No");
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "FSPHostIP=%s\r\n",configSwissSettings.fspHostIp);
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "FSPPort=%hu\r\n",configSwissSettings.fspPort);
+	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "FSPPassword=%s\r\n",configSwissSettings.fspPassword);
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
 	string_append(configString, txtbuffer);
@@ -476,6 +482,15 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("FTPUsePasv", name)) {
 					configSwissSettings.ftpUsePasv = !strcmp("Yes", value);
+				}
+				else if(!strcmp("FSPHostIP", name)) {
+					strncpy(configSwissSettings.fspHostIp, value, sizeof(((SwissSettings*)0)->fspHostIp));
+				}
+				else if(!strcmp("FSPPort", name)) {
+					configSwissSettings.fspPort = atoi(value);
+				}
+				else if(!strcmp("FSPPassword", name)) {
+					strncpy(configSwissSettings.fspPassword, value, sizeof(((SwissSettings*)0)->fspPassword));
 				}
 			}
 		}
