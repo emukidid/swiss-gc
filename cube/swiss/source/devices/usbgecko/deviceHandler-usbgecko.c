@@ -106,8 +106,6 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2) {
 	*(vu32*)VAR_DISC_1_LBA = 0;
 	*(vu32*)VAR_DISC_2_LBA = 0;
 	*(vu32*)VAR_CUR_DISC_LBA = 0;
-	*(vu32*)VAR_TMP1 = 0;
-	*(vu32*)VAR_TMP2 = 0;
 	return 1;
 }
 
@@ -158,7 +156,7 @@ DEVICEHANDLER_INTERFACE __device_usbgecko = {
 	"USB Gecko - Slot B only",
 	"Requires PC application to be up",
 	{TEX_USBGECKO, 129, 80},
-	FEAT_READ|FEAT_BOOT_GCM,
+	FEAT_READ|FEAT_BOOT_GCM|FEAT_REPLACES_DVD_FUNCS|FEAT_ALT_READ_PATCHES,
 	LOC_MEMCARD_SLOT_B,
 	&initial_USBGecko,
 	(_fn_test)&deviceHandler_USBGecko_test,

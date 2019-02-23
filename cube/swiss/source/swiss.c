@@ -698,12 +698,17 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch, int noASRequir
 
 	// Patch to read from SD/HDD/USBGecko/WKF (if frag req or audio streaming)
 	if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
-		u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
-		if(READ_PATCHED_ALL != ret)	{
-			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
-			DrawPublish(msgBox);
-			sleep(5);
-			DrawDispose(msgBox);
+		if((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches) {
+			Patch_DVDLowLevelReadAlt(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+		}
+		else {
+			u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+			if(READ_PATCHED_ALL != ret)	{
+				uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
+				DrawPublish(msgBox);
+				sleep(5);
+				DrawDispose(msgBox);
+			}
 		}
 	}
 	
@@ -719,10 +724,6 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch, int noASRequir
 		}
 	}
 	
-	if(devices[DEVICE_CUR] == &__device_usbgecko || devices[DEVICE_CUR] == &__device_fsp) {
-		Patch_DVDLowLevelReadForUSBGecko(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
-	}
-		
 	// Patch specific game hacks
 	Patch_GameSpecific(main_dol_buffer, main_dol_size+DOLHDRLENGTH, gameID, PATCH_DOL);
 
@@ -818,6 +819,8 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch, int noASRequir
 		print_gecko("DVD: %08X\r\n",dvd_get_error());
 	}
 	// Clear out some patch variables
+	*(vu32*)VAR_TMP1 = 0;
+	*(vu32*)VAR_TMP2 = 0;
 	*(vu32*)VAR_FAKE_IRQ_SET = 0;
 	*(vu32*)VAR_INTERRUPT_TIMES = 0;
 	*(vu32*)VAR_READS_IN_AS = 0;

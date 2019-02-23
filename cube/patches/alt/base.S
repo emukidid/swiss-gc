@@ -1,7 +1,7 @@
 #***************************************************************************
-# USBGecko Patch launch pad
+# Device independent Read code launch pad
 #
-# We have 0x1800 bytes to play with at 0x80001800 (code+data)
+# We have 0x2000 bytes to play with at 0x80001000 (code+data)
 #**************************************************************************
 #define _LANGUAGE_ASSEMBLY
 #include "../../reservedarea.h"

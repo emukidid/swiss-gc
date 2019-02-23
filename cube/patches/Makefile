@@ -16,8 +16,8 @@ all: execdpatch dvdpatch hddpatch sdpatch usbpatch wkfpatch bbapatch
 
 execdpatch: clean build-execD
 dvdpatch: clean build-dvd
-hddpatch: clean build-ideexi-v1 clean build-ideexi-v2
-sdpatch: clean build-sd
+hddpatch: clean build-ideexi-v1 clean build-ideexi-altv1 clean build-ideexi-v2 clean build-ideexi-altv2
+sdpatch: clean build-sd clean build-sd-alt
 usbpatch: clean build-usb
 wkfpatch: clean build-wkf
 bbapatch: clean build-bba
@@ -62,6 +62,23 @@ build-sd:
 	@rm *.bin
 	@rm *.elf
 
+build-sd-alt:
+	@echo Building SD Alternate Patch ...
+	@$(CC) -O2 $(OPTS) -c alt/base.S
+	@$(CC) -O2 $(OPTS) -c alt/read.c
+	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=2
+	@$(CC) -O2 $(OPTS) -c base/frag.c
+	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
+	@$(CC) -O2 $(OPTS) -c base/igr.c
+	@$(LD) -o sd_alt.elf base.o read.o sd.o frag.o usbgecko.o igr.o --section-start .text=0x80001000 --gc-sections
+	@rm -rf *.o
+	@$(OBJDUMP) -D sd_alt.elf > $(DISASM)/sd_alt_disasm.txt
+	@$(OBJCOPY) -O binary sd_alt.elf sd_alt.bin
+	@$(BIN2S) sd_alt.bin > sd_alt_final.s
+	@mv -f sd_alt_final.s $(DEST)/SlotAB-SD_Alt.s
+	@rm *.bin
+	@rm *.elf
+
 build-ideexi-v1:
 	@echo Building IDE-EXI-v1 Patch ...
 	@$(CC) -O1 $(OPTS) -c base/base.S
@@ -82,7 +99,24 @@ build-ideexi-v1:
 	@mv -f ideexi_v1_final.s $(DEST)/SlotAB-IDEEXI_V1.s
 	@rm *.bin
 	@rm *.elf
-	
+
+build-ideexi-altv1:
+	@echo Building IDE-EXI-v1 Alternate Patch ...
+	@$(CC) -O2 $(OPTS) -c alt/base.S
+	@$(CC) -O2 $(OPTS) -c alt/read.c
+	@$(CC) -O2 $(OPTS) -c ide-exi/hddread.c -DIDE_EXI_V1 -DSINGLE_SECTOR=1
+	@$(CC) -O2 $(OPTS) -c base/frag.c
+	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
+	@$(CC) -O2 $(OPTS) -c base/igr.c
+	@$(LD) -o ideexi_altv1.elf base.o read.o hddread.o frag.o usbgecko.o igr.o --section-start .text=0x80001000 --gc-sections
+	@rm -rf *.o
+	@$(OBJDUMP) -D ideexi_altv1.elf > $(DISASM)/ideexi_altv1_disasm.txt
+	@$(OBJCOPY) -O binary ideexi_altv1.elf ideexi_altv1.bin
+	@$(BIN2S) ideexi_altv1.bin > ideexi_altv1_final.s
+	@mv -f ideexi_altv1_final.s $(DEST)/SlotAB-IDEEXI_AltV1.s
+	@rm *.bin
+	@rm *.elf
+
 build-ideexi-v2:
 	@echo Building IDE-EXI-v2 Patch ...
 	@$(CC) -O1 $(OPTS) -c base/base.S
@@ -101,6 +135,23 @@ build-ideexi-v2:
 	@$(OBJCOPY) -O binary ideexi_v2.elf ideexi_v2.bin
 	@$(BIN2S) ideexi_v2.bin > ideexi_v2_final.s
 	@mv -f ideexi_v2_final.s $(DEST)/SlotAB-IDEEXI_V2.s
+	@rm *.bin
+	@rm *.elf
+
+build-ideexi-altv2:
+	@echo Building IDE-EXI-v2 Alternate Patch ...
+	@$(CC) -O2 $(OPTS) -c alt/base.S
+	@$(CC) -O2 $(OPTS) -c alt/read.c
+	@$(CC) -O2 $(OPTS) -c ide-exi/hddread.c -DSINGLE_SECTOR=1
+	@$(CC) -O2 $(OPTS) -c base/frag.c
+	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
+	@$(CC) -O2 $(OPTS) -c base/igr.c
+	@$(LD) -o ideexi_altv2.elf base.o read.o hddread.o frag.o usbgecko.o igr.o --section-start .text=0x80001000 --gc-sections
+	@rm -rf *.o
+	@$(OBJDUMP) -D ideexi_altv2.elf > $(DISASM)/ideexi_altv2_disasm.txt
+	@$(OBJCOPY) -O binary ideexi_altv2.elf ideexi_altv2.bin
+	@$(BIN2S) ideexi_altv2.bin > ideexi_altv2_final.s
+	@mv -f ideexi_altv2_final.s $(DEST)/SlotAB-IDEEXI_AltV2.s
 	@rm *.bin
 	@rm *.elf
 
@@ -123,9 +174,9 @@ build-dvd:
 
 build-usb:
 	@echo Building USBGecko Patch ...
-	@$(CC) -O2 $(OPTS) -c usbgecko/base.S
+	@$(CC) -O2 $(OPTS) -c alt/base.S
 	@$(CC) -O2 $(OPTS) -c usbgecko/usbgecko.c
-	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR
+	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c
 	@$(LD) -o usbgecko.elf base.o usbgecko.o sd.o frag.o igr.o --section-start .text=0x80001000 --gc-sections
@@ -133,7 +184,7 @@ build-usb:
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
 	@$(BIN2S) usbgecko.bin > usbgecko_final.s
-	@mv -f usbgecko_final.s $(DEST)/USBGeckoRead.s
+	@mv -f usbgecko_final.s $(DEST)/USBGeckoPatch.s
 	@rm *.bin
 	@rm *.elf
 
@@ -157,10 +208,10 @@ build-wkf:
 
 build-bba:
 	@echo Building BBA Patch ...
-	@$(CC) -O2 $(OPTS) -c usbgecko/base.S
+	@$(CC) -O2 $(OPTS) -c alt/base.S
 	@$(CC) -O2 $(OPTS) -c bba/bba.c
 	@$(CC) -O2 $(OPTS) -c bba/tcpip.c
-	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR
+	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c

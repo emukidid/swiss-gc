@@ -412,15 +412,20 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		else { 
 			// Patch executable files
 			if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
-				ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
-				if(READ_PATCHED_ALL != ret)	{
-					DrawDispose(progBox);	
-					uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!"));
-					sleep(5);
-					DrawDispose(msgBox);
+				if((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches) {
+					Patch_DVDLowLevelReadAlt(buffer, sizeToRead, filesToPatch[i].type);
 				}
-				else
-					patched += 1;
+				else {
+					ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
+					if(READ_PATCHED_ALL != ret)	{
+						DrawDispose(progBox);	
+						uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!"));
+						sleep(5);
+						DrawDispose(msgBox);
+					}
+					else
+						patched += 1;
+				}
 			}
 		
 			// Patch specific game hacks
@@ -444,10 +449,6 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			if(devices[DEVICE_CUR] == &__device_dvd && is_gamecube()) {
 				patched += Patch_DVDLowLevelReadForDVD(buffer, sizeToRead, filesToPatch[i].type);
 				patched += Patch_DVDReset(buffer, sizeToRead);
-			}
-			
-			if(devices[DEVICE_CUR] == &__device_usbgecko || devices[DEVICE_CUR] == &__device_fsp) {
-				Patch_DVDLowLevelReadForUSBGecko(buffer, sizeToRead, filesToPatch[i].type);
 			}
 			
 			if(devices[DEVICE_CUR] == &__device_wkf) {

@@ -42,7 +42,7 @@
 .set VAR_DISC_1_LBA, 		0x2F00	# is the base file sector for disk 1
 .set VAR_DISC_2_LBA, 		0x2F04	# is the base file sector for disk 2
 .set VAR_CUR_DISC_LBA, 		0x2F08	# is the currently selected disk sector
-.set VAR_FREE_U32_1,		0x2F0C	# A free u32
+.set VAR_SD_LBA,			0x2F0C	# is the SD Card sector being read
 .set VAR_LAST_OFFSET,		0x2F10	# the last offset a read was simulated from
 .set VAR_EXECD_OFFSET,		0x2F14	# offset of execD.bin on multi-dol discs
 .set VAR_SD_SHIFT, 			0x2F18	# is the SD Card shift amount when issueing read cmds
@@ -134,7 +134,7 @@
 #define VAR_DISC_1_LBA 		(VAR_AREA+0x2F00)	// is the base file sector for disk 1
 #define VAR_DISC_2_LBA 		(VAR_AREA+0x2F04)	// is the base file sector for disk 2
 #define VAR_CUR_DISC_LBA 	(VAR_AREA+0x2F08)	// is the currently selected disk sector
-#define VAR_FREE_U32_1		(VAR_AREA+0x2F0C)	// A free u32
+#define VAR_SD_LBA			(VAR_AREA+0x2F0C)	// is the SD Card sector being read
 #define VAR_LAST_OFFSET		(VAR_AREA+0x2F10)	// the last offset a read was simulated from
 #define VAR_EXECD_OFFSET	(VAR_AREA+0x2F14)	// offset of execD.bin on multi-dol discs
 #define VAR_SD_SHIFT 		(VAR_AREA+0x2F18)	// is the SD Card shift amount when issueing read cmds

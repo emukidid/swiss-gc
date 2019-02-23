@@ -198,6 +198,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawAddChild(page, DrawSelectableButton(510, 290, -1, 315, swissSettings.initNetworkAtStart ? "Yes":"No", option == SET_INIT_NET ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 320, "Disable Video Patches:", 1.0f, false, defaultColor));
 		DrawAddChild(page, DrawSelectableButton(510, 320, -1, 345, swissSettings.disableVideoPatches ? "Yes":"No", option == SET_ENABLE_VIDPATCH ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawStyledLabel(30, 350, "Alternate Read Patches:", 1.0f, false, defaultColor));
+		DrawAddChild(page, DrawSelectableButton(510, 350, -1, 375, swissSettings.alternateReadPatches ? "Yes":"No", option == SET_ALTREADPATCH ? B_SELECTED:B_NOSELECT));
 	}
 	else if(page_num == PAGE_GAME) {
 		DrawAddChild(page, DrawLabel(30, 65, "Current Game Settings (3/3):"));
@@ -330,6 +332,9 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 			case SET_ENABLE_VIDPATCH:
 				swissSettings.disableVideoPatches ^= 1;
+			break;
+			case SET_ALTREADPATCH:
+				swissSettings.alternateReadPatches ^= 1;
 			break;
 		}
 	}

@@ -75,7 +75,8 @@ typedef device_info* (* _fn_deviceInfo)(void);
 #define FEAT_AUTOLOAD_DOL		0x10
 #define FEAT_FAT_FUNCS			0x20
 #define FEAT_REPLACES_DVD_FUNCS	0x40
-#define FEAT_CAN_READ_PATCHES	0x80
+#define FEAT_ALT_READ_PATCHES	0x80
+#define FEAT_CAN_READ_PATCHES	0x100
 
 // Device locations
 #define LOC_MEMCARD_SLOT_A 	0x1

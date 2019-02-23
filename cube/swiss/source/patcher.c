@@ -154,13 +154,26 @@ int install_code()
 	
 	// IDE-EXI
   	if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b) {	
-		patch = (!_ideexi_version)?&ideexi_v1_bin[0]:&ideexi_v2_bin[0]; 
-		patchSize = (!_ideexi_version)?ideexi_v1_bin_size:ideexi_v2_bin_size;
+		if(swissSettings.alternateReadPatches) {
+			patch = (!_ideexi_version)?&ideexi_altv1_bin[0]:&ideexi_altv2_bin[0];
+			patchSize = (!_ideexi_version)?ideexi_altv1_bin_size:ideexi_altv2_bin_size;
+		}
+		else {
+			patch = (!_ideexi_version)?&ideexi_v1_bin[0]:&ideexi_v2_bin[0];
+			patchSize = (!_ideexi_version)?ideexi_v1_bin_size:ideexi_v2_bin_size;
+		}
 		print_gecko("Installing Patch for IDE-EXI\r\n");
   	}
 	// SD Gecko
 	else if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b) {
-		patch = &sd_bin[0]; patchSize = sd_bin_size;
+		if(swissSettings.alternateReadPatches) {
+			patch = &sd_alt_bin[0];
+			patchSize = sd_alt_bin_size;
+		}
+		else {
+			patch = &sd_bin[0];
+			patchSize = sd_bin_size;
+		}
 		print_gecko("Installing Patch for SD Gecko\r\n");
 	}
 	// DVD 2 disc code
@@ -639,7 +652,7 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 	return patched;
 }
 
-void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
+void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 {
 	int i, j;
 	FuncPattern OSSetCurrentContextSig = 
@@ -864,17 +877,17 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 		if (OSExceptionInit) {
 			switch (j) {
 				case 0:
-					data[i + 130] = branchAndLink(PATCHED_MEMCPY_USB, OSExceptionInit + 130);
+					data[i + 130] = branchAndLink(PATCHED_MEMCPY_ALT, OSExceptionInit + 130);
 					data[i + 132] = 0x38800100;	// li		r4, 256
 					data[i + 136] = 0x38800100;	// li		r4, 256
 					break;
 				case 1:
-					data[i + 122] = branchAndLink(PATCHED_MEMCPY_USB, OSExceptionInit + 122);
+					data[i + 122] = branchAndLink(PATCHED_MEMCPY_ALT, OSExceptionInit + 122);
 					data[i + 124] = 0x38800100;	// li		r4, 256
 					data[i + 128] = 0x38800100;	// li		r4, 256
 					break;
 				case 2:
-					data[i + 115] = branchAndLink(PATCHED_MEMCPY_USB, OSExceptionInit + 115);
+					data[i + 115] = branchAndLink(PATCHED_MEMCPY_ALT, OSExceptionInit + 115);
 					data[i + 117] = 0x38800100;	// li		r4, 256
 					data[i + 121] = 0x38800100;	// li		r4, 256
 					break;
@@ -951,43 +964,46 @@ void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType)
 				print_gecko("Found:[%s] @ %08X\n", SetExiInterruptMaskSigs[j].Name, SetExiInterruptMask);
 			}
 		}
+	}
+	
+	for (j = 0; j < sizeof(EXILockSigs) / sizeof(FuncPattern); j++)
+		if (EXILockSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(EXILockSigs) / sizeof(FuncPattern) && (i = EXILockSigs[j].offsetFoundAt)) {
+		u32 *EXILock = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		u32 *EXILockHook;
 		
-		for (j = 0; j < sizeof(EXILockSigs) / sizeof(FuncPattern); j++)
-			if (EXILockSigs[j].offsetFoundAt) break;
-		
-		if (j < sizeof(EXILockSigs) / sizeof(FuncPattern) && (i = EXILockSigs[j].offsetFoundAt)) {
-			u32 *EXILock = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			u32 *EXILockHook;
-			
-			if (EXILock) {
-				switch (j) {
-					case 0:
-						EXILockHook = getPatchAddr(EXI_LOCKHOOKD);
-						
-						EXILockHook[0] |= (data[i + 4] >> 5) & 0x1F0000;
-						EXILockHook[2] |= (data[i + 5] >> 5) & 0x1F0000;
-						
-						data[i + 33] = branchAndLink(EXILockHook, EXILock + 33);
-						break;
-					case 1:
-						EXILockHook = getPatchAddr(EXI_LOCKHOOK);
-						
-						EXILockHook[0] |= (data[i + 4] >> 5) & 0x1F0000;
-						EXILockHook[2] |= (data[i + 9] >> 5) & 0x1F0000;
-						
-						data[i + 11] = branchAndLink(EXILockHook, EXILock + 11);
-						break;
-					case 2:
-						EXILockHook = getPatchAddr(EXI_LOCKHOOK);
-						
-						EXILockHook[0] |= (data[i + 4] >> 5) & 0x1F0000;
-						EXILockHook[2] |= (data[i + 5] >> 5) & 0x1F0000;
-						
-						data[i + 11] = branchAndLink(EXILockHook, EXILock + 11);
-						break;
-				}
-				print_gecko("Found:[%s] @ %08X\n", EXILockSigs[j].Name, EXILock);
+		if (EXILock) {
+			switch (j) {
+				case 0:
+					EXILockHook = getPatchAddr(EXI_LOCKHOOKD);
+					
+					EXILockHook[ 0] |= (data[i + 4] >> 5) & 0x1F0000;
+					EXILockHook[ 2] |= (data[i + 5] >> 5) & 0x1F0000;
+					EXILockHook[10] |= (data[i + 4] >> 5) & 0x1F0000;
+					
+					data[i + 33] = branchAndLink(EXILockHook, EXILock + 33);
+					break;
+				case 1:
+					EXILockHook = getPatchAddr(EXI_LOCKHOOK);
+					
+					EXILockHook[ 0] |= (data[i + 4] >> 5) & 0x1F0000;
+					EXILockHook[ 2] |= (data[i + 9] >> 5) & 0x1F0000;
+					EXILockHook[10] |= (data[i + 4] >> 5) & 0x1F0000;
+					
+					data[i + 11] = branchAndLink(EXILockHook, EXILock + 11);
+					break;
+				case 2:
+					EXILockHook = getPatchAddr(EXI_LOCKHOOK);
+					
+					EXILockHook[ 0] |= (data[i + 4] >> 5) & 0x1F0000;
+					EXILockHook[ 2] |= (data[i + 5] >> 5) & 0x1F0000;
+					EXILockHook[10] |= (data[i + 4] >> 5) & 0x1F0000;
+					
+					data[i + 11] = branchAndLink(EXILockHook, EXILock + 11);
+					break;
 			}
+			print_gecko("Found:[%s] @ %08X\n", EXILockSigs[j].Name, EXILock);
 		}
 	}
 	
@@ -4822,10 +4838,10 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		if (PADRead) {
 			if (devices[DEVICE_CUR] == &__device_dvd)
 				PADReadHook = IGR_CHECK_DVD;
-			else if (devices[DEVICE_CUR] == &__device_usbgecko || devices[DEVICE_CUR] == &__device_fsp)
-				PADReadHook = IGR_CHECK_USB;
 			else if (devices[DEVICE_CUR] == &__device_wkf)
 				PADReadHook = IGR_CHECK_WKF;
+			else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches)
+				PADReadHook = IGR_CHECK_ALT;
 			else
 				PADReadHook = IGR_CHECK;
 			

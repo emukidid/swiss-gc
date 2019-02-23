@@ -180,8 +180,8 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2) {
 		*(vu8*)VAR_SD_SHIFT = (u8)(9 * sdgecko_getAddressingType(((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1)));
 		// Copy the actual freq
 		*(vu8*)VAR_EXI_FREQ = (u8)(EXI_SPEED16MHZ);	// play it safe
-		// Device slot (0 or 1) // This represents 0xCC0068xx in number of u32's so, slot A = 0xCC006800, B = 0xCC006814
-		*(vu8*)VAR_EXI_SLOT = (u8)(((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1) * 5);
+		// Device slot (0 or 1)
+		*(vu8*)VAR_EXI_SLOT = (u8)((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? EXI_CHANNEL_0:EXI_CHANNEL_1);
 	}
 	
 	print_frag_list(0);
@@ -244,7 +244,7 @@ DEVICEHANDLER_INTERFACE __device_fsp = {
 	"File Service Protocol",
 	"Must be pre-configured via swiss.ini",
 	{TEX_SAMBA, 160, 85},
-	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_CAN_READ_PATCHES,
+	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_REPLACES_DVD_FUNCS|FEAT_ALT_READ_PATCHES|FEAT_CAN_READ_PATCHES,
 	LOC_SERIAL_PORT_1,
 	&initial_FSP,
 	(_fn_test)&deviceHandler_FSP_test,

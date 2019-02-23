@@ -11,8 +11,8 @@
 .section .text
 	.globl _start, __main
 _start:
+	b		calculate_speed			# Calculates how long it takes to read 1024 bytes from the device
 	b		patched_memcpy			# void patched_memcpy(dst,src,size)
-	b		calculate_speed			# Calculates how long it takes to read 2048 bytes from the device
 	b		stop_di_irq
 	b		trigger_di_irq
 	b		__DSPHandler

@@ -18,10 +18,16 @@ typedef struct FuncPattern
 } FuncPattern;
 
 /* the SDGecko/IDE-EXI patches */
+extern u8 ideexi_altv1_bin[];
+extern u32 ideexi_altv1_bin_size;
+extern u8 ideexi_altv2_bin[];
+extern u32 ideexi_altv2_bin_size;
 extern u8 ideexi_v1_bin[];
 extern u32 ideexi_v1_bin_size;
 extern u8 ideexi_v2_bin[];
 extern u32 ideexi_v2_bin_size;
+extern u8 sd_alt_bin[];
+extern u32 sd_alt_bin_size;
 extern u8 sd_bin[];
 extern u32 sd_bin_size;
 extern u8 usbgecko_bin[];
@@ -148,9 +154,9 @@ enum patchIds {
 #define LO_RESERVE 		0x80001000
 #define LO_RESERVE_DVD 	0x80001800
 
-/* Function jump locations for the SD/IDE/USBGecko patch */
-#define PATCHED_MEMCPY			(void*)(LO_RESERVE)
-#define CALC_SPEED				(void*)(LO_RESERVE | 0x04)
+/* Function jump locations for the SD/IDE patch */
+#define CALC_SPEED				(void*)(LO_RESERVE)
+#define PATCHED_MEMCPY			(void*)(LO_RESERVE | 0x04)
 #define STOP_DI_IRQ				(void*)(LO_RESERVE | 0x08)
 #define READ_TRIGGER_INTERRUPT	(void*)(LO_RESERVE | 0x0C)
 #define DSP_HANDLER_HOOK		(void*)(LO_RESERVE | 0x10)
@@ -166,14 +172,14 @@ enum patchIds {
 #define ADJUST_LBA_OFFSET	 	(void*)(LO_RESERVE | 0x04)
 #define IGR_CHECK_WKF			(void*)(LO_RESERVE | 0x08)
 
-/* Function jump locations for the USBGecko patch */
+/* Function jump locations for the SD/IDE/USBGecko/BBA patch */
 #define EXI_HANDLER				(void*)(LO_RESERVE)
-#define PATCHED_MEMCPY_USB		(void*)(LO_RESERVE | 0x04)
+#define PATCHED_MEMCPY_ALT		(void*)(LO_RESERVE | 0x04)
 #define PERFORM_READ			(void*)(LO_RESERVE | 0x08)
 #define TICKLE_READ				(void*)(LO_RESERVE | 0x0C)
 #define TICKLE_READ_HOOK		(void*)(LO_RESERVE | 0x10)
 #define TICKLE_READ_IDLE		(void*)(LO_RESERVE | 0x14)
-#define IGR_CHECK_USB			(void*)(LO_RESERVE | 0x18)
+#define IGR_CHECK_ALT			(void*)(LO_RESERVE | 0x18)
 
 #define READ_PATCHED_ALL 		(0x111)
 
@@ -187,7 +193,7 @@ enum patchIds {
 // -1 no device, 0 slot a, 1 slot b.
 extern int savePatchDevice;
 
-void Patch_DVDLowLevelReadForUSBGecko(u32 *data, u32 length, int dataType);
+void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType);
 u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType);
