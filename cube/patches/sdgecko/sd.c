@@ -24,6 +24,12 @@
 #define exi_channel 		(*(u8*)VAR_EXI_SLOT)
 
 // EXI Functions
+static inline int exi_selected()
+{
+	volatile unsigned long(*exi)[5] = (volatile unsigned long(*)[])0xCC006800;
+	return !!(exi[exi_channel][0] & 0x380);
+}
+
 static inline void exi_select()
 {
 	volatile unsigned long(*exi)[5] = (volatile unsigned long(*)[])0xCC006800;
@@ -159,6 +165,9 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	// SDHC uses sector addressing, SD uses byte
 	lba <<= lbaShift;
 	#if SINGLE_SECTOR < 2
+	if(exi_selected()) {
+		return 0;
+	}
 	// Send single block read command and the LBA we want to read at
 	send_cmd(CMD17, lba);
 	#else
@@ -169,6 +178,9 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 			send_cmd(CMD12, 0);
 			exi_deselect();
 			rcvr_spi();
+		}
+		else if(exi_selected()) {
+			return 0;
 		}
 		// Send multiple block read command and the LBA we want to start reading at
 		send_cmd(CMD18, lba);
@@ -181,17 +193,16 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	exi_deselect();
 	rcvr_spi();
 	#else
+	lba += (1<<lbaShift);
 	// If we're done reading
 	if(len == numBytes) {
 		// End the read by sending CMD12 + Deselect SD + Burn a cycle after it
 		send_cmd(CMD12, 0);
 		exi_deselect();
 		rcvr_spi();
-		
-		*(u32*)VAR_SD_LBA = 0;
-	} else {
-		*(u32*)VAR_SD_LBA = lba + (1<<lbaShift);
+		lba = 0;
 	}
+	*(u32*)VAR_SD_LBA = lba;
 	#endif
 	return numBytes;
 }

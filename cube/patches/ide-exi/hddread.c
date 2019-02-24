@@ -43,6 +43,12 @@
 
 void *memcpy(void *dest, const void *src, u32 size);
 
+int exi_selected()
+{
+	volatile unsigned long(*exi)[5] = (volatile unsigned long(*)[])0xCC006800;
+	return !!(exi[exi_channel][0] & 0x380);
+}
+
 void exi_select()
 {
 	volatile unsigned long(*exi)[5] = (volatile unsigned long(*)[])0xCC006800;
@@ -252,6 +258,9 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);
 	
+	if(exi_selected()) {
+		return 0;
+	}
 	// Read sector
 	if(_ataReadSector(lba, sector)) {
 		//*(u32*)0xCC003024 = 0;

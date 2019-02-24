@@ -654,7 +654,7 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 
 void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 {
-	int i, j;
+	int i, j, k;
 	FuncPattern OSSetCurrentContextSig = 
 		{ 23, 4, 4, 0, 0, 5, NULL, 0, "OSSetCurrentContext" };
 	FuncPattern OSDisableInterruptsSig = 
@@ -674,6 +674,8 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 138, 44, 20,  8, 12, 12, NULL, 0, "SelectThread B" },
 		{ 141, 51, 19,  8, 12, 14, NULL, 0, "SelectThread C" }	// SN Systems ProDG
 	};
+	FuncPattern __OSRescheduleSig = 
+		{ 12, 4, 2, 1, 1, 2, NULL, 0, "__OSReschedule" };
 	FuncPattern __OSGetSystemTimeSigs[2] = {
 		{ 22, 4, 2, 3, 0, 3, NULL, 0, "__OSGetSystemTimeD" },
 		{ 25, 8, 5, 3, 0, 3, NULL, 0, "__OSGetSystemTime" }
@@ -749,6 +751,13 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 87, length, &OSDisableInterruptsSig))
 							SelectThreadSigs[j].offsetFoundAt = i;
 						break;
+				}
+				break;
+			}
+			if (SelectThreadSigs[j].offsetFoundAt && i == SelectThreadSigs[j].offsetFoundAt + SelectThreadSigs[j].Length) {
+				if (!__OSRescheduleSig.offsetFoundAt && compare_pattern(&fp, &__OSRescheduleSig)) {
+					if (findx_pattern(data, dataType, i + 7, length, &SelectThreadSigs[j]))
+						__OSRescheduleSig.offsetFoundAt = i;
 				}
 				break;
 			}
@@ -907,7 +916,6 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				case 0:
 					data[i + 12] = branchAndLink(TICKLE_READ, SelectThread + 12);
 					data[i + 20] = branchAndLink(TICKLE_READ, SelectThread + 20);
-					data[i + 35] = branchAndLink(TICKLE_READ, SelectThread + 35);
 					data[i + 48] = branchAndLink(TICKLE_READ, SelectThread + 48);
 					data[i + 58] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 58);
 					data[i + 61] = 0x4182FFF4;	// beq		-3
@@ -915,7 +923,6 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				case 1:
 					data[i + 11] = branchAndLink(TICKLE_READ, SelectThread + 11);
 					data[i + 19] = branchAndLink(TICKLE_READ, SelectThread + 19);
-					data[i + 33] = branchAndLink(TICKLE_READ, SelectThread + 33);
 					data[i + 67] = branchAndLink(TICKLE_READ, SelectThread + 67);
 					data[i + 77] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 77);
 					data[i + 80] = 0x4182FFF4;	// beq		-3
@@ -923,7 +930,6 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				case 2:
 					data[i + 11] = branchAndLink(TICKLE_READ, SelectThread + 11);
 					data[i + 19] = branchAndLink(TICKLE_READ, SelectThread + 19);
-					data[i + 33] = branchAndLink(TICKLE_READ, SelectThread + 33);
 					data[i + 67] = branchAndLink(TICKLE_READ, SelectThread + 67);
 					data[i + 82] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 82);
 					data[i + 85] = 0x4182FFF4;	// beq		-3
@@ -931,13 +937,30 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				case 3:
 					data[i +  8] = branchAndLink(TICKLE_READ, SelectThread +  8);
 					data[i + 15] = branchAndLink(TICKLE_READ, SelectThread + 15);
-					data[i + 29] = branchAndLink(TICKLE_READ, SelectThread + 29);
 					data[i + 66] = branchAndLink(TICKLE_READ, SelectThread + 66);
 					data[i + 83] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 83);
 					data[i + 86] = 0x4182FFF4;	// beq		-3
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", SelectThreadSigs[j].Name, SelectThread);
+		}
+		
+		if ((i = __OSRescheduleSig.offsetFoundAt)) {
+			u32 *__OSReschedule = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			
+			if (__OSReschedule) {
+				data[i + 0] = data[i + 3];
+				data[i + 1] = data[i + 4];
+				data[i + 2] = data[i + 5];
+				data[i + 3] = data[i + 6];
+				data[i + 4] = branch(SelectThread, __OSReschedule + 4);
+				data[i + 5] = branch(TICKLE_READ,  __OSReschedule + 5);
+				
+				for (k = 6; k < __OSRescheduleSig.Length; k++)
+					data[i + k] = 0;
+				
+				print_gecko("Found:[%s] @ %08X\n", __OSRescheduleSig.Name, __OSReschedule);
+			}
 		}
 	}
 	

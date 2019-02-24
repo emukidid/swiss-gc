@@ -301,24 +301,28 @@ void *tickle_read(void)
 	uint32_t position  = *_position;
 	uint32_t remainder = *_remainder;
 	uint8_t *data      = *_data;
-	uint32_t data_size = read_frag(data, remainder, position);
+	uint32_t data_size;
 
-	if (data_size) {
-		position  += data_size;
-		remainder -= data_size;
+	if (remainder) {
+		if (!is_frag_read(position, remainder)) {
+			tb_t end;
+			mftb(&end);
 
-		*_position  = position;
-		*_remainder = remainder;
-		*_data = data + data_size;
-		*_data_size = 0;
+			if (tb_diff_usec(&end, _start) > 1000000 && !exi_selected())
+				fsp_output(_file, *_filelen, position, remainder);
+		} else {
+			data_size = read_frag(data, remainder, position);
 
-		if (!remainder) trigger_dvd_interrupt();
-	} else if (remainder) {
-		tb_t end;
-		mftb(&end);
+			position  += data_size;
+			remainder -= data_size;
 
-		if (tb_diff_usec(&end, _start) > 1000000 && !exi_selected())
-			fsp_output(_file, *_filelen, position, remainder);
+			*_position  = position;
+			*_remainder = remainder;
+			*_data = data + data_size;
+			*_data_size = 0;
+
+			if (!remainder) trigger_dvd_interrupt();
+		}
 	}
 
 	return NULL;
