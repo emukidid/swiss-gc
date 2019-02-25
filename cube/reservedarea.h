@@ -12,12 +12,15 @@
 #include "asm.h"
 .set VAR_AREA,				0x8000
 .set VAR_TVMODE,			0x00CC	# TV format
-.set VAR_FILENAME_LEN,		0x0E00	# filename length
-.set VAR_FILENAME,			0x0E01	# filename
-.set VAR_CLIENT_MAC,		0x0EEC	# client MAC address
-.set VAR_CLIENT_IP,			0x0EF2	# client IPv4 address
-.set VAR_SERVER_MAC,		0x0EF6	# server MAC address
-.set VAR_SERVER_IP,			0x0EFC	# server IPv4 address
+.set VAR_CLIENT_MAC,		0x09EA	# client MAC address
+.set VAR_CLIENT_IP,			0x09F0	# client IPv4 address
+.set VAR_SERVER_MAC,		0x09F4	# server MAC address
+.set VAR_SERVER_IP,			0x09FA	# server IPv4 address
+.set VAR_SERVER_PORT,		0x09FE	# server UDP port
+.set VAR_DISC_1_FNLEN,		0x0A00	# disc 1 filename length
+.set VAR_DISC_1_FN,			0x0A01	# disc 1 filename
+.set VAR_DISC_2_FNLEN,		0x0B00	# disc 2 filename length
+.set VAR_DISC_2_FN,			0x0B01	# disc 2 filename
 .set VAR_PATCHES_BASE,		0x2D00	# Patches get copied to below this area.
 .set VAR_FRAG_SIZE,			0x1C8	# Size of frag array in bytes
 .set VAR_FRAG_LIST,			0x2D00	# 0x1C8 of fragments (38 frags max) (u32 offset, u32 size, u32 rawsector)
@@ -104,12 +107,15 @@
 
 #define VAR_AREA			(0x80000000)
 #define VAR_TVMODE			(VAR_AREA+0x00CC)	// TV format
-#define VAR_FILENAME_LEN	(VAR_AREA+0x0E00)	// filename length
-#define VAR_FILENAME		(VAR_AREA+0x0E01)	// filename
-#define VAR_CLIENT_MAC		(VAR_AREA+0x0EEC)	// client MAC address
-#define VAR_CLIENT_IP		(VAR_AREA+0x0EF2)	// client IPv4 address
-#define VAR_SERVER_MAC		(VAR_AREA+0x0EF6)	// server MAC address
-#define VAR_SERVER_IP		(VAR_AREA+0x0EFC)	// server IPv4 address
+#define VAR_CLIENT_MAC		(VAR_AREA+0x09EA)	// client MAC address
+#define VAR_CLIENT_IP		(VAR_AREA+0x09F0)	// client IPv4 address
+#define VAR_SERVER_MAC		(VAR_AREA+0x09F4)	// server MAC address
+#define VAR_SERVER_IP		(VAR_AREA+0x09FA)	// server IPv4 address
+#define VAR_SERVER_PORT		(VAR_AREA+0x09FE)	// server UDP port
+#define VAR_DISC_1_FNLEN	(VAR_AREA+0x0A00)	// disc 1 filename length
+#define VAR_DISC_1_FN		(VAR_AREA+0x0A01)	// disc 1 filename
+#define VAR_DISC_2_FNLEN	(VAR_AREA+0x0B00)	// disc 2 filename length
+#define VAR_DISC_2_FN		(VAR_AREA+0x0B01)	// disc 2 filename
 #define VAR_PATCHES_BASE	(VAR_AREA+0x2D00)	// Patches get copied to below this area.
 #define VAR_FRAG_SIZE		(0x1C8)				// Size of frag array in bytes
 #define VAR_FRAG_LIST		(VAR_AREA+0x2D00)	// 0x1C8 of fragments (40 frags max) (u32 offset, u32 size, u32 rawsector)

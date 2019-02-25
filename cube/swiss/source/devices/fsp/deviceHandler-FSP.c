@@ -192,7 +192,6 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2) {
 	// Currently selected disk base sector
 	*(vu32*)VAR_CUR_DISC_LBA = fragList[2];
 	
-	*(vu8*)VAR_FILENAME_LEN = snprintf((char*)VAR_FILENAME, 235, "%s\n%s", file->name, swissSettings.fspPassword) + 1;
 	net_get_mac_address((void*)VAR_CLIENT_MAC);
 	*(vu32*)VAR_CLIENT_IP = net_gethostip();
 	((vu8*)VAR_SERVER_MAC)[0] = 0xFF;
@@ -202,6 +201,8 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2) {
 	((vu8*)VAR_SERVER_MAC)[4] = 0xFF;
 	((vu8*)VAR_SERVER_MAC)[5] = 0xFF;
 	*(vu32*)VAR_SERVER_IP = inet_addr(swissSettings.fspHostIp);
+	*(vu16*)VAR_SERVER_PORT = swissSettings.fspPort ? swissSettings.fspPort : 21;
+	*(vu8*)VAR_DISC_1_FNLEN = snprintf((char*)VAR_DISC_1_FN, 255, "%s\n%s", file->name, swissSettings.fspPassword) + 1;
 	*(vu16*)VAR_IPV4_ID = 0;
 	*(vu16*)VAR_FSP_KEY = 0;
 	*(vu16*)VAR_FSP_DATA_LENGTH = 0;

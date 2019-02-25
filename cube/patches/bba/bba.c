@@ -72,36 +72,31 @@ enum {
 
 static int exi_selected(void)
 {
-	volatile uint32_t *exi = (uint32_t *)0xCC006800;
-	return !!(exi[0] & 0x380);
+	return !!((*EXI)[0] & 0x380);
 }
 
 static void exi_select(void)
 {
-	volatile uint32_t *exi = (uint32_t *)0xCC006800;
-	exi[0] = (exi[0] & 0x405) | ((1 << EXI_DEVICE_2) << 7) | (EXI_SPEED_32MHZ << 4);
+	(*EXI)[0] = ((*EXI)[0] & 0x405) | ((1 << EXI_DEVICE_2) << 7) | (EXI_SPEED_32MHZ << 4);
 }
 
 static void exi_deselect(void)
 {
-	volatile uint32_t *exi = (uint32_t *)0xCC006800;
-	exi[0] &= 0x405;
+	(*EXI)[0] &= 0x405;
 }
 
 static void exi_imm_write(uint32_t data, int len)
 {
-	volatile uint32_t *exi = (uint32_t *)0xCC006800;
-	exi[4] = data;
-	exi[3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
-	while (exi[3] & 1);
+	(*EXI)[4] = data;
+	(*EXI)[3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
+	while ((*EXI)[3] & 1);
 }
 
 static uint32_t exi_imm_read(int len)
 {
-	volatile uint32_t *exi = (uint32_t *)0xCC006800;
-	exi[3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
-	while (exi[3] & 1);
-	return exi[4] >> ((4 - len) * 8);
+	(*EXI)[3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
+	while ((*EXI)[3] & 1);
+	return (*EXI)[4] >> ((4 - len) * 8);
 }
 
 static void exi_immex_write(void *buffer, int length)
@@ -118,11 +113,10 @@ static void exi_immex_write(void *buffer, int length)
 
 static void exi_dma_read(void *data, int len)
 {
-	volatile uint32_t *exi = (uint32_t *)0xCC006800;
-	exi[1] = (uint32_t)data;
-	exi[2] = len;
-	exi[3] = (EXI_READ << 2) | 3;
-	while (exi[3] & 1);
+	(*EXI)[1] = (uint32_t)data;
+	(*EXI)[2] = len;
+	(*EXI)[3] = (EXI_READ << 2) | 3;
+	while ((*EXI)[3] & 1);
 }
 
 static uint8_t bba_in8(uint16_t reg)
@@ -263,29 +257,25 @@ void exi_handler(int32_t channel, uint32_t device)
 
 void trigger_dvd_interrupt(void)
 {
-	volatile uint32_t *dvd = (uint32_t *)0xCC006000;
+	uint32_t dst = (*DI)[5] | 0x80000000;
+	uint32_t len = (*DI)[6];
 
-	uint32_t dst = dvd[5] | 0x80000000;
-	uint32_t len = dvd[6];
-
-	dvd[2] = 0xE0000000;
-	dvd[3] = 0;
-	dvd[4] = 0;
-	dvd[5] = 0;
-	dvd[6] = 0;
-	dvd[8] = 0;
-	dvd[7] = 1;
+	(*DI)[2] = 0xE0000000;
+	(*DI)[3] = 0;
+	(*DI)[4] = 0;
+	(*DI)[5] = 0;
+	(*DI)[6] = 0;
+	(*DI)[8] = 0;
+	(*DI)[7] = 1;
 
 	dcache_flush_icache_inv((void *)dst, len);
 }
 
 void perform_read(void)
 {
-	volatile uint32_t *dvd = (uint32_t *)0xCC006000;
-
-	uint32_t off = dvd[3] << 2;
-	uint32_t len = dvd[4];
-	uint32_t dst = dvd[5] | 0x80000000;
+	uint32_t off = (*DI)[3] << 2;
+	uint32_t len = (*DI)[4];
+	uint32_t dst = (*DI)[5] | 0x80000000;
 
 	*_position  = off;
 	*_remainder = len;

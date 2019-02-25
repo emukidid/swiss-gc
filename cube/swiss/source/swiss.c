@@ -770,7 +770,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch, int noASRequir
 	ICInvalidateRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	
 	// See if the combination of our patches has exhausted our play area.
-	if(!install_code()) {
+	if(!install_code(0)) {
 		DrawDispose(loadDolProg);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Too many patches enabled, memory limit reached!");
 		DrawPublish(msgBox);
@@ -794,7 +794,8 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch, int noASRequir
 	ICInvalidateRange((void*)0x80000000, 0x3100);
 	
 	// Try a device speed test using the actual in-game read code
-	if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
+	if((devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) && !((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches)) {
+		install_code(1);
 		print_gecko("Attempting speed test\r\n");
 		char *buffer = memalign(32,1024*1024);
 		typedef u32 (*_calc_speed) (void* dst, u32 len, u32 *speed);

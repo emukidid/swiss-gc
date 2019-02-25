@@ -151,6 +151,7 @@ enum patchIds {
 
 #define SWISS_MAGIC 0x53574953 /* "SWIS" */
 
+#define LO_RESERVE_ALT	0x80000C00
 #define LO_RESERVE 		0x80001000
 #define LO_RESERVE_DVD 	0x80001800
 
@@ -173,13 +174,13 @@ enum patchIds {
 #define IGR_CHECK_WKF			(void*)(LO_RESERVE | 0x08)
 
 /* Function jump locations for the SD/IDE/USBGecko/BBA patch */
-#define EXI_HANDLER				(void*)(LO_RESERVE)
-#define PATCHED_MEMCPY_ALT		(void*)(LO_RESERVE | 0x04)
-#define PERFORM_READ			(void*)(LO_RESERVE | 0x08)
-#define TICKLE_READ				(void*)(LO_RESERVE | 0x0C)
-#define TICKLE_READ_HOOK		(void*)(LO_RESERVE | 0x10)
-#define TICKLE_READ_IDLE		(void*)(LO_RESERVE | 0x14)
-#define IGR_CHECK_ALT			(void*)(LO_RESERVE | 0x18)
+#define EXI_HANDLER				(void*)(LO_RESERVE_ALT | 0x20)
+#define PATCHED_MEMCPY_ALT		(void*)(LO_RESERVE_ALT | 0x24)
+#define PERFORM_READ			(void*)(LO_RESERVE_ALT | 0x28)
+#define TICKLE_READ				(void*)(LO_RESERVE_ALT | 0x2C)
+#define TICKLE_READ_HOOK		(void*)(LO_RESERVE_ALT | 0x30)
+#define TICKLE_READ_IDLE		(void*)(LO_RESERVE_ALT | 0x34)
+#define IGR_CHECK_ALT			(void*)(LO_RESERVE_ALT | 0x38)
 
 #define READ_PATCHED_ALL 		(0x111)
 
@@ -211,7 +212,7 @@ int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType );
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt);
 void *Calc_Address(void *data, int dataType, u32 properAddress);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);
-int install_code();
+int install_code(int final);
 
 
 #endif

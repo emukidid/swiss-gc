@@ -152,8 +152,8 @@ void fsp_output(const char *file, uint8_t filelen, uint32_t offset, uint32_t siz
 	*(uint16_t *)(memcpy(fsp->data, file, filelen) + fsp->data_length) = MIN(size, UINT16_MAX);
 	fsp->checksum = fsp_checksum(fsp, sizeof(*fsp) + fsp->data_length + sizeof(uint16_t));
 
-	udp->src_port = 21;
-	udp->dst_port = 21;
+	udp->src_port = *_port;
+	udp->dst_port = *_port;
 	udp->length = sizeof(*udp) + sizeof(*fsp) + fsp->data_length + sizeof(uint16_t);
 	udp->checksum = 0x0000;
 
@@ -221,8 +221,8 @@ static void udp_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4,
 
 			size -= sizeof(*udp);
 
-			if (udp->src_port == 21 &&
-				udp->dst_port == 21)
+			if (udp->src_port == *_port &&
+				udp->dst_port == *_port)
 				fsp_input(bba, eth, ipv4, udp, (void *)udp->data, size);
 		}
 

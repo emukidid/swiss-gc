@@ -26,42 +26,37 @@
 // EXI Functions
 static inline int exi_selected()
 {
-	volatile unsigned long(*exi)[5] = (volatile unsigned long(*)[])0xCC006800;
-	return !!(exi[exi_channel][0] & 0x380);
+	return !!(EXI[exi_channel][0] & 0x380);
 }
 
 static inline void exi_select()
 {
-	volatile unsigned long(*exi)[5] = (volatile unsigned long(*)[])0xCC006800;
-	exi[exi_channel][0] = (exi[exi_channel][0] & 0x405) | ((1<<0)<<7) | (exi_freq << 4);
+	EXI[exi_channel][0] = (EXI[exi_channel][0] & 0x405) | ((1<<0)<<7) | (exi_freq << 4);
 }
 
 static inline void exi_deselect()
 {
-	volatile unsigned long(*exi)[5] = (volatile unsigned long(*)[])0xCC006800;
-	exi[exi_channel][0] &= 0x405;
+	EXI[exi_channel][0] &= 0x405;
 }
 
 void exi_imm_write(u32 data, int len) 
 {
-	volatile unsigned long(*exi)[5] = (volatile unsigned long(*)[])0xCC006800;
-	exi[exi_channel][4] = data;
+	EXI[exi_channel][4] = data;
 	// Tell EXI if this is a read or a write
-	exi[exi_channel][3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
+	EXI[exi_channel][3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
 	// Wait for it to do its thing
-	while (exi[exi_channel][3] & 1);
+	while (EXI[exi_channel][3] & 1);
 }
 
 u32 exi_imm_read(int len)
 {
-	volatile unsigned long(*exi)[5] = (volatile unsigned long(*)[])0xCC006800;
-	exi[exi_channel][4] = -1;
+	EXI[exi_channel][4] = -1;
 	// Tell EXI if this is a read or a write
-	exi[exi_channel][3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
+	EXI[exi_channel][3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
 	// Wait for it to do its thing
-	while (exi[exi_channel][3] & 1);
+	while (EXI[exi_channel][3] & 1);
 	// Read the 4 byte data off the EXI bus
-	return exi[exi_channel][4] >> ((4 - len) * 8);
+	return EXI[exi_channel][4] >> ((4 - len) * 8);
 }
 
 // SD Functions

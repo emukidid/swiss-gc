@@ -149,29 +149,25 @@ void exi_handler() {}
 
 void trigger_dvd_interrupt()
 {
-	vu32 *dvd = (vu32 *)0xCC006000;
-	
-	dvd[2] = 0xE0000000;
-	dvd[3] = 0;
-	dvd[4] = 0;
-	dvd[5] = 0;
-	dvd[6] = 0;
-	dvd[8] = 0;
-	dvd[7] = 1;
+	(*DI)[2] = 0xE0000000;
+	(*DI)[3] = 0;
+	(*DI)[4] = 0;
+	(*DI)[5] = 0;
+	(*DI)[6] = 0;
+	(*DI)[8] = 0;
+	(*DI)[7] = 1;
 }
 
 void perform_read()
 {
-	vu32 *dvd = (vu32 *)0xCC006000;
+	u32 off = (*DI)[3] << 2;
+	u32 len = (*DI)[4];
+	u32 dst = (*DI)[5] | 0xC0000000;
 	
-	u32 dest = dvd[5] | 0xC0000000;
-	u32 size = dvd[4];
-	u32 offset = dvd[3] << 2;
+	*(u32 *)VAR_TMP1 = dst;
+	*(u32 *)VAR_TMP2 = len;
 	
-	*(u32 *)VAR_TMP1 = dest;
-	*(u32 *)VAR_TMP2 = size;
-	
-	usb_data_req req = {offset, size};
+	usb_data_req req = {off, len};
 	gecko_send(&req, sizeof(usb_data_req));
 }
 

@@ -131,13 +131,10 @@ void *getPatchAddr(int patchId) {
 	return patch_locations[patchId];
 }
 
-int install_code()
+int install_code(int final)
 {
 	void *location = (void*)LO_RESERVE;
 	u8 *patch = NULL; u32 patchSize = 0;
-	
-	DCFlushRange(location,0x80003100-LO_RESERVE);
-	ICInvalidateRange(location,0x80003100-LO_RESERVE);
 	
 	// Pokemon XD / Colosseum tiny stub for memset testing
 	if(!strncmp((char*)0x80000000, "GXX", 3) || !strncmp((char*)0x80000000, "GC6", 3)) 
@@ -157,6 +154,7 @@ int install_code()
 		if(swissSettings.alternateReadPatches) {
 			patch = (!_ideexi_version)?&ideexi_altv1_bin[0]:&ideexi_altv2_bin[0];
 			patchSize = (!_ideexi_version)?ideexi_altv1_bin_size:ideexi_altv2_bin_size;
+			location = (void*)LO_RESERVE_ALT;
 		}
 		else {
 			patch = (!_ideexi_version)?&ideexi_v1_bin[0]:&ideexi_v2_bin[0];
@@ -169,6 +167,7 @@ int install_code()
 		if(swissSettings.alternateReadPatches) {
 			patch = &sd_alt_bin[0];
 			patchSize = sd_alt_bin_size;
+			location = (void*)LO_RESERVE_ALT;
 		}
 		else {
 			patch = &sd_bin[0];
@@ -185,6 +184,7 @@ int install_code()
 	// USB Gecko
 	else if(devices[DEVICE_CUR] == &__device_usbgecko) {
 		patch = &usbgecko_bin[0]; patchSize = usbgecko_bin_size;
+		location = (void*)LO_RESERVE_ALT;
 		print_gecko("Installing Patch for USB Gecko\r\n");
 	}
 	// Wiikey Fusion
@@ -195,13 +195,18 @@ int install_code()
 	// Broadband Adapter
 	else if(devices[DEVICE_CUR] == &__device_fsp) {
 		patch = &bba_bin[0]; patchSize = bba_bin_size;
+		location = (void*)LO_RESERVE_ALT;
 		print_gecko("Installing Patch for Broadband Adapter\r\n");
 	}
 	print_gecko("Space for patch remaining: %i\r\n",top_addr - LO_RESERVE);
 	print_gecko("Space taken by vars/video patches: %i\r\n",VAR_PATCHES_BASE-top_addr);
 	if(top_addr - LO_RESERVE < patchSize)
 		return 0;
-	memcpy(location,patch,patchSize);
+	if(final) {
+		memcpy(location,patch,patchSize);
+		DCFlushRange(location,patchSize);
+		ICInvalidateRange(location,patchSize);
+	}
 	return 1;
 }
 
@@ -510,12 +515,12 @@ int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType )
 			u32 dstR = (op >> 21) & 0x1F;
 			u32 val = op & 0xFFFF;
 			if(dstR == src) {regs[src][REG_0x8000] = 0; continue; }
-			if( regs[src][REG_0x8000] && (((val & 0xFFFF) >= 0x1000) && ((val & 0xFFFF) < 0x3000))) // case with load in our range(rZ)
+			if( regs[src][REG_0x8000] && (((val & 0xFFFF) >= 0x0A00) && ((val & 0xFFFF) < 0x3000))) // case with load in our range(rZ)
 			{
 				void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
 				print_gecko("LowMem:[%08X] %08X: mem r%u, %04X\r\n", properAddress, *(vu32*)(dst + i), src, *(vu32*)(dst + i) &0xFFFF);
 				*(vu32*)(dst + i) = 0x60000000;	// We could redirect ...
-				regs[src][REG_INUSE]=1;	// was used in a 0x80001000->0x80003000 load/store
+				regs[src][REG_INUSE]=1;	// was used in a 0x80000A00->0x80003000 load/store
 				LowMemPatched++;
 			}
 			continue;

@@ -7,29 +7,25 @@ void exi_handler() {}
 
 void trigger_dvd_interrupt(void)
 {
-	volatile uint32_t *dvd = (uint32_t *)0xCC006000;
+	uint32_t dst = (*DI)[5] | 0x80000000;
+	uint32_t len = (*DI)[6];
 
-	uint32_t dst = dvd[5] | 0x80000000;
-	uint32_t len = dvd[6];
-
-	dvd[2] = 0xE0000000;
-	dvd[3] = 0;
-	dvd[4] = 0;
-	dvd[5] = 0;
-	dvd[6] = 0;
-	dvd[8] = 0;
-	dvd[7] = 1;
+	(*DI)[2] = 0xE0000000;
+	(*DI)[3] = 0;
+	(*DI)[4] = 0;
+	(*DI)[5] = 0;
+	(*DI)[6] = 0;
+	(*DI)[8] = 0;
+	(*DI)[7] = 1;
 
 	dcache_flush_icache_inv((void *)dst, len);
 }
 
 void perform_read(void)
 {
-	volatile uint32_t *dvd = (uint32_t *)0xCC006000;
-
-	uint32_t off = dvd[3] << 2;
-	uint32_t len = dvd[4];
-	uint32_t dst = dvd[5] | 0x80000000;
+	uint32_t off = (*DI)[3] << 2;
+	uint32_t len = (*DI)[4];
+	uint32_t dst = (*DI)[5] | 0x80000000;
 
 	*(uint32_t *)VAR_LAST_OFFSET = off;
 	*(uint32_t *)VAR_TMP2 = len;

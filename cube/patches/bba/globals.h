@@ -3,8 +3,9 @@
 
 #include "../../reservedarea.h"
 
-static uint8_t  *const _filelen   = (uint8_t  *)VAR_FILENAME_LEN;
-static char     *const _file      = (char     *)VAR_FILENAME;
+static uint16_t *const _port      = (uint16_t *)VAR_SERVER_PORT;
+static uint8_t  *const _filelen   = (uint8_t  *)VAR_DISC_1_FNLEN;
+static char     *const _file      = (char     *)VAR_DISC_1_FN;
 static tb_t     *const _start     = (tb_t     *)VAR_TIMER_START;
 static uint16_t *const _id        = (uint16_t *)VAR_IPV4_ID;
 static uint16_t *const _key       = (uint16_t *)VAR_FSP_KEY;
