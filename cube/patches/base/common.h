@@ -53,6 +53,7 @@ static vu32(*const DI)[10] = (vu32(*)[])0xCC006000;
 static vu32(*const EXI)[5] = (vu32(*)[])0xCC006800;
 
 u32 do_read(void *dst, u32 len, u32 offset, u32 sector);
+void end_read(void);
 u32 read_frag(void *dst, u32 len, u32 offset);
 int is_frag_read(unsigned int offset, unsigned int len);
 void device_frag_read(void* dst, u32 len, u32 offset);

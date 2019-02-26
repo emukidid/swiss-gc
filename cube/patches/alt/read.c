@@ -5,6 +5,13 @@
 
 void exi_handler() {}
 
+int exi_lock(int32_t channel, uint32_t device)
+{
+	if (channel == *(uint8_t *)VAR_EXI_SLOT)
+		end_read();
+	return 1;
+}
+
 void trigger_dvd_interrupt(void)
 {
 	uint32_t dst = (*DI)[5] | 0x80000000;

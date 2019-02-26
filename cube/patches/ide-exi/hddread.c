@@ -264,3 +264,5 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	return numBytes;
 }
 #endif
+
+void end_read() {}

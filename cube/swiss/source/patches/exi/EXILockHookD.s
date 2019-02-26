@@ -4,28 +4,21 @@
 
 .globl EXILockHookD
 EXILockHookD:
-	cmpwi		0, 0
-	bne			1f
-	cmplwi		0, 2
-	beq			2f
-1:	mfmsr		%r3
-	rlwinm		%r4, %r3, 0, 17, 15
-	extrwi		%r3, %r3, 1, 16
-	mtmsr		%r4
-	lis			%r4, VAR_AREA
-	lbz			%r0, VAR_EXI_SLOT (%r4)
-	cmpw		0, %r0
+	mr			0, %r3
+	li			%r3, 0
+	li			%r4, 0
+	mflr		%r0
+	stw			%r0, 4 (%sp)
+	stwu		%sp, -8 (%sp)
+	bl			0
+	cmpwi		%r3, 0
+	lwz			%r0, 12 (%sp)
+	addi		%sp, %sp, 8
+	mtlr		%r0
 	bnelr
-	mulli		%r0, %r0, 20
-	lis			%r4, 0xCC00
-	addi		%r4, %r4, 0x6800
-	lwzx		%r0, %r4, %r0
-	extrwi.		%r0, %r0, 3, 22
-	beqlr
 	mfmsr		%r4
-	insrwi		%r4, %r3, 1, 16
+	insrwi		%r4, 0, 1, 16
 	mtmsr		%r4
-2:	li			%r3, 0
 	lwz			%r0, 60 (%sp)
 	lmw			%r25, 28 (%sp)
 	addi		%sp, %sp, 56

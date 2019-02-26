@@ -55,6 +55,13 @@ enum {
 };
 
 enum {
+	EXI_CHANNEL_0 = 0,
+	EXI_CHANNEL_1,
+	EXI_CHANNEL_2,
+	EXI_CHANNEL_MAX
+};
+
+enum {
 	EXI_DEVICE_0 = 0,
 	EXI_DEVICE_1,
 	EXI_DEVICE_2,
@@ -253,6 +260,14 @@ void exi_handler(int32_t channel, uint32_t device)
 
 	bba_cmd_out8(0x03, status);
 	bba_cmd_out8(0x02, BBA_CMD_IRMASKNONE);
+}
+
+int exi_lock(int32_t channel, uint32_t device)
+{
+	if (channel == EXI_CHANNEL_0 &&
+		device  == EXI_DEVICE_2)
+		return 0;
+	return 1;
 }
 
 void trigger_dvd_interrupt(void)

@@ -19,7 +19,7 @@ _start:
 	nop
 
 	b		exi_handler
-	b		patched_memcpy			# void patched_memcpy(dst,src,size)
+	b		exi_lock
 	b		perform_read
 	b		tickle_read
 	b		tickle_read_hook
@@ -41,10 +41,3 @@ dcache_flush_icache_inv:
 	bdnz	1b
 	sc
 	blr
-
-.globl patched_memcpy
-patched_memcpy:
-	subis	r0, r3, 0x8000
-	cmplwi	r0, 0x0A00
-	bgelr
-	b		memcpy

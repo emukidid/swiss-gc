@@ -377,6 +377,8 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	// Currently selected disk base sector
 	*(vu32*)VAR_CUR_DISC_LBA = fragList[2];
 	
+	memset((void*)VAR_SECTOR_BUF, 0, 0x200);
+	*(vu32*)VAR_SECTOR_CUR = 0;
 	*(vu32*)VAR_SD_LBA = 0;
 	// Card Type
 	*(vu8*)VAR_SD_SHIFT = (u8)(9 * SDHCCard);

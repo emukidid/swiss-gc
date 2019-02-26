@@ -17,6 +17,8 @@
 .set VAR_SERVER_MAC,		0x09F4	# server MAC address
 .set VAR_SERVER_IP,			0x09FA	# server IPv4 address
 .set VAR_SERVER_PORT,		0x09FE	# server UDP port
+.set VAR_SECTOR_CUR,		0x09FC	# is the currently buffered disk sector
+.set VAR_SECTOR_BUF,		0x0A00	# 0x200 of read data
 .set VAR_DISC_1_FNLEN,		0x0A00	# disc 1 filename length
 .set VAR_DISC_1_FN,			0x0A01	# disc 1 filename
 .set VAR_DISC_2_FNLEN,		0x0B00	# disc 2 filename length
@@ -112,6 +114,8 @@
 #define VAR_SERVER_MAC		(VAR_AREA+0x09F4)	// server MAC address
 #define VAR_SERVER_IP		(VAR_AREA+0x09FA)	// server IPv4 address
 #define VAR_SERVER_PORT		(VAR_AREA+0x09FE)	// server UDP port
+#define VAR_SECTOR_CUR		(VAR_AREA+0x09FC)	// is the currently buffered disk sector
+#define VAR_SECTOR_BUF		(VAR_AREA+0x0A00)	// 0x200 of read data
 #define VAR_DISC_1_FNLEN	(VAR_AREA+0x0A00)	// disc 1 filename length
 #define VAR_DISC_1_FN		(VAR_AREA+0x0A01)	// disc 1 filename
 #define VAR_DISC_2_FNLEN	(VAR_AREA+0x0B00)	// disc 2 filename length

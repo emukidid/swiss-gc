@@ -175,7 +175,7 @@ enum patchIds {
 
 /* Function jump locations for the SD/IDE/USBGecko/BBA patch */
 #define EXI_HANDLER				(void*)(LO_RESERVE_ALT | 0x20)
-#define PATCHED_MEMCPY_ALT		(void*)(LO_RESERVE_ALT | 0x24)
+#define EXI_LOCK				(void*)(LO_RESERVE_ALT | 0x24)
 #define PERFORM_READ			(void*)(LO_RESERVE_ALT | 0x28)
 #define TICKLE_READ				(void*)(LO_RESERVE_ALT | 0x2C)
 #define TICKLE_READ_HOOK		(void*)(LO_RESERVE_ALT | 0x30)

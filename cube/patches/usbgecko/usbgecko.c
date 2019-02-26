@@ -147,6 +147,11 @@ static void gecko_receive(void *buffer,unsigned int size)
 
 void exi_handler() {}
 
+int exi_lock()
+{
+	return 1;
+}
+
 void trigger_dvd_interrupt()
 {
 	(*DI)[2] = 0xE0000000;

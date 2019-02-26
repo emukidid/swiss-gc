@@ -92,6 +92,7 @@ void device_frag_read(void *dst, u32 len, u32 offset)
 		dst+=amountRead;
 		offset+=amountRead;
 	}
+	end_read();
 }
 
 unsigned long tb_diff_usec(tb_t* end, tb_t* start)

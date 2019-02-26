@@ -891,19 +891,16 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		if (OSExceptionInit) {
 			switch (j) {
 				case 0:
-					data[i + 130] = branchAndLink(PATCHED_MEMCPY_ALT, OSExceptionInit + 130);
-					data[i + 132] = 0x38800100;	// li		r4, 256
-					data[i + 136] = 0x38800100;	// li		r4, 256
+					data[i + 140] = 0x28000009;	// cmplwi	r0, 9
+					data[i + 153] = 0x28000009;	// cmplwi	r0, 9
 					break;
 				case 1:
-					data[i + 122] = branchAndLink(PATCHED_MEMCPY_ALT, OSExceptionInit + 122);
-					data[i + 124] = 0x38800100;	// li		r4, 256
-					data[i + 128] = 0x38800100;	// li		r4, 256
+					data[i + 133] = 0x28000009;	// cmplwi	r0, 9
+					data[i + 149] = 0x28000009;	// cmplwi	r0, 9
 					break;
 				case 2:
-					data[i + 115] = branchAndLink(PATCHED_MEMCPY_ALT, OSExceptionInit + 115);
-					data[i + 117] = 0x38800100;	// li		r4, 256
-					data[i + 121] = 0x38800100;	// li		r4, 256
+					data[i + 125] = 0x28000009;	// cmplwi	r0, 9
+					data[i + 139] = 0x28000009;	// cmplwi	r0, 9
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", OSExceptionInitSigs[j].Name, OSExceptionInit);
@@ -1006,29 +1003,39 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				case 0:
 					EXILockHook = getPatchAddr(EXI_LOCKHOOKD);
 					
-					EXILockHook[ 0] |= (data[i + 4] >> 5) & 0x1F0000;
-					EXILockHook[ 2] |= (data[i + 5] >> 5) & 0x1F0000;
-					EXILockHook[10] |= (data[i + 4] >> 5) & 0x1F0000;
+					EXILockHook[0]  =  data[i + 34];
+					EXILockHook[1] |= (data[i +  4] >> 5) & 0x1F0000;
+					EXILockHook[2] |= (data[i +  5] >> 5) & 0x1F0000;
+					EXILockHook[6]  = branchAndLink(EXI_LOCK, EXILockHook + 6);
 					
-					data[i + 33] = branchAndLink(EXILockHook, EXILock + 33);
+					data[i + 34] = branchAndLink(EXILockHook, EXILock + 34);
+					
+					EXILockHook[13] |= data[i + 98] & 0x3E00000;
 					break;
 				case 1:
 					EXILockHook = getPatchAddr(EXI_LOCKHOOK);
 					
-					EXILockHook[ 0] |= (data[i + 4] >> 5) & 0x1F0000;
-					EXILockHook[ 2] |= (data[i + 9] >> 5) & 0x1F0000;
-					EXILockHook[10] |= (data[i + 4] >> 5) & 0x1F0000;
+					EXILockHook[0]  =  data[i + 13];
+					EXILockHook[1] |= (data[i +  4] >> 5) & 0x1F0000;
+					EXILockHook[2] |= (data[i +  9] >> 5) & 0x1F0000;
+					EXILockHook[6]  = branchAndLink(EXI_LOCK, EXILockHook + 6);
 					
-					data[i + 11] = branchAndLink(EXILockHook, EXILock + 11);
+					data[i + 13] = data[i + 12];
+					data[i + 12] = branchAndLink(EXILockHook, EXILock + 12);
+					
+					EXILockHook[13] |= data[i + 53] & 0x3E00000;
 					break;
 				case 2:
 					EXILockHook = getPatchAddr(EXI_LOCKHOOK);
 					
-					EXILockHook[ 0] |= (data[i + 4] >> 5) & 0x1F0000;
-					EXILockHook[ 2] |= (data[i + 5] >> 5) & 0x1F0000;
-					EXILockHook[10] |= (data[i + 4] >> 5) & 0x1F0000;
+					EXILockHook[0]  =  data[i + 12];
+					EXILockHook[1] |= (data[i +  4] >> 5) & 0x1F0000;
+					EXILockHook[2] |= (data[i +  5] >> 5) & 0x1F0000;
+					EXILockHook[6]  = branchAndLink(EXI_LOCK, EXILockHook + 6);
 					
-					data[i + 11] = branchAndLink(EXILockHook, EXILock + 11);
+					data[i + 12] = branchAndLink(EXILockHook, EXILock + 12);
+					
+					EXILockHook[13] |= data[i + 53] & 0x3E00000;
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", EXILockSigs[j].Name, EXILock);
