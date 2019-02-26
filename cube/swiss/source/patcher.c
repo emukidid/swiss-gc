@@ -4890,17 +4890,18 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 				case 6: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 149]; break;
 			}
 			
-			MakeStatus = Calc_Address(data, dataType, MakeStatusAddr);
-			MakeStatus = Calc_Address(data, dataType, MakeStatusAddr = *MakeStatus);
-			
-			switch (k) {
-				case 0:
-				case 1: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[0]); break;
-				case 2:
-				case 3:
-				case 4: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[1]); break;
-				case 5: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[2]); break;
-				case 6: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[3]); break;
+			if ((MakeStatus = Calc_Address(data, dataType, MakeStatusAddr)) &&
+				(MakeStatus = Calc_Address(data, dataType, MakeStatusAddr = *MakeStatus))) {
+				
+				switch (k) {
+					case 0:
+					case 1: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[0]); break;
+					case 2:
+					case 3:
+					case 4: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[1]); break;
+					case 5: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[2]); break;
+					case 6: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[3]); break;
+				}
 			}
 			
 			if (swissSettings.igrType != IGR_OFF) {
