@@ -106,6 +106,14 @@ static uint32_t exi_imm_read(int len)
 	return (*EXI)[4] >> ((4 - len) * 8);
 }
 
+static uint32_t exi_imm_read_write(uint32_t data, int len)
+{
+	(*EXI)[4] = data;
+	(*EXI)[3] = ((len - 1) << 4) | (EXI_READ_WRITE << 2) | 1;
+	while ((*EXI)[3] & 1);
+	return (*EXI)[4] >> ((4 - len) * 8);
+}
+
 static void exi_immex_write(void *buffer, int length)
 {
 	do {
@@ -151,8 +159,7 @@ static uint8_t bba_cmd_in8(uint8_t reg)
 	uint8_t val;
 
 	exi_select();
-	exi_imm_write(0x00 << 24 | reg << 24, 2);
-	val = exi_imm_read(1);
+	val = exi_imm_read_write(0x00 << 24 | reg << 24, 4);
 	exi_deselect();
 
 	return val;
@@ -161,8 +168,7 @@ static uint8_t bba_cmd_in8(uint8_t reg)
 static void bba_cmd_out8(uint8_t reg, uint8_t val)
 {
 	exi_select();
-	exi_imm_write(0x40 << 24 | reg << 24, 2);
-	exi_imm_write(val << 24, 1);
+	exi_imm_write(0x40 << 24 | reg << 24 | val, 4);
 	exi_deselect();
 }
 

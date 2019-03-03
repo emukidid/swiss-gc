@@ -221,7 +221,7 @@ void make_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functio
 		
 		functionPattern->Length++;
 		
-		if (word == 0x4E800020 && j <= i)
+		if ((word == 0x4C000064 || word == 0x4E800020) && j <= i)
 			break;
 		if ((word & 0xFC000003) == 0x40000000)
 			j = i + ((s32)((word & 0x0000FFFC) << 16) >> 18);
@@ -525,6 +525,10 @@ int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType )
 			}
 			continue;
 		}
+		// bl, flush out and reset
+		if( (op & 0xFC000003) == 0x48000001 ) {
+			memset(regs, 0, 14*4*2);
+		}
 		// blr, flush out and reset
 		if(op == 0x4E800020) {
 			memset(regs, 0, 32*4*2);
@@ -660,6 +664,11 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 {
 	int i, j, k;
+	FuncPattern OSExceptionInitSigs[3] = {
+		{ 164, 61,  6, 18, 14, 14, NULL, 0, "OSExceptionInitD A" },
+		{ 160, 39, 14, 14, 20,  7, NULL, 0, "OSExceptionInit A" },
+		{ 151, 45, 14, 16, 13,  9, NULL, 0, "OSExceptionInit B" }	// SN Systems ProDG
+	};
 	FuncPattern OSSetCurrentContextSig = 
 		{ 23, 4, 4, 0, 0, 5, NULL, 0, "OSSetCurrentContext" };
 	FuncPattern OSDisableInterruptsSig = 
@@ -668,11 +677,6 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSEnableInterrupts" };
 	FuncPattern OSRestoreInterruptsSig = 
 		{ 9, 0, 0, 0, 2, 2, NULL, 0, "OSRestoreInterrupts" };
-	FuncPattern OSExceptionInitSigs[3] = {
-		{ 164, 61,  6, 18, 14, 14, NULL, 0, "OSExceptionInitD A" },
-		{ 160, 39, 14, 14, 20,  7, NULL, 0, "OSExceptionInit A" },
-		{ 151, 45, 14, 16, 13,  9, NULL, 0, "OSExceptionInit B" }	// SN Systems ProDG
-	};
 	FuncPattern SelectThreadSigs[4] = {
 		{ 123, 39, 10, 11, 14, 12, NULL, 0, "SelectThreadD A" },
 		{ 128, 41, 20,  8, 12, 12, NULL, 0, "SelectThread A" },
@@ -714,9 +718,22 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 43, 10, 4, 4, 6, 3, NULL, 0, "DVDGetDriveStatus A" },
 		{ 43, 10, 4, 4, 6, 4, NULL, 0, "DVDGetDriveStatus B" }	// SN Systems ProDG
 	};
+	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
-		if (data[i - 1] != 0x4E800020 || (data[i] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6))
+		if (!_SDA2_BASE_ && !_SDA_BASE_) {
+			if ((data[i + 0] & 0xFFFF0000) == 0x3C400000 &&
+				(data[i + 1] & 0xFFFF0000) == 0x60420000 &&
+				(data[i + 2] & 0xFFFF0000) == 0x3DA00000 &&
+				(data[i + 3] & 0xFFFF0000) == 0x61AD0000) {
+				_SDA2_BASE_ = (data[i + 0] << 16) | (u16)data[i + 1];
+				_SDA_BASE_  = (data[i + 2] << 16) | (u16)data[i + 3];
+				i += 4;
+			}
+			continue;
+		}
+		if ((data[i - 1] != 0x4C000064 && data[i - 1] != 0x4E800020) ||
+			(data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6))
 			continue;
 		
 		FuncPattern fp;
@@ -1721,7 +1738,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			}
 			continue;
 		}
-		if (data[i - 1] != 0x4E800020 || (data[i] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6))
+		if ((data[i - 1] != 0x4C000064 && data[i - 1] != 0x4E800020) ||
+			(data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6))
 			continue;
 		
 		FuncPattern fp;
@@ -4602,7 +4620,8 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 			}
 			continue;
 		}
-		if (data[i - 1] != 0x4E800020 || (data[i] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6))
+		if ((data[i - 1] != 0x4C000064 && data[i - 1] != 0x4E800020) ||
+			(data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6))
 			continue;
 		
 		FuncPattern fp;
