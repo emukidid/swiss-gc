@@ -197,6 +197,9 @@ typedef struct drawMsgBoxEvent {
 typedef struct drawProgressEvent {
 	bool indeterminate;
 	int percent;
+	int speed;	// in bytes
+	int timestart;
+	int timeremain;
 } drawProgressEvent_t;
 
 typedef struct uiDrawObjQueue {
@@ -673,7 +676,24 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
 		_DrawSimpleBox( (640/2 - progressBarWidth/2), y1+20,
 				(multiplier*data->percent), 20, 0, progressBarColor, noColor); 
 		sprintf(fbTextBuffer,"%d%%", data->percent);
-		drawString(640/2, middleY+30, fbTextBuffer, 1.0f, true, defaultColor);
+		bool displaySpeed = data->speed != 0;
+		drawString(displaySpeed ? (x1 + 80) : (640/2), middleY+30, fbTextBuffer, 1.0f, true, defaultColor);
+		if(displaySpeed) {
+			if(data->speed >= 1048576) {
+				sprintf(fbTextBuffer,"%.2f MB/s", (float)data->speed/(float)(1048576));
+			}
+			else if(data->speed >= 1024) {
+				sprintf(fbTextBuffer,"%.2f KB/s", (float)data->speed/(float)(1024));
+			}
+			else {
+				sprintf(fbTextBuffer,"%i B/s", data->speed);
+			}
+			drawString(x1 + 280, middleY+30, fbTextBuffer, 1.0f, true, defaultColor);
+			sprintf(fbTextBuffer,"Elapsed: %02i:%02i:%02i", data->timestart / 3600, (data->timestart / 60)%60,  data->timestart % 60);
+			drawString(x1 + 500, middleY+30, fbTextBuffer, 0.65f, true, defaultColor);
+			sprintf(fbTextBuffer,"Remain: %02i:%02i:%02i", data->timeremain / 3600, (data->timeremain / 60)%60,  data->timeremain % 60);
+			drawString(x1 + 500, middleY+45, fbTextBuffer, 0.65f, true, defaultColor);
+		}
 	}	
 }
 
@@ -1121,6 +1141,16 @@ void DrawUpdateProgressBar(uiDrawObj_t *evt, int percent) {
 	LWP_MutexLock(_videomutex);
 	drawProgressEvent_t *data = (drawProgressEvent_t*)evt->data;
 	data->percent = percent;
+	LWP_MutexUnlock(_videomutex);
+}
+
+void DrawUpdateProgressBarDetail(uiDrawObj_t *evt, int percent, int speed, int timestart, int timeremain) {
+	LWP_MutexLock(_videomutex);
+	drawProgressEvent_t *data = (drawProgressEvent_t*)evt->data;
+	data->percent = percent;
+	data->speed = speed;
+	data->timestart = timestart;
+	data->timeremain = timeremain;
 	LWP_MutexUnlock(_videomutex);
 }
 

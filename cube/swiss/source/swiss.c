@@ -1209,14 +1209,27 @@ bool manage_file() {
 				sprintf(txtbuffer, "Copying to: %s",getRelativeName(destFile->name));
 				uiDrawObj_t* progBar = DrawProgressBar(false, 0, txtbuffer);
 				DrawPublish(progBar);
-	
+				
+				u64 startTime = gettime();
+				u64 lastTime = gettime();
+				u32 lastOffset = 0;
+				int speed = 0;
+				int timeremain = 0;
 				while(curOffset < curFile.size) {
 					u32 buttons = PAD_ButtonsHeld(0);
 					if(buttons & PAD_BUTTON_B) {
 						cancelled = 1;
 						break;
 					}
-					DrawUpdateProgressBar(progBar, (int)((float)((float)curOffset/(float)curFile.size)*100));
+					u32 timeDiff = diff_msec(lastTime, gettime());
+					u32 timeStart = diff_msec(startTime, gettime());
+					if(timeDiff >= 1000) {
+						speed = (int)((float)(curOffset-lastOffset) / (float)(timeDiff/1000.0f));
+						timeremain = (curFile.size - curOffset) / speed;
+						lastTime = gettime();
+						lastOffset = curOffset;
+					}
+					DrawUpdateProgressBarDetail(progBar, (int)((float)((float)curOffset/(float)curFile.size)*100), speed, timeStart/1000, timeremain);
 					u32 amountToCopy = curOffset + chunkSize > curFile.size ? curFile.size - curOffset : chunkSize;
 					ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
 					if(ret != amountToCopy) {	// Retry the read.

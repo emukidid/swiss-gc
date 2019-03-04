@@ -145,6 +145,7 @@ uiDrawObj_t* DrawFadingLabel(int x, int y, char *string, float size);
 uiDrawObj_t* DrawMenuButtons(int selection);
 uiDrawObj_t* DrawTooltip(char *tooltip);
 void DrawUpdateProgressBar(uiDrawObj_t *evt, int percent);
+void DrawUpdateProgressBarDetail(uiDrawObj_t *evt, int percent, int speed, int timestart, int timeremain);
 void DrawUpdateMenuButtons(u32 selection);
 void DrawAddChild(uiDrawObj_t *parent, uiDrawObj_t *child);
 uiDrawObj_t* DrawPublish(uiDrawObj_t *evt);
