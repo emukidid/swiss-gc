@@ -55,13 +55,11 @@ SwissSettings swissSettings;
 char *knownExtensions[] = {".dol\0", ".iso\0", ".gcm\0", ".mp3\0", ".fzn\0", ".gci\0", ".dol+cli\0"};
 
 int endsWith(char *str, char *end) {
-	if(strlen(str) < strlen(end))
+	size_t len_str = strlen(str);
+	size_t len_end = strlen(end);
+	if(len_str < len_end)
 		return 0;
-	int i;
-	for(i = 0; i < strlen(end); i++)
-		if(tolower((int)str[strlen(str)-i]) != tolower((int)end[strlen(end)-i]))
-			return 0;
-	return 1;
+	return !strcasecmp(str + len_str - len_end, end);
 }
 
 bool checkExtension(char *filename) {
