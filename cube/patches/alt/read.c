@@ -49,8 +49,8 @@ void *tickle_read(void)
 	if (remainder) {
 		data_size = read_frag(data, remainder, position);
 
-		position   += data_size;
-		remainder  -= data_size;
+		position  += data_size;
+		remainder -= data_size;
 
 		*(uint32_t *)VAR_LAST_OFFSET = position;
 		*(uint32_t *)VAR_TMP2 = remainder;

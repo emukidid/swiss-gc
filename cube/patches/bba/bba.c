@@ -315,13 +315,7 @@ void *tickle_read(void)
 	uint32_t data_size;
 
 	if (remainder) {
-		if (!is_frag_read(position, remainder)) {
-			tb_t end;
-			mftb(&end);
-
-			if (tb_diff_usec(&end, _start) > 1000000 && !exi_selected())
-				fsp_output(_file, *_filelen, position, remainder);
-		} else {
+		if (is_frag_read(position, remainder)) {
 			data_size = read_frag(data, remainder, position);
 
 			position  += data_size;
@@ -333,6 +327,14 @@ void *tickle_read(void)
 			*_data_size = 0;
 
 			if (!remainder) trigger_dvd_interrupt();
+			else if (!is_frag_read(position, remainder) && !exi_selected())
+				fsp_output(_file, *_filelen, position, remainder);
+		} else {
+			tb_t end;
+			mftb(&end);
+
+			if (tb_diff_usec(&end, _start) > 1000000 && !exi_selected())
+				fsp_output(_file, *_filelen, position, remainder);
 		}
 	}
 

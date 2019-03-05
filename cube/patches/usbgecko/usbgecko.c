@@ -1,159 +1,162 @@
-/***************************************************************************
-* USB Gecko In-Game Read code for GC/Wii
-* emu_kidid 2012
-***************************************************************************/
-
+#include <stdint.h>
+#include <string.h>
 #include "../../reservedarea.h"
 #include "../base/common.h"
 
+enum {
+	EXI_READ = 0,
+	EXI_WRITE,
+	EXI_READ_WRITE,
+};
+
+enum {
+	EXI_CHANNEL_0 = 0,
+	EXI_CHANNEL_1,
+	EXI_CHANNEL_2,
+	EXI_CHANNEL_MAX
+};
+
+enum {
+	EXI_DEVICE_0 = 0,
+	EXI_DEVICE_1,
+	EXI_DEVICE_2,
+	EXI_DEVICE_MAX
+};
+
+enum {
+	EXI_SPEED_1MHZ = 0,
+	EXI_SPEED_2MHZ,
+	EXI_SPEED_4MHZ,
+	EXI_SPEED_8MHZ,
+	EXI_SPEED_16MHZ,
+	EXI_SPEED_32MHZ,
+};
+
 typedef struct {
-	unsigned int offset;    // Offset in the file
-	unsigned int size;      // size to read
-} __attribute((packed, scalar_storage_order("little-endian"))) usb_data_req;
+	uint32_t offset;
+	uint32_t size;
+} __attribute((packed, scalar_storage_order("little-endian"))) usb_request_t;
 
-#define EXI_CHAN1SR		*(volatile unsigned int*) 0xCC006814 // Channel 1 Status Register
-#define EXI_CHAN1CR		*(volatile unsigned int*) 0xCC006820 // Channel 1 Control Register
-#define EXI_CHAN1DATA	*(volatile unsigned int*) 0xCC006824 // Channel 1 Immediate Data
-
-#define EXI_TSTART			1
-
-
-static unsigned int gecko_sendbyte(char data)
+static void exi_select(void)
 {
-	unsigned int i = 0;
-
-	EXI_CHAN1SR = 0x000000D0;
-	EXI_CHAN1DATA = 0xB0000000 | (data << 20);
-	EXI_CHAN1CR = 0x19;
-	
-	while((EXI_CHAN1CR) & EXI_TSTART);
-	i = EXI_CHAN1DATA;
-	EXI_CHAN1SR = 0;
-	
-	if (i&0x04000000)
-	{
-		return 1;
-	}
-
-	return 0;
+	EXI[EXI_CHANNEL_1][0] = (EXI[EXI_CHANNEL_1][0] & 0x405) | ((1 << EXI_DEVICE_0) << 7) | (EXI_SPEED_32MHZ << 4);
 }
 
-
-static unsigned int gecko_receivebyte(char* data)
+static void exi_deselect(void)
 {
-	unsigned int i = 0;
-	EXI_CHAN1SR = 0x000000D0;
-	EXI_CHAN1DATA = 0xA0000000;
-	EXI_CHAN1CR = 0x19;
-	
-	while((EXI_CHAN1CR) & EXI_TSTART);
-	i = EXI_CHAN1DATA;
-	EXI_CHAN1SR = 0;
-
-	if (i&0x08000000)
-	{
-		*data = (i>>16)&0xff;
-		return 1;
-	} 
-	
-	return 0;
+	EXI[EXI_CHANNEL_1][0] &= 0x405;
 }
 
-static void gecko_receiveword(unsigned long* data)
+static uint32_t exi_imm_read_write(uint32_t data, int len)
 {
-	unsigned long receiveword = 0;
-	unsigned int i = 0;
-	
-	while (i < 4)
-	{
-		i += gecko_receivebyte((char*)&receiveword + i);
-	}
-	
-	*data = receiveword;
+	EXI[EXI_CHANNEL_1][4] = data;
+	EXI[EXI_CHANNEL_1][3] = ((len - 1) << 4) | (EXI_READ_WRITE << 2) | 1;
+	while (EXI[EXI_CHANNEL_1][3] & 1);
+	return EXI[EXI_CHANNEL_1][4] >> ((4 - len) * 8);
 }
 
-
-// return 1, it is ok to send data to PC
-// return 0, FIFO full
-static unsigned int gecko_checktx()
+static int usb_receive_byte(uint8_t *data)
 {
-	unsigned int i = 0;
+	uint16_t val;
 
-	EXI_CHAN1SR = 0x000000D0;
-	EXI_CHAN1DATA = 0xC0000000;
-	EXI_CHAN1CR = 0x09;
-	
-	while((EXI_CHAN1CR) & EXI_TSTART);
-	i = EXI_CHAN1DATA;
-	EXI_CHAN1SR = 0;
+	exi_select();
+	val = exi_imm_read_write(0xA << 28, 2); *data = val;
+	exi_deselect();
 
-	return (i&0x04000000);
+	return !(val & 0x800);
 }
 
-
-// return 1, there is data in the FIFO to recieve
-// return 0, FIFO is empty
-static unsigned int gecko_checkrx()
+static int usb_transmit_byte(uint8_t *data)
 {
-	unsigned int i = 0;
-	EXI_CHAN1SR = 0x000000D0;
-	EXI_CHAN1DATA = 0xD0000000;
-	EXI_CHAN1CR = 0x09;
-	
-	while((EXI_CHAN1CR) & EXI_TSTART);
-	i = EXI_CHAN1DATA;
-	EXI_CHAN1SR = 0;
+	uint16_t val;
 
-	return (i&0x04000000);
+	exi_select();
+	val = exi_imm_read_write(0xB << 28 | *data << 20, 2);
+	exi_deselect();
+
+	return !(val & 0x400);
 }
 
-static void gecko_send(const void *buffer,unsigned int size)
+static int usb_transmit_check(void)
 {
-	char *sendbyte = (char*)buffer;
-	unsigned int ret = 0;
+	uint8_t val;
 
-	while (size > 0)
-	{
-		if(gecko_checktx())
-		{
-			ret = gecko_sendbyte(*sendbyte);
-			if(ret == 1)
-			{
-				sendbyte++;
-				size--;
-			}
+	exi_select();
+	val = exi_imm_read_write(0xC << 28, 1);
+	exi_deselect();
+
+	return !(val & 0x4);
+}
+
+static int usb_receive_check(void)
+{
+	uint8_t val;
+
+	exi_select();
+	val = exi_imm_read_write(0xD << 28, 1);
+	exi_deselect();
+
+	return !(val & 0x4);
+}
+
+static int usb_transmit(void *data, int size, int minsize)
+{
+	int i = 0, j = 0, check = 1;
+
+	while (i < size) {
+		if ((check && usb_transmit_check()) ||
+			(check = usb_transmit_byte(data + i))) {
+			j = i % 128;
+			if (i < minsize)
+				continue;
+			else break;
 		}
+
+		i++;
+		check = i % 128 == j;
 	}
+
+	return i;
 }
 
-static void gecko_receive(void *buffer,unsigned int size)
+static int usb_receive(void *data, int size, int minsize)
 {
-	char *receivebyte = (char*)buffer;
-	unsigned int ret = 0;
+	int i = 0, j = 0, check = 1;
 
-	while (size > 0)
-	{
-		if(gecko_checkrx())
-		{
-			ret = gecko_receivebyte(receivebyte);
-			if(ret == 1)
-			{
-				receivebyte++;
-				size--;
-			}
+	while (i < size) {
+		if ((check && usb_receive_check()) ||
+			(check = usb_receive_byte(data + i))) {
+			j = i % 64;
+			if (i < minsize)
+				continue;
+			else break;
 		}
+
+		i++;
+		check = i % 64 == j;
 	}
+
+	return i;
+}
+
+void usb_request(uint32_t offset, uint32_t size)
+{
+	usb_request_t request = {offset, size};
+	usb_transmit(&request, sizeof(request), sizeof(request));
 }
 
 void exi_handler() {}
 
-int exi_lock()
+int exi_lock(int32_t channel, uint32_t device)
 {
 	return 1;
 }
 
-void trigger_dvd_interrupt()
+void trigger_dvd_interrupt(void)
 {
+	uint32_t dst = (*DI)[5] | 0x80000000;
+	uint32_t len = (*DI)[6];
+
 	(*DI)[2] = 0xE0000000;
 	(*DI)[3] = 0;
 	(*DI)[4] = 0;
@@ -161,48 +164,60 @@ void trigger_dvd_interrupt()
 	(*DI)[6] = 0;
 	(*DI)[8] = 0;
 	(*DI)[7] = 1;
+
+	dcache_flush_icache_inv((void *)dst, len);
 }
 
-void perform_read()
+void perform_read(void)
 {
-	u32 off = (*DI)[3] << 2;
-	u32 len = (*DI)[4];
-	u32 dst = (*DI)[5] | 0xC0000000;
-	
-	*(u32 *)VAR_TMP1 = dst;
-	*(u32 *)VAR_TMP2 = len;
-	
-	usb_data_req req = {off, len};
-	gecko_send(&req, sizeof(usb_data_req));
+	uint32_t off = (*DI)[3] << 2;
+	uint32_t len = (*DI)[4];
+	uint32_t dst = (*DI)[5] | 0x80000000;
+
+	*(uint32_t *)VAR_LAST_OFFSET = off;
+	*(uint32_t *)VAR_TMP2 = len;
+	*(uint32_t *)VAR_TMP1 = dst;
+
+	if (!is_frag_read(off, len))
+		usb_request(off, len);
 }
 
-void *tickle_read()
+void *tickle_read(void)
 {
-	u32 *dest = *(u32 **)VAR_TMP1;
-	u32  size = *(u32  *)VAR_TMP2;
-	
-	while (size && gecko_checkrx()) {
-		gecko_receiveword(dest);
-		
-		dest++;
-		size -= sizeof(u32);
-		
-		*(u32 **)VAR_TMP1 = dest;
-		*(u32  *)VAR_TMP2 = size;
-		
-		if (!size) trigger_dvd_interrupt();
+	uint32_t position  = *(uint32_t *)VAR_LAST_OFFSET;
+	uint32_t remainder = *(uint32_t *)VAR_TMP2;
+	uint8_t *data      = *(uint8_t **)VAR_TMP1;
+	uint32_t data_size;
+
+	if (remainder) {
+		int frag = is_frag_read(position, remainder);
+		if (frag)
+			data_size = read_frag(data, remainder, position);
+		else
+			data_size = usb_receive(data, remainder, 0);
+
+		position  += data_size;
+		remainder -= data_size;
+
+		*(uint32_t *)VAR_LAST_OFFSET = position;
+		*(uint32_t *)VAR_TMP2 = remainder;
+		*(uint8_t **)VAR_TMP1 = data + data_size;
+
+		if (!remainder) trigger_dvd_interrupt();
+		else if (frag && !is_frag_read(position, remainder))
+			usb_request(position, remainder);
 	}
-	
-	return 0;
+
+	return NULL;
 }
 
-void tickle_read_hook(u32 enable)
+void tickle_read_hook(uint32_t enable)
 {
 	tickle_read();
 	restore_interrupts(enable);
 }
 
-void tickle_read_idle()
+void tickle_read_idle(void)
 {
 	disable_interrupts();
 	tickle_read();
