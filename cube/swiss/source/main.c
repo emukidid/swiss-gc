@@ -20,7 +20,6 @@
 #include <sdcard/gcsd.h>
 #include "main.h"
 #include "settings.h"
-#include "info.h"
 #include "swiss.h"
 #include "bba.h"
 #include "dvd.h"
@@ -35,110 +34,12 @@
 #include "aram/sidestep.h"
 #include "devices/filemeta.h"
 
-#define DEFAULT_FIFO_SIZE    (256*1024)//(64*1024) minimum
-
-extern void __libogc_exit(int status);
-
-GXRModeObj *vmode = NULL;				//Graphics Mode Object
-void *gp_fifo = NULL;
-u32 *xfb[2] = { NULL, NULL };   //Framebuffers
-int whichfb = 0;       		 	    //Frame buffer toggle
 u8 driveVersion[8];
-file_handle* allFiles;   		//all the files in the current dir
-int curMenuLocation = ON_FILLIST; //where are we on the screen?
-int files = 0;                  //number of files in a directory
-int curMenuSelection = 0;	      //menu selection
-int curSelection = 0;		        //game selection
-int needsDeviceChange = 0;
-int needsRefresh = 0;
 SwissSettings swissSettings;
-char *knownExtensions[] = {".dol\0", ".iso\0", ".gcm\0", ".mp3\0", ".fzn\0", ".gci\0", ".dol+cli\0"};
 
-int endsWith(char *str, char *end) {
-	size_t len_str = strlen(str);
-	size_t len_end = strlen(end);
-	if(len_str < len_end)
-		return 0;
-	return !strcasecmp(str + len_str - len_end, end);
-}
-
-bool checkExtension(char *filename) {
-	if(!swissSettings.hideUnknownFileTypes)
-		return true;
-	int i;
-	for(i = 0; i < sizeof(knownExtensions)/sizeof(char*); i++) {
-		if(endsWith(filename, knownExtensions[i])) {
-			return true;
-		}
-	}
-	return false;
-}
-
-static void ProperScanPADS()	{
-	PAD_ScanPads(); 
-}
-
-void populateVideoStr(GXRModeObj *vmode) {
-	switch(vmode->viTVMode) {
-		case VI_TVMODE_NTSC_INT:     videoStr = NtscIntStr;     break;
-		case VI_TVMODE_NTSC_DS:      videoStr = NtscDsStr;      break;
-		case VI_TVMODE_NTSC_PROG:    videoStr = NtscProgStr;    break;
-		case VI_TVMODE_PAL_INT:      videoStr = PalIntStr;      break;
-		case VI_TVMODE_PAL_DS:       videoStr = PalDsStr;       break;
-		case VI_TVMODE_PAL_PROG:     videoStr = PalProgStr;     break;
-		case VI_TVMODE_MPAL_INT:     videoStr = MpalIntStr;     break;
-		case VI_TVMODE_MPAL_DS:      videoStr = MpalDsStr;      break;
-		case VI_TVMODE_MPAL_PROG:    videoStr = MpalProgStr;    break;
-		case VI_TVMODE_EURGB60_INT:  videoStr = Eurgb60IntStr;  break;
-		case VI_TVMODE_EURGB60_DS:   videoStr = Eurgb60DsStr;   break;
-		case VI_TVMODE_EURGB60_PROG: videoStr = Eurgb60ProgStr; break;
-		default:                     videoStr = UnkStr;
-	}
-}
-
-void initialise_video(GXRModeObj *m) {
-	VIDEO_Configure (m);
-	if(xfb[0]) free(MEM_K1_TO_K0(xfb[0]));
-	if(xfb[1]) free(MEM_K1_TO_K0(xfb[1]));
-	xfb[0] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (m));
-	xfb[1] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (m));
-	VIDEO_ClearFrameBuffer (m, xfb[0], COLOR_BLACK);
-	VIDEO_ClearFrameBuffer (m, xfb[1], COLOR_BLACK);
-	VIDEO_SetNextFramebuffer (xfb[0]);
-	VIDEO_SetPostRetraceCallback (ProperScanPADS);
-	VIDEO_SetBlack (0);
-	VIDEO_Flush ();
-	VIDEO_WaitVSync ();
-	if (m->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
-	else while (VIDEO_GetNextField())   VIDEO_WaitVSync();
-	
-	// setup the fifo and then init GX
-	if(gp_fifo == NULL) {
-		gp_fifo = MEM_K0_TO_K1 (memalign (32, DEFAULT_FIFO_SIZE));
-		memset (gp_fifo, 0, DEFAULT_FIFO_SIZE);
-		GX_Init (gp_fifo, DEFAULT_FIFO_SIZE);
-	}
-	// clears the bg to color and clears the z buffer
-	GX_SetCopyClear ((GXColor) {0, 0, 0, 0xFF}, GX_MAX_Z24);
-	// init viewport
-	GX_SetViewport (0, 0, m->fbWidth, m->efbHeight, 0, 1);
-	// Set the correct y scaling for efb->xfb copy operation
-	GX_SetDispCopyYScale ((f32) m->xfbHeight / (f32) m->efbHeight);
-	GX_SetDispCopySrc (0, 0, m->fbWidth, m->efbHeight);
-	GX_SetDispCopyDst (m->fbWidth, m->xfbHeight);
-	GX_SetCopyFilter (m->aa, m->sample_pattern, GX_TRUE, m->vfilter);
-	GX_SetFieldMode (m->field_rendering, ((m->viHeight == 2 * m->xfbHeight) ? GX_ENABLE : GX_DISABLE));
-	if (m->aa)
-		GX_SetPixelFmt(GX_PF_RGB565_Z16, GX_ZC_LINEAR);
-	else
-		GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
-	GX_SetCullMode (GX_CULL_NONE); // default in rsp init
-	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the efb
-	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the xfb
-}
 
 /* Initialise Video, PAD, DVD, Font */
-void* Initialise (void)
+void Initialise (void)
 {
 	VIDEO_Init ();
 	PAD_Init ();  
@@ -152,11 +53,9 @@ void* Initialise (void)
 	
 	__SYS_ReadROM(IPLInfo,256,0);	// Read IPL tag
 
-	// Wii has no IPL tags for "PAL" so let libOGC figure out the video mode
-	if(!is_gamecube()) {
-		vmode = VIDEO_GetPreferredMode(NULL); //Last mode used
-	}
-	else {	// Gamecube, determine based on IPL
+	// By default, let libOGC figure out the video mode
+	GXRModeObj *vmode = VIDEO_GetPreferredMode(NULL); //Last mode used
+	if(is_gamecube()) {	// Gamecube, determine based on IPL
 		int retPAD = 0, retCnt = 10000;
 		while(retPAD <= 0 && retCnt >= 0) { retPAD = PAD_ScanPads(); usleep(100); retCnt--; }
 		// L Trigger held down ignores the fact that there's a component cable plugged in.
@@ -190,12 +89,10 @@ void* Initialise (void)
 			}
 		}
 	}
-	initialise_video(vmode);
-	populateVideoStr(vmode);
+	setVideoMode(vmode);
 
 	init_font();
 	DrawInit();
-	whichfb = 0;
 	
 	drive_version(&driveVersion[0]);
 	swissSettings.hasDVDDrive = *(u32*)&driveVersion[0] ? 1 : 0;
@@ -217,222 +114,7 @@ void* Initialise (void)
 		}
 		DrawDispose(progBox);
 	}
-	
-	return xfb[0];
 }
-
-void load_config() {
-
-	// Try to open up the config .ini in case it hasn't been opened already
-	if(config_init()) {
-		sprintf(txtbuffer,"Loaded %i entries from the config file",config_get_count());
-		// TODO notification area this
-		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO,txtbuffer));
-		memcpy(&swissSettings, config_get_swiss_settings(), sizeof(SwissSettings));
-		DrawDispose(msgBox);
-	}
-}
-
-int comp(const void *a1, const void *b1)
-{
-	const file_handle* a = a1;
-	const file_handle* b = b1;
-	
-	if(!a && b) return 1;
-	if(a && !b) return -1;
-	if(!a && !b) return 0;
-	
-	if((devices[DEVICE_CUR] == &__device_dvd) && ((dvdDiscTypeInt == GAMECUBE_DISC) || (dvdDiscTypeInt == MULTIDISC_DISC)))
-	{
-		if(a->size == DISC_SIZE && a->fileBase == 0)
-			return -1;
-		if(b->size == DISC_SIZE && b->fileBase == 0)
-			return 1;
-	}
-	
-	if(a->fileAttrib == IS_DIR && b->fileAttrib == IS_FILE)
-		return -1;
-	if(a->fileAttrib == IS_FILE && b->fileAttrib == IS_DIR)
-		return 1;
-
-	return strcasecmp(a->name, b->name);
-}
-
-void sortFiles(file_handle* dir, int num_files)
-{
-	if(num_files > 0) {
-		qsort(&dir[0],num_files,sizeof(file_handle),comp);
-	}
-}
-
-void free_files() {
-	if(allFiles) {
-		int i;
-		for(i = 0; i < files; i++) {
-			if(allFiles[i].meta) {
-				if(allFiles[i].meta->banner) {
-					free(allFiles[i].meta->banner);
-					allFiles[i].meta->banner = NULL;
-				}
-				memset(allFiles[i].meta, 0, sizeof(file_meta));
-				meta_free(allFiles[i].meta);
-				allFiles[i].meta = NULL;
-			}
-		}
-		free(allFiles);
-		allFiles = NULL;
-		files = 0;
-	}
-}
-
-void scan_files() {
-	free_files();
-	// Read the directory/device TOC
-	if(allFiles){ free(allFiles); allFiles = NULL; }
-	print_gecko("Reading directory: %s\r\n",curFile.name);
-	files = devices[DEVICE_CUR]->readDir(&curFile, &allFiles, -1);
-	memcpy(&curDir, &curFile, sizeof(file_handle));
-	sortFiles(allFiles, files);
-	print_gecko("Found %i entries\r\n",files);
-}
-
-// Keep this list sorted
-char *autoboot_dols[] = { "/boot.dol", "/boot2.dol" };
-void load_auto_dol() {
-	u8 rev_buf[sizeof(GITREVISION) - 1]; // Don't include the NUL termination in the comparison
-
-	memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
-	scan_files();
-	for (int i = 0; i < files; i++) {
-		for (int f = 0; f < (sizeof(autoboot_dols) / sizeof(char *)); f++) {
-			if (endsWith(allFiles[i].name, autoboot_dols[f])) {
-				// Official Swiss releases have the short commit hash appended to
-				// the end of the DOL, compare it to our own to make sure we don't
-				// bootloop the same version
-				devices[DEVICE_CUR]->seekFile(&allFiles[i],
-						allFiles[i].size - sizeof(rev_buf),
-						DEVICE_HANDLER_SEEK_SET);
-				devices[DEVICE_CUR]->readFile(&allFiles[i], rev_buf, sizeof(rev_buf));
-				if (memcmp(GITREVISION, rev_buf, sizeof(rev_buf)) != 0) {
-					// Emulate some of the menu's behavior to satisfy boot_dol
-					curSelection = i;
-					memcpy(&curFile, &allFiles[i], sizeof(file_handle));
-					boot_dol();
-				}
-
-				// If we've made it this far, we've already found an autoboot DOL,
-				// the first one (boot.dol) is not cancellable, but the rest of the
-				// list is
-				if (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
-					return;
-				}
-			}
-		}
-	}
-}
-
-void main_loop()
-{ 
-	
-	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
-	// We don't care if a subsequent device is "default"
-	if(needsDeviceChange) {
-		free_files();
-		if(devices[DEVICE_CUR]) {
-			devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
-		}
-		devices[DEVICE_CUR] = NULL;
-		needsDeviceChange = 0;
-		needsRefresh = 1;
-		curMenuLocation = ON_FILLIST;
-		select_device(DEVICE_CUR);
-		if(devices[DEVICE_CUR] != NULL) {
-			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
-			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Setting up device"));
-			// If the user selected a device, make sure it's ready before we browse the filesystem
-			if(!devices[DEVICE_CUR]->init( devices[DEVICE_CUR]->initial )) {
-				needsDeviceChange = 1;
-				deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], false);
-				DrawDispose(msgBox);
-				return;
-			}
-			DrawDispose(msgBox);
-			deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], true);	
-		}
-		else {
-			curMenuLocation=ON_OPTIONS;
-		}
-	}
-
-	uiDrawObj_t *filePanel = NULL;
-	while(1) {
-		DrawUpdateMenuButtons((curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
-		if(devices[DEVICE_CUR] != NULL && needsRefresh) {
-			curMenuLocation=ON_OPTIONS;
-			curSelection=0; curMenuSelection=0;
-			scan_files();
-			if(files<1) { devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial); needsDeviceChange=1; break;}
-			needsRefresh = 0;
-			curMenuLocation=ON_FILLIST;
-		}
-		if(devices[DEVICE_CUR] != NULL && curMenuLocation==ON_FILLIST) {
-			filePanel = renderFileBrowser(&allFiles, files, filePanel);
-			while(PAD_ButtonsHeld(0) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT)) {
-				VIDEO_WaitVSync (); 
-			}
-		}
-		else if (curMenuLocation==ON_OPTIONS) {
-			u16 btns = PAD_ButtonsHeld(0);
-			while (!((btns=PAD_ButtonsHeld(0)) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT))) {
-				VIDEO_WaitVSync();
-			}
-			
-			if(btns & PAD_BUTTON_LEFT){	curMenuSelection = (--curMenuSelection < 0) ? (MENU_MAX-1) : curMenuSelection;}
-			else if(btns & PAD_BUTTON_RIGHT){curMenuSelection = (curMenuSelection + 1) % MENU_MAX;	}
-
-			if(btns & PAD_BUTTON_A) {
-				//handle menu event
-				switch(curMenuSelection) {
-					case 0:		// Device change
-						needsDeviceChange = 1;  //Change from SD->DVD or vice versa
-						break;
-					case 1:		// Settings
-						show_settings(NULL, NULL);
-						break;
-					case 2:		// Credits
-						show_info();
-						break;
-					case 3:
-						if(devices[DEVICE_CUR] != NULL) {
-							memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
-							if(devices[DEVICE_CUR] == &__device_wkf) { 
-								wkfReinit(); devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
-							}
-						}
-						needsRefresh=1;
-						break;
-					case 4:
-						__libogc_exit(0);
-						break;
-				}
-			}
-			if((btns & PAD_BUTTON_B) && devices[DEVICE_CUR] != NULL) {
-				curMenuLocation = ON_FILLIST;
-			}
-			while(PAD_ButtonsHeld(0) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT)) {
-				VIDEO_WaitVSync (); 
-			}
-		}
-		if(needsDeviceChange) {
-			break;
-		}
-	}
-	if(filePanel != NULL) {
-		DrawDispose(filePanel);
-	}
-	DrawUpdateMenuButtons((curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
-}
-
 
 /****************************************************************************
 * Main
@@ -471,12 +153,8 @@ int main ()
 	devices[DEVICE_CONFIG] = NULL;
 	devices[DEVICE_PATCHES] = NULL;
 	
-	void *fb;
-	fb = Initialise();
-	if(!fb) {
-		return -1;
-	}
-
+	Initialise();
+	
 	// Sane defaults
 	refreshSRAM();
 	swissSettings.debugUSB = 0;
@@ -540,8 +218,14 @@ int main ()
 	}
 	config_copy_swiss_settings(&swissSettings);
 	
-	// load config
-	load_config();
+	// Try to open up the config .ini in case it hasn't been opened already
+	if(config_init()) {
+		sprintf(txtbuffer,"Loaded %i entries from the config file",config_get_count());
+		// TODO notification area this
+		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO,txtbuffer));
+		memcpy(&swissSettings, config_get_swiss_settings(), sizeof(SwissSettings));
+		DrawDispose(msgBox);
+	}
 	
 	if(swissSettings.initNetworkAtStart) {
 		// Start up the BBA if it exists
@@ -557,52 +241,18 @@ int main ()
 	}
 
 	// Swiss video mode force
-	GXRModeObj *forcedMode = getModeFromSwissSetting(swissSettings.uiVMode);
+	GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
 	
-	if((forcedMode != NULL) && (forcedMode != vmode)) {
-		initialise_video(forcedMode);
-		vmode = forcedMode;
+	if((forcedMode != NULL) && (forcedMode != getVideoMode())) {
+		setVideoMode(forcedMode);
 	}
 
 	while(1) {
-		main_loop();
+		menu_loop();
 	}
 	return 0;
 }
 
-GXRModeObj *getModeFromSwissSetting(int uiVMode) {
-	switch(uiVMode) {
-		case 1:
-			switch(swissSettings.sramVideo) {
-				case 2:  return &TVMpal480IntDf;
-				case 1:  return &TVEurgb60Hz480IntDf;
-				default: return &TVNtsc480IntDf;
-			}
-		case 2:
-			if(VIDEO_HaveComponentCable()) {
-				switch(swissSettings.sramVideo) {
-					case 2:  return &TVMpal480Prog;
-					case 1:  return &TVEurgb60Hz480Prog;
-					default: return &TVNtsc480Prog;
-				}
-			} else {
-				switch(swissSettings.sramVideo) {
-					case 2:  return &TVMpal480IntDf;
-					case 1:  return &TVEurgb60Hz480IntDf;
-					default: return &TVNtsc480IntDf;
-				}
-			}
-		case 3:
-			return &TVPal576IntDfScale;
-		case 4:
-			if(VIDEO_HaveComponentCable()) {
-				return &TVPal576ProgScale;
-			} else {
-				return &TVPal576IntDfScale;
-			}
-	}
-	return vmode;
-}
 
 // Checks if devices are available, prints name of device being detected for slow init devices
 void populateDeviceAvailability() {

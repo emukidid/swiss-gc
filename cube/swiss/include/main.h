@@ -15,12 +15,6 @@
 #include <sdcard/card_cmn.h>
 #include "deviceHandler.h"
 
-/*** 2D Video Globals ***/
-extern GXRModeObj *vmode;	/*** Graphics Mode Object ***/
-extern u32 *xfb[2];			/*** Framebuffers ***/
-extern int whichfb;			/*** Frame buffer toggle ***/
-
-
 //Cheats
 enum useCheats
 {
@@ -42,20 +36,6 @@ enum guiPos
   ON_OPTIONS=0,
   ON_FILLIST
 };
-
-//Video Modes (strings)
-#define NtscIntStr     "NTSC 480i"
-#define NtscDsStr      "NTSC 240p"
-#define NtscProgStr    "NTSC 480p"
-#define PalIntStr      "PAL 576i"
-#define PalDsStr       "PAL 288p"
-#define PalProgStr     "PAL 576p"
-#define MpalIntStr     "PAL-M 480i"
-#define MpalDsStr      "PAL-M 240p"
-#define MpalProgStr    "PAL-M 480p"
-#define Eurgb60IntStr  "PAL 480i"
-#define Eurgb60DsStr   "PAL 240p"
-#define Eurgb60ProgStr "PAL 480p"
 
 #define IDE_EXI      0x51
 
@@ -123,9 +103,6 @@ enum setupStream
 #define MULTIGAME_TABLE_OFFSET 64
 
 /* Externs */
-extern file_handle* allFiles;
-extern int files;
-
 extern void GCARSStartGame(u32* codelist);
 extern u32 *getCodeBasePtr();
 extern u32 getCodeBaseSize();
@@ -134,31 +111,8 @@ extern char *dvdDiscTypeStr;
 extern int dvdDiscTypeInt;
 extern int drive_status;
 
-extern int files;                  //number of files in a directory
-extern int curMenuSelection;	      //menu selection
-extern int curSelection;		        //game selection
-extern int needsDeviceChange;
-extern int needsRefresh;
-extern int curMenuLocation;
-
-typedef struct {
-  u8   mid;         //Manufacturer ID
-  char oid[2];      //OEM/Application ID
-  char pnm[5];      //Product Name
-  u8   prv;         //product version 0001 0001 = 1.1
-  u32  psn;         //product serial number
-  u16  mdt;         //bottom 4 bits are month, 8 bits above is year since 2000
-  u8   unk;
-} CIDdata __attribute__((aligned(32)));
-
-void print_gecko(const char* fmt, ...);
 extern u32 __SYS_SyncSram();
 extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
-extern void sortFiles(file_handle* dir, int num_files);
-extern int endsWith(char *str, char *end);
-extern bool checkExtension(char *filename);
-extern void initialise_video(GXRModeObj *m);
-GXRModeObj *getModeFromSwissSetting(int uiVMode);
 extern void populateDeviceAvailability();
 #endif
 

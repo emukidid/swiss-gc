@@ -22,6 +22,7 @@
 #include "filemeta.h"
 #include "swiss.h"
 #include "main.h"
+#include "util.h"
 #include "ata.h"
 #include "btns.h"
 #include "dolparameters.h"
@@ -375,7 +376,6 @@ static void drawInit()
 	// Reset various parameters from gfx plugin
 	GX_SetCoPlanar(GX_DISABLE);
 	GX_SetClipMode(GX_CLIP_ENABLE);
-//	GX_SetScissor(0,0,vmode->fbWidth,vmode->efbHeight);
 	GX_SetAlphaCompare(GX_ALWAYS,0,GX_AOP_AND,GX_ALWAYS,0);
 
 	guMtxIdentity(GXmodelView2D);
@@ -383,7 +383,6 @@ static void drawInit()
 	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);
 	guOrtho(GXprojection2D, 0, 479, 0, 639, 0, 700);
 	GX_LoadProjectionMtx(GXprojection2D, GX_ORTHOGRAPHIC);
-//	GX_SetViewport (0, 0, vmode->fbWidth, vmode->efbHeight, 0, 1);
 
 	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_TRUE);
 
@@ -723,7 +722,6 @@ uiDrawObj_t* DrawProgressBar(bool indeterminate, int percent, char *message) {
 
 // Internal
 static void _DrawMessageBox(uiDrawObj_t *evt) {
-	drawMsgBoxEvent_t *data = (drawMsgBoxEvent_t*)evt->data;
 	int x1 = ((640/2) - (PROGRESS_BOX_WIDTH/2));
 	int x2 = ((640/2) + (PROGRESS_BOX_WIDTH/2));
 	int y1 = ((480/2) - (PROGRESS_BOX_HEIGHT/2));
@@ -821,9 +819,9 @@ static void _DrawTooltip(uiDrawObj_t *evt) {
 		char *strPtr = data->tooltip;
 		for (numLines=1; strPtr[numLines]; strPtr[numLines]=='\n' ? numLines++ : *strPtr++);
 		int height = numLines*26;
-		int tooltipY1 = (vmode->efbHeight / 2) - (height/2);
+		int tooltipY1 = (getVideoMode()->efbHeight / 2) - (height/2);
 		// TODO centre on Y based on total size.
-		int tooltipX1 = 25, tooltipX2 = vmode->fbWidth-25, tooltipY2 = tooltipY1+height;
+		int tooltipX1 = 25, tooltipX2 = getVideoMode()->fbWidth-25, tooltipY2 = tooltipY1+height;
 		_DrawSimpleBox( tooltipX1, tooltipY1-6, tooltipX2-tooltipX1, (tooltipY2-tooltipY1)+6, 0, backColorTT, borderColorTT);
 		
 		// Write each line
@@ -1211,7 +1209,7 @@ static uiDrawObj_t* drawParameterForArgsSelector(Parameter *param, int x, int y,
 	GXColor fontColor = (param->enable || selected) ? defaultColor : deSelectedColor;
 
 	// If selected draw that it's selected
-	if(selected) DrawAddChild(container, DrawTransparentBox( x+chkWidth+gapWidth, y, vmode->fbWidth-52, y+30));
+	if(selected) DrawAddChild(container, DrawTransparentBox( x+chkWidth+gapWidth, y, getVideoMode()->fbWidth-52, y+30));
 	DrawAddChild(container, DrawImage(param->enable ? TEX_CHECKED:TEX_UNCHECKED, x, y, 32, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 	// Draw the parameter Name
 	DrawAddChild(container, DrawStyledLabel(x+chkWidth+gapWidth+5, y+4, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor));
@@ -1238,9 +1236,9 @@ void DrawArgsSelector(char *fileName) {
 	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	uiDrawObj_t *container = NULL;
 	while(1) {
-		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, vmode->fbWidth-20, 460);
+		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 		sprintf(txtbuffer, "%s Parameters:", fileName);
-		DrawAddChild(newPanel, DrawStyledLabel(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, vmode->fbWidth-50), false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), false, defaultColor));
 
 		int j = 0;
 		int current_view_start = MIN(MAX(0,param_selection-params_per_page/2),MAX(0,params->num_params-params_per_page));
@@ -1248,12 +1246,12 @@ void DrawArgsSelector(char *fileName) {
 	
 		int scrollBarHeight = 90+(params_per_page*20);
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)params->num_params);
-		DrawAddChild(newPanel, DrawVertScrollBar(vmode->fbWidth-45, 120, 25, scrollBarHeight, (float)((float)param_selection/(float)(params->num_params-1)),scrollBarTabHeight));
+		DrawAddChild(newPanel, DrawVertScrollBar(getVideoMode()->fbWidth-45, 120, 25, scrollBarHeight, (float)((float)param_selection/(float)(params->num_params-1)),scrollBarTabHeight));
 		for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
 			DrawAddChild(newPanel, drawParameterForArgsSelector(&params->parameters[current_view_start], 25, 120+j*35, current_view_start==param_selection));
 		}
 		// Write about the default if there is any
-		DrawAddChild(newPanel, DrawTransparentBox( 35, 350, vmode->fbWidth-35, 400));
+		DrawAddChild(newPanel, DrawTransparentBox( 35, 350, getVideoMode()->fbWidth-35, 400));
 		DrawAddChild(newPanel, DrawStyledLabel(33, 345, "Default values will be used by the DOL being loaded if a", 0.8f, false, defaultColor));
 		DrawAddChild(newPanel, DrawStyledLabel(33, 365, "parameter is not enabled. Please check the documentation", 0.8f, false, defaultColor));
 		DrawAddChild(newPanel, DrawStyledLabel(33, 385, "for this DOL if you are unsure of the default values.", 0.8f, false, defaultColor));
@@ -1303,7 +1301,7 @@ static uiDrawObj_t* drawCheatForCheatsSelector(CheatEntry *cheat, int x, int y, 
 
 	// If selected draw that it's selected
 	DrawAddChild(container, DrawImage(cheat->enabled ? TEX_CHECKED:TEX_UNCHECKED, x, y, 32, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-	if(selected) DrawAddChild(container, DrawTransparentBox( x+chkWidth+gapWidth, y, vmode->fbWidth-52, y+30));
+	if(selected) DrawAddChild(container, DrawTransparentBox( x+chkWidth+gapWidth, y, getVideoMode()->fbWidth-52, y+30));
 	// Draw the cheat Name
 	DrawAddChild(container, DrawStyledLabel(x+chkWidth+gapWidth+5, y+4, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor));
 	return container;
@@ -1318,9 +1316,9 @@ void DrawCheatsSelector(char *fileName) {
 	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	uiDrawObj_t *container = NULL;		
 	while(1) {
-		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, vmode->fbWidth-20, 460);
+		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 		sprintf(txtbuffer, "%s Cheats:", fileName);
-		DrawAddChild(newPanel, DrawStyledLabel(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, vmode->fbWidth-50), false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), false, defaultColor));
 
 		int j = 0;
 		int current_view_start = MIN(MAX(0,cheat_selection-cheats_per_page/2),MAX(0,cheats->num_cheats-cheats_per_page));
@@ -1328,12 +1326,12 @@ void DrawCheatsSelector(char *fileName) {
 	
 		int scrollBarHeight = 90+(cheats_per_page*20);
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)cheats->num_cheats);
-		DrawAddChild(newPanel, DrawVertScrollBar(vmode->fbWidth-45, 120, 25, scrollBarHeight, (float)((float)cheat_selection/(float)(cheats->num_cheats-1)),scrollBarTabHeight));
+		DrawAddChild(newPanel, DrawVertScrollBar(getVideoMode()->fbWidth-45, 120, 25, scrollBarHeight, (float)((float)cheat_selection/(float)(cheats->num_cheats-1)),scrollBarTabHeight));
 		for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
 			DrawAddChild(newPanel, drawCheatForCheatsSelector(&cheats->cheat[current_view_start], 25, 120+j*35, current_view_start==cheat_selection));
 		}
 		// Write about how many cheats are enabled
-		DrawAddChild(newPanel, DrawTransparentBox( 35, 350, vmode->fbWidth-35, 410));
+		DrawAddChild(newPanel, DrawTransparentBox( 35, 350, getVideoMode()->fbWidth-35, 410));
 		
 		float percent = (((float)getEnabledCheatsSize() / (float)kenobi_get_maxsize()) * 100.0f);
 		sprintf(txtbuffer, "Space taken by cheats: %i/%i bytes (%.1f%% free)"

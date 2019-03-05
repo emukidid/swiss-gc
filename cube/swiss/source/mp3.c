@@ -3,6 +3,7 @@
 #include <asndlib.h>
 #include <mp3player.h>
 #include "main.h"
+#include "util.h"
 #include "swiss.h"
 #include "mp3.h"
 #include "gui/FrameBufferMagic.h"
@@ -19,11 +20,11 @@ s32 mp3Reader(void *cbdata, void *dst, s32 size) {
 }
 
 uiDrawObj_t* updatescreen_mp3(file_handle *file, int state, int numFiles, int curMP3) {
-	uiDrawObj_t* player = DrawEmptyBox(10,100, vmode->fbWidth-10, 400);
+	uiDrawObj_t* player = DrawEmptyBox(10,100, getVideoMode()->fbWidth-10, 400);
 	sprintf(txtbuffer, "%s -  Volume (%i%%)", (state == PLAYER_PAUSE ? "Paused":"Playing"), (int)(((float)volume/(float)255)*100));
 	DrawAddChild(player, DrawStyledLabel(640/2, 130, txtbuffer, 1.0f, true, defaultColor));
 	sprintf(txtbuffer, "(%i/%i) %s",curMP3, numFiles,getRelativeName(file->name));
-	float scale = GetTextScaleToFitInWidth(txtbuffer, vmode->fbWidth-10-10);
+	float scale = GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-10-10);
 	DrawAddChild(player, DrawStyledLabel(640/2, 160, txtbuffer, scale, true, defaultColor));
 	memset(txtbuffer, 0, 256);
 	sprintf(txtbuffer, "------------------------------");

@@ -116,7 +116,7 @@ void add_tooltip_label(uiDrawObj_t* page, int page_num, int option) {
 }
 
 uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file) {
-	uiDrawObj_t* page = DrawEmptyBox(20,60, vmode->fbWidth-20, 460);
+	uiDrawObj_t* page = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 	char sramHOffsetStr[8];
 	char forceVOffsetStr[8];
 	
@@ -483,9 +483,8 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving changes ..."));
 				// Change Swiss video mode if it was modified.
 				if(tempSettings.uiVMode != swissSettings.uiVMode) {
-					GXRModeObj *newmode = getModeFromSwissSetting(swissSettings.uiVMode);
-					initialise_video(newmode);
-					vmode = newmode;
+					GXRModeObj *newmode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
+					setVideoMode(newmode);
 				}
 				// Save settings to SRAM
 				if(swissSettings.uiVMode > 0) {

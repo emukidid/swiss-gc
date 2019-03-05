@@ -37,7 +37,7 @@ char *getSramLang(u8 lang) {
 }
 
 uiDrawObj_t * info_draw_page(int page_num) {
-	uiDrawObj_t *container = DrawEmptyBox(20,60, vmode->fbWidth-20, 420);
+	uiDrawObj_t *container = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 420);
 	syssram* sram = __SYS_LockSram();
 	__SYS_UnlockSram(0);
 	
@@ -90,7 +90,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 			sprintf(topStr, "No DVD Drive present");
 		}
 		DrawAddChild(container, DrawStyledLabel(640/2, 170, topStr, 1.0f, true, defaultColor));
-		sprintf(topStr, "%s",videoStr);
+		sprintf(topStr, "%s", getVideoModeString());
 		DrawAddChild(container, DrawStyledLabel(640/2, 200, topStr, 1.0f, true, defaultColor));
 		sprintf(topStr,"%s / %s",getSramLang(sram->lang), sram->flags&4 ? "Stereo":"Mono");
 		DrawAddChild(container, DrawStyledLabel(640/2, 230, topStr, 1.0f, true, defaultColor));

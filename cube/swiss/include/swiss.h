@@ -12,6 +12,9 @@
 #include <ogcsys.h>
 #include <ogc/exi.h>
 #include "gcm.h"
+#include "util.h"
+#include "files.h"
+#include "video.h"
 #include <sdcard/card_cmn.h>
 #include "deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
@@ -21,8 +24,13 @@
 #define FILES_PER_PAGE 8
 extern int current_view_start;
 extern int current_view_end;
+extern int curMenuSelection;	      //menu selection
+extern int curSelection;		      //entry selection
+extern int needsDeviceChange;
+extern int needsRefresh;
+extern int curMenuLocation;
+
 extern char* _menu_array[];
-extern char *videoStr;
 extern file_handle curFile;
 extern file_handle curDir;
 extern u32 SDHCCard;
@@ -46,11 +54,9 @@ extern u32 __SYS_UnlockSram(u32 write);
 extern syssramex* __SYS_LockSramEx();
 extern u32 __SYS_UnlockSramEx(u32 write);
 
-extern char *getVideoString();
-void print_gecko(const char* fmt, ...);
-extern char *getRelativeName(char *str);
 extern uiDrawObj_t * renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t *container);
 
+extern void menu_loop();
 extern void boot_dol();
 extern bool manage_file();
 extern void load_file();

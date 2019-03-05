@@ -10,6 +10,7 @@
 #include "bba.h"
 #include "dvd.h"
 #include "main.h"
+#include "util.h"
 #include "devices/dvd/deviceHandler-DVD.h"
 
 static int httpd_in_use = 0;

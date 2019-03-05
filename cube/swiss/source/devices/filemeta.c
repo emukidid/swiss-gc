@@ -57,13 +57,14 @@ void* meta_alloc(unsigned int size){
 
 	void* ptr = __lwp_heap_allocate(meta_cache, size);
 	// While there's no room to allocate, call release
+	file_handle* dirEntries = getCurrentDirEntries();
 	while(!ptr) {
 		int i = 0;
-		for (i = 0; i < files; i++) {
+		for (i = 0; i < getCurrentDirEntryCount(); i++) {
 			if(!(i >= current_view_start && i <= current_view_end)) {
-				if(allFiles[i].meta) {
-					meta_free(allFiles[i].meta);
-					allFiles[i].meta = NULL;
+				if(dirEntries[i].meta) {
+					meta_free(dirEntries[i].meta);
+					dirEntries[i].meta = NULL;
 					break;
 				}
 			}

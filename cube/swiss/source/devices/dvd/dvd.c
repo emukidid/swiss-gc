@@ -8,6 +8,7 @@
 #include <malloc.h>
 #include <stdint.h>
 #include "main.h"
+#include "util.h"
 #include "dvd.h"
 #include "drivecodes.h"
 

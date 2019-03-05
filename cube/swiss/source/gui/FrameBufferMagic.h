@@ -12,10 +12,6 @@
 #include <gccore.h>
 #include "deviceHandler.h"
 
-extern GXRModeObj *vmode;
-extern u32 *xfb[2];
-extern int whichfb;
-
 #define D_WARN  0
 #define D_INFO  1
 #define D_FAIL  2

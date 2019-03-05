@@ -8,6 +8,7 @@
 #include <malloc.h>
 #include "gcm.h"
 #include "main.h"
+#include "util.h"
 #include "dvd.h"
 #include "swiss.h"
 #include "cheats.h"
