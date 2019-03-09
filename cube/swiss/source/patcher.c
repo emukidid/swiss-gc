@@ -65,6 +65,8 @@ void *installPatch(int patchId) {
 			patchSize = GXSetProjectionHook_length; patchLocation = GXSetProjectionHook; break;
 		case GX_SETSCISSORHOOK:
 			patchSize = GXSetScissorHook_length; patchLocation = GXSetScissorHook; break;
+		case GX_TOKENINTERRUPTHANDLERHOOK:
+			patchSize = GXTokenInterruptHandlerHook_length; patchLocation = GXTokenInterruptHandlerHook; break;
 		case MTX_FRUSTUMHOOK:
 			patchSize = MTXFrustumHook_length; patchLocation = MTXFrustumHook; break;
 		case MTX_LIGHTFRUSTUMHOOK:
@@ -1610,6 +1612,13 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{  549, 289, 38, 110,  7,  9, NULL, 0, "__GXInitGX F" },	// SN Systems ProDG
 		{  590, 333, 34, 119, 28, 11, NULL, 0, "__GXInitGX G" }
 	};
+	FuncPattern GXTokenInterruptHandlerSigs[5] = {
+		{ 33, 11, 3, 4, 1, 2, NULL, 0, "GXTokenInterruptHandlerD A" },
+		{ 34, 12, 4, 4, 1, 3, NULL, 0, "GXTokenInterruptHandler A" },
+		{ 33, 11, 4, 4, 0, 4, NULL, 0, "GXTokenInterruptHandler B" },	// SN Systems ProDG
+		{ 36,  9, 5, 4, 0, 4, NULL, 0, "GXTokenInterruptHandler C" },	// SN Systems ProDG
+		{ 34, 13, 4, 4, 1, 3, NULL, 0, "GXTokenInterruptHandler D" }
+	};
 	FuncPattern GXAdjustForOverscanSigs[4] = {
 		{ 57,  6,  4, 0, 3, 11, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscanD A" },
 		{ 72, 17, 15, 0, 3,  5, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan A" },
@@ -2226,6 +2235,31 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						
 						findx_pattern(data, dataType, i + 490, length, &GXSetBlendModeSigs[2]);
 						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[4]);
+						break;
+				}
+				break;
+			}
+		}
+		
+		for (j = 0; j < sizeof(GXTokenInterruptHandlerSigs) / sizeof(FuncPattern); j++) {
+			if (!GXTokenInterruptHandlerSigs[j].offsetFoundAt && compare_pattern(&fp, &GXTokenInterruptHandlerSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i + 13, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 21, length, &OSSetCurrentContextSig))
+							GXTokenInterruptHandlerSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+					case 2:
+					case 4:
+						if (findx_pattern(data, dataType, i + 14, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 22, length, &OSSetCurrentContextSig))
+							GXTokenInterruptHandlerSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i + 16, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 24, length, &OSSetCurrentContextSig))
+							GXTokenInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
 				}
 				break;
@@ -3202,6 +3236,35 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", __GXInitGXSigs[j].Name, __GXInitGX);
+		}
+	}
+	
+	for (j = 0; j < sizeof(GXTokenInterruptHandlerSigs) / sizeof(FuncPattern); j++)
+		if (GXTokenInterruptHandlerSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(GXTokenInterruptHandlerSigs) / sizeof(FuncPattern) && (i = GXTokenInterruptHandlerSigs[j].offsetFoundAt)) {
+		u32 *GXTokenInterruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		u32 *GXTokenInterruptHandlerHook;
+		
+		if (GXTokenInterruptHandler) {
+			GXTokenInterruptHandlerHook = getPatchAddr(GX_TOKENINTERRUPTHANDLERHOOK);
+			
+			switch (j) {
+				case 0:
+					data[i + 16] = 0x7D8903A6;	// mtctr	r12
+					data[i + 17] = branchAndLink(GXTokenInterruptHandlerHook, GXTokenInterruptHandler + 17);
+					break;
+				case 1:
+				case 4:
+					data[i + 17] = 0x7D8903A6;	// mtctr	r12
+				case 2:
+					data[i + 18] = branchAndLink(GXTokenInterruptHandlerHook, GXTokenInterruptHandler + 18);
+					break;
+				case 3:
+					data[i + 20] = branchAndLink(GXTokenInterruptHandlerHook, GXTokenInterruptHandler + 20);
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", GXTokenInterruptHandlerSigs[j].Name, GXTokenInterruptHandler);
 		}
 	}
 	

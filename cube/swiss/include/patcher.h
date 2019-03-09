@@ -70,6 +70,8 @@ extern u8 GXSetViewportJitterPatch[];
 extern u32 GXSetViewportJitterPatch_length;
 extern u8 GXSetViewportPatch[];
 extern u32 GXSetViewportPatch_length;
+extern u8 GXTokenInterruptHandlerHook[];
+extern u32 GXTokenInterruptHandlerHook_length;
 extern u8 MTXFrustumHook[];
 extern u32 MTXFrustumHook_length;
 extern u8 MTXLightFrustumHook[];
@@ -124,6 +126,7 @@ enum patchIds {
 	GX_INITTEXOBJLODHOOK,
 	GX_SETPROJECTIONHOOK,
 	GX_SETSCISSORHOOK,
+	GX_TOKENINTERRUPTHANDLERHOOK,
 	MTX_FRUSTUMHOOK,
 	MTX_LIGHTFRUSTUMHOOK,
 	MTX_LIGHTPERSPECTIVEHOOK,
