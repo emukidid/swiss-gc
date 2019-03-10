@@ -720,6 +720,12 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 43, 10, 4, 4, 6, 3, NULL, 0, "DVDGetDriveStatus A" },
 		{ 43, 10, 4, 4, 6, 4, NULL, 0, "DVDGetDriveStatus B" }	// SN Systems ProDG
 	};
+	FuncPattern DVDCheckDiskSigs[4] = {
+		{ 61, 16, 2, 2, 10, 7, NULL, 0, "DVDCheckDiskD A" },
+		{ 57, 19, 3, 2, 10, 5, NULL, 0, "DVDCheckDisk A" },
+		{ 61, 19, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk B" },	// SN Systems ProDG
+		{ 62, 20, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk C" }
+	};
 	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
@@ -893,6 +899,30 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 33, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 35, length, &OSRestoreInterruptsSig))
 							DVDGetDriveStatusSigs[j].offsetFoundAt = i;
+						break;
+				}
+				break;
+			}
+		}
+		
+		for (j = 0; j < sizeof(DVDCheckDiskSigs) / sizeof(FuncPattern); j++) {
+			if (!DVDCheckDiskSigs[j].offsetFoundAt && compare_pattern(&fp, &DVDCheckDiskSigs[j])) {
+				switch (j) {
+					case 1:
+						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 50, length, &OSRestoreInterruptsSig))
+							DVDCheckDiskSigs[j].offsetFoundAt = i;
+						break;
+					case 0:
+					case 2:
+						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 54, length, &OSRestoreInterruptsSig))
+							DVDCheckDiskSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 55, length, &OSRestoreInterruptsSig))
+							DVDCheckDiskSigs[j].offsetFoundAt = i;
 						break;
 				}
 				break;
@@ -1219,6 +1249,23 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				case 2: data[i + 33] = branchAndLink(TICKLE_READ_HOOK, DVDGetDriveStatus + 33); break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", DVDGetDriveStatusSigs[j].Name, DVDGetDriveStatus);
+		}
+	}
+	
+	for (j = 0; j < sizeof(DVDCheckDiskSigs) / sizeof(FuncPattern); j++)
+		if (DVDCheckDiskSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(DVDCheckDiskSigs) / sizeof(FuncPattern) && (i = DVDCheckDiskSigs[j].offsetFoundAt)) {
+		u32 *DVDCheckDisk = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (DVDCheckDisk) {
+			switch (j) {
+				case 1: data[i + 50] = branchAndLink(TICKLE_READ_HOOK, DVDCheckDisk + 50); break;
+				case 0:
+				case 2: data[i + 54] = branchAndLink(TICKLE_READ_HOOK, DVDCheckDisk + 54); break;
+				case 3: data[i + 55] = branchAndLink(TICKLE_READ_HOOK, DVDCheckDisk + 55); break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", DVDCheckDiskSigs[j].Name, DVDCheckDisk);
 		}
 	}
 	
