@@ -517,12 +517,12 @@ int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType )
 			u32 dstR = (op >> 21) & 0x1F;
 			u32 val = op & 0xFFFF;
 			if(dstR == src) {regs[src][REG_0x8000] = 0; continue; }
-			if( regs[src][REG_0x8000] && (((val & 0xFFFF) >= 0x0A00) && ((val & 0xFFFF) < 0x3000))) // case with load in our range(rZ)
+			if( regs[src][REG_0x8000] && (((val & 0xFFFF) >= 0x1000) && ((val & 0xFFFF) < 0x3000))) // case with load in our range(rZ)
 			{
 				void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
 				print_gecko("LowMem:[%08X] %08X: mem r%u, %04X\r\n", properAddress, *(vu32*)(dst + i), src, *(vu32*)(dst + i) &0xFFFF);
 				*(vu32*)(dst + i) = 0x60000000;	// We could redirect ...
-				regs[src][REG_INUSE]=1;	// was used in a 0x80000A00->0x80003000 load/store
+				regs[src][REG_INUSE]=1;	// was used in a 0x80001000->0x80003000 load/store
 				LowMemPatched++;
 			}
 			continue;
@@ -1204,8 +1204,6 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			}
 		}
 	}
-	
-	PatchDetectLowMemUsage(data, length, dataType);
 }
 
 /** Used for Multi-DOL games that require patches to be stored on SD */
@@ -3946,6 +3944,52 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 			print_gecko("Patched:[Powerpuff Girls PAL]\r\n");
 			patched=1;
 		}
+	}
+	else if(!strncmp(gameID, "GFZE01", 6) || !strncmp(gameID, "GFZP01", 6))
+	{
+		*(vu32*)(addr+0x2608) = 0x48000038;
+		*(vu32*)(addr+0x260C) = 0x60000000;
+		*(vu32*)(addr+0x2610) = 0x60000000;
+		*(vu32*)(addr+0x2614) = 0x60000000;
+		*(vu32*)(addr+0x2618) = 0x60000000;
+		*(vu32*)(addr+0x261C) = 0x60000000;
+		*(vu32*)(addr+0x2620) = 0x60000000;
+		*(vu32*)(addr+0x2624) = 0x60000000;
+		*(vu32*)(addr+0x2628) = 0x60000000;
+		*(vu32*)(addr+0x262C) = 0x60000000;
+		*(vu32*)(addr+0x2630) = 0x60000000;
+		*(vu32*)(addr+0x2634) = 0x60000000;
+		*(vu32*)(addr+0x2638) = 0x60000000;
+		*(vu32*)(addr+0x263C) = 0x60000000;
+		*(vu32*)(addr+0x2640) = 0x38000000;
+		print_gecko("Patched:[%.6s]\n", gameID);
+		patched=1;
+	}
+	else if(!strncmp(gameID, "GFZJ01", 6))
+	{
+		*(vu32*)(addr+0x2608) = 0x48000050;
+		*(vu32*)(addr+0x260C) = 0x60000000;
+		*(vu32*)(addr+0x2610) = 0x60000000;
+		*(vu32*)(addr+0x2614) = 0x60000000;
+		*(vu32*)(addr+0x2618) = 0x60000000;
+		*(vu32*)(addr+0x261C) = 0x60000000;
+		*(vu32*)(addr+0x2620) = 0x60000000;
+		*(vu32*)(addr+0x2624) = 0x60000000;
+		*(vu32*)(addr+0x2628) = 0x60000000;
+		*(vu32*)(addr+0x262C) = 0x60000000;
+		*(vu32*)(addr+0x2630) = 0x60000000;
+		*(vu32*)(addr+0x2634) = 0x60000000;
+		*(vu32*)(addr+0x2638) = 0x60000000;
+		*(vu32*)(addr+0x263C) = 0x60000000;
+		*(vu32*)(addr+0x2640) = 0x60000000;
+		*(vu32*)(addr+0x2644) = 0x60000000;
+		*(vu32*)(addr+0x2648) = 0x60000000;
+		*(vu32*)(addr+0x264C) = 0x60000000;
+		*(vu32*)(addr+0x2650) = 0x60000000;
+		*(vu32*)(addr+0x2654) = 0x60000000;
+		*(vu32*)(addr+0x2658) = 0x38000005;
+		print_gecko("Patched:[%.6s]\n", gameID);
+		patched=1;
 	}
 	return patched;
 }
