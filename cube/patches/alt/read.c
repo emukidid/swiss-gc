@@ -2,6 +2,8 @@
 #include <string.h>
 #include "../../reservedarea.h"
 #include "../base/common.h"
+#include "../base/dvd.h"
+#include "../base/os.h"
 
 void exi_handler() {}
 
@@ -25,11 +27,16 @@ void trigger_dvd_interrupt(void)
 	(*DI)[8] = 0;
 	(*DI)[7] = 1;
 
+	asm volatile("mtdabr %0" :: "r" (0));
 	dcache_flush_icache_inv((void *)dst, len);
 }
 
-void perform_read(void)
+void dsi_exception_handler(OSException exception, OSContext *context);
+
+void perform_read(DVDCommandBlock *block)
 {
+	uint32_t dabr = (uint32_t)&block->state & ~7;
+
 	uint32_t off = (*DI)[3] << 2;
 	uint32_t len = (*DI)[4];
 	uint32_t dst = (*DI)[5] | 0x80000000;
@@ -37,9 +44,12 @@ void perform_read(void)
 	*(uint32_t *)VAR_LAST_OFFSET = off;
 	*(uint32_t *)VAR_TMP2 = len;
 	*(uint32_t *)VAR_TMP1 = dst;
+
+	OSExceptionTable[OS_EXCEPTION_DSI] = dsi_exception_handler;
+	asm volatile("mtdabr %0" :: "r" (dabr | 0b101));
 }
 
-void *tickle_read(void)
+void tickle_read(void)
 {
 	uint32_t position  = *(uint32_t *)VAR_LAST_OFFSET;
 	uint32_t remainder = *(uint32_t *)VAR_TMP2;
@@ -58,14 +68,6 @@ void *tickle_read(void)
 
 		if (!remainder) trigger_dvd_interrupt();
 	}
-
-	return NULL;
-}
-
-void tickle_read_hook(uint32_t enable)
-{
-	tickle_read();
-	restore_interrupts(enable);
 }
 
 void tickle_read_idle(void)
@@ -73,4 +75,19 @@ void tickle_read_idle(void)
 	disable_interrupts();
 	tickle_read();
 	enable_interrupts();
+}
+
+OSContext *tickle_read_trap(OSException exception, OSContext *context, uint32_t dsisr, uint32_t dar)
+{
+	uint32_t dabr;
+
+	if ((dsisr & 0x400000) == 0x400000) {
+		asm volatile("mfdabr %0" : "=r" (dabr));
+		asm volatile("mtdabr %0" :: "r" (dabr & ~0b011));
+
+		tickle_read();
+		context->srr1 |= 0x400;
+	}
+
+	return context;
 }

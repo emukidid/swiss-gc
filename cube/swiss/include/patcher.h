@@ -177,13 +177,12 @@ enum patchIds {
 #define IGR_CHECK_WKF			(void*)(LO_RESERVE | 0x08)
 
 /* Function jump locations for the SD/IDE/USBGecko/BBA patch */
-#define EXI_HANDLER				(void*)(LO_RESERVE_ALT | 0x20)
-#define EXI_LOCK				(void*)(LO_RESERVE_ALT | 0x24)
-#define PERFORM_READ			(void*)(LO_RESERVE_ALT | 0x28)
-#define TICKLE_READ				(void*)(LO_RESERVE_ALT | 0x2C)
-#define TICKLE_READ_HOOK		(void*)(LO_RESERVE_ALT | 0x30)
-#define TICKLE_READ_IDLE		(void*)(LO_RESERVE_ALT | 0x34)
-#define IGR_CHECK_ALT			(void*)(LO_RESERVE_ALT | 0x38)
+#define EXI_HANDLER				(void*)(LO_RESERVE_ALT | 0x170)
+#define EXI_LOCK				(void*)(LO_RESERVE_ALT | 0x174)
+#define PERFORM_READ			(void*)(LO_RESERVE_ALT | 0x178)
+#define TICKLE_READ				(void*)(LO_RESERVE_ALT | 0x17C)
+#define TICKLE_READ_IDLE		(void*)(LO_RESERVE_ALT | 0x180)
+#define IGR_CHECK_ALT			(void*)(LO_RESERVE_ALT | 0x184)
 
 #define READ_PATCHED_ALL 		(0x111)
 

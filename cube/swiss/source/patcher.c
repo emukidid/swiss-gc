@@ -720,12 +720,6 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 43, 10, 4, 4, 6, 3, NULL, 0, "DVDGetDriveStatus A" },
 		{ 43, 10, 4, 4, 6, 4, NULL, 0, "DVDGetDriveStatus B" }	// SN Systems ProDG
 	};
-	FuncPattern DVDCheckDiskSigs[4] = {
-		{ 61, 16, 2, 2, 10, 7, NULL, 0, "DVDCheckDiskD A" },
-		{ 57, 19, 3, 2, 10, 5, NULL, 0, "DVDCheckDisk A" },
-		{ 61, 19, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk B" },	// SN Systems ProDG
-		{ 62, 20, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk C" }
-	};
 	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
@@ -904,30 +898,6 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				break;
 			}
 		}
-		
-		for (j = 0; j < sizeof(DVDCheckDiskSigs) / sizeof(FuncPattern); j++) {
-			if (!DVDCheckDiskSigs[j].offsetFoundAt && compare_pattern(&fp, &DVDCheckDiskSigs[j])) {
-				switch (j) {
-					case 1:
-						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 50, length, &OSRestoreInterruptsSig))
-							DVDCheckDiskSigs[j].offsetFoundAt = i;
-						break;
-					case 0:
-					case 2:
-						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 54, length, &OSRestoreInterruptsSig))
-							DVDCheckDiskSigs[j].offsetFoundAt = i;
-						break;
-					case 3:
-						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 55, length, &OSRestoreInterruptsSig))
-							DVDCheckDiskSigs[j].offsetFoundAt = i;
-						break;
-				}
-				break;
-			}
-		}
 		i += fp.Length - 1;
 	}
 	
@@ -966,29 +936,41 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			switch (j) {
 				case 0:
 					data[i + 12] = branchAndLink(TICKLE_READ, SelectThread + 12);
+					data[i + 13] = 0x480001A0;	// b		+104
 					data[i + 20] = branchAndLink(TICKLE_READ, SelectThread + 20);
+					data[i + 21] = 0x48000180;	// b		+96
 					data[i + 48] = branchAndLink(TICKLE_READ, SelectThread + 48);
+					data[i + 49] = 0x48000110;	// b		+68
 					data[i + 58] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 58);
 					data[i + 61] = 0x4182FFF4;	// beq		-3
 					break;
 				case 1:
 					data[i + 11] = branchAndLink(TICKLE_READ, SelectThread + 11);
+					data[i + 12] = 0x480001B4;	// b		+109
 					data[i + 19] = branchAndLink(TICKLE_READ, SelectThread + 19);
+					data[i + 20] = 0x48000194;	// b		+101
 					data[i + 67] = branchAndLink(TICKLE_READ, SelectThread + 67);
+					data[i + 68] = 0x480000D4;	// b		+53
 					data[i + 77] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 77);
 					data[i + 80] = 0x4182FFF4;	// beq		-3
 					break;
 				case 2:
 					data[i + 11] = branchAndLink(TICKLE_READ, SelectThread + 11);
+					data[i + 12] = 0x480001DC;	// b		+119
 					data[i + 19] = branchAndLink(TICKLE_READ, SelectThread + 19);
+					data[i + 20] = 0x480001BC;	// b		+111
 					data[i + 67] = branchAndLink(TICKLE_READ, SelectThread + 67);
+					data[i + 68] = 0x480000FC;	// b		+63
 					data[i + 82] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 82);
 					data[i + 85] = 0x4182FFF4;	// beq		-3
 					break;
 				case 3:
 					data[i +  8] = branchAndLink(TICKLE_READ, SelectThread +  8);
+					data[i +  9] = 0x480001F8;	// b		+126
 					data[i + 15] = branchAndLink(TICKLE_READ, SelectThread + 15);
+					data[i + 16] = 0x480001DC;	// b		+119
 					data[i + 66] = branchAndLink(TICKLE_READ, SelectThread + 66);
+					data[i + 67] = 0x48000110;	// b		+68
 					data[i + 83] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 83);
 					data[i + 86] = 0x4182FFF4;	// beq		-3
 					break;
@@ -999,7 +981,7 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		if ((i = __OSRescheduleSig.offsetFoundAt)) {
 			u32 *__OSReschedule = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			
-			if (__OSReschedule) {
+			if (__OSReschedule && SelectThread) {
 				data[i + 0] = data[i + 3];
 				data[i + 1] = data[i + 4];
 				data[i + 2] = data[i + 5];
@@ -1091,181 +1073,135 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		}
 	}
 	
+	for (k = 0; k < sizeof(DVDGetDriveStatusSigs) / sizeof(FuncPattern); k++)
+		if (DVDGetDriveStatusSigs[k].offsetFoundAt) break;
+	
 	for (j = 0; j < sizeof(ReadSigs) / sizeof(FuncPattern); j++)
 		if (ReadSigs[j].offsetFoundAt) break;
 	
-	if (j < sizeof(ReadSigs) / sizeof(FuncPattern) && (i = ReadSigs[j].offsetFoundAt)) {
-		u32 *Read = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (Read) {
-			switch (j) {
-				case 0:
-					data[i + 33] = 0x38600001;	// li		r3, 1
-					data[i + 34] = branchAndLink(PERFORM_READ, Read + 34);
-					data[i + 35] = 0x3C000010;	// lis		r0, 16
-					data[i + 41] = 0x1C80003C;	// mulli	r4, r0, 60
-					data[i + 48] = 0x1C800014;	// mulli	r4, r0, 20
-					break;
-				case 1:
-					data[i + 18] = data[i + 17];
-					data[i + 17] = data[i + 19];
-					data[i + 19] = data[i + 20];
-					data[i + 20] = data[i + 21];
-					data[i + 21] = data[i + 22];
-					data[i + 22] = data[i + 23];
-					data[i + 23] = data[i + 25];
-					data[i + 24] = data[i + 27];
-					data[i + 25] = data[i + 28];
-					data[i + 26] = data[i + 29];
-					data[i + 27] = data[i + 30];
-					data[i + 28] = 0x38600001;	// li		r3, 1
-					data[i + 29] = branchAndLink(PERFORM_READ, Read + 29);
-					data[i + 30] = 0x3C000010;	// lis		r0, 16
-					data[i + 31] = 0x7C1D0040;	// cmplw	r29, r0
-					data[i + 37] = 0x1FC0003C;	// mulli	r30, r0, 60
-					data[i + 50] = 0x1FC00014;	// mulli	r30, r0, 20
-					break;
-				case 2:
-					data[i + 20] = data[i + 19];
-					data[i + 19] = data[i + 21];
-					data[i + 21] = data[i + 22];
-					data[i + 22] = data[i + 23];
-					data[i + 23] = data[i + 24];
-					data[i + 24] = data[i + 25];
-					data[i + 25] = data[i + 27];
-					data[i + 26] = data[i + 29];
-					data[i + 27] = data[i + 30];
-					data[i + 28] = data[i + 31];
-					data[i + 29] = data[i + 32];
-					data[i + 30] = 0x38600001;	// li		r3, 1
-					data[i + 31] = branchAndLink(PERFORM_READ, Read + 31);
-					data[i + 32] = 0x3C000010;	// lis		r0, 16
-					data[i + 33] = 0x7C1D0040;	// cmplw	r29, r0
-					data[i + 39] = 0x1FC0003C;	// mulli	r30, r0, 60
-					data[i + 52] = 0x1FC00014;	// mulli	r30, r0, 20
-					break;
-				case 3:
-					data[i + 16] = data[i + 19];
-					data[i + 19] = data[i + 20];
-					data[i + 20] = data[i + 23];
-					data[i + 21] = data[i + 24];
-					data[i + 22] = data[i + 25];
-					data[i + 23] = data[i + 26];
-					data[i + 24] = data[i + 27];
-					data[i + 25] = data[i + 28];
-					data[i + 26] = 0x38600001;	// li		r3, 1
-					data[i + 27] = branchAndLink(PERFORM_READ, Read + 27);
-					data[i + 28] = 0x3C000010;	// lis		r0, 16
-					data[i + 29] = 0x7C1E0040;	// cmplw	r30, r0
-					data[i + 36] = 0x1FE0003C;	// mulli	r31, r0, 60
-					data[i + 51] = 0x1FE00014;	// mulli	r31, r0, 20
-					break;
-			}
-			print_gecko("Found:[%s] @ %08X\n", ReadSigs[j].Name, Read);
-		}
-	}
-	
-	for (j = 0; j < sizeof(DVDLowReadSigs) / sizeof(FuncPattern); j++)
-		if (DVDLowReadSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowReadSigs) / sizeof(FuncPattern) && (i = DVDLowReadSigs[j].offsetFoundAt)) {
-		u32 *DVDLowRead = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (DVDLowRead) {
-			if (j == 2) {
-				data[i +  30] = data[i +  33];
-				data[i +  33] = data[i +  34];
-				data[i +  34] = data[i +  37];
-				data[i +  35] = data[i +  38];
-				data[i +  36] = data[i +  39];
-				data[i +  37] = data[i +  40];
-				data[i +  38] = data[i +  41];
-				data[i +  39] = data[i +  42];
-				data[i +  40] = 0x38600001;	// li		r3, 1
-				data[i +  41] = branchAndLink(PERFORM_READ, DVDLowRead + 41);
-				data[i +  42] = 0x3C000010;	// lis		r0, 16
-				data[i +  43] = 0x7C180040;	// cmplw	r24, r0
-				data[i +  49] = 0x1EC0003C;	// mulli	r22, r0, 60
-				data[i +  62] = 0x1EC00014;	// mulli	r22, r0, 20
-				
-				data[i + 138] = data[i + 141];
-				data[i + 141] = data[i + 142];
-				data[i + 142] = data[i + 145];
-				data[i + 143] = data[i + 146];
-				data[i + 144] = data[i + 147];
-				data[i + 145] = data[i + 148];
-				data[i + 146] = data[i + 149];
-				data[i + 147] = data[i + 150];
-				data[i + 148] = 0x38600001;	// li		r3, 1
-				data[i + 149] = branchAndLink(PERFORM_READ, DVDLowRead + 149);
-				data[i + 150] = 0x3C000010;	// lis		r0, 16
-				data[i + 151] = 0x7C180040;	// cmplw	r24, r0
-				data[i + 157] = 0x1EC0003C;	// mulli	r22, r0, 60
-				data[i + 170] = 0x1EC00014;	// mulli	r22, r0, 20
-				
-				data[i + 221] = data[i + 224];
-				data[i + 224] = data[i + 225];
-				data[i + 225] = data[i + 228];
-				data[i + 226] = data[i + 229];
-				data[i + 227] = data[i + 230];
-				data[i + 228] = data[i + 231];
-				data[i + 229] = data[i + 232];
-				data[i + 230] = data[i + 233];
-				data[i + 231] = 0x38600001;	// li		r3, 1
-				data[i + 232] = branchAndLink(PERFORM_READ, DVDLowRead + 232);
-				data[i + 233] = 0x3C000010;	// lis		r0, 16
-				data[i + 234] = 0x7C180040;	// cmplw	r24, r0
-				data[i + 240] = 0x1EC0003C;	// mulli	r22, r0, 60
-				data[i + 253] = 0x1EC00014;	// mulli	r22, r0, 20
-			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowReadSigs[j].Name, DVDLowRead);
-		}
-	}
-	
-	for (j = 0; j < sizeof(DVDGetCommandBlockStatusSigs) / sizeof(FuncPattern); j++)
-		if (DVDGetCommandBlockStatusSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDGetCommandBlockStatusSigs) / sizeof(FuncPattern) && (i = DVDGetCommandBlockStatusSigs[j].offsetFoundAt)) {
-		u32 *DVDGetCommandBlockStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (DVDGetCommandBlockStatus) {
-			switch (j) {
-				case 0: data[i + 22] = branchAndLink(TICKLE_READ_HOOK, DVDGetCommandBlockStatus + 22); break;
-				case 1: data[i + 12] = branchAndLink(TICKLE_READ_HOOK, DVDGetCommandBlockStatus + 12); break;
-			}
-			print_gecko("Found:[%s] @ %08X\n", DVDGetCommandBlockStatusSigs[j].Name, DVDGetCommandBlockStatus);
-		}
-	}
-	
-	for (j = 0; j < sizeof(DVDGetDriveStatusSigs) / sizeof(FuncPattern); j++)
-		if (DVDGetDriveStatusSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDGetDriveStatusSigs) / sizeof(FuncPattern) && (i = DVDGetDriveStatusSigs[j].offsetFoundAt)) {
+	if (k < sizeof(DVDGetDriveStatusSigs) / sizeof(FuncPattern) && (i = DVDGetDriveStatusSigs[k].offsetFoundAt)) {
 		u32 *DVDGetDriveStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		if (DVDGetDriveStatus) {
-			switch (j) {
-				case 1:
-				case 2: data[i + 33] = branchAndLink(TICKLE_READ_HOOK, DVDGetDriveStatus + 33); break;
-			}
-			print_gecko("Found:[%s] @ %08X\n", DVDGetDriveStatusSigs[j].Name, DVDGetDriveStatus);
-		}
-	}
-	
-	for (j = 0; j < sizeof(DVDCheckDiskSigs) / sizeof(FuncPattern); j++)
-		if (DVDCheckDiskSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDCheckDiskSigs) / sizeof(FuncPattern) && (i = DVDCheckDiskSigs[j].offsetFoundAt)) {
-		u32 *DVDCheckDisk = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		s16 executing;
 		
-		if (DVDCheckDisk) {
-			switch (j) {
-				case 1: data[i + 50] = branchAndLink(TICKLE_READ_HOOK, DVDCheckDisk + 50); break;
-				case 0:
-				case 2: data[i + 54] = branchAndLink(TICKLE_READ_HOOK, DVDCheckDisk + 54); break;
-				case 3: data[i + 55] = branchAndLink(TICKLE_READ_HOOK, DVDCheckDisk + 55); break;
+		if (DVDGetDriveStatus) {
+			switch (k) {
+				case 0: executing = (s16)data[i + 29]; break;
+				case 1:
+				case 2: executing = (s16)data[i + 17]; break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDCheckDiskSigs[j].Name, DVDCheckDisk);
+			print_gecko("Found:[%s] @ %08X\n", DVDGetDriveStatusSigs[k].Name, DVDGetDriveStatus);
+		}
+		
+		if (k < sizeof(DVDLowReadSigs) / sizeof(FuncPattern) && (i = DVDLowReadSigs[k].offsetFoundAt)) {
+			u32 *DVDLowRead = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			
+			if (DVDLowRead && DVDGetDriveStatus) {
+				if (k == 2) {
+					data[i +  30] = data[i +  33];
+					data[i +  33] = data[i +  34];
+					data[i +  34] = data[i +  37];
+					data[i +  35] = data[i +  38];
+					data[i +  36] = data[i +  39];
+					data[i +  37] = data[i +  40];
+					data[i +  38] = data[i +  41];
+					data[i +  39] = data[i +  42];
+					data[i +  40] = 0x806D0000 | (executing & 0xFFFF);
+					data[i +  41] = branchAndLink(PERFORM_READ, DVDLowRead + 41);
+					data[i +  42] = 0x3C000008;	// lis		r0, 8
+					data[i +  43] = 0x7C180040;	// cmplw	r24, r0
+					
+					data[i + 138] = data[i + 141];
+					data[i + 141] = data[i + 142];
+					data[i + 142] = data[i + 145];
+					data[i + 143] = data[i + 146];
+					data[i + 144] = data[i + 147];
+					data[i + 145] = data[i + 148];
+					data[i + 146] = data[i + 149];
+					data[i + 147] = data[i + 150];
+					data[i + 148] = 0x806D0000 | (executing & 0xFFFF);
+					data[i + 149] = branchAndLink(PERFORM_READ, DVDLowRead + 149);
+					data[i + 150] = 0x3C000008;	// lis		r0, 8
+					data[i + 151] = 0x7C180040;	// cmplw	r24, r0
+					
+					data[i + 221] = data[i + 224];
+					data[i + 224] = data[i + 225];
+					data[i + 225] = data[i + 228];
+					data[i + 226] = data[i + 229];
+					data[i + 227] = data[i + 230];
+					data[i + 228] = data[i + 231];
+					data[i + 229] = data[i + 232];
+					data[i + 230] = data[i + 233];
+					data[i + 231] = 0x806D0000 | (executing & 0xFFFF);
+					data[i + 232] = branchAndLink(PERFORM_READ, DVDLowRead + 232);
+					data[i + 233] = 0x3C000008;	// lis		r0, 8
+					data[i + 234] = 0x7C180040;	// cmplw	r24, r0
+				}
+				print_gecko("Found:[%s] @ %08X\n", DVDLowReadSigs[k].Name, DVDLowRead);
+			}
+		}
+		
+		if (j < sizeof(ReadSigs) / sizeof(FuncPattern) && (i = ReadSigs[j].offsetFoundAt)) {
+			u32 *Read = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			
+			if (Read && DVDGetDriveStatus) {
+				switch (j) {
+					case 0:
+						data[i + 33] = 0x806D0000 | (executing & 0xFFFF);
+						data[i + 34] = branchAndLink(PERFORM_READ, Read + 34);
+						data[i + 35] = 0x3C000008;	// lis		r0, 8
+						break;
+					case 1:
+						data[i + 18] = data[i + 17];
+						data[i + 17] = data[i + 19];
+						data[i + 19] = data[i + 20];
+						data[i + 20] = data[i + 21];
+						data[i + 21] = data[i + 22];
+						data[i + 22] = data[i + 23];
+						data[i + 23] = data[i + 25];
+						data[i + 24] = data[i + 27];
+						data[i + 25] = data[i + 28];
+						data[i + 26] = data[i + 29];
+						data[i + 27] = data[i + 30];
+						data[i + 28] = 0x806D0000 | (executing & 0xFFFF);
+						data[i + 29] = branchAndLink(PERFORM_READ, Read + 29);
+						data[i + 30] = 0x3C000008;	// lis		r0, 8
+						data[i + 31] = 0x7C1D0040;	// cmplw	r29, r0
+						break;
+					case 2:
+						data[i + 20] = data[i + 19];
+						data[i + 19] = data[i + 21];
+						data[i + 21] = data[i + 22];
+						data[i + 22] = data[i + 23];
+						data[i + 23] = data[i + 24];
+						data[i + 24] = data[i + 25];
+						data[i + 25] = data[i + 27];
+						data[i + 26] = data[i + 29];
+						data[i + 27] = data[i + 30];
+						data[i + 28] = data[i + 31];
+						data[i + 29] = data[i + 32];
+						data[i + 30] = 0x806D0000 | (executing & 0xFFFF);
+						data[i + 31] = branchAndLink(PERFORM_READ, Read + 31);
+						data[i + 32] = 0x3C000008;	// lis		r0, 8
+						data[i + 33] = 0x7C1D0040;	// cmplw	r29, r0
+						break;
+					case 3:
+						data[i + 16] = data[i + 19];
+						data[i + 19] = data[i + 20];
+						data[i + 20] = data[i + 23];
+						data[i + 21] = data[i + 24];
+						data[i + 22] = data[i + 25];
+						data[i + 23] = data[i + 26];
+						data[i + 24] = data[i + 27];
+						data[i + 25] = data[i + 28];
+						data[i + 26] = 0x806D0000 | (executing & 0xFFFF);
+						data[i + 27] = branchAndLink(PERFORM_READ, Read + 27);
+						data[i + 28] = 0x3C000008;	// lis		r0, 8
+						data[i + 29] = 0x7C1E0040;	// cmplw	r30, r0
+						break;
+				}
+				print_gecko("Found:[%s] @ %08X\n", ReadSigs[j].Name, Read);
+			}
 		}
 	}
 	
