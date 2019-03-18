@@ -82,7 +82,7 @@ build-sd-alt:
 build-ideexi-v1:
 	@echo Building IDE-EXI-v1 Patch ...
 	@$(CC) -O1 $(OPTS) -c base/base.S
-	@$(CC) -O1 $(OPTS) -c ide-exi/hddread.c -DIDE_EXI_V1
+	@$(CC) -O1 $(OPTS) -c ide-exi/hddread.c -DDMA_READ=0
 	@$(CC) -O1 $(OPTS) -c base/frag.c
 	@$(CC) -O1 $(OPTS) -c base/igr.c
 	@$(CC) -O1 $(OPTS) -c base/usbgecko.c
@@ -104,7 +104,7 @@ build-ideexi-altv1:
 	@echo Building IDE-EXI-v1 Alternate Patch ...
 	@$(CC) -O2 $(OPTS) -c alt/base.S
 	@$(CC) -O2 $(OPTS) -c alt/read.c
-	@$(CC) -O2 $(OPTS) -c ide-exi/hddread.c -DIDE_EXI_V1 -DSINGLE_SECTOR=1
+	@$(CC) -O2 $(OPTS) -c ide-exi/hddread.c -DDMA_READ=0 -DSINGLE_SECTOR=1
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c
@@ -120,7 +120,7 @@ build-ideexi-altv1:
 build-ideexi-v2:
 	@echo Building IDE-EXI-v2 Patch ...
 	@$(CC) -O1 $(OPTS) -c base/base.S
-	@$(CC) -O1 $(OPTS) -c ide-exi/hddread.c
+	@$(CC) -O1 $(OPTS) -c ide-exi/hddread.c -DDMA_READ=1
 	@$(CC) -O1 $(OPTS) -c base/frag.c
 	@$(CC) -O1 $(OPTS) -c base/igr.c
 	@$(CC) -O1 $(OPTS) -c base/usbgecko.c
@@ -142,7 +142,7 @@ build-ideexi-altv2:
 	@echo Building IDE-EXI-v2 Alternate Patch ...
 	@$(CC) -O2 $(OPTS) -c alt/base.S
 	@$(CC) -O2 $(OPTS) -c alt/read.c
-	@$(CC) -O2 $(OPTS) -c ide-exi/hddread.c -DSINGLE_SECTOR=1
+	@$(CC) -O2 $(OPTS) -c ide-exi/hddread.c -DDMA_READ=1 -DSINGLE_SECTOR=1
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c
