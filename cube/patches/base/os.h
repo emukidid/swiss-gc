@@ -33,7 +33,7 @@ typedef enum {
 	OS_EXCEPTION_MAX
 } OSException;
 
-typedef void (*OSExceptionHandler)(OSException exception, OSContext *context);
+typedef void (*OSExceptionHandler)(OSException exception, OSContext *context, ...);
 
 static OSExceptionHandler *const OSExceptionTable = (OSExceptionHandler *)0x80003000;
 

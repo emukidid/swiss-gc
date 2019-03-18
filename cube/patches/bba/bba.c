@@ -295,7 +295,7 @@ void trigger_dvd_interrupt(void)
 	dcache_flush_icache_inv((void *)dst, len);
 }
 
-void dsi_exception_handler(OSException exception, OSContext *context);
+void dsi_exception_handler(OSException exception, OSContext *context, ...);
 
 void perform_read(DVDCommandBlock *block)
 {
@@ -366,6 +366,9 @@ OSContext *tickle_read_trap(OSException exception, OSContext *context, uint32_t 
 
 		tickle_read();
 		context->srr1 |= 0x400;
+	} else {
+		OSExceptionHandler handler = *OSExceptionTable;
+		if (handler) (handler + 0x50)(exception, context, dsisr, dar);
 	}
 
 	return context;
