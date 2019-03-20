@@ -38,16 +38,7 @@ typedef struct {
 } DOLHEADER;
 
 #ifndef DEBUG
-void *memcpy(void *dest, const void *src, u32 size)
-{
-	char *d = dest;
-	const char *s = src;
-
-	while (size--)
-		*d++ = *s++;
-
-	return dest;
-}
+void *memcpy(void *dest, const void *src, u32 size);
 
 void load_dol() {
 	u32 base = 0x81300000;

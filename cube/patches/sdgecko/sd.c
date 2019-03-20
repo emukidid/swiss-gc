@@ -19,6 +19,9 @@
 #define CMD24				(0x58)
 
 #define SECTOR_SIZE 		512
+
+#define sectorBuf			((u8*)VAR_SECTOR_BUF)
+
 #define exi_freq  			(*(u8*)VAR_EXI_FREQ)
 // exi_channel is stored as number of u32's to index into the exi bus (0xCC006800)
 #define exi_channel 		(*(u8*)VAR_EXI_SLOT)
@@ -175,7 +178,7 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	#else
 	// If we saved this sector
 	if(lba == *(u32*)VAR_SECTOR_CUR) {
-		memcpy(dst, (u8*)VAR_SECTOR_BUF + startByte, numBytes);
+		memcpy(dst, sectorBuf + startByte, numBytes);
 		return numBytes;
 	}
 	// If we weren't just reading this sector
@@ -190,8 +193,8 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	}
 	if(numBytes < SECTOR_SIZE) {
 		// Read half block
-		rcvr_datablock((u8*)VAR_SECTOR_BUF, 0, SECTOR_SIZE);
-		memcpy(dst, (u8*)VAR_SECTOR_BUF + startByte, numBytes);
+		rcvr_datablock(sectorBuf, 0, SECTOR_SIZE);
+		memcpy(dst, sectorBuf + startByte, numBytes);
 		// Save current LBA
 		*(u32*)VAR_SECTOR_CUR = lba;
 	}

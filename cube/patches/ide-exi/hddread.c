@@ -35,6 +35,8 @@
 
 #define SECTOR_SIZE 		512
 
+#define sectorBuf			((u8*)VAR_SECTOR_BUF + DMA_READ * 0x40000000)
+
 #define _ata48bit *(u8*)VAR_ATA_LBA48
 
 #define exi_freq  			(*(u8*)VAR_EXI_FREQ)
@@ -117,7 +119,6 @@ static void ata_read_buffer(u8 *dst)
 	exi_imm_write(0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8), 4);
 	#if DMA_READ
 	// v2, no deselect or extra read required.
-	dcache_flush_icache_inv(ptr, SECTOR_SIZE);
 	exi_dma_read(ptr, SECTOR_SIZE);
 	#else
 	exi_deselect();
@@ -201,11 +202,11 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	// Read any half sector if we need to until we're aligned
 	if(startByte) {
 		u32 size_to_copy = MIN(numBytes, SECTOR_SIZE-startByte);
-		if(ataReadSector(lba, (u8*)VAR_SECTOR_BUF)) {
+		if(ataReadSector(lba, sectorBuf)) {
 			//*(u32*)dst = 0x13370003;
 			return len-numBytes;
 		}
-		memcpy(dst, (u8*)VAR_SECTOR_BUF + startByte, size_to_copy);
+		memcpy(dst, sectorBuf + startByte, size_to_copy);
 		numBytes -= size_to_copy;
 		dst += size_to_copy;
 		lba ++;
@@ -213,11 +214,11 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	// Read any whole sectors
 	while(numBytes >= SECTOR_SIZE) {
 		#if DMA_READ
-		if(ataReadSector(lba, (u8*)VAR_SECTOR_BUF)) {
+		if(ataReadSector(lba, sectorBuf)) {
 			//*(u32*)dst = 0x13370004;
 			return len-numBytes;
 		}
-		memcpy(dst, (u8*)VAR_SECTOR_BUF, SECTOR_SIZE);
+		memcpy(dst, sectorBuf, SECTOR_SIZE);
 		#else
 		if(ataReadSector(lba, dst)) {
 			//*(u32*)dst = 0x13370004;
@@ -230,11 +231,11 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	}
 	// Read the last sector if there's any half sector
 	if(numBytes) {
-		if(ataReadSector(lba, (u8*)VAR_SECTOR_BUF)) {
+		if(ataReadSector(lba, sectorBuf)) {
 			//*(u32*)dst = 0x13370006;
 			return len-numBytes;
 		}
-		memcpy(dst, (u8*)VAR_SECTOR_BUF, numBytes);
+		memcpy(dst, sectorBuf, numBytes);
 	}	
 	return len;
 }
@@ -246,7 +247,7 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	
 	// If we saved this sector
 	if(lba == *(u32*)VAR_SECTOR_CUR) {
-		memcpy(dst, (u8*)VAR_SECTOR_BUF + startByte, numBytes);
+		memcpy(dst, sectorBuf + startByte, numBytes);
 		return numBytes;
 	}
 	if(exi_selected()) {
@@ -254,11 +255,11 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	}
 	if(numBytes < SECTOR_SIZE || DMA_READ) {
 		// Read half sector
-		if(ataReadSector(lba, (u8*)VAR_SECTOR_BUF)) {
+		if(ataReadSector(lba, sectorBuf)) {
 			//*(u32*)dst = 0x13370003;
 			return 0;
 		}
-		memcpy(dst, (u8*)VAR_SECTOR_BUF + startByte, numBytes);
+		memcpy(dst, sectorBuf + startByte, numBytes);
 		// Save current LBA
 		*(u32*)VAR_SECTOR_CUR = lba;
 	}
