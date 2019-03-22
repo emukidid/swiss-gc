@@ -123,7 +123,7 @@ static uint16_t ipv4_checksum(ipv4_header_t *header)
 	return ~sum[0];
 }
 
-static uint8_t fsp_checksum(fsp_header_t *header, uint16_t size)
+static uint8_t fsp_checksum(fsp_header_t *header, size_t size)
 {
 	uint8_t *data = (uint8_t *)header;
 	uint32_t sum = size;
@@ -135,7 +135,7 @@ static uint8_t fsp_checksum(fsp_header_t *header, uint16_t size)
 	return sum;
 }
 
-void fsp_output(const char *file, uint8_t filelen, uint32_t offset, uint32_t size)
+void fsp_output(const char *file, uint8_t filelen, uint32_t offset, size_t size)
 {
 	uint8_t data[MIN_FRAME_SIZE + filelen];
 	eth_header_t *eth = (eth_header_t *)data;
@@ -183,7 +183,7 @@ void fsp_output(const char *file, uint8_t filelen, uint32_t offset, uint32_t siz
 
 void trigger_dvd_interrupt(void);
 
-static void fsp_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, uint16_t size)
+static void fsp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, size_t size)
 {
 	if (size < sizeof(*fsp))
 		return;
@@ -206,7 +206,7 @@ static void fsp_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4,
 	*_key = fsp->key;
 }
 
-static void udp_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, uint16_t size)
+static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, size_t size)
 {
 	if (ipv4->src_addr.addr == (*_server_ip).addr &&
 		ipv4->dst_addr.addr == (*_client_ip).addr) {
@@ -223,7 +223,7 @@ static void udp_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4,
 
 			if (udp->src_port == *_port &&
 				udp->dst_port == *_port)
-				fsp_input(bba, eth, ipv4, udp, (void *)udp->data, size);
+				fsp_input(page, eth, ipv4, udp, (void *)udp->data, size);
 		}
 
 		if (ipv4->id == *_id) {
@@ -235,7 +235,20 @@ static void udp_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4,
 			if (data_size) {
 				data_size = MIN(data_size, remainder);
 
-				if (*_received) bba_receive_end(bba);
+				int offset = ipv4->offset * 8 - sizeof(udp_header_t) - sizeof(fsp_header_t);
+				int udp_offset = MAX(-offset, 0);
+				int data_offset = MAX(offset, 0);
+				int page_offset = (uint8_t *)udp + udp_offset - page;
+
+				size = MIN(MAX(data_size - data_offset, 0), size);
+
+				int page_size = MIN(size, sizeof(bba_page_t) - page_offset);
+				memcpy(data + data_offset, page + page_offset, page_size);
+				data_offset += page_size;
+				size        -= page_size;
+
+				if (*_received)
+					bba_receive_end(page, data + data_offset, size);
 
 				if (!(ipv4->flags & 0b001)) {
 					position  += data_size;
@@ -249,13 +262,8 @@ static void udp_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4,
 					if (remainder) fsp_output(_file, *_filelen, position, remainder);
 				}
 
-				if (!*_received) bba_receive_end(bba);
-
-				int offset = ipv4->offset * 8 - sizeof(udp_header_t) - sizeof(fsp_header_t);
-				int ipv4_offset = MIN(offset, 0);
-				int data_offset = MAX(offset, 0);
-
-				memcpy(data + data_offset, ipv4->data - ipv4_offset, MIN(data_size - data_offset, size));
+				if (!*_received)
+					bba_receive_end(page, data + data_offset, size);
 
 				if (!remainder) trigger_dvd_interrupt();
 			}
@@ -263,7 +271,7 @@ static void udp_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4,
 	}
 }
 
-static void ipv4_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4, uint16_t size)
+static void ipv4_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, size_t size)
 {
 	if (ipv4->version != 4)
 		return;
@@ -278,12 +286,12 @@ static void ipv4_input(bba_header_t *bba, eth_header_t *eth, ipv4_header_t *ipv4
 
 	switch (ipv4->protocol) {
 		case IP_PROTO_UDP:
-			udp_input(bba, eth, ipv4, (void *)ipv4->data, size);
+			udp_input(page, eth, ipv4, (void *)ipv4 + ipv4->words * 4, size);
 			break;
 	}
 }
 
-static void arp_input(bba_header_t *bba, eth_header_t *eth, arp_packet_t *arp, uint16_t size)
+static void arp_input(bba_page_t page, eth_header_t *eth, arp_packet_t *arp, size_t size)
 {
 	if (arp->hardware_type != HW_ETHERNET || arp->hardware_length != sizeof(struct eth_addr))
 		return;
@@ -321,7 +329,7 @@ static void arp_input(bba_header_t *bba, eth_header_t *eth, arp_packet_t *arp, u
 	}
 }
 
-void eth_input(bba_header_t *bba, eth_header_t *eth, uint16_t size)
+void eth_input(bba_page_t page, eth_header_t *eth, size_t size)
 {
 	if (size < MIN_FRAME_SIZE)
 		return;
@@ -330,10 +338,10 @@ void eth_input(bba_header_t *bba, eth_header_t *eth, uint16_t size)
 
 	switch (eth->type) {
 		case ETH_TYPE_ARP:
-			arp_input(bba, eth, (void *)eth->data, size);
+			arp_input(page, eth, (void *)eth->data, size);
 			break;
 		case ETH_TYPE_IPV4:
-			ipv4_input(bba, eth, (void *)eth->data, size);
+			ipv4_input(page, eth, (void *)eth->data, size);
 			break;
 	}
 }

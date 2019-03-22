@@ -10,9 +10,9 @@ typedef struct {
 	uint8_t data[];
 } __attribute((packed, scalar_storage_order("little-endian"))) bba_header_t;
 
-typedef uint32_t bba_page_t[64] __attribute((aligned(32)));
+typedef uint8_t bba_page_t[256] __attribute((aligned(32)));
 
 void bba_transmit(void *data, int size);
-void bba_receive_end(bba_header_t *bba);
+void bba_receive_end(bba_page_t page, void *data, int size);
 
 #endif /* BBA_H */

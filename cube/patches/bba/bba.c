@@ -131,7 +131,7 @@ static void exi_immex_write(void *buffer, int length)
 static void exi_dma_read(void *data, int len)
 {
 	(*EXI)[1] = (uint32_t)data;
-	(*EXI)[2] = len;
+	(*EXI)[2] = (len + 31) & ~31;
 	(*EXI)[3] = (EXI_READ << 2) | 3;
 	while ((*EXI)[3] & 1);
 }
@@ -197,28 +197,32 @@ void bba_transmit(void *data, int size)
 	bba_out8(BBA_NCRA, (bba_in8(BBA_NCRA) & ~BBA_NCRA_ST0) | BBA_NCRA_ST1);
 }
 
-void fsp_output(const char *file, uint8_t filelen, uint32_t offset, uint32_t size);
-void eth_input(void *bba, void *eth, uint16_t size);
+void fsp_output(const char *file, uint8_t filelen, uint32_t offset, size_t size);
+void eth_input(void *page, void *eth, size_t size);
 
-void bba_receive_end(bba_header_t *bba)
+void bba_receive_end(bba_page_t page, void *data, int size)
 {
-	bba_page_t *page = (bba_page_t *)bba + 1;
-	int count = (bba->length - 1) / sizeof(*page);
+	int chunk;
 	int rrp;
 
-	if (count > 0) {
-		dcache_flush_icache_inv(page, sizeof(*page) * count);
+	page += 0x40000000;
 
-		rrp = bba_in8(BBA_RRP);
-
+	if (size) {
 		do {
-			rrp = rrp % BBA_INIT_RHBP + 1;
-			bba_out8(BBA_RRP, rrp);
-			bba_ins(rrp << 8, page++, sizeof(*page));
-		} while (--count);
-	}
+			chunk = MIN(size, sizeof(bba_page_t));
 
-	(*_received)++;
+			rrp = bba_in8(BBA_RRP) % BBA_INIT_RHBP + 1;
+			bba_out8(BBA_RRP, rrp);
+			bba_ins(rrp << 8, page, chunk);
+
+			memcpy(data, page, chunk);
+
+			data += chunk;
+			size -= chunk;
+		} while (size);
+
+		(*_received)++;
+	}
 }
 
 static void bba_receive(void)
@@ -229,20 +233,16 @@ static void bba_receive(void)
 	*_received = 0;
 
 	while (rrp != rwp) {
-		bba_page_t buffer[6];
-		bba_header_t *bba = (bba_header_t *)buffer;
-		uint16_t size = sizeof(*buffer);
+		bba_page_t page;
+		bba_header_t *bba = (bba_header_t *)page;
+		size_t size = sizeof(bba_page_t);
 
-		dcache_flush_icache_inv(buffer, size);
+		dcache_flush_icache_inv(page, size);
+		bba_ins(rrp << 8, page, size);
 
-		bba_ins(rrp << 8, buffer, size);
+		size = bba->length - sizeof(*bba);
 
-		if (bba->length <= sizeof(buffer))
-			size = bba->length;
-
-		size -= sizeof(*bba);
-
-		eth_input(bba, (void *)bba->data, size);
+		eth_input(page, (void *)bba->data, size);
 		bba_out8(BBA_RRP, rrp = bba->next);
 		rwp = bba_in8(BBA_RWP);
 	}

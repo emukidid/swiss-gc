@@ -135,7 +135,7 @@ void *getPatchAddr(int patchId) {
 
 int install_code(int final)
 {
-	void *location = (void*)LO_RESERVE;
+	u32 location = LO_RESERVE;
 	u8 *patch = NULL; u32 patchSize = 0;
 	
 	// Pokemon XD / Colosseum tiny stub for memset testing
@@ -156,7 +156,7 @@ int install_code(int final)
 		if(swissSettings.alternateReadPatches) {
 			patch = (!_ideexi_version)?&ideexi_altv1_bin[0]:&ideexi_altv2_bin[0];
 			patchSize = (!_ideexi_version)?ideexi_altv1_bin_size:ideexi_altv2_bin_size;
-			location = (void*)LO_RESERVE_ALT;
+			location = LO_RESERVE_ALT;
 		}
 		else {
 			patch = (!_ideexi_version)?&ideexi_v1_bin[0]:&ideexi_v2_bin[0];
@@ -169,7 +169,7 @@ int install_code(int final)
 		if(swissSettings.alternateReadPatches) {
 			patch = &sd_alt_bin[0];
 			patchSize = sd_alt_bin_size;
-			location = (void*)LO_RESERVE_ALT;
+			location = LO_RESERVE_ALT;
 		}
 		else {
 			patch = &sd_bin[0];
@@ -180,13 +180,13 @@ int install_code(int final)
 	// DVD 2 disc code
 	else if(devices[DEVICE_CUR] == &__device_dvd) {
 		patch = &dvd_bin[0]; patchSize = dvd_bin_size;
-		location = (void*)LO_RESERVE_DVD;
+		location = LO_RESERVE_DVD;
 		print_gecko("Installing Patch for DVD\r\n");
 	}
 	// USB Gecko
 	else if(devices[DEVICE_CUR] == &__device_usbgecko) {
 		patch = &usbgecko_bin[0]; patchSize = usbgecko_bin_size;
-		location = (void*)LO_RESERVE_ALT;
+		location = LO_RESERVE_ALT;
 		print_gecko("Installing Patch for USB Gecko\r\n");
 	}
 	// Wiikey Fusion
@@ -197,17 +197,17 @@ int install_code(int final)
 	// Broadband Adapter
 	else if(devices[DEVICE_CUR] == &__device_fsp) {
 		patch = &bba_bin[0]; patchSize = bba_bin_size;
-		location = (void*)LO_RESERVE_ALT;
+		location = LO_RESERVE_ALT;
 		print_gecko("Installing Patch for Broadband Adapter\r\n");
 	}
-	print_gecko("Space for patch remaining: %i\r\n",top_addr - LO_RESERVE);
-	print_gecko("Space taken by vars/video patches: %i\r\n",VAR_PATCHES_BASE-top_addr);
-	if(top_addr - LO_RESERVE < patchSize)
+	print_gecko("Space for patch remaining: %i\r\n", top_addr - location);
+	print_gecko("Space taken by vars/video patches: %i\r\n", VAR_PATCHES_BASE - top_addr);
+	if(top_addr - location < patchSize)
 		return 0;
 	if(final) {
-		memcpy(location,patch,patchSize);
-		DCFlushRange(location,patchSize);
-		ICInvalidateRange(location,patchSize);
+		memcpy((void*)location,patch,patchSize);
+		DCFlushRange((void*)location,patchSize);
+		ICInvalidateRange((void*)location,patchSize);
 	}
 	return 1;
 }

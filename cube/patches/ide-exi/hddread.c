@@ -83,7 +83,7 @@ static u32 exi_imm_read(int len)
 static void exi_dma_read(void* data, int len)
 {
 	EXI[exi_channel][1] = (unsigned long)data;
-	EXI[exi_channel][2] = len;
+	EXI[exi_channel][2] = (len + 31) & ~31;
 	EXI[exi_channel][3] = (EXI_READ << 2) | 3;
 	while (EXI[exi_channel][3] & 1);	// Yeah.
 }
