@@ -3131,8 +3131,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11 ||
-				swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13) {
+			if (swissSettings.aveCompat != 2 && (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11 ||
+												 swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13)) {
 				switch (j) {
 					case 0:
 						data[i + 181] = 0x579C07B8;	// rlwinm	r28, r28, 0, 30, 28

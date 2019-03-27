@@ -24,6 +24,7 @@ char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS", "No"};
 char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
+char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL"};
 
 char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"System Sound:\n\nSets the default audio output type used by most games",
@@ -33,6 +34,7 @@ char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	 NULL,
 	"In-Game Reset: (B + R + Z + DPad Down)\n\nReboot: Soft-Reset the GameCube\nigr.dol: Low mem (< 0x81300000) igr.dol at the root of SD Gecko",
 	"Configuration Device:\n\nThe device that Swiss will use to load and save swiss.ini from.\nThis setting is stored in SRAM and will remain on reboot.",
+	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply firmware workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
 	NULL,
 	NULL,
 	NULL
@@ -179,6 +181,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file) {
 		DrawAddChild(page, DrawSelectableButton(320, 260, -1, 285, igrTypeStr[swissSettings.igrType], option == SET_IGR ? B_SELECTED:B_NOSELECT));
 		DrawAddChild(page, DrawStyledLabel(30, 290, "Configuration Device:", 1.0f, false, defaultColor));
 		DrawAddChild(page, DrawSelectableButton(320, 290, -1, 315, getConfigDeviceName(), option == SET_CONFIG_DEV ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawStyledLabel(30, 320, "AVE Compatibility:", 1.0f, false, defaultColor));
+		DrawAddChild(page, DrawSelectableButton(320, 320, -1, 345, aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT ? B_SELECTED:B_NOSELECT));
 	}
 	else if(page_num == PAGE_ADVANCED) {
 		DrawAddChild(page, DrawLabel(30, 65, "Advanced Settings (2/3):"));
@@ -305,6 +309,13 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 				}
 			}
 			break;
+			case SET_AVE_COMPAT:
+				swissSettings.aveCompat += direction;
+				if(swissSettings.aveCompat > 2)
+					swissSettings.aveCompat = 0;
+				if(swissSettings.aveCompat < 0)
+					swissSettings.aveCompat = 2;
+			break;
 		}	
 	}
 	else if(page == PAGE_ADVANCED) {
@@ -343,6 +354,22 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			case SET_FORCE_VIDEOMODE:
 				if(!swissSettings.disableVideoPatches) {
 					swissSettings.gameVMode += direction;
+					if(swissSettings.gameVMode > 14)
+						swissSettings.gameVMode = 0;
+					if(swissSettings.gameVMode < 0)
+						swissSettings.gameVMode = 14;
+					if(swissSettings.aveCompat) {
+						while(swissSettings.gameVMode >= 6 && swissSettings.gameVMode <= 7)
+							swissSettings.gameVMode += direction;
+						while(swissSettings.gameVMode >= 13 && swissSettings.gameVMode <= 14)
+							swissSettings.gameVMode += direction;
+					}
+					if(!VIDEO_HaveComponentCable()) {
+						while(swissSettings.gameVMode >= 4 && swissSettings.gameVMode <= 7)
+							swissSettings.gameVMode += direction;
+						while(swissSettings.gameVMode >= 11 && swissSettings.gameVMode <= 14)
+							swissSettings.gameVMode += direction;
+					}
 					if(swissSettings.gameVMode > 14)
 						swissSettings.gameVMode = 0;
 					if(swissSettings.gameVMode < 0)

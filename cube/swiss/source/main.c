@@ -161,6 +161,7 @@ int main ()
 	swissSettings.gameVMode = 0;	// Auto video mode
 	swissSettings.exiSpeed = 1;		// 32MHz
 	swissSettings.uiVMode = 0; 		// Auto UI mode
+	swissSettings.aveCompat = 1;
 	swissSettings.enableFileManagement = 0;
 
 	needsDeviceChange = 1;

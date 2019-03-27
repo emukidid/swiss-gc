@@ -190,6 +190,8 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "IGRType=%s\r\n", (igrTypeStr[swissSettings.igrType]));
 	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "AVECompat=%s\r\n", (aveCompatStr[swissSettings.aveCompat]));
+	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "FTPUserName=%s\r\n",configSwissSettings.ftpUserName);
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "FTPPassword=%s\r\n",configSwissSettings.ftpPassword);
@@ -480,6 +482,14 @@ void config_parse(char *configData) {
 						configSwissSettings.igrType = 1;
 					else if(!strcmp(igrTypeStr[2], value))
 						configSwissSettings.igrType = 2;
+				}
+				else if(!strcmp("AVECompat", name)) {
+					if(!strcmp(aveCompatStr[0], value))
+						configSwissSettings.aveCompat = 0;
+					else if(!strcmp(aveCompatStr[1], value))
+						configSwissSettings.aveCompat = 1;
+					else if(!strcmp(aveCompatStr[2], value))
+						configSwissSettings.aveCompat = 2;
 				}
 				else if(!strcmp("FTPUserName", name)) {
 					strncpy(configSwissSettings.ftpUserName, value, sizeof(((SwissSettings*)0)->ftpUserName));
