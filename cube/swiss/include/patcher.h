@@ -92,14 +92,22 @@ extern u8 VIConfigure480i[];
 extern u32 VIConfigure480i_length;
 extern u8 VIConfigure480p[];
 extern u32 VIConfigure480p_length;
+extern u8 VIConfigure540p50[];
+extern u32 VIConfigure540p50_length;
+extern u8 VIConfigure540p60[];
+extern u32 VIConfigure540p60_length;
 extern u8 VIConfigure576i[];
 extern u32 VIConfigure576i_length;
 extern u8 VIConfigure576p[];
 extern u32 VIConfigure576p_length;
+extern u8 VIConfigure960i[];
+extern u32 VIConfigure960i_length;
 extern u8 VIConfigure1080i50[];
 extern u32 VIConfigure1080i50_length;
 extern u8 VIConfigure1080i60[];
 extern u32 VIConfigure1080i60_length;
+extern u8 VIConfigure1152i[];
+extern u32 VIConfigure1152i_length;
 extern u8 VIConfigureHook1[];
 extern u32 VIConfigureHook1_length;
 extern u8 VIConfigureHook2[];
@@ -136,10 +144,14 @@ enum patchIds {
 	VI_CONFIGURE288P,
 	VI_CONFIGURE480I,
 	VI_CONFIGURE480P,
+	VI_CONFIGURE540P50,
+	VI_CONFIGURE540P60,
 	VI_CONFIGURE576I,
 	VI_CONFIGURE576P,
+	VI_CONFIGURE960I,
 	VI_CONFIGURE1080I50,
 	VI_CONFIGURE1080I60,
+	VI_CONFIGURE1152I,
 	VI_CONFIGUREHOOK1,
 	VI_CONFIGUREHOOK2,
 	VI_CONFIGUREPANHOOK,

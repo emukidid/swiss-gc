@@ -85,14 +85,22 @@ void *installPatch(int patchId) {
 			patchSize = VIConfigure480i_length; patchLocation = VIConfigure480i; break;
 		case VI_CONFIGURE480P:
 			patchSize = VIConfigure480p_length; patchLocation = VIConfigure480p; break;
+		case VI_CONFIGURE540P50:
+			patchSize = VIConfigure540p50_length; patchLocation = VIConfigure540p50; break;
+		case VI_CONFIGURE540P60:
+			patchSize = VIConfigure540p60_length; patchLocation = VIConfigure540p60; break;
 		case VI_CONFIGURE576I:
 			patchSize = VIConfigure576i_length; patchLocation = VIConfigure576i; break;
 		case VI_CONFIGURE576P:
 			patchSize = VIConfigure576p_length; patchLocation = VIConfigure576p; break;
+		case VI_CONFIGURE960I:
+			patchSize = VIConfigure960i_length; patchLocation = VIConfigure960i; break;
 		case VI_CONFIGURE1080I50:
 			patchSize = VIConfigure1080i50_length; patchLocation = VIConfigure1080i50; break;
 		case VI_CONFIGURE1080I60:
 			patchSize = VIConfigure1080i60_length; patchLocation = VIConfigure1080i60; break;
+		case VI_CONFIGURE1152I:
+			patchSize = VIConfigure1152i_length; patchLocation = VIConfigure1152i; break;
 		case VI_CONFIGUREHOOK1:
 			patchSize = VIConfigureHook1_length; patchLocation = VIConfigureHook1; break;
 		case VI_CONFIGUREHOOK2:
@@ -1414,6 +1422,19 @@ u8 video_timing[] = {
 	0x01,0x9C
 };
 
+u8 video_timing_540p60[] = {
+	0x07,0x00,0x02,0x1C,
+	0x00,0x19,0x00,0x19,
+	0x00,0x00,0x00,0x00,
+	0x28,0x28,0x28,0x28,
+	0x04,0x60,0x04,0x60,
+	0x04,0x60,0x04,0x60,
+	0x04,0x66,0x01,0x90,
+	0x10,0x15,0x37,0x73,
+	0x01,0x63,0x4B,0x00,
+	0x01,0x8A
+};
+
 u8 video_timing_1080i60[] = {
 	0x07,0x00,0x02,0x1C,
 	0x00,0x17,0x00,0x18,
@@ -1427,6 +1448,32 @@ u8 video_timing_1080i60[] = {
 	0x01,0x8A
 };
 
+u8 video_timing_960i[] = {
+	0x06,0x00,0x01,0xE0,
+	0x00,0x46,0x00,0x47,
+	0x00,0x01,0x00,0x00,
+	0x18,0x19,0x18,0x19,
+	0x04,0x0E,0x04,0x0D,
+	0x04,0x0E,0x04,0x0D,
+	0x04,0x19,0x01,0xAD,
+	0x40,0x47,0x69,0xA2,
+	0x01,0x75,0x7A,0x00,
+	0x01,0x9C
+};
+
+u8 video_timing_540p50[] = {
+	0x07,0x00,0x02,0x1C,
+	0x00,0x19,0x00,0x19,
+	0x00,0x00,0x00,0x00,
+	0x28,0x28,0x28,0x28,
+	0x04,0x60,0x04,0x60,
+	0x04,0x60,0x04,0x60,
+	0x04,0x66,0x01,0xE0,
+	0x10,0x15,0x37,0x73,
+	0x01,0x13,0x4B,0x00,
+	0x01,0x3A
+};
+
 u8 video_timing_1080i50[] = {
 	0x07,0x00,0x02,0x1C,
 	0x00,0x17,0x00,0x18,
@@ -1438,6 +1485,19 @@ u8 video_timing_1080i50[] = {
 	0x10,0x15,0x37,0x73,
 	0x01,0x13,0x4B,0x00,
 	0x01,0x3A
+};
+
+u8 video_timing_1152i[] = {
+	0x05,0x00,0x02,0x40,
+	0x00,0x51,0x00,0x52,
+	0x00,0x01,0x00,0x00,
+	0x14,0x15,0x14,0x15,
+	0x04,0xD8,0x04,0xD7,
+	0x04,0xD8,0x04,0xD7,
+	0x04,0xE1,0x01,0xB0,
+	0x40,0x4B,0x6A,0xAC,
+	0x01,0x7C,0x85,0x00,
+	0x01,0xA4
 };
 
 u8 video_timing_576p[] = {
@@ -1671,17 +1731,17 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
 	
 	switch (swissSettings.gameVMode) {
-		case 4: case 9:
+		case 6: case 13: case 7: case 14:
 			if (!swissSettings.forceHScale)
 				swissSettings.forceHScale = 1;
-		case 3: case 8:
+		case 3: case 10: case 4: case 11:
 			swissSettings.forceVOffset &= ~1;
-		case 2: case 7: case 5: case 10:
+		case 2: case  9: case 5: case 12:
 			if (!swissSettings.forceVFilter)
 				swissSettings.forceVFilter = 1;
 	}
 	
-	if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 8)
+	if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 10)
 		memcpy((u8 *)VAR_VFILTER, vertical_reduction[swissSettings.forceVFilter], 7);
 	else
 		memcpy((u8 *)VAR_VFILTER, vertical_filters[swissSettings.forceVFilter], 7);
@@ -2306,7 +2366,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 11] = 0x408200A4;	// bne		+41
 						break;
 				}
-				if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 7) {
+				if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 9) {
 					switch (j) {
 						case 0:
 							data[i +  4] = branchAndLink(getCurrentFieldEvenOdd, VISetRegs + 4);
@@ -2359,7 +2419,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 82] = 0x408200C4;	// bne		+49
 						break;
 				}
-				if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 7) {
+				if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 9) {
 					switch (j) {
 						case 2:
 						case 3:
@@ -2393,7 +2453,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							break;
 					}
 				}
-				if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 9) {
+				if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11 ||
+					swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13) {
 					__VIRetraceHandlerHook = getPatchAddr(VI_RETRACEHANDLERHOOK);
 					
 					switch (j) {
@@ -2487,21 +2548,33 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			
 			memcpy(timingTable, video_timing, sizeof(video_timing));
 			
-			if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 9)
+			if (swissSettings.gameVMode == 7 || swissSettings.gameVMode == 14)
+				memcpy(timingTable + 6, video_timing_540p60, sizeof(video_timing_540p60));
+			else if (swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13)
 				memcpy(timingTable + 6, video_timing_1080i60, sizeof(video_timing_1080i60));
+			else if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11)
+				memcpy(timingTable + 6, video_timing_960i, sizeof(video_timing_960i));
 			
 			if (j == 1 || j >= 4) {
-				if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 9)
+				if (swissSettings.gameVMode == 7 || swissSettings.gameVMode == 14)
+					memcpy(timingTable + 7, video_timing_540p50, sizeof(video_timing_540p50));
+				else if (swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13)
 					memcpy(timingTable + 7, video_timing_1080i50, sizeof(video_timing_1080i50));
+				else if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11)
+					memcpy(timingTable + 7, video_timing_1152i, sizeof(video_timing_1152i));
 				else
 					memcpy(timingTable + 7, video_timing_576p, sizeof(video_timing_576p));
 				
 				jump = jumpTable[3];
 				jumpTable[3] = jumpTable[6];
 				jumpTable[6] = jump;
-			} else if (swissSettings.gameVMode >= 6 && swissSettings.gameVMode <= 10) {
-				if (swissSettings.gameVMode == 9)
+			} else if (swissSettings.gameVMode >= 8 && swissSettings.gameVMode <= 14) {
+				if (swissSettings.gameVMode == 14)
+					memcpy(timingTable + 6, video_timing_540p50, sizeof(video_timing_540p50));
+				else if (swissSettings.gameVMode == 13)
 					memcpy(timingTable + 6, video_timing_1080i50, sizeof(video_timing_1080i50));
+				else if (swissSettings.gameVMode == 11)
+					memcpy(timingTable + 6, video_timing_1152i, sizeof(video_timing_1152i));
 				else
 					memcpy(timingTable + 6, video_timing_576p, sizeof(video_timing_576p));
 				
@@ -2592,7 +2665,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			u32 *VIWaitForRetrace = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			
 			if (VIWaitForRetrace && VIInit) {
-				if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 7) {
+				if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 9) {
 					switch (j) {
 						case 0:
 							data[i +  9] = 0x800D0000 | (flushFlag & 0xFFFF);
@@ -2637,7 +2710,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 48] = 0xA983000A;	// lha		r12, 10 (r3)
 					break;
 			}
-			if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 8) {
+			if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 10) {
 				switch (j) {
 					case 0:
 						data[i - 22] = 0x7C000378;	// mr		r0, r0
@@ -2707,13 +2780,17 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				case  1:
 				case  2: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE480I);    break;
 				case  3: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE240P);    break;
-				case  4: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE1080I60); break;
+				case  4: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE960I);    break;
 				case  5: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE480P);    break;
-				case  6:
-				case  7: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE576I);    break;
-				case  8: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE288P);    break;
-				case  9: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE1080I50); break;
-				case 10: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE576P);    break;
+				case  6: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE1080I60); break;
+				case  7: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE540P60);  break;
+				case  8:
+				case  9: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE576I);    break;
+				case 10: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE288P);    break;
+				case 11: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE1152I);   break;
+				case 12: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE576P);    break;
+				case 13: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE1080I50); break;
+				case 14: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE540P50);  break;
 			}
 			
 			switch (j) {
@@ -3054,7 +3131,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 9) {
+			if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11 ||
+				swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13) {
 				switch (j) {
 					case 0:
 						data[i + 181] = 0x579C07B8;	// rlwinm	r28, r28, 0, 30, 28
@@ -3166,7 +3244,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 7) {
+	if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 9) {
 		if ((i = VIGetRetraceCountSig.offsetFoundAt)) {
 			u32 *VIGetRetraceCount = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *VIGetRetraceCountHook;
@@ -3207,7 +3285,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		u32 *__GXInitGX = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__GXInitGX) {
-			if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 9) {
+			if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11 ||
+				swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13) {
 				switch (j) {
 					case 0: data[i + 1055] = 0x38600001; break;
 					case 1: data[i +  466] = 0x38600001; break;
@@ -3252,7 +3331,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5) {
+	if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 		for (j = 0; j < sizeof(GXAdjustForOverscanSigs) / sizeof(FuncPattern); j++)
 			if (GXAdjustForOverscanSigs[j].offsetFoundAt) break;
 		
@@ -3328,7 +3407,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 9) {
+	if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11 ||
+		swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13) {
 		for (j = 0; j < sizeof(GXCopyDispSigs) / sizeof(FuncPattern); j++)
 			if (GXCopyDispSigs[j].offsetFoundAt) break;
 		
@@ -4006,7 +4086,7 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 	if (!swissSettings.disableVideoPatches) {
 		if (!strncmp(gameID, "GS8P7D", 6)) {
 			if (!strcasecmp(fileName, "SPYROCFG_NGC.CFG")) {
-				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5) {
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 					addr = strnstr(data, "\tHeight:\t\t\t496\r\n", length);
 					if (addr) memcpy(addr, "\tHeight:\t\t\t448\r\n", 16);
 				}
@@ -4571,7 +4651,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GPTP41", 6)) {
 		switch (length) {
 			case 4017536:
-				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5) {
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 					*(u32 *)(data + 0x801B25C4 - 0x8002B240 + 0x2600) = 
 					*(u32 *)(data + 0x801B25C0 - 0x8002B240 + 0x2600);
 					*(u32 *)(data + 0x801B25C0 - 0x8002B240 + 0x2600) = 
@@ -4586,7 +4666,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 			case 639584:
-				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5) {
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 					*(s16 *)(data + 0x8002E65E - 0x8000B400 + 0x2600) = (0x80098534 + 0x8000) >> 16;
 					*(s16 *)(data + 0x8002E666 - 0x8000B400 + 0x2600) = (0x80098534) & 0xFFFF;
 					*(s16 *)(data + 0x8002E676 - 0x8000B400 + 0x2600) = 40;
@@ -4598,7 +4678,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GX2D52", 6) || !strncmp(gameID, "GX2P52", 6) || !strncmp(gameID, "GX2S52", 6)) {
 		switch (length) {
 			case 4055712:
-				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5) {
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 					*(s16 *)(data + 0x80010A1A - 0x80005760 + 0x2540) = (0x80368D5C + 0x8000) >> 16;
 					*(s16 *)(data + 0x80010A1E - 0x80005760 + 0x2540) = 5;
 					*(s16 *)(data + 0x80010A22 - 0x80005760 + 0x2540) = (0x80368D5C) & 0xFFFF;
@@ -4609,7 +4689,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GXLP52", 6)) {
 		switch (length) {
 			case 4182304:
-				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5) {
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 					*(s16 *)(data + 0x8000E9F6 - 0x80005760 + 0x2540) = (0x80384784 + 0x8000) >> 16;
 					*(s16 *)(data + 0x8000E9FA - 0x80005760 + 0x2540) = 5;
 					*(s16 *)(data + 0x8000E9FE - 0x80005760 + 0x2540) = (0x80384784) & 0xFFFF;
@@ -4620,7 +4700,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GXLX52", 6)) {
 		switch (length) {
 			case 4182624:
-				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 5) {
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 					*(s16 *)(data + 0x8000E9F6 - 0x80005760 + 0x2540) = (0x803848C4 + 0x8000) >> 16;
 					*(s16 *)(data + 0x8000E9FA - 0x80005760 + 0x2540) = 5;
 					*(s16 *)(data + 0x8000E9FE - 0x80005760 + 0x2540) = (0x803848C4) & 0xFFFF;

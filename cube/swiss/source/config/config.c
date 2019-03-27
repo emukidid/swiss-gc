@@ -345,6 +345,14 @@ void config_parse(char *configData) {
 						configEntries[configEntriesCount].gameVMode = 9;
 					else if(!strcmp(gameVModeStr[10], value))
 						configEntries[configEntriesCount].gameVMode = 10;
+					else if(!strcmp(gameVModeStr[11], value))
+						configEntries[configEntriesCount].gameVMode = 11;
+					else if(!strcmp(gameVModeStr[12], value))
+						configEntries[configEntriesCount].gameVMode = 12;
+					else if(!strcmp(gameVModeStr[13], value))
+						configEntries[configEntriesCount].gameVMode = 13;
+					else if(!strcmp(gameVModeStr[14], value))
+						configEntries[configEntriesCount].gameVMode = 14;
 				}
 				else if(!strcmp("Force Horizontal Scale", name)) {
 					if(!strcmp(forceHScaleStr[0], value))

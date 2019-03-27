@@ -17,7 +17,7 @@
 
 SwissSettings tempSettings;
 char *uiVModeStr[] = {"Auto", "480i", "480p", "576i", "576p"};
-char *gameVModeStr[] = {"No", "480i", "480sf", "240p", "1080i60", "480p", "576i", "576sf", "288p", "1080i50", "576p"};
+char *gameVModeStr[] = {"No", "480i", "480sf", "240p", "960i", "480p", "1080i60", "540p60", "576i", "576sf", "288p", "1152i", "576p", "1080i50", "540p50"};
 char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "704px", "720px"};
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
@@ -343,10 +343,10 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			case SET_FORCE_VIDEOMODE:
 				if(!swissSettings.disableVideoPatches) {
 					swissSettings.gameVMode += direction;
-					if(swissSettings.gameVMode > 10)
+					if(swissSettings.gameVMode > 14)
 						swissSettings.gameVMode = 0;
 					if(swissSettings.gameVMode < 0)
-						swissSettings.gameVMode = 10;
+						swissSettings.gameVMode = 14;
 				}
 			break;
 			case SET_HORIZ_SCALE:
