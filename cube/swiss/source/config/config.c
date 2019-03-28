@@ -307,7 +307,7 @@ void config_parse(char *configData) {
 					strcpy(&configEntries[configEntriesCount].status[0],"Unknown");
 					configEntries[configEntriesCount].gameVMode = 0;
 					configEntries[configEntriesCount].forceHScale = 0;
-					configEntries[configEntriesCount].forceVOffset = -3;
+					configEntries[configEntriesCount].forceVOffset = configSwissSettings.aveCompat == 1 ? -3:0;
 					configEntries[configEntriesCount].forceVFilter = 0;
 					configEntries[configEntriesCount].disableDithering = 0;
 					configEntries[configEntriesCount].forceAnisotropy = 0;
@@ -543,7 +543,7 @@ void config_find(ConfigEntry *entry) {
 	strcpy(entry->status,"Unknown");
 	entry->gameVMode = 0;
 	entry->forceHScale = 0;
-	entry->forceVOffset = -3;
+	entry->forceVOffset = configSwissSettings.aveCompat == 1 ? -3:0;
 	entry->forceVFilter = 0;
 	entry->disableDithering = 0;
 	entry->forceAnisotropy = 0;

@@ -103,6 +103,8 @@ void *installPatch(int patchId) {
 			patchSize = VIConfigure1152i_length; patchLocation = VIConfigure1152i; break;
 		case VI_CONFIGUREHOOK1:
 			patchSize = VIConfigureHook1_length; patchLocation = VIConfigureHook1; break;
+		case VI_CONFIGUREHOOK1_GCVIDEO:
+			patchSize = VIConfigureHook1GCVideo_length; patchLocation = VIConfigureHook1GCVideo; break;
 		case VI_CONFIGUREHOOK2:
 			patchSize = VIConfigureHook2_length; patchLocation = VIConfigureHook2; break;
 		case VI_CONFIGUREPANHOOK:
@@ -2774,7 +2776,10 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		
 		if (VIConfigure) {
 			VIConfigureHook2 = getPatchAddr(VI_CONFIGUREHOOK2);
-			VIConfigureHook1 = getPatchAddr(VI_CONFIGUREHOOK1);
+			if (swissSettings.aveCompat == 1)
+				VIConfigureHook1 = getPatchAddr(VI_CONFIGUREHOOK1_GCVIDEO);
+			else
+				VIConfigureHook1 = getPatchAddr(VI_CONFIGUREHOOK1);
 			
 			switch (swissSettings.gameVMode) {
 				case  1:

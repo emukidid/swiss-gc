@@ -241,7 +241,14 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 				swissSettings.sramStereo ^= 1;
 			break;
 			case SET_SCREEN_POS:
-				swissSettings.sramHOffset += direction;
+				if(swissSettings.aveCompat == 1) {
+					swissSettings.sramHOffset /= 2;
+					swissSettings.sramHOffset += direction;
+					swissSettings.sramHOffset *= 2;
+				}
+				else {
+					swissSettings.sramHOffset += direction;
+				}
 			break;
 			case SET_SYS_LANG:
 				swissSettings.sramLanguage += direction;
@@ -517,6 +524,9 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				if(swissSettings.uiVMode > 0) {
 					swissSettings.sram60Hz = (swissSettings.uiVMode >= 1) && (swissSettings.uiVMode <= 2);
 					swissSettings.sramProgressive = (swissSettings.uiVMode == 2) || (swissSettings.uiVMode == 4);
+				}
+				if(swissSettings.aveCompat == 1) {
+					swissSettings.sramHOffset &= ~1;
 				}
 				sram = __SYS_LockSram();
 				sram->display_offsetH = swissSettings.sramHOffset;
