@@ -224,6 +224,7 @@ bool deviceHandler_SMB_test() {
 
 DEVICEHANDLER_INTERFACE __device_smb = {
 	DEVICE_ID_8,
+	"BBA",
 	"SMB 1.0/CIFS",
 	"Must be pre-configured via swiss.ini",
 	{TEX_SAMBA, 160, 85},

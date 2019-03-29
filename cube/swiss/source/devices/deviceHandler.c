@@ -84,3 +84,12 @@ DEVICEHANDLER_INTERFACE* getDeviceByUniqueId(u8 id) {
 	}
 	return NULL;
 }
+
+DEVICEHANDLER_INTERFACE* getDeviceByLocation(u32 location) {
+	for(int i = 0; i < MAX_DEVICES; i++) {
+		if(allDevices[i] != NULL && allDevices[i]->location == location && deviceHandler_getDeviceAvailable(allDevices[i])) {
+			return allDevices[i];
+		}
+	}
+	return NULL;
+}

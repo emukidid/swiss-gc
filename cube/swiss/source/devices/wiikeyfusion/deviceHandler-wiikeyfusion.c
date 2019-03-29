@@ -220,6 +220,7 @@ bool deviceHandler_WKF_test() {
 
 DEVICEHANDLER_INTERFACE __device_wkf = {
 	DEVICE_ID_B,
+	"WKF / WASP ODE",
 	"Wiikey / Wasp Fusion",
 	"Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_WIIKEY, 102, 80},

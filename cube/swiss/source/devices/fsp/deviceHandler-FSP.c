@@ -242,6 +242,7 @@ bool deviceHandler_FSP_test() {
 
 DEVICEHANDLER_INTERFACE __device_fsp = {
 	DEVICE_ID_E,
+	"BBA",
 	"File Service Protocol",
 	"Must be pre-configured via swiss.ini",
 	{TEX_SAMBA, 160, 85},

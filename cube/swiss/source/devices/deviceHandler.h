@@ -108,6 +108,7 @@ typedef device_info* (* _fn_deviceInfo)(void);
 
 struct DEVICEHANDLER_STRUCT {
 	u8 				deviceUniqueId;
+	const char*		hwName;
 	const char*		deviceName;
 	const char*		deviceDescription;
 	textureImage	deviceTexture;
@@ -161,6 +162,7 @@ extern DEVICEHANDLER_INTERFACE* devices[MAX_DEVICES];
 
 extern int deviceHandler_test(DEVICEHANDLER_INTERFACE *device);
 extern DEVICEHANDLER_INTERFACE* getDeviceByUniqueId(u8 id);
+extern DEVICEHANDLER_INTERFACE* getDeviceByLocation(u32 location);
 
 extern void print_frag_list(int hasDisc2);
 

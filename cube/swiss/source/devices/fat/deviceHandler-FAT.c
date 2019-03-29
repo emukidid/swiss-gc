@@ -529,6 +529,7 @@ bool deviceHandler_FAT_test_ide_b() {
 
 DEVICEHANDLER_INTERFACE __device_sd_a = {
 	DEVICE_ID_1,
+	"SD Gecko",
 	"SD Gecko - Slot A",
 	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_SDSMALL, 60, 80},
@@ -550,6 +551,7 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 
 DEVICEHANDLER_INTERFACE __device_sd_b = {
 	DEVICE_ID_2,
+	"SD Gecko",
 	"SD Gecko - Slot B",
 	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_SDSMALL, 60, 80},
@@ -571,6 +573,7 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 
 DEVICEHANDLER_INTERFACE __device_ide_a = {
 	DEVICE_ID_3,
+	"IDE-EXI",
 	"IDE-EXI - Slot A",
 	"IDE HDD - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_HDD, 80, 80},
@@ -592,6 +595,7 @@ DEVICEHANDLER_INTERFACE __device_ide_a = {
 
 DEVICEHANDLER_INTERFACE __device_ide_b = {
 	DEVICE_ID_4,
+	"IDE-EXI",
 	"IDE-EXI - Slot B",
 	"IDE HDD - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_HDD, 80, 80},

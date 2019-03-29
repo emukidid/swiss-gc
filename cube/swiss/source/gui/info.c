@@ -43,8 +43,9 @@ uiDrawObj_t * info_draw_page(int page_num) {
 	
 	// System Info (Page 1/3)
 	if(!page_num) {
-		DrawAddChild(container, DrawLabel(30, 65, "System Info (1/3):"));
+		DrawAddChild(container, DrawLabel(30, 55, "System Info (1/3):"));
 		// Model
+		DrawAddChild(container, DrawStyledLabel(640/2, 100, (char*)"MODEL", 0.65f, true, defaultColor));
 		if(is_gamecube()) {
 			if(*(u32*)&driveVersion[0] == 0x20010831) {
 				sprintf(topStr, "Panasonic Q SL-GC10-S");
@@ -65,8 +66,9 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		else {
 			sprintf(topStr, "Nintendo Wii");
 		}
-		DrawAddChild(container, DrawStyledLabel(640/2, 110, topStr, 1.0f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 116, topStr, 0.75f, true, defaultColor));
 		// IPL version string
+		DrawAddChild(container, DrawStyledLabel(640/2, 140, (char*)"IPL VERSION", 0.65f, true, defaultColor));
 		if(is_gamecube()) {
 			if(!IPLInfo[0x55]) {
 				sprintf(topStr, "NTSC Revision 1.0");
@@ -76,57 +78,58 @@ uiDrawObj_t * info_draw_page(int page_num) {
 			}
 		}
 		else {
-			sprintf(topStr, "Wii IPL");
+			sprintf(topStr, "Wii");
 		}
-		DrawAddChild(container, DrawStyledLabel(640/2, 140, topStr, 1.0f, true, defaultColor));
-		if(swissSettings.hasDVDDrive) {
-			if((!__wkfSpiReadId() || (__wkfSpiReadId() == 0xFFFFFFFF))) {
-				sprintf(topStr, "DVD Drive %02X %02X%02X/%02X (%02X)",driveVersion[2],driveVersion[0],driveVersion[1],driveVersion[3],driveVersion[4]);
-			} else {
-				sprintf(topStr, "WKF Serial %s",wkfGetSerial());
-			}
-		}
-		else {
-			sprintf(topStr, "No DVD Drive present");
-		}
-		DrawAddChild(container, DrawStyledLabel(640/2, 170, topStr, 1.0f, true, defaultColor));
-		sprintf(topStr, "%s", getVideoModeString());
-		DrawAddChild(container, DrawStyledLabel(640/2, 200, topStr, 1.0f, true, defaultColor));
-		sprintf(topStr,"%s / %s",getSramLang(sram->lang), sram->flags&4 ? "Stereo":"Mono");
-		DrawAddChild(container, DrawStyledLabel(640/2, 230, topStr, 1.0f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 156, topStr, 0.75f, true, defaultColor));
+		
+		DrawAddChild(container, DrawStyledLabel(640/2, 180, (char*)"VIDEO MODE", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 196, getVideoModeString(), 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 220, (char*)"AUDIO", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 236, (char*)(sram->flags&4 ? "Stereo":"Mono"), 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 260, (char*)"LANGUAGE", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 276, getSramLang(sram->lang), 0.75f, true, defaultColor));
+
 		// GC 00083214, 00083410
-		sprintf(topStr,"CPU Revision/Version (%08X)",mfpvr());
-		DrawAddChild(container, DrawStyledLabel(640/2, 290, topStr, 0.75f, true, defaultColor));
-		sprintf(topStr,"CPU Unique ECID %08X:%08X:%08X",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
-		DrawAddChild(container, DrawStyledLabel(640/2, 320, topStr, 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 300, (char*)"CPU PVR", 0.65f, true, defaultColor));
+		sprintf(topStr,"%08X",mfpvr());
+		DrawAddChild(container, DrawStyledLabel(640/2, 316, topStr, 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 340, (char*)"CPU ECID", 0.65f, true, defaultColor));
+		sprintf(topStr,"%08X:%08X:%08X",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
+		DrawAddChild(container, DrawStyledLabel(640/2, 356, topStr, 0.75f, true, defaultColor));
 	}
 	else if(page_num == 1) {
-		DrawAddChild(container, DrawLabel(30, 65, "Device Info (2/3):"));
-		sprintf(topStr,"BBA: %s", exi_bba_exists() ? "Installed":"Not Present");
-		DrawAddChild(container, DrawLabel(30, 110, topStr));
-		if(exi_bba_exists()) {
-			sprintf(topStr,"IP: %s", net_initialized ? bba_ip:"Not Available");
+		DrawAddChild(container, DrawLabel(30, 55, "Device Info (2/3):"));
+		
+		DEVICEHANDLER_INTERFACE* dev = getDeviceByLocation(LOC_MEMCARD_SLOT_A);
+		DrawAddChild(container, DrawStyledLabel(640/2, 100, (char*)"SLOT-A", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 116, (char*)(dev == NULL ? "Empty" : dev->hwName), 0.75f, true, defaultColor));
+		dev = getDeviceByLocation(LOC_MEMCARD_SLOT_B);
+		DrawAddChild(container, DrawStyledLabel(640/2, 140, (char*)"SLOT-B", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 156, (char*)(dev == NULL ? "Empty" : dev->hwName), 0.75f, true, defaultColor));
+		dev = getDeviceByLocation(LOC_SERIAL_PORT_1);
+		DrawAddChild(container, DrawStyledLabel(640/2, 180, (char*)"SERIAL PORT 1", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 196, (char*)(dev == NULL ? "Empty" : dev->hwName), 0.75f, true, defaultColor));
+		dev = getDeviceByLocation(LOC_DVD_CONNECTOR);
+		DrawAddChild(container, DrawStyledLabel(640/2, 220, (char*)"DRIVE INTERFACE", 0.65f, true, defaultColor));
+		if(dev == &__device_dvd) {
+			sprintf(topStr, "%s %02X %02X%02X/%02X (%02X)",dev->hwName,driveVersion[2],driveVersion[0],driveVersion[1],driveVersion[3],driveVersion[4]);
+		}
+		else if(dev == &__device_wkf) {
+			sprintf(topStr, "%s (%s)",dev->hwName,wkfGetSerial());
 		}
 		else {
-			sprintf(topStr,"IP: Not Available");
+			strcpy(topStr, (dev == NULL ? "Empty" : dev->hwName));
 		}
-		DrawAddChild(container, DrawLabel(270, 110, topStr));
-		sprintf(topStr,"Component Cable Plugged in: %s",VIDEO_HaveComponentCable()?"Yes":"No");
-		DrawAddChild(container, DrawLabel(30, 140, topStr));
-		if(usb_isgeckoalive(0)||usb_isgeckoalive(1)) {
-			sprintf(topStr,"USB Gecko: Installed in %s",usb_isgeckoalive(0)?"Slot A":"Slot B");
-		}
-		else {
-			sprintf(topStr,"USB Gecko: Not Present");
-		}
-		DrawAddChild(container, DrawLabel(30, 170, topStr));
-		sprintf(topStr, "Current Device: %s", (devices[DEVICE_CUR] != NULL ? devices[DEVICE_CUR]->deviceName : "None"));
-		DrawAddChild(container, DrawLabel(30, 200, topStr));
-		sprintf(topStr, "Config Device: %s", (devices[DEVICE_CONFIG] != NULL ? devices[DEVICE_CONFIG]->deviceName : "None"));
-		DrawAddChild(container, DrawLabel(30, 230, topStr));
+		DrawAddChild(container, DrawStyledLabel(640/2, 236, topStr, 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 260, (char*)"PROGRESSIVE VIDEO", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 276, (char*)(VIDEO_HaveComponentCable() ? "Yes" : "No"), 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 310, (char*)"CURRENT MEDIUM", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 326, (char*)(devices[DEVICE_CUR] != NULL ? devices[DEVICE_CUR]->deviceName : "None"), 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 350, (char*)"CONFIG MEDIUM", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 366, (char*)(devices[DEVICE_CONFIG] != NULL ? devices[DEVICE_CONFIG]->deviceName : "None"), 0.75f, true, defaultColor));
 	}
 	else if(page_num == 2) {
-		DrawAddChild(container, DrawLabel(30, 65, "Credits (3/3):"));
+		DrawAddChild(container, DrawLabel(30, 55, "Credits (3/3):"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version 0.4", 1.0f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid 2019", 0.75f, true, defaultColor));
 		sprintf(txtbuffer, "Commit %s Revision %s", GITREVISION, GITVERSION);
@@ -139,12 +142,12 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 354, "Visit us at #gc-forever on EFNet", 0.75f, true, defaultColor));
 	}
 	if(page_num != 2) {
-		DrawAddChild(container, DrawLabel(520, 390, "->"));
+		DrawAddChild(container, DrawLabel(520, 400, "->"));
 	}
 	if(page_num != 0) {
-		DrawAddChild(container, DrawLabel(100, 390, "<-"));
+		DrawAddChild(container, DrawLabel(100, 400, "<-"));
 	}
-	DrawAddChild(container, DrawStyledLabel(640/2, 400, "Press A to return", 1.0f, true, defaultColor));
+	DrawAddChild(container, DrawStyledLabel(640/2, 410, "Press A or B to return", 1.0f, true, defaultColor));
 	return container;
 }
 
