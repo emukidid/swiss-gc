@@ -287,7 +287,9 @@ void dvd_enable_patches()
 	if(!driveVersion) return;	// Unsupported drive
 
 	void* patchCode = drive_patch_ptr(driveVersion);
-	
+	if(patchCode == NULL) {
+		return;	// Unsupported drive
+	}
 	print_gecko("Drive date %08X\r\nUnlocking DVD\r\n",driveVersion);
 	dvd_unlock();
 	print_gecko("Unlocking DVD - done\r\nWrite patch\r\n");
