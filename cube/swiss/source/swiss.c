@@ -45,6 +45,9 @@
 #include "dolparameters.h"
 #include "../../reservedarea.h"
 
+#define MSG_COUNT 8
+#define THREAD_PRIO 128
+
 DiskHeader GCMDisk;      //Gamecube Disc Header struct
 char IPLInfo[256] __attribute__((aligned(32)));
 GXRModeObj *newmode = NULL;
@@ -963,6 +966,50 @@ void boot_dol()
 	DOLtoARAM(dol_buffer, argc, argc == 0 ? NULL : argv);
 }
 
+
+enum {
+	MSG_SETFILE,
+	MSG_WRITE
+};
+
+typedef union _writer_msg {
+	struct {
+		int command;
+		void* data;
+		u32 length;
+		mqbox_t ret_box;
+	};
+	uint8_t pad[32]; // pad to 32 bytes for alignment
+} writer_msg;
+
+static void* writer_thread(void* _msgq) {
+	file_handle* fp = NULL;
+	mqbox_t msgq = (mqbox_t)_msgq;
+	writer_msg* msg;
+
+	// stupid libogc returns TRUE even if the message queue gets destroyed while waiting
+	while (MQ_Receive(msgq, (mqmsg_t*)&msg, MQ_MSG_BLOCK)==TRUE && msg) {
+		switch (msg->command) {
+			case MSG_SETFILE:
+				fp = (file_handle*)msg->data;
+				break;
+			case MSG_WRITE:
+			
+				if (fp && devices[DEVICE_DEST]->writeFile(fp, msg->data, msg->length)!=msg->length) {
+					// write error, signal it by pushing a NULL message to the front
+					MQ_Jam(msg->ret_box, (mqmsg_t)NULL, MQ_MSG_BLOCK);
+					return NULL;
+				}
+
+				// release the block so it can be reused
+				MQ_Send(msg->ret_box, (mqmsg_t)msg, MQ_MSG_BLOCK);
+				break;
+		}
+	}
+
+	return msg;
+}
+
 /* Manage file  - The user will be asked what they want to do with the currently selected file - copy/move/delete*/
 bool manage_file() {
 	// If it's a file
@@ -1215,10 +1262,29 @@ bool manage_file() {
 					free(gciHeader);
 				}
 				
+				// Threaded copy vars
+				mqbox_t msgq, blockq;
+				lwp_t writer;
+				writer_msg *wmsg;
+				writer_msg msg;
+				MQ_Init(&blockq, MSG_COUNT);
+				MQ_Init(&msgq, MSG_COUNT);
+
+				LWP_SetThreadPriority(0, THREAD_PRIO);
+				// writer thread should have same priority so it can be yielded to
+				LWP_CreateThread(&writer, writer_thread, (void*)msgq, NULL, 0, THREAD_PRIO);
+				msg.command = MSG_SETFILE;
+				msg.data = destFile;
+				MQ_Send(msgq, (mqmsg_t)&msg, MQ_MSG_BLOCK);
+				
 				// Read from one file and write to the new directory
 				u32 isCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
-				u32 curOffset = 0, cancelled = 0, chunkSize = (isCard||isDestCard) ? curFile.size : (256*1024);
-				char *readBuffer = (char*)memalign(32,chunkSize);
+				u32 curOffset = 0, cancelled = 0, chunkSize = (isCard||isDestCard) ? curFile.size : (0x40000);
+				// Create the read buffers
+				char *readBuffer = memalign(32, MSG_COUNT*(chunkSize+sizeof(writer_msg)));
+				for (int i=0; i < MSG_COUNT; i++) {
+					MQ_Send(blockq, (mqmsg_t)(readBuffer+i*(chunkSize+sizeof(writer_msg))), MQ_MSG_BLOCK);
+				}
 				sprintf(txtbuffer, "Copying to: %s",getRelativeName(destFile->name));
 				uiDrawObj_t* progBar = DrawProgressBar(false, 0, txtbuffer);
 				DrawPublish(progBar);
@@ -1229,6 +1295,12 @@ bool manage_file() {
 				int speed = 0;
 				int timeremain = 0;
 				while(curOffset < curFile.size) {
+					MQ_Receive(blockq, (mqmsg_t*)&wmsg, MQ_MSG_BLOCK);
+					if (wmsg==NULL) { // asynchronous write error
+						LWP_JoinThread(writer, NULL);
+						// TODO clean up destFile etc.
+						print_gecko("Async write error!\r\n");
+					}
 					u32 buttons = PAD_ButtonsHeld(0);
 					if(buttons & PAD_BUTTON_B) {
 						cancelled = 1;
@@ -1244,60 +1316,27 @@ bool manage_file() {
 					}
 					DrawUpdateProgressBarDetail(progBar, (int)((float)((float)curOffset/(float)curFile.size)*100), speed, timeStart/1000, timeremain);
 					u32 amountToCopy = curOffset + chunkSize > curFile.size ? curFile.size - curOffset : chunkSize;
-					ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
-					if(ret != amountToCopy) {	// Retry the read.
-						devices[DEVICE_CUR]->seekFile(&curFile, curFile.offset-ret, DEVICE_HANDLER_SEEK_SET);
-						ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
-						if(ret != amountToCopy) {
-							DrawDispose(progBar);
-							free(readBuffer);
-							devices[DEVICE_CUR]->closeFile(&curFile);
-							devices[DEVICE_DEST]->closeFile(destFile);
-							sprintf(txtbuffer, "Failed to Read! (%ul %ul)\n%s",amountToCopy,ret, &curFile.name[0]);
-							uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-							DrawPublish(msgBox);
-							wait_press_A();
-							setGCIInfo(NULL);
-							setCopyGCIMode(FALSE);
-							DrawDispose(msgBox);
-							return true;
-						}
-					}
-					ret = devices[DEVICE_DEST]->writeFile(destFile, readBuffer, amountToCopy);
-					if(ret != amountToCopy) {
-						DrawDispose(progBar);
-						free(readBuffer);
-						devices[DEVICE_CUR]->closeFile(&curFile);
-						devices[DEVICE_DEST]->closeFile(destFile);
-						sprintf(txtbuffer, "Failed to Write! (%ul %ul)\n%s",amountToCopy,ret,destFile->name);
-						uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-						DrawPublish(msgBox);
-						wait_press_A();
-						setGCIInfo(NULL);
-						setCopyGCIMode(FALSE);
-						DrawDispose(msgBox);
-						return true;
-					}
+					wmsg->command =  MSG_WRITE;
+					wmsg->data = wmsg+1;
+					wmsg->length = amountToCopy;
+					wmsg->ret_box = blockq;
+					ret = devices[DEVICE_CUR]->readFile(&curFile, wmsg->data, amountToCopy);
+					MQ_Send(msgq, (mqmsg_t)wmsg, MQ_MSG_BLOCK);
 					curOffset+=amountToCopy;
 				}
 				DrawDispose(progBar);
 
 				// Handle empty files as a special case
 				if(curFile.size == 0) {
-					ret = devices[DEVICE_DEST]->writeFile(destFile, readBuffer, 0);
-					if(ret != 0) {
-						free(readBuffer);
-						sprintf(txtbuffer, "Failed to Write! (%ul)\n%s",ret,destFile->name);
-						uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-						DrawPublish(msgBox);
-						wait_press_A();
-						setGCIInfo(NULL);
-						setCopyGCIMode(FALSE);
-						DrawDispose(msgBox);
-						return true;
-					}
+					ret = devices[DEVICE_DEST]->writeFile(destFile, NULL, 0);
 				}
+				// signal writer to finish
+				MQ_Send(msgq, (mqmsg_t)NULL, MQ_MSG_BLOCK);
+				LWP_JoinThread(writer, NULL);
 				free(readBuffer);
+				MQ_Close(blockq);
+				MQ_Close(msgq);
+				
 				devices[DEVICE_CUR]->closeFile(&curFile);
 				devices[DEVICE_DEST]->closeFile(destFile);
 				setGCIInfo(NULL);
