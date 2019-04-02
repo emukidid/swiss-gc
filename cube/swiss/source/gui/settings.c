@@ -24,7 +24,7 @@ char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS", "No"};
 char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
-char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL"};
+char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL"};
 
 char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"System Sound:\n\nSets the default audio output type used by most games",
@@ -34,7 +34,7 @@ char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	 NULL,
 	"In-Game Reset: (B + R + Z + DPad Down)\n\nReboot: Soft-Reset the GameCube\nigr.dol: Low mem (< 0x81300000) igr.dol at the root of SD Gecko",
 	"Configuration Device:\n\nThe device that Swiss will use to load and save swiss.ini from.\nThis setting is stored in SRAM and will remain on reboot.",
-	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply firmware workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
+	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply firmware workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
 	NULL,
 	NULL,
 	NULL
@@ -318,10 +318,10 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 			case SET_AVE_COMPAT:
 				swissSettings.aveCompat += direction;
-				if(swissSettings.aveCompat > 2)
+				if(swissSettings.aveCompat > 3)
 					swissSettings.aveCompat = 0;
 				if(swissSettings.aveCompat < 0)
-					swissSettings.aveCompat = 2;
+					swissSettings.aveCompat = 3;
 			break;
 		}	
 	}

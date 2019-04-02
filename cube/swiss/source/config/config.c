@@ -490,6 +490,8 @@ void config_parse(char *configData) {
 						configSwissSettings.aveCompat = 1;
 					else if(!strcmp(aveCompatStr[2], value))
 						configSwissSettings.aveCompat = 2;
+					else if(!strcmp(aveCompatStr[3], value))
+						configSwissSettings.aveCompat = 3;
 				}
 				else if(!strcmp("FTPUserName", name)) {
 					strncpy(configSwissSettings.ftpUserName, value, sizeof(((SwissSettings*)0)->ftpUserName));

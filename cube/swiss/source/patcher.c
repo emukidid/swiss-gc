@@ -1463,6 +1463,29 @@ u8 video_timing_960i[] = {
 	0x01,0x9C
 };
 
+u8 video_timing_ntsc50[] = {
+	0x06,0x00,0x01,0x20,
+	0x00,0x22,0x00,0x23,
+	0x00,0x01,0x00,0x00,
+	0x0D,0x0C,0x0B,0x0A,
+	0x02,0x6B,0x02,0x6A,
+	0x02,0x69,0x02,0x6C,
+	0x02,0x75,0x01,0xAD,
+	0x40,0x47,0x69,0xA2,
+	0x01,0x75,0x7A,0x00,
+	0x01,0x9C,
+	0x06,0x00,0x01,0x20,
+	0x00,0x24,0x00,0x24,
+	0x00,0x00,0x00,0x00,
+	0x0D,0x0B,0x0D,0x0B,
+	0x02,0x6B,0x02,0x6D,
+	0x02,0x6B,0x02,0x6D,
+	0x02,0x76,0x01,0xAD,
+	0x40,0x47,0x69,0xA2,
+	0x01,0x75,0x7A,0x00,
+	0x01,0x9C
+};
+
 u8 video_timing_540p50[] = {
 	0x07,0x00,0x02,0x1C,
 	0x00,0x19,0x00,0x19,
@@ -2557,6 +2580,9 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			else if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11)
 				memcpy(timingTable + 6, video_timing_960i, sizeof(video_timing_960i));
 			
+			if (swissSettings.aveCompat == 3)
+				memcpy(timingTable + 2, video_timing_ntsc50, sizeof(video_timing_ntsc50));
+			
 			if (j == 1 || j >= 4) {
 				if (swissSettings.gameVMode == 7 || swissSettings.gameVMode == 14)
 					memcpy(timingTable + 7, video_timing_540p50, sizeof(video_timing_540p50));
@@ -3183,6 +3209,65 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 288] = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
 						data[i + 289] = 0x54E9003C;	// rlwinm	r9, r7, 0, 0, 30
 						data[i + 290] = 0x61290001;	// ori		r9, r9, 1
+						break;
+				}
+			}
+			if (swissSettings.aveCompat == 3) {
+				switch (j) {
+					case 0:
+						data[i + 170] = 0x801F0118;	// lwz		r0, 280 (r31)
+						data[i + 171] = 0x28000001;	// cmplwi	r0, 1
+						data[i + 173] = 0x38000000;	// li		r0, 0
+						break;
+					case 1:
+						data[i + 178] = 0x801F0118;	// lwz		r0, 280 (r31)
+						data[i + 179] = 0x28000001;	// cmplwi	r0, 1
+						data[i + 181] = 0x38000004;	// li		r0, 4
+						break;
+					case 2:
+						data[i + 167] = 0x80150000;	// lwz		r0, 0 (r21)
+						data[i + 168] = 0x28000001;	// cmplwi	r0, 1
+						data[i + 170] = 0x38000000;	// li		r0, 0
+						break;
+					case 3:
+						data[i + 159] = 0x80150000;	// lwz		r0, 0 (r21)
+						data[i + 160] = 0x28000001;	// cmplwi	r0, 1
+						data[i + 162] = 0x38000000;	// li		r0, 0
+						break;
+					case 4:
+						data[i + 162] = 0x80180000;	// lwz		r0, 0 (r24)
+						data[i + 163] = 0x28000001;	// cmplwi	r0, 1
+						data[i + 165] = 0x38000000;	// li		r0, 0
+						break;
+					case 5:
+						data[i + 194] = 0x80150000;	// lwz		r0, 0 (r21)
+						data[i + 195] = 0x28000001;	// cmplwi	r0, 1
+						data[i + 197] = 0x38000000;	// li		r0, 0
+						break;
+					case 6:
+						data[i + 197] = 0x801D0118;	// lwz		r0, 280 (r29)
+						data[i + 198] = 0x28000001;	// cmplwi	r0, 1
+						data[i + 200] = 0x38000004;	// li		r0, 4
+						break;
+					case 7:
+						data[i + 213] = 0x80150000;	// lwz		r0, 0 (r21)
+						data[i + 214] = 0x28000001;	// cmplwi	r0, 1
+						data[i + 216] = 0x38000004;	// li		r0, 4
+						break;
+					case 8:
+						data[i + 245] = 0x80150000;	// lwz		r0, 0 (r21)
+						data[i + 246] = 0x28000001;	// cmplwi	r0, 1
+						data[i + 248] = 0x38000004;	// li		r0, 4
+						break;
+					case 9:
+						data[i + 232] = 0x81250028;	// lwz		r9, 40 (r5)
+						data[i + 250] = 0x28090001;	// cmplwi	r9, 1
+						data[i + 273] = 0x38000004;	// li		r0, 4
+						break;
+					case 10:
+						data[i + 245] = 0x80160000;	// lwz		r0, 0 (r22)
+						data[i + 246] = 0x28000001;	// cmplwi	r0, 1
+						data[i + 248] = 0x38000004;	// li		r0, 4
 						break;
 				}
 			}
