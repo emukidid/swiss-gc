@@ -14,7 +14,13 @@
 #include "info.h"
 #include "config.h"
 #include "settings.h"
+#include "exi.h"
 
+static int page_x_ofs_key = 30;
+static int page_x_ofs_val = 410;
+static int page_y_line = 25;
+static float label_size = 0.75f;
+	
 SwissSettings tempSettings;
 char *uiVModeStr[] = {"Auto", "480i", "480p", "576i", "576p"};
 char *gameVModeStr[] = {"No", "480i", "480sf", "240p", "960i", "480p", "1080i60", "540p60", "576i", "576sf", "288p", "1152i", "576p", "1080i50", "540p50"};
@@ -55,6 +61,10 @@ char *tooltips_advanced[PAGE_ADVANCED_MAX+1] = {
 	NULL
 };
 
+char *tooltips_network[PAGE_NETWORK_MAX+1] = {
+	
+};
+
 char *tooltips_game[PAGE_GAME_MAX+1] = {
 	NULL,
 	NULL,
@@ -74,26 +84,26 @@ syssram* sram;
 syssramex* sramex;
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
-int settings_count_pp[3] = {PAGE_GLOBAL_MAX, PAGE_ADVANCED_MAX, PAGE_GAME_MAX};
+int settings_count_pp[5] = {PAGE_GLOBAL_MAX, PAGE_NETWORK_MAX, PAGE_ADVANCED_MAX, PAGE_GAME_DEFAULTS_MAX, PAGE_GAME_MAX};
 
-void refreshSRAM() {
+void refreshSRAM(SwissSettings *settings) {
 	sram = __SYS_LockSram();
-	swissSettings.sramHOffset = sram->display_offsetH;
-	swissSettings.sram60Hz = (sram->ntd >> 6) & 1;
-	swissSettings.sramLanguage = sram->lang;
-	swissSettings.sramProgressive = (sram->flags >> 7) & 1;
-	swissSettings.sramStereo = (sram->flags >> 2) & 1;
+	settings->sramHOffset = sram->display_offsetH;
+	settings->sram60Hz = (sram->ntd >> 6) & 1;
+	settings->sramLanguage = sram->lang;
+	settings->sramProgressive = (sram->flags >> 7) & 1;
+	settings->sramStereo = (sram->flags >> 2) & 1;
 	__SYS_UnlockSram(0);
 	sramex = __SYS_LockSramEx();
-	swissSettings.configDeviceId = sramex->__padding0;
-	if(swissSettings.configDeviceId > DEVICE_ID_MAX || !(getDeviceByUniqueId(swissSettings.configDeviceId)->features & FEAT_WRITE)) {
-		swissSettings.configDeviceId = DEVICE_ID_UNK;
+	settings->configDeviceId = sramex->__padding0;
+	if(settings->configDeviceId > DEVICE_ID_MAX || !(getDeviceByUniqueId(settings->configDeviceId)->features & FEAT_WRITE)) {
+		settings->configDeviceId = DEVICE_ID_UNK;
 	}
 	__SYS_UnlockSramEx(0);
 }
 
-char* getConfigDeviceName() {
-	DEVICEHANDLER_INTERFACE *configDevice = getDeviceByUniqueId(swissSettings.configDeviceId);
+char* getConfigDeviceName(SwissSettings *settings) {
+	DEVICEHANDLER_INTERFACE *configDevice = getDeviceByUniqueId(settings->configDeviceId);
 	return configDevice != NULL ? (char*)(configDevice->deviceName) : "None";
 }
 
@@ -102,8 +112,14 @@ char* get_tooltip(int page_num, int option) {
 	if(page_num == PAGE_GLOBAL) {
 		textPtr = tooltips_global[option];
 	}
+	else if(page_num == PAGE_NETWORK) {
+		//textPtr = tooltips_network[option];
+	}
 	else if(page_num == PAGE_ADVANCED) {
 		textPtr = tooltips_advanced[option];
+	}
+	else if(page_num == PAGE_GAME_DEFAULTS) {
+		textPtr = tooltips_game[option];
 	}
 	else if(page_num == PAGE_GAME) {
 		textPtr = tooltips_game[option];
@@ -117,7 +133,22 @@ void add_tooltip_label(uiDrawObj_t* page, int page_num, int option) {
 	}
 }
 
-uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file) {
+void drawSettingEntryString(uiDrawObj_t* page, int *y, char *label, char *key, bool selected, bool enabled) {
+	DrawAddChild(page, DrawStyledLabel(page_x_ofs_key, *y, label, label_size, false, enabled ? defaultColor:deSelectedColor));
+	DrawAddChild(page, DrawStyledLabel(page_x_ofs_val, *y, key, label_size, false, enabled && selected ? defaultColor:deSelectedColor));
+	*y += page_y_line; 
+}
+
+void drawSettingEntryBoolean(uiDrawObj_t* page, int *y, char *label, bool boolval, bool selected, bool enabled) {
+	drawSettingEntryString(page, y, label, boolval ? "Enabled" : "Disabled", selected, enabled);
+}
+
+void drawSettingEntryNumeric(uiDrawObj_t* page, int *y, char *label, int num, bool selected, bool enabled) {
+	sprintf(txtbuffer, "%i", num);
+	drawSettingEntryString(page, y, label, txtbuffer, selected, enabled);
+}
+
+uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, ConfigEntry *gameConfig) {
 	uiDrawObj_t* page = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 	char sramHOffsetStr[8];
 	char forceVOffsetStr[8];
@@ -151,81 +182,103 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file) {
 	// Force Text Encoding [Auto/ANSI/SJIS]
 	// Disable Audio Streaming [Yes/No]
 
+	bool isNavOption = false;
 	// Add paging and save/cancel buttons
 	if(page_num != PAGE_MIN) {
-		DrawAddChild(page, DrawSelectableButton(50, 390, -1, 420, "Back", 
-		option == settings_count_pp[page_num]-(page_num != PAGE_MAX ? 3:2) ? B_SELECTED:B_NOSELECT));
+		isNavOption = option == settings_count_pp[page_num]-(page_num != PAGE_MAX ? 3:2);
+		DrawAddChild(page, DrawSelectableButton(50, 390, -1, 420, "Back", isNavOption));
 	}
 	if(page_num != PAGE_MAX) {
-		DrawAddChild(page, DrawSelectableButton(510, 390, -1, 420, "Next", 
-		option == settings_count_pp[page_num]-2 ? B_SELECTED:B_NOSELECT));
+		isNavOption = isNavOption || option == settings_count_pp[page_num]-2;
+		DrawAddChild(page, DrawSelectableButton(510, 390, -1, 420, "Next", option == settings_count_pp[page_num]-2 ? B_SELECTED:B_NOSELECT));
 	}
 	DrawAddChild(page, DrawSelectableButton(120, 425, -1, 455, "Save & Exit", option == settings_count_pp[page_num]-1 ? B_SELECTED:B_NOSELECT));
 	DrawAddChild(page, DrawSelectableButton(320, 425, -1, 455, "Discard & Exit", option ==  settings_count_pp[page_num] ? B_SELECTED:B_NOSELECT));
+	isNavOption = isNavOption || (option >= settings_count_pp[page_num]-1);
 	
+	int page_y_ofs = 110;
+	if(!isNavOption)
+		DrawAddChild(page, DrawStyledLabel(20, page_y_ofs + (page_y_line * option) + (page_y_line / 4), "*", 0.35f, false, disabledColor));
 	// Page specific buttons
 	if(page_num == PAGE_GLOBAL) {
-		DrawAddChild(page, DrawLabel(30, 65, "Global Settings (1/3):"));
-		DrawAddChild(page, DrawStyledLabel(30, 110, "System Sound:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(320, 110, -1, 135, swissSettings.sramStereo ? "Stereo":"Mono", option == SET_SYS_SOUND ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 140, "Screen Position:", 1.0f, false, defaultColor));
+		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Global Settings (1/5):"));
+		drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo":"Mono", option == SET_SYS_SOUND, true);
 		sprintf(sramHOffsetStr, "%+hi", swissSettings.sramHOffset);
-		DrawAddChild(page, DrawSelectableButton(320, 140, -1, 165, sramHOffsetStr, option == SET_SCREEN_POS ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 170, "System Language:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(320, 170, -1, 195, getSramLang(swissSettings.sramLanguage), option == SET_SYS_LANG ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 200, "SD/IDE Speed:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(320, 200, -1, 225, swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == SET_EXI_SPEED ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 230, "Swiss Video Mode:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(320, 230, -1, 255, uiVModeStr[swissSettings.uiVMode], option == SET_SWISS_VIDEOMODE ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 260, "In-Game Reset:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(320, 260, -1, 285, igrTypeStr[swissSettings.igrType], option == SET_IGR ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 290, "Configuration Device:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(320, 290, -1, 315, getConfigDeviceName(), option == SET_CONFIG_DEV ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 320, "AVE Compatibility:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(320, 320, -1, 345, aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT ? B_SELECTED:B_NOSELECT));
+		drawSettingEntryString(page, &page_y_ofs, "Screen Position:", sramHOffsetStr, option == SET_SCREEN_POS, true);
+		drawSettingEntryString(page, &page_y_ofs, "Swiss Video Mode:", getSramLang(swissSettings.sramLanguage), option == SET_SYS_LANG, true);
+		drawSettingEntryString(page, &page_y_ofs, "SD/IDE Speed:", swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == SET_EXI_SPEED, true);	
+		drawSettingEntryString(page, &page_y_ofs, "Swiss Video Mode:", uiVModeStr[swissSettings.uiVMode], option == SET_SWISS_VIDEOMODE, true);
+		drawSettingEntryString(page, &page_y_ofs, "In-Game Reset:", igrTypeStr[swissSettings.igrType], option == SET_IGR, true);
+		drawSettingEntryString(page, &page_y_ofs, "Configuration Device:", getConfigDeviceName(&swissSettings), option == SET_CONFIG_DEV, true);
+		drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
+	}
+	else if(page_num == PAGE_NETWORK) {
+		bool netEnable = exi_bba_exists();
+		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Network Settings (2/5):"));	
+		drawSettingEntryBoolean(page, &page_y_ofs, "Init network at startup:", swissSettings.initNetworkAtStart, option == SET_INIT_NET, netEnable);
+		drawSettingEntryString(page, &page_y_ofs, "FTP Host IP:", swissSettings.ftpHostIp, option == SET_FTP_HOSTIP, netEnable);
+		drawSettingEntryNumeric(page, &page_y_ofs, "FTP Port:", swissSettings.ftpPort, option == SET_FTP_PORT, netEnable);
+		drawSettingEntryString(page, &page_y_ofs, "FTP Username:", swissSettings.ftpUserName, option == SET_FTP_USER, netEnable);
+		drawSettingEntryString(page, &page_y_ofs, "FTP Password:", "*****", option == SET_FTP_PASS, netEnable);
+		drawSettingEntryBoolean(page, &page_y_ofs, "FTP PASV Mode:", swissSettings.ftpUsePasv, option == SET_FTP_PASV, netEnable);
+		drawSettingEntryString(page, &page_y_ofs, "FSP Host IP:", swissSettings.fspHostIp, option == SET_FSP_HOSTIP, netEnable);
+		drawSettingEntryNumeric(page, &page_y_ofs, "FSP Port:", swissSettings.fspPort, option == SET_FSP_PORT, netEnable);
+		drawSettingEntryString(page, &page_y_ofs, "FSP Password:", "*****", option == SET_FSP_PASS, netEnable);
 	}
 	else if(page_num == PAGE_ADVANCED) {
-		DrawAddChild(page, DrawLabel(30, 65, "Advanced Settings (2/3):"));
-		DrawAddChild(page, DrawStyledLabel(30, 110, "Enable USB Gecko Debug via Slot B:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(510, 110, -1, 135, swissSettings.debugUSB ? "Yes":"No", option == SET_ENABLE_USBGECKODBG ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 140, "Hide Unknown file types:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(510, 140, -1, 165, swissSettings.hideUnknownFileTypes ? "Yes":"No", option == SET_HIDE_UNK ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 170, "Stop DVD Motor on startup:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(510, 170, -1, 195, swissSettings.stopMotor ? "Yes":"No", option == SET_STOP_MOTOR ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 200, "Enable WiiRD debugging in Games:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(510, 200, -1, 225, swissSettings.wiirdDebug ? "Yes":"No", option == SET_WIIRDDBG ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 230, "Enable File Management:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(510, 230, -1, 255, swissSettings.enableFileManagement ? "Yes":"No", option == SET_FILE_MGMT ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 260, "Auto-load all cheats:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(510, 260, -1, 285, swissSettings.autoCheats ? "Yes":"No", option == SET_ALL_CHEATS ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 290, "Init network at startup:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(510, 290, -1, 315, swissSettings.initNetworkAtStart ? "Yes":"No", option == SET_INIT_NET ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 320, "Disable Video Patches:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(510, 320, -1, 345, swissSettings.disableVideoPatches ? "Yes":"No", option == SET_ENABLE_VIDPATCH ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 350, "Alternate Read Patches:", 1.0f, false, defaultColor));
-		DrawAddChild(page, DrawSelectableButton(510, 350, -1, 375, swissSettings.alternateReadPatches ? "Yes":"No", option == SET_ALTREADPATCH ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Advanced Settings (3/5):"));
+		drawSettingEntryBoolean(page, &page_y_ofs, "USB Gecko Debug via Slot B:", swissSettings.debugUSB, option == SET_ENABLE_USBGECKODBG, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Hide Unknown file types:", swissSettings.hideUnknownFileTypes, option == SET_HIDE_UNK, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Motor on startup:", swissSettings.stopMotor, option == SET_STOP_MOTOR, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "WiiRD debugging in Games:", swissSettings.wiirdDebug, option == SET_WIIRDDBG, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "File Management:", swissSettings.enableFileManagement, option == SET_FILE_MGMT, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Auto-load all cheats:", swissSettings.autoCheats, option == SET_ALL_CHEATS, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Video Patches:", swissSettings.disableVideoPatches, option == SET_ENABLE_VIDPATCH, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Alternate Read Patches:", swissSettings.alternateReadPatches, option == SET_ALTREADPATCH, true);
+	}
+	else if(page_num == PAGE_GAME_DEFAULTS) {
+		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Default Game Settings (4/5):"));
+		bool enableGameVideoPatches = !swissSettings.disableVideoPatches;
+		drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_FORCE_VIDEOMODE, enableGameVideoPatches);
+		drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_HORIZ_SCALE, enableGameVideoPatches);
+		sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
+		drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_VERT_OFFSET, enableGameVideoPatches);
+		drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_VERT_FILTER, enableGameVideoPatches);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_ALPHA_DITHER, enableGameVideoPatches);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_ANISO_FILTER, true);
+		drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_WIDESCREEN, true);
+		drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_TEXT_ENCODING, true);
+		drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_INVERT_CAMERA, true);
 	}
 	else if(page_num == PAGE_GAME) {
-		DrawAddChild(page, DrawLabel(30, 65, "Current Game Settings (3/3):"));
-		DrawAddChild(page, DrawStyledLabel(30, 110, "Force Video Mode:", 1.0f, false, file != NULL && !swissSettings.disableVideoPatches ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 110, -1, 135, gameVModeStr[swissSettings.gameVMode], option == SET_FORCE_VIDEOMODE ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 140, "Force Horizontal Scale:", 1.0f, false, file != NULL && !swissSettings.disableVideoPatches ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 140, -1, 165, forceHScaleStr[swissSettings.forceHScale], option == SET_HORIZ_SCALE ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 170, "Force Vertical Offset:", 1.0f, false, file != NULL && !swissSettings.disableVideoPatches ? defaultColor : disabledColor));
-		sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
-		DrawAddChild(page, DrawSelectableButton(480, 170, -1, 195, forceVOffsetStr, option == SET_VERT_OFFSET ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 200, "Force Vertical Filter:", 1.0f, false, file != NULL && !swissSettings.disableVideoPatches ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 200, -1, 225, forceVFilterStr[swissSettings.forceVFilter], option == SET_VERT_FILTER ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 230, "Disable Alpha Dithering:", 1.0f, false, file != NULL && !swissSettings.disableVideoPatches ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 230, -1, 255, swissSettings.disableDithering ? "Yes":"No", option == SET_ALPHA_DITHER ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 260, "Force Anisotropic Filter:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 260, -1, 285, swissSettings.forceAnisotropy ? "Yes":"No", option == SET_ANISO_FILTER ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 290, "Force Widescreen:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 290, -1, 315, forceWidescreenStr[swissSettings.forceWidescreen], option == SET_WIDESCREEN ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 320, "Force Text Encoding:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 320, -1, 345, forceEncodingStr[swissSettings.forceEncoding], option == SET_TEXT_ENCODING ? B_SELECTED:B_NOSELECT));
-		DrawAddChild(page, DrawStyledLabel(30, 350, "Invert Camera Stick:", 1.0f, false, file != NULL ? defaultColor : disabledColor));
-		DrawAddChild(page, DrawSelectableButton(480, 350, -1, 375, invertCStickStr[swissSettings.invertCStick], option == SET_INVERT_CAMERA ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Current Game Settings (5/5):"));
+		bool enableGamePatches = file != NULL && gameConfig != NULL;
+		if(enableGamePatches) {
+			bool enableGameVideoPatches = enableGamePatches && !swissSettings.disableVideoPatches;
+			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enableGameVideoPatches);
+			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[gameConfig->forceHScale], option == SET_HORIZ_SCALE, enableGameVideoPatches);
+			sprintf(forceVOffsetStr, "%+hi", gameConfig->forceVOffset);
+			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_VERT_OFFSET, enableGameVideoPatches);
+			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[gameConfig->forceVFilter], option == SET_VERT_FILTER, enableGameVideoPatches);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", gameConfig->disableDithering, option == SET_ALPHA_DITHER, enableGameVideoPatches);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", gameConfig->forceAnisotropy, option == SET_ANISO_FILTER, enableGamePatches);
+			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[gameConfig->forceWidescreen], option == SET_WIDESCREEN, enableGamePatches);
+			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[gameConfig->forceEncoding], option == SET_TEXT_ENCODING, enableGamePatches);
+			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, enableGamePatches);
+		}
+		else {
+			// Just draw the defaults again
+			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_FORCE_VIDEOMODE, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_HORIZ_SCALE, false);
+			sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
+			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_VERT_OFFSET, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_VERT_FILTER, false);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_ALPHA_DITHER, false);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_ANISO_FILTER, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_WIDESCREEN, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_TEXT_ENCODING, false);
+			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_INVERT_CAMERA, false);
+		}
 	}
 	// If we have a tooltip for this page/option, add a fading label telling the user to press Y for help
 	add_tooltip_label(page, page_num, option);
@@ -234,7 +287,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file) {
 	return page;
 }
 
-void settings_toggle(int page, int option, int direction, file_handle *file) {
+void settings_toggle(int page, int option, int direction, file_handle *file, ConfigEntry *gameConfig) {
 	if(page == PAGE_GLOBAL) {
 		switch(option) {
 			case SET_SYS_SOUND:
@@ -325,6 +378,37 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 		}	
 	}
+	else if(page == PAGE_NETWORK) {
+		switch(option) {
+			case SET_INIT_NET:
+				swissSettings.initNetworkAtStart ^= 1;
+			break;
+			/*case SET_FTP_HOSTIP:
+				swissSettings.ftpHostIp = getIpEntry();
+			break;
+			case SET_FTP_PORT:
+				swissSettings.ftpPort = getTextEntry(true, false);
+			break;
+			case SET_FTP_USER:
+				swissSettings.ftpUserName = getTextEntry(false, false);
+			break;
+			case SET_FTP_PASS:
+				swissSettings.ftpPassword = getTextEntry(false, true);
+			break;
+			case SET_FTP_PASV:
+				swissSettings.ftpUsePasv ^= 1;
+			break;
+			case SET_FSP_HOSTIP:
+				swissSettings.fspHostIp = getIpEntry();
+			break;
+			case SET_FSP_PORT:
+				swissSettings.fspPort = getTextEntry(true, false);
+			break;
+			case SET_FSP_PASS:
+				swissSettings.fspPassword = getTextEntry(false, false);
+			break;*/
+		}
+	}
 	else if(page == PAGE_ADVANCED) {
 		switch(option) {
 			case SET_ENABLE_USBGECKODBG:
@@ -345,9 +429,6 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			case SET_ALL_CHEATS:
 				swissSettings.autoCheats ^=1;
 			break;
-			case SET_INIT_NET:
-				swissSettings.initNetworkAtStart ^= 1;
-			break;
 			case SET_ENABLE_VIDPATCH:
 				swissSettings.disableVideoPatches ^= 1;
 			break;
@@ -356,7 +437,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 		}
 	}
-	else if(page == PAGE_GAME && file != NULL) {
+	else if(page == PAGE_GAME_DEFAULTS) {
 		switch(option) {
 			case SET_FORCE_VIDEOMODE:
 				if(!swissSettings.disableVideoPatches) {
@@ -435,13 +516,89 @@ void settings_toggle(int page, int option, int direction, file_handle *file) {
 			break;
 		}
 	}
+	else if(page == PAGE_GAME && file != NULL && gameConfig != NULL) {
+		switch(option) {
+			case SET_FORCE_VIDEOMODE:
+				if(!swissSettings.disableVideoPatches) {
+					gameConfig->gameVMode += direction;
+					if(gameConfig->gameVMode > 14)
+						gameConfig->gameVMode = 0;
+					if(gameConfig->gameVMode < 0)
+						gameConfig->gameVMode = 14;
+					if(swissSettings.aveCompat) {
+						while(gameConfig->gameVMode >= 6 && gameConfig->gameVMode <= 7)
+							gameConfig->gameVMode += direction;
+						while(gameConfig->gameVMode >= 13 && gameConfig->gameVMode <= 14)
+							gameConfig->gameVMode += direction;
+					}
+					if(!VIDEO_HaveComponentCable()) {
+						while(gameConfig->gameVMode >= 4 && gameConfig->gameVMode <= 7)
+							gameConfig->gameVMode += direction;
+						while(gameConfig->gameVMode >= 11 && gameConfig->gameVMode <= 14)
+							gameConfig->gameVMode += direction;
+					}
+					if(gameConfig->gameVMode > 14)
+						gameConfig->gameVMode = 0;
+					if(gameConfig->gameVMode < 0)
+						gameConfig->gameVMode = 14;
+				}
+			break;
+			case SET_HORIZ_SCALE:
+				if(!swissSettings.disableVideoPatches) {
+					gameConfig->forceHScale += direction;
+					if(gameConfig->forceHScale > 6)
+						gameConfig->forceHScale = 0;
+					if(gameConfig->forceHScale < 0)
+						gameConfig->forceHScale = 6;
+				}
+			break;
+			case SET_VERT_OFFSET:
+				if(!swissSettings.disableVideoPatches)
+					gameConfig->forceVOffset += direction;
+			break;
+			case SET_VERT_FILTER:
+				if(!swissSettings.disableVideoPatches) {
+					gameConfig->forceVFilter += direction;
+					if(gameConfig->forceVFilter > 3)
+						gameConfig->forceVFilter = 0;
+					if(gameConfig->forceVFilter < 0)
+						gameConfig->forceVFilter = 3;
+				}
+			break;
+			case SET_ALPHA_DITHER:
+				if(!swissSettings.disableVideoPatches)
+					gameConfig->disableDithering ^= 1;
+			break;
+			case SET_ANISO_FILTER:
+				gameConfig->forceAnisotropy ^= 1;
+			break;
+			case SET_WIDESCREEN:
+				gameConfig->forceWidescreen += direction;
+				if(gameConfig->forceWidescreen > 2)
+					gameConfig->forceWidescreen = 0;
+				if(gameConfig->forceWidescreen < 0)
+					gameConfig->forceWidescreen = 2;
+			break;
+			case SET_TEXT_ENCODING:
+				gameConfig->forceEncoding += direction;
+				if(gameConfig->forceEncoding > 3)
+					gameConfig->forceEncoding = 0;
+				if(gameConfig->forceEncoding < 0)
+					gameConfig->forceEncoding = 3;
+			break;
+			case SET_INVERT_CAMERA:
+				gameConfig->invertCStick += direction;
+				if(gameConfig->invertCStick > 3)
+					gameConfig->invertCStick = 0;
+				if(gameConfig->invertCStick < 0)
+					gameConfig->invertCStick = 3;
+			break;
+		}
+	}
 }
 
 int show_settings(file_handle *file, ConfigEntry *config) {
 	int page = PAGE_GLOBAL, option = SET_SYS_SOUND;
-
-	// Refresh SRAM in case user changed it from IPL
-	refreshSRAM();
 	
 	// Copy current settings to a temp copy in case the user cancels out
 	memcpy((void*)&tempSettings,(void*)&swissSettings, sizeof(SwissSettings));
@@ -453,7 +610,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 		
 	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
-		uiDrawObj_t* settingsPage = settings_draw_page(page, option, file);
+		uiDrawObj_t* settingsPage = settings_draw_page(page, option, file, config);
 		while (!((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
 			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
 			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_UP) 
@@ -483,7 +640,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				option++;
 			}
 			else {
-				settings_toggle(page, option, 1, file);
+				settings_toggle(page, option, 1, file, config);
 			}
 		}
 		if(btns & PAD_BUTTON_LEFT) {
@@ -495,7 +652,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				option--;
 			}
 			else {
-				settings_toggle(page, option, -1, file);
+				settings_toggle(page, option, -1, file, config);
 			}
 		}
 		if((btns & PAD_BUTTON_DOWN) && option < settings_count_pp[page])
@@ -541,34 +698,23 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				sramex->__padding0 = swissSettings.configDeviceId;
 				__SYS_UnlockSramEx(1);
 				while(!__SYS_SyncSram());
-				// Update our .ini
+				// Update our .ini (in memory)
 				if(config != NULL) {
-					config->gameVMode = swissSettings.gameVMode;
-					config->forceHScale = swissSettings.forceHScale;
-					config->forceVOffset = swissSettings.forceVOffset;
-					config->forceVFilter = swissSettings.forceVFilter;
-					config->disableDithering = swissSettings.disableDithering;
-					config->forceAnisotropy = swissSettings.forceAnisotropy;
-					config->forceWidescreen = swissSettings.forceWidescreen;
-					config->forceEncoding = swissSettings.forceEncoding;
-					config->invertCStick = swissSettings.invertCStick;
+					config_update(config);
+					DrawDispose(msgBox);
+				}
+				// flush settings to .ini
+				if(config_update_file()) {
+					DrawDispose(msgBox);
+					msgBox = DrawPublish(DrawMessageBox(D_INFO,"Config Saved Successfully!"));
+					sleep(1);
 					DrawDispose(msgBox);
 				}
 				else {
-					// Save the Swiss system settings since we're called from the main menu
-					config_copy_swiss_settings(&swissSettings);
-					if(config_update_file()) {
-						DrawDispose(msgBox);
-						msgBox = DrawPublish(DrawMessageBox(D_INFO,"Config Saved Successfully!"));
-						sleep(1);
-						DrawDispose(msgBox);
-					}
-					else {
-						DrawDispose(msgBox);
-						msgBox = DrawPublish(DrawMessageBox(D_INFO,"Config Failed to Save!"));
-						sleep(1);
-						DrawDispose(msgBox);
-					}
+					DrawDispose(msgBox);
+					msgBox = DrawPublish(DrawMessageBox(D_INFO,"Config Failed to Save!"));
+					sleep(1);
+					DrawDispose(msgBox);
 				}
 				DrawDispose(settingsPage);
 				return 1;

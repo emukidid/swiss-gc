@@ -30,8 +30,8 @@ int config_create();
 int config_init();
 int config_get_count();
 int config_update_file();
-void config_copy_swiss_settings(SwissSettings *settings);
-SwissSettings *config_get_swiss_settings();
+void config_load_current(ConfigEntry *config);
+void config_unload_current();
 
 #endif
 

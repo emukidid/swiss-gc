@@ -1461,6 +1461,7 @@ void load_game() {
 			wait_press_A();
 			free(filesToPatch);
 			DrawDispose(msgBox);
+			config_unload_current();
 			return;
 		}
 
@@ -1473,6 +1474,7 @@ void load_game() {
 	// setup the video mode before we kill libOGC kernel
 	ogc_video__reset();
 	load_app(multiDol, filesToPatch, noASRequired);
+	config_unload_current();
 }
 
 /* Execute/Load/Parse the currently selected file */
@@ -1565,21 +1567,6 @@ int check_game(ExecutableFile *filesToPatch)
 	return multiDol;
 }
 
-void save_config(ConfigEntry *config) {
-	// Save settings to current config device
-	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving Config ..."));
-	if(config_update(config)) {
-		DrawDispose(msgBox);
-		msgBox = DrawPublish(DrawMessageBox(D_INFO,"Config Saved Successfully!"));
-	}
-	else {
-		DrawDispose(msgBox);
-		msgBox = DrawPublish(DrawMessageBox(D_INFO,"Config Failed to Save!"));
-	}
-	sleep(1);
-	DrawDispose(msgBox);
-}
-
 uiDrawObj_t* draw_game_info() {
 	uiDrawObj_t *container = DrawEmptyBox(75,120, getVideoMode()->fbWidth-78, 400);
 
@@ -1648,16 +1635,6 @@ int info_game()
 	*(u32*)&config->game_id[0] = *(u32*)&GCMDisk.ConsoleID;	// Lazy
 	strncpy(&config->game_name[0],&GCMDisk.GameName[0],32);
 	config_find(config);	// populate
-	// load settings
-	swissSettings.gameVMode = config->gameVMode;
-	swissSettings.forceHScale = config->forceHScale;
-	swissSettings.forceVOffset = config->forceVOffset;
-	swissSettings.forceVFilter = config->forceVFilter;
-	swissSettings.disableDithering = config->disableDithering;
-	swissSettings.forceAnisotropy = config->forceAnisotropy;
-	swissSettings.forceWidescreen = config->forceWidescreen;
-	swissSettings.forceEncoding = config->forceEncoding;
-	swissSettings.invertCStick = config->invertCStick;
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
 	while(1) {
 		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y)){ VIDEO_WaitVSync (); }
@@ -1671,9 +1648,7 @@ int info_game()
 			break;
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
-			if(show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC) ? &curFile : NULL, config)) {
-				save_config(config);
-			}
+			show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC) ? &curFile : NULL, config);
 		}
 		// Look for a cheats file based on the GameID
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
@@ -1686,6 +1661,9 @@ int info_game()
 	}
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	DrawDispose(infoPanel);
+	// Load config for this game into our current settings
+	if(ret) 
+		config_load_current(config);
 	free(config);
 	return ret;
 }

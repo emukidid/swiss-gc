@@ -156,7 +156,7 @@ int main ()
 	Initialise();
 	
 	// Sane defaults
-	refreshSRAM();
+	refreshSRAM(&swissSettings);
 	swissSettings.debugUSB = 0;
 	swissSettings.gameVMode = 0;	// Auto video mode
 	swissSettings.exiSpeed = 1;		// 32MHz
@@ -217,15 +217,11 @@ int main ()
 			}
 		}
 	}
-	config_copy_swiss_settings(&swissSettings);
 	
 	// Try to open up the config .ini in case it hasn't been opened already
 	if(config_init()) {
-		sprintf(txtbuffer,"Loaded %i entries from the config file",config_get_count());
 		// TODO notification area this
-		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO,txtbuffer));
-		memcpy(&swissSettings, config_get_swiss_settings(), sizeof(SwissSettings));
-		DrawDispose(msgBox);
+		print_gecko("Loaded %i entries from the config file\r\n",config_get_count());
 	}
 	
 	if(swissSettings.initNetworkAtStart) {
