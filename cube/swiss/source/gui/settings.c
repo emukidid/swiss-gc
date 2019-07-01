@@ -32,7 +32,7 @@ char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
 char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL"};
 
-char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
+static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"System Sound:\n\nSets the default audio output type used by most games",
 	"Screen Position:\n\nAdjusts the horizontal screen position in games.\nNote: This will take effect next boot.",
 	"System Language:\n\nSystem language used in games, primarily multi-5 PAL games",
@@ -40,32 +40,23 @@ char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	 NULL,
 	"In-Game Reset: (B + R + Z + DPad Down)\n\nReboot: Soft-Reset the GameCube\nigr.dol: Low mem (< 0x81300000) igr.dol at the root of SD Gecko",
 	"Configuration Device:\n\nThe device that Swiss will use to load and save swiss.ini from.\nThis setting is stored in SRAM and will remain on reboot.",
-	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply firmware workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
-	NULL,
-	NULL,
-	NULL
+	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply firmware workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo"
 };
 
-char *tooltips_advanced[PAGE_ADVANCED_MAX+1] = {
+static char *tooltips_advanced[PAGE_ADVANCED_MAX+1] = {
 	"Enable USB Gecko Debug via Slot B:\n\nIf a USB Gecko is present in slot B, debug output from\nSwiss & in game (if the game supported output over OSReport)\nwill be output. If nothing is reading the data out from the\ndevice it may cause Swiss/games to hang.",
-	"Hide Unknown file types:\n\nNo - Show all files (default)\nYes - Swiss will hide unknown file types from being displayed\n\nKnown file types are:\n GameCube Executables (.dol)\n Disc backups (.iso/.gcm)\n MP3 Music (.mp3)\n WASP/WKF Flash files (.fzn)\n GameCube Memory Card Files (.gci)\n GameCube Executables with parameters appended (.dol+cli)",
-	"Stop DVD Motor on startup\n\nNo - Leave it as-is (default)\nYes - Stop the DVD drive from spinning when Swiss starts\n\nThis option is mostly for users booting from game\nexploits where the disc will already be spinning.",
-	"Enable WiiRD debugging in games:\n\nNo - Boot as normal (default)\nYes - This will start a game with the WiiRD debugger enabled & paused\n\nThe WiiRD debugger takes up more memory and can cause issues.",
-	"Enable File Management:\n\nNo - Known files will load immediately instead (default)\nYes - A file management prompt will be displayed for all files",
-	"Auto-load all cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. sd:/cheats/GPOP8D.txt (on a compatible device)\nthen all cheats in the file will be enabled",
-	"Init network at startup:\n\nYes - If a BBA is present, it will be initialised at startup\nNo - Do not initialise the BBA even if present (default)\n\nIf initialised, navigate to the IP in a web browser to backup various data",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	"Hide Unknown file types:\n\nDisabled - Show all files (default)\nEnabled - Swiss will hide unknown file types from being displayed\n\nKnown file types are:\n GameCube Executables (.dol)\n Disc backups (.iso/.gcm)\n MP3 Music (.mp3)\n WASP/WKF Flash files (.fzn)\n GameCube Memory Card Files (.gci)\n GameCube Executables with parameters appended (.dol+cli)",
+	"Stop DVD Motor on startup\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the DVD drive from spinning when Swiss starts\n\nThis option is mostly for users booting from game\nexploits where the disc will already be spinning.",
+	"WiiRD debugging:\n\nDisabled - Boot as normal (default)\nEnabled - This will start a game with the WiiRD debugger enabled & paused\n\nThe WiiRD debugger takes up more memory and can cause issues.",
+	"File Management:\n\nDisabled - Known files will load immediately instead (default)\nEnabled - A file management prompt will be displayed for all files",
+	"Auto-load all cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. sd:/cheats/GPOP8D.txt (on a compatible device)\nthen all cheats in the file will be enabled"
 };
 
-char *tooltips_network[PAGE_NETWORK_MAX+1] = {
-	
+static char *tooltips_network[PAGE_NETWORK_MAX+1] = {
+		"Init network at startup:\n\nDisabled - Do not initialise the BBA even if present (default)\nEnabled - If a BBA is present, it will be initialised at startup\n\nIf initialised, navigate to the IP in a web browser to backup various data"
 };
 
-char *tooltips_game[PAGE_GAME_MAX+1] = {
+static char *tooltips_game[PAGE_GAME_MAX+1] = {
 	NULL,
 	NULL,
 	"Force Vertical Offset:\n\n+0 - Standard value\n-2 - GCVideo-DVI compatible (480i)\n-3 - GCVideo-DVI compatible (default)\n-4 - GCVideo-DVI compatible (240p)\n-12 - Datapath VisionRGB (480p)",
@@ -74,10 +65,7 @@ char *tooltips_game[PAGE_GAME_MAX+1] = {
 	NULL,
 	NULL,
 	"Force Text Encoding:\n\nNo - System native format\nAuto - Game native format (default)\nANSI - Force International format on a Japanese region game\nSJIS - Force Japanese format on an International region game\n\nThis effectively behaves the same as the USA/JPN region switch.",
-	"Invert Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Invert X-axis of the C Stick\nY - Invert Y-axis of the C Stick\nX&Y - Invert both axes of the C Stick",
-	NULL,
-	NULL,
-	NULL
+	"Invert Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Invert X-axis of the C Stick\nY - Invert Y-axis of the C Stick\nX&Y - Invert both axes of the C Stick"
 };
 
 syssram* sram;
@@ -113,7 +101,7 @@ char* get_tooltip(int page_num, int option) {
 		textPtr = tooltips_global[option];
 	}
 	else if(page_num == PAGE_NETWORK) {
-		//textPtr = tooltips_network[option];
+		textPtr = tooltips_network[option];
 	}
 	else if(page_num == PAGE_ADVANCED) {
 		textPtr = tooltips_advanced[option];
@@ -205,7 +193,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo":"Mono", option == SET_SYS_SOUND, true);
 		sprintf(sramHOffsetStr, "%+hi", swissSettings.sramHOffset);
 		drawSettingEntryString(page, &page_y_ofs, "Screen Position:", sramHOffsetStr, option == SET_SCREEN_POS, true);
-		drawSettingEntryString(page, &page_y_ofs, "Swiss Video Mode:", getSramLang(swissSettings.sramLanguage), option == SET_SYS_LANG, true);
+		drawSettingEntryString(page, &page_y_ofs, "System Language:", getSramLang(swissSettings.sramLanguage), option == SET_SYS_LANG, true);
 		drawSettingEntryString(page, &page_y_ofs, "SD/IDE Speed:", swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == SET_EXI_SPEED, true);	
 		drawSettingEntryString(page, &page_y_ofs, "Swiss Video Mode:", uiVModeStr[swissSettings.uiVMode], option == SET_SWISS_VIDEOMODE, true);
 		drawSettingEntryString(page, &page_y_ofs, "In-Game Reset:", igrTypeStr[swissSettings.igrType], option == SET_IGR, true);
@@ -230,7 +218,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryBoolean(page, &page_y_ofs, "USB Gecko Debug via Slot B:", swissSettings.debugUSB, option == SET_ENABLE_USBGECKODBG, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Hide Unknown file types:", swissSettings.hideUnknownFileTypes, option == SET_HIDE_UNK, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Motor on startup:", swissSettings.stopMotor, option == SET_STOP_MOTOR, true);
-		drawSettingEntryBoolean(page, &page_y_ofs, "WiiRD debugging in Games:", swissSettings.wiirdDebug, option == SET_WIIRDDBG, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "WiiRD debugging:", swissSettings.wiirdDebug, option == SET_WIIRDDBG, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "File Management:", swissSettings.enableFileManagement, option == SET_FILE_MGMT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Auto-load all cheats:", swissSettings.autoCheats, option == SET_ALL_CHEATS, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Video Patches:", swissSettings.disableVideoPatches, option == SET_ENABLE_VIDPATCH, true);
@@ -384,28 +372,28 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 				swissSettings.initNetworkAtStart ^= 1;
 			break;
 			/*case SET_FTP_HOSTIP:
-				swissSettings.ftpHostIp = getIpEntry();
+				DrawGetTextEntry(ENTRYMODE_IP, &swissSettings.ftpHostIp, sizeof(swissSettings.ftpHostIp));
 			break;
 			case SET_FTP_PORT:
-				swissSettings.ftpPort = getTextEntry(true, false);
+				DrawGetTextEntry(ENTRYMODE_NUMERIC, &swissSettings.ftpPort, 5);
 			break;
 			case SET_FTP_USER:
-				swissSettings.ftpUserName = getTextEntry(false, false);
+				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA, &swissSettings.ftpUserName, sizeof(swissSettings.ftpUserName));
 			break;
 			case SET_FTP_PASS:
-				swissSettings.ftpPassword = getTextEntry(false, true);
+				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_MASKED, &swissSettings.ftpPassword, sizeof(swissSettings.ftpPassword));
 			break;
 			case SET_FTP_PASV:
 				swissSettings.ftpUsePasv ^= 1;
 			break;
 			case SET_FSP_HOSTIP:
-				swissSettings.fspHostIp = getIpEntry();
+				DrawGetTextEntry(ENTRYMODE_IP, &swissSettings.fspHostIp, sizeof(swissSettings.fspHostIp));
 			break;
 			case SET_FSP_PORT:
-				swissSettings.fspPort = getTextEntry(true, false);
+				DrawGetTextEntry(ENTRYMODE_NUMERIC, &swissSettings.fspPort, 5);
 			break;
 			case SET_FSP_PASS:
-				swissSettings.fspPassword = getTextEntry(false, false);
+				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_MASKED, &swissSettings.fspPassword, sizeof(swissSettings.fspPassword));
 			break;*/
 		}
 	}
