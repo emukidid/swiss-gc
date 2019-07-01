@@ -364,10 +364,12 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 		if(totFrags+1 == maxFrags) {
 			return 0;
 		}
+		devices[DEVICE_CUR]->closeFile(file);
 		// TODO fix 2 disc patched games
 		if((frags = getFragments(file2, &fragList[(maxFrags*3)], maxFrags, 0, 0, DEVICE_CUR))) {
 			totFrags += frags;
 		}
+		devices[DEVICE_CUR]->closeFile(file2);
 	}
 	
 	// Disk 1 base sector

@@ -1429,16 +1429,16 @@ void load_game() {
 			// look to see if it's a two disc game
 			// set things up properly to allow disc swapping
 			// the files must be setup as so: game-disc1.xxx game-disc2.xxx
-			secondDisc = memalign(32,sizeof(file_handle));
-			memcpy(secondDisc,&curFile,sizeof(file_handle));
+			secondDisc = calloc(1,sizeof(file_handle));
+			memcpy(secondDisc->name,&curFile.name,PATHNAME_MAX);
 			secondDisc->fp = 0;
 			secondDisc->ffsFp = NULL;
 			
 			// you're trying to load a disc1 of something
-			if(curFile.name[strlen(secondDisc->name)-5] == '1') {
+			if(curFile.name[strlen(curFile.name)-5] == '1') {
 				secondDisc->name[strlen(secondDisc->name)-5] = '2';
-			} else if(curFile.name[strlen(secondDisc->name)-5] == '2' && strcasecmp(getRelativeName(curFile.name), "disc2.iso")) {
-				secondDisc->name[strlen(secondDisc->name)-5] = '1';
+			} else if(curFile.name[strlen(curFile.name)-5] == '2' && strcasecmp(getRelativeName(curFile.name), "disc2.iso")) {
+				secondDisc->name[strlen(curFile.name)-5] = '1';
 			} else if(!strcasecmp(getRelativeName(curFile.name), "game.iso")) {
 				memset(secondDisc->name, 0, PATHNAME_MAX);
 				strncpy(secondDisc->name, curFile.name, strlen(curFile.name)-strlen(getRelativeName(curFile.name)));
@@ -1612,7 +1612,10 @@ uiDrawObj_t* draw_game_info() {
 		}
 	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
-		sprintf(txtbuffer,"GameID: [%s] Audio Streaming [%s]", (const char*)&GCMDisk ,(GCMDisk.AudioStreaming==1) ? "YES":"NO");
+		strcpy(txtbuffer, "GameID: [");
+		strncat(txtbuffer, (const char*)&GCMDisk, 6);
+		strcat(txtbuffer, "] Audio Streaming ");
+		strcat(txtbuffer, (GCMDisk.AudioStreaming==1) ? "[YES]":"[NO]");
 		DrawAddChild(container, DrawStyledLabel(640/2, 200, txtbuffer, 0.8f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 220, (GCMDisk.DiscID ? "Disc 2":""), 0.8f, true, defaultColor));
 	}
@@ -1631,8 +1634,8 @@ int info_game()
 	int ret = -1;
 	ConfigEntry *config = NULL;
 	// Find the config for this game, or default if we don't know about it
-	config = memalign(32, sizeof(ConfigEntry));
-	*(u32*)&config->game_id[0] = *(u32*)&GCMDisk.ConsoleID;	// Lazy
+	config = calloc(1, sizeof(ConfigEntry));
+	memcpy(config->game_id, &GCMDisk.ConsoleID, 4);
 	strncpy(&config->game_name[0],&GCMDisk.GameName[0],32);
 	config_find(config);	// populate
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
