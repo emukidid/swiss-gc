@@ -346,7 +346,7 @@ void config_parse(char *configData) {
 					configEntries[configEntriesCount].forceWidescreen = 0;
 					configEntries[configEntriesCount].forceEncoding = 0;
 					configEntries[configEntriesCount].invertCStick = 0;
-					configEntries[configEntriesCount].alternateReadPatches = 0;
+					configEntries[configEntriesCount].alternateReadPatches = 1;
 				}
 				else if(!strcmp("Name", name)) {
 					strncpy(&configEntries[configEntriesCount].game_name[0], value, 64);
@@ -565,7 +565,7 @@ void config_find(ConfigEntry *entry) {
 	entry->forceWidescreen = 0;
 	entry->forceEncoding = 0;
 	entry->invertCStick = 0;
-	entry->alternateReadPatches = 0;
+	entry->alternateReadPatches = 1;
 	// Add this new entry to our collection
 	memcpy(&configEntries[configEntriesCount], entry, sizeof(ConfigEntry));
 	configEntriesCount++;
