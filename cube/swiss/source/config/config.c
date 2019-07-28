@@ -173,8 +173,6 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "Disable Video Patches=%s\r\n",(swissSettings.disableVideoPatches ? "Yes":"No"));
 	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "Alternate Read Patches=%s\r\n",(swissSettings.alternateReadPatches ? "Yes":"No"));
-	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "SMBUserName=%s\r\n",swissSettings.smbUser);
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "SMBPassword=%s\r\n",swissSettings.smbPassword);
@@ -234,6 +232,9 @@ int config_update_file() {
 	
 	sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[swissSettings.invertCStick]);
 	string_append(configString, txtbuffer);
+	
+	sprintf(txtbuffer, "Alternate Read Patches=%s\r\n",(swissSettings.alternateReadPatches ? "Yes":"No"));
+	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
 	string_append(configString, txtbuffer);
 	
@@ -282,6 +283,9 @@ int config_update_file() {
 		string_append(configString, txtbuffer);
 		
 		sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[configEntries[i].invertCStick]);
+		string_append(configString, txtbuffer);
+		
+		sprintf(txtbuffer, "Alternate Read Patches=%s\r\n",(configEntries[i].alternateReadPatches ? "Yes":"No"));
 		string_append(configString, txtbuffer);
 	}
 
@@ -342,6 +346,7 @@ void config_parse(char *configData) {
 					configEntries[configEntriesCount].forceWidescreen = 0;
 					configEntries[configEntriesCount].forceEncoding = 0;
 					configEntries[configEntriesCount].invertCStick = 0;
+					configEntries[configEntriesCount].alternateReadPatches = 0;
 				}
 				else if(!strcmp("Name", name)) {
 					strncpy(&configEntries[configEntriesCount].game_name[0], value, 64);
@@ -424,6 +429,12 @@ void config_parse(char *configData) {
 						}
 					}
 				}
+				else if(!strcmp("Alternate Read Patches", name)) {
+					if(defaultPassed)
+						configEntries[configEntriesCount].alternateReadPatches = !strcmp("Yes", value) ? 1:0;
+					else
+						swissSettings.alternateReadPatches = !strcmp("Yes", value) ? 1:0;
+				}
 				
 				// Swiss settings
 				else if(!strcmp("SD/IDE Speed", name)) {
@@ -446,9 +457,6 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("Disable Video Patches", name)) {
 					swissSettings.disableVideoPatches = !strcmp("Yes", value) ? 1:0;
-				}
-				else if(!strcmp("Alternate Read Patches", name)) {
-					swissSettings.alternateReadPatches = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("Swiss Video Mode", name)) {
 					if(!strcmp(uiVModeStr[0], value))
@@ -557,6 +565,7 @@ void config_find(ConfigEntry *entry) {
 	entry->forceWidescreen = 0;
 	entry->forceEncoding = 0;
 	entry->invertCStick = 0;
+	entry->alternateReadPatches = 0;
 	// Add this new entry to our collection
 	memcpy(&configEntries[configEntriesCount], entry, sizeof(ConfigEntry));
 	configEntriesCount++;
@@ -594,6 +603,7 @@ void config_load_current(ConfigEntry *config) {
 	swissSettings.forceWidescreen = config->forceWidescreen;
 	swissSettings.forceEncoding = config->forceEncoding;
 	swissSettings.invertCStick = config->invertCStick;
+	swissSettings.alternateReadPatches = config->alternateReadPatches;
 }
 
 void config_unload_current() {
@@ -606,4 +616,5 @@ void config_unload_current() {
 	swissSettings.forceWidescreen = backup.forceWidescreen;
 	swissSettings.forceEncoding = backup.forceEncoding;
 	swissSettings.invertCStick = backup.invertCStick;
+	swissSettings.alternateReadPatches = backup.alternateReadPatches;
 }

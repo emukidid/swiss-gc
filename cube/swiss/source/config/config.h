@@ -20,6 +20,7 @@ typedef struct {
 	int forceWidescreen;
 	int forceEncoding;
 	int invertCStick;
+	int alternateReadPatches;
 } ConfigEntry __attribute__((aligned(32)));
 
 void config_parse(char *configData);

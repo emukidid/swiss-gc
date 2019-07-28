@@ -222,21 +222,21 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryBoolean(page, &page_y_ofs, "File Management:", swissSettings.enableFileManagement, option == SET_FILE_MGMT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Auto-load all cheats:", swissSettings.autoCheats, option == SET_ALL_CHEATS, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Video Patches:", swissSettings.disableVideoPatches, option == SET_ENABLE_VIDPATCH, true);
-		drawSettingEntryBoolean(page, &page_y_ofs, "Alternate Read Patches:", swissSettings.alternateReadPatches, option == SET_ALTREADPATCH, true);
 	}
 	else if(page_num == PAGE_GAME_DEFAULTS) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Default Game Settings (4/5):"));
 		bool enableGameVideoPatches = !swissSettings.disableVideoPatches;
-		drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_FORCE_VIDEOMODE, enableGameVideoPatches);
-		drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_HORIZ_SCALE, enableGameVideoPatches);
+		drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_DEFAULT_FORCE_VIDEOMODE, enableGameVideoPatches);
+		drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, enableGameVideoPatches);
 		sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
-		drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_VERT_OFFSET, enableGameVideoPatches);
-		drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_VERT_FILTER, enableGameVideoPatches);
-		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_ALPHA_DITHER, enableGameVideoPatches);
-		drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_ANISO_FILTER, true);
-		drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_WIDESCREEN, true);
-		drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_TEXT_ENCODING, true);
-		drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_INVERT_CAMERA, true);
+		drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_DEFAULT_VERT_OFFSET, enableGameVideoPatches);
+		drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_DEFAULT_VERT_FILTER, enableGameVideoPatches);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_DEFAULT_ALPHA_DITHER, enableGameVideoPatches);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_DEFAULT_ANISO_FILTER, true);
+		drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, true);
+		drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_DEFAULT_TEXT_ENCODING, true);
+		drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Alternate Read Patches:", swissSettings.alternateReadPatches, option == SET_DEFAULT_ALT_READPATCH, true);
 	}
 	else if(page_num == PAGE_GAME) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Current Game Settings (5/5):"));
@@ -253,19 +253,21 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[gameConfig->forceWidescreen], option == SET_WIDESCREEN, enableGamePatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[gameConfig->forceEncoding], option == SET_TEXT_ENCODING, enableGamePatches);
 			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, enableGamePatches);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Alternate Read Patches:", gameConfig->alternateReadPatches, option == SET_ALT_READPATCH, enableGamePatches);
 		}
 		else {
 			// Just draw the defaults again
-			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_FORCE_VIDEOMODE, false);
-			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_HORIZ_SCALE, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_DEFAULT_FORCE_VIDEOMODE, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, false);
 			sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
-			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_VERT_OFFSET, false);
-			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_VERT_FILTER, false);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_ALPHA_DITHER, false);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_ANISO_FILTER, false);
-			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_WIDESCREEN, false);
-			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_TEXT_ENCODING, false);
-			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_INVERT_CAMERA, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_DEFAULT_VERT_OFFSET, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_DEFAULT_VERT_FILTER, false);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_DEFAULT_ALPHA_DITHER, false);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_DEFAULT_ANISO_FILTER, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_DEFAULT_TEXT_ENCODING, false);
+			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, false);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Alternate Read Patches:", swissSettings.alternateReadPatches, option == SET_DEFAULT_ALT_READPATCH, false);
 		}
 	}
 	// If we have a tooltip for this page/option, add a fading label telling the user to press Y for help
@@ -420,14 +422,11 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			case SET_ENABLE_VIDPATCH:
 				swissSettings.disableVideoPatches ^= 1;
 			break;
-			case SET_ALTREADPATCH:
-				swissSettings.alternateReadPatches ^= 1;
-			break;
 		}
 	}
 	else if(page == PAGE_GAME_DEFAULTS) {
 		switch(option) {
-			case SET_FORCE_VIDEOMODE:
+			case SET_DEFAULT_FORCE_VIDEOMODE:
 				if(!swissSettings.disableVideoPatches) {
 					swissSettings.gameVMode += direction;
 					if(swissSettings.gameVMode > 14)
@@ -452,7 +451,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 						swissSettings.gameVMode = 14;
 				}
 			break;
-			case SET_HORIZ_SCALE:
+			case SET_DEFAULT_HORIZ_SCALE:
 				if(!swissSettings.disableVideoPatches) {
 					swissSettings.forceHScale += direction;
 					if(swissSettings.forceHScale > 6)
@@ -461,11 +460,11 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 						swissSettings.forceHScale = 6;
 				}
 			break;
-			case SET_VERT_OFFSET:
+			case SET_DEFAULT_VERT_OFFSET:
 				if(!swissSettings.disableVideoPatches)
 					swissSettings.forceVOffset += direction;
 			break;
-			case SET_VERT_FILTER:
+			case SET_DEFAULT_VERT_FILTER:
 				if(!swissSettings.disableVideoPatches) {
 					swissSettings.forceVFilter += direction;
 					if(swissSettings.forceVFilter > 3)
@@ -474,33 +473,36 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 						swissSettings.forceVFilter = 3;
 				}
 			break;
-			case SET_ALPHA_DITHER:
+			case SET_DEFAULT_ALPHA_DITHER:
 				if(!swissSettings.disableVideoPatches)
 					swissSettings.disableDithering ^= 1;
 			break;
-			case SET_ANISO_FILTER:
+			case SET_DEFAULT_ANISO_FILTER:
 				swissSettings.forceAnisotropy ^= 1;
 			break;
-			case SET_WIDESCREEN:
+			case SET_DEFAULT_WIDESCREEN:
 				swissSettings.forceWidescreen += direction;
 				if(swissSettings.forceWidescreen > 2)
 					swissSettings.forceWidescreen = 0;
 				if(swissSettings.forceWidescreen < 0)
 					swissSettings.forceWidescreen = 2;
 			break;
-			case SET_TEXT_ENCODING:
+			case SET_DEFAULT_TEXT_ENCODING:
 				swissSettings.forceEncoding += direction;
 				if(swissSettings.forceEncoding > 3)
 					swissSettings.forceEncoding = 0;
 				if(swissSettings.forceEncoding < 0)
 					swissSettings.forceEncoding = 3;
 			break;
-			case SET_INVERT_CAMERA:
+			case SET_DEFAULT_INVERT_CAMERA:
 				swissSettings.invertCStick += direction;
 				if(swissSettings.invertCStick > 3)
 					swissSettings.invertCStick = 0;
 				if(swissSettings.invertCStick < 0)
 					swissSettings.invertCStick = 3;
+			break;
+			case SET_DEFAULT_ALT_READPATCH:
+				swissSettings.alternateReadPatches ^= 1;
 			break;
 		}
 	}
@@ -580,6 +582,9 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 					gameConfig->invertCStick = 0;
 				if(gameConfig->invertCStick < 0)
 					gameConfig->invertCStick = 3;
+			break;
+			case SET_ALT_READPATCH:
+				gameConfig->alternateReadPatches ^= 1;
 			break;
 		}
 	}
