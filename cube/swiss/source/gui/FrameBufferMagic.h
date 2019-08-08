@@ -127,6 +127,16 @@ enum TextureId
 	TEX_UNCHECKED
 };
 
+typedef struct kbBtn_ {
+    int supportedEntryMode;
+	char *val;
+} kbBtn;
+
+#define ENTRYMODE_ALPHA 	(1)
+#define ENTRYMODE_NUMERIC 	(1<<1)
+#define ENTRYMODE_IP	 	(1<<2)
+#define ENTRYMODE_MASKED 	(1<<3)
+
 uiDrawObj_t* DrawImage(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
 uiDrawObj_t* DrawTexObj(GXTexObj *texObj, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
 uiDrawObj_t* DrawProgressBar(bool indeterminate, int percent, char *message);
@@ -150,6 +160,7 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message
 uiDrawObj_t* DrawVertScrollBar(int x, int y, int width, int height, float scrollPercent, int scrollHeight);
 void DrawArgsSelector(char *fileName);
 void DrawCheatsSelector(char *fileName);
+void DrawGetTextEntry(int entryMode, void *src, int size);
 void DrawInit();
 void DrawShutdown();
 

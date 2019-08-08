@@ -992,10 +992,10 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			sprintf(fbTextBuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
 		}
 		else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
-			sprintf(fbTextBuffer,"%.2fKB (%ul blocks)", (float)file->size/1024, file->size/8192);
+			sprintf(fbTextBuffer,"%.2fKB (%d blocks)", (float)file->size/1024, file->size/8192);
 		}
 		else if(devices[DEVICE_CUR] == &__device_qoob) {
-			sprintf(fbTextBuffer,"%.2fKB (%ul blocks)", (float)file->size/1024, file->size/0x10000);
+			sprintf(fbTextBuffer,"%.2fKB (%d blocks)", (float)file->size/1024, file->size/0x10000);
 		}
 		else {
 			sprintf(fbTextBuffer,"%.2f %s",file->size > (1024*1024) ? (float)file->size/(1024*1024):(float)file->size/1024,file->size > (1024*1024) ? "MB":"KB");
@@ -1375,6 +1375,12 @@ void DrawCheatsSelector(char *fileName) {
 	}
 	DrawDispose(container);
 }
+
+
+void DrawGetTextEntry(int mode, void *src, int size) {
+	// TODO
+}
+
 
 static void videoDrawEvent(uiDrawObj_t *videoEvent) {
 	//print_gecko("Draw event: %08X (type %s)\r\n", (u32)videoEvent, typeStrings[videoEvent->type]);
