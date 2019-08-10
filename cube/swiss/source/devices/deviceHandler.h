@@ -21,6 +21,8 @@ typedef struct {
 	int fileTypeTexId;
 	int regionTexId;
 	u8 *banner;
+	int bannerSize;
+	void *tplLocation;
 	GXTexObj bannerTexObj;
 	char description[128];
 } file_meta;

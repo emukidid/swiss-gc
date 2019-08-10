@@ -80,6 +80,17 @@ TPLFile checkedTPL;
 GXTexObj checkedTexObj;
 TPLFile uncheckedTPL;
 GXTexObj uncheckedTexObj;
+TPLFile mp3imgTPL;
+GXTexObj mp3imgTexObj;
+TPLFile dolimgTPL;
+GXTexObj dolimgTexObj;
+TPLFile dolcliimgTPL;
+GXTexObj dolcliimgTexObj;
+TPLFile fileimgTPL;
+GXTexObj fileimgTexObj;
+TPLFile dirimgTPL;
+GXTexObj dirimgTexObj;
+
 
 static char fbTextBuffer[64];
 
@@ -366,6 +377,16 @@ static void init_textures()
 	TPL_GetTexture(&checkedTPL,checked_32,&checkedTexObj);
 	TPL_OpenTPLFromMemory(&uncheckedTPL, (void *)unchecked_32_tpl, unchecked_32_tpl_size);
 	TPL_GetTexture(&uncheckedTPL,unchecked_32,&uncheckedTexObj);
+	TPL_OpenTPLFromMemory(&mp3imgTPL, (void *)mp3img_tpl, mp3img_tpl_size);
+	TPL_GetTexture(&mp3imgTPL,0,&mp3imgTexObj);
+	TPL_OpenTPLFromMemory(&dolimgTPL, (void *)dolimg_tpl, dolimg_tpl_size);
+	TPL_GetTexture(&dolimgTPL,0,&dolimgTexObj);
+	TPL_OpenTPLFromMemory(&dolcliimgTPL, (void *)dolcliimg_tpl, dolcliimg_tpl_size);
+	TPL_GetTexture(&dolcliimgTPL,0,&dolcliimgTexObj);
+	TPL_OpenTPLFromMemory(&fileimgTPL, (void *)fileimg_tpl, fileimg_tpl_size);
+	TPL_GetTexture(&fileimgTPL,0,&fileimgTexObj);
+	TPL_OpenTPLFromMemory(&dirimgTPL, (void *)dirimg_tpl, dirimg_tpl_size);
+	TPL_GetTexture(&dirimgTPL,0,&dirimgTexObj);
 }
 
 static void drawInit()
@@ -958,10 +979,10 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 	
 	// Draw banner if there is one
 	file_handle *file = data->file;
-	if(file->meta && file->meta->banner) {
+	if(file->meta && (file->meta->banner || file->meta->tplLocation)) {
 		GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
 		GX_InvalidateTexAll();
-		GX_LoadTexObj(&file->meta->bannerTexObj, GX_TEXMAP0);
+		GX_LoadTexObj(file->meta->tplLocation ? file->meta->tplLocation : &file->meta->bannerTexObj, GX_TEXMAP0);
 		GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 			GX_Position3f32((float) data->x1+7,(float) data->y1+4, 0.0f );
 			GX_Color4u8(255, 255, 255, 255);
@@ -982,7 +1003,6 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 	}
 	
 	float scale = GetTextScaleToFitInWidth(data->displayName, (data->x2-data->x1-96-35)-(borderSize*2));
-
 	drawString(data->x1 + borderSize+5+96, data->y1+borderSize, data->displayName, scale, false, defaultColor);
 	
 	// Print specific stats
@@ -1020,9 +1040,14 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message
 	if(file->meta) {
 		eventData->file->meta = calloc(1, sizeof(file_meta));
 		memcpy(eventData->file->meta, file->meta, sizeof(file_meta));
+		memset(&eventData->file->meta->bannerTexObj, 0, sizeof(GXTexObj));
 		if(file->meta->banner) {
-			eventData->file->meta->banner = memalign(32, BannerSize);
-			memcpy(eventData->file->meta->banner, file->meta->banner, BannerSize);
+			eventData->file->meta->banner = memalign(32, eventData->file->meta->bannerSize);
+			memcpy(eventData->file->meta->banner, file->meta->banner, eventData->file->meta->bannerSize);
+			// Make a copy cause we want this one to be killed off when the display event is disposed
+			if(eventData->file->meta->bannerSize == GCM_STD_BNR_SIZE) {
+				meta_create_direct_texture(eventData->file->meta);
+			}
 		}
 	}
 	strcpy(eventData->displayName, message);

@@ -29,20 +29,6 @@ extern char blankbanner[];
 
 static heap_cntrl* meta_cache = NULL;
 
-file_meta* create_basic_meta(const u8* img, const u32 img_size) {
-	file_meta* _meta = (file_meta*)memalign(32,sizeof(file_meta));
-	memset(_meta, 0, sizeof(file_meta));
-	TPLFile *tplFile = (TPLFile*) memalign(32,sizeof(TPLFile));
-	memset(tplFile,0,sizeof(TPLFile));				
-	_meta->banner = memalign(32,img_size);
-	memcpy(_meta->banner,(void *)img, img_size);
-	DCFlushRange(_meta->banner, img_size);
-	TPL_OpenTPLFromMemory(tplFile, (void *)_meta->banner, img_size);
-	TPL_GetTexture(tplFile,0,&_meta->bannerTexObj);
-	free(tplFile);
-	return _meta;
-}
-
 void meta_free(void* ptr) {
 	if(meta_cache && ptr) {
 		__lwp_heap_free(meta_cache, ptr);
@@ -51,7 +37,7 @@ void meta_free(void* ptr) {
 
 void* meta_alloc(unsigned int size){
 	if(!meta_cache){
-		meta_cache = memalign(32,sizeof(heap_cntrl));
+		meta_cache = memalign(32, sizeof(heap_cntrl));
 		__lwp_heap_init(meta_cache, memalign(32,META_CACHE_SIZE), META_CACHE_SIZE, 32);
 	}
 
@@ -75,6 +61,18 @@ void* meta_alloc(unsigned int size){
 	return ptr;
 }
 
+file_meta* create_basic_meta(void* tplTexObj) {
+	file_meta* meta = (file_meta*)meta_alloc(sizeof(file_meta));
+	memset(meta, 0, sizeof(file_meta));
+	meta->tplLocation = tplTexObj;
+	return meta;
+}
+
+void meta_create_direct_texture(file_meta* meta) {
+	DCFlushRange(meta->banner, meta->bannerSize);
+	GX_InitTexObj(&meta->bannerTexObj, meta->banner, 96, 32, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP,GX_FALSE);
+}
+
 void populate_meta(file_handle *f) {
 	// If the meta hasn't been created, lets read it.
 	
@@ -87,9 +85,9 @@ void populate_meta(file_handle *f) {
 			// If it's a GCM or ISO or DVD Disc
 			if(endsWith(f->name,".iso") || endsWith(f->name,".gcm")) {
 				
+				f->meta = (file_meta*)meta_alloc(sizeof(file_meta));
+				memset(f->meta, 0, sizeof(file_meta));
 				if(devices[DEVICE_CUR] == &__device_wode) {
-					f->meta = (file_meta*)meta_alloc(sizeof(file_meta));
-					memset(f->meta, 0, sizeof(file_meta));
 					// Assign GCM region texture
 					ISOInfo_t* isoInfo = (ISOInfo_t*)&f->other;
 					char region = wodeRegionToChar(isoInfo->iso_region);
@@ -99,15 +97,12 @@ void populate_meta(file_handle *f) {
 						f->meta->regionTexId = TEX_NTSCU;
 					else if(region == 'P')
 						f->meta->regionTexId = TEX_PAL;
-					f->meta->banner = memalign(32,BannerSize);
-					memcpy(f->meta->banner,blankbanner+0x20,BannerSize);
-					DCFlushRange(f->meta->banner,BannerSize);
-					GX_InitTexObj(&f->meta->bannerTexObj,f->meta->banner,96,32,GX_TF_RGB5A3,GX_CLAMP,GX_CLAMP,GX_FALSE);
-						
+					f->meta->banner = memalign(32,GCM_STD_BNR_SIZE);
+					memcpy(f->meta->banner,blankbanner+0x20,GCM_STD_BNR_SIZE);
+					f->meta->bannerSize = GCM_STD_BNR_SIZE;
+					meta_create_direct_texture(f->meta);
 				}
 				else {
-					f->meta = (file_meta*)meta_alloc(sizeof(file_meta));
-					memset(f->meta, 0, sizeof(file_meta));
 					DiskHeader *header = memalign(32, sizeof(DiskHeader));
 					devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
 					devices[DEVICE_CUR]->readFile(f, header, sizeof(DiskHeader));
@@ -115,16 +110,16 @@ void populate_meta(file_handle *f) {
 					if(header->DVDMagicWord == DVD_MAGIC) {
 						//print_gecko("FILE identifed as valid GCM\r\n");
 						unsigned int bannerOffset = getBannerOffset(f);
-						f->meta->banner = memalign(32,BannerSize);
+						f->meta->banner = memalign(32,GCM_STD_BNR_SIZE);
 						if(!bannerOffset) {
 							//print_gecko("Banner not found\r\n");
-							memcpy(f->meta->banner,blankbanner+0x20,BannerSize);
+							memcpy(f->meta->banner,blankbanner+0x20,GCM_STD_BNR_SIZE);
 						}
 						else
 						{
 							devices[DEVICE_CUR]->seekFile(f,bannerOffset+0x20,DEVICE_HANDLER_SEEK_SET);
-							if(devices[DEVICE_CUR]->readFile(f,f->meta->banner,BannerSize)!=BannerSize) {
-								memcpy(f->meta->banner,blankbanner+0x20,BannerSize);
+							if(devices[DEVICE_CUR]->readFile(f,f->meta->banner,GCM_STD_BNR_SIZE)!=GCM_STD_BNR_SIZE) {
+								memcpy(f->meta->banner,blankbanner+0x20,GCM_STD_BNR_SIZE);
 							}
 							//print_gecko("Read banner from %08X+0x20\r\n", bannerOffset);
 							
@@ -141,8 +136,8 @@ void populate_meta(file_handle *f) {
 							devices[DEVICE_CUR]->readFile(f,&f->meta->description[0],0x80);
 							//print_gecko("Meta Description: [%s]\r\n",&f->meta->description[0]);
 						}
-						DCFlushRange(f->meta->banner,BannerSize);
-						GX_InitTexObj(&f->meta->bannerTexObj,f->meta->banner,96,32,GX_TF_RGB5A3,GX_CLAMP,GX_CLAMP,GX_FALSE);
+						f->meta->bannerSize = GCM_STD_BNR_SIZE;
+						meta_create_direct_texture(f->meta);
 						//print_gecko("Meta Gathering complete\r\n\r\n");
 						// Assign GCM region texture
 						char region = wodeRegionToChar(header->RegionCode);
@@ -159,20 +154,20 @@ void populate_meta(file_handle *f) {
 				}
 			}
 			else if(endsWith(f->name,".mp3")) {	//MP3
-				f->meta = create_basic_meta(mp3img_tpl, mp3img_tpl_size);
+				f->meta = create_basic_meta(&mp3imgTexObj);
 			}
 			else if(endsWith(f->name,".dol")) {	//DOL
-				f->meta = create_basic_meta(dolimg_tpl, dolimg_tpl_size);
+				f->meta = create_basic_meta(&dolimgTexObj);
 			}
 			else if(endsWith(f->name,".dol+cli")) {	//DOL+CLI
-				f->meta = create_basic_meta(dolcliimg_tpl, dolcliimg_tpl_size);
+				f->meta = create_basic_meta(&dolcliimgTexObj);
 			}
 			else {
-				f->meta = create_basic_meta(fileimg_tpl, fileimg_tpl_size);
+				f->meta = create_basic_meta(&fileimgTexObj);
 			}
 		}
 		else if (f->fileAttrib == IS_DIR) {
-			f->meta = create_basic_meta(dirimg_tpl, dirimg_tpl_size);
+			f->meta = create_basic_meta(&dirimgTexObj);
 		}
 	}
 }

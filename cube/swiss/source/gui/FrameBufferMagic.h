@@ -127,6 +127,12 @@ enum TextureId
 	TEX_UNCHECKED
 };
 
+extern GXTexObj mp3imgTexObj;
+extern GXTexObj dolimgTexObj;
+extern GXTexObj dolcliimgTexObj;
+extern GXTexObj fileimgTexObj;
+extern GXTexObj dirimgTexObj;
+
 typedef struct kbBtn_ {
     int supportedEntryMode;
 	char *val;
