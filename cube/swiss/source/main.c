@@ -135,6 +135,7 @@ int main ()
 	allDevices[i++] = &__device_sd_b;
 	allDevices[i++] = &__device_card_a;
 	allDevices[i++] = &__device_card_b;
+	allDevices[i++] = &__device_sd_c;
 	allDevices[i++] = &__device_dvd;
 	allDevices[i++] = &__device_ide_a;
 	allDevices[i++] = &__device_ide_b;

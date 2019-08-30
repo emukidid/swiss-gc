@@ -1,5 +1,5 @@
 /* deviceHandler-FAT.c
-	- device implementation for FAT (via SDGecko/IDE-EXI)
+	- device implementation for FAT (via SD Card Adapters/IDE-EXI)
 	by emu_kidid
  */
 
@@ -19,14 +19,21 @@
 
 const DISC_INTERFACE* carda = &__io_gcsda;
 const DISC_INTERFACE* cardb = &__io_gcsdb;
+const DISC_INTERFACE* cardc = &__io_gcsd2;
 const DISC_INTERFACE* ideexia = &__io_ataa;
 const DISC_INTERFACE* ideexib = &__io_atab;
 extern FATFS *wkffs;
-FATFS *fs[4] = {NULL, NULL, NULL, NULL};
+FATFS *fs[5] = {NULL, NULL, NULL, NULL, NULL};
 extern void sdgecko_initIODefault();
-
-#define IS_SDCARD(v) (v[0] == 's')
-#define GET_SLOT(v) (IS_SDCARD(v) ? v[2] == 'b' : v[3] == 'b')
+#define SD_COUNT 3
+#define IS_SDCARD(v) (v[0] == 's' && v[1] == 'd')
+int GET_SLOT(char *path) {
+	if(IS_SDCARD(path)) {
+		return path[2] - 'a'; 
+	}
+	// IDE-EXI
+	return path[3] == 'b';
+}
 
 file_handle initial_SD_A =
 	{ "sda:/",       // directory
@@ -47,6 +54,16 @@ file_handle initial_SD_B =
 	  0,
 	  0
 	};
+	
+file_handle initial_SD_C =
+	{ "sdc:/",       // directory
+	  0ULL,     // fileBase (u64)
+	  0,        // offset
+	  0,        // size
+	  IS_DIR,
+	  0,
+	  0
+	};	
 	
 file_handle initial_IDE_A =
 	{ "idea:/",       // directory
@@ -82,12 +99,12 @@ void readDeviceInfo(file_handle* file) {
 		int isSDCard = IS_SDCARD(file->name);
 		int slot = GET_SLOT(file->name);
 		
-		sprintf(txtbuffer, "Reading filesystem info for %s%s:/",isSDCard ? "sd":"ide", slot ? "b":"a");
+		sprintf(txtbuffer, "Reading filesystem info for %s%c:/", isSDCard ? "sd":"ide", ('a'+slot));
 		print_gecko(txtbuffer);
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
-		sprintf(txtbuffer, "%s%s:/",isSDCard ? "sd":"ide", slot ? "b":"a");
+		sprintf(txtbuffer, "%s%c:/",isSDCard ? "sd":"ide", ('a'+slot));
 		DWORD free_clusters, free_sectors, total_sectors = 0;
-		FATFS *fsptr = fs[(isSDCard ? slot : 2 + slot)];
+		FATFS *fsptr = fs[(isSDCard ? slot : SD_COUNT + slot)];
 		if(f_getfree(txtbuffer, &free_clusters, &fsptr) == FR_OK) {
 			total_sectors = (fsptr->n_fatent - 2) * fsptr->csize;
 			free_sectors = free_clusters * fsptr->csize;
@@ -279,7 +296,7 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 	}
 	else {
 		int slot = GET_SLOT(file->name);
-		fatFS = fs[IS_SDCARD(file->name) ? slot : 2+slot];
+		fatFS = fs[IS_SDCARD(file->name) ? slot : SD_COUNT+slot];
 	}
 	s32 numFrags = 0;
 	for(i = 1; i < (clmt[0]); i+=2) {
@@ -386,8 +403,8 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	*(vu8*)VAR_SD_SHIFT = (u8)(9 * SDHCCard);
 	// Copy the actual freq
 	*(vu8*)VAR_EXI_FREQ = (u8)(!swissSettings.exiSpeed ? EXI_SPEED16MHZ:EXI_SPEED32MHZ);
-	// Device slot (0 or 1)
-	*(vu8*)VAR_EXI_SLOT = (u8)((devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A) ? EXI_CHANNEL_0:EXI_CHANNEL_1);
+	// Device slot (0, 1 or 2)
+	*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_CUR]->location == LOC_SERIAL_PORT_2 ? 2:((devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)? 0:1));
 	// IDE-EXI only settings
 	if((devices[DEVICE_CUR] == &__device_ide_a) || (devices[DEVICE_CUR] == &__device_ide_b)) {
 		// Is the HDD in use a 48 bit LBA supported HDD?
@@ -426,7 +443,7 @@ s32 fatFs_Mount(u8 devNum, char *path) {
 
 void setSDGeckoSpeed() {
 	sdgecko_setSpeed(swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-	print_gecko("SD Gecko speed set to %s\r\n", (swissSettings.exiSpeed ? "32MHz":"16MHz"));
+	print_gecko("SD speed set to %s\r\n", (swissSettings.exiSpeed ? "32MHz":"16MHz"));
 }
 
 s32 deviceHandler_FAT_init(file_handle* file) {
@@ -435,28 +452,35 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 	int ret = 0;
 	print_gecko("Init %s %i\r\n", (isSDCard ? "SD":"IDE"), slot);
 	// Slot A - SD Card
-	if(isSDCard && !slot && EXI_ResetSD(0)) {
-		setSDGeckoSpeed();
+	if(isSDCard && slot == 0 && EXI_ResetSD(slot)) {
 		carda->shutdown();
+		setSDGeckoSpeed();
 		carda->startup();
 		ret = fatFs_Mount(0, "sda:\0");
 	}
 	// Slot B - SD Card
-	if(isSDCard && slot && EXI_ResetSD(1)) {
-		setSDGeckoSpeed();
+	if(isSDCard && slot == 1 && EXI_ResetSD(1)) {
 		cardb->shutdown();
+		setSDGeckoSpeed();
 		cardb->startup();
 		ret = fatFs_Mount(1, "sdb:\0");
+	}
+	// SP2 - SD Card
+	if(isSDCard && slot == 2 && EXI_ResetSD(2)) {
+		cardc->shutdown();
+		setSDGeckoSpeed();
+		cardc->startup();
+		ret = fatFs_Mount(2, "sdc:\0");
 	}
 	// Slot A - IDE-EXI
 	if(!isSDCard && !slot) {
 		ideexia->startup();
-		ret = fatFs_Mount(2, "idea:\0");
+		ret = fatFs_Mount(3, "idea:\0");
 	}
 	// Slot B - IDE-EXI
 	if(!isSDCard && slot) {
 		ideexib->startup();
-		ret = fatFs_Mount(3, "ideb:\0");
+		ret = fatFs_Mount(4, "ideb:\0");
 	}
 	if(ret)
 		readDeviceInfo(file);
@@ -482,7 +506,7 @@ s32 deviceHandler_FAT_closeFile(file_handle* file) {
 		free(file->ffsFp);
 		file->ffsFp = 0;
 		int slot = GET_SLOT(file->name);
-		disk_flush(IS_SDCARD(file->name) ? slot : 2+slot);
+		disk_flush(IS_SDCARD(file->name) ? slot : SD_COUNT+slot);
 	}
 	return ret;
 }
@@ -494,9 +518,9 @@ s32 deviceHandler_FAT_deinit(file_handle* file) {
 		deviceHandler_FAT_closeFile(file);
 		char *mountPath = getDeviceMountPath(file->name);
 		int slot = GET_SLOT(file->name);
-		disk_flush(IS_SDCARD(file->name) ? slot : 2+slot);
+		disk_flush(IS_SDCARD(file->name) ? slot : SD_COUNT+slot);
 		f_mount(0, mountPath, 0);
-		fs[IS_SDCARD(file->name) ? slot : 2+slot] = NULL;
+		fs[IS_SDCARD(file->name) ? slot : SD_COUNT+slot] = NULL;
 		free(mountPath);
 	}
 	return 0;
@@ -506,7 +530,7 @@ s32 deviceHandler_FAT_deleteFile(file_handle* file) {
 	deviceHandler_FAT_closeFile(file);
 	int res = f_unlink(file->name) == FR_OK;
 	int slot = GET_SLOT(file->name);
-	disk_flush(IS_SDCARD(file->name) ? slot : 2+slot);
+	disk_flush(IS_SDCARD(file->name) ? slot : SD_COUNT+slot);
 	return res;
 }
 
@@ -522,6 +546,12 @@ bool deviceHandler_FAT_test_sd_b() {
 	cardb->startup();
 	return cardb->isInserted();
 }
+bool deviceHandler_FAT_test_sd_c() {
+	cardc->shutdown();
+	setSDGeckoSpeed();
+	cardc->startup();
+	return cardc->isInserted();
+}
 bool deviceHandler_FAT_test_ide_a() {
 	return ide_exi_inserted(0);
 }
@@ -531,8 +561,8 @@ bool deviceHandler_FAT_test_ide_b() {
 
 DEVICEHANDLER_INTERFACE __device_sd_a = {
 	DEVICE_ID_1,
-	"SD Gecko",
-	"SD Gecko - Slot A",
+	"SD Card Adapter",
+	"SD Card - Slot A",
 	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_SDSMALL, 60, 80},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_CAN_READ_PATCHES|FEAT_REPLACES_DVD_FUNCS,
@@ -553,8 +583,8 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 
 DEVICEHANDLER_INTERFACE __device_sd_b = {
 	DEVICE_ID_2,
-	"SD Gecko",
-	"SD Gecko - Slot B",
+	"SD Card Adapter",
+	"SD Card - Slot B",
 	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_SDSMALL, 60, 80},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_CAN_READ_PATCHES|FEAT_REPLACES_DVD_FUNCS,
@@ -605,6 +635,28 @@ DEVICEHANDLER_INTERFACE __device_ide_b = {
 	LOC_MEMCARD_SLOT_B,
 	&initial_IDE_B,
 	(_fn_test)&deviceHandler_FAT_test_ide_b,
+	(_fn_info)&deviceHandler_FAT_info,
+	(_fn_init)&deviceHandler_FAT_init,
+	(_fn_readDir)&deviceHandler_FAT_readDir,
+	(_fn_readFile)&deviceHandler_FAT_readFile,
+	(_fn_writeFile)&deviceHandler_FAT_writeFile,
+	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_seekFile)&deviceHandler_FAT_seekFile,
+	(_fn_setupFile)&deviceHandler_FAT_setupFile,
+	(_fn_closeFile)&deviceHandler_FAT_closeFile,
+	(_fn_deinit)&deviceHandler_FAT_deinit
+};
+
+DEVICEHANDLER_INTERFACE __device_sd_c = {
+	DEVICE_ID_F,
+	"SD Card Adapter",
+	"SD Card - SP2",
+	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32, exFAT",
+	{TEX_SDSMALL, 60, 80},
+	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_CAN_READ_PATCHES|FEAT_REPLACES_DVD_FUNCS,
+	LOC_SERIAL_PORT_2,
+	&initial_SD_C,
+	(_fn_test)&deviceHandler_FAT_test_sd_c,
 	(_fn_info)&deviceHandler_FAT_info,
 	(_fn_init)&deviceHandler_FAT_init,
 	(_fn_readDir)&deviceHandler_FAT_readDir,

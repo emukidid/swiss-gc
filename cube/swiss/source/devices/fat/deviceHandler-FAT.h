@@ -11,6 +11,7 @@
 
 extern DEVICEHANDLER_INTERFACE __device_sd_a;
 extern DEVICEHANDLER_INTERFACE __device_sd_b;
+extern DEVICEHANDLER_INTERFACE __device_sd_c;
 extern DEVICEHANDLER_INTERFACE __device_ide_a;
 extern DEVICEHANDLER_INTERFACE __device_ide_b;
 

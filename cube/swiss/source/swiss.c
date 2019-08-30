@@ -879,9 +879,9 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch, int noASRequir
 		wkfWriteOffset(*(vu32*)VAR_DISC_1_LBA);
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
-	if((devices[DEVICE_CUR] == &__device_sd_a) || (devices[DEVICE_CUR] == &__device_sd_b)) {
+	if((devices[DEVICE_CUR] == &__device_sd_a) || (devices[DEVICE_CUR] == &__device_sd_b) || (devices[DEVICE_CUR] == &__device_sd_c)) {
 		print_gecko("set size\r\n");
-	    sdgecko_setPageSize(((devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)? 0:1), 512);
+	    sdgecko_setPageSize(devices[DEVICE_CUR]->location == LOC_SERIAL_PORT_2 ? 2:((devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)? 0:1), 512);
 	}
 	DOLtoARAM(main_dol_buffer, 0, NULL);
 	return 0;
@@ -1737,7 +1737,7 @@ void select_device(int type)
 		DrawAddChild(deviceSelectBox, deviceNameLabel);
 		DrawAddChild(deviceSelectBox, deviceDescLabel);
 		// Memory card port devices, allow for speed selection
-		if(allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B)) {
+		if(allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2)) {
 			uiDrawObj_t *exiOptionsLabel = DrawStyledLabel(getVideoMode()->fbWidth-190, 400, "(X) EXI Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
 			DrawAddChild(deviceSelectBox, exiOptionsLabel);
 			if(inAdvanced) {
@@ -1751,7 +1751,7 @@ void select_device(int type)
 			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_Z) ))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = PAD_ButtonsHeld(0);
-		if((btns & PAD_BUTTON_X) && (allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B)))
+		if((btns & PAD_BUTTON_X) && (allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2)))
 			inAdvanced ^= 1;
 		if(btns & PAD_TRIGGER_Z) {
 			showAllDevices ^= 1;

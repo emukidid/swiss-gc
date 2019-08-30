@@ -14,7 +14,7 @@
 #include "diskio.h"
 #include "wode/WodeInterface.h"
 
-#define MAX_DEVICES 16
+#define MAX_DEVICES 17
 #define PATHNAME_MAX 1024
 
 typedef struct {
@@ -105,7 +105,8 @@ typedef device_info* (* _fn_deviceInfo)(void);
 #define DEVICE_ID_C			0x0C
 #define DEVICE_ID_D			0x0D
 #define DEVICE_ID_E			0x0E
-#define DEVICE_ID_MAX		DEVICE_ID_E
+#define DEVICE_ID_F			0x0F
+#define DEVICE_ID_MAX		DEVICE_ID_F
 #define DEVICE_ID_UNK		(DEVICE_ID_MAX + 1)
 
 struct DEVICEHANDLER_STRUCT {

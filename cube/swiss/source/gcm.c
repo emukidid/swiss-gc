@@ -335,7 +335,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, int multiDol) {
 	int i, num_patched = 0;
 	*(vu32*)VAR_EXECD_OFFSET = 0xFFFFFFFF;
-	// If the current device isn't SD Gecko, init one slot to write patches.
+	// If the current device isn't SD via EXI, init one slot to write patches.
 	// TODO expand this to support IDE-EXI and other writable devices (requires dvd patch re-write/modularity)
 	bool patchDeviceReady = false;
 	if(devices[DEVICE_CUR] != &__device_sd_a && devices[DEVICE_CUR] != &__device_sd_b) {
@@ -345,6 +345,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 		else if(deviceHandler_test(&__device_sd_b)) {
 			devices[DEVICE_PATCHES] = &__device_sd_b;
 		}
+		else if(deviceHandler_test(&__device_sd_c)) {
+			devices[DEVICE_PATCHES] = &__device_sd_c;
+		}
 	}
 	else {
 		devices[DEVICE_PATCHES] = devices[DEVICE_CUR];
@@ -352,7 +355,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 	}
 		
 	if(devices[DEVICE_PATCHES] == NULL) {
-		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "No writable device present\nA SD Gecko must be inserted in\n order to utilise patches for this game."));
+		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "No writable device present\nA SD Card Adapter must be inserted in\n order to utilise patches for this game."));
 		sleep(5);
 		DrawDispose(msgBox);
 		return 0;

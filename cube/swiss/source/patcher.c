@@ -174,8 +174,8 @@ int install_code(int final)
 		}
 		print_gecko("Installing Patch for IDE-EXI\r\n");
   	}
-	// SD Gecko
-	else if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b) {
+	// SD Card over EXI
+	else if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
 		if(swissSettings.alternateReadPatches) {
 			patch = &sd_alt_bin[0];
 			patchSize = sd_alt_bin_size;
@@ -185,7 +185,7 @@ int install_code(int final)
 			patch = &sd_bin[0];
 			patchSize = sd_bin_size;
 		}
-		print_gecko("Installing Patch for SD Gecko\r\n");
+		print_gecko("Installing Patch for SD Card over EXI\r\n");
 	}
 	// DVD 2 disc code
 	else if(devices[DEVICE_CUR] == &__device_dvd) {

@@ -65,7 +65,7 @@ extern void print_read(void* dst, u32 len, u32 ofs);
 #endif 
 
 void dvd_read_patched_section() {
-	// Check if this read offset+size lies in our patched area, if so, we write a 0xE000 cmd to the drive and read from SDGecko.
+	// Check if this read offset+size lies in our patched area, if so, we write a 0xE000 cmd to the drive and read from SD over EXI.
 	volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
 	u32 dst = dvd[5];
 	u32 len = dvd[4];

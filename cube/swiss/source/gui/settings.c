@@ -36,9 +36,9 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"System Sound:\n\nSets the default audio output type used by most games",
 	"Screen Position:\n\nAdjusts the horizontal screen position in games.\nNote: This will take effect next boot.",
 	"System Language:\n\nSystem language used in games, primarily multi-5 PAL games",
-	"SD/IDE Speed:\n\nThe speed to try and use on the EXI bus for SD Gecko or IDE-EXI devices.\n32 MHz may not work on some SD cards.",
+	"SD/IDE Speed:\n\nThe speed to try and use on the EXI bus for SD Card Adapters or IDE-EXI devices.\n32 MHz may not work on some SD cards.",
 	 NULL,
-	"In-Game Reset: (B + R + Z + DPad Down)\n\nReboot: Soft-Reset the GameCube\nigr.dol: Low mem (< 0x81300000) igr.dol at the root of SD Gecko",
+	"In-Game Reset: (B + R + Z + DPad Down)\n\nReboot: Soft-Reset the GameCube\nigr.dol: Low mem (< 0x81300000) igr.dol at the root of SD Card",
 	"Configuration Device:\n\nThe device that Swiss will use to load and save swiss.ini from.\nThis setting is stored in SRAM and will remain on reboot.",
 	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply firmware workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo"
 };
