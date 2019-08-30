@@ -49,7 +49,9 @@ static char *tooltips_advanced[PAGE_ADVANCED_MAX+1] = {
 	"Stop DVD Motor on startup\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the DVD drive from spinning when Swiss starts\n\nThis option is mostly for users booting from game\nexploits where the disc will already be spinning.",
 	"WiiRD debugging:\n\nDisabled - Boot as normal (default)\nEnabled - This will start a game with the WiiRD debugger enabled & paused\n\nThe WiiRD debugger takes up more memory and can cause issues.",
 	"File Management:\n\nDisabled - Known files will load immediately instead (default)\nEnabled - A file management prompt will be displayed for all files",
-	"Auto-load all cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. sd:/cheats/GPOP8D.txt (on a compatible device)\nthen all cheats in the file will be enabled"
+	"Auto-load all cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. sd:/cheats/GPOP8D.txt (on a compatible device)\nthen all cheats in the file will be enabled",
+	NULL,
+	"Force DTV Status:\n\nDisabled - Use signal from the video interface (default)\nEnabled - Force on in case of hardware fault"
 };
 
 static char *tooltips_network[PAGE_NETWORK_MAX+1] = {
@@ -222,6 +224,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryBoolean(page, &page_y_ofs, "File Management:", swissSettings.enableFileManagement, option == SET_FILE_MGMT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Auto-load all cheats:", swissSettings.autoCheats, option == SET_ALL_CHEATS, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Video Patches:", swissSettings.disableVideoPatches, option == SET_ENABLE_VIDPATCH, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, true);
 	}
 	else if(page_num == PAGE_GAME_DEFAULTS) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Default Game Settings (4/5):"));
@@ -422,6 +425,9 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			case SET_ENABLE_VIDPATCH:
 				swissSettings.disableVideoPatches ^= 1;
 			break;
+			case SET_FORCE_DTVSTATUS:
+				swissSettings.forceDTVStatus ^= 1;
+			break;
 		}
 	}
 	else if(page == PAGE_GAME_DEFAULTS) {
@@ -439,7 +445,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 						while(swissSettings.gameVMode >= 13 && swissSettings.gameVMode <= 14)
 							swissSettings.gameVMode += direction;
 					}
-					if(!VIDEO_HaveComponentCable()) {
+					if(!swissSettings.forceDTVStatus && !VIDEO_HaveComponentCable()) {
 						while(swissSettings.gameVMode >= 4 && swissSettings.gameVMode <= 7)
 							swissSettings.gameVMode += direction;
 						while(swissSettings.gameVMode >= 11 && swissSettings.gameVMode <= 14)
@@ -521,7 +527,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 						while(gameConfig->gameVMode >= 13 && gameConfig->gameVMode <= 14)
 							gameConfig->gameVMode += direction;
 					}
-					if(!VIDEO_HaveComponentCable()) {
+					if(!swissSettings.forceDTVStatus && !VIDEO_HaveComponentCable()) {
 						while(gameConfig->gameVMode >= 4 && gameConfig->gameVMode <= 7)
 							gameConfig->gameVMode += direction;
 						while(gameConfig->gameVMode >= 11 && gameConfig->gameVMode <= 14)

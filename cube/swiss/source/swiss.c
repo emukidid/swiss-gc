@@ -161,7 +161,7 @@ void ogc_video__reset()
 			newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
 			break;
 		case 4:
-			if(VIDEO_HaveComponentCable()) {
+			if(swissSettings.forceDTVStatus || VIDEO_HaveComponentCable()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 960i");
 				newmode = region == 'P' ? &TVPal576ProgScale : &TVNtsc480Prog;
 			} else {
@@ -171,7 +171,7 @@ void ogc_video__reset()
 			}
 			break;
 		case 5:
-			if(VIDEO_HaveComponentCable()) {
+			if(swissSettings.forceDTVStatus || VIDEO_HaveComponentCable()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480p");
 				newmode = region == 'P' ? &TVPal576ProgScale : &TVNtsc480Prog;
 			} else {
@@ -181,7 +181,7 @@ void ogc_video__reset()
 			}
 			break;
 		case 6:
-			if(VIDEO_HaveComponentCable()) {
+			if(swissSettings.forceDTVStatus || VIDEO_HaveComponentCable()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 1080i");
 				newmode = region == 'P' ? &TVPal576ProgScale : &TVNtsc480Prog;
 			} else {
@@ -191,7 +191,7 @@ void ogc_video__reset()
 			}
 			break;
 		case 7:
-			if(VIDEO_HaveComponentCable()) {
+			if(swissSettings.forceDTVStatus || VIDEO_HaveComponentCable()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 540p");
 				newmode = region == 'P' ? &TVPal576ProgScale : &TVNtsc480Prog;
 			} else {
@@ -213,7 +213,7 @@ void ogc_video__reset()
 			newmode = &TVPal576IntDfScale;
 			break;
 		case 11:
-			if(VIDEO_HaveComponentCable()) {
+			if(swissSettings.forceDTVStatus || VIDEO_HaveComponentCable()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 1152i");
 				newmode = &TVPal576ProgScale;
 			} else {
@@ -223,7 +223,7 @@ void ogc_video__reset()
 			}
 			break;
 		case 12:
-			if(VIDEO_HaveComponentCable()) {
+			if(swissSettings.forceDTVStatus || VIDEO_HaveComponentCable()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 576p");
 				newmode = &TVPal576ProgScale;
 			} else {
@@ -233,7 +233,7 @@ void ogc_video__reset()
 			}
 			break;
 		case 13:
-			if(VIDEO_HaveComponentCable()) {
+			if(swissSettings.forceDTVStatus || VIDEO_HaveComponentCable()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 1080i");
 				newmode = &TVPal576ProgScale;
 			} else {
@@ -243,7 +243,7 @@ void ogc_video__reset()
 			}
 			break;
 		case 14:
-			if(VIDEO_HaveComponentCable()) {
+			if(swissSettings.forceDTVStatus || VIDEO_HaveComponentCable()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 540p");
 				newmode = &TVPal576ProgScale;
 			} else {

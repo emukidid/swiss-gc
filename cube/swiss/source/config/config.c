@@ -173,6 +173,8 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "Disable Video Patches=%s\r\n",(swissSettings.disableVideoPatches ? "Yes":"No"));
 	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "Force DTV Status=%s\r\n",(swissSettings.forceDTVStatus ? "Yes":"No"));
+	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "SMBUserName=%s\r\n",swissSettings.smbUser);
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "SMBPassword=%s\r\n",swissSettings.smbPassword);
@@ -457,6 +459,9 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("Disable Video Patches", name)) {
 					swissSettings.disableVideoPatches = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Force DTV Status", name)) {
+					swissSettings.forceDTVStatus = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("Swiss Video Mode", name)) {
 					if(!strcmp(uiVModeStr[0], value))

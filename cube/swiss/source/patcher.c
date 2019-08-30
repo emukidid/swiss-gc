@@ -1670,6 +1670,10 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 42, 10, 3, 2, 2, 8, NULL, 0, "VIGetNextField B" },
 		{ 39, 13, 4, 3, 2, 6, NULL, 0, "VIGetNextField C" }
 	};
+	FuncPattern VIGetDTVStatusSigs[2] = {
+		{ 17, 3, 2, 2, 0, 3, NULL, 0, "VIGetDTVStatusD" },
+		{ 15, 4, 3, 2, 0, 2, NULL, 0, "VIGetDTVStatus" }
+	};
 	FuncPattern __GXInitGXSigs[9] = {
 		{ 1130, 567, 66, 133, 46, 46, NULL, 0, "__GXInitGXD A" },
 		{  544, 319, 33, 109, 18,  5, NULL, 0, "__GXInitGXD B" },
@@ -2174,6 +2178,24 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						}
 						break;
 					}
+				}
+				break;
+			}
+		}
+		
+		for (j = 0; j < sizeof(VIGetDTVStatusSigs) / sizeof(FuncPattern); j++) {
+			if (!VIGetDTVStatusSigs[j].offsetFoundAt && compare_pattern(&fp, &VIGetDTVStatusSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 10, length, &OSRestoreInterruptsSig))
+							VIGetDTVStatusSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  8, length, &OSRestoreInterruptsSig))
+							VIGetDTVStatusSigs[j].offsetFoundAt = i;
+						break;
 				}
 				break;
 			}
@@ -3367,6 +3389,23 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				data[i + 1] = 0x4E800020;	// blr
 			}
 			print_gecko("Found:[%s] @ %08X\n", VIGetNextFieldSigs[j].Name, VIGetNextField);
+		}
+	}
+	
+	if (swissSettings.forceDTVStatus) {
+		for (j = 0; j < sizeof(VIGetDTVStatusSigs) / sizeof(FuncPattern); j++)
+			if (VIGetDTVStatusSigs[j].offsetFoundAt) break;
+		
+		if (j < sizeof(VIGetDTVStatusSigs) / sizeof(FuncPattern) && (i = VIGetDTVStatusSigs[j].offsetFoundAt)) {
+			u32 *VIGetDTVStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			
+			if (VIGetDTVStatus) {
+				memset(data + i, 0, VIGetDTVStatusSigs[j].Length * sizeof(u32));
+				data[i + 0] = 0x38600001;	// li		r3, 1
+				data[i + 1] = 0x4E800020;	// blr
+				
+				print_gecko("Found:[%s] @ %08X\n", VIGetDTVStatusSigs[j].Name, VIGetDTVStatus);
+			}
 		}
 	}
 	

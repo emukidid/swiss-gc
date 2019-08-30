@@ -95,6 +95,7 @@ typedef struct {
 	int stopMotor;
 	int enableFileManagement;
 	int disableVideoPatches;
+	int forceDTVStatus;
 	int alternateReadPatches;
 	s8 sramHOffset;
 	u8 sramLanguage;
