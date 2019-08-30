@@ -94,7 +94,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		sprintf(topStr,"%08X",mfpvr());
 		DrawAddChild(container, DrawStyledLabel(640/2, 316, topStr, 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 340, (char*)"CPU ECID", 0.65f, true, defaultColor));
-		sprintf(topStr,"%08X:%08X:%08X",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E));
+		sprintf(topStr,"%08X:%08X:%08X:%08X",mfspr(0x39C),mfspr(0x39D),mfspr(0x39E),mfspr(0x39F));
 		DrawAddChild(container, DrawStyledLabel(640/2, 356, topStr, 0.75f, true, defaultColor));
 	}
 	else if(page_num == 1) {
