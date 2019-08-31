@@ -291,16 +291,28 @@ void trigger_dvd_interrupt(void)
 	(*DI)[8] = 0;
 	(*DI)[7] = 1;
 
-	asm volatile("mtdabr %0" :: "r" (0));
 	dcache_flush_icache_inv((void *)dst, len);
 }
 
 void dsi_exception_handler(OSException exception, OSContext *context, ...);
 
-void perform_read(DVDCommandBlock *block)
+DVDCommandBlock *set_breakpoint(DVDCommandBlock *block)
 {
 	uint32_t dabr = (uint32_t)&block->state & ~7;
 
+	OSExceptionTable[OS_EXCEPTION_DSI] = dsi_exception_handler;
+	asm volatile("mtdabr %0" :: "r" (dabr | 0b101));
+	return block;
+}
+
+int unset_breakpoint(int queued)
+{
+	asm volatile("mtdabr %0" :: "r" (0));
+	return queued;
+}
+
+void perform_read(DVDCommandBlock *block)
+{
 	uint32_t off = (*DI)[3] << 2;
 	uint32_t len = (*DI)[4];
 	uint32_t dst = (*DI)[5] | 0x80000000;
@@ -309,9 +321,6 @@ void perform_read(DVDCommandBlock *block)
 	*_remainder = len;
 	*_data = (void *)dst;
 	*_data_size = 0;
-
-	OSExceptionTable[OS_EXCEPTION_DSI] = dsi_exception_handler;
-	asm volatile("mtdabr %0" :: "r" (dabr | 0b101));
 
 	if (!is_frag_read(off, len) && !exi_selected())
 		fsp_output(_file, *_filelen, off, len);

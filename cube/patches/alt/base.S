@@ -120,6 +120,8 @@ dcache_flush_icache_inv:
 _start:
 	b		exi_handler
 	b		exi_lock
+	b		set_breakpoint
+	b		unset_breakpoint
 	b		perform_read
 	b		tickle_read
 	b		tickle_read_idle
