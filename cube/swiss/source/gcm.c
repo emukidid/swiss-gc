@@ -338,15 +338,15 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 	// If the current device isn't SD via EXI, init one slot to write patches.
 	// TODO expand this to support IDE-EXI and other writable devices (requires dvd patch re-write/modularity)
 	bool patchDeviceReady = false;
-	if(devices[DEVICE_CUR] != &__device_sd_a && devices[DEVICE_CUR] != &__device_sd_b) {
-		if(deviceHandler_test(&__device_sd_a)) {
-			devices[DEVICE_PATCHES] = &__device_sd_a;
+	if(devices[DEVICE_CUR] != &__device_sd_a && devices[DEVICE_CUR] != &__device_sd_b && devices[DEVICE_CUR] != &__device_sd_c) {
+		if(deviceHandler_test(&__device_sd_c)) {
+			devices[DEVICE_PATCHES] = &__device_sd_c;
 		}
 		else if(deviceHandler_test(&__device_sd_b)) {
 			devices[DEVICE_PATCHES] = &__device_sd_b;
 		}
-		else if(deviceHandler_test(&__device_sd_c)) {
-			devices[DEVICE_PATCHES] = &__device_sd_c;
+		else if(deviceHandler_test(&__device_sd_a)) {
+			devices[DEVICE_PATCHES] = &__device_sd_a;
 		}
 	}
 	else {
