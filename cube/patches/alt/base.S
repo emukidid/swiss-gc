@@ -40,7 +40,7 @@ dsi_exception_handler:
 	stw		r0, 448 (r4)
 	mfdsisr	r5
 	mfdar	r6
-	bl		tickle_read_trap
+	bl		exception_handler
 
 	.globl load_context
 load_context:
@@ -120,9 +120,9 @@ dcache_flush_icache_inv:
 _start:
 	b		exi_handler
 	b		exi_lock
+	b		set_di_handler
 	b		set_breakpoint
 	b		unset_breakpoint
-	b		perform_read
 	b		tickle_read
 	b		tickle_read_idle
 	b		exit_to_pref			# checks for a button combo and exits if true

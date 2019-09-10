@@ -1,6 +1,8 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include "../../reservedarea.h"
+
 typedef unsigned char u8;
 typedef signed char s8;
 typedef unsigned short u16;
@@ -58,6 +60,7 @@ typedef struct {
 
 #define TB_CLOCK  40500000
 
+static u32(*const DI_EMU)[10] = (u32(*)[])VAR_DI_REGS;
 static vu32(*const DI)[10] = (vu32(*)[])0xCC006000;
 static vu32(*const EXI)[5] = (vu32(*)[])0xCC006800;
 

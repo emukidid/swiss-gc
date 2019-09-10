@@ -1,3 +1,8 @@
+/* 
+ * Copyright (c) 2019, Extrems <extrems@extremscorner.org>
+ * All rights reserved.
+ */
+
 #ifndef BBA_H
 #define BBA_H
 

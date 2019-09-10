@@ -1,7 +1,7 @@
-/***************************************************************************
-* Network Read code for GC via Broadband Adapter
-* Extrems 2017
-***************************************************************************/
+/* 
+ * Copyright (c) 2017-2019, Extrems <extrems@extremscorner.org>
+ * All rights reserved.
+ */
 
 #include <stdint.h>
 #include <string.h>
@@ -181,7 +181,7 @@ void fsp_output(const char *file, uint8_t filelen, uint32_t offset, size_t size)
 	mftb(_start);
 }
 
-void trigger_dvd_interrupt(void);
+void di_trigger_interrupt(void);
 
 static void fsp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, size_t size)
 {
@@ -265,7 +265,7 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 				if (!*_received)
 					bba_receive_end(page, data + data_offset, size);
 
-				if (!remainder) trigger_dvd_interrupt();
+				if (!remainder) di_trigger_interrupt();
 			}
 		}
 	}

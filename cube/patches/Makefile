@@ -66,13 +66,14 @@ build-sd:
 build-sd-alt:
 	@echo Building SD Alternate Patch ...
 	@$(CC) -O2 $(OPTS) -c alt/base.S
-	@$(CC) -O2 $(OPTS) -c alt/read.c
+	@$(CC) -O2 $(OPTS) -c alt/emulator.c
+	@$(CC) -O2 $(OPTS) -c alt/blockdevice.c
 	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=2
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c
 	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o sd_alt.elf base.o read.o sd.o frag.o usbgecko.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
+	@$(LD) -o sd_alt.elf base.o emulator.o blockdevice.o sd.o frag.o usbgecko.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D sd_alt.elf > $(DISASM)/sd_alt_disasm.txt
 	@$(OBJCOPY) -O binary sd_alt.elf sd_alt.bin
@@ -106,13 +107,14 @@ build-ideexi-v1:
 build-ideexi-altv1:
 	@echo Building IDE-EXI-v1 Alternate Patch ...
 	@$(CC) -O2 $(OPTS) -c alt/base.S
-	@$(CC) -O2 $(OPTS) -c alt/read.c
+	@$(CC) -O2 $(OPTS) -c alt/emulator.c
+	@$(CC) -O2 $(OPTS) -c alt/blockdevice.c
 	@$(CC) -O2 $(OPTS) -c ide-exi/hddread.c -DDMA_READ=0 -DSINGLE_SECTOR=1
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c
 	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o ideexi_altv1.elf base.o read.o hddread.o frag.o usbgecko.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
+	@$(LD) -o ideexi_altv1.elf base.o emulator.o blockdevice.o hddread.o frag.o usbgecko.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_altv1.elf > $(DISASM)/ideexi_altv1_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_altv1.elf ideexi_altv1.bin
@@ -146,13 +148,14 @@ build-ideexi-v2:
 build-ideexi-altv2:
 	@echo Building IDE-EXI-v2 Alternate Patch ...
 	@$(CC) -O2 $(OPTS) -c alt/base.S
-	@$(CC) -O2 $(OPTS) -c alt/read.c
+	@$(CC) -O2 $(OPTS) -c alt/emulator.c
+	@$(CC) -O2 $(OPTS) -c alt/blockdevice.c
 	@$(CC) -O2 $(OPTS) -c ide-exi/hddread.c -DDMA_READ=1 -DSINGLE_SECTOR=1
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c
 	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o ideexi_altv2.elf base.o read.o hddread.o frag.o usbgecko.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
+	@$(LD) -o ideexi_altv2.elf base.o emulator.o blockdevice.o hddread.o frag.o usbgecko.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_altv2.elf > $(DISASM)/ideexi_altv2_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_altv2.elf ideexi_altv2.bin
@@ -182,12 +185,13 @@ build-dvd:
 build-usb:
 	@echo Building USBGecko Patch ...
 	@$(CC) -O2 $(OPTS) -c alt/base.S
+	@$(CC) -O2 $(OPTS) -c alt/emulator.c
 	@$(CC) -O2 $(OPTS) -c usbgecko/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c
 	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o usbgecko.elf base.o usbgecko.o sd.o frag.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
+	@$(LD) -o usbgecko.elf base.o emulator.o usbgecko.o sd.o frag.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
@@ -217,6 +221,7 @@ build-wkf:
 build-bba:
 	@echo Building BBA Patch ...
 	@$(CC) -O2 $(OPTS) -c alt/base.S
+	@$(CC) -O2 $(OPTS) -c alt/emulator.c
 	@$(CC) -O2 $(OPTS) -c bba/bba.c
 	@$(CC) -O2 $(OPTS) -c bba/tcpip.c
 	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
@@ -224,7 +229,7 @@ build-bba:
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c
 	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o bba.elf base.o bba.o tcpip.o usbgecko.o sd.o frag.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
+	@$(LD) -o bba.elf base.o emulator.o bba.o tcpip.o usbgecko.o sd.o frag.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D bba.elf > $(DISASM)/bba_disasm.txt
 	@$(OBJCOPY) -O binary bba.elf bba.bin

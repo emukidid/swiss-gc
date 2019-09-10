@@ -1,3 +1,8 @@
+/* 
+ * Copyright (c) 2019, Extrems <extrems@extremscorner.org>
+ * All rights reserved.
+ */
+
 #ifndef GLOBALS_H
 #define GLOBALS_H
 

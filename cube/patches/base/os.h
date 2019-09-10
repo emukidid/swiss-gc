@@ -33,8 +33,41 @@ typedef enum {
 	OS_EXCEPTION_MAX
 } OSException;
 
+typedef enum {
+	OS_INTERRUPT_MEM_0 = 0,
+	OS_INTERRUPT_MEM_1,
+	OS_INTERRUPT_MEM_2,
+	OS_INTERRUPT_MEM_3,
+	OS_INTERRUPT_MEM_ADDRESS,
+	OS_INTERRUPT_DSP_AI,
+	OS_INTERRUPT_DSP_ARAM,
+	OS_INTERRUPT_DSP_DSP,
+	OS_INTERRUPT_AI_AI,
+	OS_INTERRUPT_EXI_0_EXI,
+	OS_INTERRUPT_EXI_0_TC,
+	OS_INTERRUPT_EXI_0_EXT,
+	OS_INTERRUPT_EXI_1_EXI,
+	OS_INTERRUPT_EXI_1_TC,
+	OS_INTERRUPT_EXI_1_EXT,
+	OS_INTERRUPT_EXI_2_EXI,
+	OS_INTERRUPT_EXI_2_TC,
+	OS_INTERRUPT_PI_CP,
+	OS_INTERRUPT_PI_PE_TOKEN,
+	OS_INTERRUPT_PI_PE_FINISH,
+	OS_INTERRUPT_PI_SI,
+	OS_INTERRUPT_PI_DI,
+	OS_INTERRUPT_PI_RSW,
+	OS_INTERRUPT_PI_ERROR,
+	OS_INTERRUPT_PI_VI,
+	OS_INTERRUPT_PI_DEBUG,
+	OS_INTERRUPT_PI_HSP,
+	OS_INTERRUPT_MAX
+} OSInterrupt;
+
 typedef void (*OSExceptionHandler)(OSException exception, OSContext *context, ...);
+typedef void (*OSInterruptHandler)(OSInterrupt interrupt, OSContext *context);
 
 static OSExceptionHandler *const OSExceptionTable = (OSExceptionHandler *)0x80003000;
+static OSInterruptHandler *const OSInterruptTable = (OSInterruptHandler *)0x80003040;
 
 #endif /* OS_H */

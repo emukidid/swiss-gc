@@ -1,9 +1,11 @@
+/* 
+ * Copyright (c) 2019, Extrems <extrems@extremscorner.org>
+ * All rights reserved.
+ */
+
 #include <stdint.h>
-#include <string.h>
-#include "../../reservedarea.h"
+#include <stdbool.h>
 #include "../base/common.h"
-#include "../base/dvd.h"
-#include "../base/os.h"
 
 enum {
 	EXI_READ = 0,
@@ -57,7 +59,7 @@ static uint32_t exi_imm_read_write(uint32_t data, int len)
 	return EXI[EXI_CHANNEL_1][4] >> ((4 - len) * 8);
 }
 
-static int usb_receive_byte(uint8_t *data)
+static bool usb_receive_byte(uint8_t *data)
 {
 	uint16_t val;
 
@@ -68,7 +70,7 @@ static int usb_receive_byte(uint8_t *data)
 	return !(val & 0x800);
 }
 
-static int usb_transmit_byte(uint8_t *data)
+static bool usb_transmit_byte(uint8_t *data)
 {
 	uint16_t val;
 
@@ -79,7 +81,7 @@ static int usb_transmit_byte(uint8_t *data)
 	return !(val & 0x400);
 }
 
-static int usb_transmit_check(void)
+static bool usb_transmit_check(void)
 {
 	uint8_t val;
 
@@ -90,7 +92,7 @@ static int usb_transmit_check(void)
 	return !(val & 0x4);
 }
 
-static int usb_receive_check(void)
+static bool usb_receive_check(void)
 {
 	uint8_t val;
 
@@ -149,56 +151,21 @@ void usb_request(uint32_t offset, uint32_t size)
 
 void exi_handler() {}
 
-int exi_lock(int32_t channel, uint32_t device)
+bool exi_lock(int32_t channel, uint32_t device)
 {
-	return 1;
+	return true;
 }
 
-void trigger_dvd_interrupt(void)
+void di_trigger_interrupt(void);
+
+void perform_read(uint32_t offset, uint32_t length, uint32_t address)
 {
-	uint32_t dst = (*DI)[5] | 0x80000000;
-	uint32_t len = (*DI)[6];
+	*(uint32_t *)VAR_LAST_OFFSET = offset;
+	*(uint32_t *)VAR_TMP2 = length;
+	*(uint32_t *)VAR_TMP1 = address;
 
-	(*DI)[2] = 0xE0000000;
-	(*DI)[3] = 0;
-	(*DI)[4] = 0;
-	(*DI)[5] = 0;
-	(*DI)[6] = 0;
-	(*DI)[8] = 0;
-	(*DI)[7] = 1;
-
-	dcache_flush_icache_inv((void *)dst, len);
-}
-
-void dsi_exception_handler(OSException exception, OSContext *context, ...);
-
-DVDCommandBlock *set_breakpoint(DVDCommandBlock *block)
-{
-	uint32_t dabr = (uint32_t)&block->state & ~7;
-
-	OSExceptionTable[OS_EXCEPTION_DSI] = dsi_exception_handler;
-	asm volatile("mtdabr %0" :: "r" (dabr | 0b101));
-	return block;
-}
-
-int unset_breakpoint(int queued)
-{
-	asm volatile("mtdabr %0" :: "r" (0));
-	return queued;
-}
-
-void perform_read(DVDCommandBlock *block)
-{
-	uint32_t off = (*DI)[3] << 2;
-	uint32_t len = (*DI)[4];
-	uint32_t dst = (*DI)[5] | 0x80000000;
-
-	*(uint32_t *)VAR_LAST_OFFSET = off;
-	*(uint32_t *)VAR_TMP2 = len;
-	*(uint32_t *)VAR_TMP1 = dst;
-
-	if (!is_frag_read(off, len))
-		usb_request(off, len);
+	if (!is_frag_read(offset, length))
+		usb_request(offset, length);
 }
 
 void tickle_read(void)
@@ -222,7 +189,7 @@ void tickle_read(void)
 		*(uint32_t *)VAR_TMP2 = remainder;
 		*(uint8_t **)VAR_TMP1 = data + data_size;
 
-		if (!remainder) trigger_dvd_interrupt();
+		if (!remainder) di_trigger_interrupt();
 		else if (frag && !is_frag_read(position, remainder))
 			usb_request(position, remainder);
 	}
@@ -233,22 +200,4 @@ void tickle_read_idle(void)
 	disable_interrupts();
 	tickle_read();
 	enable_interrupts();
-}
-
-OSContext *tickle_read_trap(OSException exception, OSContext *context, uint32_t dsisr, uint32_t dar)
-{
-	uint32_t dabr;
-
-	if ((dsisr & 0x400000) == 0x400000) {
-		asm volatile("mfdabr %0" : "=r" (dabr));
-		asm volatile("mtdabr %0" :: "r" (dabr & ~0b011));
-
-		tickle_read();
-		context->srr1 |= 0x400;
-	} else {
-		OSExceptionHandler handler = *OSExceptionTable;
-		if (handler) (handler + 0x50)(exception, context, dsisr, dar);
-	}
-
-	return context;
 }
