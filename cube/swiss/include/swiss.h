@@ -33,7 +33,6 @@ extern int curMenuLocation;
 extern char* _menu_array[];
 extern file_handle curFile;
 extern file_handle curDir;
-extern u32 SDHCCard;
 extern char IPLInfo[256] __attribute__((aligned(32)));
 extern u8 driveVersion[8];
 extern DiskHeader GCMDisk;

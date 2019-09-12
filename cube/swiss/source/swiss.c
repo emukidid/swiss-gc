@@ -51,7 +51,6 @@ GXRModeObj *newmode = NULL;
 char txtbuffer[2048];           //temporary text buffer
 file_handle curFile;    //filedescriptor for current file
 file_handle curDir;     //filedescriptor for current directory
-u32 SDHCCard = 0; //0 == SDHC, 1 == normal SD
 extern int execdpatch_bin_size;
 extern u8 execdpatch_bin[];
 
@@ -879,9 +878,13 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch, int noASRequir
 		wkfWriteOffset(*(vu32*)VAR_DISC_1_LBA);
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
-	if((devices[DEVICE_CUR] == &__device_sd_a) || (devices[DEVICE_CUR] == &__device_sd_b) || (devices[DEVICE_CUR] == &__device_sd_c)) {
+	if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
 		print_gecko("set size\r\n");
-	    sdgecko_setPageSize(devices[DEVICE_CUR]->location == LOC_SERIAL_PORT_2 ? 2:((devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)? 0:1), 512);
+		sdgecko_setPageSize(devices[DEVICE_CUR] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_CUR] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2), 512);
+	}
+	else if(devices[DEVICE_PATCHES] == &__device_sd_a || devices[DEVICE_PATCHES] == &__device_sd_b || devices[DEVICE_PATCHES] == &__device_sd_c) {
+		print_gecko("set size\r\n");
+		sdgecko_setPageSize(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2), 512);
 	}
 	DOLtoARAM(main_dol_buffer, 0, NULL);
 	return 0;

@@ -164,17 +164,7 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	
 	f_closedir(dp);
 	free(dp);
-	if(IS_SDCARD(ffile->name)) {
-		int slot = GET_SLOT(ffile->name);
-	    // Set the card type (either block addressed (0) or byte addressed (1))
-	    SDHCCard = sdgecko_getAddressingType(slot);
-	    // set the page size to 512 bytes
-	    if(sdgecko_setPageSize(slot, 512)!=0) {
-	      return -1;
-	    }
-	}
-	
-  return num_entries;
+	return num_entries;
 }
 
 s32 deviceHandler_FAT_seekFile(file_handle* file, u32 where, u32 type){
@@ -400,13 +390,13 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	*(vu32*)VAR_SECTOR_CUR = 0;
 	*(vu32*)VAR_SD_LBA = 0;
 	// Card Type
-	*(vu8*)VAR_SD_SHIFT = (u8)(9 * SDHCCard);
+	*(vu8*)VAR_SD_SHIFT = (u8)(sdgecko_getAddressingType(devices[DEVICE_CUR] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_CUR] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)) ? 9:0);
 	// Copy the actual freq
-	*(vu8*)VAR_EXI_FREQ = (u8)(!swissSettings.exiSpeed ? EXI_SPEED16MHZ:EXI_SPEED32MHZ);
+	*(vu8*)VAR_EXI_FREQ = (u8)(swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	// Device slot (0, 1 or 2)
-	*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_CUR]->location == LOC_SERIAL_PORT_2 ? 2:((devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)? 0:1));
+	*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_CUR] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_CUR] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
 	// IDE-EXI only settings
-	if((devices[DEVICE_CUR] == &__device_ide_a) || (devices[DEVICE_CUR] == &__device_ide_b)) {
+	if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b) {
 		// Is the HDD in use a 48 bit LBA supported HDD?
 		*(vu8*)VAR_ATA_LBA48 = ataDriveInfo.lba48Support;
 	}
