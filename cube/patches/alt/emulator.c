@@ -169,7 +169,7 @@ void set_di_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 
 DVDCommandBlock *set_breakpoint(DVDCommandBlock *block)
 {
-	uint32_t dabr = (uint32_t)&block->state & ~7;
+	uint32_t dabr = (uint32_t)&block->state & ~0b111;
 	asm volatile("mtdabr %0" :: "r" (dabr | 0b101));
 	return block;
 }
