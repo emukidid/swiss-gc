@@ -85,16 +85,17 @@ file_handle initial_IDE_B =
 	  0
 	};
 
-device_info initial_FAT_info = {
-	0,
-	0
-};
+static device_info initial_FAT_info[5];
 	
-device_info* deviceHandler_FAT_info() {
-	return &initial_FAT_info;
+device_info* deviceHandler_FAT_info(file_handle* file) {
+	int isSDCard = IS_SDCARD(file->name);
+	int slot = GET_SLOT(file->name);
+	return &initial_FAT_info[(isSDCard ? slot : SD_COUNT + slot)];
 }
 
-void readDeviceInfo(file_handle* file) {
+void populateDeviceInfo(file_handle* file) {
+	device_info* info = deviceHandler_FAT_info(file);
+	
 	if(deviceHandler_getStatEnabled()) {
 		int isSDCard = IS_SDCARD(file->name);
 		int slot = GET_SLOT(file->name);
@@ -108,11 +109,11 @@ void readDeviceInfo(file_handle* file) {
 		if(f_getfree(txtbuffer, &free_clusters, &fsptr) == FR_OK) {
 			total_sectors = (fsptr->n_fatent - 2) * fsptr->csize;
 			free_sectors = free_clusters * fsptr->csize;
-			initial_FAT_info.freeSpaceInKB = (u32)((free_sectors)>>1);
-			initial_FAT_info.totalSpaceInKB = (u32)((total_sectors)>>1);
+			info->freeSpaceInKB = (u32)((free_sectors)>>1);
+			info->totalSpaceInKB = (u32)((total_sectors)>>1);
 		}
 		else {
-			initial_FAT_info.freeSpaceInKB = initial_FAT_info.totalSpaceInKB = 0;
+			info->freeSpaceInKB = info->totalSpaceInKB = 0;
 		}
 		DrawDispose(msgBox);
 	}
@@ -473,7 +474,7 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 		ret = fatFs_Mount(4, "ideb:\0");
 	}
 	if(ret)
-		readDeviceInfo(file);
+		populateDeviceInfo(file);
 	return ret;
 }
 
@@ -502,8 +503,9 @@ s32 deviceHandler_FAT_closeFile(file_handle* file) {
 }
 
 s32 deviceHandler_FAT_deinit(file_handle* file) {
-	initial_FAT_info.freeSpaceInKB = 0;
-	initial_FAT_info.totalSpaceInKB = 0;
+	device_info* info = deviceHandler_FAT_info(file);
+	info->freeSpaceInKB = 0;
+	info->totalSpaceInKB = 0;
 	if(file) {
 		deviceHandler_FAT_closeFile(file);
 		char *mountPath = getDeviceMountPath(file->name);

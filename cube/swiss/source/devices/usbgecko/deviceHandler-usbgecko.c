@@ -32,7 +32,7 @@ device_info initial_USBGecko_info = {
 
 extern char *getRelativeName(char *str);
 	
-device_info* deviceHandler_USBGecko_info() {
+device_info* deviceHandler_USBGecko_info(file_handle* file) {
 	return &initial_USBGecko_info;
 }
 	

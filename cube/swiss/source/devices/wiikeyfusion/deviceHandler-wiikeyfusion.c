@@ -39,7 +39,7 @@ device_info initial_WKF_info = {
 	0
 };
 	
-device_info* deviceHandler_WKF_info() {
+device_info* deviceHandler_WKF_info(file_handle* file) {
 	return &initial_WKF_info;
 }
 

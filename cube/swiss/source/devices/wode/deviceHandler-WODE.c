@@ -56,7 +56,7 @@ int startupWode() {
 	return -1;
 }
 
-device_info* deviceHandler_WODE_info() {
+device_info* deviceHandler_WODE_info(file_handle* file) {
 	return &initial_WODE_info;
 }
 	

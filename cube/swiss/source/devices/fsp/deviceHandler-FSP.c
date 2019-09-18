@@ -35,7 +35,7 @@ device_info initial_FSP_info = {
 	0
 };
 
-device_info* deviceHandler_FSP_info() {
+device_info* deviceHandler_FSP_info(file_handle* file) {
 	return &initial_FSP_info;
 }
 

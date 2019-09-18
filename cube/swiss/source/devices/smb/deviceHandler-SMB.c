@@ -59,7 +59,7 @@ device_info initial_SMB_info = {
 	0
 };
 	
-device_info* deviceHandler_SMB_info() {
+device_info* deviceHandler_SMB_info(file_handle* file) {
 	return &initial_SMB_info;
 }
 

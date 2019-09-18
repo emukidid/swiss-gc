@@ -56,7 +56,7 @@ typedef struct {
 #define DEVICE_HANDLER_SEEK_CUR 1
 
 // Device struct
-typedef s32 (* _fn_info)(void);
+typedef s32 (* _fn_info)(file_handle*);
 typedef bool (* _fn_test)(void);
 typedef s32 (* _fn_init)(file_handle*);
 typedef s32 (* _fn_readDir)(file_handle*, file_handle**, u32);

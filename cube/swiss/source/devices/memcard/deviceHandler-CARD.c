@@ -35,10 +35,7 @@ file_handle initial_CARDB =
 	  0
 };
 
-device_info initial_CARD_info = {
-	0,
-	0
-};
+static device_info initial_CARD_info[2];
 
 static unsigned char *sys_area = NULL;
 static int card_init[2] = {0,0};
@@ -95,8 +92,9 @@ int initialize_card(int slot) {
 	return slot_error;
 }
 
-device_info* deviceHandler_CARD_info() {
-	return &initial_CARD_info;
+device_info* deviceHandler_CARD_info(file_handle* file) {
+	int slot = (!strncmp((const char*)initial_CARDB.name, file->name, 7));
+	return &initial_CARD_info[slot];
 }
 
 s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){	
@@ -141,7 +139,7 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	free(memcard_dir);
 	
 	usedSpace >>= 10;
-	initial_CARD_info.freeSpaceInKB = initial_CARD_info.totalSpaceInKB-usedSpace;
+	initial_CARD_info[slot].freeSpaceInKB = initial_CARD_info[slot].totalSpaceInKB-usedSpace;
 
 	return num_entries;
 }
@@ -442,11 +440,11 @@ s32 deviceHandler_CARD_init(file_handle* file){
 	s32 memSize = 0, sectSize = 0;
 	int ret = CARD_ProbeEx(slot,&memSize,&sectSize);
 	if(ret==CARD_ERROR_READY) {
-		initial_CARD_info.totalSpaceInKB = (memSize<<7);
+		initial_CARD_info[slot].totalSpaceInKB = (memSize<<7);
 	} else {
 		print_gecko("CARD_ProbeEx failed %i\r\n", ret);
 	}
-	initial_CARD_info.freeSpaceInKB = 0;
+	initial_CARD_info[slot].freeSpaceInKB = 0;
 	
 	return file->status == CARD_ERROR_READY ? 1 : 0;
 }

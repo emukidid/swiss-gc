@@ -78,7 +78,7 @@ device_info initial_SYS_info =
 	0
 };
 
-device_info* deviceHandler_SYS_info() {
+device_info* deviceHandler_SYS_info(file_handle* file) {
 	return &initial_SYS_info;
 }
 

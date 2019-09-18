@@ -242,7 +242,7 @@ int gettype_disc() {
   return type;
 }
 
-device_info* deviceHandler_DVD_info() {
+device_info* deviceHandler_DVD_info(file_handle* file) {
 	return &initial_DVD_info;
 }
 

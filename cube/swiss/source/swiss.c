@@ -268,7 +268,7 @@ void do_videomode_swap() {
 void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 	if(devices[DEVICE_CUR] == NULL)
 		return;
-	device_info* info = (device_info*)devices[DEVICE_CUR]->info();
+	device_info* info = (device_info*)devices[DEVICE_CUR]->info(devices[DEVICE_CUR]->initial);
 
 	uiDrawObj_t *bgBox = DrawTransparentBox(30, 100, 135, 200);	// Device icon + slot box
 	DrawAddChild(containerPanel, bgBox);
@@ -1274,7 +1274,7 @@ bool manage_file() {
 							free(readBuffer);
 							devices[DEVICE_CUR]->closeFile(&curFile);
 							devices[DEVICE_DEST]->closeFile(destFile);
-							sprintf(txtbuffer, "Failed to Read! (%ul %ul)\n%s",amountToCopy,ret, &curFile.name[0]);
+							sprintf(txtbuffer, "Failed to Read! (%d %d)\n%s",amountToCopy,ret, &curFile.name[0]);
 							uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
 							DrawPublish(msgBox);
 							wait_press_A();

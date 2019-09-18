@@ -57,7 +57,7 @@ device_info initial_FTP_info = {
 	0
 };
 	
-device_info* deviceHandler_FTP_info() {
+device_info* deviceHandler_FTP_info(file_handle* file) {
 	return &initial_FTP_info;
 }
 

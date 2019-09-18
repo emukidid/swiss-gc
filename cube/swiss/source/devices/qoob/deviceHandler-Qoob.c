@@ -33,7 +33,7 @@ device_info initial_Qoob_info = {
 	2048
 };
 	
-device_info* deviceHandler_Qoob_info() {
+device_info* deviceHandler_Qoob_info(file_handle* file) {
 	return &initial_Qoob_info;
 }
 	
