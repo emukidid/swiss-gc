@@ -12,24 +12,32 @@
 void perform_read(uint32_t offset, uint32_t length, uint32_t address);
 void tickle_read(void);
 
-void di_trigger_interrupt(void)
+void di_update_interrupts(void)
 {
-	uint32_t address = (*DI_EMU)[5] | 0x80000000;
+	uint32_t status = (*DI)[0];
+	uint32_t cover  = (*DI)[1];
+
+	if (((*DI_EMU)[0] >> 1) & ((*DI_EMU)[0] & 0b0101010) ||
+		((*DI_EMU)[1] >> 1) & ((*DI_EMU)[1] & 0b010))
+		status |= 0b1000001;
+
+	(*DI)[0] = status;
+	(*DI)[1] = cover;
+}
+
+void di_complete_transfer(void)
+{
+	uint32_t address = (*DI_EMU)[5] + OS_BASE_CACHED;
 	uint32_t length  = (*DI_EMU)[6];
 
+	(*DI_EMU)[0] |= 0b0010000;
 	(*DI_EMU)[6]  = 0;
 	(*DI_EMU)[7] &= ~0b001;
 
-	(*DI)[2] = 0xE0000000;
-	(*DI)[3] = 0;
-	(*DI)[4] = 0;
-	(*DI)[5] = 0;
-	(*DI)[6] = 0;
-	(*DI)[8] = 0;
-	(*DI)[7] = 1;
-
 	if ((*DI_EMU)[7] & 0b010)
 		dcache_flush_icache_inv((void *)address, length);
+
+	di_update_interrupts();
 }
 
 static void di_execute_command(void)
@@ -39,7 +47,7 @@ static void di_execute_command(void)
 		{
 			uint32_t offset  = (*DI_EMU)[3] << 2;
 			uint32_t length  = (*DI_EMU)[4];
-			uint32_t address = (*DI_EMU)[5] | 0x80000000;
+			uint32_t address = (*DI_EMU)[5] + OS_BASE_CACHED;
 
 			perform_read(offset, length, address);
 			break;
@@ -47,25 +55,29 @@ static void di_execute_command(void)
 		default:
 		{
 			(*DI_EMU)[8] = 0;
-			di_trigger_interrupt();
+			di_complete_transfer();
 		}
 	}
 }
 
 static void di_read(unsigned index, uint32_t *value)
 {
-	switch (index) {
-		case 2 ... 8:
-			*value = (*DI_EMU)[index];
-			break;
-		default:
-			*value = (*DI)[index];
-	}
+	*value = (*DI_EMU)[index];
 }
 
 static void di_write(unsigned index, uint32_t value)
 {
 	switch (index) {
+		case 0:
+			(*DI_EMU)[0] = ((value & 0b1010100) ^ (*DI_EMU)[0]) & (*DI_EMU)[0];
+			(*DI_EMU)[0] = (value & 0b0101011) | ((*DI_EMU)[0] & ~0b0101010);
+			di_update_interrupts();
+			break;
+		case 1:
+			(*DI_EMU)[1] = ((value & 0b100) ^ (*DI_EMU)[1]) & (*DI_EMU)[1];
+			(*DI_EMU)[1] = (value & 0b010) | ((*DI_EMU)[1] & ~0b010);
+			di_update_interrupts();
+			break;
 		case 2 ... 4:
 		case 8:
 			(*DI_EMU)[index] = value;
@@ -82,8 +94,6 @@ static void di_write(unsigned index, uint32_t value)
 			if (value & 0b001)
 				di_execute_command();
 			break;
-		default:
-			(*DI)[index] = value;
 	}
 }
 
@@ -116,6 +126,13 @@ static bool ppc_step(OSContext *context)
 			int ra = (opcode >> 16) & 0x1F;
 			short d = opcode & 0xFFFF;
 			return ppc_load32(context->gpr[ra] + d, &context->gpr[rd]);
+		}
+		case 33:
+		{
+			int rd = (opcode >> 21) & 0x1F;
+			int ra = (opcode >> 16) & 0x1F;
+			short d = opcode & 0xFFFF;
+			return ppc_load32(context->gpr[ra] += d, &context->gpr[rd]);
 		}
 		case 36:
 		{
@@ -151,7 +168,7 @@ OSContext *exception_handler(OSException exception, OSContext *context, uint32_t
 		}
 		default:
 		{
-			OSExceptionHandler handler = *OSExceptionTable;
+			OSExceptionHandler handler = *OSExceptionHandlerTable;
 			if (handler) (handler + 0x50)(exception, context, dsisr, dar);
 		}
 	}
@@ -161,10 +178,26 @@ OSContext *exception_handler(OSException exception, OSContext *context, uint32_t
 
 void dsi_exception_handler(OSException exception, OSContext *context, ...);
 
-void set_di_handler(OSInterrupt interrupt, OSInterruptHandler handler)
+void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	OSExceptionTable[OS_EXCEPTION_DSI] = dsi_exception_handler;
-	OSInterruptTable[OS_INTERRUPT_PI_DI] = handler;
+	OSContext exceptionContext;
+
+	OSClearContext(&exceptionContext);
+	OSSetCurrentContext(&exceptionContext);
+
+	OSInterruptHandler handler = OSGetInterruptHandler(OS_INTERRUPT_EMU_DI);
+	if (handler) handler(OS_INTERRUPT_EMU_DI, &exceptionContext);
+
+	OSClearContext(&exceptionContext);
+	OSSetCurrentContext(context);
+}
+
+OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler handler)
+{
+	OSSetExceptionHandler(OS_EXCEPTION_DSI, dsi_exception_handler);
+	OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
+
+	return OSSetInterruptHandler(interrupt, handler);
 }
 
 DVDCommandBlock *set_breakpoint(DVDCommandBlock *block)

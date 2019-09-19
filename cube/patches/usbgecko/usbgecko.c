@@ -156,7 +156,7 @@ bool exi_lock(int32_t channel, uint32_t device)
 	return true;
 }
 
-void di_trigger_interrupt(void);
+void di_complete_transfer(void);
 
 void perform_read(uint32_t offset, uint32_t length, uint32_t address)
 {
@@ -189,7 +189,7 @@ void tickle_read(void)
 		*(uint32_t *)VAR_TMP2 = remainder;
 		*(uint8_t **)VAR_TMP1 = data + data_size;
 
-		if (!remainder) di_trigger_interrupt();
+		if (!remainder) di_complete_transfer();
 		else if (frag && !is_frag_read(position, remainder))
 			usb_request(position, remainder);
 	}

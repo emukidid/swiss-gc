@@ -72,8 +72,9 @@ build-sd-alt:
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c
-	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o sd_alt.elf base.o emulator.o blockdevice.o sd.o frag.o usbgecko.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
+	@$(CC) -O2 $(OPTS) -c base/memcpy.S
+	@$(CC) -O2 $(OPTS) -c base/os.c
+	@$(LD) -o sd_alt.elf -T alt/base.ld -T base/os.ld base.o emulator.o blockdevice.o sd.o frag.o usbgecko.o igr.o memcpy.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D sd_alt.elf > $(DISASM)/sd_alt_disasm.txt
 	@$(OBJCOPY) -O binary sd_alt.elf sd_alt.bin
@@ -113,8 +114,9 @@ build-ideexi-altv1:
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c
-	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o ideexi_altv1.elf base.o emulator.o blockdevice.o hddread.o frag.o usbgecko.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
+	@$(CC) -O2 $(OPTS) -c base/memcpy.S
+	@$(CC) -O2 $(OPTS) -c base/os.c
+	@$(LD) -o ideexi_altv1.elf -T alt/base.ld -T base/os.ld base.o emulator.o blockdevice.o hddread.o frag.o usbgecko.o igr.o memcpy.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_altv1.elf > $(DISASM)/ideexi_altv1_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_altv1.elf ideexi_altv1.bin
@@ -154,8 +156,9 @@ build-ideexi-altv2:
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c
-	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o ideexi_altv2.elf base.o emulator.o blockdevice.o hddread.o frag.o usbgecko.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
+	@$(CC) -O2 $(OPTS) -c base/memcpy.S
+	@$(CC) -O2 $(OPTS) -c base/os.c
+	@$(LD) -o ideexi_altv2.elf -T alt/base.ld -T base/os.ld base.o emulator.o blockdevice.o hddread.o frag.o usbgecko.o igr.o memcpy.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_altv2.elf > $(DISASM)/ideexi_altv2_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_altv2.elf ideexi_altv2.bin
@@ -190,8 +193,9 @@ build-usb:
 	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c
-	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o usbgecko.elf base.o emulator.o usbgecko.o sd.o frag.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
+	@$(CC) -O2 $(OPTS) -c base/memcpy.S
+	@$(CC) -O2 $(OPTS) -c base/os.c
+	@$(LD) -o usbgecko.elf -T alt/base.ld -T base/os.ld base.o emulator.o usbgecko.o sd.o frag.o igr.o memcpy.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
@@ -228,8 +232,9 @@ build-bba:
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c
-	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o bba.elf base.o emulator.o bba.o tcpip.o usbgecko.o sd.o frag.o igr.o memcpy.o --section-start .text=0x80000C00 --gc-sections
+	@$(CC) -O2 $(OPTS) -c base/memcpy.S
+	@$(CC) -O2 $(OPTS) -c base/os.c
+	@$(LD) -o bba.elf -T alt/base.ld -T base/os.ld base.o emulator.o bba.o tcpip.o usbgecko.o sd.o frag.o igr.o memcpy.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D bba.elf > $(DISASM)/bba_disasm.txt
 	@$(OBJCOPY) -O binary bba.elf bba.bin

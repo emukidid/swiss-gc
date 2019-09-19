@@ -181,7 +181,7 @@ void fsp_output(const char *file, uint8_t filelen, uint32_t offset, size_t size)
 	mftb(_start);
 }
 
-void di_trigger_interrupt(void);
+void di_complete_transfer(void);
 
 static void fsp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, size_t size)
 {
@@ -265,7 +265,7 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 				if (!*_received)
 					bba_receive_end(page, data + data_offset, size);
 
-				if (!remainder) di_trigger_interrupt();
+				if (!remainder) di_complete_transfer();
 			}
 		}
 	}

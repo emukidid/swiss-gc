@@ -997,6 +997,12 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
+			else if (ReadSigs[j].offsetFoundAt) {
+				if (!DoJustReadSig.offsetFoundAt && compare_pattern(&fp, &DoJustReadSig)) {
+					if (findx_pattern(data, dataType, i + 16, length, &ReadSigs[j]))
+						DoJustReadSig.offsetFoundAt = i;
+				}
+			}
 		}
 		
 		for (j = 0; j < sizeof(DVDLowReadSigs) / sizeof(FuncPattern); j++) {
@@ -1231,7 +1237,7 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			else if (stateBusySigs[j].offsetFoundAt && i == stateBusySigs[j].offsetFoundAt + stateBusySigs[j].Length) {
+			else if (stateBusySigs[j].offsetFoundAt) {
 				for (k = 0; k < sizeof(cbForStateBusySigs) / sizeof(FuncPattern); k++) {
 					if (!cbForStateBusySigs[k].offsetFoundAt && compare_pattern(&fp, &cbForStateBusySigs[k])) {
 						switch (k) {
@@ -1442,6 +1448,45 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		u32 *__DVDInterruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__DVDInterruptHandler) {
+			switch (j) {
+				case 0:
+					data[i +  32] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  52] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  76] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  93] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  95] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 101] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 111] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 117] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 1:
+					data[i +  31] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  51] = 0x3FE00C00;	// lis		r31, 0x0C00
+					data[i +  97] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 112] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i +  33] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  54] = 0x3FE00C00;	// lis		r31, 0x0C00
+					data[i + 100] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 115] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 3:
+					data[i +  28] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  51] = 0x3FE00C00;	// lis		r31, 0x0C00
+					data[i +  98] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 113] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 4:
+					data[i +  30] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  54] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  80] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  95] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 102] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 112] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 118] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", __DVDInterruptHandlerSigs[j].Name, __DVDInterruptHandler);
 		}
 	}
@@ -1701,23 +1746,28 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		if (DVDInit) {
 			switch (j) {
 				case 0:
+					data[i + 20] = 0x3860001B;	// li		r3, 27
 					data[i + 23] = branchAndLink(SET_DI_HANDLER, DVDInit + 23);
 					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 32] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 1:
+					data[i + 21] = 0x3860001B;	// li		r3, 27
 					data[i + 22] = branchAndLink(SET_DI_HANDLER, DVDInit + 22);
 					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 2:
+					data[i + 19] = 0x3860001B;	// li		r3, 27
 					data[i + 20] = branchAndLink(SET_DI_HANDLER, DVDInit + 20);
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 3:
+					data[i + 17] = 0x3860001B;	// li		r3, 27
 					data[i + 19] = branchAndLink(SET_DI_HANDLER, DVDInit + 19);
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 4:
+					data[i + 21] = 0x3860001B;	// li		r3, 27
 					data[i + 23] = branchAndLink(SET_DI_HANDLER, DVDInit + 23);
 					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
