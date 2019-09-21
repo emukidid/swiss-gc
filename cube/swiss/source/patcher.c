@@ -686,6 +686,8 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{  7,  2, 1, 0, 0, 1, NULL, 0, "__OSSetExceptionHandler A" },
 		{  5,  1, 0, 0, 0, 2, NULL, 0, "__OSSetExceptionHandler B" }	// SN Systems ProDG
 	};
+	FuncPattern ICFlashInvalidateSig = 
+		{ 4, 0, 0, 0, 0, 2, NULL, 0, "ICFlashInvalidate" };
 	FuncPattern OSSetCurrentContextSig = 
 		{ 23, 4, 4, 0, 0, 5, NULL, 0, "OSSetCurrentContext" };
 	FuncPattern OSDisableInterruptsSig = 
@@ -698,6 +700,22 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 49, 19, 3, 2, 3, 4, NULL, 0, "__OSSetInterruptHandlerD A" },
 		{  7,  2, 1, 0, 0, 2, NULL, 0, "__OSSetInterruptHandler A" },
 		{  6,  1, 0, 0, 0, 3, NULL, 0, "__OSSetInterruptHandler B" }	// SN Systems ProDG
+	};
+	FuncPattern __OSDoHotResetSigs[3] = {
+		{ 17, 6, 3, 3, 0, 2, NULL, 0, "__OSDoHotResetD A" },
+		{ 18, 6, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset A" },
+		{ 17, 5, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset B" }	// SN Systems ProDG
+	};
+	FuncPattern OSResetSystemSigs[9] = {
+		{  64, 13, 2, 15,  6, 8, NULL, 0, "OSResetSystemD A" },
+		{  97, 29, 3, 27,  5, 8, NULL, 0, "OSResetSystemD B" },
+		{ 110, 19, 2, 16, 24, 9, NULL, 0, "OSResetSystem A" },
+		{ 111, 19, 2, 17, 24, 9, NULL, 0, "OSResetSystem B" },
+		{ 147, 37, 2, 21, 30, 8, NULL, 0, "OSResetSystem C" },
+		{ 158, 41, 2, 24, 30, 9, NULL, 0, "OSResetSystem D" },
+		{ 148, 44, 2, 26, 16, 9, NULL, 0, "OSResetSystem E" },	// SN Systems ProDG
+		{ 174, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem F" },
+		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem G" }
 	};
 	FuncPattern SelectThreadSigs[4] = {
 		{ 123, 39, 10, 11, 14, 12, NULL, 0, "SelectThreadD A" },
@@ -862,6 +880,91 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 						if (findx_pattern(data, dataType, i + 136, length, &__OSSetExceptionHandlerSigs[2]))
 							OSExceptionInitSigs[j].offsetFoundAt = i;
 						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(__OSDoHotResetSigs) / sizeof(FuncPattern); j++) {
+			if (!__OSDoHotResetSigs[j].offsetFoundAt && compare_pattern(&fp, &__OSDoHotResetSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  9, length, &ICFlashInvalidateSig))
+							__OSDoHotResetSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 10, length, &ICFlashInvalidateSig))
+							__OSDoHotResetSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  9, length, &ICFlashInvalidateSig))
+							__OSDoHotResetSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+			else if (__OSDoHotResetSigs[j].offsetFoundAt && i == __OSDoHotResetSigs[j].offsetFoundAt + __OSDoHotResetSigs[j].Length) {
+				for (k = 0; k < sizeof(OSResetSystemSigs) / sizeof(FuncPattern); k++) {
+					if (!OSResetSystemSigs[k].offsetFoundAt && compare_pattern(&fp, &OSResetSystemSigs[k])) {
+						switch (k) {
+							case 0:
+								if (findx_pattern(data, dataType, i +  27, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  57, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  49, length, &__OSDoHotResetSigs[j]))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 1:
+								if (findx_pattern(data, dataType, i +  32, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  55, length, &__OSDoHotResetSigs[j]))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 2:
+								if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i + 103, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  72, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  77, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 3:
+								if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i + 104, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  73, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  78, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 4:
+								if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  72, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  77, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 5:
+								if (findx_pattern(data, dataType, i +  57, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  82, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 6:
+								if (findx_pattern(data, dataType, i +  48, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  66, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  70, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 7:
+								if (findx_pattern(data, dataType, i +  64, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  86, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  91, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 8:
+								if (findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  79, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+						}
+					}
 				}
 			}
 		}
@@ -1292,6 +1395,42 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", OSExceptionInitSigs[j].Name, OSExceptionInit);
+		}
+	}
+	
+	for (j = 0; j < sizeof(__OSDoHotResetSigs) / sizeof(FuncPattern); j++)
+		if (__OSDoHotResetSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(__OSDoHotResetSigs) / sizeof(FuncPattern) && (i = __OSDoHotResetSigs[j].offsetFoundAt)) {
+		u32 *__OSDoHotReset = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__OSDoHotReset) {
+			switch (j) {
+				case 0: data[i + 4] = branchAndLink(IGR_EXIT_ALT, __OSDoHotReset + 4); break;
+				case 1:
+				case 2: data[i + 5] = branchAndLink(IGR_EXIT_ALT, __OSDoHotReset + 5); break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", __OSDoHotResetSigs[j].Name, __OSDoHotReset);
+		}
+	}
+	
+	for (j = 0; j < sizeof(OSResetSystemSigs) / sizeof(FuncPattern); j++)
+		if (OSResetSystemSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(OSResetSystemSigs) / sizeof(FuncPattern) && (i = OSResetSystemSigs[j].offsetFoundAt)) {
+		u32 *OSResetSystem = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (OSResetSystem) {
+			switch (j) {
+				case 2: data[i + 72] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 72); break;
+				case 3: data[i + 73] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 73); break;
+				case 4: data[i + 72] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 72); break;
+				case 5: data[i + 77] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 77); break;
+				case 6: data[i + 66] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 66); break;
+				case 7: data[i + 86] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 86); break;
+				case 8: data[i + 74] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 74); break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", OSResetSystemSigs[j].Name, OSResetSystem);
 		}
 	}
 	
