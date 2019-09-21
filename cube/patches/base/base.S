@@ -16,7 +16,8 @@ _start:
 	b		stop_di_irq
 	b		trigger_di_irq
 	b		__DSPHandler
-	b		exit_to_pref			# checks for a button combo and exits if true
+	b		check_pad
+	b		igr_exit
 
 	.globl trigger_di_irq
 trigger_di_irq:

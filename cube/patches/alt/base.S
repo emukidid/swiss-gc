@@ -125,4 +125,5 @@ _start:
 	b		unset_breakpoint
 	b		tickle_read
 	b		tickle_read_idle
-	b		exit_to_pref			# checks for a button combo and exits if true
+	b		check_pad
+	b		igr_exit

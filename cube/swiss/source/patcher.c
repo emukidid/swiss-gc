@@ -839,8 +839,9 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			}
 			continue;
 		}
-		if ((data[i - 1] != 0x4C000064 && data[i - 1] != 0x4E800020) ||
-			(data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6))
+		if ((data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) ||
+			(data[i - 1] != 0x4E800020 && data[i - 1] != 0x4C000064 &&
+			branchResolve(data, dataType, i - 1) == 0))
 			continue;
 		
 		FuncPattern fp;
@@ -2555,8 +2556,9 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			}
 			continue;
 		}
-		if ((data[i - 1] != 0x4C000064 && data[i - 1] != 0x4E800020) ||
-			(data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6))
+		if ((data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) ||
+			(data[i - 1] != 0x4E800020 && data[i - 1] != 0x4C000064 &&
+			branchResolve(data, dataType, i - 1) == 0))
 			continue;
 		
 		FuncPattern fp;
@@ -5566,10 +5568,28 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 void Patch_PADStatus(u32 *data, u32 length, int dataType)
 {
 	int i, j, k;
+	FuncPattern ICFlashInvalidateSig = 
+		{ 4, 0, 0, 0, 0, 2, NULL, 0, "ICFlashInvalidate" };
 	FuncPattern OSDisableInterruptsSig = 
 		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
 	FuncPattern OSRestoreInterruptsSig = 
 		{ 9, 0, 0, 0, 2, 2, NULL, 0, "OSRestoreInterrupts" };
+	FuncPattern __OSDoHotResetSigs[3] = {
+		{ 17, 6, 3, 3, 0, 2, NULL, 0, "__OSDoHotResetD A" },
+		{ 18, 6, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset A" },
+		{ 17, 5, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset B" }	// SN Systems ProDG
+	};
+	FuncPattern OSResetSystemSigs[9] = {
+		{  64, 13, 2, 15,  6, 8, NULL, 0, "OSResetSystemD A" },
+		{  97, 29, 3, 27,  5, 8, NULL, 0, "OSResetSystemD B" },
+		{ 110, 19, 2, 16, 24, 9, NULL, 0, "OSResetSystem A" },
+		{ 111, 19, 2, 17, 24, 9, NULL, 0, "OSResetSystem B" },
+		{ 147, 37, 2, 21, 30, 8, NULL, 0, "OSResetSystem C" },
+		{ 158, 41, 2, 24, 30, 9, NULL, 0, "OSResetSystem D" },
+		{ 148, 44, 2, 26, 16, 9, NULL, 0, "OSResetSystem E" },	// SN Systems ProDG
+		{ 174, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem F" },
+		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem G" }
+	};
 	FuncPattern UpdateOriginSigs[4] = {
 		{ 105, 15, 1, 0, 20, 4, NULL, 0, "UpdateOriginD A" },
 		{ 107, 13, 2, 1, 20, 6, NULL, 0, "UpdateOriginD B" },
@@ -5645,12 +5665,98 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 			}
 			continue;
 		}
-		if ((data[i - 1] != 0x4C000064 && data[i - 1] != 0x4E800020) ||
-			(data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6))
+		if ((data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) ||
+			(data[i - 1] != 0x4E800020 && data[i - 1] != 0x4C000064 &&
+			branchResolve(data, dataType, i - 1) == 0))
 			continue;
 		
 		FuncPattern fp;
 		make_pattern(data, i, length, &fp);
+		
+		for (j = 0; j < sizeof(__OSDoHotResetSigs) / sizeof(FuncPattern); j++) {
+			if (!__OSDoHotResetSigs[j].offsetFoundAt && compare_pattern(&fp, &__OSDoHotResetSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  9, length, &ICFlashInvalidateSig))
+							__OSDoHotResetSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 10, length, &ICFlashInvalidateSig))
+							__OSDoHotResetSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  9, length, &ICFlashInvalidateSig))
+							__OSDoHotResetSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+			else if (__OSDoHotResetSigs[j].offsetFoundAt && i == __OSDoHotResetSigs[j].offsetFoundAt + __OSDoHotResetSigs[j].Length) {
+				for (k = 0; k < sizeof(OSResetSystemSigs) / sizeof(FuncPattern); k++) {
+					if (!OSResetSystemSigs[k].offsetFoundAt && compare_pattern(&fp, &OSResetSystemSigs[k])) {
+						switch (k) {
+							case 0:
+								if (findx_pattern(data, dataType, i +  27, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  57, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  49, length, &__OSDoHotResetSigs[j]))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 1:
+								if (findx_pattern(data, dataType, i +  32, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  55, length, &__OSDoHotResetSigs[j]))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 2:
+								if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i + 103, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  72, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  77, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 3:
+								if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i + 104, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  73, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  78, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 4:
+								if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  72, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  77, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 5:
+								if (findx_pattern(data, dataType, i +  57, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  82, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 6:
+								if (findx_pattern(data, dataType, i +  48, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  66, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  70, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 7:
+								if (findx_pattern(data, dataType, i +  64, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  86, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  91, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 8:
+								if (findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  79, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+						}
+					}
+				}
+			}
+		}
 		
 		for (j = 0; j < sizeof(PADOriginCallbackSigs) / sizeof(FuncPattern); j++) {
 			if (!PADOriginCallbackSigs[j].offsetFoundAt && compare_pattern(&fp, &PADOriginCallbackSigs[j])) {
@@ -5825,6 +5931,64 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		i += fp.Length - 1;
 	}
 	
+	if (swissSettings.igrType != IGR_OFF) {
+		for (j = 0; j < sizeof(__OSDoHotResetSigs) / sizeof(FuncPattern); j++)
+			if (__OSDoHotResetSigs[j].offsetFoundAt) break;
+		
+		if (j < sizeof(__OSDoHotResetSigs) / sizeof(FuncPattern) && (i = __OSDoHotResetSigs[j].offsetFoundAt)) {
+			u32 *__OSDoHotReset = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			u32 *__OSDoHotResetHook;
+			
+			if (__OSDoHotReset) {
+				if (devices[DEVICE_CUR] == &__device_dvd)
+					__OSDoHotResetHook = IGR_EXIT_DVD;
+				else if (devices[DEVICE_CUR] == &__device_wkf)
+					__OSDoHotResetHook = IGR_EXIT_WKF;
+				else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches)
+					__OSDoHotResetHook = IGR_EXIT_ALT;
+				else
+					__OSDoHotResetHook = IGR_EXIT;
+				
+				switch (j) {
+					case 0: data[i + 4] = branchAndLink(__OSDoHotResetHook, __OSDoHotReset + 4); break;
+					case 1:
+					case 2: data[i + 5] = branchAndLink(__OSDoHotResetHook, __OSDoHotReset + 5); break;
+				}
+				print_gecko("Found:[%s] @ %08X\n", __OSDoHotResetSigs[j].Name, __OSDoHotReset);
+			}
+		}
+		
+		for (j = 0; j < sizeof(OSResetSystemSigs) / sizeof(FuncPattern); j++)
+			if (OSResetSystemSigs[j].offsetFoundAt) break;
+		
+		if (j < sizeof(OSResetSystemSigs) / sizeof(FuncPattern) && (i = OSResetSystemSigs[j].offsetFoundAt)) {
+			u32 *OSResetSystem = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			u32 *OSResetSystemHook;
+			
+			if (OSResetSystem) {
+				if (devices[DEVICE_CUR] == &__device_dvd)
+					OSResetSystemHook = IGR_EXIT_DVD;
+				else if (devices[DEVICE_CUR] == &__device_wkf)
+					OSResetSystemHook = IGR_EXIT_WKF;
+				else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches)
+					OSResetSystemHook = IGR_EXIT_ALT;
+				else
+					OSResetSystemHook = IGR_EXIT;
+				
+				switch (j) {
+					case 2: data[i + 72] = branchAndLink(OSResetSystemHook, OSResetSystem + 72); break;
+					case 3: data[i + 73] = branchAndLink(OSResetSystemHook, OSResetSystem + 73); break;
+					case 4: data[i + 72] = branchAndLink(OSResetSystemHook, OSResetSystem + 72); break;
+					case 5: data[i + 77] = branchAndLink(OSResetSystemHook, OSResetSystem + 77); break;
+					case 6: data[i + 66] = branchAndLink(OSResetSystemHook, OSResetSystem + 66); break;
+					case 7: data[i + 86] = branchAndLink(OSResetSystemHook, OSResetSystem + 86); break;
+					case 8: data[i + 74] = branchAndLink(OSResetSystemHook, OSResetSystem + 74); break;
+				}
+				print_gecko("Found:[%s] @ %08X\n", OSResetSystemSigs[j].Name, OSResetSystem);
+			}
+		}
+	}
+	
 	for (j = 0; j < sizeof(UpdateOriginSigs) / sizeof(FuncPattern); j++)
 		if (UpdateOriginSigs[j].offsetFoundAt) break;
 	
@@ -5911,13 +6075,13 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		
 		if (PADRead) {
 			if (devices[DEVICE_CUR] == &__device_dvd)
-				PADReadHook = IGR_CHECK_DVD;
+				PADReadHook = CHECK_PAD_DVD;
 			else if (devices[DEVICE_CUR] == &__device_wkf)
-				PADReadHook = IGR_CHECK_WKF;
+				PADReadHook = CHECK_PAD_WKF;
 			else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches)
-				PADReadHook = IGR_CHECK_ALT;
+				PADReadHook = CHECK_PAD_ALT;
 			else
-				PADReadHook = IGR_CHECK;
+				PADReadHook = CHECK_PAD;
 			
 			switch (k) {
 				case 0: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 132]; break;

@@ -11,7 +11,8 @@
 _start:
 	b		patched_memcpy			# void patched_memcpy(dst,src,size)
 	b		adjust_read
-	b		exit_to_pref			# checks for a button combo and exits if true
+	b		check_pad
+	b		igr_exit
 	
 	.globl dcache_flush_icache_inv
 dcache_flush_icache_inv:

@@ -179,17 +179,20 @@ enum patchIds {
 #define STOP_DI_IRQ				(void*)(LO_RESERVE | 0x08)
 #define READ_TRIGGER_INTERRUPT	(void*)(LO_RESERVE | 0x0C)
 #define DSP_HANDLER_HOOK		(void*)(LO_RESERVE | 0x10)
-#define IGR_CHECK				(void*)(LO_RESERVE | 0x14)
+#define CHECK_PAD				(void*)(LO_RESERVE | 0x14)
+#define IGR_EXIT				(void*)(LO_RESERVE | 0x18)
 
 /* Function jump locations for the DVD patch */
 #define ENABLE_BACKUP_DISC 		(void*)(LO_RESERVE_DVD | 0x00)
 #define READ_REAL_OR_PATCHED	(void*)(LO_RESERVE_DVD | 0x04)
-#define IGR_CHECK_DVD			(void*)(LO_RESERVE_DVD | 0x08)
+#define CHECK_PAD_DVD			(void*)(LO_RESERVE_DVD | 0x08)
+#define IGR_EXIT_DVD			(void*)(LO_RESERVE_DVD | 0x0C)
 
 /* Function jump locations for the WKF/WASP patch */
 #define PATCHED_MEMCPY_WKF		(void*)(LO_RESERVE)
 #define ADJUST_LBA_OFFSET	 	(void*)(LO_RESERVE | 0x04)
-#define IGR_CHECK_WKF			(void*)(LO_RESERVE | 0x08)
+#define CHECK_PAD_WKF			(void*)(LO_RESERVE | 0x08)
+#define IGR_EXIT_WKF			(void*)(LO_RESERVE | 0x0C)
 
 /* Function jump locations for the SD/IDE/USBGecko/BBA patch */
 #define EXI_HANDLER				(void*)(LO_RESERVE_ALT | 0x170)
@@ -199,7 +202,8 @@ enum patchIds {
 #define UNSET_BREAKPOINT		(void*)(LO_RESERVE_ALT | 0x180)
 #define TICKLE_READ				(void*)(LO_RESERVE_ALT | 0x184)
 #define TICKLE_READ_IDLE		(void*)(LO_RESERVE_ALT | 0x188)
-#define IGR_CHECK_ALT			(void*)(LO_RESERVE_ALT | 0x18C)
+#define CHECK_PAD_ALT			(void*)(LO_RESERVE_ALT | 0x18C)
+#define IGR_EXIT_ALT			(void*)(LO_RESERVE_ALT | 0x190)
 
 #define READ_PATCHED_ALL 		(0x111)
 

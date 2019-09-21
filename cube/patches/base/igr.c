@@ -7,9 +7,6 @@
 #include "../../reservedarea.h"
 #include "common.h"
 
-#ifdef WKF
-extern void wkfReinit();
-#endif
 void memset32(u32 dst,u32 fill,u32 len)
 {
 	u32 i;
@@ -40,7 +37,7 @@ typedef struct {
 #ifndef DEBUG
 void *memcpy(void *dest, const void *src, u32 size);
 
-void load_dol() {
+static void load_dol() {
 	u32 base = 0x81300000;
 	// Read the binary file mapped to 0x60000000
 	device_frag_read((void*)base, *(vu32*)VAR_IGR_DOL_SIZE, 0x60000000);
@@ -96,17 +93,11 @@ typedef struct {
 } PADStatus;
 
 // exits to user preferred method
-void exit_to_pref(s32 chan, PADStatus *status) {
+void igr_exit(void) {
+	disable_interrupts();
+	end_read();
+	
 	u8 igr_exit_type = *(vu8*)VAR_IGR_EXIT_TYPE;
-	
-	if((status->button & PAD_COMBO_EXIT) != PAD_COMBO_EXIT) {
-		status->button &= ~PAD_USE_ORIGIN;
-		return;
-	}
-	
-#ifdef WKF
-	wkfReinit();
-#endif
 	
 	if(igr_exit_type == IGR_HARDRESET) {
 		// int i = 0;
@@ -129,7 +120,6 @@ void exit_to_pref(s32 chan, PADStatus *status) {
 		// R = 00200000
 		// Z = 00100000
 		// D = 00040000
-		disable_interrupts();
 		volatile u16* const _memReg = (u16*)0xCC004000;
 		volatile u16* const _dspReg = (u16*)0xCC005000;
 		/* stop audio dma */
@@ -147,6 +137,16 @@ void exit_to_pref(s32 chan, PADStatus *status) {
 	}
 }
 #else
-void exit_to_pref(void) {
+void igr_exit(void) {
+	disable_interrupts();
+	end_read();
 }
 #endif
+
+void check_pad(s32 chan, PADStatus *status) {
+	status->button &= ~PAD_USE_ORIGIN;
+	
+	if((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT) {
+		igr_exit();
+	}
+}
