@@ -124,7 +124,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 		*(vu8*)VAR_SD_SHIFT = (u8)(sdgecko_getAddressingType(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)) ? 9:0);
 		// Copy the actual freq
 		*(vu8*)VAR_EXI_FREQ = (u8)(swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-		// Device slot (0 or 1)
+		// Device slot (0, 1 or 2)
 		*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
 	}
 

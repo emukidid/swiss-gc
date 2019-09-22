@@ -389,15 +389,21 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	
 	memset((void*)VAR_SECTOR_BUF, 0, 0x200);
 	*(vu32*)VAR_SECTOR_CUR = 0;
-	*(vu32*)VAR_SD_LBA = 0;
-	// Card Type
-	*(vu8*)VAR_SD_SHIFT = (u8)(sdgecko_getAddressingType(devices[DEVICE_CUR] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_CUR] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)) ? 9:0);
+	
+	int isSDCard = IS_SDCARD(file->name);
+	int slot = GET_SLOT(file->name);
+	if(isSDCard) {
+		// Reset sector being read
+		*(vu32*)VAR_SD_LBA = 0;
+		// Card Type
+		*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(slot) ? 9:0;
+	}
 	// Copy the actual freq
-	*(vu8*)VAR_EXI_FREQ = (u8)(swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+	*(vu8*)VAR_EXI_FREQ = swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ;
 	// Device slot (0, 1 or 2)
-	*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_CUR] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_CUR] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
+	*(vu8*)VAR_EXI_SLOT = slot;
 	// IDE-EXI only settings
-	if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b) {
+	if(!isSDCard) {
 		// Is the HDD in use a 48 bit LBA supported HDD?
 		*(vu8*)VAR_ATA_LBA48 = ataDriveInfo.lba48Support;
 	}
