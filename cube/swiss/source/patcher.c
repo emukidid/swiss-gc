@@ -4887,7 +4887,7 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 	int patched = 0;
 	
 	// Fix Zelda WW on Wii (__GXSetVAT patch)
-	if (!is_gamecube() && (!strncmp(gameID, "GZLP01", 6) || !strncmp(gameID, "GZLE01", 6) || !strncmp(gameID, "GZLJ01", 6))) {
+	if (!is_gamecube() && (!strncmp(gameID, "GZLP01", 6) || !strncmp(gameID, "GZLE01", 6) || !strncmp(gameID, "GZLJ01", 6)) && dataType == PATCH_DOL) {
 		int mode;
 		if(!strncmp(gameID, "GZLP01", 6))
 			mode = 1;	//PAL
@@ -4929,14 +4929,14 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 			}
 		}
 	}
-	else if(!strncmp(gameID, "GXX", 3) || !strncmp(gameID, "GC6", 3))
+	else if((!strncmp(gameID, "GXX", 3) || !strncmp(gameID, "GC6", 3)) && dataType == PATCH_DOL)
 	{
 		print_gecko("Patched:[Pokemon memset]\r\n");
 		// patch memset to jump to test function
 		*(vu32*)(addr+0x2420) = 0x4BFFAC68;
 		patched=1;
 	}
-	else if(!strncmp(gameID, "PZL", 3))
+	else if(!strncmp(gameID, "PZL", 3) && dataType == PATCH_DOL)
 	{
 		if(*(vu32*)(addr+0xDE6D8) == 0x2F6D616A) // PAL
 		{
@@ -4999,7 +4999,7 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 			patched=1;
 		}
 	}
-	else if(!strncmp(gameID, "GPQ", 3))
+	else if(!strncmp(gameID, "GPQ", 3) && dataType == PATCH_DOL)
 	{
 		// Audio Stream force DMA to get Video Sound
 		if(*(vu32*)(addr+0xF03D8) == 0x4E800020 && *(vu32*)(addr+0xF0494) == 0x4E800020)
@@ -5021,7 +5021,7 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 			patched=1;
 		}
 	}
-	else if(!strncmp(gameID, "GFZE01", 6) || !strncmp(gameID, "GFZP01", 6))
+	else if((!strncmp(gameID, "GFZE01", 6) || !strncmp(gameID, "GFZP01", 6)) && dataType == PATCH_DOL)
 	{
 		*(vu32*)(addr+0x2608) = 0x48000038;
 		*(vu32*)(addr+0x260C) = 0x60000000;
@@ -5041,7 +5041,7 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 		print_gecko("Patched:[%.6s]\n", gameID);
 		patched=1;
 	}
-	else if(!strncmp(gameID, "GFZJ01", 6))
+	else if(!strncmp(gameID, "GFZJ01", 6) && dataType == PATCH_DOL)
 	{
 		*(vu32*)(addr+0x2608) = 0x48000050;
 		*(vu32*)(addr+0x260C) = 0x60000000;
@@ -5093,7 +5093,7 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 
 void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dataType)
 {
-	if (!strncmp(gameID, "GAEJ01", 6)) {
+	if (!strncmp(gameID, "GAEJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1069088:
 				*(s16 *)(data + 0x80006CBE - 0x80005760 + 0x26C0) = 0;
@@ -5186,7 +5186,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
-	} else if (!strncmp(gameID, "GAFE01", 6)) {
+	} else if (!strncmp(gameID, "GAFE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 918720:
 				*(s16 *)(data + 0x8000672E - 0x800056C0 + 0x2620) = 0;
@@ -5232,7 +5232,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
-	} else if (!strncmp(gameID, "GAFJ01", 6)) {
+	} else if (!strncmp(gameID, "GAFJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 888704:
 				*(s16 *)(data + 0x80006622 - 0x800055C0 + 0x2520) = 0;
@@ -5299,7 +5299,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
-	} else if (!strncmp(gameID, "GAFP01", 6)) {
+	} else if (!strncmp(gameID, "GAFP01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 971712:
 				*(s16 *)(data + 0x80006B4A - 0x80005680 + 0x25E0) = 574;
@@ -5582,7 +5582,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
-	} else if (!strncmp(gameID, "GAFU01", 6)) {
+	} else if (!strncmp(gameID, "GAFU01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 964128:
 				*(s16 *)(data + 0x80006726 - 0x80005680 + 0x25E0) = 574;
@@ -5641,7 +5641,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
-	} else if (!strncmp(gameID, "GPTP41", 6)) {
+	} else if (!strncmp(gameID, "GPTP41", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4017536:
 				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
@@ -5668,7 +5668,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
-	} else if (!strncmp(gameID, "GX2D52", 6) || !strncmp(gameID, "GX2P52", 6) || !strncmp(gameID, "GX2S52", 6)) {
+	} else if ((!strncmp(gameID, "GX2D52", 6) || !strncmp(gameID, "GX2P52", 6) || !strncmp(gameID, "GX2S52", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4055712:
 				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
@@ -5679,7 +5679,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
-	} else if (!strncmp(gameID, "GXLP52", 6)) {
+	} else if (!strncmp(gameID, "GXLP52", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4182304:
 				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
@@ -5690,7 +5690,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
-	} else if (!strncmp(gameID, "GXLX52", 6)) {
+	} else if (!strncmp(gameID, "GXLX52", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4182624:
 				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {

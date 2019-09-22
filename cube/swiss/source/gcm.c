@@ -148,6 +148,11 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
 			if(endsWith(filename,".dol")) {
+				// Some games contain a single "default.dol", these do not need 
+				// pre-patching because they are what is actually pointed to by the apploader (and loaded by us)
+				if(GCMDisk.DOLOffset == file_offset) {
+					continue;
+				}
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL;
@@ -182,13 +187,8 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 	}
 	free(FST);
 	
-	// Some games contain a single "default.dol", these do not need 
-	// pre-patching because they are what is actually pointed to by the apploader (and loaded by us)
-	if(numFiles==1 && (!strcmp(&filesToPatch[0].name[0],"default.dol"))) {
-		numFiles = 0;
-	}
 	// Multi-DOL games may re-load the main DOL, so make sure we patch it too.
-	if(numFiles>0) {
+	if((devices[DEVICE_CUR]->features & FEAT_CAN_HOLD_PATCHES) || numFiles > 0) {
 		DOLHEADER dolhdr;
 		u32 main_dol_size = 0;
 		// Calc size
@@ -338,7 +338,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 	// If the current device isn't SD via EXI, init one slot to write patches.
 	// TODO expand this to support IDE-EXI and other writable devices (requires dvd patch re-write/modularity)
 	bool patchDeviceReady = false;
-	if(devices[DEVICE_CUR] != &__device_sd_a && devices[DEVICE_CUR] != &__device_sd_b && devices[DEVICE_CUR] != &__device_sd_c) {
+	if(!(devices[DEVICE_CUR]->features & FEAT_CAN_HOLD_PATCHES)) {
 		if(deviceHandler_test(&__device_sd_c)) {
 			devices[DEVICE_PATCHES] = &__device_sd_c;
 		}

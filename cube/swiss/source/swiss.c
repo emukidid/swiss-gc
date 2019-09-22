@@ -1387,6 +1387,9 @@ void load_game() {
 		return;
 	}
 	
+	// setup the video mode before we kill libOGC kernel
+	ogc_video__reset();
+	
 	// Auto load cheats if the set to auto load and if any are found
 	if(swissSettings.autoCheats) {
 		if(findCheats(true) > 0) {
@@ -1474,8 +1477,6 @@ void load_game() {
 		}
 	}
 
-	// setup the video mode before we kill libOGC kernel
-	ogc_video__reset();
 	load_app(multiDol, filesToPatch, noASRequired);
 	config_unload_current();
 }
