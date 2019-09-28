@@ -5,6 +5,7 @@
 
 #define OS_BASE_CACHED   0x80000000
 #define OS_BASE_UNCACHED 0xC0000000
+#define OS_BASE_MIRRORED 0xC2000000
 
 #define OSPhysicalToCached(paddr)    ((void *)(paddr) + OS_BASE_CACHED)
 #define OSPhysicalToUncached(paddr)  ((void *)(paddr) + OS_BASE_UNCACHED)
@@ -12,6 +13,7 @@
 #define OSUncachedToPhysical(ucaddr) ((u32)(ucaddr) - OS_BASE_UNCACHED)
 #define OSCachedToUncached(caddr)    ((void *)(caddr) + (OS_BASE_UNCACHED - OS_BASE_CACHED))
 #define OSUncachedToCached(ucaddr)   ((void *)(ucaddr) - (OS_BASE_UNCACHED - OS_BASE_CACHED))
+#define OSCachedToMirrored(caddr)    ((void *)(caddr) + (OS_BASE_MIRRORED - OS_BASE_CACHED))
 
 typedef struct {
 	u32 gpr[32];

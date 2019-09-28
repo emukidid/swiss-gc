@@ -14,15 +14,11 @@ void tickle_read(void);
 
 void di_update_interrupts(void)
 {
-	uint32_t status = (*DI)[0];
-	uint32_t cover  = (*DI)[1];
-
 	if (((*DI_EMU)[0] >> 1) & ((*DI_EMU)[0] & 0b0101010) ||
 		((*DI_EMU)[1] >> 1) & ((*DI_EMU)[1] & 0b010))
-		status |= 0b1000001;
-
-	(*DI)[0] = status;
-	(*DI)[1] = cover;
+		*(OSInterruptMask *)OSCachedToMirrored(VAR_FAKE_IRQ_SET) |=  OS_INTERRUPTMASK_EMU_DI;
+	else
+		*(OSInterruptMask *)OSCachedToUncached(VAR_FAKE_IRQ_SET) &= ~OS_INTERRUPTMASK_EMU_DI;
 }
 
 void di_complete_transfer(void)
@@ -178,24 +174,32 @@ OSContext *exception_handler(OSException exception, OSContext *context, uint32_t
 
 void dsi_exception_handler(OSException exception, OSContext *context, ...);
 
-void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
+	OSInterruptMask cause = *(OSInterruptMask *)OSCachedToUncached(VAR_FAKE_IRQ_SET);
 	OSContext exceptionContext;
 
-	OSClearContext(&exceptionContext);
-	OSSetCurrentContext(&exceptionContext);
+	if (cause) {
+		interrupt = __builtin_clz(cause);
 
-	OSInterruptHandler handler = OSGetInterruptHandler(OS_INTERRUPT_EMU_DI);
-	if (handler) handler(OS_INTERRUPT_EMU_DI, &exceptionContext);
+		OSClearContext(&exceptionContext);
+		OSSetCurrentContext(&exceptionContext);
 
-	OSClearContext(&exceptionContext);
-	OSSetCurrentContext(context);
+		OSInterruptHandler handler = OSGetInterruptHandler(interrupt);
+		if (handler) handler(interrupt, &exceptionContext);
+
+		OSClearContext(&exceptionContext);
+		OSSetCurrentContext(context);
+		return;
+	}
+
+	(*MI)[16] = 0;
 }
 
 OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
 	OSSetExceptionHandler(OS_EXCEPTION_DSI, dsi_exception_handler);
-	OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
+	OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
 
 	return OSSetInterruptHandler(interrupt, handler);
 }

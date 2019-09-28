@@ -60,7 +60,8 @@ typedef struct {
 
 #define TB_CLOCK  40500000
 
-static u32(*const DI_EMU)[10] = (u32(*)[])VAR_DI_REGS;
+static u32(*const DI_EMU)[9] = (u32(*)[])VAR_DI_REGS;
+static vu16(*const MI)[46] = (vu16(*)[])0xCC004000;
 static vu32(*const DI)[10] = (vu32(*)[])0xCC006000;
 static vu32(*const EXI)[5] = (vu32(*)[])0xCC006800;
 
