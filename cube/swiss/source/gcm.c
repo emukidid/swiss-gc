@@ -213,15 +213,15 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		
 		// Patch the apploader too!
 		// Calc Apploader trailer size
-		u32 appldr_info[2];
-		devices[DEVICE_CUR]->seekFile(file,0x2454,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(file,&appldr_info,8) != 8) {
+		u32 appldr_info[8];
+		devices[DEVICE_CUR]->seekFile(file,0x2440,DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(file,&appldr_info,32) != 32) {
 			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Apploader info"));
 			while(1);
 		}
-		filesToPatch[numFiles].size = appldr_info[1];
-		filesToPatch[numFiles].offset = 0x2460 + appldr_info[0];
-		filesToPatch[numFiles].type = PATCH_LOADER;
+		filesToPatch[numFiles].size = appldr_info[6];
+		filesToPatch[numFiles].offset = appldr_info[5] + 0x2460;
+		filesToPatch[numFiles].type = appldr_info[0] == 0x32303034 ? PATCH_DOL:PATCH_LOADER;
 		sprintf(filesToPatch[numFiles].name, "Apploader Trailer");
 		numFiles++;
 	}
