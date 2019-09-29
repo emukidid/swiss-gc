@@ -135,7 +135,7 @@ static uint8_t fsp_checksum(fsp_header_t *header, size_t size)
 	return sum;
 }
 
-void fsp_output(const char *file, uint8_t filelen, uint32_t offset, size_t size)
+static void fsp_output(const char *file, uint8_t filelen, uint32_t offset, size_t size)
 {
 	uint8_t data[MIN_FRAME_SIZE + filelen];
 	eth_header_t *eth = (eth_header_t *)data;
@@ -176,9 +176,8 @@ void fsp_output(const char *file, uint8_t filelen, uint32_t offset, size_t size)
 	eth->src_addr.addr = (*_client_mac).addr;
 	eth->type = ETH_TYPE_IPV4;
 
-	bba_transmit(eth, sizeof(*eth) + ipv4->length);
-
-	mftb(_start);
+	if (bba_transmit(eth, sizeof(*eth) + ipv4->length))
+		mftb(_start);
 }
 
 void di_complete_transfer(void);
@@ -329,7 +328,7 @@ static void arp_input(bba_page_t page, eth_header_t *eth, arp_packet_t *arp, siz
 	}
 }
 
-void eth_input(bba_page_t page, eth_header_t *eth, size_t size)
+static void eth_input(bba_page_t page, eth_header_t *eth, size_t size)
 {
 	if (size < MIN_FRAME_SIZE)
 		return;

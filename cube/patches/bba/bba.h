@@ -7,6 +7,7 @@
 #define BBA_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct {
 	uint32_t next   : 12;
@@ -17,7 +18,7 @@ typedef struct {
 
 typedef uint8_t bba_page_t[256] __attribute((aligned(32)));
 
-void bba_transmit(void *data, int size);
-void bba_receive_end(bba_page_t page, void *data, int size);
+bool bba_transmit(const void *data, size_t size);
+void bba_receive_end(bba_page_t page, void *data, size_t size);
 
 #endif /* BBA_H */

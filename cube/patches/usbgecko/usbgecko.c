@@ -51,11 +51,11 @@ static void exi_deselect(void)
 	EXI[EXI_CHANNEL_1][0] &= 0x405;
 }
 
-static uint32_t exi_imm_read_write(uint32_t data, int len)
+static uint32_t exi_imm_read_write(uint32_t data, uint32_t len)
 {
 	EXI[EXI_CHANNEL_1][4] = data;
-	EXI[EXI_CHANNEL_1][3] = ((len - 1) << 4) | (EXI_READ_WRITE << 2) | 1;
-	while (EXI[EXI_CHANNEL_1][3] & 1);
+	EXI[EXI_CHANNEL_1][3] = ((len - 1) << 4) | (EXI_READ_WRITE << 2) | 0b01;
+	while (EXI[EXI_CHANNEL_1][3] & 0b01);
 	return EXI[EXI_CHANNEL_1][4] >> ((4 - len) * 8);
 }
 
@@ -149,8 +149,6 @@ void usb_request(uint32_t offset, uint32_t size)
 	usb_transmit(&request, sizeof(request), sizeof(request));
 }
 
-void exi_handler() {}
-
 bool exi_lock(int32_t channel, uint32_t device)
 {
 	return true;
@@ -168,7 +166,7 @@ void perform_read(uint32_t offset, uint32_t length, uint32_t address)
 		usb_request(offset, length);
 }
 
-void tickle_read(void)
+void trickle_read(void)
 {
 	uint32_t position  = *(uint32_t *)VAR_LAST_OFFSET;
 	uint32_t remainder = *(uint32_t *)VAR_TMP2;
@@ -193,11 +191,4 @@ void tickle_read(void)
 		else if (frag && !is_frag_read(position, remainder))
 			usb_request(position, remainder);
 	}
-}
-
-void tickle_read_idle(void)
-{
-	disable_interrupts();
-	tickle_read();
-	enable_interrupts();
 }

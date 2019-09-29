@@ -225,16 +225,15 @@ build-wkf:
 build-bba:
 	@echo Building BBA Patch ...
 	@$(CC) -O2 $(OPTS) -c alt/base.S
-	@$(CC) -O2 $(OPTS) -c alt/emulator.c
+	@$(CC) -O2 $(OPTS) -c alt/emulator.c -DBBA
 	@$(CC) -O2 $(OPTS) -c bba/bba.c
-	@$(CC) -O2 $(OPTS) -c bba/tcpip.c
 	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c base/igr.c
 	@$(CC) -O2 $(OPTS) -c base/memcpy.S
 	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o bba.elf -T alt/base.ld -T base/os.ld base.o emulator.o bba.o tcpip.o usbgecko.o sd.o frag.o igr.o memcpy.o os.o --gc-sections
+	@$(LD) -o bba.elf -T alt/base.ld -T base/os.ld base.o emulator.o bba.o usbgecko.o sd.o frag.o igr.o memcpy.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D bba.elf > $(DISASM)/bba_disasm.txt
 	@$(OBJCOPY) -O binary bba.elf bba.bin

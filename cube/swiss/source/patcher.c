@@ -1773,7 +1773,10 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		u32 *PrepareExec = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (PrepareExec) {
-			data[i + 47] = 0x3C600800;	// lis		r3, 0x0800
+			if (devices[DEVICE_CUR] == &__device_fsp)
+				data[i + 47] = 0x3C600801;	// lis		r3, 0x0801
+			else
+				data[i + 47] = 0x3C600800;	// lis		r3, 0x0800
 			
 			print_gecko("Found:[%s] @ %08X\n", PrepareExecSig.Name, PrepareExec);
 		}
@@ -1808,7 +1811,10 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		u32 *__OSBootDolSimple = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__OSBootDolSimple) {
-			data[i + 43] = 0x3C600800;	// lis		r3, 0x0800
+			if (devices[DEVICE_CUR] == &__device_fsp)
+				data[i + 43] = 0x3C600801;	// lis		r3, 0x0801
+			else
+				data[i + 43] = 0x3C600800;	// lis		r3, 0x0800
 			
 			print_gecko("Found:[%s] @ %08X\n", __OSBootDolSimpleSig.Name, __OSBootDolSimple);
 		}
@@ -1847,15 +1853,28 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		u32 *__OSReboot = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__OSReboot) {
-			switch (j) {
-				case 0: data[i + 42] = 0x3C600800; break;	// lis		r3, 0x0800
-				case 1: data[i + 50] = 0x3C600800; break;	// lis		r3, 0x0800
-				case 2: data[i + 32] = 0x3C600800; break;	// lis		r3, 0x0800
-				case 3: data[i + 39] = 0x3C600800; break;	// lis		r3, 0x0800
-				case 4:
-				case 5: data[i + 37] = 0x3C600800; break;	// lis		r3, 0x0800
-				case 6:
-				case 7: data[i + 33] = 0x3C600800; break;	// lis		r3, 0x0800
+			if (devices[DEVICE_CUR] == &__device_fsp) {
+				switch (j) {
+					case 0: data[i + 42] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 1: data[i + 50] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 2: data[i + 32] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 3: data[i + 39] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 4:
+					case 5: data[i + 37] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 6:
+					case 7: data[i + 33] = 0x3C600801; break;	// lis		r3, 0x0801
+				}
+			} else {
+				switch (j) {
+					case 0: data[i + 42] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 1: data[i + 50] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 2: data[i + 32] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 3: data[i + 39] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 4:
+					case 5: data[i + 37] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 6:
+					case 7: data[i + 33] = 0x3C600800; break;	// lis		r3, 0x0800
+				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", __OSRebootSigs[j].Name, __OSReboot);
 		}
@@ -1906,43 +1925,43 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		if (SelectThread) {
 			switch (j) {
 				case 0:
-					data[i + 12] = branchAndLink(TICKLE_READ, SelectThread + 12);
+					data[i + 12] = branchAndLink(TRICKLE_READ, SelectThread + 12);
 					data[i + 13] = 0x480001A0;	// b		+104
-					data[i + 20] = branchAndLink(TICKLE_READ, SelectThread + 20);
+					data[i + 20] = branchAndLink(TRICKLE_READ, SelectThread + 20);
 					data[i + 21] = 0x48000180;	// b		+96
-					data[i + 48] = branchAndLink(TICKLE_READ, SelectThread + 48);
+					data[i + 48] = branchAndLink(TRICKLE_READ, SelectThread + 48);
 					data[i + 49] = 0x48000110;	// b		+68
-					data[i + 58] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 58);
+					data[i + 58] = branchAndLink(IDLE_THREAD, SelectThread + 58);
 					data[i + 61] = 0x4182FFF4;	// beq		-3
 					break;
 				case 1:
-					data[i + 11] = branchAndLink(TICKLE_READ, SelectThread + 11);
+					data[i + 11] = branchAndLink(TRICKLE_READ, SelectThread + 11);
 					data[i + 12] = 0x480001B4;	// b		+109
-					data[i + 19] = branchAndLink(TICKLE_READ, SelectThread + 19);
+					data[i + 19] = branchAndLink(TRICKLE_READ, SelectThread + 19);
 					data[i + 20] = 0x48000194;	// b		+101
-					data[i + 67] = branchAndLink(TICKLE_READ, SelectThread + 67);
+					data[i + 67] = branchAndLink(TRICKLE_READ, SelectThread + 67);
 					data[i + 68] = 0x480000D4;	// b		+53
-					data[i + 77] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 77);
+					data[i + 77] = branchAndLink(IDLE_THREAD, SelectThread + 77);
 					data[i + 80] = 0x4182FFF4;	// beq		-3
 					break;
 				case 2:
-					data[i + 11] = branchAndLink(TICKLE_READ, SelectThread + 11);
+					data[i + 11] = branchAndLink(TRICKLE_READ, SelectThread + 11);
 					data[i + 12] = 0x480001DC;	// b		+119
-					data[i + 19] = branchAndLink(TICKLE_READ, SelectThread + 19);
+					data[i + 19] = branchAndLink(TRICKLE_READ, SelectThread + 19);
 					data[i + 20] = 0x480001BC;	// b		+111
-					data[i + 67] = branchAndLink(TICKLE_READ, SelectThread + 67);
+					data[i + 67] = branchAndLink(TRICKLE_READ, SelectThread + 67);
 					data[i + 68] = 0x480000FC;	// b		+63
-					data[i + 82] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 82);
+					data[i + 82] = branchAndLink(IDLE_THREAD, SelectThread + 82);
 					data[i + 85] = 0x4182FFF4;	// beq		-3
 					break;
 				case 3:
-					data[i +  8] = branchAndLink(TICKLE_READ, SelectThread +  8);
+					data[i +  8] = branchAndLink(TRICKLE_READ, SelectThread +  8);
 					data[i +  9] = 0x480001F8;	// b		+126
-					data[i + 15] = branchAndLink(TICKLE_READ, SelectThread + 15);
+					data[i + 15] = branchAndLink(TRICKLE_READ, SelectThread + 15);
 					data[i + 16] = 0x480001DC;	// b		+119
-					data[i + 66] = branchAndLink(TICKLE_READ, SelectThread + 66);
+					data[i + 66] = branchAndLink(TRICKLE_READ, SelectThread + 66);
 					data[i + 67] = 0x48000110;	// b		+68
-					data[i + 83] = branchAndLink(TICKLE_READ_IDLE, SelectThread + 83);
+					data[i + 83] = branchAndLink(IDLE_THREAD, SelectThread + 83);
 					data[i + 86] = 0x4182FFF4;	// beq		-3
 					break;
 			}
@@ -1958,7 +1977,7 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				data[i + 2] = data[i + 5];
 				data[i + 3] = data[i + 6];
 				data[i + 4] = branch(SelectThread, __OSReschedule + 4);
-				data[i + 5] = branch(TICKLE_READ,  __OSReschedule + 5);
+				data[i + 5] = branch(TRICKLE_READ, __OSReschedule + 5);
 				
 				for (k = 6; k < __OSRescheduleSig.Length; k++)
 					data[i + k] = 0;
@@ -1978,14 +1997,12 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			if (SetExiInterruptMask) {
 				switch (j) {
 					case 0:
-						data[i + 22] = 0x3C000000 | ((u32)EXI_HANDLER >> 16);
-						data[i + 23] = 0x60000000 | ((u32)EXI_HANDLER & 0xFFFF);
-						data[i + 24] = 0x901E0000;	// stw		r0, 0 (r30)
+						data[i + 28] = 0x3C600040;	// lis		r3, 0x0040
+						data[i + 31] = 0x3C600040;	// lis		r3, 0x0040
 						break;
 					case 1:
-						data[i + 20] = 0x3C000000 | ((u32)EXI_HANDLER >> 16);
-						data[i + 21] = 0x60000000 | ((u32)EXI_HANDLER & 0xFFFF);
-						data[i + 22] = 0x90040000;	// stw		r0, 0 (r4)
+						data[i + 26] = 0x3C600040;	// lis		r3, 0x0040
+						data[i + 29] = 0x3C600040;	// lis		r3, 0x0040
 						break;
 				}
 				print_gecko("Found:[%s] @ %08X\n", SetExiInterruptMaskSigs[j].Name, SetExiInterruptMask);
@@ -2431,34 +2448,46 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				case 0:
 					data[i + 20] = 0x3860001B;	// li		r3, 27
 					data[i + 23] = branchAndLink(SET_DI_HANDLER, DVDInit + 23);
-					data[i + 24] = 0x3C600800;	// lis		r3, 0x0800
 					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 32] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 1:
 					data[i + 21] = 0x3860001B;	// li		r3, 27
 					data[i + 22] = branchAndLink(SET_DI_HANDLER, DVDInit + 22);
-					data[i + 23] = 0x3C600800;	// lis		r3, 0x0800
 					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 2:
 					data[i + 19] = 0x3860001B;	// li		r3, 27
 					data[i + 20] = branchAndLink(SET_DI_HANDLER, DVDInit + 20);
-					data[i + 21] = 0x3C600800;	// lis		r3, 0x0800
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 3:
 					data[i + 17] = 0x3860001B;	// li		r3, 27
 					data[i + 19] = branchAndLink(SET_DI_HANDLER, DVDInit + 19);
-					data[i + 20] = 0x3C600800;	// lis		r3, 0x0800
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 4:
 					data[i + 21] = 0x3860001B;	// li		r3, 27
 					data[i + 23] = branchAndLink(SET_DI_HANDLER, DVDInit + 23);
-					data[i + 24] = 0x3C600800;	// lis		r3, 0x0800
 					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
+			}
+			if (devices[DEVICE_CUR] == &__device_fsp) {
+				switch (j) {
+					case 0: data[i + 24] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 1: data[i + 23] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 2: data[i + 21] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 3: data[i + 20] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 4: data[i + 24] = 0x3C600801; break;	// lis		r3, 0x0801
+				}
+			} else {
+				switch (j) {
+					case 0: data[i + 24] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 1: data[i + 23] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 2: data[i + 21] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 3: data[i + 20] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 4: data[i + 24] = 0x3C600800; break;	// lis		r3, 0x0800
+				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", DVDInitSigs[j].Name, DVDInit);
 		}

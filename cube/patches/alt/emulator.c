@@ -10,7 +10,7 @@
 #include "../base/os.h"
 
 void perform_read(uint32_t offset, uint32_t length, uint32_t address);
-void tickle_read(void);
+void trickle_read(void);
 
 void di_update_interrupts(void)
 {
@@ -153,7 +153,7 @@ OSContext *exception_handler(OSException exception, OSContext *context, uint32_t
 				asm volatile("mfdabr %0" : "=r" (dabr));
 				asm volatile("mtdabr %0" :: "r" (dabr & ~0b011));
 
-				tickle_read();
+				trickle_read();
 				context->srr1 |= 0x400;
 				break;
 			}
@@ -196,11 +196,15 @@ static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	(*MI)[16] = 0;
 }
 
+void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
+
 OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
 	OSSetExceptionHandler(OS_EXCEPTION_DSI, dsi_exception_handler);
 	OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
-
+	#ifdef BBA
+	OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
+	#endif
 	return OSSetInterruptHandler(interrupt, handler);
 }
 
@@ -215,4 +219,11 @@ bool unset_breakpoint(bool queued)
 {
 	asm volatile("mtdabr %0" :: "r" (0));
 	return queued;
+}
+
+void idle_thread(void)
+{
+	disable_interrupts();
+	trickle_read();
+	enable_interrupts();
 }

@@ -7,8 +7,6 @@
 #include <stdbool.h>
 #include "../base/common.h"
 
-void exi_handler() {}
-
 bool exi_lock(int32_t channel, uint32_t device)
 {
 	if (channel == *(uint8_t *)VAR_EXI_SLOT)
@@ -25,7 +23,7 @@ void perform_read(uint32_t offset, uint32_t length, uint32_t address)
 	*(uint32_t *)VAR_TMP1 = address;
 }
 
-void tickle_read(void)
+void trickle_read(void)
 {
 	uint32_t position  = *(uint32_t *)VAR_LAST_OFFSET;
 	uint32_t remainder = *(uint32_t *)VAR_TMP2;
@@ -44,11 +42,4 @@ void tickle_read(void)
 
 		if (!remainder) di_complete_transfer();
 	}
-}
-
-void tickle_read_idle(void)
-{
-	disable_interrupts();
-	tickle_read();
-	enable_interrupts();
 }

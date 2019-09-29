@@ -11,6 +11,7 @@
 #include "../base/os.h"
 #include "bba.h"
 #include "globals.h"
+#include "tcpip.c"
 
 #define BBA_CMD_IRMASKALL		0x00
 #define BBA_CMD_IRMASKNONE		0xF8
@@ -85,6 +86,11 @@ static bool exi_selected(void)
 	return !!((*EXI)[0] & 0x380);
 }
 
+static void exi_clear_interrupts(int32_t chan, bool exi, bool tc, bool ext)
+{
+	EXI[chan][0] = (EXI[chan][0] & ~0x80A) | (ext << 11) | (tc << 3) | (exi << 1);
+}
+
 static void exi_select(void)
 {
 	(*EXI)[0] = ((*EXI)[0] & 0x405) | ((1 << EXI_DEVICE_2) << 7) | (EXI_SPEED_32MHZ << 4);
@@ -95,46 +101,44 @@ static void exi_deselect(void)
 	(*EXI)[0] &= 0x405;
 }
 
-static void exi_imm_write(uint32_t data, int len)
+static void exi_imm_write(uint32_t data, uint32_t len)
 {
 	(*EXI)[4] = data;
-	(*EXI)[3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
-	while ((*EXI)[3] & 1);
+	(*EXI)[3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 0b01;
+	while ((*EXI)[3] & 0b01);
 }
 
-static uint32_t exi_imm_read(int len)
+static uint32_t exi_imm_read(uint32_t len)
 {
-	(*EXI)[3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
-	while ((*EXI)[3] & 1);
+	(*EXI)[3] = ((len - 1) << 4) | (EXI_READ << 2) | 0b01;
+	while ((*EXI)[3] & 0b01);
 	return (*EXI)[4] >> ((4 - len) * 8);
 }
 
-static uint32_t exi_imm_read_write(uint32_t data, int len)
+static uint32_t exi_imm_read_write(uint32_t data, uint32_t len)
 {
 	(*EXI)[4] = data;
-	(*EXI)[3] = ((len - 1) << 4) | (EXI_READ_WRITE << 2) | 1;
-	while ((*EXI)[3] & 1);
+	(*EXI)[3] = ((len - 1) << 4) | (EXI_READ_WRITE << 2) | 0b01;
+	while ((*EXI)[3] & 0b01);
 	return (*EXI)[4] >> ((4 - len) * 8);
 }
 
-static void exi_immex_write(void *buffer, int length)
+static void exi_immex_write(const void *buf, uint32_t len)
 {
 	do {
-		int count = MIN(length, 4);
-
-		exi_imm_write(*(uint32_t *)buffer, count);
-
-		buffer += count;
-		length -= count;
-	} while (length);
+		uint32_t xlen = MIN(len, 4);
+		exi_imm_write(*(uint32_t *)buf, xlen);
+		buf += xlen;
+		len -= xlen;
+	} while (len);
 }
 
-static void exi_dma_read(void *data, int len)
+static void exi_dma_read(void *buf, uint32_t len)
 {
-	(*EXI)[1] = (uint32_t)data;
+	(*EXI)[1] = (uint32_t)buf;
 	(*EXI)[2] = (len + 31) & ~31;
-	(*EXI)[3] = (EXI_READ << 2) | 3;
-	while ((*EXI)[3] & 1);
+	(*EXI)[3] = (EXI_READ << 2) | 0b11;
+	while ((*EXI)[3] & 0b01);
 }
 
 static uint8_t bba_in8(uint16_t reg)
@@ -175,7 +179,7 @@ static void bba_cmd_out8(uint8_t reg, uint8_t val)
 	exi_deselect();
 }
 
-static void bba_ins(uint16_t reg, void *val, int len)
+static void bba_ins(uint16_t reg, void *val, uint32_t len)
 {
 	exi_select();
 	exi_imm_write(0x80 << 24 | reg << 8, 4);
@@ -183,7 +187,7 @@ static void bba_ins(uint16_t reg, void *val, int len)
 	exi_deselect();
 }
 
-static void bba_outs(uint16_t reg, void *val, int len)
+static void bba_outs(uint16_t reg, const void *val, uint32_t len)
 {
 	exi_select();
 	exi_imm_write(0xC0 << 24 | reg << 8, 4);
@@ -191,39 +195,37 @@ static void bba_outs(uint16_t reg, void *val, int len)
 	exi_deselect();
 }
 
-void bba_transmit(void *data, int size)
+bool bba_transmit(const void *data, size_t size)
 {
+	if (exi_selected())
+		return false;
+
 	while (bba_in8(BBA_NCRA) & (BBA_NCRA_ST0 | BBA_NCRA_ST1));
 	bba_outs(BBA_WRTXFIFOD, data, size);
 	bba_out8(BBA_NCRA, (bba_in8(BBA_NCRA) & ~BBA_NCRA_ST0) | BBA_NCRA_ST1);
+
+	return true;
 }
 
-void fsp_output(const char *file, uint8_t filelen, uint32_t offset, size_t size);
-void eth_input(void *page, void *eth, size_t size);
-
-void bba_receive_end(bba_page_t page, void *data, int size)
+void bba_receive_end(bba_page_t page, void *data, size_t size)
 {
-	int chunk;
-	int rrp;
+	uint8_t rrp;
 
-	page += 0x40000000;
+	page = OSCachedToUncached(page);
 
-	if (size) {
-		do {
-			chunk = MIN(size, sizeof(bba_page_t));
+	while (size) {
+		int page_size = MIN(size, sizeof(bba_page_t));
 
-			rrp = bba_in8(BBA_RRP) % BBA_INIT_RHBP + 1;
-			bba_out8(BBA_RRP, rrp);
-			bba_ins(rrp << 8, page, chunk);
+		rrp = bba_in8(BBA_RRP) % BBA_INIT_RHBP + 1;
+		bba_out8(BBA_RRP, rrp);
+		bba_ins(rrp << 8, page, page_size);
 
-			memcpy(data, page, chunk);
-
-			data += chunk;
-			size -= chunk;
-		} while (size);
-
-		(*_received)++;
+		memcpy(data, page, page_size);
+		data += page_size;
+		size -= page_size;
 	}
+
+	(*_received)++;
 }
 
 static void bba_receive(void)
@@ -259,10 +261,12 @@ static void bba_interrupt(void)
 	bba_out8(BBA_IR, ir);
 }
 
-void exi_handler(int32_t channel, uint32_t device)
+void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	uint8_t status = bba_cmd_in8(0x03);
 	bba_cmd_out8(0x02, BBA_CMD_IRMASKALL);
+
+	exi_clear_interrupts(EXI_CHANNEL_2, 1, 0, 0);
 
 	if (status & 0x80)
 		bba_interrupt();
@@ -288,11 +292,11 @@ void perform_read(uint32_t offset, uint32_t length, uint32_t address)
 	*_data = (void *)address;
 	*_data_size = 0;
 
-	if (!is_frag_read(offset, length) && !exi_selected())
+	if (!is_frag_read(offset, length))
 		fsp_output(_file, *_filelen, offset, length);
 }
 
-void tickle_read(void)
+void trickle_read(void)
 {
 	uint32_t position  = *_position;
 	uint32_t remainder = *_remainder;
@@ -312,21 +316,14 @@ void tickle_read(void)
 			*_data_size = 0;
 
 			if (!remainder) di_complete_transfer();
-			else if (!is_frag_read(position, remainder) && !exi_selected())
+			else if (!is_frag_read(position, remainder))
 				fsp_output(_file, *_filelen, position, remainder);
 		} else {
 			tb_t end;
 			mftb(&end);
 
-			if (tb_diff_usec(&end, _start) > 1000000 && !exi_selected())
+			if (tb_diff_usec(&end, _start) > 1000000)
 				fsp_output(_file, *_filelen, position, remainder);
 		}
 	}
-}
-
-void tickle_read_idle(void)
-{
-	disable_interrupts();
-	tickle_read();
-	enable_interrupts();
 }
