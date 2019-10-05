@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <gccore.h>		/*** Wrapper to include common libogc headers ***/
 #include <ogcsys.h>		/*** Needed for console support ***/
-#include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -233,7 +233,7 @@ void make_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functio
 		
 		functionPattern->Length++;
 		
-		if ((word == 0x4C000064 || word == 0x4E800020) && j <= i)
+		if ((word == 0x4E800020 || word == 0x4C000064) && j <= i)
 			break;
 		if ((word & 0xFC000003) == 0x40000000)
 			j = i + ((s32)((word & 0x0000FFFC) << 16) >> 18);
@@ -304,6 +304,11 @@ bool find_pattern_before(u32 *data, u32 length, FuncPattern *FPatA, FuncPattern 
 	if (offsetFoundAt == FPatB->offsetFoundAt)
 		return true;
 	
+	while (offsetFoundAt &&
+		data[offsetFoundAt - 1] != 0x4E800020 &&
+		data[offsetFoundAt - 1] != 0x4C000064)
+		offsetFoundAt--;
+	
 	return find_pattern(data, offsetFoundAt, length, FPatB);
 }
 
@@ -350,6 +355,59 @@ u32 branchResolve(u32 *data, int dataType, u32 offsetFoundAt)
 		return 0;
 	
 	return address - data;
+}
+
+void *loadResolve(u32 *data, int dataType, u32 offsetFoundAt, ...)
+{
+	u32 address;
+	u32 word = data[offsetFoundAt], word2;
+	
+	switch (word >> 26) {
+		case 15:
+		{
+			if (((word >> 16) & 0x1F) != 0)
+				return NULL;
+			
+			va_list args;
+			va_start(args, offsetFoundAt);
+			offsetFoundAt = va_arg(args, u32);
+			va_end(args);
+			
+			word2 = data[offsetFoundAt];
+			
+			switch (word2 >> 26) {
+				case 14:
+				case 32 ... 55:
+					if (((word2 >> 16) & 0x1F) != ((word >> 21) & 0x1F))
+						return NULL;
+					
+					address = (word << 16) + (s16)word2;
+					break;
+				case 24:
+					if (((word2 >> 21) & 0x1F) != ((word >> 21) & 0x1F))
+						return NULL;
+					
+					address = (word << 16) | (u16)word2;
+					break;
+				default:
+					return NULL;
+			}
+			
+			return Calc_Address(data, dataType, address);
+		}
+	}
+	
+	return NULL;
+}
+
+bool findi_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 offsetFoundAt2, u32 length, FuncPattern *functionPattern)
+{
+	u32 *address = loadResolve(data, dataType, offsetFoundAt, offsetFoundAt2);
+	
+	if (functionPattern && functionPattern->offsetFoundAt)
+		return address == data + functionPattern->offsetFoundAt;
+	
+	return address && find_pattern(data, address - data, length, functionPattern);
 }
 
 bool findx_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
@@ -679,22 +737,23 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 	FuncPattern PrepareExecSig = 
 		{ 60, 15, 3, 16, 13, 2, NULL, 0, "PrepareExec" };
 	FuncPattern OSExceptionInitSigs[3] = {
-		{ 164, 61,  6, 18, 14, 14, NULL, 0, "OSExceptionInitD A" },
-		{ 160, 39, 14, 14, 20,  7, NULL, 0, "OSExceptionInit A" },
-		{ 151, 45, 14, 16, 13,  9, NULL, 0, "OSExceptionInit B" }	// SN Systems ProDG
+		{ 164, 61,  6, 18, 14, 14, NULL, 0, "OSExceptionInitD" },
+		{ 160, 39, 14, 14, 20,  7, NULL, 0, "OSExceptionInit" },
+		{ 151, 45, 14, 16, 13,  9, NULL, 0, "OSExceptionInit" }	// SN Systems ProDG
 	};
 	FuncPattern __OSSetExceptionHandlerSigs[3] = {
-		{ 35, 12, 3, 1, 2, 4, NULL, 0, "__OSSetExceptionHandlerD A" },
-		{  7,  2, 1, 0, 0, 1, NULL, 0, "__OSSetExceptionHandler A" },
-		{  5,  1, 0, 0, 0, 2, NULL, 0, "__OSSetExceptionHandler B" }	// SN Systems ProDG
+		{ 35, 12, 3, 1, 2, 4, NULL, 0, "__OSSetExceptionHandlerD" },
+		{  7,  2, 1, 0, 0, 1, NULL, 0, "__OSSetExceptionHandler" },
+		{  5,  1, 0, 0, 0, 2, NULL, 0, "__OSSetExceptionHandler" }	// SN Systems ProDG
 	};
 	FuncPattern ICFlashInvalidateSig = 
 		{ 4, 0, 0, 0, 0, 2, NULL, 0, "ICFlashInvalidate" };
 	FuncPattern OSSetCurrentContextSig = 
 		{ 23, 4, 4, 0, 0, 5, NULL, 0, "OSSetCurrentContext" };
-	FuncPattern OSClearContextSigs[2] = {
+	FuncPattern OSClearContextSigs[3] = {
 		{ 12, 6, 1, 0, 0, 1, NULL, 0, "OSClearContextD" },
-		{  9, 3, 1, 0, 0, 1, NULL, 0, "OSClearContext" }
+		{  9, 3, 1, 0, 0, 1, NULL, 0, "OSClearContext" },
+		{  9, 3, 1, 0, 0, 1, NULL, 0, "OSClearContext" }	// SN Systems ProDG
 	};
 	FuncPattern __OSBootDolSimpleSig = 
 		{ 289, 104, 17, 53, 29, 16, NULL, 0, "__OSBootDolSimple" };
@@ -705,26 +764,26 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 	FuncPattern OSRestoreInterruptsSig = 
 		{ 9, 0, 0, 0, 2, 2, NULL, 0, "OSRestoreInterrupts" };
 	FuncPattern __OSSetInterruptHandlerSigs[3] = {
-		{ 49, 19, 3, 2, 3, 4, NULL, 0, "__OSSetInterruptHandlerD A" },
-		{  7,  2, 1, 0, 0, 2, NULL, 0, "__OSSetInterruptHandler A" },
-		{  6,  1, 0, 0, 0, 3, NULL, 0, "__OSSetInterruptHandler B" }	// SN Systems ProDG
+		{ 49, 19, 3, 2, 3, 4, NULL, 0, "__OSSetInterruptHandlerD" },
+		{  7,  2, 1, 0, 0, 2, NULL, 0, "__OSSetInterruptHandler" },
+		{  6,  1, 0, 0, 0, 3, NULL, 0, "__OSSetInterruptHandler" }	// SN Systems ProDG
 	};
 	FuncPattern SetInterruptMaskSigs[5] = {
 		{ 179, 31, 7, 0,  6, 3, NULL, 0, "SetInterruptMaskD A" },
 		{ 189, 29, 7, 0, 17, 1, NULL, 0, "SetInterruptMaskD B" },
 		{ 172, 28, 5, 0,  6, 6, NULL, 0, "SetInterruptMask A" },
 		{ 182, 26, 5, 0, 17, 4, NULL, 0, "SetInterruptMask B" },
-		{  39,  2, 0, 0,  9, 1, NULL, 0, "SetInterruptMask C" }	// SN Systems ProDG
+		{  39,  2, 0, 0,  9, 1, NULL, 0, "SetInterruptMask B" }	// SN Systems ProDG
 	};
 	FuncPattern __OSMaskInterruptsSigs[3] = {
-		{ 34, 7, 3, 6, 1, 5, NULL, 0, "__OSMaskInterruptsD A" },
-		{ 34, 8, 6, 3, 3, 4, NULL, 0, "__OSMaskInterrupts A" },
-		{ 32, 8, 6, 3, 1, 4, NULL, 0, "__OSMaskInterrupts B" }	// SN Systems ProDG
+		{ 34, 7, 3, 6, 1, 5, NULL, 0, "__OSMaskInterruptsD" },
+		{ 34, 8, 6, 3, 3, 4, NULL, 0, "__OSMaskInterrupts" },
+		{ 32, 8, 6, 3, 1, 4, NULL, 0, "__OSMaskInterrupts" }	// SN Systems ProDG
 	};
 	FuncPattern __OSUnmaskInterruptsSigs[3] = {
-		{ 34, 7, 3, 6, 1, 5, NULL, 0, "__OSUnmaskInterruptsD A" },
-		{ 34, 8, 6, 3, 3, 4, NULL, 0, "__OSUnmaskInterrupts A" },
-		{ 32, 8, 6, 3, 1, 4, NULL, 0, "__OSUnmaskInterrupts B" }	// SN Systems ProDG
+		{ 34, 7, 3, 6, 1, 5, NULL, 0, "__OSUnmaskInterruptsD" },
+		{ 34, 8, 6, 3, 3, 4, NULL, 0, "__OSUnmaskInterrupts" },
+		{ 32, 8, 6, 3, 1, 4, NULL, 0, "__OSUnmaskInterrupts" }	// SN Systems ProDG
 	};
 	FuncPattern __OSRebootSigs[9] = {
 		{  81, 34, 6, 16,  1,  2, NULL, 0, "__OSRebootD A" },
@@ -734,13 +793,13 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 112, 39, 8, 17, 26,  2, NULL, 0, "__OSReboot C" },
 		{ 114, 39, 8, 19, 26,  2, NULL, 0, "__OSReboot D" },
 		{ 199, 56, 7, 42, 13, 36, NULL, 0, "__OSReboot E" },	// SN Systems ProDG
-		{ 208, 54, 7, 40, 23, 34, NULL, 0, "__OSReboot F" },
-		{  28, 11, 5,  6,  0,  2, NULL, 0, "__OSReboot G" }
+		{ 208, 54, 7, 40, 23, 34, NULL, 0, "__OSReboot E" },
+		{  28, 11, 5,  6,  0,  2, NULL, 0, "__OSReboot F" }
 	};
 	FuncPattern __OSDoHotResetSigs[3] = {
-		{ 17, 6, 3, 3, 0, 2, NULL, 0, "__OSDoHotResetD A" },
-		{ 18, 6, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset A" },
-		{ 17, 5, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset B" }	// SN Systems ProDG
+		{ 17, 6, 3, 3, 0, 2, NULL, 0, "__OSDoHotResetD" },
+		{ 18, 6, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" },
+		{ 17, 5, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" }	// SN Systems ProDG
 	};
 	FuncPattern OSResetSystemSigs[9] = {
 		{  64, 13, 2, 15,  6, 8, NULL, 0, "OSResetSystemD A" },
@@ -749,172 +808,263 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 111, 19, 2, 17, 24, 9, NULL, 0, "OSResetSystem B" },
 		{ 147, 37, 2, 21, 30, 8, NULL, 0, "OSResetSystem C" },
 		{ 158, 41, 2, 24, 30, 9, NULL, 0, "OSResetSystem D" },
-		{ 148, 44, 2, 26, 16, 9, NULL, 0, "OSResetSystem E" },	// SN Systems ProDG
-		{ 174, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem F" },
-		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem G" }
+		{ 148, 44, 2, 26, 16, 9, NULL, 0, "OSResetSystem D" },	// SN Systems ProDG
+		{ 174, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem E" },
+		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem F" }
 	};
 	FuncPattern SelectThreadSigs[4] = {
-		{ 123, 39, 10, 11, 14, 12, NULL, 0, "SelectThreadD A" },
+		{ 123, 39, 10, 11, 14, 12, NULL, 0, "SelectThreadD" },
 		{ 128, 41, 20,  8, 12, 12, NULL, 0, "SelectThread A" },
 		{ 138, 44, 20,  8, 12, 12, NULL, 0, "SelectThread B" },
-		{ 141, 51, 19,  8, 12, 14, NULL, 0, "SelectThread C" }	// SN Systems ProDG
+		{ 141, 51, 19,  8, 12, 14, NULL, 0, "SelectThread B" }	// SN Systems ProDG
 	};
 	FuncPattern __OSRescheduleSig = 
 		{ 12, 4, 2, 1, 1, 2, NULL, 0, "__OSReschedule" };
-	FuncPattern __OSGetSystemTimeSigs[2] = {
+	FuncPattern __OSGetSystemTimeSigs[3] = {
 		{ 22, 4, 2, 3, 0, 3, NULL, 0, "__OSGetSystemTimeD" },
-		{ 25, 8, 5, 3, 0, 3, NULL, 0, "__OSGetSystemTime" }
+		{ 25, 8, 5, 3, 0, 3, NULL, 0, "__OSGetSystemTime" },
+		{ 25, 8, 5, 3, 0, 3, NULL, 0, "__OSGetSystemTime" }	// SN Systems ProDG
 	};
 	FuncPattern SetExiInterruptMaskSigs[2] = {
 		{ 63, 18, 3, 7, 17, 3, NULL, 0, "SetExiInterruptMaskD" },
 		{ 61, 19, 3, 7, 17, 2, NULL, 0, "SetExiInterruptMask" }
 	};
 	FuncPattern EXILockSigs[3] = {
-		{ 106, 35, 5, 9, 13, 6, NULL, 0, "EXILockD A" },
+		{ 106, 35, 5, 9, 13, 6, NULL, 0, "EXILockD" },
 		{  61, 18, 7, 5,  5, 6, NULL, 0, "EXILock A" },
 		{  61, 17, 7, 5,  5, 7, NULL, 0, "EXILock B" }
 	};
 	FuncPattern __DVDInterruptHandlerSigs[5] = {
-		{ 161, 50, 22,  8, 18, 12, NULL, 0, "__DVDInterruptHandlerD A" },
+		{ 161, 50, 22,  8, 18, 12, NULL, 0, "__DVDInterruptHandlerD" },
 		{ 186, 60, 26, 10, 21, 17, NULL, 0, "__DVDInterruptHandler A" },
 		{ 189, 60, 27,  9, 21, 17, NULL, 0, "__DVDInterruptHandler B" },
 		{ 184, 56, 23,  9, 21, 16, NULL, 0, "__DVDInterruptHandler C" },
-		{ 190, 63, 23, 11, 21, 17, NULL, 0, "__DVDInterruptHandler D" }	// SN Systems ProDG
+		{ 190, 63, 23, 11, 21, 17, NULL, 0, "__DVDInterruptHandler C" }	// SN Systems ProDG
+	};
+	FuncPattern AlarmHandlerForTimeoutSigs[3] = {
+		{ 29, 11, 5, 5, 1, 2, NULL, 0, "AlarmHandlerForTimeoutD" },
+		{ 28, 10, 4, 5, 1, 2, NULL, 0, "AlarmHandlerForTimeout" },
+		{ 28, 10, 4, 5, 1, 3, NULL, 0, "AlarmHandlerForTimeout" }	// SN Systems ProDG
+	};
+	FuncPattern SetTimeoutAlarmSigs[2] = {
+		{ 19, 10, 4, 2, 0, 2, NULL, 0, "SetTimeoutAlarmD" },
+		{ 25, 12, 5, 2, 0, 2, NULL, 0, "SetTimeoutAlarm" }
 	};
 	FuncPattern ReadSigs[4] = {
-		{ 56, 23, 18, 3, 2, 4, NULL, 0, "ReadD A" },
+		{ 56, 23, 18, 3, 2, 4, NULL, 0, "ReadD" },
 		{ 66, 29, 17, 5, 2, 3, NULL, 0, "Read A" },
 		{ 68, 30, 18, 5, 2, 3, NULL, 0, "Read B" },
-		{ 67, 29, 17, 5, 2, 6, NULL, 0, "Read C" }	// SN Systems ProDG
+		{ 67, 29, 17, 5, 2, 6, NULL, 0, "Read B" }	// SN Systems ProDG
 	};
-	FuncPattern DoJustReadSig = 
-		{ 21, 9, 8, 1, 0, 2, NULL, 0, "DoJustReadD" };
+	FuncPattern DoJustReadSigs[2] = {
+		{ 21, 9, 8, 1, 0, 2, NULL, 0, "DoJustReadD" },
+		{ 13, 5, 4, 1, 0, 2, NULL, 0, "DoJustRead" }
+	};
 	FuncPattern DVDLowReadSigs[4] = {
-		{ 157,  70,  6, 13, 12, 13, NULL, 0, "DVDLowReadD A" },
+		{ 157,  70,  6, 13, 12, 13, NULL, 0, "DVDLowReadD" },
 		{ 166,  68, 19,  9, 14, 18, NULL, 0, "DVDLowRead A" },
 		{ 166,  68, 19,  9, 14, 18, NULL, 0, "DVDLowRead B" },
-		{ 321, 113, 75, 23, 17, 34, NULL, 0, "DVDLowRead C" }	// SN Systems ProDG
+		{ 321, 113, 75, 23, 17, 34, NULL, 0, "DVDLowRead B" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowSeekSigs[4] = {
-		{ 40, 19, 9, 2, 1, 3, NULL, 0, "DVDLowSeekD A" },
+		{ 40, 19, 9, 2, 1, 3, NULL, 0, "DVDLowSeekD" },
 		{ 34, 17, 8, 2, 0, 2, NULL, 0, "DVDLowSeek A" },
 		{ 37, 19, 9, 2, 0, 2, NULL, 0, "DVDLowSeek B" },
-		{ 34, 16, 8, 2, 0, 2, NULL, 0, "DVDLowSeek C" }	// SN Systems ProDG
+		{ 34, 16, 8, 2, 0, 2, NULL, 0, "DVDLowSeek B" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowWaitCoverCloseSigs[4] = {
-		{ 10, 5, 4, 0, 0, 0, NULL, 0, "DVDLowWaitCoverCloseD A" },
+		{ 10, 5, 4, 0, 0, 0, NULL, 0, "DVDLowWaitCoverCloseD" },
 		{  8, 4, 3, 0, 0, 0, NULL, 0, "DVDLowWaitCoverClose A" },
 		{ 11, 6, 4, 0, 0, 0, NULL, 0, "DVDLowWaitCoverClose B" },
-		{ 10, 5, 4, 0, 0, 0, NULL, 0, "DVDLowWaitCoverClose C" }	// SN Systems ProDG
+		{ 10, 5, 4, 0, 0, 0, NULL, 0, "DVDLowWaitCoverClose B" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowReadDiskIDSigs[4] = {
-		{ 49, 26, 12, 2, 1, 3, NULL, 0, "DVDLowReadDiskIDD A" },
+		{ 49, 26, 12, 2, 1, 3, NULL, 0, "DVDLowReadDiskIDD" },
 		{ 40, 20, 11, 2, 0, 2, NULL, 0, "DVDLowReadDiskID A" },
 		{ 41, 19, 12, 2, 0, 2, NULL, 0, "DVDLowReadDiskID B" },
-		{ 39, 17, 11, 2, 0, 3, NULL, 0, "DVDLowReadDiskID C" }	// SN Systems ProDG
+		{ 39, 17, 11, 2, 0, 3, NULL, 0, "DVDLowReadDiskID B" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowStopMotorSigs[4] = {
-		{ 25, 12, 7, 1, 0, 2, NULL, 0, "DVDLowStopMotorD A" },
+		{ 25, 12, 7, 1, 0, 2, NULL, 0, "DVDLowStopMotorD" },
 		{ 33, 18, 7, 2, 0, 2, NULL, 0, "DVDLowStopMotor A" },
 		{ 35, 19, 8, 2, 0, 2, NULL, 0, "DVDLowStopMotor B" },
-		{ 32, 17, 7, 2, 0, 2, NULL, 0, "DVDLowStopMotor C" }	// SN Systems ProDG
+		{ 32, 17, 7, 2, 0, 2, NULL, 0, "DVDLowStopMotor B" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowRequestErrorSigs[4] = {
-		{ 25, 12, 7, 1, 0, 2, NULL, 0, "DVDLowRequestErrorD A" },
+		{ 25, 12, 7, 1, 0, 2, NULL, 0, "DVDLowRequestErrorD" },
 		{ 33, 18, 7, 2, 0, 2, NULL, 0, "DVDLowRequestError A" },
 		{ 35, 19, 8, 2, 0, 2, NULL, 0, "DVDLowRequestError B" },
-		{ 32, 17, 7, 2, 0, 2, NULL, 0, "DVDLowRequestError C" }	// SN Systems ProDG
+		{ 32, 17, 7, 2, 0, 2, NULL, 0, "DVDLowRequestError B" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowInquirySigs[4] = {
-		{ 35, 18, 11, 1, 0, 2, NULL, 0, "DVDLowInquiryD A" },
+		{ 35, 18, 11, 1, 0, 2, NULL, 0, "DVDLowInquiryD" },
 		{ 37, 19, 10, 2, 0, 2, NULL, 0, "DVDLowInquiry A" },
 		{ 39, 20, 11, 2, 0, 2, NULL, 0, "DVDLowInquiry B" },
-		{ 37, 16, 10, 2, 0, 3, NULL, 0, "DVDLowInquiry C" }	// SN Systems ProDG
+		{ 37, 16, 10, 2, 0, 3, NULL, 0, "DVDLowInquiry B" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowAudioStreamSigs[4] = {
-		{ 36, 16, 12, 1, 0, 2, NULL, 0, "DVDLowAudioStreamD A" },
+		{ 36, 16, 12, 1, 0, 2, NULL, 0, "DVDLowAudioStreamD" },
 		{ 35, 16,  9, 2, 0, 2, NULL, 0, "DVDLowAudioStream A" },
 		{ 38, 18, 10, 2, 0, 2, NULL, 0, "DVDLowAudioStream B" },
-		{ 35, 15,  9, 2, 0, 2, NULL, 0, "DVDLowAudioStream C" }	// SN Systems ProDG
+		{ 35, 15,  9, 2, 0, 2, NULL, 0, "DVDLowAudioStream B" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowRequestAudioStatusSigs[4] = {
-		{ 27, 12, 8, 1, 0, 2, NULL, 0, "DVDLowRequestAudioStatusD A" },
+		{ 27, 12, 8, 1, 0, 2, NULL, 0, "DVDLowRequestAudioStatusD" },
 		{ 32, 16, 7, 2, 0, 2, NULL, 0, "DVDLowRequestAudioStatus A" },
 		{ 35, 18, 8, 2, 0, 2, NULL, 0, "DVDLowRequestAudioStatus B" },
-		{ 32, 16, 7, 2, 0, 2, NULL, 0, "DVDLowRequestAudioStatus C" }	// SN Systems ProDG
+		{ 32, 16, 7, 2, 0, 2, NULL, 0, "DVDLowRequestAudioStatus B" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowAudioBufferConfigSigs[4] = {
-		{ 54, 21, 8, 3, 4, 3, NULL, 0, "DVDLowAudioBufferConfigD A" },
+		{ 54, 21, 8, 3, 4, 3, NULL, 0, "DVDLowAudioBufferConfigD" },
 		{ 39, 19, 7, 2, 2, 3, NULL, 0, "DVDLowAudioBufferConfig A" },
 		{ 39, 19, 8, 2, 1, 3, NULL, 0, "DVDLowAudioBufferConfig B" },
-		{ 38, 17, 7, 2, 0, 7, NULL, 0, "DVDLowAudioBufferConfig C" }	// SN Systems ProDG
+		{ 38, 17, 7, 2, 0, 7, NULL, 0, "DVDLowAudioBufferConfig B" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowResetSigs[3] = {
-		{ 49, 14, 8, 3, 0,  9, NULL, 0, "DVDLowResetD A" },
-		{ 47, 10, 8, 3, 0,  9, NULL, 0, "DVDLowReset A" },
-		{ 49,  9, 8, 5, 0, 11, NULL, 0, "DVDLowReset B" }	// SN Systems ProDG
+		{ 49, 14, 8, 3, 0,  9, NULL, 0, "DVDLowResetD" },
+		{ 47, 10, 8, 3, 0,  9, NULL, 0, "DVDLowReset" },
+		{ 49,  9, 8, 5, 0, 11, NULL, 0, "DVDLowReset" }	// SN Systems ProDG
+	};
+	FuncPattern DVDLowSetResetCoverCallbackSigs[2] = {
+		{ 18, 4, 4, 2, 0, 3, NULL, 0, "DVDLowSetResetCoverCallbackD" },
+		{ 17, 5, 5, 2, 0, 3, NULL, 0, "DVDLowSetResetCoverCallback" }
+	};
+	FuncPattern DoBreakSigs[2] = {
+		{ 12, 6, 4, 0, 0, 0, NULL, 0, "DoBreakD" },
+		{  7, 3, 2, 0, 0, 0, NULL, 0, "DoBreak" }
+	};
+	FuncPattern AlarmHandlerForBreakSigs[2] = {
+		{ 23, 10, 2, 2, 2, 4, NULL, 0, "AlarmHandlerForBreakD" },
+		{ 29, 13, 4, 1, 2, 4, NULL, 0, "AlarmHandlerForBreak" }
+	};
+	FuncPattern SetBreakAlarmSigs[2] = {
+		{ 19, 10, 4, 2, 0, 2, NULL, 0, "SetBreakAlarmD" },
+		{ 25, 12, 5, 2, 0, 2, NULL, 0, "SetBreakAlarm" }
+	};
+	FuncPattern DVDLowBreakSigs[4] = {
+		{  6,  3, 2, 0, 0, 0, NULL, 0, "DVDLowBreakD" },
+		{ 42, 22, 6, 2, 2, 4, NULL, 0, "DVDLowBreak A" },
+		{  5,  2, 2, 0, 0, 0, NULL, 0, "DVDLowBreak B" },
+		{  5,  2, 2, 0, 0, 0, NULL, 0, "DVDLowBreak B" }	// SN Systems ProDG
+	};
+	FuncPattern DVDLowClearCallbackSigs[4] = {
+		{ 12, 6, 4, 0, 0, 0, NULL, 0, "DVDLowClearCallbackD" },
+		{  6, 3, 2, 0, 0, 0, NULL, 0, "DVDLowClearCallback A" },
+		{  6, 3, 2, 0, 0, 0, NULL, 0, "DVDLowClearCallback A" },	// SN Systems ProDG
+		{  7, 3, 3, 0, 0, 0, NULL, 0, "DVDLowClearCallback B" }
 	};
 	FuncPattern DVDLowGetCoverStatusSigs[3] = {
-		{ 35, 13, 2, 1, 4,  9, NULL, 0, "DVDLowGetCoverStatusD A" },
-		{ 37, 14, 2, 1, 4,  9, NULL, 0, "DVDLowGetCoverStatus A" },
-		{ 35, 13, 2, 1, 2, 10, NULL, 0, "DVDLowGetCoverStatus B" }	// SN Systems ProDG
+		{ 35, 13, 2, 1, 4,  9, NULL, 0, "DVDLowGetCoverStatusD" },
+		{ 37, 14, 2, 1, 4,  9, NULL, 0, "DVDLowGetCoverStatus" },
+		{ 35, 13, 2, 1, 2, 10, NULL, 0, "DVDLowGetCoverStatus" }	// SN Systems ProDG
 	};
 	FuncPattern DVDInitSigs[5] = {
-		{ 66, 28,  9, 13, 2, 2, NULL, 0, "DVDInitD A" },
+		{ 66, 28,  9, 13, 2, 2, NULL, 0, "DVDInitD" },
 		{ 63, 24, 10, 12, 2, 2, NULL, 0, "DVDInit A" },
 		{ 51, 21,  9,  9, 2, 2, NULL, 0, "DVDInit B" },
-		{ 49, 21,  8,  9, 2, 2, NULL, 0, "DVDInit C" },	// SN Systems ProDG
-		{ 54, 21, 11,  9, 2, 2, NULL, 0, "DVDInit D" }
+		{ 49, 21,  8,  9, 2, 2, NULL, 0, "DVDInit B" },	// SN Systems ProDG
+		{ 54, 21, 11,  9, 2, 2, NULL, 0, "DVDInit C" }
+	};
+	FuncPattern stateGettingErrorSigs[4] = {
+		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateGettingErrorD" },
+		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateGettingError" },
+		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateGettingError" },	// SN Systems ProDG
+		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateGettingError" }
+	};
+	FuncPattern cbForStateGettingErrorSigs[4] = {
+		{ 127, 39,  9, 13, 16, 4, NULL, 0, "cbForStateGettingErrorD" },
+		{ 165, 70, 17, 17, 18, 2, NULL, 0, "cbForStateGettingError A" },
+		{ 202, 73, 22, 14, 27, 3, NULL, 0, "cbForStateGettingError A" },	// SN Systems ProDG
+		{ 153, 61, 13, 17, 18, 2, NULL, 0, "cbForStateGettingError B" }
+	};
+	FuncPattern cbForUnrecoveredErrorSigs[4] = {
+		{ 32, 11, 4, 4, 4, 3, NULL, 0, "cbForUnrecoveredErrorD" },
+		{ 26,  9, 3, 5, 3, 2, NULL, 0, "cbForUnrecoveredError A" },
+		{ 21,  6, 3, 3, 3, 2, NULL, 0, "cbForUnrecoveredError A" },	// SN Systems ProDG
+		{ 23,  7, 2, 5, 3, 2, NULL, 0, "cbForUnrecoveredError B" }
+	};
+	FuncPattern cbForUnrecoveredErrorRetrySigs[4] = {
+		{ 30, 12, 5, 3, 3, 3, NULL, 0, "cbForUnrecoveredErrorRetryD" },
+		{ 38, 18, 4, 7, 3, 2, NULL, 0, "cbForUnrecoveredErrorRetry A" },
+		{ 32, 14, 4, 5, 3, 2, NULL, 0, "cbForUnrecoveredErrorRetry A" },	// SN Systems ProDG
+		{ 32, 14, 2, 7, 3, 2, NULL, 0, "cbForUnrecoveredErrorRetry B" }
+	};
+	FuncPattern stateMotorStoppedSigs[4] = {
+		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateMotorStoppedD" },
+		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateMotorStopped" },
+		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateMotorStopped" },	// SN Systems ProDG
+		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateMotorStopped" }
+	};
+	FuncPattern cbForStateMotorStoppedSigs[4] = {
+		{ 24, 11, 5, 2, 1, 2, NULL, 0, "cbForStateMotorStoppedD" },
+		{ 57, 22, 6, 5, 9, 3, NULL, 0, "cbForStateMotorStopped A" },
+		{ 56, 23, 5, 5, 9, 3, NULL, 0, "cbForStateMotorStopped A" },	// SN Systems ProDG
+		{ 59, 23, 7, 5, 9, 3, NULL, 0, "cbForStateMotorStopped B" }
 	};
 	FuncPattern stateReadySigs[6] = {
-		{ 103, 42, 19, 11, 14, 4, NULL, 0, "stateReadyD A" },
+		{ 103, 42, 19, 11, 14, 4, NULL, 0, "stateReadyD" },
 		{ 146, 58, 20, 16, 23, 5, NULL, 0, "stateReady A" },
 		{ 183, 65, 20, 19, 40, 4, NULL, 0, "stateReady B" },
 		{ 138, 50, 17, 14, 30, 3, NULL, 0, "stateReady C" },	// SN Systems ProDG
-		{ 140, 50, 18, 14, 30, 3, NULL, 0, "stateReady D" },
-		{ 186, 66, 20, 19, 40, 4, NULL, 0, "stateReady E" }
+		{ 140, 50, 18, 14, 30, 3, NULL, 0, "stateReady C" },
+		{ 186, 66, 20, 19, 40, 4, NULL, 0, "stateReady D" }
 	};
 	FuncPattern stateBusySigs[6] = {
-		{ 182, 112, 22, 15, 17, 10, NULL, 0, "stateBusyD A" },
+		{ 182, 112, 22, 15, 17, 10, NULL, 0, "stateBusyD" },
 		{ 176, 107, 21, 15, 17, 10, NULL, 0, "stateBusy A" },
 		{ 176, 107, 21, 15, 17, 10, NULL, 0, "stateBusy B" },
 		{ 200, 118, 23, 16, 20, 10, NULL, 0, "stateBusy C" },
-		{ 187, 105, 23, 16, 18, 11, NULL, 0, "stateBusy D" },	// SN Systems ProDG
-		{ 208, 123, 24, 17, 21, 10, NULL, 0, "stateBusy E" }
+		{ 187, 105, 23, 16, 18, 11, NULL, 0, "stateBusy C" },	// SN Systems ProDG
+		{ 208, 123, 24, 17, 21, 10, NULL, 0, "stateBusy D" }
 	};
 	FuncPattern cbForStateBusySigs[5] = {
-		{ 329, 142, 27, 21, 45,  6, NULL, 0, "cbForStateBusyD A" },
+		{ 329, 142, 27, 21, 45,  6, NULL, 0, "cbForStateBusyD" },
 		{ 373, 158, 41, 21, 52,  6, NULL, 0, "cbForStateBusy A" },
 		{ 398, 167, 41, 21, 58, 11, NULL, 0, "cbForStateBusy B" },
-		{ 395, 160, 40, 19, 56, 12, NULL, 0, "cbForStateBusy C" },	// SN Systems ProDG
-		{ 406, 167, 41, 22, 60, 11, NULL, 0, "cbForStateBusy D" }
+		{ 395, 160, 40, 19, 56, 12, NULL, 0, "cbForStateBusy B" },	// SN Systems ProDG
+		{ 406, 167, 41, 22, 60, 11, NULL, 0, "cbForStateBusy C" }
 	};
 	FuncPattern DVDResetSigs[3] = {
-		{ 19, 9, 6, 1, 0, 2, NULL, 0, "DVDResetD A" },
-		{ 17, 7, 6, 1, 0, 2, NULL, 0, "DVDReset A" },
-		{ 16, 6, 6, 1, 0, 2, NULL, 0, "DVDReset B" }	// SN Systems ProDG
+		{ 19, 9, 6, 1, 0, 2, NULL, 0, "DVDResetD" },
+		{ 17, 7, 6, 1, 0, 2, NULL, 0, "DVDReset" },
+		{ 16, 6, 6, 1, 0, 2, NULL, 0, "DVDReset" }	// SN Systems ProDG
+	};
+	FuncPattern DVDCancelAsyncSigs[5] = {
+		{ 166, 53, 13, 10, 26, 8, NULL, 0, "DVDCancelAsyncD" },
+		{ 156, 47, 16,  9, 25, 5, NULL, 0, "DVDCancelAsync A" },
+		{ 156, 47, 16,  9, 25, 5, NULL, 0, "DVDCancelAsync A" },
+		{ 158, 43, 17,  9, 25, 8, NULL, 0, "DVDCancelAsync B" },	// SN Systems ProDG
+		{ 159, 49, 17,  9, 25, 5, NULL, 0, "DVDCancelAsync B" }
 	};
 	FuncPattern DVDGetCurrentDiskIDSigs[2] = {
 		{ 9, 3, 2, 1, 0, 2, NULL, 0, "DVDGetCurrentDiskIDD" },
 		{ 2, 1, 0, 0, 0, 0, NULL, 0, "DVDGetCurrentDiskID" }
 	};
 	FuncPattern DVDCheckDiskSigs[4] = {
-		{ 61, 16, 2, 2, 10, 7, NULL, 0, "DVDCheckDiskD A" },
+		{ 61, 16, 2, 2, 10, 7, NULL, 0, "DVDCheckDiskD" },
 		{ 57, 19, 3, 2, 10, 5, NULL, 0, "DVDCheckDisk A" },
 		{ 61, 19, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk B" },	// SN Systems ProDG
-		{ 62, 20, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk C" }
+		{ 62, 20, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk B" }
 	};
-	FuncPattern __DVDClearWaitingQueueSigs[2] = {
+	FuncPattern __DVDClearWaitingQueueSigs[3] = {
 		{ 16, 3, 3, 0, 2, 0, NULL, 0, "__DVDClearWaitingQueueD" },
-		{ 14, 5, 8, 0, 0, 0, NULL, 0, "__DVDClearWaitingQueue" }
+		{ 14, 5, 8, 0, 0, 0, NULL, 0, "__DVDClearWaitingQueue" },
+		{ 14, 5, 8, 0, 0, 0, NULL, 0, "__DVDClearWaitingQueue" }	// SN Systems ProDG
 	};
-	FuncPattern __DVDPopWaitingQueueSigs[2] = {
+	FuncPattern __DVDPopWaitingQueueSigs[3] = {
 		{ 31,  6, 2, 4, 4, 4, NULL, 0, "__DVDPopWaitingQueueD" },
-		{ 40, 15, 7, 5, 2, 5, NULL, 0, "__DVDPopWaitingQueue" }
+		{ 40, 15, 7, 5, 2, 5, NULL, 0, "__DVDPopWaitingQueue" },
+		{ 40, 15, 7, 5, 2, 5, NULL, 0, "__DVDPopWaitingQueue" }	// SN Systems ProDG
 	};
-	FuncPattern __DVDCheckWaitingQueueSigs[2] = {
+	FuncPattern __DVDCheckWaitingQueueSigs[3] = {
 		{ 30, 7, 2, 3, 4, 4, NULL, 0, "__DVDCheckWaitingQueueD" },
-		{ 22, 9, 2, 3, 2, 4, NULL, 0, "__DVDCheckWaitingQueue" }
+		{ 22, 9, 2, 3, 2, 4, NULL, 0, "__DVDCheckWaitingQueue" },
+		{ 22, 9, 2, 3, 2, 4, NULL, 0, "__DVDCheckWaitingQueue" }	// SN Systems ProDG
+	};
+	FuncPattern __DVDDequeueWaitingQueueSigs[3] = {
+		{ 29, 8, 4, 3, 2, 6, NULL, 0, "__DVDDequeueWaitingQueueD" },
+		{ 24, 7, 5, 3, 2, 3, NULL, 0, "__DVDDequeueWaitingQueue" },
+		{ 26, 7, 5, 3, 2, 5, NULL, 0, "__DVDDequeueWaitingQueue" }	// SN Systems ProDG
 	};
 	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
 	
@@ -1070,7 +1220,7 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 						break;
 					case 6:
 						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  19, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i +  19, length, &OSClearContextSigs[2]) &&
 							findx_pattern(data, dataType, i +  21, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i +  34, length, &__OSUnmaskInterruptsSigs[2]) &&
 							findx_pattern(data, dataType, i +  35, length, &OSEnableInterruptsSig) &&
@@ -1228,7 +1378,7 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 						if (findx_pattern(data, dataType, i + 82, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i + 83, length, &OSEnableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 87, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 93, length, &OSClearContextSigs[1]))
+							findx_pattern(data, dataType, i + 93, length, &OSClearContextSigs[2]))
 							SelectThreadSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -1280,8 +1430,6 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					case 1:
 						if (findx_pattern(data, dataType, i +  18, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  56, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i + 136, length, &ReadSigs[1]) &&
-							findx_pattern(data, dataType, i + 147, length, &DVDLowSeekSigs[1]) &&
 							findx_pattern(data, dataType, i + 159, length, &OSClearContextSigs[1]) &&
 							findx_pattern(data, dataType, i + 161, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i + 175, length, &OSClearContextSigs[1]) &&
@@ -1291,8 +1439,6 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					case 2:
 						if (findx_pattern(data, dataType, i +  16, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  59, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i + 139, length, &ReadSigs[2]) &&
-							findx_pattern(data, dataType, i + 150, length, &DVDLowSeekSigs[2]) &&
 							findx_pattern(data, dataType, i + 162, length, &OSClearContextSigs[1]) &&
 							findx_pattern(data, dataType, i + 164, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i + 178, length, &OSClearContextSigs[1]) &&
@@ -1300,21 +1446,17 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
-						if (findx_pattern(data, dataType, i +  11, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i +  56, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i + 137, length, &ReadSigs[2]) &&
-							findx_pattern(data, dataType, i + 148, length, &DVDLowSeekSigs[2]) &&
-							findx_pattern(data, dataType, i + 160, length, &OSClearContextSigs[1]) &&
+						if (findx_pattern(data, dataType, i +  11, length, &__OSGetSystemTimeSigs[2]) &&
+							findx_pattern(data, dataType, i +  56, length, &__OSGetSystemTimeSigs[2]) &&
+							findx_pattern(data, dataType, i + 160, length, &OSClearContextSigs[2]) &&
 							findx_pattern(data, dataType, i + 162, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i + 176, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 176, length, &OSClearContextSigs[2]) &&
 							findx_pattern(data, dataType, i + 178, length, &OSSetCurrentContextSig))
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i +  12, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  59, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i + 142, length, &ReadSigs[3]) &&
-							findx_pattern(data, dataType, i + 153, length, &DVDLowSeekSigs[3]) &&
 							findx_pattern(data, dataType, i + 165, length, &OSClearContextSigs[1]) &&
 							findx_pattern(data, dataType, i + 167, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i + 181, length, &OSClearContextSigs[1]) &&
@@ -1329,27 +1471,38 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			if (!ReadSigs[j].offsetFoundAt && compare_pattern(&fp, &ReadSigs[j])) {
 				switch (j) {
 					case 0:
-						if (findx_pattern(data, dataType, i + 14, length, &__OSGetSystemTimeSigs[0]))
+						if (findx_pattern(data, dataType, i + 14, length, &__OSGetSystemTimeSigs[0]) &&
+							findx_pattern(data, dataType, i + 43, length, &SetTimeoutAlarmSigs[0]) &&
+							findx_pattern(data, dataType, i + 50, length, &SetTimeoutAlarmSigs[0]) &&
+							findi_pattern(data, dataType, i -  7, i -  6, length, &AlarmHandlerForTimeoutSigs[0]))
 							ReadSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
-						if (findx_pattern(data, dataType, i + 15, length, &__OSGetSystemTimeSigs[1]))
+						if (findx_pattern(data, dataType, i + 15, length, &__OSGetSystemTimeSigs[1]) &&
+							findi_pattern(data, dataType, i + 39, i + 40, length, &AlarmHandlerForTimeoutSigs[1]) &&
+							findi_pattern(data, dataType, i + 52, i + 53, length, &AlarmHandlerForTimeoutSigs[1]))
 							ReadSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (findx_pattern(data, dataType, i + 17, length, &__OSGetSystemTimeSigs[1]))
+						if (findx_pattern(data, dataType, i + 17, length, &__OSGetSystemTimeSigs[1]) &&
+							findi_pattern(data, dataType, i + 41, i + 42, length, &AlarmHandlerForTimeoutSigs[1]) &&
+							findi_pattern(data, dataType, i + 54, i + 55, length, &AlarmHandlerForTimeoutSigs[1]))
 							ReadSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
-						if (findx_pattern(data, dataType, i + 14, length, &__OSGetSystemTimeSigs[1]))
+						if (findx_pattern(data, dataType, i + 14, length, &__OSGetSystemTimeSigs[2]) &&
+							findi_pattern(data, dataType, i + 39, i + 42, length, &AlarmHandlerForTimeoutSigs[2]) &&
+							findi_pattern(data, dataType, i + 54, i + 57, length, &AlarmHandlerForTimeoutSigs[2]))
 							ReadSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
 			else if (ReadSigs[j].offsetFoundAt) {
-				if (!DoJustReadSig.offsetFoundAt && compare_pattern(&fp, &DoJustReadSig)) {
-					if (findx_pattern(data, dataType, i + 16, length, &ReadSigs[j]))
-						DoJustReadSig.offsetFoundAt = i;
+				for (k = 0; k < sizeof(DoJustReadSigs) / sizeof(FuncPattern); k++) {
+					if (!DoJustReadSigs[k].offsetFoundAt && compare_pattern(&fp, &DoJustReadSigs[k])) {
+						if (findx_pattern(data, dataType, i + 16, length, &ReadSigs[j]))
+							DoJustReadSigs[k].offsetFoundAt = i;
+					}
 				}
 			}
 		}
@@ -1358,10 +1511,10 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			if (!DVDLowReadSigs[j].offsetFoundAt && compare_pattern(&fp, &DVDLowReadSigs[j])) {
 				switch (j) {
 					case 0:
-						if (findx_pattern(data, dataType, i +  52, length, &DoJustReadSig) &&
-							findx_pattern(data, dataType, i +  75, length, &DoJustReadSig) &&
+						if (findx_pattern(data, dataType, i +  52, length, &DoJustReadSigs[0]) &&
+							findx_pattern(data, dataType, i +  75, length, &DoJustReadSigs[0]) &&
 							findx_pattern(data, dataType, i +  89, length, &__OSGetSystemTimeSigs[0]) &&
-							findx_pattern(data, dataType, i + 112, length, &DoJustReadSig)) {
+							findx_pattern(data, dataType, i + 112, length, &DoJustReadSigs[0])) {
 							DVDLowReadSigs[j].offsetFoundAt = i;
 							
 							if (find_pattern_after(data, length, &DVDLowReadSigs[j], &DVDLowSeekSigs[j]) &&
@@ -1372,8 +1525,9 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 								find_pattern_after(data, length, &DVDLowRequestErrorSigs[j], &DVDLowInquirySigs[j]) &&
 								find_pattern_after(data, length, &DVDLowInquirySigs[j], &DVDLowAudioStreamSigs[j]) &&
 								find_pattern_after(data, length, &DVDLowAudioStreamSigs[j], &DVDLowRequestAudioStatusSigs[j]) &&
-								find_pattern_after(data, length, &DVDLowRequestAudioStatusSigs[j], &DVDLowAudioBufferConfigSigs[j]))
-								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[j], &DVDLowResetSigs[0]);
+								find_pattern_after(data, length, &DVDLowRequestAudioStatusSigs[j], &DVDLowAudioBufferConfigSigs[j]) &&
+								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[j], &DVDLowResetSigs[0]))
+								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
 						}
 						break;
 					case 1:
@@ -1392,15 +1546,16 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 								find_pattern_after(data, length, &DVDLowRequestErrorSigs[j], &DVDLowInquirySigs[j]) &&
 								find_pattern_after(data, length, &DVDLowInquirySigs[j], &DVDLowAudioStreamSigs[j]) &&
 								find_pattern_after(data, length, &DVDLowAudioStreamSigs[j], &DVDLowRequestAudioStatusSigs[j]) &&
-								find_pattern_after(data, length, &DVDLowRequestAudioStatusSigs[j], &DVDLowAudioBufferConfigSigs[j]))
-								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[j], &DVDLowResetSigs[1]);
+								find_pattern_after(data, length, &DVDLowRequestAudioStatusSigs[j], &DVDLowAudioBufferConfigSigs[j]) &&
+								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[j], &DVDLowResetSigs[1]))
+								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 3:
-						if (findx_pattern(data, dataType, i +  28, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i + 136, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i + 191, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i + 219, length, &__OSGetSystemTimeSigs[1])) {
+						if (findx_pattern(data, dataType, i +  28, length, &__OSGetSystemTimeSigs[2]) &&
+							findx_pattern(data, dataType, i + 136, length, &__OSGetSystemTimeSigs[2]) &&
+							findx_pattern(data, dataType, i + 191, length, &__OSGetSystemTimeSigs[2]) &&
+							findx_pattern(data, dataType, i + 219, length, &__OSGetSystemTimeSigs[2])) {
 							DVDLowReadSigs[j].offsetFoundAt = i;
 							
 							if (find_pattern_after(data, length, &DVDLowReadSigs[j], &DVDLowSeekSigs[j]) &&
@@ -1415,6 +1570,95 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[j], &DVDLowResetSigs[2]);
 						}
 						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(DVDLowWaitCoverCloseSigs) / sizeof(FuncPattern); j++) {
+			if (DVDLowWaitCoverCloseSigs[j].offsetFoundAt) {
+				for (k = 0; k < sizeof(stateMotorStoppedSigs) / sizeof(FuncPattern); k++) {
+					if (!stateMotorStoppedSigs[k].offsetFoundAt && compare_pattern(&fp, &stateMotorStoppedSigs[k])) {
+						switch (k) {
+							case 0:
+								if (findx_pattern(data, dataType, i + 5, length, &DVDLowWaitCoverCloseSigs[j]) &&
+									findi_pattern(data, dataType, i + 3, i + 4, length, &cbForStateMotorStoppedSigs[0]))
+									stateMotorStoppedSigs[k].offsetFoundAt = i;
+								break;
+							case 1:
+								if (findx_pattern(data, dataType, i + 5, length, &DVDLowWaitCoverCloseSigs[j]) &&
+									findi_pattern(data, dataType, i + 1, i + 3, length, &cbForStateMotorStoppedSigs[1]))
+									stateMotorStoppedSigs[k].offsetFoundAt = i;
+								break;
+							case 2:
+								if (findx_pattern(data, dataType, i + 5, length, &DVDLowWaitCoverCloseSigs[j]) &&
+									findi_pattern(data, dataType, i + 2, i + 4, length, &cbForStateMotorStoppedSigs[2]))
+									stateMotorStoppedSigs[k].offsetFoundAt = i;
+								break;
+							case 3:
+								if (findx_pattern(data, dataType, i + 5, length, &DVDLowWaitCoverCloseSigs[j]) &&
+									findi_pattern(data, dataType, i + 1, i + 3, length, &cbForStateMotorStoppedSigs[3]))
+									stateMotorStoppedSigs[k].offsetFoundAt = i;
+								break;
+						}
+					}
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(DVDLowRequestErrorSigs) / sizeof(FuncPattern); j++) {
+			if (DVDLowRequestErrorSigs[j].offsetFoundAt) {
+				for (k = 0; k < sizeof(stateGettingErrorSigs) / sizeof(FuncPattern); k++) {
+					if (!stateGettingErrorSigs[k].offsetFoundAt && compare_pattern(&fp, &stateGettingErrorSigs[k])) {
+						switch (k) {
+							case 0:
+								if (findx_pattern(data, dataType, i + 5, length, &DVDLowRequestErrorSigs[j]) &&
+									findi_pattern(data, dataType, i + 3, i + 4, length, &cbForStateGettingErrorSigs[0]))
+									stateGettingErrorSigs[k].offsetFoundAt = i;
+								break;
+							case 1:
+								if (findx_pattern(data, dataType, i + 5, length, &DVDLowRequestErrorSigs[j]) &&
+									findi_pattern(data, dataType, i + 1, i + 3, length, &cbForStateGettingErrorSigs[1]))
+									stateGettingErrorSigs[k].offsetFoundAt = i;
+								break;
+							case 2:
+								if (findx_pattern(data, dataType, i + 5, length, &DVDLowRequestErrorSigs[j]) &&
+									findi_pattern(data, dataType, i + 2, i + 4, length, &cbForStateGettingErrorSigs[2]))
+									stateGettingErrorSigs[k].offsetFoundAt = i;
+								break;
+							case 3:
+								if (findx_pattern(data, dataType, i + 5, length, &DVDLowRequestErrorSigs[j]) &&
+									findi_pattern(data, dataType, i + 1, i + 3, length, &cbForStateGettingErrorSigs[3]))
+									stateGettingErrorSigs[k].offsetFoundAt = i;
+								break;
+						}
+					}
+				}
+				
+				for (k = 0; k < sizeof(cbForUnrecoveredErrorSigs) / sizeof(FuncPattern); k++) {
+					if (!cbForUnrecoveredErrorSigs[k].offsetFoundAt && compare_pattern(&fp, &cbForUnrecoveredErrorSigs[k])) {
+						switch (k) {
+							case 0:
+								if (findx_pattern(data, dataType, i + 26, length, &DVDLowRequestErrorSigs[j]) &&
+									findi_pattern(data, dataType, i + 24, i + 25, length, &cbForUnrecoveredErrorRetrySigs[0]))
+									cbForUnrecoveredErrorSigs[k].offsetFoundAt = i;
+								break;
+							case 1:
+								if (findx_pattern(data, dataType, i + 21, length, &DVDLowRequestErrorSigs[j]) &&
+									findi_pattern(data, dataType, i + 19, i + 20, length, &cbForUnrecoveredErrorRetrySigs[1]))
+									cbForUnrecoveredErrorSigs[k].offsetFoundAt = i;
+								break;
+							case 2:
+								if (findx_pattern(data, dataType, i + 16, length, &DVDLowRequestErrorSigs[j]) &&
+									findi_pattern(data, dataType, i + 14, i + 15, length, &cbForUnrecoveredErrorRetrySigs[2]))
+									cbForUnrecoveredErrorSigs[k].offsetFoundAt = i;
+								break;
+							case 3:
+								if (findx_pattern(data, dataType, i + 18, length, &DVDLowRequestErrorSigs[j]) &&
+									findi_pattern(data, dataType, i + 16, i + 17, length, &cbForUnrecoveredErrorRetrySigs[3]))
+									cbForUnrecoveredErrorSigs[k].offsetFoundAt = i;
+								break;
+						}
+					}
 				}
 			}
 		}
@@ -1435,9 +1679,9 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							DVDLowResetSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (findx_pattern(data, dataType, i + 12, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i + 19, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i + 40, length, &__OSGetSystemTimeSigs[1]))
+						if (findx_pattern(data, dataType, i + 12, length, &__OSGetSystemTimeSigs[2]) &&
+							findx_pattern(data, dataType, i + 19, length, &__OSGetSystemTimeSigs[2]) &&
+							findx_pattern(data, dataType, i + 40, length, &__OSGetSystemTimeSigs[2]))
 							DVDLowResetSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -1466,8 +1710,11 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							DVDLowGetCoverStatusSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
-					case 2:
 						if (findx_pattern(data, dataType, i + 3, length, &__OSGetSystemTimeSigs[1]))
+							DVDLowGetCoverStatusSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i + 3, length, &__OSGetSystemTimeSigs[2]))
 							DVDLowGetCoverStatusSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -1496,7 +1743,7 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							DVDInitSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
-						if (findx_pattern(data, dataType, i + 11, length, &__DVDClearWaitingQueueSigs[1]) &&
+						if (findx_pattern(data, dataType, i + 11, length, &__DVDClearWaitingQueueSigs[2]) &&
 							findx_pattern(data, dataType, i + 19, length, &__OSSetInterruptHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i + 21, length, &__OSUnmaskInterruptsSigs[2]))
 							DVDInitSigs[j].offsetFoundAt = i;
@@ -1539,10 +1786,10 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							stateReadySigs[j].offsetFoundAt = i;
 						break;
 					case 3:
-						if (findx_pattern(data, dataType, i +   3, length, &__DVDCheckWaitingQueueSigs[1]) &&
-							findx_pattern(data, dataType, i +  17, length, &__DVDPopWaitingQueueSigs[1]) &&
+						if (findx_pattern(data, dataType, i +   3, length, &__DVDCheckWaitingQueueSigs[2]) &&
+							findx_pattern(data, dataType, i +  17, length, &__DVDPopWaitingQueueSigs[2]) &&
 							findx_pattern(data, dataType, i +  34, length, &fp) &&
-							findx_pattern(data, dataType, i +  88, length, &__DVDClearWaitingQueueSigs[1]) &&
+							findx_pattern(data, dataType, i +  88, length, &__DVDClearWaitingQueueSigs[2]) &&
 							findx_pattern(data, dataType, i +  99, length, &fp))
 							stateReadySigs[j].offsetFoundAt = i;
 						break;
@@ -1566,6 +1813,95 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
+			else if (stateReadySigs[j].offsetFoundAt) {
+				for (k = 0; k < sizeof(DVDCancelAsyncSigs) / sizeof(FuncPattern); k++) {
+					if (!DVDCancelAsyncSigs[k].offsetFoundAt && compare_pattern(&fp, &DVDCancelAsyncSigs[k])) {
+						switch (k) {
+							case 0:
+								if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  30, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  42, length, &DVDLowBreakSigs[0]) &&
+									findx_pattern(data, dataType, i +  45, length, &__DVDDequeueWaitingQueueSigs[0]) &&
+									findx_pattern(data, dataType, i +  88, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  95, length, &DVDLowClearCallbackSigs[0]) &&
+									findx_pattern(data, dataType, i + 112, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i + 157, length, &stateReadySigs[j]) &&
+									findx_pattern(data, dataType, i + 159, length, &OSRestoreInterruptsSig)) {
+									DVDCancelAsyncSigs[k].offsetFoundAt = i;
+									
+									if (find_pattern_before(data, length, &DVDLowBreakSigs[0], &SetBreakAlarmSigs[0]) &&
+										find_pattern_before(data, length, &SetBreakAlarmSigs[0], &AlarmHandlerForBreakSigs[0]))
+										find_pattern_before(data, length, &AlarmHandlerForBreakSigs[0], &DoBreakSigs[0]);
+								}
+								break;
+							case 1:
+								if (findx_pattern(data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  32, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  43, length, &DVDLowBreakSigs[1]) &&
+									findx_pattern(data, dataType, i +  46, length, &__DVDDequeueWaitingQueueSigs[1]) &&
+									findx_pattern(data, dataType, i +  88, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  95, length, &DVDLowClearCallbackSigs[1]) &&
+									findx_pattern(data, dataType, i + 101, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i + 145, length, &stateReadySigs[j]) &&
+									findx_pattern(data, dataType, i + 147, length, &OSRestoreInterruptsSig)) {
+									DVDCancelAsyncSigs[k].offsetFoundAt = i;
+									
+									if (find_pattern_before(data, length, &DVDLowBreakSigs[1], &SetBreakAlarmSigs[1]) &&
+										find_pattern_before(data, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
+										find_pattern_before(data, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
+								}
+								break;
+							case 2:
+								if (findx_pattern(data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  32, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  43, length, &DVDLowBreakSigs[2]) &&
+									findx_pattern(data, dataType, i +  46, length, &__DVDDequeueWaitingQueueSigs[1]) &&
+									findx_pattern(data, dataType, i +  88, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  95, length, &DVDLowClearCallbackSigs[1]) &&
+									findx_pattern(data, dataType, i + 101, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i + 145, length, &stateReadySigs[j]) &&
+									findx_pattern(data, dataType, i + 147, length, &OSRestoreInterruptsSig)) {
+									DVDCancelAsyncSigs[k].offsetFoundAt = i;
+									
+									if (find_pattern_before(data, length, &DVDLowBreakSigs[2], &SetBreakAlarmSigs[1]) &&
+										find_pattern_before(data, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
+										find_pattern_before(data, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
+								}
+								break;
+							case 3:
+								if (findx_pattern(data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  31, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  42, length, &DVDLowBreakSigs[3]) &&
+									findx_pattern(data, dataType, i +  45, length, &__DVDDequeueWaitingQueueSigs[2]) &&
+									findx_pattern(data, dataType, i +  87, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  94, length, &DVDLowClearCallbackSigs[2]) &&
+									findx_pattern(data, dataType, i + 100, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i + 147, length, &stateReadySigs[j]) &&
+									findx_pattern(data, dataType, i + 149, length, &OSRestoreInterruptsSig)) {
+									DVDCancelAsyncSigs[k].offsetFoundAt = i;
+								}
+								break;
+							case 4:
+								if (findx_pattern(data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  32, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  43, length, &DVDLowBreakSigs[2]) &&
+									findx_pattern(data, dataType, i +  46, length, &__DVDDequeueWaitingQueueSigs[1]) &&
+									findx_pattern(data, dataType, i +  88, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i +  95, length, &DVDLowClearCallbackSigs[3]) &&
+									findx_pattern(data, dataType, i + 101, length, &OSRestoreInterruptsSig) &&
+									findx_pattern(data, dataType, i + 148, length, &stateReadySigs[j]) &&
+									findx_pattern(data, dataType, i + 150, length, &OSRestoreInterruptsSig)) {
+									DVDCancelAsyncSigs[k].offsetFoundAt = i;
+									
+									if (find_pattern_before(data, length, &DVDLowBreakSigs[2], &SetBreakAlarmSigs[1]) &&
+										find_pattern_before(data, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
+										find_pattern_before(data, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
+								}
+								break;
+						}
+					}
+				}
+			}
 		}
 		
 		for (j = 0; j < sizeof(stateBusySigs) / sizeof(FuncPattern); j++) {
@@ -1587,10 +1923,13 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 155, length, &DVDLowRequestAudioStatusSigs[0]) &&
 							findx_pattern(data, dataType, i + 165, length, &DVDLowAudioBufferConfigSigs[0]) &&
 							findx_pattern(data, dataType, i + 176, length, &DVDLowInquirySigs[0])) {
+							stateBusySigs[j].offsetFoundAt = i;
+							
 							find_pattern_after(data, length, &DVDLowSeekSigs[0], &DVDLowWaitCoverCloseSigs[0]);
 							find_pattern_after(data, length, &DVDLowStopMotorSigs[0], &DVDLowRequestErrorSigs[0]);
-							find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[0], &DVDLowResetSigs[0]);
-							stateBusySigs[j].offsetFoundAt = i;
+							
+							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[0], &DVDLowResetSigs[0]))
+								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
 						}
 						break;
 					case 1:
@@ -1609,10 +1948,13 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 150, length, &DVDLowRequestAudioStatusSigs[1]) &&
 							findx_pattern(data, dataType, i + 160, length, &DVDLowAudioBufferConfigSigs[1]) &&
 							findx_pattern(data, dataType, i + 171, length, &DVDLowInquirySigs[1])) {
+							stateBusySigs[j].offsetFoundAt = i;
+							
 							find_pattern_after(data, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]);
 							find_pattern_after(data, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]);
-							find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[1]);
-							stateBusySigs[j].offsetFoundAt = i;
+							
+							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[1]))
+								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 2:
@@ -1631,10 +1973,13 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 150, length, &DVDLowRequestAudioStatusSigs[2]) &&
 							findx_pattern(data, dataType, i + 160, length, &DVDLowAudioBufferConfigSigs[2]) &&
 							findx_pattern(data, dataType, i + 171, length, &DVDLowInquirySigs[2])) {
+							stateBusySigs[j].offsetFoundAt = i;
+							
 							find_pattern_after(data, length, &DVDLowSeekSigs[2], &DVDLowWaitCoverCloseSigs[2]);
 							find_pattern_after(data, length, &DVDLowStopMotorSigs[2], &DVDLowRequestErrorSigs[2]);
-							find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[2], &DVDLowResetSigs[1]);
-							stateBusySigs[j].offsetFoundAt = i;
+							
+							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[2], &DVDLowResetSigs[1]))
+								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 3:
@@ -1653,10 +1998,13 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 167, length, &DVDLowRequestAudioStatusSigs[2]) &&
 							findx_pattern(data, dataType, i + 177, length, &DVDLowAudioBufferConfigSigs[2]) &&
 							findx_pattern(data, dataType, i + 188, length, &DVDLowInquirySigs[2])) {
+							stateBusySigs[j].offsetFoundAt = i;
+							
 							find_pattern_after(data, length, &DVDLowSeekSigs[2], &DVDLowWaitCoverCloseSigs[2]);
 							find_pattern_after(data, length, &DVDLowStopMotorSigs[2], &DVDLowRequestErrorSigs[2]);
-							find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[2], &DVDLowResetSigs[1]);
-							stateBusySigs[j].offsetFoundAt = i;
+							
+							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[2], &DVDLowResetSigs[1]))
+								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 4:
@@ -1675,10 +2023,11 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 156, length, &DVDLowRequestAudioStatusSigs[3]) &&
 							findx_pattern(data, dataType, i + 165, length, &DVDLowAudioBufferConfigSigs[3]) &&
 							findx_pattern(data, dataType, i + 175, length, &DVDLowInquirySigs[3])) {
+							stateBusySigs[j].offsetFoundAt = i;
+							
 							find_pattern_after(data, length, &DVDLowSeekSigs[3], &DVDLowWaitCoverCloseSigs[3]);
 							find_pattern_after(data, length, &DVDLowStopMotorSigs[3], &DVDLowRequestErrorSigs[3]);
 							find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[3], &DVDLowResetSigs[2]);
-							stateBusySigs[j].offsetFoundAt = i;
 						}
 						break;
 					case 5:
@@ -1698,10 +2047,13 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 177, length, &DVDLowAudioBufferConfigSigs[2]) &&
 							findx_pattern(data, dataType, i + 188, length, &DVDLowInquirySigs[2]) &&
 							findx_pattern(data, dataType, i + 196, length, &DVDLowStopMotorSigs[2])) {
+							stateBusySigs[j].offsetFoundAt = i;
+							
 							find_pattern_after(data, length, &DVDLowSeekSigs[2], &DVDLowWaitCoverCloseSigs[2]);
 							find_pattern_after(data, length, &DVDLowStopMotorSigs[2], &DVDLowRequestErrorSigs[2]);
-							find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[2], &DVDLowResetSigs[1]);
-							stateBusySigs[j].offsetFoundAt = i;
+							
+							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[2], &DVDLowResetSigs[1]))
+								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 				}
@@ -1825,22 +2177,18 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 	
 	if (j < sizeof(SetInterruptMaskSigs) / sizeof(FuncPattern) && (i = SetInterruptMaskSigs[j].offsetFoundAt)) {
 		u32 *SetInterruptMask = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		u32 jumpTableAddr;
 		u32 **jumpTable;
 		
 		if (SetInterruptMask) {
 			switch (j) {
-				case 0: jumpTableAddr = (data[i + 5] << 16) + (s16)data[i + 6]; break;
-				case 2: jumpTableAddr = (data[i + 3] << 16) + (s16)data[i + 4]; break;
-				default: jumpTableAddr = 0;
-			}
-			
-			jumpTable = Calc_Address(data, dataType, jumpTableAddr);
-			
-			switch (j) {
-				case 0: jumpTable[4] = SetInterruptMask + 11; break;
-				case 2: jumpTable[4] = SetInterruptMask +  9; break;
+				case 0:
+					jumpTable = loadResolve(data, dataType, i + 5, i + 6);
+					jumpTable[4] = SetInterruptMask + 11;
+					break;
+				case 2:
+					jumpTable = loadResolve(data, dataType, i + 3, i + 4);
+					jumpTable[4] = SetInterruptMask +  9;
+					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", SetInterruptMaskSigs[j].Name, SetInterruptMask);
 		}
@@ -2021,7 +2369,6 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			switch (j) {
 				case 0:
 					EXILockHook = getPatchAddr(EXI_LOCKHOOKD);
-					
 					EXILockHook[0]  =  data[i + 34];
 					EXILockHook[1] |= (data[i +  4] >> 5) & 0x1F0000;
 					EXILockHook[2] |= (data[i +  5] >> 5) & 0x1F0000;
@@ -2033,7 +2380,6 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					break;
 				case 1:
 					EXILockHook = getPatchAddr(EXI_LOCKHOOK);
-					
 					EXILockHook[0]  =  data[i + 13];
 					EXILockHook[1] |= (data[i +  4] >> 5) & 0x1F0000;
 					EXILockHook[2] |= (data[i +  9] >> 5) & 0x1F0000;
@@ -2046,7 +2392,6 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					break;
 				case 2:
 					EXILockHook = getPatchAddr(EXI_LOCKHOOK);
-					
 					EXILockHook[0]  =  data[i + 12];
 					EXILockHook[1] |= (data[i +  4] >> 5) & 0x1F0000;
 					EXILockHook[2] |= (data[i +  5] >> 5) & 0x1F0000;
@@ -2108,6 +2453,22 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", __DVDInterruptHandlerSigs[j].Name, __DVDInterruptHandler);
+		}
+	}
+	
+	for (j = 0; j < sizeof(AlarmHandlerForTimeoutSigs) / sizeof(FuncPattern); j++)
+		if (AlarmHandlerForTimeoutSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(AlarmHandlerForTimeoutSigs) / sizeof(FuncPattern) && (i = AlarmHandlerForTimeoutSigs[j].offsetFoundAt)) {
+		u32 *AlarmHandlerForTimeout = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (AlarmHandlerForTimeout) {
+			switch (j) {
+				case 0: data[i + 5] = 0x3C600800; break;	// lis		r3, 0x0800
+				case 1: data[i + 1] = 0x3C600800; break;	// lis		r3, 0x0800
+				case 2: data[i + 2] = 0x3C600800; break;	// lis		r3, 0x0800
+			}
+			print_gecko("Found:[%s] @ %08X\n", AlarmHandlerForTimeoutSigs[j].Name, AlarmHandlerForTimeout);
 		}
 	}
 	
@@ -2417,6 +2778,84 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		}
 	}
 	
+	for (j = 0; j < sizeof(DoBreakSigs) / sizeof(FuncPattern); j++)
+		if (DoBreakSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(DoBreakSigs) / sizeof(FuncPattern) && (i = DoBreakSigs[j].offsetFoundAt)) {
+		u32 *DoBreak = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (DoBreak) {
+			switch (j) {
+				case 0:
+					data[i + 2] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 5] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 1:
+					data[i + 0] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", DoBreakSigs[j].Name, DoBreak);
+		}
+	}
+	
+	for (j = 0; j < sizeof(AlarmHandlerForBreakSigs) / sizeof(FuncPattern); j++)
+		if (AlarmHandlerForBreakSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(AlarmHandlerForBreakSigs) / sizeof(FuncPattern) && (i = AlarmHandlerForBreakSigs[j].offsetFoundAt)) {
+		u32 *AlarmHandlerForBreak = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (AlarmHandlerForBreak) {
+			switch (j) {
+				case 0:
+					data[i + 3] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 1:
+					data[i + 1] = 0x3C800C00;	// lis		r4, 0x0C00
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", AlarmHandlerForBreakSigs[j].Name, AlarmHandlerForBreak);
+		}
+	}
+	
+	for (j = 0; j < sizeof(DVDLowBreakSigs) / sizeof(FuncPattern); j++)
+		if (DVDLowBreakSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(DVDLowBreakSigs) / sizeof(FuncPattern) && (i = DVDLowBreakSigs[j].offsetFoundAt)) {
+		u32 *DVDLowBreak = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (DVDLowBreak) {
+			if (j == 1)
+				data[i + 1] = 0x3C800C00;	// lis		r4, 0x0C00
+			
+			print_gecko("Found:[%s] @ %08X\n", DVDLowBreakSigs[j].Name, DVDLowBreak);
+		}
+	}
+	
+	for (j = 0; j < sizeof(DVDLowClearCallbackSigs) / sizeof(FuncPattern); j++)
+		if (DVDLowClearCallbackSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(DVDLowClearCallbackSigs) / sizeof(FuncPattern) && (i = DVDLowClearCallbackSigs[j].offsetFoundAt)) {
+		u32 *DVDLowClearCallback = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (DVDLowClearCallback) {
+			switch (j) {
+				case 0:
+					data[i + 3] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 1:
+					data[i + 0] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i + 1] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 3:
+					data[i + 0] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", DVDLowClearCallbackSigs[j].Name, DVDLowClearCallback);
+		}
+	}
+	
 	for (j = 0; j < sizeof(DVDLowGetCoverStatusSigs) / sizeof(FuncPattern); j++)
 		if (DVDLowGetCoverStatusSigs[j].offsetFoundAt) break;
 	
@@ -2493,14 +2932,78 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	for (j = 0; j < sizeof(stateReadySigs) / sizeof(FuncPattern); j++)
-		if (stateReadySigs[j].offsetFoundAt) break;
+	for (j = 0; j < sizeof(cbForStateGettingErrorSigs) / sizeof(FuncPattern); j++)
+		if (cbForStateGettingErrorSigs[j].offsetFoundAt) break;
 	
-	if (j < sizeof(stateReadySigs) / sizeof(FuncPattern) && (i = stateReadySigs[j].offsetFoundAt)) {
-		u32 *stateReady = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+	if (j < sizeof(cbForStateGettingErrorSigs) / sizeof(FuncPattern) && (i = cbForStateGettingErrorSigs[j].offsetFoundAt)) {
+		u32 *cbForStateGettingError = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		if (stateReady) {
-			print_gecko("Found:[%s] @ %08X\n", stateReadySigs[j].Name, stateReady);
+		if (cbForStateGettingError) {
+			switch (j) {
+				case 0:
+					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 1:
+					data[i + 31] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i + 26] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 3:
+					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", cbForStateGettingErrorSigs[j].Name, cbForStateGettingError);
+		}
+	}
+	
+	for (j = 0; j < sizeof(cbForUnrecoveredErrorRetrySigs) / sizeof(FuncPattern); j++)
+		if (cbForUnrecoveredErrorRetrySigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(cbForUnrecoveredErrorRetrySigs) / sizeof(FuncPattern) && (i = cbForUnrecoveredErrorRetrySigs[j].offsetFoundAt)) {
+		u32 *cbForUnrecoveredErrorRetry = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (cbForUnrecoveredErrorRetry) {
+			switch (j) {
+				case 0:
+					data[i + 21] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 1:
+					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i + 22] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 3:
+					data[i + 21] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", cbForUnrecoveredErrorRetrySigs[j].Name, cbForUnrecoveredErrorRetry);
+		}
+	}
+	
+	for (j = 0; j < sizeof(cbForStateMotorStoppedSigs) / sizeof(FuncPattern); j++)
+		if (cbForStateMotorStoppedSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(cbForStateMotorStoppedSigs) / sizeof(FuncPattern) && (i = cbForStateMotorStoppedSigs[j].offsetFoundAt)) {
+		u32 *cbForStateMotorStopped = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (cbForStateMotorStopped) {
+			switch (j) {
+				case 0:
+					data[i + 14] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 1:
+					data[i +  1] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i +  2] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 3:
+					data[i +  1] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", cbForStateMotorStoppedSigs[j].Name, cbForStateMotorStopped);
 		}
 	}
 	
