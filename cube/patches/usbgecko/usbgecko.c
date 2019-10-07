@@ -6,35 +6,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../base/common.h"
-
-enum {
-	EXI_READ = 0,
-	EXI_WRITE,
-	EXI_READ_WRITE,
-};
-
-enum {
-	EXI_CHANNEL_0 = 0,
-	EXI_CHANNEL_1,
-	EXI_CHANNEL_2,
-	EXI_CHANNEL_MAX
-};
-
-enum {
-	EXI_DEVICE_0 = 0,
-	EXI_DEVICE_1,
-	EXI_DEVICE_2,
-	EXI_DEVICE_MAX
-};
-
-enum {
-	EXI_SPEED_1MHZ = 0,
-	EXI_SPEED_2MHZ,
-	EXI_SPEED_4MHZ,
-	EXI_SPEED_8MHZ,
-	EXI_SPEED_16MHZ,
-	EXI_SPEED_32MHZ,
-};
+#include "../base/exi.h"
 
 typedef struct {
 	uint32_t offset;
@@ -149,8 +121,10 @@ void usb_request(uint32_t offset, uint32_t size)
 	usb_transmit(&request, sizeof(request), sizeof(request));
 }
 
-bool exi_lock(int32_t channel, uint32_t device)
+bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 {
+	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
+		return false;
 	return true;
 }
 

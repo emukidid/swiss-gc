@@ -53,10 +53,6 @@ void *installPatch(int patchId) {
 	u32 patchSize = 0;
 	void* patchLocation = 0;
 	switch(patchId) {
-		case EXI_LOCKHOOK:
-			patchSize = EXILockHook_length; patchLocation = EXILockHook; break;
-		case EXI_LOCKHOOKD:
-			patchSize = EXILockHookD_length; patchLocation = EXILockHookD; break;
 		case GX_COPYDISPHOOK:
 			patchSize = GXCopyDispHook_length; patchLocation = GXCopyDispHook; break;
 		case GX_INITTEXOBJLODHOOK:
@@ -829,10 +825,38 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 63, 18, 3, 7, 17, 3, NULL, 0, "SetExiInterruptMaskD" },
 		{ 61, 19, 3, 7, 17, 2, NULL, 0, "SetExiInterruptMask" }
 	};
-	FuncPattern EXILockSigs[3] = {
-		{ 106, 35, 5, 9, 13, 6, NULL, 0, "EXILockD" },
+	FuncPattern __EXIProbeSigs[5] = {
+		{ 108, 38, 2, 7, 10, 10, NULL, 0, "__EXIProbeD A" },
+		{ 112, 39, 5, 7, 10, 10, NULL, 0, "__EXIProbeD B" },
+		{  90, 30, 4, 5,  8, 10, NULL, 0, "__EXIProbe A" },
+		{  93, 30, 7, 5,  8, 10, NULL, 0, "__EXIProbe B" },
+		{  93, 30, 7, 5,  8,  9, NULL, 0, "__EXIProbe C" }
+	};
+	FuncPattern EXISelectSigs[5] = {
+		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD A" },
+		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD B" },
+		{  75, 18, 4,  6, 11, 7, NULL, 0, "EXISelect A" },
+		{  75, 18, 4,  6, 11, 7, NULL, 0, "EXISelect B" },
+		{  75, 18, 4,  6, 11, 8, NULL, 0, "EXISelect C" }
+	};
+	FuncPattern EXIDeselectSigs[5] = {
+		{ 76, 21, 3, 7, 14, 5, NULL, 0, "EXIDeselectD A" },
+		{ 77, 22, 3, 7, 14, 5, NULL, 0, "EXIDeselectD B" },
+		{ 68, 20, 8, 6, 12, 3, NULL, 0, "EXIDeselect A" },
+		{ 68, 20, 8, 6, 12, 3, NULL, 0, "EXIDeselect B" },
+		{ 68, 20, 8, 6, 12, 4, NULL, 0, "EXIDeselect C" }
+	};
+	FuncPattern EXILockSigs[4] = {
+		{ 106, 35, 5, 9, 13, 6, NULL, 0, "EXILockD A" },
+		{ 106, 35, 5, 9, 13, 6, NULL, 0, "EXILockD B" },
 		{  61, 18, 7, 5,  5, 6, NULL, 0, "EXILock A" },
 		{  61, 17, 7, 5,  5, 7, NULL, 0, "EXILock B" }
+	};
+	FuncPattern EXIUnlockSigs[4] = {
+		{ 60, 22, 4, 6, 5, 4, NULL, 0, "EXIUnlockD A" },
+		{ 61, 23, 4, 6, 5, 4, NULL, 0, "EXIUnlockD B" },
+		{ 55, 21, 8, 5, 3, 2, NULL, 0, "EXIUnlock A" },
+		{ 55, 21, 8, 5, 3, 3, NULL, 0, "EXIUnlock B" }
 	};
 	FuncPattern __DVDInterruptHandlerSigs[5] = {
 		{ 161, 50, 22,  8, 18, 12, NULL, 0, "__DVDInterruptHandlerD" },
@@ -1391,25 +1415,66 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			}
 		}
 		
-		for (j = 0; j < sizeof(EXILockSigs) / sizeof(FuncPattern); j++) {
-			if (!EXILockSigs[j].offsetFoundAt && compare_pattern(&fp, &EXILockSigs[j])) {
+		for (j = 0; j < sizeof(EXIDeselectSigs) / sizeof(FuncPattern); j++) {
+			if (!EXIDeselectSigs[j].offsetFoundAt && compare_pattern(&fp, &EXIDeselectSigs[j])) {
 				switch (j) {
 					case 0:
-						if (findx_pattern(data, dataType, i + 33, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 61, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 80, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 97, length, &SetExiInterruptMaskSigs[0]) &&
-							findx_pattern(data, dataType, i + 99, length, &OSRestoreInterruptsSig))
-							EXILockSigs[j].offsetFoundAt = i;
+						if (findx_pattern(data, dataType, i + 19, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 57, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 63, length, &__EXIProbeSigs[j]) &&
+							find_pattern_before(data, length, &fp, &EXISelectSigs[j]))
+							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
+						if (findx_pattern(data, dataType, i + 20, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 26, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 58, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 64, length, &__EXIProbeSigs[j]) &&
+							find_pattern_before(data, length, &fp, &EXISelectSigs[j]))
+							EXIDeselectSigs[j].offsetFoundAt = i;
+						break;
 					case 2:
-						if (findx_pattern(data, dataType, i + 11, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 43, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 52, length, &SetExiInterruptMaskSigs[1]) &&
-							findx_pattern(data, dataType, i + 54, length, &OSRestoreInterruptsSig))
-							EXILockSigs[j].offsetFoundAt = i;
+					case 3:
+					case 4:
+						if (findx_pattern(data, dataType, i + 12, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 18, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 52, length, &__EXIProbeSigs[j]) &&
+							find_pattern_before(data, length, &fp, &EXISelectSigs[j]))
+							EXIDeselectSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(EXIUnlockSigs) / sizeof(FuncPattern); j++) {
+			if (!EXIUnlockSigs[j].offsetFoundAt && compare_pattern(&fp, &EXIUnlockSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i + 19, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 33, length, &SetExiInterruptMaskSigs[0]) &&
+							findx_pattern(data, dataType, i + 53, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &EXILockSigs[j]))
+							EXIUnlockSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i + 20, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 26, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 34, length, &SetExiInterruptMaskSigs[0]) &&
+							findx_pattern(data, dataType, i + 54, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &EXILockSigs[j]))
+							EXIUnlockSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+					case 3:
+						if (findx_pattern(data, dataType, i + 12, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 18, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 26, length, &SetExiInterruptMaskSigs[1]) &&
+							findx_pattern(data, dataType, i + 45, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &EXILockSigs[j]))
+							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -2335,14 +2400,14 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (devices[DEVICE_CUR] == &__device_fsp) {
-		for (j = 0; j < sizeof(SetExiInterruptMaskSigs) / sizeof(FuncPattern); j++)
-			if (SetExiInterruptMaskSigs[j].offsetFoundAt) break;
+	for (j = 0; j < sizeof(SetExiInterruptMaskSigs) / sizeof(FuncPattern); j++)
+		if (SetExiInterruptMaskSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(SetExiInterruptMaskSigs) / sizeof(FuncPattern) && (i = SetExiInterruptMaskSigs[j].offsetFoundAt)) {
+		u32 *SetExiInterruptMask = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		if (j < sizeof(SetExiInterruptMaskSigs) / sizeof(FuncPattern) && (i = SetExiInterruptMaskSigs[j].offsetFoundAt)) {
-			u32 *SetExiInterruptMask = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			
-			if (SetExiInterruptMask) {
+		if (SetExiInterruptMask) {
+			if (devices[DEVICE_CUR] == &__device_fsp) {
 				switch (j) {
 					case 0:
 						data[i + 28] = 0x3C600040;	// lis		r3, 0x0040
@@ -2353,56 +2418,76 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 						data[i + 29] = 0x3C600040;	// lis		r3, 0x0040
 						break;
 				}
-				print_gecko("Found:[%s] @ %08X\n", SetExiInterruptMaskSigs[j].Name, SetExiInterruptMask);
 			}
+			print_gecko("Found:[%s] @ %08X\n", SetExiInterruptMaskSigs[j].Name, SetExiInterruptMask);
 		}
 	}
 	
-	for (j = 0; j < sizeof(EXILockSigs) / sizeof(FuncPattern); j++)
-		if (EXILockSigs[j].offsetFoundAt) break;
+	for (j = 0; j < sizeof(EXISelectSigs) / sizeof(FuncPattern); j++)
+		if (EXISelectSigs[j].offsetFoundAt) break;
 	
-	if (j < sizeof(EXILockSigs) / sizeof(FuncPattern) && (i = EXILockSigs[j].offsetFoundAt)) {
-		u32 *EXILock = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		u32 *EXILockHook;
+	if (j < sizeof(EXISelectSigs) / sizeof(FuncPattern) && (i = EXISelectSigs[j].offsetFoundAt)) {
+		u32 *EXISelect = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		if (EXILock) {
+		if (EXISelect) {
 			switch (j) {
 				case 0:
-					EXILockHook = getPatchAddr(EXI_LOCKHOOKD);
-					EXILockHook[0]  =  data[i + 34];
-					EXILockHook[1] |= (data[i +  4] >> 5) & 0x1F0000;
-					EXILockHook[2] |= (data[i +  5] >> 5) & 0x1F0000;
-					EXILockHook[6]  = branchAndLink(EXI_LOCK, EXILockHook + 6);
-					
-					data[i + 34] = branchAndLink(EXILockHook, EXILock + 34);
-					
-					EXILockHook[13] |= data[i + 98] & 0x3E00000;
+					data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
+					data[i + 65] = 0x389D0000;	// addi		r4, r29, 0
+					data[i + 66] = 0x38BE0000;	// addi		r5, r30, 0
+					data[i + 67] = branchAndLink(EXI_TRYLOCK, EXISelect + 67);
+					data[i + 68] = 0x2C030000;	// cmpwi	r3, 0
+					data[i + 69] = 0x40820014;	// bne		+5
 					break;
 				case 1:
-					EXILockHook = getPatchAddr(EXI_LOCKHOOK);
-					EXILockHook[0]  =  data[i + 13];
-					EXILockHook[1] |= (data[i +  4] >> 5) & 0x1F0000;
-					EXILockHook[2] |= (data[i +  9] >> 5) & 0x1F0000;
-					EXILockHook[6]  = branchAndLink(EXI_LOCK, EXILockHook + 6);
-					
-					data[i + 13] = data[i + 12];
-					data[i + 12] = branchAndLink(EXILockHook, EXILock + 12);
-					
-					EXILockHook[13] |= data[i + 53] & 0x3E00000;
+					data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
+					data[i + 65] = 0x389C0000;	// addi		r4, r28, 0
+					data[i + 66] = 0x38BD0000;	// addi		r5, r29, 0
+					data[i + 67] = branchAndLink(EXI_TRYLOCK, EXISelect + 67);
+					data[i + 68] = 0x2C030000;	// cmpwi	r3, 0
+					data[i + 69] = 0x40820014;	// bne		+5
 					break;
 				case 2:
-					EXILockHook = getPatchAddr(EXI_LOCKHOOK);
-					EXILockHook[0]  =  data[i + 12];
-					EXILockHook[1] |= (data[i +  4] >> 5) & 0x1F0000;
-					EXILockHook[2] |= (data[i +  5] >> 5) & 0x1F0000;
-					EXILockHook[6]  = branchAndLink(EXI_LOCK, EXILockHook + 6);
-					
-					data[i + 12] = branchAndLink(EXILockHook, EXILock + 12);
-					
-					EXILockHook[13] |= data[i + 53] & 0x3E00000;
+				case 3:
+				case 4:
+					data[i + 27] = 0x387B0000;	// addi		r3, r27, 0
+					data[i + 28] = 0x389C0000;	// addi		r4, r28, 0
+					data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
+					data[i + 30] = branchAndLink(EXI_TRYLOCK, EXISelect + 30);
+					data[i + 31] = 0x2C030000;	// cmpwi	r3, 0
+					data[i + 32] = 0x40820014;	// bne		+5
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", EXILockSigs[j].Name, EXILock);
+			if (devices[DEVICE_CUR] == &__device_fsp) {
+				switch (j) {
+					case 0:
+					case 1: data[i + 103] = 0x3C600011; break;	// lis		r3, 0x0011
+					case 2:
+					case 3:
+					case 4: data[i +  62] = 0x3C600011; break;	// lis		r3, 0x0011
+				}
+			}
+			print_gecko("Found:[%s] @ %08X\n", EXISelectSigs[j].Name, EXISelect);
+		}
+	}
+	
+	for (j = 0; j < sizeof(EXIDeselectSigs) / sizeof(FuncPattern); j++)
+		if (EXIDeselectSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(EXIDeselectSigs) / sizeof(FuncPattern) && (i = EXIDeselectSigs[j].offsetFoundAt)) {
+		u32 *EXIDeselect = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (EXIDeselect) {
+			if (devices[DEVICE_CUR] == &__device_fsp) {
+				switch (j) {
+					case 0: data[i + 51] = 0x3C600011; break;	// lis		r3, 0x0011
+					case 1: data[i + 52] = 0x3C600011; break;	// lis		r3, 0x0011
+					case 2:
+					case 3:
+					case 4: data[i + 40] = 0x3C600011; break;	// lis		r3, 0x0011
+				}
+			}
+			print_gecko("Found:[%s] @ %08X\n", EXIDeselectSigs[j].Name, EXIDeselect);
 		}
 	}
 	

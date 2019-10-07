@@ -118,7 +118,7 @@ dcache_flush_icache_inv:
 
 	.globl _start
 _start:
-	b		exi_lock
+	b		exi_trylock
 	b		set_di_handler
 	b		set_breakpoint
 	b		unset_breakpoint

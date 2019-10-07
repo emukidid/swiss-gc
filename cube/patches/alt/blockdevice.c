@@ -6,10 +6,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../base/common.h"
+#include "../base/exi.h"
 
-bool exi_lock(int32_t channel, uint32_t device)
+bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 {
-	if (channel == *(uint8_t *)VAR_EXI_SLOT)
+	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
+		return false;
+	if (chan == *(uint8_t *)VAR_EXI_SLOT)
 		end_read();
 	return true;
 }

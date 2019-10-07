@@ -8,6 +8,7 @@
 #include <string.h>
 #include "../base/common.h"
 #include "../base/dvd.h"
+#include "../base/exi.h"
 #include "../base/os.h"
 #include "bba.h"
 #include "globals.h"
@@ -51,35 +52,6 @@
 #define BBA_INIT_RHBP	0x0f
 #define BBA_INIT_RWP	BBA_INIT_BP
 #define BBA_INIT_RRP	BBA_INIT_BP
-
-enum {
-	EXI_READ = 0,
-	EXI_WRITE,
-	EXI_READ_WRITE,
-};
-
-enum {
-	EXI_CHANNEL_0 = 0,
-	EXI_CHANNEL_1,
-	EXI_CHANNEL_2,
-	EXI_CHANNEL_MAX
-};
-
-enum {
-	EXI_DEVICE_0 = 0,
-	EXI_DEVICE_1,
-	EXI_DEVICE_2,
-	EXI_DEVICE_MAX
-};
-
-enum {
-	EXI_SPEED_1MHZ = 0,
-	EXI_SPEED_2MHZ,
-	EXI_SPEED_4MHZ,
-	EXI_SPEED_8MHZ,
-	EXI_SPEED_16MHZ,
-	EXI_SPEED_32MHZ,
-};
 
 static bool exi_selected(void)
 {
@@ -275,10 +247,11 @@ void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	bba_cmd_out8(0x02, BBA_CMD_IRMASKNONE);
 }
 
-bool exi_lock(int32_t channel, uint32_t device)
+bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 {
-	if (channel == EXI_CHANNEL_0 &&
-		device  == EXI_DEVICE_2)
+	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
+		return false;
+	if (chan == EXI_CHANNEL_0 && dev == EXI_DEVICE_2)
 		return false;
 	return true;
 }
