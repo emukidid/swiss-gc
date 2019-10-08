@@ -61,10 +61,11 @@ typedef struct {
 #define TB_CLOCK  40500000
 
 static u32(*const DI_EMU)[9] = (u32(*)[])VAR_DI_REGS;
-static vu32(*const PI)[13] = (vu32(*)[])0xCC003000;
-static vu16(*const MI)[46] = (vu16(*)[])0xCC004000;
-static vu32(*const DI)[10] = (vu32(*)[])0xCC006000;
-static vu32(*const EXI)[5] = (vu32(*)[])0xCC006800;
+
+extern volatile u32 PI[13];
+extern volatile u16 MI[46];
+extern volatile u32 DI[10];
+extern volatile u32 EXI[3][5];
 
 u32 do_read(void *dst, u32 len, u32 offset, u32 sector);
 void end_read(void);

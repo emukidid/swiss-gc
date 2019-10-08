@@ -95,17 +95,17 @@ static void di_write(unsigned index, uint32_t value)
 
 static void pi_read(unsigned index, uint32_t *value)
 {
-	*value = (*PI)[index];
+	*value = PI[index];
 }
 
 static void pi_write(unsigned index, uint32_t value)
 {
 	switch (index) {
 		case 9:
-			(*PI)[index] = ((value << 1) & 0b100) | (value & ~0b100);
+			PI[index] = ((value << 1) & 0b100) | (value & ~0b100);
 			break;
 		default:
-			(*PI)[index] = value;
+			PI[index] = value;
 	}
 }
 
@@ -210,7 +210,7 @@ static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 		return;
 	}
 
-	(*MI)[16] = 0;
+	MI[16] = 0;
 }
 
 void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);

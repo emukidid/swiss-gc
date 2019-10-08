@@ -55,7 +55,7 @@
 
 static bool exi_selected(void)
 {
-	return !!((*EXI)[0] & 0x380);
+	return !!(EXI[EXI_CHANNEL_0][0] & 0x380);
 }
 
 static void exi_clear_interrupts(int32_t chan, bool exi, bool tc, bool ext)
@@ -65,34 +65,34 @@ static void exi_clear_interrupts(int32_t chan, bool exi, bool tc, bool ext)
 
 static void exi_select(void)
 {
-	(*EXI)[0] = ((*EXI)[0] & 0x405) | ((1 << EXI_DEVICE_2) << 7) | (EXI_SPEED_32MHZ << 4);
+	EXI[EXI_CHANNEL_0][0] = (EXI[EXI_CHANNEL_0][0] & 0x405) | ((1 << EXI_DEVICE_2) << 7) | (EXI_SPEED_32MHZ << 4);
 }
 
 static void exi_deselect(void)
 {
-	(*EXI)[0] &= 0x405;
+	EXI[EXI_CHANNEL_0][0] &= 0x405;
 }
 
 static void exi_imm_write(uint32_t data, uint32_t len)
 {
-	(*EXI)[4] = data;
-	(*EXI)[3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 0b01;
-	while ((*EXI)[3] & 0b01);
+	EXI[EXI_CHANNEL_0][4] = data;
+	EXI[EXI_CHANNEL_0][3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 0b01;
+	while (EXI[EXI_CHANNEL_0][3] & 0b01);
 }
 
 static uint32_t exi_imm_read(uint32_t len)
 {
-	(*EXI)[3] = ((len - 1) << 4) | (EXI_READ << 2) | 0b01;
-	while ((*EXI)[3] & 0b01);
-	return (*EXI)[4] >> ((4 - len) * 8);
+	EXI[EXI_CHANNEL_0][3] = ((len - 1) << 4) | (EXI_READ << 2) | 0b01;
+	while (EXI[EXI_CHANNEL_0][3] & 0b01);
+	return EXI[EXI_CHANNEL_0][4] >> ((4 - len) * 8);
 }
 
 static uint32_t exi_imm_read_write(uint32_t data, uint32_t len)
 {
-	(*EXI)[4] = data;
-	(*EXI)[3] = ((len - 1) << 4) | (EXI_READ_WRITE << 2) | 0b01;
-	while ((*EXI)[3] & 0b01);
-	return (*EXI)[4] >> ((4 - len) * 8);
+	EXI[EXI_CHANNEL_0][4] = data;
+	EXI[EXI_CHANNEL_0][3] = ((len - 1) << 4) | (EXI_READ_WRITE << 2) | 0b01;
+	while (EXI[EXI_CHANNEL_0][3] & 0b01);
+	return EXI[EXI_CHANNEL_0][4] >> ((4 - len) * 8);
 }
 
 static void exi_immex_write(const void *buf, uint32_t len)
@@ -107,10 +107,10 @@ static void exi_immex_write(const void *buf, uint32_t len)
 
 static void exi_dma_read(void *buf, uint32_t len)
 {
-	(*EXI)[1] = (uint32_t)buf;
-	(*EXI)[2] = (len + 31) & ~31;
-	(*EXI)[3] = (EXI_READ << 2) | 0b11;
-	while ((*EXI)[3] & 0b01);
+	EXI[EXI_CHANNEL_0][1] = (uint32_t)buf;
+	EXI[EXI_CHANNEL_0][2] = (len + 31) & ~31;
+	EXI[EXI_CHANNEL_0][3] = (EXI_READ << 2) | 0b11;
+	while (EXI[EXI_CHANNEL_0][3] & 0b01);
 }
 
 static uint8_t bba_in8(uint16_t reg)

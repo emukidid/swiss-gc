@@ -5,7 +5,7 @@ LD      = $(DIR)/powerpc-eabi-ld
 OBJDUMP = $(DIR)/powerpc-eabi-objdump
 OBJCOPY = $(DIR)/powerpc-eabi-objcopy
 
-OPTS	= -ffunction-sections -fno-asynchronous-unwind-tables
+OPTS	= -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables
 
 DEST    = ../swiss/source/patches
 
@@ -54,7 +54,7 @@ build-sd:
 	@$(CC) -O1 $(OPTS) -c base/Stream.c
 	@$(CC) -O1 $(OPTS) -c base/__DSPHandler.S
 	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o sd.elf base.o igr.o frag.o sd.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o memcpy.o --section-start .text=0x80001000 --gc-sections
+	@$(LD) -o sd.elf -T base/base.ld -T base/common.ld base.o igr.o frag.o sd.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o memcpy.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D sd.elf > $(DISASM)/sd_disasm.txt
 	@$(OBJCOPY) -O binary sd.elf sd.bin
@@ -74,7 +74,7 @@ build-sd-alt:
 	@$(CC) -O2 $(OPTS) -c base/igr.c
 	@$(CC) -O2 $(OPTS) -c base/memcpy.S
 	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o sd_alt.elf -T alt/base.ld -T base/os.ld base.o emulator.o blockdevice.o sd.o frag.o usbgecko.o igr.o memcpy.o os.o --gc-sections
+	@$(LD) -o sd_alt.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o blockdevice.o sd.o frag.o usbgecko.o igr.o memcpy.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D sd_alt.elf > $(DISASM)/sd_alt_disasm.txt
 	@$(OBJCOPY) -O binary sd_alt.elf sd_alt.bin
@@ -96,7 +96,7 @@ build-ideexi-v1:
 	@$(CC) -O1 $(OPTS) -c base/Stream.c
 	@$(CC) -O1 $(OPTS) -c base/__DSPHandler.S
 	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o ideexi_v1.elf base.o igr.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o memcpy.o --section-start .text=0x80001000 -gc-sections 
+	@$(LD) -o ideexi_v1.elf -T base/base.ld -T base/common.ld base.o igr.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o memcpy.o --gc-sections 
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_v1.elf > $(DISASM)/ideexi_v1_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_v1.elf ideexi_v1.bin
@@ -116,7 +116,7 @@ build-ideexi-altv1:
 	@$(CC) -O2 $(OPTS) -c base/igr.c
 	@$(CC) -O2 $(OPTS) -c base/memcpy.S
 	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o ideexi_altv1.elf -T alt/base.ld -T base/os.ld base.o emulator.o blockdevice.o hddread.o frag.o usbgecko.o igr.o memcpy.o os.o --gc-sections
+	@$(LD) -o ideexi_altv1.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o blockdevice.o hddread.o frag.o usbgecko.o igr.o memcpy.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_altv1.elf > $(DISASM)/ideexi_altv1_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_altv1.elf ideexi_altv1.bin
@@ -138,7 +138,7 @@ build-ideexi-v2:
 	@$(CC) -O1 $(OPTS) -c base/Stream.c
 	@$(CC) -O1 $(OPTS) -c base/__DSPHandler.S
 	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o ideexi_v2.elf base.o igr.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o memcpy.o --section-start .text=0x80001000 -gc-sections 
+	@$(LD) -o ideexi_v2.elf -T base/base.ld -T base/common.ld base.o igr.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o memcpy.o -gc-sections 
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_v2.elf > $(DISASM)/ideexi_v2_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_v2.elf ideexi_v2.bin
@@ -158,7 +158,7 @@ build-ideexi-altv2:
 	@$(CC) -O2 $(OPTS) -c base/igr.c
 	@$(CC) -O2 $(OPTS) -c base/memcpy.S
 	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o ideexi_altv2.elf -T alt/base.ld -T base/os.ld base.o emulator.o blockdevice.o hddread.o frag.o usbgecko.o igr.o memcpy.o os.o --gc-sections
+	@$(LD) -o ideexi_altv2.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o blockdevice.o hddread.o frag.o usbgecko.o igr.o memcpy.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_altv2.elf > $(DISASM)/ideexi_altv2_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_altv2.elf ideexi_altv2.bin
@@ -176,7 +176,7 @@ build-dvd:
 	@$(CC) -O1 $(OPTS) -c base/usbgecko.c
 	@$(CC) -O1 $(OPTS) -c base/igr.c
 	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o dvd.elf base.o igr.o frag.o sd.o dvd.o usbgecko.o memcpy.o --section-start .text=0x80001800
+	@$(LD) -o dvd.elf -T dvd/base.ld -T base/common.ld base.o igr.o frag.o sd.o dvd.o usbgecko.o memcpy.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd_disasm.txt
 	@$(OBJCOPY) -O binary dvd.elf dvd.bin
@@ -195,7 +195,7 @@ build-usb:
 	@$(CC) -O2 $(OPTS) -c base/igr.c
 	@$(CC) -O2 $(OPTS) -c base/memcpy.S
 	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o usbgecko.elf -T alt/base.ld -T base/os.ld base.o emulator.o usbgecko.o sd.o frag.o igr.o memcpy.o os.o --gc-sections
+	@$(LD) -o usbgecko.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o usbgecko.o sd.o frag.o igr.o memcpy.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
@@ -213,7 +213,7 @@ build-wkf:
 	@$(CC) -O1 $(OPTS) -c base/frag.c
 	@$(CC) -O1 $(OPTS) -c base/igr.c  -DWKF
 	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o wkf.elf base.o wkf.o usbgecko.o sd.o frag.o igr.o memcpy.o --section-start .text=0x80001000 --gc-sections
+	@$(LD) -o wkf.elf -T wkf/base.ld -T base/common.ld base.o wkf.o usbgecko.o sd.o frag.o igr.o memcpy.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf_disasm.txt
 	@$(OBJCOPY) -O binary wkf.elf wkf.bin
@@ -233,7 +233,7 @@ build-bba:
 	@$(CC) -O2 $(OPTS) -c base/igr.c
 	@$(CC) -O2 $(OPTS) -c base/memcpy.S
 	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o bba.elf -T alt/base.ld -T base/os.ld base.o emulator.o bba.o usbgecko.o sd.o frag.o igr.o memcpy.o os.o --gc-sections
+	@$(LD) -o bba.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o bba.o usbgecko.o sd.o frag.o igr.o memcpy.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D bba.elf > $(DISASM)/bba_disasm.txt
 	@$(OBJCOPY) -O binary bba.elf bba.bin
