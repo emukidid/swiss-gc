@@ -2512,19 +2512,34 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				case 1:
 					data[i +  31] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  51] = 0x3FE00C00;	// lis		r31, 0x0C00
+					data[i +  77] = 0x801F6004;	// lwz		r0, 0x6004 (r31)
+					data[i +  91] = 0x801F6004;	// lwz		r0, 0x6004 (r31)
+					data[i +  92] = 0x901F6004;	// stw		r0, 0x6004 (r31)
 					data[i +  97] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  99] = 0x80050004;	// lwz		r0, 0x0004 (r5)
+					data[i + 108] = 0x90050004;	// stw		r0, 0x0004 (r5)
 					data[i + 112] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 2:
 					data[i +  33] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  54] = 0x3FE00C00;	// lis		r31, 0x0C00
+					data[i +  80] = 0x801F6004;	// lwz		r0, 0x6004 (r31)
+					data[i +  94] = 0x801F6004;	// lwz		r0, 0x6004 (r31)
+					data[i +  95] = 0x901F6004;	// stw		r0, 0x6004 (r31)
 					data[i + 100] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 102] = 0x80050004;	// lwz		r0, 0x0004 (r5)
+					data[i + 111] = 0x90050004;	// stw		r0, 0x0004 (r5)
 					data[i + 115] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 3:
 					data[i +  28] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  51] = 0x3FE00C00;	// lis		r31, 0x0C00
+					data[i +  78] = 0x801B0004;	// lwz		r0, 0x0004 (r27)
+					data[i +  92] = 0x801B0004;	// lwz		r0, 0x0004 (r27)
+					data[i +  93] = 0x901B0004;	// stw		r0, 0x0004 (r27)
 					data[i +  98] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 100] = 0x80050004;	// lwz		r0, 0x0004 (r5)
+					data[i + 109] = 0x90050004;	// stw		r0, 0x0004 (r5)
 					data[i + 113] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 4:
@@ -2859,6 +2874,23 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		u32 *DVDLowReset = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowReset) {
+			switch (j) {
+				case 0:
+					data[i +  5] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 11] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 37] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 1:
+					data[i +  1] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 11] = 0x901F0024;	// stw		r0, 0x0024 (r31)
+					data[i + 36] = 0x901F0024;	// stw		r0, 0x0024 (r31)
+					break;
+				case 2:
+					data[i +  6] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 36] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", DVDLowResetSigs[j].Name, DVDLowReset);
 		}
 	}
@@ -3239,6 +3271,19 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		u32 *DVDReset = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDReset) {
+			switch (j) {
+				case 0:
+					data[i + 5] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 7] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 9] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 1:
+					data[i + 4] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i + 5] = 0x3C800C00;	// lis		r4, 0x0C00
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", DVDResetSigs[j].Name, DVDReset);
 		}
 	}

@@ -93,8 +93,28 @@ static void di_write(unsigned index, uint32_t value)
 	}
 }
 
+static void pi_read(unsigned index, uint32_t *value)
+{
+	*value = (*PI)[index];
+}
+
+static void pi_write(unsigned index, uint32_t value)
+{
+	switch (index) {
+		case 9:
+			(*PI)[index] = ((value << 1) & 0b100) | (value & ~0b100);
+			break;
+		default:
+			(*PI)[index] = value;
+	}
+}
+
 static bool ppc_load32(uint32_t address, uint32_t *value)
 {
+	if ((address & ~0xFFC) == 0x0C003000) {
+		pi_read((address >> 2) & 0x7F, value);
+		return true;
+	}
 	if ((address & ~0x3FC) == 0x0C006000) {
 		di_read((address >> 2) & 0xF, value);
 		return true;
@@ -104,6 +124,10 @@ static bool ppc_load32(uint32_t address, uint32_t *value)
 
 static bool ppc_store32(uint32_t address, uint32_t value)
 {
+	if ((address & ~0xFFC) == 0x0C003000) {
+		pi_write((address >> 2) & 0x7F, value);
+		return true;
+	}
 	if ((address & ~0x3FC) == 0x0C006000) {
 		di_write((address >> 2) & 0xF, value);
 		return true;
@@ -122,13 +146,6 @@ static bool ppc_step(OSContext *context)
 			int ra = (opcode >> 16) & 0x1F;
 			short d = opcode & 0xFFFF;
 			return ppc_load32(context->gpr[ra] + d, &context->gpr[rd]);
-		}
-		case 33:
-		{
-			int rd = (opcode >> 21) & 0x1F;
-			int ra = (opcode >> 16) & 0x1F;
-			short d = opcode & 0xFFFF;
-			return ppc_load32(context->gpr[ra] += d, &context->gpr[rd]);
 		}
 		case 36:
 		{
