@@ -206,7 +206,6 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2) {
 	*(vu16*)VAR_IPV4_ID = 0;
 	*(vu16*)VAR_FSP_KEY = 0;
 	*(vu16*)VAR_FSP_DATA_LENGTH = 0;
-	*(vu32*)VAR_FSP_POSITION = EOF;
 	return 1;
 }
 

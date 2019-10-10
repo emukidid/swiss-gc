@@ -27,33 +27,46 @@ void di_complete_transfer(void)
 	uint32_t length  = (*DI_EMU)[6];
 
 	(*DI_EMU)[0] |= 0b0010000;
-	(*DI_EMU)[6]  = 0;
 	(*DI_EMU)[7] &= ~0b001;
 
-	if ((*DI_EMU)[7] & 0b010)
+	if ((*DI_EMU)[7] & 0b010) {
+		(*DI_EMU)[6] = 0;
 		dcache_flush_icache_inv((void *)address, length);
+	}
 
 	di_update_interrupts();
 }
 
 static void di_execute_command(void)
 {
+	uint32_t result = 0;
+
 	switch ((*DI_EMU)[2] >> 24) {
 		case 0xA8:
 		{
-			uint32_t offset  = (*DI_EMU)[3] << 2;
-			uint32_t length  = (*DI_EMU)[4];
-			uint32_t address = (*DI_EMU)[5] + OS_BASE_CACHED;
+			if (!((*DI_EMU)[1] & 0b001)) {
+				uint32_t offset  = (*DI_EMU)[3] << 2;
+				uint32_t length  = (*DI_EMU)[4];
+				uint32_t address = (*DI_EMU)[5] + OS_BASE_CACHED;
 
-			perform_read(offset, length, address);
+				perform_read(offset, length, address);
+			} else {
+				(*DI_EMU)[0] |= 0b0000100;
+				(*DI_EMU)[7] &= ~0b001;
+				di_update_interrupts();
+			}
+			return;
+		}
+		case 0xE0:
+		{
+			if ((*DI_EMU)[1] & 0b001)
+				result = 0x01023A00;
 			break;
 		}
-		default:
-		{
-			(*DI_EMU)[8] = 0;
-			di_complete_transfer();
-		}
 	}
+
+	(*DI_EMU)[8] = result;
+	di_complete_transfer();
 }
 
 static void di_read(unsigned index, uint32_t *value)
@@ -95,7 +108,13 @@ static void di_write(unsigned index, uint32_t value)
 
 static void pi_read(unsigned index, uint32_t *value)
 {
-	*value = PI[index];
+	switch (index) {
+		case 0:
+			*value = PI[index] & ~(!!*(uint32_t *)VAR_IGR_EXIT_FLAG << 16);
+			break;
+		default:
+			*value = PI[index];
+	}
 }
 
 static void pi_write(unsigned index, uint32_t value)

@@ -858,6 +858,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch, int noASRequir
 	*(vu32*)VAR_LAST_OFFSET = 0xCAFEBABE;
 	*(vu32*)VAR_AS_ENABLED = GCMDisk.AudioStreaming;
 	*(vu8*)VAR_IGR_EXIT_TYPE = (u8)swissSettings.igrType;
+	*(vu32*)VAR_IGR_EXIT_FLAG = 0;
 	memset((void*)VAR_DI_REGS, 0, 0x24);
 	memset((void*)VAR_STREAM_START, 0, 0xA0);
 	print_gecko("Audio Streaming is %s\r\n",*(vu32*)VAR_AS_ENABLED?"Enabled":"Disabled");
