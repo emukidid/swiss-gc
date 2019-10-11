@@ -188,7 +188,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 	free(FST);
 	
 	// Multi-DOL games may re-load the main DOL, so make sure we patch it too.
-	if((devices[DEVICE_CUR]->features & FEAT_CAN_HOLD_PATCHES) || numFiles > 0) {
+	if((devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) || numFiles > 0) {
 		DOLHEADER dolhdr;
 		u32 main_dol_size = 0;
 		// Calc size

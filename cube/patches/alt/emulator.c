@@ -26,7 +26,7 @@ void di_complete_transfer(void)
 	uint32_t address = (*DI_EMU)[5] + OS_BASE_CACHED;
 	uint32_t length  = (*DI_EMU)[6];
 
-	(*DI_EMU)[0] |= 0b0010000;
+	(*DI_EMU)[0] |=  0b0010000;
 	(*DI_EMU)[7] &= ~0b001;
 
 	if ((*DI_EMU)[7] & 0b010) {
@@ -51,7 +51,7 @@ static void di_execute_command(void)
 
 				perform_read(offset, length, address);
 			} else {
-				(*DI_EMU)[0] |= 0b0000100;
+				(*DI_EMU)[0] |=  0b0000100;
 				(*DI_EMU)[7] &= ~0b001;
 				di_update_interrupts();
 			}
@@ -62,6 +62,12 @@ static void di_execute_command(void)
 			if ((*DI_EMU)[1] & 0b001)
 				result = 0x01023A00;
 			break;
+		}
+		case 0xE3:
+		{
+			(*DI_EMU)[1] |= 0b001;
+			mftb((tb_t *)VAR_TIMER_START);
+			*(uint32_t *)VAR_DISC_CHANGING = 1;
 		}
 	}
 

@@ -17,6 +17,7 @@ bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 	return true;
 }
 
+void di_update_interrupts(void);
 void di_complete_transfer(void);
 
 void perform_read(uint32_t offset, uint32_t length, uint32_t address)
@@ -44,5 +45,21 @@ void trickle_read(void)
 		*(uint8_t **)VAR_TMP1 = data + data_size;
 
 		if (!remainder) di_complete_transfer();
+	} else if (*(uint32_t *)VAR_DISC_CHANGING) {
+		tb_t end;
+		mftb(&end);
+
+		if (tb_diff_usec(&end, (tb_t *)VAR_TIMER_START) > 1000000) {
+			if (*(uint32_t *)VAR_CUR_DISC_LBA == *(uint32_t *)VAR_DISC_1_LBA)
+				*(uint32_t *)VAR_CUR_DISC_LBA  = *(uint32_t *)VAR_DISC_2_LBA;
+			else
+				*(uint32_t *)VAR_CUR_DISC_LBA  = *(uint32_t *)VAR_DISC_1_LBA;
+
+			*(uint32_t *)VAR_DISC_CHANGING = 0;
+
+			(*DI_EMU)[1] &= ~0b001;
+			(*DI_EMU)[1] |=  0b100;
+			di_update_interrupts();
+		}
 	}
 }
