@@ -29,10 +29,11 @@ typedef enum {
 typedef enum {
 	DEV_SDA	= 0,
 	DEV_SDB	= 1,
-	DEV_IDEA = 2,
-	DEV_IDEB = 3,
-	DEV_WKF = 4,
-	DEV_MAX = 5
+	DEV_SDC	= 2,
+	DEV_IDEA = 3,
+	DEV_IDEB = 4,
+	DEV_WKF = 5,
+	DEV_MAX = 6
 } DeviceNumber;
 
 DSTATUS disk_initialize (BYTE pdrv);
