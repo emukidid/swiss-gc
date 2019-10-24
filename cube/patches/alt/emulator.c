@@ -19,6 +19,8 @@ void di_update_interrupts(void)
 		*(OSInterruptMask *)OSCachedToMirrored(VAR_FAKE_IRQ_SET) |=  OS_INTERRUPTMASK_EMU_DI;
 	else
 		*(OSInterruptMask *)OSCachedToUncached(VAR_FAKE_IRQ_SET) &= ~OS_INTERRUPTMASK_EMU_DI;
+
+	asm volatile("sc" ::: "r9", "r10");
 }
 
 void di_complete_transfer(void)
@@ -65,9 +67,12 @@ static void di_execute_command(void)
 		}
 		case 0xE3:
 		{
-			(*DI_EMU)[1] |= 0b001;
-			mftb((tb_t *)VAR_TIMER_START);
-			*(uint32_t *)VAR_DISC_CHANGING = 1;
+			if (*(uint32_t *)VAR_DISC_1_LBA != *(uint32_t *)VAR_DISC_2_LBA) {
+				(*DI_EMU)[1] |= 0b001;
+				mftb((tb_t *)VAR_TIMER_START);
+				*(uint32_t *)VAR_DISC_CHANGING = 1;
+			}
+			break;
 		}
 	}
 
