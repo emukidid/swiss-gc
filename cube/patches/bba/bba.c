@@ -263,10 +263,9 @@ void perform_read(uint32_t offset, uint32_t length, uint32_t address)
 	*_position  = offset;
 	*_remainder = length;
 	*_data = (void *)address;
-	*_data_size = 0;
 
 	if (!is_frag_read(offset, length))
-		fsp_output(_file, *_filelen, offset, length);
+		fsp_get_file(offset, length);
 }
 
 void trickle_read(void)
@@ -290,13 +289,13 @@ void trickle_read(void)
 
 			if (!remainder) di_complete_transfer();
 			else if (!is_frag_read(position, remainder))
-				fsp_output(_file, *_filelen, position, remainder);
+				fsp_get_file(position, remainder);
 		} else {
 			tb_t end;
 			mftb(&end);
 
 			if (tb_diff_usec(&end, _start) > 1000000)
-				fsp_output(_file, *_filelen, position, remainder);
+				fsp_get_file(position, remainder);
 		}
 	}
 }

@@ -48,6 +48,20 @@ typedef volatile f64 vf64;
 	asm volatile ("mtmsr %0" :: "r" (msr)); \
 })
 
+#define disable_breakpoint() ({ \
+	unsigned long dabr; \
+	asm volatile ("mfdabr %0" : "=r" (dabr)); \
+	asm volatile ("clrrwi %0,%0,2" : "+r" (dabr)); \
+	asm volatile ("mtdabr %0" :: "r" (dabr)); \
+})
+
+#define enable_breakpoint() ({ \
+	unsigned long dabr; \
+	asm volatile ("mfdabr %0" : "=r" (dabr)); \
+	asm volatile ("ori %0,%0,1" : "+r" (dabr)); \
+	asm volatile ("mtdabr %0" :: "r" (dabr)); \
+})
+
 #define mftb(rval) ({unsigned long u; do { \
 	 asm volatile ("mftbu %0" : "=r" (u)); \
 	 asm volatile ("mftb %0" : "=r" ((rval)->l)); \

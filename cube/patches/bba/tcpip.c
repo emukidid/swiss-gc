@@ -135,8 +135,11 @@ static uint8_t fsp_checksum(fsp_header_t *header, size_t size)
 	return sum;
 }
 
-static void fsp_output(const char *file, uint8_t filelen, uint32_t offset, size_t size)
+static void fsp_get_file(uint32_t offset, size_t size)
 {
+	const char *file = _file;
+	uint8_t filelen = *_filelen;
+
 	uint8_t data[MIN_FRAME_SIZE + filelen];
 	eth_header_t *eth = (eth_header_t *)data;
 	ipv4_header_t *ipv4 = (ipv4_header_t *)eth->data;
@@ -258,7 +261,7 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 					*_data = data + data_size;
 					*_data_size = 0;
 
-					if (remainder) fsp_output(_file, *_filelen, position, remainder);
+					if (remainder) fsp_get_file(position, remainder);
 				}
 
 				if (!*_received)

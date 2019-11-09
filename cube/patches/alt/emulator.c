@@ -28,6 +28,8 @@ void di_complete_transfer(void)
 	uint32_t address = (*DI_EMU)[5] + OS_BASE_CACHED;
 	uint32_t length  = (*DI_EMU)[6];
 
+	disable_breakpoint();
+
 	(*DI_EMU)[0] |=  0b0010000;
 	(*DI_EMU)[7] &= ~0b001;
 
@@ -52,6 +54,7 @@ static void di_execute_command(void)
 				uint32_t address = (*DI_EMU)[5] + OS_BASE_CACHED;
 
 				perform_read(offset, length, address);
+				enable_breakpoint();
 			} else {
 				(*DI_EMU)[0] |=  0b0000100;
 				(*DI_EMU)[7] &= ~0b001;
@@ -191,15 +194,11 @@ static bool ppc_step(OSContext *context)
 
 OSContext *exception_handler(OSException exception, OSContext *context, uint32_t dsisr, uint32_t dar)
 {
-	uint32_t dabr;
-
 	switch (exception) {
 		case OS_EXCEPTION_DSI:
 		{
 			if ((dsisr & 0x400000) == 0x400000) {
-				asm volatile("mfdabr %0" : "=r" (dabr));
-				asm volatile("mtdabr %0" :: "r" (dabr & ~0b011));
-
+				disable_breakpoint();
 				trickle_read();
 				context->srr1 |= 0x400;
 				break;
@@ -258,7 +257,7 @@ OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler hand
 DVDCommandBlock *set_breakpoint(DVDCommandBlock *block)
 {
 	uint32_t dabr = (uint32_t)&block->state & ~0b111;
-	asm volatile("mtdabr %0" :: "r" (dabr | 0b101));
+	asm volatile("mtdabr %0" :: "r" (dabr | 0b100));
 	return block;
 }
 

@@ -79,10 +79,8 @@ static void send_cmd(u32 cmd, u32 sector) {
 	exi_imm_write(1<<24, 1);
 	if (cmd == CMD12) rcvr_spi();
 
-	int timeout = 10;
-	while((rcvr_spi() & 0x80) && timeout) {
-		timeout--;
-	}
+	int timeout = 16;
+	while((rcvr_spi() & 0x80) && --timeout);
 }
 
 static void exi_read_to_buffer(void *dest, u32 len) {
