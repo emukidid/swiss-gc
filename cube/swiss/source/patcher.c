@@ -843,6 +843,8 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{  93, 30, 7, 5,  8,  9, NULL, 0, "__EXIProbe C" },
 		{ 109, 34, 6, 5,  8,  8, NULL, 0, "__EXIProbe C" }
 	};
+	FuncPattern EXISelectSDSig = 
+		{ 85, 23, 4, 7, 14, 6, NULL, 0, "EXISelectSD" };
 	FuncPattern EXISelectSigs[6] = {
 		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD A" },
 		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD B" },
@@ -1485,6 +1487,15 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 						__OSRescheduleSig.offsetFoundAt = i;
 				}
 			}
+		}
+		
+		if (!EXISelectSDSig.offsetFoundAt && compare_pattern(&fp, &EXISelectSDSig)) {
+			if (findx_pattern(data, dataType, i + 11, length, &OSDisableInterruptsSig) &&
+				findx_pattern(data, dataType, i + 24, length, &__EXIProbeSigs[4]) &&
+				findx_pattern(data, dataType, i + 48, length, &OSRestoreInterruptsSig) &&
+				findx_pattern(data, dataType, i + 78, length, &OSRestoreInterruptsSig) &&
+				find_pattern_after(data, length, &fp, &EXISelectSigs[4]))
+				EXISelectSDSig.offsetFoundAt = i;
 		}
 		
 		for (j = 0; j < sizeof(EXIDeselectSigs) / sizeof(FuncPattern); j++) {
@@ -2557,6 +2568,24 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", SetExiInterruptMaskSigs[j].Name, SetExiInterruptMask);
+		}
+	}
+	
+	if ((i = EXISelectSDSig.offsetFoundAt)) {
+		u32 *EXISelectSD = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (EXISelectSD) {
+			data[i + 41] = 0x387B0000;	// addi		r3, r27, 0
+			data[i + 42] = 0x389C0000;	// addi		r4, r28, 0
+			data[i + 43] = 0x38BF0000;	// addi		r5, r31, 0
+			data[i + 44] = branchAndLink(EXI_TRYLOCK, EXISelectSD + 44);
+			data[i + 45] = 0x2C030000;	// cmpwi	r3, 0
+			data[i + 46] = 0x40820014;	// bne		+5
+			
+			if (devices[DEVICE_CUR] == &__device_fsp)
+				data[i + 72] = 0x3C600011;	// lis		r3, 0x0011
+			
+			print_gecko("Found:[%s] @ %08X\n", EXISelectSDSig.Name, EXISelectSD);
 		}
 	}
 	
