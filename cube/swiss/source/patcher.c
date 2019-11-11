@@ -6511,7 +6511,34 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 
 void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int dataType)
 {
-	if (!strncmp(gameID, "GXXE01", 6) && dataType == PATCH_DOL) {
+	if ((!strncmp(gameID, "G3FD69", 6) || !strncmp(gameID, "G3FE69", 6) || !strncmp(gameID, "G3FF69", 6) || !strncmp(gameID, "G3FP69", 6) || !strncmp(gameID, "G3FS69", 6)) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4880320:
+				*(u32 *)(data + 0x80184780 - 0x800055E0 + 0x25E0) = 0x3C800000 | (0x80184CA0 + 0x8000) >> 16;
+				*(u32 *)(data + 0x80184784 - 0x800055E0 + 0x25E0) = 0x3860000F;
+				*(u32 *)(data + 0x80184788 - 0x800055E0 + 0x25E0) = 0x38840000 | (0x80184CA0 & 0xFFFF);
+				*(u32 *)(data + 0x8018478C - 0x800055E0 + 0x25E0) = branchAndLink((u32 *)0x8039858C, (u32 *)0x8018478C);
+				*(u32 *)(data + 0x80184790 - 0x800055E0 + 0x25E0) = 0x48000038;
+				*(u32 *)(data + 0x80184794 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80184798 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8018479C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x801847A0 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x801847A4 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x801847A8 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x801847AC - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x801847B0 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x801847B4 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x801847B8 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x801847BC - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x801847C0 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x801847C4 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				*(u32 *)(data + 0x80184CAC - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GXXE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4333056:
 				*(u32 *)(data + 0x802ADCEC - 0x800056A0 + 0x2600) = 0x60000000;

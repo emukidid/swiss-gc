@@ -82,7 +82,7 @@ static const u32 GC_DefaultConfig[56] =
 	0x01800000, 0x00000000, 0x09A7EC80, 0x1CF7C580  // 52..55 800000F0
 };
 
-char *DiscIDNoNTSC[] = {"DLSP64", "GFZP01", "GLRD64", "GLRF64", "GLRP64", "GM8P01", "GMSP01", "GSWD64", "GSWF64", "GSWI64", "GSWP64", "GSWS64"};
+char *DiscIDNoNTSC[] = {"DLSP64", "G3FD69", "G3FF69", "G3FP69", "G3FS69", "GFZP01", "GLRD64", "GLRF64", "GLRP64", "GM8P01", "GMSP01", "GSWD64", "GSWF64", "GSWI64", "GSWP64", "GSWS64"};
 
 /* re-init video for a given game */
 void ogc_video__reset()
