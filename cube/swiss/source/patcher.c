@@ -6538,6 +6538,60 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
+	} else if (!strncmp(gameID, "GISE36", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3266176:
+				*(u32 *)(data + 0x8010A738 - 0x800055E0 + 0x25E0) = 0x3C800000 | (0x8010AC60 + 0x8000) >> 16;
+				*(u32 *)(data + 0x8010A73C - 0x800055E0 + 0x25E0) = 0x3860000F;
+				*(u32 *)(data + 0x8010A740 - 0x800055E0 + 0x25E0) = 0x38840000 | (0x8010AC60 & 0xFFFF);
+				*(u32 *)(data + 0x8010A744 - 0x800055E0 + 0x25E0) = branchAndLink((u32 *)0x80270BCC, (u32 *)0x8010A744);
+				*(u32 *)(data + 0x8010A748 - 0x800055E0 + 0x25E0) = 0x48000038;
+				*(u32 *)(data + 0x8010A74C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010A750 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010A754 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010A758 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010A75C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010A760 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010A764 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010A768 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010A76C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010A770 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010A774 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010A778 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010A77C - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				*(u32 *)(data + 0x8010AC6C - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GISP36", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3268768:
+				*(u32 *)(data + 0x8010AED0 - 0x800055E0 + 0x25E0) = 0x3C800000 | (0x8010B3F8 + 0x8000) >> 16;
+				*(u32 *)(data + 0x8010AED4 - 0x800055E0 + 0x25E0) = 0x3860000F;
+				*(u32 *)(data + 0x8010AED8 - 0x800055E0 + 0x25E0) = 0x38840000 | (0x8010B3F8 & 0xFFFF);
+				*(u32 *)(data + 0x8010AEDC - 0x800055E0 + 0x25E0) = branchAndLink((u32 *)0x8027169C, (u32 *)0x8010AEDC);
+				*(u32 *)(data + 0x8010AEE0 - 0x800055E0 + 0x25E0) = 0x48000038;
+				*(u32 *)(data + 0x8010AEE4 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010AEE8 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010AEEC - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010AEF0 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010AEF4 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010AEF8 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010AEFC - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010AF00 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010AF04 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010AF08 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010AF0C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010AF10 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8010AF14 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				*(u32 *)(data + 0x8010B404 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
 	} else if (!strncmp(gameID, "GXXE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4333056:
