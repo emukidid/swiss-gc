@@ -222,6 +222,7 @@ int Patch_Fwrite(void *addr, u32 length);
 int Patch_DVDReset(void *addr,u32 length);
 int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType);
 int Patch_GameSpecificFile(void *data, u32 length, const char* gameID, const char* fileName);
+void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int dataType);
 void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dataType);
 void Patch_PADStatus(u32 *data, u32 length, int dataType);
 int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType );

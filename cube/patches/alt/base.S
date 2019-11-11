@@ -42,7 +42,7 @@ dsi_exception_handler:
 	mfdar	r6
 	bl		exception_handler
 
-	.globl load_context
+	.globl load_context, load_context_end
 load_context:
 	lwz		r0, 0 (r3)
 	lwz		sp, 4 (r3)
@@ -79,6 +79,7 @@ load_context:
 	sth		r4, 418 (r3)
 	lwz		r4, 16 (r3)
 	lwz		r3, 12 (r3)
+load_context_end:
 	rfi
 
 	.balign 0x100

@@ -4,6 +4,7 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include "../base/common.h"
 #include "../base/dvd.h"
@@ -192,11 +193,17 @@ static bool ppc_step(OSContext *context)
 	return false;
 }
 
+extern uint32_t load_context_end[];
+
 OSContext *exception_handler(OSException exception, OSContext *context, uint32_t dsisr, uint32_t dar)
 {
+	OSExceptionHandler handler;
+
 	switch (exception) {
 		case OS_EXCEPTION_DSI:
 		{
+			handler = OSGetExceptionHandler(OS_EXCEPTION_USER);
+
 			if ((dsisr & 0x400000) == 0x400000) {
 				disable_breakpoint();
 				trickle_read();
@@ -207,14 +214,23 @@ OSContext *exception_handler(OSException exception, OSContext *context, uint32_t
 				context->srr0 += 4;
 				break;
 			}
+			if (handler) {
+				ptrdiff_t offset = (ptrdiff_t)handler - (ptrdiff_t)load_context_end;
+
+				*load_context_end = 0x48000000 | (offset & 0x3FFFFFC);
+				dcache_flush_icache_inv(load_context_end, sizeof(*load_context_end));
+				return context;
+			}
 		}
 		default:
 		{
-			OSExceptionHandler handler = *OSExceptionHandlerTable;
+			handler = *OSExceptionHandlerTable;
 			if (handler) (handler + 0x50)(exception, context, dsisr, dar);
 		}
 	}
 
+	*load_context_end = 0x4C000064;
+	dcache_flush_icache_inv(load_context_end, sizeof(*load_context_end));
 	return context;
 }
 
@@ -223,6 +239,7 @@ void dsi_exception_handler(OSException exception, OSContext *context, ...);
 static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	OSInterruptMask cause = *(OSInterruptMask *)OSCachedToUncached(VAR_FAKE_IRQ_SET);
+	OSInterruptHandler handler;
 	OSContext exceptionContext;
 
 	if (cause) {
@@ -231,7 +248,7 @@ static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 		OSClearContext(&exceptionContext);
 		OSSetCurrentContext(&exceptionContext);
 
-		OSInterruptHandler handler = OSGetInterruptHandler(interrupt);
+		handler = OSGetInterruptHandler(interrupt);
 		if (handler) handler(interrupt, &exceptionContext);
 
 		OSClearContext(&exceptionContext);
