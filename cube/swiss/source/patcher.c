@@ -781,7 +781,7 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 34, 8, 6, 3, 3, 4, NULL, 0, "__OSUnmaskInterrupts" },
 		{ 32, 8, 6, 3, 1, 4, NULL, 0, "__OSUnmaskInterrupts" }	// SN Systems ProDG
 	};
-	FuncPattern __OSRebootSigs[9] = {
+	FuncPattern __OSRebootSigs[10] = {
 		{  81, 34, 6, 16,  1,  2, NULL, 0, "__OSRebootD A" },
 		{  89, 39, 8, 17,  1,  2, NULL, 0, "__OSRebootD B" },
 		{ 108, 36, 7, 16, 26,  3, NULL, 0, "__OSReboot A" },
@@ -790,14 +790,15 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 114, 39, 8, 19, 26,  2, NULL, 0, "__OSReboot D" },
 		{ 199, 56, 7, 42, 13, 36, NULL, 0, "__OSReboot E" },	// SN Systems ProDG
 		{ 208, 54, 7, 40, 23, 34, NULL, 0, "__OSReboot E" },
-		{  28, 11, 5,  6,  0,  2, NULL, 0, "__OSReboot F" }
+		{ 204, 54, 6, 40, 23, 35, NULL, 0, "__OSReboot F" },
+		{  28, 11, 5,  6,  0,  2, NULL, 0, "__OSReboot G" }
 	};
 	FuncPattern __OSDoHotResetSigs[3] = {
 		{ 17, 6, 3, 3, 0, 2, NULL, 0, "__OSDoHotResetD" },
 		{ 18, 6, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" },
 		{ 17, 5, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" }	// SN Systems ProDG
 	};
-	FuncPattern OSResetSystemSigs[10] = {
+	FuncPattern OSResetSystemSigs[11] = {
 		{  64, 13, 2, 15,  6, 8, NULL, 0, "OSResetSystemD A" },
 		{  97, 29, 3, 27,  5, 8, NULL, 0, "OSResetSystemD B" },
 		{ 110, 19, 2, 16, 24, 9, NULL, 0, "OSResetSystem A" },
@@ -807,7 +808,8 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 148, 44, 2, 26, 16, 9, NULL, 0, "OSResetSystem D" },	// SN Systems ProDG
 		{ 162, 41, 2, 24, 34, 9, NULL, 0, "OSResetSystem E" },
 		{ 174, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem F" },
-		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem G" }
+		{ 175, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem G" },
+		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem H" }
 	};
 	FuncPattern OSGetResetButtonStateSigs[6] = {
 		{ 118, 36, 11, 6, 12, 26, NULL, 0, "OSGetResetSwitchStateD" },
@@ -1058,12 +1060,13 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 187, 105, 23, 16, 18, 11, NULL, 0, "stateBusy C" },	// SN Systems ProDG
 		{ 208, 123, 24, 17, 21, 10, NULL, 0, "stateBusy D" }
 	};
-	FuncPattern cbForStateBusySigs[5] = {
+	FuncPattern cbForStateBusySigs[6] = {
 		{ 329, 142, 27, 21, 45,  6, NULL, 0, "cbForStateBusyD" },
 		{ 373, 158, 41, 21, 52,  6, NULL, 0, "cbForStateBusy A" },
 		{ 398, 167, 41, 21, 58, 11, NULL, 0, "cbForStateBusy B" },
 		{ 395, 160, 40, 19, 56, 12, NULL, 0, "cbForStateBusy B" },	// SN Systems ProDG
-		{ 406, 167, 41, 22, 60, 11, NULL, 0, "cbForStateBusy C" }
+		{ 389, 161, 38, 21, 58, 11, NULL, 0, "cbForStateBusy C" },
+		{ 406, 167, 41, 22, 60, 11, NULL, 0, "cbForStateBusy D" }
 	};
 	FuncPattern DVDResetSigs[3] = {
 		{ 19, 9, 6, 1, 0, 2, NULL, 0, "DVDResetD" },
@@ -1289,6 +1292,20 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							__OSRebootSigs[j].offsetFoundAt = i;
 						break;
 					case 8:
+						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  18, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i +  20, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  33, length, &__OSUnmaskInterruptsSigs[1]) &&
+							findx_pattern(data, dataType, i +  34, length, &OSEnableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  58, length, &__OSDoHotResetSigs[1]) &&
+							findx_pattern(data, dataType, i + 106, length, &__OSDoHotResetSigs[1]) &&
+							findx_pattern(data, dataType, i + 145, length, &__OSDoHotResetSigs[1]) &&
+							findx_pattern(data, dataType, i + 187, length, &__OSDoHotResetSigs[1]) &&
+							findx_pattern(data, dataType, i + 195, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 196, length, &ICFlashInvalidateSig))
+							__OSRebootSigs[j].offsetFoundAt = i;
+						break;
+					case 9:
 						if (findx_pattern(data, dataType, i +  7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 13, length, &OSClearContextSigs[1]) &&
 							findx_pattern(data, dataType, i + 15, length, &OSSetCurrentContextSig))
@@ -1365,6 +1382,13 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 									OSResetSystemSigs[k].offsetFoundAt = i;
 								break;
 							case 9:
+								if (findx_pattern(data, dataType, i +  65, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  87, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  92, length, &ICFlashInvalidateSig) &&
+									findx_pattern(data, dataType, i + 125, length, &__OSRebootSigs[j]))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 10:
 								if (findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  79, length, &ICFlashInvalidateSig) &&
@@ -2260,6 +2284,10 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 4:
+								if (findx_pattern(data, dataType, i + 184, length, &stateBusySigs[j]))
+									cbForStateBusySigs[k].offsetFoundAt = i;
+								break;
+							case 5:
 								if (findx_pattern(data, dataType, i + 201, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
@@ -2392,6 +2420,7 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					case 5: data[i + 37] = 0x3C600801; break;	// lis		r3, 0x0801
 					case 6:
 					case 7: data[i + 33] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 8: data[i + 32] = 0x3C600801; break;	// lis		r3, 0x0801
 				}
 			} else {
 				switch (j) {
@@ -2403,6 +2432,7 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					case 5: data[i + 37] = 0x3C600800; break;	// lis		r3, 0x0800
 					case 6:
 					case 7: data[i + 33] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 8:	data[i + 32] = 0x3C600800; break;	// lis		r3, 0x0800
 				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", __OSRebootSigs[j].Name, __OSReboot);
@@ -2433,14 +2463,15 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		
 		if (OSResetSystem) {
 			switch (j) {
-				case 2: data[i + 72] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 72); break;
-				case 3: data[i + 73] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 73); break;
-				case 4: data[i + 72] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 72); break;
-				case 5: data[i + 77] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 77); break;
-				case 6: data[i + 66] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 66); break;
-				case 7: data[i + 81] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 81); break;
-				case 8: data[i + 86] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 86); break;
-				case 9: data[i + 74] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 74); break;
+				case  2: data[i + 72] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 72); break;
+				case  3: data[i + 73] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 73); break;
+				case  4: data[i + 72] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 72); break;
+				case  5: data[i + 77] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 77); break;
+				case  6: data[i + 66] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 66); break;
+				case  7: data[i + 81] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 81); break;
+				case  8: data[i + 86] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 86); break;
+				case  9: data[i + 87] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 87); break;
+				case 10: data[i + 74] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 74); break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", OSResetSystemSigs[j].Name, OSResetSystem);
 		}
@@ -3430,6 +3461,12 @@ void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 256] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 4:
+					data[i +  96] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 230] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 234] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 257] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 5:
 					data[i +  96] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 247] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 251] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -7279,7 +7316,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		{ 18, 6, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" },
 		{ 17, 5, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" }	// SN Systems ProDG
 	};
-	FuncPattern OSResetSystemSigs[10] = {
+	FuncPattern OSResetSystemSigs[11] = {
 		{  64, 13, 2, 15,  6, 8, NULL, 0, "OSResetSystemD A" },
 		{  97, 29, 3, 27,  5, 8, NULL, 0, "OSResetSystemD B" },
 		{ 110, 19, 2, 16, 24, 9, NULL, 0, "OSResetSystem A" },
@@ -7289,7 +7326,8 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		{ 148, 44, 2, 26, 16, 9, NULL, 0, "OSResetSystem D" },	// SN Systems ProDG
 		{ 162, 41, 2, 24, 34, 9, NULL, 0, "OSResetSystem E" },
 		{ 174, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem F" },
-		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem G" }
+		{ 175, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem G" },
+		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem H" }
 	};
 	FuncPattern UpdateOriginSigs[4] = {
 		{ 105, 15, 1, 0, 20, 4, NULL, 0, "UpdateOriginD A" },
@@ -7454,6 +7492,12 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 									OSResetSystemSigs[k].offsetFoundAt = i;
 								break;
 							case 9:
+								if (findx_pattern(data, dataType, i +  65, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  87, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  92, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 10:
 								if (findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  79, length, &ICFlashInvalidateSig))
@@ -7683,14 +7727,15 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 					OSResetSystemHook = IGR_EXIT;
 				
 				switch (j) {
-					case 2: data[i + 72] = branchAndLink(OSResetSystemHook, OSResetSystem + 72); break;
-					case 3: data[i + 73] = branchAndLink(OSResetSystemHook, OSResetSystem + 73); break;
-					case 4: data[i + 72] = branchAndLink(OSResetSystemHook, OSResetSystem + 72); break;
-					case 5: data[i + 77] = branchAndLink(OSResetSystemHook, OSResetSystem + 77); break;
-					case 6: data[i + 66] = branchAndLink(OSResetSystemHook, OSResetSystem + 66); break;
-					case 7: data[i + 81] = branchAndLink(OSResetSystemHook, OSResetSystem + 81); break;
-					case 8: data[i + 86] = branchAndLink(OSResetSystemHook, OSResetSystem + 86); break;
-					case 9: data[i + 74] = branchAndLink(OSResetSystemHook, OSResetSystem + 74); break;
+					case  2: data[i + 72] = branchAndLink(OSResetSystemHook, OSResetSystem + 72); break;
+					case  3: data[i + 73] = branchAndLink(OSResetSystemHook, OSResetSystem + 73); break;
+					case  4: data[i + 72] = branchAndLink(OSResetSystemHook, OSResetSystem + 72); break;
+					case  5: data[i + 77] = branchAndLink(OSResetSystemHook, OSResetSystem + 77); break;
+					case  6: data[i + 66] = branchAndLink(OSResetSystemHook, OSResetSystem + 66); break;
+					case  7: data[i + 81] = branchAndLink(OSResetSystemHook, OSResetSystem + 81); break;
+					case  8: data[i + 86] = branchAndLink(OSResetSystemHook, OSResetSystem + 86); break;
+					case  9: data[i + 87] = branchAndLink(OSResetSystemHook, OSResetSystem + 87); break;
+					case 10: data[i + 74] = branchAndLink(OSResetSystemHook, OSResetSystem + 74); break;
 				}
 				print_gecko("Found:[%s] @ %08X\n", OSResetSystemSigs[j].Name, OSResetSystem);
 			}
