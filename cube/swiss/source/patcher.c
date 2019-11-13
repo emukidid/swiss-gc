@@ -6554,7 +6554,15 @@ int Patch_GameSpecificRead(void *addr, u32 length, const char* gameID, int dataT
 
 void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int dataType)
 {
-	if ((!strncmp(gameID, "G3FD69", 6) || !strncmp(gameID, "G3FE69", 6) || !strncmp(gameID, "G3FF69", 6) || !strncmp(gameID, "G3FP69", 6) || !strncmp(gameID, "G3FS69", 6)) && dataType == PATCH_DOL) {
+	if (!strncmp(gameID, "D56J01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3055616:
+				*(u32 *)(data + 0x800AF1B4 - 0x80005840 + 0x26C0) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if ((!strncmp(gameID, "G3FD69", 6) || !strncmp(gameID, "G3FE69", 6) || !strncmp(gameID, "G3FF69", 6) || !strncmp(gameID, "G3FP69", 6) || !strncmp(gameID, "G3FS69", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4880320:
 				*(u32 *)(data + 0x80184780 - 0x800055E0 + 0x25E0) = 0x3C800000 | (0x80184CA0 + 0x8000) >> 16;
@@ -6631,6 +6639,38 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 				*(u32 *)(data + 0x8010AF14 - 0x800055E0 + 0x25E0) = 0x60000000;
 				
 				*(u32 *)(data + 0x8010B404 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GPAE01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 2825472:
+				*(u32 *)(data + 0x800B09EC - 0x80005840 + 0x26C0) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GPAJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3055584:
+				*(u32 *)(data + 0x800AF1C0 - 0x80005840 + 0x26C0) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GPAP01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 2745728:
+				*(u32 *)(data + 0x800B538C - 0x80005840 + 0x26C0) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GPAU01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 2720352:
+				*(u32 *)(data + 0x800B5304 - 0x80005840 + 0x26C0) = 0x60000000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
