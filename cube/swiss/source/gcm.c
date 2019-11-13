@@ -428,15 +428,14 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 						sleep(5);
 						DrawDispose(msgBox);
 					}
-					else
-						patched += 1;
+					else {
+						patched += Patch_GameSpecificRead(buffer, sizeToRead, gameID, filesToPatch[i].type);
+					}
 				}
 			}
 		
 			// Patch specific game hacks
-			if(devices[DEVICE_CUR] != &__device_dvd && devices[DEVICE_CUR] != &__device_wkf) {
-				patched += Patch_GameSpecific(buffer, sizeToRead, &gameID[0], filesToPatch[i].type);
-			}
+			patched += Patch_GameSpecific(buffer, sizeToRead, gameID, filesToPatch[i].type);
 			
 			// Patch IGR
 			if(swissSettings.igrType != IGR_OFF || swissSettings.invertCStick) {

@@ -739,6 +739,9 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch, int noASRequir
 				sleep(5);
 				DrawDispose(msgBox);
 			}
+			else {
+				Patch_GameSpecificRead(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
+			}
 		}
 	}
 	
@@ -755,7 +758,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch, int noASRequir
 	}
 	
 	// Patch specific game hacks
-	Patch_GameSpecific(main_dol_buffer, main_dol_size+DOLHDRLENGTH, gameID, PATCH_DOL);
+	Patch_GameSpecific(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
 
 	// 2 Disc support with no modchip
 	if((devices[DEVICE_CUR] == &__device_dvd) && (is_gamecube()) && (drive_status == DEBUG_MODE)) {

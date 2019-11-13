@@ -6391,7 +6391,80 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 		*(vu32*)(addr+0x2420) = 0x4BFFAC68;
 		patched=1;
 	}
-	else if(!strncmp(gameID, "PZL", 3) && dataType == PATCH_DOL)
+	else if((!strncmp(gameID, "GFZE01", 6) || !strncmp(gameID, "GFZP01", 6)) && dataType == PATCH_DOL)
+	{
+		*(vu32*)(addr+0x2608) = 0x48000038;
+		*(vu32*)(addr+0x260C) = 0x60000000;
+		*(vu32*)(addr+0x2610) = 0x60000000;
+		*(vu32*)(addr+0x2614) = 0x60000000;
+		*(vu32*)(addr+0x2618) = 0x60000000;
+		*(vu32*)(addr+0x261C) = 0x60000000;
+		*(vu32*)(addr+0x2620) = 0x60000000;
+		*(vu32*)(addr+0x2624) = 0x60000000;
+		*(vu32*)(addr+0x2628) = 0x60000000;
+		*(vu32*)(addr+0x262C) = 0x60000000;
+		*(vu32*)(addr+0x2630) = 0x60000000;
+		*(vu32*)(addr+0x2634) = 0x60000000;
+		*(vu32*)(addr+0x2638) = 0x60000000;
+		*(vu32*)(addr+0x263C) = 0x60000000;
+		*(vu32*)(addr+0x2640) = 0x38000000;
+		print_gecko("Patched:[%.6s]\n", gameID);
+		patched=1;
+	}
+	else if(!strncmp(gameID, "GFZJ01", 6) && dataType == PATCH_DOL)
+	{
+		*(vu32*)(addr+0x2608) = 0x48000050;
+		*(vu32*)(addr+0x260C) = 0x60000000;
+		*(vu32*)(addr+0x2610) = 0x60000000;
+		*(vu32*)(addr+0x2614) = 0x60000000;
+		*(vu32*)(addr+0x2618) = 0x60000000;
+		*(vu32*)(addr+0x261C) = 0x60000000;
+		*(vu32*)(addr+0x2620) = 0x60000000;
+		*(vu32*)(addr+0x2624) = 0x60000000;
+		*(vu32*)(addr+0x2628) = 0x60000000;
+		*(vu32*)(addr+0x262C) = 0x60000000;
+		*(vu32*)(addr+0x2630) = 0x60000000;
+		*(vu32*)(addr+0x2634) = 0x60000000;
+		*(vu32*)(addr+0x2638) = 0x60000000;
+		*(vu32*)(addr+0x263C) = 0x60000000;
+		*(vu32*)(addr+0x2640) = 0x60000000;
+		*(vu32*)(addr+0x2644) = 0x60000000;
+		*(vu32*)(addr+0x2648) = 0x60000000;
+		*(vu32*)(addr+0x264C) = 0x60000000;
+		*(vu32*)(addr+0x2650) = 0x60000000;
+		*(vu32*)(addr+0x2654) = 0x60000000;
+		*(vu32*)(addr+0x2658) = 0x38000005;
+		print_gecko("Patched:[%.6s]\n", gameID);
+		patched=1;
+	}
+	return patched;
+}
+
+// Overwrite game specific file content
+int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const char *fileName)
+{
+	void *addr;
+	int patched = 0;
+	
+	if (!swissSettings.disableVideoPatches) {
+		if (!strncmp(gameID, "GS8P7D", 6)) {
+			if (!strcasecmp(fileName, "SPYROCFG_NGC.CFG")) {
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
+					addr = strnstr(data, "\tHeight:\t\t\t496\r\n", length);
+					if (addr) memcpy(addr, "\tHeight:\t\t\t448\r\n", 16);
+				}
+				print_gecko("Patched:[%s]\n", fileName);
+				patched++;
+			}
+		}
+	}
+	return patched;
+}
+
+int Patch_GameSpecificRead(void *addr, u32 length, const char* gameID, int dataType) {
+	int patched = 0;
+	
+	if(!strncmp(gameID, "PZL", 3) && dataType == PATCH_DOL)
 	{
 		if(*(vu32*)(addr+0xDE6D8) == 0x2F6D616A) // PAL
 		{
@@ -6474,73 +6547,6 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 			*(vu32*)(addr+0xF0F7C) = branch(Calc_ProperAddress(addr, dataType, 0xF83B0), Calc_ProperAddress(addr, dataType, 0xF0F7C));
 			print_gecko("Patched:[Powerpuff Girls PAL]\r\n");
 			patched=1;
-		}
-	}
-	else if((!strncmp(gameID, "GFZE01", 6) || !strncmp(gameID, "GFZP01", 6)) && dataType == PATCH_DOL)
-	{
-		*(vu32*)(addr+0x2608) = 0x48000038;
-		*(vu32*)(addr+0x260C) = 0x60000000;
-		*(vu32*)(addr+0x2610) = 0x60000000;
-		*(vu32*)(addr+0x2614) = 0x60000000;
-		*(vu32*)(addr+0x2618) = 0x60000000;
-		*(vu32*)(addr+0x261C) = 0x60000000;
-		*(vu32*)(addr+0x2620) = 0x60000000;
-		*(vu32*)(addr+0x2624) = 0x60000000;
-		*(vu32*)(addr+0x2628) = 0x60000000;
-		*(vu32*)(addr+0x262C) = 0x60000000;
-		*(vu32*)(addr+0x2630) = 0x60000000;
-		*(vu32*)(addr+0x2634) = 0x60000000;
-		*(vu32*)(addr+0x2638) = 0x60000000;
-		*(vu32*)(addr+0x263C) = 0x60000000;
-		*(vu32*)(addr+0x2640) = 0x38000000;
-		print_gecko("Patched:[%.6s]\n", gameID);
-		patched=1;
-	}
-	else if(!strncmp(gameID, "GFZJ01", 6) && dataType == PATCH_DOL)
-	{
-		*(vu32*)(addr+0x2608) = 0x48000050;
-		*(vu32*)(addr+0x260C) = 0x60000000;
-		*(vu32*)(addr+0x2610) = 0x60000000;
-		*(vu32*)(addr+0x2614) = 0x60000000;
-		*(vu32*)(addr+0x2618) = 0x60000000;
-		*(vu32*)(addr+0x261C) = 0x60000000;
-		*(vu32*)(addr+0x2620) = 0x60000000;
-		*(vu32*)(addr+0x2624) = 0x60000000;
-		*(vu32*)(addr+0x2628) = 0x60000000;
-		*(vu32*)(addr+0x262C) = 0x60000000;
-		*(vu32*)(addr+0x2630) = 0x60000000;
-		*(vu32*)(addr+0x2634) = 0x60000000;
-		*(vu32*)(addr+0x2638) = 0x60000000;
-		*(vu32*)(addr+0x263C) = 0x60000000;
-		*(vu32*)(addr+0x2640) = 0x60000000;
-		*(vu32*)(addr+0x2644) = 0x60000000;
-		*(vu32*)(addr+0x2648) = 0x60000000;
-		*(vu32*)(addr+0x264C) = 0x60000000;
-		*(vu32*)(addr+0x2650) = 0x60000000;
-		*(vu32*)(addr+0x2654) = 0x60000000;
-		*(vu32*)(addr+0x2658) = 0x38000005;
-		print_gecko("Patched:[%.6s]\n", gameID);
-		patched=1;
-	}
-	return patched;
-}
-
-// Overwrite game specific file content
-int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const char *fileName)
-{
-	void *addr;
-	int patched = 0;
-	
-	if (!swissSettings.disableVideoPatches) {
-		if (!strncmp(gameID, "GS8P7D", 6)) {
-			if (!strcasecmp(fileName, "SPYROCFG_NGC.CFG")) {
-				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
-					addr = strnstr(data, "\tHeight:\t\t\t496\r\n", length);
-					if (addr) memcpy(addr, "\tHeight:\t\t\t448\r\n", 16);
-				}
-				print_gecko("Patched:[%s]\n", fileName);
-				patched++;
-			}
 		}
 	}
 	return patched;
