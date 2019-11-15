@@ -5177,6 +5177,20 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		}
 	}
 	
+	for (j = 0; j < sizeof(__VIInitSigs) / sizeof(FuncPattern); j++)
+		if (__VIInitSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(__VIInitSigs) / sizeof(FuncPattern) && (i = __VIInitSigs[j].offsetFoundAt)) {
+		u32 *__VIInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__VIInit) {
+			memset(data + i, 0, __VIInitSigs[j].Length * sizeof(u32));
+			data[i] = 0x4E800020;	// blr
+			
+			print_gecko("Found:[%s] @ %08X\n", __VIInitSigs[j].Name, __VIInit);
+		}
+	}
+	
 	if ((i = AdjustPositionSig.offsetFoundAt)) {
 		u32 *AdjustPosition = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
@@ -5233,6 +5247,16 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				case 5: flushFlag = (s16)data[i + 31]; break;
 				case 6: flushFlag = (s16)data[i + 37]; break;
 				case 7: flushFlag = (s16)data[i + 35]; break;
+			}
+			switch (k) {
+				case 0:
+				case 1: data[i + 15] = 0x7FE00008; break;	// trap
+				case 2:
+				case 3: data[i + 16] = 0x7FE00008; break;	// trap
+				case 4:
+				case 5: data[i + 19] = 0x7FE00008; break;	// trap
+				case 6: data[i + 25] = 0x7FE00008; break;	// trap
+				case 7: data[i + 18] = 0x7FE00008; break;	// trap
 			}
 			print_gecko("Found:[%s] @ %08X\n", VIInitSigs[k].Name, VIInit);
 		}
