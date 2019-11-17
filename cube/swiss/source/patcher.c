@@ -6571,7 +6571,8 @@ const u32 GXSETVAT_NTSC_patched[32] = {
 };
 
 // Apply specific per-game hacks/workarounds
-int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType) {
+int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
+{
 	int patched = 0;
 	
 	// Fix Zelda WW on Wii (__GXSetVAT patch)
@@ -6581,8 +6582,8 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 			mode = 1;	//PAL
 		else 
 			mode = 2;	//NTSC-U,NTSC-J
-		void *addr_start = addr;
-		void *addr_end = addr+length;
+		void *addr_start = data;
+		void *addr_end = data+length;
 		while(addr_start<addr_end) 
 		{
 			if(mode == 1 && memcmp(addr_start,GXSETVAT_PAL_orig,sizeof(GXSETVAT_PAL_orig))==0) 
@@ -6604,8 +6605,8 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 		&& (*(u32*)&gameID[4] == 0x38500002) 
 		&& (*(u32*)&gameID[8] == 0x01000000)) {
 		// Nasty PSO 1 & 2+ hack to redirect a lowmem buffer to highmem 
-		void *addr_start = addr;
-		void *addr_end = addr+length;
+		void *addr_start = data;
+		void *addr_end = data+length;
 		while(addr_start<addr_end) 
 		{
 			addr_start += 4;
@@ -6621,54 +6622,142 @@ int Patch_GameSpecific(void *addr, u32 length, const char* gameID, int dataType)
 	{
 		print_gecko("Patched:[Pokemon memset]\r\n");
 		// patch memset to jump to test function
-		*(vu32*)(addr+0x2420) = 0x4BFFAC68;
+		*(vu32*)(data+0x2420) = 0x4BFFAC68;
 		patched=1;
 	}
-	else if((!strncmp(gameID, "GFZE01", 6) || !strncmp(gameID, "GFZP01", 6)) && dataType == PATCH_DOL)
-	{
-		*(vu32*)(addr+0x2608) = 0x48000038;
-		*(vu32*)(addr+0x260C) = 0x60000000;
-		*(vu32*)(addr+0x2610) = 0x60000000;
-		*(vu32*)(addr+0x2614) = 0x60000000;
-		*(vu32*)(addr+0x2618) = 0x60000000;
-		*(vu32*)(addr+0x261C) = 0x60000000;
-		*(vu32*)(addr+0x2620) = 0x60000000;
-		*(vu32*)(addr+0x2624) = 0x60000000;
-		*(vu32*)(addr+0x2628) = 0x60000000;
-		*(vu32*)(addr+0x262C) = 0x60000000;
-		*(vu32*)(addr+0x2630) = 0x60000000;
-		*(vu32*)(addr+0x2634) = 0x60000000;
-		*(vu32*)(addr+0x2638) = 0x60000000;
-		*(vu32*)(addr+0x263C) = 0x60000000;
-		*(vu32*)(addr+0x2640) = 0x38000000;
-		print_gecko("Patched:[%.6s]\n", gameID);
-		patched=1;
-	}
-	else if(!strncmp(gameID, "GFZJ01", 6) && dataType == PATCH_DOL)
-	{
-		*(vu32*)(addr+0x2608) = 0x48000050;
-		*(vu32*)(addr+0x260C) = 0x60000000;
-		*(vu32*)(addr+0x2610) = 0x60000000;
-		*(vu32*)(addr+0x2614) = 0x60000000;
-		*(vu32*)(addr+0x2618) = 0x60000000;
-		*(vu32*)(addr+0x261C) = 0x60000000;
-		*(vu32*)(addr+0x2620) = 0x60000000;
-		*(vu32*)(addr+0x2624) = 0x60000000;
-		*(vu32*)(addr+0x2628) = 0x60000000;
-		*(vu32*)(addr+0x262C) = 0x60000000;
-		*(vu32*)(addr+0x2630) = 0x60000000;
-		*(vu32*)(addr+0x2634) = 0x60000000;
-		*(vu32*)(addr+0x2638) = 0x60000000;
-		*(vu32*)(addr+0x263C) = 0x60000000;
-		*(vu32*)(addr+0x2640) = 0x60000000;
-		*(vu32*)(addr+0x2644) = 0x60000000;
-		*(vu32*)(addr+0x2648) = 0x60000000;
-		*(vu32*)(addr+0x264C) = 0x60000000;
-		*(vu32*)(addr+0x2650) = 0x60000000;
-		*(vu32*)(addr+0x2654) = 0x60000000;
-		*(vu32*)(addr+0x2658) = 0x38000005;
-		print_gecko("Patched:[%.6s]\n", gameID);
-		patched=1;
+	else if (!strncmp(gameID, "GFZE01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1414848:
+				*(u32 *)(data + 0x80005608 - 0x800055E0 + 0x25E0) = 0x48000038;
+				*(u32 *)(data + 0x8000560C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005610 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005614 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005618 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8000561C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005620 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005624 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005628 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8000562C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005630 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005634 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005638 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8000563C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005640 - 0x800055E0 + 0x25E0) = 0x38000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GFZJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1412928:
+				*(u32 *)(data + 0x80005608 - 0x800055E0 + 0x25E0) = 0x48000050;
+				*(u32 *)(data + 0x8000560C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005610 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005614 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005618 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8000561C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005620 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005624 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005628 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8000562C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005630 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005634 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005638 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8000563C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005640 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005644 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005648 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8000564C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005650 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005654 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005658 - 0x800055E0 + 0x25E0) = 0x38000005;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GFZP01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1425760:
+				*(u32 *)(data + 0x80005608 - 0x800055E0 + 0x25E0) = 0x48000038;
+				*(u32 *)(data + 0x8000560C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005610 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005614 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005618 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8000561C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005620 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005624 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005628 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8000562C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005630 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005634 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005638 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x8000563C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005640 - 0x800055E0 + 0x25E0) = 0x38000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "P2ME01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 508384:
+				*(s16 *)(data + 0x800056FA - 0x800056C0 + 0x2600) = 0x019A;
+				*(s16 *)(data + 0x80005702 - 0x800056C0 + 0x2600) = 0x01A0;
+				*(s16 *)(data + 0x8000571A - 0x800056C0 + 0x2600) = 0x01C7;
+				*(s16 *)(data + 0x8000572E - 0x800056C0 + 0x2600) = 0x01C8;
+				*(s16 *)(data + 0x80005742 - 0x800056C0 + 0x2600) = 0x01C8;
+				*(s16 *)(data + 0x80005772 - 0x800056C0 + 0x2600) = 0x019A;
+				*(s16 *)(data + 0x80005906 - 0x800056C0 + 0x2600) = 0x019A;
+				*(s16 *)(data + 0x800059A2 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80005A12 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80005CE2 - 0x800056C0 + 0x2600) = 0x019A;
+				*(s16 *)(data + 0x80005D3A - 0x800056C0 + 0x2600) = 0x019A;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 832960:
+				*(s16 *)(data + 0x800056FA - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x8000585E - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x8000586E - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x800058A2 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x800059DE - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80005F4A - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x8000604E - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80006052 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80006266 - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x80006282 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x800062FA - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x80006316 - 0x800056C0 + 0x2600) = 0x0198;
+				
+				*(s16 *)(data + 0x8000680E - 0x800056C0 + 0x2600) = 0x0198;
+				
+				*(s16 *)(data + 0x800068B6 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x8000697E - 0x800056C0 + 0x2600) = 0x01C8;
+				
+				*(s16 *)(data + 0x80006A4A - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x80006A52 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80006A62 - 0x800056C0 + 0x2600) = 0x019A;
+				*(s16 *)(data + 0x80006A7E - 0x800056C0 + 0x2600) = 0x01A0;
+				*(s16 *)(data + 0x80006A92 - 0x800056C0 + 0x2600) = 0x01C7;
+				*(s16 *)(data + 0x80006AAE - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x80006AFE - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x80006B2A - 0x800056C0 + 0x2600) = 0x0199;
+				
+				*(s16 *)(data + 0x80006EF2 - 0x800056C0 + 0x2600) = 0x0199;
+				
+				*(s16 *)(data + 0x80007126 - 0x800056C0 + 0x2600) = 0x0199;
+				
+				*(s16 *)(data + 0x80007132 - 0x800056C0 + 0x2600) = 0x0199;
+				
+				*(s16 *)(data + 0x80007142 - 0x800056C0 + 0x2600) = 0x0199;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
 	}
 	return patched;
 }
