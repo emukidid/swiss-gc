@@ -6628,6 +6628,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	else if (!strncmp(gameID, "GFZE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1414848:
+				// Skip exception stubbing.
 				*(u32 *)(data + 0x80005608 - 0x800055E0 + 0x25E0) = 0x48000038;
 				*(u32 *)(data + 0x8000560C - 0x800055E0 + 0x25E0) = 0x60000000;
 				*(u32 *)(data + 0x80005610 - 0x800055E0 + 0x25E0) = 0x60000000;
@@ -6651,6 +6652,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (!strncmp(gameID, "GFZJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1412928:
+				// Skip exception stubbing and force Japanese language.
 				*(u32 *)(data + 0x80005608 - 0x800055E0 + 0x25E0) = 0x48000050;
 				*(u32 *)(data + 0x8000560C - 0x800055E0 + 0x25E0) = 0x60000000;
 				*(u32 *)(data + 0x80005610 - 0x800055E0 + 0x25E0) = 0x60000000;
@@ -6680,6 +6682,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (!strncmp(gameID, "GFZP01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1425760:
+				// Skip exception stubbing.
 				*(u32 *)(data + 0x80005608 - 0x800055E0 + 0x25E0) = 0x48000038;
 				*(u32 *)(data + 0x8000560C - 0x800055E0 + 0x25E0) = 0x60000000;
 				*(u32 *)(data + 0x80005610 - 0x800055E0 + 0x25E0) = 0x60000000;
@@ -6703,6 +6706,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (!strncmp(gameID, "P2ME01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 508384:
+				// Move persistent structure from 0x80001798 to 0x80000198.
 				*(s16 *)(data + 0x800056FA - 0x800056C0 + 0x2600) = 0x019A;
 				*(s16 *)(data + 0x80005702 - 0x800056C0 + 0x2600) = 0x01A0;
 				*(s16 *)(data + 0x8000571A - 0x800056C0 + 0x2600) = 0x01C7;
@@ -6719,6 +6723,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 			case 832960:
+				// Move persistent structure from 0x80001798 to 0x80000198.
 				*(s16 *)(data + 0x800056FA - 0x800056C0 + 0x2600) = 0x0199;
 				*(s16 *)(data + 0x8000585E - 0x800056C0 + 0x2600) = 0x0198;
 				*(s16 *)(data + 0x8000586E - 0x800056C0 + 0x2600) = 0x0198;
@@ -6761,6 +6766,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (!strncmp(gameID, "PC6E01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 508672:
+				// Move persistent structure from 0x80001798 to 0x80000198.
 				*(s16 *)(data + 0x800056FA - 0x800056C0 + 0x2600) = 0x019A;
 				*(s16 *)(data + 0x80005702 - 0x800056C0 + 0x2600) = 0x01A0;
 				*(s16 *)(data + 0x8000571A - 0x800056C0 + 0x2600) = 0x01C7;
@@ -6774,6 +6780,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 			case 771104:
+				// Move persistent structure from 0x80001798 to 0x80000198.
 				*(s16 *)(data + 0x800056F6 - 0x800056C0 + 0x2600) = 0x0199;
 				*(s16 *)(data + 0x8000579A - 0x800056C0 + 0x2600) = 0x0198;
 				*(s16 *)(data + 0x800057AA - 0x800056C0 + 0x2600) = 0x0198;
@@ -6805,6 +6812,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (!strncmp(gameID, "PCKJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1181312:
+				// Move persistent structure from 0x800017C0 to 0x800001C0.
 				*(s16 *)(data + 0x800062DA - 0x80005C80 + 0x2600) = 0x01C0;
 				*(s16 *)(data + 0x8000635E - 0x80005C80 + 0x2600) = 0x01C0;
 				
@@ -6824,6 +6832,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (!strncmp(gameID, "PCSJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1177728:
+				// Move persistent structure from 0x800017C0 to 0x800001C0.
 				*(s16 *)(data + 0x800062DA - 0x80005C80 + 0x2600) = 0x01C0;
 				*(s16 *)(data + 0x8000635E - 0x80005C80 + 0x2600) = 0x01C0;
 				
@@ -6961,6 +6970,7 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	if (!strncmp(gameID, "D56J01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3055616:
+				// Skip second EXIInit call.
 				*(u32 *)(data + 0x800AF1B4 - 0x80005840 + 0x26C0) = 0x60000000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
@@ -6969,6 +6979,7 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if ((!strncmp(gameID, "G3FD69", 6) || !strncmp(gameID, "G3FE69", 6) || !strncmp(gameID, "G3FF69", 6) || !strncmp(gameID, "G3FP69", 6) || !strncmp(gameID, "G3FS69", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4880320:
+				// Set user DSI exception handler.
 				*(u32 *)(data + 0x80184780 - 0x800055E0 + 0x25E0) = 0x3C800000 | (0x80184CA0 + 0x8000) >> 16;
 				*(u32 *)(data + 0x80184784 - 0x800055E0 + 0x25E0) = 0x3860000F;
 				*(u32 *)(data + 0x80184788 - 0x800055E0 + 0x25E0) = 0x38840000 | (0x80184CA0 & 0xFFFF);
@@ -6988,6 +6999,7 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 				*(u32 *)(data + 0x801847C0 - 0x800055E0 + 0x25E0) = 0x60000000;
 				*(u32 *)(data + 0x801847C4 - 0x800055E0 + 0x25E0) = 0x60000000;
 				
+				// Skip virtual to physical address translation.
 				*(u32 *)(data + 0x80184CAC - 0x800055E0 + 0x25E0) = 0x60000000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
@@ -6996,6 +7008,7 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if (!strncmp(gameID, "GISE36", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3266176:
+				// Set user DSI exception handler.
 				*(u32 *)(data + 0x8010A738 - 0x800055E0 + 0x25E0) = 0x3C800000 | (0x8010AC60 + 0x8000) >> 16;
 				*(u32 *)(data + 0x8010A73C - 0x800055E0 + 0x25E0) = 0x3860000F;
 				*(u32 *)(data + 0x8010A740 - 0x800055E0 + 0x25E0) = 0x38840000 | (0x8010AC60 & 0xFFFF);
@@ -7015,6 +7028,7 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 				*(u32 *)(data + 0x8010A778 - 0x800055E0 + 0x25E0) = 0x60000000;
 				*(u32 *)(data + 0x8010A77C - 0x800055E0 + 0x25E0) = 0x60000000;
 				
+				// Skip virtual to physical address translation.
 				*(u32 *)(data + 0x8010AC6C - 0x800055E0 + 0x25E0) = 0x60000000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
@@ -7023,6 +7037,7 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if (!strncmp(gameID, "GISP36", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3268768:
+				// Set user DSI exception handler.
 				*(u32 *)(data + 0x8010AED0 - 0x800055E0 + 0x25E0) = 0x3C800000 | (0x8010B3F8 + 0x8000) >> 16;
 				*(u32 *)(data + 0x8010AED4 - 0x800055E0 + 0x25E0) = 0x3860000F;
 				*(u32 *)(data + 0x8010AED8 - 0x800055E0 + 0x25E0) = 0x38840000 | (0x8010B3F8 & 0xFFFF);
@@ -7042,6 +7057,7 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 				*(u32 *)(data + 0x8010AF10 - 0x800055E0 + 0x25E0) = 0x60000000;
 				*(u32 *)(data + 0x8010AF14 - 0x800055E0 + 0x25E0) = 0x60000000;
 				
+				// Skip virtual to physical address translation.
 				*(u32 *)(data + 0x8010B404 - 0x800055E0 + 0x25E0) = 0x60000000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
@@ -7050,6 +7066,7 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if (!strncmp(gameID, "GPAE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 2825472:
+				// Skip second EXIInit call.
 				*(u32 *)(data + 0x800B09EC - 0x80005840 + 0x26C0) = 0x60000000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
@@ -7058,6 +7075,7 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if (!strncmp(gameID, "GPAJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3055584:
+				// Skip second EXIInit call.
 				*(u32 *)(data + 0x800AF1C0 - 0x80005840 + 0x26C0) = 0x60000000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
@@ -7066,6 +7084,7 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if (!strncmp(gameID, "GPAP01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 2745728:
+				// Skip second EXIInit call.
 				*(u32 *)(data + 0x800B538C - 0x80005840 + 0x26C0) = 0x60000000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
@@ -7074,6 +7093,7 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if (!strncmp(gameID, "GPAU01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 2720352:
+				// Skip second EXIInit call.
 				*(u32 *)(data + 0x800B5304 - 0x80005840 + 0x26C0) = 0x60000000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
@@ -7082,8 +7102,10 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if ((!strncmp(gameID, "GSXD64", 6) || !strncmp(gameID, "GSXF64", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3728640:
+				// Skip virtual to physical address translation.
 				*(u32 *)(data + 0x800039BC - 0x80003100 + 0x100) = 0x60000000;
 				
+				// Set user DSI exception handler.
 				*(u32 *)(data + 0x80004AC0 - 0x80003100 + 0x100) = 0x3C800000 | (0x800039A4 + 0x8000) >> 16;
 				*(u32 *)(data + 0x80004AC4 - 0x80003100 + 0x100) = 0x3860000F;
 				*(u32 *)(data + 0x80004AC8 - 0x80003100 + 0x100) = 0x38840000 | (0x800039A4 & 0xFFFF);
@@ -7110,8 +7132,10 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if (!strncmp(gameID, "GSXE64", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3728544:
+				// Skip virtual to physical address translation.
 				*(u32 *)(data + 0x800039BC - 0x80003100 + 0x100) = 0x60000000;
 				
+				// Set user DSI exception handler.
 				*(u32 *)(data + 0x80004AC0 - 0x80003100 + 0x100) = 0x3C800000 | (0x800039A4 + 0x8000) >> 16;
 				*(u32 *)(data + 0x80004AC4 - 0x80003100 + 0x100) = 0x3860000F;
 				*(u32 *)(data + 0x80004AC8 - 0x80003100 + 0x100) = 0x38840000 | (0x800039A4 & 0xFFFF);
@@ -7138,8 +7162,10 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if ((!strncmp(gameID, "GSXI64", 6) || !strncmp(gameID, "GSXS64", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3728640:
+				// Skip virtual to physical address translation.
 				*(u32 *)(data + 0x800039BC - 0x80003100 + 0x100) = 0x60000000;
 				
+				// Set user DSI exception handler.
 				*(u32 *)(data + 0x80004AC0 - 0x80003100 + 0x100) = 0x3C800000 | (0x800039A4 + 0x8000) >> 16;
 				*(u32 *)(data + 0x80004AC4 - 0x80003100 + 0x100) = 0x3860000F;
 				*(u32 *)(data + 0x80004AC8 - 0x80003100 + 0x100) = 0x38840000 | (0x800039A4 & 0xFFFF);
@@ -7166,8 +7192,10 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if (!strncmp(gameID, "GSXJ13", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3730336:
+				// Skip virtual to physical address translation.
 				*(u32 *)(data + 0x800039D8 - 0x80003100 + 0x100) = 0x60000000;
 				
+				// Set user DSI exception handler.
 				*(u32 *)(data + 0x80004ADC - 0x80003100 + 0x100) = 0x3C800000 | (0x800039C0 + 0x8000) >> 16;
 				*(u32 *)(data + 0x80004AE0 - 0x80003100 + 0x100) = 0x3860000F;
 				*(u32 *)(data + 0x80004AE4 - 0x80003100 + 0x100) = 0x38840000 | (0x800039C0 & 0xFFFF);
@@ -7194,8 +7222,10 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if (!strncmp(gameID, "GSXP64", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3728640:
+				// Skip virtual to physical address translation.
 				*(u32 *)(data + 0x800039BC - 0x80003100 + 0x100) = 0x60000000;
 				
+				// Set user DSI exception handler.
 				*(u32 *)(data + 0x80004AC0 - 0x80003100 + 0x100) = 0x3C800000 | (0x800039A4 + 0x8000) >> 16;
 				*(u32 *)(data + 0x80004AC4 - 0x80003100 + 0x100) = 0x3860000F;
 				*(u32 *)(data + 0x80004AC8 - 0x80003100 + 0x100) = 0x38840000 | (0x800039A4 & 0xFFFF);
@@ -7222,12 +7252,13 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if (!strncmp(gameID, "GXXE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4333056:
+				// Skip virtual to physical address translation.
 				*(u32 *)(data + 0x802ADCEC - 0x800056A0 + 0x2600) = 0x60000000;
 				*(u32 *)(data + 0x802ADCF0 - 0x800056A0 + 0x2600) = 0x60000000;
 				*(u32 *)(data + 0x802ADCF4 - 0x800056A0 + 0x2600) = 0x60000000;
-				
 				*(u32 *)(data + 0x802ADD20 - 0x800056A0 + 0x2600) = 0x60632000;
 				
+				// Set user DSI exception handler.
 				*(u32 *)(data + 0x802AE0E0 - 0x800056A0 + 0x2600) = 0x3C800000 | (0x802ADCC8 + 0x8000) >> 16;
 				*(u32 *)(data + 0x802AE0E4 - 0x800056A0 + 0x2600) = 0x3860000F;
 				*(u32 *)(data + 0x802AE0E8 - 0x800056A0 + 0x2600) = 0x38840000 | (0x802ADCC8 & 0xFFFF);
@@ -7241,12 +7272,13 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if (!strncmp(gameID, "GXXJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4191264:
+				// Skip virtual to physical address translation.
 				*(u32 *)(data + 0x802A8714 - 0x800056A0 + 0x2600) = 0x60000000;
 				*(u32 *)(data + 0x802A8718 - 0x800056A0 + 0x2600) = 0x60000000;
 				*(u32 *)(data + 0x802A871C - 0x800056A0 + 0x2600) = 0x60000000;
-				
 				*(u32 *)(data + 0x802A8748 - 0x800056A0 + 0x2600) = 0x60632000;
 				
+				// Set user DSI exception handler.
 				*(u32 *)(data + 0x802A8B08 - 0x800056A0 + 0x2600) = 0x3C800000 | (0x802A86F0 + 0x8000) >> 16;
 				*(u32 *)(data + 0x802A8B0C - 0x800056A0 + 0x2600) = 0x3860000F;
 				*(u32 *)(data + 0x802A8B10 - 0x800056A0 + 0x2600) = 0x38840000 | (0x802A86F0 & 0xFFFF);
@@ -7260,12 +7292,13 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if (!strncmp(gameID, "GXXP01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4573216:
+				// Skip virtual to physical address translation.
 				*(u32 *)(data + 0x802AFC40 - 0x800056A0 + 0x2600) = 0x60000000;
 				*(u32 *)(data + 0x802AFC44 - 0x800056A0 + 0x2600) = 0x60000000;
 				*(u32 *)(data + 0x802AFC48 - 0x800056A0 + 0x2600) = 0x60000000;
-				
 				*(u32 *)(data + 0x802AFC74 - 0x800056A0 + 0x2600) = 0x60632000;
 				
+				// Set user DSI exception handler.
 				*(u32 *)(data + 0x802B0034 - 0x800056A0 + 0x2600) = 0x3C800000 | (0x802AFC1C + 0x8000) >> 16;
 				*(u32 *)(data + 0x802B0038 - 0x800056A0 + 0x2600) = 0x3860000F;
 				*(u32 *)(data + 0x802B003C - 0x800056A0 + 0x2600) = 0x38840000 | (0x802AFC1C & 0xFFFF);
@@ -7279,6 +7312,7 @@ void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int d
 	} else if (!strncmp(gameID, "PCKJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3093408:
+				// Skip second EXIInit call.
 				*(u32 *)(data + 0x800B0464 - 0x80005840 + 0x26C0) = 0x60000000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
