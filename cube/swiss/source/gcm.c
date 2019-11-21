@@ -417,8 +417,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			// Patch executable files
 			if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
 				if((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches) {
-					Patch_DVDLowLevelReadAlt(buffer, sizeToRead, filesToPatch[i].type);
-					Patch_GameSpecificReadAlt(buffer, sizeToRead, gameID, filesToPatch[i].type);
+					patched += Patch_DVDLowLevelReadAlt(buffer, sizeToRead, filesToPatch[i].type);
+					patched += Patch_GameSpecificReadAlt(buffer, sizeToRead, gameID, filesToPatch[i].type);
 				}
 				else {
 					ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);

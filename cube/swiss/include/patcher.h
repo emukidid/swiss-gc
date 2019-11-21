@@ -210,7 +210,7 @@ enum patchIds {
 // -1 no device, 0 slot a, 1 slot b.
 extern int savePatchDevice;
 
-void Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType);
+int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType);
 u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType);
@@ -223,7 +223,7 @@ int Patch_DVDReset(void *addr,u32 length);
 int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType);
 int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const char *fileName);
 int Patch_GameSpecificRead(void *addr, u32 length, const char* gameID, int dataType);
-void Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int dataType);
+int Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int dataType);
 void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dataType);
 void Patch_PADStatus(u32 *data, u32 length, int dataType);
 int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType );
