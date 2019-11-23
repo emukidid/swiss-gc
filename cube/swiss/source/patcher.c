@@ -790,8 +790,10 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{  9, 3, 1, 0, 0, 1, NULL, 0, "OSClearContext" },
 		{  9, 3, 1, 0, 0, 1, NULL, 0, "OSClearContext" }	// SN Systems ProDG
 	};
-	FuncPattern __OSBootDolSimpleSig = 
-		{ 289, 104, 17, 53, 29, 16, NULL, 0, "__OSBootDolSimple" };
+	FuncPattern __OSBootDolSimpleSigs[2] = {
+		{ 109,  35, 15, 25,  3, 10, NULL, 0, "__OSBootDolSimpleD" },
+		{ 289, 104, 17, 53, 29, 16, NULL, 0, "__OSBootDolSimple" }
+	};
 	FuncPattern OSDisableInterruptsSig = 
 		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
 	FuncPattern OSEnableInterruptsSig = 
@@ -820,9 +822,10 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 34, 8, 6, 3, 3, 4, NULL, 0, "__OSUnmaskInterrupts" },
 		{ 32, 8, 6, 3, 1, 4, NULL, 0, "__OSUnmaskInterrupts" }	// SN Systems ProDG
 	};
-	FuncPattern __OSRebootSigs[10] = {
+	FuncPattern __OSRebootSigs[11] = {
 		{  81, 34, 6, 16,  1,  2, NULL, 0, "__OSRebootD A" },
 		{  89, 39, 8, 17,  1,  2, NULL, 0, "__OSRebootD B" },
+		{  25, 10, 5,  6,  0,  2, NULL, 0, "__OSRebootD C" },
 		{ 108, 36, 7, 16, 26,  3, NULL, 0, "__OSReboot A" },
 		{ 115, 40, 9, 17, 26,  3, NULL, 0, "__OSReboot B" },
 		{ 112, 39, 8, 17, 26,  2, NULL, 0, "__OSReboot C" },
@@ -837,18 +840,20 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 18, 6, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" },
 		{ 17, 5, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" }	// SN Systems ProDG
 	};
-	FuncPattern OSResetSystemSigs[11] = {
+	FuncPattern OSResetSystemSigs[13] = {
 		{  64, 13, 2, 15,  6, 8, NULL, 0, "OSResetSystemD A" },
 		{  97, 29, 3, 27,  5, 8, NULL, 0, "OSResetSystemD B" },
+		{  87, 28, 2, 21,  4, 6, NULL, 0, "OSResetSystemD C" },
 		{ 110, 19, 2, 16, 24, 9, NULL, 0, "OSResetSystem A" },
 		{ 111, 19, 2, 17, 24, 9, NULL, 0, "OSResetSystem B" },
 		{ 147, 37, 2, 21, 30, 8, NULL, 0, "OSResetSystem C" },
-		{ 158, 41, 2, 24, 30, 9, NULL, 0, "OSResetSystem D" },
-		{ 148, 44, 2, 26, 16, 9, NULL, 0, "OSResetSystem D" },	// SN Systems ProDG
-		{ 162, 41, 2, 24, 34, 9, NULL, 0, "OSResetSystem E" },
-		{ 174, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem F" },
-		{ 175, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem G" },
-		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem H" }
+		{ 154, 38, 2, 23, 30, 9, NULL, 0, "OSResetSystem D" },
+		{ 158, 41, 2, 24, 30, 9, NULL, 0, "OSResetSystem E" },
+		{ 148, 44, 2, 26, 16, 9, NULL, 0, "OSResetSystem E" },	// SN Systems ProDG
+		{ 162, 41, 2, 24, 34, 9, NULL, 0, "OSResetSystem F" },
+		{ 174, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem G" },
+		{ 175, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem H" },
+		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem I" }
 	};
 	FuncPattern OSGetResetButtonStateSigs[7] = {
 		{ 118, 36, 11, 6, 12, 26, NULL, 0, "OSGetResetSwitchStateD" },
@@ -859,8 +864,9 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 166, 39, 16, 5, 16, 46, NULL, 0, "OSGetResetButtonState B" },
 		{ 167, 36, 16, 4, 15, 46, NULL, 0, "OSGetResetButtonState B" }	// SN Systems ProDG
 	};
-	FuncPattern SelectThreadSigs[4] = {
-		{ 123, 39, 10, 11, 14, 12, NULL, 0, "SelectThreadD" },
+	FuncPattern SelectThreadSigs[5] = {
+		{ 123, 39, 10, 11, 14, 12, NULL, 0, "SelectThreadD A" },
+		{ 122, 38,  9, 12, 14, 12, NULL, 0, "SelectThreadD B" },
 		{ 128, 41, 20,  8, 12, 12, NULL, 0, "SelectThread A" },
 		{ 138, 44, 20,  8, 12, 12, NULL, 0, "SelectThread B" },
 		{ 141, 51, 19,  8, 12, 14, NULL, 0, "SelectThread B" }	// SN Systems ProDG
@@ -877,9 +883,10 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 61, 19, 3, 7, 17, 2, NULL, 0, "SetExiInterruptMask" },
 		{ 63, 18, 3, 7, 17, 2, NULL, 0, "SetExiInterruptMask" }
 	};
-	FuncPattern __EXIProbeSigs[6] = {
+	FuncPattern __EXIProbeSigs[7] = {
 		{ 108, 38, 2, 7, 10, 10, NULL, 0, "__EXIProbeD A" },
-		{ 112, 39, 5, 7, 10, 10, NULL, 0, "__EXIProbeD B" },
+		{ 111, 38, 5, 7, 10, 10, NULL, 0, "__EXIProbeD B" },
+		{ 112, 39, 5, 7, 10, 10, NULL, 0, "__EXIProbeD C" },
 		{  90, 30, 4, 5,  8, 10, NULL, 0, "__EXIProbe A" },
 		{  93, 30, 7, 5,  8, 10, NULL, 0, "__EXIProbe B" },
 		{  93, 30, 7, 5,  8,  9, NULL, 0, "__EXIProbe C" },
@@ -887,17 +894,19 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 	};
 	FuncPattern EXISelectSDSig = 
 		{ 85, 23, 4, 7, 14, 6, NULL, 0, "EXISelectSD" };
-	FuncPattern EXISelectSigs[6] = {
+	FuncPattern EXISelectSigs[7] = {
 		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD A" },
 		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD B" },
+		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD C" },
 		{  75, 18, 4,  6, 11, 7, NULL, 0, "EXISelect A" },
 		{  75, 18, 4,  6, 11, 7, NULL, 0, "EXISelect B" },
 		{  75, 18, 4,  6, 11, 8, NULL, 0, "EXISelect C" },
 		{  80, 20, 4,  6, 11, 6, NULL, 0, "EXISelect C" }
 	};
-	FuncPattern EXIDeselectSigs[7] = {
+	FuncPattern EXIDeselectSigs[8] = {
 		{ 76, 21, 3, 7, 14, 5, NULL, 0, "EXIDeselectD A" },
-		{ 77, 22, 3, 7, 14, 5, NULL, 0, "EXIDeselectD B" },
+		{ 76, 21, 3, 7, 14, 5, NULL, 0, "EXIDeselectD B" },
+		{ 77, 22, 3, 7, 14, 5, NULL, 0, "EXIDeselectD C" },
 		{ 68, 20, 8, 6, 11, 3, NULL, 0, "EXIDeselect A" },
 		{ 68, 20, 8, 6, 12, 3, NULL, 0, "EXIDeselect B" },
 		{ 68, 20, 8, 6, 12, 3, NULL, 0, "EXIDeselect C" },
@@ -918,8 +927,9 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 55, 21, 8, 5, 3, 3, NULL, 0, "EXIUnlock B" },
 		{ 50, 18, 4, 5, 3, 3, NULL, 0, "EXIUnlock B" }
 	};
-	FuncPattern __DVDInterruptHandlerSigs[7] = {
-		{ 161, 50, 22,  8, 18, 12, NULL, 0, "__DVDInterruptHandlerD" },
+	FuncPattern __DVDInterruptHandlerSigs[8] = {
+		{ 161, 50, 22,  8, 18, 12, NULL, 0, "__DVDInterruptHandlerD A" },
+		{ 161, 50, 22,  8, 18, 12, NULL, 0, "__DVDInterruptHandlerD B" },
 		{ 121, 32, 13,  4, 15, 14, NULL, 0, "__DVDInterruptHandler A" },
 		{ 184, 59, 26,  9, 21, 17, NULL, 0, "__DVDInterruptHandler B" },
 		{ 186, 60, 26, 10, 21, 17, NULL, 0, "__DVDInterruptHandler C" },
@@ -1044,8 +1054,9 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{  5,  2, 2, 0, 0, 0, NULL, 0, "DVDLowBreak C" },
 		{  5,  2, 2, 0, 0, 0, NULL, 0, "DVDLowBreak C" }	// SN Systems ProDG
 	};
-	FuncPattern DVDLowClearCallbackSigs[4] = {
-		{ 12, 6, 4, 0, 0, 0, NULL, 0, "DVDLowClearCallbackD" },
+	FuncPattern DVDLowClearCallbackSigs[5] = {
+		{ 12, 6, 4, 0, 0, 0, NULL, 0, "DVDLowClearCallbackD A" },
+		{ 14, 7, 5, 0, 0, 0, NULL, 0, "DVDLowClearCallbackD B" },
 		{  6, 3, 2, 0, 0, 0, NULL, 0, "DVDLowClearCallback A" },
 		{  6, 3, 2, 0, 0, 0, NULL, 0, "DVDLowClearCallback A" },	// SN Systems ProDG
 		{  7, 3, 3, 0, 0, 0, NULL, 0, "DVDLowClearCallback B" }
@@ -1055,8 +1066,9 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 37, 14, 2, 1, 4,  9, NULL, 0, "DVDLowGetCoverStatus" },
 		{ 35, 13, 2, 1, 2, 10, NULL, 0, "DVDLowGetCoverStatus" }	// SN Systems ProDG
 	};
-	FuncPattern DVDInitSigs[6] = {
-		{ 66, 28,  9, 13, 2, 2, NULL, 0, "DVDInitD" },
+	FuncPattern DVDInitSigs[7] = {
+		{ 66, 28,  9, 13, 2, 2, NULL, 0, "DVDInitD A" },
+		{ 56, 26,  9, 10, 2, 2, NULL, 0, "DVDInitD B" },
 		{ 61, 24, 10, 10, 2, 2, NULL, 0, "DVDInit A" },
 		{ 63, 24, 10, 12, 2, 2, NULL, 0, "DVDInit B" },
 		{ 51, 21,  9,  9, 2, 2, NULL, 0, "DVDInit C" },
@@ -1068,23 +1080,26 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateGettingError" },
 		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateGettingError" }	// SN Systems ProDG
 	};
-	FuncPattern cbForStateGettingErrorSigs[6] = {
-		{ 127, 39,  9, 13, 16, 4, NULL, 0, "cbForStateGettingErrorD" },
+	FuncPattern cbForStateGettingErrorSigs[7] = {
+		{ 127, 39,  9, 13, 16, 4, NULL, 0, "cbForStateGettingErrorD A" },
+		{ 115, 31,  5, 13, 16, 4, NULL, 0, "cbForStateGettingErrorD B" },
 		{ 231, 82, 21,  9, 36, 2, NULL, 0, "cbForStateGettingError A" },
 		{ 162, 68, 16, 17, 18, 2, NULL, 0, "cbForStateGettingError B" },
 		{ 165, 70, 17, 17, 18, 2, NULL, 0, "cbForStateGettingError C" },
 		{ 202, 73, 22, 14, 27, 3, NULL, 0, "cbForStateGettingError C" },	// SN Systems ProDG
 		{ 153, 61, 13, 17, 18, 2, NULL, 0, "cbForStateGettingError D" }
 	};
-	FuncPattern cbForUnrecoveredErrorSigs[5] = {
-		{ 32, 11, 4, 4, 4, 3, NULL, 0, "cbForUnrecoveredErrorD" },
+	FuncPattern cbForUnrecoveredErrorSigs[6] = {
+		{ 32, 11, 4, 4, 4, 3, NULL, 0, "cbForUnrecoveredErrorD A" },
+		{ 29,  9, 3, 4, 4, 3, NULL, 0, "cbForUnrecoveredErrorD B" },
 		{ 23,  7, 2, 5, 3, 2, NULL, 0, "cbForUnrecoveredError A" },
 		{ 26,  9, 3, 5, 3, 2, NULL, 0, "cbForUnrecoveredError B" },
 		{ 21,  6, 3, 3, 3, 2, NULL, 0, "cbForUnrecoveredError B" },	// SN Systems ProDG
 		{ 23,  7, 2, 5, 3, 2, NULL, 0, "cbForUnrecoveredError C" }
 	};
-	FuncPattern cbForUnrecoveredErrorRetrySigs[5] = {
-		{ 30, 12, 5, 3, 3, 3, NULL, 0, "cbForUnrecoveredErrorRetryD" },
+	FuncPattern cbForUnrecoveredErrorRetrySigs[6] = {
+		{ 30, 12, 5, 3, 3, 3, NULL, 0, "cbForUnrecoveredErrorRetryD A" },
+		{ 24,  8, 3, 3, 3, 3, NULL, 0, "cbForUnrecoveredErrorRetryD B" },
 		{ 35, 16, 3, 7, 3, 2, NULL, 0, "cbForUnrecoveredErrorRetry A" },
 		{ 38, 18, 4, 7, 3, 2, NULL, 0, "cbForUnrecoveredErrorRetry B" },
 		{ 32, 14, 4, 5, 3, 2, NULL, 0, "cbForUnrecoveredErrorRetry B" },	// SN Systems ProDG
@@ -1102,8 +1117,9 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 56, 23, 5, 5, 9, 3, NULL, 0, "cbForStateMotorStopped B" },	// SN Systems ProDG
 		{ 59, 23, 7, 5, 9, 3, NULL, 0, "cbForStateMotorStopped C" }
 	};
-	FuncPattern stateReadySigs[8] = {
-		{ 103, 42, 19, 11, 14, 4, NULL, 0, "stateReadyD" },
+	FuncPattern stateReadySigs[9] = {
+		{ 103, 42, 19, 11, 14, 4, NULL, 0, "stateReadyD A" },
+		{ 101, 35, 16, 10, 22, 2, NULL, 0, "stateReadyD B" },
 		{ 125, 49, 18, 13, 21, 4, NULL, 0, "stateReady A" },
 		{ 146, 58, 20, 16, 23, 5, NULL, 0, "stateReady B" },
 		{ 183, 65, 20, 19, 40, 4, NULL, 0, "stateReady C" },
@@ -1112,8 +1128,9 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 138, 49, 17, 14, 30, 3, NULL, 0, "stateReady E" },
 		{ 186, 66, 20, 19, 40, 4, NULL, 0, "stateReady F" }
 	};
-	FuncPattern stateBusySigs[7] = {
-		{ 182, 112, 22, 15, 17, 10, NULL, 0, "stateBusyD" },
+	FuncPattern stateBusySigs[8] = {
+		{ 182, 112, 22, 15, 17, 10, NULL, 0, "stateBusyD A" },
+		{ 216, 129, 24, 17, 21, 10, NULL, 0, "stateBusyD B" },
 		{ 176, 107, 21, 15, 17, 10, NULL, 0, "stateBusy A" },
 		{ 176, 107, 21, 15, 17, 10, NULL, 0, "stateBusy A" },
 		{ 176, 107, 21, 15, 17, 10, NULL, 0, "stateBusy B" },
@@ -1121,8 +1138,9 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 187, 105, 23, 16, 18, 11, NULL, 0, "stateBusy C" },	// SN Systems ProDG
 		{ 208, 123, 24, 17, 21, 10, NULL, 0, "stateBusy D" }
 	};
-	FuncPattern cbForStateBusySigs[8] = {
-		{ 329, 142, 27, 21, 45,  6, NULL, 0, "cbForStateBusyD" },
+	FuncPattern cbForStateBusySigs[9] = {
+		{ 329, 142, 27, 21, 45,  6, NULL, 0, "cbForStateBusyD A" },
+		{ 316, 136, 27, 25, 41,  6, NULL, 0, "cbForStateBusyD B" },
 		{ 261, 108, 22, 12, 43,  5, NULL, 0, "cbForStateBusy A" },
 		{ 370, 156, 40, 21, 52,  6, NULL, 0, "cbForStateBusy B" },
 		{ 373, 158, 41, 21, 52,  6, NULL, 0, "cbForStateBusy C" },
@@ -1136,8 +1154,9 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 17, 7, 6, 1, 0, 2, NULL, 0, "DVDReset" },
 		{ 16, 6, 6, 1, 0, 2, NULL, 0, "DVDReset" }	// SN Systems ProDG
 	};
-	FuncPattern DVDCancelAsyncSigs[7] = {
-		{ 166, 53, 13, 10, 26, 8, NULL, 0, "DVDCancelAsyncD" },
+	FuncPattern DVDCancelAsyncSigs[8] = {
+		{ 166, 53, 13, 10, 26, 8, NULL, 0, "DVDCancelAsyncD A" },
+		{ 171, 56, 15, 10, 26, 8, NULL, 0, "DVDCancelAsyncD B" },
 		{ 171, 56, 20,  8, 20, 8, NULL, 0, "DVDCancelAsync A" },
 		{ 156, 48, 17,  8, 25, 6, NULL, 0, "DVDCancelAsync B" },
 		{ 156, 47, 16,  9, 25, 5, NULL, 0, "DVDCancelAsync C" },
@@ -1149,8 +1168,9 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 9, 3, 2, 1, 0, 2, NULL, 0, "DVDGetCurrentDiskIDD" },
 		{ 2, 1, 0, 0, 0, 0, NULL, 0, "DVDGetCurrentDiskID" }
 	};
-	FuncPattern DVDCheckDiskSigs[4] = {
-		{ 61, 16, 2, 2, 10, 7, NULL, 0, "DVDCheckDiskD" },
+	FuncPattern DVDCheckDiskSigs[5] = {
+		{ 61, 16, 2, 2, 10, 7, NULL, 0, "DVDCheckDiskD A" },
+		{ 66, 17, 2, 2, 12, 7, NULL, 0, "DVDCheckDiskD B" },
 		{ 57, 19, 3, 2, 10, 5, NULL, 0, "DVDCheckDisk A" },
 		{ 61, 19, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk B" },	// SN Systems ProDG
 		{ 62, 20, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk B" }
@@ -1227,20 +1247,36 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			}
 		}
 		
-		if (compare_pattern(&fp, &__OSBootDolSimpleSig)) {
-			if (findx_pattern(data, dataType, i +  11, length, &OSDisableInterruptsSig) &&
-				findx_pattern(data, dataType, i +  42, length, &__OSMaskInterruptsSigs[1]) &&
-				findx_pattern(data, dataType, i +  44, length, &__OSUnmaskInterruptsSigs[1]) &&
-				findx_pattern(data, dataType, i +  45, length, &OSEnableInterruptsSig) &&
-				findx_pattern(data, dataType, i +  53, length, &__OSDoHotResetSigs[1]) &&
-				findx_pattern(data, dataType, i +  83, length, &__OSDoHotResetSigs[1]) &&
-				findx_pattern(data, dataType, i + 152, length, &__OSDoHotResetSigs[1]) &&
-				findx_pattern(data, dataType, i + 210, length, &__OSDoHotResetSigs[1]) &&
-				findx_pattern(data, dataType, i + 241, length, &OSDisableInterruptsSig) &&
-				findx_pattern(data, dataType, i + 270, length, &__OSDoHotResetSigs[1]) &&
-				findx_pattern(data, dataType, i + 280, length, &OSDisableInterruptsSig) &&
-				findx_pattern(data, dataType, i + 281, length, &ICFlashInvalidateSig))
-				__OSBootDolSimpleSig.offsetFoundAt = i;
+		for (j = 0; j < sizeof(__OSBootDolSimpleSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &__OSBootDolSimpleSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  11, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  43, length, &__OSMaskInterruptsSigs[0]) &&
+							findx_pattern(data, dataType, i +  45, length, &__OSUnmaskInterruptsSigs[0]) &&
+							findx_pattern(data, dataType, i +  46, length, &OSEnableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  52, length, &__OSDoHotResetSigs[0]) &&
+							findx_pattern(data, dataType, i + 100, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 101, length, &ICFlashInvalidateSig))
+							__OSBootDolSimpleSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  11, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  42, length, &__OSMaskInterruptsSigs[1]) &&
+							findx_pattern(data, dataType, i +  44, length, &__OSUnmaskInterruptsSigs[1]) &&
+							findx_pattern(data, dataType, i +  45, length, &OSEnableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  53, length, &__OSDoHotResetSigs[1]) &&
+							findx_pattern(data, dataType, i +  83, length, &__OSDoHotResetSigs[1]) &&
+							findx_pattern(data, dataType, i + 152, length, &__OSDoHotResetSigs[1]) &&
+							findx_pattern(data, dataType, i + 210, length, &__OSDoHotResetSigs[1]) &&
+							findx_pattern(data, dataType, i + 241, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 270, length, &__OSDoHotResetSigs[1]) &&
+							findx_pattern(data, dataType, i + 280, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 281, length, &ICFlashInvalidateSig))
+							__OSBootDolSimpleSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
 		}
 		
 		for (j = 0; j < sizeof(__OSUnmaskInterruptsSigs) / sizeof(FuncPattern); j++) {
@@ -1297,6 +1333,12 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							__OSRebootSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
+						if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 11, length, &OSClearContextSigs[0]) &&
+							findx_pattern(data, dataType, i + 13, length, &OSSetCurrentContextSig))
+							__OSRebootSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
 						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  18, length, &OSClearContextSigs[1]) &&
 							findx_pattern(data, dataType, i +  20, length, &OSSetCurrentContextSig) &&
@@ -1308,7 +1350,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  94, length, &__OSDoHotResetSigs[1]))
 							__OSRebootSigs[j].offsetFoundAt = i;
 						break;
-					case 3:
+					case 4:
 						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  23, length, &OSClearContextSigs[1]) &&
 							findx_pattern(data, dataType, i +  25, length, &OSSetCurrentContextSig) &&
@@ -1320,7 +1362,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 101, length, &__OSDoHotResetSigs[1]))
 							__OSRebootSigs[j].offsetFoundAt = i;
 						break;
-					case 4:
+					case 5:
 						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  21, length, &OSClearContextSigs[1]) &&
 							findx_pattern(data, dataType, i +  23, length, &OSSetCurrentContextSig) &&
@@ -1332,7 +1374,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  99, length, &__OSDoHotResetSigs[1]))
 							__OSRebootSigs[j].offsetFoundAt = i;
 						break;
-					case 5:
+					case 6:
 						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  21, length, &OSClearContextSigs[1]) &&
 							findx_pattern(data, dataType, i +  23, length, &OSSetCurrentContextSig) &&
@@ -1346,7 +1388,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 105, length, &ICFlashInvalidateSig))
 							__OSRebootSigs[j].offsetFoundAt = i;
 						break;
-					case 6:
+					case 7:
 						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  19, length, &OSClearContextSigs[2]) &&
 							findx_pattern(data, dataType, i +  21, length, &OSSetCurrentContextSig) &&
@@ -1361,7 +1403,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 190, length, &ICFlashInvalidateSig))
 							__OSRebootSigs[j].offsetFoundAt = i;
 						break;
-					case 7:
+					case 8:
 						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  20, length, &OSClearContextSigs[1]) &&
 							findx_pattern(data, dataType, i +  22, length, &OSSetCurrentContextSig) &&
@@ -1376,7 +1418,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 200, length, &ICFlashInvalidateSig))
 							__OSRebootSigs[j].offsetFoundAt = i;
 						break;
-					case 8:
+					case 9:
 						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  18, length, &OSClearContextSigs[1]) &&
 							findx_pattern(data, dataType, i +  20, length, &OSSetCurrentContextSig) &&
@@ -1391,7 +1433,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 196, length, &ICFlashInvalidateSig))
 							__OSRebootSigs[j].offsetFoundAt = i;
 						break;
-					case 9:
+					case 10:
 						if (findx_pattern(data, dataType, i +  7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 13, length, &OSClearContextSigs[1]) &&
 							findx_pattern(data, dataType, i + 15, length, &OSSetCurrentContextSig))
@@ -1438,56 +1480,66 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							OSResetSystemSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
+						if (findx_pattern(data, dataType, i +  38, length, &__OSDoHotResetSigs[0]))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
 						if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  72, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  77, length, &ICFlashInvalidateSig) &&
 							findx_pattern(data, dataType, i + 103, length, &OSRestoreInterruptsSig))
 							OSResetSystemSigs[j].offsetFoundAt = i;
 						break;
-					case 3:
+					case 4:
 						if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  73, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  78, length, &ICFlashInvalidateSig) &&
 							findx_pattern(data, dataType, i + 104, length, &OSRestoreInterruptsSig))
 							OSResetSystemSigs[j].offsetFoundAt = i;
 						break;
-					case 4:
+					case 5:
 						if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  72, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  77, length, &ICFlashInvalidateSig))
 							OSResetSystemSigs[j].offsetFoundAt = i;
 						break;
-					case 5:
+					case 6:
 						if (findx_pattern(data, dataType, i +  57, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  82, length, &ICFlashInvalidateSig))
 							OSResetSystemSigs[j].offsetFoundAt = i;
 						break;
-					case 6:
+					case 7:
+						if (findx_pattern(data, dataType, i +  57, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  82, length, &ICFlashInvalidateSig))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 8:
 						if (findx_pattern(data, dataType, i +  48, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  66, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  70, length, &ICFlashInvalidateSig))
 							OSResetSystemSigs[j].offsetFoundAt = i;
 						break;
-					case 7:
+					case 9:
 						if (findx_pattern(data, dataType, i +  59, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  81, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  86, length, &ICFlashInvalidateSig))
 							OSResetSystemSigs[j].offsetFoundAt = i;
 						break;
-					case 8:
+					case 10:
 						if (findx_pattern(data, dataType, i +  64, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  86, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  91, length, &ICFlashInvalidateSig))
 							OSResetSystemSigs[j].offsetFoundAt = i;
 						break;
-					case 9:
+					case 11:
 						if (findx_pattern(data, dataType, i +  65, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  87, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  92, length, &ICFlashInvalidateSig))
 							OSResetSystemSigs[j].offsetFoundAt = i;
 						break;
-					case 10:
+					case 12:
 						if (findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  79, length, &ICFlashInvalidateSig))
@@ -1565,6 +1617,14 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							SelectThreadSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
+						if (findx_pattern(data, dataType, i + 56, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 57, length, &OSEnableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 61, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 66, length, &OSClearContextSigs[0]) &&
+							find_pattern_after(data, length, &fp, &__OSRescheduleSig))
+							SelectThreadSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
 						if (findx_pattern(data, dataType, i + 76, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i + 77, length, &OSEnableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 81, length, &OSDisableInterruptsSig) &&
@@ -1572,7 +1632,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, length, &fp, &__OSRescheduleSig))
 							SelectThreadSigs[j].offsetFoundAt = i;
 						break;
-					case 2:
+					case 3:
 						if (findx_pattern(data, dataType, i + 81, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i + 82, length, &OSEnableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 86, length, &OSDisableInterruptsSig) &&
@@ -1580,7 +1640,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, length, &fp, &__OSRescheduleSig))
 							SelectThreadSigs[j].offsetFoundAt = i;
 						break;
-					case 3:
+					case 4:
 						if (findx_pattern(data, dataType, i + 82, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i + 83, length, &OSEnableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 87, length, &OSDisableInterruptsSig) &&
@@ -1594,10 +1654,10 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		
 		if (compare_pattern(&fp, &EXISelectSDSig)) {
 			if (findx_pattern(data, dataType, i + 11, length, &OSDisableInterruptsSig) &&
-				findx_pattern(data, dataType, i + 24, length, &__EXIProbeSigs[4]) &&
+				findx_pattern(data, dataType, i + 24, length, &__EXIProbeSigs[5]) &&
 				findx_pattern(data, dataType, i + 48, length, &OSRestoreInterruptsSig) &&
 				findx_pattern(data, dataType, i + 78, length, &OSRestoreInterruptsSig) &&
-				find_pattern_after(data, length, &fp, &EXISelectSigs[4]))
+				find_pattern_after(data, length, &fp, &EXISelectSigs[5]))
 				EXISelectSDSig.offsetFoundAt = i;
 		}
 		
@@ -1613,18 +1673,18 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
-						if (findx_pattern(data, dataType, i + 20, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 26, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 58, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 64, length, &__EXIProbeSigs[1]) &&
+						if (findx_pattern(data, dataType, i + 19, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 57, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 63, length, &__EXIProbeSigs[1]) &&
 							find_pattern_before(data, length, &fp, &EXISelectSigs[1]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (findx_pattern(data, dataType, i + 12, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 18, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 52, length, &__EXIProbeSigs[2]) &&
+						if (findx_pattern(data, dataType, i + 20, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 26, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 58, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 64, length, &__EXIProbeSigs[2]) &&
 							find_pattern_before(data, length, &fp, &EXISelectSigs[2]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
@@ -1632,8 +1692,8 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 						if (findx_pattern(data, dataType, i + 12, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 18, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 52, length, &__EXIProbeSigs[2]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[2]))
+							findx_pattern(data, dataType, i + 52, length, &__EXIProbeSigs[3]) &&
+							find_pattern_before(data, length, &fp, &EXISelectSigs[3]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
@@ -1653,11 +1713,19 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
+						if (findx_pattern(data, dataType, i + 12, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 18, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 52, length, &__EXIProbeSigs[5]) &&
+							find_pattern_before(data, length, &fp, &EXISelectSigs[5]))
+							EXIDeselectSigs[j].offsetFoundAt = i;
+						break;
+					case 7:
 						if (findx_pattern(data, dataType, i +  9, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 15, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 47, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 53, length, &__EXIProbeSigs[5]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[5]))
+							findx_pattern(data, dataType, i + 53, length, &__EXIProbeSigs[6]) &&
+							find_pattern_before(data, length, &fp, &EXISelectSigs[6]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -1724,13 +1792,22 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
+						if (findx_pattern(data, dataType, i +  11, length, &__OSGetSystemTimeSigs[0]) &&
+							findx_pattern(data, dataType, i +  57, length, &__OSGetSystemTimeSigs[0]) &&
+							findx_pattern(data, dataType, i + 136, length, &OSClearContextSigs[0]) &&
+							findx_pattern(data, dataType, i + 138, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 153, length, &OSClearContextSigs[0]) &&
+							findx_pattern(data, dataType, i + 155, length, &OSSetCurrentContextSig))
+							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
 						if (findx_pattern(data, dataType, i +  33, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  99, length, &OSClearContextSigs[1]) &&
 							findx_pattern(data, dataType, i + 101, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i + 113, length, &OSSetCurrentContextSig))
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
-					case 2:
+					case 3:
 						if (findx_pattern(data, dataType, i +  16, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  54, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i + 157, length, &OSClearContextSigs[1]) &&
@@ -1739,7 +1816,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 175, length, &OSSetCurrentContextSig))
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
-					case 3:
+					case 4:
 						if (findx_pattern(data, dataType, i +  18, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  56, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i + 159, length, &OSClearContextSigs[1]) &&
@@ -1748,7 +1825,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 177, length, &OSSetCurrentContextSig))
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
-					case 4:
+					case 5:
 						if (findx_pattern(data, dataType, i +  16, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  59, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i + 162, length, &OSClearContextSigs[1]) &&
@@ -1757,7 +1834,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 180, length, &OSSetCurrentContextSig))
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
-					case 5:
+					case 6:
 						if (findx_pattern(data, dataType, i +  11, length, &__OSGetSystemTimeSigs[2]) &&
 							findx_pattern(data, dataType, i +  56, length, &__OSGetSystemTimeSigs[2]) &&
 							findx_pattern(data, dataType, i + 160, length, &OSClearContextSigs[2]) &&
@@ -1766,7 +1843,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 178, length, &OSSetCurrentContextSig))
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
-					case 6:
+					case 7:
 						if (findx_pattern(data, dataType, i +  12, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  59, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i + 165, length, &OSClearContextSigs[1]) &&
@@ -1964,30 +2041,36 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							DVDInitSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
+						if (findx_pattern(data, dataType, i + 11, length, &__DVDClearWaitingQueueSigs[0]) &&
+							findx_pattern(data, dataType, i + 23, length, &__OSSetInterruptHandlerSigs[0]) &&
+							findx_pattern(data, dataType, i + 25, length, &__OSUnmaskInterruptsSigs[0]))
+							DVDInitSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
 						if (findx_pattern(data, dataType, i + 13, length, &__DVDClearWaitingQueueSigs[1]) &&
 							findx_pattern(data, dataType, i + 20, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 22, length, &__OSUnmaskInterruptsSigs[1]))
 							DVDInitSigs[j].offsetFoundAt = i;
 						break;
-					case 2:
+					case 3:
 						if (findx_pattern(data, dataType, i + 14, length, &__DVDClearWaitingQueueSigs[1]) &&
 							findx_pattern(data, dataType, i + 22, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 24, length, &__OSUnmaskInterruptsSigs[1]))
 							DVDInitSigs[j].offsetFoundAt = i;
 						break;
-					case 3:
+					case 4:
 						if (findx_pattern(data, dataType, i + 12, length, &__DVDClearWaitingQueueSigs[1]) &&
 							findx_pattern(data, dataType, i + 20, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 22, length, &__OSUnmaskInterruptsSigs[1]))
 							DVDInitSigs[j].offsetFoundAt = i;
 						break;
-					case 4:
+					case 5:
 						if (findx_pattern(data, dataType, i + 11, length, &__DVDClearWaitingQueueSigs[2]) &&
 							findx_pattern(data, dataType, i + 19, length, &__OSSetInterruptHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i + 21, length, &__OSUnmaskInterruptsSigs[2]))
 							DVDInitSigs[j].offsetFoundAt = i;
 						break;
-					case 5:
+					case 6:
 						if (findx_pattern(data, dataType, i + 13, length, &__DVDClearWaitingQueueSigs[1]) &&
 							findx_pattern(data, dataType, i + 23, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 25, length, &__OSUnmaskInterruptsSigs[1]))
@@ -2001,22 +2084,23 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			if (compare_pattern(&fp, &stateGettingErrorSigs[j])) {
 				switch (j) {
 					case 0:
-						if (findi_pattern(data, dataType, i + 3, i + 4, length, &cbForStateGettingErrorSigs[0]) &&
-							findx_pattern(data, dataType, i + 5, length, &DVDLowRequestErrorSigs[0]))
+						if (findi_patterns(data, dataType, i + 3, i + 4, length, &cbForStateGettingErrorSigs[0],
+							                                                     &cbForStateGettingErrorSigs[1], NULL) &&
+							findx_pattern (data, dataType, i + 5, length, &DVDLowRequestErrorSigs[0]))
 							stateGettingErrorSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
-						if (findi_patterns(data, dataType, i + 1, i + 3, length, &cbForStateGettingErrorSigs[1],
-							                                                     &cbForStateGettingErrorSigs[2],
+						if (findi_patterns(data, dataType, i + 1, i + 3, length, &cbForStateGettingErrorSigs[2],
 							                                                     &cbForStateGettingErrorSigs[3],
-							                                                     &cbForStateGettingErrorSigs[5], NULL) &&
+							                                                     &cbForStateGettingErrorSigs[4],
+							                                                     &cbForStateGettingErrorSigs[6], NULL) &&
 							findx_patterns(data, dataType, i + 5, length, &DVDLowRequestErrorSigs[1],
 							                                              &DVDLowRequestErrorSigs[2],
 							                                              &DVDLowRequestErrorSigs[3], NULL))
 							stateGettingErrorSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (findi_pattern(data, dataType, i + 2, i + 4, length, &cbForStateGettingErrorSigs[4]) &&
+						if (findi_pattern(data, dataType, i + 2, i + 4, length, &cbForStateGettingErrorSigs[5]) &&
 							findx_pattern(data, dataType, i + 5, length, &DVDLowRequestErrorSigs[4]))
 							stateGettingErrorSigs[j].offsetFoundAt = i;
 						break;
@@ -2033,22 +2117,27 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							cbForUnrecoveredErrorSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
-						if (findi_pattern(data, dataType, i + 16, i + 17, length, &cbForUnrecoveredErrorRetrySigs[1]) &&
+						if (findi_pattern(data, dataType, i + 21, i + 22, length, &cbForUnrecoveredErrorRetrySigs[1]) &&
+							findx_pattern(data, dataType, i + 23, length, &DVDLowRequestErrorSigs[0]))
+							cbForUnrecoveredErrorSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findi_pattern(data, dataType, i + 16, i + 17, length, &cbForUnrecoveredErrorRetrySigs[2]) &&
 							findx_pattern(data, dataType, i + 18, length, &DVDLowRequestErrorSigs[2]))
 							cbForUnrecoveredErrorSigs[j].offsetFoundAt = i;
-					case 2:
-						if (findi_pattern (data, dataType, i + 19, i + 20, length, &cbForUnrecoveredErrorRetrySigs[2]) &&
+					case 3:
+						if (findi_pattern (data, dataType, i + 19, i + 20, length, &cbForUnrecoveredErrorRetrySigs[3]) &&
 							findx_patterns(data, dataType, i + 21, length, &DVDLowRequestErrorSigs[2],
 							                                               &DVDLowRequestErrorSigs[3], NULL))
 							cbForUnrecoveredErrorSigs[j].offsetFoundAt = i;
 						break;
-					case 3:
-						if (findi_pattern(data, dataType, i + 14, i + 15, length, &cbForUnrecoveredErrorRetrySigs[3]) &&
+					case 4:
+						if (findi_pattern(data, dataType, i + 14, i + 15, length, &cbForUnrecoveredErrorRetrySigs[4]) &&
 							findx_pattern(data, dataType, i + 16, length, &DVDLowRequestErrorSigs[4]))
 							cbForUnrecoveredErrorSigs[j].offsetFoundAt = i;
 						break;
-					case 4:
-						if (findi_pattern(data, dataType, i + 16, i + 17, length, &cbForUnrecoveredErrorRetrySigs[4]) &&
+					case 5:
+						if (findi_pattern(data, dataType, i + 16, i + 17, length, &cbForUnrecoveredErrorRetrySigs[5]) &&
 							findx_pattern(data, dataType, i + 18, length, &DVDLowRequestErrorSigs[3]))
 							cbForUnrecoveredErrorSigs[j].offsetFoundAt = i;
 						break;
@@ -2091,13 +2180,19 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							stateReadySigs[j].offsetFoundAt = i;
 						break;
 					case 1:
+						if (findx_pattern(data, dataType, i +   4, length, &__DVDCheckWaitingQueueSigs[0]) &&
+							findx_pattern(data, dataType, i +  18, length, &__DVDPopWaitingQueueSigs[0]) &&
+							findx_pattern(data, dataType, i +  38, length, &fp))
+							stateReadySigs[j].offsetFoundAt = i;
+						break;
+					case 2:
 						if (findx_pattern(data, dataType, i +   4, length, &__DVDCheckWaitingQueueSigs[1]) &&
 							findx_pattern(data, dataType, i +  18, length, &__DVDPopWaitingQueueSigs[1]) &&
 							findx_pattern(data, dataType, i +  79, length, &__DVDClearWaitingQueueSigs[1]) &&
 							findx_pattern(data, dataType, i +  87, length, &fp))
 							stateReadySigs[j].offsetFoundAt = i;
 						break;
-					case 2:
+					case 3:
 						if (findx_patterns(data, dataType, i +   6, length, &__DVDCheckWaitingQueueSigs[1],
 							                                                &__DVDCheckWaitingQueueSigs[2], NULL) &&
 							findx_patterns(data, dataType, i +  20, length, &__DVDPopWaitingQueueSigs[1],
@@ -2107,7 +2202,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern (data, dataType, i + 108, length, &fp))
 							stateReadySigs[j].offsetFoundAt = i;
 						break;
-					case 3:
+					case 4:
 						if (findx_pattern(data, dataType, i +   6, length, &__DVDCheckWaitingQueueSigs[2]) &&
 							findx_pattern(data, dataType, i +  20, length, &__DVDPopWaitingQueueSigs[2]) &&
 							findx_pattern(data, dataType, i +  37, length, &fp) &&
@@ -2117,20 +2212,12 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 145, length, &fp))
 							stateReadySigs[j].offsetFoundAt = i;
 						break;
-					case 4:
+					case 5:
 						if (findx_pattern(data, dataType, i +   3, length, &__DVDCheckWaitingQueueSigs[3]) &&
 							findx_pattern(data, dataType, i +  17, length, &__DVDPopWaitingQueueSigs[3]) &&
 							findx_pattern(data, dataType, i +  34, length, &fp) &&
 							findx_pattern(data, dataType, i +  88, length, &__DVDClearWaitingQueueSigs[2]) &&
 							findx_pattern(data, dataType, i +  99, length, &fp))
-							stateReadySigs[j].offsetFoundAt = i;
-						break;
-					case 5:
-						if (findx_pattern(data, dataType, i +   6, length, &__DVDCheckWaitingQueueSigs[2]) &&
-							findx_pattern(data, dataType, i +  20, length, &__DVDPopWaitingQueueSigs[2]) &&
-							findx_pattern(data, dataType, i +  37, length, &fp) &&
-							findx_pattern(data, dataType, i +  92, length, &__DVDClearWaitingQueueSigs[1]) &&
-							findx_pattern(data, dataType, i + 102, length, &fp))
 							stateReadySigs[j].offsetFoundAt = i;
 						break;
 					case 6:
@@ -2142,6 +2229,14 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							stateReadySigs[j].offsetFoundAt = i;
 						break;
 					case 7:
+						if (findx_pattern(data, dataType, i +   6, length, &__DVDCheckWaitingQueueSigs[2]) &&
+							findx_pattern(data, dataType, i +  20, length, &__DVDPopWaitingQueueSigs[2]) &&
+							findx_pattern(data, dataType, i +  37, length, &fp) &&
+							findx_pattern(data, dataType, i +  92, length, &__DVDClearWaitingQueueSigs[1]) &&
+							findx_pattern(data, dataType, i + 102, length, &fp))
+							stateReadySigs[j].offsetFoundAt = i;
+						break;
+					case 8:
 						if (findx_pattern(data, dataType, i +   6, length, &__DVDCheckWaitingQueueSigs[2]) &&
 							findx_pattern(data, dataType, i +  20, length, &__DVDPopWaitingQueueSigs[2]) &&
 							findx_pattern(data, dataType, i +  37, length, &fp) &&
@@ -2184,6 +2279,32 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 						}
 						break;
 					case 1:
+						if (findx_pattern(data, dataType, i +  26, length, &DVDLowReadDiskIDSigs[0]) &&
+							findx_pattern(data, dataType, i +  72, length, &DVDLowReadSigs[0]) &&
+							findx_pattern(data, dataType, i +  81, length, &DVDLowSeekSigs[0]) &&
+							findx_pattern(data, dataType, i +  85, length, &DVDLowStopMotorSigs[0]) &&
+							findx_pattern(data, dataType, i +  89, length, &DVDLowStopMotorSigs[0]) &&
+							findx_pattern(data, dataType, i + 104, length, &DVDLowRequestAudioStatusSigs[0]) &&
+							findx_pattern(data, dataType, i + 114, length, &DVDLowAudioStreamSigs[0]) &&
+							findx_pattern(data, dataType, i + 125, length, &DVDLowAudioStreamSigs[0]) &&
+							findx_pattern(data, dataType, i + 138, length, &DVDLowAudioStreamSigs[0]) &&
+							findx_pattern(data, dataType, i + 147, length, &DVDLowRequestAudioStatusSigs[0]) &&
+							findx_pattern(data, dataType, i + 156, length, &DVDLowRequestAudioStatusSigs[0]) &&
+							findx_pattern(data, dataType, i + 165, length, &DVDLowRequestAudioStatusSigs[0]) &&
+							findx_pattern(data, dataType, i + 174, length, &DVDLowRequestAudioStatusSigs[0]) &&
+							findx_pattern(data, dataType, i + 184, length, &DVDLowAudioBufferConfigSigs[0]) &&
+							findx_pattern(data, dataType, i + 195, length, &DVDLowInquirySigs[0]) &&
+							findx_pattern(data, dataType, i + 203, length, &DVDLowStopMotorSigs[0])) {
+							stateBusySigs[j].offsetFoundAt = i;
+							
+							find_pattern_after(data, length, &DVDLowSeekSigs[0], &DVDLowWaitCoverCloseSigs[0]);
+							find_pattern_after(data, length, &DVDLowStopMotorSigs[0], &DVDLowRequestErrorSigs[0]);
+							
+							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[0], &DVDLowResetSigs[0]))
+								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
+						}
+						break;
+					case 2:
 						if (findx_pattern(data, dataType, i +  25, length, &DVDLowReadDiskIDSigs[1]) &&
 							findx_pattern(data, dataType, i +  48, length, &DVDLowReadSigs[1]) &&
 							findx_pattern(data, dataType, i +  57, length, &DVDLowSeekSigs[1]) &&
@@ -2208,7 +2329,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
-					case 2:
+					case 3:
 						if (findx_pattern(data, dataType, i +  25, length, &DVDLowReadDiskIDSigs[2]) &&
 							findx_pattern(data, dataType, i +  48, length, &DVDLowReadSigs[2]) &&
 							findx_pattern(data, dataType, i +  57, length, &DVDLowSeekSigs[2]) &&
@@ -2233,7 +2354,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
-					case 3:
+					case 4:
 						if (findx_pattern(data, dataType, i +  25, length, &DVDLowReadDiskIDSigs[3]) &&
 							findx_pattern(data, dataType, i +  48, length, &DVDLowReadSigs[3]) &&
 							findx_pattern(data, dataType, i +  57, length, &DVDLowSeekSigs[3]) &&
@@ -2258,7 +2379,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
-					case 4:
+					case 5:
 						if (findx_pattern(data, dataType, i +  25, length, &DVDLowReadDiskIDSigs[3]) &&
 							findx_pattern(data, dataType, i +  65, length, &DVDLowReadSigs[3]) &&
 							findx_pattern(data, dataType, i +  74, length, &DVDLowSeekSigs[3]) &&
@@ -2283,7 +2404,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
-					case 5:
+					case 6:
 						if (findx_pattern(data, dataType, i +  24, length, &DVDLowReadDiskIDSigs[4]) &&
 							findx_pattern(data, dataType, i +  62, length, &DVDLowReadSigs[4]) &&
 							findx_pattern(data, dataType, i +  70, length, &DVDLowSeekSigs[4]) &&
@@ -2306,7 +2427,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[2]);
 						}
 						break;
-					case 6:
+					case 7:
 						if (findx_pattern(data, dataType, i +  25, length, &DVDLowReadDiskIDSigs[3]) &&
 							findx_pattern(data, dataType, i +  65, length, &DVDLowReadSigs[3]) &&
 							findx_pattern(data, dataType, i +  74, length, &DVDLowSeekSigs[3]) &&
@@ -2343,30 +2464,34 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 1:
-								if (findx_pattern(data, dataType, i + 150, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 141, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 2:
-								if (findx_pattern(data, dataType, i + 175, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 150, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 3:
-								if (findx_pattern(data, dataType, i + 178, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 175, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 4:
-								if (findx_pattern(data, dataType, i + 190, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 178, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 5:
-								if (findx_pattern(data, dataType, i + 182, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 190, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 6:
-								if (findx_pattern(data, dataType, i + 184, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 182, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 7:
+								if (findx_pattern(data, dataType, i + 184, length, &stateBusySigs[j]))
+									cbForStateBusySigs[k].offsetFoundAt = i;
+								break;
+							case 8:
 								if (findx_pattern(data, dataType, i + 201, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
@@ -2415,32 +2540,48 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 						}
 						break;
 					case 1:
+						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  30, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  42, length, &DVDLowBreakSigs[0]) &&
+							findx_pattern(data, dataType, i +  45, length, &__DVDDequeueWaitingQueueSigs[0]) &&
+							findx_pattern(data, dataType, i +  88, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  95, length, &DVDLowClearCallbackSigs[1]) &&
+							findx_pattern(data, dataType, i + 112, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 164, length, &OSRestoreInterruptsSig)) {
+							DVDCancelAsyncSigs[j].offsetFoundAt = i;
+							
+							if (find_pattern_before(data, length, &DVDLowBreakSigs[0], &SetBreakAlarmSigs[0]) &&
+								find_pattern_before(data, length, &SetBreakAlarmSigs[0], &AlarmHandlerForBreakSigs[0]))
+								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[0], &DoBreakSigs[0]);
+						}
+						break;
+					case 2:
 						if (findx_pattern(data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  35, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i +  47, length, &DVDLowBreakSigs[1]) &&
 							findx_pattern(data, dataType, i +  50, length, &__DVDDequeueWaitingQueueSigs[1]) &&
 							findx_pattern(data, dataType, i +  89, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 112, length, &DVDLowClearCallbackSigs[1]) &&
+							findx_pattern(data, dataType, i + 112, length, &DVDLowClearCallbackSigs[2]) &&
 							findx_pattern(data, dataType, i + 162, length, &OSRestoreInterruptsSig))
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 						break;
-					case 2:
+					case 3:
 						if (findx_pattern(data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  34, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i +  45, length, &DVDLowBreakSigs[1]) &&
 							findx_pattern(data, dataType, i +  48, length, &__DVDDequeueWaitingQueueSigs[1]) &&
 							findx_pattern(data, dataType, i +  90, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  97, length, &DVDLowClearCallbackSigs[1]) &&
+							findx_pattern(data, dataType, i +  97, length, &DVDLowClearCallbackSigs[2]) &&
 							findx_pattern(data, dataType, i + 147, length, &OSRestoreInterruptsSig))
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 						break;
-					case 3:
+					case 4:
 						if (findx_pattern(data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  32, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i +  43, length, &DVDLowBreakSigs[2]) &&
 							findx_pattern(data, dataType, i +  46, length, &__DVDDequeueWaitingQueueSigs[1]) &&
 							findx_pattern(data, dataType, i +  88, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  95, length, &DVDLowClearCallbackSigs[1]) &&
+							findx_pattern(data, dataType, i +  95, length, &DVDLowClearCallbackSigs[2]) &&
 							findx_pattern(data, dataType, i + 101, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 147, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
@@ -2450,13 +2591,13 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
 						}
 						break;
-					case 4:
+					case 5:
 						if (findx_pattern(data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  32, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i +  43, length, &DVDLowBreakSigs[3]) &&
 							findx_pattern(data, dataType, i +  46, length, &__DVDDequeueWaitingQueueSigs[1]) &&
 							findx_pattern(data, dataType, i +  88, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  95, length, &DVDLowClearCallbackSigs[1]) &&
+							findx_pattern(data, dataType, i +  95, length, &DVDLowClearCallbackSigs[2]) &&
 							findx_pattern(data, dataType, i + 101, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 147, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
@@ -2466,14 +2607,14 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
 						}
 						break;
-					case 5:
+					case 6:
 						if (findx_pattern (data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
 							findx_pattern (data, dataType, i +  32, length, &OSRestoreInterruptsSig) &&
 							findx_pattern (data, dataType, i +  43, length, &DVDLowBreakSigs[3]) &&
 							findx_pattern (data, dataType, i +  46, length, &__DVDDequeueWaitingQueueSigs[1]) &&
 							findx_pattern (data, dataType, i +  88, length, &OSRestoreInterruptsSig) &&
-							findx_patterns(data, dataType, i +  95, length, &DVDLowClearCallbackSigs[1],
-							                                                &DVDLowClearCallbackSigs[3], NULL) &&
+							findx_patterns(data, dataType, i +  95, length, &DVDLowClearCallbackSigs[2],
+							                                                &DVDLowClearCallbackSigs[4], NULL) &&
 							findx_pattern (data, dataType, i + 101, length, &OSRestoreInterruptsSig) &&
 							findx_pattern (data, dataType, i + 150, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
@@ -2483,13 +2624,13 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
 						}
 						break;
-					case 6:
+					case 7:
 						if (findx_pattern(data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  31, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i +  42, length, &DVDLowBreakSigs[4]) &&
 							findx_pattern(data, dataType, i +  45, length, &__DVDDequeueWaitingQueueSigs[2]) &&
 							findx_pattern(data, dataType, i +  87, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  94, length, &DVDLowClearCallbackSigs[2]) &&
+							findx_pattern(data, dataType, i +  94, length, &DVDLowClearCallbackSigs[3]) &&
 							findx_pattern(data, dataType, i + 100, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 149, length, &OSRestoreInterruptsSig))
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
@@ -2509,17 +2650,23 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 59, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &DVDGetCurrentDiskIDSigs[0]))
+							DVDCheckDiskSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 50, length, &OSRestoreInterruptsSig) &&
 							find_pattern_before(data, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
 							DVDCheckDiskSigs[j].offsetFoundAt = i;
 						break;
-					case 2:
+					case 3:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 54, length, &OSRestoreInterruptsSig) &&
 							find_pattern_before(data, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
 							DVDCheckDiskSigs[j].offsetFoundAt = i;
 						break;
-					case 3:
+					case 4:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 55, length, &OSRestoreInterruptsSig) &&
 							find_pattern_before(data, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
@@ -2571,16 +2718,25 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if ((i = __OSBootDolSimpleSig.offsetFoundAt)) {
+	for (j = 0; j < sizeof(__OSBootDolSimpleSigs) / sizeof(FuncPattern); j++)
+		if (__OSBootDolSimpleSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(__OSBootDolSimpleSigs) / sizeof(FuncPattern) && (i = __OSBootDolSimpleSigs[j].offsetFoundAt)) {
 		u32 *__OSBootDolSimple = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__OSBootDolSimple) {
-			if (devices[DEVICE_CUR] == &__device_fsp)
-				data[i + 43] = 0x3C600801;	// lis		r3, 0x0801
-			else
-				data[i + 43] = 0x3C600800;	// lis		r3, 0x0800
-			
-			print_gecko("Found:[%s] @ %08X\n", __OSBootDolSimpleSig.Name, __OSBootDolSimple);
+			if (devices[DEVICE_CUR] == &__device_fsp) {
+				switch (j) {
+					case 0: data[i + 44] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 1: data[i + 43] = 0x3C600801; break;	// lis		r3, 0x0801
+				}
+			} else {
+				switch (j) {
+					case 0: data[i + 44] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 1: data[i + 43] = 0x3C600800; break;	// lis		r3, 0x0800
+				}
+			}
+			print_gecko("Found:[%s] @ %08X\n", __OSBootDolSimpleSigs[j].Name, __OSBootDolSimple);
 			patched++;
 		}
 	}
@@ -2619,25 +2775,25 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				switch (j) {
 					case 0: data[i + 42] = 0x3C600801; break;	// lis		r3, 0x0801
 					case 1: data[i + 50] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 2: data[i + 32] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 3: data[i + 39] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 4:
-					case 5: data[i + 37] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 6:
-					case 7: data[i + 33] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 8: data[i + 32] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 3: data[i + 32] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 4: data[i + 39] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 5:
+					case 6: data[i + 37] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 7:
+					case 8: data[i + 33] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 9: data[i + 32] = 0x3C600801; break;	// lis		r3, 0x0801
 				}
 			} else {
 				switch (j) {
 					case 0: data[i + 42] = 0x3C600800; break;	// lis		r3, 0x0800
 					case 1: data[i + 50] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 2: data[i + 32] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 3: data[i + 39] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 4:
-					case 5: data[i + 37] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 6:
-					case 7: data[i + 33] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 8:	data[i + 32] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 3: data[i + 32] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 4: data[i + 39] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 5:
+					case 6: data[i + 37] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 7:
+					case 8: data[i + 33] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 9:	data[i + 32] = 0x3C600800; break;	// lis		r3, 0x0800
 				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", __OSRebootSigs[j].Name, __OSReboot);
@@ -2670,15 +2826,16 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		
 		if (OSResetSystem) {
 			switch (j) {
-				case  2: data[i + 72] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 72); break;
-				case  3: data[i + 73] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 73); break;
-				case  4: data[i + 72] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 72); break;
-				case  5: data[i + 77] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 77); break;
-				case  6: data[i + 66] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 66); break;
-				case  7: data[i + 81] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 81); break;
-				case  8: data[i + 86] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 86); break;
-				case  9: data[i + 87] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 87); break;
-				case 10: data[i + 74] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 74); break;
+				case  3: data[i + 72] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 72); break;
+				case  4: data[i + 73] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 73); break;
+				case  5: data[i + 72] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 72); break;
+				case  6:
+				case  7: data[i + 77] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 77); break;
+				case  8: data[i + 66] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 66); break;
+				case  9: data[i + 81] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 81); break;
+				case 10: data[i + 86] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 86); break;
+				case 11: data[i + 87] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 87); break;
+				case 12: data[i + 74] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 74); break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", OSResetSystemSigs[j].Name, OSResetSystem);
 			patched++;
@@ -2735,6 +2892,16 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 61] = 0x4182FFF4;	// beq		-3
 					break;
 				case 1:
+					data[i + 12] = branchAndLink(TRICKLE_READ, SelectThread + 12);
+					data[i + 13] = 0x4800019C;	// b		+103
+					data[i + 20] = branchAndLink(TRICKLE_READ, SelectThread + 20);
+					data[i + 21] = 0x4800017C;	// b		+95
+					data[i + 48] = branchAndLink(TRICKLE_READ, SelectThread + 48);
+					data[i + 49] = 0x4800010C;	// b		+67
+					data[i + 57] = branchAndLink(IDLE_THREAD, SelectThread + 57);
+					data[i + 60] = 0x4182FFF4;	// beq		-3
+					break;
+				case 2:
 					data[i + 11] = branchAndLink(TRICKLE_READ, SelectThread + 11);
 					data[i + 12] = 0x480001B4;	// b		+109
 					data[i + 19] = branchAndLink(TRICKLE_READ, SelectThread + 19);
@@ -2744,7 +2911,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 77] = branchAndLink(IDLE_THREAD, SelectThread + 77);
 					data[i + 80] = 0x4182FFF4;	// beq		-3
 					break;
-				case 2:
+				case 3:
 					data[i + 11] = branchAndLink(TRICKLE_READ, SelectThread + 11);
 					data[i + 12] = 0x480001DC;	// b		+119
 					data[i + 19] = branchAndLink(TRICKLE_READ, SelectThread + 19);
@@ -2754,7 +2921,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 82] = branchAndLink(IDLE_THREAD, SelectThread + 82);
 					data[i + 85] = 0x4182FFF4;	// beq		-3
 					break;
-				case 3:
+				case 4:
 					data[i +  8] = branchAndLink(TRICKLE_READ, SelectThread +  8);
 					data[i +  9] = 0x480001F8;	// b		+126
 					data[i + 15] = branchAndLink(TRICKLE_READ, SelectThread + 15);
@@ -2845,6 +3012,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		if (EXISelect) {
 			switch (j) {
 				case 0:
+				case 1:
 					data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
 					data[i + 65] = 0x389D0000;	// addi		r4, r29, 0
 					data[i + 66] = 0x38BE0000;	// addi		r5, r30, 0
@@ -2852,7 +3020,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 68] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 69] = 0x40820014;	// bne		+5
 					break;
-				case 1:
+				case 2:
 					data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
 					data[i + 65] = 0x389C0000;	// addi		r4, r28, 0
 					data[i + 66] = 0x38BD0000;	// addi		r5, r29, 0
@@ -2860,9 +3028,9 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 68] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 69] = 0x40820014;	// bne		+5
 					break;
-				case 2:
 				case 3:
 				case 4:
+				case 5:
 					data[i + 27] = 0x387B0000;	// addi		r3, r27, 0
 					data[i + 28] = 0x389C0000;	// addi		r4, r28, 0
 					data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
@@ -2870,7 +3038,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 31] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 32] = 0x40820014;	// bne		+5
 					break;
-				case 5:
+				case 6:
 					data[i + 27] = 0x387E0000;	// addi		r3, r30, 0
 					data[i + 28] = 0x389B0000;	// addi		r4, r27, 0
 					data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
@@ -2882,11 +3050,12 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			if (devices[DEVICE_CUR] == &__device_fsp) {
 				switch (j) {
 					case 0:
-					case 1: data[i + 103] = 0x3C600011; break;	// lis		r3, 0x0011
-					case 2:
+					case 1:
+					case 2: data[i + 103] = 0x3C600011; break;	// lis		r3, 0x0011
 					case 3:
-					case 4: data[i +  62] = 0x3C600011; break;	// lis		r3, 0x0011
-					case 5: data[i +  67] = 0x3C600011; break;	// lis		r3, 0x0011
+					case 4:
+					case 5: data[i +  62] = 0x3C600011; break;	// lis		r3, 0x0011
+					case 6: data[i +  67] = 0x3C600011; break;	// lis		r3, 0x0011
 				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", EXISelectSigs[j].Name, EXISelect);
@@ -2903,13 +3072,14 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		if (EXIDeselect) {
 			if (devices[DEVICE_CUR] == &__device_fsp) {
 				switch (j) {
-					case 0: data[i + 51] = 0x3C600011; break;	// lis		r3, 0x0011
-					case 1: data[i + 52] = 0x3C600011; break;	// lis		r3, 0x0011
-					case 2:
+					case 0:
+					case 1: data[i + 51] = 0x3C600011; break;	// lis		r3, 0x0011
+					case 2: data[i + 52] = 0x3C600011; break;	// lis		r3, 0x0011
 					case 3:
 					case 4:
-					case 5: data[i + 40] = 0x3C600011; break;	// lis		r3, 0x0011
-					case 6: data[i + 41] = 0x3C600011; break;	// lis		r3, 0x0011
+					case 5:
+					case 6: data[i + 40] = 0x3C600011; break;	// lis		r3, 0x0011
+					case 7: data[i + 41] = 0x3C600011; break;	// lis		r3, 0x0011
 				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", EXIDeselectSigs[j].Name, EXIDeselect);
@@ -2936,6 +3106,16 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 117] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 1:
+					data[i +  30] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  52] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  76] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  93] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  95] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 101] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 111] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 117] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
 					data[i +   1] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  28] = 0x3FE00C00;	// lis		r31, 0x0C00
 					data[i +  54] = 0x801F6004;	// lwz		r0, 0x6004 (r31)
@@ -2946,7 +3126,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i +  85] = 0x90050004;	// stw		r0, 0x0004 (r5)
 					data[i +  89] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 2:
+				case 3:
 					data[i +  29] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  49] = 0x3FE00C00;	// lis		r31, 0x0C00
 					data[i +  75] = 0x801F6004;	// lwz		r0, 0x6004 (r31)
@@ -2957,7 +3137,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 106] = 0x90050004;	// stw		r0, 0x0004 (r5)
 					data[i + 110] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 3:
+				case 4:
 					data[i +  31] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  51] = 0x3FE00C00;	// lis		r31, 0x0C00
 					data[i +  77] = 0x801F6004;	// lwz		r0, 0x6004 (r31)
@@ -2968,7 +3148,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 108] = 0x90050004;	// stw		r0, 0x0004 (r5)
 					data[i + 112] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 4:
+				case 5:
 					data[i +  33] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  54] = 0x3FE00C00;	// lis		r31, 0x0C00
 					data[i +  80] = 0x801F6004;	// lwz		r0, 0x6004 (r31)
@@ -2979,7 +3159,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 111] = 0x90050004;	// stw		r0, 0x0004 (r5)
 					data[i + 115] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 5:
+				case 6:
 					data[i +  28] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  51] = 0x3FE00C00;	// lis		r31, 0x0C00
 					data[i +  78] = 0x801B0004;	// lwz		r0, 0x0004 (r27)
@@ -2990,7 +3170,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 109] = 0x90050004;	// stw		r0, 0x0004 (r5)
 					data[i + 113] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 6:
+				case 7:
 					data[i +  30] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  54] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  80] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -3453,15 +3633,16 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		if (DVDLowClearCallback) {
 			switch (j) {
 				case 0:
+				case 1:
 					data[i + 3] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 1:
+				case 2:
 					data[i + 0] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 2:
+				case 3:
 					data[i + 1] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 3:
+				case 4:
 					data[i + 0] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
@@ -3500,32 +3681,33 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		if (DVDInit) {
 			switch (j) {
 				case 0:
+				case 1:
 					data[i + 20] = 0x3860001B;	// li		r3, 27
 					data[i + 23] = branchAndLink(SET_DI_HANDLER, DVDInit + 23);
 					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 32] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 1:
+				case 2:
 					data[i + 19] = 0x3860001B;	// li		r3, 27
 					data[i + 20] = branchAndLink(SET_DI_HANDLER, DVDInit + 20);
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 2:
+				case 3:
 					data[i + 21] = 0x3860001B;	// li		r3, 27
 					data[i + 22] = branchAndLink(SET_DI_HANDLER, DVDInit + 22);
 					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 3:
+				case 4:
 					data[i + 19] = 0x3860001B;	// li		r3, 27
 					data[i + 20] = branchAndLink(SET_DI_HANDLER, DVDInit + 20);
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 4:
+				case 5:
 					data[i + 17] = 0x3860001B;	// li		r3, 27
 					data[i + 19] = branchAndLink(SET_DI_HANDLER, DVDInit + 19);
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 5:
+				case 6:
 					data[i + 21] = 0x3860001B;	// li		r3, 27
 					data[i + 23] = branchAndLink(SET_DI_HANDLER, DVDInit + 23);
 					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -3533,21 +3715,23 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			}
 			if (devices[DEVICE_CUR] == &__device_fsp) {
 				switch (j) {
-					case 0: data[i + 24] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 1: data[i + 21] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 2: data[i + 23] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 3: data[i + 21] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 4: data[i + 20] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 5: data[i + 24] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 0:
+					case 1: data[i + 24] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 2: data[i + 21] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 3: data[i + 23] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 4: data[i + 21] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 5: data[i + 20] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 6: data[i + 24] = 0x3C600801; break;	// lis		r3, 0x0801
 				}
 			} else {
 				switch (j) {
-					case 0: data[i + 24] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 1: data[i + 21] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 2: data[i + 23] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 3: data[i + 21] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 4: data[i + 20] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 5: data[i + 24] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 0:
+					case 1: data[i + 24] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 2: data[i + 21] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 3: data[i + 23] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 4: data[i + 21] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 5: data[i + 20] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 6: data[i + 24] = 0x3C600800; break;	// lis		r3, 0x0800
 				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", DVDInitSigs[j].Name, DVDInit);
@@ -3567,18 +3751,21 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 1:
-					data[i + 17] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 23] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 2:
-					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 17] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 3:
-					data[i + 31] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 4:
-					data[i + 26] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 31] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 5:
+					data[i + 26] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 6:
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
@@ -3599,15 +3786,18 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 21] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 1:
-					data[i + 24] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 15] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 2:
-					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 24] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 3:
-					data[i + 22] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 4:
+					data[i + 22] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 5:
 					data[i + 21] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
@@ -3678,8 +3868,36 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 169] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 1:
+					data[i +  17] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  19] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  47] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  49] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  74] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  76] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  91] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  93] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 116] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 118] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 127] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 129] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 140] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 142] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 149] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 151] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 158] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 160] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 167] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 169] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 176] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 178] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 186] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 188] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 197] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 199] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
 				case 2:
 				case 3:
+				case 4:
 					data[i +  16] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  27] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  30] = 0x3C800008;	// lis		r4, 8
@@ -3693,7 +3911,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 152] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 162] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 4:
+				case 5:
 					data[i +  16] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  44] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  67] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -3707,7 +3925,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 169] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 179] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 5:
+				case 6:
 					data[i +  16] = 0x3CC00C00;	// lis		r6, 0x0C00
 					data[i +  43] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  64] = 0x3CA00C00;	// lis		r5, 0x0C00
@@ -3721,7 +3939,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 158] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 167] = 0x3CC00C00;	// lis		r6, 0x0C00
 					break;
-				case 6:
+				case 7:
 					data[i +  16] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  44] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  67] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -3757,42 +3975,48 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 206] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 1:
+					data[i +  61] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 168] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 172] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 196] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
 					data[i +  75] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 181] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 185] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 207] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 2:
+				case 3:
 					data[i +  93] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 208] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 212] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 235] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 3:
+				case 4:
 					data[i +  96] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 211] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 215] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 238] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 4:
+				case 5:
 					data[i + 102] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 236] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 240] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 263] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 5:
+				case 6:
 					data[i +  94] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 230] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 234] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 256] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 6:
+				case 7:
 					data[i +  96] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 230] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 234] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 257] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 7:
+				case 8:
 					data[i +  96] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 247] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 251] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -3838,11 +4062,12 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		if (DVDCheckDisk) {
 			switch (j) {
 				case 0:
+				case 1:
 					data[i + 44] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 1:
 				case 2:
 				case 3:
+				case 4:
 					data[i + 40] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
@@ -8091,18 +8316,20 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		{ 18, 6, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" },
 		{ 17, 5, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" }	// SN Systems ProDG
 	};
-	FuncPattern OSResetSystemSigs[11] = {
+	FuncPattern OSResetSystemSigs[13] = {
 		{  64, 13, 2, 15,  6, 8, NULL, 0, "OSResetSystemD A" },
 		{  97, 29, 3, 27,  5, 8, NULL, 0, "OSResetSystemD B" },
+		{  87, 28, 2, 21,  4, 6, NULL, 0, "OSResetSystemD C" },
 		{ 110, 19, 2, 16, 24, 9, NULL, 0, "OSResetSystem A" },
 		{ 111, 19, 2, 17, 24, 9, NULL, 0, "OSResetSystem B" },
 		{ 147, 37, 2, 21, 30, 8, NULL, 0, "OSResetSystem C" },
-		{ 158, 41, 2, 24, 30, 9, NULL, 0, "OSResetSystem D" },
-		{ 148, 44, 2, 26, 16, 9, NULL, 0, "OSResetSystem D" },	// SN Systems ProDG
-		{ 162, 41, 2, 24, 34, 9, NULL, 0, "OSResetSystem E" },
-		{ 174, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem F" },
-		{ 175, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem G" },
-		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem H" }
+		{ 154, 38, 2, 23, 30, 9, NULL, 0, "OSResetSystem D" },
+		{ 158, 41, 2, 24, 30, 9, NULL, 0, "OSResetSystem E" },
+		{ 148, 44, 2, 26, 16, 9, NULL, 0, "OSResetSystem E" },	// SN Systems ProDG
+		{ 162, 41, 2, 24, 34, 9, NULL, 0, "OSResetSystem F" },
+		{ 174, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem G" },
+		{ 175, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem H" },
+		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem I" }
 	};
 	FuncPattern UpdateOriginSigs[4] = {
 		{ 105, 15, 1, 0, 20, 4, NULL, 0, "UpdateOriginD A" },
@@ -8223,56 +8450,66 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 									OSResetSystemSigs[k].offsetFoundAt = i;
 								break;
 							case 2:
+								if (findx_pattern(data, dataType, i +  38, length, &__OSDoHotResetSigs[j]))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 3:
 								if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i + 103, length, &OSRestoreInterruptsSig) &&
 									findx_pattern(data, dataType, i +  72, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  77, length, &ICFlashInvalidateSig))
 									OSResetSystemSigs[k].offsetFoundAt = i;
 								break;
-							case 3:
+							case 4:
 								if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i + 104, length, &OSRestoreInterruptsSig) &&
 									findx_pattern(data, dataType, i +  73, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  78, length, &ICFlashInvalidateSig))
 									OSResetSystemSigs[k].offsetFoundAt = i;
 								break;
-							case 4:
+							case 5:
 								if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  72, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  77, length, &ICFlashInvalidateSig))
 									OSResetSystemSigs[k].offsetFoundAt = i;
 								break;
-							case 5:
+							case 6:
 								if (findx_pattern(data, dataType, i +  57, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  82, length, &ICFlashInvalidateSig))
 									OSResetSystemSigs[k].offsetFoundAt = i;
 								break;
-							case 6:
+							case 7:
+								if (findx_pattern(data, dataType, i +  57, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
+									findx_pattern(data, dataType, i +  82, length, &ICFlashInvalidateSig))
+									OSResetSystemSigs[k].offsetFoundAt = i;
+								break;
+							case 8:
 								if (findx_pattern(data, dataType, i +  48, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  66, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  70, length, &ICFlashInvalidateSig))
 									OSResetSystemSigs[k].offsetFoundAt = i;
 								break;
-							case 7:
+							case 9:
 								if (findx_pattern(data, dataType, i +  59, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  81, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  86, length, &ICFlashInvalidateSig))
 									OSResetSystemSigs[k].offsetFoundAt = i;
 								break;
-							case 8:
+							case 10:
 								if (findx_pattern(data, dataType, i +  64, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  86, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  91, length, &ICFlashInvalidateSig))
 									OSResetSystemSigs[k].offsetFoundAt = i;
 								break;
-							case 9:
+							case 11:
 								if (findx_pattern(data, dataType, i +  65, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  87, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  92, length, &ICFlashInvalidateSig))
 									OSResetSystemSigs[k].offsetFoundAt = i;
 								break;
-							case 10:
+							case 12:
 								if (findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i +  79, length, &ICFlashInvalidateSig))
@@ -8502,15 +8739,16 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 					OSResetSystemHook = IGR_EXIT;
 				
 				switch (j) {
-					case  2: data[i + 72] = branchAndLink(OSResetSystemHook, OSResetSystem + 72); break;
-					case  3: data[i + 73] = branchAndLink(OSResetSystemHook, OSResetSystem + 73); break;
-					case  4: data[i + 72] = branchAndLink(OSResetSystemHook, OSResetSystem + 72); break;
-					case  5: data[i + 77] = branchAndLink(OSResetSystemHook, OSResetSystem + 77); break;
-					case  6: data[i + 66] = branchAndLink(OSResetSystemHook, OSResetSystem + 66); break;
-					case  7: data[i + 81] = branchAndLink(OSResetSystemHook, OSResetSystem + 81); break;
-					case  8: data[i + 86] = branchAndLink(OSResetSystemHook, OSResetSystem + 86); break;
-					case  9: data[i + 87] = branchAndLink(OSResetSystemHook, OSResetSystem + 87); break;
-					case 10: data[i + 74] = branchAndLink(OSResetSystemHook, OSResetSystem + 74); break;
+					case  3: data[i + 72] = branchAndLink(OSResetSystemHook, OSResetSystem + 72); break;
+					case  4: data[i + 73] = branchAndLink(OSResetSystemHook, OSResetSystem + 73); break;
+					case  5: data[i + 72] = branchAndLink(OSResetSystemHook, OSResetSystem + 72); break;
+					case  6:
+					case  7: data[i + 77] = branchAndLink(OSResetSystemHook, OSResetSystem + 77); break;
+					case  8: data[i + 66] = branchAndLink(OSResetSystemHook, OSResetSystem + 66); break;
+					case  9: data[i + 81] = branchAndLink(OSResetSystemHook, OSResetSystem + 81); break;
+					case 10: data[i + 86] = branchAndLink(OSResetSystemHook, OSResetSystem + 86); break;
+					case 11: data[i + 87] = branchAndLink(OSResetSystemHook, OSResetSystem + 87); break;
+					case 12: data[i + 74] = branchAndLink(OSResetSystemHook, OSResetSystem + 74); break;
 				}
 				print_gecko("Found:[%s] @ %08X\n", OSResetSystemSigs[j].Name, OSResetSystem);
 			}
