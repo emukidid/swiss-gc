@@ -8302,9 +8302,10 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	}
 }
 
-void Patch_PADStatus(u32 *data, u32 length, int dataType)
+int Patch_PADStatus(u32 *data, u32 length, int dataType)
 {
-	int i, j, k;
+	int i, j;
+	int patched = 0;
 	FuncPattern ICFlashInvalidateSig = 
 		{ 4, 0, 0, 0, 0, 2, NULL, 0, "ICFlashInvalidate" };
 	FuncPattern OSDisableInterruptsSig = 
@@ -8331,66 +8332,85 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		{ 175, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem H" },
 		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem I" }
 	};
-	FuncPattern UpdateOriginSigs[4] = {
+	FuncPattern SIGetResponseSigs[6] = {
+		{ 36, 13, 4, 1, 2,  4, NULL, 0, "SIGetResponseD A" },
+		{ 48, 12, 5, 4, 3,  7, NULL, 0, "SIGetResponseD B" },
+		{  9,  4, 2, 0, 0,  1, NULL, 0, "SIGetResponse A" },
+		{ 52, 13, 8, 3, 2, 10, NULL, 0, "SIGetResponse B" },
+		{ 49, 13, 8, 3, 2,  7, NULL, 0, "SIGetResponse C" },
+		{ 74, 26, 9, 4, 3, 14, NULL, 0, "SIGetResponse C" }	// SN Systems ProDG
+	};
+	FuncPattern UpdateOriginSigs[5] = {
 		{ 105, 15, 1, 0, 20, 4, NULL, 0, "UpdateOriginD A" },
 		{ 107, 13, 2, 1, 20, 6, NULL, 0, "UpdateOriginD B" },
-		{ 101, 14, 0, 0, 18, 5, NULL, 0, "UpdateOrigin A" },
-		{ 105, 14, 3, 1, 20, 5, NULL, 0, "UpdateOrigin B" }
+		{  81,  7, 0, 0, 18, 1, NULL, 0, "UpdateOrigin A" },
+		{ 101, 14, 0, 0, 18, 5, NULL, 0, "UpdateOrigin B" },
+		{ 105, 14, 3, 1, 20, 5, NULL, 0, "UpdateOrigin C" }
 	};
-	FuncPattern PADOriginCallbackSigs[4] = {
-		{  39, 17,  4, 5,  3,  3, NULL, 0, "PADOriginCallbackD A" },
-		{  71, 27, 10, 6,  2,  9, NULL, 0, "PADOriginCallback A" },
-		{  49, 21,  6, 6,  1,  8, NULL, 0, "PADOriginCallback B" },
-		{ 143, 30,  6, 6, 21, 11, NULL, 0, "PADOriginCallback C" }	// SN Systems ProDG
+	FuncPattern PADOriginCallbackSigs[6] = {
+		{  39, 17,  4, 5,  3,  3, NULL, 0, "PADOriginCallbackD" },
+		{  69, 28,  9, 6,  2,  9, NULL, 0, "PADOriginCallback A" },
+		{  70, 28, 10, 6,  2,  9, NULL, 0, "PADOriginCallback B" },
+		{  71, 27, 10, 6,  2,  9, NULL, 0, "PADOriginCallback C" },
+		{  49, 21,  6, 6,  1,  8, NULL, 0, "PADOriginCallback D" },
+		{ 143, 30,  6, 6, 21, 11, NULL, 0, "PADOriginCallback D" }	// SN Systems ProDG
 	};
-	FuncPattern PADOriginUpdateCallbackSigs[6] = {
+	FuncPattern PADOriginUpdateCallbackSigs[7] = {
 		{  31, 10,  4, 2,  3,  5, NULL, 0, "PADOriginUpdateCallbackD A" },
 		{  34,  8,  2, 3,  4,  4, NULL, 0, "PADOriginUpdateCallbackD B" },
-		{  15,  4,  2, 1,  1,  4, NULL, 0, "PADOriginUpdateCallback A" },
-		{  48, 13,  9, 5,  2,  9, NULL, 0, "PADOriginUpdateCallback B" },
+		{  10,  2,  2, 1,  0,  2, NULL, 0, "PADOriginUpdateCallback A" },
+		{  15,  4,  2, 1,  1,  4, NULL, 0, "PADOriginUpdateCallback B" },
+		{  48, 13,  9, 5,  2,  9, NULL, 0, "PADOriginUpdateCallback C" },
 		{ 143, 23, 10, 5, 22, 13, NULL, 0, "PADOriginUpdateCallback C" },	// SN Systems ProDG
 		{  51, 14, 10, 5,  2, 10, NULL, 0, "PADOriginUpdateCallback D" }
 	};
-	FuncPattern PADInitSigs[10] = {
+	FuncPattern PADInitSigs[14] = {
 		{  88, 37,  4,  8, 3, 11, NULL, 0, "PADInitD A" },
-		{  90, 37,  5,  8, 6, 11, NULL, 0, "PADInitD B" },
-		{ 113, 31, 11, 11, 1, 17, NULL, 0, "PADInit A" },
-		{ 129, 42, 13, 12, 2, 18, NULL, 0, "PADInit B" },
-		{ 132, 43, 14, 12, 5, 18, NULL, 0, "PADInit C" },
-		{ 133, 43, 14, 12, 5, 18, NULL, 0, "PADInit D" },
-		{ 132, 42, 14, 12, 5, 18, NULL, 0, "PADInit E" },
-		{ 134, 43, 14, 13, 5, 18, NULL, 0, "PADInit F" },
-		{ 123, 38, 16, 10, 5, 27, NULL, 0, "PADInit G" },	// SN Systems ProDG
-		{  84, 24,  8,  9, 4,  9, NULL, 0, "PADInit H" }
+		{  91, 38,  5,  8, 6, 11, NULL, 0, "PADInitD B" },
+		{  90, 37,  5,  8, 6, 11, NULL, 0, "PADInitD C" },
+		{  92, 38,  5,  9, 6, 11, NULL, 0, "PADInitD D" },
+		{  84, 25,  7, 10, 1, 11, NULL, 0, "PADInit A" },
+		{  94, 29,  7, 11, 1, 17, NULL, 0, "PADInit B" },
+		{ 113, 31, 11, 11, 1, 17, NULL, 0, "PADInit C" },
+		{ 129, 42, 13, 12, 2, 18, NULL, 0, "PADInit D" },
+		{ 132, 43, 14, 12, 5, 18, NULL, 0, "PADInit E" },
+		{ 133, 43, 14, 12, 5, 18, NULL, 0, "PADInit F" },
+		{ 132, 42, 14, 12, 5, 18, NULL, 0, "PADInit G" },
+		{ 134, 43, 14, 13, 5, 18, NULL, 0, "PADInit H" },
+		{ 123, 38, 16, 10, 5, 27, NULL, 0, "PADInit H" },	// SN Systems ProDG
+		{  84, 24,  8,  9, 4,  9, NULL, 0, "PADInit I" }
 	};
-	FuncPattern PADReadSigs[7] = {
+	FuncPattern PADReadSigs[9] = {
 		{ 172, 65,  3, 15, 16, 18, NULL, 0, "PADReadD A" },
 		{ 171, 66,  4, 20, 17, 14, NULL, 0, "PADReadD B" },
-		{ 206, 78,  7, 20, 17, 19, NULL, 0, "PADRead A" },
-		{ 237, 87, 13, 27, 17, 25, NULL, 0, "PADRead B" },
-		{ 235, 86, 13, 27, 17, 24, NULL, 0, "PADRead C" },
-		{ 233, 71, 13, 29, 17, 27, NULL, 0, "PADRead D" },	// SN Systems ProDG
-		{ 192, 73,  8, 23, 16, 15, NULL, 0, "PADRead E" }
+		{ 128, 49,  4, 10, 11, 11, NULL, 0, "PADRead A" },
+		{ 200, 75,  9, 20, 17, 18, NULL, 0, "PADRead B" },
+		{ 206, 78,  7, 20, 17, 19, NULL, 0, "PADRead C" },
+		{ 237, 87, 13, 27, 17, 25, NULL, 0, "PADRead D" },
+		{ 235, 86, 13, 27, 17, 24, NULL, 0, "PADRead E" },
+		{ 233, 71, 13, 29, 17, 27, NULL, 0, "PADRead E" },	// SN Systems ProDG
+		{ 192, 73,  8, 23, 16, 15, NULL, 0, "PADRead F" }
 	};
 	FuncPattern PADSetSpecSigs[2] = {
 		{ 42, 15, 8, 1, 9, 3, NULL, 0, "PADSetSpecD" },
 		{ 24,  7, 5, 0, 8, 0, NULL, 0, "PADSetSpec" }
 	};
 	FuncPattern SPEC0_MakeStatusSigs[3] = {
-		{ 96, 28, 0, 0, 12, 9, NULL, 0, "SPEC0_MakeStatusD A" },
-		{ 93, 26, 0, 0, 11, 9, NULL, 0, "SPEC0_MakeStatus A" },
-		{ 85, 18, 0, 0,  2, 8, NULL, 0, "SPEC0_MakeStatus B" }	// SN Systems ProDG
+		{ 96, 28, 0, 0, 12, 9, NULL, 0, "SPEC0_MakeStatusD" },
+		{ 93, 26, 0, 0, 11, 9, NULL, 0, "SPEC0_MakeStatus" },
+		{ 85, 18, 0, 0,  2, 8, NULL, 0, "SPEC0_MakeStatus" }	// SN Systems ProDG
 	};
 	FuncPattern SPEC1_MakeStatusSigs[3] = {
-		{ 96, 28, 0, 0, 12, 9, NULL, 0, "SPEC1_MakeStatusD A" },
-		{ 93, 26, 0, 0, 11, 9, NULL, 0, "SPEC1_MakeStatus A" },
-		{ 85, 18, 0, 0,  2, 8, NULL, 0, "SPEC1_MakeStatus B" }	// SN Systems ProDG
+		{ 96, 28, 0, 0, 12, 9, NULL, 0, "SPEC1_MakeStatusD" },
+		{ 93, 26, 0, 0, 11, 9, NULL, 0, "SPEC1_MakeStatus" },
+		{ 85, 18, 0, 0,  2, 8, NULL, 0, "SPEC1_MakeStatus" }	// SN Systems ProDG
 	};
-	FuncPattern SPEC2_MakeStatusSigs[4] = {
+	FuncPattern SPEC2_MakeStatusSigs[5] = {
 		{ 186, 43, 3, 6, 20, 14, NULL, 0, "SPEC2_MakeStatusD A" },
+		{ 218, 54, 4, 6, 22, 19, NULL, 0, "SPEC2_MakeStatusD B" },
 		{ 254, 46, 0, 0, 42, 71, NULL, 0, "SPEC2_MakeStatus A" },
-		{ 234, 46, 0, 0, 42, 51, NULL, 0, "SPEC2_MakeStatus B" },	// SN Systems ProDG
-		{ 284, 55, 2, 0, 43, 76, NULL, 0, "SPEC2_MakeStatus C" }
+		{ 234, 46, 0, 0, 42, 51, NULL, 0, "SPEC2_MakeStatus A" },	// SN Systems ProDG
+		{ 284, 55, 2, 0, 43, 76, NULL, 0, "SPEC2_MakeStatus B" }
 	};
 	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
 	
@@ -8415,7 +8435,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		make_pattern(data, i, length, &fp);
 		
 		for (j = 0; j < sizeof(__OSDoHotResetSigs) / sizeof(FuncPattern); j++) {
-			if (!__OSDoHotResetSigs[j].offsetFoundAt && compare_pattern(&fp, &__OSDoHotResetSigs[j])) {
+			if (compare_pattern(&fp, &__OSDoHotResetSigs[j])) {
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
@@ -8434,155 +8454,172 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			else if (__OSDoHotResetSigs[j].offsetFoundAt && i == __OSDoHotResetSigs[j].offsetFoundAt + __OSDoHotResetSigs[j].Length) {
-				for (k = 0; k < sizeof(OSResetSystemSigs) / sizeof(FuncPattern); k++) {
-					if (!OSResetSystemSigs[k].offsetFoundAt && compare_pattern(&fp, &OSResetSystemSigs[k])) {
-						switch (k) {
-							case 0:
-								if (findx_pattern(data, dataType, i +  27, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  57, length, &OSRestoreInterruptsSig) &&
-									findx_pattern(data, dataType, i +  49, length, &__OSDoHotResetSigs[j]))
-									OSResetSystemSigs[k].offsetFoundAt = i;
-								break;
-							case 1:
-								if (findx_pattern(data, dataType, i +  32, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  55, length, &__OSDoHotResetSigs[j]))
-									OSResetSystemSigs[k].offsetFoundAt = i;
-								break;
-							case 2:
-								if (findx_pattern(data, dataType, i +  38, length, &__OSDoHotResetSigs[j]))
-									OSResetSystemSigs[k].offsetFoundAt = i;
-								break;
-							case 3:
-								if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i + 103, length, &OSRestoreInterruptsSig) &&
-									findx_pattern(data, dataType, i +  72, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  77, length, &ICFlashInvalidateSig))
-									OSResetSystemSigs[k].offsetFoundAt = i;
-								break;
-							case 4:
-								if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i + 104, length, &OSRestoreInterruptsSig) &&
-									findx_pattern(data, dataType, i +  73, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  78, length, &ICFlashInvalidateSig))
-									OSResetSystemSigs[k].offsetFoundAt = i;
-								break;
-							case 5:
-								if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  72, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  77, length, &ICFlashInvalidateSig))
-									OSResetSystemSigs[k].offsetFoundAt = i;
-								break;
-							case 6:
-								if (findx_pattern(data, dataType, i +  57, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  82, length, &ICFlashInvalidateSig))
-									OSResetSystemSigs[k].offsetFoundAt = i;
-								break;
-							case 7:
-								if (findx_pattern(data, dataType, i +  57, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  82, length, &ICFlashInvalidateSig))
-									OSResetSystemSigs[k].offsetFoundAt = i;
-								break;
-							case 8:
-								if (findx_pattern(data, dataType, i +  48, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  66, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  70, length, &ICFlashInvalidateSig))
-									OSResetSystemSigs[k].offsetFoundAt = i;
-								break;
-							case 9:
-								if (findx_pattern(data, dataType, i +  59, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  81, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  86, length, &ICFlashInvalidateSig))
-									OSResetSystemSigs[k].offsetFoundAt = i;
-								break;
-							case 10:
-								if (findx_pattern(data, dataType, i +  64, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  86, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  91, length, &ICFlashInvalidateSig))
-									OSResetSystemSigs[k].offsetFoundAt = i;
-								break;
-							case 11:
-								if (findx_pattern(data, dataType, i +  65, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  87, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  92, length, &ICFlashInvalidateSig))
-									OSResetSystemSigs[k].offsetFoundAt = i;
-								break;
-							case 12:
-								if (findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  79, length, &ICFlashInvalidateSig))
-									OSResetSystemSigs[k].offsetFoundAt = i;
-								break;
-						}
-					}
+		}
+		
+		for (j = 0; j < sizeof(OSResetSystemSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &OSResetSystemSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  27, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  49, length, &__OSDoHotResetSigs[0]) &&
+							findx_pattern(data, dataType, i +  57, length, &OSRestoreInterruptsSig))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  32, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  55, length, &__OSDoHotResetSigs[0]))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  38, length, &__OSDoHotResetSigs[0]))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  72, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  77, length, &ICFlashInvalidateSig) &&
+							findx_pattern(data, dataType, i + 103, length, &OSRestoreInterruptsSig))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  73, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  78, length, &ICFlashInvalidateSig) &&
+							findx_pattern(data, dataType, i + 104, length, &OSRestoreInterruptsSig))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  72, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  77, length, &ICFlashInvalidateSig))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 6:
+						if (findx_pattern(data, dataType, i +  57, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  82, length, &ICFlashInvalidateSig))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 7:
+						if (findx_pattern(data, dataType, i +  57, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  82, length, &ICFlashInvalidateSig))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 8:
+						if (findx_pattern(data, dataType, i +  48, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  66, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  70, length, &ICFlashInvalidateSig))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 9:
+						if (findx_pattern(data, dataType, i +  59, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  81, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  86, length, &ICFlashInvalidateSig))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 10:
+						if (findx_pattern(data, dataType, i +  64, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  86, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  91, length, &ICFlashInvalidateSig))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 11:
+						if (findx_pattern(data, dataType, i +  65, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  87, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  92, length, &ICFlashInvalidateSig))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 12:
+						if (findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  79, length, &ICFlashInvalidateSig))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
 				}
 			}
 		}
 		
 		for (j = 0; j < sizeof(PADOriginCallbackSigs) / sizeof(FuncPattern); j++) {
-			if (!PADOriginCallbackSigs[j].offsetFoundAt && compare_pattern(&fp, &PADOriginCallbackSigs[j])) {
+			if (compare_pattern(&fp, &PADOriginCallbackSigs[j])) {
 				switch (j) {
 					case 0:
-						if (findx_pattern(data, dataType, i + 31, length, &UpdateOriginSigs[0]) ||
-							findx_pattern(data, dataType, i + 31, length, &UpdateOriginSigs[1]))
+						if (findx_patterns(data, dataType, i +  31, length, &UpdateOriginSigs[0],
+							                                                &UpdateOriginSigs[1], NULL))
 							PADOriginCallbackSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
-						if (findx_pattern(data, dataType, i + 10, length, &UpdateOriginSigs[2]))
+						if (findx_pattern(data, dataType, i +   7, length, &UpdateOriginSigs[2]) &&
+							findx_pattern(data, dataType, i +  16, length, &SIGetResponseSigs[2]))
 							PADOriginCallbackSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (findx_pattern(data, dataType, i +  7, length, &UpdateOriginSigs[3]))
+						if (findx_pattern(data, dataType, i +   7, length, &UpdateOriginSigs[2]) &&
+							findx_pattern(data, dataType, i +  16, length, &SIGetResponseSigs[2]))
 							PADOriginCallbackSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
-						PADOriginCallbackSigs[j].offsetFoundAt = i;
+						if (findx_pattern(data, dataType, i +  10, length, &UpdateOriginSigs[3]) &&
+							findx_pattern(data, dataType, i +  19, length, &SIGetResponseSigs[2]))
+							PADOriginCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_pattern (data, dataType, i +   7, length, &UpdateOriginSigs[4]) &&
+							findx_patterns(data, dataType, i +  16, length, &SIGetResponseSigs[3],
+							                                                &SIGetResponseSigs[4], NULL))
+							PADOriginCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (findx_pattern(data, dataType, i + 111, length, &SIGetResponseSigs[5]))
+							PADOriginCallbackSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
-			else if (PADOriginCallbackSigs[j].offsetFoundAt && i == PADOriginCallbackSigs[j].offsetFoundAt + PADOriginCallbackSigs[j].Length) {
-				for (k = 0; k < sizeof(PADOriginUpdateCallbackSigs) / sizeof(FuncPattern); k++) {
-					if (!PADOriginUpdateCallbackSigs[k].offsetFoundAt && compare_pattern(&fp, &PADOriginUpdateCallbackSigs[k])) {
-						switch (k) {
-							case 0:
-								if (findx_pattern(data, dataType, i +  25, length, &UpdateOriginSigs[0]))
-									PADOriginUpdateCallbackSigs[k].offsetFoundAt = i;
-								break;
-							case 1:
-								if (findx_pattern(data, dataType, i +  24, length, &UpdateOriginSigs[1]))
-									PADOriginUpdateCallbackSigs[k].offsetFoundAt = i;
-								break;
-							case 2:
-								if (findx_pattern(data, dataType, i +  10, length, &UpdateOriginSigs[2]))
-									PADOriginUpdateCallbackSigs[k].offsetFoundAt = i;
-								break;
-							case 3:
-								if (findx_pattern(data, dataType, i +  19, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  40, length, &OSRestoreInterruptsSig) &&
-									findx_pattern(data, dataType, i +  16, length, &UpdateOriginSigs[3]))
-									PADOriginUpdateCallbackSigs[k].offsetFoundAt = i;
-								break;
-							case 4:
-								if (findx_pattern(data, dataType, i + 113, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i + 134, length, &OSRestoreInterruptsSig))
-									PADOriginUpdateCallbackSigs[k].offsetFoundAt = i;
-								break;
-							case 5:
-								if (findx_pattern(data, dataType, i +  19, length, &OSDisableInterruptsSig) &&
-									findx_pattern(data, dataType, i +  43, length, &OSRestoreInterruptsSig) &&
-									findx_pattern(data, dataType, i +  16, length, &UpdateOriginSigs[3]))
-									PADOriginUpdateCallbackSigs[k].offsetFoundAt = i;
-								break;
-						}
-					}
+		}
+		
+		for (j = 0; j < sizeof(PADOriginUpdateCallbackSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &PADOriginUpdateCallbackSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  25, length, &UpdateOriginSigs[0]))
+							PADOriginUpdateCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  24, length, &UpdateOriginSigs[1]))
+							PADOriginUpdateCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +   5, length, &UpdateOriginSigs[2]))
+							PADOriginUpdateCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_patterns(data, dataType, i +  10, length, &UpdateOriginSigs[2],
+							                                                &UpdateOriginSigs[3], NULL))
+							PADOriginUpdateCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_pattern(data, dataType, i +  16, length, &UpdateOriginSigs[4]) &&
+							findx_pattern(data, dataType, i +  19, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  40, length, &OSRestoreInterruptsSig))
+							PADOriginUpdateCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (findx_pattern(data, dataType, i + 113, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 134, length, &OSRestoreInterruptsSig))
+							PADOriginUpdateCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 6:
+						if (findx_pattern(data, dataType, i +  16, length, &UpdateOriginSigs[4]) &&
+							findx_pattern(data, dataType, i +  19, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  43, length, &OSRestoreInterruptsSig))
+							PADOriginUpdateCallbackSigs[j].offsetFoundAt = i;
+						break;
 				}
 			}
 		}
 		
 		for (j = 0; j < sizeof(PADInitSigs) / sizeof(FuncPattern); j++) {
-			if (!PADInitSigs[j].offsetFoundAt && compare_pattern(&fp, &PADInitSigs[j])) {
+			if (compare_pattern(&fp, &PADInitSigs[j])) {
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i +  11, length, &PADSetSpecSigs[0]))
@@ -8593,48 +8630,68 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (findx_pattern(data, dataType, i +  75, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 106, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  12, length, &PADSetSpecSigs[1]))
+						if (findx_pattern(data, dataType, i +  13, length, &PADSetSpecSigs[0]))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
-						if (findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 122, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  12, length, &PADSetSpecSigs[1]))
+						if (findx_pattern(data, dataType, i +  15, length, &PADSetSpecSigs[0]))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
-						if (findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 125, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]))
+						if (findx_pattern(data, dataType, i +  10, length, &PADSetSpecSigs[1]) &&
+							findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  77, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 5:
-						if (findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 126, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]))
+						if (findx_pattern(data, dataType, i +  10, length, &PADSetSpecSigs[1]) &&
+							findx_pattern(data, dataType, i +  56, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  87, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
-						if (findx_pattern(data, dataType, i +  76, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 125, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]))
+						if (findx_pattern(data, dataType, i +  12, length, &PADSetSpecSigs[1]) &&
+							findx_pattern(data, dataType, i +  75, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 106, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 7:
-						if (findx_pattern(data, dataType, i +  78, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 127, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  16, length, &PADSetSpecSigs[1]))
+						if (findx_pattern(data, dataType, i +  12, length, &PADSetSpecSigs[1]) &&
+							findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 122, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 8:
-						if (findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 115, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  15, length, &PADSetSpecSigs[1]))
+						if (findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]) &&
+							findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 125, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 9:
+						if (findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]) &&
+							findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 126, length, &OSRestoreInterruptsSig))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+					case 10:
+						if (findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]) &&
+							findx_pattern(data, dataType, i +  76, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 125, length, &OSRestoreInterruptsSig))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+					case 11:
+						if (findx_pattern(data, dataType, i +  16, length, &PADSetSpecSigs[1]) &&
+							findx_pattern(data, dataType, i +  78, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 127, length, &OSRestoreInterruptsSig))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+					case 12:
+						if (findx_pattern(data, dataType, i +  15, length, &PADSetSpecSigs[1]) &&
+							findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 115, length, &OSRestoreInterruptsSig))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+					case 13:
 						if (findx_pattern(data, dataType, i +  16, length, &PADSetSpecSigs[1]))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
@@ -8643,48 +8700,72 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		}
 		
 		for (j = 0; j < sizeof(PADReadSigs) / sizeof(FuncPattern); j++) {
-			if (!PADReadSigs[j].offsetFoundAt && compare_pattern(&fp, &PADReadSigs[j])) {
+			if (compare_pattern(&fp, &PADReadSigs[j])) {
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i +  55, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  75, length, &OSRestoreInterruptsSig))
+							findx_pattern(data, dataType, i +  75, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 108, length, &SIGetResponseSigs[0]))
 							PADReadSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  68, length, &SIGetResponseSigs[1]) &&
+							findx_pattern(data, dataType, i + 105, length, &SIGetResponseSigs[1]) &&
 							findx_pattern(data, dataType, i + 164, length, &OSRestoreInterruptsSig))
 							PADReadSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (findx_pattern(data, dataType, i +  64, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  81, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  83, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 114, length, &OSRestoreInterruptsSig))
+						if (findx_pattern(data, dataType, i +  81, length, &SIGetResponseSigs[2]))
 							PADReadSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
-						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  26, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 159, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 230, length, &OSRestoreInterruptsSig))
+						if (findx_pattern(data, dataType, i +  64, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  82, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  84, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 115, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 136, length, &SIGetResponseSigs[2]))
 							PADReadSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
-						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  24, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 157, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 228, length, &OSRestoreInterruptsSig))
+						if (findx_pattern(data, dataType, i +  64, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  81, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  83, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 114, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 142, length, &SIGetResponseSigs[2]))
 							PADReadSigs[j].offsetFoundAt = i;
 						break;
 					case 5:
-						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 225, length, &OSRestoreInterruptsSig))
+						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  26, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 119, length, &SIGetResponseSigs[3]) &&
+							findx_pattern(data, dataType, i + 159, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 174, length, &SIGetResponseSigs[3]) &&
+							findx_pattern(data, dataType, i + 230, length, &OSRestoreInterruptsSig))
 							PADReadSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
 						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  24, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 117, length, &SIGetResponseSigs[4]) &&
+							findx_pattern(data, dataType, i + 157, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 172, length, &SIGetResponseSigs[4]) &&
+							findx_pattern(data, dataType, i + 228, length, &OSRestoreInterruptsSig))
+							PADReadSigs[j].offsetFoundAt = i;
+						break;
+					case 7:
+						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 112, length, &SIGetResponseSigs[5]) &&
+							findx_pattern(data, dataType, i + 168, length, &SIGetResponseSigs[5]) &&
+							findx_pattern(data, dataType, i + 225, length, &OSRestoreInterruptsSig))
+							PADReadSigs[j].offsetFoundAt = i;
+						break;
+					case 8:
+						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  71, length, &SIGetResponseSigs[4]) &&
 							findx_pattern(data, dataType, i +  90, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 114, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 129, length, &SIGetResponseSigs[4]) &&
 							findx_pattern(data, dataType, i + 185, length, &OSRestoreInterruptsSig))
 							PADReadSigs[j].offsetFoundAt = i;
 						break;
@@ -8718,6 +8799,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 					case 2: data[i + 5] = branchAndLink(__OSDoHotResetHook, __OSDoHotReset + 5); break;
 				}
 				print_gecko("Found:[%s] @ %08X\n", __OSDoHotResetSigs[j].Name, __OSDoHotReset);
+				patched++;
 			}
 		}
 		
@@ -8751,6 +8833,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 					case 12: data[i + 74] = branchAndLink(OSResetSystemHook, OSResetSystem + 74); break;
 				}
 				print_gecko("Found:[%s] @ %08X\n", OSResetSystemSigs[j].Name, OSResetSystem);
+				patched++;
 			}
 		}
 	}
@@ -8766,19 +8849,22 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 				switch (j) {
 					case 0: data[i + 79] = 0x2004007F; break;	// subfic	r0, r4, 127
 					case 1: data[i + 82] = 0x2003007F; break;	// subfic	r0, r3, 127
-					case 2: data[i + 77] = 0x20A5007F; break;	// subfic	r5, r5, 127
-					case 3: data[i + 81] = 0x2084007F; break;	// subfic	r4, r4, 127
+					case 2: data[i + 75] = 0x2004007F; break;	// subfic	r0, r4, 127
+					case 3: data[i + 77] = 0x20A5007F; break;	// subfic	r5, r5, 127
+					case 4: data[i + 81] = 0x2084007F; break;	// subfic	r4, r4, 127
 				}
 			}
 			if (swissSettings.invertCStick & 2) {
 				switch (j) {
 					case 0: data[i + 82] = 0x2004007F; break;	// subfic	r0, r4, 127
 					case 1: data[i + 85] = 0x2003007F; break;	// subfic	r0, r3, 127
-					case 2: data[i + 80] = 0x20A5007F; break;	// subfic	r5, r5, 127
-					case 3: data[i + 84] = 0x2084007F; break;	// subfic	r4, r4, 127
+					case 2: data[i + 78] = 0x2004007F; break;	// subfic	r0, r4, 127
+					case 3: data[i + 80] = 0x20A5007F; break;	// subfic	r5, r5, 127
+					case 4: data[i + 84] = 0x2084007F; break;	// subfic	r4, r4, 127
 				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", UpdateOriginSigs[j].Name, UpdateOrigin);
+			patched++;
 		}
 	}
 	
@@ -8789,13 +8875,14 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		u32 *PADOriginCallback = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (PADOriginCallback) {
-			if (j == 3) {
+			if (j == 5) {
 				if (swissSettings.invertCStick & 1)
 					data[i + 86] = 0x2004007F;	// subfic	r0, r4, 127
 				if (swissSettings.invertCStick & 2)
 					data[i + 89] = 0x2004007F;	// subfic	r0, r4, 127
 			}
 			print_gecko("Found:[%s] @ %08X\n", PADOriginCallbackSigs[j].Name, PADOriginCallback);
+			patched++;
 		}
 	}
 	
@@ -8806,34 +8893,21 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		u32 *PADOriginUpdateCallback = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (PADOriginUpdateCallback) {
-			if (j == 4) {
+			if (j == 5) {
 				if (swissSettings.invertCStick & 1)
 					data[i + 93] = 0x2003007F;	// subfic	r0, r3, 127
 				if (swissSettings.invertCStick & 2)
 					data[i + 96] = 0x2003007F;	// subfic	r0, r3, 127
 			}
 			print_gecko("Found:[%s] @ %08X\n", PADOriginUpdateCallbackSigs[j].Name, PADOriginUpdateCallback);
+			patched++;
 		}
 	}
 	
-	for (j = 0; j < sizeof(PADInitSigs) / sizeof(FuncPattern); j++)
-		if (PADInitSigs[j].offsetFoundAt) break;
+	for (j = 0; j < sizeof(PADReadSigs) / sizeof(FuncPattern); j++)
+		if (PADReadSigs[j].offsetFoundAt) break;
 	
-	if (j < sizeof(PADInitSigs) / sizeof(FuncPattern) && (i = PADInitSigs[j].offsetFoundAt)) {
-		u32 *PADInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (PADInit) {
-			print_gecko("Found:[%s] @ %08X\n", PADInitSigs[j].Name, PADInit);
-		}
-	}
-	
-	for (k = 0; k < sizeof(PADReadSigs) / sizeof(FuncPattern); k++)
-		if (PADReadSigs[k].offsetFoundAt) break;
-	
-	for (j = 0; j < sizeof(PADSetSpecSigs) / sizeof(FuncPattern); j++)
-		if (PADSetSpecSigs[j].offsetFoundAt) break;
-	
-	if (k < sizeof(PADReadSigs) / sizeof(FuncPattern) && (i = PADReadSigs[k].offsetFoundAt)) {
+	if (j < sizeof(PADReadSigs) / sizeof(FuncPattern) && (i = PADReadSigs[j].offsetFoundAt)) {
 		u32 *PADRead = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		u32 *PADReadHook;
 		
@@ -8849,32 +8923,35 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 			else
 				PADReadHook = CHECK_PAD;
 			
-			switch (k) {
+			switch (j) {
 				case 0: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 132]; break;
 				case 1: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 128]; break;
-				case 2: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 163]; break;
-				case 3: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 194]; break;
-				case 4: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 192]; break;
-				case 5: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 188]; break;
-				case 6: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 149]; break;
+				case 2: MakeStatusAddr = _SDA_BASE_ + (s16)data[i +  96]; break;
+				case 3: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 157]; break;
+				case 4: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 163]; break;
+				case 5: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 194]; break;
+				case 6: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 192]; break;
+				case 7: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 188]; break;
+				case 8: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 149]; break;
 			}
 			
 			if ((MakeStatus = Calc_Address(data, dataType, MakeStatusAddr)) &&
 				(MakeStatus = Calc_Address(data, dataType, MakeStatusAddr = *MakeStatus))) {
-				
-				switch (k) {
+				switch (j) {
 					case 0:
 					case 1: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[0]); break;
 					case 2:
 					case 3:
-					case 4: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[1]); break;
-					case 5: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[2]); break;
-					case 6: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[3]); break;
+					case 4:
+					case 5:
+					case 6: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[2]); break;
+					case 7: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[3]); break;
+					case 8: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[4]); break;
 				}
 			}
 			
 			if (swissSettings.igrType != IGR_OFF) {
-				switch (k) {
+				switch (j) {
 					case 0:
 						data[i + 159] = 0x387E0000;	// addi		r3, r30, 0
 						data[i + 160] = 0x389F0000;	// addi		r4, r31, 0
@@ -8886,84 +8963,73 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 						data[i + 158] = branchAndLink(PADReadHook, PADRead + 158);
 						break;
 					case 2:
+						data[i + 100] = 0x387D0000;	// addi		r3, r29, 0
+						data[i + 101] = 0x389B0000;	// addi		r4, r27, 0
+						data[i + 102] = branchAndLink(PADReadHook, PADRead + 102);
+						break;
+					case 3:
+						data[i + 185] = 0x38760000;	// addi		r3, r22, 0
+						data[i + 186] = 0x38950000;	// addi		r4, r21, 0
+						data[i + 187] = branchAndLink(PADReadHook, PADRead + 187);
+						break;
+					case 4:
 						data[i + 190] = 0x38770000;	// addi		r3, r23, 0
 						data[i + 191] = 0x38950000;	// addi		r4, r21, 0
 						data[i + 192] = branchAndLink(PADReadHook, PADRead + 192);
 						break;
-					case 3:
+					case 5:
 						data[i + 221] = 0x38750000;	// addi		r3, r21, 0
 						data[i + 222] = 0x389F0000;	// addi		r4, r31, 0
 						data[i + 223] = branchAndLink(PADReadHook, PADRead + 223);
 						break;
-					case 4:
+					case 6:
 						data[i + 219] = 0x38750000;	// addi		r3, r21, 0
 						data[i + 220] = 0x389F0000;	// addi		r4, r31, 0
 						data[i + 221] = branchAndLink(PADReadHook, PADRead + 221);
 						break;
-					case 5:
+					case 7:
 						data[i + 216] = 0x7F63DB78;	// mr		r3, r27
 						data[i + 217] = 0x7F24CB78;	// mr		r4, r25
 						data[i + 218] = branchAndLink(PADReadHook, PADRead + 218);
 						break;
-					case 6:
+					case 8:
 						data[i + 176] = 0x38790000;	// addi		r3, r25, 0
 						data[i + 177] = 0x38970000;	// addi		r4, r23, 0
 						data[i + 178] = branchAndLink(PADReadHook, PADRead + 178);
 						break;
 				}
 			}
-			print_gecko("Found:[%s] @ %08X\n", PADReadSigs[k].Name, PADRead);
+			print_gecko("Found:[%s] @ %08X\n", PADReadSigs[j].Name, PADRead);
+			patched++;
 		}
+	}
+	
+	for (j = 0; j < sizeof(PADSetSpecSigs) / sizeof(FuncPattern); j++)
+		if (PADSetSpecSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(PADSetSpecSigs) / sizeof(FuncPattern) && (i = PADSetSpecSigs[j].offsetFoundAt)) {
+		u32 *PADSetSpec = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		if (j < sizeof(PADSetSpecSigs) / sizeof(FuncPattern) && (i = PADSetSpecSigs[j].offsetFoundAt)) {
-			u32 *PADSetSpec = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			
-			u32 SPEC0_MakeStatusAddr, *SPEC0_MakeStatus;
-			u32 SPEC1_MakeStatusAddr, *SPEC1_MakeStatus;
-			u32 SPEC2_MakeStatusAddr, *SPEC2_MakeStatus;
-			
-			if (PADSetSpec && PADRead) {
-				if (j >= 1) {
-					SPEC0_MakeStatusAddr = (data[i + 11] << 16) + (s16)data[i + 12];
-					SPEC1_MakeStatusAddr = (data[i + 15] << 16) + (s16)data[i + 16];
-					SPEC2_MakeStatusAddr = (data[i + 19] << 16) + (s16)data[i + 20];
-				} else {
-					SPEC0_MakeStatusAddr = (data[i + 25] << 16) + (s16)data[i + 26];
-					SPEC1_MakeStatusAddr = (data[i + 29] << 16) + (s16)data[i + 30];
-					SPEC2_MakeStatusAddr = (data[i + 33] << 16) + (s16)data[i + 34];
-				}
-				
-				SPEC0_MakeStatus = Calc_Address(data, dataType, SPEC0_MakeStatusAddr);
-				SPEC1_MakeStatus = Calc_Address(data, dataType, SPEC1_MakeStatusAddr);
-				SPEC2_MakeStatus = Calc_Address(data, dataType, SPEC2_MakeStatusAddr);
-				
-				switch (k) {
-					case 0:
-					case 1:
-						find_pattern(data, SPEC0_MakeStatus - data, length, &SPEC0_MakeStatusSigs[0]);
-						find_pattern(data, SPEC1_MakeStatus - data, length, &SPEC1_MakeStatusSigs[0]);
-						find_pattern(data, SPEC2_MakeStatus - data, length, &SPEC2_MakeStatusSigs[0]);
-						break;
-					case 2:
-					case 3:
-					case 4:
-						find_pattern(data, SPEC0_MakeStatus - data, length, &SPEC0_MakeStatusSigs[1]);
-						find_pattern(data, SPEC1_MakeStatus - data, length, &SPEC1_MakeStatusSigs[1]);
-						find_pattern(data, SPEC2_MakeStatus - data, length, &SPEC2_MakeStatusSigs[1]);
-						break;
-					case 5:
-						find_pattern(data, SPEC0_MakeStatus - data, length, &SPEC0_MakeStatusSigs[2]);
-						find_pattern(data, SPEC1_MakeStatus - data, length, &SPEC1_MakeStatusSigs[2]);
-						find_pattern(data, SPEC2_MakeStatus - data, length, &SPEC2_MakeStatusSigs[2]);
-						break;
-					case 6:
-						find_pattern(data, SPEC0_MakeStatus - data, length, &SPEC0_MakeStatusSigs[1]);
-						find_pattern(data, SPEC1_MakeStatus - data, length, &SPEC1_MakeStatusSigs[1]);
-						find_pattern(data, SPEC2_MakeStatus - data, length, &SPEC2_MakeStatusSigs[3]);
-						break;
-				}
-				print_gecko("Found:[%s] @ %08X\n", PADSetSpecSigs[j].Name, PADSetSpec);
+		if (PADSetSpec) {
+			switch (j) {
+				case 0:
+					findi_pattern (data, dataType, i + 25, i + 26, length, &SPEC0_MakeStatusSigs[0]);
+					findi_pattern (data, dataType, i + 29, i + 30, length, &SPEC1_MakeStatusSigs[0]);
+					findi_patterns(data, dataType, i + 33, i + 34, length, &SPEC2_MakeStatusSigs[0],
+					                                                       &SPEC2_MakeStatusSigs[1], NULL);
+					break;
+				case 1:
+					findi_patterns(data, dataType, i + 11, i + 12, length, &SPEC0_MakeStatusSigs[1],
+					                                                       &SPEC0_MakeStatusSigs[2], NULL);
+					findi_patterns(data, dataType, i + 15, i + 16, length, &SPEC1_MakeStatusSigs[1],
+					                                                       &SPEC1_MakeStatusSigs[2], NULL);
+					findi_patterns(data, dataType, i + 19, i + 20, length, &SPEC2_MakeStatusSigs[2],
+					                                                       &SPEC2_MakeStatusSigs[3],
+					                                                       &SPEC2_MakeStatusSigs[4], NULL);
+					break;
 			}
+			print_gecko("Found:[%s] @ %08X\n", PADSetSpecSigs[j].Name, PADSetSpec);
+			patched++;
 		}
 	}
 	
@@ -8989,6 +9055,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", SPEC0_MakeStatusSigs[j].Name, SPEC0_MakeStatus);
+			patched++;
 		}
 	}
 	
@@ -9014,6 +9081,7 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", SPEC1_MakeStatusSigs[j].Name, SPEC1_MakeStatus);
+			patched++;
 		}
 	}
 	
@@ -9026,23 +9094,27 @@ void Patch_PADStatus(u32 *data, u32 length, int dataType)
 		if (SPEC2_MakeStatus) {
 			if (swissSettings.invertCStick & 1) {
 				switch (j) {
-					case 0: data[i + 147] = 0x2003007F; break;	// subfic	r0, r3, 127
-					case 1: data[i + 142] = 0x2005007F; break;	// subfic	r0, r5, 127
-					case 2: data[i + 130] = 0x2005007F; break;	// subfic	r0, r5, 127
-					case 3: data[i + 142] = 0x2006007F; break;	// subfic	r0, r6, 127
+					case 0:
+					case 1: data[i + 147] = 0x2003007F; break;	// subfic	r0, r3, 127
+					case 2: data[i + 142] = 0x2005007F; break;	// subfic	r0, r5, 127
+					case 3: data[i + 130] = 0x2005007F; break;	// subfic	r0, r5, 127
+					case 4: data[i + 142] = 0x2006007F; break;	// subfic	r0, r6, 127
 				}
 			}
 			if (swissSettings.invertCStick & 2) {
 				switch (j) {
-					case 0: data[i + 150] = 0x2003007F; break;	// subfic	r0, r3, 127
-					case 1: data[i + 145] = 0x2005007F; break;	// subfic	r0, r5, 127
-					case 2: data[i + 133] = 0x2005007F; break;	// subfic	r0, r5, 127
-					case 3: data[i + 145] = 0x2006007F; break;	// subfic	r0, r6, 127
+					case 0:
+					case 1: data[i + 150] = 0x2003007F; break;	// subfic	r0, r3, 127
+					case 2: data[i + 145] = 0x2005007F; break;	// subfic	r0, r5, 127
+					case 3: data[i + 133] = 0x2005007F; break;	// subfic	r0, r5, 127
+					case 4: data[i + 145] = 0x2006007F; break;	// subfic	r0, r6, 127
 				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", SPEC2_MakeStatusSigs[j].Name, SPEC2_MakeStatus);
+			patched++;
 		}
 	}
+	return patched;
 }
 
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {

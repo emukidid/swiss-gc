@@ -225,7 +225,7 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 int Patch_GameSpecificRead(void *addr, u32 length, const char* gameID, int dataType);
 int Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int dataType);
 void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dataType);
-void Patch_PADStatus(u32 *data, u32 length, int dataType);
+int Patch_PADStatus(u32 *data, u32 length, int dataType);
 int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType );
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt);
 void *Calc_Address(void *data, int dataType, u32 properAddress);
