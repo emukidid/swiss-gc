@@ -411,21 +411,6 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	return 1;
 }
 
-int EXI_ResetSD(int drv) {
-	/* Wait for any pending transfers to complete */
-	while ( *(vu32 *)0xCC00680C & 1 );
-	while ( *(vu32 *)0xCC006820 & 1 );
-	while ( *(vu32 *)0xCC006834 & 1 );
-	*(vu32 *)0xCC00680C = 0xC0A;
-	*(vu32 *)0xCC006820 = 0xC0A;
-	*(vu32 *)0xCC006834 = 0x80A;
-	/*** Needed to re-kick after insertion etc ***/
-	EXI_ProbeEx(drv);
-	EXI_Detach(drv);
-	sdgecko_initIODefault();
-	return 1;
-}
-
 s32 fatFs_Mount(u8 devNum, char *path) {
 	if(fs[devNum] != NULL) {
 		disk_flush(devNum);
@@ -449,34 +434,32 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 	int ret = 0;
 	print_gecko("Init %s %i\r\n", (isSDCard ? "SD":"IDE"), slot);
 	// Slot A - SD Card
-	if(isSDCard && slot == 0 && EXI_ResetSD(slot)) {
+	if(isSDCard && slot == 0) {
 		carda->shutdown();
-		setSDGeckoSpeed();
 		carda->startup();
+		setSDGeckoSpeed();
 		ret = fatFs_Mount(0, "sda:\0");
 	}
 	// Slot B - SD Card
-	if(isSDCard && slot == 1 && EXI_ResetSD(1)) {
+	if(isSDCard && slot == 1) {
 		cardb->shutdown();
-		setSDGeckoSpeed();
 		cardb->startup();
+		setSDGeckoSpeed();
 		ret = fatFs_Mount(1, "sdb:\0");
 	}
 	// SP2 - SD Card
-	if(isSDCard && slot == 2 && EXI_ResetSD(2)) {
+	if(isSDCard && slot == 2) {
 		cardc->shutdown();
-		setSDGeckoSpeed();
 		cardc->startup();
+		setSDGeckoSpeed();
 		ret = fatFs_Mount(2, "sdc:\0");
 	}
 	// Slot A - IDE-EXI
 	if(!isSDCard && !slot) {
-		ideexia->startup();
 		ret = fatFs_Mount(3, "idea:\0");
 	}
 	// Slot B - IDE-EXI
 	if(!isSDCard && slot) {
-		ideexib->startup();
 		ret = fatFs_Mount(4, "ideb:\0");
 	}
 	if(ret)
@@ -533,22 +516,19 @@ s32 deviceHandler_FAT_deleteFile(file_handle* file) {
 }
 
 bool deviceHandler_FAT_test_sd_a() {
-	setSDGeckoSpeed();
 	carda->shutdown();
 	carda->startup();
-	return carda->isInserted();
+	return sdgecko_readStatus(0) == CARDIO_ERROR_READY;
 }
 bool deviceHandler_FAT_test_sd_b() {
-	setSDGeckoSpeed();
 	cardb->shutdown();
 	cardb->startup();
-	return cardb->isInserted();
+	return sdgecko_readStatus(1) == CARDIO_ERROR_READY;
 }
 bool deviceHandler_FAT_test_sd_c() {
 	cardc->shutdown();
-	setSDGeckoSpeed();
 	cardc->startup();
-	return cardc->isInserted();
+	return sdgecko_readStatus(2) == CARDIO_ERROR_READY;
 }
 bool deviceHandler_FAT_test_ide_a() {
 	return ide_exi_inserted(0);
