@@ -1736,6 +1736,7 @@ void select_device(int type)
 					curDevice = direction > 0 ? 0 : MAX_DEVICES-1;
 				}
 			}
+			direction = 0;
 		}
 
 		textureImage *devImage = &allDevices[curDevice]->deviceTexture;
@@ -1765,10 +1766,8 @@ void select_device(int type)
 		if(btns & PAD_TRIGGER_Z) {
 			showAllDevices ^= 1;
 			if(!showAllDevices && !deviceHandler_getDeviceAvailable(allDevices[curDevice])) {
+				inAdvanced = 0;
 				direction = 1;
-			}
-			else {
-				direction = 0;
 			}
 		}
 		if(inAdvanced) {
