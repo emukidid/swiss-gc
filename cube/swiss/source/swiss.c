@@ -600,7 +600,7 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch) {
 	
 }
 
-unsigned int load_app(int multiDol, ExecutableFile *filesToPatch, int noASRequired)
+unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 {
 	char* gameID = (char*)0x80000000;
 	int i = 0;
@@ -615,10 +615,6 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch, int noASRequir
 	if(devices[DEVICE_CUR]->readFile(&curFile,(unsigned char*)0x80000000,32) != 32) {
 		DrawPublish(DrawMessageBox(D_FAIL, "Game Header Failed to read"));
 		while(1);
-	}
-	// Disable Audio streaming if there aren't any .ADP files in the FST.
-	if(noASRequired) {
-		GCMDisk.AudioStreaming = 0;
 	}
 	
 	// Prompt for DOL selection if multi-dol
@@ -1386,6 +1382,19 @@ void load_game() {
 		return;
 	}
 	
+	// Check that Audio streaming is really necessary before we patch anything for it
+	if(GCMDisk.AudioStreaming) {
+		print_gecko("Checking game for 32K files\r\n");
+		int numAdpFiles = parse_gcm_for_ext(&curFile, NULL, true);
+		if(!numAdpFiles) {
+			print_gecko("No 32K files detected in FST, disabling AudioStreaming flag\r\n");
+			GCMDisk.AudioStreaming = 0;
+		}
+		else {
+			print_gecko("Found %i 32K files\r\n", numAdpFiles);
+		}
+	}
+	
 	DrawDispose(msgBox);
 	// Show game info or return to the menu
 	if(!info_game()) {
@@ -1407,26 +1416,9 @@ void load_game() {
 	}
 	
 	int multiDol = 0;
-	int noASRequired = 0;
 	ExecutableFile *filesToPatch = memalign(32, sizeof(ExecutableFile)*512);
 	memset(filesToPatch, 0, sizeof(ExecutableFile)*512);
 
-	// If a device is capable of redirecting Audio Streaming, check to see if we really need it
-	if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
-		// Check that Audio streaming is really necessary before we patch anything for it
-		if(GCMDisk.AudioStreaming) {
-			print_gecko("Checking game for 32K files\r\n");
-			int numAdpFiles = parse_gcm_for_ext(&curFile, NULL, true);
-			if(!numAdpFiles) {
-				print_gecko("No 32K files detected in FST, disabling AudioStreaming flag\r\n");
-				noASRequired = 1;
-				GCMDisk.AudioStreaming = 0;
-			}
-			else {
-				print_gecko("Found %i 32K files\r\n", numAdpFiles);
-			}
-		}
-	}
 	// Report to the user the patch status of this GCM/ISO file
 	if(devices[DEVICE_CUR]->features & FEAT_CAN_READ_PATCHES) {
 		multiDol = check_game(filesToPatch);
@@ -1482,7 +1474,7 @@ void load_game() {
 		}
 	}
 
-	load_app(multiDol, filesToPatch, noASRequired);
+	load_app(multiDol, filesToPatch);
 	config_unload_current();
 }
 
