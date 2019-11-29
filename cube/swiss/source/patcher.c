@@ -781,6 +781,8 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{  7,  2, 1, 0, 0, 1, NULL, 0, "__OSSetExceptionHandler" },
 		{  5,  1, 0, 0, 0, 2, NULL, 0, "__OSSetExceptionHandler" }	// SN Systems ProDG
 	};
+	FuncPattern DCFlushRangeNoSyncSig = 
+		{ 11, 2, 0, 0, 0, 3, NULL, 0, "DCFlushRangeNoSync" };
 	FuncPattern ICFlashInvalidateSig = 
 		{ 4, 0, 0, 0, 0, 2, NULL, 0, "ICFlashInvalidate" };
 	FuncPattern OSSetCurrentContextSig = 
@@ -1213,6 +1215,12 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 24, 7, 5, 3, 2, 3, NULL, 0, "__DVDDequeueWaitingQueue" },
 		{ 26, 7, 5, 3, 2, 5, NULL, 0, "__DVDDequeueWaitingQueue" }	// SN Systems ProDG
 	};
+	FuncPattern __VMBASESetupExceptionHandlersSig = 
+		{ 95, 42, 10, 6, 0, 16, NULL, 0, "__VMBASESetupExceptionHandlers" };
+	FuncPattern __VMBASEDSIExceptionHandlerSig = 
+		{ 106, 13, 23, 4, 4, 44, NULL, 0, "__VMBASEDSIExceptionHandler" };
+	FuncPattern __VMBASEISIExceptionHandlerSig = 
+		{ 81, 6, 19, 0, 4, 40, NULL, 0, "__VMBASEISIExceptionHandler" };
 	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
@@ -2796,6 +2804,18 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				}
 			}
 		}
+		
+		if (compare_pattern(&fp, &__VMBASESetupExceptionHandlersSig)) {
+			if (findi_pattern(data, dataType, i +  2, i +  5, length, &__VMBASEDSIExceptionHandlerSig) &&
+				findx_pattern(data, dataType, i + 15, length, &DCFlushRangeNoSyncSig) &&
+				findx_pattern(data, dataType, i + 27, length, &DCFlushRangeNoSyncSig) &&
+				findx_pattern(data, dataType, i + 42, length, &DCFlushRangeNoSyncSig) &&
+				findi_pattern(data, dataType, i + 47, i + 49, length, &__VMBASEISIExceptionHandlerSig) &&
+				findx_pattern(data, dataType, i + 57, length, &DCFlushRangeNoSyncSig) &&
+				findx_pattern(data, dataType, i + 69, length, &DCFlushRangeNoSyncSig) &&
+				findx_pattern(data, dataType, i + 84, length, &DCFlushRangeNoSyncSig))
+				__VMBASESetupExceptionHandlersSig.offsetFoundAt = i;
+		}
 		i += fp.Length - 1;
 	}
 	
@@ -4292,6 +4312,18 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			data[i + __DVDCheckWaitingQueueSigs[j].Length - 1] = branch(UNSET_BREAKPOINT, __DVDCheckWaitingQueue + __DVDCheckWaitingQueueSigs[j].Length - 1);
 			
 			print_gecko("Found:[%s] @ %08X\n", __DVDCheckWaitingQueueSigs[j].Name, __DVDCheckWaitingQueue);
+			patched++;
+		}
+	}
+	
+	if ((i = __VMBASEISIExceptionHandlerSig.offsetFoundAt)) {
+		u32 *__VMBASEISIExceptionHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__VMBASEISIExceptionHandler) {
+			data[i +  5] = 0x7CBA02A6;	// mfsrr0	r5
+			data[i + 10] = 0x7CBA02A6;	// mfsrr0	r5
+			
+			print_gecko("Found:[%s] @ %08X\n", __VMBASEISIExceptionHandlerSig.Name, __VMBASEISIExceptionHandler);
 			patched++;
 		}
 	}
