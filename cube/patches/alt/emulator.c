@@ -193,9 +193,10 @@ static bool ppc_step(OSContext *context)
 	return false;
 }
 
+extern void load_context(void) __attribute((noreturn));
 extern uint32_t load_context_end[];
 
-OSContext *exception_handler(OSException exception, OSContext *context, uint32_t dsisr, uint32_t dar)
+void exception_handler(OSException exception, OSContext *context, uint32_t dsisr, uint32_t dar)
 {
 	OSExceptionHandler handler;
 
@@ -218,8 +219,9 @@ OSContext *exception_handler(OSException exception, OSContext *context, uint32_t
 				ptrdiff_t offset = (ptrdiff_t)handler - (ptrdiff_t)load_context_end;
 
 				*load_context_end = 0x48000000 | (offset & 0x3FFFFFC);
-				dcache_flush_icache_inv(load_context_end, sizeof(*load_context_end));
-				return context;
+				asm volatile("dcbst 0,%0; sync; icbi 0,%0" :: "r" (load_context_end));
+				load_context();
+				return;
 			}
 		}
 		default:
@@ -229,9 +231,9 @@ OSContext *exception_handler(OSException exception, OSContext *context, uint32_t
 		}
 	}
 
-	*load_context_end = 0x4C000064;
-	dcache_flush_icache_inv(load_context_end, sizeof(*load_context_end));
-	return context;
+	*load_context_end = 0x60000000;
+	asm volatile("dcbst 0,%0; sync; icbi 0,%0" :: "r" (load_context_end));
+	load_context();
 }
 
 void dsi_exception_handler(OSException exception, OSContext *context, ...);

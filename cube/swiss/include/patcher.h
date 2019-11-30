@@ -189,14 +189,14 @@ enum patchIds {
 #define IGR_EXIT_WKF			(void*)(LO_RESERVE | 0x0C)
 
 /* Function jump locations for the SD/IDE/USBGecko/BBA patch */
-#define EXI_TRYLOCK				(void*)(LO_RESERVE_ALT | 0x170)
-#define SET_DI_HANDLER			(void*)(LO_RESERVE_ALT | 0x174)
-#define SET_BREAKPOINT			(void*)(LO_RESERVE_ALT | 0x178)
-#define UNSET_BREAKPOINT		(void*)(LO_RESERVE_ALT | 0x17C)
-#define IDLE_THREAD				(void*)(LO_RESERVE_ALT | 0x180)
-#define TRICKLE_READ			(void*)(LO_RESERVE_ALT | 0x184)
-#define CHECK_PAD_ALT			(void*)(LO_RESERVE_ALT | 0x188)
-#define IGR_EXIT_ALT			(void*)(LO_RESERVE_ALT | 0x18C)
+#define EXI_TRYLOCK				(void*)(LO_RESERVE_ALT | 0x158)
+#define SET_DI_HANDLER			(void*)(LO_RESERVE_ALT | 0x15C)
+#define SET_BREAKPOINT			(void*)(LO_RESERVE_ALT | 0x160)
+#define UNSET_BREAKPOINT		(void*)(LO_RESERVE_ALT | 0x164)
+#define IDLE_THREAD				(void*)(LO_RESERVE_ALT | 0x168)
+#define TRICKLE_READ			(void*)(LO_RESERVE_ALT | 0x16C)
+#define CHECK_PAD_ALT			(void*)(LO_RESERVE_ALT | 0x170)
+#define IGR_EXIT_ALT			(void*)(LO_RESERVE_ALT | 0x174)
 
 #define READ_PATCHED_ALL 		(0x111)
 

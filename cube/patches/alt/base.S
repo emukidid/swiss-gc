@@ -43,6 +43,8 @@ dsi_exception_handler:
 
 	.globl load_context, load_context_end
 load_context:
+	bl		realmode
+	lwz		r3, 192 (r0)
 	lswi	r0, r3, 12
 	lmw		r5, 20 (r3)
 	lwz		r4, 424 (r3)
@@ -77,6 +79,7 @@ load_context:
 	lwz		r4, 16 (r3)
 	lwz		r3, 12 (r3)
 load_context_end:
+	nop
 	rfi
 
 	.balign 0x100
@@ -98,6 +101,27 @@ trace_exception_vector:
 	mfsprg	r0, 0
 	rfi
 
+	.globl realmode
+realmode:
+	mflr	r3
+	clrlwi	r3, r3, 2
+	mtsrr0	r3
+	mfmsr	r3
+	rlwinm	r3, r3, 0, 28, 25
+	mtsrr1	r3
+	rfi
+
+	.globl _start
+_start:
+	b		exi_trylock
+	b		set_di_handler
+	b		set_breakpoint
+	b		unset_breakpoint
+	b		idle_thread
+	b		trickle_read
+	b		check_pad
+	b		igr_exit
+
 	.globl dcache_flush_icache_inv
 dcache_flush_icache_inv:
 	cmplwi	r4, 0
@@ -113,14 +137,3 @@ dcache_flush_icache_inv:
 	bdnz	1b
 	sc
 	blr
-
-	.globl _start
-_start:
-	b		exi_trylock
-	b		set_di_handler
-	b		set_breakpoint
-	b		unset_breakpoint
-	b		idle_thread
-	b		trickle_read
-	b		check_pad
-	b		igr_exit
