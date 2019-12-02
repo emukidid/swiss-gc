@@ -1382,6 +1382,13 @@ void load_game() {
 		return;
 	}
 	
+	if(curFile.size < DISC_SIZE && strncmp(&GCMDisk.GameName[0x1E0], "NKIT", 4)) {
+		DrawDispose(msgBox);
+		msgBox = DrawPublish(DrawMessageBox(D_WARN, "Disc shrunk using an unsupported tool.\nPlease use NKit."));
+		sleep(5);
+		DrawDispose(msgBox);
+	}
+	
 	// Check that Audio streaming is really necessary before we patch anything for it
 	if(GCMDisk.AudioStreaming) {
 		print_gecko("Checking game for 32K files\r\n");
