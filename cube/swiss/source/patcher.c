@@ -4109,12 +4109,14 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				case 3:
 				case 4:
 				case 5:
+				case 6:
 					data[i +  16] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  27] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  30] = 0x3C800008;	// lis		r4, 8
 					data[i +  50] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  67] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  92] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 103] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 116] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 125] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 134] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -4122,7 +4124,6 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 152] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 162] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 6:
 				case 7:
 					data[i +  16] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  44] = 0x3C600C00;	// lis		r3, 0x0C00
