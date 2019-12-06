@@ -560,8 +560,13 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch) {
 	int i = 0, j = 0, max = 0, idx = 0, page = 4;
 	for(i = 0; i < 64; i++) if(filesToPatch[i].offset == 0) break;
 	sortDols(filesToPatch, i);	// Sort DOL to the top
-	for(i = 0; i < 64; i++) if(filesToPatch[i].offset == 0 || filesToPatch[i].type != PATCH_DOL) break;
-	int num_files = i;
+	int num_files = 0;
+	for(i = 0; i < 64; i++) {
+		if(filesToPatch[i].offset != 0 && filesToPatch[i].type == PATCH_DOL 
+			&& !(!strcmp(filesToPatch[i].name, "Main DOL") || !strcmp(filesToPatch[i].name, "Apploader Trailer"))) {
+				num_files++;
+		}
+	}
 	if(num_files < 2) return 0;
 	
 	int fileListBase = 175;
