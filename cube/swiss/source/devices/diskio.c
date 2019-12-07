@@ -14,13 +14,14 @@
 #include <sdcard/gcsd.h>
 #include "ata.h"
 #include "wkf.h"
+#include "gcloader.h"
 #include "ff_cache/cache.h"
 
-const DISC_INTERFACE *driver[FF_VOLUMES] = { &__io_gcsda, &__io_gcsdb, &__io_gcsd2, &__io_ataa, &__io_atab, &__io_wkf};
-static bool disk_isInit[FF_VOLUMES] = {0,0,0,0,0,0};
+const DISC_INTERFACE *driver[FF_VOLUMES] = { &__io_gcsda, &__io_gcsdb, &__io_gcsd2, &__io_ataa, &__io_atab, &__io_wkf, &__io_gcloader};
+static bool disk_isInit[FF_VOLUMES] = {0,0,0,0,0,0,0};
 
 // Disk caches
-CACHE *cache[FF_VOLUMES] = {NULL, NULL, NULL, NULL, NULL, NULL};
+CACHE *cache[FF_VOLUMES] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 
 /*-----------------------------------------------------------------------*/

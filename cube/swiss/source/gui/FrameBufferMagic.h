@@ -91,6 +91,8 @@
 #include "checked_32.h"
 #include "unchecked_32_tpl.h"
 #include "unchecked_32.h"
+#include "gcloaderimg_tpl.h"
+#include "gcloaderimg.h"
 
 typedef struct uiDrawObj {
     int type;
@@ -124,7 +126,8 @@ enum TextureId
 	TEX_NTSCU,
 	TEX_PAL,
 	TEX_CHECKED,
-	TEX_UNCHECKED
+	TEX_UNCHECKED,
+	TEX_GCLOADER
 };
 
 extern GXTexObj mp3imgTexObj;

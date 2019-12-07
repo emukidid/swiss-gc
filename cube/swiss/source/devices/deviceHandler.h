@@ -14,7 +14,7 @@
 #include "diskio.h"
 #include "wode/WodeInterface.h"
 
-#define MAX_DEVICES 17
+#define MAX_DEVICES 18
 #define PATHNAME_MAX 1024
 
 typedef struct {
@@ -107,7 +107,8 @@ typedef device_info* (* _fn_deviceInfo)(void);
 #define DEVICE_ID_D			0x0D
 #define DEVICE_ID_E			0x0E
 #define DEVICE_ID_F			0x0F
-#define DEVICE_ID_MAX		DEVICE_ID_F
+#define DEVICE_ID_G			0x10
+#define DEVICE_ID_MAX		DEVICE_ID_G
 #define DEVICE_ID_UNK		(DEVICE_ID_MAX + 1)
 
 struct DEVICEHANDLER_STRUCT {
@@ -154,6 +155,7 @@ enum DEVICE_SLOTS {
 #include "devices/system/deviceHandler-SYS.h"
 #include "devices/ftp/deviceHandler-FTP.h"
 #include "devices/fsp/deviceHandler-FSP.h"
+#include "devices/gcloader/deviceHandler-gcloader.h"
 
 extern void deviceHandler_setStatEnabled(int enable);
 extern int deviceHandler_getStatEnabled();

@@ -60,6 +60,7 @@ SOURCES		:=  source \
               source/devices/fat \
 			  source/devices/fsp \
 			  source/devices/ftp \
+			  source/devices/gcloader \
               source/devices/memcard \
               source/devices/qoob \
 			  source/devices/smb \

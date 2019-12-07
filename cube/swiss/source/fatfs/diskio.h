@@ -33,7 +33,8 @@ typedef enum {
 	DEV_IDEA = 3,
 	DEV_IDEB = 4,
 	DEV_WKF = 5,
-	DEV_MAX = 6
+	DEV_GCLDR = 6,
+	DEV_MAX = 7
 } DeviceNumber;
 
 DSTATUS disk_initialize (BYTE pdrv);

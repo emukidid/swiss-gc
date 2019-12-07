@@ -23,6 +23,7 @@ const DISC_INTERFACE* cardc = &__io_gcsd2;
 const DISC_INTERFACE* ideexia = &__io_ataa;
 const DISC_INTERFACE* ideexib = &__io_atab;
 extern FATFS *wkffs;
+extern FATFS *gcloaderfs;
 FATFS *fs[5] = {NULL, NULL, NULL, NULL, NULL};
 extern void sdgecko_initIODefault();
 #define SD_COUNT 3
@@ -284,6 +285,9 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 	FATFS* fatFS = NULL;
 	if(file->name[0] == 'w') {
 		fatFS = wkffs;
+	}
+	else if(file->name[0] == 'g') {
+		fatFS = gcloaderfs;
 	}
 	else {
 		int slot = GET_SLOT(file->name);
