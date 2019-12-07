@@ -771,7 +771,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	}
 	
 	// Patch IGR
-	if(swissSettings.igrType != IGR_OFF || swissSettings.invertCStick) {
+	if(devices[DEVICE_CUR] != &__device_gcloader && (swissSettings.igrType != IGR_OFF || swissSettings.invertCStick)) {
 		Patch_PADStatus(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 	
