@@ -121,9 +121,20 @@ void usb_request(uint32_t offset, uint32_t size)
 	usb_transmit(&request, sizeof(request), sizeof(request));
 }
 
+bool exi_probe(int32_t chan)
+{
+	if (chan == EXI_CHANNEL_2)
+		return false;
+	if (chan == *(uint8_t *)VAR_EXI_SLOT)
+		return false;
+	return true;
+}
+
 bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 {
 	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
+		return false;
+	if (chan == *(uint8_t *)VAR_EXI_SLOT && dev == EXI_DEVICE_0)
 		return false;
 	return true;
 }

@@ -3125,6 +3125,66 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		}
 	}
 	
+	for (j = 0; j < sizeof(__EXIProbeSigs) / sizeof(FuncPattern); j++)
+		if (__EXIProbeSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(__EXIProbeSigs) / sizeof(FuncPattern) && (i = __EXIProbeSigs[j].offsetFoundAt)) {
+		u32 *__EXIProbe = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__EXIProbe) {
+			switch (j) {
+				case 0:
+					data[i + 19] = 0x387F0000;	// addi		r3, r31, 0
+					data[i + 20] = branchAndLink(EXI_PROBE, __EXIProbe + 20);
+					data[i + 21] = 0x2C030000;	// cmpwi	r3, 0
+					data[i + 22] = 0x41820144;	// beq		+81
+					break;
+				case 1:
+					data[i + 19] = 0x387F0000;	// addi		r3, r31, 0
+					data[i + 20] = branchAndLink(EXI_PROBE, __EXIProbe + 20);
+					data[i + 21] = 0x2C030000;	// cmpwi	r3, 0
+					data[i + 22] = 0x41820150;	// beq		+84
+					break;
+				case 2:
+					data[i + 20] = 0x387F0000;	// addi		r3, r31, 0
+					data[i + 21] = branchAndLink(EXI_PROBE, __EXIProbe + 21);
+					data[i + 22] = 0x2C030000;	// cmpwi	r3, 0
+					data[i + 23] = 0x41820150;	// beq		+84
+					break;
+				case 3:
+					data[i +  8] = data[i + 9];
+					data[i +  9] = 0x387D0000;	// addi		r3, r29, 0
+					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
+					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
+					data[i + 12] = 0x41820124;	// beq		+73
+					break;
+				case 4:
+					data[i +  6] = data[i + 7];
+					data[i +  7] = data[i + 8];
+					data[i +  8] = data[i + 9];
+					data[i +  9] = 0x387C0000;	// addi		r3, r28, 0
+					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
+					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
+					data[i + 12] = 0x41820130;	// beq		+76
+					break;
+				case 5:
+					data[i +  9] = 0x387C0000;	// addi		r3, r28, 0
+					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
+					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
+					data[i + 12] = 0x41820130;	// beq		+76
+					break;
+				case 6:
+					data[i +  9] = 0x387F0000;	// addi		r3, r31, 0
+					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
+					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
+					data[i + 12] = 0x41820170;	// beq		+92
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", __EXIProbeSigs[j].Name, __EXIProbe);
+			patched++;
+		}
+	}
+	
 	if ((i = EXISelectSDSig.offsetFoundAt)) {
 		u32 *EXISelectSD = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		

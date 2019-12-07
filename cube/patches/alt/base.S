@@ -113,6 +113,7 @@ realmode:
 
 	.globl _start
 _start:
+	b		exi_probe
 	b		exi_trylock
 	b		set_di_handler
 	b		set_breakpoint
