@@ -111,7 +111,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 
 	// Set up Swiss game patches using a patch supporting device
 	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
-#if 0	
+
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
 		int maxFrags = (VAR_FRAG_SIZE/12), i = 0, frags = 0;
@@ -139,7 +139,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 			
 			devices[DEVICE_PATCHES]->seekFile(&patchFile,fno.fsize-16,DEVICE_HANDLER_SEEK_SET);
 			if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, patchInfo[0], patchInfo[1] | 0x80000000, DEVICE_PATCHES))) {
+				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
 					return 0;
 				}
 				totFrags+=frags;
@@ -163,14 +163,15 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 			}
 		}
 		// Card Type
-		*(vu8*)VAR_SD_SHIFT = (u8)(9 * sdgecko_getAddressingType(((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? 0:1)));
+		*(vu8*)VAR_SD_SHIFT = (u8)(sdgecko_getAddressingType(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)) ? 9:0);
 		// Copy the actual freq
-		*(vu8*)VAR_EXI_FREQ = (u8)(EXI_SPEED16MHZ);	// play it safe
-		// Device slot (0 or 1)
-		*(vu8*)VAR_EXI_SLOT = (u8)((devices[DEVICE_PATCHES]->location == LOC_MEMCARD_SLOT_A) ? EXI_CHANNEL_0:EXI_CHANNEL_1);
+		*(vu8*)VAR_EXI_FREQ = (u8)(swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+		// Device slot (0, 1 or 2)
+		*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
 	}
-#endif
-    return 1;
+	
+	print_frag_list(0);
+	return 1;
 }
 
 s32 deviceHandler_GCLOADER_init(file_handle* file){
@@ -231,7 +232,7 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	"GameCube Optical Drive Emulator",
 	"Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_GCLOADER, 134, 80},
-	FEAT_READ|FEAT_BOOT_GCM|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_BOOT_DEVICE/*|FEAT_CAN_READ_PATCHES*/,
+	FEAT_READ|FEAT_BOOT_GCM|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_BOOT_DEVICE|FEAT_CAN_READ_PATCHES,
 	LOC_DVD_CONNECTOR,
 	&initial_GCLOADER,
 	(_fn_test)&deviceHandler_GCLOADER_test,

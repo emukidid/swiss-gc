@@ -452,9 +452,12 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 				Patch_CheatsHook(buffer, sizeToRead, filesToPatch[i].type);
 			}
 			
-			if(devices[DEVICE_CUR] == &__device_dvd && is_gamecube()) {
-				patched += Patch_DVDLowLevelReadForDVD(buffer, sizeToRead, filesToPatch[i].type);
+			if(devices[DEVICE_CUR] == &__device_dvd && drive_status == DEBUG_MODE) {
 				patched += Patch_DVDReset(buffer, sizeToRead);
+			}
+			
+			if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader) {
+				patched += Patch_DVDLowLevelReadForDVD(buffer, sizeToRead, filesToPatch[i].type);
 			}
 			
 			if(devices[DEVICE_CUR] == &__device_wkf) {

@@ -184,7 +184,7 @@ int install_code(int final)
 		print_gecko("Installing Patch for SD Card over EXI\r\n");
 	}
 	// DVD 2 disc code
-	else if(devices[DEVICE_CUR] == &__device_dvd) {
+	else if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader) {
 		patch = &dvd_bin[0]; patchSize = dvd_bin_size;
 		location = LO_RESERVE_DVD;
 		print_gecko("Installing Patch for DVD\r\n");
@@ -9067,7 +9067,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 			u32 *__OSDoHotResetHook;
 			
 			if (__OSDoHotReset) {
-				if (devices[DEVICE_CUR] == &__device_dvd)
+				if (devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader)
 					__OSDoHotResetHook = IGR_EXIT_DVD;
 				else if (devices[DEVICE_CUR] == &__device_wkf)
 					__OSDoHotResetHook = IGR_EXIT_WKF;
@@ -9094,7 +9094,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 			u32 *OSResetSystemHook;
 			
 			if (OSResetSystem) {
-				if (devices[DEVICE_CUR] == &__device_dvd)
+				if (devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader)
 					OSResetSystemHook = IGR_EXIT_DVD;
 				else if (devices[DEVICE_CUR] == &__device_wkf)
 					OSResetSystemHook = IGR_EXIT_WKF;
@@ -9197,7 +9197,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 		u32 MakeStatusAddr, *MakeStatus;
 		
 		if (PADRead) {
-			if (devices[DEVICE_CUR] == &__device_dvd)
+			if (devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader)
 				PADReadHook = CHECK_PAD_DVD;
 			else if (devices[DEVICE_CUR] == &__device_wkf)
 				PADReadHook = CHECK_PAD_WKF;

@@ -690,7 +690,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	*(volatile u32*)0x80000028 = top_of_main_ram & 0x01FFFFFF;			// Physical Memory Size
     *(volatile u32*)0x800000F0 = top_of_main_ram & 0x01FFFFFF;			// Console Simulated Mem size
 	u32* osctxblock = (u32*)memalign(32, 1024);
-	*(volatile u32*)0x800000C0 = (u32)osctxblock | 0x7FFFFFFF;
+	*(volatile u32*)0x800000C0 = (u32)osctxblock & 0x7FFFFFFF;
 	*(volatile u32*)0x800000D4 = (u32)osctxblock;
 	memset(osctxblock, 0, 1024);
 
@@ -762,16 +762,16 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	Patch_GameSpecific(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
 
 	// 2 Disc support with no modchip
-	if((devices[DEVICE_CUR] == &__device_dvd) && (is_gamecube()) && (drive_status == DEBUG_MODE)) {
+	if(devices[DEVICE_CUR] == &__device_dvd && drive_status == DEBUG_MODE) {
 		Patch_DVDReset(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
 	}
 	// Support patches for multi-dol discs that need to read patched data from SD
-	if(multiDol && devices[DEVICE_CUR] == &__device_dvd && is_gamecube()) {
+	if(multiDol && (devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader)) {
 		Patch_DVDLowLevelReadForDVD(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 	
 	// Patch IGR
-	if(devices[DEVICE_CUR] != &__device_gcloader && (swissSettings.igrType != IGR_OFF || swissSettings.invertCStick)) {
+	if(swissSettings.igrType != IGR_OFF || swissSettings.invertCStick) {
 		Patch_PADStatus(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
 	}
 	
