@@ -26,19 +26,11 @@ void di_update_interrupts(void)
 
 void di_complete_transfer(void)
 {
-	uint32_t address = (*DI_EMU)[5] + OS_BASE_CACHED;
-	uint32_t length  = (*DI_EMU)[6];
-
 	disable_breakpoint();
 
 	(*DI_EMU)[0] |=  0b0010000;
+	(*DI_EMU)[6]  =  0;
 	(*DI_EMU)[7] &= ~0b001;
-
-	if ((*DI_EMU)[7] & 0b010) {
-		(*DI_EMU)[6] = 0;
-		dcache_flush_icache_inv((void *)address, length);
-	}
-
 	di_update_interrupts();
 }
 
@@ -52,7 +44,7 @@ static void di_execute_command(void)
 			if (!((*DI_EMU)[1] & 0b001)) {
 				uint32_t offset  = (*DI_EMU)[3] << 2;
 				uint32_t length  = (*DI_EMU)[4];
-				uint32_t address = (*DI_EMU)[5] + OS_BASE_CACHED;
+				uint32_t address = (*DI_EMU)[5];
 
 				perform_read(offset, length, address);
 				enable_breakpoint();

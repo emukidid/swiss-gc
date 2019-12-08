@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include "../base/common.h"
 #include "../base/exi.h"
+#include "../base/os.h"
 
 typedef struct {
 	uint32_t offset;
@@ -145,7 +146,7 @@ void perform_read(uint32_t offset, uint32_t length, uint32_t address)
 {
 	*(uint32_t *)VAR_LAST_OFFSET = offset;
 	*(uint32_t *)VAR_TMP2 = length;
-	*(uint32_t *)VAR_TMP1 = address;
+	*(uint8_t **)VAR_TMP1 = OSPhysicalToCached(address);
 
 	if (!is_frag_read(offset, length))
 		usb_request(offset, length);
@@ -171,6 +172,8 @@ void trickle_read(void)
 		*(uint32_t *)VAR_LAST_OFFSET = position;
 		*(uint32_t *)VAR_TMP2 = remainder;
 		*(uint8_t **)VAR_TMP1 = data + data_size;
+
+		dcache_store(data, data_size);
 
 		if (!remainder) di_complete_transfer();
 		else if (frag && !is_frag_read(position, remainder))

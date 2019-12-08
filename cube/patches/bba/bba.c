@@ -273,7 +273,7 @@ void perform_read(uint32_t offset, uint32_t length, uint32_t address)
 {
 	*_position  = offset;
 	*_remainder = length;
-	*_data = (void *)address;
+	*_data = OSPhysicalToCached(address);
 
 	if (!is_frag_read(offset, length))
 		fsp_get_file(offset, length);
@@ -297,6 +297,8 @@ void trickle_read(void)
 			*_remainder = remainder;
 			*_data = data + data_size;
 			*_data_size = 0;
+
+			dcache_store(data, data_size);
 
 			if (!remainder) di_complete_transfer();
 			else if (!is_frag_read(position, remainder))

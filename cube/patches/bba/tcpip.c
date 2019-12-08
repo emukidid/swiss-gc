@@ -249,8 +249,10 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 				data_offset += page_size;
 				size        -= page_size;
 
-				if (*_received)
+				if (*_received) {
 					bba_receive_end(page, data + data_offset, size);
+					dcache_store(data, data_size);
+				}
 
 				if (!(ipv4->flags & 0b001)) {
 					position  += data_size;
@@ -261,13 +263,15 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 					*_data = data + data_size;
 					*_data_size = 0;
 
-					if (remainder) fsp_get_file(position, remainder);
+					if (!remainder) di_complete_transfer();
+					else if (!is_frag_read(position, remainder))
+						fsp_get_file(position, remainder);
 				}
 
-				if (!*_received)
+				if (!*_received) {
 					bba_receive_end(page, data + data_offset, size);
-
-				if (!remainder) di_complete_transfer();
+					dcache_store(data, data_size);
+				}
 			}
 		}
 	}

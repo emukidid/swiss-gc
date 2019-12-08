@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include "../base/common.h"
 #include "../base/exi.h"
+#include "../base/os.h"
 
 bool exi_probe(int32_t chan)
 {
@@ -35,7 +36,7 @@ void perform_read(uint32_t offset, uint32_t length, uint32_t address)
 {
 	*(uint32_t *)VAR_LAST_OFFSET = offset;
 	*(uint32_t *)VAR_TMP2 = length;
-	*(uint32_t *)VAR_TMP1 = address;
+	*(uint8_t **)VAR_TMP1 = OSPhysicalToUncached(address);
 }
 
 void trickle_read(void)

@@ -22,7 +22,6 @@ typedef struct _apploader_hdr
 } apploader_hdr;
 
 int noprintf( const char *str, ... ) { return 0; };
-void dcache_store(char *dst, u32 size);
 
 void memset32(u32 dst,u32 fill,u32 len)
 {
