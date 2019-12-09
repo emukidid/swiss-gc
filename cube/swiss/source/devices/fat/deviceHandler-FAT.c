@@ -419,12 +419,12 @@ s32 fatFs_Mount(u8 devNum, char *path) {
 	if(fs[devNum] != NULL) {
 		disk_flush(devNum);
 		print_gecko("Unmount %i devnum, %s path\r\n", devNum, path);
-		f_mount(0, path, 0);	// Unmount
+		f_unmount(path);
 		free(fs[devNum]);
 		fs[devNum] = NULL;
 	}
 	fs[devNum] = (FATFS*)malloc(sizeof(FATFS));
-	return f_mount(fs[devNum], path, 0) == FR_OK;
+	return f_mount(fs[devNum], path, 1) == FR_OK;
 }
 
 void setSDGeckoSpeed() {
@@ -442,29 +442,29 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 		carda->shutdown();
 		carda->startup();
 		setSDGeckoSpeed();
-		ret = fatFs_Mount(0, "sda:\0");
+		ret = fatFs_Mount(0, "sda:/");
 	}
 	// Slot B - SD Card
 	if(isSDCard && slot == 1) {
 		cardb->shutdown();
 		cardb->startup();
 		setSDGeckoSpeed();
-		ret = fatFs_Mount(1, "sdb:\0");
+		ret = fatFs_Mount(1, "sdb:/");
 	}
 	// SP2 - SD Card
 	if(isSDCard && slot == 2) {
 		cardc->shutdown();
 		cardc->startup();
 		setSDGeckoSpeed();
-		ret = fatFs_Mount(2, "sdc:\0");
+		ret = fatFs_Mount(2, "sdc:/");
 	}
 	// Slot A - IDE-EXI
 	if(!isSDCard && !slot) {
-		ret = fatFs_Mount(3, "idea:\0");
+		ret = fatFs_Mount(3, "idea:/");
 	}
 	// Slot B - IDE-EXI
 	if(!isSDCard && slot) {
-		ret = fatFs_Mount(4, "ideb:\0");
+		ret = fatFs_Mount(4, "ideb:/");
 	}
 	if(ret)
 		populateDeviceInfo(file);
@@ -504,7 +504,7 @@ s32 deviceHandler_FAT_deinit(file_handle* file) {
 		char *mountPath = getDeviceMountPath(file->name);
 		int slot = GET_SLOT(file->name);
 		disk_flush(IS_SDCARD(file->name) ? slot : SD_COUNT+slot);
-		f_mount(0, mountPath, 0);
+		f_unmount(mountPath);
 		fs[IS_SDCARD(file->name) ? slot : SD_COUNT+slot] = NULL;
 		free(mountPath);
 	}

@@ -169,14 +169,14 @@ s32 deviceHandler_WKF_init(file_handle* file){
 	
 	wkfReinit();
 	if(wkffs != NULL) {
-		f_mount(0, "wkf:/", 0);	// Unmount
+		f_unmount("wkf:/");
 		free(wkffs);
 		wkffs = NULL;
 	}
 	wkffs = (FATFS*)malloc(sizeof(FATFS));
 	int ret = 0;
 	
-	if(((ret=f_mount(wkffs, "wkf:/", 0)) == FR_OK) && deviceHandler_getStatEnabled()) {	
+	if(((ret=f_mount(wkffs, "wkf:/", 1)) == FR_OK) && deviceHandler_getStatEnabled()) {	
 		sprintf(txtbuffer, "Reading filesystem info for wkf:/");
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
 		

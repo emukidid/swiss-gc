@@ -177,14 +177,14 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 s32 deviceHandler_GCLOADER_init(file_handle* file){
 
 	if(gcloaderfs != NULL) {
-		f_mount(0, "gcldr:/", 0);	// Unmount
+		f_unmount("gcldr:/");
 		free(gcloaderfs);
 		gcloaderfs = NULL;
 	}
 	gcloaderfs = (FATFS*)malloc(sizeof(FATFS));
 	int ret = 0;
 	
-	if(((ret=f_mount(gcloaderfs, "gcldr:/", 0)) == FR_OK) && deviceHandler_getStatEnabled()) {	
+	if(((ret=f_mount(gcloaderfs, "gcldr:/", 1)) == FR_OK) && deviceHandler_getStatEnabled()) {	
 		sprintf(txtbuffer, "Reading filesystem info for gcldr:/");
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
 		
