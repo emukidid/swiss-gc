@@ -18,8 +18,8 @@ system_call_vector:
 	mthid0	r9
 	rfi
 
-	.globl dsi_exception_handler
-dsi_exception_handler:
+	.globl exception_handler
+exception_handler:
 	stswi	r0, r4, 12
 	stmw	r6, 24 (r4)
 	mfgqr	r0, 1
@@ -39,7 +39,7 @@ dsi_exception_handler:
 	mfdsisr	r5
 	mfdar	r6
 	stwu	sp, -8 (sp)
-	bl		exception_handler
+	bl		service_exception
 
 	.globl load_context, load_context_end
 load_context:

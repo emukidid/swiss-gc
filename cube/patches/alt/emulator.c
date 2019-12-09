@@ -188,7 +188,7 @@ static bool ppc_step(OSContext *context)
 extern void load_context(void) __attribute((noreturn));
 extern uint32_t load_context_end[];
 
-void exception_handler(OSException exception, OSContext *context, uint32_t dsisr, uint32_t dar)
+void service_exception(OSException exception, OSContext *context, uint32_t dsisr, uint32_t dar)
 {
 	OSExceptionHandler handler;
 
@@ -216,6 +216,25 @@ void exception_handler(OSException exception, OSContext *context, uint32_t dsisr
 				return;
 			}
 		}
+		#ifndef BBA
+		case OS_EXCEPTION_PROGRAM:
+		{
+			uint32_t opcode = *(uint32_t *)context->srr0;
+
+			switch (opcode >> 26) {
+				case 3:
+				{
+					trickle_read();
+					context->srr0 += 4;
+
+					*load_context_end = 0x28000000 | (opcode & 0x1FFFFF);
+					asm volatile("dcbst 0,%0; sync; icbi 0,%0" :: "r" (load_context_end));
+					load_context();
+					return;
+				}
+			}
+		}
+		#endif
 		default:
 		{
 			handler = *OSExceptionHandlerTable;
@@ -228,7 +247,7 @@ void exception_handler(OSException exception, OSContext *context, uint32_t dsisr
 	load_context();
 }
 
-void dsi_exception_handler(OSException exception, OSContext *context, ...);
+void exception_handler(OSException exception, OSContext *context, ...);
 
 static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
@@ -257,7 +276,8 @@ void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 
 OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
-	OSSetExceptionHandler(OS_EXCEPTION_DSI, dsi_exception_handler);
+	OSSetExceptionHandler(OS_EXCEPTION_DSI, exception_handler);
+	OSSetExceptionHandler(OS_EXCEPTION_PROGRAM, exception_handler);
 	OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
 	#ifdef BBA
 	OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);

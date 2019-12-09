@@ -7612,6 +7612,28 @@ int Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int da
 				patched++;
 				break;
 		}
+	} else if (!strncmp(gameID, "DVJP08", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 2556736:
+				if (devices[DEVICE_CUR] != &__device_fsp) {
+					// Trap busy-wait for 60Hz periodic alarm.
+					*(u32 *)(data + 0x800E14B4 - 0x80003480 + 0x480) = 0x0F800000;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "G2VP08", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3240352:
+				if (devices[DEVICE_CUR] != &__device_fsp) {
+					// Trap busy-wait for 60Hz periodic alarm.
+					*(u32 *)(data + 0x801FD784 - 0x800034A0 + 0x4A0) = 0x0F800000;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
 	} else if ((!strncmp(gameID, "G3FD69", 6) || !strncmp(gameID, "G3FE69", 6) || !strncmp(gameID, "G3FF69", 6) || !strncmp(gameID, "G3FP69", 6) || !strncmp(gameID, "G3FS69", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4880320:
@@ -7909,6 +7931,28 @@ int Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int da
 				*(u32 *)(data + 0x80004B04 - 0x80003100 + 0x100) = 0x60000000;
 				*(u32 *)(data + 0x80004B08 - 0x80003100 + 0x100) = 0x60000000;
 				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GVCP08", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3041312:
+				if (devices[DEVICE_CUR] != &__device_fsp) {
+					// Trap busy-wait for 60Hz periodic alarm.
+					*(u32 *)(data + 0x801FBA2C - 0x800034A0 + 0x4A0) = 0x0F800000;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GVJP08", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 2568224:
+				if (devices[DEVICE_CUR] != &__device_fsp) {
+					// Trap busy-wait for 60Hz periodic alarm.
+					*(u32 *)(data + 0x800E5390 - 0x80003480 + 0x480) = 0x0CE00001;
+				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
