@@ -781,8 +781,10 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{  7,  2, 1, 0, 0, 1, NULL, 0, "__OSSetExceptionHandler" },
 		{  5,  1, 0, 0, 0, 2, NULL, 0, "__OSSetExceptionHandler" }	// SN Systems ProDG
 	};
-	FuncPattern DCFlushRangeNoSyncSig = 
-		{ 11, 2, 0, 0, 0, 3, NULL, 0, "DCFlushRangeNoSync" };
+	FuncPattern DCFlushRangeNoSyncSigs[2] = {
+		{ 12, 3, 0, 0, 1, 2, NULL, 0, "DCFlushRangeNoSync A" },
+		{ 11, 2, 0, 0, 0, 3, NULL, 0, "DCFlushRangeNoSync B" }
+	};
 	FuncPattern ICFlashInvalidateSig = 
 		{ 4, 0, 0, 0, 0, 2, NULL, 0, "ICFlashInvalidate" };
 	FuncPattern OSSetCurrentContextSig = 
@@ -1215,8 +1217,10 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		{ 24, 7, 5, 3, 2, 3, NULL, 0, "__DVDDequeueWaitingQueue" },
 		{ 26, 7, 5, 3, 2, 5, NULL, 0, "__DVDDequeueWaitingQueue" }	// SN Systems ProDG
 	};
-	FuncPattern __VMBASESetupExceptionHandlersSig = 
-		{ 95, 42, 10, 6, 0, 16, NULL, 0, "__VMBASESetupExceptionHandlers" };
+	FuncPattern __VMBASESetupExceptionHandlersSigs[2] = {
+		{ 95, 38, 12, 6, 0, 20, NULL, 0, "__VMBASESetupExceptionHandlers A" },
+		{ 95, 42, 10, 6, 0, 16, NULL, 0, "__VMBASESetupExceptionHandlers B" }
+	};
 	FuncPattern __VMBASEDSIExceptionHandlerSig = 
 		{ 54, 6, 9, 0, 3, 27, NULL, 0, "__VMBASEDSIExceptionHandler" };
 	FuncPattern __VMBASEISIExceptionHandlerSig = 
@@ -2805,16 +2809,33 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			}
 		}
 		
-		if (compare_pattern(&fp, &__VMBASESetupExceptionHandlersSig)) {
-			if (findi_pattern(data, dataType, i +  2, i +  5, length, &__VMBASEDSIExceptionHandlerSig) &&
-				findx_pattern(data, dataType, i + 15, length, &DCFlushRangeNoSyncSig) &&
-				findx_pattern(data, dataType, i + 27, length, &DCFlushRangeNoSyncSig) &&
-				findx_pattern(data, dataType, i + 42, length, &DCFlushRangeNoSyncSig) &&
-				findi_pattern(data, dataType, i + 47, i + 49, length, &__VMBASEISIExceptionHandlerSig) &&
-				findx_pattern(data, dataType, i + 57, length, &DCFlushRangeNoSyncSig) &&
-				findx_pattern(data, dataType, i + 69, length, &DCFlushRangeNoSyncSig) &&
-				findx_pattern(data, dataType, i + 84, length, &DCFlushRangeNoSyncSig))
-				__VMBASESetupExceptionHandlersSig.offsetFoundAt = i;
+		for (j = 0; j < sizeof(__VMBASESetupExceptionHandlersSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &__VMBASESetupExceptionHandlersSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findi_pattern(data, dataType, i +  7, i +  8, length, &__VMBASEDSIExceptionHandlerSig) &&
+							findx_pattern(data, dataType, i + 17, length, &DCFlushRangeNoSyncSigs[0]) &&
+							findx_pattern(data, dataType, i + 29, length, &DCFlushRangeNoSyncSigs[0]) &&
+							findx_pattern(data, dataType, i + 44, length, &DCFlushRangeNoSyncSigs[0]) &&
+							findi_pattern(data, dataType, i + 49, i + 50, length, &__VMBASEISIExceptionHandlerSig) &&
+							findx_pattern(data, dataType, i + 57, length, &DCFlushRangeNoSyncSigs[0]) &&
+							findx_pattern(data, dataType, i + 68, length, &DCFlushRangeNoSyncSigs[0]) &&
+							findx_pattern(data, dataType, i + 83, length, &DCFlushRangeNoSyncSigs[0]))
+							__VMBASESetupExceptionHandlersSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findi_pattern(data, dataType, i +  2, i +  5, length, &__VMBASEDSIExceptionHandlerSig) &&
+							findx_pattern(data, dataType, i + 15, length, &DCFlushRangeNoSyncSigs[1]) &&
+							findx_pattern(data, dataType, i + 27, length, &DCFlushRangeNoSyncSigs[1]) &&
+							findx_pattern(data, dataType, i + 42, length, &DCFlushRangeNoSyncSigs[1]) &&
+							findi_pattern(data, dataType, i + 47, i + 49, length, &__VMBASEISIExceptionHandlerSig) &&
+							findx_pattern(data, dataType, i + 57, length, &DCFlushRangeNoSyncSigs[1]) &&
+							findx_pattern(data, dataType, i + 69, length, &DCFlushRangeNoSyncSigs[1]) &&
+							findx_pattern(data, dataType, i + 84, length, &DCFlushRangeNoSyncSigs[1]))
+							__VMBASESetupExceptionHandlersSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
 		}
 		i += fp.Length - 1;
 	}
@@ -4373,6 +4394,26 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			data[i + __DVDCheckWaitingQueueSigs[j].Length - 1] = branch(UNSET_BREAKPOINT, __DVDCheckWaitingQueue + __DVDCheckWaitingQueueSigs[j].Length - 1);
 			
 			print_gecko("Found:[%s] @ %08X\n", __DVDCheckWaitingQueueSigs[j].Name, __DVDCheckWaitingQueue);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(__VMBASESetupExceptionHandlersSigs) / sizeof(FuncPattern); j++)
+		if (__VMBASESetupExceptionHandlersSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(__VMBASESetupExceptionHandlersSigs) / sizeof(FuncPattern) && (i = __VMBASESetupExceptionHandlersSigs[j].offsetFoundAt)) {
+		u32 *__VMBASESetupExceptionHandlers = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__VMBASESetupExceptionHandlers) {
+			if (j == 0) {
+				data[i + 22] = 0x7C1E07AC;	// icbi		r30, r0
+				data[i + 32] = 0x7C1EE7AC;	// icbi		r30, r28
+				data[i + 47] = 0x7C1EE7AC;	// icbi		r30, r28
+				data[i + 61] = 0x7C1E07AC;	// icbi		r30, r0
+				data[i + 71] = 0x7C1EEFAC;	// icbi		r30, r29
+				data[i + 86] = 0x7C1EE7AC;	// icbi		r30, r28
+			}
+			print_gecko("Found:[%s] @ %08X\n", __VMBASESetupExceptionHandlersSigs[j].Name, __VMBASESetupExceptionHandlers);
 			patched++;
 		}
 	}
@@ -7341,10 +7382,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 			case 2308384:
 				// Fix race condition with DVD callback.
 				*(u32 *)(data + 0x80155A08 - 0x80014140 + 0x2620) = 0x38000001;
-				*(u32 *)(data + 0x80155A0C - 0x80014140 + 0x2620) = 0x3C808015;
+				*(u32 *)(data + 0x80155A0C - 0x80014140 + 0x2620) = 0x3C800000 | (0x80155AD8 + 0x8000) >> 16;
 				*(u32 *)(data + 0x80155A10 - 0x80014140 + 0x2620) = 0x980D99F8;
 				*(u32 *)(data + 0x80155A14 - 0x80014140 + 0x2620) = 0x7C7D1B78;
-				*(u32 *)(data + 0x80155A18 - 0x80014140 + 0x2620) = 0x38E45AD8;
+				*(u32 *)(data + 0x80155A18 - 0x80014140 + 0x2620) = 0x38E40000 | (0x80155AD8 & 0xFFFF);
 				*(u32 *)(data + 0x80155A1C - 0x80014140 + 0x2620) = 0x7FC5F378;
 				*(u32 *)(data + 0x80155A20 - 0x80014140 + 0x2620) = 0x38610008;
 				*(u32 *)(data + 0x80155A24 - 0x80014140 + 0x2620) = 0x7FA4EB78;
@@ -7352,10 +7393,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80155A2C - 0x80014140 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80155A30 - 0x80014140 + 0x2620) = branchAndLink((u32 *)0x801996C8, (u32 *)0x80155A30);
 				*(u32 *)(data + 0x80155A70 - 0x80014140 + 0x2620) = 0x38000001;
-				*(u32 *)(data + 0x80155A74 - 0x80014140 + 0x2620) = 0x3C608015;
+				*(u32 *)(data + 0x80155A74 - 0x80014140 + 0x2620) = 0x3C600000 | (0x80155AD8 + 0x8000) >> 16;
 				*(u32 *)(data + 0x80155A78 - 0x80014140 + 0x2620) = 0x980D99F8;
 				*(u32 *)(data + 0x80155A7C - 0x80014140 + 0x2620) = 0x7F84E378;
-				*(u32 *)(data + 0x80155A80 - 0x80014140 + 0x2620) = 0x38E35AD8;
+				*(u32 *)(data + 0x80155A80 - 0x80014140 + 0x2620) = 0x38E30000 | (0x80155AD8 & 0xFFFF);
 				*(u32 *)(data + 0x80155A84 - 0x80014140 + 0x2620) = 0x7FC5F378;
 				*(u32 *)(data + 0x80155A88 - 0x80014140 + 0x2620) = 0x38610008;
 				*(u32 *)(data + 0x80155A8C - 0x80014140 + 0x2620) = 0x38C00000;
@@ -7371,10 +7412,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 			case 2275008:
 				// Fix race condition with DVD callback.
 				*(u32 *)(data + 0x80151A50 - 0x80014180 + 0x2620) = 0x38000001;
-				*(u32 *)(data + 0x80151A54 - 0x80014180 + 0x2620) = 0x3C808015;
+				*(u32 *)(data + 0x80151A54 - 0x80014180 + 0x2620) = 0x3C800000 | (0x80151B20 + 0x8000) >> 16;
 				*(u32 *)(data + 0x80151A58 - 0x80014180 + 0x2620) = 0x980D9978;
 				*(u32 *)(data + 0x80151A5C - 0x80014180 + 0x2620) = 0x7C7D1B78;
-				*(u32 *)(data + 0x80151A60 - 0x80014180 + 0x2620) = 0x38E41B20;
+				*(u32 *)(data + 0x80151A60 - 0x80014180 + 0x2620) = 0x38E40000 | (0x80151B20 & 0xFFFF);
 				*(u32 *)(data + 0x80151A64 - 0x80014180 + 0x2620) = 0x7FC5F378;
 				*(u32 *)(data + 0x80151A68 - 0x80014180 + 0x2620) = 0x38610008;
 				*(u32 *)(data + 0x80151A6C - 0x80014180 + 0x2620) = 0x7FA4EB78;
@@ -7382,10 +7423,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80151A74 - 0x80014180 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80151A78 - 0x80014180 + 0x2620) = branchAndLink((u32 *)0x8019414C, (u32 *)0x80151A78);
 				*(u32 *)(data + 0x80151AB8 - 0x80014180 + 0x2620) = 0x38000001;
-				*(u32 *)(data + 0x80151ABC - 0x80014180 + 0x2620) = 0x3C608015;
+				*(u32 *)(data + 0x80151ABC - 0x80014180 + 0x2620) = 0x3C600000 | (0x80151B20 + 0x8000) >> 16;
 				*(u32 *)(data + 0x80151AC0 - 0x80014180 + 0x2620) = 0x980D9978;
 				*(u32 *)(data + 0x80151AC4 - 0x80014180 + 0x2620) = 0x7F84E378;
-				*(u32 *)(data + 0x80151AC8 - 0x80014180 + 0x2620) = 0x38E31B20;
+				*(u32 *)(data + 0x80151AC8 - 0x80014180 + 0x2620) = 0x38E30000 | (0x80151B20 & 0xFFFF);
 				*(u32 *)(data + 0x80151ACC - 0x80014180 + 0x2620) = 0x7FC5F378;
 				*(u32 *)(data + 0x80151AD0 - 0x80014180 + 0x2620) = 0x38610008;
 				*(u32 *)(data + 0x80151AD4 - 0x80014180 + 0x2620) = 0x38C00000;
@@ -7401,10 +7442,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 			case 2306400:
 				// Fix race condition with DVD callback.
 				*(u32 *)(data + 0x80155A4C - 0x80014140 + 0x2620) = 0x38000001;
-				*(u32 *)(data + 0x80155A50 - 0x80014140 + 0x2620) = 0x3C808015;
+				*(u32 *)(data + 0x80155A50 - 0x80014140 + 0x2620) = 0x3C800000 | (0x80155B1C + 0x8000) >> 16;
 				*(u32 *)(data + 0x80155A54 - 0x80014140 + 0x2620) = 0x980D99F8;
 				*(u32 *)(data + 0x80155A58 - 0x80014140 + 0x2620) = 0x7C7D1B78;
-				*(u32 *)(data + 0x80155A5C - 0x80014140 + 0x2620) = 0x38E45B1C;
+				*(u32 *)(data + 0x80155A5C - 0x80014140 + 0x2620) = 0x38E40000 | (0x80155B1C & 0xFFFF);
 				*(u32 *)(data + 0x80155A60 - 0x80014140 + 0x2620) = 0x7FC5F378;
 				*(u32 *)(data + 0x80155A64 - 0x80014140 + 0x2620) = 0x38610008;
 				*(u32 *)(data + 0x80155A68 - 0x80014140 + 0x2620) = 0x7FA4EB78;
@@ -7412,10 +7453,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80155A70 - 0x80014140 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80155A74 - 0x80014140 + 0x2620) = branchAndLink((u32 *)0x80199784, (u32 *)0x80155A74);
 				*(u32 *)(data + 0x80155AB4 - 0x80014140 + 0x2620) = 0x38000001;
-				*(u32 *)(data + 0x80155AB8 - 0x80014140 + 0x2620) = 0x3C608015;
+				*(u32 *)(data + 0x80155AB8 - 0x80014140 + 0x2620) = 0x3C600000 | (0x80155B1C + 0x8000) >> 16;
 				*(u32 *)(data + 0x80155ABC - 0x80014140 + 0x2620) = 0x980D99F8;
 				*(u32 *)(data + 0x80155AC0 - 0x80014140 + 0x2620) = 0x7F84E378;
-				*(u32 *)(data + 0x80155AC4 - 0x80014140 + 0x2620) = 0x38E35B1C;
+				*(u32 *)(data + 0x80155AC4 - 0x80014140 + 0x2620) = 0x38E30000 | (0x80155B1C & 0xFFFF);
 				*(u32 *)(data + 0x80155AC8 - 0x80014140 + 0x2620) = 0x7FC5F378;
 				*(u32 *)(data + 0x80155ACC - 0x80014140 + 0x2620) = 0x38610008;
 				*(u32 *)(data + 0x80155AD0 - 0x80014140 + 0x2620) = 0x38C00000;
@@ -7431,10 +7472,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 			case 2303168:
 				// Fix race condition with DVD callback.
 				*(u32 *)(data + 0x801559E4 - 0x80014140 + 0x2620) = 0x38000001;
-				*(u32 *)(data + 0x801559E8 - 0x80014140 + 0x2620) = 0x3C808015;
+				*(u32 *)(data + 0x801559E8 - 0x80014140 + 0x2620) = 0x3C800000 | (0x80155AB4 + 0x8000) >> 16;
 				*(u32 *)(data + 0x801559EC - 0x80014140 + 0x2620) = 0x980D99F8;
 				*(u32 *)(data + 0x801559F0 - 0x80014140 + 0x2620) = 0x7C7D1B78;
-				*(u32 *)(data + 0x801559F4 - 0x80014140 + 0x2620) = 0x38E45AB4;
+				*(u32 *)(data + 0x801559F4 - 0x80014140 + 0x2620) = 0x38E40000 | (0x80155AB4 & 0xFFFF);
 				*(u32 *)(data + 0x801559F8 - 0x80014140 + 0x2620) = 0x7FC5F378;
 				*(u32 *)(data + 0x801559FC - 0x80014140 + 0x2620) = 0x38610008;
 				*(u32 *)(data + 0x80155A00 - 0x80014140 + 0x2620) = 0x7FA4EB78;
@@ -7442,10 +7483,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80155A08 - 0x80014140 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80155A0C - 0x80014140 + 0x2620) = branchAndLink((u32 *)0x801996B8, (u32 *)0x80155A0C);
 				*(u32 *)(data + 0x80155A4C - 0x80014140 + 0x2620) = 0x38000001;
-				*(u32 *)(data + 0x80155A50 - 0x80014140 + 0x2620) = 0x3C608015;
+				*(u32 *)(data + 0x80155A50 - 0x80014140 + 0x2620) = 0x3C600000 | (0x80155AB4 + 0x8000) >> 16;
 				*(u32 *)(data + 0x80155A54 - 0x80014140 + 0x2620) = 0x980D99F8;
 				*(u32 *)(data + 0x80155A58 - 0x80014140 + 0x2620) = 0x7F84E378;
-				*(u32 *)(data + 0x80155A5C - 0x80014140 + 0x2620) = 0x38E35AB4;
+				*(u32 *)(data + 0x80155A5C - 0x80014140 + 0x2620) = 0x38E30000 | (0x80155AB4 & 0xFFFF);
 				*(u32 *)(data + 0x80155A60 - 0x80014140 + 0x2620) = 0x7FC5F378;
 				*(u32 *)(data + 0x80155A64 - 0x80014140 + 0x2620) = 0x38610008;
 				*(u32 *)(data + 0x80155A68 - 0x80014140 + 0x2620) = 0x38C00000;
