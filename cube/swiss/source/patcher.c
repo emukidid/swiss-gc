@@ -7617,7 +7617,12 @@ int Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int da
 			case 2556736:
 				if (devices[DEVICE_CUR] != &__device_fsp) {
 					// Trap busy-wait for 60Hz periodic alarm.
+					*(u32 *)(data + 0x8000B810 - 0x80003480 + 0x480) = 0x0F800000;
+					
 					*(u32 *)(data + 0x800E14B4 - 0x80003480 + 0x480) = 0x0F800000;
+					
+					*(u32 *)(data + 0x800E4B30 - 0x80003480 + 0x480) = 0x0F800000;
+					*(u32 *)(data + 0x800E4B3C - 0x80003480 + 0x480) = 0x0CE00001;
 				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -7628,7 +7633,12 @@ int Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int da
 			case 3240352:
 				if (devices[DEVICE_CUR] != &__device_fsp) {
 					// Trap busy-wait for 60Hz periodic alarm.
+					*(u32 *)(data + 0x801E0088 - 0x800034A0 + 0x4A0) = 0x0F800000;
+					
 					*(u32 *)(data + 0x801FD784 - 0x800034A0 + 0x4A0) = 0x0F800000;
+					
+					*(u32 *)(data + 0x80200EAC - 0x800034A0 + 0x4A0) = 0x0F800000;
+					*(u32 *)(data + 0x80200EB8 - 0x800034A0 + 0x4A0) = 0x0CE00001;
 				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -7940,7 +7950,12 @@ int Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int da
 			case 3041312:
 				if (devices[DEVICE_CUR] != &__device_fsp) {
 					// Trap busy-wait for 60Hz periodic alarm.
+					*(u32 *)(data + 0x801E0740 - 0x800034A0 + 0x4A0) = 0x0F800000;
+					
 					*(u32 *)(data + 0x801FBA2C - 0x800034A0 + 0x4A0) = 0x0F800000;
+					
+					*(u32 *)(data + 0x801FEFBC - 0x800034A0 + 0x4A0) = 0x0F800000;
+					*(u32 *)(data + 0x801FEFC8 - 0x800034A0 + 0x4A0) = 0x0CE00001;
 				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -7951,6 +7966,11 @@ int Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int da
 			case 2568224:
 				if (devices[DEVICE_CUR] != &__device_fsp) {
 					// Trap busy-wait for 60Hz periodic alarm.
+					*(u32 *)(data + 0x8000BC20 - 0x80003480 + 0x480) = 0x0F800000;
+					
+					*(u32 *)(data + 0x800E1D34 - 0x80003480 + 0x480) = 0x0F800000;
+					
+					*(u32 *)(data + 0x800E5384 - 0x80003480 + 0x480) = 0x0F800000;
 					*(u32 *)(data + 0x800E5390 - 0x80003480 + 0x480) = 0x0CE00001;
 				}
 				print_gecko("Patched:[%.6s]\n", gameID);
