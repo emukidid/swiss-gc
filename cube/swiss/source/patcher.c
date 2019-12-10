@@ -3210,6 +3210,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 		u32 *EXISelectSD = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISelectSD) {
+			data[i + 17] = 0x41820078;	// beq		+30
 			data[i + 41] = 0x387B0000;	// addi		r3, r27, 0
 			data[i + 42] = 0x389C0000;	// addi		r4, r28, 0
 			data[i + 43] = 0x38BF0000;	// addi		r5, r31, 0
@@ -3235,6 +3236,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			switch (j) {
 				case 0:
 				case 1:
+					data[i + 54] = 0x41820040;	// beq		+16
 					data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
 					data[i + 65] = 0x389D0000;	// addi		r4, r29, 0
 					data[i + 66] = 0x38BE0000;	// addi		r5, r30, 0
@@ -3243,6 +3245,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 69] = 0x40820014;	// bne		+5
 					break;
 				case 2:
+					data[i + 54] = 0x41820040;	// beq		+16
 					data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
 					data[i + 65] = 0x389C0000;	// addi		r4, r28, 0
 					data[i + 66] = 0x38BD0000;	// addi		r5, r29, 0
@@ -3253,6 +3256,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				case 3:
 				case 4:
 				case 5:
+					data[i + 17] = 0x41820040;	// beq		+16
 					data[i + 27] = 0x387B0000;	// addi		r3, r27, 0
 					data[i + 28] = 0x389C0000;	// addi		r4, r28, 0
 					data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
@@ -3261,6 +3265,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 					data[i + 32] = 0x40820014;	// bne		+5
 					break;
 				case 6:
+					data[i + 17] = 0x41820040;	// beq		+16
 					data[i + 27] = 0x387E0000;	// addi		r3, r30, 0
 					data[i + 28] = 0x389B0000;	// addi		r4, r27, 0
 					data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0

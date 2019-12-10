@@ -135,8 +135,6 @@ bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 {
 	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
 		return false;
-	if (chan == *(uint8_t *)VAR_EXI_SLOT && dev == EXI_DEVICE_0)
-		return false;
 	return true;
 }
 
