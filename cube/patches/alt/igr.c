@@ -13,12 +13,10 @@ void check_pad(int32_t chan, PADStatus *status)
 	uint32_t igr_exit_flag = *(uint32_t *)VAR_IGR_EXIT_FLAG;
 
 	status->button &= ~PAD_USE_ORIGIN;
-	if ((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT) {
+	if ((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT)
 		igr_exit_flag |= (1 << chan);
-	} else {
-		if (igr_exit_flag & (1 << chan)) (*DI_EMU)[1] |= 0b001;
-		igr_exit_flag &= ~(1 << chan);
-	}
+	else if (igr_exit_flag & (1 << chan))
+		igr_exit_flag <<= 4;
 
 	*(uint32_t *)VAR_IGR_EXIT_FLAG = igr_exit_flag;
 }

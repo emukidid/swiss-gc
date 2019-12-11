@@ -117,7 +117,9 @@ static void pi_read(unsigned index, uint32_t *value)
 {
 	switch (index) {
 		case 0:
-			*value = PI[index] & ~(!!*(uint32_t *)VAR_IGR_EXIT_FLAG << 16);
+			if (*(uint32_t *)VAR_IGR_EXIT_FLAG & 0xF0)
+				(*DI_EMU)[1] |= 0b001;
+			*value = PI[index] & ~(!!(*(uint32_t *)VAR_IGR_EXIT_FLAG & 0x0F) << 16);
 			break;
 		default:
 			*value = PI[index];

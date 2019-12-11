@@ -9078,7 +9078,8 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 						break;
 					case 4:
 						if (findx_pattern (data, dataType, i +   7, length, &UpdateOriginSigs[4]) &&
-							findx_patterns(data, dataType, i +  16, length, &SIGetResponseSigs[3],
+							findx_patterns(data, dataType, i +  16, length, &SIGetResponseSigs[1],
+							                                                &SIGetResponseSigs[3],
 							                                                &SIGetResponseSigs[4], NULL))
 							PADOriginCallbackSigs[j].offsetFoundAt = i;
 						break;
@@ -9258,12 +9259,14 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 							PADReadSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
-						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  24, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 117, length, &SIGetResponseSigs[4]) &&
-							findx_pattern(data, dataType, i + 157, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 172, length, &SIGetResponseSigs[4]) &&
-							findx_pattern(data, dataType, i + 228, length, &OSRestoreInterruptsSig))
+						if (findx_pattern (data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
+							findx_pattern (data, dataType, i +  24, length, &OSDisableInterruptsSig) &&
+							findx_patterns(data, dataType, i + 117, length, &SIGetResponseSigs[1],
+							                                                &SIGetResponseSigs[4], NULL) &&
+							findx_pattern (data, dataType, i + 157, length, &OSRestoreInterruptsSig) &&
+							findx_patterns(data, dataType, i + 172, length, &SIGetResponseSigs[1],
+							                                                &SIGetResponseSigs[4], NULL) &&
+							findx_pattern (data, dataType, i + 228, length, &OSRestoreInterruptsSig))
 							PADReadSigs[j].offsetFoundAt = i;
 						break;
 					case 7:
