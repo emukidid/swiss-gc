@@ -144,19 +144,6 @@ int install_code(int final)
 	u32 location = LO_RESERVE;
 	u8 *patch = NULL; u32 patchSize = 0;
 	
-	// Pokemon XD / Colosseum tiny stub for memset testing
-	if(!strncmp((char*)0x80000000, "GC6", 3)) 
-	{
-		print_gecko("Patch:[Pokemon memset] applied\r\n");
-		// patch in test < 0x3000 function at an empty spot in RAM
-		*(vu32*)0x80000088 = 0x3CC08000;
-		*(vu32*)0x8000008C = 0x60C63000;
-		*(vu32*)0x80000090 = 0x7C033000;
-		*(vu32*)0x80000094 = 0x41800008;
-		*(vu32*)0x80000098 = 0x480053A5;
-		*(vu32*)0x8000009C = 0x48005388;
-	}
-	
 	// IDE-EXI
   	if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b) {	
 		if(swissSettings.alternateReadPatches) {
@@ -7297,14 +7284,59 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 			}
 		}
 	}
-	else if(!strncmp(gameID, "GC6", 3) && dataType == PATCH_DOL)
-	{
-		print_gecko("Patched:[Pokemon memset]\r\n");
-		// patch memset to jump to test function
-		*(vu32*)(data+0x2420) = 0x4BFFAC68;
-		patched=1;
-	}
-	else if (!strncmp(gameID, "GFZE01", 6) && dataType == PATCH_DOL) {
+	else if (!strncmp(gameID, "GC6E01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3779808:
+				// Strip anti-debugging code.
+				*(u32 *)(data + 0x80005614 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				*(u32 *)(data + 0x80005C24 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				*(u32 *)(data + 0x80005D2C - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005D50 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				*(u32 *)(data + 0x80036598 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				*(u32 *)(data + 0x80036688 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				*(u32 *)(data + 0x80036740 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GC6J01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3699680:
+				// Strip anti-debugging code.
+				*(u32 *)(data + 0x80005CA4 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GC6P01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4096576:
+				// Strip anti-debugging code.
+				*(u32 *)(data + 0x80005614 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				*(u32 *)(data + 0x80005D1C - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				*(u32 *)(data + 0x80005E24 - 0x800055E0 + 0x25E0) = 0x60000000;
+				*(u32 *)(data + 0x80005E48 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				*(u32 *)(data + 0x800387E4 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				*(u32 *)(data + 0x800388D4 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				*(u32 *)(data + 0x8003898C - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GFZE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1414848:
 				// Skip exception stubbing.
@@ -7690,6 +7722,13 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
+			case 3771872:
+				// Strip anti-debugging code.
+				*(u32 *)(data + 0x80005DD0 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
 		}
 	} else if (!strncmp(gameID, "PCSJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
@@ -7706,6 +7745,13 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(s16 *)(data + 0x800076E2 - 0x80005C80 + 0x2600) = 0x01C1;
 				*(s16 *)(data + 0x8000783E - 0x80005C80 + 0x2600) = 0x01C1;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 3771872:
+				// Strip anti-debugging code.
+				*(u32 *)(data + 0x80005DD0 - 0x800055E0 + 0x25E0) = 0x60000000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
