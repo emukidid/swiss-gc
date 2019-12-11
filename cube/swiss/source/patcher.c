@@ -145,7 +145,7 @@ int install_code(int final)
 	u8 *patch = NULL; u32 patchSize = 0;
 	
 	// Pokemon XD / Colosseum tiny stub for memset testing
-	if(!strncmp((char*)0x80000000, "GXX", 3) || !strncmp((char*)0x80000000, "GC6", 3)) 
+	if(!strncmp((char*)0x80000000, "GC6", 3)) 
 	{
 		print_gecko("Patch:[Pokemon memset] applied\r\n");
 		// patch in test < 0x3000 function at an empty spot in RAM
@@ -7297,7 +7297,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 			}
 		}
 	}
-	else if((!strncmp(gameID, "GXX", 3) || !strncmp(gameID, "GC6", 3)) && dataType == PATCH_DOL)
+	else if(!strncmp(gameID, "GC6", 3) && dataType == PATCH_DOL)
 	{
 		print_gecko("Patched:[Pokemon memset]\r\n");
 		// patch memset to jump to test function
@@ -7497,6 +7497,69 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80155A68 - 0x80014140 + 0x2620) = 0x38C00000;
 				*(u32 *)(data + 0x80155A6C - 0x80014140 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80155A70 - 0x80014140 + 0x2620) = branchAndLink((u32 *)0x801996B8, (u32 *)0x80155A70);
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GXXE01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4333056:
+				// Strip anti-debugging code.
+				*(u32 *)(data + 0x8000F614 - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x8005C8AC - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x8005C960 - 0x800056A0 + 0x2600) = 0x60000000;
+				*(u32 *)(data + 0x8005C984 - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x80086930 - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x80086A34 - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x800875BC - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GXXJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4191264:
+				// Strip anti-debugging code.
+				*(u32 *)(data + 0x8000F50C - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x8005AF90 - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x8005AFF8 - 0x800056A0 + 0x2600) = 0x60000000;
+				*(u32 *)(data + 0x8005B01C - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x800842F8 - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x800843FC - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x80084E70 - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GXXP01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4573216:
+				// Strip anti-debugging code.
+				*(u32 *)(data + 0x8000F11C - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x8005CC60 - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x8005CD14 - 0x800056A0 + 0x2600) = 0x60000000;
+				*(u32 *)(data + 0x8005CD38 - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x80087AD4 - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x80087BD8 - 0x800056A0 + 0x2600) = 0x60000000;
+				
+				*(u32 *)(data + 0x80088574 - 0x800056A0 + 0x2600) = 0x60000000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
