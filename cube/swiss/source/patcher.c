@@ -7414,6 +7414,51 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 		}
+	} else if (!strncmp(gameID, "GPXE01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 2065728:
+				// Move structures from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x80005B56 - 0x800056C0 + 0x2600) = (0x8023D3E0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x80005B5A - 0x800056C0 + 0x2600) = (0x8023D3E0 & 0xFFFF);
+				*(s16 *)(data + 0x80005B72 - 0x800056C0 + 0x2600) = (0x8023E1E0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x80005B76 - 0x800056C0 + 0x2600) = (0x8023E1E0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x80127F06 - 0x800056C0 + 0x2600) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GPXJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1940480:
+				// Move structures from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x80005B56 - 0x800056C0 + 0x2600) = (0x8021C1E0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x80005B5A - 0x800056C0 + 0x2600) = (0x8021C1E0 & 0xFFFF);
+				*(s16 *)(data + 0x80005B72 - 0x800056C0 + 0x2600) = (0x8021CFE0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x80005B76 - 0x800056C0 + 0x2600) = (0x8021CFE0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x8012501A - 0x800056C0 + 0x2600) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GPXP01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 2076160:
+				// Move structures from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x80005B56 - 0x800056C0 + 0x2600) = (0x8023FCA0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x80005B5A - 0x800056C0 + 0x2600) = (0x8023FCA0 & 0xFFFF);
+				*(s16 *)(data + 0x80005B72 - 0x800056C0 + 0x2600) = (0x80240AA0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x80005B76 - 0x800056C0 + 0x2600) = (0x80240AA0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x80129362 - 0x800056C0 + 0x2600) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
 	} else if (!strncmp(gameID, "GS2D78", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 2308384:
