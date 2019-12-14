@@ -95,7 +95,7 @@ bool config_set_device() {
 	DEVICEHANDLER_INTERFACE *configDevice = getDeviceByUniqueId(swissSettings.configDeviceId);
 	devices[DEVICE_CONFIG] = NULL;
 	if(configDevice != NULL) {
-		if((configDevice->features & FEAT_WRITE) && (configDevice->test())) {
+		if(configDevice->test()) {
 			deviceHandler_setDeviceAvailable(configDevice, true);
 			devices[DEVICE_CONFIG] = configDevice;
 		}

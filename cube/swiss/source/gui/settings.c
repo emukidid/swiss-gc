@@ -86,7 +86,7 @@ void refreshSRAM(SwissSettings *settings) {
 	__SYS_UnlockSram(0);
 	sramex = __SYS_LockSramEx();
 	settings->configDeviceId = sramex->__padding0;
-	if(settings->configDeviceId > DEVICE_ID_MAX || !(getDeviceByUniqueId(settings->configDeviceId)->features & FEAT_WRITE)) {
+	if(settings->configDeviceId > DEVICE_ID_MAX || (getDeviceByUniqueId(settings->configDeviceId)->features & (FEAT_WRITE|FEAT_BOOT_DEVICE)) != (FEAT_WRITE|FEAT_BOOT_DEVICE)) {
 		settings->configDeviceId = DEVICE_ID_UNK;
 	}
 	__SYS_UnlockSramEx(0);
@@ -327,7 +327,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 				// Set it to the first writable device available
 				if(swissSettings.configDeviceId == DEVICE_ID_UNK) {
 					for(int i = 0; i < MAX_DEVICES; i++) {
-						if(allDevices[i] != NULL && (allDevices[i]->features & FEAT_WRITE)) {
+						if(allDevices[i] != NULL && (allDevices[i]->features & (FEAT_WRITE|FEAT_BOOT_DEVICE)) == (FEAT_WRITE|FEAT_BOOT_DEVICE)) {
 							swissSettings.configDeviceId = allDevices[i]->deviceUniqueId;
 							return;
 						}
@@ -350,7 +350,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 						curDevicePos = curDevicePos > 0 ? curDevicePos-1 : 0;
 					}
 					// Go to next writable device
-					while((allDevices[curDevicePos] == NULL) || !(allDevices[curDevicePos]->features & FEAT_WRITE)) {
+					while((allDevices[curDevicePos] == NULL) || (allDevices[curDevicePos]->features & (FEAT_WRITE|FEAT_BOOT_DEVICE)) != (FEAT_WRITE|FEAT_BOOT_DEVICE)) {
 						curDevicePos += direction;
 						if((curDevicePos < 0) || (curDevicePos >= MAX_DEVICES)){
 							curDevicePos = direction > 0 ? 0 : MAX_DEVICES-1;
