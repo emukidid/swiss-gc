@@ -729,7 +729,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	// Patch to read from SD/HDD/USBGecko/WKF (if frag req or audio streaming)
 	if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
 		if((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches) {
-			Patch_DVDLowLevelReadAlt(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+			Patch_DVDLowLevelReadAlt(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
 			Patch_GameSpecificReadAlt(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
 		}
 		else {

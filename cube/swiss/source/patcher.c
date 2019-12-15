@@ -752,10 +752,13 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 	return patched;
 }
 
-int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
+char *DiscIDRaceHazard[] = {"GLME01", "GLMJ01", "GLMP01"};
+
+int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int dataType)
 {
 	int i, j, k;
 	int patched = 0;
+	int hasRaceHazard = 0;
 	FuncPattern PrepareExecSig = 
 		{ 60, 15, 3, 16, 13, 2, NULL, 0, "PrepareExec" };
 	FuncPattern OSExceptionInitSigs[3] = {
@@ -1213,6 +1216,13 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 	FuncPattern __VMBASEISIExceptionHandlerSig = 
 		{ 54, 6, 9, 0, 3, 27, NULL, 0, "__VMBASEISIExceptionHandler" };
 	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
+	
+	for (j = 0; j < sizeof(DiscIDRaceHazard) / sizeof(char *); j++) {
+		if (!strncmp(gameID, DiscIDRaceHazard[j], 6)) {
+			hasRaceHazard = 1;
+			break;
+		}
+	}
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (!_SDA2_BASE_ && !_SDA_BASE_) {
@@ -3033,53 +3043,67 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 				case 0:
 					data[i + 12] = branchAndLink(TRICKLE_READ, SelectThread + 12);
 					data[i + 13] = 0x480001A0;	// b		+104
-					data[i + 20] = branchAndLink(TRICKLE_READ, SelectThread + 20);
-					data[i + 21] = 0x48000180;	// b		+96
-					data[i + 48] = branchAndLink(TRICKLE_READ, SelectThread + 48);
-					data[i + 49] = 0x48000110;	// b		+68
 					data[i + 58] = branchAndLink(IDLE_THREAD, SelectThread + 58);
 					data[i + 61] = 0x4182FFF4;	// beq		-3
 					break;
 				case 1:
 					data[i + 12] = branchAndLink(TRICKLE_READ, SelectThread + 12);
 					data[i + 13] = 0x4800019C;	// b		+103
-					data[i + 20] = branchAndLink(TRICKLE_READ, SelectThread + 20);
-					data[i + 21] = 0x4800017C;	// b		+95
-					data[i + 48] = branchAndLink(TRICKLE_READ, SelectThread + 48);
-					data[i + 49] = 0x4800010C;	// b		+67
 					data[i + 57] = branchAndLink(IDLE_THREAD, SelectThread + 57);
 					data[i + 60] = 0x4182FFF4;	// beq		-3
 					break;
 				case 2:
 					data[i + 11] = branchAndLink(TRICKLE_READ, SelectThread + 11);
 					data[i + 12] = 0x480001B4;	// b		+109
-					data[i + 19] = branchAndLink(TRICKLE_READ, SelectThread + 19);
-					data[i + 20] = 0x48000194;	// b		+101
-					data[i + 67] = branchAndLink(TRICKLE_READ, SelectThread + 67);
-					data[i + 68] = 0x480000D4;	// b		+53
 					data[i + 77] = branchAndLink(IDLE_THREAD, SelectThread + 77);
 					data[i + 80] = 0x4182FFF4;	// beq		-3
 					break;
 				case 3:
 					data[i + 11] = branchAndLink(TRICKLE_READ, SelectThread + 11);
 					data[i + 12] = 0x480001DC;	// b		+119
-					data[i + 19] = branchAndLink(TRICKLE_READ, SelectThread + 19);
-					data[i + 20] = 0x480001BC;	// b		+111
-					data[i + 67] = branchAndLink(TRICKLE_READ, SelectThread + 67);
-					data[i + 68] = 0x480000FC;	// b		+63
 					data[i + 82] = branchAndLink(IDLE_THREAD, SelectThread + 82);
 					data[i + 85] = 0x4182FFF4;	// beq		-3
 					break;
 				case 4:
 					data[i +  8] = branchAndLink(TRICKLE_READ, SelectThread +  8);
 					data[i +  9] = 0x480001F8;	// b		+126
-					data[i + 15] = branchAndLink(TRICKLE_READ, SelectThread + 15);
-					data[i + 16] = 0x480001DC;	// b		+119
-					data[i + 66] = branchAndLink(TRICKLE_READ, SelectThread + 66);
-					data[i + 67] = 0x48000110;	// b		+68
 					data[i + 83] = branchAndLink(IDLE_THREAD, SelectThread + 83);
 					data[i + 86] = 0x4182FFF4;	// beq		-3
 					break;
+			}
+			if (!hasRaceHazard) {
+				switch (j) {
+					case 0:
+						data[i + 20] = branchAndLink(TRICKLE_READ, SelectThread + 20);
+						data[i + 21] = 0x48000180;	// b		+96
+						data[i + 48] = branchAndLink(TRICKLE_READ, SelectThread + 48);
+						data[i + 49] = 0x48000110;	// b		+68
+						break;
+					case 1:
+						data[i + 20] = branchAndLink(TRICKLE_READ, SelectThread + 20);
+						data[i + 21] = 0x4800017C;	// b		+95
+						data[i + 48] = branchAndLink(TRICKLE_READ, SelectThread + 48);
+						data[i + 49] = 0x4800010C;	// b		+67
+						break;
+					case 2:
+						data[i + 19] = branchAndLink(TRICKLE_READ, SelectThread + 19);
+						data[i + 20] = 0x48000194;	// b		+101
+						data[i + 67] = branchAndLink(TRICKLE_READ, SelectThread + 67);
+						data[i + 68] = 0x480000D4;	// b		+53
+						break;
+					case 3:
+						data[i + 19] = branchAndLink(TRICKLE_READ, SelectThread + 19);
+						data[i + 20] = 0x480001BC;	// b		+111
+						data[i + 67] = branchAndLink(TRICKLE_READ, SelectThread + 67);
+						data[i + 68] = 0x480000FC;	// b		+63
+						break;
+					case 4:
+						data[i + 15] = branchAndLink(TRICKLE_READ, SelectThread + 15);
+						data[i + 16] = 0x480001DC;	// b		+119
+						data[i + 66] = branchAndLink(TRICKLE_READ, SelectThread + 66);
+						data[i + 67] = 0x48000110;	// b		+68
+						break;
+				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", SelectThreadSigs[j].Name, SelectThread);
 			patched++;
@@ -3089,16 +3113,17 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, int dataType)
 			u32 *__OSReschedule = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			
 			if (__OSReschedule && SelectThread) {
-				data[i + 0] = data[i + 3];
-				data[i + 1] = data[i + 4];
-				data[i + 2] = data[i + 5];
-				data[i + 3] = data[i + 6];
-				data[i + 4] = branch(SelectThread, __OSReschedule + 4);
-				data[i + 5] = branch(TRICKLE_READ, __OSReschedule + 5);
-				
-				for (k = 6; k < __OSRescheduleSig.Length; k++)
-					data[i + k] = 0;
-				
+				if (!hasRaceHazard) {
+					data[i + 0] = data[i + 3];
+					data[i + 1] = data[i + 4];
+					data[i + 2] = data[i + 5];
+					data[i + 3] = data[i + 6];
+					data[i + 4] = branch(SelectThread, __OSReschedule + 4);
+					data[i + 5] = branch(TRICKLE_READ, __OSReschedule + 5);
+					
+					for (k = 6; k < __OSRescheduleSig.Length; k++)
+						data[i + k] = 0;
+				}
 				print_gecko("Found:[%s] @ %08X\n", __OSRescheduleSig.Name, __OSReschedule);
 				patched++;
 			}
