@@ -655,13 +655,6 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	if(*(vu32*)VAR_EXECD_OFFSET != 0 && *(vu32*)VAR_EXECD_OFFSET != -1) {
 		top_of_main_ram = EXECD_RUNNER;
 	}
-	if((*(u32*)0x80000000 == 0x47504F45) 
-		&& (*(u32*)0x80000004 == 0x38500002) 
-		&& (*(u32*)0x80000008 == 0x01000000)) {
-		// Nasty PSO 1 & 2+ hack to redirect a lowmem buffer to highmem
-		top_of_main_ram = 0x817F1800;
-		print_gecko("PSO 1 & 2+ hack enabled\r\n");
-	}
 
 	print_gecko("Top of RAM simulated as: 0x%08X\r\n", top_of_main_ram);
 	

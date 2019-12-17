@@ -630,57 +630,6 @@ int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType )
 	return LowMemPatched;
 }
 
-// HACK: PSO 0x80001800 move to 0x817F1800
-u32 PatchPatchBuffer(char *dst)
-{
-	int i;
-	int patched = 0;
-	u32 LISReg = -1;
-	u32 LISOff = -1;
-
-	for (i = 0;; i += 4)
-	{
-		u32 op = *(vu32*)(dst + i);
-
-		if ((op & 0xFC1FFFFF) == 0x3C008000)	// lis rX, 0x8000
-		{
-			LISReg = (op & 0x3E00000) >> 21;
-			LISOff = (u32)dst + i;
-		}
-
-		if ((op & 0xFC000000) == 0x38000000)	// li rX, x
-		{
-			u32 src = (op >> 16) & 0x1F;
-			u32 dst = (op >> 21) & 0x1F;
-			if ((src != LISReg) && (dst == LISReg))
-			{
-				LISReg = -1;
-				LISOff = (u32)dst + i;
-			}
-		}
-
-		if ((op & 0xFC00FFFF) == 0x38001800) // addi rX, rY, 0x1800 (patch buffer)
-		{
-			u32 src = (op >> 16) & 0x1F;
-			if (src == LISReg)
-			{
-				*(vu32*)(LISOff) = (LISReg << 21) | 0x3C00817F;
-				print_gecko("Patch:[%08X] %08X: lis r%u, 0x817F\r\n", (u32)LISOff, *(u32*)LISOff, LISReg );
-				LISReg = -1;
-				patched++;
-			}
-			u32 dst = (op >> 21) & 0x1F;
-			if (dst == LISReg)
-				LISReg = -1;
-		}
-		if (op == 0x4E800020)	// blr
-			break;
-	}
-	return patched;
-}
-
-
-
 u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 	int i = 0;
 	int patched = 0;
@@ -7291,25 +7240,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 			}
 			addr_start += 4;
 		}
-	}
-	else if((*(u32*)&gameID[0] == 0x47504F45) 
-		&& (*(u32*)&gameID[4] == 0x38500002) 
-		&& (*(u32*)&gameID[8] == 0x01000000)) {
-		// Nasty PSO 1 & 2+ hack to redirect a lowmem buffer to highmem 
-		void *addr_start = data;
-		void *addr_end = data+length;
-		while(addr_start<addr_end) 
-		{
-			addr_start += 4;
-			if( *(vu32*)(addr_start) != 0x7C0802A6 )
-				continue;
-			if(PatchPatchBuffer(addr_start)) {
-				print_gecko("Patched: PSO 1 & 2 +\r\n");
-				patched=1;
-			}
-		}
-	}
-	else if (!strncmp(gameID, "GC6E01", 6) && dataType == PATCH_DOL) {
+	} else if (!strncmp(gameID, "GC6E01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3779808:
 				// Strip anti-debugging code.
@@ -7434,6 +7365,84 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80005638 - 0x800055E0 + 0x25E0) = 0x60000000;
 				*(u32 *)(data + 0x8000563C - 0x800055E0 + 0x25E0) = 0x60000000;
 				*(u32 *)(data + 0x80005640 - 0x800055E0 + 0x25E0) = 0x38000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GPOE8P", 6) && (dataType == PATCH_DOL || dataType == PATCH_DOL_PRS)) {
+		switch (length) {
+			case 204480:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x806C7A76 - 0x806C7500 + 0x2600) = (0x8070DAC0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7A82 - 0x806C7500 + 0x2600) = (0x8070DAC0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x806C7E2A - 0x806C7500 + 0x2600) = (0x8070DAC0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7E32 - 0x806C7500 + 0x2600) = (0x8070DAC0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x806C84B2 - 0x806C7500 + 0x2600) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 213952:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x8000F2BE - 0x8000E780 + 0x2620) = (0x80057100 + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F2C6 - 0x8000E780 + 0x2620) = (0x80057100 & 0xFFFF);
+				
+				*(s16 *)(data + 0x8000F566 - 0x8000E780 + 0x2620) = (0x80057100 + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F56E - 0x8000E780 + 0x2620) = (0x80057100 & 0xFFFF);
+				
+				*(s16 *)(data + 0x8000FDAA - 0x8000E780 + 0x2620) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 5233088:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x8036F5C6 - 0x8000F740 + 0x2620) = (0x805F1240 + 0x8000) >> 16;
+				*(s16 *)(data + 0x8036F5CE - 0x8000F740 + 0x2620) = (0x805F1240 & 0xFFFF);
+				
+				*(s16 *)(data + 0x8036FCF2 - 0x8000F740 + 0x2620) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GPOJ8P", 6) && (dataType == PATCH_DOL || dataType == PATCH_DOL_PRS)) {
+		switch (length) {
+			case 211360:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x806C7B36 - 0x806C75C0 + 0x26C0) = (0x8070F680 + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7B42 - 0x806C75C0 + 0x26C0) = (0x8070F680 & 0xFFFF);
+				
+				*(s16 *)(data + 0x806C7EEA - 0x806C75C0 + 0x26C0) = (0x8070F680 + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7EF2 - 0x806C75C0 + 0x26C0) = (0x8070F680 & 0xFFFF);
+				
+				*(s16 *)(data + 0x806C8742 - 0x806C75C0 + 0x26C0) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 214880:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x8000F2BE - 0x8000E780 + 0x2620) = (0x800574A0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F2C6 - 0x8000E780 + 0x2620) = (0x800574A0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x8000F566 - 0x8000E780 + 0x2620) = (0x800574A0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F56E - 0x8000E780 + 0x2620) = (0x800574A0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x8000FDAA - 0x8000E780 + 0x2620) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 5234880:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x8036F1FA - 0x8000F740 + 0x2620) = (0x805F1940 + 0x8000) >> 16;
+				*(s16 *)(data + 0x8036F202 - 0x8000F740 + 0x2620) = (0x805F1940 & 0xFFFF);
+				
+				*(s16 *)(data + 0x8036F926 - 0x8000F740 + 0x2620) = 0x181F;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
