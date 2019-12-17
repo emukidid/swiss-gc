@@ -67,8 +67,6 @@ SOURCES		:=  source \
 			  source/devices/usbgecko \
               source/devices/wode \
 			  source/devices/wiikeyfusion \
-              source/elmchan \
-              source/elmchan/option \
               source/cheats \
               source/patches \
 			  source/patches/card \
@@ -77,6 +75,7 @@ SOURCES		:=  source \
 			  source/patches/gx \
 			  source/patches/mtx \
 			  source/patches/vi \
+			  source/psoarchive \
               source/images \
 			  source/images/buttons \
 			  source/fatfs

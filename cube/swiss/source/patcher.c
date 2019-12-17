@@ -9813,7 +9813,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 }
 
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
-	if(dataType == PATCH_DOL) {
+	if(dataType == PATCH_DOL || dataType == PATCH_DOL_PRS) {
 		int i;
 		DOLHEADER *hdr = (DOLHEADER *) data;
 
@@ -9882,7 +9882,7 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 }
 
 void *Calc_Address(void *data, int dataType, u32 properAddress) {
-	if(dataType == PATCH_DOL) {
+	if(dataType == PATCH_DOL || dataType == PATCH_DOL_PRS) {
 		int i;
 		DOLHEADER *hdr = (DOLHEADER *) data;
 

@@ -15,6 +15,7 @@
 #include "patcher.h"
 #include "sidestep.h"
 #include "crc32/crc32.h"
+#include "psoarchive/PRS.h"
 #include "devices/deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
@@ -116,7 +117,7 @@ void parse_gcm_add(file_handle *file, ExecutableFile *filesToPatch, u32 *numToPa
 	if(file_offset != 0 && file_size != 0) {
 		filesToPatch[*numToPatch].offset = file_offset;
 		filesToPatch[*numToPatch].size = file_size;
-		filesToPatch[*numToPatch].type = PATCH_OTHER;
+		filesToPatch[*numToPatch].type = endsWith(fileName,".prs") ? PATCH_OTHER_PRS:PATCH_OTHER;
 		memcpy(&filesToPatch[*numToPatch].name,fileName,64); 
 		*numToPatch += 1;
 	}
@@ -156,6 +157,13 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL;
+				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
+				numFiles++;
+			}
+			if(strstr(filename,"switcher.prs")) {
+				filesToPatch[numFiles].offset = file_offset;
+				filesToPatch[numFiles].size = size;
+				filesToPatch[numFiles].type = PATCH_DOL_PRS;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
@@ -411,9 +419,20 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			return 0;
 		}
 		
+		if(filesToPatch[i].type == PATCH_DOL_PRS || filesToPatch[i].type == PATCH_OTHER_PRS) {
+			sizeToRead = pso_prs_decompress_buf(buffer, &buffer, sizeToRead);
+			if(sizeToRead < 0) {
+				DrawDispose(progBox);
+				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to decompress!"));
+				sleep(5);
+				DrawDispose(msgBox);
+				return 0;
+			}
+		}
+		
 		// Patch raw files for certain games
-		if(filesToPatch[i].type == PATCH_OTHER) {
-			patched += Patch_GameSpecificFile(buffer, sizeToRead, &gameID[0], filesToPatch[i].name);
+		if(filesToPatch[i].type == PATCH_OTHER || filesToPatch[i].type == PATCH_OTHER_PRS) {
+			patched += Patch_GameSpecificFile(buffer, sizeToRead, gameID, filesToPatch[i].name);
 		}
 		else { 
 			// Patch executable files
@@ -476,6 +495,18 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch, i
 			if(swissSettings.forceAnisotropy)
 				Patch_TexFilt(buffer, sizeToRead, filesToPatch[i].type);
 		}
+		
+		if(filesToPatch[i].type == PATCH_DOL_PRS || filesToPatch[i].type == PATCH_OTHER_PRS) {
+			sizeToRead = pso_prs_compress(buffer, &buffer, sizeToRead);
+			if(sizeToRead < 0 || sizeToRead > filesToPatch[i].size) {
+				DrawDispose(progBox);
+				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to recompress!"));
+				sleep(5);
+				DrawDispose(msgBox);
+				return 0;
+			}
+		}
+		
 		if(patched) {
 			if(!patchDeviceReady) {
 				deviceHandler_setStatEnabled(0);
