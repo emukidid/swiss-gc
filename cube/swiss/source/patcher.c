@@ -7448,6 +7448,132 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 		}
+	} else if (!strncmp(gameID, "GPSE8P", 6) && (dataType == PATCH_DOL || dataType == PATCH_DOL_PRS)) {
+		switch (length) {
+			case 211648:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x806C7C92 - 0x806C75C0 + 0x26C0) = (0x8070F6E0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7C9E - 0x806C75C0 + 0x26C0) = (0x8070F6E0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x806C805E - 0x806C75C0 + 0x26C0) = (0x8070F6E0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C8066 - 0x806C75C0 + 0x26C0) = (0x8070F6E0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x806C88B6 - 0x806C75C0 + 0x26C0) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 220800:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x8000F35E - 0x8000E820 + 0x26C0) = (0x80058BE0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F366 - 0x8000E820 + 0x26C0) = (0x80058BE0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x8000F742 - 0x8000E820 + 0x26C0) = (0x80058BE0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F74A - 0x8000E820 + 0x26C0) = (0x80058BE0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x80010156 - 0x8000E820 + 0x26C0) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 4785536:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x800590F6 - 0x8000E680 + 0x26C0) = (0x100B2650 + 0x8000) >> 16;
+				*(s16 *)(data + 0x800590FE - 0x8000E680 + 0x26C0) = (0x100B2650 & 0xFFFF);
+				
+				*(s16 *)(data + 0x80315B92 - 0x8000E680 + 0x26C0) = (0x80593280 + 0x8000) >> 16;
+				*(s16 *)(data + 0x80315B9A - 0x8000E680 + 0x26C0) = (0x80593280 & 0xFFFF);
+				
+				*(s16 *)(data + 0x80316BAE - 0x8000E680 + 0x26C0) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GPSJ8P", 6) && (dataType == PATCH_DOL || dataType == PATCH_DOL_PRS)) {
+		switch (length) {
+			case 212928:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x806C7B36 - 0x806C75C0 + 0x26C0) = (0x8070FBE0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7B42 - 0x806C75C0 + 0x26C0) = (0x8070FBE0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x806C7EEA - 0x806C75C0 + 0x26C0) = (0x8070FBE0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7EF2 - 0x806C75C0 + 0x26C0) = (0x8070FBE0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x806C8742 - 0x806C75C0 + 0x26C0) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 222048:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x8000F35E - 0x8000E820 + 0x26C0) = (0x800590C0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F366 - 0x8000E820 + 0x26C0) = (0x800590C0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x8000F606 - 0x8000E820 + 0x26C0) = (0x800590C0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F60E - 0x8000E820 + 0x26C0) = (0x800590C0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x8001001A - 0x8000E820 + 0x26C0) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 4781856:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x800591A2 - 0x8000E680 + 0x26C0) = (0x100B2484 + 0x8000) >> 16;
+				*(s16 *)(data + 0x800591AA - 0x8000E680 + 0x26C0) = (0x100B2484 & 0xFFFF);
+				
+				*(s16 *)(data + 0x80314B3A - 0x8000E680 + 0x26C0) = (0x80592420 + 0x8000) >> 16;
+				*(s16 *)(data + 0x80314B42 - 0x8000E680 + 0x26C0) = (0x80592420 & 0xFFFF);
+				
+				*(s16 *)(data + 0x80315B56 - 0x8000E680 + 0x26C0) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GPSP8P", 6) && (dataType == PATCH_DOL || dataType == PATCH_DOL_PRS)) {
+		switch (length) {
+			case 212000:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x806C7C92 - 0x806C75C0 + 0x26C0) = (0x8070F840 + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7C9E - 0x806C75C0 + 0x26C0) = (0x8070F840 & 0xFFFF);
+				
+				*(s16 *)(data + 0x806C805E - 0x806C75C0 + 0x26C0) = (0x8070F840 + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C8066 - 0x806C75C0 + 0x26C0) = (0x8070F840 & 0xFFFF);
+				
+				*(s16 *)(data + 0x806C88B6 - 0x806C75C0 + 0x26C0) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 221152:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x8000F35E - 0x8000E820 + 0x26C0) = (0x80058D40 + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F366 - 0x8000E820 + 0x26C0) = (0x80058D40 & 0xFFFF);
+				
+				*(s16 *)(data + 0x8000F742 - 0x8000E820 + 0x26C0) = (0x80058D40 + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F74A - 0x8000E820 + 0x26C0) = (0x80058D40 & 0xFFFF);
+				
+				*(s16 *)(data + 0x80010156 - 0x8000E820 + 0x26C0) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 4794720:
+				// Move buffer from 0x80001800 to low arena boundary.
+				*(s16 *)(data + 0x8005925E - 0x8000E680 + 0x26C0) = (0x100B2AD8 + 0x8000) >> 16;
+				*(s16 *)(data + 0x80059266 - 0x8000E680 + 0x26C0) = (0x100B2AD8 & 0xFFFF);
+				
+				*(s16 *)(data + 0x803167F2 - 0x8000E680 + 0x26C0) = (0x805956C0 + 0x8000) >> 16;
+				*(s16 *)(data + 0x803167FA - 0x8000E680 + 0x26C0) = (0x805956C0 & 0xFFFF);
+				
+				*(s16 *)(data + 0x8031780E - 0x8000E680 + 0x26C0) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
 	} else if (!strncmp(gameID, "GPXE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 2065728:
