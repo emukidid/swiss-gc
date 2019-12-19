@@ -202,12 +202,13 @@ enum patchIds {
 #define READ_PATCHED_ALL 		(0x111)
 
 /* Types of files we may patch */
-#define PATCH_DOL		0
-#define PATCH_DOL_PRS	1
-#define PATCH_ELF		2
-#define PATCH_LOADER	3
-#define PATCH_OTHER		4
-#define PATCH_OTHER_PRS	5
+#define PATCH_APPLOADER		0
+#define PATCH_DOL			1
+#define PATCH_DOL_APPLOADER	2
+#define PATCH_DOL_PRS		3
+#define PATCH_ELF			4
+#define PATCH_OTHER			5
+#define PATCH_OTHER_PRS		6
 
 /* The device patches for a particular game were written to */
 // -1 no device, 0 slot a, 1 slot b.

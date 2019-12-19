@@ -9948,7 +9948,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 }
 
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
-	if(dataType == PATCH_DOL || dataType == PATCH_DOL_PRS) {
+	if(dataType == PATCH_DOL || dataType == PATCH_DOL_APPLOADER || dataType == PATCH_DOL_PRS) {
 		int i;
 		DOLHEADER *hdr = (DOLHEADER *) data;
 
@@ -10009,7 +10009,7 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 			}
 		}	
 	}
-	else if(dataType == PATCH_LOADER) {
+	else if(dataType == PATCH_APPLOADER) {
 		return (void*)(offsetFoundAt+0x81300000);
 	}
 	print_gecko("No cases matched, returning NULL for proper address\r\n");
@@ -10017,7 +10017,7 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 }
 
 void *Calc_Address(void *data, int dataType, u32 properAddress) {
-	if(dataType == PATCH_DOL || dataType == PATCH_DOL_PRS) {
+	if(dataType == PATCH_DOL || dataType == PATCH_DOL_APPLOADER || dataType == PATCH_DOL_PRS) {
 		int i;
 		DOLHEADER *hdr = (DOLHEADER *) data;
 
@@ -10078,7 +10078,7 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 			}
 		}	
 	}
-	else if(dataType == PATCH_LOADER) {
+	else if(dataType == PATCH_APPLOADER) {
 		return data+properAddress-0x81300000;
 	}
 	print_gecko("No cases matched, returning NULL for address\r\n");

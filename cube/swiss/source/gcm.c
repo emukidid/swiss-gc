@@ -177,7 +177,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 			if(strstr(filename,"execD.img")) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
-				filesToPatch[numFiles].type = PATCH_LOADER;
+				filesToPatch[numFiles].type = PATCH_APPLOADER;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
@@ -229,7 +229,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		}
 		filesToPatch[numFiles].size = appldr_info[6];
 		filesToPatch[numFiles].offset = appldr_info[5] + 0x2460;
-		filesToPatch[numFiles].type = appldr_info[0] == 0x32303034 ? PATCH_DOL:PATCH_LOADER;
+		filesToPatch[numFiles].type = appldr_info[0] == 0x32303034 ? PATCH_DOL_APPLOADER:PATCH_APPLOADER;
 		sprintf(filesToPatch[numFiles].name, "Apploader Trailer");
 		numFiles++;
 	}
@@ -330,7 +330,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 			if(strstr(filename,"execD.img")) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
-				filesToPatch[numFiles].type = PATCH_LOADER;
+				filesToPatch[numFiles].type = PATCH_APPLOADER;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
