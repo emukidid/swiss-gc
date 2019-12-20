@@ -20,7 +20,7 @@
 #include "ata.h"
 #include "cheats.h"
 
-static u32 top_addr = VAR_PATCHES_BASE;
+static u32 top_addr = (u32)VAR_PATCHES_BASE;
 
 // Read
 FuncPattern ReadDebug = {56, 23, 18, 3, 2, 4, 0, 0, "Read (Debug)", 0};
@@ -464,7 +464,7 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 			u32 dstR = (op >> 21) & 0x1F;
 			if(regs[dstR][REG_USED]) {
 				u32 lisOffset = regs[dstR][REG_OFFSET];
-				*(vu32*)lisOffset = (((*(vu32*)lisOffset) & 0xFFFF0000) | (VAR_DI_REGS>>16));
+				*(vu32*)lisOffset = (((*(vu32*)lisOffset) & 0xFFFF0000) | ((u32)VAR_DI_REGS>>16));
 				//void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(lisOffset)-(u32)(dst));
 				//print_gecko("DI:[%08X] %08X: lis r%u, %04X\r\n", properAddress, *(vu32*)regs[dstR][REG_OFFSET], dstR, (*(vu32*)lisOffset) &0xFFFF);
 				DIPatched++;
@@ -481,7 +481,7 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 			if (regs[dstR][REG_0xCC00]) {
 				if(regs[dstR][REG_USED]) {
 					u32 lisOffset = regs[dstR][REG_OFFSET];
-					*(vu32*)lisOffset = (((*(vu32*)lisOffset) & 0xFFFF0000) | (VAR_DI_REGS>>16));
+					*(vu32*)lisOffset = (((*(vu32*)lisOffset) & 0xFFFF0000) | ((u32)VAR_DI_REGS>>16));
 					//void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(lisOffset)-(u32)(dst));
 					//print_gecko("DI:[%08X] %08X: lis r%u, %04X\r\n", properAddress, *(vu32*)regs[dstR][REG_OFFSET], dstR, (*(vu32*)lisOffset) &0xFFFF);
 					DIPatched++;
@@ -508,7 +508,7 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 				
 				// else just patch.
 				if( (op & 0xFC00FF00) == 0x38006000 ) {
-					*(vu32*)(dst + i) = op - (0x6000 - (VAR_DI_REGS&0xFFFF));
+					*(vu32*)(dst + i) = op - (0x6000 - ((u32)VAR_DI_REGS&0xFFFF));
 					//void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
 					//print_gecko("DI:[%08X] %08X: addi r%u, %04X\r\n", properAddress, *(vu32*)(dst + i), src, *(vu32*)(dst + i) &0xFFFF);
 					regs[src][REG_USED]=1;	// was used in a 0xCC006000 addi
@@ -523,7 +523,7 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 			u32 src = (op >> 16) & 0x1F;
 			if( regs[src][REG_0xCC00] )		// The source register is 0xCC00, patch this ori
 			{
-				*(vu32*)(dst + i) -= (0x6000 - (VAR_DI_REGS&0xFFFF));
+				*(vu32*)(dst + i) -= (0x6000 - ((u32)VAR_DI_REGS&0xFFFF));
 				//void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
 				//print_gecko("DI:[%08X] %08X: ori r%u, %04X\r\n", properAddress, *(vu32*)(dst + i), src, *(vu32*)(dst + i) &0xFFFF);
 				regs[src][REG_USED]=1;	// was used in a 0xCC006000 ori
@@ -540,7 +540,7 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 
 			if( regs[src][REG_0xCC00] && ((val & 0xFF00) == 0x6000)) // case with 0x60XY(rZ) (di)
 			{
-				*(vu32*)(dst + i) -= (0x6000 - (VAR_DI_REGS&0xFFFF));
+				*(vu32*)(dst + i) -= (0x6000 - ((u32)VAR_DI_REGS&0xFFFF));
 				//void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
 				//print_gecko("DI:[%08X] %08X: mem r%u, %04X\r\n", properAddress, *(vu32*)(dst + i), src, *(vu32*)(dst + i) &0xFFFF);
 				regs[src][REG_USED]=1;	// was used in a 0xCC006000 load/store
@@ -554,7 +554,7 @@ void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
 			for (x = 0; x < 32; x++) {
 				if(regs[x][REG_0xCC00] && regs[x][REG_USED]) {
 					u32 lisOffset = regs[x][REG_OFFSET];
-					*(vu32*)lisOffset = (((*(vu32*)lisOffset) & 0xFFFF0000) | (VAR_DI_REGS>>16));
+					*(vu32*)lisOffset = (((*(vu32*)lisOffset) & 0xFFFF0000) | ((u32)VAR_DI_REGS>>16));
 					//void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(lisOffset)-(u32)(dst));
 					//print_gecko("DI:[%08X] %08X: lis r%u, %04X\r\n", properAddress, *(vu32*)regs[x][REG_OFFSET], x, (*(vu32*)lisOffset) &0xFFFF);
 					DIPatched++;
@@ -4950,9 +4950,9 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	}
 	
 	if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 10)
-		memcpy((u8 *)VAR_VFILTER, vertical_reduction[swissSettings.forceVFilter], 7);
+		memcpy(VAR_VFILTER, vertical_reduction[swissSettings.forceVFilter], 7);
 	else
-		memcpy((u8 *)VAR_VFILTER, vertical_filters[swissSettings.forceVFilter], 7);
+		memcpy(VAR_VFILTER, vertical_filters[swissSettings.forceVFilter], 7);
 	
 	*(u8 *)VAR_VFILTER_ON = !!swissSettings.forceVFilter;
 	
@@ -5584,15 +5584,15 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i +  4] = branchAndLink(getCurrentFieldEvenOdd, VISetRegs + 4);
 							data[i +  5] = 0x2C030000;	// cmpwi	r3, 0
 							data[i +  6] = 0x54630FFE;	// srwi		r3, r3, 31
-							data[i +  7] = 0x3C800000 | (VAR_AREA >> 16);
-							data[i +  8] = 0x98640000 | (VAR_CURRENT_FIELD & 0xFFFF);
+							data[i +  7] = 0x3C800000 | ((u32)VAR_AREA >> 16);
+							data[i +  8] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
 							break;
 						case 1:
 							data[i +  6] = branchAndLink(getCurrentFieldEvenOdd, VISetRegs + 6);
 							data[i +  7] = 0x2C030000;	// cmpwi	r3, 0
 							data[i +  8] = 0x54630FFE;	// srwi		r3, r3, 31
-							data[i +  9] = 0x3C800000 | (VAR_AREA >> 16);
-							data[i + 10] = 0x98640000 | (VAR_CURRENT_FIELD & 0xFFFF);
+							data[i +  9] = 0x3C800000 | ((u32)VAR_AREA >> 16);
+							data[i + 10] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
 							break;
 					}
 				}
@@ -5638,30 +5638,30 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i + 57] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 57);
 							data[i + 58] = 0x2C030000;	// cmpwi	r3, 0
 							data[i + 59] = 0x54630FFE;	// srwi		r3, r3, 31
-							data[i + 60] = 0x3C800000 | (VAR_AREA >> 16);
-							data[i + 61] = 0x98640000 | (VAR_CURRENT_FIELD & 0xFFFF);
+							data[i + 60] = 0x3C800000 | ((u32)VAR_AREA >> 16);
+							data[i + 61] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
 							break;
 						case 4:
 						case 5:
 							data[i + 60] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 60);
 							data[i + 61] = 0x2C030000;	// cmpwi	r3, 0
 							data[i + 62] = 0x54630FFE;	// srwi		r3, r3, 31
-							data[i + 63] = 0x3C800000 | (VAR_AREA >> 16);
-							data[i + 64] = 0x98640000 | (VAR_CURRENT_FIELD & 0xFFFF);
+							data[i + 63] = 0x3C800000 | ((u32)VAR_AREA >> 16);
+							data[i + 64] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
 							break;
 						case 6:
 							data[i + 65] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 65);
 							data[i + 66] = 0x2C030000;	// cmpwi	r3, 0
 							data[i + 67] = 0x54630FFE;	// srwi		r3, r3, 31
-							data[i + 68] = 0x3C800000 | (VAR_AREA >> 16);
-							data[i + 69] = 0x98640000 | (VAR_CURRENT_FIELD & 0xFFFF);
+							data[i + 68] = 0x3C800000 | ((u32)VAR_AREA >> 16);
+							data[i + 69] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
 							break;
 						case 7:
 							data[i + 77] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 77);
 							data[i + 78] = 0x2C030000;	// cmpwi	r3, 0
 							data[i + 79] = 0x54630FFE;	// srwi		r3, r3, 31
-							data[i + 80] = 0x3C800000 | (VAR_AREA >> 16);
-							data[i + 81] = 0x98640000 | (VAR_CURRENT_FIELD & 0xFFFF);
+							data[i + 80] = 0x3C800000 | ((u32)VAR_AREA >> 16);
+							data[i + 81] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
 							break;
 					}
 				}

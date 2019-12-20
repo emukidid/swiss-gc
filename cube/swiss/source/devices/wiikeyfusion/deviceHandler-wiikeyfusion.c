@@ -68,11 +68,11 @@ s32 deviceHandler_WKF_writeFile(file_handle* file, void* buffer, u32 length){
 s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 	
 	// If there are 2 discs, we only allow 21 fragments per disc.
-	int maxFrags = (VAR_FRAG_SIZE/12), i = 0;
+	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
 	s32 frags = 0, totFrags = 0;
 	
-	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
+	memset(VAR_FRAG_LIST, 0, sizeof(VAR_FRAG_LIST));
 
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {

@@ -14,7 +14,7 @@ u32 read_frag(void *dst, u32 len, u32 offset) {
 
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
 	int isDisc2 = (*(vu32*)(VAR_DISC_1_LBA)) != (*(vu32*)VAR_CUR_DISC_LBA);
-	int maxFrags = (*(vu32*)(VAR_DISC_1_LBA) != *(vu32*)(VAR_DISC_2_LBA)) ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0, j = 0;
+	int maxFrags = (*(vu32*)(VAR_DISC_1_LBA) != *(vu32*)(VAR_DISC_2_LBA)) ? ((sizeof(VAR_FRAG_LIST)/12)/2) : (sizeof(VAR_FRAG_LIST)/12), i = 0, j = 0;
 	int fragTableStart = isDisc2 ? (maxFrags*3) : 0;
 	int amountToRead = len;
 	int adjustedOffset = offset;
@@ -64,7 +64,7 @@ u32 read_frag(void *dst, u32 len, u32 offset) {
 
 int is_frag_read(unsigned int offset, unsigned int len) {
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-	int maxFrags = (VAR_FRAG_SIZE/12), i = 0, j = 0;
+	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0, j = 0;
 	
 	// If we locate that this read lies in our frag area, return true
 	for(i = 0; i < maxFrags; i++) {

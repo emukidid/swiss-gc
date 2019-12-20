@@ -1,3 +1,5 @@
+INCLUDE ../reservedarea.ld
+
 PI  = 0xCC003000;
 MI  = 0xCC004000;
 DI  = 0xCC006000;

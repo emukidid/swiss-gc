@@ -32,7 +32,7 @@ build-execD:
 	@echo Building execD replacement ...
 	@$(CC) -O1 $(OPTS) -c execd/appldr_start.S
 	@$(CC) -O1 $(OPTS) -c execd/appldr.c
-	@$(LD) -o execdpatch.elf appldr_start.o appldr.o --section-start .text=0x817FA000 --gc-sections
+	@$(LD) -o execdpatch.elf -T execd/appldr.ld -T base/common.ld appldr_start.o appldr.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D execdpatch.elf > $(DISASM)/execdpatch_disasm.txt
 	@$(OBJCOPY) -O binary execdpatch.elf execdpatch.bin

@@ -232,7 +232,7 @@ s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length) {
 void print_frag_list(int hasDisc2) {
 	print_gecko("== Fragments List ==\r\n");
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-	int maxFrags = hasDisc2 ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0;
+	int maxFrags = hasDisc2 ? ((sizeof(VAR_FRAG_LIST)/12)/2) : (sizeof(VAR_FRAG_LIST)/12), i = 0;
 	for(i = 0; i < maxFrags; i++) {
 		if(!fragList[(i*3)+1]) break;
 		
@@ -310,10 +310,10 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	
 	// If there are 2 discs, we only allow 21 fragments per disc.
-	int maxFrags = file2 ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0;
+	int maxFrags = file2 ? ((sizeof(VAR_FRAG_LIST)/12)/2) : (sizeof(VAR_FRAG_LIST)/12), i = 0;
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
 	
-	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
+	memset(VAR_FRAG_LIST, 0, sizeof(VAR_FRAG_LIST));
 	
   	// Look for patch files, if we find some, open them and add them as fragments
 	file_handle patchFile;
@@ -391,7 +391,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	// Currently selected disk base sector
 	*(vu32*)VAR_CUR_DISC_LBA = fragList[2];
 	
-	memset((void*)VAR_SECTOR_BUF, 0, 0x200);
+	memset(VAR_SECTOR_BUF, 0, sizeof(VAR_SECTOR_BUF));
 	*(vu32*)VAR_SECTOR_CUR = 0;
 	
 	int isSDCard = IS_SDCARD(file->name);

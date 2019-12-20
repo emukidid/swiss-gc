@@ -40,7 +40,7 @@ void adjust_read() {
 	
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
 	int isDisc2 = (*(vu32*)(VAR_DISC_2_LBA)) == (*(vu32*)VAR_CUR_DISC_LBA);
-	int maxFrags = (*(vu32*)(VAR_DISC_2_LBA)) ? ((VAR_FRAG_SIZE/12)/2) : (VAR_FRAG_SIZE/12), i = 0, j = 0;
+	int maxFrags = (*(vu32*)(VAR_DISC_2_LBA)) ? ((sizeof(VAR_FRAG_LIST)/12)/2) : (sizeof(VAR_FRAG_LIST)/12), i = 0, j = 0;
 	int fragTableStart = isDisc2 ? (maxFrags*3) : 0;
 	u32 adjustedOffset = offset;
 

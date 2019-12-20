@@ -110,11 +110,11 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
     gcloaderWriteDiscNum(0);
 
 	// Set up Swiss game patches using a patch supporting device
-	memset((void*)VAR_FRAG_LIST, 0, VAR_FRAG_SIZE);
+	memset(VAR_FRAG_LIST, 0, sizeof(VAR_FRAG_LIST));
 
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
-		int maxFrags = (VAR_FRAG_SIZE/12), i = 0, frags = 0;
+		int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0, frags = 0;
 		vu32 *fragList = (vu32*)VAR_FRAG_LIST;
 		totFrags = 0;
 		
