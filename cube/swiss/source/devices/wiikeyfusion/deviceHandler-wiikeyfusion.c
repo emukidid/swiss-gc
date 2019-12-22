@@ -97,7 +97,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 			
 			devices[DEVICE_PATCHES]->seekFile(&patchFile,fno.fsize-16,DEVICE_HANDLER_SEEK_SET);
 			if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, patchInfo[0], patchInfo[1] | 0x80000000, DEVICE_PATCHES))) {
+				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
 					return 0;
 				}
 				totFrags+=frags;
