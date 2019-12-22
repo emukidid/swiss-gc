@@ -164,6 +164,8 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2) {
 		*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
 	}
 
+	*(vu8*)VAR_DISC_1_FNLEN = snprintf(VAR_DISC_1_FN, sizeof(VAR_DISC_1_FN), "%s", file->name) + 1;
+	*(vu8*)VAR_DISC_2_FNLEN = snprintf(VAR_DISC_2_FN, sizeof(VAR_DISC_2_FN), "%s", file2 ? file2->name : file->name) + 1;
 	return 1;
 }
 
