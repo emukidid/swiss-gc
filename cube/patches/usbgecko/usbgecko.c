@@ -118,7 +118,7 @@ static int usb_receive(void *data, int size, int minsize)
 
 void usb_request(uint32_t offset, uint32_t size)
 {
-	usb_request_t request = {offset, size};
+	usb_request_t request = {offset & ~0x80000000, size};
 	usb_transmit(&request, sizeof(request), sizeof(request));
 }
 

@@ -114,7 +114,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 		FILINFO fno;
 		if(f_stat(&patchFile.name[0], &fno) == FR_OK) {
 			print_gecko("IGR Boot DOL exists\r\n");
-			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, 0x60000000, 0, DEVICE_PATCHES))) {
+			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, 0xE0000000, 0, DEVICE_PATCHES))) {
 				totFrags+=frags;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				*(vu32*)VAR_IGR_DOL_SIZE = fno.fsize;
@@ -147,21 +147,14 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 			return 0;
 		}
 		// TODO fix 2 disc patched games
-		if(!(frags = getFragments(file2, &fragList[(maxFrags*3)], maxFrags, 0, 0, DEVICE_CUR))) {
+		if(!(frags = getFragments(file2, &fragList[totFrags*3], maxFrags, 0x80000000, 0, DEVICE_CUR))) {
 			return 0;
 		}
 		totFrags += frags;
 	}
-		
-	// Disk 1 base sector
-	*(vu32*)VAR_DISC_1_LBA = fragList[2];
-	// Disk 2 base sector
-	*(vu32*)VAR_DISC_2_LBA = file2 ? fragList[2 + (maxFrags*3)]:fragList[2];
-	// Currently selected disk base sector
-	*(vu32*)VAR_CUR_DISC_LBA = fragList[2];
 	
 	wkfFragSetupReq = (file2 && frags > 2) ? 1 : frags>1;
-	print_frag_list(file2 != 0);
+	print_frag_list(0);
 	return 1;
 }
 

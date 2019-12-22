@@ -50,7 +50,7 @@ void igr_exit(void)
 	switch (igr_exit_type) {
 		case IGR_BOOTBIN:
 			if (igr_dol_size)
-				load_dol(0x60000000, igr_dol_size);
+				load_dol(0xE0000000, igr_dol_size);
 			break;
 	}
 }

@@ -43,8 +43,10 @@ static void di_execute_command(void)
 		{
 			if (!((*DI_EMU)[1] & 0b001)) {
 				uint32_t offset  = (*DI_EMU)[3] << 2;
-				uint32_t length  = (*DI_EMU)[4];
+				uint32_t length  = (*DI_EMU)[6];
 				uint32_t address = (*DI_EMU)[5];
+
+				offset |= *(uint32_t *)VAR_CURRENT_DISC * 0x80000000;
 
 				perform_read(offset, length, address);
 				enable_breakpoint();
@@ -63,10 +65,10 @@ static void di_execute_command(void)
 		}
 		case 0xE3:
 		{
-			if (*(uint32_t *)VAR_DISC_1_LBA != *(uint32_t *)VAR_DISC_2_LBA) {
+			if (*(uint32_t *)VAR_SECOND_DISC) {
 				(*DI_EMU)[1] |= 0b001;
 				mftb((tb_t *)VAR_TIMER_START);
-				*(uint32_t *)VAR_DISC_CHANGING = 1;
+				*(uint32_t *)VAR_DISC_CHANGING = true;
 			}
 			break;
 		}

@@ -869,7 +869,9 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 		
 	// Set WKF base offset if not using the frag or audio streaming patch
 	if(devices[DEVICE_CUR] == &__device_wkf) {
-		wkfWriteOffset(*(vu32*)VAR_DISC_1_LBA);
+		vu32 *fragList = (vu32*)VAR_FRAG_LIST;
+		u32 fragSector = fragList[2];
+		wkfWriteOffset(fragSector);
 	}
 	print_gecko("libogc shutdown and boot game!\r\n");
 	if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
@@ -1457,6 +1459,8 @@ void load_game() {
 			}
 		}
 
+		*(vu32*)VAR_SECOND_DISC = secondDisc ? 1:0;
+		*(vu32*)VAR_CURRENT_DISC = 0;
 		*(vu32*)VAR_IGR_DOL_SIZE = 0;
 		// Call the special setup for each device (e.g. SD will set the sector(s))
 		if(!devices[DEVICE_CUR]->setupFile(&curFile, secondDisc)) {

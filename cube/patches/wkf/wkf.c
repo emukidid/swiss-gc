@@ -39,15 +39,13 @@ void adjust_read() {
 	u32 offset = (dvd[3]<<2);
 	
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-	int isDisc2 = (*(vu32*)(VAR_DISC_2_LBA)) == (*(vu32*)VAR_CUR_DISC_LBA);
-	int maxFrags = (*(vu32*)(VAR_DISC_2_LBA)) ? ((sizeof(VAR_FRAG_LIST)/12)/2) : (sizeof(VAR_FRAG_LIST)/12), i = 0, j = 0;
-	int fragTableStart = isDisc2 ? (maxFrags*3) : 0;
+	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
 	u32 adjustedOffset = offset;
 
 	// Locate this offset in the fat table
 	for(i = 0; i < maxFrags; i++) {
 		u32 fragOffset = fragList[(i*3)+0];
-		u32 fragSize = fragList[(i*3)+1] & 0x7FFFFFFF;
+		u32 fragSize = fragList[(i*3)+1] & ~0x80000000;
 		u32 fragSector = fragList[(i*3)+2];
 		u32 fragOffsetEnd = fragOffset + fragSize;
 		u32 isPatchFrag = fragList[(i*3)+1] >> 31;

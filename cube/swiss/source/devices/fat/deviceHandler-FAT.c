@@ -299,7 +299,7 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 		DWORD size = (clmt[i]) * fatFS->csize * 512;
 		DWORD sector = clst2sect(fatFS, clmt[i+1]);
 		// this frag offset in the file is the last frag offset+size
-		fragTbl[numFrags*3] = forceBaseOffset + (i > 1 ? fragTbl[((numFrags-1)*3)+1]+(fragTbl[((numFrags-1)*3)]) : 0);
+		fragTbl[numFrags*3] = i > 1 ? fragTbl[((numFrags-1)*3)+1]+(fragTbl[((numFrags-1)*3)]) : forceBaseOffset;
 		fragTbl[(numFrags*3)+1] = (clmt[0] >> 1)-1 == 1 ? (forceSize!= 0?forceSize:file->size) : size;
 		fragTbl[(numFrags*3)+2] = sector;
 		numFrags++;
@@ -310,7 +310,7 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	
 	// If there are 2 discs, we only allow 21 fragments per disc.
-	int maxFrags = file2 ? ((sizeof(VAR_FRAG_LIST)/12)/2) : (sizeof(VAR_FRAG_LIST)/12), i = 0;
+	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
 	
 	memset(VAR_FRAG_LIST, 0, sizeof(VAR_FRAG_LIST));
@@ -352,7 +352,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	FILINFO fno;
 	if(f_stat(&patchFile.name[0], &fno) == FR_OK) {
 		print_gecko("IGR Boot DOL exists\r\n");
-		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, 0x60000000, 0, DEVICE_CUR))) {
+		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, 0xE0000000, 0, DEVICE_CUR))) {
 			totFrags+=frags;
 			devices[DEVICE_CUR]->closeFile(&patchFile);
 			*(vu32*)VAR_IGR_DOL_SIZE = fno.fsize;
@@ -378,18 +378,11 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 		}
 		devices[DEVICE_CUR]->closeFile(file);
 		// TODO fix 2 disc patched games
-		if((frags = getFragments(file2, &fragList[(maxFrags*3)], maxFrags, 0, 0, DEVICE_CUR))) {
+		if((frags = getFragments(file2, &fragList[totFrags*3], maxFrags, 0x80000000, 0, DEVICE_CUR))) {
 			totFrags += frags;
 		}
 		devices[DEVICE_CUR]->closeFile(file2);
 	}
-	
-	// Disk 1 base sector
-	*(vu32*)VAR_DISC_1_LBA = fragList[2];
-	// Disk 2 base sector
-	*(vu32*)VAR_DISC_2_LBA = file2 ? fragList[2 + (maxFrags*3)]:fragList[2];
-	// Currently selected disk base sector
-	*(vu32*)VAR_CUR_DISC_LBA = fragList[2];
 	
 	memset(VAR_SECTOR_BUF, 0, sizeof(VAR_SECTOR_BUF));
 	*(vu32*)VAR_SECTOR_CUR = 0;
@@ -411,7 +404,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 		// Is the HDD in use a 48 bit LBA supported HDD?
 		*(vu8*)VAR_ATA_LBA48 = ataDriveInfo.lba48Support;
 	}
-	print_frag_list(file2 != 0);
+	print_frag_list(0);
 	return 1;
 }
 

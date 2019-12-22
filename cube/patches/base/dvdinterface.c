@@ -53,11 +53,7 @@ void DIUpdateRegisters() {
 	
 	if(discChanging == 1) {
 		*(vu32*)VAR_DISC_CHANGING = 2;
-		
-		if(*(vu32*)VAR_CUR_DISC_LBA == *(vu32*)VAR_DISC_1_LBA)
-			*(vu32*)VAR_CUR_DISC_LBA = *(vu32*)VAR_DISC_2_LBA;
-		else
-			*(vu32*)VAR_CUR_DISC_LBA = *(vu32*)VAR_DISC_1_LBA;
+		*(vu32*)VAR_CURRENT_DISC = !*(vu32*)VAR_CURRENT_DISC;
 		mftb((tb_t*)VAR_TIMER_START);
 	}
 	
@@ -73,7 +69,7 @@ void DIUpdateRegisters() {
 					u8 asSubCmd = (dvd[DI_CMD] >> 16) & 0xFF;
 					*(vu8*)VAR_STREAM_DI = !asSubCmd;
 					if(!asSubCmd)
-						StreamStartStream(dvd[DI_LBA] << 2, dvd[DI_SRCLEN]);
+						StreamStartStream(dvd[DI_LBA] << 2 | (*(vu32*)VAR_CURRENT_DISC * 0x80000000), dvd[DI_SRCLEN]);
 					else
 						StreamEndStream();
 				}
@@ -125,7 +121,7 @@ void DIUpdateRegisters() {
 				break;
 			case 0xE3:	// Stop motor
 				if(!discChanging) {
-					*(vu32*)VAR_DISC_CHANGING = 1;	// Lid is open
+					*(vu32*)VAR_DISC_CHANGING = *(vu32*)VAR_SECOND_DISC;	// Lid is open
 				}
 				diOpCompleted = 1;
 				break;
@@ -137,7 +133,7 @@ void DIUpdateRegisters() {
 				
 					u32 dst	= dvd[DI_DMAADDR];
 					u32 len	= dvd[DI_DMALEN];
-					u32 offset	= dvd[DI_LBA] << 2;
+					u32 offset	= dvd[DI_LBA] << 2 | (*(vu32*)VAR_CURRENT_DISC * 0x80000000);
 
 					// The only time we readComplete=1 is when reading the arguments for 
 					// execD, since interrupts are off after this point and our handler isn't called again.

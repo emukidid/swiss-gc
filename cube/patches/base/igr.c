@@ -40,8 +40,8 @@ void *memcpy(void *dest, const void *src, u32 size);
 
 static void load_dol() {
 	u32 base = 0x81300000;
-	// Read the binary file mapped to 0x60000000
-	device_frag_read((void*)base, *(vu32*)VAR_IGR_DOL_SIZE, 0x60000000);
+	// Read the binary file mapped to 0xE0000000
+	device_frag_read((void*)base, *(vu32*)VAR_IGR_DOL_SIZE, 0xE0000000);
 	
 	int i = 0;
 	DOLHEADER *hdr = (DOLHEADER *) base;

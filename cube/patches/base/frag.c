@@ -13,18 +13,15 @@
 u32 read_frag(void *dst, u32 len, u32 offset) {
 
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-	int isDisc2 = (*(vu32*)(VAR_DISC_1_LBA)) != (*(vu32*)VAR_CUR_DISC_LBA);
-	int maxFrags = (*(vu32*)(VAR_DISC_1_LBA) != *(vu32*)(VAR_DISC_2_LBA)) ? ((sizeof(VAR_FRAG_LIST)/12)/2) : (sizeof(VAR_FRAG_LIST)/12), i = 0, j = 0;
-	int fragTableStart = isDisc2 ? (maxFrags*3) : 0;
-	int amountToRead = len;
-	int adjustedOffset = offset;
+	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
+	u32 amountToRead = len;
+	u32 adjustedOffset = offset;
 	
 	// Locate this offset in the fat table and read as much as we can from a single fragment
 	for(i = 0; i < maxFrags; i++) {
-		u32 fragTableIdx = fragTableStart +(i*3);
-		u32 fragOffset = fragList[fragTableIdx+0];
-		u32 fragSize = fragList[fragTableIdx+1] & 0x7FFFFFFF;
-		u32 fragSector = fragList[fragTableIdx+2];
+		u32 fragOffset = fragList[(i*3)+0];
+		u32 fragSize = fragList[(i*3)+1] & ~0x80000000;
+		u32 fragSector = fragList[(i*3)+2];
 		u32 fragOffsetEnd = fragOffset + fragSize;
 #ifdef DEBUG_VERBOSE
 		usb_sendbuffer_safe("READ: dst: ",11);
@@ -64,14 +61,14 @@ u32 read_frag(void *dst, u32 len, u32 offset) {
 
 int is_frag_read(unsigned int offset, unsigned int len) {
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0, j = 0;
+	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
 	
 	// If we locate that this read lies in our frag area, return true
 	for(i = 0; i < maxFrags; i++) {
-		int fragOffset = fragList[(i*3)+0];
-		int fragSize = fragList[(i*3)+1];
-		int fragSector = fragList[(i*3)+2];
-		int fragOffsetEnd = fragOffset + fragSize;
+		u32 fragOffset = fragList[(i*3)+0];
+		u32 fragSize = fragList[(i*3)+1] & ~0x80000000;
+		u32 fragSector = fragList[(i*3)+2];
+		u32 fragOffsetEnd = fragOffset + fragSize;
 		
 		if(offset >= fragOffset && offset < fragOffsetEnd) {
 			// Does our read get cut off early?

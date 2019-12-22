@@ -140,6 +140,12 @@ static void fsp_get_file(uint32_t offset, size_t size)
 	const char *file = _file;
 	uint8_t filelen = *_filelen;
 
+	if (offset &   0x80000000) {
+		offset &= ~0x80000000;
+		file    =  _file2;
+		filelen = *_file2len;
+	}
+
 	uint8_t data[MIN_FRAME_SIZE + filelen];
 	eth_header_t *eth = (eth_header_t *)data;
 	ipv4_header_t *ipv4 = (ipv4_header_t *)eth->data;
@@ -149,7 +155,7 @@ static void fsp_get_file(uint32_t offset, size_t size)
 	fsp->command = CC_GET_FILE;
 	fsp->checksum = 0x00;
 	fsp->key = *_key;
-	fsp->sequence = 0;
+	fsp->sequence = *_disc2;
 	fsp->data_length = filelen;
 	fsp->position = offset;
 	*(uint16_t *)(memcpy(fsp->data, file, filelen) + fsp->data_length) = MIN(size, UINT16_MAX);
@@ -198,7 +204,7 @@ static void fsp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 		case CC_ERR:
 			break;
 		case CC_GET_FILE:
-			if (*_position == fsp->position) {
+			if (*_position == fsp->position + fsp->sequence * 0x80000000) {
 				*_data_size = fsp->data_length;
 				*_id        = ipv4->id;
 			}

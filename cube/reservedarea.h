@@ -43,9 +43,8 @@
 .set VAR_SAR_WIDTH,			0x2EFC	# sample aspect ratio width
 .set VAR_SAR_HEIGHT,		0x2EFE	# sample aspect ratio height
 .set VAR_CURRENT_FIELD,		0x2EFF	# current video field
-.set VAR_DISC_1_LBA, 		0x2F00	# is the base file sector for disk 1
-.set VAR_DISC_2_LBA, 		0x2F04	# is the base file sector for disk 2
-.set VAR_CUR_DISC_LBA, 		0x2F08	# is the currently selected disk sector
+.set VAR_CURRENT_DISC,		0x2F00	# current disc number
+.set VAR_SECOND_DISC,		0x2F04	# second disc present
 .set VAR_SD_LBA,			0x2F0C	# is the SD Card sector being read
 .set VAR_LAST_OFFSET,		0x2F10	# the last offset a read was simulated from
 .set VAR_EXECD_OFFSET,		0x2F14	# offset of execD.bin on multi-dol discs
@@ -139,9 +138,8 @@ extern char VAR_FAKE_IRQ_SET[4];	// flag to say we are ready to fake irq.
 extern char VAR_SAR_WIDTH[2];		// sample aspect ratio width
 extern char VAR_SAR_HEIGHT[1];		// sample aspect ratio height
 extern char VAR_CURRENT_FIELD[1];	// current video field
-extern char VAR_DISC_1_LBA[4];		// is the base file sector for disk 1
-extern char VAR_DISC_2_LBA[4];		// is the base file sector for disk 2
-extern char VAR_CUR_DISC_LBA[4];	// is the currently selected disk sector
+extern char VAR_CURRENT_DISC[4];	// current disc number
+extern char VAR_SECOND_DISC[4];		// second disc present
 extern char VAR_SD_LBA[4];			// is the SD Card sector being read
 extern char VAR_LAST_OFFSET[4];		// the last offset a read was simulated from
 extern char VAR_EXECD_OFFSET[4];	// offset of execD.bin on multi-dol discs

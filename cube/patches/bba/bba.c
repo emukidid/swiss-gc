@@ -265,6 +265,7 @@ bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 	return true;
 }
 
+void di_update_interrupts(void);
 void di_complete_transfer(void);
 
 void perform_read(uint32_t offset, uint32_t length, uint32_t address)
@@ -284,6 +285,9 @@ void trickle_read(void)
 	uint8_t *data      = *_data;
 	uint32_t data_size;
 
+	tb_t end;
+	mftb(&end);
+
 	if (remainder) {
 		if (is_frag_read(position, remainder)) {
 			data_size = read_frag(data, remainder, position);
@@ -302,11 +306,17 @@ void trickle_read(void)
 			else if (!is_frag_read(position, remainder))
 				fsp_get_file(position, remainder);
 		} else {
-			tb_t end;
-			mftb(&end);
-
 			if (tb_diff_usec(&end, _start) > 1000000)
 				fsp_get_file(position, remainder);
 		}
-	}
+	} else if (*_changing) {
+		if (tb_diff_usec(&end, _start) > 1000000) {
+			*_disc2 = !*_disc2;
+			*_changing = false;
+
+			(*DI_EMU)[1] &= ~0b001;
+			(*DI_EMU)[1] |=  0b100;
+			di_update_interrupts();
+ 		}
+ 	}
 }

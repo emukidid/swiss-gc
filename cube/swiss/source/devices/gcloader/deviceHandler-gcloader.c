@@ -80,13 +80,6 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 	devices[DEVICE_CUR]->deinit(file);
 	totFrags += disc1Frags;
 	
-	// Disk 1 base sector
-	*(vu32*)VAR_DISC_1_LBA = discFragList[2];
-	// Disk 2 base sector (we don't care)
-	*(vu32*)VAR_DISC_2_LBA = discFragList[2];
-	// Currently selected disk base sector
-	*(vu32*)VAR_CUR_DISC_LBA = discFragList[2];
-	
 	// write disc 1 frags
     gcloaderWriteFrags(0, &discFragList[0], disc1Frags);
 	
@@ -156,12 +149,14 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 		FILINFO fno;
 		if(f_stat(&patchFile.name[0], &fno) == FR_OK) {
 			print_gecko("IGR Boot DOL exists\r\n");
-			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, 0x60000000, 0, DEVICE_PATCHES))) {
+			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, 0xE0000000, 0, DEVICE_PATCHES))) {
 				totFrags+=frags;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				*(vu32*)VAR_IGR_DOL_SIZE = fno.fsize;
 			}
 		}
+		
+		print_frag_list(0);
 		// Card Type
 		*(vu8*)VAR_SD_SHIFT = (u8)(sdgecko_getAddressingType(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)) ? 9:0);
 		// Copy the actual freq
@@ -169,8 +164,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 		// Device slot (0, 1 or 2)
 		*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
 	}
-	
-	print_frag_list(0);
+
 	return 1;
 }
 
