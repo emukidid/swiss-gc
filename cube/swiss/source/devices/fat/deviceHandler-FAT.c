@@ -16,6 +16,7 @@
 #include "main.h"
 #include "ata.h"
 #include "patcher.h"
+#include "dvd.h"
 
 const DISC_INTERFACE* carda = &__io_gcsda;
 const DISC_INTERFACE* cardb = &__io_gcsdb;
@@ -371,7 +372,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	}
 	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!(frags = getFragments(file, &fragList[totFrags*3], maxFrags, 0, 0, DEVICE_CUR))) {
+	if(!(frags = getFragments(file, &fragList[totFrags*3], maxFrags, 0, DISC_SIZE, DEVICE_CUR))) {
 		return 0;
 	}
 	totFrags += frags;
@@ -384,7 +385,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 		}
 		devices[DEVICE_CUR]->closeFile(file);
 		// TODO fix 2 disc patched games
-		if((frags = getFragments(file2, &fragList[totFrags*3], maxFrags, 0x80000000, 0, DEVICE_CUR))) {
+		if((frags = getFragments(file2, &fragList[totFrags*3], maxFrags, 0x80000000, DISC_SIZE, DEVICE_CUR))) {
 			totFrags += frags;
 		}
 		devices[DEVICE_CUR]->closeFile(file2);

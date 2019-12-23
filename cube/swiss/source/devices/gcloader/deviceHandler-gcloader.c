@@ -18,6 +18,7 @@
 #include "main.h"
 #include "gcloader.h"
 #include "patcher.h"
+#include "dvd.h"
 
 const DISC_INTERFACE* gcloader = &__io_gcloader;
 FATFS *gcloaderfs = NULL;
@@ -74,7 +75,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 	memset((void*)discFragList, 0, fragListSize);
 
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!(disc1Frags = getFragments(file, &discFragList[0], maxDiscFrags, 0, 0, DEVICE_CUR))) {
+	if(!(disc1Frags = getFragments(file, &discFragList[0], maxDiscFrags, 0, DISC_SIZE, DEVICE_CUR))) {
 		return 0;
 	}
 	devices[DEVICE_CUR]->deinit(file);
@@ -91,7 +92,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 		if(totFrags+1 == maxDiscFrags) {
 			return 0;
 		}
-		if(!(disc2Frags = getFragments(file2, &discFragList[0], maxDiscFrags, 0, 0, DEVICE_CUR))) {
+		if(!(disc2Frags = getFragments(file2, &discFragList[0], maxDiscFrags, 0, DISC_SIZE, DEVICE_CUR))) {
 			return 0;
 		}
 		totFrags += disc2Frags;

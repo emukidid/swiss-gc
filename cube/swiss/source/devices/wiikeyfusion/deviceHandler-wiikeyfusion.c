@@ -18,6 +18,7 @@
 #include "main.h"
 #include "wkf.h"
 #include "patcher.h"
+#include "dvd.h"
 
 const DISC_INTERFACE* wkf = &__io_wkf;
 int wkfFragSetupReq = 0;
@@ -135,7 +136,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 	}
 	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!(frags = getFragments(file, &fragList[totFrags*3], maxFrags, 0, 0, DEVICE_CUR))) {
+	if(!(frags = getFragments(file, &fragList[totFrags*3], maxFrags, 0, DISC_SIZE, DEVICE_CUR))) {
 		return 0;
 	}
 	totFrags += frags;
@@ -147,7 +148,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2) {
 			return 0;
 		}
 		// TODO fix 2 disc patched games
-		if(!(frags = getFragments(file2, &fragList[totFrags*3], maxFrags, 0x80000000, 0, DEVICE_CUR))) {
+		if(!(frags = getFragments(file2, &fragList[totFrags*3], maxFrags, 0x80000000, DISC_SIZE, DEVICE_CUR))) {
 			return 0;
 		}
 		totFrags += frags;
