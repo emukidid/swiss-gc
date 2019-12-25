@@ -430,7 +430,7 @@ void setGCIInfo(void *buffer) {
 	}
 }
 
-s32 deviceHandler_CARD_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_CARD_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	return 1;
 }
 

@@ -64,7 +64,7 @@ typedef s32 (* _fn_readFile)(file_handle*, void*, u32);
 typedef s32 (* _fn_writeFile)(file_handle*, void*, u32);
 typedef s32 (* _fn_deleteFile)(file_handle*);
 typedef s32 (* _fn_seekFile)(file_handle*,  u32, u32);
-typedef s32 (* _fn_setupFile)(file_handle*, file_handle*);
+typedef s32 (* _fn_setupFile)(file_handle*, file_handle*, int);
 typedef s32 (* _fn_closeFile)(file_handle*);
 typedef s32 (* _fn_deinit)(file_handle*);
 typedef device_info* (* _fn_deviceInfo)(void);

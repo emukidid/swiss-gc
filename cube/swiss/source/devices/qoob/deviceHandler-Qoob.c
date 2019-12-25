@@ -92,7 +92,7 @@ s32 deviceHandler_Qoob_readFile(file_handle* file, void* buffer, u32 length) {
 	return length;
 }
 
-s32 deviceHandler_Qoob_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_Qoob_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	return 1;
 }
 

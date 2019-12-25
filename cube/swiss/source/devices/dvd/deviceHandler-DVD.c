@@ -379,7 +379,7 @@ s32 deviceHandler_DVD_readFile(file_handle* file, void* buffer, u32 length){
 	return bytesread;
 }
 
-s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 
 	// Multi-Game disc audio streaming setup
 	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
@@ -422,7 +422,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 		memset(&gameID, 0, 8);
 		strncpy((char*)&gameID, (char*)&GCMDisk, 4);
 		
-		for(i = 0; i < maxFrags; i++) {
+		for(i = 0; i < numToPatch; i++) {
 			u32 patchInfo[4];
 			patchInfo[0] = 0; patchInfo[1] = 0; 
 			memset(&patchFile, 0, sizeof(file_handle));
@@ -435,7 +435,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 			}
 			devices[DEVICE_PATCHES]->seekFile(&patchFile,fno.fsize-16,DEVICE_HANDLER_SEEK_SET);
 			if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
+				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
 					return 0;
 				}
 				totFrags+=frags;
@@ -452,7 +452,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2) {
 		FILINFO fno;
 		if(f_stat(&patchFile.name[0], &fno) == FR_OK) {
 			print_gecko("IGR Boot DOL exists\r\n");
-			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, 0xE0000000, 0, DEVICE_PATCHES))) {
+			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, 0xE0000000, 0, DEVICE_PATCHES))) {
 				totFrags+=frags;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				*(vu32*)VAR_IGR_DOL_SIZE = fno.fsize;

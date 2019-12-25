@@ -65,12 +65,12 @@ s32 deviceHandler_GCLOADER_writeFile(file_handle* file, void* buffer, u32 length
 }
 
 
-s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	
 	// GCLoader disc/file fragment setup
 	s32 fragListSize = (3 * 4) * (MAX_GCLOADER_FRAGS_PER_DISC*2);
 	vu32 *discFragList = (vu32*)memalign(32, fragListSize);
-	s32 totFrags = 0, disc1Frags, disc2Frags, maxDiscFrags = (!file2 ? MAX_GCLOADER_FRAGS_PER_DISC : MAX_GCLOADER_FRAGS_PER_DISC>>1);
+	s32 disc1Frags, disc2Frags, maxDiscFrags = (!file2 ? MAX_GCLOADER_FRAGS_PER_DISC : MAX_GCLOADER_FRAGS_PER_DISC>>1);
 
 	memset((void*)discFragList, 0, fragListSize);
 
@@ -79,7 +79,6 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 		return 0;
 	}
 	devices[DEVICE_CUR]->deinit(file);
-	totFrags += disc1Frags;
 	
 	// write disc 1 frags
     gcloaderWriteFrags(0, &discFragList[0], disc1Frags);
@@ -88,16 +87,11 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
 		memset((void*)discFragList, 0, fragListSize);
-		// No fragment room left for the second disc, fail.
-		if(totFrags+1 == maxDiscFrags) {
-			return 0;
-		}
 		if(!(disc2Frags = getFragments(file2, &discFragList[0], maxDiscFrags, 0, DISC_SIZE, DEVICE_CUR))) {
 			return 0;
 		}
-		totFrags += disc2Frags;
-        gcloaderWriteFrags(1, &discFragList[0], disc2Frags);
 		devices[DEVICE_CUR]->deinit(file2);
+        gcloaderWriteFrags(1, &discFragList[0], disc2Frags);
 	}
 	
     // set disc 1 as active disc
@@ -108,9 +102,9 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
-		int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0, frags = 0;
+		int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
 		vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-		totFrags = 0;
+		s32 frags = 0, totFrags = 0;
 		
 		print_gecko("Save Patch device found\r\n");
 		
@@ -120,7 +114,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 		memset(&gameID, 0, 8);
 		strncpy((char*)&gameID, (char*)&GCMDisk, 4);
 		
-		for(i = 0; i < maxFrags; i++) {
+		for(i = 0; i < numToPatch; i++) {
 			u32 patchInfo[4];
 			patchInfo[0] = 0; patchInfo[1] = 0; 
 			memset(&patchFile, 0, sizeof(file_handle));
@@ -133,7 +127,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 			
 			devices[DEVICE_PATCHES]->seekFile(&patchFile,fno.fsize-16,DEVICE_HANDLER_SEEK_SET);
 			if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
+				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
 					return 0;
 				}
 				totFrags+=frags;
@@ -150,7 +144,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2) {
 		FILINFO fno;
 		if(f_stat(&patchFile.name[0], &fno) == FR_OK) {
 			print_gecko("IGR Boot DOL exists\r\n");
-			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, 0xE0000000, 0, DEVICE_PATCHES))) {
+			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, 0xE0000000, 0, DEVICE_PATCHES))) {
 				totFrags+=frags;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				*(vu32*)VAR_IGR_DOL_SIZE = fno.fsize;

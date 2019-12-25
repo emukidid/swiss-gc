@@ -275,8 +275,8 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 	}
 
 	// fatfs - Cluster link table map buffer
-	DWORD clmt[(maxFrags*2) + 1];
-	clmt[0] = maxFrags;
+	DWORD clmt[(maxFrags+1)*2];
+	clmt[0] = (maxFrags+1)*2;
 	file->ffsFp->cltbl = &clmt[0];
 	if(f_lseek(file->ffsFp, CREATE_LINKMAP) != FR_OK) return 0;	// Too many fragments for our buffer
 	
@@ -314,7 +314,7 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 	return numFrags;
 }
 
-s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	
 	// If there are 2 discs, we only allow 21 fragments per disc.
 	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
@@ -325,7 +325,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
   	// Look for patch files, if we find some, open them and add them as fragments
 	file_handle patchFile;
 	s32 frags = 0, totFrags = 0;
-	for(i = 0; i < maxFrags; i++) {
+	for(i = 0; i < numToPatch; i++) {
 		u32 patchInfo[4];
 		patchInfo[0] = 0; patchInfo[1] = 0; 
 		char gameID[8];
@@ -341,7 +341,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 
 		devices[DEVICE_CUR]->seekFile(&patchFile,fno.fsize-16,DEVICE_HANDLER_SEEK_SET);
 		if((devices[DEVICE_CUR]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-			if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, patchInfo[0], patchInfo[1], DEVICE_CUR))) {
+			if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, patchInfo[0], patchInfo[1], DEVICE_CUR))) {
 				return 0;
 			}
 			totFrags+=frags;
@@ -359,33 +359,24 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2) {
 	FILINFO fno;
 	if(f_stat(&patchFile.name[0], &fno) == FR_OK) {
 		print_gecko("IGR Boot DOL exists\r\n");
-		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags, 0xE0000000, 0, DEVICE_CUR))) {
+		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, 0xE0000000, 0, DEVICE_CUR))) {
 			totFrags+=frags;
 			devices[DEVICE_CUR]->closeFile(&patchFile);
 			*(vu32*)VAR_IGR_DOL_SIZE = fno.fsize;
 		}
 	}
 	
-	// No fragment room left for the actual game, fail.
-	if(totFrags+1 == maxFrags) {
-		return 0;
-	}
-	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!(frags = getFragments(file, &fragList[totFrags*3], maxFrags, 0, DISC_SIZE, DEVICE_CUR))) {
+	if(!(frags = getFragments(file, &fragList[totFrags*3], maxFrags-totFrags, 0, DISC_SIZE, DEVICE_CUR))) {
 		return 0;
 	}
 	totFrags += frags;
 
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
-		// No fragment room left for the second disc, fail.
-		if(totFrags+1 == maxFrags) {
-			return 0;
-		}
 		devices[DEVICE_CUR]->closeFile(file);
 		// TODO fix 2 disc patched games
-		if((frags = getFragments(file2, &fragList[totFrags*3], maxFrags, 0x80000000, DISC_SIZE, DEVICE_CUR))) {
+		if((frags = getFragments(file2, &fragList[totFrags*3], maxFrags-totFrags, 0x80000000, DISC_SIZE, DEVICE_CUR))) {
 			totFrags += frags;
 		}
 		devices[DEVICE_CUR]->closeFile(file2);

@@ -600,7 +600,7 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch) {
 	
 }
 
-unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
+unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 {
 	char* gameID = (char*)0x80000000;
 	int i = 0;
@@ -619,7 +619,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	
 	// Prompt for DOL selection if multi-dol
 	ExecutableFile* altDol = NULL;
-	if(filesToPatch != NULL && multiDol) {
+	if(filesToPatch != NULL && numToPatch > 0) {
 		altDol = select_alt_dol(filesToPatch);
 		if(altDol != NULL) {
 			print_gecko("Alt DOL selected :%08X\r\n", altDol->offset);
@@ -747,7 +747,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 		Patch_DVDReset(main_dol_buffer, main_dol_size);
 	}
 	// Support patches for multi-dol discs that need to read patched data from SD
-	if(multiDol && (devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader)) {
+	if((devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader) && numToPatch > 0) {
 		Patch_DVDLowLevelReadForDVD(main_dol_buffer, main_dol_size, PATCH_DOL);
 	}
 	
@@ -1347,7 +1347,7 @@ bool manage_file() {
 void load_game() {
 	if(devices[DEVICE_CUR] == &__device_wode) {
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Setup base offset please Wait .."));
-		devices[DEVICE_CUR]->setupFile(&curFile, 0);
+		devices[DEVICE_CUR]->setupFile(&curFile, NULL, 0);
 		DrawDispose(msgBox);
 	}
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading ..."));
@@ -1410,13 +1410,13 @@ void load_game() {
 		}
 	}
 	
-	int multiDol = 0;
+	int numToPatch = 0;
 	ExecutableFile *filesToPatch = memalign(32, sizeof(ExecutableFile)*512);
 	memset(filesToPatch, 0, sizeof(ExecutableFile)*512);
 
 	// Report to the user the patch status of this GCM/ISO file
 	if(devices[DEVICE_CUR]->features & FEAT_CAN_READ_PATCHES) {
-		multiDol = check_game(filesToPatch);
+		numToPatch = check_game(filesToPatch);
 	}
 	
   	if(devices[DEVICE_CUR] != &__device_wode) {
@@ -1456,7 +1456,7 @@ void load_game() {
 		*(vu32*)VAR_CURRENT_DISC = 0;
 		*(vu32*)VAR_IGR_DOL_SIZE = 0;
 		// Call the special setup for each device (e.g. SD will set the sector(s))
-		if(!devices[DEVICE_CUR]->setupFile(&curFile, secondDisc)) {
+		if(!devices[DEVICE_CUR]->setupFile(&curFile, secondDisc, numToPatch)) {
 			msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
 			wait_press_A();
 			free(filesToPatch);
@@ -1471,7 +1471,7 @@ void load_game() {
 		}
 	}
 
-	load_app(multiDol, filesToPatch);
+	load_app(filesToPatch, numToPatch);
 	config_unload_current();
 }
 
@@ -1547,10 +1547,9 @@ void load_file()
 int check_game(ExecutableFile *filesToPatch)
 { 	
 	char* gameID = (char*)&GCMDisk;
-	int multiDol = 0;
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Checking Game .."));
 	
-	u32 numToPatch = parse_gcm(&curFile, filesToPatch);
+	int numToPatch = parse_gcm(&curFile, filesToPatch);
 	
 	if(!swissSettings.disableVideoPatches) {
 		if(!strncmp(gameID, "GS8P7D", 6)) {
@@ -1558,11 +1557,7 @@ int check_game(ExecutableFile *filesToPatch)
 		}
 	}
 	DrawDispose(msgBox);
-	if(numToPatch>0) {
-		// Game requires patch files, lets do it.	
-		multiDol = patch_gcm(&curFile, filesToPatch, numToPatch, 0);
-	}
-	return multiDol;
+	return patch_gcm(&curFile, filesToPatch, numToPatch);
 }
 
 uiDrawObj_t* draw_game_info() {

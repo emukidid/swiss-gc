@@ -306,7 +306,7 @@ s32 deviceHandler_SYS_seekFile(file_handle* file, u32 where, u32 type) {
 	return file->offset;
 }
 
-s32 deviceHandler_SYS_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_SYS_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	return 1;
 }
 

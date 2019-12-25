@@ -115,7 +115,7 @@ s32 deviceHandler_WODE_readFile(file_handle* file, void* buffer, u32 length) {
 	return bytesread;
 }
 
-s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2) {
+s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
 	SetISO(isoInfo->iso_partition,isoInfo->iso_number);
 	sleep(2);
