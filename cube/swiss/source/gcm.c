@@ -128,9 +128,37 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 
 	char	*FST = get_fst(file);
 	char	filename[256];
-	int		numFiles = 0;
+	int		dolOffset, dolSize, numFiles = 0;
 
 	if(!FST) return -1;
+
+	// Patch the apploader too!
+	// Calc Apploader trailer size
+	u32 appldr_info[8];
+	devices[DEVICE_CUR]->seekFile(file,0x2440,DEVICE_HANDLER_SEEK_SET);
+	if(devices[DEVICE_CUR]->readFile(file,&appldr_info,32) != 32) {
+		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Apploader info"));
+		while(1);
+	}
+	filesToPatch[numFiles].size = appldr_info[6];
+	filesToPatch[numFiles].offset = appldr_info[5] + 0x2460;
+	filesToPatch[numFiles].type = appldr_info[0] == 0x32303034 ? PATCH_DOL_APPLOADER:PATCH_APPLOADER;
+	sprintf(filesToPatch[numFiles].name, "Apploader Trailer");
+	numFiles++;
+
+	// Multi-DOL games may re-load the main DOL, so make sure we patch it too.
+	// Calc size
+	DOLHEADER dolhdr;
+	devices[DEVICE_CUR]->seekFile(file,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
+	if(devices[DEVICE_CUR]->readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
+		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Main DOL Header"));
+		while(1);
+	}
+	filesToPatch[numFiles].offset = dolOffset = GCMDisk.DOLOffset;
+	filesToPatch[numFiles].size = dolSize = DOLSize(&dolhdr);
+	filesToPatch[numFiles].type = PATCH_DOL;
+	sprintf(filesToPatch[numFiles].name, "Main DOL");
+	numFiles++;
 
 	u32 entries=*(unsigned int*)&FST[8];
 	u32 string_table_offset=FST_ENTRY_SIZE*entries;
@@ -151,7 +179,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 			if(endsWith(filename,".dol")) {
 				// Some games contain a single "default.dol", these do not need 
 				// pre-patching because they are what is actually pointed to by the apploader (and loaded by us)
-				if(GCMDisk.DOLOffset == file_offset) {
+				if(dolOffset == file_offset || dolSize == size) {
 					continue;
 				}
 				filesToPatch[numFiles].offset = file_offset;
@@ -194,46 +222,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		} 
 	}
 	free(FST);
-	
-	// Multi-DOL games may re-load the main DOL, so make sure we patch it too.
-	if((devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) || numFiles > 0) {
-		DOLHEADER dolhdr;
-		u32 main_dol_size = 0;
-		// Calc size
-		devices[DEVICE_CUR]->seekFile(file,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Main DOL Header"));
-			while(1);
-		}
-		for (i = 0; i < MAXTEXTSECTION; i++) {
-			if (dolhdr.textLength[i] + dolhdr.textOffset[i] > main_dol_size)
-				main_dol_size = dolhdr.textLength[i] + dolhdr.textOffset[i];
-		}
-		for (i = 0; i < MAXDATASECTION; i++) {
-			if (dolhdr.dataLength[i] + dolhdr.dataOffset[i] > main_dol_size)
-				main_dol_size = dolhdr.dataLength[i] + dolhdr.dataOffset[i];
-		}
-		filesToPatch[numFiles].offset = GCMDisk.DOLOffset;
-		filesToPatch[numFiles].size = main_dol_size;
-		filesToPatch[numFiles].type = PATCH_DOL;
-		sprintf(filesToPatch[numFiles].name, "Main DOL");
-		numFiles++;
-		
-		// Patch the apploader too!
-		// Calc Apploader trailer size
-		u32 appldr_info[8];
-		devices[DEVICE_CUR]->seekFile(file,0x2440,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(file,&appldr_info,32) != 32) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Apploader info"));
-			while(1);
-		}
-		filesToPatch[numFiles].size = appldr_info[6];
-		filesToPatch[numFiles].offset = appldr_info[5] + 0x2460;
-		filesToPatch[numFiles].type = appldr_info[0] == 0x32303034 ? PATCH_DOL_APPLOADER:PATCH_APPLOADER;
-		sprintf(filesToPatch[numFiles].name, "Apploader Trailer");
-		numFiles++;
-	}
-	return numFiles;
+	return (devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) || numFiles > 2 ? numFiles : 0;
 }
 
 // Adjust TGC FST entries in case we load a DOL from one directly
@@ -257,12 +246,12 @@ void adjust_tgc_fst(char* FST, u32 tgc_base, u32 fileAreaStart, u32 fakeAmount) 
 int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, char* tgcname) {
 	char	*FST; 
 	char	filename[256];
-	u32 fileAreaStart, fakeAmount, offset, size, numFiles = 0;
+	u32 fileAreaStart, fakeAmount, dolOffset, dolSize, numFiles = 0;
 	
 	// add this embedded GCM's main DOL
 	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x1C,DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file,&offset,4);
-	devices[DEVICE_CUR]->readFile(file,&size,4);
+	devices[DEVICE_CUR]->readFile(file,&dolOffset,4);
+	devices[DEVICE_CUR]->readFile(file,&dolSize,4);
 	devices[DEVICE_CUR]->readFile(file, &fileAreaStart, 4);
 	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x34,DEVICE_HANDLER_SEEK_SET);
 	devices[DEVICE_CUR]->readFile(file, &fakeAmount, 4);
@@ -273,8 +262,8 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
  	devices[DEVICE_CUR]->readFile(file,&fstOfsAndSize,2*sizeof(u32));
 	
 	// The TGC main DOL entry
-	filesToPatch[numFiles].offset = offset+tgc_base;
-	filesToPatch[numFiles].size = size;
+	filesToPatch[numFiles].offset = tgc_base+dolOffset;
+	filesToPatch[numFiles].size = dolSize;
 	filesToPatch[numFiles].tgcFstOffset = tgc_base+fstOfsAndSize[0];
 	filesToPatch[numFiles].tgcFstSize = fstOfsAndSize[1];
 	filesToPatch[numFiles].tgcBase = tgc_base;
@@ -309,6 +298,9 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
 			if(endsWith(filename,".dol")) {
+				if(dolSize == size) {
+					continue;
+				}
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL;

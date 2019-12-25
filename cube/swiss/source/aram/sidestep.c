@@ -241,6 +241,38 @@ static void DOLMinMax(DOLHEADER * dol)
   maxaddress += 0x20000;
 }
 
+u32 DOLSize(DOLHEADER *dol)
+{
+  u32 sizeinbytes;
+  int i;
+
+  sizeinbytes = DOLHDRLENGTH;
+
+  /*** Go through DOL sections ***/
+  /*** Text sections ***/
+  for (i = 0; i < MAXTEXTSECTION; i++)
+  {
+    if (dol->textOffset[i])
+    {
+      if ((dol->textOffset[i] + dol->textLength[i]) > sizeinbytes)
+        sizeinbytes = dol->textOffset[i] + dol->textLength[i];
+    }
+  }
+
+  /*** Data sections ***/
+  for (i = 0; i < MAXDATASECTION; i++)
+  {
+    if (dol->dataOffset[i])
+    {
+      if ((dol->dataOffset[i] + dol->dataLength[i]) > sizeinbytes)
+        sizeinbytes = dol->dataOffset[i] + dol->dataLength[i];
+    }
+  }
+
+  /*** Return DOL size ***/
+  return sizeinbytes;
+}
+
 /****************************************************************************
 * DOLtoARAM
 *

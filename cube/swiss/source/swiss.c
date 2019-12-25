@@ -692,24 +692,17 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	}
 	
 	// Figure out the size of the Main DOL so that we can read it all
-	for (i = 0; i < MAXTEXTSECTION; i++) {
-		if (dolhdr.textLength[i] + dolhdr.textOffset[i] > main_dol_size)
-			main_dol_size = dolhdr.textLength[i] + dolhdr.textOffset[i];
-	}
-	for (i = 0; i < MAXDATASECTION; i++) {
-		if (dolhdr.dataLength[i] + dolhdr.dataOffset[i] > main_dol_size)
-			main_dol_size = dolhdr.dataLength[i] + dolhdr.dataOffset[i];
-	}
+	main_dol_size = DOLSize(&dolhdr);
 	print_gecko("DOL size %i\r\n", main_dol_size);
 
 	// Read the entire Main DOL
-	main_dol_buffer = memalign(32,main_dol_size+DOLHDRLENGTH);
+	main_dol_buffer = memalign(32,main_dol_size);
 	print_gecko("DOL buffer %08X\r\n", (u32)main_dol_buffer);
 	if(!main_dol_buffer) {
 		return 0;
 	}
 	devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(&curFile,(void*)main_dol_buffer,main_dol_size+DOLHDRLENGTH) != main_dol_size+DOLHDRLENGTH) {
+	if(devices[DEVICE_CUR]->readFile(&curFile,(void*)main_dol_buffer,main_dol_size) != main_dol_size) {
 		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
 		while(1);
 	}
@@ -721,7 +714,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 			Patch_GameSpecificReadAlt(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
 		}
 		else {
-			u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+			u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size, PATCH_DOL);
 			if(READ_PATCHED_ALL != ret)	{
 				uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
 				DrawPublish(msgBox);
@@ -736,7 +729,7 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 	
 	// Only set up the WKF fragmentation patch if we have to.
 	if(devices[DEVICE_CUR] == &__device_wkf && wkfFragSetupReq) {
-		u32 ret = Patch_DVDLowLevelReadForWKF(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+		u32 ret = Patch_DVDLowLevelReadForWKF(main_dol_buffer, main_dol_size, PATCH_DOL);
 		if(ret == 0) {
 			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Fragmentation patch failed to apply!");
 			DrawPublish(msgBox);
@@ -751,45 +744,45 @@ unsigned int load_app(int multiDol, ExecutableFile *filesToPatch)
 
 	// 2 Disc support with no modchip
 	if(devices[DEVICE_CUR] == &__device_dvd && drive_status == DEBUG_MODE) {
-		Patch_DVDReset(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		Patch_DVDReset(main_dol_buffer, main_dol_size);
 	}
 	// Support patches for multi-dol discs that need to read patched data from SD
 	if(multiDol && (devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader)) {
-		Patch_DVDLowLevelReadForDVD(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+		Patch_DVDLowLevelReadForDVD(main_dol_buffer, main_dol_size, PATCH_DOL);
 	}
 	
 	// Patch IGR
 	if(swissSettings.igrType != IGR_OFF || swissSettings.invertCStick) {
-		Patch_PADStatus(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+		Patch_PADStatus(main_dol_buffer, main_dol_size, PATCH_DOL);
 	}
 	
 	// Patch OSReport to print out over USBGecko
 	if(swissSettings.debugUSB && usb_isgeckoalive(1) && !swissSettings.wiirdDebug) {
-		Patch_Fwrite(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+		Patch_Fwrite(main_dol_buffer, main_dol_size);
 	}
 	// Force Video Mode
 	if(!swissSettings.disableVideoPatches) {
 		Patch_GameSpecificVideo(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
-		Patch_VideoMode(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+		Patch_VideoMode(main_dol_buffer, main_dol_size, PATCH_DOL);
 	}
 	// Force Widescreen
 	if(swissSettings.forceWidescreen) {
-		Patch_Widescreen(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+		Patch_Widescreen(main_dol_buffer, main_dol_size, PATCH_DOL);
 	}
 	// Force Anisotropy
 	if(swissSettings.forceAnisotropy) {
-		Patch_TexFilt(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+		Patch_TexFilt(main_dol_buffer, main_dol_size, PATCH_DOL);
 	}
 	// Force Text Encoding
-	Patch_FontEncode(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	Patch_FontEncode(main_dol_buffer, main_dol_size);
 	
 	// Cheats
 	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
-		Patch_CheatsHook(main_dol_buffer, main_dol_size+DOLHDRLENGTH, PATCH_DOL);
+		Patch_CheatsHook(main_dol_buffer, main_dol_size, PATCH_DOL);
 	}
 
-	DCFlushRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
-	ICInvalidateRange(main_dol_buffer, main_dol_size+DOLHDRLENGTH);
+	DCFlushRange(main_dol_buffer, main_dol_size);
+	ICInvalidateRange(main_dol_buffer, main_dol_size);
 	
 	// See if the combination of our patches has exhausted our play area.
 	if(!install_code(0)) {
