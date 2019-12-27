@@ -78,7 +78,6 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 	if(!(disc1Frags = getFragments(file, &discFragList[0], maxDiscFrags, 0, DISC_SIZE, DEVICE_CUR))) {
 		return 0;
 	}
-	devices[DEVICE_CUR]->deinit(file);
 	
 	// write disc 1 frags
     gcloaderWriteFrags(0, &discFragList[0], disc1Frags);
@@ -90,7 +89,6 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 		if(!(disc2Frags = getFragments(file2, &discFragList[0], maxDiscFrags, 0, DISC_SIZE, DEVICE_CUR))) {
 			return 0;
 		}
-		devices[DEVICE_CUR]->deinit(file2);
         gcloaderWriteFrags(1, &discFragList[0], disc2Frags);
 	}
 	

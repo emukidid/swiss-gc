@@ -263,9 +263,6 @@ void print_frag_list(int hasDisc2) {
 */ 
 s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOffset, u32 forceSize, u32 dev) {
 	int i;
-	if(file->ffsFp != NULL && file->ffsFp->cltbl != NULL) {
-		devices[dev]->closeFile(file);	// If we've already read fragments, reopen it
-	}
 	if(!file->ffsFp) {
 		devices[dev]->readFile(file, NULL, 0);	// open the file (should be open already)
 	}
@@ -278,7 +275,11 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 	DWORD clmt[(maxFrags+1)*2];
 	clmt[0] = (maxFrags+1)*2;
 	file->ffsFp->cltbl = &clmt[0];
-	if(f_lseek(file->ffsFp, CREATE_LINKMAP) != FR_OK) return 0;	// Too many fragments for our buffer
+	if(f_lseek(file->ffsFp, CREATE_LINKMAP) != FR_OK) {
+		file->ffsFp->cltbl = NULL;
+		return 0;	// Too many fragments for our buffer
+	}
+	file->ffsFp->cltbl = NULL;
 	
 	print_gecko("getFragments [%s] - found %i fragments [%i arr]\r\n",file->name, (clmt[0] >> 1)-1, clmt[0]);
 	
@@ -374,12 +375,11 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
-		devices[DEVICE_CUR]->closeFile(file);
 		// TODO fix 2 disc patched games
-		if((frags = getFragments(file2, &fragList[totFrags*3], maxFrags-totFrags, 0x80000000, DISC_SIZE, DEVICE_CUR))) {
-			totFrags += frags;
+		if(!(frags = getFragments(file2, &fragList[totFrags*3], maxFrags-totFrags, 0x80000000, DISC_SIZE, DEVICE_CUR))) {
+			return 0;
 		}
-		devices[DEVICE_CUR]->closeFile(file2);
+		totFrags += frags;
 	}
 	
 	memset(VAR_SECTOR_BUF, 0, sizeof(VAR_SECTOR_BUF));
