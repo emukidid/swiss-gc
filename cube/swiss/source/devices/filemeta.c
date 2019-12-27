@@ -106,6 +106,7 @@ void populate_meta(file_handle *f) {
 					DiskHeader *header = memalign(32, sizeof(DiskHeader));
 					devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
 					devices[DEVICE_CUR]->readFile(f, header, sizeof(DiskHeader));
+					memcpy(&f->meta->diskId, header, sizeof(dvddiskid));
 					
 					if(header->DVDMagicWord == DVD_MAGIC) {
 						//print_gecko("FILE identifed as valid GCM\r\n");
@@ -172,3 +173,27 @@ void populate_meta(file_handle *f) {
 	}
 }
 
+file_handle* meta_find_disk2(file_handle* f) {
+	file_handle* dirEntries = getCurrentDirEntries();
+	if(f->meta) {
+		int i;
+		for(i = 0; i < getCurrentDirEntryCount(); i++) {
+			if(dirEntries[i].meta) {
+				if(strncmp(dirEntries[i].meta->diskId.gamename, f->meta->diskId.gamename, 4)) {
+					continue;
+				}
+				if(strncmp(dirEntries[i].meta->diskId.company, f->meta->diskId.company, 2)) {
+					continue;
+				}
+				if(dirEntries[i].meta->diskId.disknum == f->meta->diskId.disknum) {
+					continue;
+				}
+				if(dirEntries[i].meta->diskId.gamever != f->meta->diskId.gamever) {
+					continue;
+				}
+				return &dirEntries[i];
+			}
+		}
+	}
+	return NULL;
+}

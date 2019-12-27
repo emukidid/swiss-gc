@@ -1420,38 +1420,7 @@ void load_game() {
 	}
 	
   	if(devices[DEVICE_CUR] != &__device_wode) {
-		file_handle *secondDisc = NULL;
-		
-		// If we're booting from SD card or IDE hdd
-		if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
-			// look to see if it's a two disc game
-			// set things up properly to allow disc swapping
-			// the files must be setup as so: game-disc1.xxx game-disc2.xxx
-			secondDisc = calloc(1,sizeof(file_handle));
-			memcpy(secondDisc->name,&curFile.name,PATHNAME_MAX);
-			secondDisc->fp = 0;
-			secondDisc->ffsFp = NULL;
-			
-			// you're trying to load a disc1 of something
-			if(curFile.name[strlen(curFile.name)-5] == '1') {
-				secondDisc->name[strlen(secondDisc->name)-5] = '2';
-			} else if(curFile.name[strlen(curFile.name)-5] == '2' && strcasecmp(getRelativeName(curFile.name), "disc2.iso")) {
-				secondDisc->name[strlen(curFile.name)-5] = '1';
-			} else if(!strcasecmp(getRelativeName(curFile.name), "game.iso")) {
-				memset(secondDisc->name, 0, PATHNAME_MAX);
-				strncpy(secondDisc->name, curFile.name, strlen(curFile.name)-strlen(getRelativeName(curFile.name)));
-				strcat(secondDisc->name, "disc2.iso\0");	// Nintendont style
-			} else if(!strcasecmp(getRelativeName(curFile.name), "disc2.iso")) {
-				memset(secondDisc->name, 0, PATHNAME_MAX);
-				strncpy(secondDisc->name, curFile.name, strlen(curFile.name)-strlen(getRelativeName(curFile.name)));
-				strcat(secondDisc->name, "game.iso\0");		// Nintendont style
-			}
-			else {
-				free(secondDisc);
-				secondDisc = NULL;
-			}
-		}
-
+		file_handle *secondDisc = meta_find_disk2(&curFile);
 		*(vu32*)VAR_SECOND_DISC = secondDisc ? 1:0;
 		*(vu32*)VAR_CURRENT_DISC = 0;
 		*(vu32*)VAR_IGR_DOL_SIZE = 0;
@@ -1463,11 +1432,6 @@ void load_game() {
 			DrawDispose(msgBox);
 			config_unload_current();
 			return;
-		}
-
-		
-		if(secondDisc) {
-			free(secondDisc);
 		}
 	}
 
