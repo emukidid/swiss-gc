@@ -192,7 +192,7 @@ static void fsp_get_file(uint32_t offset, size_t size)
 	timer1_start(OSSecondsToTicks(1));
 }
 
-void di_complete_transfer(void);
+void schedule_read(uint32_t offset, uint32_t length, OSTick ticks);
 
 static void fsp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, size_t size)
 {
@@ -267,19 +267,10 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 					position  += data_size;
 					remainder -= data_size;
 
-					*_position  = position;
-					*_remainder = remainder;
 					*_data = data + data_size;
 					*_data_size = 0;
 
-					if (!remainder) {
-						di_complete_transfer();
-					} else {
-						if (!is_frag_read(position, remainder))
-							fsp_get_file(position, remainder);
-						else
-							timer1_start(0);
-					}
+					schedule_read(position, remainder, 0);
 				}
 
 				if (!*_received) {
