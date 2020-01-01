@@ -36,6 +36,10 @@ static void load_dol(uint32_t offset, uint32_t size)
 		dcache_flush_icache_inv(image.data[i], image.dataLen[i]);
 	}
 
+	asm volatile("mtmmcr0 %0" :: "r" (0));
+	asm volatile("mtpmc1 %0" :: "r" (0));
+	asm volatile("mtpmc2 %0" :: "r" (0));
+
 	image.entry();
 }
 

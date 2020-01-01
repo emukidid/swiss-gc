@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include "../alt/timer.h"
 #include "../base/common.h"
 #include "../base/dvd.h"
 #include "../base/exi.h"
@@ -276,6 +277,8 @@ void perform_read(uint32_t offset, uint32_t length, uint32_t address)
 
 	if (!is_frag_read(offset, length))
 		fsp_get_file(offset, length);
+	else
+		timer1_start(0);
 }
 
 void trickle_read(void)
@@ -285,12 +288,11 @@ void trickle_read(void)
 	uint8_t *data      = *_data;
 	uint32_t data_size;
 
-	tb_t end;
-	mftb(&end);
-
 	if (remainder) {
 		if (is_frag_read(position, remainder)) {
+			OSTick start = OSGetTick();
 			data_size = read_frag(data, remainder, position);
+			OSTick end = OSGetTick();
 
 			position  += data_size;
 			remainder -= data_size;
@@ -298,25 +300,32 @@ void trickle_read(void)
 			*_position  = position;
 			*_remainder = remainder;
 			*_data = data + data_size;
-			*_data_size = 0;
 
 			dcache_store(data, data_size);
 
-			if (!remainder) di_complete_transfer();
-			else if (!is_frag_read(position, remainder))
-				fsp_get_file(position, remainder);
+			if (!remainder) {
+				di_complete_transfer();
+			} else {
+				if (!is_frag_read(position, remainder))
+					fsp_get_file(position, remainder);
+				else
+					timer1_start(OSDiffTick(end, start));
+			}
 		} else {
-			if (tb_diff_usec(&end, _start) > 1000000)
+			OSTime start = *_start;
+			OSTime end = OSGetTime();
+
+			if (OSSecondsToTicks(1) < end - start)
 				fsp_get_file(position, remainder);
 		}
-	} else if (*_changing) {
-		if (tb_diff_usec(&end, _start) > 1000000) {
-			*_disc2 = !*_disc2;
-			*_changing = false;
+	}
+}
 
-			(*DI_EMU)[1] &= ~0b001;
-			(*DI_EMU)[1] |=  0b100;
-			di_update_interrupts();
- 		}
- 	}
+void change_disc(void)
+{
+	*_disc2 = !*_disc2;
+
+	(*DI_EMU)[1] &= ~0b001;
+	(*DI_EMU)[1] |=  0b100;
+	di_update_interrupts();
 }

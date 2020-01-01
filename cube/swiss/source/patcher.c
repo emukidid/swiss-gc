@@ -701,13 +701,10 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 	return patched;
 }
 
-char *DiscIDRaceHazard[] = {"GLME01", "GLMJ01", "GLMP01"};
-
 int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int dataType)
 {
 	int i, j, k;
 	int patched = 0;
-	int hasRaceHazard = 0;
 	FuncPattern PrepareExecSig = 
 		{ 60, 15, 3, 16, 13, 2, NULL, 0, "PrepareExec" };
 	FuncPattern OSExceptionInitSigs[3] = {
@@ -814,8 +811,6 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		{ 138, 44, 20,  8, 12, 12, NULL, 0, "SelectThread B" },
 		{ 141, 51, 19,  8, 12, 14, NULL, 0, "SelectThread B" }	// SN Systems ProDG
 	};
-	FuncPattern __OSRescheduleSig = 
-		{ 12, 4, 2, 1, 1, 2, NULL, 0, "__OSReschedule" };
 	FuncPattern __OSGetSystemTimeSigs[3] = {
 		{ 22, 4, 2, 3, 0, 3, NULL, 0, "__OSGetSystemTimeD" },
 		{ 25, 8, 5, 3, 0, 3, NULL, 0, "__OSGetSystemTime" },
@@ -1166,13 +1161,6 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		{ 54, 6, 9, 0, 3, 27, NULL, 0, "__VMBASEISIExceptionHandler" };
 	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
 	
-	for (j = 0; j < sizeof(DiscIDRaceHazard) / sizeof(char *); j++) {
-		if (!strncmp(gameID, DiscIDRaceHazard[j], 6)) {
-			hasRaceHazard = 1;
-			break;
-		}
-	}
-	
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (!_SDA2_BASE_ && !_SDA_BASE_) {
 			if ((data[i + 0] & 0xFFFF0000) == 0x3C400000 &&
@@ -1185,10 +1173,34 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 			}
 			continue;
 		}
-		if ((data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) ||
+		if ((data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6 && data[i + 1] != 0x4E800020) ||
 			(data[i - 1] != 0x4E800020 && data[i - 1] != 0x4C000064 &&
 			branchResolve(data, dataType, i - 1) == 0))
 			continue;
+		
+		if (data[i + 1] == 0x4E800020) {
+			switch (data[i]) {
+				case 0x7C78EAA6:	// mfmmcr0	r3
+				case 0x7C79EAA6:	// mfpmc1	r3
+				case 0x7C7AEAA6:	// mfpmc2	r3
+				case 0x7C7BEAA6:	// mfsia	r3
+				case 0x7C7CEAA6:	// mfmmcr1	r3
+				case 0x7C7DEAA6:	// mfpmc3	r3
+				case 0x7C7EEAA6:	// mfpmc4	r3
+					data[i] = 0x38600000;
+					break;
+				case 0x7C78EBA6:	// mtmmcr0	r3
+				case 0x7C79EBA6:	// mtpmc1	r3
+				case 0x7C7AEBA6:	// mtpmc2	r3
+				case 0x7C7BEBA6:	// mtsia	r3
+				case 0x7C7CEBA6:	// mtmmcr1	r3
+				case 0x7C7DEBA6:	// mtpmc3	r3
+				case 0x7C7EEBA6:	// mtpmc4	r3
+					data[i] = 0x60000000;
+					break;
+			}
+			continue;
+		}
 		
 		FuncPattern fp;
 		make_pattern(data, i, length, &fp);
@@ -1586,40 +1598,35 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 						if (findx_pattern(data, dataType, i + 57, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i + 58, length, &OSEnableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 62, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 67, length, &OSClearContextSigs[0]) &&
-							find_pattern_after(data, length, &fp, &__OSRescheduleSig))
+							findx_pattern(data, dataType, i + 67, length, &OSClearContextSigs[0]))
 							SelectThreadSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i + 56, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i + 57, length, &OSEnableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 61, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 66, length, &OSClearContextSigs[0]) &&
-							find_pattern_after(data, length, &fp, &__OSRescheduleSig))
+							findx_pattern(data, dataType, i + 66, length, &OSClearContextSigs[0]))
 							SelectThreadSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i + 76, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i + 77, length, &OSEnableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 81, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 86, length, &OSClearContextSigs[1]) &&
-							find_pattern_after(data, length, &fp, &__OSRescheduleSig))
+							findx_pattern(data, dataType, i + 86, length, &OSClearContextSigs[1]))
 							SelectThreadSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
 						if (findx_pattern(data, dataType, i + 81, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i + 82, length, &OSEnableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 86, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 91, length, &OSClearContextSigs[1]) &&
-							find_pattern_after(data, length, &fp, &__OSRescheduleSig))
+							findx_pattern(data, dataType, i + 91, length, &OSClearContextSigs[1]))
 							SelectThreadSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i + 82, length, &OSSetCurrentContextSig) &&
 							findx_pattern(data, dataType, i + 83, length, &OSEnableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 87, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 93, length, &OSClearContextSigs[2]) &&
-							find_pattern_after(data, length, &fp, &__OSRescheduleSig))
+							findx_pattern(data, dataType, i + 93, length, &OSClearContextSigs[2]))
 							SelectThreadSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -2990,92 +2997,28 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		if (SelectThread) {
 			switch (j) {
 				case 0:
-					data[i + 12] = branchAndLink(TRICKLE_READ, SelectThread + 12);
-					data[i + 13] = 0x480001A0;	// b		+104
 					data[i + 58] = branchAndLink(IDLE_THREAD, SelectThread + 58);
 					data[i + 61] = 0x4182FFF4;	// beq		-3
 					break;
 				case 1:
-					data[i + 12] = branchAndLink(TRICKLE_READ, SelectThread + 12);
-					data[i + 13] = 0x4800019C;	// b		+103
 					data[i + 57] = branchAndLink(IDLE_THREAD, SelectThread + 57);
 					data[i + 60] = 0x4182FFF4;	// beq		-3
 					break;
 				case 2:
-					data[i + 11] = branchAndLink(TRICKLE_READ, SelectThread + 11);
-					data[i + 12] = 0x480001B4;	// b		+109
 					data[i + 77] = branchAndLink(IDLE_THREAD, SelectThread + 77);
 					data[i + 80] = 0x4182FFF4;	// beq		-3
 					break;
 				case 3:
-					data[i + 11] = branchAndLink(TRICKLE_READ, SelectThread + 11);
-					data[i + 12] = 0x480001DC;	// b		+119
 					data[i + 82] = branchAndLink(IDLE_THREAD, SelectThread + 82);
 					data[i + 85] = 0x4182FFF4;	// beq		-3
 					break;
 				case 4:
-					data[i +  8] = branchAndLink(TRICKLE_READ, SelectThread +  8);
-					data[i +  9] = 0x480001F8;	// b		+126
 					data[i + 83] = branchAndLink(IDLE_THREAD, SelectThread + 83);
 					data[i + 86] = 0x4182FFF4;	// beq		-3
 					break;
 			}
-			if (!hasRaceHazard) {
-				switch (j) {
-					case 0:
-						data[i + 20] = branchAndLink(TRICKLE_READ, SelectThread + 20);
-						data[i + 21] = 0x48000180;	// b		+96
-						data[i + 48] = branchAndLink(TRICKLE_READ, SelectThread + 48);
-						data[i + 49] = 0x48000110;	// b		+68
-						break;
-					case 1:
-						data[i + 20] = branchAndLink(TRICKLE_READ, SelectThread + 20);
-						data[i + 21] = 0x4800017C;	// b		+95
-						data[i + 48] = branchAndLink(TRICKLE_READ, SelectThread + 48);
-						data[i + 49] = 0x4800010C;	// b		+67
-						break;
-					case 2:
-						data[i + 19] = branchAndLink(TRICKLE_READ, SelectThread + 19);
-						data[i + 20] = 0x48000194;	// b		+101
-						data[i + 67] = branchAndLink(TRICKLE_READ, SelectThread + 67);
-						data[i + 68] = 0x480000D4;	// b		+53
-						break;
-					case 3:
-						data[i + 19] = branchAndLink(TRICKLE_READ, SelectThread + 19);
-						data[i + 20] = 0x480001BC;	// b		+111
-						data[i + 67] = branchAndLink(TRICKLE_READ, SelectThread + 67);
-						data[i + 68] = 0x480000FC;	// b		+63
-						break;
-					case 4:
-						data[i + 15] = branchAndLink(TRICKLE_READ, SelectThread + 15);
-						data[i + 16] = 0x480001DC;	// b		+119
-						data[i + 66] = branchAndLink(TRICKLE_READ, SelectThread + 66);
-						data[i + 67] = 0x48000110;	// b		+68
-						break;
-				}
-			}
 			print_gecko("Found:[%s] @ %08X\n", SelectThreadSigs[j].Name, SelectThread);
 			patched++;
-		}
-		
-		if ((i = __OSRescheduleSig.offsetFoundAt)) {
-			u32 *__OSReschedule = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			
-			if (__OSReschedule && SelectThread) {
-				if (!hasRaceHazard) {
-					data[i + 0] = data[i + 3];
-					data[i + 1] = data[i + 4];
-					data[i + 2] = data[i + 5];
-					data[i + 3] = data[i + 6];
-					data[i + 4] = branch(SelectThread, __OSReschedule + 4);
-					data[i + 5] = branch(TRICKLE_READ, __OSReschedule + 5);
-					
-					for (k = 6; k < __OSRescheduleSig.Length; k++)
-						data[i + k] = 0;
-				}
-				print_gecko("Found:[%s] @ %08X\n", __OSRescheduleSig.Name, __OSReschedule);
-				patched++;
-			}
 		}
 	}
 	
@@ -4332,34 +4275,6 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", DVDCheckDiskSigs[j].Name, DVDCheckDisk);
-			patched++;
-		}
-	}
-	
-	for (j = 0; j < sizeof(__DVDPopWaitingQueueSigs) / sizeof(FuncPattern); j++)
-		if (__DVDPopWaitingQueueSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__DVDPopWaitingQueueSigs) / sizeof(FuncPattern) && (i = __DVDPopWaitingQueueSigs[j].offsetFoundAt)) {
-		u32 *__DVDPopWaitingQueue = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (__DVDPopWaitingQueue) {
-			data[i + __DVDPopWaitingQueueSigs[j].Length - 1] = branch(SET_BREAKPOINT, __DVDPopWaitingQueue + __DVDPopWaitingQueueSigs[j].Length - 1);
-			
-			print_gecko("Found:[%s] @ %08X\n", __DVDPopWaitingQueueSigs[j].Name, __DVDPopWaitingQueue);
-			patched++;
-		}
-	}
-	
-	for (j = 0; j < sizeof(__DVDCheckWaitingQueueSigs) / sizeof(FuncPattern); j++)
-		if (__DVDCheckWaitingQueueSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__DVDCheckWaitingQueueSigs) / sizeof(FuncPattern) && (i = __DVDCheckWaitingQueueSigs[j].offsetFoundAt)) {
-		u32 *__DVDCheckWaitingQueue = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (__DVDCheckWaitingQueue) {
-			data[i + __DVDCheckWaitingQueueSigs[j].Length - 1] = branch(UNSET_BREAKPOINT, __DVDCheckWaitingQueue + __DVDCheckWaitingQueueSigs[j].Length - 1);
-			
-			print_gecko("Found:[%s] @ %08X\n", __DVDCheckWaitingQueueSigs[j].Name, __DVDCheckWaitingQueue);
 			patched++;
 		}
 	}
@@ -8092,38 +8007,6 @@ int Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int da
 				patched++;
 				break;
 		}
-	} else if (!strncmp(gameID, "DVJP08", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 2556736:
-				if (devices[DEVICE_CUR] != &__device_fsp) {
-					// Trap busy-wait for 60Hz periodic alarm.
-					*(u32 *)(data + 0x8000B810 - 0x80003480 + 0x480) = 0x0F800000;
-					
-					*(u32 *)(data + 0x800E14B4 - 0x80003480 + 0x480) = 0x0F800000;
-					
-					*(u32 *)(data + 0x800E4B30 - 0x80003480 + 0x480) = 0x0F800000;
-					*(u32 *)(data + 0x800E4B3C - 0x80003480 + 0x480) = 0x0CE00001;
-				}
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "G2VP08", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 3240352:
-				if (devices[DEVICE_CUR] != &__device_fsp) {
-					// Trap busy-wait for 60Hz periodic alarm.
-					*(u32 *)(data + 0x801E0088 - 0x800034A0 + 0x4A0) = 0x0F800000;
-					
-					*(u32 *)(data + 0x801FD784 - 0x800034A0 + 0x4A0) = 0x0F800000;
-					
-					*(u32 *)(data + 0x80200EAC - 0x800034A0 + 0x4A0) = 0x0F800000;
-					*(u32 *)(data + 0x80200EB8 - 0x800034A0 + 0x4A0) = 0x0CE00001;
-				}
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
 	} else if ((!strncmp(gameID, "G3FD69", 6) || !strncmp(gameID, "G3FE69", 6) || !strncmp(gameID, "G3FF69", 6) || !strncmp(gameID, "G3FP69", 6) || !strncmp(gameID, "G3FS69", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4880320:
@@ -8421,38 +8304,6 @@ int Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int da
 				*(u32 *)(data + 0x80004B04 - 0x80003100 + 0x100) = 0x60000000;
 				*(u32 *)(data + 0x80004B08 - 0x80003100 + 0x100) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GVCP08", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 3041312:
-				if (devices[DEVICE_CUR] != &__device_fsp) {
-					// Trap busy-wait for 60Hz periodic alarm.
-					*(u32 *)(data + 0x801E0740 - 0x800034A0 + 0x4A0) = 0x0F800000;
-					
-					*(u32 *)(data + 0x801FBA2C - 0x800034A0 + 0x4A0) = 0x0F800000;
-					
-					*(u32 *)(data + 0x801FEFBC - 0x800034A0 + 0x4A0) = 0x0F800000;
-					*(u32 *)(data + 0x801FEFC8 - 0x800034A0 + 0x4A0) = 0x0CE00001;
-				}
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GVJP08", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 2568224:
-				if (devices[DEVICE_CUR] != &__device_fsp) {
-					// Trap busy-wait for 60Hz periodic alarm.
-					*(u32 *)(data + 0x8000BC20 - 0x80003480 + 0x480) = 0x0F800000;
-					
-					*(u32 *)(data + 0x800E1D34 - 0x80003480 + 0x480) = 0x0F800000;
-					
-					*(u32 *)(data + 0x800E5384 - 0x80003480 + 0x480) = 0x0F800000;
-					*(u32 *)(data + 0x800E5390 - 0x80003480 + 0x480) = 0x0CE00001;
-				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;

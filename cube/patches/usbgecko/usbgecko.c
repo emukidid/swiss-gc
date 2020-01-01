@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "../alt/timer.h"
 #include "../base/common.h"
 #include "../base/exi.h"
 #include "../base/os.h"
@@ -195,6 +196,8 @@ void perform_read(uint32_t offset, uint32_t length, uint32_t address)
 
 	if (!is_frag_read(offset, length))
 		usb_request(offset, length);
+
+	timer1_start(0);
 }
 
 void trickle_read(void)
@@ -204,15 +207,12 @@ void trickle_read(void)
 	uint8_t *data      = *(uint8_t **)VAR_TMP1;
 	uint32_t data_size;
 
-	tb_t end;
-	mftb(&end);
-
 	if (remainder) {
-		int frag = is_frag_read(position, remainder);
-		if (frag)
-			data_size = read_frag(data, remainder, position);
-		else
-			data_size = usb_receive(data, remainder, 0);
+		OSTick start = OSGetTick();
+		bool frag = is_frag_read(position, remainder);
+		data_size = frag ? read_frag(data, remainder, position)
+		                 : usb_receive(data, remainder, 0);
+		OSTick end = OSGetTick();
 
 		position  += data_size;
 		remainder -= data_size;
@@ -223,21 +223,26 @@ void trickle_read(void)
 
 		dcache_store(data, data_size);
 
-		if (!remainder) di_complete_transfer();
-		else if (frag && !is_frag_read(position, remainder))
-			usb_request(position, remainder);
-	} else if (*(uint32_t *)VAR_DISC_CHANGING) {
-		if (tb_diff_usec(&end, (tb_t *)VAR_TIMER_START) > 1000000) {
-			*(uint32_t *)VAR_CURRENT_DISC = !*(uint32_t *)VAR_CURRENT_DISC;
-			*(uint32_t *)VAR_DISC_CHANGING = false;
+		if (!remainder) {
+			di_complete_transfer();
+		} else {
+			if (frag && !is_frag_read(position, remainder))
+				usb_request(position, remainder);
 
-			usb_unlock_file();
-
-			if (usb_serve_file() && usb_lock_file()) {
-				(*DI_EMU)[1] &= ~0b001;
-				(*DI_EMU)[1] |=  0b100;
-				di_update_interrupts();
-			}
+			timer1_start(OSDiffTick(end, start));
 		}
+	}
+}
+
+void change_disc(void)
+{
+	usb_unlock_file();
+
+	*(uint32_t *)VAR_CURRENT_DISC = !*(uint32_t *)VAR_CURRENT_DISC;
+
+	if (usb_serve_file() && usb_lock_file()) {
+		(*DI_EMU)[1] &= ~0b001;
+		(*DI_EMU)[1] |=  0b100;
+		di_update_interrupts();
 	}
 }

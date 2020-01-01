@@ -6,12 +6,14 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include "timer.h"
 #include "../base/common.h"
 #include "../base/dvd.h"
 #include "../base/os.h"
 
 void perform_read(uint32_t offset, uint32_t length, uint32_t address);
 void trickle_read(void);
+void change_disc(void);
 
 void di_update_interrupts(void)
 {
@@ -26,8 +28,6 @@ void di_update_interrupts(void)
 
 void di_complete_transfer(void)
 {
-	disable_breakpoint();
-
 	(*DI_EMU)[0] |=  0b0010000;
 	(*DI_EMU)[6]  =  0;
 	(*DI_EMU)[7] &= ~0b001;
@@ -42,14 +42,13 @@ static void di_execute_command(void)
 		case 0xA8:
 		{
 			if (!((*DI_EMU)[1] & 0b001)) {
-				uint32_t offset  = (*DI_EMU)[3] << 2;
+				uint32_t offset  = (*DI_EMU)[3] << 2 & ~0x80000000;
 				uint32_t length  = (*DI_EMU)[6];
 				uint32_t address = (*DI_EMU)[5];
 
 				offset |= *(uint32_t *)VAR_CURRENT_DISC * 0x80000000;
 
 				perform_read(offset, length, address);
-				enable_breakpoint();
 			} else {
 				(*DI_EMU)[0] |=  0b0000100;
 				(*DI_EMU)[7] &= ~0b001;
@@ -67,8 +66,7 @@ static void di_execute_command(void)
 		{
 			if (*(uint32_t *)VAR_SECOND_DISC) {
 				(*DI_EMU)[1] |= 0b001;
-				mftb((tb_t *)VAR_TIMER_START);
-				*(uint32_t *)VAR_DISC_CHANGING = true;
+				timer2_start(OSSecondsToTicks(1));
 			}
 			break;
 		}
@@ -201,12 +199,6 @@ void service_exception(OSException exception, OSContext *context, uint32_t dsisr
 		{
 			handler = OSGetExceptionHandler(OS_EXCEPTION_USER);
 
-			if ((dsisr & 0x400000) == 0x400000) {
-				disable_breakpoint();
-				trickle_read();
-				context->srr1 |= 0x400;
-				break;
-			}
 			if (ppc_step(context)) {
 				context->srr0 += 4;
 				break;
@@ -220,29 +212,23 @@ void service_exception(OSException exception, OSContext *context, uint32_t dsisr
 				return;
 			}
 		}
-		#ifndef BBA
-		case OS_EXCEPTION_PROGRAM:
-		{
-			uint32_t opcode = *(uint32_t *)context->srr0;
-
-			switch (opcode >> 26) {
-				case 3:
-				{
-					trickle_read();
-					context->srr0 += 4;
-
-					*load_context_end = 0x28000000 | (opcode & 0x1FFFFF);
-					asm volatile("dcbst 0,%0; sync; icbi 0,%0" :: "r" (load_context_end));
-					load_context();
-					return;
-				}
-			}
-		}
-		#endif
 		default:
 		{
 			handler = *OSExceptionHandlerTable;
 			if (handler) (handler + 0x50)(exception, context, dsisr, dar);
+			break;
+		}
+		case OS_EXCEPTION_PERFORMANCE_MONITOR:
+		{
+			if (timer1_interrupt()) {
+				timer1_stop();
+				trickle_read();
+			}
+			if (timer2_interrupt()) {
+				timer2_stop();
+				change_disc();
+			}
+			break;
 		}
 	}
 
@@ -281,25 +267,11 @@ void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
 	OSSetExceptionHandler(OS_EXCEPTION_DSI, exception_handler);
-	OSSetExceptionHandler(OS_EXCEPTION_PROGRAM, exception_handler);
 	OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
 	#ifdef BBA
 	OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
 	#endif
 	return OSSetInterruptHandler(interrupt, handler);
-}
-
-DVDCommandBlock *set_breakpoint(DVDCommandBlock *block)
-{
-	uint32_t dabr = (uint32_t)&block->state & ~0b111;
-	asm volatile("mtdabr %0" :: "r" (dabr | 0b100));
-	return block;
-}
-
-bool unset_breakpoint(bool queued)
-{
-	asm volatile("mtdabr %0" :: "r" (0));
-	return queued;
 }
 
 void idle_thread(void)

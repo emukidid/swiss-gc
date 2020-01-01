@@ -7,9 +7,9 @@
 #include "../../reservedarea.h"
 
 .section .text
-	.balign 0x100
-	.globl system_call_vector
-system_call_vector:
+	.org 0x80000C00 - 0x80000C00
+	.globl system_call_exception
+system_call_exception:
 	mfhid0	r9
 	ori		r10, r9, 0x8
 	mthid0	r10
@@ -82,24 +82,19 @@ load_context_end:
 	nop
 	rfi
 
-	.balign 0x100
-	.globl trace_exception_vector
-trace_exception_vector:
-	mtsprg	0, r0
-	mfcr	r0
-	mtsprg	1, r0
-	mfdabr	r0
-	cmplwi	r0, 0
-	beq		1f
-	ori		r0, r0, 1
-	mtdabr	r0
-1:	mfsprg	r0, 1
-	mtcr	r0
-	mfsrr1	r0
-	rlwinm	r0, r0, 0, 23, 20
-	mtsrr1	r0
-	mfsprg	r0, 0
+	.org 0x80000D00 - 0x80000C00
+	.globl trace_exception
+trace_exception:
 	rfi
+
+	.globl _start
+_start:
+	b		exi_probe
+	b		exi_trylock
+	b		set_di_handler
+	b		idle_thread
+	b		check_pad
+	b		igr_exit
 
 	.globl realmode
 realmode:
@@ -110,18 +105,6 @@ realmode:
 	rlwinm	r3, r3, 0, 28, 25
 	mtsrr1	r3
 	rfi
-
-	.globl _start
-_start:
-	b		exi_probe
-	b		exi_trylock
-	b		set_di_handler
-	b		set_breakpoint
-	b		unset_breakpoint
-	b		idle_thread
-	b		trickle_read
-	b		check_pad
-	b		igr_exit
 
 	.globl dcache_flush_icache_inv
 dcache_flush_icache_inv:
@@ -152,3 +135,42 @@ dcache_store:
 	addi	r3, r3, 32
 	bdnz	1b
 	blr
+
+#include "../base/memcpy.S"
+
+	.org 0x80000F00 - 0x80000C00 - 0x80
+	.globl performance_monitor_interrupt
+performance_monitor_interrupt:
+	mtsprg	0, r4
+	lwz		r4, 192 (r0)
+	stw		r3, 12 (r4)
+	mfsprg	r3, 0
+	stw		r3, 16 (r4)
+	stw		r5, 20 (r4)
+	lhz		r3, 418 (r4)
+	ori		r3, r3, 0x2
+	sth		r3, 418 (r4)
+	mfcr	r3
+	stw		r3, 128 (r4)
+	mflr	r3
+	stw		r3, 132 (r4)
+	mfctr	r3
+	stw		r3, 136 (r4)
+	mfxer	r3
+	stw		r3, 140 (r4)
+	mfsrr0	r3
+	stw		r3, 408 (r4)
+	mfsrr1	r3
+	stw		r3, 412 (r4)
+	mr		r5, r3
+	nop
+	mfmsr	r3
+	ori		r3, r3, 0x30
+	mtsrr1	r3
+	li		r3, 11
+	lwz		r4, 212 (r0)
+	lis		r5, exception_handler@ha
+	addi	r5, r5, exception_handler@l
+	mtsrr0	r5
+	rfi
+	b		performance_monitor_interrupt

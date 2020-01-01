@@ -72,9 +72,8 @@ build-sd-alt:
 	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=2
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
-	@$(CC) -O2 $(OPTS) -c base/memcpy.S
 	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o sd_alt.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o blockdevice.o sd.o frag.o usbgecko.o memcpy.o os.o --gc-sections
+	@$(LD) -o sd_alt.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o blockdevice.o sd.o frag.o usbgecko.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D sd_alt.elf > $(DISASM)/sd_alt_disasm.txt
 	@$(OBJCOPY) -O binary sd_alt.elf sd_alt.bin
@@ -114,9 +113,8 @@ build-ideexi-altv1:
 	@$(CC) -O2 $(OPTS) -c ide-exi/hddread.c -DDMA_READ=0 -DSINGLE_SECTOR=1
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
-	@$(CC) -O2 $(OPTS) -c base/memcpy.S
 	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o ideexi_altv1.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o blockdevice.o hddread.o frag.o usbgecko.o memcpy.o os.o --gc-sections
+	@$(LD) -o ideexi_altv1.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o blockdevice.o hddread.o frag.o usbgecko.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_altv1.elf > $(DISASM)/ideexi_altv1_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_altv1.elf ideexi_altv1.bin
@@ -156,9 +154,8 @@ build-ideexi-altv2:
 	@$(CC) -O2 $(OPTS) -c ide-exi/hddread.c -DDMA_READ=1 -DSINGLE_SECTOR=1
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
-	@$(CC) -O2 $(OPTS) -c base/memcpy.S
 	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o ideexi_altv2.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o blockdevice.o hddread.o frag.o usbgecko.o memcpy.o os.o --gc-sections
+	@$(LD) -o ideexi_altv2.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o blockdevice.o hddread.o frag.o usbgecko.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_altv2.elf > $(DISASM)/ideexi_altv2_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_altv2.elf ideexi_altv2.bin
@@ -193,9 +190,8 @@ build-usb:
 	@$(CC) -O2 $(OPTS) -c usbgecko/usbgecko.c
 	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -O2 $(OPTS) -c base/frag.c
-	@$(CC) -O2 $(OPTS) -c base/memcpy.S
 	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o usbgecko.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o usbgecko.o sd.o frag.o memcpy.o os.o --gc-sections
+	@$(LD) -o usbgecko.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o usbgecko.o sd.o frag.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
@@ -231,9 +227,8 @@ build-bba:
 	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -O2 $(OPTS) -c base/frag.c
 	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
-	@$(CC) -O2 $(OPTS) -c base/memcpy.S
 	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o bba.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o bba.o usbgecko.o sd.o frag.o memcpy.o os.o --gc-sections
+	@$(LD) -o bba.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o bba.o usbgecko.o sd.o frag.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D bba.elf > $(DISASM)/bba_disasm.txt
 	@$(OBJCOPY) -O binary bba.elf bba.bin

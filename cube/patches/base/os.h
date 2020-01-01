@@ -15,6 +15,45 @@
 #define OSUncachedToCached(ucaddr)   ((void *)(ucaddr) - (OS_BASE_UNCACHED - OS_BASE_CACHED))
 #define OSCachedToMirrored(caddr)    ((void *)(caddr) + (OS_BASE_MIRRORED - OS_BASE_CACHED))
 
+typedef s64 OSTime;
+typedef u32 OSTick;
+
+#define OS_CORE_CLOCK  486000000
+#define OS_BUS_CLOCK   162000000
+#define OS_TIMER_CLOCK (OS_BUS_CLOCK / 4)
+
+#define OSTicksToCycles(ticks)       (((ticks) * ((OS_CORE_CLOCK * 2) / OS_TIMER_CLOCK)) / 2)
+#define OSTicksToSeconds(ticks)      ((ticks) / OS_TIMER_CLOCK)
+#define OSTicksToMilliseconds(ticks) ((ticks) / (OS_TIMER_CLOCK / 1000))
+#define OSTicksToMicroseconds(ticks) (((ticks) * 8) / (OS_TIMER_CLOCK / 125000))
+#define OSTicksToNanoseconds(ticks)  (((ticks) * 8000) / (OS_TIMER_CLOCK / 125000))
+#define OSSecondsToTicks(sec)        ((sec)  * OS_TIMER_CLOCK)
+#define OSMillisecondsToTicks(msec)  ((msec) * (OS_TIMER_CLOCK / 1000))
+#define OSMicrosecondsToTicks(usec)  (((usec) * (OS_TIMER_CLOCK / 125000)) / 8)
+#define OSNanosecondsToTicks(nsec)   (((nsec) * (OS_TIMER_CLOCK / 125000)) / 8000)
+
+#define OSDiffTick(tick1, tick0) ((s32)(tick1) - (s32)(tick0))
+
+static OSTick OSGetTick(void)
+{
+	OSTick ticks;
+	asm volatile("mftb %0" : "=r" (ticks));
+	return ticks;
+}
+
+static OSTime OSGetTime(void)
+{
+	u32 u32[3];
+
+	do {
+		asm volatile("mftbu %0" : "=r" (u32[0]));
+		asm volatile("mftbl %0" : "=r" (u32[1]));
+		asm volatile("mftbu %0" : "=r" (u32[2]));
+	} while (u32[0] != u32[2]);
+
+	return (OSTime)u32[0] << 32 | u32[1];
+}
+
 typedef struct {
 	u32 gpr[32];
 	u32 cr, lr, ctr, xer;

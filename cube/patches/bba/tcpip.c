@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include "../alt/timer.h"
 #include "../base/common.h"
 #include "bba.h"
 #include "globals.h"
@@ -186,7 +187,9 @@ static void fsp_get_file(uint32_t offset, size_t size)
 	eth->type = ETH_TYPE_IPV4;
 
 	if (bba_transmit(eth, sizeof(*eth) + ipv4->length))
-		mftb(_start);
+		*_start = OSGetTime();
+
+	timer1_start(OSSecondsToTicks(1));
 }
 
 void di_complete_transfer(void);
@@ -269,9 +272,14 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 					*_data = data + data_size;
 					*_data_size = 0;
 
-					if (!remainder) di_complete_transfer();
-					else if (!is_frag_read(position, remainder))
-						fsp_get_file(position, remainder);
+					if (!remainder) {
+						di_complete_transfer();
+					} else {
+						if (!is_frag_read(position, remainder))
+							fsp_get_file(position, remainder);
+						else
+							timer1_start(0);
+					}
 				}
 
 				if (!*_received) {
