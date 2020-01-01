@@ -68,11 +68,19 @@ s32 deviceHandler_GCLOADER_writeFile(file_handle* file, void* buffer, u32 length
 s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	
 	// GCLoader disc/file fragment setup
-	s32 fragListSize = (3 * 4) * (MAX_GCLOADER_FRAGS_PER_DISC*2);
-	vu32 *discFragList = (vu32*)memalign(32, fragListSize);
-	s32 disc1Frags, disc2Frags, maxDiscFrags = (!file2 ? MAX_GCLOADER_FRAGS_PER_DISC : MAX_GCLOADER_FRAGS_PER_DISC>>1);
+	s32 maxDiscFrags = MAX_GCLOADER_FRAGS_PER_DISC;
+	u32 discFragList[maxDiscFrags*3];
+	s32 disc1Frags = 0, disc2Frags = 0;
 
-	memset((void*)discFragList, 0, fragListSize);
+	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
+	if(file2) {
+		if(!(disc2Frags = getFragments(file2, &discFragList[0], maxDiscFrags, 0, DISC_SIZE, DEVICE_CUR))) {
+			return 0;
+		}
+	}
+
+	// write disc 2 frags
+	gcloaderWriteFrags(1, &discFragList[0], disc2Frags);
 
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
 	if(!(disc1Frags = getFragments(file, &discFragList[0], maxDiscFrags, 0, DISC_SIZE, DEVICE_CUR))) {
@@ -81,16 +89,6 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 	
 	// write disc 1 frags
     gcloaderWriteFrags(0, &discFragList[0], disc1Frags);
-	
-	
-	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
-	if(file2) {
-		memset((void*)discFragList, 0, fragListSize);
-		if(!(disc2Frags = getFragments(file2, &discFragList[0], maxDiscFrags, 0, DISC_SIZE, DEVICE_CUR))) {
-			return 0;
-		}
-        gcloaderWriteFrags(1, &discFragList[0], disc2Frags);
-	}
 	
     // set disc 1 as active disc
     gcloaderWriteDiscNum(0);
@@ -210,7 +208,7 @@ s32 deviceHandler_GCLOADER_closeFile(file_handle* file) {
 }
 
 bool deviceHandler_GCLOADER_test() {
-	return swissSettings.hasDVDDrive && (gcloaderReadId() != 0 && gcloaderReadId() != 0xFFFFFFFF);
+	return swissSettings.hasDVDDrive && (*(u32*)&driveVersion[0] == 0x20196C64);
 }
 
 DEVICEHANDLER_INTERFACE __device_gcloader = {

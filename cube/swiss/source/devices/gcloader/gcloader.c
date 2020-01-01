@@ -93,12 +93,7 @@ static bool __gcloader_shutdown(void)
 }
 
 u32 gcloaderReadId() {
-	return __gcloaderCmdImm(0xB0000000, 0xE0009F00, 0x00000000);
-}
-
-// Write the base offset to base all reads from
-void gcloaderWriteOffset(u32 offset) {
-	__gcloaderCmdImm(0xB3000000, offset, 0x00000000);
+	return __gcloaderCmdImm(0xB0000000, 0x00000000, 0x00000000);
 }
 
 void gcloaderWriteFrags(u32 discNum, vu32 *fragList, u32 totFrags) {
@@ -116,7 +111,7 @@ void gcloaderWriteFrags(u32 discNum, vu32 *fragList, u32 totFrags) {
 
 
 void gcloaderWriteDiscNum(u32 discNum) {
-	__gcloaderCmdImm(0xB3000002, 0, discNum);
+	__gcloaderCmdImm(0xB3000002, discNum, 0x00000000);
 }
 
 
