@@ -35,7 +35,7 @@ DSTATUS disk_status (
 		return STA_NOINIT;
 
 	if (disk_isInit[pdrv]) {
-		return (driver[pdrv]->isInserted() ? FR_OK : STA_NODISK);
+		return (driver[pdrv]->isInserted() ? 0 : STA_NODISK | STA_NOINIT);
 	}
 
 	// Disk isn't initialized.
@@ -60,7 +60,7 @@ DSTATUS disk_initialize (
 			return STA_NOINIT;
 	}
 	if (!driver[pdrv]->isInserted())
-		return STA_NODISK;
+		return STA_NODISK | STA_NOINIT;
 
 	// Initialize the disk cache.
 	// libfat/source/common.h:
