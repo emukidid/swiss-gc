@@ -1071,18 +1071,6 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		{ 56, 23, 5, 5, 9, 3, NULL, 0, "cbForStateMotorStopped B" },	// SN Systems ProDG
 		{ 59, 23, 7, 5, 9, 3, NULL, 0, "cbForStateMotorStopped C" }
 	};
-	FuncPattern stateReadySigs[10] = {
-		{ 103, 42, 19, 11, 14, 4, NULL, 0, "stateReadyD A" },
-		{  99, 36, 17,  9, 21, 2, NULL, 0, "stateReadyD B" },
-		{ 101, 35, 16, 10, 22, 2, NULL, 0, "stateReadyD C" },
-		{ 125, 49, 18, 13, 21, 4, NULL, 0, "stateReady A" },
-		{ 146, 58, 20, 16, 23, 5, NULL, 0, "stateReady B" },
-		{ 183, 65, 20, 19, 40, 4, NULL, 0, "stateReady C" },
-		{ 138, 50, 17, 14, 30, 3, NULL, 0, "stateReady D" },	// SN Systems ProDG
-		{ 140, 50, 18, 14, 30, 3, NULL, 0, "stateReady D" },
-		{ 138, 49, 17, 14, 30, 3, NULL, 0, "stateReady E" },
-		{ 186, 66, 20, 19, 40, 4, NULL, 0, "stateReady F" }
-	};
 	FuncPattern stateBusySigs[11] = {
 		{ 182, 112, 22, 15, 17, 10, NULL, 0, "stateBusyD A" },
 		{ 182, 112, 22, 15, 17, 10, NULL, 0, "stateBusyD B" },
@@ -1139,18 +1127,6 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		{ 16, 3, 3, 0, 2, 0, NULL, 0, "__DVDClearWaitingQueueD" },
 		{ 14, 5, 8, 0, 0, 0, NULL, 0, "__DVDClearWaitingQueue" },
 		{ 14, 5, 8, 0, 0, 0, NULL, 0, "__DVDClearWaitingQueue" }	// SN Systems ProDG
-	};
-	FuncPattern __DVDPopWaitingQueueSigs[4] = {
-		{ 31,  6, 2, 4, 4, 4, NULL, 0, "__DVDPopWaitingQueueD" },
-		{ 39, 15, 7, 4, 2, 5, NULL, 0, "__DVDPopWaitingQueue A" },
-		{ 40, 15, 7, 5, 2, 5, NULL, 0, "__DVDPopWaitingQueue B" },
-		{ 40, 15, 7, 5, 2, 5, NULL, 0, "__DVDPopWaitingQueue B" }	// SN Systems ProDG
-	};
-	FuncPattern __DVDCheckWaitingQueueSigs[4] = {
-		{ 30, 7, 2, 3, 4, 4, NULL, 0, "__DVDCheckWaitingQueueD" },
-		{ 31, 8, 2, 2, 8, 6, NULL, 0, "__DVDCheckWaitingQueue A" },
-		{ 22, 9, 2, 3, 2, 4, NULL, 0, "__DVDCheckWaitingQueue B" },
-		{ 22, 9, 2, 3, 2, 4, NULL, 0, "__DVDCheckWaitingQueue B" }	// SN Systems ProDG
 	};
 	FuncPattern __DVDDequeueWaitingQueueSigs[3] = {
 		{ 29, 8, 4, 3, 2, 6, NULL, 0, "__DVDDequeueWaitingQueueD" },
@@ -2215,92 +2191,6 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 						if (findi_pattern(data, dataType, i + 2, i + 4, length, &cbForStateMotorStoppedSigs[3]) &&
 							findx_pattern(data, dataType, i + 3, length, &DVDLowWaitCoverCloseSigs[4]))
 							stateMotorStoppedSigs[j].offsetFoundAt = i;
-						break;
-				}
-			}
-		}
-		
-		for (j = 0; j < sizeof(stateReadySigs) / sizeof(FuncPattern); j++) {
-			if (compare_pattern(&fp, &stateReadySigs[j])) {
-				switch (j) {
-					case 0:
-						if (findx_pattern(data, dataType, i +   4, length, &__DVDCheckWaitingQueueSigs[0]) &&
-							findx_pattern(data, dataType, i +  18, length, &__DVDPopWaitingQueueSigs[0]) &&
-							findx_pattern(data, dataType, i +  38, length, &fp))
-							stateReadySigs[j].offsetFoundAt = i;
-						break;
-					case 1:
-						if (findx_pattern(data, dataType, i +   4, length, &__DVDCheckWaitingQueueSigs[0]) &&
-							findx_pattern(data, dataType, i +  18, length, &__DVDPopWaitingQueueSigs[0]) &&
-							findx_pattern(data, dataType, i +  38, length, &fp))
-							stateReadySigs[j].offsetFoundAt = i;
-						break;
-					case 2:
-						if (findx_pattern(data, dataType, i +   4, length, &__DVDCheckWaitingQueueSigs[0]) &&
-							findx_pattern(data, dataType, i +  18, length, &__DVDPopWaitingQueueSigs[0]) &&
-							findx_pattern(data, dataType, i +  38, length, &fp))
-							stateReadySigs[j].offsetFoundAt = i;
-						break;
-					case 3:
-						if (findx_pattern(data, dataType, i +   4, length, &__DVDCheckWaitingQueueSigs[1]) &&
-							findx_pattern(data, dataType, i +  18, length, &__DVDPopWaitingQueueSigs[1]) &&
-							findx_pattern(data, dataType, i +  79, length, &__DVDClearWaitingQueueSigs[1]) &&
-							findx_pattern(data, dataType, i +  87, length, &fp))
-							stateReadySigs[j].offsetFoundAt = i;
-						break;
-					case 4:
-						if (findx_patterns(data, dataType, i +   6, length, &__DVDCheckWaitingQueueSigs[1],
-							                                                &__DVDCheckWaitingQueueSigs[2], NULL) &&
-							findx_patterns(data, dataType, i +  20, length, &__DVDPopWaitingQueueSigs[1],
-							                                                &__DVDPopWaitingQueueSigs[2], NULL) &&
-							findx_pattern (data, dataType, i +  37, length, &fp) &&
-							findx_pattern (data, dataType, i +  98, length, &__DVDClearWaitingQueueSigs[1]) &&
-							findx_pattern (data, dataType, i + 108, length, &fp))
-							stateReadySigs[j].offsetFoundAt = i;
-						break;
-					case 5:
-						if (findx_pattern(data, dataType, i +   6, length, &__DVDCheckWaitingQueueSigs[2]) &&
-							findx_pattern(data, dataType, i +  20, length, &__DVDPopWaitingQueueSigs[2]) &&
-							findx_pattern(data, dataType, i +  37, length, &fp) &&
-							findx_pattern(data, dataType, i +  74, length, &__DVDClearWaitingQueueSigs[1]) &&
-							findx_pattern(data, dataType, i +  84, length, &fp) &&
-							findx_pattern(data, dataType, i + 135, length, &__DVDClearWaitingQueueSigs[1]) &&
-							findx_pattern(data, dataType, i + 145, length, &fp))
-							stateReadySigs[j].offsetFoundAt = i;
-						break;
-					case 6:
-						if (findx_pattern(data, dataType, i +   3, length, &__DVDCheckWaitingQueueSigs[3]) &&
-							findx_pattern(data, dataType, i +  17, length, &__DVDPopWaitingQueueSigs[3]) &&
-							findx_pattern(data, dataType, i +  34, length, &fp) &&
-							findx_pattern(data, dataType, i +  88, length, &__DVDClearWaitingQueueSigs[2]) &&
-							findx_pattern(data, dataType, i +  99, length, &fp))
-							stateReadySigs[j].offsetFoundAt = i;
-						break;
-					case 7:
-						if (findx_pattern(data, dataType, i +   6, length, &__DVDCheckWaitingQueueSigs[2]) &&
-							findx_pattern(data, dataType, i +  20, length, &__DVDPopWaitingQueueSigs[2]) &&
-							findx_pattern(data, dataType, i +  37, length, &fp) &&
-							findx_pattern(data, dataType, i +  92, length, &__DVDClearWaitingQueueSigs[1]) &&
-							findx_pattern(data, dataType, i + 102, length, &fp))
-							stateReadySigs[j].offsetFoundAt = i;
-						break;
-					case 8:
-						if (findx_pattern(data, dataType, i +   6, length, &__DVDCheckWaitingQueueSigs[2]) &&
-							findx_pattern(data, dataType, i +  20, length, &__DVDPopWaitingQueueSigs[2]) &&
-							findx_pattern(data, dataType, i +  37, length, &fp) &&
-							findx_pattern(data, dataType, i +  92, length, &__DVDClearWaitingQueueSigs[1]) &&
-							findx_pattern(data, dataType, i + 102, length, &fp))
-							stateReadySigs[j].offsetFoundAt = i;
-						break;
-					case 9:
-						if (findx_pattern(data, dataType, i +   6, length, &__DVDCheckWaitingQueueSigs[2]) &&
-							findx_pattern(data, dataType, i +  20, length, &__DVDPopWaitingQueueSigs[2]) &&
-							findx_pattern(data, dataType, i +  37, length, &fp) &&
-							findx_pattern(data, dataType, i +  92, length, &__DVDClearWaitingQueueSigs[1]) &&
-							findx_pattern(data, dataType, i + 102, length, &fp) &&
-							findx_pattern(data, dataType, i + 151, length, &__DVDClearWaitingQueueSigs[1]) &&
-							findx_pattern(data, dataType, i + 161, length, &fp))
-							stateReadySigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
