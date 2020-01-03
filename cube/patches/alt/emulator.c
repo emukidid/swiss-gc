@@ -228,6 +228,7 @@ void service_exception(OSException exception, OSContext *context, uint32_t dsisr
 				timer2_stop();
 				change_disc();
 			}
+			restore_timer_interrupts();
 			break;
 		}
 	}

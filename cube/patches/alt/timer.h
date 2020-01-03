@@ -53,7 +53,7 @@ static inline void timer1_start(uint32_t ticks)
 	mmcr0.dms = false;
 	mmcr0.dmr = false;
 	mmcr0.enint = true;
-	mmcr0.discount = true;
+	mmcr0.discount = false;
 	mmcr0.rtcselect = 0;
 	mmcr0.intonbittrans = false;
 	mmcr0.threshold = 0;
@@ -98,7 +98,7 @@ static inline void timer2_start(uint32_t ticks)
 	mmcr0.dms = false;
 	mmcr0.dmr = false;
 	mmcr0.enint = true;
-	mmcr0.discount = true;
+	mmcr0.discount = false;
 	mmcr0.rtcselect = 0;
 	mmcr0.intonbittrans = false;
 	mmcr0.threshold = 0;
@@ -126,6 +126,14 @@ static inline void timer2_stop(void)
 	mmcr0.pmc2select = 0;
 	asm volatile("mtmmcr0 %0" :: "r" (mmcr0.val));
 	asm volatile("mtpmc2 %0" :: "r" (0));
+}
+
+static inline void restore_timer_interrupts(void)
+{
+	union mmcr0 mmcr0;
+	asm volatile("mfmmcr0 %0" : "=r" (mmcr0.val));
+	mmcr0.enint = mmcr0.pmc1select || mmcr0.pmc2select;
+	asm volatile("mtmmcr0 %0" :: "r" (mmcr0.val));
 }
 
 #endif /* TIMER_H */
