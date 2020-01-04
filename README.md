@@ -11,15 +11,16 @@ Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
 
 ### Main Features
 **Can browse the following devices**
-- SD/SDHC/SDXC Card via SDGecko
-- DVD (-/+R) via Disc Drive
-- Qoob Pro flash memory
-- USB Gecko remote file storage
-- SD/SDHC via Wasp/WKF
-- Samba via BBA
-- Wode Jukebox
-- IDE-EXI
+- SDSC/SDHC/SDXC Card via [SDGecko](https://www.gc-forever.com/wiki/index.php?title=SDGecko) or [SD2SP2](https://github.com/citrus3000psi/SD2SP2)
+- DVD (-/+R) or original GameCube discs via Disc Drive
+- [Qoob Pro](https://www.gc-forever.com/wiki/index.php?title=Qoob) flash memory
+- [USB Gecko](https://www.gc-forever.com/wiki/index.php?title=USBGecko) remote file storage
+- [Wasp](https://www.gc-forever.com/wiki/index.php?title=WASP_Fusion) / [WKF](https://www.gc-forever.com/wiki/index.php?title=Wiikey_Fusion)
+- Samba, FSP, FTP via BBA
+- [Wode Jukebox](https://www.gc-forever.com/wiki/index.php?title=Wii_Optical_Drive_Emulator)
+- [IDE-EXI](https://www.gc-forever.com/wiki/index.php?title=Ide-exi)
 - Memory cards
+- [GCLoader](https://shop.dansprojects.com/gc-loader.html)
 
 ### Requirements
 - GameCube with controller
@@ -30,7 +31,9 @@ Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
 2. Copy the compressed Swiss DOL file found in the DOL folder to the device/medium you are using to boot homebrew.
 3. Launch Swiss, browse your device and load a DOL or GCM!
 
-If the above steps do not work, try using the non-compressed Swiss DOL file.
+Note: If the above steps do not work, try using the non-compressed Swiss DOL file.
+
+Another Note: Specific devices will have specific locations/executable file variants that need to be used, please check the documentation with those devices on where Swiss will need to be placed.
 
 ## Navigating Swiss
 ### Controls
