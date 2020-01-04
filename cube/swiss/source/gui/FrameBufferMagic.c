@@ -1051,7 +1051,7 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message
 			eventData->file->meta->banner = memalign(32, eventData->file->meta->bannerSize);
 			memcpy(eventData->file->meta->banner, file->meta->banner, eventData->file->meta->bannerSize);
 			// Make a copy cause we want this one to be killed off when the display event is disposed
-			if(eventData->file->meta->bannerSize == GCM_STD_BNR_SIZE) {
+			if(eventData->file->meta->bannerSize == BNR_PIXELDATA_LEN) {
 				meta_create_direct_texture(eventData->file->meta);
 			}
 		}

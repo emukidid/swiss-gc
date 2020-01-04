@@ -97,9 +97,9 @@ void populate_meta(file_handle *f) {
 						f->meta->regionTexId = TEX_NTSCU;
 					else if(region == 'P')
 						f->meta->regionTexId = TEX_PAL;
-					f->meta->banner = memalign(32,GCM_STD_BNR_SIZE);
-					memcpy(f->meta->banner,blankbanner+0x20,GCM_STD_BNR_SIZE);
-					f->meta->bannerSize = GCM_STD_BNR_SIZE;
+					f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
+					memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
+					f->meta->bannerSize = BNR_PIXELDATA_LEN;
 					meta_create_direct_texture(f->meta);
 				}
 				else {
@@ -108,36 +108,34 @@ void populate_meta(file_handle *f) {
 					devices[DEVICE_CUR]->readFile(f, header, sizeof(DiskHeader));
 					memcpy(&f->meta->diskId, header, sizeof(dvddiskid));
 					
-					if(header->DVDMagicWord == DVD_MAGIC) {
+					if(header->DVDMagicWord == DVD_MAGIC) {					
 						//print_gecko("FILE identifed as valid GCM\r\n");
 						unsigned int bannerOffset = getBannerOffset(f);
-						f->meta->banner = memalign(32,GCM_STD_BNR_SIZE);
+
+						f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
 						if(!bannerOffset) {
 							//print_gecko("Banner not found\r\n");
-							memcpy(f->meta->banner,blankbanner+0x20,GCM_STD_BNR_SIZE);
+							memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
 						}
 						else
 						{
-							devices[DEVICE_CUR]->seekFile(f,bannerOffset+0x20,DEVICE_HANDLER_SEEK_SET);
-							if(devices[DEVICE_CUR]->readFile(f,f->meta->banner,GCM_STD_BNR_SIZE)!=GCM_STD_BNR_SIZE) {
-								memcpy(f->meta->banner,blankbanner+0x20,GCM_STD_BNR_SIZE);
-							}
-							//print_gecko("Read banner from %08X+0x20\r\n", bannerOffset);
-							
-							char bnrType[8];
-							// If this is a BNR2 banner, show the proper description for the language the console is set to
-							devices[DEVICE_CUR]->seekFile(f,bannerOffset,DEVICE_HANDLER_SEEK_SET);
-							devices[DEVICE_CUR]->readFile(f,&bnrType[0],4);
-							if(!strncmp(bnrType, "BNR2", 4)) {
-								devices[DEVICE_CUR]->seekFile(f,bannerOffset+(0x18e0+(swissSettings.sramLanguage*0x0140)),DEVICE_HANDLER_SEEK_SET);
+							BNR *banner = calloc(1, sizeof(BNR));
+							devices[DEVICE_CUR]->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
+							if(devices[DEVICE_CUR]->readFile(f, banner, sizeof(BNR)) != sizeof(BNR)) {
+								memcpy(f->meta->banner, blankbanner+0x20, BNR_PIXELDATA_LEN);
 							}
 							else {
-								devices[DEVICE_CUR]->seekFile(f,bannerOffset+0x18e0,DEVICE_HANDLER_SEEK_SET);
+								memcpy(f->meta->banner, &banner->pixelData, BNR_PIXELDATA_LEN);						
+								if(!strncmp(banner->magic, "BNR2", 4)) {
+									memcpy(&f->meta->description, &banner->desc[swissSettings.sramLanguage].description, BNR_DESC_LEN);
+								}
+								else {
+									memcpy(&f->meta->description, &banner->desc[0].description, BNR_DESC_LEN);
+								}
 							}
-							devices[DEVICE_CUR]->readFile(f,&f->meta->description[0],0x80);
-							//print_gecko("Meta Description: [%s]\r\n",&f->meta->description[0]);
+							free(banner);
 						}
-						f->meta->bannerSize = GCM_STD_BNR_SIZE;
+						f->meta->bannerSize = BNR_PIXELDATA_LEN;
 						meta_create_direct_texture(f->meta);
 						//print_gecko("Meta Gathering complete\r\n\r\n");
 						// Assign GCM region texture

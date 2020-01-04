@@ -8,8 +8,6 @@
 #include <malloc.h>
 #include <gccore.h>
 
-char *getSramLang(u8 lang);
-
 void show_info();
 
 #endif

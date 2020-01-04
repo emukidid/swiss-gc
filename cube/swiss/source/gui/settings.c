@@ -31,6 +31,7 @@ char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS", "No"};
 char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
 char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL"};
+char *sramLang[] = {"English", "German", "French", "Spanish", "Italian", "Dutch"};
 
 static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"System Sound:\n\nSets the default audio output type used by most games",
@@ -195,7 +196,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo":"Mono", option == SET_SYS_SOUND, true);
 		sprintf(sramHOffsetStr, "%+hi", swissSettings.sramHOffset);
 		drawSettingEntryString(page, &page_y_ofs, "Screen Position:", sramHOffsetStr, option == SET_SCREEN_POS, true);
-		drawSettingEntryString(page, &page_y_ofs, "System Language:", getSramLang(swissSettings.sramLanguage), option == SET_SYS_LANG, true);
+		drawSettingEntryString(page, &page_y_ofs, "System Language:", swissSettings.sramLanguage > SRAM_LANG_MAX ? "Unknown" : sramLang[swissSettings.sramLanguage], option == SET_SYS_LANG, true);
 		drawSettingEntryString(page, &page_y_ofs, "SD/IDE Speed:", swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == SET_EXI_SPEED, true);	
 		drawSettingEntryString(page, &page_y_ofs, "Swiss Video Mode:", uiVModeStr[swissSettings.uiVMode], option == SET_SWISS_VIDEOMODE, true);
 		drawSettingEntryString(page, &page_y_ofs, "In-Game Reset:", igrTypeStr[swissSettings.igrType], option == SET_IGR, true);
@@ -298,10 +299,10 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			break;
 			case SET_SYS_LANG:
 				swissSettings.sramLanguage += direction;
-				if(swissSettings.sramLanguage > 5)
+				if(swissSettings.sramLanguage > SRAM_LANG_MAX)
 					swissSettings.sramLanguage = 0;
 				if(swissSettings.sramLanguage < 0)
-					swissSettings.sramLanguage = 5;
+					swissSettings.sramLanguage = SRAM_LANG_MAX;
 			break;
 			case SET_EXI_SPEED:
 				swissSettings.exiSpeed ^= 1;

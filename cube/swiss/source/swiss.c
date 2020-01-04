@@ -1558,7 +1558,7 @@ uiDrawObj_t* draw_game_info() {
 				DrawAddChild(container, DrawImage(curFile.meta->regionTexId, 450, 262, 30,20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 
 			sprintf(txtbuffer, "%s", &curFile.meta->description[0]);
-			char * tok = strtok (txtbuffer,"\n");
+			char * tok = strtok (txtbuffer,"\r\n");
 			int line = 0;
 			while (tok != NULL)	{
 				float scale = GetTextScaleToFitInWidth(tok,(getVideoMode()->fbWidth-78)-75);
@@ -1577,10 +1577,10 @@ uiDrawObj_t* draw_game_info() {
 		DrawAddChild(container, DrawStyledLabel(640/2, 220, (GCMDisk.DiscID ? "Disc 2":""), 0.8f, true, defaultColor));
 	}
 	if(devices[DEVICE_CUR] == &__device_wode) {
-		DrawAddChild(container, DrawStyledLabel(640/2, 370, "Settings (X) - Cheats (Y) - Boot (A)", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 380, "Settings (X) - Cheats (Y) - Boot (A)", 0.75f, true, defaultColor));
 	}
 	else {
-		DrawAddChild(container, DrawStyledLabel(640/2, 370, "Settings (X) - Cheats (Y) - Exit (B) - Boot (A)", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 380, "Settings (X) - Cheats (Y) - Exit (B) - Boot (A)", 0.75f, true, defaultColor));
 	}
 	return container;
 }

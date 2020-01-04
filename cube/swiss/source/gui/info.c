@@ -10,6 +10,7 @@
 #include "FrameBufferMagic.h"
 #include "IPLFontWrite.h"
 #include "swiss.h"
+#include "settings.h"
 #include "main.h"
 #include "ata.h"
 #include "exi.h"
@@ -17,24 +18,6 @@
 #include "wkf.h"
 
 char topStr[256];
-
-char *getSramLang(u8 lang) {
-	switch(lang) {
-		case 5:
-			return "Dutch";
-		case 4:
-			return "Italian";
-		case 3:
-			return "Spanish";
-		case 2:
-			return "French";
-		case 1:
-			return "German";
-		case 0:
-			return "English";
-	}
-	return "Unknown";
-}
 
 uiDrawObj_t * info_draw_page(int page_num) {
 	uiDrawObj_t *container = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 420);
@@ -87,7 +70,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 210, (char*)"AUDIO", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 226, (char*)(sram->flags&4 ? "Stereo":"Mono"), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"LANGUAGE", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 266, getSramLang(sram->lang), 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 266, sram->lang > SRAM_LANG_MAX ? "Unknown" : sramLang[sram->lang], 0.75f, true, defaultColor));
 
 		// GC 00083214, 00083410
 		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"CPU PVR", 0.65f, true, defaultColor));

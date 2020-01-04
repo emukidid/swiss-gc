@@ -112,6 +112,8 @@ extern char *forceEncodingStr[];
 extern char *invertCStickStr[];
 extern char *igrTypeStr[];
 extern char *aveCompatStr[];
+#define SRAM_LANG_MAX 5
+extern char *sramLang[];
 int show_settings(file_handle *file, ConfigEntry *config);
 void refreshSRAM();
 
