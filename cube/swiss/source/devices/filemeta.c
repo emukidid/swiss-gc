@@ -113,16 +113,19 @@ void populate_meta(file_handle *f) {
 						unsigned int bannerOffset = getBannerOffset(f);
 
 						f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
-						if(!bannerOffset) {
-							//print_gecko("Banner not found\r\n");
+						if(!bannerOffset || bannerOffset > f->size) {
+							print_gecko("Banner not found or out of range\r\n");
 							memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
 						}
 						else
 						{
 							BNR *banner = calloc(1, sizeof(BNR));
 							devices[DEVICE_CUR]->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
-							if(devices[DEVICE_CUR]->readFile(f, banner, sizeof(BNR)) != sizeof(BNR)) {
+							// Can't always assume BNR2 size when reading cause we might fall off the end of the file when a game has placed it as the last file on disc
+							int readSize = bannerOffset + sizeof(BNR) > f->size ? (f->size - bannerOffset) : sizeof(BNR);
+							if(devices[DEVICE_CUR]->readFile(f, banner, readSize) != readSize) {
 								memcpy(f->meta->banner, blankbanner+0x20, BNR_PIXELDATA_LEN);
+								print_gecko("Banner read failed %i from offset %08X\r\n", readSize, bannerOffset);
 							}
 							else {
 								memcpy(f->meta->banner, &banner->pixelData, BNR_PIXELDATA_LEN);						
