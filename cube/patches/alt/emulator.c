@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2020, Extrems <extrems@extremscorner.org>
  * All rights reserved.
  */
 
@@ -10,6 +10,11 @@
 #include "../base/common.h"
 #include "../base/dvd.h"
 #include "../base/os.h"
+
+#ifdef BBA
+void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
+void exi_unmask_interrupt(void);
+#endif
 
 void perform_read(uint32_t offset, uint32_t length, uint32_t address);
 void trickle_read(void);
@@ -187,6 +192,8 @@ static bool ppc_step(OSContext *context)
 	return false;
 }
 
+void exception_handler(OSException exception, OSContext *context, ...);
+
 extern void load_context(void) __attribute((noreturn));
 extern uint32_t load_context_end[];
 
@@ -228,6 +235,12 @@ void service_exception(OSException exception, OSContext *context, uint32_t dsisr
 				timer2_stop();
 				change_disc();
 			}
+			#ifdef BBA
+			if (timer3_interrupt()) {
+				timer3_stop();
+				exi_unmask_interrupt();
+			}
+			#endif
 			restore_timer_interrupts();
 			break;
 		}
@@ -237,8 +250,6 @@ void service_exception(OSException exception, OSContext *context, uint32_t dsisr
 	asm volatile("dcbst 0,%0; sync; icbi 0,%0" :: "r" (load_context_end));
 	load_context();
 }
-
-void exception_handler(OSException exception, OSContext *context, ...);
 
 static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
@@ -263,8 +274,6 @@ static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	MI[16] = 0;
 }
 
-void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
-
 OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
 	OSSetExceptionHandler(OS_EXCEPTION_DSI, exception_handler);
@@ -279,5 +288,8 @@ void idle_thread(void)
 {
 	disable_interrupts();
 	trickle_read();
+	#ifdef BBA
+	exi_unmask_interrupt();
+	#endif
 	enable_interrupts();
 }

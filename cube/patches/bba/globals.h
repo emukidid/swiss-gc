@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2020, Extrems <extrems@extremscorner.org>
  * All rights reserved.
  */
 
@@ -21,6 +21,5 @@ static uint32_t *const _disc2     = (uint32_t *)VAR_CURRENT_DISC;
 static uint32_t *const _position  = (uint32_t *)VAR_LAST_OFFSET;
 static void    **const _data      = (void    **)VAR_TMP1;
 static uint32_t *const _remainder = (uint32_t *)VAR_TMP2;
-static uint32_t *const _received  = (uint32_t *)VAR_INTERRUPT_TIMES;
 
 #endif /* GLOBALS_H */

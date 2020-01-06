@@ -96,6 +96,18 @@ _start:
 	b		check_pad
 	b		igr_exit
 
+	.globl EXILock, EXIUnlock
+EXILock:
+	blr
+EXIUnlock:
+	blr
+	blr
+	blr
+	blr
+	blr
+	blr
+	blr
+
 	.globl realmode
 realmode:
 	mflr	r3

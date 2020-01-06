@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2020, Extrems <extrems@extremscorner.org>
  * All rights reserved.
  */
 
@@ -22,6 +22,8 @@ bool exi_probe(int32_t chan)
 bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 {
 	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
+		return false;
+	if (chan == *(uint8_t *)VAR_EXI_SLOT && dev == EXI_DEVICE_0)
 		return false;
 	if (chan == *(uint8_t *)VAR_EXI_SLOT)
 		end_read();
@@ -47,7 +49,6 @@ void schedule_read(uint32_t offset, uint32_t length, OSTick ticks)
 void perform_read(uint32_t offset, uint32_t length, uint32_t address)
 {
 	*(uint8_t **)VAR_TMP1 = OSPhysicalToUncached(address);
-
 	schedule_read(offset, length, OSMicrosecondsToTicks(300));
 }
 
@@ -67,7 +68,6 @@ void trickle_read(void)
 		remainder -= data_size;
 
 		*(uint8_t **)VAR_TMP1 = data + data_size;
-
 		schedule_read(position, remainder, OSDiffTick(end, start));
 	}
 }

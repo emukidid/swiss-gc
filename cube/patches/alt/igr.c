@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2020, Extrems <extrems@extremscorner.org>
  * All rights reserved.
  */
 
@@ -37,8 +37,11 @@ static void load_dol(uint32_t offset, uint32_t size)
 	}
 
 	asm volatile("mtmmcr0 %0" :: "r" (0));
+	asm volatile("mtmmcr1 %0" :: "r" (0));
 	asm volatile("mtpmc1 %0" :: "r" (0));
 	asm volatile("mtpmc2 %0" :: "r" (0));
+	asm volatile("mtpmc3 %0" :: "r" (0));
+	asm volatile("mtpmc4 %0" :: "r" (0));
 
 	image.entry();
 }

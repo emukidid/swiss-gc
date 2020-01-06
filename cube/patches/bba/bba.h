@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2020, Extrems <extrems@extremscorner.org>
  * All rights reserved.
  */
 

@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2017-2019, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2017-2020, Extrems <extrems@extremscorner.org>
  * All rights reserved.
  */
 
@@ -62,6 +62,16 @@ static bool exi_selected(void)
 static void exi_clear_interrupts(int32_t chan, bool exi, bool tc, bool ext)
 {
 	EXI[chan][0] = (EXI[chan][0] & ~0x80A) | (ext << 11) | (tc << 3) | (exi << 1);
+}
+
+static void exi_mask_interrupts(int32_t chan, bool exi, bool tc, bool ext)
+{
+	EXI[chan][0] = EXI[chan][0] & ~(0x80A | (ext << 10) | (tc << 2) | (exi << 0));
+}
+
+static void exi_unmask_interrupts(int32_t chan, bool exi, bool tc, bool ext)
+{
+	EXI[chan][0] = (EXI[chan][0] & ~0x80A) | (ext << 10) | (tc << 2) | (exi << 0);
 }
 
 static void exi_select(void)
@@ -170,8 +180,7 @@ static void bba_outs(uint16_t reg, const void *val, uint32_t len)
 
 bool bba_transmit(const void *data, size_t size)
 {
-	if (exi_selected())
-		return false;
+	if (exi_selected()) return false;
 
 	while (bba_in8(BBA_NCRA) & (BBA_NCRA_ST0 | BBA_NCRA_ST1));
 	bba_outs(BBA_WRTXFIFOD, data, size);
@@ -197,18 +206,14 @@ void bba_receive_end(bba_page_t page, void *data, size_t size)
 		data += page_size;
 		size -= page_size;
 	}
-
-	(*_received)++;
 }
 
-static void bba_receive(void)
+static bool bba_receive(void)
 {
 	uint8_t rwp = bba_in8(BBA_RWP);
 	uint8_t rrp = bba_in8(BBA_RRP);
 
-	*_received = 0;
-
-	while (rrp != rwp) {
+	if (rrp != rwp) {
 		bba_page_t page;
 		bba_header_t *bba = (bba_header_t *)page;
 		size_t size = sizeof(bba_page_t);
@@ -222,30 +227,50 @@ static void bba_receive(void)
 		bba_out8(BBA_RRP, rrp = bba->next);
 		rwp = bba_in8(BBA_RWP);
 	}
+
+	return rrp != rwp;
 }
 
 static void bba_interrupt(void)
 {
 	uint8_t ir = bba_in8(BBA_IR);
 
-	if (ir & BBA_IR_RI)
-		bba_receive();
+	if ((ir & BBA_IR_RI) && bba_receive())
+		ir &= ~BBA_IR_RI;
 
 	bba_out8(BBA_IR, ir);
 }
 
+static void exi_callback(int32_t chan, uint32_t dev)
+{
+	if (EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, exi_callback)) {
+		OSTick start = OSGetTick();
+
+		uint8_t status = bba_cmd_in8(0x03);
+		bba_cmd_out8(0x02, BBA_CMD_IRMASKALL);
+
+		if (status & 0x80) bba_interrupt();
+
+		bba_cmd_out8(0x03, status);
+		bba_cmd_out8(0x02, BBA_CMD_IRMASKNONE);
+
+		OSTick end = OSGetTick();
+		timer3_start(OSDiffTick(end, start));
+
+		exi_mask_interrupts(EXI_CHANNEL_2, 1, 0, 0);
+		EXIUnlock(EXI_CHANNEL_0);
+	}
+}
+
 void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	uint8_t status = bba_cmd_in8(0x03);
-	bba_cmd_out8(0x02, BBA_CMD_IRMASKALL);
-
 	exi_clear_interrupts(EXI_CHANNEL_2, 1, 0, 0);
+	exi_callback(EXI_CHANNEL_0, EXI_DEVICE_2);
+}
 
-	if (status & 0x80)
-		bba_interrupt();
-
-	bba_cmd_out8(0x03, status);
-	bba_cmd_out8(0x02, BBA_CMD_IRMASKNONE);
+void exi_unmask_interrupt(void)
+{
+	exi_unmask_interrupts(EXI_CHANNEL_2, 1, 0, 0);
 }
 
 bool exi_probe(int32_t chan)
@@ -262,6 +287,8 @@ bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
 		return false;
 	if (chan == EXI_CHANNEL_0 && dev == EXI_DEVICE_2)
+		return false;
+	if (chan == *(uint8_t *)VAR_EXI_SLOT && dev == EXI_DEVICE_0)
 		return false;
 	return true;
 }
@@ -288,7 +315,6 @@ void schedule_read(uint32_t offset, uint32_t length, OSTick ticks)
 void perform_read(uint32_t offset, uint32_t length, uint32_t address)
 {
 	*_data = OSPhysicalToCached(address);
-
 	schedule_read(offset, length, 0);
 }
 
@@ -309,7 +335,6 @@ void trickle_read(void)
 			remainder -= data_size;
 
 			*_data = data + data_size;
-
 			schedule_read(position, remainder, OSDiffTick(end, start));
 			dcache_store(data, data_size);
 		} else {

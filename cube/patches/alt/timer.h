@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2020, Extrems <extrems@extremscorner.org>
  * All rights reserved.
  */
 
@@ -27,6 +27,14 @@ union mmcr0 {
 		uint32_t pmctrigger     : 1;
 		uint32_t pmc1select     : 7;
 		uint32_t pmc2select     : 6;
+	};
+};
+
+union mmcr1 {
+	uint32_t val;
+	struct {
+		uint32_t pmc3select : 5;
+		uint32_t pmc4select : 5;
 	};
 };
 
@@ -128,11 +136,108 @@ static inline void timer2_stop(void)
 	asm volatile("mtpmc2 %0" :: "r" (0));
 }
 
+static inline void timer3_start(uint32_t ticks)
+{
+	union mmcr0 mmcr0;
+	union mmcr1 mmcr1;
+	union pmc pmc3;
+
+	asm volatile("mfmmcr0 %0" : "=r" (mmcr0.val));
+	asm volatile("mfmmcr1 %0" : "=r" (mmcr1.val));
+	mmcr1.pmc3select = 0;
+	asm volatile("mtmmcr1 %0" :: "r" (mmcr1.val));
+
+	mmcr0.dis = false;
+	mmcr0.dp = false;
+	mmcr0.du = false;
+	mmcr0.dms = false;
+	mmcr0.dmr = false;
+	mmcr0.enint = true;
+	mmcr0.discount = false;
+	mmcr0.rtcselect = 0;
+	mmcr0.intonbittrans = false;
+	mmcr0.threshold = 0;
+	mmcr0.pmcintcontrol = true;
+	mmcr0.pmctrigger = false;
+	mmcr1.pmc3select = 3;
+
+	pmc3.val = 0x80000000 - ticks / 2;
+
+	asm volatile("mtpmc3 %0" :: "r" (pmc3.val));
+	asm volatile("mtmmcr1 %0" :: "r" (mmcr1.val));
+	asm volatile("mtmmcr0 %0" :: "r" (mmcr0.val));
+}
+
+static inline bool timer3_interrupt(void)
+{
+	union pmc pmc3;
+	asm volatile("mfpmc3 %0" : "=r" (pmc3.val));
+	return pmc3.ov;
+}
+
+static inline void timer3_stop(void)
+{
+	union mmcr1 mmcr1;
+	asm volatile("mfmmcr1 %0" : "=r" (mmcr1.val));
+	mmcr1.pmc3select = 0;
+	asm volatile("mtmmcr1 %0" :: "r" (mmcr1.val));
+	asm volatile("mtpmc3 %0" :: "r" (0));
+}
+
+static inline void timer4_start(uint32_t ticks)
+{
+	union mmcr0 mmcr0;
+	union mmcr1 mmcr1;
+	union pmc pmc4;
+
+	asm volatile("mfmmcr0 %0" : "=r" (mmcr0.val));
+	asm volatile("mfmmcr1 %0" : "=r" (mmcr1.val));
+	mmcr1.pmc4select = 0;
+	asm volatile("mtmmcr1 %0" :: "r" (mmcr1.val));
+
+	mmcr0.dis = false;
+	mmcr0.dp = false;
+	mmcr0.du = false;
+	mmcr0.dms = false;
+	mmcr0.dmr = false;
+	mmcr0.enint = true;
+	mmcr0.discount = false;
+	mmcr0.rtcselect = 0;
+	mmcr0.intonbittrans = false;
+	mmcr0.threshold = 0;
+	mmcr0.pmcintcontrol = true;
+	mmcr0.pmctrigger = false;
+	mmcr1.pmc4select = 3;
+
+	pmc4.val = 0x80000000 - ticks / 2;
+
+	asm volatile("mtpmc4 %0" :: "r" (pmc4.val));
+	asm volatile("mtmmcr1 %0" :: "r" (mmcr1.val));
+	asm volatile("mtmmcr0 %0" :: "r" (mmcr0.val));
+}
+
+static inline bool timer4_interrupt(void)
+{
+	union pmc pmc4;
+	asm volatile("mfpmc4 %0" : "=r" (pmc4.val));
+	return pmc4.ov;
+}
+
+static inline void timer4_stop(void)
+{
+	union mmcr1 mmcr1;
+	asm volatile("mfmmcr1 %0" : "=r" (mmcr1.val));
+	mmcr1.pmc4select = 0;
+	asm volatile("mtmmcr1 %0" :: "r" (mmcr1.val));
+	asm volatile("mtpmc4 %0" :: "r" (0));
+}
+
 static inline void restore_timer_interrupts(void)
 {
 	union mmcr0 mmcr0;
+	union mmcr1 mmcr1;
 	asm volatile("mfmmcr0 %0" : "=r" (mmcr0.val));
-	mmcr0.enint = mmcr0.pmc1select || mmcr0.pmc2select;
+	mmcr0.enint = mmcr0.pmc1select || mmcr0.pmc2select || mmcr1.pmc3select || mmcr1.pmc4select;
 	asm volatile("mtmmcr0 %0" :: "r" (mmcr0.val));
 }
 

@@ -806,6 +806,13 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		{ 166, 39, 16, 5, 16, 46, NULL, 0, "OSGetResetButtonState B" },
 		{ 167, 36, 16, 4, 15, 46, NULL, 0, "OSGetResetButtonState B" }	// SN Systems ProDG
 	};
+	FuncPattern SystemCallVectorSig = 
+		{ 7, 0, 0, 0, 0, 1, NULL, 0, "SystemCallVector" };
+	FuncPattern __OSInitSystemCallSigs[3] = {
+		{ 28, 12, 3, 4, 0, 5, NULL, 0, "__OSInitSystemCallD" },
+		{ 25, 10, 3, 3, 0, 4, NULL, 0, "__OSInitSystemCall" },
+		{ 24, 14, 2, 3, 0, 4, NULL, 0, "__OSInitSystemCall" }	// SN Systems ProDG
+	};
 	FuncPattern SelectThreadSigs[5] = {
 		{ 123, 39, 10, 11, 14, 12, NULL, 0, "SelectThreadD A" },
 		{ 122, 38,  9, 12, 14, 12, NULL, 0, "SelectThreadD B" },
@@ -1156,7 +1163,9 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 			continue;
 		}
 		if ((data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6 && data[i + 1] != 0x4E800020) ||
-			(data[i - 1] != 0x4E800020 && data[i - 1] != 0x4C000064 &&
+			(data[i - 1] != 0x4E800020 &&
+			(data[i + 0] == 0x60000000 || data[i - 1] != 0x4C000064) &&
+			(data[i - 1] != 0x60000000 || data[i - 2] != 0x4C000064) &&
 			branchResolve(data, dataType, i - 1) == 0))
 			continue;
 		
@@ -1586,6 +1595,26 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 							findx_pattern(data, dataType, i +   8, length, &__OSGetSystemTimeSigs[2]) &&
 							findx_pattern(data, dataType, i + 158, length, &OSRestoreInterruptsSig))
 							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(__OSInitSystemCallSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &__OSInitSystemCallSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findi_pattern(data, dataType, i +  8, i +  9, length, &SystemCallVectorSig) &&
+							findi_pattern(data, dataType, i + 10, i + 11, length, &SystemCallVectorSig))
+							__OSInitSystemCallSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findi_pattern(data, dataType, i +  5, i +  9, length, &SystemCallVectorSig))
+							__OSInitSystemCallSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findi_pattern(data, dataType, i +  2, i +  5, length, &SystemCallVectorSig))
+							__OSInitSystemCallSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -2748,6 +2777,10 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		i += fp.Length - 1;
 	}
 	
+	if ((i = SystemCallVectorSig.offsetFoundAt))
+		for (j = 0; j < SystemCallVectorSig.Length; j++)
+			data[i + j] = 0x4E800020;	// blr
+	
 	if ((i = PrepareExecSig.offsetFoundAt)) {
 		u32 *PrepareExec = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
@@ -2945,6 +2978,37 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		}
 	}
 	
+	for (j = 0; j < sizeof(__OSInitSystemCallSigs) / sizeof(FuncPattern); j++)
+		if (__OSInitSystemCallSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(__OSInitSystemCallSigs) / sizeof(FuncPattern) && (i = __OSInitSystemCallSigs[j].offsetFoundAt)) {
+		u32 *__OSInitSystemCall = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__OSInitSystemCall) {
+			switch (j) {
+				case 0:
+					data[i +  4] = 0x38600000 | ((u32)JUMP_VECTOR & 0xFFFF);
+					data[i + 17] = 0x38800020;	// li		r4, 32
+					data[i + 21] = 0x38800020;	// li		r4, 32
+					break;
+				case 1:
+					data[i +  4] = 0x3CA00000 | ((u32)JUMP_VECTOR + 0x8000) >> 16;
+					data[i +  7] = 0x3BE50000 | ((u32)JUMP_VECTOR & 0xFFFF);
+					data[i + 14] = 0x38800020;	// li		r4, 32
+					data[i + 18] = 0x38800020;	// li		r4, 32
+					break;
+				case 2:
+					data[i +  6] = 0x3CA00000 | ((u32)JUMP_VECTOR + 0x8000) >> 16;
+					data[i +  8] = 0x38650000 | ((u32)JUMP_VECTOR & 0xFFFF);
+					data[i + 12] = 0x38800020;	// li		r4, 32
+					data[i + 18] = 0x38800020;	// li		r4, 32
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", __OSInitSystemCallSigs[j].Name, __OSInitSystemCall);
+			patched++;
+		}
+	}
+	
 	for (j = 0; j < sizeof(SelectThreadSigs) / sizeof(FuncPattern); j++)
 		if (SelectThreadSigs[j].offsetFoundAt) break;
 	
@@ -3016,26 +3080,26 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		if (__EXIProbe) {
 			switch (j) {
 				case 0:
-					data[i + 19] = 0x387F0000;	// addi		r3, r31, 0
+					data[i + 19] = 0x7FE3FB78;	// mr		r3, r31
 					data[i + 20] = branchAndLink(EXI_PROBE, __EXIProbe + 20);
 					data[i + 21] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 22] = 0x41820144;	// beq		+81
 					break;
 				case 1:
-					data[i + 19] = 0x387F0000;	// addi		r3, r31, 0
+					data[i + 19] = 0x7FE3FB78;	// mr		r3, r31
 					data[i + 20] = branchAndLink(EXI_PROBE, __EXIProbe + 20);
 					data[i + 21] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 22] = 0x41820150;	// beq		+84
 					break;
 				case 2:
-					data[i + 20] = 0x387F0000;	// addi		r3, r31, 0
+					data[i + 20] = 0x7FE3FB78;	// mr		r3, r31
 					data[i + 21] = branchAndLink(EXI_PROBE, __EXIProbe + 21);
 					data[i + 22] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 23] = 0x41820150;	// beq		+84
 					break;
 				case 3:
 					data[i +  8] = data[i + 9];
-					data[i +  9] = 0x387D0000;	// addi		r3, r29, 0
+					data[i +  9] = 0x7FA3EB78;	// mr		r3, r29
 					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
 					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 12] = 0x41820124;	// beq		+73
@@ -3044,19 +3108,19 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					data[i +  6] = data[i + 7];
 					data[i +  7] = data[i + 8];
 					data[i +  8] = data[i + 9];
-					data[i +  9] = 0x387C0000;	// addi		r3, r28, 0
+					data[i +  9] = 0x7F83E378;	// mr		r3, r28
 					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
 					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 12] = 0x41820130;	// beq		+76
 					break;
 				case 5:
-					data[i +  9] = 0x387C0000;	// addi		r3, r28, 0
+					data[i +  9] = 0x7F83E378;	// mr		r3, r28
 					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
 					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 12] = 0x41820130;	// beq		+76
 					break;
 				case 6:
-					data[i +  9] = 0x387F0000;	// addi		r3, r31, 0
+					data[i +  9] = 0x7FE3FB78;	// mr		r3, r31
 					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
 					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 12] = 0x41820170;	// beq		+92
@@ -3071,16 +3135,13 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		u32 *EXISelectSD = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISelectSD) {
-			data[i + 17] = 0x41820078;	// beq		+30
+			data[i + 17] = 0x41820060;	// beq		+24
 			data[i + 41] = 0x387B0000;	// addi		r3, r27, 0
 			data[i + 42] = 0x389C0000;	// addi		r4, r28, 0
 			data[i + 43] = 0x38BF0000;	// addi		r5, r31, 0
 			data[i + 44] = branchAndLink(EXI_TRYLOCK, EXISelectSD + 44);
 			data[i + 45] = 0x2C030000;	// cmpwi	r3, 0
 			data[i + 46] = 0x40820014;	// bne		+5
-			
-			if (devices[DEVICE_CUR] == &__device_fsp)
-				data[i + 72] = 0x3C600011;	// lis		r3, 0x0011
 			
 			print_gecko("Found:[%s] @ %08X\n", EXISelectSDSig.Name, EXISelectSD);
 			patched++;
@@ -3097,7 +3158,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 			switch (j) {
 				case 0:
 				case 1:
-					data[i + 54] = 0x41820040;	// beq		+16
+					data[i + 54] = 0x41820028;	// beq		+10
 					data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
 					data[i + 65] = 0x389D0000;	// addi		r4, r29, 0
 					data[i + 66] = 0x38BE0000;	// addi		r5, r30, 0
@@ -3106,7 +3167,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					data[i + 69] = 0x40820014;	// bne		+5
 					break;
 				case 2:
-					data[i + 54] = 0x41820040;	// beq		+16
+					data[i + 54] = 0x41820028;	// beq		+10
 					data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
 					data[i + 65] = 0x389C0000;	// addi		r4, r28, 0
 					data[i + 66] = 0x38BD0000;	// addi		r5, r29, 0
@@ -3117,7 +3178,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 				case 3:
 				case 4:
 				case 5:
-					data[i + 17] = 0x41820040;	// beq		+16
+					data[i + 17] = 0x41820028;	// beq		+10
 					data[i + 27] = 0x387B0000;	// addi		r3, r27, 0
 					data[i + 28] = 0x389C0000;	// addi		r4, r28, 0
 					data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
@@ -3126,7 +3187,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					data[i + 32] = 0x40820014;	// bne		+5
 					break;
 				case 6:
-					data[i + 17] = 0x41820040;	// beq		+16
+					data[i + 17] = 0x41820028;	// beq		+10
 					data[i + 27] = 0x387E0000;	// addi		r3, r30, 0
 					data[i + 28] = 0x389B0000;	// addi		r4, r27, 0
 					data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
@@ -3135,42 +3196,37 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					data[i + 32] = 0x40820014;	// bne		+5
 					break;
 			}
-			if (devices[DEVICE_CUR] == &__device_fsp) {
-				switch (j) {
-					case 0:
-					case 1:
-					case 2: data[i + 103] = 0x3C600011; break;	// lis		r3, 0x0011
-					case 3:
-					case 4:
-					case 5: data[i +  62] = 0x3C600011; break;	// lis		r3, 0x0011
-					case 6: data[i +  67] = 0x3C600011; break;	// lis		r3, 0x0011
-				}
-			}
 			print_gecko("Found:[%s] @ %08X\n", EXISelectSigs[j].Name, EXISelect);
 			patched++;
 		}
 	}
 	
-	for (j = 0; j < sizeof(EXIDeselectSigs) / sizeof(FuncPattern); j++)
-		if (EXIDeselectSigs[j].offsetFoundAt) break;
+	for (j = 0; j < sizeof(EXILockSigs) / sizeof(FuncPattern); j++)
+		if (EXILockSigs[j].offsetFoundAt) break;
 	
-	if (j < sizeof(EXIDeselectSigs) / sizeof(FuncPattern) && (i = EXIDeselectSigs[j].offsetFoundAt)) {
-		u32 *EXIDeselect = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+	if (j < sizeof(EXILockSigs) / sizeof(FuncPattern) && (i = EXILockSigs[j].offsetFoundAt)) {
+		u32 *EXILock = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		if (EXIDeselect) {
-			if (devices[DEVICE_CUR] == &__device_fsp) {
-				switch (j) {
-					case 0:
-					case 1: data[i + 51] = 0x3C600011; break;	// lis		r3, 0x0011
-					case 2: data[i + 52] = 0x3C600011; break;	// lis		r3, 0x0011
-					case 3:
-					case 4:
-					case 5:
-					case 6: data[i + 40] = 0x3C600011; break;	// lis		r3, 0x0011
-					case 7: data[i + 41] = 0x3C600011; break;	// lis		r3, 0x0011
-				}
-			}
-			print_gecko("Found:[%s] @ %08X\n", EXIDeselectSigs[j].Name, EXIDeselect);
+		if (EXILock) {
+			if ((k = SystemCallVectorSig.offsetFoundAt))
+				data[k + 0] = branch(EXILock, JUMP_VECTOR + 0);
+			
+			print_gecko("Found:[%s] @ %08X\n", EXILockSigs[j].Name, EXILock);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(EXIUnlockSigs) / sizeof(FuncPattern); j++)
+		if (EXIUnlockSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(EXIUnlockSigs) / sizeof(FuncPattern) && (i = EXIUnlockSigs[j].offsetFoundAt)) {
+		u32 *EXIUnlock = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (EXIUnlock) {
+			if ((k = SystemCallVectorSig.offsetFoundAt))
+				data[k + 1] = branch(EXIUnlock, JUMP_VECTOR + 1);
+			
+			print_gecko("Found:[%s] @ %08X\n", EXIUnlockSigs[j].Name, EXIUnlock);
 			patched++;
 		}
 	}
@@ -4917,7 +4973,9 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			continue;
 		}
 		if ((data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) ||
-			(data[i - 1] != 0x4E800020 && data[i - 1] != 0x4C000064 &&
+			(data[i - 1] != 0x4E800020 &&
+			(data[i + 0] == 0x60000000 || data[i - 1] != 0x4C000064) &&
+			(data[i - 1] != 0x60000000 || data[i - 2] != 0x4C000064) &&
 			branchResolve(data, dataType, i - 1) == 0))
 			continue;
 		
@@ -9108,7 +9166,9 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 			continue;
 		}
 		if ((data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) ||
-			(data[i - 1] != 0x4E800020 && data[i - 1] != 0x4C000064 &&
+			(data[i - 1] != 0x4E800020 &&
+			(data[i + 0] == 0x60000000 || data[i - 1] != 0x4C000064) &&
+			(data[i - 1] != 0x60000000 || data[i - 2] != 0x4C000064) &&
 			branchResolve(data, dataType, i - 1) == 0))
 			continue;
 		
