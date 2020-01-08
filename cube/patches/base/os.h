@@ -108,6 +108,8 @@ static OSExceptionHandler OSGetExceptionHandler(OSException exception)
 	return OSExceptionHandlerTable[exception];
 }
 
+void OSUnhandledException(OSException exception, OSContext *context, u32 dsisr, u32 dar);
+
 typedef enum {
 	OS_INTERRUPT_MEM_0 = 0,
 	OS_INTERRUPT_MEM_1,

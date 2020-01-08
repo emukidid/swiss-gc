@@ -725,10 +725,23 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		{ 4, 0, 0, 0, 0, 2, NULL, 0, "ICFlashInvalidate" };
 	FuncPattern OSSetCurrentContextSig = 
 		{ 23, 4, 4, 0, 0, 5, NULL, 0, "OSSetCurrentContext" };
+	FuncPattern OSLoadContextSigs[2] = {
+		{ 54, 23, 1, 0, 3, 17, NULL, 0, "OSLoadContext A" },
+		{ 54, 23, 1, 0, 4, 17, NULL, 0, "OSLoadContext B" }
+	};
 	FuncPattern OSClearContextSigs[3] = {
 		{ 12, 6, 1, 0, 0, 1, NULL, 0, "OSClearContextD" },
 		{  9, 3, 1, 0, 0, 1, NULL, 0, "OSClearContext" },
 		{  9, 3, 1, 0, 0, 1, NULL, 0, "OSClearContext" }	// SN Systems ProDG
+	};
+	FuncPattern __OSUnhandledExceptionSigs[7] = {
+		{ 106, 34, 2, 13, 13,  5, NULL, 0, "__OSUnhandledExceptionD A" },
+		{ 147, 58, 2, 23,  6,  7, NULL, 0, "__OSUnhandledExceptionD B" },
+		{ 211, 75, 7, 33, 10, 10, NULL, 0, "__OSUnhandledExceptionD C" },
+		{  93, 27, 2, 12, 13,  4, NULL, 0, "__OSUnhandledException A" },
+		{ 128, 43, 2, 22,  6,  5, NULL, 0, "__OSUnhandledException B" },
+		{ 186, 56, 7, 32, 10,  7, NULL, 0, "__OSUnhandledException C" },
+		{ 194, 53, 7, 34, 10, 15, NULL, 0, "__OSUnhandledException C" }	// SN Systems ProDG
 	};
 	FuncPattern __OSBootDolSimpleSigs[2] = {
 		{ 109,  35, 15, 25,  3, 10, NULL, 0, "__OSBootDolSimpleD" },
@@ -1219,6 +1232,51 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					case 2:
 						if (findx_pattern(data, dataType, i + 136, length, &__OSSetExceptionHandlerSigs[2]))
 							OSExceptionInitSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(__OSUnhandledExceptionSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &__OSUnhandledExceptionSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  38, length, &OSLoadContextSigs[0]) &&
+							findx_pattern(data, dataType, i +  43, length, &OSLoadContextSigs[0]))
+							__OSUnhandledExceptionSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  41, length, &OSLoadContextSigs[0]) &&
+							findx_pattern(data, dataType, i +  46, length, &OSLoadContextSigs[0]))
+							__OSUnhandledExceptionSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  88, length, &OSLoadContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 106, length, &OSLoadContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 111, length, &OSLoadContextSigs[1]))
+							__OSUnhandledExceptionSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i +  33, length, &OSLoadContextSigs[0]) &&
+							findx_pattern(data, dataType, i +  38, length, &OSLoadContextSigs[0]))
+							__OSUnhandledExceptionSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_pattern(data, dataType, i +  38, length, &OSLoadContextSigs[0]) &&
+							findx_pattern(data, dataType, i +  43, length, &OSLoadContextSigs[0]))
+							__OSUnhandledExceptionSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (findx_pattern(data, dataType, i +  78, length, &OSLoadContextSigs[1]) &&
+							findx_pattern(data, dataType, i +  97, length, &OSLoadContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 102, length, &OSLoadContextSigs[1]))
+							__OSUnhandledExceptionSigs[j].offsetFoundAt = i;
+						break;
+					case 6:
+						if (findx_pattern(data, dataType, i +  84, length, &OSLoadContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 103, length, &OSLoadContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 108, length, &OSLoadContextSigs[1]))
+							__OSUnhandledExceptionSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -2821,6 +2879,21 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		}
 	}
 	
+	for (j = 0; j < sizeof(__OSUnhandledExceptionSigs) / sizeof(FuncPattern); j++)
+		if (__OSUnhandledExceptionSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(__OSUnhandledExceptionSigs) / sizeof(FuncPattern) && (i = __OSUnhandledExceptionSigs[j].offsetFoundAt)) {
+		u32 *__OSUnhandledException = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__OSUnhandledException) {
+			if ((k = SystemCallVectorSig.offsetFoundAt))
+				data[k + 0] = branch(__OSUnhandledException, JUMP_VECTOR + 0);
+			
+			print_gecko("Found:[%s] @ %08X\n", __OSUnhandledExceptionSigs[j].Name, __OSUnhandledException);
+			patched++;
+		}
+	}
+	
 	for (j = 0; j < sizeof(__OSBootDolSimpleSigs) / sizeof(FuncPattern); j++)
 		if (__OSBootDolSimpleSigs[j].offsetFoundAt) break;
 	
@@ -3209,7 +3282,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		
 		if (EXILock) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 0] = branch(EXILock, JUMP_VECTOR + 0);
+				data[k + 1] = branch(EXILock, JUMP_VECTOR + 1);
 			
 			print_gecko("Found:[%s] @ %08X\n", EXILockSigs[j].Name, EXILock);
 			patched++;
@@ -3224,7 +3297,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		
 		if (EXIUnlock) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 1] = branch(EXIUnlock, JUMP_VECTOR + 1);
+				data[k + 2] = branch(EXIUnlock, JUMP_VECTOR + 2);
 			
 			print_gecko("Found:[%s] @ %08X\n", EXIUnlockSigs[j].Name, EXIUnlock);
 			patched++;

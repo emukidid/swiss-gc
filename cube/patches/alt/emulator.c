@@ -221,8 +221,7 @@ void service_exception(OSException exception, OSContext *context, uint32_t dsisr
 		}
 		default:
 		{
-			handler = *OSExceptionHandlerTable;
-			if (handler) (handler + 0x50)(exception, context, dsisr, dar);
+			OSUnhandledException(exception, context, dsisr, dar);
 			break;
 		}
 		case OS_EXCEPTION_PERFORMANCE_MONITOR:
