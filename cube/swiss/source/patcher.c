@@ -3027,24 +3027,26 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		u32 *OSGetResetButtonState = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (OSGetResetButtonState) {
-			switch (j) {
-				case 0:
-					data[i +  6] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 1:
-					data[i + 69] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 2:
-					data[i +  6] = 0x3C800C00;	// lis		r4, 0x0C00
-					break;
-				case 3:
-					data[i +  7] = 0x3C800C00;	// lis		r4, 0x0C00
-					break;
-				case 4:
-				case 5:
-				case 6:
-					data[i +  9] = 0x3CA00C00;	// lis		r5, 0x0C00
-					break;
+			if (swissSettings.igrType != IGR_OFF) {
+				switch (j) {
+					case 0:
+						data[i +  6] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 1:
+						data[i + 69] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 2:
+						data[i +  6] = 0x3C800C00;	// lis		r4, 0x0C00
+						break;
+					case 3:
+						data[i +  7] = 0x3C800C00;	// lis		r4, 0x0C00
+						break;
+					case 4:
+					case 5:
+					case 6:
+						data[i +  9] = 0x3CA00C00;	// lis		r5, 0x0C00
+						break;
+				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", OSGetResetButtonStateSigs[j].Name, OSGetResetButtonState);
 			patched++;
