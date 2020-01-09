@@ -810,15 +810,6 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		{ 175, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem H" },
 		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem I" }
 	};
-	FuncPattern OSGetResetButtonStateSigs[7] = {
-		{ 118, 36, 11, 6, 12, 26, NULL, 0, "OSGetResetSwitchStateD" },
-		{ 241, 80, 13, 8, 19, 57, NULL, 0, "OSGetResetButtonStateD" },
-		{  74, 20, 12, 4,  8, 12, NULL, 0, "OSGetResetSwitchState A" },
-		{ 125, 34, 14, 6, 12, 28, NULL, 0, "OSGetResetSwitchState B" },
-		{ 169, 40, 16, 5, 17, 46, NULL, 0, "OSGetResetButtonState A" },
-		{ 166, 39, 16, 5, 16, 46, NULL, 0, "OSGetResetButtonState B" },
-		{ 167, 36, 16, 4, 15, 46, NULL, 0, "OSGetResetButtonState B" }	// SN Systems ProDG
-	};
 	FuncPattern SystemCallVectorSig = 
 		{ 7, 0, 0, 0, 0, 1, NULL, 0, "SystemCallVector" };
 	FuncPattern __OSInitSystemCallSigs[3] = {
@@ -1597,62 +1588,6 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 							findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  79, length, &ICFlashInvalidateSig))
 							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-				}
-			}
-		}
-		
-		for (j = 0; j < sizeof(OSGetResetButtonStateSigs) / sizeof(FuncPattern); j++) {
-			if (compare_pattern(&fp, &OSGetResetButtonStateSigs[j])) {
-				switch (j) {
-					case 0:
-						if (findx_pattern(data, dataType, i +   4, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  26, length, &__OSGetSystemTimeSigs[0]) &&
-							findx_pattern(data, dataType, i +  38, length, &__OSGetSystemTimeSigs[0]) &&
-							findx_pattern(data, dataType, i +  71, length, &__OSGetSystemTimeSigs[0]) &&
-							findx_pattern(data, dataType, i +  83, length, &__OSGetSystemTimeSigs[0]) &&
-							findx_pattern(data, dataType, i + 111, length, &OSRestoreInterruptsSig))
-							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
-						break;
-					case 1:
-						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +   8, length, &__OSGetSystemTimeSigs[0]) &&
-							findx_pattern(data, dataType, i + 234, length, &OSRestoreInterruptsSig))
-							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
-						break;
-					case 2:
-						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  27, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i +  39, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i +  66, length, &OSRestoreInterruptsSig))
-							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
-						break;
-					case 3:
-						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  27, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i +  39, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i +  77, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i +  88, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i + 116, length, &OSRestoreInterruptsSig))
-							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
-						break;
-					case 4:
-						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +   8, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i + 160, length, &OSRestoreInterruptsSig))
-							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
-						break;
-					case 5:
-						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +   8, length, &__OSGetSystemTimeSigs[1]) &&
-							findx_pattern(data, dataType, i + 157, length, &OSRestoreInterruptsSig))
-							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
-						break;
-					case 6:
-						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +   8, length, &__OSGetSystemTimeSigs[2]) &&
-							findx_pattern(data, dataType, i + 158, length, &OSRestoreInterruptsSig))
-							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -3015,40 +2950,10 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 				case 12: data[i + 87] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 87); break;
 				case 13: data[i + 74] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 74); break;
 			}
+			if ((k = SystemCallVectorSig.offsetFoundAt))
+				data[k + 1] = branch(OSResetSystem, JUMP_VECTOR + 1);
+			
 			print_gecko("Found:[%s] @ %08X\n", OSResetSystemSigs[j].Name, OSResetSystem);
-			patched++;
-		}
-	}
-	
-	for (j = 0; j < sizeof(OSGetResetButtonStateSigs) / sizeof(FuncPattern); j++)
-		if (OSGetResetButtonStateSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(OSGetResetButtonStateSigs) / sizeof(FuncPattern) && (i = OSGetResetButtonStateSigs[j].offsetFoundAt)) {
-		u32 *OSGetResetButtonState = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (OSGetResetButtonState) {
-			if (swissSettings.igrType != IGR_OFF) {
-				switch (j) {
-					case 0:
-						data[i +  6] = 0x3C600C00;	// lis		r3, 0x0C00
-						break;
-					case 1:
-						data[i + 69] = 0x3C600C00;	// lis		r3, 0x0C00
-						break;
-					case 2:
-						data[i +  6] = 0x3C800C00;	// lis		r4, 0x0C00
-						break;
-					case 3:
-						data[i +  7] = 0x3C800C00;	// lis		r4, 0x0C00
-						break;
-					case 4:
-					case 5:
-					case 6:
-						data[i +  9] = 0x3CA00C00;	// lis		r5, 0x0C00
-						break;
-				}
-			}
-			print_gecko("Found:[%s] @ %08X\n", OSGetResetButtonStateSigs[j].Name, OSGetResetButtonState);
 			patched++;
 		}
 	}
@@ -3284,7 +3189,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		
 		if (EXILock) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 1] = branch(EXILock, JUMP_VECTOR + 1);
+				data[k + 2] = branch(EXILock, JUMP_VECTOR + 2);
 			
 			print_gecko("Found:[%s] @ %08X\n", EXILockSigs[j].Name, EXILock);
 			patched++;
@@ -3299,7 +3204,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		
 		if (EXIUnlock) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 2] = branch(EXIUnlock, JUMP_VECTOR + 2);
+				data[k + 3] = branch(EXIUnlock, JUMP_VECTOR + 3);
 			
 			print_gecko("Found:[%s] @ %08X\n", EXIUnlockSigs[j].Name, EXIUnlock);
 			patched++;

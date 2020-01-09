@@ -247,4 +247,10 @@ static OSInterruptHandler OSGetInterruptHandler(OSInterrupt interrupt)
 	return OSInterruptHandlerTable[interrupt];
 }
 
+#define OS_RESET_RESTART  0
+#define OS_RESET_HOTRESET 1
+#define OS_RESET_SHUTDOWN 2
+
+void OSResetSystem(s32 reset, u32 resetCode, s32 forceMenu);
+
 #endif /* OS_H */

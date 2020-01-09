@@ -121,15 +121,7 @@ static void di_write(unsigned index, uint32_t value)
 
 static void pi_read(unsigned index, uint32_t *value)
 {
-	switch (index) {
-		case 0:
-			if (*(uint32_t *)VAR_IGR_EXIT_FLAG & 0xF0)
-				(*DI_EMU)[1] |= 0b001;
-			*value = PI[index] & ~(!!(*(uint32_t *)VAR_IGR_EXIT_FLAG & 0x0F) << 16);
-			break;
-		default:
-			*value = PI[index];
-	}
+	*value = PI[index];
 }
 
 static void pi_write(unsigned index, uint32_t value)
@@ -292,4 +284,7 @@ void idle_thread(void)
 	exi_unmask_interrupt();
 	#endif
 	enable_interrupts();
+
+	if (*(uint32_t *)VAR_IGR_EXIT_FLAG)
+		OSResetSystem(OS_RESET_HOTRESET, 0, 0);
 }

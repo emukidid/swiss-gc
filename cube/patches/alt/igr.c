@@ -4,21 +4,17 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "../base/common.h"
 #include "../base/dolformat.h"
 #include "../base/pad.h"
 
 void check_pad(int32_t chan, PADStatus *status)
 {
-	uint32_t igr_exit_flag = *(uint32_t *)VAR_IGR_EXIT_FLAG;
+	if ((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT)
+		*(uint32_t *)VAR_IGR_EXIT_FLAG = true;
 
 	status->button &= ~PAD_USE_ORIGIN;
-	if ((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT)
-		igr_exit_flag |= (1 << chan);
-	else if (igr_exit_flag & (1 << chan))
-		igr_exit_flag <<= 4;
-
-	*(uint32_t *)VAR_IGR_EXIT_FLAG = igr_exit_flag;
 }
 
 static void load_dol(uint32_t offset, uint32_t size)
@@ -36,6 +32,13 @@ static void load_dol(uint32_t offset, uint32_t size)
 		dcache_flush_icache_inv(image.data[i], image.dataLen[i]);
 	}
 
+	image.entry();
+}
+
+void igr_exit(void)
+{
+	disable_interrupts();
+
 	asm volatile("mtmmcr0 %0" :: "r" (0));
 	asm volatile("mtmmcr1 %0" :: "r" (0));
 	asm volatile("mtpmc1 %0" :: "r" (0));
@@ -43,12 +46,6 @@ static void load_dol(uint32_t offset, uint32_t size)
 	asm volatile("mtpmc3 %0" :: "r" (0));
 	asm volatile("mtpmc4 %0" :: "r" (0));
 
-	image.entry();
-}
-
-void igr_exit(void)
-{
-	disable_interrupts();
 	end_read();
 
 	uint8_t igr_exit_type = *(uint8_t *)VAR_IGR_EXIT_TYPE;
