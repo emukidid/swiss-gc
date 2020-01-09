@@ -24,11 +24,12 @@ void di_update_interrupts(void)
 {
 	if (((*DI_EMU)[0] >> 1) & ((*DI_EMU)[0] & 0b0101010) ||
 		((*DI_EMU)[1] >> 1) & ((*DI_EMU)[1] & 0b010))
-		*(OSInterruptMask *)OSCachedToMirrored(VAR_FAKE_IRQ_SET) |=  OS_INTERRUPTMASK_EMU_DI;
+		*(OSInterruptMask *)VAR_FAKE_IRQ_SET |=  OS_INTERRUPTMASK_EMU_DI;
 	else
-		*(OSInterruptMask *)OSCachedToUncached(VAR_FAKE_IRQ_SET) &= ~OS_INTERRUPTMASK_EMU_DI;
+		*(OSInterruptMask *)VAR_FAKE_IRQ_SET &= ~OS_INTERRUPTMASK_EMU_DI;
 
-	asm volatile("sc" ::: "r9", "r10");
+	if (*(OSInterruptMask *)VAR_FAKE_IRQ_SET)
+		*(volatile int *)OS_BASE_MIRRORED;
 }
 
 void di_complete_transfer(void)
@@ -252,7 +253,7 @@ void service_exception(OSException exception, OSContext *context, uint32_t dsisr
 
 static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	OSInterruptMask cause = *(OSInterruptMask *)OSCachedToUncached(VAR_FAKE_IRQ_SET);
+	OSInterruptMask cause = *(OSInterruptMask *)VAR_FAKE_IRQ_SET;
 	OSInterruptHandler handler;
 	OSContext exceptionContext;
 
