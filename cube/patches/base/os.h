@@ -247,6 +247,9 @@ static OSInterruptHandler OSGetInterruptHandler(OSInterrupt interrupt)
 	return OSInterruptHandlerTable[interrupt];
 }
 
+OSInterruptMask OSMaskInterrupts(OSInterruptMask mask);
+OSInterruptMask OSUnmaskInterrupts(OSInterruptMask mask);
+
 #define OS_RESET_RESTART  0
 #define OS_RESET_HOTRESET 1
 #define OS_RESET_SHUTDOWN 2

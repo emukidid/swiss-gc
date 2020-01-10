@@ -7,6 +7,7 @@
 #include <string.h>
 #include "../alt/timer.h"
 #include "../base/common.h"
+#include "../base/os.h"
 #include "bba.h"
 #include "globals.h"
 

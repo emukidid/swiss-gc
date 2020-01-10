@@ -13,7 +13,6 @@
 
 #ifdef BBA
 void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
-void exi_unmask_interrupt(void);
 #endif
 
 void perform_read(uint32_t offset, uint32_t length, uint32_t address);
@@ -230,7 +229,7 @@ void service_exception(OSException exception, OSContext *context, uint32_t dsisr
 			#ifdef BBA
 			if (timer3_interrupt()) {
 				timer3_stop();
-				exi_unmask_interrupt();
+				OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
 			}
 			#endif
 			restore_timer_interrupts();
@@ -280,9 +279,6 @@ void idle_thread(void)
 {
 	disable_interrupts();
 	trickle_read();
-	#ifdef BBA
-	exi_unmask_interrupt();
-	#endif
 	enable_interrupts();
 
 	if (*(uint32_t *)VAR_IGR_EXIT_FLAG)

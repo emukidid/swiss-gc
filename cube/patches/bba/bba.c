@@ -8,7 +8,6 @@
 #include <string.h>
 #include "../alt/timer.h"
 #include "../base/common.h"
-#include "../base/dvd.h"
 #include "../base/exi.h"
 #include "../base/os.h"
 #include "bba.h"
@@ -62,16 +61,6 @@ static bool exi_selected(void)
 static void exi_clear_interrupts(int32_t chan, bool exi, bool tc, bool ext)
 {
 	EXI[chan][0] = (EXI[chan][0] & ~0x80A) | (ext << 11) | (tc << 3) | (exi << 1);
-}
-
-static void exi_mask_interrupts(int32_t chan, bool exi, bool tc, bool ext)
-{
-	EXI[chan][0] = EXI[chan][0] & ~(0x80A | (ext << 10) | (tc << 2) | (exi << 0));
-}
-
-static void exi_unmask_interrupts(int32_t chan, bool exi, bool tc, bool ext)
-{
-	EXI[chan][0] = (EXI[chan][0] & ~0x80A) | (ext << 10) | (tc << 2) | (exi << 0);
 }
 
 static void exi_select(void)
@@ -257,7 +246,7 @@ static void exi_callback(int32_t chan, uint32_t dev)
 		OSTick end = OSGetTick();
 		timer3_start(OSDiffTick(end, start));
 
-		exi_mask_interrupts(EXI_CHANNEL_2, 1, 0, 0);
+		OSMaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
 		EXIUnlock(EXI_CHANNEL_0);
 	}
 }
@@ -266,11 +255,6 @@ void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	exi_clear_interrupts(EXI_CHANNEL_2, 1, 0, 0);
 	exi_callback(EXI_CHANNEL_0, EXI_DEVICE_2);
-}
-
-void exi_unmask_interrupt(void)
-{
-	exi_unmask_interrupts(EXI_CHANNEL_2, 1, 0, 0);
 }
 
 bool exi_probe(int32_t chan)
@@ -345,6 +329,8 @@ void trickle_read(void)
 				fsp_get_file(position, remainder);
 		}
 	}
+
+	OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
 }
 
 void change_disc(void)

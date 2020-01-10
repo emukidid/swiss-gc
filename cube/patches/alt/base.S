@@ -96,16 +96,21 @@ _start:
 	b		check_pad
 	b		igr_exit
 
-	.globl OSUnhandledException, OSResetSystem, EXILock, EXIUnlock
+	.globl OSUnhandledException
+	.globl OSMaskInterrupts, OSUnmaskInterrupts
+	.globl OSResetSystem
+	.globl EXILock, EXIUnlock
 OSUnhandledException:
+	blr
+OSMaskInterrupts:
+	blr
+OSUnmaskInterrupts:
 	blr
 OSResetSystem:
 	blr
 EXILock:
 	blr
 EXIUnlock:
-	blr
-	blr
 	blr
 	blr
 	blr
