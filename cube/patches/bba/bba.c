@@ -53,11 +53,6 @@
 #define BBA_INIT_RWP	BBA_INIT_BP
 #define BBA_INIT_RRP	BBA_INIT_BP
 
-static bool exi_selected(void)
-{
-	return !!(EXI[EXI_CHANNEL_0][0] & 0x380);
-}
-
 static void exi_clear_interrupts(int32_t chan, bool exi, bool tc, bool ext)
 {
 	EXI[chan][0] = (EXI[chan][0] & ~0x80A) | (ext << 11) | (tc << 3) | (exi << 1);
@@ -167,15 +162,11 @@ static void bba_outs(uint16_t reg, const void *val, uint32_t len)
 	exi_deselect();
 }
 
-bool bba_transmit(const void *data, size_t size)
+void bba_transmit(const void *data, size_t size)
 {
-	if (exi_selected()) return false;
-
 	while (bba_in8(BBA_NCRA) & (BBA_NCRA_ST0 | BBA_NCRA_ST1));
 	bba_outs(BBA_WRTXFIFOD, data, size);
 	bba_out8(BBA_NCRA, (bba_in8(BBA_NCRA) & ~BBA_NCRA_ST0) | BBA_NCRA_ST1);
-
-	return true;
 }
 
 void bba_receive_end(bba_page_t page, void *data, size_t size)
@@ -280,14 +271,14 @@ bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 void di_update_interrupts(void);
 void di_complete_transfer(void);
 
-void schedule_read(uint32_t offset, uint32_t length, OSTick ticks)
+void schedule_read(uint32_t offset, uint32_t length, OSTick ticks, bool lock)
 {
 	*_position  = offset;
 	*_remainder = length;
 
 	if (length) {
 		if (!is_frag_read(offset, length))
-			fsp_get_file(offset, length);
+			fsp_get_file(offset, length, lock);
 		else
 			timer1_start(ticks);
 		return;
@@ -299,7 +290,7 @@ void schedule_read(uint32_t offset, uint32_t length, OSTick ticks)
 void perform_read(uint32_t offset, uint32_t length, uint32_t address)
 {
 	*_data = OSPhysicalToCached(address);
-	schedule_read(offset, length, 0);
+	schedule_read(offset, length, 0, true);
 }
 
 void trickle_read(void)
@@ -319,14 +310,14 @@ void trickle_read(void)
 			remainder -= data_size;
 
 			*_data = data + data_size;
-			schedule_read(position, remainder, OSDiffTick(end, start));
+			schedule_read(position, remainder, OSDiffTick(end, start), true);
 			dcache_store(data, data_size);
 		} else {
 			OSTime start = *_start;
 			OSTime end = OSGetTime();
 
 			if (OSSecondsToTicks(1) < end - start)
-				fsp_get_file(position, remainder);
+				fsp_get_file(position, remainder, true);
 		}
 	}
 

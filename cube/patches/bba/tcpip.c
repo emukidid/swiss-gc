@@ -7,6 +7,7 @@
 #include <string.h>
 #include "../alt/timer.h"
 #include "../base/common.h"
+#include "../base/exi.h"
 #include "../base/os.h"
 #include "bba.h"
 #include "globals.h"
@@ -137,7 +138,10 @@ static uint8_t fsp_checksum(fsp_header_t *header, size_t size)
 	return sum;
 }
 
-static void fsp_get_file(uint32_t offset, size_t size)
+void schedule_read(uint32_t offset, uint32_t length, OSTick ticks, bool lock);
+void trickle_read(void);
+
+static void fsp_get_file(uint32_t offset, size_t size, bool lock)
 {
 	const char *file = _file;
 	uint8_t filelen = *_filelen;
@@ -147,6 +151,10 @@ static void fsp_get_file(uint32_t offset, size_t size)
 		file    =  _file2;
 		filelen = *_file2len;
 	}
+
+	*_start = 0;
+	if (lock && !EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, trickle_read))
+		return;
 
 	uint8_t data[MIN_FRAME_SIZE + filelen];
 	eth_header_t *eth = (eth_header_t *)data;
@@ -187,13 +195,13 @@ static void fsp_get_file(uint32_t offset, size_t size)
 	eth->src_addr.addr = (*_client_mac).addr;
 	eth->type = ETH_TYPE_IPV4;
 
-	if (bba_transmit(eth, sizeof(*eth) + ipv4->length))
-		*_start = OSGetTime();
+	bba_transmit(eth, sizeof(*eth) + ipv4->length);
 
+	*_start = OSGetTime();
 	timer1_start(OSSecondsToTicks(1));
-}
 
-void schedule_read(uint32_t offset, uint32_t length, OSTick ticks);
+	if (lock) EXIUnlock(EXI_CHANNEL_0);
+}
 
 static void fsp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, size_t size)
 {
@@ -265,7 +273,7 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 
 					*_data = data + data_size;
 					*_data_size = 0;
-					schedule_read(position, remainder, 0);
+					schedule_read(position, remainder, 0, false);
 				}
 
 				bba_receive_end(page, data + data_offset, size);
