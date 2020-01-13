@@ -559,18 +559,19 @@ void config_find(ConfigEntry *entry) {
 		}
 	}
 	// Didn't find it, setup defaults and add this entry
-	strcpy(entry->comment,"No Comment");
-	strcpy(entry->status,"Unknown");
-	entry->gameVMode = 0;
-	entry->forceHScale = 0;
+	strcpy(entry->comment, "No Comment");
+	strcpy(entry->status, "Unknown");
+	entry->gameVMode = swissSettings.gameVMode;
+	entry->forceHScale = swissSettings.forceHScale;
+	entry->forceVOffset = swissSettings.forceVOffset;
 	entry->forceVOffset = swissSettings.aveCompat == 1 ? -3:0;
-	entry->forceVFilter = 0;
-	entry->disableDithering = 0;
-	entry->forceAnisotropy = 0;
-	entry->forceWidescreen = 0;
-	entry->forceEncoding = 0;
-	entry->invertCStick = 0;
-	entry->alternateReadPatches = 1;
+	entry->forceVFilter = swissSettings.forceVFilter;
+	entry->disableDithering = swissSettings.disableDithering;
+	entry->forceAnisotropy = swissSettings.forceAnisotropy;
+	entry->forceWidescreen = swissSettings.forceWidescreen;
+	entry->forceEncoding = swissSettings.forceEncoding;
+	entry->invertCStick = swissSettings.invertCStick;
+	entry->alternateReadPatches = swissSettings.alternateReadPatches;
 	// Add this new entry to our collection
 	memcpy(&configEntries[configEntriesCount], entry, sizeof(ConfigEntry));
 	configEntriesCount++;
