@@ -377,30 +377,30 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			case SET_INIT_NET:
 				swissSettings.initNetworkAtStart ^= 1;
 			break;
-			/*case SET_FTP_HOSTIP:
-				DrawGetTextEntry(ENTRYMODE_IP, &swissSettings.ftpHostIp, sizeof(swissSettings.ftpHostIp));
+			case SET_FTP_HOSTIP:
+				DrawGetTextEntry(ENTRYMODE_IP, "FTP Host IP", &swissSettings.ftpHostIp, sizeof(swissSettings.ftpHostIp));
 			break;
 			case SET_FTP_PORT:
-				DrawGetTextEntry(ENTRYMODE_NUMERIC, &swissSettings.ftpPort, 5);
+				DrawGetTextEntry(ENTRYMODE_NUMERIC, "FTP Port", &swissSettings.ftpPort, 5);
 			break;
 			case SET_FTP_USER:
-				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA, &swissSettings.ftpUserName, sizeof(swissSettings.ftpUserName));
+				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA, "FTP Username", &swissSettings.ftpUserName, sizeof(swissSettings.ftpUserName));
 			break;
 			case SET_FTP_PASS:
-				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_MASKED, &swissSettings.ftpPassword, sizeof(swissSettings.ftpPassword));
+				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_MASKED, "FTP Password", &swissSettings.ftpPassword, sizeof(swissSettings.ftpPassword));
 			break;
 			case SET_FTP_PASV:
 				swissSettings.ftpUsePasv ^= 1;
 			break;
 			case SET_FSP_HOSTIP:
-				DrawGetTextEntry(ENTRYMODE_IP, &swissSettings.fspHostIp, sizeof(swissSettings.fspHostIp));
+				DrawGetTextEntry(ENTRYMODE_IP, "FSP Host IP", &swissSettings.fspHostIp, sizeof(swissSettings.fspHostIp));
 			break;
 			case SET_FSP_PORT:
-				DrawGetTextEntry(ENTRYMODE_NUMERIC, &swissSettings.fspPort, 5);
+				DrawGetTextEntry(ENTRYMODE_NUMERIC, "FSP Port", &swissSettings.fspPort, 5);
 			break;
 			case SET_FSP_PASS:
-				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_MASKED, &swissSettings.fspPassword, sizeof(swissSettings.fspPassword));
-			break;*/
+				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_MASKED, "FSP Password", &swissSettings.fspPassword, sizeof(swissSettings.fspPassword));
+			break;
 		}
 	}
 	else if(page == PAGE_ADVANCED) {
@@ -730,6 +730,10 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 			}
 			if((page != PAGE_MIN) && (option == settings_count_pp[page]-(page != PAGE_MAX ? 3:2))) {
 				page--; option = 0;
+			}
+			// These use text input, allow them to be accessed with the A button
+			if(page == PAGE_NETWORK && ((option >= SET_FTP_HOSTIP && option <= SET_FTP_PASS) || (option >= SET_FSP_HOSTIP && option <= SET_FSP_PASS))) {
+				settings_toggle(page, option, -1, file, config);
 			}
 		}
 		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 

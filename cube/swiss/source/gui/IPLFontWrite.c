@@ -259,7 +259,64 @@ void drawString(int x, int y, char *string, float scale, bool centered, GXColor 
 		x += (int) fontChars.font_size[c] * scale;
 		string++;
 	}
+}
 
+void drawStringWithCaret(int x, int y, char *string, float scale, bool centered, GXColor fontColor, int caretPosition, GXColor caretColor)
+{
+	if(string == NULL) {
+		string = "";
+	}
+	drawFontInit(fontColor);
+	if(centered)
+	{
+		int strWidth = 0;
+		int strHeight = (fontChars.fheight+STRHEIGHT_OFFSET) * scale;
+		char* string_work = string;
+		while(*string_work)
+		{
+			unsigned char c = *string_work;
+			strWidth += (int) fontChars.font_size[c] * scale;
+			string_work++;
+		}
+		x = (int) x - strWidth/2;
+		y = (int) y - strHeight/2;
+	}
+
+	int pos = 0;
+	while (*string || pos <= caretPosition)
+	{
+		unsigned char c = *string;
+		if(pos == caretPosition) { 
+			c = '|';
+			drawFontInit(caretColor);
+		}
+		else {
+			drawFontInit(fontColor);
+		}
+		if(c == '\n') break;
+		int i;
+		GX_Begin(GX_QUADS, GX_VTXFMT1, 4);
+		for (i=0; i<4; i++) {
+			int s = (i & 1) ^ ((i & 2) >> 1) ? fontChars.font_size[c] : 1;
+			int t = (i & 2) ? fontChars.fheight : 1;
+			float s0 = ((float) (fontChars.s[c] + s))/512;
+			float t0 = ((float) (fontChars.t[c] + t))/512;
+			s = (int) s * scale;
+			t = (int) t * scale;
+			GX_Position3s16(x + s, y + t, 0);
+			if(pos == caretPosition)
+				GX_Color4u8(caretColor.r, caretColor.g, caretColor.b, caretColor.a);
+			else
+				GX_Color4u8(fontColor.r, fontColor.g, fontColor.b, fontColor.a);
+			GX_TexCoord2f32(s0, t0);
+		}
+		GX_End();
+
+		x += (int) fontChars.font_size[c] * scale;
+		if(pos != caretPosition)
+			string++;
+		pos++;
+	}
 }
 
 int GetTextSizeInPixels(char *string)

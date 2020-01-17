@@ -165,8 +165,10 @@ typedef struct drawStyledLabelEvent {
 	float size;
 	bool centered;
 	GXColor color;
-	int fading;
 	int fadingDirection;
+	bool showCaret;
+	int caretPosition;
+	GXColor caretColor;
 } drawStyledLabelEvent_t;
 
 typedef struct drawSelectableButtonEvent {
@@ -183,6 +185,7 @@ typedef struct drawBoxEvent {
 	int y1;
 	int x2;
 	int y2;
+	GXColor backfill;
 } drawBoxEvent_t;
 
 typedef struct drawFileBrowserButtonEvent {
@@ -887,12 +890,24 @@ uiDrawObj_t* DrawTooltip(char *tooltip) {
 // Internal
 static void _DrawStyledLabel(uiDrawObj_t *evt) {
 	drawStyledLabelEvent_t *data = (drawStyledLabelEvent_t*)evt->data;
-	if(data->fadingDirection) {
-		data->color.a += data->fadingDirection;
-		if(data->color.a >= 255) data->fadingDirection = -1;
-		else if(data->color.a <= 15) data->fadingDirection = 1;
+	
+	if(data->showCaret) {
+		// blink the caret
+		if(data->fadingDirection) {
+			data->caretColor.a += (data->fadingDirection * 20);
+			if(data->caretColor.a >= 255) { data->fadingDirection = -1; data->caretColor.a = 255; }
+			else if(data->caretColor.a <= 15) { data->fadingDirection = 1; data->caretColor.a = 0; }
+		}		
+		drawStringWithCaret(data->x, data->y, data->string, data->size, data->centered, data->color, data->caretPosition, data->caretColor);
 	}
-	drawString(data->x, data->y, data->string, data->size, data->centered, data->color);
+	else {
+		if(data->fadingDirection) {
+			data->color.a += data->fadingDirection;
+			if(data->color.a >= 255) data->fadingDirection = -1;
+			else if(data->color.a <= 15) data->fadingDirection = 1;
+		}
+		drawString(data->x, data->y, data->string, data->size, data->centered, data->color);
+	}
 }
 
 // External
@@ -914,6 +929,18 @@ uiDrawObj_t* DrawStyledLabel(int x, int y, char *string, float size, bool center
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_STYLEDLABEL;
 	event->data = eventData;
+	return event;
+}
+
+// External
+uiDrawObj_t* DrawStyledLabelWithCaret(int x, int y, char *string, float size, bool centered, GXColor color, int caretPosition) 
+{	
+	uiDrawObj_t *event = DrawStyledLabel(x, y, string, size, centered, color);
+	drawStyledLabelEvent_t *eventData = (drawStyledLabelEvent_t*)event->data;
+	eventData->caretPosition = caretPosition;
+	eventData->showCaret = true;
+	eventData->fadingDirection = 1;
+	eventData->caretColor = eventData->color;
 	return event;
 }
 
@@ -1079,10 +1106,9 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message
 static void _DrawEmptyBox(uiDrawObj_t *evt) {
 	drawBoxEvent_t *data = (drawBoxEvent_t*)evt->data;
 	
-	GXColor fillColor = (GXColor) {0,0,0,GUI_MSGBOX_ALPHA}; //Black
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //Silver
 	
-	_DrawSimpleBox( data->x1, data->y1, data->x2-data->x1, data->y2-data->y1, 0, fillColor, borderColor);
+	_DrawSimpleBox(data->x1, data->y1, data->x2-data->x1, data->y2-data->y1, 0, data->backfill, borderColor);
 }
 
 // External
@@ -1097,6 +1123,26 @@ uiDrawObj_t* DrawEmptyBox(int x1, int y1, int x2, int y2)
 	eventData->y1 = y1;
 	eventData->x2 = x2;
 	eventData->y2 = y2;
+	eventData->backfill = (GXColor) {0,0,0,GUI_MSGBOX_ALPHA}; //Black
+	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
+	event->type = EV_EMPTYBOX;
+	event->data = eventData;
+	return event;
+}
+
+// External
+uiDrawObj_t* DrawEmptyColouredBox(int x1, int y1, int x2, int y2, GXColor colour) 
+{
+	int borderSize;
+	borderSize = (y2-y1) <= 30 ? 3 : 10;
+	x1-=borderSize;x2+=borderSize;y1-=borderSize;y2+=borderSize;
+	
+	drawBoxEvent_t *eventData = calloc(1, sizeof(drawBoxEvent_t));
+	eventData->x1 = x1;
+	eventData->y1 = y1;
+	eventData->x2 = x2;
+	eventData->y2 = y2;
+	eventData->backfill = colour;
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_EMPTYBOX;
 	event->data = eventData;
@@ -1107,10 +1153,9 @@ uiDrawObj_t* DrawEmptyBox(int x1, int y1, int x2, int y2)
 static void _DrawTransparentBox(uiDrawObj_t *evt) {
 	drawBoxEvent_t *data = (drawBoxEvent_t*)evt->data;
 	
-	GXColor noColor 	= (GXColor) {0,0,0,0};
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //Silver
 	
-	_DrawSimpleBox( data->x1, data->y1, data->x2-data->x1, data->y2-data->y1, 0, noColor, borderColor);
+	_DrawSimpleBox( data->x1, data->y1, data->x2-data->x1, data->y2-data->y1, 0, data->backfill, borderColor);
 }
 
 // External
@@ -1125,6 +1170,7 @@ uiDrawObj_t* DrawTransparentBox(int x1, int y1, int x2, int y2)
 	eventData->y1 = y1;
 	eventData->x2 = x2;
 	eventData->y2 = y2;
+	eventData->backfill = (GXColor) {0,0,0,0};
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_TRANSPARENTBOX;
 	event->data = eventData;
@@ -1408,8 +1454,245 @@ void DrawCheatsSelector(char *fileName) {
 }
 
 
-void DrawGetTextEntry(int mode, void *src, int size) {
-	// TODO
+void DrawGetTextEntry(int mode, char *label, void *src, int size) {
+	
+	print_gecko("DrawGetTextEntry Modes: Alpha [%s] Numeric [%s] IP [%s] Masked [%s]\r\n", mode & ENTRYMODE_ALPHA ? "Y":"N", mode & ENTRYMODE_NUMERIC ? "Y":"N",
+																		mode & ENTRYMODE_IP ? "Y":"N", mode & ENTRYMODE_MASKED ? "Y":"N");
+	char *text = calloc(1, size);
+	if(mode & (ENTRYMODE_ALPHA|ENTRYMODE_IP)) {
+		strncpy(text, src, size);
+	}
+	else {
+		u16 *src_int = (u16*)src;
+		itoa(*src_int, text, 10);
+	}
+	print_gecko("Text is [%s] size %i\r\n", text, size);
+	
+	int caret = strlen(text);
+	int cur_row = 0;
+	int cur_col = 0;
+	int num_rows = 0;
+	int num_per_row[5] = {0,0,0,0,0};	// number of keys per row
+	int pos_for_row[5] = {0,0,0,0,0};	// X pos to start drawing keys from
+	int grid_gap = 45;
+	int num_txt_modes = 0;	// Number of modes the text entry chars will have, e.g. upper case, lowercase etc.
+	char *txt_modes_str[] = {"lowercase", "UPPERCASE"};
+	// char arrays to grab from, exact order is important
+	char *ip_mode_chars = "123456789.0\b";
+	char *num_mode_chars = "1234567890\b";
+	char *txt_mode_chars_lower = "1234567890-=\bqwertyuiop[]\\asdfghjkl;'zxcvbnm,./`!@\a#$%";
+	char *txt_mode_chars_upper = "1234567890_+\bQWERTYUIOP{}|ASDFGHJKL:\"ZXCVBNM<>?^&*\a()~";
+	int cur_txt_mode = 0;
+	char *gridText = NULL;
+	
+	// IP mode
+	if(mode & ENTRYMODE_IP) {
+		// 1  2  3
+		// 4  5  6
+		// 7  8  9
+		//[.] 0  [backspace]
+		num_rows = 4;
+		grid_gap = 15;
+		num_per_row[0] = 3;
+		pos_for_row[0] = 240;
+		num_per_row[1] = 3;
+		pos_for_row[1] = 240;
+		num_per_row[2] = 3;
+		pos_for_row[2] = 240;
+		num_per_row[3] = 3;
+		pos_for_row[3] = 240;
+		gridText = ip_mode_chars;
+	}
+	
+	// Number only
+	if((mode & ENTRYMODE_NUMERIC) && !(mode & ENTRYMODE_ALPHA)) {
+		// 1  2  3
+		// 4  5  6
+		// 7  8  9
+		// 0  [backspace]
+		num_rows = 4;
+		grid_gap = 15;
+		num_per_row[0] = 3;
+		pos_for_row[0] = 240;
+		num_per_row[1] = 3;
+		pos_for_row[1] = 240;
+		num_per_row[2] = 3;
+		pos_for_row[2] = 240;
+		num_per_row[3] = 2;
+		pos_for_row[3] = 240;
+		gridText = num_mode_chars;
+	}
+	
+	// Alpha only
+	else if(!(mode & ENTRYMODE_NUMERIC) && (mode & ENTRYMODE_ALPHA)) {
+		// TODO if we ever have to.
+	}
+	
+	// Alphanumeric
+	else if((mode & (ENTRYMODE_NUMERIC | ENTRYMODE_ALPHA)) && !(mode & ENTRYMODE_IP)) {
+		/* Mode 0:
+		 1234567890-=<\b aka backspace>
+		 qwertyuiop[]\
+		 asdfghjkl;'
+		 zxcvbnm,./
+		 `!@<\a aka space>#$%
+		
+		 Mode 1:
+		 1234567890_+<\b aka backspace>
+		 QWERTYUIOP{}|
+		 ASDFGHJKL:"
+		 ZXCVBNM<>?
+		 ^&*<\a aka space>()~
+		*/
+		
+		num_txt_modes = 2;
+		num_rows = 5;
+		grid_gap = 10;
+		num_per_row[0] = 13;
+		pos_for_row[0] = 40;
+		num_per_row[1] = 13;
+		pos_for_row[1] = 60;
+		num_per_row[2] = 11;
+		pos_for_row[2] = 100;
+		num_per_row[3] = 10;
+		pos_for_row[3] = 120;
+		num_per_row[4] = 7;
+		pos_for_row[4] = 160;
+	}
+	
+	// Wait for any A or Left/Right presses to finish
+	while ((PAD_ButtonsHeld(0) & (PAD_BUTTON_A|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT))){ VIDEO_WaitVSync (); }
+	uiDrawObj_t *container = NULL;
+	while(1) {
+		// Double box for extra darkness
+		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 440);
+		DrawAddChild(newPanel, DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 440));
+		sprintf(txtbuffer, "%s - Please enter a value", label);
+		DrawAddChild(newPanel, DrawStyledLabel(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), false, defaultColor));
+
+		// Draw the text entry box (TODO: mask chars if the mode says to do so)
+		DrawAddChild(newPanel, DrawEmptyBox(40, 100, getVideoMode()->fbWidth-40, 140));
+		DrawAddChild(newPanel, DrawStyledLabelWithCaret(320, 120, text, GetTextScaleToFitInWidth(text, getVideoMode()->fbWidth-90), true, defaultColor, caret));
+		DrawAddChild(newPanel, DrawStyledLabel(320, 160, "(L/R) Cursor | (Start) Accept | (B) Discard", 0.75f, true, defaultColor));
+
+		// Alphanumeric has a little "mode" hint at the bottom (upper/lower case set switching)
+		if(mode & ENTRYMODE_ALPHA) {
+			gridText = cur_txt_mode == 0 ? txt_mode_chars_lower : txt_mode_chars_upper;
+			sprintf(txtbuffer, "Press X to change to [%s], current mode is [%s]",
+													txt_modes_str[(cur_txt_mode + 1 >= num_txt_modes ? 0 : cur_txt_mode + 1)], txt_modes_str[cur_txt_mode]);
+			DrawAddChild(newPanel, DrawStyledLabel(25, 420, txtbuffer, 0.65f, false, defaultColor));
+		}
+		
+		// Draw the grid
+		int y = 200, dx = 0, dy = 0, i = 0;
+		int button_height = 30;
+		for(dy = 0; dy < num_rows; dy++) {
+			int x = pos_for_row[dy];
+			for(dx = 0; dx < num_per_row[dy]; dx++) {
+				// Space and Backspace are special, draw them in double the width with smaller fonts
+				bool isSpecial = (gridText[i] == '\a' || gridText[i] == '\b');
+				int button_width = isSpecial ? (60 + grid_gap) : 30;
+				DrawAddChild(newPanel, DrawEmptyColouredBox(x, y, x+button_width, y+button_height, cur_col == dx && cur_row == dy ? (GXColor) {96,107,164,GUI_MSGBOX_ALPHA} : (GXColor) {0,0,0,GUI_MSGBOX_ALPHA}));
+				float fontSize = isSpecial ? 0.65f : 1.0f;
+				if(isSpecial)
+					sprintf(txtbuffer, "%s", gridText[i] == '\a' ? "Space" : "(Y) Back");
+				else
+					sprintf(txtbuffer, "%c", gridText[i]);
+				DrawAddChild(newPanel, DrawStyledLabel(x+(button_width/2), y+(button_height/2), txtbuffer, fontSize, true, cur_col == dx && cur_row == dy ? defaultColor : deSelectedColor));
+				x += (grid_gap + button_width);
+				i++;
+			}
+			y += (grid_gap + button_height);
+		}
+		
+		if(container) {
+			DrawDispose(container);
+		}
+		DrawPublish(newPanel);
+		container = newPanel;
+		
+		while (!(PAD_ButtonsHeld(0) & (PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_START)))
+			{ VIDEO_WaitVSync (); }
+		u16 btns = PAD_ButtonsHeld(0);
+		// Key nav
+		if(btns & PAD_BUTTON_DOWN) {
+			cur_row = (cur_row + 1 >= num_rows ? 0 : cur_row + 1);
+		}
+		if(btns & PAD_BUTTON_UP) {
+			cur_row = (cur_row == 0 ? num_rows - 1 : cur_row - 1);
+		}
+		if(btns & PAD_BUTTON_LEFT) {
+			cur_col = (cur_col == 0 ? num_per_row[cur_row] - 1 : cur_col - 1);
+		}
+		if(btns & PAD_BUTTON_RIGHT) {
+			cur_col = (cur_col + 1 >= num_per_row[cur_row] ? 0 : cur_col + 1);
+		}
+		// If we went off the end due to a row that has less than another
+		if(cur_col >= num_per_row[cur_row]) cur_col = num_per_row[cur_row] - 1;
+		// Key press handling
+		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_Y)) {
+			int char_pos = cur_col;
+			for(i = 0; i < cur_row; i++)
+				char_pos += num_per_row[i];
+			char pressed = gridText[char_pos];
+			// Handle normal character presses
+			if(pressed != '\b' && !(btns & PAD_BUTTON_Y)) {
+				if(caret < size && strlen(text) < size) {
+					//print_gecko("Pressed [%c]\r\n", pressed);
+					if(pressed == '\a')
+						pressed = ' ';
+					// Shuffle everything forward (don't want overwrite functionality)
+					for(i = size-1; i > caret; i--) {
+						text[i] = text[i-1];
+					}
+					text[caret] = pressed;
+					caret++;
+				}
+			}
+			// Handle deletes via Y button or "backspace" button
+			else if((btns & PAD_BUTTON_Y) || (pressed == '\b')) {
+				// Delete a character from the caret
+				if(caret-1 >= 0) {
+					for(i = caret-1; i < size; i++) {
+						text[i] = text[i+1];
+						text[i+1] = '\0';
+					}
+					text[size] = '\0';
+					if(caret > 0)
+						caret --;
+				}
+			}
+		}
+		// Mode switching if the set allows it (only alpha does for upper/lower)
+		if(btns & PAD_BUTTON_X) {
+			if(num_txt_modes > 0) {
+				cur_txt_mode = (cur_txt_mode + 1 >= num_txt_modes ? 0 : cur_txt_mode + 1);
+			}
+		}
+		if(btns & PAD_TRIGGER_L) {
+			if(caret > 0) caret--;
+		}
+		if(btns & PAD_TRIGGER_R) {
+			if(caret < strlen(text)) caret++;
+		}
+		if(btns & PAD_BUTTON_B) {
+			break;
+		}
+		if(btns & PAD_BUTTON_START) {
+			if(mode & (ENTRYMODE_ALPHA|ENTRYMODE_IP)) {
+				strcpy(src, text);
+			}
+			else {
+				// TODO fix this stuff at some point, we're checking based on text size rather than max val of the data type.
+				u16 *src_int = (u16*)src;
+				*src_int = (u16)atoi(text);
+			}
+			break;
+		}
+		while (PAD_ButtonsHeld(0) & (PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_START))
+			{ VIDEO_WaitVSync (); }
+	}
+	DrawDispose(container);
 }
 
 
