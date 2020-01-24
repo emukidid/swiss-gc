@@ -22,6 +22,7 @@
 #define in_range(x, a, b) (((x) >= (a)) && ((x) < (b)))
 
 #define FILES_PER_PAGE 8
+#define FILES_PER_PAGE_CAROUSEL 10
 extern int current_view_start;
 extern int current_view_end;
 extern int curMenuSelection;	      //menu selection
@@ -115,7 +116,8 @@ typedef struct {
 	int igrType;
 	int initNetworkAtStart;
 	int aveCompat;
-	u8 configDeviceId;	// see deviceHandler.h 
+	u8 configDeviceId;	// see deviceHandler.h
+	int fileBrowserType;
 } SwissSettings __attribute__((aligned(32)));
 extern SwissSettings swissSettings;
 
@@ -124,6 +126,13 @@ enum fileOptions
 	COPY_OPTION=0,
 	MOVE_OPTION,
 	DELETE_OPTION
+};
+
+enum fileBrowserTypes
+{
+	BROWSER_STANDARD=0,
+	BROWSER_CAROUSEL,
+	BROWSER_MAX
 };
 
 #endif 

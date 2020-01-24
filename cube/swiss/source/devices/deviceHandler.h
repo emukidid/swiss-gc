@@ -13,6 +13,7 @@
 #include "ff.h"
 #include "diskio.h"
 #include "wode/WodeInterface.h"
+#include "bnr.h"
 
 #define MAX_DEVICES 18
 #define PATHNAME_MAX 1024
@@ -25,7 +26,7 @@ typedef struct {
 	u8 *banner;
 	int bannerSize;
 	GXTexObj bannerTexObj;
-	char description[128];
+	BNRDesc bnrDescription;
 } file_meta;
 
 typedef struct {

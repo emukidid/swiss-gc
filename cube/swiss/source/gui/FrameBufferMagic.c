@@ -93,7 +93,7 @@ GXTexObj dirimgTexObj;
 TPLFile gcloaderTPL;
 GXTexObj gcloaderTexObj;
 
-static char fbTextBuffer[64];
+static char fbTextBuffer[256];
 
 // Video threading vars
 #define VIDEO_STACK_SIZE (1024*64)
@@ -196,6 +196,8 @@ typedef struct drawFileBrowserButtonEvent {
 	char *displayName;
 	file_handle *file;
 	int mode;
+	bool isCarousel;	// Draw this as a full "card" style
+	int distFromMiddle;	// 0 = full, -1 spine only but large then gradually getting smaller as dist increases from 0
 } drawFileBrowserButtonEvent_t;
 
 typedef struct drawMenuButtonsEvent {
@@ -999,62 +1001,187 @@ uiDrawObj_t* DrawContainer()
 
 // Internal
 static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
-	int borderSize = 4;	
+	
 	drawFileBrowserButtonEvent_t *data = (drawFileBrowserButtonEvent_t*)evt->data;
-	
-	// Not selected
-	GXColor noColor 	= (GXColor) {0,0,0,0};
-	GXColor selectColor = (GXColor) {46,57,104,GUI_MSGBOX_ALPHA}; 	//bluish
-	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //Silver
+	int borderSize = 4;	
+	if(data->isCarousel) {	
+		// Not selected
+		GXColor noColor 	= (GXColor) {0,0,0,128};
+		GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //Silver
+		// Large middle entry currently being displayed, verbose info
+		if(data->distFromMiddle == 0) {
 
-	_DrawSimpleBox(data->x1, data->y1, data->x2-data->x1, data->y2-data->y1, 
-				0, data->mode == B_SELECTED ? selectColor : noColor, borderColor);
-	
-	// Draw banner if there is one
-	file_handle *file = data->file;
-	if(file->meta && (file->meta->banner || file->meta->tplLocation)) {
-		GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
-		GX_InvalidateTexAll();
-		GX_LoadTexObj(file->meta->tplLocation ? file->meta->tplLocation : &file->meta->bannerTexObj, GX_TEXMAP0);
-		GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-			GX_Position3f32((float) data->x1+7,(float) data->y1+4, 0.0f );
-			GX_Color4u8(255, 255, 255, 255);
-			GX_TexCoord2f32(0.0f,0.0f);
-			GX_Position3f32((float) (data->x1+7+96),(float) data->y1+4,0.0f );
-			GX_Color4u8(255, 255, 255, 255);
-			GX_TexCoord2f32(1.0f,0.0f);
-			GX_Position3f32((float) (data->x1+7+96),(float) (data->y1+4+32),0.0f );
-			GX_Color4u8(255, 255, 255, 255);
-			GX_TexCoord2f32(1.0f,1.0f);
-			GX_Position3f32((float) data->x1+7,(float) (data->y1+4+32),0.0f );
-			GX_Color4u8(255, 255, 255, 255);
-			GX_TexCoord2f32(0.0f,1.0f);
-		GX_End();
-	}
-	if(file->meta && file->meta->regionTexId != -1 && file->meta->regionTexId != 0) {
-		_DrawImageNow(file->meta->regionTexId, data->x2 - 37, data->y1+borderSize+2, 30,20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	}
-	
-	float scale = GetTextScaleToFitInWidth(data->displayName, (data->x2-data->x1-96-35)-(borderSize*2));
-	drawString(data->x1 + borderSize+5+96, data->y1+borderSize, data->displayName, scale, false, defaultColor);
-	
-	// Print specific stats
-	if(file->fileAttrib==IS_FILE) {
-		if(devices[DEVICE_CUR] == &__device_wode) {
-			ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
-			sprintf(fbTextBuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
-		}
-		else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
-			sprintf(fbTextBuffer,"%.2fKB (%d blocks)", (float)file->size/1024, file->size/8192);
-		}
-		else if(devices[DEVICE_CUR] == &__device_qoob) {
-			sprintf(fbTextBuffer,"%.2fKB (%d blocks)", (float)file->size/1024, file->size/0x10000);
+			_DrawSimpleBox(data->x1, data->y1, data->x2-data->x1, data->y2-data->y1, 0, noColor, borderColor);
+			
+			int x_mid = data->x2-((data->x2-data->x1)/2);
+			int bnr_width = 96;
+			int bnr_height = 32;
+			file_handle *file = data->file;
+			// Draw banner if there is one
+			if(file->meta && (file->meta->banner || file->meta->tplLocation)) {
+				bnr_width *= (file->meta->tplLocation ? 1 : 2);
+				bnr_height *= (file->meta->tplLocation ? 1 : 2);
+				GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
+				GX_InvalidateTexAll();
+				GX_LoadTexObj(file->meta->tplLocation ? file->meta->tplLocation : &file->meta->bannerTexObj, GX_TEXMAP0);
+				int bnr_x = x_mid - (bnr_width/2);
+				GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+					GX_Position3f32((float) bnr_x,(float) data->y1+borderSize+40, 0.0f );
+					GX_Color4u8(255, 255, 255, 255);
+					GX_TexCoord2f32(0.0f,0.0f);
+					GX_Position3f32((float) (bnr_x+bnr_width),(float) data->y1+borderSize+40,0.0f );
+					GX_Color4u8(255, 255, 255, 255);
+					GX_TexCoord2f32(1.0f,0.0f);
+					GX_Position3f32((float) (bnr_x+bnr_width),(float) (data->y1+borderSize+40+bnr_height),0.0f );
+					GX_Color4u8(255, 255, 255, 255);
+					GX_TexCoord2f32(1.0f,1.0f);
+					GX_Position3f32((float) bnr_x,(float) (data->y1+borderSize+40+bnr_height),0.0f );
+					GX_Color4u8(255, 255, 255, 255);
+					GX_TexCoord2f32(0.0f,1.0f);
+				GX_End();
+				
+				// Full Game Name
+				float scale = GetTextScaleToFitInWidth(file->meta->bnrDescription.fullGameName,(data->x2-data->x1)-(borderSize*2));
+				drawString(x_mid, data->y1+(borderSize*2)+10, file->meta->bnrDescription.fullGameName, scale, true, defaultColor);	
+				
+				// Company
+				scale = GetTextScaleToFitInWidth(file->meta->bnrDescription.fullCompany,(data->x2-data->x1)-(borderSize*2));
+				drawString(x_mid, data->y1+(borderSize*2)+40+bnr_height+20, file->meta->bnrDescription.fullCompany, scale, true, defaultColor);				
+				
+				// Description
+				sprintf(fbTextBuffer, "%s", file->meta->bnrDescription.description);
+				char* rest = &fbTextBuffer[0];
+				char* tok;
+				int line = 0;
+				while ((tok = strtok_r (rest,"\r\n", &rest))) {
+					scale = GetTextScaleToFitInWidthWithMax(tok,(data->x2-data->x1)-(borderSize*2), !line ? 1.0f : scale);
+					drawString(x_mid, data->y1+(borderSize*2)+40+bnr_height+60+(line*scale*24), tok, scale, true, defaultColor);
+					line++;
+				}
+								
+			}
+			
+			// Display name (only if we didn't have an internal game name)
+			if(!(file->meta && file->meta->banner && file->meta->bnrDescription.fullGameName[0])) {
+				float scale = GetTextScaleToFitInWidth(data->displayName, (data->x2-data->x1)-(borderSize*2));
+				drawString(x_mid, data->y1+(borderSize*2)+10, data->displayName, scale, true, defaultColor);
+			}
+			
+			// Print specific stats
+			if(file->fileAttrib==IS_FILE) {
+				if(devices[DEVICE_CUR] == &__device_wode) {
+					ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
+					sprintf(fbTextBuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
+				}
+				else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
+					sprintf(fbTextBuffer,"Size: %.2fKB (%d blocks)", (float)file->size/1024, file->size/8192);
+				}
+				else if(devices[DEVICE_CUR] == &__device_qoob) {
+					sprintf(fbTextBuffer,"Size: %.2fKB (%d blocks)", (float)file->size/1024, file->size/0x10000);
+				}
+				else {
+					sprintf(fbTextBuffer,"Size: %.2f %s",file->size > (1024*1024) ? (float)file->size/(1024*1024):(float)file->size/1024,file->size > (1024*1024) ? "MB":"KB");
+				}
+				drawString(data->x2 - (borderSize + (GetTextSizeInPixels(fbTextBuffer)*0.45f)), 
+					data->y2-(borderSize+24), fbTextBuffer, 0.45f, false, defaultColor);
+									
+				// Region
+				if(file->meta && file->meta->regionTexId != -1 && file->meta->regionTexId != 0) {
+					drawString(data->x2 - borderSize - 80, data->y2-(borderSize+54), "Region:", 0.45f, false, defaultColor);
+					_DrawImageNow(file->meta->regionTexId, data->x2 - 37, data->y2-(borderSize+64), 30,20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+				}
+			}
 		}
 		else {
-			sprintf(fbTextBuffer,"%.2f %s",file->size > (1024*1024) ? (float)file->size/(1024*1024):(float)file->size/1024,file->size > (1024*1024) ? "MB":"KB");
+			// Vertical
+			_DrawSimpleBox(data->x1, data->y1, data->x2-data->x1, data->y2-data->y1, 0, noColor, borderColor);
+			int bnr_width = 72;
+			int bnr_height = 24;
+			int x_start = (data->x2-((data->x2-data->x1)/2)) - (bnr_height/2);
+			// Draw banner if there is one
+			file_handle *file = data->file;
+			if(file->meta && (file->meta->banner || file->meta->tplLocation)) {
+				GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
+				GX_InvalidateTexAll();
+				GX_LoadTexObj(file->meta->tplLocation ? file->meta->tplLocation : &file->meta->bannerTexObj, GX_TEXMAP0);
+				GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+					GX_Position3f32((float)x_start,(float) data->y2-borderSize, 0.0f ); // bottom left
+					GX_Color4u8(255, 255, 255, 255);
+					GX_TexCoord2f32(0.0f,0.0f);
+					GX_Position3f32((float)x_start,(float) data->y2-bnr_width-borderSize,0.0f );	// top left
+					GX_Color4u8(255, 255, 255, 255);
+					GX_TexCoord2f32(1.0f,0.0f);
+					GX_Position3f32((float)x_start+bnr_height,(float) data->y2-bnr_width-borderSize,0.0f );	// top right
+					GX_Color4u8(255, 255, 255, 255);
+					GX_TexCoord2f32(1.0f,1.0f);
+					GX_Position3f32((float)x_start+bnr_height,(float) data->y2 - borderSize,0.0f );	// bottom right
+					GX_Color4u8(255, 255, 255, 255);
+					GX_TexCoord2f32(0.0f,1.0f);
+				GX_End();
+				drawStringVertical(data->x1 + 16, data->y2-bnr_width-5-borderSize, file->meta->bnrDescription.fullGameName, 0.5f, defaultColor, (data->y2-bnr_width-5-borderSize) - (data->y1 + (borderSize*2)));
+			}
+			// Display name (only if we didn't have an internal game name)
+			if(!(file->meta && file->meta->banner && file->meta->bnrDescription.fullGameName[0])) {
+				drawStringVertical(data->x1 + 16, data->y2-bnr_width-5-borderSize, data->displayName, 0.5f, defaultColor, (data->y2-bnr_width-5-borderSize) - (data->y1 + (borderSize*2)));
+			}
 		}
-		drawString(data->x2 - ((borderSize+3) + (GetTextSizeInPixels(fbTextBuffer)*0.45)), 
-			data->y1+borderSize+24, fbTextBuffer, 0.45f, false, defaultColor);
+	}
+	else {
+		
+		// Not selected
+		GXColor noColor 	= (GXColor) {0,0,0,0};
+		GXColor selectColor = (GXColor) {46,57,104,GUI_MSGBOX_ALPHA}; 	//bluish
+		GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //Silver
+
+		_DrawSimpleBox(data->x1, data->y1, data->x2-data->x1, data->y2-data->y1, 
+					0, data->mode == B_SELECTED ? selectColor : noColor, borderColor);
+		
+		// Draw banner if there is one
+		file_handle *file = data->file;
+		if(file->meta && (file->meta->banner || file->meta->tplLocation)) {
+			GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
+			GX_InvalidateTexAll();
+			GX_LoadTexObj(file->meta->tplLocation ? file->meta->tplLocation : &file->meta->bannerTexObj, GX_TEXMAP0);
+			GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+				GX_Position3f32((float) data->x1+7,(float) data->y1+4, 0.0f );
+				GX_Color4u8(255, 255, 255, 255);
+				GX_TexCoord2f32(0.0f,0.0f);
+				GX_Position3f32((float) (data->x1+7+96),(float) data->y1+4,0.0f );
+				GX_Color4u8(255, 255, 255, 255);
+				GX_TexCoord2f32(1.0f,0.0f);
+				GX_Position3f32((float) (data->x1+7+96),(float) (data->y1+4+32),0.0f );
+				GX_Color4u8(255, 255, 255, 255);
+				GX_TexCoord2f32(1.0f,1.0f);
+				GX_Position3f32((float) data->x1+7,(float) (data->y1+4+32),0.0f );
+				GX_Color4u8(255, 255, 255, 255);
+				GX_TexCoord2f32(0.0f,1.0f);
+			GX_End();
+		}
+		if(file->meta && file->meta->regionTexId != -1 && file->meta->regionTexId != 0) {
+			_DrawImageNow(file->meta->regionTexId, data->x2 - 37, data->y1+borderSize+2, 30,20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+		}
+		
+		float scale = GetTextScaleToFitInWidth(data->displayName, (data->x2-data->x1-96-35)-(borderSize*2));
+		drawString(data->x1 + borderSize+5+96, data->y1+borderSize, data->displayName, scale, false, defaultColor);
+		
+		// Print specific stats
+		if(file->fileAttrib==IS_FILE) {
+			if(devices[DEVICE_CUR] == &__device_wode) {
+				ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
+				sprintf(fbTextBuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
+			}
+			else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
+				sprintf(fbTextBuffer,"%.2fKB (%d blocks)", (float)file->size/1024, file->size/8192);
+			}
+			else if(devices[DEVICE_CUR] == &__device_qoob) {
+				sprintf(fbTextBuffer,"%.2fKB (%d blocks)", (float)file->size/1024, file->size/0x10000);
+			}
+			else {
+				sprintf(fbTextBuffer,"%.2f %s",file->size > (1024*1024) ? (float)file->size/(1024*1024):(float)file->size/1024,file->size > (1024*1024) ? "MB":"KB");
+			}
+			drawString(data->x2 - ((borderSize+3) + (GetTextSizeInPixels(fbTextBuffer)*0.45)), 
+				data->y1+borderSize+24, fbTextBuffer, 0.45f, false, defaultColor);
+		}
 	}
 }
 
@@ -1099,6 +1226,15 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_FILEBROWSERBUTTON;
 	event->data = eventData;
+	return event;
+}
+
+uiDrawObj_t* DrawFileCarouselEntry(int x1, int y1, int x2, int y2, char *message, file_handle *file, int distFromMiddle) {
+	uiDrawObj_t* event = DrawFileBrowserButton(x1, y1, x2, y2, message, file, B_SELECTED);
+	drawFileBrowserButtonEvent_t *data = (drawFileBrowserButtonEvent_t*)event->data;
+	data->isCarousel = true;
+	data->distFromMiddle = distFromMiddle;
+	//print_gecko("message %s dist = %i x: (%i -> %i) y: (%i -> %i)\r\n", message, distFromMiddle, x1, x2, y1, y2);
 	return event;
 }
 

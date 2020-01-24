@@ -29,6 +29,7 @@ enum SETTINGS_GLOBAL {
 	SET_IGR,
 	SET_CONFIG_DEV,
 	SET_AVE_COMPAT,
+	SET_FILEBROWSER_TYPE,
 	SET_PAGE_1_NEXT,
 	SET_PAGE_1_SAVE,
 	SET_PAGE_1_CANCEL
@@ -112,6 +113,7 @@ extern char *forceEncodingStr[];
 extern char *invertCStickStr[];
 extern char *igrTypeStr[];
 extern char *aveCompatStr[];
+extern char *fileBrowserStr[];
 #define SRAM_LANG_MAX 5
 extern char *sramLang[];
 int show_settings(file_handle *file, ConfigEntry *config);

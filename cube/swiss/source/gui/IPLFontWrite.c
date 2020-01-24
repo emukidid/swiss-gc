@@ -319,6 +319,80 @@ void drawStringWithCaret(int x, int y, char *string, float scale, bool centered,
 	}
 }
 
+int GetCharsThatFitInWidth(char *string, int max, float scale)
+{
+	int strWidth = 0;
+	int charCount = 0;
+	char* string_work = string;
+	//print_gecko("String [%s] max %i\r\n", string, max);
+	while(*string_work)
+	{
+		unsigned char c = *string_work;
+		strWidth += (int) fontChars.font_size[c] * scale;
+		string_work++;
+		if(strWidth < max) {
+			charCount++;
+		}
+		else {
+			return charCount-4;
+		}
+	}
+	return charCount;
+}
+
+// maxSize is how far we can draw, abbreviate with "..." if we're going to exceed it.
+void drawStringVertical(int x, int y, char *string, float scale, GXColor fontColor, int maxSize)
+{
+	if(string == NULL) {
+		return;
+	}
+	drawFontInit(fontColor);
+
+	int len = strlen(string);
+	int chars_to_draw = GetCharsThatFitInWidth(string, maxSize-12, scale);
+	int dots_to_write = 0;
+	while (*string || dots_to_write)
+	{
+		unsigned char c = *string;
+		if(dots_to_write) {
+			c = '.';
+			dots_to_write --;
+			if(!dots_to_write) {
+				break;
+			}
+		}
+		if(c == '\n') break;
+
+		int i;
+		GX_Begin(GX_QUADS, GX_VTXFMT1, 4);
+		for (i=0; i<4; i++) {
+			int s = (i & 1) ^ ((i & 2) >> 1) ? fontChars.font_size[c] : 1;
+			int t = (i & 2) ? fontChars.fheight : 1;
+			float s0 = ((float) (fontChars.s[c] + s))/512;
+			float t0 = ((float) (fontChars.t[c] + t))/512;
+			s = (int) s * scale;
+			t = (int) t * scale;
+			GX_Position3s16(x + t, y - s, 0);
+			GX_Color4u8(fontColor.r, fontColor.g, fontColor.b, fontColor.a);
+			GX_TexCoord2f32(s0,t0);
+		}		
+		GX_End();
+
+		y -= (int) fontChars.font_size[c] * scale;
+		string++;
+		len--;
+		chars_to_draw--;
+		maxSize -= (int) fontChars.font_size[c] * scale;
+		
+		// check if we've started (or about to start) our ellipses abbreviation
+		if(len > 0 && chars_to_draw == 0) {
+			if(dots_to_write == 0) {
+				dots_to_write = 4;
+			}
+		}
+	}
+}
+
 int GetTextSizeInPixels(char *string)
 {
 	int strWidth = 0;

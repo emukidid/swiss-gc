@@ -191,6 +191,8 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "AVECompat=%s\r\n", (aveCompatStr[swissSettings.aveCompat]));
 	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "FileBrowserType=%s\r\n", (fileBrowserStr[swissSettings.fileBrowserType]));
+	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "FTPUserName=%s\r\n",swissSettings.ftpUserName);
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "FTPPassword=%s\r\n",swissSettings.ftpPassword);
@@ -510,6 +512,12 @@ void config_parse(char *configData) {
 						swissSettings.aveCompat = 2;
 					else if(!strcmp(aveCompatStr[3], value))
 						swissSettings.aveCompat = 3;
+				}
+				else if(!strcmp("FileBrowserType", name)) {
+					if(!strcmp(fileBrowserStr[0], value))
+						swissSettings.fileBrowserType = 0;
+					else if(!strcmp(fileBrowserStr[1], value))
+						swissSettings.fileBrowserType = 1;
 				}
 				else if(!strcmp("FTPUserName", name)) {
 					strncpy(swissSettings.ftpUserName, value, sizeof(((SwissSettings*)0)->ftpUserName));

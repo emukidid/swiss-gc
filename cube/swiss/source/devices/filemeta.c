@@ -130,10 +130,26 @@ void populate_meta(file_handle *f) {
 							else {
 								memcpy(f->meta->banner, &banner->pixelData, BNR_PIXELDATA_LEN);						
 								if(!strncmp(banner->magic, "BNR2", 4)) {
-									memcpy(&f->meta->description, &banner->desc[swissSettings.sramLanguage].description, BNR_DESC_LEN);
+									memcpy(&f->meta->bnrDescription, &banner->desc[swissSettings.sramLanguage], sizeof(BNRDesc));
 								}
 								else {
-									memcpy(&f->meta->description, &banner->desc[0].description, BNR_DESC_LEN);
+									memcpy(&f->meta->bnrDescription, &banner->desc[0], sizeof(BNRDesc));
+								}
+								if(strlen(f->meta->bnrDescription.description)) {
+									// Some banners only have empty spaces as padding until they hit a new line in the IPL
+									char *desc_ptr = f->meta->bnrDescription.description;
+									if(desc_ptr = strstr(desc_ptr, "  ")) {
+										desc_ptr[0] = '\r';
+										desc_ptr[1] = '\n';
+									}
+									// ...and some banners have no CR/LF and we'd like a sane wrap point
+									desc_ptr = f->meta->bnrDescription.description;
+									if(!strstr(desc_ptr, "\r") && !strstr(desc_ptr, "\n") && strlen(desc_ptr) > 50) {
+										desc_ptr+=(strlen(desc_ptr) / 2);
+										if(desc_ptr = strstr(desc_ptr, " ")) {
+											desc_ptr[0] = '\r';
+										}
+									}
 								}
 							}
 							free(banner);

@@ -31,6 +31,7 @@ char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS", "No"};
 char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
 char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL"};
+char *fileBrowserStr[] = {"Standard", "Carousel"};
 char *sramLang[] = {"English", "German", "French", "Spanish", "Italian", "Dutch"};
 
 static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
@@ -41,7 +42,8 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	 NULL,
 	"In-Game Reset: (B + R + Z + DPad Down)\n\nReboot: Soft-Reset the GameCube\nigr.dol: Low mem (< 0x81300000) igr.dol at the root of SD Card",
 	"Configuration Device:\n\nThe device that Swiss will use to load and save swiss.ini from.\nThis setting is stored in SRAM and will remain on reboot.",
-	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply firmware workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo"
+	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply firmware workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
+	"FileBrowser Type:\n\nStandard - Displays files with minimal detail (default)\n\nCarousel - Suited towards Game/DOL only use, consider combining\nthis option with the File Management setting turned off\nand Hide Unknown File Types turned on for a better experience."
 };
 
 static char *tooltips_advanced[PAGE_ADVANCED_MAX+1] = {
@@ -153,6 +155,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 	// Swiss Video Mode [576i (PAL 50Hz), 480i (NTSC 60Hz), 480p (NTSC 60Hz), etc]
 	// In-Game Reset [Yes/No]
 	// Configuration Device [Writable device name]
+	// AVE Compatibility
+	// Filebrowser Type [Standard / Carousel]
 
 	/** Advanced Settings (Page 2/) */
 	// Enable USB Gecko Debug via Slot B [Yes/No]
@@ -202,6 +206,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryString(page, &page_y_ofs, "In-Game Reset:", igrTypeStr[swissSettings.igrType], option == SET_IGR, true);
 		drawSettingEntryString(page, &page_y_ofs, "Configuration Device:", getConfigDeviceName(&swissSettings), option == SET_CONFIG_DEV, true);
 		drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
+		drawSettingEntryString(page, &page_y_ofs, "Filebrowser Type:", fileBrowserStr[swissSettings.fileBrowserType], option == SET_FILEBROWSER_TYPE, true);
 	}
 	else if(page_num == PAGE_NETWORK) {
 		bool netEnable = exi_bba_exists();
@@ -369,6 +374,9 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 					swissSettings.aveCompat = 0;
 				if(swissSettings.aveCompat < 0)
 					swissSettings.aveCompat = 3;
+			break;
+			case SET_FILEBROWSER_TYPE:
+				swissSettings.fileBrowserType ^= 1;
 			break;
 		}	
 	}
