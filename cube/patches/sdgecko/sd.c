@@ -5,9 +5,7 @@
 
 #include "../../reservedarea.h"
 #include "../base/common.h"
-
-#define EXI_READ			0
-#define EXI_WRITE			1
+#include "../base/exi.h"
 
 //CMD12 - Stop multiple block read command
 #define CMD12				0x4C
@@ -29,11 +27,6 @@
 void *memcpy(void *dest, const void *src, u32 size);
 
 // EXI Functions
-static int exi_selected()
-{
-	return !!(EXI[exi_channel][0] & 0x380);
-}
-
 static void exi_select()
 {
 	EXI[exi_channel][0] = (EXI[exi_channel][0] & 0x405) | ((1<<0)<<7) | (exi_freq << 4);
@@ -155,6 +148,11 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 }
 #else
 u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
+	// Try locking EXI bus
+	if(!EXILock(exi_channel, EXI_DEVICE_0, 0)) {
+		return 0;
+	}
+	
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);
@@ -163,9 +161,6 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	// SDHC uses sector addressing, SD uses byte
 	lba <<= lbaShift;
 	#if SINGLE_SECTOR < 2
-	if(exi_selected()) {
-		return 0;
-	}
 	// Send single block read command and the LBA we want to read at
 	send_cmd(CMD17, lba);
 	// Read block
@@ -177,15 +172,11 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	// If we saved this sector
 	if(lba == *(u32*)VAR_SECTOR_CUR) {
 		memcpy(dst, sectorBuf + startByte, numBytes);
-		return numBytes;
+		goto exit;
 	}
 	// If we weren't just reading this sector
 	else if(lba != *(u32*)VAR_SD_LBA) {
 		end_read();
-		
-		if(exi_selected()) {
-			return 0;
-		}
 		// Send multiple block read command and the LBA we want to start reading at
 		send_cmd(CMD18, lba);
 	}
@@ -203,6 +194,9 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	// Save next LBA
 	*(u32*)VAR_SD_LBA = lba + (1<<lbaShift);
 	#endif
+exit:
+	// Unlock EXI bus
+	EXIUnlock(exi_channel);
 	return numBytes;
 }
 #endif

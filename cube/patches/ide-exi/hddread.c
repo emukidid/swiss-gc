@@ -5,6 +5,7 @@
 
 #include "../../reservedarea.h"
 #include "../base/common.h"
+#include "../base/exi.h"
 
 // NOTE: cs0 then cs1!
 // ATA registers address        val  - cs0 cs1 a2 a1 a0
@@ -30,9 +31,6 @@
 #define ATA_SR_DRQ		0x08
 #define ATA_SR_ERR		0x01
 
-#define EXI_READ					0			/*!< EXI transfer type read */
-#define EXI_WRITE					1			/*!< EXI transfer type write */
-
 #define SECTOR_SIZE 		512
 
 #define sectorBuf			((u8*)VAR_SECTOR_BUF + DMA_READ * 0x40000000)
@@ -44,11 +42,6 @@
 #define exi_channel 		(*(u8*)VAR_EXI_SLOT)
 
 void *memcpy(void *dest, const void *src, u32 size);
-
-static int exi_selected()
-{
-	return !!(EXI[exi_channel][0] & 0x380);
-}
 
 static void exi_select()
 {
@@ -241,6 +234,11 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 }
 #else
 u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
+	// Try locking EXI bus
+	if(!EXILock(exi_channel, EXI_DEVICE_0, 0)) {
+		return 0;
+	}
+	
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);
@@ -248,14 +246,12 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	// If we saved this sector
 	if(lba == *(u32*)VAR_SECTOR_CUR) {
 		memcpy(dst, sectorBuf + startByte, numBytes);
-		return numBytes;
-	}
-	if(exi_selected()) {
-		return 0;
+		goto exit;
 	}
 	if(numBytes < SECTOR_SIZE || DMA_READ) {
 		// Read half sector
 		if(ataReadSector(lba, sectorBuf)) {
+			EXIUnlock(exi_channel);
 			//*(u32*)dst = 0x13370003;
 			return 0;
 		}
@@ -266,10 +262,14 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	else {
 		// Read full sector
 		if(ataReadSector(lba, dst)) {
+			EXIUnlock(exi_channel);
 			//*(u32*)dst = 0x13370004;
 			return 0;
 		}
 	}
+exit:
+	// Unlock EXI bus
+	EXIUnlock(exi_channel);
 	return numBytes;
 }
 #endif
