@@ -91,7 +91,10 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 146, (char*)(dev == NULL ? "Empty" : dev->hwName), 0.75f, true, defaultColor));
 		dev = getDeviceByLocation(LOC_SERIAL_PORT_1);
 		DrawAddChild(container, DrawStyledLabel(640/2, 170, (char*)"SERIAL PORT 1", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 186, (char*)(dev == NULL ? "Empty" : dev->hwName), 0.75f, true, defaultColor));
+		if(dev != NULL) {
+			sprintf(topStr, "%s (%s)",dev->hwName, net_initialized ? bba_ip : "Not initialized");
+		}
+		DrawAddChild(container, DrawStyledLabel(640/2, 186, (char*)(dev == NULL ? "Empty" : topStr), 0.75f, true, defaultColor));
 		dev = getDeviceByLocation(LOC_SERIAL_PORT_2);
 		DrawAddChild(container, DrawStyledLabel(640/2, 210, (char*)"SERIAL PORT 2", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 226, (char*)(dev == NULL ? "Empty" : dev->hwName), 0.75f, true, defaultColor));
