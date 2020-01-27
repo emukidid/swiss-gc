@@ -214,7 +214,7 @@ bool deviceHandler_GCLOADER_test() {
 DEVICEHANDLER_INTERFACE __device_gcloader = {
 	DEVICE_ID_G,
 	"GCLoader",
-	"GameCube Optical Drive Emulator",
+	"GCLoader",
 	"Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_GCLOADER, 134, 80},
 	FEAT_READ|FEAT_BOOT_GCM|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_BOOT_DEVICE|FEAT_CAN_READ_PATCHES,
