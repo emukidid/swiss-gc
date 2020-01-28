@@ -394,7 +394,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 		*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(slot) ? 9:0;
 	}
 	// Copy the actual freq
-	*(vu8*)VAR_EXI_FREQ = swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ;
+	*(vu8*)VAR_EXI_FREQ = isSDCard ? sdgecko_getSpeed(slot):(swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	// Device slot (0, 1 or 2)
 	*(vu8*)VAR_EXI_SLOT = slot;
 	// IDE-EXI only settings
@@ -408,19 +408,19 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 
 s32 fatFs_Mount(u8 devNum, char *path) {
 	if(fs[devNum] != NULL) {
-		disk_flush(devNum);
 		print_gecko("Unmount %i devnum, %s path\r\n", devNum, path);
 		f_unmount(path);
 		free(fs[devNum]);
 		fs[devNum] = NULL;
+		disk_shutdown(devNum);
 	}
 	fs[devNum] = (FATFS*)malloc(sizeof(FATFS));
 	return f_mount(fs[devNum], path, 1) == FR_OK;
 }
 
-void setSDGeckoSpeed() {
-	sdgecko_setSpeed(swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-	print_gecko("SD speed set to %s\r\n", (swissSettings.exiSpeed ? "32MHz":"16MHz"));
+void setSDGeckoSpeed(int slot, bool fast) {
+	sdgecko_setSpeed(slot, fast ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+	print_gecko("SD speed set to %s\r\n", (fast ? "32MHz":"16MHz"));
 }
 
 s32 deviceHandler_FAT_init(file_handle* file) {
@@ -430,24 +430,30 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 	print_gecko("Init %s %i\r\n", (isSDCard ? "SD":"IDE"), slot);
 	// Slot A - SD Card
 	if(isSDCard && slot == 0) {
-		carda->shutdown();
-		carda->startup();
-		setSDGeckoSpeed();
+		setSDGeckoSpeed(0, swissSettings.exiSpeed);
 		ret = fatFs_Mount(0, "sda:/");
+		if(!ret) {
+			setSDGeckoSpeed(0, false);
+			ret = fatFs_Mount(0, "sda:/");
+		}
 	}
 	// Slot B - SD Card
 	if(isSDCard && slot == 1) {
-		cardb->shutdown();
-		cardb->startup();
-		setSDGeckoSpeed();
+		setSDGeckoSpeed(1, swissSettings.exiSpeed);
 		ret = fatFs_Mount(1, "sdb:/");
+		if(!ret) {
+			setSDGeckoSpeed(1, false);
+			ret = fatFs_Mount(1, "sdb:/");
+		}
 	}
 	// SP2 - SD Card
 	if(isSDCard && slot == 2) {
-		cardc->shutdown();
-		cardc->startup();
-		setSDGeckoSpeed();
+		setSDGeckoSpeed(2, swissSettings.exiSpeed);
 		ret = fatFs_Mount(2, "sdc:/");
+		if(!ret) {
+			setSDGeckoSpeed(2, false);
+			ret = fatFs_Mount(2, "sdc:/");
+		}
 	}
 	// Slot A - IDE-EXI
 	if(!isSDCard && !slot) {
@@ -492,12 +498,12 @@ s32 deviceHandler_FAT_deinit(file_handle* file) {
 	info->totalSpaceInKB = 0;
 	if(file) {
 		deviceHandler_FAT_closeFile(file);
-		char *mountPath = getDeviceMountPath(file->name);
+		int isSDCard = IS_SDCARD(file->name);
 		int slot = GET_SLOT(file->name);
-		disk_flush(IS_SDCARD(file->name) ? slot : SD_COUNT+slot);
-		f_unmount(mountPath);
-		fs[IS_SDCARD(file->name) ? slot : SD_COUNT+slot] = NULL;
-		free(mountPath);
+		f_unmount(file->name);
+		free(fs[isSDCard ? slot : SD_COUNT+slot]);
+		fs[isSDCard ? slot : SD_COUNT+slot] = NULL;
+		disk_shutdown(isSDCard ? slot : SD_COUNT+slot);
 	}
 	return 0;
 }
@@ -511,19 +517,13 @@ s32 deviceHandler_FAT_deleteFile(file_handle* file) {
 }
 
 bool deviceHandler_FAT_test_sd_a() {
-	carda->shutdown();
-	carda->startup();
-	return sdgecko_readStatus(0) == CARDIO_ERROR_READY;
+	return carda->startup() && carda->shutdown();
 }
 bool deviceHandler_FAT_test_sd_b() {
-	cardb->shutdown();
-	cardb->startup();
-	return sdgecko_readStatus(1) == CARDIO_ERROR_READY;
+	return cardb->startup() && cardb->shutdown();
 }
 bool deviceHandler_FAT_test_sd_c() {
-	cardc->shutdown();
-	cardc->startup();
-	return sdgecko_readStatus(2) == CARDIO_ERROR_READY;
+	return cardc->startup() && cardc->shutdown();
 }
 bool deviceHandler_FAT_test_ide_a() {
 	return ide_exi_inserted(0);
