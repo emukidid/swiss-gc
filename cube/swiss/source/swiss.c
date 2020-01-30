@@ -1122,62 +1122,71 @@ void boot_dol()
 	int argc = 0;
 	char *argv[1024];
 
+	u32 readTest;
+	char fileName[PATHNAME_MAX];
+	memset(&fileName, 0, PATHNAME_MAX);
+	strncpy(&fileName[0], &curFile.name[0], strlen(&curFile.name[0])-3);
+	print_gecko("DOL file name without extension [%s]\r\n", fileName);
+	
+	file_handle *argFile = calloc(1, sizeof(file_handle));
+	
+	// .cli argument file
+	sprintf(argFile->name, "%scli", fileName);
+	if(devices[DEVICE_CUR]->readFile(argFile, &readTest, 4) != 4) {
+		// try a .dcp instead
+		memset(argFile->name, 0, PATHNAME_MAX);
+		sprintf(argFile->name, "%sdcp", fileName);
+		if(devices[DEVICE_CUR]->readFile(argFile, &readTest, 4) != 4) {
+			free(argFile);
+			argFile = NULL;
+		}
+	}
+	
+	// we found something, parse and display parameters for selection (.dcp), or just use parameters (.cli)
+	if(argFile) {
+		print_gecko("Argument file found [%s]\r\n", argFile->name);
+		char *cli_buffer = memalign(32, argFile->size);
+		if(cli_buffer) {
+			devices[DEVICE_CUR]->seekFile(argFile, 0, DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_CUR]->readFile(argFile, cli_buffer, argFile->size);
 
-	file_handle* allDirEntries = NULL;
-	file_handle* curDirEntries = getCurrentDirEntries();
-	swissSettings.hideUnknownFileTypes = 0;
-	int fileCount = devices[DEVICE_CUR]->readDir(&curDir, &allDirEntries, IS_FILE);
-	swissSettings.hideUnknownFileTypes = 1;
-
-	// If there's a .cli or .dcp file next to the DOL, use that as a source for arguments
-	for(i = 0; i < fileCount; i++) {
-		int eq = !strncmp(allDirEntries[i].name, curDirEntries[curSelection].name, strlen(curDirEntries[curSelection].name)-3);
-		if(eq && (endsWith(allDirEntries[i].name,".cli") || endsWith(allDirEntries[i].name,".dcp"))) {
-			
-			file_handle *argFile = &allDirEntries[i];
-			char *cli_buffer = memalign(32, argFile->size);
-			if(cli_buffer) {
-				devices[DEVICE_CUR]->seekFile(argFile, 0, DEVICE_HANDLER_SEEK_SET);
-				devices[DEVICE_CUR]->readFile(argFile, cli_buffer, argFile->size);
-
-				// CLI support
-				if(endsWith(allDirEntries[i].name,".cli")) {
-					argv[argc] = (char*)&curFile.name;
+			// CLI support
+			if(endsWith(argFile->name,".cli")) {
+				argv[argc] = (char*)&curFile.name;
+				argc++;
+				// First argument is at the beginning of the file
+				if(cli_buffer[0] != '\r' && cli_buffer[0] != '\n') {
+					argv[argc] = cli_buffer;
 					argc++;
-					// First argument is at the beginning of the file
-					if(cli_buffer[0] != '\r' && cli_buffer[0] != '\n') {
-						argv[argc] = cli_buffer;
-						argc++;
+				}
+
+				// Search for the others after each newline
+				for(i = 0; i < argFile->size; i++) {
+					if(cli_buffer[i] == '\r' || cli_buffer[i] == '\n') {
+						cli_buffer[i] = '\0';
 					}
+					else if(cli_buffer[i - 1] == '\0') {
+						argv[argc] = cli_buffer + i;
+						argc++;
 
-					// Search for the others after each newline
-					for(i = 0; i < argFile->size; i++) {
-						if(cli_buffer[i] == '\r' || cli_buffer[i] == '\n') {
-							cli_buffer[i] = '\0';
-						}
-						else if(cli_buffer[i - 1] == '\0') {
-							argv[argc] = cli_buffer + i;
-							argc++;
-
-							if(argc >= 1024)
-								break;
-						}
+						if(argc >= 1024)
+							break;
 					}
 				}
-				// DCP support
-				if(endsWith(allDirEntries[i].name,".dcp")) {
-					parseParameters(cli_buffer);
-					Parameters *params = (Parameters*)getParameters();
-					if(params->num_params > 0) {
-						DrawArgsSelector(getRelativeName(curDirEntries[curSelection].name));
-						// Get an argv back or none.
-						populateArgv(&argc, argv, (char*)&curFile.name);
-					}
+			}
+			// DCP support
+			if(endsWith(argFile->name,".dcp")) {
+				parseParameters(cli_buffer);
+				Parameters *params = (Parameters*)getParameters();
+				if(params->num_params > 0) {
+					DrawArgsSelector(getRelativeName(&curFile.name[0]));
+					// Get an argv back or none.
+					populateArgv(&argc, argv, (char*)&curFile.name);
 				}
 			}
 		}
 	}
-	free(allDirEntries);
+	free(argFile);
 
 	if(devices[DEVICE_CUR] != NULL) devices[DEVICE_CUR]->deinit( devices[DEVICE_CUR]->initial );
 	// Boot
