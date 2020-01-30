@@ -532,7 +532,6 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 		int sub_entry_height = 270;
 		int main_entry_width = 320;
 		int main_entry_height = parentLink ? 40 : 280;
-		int entry_gap = 5;
 		int left_x_base = ((getVideoMode()->fbWidth / 2) - (main_entry_width / 2));  // left x entry
 		int right_x_base = ((getVideoMode()->fbWidth / 2) + (main_entry_width / 2));  // right x entry
 		
@@ -810,7 +809,6 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch) {
 unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 {
 	char* gameID = (char*)0x80000000;
-	int i = 0;
 	u32 main_dol_size = 0;
 	void *main_dol_buffer = 0;
 	DOLHEADER dolhdr;
@@ -1124,21 +1122,26 @@ void boot_dol()
 	int argc = 0;
 	char *argv[1024];
 
+
+	file_handle* allDirEntries = NULL;
 	file_handle* curDirEntries = getCurrentDirEntries();
-	// If there's a .cli file next to the DOL, use that as a source for arguments
-	for(i = 0; i < getCurrentDirEntryCount(); i++) {
-		if (i == curSelection) continue;
-		int eq = !strncmp(curDirEntries[i].name, curDirEntries[curSelection].name, strlen(curDirEntries[curSelection].name)-3);
-		if(eq && (endsWith(curDirEntries[i].name,".cli") || endsWith(curDirEntries[i].name,".dcp"))) {
+	swissSettings.hideUnknownFileTypes = 0;
+	int fileCount = devices[DEVICE_CUR]->readDir(&curDir, &allDirEntries, IS_FILE);
+	swissSettings.hideUnknownFileTypes = 1;
+
+	// If there's a .cli or .dcp file next to the DOL, use that as a source for arguments
+	for(i = 0; i < fileCount; i++) {
+		int eq = !strncmp(allDirEntries[i].name, curDirEntries[curSelection].name, strlen(curDirEntries[curSelection].name)-3);
+		if(eq && (endsWith(allDirEntries[i].name,".cli") || endsWith(allDirEntries[i].name,".dcp"))) {
 			
-			file_handle *argFile = &curDirEntries[i];
+			file_handle *argFile = &allDirEntries[i];
 			char *cli_buffer = memalign(32, argFile->size);
 			if(cli_buffer) {
 				devices[DEVICE_CUR]->seekFile(argFile, 0, DEVICE_HANDLER_SEEK_SET);
 				devices[DEVICE_CUR]->readFile(argFile, cli_buffer, argFile->size);
 
 				// CLI support
-				if(endsWith(curDirEntries[i].name,".cli")) {
+				if(endsWith(allDirEntries[i].name,".cli")) {
 					argv[argc] = (char*)&curFile.name;
 					argc++;
 					// First argument is at the beginning of the file
@@ -1162,7 +1165,7 @@ void boot_dol()
 					}
 				}
 				// DCP support
-				if(endsWith(curDirEntries[i].name,".dcp")) {
+				if(endsWith(allDirEntries[i].name,".dcp")) {
 					parseParameters(cli_buffer);
 					Parameters *params = (Parameters*)getParameters();
 					if(params->num_params > 0) {
@@ -1174,6 +1177,7 @@ void boot_dol()
 			}
 		}
 	}
+	free(allDirEntries);
 
 	if(devices[DEVICE_CUR] != NULL) devices[DEVICE_CUR]->deinit( devices[DEVICE_CUR]->initial );
 	// Boot
@@ -1720,7 +1724,7 @@ int check_game(ExecutableFile *filesToPatch)
 	char* gameID = (char*)&GCMDisk;
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Checking Game .."));
 	
-	int numToPatch = parse_gcm(&curFile, filesToPatch);
+	u32 numToPatch = parse_gcm(&curFile, filesToPatch);
 	
 	if(!swissSettings.disableVideoPatches) {
 		if(!strncmp(gameID, "GS8P7D", 6)) {
