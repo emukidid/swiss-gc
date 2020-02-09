@@ -914,7 +914,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 
 	// Patch to read from SD/HDD/USBGecko/WKF (if frag req or audio streaming)
 	if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
-		if((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches) {
+		if((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming) {
 			Patch_DVDLowLevelReadAlt(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
 			Patch_GameSpecificReadAlt(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
 		}
@@ -1014,7 +1014,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	ICInvalidateRange((void*)0x80000000, 0x3100);
 	
 	// Try a device speed test using the actual in-game read code
-	if((devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) && !((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches)) {
+	if((devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) && !((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)) {
 		install_code(1);
 		print_gecko("Attempting speed test\r\n");
 		char *buffer = memalign(32,1024*1024);

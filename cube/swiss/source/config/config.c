@@ -237,7 +237,7 @@ int config_update_file() {
 	sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[swissSettings.invertCStick]);
 	string_append(configString, txtbuffer);
 	
-	sprintf(txtbuffer, "Alternate Read Patches=%s\r\n",(swissSettings.alternateReadPatches ? "Yes":"No"));
+	sprintf(txtbuffer, "Emulate Audio Streaming=%s\r\n",(swissSettings.emulateAudioStreaming ? "Yes":"No"));
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
 	string_append(configString, txtbuffer);
@@ -289,7 +289,7 @@ int config_update_file() {
 		sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[configEntries[i].invertCStick]);
 		string_append(configString, txtbuffer);
 		
-		sprintf(txtbuffer, "Alternate Read Patches=%s\r\n",(configEntries[i].alternateReadPatches ? "Yes":"No"));
+		sprintf(txtbuffer, "Emulate Audio Streaming=%s\r\n",(configEntries[i].emulateAudioStreaming ? "Yes":"No"));
 		string_append(configString, txtbuffer);
 	}
 
@@ -350,7 +350,7 @@ void config_parse(char *configData) {
 					configEntries[configEntriesCount].forceWidescreen = 0;
 					configEntries[configEntriesCount].forceEncoding = 0;
 					configEntries[configEntriesCount].invertCStick = 0;
-					configEntries[configEntriesCount].alternateReadPatches = 1;
+					configEntries[configEntriesCount].emulateAudioStreaming = 0;
 				}
 				else if(!strcmp("Name", name)) {
 					strncpy(&configEntries[configEntriesCount].game_name[0], value, 64);
@@ -433,11 +433,11 @@ void config_parse(char *configData) {
 						}
 					}
 				}
-				else if(!strcmp("Alternate Read Patches", name)) {
+				else if(!strcmp("Emulate Audio Streaming", name)) {
 					if(defaultPassed)
-						configEntries[configEntriesCount].alternateReadPatches = !strcmp("Yes", value) ? 1:0;
+						configEntries[configEntriesCount].emulateAudioStreaming = !strcmp("Yes", value) ? 1:0;
 					else
-						swissSettings.alternateReadPatches = !strcmp("Yes", value) ? 1:0;
+						swissSettings.emulateAudioStreaming = !strcmp("Yes", value) ? 1:0;
 				}
 				
 				// Swiss settings
@@ -579,7 +579,7 @@ void config_find(ConfigEntry *entry) {
 	entry->forceWidescreen = swissSettings.forceWidescreen;
 	entry->forceEncoding = swissSettings.forceEncoding;
 	entry->invertCStick = swissSettings.invertCStick;
-	entry->alternateReadPatches = swissSettings.alternateReadPatches;
+	entry->emulateAudioStreaming = swissSettings.emulateAudioStreaming;
 	// Add this new entry to our collection
 	memcpy(&configEntries[configEntriesCount], entry, sizeof(ConfigEntry));
 	configEntriesCount++;
@@ -617,7 +617,7 @@ void config_load_current(ConfigEntry *config) {
 	swissSettings.forceWidescreen = config->forceWidescreen;
 	swissSettings.forceEncoding = config->forceEncoding;
 	swissSettings.invertCStick = config->invertCStick;
-	swissSettings.alternateReadPatches = config->alternateReadPatches;
+	swissSettings.emulateAudioStreaming = config->emulateAudioStreaming;
 }
 
 void config_unload_current() {
@@ -630,5 +630,5 @@ void config_unload_current() {
 	swissSettings.forceWidescreen = backup.forceWidescreen;
 	swissSettings.forceEncoding = backup.forceEncoding;
 	swissSettings.invertCStick = backup.invertCStick;
-	swissSettings.alternateReadPatches = backup.alternateReadPatches;
+	swissSettings.emulateAudioStreaming = backup.emulateAudioStreaming;
 }

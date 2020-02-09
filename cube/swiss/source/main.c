@@ -165,7 +165,6 @@ int main ()
 	swissSettings.uiVMode = 0; 		// Auto UI mode
 	swissSettings.aveCompat = 1;
 	swissSettings.enableFileManagement = 0;
-	swissSettings.alternateReadPatches = 1;
 
 	needsDeviceChange = 1;
 	needsRefresh = 1;

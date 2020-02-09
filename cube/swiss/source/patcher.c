@@ -146,7 +146,7 @@ int install_code(int final)
 	
 	// IDE-EXI
   	if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b) {	
-		if(swissSettings.alternateReadPatches) {
+		if(!swissSettings.emulateAudioStreaming) {
 			patch = (!_ideexi_version)?&ideexi_altv1_bin[0]:&ideexi_altv2_bin[0];
 			patchSize = (!_ideexi_version)?ideexi_altv1_bin_size:ideexi_altv2_bin_size;
 			location = LO_RESERVE_ALT;
@@ -159,7 +159,7 @@ int install_code(int final)
   	}
 	// SD Card over EXI
 	else if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
-		if(swissSettings.alternateReadPatches) {
+		if(!swissSettings.emulateAudioStreaming) {
 			patch = &sd_alt_bin[0];
 			patchSize = sd_alt_bin_size;
 			location = LO_RESERVE_ALT;
@@ -9677,7 +9677,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 					__OSDoHotResetHook = IGR_EXIT_DVD;
 				else if (devices[DEVICE_CUR] == &__device_wkf)
 					__OSDoHotResetHook = IGR_EXIT_WKF;
-				else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches)
+				else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
 					__OSDoHotResetHook = IGR_EXIT_ALT;
 				else
 					__OSDoHotResetHook = IGR_EXIT;
@@ -9704,7 +9704,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 					OSResetSystemHook = IGR_EXIT_DVD;
 				else if (devices[DEVICE_CUR] == &__device_wkf)
 					OSResetSystemHook = IGR_EXIT_WKF;
-				else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches)
+				else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
 					OSResetSystemHook = IGR_EXIT_ALT;
 				else
 					OSResetSystemHook = IGR_EXIT;
@@ -9807,7 +9807,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 				PADReadHook = CHECK_PAD_DVD;
 			else if (devices[DEVICE_CUR] == &__device_wkf)
 				PADReadHook = CHECK_PAD_WKF;
-			else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches)
+			else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
 				PADReadHook = CHECK_PAD_ALT;
 			else
 				PADReadHook = CHECK_PAD;

@@ -395,7 +395,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		print_gecko("Checking %s %iKb\r\n", filesToPatch[i].name, filesToPatch[i].size/1024);
 		
 		// Make note of execD.img if we're using non alternative patches from a device that supports them.
-		if(strstr(filesToPatch[i].name, "execD.") && (devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) && !((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches)) {
+		if(strstr(filesToPatch[i].name, "execD.") && (devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) && !((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)) {
 			*(vu32*)VAR_EXECD_OFFSET = filesToPatch[i].offset;
 		}
 		if(strstr(filesToPatch[i].name, "iwanagaD.dol") || strstr(filesToPatch[i].name, "switcherD.dol")) {
@@ -434,7 +434,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		else { 
 			// Patch executable files
 			if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
-				if((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || swissSettings.alternateReadPatches) {
+				if((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming) {
 					patched += Patch_DVDLowLevelReadAlt(buffer, sizeToRead, gameID, filesToPatch[i].type);
 					patched += Patch_GameSpecificReadAlt(buffer, sizeToRead, gameID, filesToPatch[i].type);
 				}
