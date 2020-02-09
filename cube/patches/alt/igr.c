@@ -12,12 +12,13 @@
 
 void check_pad(int32_t chan, PADStatus *status)
 {
-	if ((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT) {
-		*(uint32_t *)VAR_IGR_EXIT_FLAG = true;
-		*(volatile int *)OS_BASE_MIRRORED;
-	}
-
 	status->button &= ~PAD_USE_ORIGIN;
+
+	if ((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT) {
+		enable_interrupts();
+		OSResetSystem(OS_RESET_HOTRESET, 0, 0);
+		disable_interrupts();
+	}
 }
 
 static void load_dol(uint32_t offset, uint32_t size)
