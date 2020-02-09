@@ -7,12 +7,15 @@
 #include <stdbool.h>
 #include "../base/common.h"
 #include "../base/dolformat.h"
+#include "../base/os.h"
 #include "../base/pad.h"
 
 void check_pad(int32_t chan, PADStatus *status)
 {
-	if ((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT)
+	if ((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT) {
 		*(uint32_t *)VAR_IGR_EXIT_FLAG = true;
+		*(volatile int *)OS_BASE_MIRRORED;
+	}
 
 	status->button &= ~PAD_USE_ORIGIN;
 }

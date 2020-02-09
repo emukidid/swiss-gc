@@ -263,6 +263,16 @@ static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	}
 
 	MI[16] = 0;
+
+	if (*(uint32_t *)VAR_IGR_EXIT_FLAG) {
+		*(uint32_t *)VAR_IGR_EXIT_FLAG = false;
+
+		context->srr0 = OSResetSystem;
+		context->gpr[3] = OS_RESET_HOTRESET;
+		context->gpr[4] = 0;
+		context->gpr[5] = 0;
+		context->lr = NULL;
+	}
 }
 
 OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler handler)
@@ -280,7 +290,4 @@ void idle_thread(void)
 	disable_interrupts();
 	trickle_read();
 	enable_interrupts();
-
-	if (*(uint32_t *)VAR_IGR_EXIT_FLAG)
-		OSResetSystem(OS_RESET_HOTRESET, 0, 0);
 }
