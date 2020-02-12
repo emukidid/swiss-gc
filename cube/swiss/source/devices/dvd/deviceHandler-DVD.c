@@ -424,7 +424,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 		
 		for(i = 0; i < numToPatch; i++) {
 			u32 patchInfo[4];
-			patchInfo[0] = 0; patchInfo[1] = 0; 
+			memset(patchInfo, 0, 16);
 			memset(&patchFile, 0, sizeof(file_handle));
 			sprintf(&patchFile.name[0], "%sswiss_patches/%s/%i",devices[DEVICE_PATCHES]->initial->name,gameID, i);
 			print_gecko("Looking for file %s\r\n", &patchFile.name);

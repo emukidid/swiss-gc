@@ -328,7 +328,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	s32 frags = 0, totFrags = 0;
 	for(i = 0; i < numToPatch; i++) {
 		u32 patchInfo[4];
-		patchInfo[0] = 0; patchInfo[1] = 0; 
+		memset(patchInfo, 0, 16);
 		char gameID[8];
 		memset(&gameID, 0, 8);
 		strncpy((char*)&gameID, (char*)&GCMDisk, 4);

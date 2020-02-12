@@ -379,7 +379,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 	print_gecko("Patch dir will be: %s if required\r\n", patchDirName);
 	// Go through all the possible files we think need patching..
 	for(i = 0; i < numToPatch; i++) {
-		u32 patched = 0, crc32 = 0;
+		u32 patched = 0;
 
 		sprintf(txtbuffer, "Patching File %i/%i",i+1,numToPatch);
 			
@@ -533,16 +533,21 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			}
 			sprintf(patchFile.name, "%s/%i",patchDirName, num_patched);
 
-			// Work out the crc32
-			crc32 = Crc32_ComputeBuf( 0, buffer, (u32) sizeToRead);
+			// Make patch trailer
+			u32 patchInfo[4];
+			patchInfo[0] = filesToPatch[i].offset;
+			patchInfo[1] = filesToPatch[i].size;
+			patchInfo[2] = SWISS_MAGIC;
+			patchInfo[3] = Crc32_ComputeBuf(0, buffer, sizeToRead);
 
 			// See if this file already exists, if it does, match crc
 			if(!devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0)) {
 				//print_gecko("Old Patch exists\r\n");
-				u32 oldCrc32 = 0;
-				devices[DEVICE_PATCHES]->seekFile(&patchFile, patchFile.size-4, DEVICE_HANDLER_SEEK_SET);
-				devices[DEVICE_PATCHES]->readFile(&patchFile, &oldCrc32, 4);
-				if(oldCrc32 == crc32) {
+				u32 oldPatchInfo[4];
+				memset(oldPatchInfo, 0, 16);
+				devices[DEVICE_PATCHES]->seekFile(&patchFile, patchFile.size-16, DEVICE_HANDLER_SEEK_SET);
+				devices[DEVICE_PATCHES]->readFile(&patchFile, oldPatchInfo, 16);
+				if(!memcmp(oldPatchInfo, patchInfo, 16)) {
 					num_patched++;
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 					free(buffer);
@@ -559,11 +564,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", patchFile.name, sizeToRead, filesToPatch[i].offset);
 			devices[DEVICE_PATCHES]->seekFile(&patchFile, 0, DEVICE_HANDLER_SEEK_SET);
 			devices[DEVICE_PATCHES]->writeFile(&patchFile, buffer, sizeToRead);
-			u32 magic = SWISS_MAGIC;
-			devices[DEVICE_PATCHES]->writeFile(&patchFile, &filesToPatch[i].offset, 4);
-			devices[DEVICE_PATCHES]->writeFile(&patchFile, &filesToPatch[i].size, 4);
-			devices[DEVICE_PATCHES]->writeFile(&patchFile, &magic, 4);
-			devices[DEVICE_PATCHES]->writeFile(&patchFile, &crc32, 4);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, patchInfo, 16);
 			devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			num_patched++;
 			DrawDispose(progBox);
