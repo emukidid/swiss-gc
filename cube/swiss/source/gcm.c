@@ -526,6 +526,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 					print_gecko("Warning: %i [%s]\r\n",res, patchBaseDirName);
 				}
 			}
+			else {
+				f_chmod(&patchBaseDirName[0], AM_HID, AM_HID);
+			}
 			if((res=f_mkdir(&patchDirName[0])) != FR_OK) {
 				if(res != FR_EXIST) {
 					print_gecko("Warning: %i [%s]\r\n",res, patchDirName);

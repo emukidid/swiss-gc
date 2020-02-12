@@ -510,10 +510,7 @@ s32 deviceHandler_FAT_deinit(file_handle* file) {
 
 s32 deviceHandler_FAT_deleteFile(file_handle* file) {
 	deviceHandler_FAT_closeFile(file);
-	int res = f_unlink(file->name) == FR_OK;
-	int slot = GET_SLOT(file->name);
-	disk_flush(IS_SDCARD(file->name) ? slot : SD_COUNT+slot);
-	return res;
+	return f_unlink(file->name);
 }
 
 bool deviceHandler_FAT_test_sd_a() {

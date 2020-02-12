@@ -147,6 +147,10 @@ DRESULT disk_ioctl (
 		return ret;
 
 	switch (cmd) {
+		case CTRL_SYNC:
+			ret = (_FAT_cache_flush(cache[pdrv]) ? RES_OK : RES_ERROR);
+			break;
+
 		case GET_SECTOR_SIZE:
 			*(WORD*)buff = 512;
 			ret = RES_OK;
