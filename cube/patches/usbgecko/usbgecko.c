@@ -190,10 +190,11 @@ bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 void di_update_interrupts(void);
 void di_complete_transfer(void);
 
-void schedule_read(uint32_t offset, uint32_t length, OSTick ticks, bool request)
+void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks, bool request)
 {
 	*(uint32_t *)VAR_LAST_OFFSET = offset;
 	*(uint32_t *)VAR_TMP2 = length;
+	*(uint8_t **)VAR_TMP1 = address;
 
 	if (length) {
 		if (!is_frag_read(offset, length) && request)
@@ -206,10 +207,9 @@ void schedule_read(uint32_t offset, uint32_t length, OSTick ticks, bool request)
 	di_complete_transfer();
 }
 
-void perform_read(uint32_t offset, uint32_t length, uint32_t address)
+void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
-	*(uint8_t **)VAR_TMP1 = OSPhysicalToCached(address);
-	schedule_read(offset, length, 0, true);
+	schedule_read(OSPhysicalToCached(address), length, offset, 0, true);
 }
 
 void trickle_read(void)
@@ -229,8 +229,7 @@ void trickle_read(void)
 		position  += data_size;
 		remainder -= data_size;
 
-		*(uint8_t **)VAR_TMP1 = data + data_size;
-		schedule_read(position, remainder, OSDiffTick(end, start), frag);
+		schedule_read(data + data_size, remainder, position, OSDiffTick(end, start), frag);
 		dcache_store(data, data_size);
 	}
 }

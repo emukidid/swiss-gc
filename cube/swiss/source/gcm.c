@@ -222,7 +222,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		} 
 	}
 	free(FST);
-	return (devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) || numFiles > 2 ? numFiles : 0;
+	return numFiles;
 }
 
 // Adjust TGC FST entries in case we load a DOL from one directly
@@ -358,7 +358,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 	}
 		
 	if(devices[DEVICE_PATCHES] == NULL) {
-		if(numToPatch > 0) {
+		if(numToPatch > 2) {
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "No writable device present\nA SD Card Adapter must be inserted in\n order to utilise patches for this game."));
 			sleep(5);
 			DrawDispose(msgBox);
@@ -466,14 +466,6 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			
 			if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 				Patch_CheatsHook(buffer, sizeToRead, filesToPatch[i].type);
-			}
-			
-			if(devices[DEVICE_CUR] == &__device_dvd && drive_status == DEBUG_MODE) {
-				patched += Patch_DVDReset(buffer, sizeToRead);
-			}
-			
-			if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader) {
-				patched += Patch_DVDLowLevelReadForDVD(buffer, sizeToRead, filesToPatch[i].type);
 			}
 			
 			if(devices[DEVICE_CUR] == &__device_wkf) {

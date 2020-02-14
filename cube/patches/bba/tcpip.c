@@ -138,7 +138,7 @@ static uint8_t fsp_checksum(fsp_header_t *header, size_t size)
 	return sum;
 }
 
-void schedule_read(uint32_t offset, uint32_t length, OSTick ticks, bool lock);
+void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks, bool lock);
 void trickle_read(void);
 
 static void fsp_get_file(uint32_t offset, size_t size, bool lock)
@@ -271,9 +271,7 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 					position  += data_size;
 					remainder -= data_size;
 
-					*_data = data + data_size;
-					*_data_size = 0;
-					schedule_read(position, remainder, 0, false);
+					schedule_read(data + data_size, remainder, position, 0, false);
 				}
 
 				bba_receive_end(page, data + data_offset, size);

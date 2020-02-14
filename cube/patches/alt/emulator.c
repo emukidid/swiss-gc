@@ -15,10 +15,11 @@
 void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 #endif
 
-void perform_read(uint32_t offset, uint32_t length, uint32_t address);
+void perform_read(uint32_t address, uint32_t length, uint32_t offset);
 void trickle_read(void);
 void change_disc(void);
 
+#ifndef DVD
 void di_update_interrupts(void)
 {
 	if (((*DI_EMU)[0] >> 1) & ((*DI_EMU)[0] & 0b0101010) ||
@@ -53,7 +54,7 @@ static void di_execute_command(void)
 
 				offset |= *(uint32_t *)VAR_CURRENT_DISC * 0x80000000;
 
-				perform_read(offset, length, address);
+				perform_read(address, length, offset);
 			} else {
 				(*DI_EMU)[0] |=  0b0000100;
 				(*DI_EMU)[7] &= ~0b001;
@@ -80,15 +81,49 @@ static void di_execute_command(void)
 	(*DI_EMU)[8] = result;
 	di_complete_transfer();
 }
+#else
+static void di_execute_command(void)
+{
+	switch ((*DI_EMU)[2] >> 24) {
+		case 0xA8:
+		{
+			switch ((*DI_EMU)[2] & 0xFF) {
+				case 0x00:
+				{
+					uint32_t offset  = (*DI_EMU)[3] << 2;
+					uint32_t length  = (*DI_EMU)[6];
+					uint32_t address = (*DI_EMU)[5];
+
+					perform_read(address, length, offset);
+					return;
+				}
+			}
+			break;
+		}
+	}
+
+	DI[2] = (*DI_EMU)[2];
+	DI[3] = (*DI_EMU)[3];
+	DI[4] = (*DI_EMU)[4];
+	DI[5] = (*DI_EMU)[5];
+	DI[6] = (*DI_EMU)[6];
+	DI[7] = (*DI_EMU)[7];
+}
+#endif
 
 static void di_read(unsigned index, uint32_t *value)
 {
+	#ifndef DVD
 	*value = (*DI_EMU)[index];
+	#else
+	*value = DI[index];
+	#endif
 }
 
 static void di_write(unsigned index, uint32_t value)
 {
 	switch (index) {
+		#ifndef DVD
 		case 0:
 			(*DI_EMU)[0] = ((value & 0b1010100) ^ (*DI_EMU)[0]) & (*DI_EMU)[0];
 			(*DI_EMU)[0] = (value & 0b0101011) | ((*DI_EMU)[0] & ~0b0101010);
@@ -99,6 +134,11 @@ static void di_write(unsigned index, uint32_t value)
 			(*DI_EMU)[1] = (value & 0b010) | ((*DI_EMU)[1] & ~0b010);
 			di_update_interrupts();
 			break;
+		#else
+		default:
+			DI[index] = value;
+			break;
+		#endif
 		case 2 ... 4:
 		case 8:
 			(*DI_EMU)[index] = value;
@@ -126,9 +166,11 @@ static void pi_read(unsigned index, uint32_t *value)
 static void pi_write(unsigned index, uint32_t value)
 {
 	switch (index) {
+		#ifndef DVD
 		case 9:
 			PI[index] = ((value << 1) & 0b100) | (value & ~0b100);
 			break;
+		#endif
 		default:
 			PI[index] = value;
 	}
@@ -222,10 +264,12 @@ void service_exception(OSException exception, OSContext *context, uint32_t dsisr
 				timer1_stop();
 				trickle_read();
 			}
+			#ifndef DVD
 			if (timer2_interrupt()) {
 				timer2_stop();
 				change_disc();
 			}
+			#endif
 			#ifdef BBA
 			if (timer3_interrupt()) {
 				timer3_stop();
@@ -242,28 +286,39 @@ void service_exception(OSException exception, OSContext *context, uint32_t dsisr
 	load_context();
 }
 
-static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+static void dispatch_interrupt(OSInterrupt interrupt, OSContext *context)
 {
-	OSInterruptMask cause = *(OSInterruptMask *)VAR_FAKE_IRQ_SET;
 	OSInterruptHandler handler;
 	OSContext exceptionContext;
 
+	OSClearContext(&exceptionContext);
+	OSSetCurrentContext(&exceptionContext);
+
+	handler = OSGetInterruptHandler(interrupt);
+	if (handler) handler(interrupt, &exceptionContext);
+
+	OSClearContext(&exceptionContext);
+	OSSetCurrentContext(context);
+}
+
+static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+{
+	OSInterruptMask cause = *(OSInterruptMask *)VAR_FAKE_IRQ_SET;
+
 	if (cause) {
-		interrupt = __builtin_clz(cause);
-
-		OSClearContext(&exceptionContext);
-		OSSetCurrentContext(&exceptionContext);
-
-		handler = OSGetInterruptHandler(interrupt);
-		if (handler) handler(interrupt, &exceptionContext);
-
-		OSClearContext(&exceptionContext);
-		OSSetCurrentContext(context);
+		dispatch_interrupt(__builtin_clz(cause), context);
 		return;
 	}
 
 	MI[16] = 0;
 }
+
+#ifdef DVD
+static void dvd_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+{
+	dispatch_interrupt(OS_INTERRUPT_EMU_DI, context);
+}
+#endif
 
 OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
@@ -271,6 +326,9 @@ OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler hand
 	OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
 	#ifdef BBA
 	OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
+	#endif
+	#ifdef DVD
+	OSSetInterruptHandler(OS_INTERRUPT_PI_DI, dvd_interrupt_handler);
 	#endif
 	return OSSetInterruptHandler(interrupt, handler);
 }

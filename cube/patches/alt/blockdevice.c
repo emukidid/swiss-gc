@@ -33,10 +33,11 @@ bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 void di_update_interrupts(void);
 void di_complete_transfer(void);
 
-void schedule_read(uint32_t offset, uint32_t length, OSTick ticks)
+void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks)
 {
 	*(uint32_t *)VAR_LAST_OFFSET = offset;
 	*(uint32_t *)VAR_TMP2 = length;
+	*(uint8_t **)VAR_TMP1 = address;
 
 	if (length) {
 		timer1_start(ticks);
@@ -46,10 +47,9 @@ void schedule_read(uint32_t offset, uint32_t length, OSTick ticks)
 	di_complete_transfer();
 }
 
-void perform_read(uint32_t offset, uint32_t length, uint32_t address)
+void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
-	*(uint8_t **)VAR_TMP1 = OSPhysicalToUncached(address);
-	schedule_read(offset, length, OSMicrosecondsToTicks(300));
+	schedule_read(OSPhysicalToUncached(address), length, offset, OSMicrosecondsToTicks(300));
 }
 
 void trickle_read(void)
@@ -67,8 +67,7 @@ void trickle_read(void)
 		position  += data_size;
 		remainder -= data_size;
 
-		*(uint8_t **)VAR_TMP1 = data + data_size;
-		schedule_read(position, remainder, OSDiffTick(end, start));
+		schedule_read(data + data_size, remainder, position, OSDiffTick(end, start));
 	}
 }
 

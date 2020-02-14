@@ -1,102 +1,94 @@
-/***************************************************************************
-# DVD patch code helper functions for Swiss
-# emu_kidid 2013
-#**************************************************************************/
+/* 
+ * Copyright (c) 2019-2020, Extrems <extrems@extremscorner.org>
+ * All rights reserved.
+ */
 
-#include "../../reservedarea.h"
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include "../alt/timer.h"
 #include "../base/common.h"
+#include "../base/dvd.h"
+#include "../base/exi.h"
+#include "../base/os.h"
 
-// Perform a debug spinup/etc instead of a hard dvd reset
-void handle_disc_swap()
+static void dvd_read(void *address, uint32_t length, uint32_t offset)
 {
-	disable_interrupts();
-	
-	volatile u32* dvd = (volatile u32*)0xCC006000;
-	// Unlock
-	// Part 1 with 'MATSHITA'
-	dvd[0] |= 0x00000014;
-	dvd[1] = dvd[1];
-	dvd[2] = 0xFF014D41;
-	dvd[3] = 0x54534849;
-	dvd[4] = 0x54410200;
-	dvd[7] = 1;
-	while (!(dvd[0] & 0x14));
-	// Part 2 with 'DVD-GAME'
-	dvd[0] |= 0x00000014;
-	dvd[1] = dvd[1];
-	dvd[2] = 0xFF004456;
-	dvd[3] = 0x442D4741;
-	dvd[4] = 0x4D450300;
-	dvd[7] = 1;
-	while (!(dvd[0] & 0x14));
-	
-	// Enable drive extensions
-	dvd[0] |= 0x14;
-	dvd[1] = dvd[1];
-	dvd[2] = 0x55010000;
-	dvd[3] = 0;
-	dvd[4] = 0;
-	dvd[7] = 1;
-	while (!(dvd[0] & 0x14));
-	
-	// Enable motor/laser
-	dvd[0] |= 0x14;
-	dvd[1] = dvd[1];
-	dvd[2] = 0xfe114100;
-	dvd[3] = 0;
-	dvd[4] = 0;
-	dvd[7] = 1;
-	while (!(dvd[0] & 0x14));
-	
-	// Set the status
-	dvd[0] |= 0x14;
-	dvd[1] = dvd[1];
-	dvd[2] = 0xee060300;
-	dvd[3] = 0;
-	dvd[4] = 0;
-	dvd[7] = 1;
-	while (!(dvd[0] & 0x14));
-	
-	enable_interrupts();
+	DI[2] = 0xA8000000;
+	DI[3] = offset >> 2;
+	DI[4] = length;
+	DI[5] = (uint32_t)address;
+	DI[6] = length;
+	DI[7] = 0b011;
 }
 
-#ifdef DEBUG
-extern void print_read(void* dst, u32 len, u32 ofs);
-#endif 
+static void dvd_read_diskid(DVDDiskID *diskID)
+{
+	DI[2] = 0xA8000040;
+	DI[3] = 0;
+	DI[4] = sizeof(DVDDiskID);
+	DI[5] = (uint32_t)diskID;
+	DI[6] = sizeof(DVDDiskID);
+	DI[7] = 0b011;
+}
 
-void dvd_read_patched_section() {
-	// Check if this read offset+size lies in our patched area, if so, we write a 0xE000 cmd to the drive and read from SD over EXI.
-	volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
-	u32 dst = dvd[5];
-	u32 len = dvd[4];
-	u32 offset = (dvd[3]<<2);
-	int ret = 0;
+bool exi_probe(int32_t chan)
+{
+	if (chan == EXI_CHANNEL_2)
+		return false;
+	if (chan == *(uint8_t *)VAR_EXI_SLOT)
+		return false;
+	return true;
+}
 
-#ifdef DEBUG
-	usb_sendbuffer_safe("New Read: ",10);
-	print_read((void*)dst,len,offset);
-#endif
+bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
+{
+	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
+		return false;
+	if (chan == *(uint8_t *)VAR_EXI_SLOT && dev == EXI_DEVICE_0)
+		return false;
+	return true;
+}
 
-	// If it doesn't let the value about to be passed to the DVD drive be DVD_DMA | DVD_START
-	if((ret=is_frag_read(offset, len))) {
-#ifdef DEBUG
-		if(ret == 2) {
-			usb_sendbuffer_safe("SPLIT FRAG\r\n",12);
-		}
-		usb_sendbuffer_safe("FRAG READ!\r\n",12);
-#endif
-		device_frag_read((void*)(dst | 0x80000000), len, offset);
-		dcache_flush_icache_inv((void*)(dst | 0x80000000), len);
-		dvd[3] = 0;
-		dvd[4] = 0x20;
-		dvd[5] = 0;
-		dvd[6] = 0x20;
-		dvd[7] = 3;
+void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks)
+{
+	*(uint32_t *)VAR_LAST_OFFSET = offset;
+	*(uint32_t *)VAR_TMP2 = length;
+	*(uint8_t **)VAR_TMP1 = address;
+
+	if (length) {
+		if (!is_frag_read(offset, length))
+			dvd_read(address, length, offset);
+		else
+			timer1_start(ticks);
+		return;
 	}
-	else {
-#ifdef DEBUG
-		usb_sendbuffer_safe("NORM READ!\r\n",12);
-#endif
-		dvd[7] = 3;	// DVD_DMA | DVD_START
+
+	dvd_read_diskid(NULL);
+}
+
+void perform_read(uint32_t address, uint32_t length, uint32_t offset)
+{
+	schedule_read(OSPhysicalToUncached(address), length, offset, 0);
+}
+
+void trickle_read(void)
+{
+	uint32_t position  = *(uint32_t *)VAR_LAST_OFFSET;
+	uint32_t remainder = *(uint32_t *)VAR_TMP2;
+	uint8_t *data      = *(uint8_t **)VAR_TMP1;
+	uint32_t data_size;
+
+	if (remainder) {
+		if (is_frag_read(position, remainder)) {
+			OSTick start = OSGetTick();
+			data_size = read_frag(data, remainder, position);
+			OSTick end = OSGetTick();
+
+			position  += data_size;
+			remainder -= data_size;
+
+			schedule_read(data + data_size, remainder, position, OSDiffTick(end, start));
+		}
 	}
 }

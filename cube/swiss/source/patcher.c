@@ -170,10 +170,10 @@ int install_code(int final)
 		}
 		print_gecko("Installing Patch for SD Card over EXI\r\n");
 	}
-	// DVD 2 disc code
+	// DVD
 	else if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader) {
 		patch = &dvd_bin[0]; patchSize = dvd_bin_size;
-		location = LO_RESERVE_DVD;
+		location = LO_RESERVE_ALT;
 		print_gecko("Installing Patch for DVD\r\n");
 	}
 	// USB Gecko
@@ -2891,7 +2891,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		if (PrepareExec) {
 			if (devices[DEVICE_CUR] == &__device_fsp)
 				data[i + 47] = 0x3C600801;	// lis		r3, 0x0801
-			else
+			else if (devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR)
 				data[i + 47] = 0x3C600800;	// lis		r3, 0x0800
 			
 			print_gecko("Found:[%s] @ %08X\n", PrepareExecSig.Name, PrepareExec);
@@ -2952,7 +2952,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					case 0: data[i + 44] = 0x3C600801; break;	// lis		r3, 0x0801
 					case 1: data[i + 43] = 0x3C600801; break;	// lis		r3, 0x0801
 				}
-			} else {
+			} else if (devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
 				switch (j) {
 					case 0: data[i + 44] = 0x3C600800; break;	// lis		r3, 0x0800
 					case 1: data[i + 43] = 0x3C600800; break;	// lis		r3, 0x0800
@@ -3036,7 +3036,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					case  9: data[i + 33] = 0x3C600801; break;	// lis		r3, 0x0801
 					case 10: data[i + 32] = 0x3C600801; break;	// lis		r3, 0x0801
 				}
-			} else {
+			} else if (devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
 				switch (j) {
 					case  0: data[i + 42] = 0x3C600800; break;	// lis		r3, 0x0800
 					case  1: data[i + 50] = 0x3C600800; break;	// lis		r3, 0x0800
@@ -3486,10 +3486,12 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		u32 *AlarmHandlerForTimeout = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (AlarmHandlerForTimeout) {
-			switch (j) {
-				case 0: data[i + 5] = 0x3C600800; break;	// lis		r3, 0x0800
-				case 1: data[i + 1] = 0x3C600800; break;	// lis		r3, 0x0800
-				case 2: data[i + 2] = 0x3C600800; break;	// lis		r3, 0x0800
+			if (devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
+				switch (j) {
+					case 0: data[i + 5] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 1: data[i + 1] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 2: data[i + 2] = 0x3C600800; break;	// lis		r3, 0x0800
+				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", AlarmHandlerForTimeoutSigs[j].Name, AlarmHandlerForTimeout);
 			patched++;
@@ -4086,7 +4088,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					case 6: data[i + 20] = 0x3C600801; break;	// lis		r3, 0x0801
 					case 7: data[i + 24] = 0x3C600801; break;	// lis		r3, 0x0801
 				}
-			} else {
+			} else if (devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
 				switch (j) {
 					case 0: data[i + 24] = 0x3C600800; break;	// lis		r3, 0x0800
 					case 1: data[i + 22] = 0x3C600800; break;	// lis		r3, 0x0800
@@ -4509,54 +4511,6 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		}
 	}
 	return patched;
-}
-
-/** Used for Multi-DOL games that require patches to be stored on SD */
-u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType) {
-	int i = 0;
-	
-	// Where the DVD_DMA | DVD_START are about to be written to the DI reg,
-	// overwrite it with a jump to our handler which will either allow the read to happen
-	// or mark it as a 0xE000 command with DVD_START only (no DMA) and read a fragment from SD.
-			
-	// This fragment that is read will only be a patched bit of PPC code, 
-	// it will be small so a blocking read will be used.
-
-	for(i = 0; i < length; i+=4) {
-		// Patch Read (called from DVDLowLevelRead) to read data from SD if it has been patched.
-		if( *(vu32*)(addr+i) != 0x7C0802A6 && *(vu32*)(addr+i+4) != 0x7C0802A6 )
-			continue;
-		
-		FuncPattern fp;
-		make_pattern( addr, i / 4, length, &fp );
-		
-		if(compare_pattern(&fp, &ReadCommon)) {
-			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x84)-(u32)(addr));
-			print_gecko("Found:[%s] @ %08X for DVD\r\n", ReadCommon.Name, properAddress - 0x84);
-			*(vu32*)(addr + i + 0x84) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
-			return 1;
-		}
-		if(compare_pattern(&fp, &ReadDebug)) {	// As above, for debug read now.
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x88)-(u32)(addr));
-			print_gecko("Found:[%s] @ %08X for DVD\r\n", ReadDebug.Name, properAddress - 0x88);
-			*(vu32*)(addr + i + 0x88) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
-			return 1;
-		}
-		if(compare_pattern(&fp, &ReadUncommon)) {	// Same, for the less common read type.
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x7C)-(u32)(addr));
-			print_gecko("Found:[%s] @ %08X for DVD\r\n", ReadUncommon.Name, properAddress - 0x7C);
-			*(vu32*)(addr + i + 0x7C) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
-			return 1;
-		}
-		if(compare_pattern(&fp, &ReadProDG)) {
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x74)-(u32)(addr));
-			print_gecko("Found:[%s] @ %08X for DVD\r\n", ReadProDG.Name, properAddress - 0x74);
-			*(vu32*)(addr + i + 0x74) = branchAndLink(READ_REAL_OR_PATCHED, properAddress);
-			return 1;
-		}
-	}
-	return 0;
 }
 
 u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
@@ -7149,39 +7103,6 @@ int Patch_FontEncode(u32 *data, u32 length)
 	return patched;
 }
 
-
-/** SDK DVD Reset Replacement 
-	- Allows debug spinup for backups */
-
-static const u32 _dvdlowreset_org[12] = {
-	0x7C0802A6,0x3C80CC00,0x90010004,0x38000002,0x9421FFE0,0xBF410008,0x3BE43000,0x90046004,
-	0x83C43024,0x57C007B8,0x60000001,0x941F0024
-};
-
-static const u32 _dvdlowreset_new[5] = {
-	0x3FE08000,0x63FF0000,0x7FE803A6,0x4E800021,0x4800006C
-};
-	
-int Patch_DVDReset(void *addr,u32 length)
-{
-	void *addr_start = addr;
-	void *addr_end = addr+length;
-
-	while(addr_start<addr_end) {
-		if(memcmp(addr_start,_dvdlowreset_org,sizeof(_dvdlowreset_org))==0) {
-			// we found the DVDLowReset
-			memcpy((addr_start+0x18),_dvdlowreset_new,sizeof(_dvdlowreset_new));
-			// Adjust the offset of where to jump to
-			u32 *ptr = (addr_start+0x18);
-			ptr[1] = _dvdlowreset_new[1] | ((u32)ENABLE_BACKUP_DISC&0xFFFF);
-			print_gecko("Found:[DVDLowReset] @ 0x%08X\r\n", (u32)ptr);
-			return 1;
-		}
-		addr_start += 4;
-	}
-	return 0;
-}
-
 /** SDK fwrite USB Gecko Slot B redirect */
 u32 sig_fwrite[8] = {
   0x9421FFD0,
@@ -9673,9 +9594,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 			u32 *__OSDoHotResetHook;
 			
 			if (__OSDoHotReset) {
-				if (devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader)
-					__OSDoHotResetHook = IGR_EXIT_DVD;
-				else if (devices[DEVICE_CUR] == &__device_wkf)
+				if (devices[DEVICE_CUR] == &__device_wkf)
 					__OSDoHotResetHook = IGR_EXIT_WKF;
 				else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
 					__OSDoHotResetHook = IGR_EXIT_ALT;
@@ -9700,9 +9619,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 			u32 *OSResetSystemHook;
 			
 			if (OSResetSystem) {
-				if (devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader)
-					OSResetSystemHook = IGR_EXIT_DVD;
-				else if (devices[DEVICE_CUR] == &__device_wkf)
+				if (devices[DEVICE_CUR] == &__device_wkf)
 					OSResetSystemHook = IGR_EXIT_WKF;
 				else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
 					OSResetSystemHook = IGR_EXIT_ALT;
@@ -9803,9 +9720,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 		u32 MakeStatusAddr, *MakeStatus;
 		
 		if (PADRead) {
-			if (devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader)
-				PADReadHook = CHECK_PAD_DVD;
-			else if (devices[DEVICE_CUR] == &__device_wkf)
+			if (devices[DEVICE_CUR] == &__device_wkf)
 				PADReadHook = CHECK_PAD_WKF;
 			else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
 				PADReadHook = CHECK_PAD_ALT;

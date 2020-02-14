@@ -165,7 +165,6 @@ enum patchIds {
 
 #define LO_RESERVE_ALT	0x80000C00
 #define LO_RESERVE 		0x80001000
-#define LO_RESERVE_DVD 	0x80001800
 
 /* Function jump locations for the SD/IDE patch */
 #define CALC_SPEED				(void*)(LO_RESERVE)
@@ -175,12 +174,6 @@ enum patchIds {
 #define DSP_HANDLER_HOOK		(void*)(LO_RESERVE | 0x10)
 #define CHECK_PAD				(void*)(LO_RESERVE | 0x14)
 #define IGR_EXIT				(void*)(LO_RESERVE | 0x18)
-
-/* Function jump locations for the DVD patch */
-#define ENABLE_BACKUP_DISC 		(void*)(LO_RESERVE_DVD | 0x00)
-#define READ_REAL_OR_PATCHED	(void*)(LO_RESERVE_DVD | 0x04)
-#define CHECK_PAD_DVD			(void*)(LO_RESERVE_DVD | 0x08)
-#define IGR_EXIT_DVD			(void*)(LO_RESERVE_DVD | 0x0C)
 
 /* Function jump locations for the WKF/WASP patch */
 #define PATCHED_MEMCPY_WKF		(void*)(LO_RESERVE)
@@ -214,14 +207,12 @@ extern int savePatchDevice;
 
 int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int dataType);
 u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType);
-u32 Patch_DVDLowLevelReadForDVD(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType);
 void Patch_VideoMode(u32 *data, u32 length, int dataType);
 void Patch_Widescreen(u32 *data, u32 length, int dataType);
 int Patch_TexFilt(u32 *data, u32 length, int dataType);
 int Patch_FontEncode(u32 *data, u32 length);
 int Patch_Fwrite(void *addr, u32 length);
-int Patch_DVDReset(void *addr,u32 length);
 int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType);
 int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const char *fileName);
 int Patch_GameSpecificRead(void *addr, u32 length, const char* gameID, int dataType);

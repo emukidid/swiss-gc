@@ -271,10 +271,12 @@ bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 void di_update_interrupts(void);
 void di_complete_transfer(void);
 
-void schedule_read(uint32_t offset, uint32_t length, OSTick ticks, bool lock)
+void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks, bool lock)
 {
 	*_position  = offset;
 	*_remainder = length;
+	*_data      = address;
+	*_data_size = 0;
 
 	if (length) {
 		if (!is_frag_read(offset, length))
@@ -287,10 +289,9 @@ void schedule_read(uint32_t offset, uint32_t length, OSTick ticks, bool lock)
 	di_complete_transfer();
 }
 
-void perform_read(uint32_t offset, uint32_t length, uint32_t address)
+void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
-	*_data = OSPhysicalToCached(address);
-	schedule_read(offset, length, 0, true);
+	schedule_read(OSPhysicalToCached(address), length, offset, 0, true);
 }
 
 void trickle_read(void)
@@ -309,8 +310,7 @@ void trickle_read(void)
 			position  += data_size;
 			remainder -= data_size;
 
-			*_data = data + data_size;
-			schedule_read(position, remainder, OSDiffTick(end, start), true);
+			schedule_read(data + data_size, remainder, position, OSDiffTick(end, start), true);
 			dcache_store(data, data_size);
 		} else {
 			OSTime start = *_start;

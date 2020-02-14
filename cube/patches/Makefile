@@ -166,14 +166,15 @@ build-ideexi-altv2:
 
 build-dvd:
 	@echo Building DVD Patch ...
-	@$(CC) -O1 $(OPTS) -c dvd/base.S
-	@$(CC) -O1 $(OPTS) -c dvd/dvd.c
-	@$(CC) -O1 $(OPTS) -c sdgecko/sd.c
-	@$(CC) -O1 $(OPTS) -c base/frag.c
-	@$(CC) -O1 $(OPTS) -c base/usbgecko.c
-	@$(CC) -O1 $(OPTS) -c base/igr.c
-	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o dvd.elf -T dvd/base.ld -T base/common.ld base.o igr.o frag.o sd.o dvd.o usbgecko.o memcpy.o --gc-sections
+	@$(CC) -O2 $(OPTS) -c alt/base.S
+	@$(CC) -O2 $(OPTS) -c alt/emulator.c -DDVD
+	@$(CC) -O2 $(OPTS) -c alt/igr.c
+	@$(CC) -O2 $(OPTS) -c dvd/dvd.c
+	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -O2 $(OPTS) -c base/frag.c
+	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
+	@$(CC) -O2 $(OPTS) -c base/os.c
+	@$(LD) -o dvd.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd_disasm.txt
 	@$(OBJCOPY) -O binary dvd.elf dvd.bin

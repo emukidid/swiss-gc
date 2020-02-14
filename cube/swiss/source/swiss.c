@@ -946,15 +946,6 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	
 	// Patch specific game hacks
 	Patch_GameSpecific(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
-
-	// 2 Disc support with no modchip
-	if(devices[DEVICE_CUR] == &__device_dvd && drive_status == DEBUG_MODE) {
-		Patch_DVDReset(main_dol_buffer, main_dol_size);
-	}
-	// Support patches for multi-dol discs that need to read patched data from SD
-	if((devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader) && numToPatch > 0) {
-		Patch_DVDLowLevelReadForDVD(main_dol_buffer, main_dol_size, PATCH_DOL);
-	}
 	
 	// Patch IGR
 	if(swissSettings.igrType != IGR_OFF || swissSettings.invertCStick) {
