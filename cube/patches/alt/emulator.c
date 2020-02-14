@@ -19,6 +19,19 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset);
 void trickle_read(void);
 void change_disc(void);
 
+bool memeq(const void *a, const void *b, size_t size)
+{
+	const uint8_t *x = a;
+	const uint8_t *y = b;
+	size_t i;
+
+	for (i = 0; i < size; ++i)
+		if (x[i] != y[i])
+			return false;
+
+	return true;
+}
+
 #ifndef DVD
 void di_update_interrupts(void)
 {
@@ -90,6 +103,12 @@ static void di_execute_command(void)
 			switch ((*DI_EMU)[2] & 0xFF) {
 				case 0x00:
 				{
+					DVDDiskID *id1 = (DVDDiskID *)VAR_AREA;
+					DVDDiskID *id2 = (DVDDiskID *)VAR_DISC_1_ID;
+
+					if (!memeq(id1, id2, sizeof(DVDDiskID)))
+						break;
+
 					uint32_t offset  = (*DI_EMU)[3] << 2;
 					uint32_t length  = (*DI_EMU)[6];
 					uint32_t address = (*DI_EMU)[5];

@@ -23,6 +23,8 @@
 .set VAR_DISC_1_FN,			0x0A01	# disc 1 filename
 .set VAR_DISC_2_FNLEN,		0x0B00	# disc 2 filename length
 .set VAR_DISC_2_FN,			0x0B01	# disc 2 filename
+.set VAR_DISC_1_ID,			0x0A00	# disc 1 header
+.set VAR_DISC_2_ID,			0x0B00	# disc 2 header
 .set VAR_PATCHES_BASE,		0x2D00	# Patches get copied to below this area.
 .set VAR_FRAG_LIST,			0x2D00	# 0x1C8 of fragments (38 frags max) (u32 offset, u32 size, u32 rawsector)
 .set VAR_TIMER_START,		0x2EC8	# Use this as a timer start (tbu,tb)
@@ -118,6 +120,8 @@ extern char VAR_DISC_1_FNLEN[1];	// disc 1 filename length
 extern char VAR_DISC_1_FN[0xFF];	// disc 1 filename
 extern char VAR_DISC_2_FNLEN[1];	// disc 2 filename length
 extern char VAR_DISC_2_FN[0xFF];	// disc 2 filename
+extern char VAR_DISC_1_ID[0x20];	// disc 1 header
+extern char VAR_DISC_2_ID[0x20];	// disc 2 header
 extern char VAR_PATCHES_BASE[];		// Patches get copied to below this area.
 extern char VAR_FRAG_LIST[0x1C8];	// 0x1C8 of fragments (40 frags max) (u32 offset, u32 size, u32 rawsector)
 extern char VAR_TIMER_START[8];		// Use this as a timer start (tbu,tb)

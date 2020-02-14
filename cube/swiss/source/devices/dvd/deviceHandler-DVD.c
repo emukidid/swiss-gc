@@ -407,17 +407,20 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 		file->status = OFFSET_SET;
 		print_gecko("Streaming %s %08X\r\n",streaming?"Enabled":"Disabled",dvd_get_error());
 	}
+
+	// Set up Swiss game patches using a patch supporting device
+	memset(VAR_FRAG_LIST, 0, sizeof(VAR_FRAG_LIST));
+
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
-		print_gecko("Save Patch device found\r\n");
 		int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
 		vu32 *fragList = (vu32*)VAR_FRAG_LIST;
+		s32 frags = 0, totFrags = 0;
 		
-		memset(VAR_FRAG_LIST, 0, sizeof(VAR_FRAG_LIST));
+		print_gecko("Save Patch device found\r\n");
 		
-		// Look for .patchX files, if we find some, open them and add them as fragments
+		// Look for patch files, if we find some, open them and add them as fragments
 		file_handle patchFile;
-		int totFrags = 0, frags = 0;
 		char gameID[8];
 		memset(&gameID, 0, 8);
 		strncpy((char*)&gameID, (char*)&GCMDisk, 4);
@@ -428,11 +431,11 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 			memset(&patchFile, 0, sizeof(file_handle));
 			sprintf(&patchFile.name[0], "%sswiss_patches/%s/%i",devices[DEVICE_PATCHES]->initial->name,gameID, i);
 			print_gecko("Looking for file %s\r\n", &patchFile.name);
-			
 			FILINFO fno;
 			if(f_stat(&patchFile.name[0], &fno) != FR_OK) {
 				break;	// Patch file doesn't exist, don't bother with fragments
 			}
+			
 			devices[DEVICE_PATCHES]->seekFile(&patchFile,fno.fsize-16,DEVICE_HANDLER_SEEK_SET);
 			if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
 				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
@@ -468,6 +471,8 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 		*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
 	}
 
+	memcpy(VAR_DISC_1_ID, &GCMDisk, sizeof(VAR_DISC_1_ID));
+	memcpy(VAR_DISC_2_ID, &GCMDisk, sizeof(VAR_DISC_2_ID));
 	return 1;
 }
 

@@ -16,6 +16,9 @@ VAR_DISC_1_FN		= VAR_AREA | 0x0A01;	/* disc 1 filename */
 VAR_DISC_2_FNLEN	= VAR_AREA | 0x0B00;	/* disc 2 filename length */
 VAR_DISC_2_FN		= VAR_AREA | 0x0B01;	/* disc 2 filename */
 
+VAR_DISC_1_ID		= VAR_AREA | 0x0A00;	/* disc 1 header */
+VAR_DISC_2_ID		= VAR_AREA | 0x0B00;	/* disc 2 header */
+
 VAR_PATCHES_BASE	= VAR_AREA | 0x2D00;	/* Patches get copied to below this area. */
 
 VAR_FRAG_LIST		= VAR_AREA | 0x2D00;	/* 0x1C8 of fragments (40 frags max) (u32 offset, u32 size, u32 rawsector) */
