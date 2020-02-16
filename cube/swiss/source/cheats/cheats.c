@@ -212,7 +212,7 @@ int findCheats(bool silent) {
 
 	devices[DEVICE_TEMP] = devices[DEVICE_CUR];
 
-	// Check SD in both slots if we're not already running from SD, or if we fail from current device
+	// Check SD in all slots if we're not already running from SD, or if we fail from current device
 	if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 		// Try SD slots now
 		if(devices[DEVICE_CUR] != &__device_sd_a) {
@@ -230,7 +230,7 @@ int findCheats(bool silent) {
 		devices[DEVICE_TEMP]->init(cheatsFile);
 		if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 			if(devices[DEVICE_TEMP] == &__device_sd_b) {
-				devices[DEVICE_TEMP] = NULL;	// We already tried this & failed.
+				devices[DEVICE_TEMP] = &__device_sd_c;	// We already tried A & failed, so last thing to try is SP2 slot.
 			}
 			else {
 				devices[DEVICE_TEMP] = &__device_sd_b;
@@ -241,7 +241,18 @@ int findCheats(bool silent) {
 
 				devices[DEVICE_TEMP]->init(cheatsFile);
 				if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
-					devices[DEVICE_TEMP] = NULL;
+					devices[DEVICE_TEMP] = &__device_sd_c; // Last thing to try is SP2 slot.
+				}
+			}
+			if (devices[DEVICE_TEMP] == &__device_sd_c) {
+				slotFile = devices[DEVICE_TEMP]->initial;
+				memset(cheatsFile, 0, sizeof(file_handle));
+				sprintf(cheatsFile->name, "%s/cheats/%s.txt", slotFile->name, trimmedGameId);
+				print_gecko("Looking for cheats file @[%s]\r\n", cheatsFile->name);
+
+				devices[DEVICE_TEMP]->init(cheatsFile);
+				if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
+					devices[DEVICE_TEMP] = NULL; // All three have failed.
 				}
 			}
 		}
