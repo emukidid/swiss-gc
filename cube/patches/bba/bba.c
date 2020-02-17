@@ -252,7 +252,7 @@ bool exi_probe(int32_t chan)
 {
 	if (chan == EXI_CHANNEL_2)
 		return false;
-	if (chan == *(uint8_t *)VAR_EXI_SLOT)
+	if (chan == *VAR_EXI_SLOT)
 		return false;
 	return true;
 }
@@ -263,7 +263,7 @@ bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 		return false;
 	if (chan == EXI_CHANNEL_0 && dev == EXI_DEVICE_2)
 		return false;
-	if (chan == *(uint8_t *)VAR_EXI_SLOT && dev == EXI_DEVICE_0)
+	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
 		return false;
 	return true;
 }

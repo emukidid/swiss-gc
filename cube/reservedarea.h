@@ -23,6 +23,8 @@
 .set VAR_DISC_1_FN,			0x0A01	# disc 1 filename
 .set VAR_DISC_2_FNLEN,		0x0B00	# disc 2 filename length
 .set VAR_DISC_2_FN,			0x0B01	# disc 2 filename
+.set VAR_DRIVE_RESETTING,	0x09FE	# disc drive resetting
+.set VAR_DRIVE_PATCHED,		0x09FF	# disc drive patched
 .set VAR_DISC_1_ID,			0x0A00	# disc 1 header
 .set VAR_DISC_2_ID,			0x0B00	# disc 2 header
 .set VAR_PATCHES_BASE,		0x2D00	# Patches get copied to below this area.
@@ -120,6 +122,8 @@ extern char VAR_DISC_1_FNLEN[1];	// disc 1 filename length
 extern char VAR_DISC_1_FN[0xFF];	// disc 1 filename
 extern char VAR_DISC_2_FNLEN[1];	// disc 2 filename length
 extern char VAR_DISC_2_FN[0xFF];	// disc 2 filename
+extern char VAR_DRIVE_RESETTING[1];	// disc drive resetting
+extern char VAR_DRIVE_PATCHED[1];	// disc drive patched
 extern char VAR_DISC_1_ID[0x20];	// disc 1 header
 extern char VAR_DISC_2_ID[0x20];	// disc 2 header
 extern char VAR_PATCHES_BASE[];		// Patches get copied to below this area.

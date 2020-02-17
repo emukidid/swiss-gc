@@ -97,6 +97,9 @@ static void di_execute_command(void)
 #else
 static void di_execute_command(void)
 {
+	if (*VAR_DRIVE_RESETTING)
+		return;
+
 	switch ((*DI_EMU)[2] >> 24) {
 		case 0xA8:
 		{
@@ -177,6 +180,53 @@ static void di_write(unsigned index, uint32_t value)
 	}
 }
 
+#ifdef DVD
+static void di_reset(void)
+{
+	DI[0] = DI[0];
+	DI[1] = DI[1];
+
+	switch ((*VAR_DRIVE_RESETTING)++) {
+		case 0:
+			DI[2] = 0xFF014D41;
+			DI[3] = 0x54534849;
+			DI[4] = 0x54410200;
+			DI[7] = 0b001;
+			break;
+		case 1:
+			DI[2] = 0xFF004456;
+			DI[3] = 0x442D4741;
+			DI[4] = 0x4D450300;
+			DI[7] = 0b001;
+			break;
+		case 2:
+			DI[2] = 0x55010000;
+			DI[3] = 0;
+			DI[4] = 0;
+			DI[7] = 0b001;
+			break;
+		case 3:
+			DI[2] = 0xFE114100;
+			DI[3] = 0;
+			DI[4] = 0;
+			DI[7] = 0b001;
+			break;
+		case 4:
+			DI[2] = 0xEE060300;
+			DI[3] = 0;
+			DI[4] = 0;
+			DI[7] = 0b001;
+			break;
+		case 5:
+			*VAR_DRIVE_RESETTING = 0;
+
+			if ((*DI_EMU)[7] & 0b001)
+				di_execute_command();
+			break;
+	}
+}
+#endif
+
 static void pi_read(unsigned index, uint32_t *value)
 {
 	*value = PI[index];
@@ -185,11 +235,19 @@ static void pi_read(unsigned index, uint32_t *value)
 static void pi_write(unsigned index, uint32_t value)
 {
 	switch (index) {
-		#ifndef DVD
 		case 9:
+			#ifndef DVD
 			PI[index] = ((value << 1) & 0b100) | (value & ~0b100);
 			break;
-		#endif
+			#else
+			if (*VAR_DRIVE_PATCHED) {
+				PI[index] = ((value << 1) & 0b100) | (value & ~0b100);
+
+				if (!*VAR_DRIVE_RESETTING && !(value & 0b100))
+					di_reset();
+				break;
+			}
+			#endif
 		default:
 			PI[index] = value;
 	}
@@ -335,6 +393,11 @@ static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 #ifdef DVD
 static void dvd_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
+	if (*VAR_DRIVE_RESETTING) {
+		di_reset();
+		return;
+	}
+
 	dispatch_interrupt(OS_INTERRUPT_EMU_DI, context);
 }
 #endif

@@ -16,6 +16,8 @@ VAR_DISC_1_FN		= VAR_AREA | 0x0A01;	/* disc 1 filename */
 VAR_DISC_2_FNLEN	= VAR_AREA | 0x0B00;	/* disc 2 filename length */
 VAR_DISC_2_FN		= VAR_AREA | 0x0B01;	/* disc 2 filename */
 
+VAR_DRIVE_RESETTING	= VAR_AREA | 0x09FE;	/* disc drive resetting */
+VAR_DRIVE_PATCHED	= VAR_AREA | 0x09FF;	/* disc drive patched */
 VAR_DISC_1_ID		= VAR_AREA | 0x0A00;	/* disc 1 header */
 VAR_DISC_2_ID		= VAR_AREA | 0x0B00;	/* disc 2 header */
 
