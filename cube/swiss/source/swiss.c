@@ -839,14 +839,13 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 
 	uiDrawObj_t* loadDolProg = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
 	
-	u32 audioStreamingBufferReq = GCMDisk.AudioStreaming;
-	// Native devices shouldn't steal memory for AS redirection
-	if(!(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS)) {
-		audioStreamingBufferReq = 0;
-	}
-	
 	// Adjust top of memory
-	u32 top_of_main_ram = !audioStreamingBufferReq ? 0x81800000 : DECODED_BUFFER_0;
+	u32 top_of_main_ram = 0x81800000;
+	
+	// Native devices shouldn't steal memory for AS redirection
+	if(GCMDisk.AudioStreaming && (devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) && !((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)) {
+		top_of_main_ram = DECODED_BUFFER_0;
+	}
 	// Steal even more if there's cheats!
 	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 		top_of_main_ram = WIIRD_ENGINE;
