@@ -73,6 +73,9 @@ int is_frag_read(unsigned int offset, unsigned int len) {
 		if(offset >= fragOffset && offset < fragOffsetEnd) {
 			// Does our read get cut off early?
 			if(offset + len > fragOffsetEnd) {
+				if(offset > fragOffsetEnd - 0x20) {
+					continue;
+				}
 				return 2; // TODO Disable DVD Interrupts, perform a read for the overhang, clear interrupts.
 			}
 			return 1;
