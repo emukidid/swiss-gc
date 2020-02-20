@@ -61,8 +61,6 @@ void *installPatch(int patchId) {
 			patchSize = GXSetProjectionHook_length; patchLocation = GXSetProjectionHook; break;
 		case GX_SETSCISSORHOOK:
 			patchSize = GXSetScissorHook_length; patchLocation = GXSetScissorHook; break;
-		case GX_TOKENINTERRUPTHANDLERHOOK:
-			patchSize = GXTokenInterruptHandlerHook_length; patchLocation = GXTokenInterruptHandlerHook; break;
 		case MTX_FRUSTUMHOOK:
 			patchSize = MTXFrustumHook_length; patchLocation = MTXFrustumHook; break;
 		case MTX_LIGHTFRUSTUMHOOK:
@@ -701,6 +699,44 @@ u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
 	return patched;
 }
 
+u32 _gxpeekz_a[] = {
+	0x546013BA,	// clrlslwi	r0, r3, 16, 2
+	0x6400C800,	// oris		r0, r0, 0xC800
+	0x54030512,	// rlwinm	r3, r0, 0, 20, 9
+	0x54806126,	// clrlslwi	r0, r4, 16, 12
+	0x7C600378,	// or		r0, r3, r0
+	0x5400028E,	// rlwinm	r0, r0, 0, 10, 7
+	0x64030040,	// oris		r3, r0, 0x0040
+	0x80030000,	// lwz		r0, 0 (r3)
+	0x90050000,	// stw		r0, 0 (r5)
+	0x4E800020	// blr
+};
+
+u32 _gxpeekz_b[] = {
+	0x5463103A,	// slwi		r3, r3, 2
+	0x54846026,	// slwi		r4, r4, 12
+	0x6463C800,	// oris		r3, r3, 0xC800
+	0x54600512,	// rlwinm	r0, r3, 0, 20, 9
+	0x7C032378,	// or		r3, r0, r4
+	0x5460028E,	// rlwinm	r0, r3, 0, 10, 7
+	0x64030040,	// oris		r3, r0, 0x0040
+	0x80030000,	// lwz		r0, 0 (r3)
+	0x90050000,	// stw		r0, 0 (r5)
+	0x4E800020	// blr
+};
+
+u32 _gxpeekz_c[] = {
+	0x5460043E,	// clrlwi	r0, r3, 16
+	0x3C60C800,	// lis		r3, 0xC800
+	0x5003153A,	// insrwi	r3, r0, 10, 20
+	0x38000001,	// li		r0, 1
+	0x508362A6,	// insrwi	r3, r4, 10, 10
+	0x5003B212,	// insrwi	r3, r0, 2, 8
+	0x80030000,	// lwz		r0, 0 (r3)
+	0x90050000,	// stw		r0, 0 (r5)
+	0x4E800020	// blr
+};
+
 int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int dataType)
 {
 	int i, j, k;
@@ -1162,6 +1198,11 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		{ 24, 7, 5, 3, 2, 3, NULL, 0, "__DVDDequeueWaitingQueue" },
 		{ 26, 7, 5, 3, 2, 5, NULL, 0, "__DVDDequeueWaitingQueue" }	// SN Systems ProDG
 	};
+	FuncPattern GXPeekZSigs[3] = {
+		{ 10, 1, 1, 0, 0, 1, NULL, 0, "GXPeekZ A" },
+		{ 10, 1, 1, 0, 0, 1, NULL, 0, "GXPeekZ B" },	// SN Systems ProDG
+		{  9, 3, 1, 0, 0, 0, NULL, 0, "GXPeekZ C" }
+	};
 	FuncPattern __VMBASESetupExceptionHandlersSigs[2] = {
 		{ 95, 38, 12, 6, 0, 20, NULL, 0, "__VMBASESetupExceptionHandlers A" },
 		{ 95, 42, 10, 6, 0, 16, NULL, 0, "__VMBASESetupExceptionHandlers B" }
@@ -1184,8 +1225,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 			}
 			continue;
 		}
-		if ((data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6 && data[i + 1] != 0x4E800020) ||
-			(data[i - 1] != 0x4E800020 &&
+		if ((data[i - 1] != 0x4E800020 &&
 			(data[i + 0] == 0x60000000 || data[i - 1] != 0x4C000064) &&
 			(data[i - 1] != 0x60000000 || data[i - 2] != 0x4C000064) &&
 			branchResolve(data, dataType, i - 1) == 0))
@@ -1212,6 +1252,15 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					data[i] = 0x60000000;
 					break;
 			}
+			continue;
+		}
+		else if (data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) {
+			if (!memcmp(data + i, _gxpeekz_a, sizeof(_gxpeekz_a)))
+				GXPeekZSigs[0].offsetFoundAt = i;
+			else if (!memcmp(data + i, _gxpeekz_b, sizeof(_gxpeekz_b)))
+				GXPeekZSigs[1].offsetFoundAt = i;
+			else if (!memcmp(data + i, _gxpeekz_c, sizeof(_gxpeekz_c)))
+				GXPeekZSigs[2].offsetFoundAt = i;
 			continue;
 		}
 		
@@ -4479,6 +4528,29 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		}
 	}
 	
+	for (j = 0; j < sizeof(GXPeekZSigs) / sizeof(FuncPattern); j++)
+		if (GXPeekZSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(GXPeekZSigs) / sizeof(FuncPattern) && (i = GXPeekZSigs[j].offsetFoundAt)) {
+		u32 *GXPeekZ = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (GXPeekZ) {
+			switch (j) {
+				case 0:
+					data[i + 1] = 0x64000800;	// oris		r0, r0, 0x0800
+					break;
+				case 1:
+					data[i + 2] = 0x64630800;	// oris		r3, r3, 0x0800
+					break;
+				case 2:
+					data[i + 1] = 0x3C600800;	// lis		r3, 0x0800
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", GXPeekZSigs[j].Name, GXPeekZ);
+			patched++;
+		}
+	}
+	
 	for (j = 0; j < sizeof(__VMBASESetupExceptionHandlersSigs) / sizeof(FuncPattern); j++)
 		if (__VMBASESetupExceptionHandlersSigs[j].offsetFoundAt) break;
 	
@@ -4930,13 +5002,6 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{  546, 293, 37, 110,  7,  9, NULL, 0, "__GXInitGX E" },	// SN Systems ProDG
 		{  549, 289, 38, 110,  7,  9, NULL, 0, "__GXInitGX F" },	// SN Systems ProDG
 		{  590, 333, 34, 119, 28, 11, NULL, 0, "__GXInitGX G" }
-	};
-	FuncPattern GXTokenInterruptHandlerSigs[5] = {
-		{ 33, 11, 3, 4, 1, 2, NULL, 0, "GXTokenInterruptHandlerD A" },
-		{ 34, 12, 4, 4, 1, 3, NULL, 0, "GXTokenInterruptHandler A" },
-		{ 33, 11, 4, 4, 0, 4, NULL, 0, "GXTokenInterruptHandler B" },	// SN Systems ProDG
-		{ 36,  9, 5, 4, 0, 4, NULL, 0, "GXTokenInterruptHandler C" },	// SN Systems ProDG
-		{ 34, 13, 4, 4, 1, 3, NULL, 0, "GXTokenInterruptHandler D" }
 	};
 	FuncPattern GXAdjustForOverscanSigs[4] = {
 		{ 57,  6,  4, 0, 3, 11, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscanD A" },
@@ -5562,30 +5627,6 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						
 						findx_pattern(data, dataType, i + 490, length, &GXSetBlendModeSigs[2]);
 						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[4]);
-						break;
-				}
-			}
-		}
-		
-		for (j = 0; j < sizeof(GXTokenInterruptHandlerSigs) / sizeof(FuncPattern); j++) {
-			if (!GXTokenInterruptHandlerSigs[j].offsetFoundAt && compare_pattern(&fp, &GXTokenInterruptHandlerSigs[j])) {
-				switch (j) {
-					case 0:
-						if (findx_pattern(data, dataType, i + 13, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i + 21, length, &OSSetCurrentContextSig))
-							GXTokenInterruptHandlerSigs[j].offsetFoundAt = i;
-						break;
-					case 1:
-					case 2:
-					case 4:
-						if (findx_pattern(data, dataType, i + 14, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i + 22, length, &OSSetCurrentContextSig))
-							GXTokenInterruptHandlerSigs[j].offsetFoundAt = i;
-						break;
-					case 3:
-						if (findx_pattern(data, dataType, i + 16, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i + 24, length, &OSSetCurrentContextSig))
-							GXTokenInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -6689,35 +6730,6 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", __GXInitGXSigs[j].Name, __GXInitGX);
-		}
-	}
-	
-	for (j = 0; j < sizeof(GXTokenInterruptHandlerSigs) / sizeof(FuncPattern); j++)
-		if (GXTokenInterruptHandlerSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(GXTokenInterruptHandlerSigs) / sizeof(FuncPattern) && (i = GXTokenInterruptHandlerSigs[j].offsetFoundAt)) {
-		u32 *GXTokenInterruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		u32 *GXTokenInterruptHandlerHook;
-		
-		if (GXTokenInterruptHandler) {
-			GXTokenInterruptHandlerHook = getPatchAddr(GX_TOKENINTERRUPTHANDLERHOOK);
-			
-			switch (j) {
-				case 0:
-					data[i + 16] = 0x7D8903A6;	// mtctr	r12
-					data[i + 17] = branchAndLink(GXTokenInterruptHandlerHook, GXTokenInterruptHandler + 17);
-					break;
-				case 1:
-				case 4:
-					data[i + 17] = 0x7D8903A6;	// mtctr	r12
-				case 2:
-					data[i + 18] = branchAndLink(GXTokenInterruptHandlerHook, GXTokenInterruptHandler + 18);
-					break;
-				case 3:
-					data[i + 20] = branchAndLink(GXTokenInterruptHandlerHook, GXTokenInterruptHandler + 20);
-					break;
-			}
-			print_gecko("Found:[%s] @ %08X\n", GXTokenInterruptHandlerSigs[j].Name, GXTokenInterruptHandler);
 		}
 	}
 	

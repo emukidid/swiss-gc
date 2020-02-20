@@ -125,6 +125,8 @@ realmode:
 	mtsrr1	r3
 	rfi
 
+#include "../base/memcpy.S"
+
 	.globl dcache_flush_icache_inv
 dcache_flush_icache_inv:
 	cmplwi	r4, 0
@@ -155,7 +157,20 @@ dcache_store:
 	bdnz	1b
 	blr
 
-#include "../base/memcpy.S"
+	.globl wait_pecopydone
+wait_pecopydone:
+	lis		r3, 0xCC00
+	li		r4, 0
+1:	stw		r4, 0x404E (r3)
+	mftb	r5
+2:	mftb	r6
+	sub		r6, r6, r5
+	cmplwi	r6, 10
+	ble		2b
+	lwz		r4, 0x404E (r3)
+	cmplwi	r4, 0
+	bne		1b
+	blr
 
 	.org 0x80000F00 - 0x80000C00 - 0x80
 	.globl performance_monitor_interrupt

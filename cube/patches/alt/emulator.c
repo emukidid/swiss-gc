@@ -181,7 +181,7 @@ static void di_write(unsigned index, uint32_t value)
 }
 
 #ifdef DVD
-static void di_reset(void)
+static void dvd_reset(void)
 {
 	DI[0] = DI[0];
 	DI[1] = DI[1];
@@ -244,7 +244,7 @@ static void pi_write(unsigned index, uint32_t value)
 				PI[index] = ((value << 1) & 0b100) | (value & ~0b100);
 
 				if (!*VAR_DRIVE_RESETTING && !(value & 0b100))
-					di_reset();
+					dvd_reset();
 				break;
 			}
 			#endif
@@ -253,8 +253,20 @@ static void pi_write(unsigned index, uint32_t value)
 	}
 }
 
+void wait_pecopydone(void);
+
+static void efb_read(uint32_t address, uint32_t *value)
+{
+	wait_pecopydone();
+	*value = *(uint32_t *)OSPhysicalToUncached(address);
+}
+
 static bool ppc_load32(uint32_t address, uint32_t *value)
 {
+	if ((address & ~0xFFFFFC) == 0x08000000) {
+		efb_read(address, value);
+		return true;
+	}
 	if ((address & ~0xFFC) == 0x0C003000) {
 		pi_read((address >> 2) & 0x7F, value);
 		return true;
@@ -394,7 +406,7 @@ static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 static void dvd_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	if (*VAR_DRIVE_RESETTING) {
-		di_reset();
+		dvd_reset();
 		return;
 	}
 
