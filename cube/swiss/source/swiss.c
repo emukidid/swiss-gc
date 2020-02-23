@@ -808,117 +808,136 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch) {
 
 unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 {
+	uiDrawObj_t* progBox = NULL;
 	char* gameID = (char*)0x80000000;
-	u32 main_dol_size = 0;
-	void *main_dol_buffer = 0;
-	DOLHEADER dolhdr;
+	int sizeToRead, type;
+	void *buffer;
 	
-	memcpy((void*)0x80000020,GC_DefaultConfig,0xE0);
-  
-	// Read the game header to 0x80000000 & apploader header
-	devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(&curFile,(unsigned char*)0x80000000,32) != 32) {
-		DrawPublish(DrawMessageBox(D_FAIL, "Game Header Failed to read"));
-		while(1);
+	if(swissSettings.bs2Boot) {
+		progBox = DrawPublish(DrawProgressBar(true, 0, "Loading BS2"));
+		
+		// Read BS2
+		sizeToRead = 0x1AFF00-0x820;
+		type = PATCH_APPLOADER;
+		buffer = memalign(32,sizeToRead);
+		if(!buffer) {
+			return 0;
+		}
+		read_rom_ipl_clear(0x820,buffer,sizeToRead);
+		
+		// Clear out OSBootInfo
+		memset((void*)0x80000000,0,0x40);
 	}
-	
-	// Prompt for DOL selection if multi-dol
-	ExecutableFile* altDol = NULL;
-	if(filesToPatch != NULL && numToPatch > 0) {
-		altDol = select_alt_dol(filesToPatch);
-		if(altDol != NULL) {
-			print_gecko("Alt DOL selected :%08X\r\n", altDol->offset);
-			GCMDisk.DOLOffset = altDol->offset;
-			// For a DOL from a TGC, redirect the FST to the TGC FST.
-			if(altDol->tgcFstSize > 0) {
-				GCMDisk.MaxFSTSize = altDol->tgcFstSize;
-				GCMDisk.FSTOffset = altDol->tgcFstOffset;
+	else {
+		memcpy((void*)0x80000020,GC_DefaultConfig,0xE0);
+		
+		// Read the game header to 0x80000000 & apploader header
+		devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(&curFile,(unsigned char*)0x80000000,32) != 32) {
+			DrawPublish(DrawMessageBox(D_FAIL, "Game Header Failed to read"));
+			while(1);
+		}
+		
+		// Prompt for DOL selection if multi-dol
+		ExecutableFile* altDol = NULL;
+		if(filesToPatch != NULL && numToPatch > 0) {
+			altDol = select_alt_dol(filesToPatch);
+			if(altDol != NULL) {
+				print_gecko("Alt DOL selected :%08X\r\n", altDol->offset);
+				GCMDisk.DOLOffset = altDol->offset;
+				// For a DOL from a TGC, redirect the FST to the TGC FST.
+				if(altDol->tgcFstSize > 0) {
+					GCMDisk.MaxFSTSize = altDol->tgcFstSize;
+					GCMDisk.FSTOffset = altDol->tgcFstOffset;
+				}
 			}
 		}
-	}
 
-	uiDrawObj_t* loadDolProg = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
-	
-	// Adjust top of memory
-	u32 top_of_main_ram = 0x81800000;
-	
-	// Native devices shouldn't steal memory for AS redirection
-	if(GCMDisk.AudioStreaming && (devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) && !((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)) {
-		top_of_main_ram = DECODED_BUFFER_0;
-	}
-	// Steal even more if there's cheats!
-	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
-		top_of_main_ram = WIIRD_ENGINE;
-	}
-	// execD handler lives at the top of mem and is branched to via lowmem code.
-	if(*(vu32*)VAR_EXECD_OFFSET != 0 && *(vu32*)VAR_EXECD_OFFSET != -1) {
-		top_of_main_ram = EXECD_RUNNER;
-	}
+		progBox = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
+		
+		// Adjust top of memory
+		u32 top_of_main_ram = 0x81800000;
+		
+		// Native devices shouldn't steal memory for AS redirection
+		if(GCMDisk.AudioStreaming && (devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) && !((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)) {
+			top_of_main_ram = DECODED_BUFFER_0;
+		}
+		// Steal even more if there's cheats!
+		if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
+			top_of_main_ram = WIIRD_ENGINE;
+		}
+		// execD handler lives at the top of mem and is branched to via lowmem code.
+		if(*(vu32*)VAR_EXECD_OFFSET != 0 && *(vu32*)VAR_EXECD_OFFSET != -1) {
+			top_of_main_ram = EXECD_RUNNER;
+		}
 
-	print_gecko("Top of RAM simulated as: 0x%08X\r\n", top_of_main_ram);
-	
-	// Read FST to top of Main Memory (round to 32 byte boundary)
-	u32 fstSizeAligned = GCMDisk.MaxFSTSize + (32-(GCMDisk.MaxFSTSize%32));
-	devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(&curFile,(void*)(top_of_main_ram-fstSizeAligned),GCMDisk.MaxFSTSize) != GCMDisk.MaxFSTSize) {
-		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
-		while(1);
-	}
-	if(altDol != NULL && altDol->tgcFstSize > 0) {
-		adjust_tgc_fst((void*)(top_of_main_ram-fstSizeAligned), altDol->tgcBase, altDol->tgcFileStartArea, altDol->tgcFakeOffset);
-	}
-	
-	// Read bi2.bin (Disk Header Information) to just under the FST
-	devices[DEVICE_CUR]->seekFile(&curFile,0x440,DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(&curFile,(void*)(top_of_main_ram-fstSizeAligned-0x2000),0x2000) != 0x2000) {
-		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read bi2.bin"));
-		while(1);
-	}
+		print_gecko("Top of RAM simulated as: 0x%08X\r\n", top_of_main_ram);
+		
+		// Read FST to top of Main Memory (round to 32 byte boundary)
+		u32 fstSizeAligned = GCMDisk.MaxFSTSize + (32-(GCMDisk.MaxFSTSize%32));
+		devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)(top_of_main_ram-fstSizeAligned),GCMDisk.MaxFSTSize) != GCMDisk.MaxFSTSize) {
+			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
+			while(1);
+		}
+		if(altDol != NULL && altDol->tgcFstSize > 0) {
+			adjust_tgc_fst((void*)(top_of_main_ram-fstSizeAligned), altDol->tgcBase, altDol->tgcFileStartArea, altDol->tgcFakeOffset);
+		}
+		
+		// Read bi2.bin (Disk Header Information) to just under the FST
+		devices[DEVICE_CUR]->seekFile(&curFile,0x440,DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)(top_of_main_ram-fstSizeAligned-0x2000),0x2000) != 0x2000) {
+			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read bi2.bin"));
+			while(1);
+		}
 
-	*(volatile u32*)0x800000F4 = top_of_main_ram-fstSizeAligned-0x2000;	// bi2.bin location
-	*(volatile u32*)0x80000038 = top_of_main_ram-fstSizeAligned;		// FST Location in ram
-	*(volatile u32*)0x8000003C = GCMDisk.MaxFSTSize;					// FST Max Length
-	*(volatile u32*)0x80000034 = *(volatile u32*)0x80000038;			// Arena Hi
-	*(volatile u32*)0x80000028 = top_of_main_ram & 0x01FFFFFF;			// Physical Memory Size
-    *(volatile u32*)0x800000F0 = top_of_main_ram & 0x01FFFFFF;			// Console Simulated Mem size
-	u32* osctxblock = (u32*)memalign(32, 1024);
-	*(volatile u32*)0x800000C0 = (u32)osctxblock & 0x7FFFFFFF;
-	*(volatile u32*)0x800000D4 = (u32)osctxblock;
-	memset(osctxblock, 0, 1024);
+		*(volatile u32*)0x800000F4 = top_of_main_ram-fstSizeAligned-0x2000;	// bi2.bin location
+		*(volatile u32*)0x80000038 = top_of_main_ram-fstSizeAligned;		// FST Location in ram
+		*(volatile u32*)0x8000003C = GCMDisk.MaxFSTSize;					// FST Max Length
+		*(volatile u32*)0x80000034 = *(volatile u32*)0x80000038;			// Arena Hi
+		*(volatile u32*)0x80000028 = top_of_main_ram & 0x01FFFFFF;			// Physical Memory Size
+		*(volatile u32*)0x800000F0 = top_of_main_ram & 0x01FFFFFF;			// Console Simulated Mem size
+		u32* osctxblock = (u32*)memalign(32, 1024);
+		*(volatile u32*)0x800000C0 = (u32)osctxblock & 0x7FFFFFFF;
+		*(volatile u32*)0x800000D4 = (u32)osctxblock;
+		memset(osctxblock, 0, 1024);
 
-	print_gecko("DOL Lives at %08X\r\n", GCMDisk.DOLOffset);
-	
-	// Read the Main DOL header
-	devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(&curFile,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
-		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL Header"));
-		while(1);
-	}
-	
-	// Figure out the size of the Main DOL so that we can read it all
-	main_dol_size = DOLSize(&dolhdr);
-	print_gecko("DOL size %i\r\n", main_dol_size);
+		print_gecko("DOL Lives at %08X\r\n", GCMDisk.DOLOffset);
+		
+		// Read the Main DOL header
+		DOLHEADER dolhdr;
+		devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(&curFile,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
+			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL Header"));
+			while(1);
+		}
+		
+		// Figure out the size of the Main DOL so that we can read it all
+		sizeToRead = DOLSize(&dolhdr);
+		type = PATCH_DOL;
+		print_gecko("DOL size %i\r\n", sizeToRead);
 
-	// Read the entire Main DOL
-	main_dol_buffer = memalign(32,main_dol_size);
-	print_gecko("DOL buffer %08X\r\n", (u32)main_dol_buffer);
-	if(!main_dol_buffer) {
-		return 0;
-	}
-	devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(&curFile,(void*)main_dol_buffer,main_dol_size) != main_dol_size) {
-		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
-		while(1);
+		// Read the entire Main DOL
+		buffer = memalign(32,sizeToRead);
+		print_gecko("DOL buffer %08X\r\n", (u32)buffer);
+		if(!buffer) {
+			return 0;
+		}
+		devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(&curFile,buffer,sizeToRead) != sizeToRead) {
+			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
+			while(1);
+		}
 	}
 
 	// Patch to read from SD/HDD/USBGecko/WKF (if frag req or audio streaming)
 	if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
 		if((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming) {
-			Patch_DVDLowLevelReadAlt(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
-			Patch_GameSpecificReadAlt(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
+			Patch_DVDLowLevelReadAlt(buffer, sizeToRead, gameID, type);
+			Patch_GameSpecificReadAlt(buffer, sizeToRead, gameID, type);
 		}
 		else {
-			u32 ret = Patch_DVDLowLevelRead(main_dol_buffer, main_dol_size, PATCH_DOL);
+			u32 ret = Patch_DVDLowLevelRead(buffer, sizeToRead, type);
 			if(READ_PATCHED_ALL != ret)	{
 				uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
 				DrawPublish(msgBox);
@@ -926,14 +945,14 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 				DrawDispose(msgBox);
 			}
 			else {
-				Patch_GameSpecificRead(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
+				Patch_GameSpecificRead(buffer, sizeToRead, gameID, type);
 			}
 		}
 	}
 	
 	// Only set up the WKF fragmentation patch if we have to.
 	if(devices[DEVICE_CUR] == &__device_wkf && wkfFragSetupReq) {
-		u32 ret = Patch_DVDLowLevelReadForWKF(main_dol_buffer, main_dol_size, PATCH_DOL);
+		u32 ret = Patch_DVDLowLevelReadForWKF(buffer, sizeToRead, type);
 		if(ret == 0) {
 			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Fragmentation patch failed to apply!");
 			DrawPublish(msgBox);
@@ -944,44 +963,44 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	}
 	
 	// Patch specific game hacks
-	Patch_GameSpecific(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
+	Patch_GameSpecific(buffer, sizeToRead, gameID, type);
 	
 	// Patch IGR
 	if(swissSettings.igrType != IGR_OFF || swissSettings.invertCStick) {
-		Patch_PADStatus(main_dol_buffer, main_dol_size, PATCH_DOL);
+		Patch_PADStatus(buffer, sizeToRead, type);
 	}
 	
 	// Patch OSReport to print out over USBGecko
 	if(swissSettings.debugUSB && usb_isgeckoalive(1) && !swissSettings.wiirdDebug) {
-		Patch_Fwrite(main_dol_buffer, main_dol_size);
+		Patch_Fwrite(buffer, sizeToRead);
 	}
 	// Force Video Mode
 	if(!swissSettings.disableVideoPatches) {
-		Patch_GameSpecificVideo(main_dol_buffer, main_dol_size, gameID, PATCH_DOL);
-		Patch_VideoMode(main_dol_buffer, main_dol_size, PATCH_DOL);
+		Patch_GameSpecificVideo(buffer, sizeToRead, gameID, type);
+		Patch_VideoMode(buffer, sizeToRead, type);
 	}
 	// Force Widescreen
 	if(swissSettings.forceWidescreen) {
-		Patch_Widescreen(main_dol_buffer, main_dol_size, PATCH_DOL);
+		Patch_Widescreen(buffer, sizeToRead, type);
 	}
 	// Force Anisotropy
 	if(swissSettings.forceAnisotropy) {
-		Patch_TexFilt(main_dol_buffer, main_dol_size, PATCH_DOL);
+		Patch_TexFilt(buffer, sizeToRead, type);
 	}
 	// Force Text Encoding
-	Patch_FontEncode(main_dol_buffer, main_dol_size);
+	Patch_FontEncode(buffer, sizeToRead);
 	
 	// Cheats
 	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
-		Patch_CheatsHook(main_dol_buffer, main_dol_size, PATCH_DOL);
+		Patch_CheatsHook(buffer, sizeToRead, type);
 	}
 
-	DCFlushRange(main_dol_buffer, main_dol_size);
-	ICInvalidateRange(main_dol_buffer, main_dol_size);
+	DCFlushRange(buffer, sizeToRead);
+	ICInvalidateRange(buffer, sizeToRead);
 	
 	// See if the combination of our patches has exhausted our play area.
 	if(!install_code(0)) {
-		DrawDispose(loadDolProg);
+		DrawDispose(progBox);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Too many patches enabled, memory limit reached!");
 		DrawPublish(msgBox);
 		wait_press_A();
@@ -994,7 +1013,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		devices[DEVICE_CUR]->deinit(&curFile);
 	}
 	
-	DrawDispose(loadDolProg);
+	DrawDispose(progBox);
 	DrawShutdown();
 	
 	do_videomode_swap();
@@ -1070,7 +1089,12 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		print_gecko("set size\r\n");
 		sdgecko_setPageSize(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2), 512);
 	}
-	DOLtoARAM(main_dol_buffer, 0, NULL);
+	if(type == PATCH_APPLOADER) {
+		BINtoARAM(buffer, sizeToRead, 0x81300000);
+	}
+	else if(type == PATCH_DOL) {
+		DOLtoARAM(buffer, 0, NULL);
+	}
 	return 0;
 }
 

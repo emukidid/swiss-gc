@@ -356,3 +356,19 @@ int DOLtoARAM(unsigned char *dol, int argc, char *argv[])
   /*** Will never return ***/
   return 1;
 }
+
+int BINtoARAM(unsigned char *bin, int len, unsigned int entrypoint)
+{
+  /*** Make sure ARAM subsystem is alive! ***/
+  AR_Init(NULL, 0); /*** No stack - we need it all ***/
+  ARAMClear();
+
+  /*** Move BIN into ARAM ***/
+  ARAMPut(bin, (char *) ARAMSTART, len);
+
+  /*** Now go run it ***/
+  ARAMRun(entrypoint, entrypoint, ARAMSTART, len);
+
+  /*** Will never return ***/
+  return 1;
+}

@@ -193,6 +193,8 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "FileBrowserType=%s\r\n", (fileBrowserStr[swissSettings.fileBrowserType]));
 	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "BS2Boot=%s\r\n", (swissSettings.bs2Boot ? "Yes":"No"));
+	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "FTPUserName=%s\r\n",swissSettings.ftpUserName);
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "FTPPassword=%s\r\n",swissSettings.ftpPassword);
@@ -518,6 +520,9 @@ void config_parse(char *configData) {
 						swissSettings.fileBrowserType = 0;
 					else if(!strcmp(fileBrowserStr[1], value))
 						swissSettings.fileBrowserType = 1;
+				}
+				else if(!strcmp("BS2Boot", name)) {
+					swissSettings.bs2Boot = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("FTPUserName", name)) {
 					strncpy(swissSettings.ftpUserName, value, sizeof(((SwissSettings*)0)->ftpUserName));

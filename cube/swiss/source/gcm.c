@@ -358,7 +358,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 	}
 		
 	if(devices[DEVICE_PATCHES] == NULL) {
-		if(numToPatch > 2) {
+		if(numToPatch > 2 || swissSettings.bs2Boot) {
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "No writable device present\nA SD Card Adapter must be inserted in\n order to utilise patches for this game."));
 			sleep(5);
 			DrawDispose(msgBox);

@@ -93,30 +93,20 @@ int read_rom_ipl_clear(unsigned int offset, void* buffer, unsigned int length) {
 	// bootrom descrambler reversed by segher
 	// Copyright 2008 Segher Boessenkool <segher@kernel.crashing.org>
 
-	unsigned it;
-	u8* data = buffer;
+	unsigned char* data = buffer;
+	unsigned int descrambled_length = 0x100;
 
-	static u8 acc, nacc, x;
-	static u16 t, u, v;
-	static unsigned int descrambled_length;
+	unsigned char acc = 0;
+	unsigned char nacc = 0;
 
-	if(offset < 0x100) {
-		acc = 0;
-		nacc = 0;
+	unsigned short t = 0x2953;
+	unsigned short u = 0xd9c2;
+	unsigned short v = 0x3ff1;
 
-		t = 0x2953;
-		u = 0xd9c2;
-		v = 0x3ff1;
+	unsigned char x = 1;
+	unsigned int it = offset < 0x100 ? 0x100 - offset : 0;
 
-		x = 1;
-
-		data += 0x100;
-		length -= 0x100;
-
-		descrambled_length = 0;
-	}
-
-	for (it = 0; it < length;) {
+	while (it < length) {
 		int t0 = t & 1;
 		int t1 = (t >> 1) & 1;
 		int u0 = u & 1;
@@ -146,10 +136,11 @@ int read_rom_ipl_clear(unsigned int offset, void* buffer, unsigned int length) {
 		nacc++;
 		acc = 2*acc + x;
 		if (nacc == 8) {
-			if(descrambled_length++ >= 0x1afe00)
-				length = 0;
-			else
+			if (descrambled_length >= 0x1aff00)
+				it++;
+			else if (descrambled_length >= offset)
 				data[it++] ^= acc;
+			descrambled_length++;
 			nacc = 0;
 		}
 	}

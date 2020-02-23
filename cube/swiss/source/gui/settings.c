@@ -43,7 +43,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"In-Game Reset: (B + R + Z + DPad Down)\n\nReboot: Soft-Reset the GameCube\nigr.dol: Low mem (< 0x81300000) igr.dol at the root of SD Card",
 	"Configuration Device:\n\nThe device that Swiss will use to load and save swiss.ini from.\nThis setting is stored in SRAM and will remain on reboot.",
 	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply firmware workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
-	"FileBrowser Type:\n\nStandard - Displays files with minimal detail (default)\n\nCarousel - Suited towards Game/DOL only use, consider combining\nthis option with the File Management setting turned off\nand Hide Unknown File Types turned on for a better experience."
+	"File Browser Type:\n\nStandard - Displays files with minimal detail (default)\n\nCarousel - Suited towards Game/DOL only use, consider combining\nthis option with the File Management setting turned off\nand Hide Unknown File Types turned on for a better experience."
 };
 
 static char *tooltips_advanced[PAGE_ADVANCED_MAX+1] = {
@@ -206,7 +206,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryString(page, &page_y_ofs, "In-Game Reset:", igrTypeStr[swissSettings.igrType], option == SET_IGR, true);
 		drawSettingEntryString(page, &page_y_ofs, "Configuration Device:", getConfigDeviceName(&swissSettings), option == SET_CONFIG_DEV, true);
 		drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
-		drawSettingEntryString(page, &page_y_ofs, "Filebrowser Type:", fileBrowserStr[swissSettings.fileBrowserType], option == SET_FILEBROWSER_TYPE, true);
+		drawSettingEntryString(page, &page_y_ofs, "File Browser Type:", fileBrowserStr[swissSettings.fileBrowserType], option == SET_FILEBROWSER_TYPE, true);
 	}
 	else if(page_num == PAGE_NETWORK) {
 		bool netEnable = exi_bba_exists();
@@ -231,6 +231,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryBoolean(page, &page_y_ofs, "Auto-load all cheats:", swissSettings.autoCheats, option == SET_ALL_CHEATS, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Video Patches:", swissSettings.disableVideoPatches, option == SET_ENABLE_VIDPATCH, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Boot through IPL:", swissSettings.bs2Boot, option == SET_BS2BOOT, true);
 	}
 	else if(page_num == PAGE_GAME_DEFAULTS) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Default Game Settings (4/5):"));
@@ -436,6 +437,9 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			break;
 			case SET_FORCE_DTVSTATUS:
 				swissSettings.forceDTVStatus ^= 1;
+			break;
+			case SET_BS2BOOT:
+				swissSettings.bs2Boot ^= 1;
 			break;
 		}
 	}

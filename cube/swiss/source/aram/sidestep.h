@@ -35,6 +35,7 @@ typedef struct {
 
 u32 DOLSize(DOLHEADER *dol);
 int DOLtoARAM(unsigned char *dol, int argc, char *argv[]);
+int BINtoARAM(unsigned char *bin, int len, unsigned int entrypoint);
 
 #endif
 #endif
