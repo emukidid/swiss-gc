@@ -9,6 +9,41 @@
 #include "../../reservedarea.h"
 #include "common.h"
 
+#ifndef PATCH_FRAGS
+#define PATCH_FRAGS 1
+#endif
+
+void read_disc_frag(void *dst, u32 len, u32 offset) {
+
+	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
+	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
+	u32 amountToRead = len;
+	u32 adjustedOffset = offset;
+	
+	// Locate this offset in the fat table and read as much as we can from a single fragment
+	for(i = 0; i < maxFrags; i++) {
+		u32 fragOffset = fragList[(i*3)+0];
+		u32 fragSize = fragList[(i*3)+1] & ~0x80000000;
+		u32 fragSector = fragList[(i*3)+2];
+		u32 fragOffsetEnd = fragOffset + fragSize;
+		u32 isPatchFrag = PATCH_FRAGS || fragList[(i*3)+1] >> 31;
+		
+		// Find where our read starts and read as much as we can in this frag before returning
+		if(offset >= fragOffset && offset < fragOffsetEnd && !isPatchFrag) {
+			// Does our read get cut off early?
+			if(offset + len > fragOffsetEnd) {
+				if(offset > fragOffsetEnd - 0x20) {
+					continue;
+				}
+				amountToRead = fragOffsetEnd - offset;
+			}
+			adjustedOffset -= fragOffset;
+			do_read_disc(dst, amountToRead, adjustedOffset, fragSector);
+			return;
+		}
+	}
+}
+
 // Returns the amount read from the given offset until a frag is hit
 u32 read_frag(void *dst, u32 len, u32 offset) {
 
@@ -23,6 +58,7 @@ u32 read_frag(void *dst, u32 len, u32 offset) {
 		u32 fragSize = fragList[(i*3)+1] & ~0x80000000;
 		u32 fragSector = fragList[(i*3)+2];
 		u32 fragOffsetEnd = fragOffset + fragSize;
+		u32 isPatchFrag = PATCH_FRAGS || fragList[(i*3)+1] >> 31;
 #ifdef DEBUG_VERBOSE
 		usb_sendbuffer_safe("READ: dst: ",11);
 		print_int_hex(dst);
@@ -32,14 +68,15 @@ u32 read_frag(void *dst, u32 len, u32 offset) {
 		print_int_hex(offset);
 #endif
 		// Find where our read starts and read as much as we can in this frag before returning
-		if(offset >= fragOffset && offset < fragOffsetEnd) {
+		if(offset >= fragOffset && offset < fragOffsetEnd && isPatchFrag) {
 			// Does our read get cut off early?
 			if(offset + len > fragOffsetEnd) {
+				if(offset > fragOffsetEnd - 0x20) {
+					continue;
+				}
 				amountToRead = fragOffsetEnd - offset;
 			}
-			if(fragOffset != 0) {
-				adjustedOffset = offset - fragOffset;
-			}
+			adjustedOffset -= fragOffset;
 			amountToRead = do_read(dst, amountToRead, adjustedOffset, fragSector);
 #ifdef DEBUG_VERBOSE
 			u32 sz = amountToRead;
@@ -69,8 +106,9 @@ int is_frag_read(unsigned int offset, unsigned int len) {
 		u32 fragSize = fragList[(i*3)+1] & ~0x80000000;
 		u32 fragSector = fragList[(i*3)+2];
 		u32 fragOffsetEnd = fragOffset + fragSize;
+		u32 isPatchFrag = PATCH_FRAGS || fragList[(i*3)+1] >> 31;
 		
-		if(offset >= fragOffset && offset < fragOffsetEnd) {
+		if(offset >= fragOffset && offset < fragOffsetEnd && isPatchFrag) {
 			// Does our read get cut off early?
 			if(offset + len > fragOffsetEnd) {
 				if(offset > fragOffsetEnd - 0x20) {

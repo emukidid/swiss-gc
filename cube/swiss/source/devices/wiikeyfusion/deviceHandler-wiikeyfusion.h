@@ -9,7 +9,6 @@
 
 #include "../deviceHandler.h"
 
-extern int wkfFragSetupReq;
 extern DEVICEHANDLER_INTERFACE __device_wkf;
 
 #endif

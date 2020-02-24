@@ -183,6 +183,7 @@ int install_code(int final)
 	// Wiikey Fusion
 	else if(devices[DEVICE_CUR] == &__device_wkf) {
 		patch = &wkf_bin[0]; patchSize = wkf_bin_size;
+		location = LO_RESERVE_ALT;
 		print_gecko("Installing Patch for WKF\r\n");
 	}
 	// Broadband Adapter
@@ -626,77 +627,6 @@ int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType )
 
 	print_gecko("Patch:[LowMem] applied %u times\r\n", LowMemPatched);
 	return LowMemPatched;
-}
-
-u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType) {
-	int i = 0;
-	int patched = 0;
-	patched = PatchDetectLowMemUsage(addr, length, dataType);
-	for(i = 0; i < length; i+=4) {
-		if(patched == 0x11) break;	// we're done
-
-		// Patch Read to adjust the offset for fragmented files
-		if( *(vu32*)(addr+i) != 0x7C0802A6 && *(vu32*)(addr+i+4) != 0x7C0802A6 )
-			continue;
-		
-		FuncPattern fp;
-		make_pattern( addr, i / 4, length, &fp );
-		
-		if(compare_pattern(&fp, &OSExceptionInitSig))
-		{
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 488)-(u32)(addr));
-			print_gecko("Found:[%s] @ %08X for WKF\r\n", OSExceptionInitSig.Name, properAddress);
-			*(vu32*)(addr + i + 488) = branchAndLink(PATCHED_MEMCPY_WKF, properAddress);
-			*(vu32*)(addr + i + 496) = 0x38800100;
-			*(vu32*)(addr + i + 512) = 0x38800100;
-			patched |= 0x10;
-		}
-		// Debug version of the above
-		if(compare_pattern(&fp, &OSExceptionInitSigDebug))
-		{
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 520)-(u32)(addr));
-			print_gecko("Found:[%s] @ %08X for WKF\r\n", OSExceptionInitSigDebug.Name, properAddress);
-			*(vu32*)(addr + i + 520) = branchAndLink(PATCHED_MEMCPY_WKF, properAddress);
-			*(vu32*)(addr + i + 528) = 0x38800100;
-			*(vu32*)(addr + i + 544) = 0x38800100;
-			patched |= 0x10;
-		}
-		if(compare_pattern(&fp, &OSExceptionInitSigProDG))
-		{
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 460)-(u32)(addr));
-			print_gecko("Found:[%s] @ %08X for WKF\r\n", OSExceptionInitSigProDG.Name, properAddress);
-			*(vu32*)(addr + i + 460) = branchAndLink(PATCHED_MEMCPY_WKF, properAddress);
-			*(vu32*)(addr + i + 468) = 0x38800100;
-			*(vu32*)(addr + i + 484) = 0x38800100;
-			patched |= 0x10;
-		}
-		if(compare_pattern(&fp, &ReadCommon)) {
-			// Overwrite the DI start to go to our code that will manipulate offsets for frag'd files.
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x84)-(u32)(addr));
-			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadCommon.Name, properAddress - 0x84);
-			*(vu32*)(addr + i + 0x84) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
-			patched |= 0x100;
-		}
-		if(compare_pattern(&fp, &ReadDebug)) {	// As above, for debug read now.
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x88)-(u32)(addr));
-			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadDebug.Name, properAddress - 0x88);
-			*(vu32*)(addr + i + 0x88) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
-			patched |= 0x100;
-		}
-		if(compare_pattern(&fp, &ReadUncommon)) {	// Same, for the less common read type.
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x7C)-(u32)(addr));
-			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadUncommon.Name, properAddress - 0x7C);
-			*(vu32*)(addr + i + 0x7C) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
-			patched |= 0x100;
-		}
-		if(compare_pattern(&fp, &ReadProDG)) {
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr + i + 0x74)-(u32)(addr));
-			print_gecko("Found:[%s] @ %08X for WKF\r\n", ReadProDG.Name, properAddress - 0x74);
-			*(vu32*)(addr + i + 0x74) = branchAndLink(ADJUST_LBA_OFFSET, properAddress);
-			patched |= 0x100;
-		}
-	}
-	return patched;
 }
 
 u32 _gxpeekz_a[] = {
@@ -2940,7 +2870,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		if (PrepareExec) {
 			if (devices[DEVICE_CUR] == &__device_fsp)
 				data[i + 47] = 0x3C600801;	// lis		r3, 0x0801
-			else if (devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR)
+			else if (devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR)
 				data[i + 47] = 0x3C600800;	// lis		r3, 0x0800
 			
 			print_gecko("Found:[%s] @ %08X\n", PrepareExecSig.Name, PrepareExec);
@@ -3001,7 +2931,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					case 0: data[i + 44] = 0x3C600801; break;	// lis		r3, 0x0801
 					case 1: data[i + 43] = 0x3C600801; break;	// lis		r3, 0x0801
 				}
-			} else if (devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
+			} else if (devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
 				switch (j) {
 					case 0: data[i + 44] = 0x3C600800; break;	// lis		r3, 0x0800
 					case 1: data[i + 43] = 0x3C600800; break;	// lis		r3, 0x0800
@@ -3085,7 +3015,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					case  9: data[i + 33] = 0x3C600801; break;	// lis		r3, 0x0801
 					case 10: data[i + 32] = 0x3C600801; break;	// lis		r3, 0x0801
 				}
-			} else if (devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
+			} else if (devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
 				switch (j) {
 					case  0: data[i + 42] = 0x3C600800; break;	// lis		r3, 0x0800
 					case  1: data[i + 50] = 0x3C600800; break;	// lis		r3, 0x0800
@@ -3535,7 +3465,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		u32 *AlarmHandlerForTimeout = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (AlarmHandlerForTimeout) {
-			if (devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
+			if (devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
 				switch (j) {
 					case 0: data[i + 5] = 0x3C600800; break;	// lis		r3, 0x0800
 					case 1: data[i + 1] = 0x3C600800; break;	// lis		r3, 0x0800
@@ -4137,7 +4067,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					case 6: data[i + 20] = 0x3C600801; break;	// lis		r3, 0x0801
 					case 7: data[i + 24] = 0x3C600801; break;	// lis		r3, 0x0801
 				}
-			} else if (devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
+			} else if (devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
 				switch (j) {
 					case 0: data[i + 24] = 0x3C600800; break;	// lis		r3, 0x0800
 					case 1: data[i + 22] = 0x3C600800; break;	// lis		r3, 0x0800
@@ -9606,9 +9536,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 			u32 *__OSDoHotResetHook;
 			
 			if (__OSDoHotReset) {
-				if (devices[DEVICE_CUR] == &__device_wkf)
-					__OSDoHotResetHook = IGR_EXIT_WKF;
-				else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
+				if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
 					__OSDoHotResetHook = IGR_EXIT_ALT;
 				else
 					__OSDoHotResetHook = IGR_EXIT;
@@ -9631,9 +9559,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 			u32 *OSResetSystemHook;
 			
 			if (OSResetSystem) {
-				if (devices[DEVICE_CUR] == &__device_wkf)
-					OSResetSystemHook = IGR_EXIT_WKF;
-				else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
+				if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
 					OSResetSystemHook = IGR_EXIT_ALT;
 				else
 					OSResetSystemHook = IGR_EXIT;
@@ -9732,9 +9658,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 		u32 MakeStatusAddr, *MakeStatus;
 		
 		if (PADRead) {
-			if (devices[DEVICE_CUR] == &__device_wkf)
-				PADReadHook = CHECK_PAD_WKF;
-			else if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
+			if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
 				PADReadHook = CHECK_PAD_ALT;
 			else
 				PADReadHook = CHECK_PAD;

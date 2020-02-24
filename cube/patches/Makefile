@@ -203,14 +203,15 @@ build-usb:
 
 build-wkf:
 	@echo Building WKF Patch ...
-	@$(CC) -O1 $(OPTS) -c wkf/base.S
-	@$(CC) -O1 $(OPTS) -c wkf/wkf.c
-	@$(CC) -O1 $(OPTS) -c base/usbgecko.c
-	@$(CC) -O1 $(OPTS) -c sdgecko/sd.c
-	@$(CC) -O1 $(OPTS) -c base/frag.c
-	@$(CC) -O1 $(OPTS) -c base/igr.c  -DWKF
-	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o wkf.elf -T wkf/base.ld -T base/common.ld base.o wkf.o usbgecko.o sd.o frag.o igr.o memcpy.o --gc-sections
+	@$(CC) -O2 $(OPTS) -c alt/base.S
+	@$(CC) -O2 $(OPTS) -c alt/emulator.c -DWKF
+	@$(CC) -O2 $(OPTS) -c alt/igr.c
+	@$(CC) -O2 $(OPTS) -c wkf/wkf.c
+	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -O2 $(OPTS) -c base/frag.c -DPATCH_FRAGS=0
+	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
+	@$(CC) -O2 $(OPTS) -c base/os.c
+	@$(LD) -o wkf.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o wkf.o sd.o frag.o usbgecko.o os.o --gc-sections
 	@rm -rf *.o
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf_disasm.txt
 	@$(OBJCOPY) -O binary wkf.elf wkf.bin

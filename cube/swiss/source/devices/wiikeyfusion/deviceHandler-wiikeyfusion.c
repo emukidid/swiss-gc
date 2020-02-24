@@ -21,7 +21,6 @@
 #include "dvd.h"
 
 const DISC_INTERFACE* wkf = &__io_wkf;
-int wkfFragSetupReq = 0;
 FATFS *wkffs = NULL;
 
 file_handle initial_WKF =
@@ -144,7 +143,6 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 		totFrags += frags;
 	}
 	
-	wkfFragSetupReq = (file2 && frags > 2) ? 1 : frags>1;
 	print_frag_list(0);
 	return 1;
 }
@@ -208,7 +206,7 @@ DEVICEHANDLER_INTERFACE __device_wkf = {
 	"Wiikey / Wasp Fusion",
 	"Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_WIIKEY, 102, 80},
-	FEAT_READ|FEAT_BOOT_GCM|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_BOOT_DEVICE|FEAT_CAN_READ_PATCHES,
+	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_REPLACES_DVD_FUNCS|FEAT_ALT_READ_PATCHES|FEAT_CAN_READ_PATCHES,
 	LOC_DVD_CONNECTOR,
 	&initial_WKF,
 	(_fn_test)&deviceHandler_WKF_test,

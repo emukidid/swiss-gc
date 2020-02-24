@@ -172,12 +172,6 @@ enum patchIds {
 #define CHECK_PAD				(void*)(LO_RESERVE | 0x14)
 #define IGR_EXIT				(void*)(LO_RESERVE | 0x18)
 
-/* Function jump locations for the WKF/WASP patch */
-#define PATCHED_MEMCPY_WKF		(void*)(LO_RESERVE)
-#define ADJUST_LBA_OFFSET	 	(void*)(LO_RESERVE | 0x04)
-#define CHECK_PAD_WKF			(void*)(LO_RESERVE | 0x08)
-#define IGR_EXIT_WKF			(void*)(LO_RESERVE | 0x0C)
-
 /* Function jump locations for the SD/IDE/USBGecko/BBA patch */
 #define EXI_PROBE				(u32 *)(LO_RESERVE_ALT | 0x104)
 #define EXI_TRYLOCK				(u32 *)(LO_RESERVE_ALT | 0x108)
@@ -203,7 +197,6 @@ enum patchIds {
 extern int savePatchDevice;
 
 int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int dataType);
-u32 Patch_DVDLowLevelReadForWKF(void *addr, u32 length, int dataType);
 u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType);
 void Patch_VideoMode(u32 *data, u32 length, int dataType);
 void Patch_Widescreen(u32 *data, u32 length, int dataType);

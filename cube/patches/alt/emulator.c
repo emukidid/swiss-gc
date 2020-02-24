@@ -14,6 +14,9 @@
 #ifdef BBA
 void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 #endif
+#ifdef WKF
+void dvd_interrupt_handler(OSInterrupt interrupt, OSContext *context);
+#endif
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset);
 void trickle_read(void);
@@ -421,7 +424,7 @@ OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler hand
 	#ifdef BBA
 	OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
 	#endif
-	#ifdef DVD
+	#if defined DVD || defined WKF
 	OSSetInterruptHandler(OS_INTERRUPT_PI_DI, dvd_interrupt_handler);
 	#endif
 	return OSSetInterruptHandler(interrupt, handler);

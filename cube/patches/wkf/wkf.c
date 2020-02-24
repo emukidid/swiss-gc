@@ -1,120 +1,130 @@
-/***************************************************************************
-* Wiikey Fusion related patches
-* emu_kidid 2015
-***************************************************************************/
+/* 
+ * Copyright (c) 2019-2020, Extrems <extrems@extremscorner.org>
+ * All rights reserved.
+ */
 
-#include "../../reservedarea.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include "../alt/timer.h"
 #include "../base/common.h"
+#include "../base/exi.h"
+#include "../base/os.h"
 
-extern void print_int_hex(unsigned int num);
+void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks);
 
-void wkfWriteOffset(u32 offset) {
-	volatile u32* wkf = (volatile u32*)0xCC006000;
-	wkf[2] = 0xDE000000;
-	wkf[3] = offset;
-	wkf[4] = 0x5A000000;
-	wkf[6] = 0;
-	wkf[8] = 0;
-	wkf[7] = 1;
-	while( wkf[7] & 1);
+void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector)
+{
+	DI[2] = 0xDE000000;
+	DI[3] = sector;
+	DI[4] = 0x5A000000;
+	DI[7] = 0b001;
+	while (DI[7] & 0b001);
+
+	DI[0] = 0b0011000;
+	DI[1] = 0;
+	DI[2] = 0xA8000000;
+	DI[3] = offset >> 2;
+	DI[4] = length;
+	DI[5] = (uint32_t)address;
+	DI[6] = length;
+	DI[7] = 0b011;
+
+	OSUnmaskInterrupts(OS_INTERRUPTMASK_PI_DI);
 }
 
+void dvd_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+{
+	OSMaskInterrupts(OS_INTERRUPTMASK_PI_DI);
 
-void wkfRead(void* dst, int len, u32 offset) {
-	volatile u32* dvd = (volatile u32*)0xCC006000;
-	dvd[2] = 0xA8000000;
-	dvd[3] = offset >> 2;
-	dvd[4] = len;
-	dvd[5] = (unsigned long)dst;
-	dvd[6] = len;
-	dvd[7] = 3; // enable reading!
-}
+	DI[0] = 0;
+	DI[1] = 0;
 
-// Adjusts the offset on the WKF for fragmented reads
-void adjust_read() {
-	volatile u32* dvd = (volatile u32*)0xCC006000;
-	
-	u32 dst = dvd[5];
-	u32 len = dvd[4];
-	u32 offset = (dvd[3]<<2);
-	
-	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
-	u32 adjustedOffset = offset;
+	switch (DI[2] >> 24) {
+		case 0xA8:
+		{
+			uint32_t position  = *(uint32_t *)VAR_LAST_OFFSET;
+			uint32_t remainder = *(uint32_t *)VAR_TMP2;
+			uint8_t *data      = *(uint8_t **)VAR_TMP1;
+			uint32_t data_size = DI[4] - DI[6];
 
-	// Locate this offset in the fat table
-	for(i = 0; i < maxFrags; i++) {
-		u32 fragOffset = fragList[(i*3)+0];
-		u32 fragSize = fragList[(i*3)+1] & ~0x80000000;
-		u32 fragSector = fragList[(i*3)+2];
-		u32 fragOffsetEnd = fragOffset + fragSize;
-		u32 isPatchFrag = fragList[(i*3)+1] >> 31;
-		
-		// Find where our read starts
-		if(offset >= fragOffset && offset < fragOffsetEnd) {
-			if(isPatchFrag) {
-#ifdef DEBUG
-				usb_sendbuffer_safe("FRAG INFO: ofs: ",16);
-				print_int_hex(fragOffset);
-				usb_sendbuffer_safe(" len: ",6);
-				print_int_hex(fragSize);
-				usb_sendbuffer_safe(" sec: ",6);
-				print_int_hex(fragSector);
-				usb_sendbuffer_safe(" end: ",6);
-				print_int_hex(fragOffsetEnd);
-				usb_sendbuffer_safe(" frg? ",6);
-				print_int_hex(isPatchFrag);
-				usb_sendbuffer_safe("\r\n",2);
+			position  += data_size;
+			remainder -= data_size;
 
-				usb_sendbuffer_safe("PATCH READ: dst: ",17);
-				print_int_hex(dst);
-				usb_sendbuffer_safe(" len: ",6);
-				print_int_hex(len);
-				usb_sendbuffer_safe(" ofs: ",6);
-				print_int_hex(offset);
-				usb_sendbuffer_safe("\r\n",2);
-#endif
-				device_frag_read((void*)(dst | 0x80000000), len, offset);
-				dcache_flush_icache_inv((void*)(dst | 0x80000000), len);
-#ifdef DEBUG				
-				usb_sendbuffer_safe("data: \r\n",8);
-				print_int_hex(*(vu32*)((dst+0)| 0x80000000));
-				print_int_hex(*(vu32*)((dst+4)| 0x80000000));
-				print_int_hex(*(vu32*)((dst+len-4)| 0x80000000));
-#endif
-				dvd[3] = 0;
-				dvd[4] = 0x20;
-				dvd[5] = 0;
-				dvd[6] = 0x20;
-				dvd[7] = 3;
-				break;
-			}
-			else {
-#ifdef DEBUG
-				usb_sendbuffer_safe("NORM READ!\r\n",12);
-#endif
-				if(fragOffset != 0) {
-					adjustedOffset = offset - fragOffset;
-				}
-				fragSector = fragSector + (adjustedOffset>>9);
-				if(*(vu32*)VAR_TMP1 != fragSector) {
-					wkfWriteOffset(fragSector);
-					*(vu32*)VAR_TMP1 = fragSector;
-				}
-				wkfRead((void*)dst, len, adjustedOffset & 511);
-				break;
-			}
+			schedule_read(data + data_size, remainder, position, 0);
+			break;
 		}
 	}
 }
 
-void wkfReinit(void) {
-	disable_interrupts();
-	// TODO re-init WKF
+bool exi_probe(int32_t chan)
+{
+	if (chan == EXI_CHANNEL_2)
+		return false;
+	if (chan == *VAR_EXI_SLOT)
+		return false;
+	return true;
 }
 
-//void swap_disc() {
-//	int isDisc1 = (*(u32*)(VAR_DISC_1_LBA)) == (*(u32*)VAR_CUR_DISC_LBA);
-//	*(u32*)VAR_CUR_DISC_LBA = isDisc1 ? *(u32*)(VAR_DISC_2_LBA) : *(u32*)(VAR_DISC_1_LBA);
-//}
+bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
+{
+	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
+		return false;
+	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
+		return false;
+	return true;
+}
 
+void di_update_interrupts(void);
+void di_complete_transfer(void);
+
+void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks)
+{
+	*(uint32_t *)VAR_LAST_OFFSET = offset;
+	*(uint32_t *)VAR_TMP2 = length;
+	*(uint8_t **)VAR_TMP1 = address;
+
+	if (length) {
+		if (!is_frag_read(offset, length))
+			read_disc_frag(address, length, offset);
+		else
+			timer1_start(ticks);
+		return;
+	}
+
+	di_complete_transfer();
+}
+
+void perform_read(uint32_t address, uint32_t length, uint32_t offset)
+{
+	schedule_read(OSPhysicalToUncached(address), length, offset, 0);
+}
+
+void trickle_read(void)
+{
+	uint32_t position  = *(uint32_t *)VAR_LAST_OFFSET;
+	uint32_t remainder = *(uint32_t *)VAR_TMP2;
+	uint8_t *data      = *(uint8_t **)VAR_TMP1;
+	uint32_t data_size;
+
+	if (remainder) {
+		if (is_frag_read(position, remainder)) {
+			OSTick start = OSGetTick();
+			data_size = read_frag(data, remainder, position);
+			OSTick end = OSGetTick();
+
+			position  += data_size;
+			remainder -= data_size;
+
+			schedule_read(data + data_size, remainder, position, OSDiffTick(end, start));
+		}
+	}
+}
+
+void change_disc(void)
+{
+	*(uint32_t *)VAR_CURRENT_DISC = !*(uint32_t *)VAR_CURRENT_DISC;
+
+	(*DI_EMU)[1] &= ~0b001;
+	(*DI_EMU)[1] |=  0b100;
+	di_update_interrupts();
+}

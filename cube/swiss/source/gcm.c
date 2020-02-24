@@ -468,10 +468,6 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 				Patch_CheatsHook(buffer, sizeToRead, filesToPatch[i].type);
 			}
 			
-			if(devices[DEVICE_CUR] == &__device_wkf) {
-				patched += Patch_DVDLowLevelReadForWKF(buffer, sizeToRead, filesToPatch[i].type);
-			}
-			
 			patched += Patch_FontEncode(buffer, sizeToRead);
 			
 			if(!swissSettings.disableVideoPatches) {

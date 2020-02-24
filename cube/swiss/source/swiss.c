@@ -950,18 +950,6 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		}
 	}
 	
-	// Only set up the WKF fragmentation patch if we have to.
-	if(devices[DEVICE_CUR] == &__device_wkf && wkfFragSetupReq) {
-		u32 ret = Patch_DVDLowLevelReadForWKF(buffer, sizeToRead, type);
-		if(ret == 0) {
-			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Fragmentation patch failed to apply!");
-			DrawPublish(msgBox);
-			sleep(5);
-			DrawDispose(msgBox);
-			return 0;
-		}
-	}
-	
 	// Patch specific game hacks
 	Patch_GameSpecific(buffer, sizeToRead, gameID, type);
 	
@@ -1073,13 +1061,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 		kenobi_install_engine();
 	}
-		
-	// Set WKF base offset if not using the frag or audio streaming patch
-	if(devices[DEVICE_CUR] == &__device_wkf) {
-		vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-		u32 fragSector = fragList[2];
-		wkfWriteOffset(fragSector);
-	}
+	
 	print_gecko("libogc shutdown and boot game!\r\n");
 	if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
 		print_gecko("set size\r\n");
