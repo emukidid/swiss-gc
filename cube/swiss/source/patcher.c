@@ -7311,6 +7311,11 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300712 - 0x81300000) = newmode->viTVMode;
 				
+				// Accept any region code.
+				*(s16 *)(data + 0x81300E8A - 0x81300000) = 1;
+				*(s16 *)(data + 0x81300EA2 - 0x81300000) = 1;
+				*(s16 *)(data + 0x81300EAA - 0x81300000) = 1;
+				
 				if (newmode->viTVMode >> 2 == VI_PAL)
 					memcpy(data + 0x8135DDE0 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				
@@ -7320,6 +7325,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 			case 1583056:
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300522 - 0x81300000) = newmode->viTVMode;
+				
+				// Accept any region code.
+				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
+				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
 				
 				if (newmode->viTVMode >> 2 == VI_PAL)
 					memcpy(data + 0x8137D9F0 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
@@ -7331,6 +7340,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300876 - 0x81300000) = newmode->viTVMode;
 				
+				// Accept any region code.
+				*(s16 *)(data + 0x81300ACE - 0x81300000) = 1;
+				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
+				
 				if (newmode->viTVMode >> 2 == VI_PAL)
 					memcpy(data + 0x8137F138 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				
@@ -7341,6 +7354,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300522 - 0x81300000) = newmode->viTVMode;
 				
+				// Accept any region code.
+				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
+				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
+				
 				if (newmode->viTVMode >> 2 != VI_PAL)
 					memcpy(data + 0x81380FD0 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
 				
@@ -7350,6 +7367,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 			case 1561744:
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300522 - 0x81300000) = newmode->viTVMode;
+				
+				// Accept any region code.
+				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
+				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
 				
 				if (newmode->viTVMode >> 2 != VI_PAL)
 					memcpy(data + 0x8137D910 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
@@ -7362,6 +7383,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 			case 1766736:
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300612 - 0x81300000) = newmode->viTVMode;
+				
+				// Accept any region code.
+				*(s16 *)(data + 0x81300882 - 0x81300000) = 1;
+				*(s16 *)(data + 0x813008A6 - 0x81300000) = 1;
 				
 				if (newmode->viTVMode >> 2 != VI_PAL)
 					memcpy(data + 0x81382470 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
