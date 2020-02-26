@@ -825,8 +825,25 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		}
 		read_rom_ipl_clear(0x820,buffer,sizeToRead);
 		
-		// Clear out OSBootInfo
-		memset((void*)0x80000000,0,0x40);
+		// Guess BS2's size
+		if(!IPLInfo[0x55]) {
+			sizeToRead = 1435168;
+		}
+		else if(!strncmp(&IPLInfo[0x55], "NTSC Revision 1.1", 17)) {
+			sizeToRead = 1583056;
+		}
+		else if(!strncmp(&IPLInfo[0x55], "NTSC Revision 1.2", 17)) {
+			sizeToRead = 1587472;
+		}
+		else if(!strncmp(&IPLInfo[0x55], "PAL  Revision 1.0", 17)) {
+			sizeToRead = 1763016;
+		}
+		else if(!strncmp(&IPLInfo[0x55], "MPAL Revision 1.1", 17)) {
+			sizeToRead = 1561744;
+		}
+		else if(!strncmp(&IPLInfo[0x55], "PAL  Revision 1.2", 17)) {
+			sizeToRead = 1766736;
+		}
 	}
 	else {
 		memcpy((void*)0x80000020,GC_DefaultConfig,0xE0);

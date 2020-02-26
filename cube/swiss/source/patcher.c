@@ -4800,6 +4800,8 @@ u8 vertical_reduction[][7] = {
 	{ 0,  0, 21, 22, 21,  0,  0}
 };
 
+extern GXRModeObj *newmode;
+
 void Patch_VideoMode(u32 *data, u32 length, int dataType)
 {
 	int i, j, k;
@@ -5601,6 +5603,14 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 24] = 0x7C630E70;	// srawi	r3, r3, 1
 					break;
 			}
+			if (swissSettings.gameVMode >= 8 && swissSettings.gameVMode <= 14) {
+				switch (k) {
+					case 0:
+					case 2:
+						data[i + 8] = 0x38600006;	// li		r3, 6
+						break;
+				}
+			}
 			print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOdd);
 		}
 		
@@ -5864,9 +5874,46 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		u32 *__VIInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__VIInit) {
-			memset(data + i, 0, __VIInitSigs[j].Length * sizeof(u32));
-			data[i] = 0x4E800020;	// blr
-			
+			switch (j) {
+				case 0:
+					data[i +  10] = 0x579B07BE;	// clrlwi	r27, r28, 30
+					data[i + 135] = 0x281B0002;	// cmplwi	r27, 2
+					data[i + 137] = 0x5760177A;	// rlwinm	r0, r27, 2, 29, 29
+					break;
+				case 1:
+					data[i +  10] = 0x57BB07BE;	// clrlwi	r27, r29, 30
+					data[i + 135] = 0x281B0002;	// cmplwi	r27, 2
+					data[i + 137] = 0x281B0003;	// cmplwi	r27, 3
+					data[i + 139] = 0x5760177A;	// rlwinm	r0, r27, 2, 29, 29
+					break;
+				case 2:
+					data[i +  11] = 0x57BE07BE;	// clrlwi	r30, r29, 30
+					data[i +  35] = 0x281E0002;	// cmplwi	r30, 2
+					data[i + 104] = 0x57C3177A;	// rlwinm	r3, r30, 2, 29, 29
+					break;
+				case 3:
+					data[i +  11] = 0x57BE07BE;	// clrlwi	r30, r29, 30
+					data[i +  35] = 0x281E0002;	// cmplwi	r30, 2
+					data[i + 104] = 0x281E0003;	// cmplwi	r30, 3
+					data[i + 106] = 0x57C3177A;	// rlwinm	r3, r30, 2, 29, 29
+					break;
+				case 4:
+					data[i +  11] = 0x57BE07BE;	// clrlwi	r30, r29, 30
+					data[i +  35] = 0x281E0002;	// cmplwi	r30, 2
+					data[i + 104] = 0x281E0003;	// cmplwi	r30, 3
+					data[i + 106] = 0x281E0001;	// cmplwi	r30, 1
+					data[i + 107] = 0x41810020;	// bgt		+8
+					data[i + 108] = 0x57C3177A;	// rlwinm	r3, r30, 2, 29, 29
+					break;
+				case 5:
+					data[i +   5] = 0x546607BE;	// clrlwi	r6, r3, 30
+					data[i +  90] = 0x28060002;	// cmplwi	r6, 2
+					data[i + 157] = 0x28060003;	// cmplwi	r6, 3
+					data[i + 159] = 0x28060001;	// cmplwi	r6, 1
+					data[i + 160] = 0x41810020;	// bgt		+8
+					data[i + 161] = 0x54C5177A;	// rlwinm	r5, r6, 2, 29, 29
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", __VIInitSigs[j].Name, __VIInit);
 		}
 	}
@@ -5930,13 +5977,13 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			}
 			switch (k) {
 				case 0:
-				case 1: data[i + 15] = 0x7FE00008; break;	// trap
+				case 1: data[i + 14] = 0x38600000 | (newmode->viTVMode & 0xFFFF); break;
 				case 2:
-				case 3: data[i + 16] = 0x7FE00008; break;	// trap
+				case 3: data[i + 15] = 0x38600000 | (newmode->viTVMode & 0xFFFF); break;
 				case 4:
-				case 5: data[i + 19] = 0x7FE00008; break;	// trap
-				case 6: data[i + 25] = 0x7FE00008; break;	// trap
-				case 7: data[i + 18] = 0x7FE00008; break;	// trap
+				case 5: data[i + 18] = 0x38600000 | (newmode->viTVMode & 0xFFFF); break;
+				case 6: data[i + 24] = 0x38600000 | (newmode->viTVMode & 0xFFFF); break;
+				case 7: data[i + 17] = 0x38600000 | (newmode->viTVMode & 0xFFFF); break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", VIInitSigs[k].Name, VIInit);
 		}
@@ -6223,9 +6270,9 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 192] = 0x7C090050;	// sub		r0, r0, r9
 					data[i + 313] = 0x801C0000;	// lwz		r0, 0 (r28)
 					data[i + 315] = 0x28000002;	// cmplwi	r0, 2
-					data[i + 316] = 0x41800020;	// blt		+8
-					data[i + 317] = 0x28000002;	// cmplwi	r0, 2
-					data[i + 319] = 0x28000003;	// cmplwi	r0, 3
+					data[i + 317] = 0x28000003;	// cmplwi	r0, 3
+					data[i + 319] = 0x28000001;	// cmplwi	r0, 1
+					data[i + 320] = 0x40810010;	// ble		+4
 					data[i + 506] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 516] = branchAndLink(VIConfigureHook2, VIConfigure + 516);
 					break;
@@ -6242,9 +6289,9 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 234] = 0x7D9A6050;	// sub		r12, r12, r26
 					data[i + 332] = 0x815D0024;	// lwz		r10, 36 (r29)
 					data[i + 336] = 0x280A0002;	// cmplwi	r10, 2
-					data[i + 342] = 0x41800020;	// blt		+8
-					data[i + 343] = 0x280A0002;	// cmplwi	r10, 2
-					data[i + 345] = 0x280A0003;	// cmplwi	r10, 3
+					data[i + 343] = 0x280A0003;	// cmplwi	r10, 3
+					data[i + 345] = 0x280A0001;	// cmplwi	r10, 1
+					data[i + 346] = 0x40810010;	// ble		+4
 					data[i + 542] = 0xA87E000A;	// lha		r3, 10 (r30)
 					data[i + 552] = branchAndLink(VIConfigureHook2, VIConfigure + 552);
 					break;
@@ -6617,6 +6664,10 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				memset(data + i, 0, VIGetNextFieldSigs[j].Length * sizeof(u32));
 				data[i + 0] = 0x38600001;	// li		r3, 1
 				data[i + 1] = 0x4E800020;	// blr
+			}
+			else if (swissSettings.gameVMode >= 8 && swissSettings.gameVMode <= 14) {
+				if (j == 1)
+					data[i + 12] = 0x38600006;	// li		r3, 6
 			}
 			print_gecko("Found:[%s] @ %08X\n", VIGetNextFieldSigs[j].Name, VIGetNextField);
 		}
@@ -7188,6 +7239,42 @@ const u32 GXSETVAT_NTSC_patched[32] = {
     0x4082ffa0, 0x38000000, 0x980904f2, 0x4e800020
 };
 
+u8 BS2Ntsc448IntAa[] = {
+	0x00,0x00,0x00,0x00,
+	0x02,0x50,0x00,0xE2,
+	0x01,0xC0,0x00,0x28,
+	0x00,0x10,0x02,0x80,
+	0x01,0xC0,0x00,0x00,
+	0x00,0x00,0x00,0x01,
+	0x00,0x01,0x03,0x02,
+	0x09,0x06,0x03,0x0A,
+	0x03,0x02,0x09,0x06,
+	0x03,0x0A,0x09,0x02,
+	0x03,0x06,0x09,0x0A,
+	0x09,0x02,0x03,0x06,
+	0x09,0x0A,0x08,0x08,
+	0x0A,0x0C,0x0A,0x08,
+	0x08,0x00,0x00,0x00
+};
+
+u8 BS2Pal520IntAa[] = {
+	0x00,0x00,0x00,0x04,
+	0x02,0x50,0x01,0x06,
+	0x02,0x08,0x00,0x28,
+	0x00,0x1B,0x02,0x80,
+	0x02,0x08,0x00,0x00,
+	0x00,0x00,0x00,0x01,
+	0x00,0x01,0x03,0x02,
+	0x09,0x06,0x03,0x0A,
+	0x03,0x02,0x09,0x06,
+	0x03,0x0A,0x09,0x02,
+	0x03,0x06,0x09,0x0A,
+	0x09,0x02,0x03,0x06,
+	0x09,0x0A,0x08,0x08,
+	0x0A,0x0C,0x0A,0x08,
+	0x08,0x00,0x00,0x00
+};
+
 // Apply specific per-game hacks/workarounds
 int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 {
@@ -7217,6 +7304,71 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched=1;
 			}
 			addr_start += 4;
+		}
+	} else if (dataType == PATCH_APPLOADER) {
+		switch (length) {
+			case 1435168:
+				// __VIInit(newmode->viTVMode);
+				*(s16 *)(data + 0x81300712 - 0x81300000) = newmode->viTVMode;
+				
+				if (newmode->viTVMode >> 2 == VI_PAL)
+					memcpy(data + 0x8135DDE0 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+				
+				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
+				patched++;
+				break;
+			case 1583056:
+				// __VIInit(newmode->viTVMode);
+				*(s16 *)(data + 0x81300522 - 0x81300000) = newmode->viTVMode;
+				
+				if (newmode->viTVMode >> 2 == VI_PAL)
+					memcpy(data + 0x8137D9F0 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+				
+				print_gecko("Patched:[%s]\n", "NTSC Revision 1.1");
+				patched++;
+				break;
+			case 1587472:
+				// __VIInit(newmode->viTVMode);
+				*(s16 *)(data + 0x81300876 - 0x81300000) = newmode->viTVMode;
+				
+				if (newmode->viTVMode >> 2 == VI_PAL)
+					memcpy(data + 0x8137F138 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+				
+				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
+				patched++;
+				break;
+			case 1763016:
+				// __VIInit(newmode->viTVMode);
+				*(s16 *)(data + 0x81300522 - 0x81300000) = newmode->viTVMode;
+				
+				if (newmode->viTVMode >> 2 != VI_PAL)
+					memcpy(data + 0x81380FD0 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
+				
+				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
+				patched++;
+				break;
+			case 1561744:
+				// __VIInit(newmode->viTVMode);
+				*(s16 *)(data + 0x81300522 - 0x81300000) = newmode->viTVMode;
+				
+				if (newmode->viTVMode >> 2 != VI_PAL)
+					memcpy(data + 0x8137D910 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
+				else
+					memcpy(data + 0x8137D910 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+				
+				print_gecko("Patched:[%s]\n", "MPAL Revision 1.1");
+				patched++;
+				break;
+			case 1766736:
+				// __VIInit(newmode->viTVMode);
+				*(s16 *)(data + 0x81300612 - 0x81300000) = newmode->viTVMode;
+				
+				if (newmode->viTVMode >> 2 != VI_PAL)
+					memcpy(data + 0x81382470 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
+				
+				print_gecko("Patched:[%s]\n", "PAL  Revision 1.2");
+				patched++;
+				break;
 		}
 	} else if (!strncmp(gameID, "GC6E01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
@@ -9872,7 +10024,7 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 		for (i = 0; i < MAXTEXTSECTION; i++) {
 			if (hdr->textAddress[i] && hdr->textLength[i]) {
 				// Does what we found lie in this section?
-				if((offsetFoundAt >= hdr->textOffset[i]) && offsetFoundAt <= (hdr->textOffset[i] + hdr->textLength[i])) {
+				if(offsetFoundAt >= hdr->textOffset[i] && offsetFoundAt < hdr->textOffset[i] + hdr->textLength[i]) {
 					// Yes it does, return the load address + offsetFoundAt as that's where it'll end up!
 					return (void*)(offsetFoundAt+hdr->textAddress[i]-hdr->textOffset[i]);
 				}
@@ -9883,7 +10035,7 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 		for (i = 0; i < MAXDATASECTION; i++) {
 			if (hdr->dataAddress[i] && hdr->dataLength[i]) {
 				// Does what we found lie in this section?
-				if((offsetFoundAt >= hdr->dataOffset[i]) && offsetFoundAt <= (hdr->dataOffset[i] + hdr->dataLength[i])) {
+				if(offsetFoundAt >= hdr->dataOffset[i] && offsetFoundAt < hdr->dataOffset[i] + hdr->dataLength[i]) {
 					// Yes it does, return the load address + offsetFoundAt as that's where it'll end up!
 					return (void*)(offsetFoundAt+hdr->dataAddress[i]-hdr->dataOffset[i]);
 				}
@@ -9912,7 +10064,7 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 			shdr->sh_addr |= 0x80000000;
 
 			if (shdr->sh_type != SHT_NOBITS) {
-				if((offsetFoundAt >= shdr->sh_offset) && offsetFoundAt <= (shdr->sh_offset + shdr->sh_size)) {
+				if(offsetFoundAt >= shdr->sh_offset && offsetFoundAt < shdr->sh_offset + shdr->sh_size) {
 					// Yes it does, return the load address + offsetFoundAt as that's where it'll end up!
 					return (void*)(offsetFoundAt+shdr->sh_addr-shdr->sh_offset);
 				}
@@ -9920,7 +10072,8 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 		}	
 	}
 	else if(dataType == PATCH_APPLOADER) {
-		return (void*)(offsetFoundAt+0x81300000);
+		if(offsetFoundAt < 0x1AF6E0)
+			return (void*)(offsetFoundAt+0x81300000);
 	}
 	print_gecko("No cases matched, returning NULL for proper address\r\n");
 	return NULL;
@@ -9941,7 +10094,7 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 		for (i = 0; i < MAXTEXTSECTION; i++) {
 			if (hdr->textAddress[i] && hdr->textLength[i]) {
 				// Does what we found lie in this section?
-				if((properAddress >= hdr->textAddress[i]) && properAddress <= (hdr->textAddress[i] + hdr->textLength[i])) {
+				if(properAddress >= hdr->textAddress[i] && properAddress < hdr->textAddress[i] + hdr->textLength[i]) {
 					// Yes it does, return the properAddress - load address as that's where it'll end up!
 					return data+properAddress-hdr->textAddress[i]+hdr->textOffset[i];
 				}
@@ -9952,7 +10105,7 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 		for (i = 0; i < MAXDATASECTION; i++) {
 			if (hdr->dataAddress[i] && hdr->dataLength[i]) {
 				// Does what we found lie in this section?
-				if((properAddress >= hdr->dataAddress[i]) && properAddress <= (hdr->dataAddress[i] + hdr->dataLength[i])) {
+				if(properAddress >= hdr->dataAddress[i] && properAddress < hdr->dataAddress[i] + hdr->dataLength[i]) {
 					// Yes it does, return the properAddress - load address as that's where it'll end up!
 					return data+properAddress-hdr->dataAddress[i]+hdr->dataOffset[i];
 				}
@@ -9981,7 +10134,7 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 			shdr->sh_addr |= 0x80000000;
 
 			if (shdr->sh_type != SHT_NOBITS) {
-				if((properAddress >= shdr->sh_addr) && properAddress <= (shdr->sh_addr + shdr->sh_size)) {
+				if(properAddress >= shdr->sh_addr && properAddress < shdr->sh_addr + shdr->sh_size) {
 					// Yes it does, return the properAddress - load address as that's where it'll end up!
 					return data+properAddress-shdr->sh_addr+shdr->sh_offset;
 				}
@@ -9989,7 +10142,8 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 		}	
 	}
 	else if(dataType == PATCH_APPLOADER) {
-		return data+properAddress-0x81300000;
+		if(properAddress >= 0x81300000 && properAddress < 0x814AF6E0)
+			return data+properAddress-0x81300000;
 	}
 	print_gecko("No cases matched, returning NULL for address\r\n");
 	return NULL;
