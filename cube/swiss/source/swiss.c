@@ -123,6 +123,11 @@ void ogc_video__reset()
 	__SYS_UnlockSram(1);
 	while(!__SYS_SyncSram());
 	
+	if(region == 'P' && swissSettings.bs2Boot) {
+		if(swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7)
+			swissSettings.gameVMode += 7;
+	}
+	
 	for(i = 0; i < sizeof(DiscIDNoNTSC)/sizeof(char*); i++) {
 		if(!strncmp(gameID, DiscIDNoNTSC[i], 6)) {
 			if(swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7)
