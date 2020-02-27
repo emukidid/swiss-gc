@@ -1802,12 +1802,13 @@ uiDrawObj_t* draw_game_info() {
 		}
 	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
-		strcpy(txtbuffer, "GameID: [");
-		strncat(txtbuffer, (const char*)&GCMDisk, 6);
-		strcat(txtbuffer, "] Audio Streaming ");
-		strcat(txtbuffer, (GCMDisk.AudioStreaming==1) ? "[YES]":"[NO]");
+		sprintf(txtbuffer, "Game ID: [%.6s] Audio Streaming: [%s]", (char*)&GCMDisk, (GCMDisk.AudioStreaming ? "Yes":"No"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 200, txtbuffer, 0.8f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 220, (GCMDisk.DiscID ? "Disc 2":""), 0.8f, true, defaultColor));
+
+		if(meta_find_disk2(&curFile)) {
+			sprintf(txtbuffer, "Disc %i", GCMDisk.DiscID+1);
+			DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.8f, true, defaultColor));
+		}
 	}
 	if(devices[DEVICE_CUR] == &__device_wode) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 380, "Settings (X) - Cheats (Y) - Boot (A)", 0.75f, true, defaultColor));
