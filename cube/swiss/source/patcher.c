@@ -7316,6 +7316,20 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x81300EA2 - 0x81300000) = 1;
 				*(s16 *)(data + 0x81300EAA - 0x81300000) = 1;
 				
+				// Force text encoding, but keep system language.
+				switch (swissSettings.forceEncoding) {
+					case 1:
+						*(u32 *)(data + 0x8130B3E4 - 0x81300000) = 0x38600000;
+						
+						*(s16 *)(data + 0x8134511A - 0x81300000) = 0;
+						break;
+					case 2:
+						*(u32 *)(data + 0x8130B3E4 - 0x81300000) = 0x38600002;
+						
+						*(s16 *)(data + 0x81345122 - 0x81300000) = 1;
+						break;
+				}
+				
 				if (newmode->viTVMode >> 2 == VI_PAL)
 					memcpy(data + 0x8135DDE0 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				
@@ -7330,6 +7344,16 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
 				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
 				
+				// Force text encoding, but keep system language.
+				switch (swissSettings.forceEncoding) {
+					case 1:
+						*(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600000;
+						break;
+					case 2:
+						*(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600002;
+						break;
+				}
+				
 				if (newmode->viTVMode >> 2 == VI_PAL)
 					memcpy(data + 0x8137D9F0 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				
@@ -7343,6 +7367,16 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Accept any region code.
 				*(s16 *)(data + 0x81300ACE - 0x81300000) = 1;
 				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
+				
+				// Force text encoding, but keep system language.
+				switch (swissSettings.forceEncoding) {
+					case 1:
+						*(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600000;
+						break;
+					case 2:
+						*(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600002;
+						break;
+				}
 				
 				if (newmode->viTVMode >> 2 == VI_PAL)
 					memcpy(data + 0x8137F138 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
@@ -7371,6 +7405,16 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Accept any region code.
 				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
 				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
+				
+				// Force text encoding, but keep system language.
+				switch (swissSettings.forceEncoding) {
+					case 1:
+						*(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600000;
+						break;
+					case 2:
+						*(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600002;
+						break;
+				}
 				
 				if (newmode->viTVMode >> 2 != VI_PAL)
 					memcpy(data + 0x8137D910 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
