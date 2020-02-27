@@ -7062,15 +7062,21 @@ int Patch_TexFilt(u32 *data, u32 length, int dataType)
 	return 0;
 }
 
-u32 _fontencode_part[] = {
+u32 _fontencode_part_a[] = {
 	0x2C000000,	// cmpwi	r0, 0
 	0x4182000C,	// beq		+3
 	0x4180002C,	// blt		+11
-	0x48000028,	// b		+10
+	0x48000028	// b		+10
+};
+
+u32 _fontencode_part_b[] = {
 	0x3C60CC00,	// lis		r3, 0xCC00
 	0xA003206E,	// lhz		r0, 0x206E (r3)
 	0x540007BD,	// rlwinm.	r0, r0, 0, 30, 30
-	0x4182000C	// beq		+3
+	0x4182000C,	// beq		+3
+	0x38000001,	// li		r0, 1
+	0x48000008,	// b		+2
+	0x38000000	// li		r0, 0
 };
 
 int Patch_FontEncode(u32 *data, u32 length)
@@ -7079,7 +7085,8 @@ int Patch_FontEncode(u32 *data, u32 length)
 	int i;
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
-		if (!memcmp(data + i, _fontencode_part, sizeof(_fontencode_part))) {
+		if (!memcmp(data + i + 0, _fontencode_part_a, sizeof(_fontencode_part_a)) &&
+			!memcmp(data + i + 4, _fontencode_part_b, sizeof(_fontencode_part_b))) {
 			switch (swissSettings.forceEncoding) {
 				case 1:
 					data[i +  8] = 0x38000000;
@@ -7087,6 +7094,17 @@ int Patch_FontEncode(u32 *data, u32 length)
 				case 2:
 					data[i + 10] = 0x38000001;
 					data[i + 13] = 0x38000001;
+					break;
+			}
+			patched++;
+		}
+		else if (!memcmp(data + i, _fontencode_part_b, sizeof(_fontencode_part_b))) {
+			switch (swissSettings.forceEncoding) {
+				case 1:
+					data[i + 4] = 0x38000000;
+					break;
+				case 2:
+					data[i + 6] = 0x38000001;
 					break;
 			}
 			patched++;
@@ -7320,13 +7338,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				switch (swissSettings.forceEncoding) {
 					case 1:
 						*(u32 *)(data + 0x8130B3E4 - 0x81300000) = 0x38600000;
-						
-						*(s16 *)(data + 0x8134511A - 0x81300000) = 0;
 						break;
 					case 2:
 						*(u32 *)(data + 0x8130B3E4 - 0x81300000) = 0x38600002;
-						
-						*(s16 *)(data + 0x81345122 - 0x81300000) = 1;
 						break;
 				}
 				
@@ -10144,7 +10158,6 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 		if(offsetFoundAt < 0x1AF6E0)
 			return (void*)(offsetFoundAt+0x81300000);
 	}
-	print_gecko("No cases matched, returning NULL for proper address\r\n");
 	return NULL;
 }
 
@@ -10214,7 +10227,6 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 		if(properAddress >= 0x81300000 && properAddress < 0x814AF6E0)
 			return data+properAddress-0x81300000;
 	}
-	print_gecko("No cases matched, returning NULL for address\r\n");
 	return NULL;
 }
 
