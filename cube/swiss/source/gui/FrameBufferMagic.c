@@ -1319,22 +1319,20 @@ static void _DrawMenuButtons(uiDrawObj_t *evt) {
 	
 	drawMenuButtonsEvent_t *data = (drawMenuButtonsEvent_t*)evt->data;
 	
-	// Draw the buttons	
-	_DrawImageNow(TEX_BTNDEVICE, 40+(0*116), 430, BTNDEVICE_WIDTH,BTNDEVICE_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNSETTINGS, 40+(1*116), 430, BTNSETTINGS_WIDTH,BTNSETTINGS_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNINFO, 40+(2*116), 430, BTNINFO_WIDTH,BTNINFO_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNREFRESH, 40+(3*116), 430, BTNREFRESH_WIDTH,BTNREFRESH_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNEXIT, 40+(4*116), 430, BTNEXIT_WIDTH,BTNEXIT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	
 	// Highlight selected
 	int i;
 	for(i=0;i<5;i++)
 	{
-		if(data->selection==i)
-			_DrawImageNow(TEX_BTNHILIGHT, 40+(i*116), 430, BTNHILIGHT_WIDTH,BTNHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-		else
-			_DrawImageNow(TEX_BTNNOHILIGHT, 40+(i*116), 430, BTNNOHILIGHT_WIDTH,BTNNOHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+		if(data->selection==i) 
+			_DrawImageNow(TEX_BTNHILIGHT, 48+(i*119), 431, BTNHILIGHT_WIDTH,BTNHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	}
+
+	// Draw the buttons	
+	_DrawImageNow(TEX_BTNDEVICE, 32+(0*119), 431, BTNDEVICE_WIDTH,BTNDEVICE_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNSETTINGS, 32+(1*119), 431, BTNSETTINGS_WIDTH,BTNSETTINGS_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNINFO, 32+(2*119), 431, BTNINFO_WIDTH,BTNINFO_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNREFRESH, 32+(3*119), 431, BTNREFRESH_WIDTH,BTNREFRESH_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNEXIT, 32+(4*119), 431, BTNEXIT_WIDTH,BTNEXIT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 }
 
 // External
@@ -1944,7 +1942,7 @@ static void *videoUpdate(void *videoEventQueue) {
 		time(&curtime);
 		struct tm *info = localtime( &curtime );
 		strftime(fps, 80, "%Y-%m-%d - %H:%M:%S", info);
-		drawString(420, 30, fps, 0.55f, false, (GXColor){255,255,255,255});
+		drawString(434, 33, fps, 0.55f, false, (GXColor){255,255,255,255});
 
 		//Copy EFB->XFB
 		GX_SetCopyClear((GXColor){0, 0, 0, 0xFF}, GX_MAX_Z24);
@@ -1993,9 +1991,9 @@ void DrawInit() {
 	init_textures();
 	uiDrawObj_t *container = DrawContainer();
 	DrawAddChild(container, DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-	DrawAddChild(container, DrawStyledLabel(40,27, "Swiss v0.4", 1.5f, false, defaultColor));
+	DrawAddChild(container, DrawStyledLabel(40,28, "Swiss v0.4", 1.5f, false, defaultColor));
 	sprintf(fbTextBuffer, "commit: %s rev: %s", GITREVISION, GITVERSION);
-	DrawAddChild(container, DrawStyledLabel(210,60, fbTextBuffer, 0.55f, false, defaultColor));
+	DrawAddChild(container, DrawStyledLabel(425,50, fbTextBuffer, 0.55f, false, defaultColor));
 	buttonPanel = DrawMenuButtons(-1);
 	DrawAddChild(container, buttonPanel);
 	DrawPublish(container);

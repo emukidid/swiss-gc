@@ -301,12 +301,12 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 	
 	// Info labels
 	uiDrawObj_t *devNameLabel = DrawStyledLabel(30 + ((135-30) / 2), 195, txtbuffer, 0.65f, true, defaultColor);
-	uiDrawObj_t *devInfoBox = DrawTransparentBox(30, 220, 135, 325);	// Device size/extra info box
+	uiDrawObj_t *devInfoBox = DrawTransparentBox(30, 225, 135, 330);	// Device size/extra info box
 	DrawAddChild(containerPanel, devNameLabel);
 	DrawAddChild(containerPanel, devInfoBox);
 	
 	// Total space
-	uiDrawObj_t *devTotalLabel = DrawStyledLabel(30, 220, "Total:", 0.6f, false, defaultColor);
+	uiDrawObj_t *devTotalLabel = DrawStyledLabel(30, 225, "Total:", 0.6f, false, defaultColor);
 	DrawAddChild(containerPanel, devTotalLabel);
 	if(info->totalSpaceInKB < 1024)	// < 1 MB
 		sprintf(txtbuffer,"%ulKB", info->totalSpaceInKB);
@@ -314,11 +314,11 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 		sprintf(txtbuffer,"%.2fMB", (float)info->totalSpaceInKB/1024);
 	else
 		sprintf(txtbuffer,"%.2fGB", (float)info->totalSpaceInKB/(1024*1024));
-	uiDrawObj_t *devTotalSizeLabel = DrawStyledLabel(60, 235, txtbuffer, 0.6f, false, defaultColor);
+	uiDrawObj_t *devTotalSizeLabel = DrawStyledLabel(60, 240, txtbuffer, 0.6f, false, defaultColor);
 	DrawAddChild(containerPanel, devTotalSizeLabel);
 	
 	// Free space
-	uiDrawObj_t *devFreeLabel = DrawStyledLabel(30, 255, "Free:", 0.6f, false, defaultColor);
+	uiDrawObj_t *devFreeLabel = DrawStyledLabel(30, 260, "Free:", 0.6f, false, defaultColor);
 	DrawAddChild(containerPanel, devFreeLabel);
 	if(info->freeSpaceInKB < 1024)	// < 1 MB
 		sprintf(txtbuffer,"%ulKB", info->freeSpaceInKB);
@@ -326,11 +326,11 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 		sprintf(txtbuffer,"%.2fMB", (float)info->freeSpaceInKB/1024);
 	else
 		sprintf(txtbuffer,"%.2fGB", (float)info->freeSpaceInKB/(1024*1024));
-	uiDrawObj_t *devFreeSizeLabel = DrawStyledLabel(60, 270, txtbuffer, 0.6f, false, defaultColor);
+	uiDrawObj_t *devFreeSizeLabel = DrawStyledLabel(60, 275, txtbuffer, 0.6f, false, defaultColor);
 	DrawAddChild(containerPanel, devFreeSizeLabel);
 	
 	// Used space
-	uiDrawObj_t *devUsedLabel = DrawStyledLabel(30, 290, "Used:", 0.6f, false, defaultColor);
+	uiDrawObj_t *devUsedLabel = DrawStyledLabel(30, 295, "Used:", 0.6f, false, defaultColor);
 	DrawAddChild(containerPanel, devUsedLabel);
 	u32 usedSpaceInKB = (info->totalSpaceInKB)-(info->freeSpaceInKB);
 	if(usedSpaceInKB < 1024)	// < 1 MB
@@ -339,7 +339,7 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 		sprintf(txtbuffer,"%.2fMB", (float)usedSpaceInKB/1024);
 	else
 		sprintf(txtbuffer,"%.2fGB", (float)usedSpaceInKB/(1024*1024));
-	uiDrawObj_t *devUsedSizeLabel = DrawStyledLabel(60, 305, txtbuffer, 0.6f, false, defaultColor);
+	uiDrawObj_t *devUsedSizeLabel = DrawStyledLabel(60, 310, txtbuffer, 0.6f, false, defaultColor);
 	DrawAddChild(containerPanel, devUsedSizeLabel);
 }
 
@@ -356,7 +356,7 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 		// Draw which directory we're in
 		sprintf(txtbuffer, "%s", &curFile.name[0]);
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, ((getVideoMode()->fbWidth-150)-20), .85);
-		DrawAddChild(containerPanel, DrawStyledLabel(150, 85, txtbuffer, scale, false, defaultColor));
+		DrawAddChild(containerPanel, DrawStyledLabel(150, 80, txtbuffer, scale, false, defaultColor));
 		if(num_files > FILES_PER_PAGE) {
 			uiDrawObj_t *scrollBar = DrawVertScrollBar(getVideoMode()->fbWidth-25, fileListBase, 16, scrollBarHeight, (float)((float)curSelection/(float)(num_files-1)),scrollBarTabHeight);
 			DrawAddChild(containerPanel, scrollBar);
@@ -2047,6 +2047,7 @@ void menu_loop()
 			if(getCurrentDirEntryCount()<1) { devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial); needsDeviceChange=1; break;}
 			needsRefresh = 0;
 			curMenuLocation=ON_FILLIST;
+			DrawUpdateMenuButtons((curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
 		}
 		if(devices[DEVICE_CUR] != NULL && curMenuLocation==ON_FILLIST) {
 			file_handle* curDirFiles = getCurrentDirEntries();
