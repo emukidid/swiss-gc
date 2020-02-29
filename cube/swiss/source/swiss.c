@@ -1163,28 +1163,26 @@ void boot_dol()
 			devices[DEVICE_CUR]->seekFile(cliArgFile, 0, DEVICE_HANDLER_SEEK_SET);
 			devices[DEVICE_CUR]->readFile(cliArgFile, cli_buffer, cliArgFile->size);
 
-			// CLI support
-			if(endsWith(cliArgFile->name,".cli")) {
-				argv[argc] = (char*)&curFile.name;
+			// Parse CLI
+			argv[argc] = (char*)&curFile.name;
+			argc++;
+			// First argument is at the beginning of the file
+			if(cli_buffer[0] != '\r' && cli_buffer[0] != '\n') {
+				argv[argc] = cli_buffer;
 				argc++;
-				// First argument is at the beginning of the file
-				if(cli_buffer[0] != '\r' && cli_buffer[0] != '\n') {
-					argv[argc] = cli_buffer;
-					argc++;
+			}
+
+			// Search for the others after each newline
+			for(i = 0; i < cliArgFile->size; i++) {
+				if(cli_buffer[i] == '\r' || cli_buffer[i] == '\n') {
+					cli_buffer[i] = '\0';
 				}
+				else if(cli_buffer[i - 1] == '\0') {
+					argv[argc] = cli_buffer + i;
+					argc++;
 
-				// Search for the others after each newline
-				for(i = 0; i < cliArgFile->size; i++) {
-					if(cli_buffer[i] == '\r' || cli_buffer[i] == '\n') {
-						cli_buffer[i] = '\0';
-					}
-					else if(cli_buffer[i - 1] == '\0') {
-						argv[argc] = cli_buffer + i;
-						argc++;
-
-						if(argc >= 1024)
-							break;
-					}
+					if(argc >= 1024)
+						break;
 				}
 			}
 		}
@@ -1195,7 +1193,6 @@ void boot_dol()
 	file_handle *dcpArgFile = calloc(1, sizeof(file_handle));
 	
 	// .dcp parameter file
-	memset(dcpArgFile->name, 0, PATHNAME_MAX);
 	sprintf(dcpArgFile->name, "%sdcp", fileName);
 	if(devices[DEVICE_CUR]->readFile(dcpArgFile, &readTest, 4) != 4) {
 		free(dcpArgFile);
@@ -1205,20 +1202,18 @@ void boot_dol()
 	// we found something, parse and display parameters for selection (.dcp)
 	if(dcpArgFile) {
 		print_gecko("Argument file found [%s]\r\n", dcpArgFile->name);
-		char *cli_buffer = memalign(32, dcpArgFile->size);
-		if(cli_buffer) {
+		char *dcp_buffer = memalign(32, dcpArgFile->size);
+		if(dcp_buffer) {
 			devices[DEVICE_CUR]->seekFile(dcpArgFile, 0, DEVICE_HANDLER_SEEK_SET);
-			devices[DEVICE_CUR]->readFile(dcpArgFile, cli_buffer, dcpArgFile->size);
+			devices[DEVICE_CUR]->readFile(dcpArgFile, dcp_buffer, dcpArgFile->size);
 
-			// DCP support
-			if(endsWith(dcpArgFile->name,".dcp")) {
-				parseParameters(cli_buffer);
-				Parameters *params = (Parameters*)getParameters();
-				if(params->num_params > 0) {
-					DrawArgsSelector(getRelativeName(&curFile.name[0]));
-					// Get an argv back or none.
-					populateArgv(&argc, argv, (char*)&curFile.name);
-				}
+			// Parse DCP
+			parseParameters(dcp_buffer);
+			Parameters *params = (Parameters*)getParameters();
+			if(params->num_params > 0) {
+				DrawArgsSelector(getRelativeName(&curFile.name[0]));
+				// Get an argv back or none.
+				populateArgv(&argc, argv, (char*)&curFile.name);
 			}
 		}
 	}
