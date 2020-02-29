@@ -1146,65 +1146,79 @@ void boot_dol()
 	strncpy(&fileName[0], &curFile.name[0], strlen(&curFile.name[0])-3);
 	print_gecko("DOL file name without extension [%s]\r\n", fileName);
 	
-	file_handle *argFile = calloc(1, sizeof(file_handle));
+	file_handle *cliArgFile = calloc(1, sizeof(file_handle));
 	
 	// .cli argument file
-	sprintf(argFile->name, "%scli", fileName);
-	if(devices[DEVICE_CUR]->readFile(argFile, &readTest, 4) != 4) {
-		// try a .dcp instead
-		memset(argFile->name, 0, PATHNAME_MAX);
-		sprintf(argFile->name, "%sdcp", fileName);
-		if(devices[DEVICE_CUR]->readFile(argFile, &readTest, 4) != 4) {
-			free(argFile);
-			argFile = NULL;
-		}
+	sprintf(cliArgFile->name, "%scli", fileName);
+	if(devices[DEVICE_CUR]->readFile(cliArgFile, &readTest, 4) != 4) {
+		free(cliArgFile);
+		cliArgFile = NULL;
 	}
 	
-	// we found something, parse and display parameters for selection (.dcp), or just use parameters (.cli)
-	if(argFile) {
-		print_gecko("Argument file found [%s]\r\n", argFile->name);
-		char *cli_buffer = memalign(32, argFile->size);
+	// we found something, use parameters (.cli)
+	if(cliArgFile) {
+		print_gecko("Argument file found [%s]\r\n", cliArgFile->name);
+		char *cli_buffer = memalign(32, cliArgFile->size);
 		if(cli_buffer) {
-			devices[DEVICE_CUR]->seekFile(argFile, 0, DEVICE_HANDLER_SEEK_SET);
-			devices[DEVICE_CUR]->readFile(argFile, cli_buffer, argFile->size);
+			devices[DEVICE_CUR]->seekFile(cliArgFile, 0, DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_CUR]->readFile(cliArgFile, cli_buffer, cliArgFile->size);
 
-			// CLI support
-			if(endsWith(argFile->name,".cli")) {
-				argv[argc] = (char*)&curFile.name;
+			// Parse CLI
+			argv[argc] = (char*)&curFile.name;
+			argc++;
+			// First argument is at the beginning of the file
+			if(cli_buffer[0] != '\r' && cli_buffer[0] != '\n') {
+				argv[argc] = cli_buffer;
 				argc++;
-				// First argument is at the beginning of the file
-				if(cli_buffer[0] != '\r' && cli_buffer[0] != '\n') {
-					argv[argc] = cli_buffer;
-					argc++;
-				}
-
-				// Search for the others after each newline
-				for(i = 0; i < argFile->size; i++) {
-					if(cli_buffer[i] == '\r' || cli_buffer[i] == '\n') {
-						cli_buffer[i] = '\0';
-					}
-					else if(cli_buffer[i - 1] == '\0') {
-						argv[argc] = cli_buffer + i;
-						argc++;
-
-						if(argc >= 1024)
-							break;
-					}
-				}
 			}
-			// DCP support
-			if(endsWith(argFile->name,".dcp")) {
-				parseParameters(cli_buffer);
-				Parameters *params = (Parameters*)getParameters();
-				if(params->num_params > 0) {
-					DrawArgsSelector(getRelativeName(&curFile.name[0]));
-					// Get an argv back or none.
-					populateArgv(&argc, argv, (char*)&curFile.name);
+
+			// Search for the others after each newline
+			for(i = 0; i < cliArgFile->size; i++) {
+				if(cli_buffer[i] == '\r' || cli_buffer[i] == '\n') {
+					cli_buffer[i] = '\0';
+				}
+				else if(cli_buffer[i - 1] == '\0') {
+					argv[argc] = cli_buffer + i;
+					argc++;
+
+					if(argc >= 1024)
+						break;
 				}
 			}
 		}
 	}
-	free(argFile);
+
+	free(cliArgFile);
+
+	file_handle *dcpArgFile = calloc(1, sizeof(file_handle));
+	
+	// .dcp parameter file
+	sprintf(dcpArgFile->name, "%sdcp", fileName);
+	if(devices[DEVICE_CUR]->readFile(dcpArgFile, &readTest, 4) != 4) {
+		free(dcpArgFile);
+		dcpArgFile = NULL;
+	}
+	
+	// we found something, parse and display parameters for selection (.dcp)
+	if(dcpArgFile) {
+		print_gecko("Argument file found [%s]\r\n", dcpArgFile->name);
+		char *dcp_buffer = memalign(32, dcpArgFile->size);
+		if(dcp_buffer) {
+			devices[DEVICE_CUR]->seekFile(dcpArgFile, 0, DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_CUR]->readFile(dcpArgFile, dcp_buffer, dcpArgFile->size);
+
+			// Parse DCP
+			parseParameters(dcp_buffer);
+			Parameters *params = (Parameters*)getParameters();
+			if(params->num_params > 0) {
+				DrawArgsSelector(getRelativeName(&curFile.name[0]));
+				// Get an argv back or none.
+				populateArgv(&argc, argv, (char*)&curFile.name);
+			}
+		}
+	}
+
+	free(dcpArgFile);
 
 	if(devices[DEVICE_CUR] != NULL) devices[DEVICE_CUR]->deinit( devices[DEVICE_CUR]->initial );
 	// Boot
