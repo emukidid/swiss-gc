@@ -58,7 +58,6 @@ build:
 	@mkdir $(DIST)/DOL
 	@mkdir $(DIST)/DOL/Viper
 	@mkdir $(DIST)/ISO
-	@mkdir $(DIST)/ISO/DOL
 	@mkdir $(DIST)/WiikeyFusion
 	@mkdir $(DIST)/WiikeyFusion/RecoveryISO
 	@mkdir $(DIST)/ActionReplay
@@ -72,22 +71,19 @@ build:
 	@$(DOLLZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol -m
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/swiss-lz.dol
-	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ISO/DOL/$(SVN_REVISION)-compressed.dol
 	# make ISOs and WKF firmware
 	# NTSC
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-u.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-u)".iso $(DIST)/ISO/DOL/
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-u.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-u)".iso -find $(DIST)/DOL/$(SVN_REVISION).dol
 	## NTSC-J
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/ISO/DOL/
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso -find $(DIST)/DOL/$(SVN_REVISION).dol
 	# PAL
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/ISO/DOL/
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso -find $(DIST)/DOL/$(SVN_REVISION).dol
 	# WODE
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-wode.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/WODE/$(SVN_REVISION)"(wode_extcfg)".iso $(DIST)/ISO/DOL/
-	@cp $(BUILDTOOLS)/wkf/wkf_menu.fzn $(SVN_REVISION).fzn
-	@dd if=$(DIST)/ISO/$(SVN_REVISION)"(pal)".iso of=$(SVN_REVISION).fzn conv=notrunc
-	@mv $(SVN_REVISION).fzn $(DIST)/WiikeyFusion
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-wode.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/WODE/$(SVN_REVISION)"(wode_extcfg)".iso -find $(DIST)/DOL/$(SVN_REVISION).dol
+	# WKF
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn -find $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
+	@truncate -s 1856K $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn
 	@cp $(BUILDTOOLS)/wkf/autoboot.fzn.fw $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn.fw
-	@rm $(DIST)/ISO/DOL/$(SVN_REVISION)-compressed.dol
-	@rmdir $(DIST)/ISO/DOL
 
 #------------------------------------------------------------------
 
