@@ -2105,7 +2105,7 @@ void menu_loop()
 						needsRefresh=1;
 						break;
 					case 4:
-						__libogc_exit(0);
+						SYS_ResetSystem(SYS_HOTRESET, 0, TRUE);
 						break;
 				}
 			}
