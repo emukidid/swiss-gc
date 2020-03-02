@@ -119,16 +119,17 @@ uiDrawObj_t * info_draw_page(int page_num) {
 	}
 	else if(page_num == 2) {
 		DrawAddChild(container, DrawLabel(30, 55, "Credits (3/3):"));
-		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version 0.4", 1.0f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid 2020", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version 0.5", 1.0f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid & Extrems, 2020", 0.75f, true, defaultColor));
 		sprintf(txtbuffer, "Commit %s Revision %s", GITREVISION, GITVERSION);
 		DrawAddChild(container, DrawStyledLabel(640/2, 165, txtbuffer, 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 210, "Thanks to", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 228, "Testers & libOGC/dkPPC authors", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 246, "Extrems, FIX94, megalomaniac, sepp256", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 300, "Web/Support https://www.gc-forever.com/", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 318, "Source at https://github.com/emukidid/swiss-gc", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 354, "Visit us at #gc-forever on EFNet", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 210, "Patreon supporters", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 228, "meneerbeer, Dan Kunz, Heather Kent, Joshua Witt", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 246, "Cristofer Cruz, LemonMeringueTy", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 282, "Greetz to FIX94, megalomaniac, sepp256, StreetWal", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 318, "Web/Support https://www.gc-forever.com/", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 334, "Source at https://github.com/emukidid/swiss-gc", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 372, "Visit us at #gc-forever on EFNet", 0.75f, true, defaultColor));
 	}
 	if(page_num != 2) {
 		DrawAddChild(container, DrawLabel(520, 400, "->"));

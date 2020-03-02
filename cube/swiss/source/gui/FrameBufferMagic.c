@@ -28,7 +28,7 @@
 #include "dolparameters.h"
 #include "cheats.h"
 
-#define GUI_MSGBOX_ALPHA 220
+#define GUI_MSGBOX_ALPHA 225
 
 TPLFile backdropTPL;
 GXTexObj backdropTexObj;
@@ -1991,7 +1991,7 @@ void DrawInit() {
 	init_textures();
 	uiDrawObj_t *container = DrawContainer();
 	DrawAddChild(container, DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-	DrawAddChild(container, DrawStyledLabel(40,28, "Swiss v0.4", 1.5f, false, defaultColor));
+	DrawAddChild(container, DrawStyledLabel(40,28, "Swiss v0.5", 1.5f, false, defaultColor));
 	sprintf(fbTextBuffer, "commit: %s rev: %s", GITREVISION, GITVERSION);
 	DrawAddChild(container, DrawStyledLabel(425,50, fbTextBuffer, 0.55f, false, defaultColor));
 	buttonPanel = DrawMenuButtons(-1);
