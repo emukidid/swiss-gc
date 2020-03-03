@@ -6,6 +6,7 @@
 #include <string.h>
 #include <math.h>
 #include <malloc.h>
+#include "elf.h"
 #include "gcm.h"
 #include "main.h"
 #include "util.h"
@@ -195,7 +196,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if(endsWith(filename,".elf") && size < 12*1024*1024) {
+			if(endsWith(filename,".elf")) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_ELF;
@@ -312,7 +313,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if(endsWith(filename,".elf") && size < 12*1024*1024) {
+			if(endsWith(filename,".elf")) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_ELF;
@@ -330,6 +331,33 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 	}
 	free(FST);
 	return numFiles;
+}
+
+u32 calc_elf_segments_size(file_handle *file, u32 file_offset, u32 file_size) {
+	Elf32_Ehdr *ehdr = calloc(1, sizeof(Elf32_Ehdr));
+	devices[DEVICE_CUR]->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	devices[DEVICE_CUR]->readFile(file, ehdr, sizeof(Elf32_Ehdr));
+	if(!valid_elf_image(ehdr)) {
+		free(ehdr);
+		return file_size;
+	}
+	
+	Elf32_Phdr *phdr = calloc(ehdr->e_phnum, sizeof(Elf32_Phdr));
+	devices[DEVICE_CUR]->seekFile(file, file_offset + ehdr->e_phoff, DEVICE_HANDLER_SEEK_SET);
+	devices[DEVICE_CUR]->readFile(file, phdr, ehdr->e_phnum * sizeof(Elf32_Phdr));
+	file_size = ehdr->e_phoff + ehdr->e_phnum * sizeof(Elf32_Phdr);
+	
+	int i;
+	for(i = 0; i < ehdr->e_phnum; i++) {
+		if(phdr[i].p_type == PT_LOAD) {
+			if(phdr[i].p_offset + phdr[i].p_filesz > file_size) {
+				file_size = phdr[i].p_offset + phdr[i].p_filesz;
+			}
+		}
+	}
+	free(ehdr);
+	free(phdr);
+	return file_size;
 }
 
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
@@ -382,7 +410,11 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		u32 patched = 0;
 
 		sprintf(txtbuffer, "Patching File %i/%i",i+1,numToPatch);
-			
+		
+		if(filesToPatch[i].type == PATCH_ELF) {
+			filesToPatch[i].size = calc_elf_segments_size(file, filesToPatch[i].offset, filesToPatch[i].size);
+		}
+		
 		// Round up to 32 bytes
 		if(filesToPatch[i].size % 0x20) {
 			filesToPatch[i].size += (0x20-(filesToPatch[i].size%0x20));

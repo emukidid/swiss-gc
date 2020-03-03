@@ -10127,32 +10127,23 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 	
 	}
 	else if(dataType == PATCH_ELF) {
-		if(!valid_elf_image((u32)data))
+		if(!valid_elf_image(data))
 			return NULL;
-			
-		Elf32_Ehdr* ehdr;
-		Elf32_Shdr* shdr;
+
+		Elf32_Ehdr *ehdr = (Elf32_Ehdr *) data;
+		Elf32_Phdr *phdr = (Elf32_Phdr *)(data + ehdr->e_phoff);
 		int i;
 
-		ehdr = (Elf32_Ehdr *)data;
-
-		// Search through each appropriate section
-		for (i = 0; i < ehdr->e_shnum; ++i) {
-			shdr = (Elf32_Shdr *)(data + ehdr->e_shoff + (i * sizeof(Elf32_Shdr)));
-
-			if (!(shdr->sh_flags & SHF_ALLOC) || shdr->sh_addr == 0 || shdr->sh_size == 0)
-				continue;
-
-			shdr->sh_addr &= 0x3FFFFFFF;
-			shdr->sh_addr |= 0x80000000;
-
-			if (shdr->sh_type != SHT_NOBITS) {
-				if(offsetFoundAt >= shdr->sh_offset && offsetFoundAt < shdr->sh_offset + shdr->sh_size) {
+		// Inspect loadable segments to see if what we found lies in here
+		for (i = 0; i < ehdr->e_phnum; i++) {
+			if (phdr[i].p_type == PT_LOAD) {
+				// Does what we found lie in this segment?
+				if(offsetFoundAt >= phdr[i].p_offset && offsetFoundAt < phdr[i].p_offset + phdr[i].p_filesz) {
 					// Yes it does, return the load address + offsetFoundAt as that's where it'll end up!
-					return (void*)(offsetFoundAt+shdr->sh_addr-shdr->sh_offset);
+					return (void*)(offsetFoundAt+phdr[i].p_vaddr-phdr[i].p_offset);
 				}
 			}
-		}	
+		}
 	}
 	else if(dataType == PATCH_APPLOADER) {
 		if(offsetFoundAt < 0x1AF6E0)
@@ -10196,29 +10187,20 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 	
 	}
 	else if(dataType == PATCH_ELF) {
-		if(!valid_elf_image((u32)data))
+		if(!valid_elf_image(data))
 			return NULL;
-			
-		Elf32_Ehdr* ehdr;
-		Elf32_Shdr* shdr;
+
+		Elf32_Ehdr *ehdr = (Elf32_Ehdr *) data;
+		Elf32_Phdr *phdr = (Elf32_Phdr *)(data + ehdr->e_phoff);
 		int i;
 
-		ehdr = (Elf32_Ehdr *)data;
-
-		// Search through each appropriate section
-		for (i = 0; i < ehdr->e_shnum; ++i) {
-			shdr = (Elf32_Shdr *)(data + ehdr->e_shoff + (i * sizeof(Elf32_Shdr)));
-
-			if (!(shdr->sh_flags & SHF_ALLOC) || shdr->sh_addr == 0 || shdr->sh_size == 0)
-				continue;
-
-			shdr->sh_addr &= 0x3FFFFFFF;
-			shdr->sh_addr |= 0x80000000;
-
-			if (shdr->sh_type != SHT_NOBITS) {
-				if(properAddress >= shdr->sh_addr && properAddress < shdr->sh_addr + shdr->sh_size) {
+		// Inspect loadable segments to see if what we found lies in here
+		for (i = 0; i < ehdr->e_phnum; i++) {
+			if (phdr[i].p_type == PT_LOAD) {
+				// Does what we found lie in this segment?
+				if(properAddress >= phdr[i].p_vaddr && properAddress < phdr[i].p_vaddr + phdr[i].p_filesz) {
 					// Yes it does, return the properAddress - load address as that's where it'll end up!
-					return data+properAddress-shdr->sh_addr+shdr->sh_offset;
+					return data+properAddress-phdr[i].p_vaddr+phdr[i].p_offset;
 				}
 			}
 		}	

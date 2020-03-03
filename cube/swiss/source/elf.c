@@ -27,7 +27,7 @@
  * First looks at the ELF header magic field, the makes sure that it is
  * executable and makes sure that it is for a PowerPC.
  * ====================================================================== */
-int valid_elf_image(unsigned int addr)
+int valid_elf_image(void *addr)
 {
 	Elf32_Ehdr* ehdr;		/* Elf header structure pointer */
 
@@ -62,7 +62,7 @@ int valid_elf_image(unsigned int addr)
  * A very simple elf loader, assumes the image is valid, returns the
  * entry point address.
  * ====================================================================== */
-unsigned int load_elf_image(unsigned int addr)
+unsigned int load_elf_image(void *addr)
 {
 	Elf32_Ehdr* ehdr;
 	Elf32_Shdr* shdr;

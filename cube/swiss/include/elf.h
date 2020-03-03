@@ -3,7 +3,7 @@
 
 #include "elf_abi.h"
 
-int valid_elf_image(unsigned int addr);
-unsigned int load_elf_image(unsigned int addr);
+int valid_elf_image(void *addr);
+unsigned int load_elf_image(void *addr);
 
 #endif
