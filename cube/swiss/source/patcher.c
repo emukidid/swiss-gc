@@ -629,6 +629,36 @@ int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType )
 	return LowMemPatched;
 }
 
+u32 _dvdgettransferredsize[] = {
+	0x8003000C,	// lwz		r0, 12 (r3)
+	0x2C000002,	// cmpwi	r0, 2
+	0x41820040,	// beq		+16
+	0x40800018,	// bge		+6
+	0x2C000001,	// cmpwi	r0, 1
+	0x4080003C,	// bge		+15
+	0x2C00FFFF,	// cmpwi	r0, -1
+	0x40800024,	// bge		+9
+	0x4E800020,	// blr
+	0x2C00000A,	// cmpwi	r0, 10
+	0x40800010,	// bge		+4
+	0x2C000008,	// cmpwi	r0, 8
+	0x4C800020,	// bgelr
+	0x4800000C,	// b		+3
+	0x2C00000C,	// cmpwi	r0, 12
+	0x4C800020,	// bgelr
+	0x80630020,	// lwz		r3, 32 (r3)
+	0x4E800020,	// blr
+	0x38600000,	// li		r3, 0
+	0x4E800020,	// blr
+	0x3C80CC00,	// lis		r4, 0xCC00
+	0x8003001C,	// lwz		r0, 28 (r3)
+	0x80A30020,	// lwz		r5, 32 (r3)
+	0x80646018,	// lwz		r3, 0x6018 (r4)
+	0x7C030050,	// subf		r0, r3, r0
+	0x7C650214,	// add		r3, r5, r0
+	0x4E800020	// blr
+};
+
 u32 _gxpeekz_a[] = {
 	0x546013BA,	// clrlslwi	r0, r3, 16, 2
 	0x6400C800,	// oris		r0, r0, 0xC800
@@ -1014,6 +1044,8 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		{ 37, 14, 2, 1, 4,  9, NULL, 0, "DVDLowGetCoverStatus" },
 		{ 35, 13, 2, 1, 2, 10, NULL, 0, "DVDLowGetCoverStatus" }	// SN Systems ProDG
 	};
+	FuncPattern DVDGetTransferredSizeSig = 
+		{ 18, 2, 0, 0, 6, 0, NULL, 0, "DVDGetTransferredSize" };
 	FuncPattern DVDInitSigs[8] = {
 		{ 66, 28,  9, 13, 2, 2, NULL, 0, "DVDInitD A" },
 		{ 54, 25,  8, 10, 2, 2, NULL, 0, "DVDInitD B" },
@@ -1185,7 +1217,9 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 			continue;
 		}
 		else if (data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) {
-			if (!memcmp(data + i, _gxpeekz_a, sizeof(_gxpeekz_a)))
+			if (!memcmp(data + i, _dvdgettransferredsize, sizeof(_dvdgettransferredsize)))
+				DVDGetTransferredSizeSig.offsetFoundAt = i;
+			else if (!memcmp(data + i, _gxpeekz_a, sizeof(_gxpeekz_a)))
 				GXPeekZSigs[0].offsetFoundAt = i;
 			else if (!memcmp(data + i, _gxpeekz_b, sizeof(_gxpeekz_b)))
 				GXPeekZSigs[1].offsetFoundAt = i;
@@ -4000,6 +4034,17 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", DVDLowGetCoverStatusSigs[j].Name, DVDLowGetCoverStatus);
+			patched++;
+		}
+	}
+	
+	if ((i = DVDGetTransferredSizeSig.offsetFoundAt)) {
+		u32 *DVDGetTransferredSize = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (DVDGetTransferredSize) {
+			data[i + 20] = 0x3C800C00;	// lis		r4, 0x0C00
+			
+			print_gecko("Found:[%s] @ %08X\n", DVDGetTransferredSizeSig.Name, DVDGetTransferredSize);
 			patched++;
 		}
 	}
