@@ -5,7 +5,7 @@ LD      = $(DIR)/powerpc-eabi-ld
 OBJDUMP = $(DIR)/powerpc-eabi-objdump
 OBJCOPY = $(DIR)/powerpc-eabi-objcopy
 
-OPTS	= -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables
+OPTS	= -flto -ffunction-sections -fdata-sections -Wl,--gc-sections
 
 DEST    = ../swiss/source/patches
 
@@ -32,7 +32,7 @@ build-execD:
 	@echo Building execD replacement ...
 	@$(CC) -O1 $(OPTS) -c execd/appldr_start.S
 	@$(CC) -O1 $(OPTS) -c execd/appldr.c
-	@$(LD) -o execdpatch.elf -T execd/appldr.ld -T base/common.ld appldr_start.o appldr.o --gc-sections
+	@$(CC) -O1 $(OPTS) -o execdpatch.elf -T execd/appldr.ld -T base/common.ld appldr_start.o appldr.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D execdpatch.elf > $(DISASM)/execdpatch_disasm.txt
 	@$(OBJCOPY) -O binary execdpatch.elf execdpatch.bin
@@ -54,7 +54,7 @@ build-sd:
 	@$(CC) -O1 $(OPTS) -c base/Stream.c
 	@$(CC) -O1 $(OPTS) -c base/__DSPHandler.S
 	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o sd.elf -T base/base.ld -T base/common.ld base.o igr.o frag.o sd.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o memcpy.o --gc-sections
+	@$(CC) -O1 $(OPTS) -o sd.elf -T base/base.ld -T base/common.ld base.o igr.o frag.o sd.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o memcpy.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D sd.elf > $(DISASM)/sd_disasm.txt
 	@$(OBJCOPY) -O binary sd.elf sd.bin
@@ -65,15 +65,15 @@ build-sd:
 
 build-sd-alt:
 	@echo Building SD Alternate Patch ...
-	@$(CC) -O2 $(OPTS) -c alt/base.S
-	@$(CC) -O2 $(OPTS) -c alt/emulator.c
-	@$(CC) -O2 $(OPTS) -c alt/igr.c
-	@$(CC) -O2 $(OPTS) -c alt/blockdevice.c
-	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=2
-	@$(CC) -O2 $(OPTS) -c base/frag.c
-	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
-	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o sd_alt.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o blockdevice.o sd.o frag.o usbgecko.o os.o --gc-sections
+	@$(CC) -Os $(OPTS) -c alt/base.S
+	@$(CC) -Os $(OPTS) -c alt/emulator.c
+	@$(CC) -Os $(OPTS) -c alt/igr.c
+	@$(CC) -Os $(OPTS) -c alt/blockdevice.c
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=2
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/usbgecko.c
+	@$(CC) -Os $(OPTS) -c base/os.c
+	@$(CC) -Os $(OPTS) -o sd_alt.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o blockdevice.o sd.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D sd_alt.elf > $(DISASM)/sd_alt_disasm.txt
 	@$(OBJCOPY) -O binary sd_alt.elf sd_alt.bin
@@ -95,7 +95,7 @@ build-ideexi-v1:
 	@$(CC) -O1 $(OPTS) -c base/Stream.c
 	@$(CC) -O1 $(OPTS) -c base/__DSPHandler.S
 	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o ideexi_v1.elf -T base/base.ld -T base/common.ld base.o igr.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o memcpy.o --gc-sections 
+	@$(CC) -O1 $(OPTS) -o ideexi_v1.elf -T base/base.ld -T base/common.ld base.o igr.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o memcpy.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_v1.elf > $(DISASM)/ideexi_v1_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_v1.elf ideexi_v1.bin
@@ -106,15 +106,15 @@ build-ideexi-v1:
 
 build-ideexi-altv1:
 	@echo Building IDE-EXI-v1 Alternate Patch ...
-	@$(CC) -O2 $(OPTS) -c alt/base.S
-	@$(CC) -O2 $(OPTS) -c alt/emulator.c
-	@$(CC) -O2 $(OPTS) -c alt/igr.c
-	@$(CC) -O2 $(OPTS) -c alt/blockdevice.c
-	@$(CC) -O2 $(OPTS) -c ide-exi/hddread.c -DDMA_READ=0 -DSINGLE_SECTOR=1
-	@$(CC) -O2 $(OPTS) -c base/frag.c
-	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
-	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o ideexi_altv1.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o blockdevice.o hddread.o frag.o usbgecko.o os.o --gc-sections
+	@$(CC) -Os $(OPTS) -c alt/base.S
+	@$(CC) -Os $(OPTS) -c alt/emulator.c
+	@$(CC) -Os $(OPTS) -c alt/igr.c
+	@$(CC) -Os $(OPTS) -c alt/blockdevice.c
+	@$(CC) -Os $(OPTS) -c ide-exi/hddread.c -DDMA_READ=0 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/usbgecko.c
+	@$(CC) -Os $(OPTS) -c base/os.c
+	@$(CC) -Os $(OPTS) -o ideexi_altv1.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o blockdevice.o hddread.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_altv1.elf > $(DISASM)/ideexi_altv1_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_altv1.elf ideexi_altv1.bin
@@ -136,7 +136,7 @@ build-ideexi-v2:
 	@$(CC) -O1 $(OPTS) -c base/Stream.c
 	@$(CC) -O1 $(OPTS) -c base/__DSPHandler.S
 	@$(CC) -O1 $(OPTS) -c base/memcpy.S
-	@$(LD) -o ideexi_v2.elf -T base/base.ld -T base/common.ld base.o igr.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o memcpy.o -gc-sections 
+	@$(CC) -O1 $(OPTS) -o ideexi_v2.elf -T base/base.ld -T base/common.ld base.o igr.o frag.o hddread.o dvdinterface.o dvdqueue.o usbgecko.o adp.o Stream.o __DSPHandler.o memcpy.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_v2.elf > $(DISASM)/ideexi_v2_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_v2.elf ideexi_v2.bin
@@ -147,15 +147,15 @@ build-ideexi-v2:
 
 build-ideexi-altv2:
 	@echo Building IDE-EXI-v2 Alternate Patch ...
-	@$(CC) -O2 $(OPTS) -c alt/base.S
-	@$(CC) -O2 $(OPTS) -c alt/emulator.c
-	@$(CC) -O2 $(OPTS) -c alt/igr.c
-	@$(CC) -O2 $(OPTS) -c alt/blockdevice.c
-	@$(CC) -O2 $(OPTS) -c ide-exi/hddread.c -DDMA_READ=1 -DSINGLE_SECTOR=1
-	@$(CC) -O2 $(OPTS) -c base/frag.c
-	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
-	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o ideexi_altv2.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o blockdevice.o hddread.o frag.o usbgecko.o os.o --gc-sections
+	@$(CC) -Os $(OPTS) -c alt/base.S
+	@$(CC) -Os $(OPTS) -c alt/emulator.c
+	@$(CC) -Os $(OPTS) -c alt/igr.c
+	@$(CC) -Os $(OPTS) -c alt/blockdevice.c
+	@$(CC) -Os $(OPTS) -c ide-exi/hddread.c -DDMA_READ=1 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/usbgecko.c
+	@$(CC) -Os $(OPTS) -c base/os.c
+	@$(CC) -Os $(OPTS) -o ideexi_altv2.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o blockdevice.o hddread.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_altv2.elf > $(DISASM)/ideexi_altv2_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_altv2.elf ideexi_altv2.bin
@@ -166,15 +166,15 @@ build-ideexi-altv2:
 
 build-dvd:
 	@echo Building DVD Patch ...
-	@$(CC) -O2 $(OPTS) -c alt/base.S
-	@$(CC) -O2 $(OPTS) -c alt/emulator.c -DDVD
-	@$(CC) -O2 $(OPTS) -c alt/igr.c
-	@$(CC) -O2 $(OPTS) -c dvd/dvd.c
-	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
-	@$(CC) -O2 $(OPTS) -c base/frag.c
-	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
-	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o dvd.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o --gc-sections
+	@$(CC) -Os $(OPTS) -c alt/base.S
+	@$(CC) -Os $(OPTS) -c alt/emulator.c -DDVD
+	@$(CC) -Os $(OPTS) -c alt/igr.c
+	@$(CC) -Os $(OPTS) -c dvd/dvd.c
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/usbgecko.c
+	@$(CC) -Os $(OPTS) -c base/os.c
+	@$(CC) -Os $(OPTS) -o dvd.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd_disasm.txt
 	@$(OBJCOPY) -O binary dvd.elf dvd.bin
@@ -185,14 +185,14 @@ build-dvd:
 
 build-usb:
 	@echo Building USBGecko Patch ...
-	@$(CC) -O2 $(OPTS) -c alt/base.S
-	@$(CC) -O2 $(OPTS) -c alt/emulator.c
-	@$(CC) -O2 $(OPTS) -c alt/igr.c
-	@$(CC) -O2 $(OPTS) -c usbgecko/usbgecko.c
-	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
-	@$(CC) -O2 $(OPTS) -c base/frag.c
-	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o usbgecko.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o usbgecko.o sd.o frag.o os.o --gc-sections
+	@$(CC) -Os $(OPTS) -c alt/base.S
+	@$(CC) -Os $(OPTS) -c alt/emulator.c
+	@$(CC) -Os $(OPTS) -c alt/igr.c
+	@$(CC) -Os $(OPTS) -c usbgecko/usbgecko.c
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/os.c
+	@$(CC) -Os $(OPTS) -o usbgecko.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o usbgecko.o sd.o frag.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
@@ -203,15 +203,15 @@ build-usb:
 
 build-wkf:
 	@echo Building WKF Patch ...
-	@$(CC) -O2 $(OPTS) -c alt/base.S
-	@$(CC) -O2 $(OPTS) -c alt/emulator.c -DWKF
-	@$(CC) -O2 $(OPTS) -c alt/igr.c
-	@$(CC) -O2 $(OPTS) -c wkf/wkf.c
-	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
-	@$(CC) -O2 $(OPTS) -c base/frag.c -DPATCH_FRAGS=0
-	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
-	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o wkf.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o wkf.o sd.o frag.o usbgecko.o os.o --gc-sections
+	@$(CC) -Os $(OPTS) -c alt/base.S
+	@$(CC) -Os $(OPTS) -c alt/emulator.c -DWKF
+	@$(CC) -Os $(OPTS) -c alt/igr.c
+	@$(CC) -Os $(OPTS) -c wkf/wkf.c
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=0
+	@$(CC) -Os $(OPTS) -c base/usbgecko.c
+	@$(CC) -Os $(OPTS) -c base/os.c
+	@$(CC) -Os $(OPTS) -o wkf.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o wkf.o sd.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf_disasm.txt
 	@$(OBJCOPY) -O binary wkf.elf wkf.bin
@@ -222,15 +222,15 @@ build-wkf:
 
 build-bba:
 	@echo Building BBA Patch ...
-	@$(CC) -O2 $(OPTS) -c alt/base.S
-	@$(CC) -O2 $(OPTS) -c alt/emulator.c -DBBA
-	@$(CC) -O2 $(OPTS) -c alt/igr.c 
-	@$(CC) -O2 $(OPTS) -c bba/bba.c
-	@$(CC) -O2 $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
-	@$(CC) -O2 $(OPTS) -c base/frag.c
-	@$(CC) -O2 $(OPTS) -c base/usbgecko.c
-	@$(CC) -O2 $(OPTS) -c base/os.c
-	@$(LD) -o bba.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o bba.o usbgecko.o sd.o frag.o os.o --gc-sections
+	@$(CC) -Os $(OPTS) -c alt/base.S
+	@$(CC) -Os $(OPTS) -c alt/emulator.c -DBBA
+	@$(CC) -Os $(OPTS) -c alt/igr.c
+	@$(CC) -Os $(OPTS) -c bba/bba.c
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/usbgecko.c
+	@$(CC) -Os $(OPTS) -c base/os.c
+	@$(CC) -Os $(OPTS) -o bba.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o bba.o usbgecko.o sd.o frag.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D bba.elf > $(DISASM)/bba_disasm.txt
 	@$(OBJCOPY) -O binary bba.elf bba.bin
