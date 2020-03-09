@@ -1142,14 +1142,14 @@ void boot_dol()
 
 	u32 readTest;
 	char fileName[PATHNAME_MAX];
-	memset(&fileName, 0, PATHNAME_MAX);
-	strncpy(&fileName[0], &curFile.name[0], strlen(&curFile.name[0])-3);
+	memset(&fileName[0], 0, PATHNAME_MAX);
+	strncpy(&fileName[0], &curFile.name[0], strrchr(&curFile.name[0], '.') - &curFile.name[0]);
 	print_gecko("DOL file name without extension [%s]\r\n", fileName);
 	
 	file_handle *cliArgFile = calloc(1, sizeof(file_handle));
 	
 	// .cli argument file
-	sprintf(cliArgFile->name, "%scli", fileName);
+	sprintf(cliArgFile->name, "%s.cli", fileName);
 	if(devices[DEVICE_CUR]->readFile(cliArgFile, &readTest, 4) != 4) {
 		free(cliArgFile);
 		cliArgFile = NULL;
@@ -1193,7 +1193,7 @@ void boot_dol()
 	file_handle *dcpArgFile = calloc(1, sizeof(file_handle));
 	
 	// .dcp parameter file
-	sprintf(dcpArgFile->name, "%sdcp", fileName);
+	sprintf(dcpArgFile->name, "%s.dcp", fileName);
 	if(devices[DEVICE_CUR]->readFile(dcpArgFile, &readTest, 4) != 4) {
 		free(dcpArgFile);
 		dcpArgFile = NULL;
