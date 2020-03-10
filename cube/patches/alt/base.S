@@ -96,24 +96,27 @@ _start:
 	b		check_pad
 	b		igr_exit
 
+	.globl jump_table, jump_table_end
+jump_table:
 	.globl OSUnhandledException
 	.globl OSMaskInterrupts, OSUnmaskInterrupts
 	.globl OSResetSystem
 	.globl EXILock, EXIUnlock
 OSUnhandledException:
-	blr
+	.long 0
 OSMaskInterrupts:
-	blr
+	.long 0
 OSUnmaskInterrupts:
-	blr
+	.long 0
 OSResetSystem:
-	blr
+	.long 0
 EXILock:
-	blr
+	.long 0
 EXIUnlock:
-	blr
-	blr
-	blr
+	.long 0
+	.long 0
+jump_table_end:
+	.long 0
 
 	.globl realmode
 realmode:
@@ -124,6 +127,21 @@ realmode:
 	rlwinm	r3, r3, 0, 28, 25
 	mtsrr1	r3
 	rfi
+
+	.globl switch_fiber
+switch_fiber:
+	mflr	r0
+	mr		r9, sp
+	stwu	r9, -8 (r8)
+	mr		sp, r8
+	stw		r0, 4 (r9)
+	mtlr	r7
+	blrl
+	lwz		r5, 0 (sp)
+	lwz		r0, 4 (r5)
+	mtlr	r0
+	mr		sp, r5
+	blr
 
 #include "../base/memcpy.S"
 

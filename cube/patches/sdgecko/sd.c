@@ -149,7 +149,7 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 #else
 u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	// Try locking EXI bus
-	if(!EXILock(exi_channel, EXI_DEVICE_0, 0)) {
+	if(EXILock && !EXILock(exi_channel, EXI_DEVICE_0, 0)) {
 		return 0;
 	}
 	
@@ -196,7 +196,7 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	#endif
 exit:
 	// Unlock EXI bus
-	EXIUnlock(exi_channel);
+	if (EXIUnlock) EXIUnlock(exi_channel);
 	return numBytes;
 }
 #endif

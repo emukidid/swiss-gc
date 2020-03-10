@@ -2896,7 +2896,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 	
 	if ((i = SystemCallVectorSig.offsetFoundAt))
 		for (j = 0; j < SystemCallVectorSig.Length; j++)
-			data[i + j] = 0x4E800020;	// blr
+			data[i + j] = 0;
 	
 	if ((i = PrepareExecSig.offsetFoundAt)) {
 		u32 *PrepareExec = Calc_ProperAddress(data, dataType, i * sizeof(u32));
@@ -2946,7 +2946,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		
 		if (__OSUnhandledException) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 0] = branch(__OSUnhandledException, JUMP_VECTOR + 0);
+				data[k + 0] = (u32)__OSUnhandledException;
 			
 			print_gecko("Found:[%s] @ %08X\n", __OSUnhandledExceptionSigs[j].Name, __OSUnhandledException);
 			patched++;
@@ -3007,7 +3007,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		
 		if (__OSMaskInterrupts) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 1] = branch(__OSMaskInterrupts, JUMP_VECTOR + 1);
+				data[k + 1] = (u32)__OSMaskInterrupts;
 			
 			print_gecko("Found:[%s] @ %08X\n", __OSMaskInterruptsSigs[j].Name, __OSMaskInterrupts);
 			patched++;
@@ -3022,7 +3022,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		
 		if (__OSUnmaskInterrupts) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 2] = branch(__OSUnmaskInterrupts, JUMP_VECTOR + 2);
+				data[k + 2] = (u32)__OSUnmaskInterrupts;
 			
 			print_gecko("Found:[%s] @ %08X\n", __OSUnmaskInterruptsSigs[j].Name, __OSUnmaskInterrupts);
 			patched++;
@@ -3105,7 +3105,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 				case 13: data[i + 74] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 74); break;
 			}
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 3] = branch(OSResetSystem, JUMP_VECTOR + 3);
+				data[k + 3] = (u32)OSResetSystem;
 			
 			print_gecko("Found:[%s] @ %08X\n", OSResetSystemSigs[j].Name, OSResetSystem);
 			patched++;
@@ -3362,7 +3362,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		
 		if (EXILock) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 4] = branch(EXILock, JUMP_VECTOR + 4);
+				data[k + 4] = (u32)EXILock;
 			
 			print_gecko("Found:[%s] @ %08X\n", EXILockSigs[j].Name, EXILock);
 			patched++;
@@ -3377,7 +3377,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		
 		if (EXIUnlock) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 5] = branch(EXIUnlock, JUMP_VECTOR + 5);
+				data[k + 5] = (u32)EXIUnlock;
 			
 			print_gecko("Found:[%s] @ %08X\n", EXIUnlockSigs[j].Name, EXIUnlock);
 			patched++;

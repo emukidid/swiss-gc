@@ -4,7 +4,9 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
+#include "timer.h"
 #include "../base/common.h"
 #include "../base/dolformat.h"
 #include "../base/os.h"
@@ -16,9 +18,19 @@ void check_pad(int32_t chan, PADStatus *status)
 
 	if ((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT) {
 		enable_interrupts();
-		OSResetSystem(OS_RESET_HOTRESET, 0, 0);
+		if (OSResetSystem) OSResetSystem(OS_RESET_HOTRESET, 0, 0);
 		disable_interrupts();
 	}
+}
+
+extern void *jump_table[];
+extern void *jump_table_end[];
+
+static void clear_jump_table(void)
+{
+	void **ptr = jump_table;
+	while (ptr < jump_table_end)
+		*ptr++ = NULL;
 }
 
 static void load_dol(uint32_t offset, uint32_t size)
@@ -42,14 +54,8 @@ static void load_dol(uint32_t offset, uint32_t size)
 void igr_exit(void)
 {
 	disable_interrupts();
-
-	asm volatile("mtmmcr0 %0" :: "r" (0));
-	asm volatile("mtmmcr1 %0" :: "r" (0));
-	asm volatile("mtpmc1 %0" :: "r" (0));
-	asm volatile("mtpmc2 %0" :: "r" (0));
-	asm volatile("mtpmc3 %0" :: "r" (0));
-	asm volatile("mtpmc4 %0" :: "r" (0));
-
+	clear_timers();
+	clear_jump_table();
 	end_read();
 
 	uint8_t igr_exit_type = *(uint8_t *)VAR_IGR_EXIT_TYPE;
@@ -58,7 +64,7 @@ void igr_exit(void)
 	switch (igr_exit_type) {
 		case IGR_BOOTBIN:
 			if (igr_dol_size)
-				load_dol(0xE0000000, igr_dol_size);
+				switch_fiber(0xE0000000, igr_dol_size, 0, 0, (intptr_t)load_dol, 0x81800000);
 			break;
 	}
 }

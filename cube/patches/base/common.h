@@ -88,6 +88,7 @@ void read_disc_frag(void *dst, u32 len, u32 offset);
 u32 read_frag(void *dst, u32 len, u32 offset);
 int is_frag_read(unsigned int offset, unsigned int len);
 void device_frag_read(void* dst, u32 len, u32 offset);
+int switch_fiber(u32 arg0, u32 arg1, u32 arg2, u32 arg3, u32 pc, u32 newsp);
 void dcache_flush_icache_inv(void* dst, u32 len);
 void dcache_store(void* dst, u32 len);
 void ADPdecodebuffer(unsigned char *input, short *outl, short * outr, long *histl1, long *histl2, long *histr1, long *histr2);

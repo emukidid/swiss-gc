@@ -241,4 +241,14 @@ static inline void restore_timer_interrupts(void)
 	asm volatile("mtmmcr0 %0" :: "r" (mmcr0.val));
 }
 
+static inline void clear_timers(void)
+{
+	asm volatile("mtmmcr0 %0" :: "r" (0));
+	asm volatile("mtmmcr1 %0" :: "r" (0));
+	asm volatile("mtpmc1 %0" :: "r" (0));
+	asm volatile("mtpmc2 %0" :: "r" (0));
+	asm volatile("mtpmc3 %0" :: "r" (0));
+	asm volatile("mtpmc4 %0" :: "r" (0));
+}
+
 #endif /* TIMER_H */
