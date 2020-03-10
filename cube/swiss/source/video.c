@@ -116,7 +116,7 @@ void setVideoMode(GXRModeObj *m) {
 	// clears the bg to color and clears the z buffer
 	GX_SetCopyClear ((GXColor) {0, 0, 0, 0xFF}, GX_MAX_Z24);
 	// init viewport
-	GX_SetViewport (0, 0, m->fbWidth, m->efbHeight, 0, 1);
+	GX_SetViewport (1.0f/24.0f, 1.0f/24.0f, m->fbWidth, m->efbHeight, 0.0f, 1.0f);
 	// Set the correct y scaling for efb->xfb copy operation
 	GX_SetDispCopyYScale ((f32) m->xfbHeight / (f32) m->efbHeight);
 	GX_SetDispCopySrc (0, 0, m->fbWidth, m->efbHeight);

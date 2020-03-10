@@ -410,7 +410,7 @@ static void drawInit()
 	guMtxIdentity(GXmodelView2D);
 	GX_LoadTexMtxImm(GXmodelView2D,GX_TEXMTX0,GX_MTX2x4);
 	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);
-	guOrtho(GXprojection2D, 0, 479, 0, 639, 0, 700);
+	guOrtho(GXprojection2D, 0, 480, 0, 640, 0, 1);
 	GX_LoadProjectionMtx(GXprojection2D, GX_ORTHOGRAPHIC);
 
 	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_TRUE);

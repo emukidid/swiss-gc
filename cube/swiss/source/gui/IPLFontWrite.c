@@ -175,7 +175,7 @@ void drawFontInit(GXColor fontColor)
 	guMtxIdentity(GXmodelView2D);
 	GX_LoadTexMtxImm(GXmodelView2D,GX_TEXMTX0,GX_MTX2x4);
 	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);
-	guOrtho(GXprojection2D, 0, 479, 0, 639, 0, 700);
+	guOrtho(GXprojection2D, 0, 480, 0, 640, 0, 1);
 	GX_LoadProjectionMtx(GXprojection2D, GX_ORTHOGRAPHIC);
 
 	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_TRUE);
@@ -198,6 +198,7 @@ void drawFontInit(GXColor fontColor)
 
 	GX_InvalidateTexAll();
 	GX_InitTexObj(&fontTexObj, &fontFont[0], 512, 512, GX_TF_I4, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	GX_InitTexObjLOD(&fontTexObj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_TRUE, GX_TRUE, GX_ANISO_4);
 	GX_LoadTexObj(&fontTexObj, GX_TEXMAP0);
 
 	GX_SetTevColor(GX_TEVREG1,fontColor);
