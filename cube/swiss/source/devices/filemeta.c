@@ -70,7 +70,8 @@ file_meta* create_basic_meta(void* tplTexObj) {
 
 void meta_create_direct_texture(file_meta* meta) {
 	DCFlushRange(meta->banner, meta->bannerSize);
-	GX_InitTexObj(&meta->bannerTexObj, meta->banner, 96, 32, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP,GX_FALSE);
+	GX_InitTexObj(&meta->bannerTexObj, meta->banner, 96, 32, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	GX_InitTexObjFilterMode(&meta->bannerTexObj, GX_LINEAR, GX_NEAR);
 }
 
 void populate_meta(file_handle *f) {
