@@ -739,9 +739,10 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		{ 186, 56, 7, 32, 10,  7, NULL, 0, "__OSUnhandledException C" },
 		{ 194, 53, 7, 34, 10, 15, NULL, 0, "__OSUnhandledException C" }	// SN Systems ProDG
 	};
-	FuncPattern __OSBootDolSimpleSigs[2] = {
+	FuncPattern __OSBootDolSimpleSigs[3] = {
 		{ 109,  35, 15, 25,  3, 10, NULL, 0, "__OSBootDolSimpleD" },
-		{ 289, 104, 17, 53, 29, 16, NULL, 0, "__OSBootDolSimple" }
+		{ 310, 100, 17, 53, 29, 40, NULL, 0, "__OSBootDolSimple A" },
+		{ 289, 104, 17, 53, 29, 16, NULL, 0, "__OSBootDolSimple B" }
 	};
 	FuncPattern OSDisableInterruptsSig = 
 		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
@@ -1318,6 +1319,19 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 							__OSBootDolSimpleSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
+						if (findx_pattern(data, dataType, i +  11, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  42, length, &__OSMaskInterruptsSigs[1]) &&
+							findx_pattern(data, dataType, i +  44, length, &__OSUnmaskInterruptsSigs[1]) &&
+							findx_pattern(data, dataType, i +  45, length, &OSEnableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  70, length, &__OSDoHotResetSigs[1]) &&
+							findx_pattern(data, dataType, i + 118, length, &__OSDoHotResetSigs[1]) &&
+							findx_pattern(data, dataType, i + 245, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 291, length, &__OSDoHotResetSigs[1]) &&
+							findx_pattern(data, dataType, i + 301, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 302, length, &ICFlashInvalidateSig))
+							__OSBootDolSimpleSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
 						if (findx_pattern(data, dataType, i +  11, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  42, length, &__OSMaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i +  44, length, &__OSUnmaskInterruptsSigs[1]) &&
@@ -2963,12 +2977,14 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 			if (devices[DEVICE_CUR] == &__device_fsp) {
 				switch (j) {
 					case 0: data[i + 44] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 1: data[i + 43] = 0x3C600801; break;	// lis		r3, 0x0801
+					case 1:
+					case 2: data[i + 43] = 0x3C600801; break;	// lis		r3, 0x0801
 				}
 			} else if (devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
 				switch (j) {
 					case 0: data[i + 44] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 1: data[i + 43] = 0x3C600800; break;	// lis		r3, 0x0800
+					case 1:
+					case 2: data[i + 43] = 0x3C600800; break;	// lis		r3, 0x0800
 				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", __OSBootDolSimpleSigs[j].Name, __OSBootDolSimple);
@@ -7371,8 +7387,8 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (dataType == PATCH_APPLOADER) {
 		switch (length) {
 			case 1435168:
-				// __VIInit(newmode->viTVMode);
-				*(s16 *)(data + 0x81300712 - 0x81300000) = newmode->viTVMode;
+				// __VIInit(newmode->viTVMode & ~0x3);
+				*(s16 *)(data + 0x81300712 - 0x81300000) = newmode->viTVMode & ~0x3;
 				
 				// Accept any region code.
 				*(s16 *)(data + 0x81300E8A - 0x81300000) = 1;
