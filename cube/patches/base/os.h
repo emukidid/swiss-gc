@@ -108,7 +108,7 @@ static OSExceptionHandler OSGetExceptionHandler(OSException exception)
 	return OSExceptionHandlerTable[exception];
 }
 
-void (*OSUnhandledException)(OSException exception, OSContext *context, u32 dsisr, u32 dar);
+extern void (*OSUnhandledException)(OSException exception, OSContext *context, u32 dsisr, u32 dar);
 
 typedef enum {
 	OS_INTERRUPT_MEM_0 = 0,
@@ -247,13 +247,13 @@ static OSInterruptHandler OSGetInterruptHandler(OSInterrupt interrupt)
 	return OSInterruptHandlerTable[interrupt];
 }
 
-OSInterruptMask (*OSMaskInterrupts)(OSInterruptMask mask);
-OSInterruptMask (*OSUnmaskInterrupts)(OSInterruptMask mask);
+extern OSInterruptMask (*OSMaskInterrupts)(OSInterruptMask mask);
+extern OSInterruptMask (*OSUnmaskInterrupts)(OSInterruptMask mask);
 
 #define OS_RESET_RESTART  0
 #define OS_RESET_HOTRESET 1
 #define OS_RESET_SHUTDOWN 2
 
-void (*OSResetSystem)(s32 reset, u32 resetCode, s32 forceMenu);
+extern void (*OSResetSystem)(s32 reset, u32 resetCode, s32 forceMenu);
 
 #endif /* OS_H */

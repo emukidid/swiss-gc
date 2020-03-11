@@ -629,6 +629,14 @@ int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType )
 	return LowMemPatched;
 }
 
+u32 _ppchalt[] = {
+	0x7C0004AC,	// sync
+	0x60000000,	// nop
+	0x38600000,	// li		r3, 0
+	0x60000000,	// nop
+	0x4BFFFFF4	// b		-3
+};
+
 u32 _dvdgettransferredsize[] = {
 	0x8003000C,	// lwz		r0, 12 (r3)
 	0x2C000002,	// cmpwi	r0, 2
@@ -703,6 +711,8 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 	int patched = 0;
 	FuncPattern PrepareExecSig = 
 		{ 60, 15, 3, 16, 13, 2, NULL, 0, "PrepareExec" };
+	FuncPattern PPCHaltSig = 
+		{ 5, 1, 0, 0, 1, 1, NULL, 0, "PPCHalt" };
 	FuncPattern OSExceptionInitSigs[3] = {
 		{ 164, 61,  6, 18, 14, 14, NULL, 0, "OSExceptionInitD" },
 		{ 160, 39, 14, 14, 20,  7, NULL, 0, "OSExceptionInit" },
@@ -1218,7 +1228,9 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 			continue;
 		}
 		else if (data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) {
-			if (!memcmp(data + i, _dvdgettransferredsize, sizeof(_dvdgettransferredsize)))
+			if (!memcmp(data + i, _ppchalt, sizeof(_ppchalt)))
+				PPCHaltSig.offsetFoundAt = i;
+			else if (!memcmp(data + i, _dvdgettransferredsize, sizeof(_dvdgettransferredsize)))
 				DVDGetTransferredSizeSig.offsetFoundAt = i;
 			else if (!memcmp(data + i, _gxpeekz_a, sizeof(_gxpeekz_a)))
 				GXPeekZSigs[0].offsetFoundAt = i;
@@ -3098,6 +3110,18 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 			}
 			print_gecko("Found:[%s] @ %08X\n", __OSDoHotResetSigs[j].Name, __OSDoHotReset);
 			patched++;
+		}
+		
+		if ((i = PPCHaltSig.offsetFoundAt)) {
+			u32 *PPCHalt = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			
+			if (PPCHalt && __OSDoHotReset) {
+				if (swissSettings.igrType != IGR_OFF)
+					data[i + 4] = branch(__OSDoHotReset, PPCHalt + 4);
+				
+				print_gecko("Found:[%s] @ %08X\n", PPCHaltSig.Name, PPCHalt);
+				patched++;
+			}
 		}
 	}
 	

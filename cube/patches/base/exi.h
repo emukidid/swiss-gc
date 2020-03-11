@@ -58,7 +58,7 @@ typedef struct {
 	} queue[EXI_DEVICE_MAX];
 } EXIControl;
 
-s32 (*EXILock)(s32 chan, u32 dev, EXICallback unlockedCallback);
-s32 (*EXIUnlock)(s32 chan);
+extern s32 (*EXILock)(s32 chan, u32 dev, EXICallback unlockedCallback);
+extern s32 (*EXIUnlock)(s32 chan);
 
 #endif /* EXI_H */
