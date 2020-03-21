@@ -71,6 +71,11 @@ void trickle_read(void)
 	}
 }
 
+void device_reset(void)
+{
+	end_read();
+}
+
 void change_disc(void)
 {
 	*(uint32_t *)VAR_CURRENT_DISC = !*(uint32_t *)VAR_CURRENT_DISC;

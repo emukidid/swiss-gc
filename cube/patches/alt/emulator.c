@@ -168,11 +168,8 @@ static void di_write(unsigned index, uint32_t value)
 		case 8:
 			(*DI_EMU)[index] = value;
 			break;
-		case 5:
+		case 5 ... 6:
 			(*DI_EMU)[index] = value & 0x3FFFFE0;
-			break;
-		case 6:
-			(*DI_EMU)[index] = value & ~0x1F;
 			break;
 		case 7:
 			(*DI_EMU)[index] = value & 0b111;

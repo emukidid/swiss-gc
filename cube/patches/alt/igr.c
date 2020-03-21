@@ -56,7 +56,7 @@ void igr_exit(void)
 	disable_interrupts();
 	clear_timers();
 	clear_jump_table();
-	end_read();
+	device_reset();
 
 	uint8_t igr_exit_type = *(uint8_t *)VAR_IGR_EXIT_TYPE;
 	uint32_t igr_dol_size = *(uint32_t *)VAR_IGR_DOL_SIZE;

@@ -324,6 +324,11 @@ void trickle_read(void)
 	OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
 }
 
+void device_reset(void)
+{
+	end_read();
+}
+
 void change_disc(void)
 {
 	*_disc2 = !*_disc2;

@@ -92,3 +92,20 @@ void trickle_read(void)
 		}
 	}
 }
+
+void device_reset(void)
+{
+	DVDDiskID *id = (DVDDiskID *)VAR_AREA;
+
+	if (id->streaming) {
+		AI[1] = 0;
+
+		DI[2] = 0xE1010000;
+		DI[7] = 0b001;
+		while (DI[7] & 0b001);
+
+		AI[0] &= ~0b0000001;
+	}
+
+	end_read();
+}

@@ -80,6 +80,7 @@ extern volatile u32 PI[13];
 extern volatile u16 MI[46];
 extern volatile u32 DI[10];
 extern volatile u32 EXI[3][5];
+extern volatile u32 AI[4];
 
 void do_read_disc(void *dst, u32 len, u32 offset, u32 sector);
 u32 do_read(void *dst, u32 len, u32 offset, u32 sector);
@@ -88,6 +89,7 @@ void read_disc_frag(void *dst, u32 len, u32 offset);
 u32 read_frag(void *dst, u32 len, u32 offset);
 int is_frag_read(unsigned int offset, unsigned int len);
 void device_frag_read(void* dst, u32 len, u32 offset);
+void device_reset(void);
 int switch_fiber(u32 arg0, u32 arg1, u32 arg2, u32 arg3, u32 pc, u32 newsp);
 void dcache_flush_icache_inv(void* dst, u32 len);
 void dcache_store(void* dst, u32 len);

@@ -234,6 +234,12 @@ void trickle_read(void)
 	}
 }
 
+void device_reset(void)
+{
+	usb_unlock_file();
+	end_read();
+}
+
 void change_disc(void)
 {
 	usb_unlock_file();
