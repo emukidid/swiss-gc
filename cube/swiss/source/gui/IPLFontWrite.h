@@ -21,7 +21,7 @@ extern char txtbuffer[2048];
 void init_font(void);
 void drawString(int x, int y, char *string, float scale, bool centered, GXColor fontColor);
 void drawStringWithCaret(int x, int y, char *string, float scale, bool centered, GXColor fontColor, int caretPosition, GXColor caretColor);
-void drawStringVertical(int x, int y, char *string, float scale, GXColor fontColor, int maxSize);
+void drawStringEllipsis(int x, int y, char *string, float scale, bool centered, GXColor fontColor, bool rotateVertical, int maxSize);
 int GetTextSizeInPixels(char *string);
 float GetTextScaleToFitInWidth(char *string, int width);
 float GetTextScaleToFitInWidthWithMax(char *string, int width, float max);
