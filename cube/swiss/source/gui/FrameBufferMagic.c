@@ -1074,7 +1074,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 					sprintf(fbTextBuffer,"Size: %.2fKB (%d blocks)", (float)file->size/1024, file->size/0x10000);
 				}
 				else {
-					sprintf(fbTextBuffer,"Size: %.2f %s",file->size > (1024*1024) ? (float)file->size/(1024*1024):(float)file->size/1024,file->size > (1024*1024) ? "MB":"KB");
+					sprintf(fbTextBuffer,"Size: %.2f %s", file->size > (1024*1024*1024) ? (float)file->size/(1024*1024*1024) : file->size > (1024*1024) ? (float)file->size/(1024*1024) : (float)file->size/1024, file->size > (1024*1024*1024) ? "GB" : file->size > (1024*1024) ? "MB" : "KB");
 				}
 				drawString(data->x2 - (borderSize + (GetTextSizeInPixels(fbTextBuffer)*0.45f)), 
 					data->y2-(borderSize+24), fbTextBuffer, 0.45f, false, defaultColor);
@@ -1150,15 +1150,15 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			GX_End();
 		}
 		if(file->meta && file->meta->regionTexId != -1 && file->meta->regionTexId != 0) {
-			_DrawImageNow(file->meta->regionTexId, data->x2 - 36, data->y1+borderSize+2, 26, 18, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+			_DrawImageNow(file->meta->regionTexId, data->x2 - 38, data->y1+borderSize+1, 30, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 		}
 
 		// fullGameName displays some titles with incorrect encoding, use displayName instead
 		if(data->mode == B_SELECTED) {
 			float scale = GetTextScaleToFitInWidthWithMax(data->displayName, (data->x2-data->x1-96-40)-(borderSize*2), 0.875f);
-			drawString(data->x1 + borderSize+8+96, data->y1+borderSize+2, data->displayName, scale, false, defaultColor);
+			drawString(data->x1 + borderSize+8+96, data->y1+borderSize+(26 - (26 * scale))/2, data->displayName, scale, false, defaultColor);
 		} else {
-			drawStringEllipsis(data->x1 + borderSize+8+96, data->y1+borderSize+2, data->displayName, 0.7f, false, defaultColor, false, (data->x2-data->x1-96-52)-(borderSize*2));
+			drawStringEllipsis(data->x1 + borderSize+8+96, data->y1+borderSize+4, data->displayName, 0.7f, false, defaultColor, false, (data->x2-data->x1-96-52)-(borderSize*2));
 		}
 		
 		// Print specific stats
@@ -1174,7 +1174,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				sprintf(fbTextBuffer,"%.2fKB (%d blocks)", (float)file->size/1024, file->size/0x10000);
 			}
 			else {
-				sprintf(fbTextBuffer,"%.2f %s",file->size > (1024*1024) ? (float)file->size/(1024*1024):(float)file->size/1024,file->size > (1024*1024) ? "MB":"KB");
+				sprintf(fbTextBuffer,"%.2f %s", file->size > (1024*1024*1024) ? (float)file->size/(1024*1024*1024) : file->size > (1024*1024) ? (float)file->size/(1024*1024) : (float)file->size/1024, file->size > (1024*1024*1024) ? "GB" : file->size > (1024*1024) ? "MB" : "KB");
 			}
 			drawString(data->x2 - ((borderSize) + (GetTextSizeInPixels(fbTextBuffer)*0.45)), 
 				data->y1+borderSize+21, fbTextBuffer, 0.45f, false, defaultColor);
