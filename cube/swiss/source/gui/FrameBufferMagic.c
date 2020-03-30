@@ -1113,9 +1113,8 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 					GX_TexCoord2f32(0.0f,1.0f);
 				GX_End();
 			}
-
 			// fullGameName displays some titles with incorrect encoding, use displayName instead
-			drawStringEllipsis(data->x1 + 16, data->y2-bnr_width-5-borderSize, data->displayName, 0.5f, false, defaultColor, true, (data->y2-bnr_width-5-borderSize) - (data->y1 + (borderSize*2)));
+			drawStringEllipsis(data->x1 + (data->x2-data->x1 - 12)/2, data->y2-bnr_width-5-borderSize, data->displayName, 0.5f, false, defaultColor, true, (data->y2-bnr_width-5-borderSize) - (data->y1 + (borderSize*2)));
 		}
 	}
 	else {
