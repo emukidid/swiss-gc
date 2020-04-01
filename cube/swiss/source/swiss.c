@@ -398,8 +398,8 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		u32 waitButtons = PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R;
 		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & waitButtons))
 			{ VIDEO_WaitVSync (); }
-		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) > 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
-		if((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || PAD_StickY(0) < -16) {curSelection = (curSelection + 1) % num_files;	}
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) >= 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || PAD_StickY(0) <= -16) {curSelection = (curSelection + 1) % num_files;	}
 		if(PAD_ButtonsHeld(0) & (PAD_BUTTON_LEFT|PAD_TRIGGER_L)) {
 			if(curSelection == 0) {
 				curSelection = num_files-1;
@@ -455,7 +455,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			curMenuLocation=ON_OPTIONS;
 			return filePanel;
 		}
-		if(PAD_StickY(0) < -16 || PAD_StickY(0) > 16) {
+		if(PAD_StickY(0) <= -16 || PAD_StickY(0) >= 16) {
 			usleep((abs(PAD_StickY(0)) > 64 ? 50000:100000) - abs(PAD_StickY(0)*64));
 		}
 		else {
@@ -604,8 +604,8 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		u32 waitButtons = PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R;
 		while ((PAD_StickX(0) > -16 && PAD_StickX(0) < 16) && !(PAD_ButtonsHeld(0) & waitButtons))
 			{ VIDEO_WaitVSync (); }
-		if((PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) || PAD_StickX(0) < -16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
-		if((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) || PAD_StickX(0) > 16) {curSelection = (curSelection + 1) % num_files;	}
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) || PAD_StickX(0) <= -16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) || PAD_StickX(0) >= 16) {curSelection = (curSelection + 1) % num_files;	}
 		if(PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_TRIGGER_L)) {
 			if(curSelection == 0) {
 				curSelection = num_files-1;
@@ -661,7 +661,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			curMenuLocation=ON_OPTIONS;
 			return filePanel;
 		}
-		if(PAD_StickX(0) < -16 || PAD_StickX(0) > 16) {
+		if(PAD_StickX(0) <= -16 || PAD_StickX(0) >= 16) {
 			usleep((abs(PAD_StickX(0)) > 64 ? 50000:100000) - abs(PAD_StickX(0)*64));
 		}
 		else {
