@@ -1068,7 +1068,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	*(vu32*)VAR_LAST_OFFSET = 0xCAFEBABE;
 	*(vu32*)VAR_AS_ENABLED = GCMDisk.AudioStreaming;
 	*(vu8*)VAR_IGR_EXIT_TYPE = swissSettings.igrType;
-	*(vu32*)VAR_IGR_EXIT_FLAG = 0;
+	*(vu32*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
 	memset(VAR_DI_REGS, 0, 0x24);
 	memset(VAR_STREAM_START, 0, 0xA0);
 	print_gecko("Audio Streaming is %s\r\n",*(vu32*)VAR_AS_ENABLED?"Enabled":"Disabled");

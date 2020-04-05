@@ -70,6 +70,12 @@ extern OSContext *OSCurrentContext;
 extern OSContext *OSFPUContext;
 
 void OSSetCurrentContext(OSContext *context);
+
+static OSContext *OSGetCurrentContext(void)
+{
+	return OSCurrentContext;
+}
+
 void OSClearContext(OSContext *context);
 
 typedef enum {

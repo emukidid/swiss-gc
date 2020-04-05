@@ -50,6 +50,8 @@ bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 	return true;
 }
 
+void di_defer_transfer(uint32_t offset, uint32_t length);
+
 void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks)
 {
 	*(uint32_t *)VAR_LAST_OFFSET = offset;
@@ -69,6 +71,9 @@ void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
+	if (*(uint32_t *)VAR_EMU_READ_SPEED)
+		di_defer_transfer(offset, length);
+
 	schedule_read(OSPhysicalToUncached(address), length, offset, 0);
 }
 

@@ -21,6 +21,7 @@ typedef struct {
 	int forceEncoding;
 	int invertCStick;
 	int emulateAudioStreaming;
+	int emulateReadSpeed;
 } ConfigEntry __attribute__((aligned(32)));
 
 void config_parse(char *configData);

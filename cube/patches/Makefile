@@ -5,7 +5,7 @@ LD      = $(DIR)/powerpc-eabi-ld
 OBJDUMP = $(DIR)/powerpc-eabi-objdump
 OBJCOPY = $(DIR)/powerpc-eabi-objcopy
 
-OPTS	= -flto -ffunction-sections -fdata-sections -Wl,--gc-sections
+OPTS	= -ffast-math -flto -ffunction-sections -fdata-sections -Wl,--gc-sections
 
 DEST    = ../swiss/source/patches
 
@@ -174,7 +174,9 @@ build-dvd:
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/os.c
-	@$(CC) -Os $(OPTS) -o dvd.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -c base/DVDMath.c
+	@$(CC) -Os $(OPTS) -c base/sqrt.S
+	@$(CC) -Os $(OPTS) -o dvd.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o sqrt.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd_disasm.txt
 	@$(OBJCOPY) -O binary dvd.elf dvd.bin

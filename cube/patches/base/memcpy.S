@@ -1,3 +1,8 @@
+/* 
+ * Copyright (c) 2019, Extrems <extrems@extremscorner.org>
+ * All rights reserved.
+ */
+
 #define _LANGUAGE_ASSEMBLY
 #include "../../reservedarea.h"
 

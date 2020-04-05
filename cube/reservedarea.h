@@ -36,7 +36,7 @@
 .set VAR_IPV4_ID,			0x2ED6	# IPv4 fragment identifier
 .set VAR_FSP_KEY,			0x2ED8	# FSP session key
 .set VAR_FSP_DATA_LENGTH,	0x2EDA	# FSP payload size
-.set VAR_IGR_EXIT_FLAG,		0x2EDC	# IGR exit flag
+.set VAR_EMU_READ_SPEED,	0x2EDC	# emulate read speed
 .set VAR_IGR_DOL_SIZE,		0x2EE0	# IGR DOL Size
 .set VAR_READS_IN_AS,		0x2EE4	# How many times have we tried to read while streaming is on?
 .set VAR_AS_ENABLED,		0x2EE8	# Is Audio streaming enabled by the user?
@@ -135,7 +135,7 @@ extern char VAR_IGR_EXIT_TYPE[1];	// IGR exit type
 extern char VAR_IPV4_ID[2];			// IPv4 fragment identifier
 extern char VAR_FSP_KEY[2];			// FSP session key
 extern char VAR_FSP_DATA_LENGTH[2];	// FSP payload size
-extern char VAR_IGR_EXIT_FLAG[4];	// IGR exit flag
+extern char VAR_EMU_READ_SPEED[4];	// emulate read speed
 extern char VAR_IGR_DOL_SIZE[4];	// IGR DOL Size
 extern char VAR_READS_IN_AS[4];		// How many times have we tried to read while streaming is on?
 extern char VAR_AS_ENABLED[4];		// Is Audio streaming enabled by the user?

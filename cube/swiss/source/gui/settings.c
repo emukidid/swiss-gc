@@ -247,6 +247,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_DEFAULT_TEXT_ENCODING, true);
 		drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Audio Streaming:", swissSettings.emulateAudioStreaming, option == SET_DEFAULT_AUDIO_STREAMING, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Read Speed:", swissSettings.emulateReadSpeed, option == SET_DEFAULT_READ_SPEED, true);
 	}
 	else if(page_num == PAGE_GAME) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Current Game Settings (5/5):"));
@@ -264,6 +265,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[gameConfig->forceEncoding], option == SET_TEXT_ENCODING, enableGamePatches);
 			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, enableGamePatches);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Audio Streaming:", gameConfig->emulateAudioStreaming, option == SET_AUDIO_STREAMING, enableGamePatches);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Read Speed:", gameConfig->emulateReadSpeed, option == SET_READ_SPEED, enableGamePatches);
 		}
 		else {
 			// Just draw the defaults again
@@ -278,6 +280,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_DEFAULT_TEXT_ENCODING, false);
 			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, false);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Audio Streaming:", swissSettings.emulateAudioStreaming, option == SET_DEFAULT_AUDIO_STREAMING, false);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Read Speed:", swissSettings.emulateReadSpeed, option == SET_DEFAULT_READ_SPEED, false);
 		}
 	}
 	// If we have a tooltip for this page/option, add a fading label telling the user to press Y for help
@@ -523,6 +526,9 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			case SET_DEFAULT_AUDIO_STREAMING:
 				swissSettings.emulateAudioStreaming ^= 1;
 			break;
+			case SET_DEFAULT_READ_SPEED:
+				swissSettings.emulateReadSpeed ^= 1;
+			break;
 		}
 	}
 	else if(page == PAGE_GAME && file != NULL && gameConfig != NULL) {
@@ -604,6 +610,9 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			break;
 			case SET_AUDIO_STREAMING:
 				gameConfig->emulateAudioStreaming ^= 1;
+			break;
+			case SET_READ_SPEED:
+				gameConfig->emulateReadSpeed ^= 1;
 			break;
 		}
 	}

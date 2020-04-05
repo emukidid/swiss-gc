@@ -9,6 +9,7 @@
 #include "timer.h"
 #include "../base/common.h"
 #include "../base/dvd.h"
+#include "../base/DVDMath.h"
 #include "../base/os.h"
 
 #ifdef BBA
@@ -134,6 +135,34 @@ static void di_execute_command(void)
 	DI[6] = (*DI_EMU)[6];
 	DI[7] = (*DI_EMU)[7];
 }
+
+void di_defer_transfer(uint32_t offset, uint32_t length)
+{
+	OSContext *context;
+	OSContext exceptionContext;
+
+	context = OSGetCurrentContext();
+	OSClearContext(&exceptionContext);
+	OSSetCurrentContext(&exceptionContext);
+
+	__attribute((noinline))
+	void di_defer_transfer(uint32_t offset, uint32_t length)
+	{
+		uint32_t ticks = OSMicrosecondsToTicks(300);
+		ticks += OSSecondsToTicks(CalculateRawDiscReadTime(offset, length));
+		timer4_start(ticks);
+
+		uint32_t status = DI[0];
+		uint32_t mask = status & 0b0101010;
+		mask &= ~0b0001000;
+		DI[0] = mask;
+	}
+
+	di_defer_transfer(offset, length);
+
+	OSClearContext(&exceptionContext);
+	OSSetCurrentContext(context);
+}
 #endif
 
 static void di_read(unsigned index, uint32_t *value)
@@ -237,11 +266,11 @@ static void pi_write(unsigned index, uint32_t value)
 	switch (index) {
 		case 9:
 			#ifndef DVD
-			PI[index] = ((value << 1) & 0b100) | (value & ~0b100);
+			PI[index] = ((value << 2) & 0b100) | (value & ~0b100);
 			break;
 			#else
 			if (*VAR_DRIVE_PATCHED) {
-				PI[index] = ((value << 1) & 0b100) | (value & ~0b100);
+				PI[index] = ((value << 2) & 0b100) | (value & ~0b100);
 
 				if (!*VAR_DRIVE_RESETTING && !(value & 0b100))
 					dvd_reset();
@@ -363,6 +392,16 @@ void service_exception(OSException exception, OSContext *context, uint32_t dsisr
 			if (timer3_interrupt()) {
 				timer3_stop();
 				OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
+			}
+			#endif
+			#ifdef DVD
+			if (timer4_interrupt()) {
+				timer4_stop();
+
+				uint32_t status = DI[0];
+				uint32_t mask = status & 0b0101010;
+				mask = ((mask << 2) & 0b0001000) | (mask & ~0b0001000);
+				DI[0] = mask;
 			}
 			#endif
 			restore_timer_interrupts();
