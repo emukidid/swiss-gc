@@ -152,10 +152,15 @@ void di_defer_transfer(uint32_t offset, uint32_t length)
 		ticks += OSSecondsToTicks(CalculateRawDiscReadTime(offset, length));
 		timer4_start(ticks);
 
+		#ifndef DVD
+		(*DI_EMU)[0] &= ~0b0001000;
+		di_update_interrupts();
+		#else
 		uint32_t status = DI[0];
 		uint32_t mask = status & 0b0101010;
 		mask &= ~0b0001000;
 		DI[0] = mask;
+		#endif
 	}
 
 	di_defer_transfer(offset, length);
@@ -398,10 +403,15 @@ void service_exception(OSException exception, OSContext *context, uint32_t dsisr
 			if (timer4_interrupt()) {
 				timer4_stop();
 
+				#ifndef DVD
+				(*DI_EMU)[0] |= ((*DI_EMU)[0] << 2) & 0b0001000;
+				di_update_interrupts();
+				#else
 				uint32_t status = DI[0];
 				uint32_t mask = status & 0b0101010;
-				mask = ((mask << 2) & 0b0001000) | (mask & ~0b0001000);
+				mask |= (mask << 2) & 0b0001000;
 				DI[0] = mask;
+				#endif
 			}
 			#endif
 			restore_timer_interrupts();

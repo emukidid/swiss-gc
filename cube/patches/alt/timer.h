@@ -237,6 +237,7 @@ static inline void restore_timer_interrupts(void)
 	union mmcr0 mmcr0;
 	union mmcr1 mmcr1;
 	asm volatile("mfmmcr0 %0" : "=r" (mmcr0.val));
+	asm volatile("mfmmcr1 %0" : "=r" (mmcr1.val));
 	mmcr0.enint = mmcr0.pmc1select || mmcr0.pmc2select || mmcr1.pmc3select || mmcr1.pmc4select;
 	asm volatile("mtmmcr0 %0" :: "r" (mmcr0.val));
 }
