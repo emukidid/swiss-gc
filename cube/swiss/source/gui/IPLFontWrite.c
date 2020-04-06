@@ -417,6 +417,12 @@ void drawStringEllipsis(int x, int y, char *string, float scale, bool centered, 
 	}
 }
 
+int GetFontHeight(float scale)
+{
+	int strHeight = (int) fontChars.fheight * scale;
+	return strHeight;
+}
+
 int GetTextSizeInPixels(char *string)
 {
 	int strWidth = 0;
