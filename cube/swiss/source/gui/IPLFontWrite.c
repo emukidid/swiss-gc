@@ -342,12 +342,26 @@ int GetCharsThatFitInWidth(char *string, int max, float scale)
 }
 
 // maxSize is how far we can draw, abbreviate with "..." if we're going to exceed it.
-void drawStringVertical(int x, int y, char *string, float scale, GXColor fontColor, int maxSize)
+void drawStringEllipsis(int x, int y, char *string, float scale, bool centered, GXColor fontColor, bool rotateVertical, int maxSize)
 {
 	if(string == NULL) {
 		return;
 	}
 	drawFontInit(fontColor);
+	if(centered)
+	{
+		int strWidth = 0;
+		int strHeight = (fontChars.fheight+STRHEIGHT_OFFSET) * scale;
+		char* string_work = string;
+		while(*string_work)
+		{
+			unsigned char c = *string_work;
+			strWidth += (int) fontChars.font_size[c] * scale;
+			string_work++;
+		}
+		x = (int) x - strWidth/2;
+		y = (int) y - strHeight/2;
+	}
 
 	int len = strlen(string);
 	int chars_to_draw = GetCharsThatFitInWidth(string, maxSize-12, scale);
@@ -373,13 +387,22 @@ void drawStringVertical(int x, int y, char *string, float scale, GXColor fontCol
 			float t0 = ((float) (fontChars.t[c] + t))/512;
 			s = (int) s * scale;
 			t = (int) t * scale;
-			GX_Position3s16(x + t, y - s, 0);
+			if(rotateVertical) {
+				GX_Position3s16(x + t, y - s, 0);
+			} else {
+				GX_Position3s16(x + s, y + t, 0);
+			}
 			GX_Color4u8(fontColor.r, fontColor.g, fontColor.b, fontColor.a);
-			GX_TexCoord2f32(s0,t0);
-		}		
+			GX_TexCoord2f32(s0, t0);
+		}
 		GX_End();
 
-		y -= (int) fontChars.font_size[c] * scale;
+		if(rotateVertical) {
+			y -= (int) fontChars.font_size[c] * scale;
+		} else {
+			x += (int) fontChars.font_size[c] * scale;
+		}
+
 		string++;
 		len--;
 		chars_to_draw--;
@@ -392,6 +415,12 @@ void drawStringVertical(int x, int y, char *string, float scale, GXColor fontCol
 			}
 		}
 	}
+}
+
+int GetFontHeight(float scale)
+{
+	int strHeight = (int) fontChars.fheight * scale;
+	return strHeight;
 }
 
 int GetTextSizeInPixels(char *string)
