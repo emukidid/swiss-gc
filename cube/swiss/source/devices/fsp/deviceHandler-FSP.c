@@ -185,6 +185,11 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 		// Device slot (0, 1 or 2)
 		*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
 	}
+	else {
+		*(vu8*)VAR_SD_SHIFT = 32;
+		*(vu8*)VAR_EXI_FREQ = -1;
+		*(vu8*)VAR_EXI_SLOT = -1;
+	}
 	
 	net_get_mac_address(VAR_CLIENT_MAC);
 	*(vu32*)VAR_CLIENT_IP = net_gethostip();
