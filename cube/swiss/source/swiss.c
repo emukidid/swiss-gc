@@ -330,7 +330,7 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 	if(info->freeSpaceInKB < 1024*1024)	// < 1 GB
 		sprintf(txtbuffer,"%.2fMB", (float)info->freeSpaceInKB/1024);
 	else
-		sprintf(txtbuffer,"%.2fGB", (float)info->totalSpaceInKB/(1024*1024));
+		sprintf(txtbuffer,"%.2fGB", (float)info->freeSpaceInKB/(1024*1024));
 	uiDrawObj_t *devFreeSizeLabel = DrawStyledLabel(83, 283, txtbuffer, 0.6f, true, defaultColor);
 	DrawAddChild(containerPanel, devFreeSizeLabel);
 	
