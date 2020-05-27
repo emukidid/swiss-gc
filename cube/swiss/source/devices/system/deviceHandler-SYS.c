@@ -149,11 +149,9 @@ int read_rom_ipl_clear(unsigned int offset, void* buffer, unsigned int length) {
 }
 
 int read_rom_sram(unsigned int offset, void* buffer, unsigned int length) {
-	u8 sram[64];
-
 	u32 command, ret;
 
-	DCInvalidateRange(sram, 64);
+	DCInvalidateRange(buffer, length);
 
 	if(EXI_Lock(EXI_CHANNEL_0, EXI_DEVICE_1, NULL) == 0) return 0;
 	if(EXI_Select(EXI_CHANNEL_0, EXI_DEVICE_1, EXI_SPEED8MHZ) == 0) {
@@ -162,17 +160,15 @@ int read_rom_sram(unsigned int offset, void* buffer, unsigned int length) {
 	}
 
 	ret = 0;
-	command = 0x20000100;
+	command = 0x20000100 + (offset << 6);
 	if(EXI_Imm(EXI_CHANNEL_0, &command, 4, EXI_WRITE, NULL) == 0) ret |= 0x01;
 	if(EXI_Sync(EXI_CHANNEL_0) == 0) ret |= 0x02;
-	if(EXI_Dma(EXI_CHANNEL_0, sram, 64, EXI_READ, NULL) == 0) ret |= 0x04;
+	if(EXI_Dma(EXI_CHANNEL_0, buffer, length, EXI_READ, NULL) == 0) ret |= 0x04;
 	if(EXI_Sync(EXI_CHANNEL_0) == 0) ret |= 0x08;
 	if(EXI_Deselect(EXI_CHANNEL_0) == 0) ret |= 0x10;
 	if(EXI_Unlock(EXI_CHANNEL_0) == 0) ret |= 0x20;
 
 	if(ret) return 0;
-
-	memcpy(buffer, sram + offset, length);
 	return length;
 }
 
