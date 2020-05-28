@@ -48,18 +48,16 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	
 	// Set everything up to read
 	int num_entries = 1, i = 1;
-	char file_name[PATHNAME_MAX];
 	*dir = calloc(sizeof(file_handle), 1);
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 	strcpy((*dir)[0].name, "..");
 	
+	u64 usedSpace = 0LL;
 	// Read each entry of the directory
 	while( !fsp_readdir_native(dp, &entry, &result) && result == &entry ){
 		if(strlen(entry.name) <= 2  && (entry.name[0] == '.' || entry.name[1] == '.')) {
 			continue;
 		}
-		memset(&file_name[0],0,PATHNAME_MAX);
-		sprintf(&file_name[0], "%s/%s", ffile->name, entry.name);
 		// Do we want this one?
 		if((type == -1 || ((entry.type & FSP_RDTYPE_DIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
 			if(!(entry.type & FSP_RDTYPE_DIR)) {
@@ -74,10 +72,12 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			sprintf((*dir)[i].name, "%s/%s", ffile->name, entry.name);
 			(*dir)[i].size     = entry.size;
 			(*dir)[i].fileAttrib   = (entry.type & FSP_RDTYPE_DIR) ? IS_DIR : IS_FILE;
+			usedSpace += (*dir)[i].size;
 			++i;
 		}
 	}
-	
+	usedSpace >>= 10;
+	initial_FSP_info.totalSpaceInKB = (u32)(usedSpace);
 	fsp_closedir(dp);
 	return num_entries;
 }

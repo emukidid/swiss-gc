@@ -53,6 +53,7 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 	// Read each entry of the directory
 	s32 res = usbgecko_open_dir(&ffile->name[0]);
 	if(!res) return -1;
+	u64 usedSpace = 0LL;
 	while( (entry = usbgecko_get_entry()) != NULL ){
 		if(entry->fileAttrib == IS_FILE) {
 			if(!checkExtension(entry->name)) continue;
@@ -66,8 +67,11 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 		sprintf((*dir)[i].name, "%s", entry->name);
 		(*dir)[i].size			= entry->size;
 		(*dir)[i].fileAttrib	= entry->fileAttrib;
+		usedSpace += (*dir)[i].size;
 		++i;
 	}
+	usedSpace >>= 10;
+	initial_USBGecko_info.totalSpaceInKB = (u32)(usedSpace);
 	DrawDispose(msgBox);
 	return num_entries;
 }
