@@ -232,7 +232,7 @@ int findCheats(bool silent) {
 			if(devices[DEVICE_TEMP] == &__device_sd_b) {
 				devices[DEVICE_TEMP] = &__device_sd_c;	// We already tried A & failed, so last thing to try is SP2 slot.
 			}
-			else {
+			else if (devices[DEVICE_CUR] != &__device_sd_b) {
 				devices[DEVICE_TEMP] = &__device_sd_b;
 				slotFile = devices[DEVICE_TEMP]->initial;
 				memset(cheatsFile, 0, sizeof(file_handle));
@@ -244,7 +244,7 @@ int findCheats(bool silent) {
 					devices[DEVICE_TEMP] = &__device_sd_c; // Last thing to try is SP2 slot.
 				}
 			}
-			if (devices[DEVICE_TEMP] == &__device_sd_c) {
+			if (devices[DEVICE_TEMP] == &__device_sd_c && devices[DEVICE_CUR] != &__device_sd_c) {
 				slotFile = devices[DEVICE_TEMP]->initial;
 				memset(cheatsFile, 0, sizeof(file_handle));
 				sprintf(cheatsFile->name, "%s/cheats/%s.txt", slotFile->name, trimmedGameId);
