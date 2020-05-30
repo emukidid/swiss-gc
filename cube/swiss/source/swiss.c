@@ -1961,13 +1961,17 @@ void select_device(int type)
 		DrawAddChild(deviceSelectBox, deviceImage);
 		DrawAddChild(deviceSelectBox, deviceNameLabel);
 		DrawAddChild(deviceSelectBox, deviceDescLabel);
+		if(allDevices[curDevice]->features & FEAT_BOOT_GCM) {
+			uiDrawObj_t *gameBootLabel = DrawStyledLabel(640/2, 365, "Supports Game Boot", 0.65f, true, defaultColor);
+			DrawAddChild(deviceSelectBox, gameBootLabel);
+		}
 		// Memory card port devices, allow for speed selection
 		if(allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2)) {
 			uiDrawObj_t *exiOptionsLabel = DrawStyledLabel(getVideoMode()->fbWidth-190, 400, "(X) EXI Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
 			DrawAddChild(deviceSelectBox, exiOptionsLabel);
 			if(inAdvanced) {
 				// Draw speed selection if advanced menu is showing.
-				uiDrawObj_t *exiSpeedLabel = DrawStyledLabel(getVideoMode()->fbWidth-160, 385, swissSettings.exiSpeed ? "Speed: Fast":"Speed: Compatible", 0.65f, false, defaultColor);
+				uiDrawObj_t *exiSpeedLabel = DrawStyledLabel(getVideoMode()->fbWidth-160, 385, swissSettings.exiSpeed ? "Speed: 32 MHz":"Speed: 16 MHz", 0.65f, false, defaultColor);
 				DrawAddChild(deviceSelectBox, exiSpeedLabel);
 			}
 		}
