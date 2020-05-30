@@ -85,6 +85,33 @@ static void di_execute_command(void)
 				result = 0x01023A00;
 			break;
 		}
+		case 0xE1:
+		{
+			switch (((*DI_EMU)[2] >> 16) & 0xFF) {
+				case 0x00:
+				{
+					*(uint8_t *)VAR_STREAM_DI = true;
+					break;
+				}
+				case 0x01:
+				{
+					*(uint8_t *)VAR_STREAM_DI = false;
+					break;
+				}
+			}
+			break;
+		}
+		case 0xE2:
+		{
+			switch (((*DI_EMU)[2] >> 16) & 0xFF) {
+				case 0x00:
+				{
+					result = *(uint8_t *)VAR_STREAM_DI;
+					break;
+				}
+			}
+			break;
+		}
 		case 0xE3:
 		{
 			if (*(uint32_t *)VAR_SECOND_DISC) {
