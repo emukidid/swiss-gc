@@ -88,6 +88,9 @@ s32 deviceHandler_Qoob_seekFile(file_handle* file, u32 where, u32 type) {
 }
 
 s32 deviceHandler_Qoob_readFile(file_handle* file, void* buffer, u32 length) {
+	if(!file->fileBase) {
+		return -1;
+	}
 	__SYS_ReadROM(buffer,length,file->fileBase+file->offset);
 	return length;
 }

@@ -125,7 +125,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 165, txtbuffer, 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 210, "Patreon supporters", 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 228, "meneerbeer, Dan Kunz, Heather Kent, Joshua Witt", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 246, "Cristofer Cruz, LemonMeringueTy", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 246, "Cristofer Cruz, LemonMeringueTy, badsector", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 282, "Greetz to FIX94, megalomaniac, sepp256, StreetWal", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 318, "Web/Support https://www.gc-forever.com/", 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 334, "Source at https://github.com/emukidid/swiss-gc", 0.75f, true, defaultColor));
