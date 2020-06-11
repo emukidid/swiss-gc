@@ -222,7 +222,7 @@ DEVICEHANDLER_INTERFACE __device_ftp = {
 	DEVICE_ID_D,
 	"BBA",
 	"File Transfer Protocol",
-	"Must be pre-configured via swiss.ini",
+	"Configurable via the settings screen",
 	{TEX_SAMBA, 140, 64},
 	FEAT_READ,
 	LOC_SERIAL_PORT_1,

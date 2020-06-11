@@ -1258,7 +1258,7 @@ bool manage_file() {
 		else {
 			DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 230, "(A) Load (X) Copy", 1.0f, true, defaultColor));
 		}
-		DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 300, "Press an option to Continue, or B to return", 1.0f, true, defaultColor));
+		DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 300, "Press an option to continue, or B to return", 1.0f, true, defaultColor));
 		DrawPublish(manageFileBox);
 		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
 		int option = 0;
@@ -1364,7 +1364,7 @@ bool manage_file() {
 				float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
 				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor));
 				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 230, "(A) Rename (Z) Overwrite", 1.0f, true, defaultColor));
-				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 300, "Press an option to Continue, or B to return", 1.0f, true, defaultColor));
+				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 300, "Press an option to continue, or B to return", 1.0f, true, defaultColor));
 				DrawPublish(dupeBox);
 				while(PAD_ButtonsHeld(0) & (PAD_BUTTON_A | PAD_TRIGGER_Z)) { VIDEO_WaitVSync (); }
 				while(1) {

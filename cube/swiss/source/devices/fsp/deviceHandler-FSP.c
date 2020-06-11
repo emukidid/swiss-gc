@@ -243,7 +243,7 @@ DEVICEHANDLER_INTERFACE __device_fsp = {
 	DEVICE_ID_E,
 	"BBA",
 	"File Service Protocol",
-	"Must be pre-configured via swiss.ini",
+	"Configurable via the settings screen",
 	{TEX_SAMBA, 140, 64},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_REPLACES_DVD_FUNCS|FEAT_ALT_READ_PATCHES|FEAT_CAN_READ_PATCHES,
 	LOC_SERIAL_PORT_1,
