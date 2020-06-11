@@ -144,10 +144,11 @@ u32 calc_elf_segments_size(file_handle *file, u32 file_offset, u32 *file_size) {
 	int i;
 	for(i = 0; i < ehdr->e_phnum; i++) {
 		if(phdr[i].p_type == PT_LOAD) {
+			phdr[i].p_filesz = (phdr[i].p_filesz + 31) & ~31;
 			if(phdr[i].p_offset + phdr[i].p_filesz > *file_size) {
 				*file_size = phdr[i].p_offset + phdr[i].p_filesz;
 			}
-			size += (phdr[i].p_filesz + 31) & ~31;
+			size += phdr[i].p_filesz;
 		}
 	}
 	free(ehdr);
