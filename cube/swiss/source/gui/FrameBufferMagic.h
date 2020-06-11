@@ -57,8 +57,6 @@
 #include "memcardimg.h"
 #include "sambaimg_tpl.h"
 #include "sambaimg.h"
-#include "btnnohilight_tpl.h"
-#include "btnnohilight.h"
 #include "btnhilight_tpl.h"
 #include "btnhilight.h"
 #include "btndevice_tpl.h"
@@ -109,7 +107,6 @@ enum TextureId
 	TEX_HDD,
 	TEX_QOOB,
 	TEX_WODEIMG,
-	TEX_BTNNOHILIGHT,
 	TEX_BTNHILIGHT,
 	TEX_BTNDEVICE,
 	TEX_BTNSETTINGS,

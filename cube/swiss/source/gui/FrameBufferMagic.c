@@ -52,8 +52,6 @@ TPLFile wiikeyTPL;
 GXTexObj wiikeyTexObj;
 TPLFile systemTPL;
 GXTexObj systemTexObj;
-TPLFile btnnohilightTPL;
-GXTexObj btnnohilightTexObj;
 TPLFile btnhilightTPL;
 GXTexObj btnhilightTexObj;
 TPLFile btndeviceTPL;
@@ -355,8 +353,6 @@ static void init_textures()
 	TPL_GetTexture(&usbgeckoTPL,usbgeckoimg,&usbgeckoTexObj);
 	TPL_OpenTPLFromMemory(&sambaTPL, (void *)sambaimg_tpl, sambaimg_tpl_size);
 	TPL_GetTexture(&sambaTPL,sambaimg,&sambaTexObj);
-	TPL_OpenTPLFromMemory(&btnnohilightTPL, (void *)btnnohilight_tpl, btnnohilight_tpl_size);
-	TPL_GetTexture(&btnnohilightTPL,btnnohilight,&btnnohilightTexObj);
 	TPL_OpenTPLFromMemory(&btnhilightTPL, (void *)btnhilight_tpl, btnhilight_tpl_size);
 	TPL_GetTexture(&btnhilightTPL,btnhilight,&btnhilightTexObj);
 	TPL_OpenTPLFromMemory(&btndeviceTPL, (void *)btndevice_tpl, btndevice_tpl_size);
@@ -527,9 +523,6 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			break;
 		case TEX_SAMBA:
 			GX_LoadTexObj(&sambaTexObj, GX_TEXMAP0);
-			break;
-		case TEX_BTNNOHILIGHT:
-			GX_LoadTexObj(&btnnohilightTexObj, GX_TEXMAP0);
 			break;
 		case TEX_BTNHILIGHT:
 			GX_LoadTexObj(&btnhilightTexObj, GX_TEXMAP0);

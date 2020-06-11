@@ -20,7 +20,4 @@
 #define BTNHILIGHT_WIDTH   (68)
 #define BTNHILIGHT_HEIGHT  (52)
 
-#define BTNNOHILIGHT_WIDTH   (36)
-#define BTNNOHILIGHT_HEIGHT  (38)
-
 #endif
