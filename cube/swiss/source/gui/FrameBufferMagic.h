@@ -24,9 +24,8 @@
 
 #define PROGRESS_BOX_WIDTH  600
 #define PROGRESS_BOX_HEIGHT 125
-#define PROGRESS_BOX_BAR    COLOR_GREEN
-#define PROGRESS_BOX_BARALL COLOR_RED
-#define PROGRESS_BOX_BACK   COLOR_BLUE
+#define PROGRESS_BOX_BOTTOMLEFT 0
+#define PROGRESS_BOX_TOPRIGHT 1
 
 #define MENU_MAX 5
 #define MENU_NOSELECT -1
@@ -149,6 +148,7 @@ typedef struct kbBtn_ {
 uiDrawObj_t* DrawImage(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
 uiDrawObj_t* DrawTexObj(GXTexObj *texObj, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
 uiDrawObj_t* DrawProgressBar(bool indeterminate, int percent, char *message);
+uiDrawObj_t* DrawProgressLoading(int miniModePos);
 uiDrawObj_t* DrawContainer();
 uiDrawObj_t* DrawMessageBox(int type, char *message);
 uiDrawObj_t* DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode);

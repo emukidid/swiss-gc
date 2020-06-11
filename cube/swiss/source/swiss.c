@@ -389,7 +389,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		if(loadingBox != NULL) {
 			DrawDispose(loadingBox);
 		}
-		loadingBox = DrawProgressBar(true, 0, "Loading ...");
+		loadingBox = DrawProgressLoading(PROGRESS_BOX_BOTTOMLEFT);
 		DrawPublish(loadingBox);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFiles(directory, num_files, newPanel);
@@ -604,7 +604,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		if(loadingBox != NULL) {
 			DrawDispose(loadingBox);
 		}
-		loadingBox = DrawProgressBar(true, 0, "Loading ...");
+		loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
 		DrawPublish(loadingBox);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFilesCarousel(directory, num_files, newPanel);
