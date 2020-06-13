@@ -1964,6 +1964,11 @@ static void *videoUpdate(void *videoEventQueue) {
 		/*sprintf(fps, "fps %i", framerate);
 		drawString(10, 10, fps, 1.0f, false, (GXColor){255,255,255,255});*/
 		
+		s8 cputemp = SYS_GetCoreTemperature();
+		if(cputemp >= 0) {
+			sprintf(fps, "%i\260C", cputemp);
+			drawString(390, 33, fps, 0.55f, false, (GXColor){255,255,255,255});
+		}
 		time_t curtime;
 		time(&curtime);
 		struct tm *info = localtime( &curtime );
