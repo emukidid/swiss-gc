@@ -214,6 +214,7 @@ typedef struct drawProgressEvent {
 	bool indeterminate;
 	bool miniMode;
 	int miniModePos;
+	int miniModeAlpha;
 	int percent;
 	int speed;	// in bytes
 	int timestart;
@@ -664,25 +665,26 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
 	if(data->miniMode) {	
 		GX_SetLineWidth((u8) 12, GX_TO_ZERO );
 		
-		int x = 30, y = 420, radius = 4, numSegments = 20;
+		int x = 30, y = 420, radius = 5, numSegments = 100;
 		if(data->miniModePos == PROGRESS_BOX_TOPRIGHT) {
 			x = 560; y = 100;
 		}
 		float angle, point_x, point_y;
-		GXColor progCol = (GXColor) {defaultColor.r,defaultColor.g,defaultColor.b,(u8)(255*(data->percent/100.0f))};
-		GX_Begin(GX_LINESTRIP, GX_VTXFMT0, (data->percent/5)+1);
-		for (int i = 0; i<=data->percent/5; i++)
+		GXColor progCol = (GXColor) {defaultColor.r,defaultColor.g,defaultColor.b, (u8)data->miniModeAlpha};
+		GX_Begin(GX_LINESTRIP, GX_VTXFMT0, (data->percent)+1);
+		for (int i = 0; i<=data->percent; i++)
 		{
 			angle = M_TWOPI * i/numSegments;
 			point_x = (float)x + (float)radius * cos( angle );
 			point_y = (float)y + (float)radius * sin( angle );
 
 			GX_Position3f32((float) point_x,(float) point_y, 0.0f );
-			GX_Color4u8(progCol.r, progCol.g, progCol.b, progCol.r);
+			GX_Color4u8(progCol.r, progCol.g, progCol.b, progCol.a);
 			GX_TexCoord2f32(0.0f,0.0f);
 		}
 		GX_End();
-		data->percent += (data->percent + 5 > 100 ? -100 : 5);
+		data->percent += (data->percent + 2 > 100 ? -100 : 2);
+		if(data->miniModeAlpha < 254) data->miniModeAlpha+=2;
 		drawString(x+30, y, "loading...", 0.45f, true, progCol);
 		return;
 	}
