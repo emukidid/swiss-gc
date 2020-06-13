@@ -61,12 +61,14 @@ static u32 exi_imm_read(int len)
 #define rcvr_spi() ((u8)(exi_imm_read(1) & 0xFF))
 
 static void send_cmd(u32 cmd, u32 sector) {
-	exi_deselect();
-	exi_select();
-	rcvr_spi();
+	if (cmd != CMD12) {
+		exi_deselect();
+		exi_select();
+		rcvr_spi();
 
-	while(rcvr_spi() != 0xFF);
-	
+		while(rcvr_spi() != 0xFF);
+	}
+
 	exi_imm_write(cmd<<24, 1);
 	exi_imm_write(sector, 4);
 	exi_imm_write(1<<24, 1);
@@ -175,10 +177,15 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 		goto exit;
 	}
 	// If we weren't just reading this sector
-	else if(lba != *(u32*)VAR_SD_LBA) {
+	if(lba != *(u32*)VAR_SD_LBA) {
 		end_read();
 		// Send multiple block read command and the LBA we want to start reading at
 		send_cmd(CMD18, lba);
+	}
+	else {
+		// Select SD + Burn a cycle after it
+		exi_select();
+		rcvr_spi();
 	}
 	if(numBytes < SECTOR_SIZE) {
 		// Read half block
@@ -193,6 +200,9 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	}
 	// Save next LBA
 	*(u32*)VAR_SD_LBA = lba + (1<<lbaShift);
+	// Deselect SD + Burn a cycle after it
+	exi_deselect();
+	rcvr_spi();
 	#endif
 exit:
 	// Unlock EXI bus
@@ -206,6 +216,8 @@ void end_read() {
 	if(*(u32*)VAR_SD_LBA) {
 		*(u32*)VAR_SD_LBA = 0;
 		// End the read by sending CMD12 + Deselect SD + Burn a cycle after it
+		exi_select();
+		rcvr_spi();
 		send_cmd(CMD12, 0);
 		exi_deselect();
 		rcvr_spi();
