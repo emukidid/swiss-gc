@@ -78,6 +78,8 @@ TPLFile checkedTPL;
 GXTexObj checkedTexObj;
 TPLFile uncheckedTPL;
 GXTexObj uncheckedTexObj;
+TPLFile loadingTPL;
+GXTexObj loadingTexObj;
 TPLFile mp3imgTPL;
 GXTexObj mp3imgTexObj;
 TPLFile dolimgTPL;
@@ -382,6 +384,9 @@ static void init_textures()
 	TPL_GetTexture(&checkedTPL,checked_32,&checkedTexObj);
 	TPL_OpenTPLFromMemory(&uncheckedTPL, (void *)unchecked_32_tpl, unchecked_32_tpl_size);
 	TPL_GetTexture(&uncheckedTPL,unchecked_32,&uncheckedTexObj);
+	TPL_OpenTPLFromMemory(&loadingTPL, (void *)loading_16_tpl, loading_16_tpl_size);
+	TPL_GetTexture(&loadingTPL,loading_16,&loadingTexObj);
+	GX_InitTexObjWrapMode(&loadingTexObj, GX_MIRROR, GX_MIRROR);
 	TPL_OpenTPLFromMemory(&mp3imgTPL, (void *)mp3img_tpl, mp3img_tpl_size);
 	TPL_GetTexture(&mp3imgTPL,0,&mp3imgTexObj);
 	TPL_OpenTPLFromMemory(&dolimgTPL, (void *)dolimg_tpl, dolimg_tpl_size);
@@ -663,29 +668,19 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
 	GXColor progressBarIndColor = (GXColor) {0xb3,0xd9,0xff,GUI_MSGBOX_ALPHA}; //orange
 	
 	if(data->miniMode) {	
-		GX_SetLineWidth((u8) 12, GX_TO_ZERO );
-		
-		int x = 30, y = 420, radius = 5, numSegments = 100;
+		int x = 30, y = 420;
 		if(data->miniModePos == PROGRESS_BOX_TOPRIGHT) {
 			x = 560; y = 100;
 		}
-		float angle, point_x, point_y;
-		GXColor progCol = (GXColor) {defaultColor.r,defaultColor.g,defaultColor.b, (u8)data->miniModeAlpha};
-		GX_Begin(GX_LINESTRIP, GX_VTXFMT0, (data->percent)+1);
-		for (int i = 0; i<=data->percent; i++)
-		{
-			angle = M_TWOPI * i/numSegments;
-			point_x = (float)x + (float)radius * cos( angle );
-			point_y = (float)y + (float)radius * sin( angle );
-
-			GX_Position3f32((float) point_x,(float) point_y, 0.0f );
-			GX_Color4u8(progCol.r, progCol.g, progCol.b, progCol.a);
-			GX_TexCoord2f32(0.0f,0.0f);
-		}
-		GX_End();
-		data->percent += (data->percent + 2 > 100 ? -100 : 2);
-		if(data->miniModeAlpha < 254) data->miniModeAlpha+=2;
-		drawString(x+30, y, "loading...", 0.45f, true, progCol);
+		GXColor loadingColor = (GXColor) {255,255,255,data->miniModeAlpha};
+		int numSegments = (data->percent*8)/100;
+		data->percent += (data->percent + 2 > 200 ? -200 : 2);
+		data->miniModeAlpha = (data->miniModeAlpha + 2 > 255 ? 255 : data->miniModeAlpha + 2);
+		GX_SetTevOp (GX_TEVSTAGE0, GX_MODULATE);
+		GX_InvalidateTexAll();
+		GX_LoadTexObj(&loadingTexObj, GX_TEXMAP0);
+		_drawRect(x-8, y-8, 16, 16, 0, loadingColor, (float) (numSegments)/8, (float) (numSegments+1)/8, 0.0f, 1.0f);
+		drawString(x+38, y, "Loading...", 0.55f, true, loadingColor);
 		return;
 	}
 	_DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor);		

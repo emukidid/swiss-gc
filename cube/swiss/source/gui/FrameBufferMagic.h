@@ -88,6 +88,8 @@
 #include "checked_32.h"
 #include "unchecked_32_tpl.h"
 #include "unchecked_32.h"
+#include "loading_16_tpl.h"
+#include "loading_16.h"
 #include "gcloaderimg_tpl.h"
 #include "gcloaderimg.h"
 
