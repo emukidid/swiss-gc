@@ -832,7 +832,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	int sizeToRead, type;
 	void *buffer;
 	
-	if(swissSettings.bs2Boot) {
+	if(GCMDisk.DOLOffset == 0 || swissSettings.bs2Boot) {
 		progBox = DrawPublish(DrawProgressBar(true, 0, "Loading BS2"));
 		
 		// Read BS2
