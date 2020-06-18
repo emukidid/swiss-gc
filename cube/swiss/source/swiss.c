@@ -927,6 +927,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 			while(1);
 		}
 
+		*(volatile u32*)0x8000002C = (*(volatile u32*)0xCC00302C >> 28) + (swissSettings.debugUSB ? 0x10000004:0x00000001);
 		*(volatile u32*)0x800000F4 = top_of_main_ram-fstSizeAligned-0x2000;	// bi2.bin location
 		*(volatile u32*)0x80000038 = top_of_main_ram-fstSizeAligned;		// FST Location in ram
 		*(volatile u32*)0x8000003C = GCMDisk.MaxFSTSize;					// FST Max Length
