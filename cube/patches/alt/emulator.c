@@ -6,11 +6,28 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include "fifo.h"
 #include "timer.h"
 #include "../base/common.h"
 #include "../base/dvd.h"
 #include "../base/DVDMath.h"
 #include "../base/os.h"
+
+static struct {
+	bool playing;
+	bool stopping;
+
+	struct {
+		uint32_t position;
+		uint32_t start;
+		uint32_t length;
+	} current;
+
+	struct {
+		uint32_t start;
+		uint32_t length;
+	} next;
+} dtk = {0};
 
 #ifdef BBA
 void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
@@ -35,6 +52,47 @@ bool memeq(const void *a, const void *b, size_t size)
 
 	return true;
 }
+
+#ifdef DTK
+bool dtk_fill_buffer(void)
+{
+	int16_t buffer[448][2] __attribute((aligned(32)));
+
+	if (!dtk.playing)
+		return false;
+	if (fifo_space() < sizeof(buffer))
+		return false;
+
+	OSTick start = OSGetTick();
+
+	int size = read_frag(VAR_SECTOR_BUF, sizeof(VAR_SECTOR_BUF), dtk.current.position);
+	if (size == sizeof(VAR_SECTOR_BUF)) {
+		for (int i = 0; i < size / 32; i++)
+			ADPDecodeBlock(VAR_SECTOR_BUF + i * 32, buffer + i * 28);
+
+		fifo_write(buffer, sizeof(buffer));
+		dtk.current.position += size;
+
+		if (dtk.current.position == dtk.current.start + dtk.current.length) {
+			dtk.current.position = 
+			dtk.current.start  = dtk.next.start;
+			dtk.current.length = dtk.next.length;
+
+			if (dtk.stopping) {
+				dtk.stopping = false;
+				dtk.playing  = false;
+			}
+
+			ADPResetFilter();
+		}
+	}
+
+	OSTick end = OSGetTick();
+	timer1_start(OSDiffTick(end, start));
+
+	return true;
+}
+#endif
 
 #ifndef DVD
 void di_update_interrupts(void)
@@ -90,12 +148,37 @@ static void di_execute_command(void)
 			switch (((*DI_EMU)[2] >> 16) & 0xFF) {
 				case 0x00:
 				{
-					*(uint8_t *)VAR_STREAM_DI = true;
+					uint32_t offset = (*DI_EMU)[3] << 2 & ~0x80007FFF;
+					uint32_t length = (*DI_EMU)[4] & ~0x7FFF;
+
+					if (!offset && !length) {
+						dtk.stopping = true;
+					} else if (!dtk.stopping) {
+						dtk.next.start  = offset;
+						dtk.next.length = length;
+
+						if (!dtk.playing) {
+							dtk.current.position = 
+							dtk.current.start  = offset;
+							dtk.current.length = length;
+
+							#ifdef DTK
+							fifo_reset();
+							#endif
+
+							dtk.playing = true;
+						}
+					}
 					break;
 				}
 				case 0x01:
 				{
-					*(uint8_t *)VAR_STREAM_DI = false;
+					dtk.stopping = false;
+					dtk.playing  = false;
+
+					#ifdef DTK
+					ADPResetFilter();
+					#endif
 					break;
 				}
 			}
@@ -106,7 +189,22 @@ static void di_execute_command(void)
 			switch (((*DI_EMU)[2] >> 16) & 0xFF) {
 				case 0x00:
 				{
-					result = *(uint8_t *)VAR_STREAM_DI;
+					result = dtk.playing;
+					break;
+				}
+				case 0x01:
+				{
+					result = dtk.current.position & ~0x80007FFF >> 2;
+					break;
+				}
+				case 0x02:
+				{
+					result = dtk.current.start & ~0x80007FFF >> 2;
+					break;
+				}
+				case 0x03:
+				{
+					result = dtk.current.length;
 					break;
 				}
 			}
@@ -241,6 +339,47 @@ static void di_write(unsigned index, uint32_t value)
 	}
 }
 
+#ifdef DTK
+static uint32_t DSP_EMU[15] = {0};
+
+static void dsp_read(unsigned index, uint32_t *value)
+{
+	*value = ((uint16_t *)DSP)[index];
+}
+
+static void dsp_write(unsigned index, uint16_t value)
+{
+	switch (index) {
+		case 24:
+			((uint16_t *)DSP_EMU)[index] = value & 0x3FF;
+			break;
+		case 25:
+			((uint16_t *)DSP_EMU)[index] = value & 0xFFE0;
+			break;
+		case 27:
+			((uint16_t *)DSP_EMU)[index] = value;
+
+			if ((value & 0x8000) && (AI[0] & 0b0000001)) {
+				void *buffer = OSPhysicalToCached(DSP_EMU[12]);
+				int length = (DSP_EMU[13] & 0x7FFF) << 5;
+
+				if (fifo_size() >= length) {
+					fifo_read(buffer, length);
+					AI[0] &= ~0b1000000;
+				} else
+					AI[0] |=  0b1000000;
+			} else
+				AI[0] |=  0b1000000;
+
+			DSP[12] = DSP_EMU[12];
+			DSP[13] = DSP_EMU[13];
+			break;
+		default:
+			DSP[index] = value;
+	}
+}
+#endif
+
 #ifdef DVD
 static void dvd_reset(void)
 {
@@ -352,6 +491,26 @@ static bool ppc_store32(uint32_t address, uint32_t value)
 	return false;
 }
 
+#ifdef DTK
+static bool ppc_load16(uint32_t address, uint32_t *value)
+{
+	if ((address & ~0xFFE) == 0x0C005000) {
+		dsp_read((address >> 1) & 0xFF, value);
+		return true;
+	}
+	return false;
+}
+
+static bool ppc_store16(uint32_t address, uint16_t value)
+{
+	if ((address & ~0xFFE) == 0x0C005000) {
+		dsp_write((address >> 1) & 0xFF, value);
+		return true;
+	}
+	return false;
+}
+#endif
+
 static bool ppc_step(OSContext *context)
 {
 	uint32_t opcode = *(uint32_t *)context->srr0;
@@ -371,6 +530,22 @@ static bool ppc_step(OSContext *context)
 			short d = opcode & 0xFFFF;
 			return ppc_store32(context->gpr[ra] + d, context->gpr[rs]);
 		}
+		#ifdef DTK
+		case 40:
+		{
+			int rd = (opcode >> 21) & 0x1F;
+			int ra = (opcode >> 16) & 0x1F;
+			short d = opcode & 0xFFFF;
+			return ppc_load16(context->gpr[ra] + d, &context->gpr[rd]);
+		}
+		case 44:
+		{
+			int rs = (opcode >> 21) & 0x1F;
+			int ra = (opcode >> 16) & 0x1F;
+			short d = opcode & 0xFFFF;
+			return ppc_store16(context->gpr[ra] + d, context->gpr[rs]);
+		}
+		#endif
 	}
 
 	return false;

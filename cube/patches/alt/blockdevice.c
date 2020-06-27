@@ -30,6 +30,7 @@ bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 	return true;
 }
 
+bool dtk_fill_buffer(void);
 void di_update_interrupts(void);
 void di_complete_transfer(void);
 
@@ -54,6 +55,9 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 
 void trickle_read(void)
 {
+	if (dtk_fill_buffer())
+		return;
+
 	uint32_t position  = *(uint32_t *)VAR_LAST_OFFSET;
 	uint32_t remainder = *(uint32_t *)VAR_TMP2;
 	uint8_t *data      = *(uint8_t **)VAR_TMP1;

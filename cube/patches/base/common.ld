@@ -2,6 +2,7 @@ INCLUDE ../reservedarea.ld
 
 PI  = 0xCC003000;
 MI  = 0xCC004000;
+DSP = 0xCC005000;
 DI  = 0xCC006000;
 EXI = 0xCC006800;
 AI  = 0xCC006C00;

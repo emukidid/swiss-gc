@@ -251,9 +251,8 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	if(numBytes < SECTOR_SIZE || DMA_READ) {
 		// Read half sector
 		if(ataReadSector(lba, sectorBuf)) {
-			EXIUnlock(exi_channel);
-			//*(u32*)dst = 0x13370003;
-			return 0;
+			numBytes = 0;
+			goto exit;
 		}
 		memcpy(dst, sectorBuf + startByte, numBytes);
 		// Save current LBA
@@ -262,9 +261,13 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	else {
 		// Read full sector
 		if(ataReadSector(lba, dst)) {
-			EXIUnlock(exi_channel);
-			//*(u32*)dst = 0x13370004;
-			return 0;
+			numBytes = 0;
+			goto exit;
+		}
+		// If we're reusing the sector buffer
+		if(dst == sectorBuf) {
+			// Save current LBA
+			*(u32*)VAR_SECTOR_CUR = lba;
 		}
 	}
 exit:

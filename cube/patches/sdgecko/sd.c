@@ -197,6 +197,11 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	else {
 		// Read full block
 		rcvr_datablock(dst, 0, SECTOR_SIZE);
+		// If we're reusing the sector buffer
+		if(dst == sectorBuf) {
+			// Save current LBA
+			*(u32*)VAR_SECTOR_CUR = lba;
+		}
 	}
 	// Save next LBA
 	*(u32*)VAR_SD_LBA = lba + (1<<lbaShift);

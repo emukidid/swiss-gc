@@ -78,6 +78,7 @@ static u32(*const DI_EMU)[9] = (u32(*)[])VAR_DI_REGS;
 
 extern volatile u32 PI[13];
 extern volatile u16 MI[46];
+extern volatile u32 DSP[15];
 extern volatile u32 DI[10];
 extern volatile u32 EXI[3][5];
 extern volatile u32 AI[4];
@@ -93,6 +94,8 @@ void device_reset(void);
 int switch_fiber(u32 arg0, u32 arg1, u32 arg2, u32 arg3, u32 pc, u32 newsp);
 void dcache_flush_icache_inv(void* dst, u32 len);
 void dcache_store(void* dst, u32 len);
+void ADPResetFilter(void);
+void ADPDecodeBlock(unsigned char *input, short (*out)[2]);
 void ADPdecodebuffer(unsigned char *input, short *outl, short * outr, long *histl1, long *histl2, long *histr1, long *histr2);
 void StreamStartStream(u32 CurrentStart, u32 CurrentSize);
 void StreamEndStream(void);

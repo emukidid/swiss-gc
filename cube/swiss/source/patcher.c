@@ -1171,6 +1171,14 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		{ 24, 7, 5, 3, 2, 3, NULL, 0, "__DVDDequeueWaitingQueue" },
 		{ 26, 7, 5, 3, 2, 5, NULL, 0, "__DVDDequeueWaitingQueue" }	// SN Systems ProDG
 	};
+	FuncPattern AIRegisterDMACallbackSigs[2] = {
+		{ 18, 4, 4, 2, 0, 3, NULL, 0, "AIRegisterDMACallbackD" },
+		{ 17, 5, 5, 2, 0, 3, NULL, 0, "AIRegisterDMACallback" }
+	};
+	FuncPattern AIInitDMASigs[2] = {
+		{ 44, 12, 2, 3, 1, 6, NULL, 0, "AIInitDMAD" },
+		{ 34,  8, 4, 2, 0, 5, NULL, 0, "AIInitDMA" }
+	};
 	FuncPattern GXPeekZSigs[3] = {
 		{ 10, 1, 1, 0, 0, 1, NULL, 0, "GXPeekZ A" },
 		{ 10, 1, 1, 0, 0, 1, NULL, 0, "GXPeekZ B" },	// SN Systems ProDG
@@ -2889,6 +2897,25 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 			}
 		}
 		
+		for (j = 0; j < sizeof(AIInitDMASigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &AIInitDMASigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &AIRegisterDMACallbackSigs[0]))
+							AIInitDMASigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  7, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &AIRegisterDMACallbackSigs[1]))
+							AIInitDMASigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
 		for (j = 0; j < sizeof(__VMBASESetupExceptionHandlersSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &__VMBASESetupExceptionHandlersSigs[j])) {
 				switch (j) {
@@ -4539,6 +4566,33 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", DVDCheckDiskSigs[j].Name, DVDCheckDisk);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(AIInitDMASigs) / sizeof(FuncPattern); j++)
+		if (AIInitDMASigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(AIInitDMASigs) / sizeof(FuncPattern) && (i = AIInitDMASigs[j].offsetFoundAt)) {
+		u32 *AIInitDMA = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (AIInitDMA) {
+			if (devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
+				switch (j) {
+					case 0:
+						data[i +  8] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 15] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 30] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 35] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 1:
+						data[i +  8] = 0x3C800C00;	// lis		r4, 0x0C00
+						break;
+				}
+			}
+			print_gecko("Found:[%s] @ %08X\n", AIInitDMASigs[j].Name, AIInitDMA);
 			patched++;
 		}
 	}
