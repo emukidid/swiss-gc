@@ -69,13 +69,14 @@ build-sd-alt:
 	@$(CC) -Os $(OPTS) -c alt/emulator.c -DDTK
 	@$(CC) -Os $(OPTS) -c alt/fifo.c
 	@$(CC) -Os $(OPTS) -c alt/igr.c
+	@$(CC) -Os $(OPTS) -c alt/mix.c
 	@$(CC) -Os $(OPTS) -c alt/blockdevice.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=2
 	@$(CC) -Os $(OPTS) -c base/adp.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/os.c
-	@$(CC) -Os $(OPTS) -o sd_alt.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o fifo.o igr.o blockdevice.o sd.o adp.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o sd_alt.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o fifo.o igr.o mix.o blockdevice.o sd.o adp.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D sd_alt.elf > $(DISASM)/sd_alt_disasm.txt
 	@$(OBJCOPY) -O binary sd_alt.elf sd_alt.bin
@@ -112,13 +113,14 @@ build-ideexi-altv1:
 	@$(CC) -Os $(OPTS) -c alt/emulator.c -DDTK
 	@$(CC) -Os $(OPTS) -c alt/fifo.c
 	@$(CC) -Os $(OPTS) -c alt/igr.c
+	@$(CC) -Os $(OPTS) -c alt/mix.c
 	@$(CC) -Os $(OPTS) -c alt/blockdevice.c
 	@$(CC) -Os $(OPTS) -c ide-exi/hddread.c -DDMA_READ=0 -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c base/adp.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/os.c
-	@$(CC) -Os $(OPTS) -o ideexi_altv1.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o fifo.o igr.o blockdevice.o hddread.o adp.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o ideexi_altv1.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o fifo.o igr.o mix.o blockdevice.o hddread.o adp.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_altv1.elf > $(DISASM)/ideexi_altv1_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_altv1.elf ideexi_altv1.bin
@@ -155,13 +157,14 @@ build-ideexi-altv2:
 	@$(CC) -Os $(OPTS) -c alt/emulator.c -DDTK
 	@$(CC) -Os $(OPTS) -c alt/fifo.c
 	@$(CC) -Os $(OPTS) -c alt/igr.c
+	@$(CC) -Os $(OPTS) -c alt/mix.c
 	@$(CC) -Os $(OPTS) -c alt/blockdevice.c
 	@$(CC) -Os $(OPTS) -c ide-exi/hddread.c -DDMA_READ=1 -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c base/adp.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/os.c
-	@$(CC) -Os $(OPTS) -o ideexi_altv2.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o fifo.o igr.o blockdevice.o hddread.o adp.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o ideexi_altv2.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o fifo.o igr.o mix.o blockdevice.o hddread.o adp.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_altv2.elf > $(DISASM)/ideexi_altv2_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_altv2.elf ideexi_altv2.bin

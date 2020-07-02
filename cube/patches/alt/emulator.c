@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include "fifo.h"
+#include "mix.h"
 #include "timer.h"
 #include "../base/common.h"
 #include "../base/dvd.h"
@@ -373,17 +374,26 @@ static void dsp_write(unsigned index, uint16_t value)
 		case 27:
 			((uint16_t *)DSP_EMU)[index] = value;
 
-			if ((value & 0x8000) && (AI[0] & 0b0000001)) {
-				void *buffer = OSPhysicalToCached(DSP_EMU[12]);
+			if (value & 0x8000) {
+				void *buffer = OSPhysicalToUncached(DSP_EMU[12]);
 				int length = (DSP_EMU[13] & 0x7FFF) << 5;
+				int count = length / sizeof(sample_t);
 
-				if (fifo_size() >= length) {
-					fifo_read(buffer, length);
-					AI[0] &= ~0b1000000;
-				} else
-					AI[0] |=  0b1000000;
-			} else
-				AI[0] |=  0b1000000;
+				if ((AI[0] & 0b0000001) && fifo_size() >= length) {
+					uint8_t volume_l = AI[1];
+					uint8_t volume_r = AI[1] >> 8;
+
+					if (AI[0] & 0b1000000) {
+						sample_t stream[count * 3 / 2] __attribute((aligned(32)));
+						fifo_read(stream, sizeof(stream));
+						mix_samples(buffer, stream, true, count, volume_l, volume_r);
+					} else {
+						sample_t stream[count] __attribute((aligned(32)));
+						fifo_read(stream, sizeof(stream));
+						mix_samples(buffer, stream, false, count, volume_l, volume_r);
+					}
+				}
+			}
 
 			DSP[12] = DSP_EMU[12];
 			DSP[13] = DSP_EMU[13];
