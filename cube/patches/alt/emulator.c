@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <string.h>
 #include "fifo.h"
 #include "mix.h"
 #include "timer.h"
@@ -355,6 +356,10 @@ static void di_write(unsigned index, uint32_t value)
 }
 
 #ifdef DTK
+static sample_t __AXOutBuffer[2][160] __attribute((aligned(32))) = {0};
+static sample_t (*AXOutBuffer)[160] = OSCachedToUncached(__AXOutBuffer);
+static int AXOutFrame = 0;
+
 static uint32_t DSP_EMU[15] = {0};
 
 static void dsp_read(unsigned index, uint32_t *value)
@@ -379,6 +384,9 @@ static void dsp_write(unsigned index, uint16_t value)
 				int length = (DSP_EMU[13] & 0x7FFF) << 5;
 				int count = length / sizeof(sample_t);
 
+				if (length == sizeof(*AXOutBuffer))
+					buffer = memcpy(AXOutBuffer[AXOutFrame ^= 1], buffer, length);
+
 				if ((AI[0] & 0b0000001) && fifo_size() >= length) {
 					uint8_t volume_l = AI[1];
 					uint8_t volume_r = AI[1] >> 8;
@@ -393,10 +401,13 @@ static void dsp_write(unsigned index, uint16_t value)
 						mix_samples(buffer, stream, false, count, volume_l, volume_r);
 					}
 				}
-			}
 
-			DSP[12] = DSP_EMU[12];
-			DSP[13] = DSP_EMU[13];
+				DSP[12] = (intptr_t)buffer;
+				DSP[13] = ((length >> 5) & 0x7FFF) | 0x8000;
+			} else {
+				DSP[12] = DSP_EMU[12];
+				DSP[13] = DSP_EMU[13];
+			}
 			break;
 		default:
 			DSP[index] = value;
