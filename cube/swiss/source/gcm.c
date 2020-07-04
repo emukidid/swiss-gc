@@ -375,11 +375,10 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 	int i, num_patched = 0;
-	*(vu32*)VAR_EXECD_OFFSET = 0xFFFFFFFF;
 	// If the current device isn't SD via EXI, init one slot to write patches.
 	// TODO expand this to support IDE-EXI and other writable devices (requires dvd patch re-write/modularity)
 	bool patchDeviceReady = false;
-	if(!(devices[DEVICE_CUR]->features & FEAT_CAN_HOLD_PATCHES)) {
+	if(!(devices[DEVICE_CUR]->features & FEAT_PATCHES)) {
 		if(deviceHandler_test(&__device_sd_c)) {
 			devices[DEVICE_PATCHES] = &__device_sd_c;
 		}
@@ -435,10 +434,6 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		}
 		print_gecko("Checking %s %iKb\r\n", filesToPatch[i].name, filesToPatch[i].size/1024);
 		
-		// Make note of execD.img if we're using non alternative patches from a device that supports them.
-		if(strstr(filesToPatch[i].name, "execD.") && (devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) && !((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)) {
-			*(vu32*)VAR_EXECD_OFFSET = filesToPatch[i].offset;
-		}
 		if(strstr(filesToPatch[i].name, "iwanagaD.dol") || strstr(filesToPatch[i].name, "switcherD.dol")) {
 			continue;	// skip unused PSO files
 		}
@@ -474,23 +469,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		}
 		else { 
 			// Patch executable files
-			if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
-				if((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming) {
-					patched += Patch_DVDLowLevelReadAlt(buffer, sizeToRead, gameID, filesToPatch[i].type);
-					patched += Patch_GameSpecificReadAlt(buffer, sizeToRead, gameID, filesToPatch[i].type);
-				}
-				else {
-					ret = Patch_DVDLowLevelRead(buffer, sizeToRead, filesToPatch[i].type);
-					if(READ_PATCHED_ALL != ret)	{
-						DrawDispose(progBox);	
-						uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!"));
-						sleep(5);
-						DrawDispose(msgBox);
-					}
-					else {
-						patched += Patch_GameSpecificRead(buffer, sizeToRead, gameID, filesToPatch[i].type);
-					}
-				}
+			if(devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
+				patched += Patch_Hypervisor(buffer, sizeToRead, filesToPatch[i].type);
+				patched += Patch_GameSpecificHypervisor(buffer, sizeToRead, gameID, filesToPatch[i].type);
 			}
 		
 			// Patch specific game hacks

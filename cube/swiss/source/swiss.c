@@ -51,8 +51,6 @@ GXRModeObj *newmode = NULL;
 char txtbuffer[2048];           //temporary text buffer
 file_handle curFile;    //filedescriptor for current file
 file_handle curDir;     //filedescriptor for current directory
-extern int execdpatch_bin_size;
-extern u8 execdpatch_bin[];
 
 // Menu related variables
 int curMenuLocation = ON_FILLIST; //where are we on the screen?
@@ -894,17 +892,9 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		// Adjust top of memory
 		u32 top_of_main_ram = 0x81800000;
 		
-		// Native devices shouldn't steal memory for AS redirection
-		if(GCMDisk.AudioStreaming && (devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) && !((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)) {
-			top_of_main_ram = DECODED_BUFFER_0;
-		}
 		// Steal even more if there's cheats!
 		if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 			top_of_main_ram = WIIRD_ENGINE;
-		}
-		// execD handler lives at the top of mem and is branched to via lowmem code.
-		if(*(vu32*)VAR_EXECD_OFFSET != 0 && *(vu32*)VAR_EXECD_OFFSET != -1) {
-			top_of_main_ram = EXECD_RUNNER;
 		}
 
 		print_gecko("Top of RAM simulated as: 0x%08X\r\n", top_of_main_ram);
@@ -967,24 +957,10 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		}
 	}
 
-	// Patch to read from SD/HDD/USBGecko/WKF (if frag req or audio streaming)
-	if(devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) {
-		if((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming) {
-			Patch_DVDLowLevelReadAlt(buffer, sizeToRead, gameID, type);
-			Patch_GameSpecificReadAlt(buffer, sizeToRead, gameID, type);
-		}
-		else {
-			u32 ret = Patch_DVDLowLevelRead(buffer, sizeToRead, type);
-			if(READ_PATCHED_ALL != ret)	{
-				uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Failed to find necessary functions for patching!");
-				DrawPublish(msgBox);
-				sleep(5);
-				DrawDispose(msgBox);
-			}
-			else {
-				Patch_GameSpecificRead(buffer, sizeToRead, gameID, type);
-			}
-		}
+	// Patch hypervisor
+	if(devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
+		Patch_Hypervisor(buffer, sizeToRead, type);
+		Patch_GameSpecificHypervisor(buffer, sizeToRead, gameID, type);
 	}
 	
 	// Patch specific game hacks
@@ -1047,28 +1023,6 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	DCFlushRange((void*)0x80000000, 0x3100);
 	ICInvalidateRange((void*)0x80000000, 0x3100);
 	
-	// Try a device speed test using the actual in-game read code
-	if((devices[DEVICE_CUR]->features & FEAT_REPLACES_DVD_FUNCS) && !((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)) {
-		install_code(1);
-		print_gecko("Attempting speed test\r\n");
-		char *buffer = memalign(32,1024*1024);
-		typedef u32 (*_calc_speed) (void* dst, u32 len, u32 *speed);
-		_calc_speed calculate_speed = (_calc_speed) (void*)(CALC_SPEED);
-		u32 speed = 0;
-		if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b) {
-			calculate_speed(buffer, 1024*1024, &speed);	//Once more for HDD seek
-			speed = 0;
-		}
-		calculate_speed(buffer, 1024*1024, &speed);
-		float timeTakenInSec = (float)speed/1000000;
-		print_gecko("Speed is %i usec %.2f sec for 1MB\r\n",speed,timeTakenInSec);
-		float bytePerSec = (1024*1024) / timeTakenInSec;
-		print_gecko("Speed is %.2f KB/s\r\n",bytePerSec/1024);
-		print_gecko("Speed for 1024 bytes is: %i usec\r\n",speed/1024);
-		*(vu32*)VAR_DEVICE_SPEED = speed/1024;
-		free(buffer);
-	}
-	
 	if(swissSettings.hasDVDDrive) {
 		// Check DVD Status, make sure it's error code 0
 		print_gecko("DVD: %08X\r\n",dvd_get_error());
@@ -1077,23 +1031,11 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	*(vu32*)VAR_TMP1 = 0;
 	*(vu32*)VAR_TMP2 = 0;
 	*(vu32*)VAR_FAKE_IRQ_SET = 0;
-	*(vu32*)VAR_INTERRUPT_TIMES = 0;
-	*(vu32*)VAR_READS_IN_AS = 0;
 	*(vu32*)VAR_DISC_CHANGING = 0;
 	*(vu32*)VAR_LAST_OFFSET = 0xCAFEBABE;
-	*(vu32*)VAR_AS_ENABLED = GCMDisk.AudioStreaming;
 	*(vu8*)VAR_IGR_EXIT_TYPE = swissSettings.igrType;
 	*(vu32*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
 	memset(VAR_DI_REGS, 0, 0x24);
-	memset(VAR_STREAM_START, 0, 0xA0);
-	print_gecko("Audio Streaming is %s\r\n",*(vu32*)VAR_AS_ENABLED?"Enabled":"Disabled");
-	if(*(vu32*)VAR_EXECD_OFFSET != 0 && *(vu32*)VAR_EXECD_OFFSET != -1) {
-		print_gecko("execD offset: %08X\r\n", *(vu32*)VAR_EXECD_OFFSET);
-		memcpy((void*)EXECD_RUNNER, execdpatch_bin, execdpatch_bin_size);
-		DCFlushRange((void*)EXECD_RUNNER, EXECD_RUNNER_SPACE);
-		ICInvalidateRange((void*)EXECD_RUNNER, EXECD_RUNNER_SPACE);
-		print_gecko("Installed execD handler to %08X (%i bytes)\r\n", EXECD_RUNNER, execdpatch_bin_size);
-	}
 	
 	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 		kenobi_install_engine();
@@ -1682,7 +1624,7 @@ void load_game() {
 	memset(filesToPatch, 0, sizeof(ExecutableFile)*512);
 
 	// Report to the user the patch status of this GCM/ISO file
-	if(devices[DEVICE_CUR]->features & FEAT_CAN_READ_PATCHES) {
+	if(devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
 		numToPatch = check_game(filesToPatch);
 	}
 	

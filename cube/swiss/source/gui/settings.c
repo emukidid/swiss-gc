@@ -246,7 +246,6 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, true);
 		drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_DEFAULT_TEXT_ENCODING, true);
 		drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, true);
-		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Audio Streaming:", swissSettings.emulateAudioStreaming, option == SET_DEFAULT_AUDIO_STREAMING, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Read Speed:", swissSettings.emulateReadSpeed, option == SET_DEFAULT_READ_SPEED, true);
 	}
 	else if(page_num == PAGE_GAME) {
@@ -264,7 +263,6 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[gameConfig->forceWidescreen], option == SET_WIDESCREEN, enableGamePatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[gameConfig->forceEncoding], option == SET_TEXT_ENCODING, enableGamePatches);
 			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, enableGamePatches);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Audio Streaming:", gameConfig->emulateAudioStreaming, option == SET_AUDIO_STREAMING, enableGamePatches);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Read Speed:", gameConfig->emulateReadSpeed, option == SET_READ_SPEED, enableGamePatches);
 		}
 		else {
@@ -279,7 +277,6 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, false);
 			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_DEFAULT_TEXT_ENCODING, false);
 			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, false);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Audio Streaming:", swissSettings.emulateAudioStreaming, option == SET_DEFAULT_AUDIO_STREAMING, false);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Read Speed:", swissSettings.emulateReadSpeed, option == SET_DEFAULT_READ_SPEED, false);
 		}
 	}
@@ -523,9 +520,6 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 				if(swissSettings.invertCStick < 0)
 					swissSettings.invertCStick = 3;
 			break;
-			case SET_DEFAULT_AUDIO_STREAMING:
-				swissSettings.emulateAudioStreaming ^= 1;
-			break;
 			case SET_DEFAULT_READ_SPEED:
 				swissSettings.emulateReadSpeed ^= 1;
 			break;
@@ -607,9 +601,6 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 					gameConfig->invertCStick = 0;
 				if(gameConfig->invertCStick < 0)
 					gameConfig->invertCStick = 3;
-			break;
-			case SET_AUDIO_STREAMING:
-				gameConfig->emulateAudioStreaming ^= 1;
 			break;
 			case SET_READ_SPEED:
 				gameConfig->emulateReadSpeed ^= 1;

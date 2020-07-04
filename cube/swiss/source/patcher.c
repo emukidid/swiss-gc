@@ -22,22 +22,6 @@
 
 static u32 top_addr = (u32)VAR_PATCHES_BASE;
 
-// Read
-FuncPattern ReadDebug = {56, 23, 18, 3, 2, 4, 0, 0, "Read (Debug)", 0};
-FuncPattern ReadCommon = {68, 30, 18, 5, 2, 3, 0, 0, "Read (Common)", 0};
-FuncPattern ReadUncommon = {66, 29, 17, 5, 2, 3, 0, 0, "Read (Uncommon)", 0};
-FuncPattern ReadProDG = {67, 29, 17, 5, 2, 6, 0, 0, "Read (ProDG)", 0};
-
-// OSExceptionInit
-FuncPattern OSExceptionInitSig = {160, 39, 14, 14, 20, 7, 0, 0, "OSExceptionInit", 0};
-FuncPattern OSExceptionInitSigDebug = {164, 61, 6, 18, 14, 14, 0, 0, "OSExceptionInit (Debug)", 0};
-FuncPattern OSExceptionInitSigProDG = {151, 45, 14, 16, 13, 9, 0, 0, "OSExceptionInit (ProDG)", 0};
-
-// __DVDInterruptHandler
-u16 _dvdinterrupthandler_part[3] = {
-	0x6000, 0x002A, 0x0054
-};
-
 static void *patch_locations[PATCHES_MAX];
 
 void checkPatchAddr() {
@@ -109,12 +93,6 @@ void *installPatch(int patchId) {
 			patchSize = VIGetRetraceCountHook_length; patchLocation = VIGetRetraceCountHook; break;
 		case VI_RETRACEHANDLERHOOK:
 			patchSize = VIRetraceHandlerHook_length; patchLocation = VIRetraceHandlerHook; break;
-		case MAJORA_SAVEREGS:
-			patchSize = MajoraSaveRegs_length; patchLocation = MajoraSaveRegs; break;
-		case MAJORA_AUDIOSTREAM:
-			patchSize = MajoraAudioStream_length; patchLocation = MajoraAudioStream; break;
-		case MAJORA_LOADREGS:
-			patchSize = MajoraLoadRegs_length; patchLocation = MajoraLoadRegs; break;
 		default:
 			break;
 	}
@@ -144,52 +122,33 @@ int install_code(int final)
 	
 	// IDE-EXI
   	if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b) {	
-		if(!swissSettings.emulateAudioStreaming) {
-			patch = (!_ideexi_version)?&ideexi_altv1_bin[0]:&ideexi_altv2_bin[0];
-			patchSize = (!_ideexi_version)?ideexi_altv1_bin_size:ideexi_altv2_bin_size;
-			location = LO_RESERVE_ALT;
-		}
-		else {
-			patch = (!_ideexi_version)?&ideexi_v1_bin[0]:&ideexi_v2_bin[0];
-			patchSize = (!_ideexi_version)?ideexi_v1_bin_size:ideexi_v2_bin_size;
-		}
+		patch = (!_ideexi_version)?&ideexi_v1_bin[0]:&ideexi_v2_bin[0];
+		patchSize = (!_ideexi_version)?ideexi_v1_bin_size:ideexi_v2_bin_size;
 		print_gecko("Installing Patch for IDE-EXI\r\n");
   	}
 	// SD Card over EXI
 	else if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
-		if(!swissSettings.emulateAudioStreaming) {
-			patch = &sd_alt_bin[0];
-			patchSize = sd_alt_bin_size;
-			location = LO_RESERVE_ALT;
-		}
-		else {
-			patch = &sd_bin[0];
-			patchSize = sd_bin_size;
-		}
+		patch = &sd_bin[0]; patchSize = sd_bin_size;
 		print_gecko("Installing Patch for SD Card over EXI\r\n");
 	}
 	// DVD
 	else if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader) {
 		patch = &dvd_bin[0]; patchSize = dvd_bin_size;
-		location = LO_RESERVE_ALT;
 		print_gecko("Installing Patch for DVD\r\n");
 	}
 	// USB Gecko
 	else if(devices[DEVICE_CUR] == &__device_usbgecko) {
 		patch = &usbgecko_bin[0]; patchSize = usbgecko_bin_size;
-		location = LO_RESERVE_ALT;
 		print_gecko("Installing Patch for USB Gecko\r\n");
 	}
 	// Wiikey Fusion
 	else if(devices[DEVICE_CUR] == &__device_wkf) {
 		patch = &wkf_bin[0]; patchSize = wkf_bin_size;
-		location = LO_RESERVE_ALT;
 		print_gecko("Installing Patch for WKF\r\n");
 	}
 	// Broadband Adapter
 	else if(devices[DEVICE_CUR] == &__device_fsp) {
 		patch = &bba_bin[0]; patchSize = bba_bin_size;
-		location = LO_RESERVE_ALT;
 		print_gecko("Installing Patch for Broadband Adapter\r\n");
 	}
 	print_gecko("Space for patch remaining: %i\r\n", top_addr - location);
@@ -440,195 +399,6 @@ bool findx_patterns(u32 *data, int dataType, u32 offsetFoundAt, u32 length, ...)
 	return functionPattern;
 }
 
-// Redirects 0xCC0060xx reads to VAR_DI_REGS
-void PatchDVDInterface( u8 *dst, u32 Length, int dataType )
-{
-	PatchDetectLowMemUsage(dst, Length, dataType);
-	u32 DIPatched = 0;
-	int i;
-
-#define REG_0xCC00 0
-#define REG_OFFSET 1
-#define REG_USED   2
-	
-	u32 regs[32][3];
-	memset(regs, 0, 32*4*3);
-	
-	for( i=0; i < Length; i+=4 )
-	{
-		u32 op = *(vu32*)(dst + i);
-			
-		// lis rX, 0xCC00
-		if( (op & 0xFC1FFFFF) == 0x3C00CC00 ) {
-			u32 dstR = (op >> 21) & 0x1F;
-			if(regs[dstR][REG_USED]) {
-				u32 lisOffset = regs[dstR][REG_OFFSET];
-				*(vu32*)lisOffset = (((*(vu32*)lisOffset) & 0xFFFF0000) | ((u32)VAR_DI_REGS>>16));
-				//void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(lisOffset)-(u32)(dst));
-				//print_gecko("DI:[%08X] %08X: lis r%u, %04X\r\n", properAddress, *(vu32*)regs[dstR][REG_OFFSET], dstR, (*(vu32*)lisOffset) &0xFFFF);
-				DIPatched++;
-				regs[dstR][REG_USED] = 0;	// This might not eventuate to a 0xCC006000 write
-			}
-			regs[dstR][REG_0xCC00]	=	1;	// this reg is now 0xCC00
-			regs[dstR][REG_OFFSET]	=	(u32)dst + i;
-			continue;
-		}
-
-		// li rX, x or lis rX, x
-		if( (op & 0xFC1F0000) == 0x38000000 || (op & 0xFC1F0000) == 0x3C000000 ) {
-			u32 dstR = (op >> 21) & 0x1F;
-			if (regs[dstR][REG_0xCC00]) {
-				if(regs[dstR][REG_USED]) {
-					u32 lisOffset = regs[dstR][REG_OFFSET];
-					*(vu32*)lisOffset = (((*(vu32*)lisOffset) & 0xFFFF0000) | ((u32)VAR_DI_REGS>>16));
-					//void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(lisOffset)-(u32)(dst));
-					//print_gecko("DI:[%08X] %08X: lis r%u, %04X\r\n", properAddress, *(vu32*)regs[dstR][REG_OFFSET], dstR, (*(vu32*)lisOffset) &0xFFFF);
-					DIPatched++;
-				}
-				regs[dstR][REG_0xCC00] = 0;	// reg is no longer 0xCC00
-			}
-			continue;
-		}
-
-		// addi rX, rY, 0x6000 (di)
-		if( (op & 0xFC000000) == 0x38000000 ) {
-			u32 src = (op >> 16) & 0x1F;
-			if( regs[src][REG_0xCC00] )	{	// The source register is 0xCC00, patch this addi
-				// Hack to fix a few games
-				// If the next instruction is a lhz
-				u32 nextOp = *(vu32*)(dst + i+4);
-				if(( (nextOp & 0xF8000000 ) == 0xA0000000 )) {
-					u32 nextOpSrc = (nextOp >> 16) & 0x1F;
-					if(nextOpSrc == src) {
-						regs[src][REG_0xCC00] = 0;	// No 0xCC0060xx code uses load half op
-						continue;
-					}
-				}
-				
-				// else just patch.
-				if( (op & 0xFC00FF00) == 0x38006000 ) {
-					*(vu32*)(dst + i) = op - (0x6000 - ((u32)VAR_DI_REGS&0xFFFF));
-					//void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
-					//print_gecko("DI:[%08X] %08X: addi r%u, %04X\r\n", properAddress, *(vu32*)(dst + i), src, *(vu32*)(dst + i) &0xFFFF);
-					regs[src][REG_USED]=1;	// was used in a 0xCC006000 addi
-					DIPatched++;
-				}
-			}
-			continue;
-		}
-		// ori rX, rY, 0x6000 (di)
-		else if ((op & 0xFC00FF00) == 0x60006000) 
-		{
-			u32 src = (op >> 16) & 0x1F;
-			if( regs[src][REG_0xCC00] )		// The source register is 0xCC00, patch this ori
-			{
-				*(vu32*)(dst + i) -= (0x6000 - ((u32)VAR_DI_REGS&0xFFFF));
-				//void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
-				//print_gecko("DI:[%08X] %08X: ori r%u, %04X\r\n", properAddress, *(vu32*)(dst + i), src, *(vu32*)(dst + i) &0xFFFF);
-				regs[src][REG_USED]=1;	// was used in a 0xCC006000 ori
-				DIPatched++;
-			}
-			continue;
-		}
-		// lwz and lwzu, stw and stwu
-		if (((op & 0xF8000000) == 0x80000000) || ( (op & 0xF8000000 ) == 0x90000000 ) || ( (op & 0xF8000000 ) == 0xA0000000 ) )
-		{
-			u32 src = (op >> 16) & 0x1F;
-			//u32 dstR = (op >> 21) & 0x1F;
-			u32 val = op & 0xFFFF;
-
-			if( regs[src][REG_0xCC00] && ((val & 0xFF00) == 0x6000)) // case with 0x60XY(rZ) (di)
-			{
-				*(vu32*)(dst + i) -= (0x6000 - ((u32)VAR_DI_REGS&0xFFFF));
-				//void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
-				//print_gecko("DI:[%08X] %08X: mem r%u, %04X\r\n", properAddress, *(vu32*)(dst + i), src, *(vu32*)(dst + i) &0xFFFF);
-				regs[src][REG_USED]=1;	// was used in a 0xCC006000 load/store
-				DIPatched++;
-			}
-			continue;
-		}
-		// blr, flush out and reset
-		if(op == 0x4E800020) {
-			int x = 0;
-			for (x = 0; x < 32; x++) {
-				if(regs[x][REG_0xCC00] && regs[x][REG_USED]) {
-					u32 lisOffset = regs[x][REG_OFFSET];
-					*(vu32*)lisOffset = (((*(vu32*)lisOffset) & 0xFFFF0000) | ((u32)VAR_DI_REGS>>16));
-					//void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(lisOffset)-(u32)(dst));
-					//print_gecko("DI:[%08X] %08X: lis r%u, %04X\r\n", properAddress, *(vu32*)regs[x][REG_OFFSET], x, (*(vu32*)lisOffset) &0xFFFF);
-					DIPatched++;
-				}
-			}
-			memset(regs, 0, 32*4*3);
-		}
-	}
-
-	print_gecko("Patch:[DI] applied %u times\r\n", DIPatched);
-}
-
-int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType )
-{
-
-#define REG_0x8000 0
-#define REG_INUSE  1
-
-	u32 LowMemPatched = 0;
-	int i;
-
-	u32 regs[32][2];
-	memset(regs, 0, 32*4*2);
-	
-	for( i=0; i < Length; i+=4 )
-	{
-		u32 op = *(vu32*)(dst + i);
-			
-		// lis rX, 0x8000
-		if( (op & 0xFC1FFFFF) == 0x3C008000 ) {
-			u32 dstR = (op >> 21) & 0x1F;
-			regs[dstR][REG_0x8000]	=	1;	// this reg is now 0x80000000
-			continue;
-		}
-
-		// li rX, x or lis rX, x
-		if( (op & 0xFC1F0000) == 0x38000000 || (op & 0xFC1F0000) == 0x3C000000 ) {
-			u32 dstR = (op >> 21) & 0x1F;
-			if (regs[dstR][REG_0x8000]) {
-				regs[dstR][REG_0x8000] = 0;	// reg is no longer 0x80000000
-			}
-			continue;
-		}
-
-		// lwz and lwzu, stw and stwu
-		if (((op & 0xF8000000) == 0x80000000) || ( (op & 0xF8000000 ) == 0x90000000 ) || ( (op & 0xF8000000 ) == 0xA0000000 ) )
-		{
-			u32 src = (op >> 16) & 0x1F;
-			u32 dstR = (op >> 21) & 0x1F;
-			u32 val = op & 0xFFFF;
-			if(dstR == src) {regs[src][REG_0x8000] = 0; continue; }
-			if( regs[src][REG_0x8000] && (((val & 0xFFFF) >= 0x1000) && ((val & 0xFFFF) < 0x3000))) // case with load in our range(rZ)
-			{
-				void *properAddress = Calc_ProperAddress(dst, dataType, (u32)(dst + i)-(u32)(dst));
-				print_gecko("LowMem:[%08X] %08X: mem r%u, %04X\r\n", properAddress, *(vu32*)(dst + i), src, *(vu32*)(dst + i) &0xFFFF);
-				*(vu32*)(dst + i) = 0x60000000;	// We could redirect ...
-				regs[src][REG_INUSE]=1;	// was used in a 0x80001000->0x80003000 load/store
-				LowMemPatched++;
-			}
-			continue;
-		}
-		// bl, flush out and reset
-		if( (op & 0xFC000003) == 0x48000001 ) {
-			memset(regs, 0, 14*4*2);
-		}
-		// blr, flush out and reset
-		if(op == 0x4E800020) {
-			memset(regs, 0, 32*4*2);
-		}
-	}
-
-	print_gecko("Patch:[LowMem] applied %u times\r\n", LowMemPatched);
-	return LowMemPatched;
-}
-
 u32 _ppchalt[] = {
 	0x7C0004AC,	// sync
 	0x60000000,	// nop
@@ -705,7 +475,7 @@ u32 _gxpeekz_c[] = {
 	0x4E800020	// blr
 };
 
-int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int dataType)
+int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 {
 	int i, j, k;
 	int patched = 0;
@@ -3131,9 +2901,9 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		
 		if (__OSDoHotReset) {
 			switch (j) {
-				case 0: data[i + 4] = branchAndLink(IGR_EXIT_ALT, __OSDoHotReset + 4); break;
+				case 0: data[i + 4] = branchAndLink(IGR_EXIT, __OSDoHotReset + 4); break;
 				case 1:
-				case 2: data[i + 5] = branchAndLink(IGR_EXIT_ALT, __OSDoHotReset + 5); break;
+				case 2: data[i + 5] = branchAndLink(IGR_EXIT, __OSDoHotReset + 5); break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", __OSDoHotResetSigs[j].Name, __OSDoHotReset);
 			patched++;
@@ -3160,16 +2930,16 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		
 		if (OSResetSystem) {
 			switch (j) {
-				case  4: data[i + 72] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 72); break;
-				case  5: data[i + 73] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 73); break;
-				case  6: data[i + 72] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 72); break;
+				case  4: data[i + 72] = branchAndLink(IGR_EXIT, OSResetSystem + 72); break;
+				case  5: data[i + 73] = branchAndLink(IGR_EXIT, OSResetSystem + 73); break;
+				case  6: data[i + 72] = branchAndLink(IGR_EXIT, OSResetSystem + 72); break;
 				case  7:
-				case  8: data[i + 77] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 77); break;
-				case  9: data[i + 66] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 66); break;
-				case 10: data[i + 81] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 81); break;
-				case 11: data[i + 86] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 86); break;
-				case 12: data[i + 87] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 87); break;
-				case 13: data[i + 74] = branchAndLink(IGR_EXIT_ALT, OSResetSystem + 74); break;
+				case  8: data[i + 77] = branchAndLink(IGR_EXIT, OSResetSystem + 77); break;
+				case  9: data[i + 66] = branchAndLink(IGR_EXIT, OSResetSystem + 66); break;
+				case 10: data[i + 81] = branchAndLink(IGR_EXIT, OSResetSystem + 81); break;
+				case 11: data[i + 86] = branchAndLink(IGR_EXIT, OSResetSystem + 86); break;
+				case 12: data[i + 87] = branchAndLink(IGR_EXIT, OSResetSystem + 87); break;
+				case 13: data[i + 74] = branchAndLink(IGR_EXIT, OSResetSystem + 74); break;
 			}
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 3] = (u32)OSResetSystem;
@@ -4651,90 +4421,6 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 			patched++;
 		}
 	}
-	return patched;
-}
-
-u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType) {
-	void *addr_start = addr;
-	void *addr_end = addr+length;
-	int patched = 0;
-	FuncPattern DSPHandler = {265, 103, 23, 34, 32, 9, 0, 0, "__DSPHandler", 0};
-	while(addr_start<addr_end) {
-		// Patch the memcpy call in OSExceptionInit to copy our code to 0x80000500 instead of anything else.
-		if(*(vu32*)(addr_start) == 0x7C0802A6 || *(vu32*)(addr_start + 4) == 0x7C0802A6)
-		{
-			if( find_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &OSExceptionInitSig ) )
-			{
-				void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 488)-(u32)(addr));
-				print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
-				*(vu32*)(addr_start + 488) = branchAndLink(PATCHED_MEMCPY, properAddress);
-				*(vu32*)(addr_start + 496) = 0x38800100;
-				*(vu32*)(addr_start + 512) = 0x38800100;
-				patched |= 0x100;
-			}
-			// Debug version of the above
-			else if( find_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &OSExceptionInitSigDebug ) )
-			{
-				void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 520)-(u32)(addr));
-				print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
-				*(vu32*)(addr_start + 520) = branchAndLink(PATCHED_MEMCPY, properAddress);
-				*(vu32*)(addr_start + 528) = 0x38800100;
-				*(vu32*)(addr_start + 544) = 0x38800100;
-				patched |= 0x100;
-			}
-			else if( find_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &OSExceptionInitSigProDG ) )
-			{
-				void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + 460)-(u32)(addr));
-				print_gecko("Found:[OSExceptionInit] @ %08X\r\n", properAddress);
-				*(vu32*)(addr_start + 460) = branchAndLink(PATCHED_MEMCPY, properAddress);
-				*(vu32*)(addr_start + 468) = 0x38800100;
-				*(vu32*)(addr_start + 484) = 0x38800100;
-				patched |= 0x100;
-			}
-			// Audio Streaming Hook (only if required)
-			else if(GCMDisk.AudioStreaming && find_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &DSPHandler ) )
-			{	
-				if(strncmp((const char*)0x80000000, "PZL", 3)) {	// ZeldaCE uses a special case for MM
-					void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start+0xF8)-(u32)(addr));
-					print_gecko("Found:[__DSPHandler] @ %08X\r\n", properAddress);
-					*(vu32*)(addr_start+0xF8) = branchAndLink(DSP_HANDLER_HOOK, properAddress);
-				}
-			}
-			// Read variations
-			FuncPattern fp;
-			make_pattern( addr, (u32*)(addr_start)-(u32*)(addr), length, &fp );
-			if(compare_pattern(&fp, &ReadCommon) 			// Common Read function
-				|| compare_pattern(&fp, &ReadDebug)			// Debug Read function
-				|| compare_pattern(&fp, &ReadUncommon)		// Uncommon Read function
-				|| compare_pattern(&fp, &ReadProDG))		// ProDG Read function
-			{
-				u32 iEnd = 4;
-				while(*(vu32*)(addr_start + iEnd) != 0x4E800020) iEnd += 4;	// branch relative from the end
-				void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start + iEnd)-(u32)(addr));
-				print_gecko("Found:[Read] @ %08X\r\n", properAddress-iEnd);
-				*(vu32*)(addr_start + iEnd) = branch(READ_TRIGGER_INTERRUPT, properAddress);
-				patched |= 0x10;
-			}
-		}
-		// __DVDInterruptHandler
-		else if( ((*(vu32*)(addr_start + 0 )) & 0xFFFF) == _dvdinterrupthandler_part[0]
-			&& ((*(vu32*)(addr_start + 4 )) & 0xFFFF) == _dvdinterrupthandler_part[1]
-			&& ((*(vu32*)(addr_start + 8 )) & 0xFFFF) == _dvdinterrupthandler_part[2] ) 
-		{
-			u32 iEnd = 12;
-			while(*(vu32*)(addr_start + iEnd) != 0x4E800020) iEnd += 4;	// branch relative from the end
-			void *properAddress = Calc_ProperAddress(addr, dataType, (u32)(addr_start+iEnd)-(u32)(addr));
-			print_gecko("Found:[__DVDInterruptHandler] end @ %08X\r\n", properAddress );
-			*(vu32*)(addr_start+iEnd) = branch(STOP_DI_IRQ, properAddress);
-			patched |= 0x1;
-		}
-		addr_start += 4;
-	}
-	if(patched != READ_PATCHED_ALL) {
-		print_gecko("Failed to find all required patches\r\n");
-	}
-	// Replace all 0xCC0060xx references to VAR_AREA references
-	PatchDVDInterface(addr, length, dataType);
 	return patched;
 }
 
@@ -8339,98 +8025,7 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 	return patched;
 }
 
-int Patch_GameSpecificRead(void *addr, u32 length, const char* gameID, int dataType) {
-	int patched = 0;
-	
-	if(!strncmp(gameID, "PZL", 3) && dataType == PATCH_DOL)
-	{
-		if(*(vu32*)(addr+0xDE6D8) == 0x2F6D616A) // PAL
-		{
-			print_gecko("Patched:[Majoras Mask (Zelda CE) PAL]\r\n");
-			//save up regs
-			void *patchAddr = getPatchAddr(MAJORA_SAVEREGS);
-			*(vu32*)(addr+0x1A6B4) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A6B4));
-			*(vu32*)(patchAddr+MajoraSaveRegs_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A6B8), patchAddr+MajoraSaveRegs_length-4);
-			//frees r28 and secures r10 for us
-			*(vu32*)(addr+0x1A76C) = 0x60000000;
-			*(vu32*)(addr+0x1A770) = 0x839D0000;
-			*(vu32*)(addr+0x1A774) = 0x7D3C4AAE;
-			//do audio streaming injection
-			patchAddr = getPatchAddr(MAJORA_AUDIOSTREAM);
-			*(vu32*)(addr+0x1A784) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A784));
-			*(vu32*)(patchAddr+MajoraAudioStream_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A788), patchAddr+MajoraAudioStream_length-4);
-			//load up regs (and jump back)
-			patchAddr = getPatchAddr(MAJORA_LOADREGS);
-			*(vu32*)(addr+0x1A878) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A878));
-			patched=1;
-		}
-		else if(*(vu32*)(addr+0xEF78C) == 0x2F6D616A) // NTSC-U
-		{
-			print_gecko("Patched:[Majoras Mask (Zelda CE) NTSC-U]\r\n");
-			//save up regs
-			void *patchAddr = getPatchAddr(MAJORA_SAVEREGS);
-			*(vu32*)(addr+0x19DD4) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x19DD4));
-			*(vu32*)(patchAddr+MajoraSaveRegs_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x19DD8), patchAddr+MajoraSaveRegs_length-4);
-			//frees r28 and secures r10 for us
-			*(vu32*)(addr+0x19E8C) = 0x60000000;
-			*(vu32*)(addr+0x19E90) = 0x839D0000;
-			*(vu32*)(addr+0x19E94) = 0x7D3C4AAE;
-			//do audio streaming injection
-			patchAddr = getPatchAddr(MAJORA_AUDIOSTREAM);
-			*(vu32*)(addr+0x19EA4) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x19EA4));
-			*(vu32*)(patchAddr+MajoraAudioStream_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x19EA8), patchAddr+MajoraAudioStream_length-4);
-			//load up regs (and jump back)
-			patchAddr = getPatchAddr(MAJORA_LOADREGS);
-			*(vu32*)(addr+0x19F98) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x19F98));
-			patched=1;
-		}
-		else if(*(vu32*)(addr+0xF324C) == 0x2F6D616A) // NTSC-J
-		{
-			print_gecko("Patched:[Majoras Mask (Zelda CE) NTSC-J]\r\n");
-			//save up regs
-			void *patchAddr = getPatchAddr(MAJORA_SAVEREGS);
-			*(vu32*)(addr+0x1A448) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A448));
-			*(vu32*)(patchAddr+MajoraSaveRegs_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A44C), patchAddr+MajoraSaveRegs_length-4);
-			//frees r28 and secures r10 for us
-			*(vu32*)(addr+0x1A500) = 0x60000000;
-			*(vu32*)(addr+0x1A504) = 0x839D0000;
-			*(vu32*)(addr+0x1A508) = 0x7D3C4AAE;
-			//do audio streaming injection
-			patchAddr = getPatchAddr(MAJORA_AUDIOSTREAM);
-			*(vu32*)(addr+0x1A518) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A518));
-			*(vu32*)(patchAddr+MajoraAudioStream_length-4) = branch(Calc_ProperAddress(addr, dataType, 0x1A51C), patchAddr+MajoraAudioStream_length-4);
-			//load up regs (and jump back)
-			patchAddr = getPatchAddr(MAJORA_LOADREGS);
-			*(vu32*)(addr+0x1A60C) = branch(patchAddr, Calc_ProperAddress(addr, dataType, 0x1A60C));
-			patched=1;
-		}
-	}
-	else if(!strncmp(gameID, "GPQ", 3) && dataType == PATCH_DOL)
-	{
-		// Audio Stream force DMA to get Video Sound
-		if(*(vu32*)(addr+0xF03D8) == 0x4E800020 && *(vu32*)(addr+0xF0494) == 0x4E800020)
-		{
-			//Call AXInit after DVDPrepareStreamAbsAsync
-			*(vu32*)(addr+0xF03D8) = branch(Calc_ProperAddress(addr, dataType, 0xF6E80), Calc_ProperAddress(addr, dataType, 0xF03D8));
-			//Call AXQuit after DVDCancelStreamAsync
-			*(vu32*)(addr+0xF0494) = branch(Calc_ProperAddress(addr, dataType, 0xF6EB4), Calc_ProperAddress(addr, dataType, 0xF0494));
-			print_gecko("Patched:[Powerpuff Girls NTSC-U]\r\n");
-			patched=1;
-		}
-		else if(*(vu32*)(addr+0xF0EC0) == 0x4E800020 && *(vu32*)(addr+0xF0F7C) == 0x4E800020)
-		{
-			//Call AXInit after DVDPrepareStreamAbsAsync
-			*(vu32*)(addr+0xF0EC0) = branch(Calc_ProperAddress(addr, dataType, 0xF8340), Calc_ProperAddress(addr, dataType, 0xF0EC0));
-			//Call AXQuit after DVDCancelStreamAsync
-			*(vu32*)(addr+0xF0F7C) = branch(Calc_ProperAddress(addr, dataType, 0xF83B0), Calc_ProperAddress(addr, dataType, 0xF0F7C));
-			print_gecko("Patched:[Powerpuff Girls PAL]\r\n");
-			patched=1;
-		}
-	}
-	return patched;
-}
-
-int Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int dataType)
+int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int dataType)
 {
 	int patched = 0;
 	
@@ -9421,33 +9016,10 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 {
 	int i, j;
 	int patched = 0;
-	FuncPattern ICFlashInvalidateSig = 
-		{ 4, 0, 0, 0, 0, 2, NULL, 0, "ICFlashInvalidate" };
 	FuncPattern OSDisableInterruptsSig = 
 		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
 	FuncPattern OSRestoreInterruptsSig = 
 		{ 9, 0, 0, 0, 2, 2, NULL, 0, "OSRestoreInterrupts" };
-	FuncPattern __OSDoHotResetSigs[3] = {
-		{ 17, 6, 3, 3, 0, 2, NULL, 0, "__OSDoHotResetD" },
-		{ 18, 6, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" },
-		{ 17, 5, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" }	// SN Systems ProDG
-	};
-	FuncPattern OSResetSystemSigs[14] = {
-		{  64, 13, 2, 15,  6, 8, NULL, 0, "OSResetSystemD A" },
-		{  97, 29, 3, 27,  5, 8, NULL, 0, "OSResetSystemD B" },
-		{ 115, 36, 4, 30,  8, 8, NULL, 0, "OSResetSystemD C" },
-		{  87, 28, 2, 21,  4, 6, NULL, 0, "OSResetSystemD D" },
-		{ 110, 19, 2, 16, 24, 9, NULL, 0, "OSResetSystem A" },
-		{ 111, 19, 2, 17, 24, 9, NULL, 0, "OSResetSystem B" },
-		{ 147, 37, 2, 21, 30, 8, NULL, 0, "OSResetSystem C" },
-		{ 154, 38, 2, 23, 30, 9, NULL, 0, "OSResetSystem D" },
-		{ 158, 41, 2, 24, 30, 9, NULL, 0, "OSResetSystem E" },
-		{ 148, 44, 2, 26, 16, 9, NULL, 0, "OSResetSystem E" },	// SN Systems ProDG
-		{ 162, 41, 2, 24, 34, 9, NULL, 0, "OSResetSystem F" },
-		{ 174, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem G" },
-		{ 175, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem H" },
-		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem I" }
-	};
 	FuncPattern SIGetResponseSigs[6] = {
 		{ 36, 13, 4, 1, 2,  4, NULL, 0, "SIGetResponseD A" },
 		{ 48, 12, 5, 4, 3,  7, NULL, 0, "SIGetResponseD B" },
@@ -9551,117 +9123,6 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 		
 		FuncPattern fp;
 		make_pattern(data, i, length, &fp);
-		
-		for (j = 0; j < sizeof(__OSDoHotResetSigs) / sizeof(FuncPattern); j++) {
-			if (compare_pattern(&fp, &__OSDoHotResetSigs[j])) {
-				switch (j) {
-					case 0:
-						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  9, length, &ICFlashInvalidateSig))
-							__OSDoHotResetSigs[j].offsetFoundAt = i;
-						break;
-					case 1:
-						if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 10, length, &ICFlashInvalidateSig))
-							__OSDoHotResetSigs[j].offsetFoundAt = i;
-						break;
-					case 2:
-						if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  9, length, &ICFlashInvalidateSig))
-							__OSDoHotResetSigs[j].offsetFoundAt = i;
-						break;
-				}
-			}
-		}
-		
-		for (j = 0; j < sizeof(OSResetSystemSigs) / sizeof(FuncPattern); j++) {
-			if (compare_pattern(&fp, &OSResetSystemSigs[j])) {
-				switch (j) {
-					case 0:
-						if (findx_pattern(data, dataType, i +  27, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  49, length, &__OSDoHotResetSigs[0]) &&
-							findx_pattern(data, dataType, i +  57, length, &OSRestoreInterruptsSig))
-							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-					case 1:
-						if (findx_pattern(data, dataType, i +  32, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  55, length, &__OSDoHotResetSigs[0]))
-							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-					case 2:
-						if (findx_pattern(data, dataType, i +  37, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  60, length, &__OSDoHotResetSigs[0]))
-							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-					case 3:
-						if (findx_pattern(data, dataType, i +  38, length, &__OSDoHotResetSigs[0]))
-							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-					case 4:
-						if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  72, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  77, length, &ICFlashInvalidateSig) &&
-							findx_pattern(data, dataType, i + 103, length, &OSRestoreInterruptsSig))
-							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-					case 5:
-						if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  73, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  78, length, &ICFlashInvalidateSig) &&
-							findx_pattern(data, dataType, i + 104, length, &OSRestoreInterruptsSig))
-							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-					case 6:
-						if (findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  72, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  77, length, &ICFlashInvalidateSig))
-							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-					case 7:
-						if (findx_pattern(data, dataType, i +  57, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  82, length, &ICFlashInvalidateSig))
-							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-					case 8:
-						if (findx_pattern(data, dataType, i +  57, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  82, length, &ICFlashInvalidateSig))
-							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-					case 9:
-						if (findx_pattern(data, dataType, i +  48, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  66, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  70, length, &ICFlashInvalidateSig))
-							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-					case 10:
-						if (findx_pattern(data, dataType, i +  59, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  81, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  86, length, &ICFlashInvalidateSig))
-							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-					case 11:
-						if (findx_pattern(data, dataType, i +  64, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  86, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  91, length, &ICFlashInvalidateSig))
-							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-					case 12:
-						if (findx_pattern(data, dataType, i +  65, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  87, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  92, length, &ICFlashInvalidateSig))
-							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-					case 13:
-						if (findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  79, length, &ICFlashInvalidateSig))
-							OSResetSystemSigs[j].offsetFoundAt = i;
-						break;
-				}
-			}
-		}
 		
 		for (j = 0; j < sizeof(PADOriginCallbackSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &PADOriginCallbackSigs[j])) {
@@ -9903,61 +9364,6 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 		i += fp.Length - 1;
 	}
 	
-	if (swissSettings.igrType != IGR_OFF) {
-		for (j = 0; j < sizeof(__OSDoHotResetSigs) / sizeof(FuncPattern); j++)
-			if (__OSDoHotResetSigs[j].offsetFoundAt) break;
-		
-		if (j < sizeof(__OSDoHotResetSigs) / sizeof(FuncPattern) && (i = __OSDoHotResetSigs[j].offsetFoundAt)) {
-			u32 *__OSDoHotReset = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			u32 *__OSDoHotResetHook;
-			
-			if (__OSDoHotReset) {
-				if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
-					__OSDoHotResetHook = IGR_EXIT_ALT;
-				else
-					__OSDoHotResetHook = IGR_EXIT;
-				
-				switch (j) {
-					case 0: data[i + 4] = branchAndLink(__OSDoHotResetHook, __OSDoHotReset + 4); break;
-					case 1:
-					case 2: data[i + 5] = branchAndLink(__OSDoHotResetHook, __OSDoHotReset + 5); break;
-				}
-				print_gecko("Found:[%s] @ %08X\n", __OSDoHotResetSigs[j].Name, __OSDoHotReset);
-				patched++;
-			}
-		}
-		
-		for (j = 0; j < sizeof(OSResetSystemSigs) / sizeof(FuncPattern); j++)
-			if (OSResetSystemSigs[j].offsetFoundAt) break;
-		
-		if (j < sizeof(OSResetSystemSigs) / sizeof(FuncPattern) && (i = OSResetSystemSigs[j].offsetFoundAt)) {
-			u32 *OSResetSystem = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			u32 *OSResetSystemHook;
-			
-			if (OSResetSystem) {
-				if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
-					OSResetSystemHook = IGR_EXIT_ALT;
-				else
-					OSResetSystemHook = IGR_EXIT;
-				
-				switch (j) {
-					case  4: data[i + 72] = branchAndLink(OSResetSystemHook, OSResetSystem + 72); break;
-					case  5: data[i + 73] = branchAndLink(OSResetSystemHook, OSResetSystem + 73); break;
-					case  6: data[i + 72] = branchAndLink(OSResetSystemHook, OSResetSystem + 72); break;
-					case  7:
-					case  8: data[i + 77] = branchAndLink(OSResetSystemHook, OSResetSystem + 77); break;
-					case  9: data[i + 66] = branchAndLink(OSResetSystemHook, OSResetSystem + 66); break;
-					case 10: data[i + 81] = branchAndLink(OSResetSystemHook, OSResetSystem + 81); break;
-					case 11: data[i + 86] = branchAndLink(OSResetSystemHook, OSResetSystem + 86); break;
-					case 12: data[i + 87] = branchAndLink(OSResetSystemHook, OSResetSystem + 87); break;
-					case 13: data[i + 74] = branchAndLink(OSResetSystemHook, OSResetSystem + 74); break;
-				}
-				print_gecko("Found:[%s] @ %08X\n", OSResetSystemSigs[j].Name, OSResetSystem);
-				patched++;
-			}
-		}
-	}
-	
 	for (j = 0; j < sizeof(UpdateOriginSigs) / sizeof(FuncPattern); j++)
 		if (UpdateOriginSigs[j].offsetFoundAt) break;
 	
@@ -10029,16 +9435,10 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 	
 	if (j < sizeof(PADReadSigs) / sizeof(FuncPattern) && (i = PADReadSigs[j].offsetFoundAt)) {
 		u32 *PADRead = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		u32 *PADReadHook;
 		
 		u32 MakeStatusAddr, *MakeStatus;
 		
 		if (PADRead) {
-			if ((devices[DEVICE_CUR]->features & FEAT_ALT_READ_PATCHES) || !swissSettings.emulateAudioStreaming)
-				PADReadHook = CHECK_PAD_ALT;
-			else
-				PADReadHook = CHECK_PAD;
-			
 			switch (j) {
 				case 0: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 132]; break;
 				case 1: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 128]; break;
@@ -10071,47 +9471,47 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 					case 0:
 						data[i + 159] = 0x387E0000;	// addi		r3, r30, 0
 						data[i + 160] = 0x389F0000;	// addi		r4, r31, 0
-						data[i + 161] = branchAndLink(PADReadHook, PADRead + 161);
+						data[i + 161] = branchAndLink(CHECK_PAD, PADRead + 161);
 						break;
 					case 1:
 						data[i + 156] = 0x387E0000;	// addi		r3, r30, 0
 						data[i + 157] = 0x389F0000;	// addi		r4, r31, 0
-						data[i + 158] = branchAndLink(PADReadHook, PADRead + 158);
+						data[i + 158] = branchAndLink(CHECK_PAD, PADRead + 158);
 						break;
 					case 2:
 						data[i + 100] = 0x387D0000;	// addi		r3, r29, 0
 						data[i + 101] = 0x389B0000;	// addi		r4, r27, 0
-						data[i + 102] = branchAndLink(PADReadHook, PADRead + 102);
+						data[i + 102] = branchAndLink(CHECK_PAD, PADRead + 102);
 						break;
 					case 3:
 						data[i + 185] = 0x38760000;	// addi		r3, r22, 0
 						data[i + 186] = 0x38950000;	// addi		r4, r21, 0
-						data[i + 187] = branchAndLink(PADReadHook, PADRead + 187);
+						data[i + 187] = branchAndLink(CHECK_PAD, PADRead + 187);
 						break;
 					case 4:
 						data[i + 190] = 0x38770000;	// addi		r3, r23, 0
 						data[i + 191] = 0x38950000;	// addi		r4, r21, 0
-						data[i + 192] = branchAndLink(PADReadHook, PADRead + 192);
+						data[i + 192] = branchAndLink(CHECK_PAD, PADRead + 192);
 						break;
 					case 5:
 						data[i + 221] = 0x38750000;	// addi		r3, r21, 0
 						data[i + 222] = 0x389F0000;	// addi		r4, r31, 0
-						data[i + 223] = branchAndLink(PADReadHook, PADRead + 223);
+						data[i + 223] = branchAndLink(CHECK_PAD, PADRead + 223);
 						break;
 					case 6:
 						data[i + 219] = 0x38750000;	// addi		r3, r21, 0
 						data[i + 220] = 0x389F0000;	// addi		r4, r31, 0
-						data[i + 221] = branchAndLink(PADReadHook, PADRead + 221);
+						data[i + 221] = branchAndLink(CHECK_PAD, PADRead + 221);
 						break;
 					case 7:
 						data[i + 216] = 0x7F63DB78;	// mr		r3, r27
 						data[i + 217] = 0x7F24CB78;	// mr		r4, r25
-						data[i + 218] = branchAndLink(PADReadHook, PADRead + 218);
+						data[i + 218] = branchAndLink(CHECK_PAD, PADRead + 218);
 						break;
 					case 8:
 						data[i + 176] = 0x38790000;	// addi		r3, r25, 0
 						data[i + 177] = 0x38970000;	// addi		r4, r23, 0
-						data[i + 178] = branchAndLink(PADReadHook, PADRead + 178);
+						data[i + 178] = branchAndLink(CHECK_PAD, PADRead + 178);
 						break;
 				}
 			}

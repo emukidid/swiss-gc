@@ -18,16 +18,10 @@ typedef struct FuncPattern
 } FuncPattern;
 
 /* the SDGecko/IDE-EXI patches */
-extern u8 ideexi_altv1_bin[];
-extern u32 ideexi_altv1_bin_size;
-extern u8 ideexi_altv2_bin[];
-extern u32 ideexi_altv2_bin_size;
 extern u8 ideexi_v1_bin[];
 extern u32 ideexi_v1_bin_size;
 extern u8 ideexi_v2_bin[];
 extern u32 ideexi_v2_bin_size;
-extern u8 sd_alt_bin[];
-extern u32 sd_alt_bin_size;
 extern u8 sd_bin[];
 extern u32 sd_bin_size;
 extern u8 usbgecko_bin[];
@@ -116,12 +110,6 @@ extern u8 VIGetRetraceCountHook[];
 extern u32 VIGetRetraceCountHook_length;
 extern u8 VIRetraceHandlerHook[];
 extern u32 VIRetraceHandlerHook_length;
-extern u8 MajoraSaveRegs[];
-extern u32 MajoraSaveRegs_length;
-extern u8 MajoraAudioStream[];
-extern u32 MajoraAudioStream_length;
-extern u8 MajoraLoadRegs[];
-extern u32 MajoraLoadRegs_length;
 
 enum patchIds {
 	GX_COPYDISPHOOK = 0,
@@ -152,36 +140,21 @@ enum patchIds {
 	VI_CONFIGUREPANHOOKD,
 	VI_GETRETRACECOUNTHOOK,
 	VI_RETRACEHANDLERHOOK,
-	MAJORA_SAVEREGS,
-	MAJORA_AUDIOSTREAM,
-	MAJORA_LOADREGS,
 	PATCHES_MAX
 };
 
 #define SWISS_MAGIC 0x53574953 /* "SWIS" */
 
-#define LO_RESERVE_ALT	0x80000C00
-#define LO_RESERVE 		0x80001000
+#define LO_RESERVE 0x80000C00
 
-/* Function jump locations for the SD/IDE patch */
-#define CALC_SPEED				(void*)(LO_RESERVE)
-#define PATCHED_MEMCPY			(void*)(LO_RESERVE | 0x04)
-#define STOP_DI_IRQ				(void*)(LO_RESERVE | 0x08)
-#define READ_TRIGGER_INTERRUPT	(void*)(LO_RESERVE | 0x0C)
-#define DSP_HANDLER_HOOK		(void*)(LO_RESERVE | 0x10)
-#define CHECK_PAD				(void*)(LO_RESERVE | 0x14)
-#define IGR_EXIT				(void*)(LO_RESERVE | 0x18)
-
-/* Function jump locations for the SD/IDE/USBGecko/BBA patch */
-#define EXI_PROBE				(u32 *)(LO_RESERVE_ALT | 0x104)
-#define EXI_TRYLOCK				(u32 *)(LO_RESERVE_ALT | 0x108)
-#define SET_DI_HANDLER			(u32 *)(LO_RESERVE_ALT | 0x10C)
-#define IDLE_THREAD				(u32 *)(LO_RESERVE_ALT | 0x110)
-#define CHECK_PAD_ALT			(u32 *)(LO_RESERVE_ALT | 0x114)
-#define IGR_EXIT_ALT			(u32 *)(LO_RESERVE_ALT | 0x118)
-#define JUMP_VECTOR				(u32 *)(LO_RESERVE_ALT | 0x11C)
-
-#define READ_PATCHED_ALL 		(0x111)
+/* Function jump locations for the hypervisor */
+#define EXI_PROBE		(u32 *)(LO_RESERVE + 0x104)
+#define EXI_TRYLOCK		(u32 *)(LO_RESERVE + 0x108)
+#define SET_DI_HANDLER	(u32 *)(LO_RESERVE + 0x10C)
+#define IDLE_THREAD		(u32 *)(LO_RESERVE + 0x110)
+#define CHECK_PAD		(u32 *)(LO_RESERVE + 0x114)
+#define IGR_EXIT		(u32 *)(LO_RESERVE + 0x118)
+#define JUMP_VECTOR		(u32 *)(LO_RESERVE + 0x11C)
 
 /* Types of files we may patch */
 #define PATCH_APPLOADER		0
@@ -192,12 +165,7 @@ enum patchIds {
 #define PATCH_OTHER			5
 #define PATCH_OTHER_PRS		6
 
-/* The device patches for a particular game were written to */
-// -1 no device, 0 slot a, 1 slot b.
-extern int savePatchDevice;
-
-int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int dataType);
-u32 Patch_DVDLowLevelRead(void *addr, u32 length, int dataType);
+int Patch_Hypervisor(u32 *data, u32 length, int dataType);
 void Patch_VideoMode(u32 *data, u32 length, int dataType);
 void Patch_Widescreen(u32 *data, u32 length, int dataType);
 int Patch_TexFilt(u32 *data, u32 length, int dataType);
@@ -205,11 +173,9 @@ int Patch_FontEncode(u32 *data, u32 length);
 int Patch_Fwrite(void *addr, u32 length);
 int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType);
 int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const char *fileName);
-int Patch_GameSpecificRead(void *addr, u32 length, const char* gameID, int dataType);
-int Patch_GameSpecificReadAlt(void *data, u32 length, const char *gameID, int dataType);
+int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int dataType);
 void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dataType);
 int Patch_PADStatus(u32 *data, u32 length, int dataType);
-int PatchDetectLowMemUsage( void *dst, u32 Length, int dataType );
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt);
 void *Calc_Address(void *data, int dataType, u32 properAddress);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);

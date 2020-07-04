@@ -78,10 +78,8 @@ typedef device_info* (* _fn_deviceInfo)(void);
 #define FEAT_BOOT_DEVICE		0x8
 #define FEAT_AUTOLOAD_DOL		0x10
 #define FEAT_FAT_FUNCS			0x20
-#define FEAT_REPLACES_DVD_FUNCS	0x40
-#define FEAT_ALT_READ_PATCHES	0x80
-#define FEAT_CAN_READ_PATCHES	0x100
-#define FEAT_CAN_HOLD_PATCHES	0x200
+#define FEAT_HYPERVISOR			0x40
+#define FEAT_PATCHES			0x80
 
 // Device emulated features
 #define EMU_NONE			0x0
