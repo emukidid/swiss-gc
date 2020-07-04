@@ -148,6 +148,7 @@ DEVICEHANDLER_INTERFACE __device_qoob = {
 	"Qoob Pro Flash File System",
 	{TEX_QOOB, 84, 84},
 	FEAT_READ,
+	EMU_NONE,
 	LOC_SYSTEM,
 	&initial_Qoob,
 	(_fn_test)&deviceHandler_Qoob_test,

@@ -83,6 +83,11 @@ typedef device_info* (* _fn_deviceInfo)(void);
 #define FEAT_CAN_READ_PATCHES	0x100
 #define FEAT_CAN_HOLD_PATCHES	0x200
 
+// Device emulated features
+#define EMU_NONE			0x0
+#define EMU_READ			0x1
+#define EMU_AUDIO_STREAMING	0x2
+
 // Device locations
 #define LOC_MEMCARD_SLOT_A 	0x1
 #define LOC_MEMCARD_SLOT_B 	0x2
@@ -120,6 +125,7 @@ struct DEVICEHANDLER_STRUCT {
 	const char*		deviceDescription;
 	textureImage	deviceTexture;
 	u32				features;
+	u32				emulate;
 	u32				location;
 	file_handle*	initial;
 	_fn_test		test;

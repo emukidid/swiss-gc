@@ -2957,7 +2957,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		if (PrepareExec) {
 			if (devices[DEVICE_CUR] == &__device_fsp)
 				data[i + 47] = 0x3C600801;	// lis		r3, 0x0801
-			else if (devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR)
+			else if (devices[DEVICE_CUR]->emulate & EMU_READ)
 				data[i + 47] = 0x3C600800;	// lis		r3, 0x0800
 			
 			print_gecko("Found:[%s] @ %08X\n", PrepareExecSig.Name, PrepareExec);
@@ -3019,7 +3019,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					case 1:
 					case 2: data[i + 43] = 0x3C600801; break;	// lis		r3, 0x0801
 				}
-			} else if (devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
+			} else if (devices[DEVICE_CUR]->emulate & EMU_READ) {
 				switch (j) {
 					case 0: data[i + 44] = 0x3C600800; break;	// lis		r3, 0x0800
 					case 1:
@@ -3104,7 +3104,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					case  9: data[i + 33] = 0x3C600801; break;	// lis		r3, 0x0801
 					case 10: data[i + 32] = 0x3C600801; break;	// lis		r3, 0x0801
 				}
-			} else if (devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
+			} else if (devices[DEVICE_CUR]->emulate & EMU_READ) {
 				switch (j) {
 					case  0: data[i + 42] = 0x3C600800; break;	// lis		r3, 0x0800
 					case  1: data[i + 50] = 0x3C600800; break;	// lis		r3, 0x0800
@@ -3566,7 +3566,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		u32 *AlarmHandlerForTimeout = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (AlarmHandlerForTimeout) {
-			if (devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
+			if (devices[DEVICE_CUR]->emulate & EMU_READ) {
 				switch (j) {
 					case 0: data[i + 5] = 0x3C600800; break;	// lis		r3, 0x0800
 					case 1: data[i + 1] = 0x3C600800; break;	// lis		r3, 0x0800
@@ -4179,7 +4179,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 					case 6: data[i + 20] = 0x3C600801; break;	// lis		r3, 0x0801
 					case 7: data[i + 24] = 0x3C600801; break;	// lis		r3, 0x0801
 				}
-			} else if (devices[DEVICE_CUR] == &__device_wkf || devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
+			} else if (devices[DEVICE_CUR]->emulate & EMU_READ) {
 				switch (j) {
 					case 0: data[i + 24] = 0x3C600800; break;	// lis		r3, 0x0800
 					case 1: data[i + 22] = 0x3C600800; break;	// lis		r3, 0x0800
@@ -4577,7 +4577,7 @@ int Patch_DVDLowLevelReadAlt(u32 *data, u32 length, const char *gameID, int data
 		u32 *AIInitDMA = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (AIInitDMA) {
-			if (devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
+			if (devices[DEVICE_CUR]->emulate & EMU_AUDIO_STREAMING) {
 				switch (j) {
 					case 0:
 						data[i +  8] = 0x3C600C00;	// lis		r3, 0x0C00

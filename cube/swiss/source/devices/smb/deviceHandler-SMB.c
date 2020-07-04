@@ -229,6 +229,7 @@ DEVICEHANDLER_INTERFACE __device_smb = {
 	"Configurable via the settings screen",
 	{TEX_SAMBA, 140, 64},
 	FEAT_READ,
+	EMU_NONE,
 	LOC_SERIAL_PORT_1,
 	&initial_SMB,
 	(_fn_test)&deviceHandler_SMB_test,

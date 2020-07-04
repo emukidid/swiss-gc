@@ -154,6 +154,7 @@ DEVICEHANDLER_INTERFACE __device_wode = {
 	"Supported File System(s): FAT32, NTFS, EXT2/3, HPFS",
 	{TEX_WODEIMG, 116, 40},
 	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE,
+	EMU_NONE,
 	LOC_DVD_CONNECTOR,
 	&initial_WODE,
 	(_fn_test)&deviceHandler_WODE_test,

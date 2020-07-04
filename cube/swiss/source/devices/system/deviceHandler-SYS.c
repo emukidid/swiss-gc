@@ -316,6 +316,7 @@ DEVICEHANDLER_INTERFACE __device_sys = {
 	"Backup IPL, DSP, DVD, SRAM",
 	{TEX_SYSTEM, 80, 84}, 
 	FEAT_READ,
+	EMU_NONE,
 	LOC_SYSTEM,
 	&initial_SYS,
 	(_fn_test)&deviceHandler_SYS_test,

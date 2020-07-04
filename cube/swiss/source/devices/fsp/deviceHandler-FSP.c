@@ -246,6 +246,7 @@ DEVICEHANDLER_INTERFACE __device_fsp = {
 	"Configurable via the settings screen",
 	{TEX_SAMBA, 140, 64},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_REPLACES_DVD_FUNCS|FEAT_ALT_READ_PATCHES|FEAT_CAN_READ_PATCHES,
+	EMU_READ,
 	LOC_SERIAL_PORT_1,
 	&initial_FSP,
 	(_fn_test)&deviceHandler_FSP_test,
