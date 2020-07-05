@@ -1905,7 +1905,7 @@ void select_device(int type)
 		DrawAddChild(deviceSelectBox, deviceNameLabel);
 		DrawAddChild(deviceSelectBox, deviceDescLabel);
 		if(allDevices[curDevice]->features & FEAT_BOOT_GCM) {
-			uiDrawObj_t *gameBootLabel = DrawStyledLabel(640/2, 365, "Supports Game Boot", 0.65f, true, defaultColor);
+			uiDrawObj_t *gameBootLabel = DrawStyledLabel(640/2, 365, (allDevices[curDevice]->features & FEAT_AUDIO_STREAMING) ? "Supports Game Boot & Audio Streaming":"Supports Game Boot", 0.65f, true, defaultColor);
 			DrawAddChild(deviceSelectBox, gameBootLabel);
 		}
 		// Memory card port devices, allow for speed selection
