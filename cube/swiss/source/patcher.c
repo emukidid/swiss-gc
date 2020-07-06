@@ -437,6 +437,16 @@ u32 _dvdgettransferredsize[] = {
 	0x4E800020	// blr
 };
 
+u32 _aigetdmastartaddr[] = {
+	0x3C60CC00,	// lis		r3, 0xCC00
+	0x38635000,	// addi		r3, r3, 0x5000
+	0xA0830030,	// lhz		r4, 0x0030 (r3)
+	0xA0030032,	// lhz		r0, 0x0032 (r3)
+	0x54030434,	// rlwinm	r3, r0, 0, 16, 26
+	0x5083819E,	// rlwimi	r3, r4, 16, 6, 15
+	0x4E800020	// blr
+};
+
 u32 _gxpeekz_a[] = {
 	0x546013BA,	// clrlslwi	r0, r3, 16, 2
 	0x6400C800,	// oris		r0, r0, 0xC800
@@ -949,6 +959,8 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 44, 12, 2, 3, 1, 6, NULL, 0, "AIInitDMAD" },
 		{ 34,  8, 4, 2, 0, 5, NULL, 0, "AIInitDMA" }
 	};
+	FuncPattern AIGetDMAStartAddrSig = 
+		{ 7, 2, 0, 0, 0, 0, NULL, 0, "AIGetDMAStartAddr" };
 	FuncPattern GXPeekZSigs[3] = {
 		{ 10, 1, 1, 0, 0, 1, NULL, 0, "GXPeekZ A" },
 		{ 10, 1, 1, 0, 0, 1, NULL, 0, "GXPeekZ B" },	// SN Systems ProDG
@@ -1010,6 +1022,8 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				PPCHaltSig.offsetFoundAt = i;
 			else if (!memcmp(data + i, _dvdgettransferredsize, sizeof(_dvdgettransferredsize)))
 				DVDGetTransferredSizeSig.offsetFoundAt = i;
+			else if (!memcmp(data + i, _aigetdmastartaddr, sizeof(_aigetdmastartaddr)))
+				AIGetDMAStartAddrSig.offsetFoundAt = i;
 			else if (!memcmp(data + i, _gxpeekz_a, sizeof(_gxpeekz_a)))
 				GXPeekZSigs[0].offsetFoundAt = i;
 			else if (!memcmp(data + i, _gxpeekz_b, sizeof(_gxpeekz_b)))
@@ -4363,6 +4377,18 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", AIInitDMASigs[j].Name, AIInitDMA);
+			patched++;
+		}
+	}
+	
+	if ((i = AIGetDMAStartAddrSig.offsetFoundAt)) {
+		u32 *AIGetDMAStartAddr = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (AIGetDMAStartAddr) {
+			if (devices[DEVICE_CUR]->emulate & EMU_AUDIO_STREAMING)
+				data[i + 0] = 0x3C600C00;	// lis		r3, 0x0C00
+			
+			print_gecko("Found:[%s] @ %08X\n", AIGetDMAStartAddrSig.Name, AIGetDMAStartAddr);
 			patched++;
 		}
 	}

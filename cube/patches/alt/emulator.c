@@ -361,10 +361,19 @@ static sample_t (*AXOutBuffer)[160] = OSCachedToUncached(__AXOutBuffer);
 static int AXOutFrame = 0;
 
 static uint32_t DSP_EMU[15] = {0};
+static int dsp_aimar_count = 0;
 
 static void dsp_read(unsigned index, uint32_t *value)
 {
-	*value = ((uint16_t *)DSP)[index];
+	switch (index) {
+		case 24:
+		case 25:
+			*value = ((uint16_t *)DSP)[index];
+			dsp_aimar_count--;
+			break;
+		default:
+			*value = ((uint16_t *)DSP)[index];
+	}
 }
 
 static void dsp_write(unsigned index, uint16_t value)
@@ -372,19 +381,21 @@ static void dsp_write(unsigned index, uint16_t value)
 	switch (index) {
 		case 24:
 			((uint16_t *)DSP_EMU)[index] = value & 0x3FF;
+			dsp_aimar_count++;
 			break;
 		case 25:
 			((uint16_t *)DSP_EMU)[index] = value & 0xFFE0;
+			dsp_aimar_count++;
 			break;
 		case 27:
 			((uint16_t *)DSP_EMU)[index] = value;
 
-			if (value & 0x8000) {
+			if ((value & 0x8000) && dsp_aimar_count >= 0) {
 				void *buffer = OSPhysicalToUncached(DSP_EMU[12]);
 				int length = (DSP_EMU[13] & 0x7FFF) << 5;
 				int count = length / sizeof(sample_t);
 
-				if (length == sizeof(*AXOutBuffer))
+				if (length <= sizeof(*AXOutBuffer))
 					buffer = memcpy(AXOutBuffer[AXOutFrame ^= 1], buffer, length);
 
 				if ((AI[0] & 0b0000001) && fifo_size() >= length) {
@@ -408,6 +419,8 @@ static void dsp_write(unsigned index, uint16_t value)
 				DSP[12] = DSP_EMU[12];
 				DSP[13] = DSP_EMU[13];
 			}
+
+			dsp_aimar_count = 0;
 			break;
 		default:
 			DSP[index] = value;
