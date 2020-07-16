@@ -410,7 +410,7 @@ static void dsp_write(unsigned index, uint16_t value)
 				if (length <= sizeof(*AXOutBuffer))
 					buffer = memcpy(AXOutBuffer[AXOutFrame ^= 1], buffer, length);
 
-				if ((AI[0] & 0b0000001) && fifo_size() >= length) {
+				if ((AI[0] & 0b0000001) && fifo_size() >= length * 3 / 2) {
 					uint8_t volume_l = AI[1];
 					uint8_t volume_r = AI[1] >> 8;
 
@@ -427,6 +427,9 @@ static void dsp_write(unsigned index, uint16_t value)
 
 				DSP[12] = (intptr_t)buffer;
 				DSP[13] = ((length >> 5) & 0x7FFF) | 0x8000;
+
+				if (fifo_size() < length * 3 / 2)
+					dtk_fill_buffer();
 			} else {
 				DSP[12] = DSP_EMU[12];
 				DSP[13] = DSP_EMU[13];
