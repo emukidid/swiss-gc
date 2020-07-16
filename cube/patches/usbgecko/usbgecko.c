@@ -19,10 +19,19 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "../alt/timer.h"
+#include "../alt/emulator.h"
 #include "../base/common.h"
 #include "../base/exi.h"
 #include "../base/os.h"
+
+static struct {
+	void *buffer;
+	uint32_t length;
+	uint32_t offset;
+	bool frag;
+} dvd = {0};
+
+OSAlarm read_alarm = {0};
 
 enum {
 	ASK_READY = 0x15,
@@ -189,62 +198,60 @@ bool exi_probe(int32_t chan)
 		return false;
 	if (chan == *VAR_EXI_SLOT)
 		return false;
+
 	return true;
 }
 
-bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
+bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 {
 	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
 		return false;
 	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
 		return false;
+
 	return true;
 }
 
-void di_update_interrupts(void);
-void di_complete_transfer(void);
-
-void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks, bool request)
+void schedule_read(OSTick ticks, bool request)
 {
-	*(uint32_t *)VAR_LAST_OFFSET = offset;
-	*(uint32_t *)VAR_TMP2 = length;
-	*(uint8_t **)VAR_TMP1 = address;
+	OSCancelAlarm(&read_alarm);
 
-	if (length) {
-		if (!is_frag_read(offset, length) && request)
-			usb_request(offset, length);
-
-		timer1_start(ticks);
+	if (!dvd.length) {
+		di_complete_transfer();
 		return;
 	}
 
-	di_complete_transfer();
+	dvd.frag = is_frag_read(dvd.offset, dvd.length);
+
+	if (!dvd.frag && request)
+		usb_request(dvd.offset, dvd.length);
+
+	OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
 }
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
-	schedule_read(OSPhysicalToCached(address), length, offset, 0, true);
+	dvd.buffer = OSPhysicalToCached(address);
+	dvd.length = length;
+	dvd.offset = offset;
+
+	schedule_read(OSMicrosecondsToTicks(300), true);
 }
 
 void trickle_read(void)
 {
-	uint32_t position  = *(uint32_t *)VAR_LAST_OFFSET;
-	uint32_t remainder = *(uint32_t *)VAR_TMP2;
-	uint8_t *data      = *(uint8_t **)VAR_TMP1;
-	uint32_t data_size;
-
-	if (remainder) {
+	if (dvd.length) {
 		OSTick start = OSGetTick();
-		bool frag = is_frag_read(position, remainder);
-		data_size = frag ? read_frag(data, remainder, position)
-		                 : usb_receive(data, remainder, 0);
+		int size = dvd.frag ? read_frag(dvd.buffer, dvd.length, dvd.offset)
+		                    : usb_receive(dvd.buffer, dvd.length, 0);
+		dcache_store(dvd.buffer, size);
 		OSTick end = OSGetTick();
 
-		position  += data_size;
-		remainder -= data_size;
+		dvd.buffer += size;
+		dvd.length -= size;
+		dvd.offset += size;
 
-		schedule_read(data + data_size, remainder, position, OSDiffTick(end, start), frag);
-		dcache_store(data, data_size);
+		schedule_read(OSDiffTick(end, start), dvd.frag);
 	}
 }
 

@@ -54,7 +54,30 @@ static OSTime OSGetTime(void)
 	return (OSTime)u32[0] << 32 | u32[1];
 }
 
-typedef struct {
+typedef struct OSAlarm OSAlarm;
+typedef struct OSContext OSContext;
+
+typedef void (*OSAlarmHandler)(OSAlarm *alarm, OSContext *context);
+
+struct OSAlarm {
+	OSAlarmHandler handler;
+	u32 tag;
+	OSTime fire;
+	OSAlarm *prev;
+	OSAlarm *next;
+	OSTime period;
+	OSTime start;
+};
+
+static void OSCreateAlarm(OSAlarm *alarm)
+{
+	alarm->handler = 0;
+}
+
+extern void (*OSSetAlarm)(OSAlarm *alarm, OSTime tick, OSAlarmHandler handler);
+extern void (*OSCancelAlarm)(OSAlarm *alarm);
+
+typedef struct OSContext {
 	u32 gpr[32];
 	u32 cr, lr, ctr, xer;
 	f64 fpr[32];
@@ -78,7 +101,7 @@ static OSContext *OSGetCurrentContext(void)
 
 void OSClearContext(OSContext *context);
 
-typedef enum {
+typedef enum OSException {
 	OS_EXCEPTION_SYSTEM_RESET = 0,
 	OS_EXCEPTION_MACHINE_CHECK,
 	OS_EXCEPTION_DSI,
@@ -116,7 +139,7 @@ static OSExceptionHandler OSGetExceptionHandler(OSException exception)
 
 extern void (*OSUnhandledException)(OSException exception, OSContext *context, u32 dsisr, u32 dar);
 
-typedef enum {
+typedef enum OSInterrupt {
 	OS_INTERRUPT_MEM_0 = 0,
 	OS_INTERRUPT_MEM_1,
 	OS_INTERRUPT_MEM_2,

@@ -20,7 +20,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include "timer.h"
 #include "../base/common.h"
 #include "../base/dolformat.h"
 #include "../base/os.h"
@@ -65,10 +64,9 @@ static void load_dol(uint32_t offset, uint32_t size)
 	image.entry();
 }
 
-void igr_exit(void)
+void fini(void)
 {
 	disable_interrupts();
-	clear_timers();
 	clear_jump_table();
 	device_reset();
 

@@ -41,7 +41,7 @@ enum {
 
 typedef void (*EXICallback)(s32 chan, u32 dev);
 
-typedef struct {
+typedef struct EXIControl {
 	EXICallback exiCallback;
 	EXICallback tcCallback;
 	EXICallback extCallback;

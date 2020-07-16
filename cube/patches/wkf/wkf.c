@@ -19,12 +19,21 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "../alt/timer.h"
+#include "../alt/emulator.h"
 #include "../base/common.h"
 #include "../base/exi.h"
 #include "../base/os.h"
 
-void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks);
+static struct {
+	void *buffer;
+	uint32_t length;
+	uint32_t offset;
+	bool frag;
+} dvd = {0};
+
+OSAlarm read_alarm = {0};
+
+void schedule_read(OSTick ticks);
 
 void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector)
 {
@@ -56,15 +65,13 @@ void dvd_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	switch (DI[2] >> 24) {
 		case 0xA8:
 		{
-			uint32_t position  = *(uint32_t *)VAR_LAST_OFFSET;
-			uint32_t remainder = *(uint32_t *)VAR_TMP2;
-			uint8_t *data      = *(uint8_t **)VAR_TMP1;
-			uint32_t data_size = DI[4] - DI[6];
+			int size = DI[4] - DI[6];
 
-			position  += data_size;
-			remainder -= data_size;
+			dvd.buffer += size;
+			dvd.length -= size;
+			dvd.offset += size;
 
-			schedule_read(data + data_size, remainder, position, 0);
+			schedule_read(OSMicrosecondsToTicks(300));
 			break;
 		}
 	}
@@ -76,61 +83,58 @@ bool exi_probe(int32_t chan)
 		return false;
 	if (chan == *VAR_EXI_SLOT)
 		return false;
+
 	return true;
 }
 
-bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
+bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 {
 	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
 		return false;
 	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
 		return false;
+
 	return true;
 }
 
-void di_update_interrupts(void);
-void di_complete_transfer(void);
-
-void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks)
+void schedule_read(OSTick ticks)
 {
-	*(uint32_t *)VAR_LAST_OFFSET = offset;
-	*(uint32_t *)VAR_TMP2 = length;
-	*(uint8_t **)VAR_TMP1 = address;
+	OSCancelAlarm(&read_alarm);
 
-	if (length) {
-		if (!is_frag_read(offset, length))
-			read_disc_frag(address, length, offset);
-		else
-			timer1_start(ticks);
+	if (!dvd.length) {
+		di_complete_transfer();
 		return;
 	}
 
-	di_complete_transfer();
+	dvd.frag = is_frag_read(dvd.offset, dvd.length);
+
+	if (!dvd.frag)
+		read_disc_frag(dvd.buffer, dvd.length, dvd.offset);
+	else
+		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
 }
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
-	schedule_read(OSPhysicalToUncached(address), length, offset, 0);
+	dvd.buffer = OSPhysicalToUncached(address);
+	dvd.length = length;
+	dvd.offset = offset;
+
+	schedule_read(OSMicrosecondsToTicks(300));
 }
 
 void trickle_read(void)
 {
-	uint32_t position  = *(uint32_t *)VAR_LAST_OFFSET;
-	uint32_t remainder = *(uint32_t *)VAR_TMP2;
-	uint8_t *data      = *(uint8_t **)VAR_TMP1;
-	uint32_t data_size;
+	if (dvd.length && dvd.frag) {
+		OSTick start = OSGetTick();
+		int size = read_frag(dvd.buffer, dvd.length, dvd.offset);
+		OSTick end = OSGetTick();
 
-	if (remainder) {
-		if (is_frag_read(position, remainder)) {
-			OSTick start = OSGetTick();
-			data_size = read_frag(data, remainder, position);
-			OSTick end = OSGetTick();
+		dvd.buffer += size;
+		dvd.length -= size;
+		dvd.offset += size;
 
-			position  += data_size;
-			remainder -= data_size;
-
-			schedule_read(data + data_size, remainder, position, OSDiffTick(end, start));
-		}
+		schedule_read(OSDiffTick(end, start));
 	}
 }
 

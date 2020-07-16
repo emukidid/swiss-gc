@@ -17,19 +17,24 @@
  * with Swiss.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GLOBALS_H
-#define GLOBALS_H
+#ifndef EMULATOR_H
+#define EMULATOR_H
 
-#include "../../reservedarea.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include "../base/os.h"
 
-static uint16_t *const _port      = (uint16_t *)VAR_SERVER_PORT;
-static uint8_t  *const _filelen   = (uint8_t  *)VAR_DISC_1_FNLEN;
-static char     *const _file      = (char     *)VAR_DISC_1_FN;
-static uint8_t  *const _file2len  = (uint8_t  *)VAR_DISC_2_FNLEN;
-static char     *const _file2     = (char     *)VAR_DISC_2_FN;
-static uint16_t *const _id        = (uint16_t *)VAR_IPV4_ID;
-static uint16_t *const _key       = (uint16_t *)VAR_FSP_KEY;
-static uint16_t *const _data_size = (uint16_t *)VAR_FSP_DATA_LENGTH;
-static uint32_t *const _disc2     = (uint32_t *)VAR_CURRENT_DISC;
+extern OSAlarm bba_alarm;
+extern OSAlarm read_alarm;
 
-#endif /* GLOBALS_H */
+void perform_read(uint32_t address, uint32_t length, uint32_t offset);
+void trickle_read(void);
+void change_disc(void);
+
+bool dtk_fill_buffer(void);
+
+void di_update_interrupts(void);
+void di_complete_transfer(void);
+void di_defer_transfer(uint32_t offset, uint32_t length);
+
+#endif /* EMULATOR_H */

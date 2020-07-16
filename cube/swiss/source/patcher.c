@@ -491,6 +491,8 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	int patched = 0;
 	FuncPattern PrepareExecSig = 
 		{ 60, 15, 3, 16, 13, 2, NULL, 0, "PrepareExec" };
+	FuncPattern PPCMtdecSig = 
+		{ 2, 0, 0, 0, 0, 1, NULL, 0, "PPCMtdec" };
 	FuncPattern PPCHaltSig = 
 		{ 5, 1, 0, 0, 1, 1, NULL, 0, "PPCHalt" };
 	FuncPattern OSExceptionInitSigs[3] = {
@@ -502,6 +504,23 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 35, 12, 3, 1, 2, 4, NULL, 0, "__OSSetExceptionHandlerD" },
 		{  7,  2, 1, 0, 0, 1, NULL, 0, "__OSSetExceptionHandler" },
 		{  5,  1, 0, 0, 0, 2, NULL, 0, "__OSSetExceptionHandler" }	// SN Systems ProDG
+	};
+	FuncPattern SetTimerSig = 
+		{ 43, 13, 3, 4, 4, 10, NULL, 0, "SetTimerD" };
+	FuncPattern InsertAlarmSigs[3] = {
+		{ 123, 38, 17,  6, 11, 24, NULL, 0, "InsertAlarmD" },
+		{ 148, 30, 16, 10, 17, 45, NULL, 0, "InsertAlarm" },
+		{ 154, 31, 16, 12, 17, 51, NULL, 0, "InsertAlarm" }	// SN Systems ProDG
+	};
+	FuncPattern OSSetAlarmSigs[3] = {
+		{ 58, 18, 4, 8, 0, 9, NULL, 0, "OSSetAlarmD" },
+		{ 26,  5, 4, 4, 0, 5, NULL, 0, "OSSetAlarm" },
+		{ 28,  3, 4, 6, 0, 9, NULL, 0, "OSSetAlarm" }	// SN Systems ProDG
+	};
+	FuncPattern OSCancelAlarmSigs[3] = {
+		{ 52, 15,  7, 6, 5,  4, NULL, 0, "OSCancelAlarmD" },
+		{ 71, 18, 10, 7, 9, 12, NULL, 0, "OSCancelAlarm" },
+		{ 70, 18, 10, 7, 9, 13, NULL, 0, "OSCancelAlarm" }	// SN Systems ProDG
 	};
 	FuncPattern DCFlushRangeNoSyncSigs[2] = {
 		{ 12, 3, 0, 0, 1, 2, NULL, 0, "DCFlushRangeNoSync A" },
@@ -611,6 +630,8 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 138, 44, 20,  8, 12, 12, NULL, 0, "SelectThread B" },
 		{ 141, 51, 19,  8, 12, 14, NULL, 0, "SelectThread B" }	// SN Systems ProDG
 	};
+	FuncPattern OSGetTimeSig = 
+		{ 6, 0, 0, 0, 0, 4, NULL, 0, "OSGetTime" };
 	FuncPattern __OSGetSystemTimeSigs[3] = {
 		{ 22, 4, 2, 3, 0, 3, NULL, 0, "__OSGetSystemTimeD" },
 		{ 25, 8, 5, 3, 0, 3, NULL, 0, "__OSGetSystemTime" },
@@ -994,30 +1015,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			branchResolve(data, dataType, i - 1) == 0))
 			continue;
 		
-		if (data[i + 1] == 0x4E800020) {
-			switch (data[i]) {
-				case 0x7C78EAA6:	// mfmmcr0	r3
-				case 0x7C79EAA6:	// mfpmc1	r3
-				case 0x7C7AEAA6:	// mfpmc2	r3
-				case 0x7C7BEAA6:	// mfsia	r3
-				case 0x7C7CEAA6:	// mfmmcr1	r3
-				case 0x7C7DEAA6:	// mfpmc3	r3
-				case 0x7C7EEAA6:	// mfpmc4	r3
-					data[i] = 0x38600000;
-					break;
-				case 0x7C78EBA6:	// mtmmcr0	r3
-				case 0x7C79EBA6:	// mtpmc1	r3
-				case 0x7C7AEBA6:	// mtpmc2	r3
-				case 0x7C7BEBA6:	// mtsia	r3
-				case 0x7C7CEBA6:	// mtmmcr1	r3
-				case 0x7C7DEBA6:	// mtpmc3	r3
-				case 0x7C7EEBA6:	// mtpmc4	r3
-					data[i] = 0x60000000;
-					break;
-			}
-			continue;
-		}
-		else if (data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) {
+		if (data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) {
 			if (!memcmp(data + i, _ppchalt, sizeof(_ppchalt)))
 				PPCHaltSig.offsetFoundAt = i;
 			else if (!memcmp(data + i, _dvdgettransferredsize, sizeof(_dvdgettransferredsize)))
@@ -1059,6 +1057,70 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					case 2:
 						if (findx_pattern(data, dataType, i + 136, length, &__OSSetExceptionHandlerSigs[2]))
 							OSExceptionInitSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(OSSetAlarmSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &OSSetAlarmSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern (data, dataType, i + 31, length, &OSDisableInterruptsSig) &&
+							findx_patterns(data, dataType, i + 37, length, &OSGetTimeSig,
+							                                               &__OSGetSystemTimeSigs[0], NULL) &&
+							findx_pattern (data, dataType, i + 42, length, &InsertAlarmSigs[0]) &&
+							findx_pattern (data, dataType, i + 52, length, &OSRestoreInterruptsSig))
+							OSSetAlarmSigs[j].offsetFoundAt = i;
+					case 1:
+						if (findx_pattern (data, dataType, i +  8, length, &OSDisableInterruptsSig) &&
+							findx_patterns(data, dataType, i + 13, length, &OSGetTimeSig,
+							                                               &__OSGetSystemTimeSigs[1], NULL) &&
+							findx_pattern (data, dataType, i + 18, length, &InsertAlarmSigs[1]) &&
+							findx_pattern (data, dataType, i + 20, length, &OSRestoreInterruptsSig))
+							OSSetAlarmSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  9, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 14, length, &__OSGetSystemTimeSigs[2]) &&
+							findx_pattern(data, dataType, i + 19, length, &InsertAlarmSigs[2]) &&
+							findx_pattern(data, dataType, i + 21, length, &OSRestoreInterruptsSig))
+							OSSetAlarmSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(OSCancelAlarmSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &OSCancelAlarmSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern (data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+							findx_pattern (data, dataType, i + 11, length, &OSRestoreInterruptsSig) &&
+							findx_patterns(data, dataType, i + 32, length, &SetTimerSig) &&
+							findx_pattern (data, dataType, i + 46, length, &OSRestoreInterruptsSig))
+							OSCancelAlarmSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern (data, dataType, i +  7, length, &OSDisableInterruptsSig) &&
+							findx_pattern (data, dataType, i + 13, length, &OSRestoreInterruptsSig) &&
+							findx_patterns(data, dataType, i + 32, length, &OSGetTimeSig,
+							                                               &__OSGetSystemTimeSigs[1], NULL) &&
+							findx_pattern (data, dataType, i + 46, length, &PPCMtdecSig) &&
+							findx_pattern (data, dataType, i + 56, length, &PPCMtdecSig) &&
+							findx_pattern (data, dataType, i + 59, length, &PPCMtdecSig) &&
+							findx_pattern (data, dataType, i + 63, length, &OSRestoreInterruptsSig))
+							OSCancelAlarmSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  7, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 12, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 31, length, &__OSGetSystemTimeSigs[2]) &&
+							findx_pattern(data, dataType, i + 45, length, &PPCMtdecSig) &&
+							findx_pattern(data, dataType, i + 55, length, &PPCMtdecSig) &&
+							findx_pattern(data, dataType, i + 58, length, &PPCMtdecSig) &&
+							findx_pattern(data, dataType, i + 62, length, &OSRestoreInterruptsSig))
+							OSCancelAlarmSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -2775,6 +2837,33 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		}
 	}
 	
+	for (j = 0; j < sizeof(OSSetAlarmSigs) / sizeof(FuncPattern); j++)
+		if (OSSetAlarmSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(OSSetAlarmSigs) / sizeof(FuncPattern) && (i = OSSetAlarmSigs[j].offsetFoundAt)) {
+		u32 *OSSetAlarm = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (OSSetAlarm) {
+			if ((k = SystemCallVectorSig.offsetFoundAt))
+				data[k + 0] = (u32)OSSetAlarm;
+			
+			print_gecko("Found:[%s] @ %08X\n", OSSetAlarmSigs[j].Name, OSSetAlarm);
+			patched++;
+		}
+	}
+	
+	if (j < sizeof(OSCancelAlarmSigs) / sizeof(FuncPattern) && (i = OSCancelAlarmSigs[j].offsetFoundAt)) {
+		u32 *OSCancelAlarm = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (OSCancelAlarm) {
+			if ((k = SystemCallVectorSig.offsetFoundAt))
+				data[k + 1] = (u32)OSCancelAlarm;
+			
+			print_gecko("Found:[%s] @ %08X\n", OSCancelAlarmSigs[j].Name, OSCancelAlarm);
+			patched++;
+		}
+	}
+	
 	for (j = 0; j < sizeof(__OSUnhandledExceptionSigs) / sizeof(FuncPattern); j++)
 		if (__OSUnhandledExceptionSigs[j].offsetFoundAt) break;
 	
@@ -2783,7 +2872,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		
 		if (__OSUnhandledException) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 0] = (u32)__OSUnhandledException;
+				data[k + 2] = (u32)__OSUnhandledException;
 			
 			print_gecko("Found:[%s] @ %08X\n", __OSUnhandledExceptionSigs[j].Name, __OSUnhandledException);
 			patched++;
@@ -2846,7 +2935,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		
 		if (__OSMaskInterrupts) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 1] = (u32)__OSMaskInterrupts;
+				data[k + 3] = (u32)__OSMaskInterrupts;
 			
 			print_gecko("Found:[%s] @ %08X\n", __OSMaskInterruptsSigs[j].Name, __OSMaskInterrupts);
 			patched++;
@@ -2861,7 +2950,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		
 		if (__OSUnmaskInterrupts) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 2] = (u32)__OSUnmaskInterrupts;
+				data[k + 4] = (u32)__OSUnmaskInterrupts;
 			
 			print_gecko("Found:[%s] @ %08X\n", __OSUnmaskInterruptsSigs[j].Name, __OSUnmaskInterrupts);
 			patched++;
@@ -2915,9 +3004,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		
 		if (__OSDoHotReset) {
 			switch (j) {
-				case 0: data[i + 4] = branchAndLink(IGR_EXIT, __OSDoHotReset + 4); break;
+				case 0: data[i + 4] = branchAndLink(FINI, __OSDoHotReset + 4); break;
 				case 1:
-				case 2: data[i + 5] = branchAndLink(IGR_EXIT, __OSDoHotReset + 5); break;
+				case 2: data[i + 5] = branchAndLink(FINI, __OSDoHotReset + 5); break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", __OSDoHotResetSigs[j].Name, __OSDoHotReset);
 			patched++;
@@ -2944,19 +3033,19 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		
 		if (OSResetSystem) {
 			switch (j) {
-				case  4: data[i + 72] = branchAndLink(IGR_EXIT, OSResetSystem + 72); break;
-				case  5: data[i + 73] = branchAndLink(IGR_EXIT, OSResetSystem + 73); break;
-				case  6: data[i + 72] = branchAndLink(IGR_EXIT, OSResetSystem + 72); break;
+				case  4: data[i + 72] = branchAndLink(FINI, OSResetSystem + 72); break;
+				case  5: data[i + 73] = branchAndLink(FINI, OSResetSystem + 73); break;
+				case  6: data[i + 72] = branchAndLink(FINI, OSResetSystem + 72); break;
 				case  7:
-				case  8: data[i + 77] = branchAndLink(IGR_EXIT, OSResetSystem + 77); break;
-				case  9: data[i + 66] = branchAndLink(IGR_EXIT, OSResetSystem + 66); break;
-				case 10: data[i + 81] = branchAndLink(IGR_EXIT, OSResetSystem + 81); break;
-				case 11: data[i + 86] = branchAndLink(IGR_EXIT, OSResetSystem + 86); break;
-				case 12: data[i + 87] = branchAndLink(IGR_EXIT, OSResetSystem + 87); break;
-				case 13: data[i + 74] = branchAndLink(IGR_EXIT, OSResetSystem + 74); break;
+				case  8: data[i + 77] = branchAndLink(FINI, OSResetSystem + 77); break;
+				case  9: data[i + 66] = branchAndLink(FINI, OSResetSystem + 66); break;
+				case 10: data[i + 81] = branchAndLink(FINI, OSResetSystem + 81); break;
+				case 11: data[i + 86] = branchAndLink(FINI, OSResetSystem + 86); break;
+				case 12: data[i + 87] = branchAndLink(FINI, OSResetSystem + 87); break;
+				case 13: data[i + 74] = branchAndLink(FINI, OSResetSystem + 74); break;
 			}
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 3] = (u32)OSResetSystem;
+				data[k + 5] = (u32)OSResetSystem;
 			
 			print_gecko("Found:[%s] @ %08X\n", OSResetSystemSigs[j].Name, OSResetSystem);
 			patched++;
@@ -2973,20 +3062,33 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			switch (j) {
 				case 0:
 					data[i +  4] = 0x38600000 | ((u32)JUMP_VECTOR & 0xFFFF);
+					data[i + 12] = 0x3CA00000 | ((u32)__OSInitSystemCall + 0x8000) >> 16;
+					data[i + 13] = 0x38050000 | ((u32)__OSInitSystemCall & 0xFFFF);
 					data[i + 17] = 0x38800020;	// li		r4, 32
 					data[i + 21] = 0x38800020;	// li		r4, 32
+					data[i + 22] = branchAndLink(INIT, __OSInitSystemCall + 22);
 					break;
 				case 1:
 					data[i +  4] = 0x3CA00000 | ((u32)JUMP_VECTOR + 0x8000) >> 16;
+					data[i +  6] = 0x3C600000 | ((u32)__OSInitSystemCall + 0x8000) >> 16;
 					data[i +  7] = 0x3BE50000 | ((u32)JUMP_VECTOR & 0xFFFF);
+					data[i +  8] = 0x38030000 | ((u32)__OSInitSystemCall & 0xFFFF);
 					data[i + 14] = 0x38800020;	// li		r4, 32
 					data[i + 18] = 0x38800020;	// li		r4, 32
+					data[i + 19] = branchAndLink(INIT, __OSInitSystemCall + 19);
 					break;
 				case 2:
+					data[i +  3] = 0x3C600000 | ((u32)__OSInitSystemCall + 0x8000) >> 16;
 					data[i +  6] = 0x3CA00000 | ((u32)JUMP_VECTOR + 0x8000) >> 16;
+					data[i +  7] = 0x38030000 | ((u32)__OSInitSystemCall & 0xFFFF);
 					data[i +  8] = 0x38650000 | ((u32)JUMP_VECTOR & 0xFFFF);
+					data[i + 11] = 0x3C600000 | ((u32)JUMP_VECTOR + 0x8000) >> 16;
 					data[i + 12] = 0x38800020;	// li		r4, 32
+					data[i + 13] = 0x38630000 | ((u32)JUMP_VECTOR & 0xFFFF);
+					data[i + 16] = 0x3C600000 | ((u32)JUMP_VECTOR + 0x8000) >> 16;
+					data[i + 17] = 0x38630000 | ((u32)JUMP_VECTOR & 0xFFFF);
 					data[i + 18] = 0x38800020;	// li		r4, 32
+					data[i + 19] = branchAndLink(INIT, __OSInitSystemCall + 19);
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", __OSInitSystemCallSigs[j].Name, __OSInitSystemCall);
@@ -3143,7 +3245,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			data[i + 41] = 0x387B0000;	// addi		r3, r27, 0
 			data[i + 42] = 0x389C0000;	// addi		r4, r28, 0
 			data[i + 43] = 0x38BF0000;	// addi		r5, r31, 0
-			data[i + 44] = branchAndLink(EXI_TRYLOCK, EXISelectSD + 44);
+			data[i + 44] = branchAndLink(EXI_TRY_LOCK, EXISelectSD + 44);
 			data[i + 45] = 0x2C030000;	// cmpwi	r3, 0
 			data[i + 46] = 0x40820014;	// bne		+5
 			
@@ -3166,7 +3268,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
 					data[i + 65] = 0x389D0000;	// addi		r4, r29, 0
 					data[i + 66] = 0x38BE0000;	// addi		r5, r30, 0
-					data[i + 67] = branchAndLink(EXI_TRYLOCK, EXISelect + 67);
+					data[i + 67] = branchAndLink(EXI_TRY_LOCK, EXISelect + 67);
 					data[i + 68] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 69] = 0x40820014;	// bne		+5
 					break;
@@ -3175,7 +3277,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
 					data[i + 65] = 0x389C0000;	// addi		r4, r28, 0
 					data[i + 66] = 0x38BD0000;	// addi		r5, r29, 0
-					data[i + 67] = branchAndLink(EXI_TRYLOCK, EXISelect + 67);
+					data[i + 67] = branchAndLink(EXI_TRY_LOCK, EXISelect + 67);
 					data[i + 68] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 69] = 0x40820014;	// bne		+5
 					break;
@@ -3186,7 +3288,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 27] = 0x387B0000;	// addi		r3, r27, 0
 					data[i + 28] = 0x389C0000;	// addi		r4, r28, 0
 					data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
-					data[i + 30] = branchAndLink(EXI_TRYLOCK, EXISelect + 30);
+					data[i + 30] = branchAndLink(EXI_TRY_LOCK, EXISelect + 30);
 					data[i + 31] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 32] = 0x40820014;	// bne		+5
 					break;
@@ -3195,7 +3297,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 27] = 0x387E0000;	// addi		r3, r30, 0
 					data[i + 28] = 0x389B0000;	// addi		r4, r27, 0
 					data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
-					data[i + 30] = branchAndLink(EXI_TRYLOCK, EXISelect + 30);
+					data[i + 30] = branchAndLink(EXI_TRY_LOCK, EXISelect + 30);
 					data[i + 31] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 32] = 0x40820014;	// bne		+5
 					break;
@@ -3213,7 +3315,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		
 		if (EXILock) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 4] = (u32)EXILock;
+				data[k + 6] = (u32)EXILock;
 			
 			print_gecko("Found:[%s] @ %08X\n", EXILockSigs[j].Name, EXILock);
 			patched++;
@@ -3228,7 +3330,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		
 		if (EXIUnlock) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 5] = (u32)EXIUnlock;
+				data[k + 7] = (u32)EXIUnlock;
 			
 			print_gecko("Found:[%s] @ %08X\n", EXIUnlockSigs[j].Name, EXIUnlock);
 			patched++;

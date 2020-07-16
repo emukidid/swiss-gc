@@ -19,10 +19,18 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "timer.h"
+#include "emulator.h"
 #include "../base/common.h"
 #include "../base/exi.h"
 #include "../base/os.h"
+
+static struct {
+	void *buffer;
+	uint32_t length;
+	uint32_t offset;
+} dvd = {0};
+
+OSAlarm read_alarm = {0};
 
 bool exi_probe(int32_t chan)
 {
@@ -30,10 +38,11 @@ bool exi_probe(int32_t chan)
 		return false;
 	if (chan == *VAR_EXI_SLOT)
 		return false;
+
 	return true;
 }
 
-bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
+bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 {
 	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
 		return false;
@@ -41,30 +50,29 @@ bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 		return false;
 	if (chan == *VAR_EXI_SLOT)
 		end_read();
+
 	return true;
 }
 
-bool dtk_fill_buffer(void);
-void di_update_interrupts(void);
-void di_complete_transfer(void);
-
-void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks)
+void schedule_read(OSTick ticks)
 {
-	*(uint32_t *)VAR_LAST_OFFSET = offset;
-	*(uint32_t *)VAR_TMP2 = length;
-	*(uint8_t **)VAR_TMP1 = address;
+	OSCancelAlarm(&read_alarm);
 
-	if (length) {
-		timer1_start(ticks);
+	if (!dvd.length) {
+		di_complete_transfer();
 		return;
 	}
 
-	di_complete_transfer();
+	OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
 }
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
-	schedule_read(OSPhysicalToUncached(address), length, offset, OSMicrosecondsToTicks(300));
+	dvd.buffer = OSPhysicalToUncached(address);
+	dvd.length = length;
+	dvd.offset = offset;
+
+	schedule_read(OSMicrosecondsToTicks(300));
 }
 
 void trickle_read(void)
@@ -72,20 +80,16 @@ void trickle_read(void)
 	if (dtk_fill_buffer())
 		return;
 
-	uint32_t position  = *(uint32_t *)VAR_LAST_OFFSET;
-	uint32_t remainder = *(uint32_t *)VAR_TMP2;
-	uint8_t *data      = *(uint8_t **)VAR_TMP1;
-	uint32_t data_size;
-
-	if (remainder) {
+	if (dvd.length) {
 		OSTick start = OSGetTick();
-		data_size = read_frag(data, remainder, position);
+		int size = read_frag(dvd.buffer, dvd.length, dvd.offset);
 		OSTick end = OSGetTick();
 
-		position  += data_size;
-		remainder -= data_size;
+		dvd.buffer += size;
+		dvd.length -= size;
+		dvd.offset += size;
 
-		schedule_read(data + data_size, remainder, position, OSDiffTick(end, start));
+		schedule_read(OSDiffTick(end, start));
 	}
 }
 

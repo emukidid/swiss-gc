@@ -21,9 +21,9 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
+#include "emulator.h"
 #include "fifo.h"
 #include "mix.h"
-#include "timer.h"
 #include "../base/common.h"
 #include "../base/dvd.h"
 #include "../base/DVDMath.h"
@@ -45,16 +45,14 @@ static struct {
 	} next;
 } dtk = {0};
 
+OSAlarm command_alarm = {0};
+
 #ifdef BBA
 void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 #endif
 #ifdef WKF
 void dvd_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 #endif
-
-void perform_read(uint32_t address, uint32_t length, uint32_t offset);
-void trickle_read(void);
-void change_disc(void);
 
 bool memeq(const void *a, const void *b, size_t size)
 {
@@ -79,6 +77,7 @@ bool dtk_fill_buffer(void)
 	if (fifo_space() < sizeof(buffer))
 		return false;
 
+	OSCancelAlarm(&read_alarm);
 	OSTick start = OSGetTick();
 
 	int size = read_frag(VAR_SECTOR_BUF, sizeof(VAR_SECTOR_BUF), dtk.current.position);
@@ -104,7 +103,7 @@ bool dtk_fill_buffer(void)
 	}
 
 	OSTick end = OSGetTick();
-	timer1_start(OSDiffTick(end, start));
+	OSSetAlarm(&read_alarm, OSDiffTick(end, start), (OSAlarmHandler)trickle_read);
 
 	return true;
 }
@@ -228,9 +227,9 @@ static void di_execute_command(void)
 		}
 		case 0xE3:
 		{
-			if (*(uint32_t *)VAR_SECOND_DISC) {
+			if (!((*DI_EMU)[1] & 0b001) && *(uint32_t *)VAR_SECOND_DISC) {
 				(*DI_EMU)[1] |= 0b001;
-				timer2_start(OSSecondsToTicks(1));
+				OSSetAlarm(&command_alarm, OSSecondsToTicks(1), (OSAlarmHandler)change_disc);
 			}
 			break;
 		}
@@ -289,9 +288,22 @@ void di_defer_transfer(uint32_t offset, uint32_t length)
 	__attribute((noinline))
 	void di_defer_transfer(uint32_t offset, uint32_t length)
 	{
+		void alarm_handler(OSAlarm *alarm, OSContext *context)
+		{
+			#ifndef DVD
+			(*DI_EMU)[0] |= ((*DI_EMU)[0] << 2) & 0b0001000;
+			di_update_interrupts();
+			#else
+			uint32_t status = DI[0];
+			uint32_t mask = status & 0b0101010;
+			mask |= (mask << 2) & 0b0001000;
+			DI[0] = mask;
+			#endif
+		}
+
 		uint32_t ticks = OSMicrosecondsToTicks(300);
 		ticks += OSSecondsToTicks(CalculateRawDiscReadTime(offset, length));
-		timer4_start(ticks);
+		OSSetAlarm(&command_alarm, ticks, alarm_handler);
 
 		#ifndef DVD
 		(*DI_EMU)[0] &= ~0b0001000;
@@ -631,42 +643,6 @@ void service_exception(OSException exception, OSContext *context, uint32_t dsisr
 			OSUnhandledException(exception, context, dsisr, dar);
 			break;
 		}
-		case OS_EXCEPTION_PERFORMANCE_MONITOR:
-		{
-			if (timer1_interrupt()) {
-				timer1_stop();
-				trickle_read();
-			}
-			#ifndef DVD
-			if (timer2_interrupt()) {
-				timer2_stop();
-				change_disc();
-			}
-			#endif
-			#ifdef BBA
-			if (timer3_interrupt()) {
-				timer3_stop();
-				OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
-			}
-			#endif
-			#ifdef DVD
-			if (timer4_interrupt()) {
-				timer4_stop();
-
-				#ifndef DVD
-				(*DI_EMU)[0] |= ((*DI_EMU)[0] << 2) & 0b0001000;
-				di_update_interrupts();
-				#else
-				uint32_t status = DI[0];
-				uint32_t mask = status & 0b0101010;
-				mask |= (mask << 2) & 0b0001000;
-				DI[0] = mask;
-				#endif
-			}
-			#endif
-			restore_timer_interrupts();
-			break;
-		}
 	}
 
 	*load_context_end = 0x60000000;
@@ -713,9 +689,19 @@ static void dvd_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 }
 #endif
 
+void init(void)
+{
+	#ifdef BBA
+	OSCreateAlarm(&bba_alarm);
+	#endif
+	OSCreateAlarm(&read_alarm);
+	OSCreateAlarm(&command_alarm);
+
+	OSSetExceptionHandler(OS_EXCEPTION_DSI, exception_handler);
+}
+
 OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
-	OSSetExceptionHandler(OS_EXCEPTION_DSI, exception_handler);
 	OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
 	#ifdef BBA
 	OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
@@ -730,5 +716,8 @@ void idle_thread(void)
 {
 	disable_interrupts();
 	trickle_read();
+	#ifdef BBA
+	exi_interrupt_handler(OS_INTERRUPT_EXI_2_EXI, OSGetCurrentContext());
+	#endif
 	enable_interrupts();
 }

@@ -20,12 +20,26 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-#include "../alt/timer.h"
+#include "../alt/emulator.h"
 #include "../base/common.h"
 #include "../base/exi.h"
 #include "../base/os.h"
 #include "bba.h"
 #include "globals.h"
+
+static struct {
+	void *buffer;
+	uint32_t length;
+	uint32_t offset;
+	bool frag;
+} dvd = {0};
+
+OSAlarm bba_alarm = {0};
+OSAlarm read_alarm = {0};
+
+void schedule_read(OSTick ticks, bool lock);
+void retry_read(void);
+
 #include "tcpip.c"
 
 #define BBA_CMD_IRMASKALL		0x00
@@ -237,7 +251,13 @@ static void bba_interrupt(void)
 
 static void exi_callback(int32_t chan, uint32_t dev)
 {
+	void alarm_handler(OSAlarm *alarm, OSContext *context)
+	{
+		OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
+	}
+
 	if (EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, exi_callback)) {
+		OSCancelAlarm(&bba_alarm);
 		OSTick start = OSGetTick();
 
 		uint8_t status = bba_cmd_in8(0x03);
@@ -249,7 +269,7 @@ static void exi_callback(int32_t chan, uint32_t dev)
 		bba_cmd_out8(0x02, BBA_CMD_IRMASKNONE);
 
 		OSTick end = OSGetTick();
-		timer3_start(OSDiffTick(end, start));
+		OSSetAlarm(&bba_alarm, OSDiffTick(end, start), alarm_handler);
 
 		OSMaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
 		EXIUnlock(EXI_CHANNEL_0);
@@ -268,10 +288,11 @@ bool exi_probe(int32_t chan)
 		return false;
 	if (chan == *VAR_EXI_SLOT)
 		return false;
+
 	return true;
 }
 
-bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
+bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 {
 	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
 		return false;
@@ -279,63 +300,55 @@ bool exi_trylock(int32_t chan, uint32_t dev, EXIControl *exi)
 		return false;
 	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
 		return false;
+
 	return true;
 }
 
-void di_update_interrupts(void);
-void di_complete_transfer(void);
-
-void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks, bool lock)
+void schedule_read(OSTick ticks, bool lock)
 {
-	*_position  = offset;
-	*_remainder = length;
-	*_data      = address;
-	*_data_size = 0;
+	OSCancelAlarm(&read_alarm);
 
-	if (length) {
-		if (!is_frag_read(offset, length))
-			fsp_get_file(offset, length, lock);
-		else
-			timer1_start(ticks);
+	if (!dvd.length) {
+		di_complete_transfer();
 		return;
 	}
 
-	di_complete_transfer();
+	dvd.frag = is_frag_read(dvd.offset, dvd.length);
+
+	if (!dvd.frag)
+		fsp_get_file(dvd.offset, dvd.length, lock);
+	else
+		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
+}
+
+void retry_read(void)
+{
+	fsp_get_file(dvd.offset, dvd.length, true);
 }
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
-	schedule_read(OSPhysicalToCached(address), length, offset, 0, true);
+	dvd.buffer = OSPhysicalToCached(address);
+	dvd.length = length;
+	dvd.offset = offset;
+
+	schedule_read(OSMicrosecondsToTicks(300), true);
 }
 
 void trickle_read(void)
 {
-	uint32_t position  = *_position;
-	uint32_t remainder = *_remainder;
-	uint8_t *data      = *_data;
-	uint32_t data_size;
+	if (dvd.length && dvd.frag) {
+		OSTick start = OSGetTick();
+		int size = read_frag(dvd.buffer, dvd.length, dvd.offset);
+		dcache_store(dvd.buffer, size);
+		OSTick end = OSGetTick();
 
-	if (remainder) {
-		if (is_frag_read(position, remainder)) {
-			OSTick start = OSGetTick();
-			data_size = read_frag(data, remainder, position);
-			OSTick end = OSGetTick();
+		dvd.buffer += size;
+		dvd.length -= size;
+		dvd.offset += size;
 
-			position  += data_size;
-			remainder -= data_size;
-
-			schedule_read(data + data_size, remainder, position, OSDiffTick(end, start), true);
-			dcache_store(data, data_size);
-		} else {
-			OSTime start = *_start;
-			OSTime end = OSGetTime();
-
-			if (OSSecondsToTicks(1) < end - start)
-				fsp_get_file(position, remainder, true);
-		}
+		schedule_read(OSDiffTick(end, start), true);
 	}
-
-	OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
 }
 
 void device_reset(void)

@@ -20,7 +20,7 @@
 
 #define PAD_COMBO_EXIT (PAD_BUTTON_B | PAD_BUTTON_R | PAD_BUTTON_Z | PAD_BUTTON_DOWN)
 
-typedef struct {
+typedef struct PADStatus {
 	u16 button;
 	s8 stickX;
 	s8 stickY;

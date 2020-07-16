@@ -89,19 +89,25 @@ trace_exception:
 
 	.globl _start
 _start:
+	b		init
 	b		exi_probe
-	b		exi_trylock
+	b		exi_try_lock
 	b		set_di_handler
 	b		idle_thread
 	b		check_pad
-	b		igr_exit
+	b		fini
 
 	.globl jump_table, jump_table_end
 jump_table:
+	.globl OSSetAlarm, OSCancelAlarm
 	.globl OSUnhandledException
 	.globl OSMaskInterrupts, OSUnmaskInterrupts
 	.globl OSResetSystem
 	.globl EXILock, EXIUnlock
+OSSetAlarm:
+	.long 0
+OSCancelAlarm:
+	.long 0
 OSUnhandledException:
 	.long 0
 OSMaskInterrupts:
@@ -114,9 +120,7 @@ EXILock:
 	.long 0
 EXIUnlock:
 	.long 0
-	.long 0
 jump_table_end:
-	.long 0
 
 	.globl realmode
 realmode:
@@ -189,40 +193,3 @@ wait_pecopydone:
 	cmplwi	r4, 0
 	bne		1b
 	blr
-
-	.org 0x80000F00 - 0x80000C00 - 0x80
-	.globl performance_monitor_interrupt
-performance_monitor_interrupt:
-	mtsprg	0, r4
-	lwz		r4, 192 (r0)
-	stw		r3, 12 (r4)
-	mfsprg	r3, 0
-	stw		r3, 16 (r4)
-	stw		r5, 20 (r4)
-	lhz		r3, 418 (r4)
-	ori		r3, r3, 0x2
-	sth		r3, 418 (r4)
-	mfcr	r3
-	stw		r3, 128 (r4)
-	mflr	r3
-	stw		r3, 132 (r4)
-	mfctr	r3
-	stw		r3, 136 (r4)
-	mfxer	r3
-	stw		r3, 140 (r4)
-	mfsrr0	r3
-	stw		r3, 408 (r4)
-	mfsrr1	r3
-	stw		r3, 412 (r4)
-	mr		r5, r3
-	nop
-	mfmsr	r3
-	ori		r3, r3, 0x30
-	mtsrr1	r3
-	li		r3, 11
-	lwz		r4, 212 (r0)
-	lis		r5, exception_handler@ha
-	addi	r5, r5, exception_handler@l
-	mtsrr0	r5
-	rfi
-	b		performance_monitor_interrupt

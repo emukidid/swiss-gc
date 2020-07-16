@@ -19,7 +19,6 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "../alt/timer.h"
 #include "../base/common.h"
 #include "../base/exi.h"
 #include "../base/os.h"
@@ -152,9 +151,6 @@ static uint8_t fsp_checksum(fsp_header_t *header, size_t size)
 	return sum;
 }
 
-void schedule_read(void *address, uint32_t length, uint32_t offset, OSTick ticks, bool lock);
-void trickle_read(void);
-
 static void fsp_get_file(uint32_t offset, size_t size, bool lock)
 {
 	const char *file = _file;
@@ -166,8 +162,7 @@ static void fsp_get_file(uint32_t offset, size_t size, bool lock)
 		filelen = *_file2len;
 	}
 
-	*_start = 0;
-	if (lock && !EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, trickle_read))
+	if (lock && !EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, (EXICallback)retry_read))
 		return;
 
 	uint8_t data[MIN_FRAME_SIZE + filelen];
@@ -211,8 +206,7 @@ static void fsp_get_file(uint32_t offset, size_t size, bool lock)
 
 	bba_transmit(eth, sizeof(*eth) + ipv4->length);
 
-	*_start = OSGetTime();
-	timer1_start(OSSecondsToTicks(1));
+	OSSetAlarm(&read_alarm, OSSecondsToTicks(1), (OSAlarmHandler)retry_read);
 
 	if (lock) EXIUnlock(EXI_CHANNEL_0);
 }
@@ -230,7 +224,7 @@ static void fsp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 		case CC_ERR:
 			break;
 		case CC_GET_FILE:
-			if (*_position == fsp->position + fsp->sequence * 0x80000000) {
+			if (dvd.offset == fsp->position + fsp->sequence * 0x80000000) {
 				*_data_size = fsp->data_length;
 				*_id        = ipv4->id;
 			}
@@ -261,13 +255,11 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 		}
 
 		if (ipv4->id == *_id) {
-			uint32_t position  = *_position;
-			uint32_t remainder = *_remainder;
-			uint8_t *data      = *_data;
+			uint8_t *data      = dvd.buffer;
 			uint16_t data_size = *_data_size;
 
 			if (data_size) {
-				data_size = MIN(data_size, remainder);
+				data_size = MIN(data_size, dvd.length);
 
 				int offset = ipv4->offset * 8 - sizeof(udp_header_t) - sizeof(fsp_header_t);
 				int udp_offset = MAX(-offset, 0);
@@ -282,10 +274,12 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 				size        -= page_size;
 
 				if (!(ipv4->flags & 0b001)) {
-					position  += data_size;
-					remainder -= data_size;
+					dvd.buffer += data_size;
+					dvd.length -= data_size;
+					dvd.offset += data_size;
+					*_data_size = 0;
 
-					schedule_read(data + data_size, remainder, position, 0, false);
+					schedule_read(OSMicrosecondsToTicks(300), false);
 				}
 
 				bba_receive_end(page, data + data_offset, size);

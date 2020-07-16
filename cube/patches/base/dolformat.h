@@ -6,7 +6,7 @@
 #define DOL_MAX_TEXT 7
 #define DOL_MAX_DATA 11
 
-typedef struct {
+typedef struct DOLImage {
 	u32 textData[DOL_MAX_TEXT];
 	u32 dataData[DOL_MAX_DATA];
 	void *text[DOL_MAX_TEXT];
