@@ -923,10 +923,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 187, 105, 23, 16, 18, 11, NULL, 0, "stateBusy D" },	// SN Systems ProDG
 		{ 208, 123, 24, 17, 21, 10, NULL, 0, "stateBusy E" }
 	};
-	FuncPattern cbForStateBusySigs[10] = {
+	FuncPattern cbForStateBusySigs[11] = {
 		{ 329, 142, 27, 21, 45,  6, NULL, 0, "cbForStateBusyD A" },
 		{ 305, 133, 27, 24, 39,  6, NULL, 0, "cbForStateBusyD B" },
-		{ 316, 136, 27, 25, 41,  6, NULL, 0, "cbForStateBusyD C" },
+		{ 296, 127, 24, 24, 39,  6, NULL, 0, "cbForStateBusyD C" },
+		{ 316, 136, 27, 25, 41,  6, NULL, 0, "cbForStateBusyD D" },
 		{ 261, 108, 22, 12, 43,  5, NULL, 0, "cbForStateBusy A" },
 		{ 370, 156, 40, 21, 52,  6, NULL, 0, "cbForStateBusy B" },
 		{ 373, 158, 41, 21, 52,  6, NULL, 0, "cbForStateBusy C" },
@@ -1808,12 +1809,16 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (findx_pattern(data, dataType, i +  11, length, &__OSGetSystemTimeSigs[0]) &&
-							findx_pattern(data, dataType, i +  57, length, &__OSGetSystemTimeSigs[0]) &&
-							findx_pattern(data, dataType, i + 136, length, &OSClearContextSigs[0]) &&
-							findx_pattern(data, dataType, i + 138, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i + 153, length, &OSClearContextSigs[0]) &&
-							findx_pattern(data, dataType, i + 155, length, &OSSetCurrentContextSig))
+						if (findx_patterns(data, dataType, i +  11, length, &__OSGetSystemTimeSigs[0],
+							                                                &__OSGetSystemTimeSigs[1], NULL) &&
+							findx_patterns(data, dataType, i +  57, length, &__OSGetSystemTimeSigs[0],
+							                                                &__OSGetSystemTimeSigs[1], NULL) &&
+							findx_patterns(data, dataType, i + 136, length, &OSClearContextSigs[0],
+							                                                &OSClearContextSigs[1], NULL) &&
+							findx_pattern (data, dataType, i + 138, length, &OSSetCurrentContextSig) &&
+							findx_patterns(data, dataType, i + 153, length, &OSClearContextSigs[0],
+							                                                &OSClearContextSigs[1], NULL) &&
+							findx_pattern (data, dataType, i + 155, length, &OSSetCurrentContextSig))
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
@@ -1883,9 +1888,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							ReadSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
-						if (findx_pattern(data, dataType, i + 14, length, &__OSGetSystemTimeSigs[0]) &&
-							findx_pattern(data, dataType, i + 43, length, &SetTimeoutAlarmSigs[0]) &&
-							findx_pattern(data, dataType, i + 50, length, &SetTimeoutAlarmSigs[0]) &&
+						if (findx_patterns(data, dataType, i + 14, length, &__OSGetSystemTimeSigs[0],
+							                                               &__OSGetSystemTimeSigs[1], NULL) &&
+							findx_pattern (data, dataType, i + 43, length, &SetTimeoutAlarmSigs[0]) &&
+							findx_pattern (data, dataType, i + 50, length, &SetTimeoutAlarmSigs[0]) &&
 							find_pattern_before(data, length, &SetTimeoutAlarmSigs[0], &AlarmHandlerForTimeoutSigs[0]))
 							ReadSigs[j].offsetFoundAt = i;
 						break;
@@ -1948,10 +1954,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						}
 						break;
 					case 1:
-						if (findx_pattern(data, dataType, i +  52, length, &DoJustReadSigs[0]) &&
-							findx_pattern(data, dataType, i +  75, length, &DoJustReadSigs[0]) &&
-							findx_pattern(data, dataType, i +  89, length, &__OSGetSystemTimeSigs[0]) &&
-							findx_pattern(data, dataType, i + 112, length, &DoJustReadSigs[0])) {
+						if (findx_pattern (data, dataType, i +  52, length, &DoJustReadSigs[0]) &&
+							findx_pattern (data, dataType, i +  75, length, &DoJustReadSigs[0]) &&
+							findx_patterns(data, dataType, i +  89, length, &__OSGetSystemTimeSigs[0],
+							                                                &__OSGetSystemTimeSigs[1], NULL) &&
+							findx_pattern (data, dataType, i + 112, length, &DoJustReadSigs[0])) {
 							DVDLowReadSigs[j].offsetFoundAt = i;
 							
 							if (find_pattern_after(data, length, &DVDLowReadSigs[1], &DVDLowSeekSigs[1]) &&
@@ -2034,9 +2041,12 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if (compare_pattern(&fp, &DVDLowResetSigs[j])) {
 				switch (j) {
 					case 0:
-						if (findx_pattern(data, dataType, i + 13, length, &__OSGetSystemTimeSigs[0]) &&
-							findx_pattern(data, dataType, i + 16, length, &__OSGetSystemTimeSigs[0]) &&
-							findx_pattern(data, dataType, i + 41, length, &__OSGetSystemTimeSigs[0]))
+						if (findx_patterns(data, dataType, i + 13, length, &__OSGetSystemTimeSigs[0],
+							                                               &__OSGetSystemTimeSigs[1], NULL) &&
+							findx_patterns(data, dataType, i + 16, length, &__OSGetSystemTimeSigs[0],
+							                                               &__OSGetSystemTimeSigs[1], NULL) &&
+							findx_patterns(data, dataType, i + 41, length, &__OSGetSystemTimeSigs[0],
+							                                               &__OSGetSystemTimeSigs[1], NULL))
 							DVDLowResetSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
@@ -2084,9 +2094,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							DVDInitSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
-						if (findx_pattern(data, dataType, i + 11, length, &__DVDClearWaitingQueueSigs[0]) &&
-							findx_pattern(data, dataType, i + 21, length, &__OSSetInterruptHandlerSigs[0]) &&
-							findx_pattern(data, dataType, i + 23, length, &__OSUnmaskInterruptsSigs[0]))
+						if (findx_pattern (data, dataType, i + 11, length, &__DVDClearWaitingQueueSigs[0]) &&
+							findx_patterns(data, dataType, i + 21, length, &__OSSetInterruptHandlerSigs[0],
+							                                               &__OSSetInterruptHandlerSigs[1], NULL) &&
+							findx_patterns(data, dataType, i + 23, length, &__OSUnmaskInterruptsSigs[0],
+							                                               &__OSUnmaskInterruptsSigs[1], NULL))
 							DVDInitSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
@@ -2515,34 +2527,38 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 2:
-								if (findx_pattern(data, dataType, i + 141, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 121, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 3:
-								if (findx_pattern(data, dataType, i + 150, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 141, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 4:
-								if (findx_pattern(data, dataType, i + 175, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 150, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 5:
-								if (findx_pattern(data, dataType, i + 178, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 175, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 6:
-								if (findx_pattern(data, dataType, i + 190, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 178, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 7:
-								if (findx_pattern(data, dataType, i + 182, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 190, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 8:
-								if (findx_pattern(data, dataType, i + 184, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 182, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 9:
+								if (findx_pattern(data, dataType, i + 184, length, &stateBusySigs[j]))
+									cbForStateBusySigs[k].offsetFoundAt = i;
+								break;
+							case 10:
 								if (findx_pattern(data, dataType, i + 201, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
@@ -4356,47 +4372,53 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					break;
 				case 2:
 					data[i +  61] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 148] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 152] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 176] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 3:
+					data[i +  61] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 168] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 172] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 196] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 3:
+				case 4:
 					data[i +  75] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 181] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 185] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 207] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 4:
+				case 5:
 					data[i +  93] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 208] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 212] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 235] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 5:
+				case 6:
 					data[i +  96] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 211] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 215] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 238] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 6:
+				case 7:
 					data[i + 102] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 236] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 240] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 263] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 7:
+				case 8:
 					data[i +  94] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 230] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 234] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 256] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 8:
+				case 9:
 					data[i +  96] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 230] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 234] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 257] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 9:
+				case 10:
 					data[i +  96] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 247] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 251] = 0x3C600C00;	// lis		r3, 0x0C00
