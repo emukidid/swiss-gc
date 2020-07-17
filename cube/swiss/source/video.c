@@ -92,6 +92,8 @@ GXRModeObj* getVideoMode() {
 }
 
 void setVideoMode(GXRModeObj *m) {
+	m->viWidth = 704;
+	m->viXOrigin = 8;
 	VIDEO_Configure (m);
 	if(xfb[0]) free(MEM_K1_TO_K0(xfb[0]));
 	if(xfb[1]) free(MEM_K1_TO_K0(xfb[1]));
