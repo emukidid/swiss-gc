@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "../alt/emulator.h"
 #include "../base/common.h"
 #include "../base/exi.h"
@@ -31,17 +32,30 @@ static struct {
 	bool frag;
 } dvd = {0};
 
+static struct {
+	uint32_t base_sector;
+	int items;
+	struct {
+		void *address;
+		uint32_t length;
+		uint32_t offset;
+		uint32_t sector;
+		read_frag_cb callback;
+	} queue[2];
+} wkf = {0};
+
 OSAlarm read_alarm = {0};
 
-void schedule_read(OSTick ticks);
-
-void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector)
+static void wkf_read(void *address, uint32_t length, uint32_t offset, uint32_t sector)
 {
-	DI[2] = 0xDE000000;
-	DI[3] = sector;
-	DI[4] = 0x5A000000;
-	DI[7] = 0b001;
-	while (DI[7] & 0b001);
+	if (wkf.base_sector != sector) {
+		DI[2] = 0xDE000000;
+		DI[3] = sector;
+		DI[4] = 0x5A000000;
+		DI[7] = 0b001;
+		while (DI[7] & 0b001);
+		wkf.base_sector = sector;
+	}
 
 	DI[0] = 0b0011000;
 	DI[1] = 0;
@@ -55,26 +69,40 @@ void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sect
 	OSUnmaskInterrupts(OS_INTERRUPTMASK_PI_DI);
 }
 
-void dvd_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
+{
+	int i;
+
+	for (i = 0; i < wkf.items; i++)
+		if (wkf.queue[i].callback == callback)
+			return;
+
+	wkf.queue[i].address = address;
+	wkf.queue[i].length = length;
+	wkf.queue[i].offset = offset;
+	wkf.queue[i].sector = sector;
+	wkf.queue[i].callback = callback;
+	if (wkf.items++) return;
+
+	wkf_read(address, length, offset, sector);
+}
+
+void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	OSMaskInterrupts(OS_INTERRUPTMASK_PI_DI);
 
-	DI[0] = 0;
-	DI[1] = 0;
+	void *address = wkf.queue[0].address;
+	uint32_t length = wkf.queue[0].length;
+	uint32_t offset = wkf.queue[0].offset;
+	uint32_t sector = wkf.queue[0].sector;
+	read_frag_cb callback = wkf.queue[0].callback;
 
-	switch (DI[2] >> 24) {
-		case 0xA8:
-		{
-			int size = DI[4] - DI[6];
-
-			dvd.buffer += size;
-			dvd.length -= size;
-			dvd.offset += size;
-
-			schedule_read(OSMicrosecondsToTicks(300));
-			break;
-		}
+	if (--wkf.items) {
+		memcpy(wkf.queue, wkf.queue + 1, wkf.items * sizeof(*wkf.queue));
+		wkf_read(wkf.queue[0].address, wkf.queue[0].length, wkf.queue[0].offset, wkf.queue[0].sector);
 	}
+
+	callback(address, length);
 }
 
 bool exi_probe(int32_t chan)
@@ -99,6 +127,15 @@ bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 
 void schedule_read(OSTick ticks)
 {
+	void read_callback(void *address, uint32_t length)
+	{
+		dvd.buffer += length;
+		dvd.length -= length;
+		dvd.offset += length;
+
+		schedule_read(OSMicrosecondsToTicks(300));
+	}
+
 	OSCancelAlarm(&read_alarm);
 
 	if (!dvd.length) {
@@ -106,10 +143,11 @@ void schedule_read(OSTick ticks)
 		return;
 	}
 
+	dtk_fill_buffer();
 	dvd.frag = is_frag_read(dvd.offset, dvd.length);
 
 	if (!dvd.frag)
-		read_disc_frag(dvd.buffer, dvd.length, dvd.offset);
+		read_disc_frag(dvd.buffer, dvd.length, dvd.offset, read_callback);
 	else
 		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
 }

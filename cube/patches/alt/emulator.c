@@ -33,6 +33,8 @@ static struct {
 	bool playing;
 	bool stopping;
 
+	uint8_t (*buffer)[512];
+
 	struct {
 		uint32_t position;
 		uint32_t start;
@@ -43,7 +45,9 @@ static struct {
 		uint32_t start;
 		uint32_t length;
 	} next;
-} dtk = {0};
+} dtk = {
+	.buffer = (void *)VAR_SECTOR_BUF
+};
 
 OSAlarm command_alarm = {0};
 
@@ -51,7 +55,7 @@ OSAlarm command_alarm = {0};
 void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 #endif
 #ifdef WKF
-void dvd_interrupt_handler(OSInterrupt interrupt, OSContext *context);
+void di_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 #endif
 
 bool memeq(const void *a, const void *b, size_t size)
@@ -68,42 +72,57 @@ bool memeq(const void *a, const void *b, size_t size)
 }
 
 #ifdef DTK
+static void dtk_decode_buffer(void *address, uint32_t length)
+{
+	int16_t stream[448][2] __attribute((aligned(32)));
+
+	for (int i = 0; i < sizeof(*dtk.buffer) / 32; i++)
+		ADPDecodeBlock(*dtk.buffer + i * 32, stream + i * 28);
+
+	fifo_write(stream, sizeof(stream));
+	dtk.current.position += sizeof(*dtk.buffer);
+
+	if (dtk.current.position == dtk.current.start + dtk.current.length) {
+		dtk.current.position = 
+		dtk.current.start  = dtk.next.start;
+		dtk.current.length = dtk.next.length;
+
+		if (dtk.stopping) {
+			dtk.stopping = false;
+			dtk.playing  = false;
+		}
+
+		ADPResetFilter();
+	}
+}
+
 bool dtk_fill_buffer(void)
 {
-	int16_t buffer[448][2] __attribute((aligned(32)));
-
 	if (!dtk.playing)
 		return false;
-	if (fifo_space() < sizeof(buffer))
+	if (fifo_space() < 448 * sizeof(sample_t))
 		return false;
 
+	#ifdef WKF
+	void read_callback(void *address, uint32_t length)
+	{
+		dtk_decode_buffer(address, length);
+		dtk_fill_buffer();
+	}
+
+	dcache_flush_icache_inv(dtk.buffer, sizeof(*dtk.buffer));
+	read_disc_frag(dtk.buffer, sizeof(*dtk.buffer), dtk.current.position, read_callback);
+	#else
 	OSCancelAlarm(&read_alarm);
 	OSTick start = OSGetTick();
 
-	int size = read_frag(VAR_SECTOR_BUF, sizeof(VAR_SECTOR_BUF), dtk.current.position);
-	if (size == sizeof(VAR_SECTOR_BUF)) {
-		for (int i = 0; i < size / 32; i++)
-			ADPDecodeBlock(VAR_SECTOR_BUF + i * 32, buffer + i * 28);
-
-		fifo_write(buffer, sizeof(buffer));
-		dtk.current.position += size;
-
-		if (dtk.current.position == dtk.current.start + dtk.current.length) {
-			dtk.current.position = 
-			dtk.current.start  = dtk.next.start;
-			dtk.current.length = dtk.next.length;
-
-			if (dtk.stopping) {
-				dtk.stopping = false;
-				dtk.playing  = false;
-			}
-
-			ADPResetFilter();
-		}
-	}
+	int size = read_frag(dtk.buffer, sizeof(*dtk.buffer), dtk.current.position);
+	if (size == sizeof(*dtk.buffer))
+		dtk_decode_buffer(dtk.buffer, size);
 
 	OSTick end = OSGetTick();
 	OSSetAlarm(&read_alarm, OSDiffTick(end, start), (OSAlarmHandler)trickle_read);
+	#endif
 
 	return true;
 }
@@ -681,7 +700,7 @@ static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 }
 
 #ifdef DVD
-static void dvd_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	if (*VAR_DRIVE_RESETTING) {
 		dvd_reset();
@@ -710,7 +729,7 @@ OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler hand
 	OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
 	#endif
 	#if defined DVD || defined WKF
-	OSSetInterruptHandler(OS_INTERRUPT_PI_DI, dvd_interrupt_handler);
+	OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
 	#endif
 	return OSSetInterruptHandler(interrupt, handler);
 }

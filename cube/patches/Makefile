@@ -135,14 +135,17 @@ build-usb:
 build-wkf:
 	@echo Building WKF Patch ...
 	@$(CC) -Os $(OPTS) -c alt/base.S
-	@$(CC) -Os $(OPTS) -c alt/emulator.c -DWKF
+	@$(CC) -Os $(OPTS) -c alt/emulator.c -DDTK -DWKF
+	@$(CC) -Os $(OPTS) -c alt/fifo.c
 	@$(CC) -Os $(OPTS) -c alt/igr.c
+	@$(CC) -Os $(OPTS) -c alt/mix.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c base/adp.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=0
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/os.c
-	@$(CC) -Os $(OPTS) -o wkf.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o wkf.o sd.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o wkf.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o fifo.o igr.o mix.o wkf.o sd.o adp.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf_disasm.txt
 	@$(OBJCOPY) -O binary wkf.elf wkf.bin
