@@ -143,8 +143,12 @@ void di_update_interrupts(void)
 
 void di_complete_transfer(void)
 {
+	if ((*DI_EMU)[7] & 0b010) {
+		(*DI_EMU)[5] += (*DI_EMU)[6];
+		(*DI_EMU)[6]  = 0;
+	}
+
 	(*DI_EMU)[0] |=  0b0010000;
-	(*DI_EMU)[6]  =  0;
 	(*DI_EMU)[7] &= ~0b001;
 	di_update_interrupts();
 }
@@ -157,11 +161,9 @@ static void di_execute_command(void)
 		case 0xA8:
 		{
 			if (!((*DI_EMU)[1] & 0b001)) {
-				uint32_t offset  = (*DI_EMU)[3] << 2 & ~0x80000000;
-				uint32_t length  = (*DI_EMU)[6];
 				uint32_t address = (*DI_EMU)[5];
-
-				offset |= *(uint32_t *)VAR_CURRENT_DISC * 0x80000000;
+				uint32_t length  = (*DI_EMU)[6];
+				uint32_t offset  = (*DI_EMU)[3] << 2 & ~0x80000000;
 
 				perform_read(address, length, offset);
 			} else {
@@ -275,9 +277,9 @@ static void di_execute_command(void)
 					if (!memeq(id1, id2, sizeof(DVDDiskID)))
 						break;
 
-					uint32_t offset  = (*DI_EMU)[3] << 2;
-					uint32_t length  = (*DI_EMU)[6];
 					uint32_t address = (*DI_EMU)[5];
+					uint32_t length  = (*DI_EMU)[6];
+					uint32_t offset  = (*DI_EMU)[3] << 2;
 
 					perform_read(address, length, offset);
 					return;
@@ -387,12 +389,28 @@ static void di_write(unsigned index, uint32_t value)
 }
 
 #ifdef DTK
-static sample_t __AXOutBuffer[2][160] __attribute((aligned(32))) = {0};
-static sample_t (*AXOutBuffer)[160] = OSCachedToUncached(__AXOutBuffer);
-static int AXOutFrame = 0;
+static sample_t AXOutBuffer[2][160] __attribute((aligned(32))) = {0};
 
-static uint32_t DSP_EMU[15] = {0};
-static int dsp_aimar_count = 0;
+static struct {
+	union {
+		uint16_t regs[4];
+		struct {
+			uint32_t aima;
+			uint32_t aibl;
+		} reg;
+	};
+
+	struct {
+		int aima;
+	} req;
+
+	void *buffer[2];
+} dsp = {
+	.buffer = {
+		OSCachedToUncached(AXOutBuffer[0]),
+		OSCachedToUncached(AXOutBuffer[1])
+	}
+};
 
 static void dsp_read(unsigned index, uint32_t *value)
 {
@@ -400,7 +418,7 @@ static void dsp_read(unsigned index, uint32_t *value)
 		case 24:
 		case 25:
 			*value = ((uint16_t *)DSP)[index];
-			dsp_aimar_count--;
+			dsp.req.aima--;
 			break;
 		default:
 			*value = ((uint16_t *)DSP)[index];
@@ -411,53 +429,61 @@ static void dsp_write(unsigned index, uint16_t value)
 {
 	switch (index) {
 		case 24:
-			((uint16_t *)DSP_EMU)[index] = value & 0x3FF;
-			dsp_aimar_count++;
+			dsp.regs[index - 24] = value & 0x3FF;
+			dsp.req.aima++;
 			break;
 		case 25:
-			((uint16_t *)DSP_EMU)[index] = value & 0xFFE0;
-			dsp_aimar_count++;
+			dsp.regs[index - 24] = value & 0xFFE0;
+			dsp.req.aima++;
 			break;
 		case 27:
-			((uint16_t *)DSP_EMU)[index] = value;
+			dsp.regs[index - 24] = value;
 
-			if ((value & 0x8000) && dsp_aimar_count >= 0) {
-				void *buffer = OSPhysicalToUncached(DSP_EMU[12]);
-				int length = (DSP_EMU[13] & 0x7FFF) << 5;
+			if ((value & 0x8000) && dsp.req.aima >= 0) {
+				void *buffer = OSPhysicalToUncached(dsp.reg.aima);
+				int length = (dsp.reg.aibl & 0x7FFF) << 5;
 				int count = length / sizeof(sample_t);
 
-				if (length <= sizeof(*AXOutBuffer))
-					buffer = memcpy(AXOutBuffer[AXOutFrame ^= 1], buffer, length);
+				if (length <= sizeof(*AXOutBuffer)) {
+					void *buffer2 = dsp.buffer[0];
+					dsp.buffer[0] = dsp.buffer[1];
+					dsp.buffer[1] = buffer2;
+					buffer = memcpy(buffer2, buffer, length);
+				}
 
-				if ((AI[0] & 0b0000001) && fifo_size() >= length * 3 / 2) {
-					uint8_t volume_l = AI[1];
-					uint8_t volume_r = AI[1] >> 8;
+				uint32_t aicr = AI[0];
+				uint32_t aivr = AI[1];
 
-					if (AI[0] & 0b1000000) {
+				if (aicr & 0b0000001) {
+					if (aicr & 0b1000000) {
 						sample_t stream[count * 3 / 2] __attribute((aligned(32)));
-						fifo_read(stream, sizeof(stream));
-						mix_samples(buffer, stream, true, count, volume_l, volume_r);
+
+						if (fifo_size() >= sizeof(stream)) {
+							fifo_read(stream, sizeof(stream));
+							mix_samples(buffer, stream, true, count, aivr, aivr >> 8);
+						}
 					} else {
 						sample_t stream[count] __attribute((aligned(32)));
-						fifo_read(stream, sizeof(stream));
-						mix_samples(buffer, stream, false, count, volume_l, volume_r);
+
+						if (fifo_size() >= sizeof(stream)) {
+							fifo_read(stream, sizeof(stream));
+							mix_samples(buffer, stream, false, count, aivr, aivr >> 8);
+						}
 					}
 				}
 
 				DSP[12] = (intptr_t)buffer;
 				DSP[13] = ((length >> 5) & 0x7FFF) | 0x8000;
 
-				if (fifo_size() < length * 3 / 2)
+				if (fifo_size() < (count * 3 / 2) * sizeof(sample_t))
 					dtk_fill_buffer();
 			} else {
-				DSP[12] = DSP_EMU[12];
-				DSP[13] = DSP_EMU[13];
+				DSP[12] = dsp.reg.aima;
+				DSP[13] = dsp.reg.aibl;
 			}
 
-			dsp_aimar_count = 0;
+			dsp.req.aima = 0;
 			break;
-		default:
-			DSP[index] = value;
 	}
 }
 #endif

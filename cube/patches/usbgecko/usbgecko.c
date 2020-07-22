@@ -233,7 +233,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
 	dvd.buffer = OSPhysicalToCached(address);
 	dvd.length = length;
-	dvd.offset = offset;
+	dvd.offset = offset | *(uint32_t *)VAR_CURRENT_DISC << 31;
 
 	schedule_read(OSMicrosecondsToTicks(300), true);
 }
