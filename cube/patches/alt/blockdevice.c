@@ -56,14 +56,29 @@ bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 
 void schedule_read(OSTick ticks)
 {
+	#ifdef ASYNC_READ
+	void read_callback(void *address, uint32_t length)
+	{
+		dvd.buffer += length;
+		dvd.length -= length;
+		dvd.offset += length;
+
+		schedule_read(OSMicrosecondsToTicks(300));
+	}
+	#else
 	OSCancelAlarm(&read_alarm);
+	#endif
 
 	if (!dvd.length) {
 		di_complete_transfer();
 		return;
 	}
 
+	#ifdef ASYNC_READ
+	read_disc_frag(dvd.buffer, dvd.length, dvd.offset, read_callback);
+	#else
 	OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
+	#endif
 }
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
@@ -77,6 +92,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 
 void trickle_read(void)
 {
+	#ifndef ASYNC_READ
 	if (dtk_fill_buffer())
 		return;
 
@@ -91,6 +107,7 @@ void trickle_read(void)
 
 		schedule_read(OSDiffTick(end, start));
 	}
+	#endif
 }
 
 void device_reset(void)

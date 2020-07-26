@@ -3,9 +3,12 @@
 * emu_kidid 2010-2012
 ***************************************************************************/
 
-#include "../../reservedarea.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
 #include "../base/common.h"
 #include "../base/exi.h"
+#include "../base/os.h"
 
 // NOTE: cs0 then cs1!
 // ATA registers address        val  - cs0 cs1 a2 a1 a0
@@ -41,7 +44,28 @@
 // exi_channel is stored as number of u32's to index into the exi bus (0xCC006800)
 #define exi_channel 		(*(u8*)VAR_EXI_SLOT)
 
-void *memcpy(void *dest, const void *src, u32 size);
+static OSInterruptHandler TCIntrruptHandler = NULL;
+
+static struct {
+	uint32_t last_sector;
+	#if DMA_READ
+	int items;
+	struct {
+		void *address;
+		uint32_t length;
+		uint32_t offset;
+		uint32_t sector;
+		read_frag_cb callback;
+	} queue[2];
+	#endif
+} ata = {0};
+
+void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context);
+
+static void exi_clear_interrupts(int32_t chan, bool exi, bool tc, bool ext)
+{
+	EXI[chan][0] = (EXI[chan][0] & ~0x80A) | (ext << 11) | (tc << 3) | (exi << 1);
+}
 
 static void exi_select()
 {
@@ -78,7 +102,11 @@ static void exi_dma_read(void* data, int len)
 	EXI[exi_channel][1] = (unsigned long)data;
 	EXI[exi_channel][2] = (len + 31) & ~31;
 	EXI[exi_channel][3] = (EXI_READ << 2) | 3;
-	while (EXI[exi_channel][3] & 1);	// Yeah.
+}
+
+static void exi_sync()
+{
+	while (EXI[exi_channel][3] & 1);
 }
 
 // Returns 8 bits from the ATA Status register
@@ -102,7 +130,7 @@ static void ataWriteByte(u8 addr, u8 data)
 }
 
 // Reads up to 0xFFFF * 4 bytes of data (~255kb) from the hdd at the given offset
-static void ata_read_buffer(u8 *dst)
+static void ata_read_buffer(u8 *dst, int sync)
 {
 	u32 i = 0;
 	u32 *ptr = (u32*)dst;
@@ -112,7 +140,17 @@ static void ata_read_buffer(u8 *dst)
 	exi_imm_write(0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8), 4);
 	#if DMA_READ
 	// v2, no deselect or extra read required.
+	exi_clear_interrupts(exi_channel, 0, 1, 0);
 	exi_dma_read(ptr, SECTOR_SIZE);
+	if(sync) {
+		exi_sync();
+		exi_deselect();
+	}
+	else {
+		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_TC + (3 * exi_channel);
+		TCIntrruptHandler = OSSetInterruptHandler(interrupt, tc_interrupt_handler);
+		OSUnmaskInterrupts(OS_INTERRUPTMASK(interrupt));
+	}
 	#else
 	exi_deselect();
 	for(i = 0; i < dwords; i++) {
@@ -122,13 +160,13 @@ static void ata_read_buffer(u8 *dst)
 	}
 	exi_select();
 	exi_imm_read(4);
-	#endif
 	exi_deselect();
+	#endif
 }
 
 // Reads sectors from the specified lba, for the specified slot, 511 sectors at a time max for LBA48 drives
 // Returns 0 on success, -1 on failure.
-static int ataReadSector(u32 lba, void *buffer)
+static int ataReadSector(u32 lba, void *buffer, int sync)
 {
 	u32 temp = 0;
   	
@@ -172,18 +210,20 @@ static int ataReadSector(u32 lba, void *buffer)
 	while(!(ataReadStatusReg() & ATA_SR_DRQ));
 	
 	// read data from drive
-	ata_read_buffer(buffer);
+	ata_read_buffer(buffer, sync);
 
-	// Wait for BSY to clear
-	temp = ataReadStatusReg();
-	
-	// If the error bit was set, fail.
-	if(temp & ATA_SR_ERR) {
-		//*(u32*)buffer = 0x13370002;
-		return 1;
+	if(sync) {
+		// Wait for BSY to clear
+		temp = ataReadStatusReg();
+		
+		// If the error bit was set, fail.
+		if(temp & ATA_SR_ERR) {
+			//*(u32*)buffer = 0x13370002;
+			return 1;
+		}
 	}
 	
-	return temp & ATA_SR_ERR;
+	return 0;
 }
 
 #ifndef SINGLE_SECTOR
@@ -195,7 +235,7 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	// Read any half sector if we need to until we're aligned
 	if(startByte) {
 		u32 size_to_copy = MIN(numBytes, SECTOR_SIZE-startByte);
-		if(ataReadSector(lba, sectorBuf)) {
+		if(ataReadSector(lba, sectorBuf, 1)) {
 			//*(u32*)dst = 0x13370003;
 			return len-numBytes;
 		}
@@ -207,13 +247,13 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	// Read any whole sectors
 	while(numBytes >= SECTOR_SIZE) {
 		#if DMA_READ
-		if(ataReadSector(lba, sectorBuf)) {
+		if(ataReadSector(lba, sectorBuf, 1)) {
 			//*(u32*)dst = 0x13370004;
 			return len-numBytes;
 		}
 		memcpy(dst, sectorBuf, SECTOR_SIZE);
 		#else
-		if(ataReadSector(lba, dst)) {
+		if(ataReadSector(lba, dst, 1)) {
 			//*(u32*)dst = 0x13370004;
 			return len-numBytes;
 		}
@@ -224,7 +264,7 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	}
 	// Read the last sector if there's any half sector
 	if(numBytes) {
-		if(ataReadSector(lba, sectorBuf)) {
+		if(ataReadSector(lba, sectorBuf, 1)) {
 			//*(u32*)dst = 0x13370006;
 			return len-numBytes;
 		}
@@ -233,6 +273,69 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	return len;
 }
 #else
+#if DMA_READ
+static void ata_read_queued(void)
+{
+	if (!EXILock(exi_channel, EXI_DEVICE_0, (EXICallback)ata_read_queued))
+		return;
+
+	void *address = ata.queue[0].address;
+	uint32_t length = ata.queue[0].length;
+	uint32_t offset = ata.queue[0].offset;
+	uint32_t sector = ata.queue[0].sector;
+
+	ataReadSector(sector, sectorBuf, 0);
+}
+
+void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
+{
+	int i;
+
+	for (i = 0; i < ata.items; i++)
+		if (ata.queue[i].callback == callback)
+			return;
+
+	sector = offset / SECTOR_SIZE + sector;
+	offset = offset % SECTOR_SIZE;
+	length = MIN(length, SECTOR_SIZE - offset);
+
+	ata.queue[i].address = address;
+	ata.queue[i].length = length;
+	ata.queue[i].offset = offset;
+	ata.queue[i].sector = sector;
+	ata.queue[i].callback = callback;
+	if (ata.items++) return;
+
+	ata_read_queued();
+}
+
+void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+{
+	OSMaskInterrupts(OS_INTERRUPTMASK(interrupt));
+	OSSetInterruptHandler(interrupt, TCIntrruptHandler);
+	exi_clear_interrupts(exi_channel, 0, 1, 0);
+	exi_deselect();
+	EXIUnlock(exi_channel);
+
+	void *address = ata.queue[0].address;
+	uint32_t length = ata.queue[0].length;
+	uint32_t offset = ata.queue[0].offset;
+	uint32_t sector = ata.queue[0].sector;
+	read_frag_cb callback = ata.queue[0].callback;
+	ata.last_sector = sector;
+
+	if (address != VAR_SECTOR_BUF + offset)
+		memcpy(address, sectorBuf + offset, length);
+
+	if (--ata.items) {
+		memcpy(ata.queue, ata.queue + 1, ata.items * sizeof(*ata.queue));
+		ata_read_queued();
+	}
+
+	callback(address, length);
+}
+#endif
+
 u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	// Try locking EXI bus
 	if(EXILock && !EXILock(exi_channel, EXI_DEVICE_0, 0)) {
@@ -244,30 +347,30 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);
 	
 	// If we saved this sector
-	if(lba == *(u32*)VAR_SECTOR_CUR) {
+	if(lba == ata.last_sector) {
 		memcpy(dst, sectorBuf + startByte, numBytes);
 		goto exit;
 	}
 	if(numBytes < SECTOR_SIZE || DMA_READ) {
 		// Read half sector
-		if(ataReadSector(lba, sectorBuf)) {
+		if(ataReadSector(lba, sectorBuf, 1)) {
 			numBytes = 0;
 			goto exit;
 		}
 		memcpy(dst, sectorBuf + startByte, numBytes);
 		// Save current LBA
-		*(u32*)VAR_SECTOR_CUR = lba;
+		ata.last_sector = lba;
 	}
 	else {
 		// Read full sector
-		if(ataReadSector(lba, dst)) {
+		if(ataReadSector(lba, dst, 1)) {
 			numBytes = 0;
 			goto exit;
 		}
 		// If we're reusing the sector buffer
-		if(dst == sectorBuf) {
+		if(dst == VAR_SECTOR_BUF) {
 			// Save current LBA
-			*(u32*)VAR_SECTOR_CUR = lba;
+			ata.last_sector = lba;
 		}
 	}
 exit:

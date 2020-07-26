@@ -74,11 +74,11 @@ build-ideexi-v1:
 build-ideexi-v2:
 	@echo Building IDE-EXI-v2 Patch ...
 	@$(CC) -Os $(OPTS) -c alt/base.S
-	@$(CC) -Os $(OPTS) -c alt/emulator.c -DDTK
+	@$(CC) -Os $(OPTS) -c alt/emulator.c -DASYNC_READ -DDTK
 	@$(CC) -Os $(OPTS) -c alt/fifo.c
 	@$(CC) -Os $(OPTS) -c alt/igr.c
 	@$(CC) -Os $(OPTS) -c alt/mix.c
-	@$(CC) -Os $(OPTS) -c alt/blockdevice.c
+	@$(CC) -Os $(OPTS) -c alt/blockdevice.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c ide-exi/hddread.c -DDMA_READ=1 -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c base/adp.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -100,7 +100,7 @@ build-dvd:
 	@$(CC) -Os $(OPTS) -c alt/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
-	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/os.c
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
@@ -121,7 +121,7 @@ build-usb:
 	@$(CC) -Os $(OPTS) -c alt/igr.c
 	@$(CC) -Os $(OPTS) -c usbgecko/usbgecko.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
-	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
 	@$(CC) -Os $(OPTS) -c base/os.c
 	@$(CC) -Os $(OPTS) -o usbgecko.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o usbgecko.o sd.o frag.o os.o
 	@rm -rf *.o
@@ -135,14 +135,14 @@ build-usb:
 build-wkf:
 	@echo Building WKF Patch ...
 	@$(CC) -Os $(OPTS) -c alt/base.S
-	@$(CC) -Os $(OPTS) -c alt/emulator.c -DDTK -DWKF
+	@$(CC) -Os $(OPTS) -c alt/emulator.c -DASYNC_READ -DDTK -DWKF
 	@$(CC) -Os $(OPTS) -c alt/fifo.c
 	@$(CC) -Os $(OPTS) -c alt/igr.c
 	@$(CC) -Os $(OPTS) -c alt/mix.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c base/adp.c
-	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=0
+	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/os.c
 	@$(CC) -Os $(OPTS) -o wkf.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o fifo.o igr.o mix.o wkf.o sd.o adp.o frag.o usbgecko.o os.o
@@ -161,7 +161,7 @@ build-bba:
 	@$(CC) -Os $(OPTS) -c alt/igr.c
 	@$(CC) -Os $(OPTS) -c bba/bba.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
-	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/os.c
 	@$(CC) -Os $(OPTS) -o bba.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o bba.o usbgecko.o sd.o frag.o os.o

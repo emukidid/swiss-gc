@@ -103,7 +103,7 @@ bool dtk_fill_buffer(void)
 	if (fifo_space() < 448 * sizeof(sample_t))
 		return false;
 
-	#ifdef WKF
+	#ifdef ASYNC_READ
 	void read_callback(void *address, uint32_t length)
 	{
 		dtk_decode_buffer(address, length);

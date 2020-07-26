@@ -46,8 +46,13 @@ static struct {
 
 OSAlarm read_alarm = {0};
 
-static void wkf_read(void *address, uint32_t length, uint32_t offset, uint32_t sector)
+static void wkf_read_queued(void)
 {
+	void *address = wkf.queue[0].address;
+	uint32_t length = wkf.queue[0].length;
+	uint32_t offset = wkf.queue[0].offset;
+	uint32_t sector = wkf.queue[0].sector;
+
 	if (wkf.base_sector != sector) {
 		DI[2] = 0xDE000000;
 		DI[3] = sector;
@@ -84,7 +89,7 @@ void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sect
 	wkf.queue[i].callback = callback;
 	if (wkf.items++) return;
 
-	wkf_read(address, length, offset, sector);
+	wkf_read_queued();
 }
 
 void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
@@ -99,7 +104,7 @@ void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 
 	if (--wkf.items) {
 		memcpy(wkf.queue, wkf.queue + 1, wkf.items * sizeof(*wkf.queue));
-		wkf_read(wkf.queue[0].address, wkf.queue[0].length, wkf.queue[0].offset, wkf.queue[0].sector);
+		wkf_read_queued();
 	}
 
 	callback(address, length);
