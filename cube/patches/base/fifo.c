@@ -19,9 +19,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "common.h"
+#include "dolphin/ar.h"
 #include "fifo.h"
-#include "../base/ar.h"
-#include "../base/common.h"
 
 static struct {
 	uint32_t used, size;

@@ -1,7 +1,7 @@
 #ifndef PAD_H
 #define PAD_H
 
-#include "common.h"
+#include "../common.h"
 
 #define PAD_BUTTON_LEFT  0x0001
 #define PAD_BUTTON_RIGHT 0x0002

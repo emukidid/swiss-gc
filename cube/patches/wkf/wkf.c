@@ -20,10 +20,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-#include "../alt/emulator.h"
 #include "../base/common.h"
-#include "../base/exi.h"
-#include "../base/os.h"
+#include "../base/dolphin/exi.h"
+#include "../base/dolphin/os.h"
+#include "../base/emulator.h"
 
 static struct {
 	void *buffer;

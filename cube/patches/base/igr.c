@@ -20,10 +20,10 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include "../base/common.h"
-#include "../base/dolformat.h"
-#include "../base/os.h"
-#include "../base/pad.h"
+#include "common.h"
+#include "dolphin/dolformat.h"
+#include "dolphin/os.h"
+#include "dolphin/pad.h"
 
 void check_pad(int32_t chan, PADStatus *status)
 {

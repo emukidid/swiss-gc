@@ -3,9 +3,8 @@
 # emu_kidid 2007-2012
 #**************************************************************************/
 
-#include "../../reservedarea.h"
 #include "../base/common.h"
-#include "../base/exi.h"
+#include "../base/dolphin/exi.h"
 
 //CMD12 - Stop multiple block read command
 #define CMD12				0x4C

@@ -7,8 +7,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include "../base/common.h"
-#include "../base/exi.h"
-#include "../base/os.h"
+#include "../base/dolphin/exi.h"
+#include "../base/dolphin/os.h"
 
 // NOTE: cs0 then cs1!
 // ATA registers address        val  - cs0 cs1 a2 a1 a0

@@ -1,7 +1,7 @@
 #ifndef OS_H
 #define OS_H
 
-#include "common.h"
+#include "../common.h"
 
 #define OS_BASE_CACHED   0x80000000
 #define OS_BASE_UNCACHED 0xC0000000

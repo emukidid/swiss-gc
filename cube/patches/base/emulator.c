@@ -21,13 +21,13 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
+#include "common.h"
+#include "dolphin/dvd.h"
+#include "dolphin/os.h"
+#include "DVDMath.h"
 #include "emulator.h"
 #include "fifo.h"
 #include "mix.h"
-#include "../base/common.h"
-#include "../base/dvd.h"
-#include "../base/DVDMath.h"
-#include "../base/os.h"
 
 static struct {
 	bool playing;

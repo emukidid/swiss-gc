@@ -20,8 +20,8 @@
 #include <stdint.h>
 #include <string.h>
 #include "../base/common.h"
-#include "../base/exi.h"
-#include "../base/os.h"
+#include "../base/dolphin/exi.h"
+#include "../base/dolphin/os.h"
 #include "bba.h"
 #include "globals.h"
 

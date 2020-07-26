@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "../base/os.h"
+#include "dolphin/os.h"
 
 extern OSAlarm bba_alarm;
 extern OSAlarm read_alarm;

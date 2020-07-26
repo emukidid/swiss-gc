@@ -1,7 +1,7 @@
 #ifndef DVD_H
 #define DVD_H
 
-#include "common.h"
+#include "../common.h"
 
 typedef struct DVDCommandBlock DVDCommandBlock;
 

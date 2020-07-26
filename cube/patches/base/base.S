@@ -147,7 +147,7 @@ switch_fiber:
 	mr		sp, r5
 	blr
 
-#include "../base/memcpy.S"
+#include "memcpy.S"
 
 	.globl dcache_flush_icache_inv
 dcache_flush_icache_inv:

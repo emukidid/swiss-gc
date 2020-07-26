@@ -1,7 +1,7 @@
 #ifndef DOLFORMAT_H
 #define DOLFORMAT_H
 
-#include "common.h"
+#include "../common.h"
 
 #define DOL_MAX_TEXT 7
 #define DOL_MAX_DATA 11

@@ -29,18 +29,18 @@ clean:
 
 build-sd:
 	@echo Building SD Patch ...
-	@$(CC) -Os $(OPTS) -c alt/base.S
-	@$(CC) -Os $(OPTS) -c alt/emulator.c -DDTK
-	@$(CC) -Os $(OPTS) -c alt/fifo.c
-	@$(CC) -Os $(OPTS) -c alt/igr.c
-	@$(CC) -Os $(OPTS) -c alt/mix.c
-	@$(CC) -Os $(OPTS) -c alt/blockdevice.c
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DDTK
+	@$(CC) -Os $(OPTS) -c base/fifo.c
+	@$(CC) -Os $(OPTS) -c base/igr.c
+	@$(CC) -Os $(OPTS) -c base/mix.c
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=2
 	@$(CC) -Os $(OPTS) -c base/adp.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
-	@$(CC) -Os $(OPTS) -c base/os.c
-	@$(CC) -Os $(OPTS) -o sd.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o fifo.o igr.o mix.o blockdevice.o sd.o adp.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -o sd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o mix.o blockdevice.o sd.o adp.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D sd.elf > $(DISASM)/sd_disasm.txt
 	@$(OBJCOPY) -O binary sd.elf sd.bin
@@ -51,18 +51,18 @@ build-sd:
 
 build-ideexi-v1:
 	@echo Building IDE-EXI-v1 Patch ...
-	@$(CC) -Os $(OPTS) -c alt/base.S
-	@$(CC) -Os $(OPTS) -c alt/emulator.c -DDTK
-	@$(CC) -Os $(OPTS) -c alt/fifo.c
-	@$(CC) -Os $(OPTS) -c alt/igr.c
-	@$(CC) -Os $(OPTS) -c alt/mix.c
-	@$(CC) -Os $(OPTS) -c alt/blockdevice.c
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DDTK
+	@$(CC) -Os $(OPTS) -c base/fifo.c
+	@$(CC) -Os $(OPTS) -c base/igr.c
+	@$(CC) -Os $(OPTS) -c base/mix.c
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c
 	@$(CC) -Os $(OPTS) -c ide-exi/hddread.c -DDMA_READ=0 -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c base/adp.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
-	@$(CC) -Os $(OPTS) -c base/os.c
-	@$(CC) -Os $(OPTS) -o ideexi_v1.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o fifo.o igr.o mix.o blockdevice.o hddread.o adp.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -o ideexi_v1.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o mix.o blockdevice.o hddread.o adp.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_v1.elf > $(DISASM)/ideexi_v1_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_v1.elf ideexi_v1.bin
@@ -73,18 +73,18 @@ build-ideexi-v1:
 
 build-ideexi-v2:
 	@echo Building IDE-EXI-v2 Patch ...
-	@$(CC) -Os $(OPTS) -c alt/base.S
-	@$(CC) -Os $(OPTS) -c alt/emulator.c -DASYNC_READ -DDTK
-	@$(CC) -Os $(OPTS) -c alt/fifo.c
-	@$(CC) -Os $(OPTS) -c alt/igr.c
-	@$(CC) -Os $(OPTS) -c alt/mix.c
-	@$(CC) -Os $(OPTS) -c alt/blockdevice.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK
+	@$(CC) -Os $(OPTS) -c base/fifo.c
+	@$(CC) -Os $(OPTS) -c base/igr.c
+	@$(CC) -Os $(OPTS) -c base/mix.c
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c ide-exi/hddread.c -DDMA_READ=1 -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c base/adp.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
-	@$(CC) -Os $(OPTS) -c base/os.c
-	@$(CC) -Os $(OPTS) -o ideexi_v2.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o fifo.o igr.o mix.o blockdevice.o hddread.o adp.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -o ideexi_v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o mix.o blockdevice.o hddread.o adp.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_v2.elf > $(DISASM)/ideexi_v2_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_v2.elf ideexi_v2.bin
@@ -95,17 +95,17 @@ build-ideexi-v2:
 
 build-dvd:
 	@echo Building DVD Patch ...
-	@$(CC) -Os $(OPTS) -c alt/base.S
-	@$(CC) -Os $(OPTS) -c alt/emulator.c -DDVD
-	@$(CC) -Os $(OPTS) -c alt/igr.c
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DDVD
+	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
-	@$(CC) -Os $(OPTS) -c base/os.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/sqrt.S
-	@$(CC) -Os $(OPTS) -o dvd.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o sqrt.o
+	@$(CC) -Os $(OPTS) -o dvd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o sqrt.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd_disasm.txt
 	@$(OBJCOPY) -O binary dvd.elf dvd.bin
@@ -116,14 +116,14 @@ build-dvd:
 
 build-usb:
 	@echo Building USBGecko Patch ...
-	@$(CC) -Os $(OPTS) -c alt/base.S
-	@$(CC) -Os $(OPTS) -c alt/emulator.c
-	@$(CC) -Os $(OPTS) -c alt/igr.c
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c
+	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c usbgecko/usbgecko.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
-	@$(CC) -Os $(OPTS) -c base/os.c
-	@$(CC) -Os $(OPTS) -o usbgecko.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o usbgecko.o sd.o frag.o os.o
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -o usbgecko.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o usbgecko.o sd.o frag.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
@@ -134,18 +134,18 @@ build-usb:
 
 build-wkf:
 	@echo Building WKF Patch ...
-	@$(CC) -Os $(OPTS) -c alt/base.S
-	@$(CC) -Os $(OPTS) -c alt/emulator.c -DASYNC_READ -DDTK -DWKF
-	@$(CC) -Os $(OPTS) -c alt/fifo.c
-	@$(CC) -Os $(OPTS) -c alt/igr.c
-	@$(CC) -Os $(OPTS) -c alt/mix.c
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK -DWKF
+	@$(CC) -Os $(OPTS) -c base/fifo.c
+	@$(CC) -Os $(OPTS) -c base/igr.c
+	@$(CC) -Os $(OPTS) -c base/mix.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c base/adp.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
-	@$(CC) -Os $(OPTS) -c base/os.c
-	@$(CC) -Os $(OPTS) -o wkf.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o fifo.o igr.o mix.o wkf.o sd.o adp.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -o wkf.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o mix.o wkf.o sd.o adp.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf_disasm.txt
 	@$(OBJCOPY) -O binary wkf.elf wkf.bin
@@ -156,15 +156,15 @@ build-wkf:
 
 build-bba:
 	@echo Building BBA Patch ...
-	@$(CC) -Os $(OPTS) -c alt/base.S
-	@$(CC) -Os $(OPTS) -c alt/emulator.c -DBBA
-	@$(CC) -Os $(OPTS) -c alt/igr.c
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DBBA
+	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c bba/bba.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
-	@$(CC) -Os $(OPTS) -c base/os.c
-	@$(CC) -Os $(OPTS) -o bba.elf -T alt/base.ld -T base/common.ld -T base/os.ld base.o emulator.o igr.o bba.o usbgecko.o sd.o frag.o os.o
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -o bba.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o bba.o usbgecko.o sd.o frag.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D bba.elf > $(DISASM)/bba_disasm.txt
 	@$(OBJCOPY) -O binary bba.elf bba.bin

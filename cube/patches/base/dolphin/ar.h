@@ -1,7 +1,7 @@
 #ifndef AR_H
 #define AR_H
 
-#include "common.h"
+#include "../common.h"
 
 #define ARAM_DIR_MRAM_TO_ARAM 0
 #define ARAM_DIR_ARAM_TO_MRAM 1

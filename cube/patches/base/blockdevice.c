@@ -19,10 +19,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "common.h"
+#include "dolphin/exi.h"
+#include "dolphin/os.h"
 #include "emulator.h"
-#include "../base/common.h"
-#include "../base/exi.h"
-#include "../base/os.h"
 
 static struct {
 	void *buffer;
