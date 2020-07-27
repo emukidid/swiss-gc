@@ -97,31 +97,6 @@ _start:
 	b		check_pad
 	b		fini
 
-	.globl jump_table, jump_table_end
-jump_table:
-	.globl OSSetAlarm, OSCancelAlarm
-	.globl OSUnhandledException
-	.globl OSMaskInterrupts, OSUnmaskInterrupts
-	.globl OSResetSystem
-	.globl EXILock, EXIUnlock
-OSSetAlarm:
-	.long 0
-OSCancelAlarm:
-	.long 0
-OSUnhandledException:
-	.long 0
-OSMaskInterrupts:
-	.long 0
-OSUnmaskInterrupts:
-	.long 0
-OSResetSystem:
-	.long 0
-EXILock:
-	.long 0
-EXIUnlock:
-	.long 0
-jump_table_end:
-
 	.globl realmode
 realmode:
 	mflr	r3

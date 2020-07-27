@@ -36,16 +36,6 @@ void check_pad(int32_t chan, PADStatus *status)
 	}
 }
 
-extern void *jump_table[];
-extern void *jump_table_end[];
-
-static void clear_jump_table(void)
-{
-	void **ptr = jump_table;
-	while (ptr < jump_table_end)
-		*ptr++ = NULL;
-}
-
 static void load_dol(uint32_t offset, uint32_t size)
 {
 	DOLImage image;
@@ -62,6 +52,11 @@ static void load_dol(uint32_t offset, uint32_t size)
 	}
 
 	image.entry();
+}
+
+static void clear_jump_table(void)
+{
+	DCBlockZero(VAR_JUMP_TABLE);
 }
 
 void fini(void)

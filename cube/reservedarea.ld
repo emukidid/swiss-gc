@@ -1,5 +1,6 @@
 VAR_AREA			= 0x80000000;
 
+VAR_JUMP_TABLE		= VAR_AREA | 0x00A0;	/* Dolphin OS jump table */
 VAR_TVMODE			= VAR_AREA | 0x00CC;	/* TV format */
 
 VAR_CLIENT_MAC		= VAR_AREA | 0x09EA;	/* client MAC address */

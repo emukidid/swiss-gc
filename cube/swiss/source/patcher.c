@@ -3077,7 +3077,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		if (__OSInitSystemCall) {
 			switch (j) {
 				case 0:
-					data[i +  4] = 0x38600000 | ((u32)JUMP_VECTOR & 0xFFFF);
+					data[i +  4] = 0x38600000 | ((u32)VAR_JUMP_TABLE & 0xFFFF);
 					data[i + 12] = 0x3CA00000 | ((u32)__OSInitSystemCall + 0x8000) >> 16;
 					data[i + 13] = 0x38050000 | ((u32)__OSInitSystemCall & 0xFFFF);
 					data[i + 17] = 0x38800020;	// li		r4, 32
@@ -3085,9 +3085,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 22] = branchAndLink(INIT, __OSInitSystemCall + 22);
 					break;
 				case 1:
-					data[i +  4] = 0x3CA00000 | ((u32)JUMP_VECTOR + 0x8000) >> 16;
+					data[i +  4] = 0x3CA00000 | ((u32)VAR_JUMP_TABLE + 0x8000) >> 16;
 					data[i +  6] = 0x3C600000 | ((u32)__OSInitSystemCall + 0x8000) >> 16;
-					data[i +  7] = 0x3BE50000 | ((u32)JUMP_VECTOR & 0xFFFF);
+					data[i +  7] = 0x3BE50000 | ((u32)VAR_JUMP_TABLE & 0xFFFF);
 					data[i +  8] = 0x38030000 | ((u32)__OSInitSystemCall & 0xFFFF);
 					data[i + 14] = 0x38800020;	// li		r4, 32
 					data[i + 18] = 0x38800020;	// li		r4, 32
@@ -3095,14 +3095,14 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					break;
 				case 2:
 					data[i +  3] = 0x3C600000 | ((u32)__OSInitSystemCall + 0x8000) >> 16;
-					data[i +  6] = 0x3CA00000 | ((u32)JUMP_VECTOR + 0x8000) >> 16;
+					data[i +  6] = 0x3CA00000 | ((u32)VAR_JUMP_TABLE + 0x8000) >> 16;
 					data[i +  7] = 0x38030000 | ((u32)__OSInitSystemCall & 0xFFFF);
-					data[i +  8] = 0x38650000 | ((u32)JUMP_VECTOR & 0xFFFF);
-					data[i + 11] = 0x3C600000 | ((u32)JUMP_VECTOR + 0x8000) >> 16;
+					data[i +  8] = 0x38650000 | ((u32)VAR_JUMP_TABLE & 0xFFFF);
+					data[i + 11] = 0x3C600000 | ((u32)VAR_JUMP_TABLE + 0x8000) >> 16;
 					data[i + 12] = 0x38800020;	// li		r4, 32
-					data[i + 13] = 0x38630000 | ((u32)JUMP_VECTOR & 0xFFFF);
-					data[i + 16] = 0x3C600000 | ((u32)JUMP_VECTOR + 0x8000) >> 16;
-					data[i + 17] = 0x38630000 | ((u32)JUMP_VECTOR & 0xFFFF);
+					data[i + 13] = 0x38630000 | ((u32)VAR_JUMP_TABLE & 0xFFFF);
+					data[i + 16] = 0x3C600000 | ((u32)VAR_JUMP_TABLE + 0x8000) >> 16;
+					data[i + 17] = 0x38630000 | ((u32)VAR_JUMP_TABLE & 0xFFFF);
 					data[i + 18] = 0x38800020;	// li		r4, 32
 					data[i + 19] = branchAndLink(INIT, __OSInitSystemCall + 19);
 					break;

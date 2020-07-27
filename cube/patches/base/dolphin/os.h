@@ -77,6 +77,11 @@ static void OSCreateAlarm(OSAlarm *alarm)
 extern void (*OSSetAlarm)(OSAlarm *alarm, OSTime tick, OSAlarmHandler handler);
 extern void (*OSCancelAlarm)(OSAlarm *alarm);
 
+static void DCBlockZero(void *addr)
+{
+	asm volatile("dcbz %y0" : "=Z" (*(char(*)[32])addr));
+}
+
 typedef struct OSContext {
 	u32 gpr[32];
 	u32 cr, lr, ctr, xer;

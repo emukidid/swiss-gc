@@ -155,7 +155,6 @@ enum patchIds {
 #define IDLE_THREAD		(u32 *)(LO_RESERVE + 0x114)
 #define CHECK_PAD		(u32 *)(LO_RESERVE + 0x118)
 #define FINI			(u32 *)(LO_RESERVE + 0x11C)
-#define JUMP_VECTOR		(u32 *)(LO_RESERVE + 0x120)
 
 /* Types of files we may patch */
 #define PATCH_APPLOADER		0

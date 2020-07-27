@@ -11,6 +11,7 @@
 #ifdef _LANGUAGE_ASSEMBLY
 #include "asm.h"
 .set VAR_AREA,				0x8000
+.set VAR_JUMP_TABLE,		0x00A0	# Dolphin OS jump table
 .set VAR_TVMODE,			0x00CC	# TV format
 .set VAR_CLIENT_MAC,		0x09EA	# client MAC address
 .set VAR_CLIENT_IP,			0x09F0	# client IPv4 address
@@ -110,6 +111,7 @@
 #else
 
 extern char VAR_AREA[];
+extern char VAR_JUMP_TABLE[32];		// Dolphin OS jump table
 extern char VAR_TVMODE[4];			// TV format
 extern char VAR_CLIENT_MAC[6];		// client MAC address
 extern char VAR_CLIENT_IP[4];		// client IPv4 address
