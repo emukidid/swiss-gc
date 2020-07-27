@@ -6,7 +6,6 @@
 *		- Wrap normal read requests around a fragmented file table
 */
 
-#include "../../reservedarea.h"
 #include "common.h"
 
 #ifndef PATCH_FRAGS
@@ -131,23 +130,4 @@ void device_frag_read(void *dst, u32 len, u32 offset)
 		offset+=amountRead;
 	}
 	end_read();
-}
-
-unsigned long tb_diff_usec(tb_t* end, tb_t* start)
-{
-	unsigned long upper, lower;
-	upper = end->u - start->u;
-	if (start->l > end->l)
-		upper--;
-	lower = end->l - start->l;
-	return ((upper * ((unsigned long)0x80000000 / (TB_CLOCK / 2000000))) + (lower / (TB_CLOCK / 1000000)));
-}
-
-void calculate_speed(void* dst, u32 len, u32 *speed)
-{
-	tb_t start, end;
-	mftb(&start);
-	device_frag_read(dst, len, 0);
-	mftb(&end);
-	*speed = tb_diff_usec(&end, &start);
 }

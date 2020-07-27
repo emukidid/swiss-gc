@@ -3,6 +3,9 @@
 
 #include "../common.h"
 
+#define OSRoundUp32B(x)   (((u32)(x) + (32 - 1)) & ~(32 - 1))
+#define OSRoundDown32B(x) ((u32)(x) & ~(32 - 1))
+
 #define OS_BASE_CACHED   0x80000000
 #define OS_BASE_UNCACHED 0xC0000000
 #define OS_BASE_MIRRORED 0xC2000000
@@ -79,8 +82,28 @@ extern void (*OSCancelAlarm)(OSAlarm *alarm);
 
 static void DCBlockZero(void *addr)
 {
-	asm volatile("dcbz %y0" : "=Z" (*(char(*)[32])addr));
+	asm("dcbz %y0" : "=Z" (*(char(*)[32])addr) :: "memory");
 }
+
+static void DCBlockStore(void *addr)
+{
+	asm("dcbst %y0" : "=Z" (*(char(*)[32])addr) :: "memory");
+}
+
+static void DCBlockFlush(void *addr)
+{
+	asm("dcbf %y0" : "=Z" (*(char(*)[32])addr) :: "memory");
+}
+
+static void DCBlockInvalidate(void *addr)
+{
+	asm("dcbi %y0" : "=Z" (*(char(*)[32])addr) :: "memory");
+}
+
+void DCInvalidateRange(void *addr, u32 nBytes);
+void DCFlushRange(void *addr, u32 nBytes);
+void DCStoreRangeNoSync(void *addr, u32 nBytes);
+void DCZeroRange(void *addr, u32 nBytes);
 
 typedef struct OSContext {
 	u32 gpr[32];

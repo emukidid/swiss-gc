@@ -41,39 +41,6 @@ typedef volatile f64 vf64;
 	asm volatile ("mtmsr %0" :: "r" (msr)); \
 })
 
-#define restore_interrupts(enable) ({ \
-	unsigned long msr; \
-	asm volatile ("mfmsr %0" : "=r" (msr)); \
-	asm volatile ("insrwi %0,%1,1,16" : "+r" (msr) : "r" (enable)); \
-	asm volatile ("mtmsr %0" :: "r" (msr)); \
-})
-
-#define disable_breakpoint() ({ \
-	unsigned long dabr; \
-	asm volatile ("mfdabr %0" : "=r" (dabr)); \
-	asm volatile ("clrrwi %0,%0,2" : "+r" (dabr)); \
-	asm volatile ("mtdabr %0" :: "r" (dabr)); \
-})
-
-#define enable_breakpoint() ({ \
-	unsigned long dabr; \
-	asm volatile ("mfdabr %0" : "=r" (dabr)); \
-	asm volatile ("ori %0,%0,1" : "+r" (dabr)); \
-	asm volatile ("mtdabr %0" :: "r" (dabr)); \
-})
-
-#define mftb(rval) ({unsigned long u; do { \
-	 asm volatile ("mftbu %0" : "=r" (u)); \
-	 asm volatile ("mftb %0" : "=r" ((rval)->l)); \
-	 asm volatile ("mftbu %0" : "=r" ((rval)->u)); \
-	 } while(u != ((rval)->u)); })
-	 
-typedef struct {
-	unsigned long l, u;
-} tb_t;
-
-#define TB_CLOCK  40500000
-
 static u32(*const DI_EMU)[9] = (u32(*)[])VAR_DI_REGS;
 
 extern volatile u32 PI[13];
@@ -95,11 +62,9 @@ void device_frag_read(void* dst, u32 len, u32 offset);
 void device_reset(void);
 int switch_fiber(u32 arg0, u32 arg1, u32 arg2, u32 arg3, u32 pc, u32 newsp);
 void dcache_flush_icache_inv(void* dst, u32 len);
-void dcache_store(void* dst, u32 len);
 void ADPResetFilter(void);
 void ADPDecodeBlock(unsigned char *input, short (*out)[2]);
 void ADPdecodebuffer(unsigned char *input, short *outl, short * outr, long *histl1, long *histl2, long *histr1, long *histr2);
-unsigned long tb_diff_usec(tb_t* end, tb_t* start);
 
 int usb_sendbuffer_safe(const void *buffer,int size);
 

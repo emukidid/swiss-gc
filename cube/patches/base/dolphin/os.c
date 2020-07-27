@@ -1,5 +1,54 @@
-#include <stddef.h>
 #include "os.h"
+
+void DCInvalidateRange(void *addr, u32 nBytes)
+{
+	if (!nBytes) return;
+	nBytes = OSRoundUp32B(((u32)(addr) & (32 - 1)) + nBytes);
+	int i = nBytes / 32;
+
+	do {
+		DCBlockInvalidate(addr);
+		addr += 32;
+	} while (--i);
+}
+
+void DCFlushRange(void *addr, u32 nBytes)
+{
+	if (!nBytes) return;
+	nBytes = OSRoundUp32B(((u32)(addr) & (32 - 1)) + nBytes);
+	int i = nBytes / 32;
+
+	do {
+		DCBlockFlush(addr);
+		addr += 32;
+	} while (--i);
+
+	asm volatile("sc" ::: "r9", "r10");
+}
+
+void DCStoreRangeNoSync(void *addr, u32 nBytes)
+{
+	if (!nBytes) return;
+	nBytes = OSRoundUp32B(((u32)(addr) & (32 - 1)) + nBytes);
+	int i = nBytes / 32;
+
+	do {
+		DCBlockStore(addr);
+		addr += 32;
+	} while (--i);
+}
+
+void DCZeroRange(void *addr, u32 nBytes)
+{
+	if (!nBytes) return;
+	nBytes = OSRoundUp32B(((u32)(addr) & (32 - 1)) + nBytes);
+	int i = nBytes / 32;
+
+	do {
+		DCBlockZero(addr);
+		addr += 32;
+	} while (--i);
+}
 
 void OSSetCurrentContext(OSContext *context)
 {
@@ -27,5 +76,5 @@ void OSClearContext(OSContext *context)
 	context->state = 0;
 
 	if (OSFPUContext == context)
-		OSFPUContext  = NULL;
+		OSFPUContext = 0;
 }

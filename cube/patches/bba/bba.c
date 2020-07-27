@@ -131,7 +131,7 @@ static void exi_immex_write(const void *buf, uint32_t len)
 static void exi_dma_read(void *buf, uint32_t len)
 {
 	EXI[EXI_CHANNEL_0][1] = (uint32_t)buf;
-	EXI[EXI_CHANNEL_0][2] = (len + 31) & ~31;
+	EXI[EXI_CHANNEL_0][2] = OSRoundUp32B(len);
 	EXI[EXI_CHANNEL_0][3] = (EXI_READ << 2) | 0b11;
 	while (EXI[EXI_CHANNEL_0][3] & 0b01);
 }
@@ -226,7 +226,7 @@ static bool bba_receive(void)
 		bba_header_t *bba = (bba_header_t *)page;
 		size_t size = sizeof(bba_page_t);
 
-		dcache_flush_icache_inv(page, size);
+		DCInvalidateRange(page, size);
 		bba_ins(rrp << 8, page, size);
 
 		size = bba->length - sizeof(*bba);
@@ -340,7 +340,7 @@ void trickle_read(void)
 	if (dvd.length && dvd.frag) {
 		OSTick start = OSGetTick();
 		int size = read_frag(dvd.buffer, dvd.length, dvd.offset);
-		dcache_store(dvd.buffer, size);
+		DCStoreRangeNoSync(dvd.buffer, size);
 		OSTick end = OSGetTick();
 
 		dvd.buffer += size;

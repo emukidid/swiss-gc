@@ -283,7 +283,7 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 				}
 
 				bba_receive_end(page, data + data_offset, size);
-				dcache_store(data, data_size);
+				DCStoreRangeNoSync(data, data_size);
 			}
 		}
 	}

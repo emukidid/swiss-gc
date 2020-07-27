@@ -244,7 +244,7 @@ void trickle_read(void)
 		OSTick start = OSGetTick();
 		int size = dvd.frag ? read_frag(dvd.buffer, dvd.length, dvd.offset)
 		                    : usb_receive(dvd.buffer, dvd.length, 0);
-		dcache_store(dvd.buffer, size);
+		DCStoreRangeNoSync(dvd.buffer, size);
 		OSTick end = OSGetTick();
 
 		dvd.buffer += size;

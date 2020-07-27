@@ -110,8 +110,8 @@ bool dtk_fill_buffer(void)
 		dtk_fill_buffer();
 	}
 
-	dcache_flush_icache_inv(dtk.buffer, sizeof(*dtk.buffer));
-	read_disc_frag(dtk.buffer, sizeof(*dtk.buffer), dtk.current.position, read_callback);
+	DCInvalidateRange(__builtin_assume_aligned(dtk.buffer, 32), sizeof(*dtk.buffer));
+	read_disc_frag(__builtin_assume_aligned(dtk.buffer, 32), sizeof(*dtk.buffer), dtk.current.position, read_callback);
 	#else
 	OSCancelAlarm(&read_alarm);
 	OSTick start = OSGetTick();
