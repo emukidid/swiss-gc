@@ -167,8 +167,6 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 		*(vu8*)VAR_EXI_SLOT = -1;
 	}
 
-	*(vu8*)VAR_DRIVE_RESETTING = 0;
-	*(vu8*)VAR_DRIVE_PATCHED = 0;
 	return 1;
 }
 

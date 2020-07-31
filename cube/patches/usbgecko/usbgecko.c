@@ -166,7 +166,7 @@ static bool usb_serve_file(void)
 		const char *file = (const char *)VAR_DISC_1_FN;
 		uint8_t filelen = *(uint8_t *)VAR_DISC_1_FNLEN;
 
-		if (*(uint32_t *)VAR_CURRENT_DISC) {
+		if (*VAR_CURRENT_DISC) {
 			file    =  (const char *)VAR_DISC_2_FN;
 			filelen = *(uint8_t *)VAR_DISC_2_FNLEN;
 		}
@@ -192,26 +192,6 @@ static void usb_unlock_file(void)
 	usb_request(0, 0);
 }
 
-bool exi_probe(int32_t chan)
-{
-	if (chan == EXI_CHANNEL_2)
-		return false;
-	if (chan == *VAR_EXI_SLOT)
-		return false;
-
-	return true;
-}
-
-bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
-{
-	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
-		return false;
-	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
-		return false;
-
-	return true;
-}
-
 void schedule_read(OSTick ticks, bool request)
 {
 	OSCancelAlarm(&read_alarm);
@@ -233,7 +213,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
 	dvd.buffer = OSPhysicalToCached(address);
 	dvd.length = length;
-	dvd.offset = offset | *(uint32_t *)VAR_CURRENT_DISC << 31;
+	dvd.offset = offset | *VAR_CURRENT_DISC << 31;
 
 	schedule_read(OSMicrosecondsToTicks(300), true);
 }
@@ -261,15 +241,13 @@ void device_reset(void)
 	end_read();
 }
 
-void change_disc(void)
+bool change_disc(void)
 {
-	usb_unlock_file();
-
-	*(uint32_t *)VAR_CURRENT_DISC = !*(uint32_t *)VAR_CURRENT_DISC;
-
-	if (usb_serve_file() && usb_lock_file()) {
-		(*DI_EMU)[1] &= ~0b001;
-		(*DI_EMU)[1] |=  0b100;
-		di_update_interrupts();
+	if (*VAR_SECOND_DISC) {
+		usb_unlock_file();
+		*VAR_CURRENT_DISC ^= 1;
+		return usb_serve_file() && usb_lock_file();
 	}
+
+	return false;
 }

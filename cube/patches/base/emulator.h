@@ -29,11 +29,10 @@ extern OSAlarm read_alarm;
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset);
 void trickle_read(void);
-void change_disc(void);
+bool change_disc(void);
 
 bool dtk_fill_buffer(void);
 
-void di_update_interrupts(void);
 void di_complete_transfer(void);
 void di_defer_transfer(uint32_t offset, uint32_t length);
 

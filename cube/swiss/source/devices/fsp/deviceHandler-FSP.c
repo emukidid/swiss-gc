@@ -203,9 +203,7 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 	*(vu16*)VAR_SERVER_PORT = swissSettings.fspPort ? swissSettings.fspPort : 21;
 	*(vu8*)VAR_DISC_1_FNLEN = snprintf(VAR_DISC_1_FN, sizeof(VAR_DISC_1_FN), "%s\n%s", file->name, swissSettings.fspPassword) + 1;
 	*(vu8*)VAR_DISC_2_FNLEN = snprintf(VAR_DISC_2_FN, sizeof(VAR_DISC_2_FN), "%s\n%s", file2 ? file2->name : file->name, swissSettings.fspPassword) + 1;
-	*(vu16*)VAR_IPV4_ID = 0;
 	*(vu16*)VAR_FSP_KEY = 0;
-	*(vu16*)VAR_FSP_DATA_LENGTH = 0;
 	return 1;
 }
 

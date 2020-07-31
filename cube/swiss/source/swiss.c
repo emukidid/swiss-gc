@@ -1027,15 +1027,6 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		// Check DVD Status, make sure it's error code 0
 		print_gecko("DVD: %08X\r\n",dvd_get_error());
 	}
-	// Clear out some patch variables
-	*(vu32*)VAR_TMP1 = 0;
-	*(vu32*)VAR_TMP2 = 0;
-	*(vu32*)VAR_FAKE_IRQ_SET = 0;
-	*(vu32*)VAR_DISC_CHANGING = 0;
-	*(vu32*)VAR_LAST_OFFSET = 0xCAFEBABE;
-	*(vu8*)VAR_IGR_EXIT_TYPE = swissSettings.igrType;
-	*(vu32*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
-	memset(VAR_DI_REGS, 0, 0x24);
 	
 	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 		kenobi_install_engine();
@@ -1630,8 +1621,11 @@ void load_game() {
 	
   	if(devices[DEVICE_CUR] != &__device_wode) {
 		file_handle *secondDisc = meta_find_disk2(&curFile);
-		*(vu32*)VAR_SECOND_DISC = secondDisc ? 1:0;
-		*(vu32*)VAR_CURRENT_DISC = 0;
+		*(vu8*)VAR_CURRENT_DISC = 0;
+		*(vu8*)VAR_SECOND_DISC = secondDisc ? 1:0;
+		*(vu8*)VAR_DRIVE_PATCHED = 0;
+		*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
+		*(vu8*)VAR_IGR_EXIT_TYPE = swissSettings.igrType;
 		*(vu32*)VAR_IGR_DOL_SIZE = 0;
 		// Call the special setup for each device (e.g. SD will set the sector(s))
 		if(!devices[DEVICE_CUR]->setupFile(&curFile, secondDisc, numToPatch)) {

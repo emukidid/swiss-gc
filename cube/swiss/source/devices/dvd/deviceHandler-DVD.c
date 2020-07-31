@@ -481,7 +481,6 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 		*(vu8*)VAR_EXI_SLOT = -1;
 	}
 
-	*(vu8*)VAR_DRIVE_RESETTING = 0;
 	*(vu8*)VAR_DRIVE_PATCHED = drive_status == DEBUG_MODE;
 	return 1;
 }

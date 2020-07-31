@@ -22,7 +22,6 @@
 #include <stdbool.h>
 #include "../base/common.h"
 #include "../base/dolphin/dvd.h"
-#include "../base/dolphin/exi.h"
 #include "../base/dolphin/os.h"
 #include "../base/emulator.h"
 
@@ -55,26 +54,6 @@ static void dvd_read_diskid(DVDDiskID *diskID)
 	DI[7] = 0b011;
 }
 
-bool exi_probe(int32_t chan)
-{
-	if (chan == EXI_CHANNEL_2)
-		return false;
-	if (chan == *VAR_EXI_SLOT)
-		return false;
-
-	return true;
-}
-
-bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
-{
-	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
-		return false;
-	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
-		return false;
-
-	return true;
-}
-
 void schedule_read(OSTick ticks)
 {
 	OSCancelAlarm(&read_alarm);
@@ -98,7 +77,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	dvd.length = length;
 	dvd.offset = offset;
 
-	if (*(uint32_t *)VAR_EMU_READ_SPEED)
+	if (*VAR_EMU_READ_SPEED)
 		di_defer_transfer(dvd.offset, dvd.length);
 
 	schedule_read(OSMicrosecondsToTicks(300));

@@ -20,7 +20,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "common.h"
-#include "dolphin/exi.h"
 #include "dolphin/os.h"
 #include "emulator.h"
 
@@ -31,28 +30,6 @@ static struct {
 } dvd = {0};
 
 OSAlarm read_alarm = {0};
-
-bool exi_probe(int32_t chan)
-{
-	if (chan == EXI_CHANNEL_2)
-		return false;
-	if (chan == *VAR_EXI_SLOT)
-		return false;
-
-	return true;
-}
-
-bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
-{
-	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
-		return false;
-	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
-		return false;
-	if (chan == *VAR_EXI_SLOT)
-		end_read();
-
-	return true;
-}
 
 void schedule_read(OSTick ticks)
 {
@@ -85,7 +62,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
 	dvd.buffer = OSPhysicalToUncached(address);
 	dvd.length = length;
-	dvd.offset = offset | *(uint32_t *)VAR_CURRENT_DISC << 31;
+	dvd.offset = offset | *VAR_CURRENT_DISC << 31;
 
 	schedule_read(OSMicrosecondsToTicks(300));
 }
@@ -115,11 +92,12 @@ void device_reset(void)
 	end_read();
 }
 
-void change_disc(void)
+bool change_disc(void)
 {
-	*(uint32_t *)VAR_CURRENT_DISC = !*(uint32_t *)VAR_CURRENT_DISC;
+	if (*VAR_SECOND_DISC) {
+		*VAR_CURRENT_DISC ^= 1;
+		return true;
+	}
 
-	(*DI_EMU)[1] &= ~0b001;
-	(*DI_EMU)[1] |=  0b100;
-	di_update_interrupts();
+	return false;
 }

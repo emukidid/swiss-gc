@@ -3,6 +3,8 @@
 # emu_kidid 2007-2012
 #**************************************************************************/
 
+#include <stdint.h>
+#include <string.h>
 #include "../base/common.h"
 #include "../base/dolphin/exi.h"
 
@@ -23,7 +25,10 @@
 // exi_channel is stored as number of u32's to index into the exi bus (0xCC006800)
 #define exi_channel 		(*(u8*)VAR_EXI_SLOT)
 
-void *memcpy(void *dest, const void *src, u32 size);
+static struct {
+	uint32_t next_sector;
+	uint32_t last_sector;
+} mmc = {0};
 
 // EXI Functions
 static void exi_select()
@@ -167,12 +172,12 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	rcvr_datablock(dst, startByte, numBytes);
 	#else
 	// If we saved this sector
-	if(lba == *(u32*)VAR_SECTOR_CUR) {
+	if(lba == mmc.last_sector) {
 		memcpy(dst, sectorBuf + startByte, numBytes);
 		goto exit;
 	}
 	// If we weren't just reading this sector
-	if(lba != *(u32*)VAR_SD_LBA) {
+	if(lba != mmc.next_sector) {
 		end_read();
 		// Send multiple block read command and the LBA we want to start reading at
 		send_cmd(CMD18, lba);
@@ -182,19 +187,19 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 		rcvr_datablock(sectorBuf, 0, SECTOR_SIZE);
 		memcpy(dst, sectorBuf + startByte, numBytes);
 		// Save current LBA
-		*(u32*)VAR_SECTOR_CUR = lba;
+		mmc.last_sector = lba;
 	}
 	else {
 		// Read full block
 		rcvr_datablock(dst, 0, SECTOR_SIZE);
 		// If we're reusing the sector buffer
-		if(dst == sectorBuf) {
+		if(dst == VAR_SECTOR_BUF) {
 			// Save current LBA
-			*(u32*)VAR_SECTOR_CUR = lba;
+			mmc.last_sector = lba;
 		}
 	}
 	// Save next LBA
-	*(u32*)VAR_SD_LBA = lba + (1<<lbaShift);
+	mmc.next_sector = lba + (1<<lbaShift);
 	#endif
 exit:
 	// Unlock EXI bus
@@ -205,8 +210,8 @@ exit:
 
 void end_read() {
 	#if SINGLE_SECTOR == 2
-	if(*(u32*)VAR_SD_LBA) {
-		*(u32*)VAR_SD_LBA = 0;
+	if(mmc.next_sector) {
+		mmc.next_sector = 0;
 		// End the read by sending CMD12
 		send_cmd(CMD12, 0);
 	}

@@ -23,13 +23,10 @@
 #include "../../reservedarea.h"
 
 static uint16_t *const _port      = (uint16_t *)VAR_SERVER_PORT;
+static uint16_t *const _key       = (uint16_t *)VAR_FSP_KEY;
 static uint8_t  *const _filelen   = (uint8_t  *)VAR_DISC_1_FNLEN;
 static char     *const _file      = (char     *)VAR_DISC_1_FN;
 static uint8_t  *const _file2len  = (uint8_t  *)VAR_DISC_2_FNLEN;
 static char     *const _file2     = (char     *)VAR_DISC_2_FN;
-static uint16_t *const _id        = (uint16_t *)VAR_IPV4_ID;
-static uint16_t *const _key       = (uint16_t *)VAR_FSP_KEY;
-static uint16_t *const _data_size = (uint16_t *)VAR_FSP_DATA_LENGTH;
-static uint32_t *const _disc2     = (uint32_t *)VAR_CURRENT_DISC;
 
 #endif /* GLOBALS_H */

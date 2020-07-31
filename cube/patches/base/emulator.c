@@ -23,11 +23,33 @@
 #include <string.h>
 #include "common.h"
 #include "dolphin/dvd.h"
+#include "dolphin/exi.h"
 #include "dolphin/os.h"
 #include "DVDMath.h"
 #include "emulator.h"
 #include "fifo.h"
 #include "mix.h"
+
+static OSInterruptMask fake_interrupts = 0;
+
+static struct {
+	union {
+		uint32_t regs[9];
+		struct {
+			uint32_t sr;
+			uint32_t cvr;
+			uint32_t cmdbuf0;
+			uint32_t cmdbuf1;
+			uint32_t cmdbuf2;
+			uint32_t mar;
+			uint32_t length;
+			uint32_t cr;
+			uint32_t immbuf;
+		} reg;
+	};
+
+	int reset;
+} di = {0};
 
 static struct {
 	bool playing;
@@ -129,27 +151,34 @@ bool dtk_fill_buffer(void)
 #endif
 
 #ifndef DVD
-void di_update_interrupts(void)
+static void di_update_interrupts(void)
 {
-	if (((*DI_EMU)[0] >> 1) & ((*DI_EMU)[0] & 0b0101010) ||
-		((*DI_EMU)[1] >> 1) & ((*DI_EMU)[1] & 0b010))
-		*(OSInterruptMask *)VAR_FAKE_IRQ_SET |=  OS_INTERRUPTMASK_EMU_DI;
+	if ((di.reg.sr  >> 1) & (di.reg.sr  & 0b0101010) ||
+		(di.reg.cvr >> 1) & (di.reg.cvr & 0b010))
+		fake_interrupts |=  OS_INTERRUPTMASK_EMU_DI;
 	else
-		*(OSInterruptMask *)VAR_FAKE_IRQ_SET &= ~OS_INTERRUPTMASK_EMU_DI;
+		fake_interrupts &= ~OS_INTERRUPTMASK_EMU_DI;
 
-	if (*(OSInterruptMask *)VAR_FAKE_IRQ_SET)
+	if (fake_interrupts)
 		*(volatile int *)OS_BASE_MIRRORED;
 }
 
 void di_complete_transfer(void)
 {
-	if ((*DI_EMU)[7] & 0b010) {
-		(*DI_EMU)[5] += (*DI_EMU)[6];
-		(*DI_EMU)[6]  = 0;
+	if (di.reg.cr & 0b010) {
+		di.reg.mar += di.reg.length;
+		di.reg.length = 0;
 	}
 
-	(*DI_EMU)[0] |=  0b0010000;
-	(*DI_EMU)[7] &= ~0b001;
+	di.reg.sr |=  0b0010000;
+	di.reg.cr &= ~0b001;
+	di_update_interrupts();
+}
+
+static void di_close_cover(void)
+{
+	di.reg.cvr &= ~0b001;
+	di.reg.cvr |=  0b100;
 	di_update_interrupts();
 }
 
@@ -157,35 +186,35 @@ static void di_execute_command(void)
 {
 	uint32_t result = 0;
 
-	switch ((*DI_EMU)[2] >> 24) {
+	switch (di.reg.cmdbuf0 >> 24) {
 		case 0xA8:
 		{
-			if (!((*DI_EMU)[1] & 0b001)) {
-				uint32_t address = (*DI_EMU)[5];
-				uint32_t length  = (*DI_EMU)[6];
-				uint32_t offset  = (*DI_EMU)[3] << 2 & ~0x80000000;
+			if (!(di.reg.cvr & 0b001)) {
+				uint32_t address = di.reg.mar;
+				uint32_t length  = di.reg.length;
+				uint32_t offset  = di.reg.cmdbuf1 << 2 & ~0x80000000;
 
 				perform_read(address, length, offset);
 			} else {
-				(*DI_EMU)[0] |=  0b0000100;
-				(*DI_EMU)[7] &= ~0b001;
+				di.reg.sr |=  0b0000100;
+				di.reg.cr &= ~0b001;
 				di_update_interrupts();
 			}
 			return;
 		}
 		case 0xE0:
 		{
-			if ((*DI_EMU)[1] & 0b001)
+			if (di.reg.cvr & 0b001)
 				result = 0x01023A00;
 			break;
 		}
 		case 0xE1:
 		{
-			switch (((*DI_EMU)[2] >> 16) & 0xFF) {
+			switch ((di.reg.cmdbuf0 >> 16) & 0xFF) {
 				case 0x00:
 				{
-					uint32_t offset = (*DI_EMU)[3] << 2 & ~0x80007FFF;
-					uint32_t length = (*DI_EMU)[4] & ~0x7FFF;
+					uint32_t offset = di.reg.cmdbuf1 << 2 & ~0x80007FFF;
+					uint32_t length = di.reg.cmdbuf2 & ~0x7FFF;
 
 					if (!offset && !length) {
 						dtk.stopping = true;
@@ -222,7 +251,7 @@ static void di_execute_command(void)
 		}
 		case 0xE2:
 		{
-			switch (((*DI_EMU)[2] >> 16) & 0xFF) {
+			switch ((di.reg.cmdbuf0 >> 16) & 0xFF) {
 				case 0x00:
 				{
 					result = dtk.playing;
@@ -248,27 +277,27 @@ static void di_execute_command(void)
 		}
 		case 0xE3:
 		{
-			if (!((*DI_EMU)[1] & 0b001) && *(uint32_t *)VAR_SECOND_DISC) {
-				(*DI_EMU)[1] |= 0b001;
-				OSSetAlarm(&command_alarm, OSSecondsToTicks(1), (OSAlarmHandler)change_disc);
+			if (!(di.reg.cvr & 0b001) && change_disc()) {
+				di.reg.cvr |= 0b001;
+				OSSetAlarm(&command_alarm, OSSecondsToTicks(1), (OSAlarmHandler)di_close_cover);
 			}
 			break;
 		}
 	}
 
-	(*DI_EMU)[8] = result;
+	di.reg.immbuf = result;
 	di_complete_transfer();
 }
 #else
 static void di_execute_command(void)
 {
-	if (*VAR_DRIVE_RESETTING)
+	if (di.reset)
 		return;
 
-	switch ((*DI_EMU)[2] >> 24) {
+	switch (di.reg.cmdbuf0 >> 24) {
 		case 0xA8:
 		{
-			switch ((*DI_EMU)[2] & 0xFF) {
+			switch (di.reg.cmdbuf0 & 0xFF) {
 				case 0x00:
 				{
 					DVDDiskID *id1 = (DVDDiskID *)VAR_AREA;
@@ -277,9 +306,9 @@ static void di_execute_command(void)
 					if (!memeq(id1, id2, sizeof(DVDDiskID)))
 						break;
 
-					uint32_t address = (*DI_EMU)[5];
-					uint32_t length  = (*DI_EMU)[6];
-					uint32_t offset  = (*DI_EMU)[3] << 2;
+					uint32_t address = di.reg.mar;
+					uint32_t length  = di.reg.length;
+					uint32_t offset  = di.reg.cmdbuf1 << 2;
 
 					perform_read(address, length, offset);
 					return;
@@ -289,12 +318,12 @@ static void di_execute_command(void)
 		}
 	}
 
-	DI[2] = (*DI_EMU)[2];
-	DI[3] = (*DI_EMU)[3];
-	DI[4] = (*DI_EMU)[4];
-	DI[5] = (*DI_EMU)[5];
-	DI[6] = (*DI_EMU)[6];
-	DI[7] = (*DI_EMU)[7];
+	DI[2] = di.reg.cmdbuf0;
+	DI[3] = di.reg.cmdbuf1;
+	DI[4] = di.reg.cmdbuf2;
+	DI[5] = di.reg.mar;
+	DI[6] = di.reg.length;
+	DI[7] = di.reg.cr;
 }
 
 void di_defer_transfer(uint32_t offset, uint32_t length)
@@ -312,7 +341,7 @@ void di_defer_transfer(uint32_t offset, uint32_t length)
 		void alarm_handler(OSAlarm *alarm, OSContext *context)
 		{
 			#ifndef DVD
-			(*DI_EMU)[0] |= ((*DI_EMU)[0] << 2) & 0b0001000;
+			di.reg.sr |= (di.reg.sr << 2) & 0b0001000;
 			di_update_interrupts();
 			#else
 			uint32_t status = DI[0];
@@ -327,7 +356,7 @@ void di_defer_transfer(uint32_t offset, uint32_t length)
 		OSSetAlarm(&command_alarm, ticks, alarm_handler);
 
 		#ifndef DVD
-		(*DI_EMU)[0] &= ~0b0001000;
+		di.reg.sr &= ~0b0001000;
 		di_update_interrupts();
 		#else
 		uint32_t status = DI[0];
@@ -347,7 +376,7 @@ void di_defer_transfer(uint32_t offset, uint32_t length)
 static void di_read(unsigned index, uint32_t *value)
 {
 	#ifndef DVD
-	*value = (*DI_EMU)[index];
+	*value = di.regs[index];
 	#else
 	*value = DI[index];
 	#endif
@@ -358,13 +387,13 @@ static void di_write(unsigned index, uint32_t value)
 	switch (index) {
 		#ifndef DVD
 		case 0:
-			(*DI_EMU)[0] = ((value & 0b1010100) ^ (*DI_EMU)[0]) & (*DI_EMU)[0];
-			(*DI_EMU)[0] = (value & 0b0101011) | ((*DI_EMU)[0] & ~0b0101010);
+			di.reg.sr = ((value & 0b1010100) ^ di.reg.sr) & di.reg.sr;
+			di.reg.sr = (value & 0b0101011) | (di.reg.sr & ~0b0101010);
 			di_update_interrupts();
 			break;
 		case 1:
-			(*DI_EMU)[1] = ((value & 0b100) ^ (*DI_EMU)[1]) & (*DI_EMU)[1];
-			(*DI_EMU)[1] = (value & 0b010) | ((*DI_EMU)[1] & ~0b010);
+			di.reg.cvr = ((value & 0b100) ^ di.reg.cvr) & di.reg.cvr;
+			di.reg.cvr = (value & 0b010) | (di.reg.cvr & ~0b010);
 			di_update_interrupts();
 			break;
 		#else
@@ -374,13 +403,13 @@ static void di_write(unsigned index, uint32_t value)
 		#endif
 		case 2 ... 4:
 		case 8:
-			(*DI_EMU)[index] = value;
+			di.regs[index] = value;
 			break;
 		case 5 ... 6:
-			(*DI_EMU)[index] = value & 0x3FFFFE0;
+			di.regs[index] = value & 0x3FFFFE0;
 			break;
 		case 7:
-			(*DI_EMU)[index] = value & 0b111;
+			di.regs[index] = value & 0b111;
 
 			if (value & 0b001)
 				di_execute_command();
@@ -489,12 +518,12 @@ static void dsp_write(unsigned index, uint16_t value)
 #endif
 
 #ifdef DVD
-static void dvd_reset(void)
+static void di_reset(void)
 {
 	DI[0] = DI[0];
 	DI[1] = DI[1];
 
-	switch ((*VAR_DRIVE_RESETTING)++) {
+	switch (di.reset++) {
 		case 0:
 			DI[2] = 0xFF014D41;
 			DI[3] = 0x54534849;
@@ -526,9 +555,9 @@ static void dvd_reset(void)
 			DI[7] = 0b001;
 			break;
 		case 5:
-			*VAR_DRIVE_RESETTING = 0;
+			di.reset = 0;
 
-			if ((*DI_EMU)[7] & 0b001)
+			if (di.reg.cr & 0b001)
 				di_execute_command();
 			break;
 	}
@@ -551,8 +580,8 @@ static void pi_write(unsigned index, uint32_t value)
 			if (*VAR_DRIVE_PATCHED) {
 				PI[index] = ((value << 2) & 0b100) | (value & ~0b100);
 
-				if (!*VAR_DRIVE_RESETTING && !(value & 0b100))
-					dvd_reset();
+				if (!di.reset && !(value & 0b100))
+					di_reset();
 				break;
 			}
 			#endif
@@ -715,10 +744,8 @@ static void dispatch_interrupt(OSInterrupt interrupt, OSContext *context)
 
 static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	OSInterruptMask cause = *(OSInterruptMask *)VAR_FAKE_IRQ_SET;
-
-	if (cause) {
-		dispatch_interrupt(__builtin_clz(cause), context);
+	if (fake_interrupts) {
+		dispatch_interrupt(__builtin_clz(fake_interrupts), context);
 		return;
 	}
 
@@ -728,8 +755,8 @@ static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 #ifdef DVD
 static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	if (*VAR_DRIVE_RESETTING) {
-		dvd_reset();
+	if (di.reset) {
+		di_reset();
 		return;
 	}
 
@@ -746,6 +773,32 @@ void init(void)
 	OSCreateAlarm(&command_alarm);
 
 	OSSetExceptionHandler(OS_EXCEPTION_DSI, exception_handler);
+}
+
+bool exi_probe(int32_t chan)
+{
+	if (chan == EXI_CHANNEL_2)
+		return false;
+	if (chan == *VAR_EXI_SLOT)
+		return false;
+
+	return true;
+}
+
+bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
+{
+	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
+		return false;
+	#ifdef BBA
+	if (chan == EXI_CHANNEL_0 && dev == EXI_DEVICE_2)
+		return false;
+	#endif
+	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
+		return false;
+	if (chan == *VAR_EXI_SLOT)
+		end_read();
+
+	return true;
 }
 
 OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler handler)

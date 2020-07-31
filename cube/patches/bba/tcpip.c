@@ -124,6 +124,14 @@ static struct ipv4_addr *const _client_ip  = (struct ipv4_addr *)VAR_CLIENT_IP;
 static struct eth_addr  *const _server_mac = (struct eth_addr  *)VAR_SERVER_MAC;
 static struct ipv4_addr *const _server_ip  = (struct ipv4_addr *)VAR_SERVER_IP;
 
+static struct {
+	uint16_t packet_id;
+	uint8_t command;
+	uint16_t sequence;
+	uint16_t data_length;
+	uint32_t position;
+} _fsp = {0};
+
 static uint16_t ipv4_checksum(ipv4_header_t *header)
 {
 	uint16_t *data = (uint16_t *)header;
@@ -171,12 +179,12 @@ static void fsp_get_file(uint32_t offset, size_t size, bool lock)
 	udp_header_t *udp = (udp_header_t *)ipv4->data;
 	fsp_header_t *fsp = (fsp_header_t *)udp->data;
 
-	fsp->command = CC_GET_FILE;
+	fsp->command = _fsp.command = CC_GET_FILE;
 	fsp->checksum = 0x00;
 	fsp->key = *_key;
-	fsp->sequence = *_disc2;
+	fsp->sequence = ++_fsp.sequence;
 	fsp->data_length = filelen;
-	fsp->position = offset;
+	fsp->position = _fsp.position = offset;
 	*(uint16_t *)(memcpy(fsp->data, file, filelen) + fsp->data_length) = MIN(size, UINT16_MAX);
 	fsp->checksum = fsp_checksum(fsp, sizeof(*fsp) + fsp->data_length + sizeof(uint16_t));
 
@@ -203,7 +211,6 @@ static void fsp_get_file(uint32_t offset, size_t size, bool lock)
 	eth->dst_addr.addr = (*_server_mac).addr;
 	eth->src_addr.addr = (*_client_mac).addr;
 	eth->type = ETH_TYPE_IPV4;
-
 	bba_transmit(eth, sizeof(*eth) + ipv4->length);
 
 	OSSetAlarm(&read_alarm, OSSecondsToTicks(1), (OSAlarmHandler)retry_read);
@@ -224,9 +231,12 @@ static void fsp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 		case CC_ERR:
 			break;
 		case CC_GET_FILE:
-			if (dvd.offset == fsp->position + fsp->sequence * 0x80000000) {
-				*_data_size = fsp->data_length;
-				*_id        = ipv4->id;
+			if (fsp->command  == _fsp.command  &&
+				fsp->sequence == _fsp.sequence &&
+				fsp->position == _fsp.position) {
+
+				_fsp.packet_id   = ipv4->id;
+				_fsp.data_length = fsp->data_length;
 			}
 			break;
 	}
@@ -254,36 +264,39 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 				fsp_input(page, eth, ipv4, udp, (void *)udp->data, size);
 		}
 
-		if (ipv4->id == *_id) {
-			uint8_t *data      = dvd.buffer;
-			uint16_t data_size = *_data_size;
+		if (ipv4->id == _fsp.packet_id) {
+			switch (_fsp.command) {
+				case CC_GET_FILE:
+				{
+					uint8_t *data = dvd.buffer;
+					int data_size = MIN(_fsp.data_length, dvd.length);
 
-			if (data_size) {
-				data_size = MIN(data_size, dvd.length);
+					int offset = ipv4->offset * 8 - sizeof(udp_header_t) - sizeof(fsp_header_t);
+					int udp_offset = MAX(-offset, 0);
+					int data_offset = MAX(offset, 0);
+					int page_offset = (uint8_t *)udp + udp_offset - page;
 
-				int offset = ipv4->offset * 8 - sizeof(udp_header_t) - sizeof(fsp_header_t);
-				int udp_offset = MAX(-offset, 0);
-				int data_offset = MAX(offset, 0);
-				int page_offset = (uint8_t *)udp + udp_offset - page;
+					size = MIN(MAX(data_size - data_offset, 0), size);
 
-				size = MIN(MAX(data_size - data_offset, 0), size);
+					int page_size = MIN(size, sizeof(bba_page_t) - page_offset);
+					memcpy(data + data_offset, page + page_offset, page_size);
+					data_offset += page_size;
+					size        -= page_size;
 
-				int page_size = MIN(size, sizeof(bba_page_t) - page_offset);
-				memcpy(data + data_offset, page + page_offset, page_size);
-				data_offset += page_size;
-				size        -= page_size;
+					if (!(ipv4->flags & 0b001)) {
+						_fsp.command = 0x00;
 
-				if (!(ipv4->flags & 0b001)) {
-					dvd.buffer += data_size;
-					dvd.length -= data_size;
-					dvd.offset += data_size;
-					*_data_size = 0;
+						dvd.buffer += data_size;
+						dvd.length -= data_size;
+						dvd.offset += data_size;
 
-					schedule_read(OSMicrosecondsToTicks(300), false);
+						schedule_read(OSMicrosecondsToTicks(300), false);
+					}
+
+					bba_receive_end(page, data + data_offset, size);
+					DCStoreRangeNoSync(data, data_size);
+					break;
 				}
-
-				bba_receive_end(page, data + data_offset, size);
-				DCStoreRangeNoSync(data, data_size);
 			}
 		}
 	}

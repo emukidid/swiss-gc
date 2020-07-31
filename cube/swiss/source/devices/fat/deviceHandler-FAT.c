@@ -383,13 +383,10 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	}
 	
 	memset(VAR_SECTOR_BUF, 0, sizeof(VAR_SECTOR_BUF));
-	*(vu32*)VAR_SECTOR_CUR = 0;
 	
 	int isSDCard = IS_SDCARD(file->name);
 	int slot = GET_SLOT(file->name);
 	if(isSDCard) {
-		// Reset sector being read
-		*(vu32*)VAR_SD_LBA = 0;
 		// Card Type
 		*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(slot) ? 9:0;
 	}

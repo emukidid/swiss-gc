@@ -41,8 +41,6 @@ typedef volatile f64 vf64;
 	asm volatile ("mtmsr %0" :: "r" (msr)); \
 })
 
-static u32(*const DI_EMU)[9] = (u32(*)[])VAR_DI_REGS;
-
 extern volatile u32 PI[13];
 extern volatile u16 MI[46];
 extern volatile u32 DSP[15];
