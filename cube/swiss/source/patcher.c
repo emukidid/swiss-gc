@@ -491,8 +491,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	int patched = 0;
 	FuncPattern PrepareExecSig = 
 		{ 60, 15, 3, 16, 13, 2, NULL, 0, "PrepareExec" };
-	FuncPattern PPCMtdecSig = 
-		{ 2, 0, 0, 0, 0, 1, NULL, 0, "PPCMtdec" };
 	FuncPattern PPCHaltSig = 
 		{ 5, 1, 0, 0, 1, 1, NULL, 0, "PPCHalt" };
 	FuncPattern OSExceptionInitSigs[3] = {
@@ -1107,9 +1105,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern (data, dataType, i + 13, length, &OSRestoreInterruptsSig) &&
 							findx_patterns(data, dataType, i + 32, length, &OSGetTimeSig,
 							                                               &__OSGetSystemTimeSigs[1], NULL) &&
-							findx_pattern (data, dataType, i + 46, length, &PPCMtdecSig) &&
-							findx_pattern (data, dataType, i + 56, length, &PPCMtdecSig) &&
-							findx_pattern (data, dataType, i + 59, length, &PPCMtdecSig) &&
 							findx_pattern (data, dataType, i + 63, length, &OSRestoreInterruptsSig))
 							OSCancelAlarmSigs[j].offsetFoundAt = i;
 						break;
@@ -1117,9 +1112,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						if (findx_pattern(data, dataType, i +  7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 12, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 31, length, &__OSGetSystemTimeSigs[2]) &&
-							findx_pattern(data, dataType, i + 45, length, &PPCMtdecSig) &&
-							findx_pattern(data, dataType, i + 55, length, &PPCMtdecSig) &&
-							findx_pattern(data, dataType, i + 58, length, &PPCMtdecSig) &&
 							findx_pattern(data, dataType, i + 62, length, &OSRestoreInterruptsSig))
 							OSCancelAlarmSigs[j].offsetFoundAt = i;
 						break;
