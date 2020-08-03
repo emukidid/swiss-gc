@@ -60,8 +60,8 @@ static void ARAMStub(void)
     asm("stw 7,0(8)");
 
     asm("mfmsr 8");
-    asm("ori 8,8,2");
     asm("rlwinm 8,8,0,17,15");
+    asm("ori 8,8,8194");
     asm("mtmsr 8");
 
     asm("lis  7,0xcc00");
@@ -104,14 +104,10 @@ static void ARAMStub(void)
     asm("bdnz flush");
     asm("isync");
 
-    /*** Fix ints ***/
-    asm("mfmsr 8");
-    asm("rlwinm 8,8,0,17,15");
-    asm("mtmsr 8");
-
-    asm("mfmsr 8");
-    asm("ori 8,8,8194");
-    asm("mtmsr 8");
+    /*** Enable external control ***/
+    asm("lis 8,0x8000");
+    asm("ori 8,8,0x000c");
+    asm("mtear 8");
 
     /*** Party! ***/
     asm("mtlr 3");

@@ -132,7 +132,9 @@ bool dtk_fill_buffer(void)
 		dtk_fill_buffer();
 	}
 
+	#ifndef ISR
 	DCInvalidateRange(__builtin_assume_aligned(dtk.buffer, 32), sizeof(*dtk.buffer));
+	#endif
 	read_disc_frag(__builtin_assume_aligned(dtk.buffer, 32), sizeof(*dtk.buffer), dtk.current.position, read_callback);
 	#else
 	OSCancelAlarm(&read_alarm);
@@ -693,6 +695,14 @@ void exception_handler(OSException exception, OSContext *context, ...);
 extern void load_context(void) __attribute((noreturn));
 extern uint32_t load_context_end[];
 
+void external_interrupt_vector(void);
+
+static void write_branch(void *a, void *b)
+{
+	*(uint32_t *)a = (uint32_t)(b - (OS_BASE_CACHED - 0x48000002));
+	asm volatile("dcbst 0,%0; sync; icbi 0,%0" :: "r" (a));
+}
+
 void service_exception(OSException exception, OSContext *context, uint32_t dsisr, uint32_t dar)
 {
 	OSExceptionHandler handler;
@@ -707,10 +717,7 @@ void service_exception(OSException exception, OSContext *context, uint32_t dsisr
 				break;
 			}
 			if (handler) {
-				ptrdiff_t offset = (ptrdiff_t)handler - (ptrdiff_t)load_context_end;
-
-				*load_context_end = 0x48000000 | (offset & 0x3FFFFFC);
-				asm volatile("dcbst 0,%0; sync; icbi 0,%0" :: "r" (load_context_end));
+				write_branch(load_context_end, handler);
 				load_context();
 				return;
 			}
@@ -773,6 +780,9 @@ void init(void)
 	OSCreateAlarm(&command_alarm);
 
 	OSSetExceptionHandler(OS_EXCEPTION_DSI, exception_handler);
+	#ifdef ISR
+	write_branch((void *)0x80000500, external_interrupt_vector);
+	#endif
 }
 
 bool exi_probe(int32_t chan)

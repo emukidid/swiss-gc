@@ -4,9 +4,11 @@
 #**************************************************************************/
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include "../base/common.h"
 #include "../base/dolphin/exi.h"
+#include "../base/dolphin/os.h"
 
 //CMD12 - Stop multiple block read command
 #define CMD12				0x4C
@@ -25,10 +27,27 @@
 #define exi_channel			(*(u8*)VAR_EXI_SLOT)
 #define exi_regs			(*(vu32**)VAR_EXI_REGS)
 
+static OSInterruptHandler TCIntrruptHandler = NULL;
+
 static struct {
 	uint32_t next_sector;
 	uint32_t last_sector;
+	#if ISR_READ
+	int items;
+	struct {
+		void *address;
+		uint32_t length;
+		uint32_t offset;
+		uint32_t sector;
+		read_frag_cb callback;
+	} queue[2];
+	#endif
 } mmc = {0};
+
+extern intptr_t isr_registers;
+extern int isr_transferred;
+
+void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 
 // EXI Functions
 static void exi_select()
@@ -94,22 +113,34 @@ static void exi_read_to_buffer(void *dest, u32 len) {
 	}
 }
 
-static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read) {
+static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sync) {
 	exi_select();
 
 	while(rcvr_spi() != 0xFE);
 
-	// Skip the start if it's a misaligned read
-	exi_read_to_buffer(0, start_byte);
-	
-	// Read however much we need to in this block
-	exi_read_to_buffer(dest, bytes_to_read);
+	if(sync) {
+		// Skip the start if it's a misaligned read
+		exi_read_to_buffer(0, start_byte);
 
-	// Read out the rest from the SD as we've requested it anyway and can't have it hanging off the bus (2 for CRC discard)
-	u32 remainder = 2 + (SECTOR_SIZE - (start_byte+bytes_to_read));
-	exi_read_to_buffer(0, remainder);
+		// Read however much we need to in this block
+		exi_read_to_buffer(dest, bytes_to_read);
 
-	exi_deselect();
+		// Read out the rest from the SD as we've requested it anyway and can't have it hanging off the bus (2 for CRC discard)
+		u32 remainder = 2 + (SECTOR_SIZE - (start_byte+bytes_to_read));
+		exi_read_to_buffer(0, remainder);
+
+		exi_deselect();
+	}
+	else {
+		#if ISR_READ
+		isr_registers = OSUncachedToPhysical(exi_regs);
+		isr_transferred = -4;
+
+		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_TC + (3 * exi_channel);
+		TCIntrruptHandler = OSSetInterruptHandler(interrupt, tc_interrupt_handler);
+		OSUnmaskInterrupts(OS_INTERRUPTMASK(interrupt));
+		#endif
+	}
 }
 
 #ifndef SINGLE_SECTOR
@@ -128,7 +159,7 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	if(startByte) {
 		// amount to read in first block may vary if our read is small enough to fit in it
 		u32 amountInBlock = (len + startByte > SECTOR_SIZE) ? SECTOR_SIZE-startByte : len;
-		rcvr_datablock(dst,startByte, amountInBlock);
+		rcvr_datablock(dst,startByte, amountInBlock, 1);
 		numBytes-=amountInBlock;
 		dst+=amountInBlock;
 	}
@@ -137,14 +168,14 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u32 numFullBlocks = numBytes>>9; 
 	numBytes -= numFullBlocks << 9;
 	while(numFullBlocks) {
-		rcvr_datablock(dst, 0,SECTOR_SIZE);
+		rcvr_datablock(dst, 0,SECTOR_SIZE, 1);
 		dst+=SECTOR_SIZE; 
 		numFullBlocks--;
 	}
 	
 	// Read any trailing half block
 	if(numBytes) {
-		rcvr_datablock(dst,0, numBytes);
+		rcvr_datablock(dst,0, numBytes, 1);
 		dst+=numBytes;
 	}
 	// End the read by sending CMD12
@@ -152,6 +183,78 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	return len;
 }
 #else
+#if ISR_READ
+static void mmc_read_queued(void)
+{
+	if (!EXILock(exi_channel, EXI_DEVICE_0, (EXICallback)mmc_read_queued))
+		return;
+
+	void *address = mmc.queue[0].address;
+	uint32_t length = mmc.queue[0].length;
+	uint32_t offset = mmc.queue[0].offset;
+	uint32_t sector = mmc.queue[0].sector;
+
+	if (sector != mmc.next_sector) {
+		end_read();
+		send_cmd(CMD18, sector);
+	}
+
+	rcvr_datablock(sectorBuf, 0, SECTOR_SIZE, 0);
+}
+
+void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
+{
+	int i;
+
+	for (i = 0; i < mmc.items; i++)
+		if (mmc.queue[i].callback == callback)
+			return;
+
+	sector = offset / SECTOR_SIZE + sector;
+	offset = offset % SECTOR_SIZE;
+	length = MIN(length, SECTOR_SIZE - offset);
+
+	mmc.queue[i].address = address;
+	mmc.queue[i].length = length;
+	mmc.queue[i].offset = offset;
+	mmc.queue[i].sector = sector;
+	mmc.queue[i].callback = callback;
+	if (mmc.items++) return;
+
+	mmc_read_queued();
+}
+
+void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+{
+	if (isr_transferred < SECTOR_SIZE)
+		return;
+
+	OSMaskInterrupts(OS_INTERRUPTMASK(interrupt));
+	OSSetInterruptHandler(interrupt, TCIntrruptHandler);
+	exi_imm_read(2);
+	exi_deselect();
+	EXIUnlock(exi_channel);
+
+	void *address = mmc.queue[0].address;
+	uint32_t length = mmc.queue[0].length;
+	uint32_t offset = mmc.queue[0].offset;
+	uint32_t sector = mmc.queue[0].sector;
+	read_frag_cb callback = mmc.queue[0].callback;
+	mmc.last_sector = sector;
+	mmc.next_sector = sector + (1 << *VAR_SD_SHIFT);
+
+	if (address != VAR_SECTOR_BUF + offset)
+		memcpy(address, sectorBuf + offset, length);
+
+	if (--mmc.items) {
+		memcpy(mmc.queue, mmc.queue + 1, mmc.items * sizeof(*mmc.queue));
+		mmc_read_queued();
+	}
+
+	callback(address, length);
+}
+#endif
+
 u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	// Try locking EXI bus
 	if(EXILock && !EXILock(exi_channel, EXI_DEVICE_0, 0)) {
@@ -169,7 +272,7 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	// Send single block read command and the LBA we want to read at
 	send_cmd(CMD17, lba);
 	// Read block
-	rcvr_datablock(dst, startByte, numBytes);
+	rcvr_datablock(dst, startByte, numBytes, 1);
 	#else
 	// If we saved this sector
 	if(lba == mmc.last_sector) {
@@ -184,14 +287,14 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	}
 	if(numBytes < SECTOR_SIZE) {
 		// Read half block
-		rcvr_datablock(sectorBuf, 0, SECTOR_SIZE);
+		rcvr_datablock(sectorBuf, 0, SECTOR_SIZE, 1);
 		memcpy(dst, sectorBuf + startByte, numBytes);
 		// Save current LBA
 		mmc.last_sector = lba;
 	}
 	else {
 		// Read full block
-		rcvr_datablock(dst, 0, SECTOR_SIZE);
+		rcvr_datablock(dst, 0, SECTOR_SIZE, 1);
 		// If we're reusing the sector buffer
 		if(dst == VAR_SECTOR_BUF) {
 			// Save current LBA
@@ -209,7 +312,7 @@ exit:
 #endif
 
 void end_read() {
-	#if SINGLE_SECTOR == 2
+	#if SINGLE_SECTOR == 2 || ISR_READ
 	if(mmc.next_sector) {
 		mmc.next_sector = 0;
 		// End the read by sending CMD12
