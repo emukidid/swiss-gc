@@ -160,11 +160,13 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 		*(vu8*)VAR_EXI_FREQ = (u8)(sdgecko_getSpeed(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)));
 		// Device slot (0, 1 or 2)
 		*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
+		*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[*(vu8*)VAR_EXI_SLOT];
 	}
 	else {
 		*(vu8*)VAR_SD_SHIFT = 32;
-		*(vu8*)VAR_EXI_FREQ = -1;
-		*(vu8*)VAR_EXI_SLOT = -1;
+		*(vu8*)VAR_EXI_FREQ = EXI_SPEED1MHZ;
+		*(vu8*)VAR_EXI_SLOT = EXI_CHANNEL_MAX;
+		*(vu32**)VAR_EXI_REGS = NULL;
 	}
 
 	return 1;

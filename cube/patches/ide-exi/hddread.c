@@ -40,9 +40,9 @@
 
 #define _ata48bit *(u8*)VAR_ATA_LBA48
 
-#define exi_freq  			(*(u8*)VAR_EXI_FREQ)
-// exi_channel is stored as number of u32's to index into the exi bus (0xCC006800)
-#define exi_channel 		(*(u8*)VAR_EXI_SLOT)
+#define exi_freq			(*(u8*)VAR_EXI_FREQ)
+#define exi_channel			(*(u8*)VAR_EXI_SLOT)
+#define exi_regs			(*(vu32**)VAR_EXI_REGS)
 
 static OSInterruptHandler TCIntrruptHandler = NULL;
 
@@ -62,51 +62,51 @@ static struct {
 
 void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 
-static void exi_clear_interrupts(int32_t chan, bool exi, bool tc, bool ext)
+static void exi_clear_interrupts(bool exi, bool tc, bool ext)
 {
-	EXI[chan][0] = (EXI[chan][0] & ~0x80A) | (ext << 11) | (tc << 3) | (exi << 1);
+	exi_regs[0] = (exi_regs[0] & ~0x80A) | (ext << 11) | (tc << 3) | (exi << 1);
 }
 
 static void exi_select()
 {
-	EXI[exi_channel][0] = (EXI[exi_channel][0] & 0x405) | ((1<<0)<<7) | (exi_freq << 4);
+	exi_regs[0] = (exi_regs[0] & 0x405) | ((1 << EXI_DEVICE_0) << 7) | (exi_freq << 4);
 }
 
 static void exi_deselect()
 {
-	EXI[exi_channel][0] &= 0x405;
+	exi_regs[0] &= 0x405;
 }
 
 static void exi_imm_write(u32 data, int len) 
 {
-	EXI[exi_channel][4] = data;
+	exi_regs[4] = data;
 	// Tell EXI if this is a read or a write
-	EXI[exi_channel][3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
+	exi_regs[3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
 	// Wait for it to do its thing
-	while (EXI[exi_channel][3] & 1);
+	while (exi_regs[3] & 1);
 }
 
 static u32 exi_imm_read(int len)
 {
-	EXI[exi_channel][4] = -1;
+	exi_regs[4] = -1;
 	// Tell EXI if this is a read or a write
-	EXI[exi_channel][3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
+	exi_regs[3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
 	// Wait for it to do its thing
-	while (EXI[exi_channel][3] & 1);
+	while (exi_regs[3] & 1);
 	// Read the 4 byte data off the EXI bus
-	return EXI[exi_channel][4] >> ((4 - len) * 8);
+	return exi_regs[4] >> ((4 - len) * 8);
 }
 
 static void exi_dma_read(void* data, int len)
 {
-	EXI[exi_channel][1] = (unsigned long)data;
-	EXI[exi_channel][2] = (len + 31) & ~31;
-	EXI[exi_channel][3] = (EXI_READ << 2) | 3;
+	exi_regs[1] = (unsigned long)data;
+	exi_regs[2] = len;
+	exi_regs[3] = (EXI_READ << 2) | 3;
 }
 
 static void exi_sync()
 {
-	while (EXI[exi_channel][3] & 1);
+	while (exi_regs[3] & 1);
 }
 
 // Returns 8 bits from the ATA Status register
@@ -140,7 +140,7 @@ static void ata_read_buffer(u8 *dst, int sync)
 	exi_imm_write(0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8), 4);
 	#if DMA_READ
 	// v2, no deselect or extra read required.
-	exi_clear_interrupts(exi_channel, 0, 1, 0);
+	exi_clear_interrupts(0, 1, 0);
 	exi_dma_read(ptr, SECTOR_SIZE);
 	if(sync) {
 		exi_sync();
@@ -313,7 +313,6 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	OSMaskInterrupts(OS_INTERRUPTMASK(interrupt));
 	OSSetInterruptHandler(interrupt, TCIntrruptHandler);
-	exi_clear_interrupts(exi_channel, 0, 1, 0);
 	exi_deselect();
 	EXIUnlock(exi_channel);
 

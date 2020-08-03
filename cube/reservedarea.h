@@ -15,20 +15,32 @@
 .set VAR_JUMP_TABLE,		0x00A0	# Dolphin OS jump table
 .set VAR_TVMODE,			0x00CC	# TV format
 
-.set VAR_SERVER_MAC,		0x09E8	# server MAC address
-.set VAR_CLIENT_MAC,		0x09EE	# client MAC address
-.set VAR_SERVER_IP,			0x09F4	# server IPv4 address
-.set VAR_CLIENT_IP,			0x09F8	# client IPv4 address
-.set VAR_SERVER_PORT,		0x09FC	# server UDP port
-.set VAR_FSP_KEY,			0x09FE	# FSP session key
+.set VAR_CURRENT_DISC,		0x09B0	# current disc number
+.set VAR_SECOND_DISC,		0x09B1	# second disc present
+.set VAR_DRIVE_PATCHED,		0x09B2	# disc drive patched
+.set VAR_EMU_READ_SPEED,	0x09B3	# emulate read speed
+.set VAR_EXI_REGS,			0x09B4	# pointer to EXI registers
+.set VAR_EXI_SLOT,			0x09B8	# is the EXI slot (0 = slot a, 1 = slot b)
+.set VAR_EXI_FREQ,			0x09B9	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
+.set VAR_SD_SHIFT,			0x09BA	# is the SD Card shift amount when issueing read cmds
+.set VAR_ATA_LBA48,			0x09BA	# Is the HDD in use a 48 bit LBA supported HDD?
+.set VAR_IGR_EXIT_TYPE,		0x09BB	# IGR exit type
+.set VAR_IGR_DOL_SIZE,		0x09BC	# IGR DOL Size
+.set VAR_DISC_1_ID,			0x09C0	# disc 1 header
+.set VAR_DISC_2_ID,			0x09E0	# disc 2 header
+.set VAR_SECTOR_BUF,		0x0A00	# 0x200 of read data
+
+.set VAR_SERVER_MAC,		0x09C0	# server MAC address
+.set VAR_CLIENT_MAC,		0x09C6	# client MAC address
+.set VAR_SERVER_IP,			0x09CC	# server IPv4 address
+.set VAR_CLIENT_IP,			0x09D0	# client IPv4 address
+.set VAR_SERVER_PORT,		0x09D4	# server UDP port
+.set VAR_FSP_KEY,			0x09D6	# FSP session key
+
 .set VAR_DISC_1_FNLEN,		0x0A00	# disc 1 filename length
 .set VAR_DISC_1_FN,			0x0A01	# disc 1 filename
 .set VAR_DISC_2_FNLEN,		0x0B00	# disc 2 filename length
 .set VAR_DISC_2_FN,			0x0B01	# disc 2 filename
-
-.set VAR_DISC_1_ID,			0x09C0	# disc 1 header
-.set VAR_DISC_2_ID,			0x09E0	# disc 2 header
-.set VAR_SECTOR_BUF,		0x0A00	# 0x200 of read data
 
 .set VAR_PATCHES_BASE,		0x2E00	# Patches get copied to below this area.
 
@@ -42,18 +54,7 @@
 .set VAR_SAR_HEIGHT,		0x2E1A	# sample aspect ratio height
 .set VAR_NEXT_FIELD,		0x2E1B	# next video field
 .set VAR_CURRENT_FIELD,		0x2E1C	# current video field
-
-.set VAR_CURRENT_DISC,		0x2E20	# current disc number
-.set VAR_SECOND_DISC,		0x2E21	# second disc present
-.set VAR_DRIVE_PATCHED,		0x2E22	# disc drive patched
-.set VAR_EMU_READ_SPEED,	0x2E23	# emulate read speed
-.set VAR_EXI_SLOT,			0x2E24	# is the EXI slot (0 = slot a, 1 = slot b)
-.set VAR_EXI_FREQ,			0x2E25	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
-.set VAR_SD_SHIFT,			0x2E26	# is the SD Card shift amount when issueing read cmds
-.set VAR_ATA_LBA48,			0x2E26	# Is the HDD in use a 48 bit LBA supported HDD?
-.set VAR_IGR_EXIT_TYPE,		0x2E27	# IGR exit type
-.set VAR_IGR_DOL_SIZE,		0x2E28	# IGR DOL Size
-.set VAR_FRAG_LIST,			0x2E2C	# 0x1D4 of fragments (39 frags max) (u32 offset, u32 size, u32 rawsector)
+.set VAR_FRAG_LIST,			0x2E20	# 0x1E0 of fragments (40 frags max) (u32 offset, u32 size, u32 rawsector)
 
 .set VAR_RMODE,				0x30F8	# render mode
 
@@ -86,20 +87,32 @@ extern char VAR_AREA[];
 extern char VAR_JUMP_TABLE[0x20];	// Dolphin OS jump table
 extern char VAR_TVMODE[4];			// TV format
 
+extern char VAR_CURRENT_DISC[1];	// current disc number
+extern char VAR_SECOND_DISC[1];		// second disc present
+extern char VAR_DRIVE_PATCHED[1];	// disc drive patched
+extern char VAR_EMU_READ_SPEED[1];	// emulate read speed
+extern char VAR_EXI_REGS[4];		// pointer to EXI registers
+extern char VAR_EXI_SLOT[1];		// is the EXI slot (0 = slot a, 1 = slot b)
+extern char VAR_EXI_FREQ[1];		// is the EXI frequency (4 = 16mhz, 5 = 32mhz)
+extern char VAR_SD_SHIFT[1];		// is the SD Card shift amount when issueing read cmds
+extern char VAR_ATA_LBA48[1];		// Is the HDD in use a 48 bit LBA supported HDD?
+extern char VAR_IGR_EXIT_TYPE[1];	// IGR exit type
+extern char VAR_IGR_DOL_SIZE[4];	// IGR DOL Size
+extern char VAR_DISC_1_ID[0x20];	// disc 1 header
+extern char VAR_DISC_2_ID[0x20];	// disc 2 header
+extern char VAR_SECTOR_BUF[0x200];	// 0x200 of read data
+
 extern char VAR_SERVER_MAC[6];		// server MAC address
 extern char VAR_CLIENT_MAC[6];		// client MAC address
 extern char VAR_SERVER_IP[4];		// server IPv4 address
 extern char VAR_CLIENT_IP[4];		// client IPv4 address
 extern char VAR_SERVER_PORT[2];		// server UDP port
 extern char VAR_FSP_KEY[2];			// FSP session key
+
 extern char VAR_DISC_1_FNLEN[1];	// disc 1 filename length
 extern char VAR_DISC_1_FN[0xFF];	// disc 1 filename
 extern char VAR_DISC_2_FNLEN[1];	// disc 2 filename length
 extern char VAR_DISC_2_FN[0xFF];	// disc 2 filename
-
-extern char VAR_DISC_1_ID[0x20];	// disc 1 header
-extern char VAR_DISC_2_ID[0x20];	// disc 2 header
-extern char VAR_SECTOR_BUF[0x200];	// 0x200 of read data
 
 extern char VAR_PATCHES_BASE[];		// Patches get copied to below this area.
 
@@ -113,18 +126,7 @@ extern char VAR_SAR_WIDTH[2];		// sample aspect ratio width
 extern char VAR_SAR_HEIGHT[1];		// sample aspect ratio height
 extern char VAR_NEXT_FIELD[1];		// next video field
 extern char VAR_CURRENT_FIELD[1];	// current video field
-
-extern char VAR_CURRENT_DISC[1];	// current disc number
-extern char VAR_SECOND_DISC[1];		// second disc present
-extern char VAR_DRIVE_PATCHED[1];	// disc drive patched
-extern char VAR_EMU_READ_SPEED[1];	// emulate read speed
-extern char VAR_EXI_SLOT[1];		// is the EXI slot (0 = slot a, 1 = slot b)
-extern char VAR_EXI_FREQ[1];		// is the EXI frequency (4 = 16mhz, 5 = 32mhz)
-extern char VAR_SD_SHIFT[1];		// is the SD Card shift amount when issueing read cmds
-extern char VAR_ATA_LBA48[1];		// Is the HDD in use a 48 bit LBA supported HDD?
-extern char VAR_IGR_EXIT_TYPE[1];	// IGR exit type
-extern char VAR_IGR_DOL_SIZE[4];	// IGR DOL Size
-extern char VAR_FRAG_LIST[0x1D4];	// 0x1D4 of fragments (39 frags max) (u32 offset, u32 size, u32 rawsector)
+extern char VAR_FRAG_LIST[0x1E0];	// 0x1E0 of fragments (40 frags max) (u32 offset, u32 size, u32 rawsector)
 
 extern char VAR_RMODE[4];			// render mode
 

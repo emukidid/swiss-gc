@@ -44,8 +44,7 @@ build-sd:
 	@rm -rf *.o
 	@$(OBJDUMP) -D sd.elf > $(DISASM)/sd_disasm.txt
 	@$(OBJCOPY) -O binary sd.elf sd.bin
-	@$(BIN2S) sd.bin > sd_final.s
-	@mv -f sd_final.s $(DEST)/SlotAB-SD.s
+	@$(BIN2S) sd.bin > $(DEST)/SlotAB-SD.s
 	@rm *.bin
 	@rm *.elf
 
@@ -66,8 +65,7 @@ build-ideexi-v1:
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_v1.elf > $(DISASM)/ideexi_v1_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_v1.elf ideexi_v1.bin
-	@$(BIN2S) ideexi_v1.bin > ideexi_v1_final.s
-	@mv -f ideexi_v1_final.s $(DEST)/SlotAB-IDEEXI_V1.s
+	@$(BIN2S) ideexi_v1.bin > $(DEST)/SlotAB-IDEEXI_V1.s
 	@rm *.bin
 	@rm *.elf
 
@@ -88,8 +86,7 @@ build-ideexi-v2:
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_v2.elf > $(DISASM)/ideexi_v2_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_v2.elf ideexi_v2.bin
-	@$(BIN2S) ideexi_v2.bin > ideexi_v2_final.s
-	@mv -f ideexi_v2_final.s $(DEST)/SlotAB-IDEEXI_V2.s
+	@$(BIN2S) ideexi_v2.bin > $(DEST)/SlotAB-IDEEXI_V2.s
 	@rm *.bin
 	@rm *.elf
 
@@ -109,8 +106,7 @@ build-dvd:
 	@rm -rf *.o
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd_disasm.txt
 	@$(OBJCOPY) -O binary dvd.elf dvd.bin
-	@$(BIN2S) dvd.bin > dvd_final.s
-	@mv -f dvd_final.s $(DEST)/DVDPatch.s
+	@$(BIN2S) dvd.bin > $(DEST)/DVDPatch.s
 	@rm *.bin
 	@rm *.elf
 
@@ -127,8 +123,7 @@ build-usb:
 	@rm -rf *.o
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
-	@$(BIN2S) usbgecko.bin > usbgecko_final.s
-	@mv -f usbgecko_final.s $(DEST)/USBGeckoPatch.s
+	@$(BIN2S) usbgecko.bin > $(DEST)/USBGeckoPatch.s
 	@rm *.bin
 	@rm *.elf
 
@@ -149,8 +144,7 @@ build-wkf:
 	@rm -rf *.o
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf_disasm.txt
 	@$(OBJCOPY) -O binary wkf.elf wkf.bin
-	@$(BIN2S) wkf.bin > wkf.s
-	@mv -f wkf.s $(DEST)/wkfPatch.s
+	@$(BIN2S) wkf.bin > $(DEST)/WKFPatch.s
 	@rm *.bin
 	@rm *.elf
 
@@ -168,7 +162,6 @@ build-bba:
 	@rm -rf *.o
 	@$(OBJDUMP) -D bba.elf > $(DISASM)/bba_disasm.txt
 	@$(OBJCOPY) -O binary bba.elf bba.bin
-	@$(BIN2S) bba.bin > bba.s
-	@mv -f bba.s $(DEST)/BBAPatch.s
+	@$(BIN2S) bba.bin > $(DEST)/BBAPatch.s
 	@rm *.bin
 	@rm *.elf

@@ -394,6 +394,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	*(vu8*)VAR_EXI_FREQ = isSDCard ? sdgecko_getSpeed(slot):(swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	// Device slot (0, 1 or 2)
 	*(vu8*)VAR_EXI_SLOT = slot;
+	*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[slot];
 	// IDE-EXI only settings
 	if(!isSDCard) {
 		// Is the HDD in use a 48 bit LBA supported HDD?

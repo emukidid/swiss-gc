@@ -39,22 +39,12 @@ typedef u32 OSTick;
 
 static OSTick OSGetTick(void)
 {
-	OSTick ticks;
-	asm volatile("mftb %0" : "=r" (ticks));
-	return ticks;
+	return __builtin_ppc_mftb();
 }
 
 static OSTime OSGetTime(void)
 {
-	u32 u32[3];
-
-	do {
-		asm volatile("mftbu %0" : "=r" (u32[0]));
-		asm volatile("mftbl %0" : "=r" (u32[1]));
-		asm volatile("mftbu %0" : "=r" (u32[2]));
-	} while (u32[0] != u32[2]);
-
-	return (OSTime)u32[0] << 32 | u32[1];
+	return __builtin_ppc_get_timebase();
 }
 
 typedef struct OSAlarm OSAlarm;

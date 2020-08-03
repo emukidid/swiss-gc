@@ -3,20 +3,32 @@ VAR_AREA			= 0x80000000;
 VAR_JUMP_TABLE		= VAR_AREA | 0x00A0;	/* Dolphin OS jump table */
 VAR_TVMODE			= VAR_AREA | 0x00CC;	/* TV format */
 
-VAR_SERVER_MAC		= VAR_AREA | 0x09E8;	/* server MAC address */
-VAR_CLIENT_MAC		= VAR_AREA | 0x09EE;	/* client MAC address */
-VAR_SERVER_IP		= VAR_AREA | 0x09F4;	/* server IPv4 address */
-VAR_CLIENT_IP		= VAR_AREA | 0x09F8;	/* client IPv4 address */
-VAR_SERVER_PORT		= VAR_AREA | 0x09FC;	/* server UDP port */
-VAR_FSP_KEY			= VAR_AREA | 0x09FE;	/* FSP session key */
+VAR_CURRENT_DISC	= VAR_AREA | 0x09B0;	/* current disc number */
+VAR_SECOND_DISC		= VAR_AREA | 0x09B1;	/* second disc present */
+VAR_DRIVE_PATCHED	= VAR_AREA | 0x09B2;	/* disc drive patched */
+VAR_EMU_READ_SPEED	= VAR_AREA | 0x09B3;	/* emulate read speed */
+VAR_EXI_REGS		= VAR_AREA | 0x09B4;	/* pointer to EXI registers */
+VAR_EXI_SLOT		= VAR_AREA | 0x09B8;	/* is the EXI slot (0 = slot a, 1 = slot b) */
+VAR_EXI_FREQ		= VAR_AREA | 0x09B9;	/* is the EXI frequency (4 = 16mhz, 5 = 32mhz) */
+VAR_SD_SHIFT		= VAR_AREA | 0x09BA;	/* is the SD Card shift amount when issueing read cmds */
+VAR_ATA_LBA48		= VAR_AREA | 0x09BA;	/* Is the HDD in use a 48 bit LBA supported HDD? */
+VAR_IGR_EXIT_TYPE	= VAR_AREA | 0x09BB;	/* IGR exit type */
+VAR_IGR_DOL_SIZE	= VAR_AREA | 0x09BC;	/* IGR DOL Size */
+VAR_DISC_1_ID		= VAR_AREA | 0x09C0;	/* disc 1 header */
+VAR_DISC_2_ID		= VAR_AREA | 0x09E0;	/* disc 2 header */
+VAR_SECTOR_BUF		= VAR_AREA | 0x0A00;	/* 0x200 of read data */
+
+VAR_SERVER_MAC		= VAR_AREA | 0x09C0;	/* server MAC address */
+VAR_CLIENT_MAC		= VAR_AREA | 0x09C6;	/* client MAC address */
+VAR_SERVER_IP		= VAR_AREA | 0x09CC;	/* server IPv4 address */
+VAR_CLIENT_IP		= VAR_AREA | 0x09D0;	/* client IPv4 address */
+VAR_SERVER_PORT		= VAR_AREA | 0x09D4;	/* server UDP port */
+VAR_FSP_KEY			= VAR_AREA | 0x09D6;	/* FSP session key */
+
 VAR_DISC_1_FNLEN	= VAR_AREA | 0x0A00;	/* disc 1 filename length */
 VAR_DISC_1_FN		= VAR_AREA | 0x0A01;	/* disc 1 filename */
 VAR_DISC_2_FNLEN	= VAR_AREA | 0x0B00;	/* disc 2 filename length */
 VAR_DISC_2_FN		= VAR_AREA | 0x0B01;	/* disc 2 filename */
-
-VAR_DISC_1_ID		= VAR_AREA | 0x09C0;	/* disc 1 header */
-VAR_DISC_2_ID		= VAR_AREA | 0x09E0;	/* disc 2 header */
-VAR_SECTOR_BUF		= VAR_AREA | 0x0A00;	/* 0x200 of read data */
 
 VAR_PATCHES_BASE	= VAR_AREA | 0x2E00;	/* Patches get copied to below this area. */
 
@@ -30,17 +42,6 @@ VAR_SAR_WIDTH		= VAR_AREA | 0x2E18;	/* sample aspect ratio width */
 VAR_SAR_HEIGHT		= VAR_AREA | 0x2E1A;	/* sample aspect ratio height */
 VAR_NEXT_FIELD		= VAR_AREA | 0x2E1B;	/* next video field */
 VAR_CURRENT_FIELD	= VAR_AREA | 0x2E1C;	/* current video field */
-
-VAR_CURRENT_DISC	= VAR_AREA | 0x2E20;	/* current disc number */
-VAR_SECOND_DISC		= VAR_AREA | 0x2E21;	/* second disc present */
-VAR_DRIVE_PATCHED	= VAR_AREA | 0x2E22;	/* disc drive patched */
-VAR_EMU_READ_SPEED	= VAR_AREA | 0x2E23;	/* emulate read speed */
-VAR_EXI_SLOT		= VAR_AREA | 0x2E24;	/* is the EXI slot (0 = slot a, 1 = slot b) */
-VAR_EXI_FREQ		= VAR_AREA | 0x2E25;	/* is the EXI frequency (4 = 16mhz, 5 = 32mhz) */
-VAR_SD_SHIFT		= VAR_AREA | 0x2E26;	/* is the SD Card shift amount when issueing read cmds */
-VAR_ATA_LBA48		= VAR_AREA | 0x2E26;	/* Is the HDD in use a 48 bit LBA supported HDD? */
-VAR_IGR_EXIT_TYPE	= VAR_AREA | 0x2E27;	/* IGR exit type */
-VAR_IGR_DOL_SIZE	= VAR_AREA | 0x2E28;	/* IGR DOL Size */
-VAR_FRAG_LIST		= VAR_AREA | 0x2E2C;	/* 0x1D4 of fragments (39 frags max) (u32 offset, u32 size, u32 rawsector) */
+VAR_FRAG_LIST		= VAR_AREA | 0x2E20;	/* 0x1E0 of fragments (40 frags max) (u32 offset, u32 size, u32 rawsector) */
 
 VAR_RMODE			= VAR_AREA | 0x30F8;	/* render mode */
