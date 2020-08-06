@@ -458,7 +458,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 						while(swissSettings.gameVMode >= 13 && swissSettings.gameVMode <= 14)
 							swissSettings.gameVMode += direction;
 					}
-					if(!swissSettings.forceDTVStatus && !VIDEO_HaveComponentCable()) {
+					if(!getDTVStatus()) {
 						while(swissSettings.gameVMode >= 4 && swissSettings.gameVMode <= 7)
 							swissSettings.gameVMode += direction;
 						while(swissSettings.gameVMode >= 11 && swissSettings.gameVMode <= 14)
@@ -540,7 +540,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 						while(gameConfig->gameVMode >= 13 && gameConfig->gameVMode <= 14)
 							gameConfig->gameVMode += direction;
 					}
-					if(!swissSettings.forceDTVStatus && !VIDEO_HaveComponentCable()) {
+					if(!getDTVStatus()) {
 						while(gameConfig->gameVMode >= 4 && gameConfig->gameVMode <= 7)
 							gameConfig->gameVMode += direction;
 						while(gameConfig->gameVMode >= 11 && gameConfig->gameVMode <= 14)

@@ -48,6 +48,10 @@ void setVideoModeString(GXRModeObj *v) {
 	}
 }
 
+int getDTVStatus() {
+	volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
+	return swissSettings.forceDTVStatus || (vireg[55] & 1);
+}
 
 GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 	switch(uiVMode) {
@@ -58,7 +62,7 @@ GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 				default: return &TVNtsc480IntDf;
 			}
 		case 2:
-			if(swissSettings.forceDTVStatus || VIDEO_HaveComponentCable()) {
+			if(getDTVStatus()) {
 				switch(swissSettings.sramVideo) {
 					case 2:  return &TVMpal480Prog;
 					case 1:  return &TVEurgb60Hz480Prog;
@@ -74,7 +78,7 @@ GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 		case 3:
 			return &TVPal576IntDfScale;
 		case 4:
-			if(swissSettings.forceDTVStatus || VIDEO_HaveComponentCable()) {
+			if(getDTVStatus()) {
 				return &TVPal576ProgScale;
 			} else {
 				return &TVPal576IntDfScale;
