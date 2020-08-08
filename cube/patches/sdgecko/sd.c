@@ -57,6 +57,7 @@ static void exi_select()
 
 static void exi_deselect()
 {
+	exi_regs[4] = -1;
 	exi_regs[0] &= 0x405;
 }
 
@@ -116,9 +117,9 @@ static void exi_read_to_buffer(void *dest, u32 len) {
 static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sync) {
 	exi_select();
 
-	while(rcvr_spi() != 0xFE);
-
 	if(sync) {
+		while(rcvr_spi() != 0xFE);
+
 		// Skip the start if it's a misaligned read
 		exi_read_to_buffer(0, start_byte);
 
@@ -134,7 +135,7 @@ static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sy
 	else {
 		#if ISR_READ
 		isr_registers = OSUncachedToPhysical(exi_regs);
-		isr_transferred = -4;
+		isr_transferred = 0xFEFFFFFF;
 
 		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_TC + (3 * exi_channel);
 		TCIntrruptHandler = OSSetInterruptHandler(interrupt, tc_interrupt_handler);

@@ -39,39 +39,47 @@ external_interrupt_vector:
 	eciwx	r5, r0, r4
 	rlwinm	r6, r5, 1, 28, 28
 	and.	r6, r5, r6
-	beq		3f
+	beq		6f
 	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
 	lwz		r6, isr_transferred - 0x80000000 (r0)
-	cmpwi	r6, 512 - 4
-	bgt		3f
-	addi	r6, r6, 4
-	stw		r6, isr_transferred - 0x80000000 (r0)
-	beq		1f
-	cmpwi	r6, 0
+	cmpwi	cr0, r6, 0
+	cmpwi	cr1, r6, 512 - 4
+	bgt		cr1, 6f
+	beq		cr1, 1f
 	ecowx	r5, r0, r4
-	ble		2f
 1:	li		r5, 4*4
 	eciwx	r5, r5, r4
-	stw		r5, VAR_SECTOR_BUF - 4 (r6)
-	beq		3f
-2:	li		r5, 4*4
+	blt		cr0, 2f
+	stw		r5, VAR_SECTOR_BUF (r6)
+	addi	r6, r6, 4
+	stw		r6, isr_transferred - 0x80000000 (r0)
+	beq		cr1, 6f
+2:	cmpw	cr1, r5, r6
+	li		r5, 4*4
 	li		r6, -1
 	ecowx	r6, r5, r4
+	bnl		cr0, 4f
+	beq		cr1, 3f
 	li		r5, 3*4
+	li		r6, ((1 - 1) << 4) | 0b01
+	b		5f
+3:	li		r6, 0
+	stw		r6, isr_transferred - 0x80000000 (r0)
+4:	li		r5, 3*4
 	li		r6, ((4 - 1) << 4) | 0b01
-	ecowx	r6, r5, r4
+5:	ecowx	r6, r5, r4
 	lis		r4, 0x0C00
 	li		r5, 0x3000
 	eciwx	r5, r5, r4
 	rlwinm.	r6, r5, 0, 16, 14
-	bne		3f
+	bne		6f
 	mfsprg	r6, 3
 	mtcr	r6
 	mfsprg	r6, 2
 	mfsprg	r5, 1
 	mfsprg	r4, 0
 	rfi
-3:	mfsprg	r6, 3
+6:	mfsprg	r6, 3
 	mtcr	r6
 	mfsprg	r6, 2
 	mfsprg	r5, 1
