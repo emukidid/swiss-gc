@@ -63,6 +63,7 @@ build:
 	@mkdir $(DIST)/ActionReplay
 	@mkdir $(DIST)/GCI
 	@mkdir $(DIST)/WODE
+	@mkdir $(DIST)/GCLoader
 	@cp $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/$(SVN_REVISION).dol
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION).dol
 	@cp $(SOURCES)/swiss/swiss.elf $(DIST)/DOL/$(SVN_REVISION).elf
@@ -72,10 +73,11 @@ build:
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/swiss-lz.dol
 	# make ISOs and WKF firmware
+	# NTSC-J
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso -find $(DIST)/DOL/$(SVN_REVISION).dol
+	@cp $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/GCLoader/boot.iso
 	# NTSC
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-u.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-u)".iso -find $(DIST)/DOL/$(SVN_REVISION).dol
-	## NTSC-J
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso -find $(DIST)/DOL/$(SVN_REVISION).dol
 	# PAL
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso -find $(DIST)/DOL/$(SVN_REVISION).dol
 	# WODE
@@ -104,6 +106,7 @@ package:   # create distribution package
 	@mv $(DIST)/ISO $(SVN_REVISION)
 	@mv $(DIST)/WODE $(SVN_REVISION)
 	@mv $(DIST)/WiikeyFusion $(SVN_REVISION)
+	@mv $(DIST)/GCLoader $(SVN_REVISION)
 	@mv $(DIST)/ActionReplay $(SVN_REVISION)
 	@mv $(DIST)/USBGeckoRemoteServer $(SVN_REVISION)
 	@find ./$(SVN_REVISION) -type f -print0 | xargs -0 md5sum > $(SVN_REVISION).md5
