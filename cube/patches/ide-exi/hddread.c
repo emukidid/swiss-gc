@@ -306,6 +306,13 @@ void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sect
 	ata.queue[i].callback = callback;
 	if (ata.items++) return;
 
+	if (sector == ata.last_sector) {
+		--ata.items;
+		memcpy(address, sectorBuf + offset, length);
+		callback(address, length);
+		return;
+	}
+
 	ata_read_queued();
 }
 
@@ -336,10 +343,12 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 #endif
 
 u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
+	#if !DMA_READ
 	// Try locking EXI bus
 	if(EXILock && !EXILock(exi_channel, EXI_DEVICE_0, 0)) {
 		return 0;
 	}
+	#endif
 	
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
@@ -373,8 +382,10 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 		}
 	}
 exit:
+	#if !DMA_READ
 	// Unlock EXI bus
 	if (EXIUnlock) EXIUnlock(exi_channel);
+	#endif
 	return numBytes;
 }
 #endif

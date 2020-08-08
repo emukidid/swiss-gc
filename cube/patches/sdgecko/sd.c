@@ -222,6 +222,13 @@ void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sect
 	mmc.queue[i].callback = callback;
 	if (mmc.items++) return;
 
+	if (sector == mmc.last_sector) {
+		--mmc.items;
+		memcpy(address, sectorBuf + offset, length);
+		callback(address, length);
+		return;
+	}
+
 	mmc_read_queued();
 }
 
@@ -257,10 +264,12 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 #endif
 
 u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
+	#if !ISR_READ
 	// Try locking EXI bus
 	if(EXILock && !EXILock(exi_channel, EXI_DEVICE_0, 0)) {
 		return 0;
 	}
+	#endif
 	
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
@@ -306,8 +315,10 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	mmc.next_sector = lba + (1<<lbaShift);
 	#endif
 exit:
+	#if !ISR_READ
 	// Unlock EXI bus
 	if (EXIUnlock) EXIUnlock(exi_channel);
+	#endif
 	return numBytes;
 }
 #endif
