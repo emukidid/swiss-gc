@@ -19,15 +19,64 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "mix.h"
+#include "audio.h"
 
 __attribute((always_inline))
-static inline int_fast16_t clamp(int32_t x)
+static inline int_fast16_t clamp_s16(int32_t x)
 {
 	if ((x + 0x8000) & ~0xFFFF)
 		return x >> 31 ^ 0x7FFF;
 	else
 		return x;
+}
+
+__attribute((always_inline))
+static inline int32_t clamp_s22(int32_t x)
+{
+	if ((x + 0x200000) & ~0x3FFFFF)
+		return x >> 31 ^ 0x1FFFFF;
+	else
+		return x;
+}
+
+static int_fast16_t decode_sample(uint8_t header, int sample, int32_t prev[2])
+{
+	static uint8_t table[][4] = {
+		{ 0, 60, 115, 98 },
+		{ 0,  0,  52, 55 }
+	};
+
+	int index = (header & 0x30) >> 4;
+	int shift = header & 0xF;
+
+	int32_t curr = prev[0] * table[0][index] -
+	               prev[1] * table[1][index];
+
+	curr = clamp_s22((curr + 32) >> 6) + ((int16_t)(sample << 12) >> shift << 6);
+
+	prev[1] = prev[0];
+	prev[0] = curr;
+
+	return clamp_s16((curr + 32) >> 6);
+}
+
+void adpcm_reset(adpcm_t *adpcm)
+{
+	adpcm->l[0] = adpcm->l[1] = 0;
+	adpcm->r[0] = adpcm->r[1] = 0;
+}
+
+void adpcm_decode(adpcm_t *adpcm, sample_t *out, uint8_t *in, int count)
+{
+	for (int j = 0; j < count; j += 28) {
+		for (int i = 0; i < 28; i++) {
+			out[i].l = decode_sample(in[0], in[4 + i] & 0xF, adpcm->l);
+			out[i].r = decode_sample(in[1], in[4 + i] >> 4, adpcm->r);
+		}
+
+		out += 28;
+		in  += 32;
+	}
 }
 
 void mix_samples(volatile sample_t *out, sample_t *in, bool _3to2, int count, uint8_t volume_l, uint8_t volume_r)
@@ -47,8 +96,8 @@ void mix_samples(volatile sample_t *out, sample_t *in, bool _3to2, int count, ui
 		r = (r * volume_r >> 8) + sample.r;
 		l = (l * volume_l >> 8) + sample.l;
 
-		sample.r = clamp(r);
-		sample.l = clamp(l);
+		sample.r = clamp_s16(r);
+		sample.l = clamp_s16(l);
 		*out++ = sample;
 	}
 }

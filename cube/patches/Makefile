@@ -33,15 +33,14 @@ build-sd:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK -DISR
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c base/mix.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
-	@$(CC) -Os $(OPTS) -c base/adp.c
+	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o sd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o mix.o blockdevice.o sd.o sd_isr.o adp.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o sd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o blockdevice.o sd.o sd_isr.o audio.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D sd.elf > $(DISASM)/sd_disasm.txt
 	@$(OBJCOPY) -O binary sd.elf sd.bin
@@ -55,14 +54,13 @@ build-ideexi-v1:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DDTK
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c base/mix.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c
 	@$(CC) -Os $(OPTS) -c ide-exi/hddread.c -DDMA_READ=0 -DSINGLE_SECTOR=1
-	@$(CC) -Os $(OPTS) -c base/adp.c
+	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o ideexi_v1.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o mix.o blockdevice.o hddread.o adp.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o ideexi_v1.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o blockdevice.o hddread.o audio.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_v1.elf > $(DISASM)/ideexi_v1_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_v1.elf ideexi_v1.bin
@@ -76,14 +74,13 @@ build-ideexi-v2:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c base/mix.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c ide-exi/hddread.c -DDMA_READ=1 -DSINGLE_SECTOR=1
-	@$(CC) -Os $(OPTS) -c base/adp.c
+	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o ideexi_v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o mix.o blockdevice.o hddread.o adp.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o ideexi_v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o blockdevice.o hddread.o audio.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D ideexi_v2.elf > $(DISASM)/ideexi_v2_disasm.txt
 	@$(OBJCOPY) -O binary ideexi_v2.elf ideexi_v2.bin
@@ -134,14 +131,13 @@ build-wkf:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK -DWKF
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c base/mix.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
-	@$(CC) -Os $(OPTS) -c base/adp.c
+	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o wkf.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o mix.o wkf.o sd.o adp.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o wkf.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o wkf.o sd.o audio.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf_disasm.txt
 	@$(OBJCOPY) -O binary wkf.elf wkf.bin

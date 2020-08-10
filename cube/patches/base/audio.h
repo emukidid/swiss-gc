@@ -17,17 +17,25 @@
  * with Swiss.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef MIX_H
-#define MIX_H
+#ifndef AUDIO_H
+#define AUDIO_H
 
 #include <stdint.h>
 #include <stdbool.h>
+
+typedef struct {
+	int32_t l[2];
+	int32_t r[2];
+} adpcm_t;
 
 typedef struct {
 	int16_t r;
 	int16_t l;
 } sample_t;
 
+void adpcm_reset(adpcm_t *adpcm);
+void adpcm_decode(adpcm_t *adpcm, sample_t *out, uint8_t *in, int count);
+
 void mix_samples(volatile sample_t *out, sample_t *in, bool _3to2, int count, uint8_t volume_l, uint8_t volume_r);
 
-#endif /* MIX_H */
+#endif /* AUDIO_H */

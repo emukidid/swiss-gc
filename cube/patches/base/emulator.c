@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
+#include "audio.h"
 #include "common.h"
 #include "dolphin/dvd.h"
 #include "dolphin/exi.h"
@@ -28,7 +29,6 @@
 #include "DVDMath.h"
 #include "emulator.h"
 #include "fifo.h"
-#include "mix.h"
 
 static OSInterruptMask fake_interrupts = 0;
 
@@ -52,10 +52,10 @@ static struct {
 } di = {0};
 
 static struct {
+	adpcm_t adpcm;
+
 	bool playing;
 	bool stopping;
-
-	uint8_t (*buffer)[512];
 
 	struct {
 		uint32_t position;
@@ -67,6 +67,8 @@ static struct {
 		uint32_t start;
 		uint32_t length;
 	} next;
+
+	uint8_t (*buffer)[512];
 } dtk = {
 	.buffer = (void *)VAR_SECTOR_BUF
 };
@@ -96,11 +98,9 @@ bool memeq(const void *a, const void *b, size_t size)
 #ifdef DTK
 static void dtk_decode_buffer(void *address, uint32_t length)
 {
-	int16_t stream[448][2] __attribute((aligned(32)));
+	sample_t stream[448] __attribute((aligned(32)));
 
-	for (int i = 0; i < sizeof(*dtk.buffer) / 32; i++)
-		ADPDecodeBlock(*dtk.buffer + i * 32, stream + i * 28);
-
+	adpcm_decode(&dtk.adpcm, stream, *dtk.buffer, 448);
 	fifo_write(stream, sizeof(stream));
 	dtk.current.position += sizeof(*dtk.buffer);
 
@@ -114,7 +114,7 @@ static void dtk_decode_buffer(void *address, uint32_t length)
 			dtk.playing  = false;
 		}
 
-		ADPResetFilter();
+		adpcm_reset(&dtk.adpcm);
 	}
 }
 
@@ -244,7 +244,7 @@ static void di_execute_command(void)
 					dtk.playing  = false;
 
 					#ifdef DTK
-					ADPResetFilter();
+					adpcm_reset(&dtk.adpcm);
 					#endif
 					break;
 				}
