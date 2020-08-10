@@ -50,6 +50,11 @@ extern int isr_transferred;
 void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 
 // EXI Functions
+static void exi_clear_interrupts(bool exi, bool tc, bool ext)
+{
+	exi_regs[0] = (exi_regs[0] & ~0x80A) | (ext << 11) | (tc << 3) | (exi << 1);
+}
+
 static void exi_select()
 {
 	exi_regs[0] = (exi_regs[0] & 0x405) | ((1 << EXI_DEVICE_0) << 7) | (exi_freq << 4);
@@ -57,32 +62,37 @@ static void exi_select()
 
 static void exi_deselect()
 {
-	exi_regs[4] = -1;
 	exi_regs[0] &= 0x405;
 }
 
-static void exi_imm_write(u32 data, int len)
+static void exi_imm_write(u32 data, int len, int sync)
 {
 	exi_regs[4] = data;
 	// Tell EXI if this is a read or a write
 	exi_regs[3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
-	// Wait for it to do its thing
-	while (exi_regs[3] & 1);
+
+	if (sync) {
+		// Wait for it to do its thing
+		while (exi_regs[3] & 1);
+	}
 }
 
-static u32 exi_imm_read(int len)
+static u32 exi_imm_read(int len, int sync)
 {
 	exi_regs[4] = -1;
 	// Tell EXI if this is a read or a write
 	exi_regs[3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
-	// Wait for it to do its thing
-	while (exi_regs[3] & 1);
-	// Read the 4 byte data off the EXI bus
-	return exi_regs[4] >> ((4 - len) * 8);
+
+	if (sync) {
+		// Wait for it to do its thing
+		while (exi_regs[3] & 1);
+		// Read the 4 byte data off the EXI bus
+		return exi_regs[4] >> ((4 - len) * 8);
+	}
 }
 
 // SD Functions
-#define rcvr_spi() ((u8)(exi_imm_read(1) & 0xFF))
+#define rcvr_spi() ((u8)(exi_imm_read(1, 1) & 0xFF))
 
 static void send_cmd(u32 cmd, u32 sector) {
 	exi_select();
@@ -90,9 +100,9 @@ static void send_cmd(u32 cmd, u32 sector) {
 	if(cmd != CMD12)
 		while(rcvr_spi() != 0xFF);
 
-	exi_imm_write(cmd<<24, 1);
-	exi_imm_write(sector, 4);
-	exi_imm_write(1<<24, 1);
+	exi_imm_write(cmd<<24, 1, 1);
+	exi_imm_write(sector, 4, 1);
+	exi_imm_write(1<<24, 1, 1);
 
 	while(rcvr_spi() & 0x80);
 
@@ -102,7 +112,7 @@ static void send_cmd(u32 cmd, u32 sector) {
 static void exi_read_to_buffer(void *dest, u32 len) {
 	u32 *destu = (u32*)dest;
 	while(len>=4) {
-		u32 read = exi_imm_read(4);
+		u32 read = exi_imm_read(4, 1);
 		if(dest) *destu++ = read;
 		len-=4;
 	}
@@ -134,6 +144,9 @@ static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sy
 	}
 	else {
 		#if ISR_READ
+		exi_clear_interrupts(0, 1, 0);
+		exi_imm_read(1, 0);
+
 		isr_registers = OSUncachedToPhysical(exi_regs);
 		isr_transferred = 0xFEFFFFFF;
 
@@ -239,7 +252,7 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 
 	OSMaskInterrupts(OS_INTERRUPTMASK(interrupt));
 	OSSetInterruptHandler(interrupt, TCIntrruptHandler);
-	exi_imm_read(2);
+	exi_imm_read(2, 1);
 	exi_deselect();
 	EXIUnlock(exi_channel);
 
