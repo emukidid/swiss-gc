@@ -124,6 +124,48 @@ void parse_gcm_add(file_handle *file, ExecutableFile *filesToPatch, u32 *numToPa
 	}
 }
 
+bool valid_dol_file(file_handle *file, u32 file_offset, u32 file_size) {
+	bool valid = false;
+	
+	if(file_size % 32 || file_size < DOLHDRLENGTH) {
+		return false;
+	}
+	DOLHEADER dolhdr;
+	devices[DEVICE_CUR]->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	devices[DEVICE_CUR]->readFile(file, &dolhdr, DOLHDRLENGTH);
+	
+	int i;
+	for(i = 0; i < MAXTEXTSECTION; i++) {
+		if(dolhdr.textOffset[i]) {
+			if(dolhdr.textOffset[i] % 32 || dolhdr.textOffset[i] < DOLHDRLENGTH || dolhdr.textOffset[i] + dolhdr.textLength[i] > file_size) {
+				return false;
+			}
+			if(dolhdr.textAddress[i] % 32 || dolhdr.textAddress[i] < 0x80003100 || dolhdr.textAddress[i] + dolhdr.textLength[i] > 0x81200000) {
+				return false;
+			}
+			if(dolhdr.entryPoint >= dolhdr.textAddress[i] && dolhdr.entryPoint < dolhdr.textAddress[i] + dolhdr.textLength[i]) {
+				valid = true;
+			}
+		}
+	}
+	for(i = 0; i < MAXDATASECTION; i++) {
+		if(dolhdr.dataOffset[i]) {
+			if(dolhdr.dataOffset[i] % 32 || dolhdr.dataOffset[i] < DOLHDRLENGTH || dolhdr.dataOffset[i] + dolhdr.dataLength[i] > file_size) {
+				return false;
+			}
+			if(dolhdr.dataAddress[i] % 32 || dolhdr.dataAddress[i] < 0x80003100 || dolhdr.dataAddress[i] + dolhdr.dataLength[i] > 0x81200000) {
+				return false;
+			}
+		}
+	}
+	if(dolhdr.bssLength) {
+		if(dolhdr.bssAddress % 32 || dolhdr.bssAddress < 0x80003100 || dolhdr.bssAddress + dolhdr.bssLength > 0x81200000) {
+			return false;
+		}
+	}
+	return valid;
+}
+
 u32 calc_elf_segments_size(file_handle *file, u32 file_offset, u32 *file_size) {
 	u32 size = 0;
 	
@@ -214,7 +256,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 			if(endsWith(filename,".dol")) {
 				// Some games contain a single "default.dol", these do not need 
 				// pre-patching because they are what is actually pointed to by the apploader (and loaded by us)
-				if(dolOffset == file_offset || dolSize == size) {
+				if(dolOffset == file_offset || dolSize == size || !valid_dol_file(file, file_offset, size)) {
 					continue;
 				}
 				filesToPatch[numFiles].offset = file_offset;
@@ -336,7 +378,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
 			if(endsWith(filename,".dol")) {
-				if(dolSize == size) {
+				if(dolSize == size || !valid_dol_file(file, file_offset, size)) {
 					continue;
 				}
 				filesToPatch[numFiles].offset = file_offset;
