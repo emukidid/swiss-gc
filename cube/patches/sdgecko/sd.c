@@ -210,7 +210,7 @@ static void mmc_read_queued(void)
 
 	if (sector != mmc.next_sector) {
 		end_read();
-		send_cmd(CMD18, sector);
+		send_cmd(CMD18, sector << *VAR_SD_SHIFT);
 	}
 
 	rcvr_datablock(sectorBuf, 0, SECTOR_SIZE, 0);
@@ -224,7 +224,7 @@ void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sect
 		if (mmc.queue[i].callback == callback)
 			return;
 
-	sector = offset / SECTOR_SIZE + sector << *VAR_SD_SHIFT;
+	sector = offset / SECTOR_SIZE + sector;
 	offset = offset % SECTOR_SIZE;
 	length = MIN(length, SECTOR_SIZE - offset);
 
@@ -262,7 +262,7 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	uint32_t sector = mmc.queue[0].sector;
 	read_frag_cb callback = mmc.queue[0].callback;
 	mmc.last_sector = sector;
-	mmc.next_sector = sector + (1 << *VAR_SD_SHIFT);
+	mmc.next_sector = sector + 1;
 
 	if (address != VAR_SECTOR_BUF + offset)
 		memcpy(address, sectorBuf + offset, length);
@@ -289,9 +289,9 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);
 	u8 lbaShift = *(u8*)VAR_SD_SHIFT;
 	
+	#if SINGLE_SECTOR < 2
 	// SDHC uses sector addressing, SD uses byte
 	lba <<= lbaShift;
-	#if SINGLE_SECTOR < 2
 	// Send single block read command and the LBA we want to read at
 	send_cmd(CMD17, lba);
 	// Read block
@@ -306,7 +306,7 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	if(lba != mmc.next_sector) {
 		end_read();
 		// Send multiple block read command and the LBA we want to start reading at
-		send_cmd(CMD18, lba);
+		send_cmd(CMD18, lba << lbaShift);
 	}
 	if(numBytes < SECTOR_SIZE) {
 		// Read half block
@@ -325,7 +325,7 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 		}
 	}
 	// Save next LBA
-	mmc.next_sector = lba + (1<<lbaShift);
+	mmc.next_sector = lba + 1;
 	#endif
 exit:
 	#if !ISR_READ
