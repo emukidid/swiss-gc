@@ -224,7 +224,7 @@ void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sect
 		if (mmc.queue[i].callback == callback)
 			return;
 
-	sector = offset / SECTOR_SIZE + sector;
+	sector = offset / SECTOR_SIZE + sector << *VAR_SD_SHIFT;
 	offset = offset % SECTOR_SIZE;
 	length = MIN(length, SECTOR_SIZE - offset);
 
