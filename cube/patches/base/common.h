@@ -41,6 +41,7 @@ typedef volatile f64 vf64;
 	asm volatile ("mtmsr %0" :: "r" (msr)); \
 })
 
+extern volatile u16 PE[24];
 extern volatile u32 PI[13];
 extern volatile u16 MI[46];
 extern volatile u32 DSP[15];

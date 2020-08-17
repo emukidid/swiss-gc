@@ -592,17 +592,18 @@ static void pi_write(unsigned index, uint32_t value)
 	}
 }
 
-void wait_pecopydone(void);
-
 static void efb_read(uint32_t address, uint32_t *value)
 {
-	wait_pecopydone();
+	uint16_t zmode = PE[0];
+	PE[0] = 0;
+	*(volatile uint32_t *)OSPhysicalToUncached(address) = 0xFFFFFF;
 	*value = *(uint32_t *)OSPhysicalToUncached(address);
+	PE[0] = zmode;
 }
 
 static bool ppc_load32(uint32_t address, uint32_t *value)
 {
-	if ((address & ~0xFFFFFC) == 0x08000000) {
+	if ((address & ~0x3FFFFC) == 0x08400000) {
 		efb_read(address, value);
 		return true;
 	}

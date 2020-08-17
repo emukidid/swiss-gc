@@ -1,5 +1,6 @@
 INCLUDE ../reservedarea.ld
 
+PE  = 0xCC001000;
 PI  = 0xCC003000;
 MI  = 0xCC004000;
 DSP = 0xCC005000;

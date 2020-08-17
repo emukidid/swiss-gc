@@ -139,18 +139,3 @@ dcache_flush_icache_inv:
 	bdnz	1b
 	sc
 	blr
-
-	.globl wait_pecopydone
-wait_pecopydone:
-	lis		r3, 0xCC00
-	li		r4, 0
-1:	stw		r4, 0x404E (r3)
-	mftb	r5
-2:	mftb	r6
-	sub		r6, r6, r5
-	cmplwi	r6, 10
-	ble		2b
-	lwz		r4, 0x404E (r3)
-	cmplwi	r4, 0
-	bne		1b
-	blr
