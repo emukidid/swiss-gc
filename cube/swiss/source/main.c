@@ -208,7 +208,7 @@ int main ()
 	// If there's no default config device, set it to the first writable device available
 	if(swissSettings.configDeviceId == DEVICE_ID_UNK) {
 		for(int i = 0; i < MAX_DEVICES; i++) {
-			if(allDevices[i] != NULL && (allDevices[i]->features & (FEAT_WRITE|FEAT_BOOT_DEVICE)) == (FEAT_WRITE|FEAT_BOOT_DEVICE) && deviceHandler_getDeviceAvailable(allDevices[i])) {
+			if(allDevices[i] != NULL && (allDevices[i]->features & FEAT_CONFIG_DEVICE) && deviceHandler_getDeviceAvailable(allDevices[i])) {
 				swissSettings.configDeviceId = allDevices[i]->deviceUniqueId;
 				print_gecko("No default config device found, using [%s]\r\n", allDevices[i]->deviceName);
 				syssramex* sramex = __SYS_LockSramEx();
