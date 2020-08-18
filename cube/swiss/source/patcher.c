@@ -4516,17 +4516,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *GXPeekZ = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (GXPeekZ) {
-			switch (j) {
-				case 0:
-					data[i + 1] = 0x64000800;	// oris		r0, r0, 0x0800
-					break;
-				case 1:
-					data[i + 2] = 0x64630800;	// oris		r3, r3, 0x0800
-					break;
-				case 2:
-					data[i + 1] = 0x3C600800;	// lis		r3, 0x0800
-					break;
-			}
+			memcpy(data + i, _gxpeekz_c, sizeof(_gxpeekz_c));
+			
+			data[i + 1] = 0x3C600800;	// lis		r3, 0x0800
+			
 			print_gecko("Found:[%s] @ %08X\n", GXPeekZSigs[j].Name, GXPeekZ);
 			patched++;
 		}
