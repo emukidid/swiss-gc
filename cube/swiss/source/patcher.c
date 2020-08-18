@@ -9084,6 +9084,32 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
+	} else if (!strncmp(gameID, "GEME7F", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1483520:
+				if (swissSettings.gameVMode > 0) {
+					*(s16 *)(data + 0x800331BE - 0x80005740 + 0x2520) = 448;
+					
+					*(u32 *)(data + 0x800331FC - 0x80005740 + 0x2520) = 0x60000000;
+					
+					*(u32 *)(data + 0x806D0898 - 0x806D06C0 + 0x169120) = 0x801671CC;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GEMJ28", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1483264:
+				if (swissSettings.gameVMode > 0) {
+					*(s16 *)(data + 0x80033062 - 0x80005740 + 0x2520) = 448;
+					
+					*(u32 *)(data + 0x800330A0 - 0x80005740 + 0x2520) = 0x60000000;
+					
+					*(u32 *)(data + 0x806D0660 - 0x806D0480 + 0x169000) = 0x801670A4;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
 	} else if (!strncmp(gameID, "GPTP41", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4017536:
