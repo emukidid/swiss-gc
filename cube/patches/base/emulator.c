@@ -353,7 +353,7 @@ void di_defer_transfer(uint32_t offset, uint32_t length)
 			#endif
 		}
 
-		uint32_t ticks = OSMicrosecondsToTicks(300);
+		uint32_t ticks = READ_COMMAND_LATENCY;
 		ticks += OSSecondsToTicks(CalculateRawDiscReadTime(offset, length));
 		OSSetAlarm(&command_alarm, ticks, alarm_handler);
 

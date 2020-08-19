@@ -9,6 +9,7 @@
 #include "../base/common.h"
 #include "../base/dolphin/exi.h"
 #include "../base/dolphin/os.h"
+#include "../base/emulator.h"
 
 // NOTE: cs0 then cs1!
 // ATA registers address        val  - cs0 cs1 a2 a1 a0
@@ -285,6 +286,27 @@ static void ata_read_queued(void)
 	uint32_t sector = ata.queue[0].sector;
 
 	ataReadSector(sector, sectorBuf, 0);
+
+	ata.last_sector = sector;
+}
+
+static void ata_done_queued(void)
+{
+	void *address = ata.queue[0].address;
+	uint32_t length = ata.queue[0].length;
+	uint32_t offset = ata.queue[0].offset;
+	uint32_t sector = ata.queue[0].sector;
+	read_frag_cb callback = ata.queue[0].callback;
+
+	if (address != VAR_SECTOR_BUF + offset)
+		memcpy(address, sectorBuf + offset, length);
+
+	if (--ata.items) {
+		memcpy(ata.queue, ata.queue + 1, ata.items * sizeof(*ata.queue));
+		ata_read_queued();
+	}
+
+	callback(address, length);
 }
 
 void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
@@ -307,9 +329,7 @@ void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sect
 	if (ata.items++) return;
 
 	if (sector == ata.last_sector) {
-		--ata.items;
-		memcpy(address, sectorBuf + offset, length);
-		callback(address, length);
+		OSSetAlarm(&read_alarm, READ_COMMAND_LATENCY, (OSAlarmHandler)ata_done_queued);
 		return;
 	}
 
@@ -323,22 +343,7 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	exi_deselect();
 	EXIUnlock(exi_channel);
 
-	void *address = ata.queue[0].address;
-	uint32_t length = ata.queue[0].length;
-	uint32_t offset = ata.queue[0].offset;
-	uint32_t sector = ata.queue[0].sector;
-	read_frag_cb callback = ata.queue[0].callback;
-	ata.last_sector = sector;
-
-	if (address != VAR_SECTOR_BUF + offset)
-		memcpy(address, sectorBuf + offset, length);
-
-	if (--ata.items) {
-		memcpy(ata.queue, ata.queue + 1, ata.items * sizeof(*ata.queue));
-		ata_read_queued();
-	}
-
-	callback(address, length);
+	ata_done_queued();
 }
 #endif
 

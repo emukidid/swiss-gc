@@ -24,6 +24,8 @@
 #include <stdbool.h>
 #include "dolphin/os.h"
 
+#define READ_COMMAND_LATENCY OSMicrosecondsToTicks(300)
+
 extern OSAlarm bba_alarm;
 extern OSAlarm read_alarm;
 

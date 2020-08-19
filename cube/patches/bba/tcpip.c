@@ -290,7 +290,7 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 						dvd.length -= data_size;
 						dvd.offset += data_size;
 
-						schedule_read(OSMicrosecondsToTicks(300), false);
+						schedule_read(READ_COMMAND_LATENCY, false);
 					}
 
 					bba_receive_end(page, data + data_offset, size);

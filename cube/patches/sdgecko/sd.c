@@ -9,6 +9,7 @@
 #include "../base/common.h"
 #include "../base/dolphin/exi.h"
 #include "../base/dolphin/os.h"
+#include "../base/emulator.h"
 
 //CMD12 - Stop multiple block read command
 #define CMD12				0x4C
@@ -214,6 +215,28 @@ static void mmc_read_queued(void)
 	}
 
 	rcvr_datablock(sectorBuf, 0, SECTOR_SIZE, 0);
+
+	mmc.last_sector = sector;
+	mmc.next_sector = sector + 1;
+}
+
+static void mmc_done_queued(void)
+{
+	void *address = mmc.queue[0].address;
+	uint32_t length = mmc.queue[0].length;
+	uint32_t offset = mmc.queue[0].offset;
+	uint32_t sector = mmc.queue[0].sector;
+	read_frag_cb callback = mmc.queue[0].callback;
+
+	if (address != VAR_SECTOR_BUF + offset)
+		memcpy(address, sectorBuf + offset, length);
+
+	if (--mmc.items) {
+		memcpy(mmc.queue, mmc.queue + 1, mmc.items * sizeof(*mmc.queue));
+		mmc_read_queued();
+	}
+
+	callback(address, length);
 }
 
 void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
@@ -236,9 +259,7 @@ void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sect
 	if (mmc.items++) return;
 
 	if (sector == mmc.last_sector) {
-		--mmc.items;
-		memcpy(address, sectorBuf + offset, length);
-		callback(address, length);
+		OSSetAlarm(&read_alarm, READ_COMMAND_LATENCY, (OSAlarmHandler)mmc_done_queued);
 		return;
 	}
 
@@ -256,23 +277,7 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	exi_deselect();
 	EXIUnlock(exi_channel);
 
-	void *address = mmc.queue[0].address;
-	uint32_t length = mmc.queue[0].length;
-	uint32_t offset = mmc.queue[0].offset;
-	uint32_t sector = mmc.queue[0].sector;
-	read_frag_cb callback = mmc.queue[0].callback;
-	mmc.last_sector = sector;
-	mmc.next_sector = sector + 1;
-
-	if (address != VAR_SECTOR_BUF + offset)
-		memcpy(address, sectorBuf + offset, length);
-
-	if (--mmc.items) {
-		memcpy(mmc.queue, mmc.queue + 1, mmc.items * sizeof(*mmc.queue));
-		mmc_read_queued();
-	}
-
-	callback(address, length);
+	mmc_done_queued();
 }
 #endif
 

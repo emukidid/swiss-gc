@@ -310,7 +310,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	dvd.length = length;
 	dvd.offset = offset | *VAR_CURRENT_DISC << 31;
 
-	schedule_read(OSMicrosecondsToTicks(300), true);
+	schedule_read(READ_COMMAND_LATENCY, true);
 }
 
 void trickle_read(void)
