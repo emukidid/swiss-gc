@@ -165,6 +165,13 @@ static void di_update_interrupts(void)
 		*(volatile int *)OS_BASE_MIRRORED;
 }
 
+static void di_error(void)
+{
+	di.reg.sr |=  0b0000100;
+	di.reg.cr &= ~0b001;
+	di_update_interrupts();
+}
+
 void di_complete_transfer(void)
 {
 	if (di.reg.cr & 0b010) {
@@ -191,17 +198,24 @@ static void di_execute_command(void)
 	switch (di.reg.cmdbuf0 >> 24) {
 		case 0xA8:
 		{
-			if (!(di.reg.cvr & 0b001)) {
-				uint32_t address = di.reg.mar;
-				uint32_t length  = di.reg.length;
-				uint32_t offset  = di.reg.cmdbuf1 << 2 & ~0x80000000;
+			uint32_t address = di.reg.mar;
+			uint32_t length  = di.reg.length;
+			uint32_t offset  = di.reg.cmdbuf1 << 2 & ~0x80000000;
 
+			if (!(di.reg.cvr & 0b001))
 				perform_read(address, length, offset);
-			} else {
-				di.reg.sr |=  0b0000100;
-				di.reg.cr &= ~0b001;
-				di_update_interrupts();
-			}
+			else
+				di_error();
+			return;
+		}
+		case 0xAB:
+		{
+			uint32_t offset = di.reg.cmdbuf1 << 2 & ~0x80000000;
+
+			if (!(di.reg.cvr & 0b001))
+				perform_read(0, 0, offset);
+			else
+				di_error();
 			return;
 		}
 		case 0xE0:
@@ -212,7 +226,7 @@ static void di_execute_command(void)
 		}
 		case 0xE1:
 		{
-			switch ((di.reg.cmdbuf0 >> 16) & 0xFF) {
+			switch ((di.reg.cmdbuf0 >> 16) & 0x03) {
 				case 0x00:
 				{
 					uint32_t offset = di.reg.cmdbuf1 << 2 & ~0x80007FFF;
@@ -253,7 +267,7 @@ static void di_execute_command(void)
 		}
 		case 0xE2:
 		{
-			switch ((di.reg.cmdbuf0 >> 16) & 0xFF) {
+			switch ((di.reg.cmdbuf0 >> 16) & 0x03) {
 				case 0x00:
 				{
 					result = dtk.playing;
@@ -299,7 +313,7 @@ static void di_execute_command(void)
 	switch (di.reg.cmdbuf0 >> 24) {
 		case 0xA8:
 		{
-			switch (di.reg.cmdbuf0 & 0xFF) {
+			switch (di.reg.cmdbuf0 & 0xC0) {
 				case 0x00:
 				{
 					DVDDiskID *id1 = (DVDDiskID *)VAR_AREA;

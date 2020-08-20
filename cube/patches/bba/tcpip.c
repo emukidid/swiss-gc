@@ -289,6 +289,7 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 						dvd.buffer += data_size;
 						dvd.length -= data_size;
 						dvd.offset += data_size;
+						dvd.read = !!dvd.length;
 
 						schedule_read(READ_COMMAND_LATENCY, false);
 					}

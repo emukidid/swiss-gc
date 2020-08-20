@@ -27,6 +27,7 @@ static struct {
 	void *buffer;
 	uint32_t length;
 	uint32_t offset;
+	bool read;
 } dvd = {0};
 
 OSAlarm read_alarm = {0};
@@ -39,6 +40,7 @@ void schedule_read(OSTick ticks)
 		dvd.buffer += length;
 		dvd.length -= length;
 		dvd.offset += length;
+		dvd.read = !!dvd.length;
 
 		schedule_read(READ_COMMAND_LATENCY);
 	}
@@ -46,7 +48,7 @@ void schedule_read(OSTick ticks)
 	OSCancelAlarm(&read_alarm);
 	#endif
 
-	if (!dvd.length) {
+	if (!dvd.read) {
 		di_complete_transfer();
 		return;
 	}
@@ -63,6 +65,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	dvd.buffer = OSPhysicalToUncached(address);
 	dvd.length = length;
 	dvd.offset = offset | *VAR_CURRENT_DISC << 31;
+	dvd.read = true;
 
 	schedule_read(READ_COMMAND_LATENCY);
 }
@@ -73,7 +76,7 @@ void trickle_read(void)
 	if (dtk_fill_buffer())
 		return;
 
-	if (dvd.length) {
+	if (dvd.read) {
 		OSTick start = OSGetTick();
 		int size = read_frag(dvd.buffer, dvd.length, dvd.offset);
 		OSTick end = OSGetTick();
@@ -81,6 +84,7 @@ void trickle_read(void)
 		dvd.buffer += size;
 		dvd.length -= size;
 		dvd.offset += size;
+		dvd.read = !!dvd.length;
 
 		schedule_read(OSDiffTick(end, start));
 	}

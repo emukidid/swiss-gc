@@ -29,7 +29,7 @@ static struct {
 	void *buffer;
 	uint32_t length;
 	uint32_t offset;
-	bool frag;
+	bool read, frag;
 } dvd = {0};
 
 OSAlarm read_alarm = {0};
@@ -58,7 +58,7 @@ void schedule_read(OSTick ticks)
 {
 	OSCancelAlarm(&read_alarm);
 
-	if (!dvd.length) {
+	if (!dvd.read) {
 		dvd_read_diskid(NULL);
 		return;
 	}
@@ -76,6 +76,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	dvd.buffer = OSPhysicalToUncached(address);
 	dvd.length = length;
 	dvd.offset = offset;
+	dvd.read = true;
 
 	if (*VAR_EMU_READ_SPEED)
 		di_defer_transfer(dvd.offset, dvd.length);
@@ -85,7 +86,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 
 void trickle_read(void)
 {
-	if (dvd.length && dvd.frag) {
+	if (dvd.read && dvd.frag) {
 		OSTick start = OSGetTick();
 		int size = read_frag(dvd.buffer, dvd.length, dvd.offset);
 		OSTick end = OSGetTick();
@@ -93,6 +94,7 @@ void trickle_read(void)
 		dvd.buffer += size;
 		dvd.length -= size;
 		dvd.offset += size;
+		dvd.read = !!dvd.length;
 
 		schedule_read(OSDiffTick(end, start));
 	}

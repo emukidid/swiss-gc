@@ -28,7 +28,7 @@ static struct {
 	void *buffer;
 	uint32_t length;
 	uint32_t offset;
-	bool frag;
+	bool read, frag;
 } dvd = {0};
 
 static struct {
@@ -63,12 +63,19 @@ static void wkf_read_queued(void)
 
 	DI[0] = 0b0011000;
 	DI[1] = 0;
-	DI[2] = 0xA8000000;
-	DI[3] = offset >> 2;
-	DI[4] = length;
-	DI[5] = (uint32_t)address;
-	DI[6] = length;
-	DI[7] = 0b011;
+
+	if (length) {
+		DI[2] = 0xA8000000;
+		DI[3] = offset >> 2;
+		DI[4] = length;
+		DI[5] = (uint32_t)address;
+		DI[6] = length;
+		DI[7] = 0b011;
+	} else {
+		DI[2] = 0xAB000000;
+		DI[3] = offset >> 2;
+		DI[7] = 0b001;
+	}
 
 	OSUnmaskInterrupts(OS_INTERRUPTMASK_PI_DI);
 }
@@ -116,13 +123,14 @@ void schedule_read(OSTick ticks)
 		dvd.buffer += length;
 		dvd.length -= length;
 		dvd.offset += length;
+		dvd.read = !!dvd.length;
 
 		schedule_read(READ_COMMAND_LATENCY);
 	}
 
 	OSCancelAlarm(&read_alarm);
 
-	if (!dvd.length) {
+	if (!dvd.read) {
 		di_complete_transfer();
 		return;
 	}
@@ -141,13 +149,14 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	dvd.buffer = OSPhysicalToUncached(address);
 	dvd.length = length;
 	dvd.offset = offset | *VAR_CURRENT_DISC << 31;
+	dvd.read = true;
 
 	schedule_read(READ_COMMAND_LATENCY);
 }
 
 void trickle_read(void)
 {
-	if (dvd.length && dvd.frag) {
+	if (dvd.read && dvd.frag) {
 		OSTick start = OSGetTick();
 		int size = read_frag(dvd.buffer, dvd.length, dvd.offset);
 		OSTick end = OSGetTick();
@@ -155,6 +164,7 @@ void trickle_read(void)
 		dvd.buffer += size;
 		dvd.length -= size;
 		dvd.offset += size;
+		dvd.read = !!dvd.length;
 
 		schedule_read(OSDiffTick(end, start));
 	}
