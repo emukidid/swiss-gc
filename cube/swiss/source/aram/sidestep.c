@@ -115,11 +115,12 @@ static void ARAMStub(void)
 
 }
 
-void *ARAMRunStub() {
+void ARAMRunStub(void)
+{
 	BOOTSTUB stub;
 	char *p;
 	char *s = (char *) ARAMStub;
- 
+
 	/*** Copy ARAMStub to 81300000 ***/
 	if (_dst + _len < 0x81300000) p = (void *) 0x81300000;
 	else p = (void *) 0x80003100;
@@ -128,15 +129,12 @@ void *ARAMRunStub() {
 	/*** Round length to 32 bytes ***/
 	if (_len & 0x1f) _len = (_len & ~0x1f) + 0x20;
 
- 
 	/*** Flush everything! ***/
 	DCFlushRange((void *) 0x80000000, 0x1800000);
 
 	/*** Boot the bugger :D ***/
 	stub = (BOOTSTUB) p;
-	stub((u32) _entrypoint, _dst, _src, _len | 0x80000000, _len >> 5, _dst); 
-	
-	return 0;
+	stub((u32) _entrypoint, _dst, _src, _len | 0x80000000, _len >> 5, _dst);
 }
 
 /****************************************************************************
@@ -163,7 +161,7 @@ void ARAMRun(u32 entrypoint, u32 dst, u32 src, u32 len)
 	*(volatile u32*)0x800000D4 = osctxvirt;
 	install_code(1);	// Must happen here because libOGC likes to write over all exception handlers.
 	/*** Shutdown all threads and exit to this method ***/
-	__lwp_thread_stopmultitasking((void(*)())ARAMRunStub());
+	__lwp_thread_stopmultitasking(ARAMRunStub);
 }
 
 /****************************************************************************
