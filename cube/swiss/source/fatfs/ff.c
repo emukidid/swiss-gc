@@ -503,7 +503,7 @@ static const BYTE GUID_MS_Basic[16] = {0xA2,0xA0,0xD0,0xEB,0xE5,0xB9,0x33,0x44,0
 #if FF_LFN_BUF < FF_SFN_BUF || FF_SFN_BUF < 12
 #error Wrong setting of FF_LFN_BUF or FF_SFN_BUF
 #endif
-#if FF_LFN_UNICODE < 0 || FF_LFN_UNICODE > 3
+#if FF_LFN_UNICODE < 0 || FF_LFN_UNICODE > 4
 #error Wrong setting of FF_LFN_UNICODE
 #endif
 static const BYTE LfnOfs[] = {1,3,5,7,9,14,16,18,20,22,24,28,30};	/* FAT: Offset of LFN characters in the directory entry */
@@ -822,6 +822,9 @@ static DWORD tchar2uni (	/* Returns a character in UTF-16 encoding (>=0x10000 on
 	if (uc >= 0x110000 || IsSurrogate(uc)) return 0xFFFFFFFF;	/* Wrong code? */
 	if (uc >= 0x010000) uc = 0xD800DC00 | ((uc - 0x10000) << 6 & 0x3FF0000) | (uc & 0x3FF);	/* Make a surrogate pair if needed */
 
+#elif FF_LFN_UNICODE == 4	/* ISO-8859-1 input */
+	uc = (BYTE)*p++;
+
 #else		/* ANSI/OEM input */
 	BYTE b;
 	WCHAR wc;
@@ -910,6 +913,11 @@ static BYTE put_utf (	/* Returns number of encoding units written (0:buffer over
 		chr = (hc | chr) + 0x10000;
 	}
 	*buf++ = (TCHAR)chr;
+	return 1;
+
+#elif FF_LFN_UNICODE == 4	/* ISO-8859-1 output */
+	if (chr >= 0x100 || szb < 1) return 0;	/* Invalid char or buffer overflow? */
+	*buf++ = (TCHAR)chr;					/* Store the character */
 	return 1;
 
 #else						/* ANSI/OEM output */

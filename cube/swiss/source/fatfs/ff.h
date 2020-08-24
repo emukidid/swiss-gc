@@ -93,7 +93,7 @@ typedef char TCHAR;
 typedef DWORD TCHAR;
 #define _T(x) U ## x
 #define _TEXT(x) U ## x
-#elif FF_USE_LFN && (FF_LFN_UNICODE < 0 || FF_LFN_UNICODE > 3)
+#elif FF_USE_LFN && (FF_LFN_UNICODE < 0 || FF_LFN_UNICODE > 4)
 #error Wrong FF_LFN_UNICODE setting
 #else									/* ANSI/OEM code in SBCS/DBCS */
 typedef char TCHAR;
