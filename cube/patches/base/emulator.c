@@ -313,6 +313,13 @@ static void di_execute_command(void)
 	switch (di.reg.cmdbuf0 >> 24) {
 		case 0xA8:
 		{
+			uint32_t address = di.reg.mar;
+			uint32_t length  = di.reg.length;
+			uint32_t offset  = di.reg.cmdbuf1 << 2;
+
+			if (*VAR_EMU_READ_SPEED)
+				di_defer_transfer(offset, length);
+
 			switch (di.reg.cmdbuf0 & 0xC0) {
 				case 0x00:
 				{
@@ -322,14 +329,18 @@ static void di_execute_command(void)
 					if (!memeq(id1, id2, sizeof(DVDDiskID)))
 						break;
 
-					uint32_t address = di.reg.mar;
-					uint32_t length  = di.reg.length;
-					uint32_t offset  = di.reg.cmdbuf1 << 2;
-
 					perform_read(address, length, offset);
 					return;
 				}
 			}
+			break;
+		}
+		case 0xAB:
+		{
+			uint32_t offset = di.reg.cmdbuf1 << 2;
+
+			if (*VAR_EMU_READ_SPEED)
+				di_defer_transfer(offset, 0);
 			break;
 		}
 	}
@@ -367,8 +378,15 @@ void di_defer_transfer(uint32_t offset, uint32_t length)
 			#endif
 		}
 
+		static uint32_t last_offset = 0;
 		uint32_t ticks = READ_COMMAND_LATENCY;
-		ticks += OSSecondsToTicks(CalculateRawDiscReadTime(offset, length));
+
+		if (offset != last_offset)
+			ticks += OSSecondsToTicks(CalculateSeekTime(last_offset, offset));
+		else
+			ticks += OSSecondsToTicks(CalculateRawDiscReadTime(offset, length));
+		last_offset = offset + length;
+
 		OSSetAlarm(&command_alarm, ticks, alarm_handler);
 
 		#ifndef DVD

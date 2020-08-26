@@ -78,10 +78,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	dvd.offset = offset;
 	dvd.read = true;
 
-	if (*VAR_EMU_READ_SPEED)
-		di_defer_transfer(dvd.offset, dvd.length);
-
-	schedule_read(OSMicrosecondsToTicks(300));
+	schedule_read(READ_COMMAND_LATENCY);
 }
 
 void trickle_read(void)
