@@ -215,11 +215,13 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Apploader info"));
 		while(1);
 	}
-	filesToPatch[numFiles].size = appldr_info[6];
-	filesToPatch[numFiles].offset = appldr_info[5] + 0x2460;
-	filesToPatch[numFiles].type = appldr_info[0] == 0x32303034 ? PATCH_DOL_APPLOADER:PATCH_APPLOADER;
-	sprintf(filesToPatch[numFiles].name, "Apploader Trailer");
-	numFiles++;
+	if(appldr_info[6] != 0) {
+		filesToPatch[numFiles].size = appldr_info[6];
+		filesToPatch[numFiles].offset = appldr_info[5] + 0x2460;
+		filesToPatch[numFiles].type = appldr_info[0] == 0x32303034 ? PATCH_DOL_APPLOADER:PATCH_APPLOADER;
+		sprintf(filesToPatch[numFiles].name, "Apploader Trailer");
+		numFiles++;
+	}
 
 	if(GCMDisk.DOLOffset != 0) {
 		// Multi-DOL games may re-load the main DOL, so make sure we patch it too.

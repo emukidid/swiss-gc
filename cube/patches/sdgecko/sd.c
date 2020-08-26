@@ -43,7 +43,10 @@ static struct {
 		read_frag_cb callback;
 	} queue[2];
 	#endif
-} mmc = {0};
+} mmc = {
+	.next_sector = -1,
+	.last_sector = -1
+};
 
 extern intptr_t isr_registers;
 extern int isr_transferred;
@@ -343,8 +346,8 @@ exit:
 
 void end_read() {
 	#if SINGLE_SECTOR == 2 || ISR_READ
-	if(mmc.next_sector) {
-		mmc.next_sector = 0;
+	if(mmc.next_sector != -1) {
+		mmc.next_sector = -1;
 		// End the read by sending CMD12
 		send_cmd(CMD12, 0);
 	}

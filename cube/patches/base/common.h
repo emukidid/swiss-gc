@@ -61,9 +61,6 @@ void device_frag_read(void* dst, u32 len, u32 offset);
 void device_reset(void);
 int switch_fiber(u32 arg0, u32 arg1, u32 arg2, u32 arg3, u32 pc, u32 newsp);
 void dcache_flush_icache_inv(void* dst, u32 len);
-void ADPResetFilter(void);
-void ADPDecodeBlock(unsigned char *input, short (*out)[2]);
-void ADPdecodebuffer(unsigned char *input, short *outl, short * outr, long *histl1, long *histl2, long *histr1, long *histr2);
 
 int usb_sendbuffer_safe(const void *buffer,int size);
 

@@ -41,7 +41,9 @@ static struct {
 		uint32_t sector;
 		read_frag_cb callback;
 	} queue[2];
-} wkf = {0};
+} wkf = {
+	.base_sector = -1
+};
 
 OSAlarm read_alarm = {0};
 

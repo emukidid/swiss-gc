@@ -59,7 +59,9 @@ static struct {
 		read_frag_cb callback;
 	} queue[2];
 	#endif
-} ata = {0};
+} ata = {
+	.last_sector = -1
+};
 
 void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 
