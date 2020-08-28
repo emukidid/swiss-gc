@@ -1541,7 +1541,7 @@ void load_game() {
 		return;
 	}
 	
-	if(curFile.size < DISC_SIZE && strncmp(&GCMDisk.GameName[0x1E0], "NKIT", 4)) {
+	if(GCMDisk.DOLOffset != 0 && curFile.size < DISC_SIZE && strncmp(&GCMDisk.GameName[0x1E0], "NKIT", 4)) {
 		DrawDispose(msgBox);
 		msgBox = DrawPublish(DrawMessageBox(D_WARN, "Disc shrunk using an unsupported tool.\nPlease use NKit."));
 		sleep(5);
@@ -1783,7 +1783,7 @@ int info_game()
 			break;
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
-			show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC) ? &curFile : NULL, config);
+			show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC && GCMDisk.DOLOffset != 0) ? &curFile : NULL, config);
 		}
 		// Look for a cheats file based on the GameID
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
