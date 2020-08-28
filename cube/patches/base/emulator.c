@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
+#include <math.h>
 #include "audio.h"
 #include "common.h"
 #include "dolphin/dvd.h"
@@ -81,6 +82,11 @@ void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 #ifdef WKF
 void di_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 #endif
+
+double fmod(double x, double y)
+{
+	return x - floor(x / y) * y;
+}
 
 bool memeq(const void *a, const void *b, size_t size)
 {
@@ -379,12 +385,17 @@ void di_defer_transfer(uint32_t offset, uint32_t length)
 		}
 
 		static uint32_t last_offset = 0;
-		uint32_t ticks = READ_COMMAND_LATENCY;
 
-		if (offset != last_offset)
+		OSTick ticks = READ_COMMAND_LATENCY;
+		OSTime time = OSGetTime();
+
+		if (offset != last_offset) {
 			ticks += OSSecondsToTicks(CalculateSeekTime(last_offset, offset));
-		else
+			ticks += OSSecondsToTicks(CalculateRotationalLatency(offset, OSTicksToSeconds((double)(time + ticks))));
+		} else {
 			ticks += OSSecondsToTicks(CalculateRawDiscReadTime(offset, length));
+		}
+
 		last_offset = offset + length;
 
 		OSSetAlarm(&command_alarm, ticks, alarm_handler);

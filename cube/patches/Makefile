@@ -99,8 +99,9 @@ build-dvd:
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
+	@$(CC) -Os $(OPTS) -c base/floor.S
 	@$(CC) -Os $(OPTS) -c base/sqrt.S
-	@$(CC) -Os $(OPTS) -o dvd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o sqrt.o
+	@$(CC) -Os $(OPTS) -o dvd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd_disasm.txt
 	@$(OBJCOPY) -O binary dvd.elf dvd.bin
