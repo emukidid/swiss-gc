@@ -5,7 +5,7 @@
 
 /* 	The Retail Game DVD Disk Header 
 	Info source: YAGCD
-	Size of Struct: 0x460	*/
+	Size of Struct: 0x2440	*/
 typedef struct {
 	u8  ConsoleID;		//G = Gamecube, R = Wii.
 	u8  GamecodeA;		//2 Ascii letters to indicate the GameID.
@@ -19,10 +19,20 @@ typedef struct {
 	u8 	StreamBufSize;	//For the AudioEnable. (always 00?)
 	u8	unused_1[18];	
 	u32 DVDMagicWord;	//0xC2339F3D
-	char GameName[992];	//String Name of Game, rarely > 32 chars
-	u32 DMonitorOffset;	//offset of debug monitor (dh.bin)?
-	u32	DMonitorLoadAd;	//addr(?) to load debug monitor?
-	u8	unused_2[24];	
+	char GameName[64];	//String Name of Game, rarely > 32 chars
+	u8  unused_2[416];
+	u32 NKitMagicWord;
+	u32 NKitVersion;
+	u32 ImageCRC;
+	u32 ForceCRC;
+	u32 ImageSize;
+	u32 JunkID;
+	u8  unused_3[488];
+	u32 ApploaderSize;
+	u32 ApploaderFunc1;
+	u32 ApploaderFunc2;
+	u32 ApploaderFunc3;
+	u8  unused_4[16];
 	u32 DOLOffset;		//offset of main executable DOL (bootfile)
 	u32 FSTOffset;		//offset of the FST ("fst.bin")
 	u32	FSTSize;		//size of FST
@@ -30,15 +40,19 @@ typedef struct {
 	u32 UserPos;		//user position(?)
 	u32 UserLength;		//user length(?)
 	u32 unknown_1;		//(?)
-	u32 unused_3;
-	u32 DMonitorSize;
+	u32 unused_5;
+	u32 DebugMonSize;
 	u32 SimMemSize;
 	u32 ArgOffset;
 	u32 DebugFlag;
-	u32 TrackLocation;
-	u32 TrackSize;
+	u32 TRKLocation;
+	u32 TRKSize;
 	u32 RegionCode;
-	u32 unknown_2;
+	u32 TotalDisc;
+	u32 LongFileName;
+	u32 PADSpec;
+	u32 DOLLimit;
+	u8  unused_6[8148];
 	// *Multiple DVDs must use it, to properly reside all FSTs.
 } DiskHeader __attribute__((aligned(32)));
 

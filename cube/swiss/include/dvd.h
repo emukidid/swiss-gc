@@ -1,7 +1,7 @@
 #ifndef __DVD_H
 #define __DVD_H
 
-#include <gctypes.h>
+#include <gccore.h>
 
 #define CHUNK_SIZE    256*1024
 #define DISC_SIZE   0x57058000

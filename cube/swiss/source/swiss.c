@@ -34,6 +34,7 @@
 #include "dvd.h"
 #include "gcm.h"
 #include "mp3.h"
+#include "nkit.h"
 #include "wkf.h"
 #include "cheats.h"
 #include "settings.h"
@@ -1541,11 +1542,13 @@ void load_game() {
 		return;
 	}
 	
-	if(GCMDisk.DOLOffset != 0 && curFile.size < DISC_SIZE && strncmp(&GCMDisk.GameName[0x1E0], "NKIT", 4)) {
-		DrawDispose(msgBox);
-		msgBox = DrawPublish(DrawMessageBox(D_WARN, "Disc shrunk using an unsupported tool.\nPlease use NKit."));
-		sleep(5);
-		DrawDispose(msgBox);
+	if(curFile.size < DISC_SIZE && is_redump_game(&GCMDisk)) {
+		if(!valid_nkit_image(&GCMDisk, curFile.size)) {
+			DrawDispose(msgBox);
+			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Disc shrunk using an unsupported tool.\nPlease recover using NKit."));
+			sleep(5);
+			DrawDispose(msgBox);
+		}
 	}
 	
 	// Check that Audio streaming is really necessary before we patch anything for it
