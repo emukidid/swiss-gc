@@ -29,22 +29,19 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawLabel(30, 55, "System Info (1/3):"));
 		// Model
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"MODEL", 0.65f, true, defaultColor));
-		if(is_gamecube()) {
+		if(mfpvr() == GC_CPU_VERSION01) {
 			if(*(u32*)&driveVersion[0] == 0x20010831) {
 				sprintf(topStr, "Panasonic Q SL-GC10-S");
 			}
-			else if(IPLInfo[0x55]=='M') {							// MPAL 1.1 (Brazil)
+			else if(!strncmp(&IPLInfo[0x55], "MPAL Revision 1.1", 17)) {
 				sprintf(topStr, "Nintendo GameCube DOL-002 (BRA)");
 			}
-			else if((!IPLInfo[0x55])									// NTSC 1.0 
-					|| (IPLInfo[0x55] == 'P' && IPLInfo[0x65]=='0')		// PAL 1.0 
-					|| (IPLInfo[0x55] != 'P' && IPLInfo[0x65]=='1')) {	// NTSC 1.1
+			else {
 				sprintf(topStr, "Nintendo GameCube DOL-001");
 			}
-			else if((IPLInfo[0x55] == 'P' && IPLInfo[0x65]=='0')	// PAL 1.1
-					|| IPLInfo[0x65]=='2') {						// NTSC 1.2
-				sprintf(topStr, "Nintendo GameCube DOL-101");
-			}
+		}
+		else if(mfpvr() == GC_CPU_VERSION02) {
+			sprintf(topStr, "Nintendo GameCube DOL-101");
 		}
 		else {
 			sprintf(topStr, "Nintendo Wii");
