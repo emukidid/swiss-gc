@@ -7334,30 +7334,6 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.1");
 				patched++;
 				break;
-			case 1587472:
-				// __VIInit(newmode->viTVMode);
-				*(s16 *)(data + 0x81300876 - 0x81300000) = newmode->viTVMode;
-				
-				// Accept any region code.
-				*(s16 *)(data + 0x81300ACE - 0x81300000) = 1;
-				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
-				
-				// Force text encoding, but keep system language.
-				switch (swissSettings.forceEncoding) {
-					case 1:
-						*(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600000;
-						break;
-					case 2:
-						*(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600002;
-						break;
-				}
-				
-				if (newmode->viTVMode >> 2 == VI_PAL)
-					memcpy(data + 0x8137F138 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
-				
-				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
-				patched++;
-				break;
 			case 1763016:
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300522 - 0x81300000) = newmode->viTVMode;
@@ -7396,6 +7372,54 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					memcpy(data + 0x8137D910 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				
 				print_gecko("Patched:[%s]\n", "MPAL Revision 1.1");
+				patched++;
+				break;
+			case 1586320:
+				// __VIInit(newmode->viTVMode);
+				*(s16 *)(data + 0x81300876 - 0x81300000) = newmode->viTVMode;
+				
+				// Accept any region code.
+				*(s16 *)(data + 0x81300ACE - 0x81300000) = 1;
+				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
+				
+				// Force text encoding, but keep system language.
+				switch (swissSettings.forceEncoding) {
+					case 1:
+						*(u32 *)(data + 0x8130B8D0 - 0x81300000) = 0x38600000;
+						break;
+					case 2:
+						*(u32 *)(data + 0x8130B8D0 - 0x81300000) = 0x38600002;
+						break;
+				}
+				
+				if (newmode->viTVMode >> 2 == VI_PAL)
+					memcpy(data + 0x8137ECB8 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+				
+				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
+				patched++;
+				break;
+			case 1587472:
+				// __VIInit(newmode->viTVMode);
+				*(s16 *)(data + 0x81300876 - 0x81300000) = newmode->viTVMode;
+				
+				// Accept any region code.
+				*(s16 *)(data + 0x81300ACE - 0x81300000) = 1;
+				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
+				
+				// Force text encoding, but keep system language.
+				switch (swissSettings.forceEncoding) {
+					case 1:
+						*(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600000;
+						break;
+					case 2:
+						*(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600002;
+						break;
+				}
+				
+				if (newmode->viTVMode >> 2 == VI_PAL)
+					memcpy(data + 0x8137F138 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+				
+				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
 				patched++;
 				break;
 			case 1766736:

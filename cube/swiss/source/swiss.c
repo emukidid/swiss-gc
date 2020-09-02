@@ -815,23 +815,15 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		read_rom_ipl_clear(0x820,buffer,sizeToRead);
 		
 		// Guess BS2's size
-		if(!IPLInfo[0x55]) {
-			sizeToRead = 1435168;
-		}
-		else if(!strncmp(&IPLInfo[0x55], "NTSC Revision 1.1", 17)) {
-			sizeToRead = 1583056;
-		}
-		else if(!strncmp(&IPLInfo[0x55], "NTSC Revision 1.2", 17)) {
-			sizeToRead = 1587472;
-		}
-		else if(!strncmp(&IPLInfo[0x55], "PAL  Revision 1.0", 17)) {
-			sizeToRead = 1763016;
-		}
-		else if(!strncmp(&IPLInfo[0x55], "MPAL Revision 1.1", 17)) {
-			sizeToRead = 1561744;
-		}
-		else if(!strncmp(&IPLInfo[0x55], "PAL  Revision 1.2", 17)) {
-			sizeToRead = 1766736;
+		u32 crc = Crc32_ComputeBuf(0, buffer, sizeToRead);
+		switch(crc) {
+			case 0xE4274F2A: sizeToRead = 1435168; break;	// NTSC Revision 1.0
+			case 0x46FB458C: sizeToRead = 1583056; break;	// NTSC Revision 1.1
+			case 0xED682C36: sizeToRead = 1763016; break;	// PAL  Revision 1.0
+			case 0xCD6CE87D: sizeToRead = 1561744; break;	// MPAL Revision 1.1
+			case 0x82B82D2A: sizeToRead = 1586320; break;	// NTSC Revision 1.2
+			case 0x8B968F6A: sizeToRead = 1587472; break;	// NTSC Revision 1.2
+			case 0x032CDBB2: sizeToRead = 1766736; break;	// PAL  Revision 1.2
 		}
 	}
 	else {
