@@ -7294,15 +7294,29 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x81300EA2 - 0x81300000) = 1;
 				*(s16 *)(data + 0x81300EAA - 0x81300000) = 1;
 				
-				// Force text encoding, but keep system language.
+				// Force text encoding.
 				switch (swissSettings.forceEncoding) {
-					case 1:
-						*(u32 *)(data + 0x8130B3E4 - 0x81300000) = 0x38600000;
-						break;
-					case 2:
-						*(u32 *)(data + 0x8130B3E4 - 0x81300000) = 0x38600002;
-						break;
+					case 1: *(u32 *)(data + 0x8130B3E4 - 0x81300000) = 0x38600000; break;
+					case 2: *(u32 *)(data + 0x8130B3E4 - 0x81300000) = 0x38600002; break;
 				}
+				
+				// Force English language, the hard way.
+				*(s16 *)(data + 0x8130B40A - 0x81300000) = 10;
+				*(s16 *)(data + 0x8130B412 - 0x81300000) = 38;
+				*(s16 *)(data + 0x8130B416 - 0x81300000) = 39;
+				*(s16 *)(data + 0x8130B422 - 0x81300000) = 15;
+				*(s16 *)(data + 0x8130B42E - 0x81300000) = 7;
+				*(s16 *)(data + 0x8130B43A - 0x81300000) = 1;
+				*(s16 *)(data + 0x8130B446 - 0x81300000) = 4;
+				*(s16 *)(data + 0x8130B44E - 0x81300000) = 45;
+				*(s16 *)(data + 0x8130B452 - 0x81300000) = 46;
+				*(s16 *)(data + 0x8130B45A - 0x81300000) = 42;
+				*(s16 *)(data + 0x8130B45E - 0x81300000) = 40;
+				*(s16 *)(data + 0x8130B466 - 0x81300000) = 43;
+				*(s16 *)(data + 0x8130B476 - 0x81300000) = 31;
+				*(s16 *)(data + 0x8130B47E - 0x81300000) = 29;
+				*(s16 *)(data + 0x8130B482 - 0x81300000) = 30;
+				*(s16 *)(data + 0x8130B48E - 0x81300000) = 80;
 				
 				if (newmode->viTVMode >> 2 == VI_PAL)
 					memcpy(data + 0x8135DDE0 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
@@ -7318,15 +7332,29 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
 				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
 				
-				// Force text encoding, but keep system language.
+				// Force text encoding.
 				switch (swissSettings.forceEncoding) {
-					case 1:
-						*(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600000;
-						break;
-					case 2:
-						*(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600002;
-						break;
+					case 1: *(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600000; break;
+					case 2: *(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600002; break;
 				}
+				
+				// Force English language, the hard way.
+				*(s16 *)(data + 0x8130B592 - 0x81300000) = 38;
+				*(s16 *)(data + 0x8130B5B2 - 0x81300000) = 10;
+				*(s16 *)(data + 0x8130B5BA - 0x81300000) = 39;
+				*(s16 *)(data + 0x8130B5BE - 0x81300000) = 15;
+				*(s16 *)(data + 0x8130B5C6 - 0x81300000) = 7;
+				*(s16 *)(data + 0x8130B5CA - 0x81300000) = 1;
+				*(s16 *)(data + 0x8130B5D2 - 0x81300000) = 4;
+				*(s16 *)(data + 0x8130B5D6 - 0x81300000) = 45;
+				*(s16 *)(data + 0x8130B5DE - 0x81300000) = 46;
+				*(s16 *)(data + 0x8130B5E2 - 0x81300000) = 42;
+				*(s16 *)(data + 0x8130B5EA - 0x81300000) = 40;
+				*(s16 *)(data + 0x8130B5EE - 0x81300000) = 43;
+				*(s16 *)(data + 0x8130B602 - 0x81300000) = 31;
+				*(s16 *)(data + 0x8130B606 - 0x81300000) = 29;
+				*(s16 *)(data + 0x8130B60E - 0x81300000) = 30;
+				*(s16 *)(data + 0x8130B61A - 0x81300000) = 80;
 				
 				if (newmode->viTVMode >> 2 == VI_PAL)
 					memcpy(data + 0x8137D9F0 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
@@ -7356,16 +7384,6 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
 				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
 				
-				// Force text encoding, but keep system language.
-				switch (swissSettings.forceEncoding) {
-					case 1:
-						*(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600000;
-						break;
-					case 2:
-						*(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600002;
-						break;
-				}
-				
 				if (newmode->viTVMode >> 2 != VI_PAL)
 					memcpy(data + 0x8137D910 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
 				else
@@ -7382,15 +7400,29 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x81300ACE - 0x81300000) = 1;
 				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
 				
-				// Force text encoding, but keep system language.
+				// Force text encoding.
 				switch (swissSettings.forceEncoding) {
-					case 1:
-						*(u32 *)(data + 0x8130B8D0 - 0x81300000) = 0x38600000;
-						break;
-					case 2:
-						*(u32 *)(data + 0x8130B8D0 - 0x81300000) = 0x38600002;
-						break;
+					case 1: *(u32 *)(data + 0x8130B8D0 - 0x81300000) = 0x38600000; break;
+					case 2: *(u32 *)(data + 0x8130B8D0 - 0x81300000) = 0x38600002; break;
 				}
+				
+				// Force English language, the hard way.
+				*(s16 *)(data + 0x8130B906 - 0x81300000) = 38;
+				*(s16 *)(data + 0x8130B926 - 0x81300000) = 10;
+				*(s16 *)(data + 0x8130B92E - 0x81300000) = 39;
+				*(s16 *)(data + 0x8130B932 - 0x81300000) = 15;
+				*(s16 *)(data + 0x8130B93A - 0x81300000) = 7;
+				*(s16 *)(data + 0x8130B93E - 0x81300000) = 1;
+				*(s16 *)(data + 0x8130B946 - 0x81300000) = 4;
+				*(s16 *)(data + 0x8130B94A - 0x81300000) = 45;
+				*(s16 *)(data + 0x8130B952 - 0x81300000) = 46;
+				*(s16 *)(data + 0x8130B956 - 0x81300000) = 42;
+				*(s16 *)(data + 0x8130B95E - 0x81300000) = 40;
+				*(s16 *)(data + 0x8130B962 - 0x81300000) = 43;
+				*(s16 *)(data + 0x8130B976 - 0x81300000) = 31;
+				*(s16 *)(data + 0x8130B97A - 0x81300000) = 29;
+				*(s16 *)(data + 0x8130B982 - 0x81300000) = 30;
+				*(s16 *)(data + 0x8130B98E - 0x81300000) = 80;
 				
 				if (newmode->viTVMode >> 2 == VI_PAL)
 					memcpy(data + 0x8137ECB8 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
@@ -7406,15 +7438,29 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x81300ACE - 0x81300000) = 1;
 				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
 				
-				// Force text encoding, but keep system language.
+				// Force text encoding.
 				switch (swissSettings.forceEncoding) {
-					case 1:
-						*(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600000;
-						break;
-					case 2:
-						*(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600002;
-						break;
+					case 1: *(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600000; break;
+					case 2: *(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600002; break;
 				}
+				
+				// Force English language, the hard way.
+				*(s16 *)(data + 0x8130B91E - 0x81300000) = 38;
+				*(s16 *)(data + 0x8130B93E - 0x81300000) = 10;
+				*(s16 *)(data + 0x8130B946 - 0x81300000) = 39;
+				*(s16 *)(data + 0x8130B94A - 0x81300000) = 15;
+				*(s16 *)(data + 0x8130B952 - 0x81300000) = 7;
+				*(s16 *)(data + 0x8130B956 - 0x81300000) = 1;
+				*(s16 *)(data + 0x8130B95E - 0x81300000) = 4;
+				*(s16 *)(data + 0x8130B962 - 0x81300000) = 45;
+				*(s16 *)(data + 0x8130B96A - 0x81300000) = 46;
+				*(s16 *)(data + 0x8130B96E - 0x81300000) = 42;
+				*(s16 *)(data + 0x8130B976 - 0x81300000) = 40;
+				*(s16 *)(data + 0x8130B97A - 0x81300000) = 43;
+				*(s16 *)(data + 0x8130B98E - 0x81300000) = 31;
+				*(s16 *)(data + 0x8130B992 - 0x81300000) = 29;
+				*(s16 *)(data + 0x8130B99A - 0x81300000) = 30;
+				*(s16 *)(data + 0x8130B9A6 - 0x81300000) = 80;
 				
 				if (newmode->viTVMode >> 2 == VI_PAL)
 					memcpy(data + 0x8137F138 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
