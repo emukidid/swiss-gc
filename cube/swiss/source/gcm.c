@@ -465,7 +465,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 	for(i = 0; i < numToPatch; i++) {
 		u32 patched = 0;
 
-		sprintf(txtbuffer, "Patching File %i/%i\n%s",i+1,numToPatch,filesToPatch[i].name);
+		sprintf(txtbuffer, "Patching File %i/%i\n%s [%iKB]",i+1,numToPatch,filesToPatch[i].name,filesToPatch[i].size/1024);
 		
 		// Round up to 32 bytes
 		if(filesToPatch[i].size % 0x20) {
