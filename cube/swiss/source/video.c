@@ -56,18 +56,18 @@ int getDTVStatus() {
 GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 	switch(uiVMode) {
 		case 1:
-			switch(swissSettings.sramVideo) {
-				case 2:  return &TVMpal480IntDf;
-				case 1:  return &TVEurgb60Hz480IntDf;
-				default: return &TVNtsc480IntDf;
+			if(getDTVStatus()) {
+				return &TVNtsc480IntDf;
+			} else {
+				switch(swissSettings.sramVideo) {
+					case 2:  return &TVMpal480IntDf;
+					case 1:  return &TVEurgb60Hz480IntDf;
+					default: return &TVNtsc480IntDf;
+				}
 			}
 		case 2:
 			if(getDTVStatus()) {
-				switch(swissSettings.sramVideo) {
-					case 2:  return &TVMpal480Prog;
-					case 1:  return &TVEurgb60Hz480Prog;
-					default: return &TVNtsc480Prog;
-				}
+				return &TVNtsc480Prog;
 			} else {
 				switch(swissSettings.sramVideo) {
 					case 2:  return &TVMpal480IntDf;

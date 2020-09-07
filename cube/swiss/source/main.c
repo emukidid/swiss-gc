@@ -62,7 +62,7 @@ void Initialise (void)
 		if(VIDEO_HaveComponentCable() && !(PAD_ButtonsDown(0) & PAD_TRIGGER_L)) {
 			if(strstr(IPLInfo,"MPAL")!=NULL) {
 				swissSettings.sramVideo = 2;
-				vmode = &TVMpal480Prog; //Progressive 480p
+				vmode = &TVNtsc480Prog; //Progressive 480p
 			}
 			else if((strstr(IPLInfo,"PAL")!=NULL)) {
 				swissSettings.sramVideo = 1;

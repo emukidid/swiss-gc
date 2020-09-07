@@ -146,12 +146,8 @@ void ogc_video__reset()
 	uiDrawObj_t *msgBox = NULL;
 	switch(swissSettings.gameVMode) {
 		case -1:
-			if(swissSettings.sramVideo == 2) {
-				if(swissSettings.sramProgressive && !getDTVStatus())
-					msgBox = DrawMessageBox(D_WARN, "Video Mode: PAL-M 480i\nComponent Cable not detected.");
-				else
-					msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL-M 480i");
-				
+			if(swissSettings.sramVideo == 2 && !getDTVStatus()) {
+				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL-M 480i");
 				newmode = &TVMpal480IntDf;
 			} else {
 				if(swissSettings.sramProgressive && !getDTVStatus())
