@@ -20,8 +20,8 @@ static const double DISC_TRACK_PITCH = 0.00000074;
 
 // Approximate read speeds at the inner and outer locations of Wii and GC
 // discs. These speeds are approximations of speeds measured on real Wiis.
-static const double DISC_INNER_READ_SPEED = 1024 * 1024 * 2.1;    // bytes/s
-static const double DISC_OUTER_READ_SPEED = 1024 * 1024 * 3.325;  // bytes/s
+static const double DISC_INNER_READ_SPEED = 1024 * 1024 * 2;      // bytes/s
+static const double DISC_OUTER_READ_SPEED = 1024 * 1024 * 3.125;  // bytes/s
 
 // The speed at which discs rotate. These have not been directly measured on hardware -
 // rather, the read speeds above have been matched to the closest standard DVD speed
