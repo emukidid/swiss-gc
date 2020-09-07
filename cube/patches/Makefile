@@ -12,7 +12,7 @@ DEST    = ../swiss/source/patches
 DISASM    = disassembly
 
 .NOTPARALLEL:
-all: dvdpatch hddpatch sdpatch usbpatch wkfpatch bbapatch
+all: dvdpatch hddpatch sdpatch usbpatch wkfpatch bbapatch gcodepatch
 
 dvdpatch: clean build-dvd
 hddpatch: clean build-ideexi-v1 clean build-ideexi-v2
@@ -20,6 +20,7 @@ sdpatch: clean build-sd
 usbpatch: clean build-usb
 wkfpatch: clean build-wkf
 bbapatch: clean build-bba
+gcodepatch: clean build-gcode
 
 clean:
 	@rm -rf *.o
@@ -91,7 +92,7 @@ build-ideexi-v2:
 build-dvd:
 	@echo Building DVD Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DDVD
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DDVD
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
@@ -161,5 +162,26 @@ build-bba:
 	@$(OBJDUMP) -D bba.elf > $(DISASM)/bba_disasm.txt
 	@$(OBJCOPY) -O binary bba.elf bba.bin
 	@$(BIN2S) bba.bin > $(DEST)/BBAPatch.s
+	@rm *.bin
+	@rm *.elf
+
+build-gcode:
+	@echo Building GCLoader Patch ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DGCODE
+	@$(CC) -Os $(OPTS) -c base/igr.c
+	@$(CC) -Os $(OPTS) -c dvd/dvd.c
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
+	@$(CC) -Os $(OPTS) -c base/usbgecko.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/DVDMath.c
+	@$(CC) -Os $(OPTS) -c base/floor.S
+	@$(CC) -Os $(OPTS) -c base/sqrt.S
+	@$(CC) -Os $(OPTS) -o gcloader.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
+	@rm -rf *.o
+	@$(OBJDUMP) -D gcloader.elf > $(DISASM)/gcloader_disasm.txt
+	@$(OBJCOPY) -O binary gcloader.elf gcloader.bin
+	@$(BIN2S) gcloader.bin > $(DEST)/GCLoaderPatch.s
 	@rm *.bin
 	@rm *.elf

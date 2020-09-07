@@ -83,6 +83,7 @@ void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 void di_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 #endif
 
+__attribute((always_inline))
 double fmod(double x, double y)
 {
 	return x - floor(x / y) * y;
@@ -158,7 +159,7 @@ bool dtk_fill_buffer(void)
 }
 #endif
 
-#ifndef DVD
+#ifndef DI_PASSTHROUGH
 static void di_update_interrupts(void)
 {
 	if ((di.reg.sr  >> 1) & (di.reg.sr  & 0b0101010) ||
@@ -197,7 +198,7 @@ static void di_close_cover(void)
 	di_update_interrupts();
 }
 
-static void di_execute_command(void)
+static void di_execute_command(OSAlarm *alarm)
 {
 	uint32_t result = 0;
 
@@ -311,7 +312,7 @@ static void di_execute_command(void)
 	di_complete_transfer();
 }
 #else
-static void di_execute_command(void)
+static void di_execute_command(OSAlarm *alarm)
 {
 	if (di.reset)
 		return;
@@ -323,8 +324,12 @@ static void di_execute_command(void)
 			uint32_t length  = di.reg.length;
 			uint32_t offset  = di.reg.cmdbuf1 << 2;
 
-			if (*VAR_EMU_READ_SPEED)
+			#ifdef GCODE
+			if (*VAR_EMU_READ_SPEED && !alarm) {
 				di_defer_transfer(offset, length);
+				return;
+			}
+			#endif
 
 			switch (di.reg.cmdbuf0 & 0xC0) {
 				case 0x00:
@@ -341,14 +346,18 @@ static void di_execute_command(void)
 			}
 			break;
 		}
+		#ifdef GCODE
 		case 0xAB:
 		{
 			uint32_t offset = di.reg.cmdbuf1 << 2;
 
-			if (*VAR_EMU_READ_SPEED)
+			if (*VAR_EMU_READ_SPEED && !alarm) {
 				di_defer_transfer(offset, 0);
+				return;
+			}
 			break;
 		}
+		#endif
 	}
 
 	DI[2] = di.reg.cmdbuf0;
@@ -357,7 +366,9 @@ static void di_execute_command(void)
 	DI[5] = di.reg.mar;
 	DI[6] = di.reg.length;
 	DI[7] = di.reg.cr;
+	DI[8] = di.reg.immbuf;
 }
+#endif
 
 #define DVD_SECTOR_SIZE    2048
 #define DVD_ECC_BLOCK_SIZE (16 * DVD_SECTOR_SIZE)
@@ -401,19 +412,6 @@ void di_defer_transfer(uint32_t offset, uint32_t length)
 	__attribute((noinline))
 	void di_defer_transfer(uint32_t offset, uint32_t length)
 	{
-		void alarm_handler(OSAlarm *alarm, OSContext *context)
-		{
-			#ifndef DVD
-			di.reg.sr |= (di.reg.sr << 2) & 0b0001000;
-			di_update_interrupts();
-			#else
-			uint32_t status = DI[0];
-			uint32_t mask = status & 0b0101010;
-			mask |= (mask << 2) & 0b0001000;
-			DI[0] = mask;
-			#endif
-		}
-
 		OSTime current_time = OSGetTime();
 
 		uint32_t head_position;
@@ -444,6 +442,7 @@ void di_defer_transfer(uint32_t offset, uint32_t length)
 				buffer_end = head_position;
 		}
 
+		OSTick ticks_until_execution = 0;
 		OSTick ticks_until_completion = READ_COMMAND_LATENCY;
 
 		do {
@@ -461,6 +460,7 @@ void di_defer_transfer(uint32_t offset, uint32_t length)
 					ticks_until_completion += OSSecondsToTicks(CalculateRawDiscReadTime(dvd_offset, DVD_ECC_BLOCK_SIZE));
 				}
 
+				ticks_until_execution = ticks_until_completion;
 				head_position = dvd_offset + DVD_ECC_BLOCK_SIZE;
 			}
 
@@ -479,17 +479,7 @@ void di_defer_transfer(uint32_t offset, uint32_t length)
 				read_buffer.end_offset - read_buffer.start_offset));
 		}
 
-		OSSetAlarm(&command_alarm, ticks_until_completion, alarm_handler);
-
-		#ifndef DVD
-		di.reg.sr &= ~0b0001000;
-		di_update_interrupts();
-		#else
-		uint32_t status = DI[0];
-		uint32_t mask = status & 0b0101010;
-		mask &= ~0b0001000;
-		DI[0] = mask;
-		#endif
+		OSSetAlarm(&command_alarm, ticks_until_execution, (OSAlarmHandler)di_execute_command);
 	}
 
 	di_defer_transfer(offset, length);
@@ -497,21 +487,34 @@ void di_defer_transfer(uint32_t offset, uint32_t length)
 	OSClearContext(&exceptionContext);
 	OSSetCurrentContext(context);
 }
-#endif
 
 static void di_read(unsigned index, uint32_t *value)
 {
-	#ifndef DVD
+	#ifndef DI_PASSTHROUGH
 	*value = di.regs[index];
 	#else
-	*value = DI[index];
+	switch (index) {
+		default:
+			*value = DI[index];
+			break;
+		case 2 ... 4:
+		case 7 ... 8:
+			*value = di.regs[index];
+			break;
+		case 5 ... 6:
+			if ((DI[7] & 0b011) == 0b011)
+				*value = di.regs[index] = DI[index];
+			else
+				*value = di.regs[index];
+			break;
+	}
 	#endif
 }
 
 static void di_write(unsigned index, uint32_t value)
 {
 	switch (index) {
-		#ifndef DVD
+		#ifndef DI_PASSTHROUGH
 		case 0:
 			di.reg.sr = ((value & 0b1010100) ^ di.reg.sr) & di.reg.sr;
 			di.reg.sr = (value & 0b0101011) | (di.reg.sr & ~0b0101010);
@@ -538,7 +541,7 @@ static void di_write(unsigned index, uint32_t value)
 			di.regs[index] = value & 0b111;
 
 			if (value & 0b001)
-				di_execute_command();
+				di_execute_command(NULL);
 			break;
 	}
 }
@@ -684,7 +687,7 @@ static void di_reset(void)
 			di.reset = 0;
 
 			if (di.reg.cr & 0b001)
-				di_execute_command();
+				di_execute_command(NULL);
 			break;
 	}
 }
@@ -884,12 +887,25 @@ static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	MI[16] = 0;
 }
 
-#ifdef DVD
+#ifdef DI_PASSTHROUGH
 static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
+	#ifdef DVD
 	if (di.reset) {
 		di_reset();
 		return;
+	}
+	#endif
+
+	if (DI[0] & 0b1010100) {
+		di.reg.cr = DI[7];
+
+		if (di.reg.cr & 0b010) {
+			di.reg.mar    = DI[5];
+			di.reg.length = DI[6];
+		} else {
+			di.reg.immbuf = DI[8];
+		}
 	}
 
 	dispatch_interrupt(OS_INTERRUPT_EMU_DI, context);
@@ -942,7 +958,7 @@ OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler hand
 	#ifdef BBA
 	OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
 	#endif
-	#if defined DVD || defined WKF
+	#if defined WKF || defined DI_PASSTHROUGH
 	OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
 	#endif
 	return OSSetInterruptHandler(interrupt, handler);

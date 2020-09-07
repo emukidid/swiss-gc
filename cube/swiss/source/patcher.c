@@ -132,7 +132,7 @@ int install_code(int final)
 		print_gecko("Installing Patch for SD Card over EXI\r\n");
 	}
 	// DVD
-	else if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_gcloader) {
+	else if(devices[DEVICE_CUR] == &__device_dvd) {
 		patch = &dvd_bin[0]; patchSize = dvd_bin_size;
 		print_gecko("Installing Patch for DVD\r\n");
 	}
@@ -150,6 +150,11 @@ int install_code(int final)
 	else if(devices[DEVICE_CUR] == &__device_fsp) {
 		patch = &bba_bin[0]; patchSize = bba_bin_size;
 		print_gecko("Installing Patch for Broadband Adapter\r\n");
+	}
+	// GC Loader
+	else if(devices[DEVICE_CUR] == &__device_gcloader) {
+		patch = &gcloader_bin[0]; patchSize = gcloader_bin_size;
+		print_gecko("Installing Patch for GC Loader\r\n");
 	}
 	print_gecko("Space for patch remaining: %i\r\n", top_addr - location);
 	print_gecko("Space taken by vars/video patches: %i\r\n", VAR_PATCHES_BASE - top_addr);
