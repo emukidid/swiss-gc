@@ -177,6 +177,7 @@ extern DEVICEHANDLER_INTERFACE* devices[MAX_DEVICES];
 extern int deviceHandler_test(DEVICEHANDLER_INTERFACE *device);
 extern DEVICEHANDLER_INTERFACE* getDeviceByUniqueId(u8 id);
 extern DEVICEHANDLER_INTERFACE* getDeviceByLocation(u32 location);
+extern DEVICEHANDLER_INTERFACE* getDeviceFromPath(char *path);
 
 extern void print_frag_list(int hasDisc2);
 

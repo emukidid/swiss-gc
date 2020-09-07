@@ -93,3 +93,20 @@ DEVICEHANDLER_INTERFACE* getDeviceByLocation(u32 location) {
 	}
 	return NULL;
 }
+
+DEVICEHANDLER_INTERFACE* getDeviceFromPath(char *path) {
+	char *devpos = strstr(path,"/");
+	if(!path) {
+		return NULL;	// garbage
+	}
+	if(devpos == path) {
+		return &__device_fsp;	// naughty device, doesn't have a path name identifier.
+	}
+	
+	for(int i = 0; i < MAX_DEVICES; i++) {
+		if(allDevices[i] != NULL && !strncmp(&allDevices[i]->initial->name[0], path, devpos-path) && deviceHandler_getDeviceAvailable(allDevices[i])) {
+			return allDevices[i];
+		}
+	}	
+	return NULL;
+}

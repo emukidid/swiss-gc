@@ -1747,10 +1747,15 @@ uiDrawObj_t* draw_game_info() {
 		}
 	}
 	if(devices[DEVICE_CUR] == &__device_wode) {
-		DrawAddChild(container, DrawStyledLabel(640/2, 380, "Settings (X) - Cheats (Y) - Boot (A)", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 390, "Settings (X) - Cheats (Y) - Boot (A)", 0.75f, true, defaultColor));
 	}
 	else {
-		DrawAddChild(container, DrawStyledLabel(640/2, 380, "Settings (X) - Cheats (Y) - Exit (B) - Boot (A)", 0.75f, true, defaultColor));
+		if(devices[DEVICE_CONFIG] != NULL) {
+			bool isAutoLoadEntry = !strcmp(&swissSettings.autoload[0], &curFile.name[0]);
+			sprintf(txtbuffer, "Load at startup (Z) [Current: %s]", isAutoLoadEntry ? "Yes":"No");
+			DrawAddChild(container, DrawStyledLabel(640/2, 370, txtbuffer, 0.6f, true, defaultColor));
+		}
+		DrawAddChild(container, DrawStyledLabel(640/2, 390, "Settings (X) - Cheats (Y) - Exit (B) - Boot (A)", 0.75f, true, defaultColor));
 	}
 	return container;
 }
@@ -1767,8 +1772,8 @@ int info_game()
 	config_find(config);	// populate
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
 	while(1) {
-		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y)){ VIDEO_WaitVSync (); }
-		while(!(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y))){ VIDEO_WaitVSync (); }
+		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z)){ VIDEO_WaitVSync (); }
+		while(!(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z))){ VIDEO_WaitVSync (); }
 		if(PAD_ButtonsHeld(0) & (PAD_BUTTON_B|PAD_BUTTON_A)){
 			ret = (PAD_ButtonsHeld(0) & PAD_BUTTON_A) ? 1:0;
 			// WODE can't return from here.
@@ -1779,6 +1784,21 @@ int info_game()
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
 			show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC && GCMDisk.DOLOffset != 0) ? &curFile : NULL, config);
+		}
+		if(devices[DEVICE_CONFIG] != NULL && (PAD_ButtonsHeld(0) & PAD_TRIGGER_Z)) {
+			// Toggle autoload
+			if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])) {
+				memset(&swissSettings.autoload[0], 0, PATHNAME_MAX);
+			}
+			else {
+				strcpy(&swissSettings.autoload[0], &curFile.name[0]);
+			}
+			// Save config
+			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving changes ..."));
+			config_update_file();
+			DrawDispose(infoPanel);
+			infoPanel = DrawPublish(draw_game_info());
+			DrawDispose(msgBox);
 		}
 		// Look for a cheats file based on the GameID
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {

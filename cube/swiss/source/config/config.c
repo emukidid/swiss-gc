@@ -211,6 +211,8 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "FSPPassword=%s\r\n",swissSettings.fspPassword);
 	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "Autoload=%s\r\n",swissSettings.autoload);
+	string_append(configString, txtbuffer);
 	// Write out the default game config portion too
 	sprintf(txtbuffer, "Force Video Mode=%s\r\n",gameVModeStr[swissSettings.gameVMode]);
 	string_append(configString, txtbuffer);
@@ -547,6 +549,9 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("FSPPassword", name)) {
 					strncpy(swissSettings.fspPassword, value, sizeof(((SwissSettings*)0)->fspPassword));
+				}
+				else if(!strcmp("Autoload", name)) {
+					strncpy(swissSettings.autoload, value, sizeof(((SwissSettings*)0)->autoload));
 				}
 			}
 		}

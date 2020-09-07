@@ -120,6 +120,7 @@ typedef struct {
 	u8 configDeviceId;	// see deviceHandler.h
 	int fileBrowserType;
 	int bs2Boot;
+	char autoload[PATHNAME_MAX];
 } SwissSettings __attribute__((aligned(32)));
 extern SwissSettings swissSettings;
 

@@ -662,7 +662,8 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		
 	// Add the disc itself as a "file"
 	*dir = calloc( numFiles * sizeof(file_handle), 1 );
-	DVD_Read((*dir)[idx].name, 32, 128);
+	strcpy((*dir)[idx].name, __device_dvd.initial->name);
+	DVD_Read(&(*dir)[idx].name[strlen(__device_dvd.initial->name)], 32, 128);
 	strcat((*dir)[idx].name, ".gcm");
 	(*dir)[idx].fileBase = 0;
 	(*dir)[idx].offset = 0;
