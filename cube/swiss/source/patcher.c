@@ -8220,16 +8220,158 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 	void *addr;
 	int patched = 0;
 	
-	if (!swissSettings.disableVideoPatches) {
-		if (!strncmp(gameID, "GS8P7D", 6)) {
-			if (!strcasecmp(fileName, "SPYROCFG_NGC.CFG")) {
-				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
-					addr = strnstr(data, "\tHeight:\t\t\t496\r\n", length);
-					if (addr) memcpy(addr, "\tHeight:\t\t\t448\r\n", 16);
-				}
-				print_gecko("Patched:[%s]\n", fileName);
-				patched++;
+	if (!strncmp(gameID, "GS8P7D", 6)) {
+		if (!strcasecmp(fileName, "SPYROCFG_NGC.CFG")) {
+			if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
+				addr = strnstr(data, "\tHeight:\t\t\t496\r\n", length);
+				if (addr) memcpy(addr, "\tHeight:\t\t\t448\r\n", 16);
 			}
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GSXD64", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			u32 args = *(u32 *)(data + 0x8);
+			if (args) memset(data + args, 0, length - args);
+			
+			*(u32 *)(data + 0x8) = 0x1FC8;
+			
+			*(u32 *)(data + 0x1FC8) = 4;
+			*(u32 *)(data + 0x1FCC) = 0x1FE0;
+			*(u32 *)(data + 0x1FD0) = 0x1FEE;
+			*(u32 *)(data + 0x1FD4) = 0x1FF3;
+			*(u32 *)(data + 0x1FD8) = 0x1FFD;
+			*(u32 *)(data + 0x1FDC) = 0;
+			
+			strcpy(data + 0x1FE0, "Clonewars.elf");
+			strcpy(data + 0x1FEE, "/pal");
+			strcpy(data + 0x1FF3, "/language");
+			strcpy(data + 0x1FFD, "1");
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GSXE64", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			u32 args = *(u32 *)(data + 0x8);
+			if (args) memset(data + args, 0, length - args);
+			
+			*(u32 *)(data + 0x8) = 0x1FE4;
+			
+			*(u32 *)(data + 0x1FE4) = 1;
+			*(u32 *)(data + 0x1FE8) = 0x1FF1;
+			*(u32 *)(data + 0x1FEC) = 0;
+			
+			strcpy(data + 0x1FF1, "Clonewars.elf");
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GSXF64", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			u32 args = *(u32 *)(data + 0x8);
+			if (args) memset(data + args, 0, length - args);
+			
+			*(u32 *)(data + 0x8) = 0x1FC8;
+			
+			*(u32 *)(data + 0x1FC8) = 4;
+			*(u32 *)(data + 0x1FCC) = 0x1FE0;
+			*(u32 *)(data + 0x1FD0) = 0x1FEE;
+			*(u32 *)(data + 0x1FD4) = 0x1FF3;
+			*(u32 *)(data + 0x1FD8) = 0x1FFD;
+			*(u32 *)(data + 0x1FDC) = 0;
+			
+			strcpy(data + 0x1FE0, "Clonewars.elf");
+			strcpy(data + 0x1FEE, "/pal");
+			strcpy(data + 0x1FF3, "/language");
+			strcpy(data + 0x1FFD, "2");
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GSXI64", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			u32 args = *(u32 *)(data + 0x8);
+			if (args) memset(data + args, 0, length - args);
+			
+			*(u32 *)(data + 0x8) = 0x1FC8;
+			
+			*(u32 *)(data + 0x1FC8) = 4;
+			*(u32 *)(data + 0x1FCC) = 0x1FE0;
+			*(u32 *)(data + 0x1FD0) = 0x1FEE;
+			*(u32 *)(data + 0x1FD4) = 0x1FF3;
+			*(u32 *)(data + 0x1FD8) = 0x1FFD;
+			*(u32 *)(data + 0x1FDC) = 0;
+			
+			strcpy(data + 0x1FE0, "Clonewars.elf");
+			strcpy(data + 0x1FEE, "/pal");
+			strcpy(data + 0x1FF3, "/language");
+			strcpy(data + 0x1FFD, "4");
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GSXJ13", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			u32 args = *(u32 *)(data + 0x8);
+			if (args) memset(data + args, 0, length - args);
+			
+			*(u32 *)(data + 0x8) = 0x1FC0;
+			
+			*(u32 *)(data + 0x1FC0) = 4;
+			*(u32 *)(data + 0x1FC4) = 0x1FDB;
+			*(u32 *)(data + 0x1FC8) = 0x1FE9;
+			*(u32 *)(data + 0x1FCC) = 0x1FF3;
+			*(u32 *)(data + 0x1FD0) = 0x1FF5;
+			*(u32 *)(data + 0x1FD4) = 0;
+			
+			strcpy(data + 0x1FDB, "Clonewars.elf");
+			strcpy(data + 0x1FE9, "/language");
+			strcpy(data + 0x1FF3, "5");
+			strcpy(data + 0x1FF5, "/japanese");
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GSXP64", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			u32 args = *(u32 *)(data + 0x8);
+			if (args) memset(data + args, 0, length - args);
+			
+			*(u32 *)(data + 0x8) = 0x1FDC;
+			
+			*(u32 *)(data + 0x1FDC) = 2;
+			*(u32 *)(data + 0x1FE0) = 0x1FEC;
+			*(u32 *)(data + 0x1FE4) = 0x1FFA;
+			*(u32 *)(data + 0x1FE8) = 0;
+			
+			strcpy(data + 0x1FEC, "Clonewars.elf");
+			strcpy(data + 0x1FFA, "/pal");
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GSXS64", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			u32 args = *(u32 *)(data + 0x8);
+			if (args) memset(data + args, 0, length - args);
+			
+			*(u32 *)(data + 0x8) = 0x1FC8;
+			
+			*(u32 *)(data + 0x1FC8) = 4;
+			*(u32 *)(data + 0x1FCC) = 0x1FE0;
+			*(u32 *)(data + 0x1FD0) = 0x1FEE;
+			*(u32 *)(data + 0x1FD4) = 0x1FF3;
+			*(u32 *)(data + 0x1FD8) = 0x1FFD;
+			*(u32 *)(data + 0x1FDC) = 0;
+			
+			strcpy(data + 0x1FE0, "Clonewars.elf");
+			strcpy(data + 0x1FEE, "/pal");
+			strcpy(data + 0x1FF3, "/language");
+			strcpy(data + 0x1FFD, "3");
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
 		}
 	}
 	return patched;

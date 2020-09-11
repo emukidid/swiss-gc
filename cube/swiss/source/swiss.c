@@ -850,40 +850,41 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		progBox = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
 		
 		// Adjust top of memory
-		u32 top_of_main_ram = 0x81800000;
+		u32 topAddr = 0x81800000;
 		
 		// Steal even more if there's cheats!
 		if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
-			top_of_main_ram = WIIRD_ENGINE;
+			topAddr = WIIRD_ENGINE;
 		}
 
-		print_gecko("Top of RAM simulated as: 0x%08X\r\n", top_of_main_ram);
+		print_gecko("Top of RAM simulated as: 0x%08X\r\n", topAddr);
 		
 		// Read FST to top of Main Memory (round to 32 byte boundary)
-		u32 fstSizeAligned = GCMDisk.MaxFSTSize + (32-(GCMDisk.MaxFSTSize%32));
+		u32 fstAddr = (topAddr-GCMDisk.MaxFSTSize)&~31;
 		devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)(top_of_main_ram-fstSizeAligned),GCMDisk.MaxFSTSize) != GCMDisk.MaxFSTSize) {
+		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,GCMDisk.MaxFSTSize) != GCMDisk.MaxFSTSize) {
 			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
 			while(1);
 		}
 		if(altDol != NULL && altDol->tgcFstSize > 0) {
-			adjust_tgc_fst((void*)(top_of_main_ram-fstSizeAligned), altDol->tgcBase, altDol->tgcFileStartArea, altDol->tgcFakeOffset);
+			adjust_tgc_fst((void*)fstAddr, altDol->tgcBase, altDol->tgcFileStartArea, altDol->tgcFakeOffset);
 		}
 		
 		// Read bi2.bin (Disk Header Information) to just under the FST
+		u32 bi2Addr = (fstAddr-0x2000)&~31;
 		devices[DEVICE_CUR]->seekFile(&curFile,0x440,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)(top_of_main_ram-fstSizeAligned-0x2000),0x2000) != 0x2000) {
+		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)bi2Addr,0x2000) != 0x2000) {
 			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read bi2.bin"));
 			while(1);
 		}
+		// Patch bi2.bin
+		Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
 
 		*(volatile u32*)0x8000002C = (*(volatile u32*)0xCC00302C >> 28) + (swissSettings.debugUSB ? 0x10000004:0x00000001);
-		*(volatile u32*)0x800000F4 = top_of_main_ram-fstSizeAligned-0x2000;	// bi2.bin location
-		*(volatile u32*)0x80000038 = top_of_main_ram-fstSizeAligned;		// FST Location in ram
+		*(volatile u32*)0x800000F4 = bi2Addr;								// bi2.bin location
+		*(volatile u32*)0x80000038 = fstAddr;								// FST Location in ram
 		*(volatile u32*)0x8000003C = GCMDisk.MaxFSTSize;					// FST Max Length
-		*(volatile u32*)0x80000034 = *(volatile u32*)0x80000038;			// Arena Hi
-		*(volatile u32*)0x80000028 = top_of_main_ram & 0x01FFFFFF;			// Physical Memory Size
-		*(volatile u32*)0x800000F0 = top_of_main_ram & 0x01FFFFFF;			// Console Simulated Mem size
+		*(volatile u32*)0x80000034 = fstAddr;								// Arena Hi
 		u32* osctxblock = (u32*)memalign(32, 1024);
 		*(volatile u32*)0x800000C0 = (u32)osctxblock & 0x7FFFFFFF;
 		*(volatile u32*)0x800000D4 = (u32)osctxblock;

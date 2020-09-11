@@ -159,13 +159,15 @@ enum patchIds {
 #define FINI			(u32 *)(LO_RESERVE + 0x11C)
 
 /* Types of files we may patch */
-#define PATCH_APPLOADER		0
-#define PATCH_DOL			1
-#define PATCH_DOL_APPLOADER	2
-#define PATCH_DOL_PRS		3
-#define PATCH_ELF			4
-#define PATCH_OTHER			5
-#define PATCH_OTHER_PRS		6
+enum patchTypes {
+	PATCH_APPLOADER = 0,
+	PATCH_DOL,
+	PATCH_DOL_APPLOADER,
+	PATCH_DOL_PRS,
+	PATCH_ELF,
+	PATCH_OTHER,
+	PATCH_OTHER_PRS
+};
 
 int Patch_Hypervisor(u32 *data, u32 length, int dataType);
 void Patch_VideoMode(u32 *data, u32 length, int dataType);
