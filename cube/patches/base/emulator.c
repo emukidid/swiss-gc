@@ -912,7 +912,7 @@ static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 }
 #endif
 
-void init(void)
+void *init(void *arenaLo)
 {
 	#ifdef BBA
 	OSCreateAlarm(&bba_alarm);
@@ -924,6 +924,8 @@ void init(void)
 	#ifdef ISR
 	write_branch((void *)0x80000500, external_interrupt_vector);
 	#endif
+
+	return arenaLo;
 }
 
 bool exi_probe(int32_t chan)
