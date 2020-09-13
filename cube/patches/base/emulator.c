@@ -547,8 +547,6 @@ static void di_write(unsigned index, uint32_t value)
 }
 
 #ifdef DTK
-static sample_t AXOutBuffer[2][160] __attribute((aligned(32))) = {0};
-
 static struct {
 	union {
 		uint16_t regs[4];
@@ -562,13 +560,8 @@ static struct {
 		int aima;
 	} req;
 
-	void *buffer[2];
-} dsp = {
-	.buffer = {
-		OSCachedToUncached(AXOutBuffer[0]),
-		OSCachedToUncached(AXOutBuffer[1])
-	}
-};
+	uint8_t (*buffer[2])[640];
+} dsp = {0};
 
 static void dsp_read(unsigned index, uint32_t *value)
 {
@@ -602,7 +595,7 @@ static void dsp_write(unsigned index, uint16_t value)
 				int length = (dsp.reg.aibl & 0x7FFF) << 5;
 				int count = length / sizeof(sample_t);
 
-				if (length <= sizeof(*AXOutBuffer)) {
+				if (length <= sizeof(**dsp.buffer)) {
 					void *buffer2 = dsp.buffer[0];
 					dsp.buffer[0] = dsp.buffer[1];
 					dsp.buffer[1] = buffer2;
@@ -925,6 +918,10 @@ void *init(void *arenaLo)
 	write_branch((void *)0x80000500, external_interrupt_vector);
 	#endif
 
+	#ifdef DTK
+	dsp.buffer[0] = OSCachedToUncached(arenaLo); arenaLo += sizeof(*dsp.buffer[0]);
+	dsp.buffer[1] = OSCachedToUncached(arenaLo); arenaLo += sizeof(*dsp.buffer[1]);
+	#endif
 	return arenaLo;
 }
 
