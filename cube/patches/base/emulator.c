@@ -49,7 +49,10 @@ static struct {
 		} reg;
 	};
 
+	uint32_t error;
+	#ifdef DVD
 	int reset;
+	#endif
 } di = {0};
 
 static struct {
@@ -172,8 +175,10 @@ static void di_update_interrupts(void)
 		*(volatile int *)OS_BASE_MIRRORED;
 }
 
-static void di_error(void)
+static void di_error(uint32_t error)
 {
+	di.error = error;
+
 	di.reg.sr |=  0b0000100;
 	di.reg.cr &= ~0b001;
 	di_update_interrupts();
@@ -212,7 +217,7 @@ static void di_execute_command(OSAlarm *alarm)
 			if (!(di.reg.cvr & 0b001))
 				perform_read(address, length, offset);
 			else
-				di_error();
+				di_error(0x01023A00);
 			return;
 		}
 		case 0xAB:
@@ -222,13 +227,13 @@ static void di_execute_command(OSAlarm *alarm)
 			if (!(di.reg.cvr & 0b001))
 				perform_read(0, 0, offset);
 			else
-				di_error();
+				di_error(0x01023A00);
 			return;
 		}
 		case 0xE0:
 		{
-			if (di.reg.cvr & 0b001)
-				result = 0x01023A00;
+			result = di.error;
+			di.error = 0;
 			break;
 		}
 		case 0xE1:
@@ -236,8 +241,8 @@ static void di_execute_command(OSAlarm *alarm)
 			switch ((di.reg.cmdbuf0 >> 16) & 0x03) {
 				case 0x00:
 				{
-					uint32_t offset = di.reg.cmdbuf1 << 2 & ~0x80007FFF;
-					uint32_t length = di.reg.cmdbuf2 & ~0x7FFF;
+					uint32_t offset = DVDRoundDown32KB(di.reg.cmdbuf1 << 2) & ~0x80000000;
+					uint32_t length = DVDRoundDown32KB(di.reg.cmdbuf2);
 
 					if (!offset && !length) {
 						dtk.stopping = true;
@@ -282,12 +287,12 @@ static void di_execute_command(OSAlarm *alarm)
 				}
 				case 0x01:
 				{
-					result = dtk.current.position & ~0x80007FFF >> 2;
+					result = DVDRoundDown32KB(dtk.current.position & ~0x80000000) >> 2;
 					break;
 				}
 				case 0x02:
 				{
-					result = dtk.current.start & ~0x80007FFF >> 2;
+					result = DVDRoundDown32KB(dtk.current.start & ~0x80000000) >> 2;
 					break;
 				}
 				case 0x03:
@@ -302,7 +307,7 @@ static void di_execute_command(OSAlarm *alarm)
 		{
 			if (!(di.reg.cvr & 0b001) && change_disc()) {
 				di.reg.cvr |= 0b001;
-				OSSetAlarm(&command_alarm, OSSecondsToTicks(1), (OSAlarmHandler)di_close_cover);
+				OSSetAlarm(&command_alarm, OSSecondsToTicks(1.5), (OSAlarmHandler)di_close_cover);
 			}
 			break;
 		}
@@ -314,8 +319,10 @@ static void di_execute_command(OSAlarm *alarm)
 #else
 static void di_execute_command(OSAlarm *alarm)
 {
+	#ifdef DVD
 	if (di.reset)
 		return;
+	#endif
 
 	switch (di.reg.cmdbuf0 >> 24) {
 		case 0xA8:
