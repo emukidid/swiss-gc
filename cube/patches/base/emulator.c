@@ -339,7 +339,7 @@ static void di_execute_command(OSAlarm *alarm)
 			#endif
 
 			switch (di.reg.cmdbuf0 & 0xC0) {
-				case 0x00:
+				default:
 				{
 					DVDDiskID *id1 = (DVDDiskID *)VAR_AREA;
 					DVDDiskID *id2 = (DVDDiskID *)VAR_DISC_1_ID;
@@ -349,6 +349,12 @@ static void di_execute_command(OSAlarm *alarm)
 
 					perform_read(address, length, offset);
 					return;
+				}
+				case 0x40:
+				{
+					DVDDiskID *id = (DVDDiskID *)VAR_AREA;
+					DCBlockInvalidate(id);
+					break;
 				}
 			}
 			break;
