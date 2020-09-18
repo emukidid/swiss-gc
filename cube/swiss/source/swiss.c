@@ -1738,9 +1738,9 @@ uiDrawObj_t* draw_game_info() {
 		sprintf(txtbuffer, "Game ID: [%.6s] Audio Streaming: [%s]", (char*)&GCMDisk, (GCMDisk.AudioStreaming ? "Yes":"No"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 200, txtbuffer, 0.8f, true, defaultColor));
 
-		if(meta_find_disk2(&curFile)) {
-			sprintf(txtbuffer, "Disc %i", GCMDisk.DiscID+1);
-			DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.8f, true, defaultColor));
+		if(GCMDisk.TotalDisc > 1) {
+			sprintf(txtbuffer, "Disc %i/%i [Found: %s]", GCMDisk.DiscID+1, GCMDisk.TotalDisc, meta_find_disk2(&curFile) ? "Yes":"No");
+			DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.6f, true, defaultColor));
 		}
 	}
 	if(devices[DEVICE_CUR] == &__device_wode) {

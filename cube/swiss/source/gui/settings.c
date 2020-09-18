@@ -235,35 +235,37 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 	}
 	else if(page_num == PAGE_GAME_DEFAULTS) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Default Game Settings (4/5):"));
-		bool enableGameVideoPatches = !swissSettings.disableVideoPatches;
-		drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_DEFAULT_FORCE_VIDEOMODE, enableGameVideoPatches);
-		drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, enableGameVideoPatches);
+		bool enabledVideoPatches = !swissSettings.disableVideoPatches;
+		bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_READ_SPEED);
+		drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_DEFAULT_FORCE_VIDEOMODE, enabledVideoPatches);
+		drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, enabledVideoPatches);
 		sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
-		drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_DEFAULT_VERT_OFFSET, enableGameVideoPatches);
-		drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_DEFAULT_VERT_FILTER, enableGameVideoPatches);
-		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_DEFAULT_ALPHA_DITHER, enableGameVideoPatches);
+		drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_DEFAULT_VERT_OFFSET, enabledVideoPatches);
+		drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_DEFAULT_VERT_FILTER, enabledVideoPatches);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_DEFAULT_ALPHA_DITHER, enabledVideoPatches);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_DEFAULT_ANISO_FILTER, true);
 		drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, true);
 		drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_DEFAULT_TEXT_ENCODING, true);
 		drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, true);
-		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Read Speed:", swissSettings.emulateReadSpeed, option == SET_DEFAULT_READ_SPEED, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Read Speed:", swissSettings.emulateReadSpeed, option == SET_DEFAULT_READ_SPEED, emulatedReadSpeed);
 	}
 	else if(page_num == PAGE_GAME) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Current Game Settings (5/5):"));
-		bool enableGamePatches = file != NULL && gameConfig != NULL;
-		if(enableGamePatches) {
-			bool enableGameVideoPatches = enableGamePatches && !swissSettings.disableVideoPatches;
-			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enableGameVideoPatches);
-			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[gameConfig->forceHScale], option == SET_HORIZ_SCALE, enableGameVideoPatches);
+		bool enabledGamePatches = file != NULL && gameConfig != NULL;
+		if(enabledGamePatches) {
+			bool enabledVideoPatches = !swissSettings.disableVideoPatches;
+			bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_READ_SPEED);
+			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
+			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[gameConfig->forceHScale], option == SET_HORIZ_SCALE, enabledVideoPatches);
 			sprintf(forceVOffsetStr, "%+hi", gameConfig->forceVOffset);
-			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_VERT_OFFSET, enableGameVideoPatches);
-			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[gameConfig->forceVFilter], option == SET_VERT_FILTER, enableGameVideoPatches);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", gameConfig->disableDithering, option == SET_ALPHA_DITHER, enableGameVideoPatches);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", gameConfig->forceAnisotropy, option == SET_ANISO_FILTER, enableGamePatches);
-			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[gameConfig->forceWidescreen], option == SET_WIDESCREEN, enableGamePatches);
-			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[gameConfig->forceEncoding], option == SET_TEXT_ENCODING, enableGamePatches);
-			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, enableGamePatches);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Read Speed:", gameConfig->emulateReadSpeed, option == SET_READ_SPEED, enableGamePatches);
+			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_VERT_OFFSET, enabledVideoPatches);
+			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[gameConfig->forceVFilter], option == SET_VERT_FILTER, enabledVideoPatches);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", gameConfig->disableDithering, option == SET_ALPHA_DITHER, enabledVideoPatches);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", gameConfig->forceAnisotropy, option == SET_ANISO_FILTER, true);
+			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[gameConfig->forceWidescreen], option == SET_WIDESCREEN, true);
+			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[gameConfig->forceEncoding], option == SET_TEXT_ENCODING, true);
+			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, true);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Read Speed:", gameConfig->emulateReadSpeed, option == SET_READ_SPEED, emulatedReadSpeed);
 		}
 		else {
 			// Just draw the defaults again
@@ -521,7 +523,8 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 					swissSettings.invertCStick = 3;
 			break;
 			case SET_DEFAULT_READ_SPEED:
-				swissSettings.emulateReadSpeed ^= 1;
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_READ_SPEED))
+					swissSettings.emulateReadSpeed ^= 1;
 			break;
 		}
 	}
@@ -603,7 +606,8 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 					gameConfig->invertCStick = 3;
 			break;
 			case SET_READ_SPEED:
-				gameConfig->emulateReadSpeed ^= 1;
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_READ_SPEED))
+					gameConfig->emulateReadSpeed ^= 1;
 			break;
 		}
 	}
