@@ -241,7 +241,7 @@ int config_update_file() {
 	sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[swissSettings.invertCStick]);
 	string_append(configString, txtbuffer);
 	
-	sprintf(txtbuffer, "Emulate Read Speed=%s\r\n",(swissSettings.emulateReadSpeed ? "Yes":"No"));
+	sprintf(txtbuffer, "Emulate Read Speed=%s\r\n",emulateReadSpeedStr[swissSettings.emulateReadSpeed]);
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
 	string_append(configString, txtbuffer);
@@ -293,7 +293,7 @@ int config_update_file() {
 		sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[configEntries[i].invertCStick]);
 		string_append(configString, txtbuffer);
 		
-		sprintf(txtbuffer, "Emulate Read Speed=%s\r\n",(configEntries[i].emulateReadSpeed ? "Yes":"No"));
+		sprintf(txtbuffer, "Emulate Read Speed=%s\r\n",emulateReadSpeedStr[configEntries[i].emulateReadSpeed]);
 		string_append(configString, txtbuffer);
 	}
 
@@ -452,10 +452,13 @@ void config_parse(char *configData) {
 					}
 				}
 				else if(!strcmp("Emulate Read Speed", name)) {
-					if(defaultPassed)
-						configEntries[configEntriesCount].emulateReadSpeed = !strcmp("Yes", value) ? 1:0;
-					else
-						swissSettings.emulateReadSpeed = !strcmp("Yes", value) ? 1:0;
+					int *ptr = !defaultPassed ? &swissSettings.emulateReadSpeed : &configEntries[configEntriesCount].emulateReadSpeed;
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(emulateReadSpeedStr[i], value)) {
+							*ptr = i;
+							break;
+						}
+					}
 				}
 				
 				// Swiss settings

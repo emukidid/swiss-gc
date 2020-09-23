@@ -29,6 +29,7 @@ char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS", "No"};
 char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
+char *emulateReadSpeedStr[] = {"No", "Yes", "Wii"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
 char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL"};
 char *fileBrowserStr[] = {"Standard", "Carousel"};
@@ -247,7 +248,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, true);
 		drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_DEFAULT_TEXT_ENCODING, true);
 		drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, true);
-		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Read Speed:", swissSettings.emulateReadSpeed, option == SET_DEFAULT_READ_SPEED, emulatedReadSpeed);
+		drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_DEFAULT_READ_SPEED, emulatedReadSpeed);
 	}
 	else if(page_num == PAGE_GAME) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Current Game Settings (5/5):"));
@@ -265,7 +266,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[gameConfig->forceWidescreen], option == SET_WIDESCREEN, true);
 			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[gameConfig->forceEncoding], option == SET_TEXT_ENCODING, true);
 			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, true);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Read Speed:", gameConfig->emulateReadSpeed, option == SET_READ_SPEED, emulatedReadSpeed);
+			drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[gameConfig->emulateReadSpeed], option == SET_READ_SPEED, emulatedReadSpeed);
 		}
 		else {
 			// Just draw the defaults again
@@ -279,7 +280,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, false);
 			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_DEFAULT_TEXT_ENCODING, false);
 			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, false);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Read Speed:", swissSettings.emulateReadSpeed, option == SET_DEFAULT_READ_SPEED, false);
+			drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_DEFAULT_READ_SPEED, false);
 		}
 	}
 	// If we have a tooltip for this page/option, add a fading label telling the user to press Y for help
@@ -523,8 +524,13 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 					swissSettings.invertCStick = 3;
 			break;
 			case SET_DEFAULT_READ_SPEED:
-				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_READ_SPEED))
-					swissSettings.emulateReadSpeed ^= 1;
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_READ_SPEED)) {
+					swissSettings.emulateReadSpeed += direction;
+					if(swissSettings.emulateReadSpeed > 2)
+						swissSettings.emulateReadSpeed = 0;
+					if(swissSettings.emulateReadSpeed < 0)
+						swissSettings.emulateReadSpeed = 2;
+				}
 			break;
 		}
 	}
@@ -606,8 +612,13 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 					gameConfig->invertCStick = 3;
 			break;
 			case SET_READ_SPEED:
-				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_READ_SPEED))
-					gameConfig->emulateReadSpeed ^= 1;
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_READ_SPEED)) {
+					gameConfig->emulateReadSpeed += direction;
+					if(gameConfig->emulateReadSpeed > 2)
+						gameConfig->emulateReadSpeed = 0;
+					if(gameConfig->emulateReadSpeed < 0)
+						gameConfig->emulateReadSpeed = 2;
+				}
 			break;
 		}
 	}

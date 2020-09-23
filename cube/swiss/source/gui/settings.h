@@ -112,6 +112,7 @@ extern char *forceVFilterStr[];
 extern char *forceWidescreenStr[];
 extern char *forceEncodingStr[];
 extern char *invertCStickStr[];
+extern char *emulateReadSpeedStr[];
 extern char *igrTypeStr[];
 extern char *aveCompatStr[];
 extern char *fileBrowserStr[];

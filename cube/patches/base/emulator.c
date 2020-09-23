@@ -410,7 +410,7 @@ static struct {
 static uint32_t dvd_buffer_size(void)
 {
 	DVDDiskID *id = (DVDDiskID *)VAR_AREA;
-	return (id->streaming ? 5 : 15) * DVD_ECC_BLOCK_SIZE;
+	return (*VAR_EMU_READ_SPEED == 1 ? id->streaming ? 5 : 15 : 32) * DVD_ECC_BLOCK_SIZE;
 }
 
 void di_defer_transfer(uint32_t offset, uint32_t length)
