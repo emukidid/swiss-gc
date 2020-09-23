@@ -316,6 +316,31 @@ int config_update_file() {
 	return 1;
 }
 
+static char emulateReadSpeedEntries[][4] = {"GQSD", "GQSE", "GQSF", "GQSI", "GQSP", "GQSS", "GTOJ"};
+
+void config_defaults(ConfigEntry *entry) {
+	strcpy(entry->comment, "No Comment");
+	strcpy(entry->status, "Unknown");
+	entry->gameVMode = swissSettings.gameVMode;
+	entry->forceHScale = swissSettings.forceHScale;
+	entry->forceVOffset = swissSettings.forceVOffset;
+	entry->forceVOffset = swissSettings.aveCompat == 1 ? -3:0;
+	entry->forceVFilter = swissSettings.forceVFilter;
+	entry->disableDithering = swissSettings.disableDithering;
+	entry->forceAnisotropy = swissSettings.forceAnisotropy;
+	entry->forceWidescreen = swissSettings.forceWidescreen;
+	entry->forceEncoding = swissSettings.forceEncoding;
+	entry->invertCStick = swissSettings.invertCStick;
+	entry->emulateReadSpeed = swissSettings.emulateReadSpeed;
+
+	for(int i = 0; i < sizeof(emulateReadSpeedEntries) / sizeof(*emulateReadSpeedEntries); i++) {
+		if(!strncmp(entry->game_id, emulateReadSpeedEntries[i], 4)) {
+			entry->emulateReadSpeed = 1;
+			break;
+		}
+	}
+}
+
 void config_parse(char *configData) {
 	// Parse each entry and put it into our array
 	char *line, *linectx = NULL;
@@ -343,18 +368,7 @@ void config_parse(char *configData) {
 					strncpy(&configEntries[configEntriesCount].game_id[0], value, 4);
 					first = 0;
 					// Fill this entry with defaults incase some values are missing..
-					strcpy(&configEntries[configEntriesCount].comment[0],"No Comment");
-					strcpy(&configEntries[configEntriesCount].status[0],"Unknown");
-					configEntries[configEntriesCount].gameVMode = 0;
-					configEntries[configEntriesCount].forceHScale = 0;
-					configEntries[configEntriesCount].forceVOffset = swissSettings.aveCompat == 1 ? -3:0;
-					configEntries[configEntriesCount].forceVFilter = 0;
-					configEntries[configEntriesCount].disableDithering = 0;
-					configEntries[configEntriesCount].forceAnisotropy = 0;
-					configEntries[configEntriesCount].forceWidescreen = 0;
-					configEntries[configEntriesCount].forceEncoding = 0;
-					configEntries[configEntriesCount].invertCStick = 0;
-					configEntries[configEntriesCount].emulateReadSpeed = 0;
+					config_defaults(&configEntries[configEntriesCount]);
 				}
 				else if(!strcmp("Name", name)) {
 					strncpy(&configEntries[configEntriesCount].game_name[0], value, 64);
@@ -577,19 +591,7 @@ void config_find(ConfigEntry *entry) {
 		}
 	}
 	// Didn't find it, setup defaults and add this entry
-	strcpy(entry->comment, "No Comment");
-	strcpy(entry->status, "Unknown");
-	entry->gameVMode = swissSettings.gameVMode;
-	entry->forceHScale = swissSettings.forceHScale;
-	entry->forceVOffset = swissSettings.forceVOffset;
-	entry->forceVOffset = swissSettings.aveCompat == 1 ? -3:0;
-	entry->forceVFilter = swissSettings.forceVFilter;
-	entry->disableDithering = swissSettings.disableDithering;
-	entry->forceAnisotropy = swissSettings.forceAnisotropy;
-	entry->forceWidescreen = swissSettings.forceWidescreen;
-	entry->forceEncoding = swissSettings.forceEncoding;
-	entry->invertCStick = swissSettings.invertCStick;
-	entry->emulateReadSpeed = swissSettings.emulateReadSpeed;
+	config_defaults(entry);
 	// Add this new entry to our collection
 	memcpy(&configEntries[configEntriesCount], entry, sizeof(ConfigEntry));
 	configEntriesCount++;
