@@ -71,7 +71,8 @@ static char *tooltips_game[PAGE_GAME_MAX+1] = {
 	NULL,
 	NULL,
 	"Force Text Encoding:\n\nNo - System native format\nAuto - Game native format (default)\nANSI - Force International format on a Japanese region game\nSJIS - Force Japanese format on an International region game\n\nThis effectively behaves the same as the USA/JPN region switch.",
-	"Invert Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Invert X-axis of the C Stick\nY - Invert Y-axis of the C Stick\nX&Y - Invert both axes of the C Stick"
+	"Invert Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Invert X-axis of the C Stick\nY - Invert Y-axis of the C Stick\nX&Y - Invert both axes of the C Stick",
+	"Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated\nby the original medium, or for speedrunning."
 };
 
 syssram* sram;
