@@ -185,7 +185,6 @@ typedef enum OSInterrupt {
 	OS_INTERRUPT_PI_VI,
 	OS_INTERRUPT_PI_DEBUG,
 	OS_INTERRUPT_PI_HSP,
-	OS_INTERRUPT_EMU_DI,
 	OS_INTERRUPT_MAX
 } OSInterrupt;
 
@@ -275,10 +274,6 @@ typedef u32 OSInterruptMask;
                              OS_INTERRUPTMASK_PI_PE_FINISH | \
                              OS_INTERRUPTMASK_PI_DEBUG     | \
                              OS_INTERRUPTMASK_PI_HSP)
-
-#define OS_INTERRUPTMASK_EMU_DI OS_INTERRUPTMASK(OS_INTERRUPT_EMU_DI)
-
-#define OS_INTERRUPTMASK_EMU (OS_INTERRUPTMASK_EMU_DI)
 
 extern OSInterruptHandler OSInterruptHandlerTable[32];
 

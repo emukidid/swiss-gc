@@ -1105,6 +1105,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  65, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  66, length, &OSExceptionInitSigs[0]) &&
 							findx_pattern(data, dataType, i +  67, length, &__OSInitSystemCallSigs[0]) &&
+							findx_pattern(data, dataType, i +  73, length, &__OSSetInterruptHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 178, length, &OSGetArenaHiSigs[0]) &&
 							findx_pattern(data, dataType, i + 180, length, &OSGetArenaLoSigs[0]) &&
 							findx_pattern(data, dataType, i + 194, length, &OSEnableInterruptsSig))
@@ -1117,6 +1118,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  65, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  66, length, &OSExceptionInitSigs[0]) &&
 							findx_pattern(data, dataType, i +  67, length, &__OSInitSystemCallSigs[0]) &&
+							findx_pattern(data, dataType, i +  73, length, &__OSSetInterruptHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 179, length, &OSGetArenaHiSigs[0]) &&
 							findx_pattern(data, dataType, i + 181, length, &OSGetArenaLoSigs[0]) &&
 							findx_pattern(data, dataType, i + 195, length, &OSEnableInterruptsSig))
@@ -1129,6 +1131,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  65, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  66, length, &OSExceptionInitSigs[0]) &&
 							findx_pattern(data, dataType, i +  67, length, &__OSInitSystemCallSigs[0]) &&
+							findx_pattern(data, dataType, i +  73, length, &__OSSetInterruptHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 180, length, &OSGetArenaHiSigs[0]) &&
 							findx_pattern(data, dataType, i + 182, length, &OSGetArenaLoSigs[0]) &&
 							findx_pattern(data, dataType, i + 196, length, &OSEnableInterruptsSig))
@@ -1141,6 +1144,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  65, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  66, length, &OSExceptionInitSigs[0]) &&
 							findx_pattern(data, dataType, i +  67, length, &__OSInitSystemCallSigs[0]) &&
+							findx_pattern(data, dataType, i +  73, length, &__OSSetInterruptHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 184, length, &OSGetArenaHiSigs[0]) &&
 							findx_pattern(data, dataType, i + 186, length, &OSGetArenaLoSigs[0]) &&
 							findx_pattern(data, dataType, i + 200, length, &OSEnableInterruptsSig))
@@ -1154,6 +1158,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  94, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  95, length, &OSExceptionInitSigs[0]) &&
 							findx_pattern(data, dataType, i +  96, length, &__OSInitSystemCallSigs[0]) &&
+							findx_pattern(data, dataType, i + 103, length, &__OSSetInterruptHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 211, length, &OSGetArenaHiSigs[0]) &&
 							findx_pattern(data, dataType, i + 213, length, &OSGetArenaLoSigs[0]) &&
 							findx_pattern(data, dataType, i + 228, length, &OSEnableInterruptsSig))
@@ -1167,6 +1172,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  94, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  95, length, &OSExceptionInitSigs[0]) &&
 							findx_pattern(data, dataType, i +  96, length, &__OSInitSystemCallSigs[0]) &&
+							findx_pattern(data, dataType, i + 103, length, &__OSSetInterruptHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 214, length, &OSGetArenaHiSigs[0]) &&
 							findx_pattern(data, dataType, i + 216, length, &OSGetArenaLoSigs[0]) &&
 							findx_pattern(data, dataType, i + 231, length, &OSEnableInterruptsSig))
@@ -1180,6 +1186,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  98, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  99, length, &OSExceptionInitSigs[0]) &&
 							findx_pattern(data, dataType, i + 100, length, &__OSInitSystemCallSigs[0]) &&
+							findx_pattern(data, dataType, i + 107, length, &__OSSetInterruptHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 218, length, &OSGetArenaHiSigs[0]) &&
 							findx_pattern(data, dataType, i + 220, length, &OSGetArenaLoSigs[0]) &&
 							findx_pattern(data, dataType, i + 235, length, &OSEnableInterruptsSig))
@@ -1193,6 +1200,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  98, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  99, length, &OSExceptionInitSigs[0]) &&
 							findx_pattern(data, dataType, i + 100, length, &__OSInitSystemCallSigs[0]) &&
+							findx_pattern(data, dataType, i + 107, length, &__OSSetInterruptHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 218, length, &OSGetArenaHiSigs[0]) &&
 							findx_pattern(data, dataType, i + 220, length, &OSGetArenaLoSigs[0]) &&
 							findx_pattern(data, dataType, i + 235, length, &OSEnableInterruptsSig))
@@ -1206,6 +1214,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  98, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  99, length, &OSExceptionInitSigs[0]) &&
 							findx_pattern(data, dataType, i + 100, length, &__OSInitSystemCallSigs[0]) &&
+							findx_pattern(data, dataType, i + 107, length, &__OSSetInterruptHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 186, length, &OSGetArenaHiSigs[0]) &&
 							findx_pattern(data, dataType, i + 188, length, &OSGetArenaLoSigs[0]) &&
 							findx_pattern(data, dataType, i + 205, length, &OSEnableInterruptsSig))
@@ -1219,6 +1228,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 110, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i + 111, length, &OSExceptionInitSigs[0]) &&
 							findx_pattern(data, dataType, i + 112, length, &__OSInitSystemCallSigs[0]) &&
+							findx_pattern(data, dataType, i + 119, length, &__OSSetInterruptHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 211, length, &OSGetArenaHiSigs[0]) &&
 							findx_pattern(data, dataType, i + 213, length, &OSGetArenaLoSigs[0]) &&
 							findx_pattern(data, dataType, i + 230, length, &OSEnableInterruptsSig))
@@ -1232,6 +1242,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 112, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i + 113, length, &OSExceptionInitSigs[0]) &&
 							findx_pattern(data, dataType, i + 114, length, &__OSInitSystemCallSigs[0]) &&
+							findx_pattern(data, dataType, i + 121, length, &__OSSetInterruptHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 213, length, &OSGetArenaHiSigs[0]) &&
 							findx_pattern(data, dataType, i + 215, length, &OSGetArenaLoSigs[0]) &&
 							findx_pattern(data, dataType, i + 232, length, &OSEnableInterruptsSig))
@@ -1244,6 +1255,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  57, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  58, length, &OSExceptionInitSigs[1]) &&
 							findx_pattern(data, dataType, i +  59, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i +  65, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 139, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 141, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 154, length, &OSEnableInterruptsSig))
@@ -1256,6 +1268,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  57, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  58, length, &OSExceptionInitSigs[1]) &&
 							findx_pattern(data, dataType, i +  59, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i +  65, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 160, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 162, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 175, length, &OSEnableInterruptsSig))
@@ -1268,6 +1281,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  57, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  58, length, &OSExceptionInitSigs[1]) &&
 							findx_pattern(data, dataType, i +  59, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i +  65, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 161, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 163, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 176, length, &OSEnableInterruptsSig))
@@ -1281,6 +1295,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  60, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  61, length, &OSExceptionInitSigs[1]) &&
 							findx_pattern(data, dataType, i +  62, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i +  69, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 168, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 170, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 183, length, &OSEnableInterruptsSig))
@@ -1294,6 +1309,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  60, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  61, length, &OSExceptionInitSigs[1]) &&
 							findx_pattern(data, dataType, i +  62, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i +  69, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 169, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 171, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 185, length, &OSEnableInterruptsSig))
@@ -1307,6 +1323,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  77, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  78, length, &OSExceptionInitSigs[1]) &&
 							findx_pattern(data, dataType, i +  79, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i +  86, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 185, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 187, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 201, length, &OSEnableInterruptsSig))
@@ -1320,6 +1337,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  77, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  78, length, &OSExceptionInitSigs[1]) &&
 							findx_pattern(data, dataType, i +  79, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i +  86, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 186, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 188, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 202, length, &OSEnableInterruptsSig))
@@ -1333,6 +1351,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  77, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  78, length, &OSExceptionInitSigs[1]) &&
 							findx_pattern(data, dataType, i +  79, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i +  86, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 186, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 188, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 201, length, &OSEnableInterruptsSig))
@@ -1346,6 +1365,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  77, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  78, length, &OSExceptionInitSigs[1]) &&
 							findx_pattern(data, dataType, i +  79, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i +  86, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 189, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 191, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 205, length, &OSEnableInterruptsSig))
@@ -1359,6 +1379,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  82, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  83, length, &OSExceptionInitSigs[1]) &&
 							findx_pattern(data, dataType, i +  84, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i +  91, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 194, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 196, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 210, length, &OSEnableInterruptsSig))
@@ -1372,6 +1393,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  82, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  83, length, &OSExceptionInitSigs[1]) &&
 							findx_pattern(data, dataType, i +  84, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i +  91, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 194, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 196, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 210, length, &OSEnableInterruptsSig))
@@ -1385,6 +1407,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  82, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  83, length, &OSExceptionInitSigs[1]) &&
 							findx_pattern(data, dataType, i +  84, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i +  91, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 176, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 178, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 194, length, &OSEnableInterruptsSig))
@@ -1398,6 +1421,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  74, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  75, length, &OSExceptionInitSigs[2]) &&
 							findx_pattern(data, dataType, i +  76, length, &__OSInitSystemCallSigs[2]) &&
+							findx_pattern(data, dataType, i +  83, length, &__OSSetInterruptHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i + 165, length, &OSGetArenaHiSigs[2]) &&
 							findx_pattern(data, dataType, i + 167, length, &OSGetArenaLoSigs[2]) &&
 							findx_pattern(data, dataType, i + 247, length, &OSEnableInterruptsSig))
@@ -1411,6 +1435,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  94, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  95, length, &OSExceptionInitSigs[1]) &&
 							findx_pattern(data, dataType, i +  96, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i + 103, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 200, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 202, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 218, length, &OSEnableInterruptsSig))
@@ -1424,6 +1449,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  96, length, &OSSetArenaHiSig) &&
 							findx_pattern(data, dataType, i +  97, length, &OSExceptionInitSigs[1]) &&
 							findx_pattern(data, dataType, i +  98, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i + 105, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 202, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 204, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 284, length, &OSEnableInterruptsSig))
@@ -3253,6 +3279,46 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		}
 	}
 	
+	for (j = 0; j < sizeof(OSInitSigs) / sizeof(FuncPattern); j++)
+		if (OSInitSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(OSInitSigs) / sizeof(FuncPattern) && (i = OSInitSigs[j].offsetFoundAt)) {
+		u32 *OSInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (OSInit) {
+			switch (j) {
+				case  0:
+				case  1:
+				case  2:
+				case  3: data[i +  73] = branchAndLink(SET_IRQ_HANDLER, OSInit +  73); break;
+				case  4:
+				case  5: data[i + 103] = branchAndLink(SET_IRQ_HANDLER, OSInit + 103); break;
+				case  6:
+				case  7:
+				case  8: data[i + 107] = branchAndLink(SET_IRQ_HANDLER, OSInit + 107); break;
+				case  9: data[i + 119] = branchAndLink(SET_IRQ_HANDLER, OSInit + 119); break;
+				case 10: data[i + 121] = branchAndLink(SET_IRQ_HANDLER, OSInit + 121); break;
+				case 11:
+				case 12:
+				case 13: data[i +  65] = branchAndLink(SET_IRQ_HANDLER, OSInit +  65); break;
+				case 14:
+				case 15: data[i +  69] = branchAndLink(SET_IRQ_HANDLER, OSInit +  69); break;
+				case 16:
+				case 17:
+				case 18:
+				case 19: data[i +  86] = branchAndLink(SET_IRQ_HANDLER, OSInit +  86); break;
+				case 20:
+				case 21:
+				case 22: data[i +  91] = branchAndLink(SET_IRQ_HANDLER, OSInit +  91); break;
+				case 23: data[i +  83] = branchAndLink(SET_IRQ_HANDLER, OSInit +  83); break;
+				case 24: data[i + 103] = branchAndLink(SET_IRQ_HANDLER, OSInit + 103); break;
+				case 25: data[i + 105] = branchAndLink(SET_IRQ_HANDLER, OSInit + 105); break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", OSInitSigs[j].Name, OSInit);
+			patched++;
+		}
+	}
+	
 	for (j = 0; j < sizeof(OSExceptionInitSigs) / sizeof(FuncPattern); j++)
 		if (OSExceptionInitSigs[j].offsetFoundAt) break;
 	
@@ -4463,46 +4529,38 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		if (DVDInit) {
 			switch (j) {
 				case 0:
-					data[i + 20] = 0x3860001B;	// li		r3, 27
-					data[i + 23] = branchAndLink(SET_DI_HANDLER, DVDInit + 23);
+					data[i + 23] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 23);
 					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 32] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 1:
-					data[i + 18] = 0x3860001B;	// li		r3, 27
-					data[i + 21] = branchAndLink(SET_DI_HANDLER, DVDInit + 21);
+					data[i + 21] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 21);
 					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 30] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 2:
-					data[i + 20] = 0x3860001B;	// li		r3, 27
-					data[i + 23] = branchAndLink(SET_DI_HANDLER, DVDInit + 23);
+					data[i + 23] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 23);
 					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 32] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 3:
-					data[i + 19] = 0x3860001B;	// li		r3, 27
-					data[i + 20] = branchAndLink(SET_DI_HANDLER, DVDInit + 20);
+					data[i + 20] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 20);
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 4:
-					data[i + 21] = 0x3860001B;	// li		r3, 27
-					data[i + 22] = branchAndLink(SET_DI_HANDLER, DVDInit + 22);
+					data[i + 22] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 22);
 					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 5:
-					data[i + 19] = 0x3860001B;	// li		r3, 27
-					data[i + 20] = branchAndLink(SET_DI_HANDLER, DVDInit + 20);
+					data[i + 20] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 20);
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 6:
-					data[i + 17] = 0x3860001B;	// li		r3, 27
-					data[i + 19] = branchAndLink(SET_DI_HANDLER, DVDInit + 19);
+					data[i + 19] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 19);
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 7:
-					data[i + 21] = 0x3860001B;	// li		r3, 27
-					data[i + 23] = branchAndLink(SET_DI_HANDLER, DVDInit + 23);
+					data[i + 23] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 23);
 					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}

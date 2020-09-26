@@ -31,7 +31,10 @@
 #include "emulator.h"
 #include "fifo.h"
 
-static OSInterruptMask fake_interrupts = 0;
+static struct {
+	OSInterruptHandler handler[2];
+	OSInterruptMask status;
+} irq = {0};
 
 static struct {
 	union {
@@ -105,6 +108,15 @@ bool memeq(const void *a, const void *b, size_t size)
 	return true;
 }
 
+void memzero(void *buf, size_t size)
+{
+	uint8_t *b = buf;
+	uint8_t *e = b + size;
+
+	while (b != e)
+		*b++ = '\0';
+}
+
 #ifdef DTK
 static void dtk_decode_buffer(void *address, uint32_t length)
 {
@@ -167,11 +179,11 @@ static void di_update_interrupts(void)
 {
 	if ((di.reg.sr  >> 1) & (di.reg.sr  & 0b0101010) ||
 		(di.reg.cvr >> 1) & (di.reg.cvr & 0b010))
-		fake_interrupts |=  OS_INTERRUPTMASK_EMU_DI;
+		irq.status |=  OS_INTERRUPTMASK_PI_DI;
 	else
-		fake_interrupts &= ~OS_INTERRUPTMASK_EMU_DI;
+		irq.status &= ~OS_INTERRUPTMASK_PI_DI;
 
-	if (fake_interrupts)
+	if (irq.status)
 		*(volatile int *)OS_BASE_MIRRORED;
 }
 
@@ -876,7 +888,7 @@ static void dispatch_interrupt(OSInterrupt interrupt, OSContext *context)
 	OSClearContext(&exceptionContext);
 	OSSetCurrentContext(&exceptionContext);
 
-	handler = OSGetInterruptHandler(interrupt);
+	handler = irq.handler[interrupt - OS_INTERRUPT_PI_DI];
 	if (handler) handler(interrupt, &exceptionContext);
 
 	OSClearContext(&exceptionContext);
@@ -885,8 +897,8 @@ static void dispatch_interrupt(OSInterrupt interrupt, OSContext *context)
 
 static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	if (fake_interrupts) {
-		dispatch_interrupt(__builtin_clz(fake_interrupts), context);
+	if (irq.status) {
+		dispatch_interrupt(__builtin_clz(irq.status), context);
 		return;
 	}
 
@@ -914,7 +926,7 @@ static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 		}
 	}
 
-	dispatch_interrupt(OS_INTERRUPT_EMU_DI, context);
+	dispatch_interrupt(interrupt, context);
 }
 #endif
 
@@ -925,6 +937,8 @@ void *init(void *arenaLo)
 	#endif
 	OSCreateAlarm(&read_alarm);
 	OSCreateAlarm(&command_alarm);
+
+	memzero(irq.handler, sizeof(irq.handler));
 
 	OSSetExceptionHandler(OS_EXCEPTION_DSI, exception_handler);
 	#ifdef ISR
@@ -964,16 +978,25 @@ bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 	return true;
 }
 
-OSInterruptHandler set_di_handler(OSInterrupt interrupt, OSInterruptHandler handler)
+OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
-	OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
-	#ifdef BBA
-	OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
-	#endif
-	#if defined WKF || defined DI_PASSTHROUGH
-	OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
-	#endif
-	return OSSetInterruptHandler(interrupt, handler);
+	if (interrupt == OS_INTERRUPT_PI_DI) {
+		#ifndef DI_PASSTHROUGH
+		OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
+		#endif
+		#ifdef BBA
+		OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
+		#endif
+		#if defined WKF || defined DI_PASSTHROUGH
+		OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
+		#endif
+	} else {
+		OSSetInterruptHandler(interrupt, dispatch_interrupt);
+	}
+
+	OSInterruptHandler oldHandler = irq.handler[interrupt - OS_INTERRUPT_PI_DI];
+	irq.handler[interrupt - OS_INTERRUPT_PI_DI] = handler;
+	return oldHandler;
 }
 
 void idle_thread(void)

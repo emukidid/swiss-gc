@@ -92,7 +92,7 @@ _start:
 	b		init
 	b		exi_probe
 	b		exi_try_lock
-	b		set_di_handler
+	b		set_irq_handler
 	b		idle_thread
 	b		check_pad
 	b		fini
