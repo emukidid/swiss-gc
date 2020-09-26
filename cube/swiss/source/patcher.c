@@ -6550,6 +6550,14 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 14] = 0x7C7F0734;	// extsh	r31, r3
 					break;
 			}
+			if (swissSettings.forceVideoActive) {
+				switch (j) {
+					case 0: data[i + 51] = 0x38000000; break;	// li		r0, 0
+					case 1:
+					case 2: data[i +  4] = 0x3BE00000; break;	// li		r31, 0
+					case 3: data[i +  4] = 0x39800000; break;	// li		r12, 0
+				}
+			}
 			print_gecko("Found:[%s] @ %08X\n", setVerticalRegsSigs[j].Name, setVerticalRegs);
 		}
 	}

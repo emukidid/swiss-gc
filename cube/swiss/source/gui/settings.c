@@ -55,6 +55,7 @@ static char *tooltips_advanced[PAGE_ADVANCED_MAX+1] = {
 	"File Management:\n\nDisabled - Known files will load immediately instead (default)\nEnabled - A file management prompt will be displayed for all files",
 	"Auto-load all cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. sd:/cheats/GPOP8D.txt (on a compatible device)\nthen all cheats in the file will be enabled",
 	NULL,
+	NULL,
 	"Force DTV Status:\n\nDisabled - Use signal from the video interface (default)\nEnabled - Force on in case of hardware fault"
 };
 
@@ -225,6 +226,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 	}
 	else if(page_num == PAGE_ADVANCED) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Advanced Settings (3/5):"));
+		bool enabledVideoPatches = !swissSettings.disableVideoPatches;
 		drawSettingEntryBoolean(page, &page_y_ofs, "USB Gecko Debug via Slot B:", swissSettings.debugUSB, option == SET_ENABLE_USBGECKODBG, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Hide Unknown file types:", swissSettings.hideUnknownFileTypes, option == SET_HIDE_UNK, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Motor on startup:", swissSettings.stopMotor, option == SET_STOP_MOTOR, true);
@@ -232,7 +234,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryBoolean(page, &page_y_ofs, "File Management:", swissSettings.enableFileManagement, option == SET_FILE_MGMT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Auto-load all cheats:", swissSettings.autoCheats, option == SET_ALL_CHEATS, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Video Patches:", swissSettings.disableVideoPatches, option == SET_ENABLE_VIDPATCH, true);
-		drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Force Video Active:", swissSettings.forceVideoActive, option == SET_FORCE_VIDACTIVE, enabledVideoPatches);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, enabledVideoPatches);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Boot through IPL:", swissSettings.bs2Boot, option == SET_BS2BOOT, true);
 	}
 	else if(page_num == PAGE_GAME_DEFAULTS) {
@@ -439,8 +442,13 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			case SET_ENABLE_VIDPATCH:
 				swissSettings.disableVideoPatches ^= 1;
 			break;
+			case SET_FORCE_VIDACTIVE:
+				if(!swissSettings.disableVideoPatches)
+					swissSettings.forceVideoActive ^= 1;
+			break;
 			case SET_FORCE_DTVSTATUS:
-				swissSettings.forceDTVStatus ^= 1;
+				if(!swissSettings.disableVideoPatches)
+					swissSettings.forceDTVStatus ^= 1;
 			break;
 			case SET_BS2BOOT:
 				swissSettings.bs2Boot ^= 1;
