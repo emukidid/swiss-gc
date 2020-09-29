@@ -93,6 +93,8 @@ _start:
 	b		exi_probe
 	b		exi_try_lock
 	b		set_irq_handler
+	b		mask_irq
+	b		unmask_irq
 	b		idle_thread
 	b		check_pad
 	b		fini

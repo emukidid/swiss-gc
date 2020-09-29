@@ -34,6 +34,7 @@
 static struct {
 	OSInterruptHandler handler[2];
 	OSInterruptMask status;
+	OSInterruptMask mask;
 } irq = {0};
 
 static struct {
@@ -183,7 +184,7 @@ static void di_update_interrupts(void)
 	else
 		irq.status &= ~OS_INTERRUPTMASK_PI_DI;
 
-	if (irq.status)
+	if (irq.status & irq.mask)
 		*(volatile int *)OS_BASE_MIRRORED;
 }
 
@@ -897,8 +898,8 @@ static void dispatch_interrupt(OSInterrupt interrupt, OSContext *context)
 
 static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	if (irq.status) {
-		dispatch_interrupt(__builtin_clz(irq.status), context);
+	if (irq.status & irq.mask) {
+		dispatch_interrupt(__builtin_clz(irq.status & irq.mask), context);
 		return;
 	}
 
@@ -939,6 +940,7 @@ void *init(void *arenaLo)
 	OSCreateAlarm(&command_alarm);
 
 	memzero(irq.handler, sizeof(irq.handler));
+	irq.mask = 0;
 
 	OSSetExceptionHandler(OS_EXCEPTION_DSI, exception_handler);
 	#ifdef ISR
@@ -983,9 +985,9 @@ OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler han
 	if (interrupt == OS_INTERRUPT_PI_DI) {
 		#ifndef DI_PASSTHROUGH
 		OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
-		#endif
 		#ifdef BBA
 		OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
+		#endif
 		#endif
 		#if defined WKF || defined DI_PASSTHROUGH
 		OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
@@ -997,6 +999,35 @@ OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler han
 	OSInterruptHandler oldHandler = irq.handler[interrupt - OS_INTERRUPT_PI_DI];
 	irq.handler[interrupt - OS_INTERRUPT_PI_DI] = handler;
 	return oldHandler;
+}
+
+OSInterruptMask mask_irq(OSInterruptMask mask)
+{
+	irq.mask &= ~mask;
+
+	#ifndef DI_PASSTHROUGH
+	if (mask == OS_INTERRUPTMASK_PI_DI)
+		mask &= ~OS_INTERRUPTMASK_PI_DI;
+	#endif
+
+	return OSMaskInterrupts(mask);
+}
+
+OSInterruptMask unmask_irq(OSInterruptMask mask)
+{
+	irq.mask |= mask;
+
+	#ifndef DI_PASSTHROUGH
+	if (mask == OS_INTERRUPTMASK_PI_DI) {
+		mask &= ~OS_INTERRUPTMASK_PI_DI;
+		mask |=  OS_INTERRUPTMASK_MEM_ADDRESS;
+		#ifdef BBA
+		mask |=  OS_INTERRUPTMASK_EXI_2_EXI;
+		#endif
+	}
+	#endif
+
+	return OSUnmaskInterrupts(mask);
 }
 
 void idle_thread(void)

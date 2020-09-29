@@ -3269,10 +3269,8 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *PrepareExec = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (PrepareExec) {
-			if (devices[DEVICE_CUR] == &__device_fsp)
-				data[i + 47] = 0x3C600801;	// lis		r3, 0x0801
-			else if (devices[DEVICE_CUR]->emulate & EMU_READ)
-				data[i + 47] = 0x3C600800;	// lis		r3, 0x0800
+			data[i + 46] = branchAndLink(MASK_IRQ,   PrepareExec + 46);
+			data[i + 48] = branchAndLink(UNMASK_IRQ, PrepareExec + 48);
 			
 			print_gecko("Found:[%s] @ %08X\n", PrepareExecSig.Name, PrepareExec);
 			patched++;
@@ -3394,18 +3392,16 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *__OSBootDolSimple = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__OSBootDolSimple) {
-			if (devices[DEVICE_CUR] == &__device_fsp) {
-				switch (j) {
-					case 0: data[i + 44] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 1:
-					case 2: data[i + 43] = 0x3C600801; break;	// lis		r3, 0x0801
-				}
-			} else if (devices[DEVICE_CUR]->emulate & EMU_READ) {
-				switch (j) {
-					case 0: data[i + 44] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 1:
-					case 2: data[i + 43] = 0x3C600800; break;	// lis		r3, 0x0800
-				}
+			switch (j) {
+				case 0:
+					data[i + 43] = branchAndLink(MASK_IRQ,   __OSBootDolSimple + 43);
+					data[i + 45] = branchAndLink(UNMASK_IRQ, __OSBootDolSimple + 45);
+					break;
+				case 1:
+				case 2:
+					data[i + 42] = branchAndLink(MASK_IRQ,   __OSBootDolSimple + 42);
+					data[i + 44] = branchAndLink(UNMASK_IRQ, __OSBootDolSimple + 44);
+					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", __OSBootDolSimpleSigs[j].Name, __OSBootDolSimple);
 			patched++;
@@ -3472,36 +3468,46 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *__OSReboot = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__OSReboot) {
-			if (devices[DEVICE_CUR] == &__device_fsp) {
-				switch (j) {
-					case  0: data[i + 42] = 0x3C600801; break;	// lis		r3, 0x0801
-					case  1: data[i + 50] = 0x3C600801; break;	// lis		r3, 0x0801
-					case  2:
-					case  3: data[i + 49] = 0x3C600801; break;	// lis		r3, 0x0801
-					case  4: data[i + 46] = 0x3C600801; break;	// lis		r3, 0x0801
-					case  6: data[i + 32] = 0x3C600801; break;	// lis		r3, 0x0801
-					case  7: data[i + 39] = 0x3C600801; break;	// lis		r3, 0x0801
-					case  8:
-					case  9: data[i + 37] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 10:
-					case 11: data[i + 33] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 12: data[i + 32] = 0x3C600801; break;	// lis		r3, 0x0801
-				}
-			} else if (devices[DEVICE_CUR]->emulate & EMU_READ) {
-				switch (j) {
-					case  0: data[i + 42] = 0x3C600800; break;	// lis		r3, 0x0800
-					case  1: data[i + 50] = 0x3C600800; break;	// lis		r3, 0x0800
-					case  2:
-					case  3: data[i + 49] = 0x3C600800; break;	// lis		r3, 0x0800
-					case  4: data[i + 46] = 0x3C600800; break;	// lis		r3, 0x0800
-					case  6: data[i + 32] = 0x3C600800; break;	// lis		r3, 0x0800
-					case  7: data[i + 39] = 0x3C600800; break;	// lis		r3, 0x0800
-					case  8:
-					case  9: data[i + 37] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 10:
-					case 11: data[i + 33] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 12: data[i + 32] = 0x3C600800; break;	// lis		r3, 0x0800
-				}
+			switch (j) {
+				case 0:
+					data[i + 41] = branchAndLink(MASK_IRQ,   __OSReboot + 41);
+					data[i + 43] = branchAndLink(UNMASK_IRQ, __OSReboot + 43);
+					break;
+				case 1:
+					data[i + 49] = branchAndLink(MASK_IRQ,   __OSReboot + 49);
+					data[i + 51] = branchAndLink(UNMASK_IRQ, __OSReboot + 51);
+					break;
+				case 2:
+				case 3:
+					data[i + 48] = branchAndLink(MASK_IRQ,   __OSReboot + 48);
+					data[i + 50] = branchAndLink(UNMASK_IRQ, __OSReboot + 50);
+					break;
+				case 4:
+					data[i + 45] = branchAndLink(MASK_IRQ,   __OSReboot + 45);
+					data[i + 47] = branchAndLink(UNMASK_IRQ, __OSReboot + 47);
+					break;
+				case 6:
+					data[i + 31] = branchAndLink(MASK_IRQ,   __OSReboot + 31);
+					data[i + 33] = branchAndLink(UNMASK_IRQ, __OSReboot + 33);
+					break;
+				case 7:
+					data[i + 38] = branchAndLink(MASK_IRQ,   __OSReboot + 38);
+					data[i + 40] = branchAndLink(UNMASK_IRQ, __OSReboot + 40);
+					break;
+				case 8:
+				case 9:
+					data[i + 36] = branchAndLink(MASK_IRQ,   __OSReboot + 36);
+					data[i + 38] = branchAndLink(UNMASK_IRQ, __OSReboot + 38);
+					break;
+				case 10:
+				case 11:
+					data[i + 32] = branchAndLink(MASK_IRQ,   __OSReboot + 32);
+					data[i + 34] = branchAndLink(UNMASK_IRQ, __OSReboot + 34);
+					break;
+				case 12:
+					data[i + 31] = branchAndLink(MASK_IRQ,   __OSReboot + 31);
+					data[i + 33] = branchAndLink(UNMASK_IRQ, __OSReboot + 33);
+					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", __OSRebootSigs[j].Name, __OSReboot);
 			patched++;
@@ -3970,12 +3976,12 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *AlarmHandlerForTimeout = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (AlarmHandlerForTimeout) {
-			if (devices[DEVICE_CUR]->emulate & EMU_READ) {
-				switch (j) {
-					case 0: data[i + 5] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 1: data[i + 1] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 2: data[i + 2] = 0x3C600800; break;	// lis		r3, 0x0800
-				}
+			switch (j) {
+				case 0:
+				case 1:
+				case 2:
+					data[i + 6] = branchAndLink(MASK_IRQ, AlarmHandlerForTimeout + 6);
+					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", AlarmHandlerForTimeoutSigs[j].Name, AlarmHandlerForTimeout);
 			patched++;
@@ -4530,62 +4536,47 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			switch (j) {
 				case 0:
 					data[i + 23] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 23);
+					data[i + 25] = branchAndLink(UNMASK_IRQ,      DVDInit + 25);
 					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 32] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 1:
 					data[i + 21] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 21);
+					data[i + 23] = branchAndLink(UNMASK_IRQ,      DVDInit + 23);
 					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 30] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 2:
 					data[i + 23] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 23);
+					data[i + 25] = branchAndLink(UNMASK_IRQ,      DVDInit + 25);
 					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 32] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 3:
 					data[i + 20] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 20);
+					data[i + 22] = branchAndLink(UNMASK_IRQ,      DVDInit + 22);
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 4:
 					data[i + 22] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 22);
+					data[i + 24] = branchAndLink(UNMASK_IRQ,      DVDInit + 24);
 					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 5:
 					data[i + 20] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 20);
+					data[i + 22] = branchAndLink(UNMASK_IRQ,      DVDInit + 22);
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 6:
 					data[i + 19] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 19);
+					data[i + 21] = branchAndLink(UNMASK_IRQ,      DVDInit + 21);
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 7:
 					data[i + 23] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 23);
+					data[i + 25] = branchAndLink(UNMASK_IRQ,      DVDInit + 25);
 					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-			}
-			if (devices[DEVICE_CUR] == &__device_fsp) {
-				switch (j) {
-					case 0: data[i + 24] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 1: data[i + 22] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 2: data[i + 24] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 3: data[i + 21] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 4: data[i + 23] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 5: data[i + 21] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 6: data[i + 20] = 0x3C600801; break;	// lis		r3, 0x0801
-					case 7: data[i + 24] = 0x3C600801; break;	// lis		r3, 0x0801
-				}
-			} else if (devices[DEVICE_CUR]->emulate & EMU_READ) {
-				switch (j) {
-					case 0: data[i + 24] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 1: data[i + 22] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 2: data[i + 24] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 3: data[i + 21] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 4: data[i + 23] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 5: data[i + 21] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 6: data[i + 20] = 0x3C600800; break;	// lis		r3, 0x0800
-					case 7: data[i + 24] = 0x3C600800; break;	// lis		r3, 0x0800
-				}
 			}
 			print_gecko("Found:[%s] @ %08X\n", DVDInitSigs[j].Name, DVDInit);
 			patched++;
