@@ -1035,7 +1035,8 @@ void idle_thread(void)
 	disable_interrupts();
 	trickle_read();
 	#ifdef BBA
-	exi_interrupt_handler(OS_INTERRUPT_EXI_2_EXI, OSGetCurrentContext());
+	OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
+	OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
 	#endif
 	enable_interrupts();
 }
