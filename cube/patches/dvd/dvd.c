@@ -59,7 +59,7 @@ void schedule_read(OSTick ticks)
 	OSCancelAlarm(&read_alarm);
 
 	if (!dvd.read) {
-		dvd_read_diskid(NULL);
+		di_complete_transfer();
 		return;
 	}
 

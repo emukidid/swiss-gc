@@ -175,7 +175,6 @@ bool dtk_fill_buffer(void)
 }
 #endif
 
-#ifndef DI_PASSTHROUGH
 static void di_update_interrupts(void)
 {
 	if ((di.reg.sr  >> 1) & (di.reg.sr  & 0b0101010) ||
@@ -216,6 +215,7 @@ static void di_close_cover(void)
 	di_update_interrupts();
 }
 
+#ifndef DI_PASSTHROUGH
 static void di_execute_command(OSAlarm *alarm)
 {
 	uint32_t result = 0;
@@ -520,8 +520,8 @@ static void di_read(unsigned index, uint32_t *value)
 	*value = di.regs[index];
 	#else
 	switch (index) {
-		default:
-			*value = DI[index];
+		case 0 ... 1:
+			*value = di.regs[index] | DI[index];
 			break;
 		case 2 ... 4:
 		case 7 ... 8:
@@ -533,6 +533,8 @@ static void di_read(unsigned index, uint32_t *value)
 			else
 				*value = di.regs[index];
 			break;
+		default:
+			*value = DI[index];
 	}
 	#endif
 }
@@ -540,22 +542,22 @@ static void di_read(unsigned index, uint32_t *value)
 static void di_write(unsigned index, uint32_t value)
 {
 	switch (index) {
-		#ifndef DI_PASSTHROUGH
 		case 0:
+			#ifdef DI_PASSTHROUGH
+			DI[0] = value & ~(di.reg.sr & 0b1010100);
+			#endif
 			di.reg.sr = ((value & 0b1010100) ^ di.reg.sr) & di.reg.sr;
 			di.reg.sr = (value & 0b0101011) | (di.reg.sr & ~0b0101010);
 			di_update_interrupts();
 			break;
 		case 1:
+			#ifdef DI_PASSTHROUGH
+			DI[1] = value & ~(di.reg.cvr & 0b100);
+			#endif
 			di.reg.cvr = ((value & 0b100) ^ di.reg.cvr) & di.reg.cvr;
 			di.reg.cvr = (value & 0b010) | (di.reg.cvr & ~0b010);
 			di_update_interrupts();
 			break;
-		#else
-		default:
-			DI[index] = value;
-			break;
-		#endif
 		case 2 ... 4:
 		case 8:
 			di.regs[index] = value;
@@ -983,14 +985,12 @@ bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
 	if (interrupt == OS_INTERRUPT_PI_DI) {
-		#ifndef DI_PASSTHROUGH
+		#if defined WKF || defined DI_PASSTHROUGH
+		OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
+		#endif
 		OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
 		#ifdef BBA
 		OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
-		#endif
-		#endif
-		#if defined WKF || defined DI_PASSTHROUGH
-		OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
 		#endif
 	} else {
 		OSSetInterruptHandler(interrupt, dispatch_interrupt);
@@ -1017,15 +1017,15 @@ OSInterruptMask unmask_irq(OSInterruptMask mask)
 {
 	irq.mask |= mask;
 
-	#ifndef DI_PASSTHROUGH
 	if (mask == OS_INTERRUPTMASK_PI_DI) {
+		#ifndef DI_PASSTHROUGH
 		mask &= ~OS_INTERRUPTMASK_PI_DI;
+		#endif
 		mask |=  OS_INTERRUPTMASK_MEM_ADDRESS;
 		#ifdef BBA
 		mask |=  OS_INTERRUPTMASK_EXI_2_EXI;
 		#endif
 	}
-	#endif
 
 	return OSUnmaskInterrupts(mask);
 }
