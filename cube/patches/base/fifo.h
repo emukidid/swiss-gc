@@ -20,6 +20,7 @@
 #ifndef FIFO_H
 #define FIFO_H
 
+void fifo_init(void *buffer, int length);
 void fifo_reset(void);
 int fifo_space(void);
 int fifo_size(void);

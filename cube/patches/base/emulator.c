@@ -121,7 +121,7 @@ void memzero(void *buf, size_t size)
 #ifdef DTK
 static void dtk_decode_buffer(void *address, uint32_t length)
 {
-	sample_t stream[448] __attribute((aligned(32)));
+	sample_t stream[448];
 
 	adpcm_decode(&dtk.adpcm, stream, *dtk.buffer, 448);
 	fifo_write(stream, sizeof(stream));
@@ -635,14 +635,14 @@ static void dsp_write(unsigned index, uint16_t value)
 
 				if (aicr & 0b0000001) {
 					if (aicr & 0b1000000) {
-						sample_t stream[count * 3 / 2] __attribute((aligned(32)));
+						sample_t stream[count * 3 / 2];
 
 						if (fifo_size() >= sizeof(stream)) {
 							fifo_read(stream, sizeof(stream));
 							mix_samples(buffer, stream, true, count, aivr, aivr >> 8);
 						}
 					} else {
-						sample_t stream[count] __attribute((aligned(32)));
+						sample_t stream[count];
 
 						if (fifo_size() >= sizeof(stream)) {
 							fifo_read(stream, sizeof(stream));
@@ -933,7 +933,7 @@ static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 }
 #endif
 
-void *init(void *arenaLo)
+void *init(void *arenaHi)
 {
 	#ifdef BBA
 	OSCreateAlarm(&bba_alarm);
@@ -950,10 +950,11 @@ void *init(void *arenaLo)
 	#endif
 
 	#ifdef DTK
-	dsp.buffer[0] = OSCachedToUncached(arenaLo); arenaLo += sizeof(*dsp.buffer[0]);
-	dsp.buffer[1] = OSCachedToUncached(arenaLo); arenaLo += sizeof(*dsp.buffer[1]);
+	arenaHi -= sizeof(*dsp.buffer[0]); dsp.buffer[0] = OSCachedToUncached(arenaHi);
+	arenaHi -= sizeof(*dsp.buffer[1]); dsp.buffer[1] = OSCachedToUncached(arenaHi);
+	arenaHi -= 7168; fifo_init(arenaHi, 7168);
 	#endif
-	return arenaLo;
+	return arenaHi;
 }
 
 bool exi_probe(int32_t chan)

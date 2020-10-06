@@ -3577,8 +3577,8 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	if (j < sizeof(__OSInitSystemCallSigs) / sizeof(FuncPattern) && (i = __OSInitSystemCallSigs[j].offsetFoundAt)) {
 		u32 *__OSInitSystemCall = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		u32 *OSGetArenaLo = Calc_ProperAddress(data, dataType, OSGetArenaLoSigs[j].offsetFoundAt * sizeof(u32));
-		u32 *OSSetArenaLo = Calc_ProperAddress(data, dataType, OSSetArenaLoSig.offsetFoundAt * sizeof(u32));
+		u32 *OSGetArenaHi = Calc_ProperAddress(data, dataType, OSGetArenaHiSigs[j].offsetFoundAt * sizeof(u32));
+		u32 *OSSetArenaHi = Calc_ProperAddress(data, dataType, OSSetArenaHiSig.offsetFoundAt * sizeof(u32));
 		
 		if (__OSInitSystemCall) {
 			switch (j) {
@@ -3587,9 +3587,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 12] = 0x3CA00000 | ((u32)__OSInitSystemCall + 0x8000) >> 16;
 					data[i + 13] = 0x38050000 | ((u32)__OSInitSystemCall & 0xFFFF);
 					data[i + 17] = 0x38800020;	// li		r4, 32
-					data[i + 20] = OSGetArenaLo ? branchAndLink(OSGetArenaLo, __OSInitSystemCall + 20) : 0x38600000;
+					data[i + 20] = OSGetArenaHi ? branchAndLink(OSGetArenaHi, __OSInitSystemCall + 20) : 0x38600000;
 					data[i + 21] = branchAndLink(INIT, __OSInitSystemCall + 21);
-					data[i + 22] = OSSetArenaLo ? branchAndLink(OSSetArenaLo, __OSInitSystemCall + 22) : 0x60000000;
+					data[i + 22] = OSSetArenaHi ? branchAndLink(OSSetArenaHi, __OSInitSystemCall + 22) : 0x60000000;
 					break;
 				case 1:
 					data[i +  4] = 0x3CA00000 | ((u32)VAR_JUMP_TABLE + 0x8000) >> 16;
@@ -3597,9 +3597,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  7] = 0x3BE50000 | ((u32)VAR_JUMP_TABLE & 0xFFFF);
 					data[i +  8] = 0x38030000 | ((u32)__OSInitSystemCall & 0xFFFF);
 					data[i + 14] = 0x38800020;	// li		r4, 32
-					data[i + 17] = OSGetArenaLo ? branchAndLink(OSGetArenaLo, __OSInitSystemCall + 17) : 0x38600000;
+					data[i + 17] = OSGetArenaHi ? branchAndLink(OSGetArenaHi, __OSInitSystemCall + 17) : 0x38600000;
 					data[i + 18] = branchAndLink(INIT, __OSInitSystemCall + 18);
-					data[i + 19] = OSSetArenaLo ? branchAndLink(OSSetArenaLo, __OSInitSystemCall + 19) : 0x60000000;
+					data[i + 19] = OSSetArenaHi ? branchAndLink(OSSetArenaHi, __OSInitSystemCall + 19) : 0x60000000;
 					break;
 				case 2:
 					data[i +  3] = 0x3C600000 | ((u32)__OSInitSystemCall + 0x8000) >> 16;
@@ -3610,9 +3610,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 12] = 0x38800020;	// li		r4, 32
 					data[i + 13] = 0x38630000 | ((u32)VAR_JUMP_TABLE & 0xFFFF);
 					data[i + 16] = 0x60000000;	// nop
-					data[i + 17] = OSGetArenaLo ? branchAndLink(OSGetArenaLo, __OSInitSystemCall + 17) : 0x38600000;
+					data[i + 17] = OSGetArenaHi ? branchAndLink(OSGetArenaHi, __OSInitSystemCall + 17) : 0x38600000;
 					data[i + 18] = branchAndLink(INIT, __OSInitSystemCall + 18);
-					data[i + 19] = OSSetArenaLo ? branchAndLink(OSSetArenaLo, __OSInitSystemCall + 19) : 0x60000000;
+					data[i + 19] = OSSetArenaHi ? branchAndLink(OSSetArenaHi, __OSInitSystemCall + 19) : 0x60000000;
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", __OSInitSystemCallSigs[j].Name, __OSInitSystemCall);
