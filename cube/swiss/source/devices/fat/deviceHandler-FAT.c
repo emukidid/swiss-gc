@@ -179,7 +179,7 @@ s32 deviceHandler_FAT_seekFile(file_handle* file, u32 where, u32 type){
 s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
   	if(!file->ffsFp) {
 		file->ffsFp = malloc(sizeof(FIL));
-		if(f_open(file->ffsFp, file->name, FA_READ | FA_WRITE ) != FR_OK) {
+		if(f_open(file->ffsFp, file->name, FA_READ ) != FR_OK) {
 			free(file->ffsFp);
 			file->ffsFp = 0;
 			return -1;
