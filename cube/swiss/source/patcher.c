@@ -4383,6 +4383,28 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *SetExiInterruptMask = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SetExiInterruptMask) {
+			switch (j) {
+				case 0:
+				case 1:
+					data[i + 29] = branchAndLink(MASK_IRQ,   SetExiInterruptMask + 29);
+					data[i + 32] = branchAndLink(UNMASK_IRQ, SetExiInterruptMask + 32);
+					data[i + 41] = branchAndLink(MASK_IRQ,   SetExiInterruptMask + 41);
+					data[i + 44] = branchAndLink(UNMASK_IRQ, SetExiInterruptMask + 44);
+					break;
+				case 2:
+				case 3:
+					data[i + 27] = branchAndLink(MASK_IRQ,   SetExiInterruptMask + 27);
+					data[i + 30] = branchAndLink(UNMASK_IRQ, SetExiInterruptMask + 30);
+					data[i + 39] = branchAndLink(MASK_IRQ,   SetExiInterruptMask + 39);
+					data[i + 42] = branchAndLink(UNMASK_IRQ, SetExiInterruptMask + 42);
+					break;
+				case 4:
+					data[i + 29] = branchAndLink(MASK_IRQ,   SetExiInterruptMask + 29);
+					data[i + 32] = branchAndLink(UNMASK_IRQ, SetExiInterruptMask + 32);
+					data[i + 41] = branchAndLink(MASK_IRQ,   SetExiInterruptMask + 41);
+					data[i + 44] = branchAndLink(UNMASK_IRQ, SetExiInterruptMask + 44);
+					break;
+			}
 			if (devices[DEVICE_CUR] == &__device_fsp) {
 				switch (j) {
 					case 0:
@@ -4413,6 +4435,14 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *CompleteTransfer = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (CompleteTransfer) {
+			switch (j) {
+				case 0:
+					data[i + 32] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 1:
+					data[i + 33] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", CompleteTransferSigs[j].Name, CompleteTransfer);
 			patched++;
 		}
@@ -4425,6 +4455,29 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIImm = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIImm) {
+			switch (j) {
+				case 0:
+				case 1:
+					data[i +  73] = branchAndLink(UNMASK_IRQ, EXIImm + 73);
+					data[i +  93] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 111] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i +  37] = branchAndLink(UNMASK_IRQ, EXIImm + 37);
+					data[i + 119] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 133] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 3:
+					data[i +  37] = branchAndLink(UNMASK_IRQ, EXIImm + 37);
+					data[i + 118] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 135] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 4:
+					data[i +  38] = branchAndLink(UNMASK_IRQ, EXIImm + 38);
+					data[i +  58] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  76] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", EXIImmSigs[j].Name, EXIImm);
 			patched++;
 		}
@@ -4437,6 +4490,29 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIDma = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIDma) {
+			switch (j) {
+				case 0:
+				case 1:
+					data[i +  80] = branchAndLink(UNMASK_IRQ, EXIDma + 80);
+					data[i +  88] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  94] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 102] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i +  37] = branchAndLink(UNMASK_IRQ, EXIDma + 37);
+					data[i +  39] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 3:
+					data[i +  37] = branchAndLink(UNMASK_IRQ, EXIDma + 37);
+					data[i +  42] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 4:
+					data[i +  38] = branchAndLink(UNMASK_IRQ, EXIDma + 38);
+					data[i +  47] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  54] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  63] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", EXIDmaSigs[j].Name, EXIDma);
 			patched++;
 		}
@@ -4449,6 +4525,62 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXISync = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISync) {
+			switch (j) {
+				case 0:
+					data[i +  24] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  44] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  52] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 1:
+					data[i +  25] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  45] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  53] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i +  25] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  45] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  53] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  62] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  71] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 3:
+					data[i +  25] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  50] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  58] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  67] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  76] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 4:
+					data[i +   5] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i +  32] = 0x3CA00C00;	// lis		r5, 0x0C00
+					break;
+				case 5:
+					data[i +   5] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i +  31] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 110] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 6:
+					data[i +   3] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i +  31] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 110] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 7:
+					data[i +  10] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  32] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 110] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 8:
+					data[i +  14] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  41] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  65] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  73] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 9:
+					data[i +  10] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  32] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 115] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", EXISyncSigs[j].Name, EXISync);
 			patched++;
 		}
@@ -4461,6 +4593,23 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIClearInterrupts = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIClearInterrupts) {
+			switch (j) {
+				case 0:
+					data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 39] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 1:
+					data[i + 21] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 40] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i +  1] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 3:
+					data[i +  4] = 0x3CE00C00;	// lis		r7, 0x0C00
+					data[i + 20] = 0x3CE00C00;	// lis		r7, 0x0C00
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", EXIClearInterruptsSigs[j].Name, EXIClearInterrupts);
 			patched++;
 		}
@@ -4479,18 +4628,21 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 20] = branchAndLink(EXI_PROBE, __EXIProbe + 20);
 					data[i + 21] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 22] = 0x41820144;	// beq		+81
+					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 1:
 					data[i + 19] = 0x7FE3FB78;	// mr		r3, r31
 					data[i + 20] = branchAndLink(EXI_PROBE, __EXIProbe + 20);
 					data[i + 21] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 22] = 0x41820150;	// beq		+84
+					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 2:
 					data[i + 20] = 0x7FE3FB78;	// mr		r3, r31
 					data[i + 21] = branchAndLink(EXI_PROBE, __EXIProbe + 21);
 					data[i + 22] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 23] = 0x41820150;	// beq		+84
+					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 3:
 					data[i +  8] = data[i + 9];
@@ -4498,6 +4650,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
 					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 12] = 0x41820124;	// beq		+73
+					data[i + 17] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 				case 4:
 					data[i +  6] = data[i + 7];
@@ -4507,18 +4660,23 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
 					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 12] = 0x41820130;	// beq		+76
+					data[i + 17] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 				case 5:
 					data[i +  9] = 0x7F83E378;	// mr		r3, r28
 					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
 					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 12] = 0x41820130;	// beq		+76
+					data[i + 17] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 6:
 					data[i +  9] = 0x7FE3FB78;	// mr		r3, r31
 					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
 					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 12] = 0x41820170;	// beq		+92
+					data[i + 18] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 36] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", __EXIProbeSigs[j].Name, __EXIProbe);
@@ -4533,6 +4691,14 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *__EXIAttach = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__EXIAttach) {
+			switch (j) {
+				case 0:
+					data[i + 43] = branchAndLink(UNMASK_IRQ, __EXIAttach + 43);
+					break;
+				case 1:
+					data[i + 44] = branchAndLink(UNMASK_IRQ, __EXIAttach + 44);
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", __EXIAttachSigs[j].Name, __EXIAttach);
 			patched++;
 		}
@@ -4545,6 +4711,21 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIAttach = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIAttach) {
+			switch (j) {
+				case 0:
+					data[i + 47] = branchAndLink(UNMASK_IRQ, EXIAttach + 47);
+					break;
+				case 3:
+					data[i + 42] = branchAndLink(UNMASK_IRQ, EXIAttach + 42);
+					break;
+				case 4:
+				case 5:
+					data[i + 52] = branchAndLink(UNMASK_IRQ, EXIAttach + 52);
+					break;
+				case 6:
+					data[i + 58] = branchAndLink(UNMASK_IRQ, EXIAttach + 58);
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", EXIAttachSigs[j].Name, EXIAttach);
 			patched++;
 		}
@@ -4560,8 +4741,20 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			switch (j) {
 				case 0:
 				case 1:
+					data[i + 11] = 0x2C1D0003;	// cmpwi	r29, 3
+					data[i + 44] = branchAndLink(MASK_IRQ, EXIDetach + 44);
+					break;
 				case 2:
 					data[i + 11] = 0x2C1D0003;	// cmpwi	r29, 3
+					data[i + 45] = branchAndLink(MASK_IRQ, EXIDetach + 45);
+					break;
+				case 3:
+				case 4:
+				case 5:
+					data[i + 36] = branchAndLink(MASK_IRQ, EXIDetach + 36);
+					break;
+				case 6:
+					data[i + 34] = branchAndLink(MASK_IRQ, EXIDetach + 34);
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", EXIDetachSigs[j].Name, EXIDetach);
@@ -4580,6 +4773,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			data[i + 44] = branchAndLink(EXI_TRY_LOCK, EXISelectSD + 44);
 			data[i + 45] = 0x2C030000;	// cmpwi	r3, 0
 			data[i + 46] = 0x40820014;	// bne		+5
+			data[i + 55] = 0x3C600C00;	// lis		r3, 0x0C00
+			data[i + 73] = branchAndLink(MASK_IRQ, EXISelectSD + 73);
+			data[i + 76] = branchAndLink(MASK_IRQ, EXISelectSD + 76);
 			
 			print_gecko("Found:[%s] @ %08X\n", EXISelectSDSig.Name, EXISelectSD);
 			patched++;
@@ -4596,25 +4792,44 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			switch (j) {
 				case 0:
 				case 1:
-					data[i + 54] = 0x41820028;	// beq		+10
-					data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
-					data[i + 65] = 0x389D0000;	// addi		r4, r29, 0
-					data[i + 66] = 0x38BE0000;	// addi		r5, r30, 0
-					data[i + 67] = branchAndLink(EXI_TRY_LOCK, EXISelect + 67);
-					data[i + 68] = 0x2C030000;	// cmpwi	r3, 0
-					data[i + 69] = 0x40820014;	// bne		+5
+					data[i +  54] = 0x41820028;	// beq		+10
+					data[i +  64] = 0x387F0000;	// addi		r3, r31, 0
+					data[i +  65] = 0x389D0000;	// addi		r4, r29, 0
+					data[i +  66] = 0x38BE0000;	// addi		r5, r30, 0
+					data[i +  67] = branchAndLink(EXI_TRY_LOCK, EXISelect + 67);
+					data[i +  68] = 0x2C030000;	// cmpwi	r3, 0
+					data[i +  69] = 0x40820014;	// bne		+5
+					data[i +  79] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  91] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 104] = branchAndLink(MASK_IRQ, EXISelect + 104);
+					data[i + 107] = branchAndLink(MASK_IRQ, EXISelect + 107);
 					break;
 				case 2:
-					data[i + 54] = 0x41820028;	// beq		+10
-					data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
-					data[i + 65] = 0x389C0000;	// addi		r4, r28, 0
-					data[i + 66] = 0x38BD0000;	// addi		r5, r29, 0
-					data[i + 67] = branchAndLink(EXI_TRY_LOCK, EXISelect + 67);
-					data[i + 68] = 0x2C030000;	// cmpwi	r3, 0
-					data[i + 69] = 0x40820014;	// bne		+5
+					data[i +  54] = 0x41820028;	// beq		+10
+					data[i +  64] = 0x387F0000;	// addi		r3, r31, 0
+					data[i +  65] = 0x389C0000;	// addi		r4, r28, 0
+					data[i +  66] = 0x38BD0000;	// addi		r5, r29, 0
+					data[i +  67] = branchAndLink(EXI_TRY_LOCK, EXISelect + 67);
+					data[i +  68] = 0x2C030000;	// cmpwi	r3, 0
+					data[i +  69] = 0x40820014;	// bne		+5
+					data[i +  79] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  91] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 104] = branchAndLink(MASK_IRQ, EXISelect + 104);
+					data[i + 107] = branchAndLink(MASK_IRQ, EXISelect + 107);
 					break;
 				case 3:
 				case 4:
+					data[i + 17] = 0x41820028;	// beq		+10
+					data[i + 27] = 0x387B0000;	// addi		r3, r27, 0
+					data[i + 28] = 0x389C0000;	// addi		r4, r28, 0
+					data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
+					data[i + 30] = branchAndLink(EXI_TRY_LOCK, EXISelect + 30);
+					data[i + 31] = 0x2C030000;	// cmpwi	r3, 0
+					data[i + 32] = 0x40820014;	// bne		+5
+					data[i + 38] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 63] = branchAndLink(MASK_IRQ, EXISelect + 63);
+					data[i + 66] = branchAndLink(MASK_IRQ, EXISelect + 66);
+					break;
 				case 5:
 					data[i + 17] = 0x41820028;	// beq		+10
 					data[i + 27] = 0x387B0000;	// addi		r3, r27, 0
@@ -4623,6 +4838,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 30] = branchAndLink(EXI_TRY_LOCK, EXISelect + 30);
 					data[i + 31] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 32] = 0x40820014;	// bne		+5
+					data[i + 41] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 63] = branchAndLink(MASK_IRQ, EXISelect + 63);
+					data[i + 66] = branchAndLink(MASK_IRQ, EXISelect + 66);
 					break;
 				case 6:
 					data[i + 17] = 0x41820028;	// beq		+10
@@ -4632,6 +4850,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 30] = branchAndLink(EXI_TRY_LOCK, EXISelect + 30);
 					data[i + 31] = 0x2C030000;	// cmpwi	r3, 0
 					data[i + 32] = 0x40820014;	// bne		+5
+					data[i + 42] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 55] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 68] = branchAndLink(MASK_IRQ, EXISelect + 68);
+					data[i + 71] = branchAndLink(MASK_IRQ, EXISelect + 71);
 					break;
 			}
 			print_gecko("Found:[%s] @ %08X\n", EXISelectSigs[j].Name, EXISelect);
@@ -4646,6 +4868,39 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIDeselect = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIDeselect) {
+			switch (j) {
+				case 0:
+				case 1:
+					data[i + 33] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 39] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 52] = branchAndLink(UNMASK_IRQ, EXIDeselect + 52);
+					data[i + 55] = branchAndLink(UNMASK_IRQ, EXIDeselect + 55);
+					break;
+				case 2:
+					data[i + 34] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 40] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 53] = branchAndLink(UNMASK_IRQ, EXIDeselect + 53);
+					data[i + 56] = branchAndLink(UNMASK_IRQ, EXIDeselect + 56);
+					break;
+				case 3:
+				case 4:
+				case 5:
+					data[i + 22] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 41] = branchAndLink(UNMASK_IRQ, EXIDeselect + 41);
+					data[i + 44] = branchAndLink(UNMASK_IRQ, EXIDeselect + 44);
+					break;
+				case 6:
+					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 41] = branchAndLink(UNMASK_IRQ, EXIDeselect + 41);
+					data[i + 44] = branchAndLink(UNMASK_IRQ, EXIDeselect + 44);
+					break;
+				case 7:
+					data[i + 23] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 42] = branchAndLink(UNMASK_IRQ, EXIDeselect + 42);
+					data[i + 45] = branchAndLink(UNMASK_IRQ, EXIDeselect + 45);
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", EXIDeselectSigs[j].Name, EXIDeselect);
 			patched++;
 		}
@@ -4658,6 +4913,21 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIIntrruptHandler) {
+			switch (j) {
+				case 3:
+					data[i + 10] = 0x3CA00C00;	// lis		r5, 0x0C00
+					break;
+				case 4:
+					data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 5:
+					data[i + 15] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 6:
+					data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 24] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", EXIIntrruptHandlerSigs[j].Name, EXIIntrruptHandler);
 			patched++;
 		}
@@ -4670,6 +4940,30 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *TCIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (TCIntrruptHandler) {
+			switch (j) {
+				case 0:
+				case 1:
+					data[i + 27] = branchAndLink(MASK_IRQ, TCIntrruptHandler + 27);
+					break;
+				case 2:
+					data[i + 28] = branchAndLink(MASK_IRQ, TCIntrruptHandler + 28);
+					break;
+				case 3:
+				case 4:
+					data[i + 21] = branchAndLink(MASK_IRQ, TCIntrruptHandler + 21);
+					data[i + 23] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 5:
+					data[i + 21] = branchAndLink(MASK_IRQ, TCIntrruptHandler + 21);
+					data[i + 23] = 0x3CC00C00;	// lis		r6, 0x0C00
+					break;
+				case 6:
+					data[i + 17] = branchAndLink(MASK_IRQ, TCIntrruptHandler + 17);
+					data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 53] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", TCIntrruptHandlerSigs[j].Name, TCIntrruptHandler);
 			patched++;
 		}
@@ -4682,6 +4976,35 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXTIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXTIntrruptHandler) {
+			switch (j) {
+				case 0:
+				case 1:
+					data[i + 23] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 23);
+					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i + 24] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 24);
+					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 3:
+					data[i + 24] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 24);
+					break;
+				case 4:
+					data[i + 16] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 16);
+					data[i + 18] = 0x3CA00C00;	// lis		r5, 0x0C00
+					break;
+				case 5:
+					data[i + 15] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 15);
+					data[i + 17] = 0x3C800C00;	// lis		r4, 0x0C00
+					break;
+				case 6:
+					data[i + 13] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 13);
+					data[i + 17] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 7:
+					data[i + 18] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 18);
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", EXTIntrruptHandlerSigs[j].Name, EXTIntrruptHandler);
 			patched++;
 		}
@@ -4694,6 +5017,111 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIInit) {
+			switch (j) {
+				case 0:
+					data[i +  5] = branchAndLink(MASK_IRQ, EXIInit + 5);
+					data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 10] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 21] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 21);
+					data[i + 25] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 25);
+					data[i + 29] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 29);
+					data[i + 33] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 33);
+					data[i + 37] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 37);
+					data[i + 41] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 41);
+					data[i + 45] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 45);
+					data[i + 49] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 49);
+					break;
+				case 1:
+					data[i +  7] = branchAndLink(MASK_IRQ, EXIInit + 7);
+					data[i +  9] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 12] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 15] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 18] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 23] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 23);
+					data[i + 27] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 27);
+					data[i + 31] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 31);
+					data[i + 35] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 35);
+					data[i + 39] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 39);
+					data[i + 43] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 43);
+					data[i + 47] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 47);
+					data[i + 51] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 51);
+					break;
+				case 2:
+					data[i +  3] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  8] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 20] = branchAndLink(MASK_IRQ, EXIInit + 20);
+					data[i + 22] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 31] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 36] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 36);
+					data[i + 40] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 40);
+					data[i + 44] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 44);
+					data[i + 48] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 48);
+					data[i + 52] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 52);
+					data[i + 56] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 56);
+					data[i + 60] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 60);
+					data[i + 64] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 64);
+					break;
+				case 3:
+				case 4:
+					data[i +  9] = branchAndLink(MASK_IRQ, EXIInit + 9);
+					data[i + 10] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 21] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 21);
+					data[i + 26] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 26);
+					data[i + 31] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 31);
+					data[i + 34] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 34);
+					data[i + 37] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 37);
+					data[i + 40] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 40);
+					data[i + 43] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 43);
+					data[i + 46] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 46);
+					break;
+				case 5:
+					data[i +  5] = branchAndLink(MASK_IRQ, EXIInit + 5);
+					data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 10] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 21] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 21);
+					data[i + 25] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 25);
+					data[i + 29] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 29);
+					data[i + 33] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 33);
+					data[i + 37] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 37);
+					data[i + 41] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 41);
+					data[i + 45] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 45);
+					data[i + 49] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 49);
+					break;
+				case 6:
+					data[i + 11] = branchAndLink(MASK_IRQ, EXIInit + 11);
+					data[i + 13] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 23] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 23);
+					data[i + 28] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 28);
+					data[i + 33] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 33);
+					data[i + 36] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 36);
+					data[i + 39] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 39);
+					data[i + 42] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 42);
+					data[i + 45] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 45);
+					data[i + 48] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 48);
+					break;
+				case 7:
+				case 8:
+				case 9:
+					data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 23] = branchAndLink(MASK_IRQ, EXIInit + 23);
+					data[i + 25] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 35] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 35);
+					data[i + 40] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 40);
+					data[i + 45] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 45);
+					data[i + 48] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 48);
+					data[i + 51] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 51);
+					data[i + 54] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 54);
+					data[i + 57] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 57);
+					data[i + 60] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 60);
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", EXIInitSigs[j].Name, EXIInit);
 			patched++;
 		}
@@ -4736,6 +5164,25 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIGetID = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIGetID) {
+			switch (j) {
+				case 4:
+					data[i +  42] = branchAndLink(UNMASK_IRQ, EXIGetID +  42);
+					data[i + 168] = branchAndLink(MASK_IRQ,   EXIGetID + 168);
+					break;
+				case 5:
+				case 6:
+					data[i +  56] = branchAndLink(UNMASK_IRQ, EXIGetID +  56);
+					data[i + 190] = branchAndLink(MASK_IRQ,   EXIGetID + 190);
+					break;
+				case 7:
+					data[i +  57] = branchAndLink(UNMASK_IRQ, EXIGetID +  57);
+					data[i + 193] = branchAndLink(MASK_IRQ,   EXIGetID + 193);
+					break;
+				case 8:
+					data[i +  65] = branchAndLink(UNMASK_IRQ, EXIGetID +  65);
+					data[i + 203] = branchAndLink(MASK_IRQ,   EXIGetID + 203);
+					break;
+			}
 			print_gecko("Found:[%s] @ %08X\n", EXIGetIDSigs[j].Name, EXIGetID);
 			patched++;
 		}

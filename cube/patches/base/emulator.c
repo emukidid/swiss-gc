@@ -32,7 +32,7 @@
 #include "fifo.h"
 
 static struct {
-	OSInterruptHandler handler[2];
+	OSInterruptHandler handler[OS_INTERRUPT_MAX];
 	OSInterruptMask status;
 	OSInterruptMask mask;
 } irq = {0};
@@ -116,6 +116,16 @@ void memzero(void *buf, size_t size)
 
 	while (b != e)
 		*b++ = '\0';
+}
+
+static void exi_read(unsigned index, uint32_t *value)
+{
+	*value = (*EXI)[index];
+}
+
+static void exi_write(unsigned index, uint32_t value)
+{
+	(*EXI)[index] = value;
 }
 
 #ifdef DTK
@@ -763,6 +773,10 @@ static bool ppc_load32(uint32_t address, uint32_t *value)
 		di_read((address >> 2) & 0xF, value);
 		return true;
 	}
+	if ((address & ~0x3FC) == 0x0C006800) {
+		exi_read((address >> 2) & 0xF, value);
+		return true;
+	}
 	return false;
 }
 
@@ -774,6 +788,10 @@ static bool ppc_store32(uint32_t address, uint32_t value)
 	}
 	if ((address & ~0x3FC) == 0x0C006000) {
 		di_write((address >> 2) & 0xF, value);
+		return true;
+	}
+	if ((address & ~0x3FC) == 0x0C006800) {
+		exi_write((address >> 2) & 0xF, value);
 		return true;
 	}
 	return false;
@@ -804,12 +822,39 @@ static bool ppc_step(OSContext *context)
 	uint32_t opcode = *(uint32_t *)context->srr0;
 
 	switch (opcode >> 26) {
+		case 31:
+		{
+			switch ((opcode >> 1) & 0x3FF) {
+				case 23:
+				{
+					int rd = (opcode >> 21) & 0x1F;
+					int ra = (opcode >> 16) & 0x1F;
+					int rb = (opcode >> 11) & 0x1F;
+					return ppc_load32(context->gpr[ra] + context->gpr[rb], &context->gpr[rd]);
+				}
+				case 151:
+				{
+					int rd = (opcode >> 21) & 0x1F;
+					int ra = (opcode >> 16) & 0x1F;
+					int rb = (opcode >> 11) & 0x1F;
+					return ppc_store32(context->gpr[ra] + context->gpr[rb], context->gpr[rd]);
+				}
+			}
+			break;
+		}
 		case 32:
 		{
 			int rd = (opcode >> 21) & 0x1F;
 			int ra = (opcode >> 16) & 0x1F;
 			short d = opcode & 0xFFFF;
 			return ppc_load32(context->gpr[ra] + d, &context->gpr[rd]);
+		}
+		case 33:
+		{
+			int rd = (opcode >> 21) & 0x1F;
+			int ra = (opcode >> 16) & 0x1F;
+			short d = opcode & 0xFFFF;
+			return ppc_load32(context->gpr[ra] += d, &context->gpr[rd]);
 		}
 		case 36:
 		{
@@ -891,7 +936,7 @@ static void dispatch_interrupt(OSInterrupt interrupt, OSContext *context)
 	OSClearContext(&exceptionContext);
 	OSSetCurrentContext(&exceptionContext);
 
-	handler = irq.handler[interrupt - OS_INTERRUPT_PI_DI];
+	handler = irq.handler[interrupt];
 	if (handler) handler(interrupt, &exceptionContext);
 
 	OSClearContext(&exceptionContext);
@@ -954,6 +999,12 @@ void *init(void *arenaHi)
 	arenaHi -= sizeof(*dsp.buffer[1]); dsp.buffer[1] = OSCachedToUncached(arenaHi);
 	arenaHi -= 7168; fifo_init(arenaHi, 7168);
 	#endif
+
+	OSContext *context = arenaHi - sizeof(OSContext);
+	OSExceptionContext = OSCachedToPhysical(context);
+	OSCurrentContext = 
+	OSFPUContext = context;
+
 	return arenaHi;
 }
 
@@ -997,8 +1048,8 @@ OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler han
 		OSSetInterruptHandler(interrupt, dispatch_interrupt);
 	}
 
-	OSInterruptHandler oldHandler = irq.handler[interrupt - OS_INTERRUPT_PI_DI];
-	irq.handler[interrupt - OS_INTERRUPT_PI_DI] = handler;
+	OSInterruptHandler oldHandler = irq.handler[interrupt];
+	irq.handler[interrupt] = handler;
 	return oldHandler;
 }
 
