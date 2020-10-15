@@ -1661,8 +1661,14 @@ void load_file()
 			if(devices[DEVICE_CUR]->features & FEAT_BOOT_GCM)
 				load_game();
 			else {
-				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support game boot."));
-				sleep(2);
+				uiDrawObj_t *msgBox = NULL;
+				if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
+					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support game boot.\nSet EXI Speed to 16 MHz to bypass."));
+				}
+				else {
+					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support game boot."));
+				}
+				sleep(5);
 				DrawDispose(msgBox);
 			}
 			return;
