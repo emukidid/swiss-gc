@@ -1415,9 +1415,10 @@ bool manage_file() {
 					}
 					DrawUpdateProgressBarDetail(progBar, (int)((float)((float)curOffset/(float)curFile.size)*100), speed, timeStart/1000, timeremain);
 					u32 amountToCopy = curOffset + chunkSize > curFile.size ? curFile.size - curOffset : chunkSize;
+					devices[DEVICE_CUR]->seekFile(&curFile, curOffset, DEVICE_HANDLER_SEEK_SET);
 					ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
 					if(ret != amountToCopy) {	// Retry the read.
-						devices[DEVICE_CUR]->seekFile(&curFile, curFile.offset-ret, DEVICE_HANDLER_SEEK_SET);
+						devices[DEVICE_CUR]->seekFile(&curFile, curOffset, DEVICE_HANDLER_SEEK_SET);
 						ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
 						if(ret != amountToCopy) {
 							DrawDispose(progBar);
