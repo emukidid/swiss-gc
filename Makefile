@@ -115,8 +115,8 @@ package:   # create distribution package
 	@sed -i "s/emukidid <emukidid@gmail.com>/emu_kidid/g" $(SVN_REVISION)-changelog.txt
 	@mv $(SVN_REVISION)-changelog.txt $(SVN_REVISION)
 	@cp $(BUILDTOOLS)/SWISS_FILE_DESCRIPTIONS.txt $(SVN_REVISION)
-	@7z a -m0=LZMA -m1=LZMA $(SVN_REVISION).7z $(SVN_REVISION)
-	@7z t $(SVN_REVISION).7z $(SVN_REVISION)/*
+	@7z a -m0=LZMA $(SVN_REVISION).7z $(SVN_REVISION)
+	@tar cfJ $(SVN_REVISION).tar.xz $(SVN_REVISION)
 
 #------------------------------------------------------------------
 
