@@ -429,27 +429,33 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 	// Slot A - SD Card
 	if(isSDCard && slot == 0) {
 		setSDGeckoSpeed(0, swissSettings.exiSpeed);
+		__device_sd_a.features |= FEAT_BOOT_GCM;
 		ret = fatFs_Mount(0, "sda:/");
 		if(!ret) {
 			setSDGeckoSpeed(0, false);
+			__device_sd_a.features &= ~FEAT_BOOT_GCM;
 			ret = fatFs_Mount(0, "sda:/");
 		}
 	}
 	// Slot B - SD Card
 	if(isSDCard && slot == 1) {
 		setSDGeckoSpeed(1, swissSettings.exiSpeed);
+		__device_sd_b.features |= FEAT_BOOT_GCM;
 		ret = fatFs_Mount(1, "sdb:/");
 		if(!ret) {
 			setSDGeckoSpeed(1, false);
+			__device_sd_b.features &= ~FEAT_BOOT_GCM;
 			ret = fatFs_Mount(1, "sdb:/");
 		}
 	}
 	// SP2 - SD Card
 	if(isSDCard && slot == 2) {
 		setSDGeckoSpeed(2, swissSettings.exiSpeed);
+		__device_sd_c.features |= FEAT_BOOT_GCM;
 		ret = fatFs_Mount(2, "sdc:/");
 		if(!ret) {
 			setSDGeckoSpeed(2, false);
+			__device_sd_c.features &= ~FEAT_BOOT_GCM;
 			ret = fatFs_Mount(2, "sdc:/");
 		}
 	}

@@ -1661,7 +1661,7 @@ void load_file()
 			if(devices[DEVICE_CUR]->features & FEAT_BOOT_GCM)
 				load_game();
 			else {
-				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "This device does not support booting of images."));
+				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support game boot."));
 				sleep(2);
 				DrawDispose(msgBox);
 			}
