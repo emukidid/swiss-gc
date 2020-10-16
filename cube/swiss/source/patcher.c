@@ -499,32 +499,32 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	FuncPattern PPCHaltSig = 
 		{ 5, 1, 0, 0, 1, 1, NULL, 0, "PPCHalt" };
 	FuncPattern OSInitSigs[26] = {
-		{ 200,  79, 12, 34, 22,  9, NULL, 0, "OSInitD A" },
-		{ 201,  79, 12, 35, 22,  9, NULL, 0, "OSInitD B" },
-		{ 202,  79, 12, 36, 22,  9, NULL, 0, "OSInitD C" },
-		{ 206,  79, 12, 37, 22, 10, NULL, 0, "OSInitD D" },
-		{ 234,  90, 17, 44, 24,  9, NULL, 0, "OSInitD E" },
-		{ 237,  91, 17, 44, 24,  9, NULL, 0, "OSInitD F" },
-		{ 253,  97, 17, 49, 24,  9, NULL, 0, "OSInitD G" },
-		{ 261, 101, 17, 49, 26,  9, NULL, 0, "OSInitD H" },
-		{ 231,  82, 14, 49, 25,  8, NULL, 0, "OSInitD I" },
-		{ 256,  91, 14, 56, 30, 10, NULL, 0, "OSInitD J" },
-		{ 258,  92, 14, 57, 30, 10, NULL, 0, "OSInitD K" },
-		{ 161,  56, 11, 30, 21,  7, NULL, 0, "OSInit A" },
-		{ 182,  67, 14, 30, 23,  8, NULL, 0, "OSInit B" },
-		{ 183,  67, 14, 31, 23,  8, NULL, 0, "OSInit C" },
-		{ 190,  67, 16, 35, 23,  8, NULL, 0, "OSInit D" },
-		{ 192,  67, 16, 37, 23,  8, NULL, 0, "OSInit E" },
-		{ 208,  72, 19, 36, 25,  8, NULL, 0, "OSInit F" },
-		{ 209,  72, 19, 37, 25,  8, NULL, 0, "OSInit G" },
-		{ 208,  72, 19, 36, 25,  8, NULL, 0, "OSInit H" },
-		{ 212,  73, 19, 37, 25,  8, NULL, 0, "OSInit I" },
-		{ 230,  80, 20, 42, 25,  8, NULL, 0, "OSInit J" },
-		{ 238,  84, 20, 42, 27,  8, NULL, 0, "OSInit K" },
-		{ 222,  74, 17, 43, 27,  8, NULL, 0, "OSInit L" },
-		{ 277,  90, 20, 63, 30, 15, NULL, 0, "OSInit L" },	// SN Systems ProDG
-		{ 246,  83, 17, 50, 32, 10, NULL, 0, "OSInit M" },
-		{ 312,  97, 17, 71, 39, 17, NULL, 0, "OSInit N" }
+		{ 200,  79, 12, 34, 22,  9, NULL, 0, "OSInitD" },
+		{ 201,  79, 12, 35, 22,  9, NULL, 0, "OSInitD" },
+		{ 202,  79, 12, 36, 22,  9, NULL, 0, "OSInitD" },
+		{ 206,  79, 12, 37, 22, 10, NULL, 0, "OSInitD" },
+		{ 234,  90, 17, 44, 24,  9, NULL, 0, "OSInitD" },
+		{ 237,  91, 17, 44, 24,  9, NULL, 0, "OSInitD" },
+		{ 253,  97, 17, 49, 24,  9, NULL, 0, "OSInitD" },
+		{ 261, 101, 17, 49, 26,  9, NULL, 0, "OSInitD" },
+		{ 231,  82, 14, 49, 25,  8, NULL, 0, "OSInitD" },
+		{ 256,  91, 14, 56, 30, 10, NULL, 0, "OSInitD" },
+		{ 258,  92, 14, 57, 30, 10, NULL, 0, "OSInitD" },
+		{ 161,  56, 11, 30, 21,  7, NULL, 0, "OSInit" },
+		{ 182,  67, 14, 30, 23,  8, NULL, 0, "OSInit" },
+		{ 183,  67, 14, 31, 23,  8, NULL, 0, "OSInit" },
+		{ 190,  67, 16, 35, 23,  8, NULL, 0, "OSInit" },
+		{ 192,  67, 16, 37, 23,  8, NULL, 0, "OSInit" },
+		{ 208,  72, 19, 36, 25,  8, NULL, 0, "OSInit" },
+		{ 209,  72, 19, 37, 25,  8, NULL, 0, "OSInit" },
+		{ 208,  72, 19, 36, 25,  8, NULL, 0, "OSInit" },
+		{ 212,  73, 19, 37, 25,  8, NULL, 0, "OSInit" },
+		{ 230,  80, 20, 42, 25,  8, NULL, 0, "OSInit" },
+		{ 238,  84, 20, 42, 27,  8, NULL, 0, "OSInit" },
+		{ 222,  74, 17, 43, 27,  8, NULL, 0, "OSInit" },
+		{ 277,  90, 20, 63, 30, 15, NULL, 0, "OSInit" },	// SN Systems ProDG
+		{ 246,  83, 17, 50, 32, 10, NULL, 0, "OSInit" },
+		{ 312,  97, 17, 71, 39, 17, NULL, 0, "OSInit" }
 	};
 	FuncPattern OSExceptionInitSigs[3] = {
 		{ 164, 61,  6, 18, 14, 14, NULL, 0, "OSExceptionInitD" },
@@ -568,16 +568,16 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	FuncPattern OSSetArenaLoSig = 
 		{ 2, 0, 1, 0, 0, 0, NULL, 0, "OSSetArenaLo" };
 	FuncPattern DCFlushRangeNoSyncSigs[2] = {
-		{ 12, 3, 0, 0, 1, 2, NULL, 0, "DCFlushRangeNoSync A" },
-		{ 11, 2, 0, 0, 0, 3, NULL, 0, "DCFlushRangeNoSync B" }
+		{ 12, 3, 0, 0, 1, 2, NULL, 0, "DCFlushRangeNoSync" },
+		{ 11, 2, 0, 0, 0, 3, NULL, 0, "DCFlushRangeNoSync" }
 	};
 	FuncPattern ICFlashInvalidateSig = 
 		{ 4, 0, 0, 0, 0, 2, NULL, 0, "ICFlashInvalidate" };
 	FuncPattern OSSetCurrentContextSig = 
 		{ 23, 4, 4, 0, 0, 5, NULL, 0, "OSSetCurrentContext" };
 	FuncPattern OSLoadContextSigs[2] = {
-		{ 54, 23, 1, 0, 3, 17, NULL, 0, "OSLoadContext A" },
-		{ 54, 23, 1, 0, 4, 17, NULL, 0, "OSLoadContext B" }
+		{ 54, 23, 1, 0, 3, 17, NULL, 0, "OSLoadContext" },
+		{ 54, 23, 1, 0, 4, 17, NULL, 0, "OSLoadContext" }
 	};
 	FuncPattern OSClearContextSigs[3] = {
 		{ 12, 6, 1, 0, 0, 1, NULL, 0, "OSClearContextD" },
@@ -585,18 +585,18 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{  9, 3, 1, 0, 0, 1, NULL, 0, "OSClearContext" }	// SN Systems ProDG
 	};
 	FuncPattern __OSUnhandledExceptionSigs[7] = {
-		{ 106, 34, 2, 13, 13,  5, NULL, 0, "__OSUnhandledExceptionD A" },
-		{ 147, 58, 2, 23,  6,  7, NULL, 0, "__OSUnhandledExceptionD B" },
-		{ 211, 75, 7, 33, 10, 10, NULL, 0, "__OSUnhandledExceptionD C" },
-		{  93, 27, 2, 12, 13,  4, NULL, 0, "__OSUnhandledException A" },
-		{ 128, 43, 2, 22,  6,  5, NULL, 0, "__OSUnhandledException B" },
-		{ 186, 56, 7, 32, 10,  7, NULL, 0, "__OSUnhandledException C" },
-		{ 194, 53, 7, 34, 10, 15, NULL, 0, "__OSUnhandledException C" }	// SN Systems ProDG
+		{ 106, 34, 2, 13, 13,  5, NULL, 0, "__OSUnhandledExceptionD" },
+		{ 147, 58, 2, 23,  6,  7, NULL, 0, "__OSUnhandledExceptionD" },
+		{ 211, 75, 7, 33, 10, 10, NULL, 0, "__OSUnhandledExceptionD" },
+		{  93, 27, 2, 12, 13,  4, NULL, 0, "__OSUnhandledException" },
+		{ 128, 43, 2, 22,  6,  5, NULL, 0, "__OSUnhandledException" },
+		{ 186, 56, 7, 32, 10,  7, NULL, 0, "__OSUnhandledException" },
+		{ 194, 53, 7, 34, 10, 15, NULL, 0, "__OSUnhandledException" }	// SN Systems ProDG
 	};
 	FuncPattern __OSBootDolSimpleSigs[3] = {
 		{ 109,  35, 15, 25,  3, 10, NULL, 0, "__OSBootDolSimpleD" },
-		{ 310, 100, 17, 53, 29, 40, NULL, 0, "__OSBootDolSimple A" },
-		{ 289, 104, 17, 53, 29, 16, NULL, 0, "__OSBootDolSimple B" }
+		{ 310, 100, 17, 53, 29, 40, NULL, 0, "__OSBootDolSimple" },
+		{ 289, 104, 17, 53, 29, 16, NULL, 0, "__OSBootDolSimple" }
 	};
 	FuncPattern OSDisableInterruptsSig = 
 		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
@@ -610,11 +610,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{  6,  1, 0, 0, 0, 3, NULL, 0, "__OSSetInterruptHandler" }	// SN Systems ProDG
 	};
 	FuncPattern SetInterruptMaskSigs[5] = {
-		{ 179, 31, 7, 0,  6, 3, NULL, 0, "SetInterruptMaskD A" },
-		{ 189, 29, 7, 0, 17, 1, NULL, 0, "SetInterruptMaskD B" },
-		{ 172, 28, 5, 0,  6, 6, NULL, 0, "SetInterruptMask A" },
-		{ 182, 26, 5, 0, 17, 4, NULL, 0, "SetInterruptMask B" },
-		{  39,  2, 0, 0,  9, 1, NULL, 0, "SetInterruptMask B" }	// SN Systems ProDG
+		{ 179, 31, 7, 0,  6, 3, NULL, 0, "SetInterruptMaskD" },
+		{ 189, 29, 7, 0, 17, 1, NULL, 0, "SetInterruptMaskD" },
+		{ 172, 28, 5, 0,  6, 6, NULL, 0, "SetInterruptMask" },
+		{ 182, 26, 5, 0, 17, 4, NULL, 0, "SetInterruptMask" },
+		{  39,  2, 0, 0,  9, 1, NULL, 0, "SetInterruptMask" }	// SN Systems ProDG
 	};
 	FuncPattern __OSMaskInterruptsSigs[3] = {
 		{ 34, 7, 3, 6, 1, 5, NULL, 0, "__OSMaskInterruptsD" },
@@ -627,20 +627,20 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 32, 8, 6, 3, 1, 4, NULL, 0, "__OSUnmaskInterrupts" }	// SN Systems ProDG
 	};
 	FuncPattern __OSRebootSigs[14] = {
-		{  81, 34, 6, 16,  1,  2, NULL, 0, "__OSRebootD A" },
-		{  89, 39, 8, 17,  1,  2, NULL, 0, "__OSRebootD B" },
-		{  88, 39, 7, 17,  1,  2, NULL, 0, "__OSRebootD C" },
-		{  90, 39, 7, 19,  1,  2, NULL, 0, "__OSRebootD D" },
-		{ 159, 56, 8, 32,  8, 18, NULL, 0, "__OSRebootD E" },
-		{  25, 10, 5,  6,  0,  2, NULL, 0, "__OSRebootD F" },
-		{ 108, 36, 7, 16, 26,  3, NULL, 0, "__OSReboot A" },
-		{ 115, 40, 9, 17, 26,  3, NULL, 0, "__OSReboot B" },
-		{ 112, 39, 8, 17, 26,  2, NULL, 0, "__OSReboot C" },
-		{ 114, 39, 8, 19, 26,  2, NULL, 0, "__OSReboot D" },
-		{ 199, 56, 7, 42, 13, 36, NULL, 0, "__OSReboot E" },	// SN Systems ProDG
-		{ 208, 54, 7, 40, 23, 34, NULL, 0, "__OSReboot E" },
-		{ 204, 54, 6, 40, 23, 35, NULL, 0, "__OSReboot F" },
-		{  28, 11, 5,  6,  0,  2, NULL, 0, "__OSReboot G" }
+		{  81, 34, 6, 16,  1,  2, NULL, 0, "__OSRebootD" },
+		{  89, 39, 8, 17,  1,  2, NULL, 0, "__OSRebootD" },
+		{  88, 39, 7, 17,  1,  2, NULL, 0, "__OSRebootD" },
+		{  90, 39, 7, 19,  1,  2, NULL, 0, "__OSRebootD" },
+		{ 159, 56, 8, 32,  8, 18, NULL, 0, "__OSRebootD" },
+		{  25, 10, 5,  6,  0,  2, NULL, 0, "__OSRebootD" },
+		{ 108, 36, 7, 16, 26,  3, NULL, 0, "__OSReboot" },
+		{ 115, 40, 9, 17, 26,  3, NULL, 0, "__OSReboot" },
+		{ 112, 39, 8, 17, 26,  2, NULL, 0, "__OSReboot" },
+		{ 114, 39, 8, 19, 26,  2, NULL, 0, "__OSReboot" },
+		{ 199, 56, 7, 42, 13, 36, NULL, 0, "__OSReboot" },	// SN Systems ProDG
+		{ 208, 54, 7, 40, 23, 34, NULL, 0, "__OSReboot" },
+		{ 204, 54, 6, 40, 23, 35, NULL, 0, "__OSReboot" },
+		{  28, 11, 5,  6,  0,  2, NULL, 0, "__OSReboot" }
 	};
 	FuncPattern __OSDoHotResetSigs[3] = {
 		{ 17, 6, 3, 3, 0, 2, NULL, 0, "__OSDoHotResetD" },
@@ -648,24 +648,24 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 17, 5, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" }	// SN Systems ProDG
 	};
 	FuncPattern OSResetSystemSigs[18] = {
-		{  64, 13, 2, 15,  6, 8, NULL, 0, "OSResetSystemD A" },
-		{  65, 13, 2, 16,  6, 8, NULL, 0, "OSResetSystemD B" },
-		{  90, 28, 3, 25,  5, 7, NULL, 0, "OSResetSystemD C" },
-		{  97, 29, 3, 27,  5, 8, NULL, 0, "OSResetSystemD D" },
-		{ 102, 32, 3, 29,  5, 8, NULL, 0, "OSResetSystemD E" },
-		{ 115, 36, 4, 30,  8, 8, NULL, 0, "OSResetSystemD F" },
-		{  87, 28, 2, 21,  4, 6, NULL, 0, "OSResetSystemD G" },
-		{ 110, 19, 2, 16, 24, 9, NULL, 0, "OSResetSystem A" },
-		{ 111, 19, 2, 17, 24, 9, NULL, 0, "OSResetSystem B" },
-		{ 134, 34, 2, 22, 23, 9, NULL, 0, "OSResetSystem C" },
-		{ 147, 37, 2, 21, 30, 8, NULL, 0, "OSResetSystem D" },
-		{ 154, 38, 2, 23, 30, 9, NULL, 0, "OSResetSystem E" },
-		{ 158, 41, 2, 24, 30, 9, NULL, 0, "OSResetSystem F" },
-		{ 148, 44, 2, 26, 16, 9, NULL, 0, "OSResetSystem F" },	// SN Systems ProDG
-		{ 162, 41, 2, 24, 34, 9, NULL, 0, "OSResetSystem G" },
-		{ 174, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem H" },
-		{ 175, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem I" },
-		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem J" }
+		{  64, 13, 2, 15,  6, 8, NULL, 0, "OSResetSystemD" },
+		{  65, 13, 2, 16,  6, 8, NULL, 0, "OSResetSystemD" },
+		{  90, 28, 3, 25,  5, 7, NULL, 0, "OSResetSystemD" },
+		{  97, 29, 3, 27,  5, 8, NULL, 0, "OSResetSystemD" },
+		{ 102, 32, 3, 29,  5, 8, NULL, 0, "OSResetSystemD" },
+		{ 115, 36, 4, 30,  8, 8, NULL, 0, "OSResetSystemD" },
+		{  87, 28, 2, 21,  4, 6, NULL, 0, "OSResetSystemD" },
+		{ 110, 19, 2, 16, 24, 9, NULL, 0, "OSResetSystem" },
+		{ 111, 19, 2, 17, 24, 9, NULL, 0, "OSResetSystem" },
+		{ 134, 34, 2, 22, 23, 9, NULL, 0, "OSResetSystem" },
+		{ 147, 37, 2, 21, 30, 8, NULL, 0, "OSResetSystem" },
+		{ 154, 38, 2, 23, 30, 9, NULL, 0, "OSResetSystem" },
+		{ 158, 41, 2, 24, 30, 9, NULL, 0, "OSResetSystem" },
+		{ 148, 44, 2, 26, 16, 9, NULL, 0, "OSResetSystem" },	// SN Systems ProDG
+		{ 162, 41, 2, 24, 34, 9, NULL, 0, "OSResetSystem" },
+		{ 174, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem" },
+		{ 175, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem" },
+		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem" }
 	};
 	FuncPattern SystemCallVectorSig = 
 		{ 7, 0, 0, 0, 0, 1, NULL, 0, "SystemCallVector" };
@@ -675,11 +675,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 24, 14, 2, 3, 0, 4, NULL, 0, "__OSInitSystemCall" }	// SN Systems ProDG
 	};
 	FuncPattern SelectThreadSigs[5] = {
-		{ 123, 39, 10, 11, 14, 12, NULL, 0, "SelectThreadD A" },
-		{ 122, 38,  9, 12, 14, 12, NULL, 0, "SelectThreadD B" },
-		{ 128, 41, 20,  8, 12, 12, NULL, 0, "SelectThread A" },
-		{ 138, 44, 20,  8, 12, 12, NULL, 0, "SelectThread B" },
-		{ 141, 51, 19,  8, 12, 14, NULL, 0, "SelectThread B" }	// SN Systems ProDG
+		{ 123, 39, 10, 11, 14, 12, NULL, 0, "SelectThreadD" },
+		{ 122, 38,  9, 12, 14, 12, NULL, 0, "SelectThreadD" },
+		{ 128, 41, 20,  8, 12, 12, NULL, 0, "SelectThread" },
+		{ 138, 44, 20,  8, 12, 12, NULL, 0, "SelectThread" },
+		{ 141, 51, 19,  8, 12, 14, NULL, 0, "SelectThread" }	// SN Systems ProDG
 	};
 	FuncPattern OSGetTimeSig = 
 		{ 6, 0, 0, 0, 0, 4, NULL, 0, "OSGetTime" };
@@ -689,179 +689,179 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 25, 8, 5, 3, 0, 3, NULL, 0, "__OSGetSystemTime" }	// SN Systems ProDG
 	};
 	FuncPattern SetExiInterruptMaskSigs[5] = {
-		{ 63, 18, 3, 7, 17, 3, NULL, 0, "SetExiInterruptMaskD A" },
-		{ 63, 18, 3, 7, 17, 3, NULL, 0, "SetExiInterruptMaskD B" },
-		{ 61, 19, 3, 7, 17, 2, NULL, 0, "SetExiInterruptMask A" },
-		{ 61, 19, 3, 7, 17, 2, NULL, 0, "SetExiInterruptMask B" },
-		{ 63, 18, 3, 7, 17, 2, NULL, 0, "SetExiInterruptMask C" }
+		{ 63, 18, 3, 7, 17, 3, NULL, 0, "SetExiInterruptMaskD" },
+		{ 63, 18, 3, 7, 17, 3, NULL, 0, "SetExiInterruptMaskD" },
+		{ 61, 19, 3, 7, 17, 2, NULL, 0, "SetExiInterruptMask" },
+		{ 61, 19, 3, 7, 17, 2, NULL, 0, "SetExiInterruptMask" },
+		{ 63, 18, 3, 7, 17, 2, NULL, 0, "SetExiInterruptMask" }
 	};
 	FuncPattern CompleteTransferSigs[2] = {
-		{ 53, 16, 3, 1, 7, 4, NULL, 0, "CompleteTransferD A" },
-		{ 54, 17, 3, 1, 7, 4, NULL, 0, "CompleteTransferD B" }
+		{ 53, 16, 3, 1, 7, 4, NULL, 0, "CompleteTransferD" },
+		{ 54, 17, 3, 1, 7, 4, NULL, 0, "CompleteTransferD" }
 	};
 	FuncPattern EXIImmSigs[5] = {
-		{ 122, 38, 7, 9, 12,  9, NULL, 0, "EXIImmD A" },
-		{ 122, 38, 7, 9, 12,  9, NULL, 0, "EXIImmD B" },
-		{ 151, 27, 8, 5, 12, 17, NULL, 0, "EXIImm A" },
-		{ 151, 36, 8, 5, 12, 32, NULL, 0, "EXIImm B" },
-		{  87, 24, 7, 5,  7,  9, NULL, 0, "EXIImm C" }
+		{ 122, 38, 7, 9, 12,  9, NULL, 0, "EXIImmD" },
+		{ 122, 38, 7, 9, 12,  9, NULL, 0, "EXIImmD" },
+		{ 151, 27, 8, 5, 12, 17, NULL, 0, "EXIImm" },
+		{ 151, 36, 8, 5, 12, 32, NULL, 0, "EXIImm" },
+		{  87, 24, 7, 5,  7,  9, NULL, 0, "EXIImm" }
 	};
 	FuncPattern EXIDmaSigs[5] = {
-		{ 113, 42, 5, 10, 8, 6, NULL, 0, "EXIDmaD A" },
-		{ 113, 42, 5, 10, 8, 6, NULL, 0, "EXIDmaD B" },
-		{  59, 17, 7,  5, 2, 4, NULL, 0, "EXIDma A" },
-		{  59, 17, 7,  5, 2, 5, NULL, 0, "EXIDma B" },
-		{  74, 28, 8,  5, 2, 8, NULL, 0, "EXIDma C" }
+		{ 113, 42, 5, 10, 8, 6, NULL, 0, "EXIDmaD" },
+		{ 113, 42, 5, 10, 8, 6, NULL, 0, "EXIDmaD" },
+		{  59, 17, 7,  5, 2, 4, NULL, 0, "EXIDma" },
+		{  59, 17, 7,  5, 2, 5, NULL, 0, "EXIDma" },
+		{  74, 28, 8,  5, 2, 8, NULL, 0, "EXIDma" }
 	};
 	FuncPattern EXISyncSigs[10] = {
-		{  80, 25, 2, 6,  7,  7, NULL, 0, "EXISyncD A" },
-		{  80, 24, 2, 6,  7,  6, NULL, 0, "EXISyncD B" },
-		{ 102, 33, 2, 6,  8,  8, NULL, 0, "EXISyncD C" },
-		{ 107, 34, 2, 7,  9,  8, NULL, 0, "EXISyncD D" },
-		{ 116, 27, 6, 2, 10, 17, NULL, 0, "EXISync A" },
-		{ 130, 31, 3, 3, 11, 17, NULL, 0, "EXISync B" },
-		{ 142, 35, 3, 3, 12, 17, NULL, 0, "EXISync C" },
-		{ 142, 39, 3, 3, 12, 19, NULL, 0, "EXISync D" },
-		{  92, 26, 3, 3,  9,  7, NULL, 0, "EXISync E" },
-		{ 147, 40, 3, 4, 13, 19, NULL, 0, "EXISync F" }
+		{  80, 25, 2, 6,  7,  7, NULL, 0, "EXISyncD" },
+		{  80, 24, 2, 6,  7,  6, NULL, 0, "EXISyncD" },
+		{ 102, 33, 2, 6,  8,  8, NULL, 0, "EXISyncD" },
+		{ 107, 34, 2, 7,  9,  8, NULL, 0, "EXISyncD" },
+		{ 116, 27, 6, 2, 10, 17, NULL, 0, "EXISync" },
+		{ 130, 31, 3, 3, 11, 17, NULL, 0, "EXISync" },
+		{ 142, 35, 3, 3, 12, 17, NULL, 0, "EXISync" },
+		{ 142, 39, 3, 3, 12, 19, NULL, 0, "EXISync" },
+		{  92, 26, 3, 3,  9,  7, NULL, 0, "EXISync" },
+		{ 147, 40, 3, 4, 13, 19, NULL, 0, "EXISync" }
 	};
 	FuncPattern EXIClearInterruptsSigs[4] = {
-		{ 48, 13, 5, 1, 5, 3, NULL, 0, "EXIClearInterruptsD A" },
-		{ 49, 14, 5, 1, 5, 3, NULL, 0, "EXIClearInterruptsD B" },
-		{ 18,  3, 1, 0, 3, 2, NULL, 0, "EXIClearInterrupts A" },
-		{ 27,  5, 1, 0, 3, 0, NULL, 0, "EXIClearInterrupts B" }
+		{ 48, 13, 5, 1, 5, 3, NULL, 0, "EXIClearInterruptsD" },
+		{ 49, 14, 5, 1, 5, 3, NULL, 0, "EXIClearInterruptsD" },
+		{ 18,  3, 1, 0, 3, 2, NULL, 0, "EXIClearInterrupts" },
+		{ 27,  5, 1, 0, 3, 0, NULL, 0, "EXIClearInterrupts" }
 	};
 	FuncPattern EXIProbeResetSigs[2] = {
-		{ 16,  7, 4, 2, 0, 2, NULL, 0, "EXIProbeResetD A" },
-		{ 23, 12, 6, 2, 0, 2, NULL, 0, "EXIProbeResetD B" }
+		{ 16,  7, 4, 2, 0, 2, NULL, 0, "EXIProbeResetD" },
+		{ 23, 12, 6, 2, 0, 2, NULL, 0, "EXIProbeResetD" }
 	};
 	FuncPattern __EXIProbeSigs[7] = {
-		{ 108, 38, 2, 7, 10, 10, NULL, 0, "EXIProbeD A" },
-		{ 111, 38, 5, 7, 10, 10, NULL, 0, "__EXIProbeD A" },
-		{ 112, 39, 5, 7, 10, 10, NULL, 0, "__EXIProbeD B" },
-		{  90, 30, 4, 5,  8, 10, NULL, 0, "EXIProbe A" },
-		{  93, 30, 7, 5,  8, 10, NULL, 0, "__EXIProbe A" },
-		{  93, 30, 7, 5,  8,  9, NULL, 0, "__EXIProbe B" },
-		{ 109, 34, 6, 5,  8,  8, NULL, 0, "__EXIProbe C" }
+		{ 108, 38, 2, 7, 10, 10, NULL, 0, "EXIProbeD" },
+		{ 111, 38, 5, 7, 10, 10, NULL, 0, "__EXIProbeD" },
+		{ 112, 39, 5, 7, 10, 10, NULL, 0, "__EXIProbeD" },
+		{  90, 30, 4, 5,  8, 10, NULL, 0, "EXIProbe" },
+		{  93, 30, 7, 5,  8, 10, NULL, 0, "__EXIProbe" },
+		{  93, 30, 7, 5,  8,  9, NULL, 0, "__EXIProbe" },
+		{ 109, 34, 6, 5,  8,  8, NULL, 0, "__EXIProbe" }
 	};
 	FuncPattern __EXIAttachSigs[2] = {
-		{ 55, 18, 5, 7, 3, 5, NULL, 0, "__EXIAttachD A" },
-		{ 56, 19, 5, 7, 3, 5, NULL, 0, "__EXIAttachD B" }
+		{ 55, 18, 5, 7, 3, 5, NULL, 0, "__EXIAttachD" },
+		{ 56, 19, 5, 7, 3, 5, NULL, 0, "__EXIAttachD" }
 	};
 	FuncPattern EXIAttachSigs[7] = {
-		{ 59, 19, 5,  8, 5, 5, NULL, 0, "EXIAttachD A" },
-		{ 43, 11, 3,  6, 3, 5, NULL, 0, "EXIAttachD B" },
-		{ 44, 12, 3,  6, 3, 5, NULL, 0, "EXIAttachD C" },
-		{ 57, 18, 9,  6, 3, 4, NULL, 0, "EXIAttach A" },
-		{ 67, 19, 4, 11, 3, 3, NULL, 0, "EXIAttach B" },
-		{ 67, 18, 4, 11, 3, 5, NULL, 0, "EXIAttach C" },
-		{ 74, 19, 5, 11, 3, 7, NULL, 0, "EXIAttach D" }
+		{ 59, 19, 5,  8, 5, 5, NULL, 0, "EXIAttachD" },
+		{ 43, 11, 3,  6, 3, 5, NULL, 0, "EXIAttachD" },
+		{ 44, 12, 3,  6, 3, 5, NULL, 0, "EXIAttachD" },
+		{ 57, 18, 9,  6, 3, 4, NULL, 0, "EXIAttach" },
+		{ 67, 19, 4, 11, 3, 3, NULL, 0, "EXIAttach" },
+		{ 67, 18, 4, 11, 3, 5, NULL, 0, "EXIAttach" },
+		{ 74, 19, 5, 11, 3, 7, NULL, 0, "EXIAttach" }
 	};
 	FuncPattern EXIDetachSigs[7] = {
-		{ 53, 16, 3, 6, 5, 5, NULL, 0, "EXIDetachD A" },
-		{ 53, 16, 3, 6, 5, 5, NULL, 0, "EXIDetachD B" },
-		{ 54, 17, 3, 6, 5, 5, NULL, 0, "EXIDetachD C" },
-		{ 47, 15, 6, 5, 3, 3, NULL, 0, "EXIDetach A" },
-		{ 47, 15, 6, 5, 3, 3, NULL, 0, "EXIDetach B" },
-		{ 47, 15, 6, 5, 3, 4, NULL, 0, "EXIDetach C" },
-		{ 43, 12, 3, 5, 3, 4, NULL, 0, "EXIDetach D" }
+		{ 53, 16, 3, 6, 5, 5, NULL, 0, "EXIDetachD" },
+		{ 53, 16, 3, 6, 5, 5, NULL, 0, "EXIDetachD" },
+		{ 54, 17, 3, 6, 5, 5, NULL, 0, "EXIDetachD" },
+		{ 47, 15, 6, 5, 3, 3, NULL, 0, "EXIDetach" },
+		{ 47, 15, 6, 5, 3, 3, NULL, 0, "EXIDetach" },
+		{ 47, 15, 6, 5, 3, 4, NULL, 0, "EXIDetach" },
+		{ 43, 12, 3, 5, 3, 4, NULL, 0, "EXIDetach" }
 	};
 	FuncPattern EXISelectSDSig = 
 		{ 85, 23, 4, 7, 14, 6, NULL, 0, "EXISelectSD" };
 	FuncPattern EXISelectSigs[7] = {
-		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD A" },
-		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD B" },
-		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD C" },
-		{  75, 18, 4,  6, 11, 7, NULL, 0, "EXISelect A" },
-		{  75, 18, 4,  6, 11, 7, NULL, 0, "EXISelect B" },
-		{  75, 18, 4,  6, 11, 8, NULL, 0, "EXISelect C" },
-		{  80, 20, 4,  6, 11, 6, NULL, 0, "EXISelect D" }
+		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD" },
+		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD" },
+		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD" },
+		{  75, 18, 4,  6, 11, 7, NULL, 0, "EXISelect" },
+		{  75, 18, 4,  6, 11, 7, NULL, 0, "EXISelect" },
+		{  75, 18, 4,  6, 11, 8, NULL, 0, "EXISelect" },
+		{  80, 20, 4,  6, 11, 6, NULL, 0, "EXISelect" }
 	};
 	FuncPattern EXIDeselectSigs[8] = {
-		{ 76, 21, 3, 7, 14, 5, NULL, 0, "EXIDeselectD A" },
-		{ 76, 21, 3, 7, 14, 5, NULL, 0, "EXIDeselectD B" },
-		{ 77, 22, 3, 7, 14, 5, NULL, 0, "EXIDeselectD C" },
-		{ 68, 20, 8, 6, 11, 3, NULL, 0, "EXIDeselect A" },
-		{ 68, 20, 8, 6, 12, 3, NULL, 0, "EXIDeselect B" },
-		{ 68, 20, 8, 6, 12, 3, NULL, 0, "EXIDeselect C" },
-		{ 68, 20, 8, 6, 12, 4, NULL, 0, "EXIDeselect D" },
-		{ 66, 17, 3, 6, 12, 4, NULL, 0, "EXIDeselect E" }
+		{ 76, 21, 3, 7, 14, 5, NULL, 0, "EXIDeselectD" },
+		{ 76, 21, 3, 7, 14, 5, NULL, 0, "EXIDeselectD" },
+		{ 77, 22, 3, 7, 14, 5, NULL, 0, "EXIDeselectD" },
+		{ 68, 20, 8, 6, 11, 3, NULL, 0, "EXIDeselect" },
+		{ 68, 20, 8, 6, 12, 3, NULL, 0, "EXIDeselect" },
+		{ 68, 20, 8, 6, 12, 3, NULL, 0, "EXIDeselect" },
+		{ 68, 20, 8, 6, 12, 4, NULL, 0, "EXIDeselect" },
+		{ 66, 17, 3, 6, 12, 4, NULL, 0, "EXIDeselect" }
 	};
 	FuncPattern EXIIntrruptHandlerSigs[7] = {
-		{ 42, 16, 3, 2, 3, 2, NULL, 0, "EXIIntrruptHandlerD A" },
-		{ 50, 20, 2, 6, 3, 3, NULL, 0, "EXIIntrruptHandlerD B" },
-		{ 51, 21, 2, 6, 3, 3, NULL, 0, "EXIIntrruptHandlerD C" },
-		{ 32, 10, 3, 0, 1, 7, NULL, 0, "EXIIntrruptHandler A" },
-		{ 50, 19, 6, 4, 1, 8, NULL, 0, "EXIIntrruptHandler B" },
-		{ 50, 19, 6, 4, 1, 7, NULL, 0, "EXIIntrruptHandler C" },
-		{ 48, 16, 3, 4, 1, 3, NULL, 0, "EXIIntrruptHandler D" }
+		{ 42, 16, 3, 2, 3, 2, NULL, 0, "EXIIntrruptHandlerD" },
+		{ 50, 20, 2, 6, 3, 3, NULL, 0, "EXIIntrruptHandlerD" },
+		{ 51, 21, 2, 6, 3, 3, NULL, 0, "EXIIntrruptHandlerD" },
+		{ 32, 10, 3, 0, 1, 7, NULL, 0, "EXIIntrruptHandler" },
+		{ 50, 19, 6, 4, 1, 8, NULL, 0, "EXIIntrruptHandler" },
+		{ 50, 19, 6, 4, 1, 7, NULL, 0, "EXIIntrruptHandler" },
+		{ 48, 16, 3, 4, 1, 3, NULL, 0, "EXIIntrruptHandler" }
 	};
 	FuncPattern TCIntrruptHandlerSigs[7] = {
-		{  50, 18, 4, 4, 3,  4, NULL, 0, "TCIntrruptHandlerD A" },
-		{  58, 22, 3, 8, 3,  3, NULL, 0, "TCIntrruptHandlerD B" },
-		{  59, 23, 3, 8, 3,  3, NULL, 0, "TCIntrruptHandlerD C" },
-		{ 125, 34, 9, 1, 8, 21, NULL, 0, "TCIntrruptHandler A" },
-		{ 134, 37, 9, 5, 8, 21, NULL, 0, "TCIntrruptHandler B" },
-		{ 134, 41, 9, 5, 8, 22, NULL, 0, "TCIntrruptHandler C" },
-		{  87, 28, 5, 5, 6,  4, NULL, 0, "TCIntrruptHandler D" }
+		{  50, 18, 4, 4, 3,  4, NULL, 0, "TCIntrruptHandlerD" },
+		{  58, 22, 3, 8, 3,  3, NULL, 0, "TCIntrruptHandlerD" },
+		{  59, 23, 3, 8, 3,  3, NULL, 0, "TCIntrruptHandlerD" },
+		{ 125, 34, 9, 1, 8, 21, NULL, 0, "TCIntrruptHandler" },
+		{ 134, 37, 9, 5, 8, 21, NULL, 0, "TCIntrruptHandler" },
+		{ 134, 41, 9, 5, 8, 22, NULL, 0, "TCIntrruptHandler" },
+		{  87, 28, 5, 5, 6,  4, NULL, 0, "TCIntrruptHandler" }
 	};
 	FuncPattern EXTIntrruptHandlerSigs[8] = {
-		{ 52, 18, 5, 2, 3, 4, NULL, 0, "EXTIntrruptHandlerD A" },
-		{ 60, 22, 4, 6, 3, 5, NULL, 0, "EXTIntrruptHandlerD B" },
-		{ 61, 23, 4, 6, 3, 5, NULL, 0, "EXTIntrruptHandlerD C" },
-		{ 55, 20, 4, 6, 3, 4, NULL, 0, "EXTIntrruptHandlerD D" },
-		{ 43, 17, 6, 1, 1, 7, NULL, 0, "EXTIntrruptHandler A" },
-		{ 50, 17, 4, 5, 1, 5, NULL, 0, "EXTIntrruptHandler B" },
-		{ 50, 18, 4, 5, 1, 5, NULL, 0, "EXTIntrruptHandler C" },
-		{ 52, 20, 8, 5, 1, 5, NULL, 0, "EXTIntrruptHandler D" }
+		{ 52, 18, 5, 2, 3, 4, NULL, 0, "EXTIntrruptHandlerD" },
+		{ 60, 22, 4, 6, 3, 5, NULL, 0, "EXTIntrruptHandlerD" },
+		{ 61, 23, 4, 6, 3, 5, NULL, 0, "EXTIntrruptHandlerD" },
+		{ 55, 20, 4, 6, 3, 4, NULL, 0, "EXTIntrruptHandlerD" },
+		{ 43, 17, 6, 1, 1, 7, NULL, 0, "EXTIntrruptHandler" },
+		{ 50, 17, 4, 5, 1, 5, NULL, 0, "EXTIntrruptHandler" },
+		{ 50, 18, 4, 5, 1, 5, NULL, 0, "EXTIntrruptHandler" },
+		{ 52, 20, 8, 5, 1, 5, NULL, 0, "EXTIntrruptHandler" }
 	};
 	FuncPattern EXIInitSigs[10] = {
-		{  58, 36,  6, 11, 1, 2, NULL, 0, "EXIInitD A" },
-		{  60, 37,  6, 12, 1, 2, NULL, 0, "EXIInitD B" },
-		{ 107, 61,  6, 16, 8, 2, NULL, 0, "EXIInitD C" },
-		{  65, 32, 12, 12, 1, 2, NULL, 0, "EXIInit A" },
-		{  69, 34, 14, 12, 1, 2, NULL, 0, "EXIInit B" },
-		{  73, 46, 10, 12, 1, 2, NULL, 0, "EXIInit C" },
-		{  71, 35, 14, 13, 1, 2, NULL, 0, "EXIInit D" },
-		{  89, 43, 14, 14, 4, 2, NULL, 0, "EXIInit E" },
-		{  87, 42, 14, 13, 4, 2, NULL, 0, "EXIInit F" },
-		{ 117, 58, 14, 17, 8, 2, NULL, 0, "EXIInit G" }
+		{  58, 36,  6, 11, 1, 2, NULL, 0, "EXIInitD" },
+		{  60, 37,  6, 12, 1, 2, NULL, 0, "EXIInitD" },
+		{ 107, 61,  6, 16, 8, 2, NULL, 0, "EXIInitD" },
+		{  65, 32, 12, 12, 1, 2, NULL, 0, "EXIInit" },
+		{  69, 34, 14, 12, 1, 2, NULL, 0, "EXIInit" },
+		{  73, 46, 10, 12, 1, 2, NULL, 0, "EXIInit" },
+		{  71, 35, 14, 13, 1, 2, NULL, 0, "EXIInit" },
+		{  89, 43, 14, 14, 4, 2, NULL, 0, "EXIInit" },
+		{  87, 42, 14, 13, 4, 2, NULL, 0, "EXIInit" },
+		{ 117, 58, 14, 17, 8, 2, NULL, 0, "EXIInit" }
 	};
 	FuncPattern EXILockSigs[5] = {
-		{ 106, 35, 5, 9, 13, 6, NULL, 0, "EXILockD A" },
-		{ 106, 35, 5, 9, 13, 6, NULL, 0, "EXILockD B" },
-		{  61, 18, 7, 5,  5, 6, NULL, 0, "EXILock A" },
-		{  61, 17, 7, 5,  5, 7, NULL, 0, "EXILock B" },
-		{  63, 19, 5, 5,  6, 6, NULL, 0, "EXILock C" }
+		{ 106, 35, 5, 9, 13, 6, NULL, 0, "EXILockD" },
+		{ 106, 35, 5, 9, 13, 6, NULL, 0, "EXILockD" },
+		{  61, 18, 7, 5,  5, 6, NULL, 0, "EXILock" },
+		{  61, 17, 7, 5,  5, 7, NULL, 0, "EXILock" },
+		{  63, 19, 5, 5,  6, 6, NULL, 0, "EXILock" }
 	};
 	FuncPattern EXIUnlockSigs[5] = {
-		{ 60, 22, 4, 6, 5, 4, NULL, 0, "EXIUnlockD A" },
-		{ 61, 23, 4, 6, 5, 4, NULL, 0, "EXIUnlockD B" },
-		{ 55, 21, 8, 5, 3, 2, NULL, 0, "EXIUnlock A" },
-		{ 55, 21, 8, 5, 3, 3, NULL, 0, "EXIUnlock B" },
-		{ 50, 18, 4, 5, 3, 3, NULL, 0, "EXIUnlock C" }
+		{ 60, 22, 4, 6, 5, 4, NULL, 0, "EXIUnlockD" },
+		{ 61, 23, 4, 6, 5, 4, NULL, 0, "EXIUnlockD" },
+		{ 55, 21, 8, 5, 3, 2, NULL, 0, "EXIUnlock" },
+		{ 55, 21, 8, 5, 3, 3, NULL, 0, "EXIUnlock" },
+		{ 50, 18, 4, 5, 3, 3, NULL, 0, "EXIUnlock" }
 	};
 	FuncPattern EXIGetIDSigs[9] = {
-		{  97, 27,  4, 11,  7,  9, NULL, 0, "EXIGetIDD A" },
-		{ 152, 45,  6, 14, 14, 15, NULL, 0, "EXIGetIDD B" },
-		{ 153, 46,  6, 14, 14, 15, NULL, 0, "EXIGetIDD C" },
-		{ 168, 49,  7, 16, 16, 16, NULL, 0, "EXIGetIDD D" },
-		{ 181, 54,  8, 24, 14, 13, NULL, 0, "EXIGetID A" },
-		{ 223, 70, 11, 26, 20, 17, NULL, 0, "EXIGetID B" },
-		{ 223, 69, 11, 26, 20, 20, NULL, 0, "EXIGetID C" },
-		{ 228, 66, 11, 26, 19, 19, NULL, 0, "EXIGetID D" },
-		{ 236, 71, 12, 28, 22, 21, NULL, 0, "EXIGetID E" }
+		{  97, 27,  4, 11,  7,  9, NULL, 0, "EXIGetIDD" },
+		{ 152, 45,  6, 14, 14, 15, NULL, 0, "EXIGetIDD" },
+		{ 153, 46,  6, 14, 14, 15, NULL, 0, "EXIGetIDD" },
+		{ 168, 49,  7, 16, 16, 16, NULL, 0, "EXIGetIDD" },
+		{ 181, 54,  8, 24, 14, 13, NULL, 0, "EXIGetID" },
+		{ 223, 70, 11, 26, 20, 17, NULL, 0, "EXIGetID" },
+		{ 223, 69, 11, 26, 20, 20, NULL, 0, "EXIGetID" },
+		{ 228, 66, 11, 26, 19, 19, NULL, 0, "EXIGetID" },
+		{ 236, 71, 12, 28, 22, 21, NULL, 0, "EXIGetID" }
 	};
 	FuncPattern __DVDInterruptHandlerSigs[9] = {
-		{ 157, 49, 21,  9, 18, 12, NULL, 0, "__DVDInterruptHandlerD A" },
-		{ 161, 50, 22,  8, 18, 12, NULL, 0, "__DVDInterruptHandlerD B" },
-		{ 161, 50, 22,  8, 18, 12, NULL, 0, "__DVDInterruptHandlerD C" },
-		{ 121, 32, 13,  4, 15, 14, NULL, 0, "__DVDInterruptHandler A" },
-		{ 184, 59, 26,  9, 21, 17, NULL, 0, "__DVDInterruptHandler B" },
-		{ 186, 60, 26, 10, 21, 17, NULL, 0, "__DVDInterruptHandler C" },
-		{ 189, 60, 27,  9, 21, 17, NULL, 0, "__DVDInterruptHandler D" },
-		{ 184, 56, 23,  9, 21, 16, NULL, 0, "__DVDInterruptHandler E" },
-		{ 190, 63, 23, 11, 21, 17, NULL, 0, "__DVDInterruptHandler E" }	// SN Systems ProDG
+		{ 157, 49, 21,  9, 18, 12, NULL, 0, "__DVDInterruptHandlerD" },
+		{ 161, 50, 22,  8, 18, 12, NULL, 0, "__DVDInterruptHandlerD" },
+		{ 161, 50, 22,  8, 18, 12, NULL, 0, "__DVDInterruptHandlerD" },
+		{ 121, 32, 13,  4, 15, 14, NULL, 0, "__DVDInterruptHandler" },
+		{ 184, 59, 26,  9, 21, 17, NULL, 0, "__DVDInterruptHandler" },
+		{ 186, 60, 26, 10, 21, 17, NULL, 0, "__DVDInterruptHandler" },
+		{ 189, 60, 27,  9, 21, 17, NULL, 0, "__DVDInterruptHandler" },
+		{ 184, 56, 23,  9, 21, 16, NULL, 0, "__DVDInterruptHandler" },
+		{ 190, 63, 23, 11, 21, 17, NULL, 0, "__DVDInterruptHandler" }	// SN Systems ProDG
 	};
 	FuncPattern AlarmHandlerForTimeoutSigs[3] = {
 		{ 29, 11, 5, 5, 1, 2, NULL, 0, "AlarmHandlerForTimeoutD" },
@@ -873,12 +873,12 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 25, 12, 5, 2, 0, 2, NULL, 0, "SetTimeoutAlarm" }
 	};
 	FuncPattern ReadSigs[6] = {
-		{ 54, 22, 17, 3, 2, 4, NULL, 0, "ReadD A" },
-		{ 56, 23, 18, 3, 2, 4, NULL, 0, "ReadD B" },
-		{ 55, 27, 12, 4, 2, 3, NULL, 0, "Read A" },
-		{ 66, 29, 17, 5, 2, 3, NULL, 0, "Read B" },
-		{ 68, 30, 18, 5, 2, 3, NULL, 0, "Read C" },
-		{ 67, 29, 17, 5, 2, 6, NULL, 0, "Read C" }	// SN Systems ProDG
+		{ 54, 22, 17, 3, 2, 4, NULL, 0, "ReadD" },
+		{ 56, 23, 18, 3, 2, 4, NULL, 0, "ReadD" },
+		{ 55, 27, 12, 4, 2, 3, NULL, 0, "Read" },
+		{ 66, 29, 17, 5, 2, 3, NULL, 0, "Read" },
+		{ 68, 30, 18, 5, 2, 3, NULL, 0, "Read" },
+		{ 67, 29, 17, 5, 2, 6, NULL, 0, "Read" }	// SN Systems ProDG
 	};
 	FuncPattern DoJustReadSigs[2] = {
 		{ 21, 9, 8, 1, 0, 2, NULL, 0, "DoJustReadD" },
@@ -887,81 +887,81 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	FuncPattern DVDLowReadSigs[6] = {
 		{ 157,  70,  6, 13, 12, 13, NULL, 0, "DVDLowReadD" },
 		{ 157,  70,  6, 13, 12, 13, NULL, 0, "DVDLowReadD" },
-		{  13,   4,  7,  0,  0,  0, NULL, 0, "DVDLowRead A" },
-		{ 166,  68, 19,  9, 14, 18, NULL, 0, "DVDLowRead B" },
-		{ 166,  68, 19,  9, 14, 18, NULL, 0, "DVDLowRead B" },
-		{ 321, 113, 75, 23, 17, 34, NULL, 0, "DVDLowRead B" }	// SN Systems ProDG
+		{  13,   4,  7,  0,  0,  0, NULL, 0, "DVDLowRead" },
+		{ 166,  68, 19,  9, 14, 18, NULL, 0, "DVDLowRead" },
+		{ 166,  68, 19,  9, 14, 18, NULL, 0, "DVDLowRead" },
+		{ 321, 113, 75, 23, 17, 34, NULL, 0, "DVDLowRead" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowSeekSigs[6] = {
-		{ 38, 18, 8, 2, 1, 3, NULL, 0, "DVDLowSeekD A" },
-		{ 40, 19, 9, 2, 1, 3, NULL, 0, "DVDLowSeekD B" },
-		{ 10,  4, 4, 0, 0, 0, NULL, 0, "DVDLowSeek A" },
-		{ 34, 17, 8, 2, 0, 2, NULL, 0, "DVDLowSeek B" },
-		{ 37, 19, 9, 2, 0, 2, NULL, 0, "DVDLowSeek C" },
-		{ 34, 16, 8, 2, 0, 2, NULL, 0, "DVDLowSeek C" }	// SN Systems ProDG
+		{ 38, 18, 8, 2, 1, 3, NULL, 0, "DVDLowSeekD" },
+		{ 40, 19, 9, 2, 1, 3, NULL, 0, "DVDLowSeekD" },
+		{ 10,  4, 4, 0, 0, 0, NULL, 0, "DVDLowSeek" },
+		{ 34, 17, 8, 2, 0, 2, NULL, 0, "DVDLowSeek" },
+		{ 37, 19, 9, 2, 0, 2, NULL, 0, "DVDLowSeek" },
+		{ 34, 16, 8, 2, 0, 2, NULL, 0, "DVDLowSeek" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowWaitCoverCloseSigs[5] = {
-		{  8, 4, 3, 0, 0, 0, NULL, 0, "DVDLowWaitCoverCloseD A" },
-		{ 10, 5, 4, 0, 0, 0, NULL, 0, "DVDLowWaitCoverCloseD B" },
-		{  8, 4, 3, 0, 0, 0, NULL, 0, "DVDLowWaitCoverClose A" },
-		{ 11, 6, 4, 0, 0, 0, NULL, 0, "DVDLowWaitCoverClose B" },
-		{ 10, 5, 4, 0, 0, 0, NULL, 0, "DVDLowWaitCoverClose B" }	// SN Systems ProDG
+		{  8, 4, 3, 0, 0, 0, NULL, 0, "DVDLowWaitCoverCloseD" },
+		{ 10, 5, 4, 0, 0, 0, NULL, 0, "DVDLowWaitCoverCloseD" },
+		{  8, 4, 3, 0, 0, 0, NULL, 0, "DVDLowWaitCoverClose" },
+		{ 11, 6, 4, 0, 0, 0, NULL, 0, "DVDLowWaitCoverClose" },
+		{ 10, 5, 4, 0, 0, 0, NULL, 0, "DVDLowWaitCoverClose" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowReadDiskIDSigs[6] = {
-		{ 47, 25, 11, 2, 1, 3, NULL, 0, "DVDLowReadDiskIDD A" },
-		{ 49, 26, 12, 2, 1, 3, NULL, 0, "DVDLowReadDiskIDD B" },
-		{ 16,  8,  7, 0, 0, 0, NULL, 0, "DVDLowReadDiskID A" },
-		{ 40, 20, 11, 2, 0, 2, NULL, 0, "DVDLowReadDiskID B" },
-		{ 41, 19, 12, 2, 0, 2, NULL, 0, "DVDLowReadDiskID C" },
-		{ 39, 17, 11, 2, 0, 3, NULL, 0, "DVDLowReadDiskID C" }	// SN Systems ProDG
+		{ 47, 25, 11, 2, 1, 3, NULL, 0, "DVDLowReadDiskIDD" },
+		{ 49, 26, 12, 2, 1, 3, NULL, 0, "DVDLowReadDiskIDD" },
+		{ 16,  8,  7, 0, 0, 0, NULL, 0, "DVDLowReadDiskID" },
+		{ 40, 20, 11, 2, 0, 2, NULL, 0, "DVDLowReadDiskID" },
+		{ 41, 19, 12, 2, 0, 2, NULL, 0, "DVDLowReadDiskID" },
+		{ 39, 17, 11, 2, 0, 3, NULL, 0, "DVDLowReadDiskID" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowStopMotorSigs[6] = {
-		{ 23, 11, 6, 1, 0, 2, NULL, 0, "DVDLowStopMotorD A" },
-		{ 25, 12, 7, 1, 0, 2, NULL, 0, "DVDLowStopMotorD B" },
-		{  9,  5, 3, 0, 0, 0, NULL, 0, "DVDLowStopMotor A" },
-		{ 33, 18, 7, 2, 0, 2, NULL, 0, "DVDLowStopMotor B" },
-		{ 35, 19, 8, 2, 0, 2, NULL, 0, "DVDLowStopMotor C" },
-		{ 32, 17, 7, 2, 0, 2, NULL, 0, "DVDLowStopMotor C" }	// SN Systems ProDG
+		{ 23, 11, 6, 1, 0, 2, NULL, 0, "DVDLowStopMotorD" },
+		{ 25, 12, 7, 1, 0, 2, NULL, 0, "DVDLowStopMotorD" },
+		{  9,  5, 3, 0, 0, 0, NULL, 0, "DVDLowStopMotor" },
+		{ 33, 18, 7, 2, 0, 2, NULL, 0, "DVDLowStopMotor" },
+		{ 35, 19, 8, 2, 0, 2, NULL, 0, "DVDLowStopMotor" },
+		{ 32, 17, 7, 2, 0, 2, NULL, 0, "DVDLowStopMotor" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowRequestErrorSigs[6] = {
-		{ 23, 11, 6, 1, 0, 2, NULL, 0, "DVDLowRequestErrorD A" },
-		{ 25, 12, 7, 1, 0, 2, NULL, 0, "DVDLowRequestErrorD B" },
-		{  9,  5, 3, 0, 0, 0, NULL, 0, "DVDLowRequestError A" },
-		{ 33, 18, 7, 2, 0, 2, NULL, 0, "DVDLowRequestError B" },
-		{ 35, 19, 8, 2, 0, 2, NULL, 0, "DVDLowRequestError C" },
-		{ 32, 17, 7, 2, 0, 2, NULL, 0, "DVDLowRequestError C" }	// SN Systems ProDG
+		{ 23, 11, 6, 1, 0, 2, NULL, 0, "DVDLowRequestErrorD" },
+		{ 25, 12, 7, 1, 0, 2, NULL, 0, "DVDLowRequestErrorD" },
+		{  9,  5, 3, 0, 0, 0, NULL, 0, "DVDLowRequestError" },
+		{ 33, 18, 7, 2, 0, 2, NULL, 0, "DVDLowRequestError" },
+		{ 35, 19, 8, 2, 0, 2, NULL, 0, "DVDLowRequestError" },
+		{ 32, 17, 7, 2, 0, 2, NULL, 0, "DVDLowRequestError" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowInquirySigs[6] = {
-		{ 33, 17, 10, 1, 0, 2, NULL, 0, "DVDLowInquiryD A" },
-		{ 35, 18, 11, 1, 0, 2, NULL, 0, "DVDLowInquiryD B" },
-		{ 13,  6,  6, 0, 0, 0, NULL, 0, "DVDLowInquiry A" },
-		{ 37, 19, 10, 2, 0, 2, NULL, 0, "DVDLowInquiry B" },
-		{ 39, 20, 11, 2, 0, 2, NULL, 0, "DVDLowInquiry C" },
-		{ 37, 16, 10, 2, 0, 3, NULL, 0, "DVDLowInquiry C" }	// SN Systems ProDG
+		{ 33, 17, 10, 1, 0, 2, NULL, 0, "DVDLowInquiryD" },
+		{ 35, 18, 11, 1, 0, 2, NULL, 0, "DVDLowInquiryD" },
+		{ 13,  6,  6, 0, 0, 0, NULL, 0, "DVDLowInquiry" },
+		{ 37, 19, 10, 2, 0, 2, NULL, 0, "DVDLowInquiry" },
+		{ 39, 20, 11, 2, 0, 2, NULL, 0, "DVDLowInquiry" },
+		{ 37, 16, 10, 2, 0, 3, NULL, 0, "DVDLowInquiry" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowAudioStreamSigs[6] = {
-		{ 34, 15, 11, 1, 0, 2, NULL, 0, "DVDLowAudioStreamD A" },
-		{ 36, 16, 12, 1, 0, 2, NULL, 0, "DVDLowAudioStreamD B" },
-		{ 11,  3,  5, 0, 0, 0, NULL, 0, "DVDLowAudioStream A" },
-		{ 35, 16,  9, 2, 0, 2, NULL, 0, "DVDLowAudioStream B" },
-		{ 38, 18, 10, 2, 0, 2, NULL, 0, "DVDLowAudioStream C" },
-		{ 35, 15,  9, 2, 0, 2, NULL, 0, "DVDLowAudioStream C" }	// SN Systems ProDG
+		{ 34, 15, 11, 1, 0, 2, NULL, 0, "DVDLowAudioStreamD" },
+		{ 36, 16, 12, 1, 0, 2, NULL, 0, "DVDLowAudioStreamD" },
+		{ 11,  3,  5, 0, 0, 0, NULL, 0, "DVDLowAudioStream" },
+		{ 35, 16,  9, 2, 0, 2, NULL, 0, "DVDLowAudioStream" },
+		{ 38, 18, 10, 2, 0, 2, NULL, 0, "DVDLowAudioStream" },
+		{ 35, 15,  9, 2, 0, 2, NULL, 0, "DVDLowAudioStream" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowRequestAudioStatusSigs[6] = {
-		{ 25, 11, 7, 1, 0, 2, NULL, 0, "DVDLowRequestAudioStatusD A" },
-		{ 27, 12, 8, 1, 0, 2, NULL, 0, "DVDLowRequestAudioStatusD B" },
-		{  8,  3, 3, 0, 0, 0, NULL, 0, "DVDLowRequestAudioStatus A" },
-		{ 32, 16, 7, 2, 0, 2, NULL, 0, "DVDLowRequestAudioStatus B" },
-		{ 35, 18, 8, 2, 0, 2, NULL, 0, "DVDLowRequestAudioStatus C" },
-		{ 32, 16, 7, 2, 0, 2, NULL, 0, "DVDLowRequestAudioStatus C" }	// SN Systems ProDG
+		{ 25, 11, 7, 1, 0, 2, NULL, 0, "DVDLowRequestAudioStatusD" },
+		{ 27, 12, 8, 1, 0, 2, NULL, 0, "DVDLowRequestAudioStatusD" },
+		{  8,  3, 3, 0, 0, 0, NULL, 0, "DVDLowRequestAudioStatus" },
+		{ 32, 16, 7, 2, 0, 2, NULL, 0, "DVDLowRequestAudioStatus" },
+		{ 35, 18, 8, 2, 0, 2, NULL, 0, "DVDLowRequestAudioStatus" },
+		{ 32, 16, 7, 2, 0, 2, NULL, 0, "DVDLowRequestAudioStatus" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowAudioBufferConfigSigs[6] = {
-		{ 52, 20, 7, 3, 4, 3, NULL, 0, "DVDLowAudioBufferConfigD A" },
-		{ 54, 21, 8, 3, 4, 3, NULL, 0, "DVDLowAudioBufferConfigD B" },
-		{ 15,  6, 3, 0, 2, 1, NULL, 0, "DVDLowAudioBufferConfig A" },
-		{ 39, 19, 7, 2, 2, 3, NULL, 0, "DVDLowAudioBufferConfig B" },
-		{ 39, 19, 8, 2, 1, 3, NULL, 0, "DVDLowAudioBufferConfig C" },
-		{ 38, 17, 7, 2, 0, 7, NULL, 0, "DVDLowAudioBufferConfig C" }	// SN Systems ProDG
+		{ 52, 20, 7, 3, 4, 3, NULL, 0, "DVDLowAudioBufferConfigD" },
+		{ 54, 21, 8, 3, 4, 3, NULL, 0, "DVDLowAudioBufferConfigD" },
+		{ 15,  6, 3, 0, 2, 1, NULL, 0, "DVDLowAudioBufferConfig" },
+		{ 39, 19, 7, 2, 2, 3, NULL, 0, "DVDLowAudioBufferConfig" },
+		{ 39, 19, 8, 2, 1, 3, NULL, 0, "DVDLowAudioBufferConfig" },
+		{ 38, 17, 7, 2, 0, 7, NULL, 0, "DVDLowAudioBufferConfig" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowResetSigs[3] = {
 		{ 49, 14, 8, 3, 0,  9, NULL, 0, "DVDLowResetD" },
@@ -985,19 +985,19 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 25, 12, 5, 2, 0, 2, NULL, 0, "SetBreakAlarm" }
 	};
 	FuncPattern DVDLowBreakSigs[6] = {
-		{ 24, 11, 2, 2, 2, 4, NULL, 0, "DVDLowBreakD A" },
-		{  6,  3, 2, 0, 0, 0, NULL, 0, "DVDLowBreakD B" },
-		{  8,  4, 2, 0, 0, 0, NULL, 0, "DVDLowBreak A" },
-		{ 42, 22, 6, 2, 2, 4, NULL, 0, "DVDLowBreak B" },
-		{  5,  2, 2, 0, 0, 0, NULL, 0, "DVDLowBreak C" },
-		{  5,  2, 2, 0, 0, 0, NULL, 0, "DVDLowBreak C" }	// SN Systems ProDG
+		{ 24, 11, 2, 2, 2, 4, NULL, 0, "DVDLowBreakD" },
+		{  6,  3, 2, 0, 0, 0, NULL, 0, "DVDLowBreakD" },
+		{  8,  4, 2, 0, 0, 0, NULL, 0, "DVDLowBreak" },
+		{ 42, 22, 6, 2, 2, 4, NULL, 0, "DVDLowBreak" },
+		{  5,  2, 2, 0, 0, 0, NULL, 0, "DVDLowBreak" },
+		{  5,  2, 2, 0, 0, 0, NULL, 0, "DVDLowBreak" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowClearCallbackSigs[5] = {
-		{ 12, 6, 4, 0, 0, 0, NULL, 0, "DVDLowClearCallbackD A" },
-		{ 14, 7, 5, 0, 0, 0, NULL, 0, "DVDLowClearCallbackD B" },
-		{  6, 3, 2, 0, 0, 0, NULL, 0, "DVDLowClearCallback A" },
-		{  6, 3, 2, 0, 0, 0, NULL, 0, "DVDLowClearCallback A" },	// SN Systems ProDG
-		{  7, 3, 3, 0, 0, 0, NULL, 0, "DVDLowClearCallback B" }
+		{ 12, 6, 4, 0, 0, 0, NULL, 0, "DVDLowClearCallbackD" },
+		{ 14, 7, 5, 0, 0, 0, NULL, 0, "DVDLowClearCallbackD" },
+		{  6, 3, 2, 0, 0, 0, NULL, 0, "DVDLowClearCallback" },
+		{  6, 3, 2, 0, 0, 0, NULL, 0, "DVDLowClearCallback" },	// SN Systems ProDG
+		{  7, 3, 3, 0, 0, 0, NULL, 0, "DVDLowClearCallback" }
 	};
 	FuncPattern DVDLowGetCoverStatusSigs[3] = {
 		{ 35, 13, 2, 1, 4,  9, NULL, 0, "DVDLowGetCoverStatusD" },
@@ -1007,14 +1007,14 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	FuncPattern DVDGetTransferredSizeSig = 
 		{ 18, 2, 0, 0, 6, 0, NULL, 0, "DVDGetTransferredSize" };
 	FuncPattern DVDInitSigs[8] = {
-		{ 66, 28,  9, 13, 2, 2, NULL, 0, "DVDInitD A" },
-		{ 54, 25,  8, 10, 2, 2, NULL, 0, "DVDInitD B" },
-		{ 56, 26,  9, 10, 2, 2, NULL, 0, "DVDInitD C" },
-		{ 61, 24, 10, 10, 2, 2, NULL, 0, "DVDInit A" },
-		{ 63, 24, 10, 12, 2, 2, NULL, 0, "DVDInit B" },
-		{ 51, 21,  9,  9, 2, 2, NULL, 0, "DVDInit C" },
-		{ 49, 21,  8,  9, 2, 2, NULL, 0, "DVDInit C" },	// SN Systems ProDG
-		{ 54, 21, 11,  9, 2, 2, NULL, 0, "DVDInit D" }
+		{ 66, 28,  9, 13, 2, 2, NULL, 0, "DVDInitD" },
+		{ 54, 25,  8, 10, 2, 2, NULL, 0, "DVDInitD" },
+		{ 56, 26,  9, 10, 2, 2, NULL, 0, "DVDInitD" },
+		{ 61, 24, 10, 10, 2, 2, NULL, 0, "DVDInit" },
+		{ 63, 24, 10, 12, 2, 2, NULL, 0, "DVDInit" },
+		{ 51, 21,  9,  9, 2, 2, NULL, 0, "DVDInit" },
+		{ 49, 21,  8,  9, 2, 2, NULL, 0, "DVDInit" },	// SN Systems ProDG
+		{ 54, 21, 11,  9, 2, 2, NULL, 0, "DVDInit" }
 	};
 	FuncPattern stateGettingErrorSigs[3] = {
 		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateGettingErrorD" },
@@ -1022,29 +1022,29 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateGettingError" }	// SN Systems ProDG
 	};
 	FuncPattern cbForStateGettingErrorSigs[7] = {
-		{ 127, 39,  9, 13, 16, 4, NULL, 0, "cbForStateGettingErrorD A" },
-		{ 115, 31,  5, 13, 16, 4, NULL, 0, "cbForStateGettingErrorD B" },
-		{ 231, 82, 21,  9, 36, 2, NULL, 0, "cbForStateGettingError A" },
-		{ 162, 68, 16, 17, 18, 2, NULL, 0, "cbForStateGettingError B" },
-		{ 165, 70, 17, 17, 18, 2, NULL, 0, "cbForStateGettingError C" },
-		{ 202, 73, 22, 14, 27, 3, NULL, 0, "cbForStateGettingError C" },	// SN Systems ProDG
-		{ 153, 61, 13, 17, 18, 2, NULL, 0, "cbForStateGettingError D" }
+		{ 127, 39,  9, 13, 16, 4, NULL, 0, "cbForStateGettingErrorD" },
+		{ 115, 31,  5, 13, 16, 4, NULL, 0, "cbForStateGettingErrorD" },
+		{ 231, 82, 21,  9, 36, 2, NULL, 0, "cbForStateGettingError" },
+		{ 162, 68, 16, 17, 18, 2, NULL, 0, "cbForStateGettingError" },
+		{ 165, 70, 17, 17, 18, 2, NULL, 0, "cbForStateGettingError" },
+		{ 202, 73, 22, 14, 27, 3, NULL, 0, "cbForStateGettingError" },	// SN Systems ProDG
+		{ 153, 61, 13, 17, 18, 2, NULL, 0, "cbForStateGettingError" }
 	};
 	FuncPattern cbForUnrecoveredErrorSigs[6] = {
-		{ 32, 11, 4, 4, 4, 3, NULL, 0, "cbForUnrecoveredErrorD A" },
-		{ 29,  9, 3, 4, 4, 3, NULL, 0, "cbForUnrecoveredErrorD B" },
-		{ 23,  7, 2, 5, 3, 2, NULL, 0, "cbForUnrecoveredError A" },
-		{ 26,  9, 3, 5, 3, 2, NULL, 0, "cbForUnrecoveredError B" },
-		{ 21,  6, 3, 3, 3, 2, NULL, 0, "cbForUnrecoveredError B" },	// SN Systems ProDG
-		{ 23,  7, 2, 5, 3, 2, NULL, 0, "cbForUnrecoveredError C" }
+		{ 32, 11, 4, 4, 4, 3, NULL, 0, "cbForUnrecoveredErrorD" },
+		{ 29,  9, 3, 4, 4, 3, NULL, 0, "cbForUnrecoveredErrorD" },
+		{ 23,  7, 2, 5, 3, 2, NULL, 0, "cbForUnrecoveredError" },
+		{ 26,  9, 3, 5, 3, 2, NULL, 0, "cbForUnrecoveredError" },
+		{ 21,  6, 3, 3, 3, 2, NULL, 0, "cbForUnrecoveredError" },	// SN Systems ProDG
+		{ 23,  7, 2, 5, 3, 2, NULL, 0, "cbForUnrecoveredError" }
 	};
 	FuncPattern cbForUnrecoveredErrorRetrySigs[6] = {
-		{ 30, 12, 5, 3, 3, 3, NULL, 0, "cbForUnrecoveredErrorRetryD A" },
-		{ 24,  8, 3, 3, 3, 3, NULL, 0, "cbForUnrecoveredErrorRetryD B" },
-		{ 35, 16, 3, 7, 3, 2, NULL, 0, "cbForUnrecoveredErrorRetry A" },
-		{ 38, 18, 4, 7, 3, 2, NULL, 0, "cbForUnrecoveredErrorRetry B" },
-		{ 32, 14, 4, 5, 3, 2, NULL, 0, "cbForUnrecoveredErrorRetry B" },	// SN Systems ProDG
-		{ 32, 14, 2, 7, 3, 2, NULL, 0, "cbForUnrecoveredErrorRetry C" }
+		{ 30, 12, 5, 3, 3, 3, NULL, 0, "cbForUnrecoveredErrorRetryD" },
+		{ 24,  8, 3, 3, 3, 3, NULL, 0, "cbForUnrecoveredErrorRetryD" },
+		{ 35, 16, 3, 7, 3, 2, NULL, 0, "cbForUnrecoveredErrorRetry" },
+		{ 38, 18, 4, 7, 3, 2, NULL, 0, "cbForUnrecoveredErrorRetry" },
+		{ 32, 14, 4, 5, 3, 2, NULL, 0, "cbForUnrecoveredErrorRetry" },	// SN Systems ProDG
+		{ 32, 14, 2, 7, 3, 2, NULL, 0, "cbForUnrecoveredErrorRetry" }
 	};
 	FuncPattern stateMotorStoppedSigs[3] = {
 		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateMotorStoppedD" },
@@ -1053,36 +1053,36 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	};
 	FuncPattern cbForStateMotorStoppedSigs[5] = {
 		{ 24, 11, 5, 2, 1, 2, NULL, 0, "cbForStateMotorStoppedD" },
-		{ 50, 19, 6, 5, 9, 2, NULL, 0, "cbForStateMotorStopped A" },
-		{ 57, 22, 6, 5, 9, 3, NULL, 0, "cbForStateMotorStopped B" },
-		{ 56, 23, 5, 5, 9, 3, NULL, 0, "cbForStateMotorStopped B" },	// SN Systems ProDG
-		{ 59, 23, 7, 5, 9, 3, NULL, 0, "cbForStateMotorStopped C" }
+		{ 50, 19, 6, 5, 9, 2, NULL, 0, "cbForStateMotorStopped" },
+		{ 57, 22, 6, 5, 9, 3, NULL, 0, "cbForStateMotorStopped" },
+		{ 56, 23, 5, 5, 9, 3, NULL, 0, "cbForStateMotorStopped" },	// SN Systems ProDG
+		{ 59, 23, 7, 5, 9, 3, NULL, 0, "cbForStateMotorStopped" }
 	};
 	FuncPattern stateBusySigs[11] = {
-		{ 182, 112, 22, 15, 17, 10, NULL, 0, "stateBusyD A" },
-		{ 182, 112, 22, 15, 17, 10, NULL, 0, "stateBusyD B" },
-		{ 208, 124, 23, 16, 20, 10, NULL, 0, "stateBusyD C" },
-		{ 216, 129, 24, 17, 21, 10, NULL, 0, "stateBusyD D" },
-		{ 176, 107, 21, 15, 17, 10, NULL, 0, "stateBusy A" },
-		{ 176, 107, 21, 15, 17, 10, NULL, 0, "stateBusy A" },
-		{ 176, 107, 21, 15, 17, 10, NULL, 0, "stateBusy B" },
-		{ 183, 111, 21, 15, 18, 10, NULL, 0, "stateBusy C" },
-		{ 200, 118, 23, 16, 20, 10, NULL, 0, "stateBusy D" },
-		{ 187, 105, 23, 16, 18, 11, NULL, 0, "stateBusy D" },	// SN Systems ProDG
-		{ 208, 123, 24, 17, 21, 10, NULL, 0, "stateBusy E" }
+		{ 182, 112, 22, 15, 17, 10, NULL, 0, "stateBusyD" },
+		{ 182, 112, 22, 15, 17, 10, NULL, 0, "stateBusyD" },
+		{ 208, 124, 23, 16, 20, 10, NULL, 0, "stateBusyD" },
+		{ 216, 129, 24, 17, 21, 10, NULL, 0, "stateBusyD" },
+		{ 176, 107, 21, 15, 17, 10, NULL, 0, "stateBusy" },
+		{ 176, 107, 21, 15, 17, 10, NULL, 0, "stateBusy" },
+		{ 176, 107, 21, 15, 17, 10, NULL, 0, "stateBusy" },
+		{ 183, 111, 21, 15, 18, 10, NULL, 0, "stateBusy" },
+		{ 200, 118, 23, 16, 20, 10, NULL, 0, "stateBusy" },
+		{ 187, 105, 23, 16, 18, 11, NULL, 0, "stateBusy" },	// SN Systems ProDG
+		{ 208, 123, 24, 17, 21, 10, NULL, 0, "stateBusy" }
 	};
 	FuncPattern cbForStateBusySigs[11] = {
-		{ 329, 142, 27, 21, 45,  6, NULL, 0, "cbForStateBusyD A" },
-		{ 305, 133, 27, 24, 39,  6, NULL, 0, "cbForStateBusyD B" },
-		{ 296, 127, 24, 24, 39,  6, NULL, 0, "cbForStateBusyD C" },
-		{ 316, 136, 27, 25, 41,  6, NULL, 0, "cbForStateBusyD D" },
-		{ 261, 108, 22, 12, 43,  5, NULL, 0, "cbForStateBusy A" },
-		{ 370, 156, 40, 21, 52,  6, NULL, 0, "cbForStateBusy B" },
-		{ 373, 158, 41, 21, 52,  6, NULL, 0, "cbForStateBusy C" },
-		{ 398, 167, 41, 21, 58, 11, NULL, 0, "cbForStateBusy D" },
-		{ 395, 160, 40, 19, 56, 12, NULL, 0, "cbForStateBusy D" },	// SN Systems ProDG
-		{ 389, 161, 38, 21, 58, 11, NULL, 0, "cbForStateBusy E" },
-		{ 406, 167, 41, 22, 60, 11, NULL, 0, "cbForStateBusy F" }
+		{ 329, 142, 27, 21, 45,  6, NULL, 0, "cbForStateBusyD" },
+		{ 305, 133, 27, 24, 39,  6, NULL, 0, "cbForStateBusyD" },
+		{ 296, 127, 24, 24, 39,  6, NULL, 0, "cbForStateBusyD" },
+		{ 316, 136, 27, 25, 41,  6, NULL, 0, "cbForStateBusyD" },
+		{ 261, 108, 22, 12, 43,  5, NULL, 0, "cbForStateBusy" },
+		{ 370, 156, 40, 21, 52,  6, NULL, 0, "cbForStateBusy" },
+		{ 373, 158, 41, 21, 52,  6, NULL, 0, "cbForStateBusy" },
+		{ 398, 167, 41, 21, 58, 11, NULL, 0, "cbForStateBusy" },
+		{ 395, 160, 40, 19, 56, 12, NULL, 0, "cbForStateBusy" },	// SN Systems ProDG
+		{ 389, 161, 38, 21, 58, 11, NULL, 0, "cbForStateBusy" },
+		{ 406, 167, 41, 22, 60, 11, NULL, 0, "cbForStateBusy" }
 	};
 	FuncPattern DVDResetSigs[3] = {
 		{ 19, 9, 6, 1, 0, 2, NULL, 0, "DVDResetD" },
@@ -1090,26 +1090,26 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 16, 6, 6, 1, 0, 2, NULL, 0, "DVDReset" }	// SN Systems ProDG
 	};
 	FuncPattern DVDCancelAsyncSigs[9] = {
-		{ 166, 53, 13, 10, 26, 8, NULL, 0, "DVDCancelAsyncD A" },
-		{ 166, 53, 13, 10, 26, 8, NULL, 0, "DVDCancelAsyncD A" },
-		{ 171, 56, 15, 10, 26, 8, NULL, 0, "DVDCancelAsyncD B" },
-		{ 171, 56, 20,  8, 20, 8, NULL, 0, "DVDCancelAsync A" },
-		{ 156, 48, 17,  8, 25, 6, NULL, 0, "DVDCancelAsync B" },
-		{ 156, 47, 16,  9, 25, 5, NULL, 0, "DVDCancelAsync C" },
-		{ 156, 47, 16,  9, 25, 5, NULL, 0, "DVDCancelAsync C" },
-		{ 159, 49, 17,  9, 25, 5, NULL, 0, "DVDCancelAsync D" },
-		{ 158, 43, 17,  9, 25, 8, NULL, 0, "DVDCancelAsync D" }	// SN Systems ProDG
+		{ 166, 53, 13, 10, 26, 8, NULL, 0, "DVDCancelAsyncD" },
+		{ 166, 53, 13, 10, 26, 8, NULL, 0, "DVDCancelAsyncD" },
+		{ 171, 56, 15, 10, 26, 8, NULL, 0, "DVDCancelAsyncD" },
+		{ 171, 56, 20,  8, 20, 8, NULL, 0, "DVDCancelAsync" },
+		{ 156, 48, 17,  8, 25, 6, NULL, 0, "DVDCancelAsync" },
+		{ 156, 47, 16,  9, 25, 5, NULL, 0, "DVDCancelAsync" },
+		{ 156, 47, 16,  9, 25, 5, NULL, 0, "DVDCancelAsync" },
+		{ 159, 49, 17,  9, 25, 5, NULL, 0, "DVDCancelAsync" },
+		{ 158, 43, 17,  9, 25, 8, NULL, 0, "DVDCancelAsync" }	// SN Systems ProDG
 	};
 	FuncPattern DVDGetCurrentDiskIDSigs[2] = {
 		{ 9, 3, 2, 1, 0, 2, NULL, 0, "DVDGetCurrentDiskIDD" },
 		{ 2, 1, 0, 0, 0, 0, NULL, 0, "DVDGetCurrentDiskID" }
 	};
 	FuncPattern DVDCheckDiskSigs[5] = {
-		{ 61, 16, 2, 2, 10, 7, NULL, 0, "DVDCheckDiskD A" },
-		{ 66, 17, 2, 2, 12, 7, NULL, 0, "DVDCheckDiskD B" },
-		{ 57, 19, 3, 2, 10, 5, NULL, 0, "DVDCheckDisk A" },
-		{ 61, 19, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk B" },	// SN Systems ProDG
-		{ 62, 20, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk B" }
+		{ 61, 16, 2, 2, 10, 7, NULL, 0, "DVDCheckDiskD" },
+		{ 66, 17, 2, 2, 12, 7, NULL, 0, "DVDCheckDiskD" },
+		{ 57, 19, 3, 2, 10, 5, NULL, 0, "DVDCheckDisk" },
+		{ 61, 19, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk" },	// SN Systems ProDG
+		{ 62, 20, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk" }
 	};
 	FuncPattern __DVDClearWaitingQueueSigs[3] = {
 		{ 16, 3, 3, 0, 2, 0, NULL, 0, "__DVDClearWaitingQueueD" },
@@ -1132,13 +1132,13 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	FuncPattern AIGetDMAStartAddrSig = 
 		{ 7, 2, 0, 0, 0, 0, NULL, 0, "AIGetDMAStartAddr" };
 	FuncPattern GXPeekZSigs[3] = {
-		{ 10, 1, 1, 0, 0, 1, NULL, 0, "GXPeekZ A" },
-		{ 10, 1, 1, 0, 0, 1, NULL, 0, "GXPeekZ B" },	// SN Systems ProDG
-		{  9, 3, 1, 0, 0, 0, NULL, 0, "GXPeekZ C" }
+		{ 10, 1, 1, 0, 0, 1, NULL, 0, "GXPeekZ" },
+		{ 10, 1, 1, 0, 0, 1, NULL, 0, "GXPeekZ" },	// SN Systems ProDG
+		{  9, 3, 1, 0, 0, 0, NULL, 0, "GXPeekZ" }
 	};
 	FuncPattern __VMBASESetupExceptionHandlersSigs[2] = {
-		{ 95, 38, 12, 6, 0, 20, NULL, 0, "__VMBASESetupExceptionHandlers A" },
-		{ 95, 42, 10, 6, 0, 16, NULL, 0, "__VMBASESetupExceptionHandlers B" }
+		{ 95, 38, 12, 6, 0, 20, NULL, 0, "__VMBASESetupExceptionHandlers" },
+		{ 95, 42, 10, 6, 0, 16, NULL, 0, "__VMBASESetupExceptionHandlers" }
 	};
 	FuncPattern __VMBASEDSIExceptionHandlerSig = 
 		{ 54, 6, 9, 0, 3, 27, NULL, 0, "__VMBASEDSIExceptionHandler" };
@@ -4034,7 +4034,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				case 24: data[i + 103] = branchAndLink(SET_IRQ_HANDLER, OSInit + 103); break;
 				case 25: data[i + 105] = branchAndLink(SET_IRQ_HANDLER, OSInit + 105); break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", OSInitSigs[j].Name, OSInit);
+			print_gecko("Found:[%s$%i] @ %08X\n", OSInitSigs[j].Name, j, OSInit);
 			patched++;
 		}
 	}
@@ -4060,7 +4060,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 139] = 0x28000009;	// cmplwi	r0, 9
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", OSExceptionInitSigs[j].Name, OSExceptionInit);
+			print_gecko("Found:[%s$%i] @ %08X\n", OSExceptionInitSigs[j].Name, j, OSExceptionInit);
 			patched++;
 		}
 	}
@@ -4075,7 +4075,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 0] = (u32)OSSetAlarm;
 			
-			print_gecko("Found:[%s] @ %08X\n", OSSetAlarmSigs[j].Name, OSSetAlarm);
+			print_gecko("Found:[%s$%i] @ %08X\n", OSSetAlarmSigs[j].Name, j, OSSetAlarm);
 			patched++;
 		}
 	}
@@ -4087,7 +4087,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 1] = (u32)OSCancelAlarm;
 			
-			print_gecko("Found:[%s] @ %08X\n", OSCancelAlarmSigs[j].Name, OSCancelAlarm);
+			print_gecko("Found:[%s$%i] @ %08X\n", OSCancelAlarmSigs[j].Name, j, OSCancelAlarm);
 			patched++;
 		}
 	}
@@ -4102,7 +4102,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 2] = (u32)__OSUnhandledException;
 			
-			print_gecko("Found:[%s] @ %08X\n", __OSUnhandledExceptionSigs[j].Name, __OSUnhandledException);
+			print_gecko("Found:[%s$%i] @ %08X\n", __OSUnhandledExceptionSigs[j].Name, j, __OSUnhandledException);
 			patched++;
 		}
 	}
@@ -4125,7 +4125,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 44] = branchAndLink(UNMASK_IRQ, __OSBootDolSimple + 44);
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", __OSBootDolSimpleSigs[j].Name, __OSBootDolSimple);
+			print_gecko("Found:[%s$%i] @ %08X\n", __OSBootDolSimpleSigs[j].Name, j, __OSBootDolSimple);
 			patched++;
 		}
 	}
@@ -4148,7 +4148,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					jumpTable[4] = SetInterruptMask +  9;
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", SetInterruptMaskSigs[j].Name, SetInterruptMask);
+			print_gecko("Found:[%s$%i] @ %08X\n", SetInterruptMaskSigs[j].Name, j, SetInterruptMask);
 			patched++;
 		}
 	}
@@ -4163,7 +4163,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 3] = (u32)__OSMaskInterrupts;
 			
-			print_gecko("Found:[%s] @ %08X\n", __OSMaskInterruptsSigs[j].Name, __OSMaskInterrupts);
+			print_gecko("Found:[%s$%i] @ %08X\n", __OSMaskInterruptsSigs[j].Name, j, __OSMaskInterrupts);
 			patched++;
 		}
 	}
@@ -4178,7 +4178,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 4] = (u32)__OSUnmaskInterrupts;
 			
-			print_gecko("Found:[%s] @ %08X\n", __OSUnmaskInterruptsSigs[j].Name, __OSUnmaskInterrupts);
+			print_gecko("Found:[%s$%i] @ %08X\n", __OSUnmaskInterruptsSigs[j].Name, j, __OSUnmaskInterrupts);
 			patched++;
 		}
 	}
@@ -4231,7 +4231,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 33] = branchAndLink(UNMASK_IRQ, __OSReboot + 33);
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", __OSRebootSigs[j].Name, __OSReboot);
+			print_gecko("Found:[%s$%i] @ %08X\n", __OSRebootSigs[j].Name, j, __OSReboot);
 			patched++;
 		}
 	}
@@ -4248,7 +4248,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				case 1:
 				case 2: data[i + 5] = branchAndLink(FINI, __OSDoHotReset + 5); break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", __OSDoHotResetSigs[j].Name, __OSDoHotReset);
+			print_gecko("Found:[%s$%i] @ %08X\n", __OSDoHotResetSigs[j].Name, j, __OSDoHotReset);
 			patched++;
 		}
 		
@@ -4288,7 +4288,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 5] = (u32)OSResetSystem;
 			
-			print_gecko("Found:[%s] @ %08X\n", OSResetSystemSigs[j].Name, OSResetSystem);
+			print_gecko("Found:[%s$%i] @ %08X\n", OSResetSystemSigs[j].Name, j, OSResetSystem);
 			patched++;
 		}
 	}
@@ -4337,7 +4337,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 19] = OSSetArenaHi ? branchAndLink(OSSetArenaHi, __OSInitSystemCall + 19) : 0x60000000;
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", __OSInitSystemCallSigs[j].Name, __OSInitSystemCall);
+			print_gecko("Found:[%s$%i] @ %08X\n", __OSInitSystemCallSigs[j].Name, j, __OSInitSystemCall);
 			patched++;
 		}
 	}
@@ -4371,7 +4371,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 86] = 0x4182FFF4;	// beq		-3
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", SelectThreadSigs[j].Name, SelectThread);
+			print_gecko("Found:[%s$%i] @ %08X\n", SelectThreadSigs[j].Name, j, SelectThread);
 			patched++;
 		}
 	}
@@ -4423,7 +4423,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s] @ %08X\n", SetExiInterruptMaskSigs[j].Name, SetExiInterruptMask);
+			print_gecko("Found:[%s$%i] @ %08X\n", SetExiInterruptMaskSigs[j].Name, j, SetExiInterruptMask);
 			patched++;
 		}
 	}
@@ -4443,7 +4443,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 33] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", CompleteTransferSigs[j].Name, CompleteTransfer);
+			print_gecko("Found:[%s$%i] @ %08X\n", CompleteTransferSigs[j].Name, j, CompleteTransfer);
 			patched++;
 		}
 	}
@@ -4478,7 +4478,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  76] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", EXIImmSigs[j].Name, EXIImm);
+			print_gecko("Found:[%s$%i] @ %08X\n", EXIImmSigs[j].Name, j, EXIImm);
 			patched++;
 		}
 	}
@@ -4513,7 +4513,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  63] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", EXIDmaSigs[j].Name, EXIDma);
+			print_gecko("Found:[%s$%i] @ %08X\n", EXIDmaSigs[j].Name, j, EXIDma);
 			patched++;
 		}
 	}
@@ -4581,7 +4581,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 115] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", EXISyncSigs[j].Name, EXISync);
+			print_gecko("Found:[%s$%i] @ %08X\n", EXISyncSigs[j].Name, j, EXISync);
 			patched++;
 		}
 	}
@@ -4610,7 +4610,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 20] = 0x3CE00C00;	// lis		r7, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", EXIClearInterruptsSigs[j].Name, EXIClearInterrupts);
+			print_gecko("Found:[%s$%i] @ %08X\n", EXIClearInterruptsSigs[j].Name, j, EXIClearInterrupts);
 			patched++;
 		}
 	}
@@ -4679,7 +4679,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 36] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", __EXIProbeSigs[j].Name, __EXIProbe);
+			print_gecko("Found:[%s$%i] @ %08X\n", __EXIProbeSigs[j].Name, j, __EXIProbe);
 			patched++;
 		}
 	}
@@ -4699,7 +4699,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 44] = branchAndLink(UNMASK_IRQ, __EXIAttach + 44);
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", __EXIAttachSigs[j].Name, __EXIAttach);
+			print_gecko("Found:[%s$%i] @ %08X\n", __EXIAttachSigs[j].Name, j, __EXIAttach);
 			patched++;
 		}
 	}
@@ -4726,7 +4726,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 58] = branchAndLink(UNMASK_IRQ, EXIAttach + 58);
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", EXIAttachSigs[j].Name, EXIAttach);
+			print_gecko("Found:[%s$%i] @ %08X\n", EXIAttachSigs[j].Name, j, EXIAttach);
 			patched++;
 		}
 	}
@@ -4757,7 +4757,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 34] = branchAndLink(MASK_IRQ, EXIDetach + 34);
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", EXIDetachSigs[j].Name, EXIDetach);
+			print_gecko("Found:[%s$%i] @ %08X\n", EXIDetachSigs[j].Name, j, EXIDetach);
 			patched++;
 		}
 	}
@@ -4856,7 +4856,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 71] = branchAndLink(MASK_IRQ, EXISelect + 71);
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", EXISelectSigs[j].Name, EXISelect);
+			print_gecko("Found:[%s$%i] @ %08X\n", EXISelectSigs[j].Name, j, EXISelect);
 			patched++;
 		}
 	}
@@ -4901,7 +4901,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 45] = branchAndLink(UNMASK_IRQ, EXIDeselect + 45);
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", EXIDeselectSigs[j].Name, EXIDeselect);
+			print_gecko("Found:[%s$%i] @ %08X\n", EXIDeselectSigs[j].Name, j, EXIDeselect);
 			patched++;
 		}
 	}
@@ -4928,7 +4928,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 24] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", EXIIntrruptHandlerSigs[j].Name, EXIIntrruptHandler);
+			print_gecko("Found:[%s$%i] @ %08X\n", EXIIntrruptHandlerSigs[j].Name, j, EXIIntrruptHandler);
 			patched++;
 		}
 	}
@@ -4964,7 +4964,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 53] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", TCIntrruptHandlerSigs[j].Name, TCIntrruptHandler);
+			print_gecko("Found:[%s$%i] @ %08X\n", TCIntrruptHandlerSigs[j].Name, j, TCIntrruptHandler);
 			patched++;
 		}
 	}
@@ -5005,7 +5005,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 18] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 18);
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", EXTIntrruptHandlerSigs[j].Name, EXTIntrruptHandler);
+			print_gecko("Found:[%s$%i] @ %08X\n", EXTIntrruptHandlerSigs[j].Name, j, EXTIntrruptHandler);
 			patched++;
 		}
 	}
@@ -5122,7 +5122,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 60] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 60);
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", EXIInitSigs[j].Name, EXIInit);
+			print_gecko("Found:[%s$%i] @ %08X\n", EXIInitSigs[j].Name, j, EXIInit);
 			patched++;
 		}
 	}
@@ -5137,7 +5137,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 6] = (u32)EXILock;
 			
-			print_gecko("Found:[%s] @ %08X\n", EXILockSigs[j].Name, EXILock);
+			print_gecko("Found:[%s$%i] @ %08X\n", EXILockSigs[j].Name, j, EXILock);
 			patched++;
 		}
 	}
@@ -5152,7 +5152,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 7] = (u32)EXIUnlock;
 			
-			print_gecko("Found:[%s] @ %08X\n", EXIUnlockSigs[j].Name, EXIUnlock);
+			print_gecko("Found:[%s$%i] @ %08X\n", EXIUnlockSigs[j].Name, j, EXIUnlock);
 			patched++;
 		}
 	}
@@ -5183,7 +5183,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 203] = branchAndLink(MASK_IRQ,   EXIGetID + 203);
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", EXIGetIDSigs[j].Name, EXIGetID);
+			print_gecko("Found:[%s$%i] @ %08X\n", EXIGetIDSigs[j].Name, j, EXIGetID);
 			patched++;
 		}
 	}
@@ -5291,7 +5291,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 118] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", __DVDInterruptHandlerSigs[j].Name, __DVDInterruptHandler);
+			print_gecko("Found:[%s$%i] @ %08X\n", __DVDInterruptHandlerSigs[j].Name, j, __DVDInterruptHandler);
 			patched++;
 		}
 	}
@@ -5310,7 +5310,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 6] = branchAndLink(MASK_IRQ, AlarmHandlerForTimeout + 6);
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", AlarmHandlerForTimeoutSigs[j].Name, AlarmHandlerForTimeout);
+			print_gecko("Found:[%s$%i] @ %08X\n", AlarmHandlerForTimeoutSigs[j].Name, j, AlarmHandlerForTimeout);
 			patched++;
 		}
 	}
@@ -5352,7 +5352,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 18] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", ReadSigs[j].Name, Read);
+			print_gecko("Found:[%s$%i] @ %08X\n", ReadSigs[j].Name, j, Read);
 			patched++;
 		}
 	}
@@ -5381,7 +5381,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 223] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowReadSigs[j].Name, DVDLowRead);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowReadSigs[j].Name, j, DVDLowRead);
 			patched++;
 		}
 	}
@@ -5415,7 +5415,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  3] = 0x3CE00C00;	// lis		r7, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowSeekSigs[j].Name, DVDLowSeek);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowSeekSigs[j].Name, j, DVDLowSeek);
 			patched++;
 		}
 	}
@@ -5442,7 +5442,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 4] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowWaitCoverCloseSigs[j].Name, DVDLowWaitCoverClose);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowWaitCoverCloseSigs[j].Name, j, DVDLowWaitCoverClose);
 			patched++;
 		}
 	}
@@ -5484,7 +5484,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  6] = 0x3D000C00;	// lis		r8, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowReadDiskIDSigs[j].Name, DVDLowReadDiskID);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowReadDiskIDSigs[j].Name, j, DVDLowReadDiskID);
 			patched++;
 		}
 	}
@@ -5518,7 +5518,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  3] = 0x3CA00C00;	// lis		r5, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowStopMotorSigs[j].Name, DVDLowStopMotor);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowStopMotorSigs[j].Name, j, DVDLowStopMotor);
 			patched++;
 		}
 	}
@@ -5552,7 +5552,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  3] = 0x3CA00C00;	// lis		r5, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowRequestErrorSigs[j].Name, DVDLowRequestError);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowRequestErrorSigs[j].Name, j, DVDLowRequestError);
 			patched++;
 		}
 	}
@@ -5592,7 +5592,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  3] = 0x3D000C00;	// lis		r8, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowInquirySigs[j].Name, DVDLowInquiry);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowInquirySigs[j].Name, j, DVDLowInquiry);
 			patched++;
 		}
 	}
@@ -5630,7 +5630,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  6] = 0x3D000C00;	// lis		r8, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowAudioStreamSigs[j].Name, DVDLowAudioStream);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowAudioStreamSigs[j].Name, j, DVDLowAudioStream);
 			patched++;
 		}
 	}
@@ -5664,7 +5664,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  6] = 0x3CC00C00;	// lis		r6, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowRequestAudioStatusSigs[j].Name, DVDLowRequestAudioStatus);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowRequestAudioStatusSigs[j].Name, j, DVDLowRequestAudioStatus);
 			patched++;
 		}
 	}
@@ -5696,7 +5696,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 14] = 0x3CA00C00;	// lis		r5, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowAudioBufferConfigSigs[j].Name, DVDLowAudioBufferConfig);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowAudioBufferConfigSigs[j].Name, j, DVDLowAudioBufferConfig);
 			patched++;
 		}
 	}
@@ -5725,7 +5725,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 36] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowResetSigs[j].Name, DVDLowReset);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowResetSigs[j].Name, j, DVDLowReset);
 			patched++;
 		}
 	}
@@ -5746,7 +5746,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 0] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DoBreakSigs[j].Name, DoBreak);
+			print_gecko("Found:[%s$%i] @ %08X\n", DoBreakSigs[j].Name, j, DoBreak);
 			patched++;
 		}
 	}
@@ -5766,7 +5766,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 1] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", AlarmHandlerForBreakSigs[j].Name, AlarmHandlerForBreak);
+			print_gecko("Found:[%s$%i] @ %08X\n", AlarmHandlerForBreakSigs[j].Name, j, AlarmHandlerForBreak);
 			patched++;
 		}
 	}
@@ -5789,7 +5789,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 1] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowBreakSigs[j].Name, DVDLowBreak);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowBreakSigs[j].Name, j, DVDLowBreak);
 			patched++;
 		}
 	}
@@ -5816,7 +5816,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 0] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowClearCallbackSigs[j].Name, DVDLowClearCallback);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowClearCallbackSigs[j].Name, j, DVDLowClearCallback);
 			patched++;
 		}
 	}
@@ -5837,7 +5837,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 26] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDLowGetCoverStatusSigs[j].Name, DVDLowGetCoverStatus);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowGetCoverStatusSigs[j].Name, j, DVDLowGetCoverStatus);
 			patched++;
 		}
 	}
@@ -5905,7 +5905,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDInitSigs[j].Name, DVDInit);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDInitSigs[j].Name, j, DVDInit);
 			patched++;
 		}
 	}
@@ -5940,7 +5940,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", cbForStateGettingErrorSigs[j].Name, cbForStateGettingError);
+			print_gecko("Found:[%s$%i] @ %08X\n", cbForStateGettingErrorSigs[j].Name, j, cbForStateGettingError);
 			patched++;
 		}
 	}
@@ -5972,7 +5972,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 21] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", cbForUnrecoveredErrorRetrySigs[j].Name, cbForUnrecoveredErrorRetry);
+			print_gecko("Found:[%s$%i] @ %08X\n", cbForUnrecoveredErrorRetrySigs[j].Name, j, cbForUnrecoveredErrorRetry);
 			patched++;
 		}
 	}
@@ -5999,7 +5999,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  1] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", cbForStateMotorStoppedSigs[j].Name, cbForStateMotorStopped);
+			print_gecko("Found:[%s$%i] @ %08X\n", cbForStateMotorStoppedSigs[j].Name, j, cbForStateMotorStopped);
 			patched++;
 		}
 	}
@@ -6157,7 +6157,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 190] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", stateBusySigs[j].Name, stateBusy);
+			print_gecko("Found:[%s$%i] @ %08X\n", stateBusySigs[j].Name, j, stateBusy);
 			patched++;
 		}
 	}
@@ -6237,7 +6237,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 274] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", cbForStateBusySigs[j].Name, cbForStateBusy);
+			print_gecko("Found:[%s$%i] @ %08X\n", cbForStateBusySigs[j].Name, j, cbForStateBusy);
 			patched++;
 		}
 	}
@@ -6262,7 +6262,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 5] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDResetSigs[j].Name, DVDReset);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDResetSigs[j].Name, j, DVDReset);
 			patched++;
 		}
 	}
@@ -6285,7 +6285,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 40] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", DVDCheckDiskSigs[j].Name, DVDCheckDisk);
+			print_gecko("Found:[%s$%i] @ %08X\n", DVDCheckDiskSigs[j].Name, j, DVDCheckDisk);
 			patched++;
 		}
 	}
@@ -6312,7 +6312,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s] @ %08X\n", AIInitDMASigs[j].Name, AIInitDMA);
+			print_gecko("Found:[%s$%i] @ %08X\n", AIInitDMASigs[j].Name, j, AIInitDMA);
 			patched++;
 		}
 	}
@@ -6340,7 +6340,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			
 			data[i + 1] = 0x3C600800;	// lis		r3, 0x0800
 			
-			print_gecko("Found:[%s] @ %08X\n", GXPeekZSigs[j].Name, GXPeekZ);
+			print_gecko("Found:[%s$%i] @ %08X\n", GXPeekZSigs[j].Name, j, GXPeekZ);
 			patched++;
 		}
 	}
@@ -6360,7 +6360,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				data[i + 71] = 0x7C1EEFAC;	// icbi		r30, r29
 				data[i + 86] = 0x7C1EE7AC;	// icbi		r30, r28
 			}
-			print_gecko("Found:[%s] @ %08X\n", __VMBASESetupExceptionHandlersSigs[j].Name, __VMBASESetupExceptionHandlers);
+			print_gecko("Found:[%s$%i] @ %08X\n", __VMBASESetupExceptionHandlersSigs[j].Name, j, __VMBASESetupExceptionHandlers);
 			patched++;
 		}
 	}
@@ -6372,7 +6372,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			data[i +  5] = 0x7CBA02A6;	// mfsrr0	r5
 			data[i + 10] = 0x7CBA02A6;	// mfsrr0	r5
 			
-			print_gecko("Found:[%s] @ %08X\n", __VMBASEISIExceptionHandlerSig.Name, __VMBASEISIExceptionHandler);
+			print_gecko("Found:[%s$%i] @ %08X\n", __VMBASEISIExceptionHandlerSig.Name, j, __VMBASEISIExceptionHandler);
 			patched++;
 		}
 	}
@@ -6596,189 +6596,189 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 59, 17, 16, 3, 7, 5, NULL, 0, "OSSleepThread" }
 	};
 	FuncPattern VISetRegsSigs[2] = {
-		{ 54, 21, 6, 3, 3, 12, NULL, 0, "VISetRegsD A" },
-		{ 58, 21, 7, 3, 3, 12, NULL, 0, "VISetRegsD B" }
+		{ 54, 21, 6, 3, 3, 12, NULL, 0, "VISetRegsD" },
+		{ 58, 21, 7, 3, 3, 12, NULL, 0, "VISetRegsD" }
 	};
 	FuncPattern __VIRetraceHandlerSigs[8] = {
-		{ 120, 41,  7, 10, 13,  6, NULL, 0, "__VIRetraceHandlerD A" },
-		{ 121, 41,  7, 11, 13,  6, NULL, 0, "__VIRetraceHandlerD B" },
-		{ 132, 39,  7, 10, 15, 13, NULL, 0, "__VIRetraceHandler A" },
-		{ 137, 42,  8, 11, 15, 13, NULL, 0, "__VIRetraceHandler B" },
-		{ 138, 42,  9, 11, 15, 13, NULL, 0, "__VIRetraceHandler C" },
-		{ 140, 43, 10, 11, 15, 13, NULL, 0, "__VIRetraceHandler D" },
-		{ 147, 46, 13, 10, 15, 15, NULL, 0, "__VIRetraceHandler E" },	// SN Systems ProDG
-		{ 157, 50, 10, 15, 16, 13, NULL, 0, "__VIRetraceHandler F" }
+		{ 120, 41,  7, 10, 13,  6, NULL, 0, "__VIRetraceHandlerD" },
+		{ 121, 41,  7, 11, 13,  6, NULL, 0, "__VIRetraceHandlerD" },
+		{ 132, 39,  7, 10, 15, 13, NULL, 0, "__VIRetraceHandler" },
+		{ 137, 42,  8, 11, 15, 13, NULL, 0, "__VIRetraceHandler" },
+		{ 138, 42,  9, 11, 15, 13, NULL, 0, "__VIRetraceHandler" },
+		{ 140, 43, 10, 11, 15, 13, NULL, 0, "__VIRetraceHandler" },
+		{ 147, 46, 13, 10, 15, 15, NULL, 0, "__VIRetraceHandler" },	// SN Systems ProDG
+		{ 157, 50, 10, 15, 16, 13, NULL, 0, "__VIRetraceHandler" }
 	};
 	FuncPattern getTimingSigs[8] = {
-		{  30,  12,  2,  0,  7,  2,           NULL,                     0, "getTimingD A" },
-		{  40,  16,  2,  0, 12,  2, getTimingPatch, getTimingPatch_length, "getTimingD B" },
-		{  26,  11,  0,  0,  0,  3,           NULL,                     0, "getTiming A" },
-		{  30,  13,  0,  0,  0,  3,           NULL,                     0, "getTiming B" },
-		{  36,  15,  0,  0,  0,  4, getTimingPatch, getTimingPatch_length, "getTiming C" },
-		{  40,  19,  0,  0,  0,  2,           NULL,                     0, "getTiming D" },
-		{ 559, 112, 44, 14, 53, 48,           NULL,                     0, "getTiming E" },	// SN Systems ProDG
-		{  42,  20,  0,  0,  0,  2,           NULL,                     0, "getTiming F" }
+		{  30,  12,  2,  0,  7,  2,           NULL,                     0, "getTimingD" },
+		{  40,  16,  2,  0, 12,  2, getTimingPatch, getTimingPatch_length, "getTimingD" },
+		{  26,  11,  0,  0,  0,  3,           NULL,                     0, "getTiming" },
+		{  30,  13,  0,  0,  0,  3,           NULL,                     0, "getTiming" },
+		{  36,  15,  0,  0,  0,  4, getTimingPatch, getTimingPatch_length, "getTiming" },
+		{  40,  19,  0,  0,  0,  2,           NULL,                     0, "getTiming" },
+		{ 559, 112, 44, 14, 53, 48,           NULL,                     0, "getTiming" },	// SN Systems ProDG
+		{  42,  20,  0,  0,  0,  2,           NULL,                     0, "getTiming" }
 	};
 	FuncPattern __VIInitSigs[7] = {
-		{ 159, 44, 5, 4,  4, 16, NULL, 0, "__VIInitD A" },
-		{ 161, 44, 5, 4,  5, 16, NULL, 0, "__VIInitD B" },
-		{ 122, 21, 8, 1,  5,  5, NULL, 0, "__VIInit A" },
-		{ 126, 23, 8, 1,  6,  5, NULL, 0, "__VIInit B" },
-		{ 128, 23, 8, 1,  7,  5, NULL, 0, "__VIInit C" },
-		{ 176, 56, 4, 0, 21,  3, NULL, 0, "__VIInit D" },	// SN Systems ProDG
-		{ 129, 24, 7, 1,  8,  5, NULL, 0, "__VIInit E" }
+		{ 159, 44, 5, 4,  4, 16, NULL, 0, "__VIInitD" },
+		{ 161, 44, 5, 4,  5, 16, NULL, 0, "__VIInitD" },
+		{ 122, 21, 8, 1,  5,  5, NULL, 0, "__VIInit" },
+		{ 126, 23, 8, 1,  6,  5, NULL, 0, "__VIInit" },
+		{ 128, 23, 8, 1,  7,  5, NULL, 0, "__VIInit" },
+		{ 176, 56, 4, 0, 21,  3, NULL, 0, "__VIInit" },	// SN Systems ProDG
+		{ 129, 24, 7, 1,  8,  5, NULL, 0, "__VIInit" }
 	};
 	FuncPattern AdjustPositionSig = 
 		{ 135, 9, 1, 0, 17, 47, NULL, 0, "AdjustPositionD" };
 	FuncPattern ImportAdjustingValuesSig = 
 		{ 26, 9, 3, 3, 0, 4, NULL, 0, "ImportAdjustingValuesD" };
 	FuncPattern VIInitSigs[8] = {
-		{ 208, 60, 18, 8,  1, 24, NULL, 0, "VIInitD A" },
-		{ 218, 64, 21, 8,  1, 22, NULL, 0, "VIInitD B" },
-		{ 269, 37, 18, 7, 18, 57, NULL, 0, "VIInit A" },
-		{ 270, 37, 19, 7, 18, 57, NULL, 0, "VIInit B" },
-		{ 283, 40, 24, 7, 18, 49, NULL, 0, "VIInit C" },
-		{ 286, 41, 25, 7, 18, 49, NULL, 0, "VIInit D" },
-		{ 300, 48, 27, 8, 17, 48, NULL, 0, "VIInit E" },
-		{ 335, 85, 23, 9, 17, 42, NULL, 0, "VIInit F" }	// SN Systems ProDG
+		{ 208, 60, 18, 8,  1, 24, NULL, 0, "VIInitD" },
+		{ 218, 64, 21, 8,  1, 22, NULL, 0, "VIInitD" },
+		{ 269, 37, 18, 7, 18, 57, NULL, 0, "VIInit" },
+		{ 270, 37, 19, 7, 18, 57, NULL, 0, "VIInit" },
+		{ 283, 40, 24, 7, 18, 49, NULL, 0, "VIInit" },
+		{ 286, 41, 25, 7, 18, 49, NULL, 0, "VIInit" },
+		{ 300, 48, 27, 8, 17, 48, NULL, 0, "VIInit" },
+		{ 335, 85, 23, 9, 17, 42, NULL, 0, "VIInit" }	// SN Systems ProDG
 	};
 	FuncPattern VIWaitForRetraceSigs[2] = {
 		{ 19, 5, 2, 3, 1, 4, NULL, 0, "VIWaitForRetraceD" },
 		{ 21, 7, 4, 3, 1, 4, NULL, 0, "VIWaitForRetrace" }
 	};
 	FuncPattern setFbbRegsSigs[3] = {
-		{ 167, 62, 22, 2,  8, 24, NULL, 0, "setFbbRegsD A" },
-		{ 181, 54, 34, 0, 10, 16, NULL, 0, "setFbbRegs A" },
-		{ 177, 51, 34, 0, 10, 16, NULL, 0, "setFbbRegs B" }	// SN Systems ProDG
+		{ 167, 62, 22, 2,  8, 24, NULL, 0, "setFbbRegsD" },
+		{ 181, 54, 34, 0, 10, 16, NULL, 0, "setFbbRegs" },
+		{ 177, 51, 34, 0, 10, 16, NULL, 0, "setFbbRegs" }	// SN Systems ProDG
 	};
 	FuncPattern setVerticalRegsSigs[4] = {
-		{ 118, 17, 11, 0, 4, 23, NULL, 0, "setVerticalRegsD A" },
-		{ 104, 22, 14, 0, 4, 25, NULL, 0, "setVerticalRegs A" },
-		{ 104, 22, 14, 0, 4, 25, NULL, 0, "setVerticalRegs B" },
-		{ 114, 19, 13, 0, 4, 25, NULL, 0, "setVerticalRegs C" }	// SN Systems ProDG
+		{ 118, 17, 11, 0, 4, 23, NULL, 0, "setVerticalRegsD" },
+		{ 104, 22, 14, 0, 4, 25, NULL, 0, "setVerticalRegs" },
+		{ 104, 22, 14, 0, 4, 25, NULL, 0, "setVerticalRegs" },
+		{ 114, 19, 13, 0, 4, 25, NULL, 0, "setVerticalRegs" }	// SN Systems ProDG
 	};
 	FuncPattern VIConfigureSigs[11] = {
-		{ 280,  74, 15, 20, 21, 20, NULL, 0, "VIConfigureD A" },
-		{ 314,  86, 15, 21, 27, 20, NULL, 0, "VIConfigureD B" },
-		{ 428,  90, 43,  6, 32, 60, NULL, 0, "VIConfigure A" },
-		{ 420,  87, 41,  6, 31, 60, NULL, 0, "VIConfigure B" },
-		{ 423,  88, 41,  6, 31, 61, NULL, 0, "VIConfigure C" },
-		{ 464, 100, 43, 13, 34, 61, NULL, 0, "VIConfigure D" },
-		{ 462,  99, 43, 12, 34, 61, NULL, 0, "VIConfigure E" },
-		{ 487, 105, 44, 12, 38, 63, NULL, 0, "VIConfigure F" },
-		{ 522, 111, 44, 13, 53, 64, NULL, 0, "VIConfigure G" },
-		{ 559, 112, 44, 14, 53, 48, NULL, 0, "VIConfigure H" },	// SN Systems ProDG
-		{ 514, 110, 44, 13, 49, 63, NULL, 0, "VIConfigure I" }
+		{ 280,  74, 15, 20, 21, 20, NULL, 0, "VIConfigureD" },
+		{ 314,  86, 15, 21, 27, 20, NULL, 0, "VIConfigureD" },
+		{ 428,  90, 43,  6, 32, 60, NULL, 0, "VIConfigure" },
+		{ 420,  87, 41,  6, 31, 60, NULL, 0, "VIConfigure" },
+		{ 423,  88, 41,  6, 31, 61, NULL, 0, "VIConfigure" },
+		{ 464, 100, 43, 13, 34, 61, NULL, 0, "VIConfigure" },
+		{ 462,  99, 43, 12, 34, 61, NULL, 0, "VIConfigure" },
+		{ 487, 105, 44, 12, 38, 63, NULL, 0, "VIConfigure" },
+		{ 522, 111, 44, 13, 53, 64, NULL, 0, "VIConfigure" },
+		{ 559, 112, 44, 14, 53, 48, NULL, 0, "VIConfigure" },	// SN Systems ProDG
+		{ 514, 110, 44, 13, 49, 63, NULL, 0, "VIConfigure" }
 	};
 	FuncPattern VIConfigurePanSigs[2] = {
 		{ 100, 26,  3, 9,  6,  4, NULL, 0, "VIConfigurePanD" },
 		{ 229, 40, 11, 4, 25, 35, NULL, 0, "VIConfigurePan" }
 	};
 	FuncPattern VISetBlackSigs[3] = {
-		{ 30, 6, 5, 3, 0, 3, NULL, 0, "VISetBlackD A" },
-		{ 31, 7, 6, 3, 0, 3, NULL, 0, "VISetBlack A" },
-		{ 30, 7, 6, 3, 0, 4, NULL, 0, "VISetBlack B" }	// SN Systems ProDG
+		{ 30, 6, 5, 3, 0, 3, NULL, 0, "VISetBlackD" },
+		{ 31, 7, 6, 3, 0, 3, NULL, 0, "VISetBlack" },
+		{ 30, 7, 6, 3, 0, 4, NULL, 0, "VISetBlack" }	// SN Systems ProDG
 	};
 	FuncPattern VIGetRetraceCountSig = 
 		{ 2, 1, 0, 0, 0, 0, NULL, 0, "VIGetRetraceCount" };
 	FuncPattern GetCurrentDisplayPositionSig = 
 		{ 15, 3, 2, 0, 0, 1, NULL, 0, "GetCurrentDisplayPosition" };
 	FuncPattern getCurrentHalfLineSigs[2] = {
-		{ 26, 9, 1, 0, 0, 3, NULL, 0, "getCurrentHalfLineD A" },
-		{ 24, 7, 1, 0, 0, 3, NULL, 0, "getCurrentHalfLineD B" }
+		{ 26, 9, 1, 0, 0, 3, NULL, 0, "getCurrentHalfLineD" },
+		{ 24, 7, 1, 0, 0, 3, NULL, 0, "getCurrentHalfLineD" }
 	};
 	FuncPattern getCurrentFieldEvenOddSigs[5] = {
-		{ 33,  7, 2, 3, 4, 5, NULL, 0, "getCurrentFieldEvenOddD A" },
-		{ 15,  5, 2, 1, 2, 3, NULL, 0, "getCurrentFieldEvenOddD B" },
-		{ 47, 14, 2, 2, 4, 8, NULL, 0, "getCurrentFieldEvenOdd A" },
-		{ 26,  8, 0, 0, 1, 5, NULL, 0, "getCurrentFieldEvenOdd B" },
-		{ 26,  8, 0, 0, 1, 5, NULL, 0, "getCurrentFieldEvenOdd C" }	// SN Systems ProDG
+		{ 33,  7, 2, 3, 4, 5, NULL, 0, "getCurrentFieldEvenOddD" },
+		{ 15,  5, 2, 1, 2, 3, NULL, 0, "getCurrentFieldEvenOddD" },
+		{ 47, 14, 2, 2, 4, 8, NULL, 0, "getCurrentFieldEvenOdd" },
+		{ 26,  8, 0, 0, 1, 5, NULL, 0, "getCurrentFieldEvenOdd" },
+		{ 26,  8, 0, 0, 1, 5, NULL, 0, "getCurrentFieldEvenOdd" }	// SN Systems ProDG
 	};
 	FuncPattern VIGetNextFieldSigs[4] = {
-		{ 20,  4, 2, 3, 0, 3, NULL, 0, "VIGetNextFieldD A" },
-		{ 61, 16, 4, 4, 4, 9, NULL, 0, "VIGetNextField A" },
-		{ 42, 10, 3, 2, 2, 8, NULL, 0, "VIGetNextField B" },
-		{ 39, 13, 4, 3, 2, 6, NULL, 0, "VIGetNextField C" }
+		{ 20,  4, 2, 3, 0, 3, NULL, 0, "VIGetNextFieldD" },
+		{ 61, 16, 4, 4, 4, 9, NULL, 0, "VIGetNextField" },
+		{ 42, 10, 3, 2, 2, 8, NULL, 0, "VIGetNextField" },
+		{ 39, 13, 4, 3, 2, 6, NULL, 0, "VIGetNextField" }
 	};
 	FuncPattern VIGetDTVStatusSigs[2] = {
 		{ 17, 3, 2, 2, 0, 3, NULL, 0, "VIGetDTVStatusD" },
 		{ 15, 4, 3, 2, 0, 2, NULL, 0, "VIGetDTVStatus" }
 	};
 	FuncPattern __GXInitGXSigs[9] = {
-		{ 1130, 567, 66, 133, 46, 46, NULL, 0, "__GXInitGXD A" },
-		{  544, 319, 33, 109, 18,  5, NULL, 0, "__GXInitGXD B" },
-		{  976, 454, 81, 119, 43, 36, NULL, 0, "__GXInitGX A" },
-		{  530, 307, 35, 107, 18, 10, NULL, 0, "__GXInitGX B" },
-		{  545, 310, 35, 108, 24, 11, NULL, 0, "__GXInitGX C" },
-		{  561, 313, 36, 110, 28, 11, NULL, 0, "__GXInitGX D" },
-		{  546, 293, 37, 110,  7,  9, NULL, 0, "__GXInitGX E" },	// SN Systems ProDG
-		{  549, 289, 38, 110,  7,  9, NULL, 0, "__GXInitGX F" },	// SN Systems ProDG
-		{  590, 333, 34, 119, 28, 11, NULL, 0, "__GXInitGX G" }
+		{ 1130, 567, 66, 133, 46, 46, NULL, 0, "__GXInitGXD" },
+		{  544, 319, 33, 109, 18,  5, NULL, 0, "__GXInitGXD" },
+		{  976, 454, 81, 119, 43, 36, NULL, 0, "__GXInitGX" },
+		{  530, 307, 35, 107, 18, 10, NULL, 0, "__GXInitGX" },
+		{  545, 310, 35, 108, 24, 11, NULL, 0, "__GXInitGX" },
+		{  561, 313, 36, 110, 28, 11, NULL, 0, "__GXInitGX" },
+		{  546, 293, 37, 110,  7,  9, NULL, 0, "__GXInitGX" },	// SN Systems ProDG
+		{  549, 289, 38, 110,  7,  9, NULL, 0, "__GXInitGX" },	// SN Systems ProDG
+		{  590, 333, 34, 119, 28, 11, NULL, 0, "__GXInitGX" }
 	};
 	FuncPattern GXAdjustForOverscanSigs[4] = {
-		{ 57,  6,  4, 0, 3, 11, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscanD A" },
-		{ 72, 17, 15, 0, 3,  5, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan A" },
-		{ 63, 11,  8, 1, 2, 10, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan B" },	// SN Systems ProDG
-		{ 81, 17, 15, 0, 3,  7, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan C" }
+		{ 57,  6,  4, 0, 3, 11, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscanD" },
+		{ 72, 17, 15, 0, 3,  5, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan" },
+		{ 63, 11,  8, 1, 2, 10, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan" },	// SN Systems ProDG
+		{ 81, 17, 15, 0, 3,  7, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan" }
 	};
 	FuncPattern GXSetDispCopySrcSigs[5] = {
-		{ 104, 44, 10, 5, 5, 6, NULL, 0, "GXSetDispCopySrcD A" },
-		{  48, 19,  8, 0, 0, 4, NULL, 0, "GXSetDispCopySrc A" },
-		{  36,  9,  8, 0, 0, 4, NULL, 0, "GXSetDispCopySrc B" },
-		{  14,  2,  2, 0, 0, 2, NULL, 0, "GXSetDispCopySrc C" },	// SN Systems ProDG
-		{  31, 11,  8, 0, 0, 0, NULL, 0, "GXSetDispCopySrc D" }
+		{ 104, 44, 10, 5, 5, 6, NULL, 0, "GXSetDispCopySrcD" },
+		{  48, 19,  8, 0, 0, 4, NULL, 0, "GXSetDispCopySrc" },
+		{  36,  9,  8, 0, 0, 4, NULL, 0, "GXSetDispCopySrc" },
+		{  14,  2,  2, 0, 0, 2, NULL, 0, "GXSetDispCopySrc" },	// SN Systems ProDG
+		{  31, 11,  8, 0, 0, 0, NULL, 0, "GXSetDispCopySrc" }
 	};
 	FuncPattern GXSetDispCopyYScaleSigs[7] = {
-		{ 100, 33, 8, 8, 4, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScaleD A" },
-		{  85, 32, 4, 6, 4, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScaleD B" },
-		{  47, 15, 8, 2, 0, 4, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale A" },
-		{  53, 17, 4, 1, 5, 8, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale B" },
-		{  50, 14, 4, 1, 5, 8, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale C" },
-		{  44,  8, 4, 1, 2, 3, GXSetDispCopyYScalePatch2, GXSetDispCopyYScalePatch2_length, "GXSetDispCopyYScale D" },	// SN Systems ProDG
-		{  51, 16, 4, 1, 5, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale E" }
+		{ 100, 33, 8, 8, 4, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScaleD" },
+		{  85, 32, 4, 6, 4, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScaleD" },
+		{  47, 15, 8, 2, 0, 4, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" },
+		{  53, 17, 4, 1, 5, 8, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" },
+		{  50, 14, 4, 1, 5, 8, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" },
+		{  44,  8, 4, 1, 2, 3, GXSetDispCopyYScalePatch2, GXSetDispCopyYScalePatch2_length, "GXSetDispCopyYScale" },	// SN Systems ProDG
+		{  51, 16, 4, 1, 5, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" }
 	};
 	FuncPattern GXSetCopyFilterSigs[5] = {
-		{ 567, 183, 44, 32, 36, 38, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilterD A" },
-		{ 138,  15,  7,  0,  4,  5, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter A" },
-		{ 163,  19, 23,  0,  3, 14, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter B" },	// SN Systems ProDG
-		{ 163,  19, 23,  0,  3, 14, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter C" },	// SN Systems ProDG
-		{ 130,  25,  7,  0,  4,  0, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter D" }
+		{ 567, 183, 44, 32, 36, 38, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilterD" },
+		{ 138,  15,  7,  0,  4,  5, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" },
+		{ 163,  19, 23,  0,  3, 14, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" },	// SN Systems ProDG
+		{ 163,  19, 23,  0,  3, 14, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" },	// SN Systems ProDG
+		{ 130,  25,  7,  0,  4,  0, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" }
 	};
 	FuncPattern GXSetDispCopyGammaSigs[4] = {
-		{ 34, 12, 3, 2, 2, 3, NULL, 0, "GXSetDispCopyGammaD A" },
-		{  7,  1, 1, 0, 0, 1, NULL, 0, "GXSetDispCopyGamma A" },
-		{  6,  1, 1, 0, 0, 1, NULL, 0, "GXSetDispCopyGamma B" },	// SN Systems ProDG
-		{  5,  2, 1, 0, 0, 0, NULL, 0, "GXSetDispCopyGamma C" }
+		{ 34, 12, 3, 2, 2, 3, NULL, 0, "GXSetDispCopyGammaD" },
+		{  7,  1, 1, 0, 0, 1, NULL, 0, "GXSetDispCopyGamma" },
+		{  6,  1, 1, 0, 0, 1, NULL, 0, "GXSetDispCopyGamma" },	// SN Systems ProDG
+		{  5,  2, 1, 0, 0, 0, NULL, 0, "GXSetDispCopyGamma" }
 	};
 	FuncPattern GXCopyDispSigs[5] = {
-		{ 149, 62,  3, 14, 14, 3, NULL, 0, "GXCopyDispD A" },
-		{  92, 34, 14,  0,  3, 1, NULL, 0, "GXCopyDisp A" },
-		{  87, 29, 14,  0,  3, 1, NULL, 0, "GXCopyDisp B" },
-		{  69, 15, 12,  0,  1, 1, NULL, 0, "GXCopyDisp C" },	// SN Systems ProDG
-		{  90, 35, 14,  0,  3, 0, NULL, 0, "GXCopyDisp D" }
+		{ 149, 62,  3, 14, 14, 3, NULL, 0, "GXCopyDispD" },
+		{  92, 34, 14,  0,  3, 1, NULL, 0, "GXCopyDisp" },
+		{  87, 29, 14,  0,  3, 1, NULL, 0, "GXCopyDisp" },
+		{  69, 15, 12,  0,  1, 1, NULL, 0, "GXCopyDisp" },	// SN Systems ProDG
+		{  90, 35, 14,  0,  3, 0, NULL, 0, "GXCopyDisp" }
 	};
 	FuncPattern GXSetBlendModeSigs[5] = {
-		{ 154, 66, 10, 7, 9, 17, GXSetBlendModePatch1, GXSetBlendModePatch1_length, "GXSetBlendModeD A" },
-		{  65, 20,  8, 0, 2,  6, GXSetBlendModePatch1, GXSetBlendModePatch1_length, "GXSetBlendMode A" },
-		{  21,  6,  2, 0, 0,  2, GXSetBlendModePatch2, GXSetBlendModePatch2_length, "GXSetBlendMode B" },
-		{  36,  2,  2, 0, 0,  6, GXSetBlendModePatch3, GXSetBlendModePatch3_length, "GXSetBlendMode C" },	// SN Systems ProDG
-		{  38,  2,  2, 0, 0,  8, GXSetBlendModePatch3, GXSetBlendModePatch3_length, "GXSetBlendMode D" }	// SN Systems ProDG
+		{ 154, 66, 10, 7, 9, 17, GXSetBlendModePatch1, GXSetBlendModePatch1_length, "GXSetBlendModeD" },
+		{  65, 20,  8, 0, 2,  6, GXSetBlendModePatch1, GXSetBlendModePatch1_length, "GXSetBlendMode" },
+		{  21,  6,  2, 0, 0,  2, GXSetBlendModePatch2, GXSetBlendModePatch2_length, "GXSetBlendMode" },
+		{  36,  2,  2, 0, 0,  6, GXSetBlendModePatch3, GXSetBlendModePatch3_length, "GXSetBlendMode" },	// SN Systems ProDG
+		{  38,  2,  2, 0, 0,  8, GXSetBlendModePatch3, GXSetBlendModePatch3_length, "GXSetBlendMode" }	// SN Systems ProDG
 	};
 	FuncPattern __GXSetViewportSig = 
 		{ 36, 15, 7, 0, 0, 0, GXSetViewportPatch, GXSetViewportPatch_length, "__GXSetViewport" };
 	FuncPattern GXSetViewportJitterSigs[5] = {
-		{ 193, 76, 22, 4, 15, 22, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitterD A" },
-		{  71, 20, 15, 1,  1,  3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter A" },
-		{  65, 14, 15, 1,  1,  3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter B" },
-		{  31,  6, 10, 1,  0,  4,                     NULL,                               0, "GXSetViewportJitter C" },	// SN Systems ProDG
-		{  22,  6,  8, 1,  0,  2,                     NULL,                               0, "GXSetViewportJitter D" }
+		{ 193, 76, 22, 4, 15, 22, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitterD" },
+		{  71, 20, 15, 1,  1,  3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter" },
+		{  65, 14, 15, 1,  1,  3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter" },
+		{  31,  6, 10, 1,  0,  4,                     NULL,                               0, "GXSetViewportJitter" },	// SN Systems ProDG
+		{  22,  6,  8, 1,  0,  2,                     NULL,                               0, "GXSetViewportJitter" }
 	};
 	FuncPattern GXSetViewportSigs[5] = {
-		{ 21, 9, 8, 1, 0, 2, NULL, 0, "GXSetViewportD A" },
-		{  9, 3, 2, 1, 0, 2, NULL, 0, "GXSetViewport A" },
-		{  9, 3, 2, 1, 0, 2, NULL, 0, "GXSetViewport B" },
-		{  2, 1, 0, 0, 1, 0, NULL, 0, "GXSetViewport C" },	// SN Systems ProDG
-		{ 18, 5, 8, 1, 0, 2, NULL, 0, "GXSetViewport D" }
+		{ 21, 9, 8, 1, 0, 2, NULL, 0, "GXSetViewportD" },
+		{  9, 3, 2, 1, 0, 2, NULL, 0, "GXSetViewport" },
+		{  9, 3, 2, 1, 0, 2, NULL, 0, "GXSetViewport" },
+		{  2, 1, 0, 0, 1, 0, NULL, 0, "GXSetViewport" },	// SN Systems ProDG
+		{ 18, 5, 8, 1, 0, 2, NULL, 0, "GXSetViewport" }
 	};
 	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
 	
@@ -7391,7 +7391,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, getCurrentFieldEvenOdd);
+			print_gecko("Found:[%s$%i] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, k, getCurrentFieldEvenOdd);
 		}
 		
 		if (j < sizeof(VISetRegsSigs) / sizeof(FuncPattern) && (i = VISetRegsSigs[j].offsetFoundAt)) {
@@ -7426,7 +7426,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							break;
 					}
 				}
-				print_gecko("Found:[%s] @ %08X\n", VISetRegsSigs[j].Name, VISetRegs);
+				print_gecko("Found:[%s$%i] @ %08X\n", VISetRegsSigs[j].Name, j, VISetRegs);
 			}
 		}
 		
@@ -7552,7 +7552,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					}
 					data[i + __VIRetraceHandlerSigs[j].Length - 1] = branch(__VIRetraceHandlerHook, __VIRetraceHandler + __VIRetraceHandlerSigs[j].Length - 1);
 				}
-				print_gecko("Found:[%s] @ %08X\n", __VIRetraceHandlerSigs[j].Name, __VIRetraceHandler);
+				print_gecko("Found:[%s$%i] @ %08X\n", __VIRetraceHandlerSigs[j].Name, j, __VIRetraceHandler);
 			}
 		}
 	}
@@ -7643,7 +7643,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				for (k = 6; k < getTimingSigs[j].PatchLength / sizeof(u32); k++)
 					data[i + k] += timingTableAddr;
 			}
-			print_gecko("Found:[%s] @ %08X\n", getTimingSigs[j].Name, getTiming);
+			print_gecko("Found:[%s$%i] @ %08X\n", getTimingSigs[j].Name, j, getTiming);
 		}
 	}
 	
@@ -7694,7 +7694,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 161] = 0x54C5177A;	// rlwinm	r5, r6, 2, 29, 29
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", __VIInitSigs[j].Name, __VIInit);
+			print_gecko("Found:[%s$%i] @ %08X\n", __VIInitSigs[j].Name, j, __VIInit);
 		}
 	}
 	
@@ -7765,7 +7765,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				case 6: data[i + 24] = 0x38600000 | (newmode->viTVMode & 0xFFFF); break;
 				case 7: data[i + 17] = 0x38600000 | (newmode->viTVMode & 0xFFFF); break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", VIInitSigs[k].Name, VIInit);
+			print_gecko("Found:[%s$%i] @ %08X\n", VIInitSigs[k].Name, k, VIInit);
 		}
 		
 		if (j < sizeof(VIWaitForRetraceSigs) / sizeof(FuncPattern) && (i = VIWaitForRetraceSigs[j].offsetFoundAt)) {
@@ -7784,7 +7784,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							break;
 					}
 				}
-				print_gecko("Found:[%s] @ %08X\n", VIWaitForRetraceSigs[j].Name, VIWaitForRetrace);
+				print_gecko("Found:[%s$%i] @ %08X\n", VIWaitForRetraceSigs[j].Name, j, VIWaitForRetrace);
 			}
 		}
 	}
@@ -7832,7 +7832,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s] @ %08X\n", setFbbRegsSigs[j].Name, setFbbRegs);
+			print_gecko("Found:[%s$%i] @ %08X\n", setFbbRegsSigs[j].Name, j, setFbbRegs);
 		}
 	}
 	
@@ -7876,7 +7876,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					case 3: data[i +  4] = 0x39800000; break;	// li		r12, 0
 				}
 			}
-			print_gecko("Found:[%s] @ %08X\n", setVerticalRegsSigs[j].Name, setVerticalRegs);
+			print_gecko("Found:[%s$%i] @ %08X\n", setVerticalRegsSigs[j].Name, j, setVerticalRegs);
 		}
 	}
 	
@@ -8360,7 +8360,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s] @ %08X\n", VIConfigureSigs[j].Name, VIConfigure);
+			print_gecko("Found:[%s$%i] @ %08X\n", VIConfigureSigs[j].Name, j, VIConfigure);
 		}
 	}
 	
@@ -8394,7 +8394,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 214] = 0xA09D00FC;	// lhz		r4, 252 (r29)
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", VIConfigurePanSigs[j].Name, VIConfigurePan);
+			print_gecko("Found:[%s$%i] @ %08X\n", VIConfigurePanSigs[j].Name, j, VIConfigurePan);
 		}
 	}
 	
@@ -8419,7 +8419,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 14] = 0xA084000C;	// lhz		r4, 12 (r4)
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", VISetBlackSigs[j].Name, VISetBlack);
+			print_gecko("Found:[%s$%i] @ %08X\n", VISetBlackSigs[j].Name, j, VISetBlack);
 		}
 	}
 	
@@ -8457,7 +8457,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				if (j == 1)
 					data[i + 12] = 0x38600006;	// li		r3, 6
 			}
-			print_gecko("Found:[%s] @ %08X\n", VIGetNextFieldSigs[j].Name, VIGetNextField);
+			print_gecko("Found:[%s$%i] @ %08X\n", VIGetNextFieldSigs[j].Name, j, VIGetNextField);
 		}
 	}
 	
@@ -8473,7 +8473,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				data[i + 0] = 0x38600001;	// li		r3, 1
 				data[i + 1] = 0x4E800020;	// blr
 				
-				print_gecko("Found:[%s] @ %08X\n", VIGetDTVStatusSigs[j].Name, VIGetDTVStatus);
+				print_gecko("Found:[%s$%i] @ %08X\n", VIGetDTVStatusSigs[j].Name, j, VIGetDTVStatus);
 			}
 		}
 	}
@@ -8498,7 +8498,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					case 7: data[i +  520] = 0x38600001; break;
 				}
 			}
-			print_gecko("Found:[%s] @ %08X\n", __GXInitGXSigs[j].Name, __GXInitGX);
+			print_gecko("Found:[%s$%i] @ %08X\n", __GXInitGXSigs[j].Name, j, __GXInitGX);
 		}
 	}
 	
@@ -8514,7 +8514,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					memset(data + i, 0, GXAdjustForOverscanSigs[j].Length * sizeof(u32));
 					memcpy(data + i, GXAdjustForOverscanSigs[j].Patch, GXAdjustForOverscanSigs[j].PatchLength);
 				}
-				print_gecko("Found:[%s] @ %08X\n", GXAdjustForOverscanSigs[j].Name, GXAdjustForOverscan);
+				print_gecko("Found:[%s$%i] @ %08X\n", GXAdjustForOverscanSigs[j].Name, j, GXAdjustForOverscan);
 			}
 		}
 		
@@ -8533,7 +8533,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					if (GXSetDispCopyYScaleSigs[j].Patch != GXSetDispCopyYScalePatch2)
 						data[i + 6] |= op & 0x1FFFFF;
 				}
-				print_gecko("Found:[%s] @ %08X\n", GXSetDispCopyYScaleSigs[j].Name, GXSetDispCopyYScale);
+				print_gecko("Found:[%s$%i] @ %08X\n", GXSetDispCopyYScaleSigs[j].Name, j, GXSetDispCopyYScale);
 			}
 		}
 	}
@@ -8550,7 +8550,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					memset(data + i, 0, GXSetCopyFilterSigs[j].Length * sizeof(u32));
 					memcpy(data + i, GXSetCopyFilterSigs[j].Patch, GXSetCopyFilterSigs[j].PatchLength);
 				}
-				print_gecko("Found:[%s] @ %08X\n", GXSetCopyFilterSigs[j].Name, GXSetCopyFilter);
+				print_gecko("Found:[%s$%i] @ %08X\n", GXSetCopyFilterSigs[j].Name, j, GXSetCopyFilter);
 			}
 		}
 	}
@@ -8573,7 +8573,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					if (GXSetBlendModeSigs[j].Patch == GXSetBlendModePatch2)
 						data[i + 21] |= op & 0x1FFFFF;
 				}
-				print_gecko("Found:[%s] @ %08X\n", GXSetBlendModeSigs[j].Name, GXSetBlendMode);
+				print_gecko("Found:[%s$%i] @ %08X\n", GXSetBlendModeSigs[j].Name, j, GXSetBlendMode);
 			}
 		}
 	}
@@ -8592,7 +8592,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				
 				data[i + GXCopyDispSigs[j].Length - 1] = branch(GXCopyDispHook, GXCopyDisp + GXCopyDispSigs[j].Length - 1);
 				
-				print_gecko("Found:[%s] @ %08X\n", GXCopyDispSigs[j].Name, GXCopyDisp);
+				print_gecko("Found:[%s$%i] @ %08X\n", GXCopyDispSigs[j].Name, j, GXCopyDisp);
 			}
 		}
 		
@@ -8619,7 +8619,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						}
 						break;
 				}
-				print_gecko("Found:[%s] @ %08X\n", GXSetViewportSigs[j].Name, GXSetViewport);
+				print_gecko("Found:[%s$%i] @ %08X\n", GXSetViewportSigs[j].Name, j, GXSetViewport);
 			}
 		}
 		
@@ -8639,7 +8639,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 2] |= ((u32)GXSetViewportJitter + GXSetViewportJitterSigs[j].PatchLength + 0x8000) >> 16;
 					data[i + 4] |= ((u32)GXSetViewportJitter + GXSetViewportJitterSigs[j].PatchLength) & 0xFFFF;
 				}
-				print_gecko("Found:[%s] @ %08X\n", GXSetViewportJitterSigs[j].Name, GXSetViewportJitter);
+				print_gecko("Found:[%s$%i] @ %08X\n", GXSetViewportJitterSigs[j].Name, j, GXSetViewportJitter);
 			}
 		}
 		
@@ -8674,14 +8674,14 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 	FuncPattern MTXOrthoSig = 
 		{ 38, 4, 16, 0, 0, 0, NULL, 0, "C_MTXOrtho" };
 	FuncPattern GXSetScissorSigs[3] = {
-		{ 44, 19, 6, 0, 0, 6, NULL, 0, "GXSetScissor A" },
-		{ 36, 12, 6, 0, 0, 6, NULL, 0, "GXSetScissor B" },
-		{ 30, 13, 6, 0, 0, 1, NULL, 0, "GXSetScissor C" }
+		{ 44, 19, 6, 0, 0, 6, NULL, 0, "GXSetScissor" },
+		{ 36, 12, 6, 0, 0, 6, NULL, 0, "GXSetScissor" },
+		{ 30, 13, 6, 0, 0, 1, NULL, 0, "GXSetScissor" }
 	};
 	FuncPattern GXSetProjectionSigs[3] = {
-		{ 53, 30, 17, 0, 1, 0, NULL, 0, "GXSetProjection A" },
-		{ 45, 22, 17, 0, 1, 0, NULL, 0, "GXSetProjection B" },
-		{ 41, 18, 11, 0, 1, 0, NULL, 0, "GXSetProjection C" }
+		{ 53, 30, 17, 0, 1, 0, NULL, 0, "GXSetProjection" },
+		{ 45, 22, 17, 0, 1, 0, NULL, 0, "GXSetProjection" },
+		{ 41, 18, 11, 0, 1, 0, NULL, 0, "GXSetProjection" }
 	};
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
@@ -8778,7 +8778,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 					u32 *GXSetScissor = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 					u32 *GXSetScissorHook = NULL;
 					if (GXSetScissor) {
-						print_gecko("Found:[%s] @ %08X\n", GXSetScissorSigs[j].Name, GXSetScissor);
+						print_gecko("Found:[%s$%i] @ %08X\n", GXSetScissorSigs[j].Name, j, GXSetScissor);
 						GXSetScissorHook = installPatch(GX_SETSCISSORHOOK);
 						GXSetScissorHook[ 0] = data[i];
 						GXSetScissorHook[ 1] = j == 1 ? 0x800801E8 : 0x800701E8;
@@ -8803,7 +8803,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 					u32 *GXSetProjection = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 					u32 *GXSetProjectionHook = NULL;
 					if (GXSetProjection) {
-						print_gecko("Found:[%s] @ %08X\n", GXSetProjectionSigs[j].Name, GXSetProjection);
+						print_gecko("Found:[%s$%i] @ %08X\n", GXSetProjectionSigs[j].Name, j, GXSetProjection);
 						GXSetProjectionHook = installPatch(GX_SETPROJECTIONHOOK);
 						GXSetProjectionHook[5] = branch(GXSetProjection + 4, GXSetProjectionHook + 5);
 						data[i + 3] = branch(GXSetProjectionHook, GXSetProjection + 3);
@@ -8820,9 +8820,9 @@ int Patch_TexFilt(u32 *data, u32 length, int dataType)
 {
 	int i, j;
 	FuncPattern GXInitTexObjLODSigs[3] = {
-		{ 101, 29, 11, 0, 11, 11, NULL, 0, "GXInitTexObjLOD A" },
-		{  89, 16,  4, 0,  8,  6, NULL, 0, "GXInitTexObjLOD B" },	// SN Systems ProDG
-		{  89, 30, 11, 0, 11,  6, NULL, 0, "GXInitTexObjLOD C" }
+		{ 101, 29, 11, 0, 11, 11, NULL, 0, "GXInitTexObjLOD" },
+		{  89, 16,  4, 0,  8,  6, NULL, 0, "GXInitTexObjLOD" },	// SN Systems ProDG
+		{  89, 30, 11, 0, 11,  6, NULL, 0, "GXInitTexObjLOD" }
 	};
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
@@ -8837,7 +8837,7 @@ int Patch_TexFilt(u32 *data, u32 length, int dataType)
 				u32 *GXInitTexObjLOD = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 				u32 *GXInitTexObjLODHook = NULL;
 				if (GXInitTexObjLOD) {
-					print_gecko("Found:[%s] @ %08X\n", GXInitTexObjLODSigs[j].Name, GXInitTexObjLOD);
+					print_gecko("Found:[%s$%i] @ %08X\n", GXInitTexObjLODSigs[j].Name, j, GXInitTexObjLOD);
 					GXInitTexObjLODHook = installPatch(GX_INITTEXOBJLODHOOK);
 					GXInitTexObjLODHook[6] = data[i];
 					GXInitTexObjLODHook[7] = branch(GXInitTexObjLOD + 1, GXInitTexObjLODHook + 7);
@@ -11222,63 +11222,63 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 	FuncPattern OSRestoreInterruptsSig = 
 		{ 9, 0, 0, 0, 2, 2, NULL, 0, "OSRestoreInterrupts" };
 	FuncPattern SIGetResponseSigs[6] = {
-		{ 36, 13, 4, 1, 2,  4, NULL, 0, "SIGetResponseD A" },
-		{ 48, 12, 5, 4, 3,  7, NULL, 0, "SIGetResponseD B" },
-		{  9,  4, 2, 0, 0,  1, NULL, 0, "SIGetResponse A" },
-		{ 52, 13, 8, 3, 2, 10, NULL, 0, "SIGetResponse B" },
-		{ 49, 13, 8, 3, 2,  7, NULL, 0, "SIGetResponse C" },
-		{ 74, 26, 9, 4, 3, 14, NULL, 0, "SIGetResponse C" }	// SN Systems ProDG
+		{ 36, 13, 4, 1, 2,  4, NULL, 0, "SIGetResponseD" },
+		{ 48, 12, 5, 4, 3,  7, NULL, 0, "SIGetResponseD" },
+		{  9,  4, 2, 0, 0,  1, NULL, 0, "SIGetResponse" },
+		{ 52, 13, 8, 3, 2, 10, NULL, 0, "SIGetResponse" },
+		{ 49, 13, 8, 3, 2,  7, NULL, 0, "SIGetResponse" },
+		{ 74, 26, 9, 4, 3, 14, NULL, 0, "SIGetResponse" }	// SN Systems ProDG
 	};
 	FuncPattern UpdateOriginSigs[5] = {
-		{ 105, 15, 1, 0, 20, 4, NULL, 0, "UpdateOriginD A" },
-		{ 107, 13, 2, 1, 20, 6, NULL, 0, "UpdateOriginD B" },
-		{  81,  7, 0, 0, 18, 1, NULL, 0, "UpdateOrigin A" },
-		{ 101, 14, 0, 0, 18, 5, NULL, 0, "UpdateOrigin B" },
-		{ 105, 14, 3, 1, 20, 5, NULL, 0, "UpdateOrigin C" }
+		{ 105, 15, 1, 0, 20, 4, NULL, 0, "UpdateOriginD" },
+		{ 107, 13, 2, 1, 20, 6, NULL, 0, "UpdateOriginD" },
+		{  81,  7, 0, 0, 18, 1, NULL, 0, "UpdateOrigin" },
+		{ 101, 14, 0, 0, 18, 5, NULL, 0, "UpdateOrigin" },
+		{ 105, 14, 3, 1, 20, 5, NULL, 0, "UpdateOrigin" }
 	};
 	FuncPattern PADOriginCallbackSigs[6] = {
 		{  39, 17,  4, 5,  3,  3, NULL, 0, "PADOriginCallbackD" },
-		{  69, 28,  9, 6,  2,  9, NULL, 0, "PADOriginCallback A" },
-		{  70, 28, 10, 6,  2,  9, NULL, 0, "PADOriginCallback B" },
-		{  71, 27, 10, 6,  2,  9, NULL, 0, "PADOriginCallback C" },
-		{  49, 21,  6, 6,  1,  8, NULL, 0, "PADOriginCallback D" },
-		{ 143, 30,  6, 6, 21, 11, NULL, 0, "PADOriginCallback D" }	// SN Systems ProDG
+		{  69, 28,  9, 6,  2,  9, NULL, 0, "PADOriginCallback" },
+		{  70, 28, 10, 6,  2,  9, NULL, 0, "PADOriginCallback" },
+		{  71, 27, 10, 6,  2,  9, NULL, 0, "PADOriginCallback" },
+		{  49, 21,  6, 6,  1,  8, NULL, 0, "PADOriginCallback" },
+		{ 143, 30,  6, 6, 21, 11, NULL, 0, "PADOriginCallback" }	// SN Systems ProDG
 	};
 	FuncPattern PADOriginUpdateCallbackSigs[7] = {
-		{  31, 10,  4, 2,  3,  5, NULL, 0, "PADOriginUpdateCallbackD A" },
-		{  34,  8,  2, 3,  4,  4, NULL, 0, "PADOriginUpdateCallbackD B" },
-		{  10,  2,  2, 1,  0,  2, NULL, 0, "PADOriginUpdateCallback A" },
-		{  15,  4,  2, 1,  1,  4, NULL, 0, "PADOriginUpdateCallback B" },
-		{  48, 13,  9, 5,  2,  9, NULL, 0, "PADOriginUpdateCallback C" },
-		{ 143, 23, 10, 5, 22, 13, NULL, 0, "PADOriginUpdateCallback C" },	// SN Systems ProDG
-		{  51, 14, 10, 5,  2, 10, NULL, 0, "PADOriginUpdateCallback D" }
+		{  31, 10,  4, 2,  3,  5, NULL, 0, "PADOriginUpdateCallbackD" },
+		{  34,  8,  2, 3,  4,  4, NULL, 0, "PADOriginUpdateCallbackD" },
+		{  10,  2,  2, 1,  0,  2, NULL, 0, "PADOriginUpdateCallback" },
+		{  15,  4,  2, 1,  1,  4, NULL, 0, "PADOriginUpdateCallback" },
+		{  48, 13,  9, 5,  2,  9, NULL, 0, "PADOriginUpdateCallback" },
+		{ 143, 23, 10, 5, 22, 13, NULL, 0, "PADOriginUpdateCallback" },	// SN Systems ProDG
+		{  51, 14, 10, 5,  2, 10, NULL, 0, "PADOriginUpdateCallback" }
 	};
 	FuncPattern PADInitSigs[14] = {
-		{  88, 37,  4,  8, 3, 11, NULL, 0, "PADInitD A" },
-		{  91, 38,  5,  8, 6, 11, NULL, 0, "PADInitD B" },
-		{  90, 37,  5,  8, 6, 11, NULL, 0, "PADInitD C" },
-		{  92, 38,  5,  9, 6, 11, NULL, 0, "PADInitD D" },
-		{  84, 25,  7, 10, 1, 11, NULL, 0, "PADInit A" },
-		{  94, 29,  7, 11, 1, 17, NULL, 0, "PADInit B" },
-		{ 113, 31, 11, 11, 1, 17, NULL, 0, "PADInit C" },
-		{ 129, 42, 13, 12, 2, 18, NULL, 0, "PADInit D" },
-		{ 132, 43, 14, 12, 5, 18, NULL, 0, "PADInit E" },
-		{ 133, 43, 14, 12, 5, 18, NULL, 0, "PADInit F" },
-		{ 132, 42, 14, 12, 5, 18, NULL, 0, "PADInit G" },
-		{ 134, 43, 14, 13, 5, 18, NULL, 0, "PADInit H" },
-		{ 123, 38, 16, 10, 5, 27, NULL, 0, "PADInit H" },	// SN Systems ProDG
-		{  84, 24,  8,  9, 4,  9, NULL, 0, "PADInit I" }
+		{  88, 37,  4,  8, 3, 11, NULL, 0, "PADInitD" },
+		{  91, 38,  5,  8, 6, 11, NULL, 0, "PADInitD" },
+		{  90, 37,  5,  8, 6, 11, NULL, 0, "PADInitD" },
+		{  92, 38,  5,  9, 6, 11, NULL, 0, "PADInitD" },
+		{  84, 25,  7, 10, 1, 11, NULL, 0, "PADInit" },
+		{  94, 29,  7, 11, 1, 17, NULL, 0, "PADInit" },
+		{ 113, 31, 11, 11, 1, 17, NULL, 0, "PADInit" },
+		{ 129, 42, 13, 12, 2, 18, NULL, 0, "PADInit" },
+		{ 132, 43, 14, 12, 5, 18, NULL, 0, "PADInit" },
+		{ 133, 43, 14, 12, 5, 18, NULL, 0, "PADInit" },
+		{ 132, 42, 14, 12, 5, 18, NULL, 0, "PADInit" },
+		{ 134, 43, 14, 13, 5, 18, NULL, 0, "PADInit" },
+		{ 123, 38, 16, 10, 5, 27, NULL, 0, "PADInit" },	// SN Systems ProDG
+		{  84, 24,  8,  9, 4,  9, NULL, 0, "PADInit" }
 	};
 	FuncPattern PADReadSigs[9] = {
-		{ 172, 65,  3, 15, 16, 18, NULL, 0, "PADReadD A" },
-		{ 171, 66,  4, 20, 17, 14, NULL, 0, "PADReadD B" },
-		{ 128, 49,  4, 10, 11, 11, NULL, 0, "PADRead A" },
-		{ 200, 75,  9, 20, 17, 18, NULL, 0, "PADRead B" },
-		{ 206, 78,  7, 20, 17, 19, NULL, 0, "PADRead C" },
-		{ 237, 87, 13, 27, 17, 25, NULL, 0, "PADRead D" },
-		{ 235, 86, 13, 27, 17, 24, NULL, 0, "PADRead E" },
-		{ 233, 71, 13, 29, 17, 27, NULL, 0, "PADRead E" },	// SN Systems ProDG
-		{ 192, 73,  8, 23, 16, 15, NULL, 0, "PADRead F" }
+		{ 172, 65,  3, 15, 16, 18, NULL, 0, "PADReadD" },
+		{ 171, 66,  4, 20, 17, 14, NULL, 0, "PADReadD" },
+		{ 128, 49,  4, 10, 11, 11, NULL, 0, "PADRead" },
+		{ 200, 75,  9, 20, 17, 18, NULL, 0, "PADRead" },
+		{ 206, 78,  7, 20, 17, 19, NULL, 0, "PADRead" },
+		{ 237, 87, 13, 27, 17, 25, NULL, 0, "PADRead" },
+		{ 235, 86, 13, 27, 17, 24, NULL, 0, "PADRead" },
+		{ 233, 71, 13, 29, 17, 27, NULL, 0, "PADRead" },	// SN Systems ProDG
+		{ 192, 73,  8, 23, 16, 15, NULL, 0, "PADRead" }
 	};
 	FuncPattern PADSetSpecSigs[2] = {
 		{ 42, 15, 8, 1, 9, 3, NULL, 0, "PADSetSpecD" },
@@ -11295,11 +11295,11 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 		{ 85, 18, 0, 0,  2, 8, NULL, 0, "SPEC1_MakeStatus" }	// SN Systems ProDG
 	};
 	FuncPattern SPEC2_MakeStatusSigs[5] = {
-		{ 186, 43, 3, 6, 20, 14, NULL, 0, "SPEC2_MakeStatusD A" },
-		{ 218, 54, 4, 6, 22, 19, NULL, 0, "SPEC2_MakeStatusD B" },
-		{ 254, 46, 0, 0, 42, 71, NULL, 0, "SPEC2_MakeStatus A" },
-		{ 234, 46, 0, 0, 42, 51, NULL, 0, "SPEC2_MakeStatus A" },	// SN Systems ProDG
-		{ 284, 55, 2, 0, 43, 76, NULL, 0, "SPEC2_MakeStatus B" }
+		{ 186, 43, 3, 6, 20, 14, NULL, 0, "SPEC2_MakeStatusD" },
+		{ 218, 54, 4, 6, 22, 19, NULL, 0, "SPEC2_MakeStatusD" },
+		{ 254, 46, 0, 0, 42, 71, NULL, 0, "SPEC2_MakeStatus" },
+		{ 234, 46, 0, 0, 42, 51, NULL, 0, "SPEC2_MakeStatus" },	// SN Systems ProDG
+		{ 284, 55, 2, 0, 43, 76, NULL, 0, "SPEC2_MakeStatus" }
 	};
 	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
 	
@@ -11590,7 +11590,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 					case 4: data[i + 84] = 0x2084007F; break;	// subfic	r4, r4, 127
 				}
 			}
-			print_gecko("Found:[%s] @ %08X\n", UpdateOriginSigs[j].Name, UpdateOrigin);
+			print_gecko("Found:[%s$%i] @ %08X\n", UpdateOriginSigs[j].Name, j, UpdateOrigin);
 			patched++;
 		}
 	}
@@ -11608,7 +11608,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 				if (swissSettings.invertCStick & 2)
 					data[i + 89] = 0x2004007F;	// subfic	r0, r4, 127
 			}
-			print_gecko("Found:[%s] @ %08X\n", PADOriginCallbackSigs[j].Name, PADOriginCallback);
+			print_gecko("Found:[%s$%i] @ %08X\n", PADOriginCallbackSigs[j].Name, j, PADOriginCallback);
 			patched++;
 		}
 	}
@@ -11626,7 +11626,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 				if (swissSettings.invertCStick & 2)
 					data[i + 96] = 0x2003007F;	// subfic	r0, r3, 127
 			}
-			print_gecko("Found:[%s] @ %08X\n", PADOriginUpdateCallbackSigs[j].Name, PADOriginUpdateCallback);
+			print_gecko("Found:[%s$%i] @ %08X\n", PADOriginUpdateCallbackSigs[j].Name, j, PADOriginUpdateCallback);
 			patched++;
 		}
 	}
@@ -11716,7 +11716,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s] @ %08X\n", PADReadSigs[j].Name, PADRead);
+			print_gecko("Found:[%s$%i] @ %08X\n", PADReadSigs[j].Name, j, PADRead);
 			patched++;
 		}
 	}
@@ -11745,7 +11745,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 					                                                       &SPEC2_MakeStatusSigs[4], NULL);
 					break;
 			}
-			print_gecko("Found:[%s] @ %08X\n", PADSetSpecSigs[j].Name, PADSetSpec);
+			print_gecko("Found:[%s$%i] @ %08X\n", PADSetSpecSigs[j].Name, j, PADSetSpec);
 			patched++;
 		}
 	}
@@ -11771,7 +11771,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 					case 2: data[i + 82] = 0x20030080; break;	// subfic	r0, r3, 128
 				}
 			}
-			print_gecko("Found:[%s] @ %08X\n", SPEC0_MakeStatusSigs[j].Name, SPEC0_MakeStatus);
+			print_gecko("Found:[%s$%i] @ %08X\n", SPEC0_MakeStatusSigs[j].Name, j, SPEC0_MakeStatus);
 			patched++;
 		}
 	}
@@ -11797,7 +11797,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 					case 2: data[i + 82] = 0x20030080; break;	// subfic	r0, r3, 128
 				}
 			}
-			print_gecko("Found:[%s] @ %08X\n", SPEC1_MakeStatusSigs[j].Name, SPEC1_MakeStatus);
+			print_gecko("Found:[%s$%i] @ %08X\n", SPEC1_MakeStatusSigs[j].Name, j, SPEC1_MakeStatus);
 			patched++;
 		}
 	}
@@ -11827,7 +11827,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 					case 4: data[i + 145] = 0x2006007F; break;	// subfic	r0, r6, 127
 				}
 			}
-			print_gecko("Found:[%s] @ %08X\n", SPEC2_MakeStatusSigs[j].Name, SPEC2_MakeStatus);
+			print_gecko("Found:[%s$%i] @ %08X\n", SPEC2_MakeStatusSigs[j].Name, j, SPEC2_MakeStatus);
 			patched++;
 		}
 	}
