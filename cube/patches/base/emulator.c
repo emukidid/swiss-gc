@@ -118,14 +118,107 @@ void memzero(void *buf, size_t size)
 		*b++ = '\0';
 }
 
+static struct {
+	union {
+		uint32_t regs[15];
+		struct {
+			uint32_t cpr;
+			uint32_t mar;
+			uint32_t length;
+			uint32_t cr;
+			uint32_t data;
+		} reg[3];
+	};
+} exi = {0};
+
+static void exi_update_interrupts(unsigned chan)
+{
+	if ((exi.reg[chan].cpr >> 1) & (exi.reg[chan].cpr & 0b00000000000001))
+		irq.status |=  (OS_INTERRUPTMASK_EXI_0_EXI >> (3 * chan));
+	else
+		irq.status &= ~(OS_INTERRUPTMASK_EXI_0_EXI >> (3 * chan));
+
+	if ((exi.reg[chan].cpr >> 1) & (exi.reg[chan].cpr & 0b00000000000100))
+		irq.status |=  (OS_INTERRUPTMASK_EXI_0_TC >> (3 * chan));
+	else
+		irq.status &= ~(OS_INTERRUPTMASK_EXI_0_TC >> (3 * chan));
+
+	if (chan != EXI_CHANNEL_2) {
+		if ((exi.reg[chan].cpr >> 1) & (exi.reg[chan].cpr & 0b00010000000000))
+			irq.status |=  (OS_INTERRUPTMASK_EXI_0_EXT >> (3 * chan));
+		else
+			irq.status &= ~(OS_INTERRUPTMASK_EXI_0_EXT >> (3 * chan));
+	}
+
+	if (irq.status & irq.mask)
+		*(volatile int *)OS_BASE_MIRRORED;
+}
+
+static void exi_complete_transfer(unsigned chan)
+{
+	if (exi.reg[chan].cr & 0b000010) {
+		exi.reg[chan].mar += exi.reg[chan].length;
+		exi.reg[chan].length = 0;
+	}
+
+	exi.reg[chan].cpr |=  0b00000000001000;
+	exi.reg[chan].cr  &= ~0b000001;
+	exi_update_interrupts(chan);
+}
+
 static void exi_read(unsigned index, uint32_t *value)
 {
-	*value = (*EXI)[index];
+	switch (index) {
+		case 5 ... 9:
+			*value = exi.regs[index];
+			break;
+		default:
+			*value = (*EXI)[index];
+	}
 }
 
 static void exi_write(unsigned index, uint32_t value)
 {
-	(*EXI)[index] = value;
+	unsigned chan = index / 5;
+	unsigned dev = __builtin_ctz((exi.reg[chan].cpr >> 7) & 0b111);
+
+	switch (index) {
+		case 5:
+			exi.reg[chan].cpr = ((value & 0b00100000001010) ^ exi.reg[chan].cpr) & exi.reg[chan].cpr;
+
+			if ((value & 0b00001110000000) & ((value & 0b00001110000000) - 1))
+				exi.reg[chan].cpr = (value & 0b10010001110101) | (exi.reg[chan].cpr & ~0b00011111110101);
+			else
+				exi.reg[chan].cpr = (value & 0b10011111110101) | (exi.reg[chan].cpr & ~0b00011111110101);
+
+			exi_update_interrupts(chan);
+			break;
+		case 6 ... 7:
+			exi.regs[index] = value & 0x3FFFFE0;
+			break;
+		case 8:
+			exi.regs[index] = value & 0b111111;
+
+			if (value & 0b000001) {
+				if (value & 0b000010) {
+					exi_complete_transfer(chan);
+				} else {
+					int tlen = (exi.reg[chan].cr >> 4) & 0b11;
+					char *data = (char *)&exi.reg[chan].data;
+
+					for (int i = 0; i <= tlen; i++)
+						data[i] = ~0;
+
+					exi_complete_transfer(chan);
+				}
+			}
+			break;
+		case 9:
+			exi.regs[index] = value;
+			break;
+		default:
+			(*EXI)[index] = value;
+	}
 }
 
 #ifdef DTK
@@ -1036,16 +1129,23 @@ bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 
 OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
-	if (interrupt == OS_INTERRUPT_PI_DI) {
-		#if defined WKF || defined DI_PASSTHROUGH
-		OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
-		#endif
-		OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
-		#ifdef BBA
-		OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
-		#endif
-	} else {
-		OSSetInterruptHandler(interrupt, dispatch_interrupt);
+	switch (interrupt) {
+		case OS_INTERRUPT_EXI_1_EXI:
+		case OS_INTERRUPT_EXI_1_TC:
+		case OS_INTERRUPT_EXI_1_EXT:
+			OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
+			break;
+		case OS_INTERRUPT_PI_DI:
+			#if defined WKF || defined DI_PASSTHROUGH
+			OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
+			#endif
+			OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
+			#ifdef BBA
+			OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
+			#endif
+			break;
+		default:
+			OSSetInterruptHandler(interrupt, dispatch_interrupt);
 	}
 
 	OSInterruptHandler oldHandler = irq.handler[interrupt];
@@ -1056,6 +1156,9 @@ OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler han
 OSInterruptMask mask_irq(OSInterruptMask mask)
 {
 	irq.mask &= ~mask;
+
+	if ((mask & OS_INTERRUPTMASK_EXI_1) && !(mask & ~OS_INTERRUPTMASK_EXI_1))
+		mask &= ~OS_INTERRUPTMASK_EXI_1;
 
 	#ifndef DI_PASSTHROUGH
 	if (mask == OS_INTERRUPTMASK_PI_DI)
@@ -1068,6 +1171,11 @@ OSInterruptMask mask_irq(OSInterruptMask mask)
 OSInterruptMask unmask_irq(OSInterruptMask mask)
 {
 	irq.mask |= mask;
+
+	if ((mask & OS_INTERRUPTMASK_EXI_1) && !(mask & ~OS_INTERRUPTMASK_EXI_1)) {
+		mask &= ~OS_INTERRUPTMASK_EXI_1;
+		mask |=  OS_INTERRUPTMASK_MEM_ADDRESS;
+	}
 
 	if (mask == OS_INTERRUPTMASK_PI_DI) {
 		#ifndef DI_PASSTHROUGH
