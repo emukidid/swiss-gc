@@ -229,7 +229,7 @@ DEVICEHANDLER_INTERFACE __device_usbgecko = {
 	"Requires PC application to be up",
 	{TEX_USBGECKO, 64, 84},
 	FEAT_READ|FEAT_BOOT_GCM|FEAT_HYPERVISOR,
-	EMU_READ,
+	EMU_READ|EMU_MEMCARD,
 	LOC_MEMCARD_SLOT_B,
 	&initial_USBGecko,
 	(_fn_test)&deviceHandler_USBGecko_test,

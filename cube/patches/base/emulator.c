@@ -118,6 +118,7 @@ void memzero(void *buf, size_t size)
 		*b++ = '\0';
 }
 
+#ifdef CARDEMU
 static struct {
 	union {
 		uint32_t regs[15];
@@ -220,7 +221,7 @@ static void exi_write(unsigned index, uint32_t value)
 			(*EXI)[index] = value;
 	}
 }
-
+#endif
 #ifdef DTK
 static void dtk_decode_buffer(void *address, uint32_t length)
 {
@@ -447,7 +448,7 @@ static void di_execute_command(OSAlarm *alarm)
 			uint32_t length  = di.reg.length;
 			uint32_t offset  = di.reg.cmdbuf1 << 2;
 
-			#ifdef GCODE
+			#if defined GCODE && !defined CARDEMU
 			if (*VAR_EMU_READ_SPEED && !alarm) {
 				di_defer_transfer(offset, length);
 				return;
@@ -475,7 +476,7 @@ static void di_execute_command(OSAlarm *alarm)
 			}
 			break;
 		}
-		#ifdef GCODE
+		#if defined GCODE && !defined CARDEMU
 		case 0xAB:
 		{
 			uint32_t offset = di.reg.cmdbuf1 << 2;
@@ -494,8 +495,8 @@ static void di_execute_command(OSAlarm *alarm)
 	DI[4] = di.reg.cmdbuf2;
 	DI[5] = di.reg.mar;
 	DI[6] = di.reg.length;
-	DI[7] = di.reg.cr;
 	DI[8] = di.reg.immbuf;
+	DI[7] = di.reg.cr;
 }
 #endif
 
@@ -866,10 +867,12 @@ static bool ppc_load32(uint32_t address, uint32_t *value)
 		di_read((address >> 2) & 0xF, value);
 		return true;
 	}
+	#ifdef CARDEMU
 	if ((address & ~0x3FC) == 0x0C006800) {
 		exi_read((address >> 2) & 0xF, value);
 		return true;
 	}
+	#endif
 	return false;
 }
 
@@ -883,10 +886,12 @@ static bool ppc_store32(uint32_t address, uint32_t value)
 		di_write((address >> 2) & 0xF, value);
 		return true;
 	}
+	#ifdef CARDEMU
 	if ((address & ~0x3FC) == 0x0C006800) {
 		exi_write((address >> 2) & 0xF, value);
 		return true;
 	}
+	#endif
 	return false;
 }
 
@@ -915,6 +920,7 @@ static bool ppc_step(OSContext *context)
 	uint32_t opcode = *(uint32_t *)context->srr0;
 
 	switch (opcode >> 26) {
+		#ifdef CARDEMU
 		case 31:
 		{
 			switch ((opcode >> 1) & 0x3FF) {
@@ -935,6 +941,7 @@ static bool ppc_step(OSContext *context)
 			}
 			break;
 		}
+		#endif
 		case 32:
 		{
 			int rd = (opcode >> 21) & 0x1F;
@@ -942,6 +949,7 @@ static bool ppc_step(OSContext *context)
 			short d = opcode & 0xFFFF;
 			return ppc_load32(context->gpr[ra] + d, &context->gpr[rd]);
 		}
+		#ifdef CARDEMU
 		case 33:
 		{
 			int rd = (opcode >> 21) & 0x1F;
@@ -949,6 +957,7 @@ static bool ppc_step(OSContext *context)
 			short d = opcode & 0xFFFF;
 			return ppc_load32(context->gpr[ra] += d, &context->gpr[rd]);
 		}
+		#endif
 		case 36:
 		{
 			int rs = (opcode >> 21) & 0x1F;
@@ -1130,11 +1139,13 @@ bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
 	switch (interrupt) {
+		#ifdef CARDEMU
 		case OS_INTERRUPT_EXI_1_EXI:
 		case OS_INTERRUPT_EXI_1_TC:
 		case OS_INTERRUPT_EXI_1_EXT:
 			OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
 			break;
+		#endif
 		case OS_INTERRUPT_PI_DI:
 			#if defined WKF || defined DI_PASSTHROUGH
 			OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
@@ -1157,9 +1168,10 @@ OSInterruptMask mask_irq(OSInterruptMask mask)
 {
 	irq.mask &= ~mask;
 
+	#ifdef CARDEMU
 	if ((mask & OS_INTERRUPTMASK_EXI_1) && !(mask & ~OS_INTERRUPTMASK_EXI_1))
 		mask &= ~OS_INTERRUPTMASK_EXI_1;
-
+	#endif
 	#ifndef DI_PASSTHROUGH
 	if (mask == OS_INTERRUPTMASK_PI_DI)
 		mask &= ~OS_INTERRUPTMASK_PI_DI;
@@ -1172,11 +1184,12 @@ OSInterruptMask unmask_irq(OSInterruptMask mask)
 {
 	irq.mask |= mask;
 
+	#ifdef CARDEMU
 	if ((mask & OS_INTERRUPTMASK_EXI_1) && !(mask & ~OS_INTERRUPTMASK_EXI_1)) {
 		mask &= ~OS_INTERRUPTMASK_EXI_1;
 		mask |=  OS_INTERRUPTMASK_MEM_ADDRESS;
 	}
-
+	#endif
 	if (mask == OS_INTERRUPTMASK_PI_DI) {
 		#ifndef DI_PASSTHROUGH
 		mask &= ~OS_INTERRUPTMASK_PI_DI;

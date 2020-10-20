@@ -92,7 +92,7 @@ build-ideexi-v2:
 build-dvd:
 	@echo Building DVD Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DDVD
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARDEMU -DDI_PASSTHROUGH -DDVD
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
@@ -113,7 +113,7 @@ build-dvd:
 build-usb:
 	@echo Building USBGecko Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARDEMU
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c usbgecko/usbgecko.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
@@ -168,7 +168,7 @@ build-bba:
 build-gcode:
 	@echo Building GCLoader Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DGCODE
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARDEMU -DDI_PASSTHROUGH -DGCODE
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
