@@ -130,22 +130,27 @@ static struct {
 			uint32_t data;
 		} reg[3];
 	};
-} exi = {0};
+} exi = {
+	.reg = {
+		{ .cpr = 0b10000000000000 },
+		{ .cpr = 0b01000000000000 }
+	}
+};
 
 static void exi_update_interrupts(unsigned chan)
 {
-	if ((exi.reg[chan].cpr >> 1) & (exi.reg[chan].cpr & 0b00000000000001))
+	if (exi.reg[chan].cpr & 0b00000000000010)
 		irq.status |=  (OS_INTERRUPTMASK_EXI_0_EXI >> (3 * chan));
 	else
 		irq.status &= ~(OS_INTERRUPTMASK_EXI_0_EXI >> (3 * chan));
 
-	if ((exi.reg[chan].cpr >> 1) & (exi.reg[chan].cpr & 0b00000000000100))
+	if (exi.reg[chan].cpr & 0b00000000001000)
 		irq.status |=  (OS_INTERRUPTMASK_EXI_0_TC >> (3 * chan));
 	else
 		irq.status &= ~(OS_INTERRUPTMASK_EXI_0_TC >> (3 * chan));
 
 	if (chan != EXI_CHANNEL_2) {
-		if ((exi.reg[chan].cpr >> 1) & (exi.reg[chan].cpr & 0b00010000000000))
+		if (exi.reg[chan].cpr & 0b00100000000000)
 			irq.status |=  (OS_INTERRUPTMASK_EXI_0_EXT >> (3 * chan));
 		else
 			irq.status &= ~(OS_INTERRUPTMASK_EXI_0_EXT >> (3 * chan));
@@ -153,6 +158,12 @@ static void exi_update_interrupts(unsigned chan)
 
 	if (irq.status & irq.mask)
 		*(volatile int *)OS_BASE_MIRRORED;
+}
+
+static void exi_interrupt(unsigned chan)
+{
+	exi.reg[chan].cpr |=  0b00000000000010;
+	exi_update_interrupts(chan);
 }
 
 static void exi_complete_transfer(unsigned chan)
@@ -165,6 +176,118 @@ static void exi_complete_transfer(unsigned chan)
 	exi.reg[chan].cpr |=  0b00000000001000;
 	exi.reg[chan].cr  &= ~0b000001;
 	exi_update_interrupts(chan);
+}
+
+static struct {
+	int position;
+	uint8_t command;
+	uint8_t status;
+	bool interrupt;
+	uint32_t offset;
+	void *buffer;
+} card = {
+	.status = 0xC1
+};
+
+static uint8_t card_imm(unsigned chan, uint8_t data)
+{
+	uint8_t result = ~0;
+
+	if (card.position == 0)
+		card.command = data;
+
+	switch (card.command) {
+		case 0x00:
+		{
+			if (card.position >= 2) {
+				switch ((card.position - 2) % 4) {
+					case 0: result = 0x00; break;
+					case 1: result = 0x00; break;
+					case 2: result = 0x00; break;
+					case 3: result = 0x04; break;
+				}
+			}
+			break;
+		}
+		case 0x52:
+		{
+			switch (card.position) {
+				case 1: card.offset = (card.offset & ~0xE0000) | ((data << 17) & 0xE0000); break;
+				case 2: card.offset = (card.offset & ~0x1FE00) | ((data << 9) & 0x1FE00); break;
+				case 3: card.offset = (card.offset & ~0x180) | ((data << 7) & 0x180); break;
+				case 4: card.offset = (card.offset & ~0x7F) | (data & 0x7F); break;
+			}
+			break;
+		}
+		case 0x81:
+		{
+			if (card.position == 1)
+				card.interrupt = data & 1;
+			break;
+		}
+		case 0x83:
+		{
+			if (card.position >= 1)
+				result = card.status;
+			break;
+		}
+		case 0xF1:
+		case 0xF4:
+		{
+			if (card.interrupt)
+				exi_interrupt(chan);
+			break;
+		}
+		case 0xF2:
+		{
+			switch (card.position) {
+				case 1: card.offset = (card.offset & ~0xE0000) | ((data << 17) & 0xE0000); break;
+				case 2: card.offset = (card.offset & ~0x1FE00) | ((data << 9) & 0x1FE00); break;
+				case 3: card.offset = (card.offset & ~0x180) | ((data << 7) & 0x180); break;
+				case 4: card.offset = (card.offset & ~0x7F) | (data & 0x7F); break;
+			}
+			break;
+		}
+	}
+
+	card.position++;
+	return result;
+}
+
+static void card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
+{
+	void *buffer = OSPhysicalToUncached(address);
+
+	switch (card.command) {
+		case 0x52:
+		{
+			if (card.position >= 5 && type == EXI_READ) {
+				memcpy(buffer, card.buffer + card.offset, length);
+				exi_complete_transfer(chan);
+			}
+			break;
+		}
+		case 0xF2:
+		{
+			if (card.position == 5 && type == EXI_WRITE) {
+				memcpy(card.buffer + card.offset, buffer, length);
+				exi_complete_transfer(chan);
+
+				if (card.interrupt)
+					exi_interrupt(chan);
+			}
+			break;
+		}
+	}
+}
+
+static void card_select(unsigned chan)
+{
+}
+
+static void card_deselect(unsigned chan)
+{
+	card.position = 0;
 }
 
 static void exi_read(unsigned index, uint32_t *value)
@@ -192,6 +315,11 @@ static void exi_write(unsigned index, uint32_t value)
 			else
 				exi.reg[chan].cpr = (value & 0b10011111110101) | (exi.reg[chan].cpr & ~0b00011111110101);
 
+			if (dev != EXI_DEVICE_0 && (exi.reg[chan].cpr & 0b00000010000000))
+				card_select(chan);
+			if (dev == EXI_DEVICE_0 && !(exi.reg[chan].cpr & 0b00000010000000))
+				card_deselect(chan);
+
 			exi_update_interrupts(chan);
 			break;
 		case 6 ... 7:
@@ -202,13 +330,17 @@ static void exi_write(unsigned index, uint32_t value)
 
 			if (value & 0b000001) {
 				if (value & 0b000010) {
-					exi_complete_transfer(chan);
+					uint32_t address = exi.reg[chan].mar;
+					uint32_t length  = exi.reg[chan].length;
+					int type = (exi.reg[chan].cr >> 2) & 0b11;
+
+					card_dma(chan, address, length, type);
 				} else {
-					int tlen = (exi.reg[chan].cr >> 4) & 0b11;
+					int length = (exi.reg[chan].cr >> 4) & 0b11;
 					char *data = (char *)&exi.reg[chan].data;
 
-					for (int i = 0; i <= tlen; i++)
-						data[i] = ~0;
+					for (int i = 0; i <= length; i++)
+						data[i] = card_imm(chan, data[i]);
 
 					exi_complete_transfer(chan);
 				}
@@ -1101,6 +1233,9 @@ void *init(void *arenaHi)
 	arenaHi -= sizeof(*dsp.buffer[1]); dsp.buffer[1] = OSCachedToUncached(arenaHi);
 	arenaHi -= 7168; fifo_init(arenaHi, 7168);
 	#endif
+	#ifdef CARDEMU
+	arenaHi -= 512 << 10; card.buffer = OSCachedToUncached(arenaHi);
+	#endif
 
 	OSContext *context = arenaHi - sizeof(OSContext);
 	OSExceptionContext = OSCachedToPhysical(context);
@@ -1183,6 +1318,9 @@ OSInterruptMask mask_irq(OSInterruptMask mask)
 OSInterruptMask unmask_irq(OSInterruptMask mask)
 {
 	irq.mask |= mask;
+
+	if (irq.status & irq.mask)
+		*(volatile int *)OS_BASE_MIRRORED;
 
 	#ifdef CARDEMU
 	if ((mask & OS_INTERRUPTMASK_EXI_1) && !(mask & ~OS_INTERRUPTMASK_EXI_1)) {
