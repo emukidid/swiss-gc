@@ -18,6 +18,7 @@
 #include "WodeInterface.h"
 
 char wode_regions[]  = {'J','E','P','U','K'};
+char *wode_regions_str[] = {"JPN","USA","EUR","UNK","KOR"};
 char disktype[] = {'?', 'G','W','W','I' };
 int wodeInited = 0;
 
@@ -137,6 +138,10 @@ s32 deviceHandler_WODE_deinit(file_handle* file) {
 
 char wodeRegionToChar(int region) {
 	return wode_regions[region];
+}
+
+char *wodeRegionToString(int region) {
+	return wode_regions_str[region];
 }
 
 s32 deviceHandler_WODE_closeFile(file_handle* file) {

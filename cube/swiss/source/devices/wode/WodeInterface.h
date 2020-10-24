@@ -103,4 +103,5 @@ unsigned long GotoFlatMode( void );
 
 //unsigned long GetJoystick( void );
 char wodeRegionToChar(int region);
+char *wodeRegionToString(int region);
 #endif

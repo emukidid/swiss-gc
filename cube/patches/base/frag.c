@@ -95,6 +95,38 @@ u32 read_frag(void *dst, u32 len, u32 offset) {
 	return 0;
 }
 
+u32 write_frag(void *src, u32 len, u32 offset) {
+
+	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
+	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
+	u32 amountToWrite = len;
+	u32 adjustedOffset = offset;
+	
+	// Locate this offset in the fat table and write as much as we can to a single fragment
+	for(i = 0; i < maxFrags; i++) {
+		u32 fragOffset = fragList[(i*3)+0];
+		u32 fragSize = fragList[(i*3)+1] & ~0x80000000;
+		u32 fragSector = fragList[(i*3)+2];
+		u32 fragOffsetEnd = fragOffset + fragSize;
+		u32 isWriteFrag = !PATCH_FRAGS || fragList[(i*3)+1] >> 31;
+		
+		// Find where our write starts and write as much as we can in this frag before returning
+		if(offset >= fragOffset && offset < fragOffsetEnd && isWriteFrag) {
+			// Does our write get cut off early?
+			if(offset + len > fragOffsetEnd) {
+				if(offset > fragOffsetEnd - 0x20) {
+					continue;
+				}
+				amountToWrite = fragOffsetEnd - offset;
+			}
+			adjustedOffset -= fragOffset;
+			amountToWrite = do_write(src, amountToWrite, adjustedOffset, fragSector);
+			return amountToWrite;
+		}
+	}
+	return 0;
+}
+
 int is_frag_read(unsigned int offset, unsigned int len) {
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
 	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;

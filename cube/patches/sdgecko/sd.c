@@ -161,6 +161,25 @@ static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sy
 	}
 }
 
+static void xmit_datablock(void *src, u32 token) {
+	exi_select();
+
+	while(rcvr_spi() != 0xFF);
+
+	exi_imm_write(token<<24, 1, 1);
+
+	u32 i;
+	u32 *ptr = (u32*)src;
+	for(i = 0; i < 128; i++) {
+		exi_imm_write(*ptr++, 4, 1);
+	}
+
+	exi_imm_write(0xFFFF<<16, 2, 1);
+	rcvr_spi();
+
+	exi_deselect();
+}
+
 #ifndef SINGLE_SECTOR
 u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u32 lba = (offset>>9) + sectorLba;
@@ -341,6 +360,19 @@ exit:
 	if (EXIUnlock) EXIUnlock(exi_channel);
 	#endif
 	return numBytes;
+}
+
+u32 do_write(void *src, u32 len, u32 offset, u32 sectorLba) {
+	u32 lba = (offset>>9) + sectorLba;
+	u8 lbaShift = *(u8*)VAR_SD_SHIFT;
+	
+	// SDHC uses sector addressing, SD uses byte
+	lba <<= lbaShift;
+	// Send single block write command and the LBA we want to write at
+	send_cmd(CMD24, lba);
+	// Write block
+	xmit_datablock(src, 0xFE);
+	return SECTOR_SIZE;
 }
 #endif
 
