@@ -157,7 +157,7 @@ static void exi_update_interrupts(unsigned chan)
 	}
 
 	if (irq.status & irq.mask)
-		*(volatile int *)OS_BASE_MIRRORED;
+		assert_interrupt();
 }
 
 static void exi_interrupt(unsigned chan)
@@ -439,7 +439,7 @@ static void di_update_interrupts(void)
 		irq.status &= ~OS_INTERRUPTMASK_PI_DI;
 
 	if (irq.status & irq.mask)
-		*(volatile int *)OS_BASE_MIRRORED;
+		assert_interrupt();
 }
 
 static void di_error(uint32_t error)
@@ -1196,14 +1196,14 @@ static void dispatch_interrupt(OSInterrupt interrupt, OSContext *context)
 	OSSetCurrentContext(context);
 }
 
-static void mem_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+static void pi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	if (irq.status & irq.mask) {
 		dispatch_interrupt(__builtin_clz(irq.status & irq.mask), context);
 		return;
 	}
 
-	MI[16] = 0;
+	PI[0] = 1;
 }
 
 #ifdef DI_PASSTHROUGH
@@ -1294,14 +1294,14 @@ OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler han
 		case OS_INTERRUPT_EXI_1_EXI:
 		case OS_INTERRUPT_EXI_1_TC:
 		case OS_INTERRUPT_EXI_1_EXT:
-			OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
+			OSSetInterruptHandler(OS_INTERRUPT_PI_ERROR, pi_interrupt_handler);
 			break;
 		#endif
 		case OS_INTERRUPT_PI_DI:
 			#if defined WKF || defined DI_PASSTHROUGH
 			OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
 			#endif
-			OSSetInterruptHandler(OS_INTERRUPT_MEM_ADDRESS, mem_interrupt_handler);
+			OSSetInterruptHandler(OS_INTERRUPT_PI_ERROR, pi_interrupt_handler);
 			#ifdef BBA
 			OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
 			#endif
@@ -1336,19 +1336,19 @@ OSInterruptMask unmask_irq(OSInterruptMask mask)
 	irq.mask |= mask;
 
 	if (irq.status & irq.mask)
-		*(volatile int *)OS_BASE_MIRRORED;
+		assert_interrupt();
 
 	#ifdef CARDEMU
 	if ((mask & OS_INTERRUPTMASK_EXI_1) && !(mask & ~OS_INTERRUPTMASK_EXI_1)) {
 		mask &= ~OS_INTERRUPTMASK_EXI_1;
-		mask |=  OS_INTERRUPTMASK_MEM_ADDRESS;
+		mask |=  OS_INTERRUPTMASK_PI_ERROR;
 	}
 	#endif
 	if (mask == OS_INTERRUPTMASK_PI_DI) {
 		#ifndef DI_PASSTHROUGH
 		mask &= ~OS_INTERRUPTMASK_PI_DI;
 		#endif
-		mask |=  OS_INTERRUPTMASK_MEM_ADDRESS;
+		mask |=  OS_INTERRUPTMASK_PI_ERROR;
 		#ifdef BBA
 		mask |=  OS_INTERRUPTMASK_EXI_2_EXI;
 		#endif

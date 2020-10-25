@@ -27,6 +27,8 @@ typedef volatile f64 vf64;
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 
+#define assert_interrupt() *(volatile u32 *)0xC4000000
+
 #define disable_interrupts() ({ \
 	unsigned long msr; \
 	asm volatile ("mfmsr %0" : "=r" (msr)); \

@@ -626,6 +626,13 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 34, 8, 6, 3, 3, 4, NULL, 0, "__OSUnmaskInterrupts" },
 		{ 32, 8, 6, 3, 1, 4, NULL, 0, "__OSUnmaskInterrupts" }	// SN Systems ProDG
 	};
+	FuncPattern __OSDispatchInterruptSigs[5] = {
+		{ 267, 55, 5, 16, 39, 14, NULL, 0, "__OSDispatchInterruptD" },
+		{ 276, 56, 8, 17, 40, 14, NULL, 0, "__OSDispatchInterruptD" },
+		{ 201, 32, 5,  6, 39,  9, NULL, 0, "__OSDispatchInterrupt" },
+		{ 209, 33, 8,  7, 40,  9, NULL, 0, "__OSDispatchInterrupt" },
+		{ 167, 28, 8,  7, 38, 10, NULL, 0, "__OSDispatchInterrupt" }	// SN Systems ProDG
+	};
 	FuncPattern __OSRebootSigs[14] = {
 		{  81, 34, 6, 16,  1,  2, NULL, 0, "__OSRebootD" },
 		{  89, 39, 8, 17,  1,  2, NULL, 0, "__OSRebootD" },
@@ -1748,6 +1755,52 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 23, length, &OSRestoreInterruptsSig) &&
 							find_pattern_before(data, length, &fp, &__OSMaskInterruptsSigs[2]))
 							__OSUnmaskInterruptsSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(__OSDispatchInterruptSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &__OSDispatchInterruptSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  27, length, &OSLoadContextSigs[0]) &&
+							findx_pattern(data, dataType, i + 236, length, &OSLoadContextSigs[0]) &&
+							findx_pattern(data, dataType, i + 261, length, &OSLoadContextSigs[0]))
+							__OSDispatchInterruptSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_patterns(data, dataType, i +  27, length, &OSLoadContextSigs[0],
+							                                                &OSLoadContextSigs[1], NULL) &&
+							findx_pattern (data, dataType, i + 231, length, &OSGetTimeSig) &&
+							findx_patterns(data, dataType, i + 245, length, &OSLoadContextSigs[0],
+							                                                &OSLoadContextSigs[1], NULL) &&
+							findx_patterns(data, dataType, i + 270, length, &OSLoadContextSigs[0],
+							                                                &OSLoadContextSigs[1], NULL))
+							__OSDispatchInterruptSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  18, length, &OSLoadContextSigs[0]) &&
+							findx_pattern(data, dataType, i + 191, length, &OSLoadContextSigs[0]) &&
+							findx_pattern(data, dataType, i + 193, length, &OSLoadContextSigs[0]))
+							__OSDispatchInterruptSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_patterns(data, dataType, i +  18, length, &OSLoadContextSigs[0],
+							                                                &OSLoadContextSigs[1], NULL) &&
+							findx_pattern (data, dataType, i + 185, length, &OSGetTimeSig) &&
+							findx_patterns(data, dataType, i + 199, length, &OSLoadContextSigs[0],
+							                                                &OSLoadContextSigs[1], NULL) &&
+							findx_patterns(data, dataType, i + 201, length, &OSLoadContextSigs[0],
+							                                                &OSLoadContextSigs[1], NULL))
+							__OSDispatchInterruptSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_pattern(data, dataType, i +  15, length, &OSLoadContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 143, length, &OSGetTimeSig) &&
+							findx_pattern(data, dataType, i + 157, length, &OSLoadContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 159, length, &OSLoadContextSigs[1]))
+							__OSDispatchInterruptSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -4179,6 +4232,24 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				data[k + 4] = (u32)__OSUnmaskInterrupts;
 			
 			print_gecko("Found:[%s$%i] @ %08X\n", __OSUnmaskInterruptsSigs[j].Name, j, __OSUnmaskInterrupts);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(__OSDispatchInterruptSigs) / sizeof(FuncPattern); j++)
+		if (__OSDispatchInterruptSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(__OSDispatchInterruptSigs) / sizeof(FuncPattern) && (i = __OSDispatchInterruptSigs[j].offsetFoundAt)) {
+		u32 *__OSDispatchInterrupt = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__OSDispatchInterrupt) {
+			switch (j) {
+				case 0:
+				case 1:
+					data[i + 165] = 0x4800008C;	// b		+35
+					break;
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", __OSDispatchInterruptSigs[j].Name, j, __OSDispatchInterrupt);
 			patched++;
 		}
 	}
