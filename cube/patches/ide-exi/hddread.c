@@ -70,6 +70,11 @@ static void exi_clear_interrupts(bool exi, bool tc, bool ext)
 	exi_regs[0] = (exi_regs[0] & ~0x80A) | (ext << 11) | (tc << 3) | (exi << 1);
 }
 
+static int exi_selected()
+{
+	return !!(exi_regs[0] & 0x380);
+}
+
 static void exi_select()
 {
 	exi_regs[0] = (exi_regs[0] & 0x405) | ((1 << EXI_DEVICE_0) << 7) | (exi_freq << 4);
@@ -350,27 +355,22 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 #endif
 
 u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
-	#if !DMA_READ
-	// Try locking EXI bus
-	if(EXILock && !EXILock(exi_channel, EXI_DEVICE_0, 0)) {
-		return 0;
-	}
-	#endif
-	
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);
 	
+	if(exi_selected()) {
+		return 0;
+	}
 	// If we saved this sector
 	if(lba == ata.last_sector) {
 		memcpy(dst, sectorBuf + startByte, numBytes);
-		goto exit;
+		return numBytes;
 	}
 	if(numBytes < SECTOR_SIZE || DMA_READ) {
 		// Read half sector
 		if(ataReadSector(lba, sectorBuf, 1)) {
-			numBytes = 0;
-			goto exit;
+			return 0;
 		}
 		memcpy(dst, sectorBuf + startByte, numBytes);
 		// Save current LBA
@@ -379,8 +379,7 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	else {
 		// Read full sector
 		if(ataReadSector(lba, dst, 1)) {
-			numBytes = 0;
-			goto exit;
+			return 0;
 		}
 		// If we're reusing the sector buffer
 		if(dst == VAR_SECTOR_BUF) {
@@ -388,11 +387,6 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 			ata.last_sector = lba;
 		}
 	}
-exit:
-	#if !DMA_READ
-	// Unlock EXI bus
-	if (EXIUnlock) EXIUnlock(exi_channel);
-	#endif
 	return numBytes;
 }
 #endif
