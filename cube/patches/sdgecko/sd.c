@@ -166,7 +166,7 @@ static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sy
 	}
 }
 
-static void xmit_datablock(void *src, u32 token) {
+static int xmit_datablock(void *src, u32 token) {
 	exi_select();
 
 	while(rcvr_spi() != 0xFF);
@@ -180,9 +180,11 @@ static void xmit_datablock(void *src, u32 token) {
 	}
 
 	exi_imm_write(0xFFFF<<16, 2, 1);
-	rcvr_spi();
+	u8 res = rcvr_spi();
 
 	exi_deselect();
+
+	return (res & 0x1F) == 0x05;
 }
 
 #ifndef SINGLE_SECTOR
@@ -370,8 +372,10 @@ u32 do_write(void *src, u32 len, u32 offset, u32 sectorLba) {
 	// Send single block write command and the LBA we want to write at
 	send_cmd(CMD24, lba);
 	// Write block
-	xmit_datablock(src, 0xFE);
-	return SECTOR_SIZE;
+	if(xmit_datablock(src, 0xFE)) {
+		return SECTOR_SIZE;
+	}
+	return 0;
 }
 #endif
 

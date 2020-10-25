@@ -294,12 +294,14 @@ static void card_deselect(unsigned chan)
 		case 0xF2:
 		{
 			if (card.position >= 5) {
+				bool success = card.offset % 128 == 0;
+
 				if (card.write_buffer && (card.offset + 128 - card.write_offset) == 512) {
-					write_frag(card.write_buffer, 512, card.write_offset);
+					success = write_frag(card.write_buffer, 512, card.write_offset) == 512;
 					card.write_buffer = NULL;
 				}
 
-				if (card.interrupt)
+				if (card.interrupt && success)
 					exi_interrupt(chan);
 			}
 			break;
