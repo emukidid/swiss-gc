@@ -309,45 +309,49 @@ u32 branchResolve(u32 *data, int dataType, u32 offsetFoundAt)
 	return address - data;
 }
 
-void *loadResolve(u32 *data, int dataType, u32 offsetFoundAt, ...)
+bool get_immediate(u32 *data, u32 offsetFoundAt, u32 offsetFoundAt2, u32 *immediate)
 {
-	u32 address;
-	u32 word = data[offsetFoundAt], word2;
+	u32 word = data[offsetFoundAt];
 	
 	switch (word >> 26) {
 		case 15:
 		{
 			if (((word >> 16) & 0x1F) != 0)
-				return NULL;
+				return false;
 			
-			va_list args;
-			va_start(args, offsetFoundAt);
-			offsetFoundAt = va_arg(args, u32);
-			va_end(args);
-			
-			word2 = data[offsetFoundAt];
+			u32 word2 = data[offsetFoundAt2];
 			
 			switch (word2 >> 26) {
 				case 14:
 				case 32 ... 55:
+				{
 					if (((word2 >> 16) & 0x1F) != ((word >> 21) & 0x1F))
-						return NULL;
+						return false;
 					
-					address = (word << 16) + (s16)word2;
-					break;
+					*immediate = (word << 16) + (s16)word2;
+					return true;
+				}
 				case 24:
+				{
 					if (((word2 >> 21) & 0x1F) != ((word >> 21) & 0x1F))
-						return NULL;
+						return false;
 					
-					address = (word << 16) | (u16)word2;
-					break;
-				default:
-					return NULL;
+					*immediate = (word << 16) | (u16)word2;
+					return true;
+				}
 			}
-			
-			return Calc_Address(data, dataType, address);
 		}
 	}
+	
+	return false;
+}
+
+void *loadResolve(u32 *data, int dataType, u32 offsetFoundAt, u32 offsetFoundAt2)
+{
+	u32 address;
+	
+	if (get_immediate(data, offsetFoundAt, offsetFoundAt2, &address))
+		return Calc_Address(data, dataType, address);
 	
 	return NULL;
 }
@@ -494,6 +498,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 {
 	int i, j, k;
 	int patched = 0;
+	u32 address;
 	FuncPattern PrepareExecSig = 
 		{ 60, 15, 3, 16, 13, 2, NULL, 0, "PrepareExec" };
 	FuncPattern PPCHaltSig = 
@@ -720,12 +725,13 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{  59, 17, 7,  5, 2, 5, NULL, 0, "EXIDma" },
 		{  74, 28, 8,  5, 2, 8, NULL, 0, "EXIDma" }
 	};
-	FuncPattern EXISyncSigs[10] = {
+	FuncPattern EXISyncSigs[11] = {
 		{  80, 25, 2, 6,  7,  7, NULL, 0, "EXISyncD" },
 		{  80, 24, 2, 6,  7,  6, NULL, 0, "EXISyncD" },
 		{ 102, 33, 2, 6,  8,  8, NULL, 0, "EXISyncD" },
 		{ 107, 34, 2, 7,  9,  8, NULL, 0, "EXISyncD" },
 		{ 116, 27, 6, 2, 10, 17, NULL, 0, "EXISync" },
+		{ 130, 31, 3, 3, 11, 17, NULL, 0, "EXISync" },
 		{ 130, 31, 3, 3, 11, 17, NULL, 0, "EXISync" },
 		{ 142, 35, 3, 3, 12, 17, NULL, 0, "EXISync" },
 		{ 142, 39, 3, 3, 12, 19, NULL, 0, "EXISync" },
@@ -1159,8 +1165,8 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				(data[i + 1] & 0xFFFF0000) == 0x60420000 &&
 				(data[i + 2] & 0xFFFF0000) == 0x3DA00000 &&
 				(data[i + 3] & 0xFFFF0000) == 0x61AD0000) {
-				_SDA2_BASE_ = (data[i + 0] << 16) | (u16)data[i + 1];
-				_SDA_BASE_  = (data[i + 2] << 16) | (u16)data[i + 3];
+				get_immediate(data, i + 0, i + 1, &_SDA2_BASE_);
+				get_immediate(data, i + 2, i + 3, &_SDA_BASE_);
 				i += 4;
 			}
 			continue;
@@ -2271,56 +2277,103 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if (compare_pattern(&fp, &EXISyncSigs[j])) {
 				switch (j) {
 					case 0:
-						if (findx_pattern(data, dataType, i +  29, length, &OSDisableInterruptsSig) &&
+						if (get_immediate(data,  i +  24, i +  25, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  29, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  35, length, &CompleteTransferSigs[0]) &&
+							get_immediate(data,  i +  44, i +  45, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  52, i +  53, &address) && address == 0xCC006800 &&
 							findx_pattern(data, dataType, i +  60, length, &OSRestoreInterruptsSig))
 							EXISyncSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
-						if (findx_pattern(data, dataType, i +  30, length, &OSDisableInterruptsSig) &&
+						if (get_immediate(data,  i +  25, i +  26, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  30, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  36, length, &CompleteTransferSigs[1]) &&
+							get_immediate(data,  i +  45, i +  46, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  53, i +  54, &address) && address == 0xCC006800 &&
 							findx_pattern(data, dataType, i +  61, length, &OSRestoreInterruptsSig))
 							EXISyncSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (findx_pattern(data, dataType, i +  30, length, &OSDisableInterruptsSig) &&
+						if (get_immediate(data,  i +  25, i +  26, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  30, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  36, length, &CompleteTransferSigs[1]) &&
+							get_immediate(data,  i +  45, i +  46, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  53, i +  54, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  62, i +  63, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  71, i +  72, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  77, i +  78, &address) && address == 0x800030E6 &&
 							findx_pattern(data, dataType, i +  83, length, &OSRestoreInterruptsSig))
 							EXISyncSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
-						if (findx_pattern(data, dataType, i +  30, length, &OSDisableInterruptsSig) &&
+						if (get_immediate(data,  i +  25, i +  26, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  30, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  36, length, &CompleteTransferSigs[1]) &&
+							get_immediate(data,  i +  50, i +  51, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  58, i +  59, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  67, i +  68, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  76, i +  77, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  82, i +  83, &address) && address == 0x800030E6 &&
 							findx_pattern(data, dataType, i +  88, length, &OSRestoreInterruptsSig))
 							EXISyncSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
-						if (findx_pattern(data, dataType, i +  19, length, &OSDisableInterruptsSig) &&
+						if (get_immediate(data,  i +   5, i +  12, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  19, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  32, i +  34, &address) && address == 0xCC006800 &&
 							findx_pattern(data, dataType, i + 103, length, &OSRestoreInterruptsSig))
 							EXISyncSigs[j].offsetFoundAt = i;
 						break;
 					case 5:
-						if (findx_pattern(data, dataType, i +  17, length, &OSDisableInterruptsSig) &&
+						if (get_immediate(data,  i +   5, i +   9, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  17, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  31, i +  33, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i + 110, i + 111, &address) && address == 0xCC006800 &&
 							findx_pattern(data, dataType, i + 119, length, &OSRestoreInterruptsSig))
 							EXISyncSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
-						if (findx_pattern(data, dataType, i +  17, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 131, length, &OSRestoreInterruptsSig))
+						if (get_immediate(data,  i +   3, i +   8, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  17, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  31, i +  33, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i + 110, i + 111, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i + 119, length, &OSRestoreInterruptsSig))
 							EXISyncSigs[j].offsetFoundAt = i;
 						break;
 					case 7:
-						if (findx_pattern(data, dataType, i +  17, length, &OSDisableInterruptsSig) &&
+						if (get_immediate(data,  i +   3, i +   8, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  17, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  31, i +  33, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i + 110, i + 111, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i + 125, i + 126, &address) && address == 0x800030E6 &&
 							findx_pattern(data, dataType, i + 131, length, &OSRestoreInterruptsSig))
 							EXISyncSigs[j].offsetFoundAt = i;
 						break;
 					case 8:
-						if (findx_pattern(data, dataType, i +  19, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  81, length, &OSRestoreInterruptsSig))
+						if (get_immediate(data,  i +  10, i +  11, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  17, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  32, i +  33, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i + 110, i + 111, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i + 125, i + 126, &address) && address == 0x800030E6 &&
+							findx_pattern(data, dataType, i + 131, length, &OSRestoreInterruptsSig))
 							EXISyncSigs[j].offsetFoundAt = i;
 						break;
 					case 9:
-						if (findx_pattern(data, dataType, i +  17, length, &OSDisableInterruptsSig) &&
+						if (get_immediate(data,  i +  14, i +  15, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  19, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  41, i +  42, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  65, i +  66, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  73, i +  74, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  81, length, &OSRestoreInterruptsSig))
+							EXISyncSigs[j].offsetFoundAt = i;
+						break;
+					case 10:
+						if (get_immediate(data,  i +  10, i +  11, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  17, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  32, i +  33, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i + 115, i + 116, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i + 130, i + 131, &address) && address == 0x800030E6 &&
 							findx_pattern(data, dataType, i + 136, length, &OSRestoreInterruptsSig))
 							EXISyncSigs[j].offsetFoundAt = i;
 						break;
@@ -2903,11 +2956,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern (data, dataType, i +  82, length, &EXILockSigs[2]) &&
 							findx_pattern (data, dataType, i +  90, length, &EXISelectSigs[4]) &&
 							findx_pattern (data, dataType, i + 102, length, &EXIImmSigs[2]) &&
-							findx_patterns(data, dataType, i + 107, length, &EXISyncSigs[5],
-							                                                &EXISyncSigs[6], NULL) &&
+							findx_patterns(data, dataType, i + 107, length, &EXISyncSigs[6],
+							                                                &EXISyncSigs[7], NULL) &&
 							findx_pattern (data, dataType, i + 116, length, &EXIImmSigs[2]) &&
-							findx_patterns(data, dataType, i + 121, length, &EXISyncSigs[5],
-							                                                &EXISyncSigs[6], NULL) &&
+							findx_patterns(data, dataType, i + 121, length, &EXISyncSigs[6],
+							                                                &EXISyncSigs[7], NULL) &&
 							findx_pattern (data, dataType, i + 126, length, &EXIDeselectSigs[5]) &&
 							findx_pattern (data, dataType, i + 130, length, &OSDisableInterruptsSig) &&
 							findx_pattern (data, dataType, i + 136, length, &OSRestoreInterruptsSig) &&
@@ -2933,9 +2986,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  82, length, &EXILockSigs[3]) &&
 							findx_pattern(data, dataType, i +  90, length, &EXISelectSigs[5]) &&
 							findx_pattern(data, dataType, i + 102, length, &EXIImmSigs[3]) &&
-							findx_pattern(data, dataType, i + 107, length, &EXISyncSigs[7]) &&
+							findx_pattern(data, dataType, i + 107, length, &EXISyncSigs[8]) &&
 							findx_pattern(data, dataType, i + 116, length, &EXIImmSigs[3]) &&
-							findx_pattern(data, dataType, i + 121, length, &EXISyncSigs[7]) &&
+							findx_pattern(data, dataType, i + 121, length, &EXISyncSigs[8]) &&
 							findx_pattern(data, dataType, i + 126, length, &EXIDeselectSigs[6]) &&
 							findx_pattern(data, dataType, i + 130, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 136, length, &OSRestoreInterruptsSig) &&
@@ -2961,9 +3014,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  82, length, &EXILockSigs[4]) &&
 							findx_pattern(data, dataType, i +  89, length, &EXISelectSigs[6]) &&
 							findx_pattern(data, dataType, i + 100, length, &EXIImmSigs[4]) &&
-							findx_pattern(data, dataType, i + 105, length, &EXISyncSigs[8]) &&
+							findx_pattern(data, dataType, i + 105, length, &EXISyncSigs[9]) &&
 							findx_pattern(data, dataType, i + 114, length, &EXIImmSigs[4]) &&
-							findx_pattern(data, dataType, i + 119, length, &EXISyncSigs[8]) &&
+							findx_pattern(data, dataType, i + 119, length, &EXISyncSigs[9]) &&
 							findx_pattern(data, dataType, i + 124, length, &EXIDeselectSigs[7]) &&
 							findx_pattern(data, dataType, i + 130, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 136, length, &OSRestoreInterruptsSig) &&
@@ -2991,9 +3044,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern (data, dataType, i +  93, length, &EXILockSigs[3]) &&
 							findx_pattern (data, dataType, i + 101, length, &EXISelectSigs[5]) &&
 							findx_pattern (data, dataType, i + 113, length, &EXIImmSigs[3]) &&
-							findx_pattern (data, dataType, i + 118, length, &EXISyncSigs[9]) &&
+							findx_pattern (data, dataType, i + 118, length, &EXISyncSigs[10]) &&
 							findx_pattern (data, dataType, i + 127, length, &EXIImmSigs[3]) &&
-							findx_pattern (data, dataType, i + 132, length, &EXISyncSigs[9]) &&
+							findx_pattern (data, dataType, i + 132, length, &EXISyncSigs[10]) &&
 							findx_pattern (data, dataType, i + 137, length, &EXIDeselectSigs[6]) &&
 							findx_pattern (data, dataType, i + 141, length, &OSDisableInterruptsSig) &&
 							findx_pattern (data, dataType, i + 147, length, &OSRestoreInterruptsSig) &&
@@ -4640,22 +4693,23 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						data[i + 110] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 					case 6:
+					case 7:
 						data[i +   3] = 0x3C800C00;	// lis		r4, 0x0C00
 						data[i +  31] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i + 110] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
-					case 7:
+					case 8:
 						data[i +  10] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i +  32] = 0x3C800C00;	// lis		r4, 0x0C00
 						data[i + 110] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
-					case 8:
+					case 9:
 						data[i +  14] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i +  41] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i +  65] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i +  73] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
-					case 9:
+					case 10:
 						data[i +  10] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i +  32] = 0x3C800C00;	// lis		r4, 0x0C00
 						data[i + 115] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -6718,6 +6772,7 @@ extern GXRModeObj *newmode;
 void Patch_VideoMode(u32 *data, u32 length, int dataType)
 {
 	int i, j, k;
+	u32 address;
 	FuncPattern OSSetCurrentContextSig = 
 		{ 23, 4, 4, 0, 0, 5, NULL, 0, "OSSetCurrentContext" };
 	FuncPattern OSDisableInterruptsSig = 
@@ -6970,8 +7025,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				(data[i + 1] & 0xFFFF0000) == 0x60420000 &&
 				(data[i + 2] & 0xFFFF0000) == 0x3DA00000 &&
 				(data[i + 3] & 0xFFFF0000) == 0x61AD0000) {
-				_SDA2_BASE_ = (data[i + 0] << 16) | (u16)data[i + 1];
-				_SDA_BASE_  = (data[i + 2] << 16) | (u16)data[i + 3];
+				get_immediate(data, i + 0, i + 1, &_SDA2_BASE_);
+				get_immediate(data, i + 2, i + 3, &_SDA_BASE_);
 				i += 4;
 			}
 			continue;
@@ -7335,11 +7390,13 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i +  6, i +  7, &address) && address == 0xCC00206E &&
 							findx_pattern(data, dataType, i + 10, length, &OSRestoreInterruptsSig))
 							VIGetDTVStatusSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i +  5, i +  6, &address) && address == 0xCC00206E &&
 							findx_pattern(data, dataType, i +  8, length, &OSRestoreInterruptsSig))
 							VIGetDTVStatusSigs[j].offsetFoundAt = i;
 						break;
@@ -11442,8 +11499,8 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 				(data[i + 1] & 0xFFFF0000) == 0x60420000 &&
 				(data[i + 2] & 0xFFFF0000) == 0x3DA00000 &&
 				(data[i + 3] & 0xFFFF0000) == 0x61AD0000) {
-				_SDA2_BASE_ = (data[i + 0] << 16) | (u16)data[i + 1];
-				_SDA_BASE_  = (data[i + 2] << 16) | (u16)data[i + 3];
+				get_immediate(data, i + 0, i + 1, &_SDA2_BASE_);
+				get_immediate(data, i + 2, i + 3, &_SDA_BASE_);
 				i += 4;
 			}
 			continue;
