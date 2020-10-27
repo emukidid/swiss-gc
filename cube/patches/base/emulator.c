@@ -1233,7 +1233,7 @@ static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 }
 #endif
 
-void *init(void *arenaHi)
+void init(void **arenaLo, void **arenaHi)
 {
 	#ifdef BBA
 	OSCreateAlarm(&bba_alarm);
@@ -1250,17 +1250,15 @@ void *init(void *arenaHi)
 	#endif
 
 	#ifdef DTK
-	arenaHi -= sizeof(*dsp.buffer[0]); dsp.buffer[0] = OSCachedToUncached(arenaHi);
-	arenaHi -= sizeof(*dsp.buffer[1]); dsp.buffer[1] = OSCachedToUncached(arenaHi);
-	arenaHi -= 7168; fifo_init(arenaHi, 7168);
+	*arenaHi -= sizeof(*dsp.buffer[0]); dsp.buffer[0] = OSCachedToUncached(*arenaHi);
+	*arenaHi -= sizeof(*dsp.buffer[1]); dsp.buffer[1] = OSCachedToUncached(*arenaHi);
+	*arenaHi -= 7168; fifo_init(*arenaHi, 7168);
 	#endif
 
-	OSContext *context = arenaHi - sizeof(OSContext);
+	OSContext *context = *arenaLo;
 	OSExceptionContext = OSCachedToPhysical(context);
 	OSCurrentContext = 
 	OSFPUContext = context;
-
-	return arenaHi;
 }
 
 bool exi_probe(int32_t chan)

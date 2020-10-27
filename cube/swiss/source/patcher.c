@@ -309,6 +309,8 @@ u32 branchResolve(u32 *data, int dataType, u32 offsetFoundAt)
 	return address - data;
 }
 
+static u32 _SDA2_BASE_, _SDA_BASE_;
+
 bool get_immediate(u32 *data, u32 offsetFoundAt, u32 offsetFoundAt2, u32 *immediate)
 {
 	u32 word = data[offsetFoundAt];
@@ -337,6 +339,36 @@ bool get_immediate(u32 *data, u32 offsetFoundAt, u32 offsetFoundAt2, u32 *immedi
 						return false;
 					
 					*immediate = (word << 16) | (u16)word2;
+					return true;
+				}
+			}
+		}
+		case 14:
+		case 32 ... 55:
+		{
+			switch (offsetFoundAt2) {
+				case 0:
+				{
+					if (((word >> 16) & 0x1F) != 0)
+						return false;
+					
+					*immediate = (s16)word;
+					return true;
+				}
+				case 2:
+				{
+					if (((word >> 16) & 0x1F) != 2)
+						return false;
+					
+					*immediate = _SDA2_BASE_ + (s16)word;
+					return true;
+				}
+				case 13:
+				{
+					if (((word >> 16) & 0x1F) != 13)
+						return false;
+					
+					*immediate = _SDA_BASE_ + (s16)word;
 					return true;
 				}
 			}
@@ -1157,7 +1189,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 54, 6, 9, 0, 3, 27, NULL, 0, "__VMBASEDSIExceptionHandler" };
 	FuncPattern __VMBASEISIExceptionHandlerSig = 
 		{ 54, 6, 9, 0, 3, 27, NULL, 0, "__VMBASEISIExceptionHandler" };
-	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
+	_SDA2_BASE_ = _SDA_BASE_ = 0;
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (!_SDA2_BASE_ && !_SDA_BASE_) {
@@ -4422,9 +4454,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	
 	if (j < sizeof(__OSInitSystemCallSigs) / sizeof(FuncPattern) && (i = __OSInitSystemCallSigs[j].offsetFoundAt)) {
 		u32 *__OSInitSystemCall = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		u32 *OSGetArenaHi = Calc_ProperAddress(data, dataType, OSGetArenaHiSigs[j].offsetFoundAt * sizeof(u32));
-		u32 *OSSetArenaHi = Calc_ProperAddress(data, dataType, OSSetArenaHiSig.offsetFoundAt * sizeof(u32));
+		u32 __OSArenaLo, __OSArenaHi;
 		
 		if (__OSInitSystemCall) {
 			switch (j) {
@@ -4433,9 +4463,18 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 12] = 0x3CA00000 | ((u32)__OSInitSystemCall + 0x8000) >> 16;
 					data[i + 13] = 0x38050000 | ((u32)__OSInitSystemCall & 0xFFFF);
 					data[i + 17] = 0x38800020;	// li		r4, 32
-					data[i + 20] = OSGetArenaHi ? branchAndLink(OSGetArenaHi, __OSInitSystemCall + 20) : 0x38600000;
-					data[i + 21] = branchAndLink(INIT, __OSInitSystemCall + 21);
-					data[i + 22] = OSSetArenaHi ? branchAndLink(OSSetArenaHi, __OSInitSystemCall + 22) : 0x60000000;
+					
+					if (get_immediate(data, OSSetArenaLoSig.offsetFoundAt, 13, &__OSArenaLo))
+						data[i + 20] = 0x386D0000 | ((__OSArenaLo - _SDA_BASE_) & 0xFFFF);
+					else
+						data[i + 20] = 0x38600000;
+					
+					if (get_immediate(data, OSSetArenaHiSig.offsetFoundAt, 13, &__OSArenaHi))
+						data[i + 21] = 0x388D0000 | ((__OSArenaHi - _SDA_BASE_) & 0xFFFF);
+					else
+						data[i + 21] = 0x38800000;
+					
+					data[i + 22] = branchAndLink(INIT, __OSInitSystemCall + 22);
 					break;
 				case 1:
 					data[i +  4] = 0x3CA00000 | ((u32)VAR_JUMP_TABLE + 0x8000) >> 16;
@@ -4443,9 +4482,18 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  7] = 0x3BE50000 | ((u32)VAR_JUMP_TABLE & 0xFFFF);
 					data[i +  8] = 0x38030000 | ((u32)__OSInitSystemCall & 0xFFFF);
 					data[i + 14] = 0x38800020;	// li		r4, 32
-					data[i + 17] = OSGetArenaHi ? branchAndLink(OSGetArenaHi, __OSInitSystemCall + 17) : 0x38600000;
-					data[i + 18] = branchAndLink(INIT, __OSInitSystemCall + 18);
-					data[i + 19] = OSSetArenaHi ? branchAndLink(OSSetArenaHi, __OSInitSystemCall + 19) : 0x60000000;
+					
+					if (get_immediate(data, OSSetArenaLoSig.offsetFoundAt, 13, &__OSArenaLo))
+						data[i + 17] = 0x386D0000 | ((__OSArenaLo - _SDA_BASE_) & 0xFFFF);
+					else
+						data[i + 17] = 0x38600000;
+					
+					if (get_immediate(data, OSSetArenaHiSig.offsetFoundAt, 13, &__OSArenaHi))
+						data[i + 18] = 0x388D0000 | ((__OSArenaHi - _SDA_BASE_) & 0xFFFF);
+					else
+						data[i + 18] = 0x38800000;
+					
+					data[i + 19] = branchAndLink(INIT, __OSInitSystemCall + 19);
 					break;
 				case 2:
 					data[i +  3] = 0x3C600000 | ((u32)__OSInitSystemCall + 0x8000) >> 16;
@@ -4456,9 +4504,18 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 12] = 0x38800020;	// li		r4, 32
 					data[i + 13] = 0x38630000 | ((u32)VAR_JUMP_TABLE & 0xFFFF);
 					data[i + 16] = 0x60000000;	// nop
-					data[i + 17] = OSGetArenaHi ? branchAndLink(OSGetArenaHi, __OSInitSystemCall + 17) : 0x38600000;
-					data[i + 18] = branchAndLink(INIT, __OSInitSystemCall + 18);
-					data[i + 19] = OSSetArenaHi ? branchAndLink(OSSetArenaHi, __OSInitSystemCall + 19) : 0x60000000;
+					
+					if (get_immediate(data, OSSetArenaLoSig.offsetFoundAt, 13, &__OSArenaLo))
+						data[i + 17] = 0x386D0000 | ((__OSArenaLo - _SDA_BASE_) & 0xFFFF);
+					else
+						data[i + 17] = 0x38600000;
+					
+					if (get_immediate(data, OSSetArenaHiSig.offsetFoundAt, 13, &__OSArenaHi))
+						data[i + 18] = 0x388D0000 | ((__OSArenaHi - _SDA_BASE_) & 0xFFFF);
+					else
+						data[i + 18] = 0x38800000;
+					
+					data[i + 19] = branchAndLink(INIT, __OSInitSystemCall + 19);
 					break;
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", __OSInitSystemCallSigs[j].Name, j, __OSInitSystemCall);
@@ -6968,7 +7025,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{  2, 1, 0, 0, 1, 0, NULL, 0, "GXSetViewport" },	// SN Systems ProDG
 		{ 18, 5, 8, 1, 0, 2, NULL, 0, "GXSetViewport" }
 	};
-	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
+	_SDA2_BASE_ = _SDA_BASE_ = 0;
 	
 	switch (swissSettings.gameVMode) {
 		case 6: case 13: case 7: case 14:
@@ -11491,7 +11548,7 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 		{ 234, 46, 0, 0, 42, 51, NULL, 0, "SPEC2_MakeStatus" },	// SN Systems ProDG
 		{ 284, 55, 2, 0, 43, 76, NULL, 0, "SPEC2_MakeStatus" }
 	};
-	u32 _SDA2_BASE_ = 0, _SDA_BASE_ = 0;
+	_SDA2_BASE_ = _SDA_BASE_ = 0;
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (!_SDA2_BASE_ && !_SDA_BASE_) {
