@@ -178,6 +178,25 @@ static void exi_complete_transfer(unsigned chan)
 	exi_update_interrupts(chan);
 }
 
+static OSAlarm exi_alarm[EXI_CHANNEL_MAX] = {0};
+
+static void exi_transfer(unsigned chan, uint32_t length)
+{
+	OSTick ticks = ((length * (OS_TIMER_CLOCK / 843750)) * 8) >> ((exi.reg[chan].cpr >> 4) & 0b111);
+
+	void alarm_handler(OSAlarm *alarm, OSContext *context)
+	{
+		if (alarm == &exi_alarm[EXI_CHANNEL_0])
+			exi_complete_transfer(EXI_CHANNEL_0);
+		else if (alarm == &exi_alarm[EXI_CHANNEL_1])
+			exi_complete_transfer(EXI_CHANNEL_1);
+		else if (alarm == &exi_alarm[EXI_CHANNEL_2])
+			exi_complete_transfer(EXI_CHANNEL_2);
+	}
+
+	OSSetAlarm(&exi_alarm[chan], ticks, alarm_handler);
+}
+
 static struct {
 	int position;
 	uint8_t command;
@@ -273,7 +292,6 @@ static void card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
 	}
 
 	card.position += length;
-	exi_complete_transfer(chan);
 }
 
 static void card_select(unsigned chan)
@@ -356,6 +374,8 @@ static void exi_write(unsigned index, uint32_t value)
 					int type = (exi.reg[chan].cr >> 2) & 0b11;
 
 					card_dma(chan, address, length, type);
+
+					exi_transfer(chan, length);
 				} else {
 					int length = (exi.reg[chan].cr >> 4) & 0b11;
 					char *data = (char *)&exi.reg[chan].data;
