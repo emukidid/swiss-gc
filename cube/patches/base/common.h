@@ -51,6 +51,8 @@ extern volatile u32 DI[10];
 extern volatile u32 EXI[3][5];
 extern volatile u32 AI[4];
 
+extern volatile u32 EXIEmuRegs[3][5];
+
 typedef void (*read_frag_cb)(void *dst, u32 len);
 
 void do_read_disc(void *dst, u32 len, u32 offset, u32 sector, read_frag_cb cb);

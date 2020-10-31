@@ -139,21 +139,23 @@ static struct {
 
 static void exi_update_interrupts(unsigned chan)
 {
-	if (exi.reg[chan].cpr & 0b00000000000010)
-		irq.status |=  (OS_INTERRUPTMASK_EXI_0_EXI >> (3 * chan));
-	else
-		irq.status &= ~(OS_INTERRUPTMASK_EXI_0_EXI >> (3 * chan));
+	uint32_t current = (exi.reg[chan].cpr >> 1) & (exi.reg[chan].cpr & 0b00010000000101);
 
-	if (exi.reg[chan].cpr & 0b00000000001000)
-		irq.status |=  (OS_INTERRUPTMASK_EXI_0_TC >> (3 * chan));
-	else
-		irq.status &= ~(OS_INTERRUPTMASK_EXI_0_TC >> (3 * chan));
-
-	if (chan != EXI_CHANNEL_2) {
-		if (exi.reg[chan].cpr & 0b00100000000000)
-			irq.status |=  (OS_INTERRUPTMASK_EXI_0_EXT >> (3 * chan));
-		else
-			irq.status &= ~(OS_INTERRUPTMASK_EXI_0_EXT >> (3 * chan));
+	switch (chan) {
+		case EXI_CHANNEL_0:
+			irq.status = ((current << (31 - OS_INTERRUPT_EXI_0_EXI)) & OS_INTERRUPTMASK_EXI_0_EXI) | (irq.status & ~OS_INTERRUPTMASK_EXI_0_EXI);
+			irq.status = ((current << (29 - OS_INTERRUPT_EXI_0_TC))  & OS_INTERRUPTMASK_EXI_0_TC)  | (irq.status & ~OS_INTERRUPTMASK_EXI_0_TC);
+			irq.status = ((current << (21 - OS_INTERRUPT_EXI_0_EXT)) & OS_INTERRUPTMASK_EXI_0_EXT) | (irq.status & ~OS_INTERRUPTMASK_EXI_0_EXT);
+			break;
+		case EXI_CHANNEL_1:
+			irq.status = ((current << (31 - OS_INTERRUPT_EXI_1_EXI)) & OS_INTERRUPTMASK_EXI_1_EXI) | (irq.status & ~OS_INTERRUPTMASK_EXI_1_EXI);
+			irq.status = ((current << (29 - OS_INTERRUPT_EXI_1_TC))  & OS_INTERRUPTMASK_EXI_1_TC)  | (irq.status & ~OS_INTERRUPTMASK_EXI_1_TC);
+			irq.status = ((current << (21 - OS_INTERRUPT_EXI_1_EXT)) & OS_INTERRUPTMASK_EXI_1_EXT) | (irq.status & ~OS_INTERRUPTMASK_EXI_1_EXT);
+			break;
+		case EXI_CHANNEL_2:
+			irq.status = ((current << (31 - OS_INTERRUPT_EXI_2_EXI)) & OS_INTERRUPTMASK_EXI_2_EXI) | (irq.status & ~OS_INTERRUPTMASK_EXI_2_EXI);
+			irq.status = ((current << (29 - OS_INTERRUPT_EXI_2_TC))  & OS_INTERRUPTMASK_EXI_2_TC)  | (irq.status & ~OS_INTERRUPTMASK_EXI_2_TC);
+			break;
 	}
 
 	if (irq.status & irq.mask)
@@ -1335,9 +1337,41 @@ OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler han
 	return oldHandler;
 }
 
+static void set_irq_mask(OSInterruptMask mask, OSInterruptMask current)
+{
+	#ifdef CARDEMU
+	if (mask & OS_INTERRUPTMASK_EXI_0) {
+		uint32_t reg = EXIEmuRegs[EXI_CHANNEL_0][0];
+
+		reg = ((current >> (31 - OS_INTERRUPT_EXI_0_EXI)) & 0b00000000000001) | (reg & ~0b00000000000001);
+		reg = ((current >> (29 - OS_INTERRUPT_EXI_0_TC))  & 0b00000000000100) | (reg & ~0b00000000000100);
+		reg = ((current >> (21 - OS_INTERRUPT_EXI_0_EXT)) & 0b00010000000000) | (reg & ~0b00010000000000);
+
+		EXIEmuRegs[EXI_CHANNEL_0][0] = reg & ~0b00100000001010;
+	}
+	if (mask & OS_INTERRUPTMASK_EXI_1) {
+		uint32_t reg = EXIEmuRegs[EXI_CHANNEL_1][0];
+
+		reg = ((current >> (31 - OS_INTERRUPT_EXI_1_EXI)) & 0b00000000000001) | (reg & ~0b00000000000001);
+		reg = ((current >> (29 - OS_INTERRUPT_EXI_1_TC))  & 0b00000000000100) | (reg & ~0b00000000000100);
+		reg = ((current >> (21 - OS_INTERRUPT_EXI_1_EXT)) & 0b00010000000000) | (reg & ~0b00010000000000);
+
+		EXIEmuRegs[EXI_CHANNEL_1][0] = reg & ~0b00100000001010;
+	}
+	if (mask & OS_INTERRUPTMASK_EXI_2) {
+		uint32_t reg = EXIEmuRegs[EXI_CHANNEL_2][0];
+
+		reg = ((current >> (31 - OS_INTERRUPT_EXI_2_EXI)) & 0b00000000000001) | (reg & ~0b00000000000001);
+		reg = ((current >> (29 - OS_INTERRUPT_EXI_2_TC))  & 0b00000000000100) | (reg & ~0b00000000000100);
+
+		EXIEmuRegs[EXI_CHANNEL_2][0] = reg & ~0b00100000001010;
+	}
+	#endif
+}
+
 OSInterruptMask mask_irq(OSInterruptMask mask)
 {
-	irq.mask &= ~mask;
+	set_irq_mask(mask, irq.mask &= ~mask);
 
 	#ifdef CARDEMU
 	if ((mask & OS_INTERRUPTMASK_EXI_1) && !(mask & ~OS_INTERRUPTMASK_EXI_1))
@@ -1353,10 +1387,7 @@ OSInterruptMask mask_irq(OSInterruptMask mask)
 
 OSInterruptMask unmask_irq(OSInterruptMask mask)
 {
-	irq.mask |= mask;
-
-	if (irq.status & irq.mask)
-		assert_interrupt();
+	set_irq_mask(mask, irq.mask |= mask);
 
 	#ifdef CARDEMU
 	if ((mask & OS_INTERRUPTMASK_EXI_1) && !(mask & ~OS_INTERRUPTMASK_EXI_1)) {
