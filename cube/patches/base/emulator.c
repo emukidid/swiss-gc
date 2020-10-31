@@ -334,11 +334,11 @@ static void card_deselect(unsigned chan)
 static void exi_read(unsigned index, uint32_t *value)
 {
 	switch (index) {
-		case 5 ... 9:
-			*value = exi.regs[index];
+		case 0 ... 4:
+			*value = (*EXI)[index];
 			break;
 		default:
-			*value = (*EXI)[index];
+			*value = exi.regs[index];
 	}
 }
 
@@ -347,8 +347,16 @@ static void exi_write(unsigned index, uint32_t value)
 	unsigned chan = index / 5;
 	unsigned dev = __builtin_ctz((exi.reg[chan].cpr >> 7) & 0b111);
 
-	switch (index) {
-		case 5:
+	if (chan == EXI_CHANNEL_0) {
+		(*EXI)[index] = value;
+		return;
+	}
+
+	switch (index % 5) {
+		case 0:
+			if (chan == EXI_CHANNEL_2)
+				EXI[chan][0] = (value & 0b00000000000011) | (EXI[chan][0] & ~0b00100000001011);
+
 			exi.reg[chan].cpr = ((value & 0b00100000001010) ^ exi.reg[chan].cpr) & exi.reg[chan].cpr;
 
 			if ((value & 0b00001110000000) & ((value & 0b00001110000000) - 1))
@@ -356,17 +364,19 @@ static void exi_write(unsigned index, uint32_t value)
 			else
 				exi.reg[chan].cpr = (value & 0b10011111110101) | (exi.reg[chan].cpr & ~0b00011111110101);
 
-			if (dev != EXI_DEVICE_0 && (exi.reg[chan].cpr & 0b00000010000000))
-				card_select(chan);
-			if (dev == EXI_DEVICE_0 && !(exi.reg[chan].cpr & 0b00000010000000))
-				card_deselect(chan);
+			if (chan == EXI_CHANNEL_1) {
+				if (dev != EXI_DEVICE_0 && (exi.reg[chan].cpr & 0b00000010000000))
+					card_select(chan);
+				if (dev == EXI_DEVICE_0 && !(exi.reg[chan].cpr & 0b00000010000000))
+					card_deselect(chan);
+			}
 
 			exi_update_interrupts(chan);
 			break;
-		case 6 ... 7:
+		case 1 ... 2:
 			exi.regs[index] = value & 0x3FFFFE0;
 			break;
-		case 8:
+		case 3:
 			exi.regs[index] = value & 0b111111;
 
 			if (value & 0b000001) {
@@ -375,25 +385,29 @@ static void exi_write(unsigned index, uint32_t value)
 					uint32_t length  = exi.reg[chan].length;
 					int type = (exi.reg[chan].cr >> 2) & 0b11;
 
-					card_dma(chan, address, length, type);
+					if (chan == EXI_CHANNEL_1 && dev == EXI_DEVICE_0)
+						card_dma(chan, address, length, type);
 
 					exi_transfer(chan, length);
 				} else {
 					int length = (exi.reg[chan].cr >> 4) & 0b11;
 					char *data = (char *)&exi.reg[chan].data;
 
-					for (int i = 0; i <= length; i++)
-						data[i] = card_imm(chan, data[i]);
+					if (chan == EXI_CHANNEL_1 && dev == EXI_DEVICE_0) {
+						for (int i = 0; i <= length; i++)
+							data[i] = card_imm(chan, data[i]);
+					} else {
+						for (int i = 0; i <= length; i++)
+							data[i] = ~0;
+					}
 
 					exi_complete_transfer(chan);
 				}
 			}
 			break;
-		case 9:
+		case 4:
 			exi.regs[index] = value;
 			break;
-		default:
-			(*EXI)[index] = value;
 	}
 }
 #endif
@@ -1287,8 +1301,10 @@ bool exi_probe(int32_t chan)
 {
 	if (chan == EXI_CHANNEL_2)
 		return false;
+	#ifndef CARDEMU
 	if (chan == *VAR_EXI_SLOT)
 		return false;
+	#endif
 
 	return true;
 }
@@ -1301,8 +1317,10 @@ bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 	if (chan == EXI_CHANNEL_0 && dev == EXI_DEVICE_2)
 		return false;
 	#endif
+	#ifndef CARDEMU
 	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
 		return false;
+	#endif
 	if (chan == *VAR_EXI_SLOT)
 		end_read();
 
@@ -1316,6 +1334,7 @@ OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler han
 		case OS_INTERRUPT_EXI_1_EXI:
 		case OS_INTERRUPT_EXI_1_TC:
 		case OS_INTERRUPT_EXI_1_EXT:
+		case OS_INTERRUPT_EXI_2_TC:
 			OSSetInterruptHandler(OS_INTERRUPT_PI_ERROR, pi_interrupt_handler);
 			break;
 		#endif
@@ -1374,8 +1393,8 @@ OSInterruptMask mask_irq(OSInterruptMask mask)
 	set_irq_mask(mask, irq.mask &= ~mask);
 
 	#ifdef CARDEMU
-	if ((mask & OS_INTERRUPTMASK_EXI_1) && !(mask & ~OS_INTERRUPTMASK_EXI_1))
-		mask &= ~OS_INTERRUPTMASK_EXI_1;
+	if ((mask & (OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC)) && !(mask & ~(OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC)))
+		mask &= ~(OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC);
 	#endif
 	#ifndef DI_PASSTHROUGH
 	if (mask == OS_INTERRUPTMASK_PI_DI)
@@ -1390,8 +1409,8 @@ OSInterruptMask unmask_irq(OSInterruptMask mask)
 	set_irq_mask(mask, irq.mask |= mask);
 
 	#ifdef CARDEMU
-	if ((mask & OS_INTERRUPTMASK_EXI_1) && !(mask & ~OS_INTERRUPTMASK_EXI_1)) {
-		mask &= ~OS_INTERRUPTMASK_EXI_1;
+	if ((mask & (OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC)) && !(mask & ~(OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC))) {
+		mask &= ~(OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC);
 		mask |=  OS_INTERRUPTMASK_PI_ERROR;
 	}
 	#endif
