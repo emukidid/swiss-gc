@@ -99,6 +99,7 @@ typedef struct {
 	int forceVideoActive;
 	int forceDTVStatus;
 	int emulateReadSpeed;
+	int emulateMemoryCard;
 	s8 sramHOffset;
 	u8 sramLanguage;
 	u8 sramVideo;

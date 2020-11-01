@@ -245,6 +245,9 @@ int config_update_file() {
 	
 	sprintf(txtbuffer, "Emulate Read Speed=%s\r\n",emulateReadSpeedStr[swissSettings.emulateReadSpeed]);
 	string_append(configString, txtbuffer);
+	
+	sprintf(txtbuffer, "Emulate Memory Card=%s\r\n",(swissSettings.emulateMemoryCard ? "Yes":"No"));
+	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
 	string_append(configString, txtbuffer);
 	
@@ -461,6 +464,9 @@ void config_parse(char *configData) {
 							break;
 						}
 					}
+				}
+				else if(!strcmp("Emulate Memory Card", name)) {
+					swissSettings.emulateMemoryCard = !strcmp("Yes", value) ? 1:0;
 				}
 				
 				// Swiss settings

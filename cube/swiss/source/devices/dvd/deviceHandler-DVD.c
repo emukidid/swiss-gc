@@ -467,16 +467,18 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 			}
 		}
 		
-		memset(&patchFile, 0, sizeof(file_handle));
-		sprintf(&patchFile.name[0], "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
-		
-		devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
-		devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
-		devices[DEVICE_PATCHES]->closeFile(&patchFile);
-		
-		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, 0xFE000000, 16*1024*1024, DEVICE_PATCHES))) {
-			totFrags+=frags;
+		if(swissSettings.emulateMemoryCard) {
+			memset(&patchFile, 0, sizeof(file_handle));
+			sprintf(&patchFile.name[0], "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			
+			devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 			devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			
+			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, 0xFE000000, 16*1024*1024, DEVICE_PATCHES))) {
+				totFrags+=frags;
+				devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			}
 		}
 		
 		print_frag_list(0);

@@ -159,18 +159,6 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, int 
 			}
 		}
 		
-		memset(&patchFile, 0, sizeof(file_handle));
-		sprintf(&patchFile.name[0], "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
-		
-		devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
-		devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
-		devices[DEVICE_PATCHES]->closeFile(&patchFile);
-		
-		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, 0xFE000000, 16*1024*1024, DEVICE_PATCHES))) {
-			totFrags+=frags;
-			devices[DEVICE_PATCHES]->closeFile(&patchFile);
-		}
-		
 		print_frag_list(0);
 		// Card Type
 		*(vu8*)VAR_SD_SHIFT = (u8)(sdgecko_getAddressingType(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)) ? 9:0);
@@ -241,7 +229,7 @@ DEVICEHANDLER_INTERFACE __device_usbgecko = {
 	"Requires PC application to be up",
 	{TEX_USBGECKO, 64, 84},
 	FEAT_READ|FEAT_BOOT_GCM|FEAT_HYPERVISOR,
-	EMU_READ|EMU_MEMCARD,
+	EMU_READ,
 	LOC_MEMCARD_SLOT_B,
 	&initial_USBGecko,
 	(_fn_test)&deviceHandler_USBGecko_test,

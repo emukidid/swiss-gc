@@ -14,13 +14,13 @@ DISASM    = disassembly
 .NOTPARALLEL:
 all: dvdpatch hddpatch sdpatch usbpatch wkfpatch bbapatch gcodepatch
 
-dvdpatch: clean build-dvd
+dvdpatch: clean build-dvd clean build-dvd-card
 hddpatch: clean build-ideexi-v1 clean build-ideexi-v2
 sdpatch: clean build-sd
 usbpatch: clean build-usb
 wkfpatch: clean build-wkf
 bbapatch: clean build-bba
-gcodepatch: clean build-gcode
+gcodepatch: clean build-gcode clean build-gcode-card
 
 clean:
 	@rm -rf *.o
@@ -92,7 +92,7 @@ build-ideexi-v2:
 build-dvd:
 	@echo Building DVD Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARDEMU -DDI_PASSTHROUGH -DDVD
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DDVD
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
@@ -110,10 +110,31 @@ build-dvd:
 	@rm *.bin
 	@rm *.elf
 
+build-dvd-card:
+	@echo Building DVD+Card Patch ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARDEMU -DDI_PASSTHROUGH -DDVD
+	@$(CC) -Os $(OPTS) -c base/igr.c
+	@$(CC) -Os $(OPTS) -c dvd/dvd.c
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
+	@$(CC) -Os $(OPTS) -c base/usbgecko.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/DVDMath.c
+	@$(CC) -Os $(OPTS) -c base/floor.S
+	@$(CC) -Os $(OPTS) -c base/sqrt.S
+	@$(CC) -Os $(OPTS) -o dvd_card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
+	@rm -rf *.o
+	@$(OBJDUMP) -D dvd_card.elf > $(DISASM)/dvd_card_disasm.txt
+	@$(OBJCOPY) -O binary dvd_card.elf dvd_card.bin
+	@$(BIN2S) dvd_card.bin > $(DEST)/DVDCardPatch.s
+	@rm *.bin
+	@rm *.elf
+
 build-usb:
 	@echo Building USBGecko Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARDEMU
+	@$(CC) -Os $(OPTS) -c base/emulator.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c usbgecko/usbgecko.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
@@ -121,7 +142,7 @@ build-usb:
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o usbgecko.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o usbgecko.o sd.o frag.o os.o
 	@rm -rf *.o
-	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usb_disasm.txt
+	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usbgecko_disasm.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
 	@$(BIN2S) usbgecko.bin > $(DEST)/USBGeckoPatch.s
 	@rm *.bin
@@ -168,7 +189,7 @@ build-bba:
 build-gcode:
 	@echo Building GCLoader Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARDEMU -DDI_PASSTHROUGH -DGCODE
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DGCODE
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
@@ -183,5 +204,26 @@ build-gcode:
 	@$(OBJDUMP) -D gcloader.elf > $(DISASM)/gcloader_disasm.txt
 	@$(OBJCOPY) -O binary gcloader.elf gcloader.bin
 	@$(BIN2S) gcloader.bin > $(DEST)/GCLoaderPatch.s
+	@rm *.bin
+	@rm *.elf
+
+build-gcode-card:
+	@echo Building GCLoader+Card Patch ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARDEMU -DDI_PASSTHROUGH -DGCODE
+	@$(CC) -Os $(OPTS) -c base/igr.c
+	@$(CC) -Os $(OPTS) -c dvd/dvd.c
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
+	@$(CC) -Os $(OPTS) -c base/usbgecko.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/DVDMath.c
+	@$(CC) -Os $(OPTS) -c base/floor.S
+	@$(CC) -Os $(OPTS) -c base/sqrt.S
+	@$(CC) -Os $(OPTS) -o gcloader_card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
+	@rm -rf *.o
+	@$(OBJDUMP) -D gcloader_card.elf > $(DISASM)/gcloader_card_disasm.txt
+	@$(OBJCOPY) -O binary gcloader_card.elf gcloader_card.bin
+	@$(BIN2S) gcloader_card.bin > $(DEST)/GCLoaderCardPatch.s
 	@rm *.bin
 	@rm *.elf

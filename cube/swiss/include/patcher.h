@@ -30,10 +30,14 @@ extern u8 wkf_bin[];
 extern u32 wkf_bin_size;
 extern u8 dvd_bin[];
 extern u32 dvd_bin_size;
+extern u8 dvd_card_bin[];
+extern u32 dvd_card_bin_size;
 extern u8 bba_bin[];
 extern u32 bba_bin_size;
 extern u8 gcloader_bin[];
 extern u32 gcloader_bin_size;
+extern u8 gcloader_card_bin[];
+extern u32 gcloader_card_bin_size;
 
 /* SDK patches */
 extern u8 GXAdjustForOverscanPatch[];

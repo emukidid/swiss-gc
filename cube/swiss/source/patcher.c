@@ -133,7 +133,8 @@ int install_code(int final)
 	}
 	// DVD
 	else if(devices[DEVICE_CUR] == &__device_dvd) {
-		patch = &dvd_bin[0]; patchSize = dvd_bin_size;
+		patch = !swissSettings.emulateMemoryCard?&dvd_bin[0]:&dvd_card_bin[0];
+		patchSize = !swissSettings.emulateMemoryCard?dvd_bin_size:dvd_card_bin_size;
 		print_gecko("Installing Patch for DVD\r\n");
 	}
 	// USB Gecko
@@ -153,7 +154,8 @@ int install_code(int final)
 	}
 	// GC Loader
 	else if(devices[DEVICE_CUR] == &__device_gcloader) {
-		patch = &gcloader_bin[0]; patchSize = gcloader_bin_size;
+		patch = !swissSettings.emulateMemoryCard?&gcloader_bin[0]:&gcloader_card_bin[0];
+		patchSize = !swissSettings.emulateMemoryCard?gcloader_bin_size:gcloader_card_bin_size;
 		print_gecko("Installing Patch for GC Loader\r\n");
 	}
 	print_gecko("Space for patch remaining: %i\r\n", top_addr - location);
@@ -4564,7 +4566,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *SetExiInterruptMask = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SetExiInterruptMask) {
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -4618,7 +4620,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *CompleteTransfer = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (CompleteTransfer) {
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 						data[i + 32] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -4640,7 +4642,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIImm = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIImm) {
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -4677,7 +4679,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIDma = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIDma) {
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -4714,7 +4716,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXISync = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISync) {
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 						data[i +  24] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -4785,7 +4787,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIClearInterrupts = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIClearInterrupts) {
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 						data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -4864,7 +4866,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 12] = 0x41820170;	// beq		+92
 					break;
 			}
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -4899,7 +4901,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *__EXIAttach = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__EXIAttach) {
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 						data[i + 43] = branchAndLink(UNMASK_IRQ, __EXIAttach + 43);
@@ -4921,7 +4923,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIAttach = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIAttach) {
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 						data[i + 47] = branchAndLink(UNMASK_IRQ, EXIAttach + 47);
@@ -4957,7 +4959,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 11] = 0x2C1D0003;	// cmpwi	r29, 3
 					break;
 			}
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -4993,7 +4995,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			data[i + 45] = 0x2C030000;	// cmpwi	r3, 0
 			data[i + 46] = 0x40820014;	// bne		+5
 			
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				data[i + 55] = 0x3C600C00;	// lis		r3, 0x0C00
 				data[i + 73] = branchAndLink(MASK_IRQ, EXISelectSD + 73);
 				data[i + 76] = branchAndLink(MASK_IRQ, EXISelectSD + 76);
@@ -5059,7 +5061,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 32] = 0x40820014;	// bne		+5
 					break;
 			}
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5100,7 +5102,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIDeselect = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIDeselect) {
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5147,7 +5149,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIIntrruptHandler) {
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 3:
 						data[i + 10] = 0x3CA00C00;	// lis		r5, 0x0C00
@@ -5176,7 +5178,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *TCIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (TCIntrruptHandler) {
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5214,7 +5216,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXTIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXTIntrruptHandler) {
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5257,7 +5259,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIInit) {
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 0:
 						data[i +  5] = branchAndLink(MASK_IRQ, EXIInit + 5);
@@ -5406,7 +5408,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIGetID = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIGetID) {
-			if (devices[DEVICE_CUR]->emulate & EMU_MEMCARD) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
 				switch (j) {
 					case 4:
 						data[i +  42] = branchAndLink(UNMASK_IRQ, EXIGetID +  42);

@@ -153,16 +153,18 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 			}
 		}
 		
-		memset(&patchFile, 0, sizeof(file_handle));
-		sprintf(&patchFile.name[0], "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
-		
-		devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
-		devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
-		devices[DEVICE_PATCHES]->closeFile(&patchFile);
-		
-		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, 0xFE000000, 16*1024*1024, DEVICE_PATCHES))) {
-			totFrags+=frags;
+		if(swissSettings.emulateMemoryCard) {
+			memset(&patchFile, 0, sizeof(file_handle));
+			sprintf(&patchFile.name[0], "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			
+			devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 			devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			
+			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, 0xFE000000, 16*1024*1024, DEVICE_PATCHES))) {
+				totFrags+=frags;
+				devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			}
 		}
 		
 		print_frag_list(0);
@@ -243,7 +245,7 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	"Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_GCLOADER, 116, 72},
 	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_AUDIO_STREAMING,
-	EMU_MEMCARD,
+	EMU_READ_SPEED|EMU_MEMCARD,
 	LOC_DVD_CONNECTOR,
 	&initial_GCLOADER,
 	(_fn_test)&deviceHandler_GCLOADER_test,
