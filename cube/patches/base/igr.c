@@ -55,15 +55,9 @@ static void load_dol(uint32_t offset, uint32_t size)
 	image.entry();
 }
 
-static void clear_jump_table(void)
-{
-	DCBlockZero(VAR_JUMP_TABLE);
-}
-
 void fini(void)
 {
 	disable_interrupts();
-	clear_jump_table();
 	device_reset();
 
 	uint8_t igr_exit_type = *(uint8_t *)VAR_IGR_EXIT_TYPE;

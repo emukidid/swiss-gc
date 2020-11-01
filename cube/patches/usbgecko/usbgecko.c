@@ -239,6 +239,14 @@ void trickle_read(void)
 
 void device_reset(void)
 {
+	while (EXI[EXI_CHANNEL_0][3] & 0b000001);
+	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
+	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
+
+	EXI[EXI_CHANNEL_0][0] = 0;
+	EXI[EXI_CHANNEL_1][0] = 0;
+	EXI[EXI_CHANNEL_2][0] = 0;
+
 	usb_unlock_file();
 	end_read();
 }

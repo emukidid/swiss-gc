@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include "../base/common.h"
 #include "../base/dolphin/dvd.h"
+#include "../base/dolphin/exi.h"
 #include "../base/dolphin/os.h"
 #include "../base/emulator.h"
 
@@ -101,6 +102,8 @@ void device_reset(void)
 {
 	DVDDiskID *id = (DVDDiskID *)VAR_AREA;
 
+	while (DI[7] & 0b001);
+
 	if (id->streaming) {
 		AI[1] = 0;
 
@@ -110,6 +113,14 @@ void device_reset(void)
 
 		AI[0] &= ~0b0000001;
 	}
+
+	while (EXI[EXI_CHANNEL_0][3] & 0b000001);
+	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
+	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
+
+	EXI[EXI_CHANNEL_0][0] = 0;
+	EXI[EXI_CHANNEL_1][0] = 0;
+	EXI[EXI_CHANNEL_2][0] = 0;
 
 	end_read();
 }
