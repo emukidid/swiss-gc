@@ -336,7 +336,7 @@ void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sect
 	if (ata.items++) return;
 
 	if (sector == ata.last_sector) {
-		OSSetAlarm(&read_alarm, READ_COMMAND_LATENCY, (OSAlarmHandler)ata_done_queued);
+		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)ata_done_queued);
 		return;
 	}
 

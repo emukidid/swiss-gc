@@ -21,14 +21,13 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
-#include <math.h>
 #include "audio.h"
 #include "common.h"
 #include "dolphin/dvd.h"
 #include "dolphin/exi.h"
 #include "dolphin/os.h"
-#include "DVDMath.h"
 #include "emulator.h"
+#include "emulator_card.h"
 #include "fifo.h"
 
 static struct {
@@ -36,65 +35,6 @@ static struct {
 	OSInterruptMask status;
 	OSInterruptMask mask;
 } irq = {0};
-
-static struct {
-	union {
-		uint32_t regs[9];
-		struct {
-			uint32_t sr;
-			uint32_t cvr;
-			uint32_t cmdbuf0;
-			uint32_t cmdbuf1;
-			uint32_t cmdbuf2;
-			uint32_t mar;
-			uint32_t length;
-			uint32_t cr;
-			uint32_t immbuf;
-		} reg;
-	};
-
-	uint32_t error;
-	#ifdef DVD
-	int reset;
-	#endif
-} di = {0};
-
-static struct {
-	adpcm_t adpcm;
-
-	bool playing;
-	bool stopping;
-
-	struct {
-		uint32_t position;
-		uint32_t start;
-		uint32_t length;
-	} current;
-
-	struct {
-		uint32_t start;
-		uint32_t length;
-	} next;
-
-	uint8_t (*buffer)[512];
-} dtk = {
-	.buffer = (void *)VAR_SECTOR_BUF
-};
-
-OSAlarm command_alarm = {0};
-
-#ifdef BBA
-void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
-#endif
-#ifdef WKF
-void di_interrupt_handler(OSInterrupt interrupt, OSContext *context);
-#endif
-
-__attribute((always_inline))
-double fmod(double x, double y)
-{
-	return x - floor(x / y) * y;
-}
 
 bool memeq(const void *a, const void *b, size_t size)
 {
@@ -118,7 +58,7 @@ void memzero(void *buf, size_t size)
 		*b++ = '\0';
 }
 
-#ifdef CARDEMU
+#ifdef CARD_EMULATOR
 static struct {
 	union {
 		uint32_t regs[15];
@@ -162,13 +102,13 @@ static void exi_update_interrupts(unsigned chan)
 		assert_interrupt();
 }
 
-static void exi_interrupt(unsigned chan)
+void exi_interrupt(unsigned chan)
 {
 	exi.reg[chan].cpr |=  0b00000000000010;
 	exi_update_interrupts(chan);
 }
 
-static void exi_complete_transfer(unsigned chan)
+void exi_complete_transfer(unsigned chan)
 {
 	if (exi.reg[chan].cr & 0b000010) {
 		exi.reg[chan].mar += exi.reg[chan].length;
@@ -197,138 +137,6 @@ static void exi_transfer(unsigned chan, uint32_t length)
 	}
 
 	OSSetAlarm(&exi_alarm[chan], ticks, alarm_handler);
-}
-
-static struct {
-	int position;
-	uint8_t command;
-	uint8_t status;
-	bool interrupt;
-	uint32_t offset;
-	void *write_buffer;
-	uint32_t write_offset;
-} card = {
-	.status = 0xC1,
-	.offset = 0xFE000000
-};
-
-static uint8_t card_imm(unsigned chan, uint8_t data)
-{
-	uint8_t result = ~0;
-
-	if (card.position == 0)
-		card.command = data;
-
-	switch (card.command) {
-		case 0x00:
-		{
-			if (card.position >= 2) {
-				switch ((card.position - 2) % 4) {
-					case 0: result = 0x00; break;
-					case 1: result = 0x00; break;
-					case 2: result = 0x00; break;
-					case 3: result = 0x80; break;
-				}
-			}
-			break;
-		}
-		case 0x52:
-		{
-			switch (card.position) {
-				case 1: card.offset = (card.offset & ~0xFE0000) | ((data << 17) & 0xFE0000); break;
-				case 2: card.offset = (card.offset & ~0x1FE00) | ((data << 9) & 0x1FE00); break;
-				case 3: card.offset = (card.offset & ~0x180) | ((data << 7) & 0x180); break;
-				case 4: card.offset = (card.offset & ~0x7F) | (data & 0x7F); break;
-			}
-			break;
-		}
-		case 0x81:
-		{
-			if (card.position == 1)
-				card.interrupt = data & 1;
-			break;
-		}
-		case 0x83:
-		{
-			if (card.position >= 1)
-				result = card.status;
-			break;
-		}
-		case 0xF2:
-		{
-			switch (card.position) {
-				case 1: card.offset = (card.offset & ~0xFE0000) | ((data << 17) & 0xFE0000); break;
-				case 2: card.offset = (card.offset & ~0x1FE00) | ((data << 9) & 0x1FE00); break;
-				case 3: card.offset = (card.offset & ~0x180) | ((data << 7) & 0x180); break;
-				case 4: card.offset = (card.offset & ~0x7F) | (data & 0x7F); break;
-			}
-			break;
-		}
-	}
-
-	card.position++;
-	return result;
-}
-
-static void card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
-{
-	void *buffer = OSPhysicalToUncached(address);
-
-	switch (card.command) {
-		case 0x52:
-		{
-			if (card.position >= 5 && type == EXI_READ)
-				read_frag(buffer, length, card.offset);
-			break;
-		}
-		case 0xF2:
-		{
-			if (card.position == 5 && type == EXI_WRITE) {
-				if (!card.write_buffer && card.offset % 512 == 0) {
-					card.write_buffer = buffer;
-					card.write_offset = card.offset;
-				}
-			}
-			break;
-		}
-	}
-
-	card.position += length;
-}
-
-static void card_select(unsigned chan)
-{
-}
-
-static void card_deselect(unsigned chan)
-{
-	switch (card.command) {
-		case 0xF1:
-		case 0xF4:
-		{
-			if (card.position >= 3)
-				if (card.interrupt)
-					exi_interrupt(chan);
-			break;
-		}
-		case 0xF2:
-		{
-			if (card.position >= 5) {
-				bool success = card.offset % 128 == 0;
-
-				if (card.write_buffer && (card.offset + 128 - card.write_offset) == 512) {
-					success = write_frag(card.write_buffer, 512, card.write_offset) == 512;
-					card.write_buffer = NULL;
-				}
-
-				if (card.interrupt && success)
-					exi_interrupt(chan);
-			}
-			break;
-		}
-	}
-
-	card.position = 0;
 }
 
 static void exi_read(unsigned index, uint32_t *value)
@@ -411,6 +219,29 @@ static void exi_write(unsigned index, uint32_t value)
 	}
 }
 #endif
+
+static struct {
+	adpcm_t adpcm;
+
+	bool playing;
+	bool stopping;
+
+	struct {
+		uint32_t position;
+		uint32_t start;
+		uint32_t length;
+	} current;
+
+	struct {
+		uint32_t start;
+		uint32_t length;
+	} next;
+
+	uint8_t (*buffer)[512];
+} dtk = {
+	.buffer = (void *)VAR_SECTOR_BUF
+};
+
 #ifdef DTK
 static void dtk_decode_buffer(void *address, uint32_t length)
 {
@@ -468,6 +299,28 @@ bool dtk_fill_buffer(void)
 }
 #endif
 
+static struct {
+	union {
+		uint32_t regs[9];
+		struct {
+			uint32_t sr;
+			uint32_t cvr;
+			uint32_t cmdbuf0;
+			uint32_t cmdbuf1;
+			uint32_t cmdbuf2;
+			uint32_t mar;
+			uint32_t length;
+			uint32_t cr;
+			uint32_t immbuf;
+		} reg;
+	};
+
+	uint32_t error;
+	#ifdef DVD
+	int reset;
+	#endif
+} di = {0};
+
 static void di_update_interrupts(void)
 {
 	if ((di.reg.sr  >> 1) & (di.reg.sr  & 0b0101010) ||
@@ -480,7 +333,7 @@ static void di_update_interrupts(void)
 		assert_interrupt();
 }
 
-static void di_error(uint32_t error)
+void di_error(uint32_t error)
 {
 	di.error = error;
 
@@ -501,12 +354,14 @@ void di_complete_transfer(void)
 	di_update_interrupts();
 }
 
-static void di_close_cover(void)
+void di_close_cover(void)
 {
 	di.reg.cvr &= ~0b001;
 	di.reg.cvr |=  0b100;
 	di_update_interrupts();
 }
+
+OSAlarm command_alarm = {0};
 
 #ifndef DI_PASSTHROUGH
 static void di_execute_command(OSAlarm *alarm)
@@ -637,9 +492,9 @@ static void di_execute_command(OSAlarm *alarm)
 			uint32_t length  = di.reg.length;
 			uint32_t offset  = di.reg.cmdbuf1 << 2;
 
-			#if defined GCODE && !defined CARDEMU
+			#ifdef DVD_MATH
 			if (*VAR_EMU_READ_SPEED && !alarm) {
-				di_defer_transfer(offset, length);
+				dvd_schedule_read(offset, length, (OSAlarmHandler)di_execute_command);
 				return;
 			}
 			#endif
@@ -665,13 +520,13 @@ static void di_execute_command(OSAlarm *alarm)
 			}
 			break;
 		}
-		#if defined GCODE && !defined CARDEMU
+		#ifdef DVD_MATH
 		case 0xAB:
 		{
 			uint32_t offset = di.reg.cmdbuf1 << 2;
 
 			if (*VAR_EMU_READ_SPEED && !alarm) {
-				di_defer_transfer(offset, 0);
+				dvd_schedule_read(offset, 0, (OSAlarmHandler)di_execute_command);
 				return;
 			}
 			break;
@@ -688,124 +543,6 @@ static void di_execute_command(OSAlarm *alarm)
 	DI[7] = di.reg.cr;
 }
 #endif
-
-#define DVD_SECTOR_SIZE    2048
-#define DVD_ECC_BLOCK_SIZE (16 * DVD_SECTOR_SIZE)
-
-#define BUFFER_TRANSFER_RATE (13.5 * 1000 * 1000)
-
-static struct {
-	union {
-		struct {
-			uint32_t start_offset;
-			uint32_t end_offset;
-		};
-
-		struct {
-			uint32_t start_block        : 17;
-			uint32_t start_block_offset : 15;
-			uint32_t end_block          : 17;
-			uint32_t end_block_offset   : 15;
-		};
-	};
-
-	OSTime start_time;
-	OSTime end_time;
-} read_buffer = {0};
-
-static uint32_t dvd_buffer_size(void)
-{
-	DVDDiskID *id = (DVDDiskID *)VAR_AREA;
-	return (*VAR_EMU_READ_SPEED == 1 ? id->streaming ? 5 : 15 : 32) * DVD_ECC_BLOCK_SIZE;
-}
-
-void di_defer_transfer(uint32_t offset, uint32_t length)
-{
-	OSContext *context;
-	OSContext exceptionContext;
-
-	context = OSGetCurrentContext();
-	OSClearContext(&exceptionContext);
-	OSSetCurrentContext(&exceptionContext);
-
-	__attribute((noinline))
-	void di_defer_transfer(uint32_t offset, uint32_t length)
-	{
-		OSTime current_time = OSGetTime();
-
-		uint32_t head_position;
-
-		uint32_t buffer_start, buffer_end;
-		uint32_t buffer_size = dvd_buffer_size();
-
-		uint32_t dvd_offset = DVDRoundDown32KB(offset);
-
-		if (read_buffer.start_time == read_buffer.end_time) {
-			buffer_start = buffer_end = head_position = 0;
-		} else {
-			if (current_time >= read_buffer.end_time) {
-				head_position = read_buffer.end_offset;
-			} else {
-				head_position = read_buffer.start_offset +
-					OSDiffTick(current_time, read_buffer.start_time) *
-					(read_buffer.end_block - read_buffer.start_block) /
-					OSDiffTick(read_buffer.end_time, read_buffer.start_time) *
-					DVD_ECC_BLOCK_SIZE;
-			}
-
-			buffer_start = read_buffer.end_offset >= buffer_size ? read_buffer.end_offset - buffer_size : 0;
-
-			if (dvd_offset < buffer_start)
-				buffer_start = buffer_end = 0;
-			else
-				buffer_end = head_position;
-		}
-
-		OSTick ticks_until_execution = 0;
-		OSTick ticks_until_completion = READ_COMMAND_LATENCY;
-
-		do {
-			uint32_t chunk_length = MIN(length, DVD_ECC_BLOCK_SIZE - offset % DVD_ECC_BLOCK_SIZE);
-
-			if (dvd_offset >= buffer_start && dvd_offset < buffer_end) {
-				ticks_until_completion += READ_COMMAND_LATENCY;
-				ticks_until_completion += OSSecondsToTicks(chunk_length / BUFFER_TRANSFER_RATE);
-			} else {
-				if (dvd_offset != head_position) {
-					ticks_until_completion += OSSecondsToTicks(CalculateSeekTime(head_position, dvd_offset));
-					ticks_until_completion += OSSecondsToTicks(CalculateRotationalLatency(dvd_offset,
-						OSTicksToSeconds((double)(current_time + ticks_until_completion))));
-				} else {
-					ticks_until_completion += OSSecondsToTicks(CalculateRawDiscReadTime(dvd_offset, DVD_ECC_BLOCK_SIZE));
-				}
-
-				ticks_until_execution = ticks_until_completion;
-				head_position = dvd_offset + DVD_ECC_BLOCK_SIZE;
-			}
-
-			offset += chunk_length;
-			length -= chunk_length;
-			dvd_offset += DVD_ECC_BLOCK_SIZE;
-		} while (length);
-
-		if (dvd_offset != buffer_start + DVD_ECC_BLOCK_SIZE || buffer_start == buffer_end) {
-			read_buffer.start_offset = dvd_offset >= buffer_end ? dvd_offset : buffer_end;
-			read_buffer.end_offset = dvd_offset + buffer_size - DVD_ECC_BLOCK_SIZE;
-
-			read_buffer.start_time = current_time + ticks_until_completion;
-			read_buffer.end_time = read_buffer.start_time +
-				(OSTick)OSSecondsToTicks(CalculateRawDiscReadTime(read_buffer.start_offset,
-				read_buffer.end_offset - read_buffer.start_offset));
-		}
-
-		OSSetAlarm(&command_alarm, ticks_until_execution, (OSAlarmHandler)di_execute_command);
-	}
-
-	di_defer_transfer(offset, length);
-
-	OSClearContext(&exceptionContext);
-	OSSetCurrentContext(context);
-}
 
 static void di_read(unsigned index, uint32_t *value)
 {
@@ -1056,7 +793,7 @@ static bool ppc_load32(uint32_t address, uint32_t *value)
 		di_read((address >> 2) & 0xF, value);
 		return true;
 	}
-	#ifdef CARDEMU
+	#ifdef CARD_EMULATOR
 	if ((address & ~0x3FC) == 0x0C006800) {
 		exi_read((address >> 2) & 0xF, value);
 		return true;
@@ -1075,7 +812,7 @@ static bool ppc_store32(uint32_t address, uint32_t value)
 		di_write((address >> 2) & 0xF, value);
 		return true;
 	}
-	#ifdef CARDEMU
+	#ifdef CARD_EMULATOR
 	if ((address & ~0x3FC) == 0x0C006800) {
 		exi_write((address >> 2) & 0xF, value);
 		return true;
@@ -1109,7 +846,7 @@ static bool ppc_step(OSContext *context)
 	uint32_t opcode = *(uint32_t *)context->srr0;
 
 	switch (opcode >> 26) {
-		#ifdef CARDEMU
+		#ifdef CARD_EMULATOR
 		case 31:
 		{
 			switch ((opcode >> 1) & 0x3FF) {
@@ -1138,7 +875,7 @@ static bool ppc_step(OSContext *context)
 			short d = opcode & 0xFFFF;
 			return ppc_load32(context->gpr[ra] + d, &context->gpr[rd]);
 		}
-		#ifdef CARDEMU
+		#ifdef CARD_EMULATOR
 		case 33:
 		{
 			int rd = (opcode >> 21) & 0x1F;
@@ -1244,7 +981,9 @@ static void pi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	PI[0] = 1;
 }
 
-#ifdef DI_PASSTHROUGH
+#if defined WKF
+void di_interrupt_handler(OSInterrupt interrupt, OSContext *context);
+#elif defined DI_PASSTHROUGH
 static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	#ifdef DVD
@@ -1267,6 +1006,10 @@ static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 
 	dispatch_interrupt(interrupt, context);
 }
+#endif
+
+#ifdef BBA
+void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 #endif
 
 void init(void **arenaLo, void **arenaHi)
@@ -1301,7 +1044,7 @@ bool exi_probe(int32_t chan)
 {
 	if (chan == EXI_CHANNEL_2)
 		return false;
-	#ifndef CARDEMU
+	#ifndef CARD_EMULATOR
 	if (chan == *VAR_EXI_SLOT)
 		return false;
 	#endif
@@ -1317,7 +1060,7 @@ bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 	if (chan == EXI_CHANNEL_0 && dev == EXI_DEVICE_2)
 		return false;
 	#endif
-	#ifndef CARDEMU
+	#ifndef CARD_EMULATOR
 	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
 		return false;
 	#endif
@@ -1330,7 +1073,7 @@ bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
 	switch (interrupt) {
-		#ifdef CARDEMU
+		#ifdef CARD_EMULATOR
 		case OS_INTERRUPT_EXI_1_EXI:
 		case OS_INTERRUPT_EXI_1_TC:
 		case OS_INTERRUPT_EXI_1_EXT:
@@ -1358,7 +1101,7 @@ OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler han
 
 static void set_irq_mask(OSInterruptMask mask, OSInterruptMask current)
 {
-	#ifdef CARDEMU
+	#ifdef CARD_EMULATOR
 	if (mask & OS_INTERRUPTMASK_EXI_0) {
 		uint32_t reg = EXIEmuRegs[EXI_CHANNEL_0][0];
 
@@ -1392,7 +1135,7 @@ OSInterruptMask mask_irq(OSInterruptMask mask)
 {
 	set_irq_mask(mask, irq.mask &= ~mask);
 
-	#ifdef CARDEMU
+	#ifdef CARD_EMULATOR
 	if ((mask & (OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC)) && !(mask & ~(OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC)))
 		mask &= ~(OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC);
 	#endif
@@ -1408,7 +1151,7 @@ OSInterruptMask unmask_irq(OSInterruptMask mask)
 {
 	set_irq_mask(mask, irq.mask |= mask);
 
-	#ifdef CARDEMU
+	#ifdef CARD_EMULATOR
 	if ((mask & (OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC)) && !(mask & ~(OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC))) {
 		mask &= ~(OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC);
 		mask |=  OS_INTERRUPTMASK_PI_ERROR;

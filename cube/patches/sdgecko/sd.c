@@ -288,7 +288,7 @@ void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sect
 	if (mmc.items++) return;
 
 	if (sector == mmc.last_sector) {
-		OSSetAlarm(&read_alarm, READ_COMMAND_LATENCY, (OSAlarmHandler)mmc_done_queued);
+		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)mmc_done_queued);
 		return;
 	}
 

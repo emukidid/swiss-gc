@@ -79,7 +79,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	dvd.offset = offset;
 	dvd.read = true;
 
-	schedule_read(READ_COMMAND_LATENCY);
+	schedule_read(COMMAND_LATENCY_TICKS);
 }
 
 void trickle_read(void)

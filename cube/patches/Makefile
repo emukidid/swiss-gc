@@ -99,10 +99,7 @@ build-dvd:
 	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -c base/DVDMath.c
-	@$(CC) -Os $(OPTS) -c base/floor.S
-	@$(CC) -Os $(OPTS) -c base/sqrt.S
-	@$(CC) -Os $(OPTS) -o dvd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
+	@$(CC) -Os $(OPTS) -o dvd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd_disasm.txt
 	@$(OBJCOPY) -O binary dvd.elf dvd.bin
@@ -113,17 +110,15 @@ build-dvd:
 build-dvd-card:
 	@echo Building DVD+Card Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARDEMU -DDI_PASSTHROUGH -DDVD
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH -DDVD
+	@$(CC) -Os $(OPTS) -c base/emulator_card.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -c base/DVDMath.c
-	@$(CC) -Os $(OPTS) -c base/floor.S
-	@$(CC) -Os $(OPTS) -c base/sqrt.S
-	@$(CC) -Os $(OPTS) -o dvd_card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
+	@$(CC) -Os $(OPTS) -o dvd_card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o dvd.o sd.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D dvd_card.elf > $(DISASM)/dvd_card_disasm.txt
 	@$(OBJCOPY) -O binary dvd_card.elf dvd_card.bin
@@ -189,7 +184,8 @@ build-bba:
 build-gcode:
 	@echo Building GCLoader Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DGCODE
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DDVD_MATH
+	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
@@ -199,7 +195,7 @@ build-gcode:
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/floor.S
 	@$(CC) -Os $(OPTS) -c base/sqrt.S
-	@$(CC) -Os $(OPTS) -o gcloader.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
+	@$(CC) -Os $(OPTS) -o gcloader.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D gcloader.elf > $(DISASM)/gcloader_disasm.txt
 	@$(OBJCOPY) -O binary gcloader.elf gcloader.bin
@@ -210,17 +206,15 @@ build-gcode:
 build-gcode-card:
 	@echo Building GCLoader+Card Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARDEMU -DDI_PASSTHROUGH -DGCODE
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH
+	@$(CC) -Os $(OPTS) -c base/emulator_card.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -c base/DVDMath.c
-	@$(CC) -Os $(OPTS) -c base/floor.S
-	@$(CC) -Os $(OPTS) -c base/sqrt.S
-	@$(CC) -Os $(OPTS) -o gcloader_card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
+	@$(CC) -Os $(OPTS) -o gcloader_card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o dvd.o sd.o frag.o usbgecko.o os.o
 	@rm -rf *.o
 	@$(OBJDUMP) -D gcloader_card.elf > $(DISASM)/gcloader_card_disasm.txt
 	@$(OBJCOPY) -O binary gcloader_card.elf gcloader_card.bin

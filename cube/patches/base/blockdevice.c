@@ -43,7 +43,7 @@ void schedule_read(OSTick ticks)
 		dvd.offset += length;
 		dvd.read = !!dvd.length;
 
-		schedule_read(READ_COMMAND_LATENCY);
+		schedule_read(COMMAND_LATENCY_TICKS);
 	}
 	#else
 	OSCancelAlarm(&read_alarm);
@@ -68,7 +68,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	dvd.offset = offset | *VAR_CURRENT_DISC << 31;
 	dvd.read = true;
 
-	schedule_read(READ_COMMAND_LATENCY);
+	schedule_read(COMMAND_LATENCY_TICKS);
 }
 
 void trickle_read(void)

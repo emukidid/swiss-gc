@@ -24,18 +24,25 @@
 #include <stdbool.h>
 #include "dolphin/os.h"
 
-#define READ_COMMAND_LATENCY OSMicrosecondsToTicks(300)
+#define COMMAND_LATENCY_TICKS OSMicrosecondsToTicks(300)
 
 extern OSAlarm bba_alarm;
 extern OSAlarm read_alarm;
+extern OSAlarm command_alarm;
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset);
 void trickle_read(void);
 bool change_disc(void);
 
+void exi_interrupt(unsigned chan);
+void exi_complete_transfer(unsigned chan);
+
 bool dtk_fill_buffer(void);
 
+void di_error(uint32_t error);
 void di_complete_transfer(void);
-void di_defer_transfer(uint32_t offset, uint32_t length);
+void di_close_cover(void);
+
+void dvd_schedule_read(uint32_t offset, uint32_t length, OSAlarmHandler handler);
 
 #endif /* EMULATOR_H */
