@@ -155,6 +155,18 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 		
 		if(swissSettings.emulateMemoryCard) {
 			memset(&patchFile, 0, sizeof(file_handle));
+			sprintf(&patchFile.name[0], "%sswiss_patches/MemoryCardA.%s.raw", devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			
+			devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
+			devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			
+			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, 0x7E000000, 16*1024*1024, DEVICE_PATCHES))) {
+				totFrags+=frags;
+				devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			}
+			
+			memset(&patchFile, 0, sizeof(file_handle));
 			sprintf(&patchFile.name[0], "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
 			
 			devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);

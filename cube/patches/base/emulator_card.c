@@ -34,23 +34,28 @@ static struct {
 	uint32_t offset;
 	void *write_buffer;
 	uint32_t write_offset;
-} card = {
-	.status = 0xC1,
-	.offset = 0xFE000000
+} card[2] = {
+	{
+		.status = 0xC1,
+		.offset = 0x7E000000
+	}, {
+		.status = 0xC1,
+		.offset = 0xFE000000
+	}
 };
 
 uint8_t card_imm(unsigned chan, uint8_t data)
 {
 	uint8_t result = ~0;
 
-	if (card.position == 0)
-		card.command = data;
+	if (card[chan].position == 0)
+		card[chan].command = data;
 
-	switch (card.command) {
+	switch (card[chan].command) {
 		case 0x00:
 		{
-			if (card.position >= 2) {
-				switch ((card.position - 2) % 4) {
+			if (card[chan].position >= 2) {
+				switch ((card[chan].position - 2) % 4) {
 					case 0: result = 0x00; break;
 					case 1: result = 0x00; break;
 					case 2: result = 0x00; break;
@@ -61,39 +66,39 @@ uint8_t card_imm(unsigned chan, uint8_t data)
 		}
 		case 0x52:
 		{
-			switch (card.position) {
-				case 1: card.offset = (card.offset & ~0xFE0000) | ((data << 17) & 0xFE0000); break;
-				case 2: card.offset = (card.offset & ~0x1FE00) | ((data << 9) & 0x1FE00); break;
-				case 3: card.offset = (card.offset & ~0x180) | ((data << 7) & 0x180); break;
-				case 4: card.offset = (card.offset & ~0x7F) | (data & 0x7F); break;
+			switch (card[chan].position) {
+				case 1: card[chan].offset = (card[chan].offset & ~0xFE0000) | ((data << 17) & 0xFE0000); break;
+				case 2: card[chan].offset = (card[chan].offset & ~0x1FE00) | ((data << 9) & 0x1FE00); break;
+				case 3: card[chan].offset = (card[chan].offset & ~0x180) | ((data << 7) & 0x180); break;
+				case 4: card[chan].offset = (card[chan].offset & ~0x7F) | (data & 0x7F); break;
 			}
 			break;
 		}
 		case 0x81:
 		{
-			if (card.position == 1)
-				card.interrupt = data & 1;
+			if (card[chan].position == 1)
+				card[chan].interrupt = data & 1;
 			break;
 		}
 		case 0x83:
 		{
-			if (card.position >= 1)
-				result = card.status;
+			if (card[chan].position >= 1)
+				result = card[chan].status;
 			break;
 		}
 		case 0xF2:
 		{
-			switch (card.position) {
-				case 1: card.offset = (card.offset & ~0xFE0000) | ((data << 17) & 0xFE0000); break;
-				case 2: card.offset = (card.offset & ~0x1FE00) | ((data << 9) & 0x1FE00); break;
-				case 3: card.offset = (card.offset & ~0x180) | ((data << 7) & 0x180); break;
-				case 4: card.offset = (card.offset & ~0x7F) | (data & 0x7F); break;
+			switch (card[chan].position) {
+				case 1: card[chan].offset = (card[chan].offset & ~0xFE0000) | ((data << 17) & 0xFE0000); break;
+				case 2: card[chan].offset = (card[chan].offset & ~0x1FE00) | ((data << 9) & 0x1FE00); break;
+				case 3: card[chan].offset = (card[chan].offset & ~0x180) | ((data << 7) & 0x180); break;
+				case 4: card[chan].offset = (card[chan].offset & ~0x7F) | (data & 0x7F); break;
 			}
 			break;
 		}
 	}
 
-	card.position++;
+	card[chan].position++;
 	return result;
 }
 
@@ -101,26 +106,26 @@ void card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
 {
 	void *buffer = OSPhysicalToUncached(address);
 
-	switch (card.command) {
+	switch (card[chan].command) {
 		case 0x52:
 		{
-			if (card.position >= 5 && type == EXI_READ)
-				read_frag(buffer, length, card.offset);
+			if (card[chan].position >= 5 && type == EXI_READ)
+				read_frag(buffer, length, card[chan].offset);
 			break;
 		}
 		case 0xF2:
 		{
-			if (card.position == 5 && type == EXI_WRITE) {
-				if (!card.write_buffer && card.offset % 512 == 0) {
-					card.write_buffer = buffer;
-					card.write_offset = card.offset;
+			if (card[chan].position == 5 && type == EXI_WRITE) {
+				if (!card[chan].write_buffer && card[chan].offset % 512 == 0) {
+					card[chan].write_buffer = buffer;
+					card[chan].write_offset = card[chan].offset;
 				}
 			}
 			break;
 		}
 	}
 
-	card.position += length;
+	card[chan].position += length;
 }
 
 void card_select(unsigned chan)
@@ -129,31 +134,31 @@ void card_select(unsigned chan)
 
 void card_deselect(unsigned chan)
 {
-	switch (card.command) {
+	switch (card[chan].command) {
 		case 0xF1:
 		case 0xF4:
 		{
-			if (card.position >= 3)
-				if (card.interrupt)
+			if (card[chan].position >= 3)
+				if (card[chan].interrupt)
 					exi_interrupt(chan);
 			break;
 		}
 		case 0xF2:
 		{
-			if (card.position >= 5) {
-				bool success = card.offset % 128 == 0;
+			if (card[chan].position >= 5) {
+				bool success = card[chan].offset % 128 == 0;
 
-				if (card.write_buffer && (card.offset + 128 - card.write_offset) == 512) {
-					success = write_frag(card.write_buffer, 512, card.write_offset) == 512;
-					card.write_buffer = NULL;
+				if (card[chan].write_buffer && (card[chan].offset + 128 - card[chan].write_offset) == 512) {
+					success = write_frag(card[chan].write_buffer, 512, card[chan].write_offset) == 512;
+					card[chan].write_buffer = NULL;
 				}
 
-				if (card.interrupt && success)
+				if (card[chan].interrupt && success)
 					exi_interrupt(chan);
 			}
 			break;
 		}
 	}
 
-	card.position = 0;
+	card[chan].position = 0;
 }

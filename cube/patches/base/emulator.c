@@ -72,7 +72,7 @@ static struct {
 	};
 } exi = {
 	.reg = {
-		{ .cpr = 0b10000000000000 },
+		{ .cpr = 0b11100000000000 },
 		{ .cpr = 0b01100000000000 }
 	}
 };
@@ -141,9 +141,24 @@ static void exi_transfer(unsigned chan, uint32_t length)
 
 static void exi_read(unsigned index, uint32_t *value)
 {
+	unsigned chan = index / 5;
+	unsigned dev = __builtin_ctz((exi.reg[chan].cpr >> 7) & 0b111);
+
 	switch (index) {
-		case 0 ... 4:
-			*value = (*EXI)[index];
+		case 0:
+			if (exi.reg[chan].cpr & 0b00001100000000)
+				*value = (exi.reg[chan].cpr & ~0b00000000001100) | (EXI[chan][0] & 0b00000000001100);
+			else
+				*value = exi.reg[chan].cpr;
+			break;
+		case 1 ... 4:
+			if (exi.reg[chan].cpr & 0b00001100000000)
+				*value = exi.regs[index] = (*EXI)[index];
+			else
+				*value = exi.regs[index];
+			break;
+		case 10:
+			*value = (exi.reg[chan].cpr & ~0b00000000000011) | (EXI[chan][0] & 0b00000000000011);
 			break;
 		default:
 			*value = exi.regs[index];
@@ -155,16 +170,8 @@ static void exi_write(unsigned index, uint32_t value)
 	unsigned chan = index / 5;
 	unsigned dev = __builtin_ctz((exi.reg[chan].cpr >> 7) & 0b111);
 
-	if (chan == EXI_CHANNEL_0) {
-		(*EXI)[index] = value;
-		return;
-	}
-
 	switch (index % 5) {
 		case 0:
-			if (chan == EXI_CHANNEL_2)
-				EXI[chan][0] = (value & 0b00000000000011) | (EXI[chan][0] & ~0b00100000001011);
-
 			exi.reg[chan].cpr = ((value & 0b00100000001010) ^ exi.reg[chan].cpr) & exi.reg[chan].cpr;
 
 			if ((value & 0b00001110000000) & ((value & 0b00001110000000) - 1))
@@ -172,7 +179,21 @@ static void exi_write(unsigned index, uint32_t value)
 			else
 				exi.reg[chan].cpr = (value & 0b10011111110101) | (exi.reg[chan].cpr & ~0b00011111110101);
 
-			if (chan == EXI_CHANNEL_1) {
+			if (chan == EXI_CHANNEL_0) {
+				if ((EXI[chan][0] | exi.reg[chan].cpr) & 0b00001100000000) {
+					EXI[chan][0] = (value & 0b10001111111100) | (EXI[chan][0] & 0b00010000000001);
+
+					OSInterruptMask mask = OS_INTERRUPTMASK_EXI_0_TC >> (3 * chan);
+					OSGlobalInterruptMask = (OSGlobalInterruptMask & ~mask) | (mask & ~irq.mask);
+				}
+			} else if (chan == EXI_CHANNEL_2) {
+				EXI[chan][0] = (value & 0b00000000000011) | (EXI[chan][0] & 0b00011111110100);
+
+				OSInterruptMask mask = OS_INTERRUPTMASK_EXI_0_EXI >> (3 * chan);
+				OSGlobalInterruptMask = (OSGlobalInterruptMask & ~mask) | (mask & ~irq.mask);
+			}
+
+			if (chan < EXI_CHANNEL_2) {
 				if (dev != EXI_DEVICE_0 && (exi.reg[chan].cpr & 0b00000010000000))
 					card_select(chan);
 				if (dev == EXI_DEVICE_0 && !(exi.reg[chan].cpr & 0b00000010000000))
@@ -188,28 +209,35 @@ static void exi_write(unsigned index, uint32_t value)
 			exi.regs[index] = value & 0b111111;
 
 			if (value & 0b000001) {
-				if (value & 0b000010) {
-					uint32_t address = exi.reg[chan].mar;
-					uint32_t length  = exi.reg[chan].length;
-					int type = (exi.reg[chan].cr >> 2) & 0b11;
-
-					if (chan == EXI_CHANNEL_1 && dev == EXI_DEVICE_0)
-						card_dma(chan, address, length, type);
-
-					exi_transfer(chan, length);
+				if (chan == EXI_CHANNEL_0 && dev != EXI_DEVICE_0) {
+					EXI[chan][1] = exi.reg[chan].mar;
+					EXI[chan][2] = exi.reg[chan].length;
+					EXI[chan][4] = exi.reg[chan].data;
+					EXI[chan][3] = exi.reg[chan].cr;
 				} else {
-					int length = (exi.reg[chan].cr >> 4) & 0b11;
-					char *data = (char *)&exi.reg[chan].data;
+					if (value & 0b000010) {
+						uint32_t address = exi.reg[chan].mar;
+						uint32_t length  = exi.reg[chan].length;
+						int type = (exi.reg[chan].cr >> 2) & 0b11;
 
-					if (chan == EXI_CHANNEL_1 && dev == EXI_DEVICE_0) {
-						for (int i = 0; i <= length; i++)
-							data[i] = card_imm(chan, data[i]);
+						if (chan < EXI_CHANNEL_2 && dev == EXI_DEVICE_0)
+							card_dma(chan, address, length, type);
+
+						exi_transfer(chan, length);
 					} else {
-						for (int i = 0; i <= length; i++)
-							data[i] = ~0;
-					}
+						int length = (exi.reg[chan].cr >> 4) & 0b11;
+						char *data = (char *)&exi.reg[chan].data;
 
-					exi_complete_transfer(chan);
+						if (chan < EXI_CHANNEL_2 && dev == EXI_DEVICE_0) {
+							for (int i = 0; i <= length; i++)
+								data[i] = card_imm(chan, data[i]);
+						} else {
+							for (int i = 0; i <= length; i++)
+								data[i] = ~0;
+						}
+
+						exi_complete_transfer(chan);
+					}
 				}
 			}
 			break;
@@ -1074,13 +1102,19 @@ OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler han
 {
 	switch (interrupt) {
 		#ifdef CARD_EMULATOR
+		case OS_INTERRUPT_EXI_0_EXI:
+		case OS_INTERRUPT_EXI_0_TC:
+		case OS_INTERRUPT_EXI_0_EXT:
 		case OS_INTERRUPT_EXI_1_EXI:
 		case OS_INTERRUPT_EXI_1_TC:
 		case OS_INTERRUPT_EXI_1_EXT:
+		case OS_INTERRUPT_EXI_2_EXI:
 		case OS_INTERRUPT_EXI_2_TC:
 			OSSetInterruptHandler(OS_INTERRUPT_PI_ERROR, pi_interrupt_handler);
-			break;
 		#endif
+		default:
+			OSSetInterruptHandler(interrupt, dispatch_interrupt);
+			break;
 		case OS_INTERRUPT_PI_DI:
 			#if defined WKF || defined DI_PASSTHROUGH
 			OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
@@ -1090,8 +1124,6 @@ OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler han
 			OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
 			#endif
 			break;
-		default:
-			OSSetInterruptHandler(interrupt, dispatch_interrupt);
 	}
 
 	OSInterruptHandler oldHandler = irq.handler[interrupt];
@@ -1136,8 +1168,8 @@ OSInterruptMask mask_irq(OSInterruptMask mask)
 	set_irq_mask(mask, irq.mask &= ~mask);
 
 	#ifdef CARD_EMULATOR
-	if ((mask & (OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC)) && !(mask & ~(OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC)))
-		mask &= ~(OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC);
+	if ((mask & OS_INTERRUPTMASK_EXI) && !(mask & ~OS_INTERRUPTMASK_EXI))
+		mask &= ~OS_INTERRUPTMASK_EXI;
 	#endif
 	#ifndef DI_PASSTHROUGH
 	if (mask == OS_INTERRUPTMASK_PI_DI)
@@ -1152,8 +1184,8 @@ OSInterruptMask unmask_irq(OSInterruptMask mask)
 	set_irq_mask(mask, irq.mask |= mask);
 
 	#ifdef CARD_EMULATOR
-	if ((mask & (OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC)) && !(mask & ~(OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC))) {
-		mask &= ~(OS_INTERRUPTMASK_EXI_1 | OS_INTERRUPTMASK_EXI_2_TC);
+	if ((mask & OS_INTERRUPTMASK_EXI) && !(mask & ~OS_INTERRUPTMASK_EXI)) {
+		mask &= ~OS_INTERRUPTMASK_EXI;
 		mask |=  OS_INTERRUPTMASK_PI_ERROR;
 	}
 	#endif

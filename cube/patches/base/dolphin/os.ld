@@ -8,6 +8,8 @@ EXILock                 = 0x800000B8;
 EXIUnlock               = 0x800000BC;
 
 OSExceptionContext      = 0x800000C0;
+OSGlobalInterruptMask   = 0x800000C4;
+OSUserInterruptMask     = 0x800000C8;
 OSCurrentContext        = 0x800000D4;
 OSFPUContext            = 0x800000D8;
 

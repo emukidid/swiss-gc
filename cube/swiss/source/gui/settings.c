@@ -238,7 +238,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force Video Active:", swissSettings.forceVideoActive, option == SET_FORCE_VIDACTIVE, enabledVideoPatches);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, enabledVideoPatches);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Boot through IPL:", swissSettings.bs2Boot, option == SET_BS2BOOT, true);
-		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Memory Card in Slot B:", swissSettings.emulateMemoryCard, option == SET_EMULATE_MEMCARD, emulatedMemoryCard);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Memory Card:", swissSettings.emulateMemoryCard, option == SET_EMULATE_MEMCARD, emulatedMemoryCard);
 	}
 	else if(page_num == PAGE_GAME_DEFAULTS) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Default Game Settings (4/5):"));
