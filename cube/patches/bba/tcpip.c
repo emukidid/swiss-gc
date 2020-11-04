@@ -164,8 +164,8 @@ static void fsp_get_file(uint32_t offset, size_t size, bool lock)
 	const char *file = _file;
 	uint8_t filelen = *_filelen;
 
-	if (offset &   0x80000000) {
-		offset &= ~0x80000000;
+	if (offset >= FRAGS_DISC_2) {
+		offset -= FRAGS_DISC_2;
 		file    =  _file2;
 		filelen = *_file2len;
 	}

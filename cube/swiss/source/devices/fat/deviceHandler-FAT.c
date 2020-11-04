@@ -360,7 +360,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	FILINFO fno;
 	if(f_stat(&patchFile.name[0], &fno) == FR_OK) {
 		print_gecko("IGR Boot DOL exists\r\n");
-		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, 0xE0000000, 0, DEVICE_CUR))) {
+		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_IGR_DOL, 0, DEVICE_CUR))) {
 			totFrags+=frags;
 			devices[DEVICE_CUR]->closeFile(&patchFile);
 			*(vu32*)VAR_IGR_DOL_SIZE = fno.fsize;
@@ -368,7 +368,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	}
 	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!(frags = getFragments(file, &fragList[totFrags*3], maxFrags-totFrags, 0, DISC_SIZE, DEVICE_CUR))) {
+	if(!(frags = getFragments(file, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_DISC_1, DISC_SIZE, DEVICE_CUR))) {
 		return 0;
 	}
 	totFrags += frags;
@@ -376,7 +376,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
 		// TODO fix 2 disc patched games
-		if(!(frags = getFragments(file2, &fragList[totFrags*3], maxFrags-totFrags, 0x80000000, DISC_SIZE, DEVICE_CUR))) {
+		if(!(frags = getFragments(file2, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_DISC_2, DISC_SIZE, DEVICE_CUR))) {
 			return 0;
 		}
 		totFrags += frags;

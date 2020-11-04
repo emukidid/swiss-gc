@@ -37,10 +37,10 @@ static struct {
 } card[2] = {
 	{
 		.status = 0xC1,
-		.offset = 0x7E000000
+		.offset = FRAGS_CARD_A
 	}, {
 		.status = 0xC1,
-		.offset = 0xFE000000
+		.offset = FRAGS_CARD_B
 	}
 };
 

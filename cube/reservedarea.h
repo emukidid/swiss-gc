@@ -151,5 +151,12 @@ extern char VAR_RMODE[4];			// render mode
 #define IGR_HARDRESET	1
 #define IGR_BOOTBIN		2
 #define IGR_USBGKOFLASH	3
+
+// FAT Fragments
+#define FRAGS_DISC_1	0x00000000
+#define FRAGS_DISC_2	0x80000000
+#define FRAGS_IGR_DOL	0xE0000000
+#define FRAGS_CARD_A	0x7E000000
+#define FRAGS_CARD_B	0xFE000000
 #endif
 

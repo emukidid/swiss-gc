@@ -66,7 +66,7 @@ void fini(void)
 	switch (igr_exit_type) {
 		case IGR_BOOTBIN:
 			if (igr_dol_size)
-				switch_fiber(0xE0000000, igr_dol_size, 0, 0, (intptr_t)load_dol, 0x81800000);
+				switch_fiber(FRAGS_IGR_DOL, igr_dol_size, 0, 0, (intptr_t)load_dol, 0x81800000);
 			break;
 	}
 }
