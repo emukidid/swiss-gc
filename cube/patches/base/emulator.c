@@ -142,23 +142,23 @@ static void exi_transfer(unsigned chan, uint32_t length)
 static void exi_read(unsigned index, uint32_t *value)
 {
 	unsigned chan = index / 5;
-	unsigned dev = __builtin_ctz((exi.reg[chan].cpr >> 7) & 0b111);
+	unsigned dev = (exi.reg[chan].cpr >> 7) & 0b111;
 
 	switch (index) {
 		case 0:
-			if (exi.reg[chan].cpr & 0b00001100000000)
-				*value = (exi.reg[chan].cpr & ~0b00000000001100) | (EXI[chan][0] & 0b00000000001100);
+			if (dev & ~(1 << EXI_DEVICE_0))
+				*value = exi.reg[chan].cpr | (EXI[chan][0] & 0b00000000001100);
 			else
 				*value = exi.reg[chan].cpr;
 			break;
 		case 1 ... 4:
-			if (exi.reg[chan].cpr & 0b00001100000000)
+			if (dev & ~(1 << EXI_DEVICE_0))
 				*value = exi.regs[index] = (*EXI)[index];
 			else
 				*value = exi.regs[index];
 			break;
 		case 10:
-			*value = (exi.reg[chan].cpr & ~0b00000000000011) | (EXI[chan][0] & 0b00000000000011);
+			*value = exi.reg[chan].cpr | (EXI[chan][0] & 0b00000000000011);
 			break;
 		default:
 			*value = exi.regs[index];
@@ -168,7 +168,8 @@ static void exi_read(unsigned index, uint32_t *value)
 static void exi_write(unsigned index, uint32_t value)
 {
 	unsigned chan = index / 5;
-	unsigned dev = __builtin_ctz((exi.reg[chan].cpr >> 7) & 0b111);
+	unsigned dev = (exi.reg[chan].cpr >> 7) & 0b111;
+	unsigned dev2;
 
 	switch (index % 5) {
 		case 0:
@@ -179,8 +180,10 @@ static void exi_write(unsigned index, uint32_t value)
 			else
 				exi.reg[chan].cpr = (value & 0b10011111110101) | (exi.reg[chan].cpr & ~0b00011111110101);
 
+			dev2 = (exi.reg[chan].cpr >> 7) & 0b111;
+
 			if (chan == EXI_CHANNEL_0) {
-				if ((EXI[chan][0] | exi.reg[chan].cpr) & 0b00001100000000) {
+				if ((dev | dev2) & ~(1 << EXI_DEVICE_0)) {
 					EXI[chan][0] = (value & 0b10001111111100) | (EXI[chan][0] & 0b00010000000001);
 
 					OSInterruptMask mask = OS_INTERRUPTMASK_EXI_0_TC >> (3 * chan);
@@ -194,9 +197,9 @@ static void exi_write(unsigned index, uint32_t value)
 			}
 
 			if (chan < EXI_CHANNEL_2) {
-				if (dev != EXI_DEVICE_0 && (exi.reg[chan].cpr & 0b00000010000000))
+				if ((~dev & dev2) & (1 << EXI_DEVICE_0))
 					card_select(chan);
-				if (dev == EXI_DEVICE_0 && !(exi.reg[chan].cpr & 0b00000010000000))
+				if ((dev & ~dev2) & (1 << EXI_DEVICE_0))
 					card_deselect(chan);
 			}
 
@@ -209,7 +212,7 @@ static void exi_write(unsigned index, uint32_t value)
 			exi.regs[index] = value & 0b111111;
 
 			if (value & 0b000001) {
-				if (chan == EXI_CHANNEL_0 && dev != EXI_DEVICE_0) {
+				if (chan == EXI_CHANNEL_0 && (dev & ~(1 << EXI_DEVICE_0))) {
 					EXI[chan][1] = exi.reg[chan].mar;
 					EXI[chan][2] = exi.reg[chan].length;
 					EXI[chan][4] = exi.reg[chan].data;
@@ -220,7 +223,7 @@ static void exi_write(unsigned index, uint32_t value)
 						uint32_t length  = exi.reg[chan].length;
 						int type = (exi.reg[chan].cr >> 2) & 0b11;
 
-						if (chan < EXI_CHANNEL_2 && dev == EXI_DEVICE_0)
+						if (chan < EXI_CHANNEL_2 && (dev & (1 << EXI_DEVICE_0)))
 							card_dma(chan, address, length, type);
 
 						exi_transfer(chan, length);
@@ -228,7 +231,7 @@ static void exi_write(unsigned index, uint32_t value)
 						int length = (exi.reg[chan].cr >> 4) & 0b11;
 						char *data = (char *)&exi.reg[chan].data;
 
-						if (chan < EXI_CHANNEL_2 && dev == EXI_DEVICE_0) {
+						if (chan < EXI_CHANNEL_2 && (dev & (1 << EXI_DEVICE_0))) {
 							for (int i = 0; i <= length; i++)
 								data[i] = card_imm(chan, data[i]);
 						} else {
