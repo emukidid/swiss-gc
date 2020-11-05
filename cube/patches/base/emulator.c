@@ -731,8 +731,15 @@ static void dsp_write(unsigned index, uint16_t value)
 #ifdef DVD
 static void di_reset(void)
 {
-	DI[0] = DI[0];
-	DI[1] = DI[1];
+	uint32_t disr  = DI[0];
+	uint32_t dicvr = DI[1];
+
+	DI[0] = disr;
+	DI[1] = dicvr;
+
+	if (di.reset > 0 && !(disr & 0b0010100)) return;
+	if (di.reset > 3 &&  (disr & 0b0000100))
+		di.reset = 3;
 
 	switch (di.reset++) {
 		case 0:
