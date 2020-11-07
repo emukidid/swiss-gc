@@ -139,6 +139,18 @@ static void exi_transfer(unsigned chan, uint32_t length)
 	OSSetAlarm(&exi_alarm[chan], ticks, alarm_handler);
 }
 
+void exi_insert_device(unsigned chan)
+{
+	exi.reg[chan].cpr |=  0b01000000000000;
+}
+
+void exi_remove_device(unsigned chan)
+{
+	exi.reg[chan].cpr &= ~0b01000000000000;
+	exi.reg[chan].cpr |=  0b00100000000000;
+	exi_update_interrupts(chan);
+}
+
 static void exi_read(unsigned index, uint32_t *value)
 {
 	unsigned chan = index / 5;
@@ -157,6 +169,26 @@ static void exi_read(unsigned index, uint32_t *value)
 			else
 				*value = exi.regs[index];
 			break;
+		case 5:
+			if (!dev && chan != *VAR_EXI_SLOT) {
+				if (exi.reg[chan].cpr & 0b01000000000000) {
+					if (EXI[chan][0] & 0b01000000000000)
+						exi_remove_device(chan);
+				} else if (!(EXI[chan][0] & 0b01100000000000))
+					exi_insert_device(chan);
+			}
+
+			if (!(exi.reg[chan].cpr & 0b01100000000000))
+				*value = exi.reg[chan].cpr | EXI[chan][0];
+			else
+				*value = exi.reg[chan].cpr;
+			break;
+		case 6 ... 9:
+			if (!(exi.reg[chan].cpr & 0b01000000000000))
+				*value = exi.regs[index] = (*EXI)[index];
+			else
+				*value = exi.regs[index];
+			break;
 		case 10:
 			*value = exi.reg[chan].cpr | (EXI[chan][0] & 0b00000000000011);
 			break;
@@ -171,8 +203,20 @@ static void exi_write(unsigned index, uint32_t value)
 	unsigned dev = (exi.reg[chan].cpr >> 7) & 0b111;
 	unsigned dev2;
 
+	bool ext = !!(exi.reg[chan].cpr & 0b01000000000000);
+
 	switch (index % 5) {
 		case 0:
+			if (chan == EXI_CHANNEL_1) {
+				if (!(exi.reg[chan].cpr & 0b01100000000000)) {
+					EXI[chan][0] = value;
+					OSGlobalInterruptMask = (OSGlobalInterruptMask & ~OS_INTERRUPTMASK_EXI_1) | (OS_INTERRUPTMASK_EXI_1 & ~irq.mask);
+				}
+			} else if (chan == EXI_CHANNEL_2) {
+				EXI[chan][0] = (value & 0b00000000000011) | (EXI[chan][0] & 0b00011111110100);
+				OSGlobalInterruptMask = (OSGlobalInterruptMask & ~OS_INTERRUPTMASK_EXI_2_EXI) | (OS_INTERRUPTMASK_EXI_2_EXI & ~irq.mask);
+			}
+
 			exi.reg[chan].cpr = ((value & 0b00100000001010) ^ exi.reg[chan].cpr) & exi.reg[chan].cpr;
 
 			if ((value & 0b00001110000000) & ((value & 0b00001110000000) - 1))
@@ -185,18 +229,11 @@ static void exi_write(unsigned index, uint32_t value)
 			if (chan == EXI_CHANNEL_0) {
 				if ((dev | dev2) & ~(1 << EXI_DEVICE_0)) {
 					EXI[chan][0] = (value & 0b10001111111100) | (EXI[chan][0] & 0b00010000000001);
-
-					OSInterruptMask mask = OS_INTERRUPTMASK_EXI_0_TC >> (3 * chan);
-					OSGlobalInterruptMask = (OSGlobalInterruptMask & ~mask) | (mask & ~irq.mask);
+					OSGlobalInterruptMask = (OSGlobalInterruptMask & ~OS_INTERRUPTMASK_EXI_0_TC) | (OS_INTERRUPTMASK_EXI_0_TC & ~irq.mask);
 				}
-			} else if (chan == EXI_CHANNEL_2) {
-				EXI[chan][0] = (value & 0b00000000000011) | (EXI[chan][0] & 0b00011111110100);
-
-				OSInterruptMask mask = OS_INTERRUPTMASK_EXI_0_EXI >> (3 * chan);
-				OSGlobalInterruptMask = (OSGlobalInterruptMask & ~mask) | (mask & ~irq.mask);
 			}
 
-			if (chan < EXI_CHANNEL_2) {
+			if (ext) {
 				if ((~dev & dev2) & (1 << EXI_DEVICE_0))
 					card_select(chan);
 				if ((dev & ~dev2) & (1 << EXI_DEVICE_0))
@@ -212,7 +249,8 @@ static void exi_write(unsigned index, uint32_t value)
 			exi.regs[index] = value & 0b111111;
 
 			if (value & 0b000001) {
-				if (chan == EXI_CHANNEL_0 && (dev & ~(1 << EXI_DEVICE_0))) {
+				if ((chan == EXI_CHANNEL_0 && (dev & ~(1 << EXI_DEVICE_0))) ||
+					(chan == EXI_CHANNEL_1 && !ext)) {
 					EXI[chan][1] = exi.reg[chan].mar;
 					EXI[chan][2] = exi.reg[chan].length;
 					EXI[chan][4] = exi.reg[chan].data;
@@ -223,7 +261,7 @@ static void exi_write(unsigned index, uint32_t value)
 						uint32_t length  = exi.reg[chan].length;
 						int type = (exi.reg[chan].cr >> 2) & 0b11;
 
-						if (chan < EXI_CHANNEL_2 && (dev & (1 << EXI_DEVICE_0)))
+						if (ext && (dev & (1 << EXI_DEVICE_0)))
 							card_dma(chan, address, length, type);
 
 						exi_transfer(chan, length);
@@ -231,7 +269,7 @@ static void exi_write(unsigned index, uint32_t value)
 						int length = (exi.reg[chan].cr >> 4) & 0b11;
 						char *data = (char *)&exi.reg[chan].data;
 
-						if (chan < EXI_CHANNEL_2 && (dev & (1 << EXI_DEVICE_0))) {
+						if (ext && (dev & (1 << EXI_DEVICE_0))) {
 							for (int i = 0; i <= length; i++)
 								data[i] = card_imm(chan, data[i]);
 						} else {
@@ -385,6 +423,11 @@ void di_complete_transfer(void)
 	di_update_interrupts();
 }
 
+void di_open_cover(void)
+{
+	di.reg.cvr |=  0b001;
+}
+
 void di_close_cover(void)
 {
 	di.reg.cvr &= ~0b001;
@@ -482,7 +525,7 @@ static void di_execute_command(void)
 		case 0xE3:
 		{
 			if (!(di.reg.cvr & 0b001) && change_disc()) {
-				di.reg.cvr |= 0b001;
+				di_open_cover();
 				OSSetAlarm(&command_alarm, OSSecondsToTicks(1.5), (OSAlarmHandler)di_close_cover);
 			}
 			break;
@@ -570,7 +613,7 @@ static void di_write(unsigned index, uint32_t value)
 	switch (index) {
 		case 0:
 			#ifdef DI_PASSTHROUGH
-			DI[0] = value & ~(di.reg.sr & 0b1010100);
+			DI[0] = value;
 			#endif
 			di.reg.sr = ((value & 0b1010100) ^ di.reg.sr) & di.reg.sr;
 			di.reg.sr = (value & 0b0101011) | (di.reg.sr & ~0b0101010);
@@ -578,7 +621,7 @@ static void di_write(unsigned index, uint32_t value)
 			break;
 		case 1:
 			#ifdef DI_PASSTHROUGH
-			DI[1] = value & ~(di.reg.cvr & 0b100);
+			DI[1] = value;
 			#endif
 			di.reg.cvr = ((value & 0b100) ^ di.reg.cvr) & di.reg.cvr;
 			di.reg.cvr = (value & 0b010) | (di.reg.cvr & ~0b010);

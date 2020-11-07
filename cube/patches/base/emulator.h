@@ -36,11 +36,14 @@ bool change_disc(void);
 
 void exi_interrupt(unsigned chan);
 void exi_complete_transfer(unsigned chan);
+void exi_insert_device(unsigned chan);
+void exi_remove_device(unsigned chan);
 
 bool dtk_fill_buffer(void);
 
 void di_error(uint32_t error);
 void di_complete_transfer(void);
+void di_open_cover(void);
 void di_close_cover(void);
 
 void dvd_schedule_read(uint32_t offset, uint32_t length, OSAlarmHandler handler);
