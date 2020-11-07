@@ -395,7 +395,7 @@ void di_close_cover(void)
 OSAlarm command_alarm = {0};
 
 #ifndef DI_PASSTHROUGH
-static void di_execute_command(OSAlarm *alarm)
+static void di_execute_command(void)
 {
 	uint32_t result = 0;
 
@@ -472,26 +472,10 @@ static void di_execute_command(OSAlarm *alarm)
 		case 0xE2:
 		{
 			switch ((di.reg.cmdbuf0 >> 16) & 0x03) {
-				case 0x00:
-				{
-					result = dtk.playing;
-					break;
-				}
-				case 0x01:
-				{
-					result = DVDRoundDown32KB(dtk.current.position & ~0x80000000) >> 2;
-					break;
-				}
-				case 0x02:
-				{
-					result = DVDRoundDown32KB(dtk.current.start & ~0x80000000) >> 2;
-					break;
-				}
-				case 0x03:
-				{
-					result = dtk.current.length;
-					break;
-				}
+				case 0x00: result = dtk.playing; break;
+				case 0x01: result = DVDRoundDown32KB(dtk.current.position & ~0x80000000) >> 2; break;
+				case 0x02: result = DVDRoundDown32KB(dtk.current.start & ~0x80000000) >> 2; break;
+				case 0x03: result = dtk.current.length; break;
 			}
 			break;
 		}
@@ -509,7 +493,7 @@ static void di_execute_command(OSAlarm *alarm)
 	di_complete_transfer();
 }
 #else
-static void di_execute_command(OSAlarm *alarm)
+static void di_execute_command(void)
 {
 	#ifdef DVD
 	if (di.reset)
@@ -522,13 +506,6 @@ static void di_execute_command(OSAlarm *alarm)
 			uint32_t address = di.reg.mar;
 			uint32_t length  = di.reg.length;
 			uint32_t offset  = di.reg.cmdbuf1 << 2;
-
-			#ifdef DVD_MATH
-			if (*VAR_EMU_READ_SPEED && !alarm) {
-				dvd_schedule_read(offset, length, (OSAlarmHandler)di_execute_command);
-				return;
-			}
-			#endif
 
 			switch (di.reg.cmdbuf0 & 0xC0) {
 				default:
@@ -551,18 +528,6 @@ static void di_execute_command(OSAlarm *alarm)
 			}
 			break;
 		}
-		#ifdef DVD_MATH
-		case 0xAB:
-		{
-			uint32_t offset = di.reg.cmdbuf1 << 2;
-
-			if (*VAR_EMU_READ_SPEED && !alarm) {
-				dvd_schedule_read(offset, 0, (OSAlarmHandler)di_execute_command);
-				return;
-			}
-			break;
-		}
-		#endif
 	}
 
 	DI[2] = di.reg.cmdbuf0;
@@ -629,8 +594,26 @@ static void di_write(unsigned index, uint32_t value)
 		case 7:
 			di.regs[index] = value & 0b111;
 
-			if (value & 0b001)
-				di_execute_command(NULL);
+			if (value & 0b001) {
+				#ifdef DVD_MATH
+				if (*VAR_EMU_READ_SPEED) {
+					switch (di.reg.cmdbuf0 >> 24) {
+						case 0xA8:
+						{
+							dvd_schedule_read(di.reg.cmdbuf1 << 2, di.reg.cmdbuf2, (OSAlarmHandler)di_execute_command);
+							return;
+						}
+						case 0xAB:
+						{
+							dvd_schedule_read(di.reg.cmdbuf1 << 2, 0, (OSAlarmHandler)di_execute_command);
+							return;
+						}
+					}
+				}
+				#endif
+
+				di_execute_command();
+			}
 			break;
 	}
 }
@@ -776,7 +759,7 @@ static void di_reset(void)
 			di.reset = 0;
 
 			if (di.reg.cr & 0b001)
-				di_execute_command(NULL);
+				di_execute_command();
 			break;
 	}
 }
