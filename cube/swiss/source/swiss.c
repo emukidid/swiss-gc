@@ -927,10 +927,8 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	// Patch specific game hacks
 	Patch_GameSpecific(buffer, sizeToRead, gameID, type);
 	
-	// Patch IGR
-	if(swissSettings.igrType != IGR_OFF || swissSettings.invertCStick) {
-		Patch_PADStatus(buffer, sizeToRead, type);
-	}
+	// Patch CARD, PAD
+	Patch_Miscellaneous(buffer, sizeToRead, type);
 	
 	// Patch OSReport to print out over USBGecko
 	if(swissSettings.debugUSB && usb_isgeckoalive(1) && !swissSettings.wiirdDebug) {

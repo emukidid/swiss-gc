@@ -9127,8 +9127,11 @@ int Patch_FontEncode(u32 *data, u32 length)
 			switch (swissSettings.forceEncoding) {
 				case 1:
 					data[i +  8] = 0x38000000;
+					data[i + 10] = 0x38000000;
+					data[i + 13] = 0x38000000;
 					break;
 				case 2:
+					data[i +  8] = 0x38000001;
 					data[i + 10] = 0x38000001;
 					data[i + 13] = 0x38000001;
 					break;
@@ -9139,8 +9142,10 @@ int Patch_FontEncode(u32 *data, u32 length)
 			switch (swissSettings.forceEncoding) {
 				case 1:
 					data[i + 4] = 0x38000000;
+					data[i + 6] = 0x38000000;
 					break;
 				case 2:
+					data[i + 4] = 0x38000001;
 					data[i + 6] = 0x38000001;
 					break;
 			}
@@ -11462,10 +11467,15 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	}
 }
 
-int Patch_PADStatus(u32 *data, u32 length, int dataType)
+int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 {
 	int i, j;
 	int patched = 0;
+	u32 address, constant;
+	FuncPattern OSGetFontEncodeSigs[2] = {
+		{ 31, 8, 2, 1, 7, 2, NULL, 0, "OSGetFontEncodeD" },
+		{ 22, 6, 0, 0, 6, 0, NULL, 0, "OSGetFontEncode" }
+	};
 	FuncPattern OSDisableInterruptsSig = 
 		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
 	FuncPattern OSRestoreInterruptsSig = 
@@ -11549,6 +11559,17 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 		{ 254, 46, 0, 0, 42, 71, NULL, 0, "SPEC2_MakeStatus" },
 		{ 234, 46, 0, 0, 42, 51, NULL, 0, "SPEC2_MakeStatus" },	// SN Systems ProDG
 		{ 284, 55, 2, 0, 43, 76, NULL, 0, "SPEC2_MakeStatus" }
+	};
+	FuncPattern __CARDGetFontEncodeSig = 
+		{ 2, 0, 0, 0, 0, 0, NULL, 0, "__CARDGetFontEncode" };
+	FuncPattern VerifyIDSigs[7] = {
+		{ 107, 33, 2, 7, 10, 33, NULL, 0, "VerifyIDD" },
+		{ 107, 33, 2, 7, 10, 33, NULL, 0, "VerifyIDD" },
+		{ 107, 33, 2, 7, 10, 33, NULL, 0, "VerifyIDD" },
+		{ 176, 32, 2, 7, 16, 63, NULL, 0, "VerifyID" },
+		{ 161, 28, 2, 6, 12, 63, NULL, 0, "VerifyID" },
+		{ 161, 28, 2, 6, 12, 63, NULL, 0, "VerifyID" },
+		{ 161, 28, 2, 6, 12, 63, NULL, 0, "VerifyID" }
 	};
 	_SDA2_BASE_ = _SDA_BASE_ = 0;
 	
@@ -11807,6 +11828,75 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 129, length, &SIGetResponseSigs[4]) &&
 							findx_pattern(data, dataType, i + 185, length, &OSRestoreInterruptsSig))
 							PADReadSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(VerifyIDSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &VerifyIDSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  30, length, &OSGetFontEncodeSigs[0]) &&
+							get_immediate(data,  i +  44, i +  46, &constant) && constant == 0x41C64E6D &&
+							get_immediate(data,  i +  53,       0, &constant) && constant == 0x3039 &&
+							get_immediate(data,  i +  64,       0, &constant) && constant == 0x0108 &&
+							get_immediate(data,  i +  78, i +  80, &constant) && constant == 0x41C64E6D &&
+							get_immediate(data,  i +  87,       0, &constant) && constant == 0x3039 &&
+							get_immediate(data,  i +  92,       0, &constant) && constant == 0x7FFF)
+							VerifyIDSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  30, length, &OSGetFontEncodeSigs[0]) &&
+							get_immediate(data,  i +  44, i +  46, &constant) && constant == 0x41C64E6D &&
+							get_immediate(data,  i +  53,       0, &constant) && constant == 0x3039 &&
+							get_immediate(data,  i +  64,       0, &constant) && constant == 0x0110 &&
+							get_immediate(data,  i +  78, i +  80, &constant) && constant == 0x41C64E6D &&
+							get_immediate(data,  i +  87,       0, &constant) && constant == 0x3039 &&
+							get_immediate(data,  i +  92,       0, &constant) && constant == 0x7FFF)
+							VerifyIDSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (get_immediate(data,  i +  37, i +  39, &constant) && constant == 0x41C64E6D &&
+							get_immediate(data,  i +  46,       0, &constant) && constant == 0x3039 &&
+							get_immediate(data,  i +  57,       0, &constant) && constant == 0x0110 &&
+							get_immediate(data,  i +  71, i +  73, &constant) && constant == 0x41C64E6D &&
+							get_immediate(data,  i +  80,       0, &constant) && constant == 0x3039 &&
+							get_immediate(data,  i +  85,       0, &constant) && constant == 0x7FFF &&
+							findx_pattern(data, dataType, i +  94, length, &__CARDGetFontEncodeSig))
+							VerifyIDSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (get_immediate(data,  i +  94, i +  95, &address) && address == 0xCC00206E &&
+							get_immediate(data,  i + 115, i + 117, &constant) && constant == 0x2E8BA2E9 &&
+							get_immediate(data,  i + 123, i + 126, &constant) && constant == 0x41C64E6D &&
+							get_immediate(data,  i + 134,       0, &constant) && constant == 0x3039 &&
+							get_immediate(data,  i + 162,       0, &constant) && constant == 0x7FFF)
+							VerifyIDSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_pattern(data, dataType, i +  88, length, &OSGetFontEncodeSigs[1]) &&
+							get_immediate(data,  i + 100, i + 102, &constant) && constant == 0x3E0F83E1 &&
+							get_immediate(data,  i + 108, i + 111, &constant) && constant == 0x41C64E6D &&
+							get_immediate(data,  i + 119,       0, &constant) && constant == 0x3039 &&
+							get_immediate(data,  i + 147,       0, &constant) && constant == 0x7FFF)
+							VerifyIDSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (findx_pattern(data, dataType, i +  88, length, &OSGetFontEncodeSigs[1]) &&
+							get_immediate(data,  i + 100, i + 102, &constant) && constant == 0x78787879 &&
+							get_immediate(data,  i + 108, i + 111, &constant) && constant == 0x41C64E6D &&
+							get_immediate(data,  i + 119,       0, &constant) && constant == 0x3039 &&
+							get_immediate(data,  i + 147,       0, &constant) && constant == 0x7FFF)
+							VerifyIDSigs[j].offsetFoundAt = i;
+						break;
+					case 6:
+						if (get_immediate(data,  i +  93, i +  95, &constant) && constant == 0x78787879 &&
+							get_immediate(data,  i + 101, i + 104, &constant) && constant == 0x41C64E6D &&
+							get_immediate(data,  i + 112,       0, &constant) && constant == 0x3039 &&
+							get_immediate(data,  i + 140,       0, &constant) && constant == 0x7FFF &&
+							findx_pattern(data, dataType, i + 148, length, &__CARDGetFontEncodeSig))
+							VerifyIDSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -12077,6 +12167,23 @@ int Patch_PADStatus(u32 *data, u32 length, int dataType)
 				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", SPEC2_MakeStatusSigs[j].Name, j, SPEC2_MakeStatus);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(VerifyIDSigs) / sizeof(FuncPattern); j++)
+		if (VerifyIDSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(VerifyIDSigs) / sizeof(FuncPattern) && (i = VerifyIDSigs[j].offsetFoundAt)) {
+		u32 *VerifyID = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (VerifyID) {
+			memset(data + i, 0, VerifyIDSigs[j].Length * sizeof(u32));
+			
+			data[i + 0] = 0x38600000;	// li		r3, 0
+			data[i + 1] = 0x4E800020;	// blr
+			
+			print_gecko("Found:[%s$%i] @ %08X\n", VerifyIDSigs[j].Name, j, VerifyID);
 			patched++;
 		}
 	}

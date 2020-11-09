@@ -185,7 +185,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const char *fileName);
 int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int dataType);
 void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dataType);
-int Patch_PADStatus(u32 *data, u32 length, int dataType);
+int Patch_Miscellaneous(u32 *data, u32 length, int dataType);
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt);
 void *Calc_Address(void *data, int dataType, u32 properAddress);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);

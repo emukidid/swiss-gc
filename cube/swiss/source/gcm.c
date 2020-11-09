@@ -530,10 +530,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			// Patch specific game hacks
 			patched += Patch_GameSpecific(buffer, sizeToRead, gameID, filesToPatch[i].type);
 			
-			// Patch IGR
-			if(swissSettings.igrType != IGR_OFF || swissSettings.invertCStick) {
-				patched += Patch_PADStatus(buffer, sizeToRead, filesToPatch[i].type);
-			}
+			// Patch CARD, PAD
+			patched += Patch_Miscellaneous(buffer, sizeToRead, filesToPatch[i].type);
 			
 			if(swissSettings.debugUSB && usb_isgeckoalive(1) && !swissSettings.wiirdDebug) {
 				patched += Patch_Fwrite(buffer, sizeToRead);
