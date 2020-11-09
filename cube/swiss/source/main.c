@@ -226,6 +226,13 @@ int main ()
 		print_gecko("Loaded %i entries from the config file\r\n",config_get_count());
 	}
 	
+	// Swiss video mode force
+	GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
+	
+	if((forcedMode != NULL) && (forcedMode != getVideoMode())) {
+		setVideoMode(forcedMode);
+	}
+	
 	if(swissSettings.initNetworkAtStart) {
 		// Start up the BBA if it exists
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Initialising Network"));
@@ -237,13 +244,6 @@ int main ()
 	// DVD Motor off setting; Always stop the drive if we only started it to read the ID out
 	if((swissSettings.stopMotor && swissSettings.hasDVDDrive) || (swissSettings.hasDVDDrive == 2)) {
 		dvd_motor_off();
-	}
-
-	// Swiss video mode force
-	GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
-	
-	if((forcedMode != NULL) && (forcedMode != getVideoMode())) {
-		setVideoMode(forcedMode);
 	}
 	
 	// Check for autoload entry
