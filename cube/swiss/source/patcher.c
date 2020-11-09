@@ -416,6 +416,35 @@ bool findi_patterns(u32 *data, int dataType, u32 offsetFoundAt, u32 offsetFoundA
 	return functionPattern;
 }
 
+bool findp_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 offsetFoundAt2, u32 length, FuncPattern *functionPattern)
+{
+	u32 *address;
+	
+	if ((address = loadResolve(data, dataType, offsetFoundAt, offsetFoundAt2)))
+		address = Calc_Address(data, dataType, *address);
+	
+	if (functionPattern && functionPattern->offsetFoundAt)
+		return address == data + functionPattern->offsetFoundAt;
+	
+	return address && find_pattern(data, address - data, length, functionPattern);
+}
+
+bool findp_patterns(u32 *data, int dataType, u32 offsetFoundAt, u32 offsetFoundAt2, u32 length, ...)
+{
+	FuncPattern *functionPattern;
+	
+	va_list args;
+	va_start(args, length);
+	
+	while ((functionPattern = va_arg(args, FuncPattern *)))
+		if (findp_pattern(data, dataType, offsetFoundAt, offsetFoundAt2, length, functionPattern))
+			break;
+	
+	va_end(args);
+	
+	return functionPattern;
+}
+
 bool findx_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
 {
 	offsetFoundAt = branchResolve(data, dataType, offsetFoundAt);
@@ -11649,77 +11678,124 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 			if (compare_pattern(&fp, &PADInitSigs[j])) {
 				switch (j) {
 					case 0:
-						if (findx_pattern(data, dataType, i +  11, length, &PADSetSpecSigs[0]))
+						if (findx_pattern(data, dataType, i +  11, length, &PADSetSpecSigs[0]) &&
+							get_immediate(data,  i +  56, i +  57, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  62, i +  63, &address) && address == 0x800030E0)
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
-						if (findx_pattern(data, dataType, i +  13, length, &PADSetSpecSigs[0]))
+						if (findx_pattern(data, dataType, i +  13, length, &PADSetSpecSigs[0]) &&
+							get_immediate(data,  i +  57, i +  58, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  65, i +  66, &address) && address == 0x800030E0)
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (findx_pattern(data, dataType, i +  13, length, &PADSetSpecSigs[0]))
+						if (findx_pattern(data, dataType, i +  13, length, &PADSetSpecSigs[0]) &&
+							get_immediate(data,  i +  59, i +  60, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  67, i +  68, &address) && address == 0x800030E0)
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
-						if (findx_pattern(data, dataType, i +  15, length, &PADSetSpecSigs[0]))
+						if (findx_pattern(data, dataType, i +  15, length, &PADSetSpecSigs[0]) &&
+							get_immediate(data,  i +  61, i +  62, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  69, i +  70, &address) && address == 0x800030E0)
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i +  10, length, &PADSetSpecSigs[1]) &&
+							get_immediate(data,  i +  45, i +  46, &address) && address == 0x800030E0 &&
 							findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  77, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 5:
 						if (findx_pattern(data, dataType, i +  10, length, &PADSetSpecSigs[1]) &&
+							get_immediate(data,  i +  45, i +  46, &address) && address == 0x800030E0 &&
 							findx_pattern(data, dataType, i +  56, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  87, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
 						if (findx_pattern(data, dataType, i +  12, length, &PADSetSpecSigs[1]) &&
+							get_immediate(data,  i +  47, i +  48, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  49, i +  50, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  49, i +  56, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  49, i +  60, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  49, i +  64, &address) && address == 0x800030E0 &&
 							findx_pattern(data, dataType, i +  75, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 106, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 7:
 						if (findx_pattern(data, dataType, i +  12, length, &PADSetSpecSigs[1]) &&
+							get_immediate(data,  i +  47, i +  48, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  49, i +  50, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  49, i +  56, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  49, i +  60, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  49, i +  64, &address) && address == 0x800030E0 &&
 							findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 122, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 8:
 						if (findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]) &&
+							get_immediate(data,  i +  50, i +  51, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  52, i +  53, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  52, i +  59, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  52, i +  63, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  52, i +  67, &address) && address == 0x800030E0 &&
 							findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 125, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 9:
 						if (findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]) &&
+							get_immediate(data,  i +  50, i +  51, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  52, i +  53, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  52, i +  59, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  52, i +  63, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  52, i +  67, &address) && address == 0x800030E0 &&
 							findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 126, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 10:
 						if (findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]) &&
+							get_immediate(data,  i +  52, i +  53, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  54, i +  55, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  54, i +  59, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  54, i +  63, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  54, i +  67, &address) && address == 0x800030E0 &&
 							findx_pattern(data, dataType, i +  76, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 125, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 11:
 						if (findx_pattern(data, dataType, i +  16, length, &PADSetSpecSigs[1]) &&
+							get_immediate(data,  i +  54, i +  55, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  56, i +  57, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  56, i +  61, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  56, i +  65, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  56, i +  69, &address) && address == 0x800030E0 &&
 							findx_pattern(data, dataType, i +  78, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 127, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 12:
 						if (findx_pattern(data, dataType, i +  15, length, &PADSetSpecSigs[1]) &&
+							get_immediate(data,  i +  43, i +  47, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  49, i +  51, &address) && address == 0x800030E0 &&
 							findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 115, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 13:
-						if (findx_pattern(data, dataType, i +  16, length, &PADSetSpecSigs[1]))
+						if (findx_pattern(data, dataType, i +  16, length, &PADSetSpecSigs[1]) &&
+							get_immediate(data,  i +  54, i +  55, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  56, i +  57, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  56, i +  61, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  56, i +  65, &address) && address == 0x800030E0 &&
+							get_immediate(data,  i +  56, i +  69, &address) && address == 0x800030E0)
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -11732,35 +11808,46 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					case 0:
 						if (findx_pattern(data, dataType, i +  55, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  75, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 108, length, &SIGetResponseSigs[0]))
+							findx_pattern(data, dataType, i + 108, length, &SIGetResponseSigs[0])) {
+							findp_pattern(data, dataType, i + 132, 13, length, &SPEC2_MakeStatusSigs[0]);
 							PADReadSigs[j].offsetFoundAt = i;
+						}
 						break;
 					case 1:
-						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  68, length, &SIGetResponseSigs[1]) &&
-							findx_pattern(data, dataType, i + 105, length, &SIGetResponseSigs[1]) &&
-							findx_pattern(data, dataType, i + 164, length, &OSRestoreInterruptsSig))
+						if (findx_pattern (data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
+							findx_pattern (data, dataType, i +  68, length, &SIGetResponseSigs[1]) &&
+							findx_pattern (data, dataType, i + 105, length, &SIGetResponseSigs[1]) &&
+							findx_pattern (data, dataType, i + 164, length, &OSRestoreInterruptsSig)) {
+							findp_patterns(data, dataType, i + 128, 13, length, &SPEC2_MakeStatusSigs[0],
+							                                                    &SPEC2_MakeStatusSigs[1], NULL);
 							PADReadSigs[j].offsetFoundAt = i;
+						}
 						break;
 					case 2:
-						if (findx_pattern(data, dataType, i +  81, length, &SIGetResponseSigs[2]))
+						if (findx_pattern(data, dataType, i +  81, length, &SIGetResponseSigs[2])) {
+							findp_pattern(data, dataType, i +  96, 13, length, &SPEC2_MakeStatusSigs[2]);
 							PADReadSigs[j].offsetFoundAt = i;
+						}
 						break;
 					case 3:
 						if (findx_pattern(data, dataType, i +  64, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  82, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i +  84, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 115, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 136, length, &SIGetResponseSigs[2]))
+							findx_pattern(data, dataType, i + 136, length, &SIGetResponseSigs[2])) {
+							findp_pattern(data, dataType, i + 157, 13, length, &SPEC2_MakeStatusSigs[2]);
 							PADReadSigs[j].offsetFoundAt = i;
+						}
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i +  64, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  81, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i +  83, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 114, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 142, length, &SIGetResponseSigs[2]))
+							findx_pattern(data, dataType, i + 142, length, &SIGetResponseSigs[2])) {
+							findp_pattern(data, dataType, i + 163, 13, length, &SPEC2_MakeStatusSigs[2]);
 							PADReadSigs[j].offsetFoundAt = i;
+						}
 						break;
 					case 5:
 						if (findx_pattern (data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
@@ -11770,8 +11857,10 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern (data, dataType, i + 159, length, &OSRestoreInterruptsSig) &&
 							findx_patterns(data, dataType, i + 174, length, &SIGetResponseSigs[3],
 							                                                &SIGetResponseSigs[4], NULL) &&
-							findx_pattern (data, dataType, i + 230, length, &OSRestoreInterruptsSig))
+							findx_pattern (data, dataType, i + 230, length, &OSRestoreInterruptsSig)) {
+							findp_pattern (data, dataType, i + 194, 13, length, &SPEC2_MakeStatusSigs[2]);
 							PADReadSigs[j].offsetFoundAt = i;
+						}
 						break;
 					case 6:
 						if (findx_pattern (data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
@@ -11781,15 +11870,19 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern (data, dataType, i + 157, length, &OSRestoreInterruptsSig) &&
 							findx_patterns(data, dataType, i + 172, length, &SIGetResponseSigs[1],
 							                                                &SIGetResponseSigs[4], NULL) &&
-							findx_pattern (data, dataType, i + 228, length, &OSRestoreInterruptsSig))
+							findx_pattern (data, dataType, i + 228, length, &OSRestoreInterruptsSig)) {
+							findp_pattern (data, dataType, i + 192, 13, length, &SPEC2_MakeStatusSigs[2]);
 							PADReadSigs[j].offsetFoundAt = i;
+						}
 						break;
 					case 7:
 						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 112, length, &SIGetResponseSigs[5]) &&
 							findx_pattern(data, dataType, i + 168, length, &SIGetResponseSigs[5]) &&
-							findx_pattern(data, dataType, i + 225, length, &OSRestoreInterruptsSig))
+							findx_pattern(data, dataType, i + 225, length, &OSRestoreInterruptsSig)) {
+							findp_pattern(data, dataType, i + 188, 13, length, &SPEC2_MakeStatusSigs[3]);
 							PADReadSigs[j].offsetFoundAt = i;
+						}
 						break;
 					case 8:
 						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
@@ -11797,8 +11890,10 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  90, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 114, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 129, length, &SIGetResponseSigs[4]) &&
-							findx_pattern(data, dataType, i + 185, length, &OSRestoreInterruptsSig))
+							findx_pattern(data, dataType, i + 185, length, &OSRestoreInterruptsSig)) {
+							findp_pattern(data, dataType, i + 149, 13, length, &SPEC2_MakeStatusSigs[4]);
 							PADReadSigs[j].offsetFoundAt = i;
+						}
 						break;
 				}
 			}
@@ -11947,37 +12042,8 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	if (j < sizeof(PADReadSigs) / sizeof(FuncPattern) && (i = PADReadSigs[j].offsetFoundAt)) {
 		u32 *PADRead = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		u32 MakeStatusAddr, *MakeStatus;
-		
 		if (PADRead) {
-			switch (j) {
-				case 0: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 132]; break;
-				case 1: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 128]; break;
-				case 2: MakeStatusAddr = _SDA_BASE_ + (s16)data[i +  96]; break;
-				case 3: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 157]; break;
-				case 4: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 163]; break;
-				case 5: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 194]; break;
-				case 6: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 192]; break;
-				case 7: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 188]; break;
-				case 8: MakeStatusAddr = _SDA_BASE_ + (s16)data[i + 149]; break;
-			}
-			
-			if ((MakeStatus = Calc_Address(data, dataType, MakeStatusAddr)) &&
-				(MakeStatus = Calc_Address(data, dataType, MakeStatusAddr = *MakeStatus))) {
-				switch (j) {
-					case 0:
-					case 1: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[0]); break;
-					case 2:
-					case 3:
-					case 4:
-					case 5:
-					case 6: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[2]); break;
-					case 7: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[3]); break;
-					case 8: find_pattern(data, MakeStatus - data, length, &SPEC2_MakeStatusSigs[4]); break;
-				}
-			}
-			
-			if (swissSettings.igrType != IGR_OFF) {
+			if ((devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) && swissSettings.igrType != IGR_OFF) {
 				switch (j) {
 					case 0:
 						data[i + 159] = 0x387E0000;	// addi		r3, r30, 0
