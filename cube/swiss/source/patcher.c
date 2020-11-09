@@ -9124,31 +9124,14 @@ int Patch_FontEncode(u32 *data, u32 length)
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (!memcmp(data + i + 0, _fontencode_part_a, sizeof(_fontencode_part_a)) &&
 			!memcmp(data + i + 4, _fontencode_part_b, sizeof(_fontencode_part_b))) {
-			switch (swissSettings.forceEncoding) {
-				case 1:
-					data[i +  8] = 0x38000000;
-					data[i + 10] = 0x38000000;
-					data[i + 13] = 0x38000000;
-					break;
-				case 2:
-					data[i +  8] = 0x38000001;
-					data[i + 10] = 0x38000001;
-					data[i + 13] = 0x38000001;
-					break;
-			}
+			data[i +  8] = 0x38000000 | (swissSettings.fontEncode & 0xFFFF);
+			data[i + 10] = 0x38000000 | (swissSettings.fontEncode & 0xFFFF);
+			data[i + 13] = 0x38000000 | (swissSettings.fontEncode & 0xFFFF);
 			patched++;
 		}
 		else if (!memcmp(data + i, _fontencode_part_b, sizeof(_fontencode_part_b))) {
-			switch (swissSettings.forceEncoding) {
-				case 1:
-					data[i + 4] = 0x38000000;
-					data[i + 6] = 0x38000000;
-					break;
-				case 2:
-					data[i + 4] = 0x38000001;
-					data[i + 6] = 0x38000001;
-					break;
-			}
+			data[i + 4] = 0x38000000 | (swissSettings.fontEncode & 0xFFFF);
+			data[i + 6] = 0x38000000 | (swissSettings.fontEncode & 0xFFFF);
 			patched++;
 		}
 	}
@@ -9377,10 +9360,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x81300EAA - 0x81300000) = 1;
 				
 				// Force text encoding.
-				switch (swissSettings.forceEncoding) {
-					case 1: *(u32 *)(data + 0x8130B3E4 - 0x81300000) = 0x38600000; break;
-					case 2: *(u32 *)(data + 0x8130B3E4 - 0x81300000) = 0x38600002; break;
-				}
+				*(u32 *)(data + 0x8130B3E4 - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
 				// Force English language, the hard way.
 				*(s16 *)(data + 0x8130B40A - 0x81300000) = 10;
@@ -9415,10 +9395,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
 				
 				// Force text encoding.
-				switch (swissSettings.forceEncoding) {
-					case 1: *(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600000; break;
-					case 2: *(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600002; break;
-				}
+				*(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
 				// Force English language, the hard way.
 				*(s16 *)(data + 0x8130B592 - 0x81300000) = 38;
@@ -9483,10 +9460,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
 				
 				// Force text encoding.
-				switch (swissSettings.forceEncoding) {
-					case 1: *(u32 *)(data + 0x8130B8D0 - 0x81300000) = 0x38600000; break;
-					case 2: *(u32 *)(data + 0x8130B8D0 - 0x81300000) = 0x38600002; break;
-				}
+				*(u32 *)(data + 0x8130B8D0 - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
 				// Force English language, the hard way.
 				*(s16 *)(data + 0x8130B906 - 0x81300000) = 38;
@@ -9521,10 +9495,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
 				
 				// Force text encoding.
-				switch (swissSettings.forceEncoding) {
-					case 1: *(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600000; break;
-					case 2: *(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600002; break;
-				}
+				*(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
 				// Force English language, the hard way.
 				*(s16 *)(data + 0x8130B91E - 0x81300000) = 38;

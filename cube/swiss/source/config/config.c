@@ -237,9 +237,6 @@ int config_update_file() {
 	sprintf(txtbuffer, "Force Widescreen=%s\r\n",forceWidescreenStr[swissSettings.forceWidescreen]);
 	string_append(configString, txtbuffer);
 	
-	sprintf(txtbuffer, "Force Text Encoding=%s\r\n",forceEncodingStr[swissSettings.forceEncoding]);
-	string_append(configString, txtbuffer);
-	
 	sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[swissSettings.invertCStick]);
 	string_append(configString, txtbuffer);
 	
@@ -292,9 +289,6 @@ int config_update_file() {
 		sprintf(txtbuffer, "Force Widescreen=%s\r\n",forceWidescreenStr[configEntries[i].forceWidescreen]);
 		string_append(configString, txtbuffer);
 		
-		sprintf(txtbuffer, "Force Text Encoding=%s\r\n",forceEncodingStr[configEntries[i].forceEncoding]);
-		string_append(configString, txtbuffer);
-		
 		sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[configEntries[i].invertCStick]);
 		string_append(configString, txtbuffer);
 		
@@ -334,7 +328,6 @@ void config_defaults(ConfigEntry *entry) {
 	entry->disableDithering = swissSettings.disableDithering;
 	entry->forceAnisotropy = swissSettings.forceAnisotropy;
 	entry->forceWidescreen = swissSettings.forceWidescreen;
-	entry->forceEncoding = swissSettings.forceEncoding;
 	entry->invertCStick = swissSettings.invertCStick;
 	entry->emulateReadSpeed = swissSettings.emulateReadSpeed;
 
@@ -433,15 +426,6 @@ void config_parse(char *configData) {
 					int *ptr = !defaultPassed ? &swissSettings.forceWidescreen : &configEntries[configEntriesCount].forceWidescreen;
 					for(int i = 0; i < 3; i++) {
 						if(!strcmp(forceWidescreenStr[i], value)) {
-							*ptr = i;
-							break;
-						}
-					}
-				}
-				else if(!strcmp("Force Text Encoding", name)) {
-					int *ptr = !defaultPassed ? &swissSettings.forceEncoding : &configEntries[configEntriesCount].forceEncoding;
-					for(int i = 0; i < 4; i++) {
-						if(!strcmp(forceEncodingStr[i], value)) {
 							*ptr = i;
 							break;
 						}
@@ -641,7 +625,6 @@ void config_load_current(ConfigEntry *config) {
 	swissSettings.disableDithering = config->disableDithering;
 	swissSettings.forceAnisotropy = config->forceAnisotropy;
 	swissSettings.forceWidescreen = config->forceWidescreen;
-	swissSettings.forceEncoding = config->forceEncoding;
 	swissSettings.invertCStick = config->invertCStick;
 	swissSettings.emulateReadSpeed = config->emulateReadSpeed;
 }
@@ -654,7 +637,6 @@ void config_unload_current() {
 	swissSettings.disableDithering = backup.disableDithering;
 	swissSettings.forceAnisotropy = backup.forceAnisotropy;
 	swissSettings.forceWidescreen = backup.forceWidescreen;
-	swissSettings.forceEncoding = backup.forceEncoding;
 	swissSettings.invertCStick = backup.invertCStick;
 	swissSettings.emulateReadSpeed = backup.emulateReadSpeed;
 }

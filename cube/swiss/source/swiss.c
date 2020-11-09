@@ -90,12 +90,7 @@ void ogc_video__reset()
 	char region = wodeRegionToChar(GCMDisk.RegionCode);
 	int i;
 	
-	if(!swissSettings.forceEncoding || ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard)) {
-		if(region == 'J')
-			swissSettings.forceEncoding = 2;
-		else
-			swissSettings.forceEncoding = 1;
-	}
+	swissSettings.fontEncode = region == 'J';
 	
 	if(!swissSettings.gameVMode || swissSettings.disableVideoPatches) {
 		if(region == 'P')

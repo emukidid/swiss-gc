@@ -27,7 +27,6 @@ char *gameVModeStr[] = {"No", "480i", "480sf", "240p", "960i", "480p", "1080i60"
 char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "704px", "720px"};
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
-char *forceEncodingStr[] = {"Auto", "ANSI", "SJIS", "No"};
 char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
 char *emulateReadSpeedStr[] = {"No", "Yes", "Wii"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
@@ -71,7 +70,6 @@ static char *tooltips_game[PAGE_GAME_MAX+1] = {
 	NULL,
 	NULL,
 	NULL,
-	"Force Text Encoding:\n\nNo - System native format\nAuto - Game native format (default)\nANSI - Force International format on a Japanese region game\nSJIS - Force Japanese format on an International region game\n\nThis effectively behaves the same as the USA/JPN region switch.",
 	"Invert Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Invert X-axis of the C Stick\nY - Invert Y-axis of the C Stick\nX&Y - Invert both axes of the C Stick",
 	"Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated\nby the original medium, or for speedrunning."
 };
@@ -243,7 +241,6 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 	else if(page_num == PAGE_GAME_DEFAULTS) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Default Game Settings (4/5):"));
 		bool enabledVideoPatches = !swissSettings.disableVideoPatches;
-		bool forcedTextEncoding = !((devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_MEMCARD)) && swissSettings.emulateMemoryCard);
 		bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_READ_SPEED);
 		drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_DEFAULT_FORCE_VIDEOMODE, enabledVideoPatches);
 		drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, enabledVideoPatches);
@@ -253,7 +250,6 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_DEFAULT_ALPHA_DITHER, enabledVideoPatches);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_DEFAULT_ANISO_FILTER, true);
 		drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, true);
-		drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_DEFAULT_TEXT_ENCODING, forcedTextEncoding);
 		drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, true);
 		drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_DEFAULT_READ_SPEED, emulatedReadSpeed);
 	}
@@ -262,7 +258,6 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		bool enabledGamePatches = file != NULL && gameConfig != NULL;
 		if(enabledGamePatches) {
 			bool enabledVideoPatches = !swissSettings.disableVideoPatches;
-			bool forcedTextEncoding = !((devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_MEMCARD)) && swissSettings.emulateMemoryCard);
 			bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_READ_SPEED);
 			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[gameConfig->forceHScale], option == SET_HORIZ_SCALE, enabledVideoPatches);
@@ -272,7 +267,6 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", gameConfig->disableDithering, option == SET_ALPHA_DITHER, enabledVideoPatches);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", gameConfig->forceAnisotropy, option == SET_ANISO_FILTER, true);
 			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[gameConfig->forceWidescreen], option == SET_WIDESCREEN, true);
-			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[gameConfig->forceEncoding], option == SET_TEXT_ENCODING, forcedTextEncoding);
 			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, true);
 			drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[gameConfig->emulateReadSpeed], option == SET_READ_SPEED, emulatedReadSpeed);
 		}
@@ -286,7 +280,6 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_DEFAULT_ALPHA_DITHER, false);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_DEFAULT_ANISO_FILTER, false);
 			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, false);
-			drawSettingEntryString(page, &page_y_ofs, "Force Text Encoding:", forceEncodingStr[swissSettings.forceEncoding], option == SET_DEFAULT_TEXT_ENCODING, false);
 			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, false);
 			drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_DEFAULT_READ_SPEED, false);
 		}
@@ -526,15 +519,6 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 				if(swissSettings.forceWidescreen < 0)
 					swissSettings.forceWidescreen = 2;
 			break;
-			case SET_DEFAULT_TEXT_ENCODING:
-				if(!((devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_MEMCARD)) && swissSettings.emulateMemoryCard)) {
-					swissSettings.forceEncoding += direction;
-					if(swissSettings.forceEncoding > 3)
-						swissSettings.forceEncoding = 0;
-					if(swissSettings.forceEncoding < 0)
-						swissSettings.forceEncoding = 3;
-				}
-			break;
 			case SET_DEFAULT_INVERT_CAMERA:
 				swissSettings.invertCStick += direction;
 				if(swissSettings.invertCStick > 3)
@@ -615,15 +599,6 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 					gameConfig->forceWidescreen = 0;
 				if(gameConfig->forceWidescreen < 0)
 					gameConfig->forceWidescreen = 2;
-			break;
-			case SET_TEXT_ENCODING:
-				if(!((devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_MEMCARD)) && swissSettings.emulateMemoryCard)) {
-					gameConfig->forceEncoding += direction;
-					if(gameConfig->forceEncoding > 3)
-						gameConfig->forceEncoding = 0;
-					if(gameConfig->forceEncoding < 0)
-						gameConfig->forceEncoding = 3;
-				}
 			break;
 			case SET_INVERT_CAMERA:
 				gameConfig->invertCStick += direction;

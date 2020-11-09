@@ -18,7 +18,6 @@ typedef struct {
 	int disableDithering;
 	int forceAnisotropy;
 	int forceWidescreen;
-	int forceEncoding;
 	int invertCStick;
 	int emulateReadSpeed;
 } ConfigEntry __attribute__((aligned(32)));

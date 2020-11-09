@@ -80,7 +80,6 @@ enum SETTINGS_GAME_DEFAULTS {
 	SET_DEFAULT_ALPHA_DITHER,
 	SET_DEFAULT_ANISO_FILTER,
 	SET_DEFAULT_WIDESCREEN,
-	SET_DEFAULT_TEXT_ENCODING,
 	SET_DEFAULT_INVERT_CAMERA,
 	SET_DEFAULT_READ_SPEED,
 	SET_PAGE_4_BACK,
@@ -98,7 +97,6 @@ enum SETTINGS_GAME {
 	SET_ALPHA_DITHER,
 	SET_ANISO_FILTER,
 	SET_WIDESCREEN,
-	SET_TEXT_ENCODING,
 	SET_INVERT_CAMERA,
 	SET_READ_SPEED,
 	SET_PAGE_5_BACK,
@@ -112,7 +110,6 @@ extern char *gameVModeStr[];
 extern char *forceHScaleStr[];
 extern char *forceVFilterStr[];
 extern char *forceWidescreenStr[];
-extern char *forceEncodingStr[];
 extern char *invertCStickStr[];
 extern char *emulateReadSpeedStr[];
 extern char *igrTypeStr[];
