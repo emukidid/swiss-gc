@@ -301,6 +301,8 @@ int config_update_file() {
 
 	u32 len = strlen(configString->mem);
 	// TODO ask overwrite?
+	// TODO rename old file then delete if write successful
+	devices[DEVICE_CONFIG]->deleteFile(configFile);
 	if(devices[DEVICE_CONFIG]->writeFile(configFile, configString->mem, len) == len) {
 		devices[DEVICE_CONFIG]->closeFile(configFile);
 		if(devices[DEVICE_CONFIG] != devices[DEVICE_CUR]) {
