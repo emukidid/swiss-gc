@@ -21,7 +21,7 @@ extern int net_initialized;
 static FSP_SESSION *fsp_session;
 
 file_handle initial_FSP =
-	{ "/",      // directory
+	{ "fsp:/",      // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
 	  0,        // size
@@ -41,7 +41,7 @@ device_info* deviceHandler_FSP_info(file_handle* file) {
 
 s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 
-	FSP_DIR* dp = fsp_opendir(fsp_session, ffile->name);
+	FSP_DIR* dp = fsp_opendir(fsp_session, strchr(ffile->name, '/'));
 	if(!dp) return -1;
 	FSP_RDENTRY entry;
 	FSP_RDENTRY *result;
@@ -90,12 +90,12 @@ s32 deviceHandler_FSP_seekFile(file_handle* file, u32 where, u32 type) {
 
 s32 deviceHandler_FSP_readFile(file_handle* file, void* buffer, u32 length) {
 	if(!file->fp) {
-		file->fp = fsp_fopen(fsp_session, file->name, "rb");
+		file->fp = fsp_fopen(fsp_session, strchr(file->name, '/'), "rb");
 	}
 	if(!file->fp) return -1;
 	if(file->size <= 0) {
 		struct stat fstat;
-		if(fsp_stat(fsp_session, file->name, &fstat)) {
+		if(fsp_stat(fsp_session, strchr(file->name, '/'), &fstat)) {
 			fsp_fclose(file->fp);
 			file->fp = NULL;
 			return -1;
@@ -111,7 +111,7 @@ s32 deviceHandler_FSP_readFile(file_handle* file, void* buffer, u32 length) {
 
 s32 deviceHandler_FSP_writeFile(file_handle* file, void* buffer, u32 length) {
 	if(!file->fp) {
-		file->fp = fsp_fopen(fsp_session, file->name, "wb");
+		file->fp = fsp_fopen(fsp_session, strchr(file->name, '/'), "wb");
 	}
 	if(!file->fp) return -1;
 	
@@ -203,8 +203,8 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 	((vu8*)VAR_SERVER_MAC)[5] = 0xFF;
 	*(vu32*)VAR_SERVER_IP = inet_addr(swissSettings.fspHostIp);
 	*(vu16*)VAR_SERVER_PORT = swissSettings.fspPort ? swissSettings.fspPort : 21;
-	*(vu8*)VAR_DISC_1_FNLEN = snprintf(VAR_DISC_1_FN, sizeof(VAR_DISC_1_FN), "%s\n%s", file->name, swissSettings.fspPassword) + 1;
-	*(vu8*)VAR_DISC_2_FNLEN = snprintf(VAR_DISC_2_FN, sizeof(VAR_DISC_2_FN), "%s\n%s", file2 ? file2->name : file->name, swissSettings.fspPassword) + 1;
+	*(vu8*)VAR_DISC_1_FNLEN = snprintf(VAR_DISC_1_FN, sizeof(VAR_DISC_1_FN), "%s\n%s", strchr(file->name, '/'), swissSettings.fspPassword) + 1;
+	*(vu8*)VAR_DISC_2_FNLEN = snprintf(VAR_DISC_2_FN, sizeof(VAR_DISC_2_FN), "%s\n%s", strchr(file2 ? file2->name : file->name, '/'), swissSettings.fspPassword) + 1;
 	*(vu16*)VAR_FSP_KEY = 0;
 	return 1;
 }
@@ -232,7 +232,7 @@ s32 deviceHandler_FSP_deinit(file_handle* file) {
 
 s32 deviceHandler_FSP_deleteFile(file_handle* file) {
 	deviceHandler_FSP_closeFile(file);
-	return fsp_unlink(fsp_session, file->name);
+	return fsp_unlink(fsp_session, strchr(file->name, '/'));
 }
 
 bool deviceHandler_FSP_test() {
