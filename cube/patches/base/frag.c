@@ -12,7 +12,7 @@
 #define PATCH_FRAGS 0
 #endif
 
-void read_disc_frag(void *dst, u32 len, u32 offset, read_frag_cb cb) {
+int read_disc_frag(void *dst, u32 len, u32 offset, read_frag_cb cb) {
 
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
 	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
@@ -37,10 +37,10 @@ void read_disc_frag(void *dst, u32 len, u32 offset, read_frag_cb cb) {
 				amountToRead = fragOffsetEnd - offset;
 			}
 			adjustedOffset -= fragOffset;
-			do_read_disc(dst, amountToRead, adjustedOffset, fragSector, cb);
-			return;
+			return do_read_disc(dst, amountToRead, adjustedOffset, fragSector, cb);
 		}
 	}
+	return 0;
 }
 
 // Returns the amount read from the given offset until a frag is hit

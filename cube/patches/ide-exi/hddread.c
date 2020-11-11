@@ -316,31 +316,26 @@ static void ata_done_queued(void)
 	callback(address, length);
 }
 
-void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
+int do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
 {
-	int i;
-
-	for (i = 0; i < ata.items; i++)
-		if (ata.queue[i].callback == callback)
-			return;
-
 	sector = offset / SECTOR_SIZE + sector;
 	offset = offset % SECTOR_SIZE;
 	length = MIN(length, SECTOR_SIZE - offset);
 
-	ata.queue[i].address = address;
-	ata.queue[i].length = length;
-	ata.queue[i].offset = offset;
-	ata.queue[i].sector = sector;
-	ata.queue[i].callback = callback;
-	if (ata.items++) return;
+	ata.queue[ata.items].address = address;
+	ata.queue[ata.items].length = length;
+	ata.queue[ata.items].offset = offset;
+	ata.queue[ata.items].sector = sector;
+	ata.queue[ata.items].callback = callback;
+	if (ata.items++) return ata.items;
 
 	if (sector == ata.last_sector) {
 		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)ata_done_queued);
-		return;
+		return 1;
 	}
 
 	ata_read_queued();
+	return 1;
 }
 
 void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)

@@ -268,31 +268,26 @@ static void mmc_done_queued(void)
 	callback(address, length);
 }
 
-void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
+int do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
 {
-	int i;
-
-	for (i = 0; i < mmc.items; i++)
-		if (mmc.queue[i].callback == callback)
-			return;
-
 	sector = offset / SECTOR_SIZE + sector;
 	offset = offset % SECTOR_SIZE;
 	length = MIN(length, SECTOR_SIZE - offset);
 
-	mmc.queue[i].address = address;
-	mmc.queue[i].length = length;
-	mmc.queue[i].offset = offset;
-	mmc.queue[i].sector = sector;
-	mmc.queue[i].callback = callback;
-	if (mmc.items++) return;
+	mmc.queue[mmc.items].address = address;
+	mmc.queue[mmc.items].length = length;
+	mmc.queue[mmc.items].offset = offset;
+	mmc.queue[mmc.items].sector = sector;
+	mmc.queue[mmc.items].callback = callback;
+	if (mmc.items++) return mmc.items;
 
 	if (sector == mmc.last_sector) {
 		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)mmc_done_queued);
-		return;
+		return 1;
 	}
 
 	mmc_read_queued();
+	return 1;
 }
 
 void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)

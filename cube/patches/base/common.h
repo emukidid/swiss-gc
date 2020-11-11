@@ -55,11 +55,11 @@ extern volatile u32 EXIEmuRegs[3][5];
 
 typedef void (*read_frag_cb)(void *dst, u32 len);
 
-void do_read_disc(void *dst, u32 len, u32 offset, u32 sector, read_frag_cb cb);
+int do_read_disc(void *dst, u32 len, u32 offset, u32 sector, read_frag_cb cb);
 u32 do_read(void *dst, u32 len, u32 offset, u32 sector);
 u32 do_write(void *src, u32 len, u32 offset, u32 sector);
 void end_read(void);
-void read_disc_frag(void *dst, u32 len, u32 offset, read_frag_cb cb);
+int read_disc_frag(void *dst, u32 len, u32 offset, read_frag_cb cb);
 u32 read_frag(void *dst, u32 len, u32 offset);
 u32 write_frag(void *src, u32 len, u32 offset);
 int is_frag_read(unsigned int offset, unsigned int len);

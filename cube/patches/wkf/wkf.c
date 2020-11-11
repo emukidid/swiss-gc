@@ -83,22 +83,17 @@ static void wkf_read_queued(void)
 	OSUnmaskInterrupts(OS_INTERRUPTMASK_PI_DI);
 }
 
-void do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
+int do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
 {
-	int i;
-
-	for (i = 0; i < wkf.items; i++)
-		if (wkf.queue[i].callback == callback)
-			return;
-
-	wkf.queue[i].address = address;
-	wkf.queue[i].length = length;
-	wkf.queue[i].offset = offset;
-	wkf.queue[i].sector = sector;
-	wkf.queue[i].callback = callback;
-	if (wkf.items++) return;
+	wkf.queue[wkf.items].address = address;
+	wkf.queue[wkf.items].length = length;
+	wkf.queue[wkf.items].offset = offset;
+	wkf.queue[wkf.items].sector = sector;
+	wkf.queue[wkf.items].callback = callback;
+	if (wkf.items++) return wkf.items;
 
 	wkf_read_queued();
+	return 1;
 }
 
 void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)

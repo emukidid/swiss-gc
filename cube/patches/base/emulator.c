@@ -292,6 +292,8 @@ static void exi_write(unsigned index, uint32_t value)
 static struct {
 	adpcm_t adpcm;
 
+	bool reading;
+	bool flushing;
 	bool playing;
 	bool stopping;
 
@@ -336,6 +338,8 @@ static void dtk_decode_buffer(void *address, uint32_t length)
 
 bool dtk_fill_buffer(void)
 {
+	if (dtk.reading)
+		return true;
 	if (!dtk.playing)
 		return false;
 	if (fifo_space() < 448 * sizeof(sample_t))
@@ -344,14 +348,16 @@ bool dtk_fill_buffer(void)
 	#ifdef ASYNC_READ
 	void read_callback(void *address, uint32_t length)
 	{
-		dtk_decode_buffer(address, length);
+		dtk.reading = false;
+		if (dtk.flushing) dtk.flushing = false;
+		else dtk_decode_buffer(address, length);
 		dtk_fill_buffer();
 	}
 
 	#ifndef ISR
 	DCInvalidateRange(__builtin_assume_aligned(dtk.buffer, 32), sizeof(*dtk.buffer));
 	#endif
-	read_disc_frag(__builtin_assume_aligned(dtk.buffer, 32), sizeof(*dtk.buffer), dtk.current.position, read_callback);
+	return dtk.reading = read_disc_frag(dtk.buffer, sizeof(*dtk.buffer), dtk.current.position, read_callback);
 	#else
 	OSCancelAlarm(&read_alarm);
 	OSTick start = OSGetTick();
@@ -362,9 +368,9 @@ bool dtk_fill_buffer(void)
 
 	OSTick end = OSGetTick();
 	OSSetAlarm(&read_alarm, OSDiffTick(end, start), (OSAlarmHandler)trickle_read);
-	#endif
 
 	return true;
+	#endif
 }
 #endif
 
@@ -490,11 +496,10 @@ static void di_execute_command(void)
 							dtk.current.start  = offset;
 							dtk.current.length = length;
 
-							#ifdef DTK
-							fifo_reset();
-							#endif
-
 							dtk.playing = true;
+							#ifdef DTK
+							dtk_fill_buffer();
+							#endif
 						}
 					}
 					break;
@@ -503,9 +508,11 @@ static void di_execute_command(void)
 				{
 					dtk.stopping = false;
 					dtk.playing  = false;
-
 					#ifdef DTK
+					dtk.flushing = dtk.reading;
+
 					adpcm_reset(&dtk.adpcm);
+					fifo_reset();
 					#endif
 					break;
 				}
