@@ -9748,6 +9748,74 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 		}
+	} else if (!strncmp(gameID, "GDKEA4", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3009280:
+				// Accept Memory Card 2043 or 1019 instead of Memory Card 507.
+				if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard)
+					*(s16 *)(data + 0x801F1FF2 - 0x800056C0 + 0x2600) = 128;
+				else
+					*(s16 *)(data + 0x801F1FF2 - 0x800056C0 + 0x2600) = 64;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GDKJA4", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3075488:
+				// Accept Memory Card 2043 or 1019 instead of Memory Card 507.
+				if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard)
+					*(s16 *)(data + 0x801FF53E - 0x800056C0 + 0x2600) = 128;
+				else
+					*(s16 *)(data + 0x801FF53E - 0x800056C0 + 0x2600) = 64;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GDXEA4", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 2039904:
+				// Accept Memory Card 2043 or 1019 instead of Memory Card 507.
+				if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
+					*(s16 *)(data + 0x800EFF3A - 0x800129E0 + 0x2520) = 128;
+					
+					*(s16 *)(data + 0x800F0082 - 0x800129E0 + 0x2520) = 128;
+					
+					*(s16 *)(data + 0x800F0502 - 0x800129E0 + 0x2520) = 128;
+				} else {
+					*(s16 *)(data + 0x800EFF3A - 0x800129E0 + 0x2520) = 64;
+					
+					*(s16 *)(data + 0x800F0082 - 0x800129E0 + 0x2520) = 64;
+					
+					*(s16 *)(data + 0x800F0502 - 0x800129E0 + 0x2520) = 64;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GDXJA4", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1853024:
+				// Accept Memory Card 2043 or 1019 instead of Memory Card 507.
+				if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard) {
+					*(s16 *)(data + 0x800E65EE - 0x80012260 + 0x2520) = 128;
+					
+					*(s16 *)(data + 0x800E6736 - 0x80012260 + 0x2520) = 128;
+					
+					*(s16 *)(data + 0x800E6BB6 - 0x80012260 + 0x2520) = 128;
+				} else {
+					*(s16 *)(data + 0x800E65EE - 0x80012260 + 0x2520) = 64;
+					
+					*(s16 *)(data + 0x800E6736 - 0x80012260 + 0x2520) = 64;
+					
+					*(s16 *)(data + 0x800E6BB6 - 0x80012260 + 0x2520) = 64;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
 	} else if (!strncmp(gameID, "GFZE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1414848:
@@ -10190,6 +10258,45 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80155A68 - 0x80014140 + 0x2620) = 0x38C00000;
 				*(u32 *)(data + 0x80155A6C - 0x80014140 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80155A70 - 0x80014140 + 0x2620) = branchAndLink((u32 *)0x801996B8, (u32 *)0x80155A70);
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GWTEA4", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 839584:
+				// Accept Memory Card 2043 or 1019 instead of Memory Card 507.
+				if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard)
+					*(s16 *)(data + 0x8003758E - 0x8000AEA0 + 0x2520) = 128;
+				else
+					*(s16 *)(data + 0x8003758E - 0x8000AEA0 + 0x2520) = 64;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GWTJA4", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 804544:
+				// Accept Memory Card 2043 or 1019 instead of Memory Card 507.
+				if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard)
+					*(s16 *)(data + 0x8003740A - 0x8000AE60 + 0x2520) = 128;
+				else
+					*(s16 *)(data + 0x8003740A - 0x8000AE60 + 0x2520) = 64;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GWTPA4", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 834912:
+				// Accept Memory Card 2043 or 1019 instead of Memory Card 507.
+				if ((devices[DEVICE_CUR]->emulate & EMU_MEMCARD) && swissSettings.emulateMemoryCard)
+					*(s16 *)(data + 0x800374D6 - 0x8000AE60 + 0x2520) = 128;
+				else
+					*(s16 *)(data + 0x800374D6 - 0x8000AE60 + 0x2520) = 64;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
