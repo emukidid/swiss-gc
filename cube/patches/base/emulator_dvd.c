@@ -94,31 +94,35 @@ void dvd_schedule_read(uint32_t offset, uint32_t length, OSAlarmHandler handler)
 
 			if (dvd_offset < buffer_start)
 				buffer_start = buffer_end = 0;
-			else
-				buffer_end = head_position;
+			else buffer_end = head_position;
 		}
 
 		OSTick ticks_until_execution = 0;
 		OSTick ticks_until_completion = COMMAND_LATENCY_TICKS;
 
 		do {
+			OSTick ticks = 0;
+
 			uint32_t chunk_length = MIN(length, DVD_ECC_BLOCK_SIZE - offset % DVD_ECC_BLOCK_SIZE);
 
 			if (dvd_offset >= buffer_start && dvd_offset < buffer_end) {
-				ticks_until_completion += COMMAND_LATENCY_TICKS;
-				ticks_until_completion += OSSecondsToTicks(chunk_length / BUFFER_TRANSFER_RATE);
+				ticks += COMMAND_LATENCY_TICKS;
+				ticks += OSSecondsToTicks(chunk_length / BUFFER_TRANSFER_RATE);
 			} else {
 				if (dvd_offset != head_position) {
-					ticks_until_completion += OSSecondsToTicks(CalculateSeekTime(head_position, dvd_offset));
-					ticks_until_completion += OSSecondsToTicks(CalculateRotationalLatency(dvd_offset,
-						OSTicksToSeconds((double)(current_time + ticks_until_completion))));
+					ticks += OSSecondsToTicks(CalculateSeekTime(head_position, dvd_offset));
+					ticks += OSSecondsToTicks(CalculateRotationalLatency(dvd_offset,
+						OSTicksToSeconds((double)(current_time + ticks_until_completion + ticks))));
 				} else {
-					ticks_until_completion += OSSecondsToTicks(CalculateRawDiscReadTime(dvd_offset, DVD_ECC_BLOCK_SIZE));
+					ticks += OSSecondsToTicks(CalculateRawDiscReadTime(dvd_offset, DVD_ECC_BLOCK_SIZE));
 				}
 
-				ticks_until_execution = ticks_until_completion;
+				ticks_until_execution += ticks;
+
 				head_position = dvd_offset + DVD_ECC_BLOCK_SIZE;
 			}
+
+			ticks_until_completion += ticks;
 
 			offset += chunk_length;
 			length -= chunk_length;
@@ -135,7 +139,9 @@ void dvd_schedule_read(uint32_t offset, uint32_t length, OSAlarmHandler handler)
 				read_buffer.end_offset - read_buffer.start_offset));
 		}
 
-		OSSetAlarm(&command_alarm, ticks_until_execution, handler);
+		if (ticks_until_execution > 0)
+			OSSetAlarm(&command_alarm, ticks_until_execution, handler);
+		else handler(&command_alarm, &exceptionContext);
 	}
 
 	dvd_schedule_read(offset, length, handler);
