@@ -988,7 +988,7 @@ uiDrawObj_t* DrawLabel(int x, int y, char *string)
 	}
 	eventData->size = 1.0f;
 	eventData->centered = false;
-	eventData->color = (GXColor) {255, 255, 255, 255};
+	eventData->color = defaultColor;
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_STYLEDLABEL;
 	event->data = eventData;
