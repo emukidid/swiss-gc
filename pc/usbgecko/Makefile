@@ -3,7 +3,7 @@ CC = i686-w64-mingw32-gcc
 WIN-CC= i686-w64-mingw32-gcc
 else
 CC = gcc
-WIN-CC= i586-mingw32msvc-gcc
+WIN-CC= i686-w64-mingw32-gcc
 endif
 
 STRIP = strip

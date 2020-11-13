@@ -71,7 +71,7 @@ build:
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol
 	@$(DOLLZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol -m
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
-	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/swiss-lz.dol
+	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/AUTOEXEC.DOL
 	# make ISOs and WKF firmware
 	# NTSC-J
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso -find $(DIST)/DOL/$(SVN_REVISION).dol
@@ -121,13 +121,13 @@ package:   # create distribution package
 #------------------------------------------------------------------
 
 build-AR: # make ActionReplay
-	@$(BIN2S) $(DIST)/ActionReplay/swiss-lz.dol > $(AR_SOURCES)/swiss-lz.s
+	@$(BIN2S) $(DIST)/ActionReplay/AUTOEXEC.DOL > $(AR_SOURCES)/autoexec.s
 	@$(CC) -O2 -c $(AR_SOURCES)/startup.s -o $(AR_SOURCES)/startup.o
-	@$(CC) -O2 -c $(AR_SOURCES)/swiss-lz.s -o $(AR_SOURCES)/swiss-lz.o
+	@$(CC) -O2 -c $(AR_SOURCES)/autoexec.s -o $(AR_SOURCES)/autoexec.o
 	@$(CC) -O2 -c $(AR_SOURCES)/main.c -o $(AR_SOURCES)/main.o
-	@$(LD) -o $(AR_SOURCES)/sdloader.elf $(AR_SOURCES)/startup.o $(AR_SOURCES)/main.o $(AR_SOURCES)/swiss-lz.o --section-start .text=0x81700000
+	@$(LD) -o $(AR_SOURCES)/sdloader.elf $(AR_SOURCES)/startup.o $(AR_SOURCES)/main.o $(AR_SOURCES)/autoexec.o --section-start .text=0x81700000
 	@$(OBJCOPY) -O binary $(AR_SOURCES)/sdloader.elf $(DIST)/ActionReplay/SDLOADER.BIN
-	@rm -f $(AR_SOURCES)/*.o $(AR_SOURCES)/*.elf $(DIST)/ActionReplay/*swiss-lz.dol $(AR_SOURCES)/swiss-lz.s
+	@rm -f $(AR_SOURCES)/*.o $(AR_SOURCES)/*.elf $(AR_SOURCES)/autoexec.s
 
 #------------------------------------------------------------------
 
