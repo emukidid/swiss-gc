@@ -509,6 +509,16 @@ u32 _dvdgettransferredsize[] = {
 	0x4E800020	// blr
 };
 
+u32 _aigetdmastartaddrd[] = {
+	0x3C60CC00,	// lis		r3, 0xCC00
+	0xA0835030,	// lhz		r4, 0x5030 (r3)
+	0x3C60CC00,	// lis		r3, 0xCC00
+	0xA0035032,	// lhz		r0, 0x5032 (r3)
+	0x54030434,	// rlwinm	r3, r0, 0, 16, 26
+	0x5083819E,	// rlwimi	r3, r4, 16, 6, 15
+	0x4E800020	// blr
+};
+
 u32 _aigetdmastartaddr[] = {
 	0x3C60CC00,	// lis		r3, 0xCC00
 	0x38635000,	// addi		r3, r3, 0x5000
@@ -562,8 +572,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	int i, j, k;
 	int patched = 0;
 	u32 address;
-	FuncPattern PrepareExecSig = 
-		{ 60, 15, 3, 16, 13, 2, NULL, 0, "PrepareExec" };
+	FuncPattern PrepareExecSigs[2] = {
+		{ 54, 19, 3, 17,  3, 3, NULL, 0, "PrepareExecD" },
+		{ 60, 15, 3, 16, 13, 2, NULL, 0, "PrepareExec" }
+	};
 	FuncPattern PPCHaltSig = 
 		{ 5, 1, 0, 0, 1, 1, NULL, 0, "PPCHalt" };
 	FuncPattern OSInitSigs[26] = {
@@ -1197,16 +1209,14 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 24, 7, 5, 3, 2, 3, NULL, 0, "__DVDDequeueWaitingQueue" },
 		{ 26, 7, 5, 3, 2, 5, NULL, 0, "__DVDDequeueWaitingQueue" }	// SN Systems ProDG
 	};
-	FuncPattern AIRegisterDMACallbackSigs[2] = {
-		{ 18, 4, 4, 2, 0, 3, NULL, 0, "AIRegisterDMACallbackD" },
-		{ 17, 5, 5, 2, 0, 3, NULL, 0, "AIRegisterDMACallback" }
-	};
 	FuncPattern AIInitDMASigs[2] = {
 		{ 44, 12, 2, 3, 1, 6, NULL, 0, "AIInitDMAD" },
 		{ 34,  8, 4, 2, 0, 5, NULL, 0, "AIInitDMA" }
 	};
-	FuncPattern AIGetDMAStartAddrSig = 
-		{ 7, 2, 0, 0, 0, 0, NULL, 0, "AIGetDMAStartAddr" };
+	FuncPattern AIGetDMAStartAddrSigs[2] = {
+		{ 7, 2, 0, 0, 0, 0, NULL, 0, "AIGetDMAStartAddrD" },
+		{ 7, 2, 0, 0, 0, 0, NULL, 0, "AIGetDMAStartAddr" }
+	};
 	FuncPattern GXPeekZSigs[3] = {
 		{ 10, 1, 1, 0, 0, 1, NULL, 0, "GXPeekZ" },
 		{ 10, 1, 1, 0, 0, 1, NULL, 0, "GXPeekZ" },	// SN Systems ProDG
@@ -1245,8 +1255,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				PPCHaltSig.offsetFoundAt = i;
 			else if (!memcmp(data + i, _dvdgettransferredsize, sizeof(_dvdgettransferredsize)))
 				DVDGetTransferredSizeSig.offsetFoundAt = i;
+			else if (!memcmp(data + i, _aigetdmastartaddrd, sizeof(_aigetdmastartaddrd)))
+				AIGetDMAStartAddrSigs[0].offsetFoundAt = i;
 			else if (!memcmp(data + i, _aigetdmastartaddr, sizeof(_aigetdmastartaddr)))
-				AIGetDMAStartAddrSig.offsetFoundAt = i;
+				AIGetDMAStartAddrSigs[1].offsetFoundAt = i;
 			else if (!memcmp(data + i, _gxpeekz_a, sizeof(_gxpeekz_a)))
 				GXPeekZSigs[0].offsetFoundAt = i;
 			else if (!memcmp(data + i, _gxpeekz_b, sizeof(_gxpeekz_b)))
@@ -1259,13 +1271,27 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		FuncPattern fp;
 		make_pattern(data, i, length, &fp);
 		
-		if (compare_pattern(&fp, &PrepareExecSig)) {
-			if (findx_pattern(data, dataType, i + 12, length, &OSDisableInterruptsSig) &&
-				findx_pattern(data, dataType, i + 44, length, &__OSDoHotResetSigs[1]) &&
-				findx_pattern(data, dataType, i + 46, length, &__OSMaskInterruptsSigs[1]) &&
-				findx_pattern(data, dataType, i + 48, length, &__OSUnmaskInterruptsSigs[1]) &&
-				findx_pattern(data, dataType, i + 49, length, &OSEnableInterruptsSig))
-				PrepareExecSig.offsetFoundAt = i;
+		for (j = 0; j < sizeof(PrepareExecSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &PrepareExecSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i + 10, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 40, length, &__OSDoHotResetSigs[0]) &&
+							findx_pattern(data, dataType, i + 42, length, &__OSMaskInterruptsSigs[0]) &&
+							findx_pattern(data, dataType, i + 44, length, &__OSUnmaskInterruptsSigs[0]) &&
+							findx_pattern(data, dataType, i + 45, length, &OSEnableInterruptsSig))
+							PrepareExecSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i + 12, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 44, length, &__OSDoHotResetSigs[1]) &&
+							findx_pattern(data, dataType, i + 46, length, &__OSMaskInterruptsSigs[1]) &&
+							findx_pattern(data, dataType, i + 48, length, &__OSUnmaskInterruptsSigs[1]) &&
+							findx_pattern(data, dataType, i + 49, length, &OSEnableInterruptsSig))
+							PrepareExecSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
 		}
 		
 		for (j = 0; j < sizeof(OSInitSigs) / sizeof(FuncPattern); j++) {
@@ -4219,14 +4245,22 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i +  6, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &AIRegisterDMACallbackSigs[0]))
+							get_immediate(data,   i +  8, i +  9, &address) && address == 0xCC005030 &&
+							get_immediate(data,   i + 13, i + 14, &address) && address == 0xCC005030 &&
+							get_immediate(data,   i + 15, i + 16, &address) && address == 0xCC005032 &&
+							get_immediate(data,   i + 20, i + 21, &address) && address == 0xCC005032 &&
+							get_immediate(data,   i + 30, i + 31, &address) && address == 0xCC005036 &&
+							get_immediate(data,   i + 35, i + 36, &address) && address == 0xCC005036 &&
+							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig))
 							AIInitDMASigs[j].offsetFoundAt = i;
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i +  7, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &AIRegisterDMACallbackSigs[1]))
+							get_immediate(data,   i +  8, i +  9, &address) && address == 0xCC005030 &&
+							get_immediate(data,   i +  8, i + 10, &address) && address == 0xCC005000 &&
+							get_immediate(data,   i +  8, i + 11, &address) && address == 0xCC005000 &&
+							get_immediate(data,   i +  8, i + 12, &address) && address == 0xCC005000 &&
+							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig))
 							AIInitDMASigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -4268,14 +4302,24 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		for (j = 0; j < SystemCallVectorSig.Length; j++)
 			data[i + j] = 0;
 	
-	if ((i = PrepareExecSig.offsetFoundAt)) {
+	for (j = 0; j < sizeof(PrepareExecSigs) / sizeof(FuncPattern); j++)
+		if (PrepareExecSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(PrepareExecSigs) / sizeof(FuncPattern) && (i = PrepareExecSigs[j].offsetFoundAt)) {
 		u32 *PrepareExec = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (PrepareExec) {
-			data[i + 46] = branchAndLink(MASK_IRQ,   PrepareExec + 46);
-			data[i + 48] = branchAndLink(UNMASK_IRQ, PrepareExec + 48);
-			
-			print_gecko("Found:[%s] @ %08X\n", PrepareExecSig.Name, PrepareExec);
+			switch (j) {
+				case 0:
+					data[i + 42] = branchAndLink(MASK_IRQ,   PrepareExec + 42);
+					data[i + 44] = branchAndLink(UNMASK_IRQ, PrepareExec + 44);
+					break;
+				case 1:
+					data[i + 46] = branchAndLink(MASK_IRQ,   PrepareExec + 46);
+					data[i + 48] = branchAndLink(UNMASK_IRQ, PrepareExec + 48);
+					break;
+			}
+			print_gecko("Found:[%s] @ %08X\n", PrepareExecSigs[j].Name, PrepareExec);
 			patched++;
 		}
 	}
@@ -6723,14 +6767,25 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if ((i = AIGetDMAStartAddrSig.offsetFoundAt)) {
+	for (j = 0; j < sizeof(AIGetDMAStartAddrSigs) / sizeof(FuncPattern); j++)
+		if (AIGetDMAStartAddrSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(AIGetDMAStartAddrSigs) / sizeof(FuncPattern) && (i = AIGetDMAStartAddrSigs[j].offsetFoundAt)) {
 		u32 *AIGetDMAStartAddr = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (AIGetDMAStartAddr) {
-			if (devices[DEVICE_CUR]->emulate & EMU_AUDIO_STREAMING)
-				data[i + 0] = 0x3C600C00;	// lis		r3, 0x0C00
-			
-			print_gecko("Found:[%s] @ %08X\n", AIGetDMAStartAddrSig.Name, AIGetDMAStartAddr);
+			if (devices[DEVICE_CUR]->emulate & EMU_AUDIO_STREAMING) {
+				switch (j) {
+					case 0:
+						data[i + 0] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 2] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 1:
+						data[i + 0] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+				}
+			}
+			print_gecko("Found:[%s] @ %08X\n", AIGetDMAStartAddrSigs[j].Name, AIGetDMAStartAddr);
 			patched++;
 		}
 	}
