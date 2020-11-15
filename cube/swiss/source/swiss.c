@@ -1525,25 +1525,12 @@ void load_game() {
 		return;
 	}
 	
-	if(curFile.size < DISC_SIZE && is_redump_game(&GCMDisk)) {
+	if(is_redump_disc(&GCMDisk) && curFile.size < DISC_SIZE) {
 		if(!valid_nkit_image(&GCMDisk, curFile.size)) {
 			DrawDispose(msgBox);
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Disc shrunk using an unsupported tool.\nPlease recover using NKit."));
 			sleep(5);
 			DrawDispose(msgBox);
-		}
-	}
-	
-	// Check that Audio streaming is really necessary before we patch anything for it
-	if(GCMDisk.AudioStreaming) {
-		print_gecko("Checking game for 32K files\r\n");
-		int numAdpFiles = parse_gcm_for_ext(&curFile, NULL, true);
-		if(!numAdpFiles) {
-			print_gecko("No 32K files detected in FST, disabling AudioStreaming flag\r\n");
-			GCMDisk.AudioStreaming = 0;
-		}
-		else {
-			print_gecko("Found %i 32K files\r\n", numAdpFiles);
 		}
 	}
 	

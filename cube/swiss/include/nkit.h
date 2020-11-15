@@ -24,7 +24,7 @@
 #include <stddef.h>
 #include "gcm.h"
 
-bool is_redump_game(DiskHeader *header);
+bool is_redump_disc(DiskHeader *header);
 bool valid_nkit_image(DiskHeader *header, size_t size);
 
 #endif /* __NKIT_H */
