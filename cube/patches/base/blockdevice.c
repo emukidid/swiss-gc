@@ -74,8 +74,10 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 void trickle_read(void)
 {
 	#ifndef ASYNC_READ
+	#ifdef DTK
 	if (dtk_fill_buffer())
 		return;
+	#endif
 
 	if (dvd.read) {
 		OSTick start = OSGetTick();

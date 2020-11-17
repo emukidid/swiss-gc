@@ -113,15 +113,23 @@ void dvd_schedule_read(uint32_t offset, uint32_t length, OSAlarmHandler handler)
 					ticks += OSSecondsToTicks(CalculateSeekTime(head_position, dvd_offset));
 					ticks += OSSecondsToTicks(CalculateRotationalLatency(dvd_offset,
 						OSTicksToSeconds((double)(current_time + ticks_until_completion + ticks))));
+
+					#if READ_SPEED_TIER == 2
+					ticks_until_execution += ticks;
+					#endif
 				} else {
 					ticks += OSSecondsToTicks(CalculateRawDiscReadTime(dvd_offset, DVD_ECC_BLOCK_SIZE));
 				}
 
+				#if READ_SPEED_TIER == 1
 				ticks_until_execution += ticks;
-
+				#endif
 				head_position = dvd_offset + DVD_ECC_BLOCK_SIZE;
 			}
 
+			#if READ_SPEED_TIER == 0
+			ticks_until_execution += ticks;
+			#endif
 			ticks_until_completion += ticks;
 
 			offset += chunk_length;

@@ -121,41 +121,72 @@ int install_code(int final)
 	u8 *patch = NULL; u32 patchSize = 0;
 	
 	// IDE-EXI
-  	if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b) {	
-		patch = (!_ideexi_version)?&ideexi_v1_bin[0]:&ideexi_v2_bin[0];
-		patchSize = (!_ideexi_version)?ideexi_v1_bin_size:ideexi_v2_bin_size;
+	if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b) {
+		if (GCMDisk.AudioStreaming) {
+			patch     = !_ideexi_version ? ideexi_v1_dtk_bin      : ideexi_v2_dtk_bin;
+			patchSize = !_ideexi_version ? ideexi_v1_dtk_bin_size : ideexi_v2_dtk_bin_size;
+		} else {
+			patch     = !_ideexi_version ? ideexi_v1_bin      : ideexi_v2_bin;
+			patchSize = !_ideexi_version ? ideexi_v1_bin_size : ideexi_v2_bin_size;
+		}
 		print_gecko("Installing Patch for IDE-EXI\r\n");
-  	}
+	}
 	// SD Card over EXI
 	else if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
-		patch = &sd_bin[0]; patchSize = sd_bin_size;
+		if (GCMDisk.AudioStreaming) {
+			patch     = sd_dtk_bin;
+			patchSize = sd_dtk_bin_size;
+		} else {
+			patch     = sd_bin;
+			patchSize = sd_bin_size;
+		}
 		print_gecko("Installing Patch for SD Card over EXI\r\n");
 	}
 	// DVD
 	else if(devices[DEVICE_CUR] == &__device_dvd) {
-		patch = !swissSettings.emulateMemoryCard?&dvd_bin[0]:&dvd_card_bin[0];
-		patchSize = !swissSettings.emulateMemoryCard?dvd_bin_size:dvd_card_bin_size;
+		if (swissSettings.emulateMemoryCard) {
+			patch     = dvd_card_bin;
+			patchSize = dvd_card_bin_size;
+		} else {
+			patch     = dvd_bin;
+			patchSize = dvd_bin_size;
+		}
 		print_gecko("Installing Patch for DVD\r\n");
 	}
 	// USB Gecko
 	else if(devices[DEVICE_CUR] == &__device_usbgecko) {
-		patch = &usbgecko_bin[0]; patchSize = usbgecko_bin_size;
+		patch     = usbgecko_bin;
+		patchSize = usbgecko_bin_size;
+		
 		print_gecko("Installing Patch for USB Gecko\r\n");
 	}
 	// Wiikey Fusion
 	else if(devices[DEVICE_CUR] == &__device_wkf) {
-		patch = &wkf_bin[0]; patchSize = wkf_bin_size;
+		if (GCMDisk.AudioStreaming) {
+			patch     = wkf_dtk_bin;
+			patchSize = wkf_dtk_bin_size;
+		} else {
+			patch     = wkf_bin;
+			patchSize = wkf_bin_size;
+		}
 		print_gecko("Installing Patch for WKF\r\n");
 	}
 	// Broadband Adapter
 	else if(devices[DEVICE_CUR] == &__device_fsp) {
-		patch = &bba_bin[0]; patchSize = bba_bin_size;
-		print_gecko("Installing Patch for Broadband Adapter\r\n");
+		patch     = fsp_bin;
+		patchSize = fsp_bin_size;
+		
+		print_gecko("Installing Patch for File Service Protocol\r\n");
 	}
 	// GC Loader
 	else if(devices[DEVICE_CUR] == &__device_gcloader) {
-		patch = !swissSettings.emulateMemoryCard?&gcloader_bin[0]:&gcloader_card_bin[0];
-		patchSize = !swissSettings.emulateMemoryCard?gcloader_bin_size:gcloader_card_bin_size;
+		if (swissSettings.emulateMemoryCard) {
+			patch     = gcloader_card_bin;
+			patchSize = gcloader_card_bin_size;
+		} else {
+			patch     = gcloader_bin;
+			patchSize = gcloader_bin_size;
+		}
 		print_gecko("Installing Patch for GC Loader\r\n");
 	}
 	print_gecko("Space for patch remaining: %i\r\n", top_addr - location);
@@ -6747,7 +6778,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *AIInitDMA = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (AIInitDMA) {
-			if (devices[DEVICE_CUR]->emulate & EMU_AUDIO_STREAMING) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_AUDIO_STREAMING) && GCMDisk.AudioStreaming) {
 				switch (j) {
 					case 0:
 						data[i +  8] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -6774,7 +6805,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *AIGetDMAStartAddr = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (AIGetDMAStartAddr) {
-			if (devices[DEVICE_CUR]->emulate & EMU_AUDIO_STREAMING) {
+			if ((devices[DEVICE_CUR]->emulate & EMU_AUDIO_STREAMING) && GCMDisk.AudioStreaming) {
 				switch (j) {
 					case 0:
 						data[i + 0] = 0x3C600C00;	// lis		r3, 0x0C00

@@ -133,7 +133,9 @@ void schedule_read(OSTick ticks)
 		return;
 	}
 
+	#ifdef DTK
 	dtk_fill_buffer();
+	#endif
 	dvd.frag = is_frag_read(dvd.offset, dvd.length);
 
 	if (!dvd.frag)
