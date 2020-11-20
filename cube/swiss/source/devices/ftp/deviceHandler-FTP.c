@@ -238,5 +238,6 @@ DEVICEHANDLER_INTERFACE __device_ftp = {
 	(_fn_seekFile)&deviceHandler_FTP_seekFile,
 	(_fn_setupFile)NULL,
 	(_fn_closeFile)&deviceHandler_FTP_closeFile,
-	(_fn_deinit)&deviceHandler_FTP_deinit
+	(_fn_deinit)&deviceHandler_FTP_deinit,
+	(_fn_emulated)NULL,
 };

@@ -329,5 +329,6 @@ DEVICEHANDLER_INTERFACE __device_sys = {
 	(_fn_seekFile)&deviceHandler_SYS_seekFile,
 	(_fn_setupFile)&deviceHandler_SYS_setupFile,
 	(_fn_closeFile)&deviceHandler_SYS_closeFile,
-	(_fn_deinit)&deviceHandler_SYS_deinit
+	(_fn_deinit)&deviceHandler_SYS_deinit,
+	(_fn_emulated)NULL,
 };

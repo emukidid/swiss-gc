@@ -225,7 +225,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 	else if(page_num == PAGE_ADVANCED) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Advanced Settings (3/5):"));
 		bool enabledVideoPatches = !swissSettings.disableVideoPatches;
-		bool emulatedMemoryCard = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_MEMCARD);
+		bool emulatedMemoryCard = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_MEMCARD);
 		drawSettingEntryBoolean(page, &page_y_ofs, "USB Gecko Debug via Slot B:", swissSettings.debugUSB, option == SET_ENABLE_USBGECKODBG, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Hide Unknown file types:", swissSettings.hideUnknownFileTypes, option == SET_HIDE_UNK, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Motor on startup:", swissSettings.stopMotor, option == SET_STOP_MOTOR, true);
@@ -241,7 +241,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 	else if(page_num == PAGE_GAME_DEFAULTS) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Default Game Settings (4/5):"));
 		bool enabledVideoPatches = !swissSettings.disableVideoPatches;
-		bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_READ_SPEED);
+		bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
 		drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_DEFAULT_FORCE_VIDEOMODE, enabledVideoPatches);
 		drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, enabledVideoPatches);
 		sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
@@ -258,7 +258,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		bool enabledGamePatches = file != NULL && gameConfig != NULL;
 		if(enabledGamePatches) {
 			bool enabledVideoPatches = !swissSettings.disableVideoPatches;
-			bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_READ_SPEED);
+			bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
 			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[gameConfig->forceHScale], option == SET_HORIZ_SCALE, enabledVideoPatches);
 			sprintf(forceVOffsetStr, "%+hi", gameConfig->forceVOffset);
@@ -451,7 +451,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 				swissSettings.bs2Boot ^= 1;
 			break;
 			case SET_EMULATE_MEMCARD:
-				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_MEMCARD))
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_MEMCARD))
 					swissSettings.emulateMemoryCard ^= 1;
 			break;
 		}
@@ -527,7 +527,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 					swissSettings.invertCStick = 3;
 			break;
 			case SET_DEFAULT_READ_SPEED:
-				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_READ_SPEED)) {
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED)) {
 					swissSettings.emulateReadSpeed += direction;
 					if(swissSettings.emulateReadSpeed > 2)
 						swissSettings.emulateReadSpeed = 0;
@@ -608,7 +608,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 					gameConfig->invertCStick = 3;
 			break;
 			case SET_READ_SPEED:
-				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulate & EMU_READ_SPEED)) {
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED)) {
 					gameConfig->emulateReadSpeed += direction;
 					if(gameConfig->emulateReadSpeed > 2)
 						gameConfig->emulateReadSpeed = 0;

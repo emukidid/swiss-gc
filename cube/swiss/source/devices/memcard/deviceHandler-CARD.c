@@ -512,7 +512,8 @@ DEVICEHANDLER_INTERFACE __device_card_a = {
 	(_fn_seekFile)&deviceHandler_CARD_seekFile,
 	(_fn_setupFile)&deviceHandler_CARD_setupFile,
 	(_fn_closeFile)&deviceHandler_CARD_closeFile,
-	(_fn_deinit)&deviceHandler_CARD_deinit
+	(_fn_deinit)&deviceHandler_CARD_deinit,
+	(_fn_emulated)NULL,
 };
 
 DEVICEHANDLER_INTERFACE __device_card_b = {
@@ -535,5 +536,6 @@ DEVICEHANDLER_INTERFACE __device_card_b = {
 	(_fn_seekFile)&deviceHandler_CARD_seekFile,
 	(_fn_setupFile)&deviceHandler_CARD_setupFile,
 	(_fn_closeFile)&deviceHandler_CARD_closeFile,
-	(_fn_deinit)&deviceHandler_CARD_deinit
+	(_fn_deinit)&deviceHandler_CARD_deinit,
+	(_fn_emulated)NULL,
 };

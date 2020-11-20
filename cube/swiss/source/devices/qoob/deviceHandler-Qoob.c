@@ -161,5 +161,6 @@ DEVICEHANDLER_INTERFACE __device_qoob = {
 	(_fn_seekFile)&deviceHandler_Qoob_seekFile,
 	(_fn_setupFile)NULL,
 	(_fn_closeFile)&deviceHandler_Qoob_closeFile,
-	(_fn_deinit)&deviceHandler_Qoob_deinit
+	(_fn_deinit)&deviceHandler_Qoob_deinit,
+	(_fn_emulated)NULL,
 };

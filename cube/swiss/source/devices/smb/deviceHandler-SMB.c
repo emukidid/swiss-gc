@@ -242,5 +242,6 @@ DEVICEHANDLER_INTERFACE __device_smb = {
 	(_fn_seekFile)&deviceHandler_SMB_seekFile,
 	(_fn_setupFile)NULL,
 	(_fn_closeFile)&deviceHandler_SMB_closeFile,
-	(_fn_deinit)&deviceHandler_SMB_deinit
+	(_fn_deinit)&deviceHandler_SMB_deinit,
+	(_fn_emulated)NULL,
 };

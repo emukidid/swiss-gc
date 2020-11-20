@@ -239,6 +239,10 @@ bool deviceHandler_FSP_test() {
 	return exi_bba_exists();
 }
 
+u32 deviceHandler_FSP_emulated() {
+	return EMU_READ;
+}
+
 DEVICEHANDLER_INTERFACE __device_fsp = {
 	DEVICE_ID_E,
 	"BBA",
@@ -259,5 +263,6 @@ DEVICEHANDLER_INTERFACE __device_fsp = {
 	(_fn_seekFile)&deviceHandler_FSP_seekFile,
 	(_fn_setupFile)&deviceHandler_FSP_setupFile,
 	(_fn_closeFile)&deviceHandler_FSP_closeFile,
-	(_fn_deinit)&deviceHandler_FSP_deinit
+	(_fn_deinit)&deviceHandler_FSP_deinit,
+	(_fn_emulated)&deviceHandler_FSP_emulated,
 };

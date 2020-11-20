@@ -58,8 +58,8 @@ typedef struct {
 #define DEVICE_HANDLER_SEEK_CUR 1
 
 // Device struct
-typedef s32 (* _fn_info)(file_handle*);
 typedef bool (* _fn_test)(void);
+typedef device_info* (* _fn_info)(file_handle*);
 typedef s32 (* _fn_init)(file_handle*);
 typedef s32 (* _fn_readDir)(file_handle*, file_handle**, u32);
 typedef s32 (* _fn_readFile)(file_handle*, void*, u32);
@@ -69,7 +69,7 @@ typedef s32 (* _fn_seekFile)(file_handle*,  u32, u32);
 typedef s32 (* _fn_setupFile)(file_handle*, file_handle*, int);
 typedef s32 (* _fn_closeFile)(file_handle*);
 typedef s32 (* _fn_deinit)(file_handle*);
-typedef device_info* (* _fn_deviceInfo)(void);
+typedef u32 (* _fn_emulated)(void);
 
 // Device features
 #define FEAT_READ				0x1
@@ -127,7 +127,7 @@ struct DEVICEHANDLER_STRUCT {
 	const char*		deviceDescription;
 	textureImage	deviceTexture;
 	u32				features;
-	u32				emulate;
+	u32				emulable;
 	u32				location;
 	file_handle*	initial;
 	_fn_test		test;
@@ -141,6 +141,7 @@ struct DEVICEHANDLER_STRUCT {
 	_fn_setupFile	setupFile;
 	_fn_closeFile	closeFile;
 	_fn_deinit		deinit;
+	_fn_emulated	emulated;
 } ;
 
 typedef struct DEVICEHANDLER_STRUCT DEVICEHANDLER_INTERFACE;

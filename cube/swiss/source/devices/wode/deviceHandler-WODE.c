@@ -152,6 +152,10 @@ bool deviceHandler_WODE_test() {
 	return swissSettings.hasDVDDrive && (*(u32*)&driveVersion[0] == 0x20080714);
 }
 
+u32 deviceHandler_WODE_emulated() {
+	return EMU_NONE;
+}
+
 DEVICEHANDLER_INTERFACE __device_wode = {
 	DEVICE_ID_C,
 	"WODE",
@@ -172,5 +176,6 @@ DEVICEHANDLER_INTERFACE __device_wode = {
 	(_fn_seekFile)&deviceHandler_WODE_seekFile,
 	(_fn_setupFile)&deviceHandler_WODE_setupFile,
 	(_fn_closeFile)&deviceHandler_WODE_closeFile,
-	(_fn_deinit)&deviceHandler_WODE_deinit
+	(_fn_deinit)&deviceHandler_WODE_deinit,
+	(_fn_emulated)&deviceHandler_WODE_emulated,
 };

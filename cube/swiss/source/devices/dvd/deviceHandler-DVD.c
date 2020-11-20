@@ -540,6 +540,13 @@ bool deviceHandler_DVD_test() {
 	return swissSettings.hasDVDDrive != 0;
 }
 
+u32 deviceHandler_DVD_emulated() {
+	if (swissSettings.emulateMemoryCard)
+		return EMU_MEMCARD;
+	else
+		return EMU_NONE;
+}
+
 DEVICEHANDLER_INTERFACE __device_dvd = {
 	DEVICE_ID_0,
 	"Disc Drive",
@@ -560,5 +567,6 @@ DEVICEHANDLER_INTERFACE __device_dvd = {
 	(_fn_seekFile)&deviceHandler_DVD_seekFile,
 	(_fn_setupFile)&deviceHandler_DVD_setupFile,
 	(_fn_closeFile)&deviceHandler_DVD_closeFile,
-	(_fn_deinit)&deviceHandler_DVD_deinit
+	(_fn_deinit)&deviceHandler_DVD_deinit,
+	(_fn_emulated)&deviceHandler_DVD_emulated,
 };

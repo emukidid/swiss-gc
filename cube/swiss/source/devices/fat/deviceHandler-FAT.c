@@ -533,6 +533,15 @@ bool deviceHandler_FAT_test_ide_b() {
 	return ide_exi_inserted(1);
 }
 
+u32 deviceHandler_FAT_emulated() {
+	if (GCMDisk.AudioStreaming)
+		return EMU_READ|EMU_AUDIO_STREAMING;
+	else if (swissSettings.emulateReadSpeed)
+		return EMU_READ|EMU_READ_SPEED;
+	else
+		return EMU_READ;
+}
+
 DEVICEHANDLER_INTERFACE __device_sd_a = {
 	DEVICE_ID_1,
 	"SD Card Adapter",
@@ -553,7 +562,8 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
-	(_fn_deinit)&deviceHandler_FAT_deinit
+	(_fn_deinit)&deviceHandler_FAT_deinit,
+	(_fn_emulated)&deviceHandler_FAT_emulated,
 };
 
 DEVICEHANDLER_INTERFACE __device_sd_b = {
@@ -576,7 +586,8 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
-	(_fn_deinit)&deviceHandler_FAT_deinit
+	(_fn_deinit)&deviceHandler_FAT_deinit,
+	(_fn_emulated)&deviceHandler_FAT_emulated,
 };
 
 DEVICEHANDLER_INTERFACE __device_ide_a = {
@@ -599,7 +610,8 @@ DEVICEHANDLER_INTERFACE __device_ide_a = {
 	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
-	(_fn_deinit)&deviceHandler_FAT_deinit
+	(_fn_deinit)&deviceHandler_FAT_deinit,
+	(_fn_emulated)&deviceHandler_FAT_emulated,
 };
 
 DEVICEHANDLER_INTERFACE __device_ide_b = {
@@ -622,7 +634,8 @@ DEVICEHANDLER_INTERFACE __device_ide_b = {
 	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
-	(_fn_deinit)&deviceHandler_FAT_deinit
+	(_fn_deinit)&deviceHandler_FAT_deinit,
+	(_fn_emulated)&deviceHandler_FAT_emulated,
 };
 
 DEVICEHANDLER_INTERFACE __device_sd_c = {
@@ -645,5 +658,6 @@ DEVICEHANDLER_INTERFACE __device_sd_c = {
 	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
-	(_fn_deinit)&deviceHandler_FAT_deinit
+	(_fn_deinit)&deviceHandler_FAT_deinit,
+	(_fn_emulated)&deviceHandler_FAT_emulated,
 };

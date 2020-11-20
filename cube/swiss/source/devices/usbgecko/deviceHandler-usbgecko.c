@@ -222,6 +222,10 @@ bool deviceHandler_USBGecko_test() {
 	return usb_isgeckoalive(1);
 }
 
+u32 deviceHandler_USBGecko_emulated() {
+	return EMU_READ;
+}
+
 DEVICEHANDLER_INTERFACE __device_usbgecko = {
 	DEVICE_ID_A,
 	"USB Gecko",
@@ -242,5 +246,6 @@ DEVICEHANDLER_INTERFACE __device_usbgecko = {
 	(_fn_seekFile)&deviceHandler_USBGecko_seekFile,
 	(_fn_setupFile)&deviceHandler_USBGecko_setupFile,
 	(_fn_closeFile)&deviceHandler_USBGecko_closeFile,
-	(_fn_deinit)&deviceHandler_USBGecko_deinit
+	(_fn_deinit)&deviceHandler_USBGecko_deinit,
+	(_fn_emulated)&deviceHandler_USBGecko_emulated,
 };

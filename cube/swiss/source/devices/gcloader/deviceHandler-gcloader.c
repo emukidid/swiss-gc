@@ -250,6 +250,15 @@ bool deviceHandler_GCLOADER_test() {
 	return swissSettings.hasDVDDrive && (*(u32*)&driveVersion[0] == 0x20196C64);
 }
 
+u32 deviceHandler_GCLOADER_emulated() {
+	if (swissSettings.emulateReadSpeed)
+		return EMU_READ_SPEED;
+	else if (swissSettings.emulateMemoryCard)
+		return EMU_MEMCARD;
+	else
+		return EMU_NONE;
+}
+
 DEVICEHANDLER_INTERFACE __device_gcloader = {
 	DEVICE_ID_G,
 	"GCLoader",
@@ -270,5 +279,6 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	(_fn_seekFile)&deviceHandler_GCLOADER_seekFile,
 	(_fn_setupFile)&deviceHandler_GCLOADER_setupFile,
 	(_fn_closeFile)&deviceHandler_GCLOADER_closeFile,
-	(_fn_deinit)&deviceHandler_GCLOADER_deinit
+	(_fn_deinit)&deviceHandler_GCLOADER_deinit,
+	(_fn_emulated)&deviceHandler_GCLOADER_emulated,
 };

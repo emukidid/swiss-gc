@@ -207,6 +207,13 @@ bool deviceHandler_WKF_test() {
 	return swissSettings.hasDVDDrive && (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF);
 }
 
+u32 deviceHandler_WKF_emulated() {
+	if (GCMDisk.AudioStreaming)
+		return EMU_READ|EMU_AUDIO_STREAMING;
+	else
+		return EMU_READ;
+}
+
 DEVICEHANDLER_INTERFACE __device_wkf = {
 	DEVICE_ID_B,
 	"WKF / WASP ODE",
@@ -227,5 +234,6 @@ DEVICEHANDLER_INTERFACE __device_wkf = {
 	(_fn_seekFile)&deviceHandler_WKF_seekFile,
 	(_fn_setupFile)&deviceHandler_WKF_setupFile,
 	(_fn_closeFile)&deviceHandler_WKF_closeFile,
-	(_fn_deinit)&deviceHandler_WKF_deinit
+	(_fn_deinit)&deviceHandler_WKF_deinit,
+	(_fn_emulated)&deviceHandler_WKF_emulated,
 };
