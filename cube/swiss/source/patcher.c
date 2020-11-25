@@ -11804,6 +11804,26 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
 	FuncPattern OSRestoreInterruptsSig = 
 		{ 9, 0, 0, 0, 2, 2, NULL, 0, "OSRestoreInterrupts" };
+	FuncPattern __OSLockSramSigs[3] = {
+		{  9, 3, 2, 1, 0, 2, NULL, 0, "__OSLockSramD" },
+		{ 23, 7, 5, 2, 2, 2, NULL, 0, "__OSLockSram" },
+		{ 20, 7, 4, 2, 2, 3, NULL, 0, "__OSLockSram" }	// SN Systems ProDG
+	};
+	FuncPattern __OSLockSramExSigs[3] = {
+		{  9, 3, 2, 1, 0, 2, NULL, 0, "__OSLockSramExD" },
+		{ 23, 9, 5, 2, 2, 2, NULL, 0, "__OSLockSramEx" },
+		{ 20, 8, 4, 2, 2, 2, NULL, 0, "__OSLockSramEx" }	// SN Systems ProDG
+	};
+	FuncPattern __OSUnlockSramSigs[3] = {
+		{  11,  4,  3, 1, 0,  2, NULL, 0, "__OSUnlockSramD" },
+		{   9,  3,  2, 1, 0,  2, NULL, 0, "__OSUnlockSram" },
+		{ 173, 53, 11, 9, 9, 25, NULL, 0, "__OSUnlockSram" }	// SN Systems ProDG
+	};
+	FuncPattern __OSUnlockSramExSigs[3] = {
+		{ 11,  4,  3, 1, 0, 2, NULL, 0, "__OSUnlockSramExD" },
+		{  9,  3,  2, 1, 0, 2, NULL, 0, "__OSUnlockSramEx" },
+		{ 98, 43, 11, 9, 5, 6, NULL, 0, "__OSUnlockSramEx" }	// SN Systems ProDG
+	};
 	FuncPattern SIGetResponseSigs[6] = {
 		{ 36, 13, 4, 1, 2,  4, NULL, 0, "SIGetResponseD" },
 		{ 48, 12, 5, 4, 3,  7, NULL, 0, "SIGetResponseD" },
@@ -11894,6 +11914,19 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 161, 28, 2, 6, 12, 63, NULL, 0, "VerifyID" },
 		{ 161, 28, 2, 6, 12, 63, NULL, 0, "VerifyID" },
 		{ 161, 28, 2, 6, 12, 63, NULL, 0, "VerifyID" }
+	};
+	FuncPattern DoMountSigs[11] = {
+		{ 181, 48,  6, 18, 20, 26, NULL, 0, "DoMountD" },
+		{ 222, 57,  7, 20, 25, 27, NULL, 0, "DoMountD" },
+		{ 244, 57,  7, 20, 37, 27, NULL, 0, "DoMountD" },
+		{ 229, 63,  7, 24, 24, 27, NULL, 0, "DoMountD" },
+		{ 247, 67,  7, 26, 27, 29, NULL, 0, "DoMountD" },
+		{ 231, 59, 12, 17, 20, 33, NULL, 0, "DoMount" },
+		{ 238, 60, 10, 17, 21, 33, NULL, 0, "DoMount" },
+		{ 276, 68, 11, 19, 26, 33, NULL, 0, "DoMount" },
+		{ 297, 67, 11, 19, 38, 33, NULL, 0, "DoMount" },
+		{ 260, 66, 11, 20, 24, 33, NULL, 0, "DoMount" },
+		{ 277, 69, 11, 22, 27, 35, NULL, 0, "DoMount" }
 	};
 	_SDA2_BASE_ = _SDA_BASE_ = 0;
 	
@@ -12228,65 +12261,188 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i +  30, length, &OSGetFontEncodeSigs[0]) &&
+							findx_pattern(data, dataType, i +  39, length, &__OSLockSramExSigs[0]) &&
 							get_immediate(data,  i +  44, i +  46, &constant) && constant == 0x41C64E6D &&
 							get_immediate(data,  i +  53,       0, &constant) && constant == 0x3039 &&
 							get_immediate(data,  i +  64,       0, &constant) && constant == 0x0108 &&
+							findx_pattern(data, dataType, i +  74, length, &__OSUnlockSramExSigs[0]) &&
 							get_immediate(data,  i +  78, i +  80, &constant) && constant == 0x41C64E6D &&
 							get_immediate(data,  i +  87,       0, &constant) && constant == 0x3039 &&
-							get_immediate(data,  i +  92,       0, &constant) && constant == 0x7FFF)
+							get_immediate(data,  i +  92,       0, &constant) && constant == 0x7FFF &&
+							findx_pattern(data, dataType, i + 100, length, &__OSUnlockSramExSigs[0]))
 							VerifyIDSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i +  30, length, &OSGetFontEncodeSigs[0]) &&
+							findx_pattern(data, dataType, i +  39, length, &__OSLockSramExSigs[0]) &&
 							get_immediate(data,  i +  44, i +  46, &constant) && constant == 0x41C64E6D &&
 							get_immediate(data,  i +  53,       0, &constant) && constant == 0x3039 &&
 							get_immediate(data,  i +  64,       0, &constant) && constant == 0x0110 &&
+							findx_pattern(data, dataType, i +  74, length, &__OSUnlockSramExSigs[0]) &&
 							get_immediate(data,  i +  78, i +  80, &constant) && constant == 0x41C64E6D &&
 							get_immediate(data,  i +  87,       0, &constant) && constant == 0x3039 &&
-							get_immediate(data,  i +  92,       0, &constant) && constant == 0x7FFF)
+							get_immediate(data,  i +  92,       0, &constant) && constant == 0x7FFF &&
+							findx_pattern(data, dataType, i + 100, length, &__OSUnlockSramExSigs[0]))
 							VerifyIDSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (get_immediate(data,  i +  37, i +  39, &constant) && constant == 0x41C64E6D &&
+						if (findx_pattern(data, dataType, i +  32, length, &__OSLockSramExSigs[0]) &&
+							get_immediate(data,  i +  37, i +  39, &constant) && constant == 0x41C64E6D &&
 							get_immediate(data,  i +  46,       0, &constant) && constant == 0x3039 &&
 							get_immediate(data,  i +  57,       0, &constant) && constant == 0x0110 &&
+							findx_pattern(data, dataType, i +  67, length, &__OSUnlockSramExSigs[0]) &&
 							get_immediate(data,  i +  71, i +  73, &constant) && constant == 0x41C64E6D &&
 							get_immediate(data,  i +  80,       0, &constant) && constant == 0x3039 &&
 							get_immediate(data,  i +  85,       0, &constant) && constant == 0x7FFF &&
+							findx_pattern(data, dataType, i +  93, length, &__OSUnlockSramExSigs[0]) &&
 							findx_pattern(data, dataType, i +  94, length, &__CARDGetFontEncodeSig))
 							VerifyIDSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
-						if (get_immediate(data,  i +  94, i +  95, &address) && address == 0xCC00206E &&
+						if (findx_pattern(data, dataType, i +  88, length, &__OSLockSramSigs[1]) &&
+							get_immediate(data,  i +  94, i +  95, &address) && address == 0xCC00206E &&
+							findx_pattern(data, dataType, i + 103, length, &__OSUnlockSramSigs[1]) &&
+							findx_pattern(data, dataType, i + 112, length, &__OSLockSramExSigs[1]) &&
 							get_immediate(data,  i + 115, i + 117, &constant) && constant == 0x2E8BA2E9 &&
 							get_immediate(data,  i + 123, i + 126, &constant) && constant == 0x41C64E6D &&
 							get_immediate(data,  i + 134,       0, &constant) && constant == 0x3039 &&
-							get_immediate(data,  i + 162,       0, &constant) && constant == 0x7FFF)
+							findx_pattern(data, dataType, i + 147, length, &__OSUnlockSramExSigs[1]) &&
+							get_immediate(data,  i + 162,       0, &constant) && constant == 0x7FFF &&
+							findx_pattern(data, dataType, i + 169, length, &__OSUnlockSramExSigs[1]))
 							VerifyIDSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i +  88, length, &OSGetFontEncodeSigs[1]) &&
+							findx_pattern(data, dataType, i +  97, length, &__OSLockSramExSigs[1]) &&
 							get_immediate(data,  i + 100, i + 102, &constant) && constant == 0x3E0F83E1 &&
 							get_immediate(data,  i + 108, i + 111, &constant) && constant == 0x41C64E6D &&
 							get_immediate(data,  i + 119,       0, &constant) && constant == 0x3039 &&
-							get_immediate(data,  i + 147,       0, &constant) && constant == 0x7FFF)
+							findx_pattern(data, dataType, i + 132, length, &__OSUnlockSramExSigs[1]) &&
+							get_immediate(data,  i + 147,       0, &constant) && constant == 0x7FFF &&
+							findx_pattern(data, dataType, i + 154, length, &__OSUnlockSramExSigs[1]))
 							VerifyIDSigs[j].offsetFoundAt = i;
 						break;
 					case 5:
 						if (findx_pattern(data, dataType, i +  88, length, &OSGetFontEncodeSigs[1]) &&
+							findx_pattern(data, dataType, i +  97, length, &__OSLockSramExSigs[1]) &&
 							get_immediate(data,  i + 100, i + 102, &constant) && constant == 0x78787879 &&
 							get_immediate(data,  i + 108, i + 111, &constant) && constant == 0x41C64E6D &&
 							get_immediate(data,  i + 119,       0, &constant) && constant == 0x3039 &&
-							get_immediate(data,  i + 147,       0, &constant) && constant == 0x7FFF)
+							findx_pattern(data, dataType, i + 132, length, &__OSUnlockSramExSigs[1]) &&
+							get_immediate(data,  i + 147,       0, &constant) && constant == 0x7FFF &&
+							findx_pattern(data, dataType, i + 154, length, &__OSUnlockSramExSigs[1]))
 							VerifyIDSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
-						if (get_immediate(data,  i +  93, i +  95, &constant) && constant == 0x78787879 &&
+						if (findx_pattern(data, dataType, i +  90, length, &__OSLockSramExSigs[1]) &&
+							get_immediate(data,  i +  93, i +  95, &constant) && constant == 0x78787879 &&
 							get_immediate(data,  i + 101, i + 104, &constant) && constant == 0x41C64E6D &&
 							get_immediate(data,  i + 112,       0, &constant) && constant == 0x3039 &&
+							findx_pattern(data, dataType, i + 125, length, &__OSUnlockSramExSigs[1]) &&
 							get_immediate(data,  i + 140,       0, &constant) && constant == 0x7FFF &&
+							findx_pattern(data, dataType, i + 147, length, &__OSUnlockSramExSigs[1]) &&
 							findx_pattern(data, dataType, i + 148, length, &__CARDGetFontEncodeSig))
 							VerifyIDSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(DoMountSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &DoMountSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  83, length, &__OSLockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 102, length, &__OSUnlockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 108, length, &__OSLockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 120, length, &__OSUnlockSramExSigs[0]))
+							DoMountSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i + 105, length, &__OSLockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 124, length, &__OSUnlockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 130, length, &__OSLockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 142, length, &__OSUnlockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 158, length, &__OSLockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 163, length, &__OSUnlockSramExSigs[0]))
+							DoMountSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i + 127, length, &__OSLockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 146, length, &__OSUnlockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 152, length, &__OSLockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 164, length, &__OSUnlockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 180, length, &__OSLockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 185, length, &__OSUnlockSramExSigs[0]))
+							DoMountSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i + 112, length, &__OSLockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 131, length, &__OSUnlockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 137, length, &__OSLockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 149, length, &__OSUnlockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 165, length, &__OSLockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 170, length, &__OSUnlockSramExSigs[0]))
+							DoMountSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_pattern(data, dataType, i + 130, length, &__OSLockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 149, length, &__OSUnlockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 155, length, &__OSLockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 167, length, &__OSUnlockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 183, length, &__OSLockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 188, length, &__OSUnlockSramExSigs[0]))
+							DoMountSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (findx_pattern(data, dataType, i +  70, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 130, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 132, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 162, length, &__OSUnlockSramExSigs[1]))
+							DoMountSigs[j].offsetFoundAt = i;
+						break;
+					case 6:
+						if (findx_pattern(data, dataType, i +  76, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 136, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 141, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 171, length, &__OSUnlockSramExSigs[1]))
+							DoMountSigs[j].offsetFoundAt = i;
+						break;
+					case 7:
+						if (findx_pattern(data, dataType, i +  98, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 158, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 163, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 193, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 209, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 213, length, &__OSUnlockSramExSigs[1]))
+							DoMountSigs[j].offsetFoundAt = i;
+						break;
+					case 8:
+						if (findx_pattern(data, dataType, i + 119, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 179, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 184, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 214, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 230, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 234, length, &__OSUnlockSramExSigs[1]))
+							DoMountSigs[j].offsetFoundAt = i;
+						break;
+					case 9:
+						if (findx_pattern(data, dataType, i +  82, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 142, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 147, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 177, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 193, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 197, length, &__OSUnlockSramExSigs[1]))
+							DoMountSigs[j].offsetFoundAt = i;
+						break;
+					case 10:
+						if (findx_pattern(data, dataType, i +  99, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 159, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 164, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 194, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 210, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 214, length, &__OSUnlockSramExSigs[1]))
+							DoMountSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -12545,6 +12701,31 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 			data[i + 1] = 0x4E800020;	// blr
 			
 			print_gecko("Found:[%s$%i] @ %08X\n", VerifyIDSigs[j].Name, j, VerifyID);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(DoMountSigs) / sizeof(FuncPattern); j++)
+		if (DoMountSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(DoMountSigs) / sizeof(FuncPattern) && (i = DoMountSigs[j].offsetFoundAt)) {
+		u32 *DoMount = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (DoMount) {
+			switch (j) {
+				case  0: data[i + 128] = 0x48000004; break;	// b		+1
+				case  1: data[i + 150] = 0x48000004; break;	// b		+1
+				case  2: data[i + 172] = 0x48000004; break;	// b		+1
+				case  3: data[i + 157] = 0x48000004; break;	// b		+1
+				case  4: data[i + 175] = 0x48000004; break;	// b		+1
+				case  5: data[i + 170] = 0x48000004; break;	// b		+1
+				case  6: data[i + 179] = 0x48000004; break;	// b		+1
+				case  7: data[i + 201] = 0x48000004; break;	// b		+1
+				case  8: data[i + 222] = 0x48000004; break;	// b		+1
+				case  9: data[i + 185] = 0x48000004; break;	// b		+1
+				case 10: data[i + 202] = 0x48000004; break;	// b		+1
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", DoMountSigs[j].Name, j, DoMount);
 			patched++;
 		}
 	}
