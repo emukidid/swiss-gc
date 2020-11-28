@@ -2522,6 +2522,110 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			}
 		}
 		
+		for (j = 0; j < sizeof(__EXIProbeSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &__EXIProbeSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  24, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  28, i +  29, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  40, length, &EXIClearInterruptsSigs[0]) &&
+							get_immediate(data,  i +  43, i +  44, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  50, i +  51, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i +  56, length, &OSGetTimeSig) &&
+							get_immediate(data,  i +  65, i +  66, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  71, i +  72, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  75, i +  76, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  85, i +  86, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  96, i +  97, &address) && address == 0x800030C0 &&
+							findx_pattern(data, dataType, i + 101, length, &OSRestoreInterruptsSig))
+							__EXIProbeSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  24, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  28, i +  29, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  40, length, &EXIClearInterruptsSigs[0]) &&
+							get_immediate(data,  i +  44, i +  45, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  51, i +  52, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i +  57, length, &OSGetTimeSig) &&
+							get_immediate(data,  i +  66, i +  67, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  72, i +  73, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  76, i +  77, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  87, i +  88, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  99, i + 100, &address) && address == 0x800030C0 &&
+							findx_pattern(data, dataType, i + 104, length, &OSRestoreInterruptsSig))
+							__EXIProbeSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  25, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  29, i +  30, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  41, length, &EXIClearInterruptsSigs[1]) &&
+							get_immediate(data,  i +  45, i +  46, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  52, i +  53, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i +  58, length, &OSGetTimeSig) &&
+							get_immediate(data,  i +  67, i +  68, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  73, i +  74, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  77, i +  78, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  88, i +  89, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i + 100, i + 101, &address) && address == 0x800030C0 &&
+							findx_pattern(data, dataType, i + 105, length, &OSRestoreInterruptsSig))
+							__EXIProbeSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i +  14, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  17, i +  18, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  27, i +  30, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  37, i +  38, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i +  44, length, &OSGetTimeSig) &&
+							get_immediate(data,  i +  37, i +  52, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  65, i +  67, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  76, i +  78, &address) && address == 0x800030C0 &&
+							findx_pattern(data, dataType, i +  83, length, &OSRestoreInterruptsSig))
+							__EXIProbeSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_pattern(data, dataType, i +  14, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  17, i +  18, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  27, i +  31, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  38, i +  39, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i +  45, length, &OSGetTimeSig) &&
+							get_immediate(data,  i +  38, i +  53, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  67, i +  70, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  79, i +  82, &address) && address == 0x800030C0 &&
+							findx_pattern(data, dataType, i +  86, length, &OSRestoreInterruptsSig))
+							__EXIProbeSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (findx_pattern(data, dataType, i +  14, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  18, i +  19, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  28, i +  29, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  36, i +  37, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  42, i +  43, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  49, i +  50, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i +  55, length, &OSGetTimeSig) &&
+							get_immediate(data,  i +  64, i +  65, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  70, i +  71, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  74, i +  75, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  85, i +  86, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  97, i +  98, &address) && address == 0x800030C0 &&
+							findx_pattern(data, dataType, i + 102, length, &OSRestoreInterruptsSig))
+							__EXIProbeSigs[j].offsetFoundAt = i;
+						break;
+					case 6:
+						if (findx_pattern(data, dataType, i +  14, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  17, i +  18, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  33, i +  34, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  38, i +  39, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i +  45, length, &OSGetTimeSig) &&
+							get_immediate(data,  i +  38, i +  54, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  69, i +  70, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  81, i +  82, &address) && address == 0x800030C0 &&
+							findx_pattern(data, dataType, i +  86, length, &OSRestoreInterruptsSig))
+							__EXIProbeSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
 		for (j = 0; j < sizeof(EXIDetachSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &EXIDetachSigs[j])) {
 				switch (j) {
