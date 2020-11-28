@@ -4334,9 +4334,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			data[i + j] = 0;
 	
 	for (j = 0; j < sizeof(PrepareExecSigs) / sizeof(FuncPattern); j++)
-		if (PrepareExecSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(PrepareExecSigs) / sizeof(FuncPattern) && (i = PrepareExecSigs[j].offsetFoundAt)) {
+	if ((i = PrepareExecSigs[j].offsetFoundAt)) {
 		u32 *PrepareExec = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (PrepareExec) {
@@ -4356,9 +4354,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(OSInitSigs) / sizeof(FuncPattern); j++)
-		if (OSInitSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(OSInitSigs) / sizeof(FuncPattern) && (i = OSInitSigs[j].offsetFoundAt)) {
+	if ((i = OSInitSigs[j].offsetFoundAt)) {
 		u32 *OSInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (OSInit) {
@@ -4396,9 +4392,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(OSExceptionInitSigs) / sizeof(FuncPattern); j++)
-		if (OSExceptionInitSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(OSExceptionInitSigs) / sizeof(FuncPattern) && (i = OSExceptionInitSigs[j].offsetFoundAt)) {
+	if ((i = OSExceptionInitSigs[j].offsetFoundAt)) {
 		u32 *OSExceptionInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (OSExceptionInit) {
@@ -4422,9 +4416,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(OSSetAlarmSigs) / sizeof(FuncPattern); j++)
-		if (OSSetAlarmSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(OSSetAlarmSigs) / sizeof(FuncPattern) && (i = OSSetAlarmSigs[j].offsetFoundAt)) {
+	if ((i = OSSetAlarmSigs[j].offsetFoundAt)) {
 		u32 *OSSetAlarm = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (OSSetAlarm) {
@@ -4436,7 +4428,8 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (j < sizeof(OSCancelAlarmSigs) / sizeof(FuncPattern) && (i = OSCancelAlarmSigs[j].offsetFoundAt)) {
+	for (j = 0; j < sizeof(OSCancelAlarmSigs) / sizeof(FuncPattern); j++)
+	if ((i = OSCancelAlarmSigs[j].offsetFoundAt)) {
 		u32 *OSCancelAlarm = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (OSCancelAlarm) {
@@ -4449,9 +4442,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(__OSUnhandledExceptionSigs) / sizeof(FuncPattern); j++)
-		if (__OSUnhandledExceptionSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__OSUnhandledExceptionSigs) / sizeof(FuncPattern) && (i = __OSUnhandledExceptionSigs[j].offsetFoundAt)) {
+	if ((i = __OSUnhandledExceptionSigs[j].offsetFoundAt)) {
 		u32 *__OSUnhandledException = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__OSUnhandledException) {
@@ -4464,9 +4455,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(__OSBootDolSimpleSigs) / sizeof(FuncPattern); j++)
-		if (__OSBootDolSimpleSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__OSBootDolSimpleSigs) / sizeof(FuncPattern) && (i = __OSBootDolSimpleSigs[j].offsetFoundAt)) {
+	if ((i = __OSBootDolSimpleSigs[j].offsetFoundAt)) {
 		u32 *__OSBootDolSimple = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__OSBootDolSimple) {
@@ -4487,9 +4476,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(SetInterruptMaskSigs) / sizeof(FuncPattern); j++)
-		if (SetInterruptMaskSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(SetInterruptMaskSigs) / sizeof(FuncPattern) && (i = SetInterruptMaskSigs[j].offsetFoundAt)) {
+	if ((i = SetInterruptMaskSigs[j].offsetFoundAt)) {
 		u32 *SetInterruptMask = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		u32 **jumpTable;
 		
@@ -4510,9 +4497,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(__OSMaskInterruptsSigs) / sizeof(FuncPattern); j++)
-		if (__OSMaskInterruptsSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__OSMaskInterruptsSigs) / sizeof(FuncPattern) && (i = __OSMaskInterruptsSigs[j].offsetFoundAt)) {
+	if ((i = __OSMaskInterruptsSigs[j].offsetFoundAt)) {
 		u32 *__OSMaskInterrupts = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__OSMaskInterrupts) {
@@ -4525,9 +4510,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(__OSUnmaskInterruptsSigs) / sizeof(FuncPattern); j++)
-		if (__OSUnmaskInterruptsSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__OSUnmaskInterruptsSigs) / sizeof(FuncPattern) && (i = __OSUnmaskInterruptsSigs[j].offsetFoundAt)) {
+	if ((i = __OSUnmaskInterruptsSigs[j].offsetFoundAt)) {
 		u32 *__OSUnmaskInterrupts = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__OSUnmaskInterrupts) {
@@ -4540,9 +4523,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(__OSDispatchInterruptSigs) / sizeof(FuncPattern); j++)
-		if (__OSDispatchInterruptSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__OSDispatchInterruptSigs) / sizeof(FuncPattern) && (i = __OSDispatchInterruptSigs[j].offsetFoundAt)) {
+	if ((i = __OSDispatchInterruptSigs[j].offsetFoundAt)) {
 		u32 *__OSDispatchInterrupt = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__OSDispatchInterrupt) {
@@ -4558,9 +4539,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(__OSRebootSigs) / sizeof(FuncPattern); j++)
-		if (__OSRebootSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__OSRebootSigs) / sizeof(FuncPattern) && (i = __OSRebootSigs[j].offsetFoundAt)) {
+	if ((i = __OSRebootSigs[j].offsetFoundAt)) {
 		u32 *__OSReboot = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__OSReboot) {
@@ -4611,9 +4590,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(__OSDoHotResetSigs) / sizeof(FuncPattern); j++)
-		if (__OSDoHotResetSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__OSDoHotResetSigs) / sizeof(FuncPattern) && (i = __OSDoHotResetSigs[j].offsetFoundAt)) {
+	if ((i = __OSDoHotResetSigs[j].offsetFoundAt)) {
 		u32 *__OSDoHotReset = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__OSDoHotReset) {
@@ -4629,8 +4606,8 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		if ((i = PPCHaltSig.offsetFoundAt)) {
 			u32 *PPCHalt = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			
-			if (PPCHalt && __OSDoHotReset) {
-				if (swissSettings.igrType != IGR_OFF)
+			if (PPCHalt) {
+				if (__OSDoHotReset && swissSettings.igrType != IGR_OFF)
 					data[i + 4] = branch(__OSDoHotReset, PPCHalt + 4);
 				
 				print_gecko("Found:[%s] @ %08X\n", PPCHaltSig.Name, PPCHalt);
@@ -4640,9 +4617,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(OSResetSystemSigs) / sizeof(FuncPattern); j++)
-		if (OSResetSystemSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(OSResetSystemSigs) / sizeof(FuncPattern) && (i = OSResetSystemSigs[j].offsetFoundAt)) {
+	if ((i = OSResetSystemSigs[j].offsetFoundAt)) {
 		u32 *OSResetSystem = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (OSResetSystem) {
@@ -4668,9 +4643,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(__OSInitSystemCallSigs) / sizeof(FuncPattern); j++)
-		if (__OSInitSystemCallSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__OSInitSystemCallSigs) / sizeof(FuncPattern) && (i = __OSInitSystemCallSigs[j].offsetFoundAt)) {
+	if ((i = __OSInitSystemCallSigs[j].offsetFoundAt)) {
 		u32 *__OSInitSystemCall = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		u32 __OSArenaLo, __OSArenaHi;
 		
@@ -4742,9 +4715,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(SelectThreadSigs) / sizeof(FuncPattern); j++)
-		if (SelectThreadSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(SelectThreadSigs) / sizeof(FuncPattern) && (i = SelectThreadSigs[j].offsetFoundAt)) {
+	if ((i = SelectThreadSigs[j].offsetFoundAt)) {
 		u32 *SelectThread = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SelectThread) {
@@ -4776,9 +4747,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(SetExiInterruptMaskSigs) / sizeof(FuncPattern); j++)
-		if (SetExiInterruptMaskSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(SetExiInterruptMaskSigs) / sizeof(FuncPattern) && (i = SetExiInterruptMaskSigs[j].offsetFoundAt)) {
+	if ((i = SetExiInterruptMaskSigs[j].offsetFoundAt)) {
 		u32 *SetExiInterruptMask = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SetExiInterruptMask) {
@@ -4838,9 +4807,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(CompleteTransferSigs) / sizeof(FuncPattern); j++)
-		if (CompleteTransferSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(CompleteTransferSigs) / sizeof(FuncPattern) && (i = CompleteTransferSigs[j].offsetFoundAt)) {
+	if ((i = CompleteTransferSigs[j].offsetFoundAt)) {
 		u32 *CompleteTransfer = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (CompleteTransfer) {
@@ -4860,9 +4827,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(EXIImmSigs) / sizeof(FuncPattern); j++)
-		if (EXIImmSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(EXIImmSigs) / sizeof(FuncPattern) && (i = EXIImmSigs[j].offsetFoundAt)) {
+	if ((i = EXIImmSigs[j].offsetFoundAt)) {
 		u32 *EXIImm = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIImm) {
@@ -4897,9 +4862,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(EXIDmaSigs) / sizeof(FuncPattern); j++)
-		if (EXIDmaSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(EXIDmaSigs) / sizeof(FuncPattern) && (i = EXIDmaSigs[j].offsetFoundAt)) {
+	if ((i = EXIDmaSigs[j].offsetFoundAt)) {
 		u32 *EXIDma = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIDma) {
@@ -4934,9 +4897,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(EXISyncSigs) / sizeof(FuncPattern); j++)
-		if (EXISyncSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(EXISyncSigs) / sizeof(FuncPattern) && (i = EXISyncSigs[j].offsetFoundAt)) {
+	if ((i = EXISyncSigs[j].offsetFoundAt)) {
 		u32 *EXISync = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISync) {
@@ -5009,9 +4970,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(EXIClearInterruptsSigs) / sizeof(FuncPattern); j++)
-		if (EXIClearInterruptsSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(EXIClearInterruptsSigs) / sizeof(FuncPattern) && (i = EXIClearInterruptsSigs[j].offsetFoundAt)) {
+	if ((i = EXIClearInterruptsSigs[j].offsetFoundAt)) {
 		u32 *EXIClearInterrupts = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIClearInterrupts) {
@@ -5040,9 +4999,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(__EXIProbeSigs) / sizeof(FuncPattern); j++)
-		if (__EXIProbeSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__EXIProbeSigs) / sizeof(FuncPattern) && (i = __EXIProbeSigs[j].offsetFoundAt)) {
+	if ((i = __EXIProbeSigs[j].offsetFoundAt)) {
 		u32 *__EXIProbe = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__EXIProbe) {
@@ -5123,9 +5080,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(__EXIAttachSigs) / sizeof(FuncPattern); j++)
-		if (__EXIAttachSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__EXIAttachSigs) / sizeof(FuncPattern) && (i = __EXIAttachSigs[j].offsetFoundAt)) {
+	if ((i = __EXIAttachSigs[j].offsetFoundAt)) {
 		u32 *__EXIAttach = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__EXIAttach) {
@@ -5145,9 +5100,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(EXIAttachSigs) / sizeof(FuncPattern); j++)
-		if (EXIAttachSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(EXIAttachSigs) / sizeof(FuncPattern) && (i = EXIAttachSigs[j].offsetFoundAt)) {
+	if ((i = EXIAttachSigs[j].offsetFoundAt)) {
 		u32 *EXIAttach = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIAttach) {
@@ -5176,9 +5129,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(EXIDetachSigs) / sizeof(FuncPattern); j++)
-		if (EXIDetachSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(EXIDetachSigs) / sizeof(FuncPattern) && (i = EXIDetachSigs[j].offsetFoundAt)) {
+	if ((i = EXIDetachSigs[j].offsetFoundAt)) {
 		u32 *EXIDetach = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIDetach) {
@@ -5238,9 +5189,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(EXISelectSigs) / sizeof(FuncPattern); j++)
-		if (EXISelectSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(EXISelectSigs) / sizeof(FuncPattern) && (i = EXISelectSigs[j].offsetFoundAt)) {
+	if ((i = EXISelectSigs[j].offsetFoundAt)) {
 		u32 *EXISelect = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISelect) {
@@ -5328,9 +5277,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(EXIDeselectSigs) / sizeof(FuncPattern); j++)
-		if (EXIDeselectSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(EXIDeselectSigs) / sizeof(FuncPattern) && (i = EXIDeselectSigs[j].offsetFoundAt)) {
+	if ((i = EXIDeselectSigs[j].offsetFoundAt)) {
 		u32 *EXIDeselect = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIDeselect) {
@@ -5375,9 +5322,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(EXIIntrruptHandlerSigs) / sizeof(FuncPattern); j++)
-		if (EXIIntrruptHandlerSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(EXIIntrruptHandlerSigs) / sizeof(FuncPattern) && (i = EXIIntrruptHandlerSigs[j].offsetFoundAt)) {
+	if ((i = EXIIntrruptHandlerSigs[j].offsetFoundAt)) {
 		u32 *EXIIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIIntrruptHandler) {
@@ -5404,9 +5349,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(TCIntrruptHandlerSigs) / sizeof(FuncPattern); j++)
-		if (TCIntrruptHandlerSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(TCIntrruptHandlerSigs) / sizeof(FuncPattern) && (i = TCIntrruptHandlerSigs[j].offsetFoundAt)) {
+	if ((i = TCIntrruptHandlerSigs[j].offsetFoundAt)) {
 		u32 *TCIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (TCIntrruptHandler) {
@@ -5442,9 +5385,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(EXTIntrruptHandlerSigs) / sizeof(FuncPattern); j++)
-		if (EXTIntrruptHandlerSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(EXTIntrruptHandlerSigs) / sizeof(FuncPattern) && (i = EXTIntrruptHandlerSigs[j].offsetFoundAt)) {
+	if ((i = EXTIntrruptHandlerSigs[j].offsetFoundAt)) {
 		u32 *EXTIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXTIntrruptHandler) {
@@ -5485,9 +5426,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(EXIInitSigs) / sizeof(FuncPattern); j++)
-		if (EXIInitSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(EXIInitSigs) / sizeof(FuncPattern) && (i = EXIInitSigs[j].offsetFoundAt)) {
+	if ((i = EXIInitSigs[j].offsetFoundAt)) {
 		u32 *EXIInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIInit) {
@@ -5604,9 +5543,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(EXILockSigs) / sizeof(FuncPattern); j++)
-		if (EXILockSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(EXILockSigs) / sizeof(FuncPattern) && (i = EXILockSigs[j].offsetFoundAt)) {
+	if ((i = EXILockSigs[j].offsetFoundAt)) {
 		u32 *EXILock = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXILock) {
@@ -5619,9 +5556,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(EXIUnlockSigs) / sizeof(FuncPattern); j++)
-		if (EXIUnlockSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(EXIUnlockSigs) / sizeof(FuncPattern) && (i = EXIUnlockSigs[j].offsetFoundAt)) {
+	if ((i = EXIUnlockSigs[j].offsetFoundAt)) {
 		u32 *EXIUnlock = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIUnlock) {
@@ -5634,9 +5569,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(EXIGetIDSigs) / sizeof(FuncPattern); j++)
-		if (EXIGetIDSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(EXIGetIDSigs) / sizeof(FuncPattern) && (i = EXIGetIDSigs[j].offsetFoundAt)) {
+	if ((i = EXIGetIDSigs[j].offsetFoundAt)) {
 		u32 *EXIGetID = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIGetID) {
@@ -5670,9 +5603,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(__DVDInterruptHandlerSigs) / sizeof(FuncPattern); j++)
-		if (__DVDInterruptHandlerSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__DVDInterruptHandlerSigs) / sizeof(FuncPattern) && (i = __DVDInterruptHandlerSigs[j].offsetFoundAt)) {
+	if ((i = __DVDInterruptHandlerSigs[j].offsetFoundAt)) {
 		u32 *__DVDInterruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__DVDInterruptHandler) {
@@ -5778,9 +5709,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(AlarmHandlerForTimeoutSigs) / sizeof(FuncPattern); j++)
-		if (AlarmHandlerForTimeoutSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(AlarmHandlerForTimeoutSigs) / sizeof(FuncPattern) && (i = AlarmHandlerForTimeoutSigs[j].offsetFoundAt)) {
+	if ((i = AlarmHandlerForTimeoutSigs[j].offsetFoundAt)) {
 		u32 *AlarmHandlerForTimeout = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (AlarmHandlerForTimeout) {
@@ -5797,9 +5726,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(ReadSigs) / sizeof(FuncPattern); j++)
-		if (ReadSigs[j].offsetFoundAt) break;
-		
-	if (j < sizeof(ReadSigs) / sizeof(FuncPattern) && (i = ReadSigs[j].offsetFoundAt)) {
+	if ((i = ReadSigs[j].offsetFoundAt)) {
 		u32 *Read = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (Read) {
@@ -5839,9 +5766,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDLowReadSigs) / sizeof(FuncPattern); j++)
-		if (DVDLowReadSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowReadSigs) / sizeof(FuncPattern) && (i = DVDLowReadSigs[j].offsetFoundAt)) {
+	if ((i = DVDLowReadSigs[j].offsetFoundAt)) {
 		u32 *DVDLowRead = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowRead) {
@@ -5868,9 +5793,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDLowSeekSigs) / sizeof(FuncPattern); j++)
-		if (DVDLowSeekSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowSeekSigs) / sizeof(FuncPattern) && (i = DVDLowSeekSigs[j].offsetFoundAt)) {
+	if ((i = DVDLowSeekSigs[j].offsetFoundAt)) {
 		u32 *DVDLowSeek = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowSeek) {
@@ -5902,9 +5825,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDLowWaitCoverCloseSigs) / sizeof(FuncPattern); j++)
-		if (DVDLowWaitCoverCloseSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowWaitCoverCloseSigs) / sizeof(FuncPattern) && (i = DVDLowWaitCoverCloseSigs[j].offsetFoundAt)) {
+	if ((i = DVDLowWaitCoverCloseSigs[j].offsetFoundAt)) {
 		u32 *DVDLowWaitCoverClose = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowWaitCoverClose) {
@@ -5929,9 +5850,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDLowReadDiskIDSigs) / sizeof(FuncPattern); j++)
-		if (DVDLowReadDiskIDSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowReadDiskIDSigs) / sizeof(FuncPattern) && (i = DVDLowReadDiskIDSigs[j].offsetFoundAt)) {
+	if ((i = DVDLowReadDiskIDSigs[j].offsetFoundAt)) {
 		u32 *DVDLowReadDiskID = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowReadDiskID) {
@@ -5971,9 +5890,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDLowStopMotorSigs) / sizeof(FuncPattern); j++)
-		if (DVDLowStopMotorSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowStopMotorSigs) / sizeof(FuncPattern) && (i = DVDLowStopMotorSigs[j].offsetFoundAt)) {
+	if ((i = DVDLowStopMotorSigs[j].offsetFoundAt)) {
 		u32 *DVDLowStopMotor = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowStopMotor) {
@@ -6005,9 +5922,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDLowRequestErrorSigs) / sizeof(FuncPattern); j++)
-		if (DVDLowRequestErrorSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowRequestErrorSigs) / sizeof(FuncPattern) && (i = DVDLowRequestErrorSigs[j].offsetFoundAt)) {
+	if ((i = DVDLowRequestErrorSigs[j].offsetFoundAt)) {
 		u32 *DVDLowRequestError = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowRequestError) {
@@ -6039,9 +5954,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDLowInquirySigs) / sizeof(FuncPattern); j++)
-		if (DVDLowInquirySigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowInquirySigs) / sizeof(FuncPattern) && (i = DVDLowInquirySigs[j].offsetFoundAt)) {
+	if ((i = DVDLowInquirySigs[j].offsetFoundAt)) {
 		u32 *DVDLowInquiry = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowInquiry) {
@@ -6079,9 +5992,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDLowAudioStreamSigs) / sizeof(FuncPattern); j++)
-		if (DVDLowAudioStreamSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowAudioStreamSigs) / sizeof(FuncPattern) && (i = DVDLowAudioStreamSigs[j].offsetFoundAt)) {
+	if ((i = DVDLowAudioStreamSigs[j].offsetFoundAt)) {
 		u32 *DVDLowAudioStream = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowAudioStream) {
@@ -6117,9 +6028,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDLowRequestAudioStatusSigs) / sizeof(FuncPattern); j++)
-		if (DVDLowRequestAudioStatusSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowRequestAudioStatusSigs) / sizeof(FuncPattern) && (i = DVDLowRequestAudioStatusSigs[j].offsetFoundAt)) {
+	if ((i = DVDLowRequestAudioStatusSigs[j].offsetFoundAt)) {
 		u32 *DVDLowRequestAudioStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowRequestAudioStatus) {
@@ -6151,9 +6060,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDLowAudioBufferConfigSigs) / sizeof(FuncPattern); j++)
-		if (DVDLowAudioBufferConfigSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowAudioBufferConfigSigs) / sizeof(FuncPattern) && (i = DVDLowAudioBufferConfigSigs[j].offsetFoundAt)) {
+	if ((i = DVDLowAudioBufferConfigSigs[j].offsetFoundAt)) {
 		u32 *DVDLowAudioBufferConfig = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowAudioBufferConfig) {
@@ -6183,9 +6090,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDLowResetSigs) / sizeof(FuncPattern); j++)
-		if (DVDLowResetSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowResetSigs) / sizeof(FuncPattern) && (i = DVDLowResetSigs[j].offsetFoundAt)) {
+	if ((i = DVDLowResetSigs[j].offsetFoundAt)) {
 		u32 *DVDLowReset = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowReset) {
@@ -6212,9 +6117,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DoBreakSigs) / sizeof(FuncPattern); j++)
-		if (DoBreakSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DoBreakSigs) / sizeof(FuncPattern) && (i = DoBreakSigs[j].offsetFoundAt)) {
+	if ((i = DoBreakSigs[j].offsetFoundAt)) {
 		u32 *DoBreak = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DoBreak) {
@@ -6233,9 +6136,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(AlarmHandlerForBreakSigs) / sizeof(FuncPattern); j++)
-		if (AlarmHandlerForBreakSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(AlarmHandlerForBreakSigs) / sizeof(FuncPattern) && (i = AlarmHandlerForBreakSigs[j].offsetFoundAt)) {
+	if ((i = AlarmHandlerForBreakSigs[j].offsetFoundAt)) {
 		u32 *AlarmHandlerForBreak = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (AlarmHandlerForBreak) {
@@ -6253,9 +6154,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDLowBreakSigs) / sizeof(FuncPattern); j++)
-		if (DVDLowBreakSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowBreakSigs) / sizeof(FuncPattern) && (i = DVDLowBreakSigs[j].offsetFoundAt)) {
+	if ((i = DVDLowBreakSigs[j].offsetFoundAt)) {
 		u32 *DVDLowBreak = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowBreak) {
@@ -6276,9 +6175,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDLowClearCallbackSigs) / sizeof(FuncPattern); j++)
-		if (DVDLowClearCallbackSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowClearCallbackSigs) / sizeof(FuncPattern) && (i = DVDLowClearCallbackSigs[j].offsetFoundAt)) {
+	if ((i = DVDLowClearCallbackSigs[j].offsetFoundAt)) {
 		u32 *DVDLowClearCallback = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowClearCallback) {
@@ -6303,9 +6200,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDLowGetCoverStatusSigs) / sizeof(FuncPattern); j++)
-		if (DVDLowGetCoverStatusSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDLowGetCoverStatusSigs) / sizeof(FuncPattern) && (i = DVDLowGetCoverStatusSigs[j].offsetFoundAt)) {
+	if ((i = DVDLowGetCoverStatusSigs[j].offsetFoundAt)) {
 		u32 *DVDLowGetCoverStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDLowGetCoverStatus) {
@@ -6335,9 +6230,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDInitSigs) / sizeof(FuncPattern); j++)
-		if (DVDInitSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDInitSigs) / sizeof(FuncPattern) && (i = DVDInitSigs[j].offsetFoundAt)) {
+	if ((i = DVDInitSigs[j].offsetFoundAt)) {
 		u32 *DVDInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDInit) {
@@ -6392,9 +6285,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(cbForStateGettingErrorSigs) / sizeof(FuncPattern); j++)
-		if (cbForStateGettingErrorSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(cbForStateGettingErrorSigs) / sizeof(FuncPattern) && (i = cbForStateGettingErrorSigs[j].offsetFoundAt)) {
+	if ((i = cbForStateGettingErrorSigs[j].offsetFoundAt)) {
 		u32 *cbForStateGettingError = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (cbForStateGettingError) {
@@ -6427,9 +6318,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(cbForUnrecoveredErrorRetrySigs) / sizeof(FuncPattern); j++)
-		if (cbForUnrecoveredErrorRetrySigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(cbForUnrecoveredErrorRetrySigs) / sizeof(FuncPattern) && (i = cbForUnrecoveredErrorRetrySigs[j].offsetFoundAt)) {
+	if ((i = cbForUnrecoveredErrorRetrySigs[j].offsetFoundAt)) {
 		u32 *cbForUnrecoveredErrorRetry = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (cbForUnrecoveredErrorRetry) {
@@ -6459,9 +6348,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(cbForStateMotorStoppedSigs) / sizeof(FuncPattern); j++)
-		if (cbForStateMotorStoppedSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(cbForStateMotorStoppedSigs) / sizeof(FuncPattern) && (i = cbForStateMotorStoppedSigs[j].offsetFoundAt)) {
+	if ((i = cbForStateMotorStoppedSigs[j].offsetFoundAt)) {
 		u32 *cbForStateMotorStopped = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (cbForStateMotorStopped) {
@@ -6486,9 +6373,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(stateBusySigs) / sizeof(FuncPattern); j++)
-		if (stateBusySigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(stateBusySigs) / sizeof(FuncPattern) && (i = stateBusySigs[j].offsetFoundAt)) {
+	if ((i = stateBusySigs[j].offsetFoundAt)) {
 		u32 *stateBusy = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (stateBusy) {
@@ -6644,9 +6529,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(cbForStateBusySigs) / sizeof(FuncPattern); j++)
-		if (cbForStateBusySigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(cbForStateBusySigs) / sizeof(FuncPattern) && (i = cbForStateBusySigs[j].offsetFoundAt)) {
+	if ((i = cbForStateBusySigs[j].offsetFoundAt)) {
 		u32 *cbForStateBusy = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (cbForStateBusy) {
@@ -6724,9 +6607,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDResetSigs) / sizeof(FuncPattern); j++)
-		if (DVDResetSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDResetSigs) / sizeof(FuncPattern) && (i = DVDResetSigs[j].offsetFoundAt)) {
+	if ((i = DVDResetSigs[j].offsetFoundAt)) {
 		u32 *DVDReset = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDReset) {
@@ -6749,9 +6630,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DVDCheckDiskSigs) / sizeof(FuncPattern); j++)
-		if (DVDCheckDiskSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DVDCheckDiskSigs) / sizeof(FuncPattern) && (i = DVDCheckDiskSigs[j].offsetFoundAt)) {
+	if ((i = DVDCheckDiskSigs[j].offsetFoundAt)) {
 		u32 *DVDCheckDisk = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DVDCheckDisk) {
@@ -6772,9 +6651,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(AIInitDMASigs) / sizeof(FuncPattern); j++)
-		if (AIInitDMASigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(AIInitDMASigs) / sizeof(FuncPattern) && (i = AIInitDMASigs[j].offsetFoundAt)) {
+	if ((i = AIInitDMASigs[j].offsetFoundAt)) {
 		u32 *AIInitDMA = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (AIInitDMA) {
@@ -6799,9 +6676,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(AIGetDMAStartAddrSigs) / sizeof(FuncPattern); j++)
-		if (AIGetDMAStartAddrSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(AIGetDMAStartAddrSigs) / sizeof(FuncPattern) && (i = AIGetDMAStartAddrSigs[j].offsetFoundAt)) {
+	if ((i = AIGetDMAStartAddrSigs[j].offsetFoundAt)) {
 		u32 *AIGetDMAStartAddr = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (AIGetDMAStartAddr) {
@@ -6822,9 +6697,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(GXPeekZSigs) / sizeof(FuncPattern); j++)
-		if (GXPeekZSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(GXPeekZSigs) / sizeof(FuncPattern) && (i = GXPeekZSigs[j].offsetFoundAt)) {
+	if ((i = GXPeekZSigs[j].offsetFoundAt)) {
 		u32 *GXPeekZ = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (GXPeekZ) {
@@ -6838,9 +6711,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(__VMBASESetupExceptionHandlersSigs) / sizeof(FuncPattern); j++)
-		if (__VMBASESetupExceptionHandlersSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__VMBASESetupExceptionHandlersSigs) / sizeof(FuncPattern) && (i = __VMBASESetupExceptionHandlersSigs[j].offsetFoundAt)) {
+	if ((i = __VMBASESetupExceptionHandlersSigs[j].offsetFoundAt)) {
 		u32 *__VMBASESetupExceptionHandlers = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__VMBASESetupExceptionHandlers) {
@@ -12451,9 +12322,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(UpdateOriginSigs) / sizeof(FuncPattern); j++)
-		if (UpdateOriginSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(UpdateOriginSigs) / sizeof(FuncPattern) && (i = UpdateOriginSigs[j].offsetFoundAt)) {
+	if ((i = UpdateOriginSigs[j].offsetFoundAt)) {
 		u32 *UpdateOrigin = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (UpdateOrigin) {
@@ -12481,9 +12350,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(PADOriginCallbackSigs) / sizeof(FuncPattern); j++)
-		if (PADOriginCallbackSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(PADOriginCallbackSigs) / sizeof(FuncPattern) && (i = PADOriginCallbackSigs[j].offsetFoundAt)) {
+	if ((i = PADOriginCallbackSigs[j].offsetFoundAt)) {
 		u32 *PADOriginCallback = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (PADOriginCallback) {
@@ -12499,9 +12366,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(PADOriginUpdateCallbackSigs) / sizeof(FuncPattern); j++)
-		if (PADOriginUpdateCallbackSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(PADOriginUpdateCallbackSigs) / sizeof(FuncPattern) && (i = PADOriginUpdateCallbackSigs[j].offsetFoundAt)) {
+	if ((i = PADOriginUpdateCallbackSigs[j].offsetFoundAt)) {
 		u32 *PADOriginUpdateCallback = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (PADOriginUpdateCallback) {
@@ -12517,9 +12382,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(PADReadSigs) / sizeof(FuncPattern); j++)
-		if (PADReadSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(PADReadSigs) / sizeof(FuncPattern) && (i = PADReadSigs[j].offsetFoundAt)) {
+	if ((i = PADReadSigs[j].offsetFoundAt)) {
 		u32 *PADRead = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (PADRead) {
@@ -12578,9 +12441,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(PADSetSpecSigs) / sizeof(FuncPattern); j++)
-		if (PADSetSpecSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(PADSetSpecSigs) / sizeof(FuncPattern) && (i = PADSetSpecSigs[j].offsetFoundAt)) {
+	if ((i = PADSetSpecSigs[j].offsetFoundAt)) {
 		u32 *PADSetSpec = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (PADSetSpec) {
@@ -12607,9 +12468,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(SPEC0_MakeStatusSigs) / sizeof(FuncPattern); j++)
-		if (SPEC0_MakeStatusSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(SPEC0_MakeStatusSigs) / sizeof(FuncPattern) && (i = SPEC0_MakeStatusSigs[j].offsetFoundAt)) {
+	if ((i = SPEC0_MakeStatusSigs[j].offsetFoundAt)) {
 		u32 *SPEC0_MakeStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SPEC0_MakeStatus) {
@@ -12633,9 +12492,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(SPEC1_MakeStatusSigs) / sizeof(FuncPattern); j++)
-		if (SPEC1_MakeStatusSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(SPEC1_MakeStatusSigs) / sizeof(FuncPattern) && (i = SPEC1_MakeStatusSigs[j].offsetFoundAt)) {
+	if ((i = SPEC1_MakeStatusSigs[j].offsetFoundAt)) {
 		u32 *SPEC1_MakeStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SPEC1_MakeStatus) {
@@ -12659,9 +12516,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(SPEC2_MakeStatusSigs) / sizeof(FuncPattern); j++)
-		if (SPEC2_MakeStatusSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(SPEC2_MakeStatusSigs) / sizeof(FuncPattern) && (i = SPEC2_MakeStatusSigs[j].offsetFoundAt)) {
+	if ((i = SPEC2_MakeStatusSigs[j].offsetFoundAt)) {
 		u32 *SPEC2_MakeStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SPEC2_MakeStatus) {
@@ -12689,9 +12544,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(VerifyIDSigs) / sizeof(FuncPattern); j++)
-		if (VerifyIDSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(VerifyIDSigs) / sizeof(FuncPattern) && (i = VerifyIDSigs[j].offsetFoundAt)) {
+	if ((i = VerifyIDSigs[j].offsetFoundAt)) {
 		u32 *VerifyID = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (VerifyID) {
@@ -12706,9 +12559,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(DoMountSigs) / sizeof(FuncPattern); j++)
-		if (DoMountSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(DoMountSigs) / sizeof(FuncPattern) && (i = DoMountSigs[j].offsetFoundAt)) {
+	if ((i = DoMountSigs[j].offsetFoundAt)) {
 		u32 *DoMount = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (DoMount) {
