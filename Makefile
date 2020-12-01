@@ -122,9 +122,9 @@ package:   # create distribution package
 
 build-AR: # make ActionReplay
 	@$(BIN2S) $(DIST)/ActionReplay/AUTOEXEC.DOL > $(AR_SOURCES)/autoexec.s
-	@$(CC) -O2 -c $(AR_SOURCES)/startup.s -o $(AR_SOURCES)/startup.o
-	@$(CC) -O2 -c $(AR_SOURCES)/autoexec.s -o $(AR_SOURCES)/autoexec.o
-	@$(CC) -O2 -c $(AR_SOURCES)/main.c -o $(AR_SOURCES)/main.o
+	@$(CC) -O2 -ffreestanding -c $(AR_SOURCES)/startup.s -o $(AR_SOURCES)/startup.o
+	@$(CC) -O2 -ffreestanding -c $(AR_SOURCES)/autoexec.s -o $(AR_SOURCES)/autoexec.o
+	@$(CC) -O2 -ffreestanding -c $(AR_SOURCES)/main.c -o $(AR_SOURCES)/main.o
 	@$(LD) -o $(AR_SOURCES)/sdloader.elf $(AR_SOURCES)/startup.o $(AR_SOURCES)/main.o $(AR_SOURCES)/autoexec.o --section-start .text=0x81700000
 	@$(OBJCOPY) -O binary $(AR_SOURCES)/sdloader.elf $(DIST)/ActionReplay/SDLOADER.BIN
 	@rm -f $(AR_SOURCES)/*.o $(AR_SOURCES)/*.elf $(AR_SOURCES)/autoexec.s
