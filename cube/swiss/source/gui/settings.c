@@ -32,11 +32,11 @@ char *emulateReadSpeedStr[] = {"No", "Yes", "Wii"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
 char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL"};
 char *fileBrowserStr[] = {"Standard", "Carousel"};
-char *sramLang[] = {"English", "German", "French", "Spanish", "Italian", "Dutch"};
+char *sramLang[] = {"English", "German", "French", "Spanish", "Italian", "Dutch", "Japanese"};
 
 static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"System Sound:\n\nSets the default audio output type used by most games",
-	"Screen Position:\n\nAdjusts the horizontal screen position in games.\nNote: This will take effect next boot.",
+	"Screen Position:\n\nAdjusts the horizontal screen position in games",
 	"System Language:\n\nSystem language used in games, primarily multi-5 PAL games",
 	"SD/IDE Speed:\n\nThe speed to try and use on the EXI bus for SD Card Adapters or IDE-EXI devices.\n32 MHz may not work on some SD cards.",
 	 NULL,
@@ -306,13 +306,14 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 				else {
 					swissSettings.sramHOffset += direction;
 				}
+				VIDEO_SetAdjustingValues(swissSettings.sramHOffset, 0);
 			break;
 			case SET_SYS_LANG:
 				swissSettings.sramLanguage += direction;
-				if(swissSettings.sramLanguage > SRAM_LANG_MAX)
-					swissSettings.sramLanguage = 0;
-				if(swissSettings.sramLanguage < 0)
-					swissSettings.sramLanguage = SRAM_LANG_MAX;
+				if(swissSettings.sramLanguage > SYS_LANG_DUTCH)
+					swissSettings.sramLanguage = SYS_LANG_ENGLISH;
+				if(swissSettings.sramLanguage < SYS_LANG_ENGLISH)
+					swissSettings.sramLanguage = SYS_LANG_DUTCH;
 			break;
 			case SET_EXI_SPEED:
 				swissSettings.exiSpeed ^= 1;
@@ -708,6 +709,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				if(swissSettings.aveCompat == 1) {
 					swissSettings.sramHOffset &= ~1;
 				}
+				VIDEO_SetAdjustingValues(swissSettings.sramHOffset, 0);
 				sram = __SYS_LockSram();
 				sram->display_offsetH = swissSettings.sramHOffset;
 				sram->ntd = swissSettings.sram60Hz ? (sram->ntd|0x40):(sram->ntd&~0x40);
@@ -745,6 +747,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 			if(option == settings_count_pp[page]) {
 				// Exit without saving (revert)
 				memcpy((void*)&swissSettings, (void*)&tempSettings, sizeof(SwissSettings));
+				VIDEO_SetAdjustingValues(swissSettings.sramHOffset, 0);
 				DrawDispose(settingsPage);
 				return 0;
 			}

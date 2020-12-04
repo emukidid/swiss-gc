@@ -21,8 +21,6 @@ char topStr[256];
 
 uiDrawObj_t * info_draw_page(int page_num) {
 	uiDrawObj_t *container = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 420);
-	syssram* sram = __SYS_LockSram();
-	__SYS_UnlockSram(0);
 	
 	// System Info (Page 1/3)
 	if(!page_num) {
@@ -65,9 +63,9 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 170, (char*)"VIDEO MODE", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 186, getVideoModeString(), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 210, (char*)"AUDIO", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 226, (char*)(sram->flags&4 ? "Stereo":"Mono"), 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 226, (char*)(swissSettings.sramStereo ? "Stereo" : "Mono"), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"LANGUAGE", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 266, sram->lang > SRAM_LANG_MAX ? "Unknown" : sramLang[sram->lang], 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 266, (char*)(swissSettings.sramLanguage > SRAM_LANG_MAX ? "Unknown" : sramLang[swissSettings.sramLanguage]), 0.75f, true, defaultColor));
 
 		// GC 00083214, 00083410
 		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"CPU PVR", 0.65f, true, defaultColor));
@@ -108,7 +106,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		}
 		DrawAddChild(container, DrawStyledLabel(640/2, 266, topStr, 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"PROGRESSIVE VIDEO", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 306, (char*)(VIDEO_HaveComponentCable() ? "Yes" : "No"), 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 306, (char*)(getDTVStatus() ? "Yes" : "No"), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 330, (char*)"CURRENT MEDIUM", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 346, (char*)(devices[DEVICE_CUR] != NULL ? devices[DEVICE_CUR]->deviceName : "None"), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 370, (char*)"CONFIG MEDIUM", 0.65f, true, defaultColor));

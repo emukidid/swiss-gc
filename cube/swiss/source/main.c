@@ -61,31 +61,31 @@ void Initialise (void)
 		// L Trigger held down ignores the fact that there's a component cable plugged in.
 		if(VIDEO_HaveComponentCable() && !(PAD_ButtonsDown(0) & PAD_TRIGGER_L)) {
 			if(strstr(IPLInfo,"MPAL")!=NULL) {
-				swissSettings.sramVideo = 2;
-				vmode = &TVNtsc480Prog; //Progressive 480p
+				swissSettings.sramVideo = SYS_VIDEO_MPAL;
+				vmode = &TVNtsc480Prog;
 			}
 			else if((strstr(IPLInfo,"PAL")!=NULL)) {
-				swissSettings.sramVideo = 1;
-				vmode = &TVPal576ProgScale; //Progressive 576p
+				swissSettings.sramVideo = SYS_VIDEO_PAL;
+				vmode = &TVPal576ProgScale;
 			}
 			else {
-				swissSettings.sramVideo = 0;
-				vmode = &TVNtsc480Prog; //Progressive 480p
+				swissSettings.sramVideo = SYS_VIDEO_NTSC;
+				vmode = &TVNtsc480Prog;
 			}
 		}
 		else {
 			//try to use the IPL region
 			if(strstr(IPLInfo,"MPAL")!=NULL) {
-				swissSettings.sramVideo = 2;
-				vmode = &TVMpal480IntDf;        //PAL-M
+				swissSettings.sramVideo = SYS_VIDEO_MPAL;
+				vmode = &TVMpal480IntDf;
 			}
 			else if(strstr(IPLInfo,"PAL")!=NULL) {
-				swissSettings.sramVideo = 1;
-				vmode = &TVPal576IntDfScale;         //PAL
+				swissSettings.sramVideo = SYS_VIDEO_PAL;
+				vmode = &TVPal576IntDfScale;
 			}
 			else {
-				swissSettings.sramVideo = 0;
-				vmode = &TVNtsc480IntDf;        //NTSC
+				swissSettings.sramVideo = SYS_VIDEO_NTSC;
+				vmode = &TVNtsc480IntDf;
 			}
 		}
 	}

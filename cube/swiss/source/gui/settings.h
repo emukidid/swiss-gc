@@ -115,7 +115,7 @@ extern char *emulateReadSpeedStr[];
 extern char *igrTypeStr[];
 extern char *aveCompatStr[];
 extern char *fileBrowserStr[];
-#define SRAM_LANG_MAX 5
+#define SRAM_LANG_MAX 6
 extern char *sramLang[];
 int show_settings(file_handle *file, ConfigEntry *config);
 void refreshSRAM();

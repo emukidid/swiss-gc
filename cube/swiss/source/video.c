@@ -60,9 +60,9 @@ GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 				return &TVNtsc480IntDf;
 			} else {
 				switch(swissSettings.sramVideo) {
-					case 2:  return &TVMpal480IntDf;
-					case 1:  return &TVEurgb60Hz480IntDf;
-					default: return &TVNtsc480IntDf;
+					case SYS_VIDEO_MPAL: return &TVMpal480IntDf;
+					case SYS_VIDEO_PAL:  return &TVEurgb60Hz480IntDf;
+					default:             return &TVNtsc480IntDf;
 				}
 			}
 		case 2:
@@ -70,9 +70,9 @@ GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 				return &TVNtsc480Prog;
 			} else {
 				switch(swissSettings.sramVideo) {
-					case 2:  return &TVMpal480IntDf;
-					case 1:  return &TVEurgb60Hz480IntDf;
-					default: return &TVNtsc480IntDf;
+					case SYS_VIDEO_MPAL: return &TVMpal480IntDf;
+					case SYS_VIDEO_PAL:  return &TVEurgb60Hz480IntDf;
+					default:             return &TVNtsc480IntDf;
 				}
 			}
 		case 3:

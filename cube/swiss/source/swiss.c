@@ -115,7 +115,9 @@ void ogc_video__reset()
 		}
 	}
 	
-	if(!strncmp(gameID, "GB3E51", 6) || (!strncmp(gameID, "G2OE41", 6) && swissSettings.sramLanguage == 3) || !strncmp(gameID, "GMXP70", 6))
+	if(!strncmp(gameID, "GB3E51", 6)
+		|| (!strncmp(gameID, "G2OE41", 6) && swissSettings.sramLanguage == SYS_LANG_SPANISH)
+		|| !strncmp(gameID, "GMXP70", 6))
 		swissSettings.sramProgressive = 0;
 	
 	syssram* sram = __SYS_LockSram();
@@ -141,7 +143,7 @@ void ogc_video__reset()
 	uiDrawObj_t *msgBox = NULL;
 	switch(swissSettings.gameVMode) {
 		case -1:
-			if(swissSettings.sramVideo == 2 && !getDTVStatus()) {
+			if(swissSettings.sramVideo == SYS_VIDEO_MPAL && !getDTVStatus()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL-M 480i");
 				newmode = &TVMpal480IntDf;
 			} else {
