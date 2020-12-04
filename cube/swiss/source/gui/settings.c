@@ -81,13 +81,22 @@ syssramex* sramex;
 int settings_count_pp[5] = {PAGE_GLOBAL_MAX, PAGE_NETWORK_MAX, PAGE_ADVANCED_MAX, PAGE_GAME_DEFAULTS_MAX, PAGE_GAME_MAX};
 
 void refreshSRAM(SwissSettings *settings) {
+	bool writeSram = false;
 	sram = __SYS_LockSram();
+	if(!__SYS_CheckSram()) {
+		memset(sram, 0, sizeof(syssram));
+		sram->flags |= 0x10;
+		sram->flags |= 0x04;
+		writeSram = true;
+	}
 	settings->sramHOffset = sram->display_offsetH;
 	settings->sram60Hz = (sram->ntd >> 6) & 1;
 	settings->sramLanguage = sram->lang;
 	settings->sramProgressive = (sram->flags >> 7) & 1;
 	settings->sramStereo = (sram->flags >> 2) & 1;
-	__SYS_UnlockSram(0);
+	__SYS_UnlockSram(writeSram);
+	if(writeSram)
+		while(!__SYS_SyncSram());
 	sramex = __SYS_LockSramEx();
 	settings->configDeviceId = sramex->__padding0;
 	if(settings->configDeviceId > DEVICE_ID_MAX || !(getDeviceByUniqueId(settings->configDeviceId)->features & FEAT_CONFIG_DEVICE)) {

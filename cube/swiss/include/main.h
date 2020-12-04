@@ -112,6 +112,7 @@ extern int dvdDiscTypeInt;
 extern int drive_status;
 
 extern u32 __SYS_SyncSram();
+extern u32 __SYS_CheckSram();
 extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
 extern void populateDeviceAvailability();
 #endif
