@@ -6,10 +6,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-#include "../base/common.h"
-#include "../base/dolphin/exi.h"
-#include "../base/dolphin/os.h"
-#include "../base/emulator.h"
+#include "common.h"
+#include "dolphin/exi.h"
+#include "dolphin/os.h"
+#include "emulator.h"
 
 //CMD12 - Stop multiple block read command
 #define CMD12				0x4C

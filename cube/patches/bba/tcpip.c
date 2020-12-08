@@ -19,10 +19,10 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "../base/common.h"
-#include "../base/dolphin/exi.h"
-#include "../base/dolphin/os.h"
 #include "bba.h"
+#include "common.h"
+#include "dolphin/exi.h"
+#include "dolphin/os.h"
 #include "globals.h"
 
 #define MIN_FRAME_SIZE 60
