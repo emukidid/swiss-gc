@@ -28,10 +28,10 @@ _start:
 	.asciz	"STUBHAXX"
 	.align 2
 
-1:	li		r3, startup
-	mtsrr0	r3
-	li		r3, 0
+1:	li		r3, 0
 	mtsrr1	r3
+	li		r3, startup
+	mtsrr0	r3
 	rfi
 
 startup:
@@ -41,7 +41,7 @@ startup:
 
 	li		r3, 0
 	lis		r0, 0x4800
-	ori		r0, r0, reset + 0x0002
+	ori		r0, r0, 0x0002 + reset
 1:	stwu	r0, 0x0100 (r3)
 	dcbst	r0, r3
 	sync

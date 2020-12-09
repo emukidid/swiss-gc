@@ -1,7 +1,7 @@
 #ifndef EXI_H
 #define EXI_H
 
-#include "../common.h"
+#include "common.h"
 
 #define EXI_STATE_BUSY_DMA 0x01
 #define EXI_STATE_BUSY_IMM 0x02

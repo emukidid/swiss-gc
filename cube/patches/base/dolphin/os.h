@@ -1,7 +1,7 @@
 #ifndef OS_H
 #define OS_H
 
-#include "../common.h"
+#include "common.h"
 
 #define OSRoundUp32B(x)   (((u32)(x) + (32 - 1)) & ~(32 - 1))
 #define OSRoundDown32B(x) ((u32)(x) & ~(32 - 1))

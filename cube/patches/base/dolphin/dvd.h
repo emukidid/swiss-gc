@@ -1,7 +1,7 @@
 #ifndef DVD_H
 #define DVD_H
 
-#include "../common.h"
+#include "common.h"
 
 #define DVDRoundUp32KB(x)   (((u32)(x) + (32768 - 1)) & ~(32768 - 1))
 #define DVDRoundDown32KB(x) ((u32)(x) & ~(32768 - 1))
