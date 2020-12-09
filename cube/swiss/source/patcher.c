@@ -120,8 +120,16 @@ int install_code(int final)
 	u32 location = LO_RESERVE;
 	u8 *patch = NULL; u32 patchSize = 0;
 	
+	// Reload Stub
+	if (GCMDisk.DVDMagicWord != DVD_MAGIC) {
+		location  = 0x80001800;
+		patch     = stub_bin;
+		patchSize = stub_bin_size;
+		
+		print_gecko("Installing Reload Stub\r\n");
+	}
 	// IDE-EXI
-	if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b) {
+	else if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b) {
 		if (GCMDisk.AudioStreaming) {
 			patch     = !_ideexi_version ? ideexi_v1_dtk_bin      : ideexi_v2_dtk_bin;
 			patchSize = !_ideexi_version ? ideexi_v1_dtk_bin_size : ideexi_v2_dtk_bin_size;

@@ -90,8 +90,15 @@ static void DCBlockInvalidate(void *addr)
 
 void DCInvalidateRange(void *addr, u32 nBytes);
 void DCFlushRange(void *addr, u32 nBytes);
+void DCFlushRangeNoSync(void *addr, u32 nBytes);
 void DCStoreRangeNoSync(void *addr, u32 nBytes);
 void DCZeroRange(void *addr, u32 nBytes);
+void ICInvalidateRange(void *addr, u32 nBytes);
+
+static void ICBlockInvalidate(void *addr)
+{
+	asm("icbi %y0" : "=Z" (*(char(*)[32])addr) :: "memory");
+}
 
 typedef struct OSContext {
 	u32 gpr[32];

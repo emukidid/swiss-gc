@@ -12,8 +12,9 @@ DEST    = ../swiss/source/patches
 DISASM    = disassembly
 
 .NOTPARALLEL:
-all: sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch
+all: stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch
 
+stub: stub.bin
 sdpatch: sd.bin sd.dtk.bin
 ideexipatch: ideexi-v1.bin ideexi-v1.dtk.bin ideexi-v2.bin ideexi-v2.dtk.bin
 dvdpatch: dvd.bin dvd.card.bin
@@ -27,6 +28,22 @@ clean:
 	@rm -rf $(DISASM)/*
 	@-rmdir $(DISASM)
 	@mkdir $(DISASM)
+
+stub.bin:
+	@echo Building Stub ...
+	@$(CC) -Os $(OPTS) -c stub/crt0.S
+	@$(CC) -Os $(OPTS) -c stub/main.c
+	@$(CC) -Os $(OPTS) -c stub/asmfunc.S
+	@$(CC) -Os $(OPTS) -c stub/mmcbbp.c
+	@$(CC) -Os $(OPTS) -c stub/pff.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -o stub.elf -T stub/stub.ld crt0.o main.o asmfunc.o mmcbbp.o pff.o os.o
+	@rm -rf *.o
+	@$(OBJDUMP) -D stub.elf > $(DISASM)/stub.txt
+	@$(OBJCOPY) -O binary stub.elf stub.bin
+	@$(BIN2S) stub.bin > $(DEST)/Stub.s
+	@rm *.bin
+	@rm *.elf
 
 sd.bin:
 	@echo Building SD Patch ...
