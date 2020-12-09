@@ -28,12 +28,6 @@ init_spi:
 1:	eciwx	r0, r4, r3
 	andi.	r0, r0, 0b01
 	bne		1b
-
-	.globl deselect
-deselect:
-	lwz		r3, EXIRegs (r0)
-	li		r0, 0
-	ecowx	r0, r0, r3
 	blr
 
 	.globl select
@@ -41,7 +35,13 @@ select:
 	lwz		r3, EXIRegs (r0)
 	li		r0, ((1 << 0) << 7) | (4 << 4)
 	ecowx	r0, r0, r3
-	blr
+	b		rcv_spi
+
+	.globl deselect
+deselect:
+	lwz		r3, EXIRegs (r0)
+	li		r0, 0
+	ecowx	r0, r0, r3
 
 	.globl rcv_spi
 rcv_spi:

@@ -112,8 +112,8 @@ DSTATUS disk_initialize (void)
 	UINT tmr;
 
 
-	init_spi();						/* Initialize ports to control MMC */
-	for (n = 10; n; n--) rcv_spi();	/* 80 Dummy clocks with CS=H */
+	init_spi();							/* Initialize ports to control MMC */
+	for (n = 10; n; n--) deselect();	/* 80 Dummy clocks with CS=H */
 
 	ty = 0;
 	if (send_cmd(CMD0, 0) == 1) {			/* Enter Idle state */

@@ -39,12 +39,23 @@ startup:
 	ori		r0, r0, 0x000C
 	mtear	r0
 
+	li		r3, 0
+	lis		r0, 0x4800
+	ori		r0, r0, reset + 0x0002
+1:	stwu	r0, 0x0100 (r3)
+	dcbst	r0, r3
+	sync
+	icbi	r0, r3
+	cmplwi	r3, 0x1700
+	blt		1b
+
 	li		r0, 0
 	li		sp, 0x3000
 	stwu	r0, -8 (sp)
 
 	bl		_main
 
+reset:
 	li		r0, 0
 	lis		r3, 0x0C00
 	addi	r3, r3, 0x3000 + 9*4
