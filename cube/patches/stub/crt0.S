@@ -58,6 +58,14 @@ startup:
 reset:
 	li		r0, 0
 	lis		r3, 0x0C00
-	addi	r3, r3, 0x3000 + 9*4
-	ecowx	r0, r0, r3
+	li		r4, 0x3000 + 9*4
+	ecowx	r0, r4, r3
 	b		.
+
+	.globl run
+run:
+	oris	r3, r3, 0x8000
+	mtsrr0	r3
+	li		r3, 0x30
+	mtsrr1	r3
+	rfi

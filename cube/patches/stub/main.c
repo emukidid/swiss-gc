@@ -22,15 +22,17 @@
 #include "dolphin/os.h"
 #include "pff.h"
 
+static FATFS fs;
+
 vu32(*EXIRegs)[5] = (vu32(*)[])0x0C006800;
+
+void run(void (*entry)(void));
 
 void dly_us(UINT n)
 {
 	OSTick start = OSGetTick();
 	while (OSDiffTick(OSGetTick(), start) < OSMicrosecondsToTicks(n));
 }
-
-static FATFS fs;
 
 static void load_dol(const char *path)
 {
@@ -67,7 +69,7 @@ static void load_dol(const char *path)
 		asm volatile("sync");
 	}
 
-	image.entry();
+	run(image.entry);
 }
 
 void _main(void)
