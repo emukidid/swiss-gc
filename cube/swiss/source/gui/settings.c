@@ -87,6 +87,7 @@ void refreshSRAM(SwissSettings *settings) {
 		memset(sram, 0, sizeof(syssram));
 		sram->flags |= 0x10;
 		sram->flags |= 0x04;
+		sram->flags |= swissSettings.sramVideo & 0x03;
 		writeSram = true;
 	}
 	settings->sramHOffset = sram->display_offsetH;
