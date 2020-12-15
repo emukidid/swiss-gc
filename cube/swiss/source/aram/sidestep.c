@@ -18,6 +18,7 @@
 
 #include "sidestep.h"
 #include "ssaram.h"
+#include "elf.h"
 #include "patcher.h"
 
 #define ARAMSTART 0x8000
@@ -346,6 +347,93 @@ int DOLtoARAM(unsigned char *dol, int argc, char *argv[])
 
   /*** Now go run it ***/
   ARAMRun(dolhdr->entryPoint, minaddress, ARAMSTART, sizeinbytes);
+
+  /*** Will never return ***/
+  return 1;
+}
+
+static void ELFMinMax(Elf32_Ehdr *ehdr, Elf32_Phdr *phdr)
+{
+  int i;
+
+  maxaddress = 0;
+  minaddress = 0x87100000;
+
+  /*** Go through ELF segments ***/
+  for (i = 0; i < ehdr->e_phnum; i++)
+  {
+    if (phdr[i].p_type == PT_LOAD)
+    {
+      if (phdr[i].p_vaddr < minaddress)
+        minaddress = phdr[i].p_vaddr;
+      if ((phdr[i].p_vaddr + phdr[i].p_memsz) > maxaddress)
+        maxaddress = phdr[i].p_vaddr + phdr[i].p_memsz;
+    }
+  }
+}
+
+int ELFtoARAM(unsigned char *elf, int argc, char *argv[])
+{
+  Elf32_Ehdr *ehdr;
+  Elf32_Phdr *phdr;
+  u32 sizeinbytes;
+  int i;
+  struct __argv args;
+
+  /*** Make sure ARAM subsystem is alive! ***/
+  AR_Init(NULL, 0); /*** No stack - we need it all ***/
+  ARAMClear();
+
+  /*** First, does this look like an ELF? ***/
+  if (!valid_elf_image(elf))
+    return 0;
+
+  /*** Get ELF headers ***/
+  ehdr = (Elf32_Ehdr *) elf;
+  phdr = (Elf32_Phdr *) (elf + ehdr->e_phoff);
+
+  /*** Get ELF stats ***/
+  ELFMinMax(ehdr, phdr);
+  sizeinbytes = maxaddress - minaddress;
+
+  /*** Move all ELF segments into ARAM ***/
+  for (i = 0; i < ehdr->e_phnum; i++)
+  {
+    if (phdr[i].p_type == PT_LOAD)
+    {
+      ARAMPut(elf + phdr[i].p_offset, (char *) ((phdr[i].p_vaddr - minaddress) + ARAMSTART), phdr[i].p_filesz);
+    }
+  }
+
+  /*** Pass a command line ***/
+  if (argc)
+  {
+    args.argvMagic = ARGV_MAGIC;
+    args.argc = argc;
+    args.length = 1;
+
+    for (i = 0; i < argc; i++)
+    {
+      size_t argLength = strlen(argv[i]) + 1;
+      args.length += argLength;
+    }
+    args.commandLine = malloc(args.length);
+
+    unsigned int position = 0;
+    for (i = 0; i < argc; i++)
+    {
+      size_t argLength = strlen(argv[i]) + 1;
+      memcpy(args.commandLine + position, argv[i], argLength);
+      position += argLength;
+    }
+    args.commandLine[args.length - 1] = '\0';
+    DCStoreRange(args.commandLine, args.length);
+
+    ARAMPut((unsigned char *) &args, (char *) (ehdr->e_entry - minaddress + 8 + ARAMSTART), sizeof(struct __argv));
+  }
+
+  /*** Now go run it ***/
+  ARAMRun(ehdr->e_entry, minaddress, ARAMSTART, sizeinbytes);
 
   /*** Will never return ***/
   return 1;

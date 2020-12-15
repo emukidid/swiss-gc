@@ -32,6 +32,7 @@
 #include "exi.h"
 #include "patcher.h"
 #include "dvd.h"
+#include "elf.h"
 #include "gcm.h"
 #include "mp3.h"
 #include "nkit.h"
@@ -1126,7 +1127,14 @@ void boot_dol()
 
 	if(devices[DEVICE_CUR] != NULL) devices[DEVICE_CUR]->deinit( devices[DEVICE_CUR]->initial );
 	// Boot
-	DOLtoARAM(dol_buffer, argc, argc == 0 ? NULL : argv);
+	if(!memcmp(dol_buffer, ELFMAG, SELFMAG)) {
+		ELFtoARAM(dol_buffer, argc, argc == 0 ? NULL : argv);
+	}
+	else {
+		DOLtoARAM(dol_buffer, argc, argc == 0 ? NULL : argv);
+	}
+
+	free(dol_buffer);
 }
 
 /* Manage file  - The user will be asked what they want to do with the currently selected file - copy/move/delete*/
@@ -1595,7 +1603,7 @@ void load_file()
 		
 	//if it's a DOL, boot it
 	if(strlen(fileName)>4) {
-		if(endsWith(fileName,".dol") || endsWith(fileName,".dol+cli")) {
+		if(endsWith(fileName,".dol") || endsWith(fileName,".dol+cli") || endsWith(fileName,".elf")) {
 			boot_dol();
 			// if it was invalid (overlaps sections, too large, etc..) it'll return
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid DOL"));

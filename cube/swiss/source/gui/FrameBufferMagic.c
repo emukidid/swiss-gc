@@ -1239,7 +1239,8 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message
 		if(endsWith(eventData->displayName,".gcm") 
 			|| endsWith(eventData->displayName,".iso")
 			|| endsWith(eventData->displayName,".dol")
-			|| endsWith(eventData->displayName,".dol+cli")) {
+			|| endsWith(eventData->displayName,".dol+cli")
+			|| endsWith(eventData->displayName,".elf")) {
 			if(endsWith(eventData->displayName,".nkit.iso")) {
 				eventData->displayName[((u32)strrchr(eventData->displayName, '.'))-((u32)eventData->displayName)] = '\0';
 			}

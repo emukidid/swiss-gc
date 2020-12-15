@@ -181,6 +181,9 @@ void populate_meta(file_handle *f) {
 			else if(endsWith(f->name,".dol+cli")) {	//DOL+CLI
 				f->meta = create_basic_meta(&dolcliimgTexObj);
 			}
+			else if(endsWith(f->name,".elf")) {	//ELF
+				f->meta = create_basic_meta(&dolimgTexObj);
+			}
 			else {
 				f->meta = create_basic_meta(&fileimgTexObj);
 			}
