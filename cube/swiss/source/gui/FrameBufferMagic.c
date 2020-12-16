@@ -86,6 +86,8 @@ TPLFile dolimgTPL;
 GXTexObj dolimgTexObj;
 TPLFile dolcliimgTPL;
 GXTexObj dolcliimgTexObj;
+TPLFile elfimgTPL;
+GXTexObj elfimgTexObj;
 TPLFile fileimgTPL;
 GXTexObj fileimgTexObj;
 TPLFile dirimgTPL;
@@ -393,6 +395,8 @@ static void init_textures()
 	TPL_GetTexture(&dolimgTPL,0,&dolimgTexObj);
 	TPL_OpenTPLFromMemory(&dolcliimgTPL, (void *)dolcliimg_tpl, dolcliimg_tpl_size);
 	TPL_GetTexture(&dolcliimgTPL,0,&dolcliimgTexObj);
+	TPL_OpenTPLFromMemory(&elfimgTPL, (void *)elfimg_tpl, elfimg_tpl_size);
+	TPL_GetTexture(&elfimgTPL,0,&elfimgTexObj);
 	TPL_OpenTPLFromMemory(&fileimgTPL, (void *)fileimg_tpl, fileimg_tpl_size);
 	TPL_GetTexture(&fileimgTPL,0,&fileimgTexObj);
 	TPL_OpenTPLFromMemory(&dirimgTPL, (void *)dirimg_tpl, dirimg_tpl_size);

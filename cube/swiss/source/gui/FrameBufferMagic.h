@@ -82,6 +82,7 @@
 #include "mp3img_tpl.h"
 #include "dolimg_tpl.h"
 #include "dolcliimg_tpl.h"
+#include "elfimg_tpl.h"
 #include "dirimg_tpl.h"
 #include "fileimg_tpl.h"
 #include "checked_32_tpl.h"
@@ -131,6 +132,7 @@ enum TextureId
 extern GXTexObj mp3imgTexObj;
 extern GXTexObj dolimgTexObj;
 extern GXTexObj dolcliimgTexObj;
+extern GXTexObj elfimgTexObj;
 extern GXTexObj fileimgTexObj;
 extern GXTexObj dirimgTexObj;
 

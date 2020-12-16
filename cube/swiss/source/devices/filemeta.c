@@ -182,7 +182,7 @@ void populate_meta(file_handle *f) {
 				f->meta = create_basic_meta(&dolcliimgTexObj);
 			}
 			else if(endsWith(f->name,".elf")) {	//ELF
-				f->meta = create_basic_meta(&dolimgTexObj);
+				f->meta = create_basic_meta(&elfimgTexObj);
 			}
 			else {
 				f->meta = create_basic_meta(&fileimgTexObj);
