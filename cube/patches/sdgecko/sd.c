@@ -20,6 +20,9 @@
 //CMD24 - Write single block command 
 #define CMD24				(0x58)
 
+#ifndef QUEUE_SIZE
+#define QUEUE_SIZE			2
+#endif
 #define SECTOR_SIZE 		512
 
 #define sectorBuf			((u8*)VAR_SECTOR_BUF)
@@ -41,7 +44,7 @@ static struct {
 		uint32_t offset;
 		uint32_t sector;
 		read_frag_cb callback;
-	} queue[2];
+	} queue[QUEUE_SIZE];
 	#endif
 } mmc = {
 	.next_sector = -1,
@@ -228,6 +231,7 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 }
 #else
 #if ISR_READ
+static void mmc_done_queued(void);
 static void mmc_read_queued(void)
 {
 	if (!EXILock(exi_channel, EXI_DEVICE_0, (EXICallback)mmc_read_queued))
@@ -237,6 +241,11 @@ static void mmc_read_queued(void)
 	uint32_t length = mmc.queue[0].length;
 	uint32_t offset = mmc.queue[0].offset;
 	uint32_t sector = mmc.queue[0].sector;
+
+	if (sector == mmc.last_sector) {
+		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)mmc_done_queued);
+		return;
+	}
 
 	if (sector != mmc.next_sector) {
 		end_read();
@@ -259,13 +268,14 @@ static void mmc_done_queued(void)
 
 	if (address != VAR_SECTOR_BUF + offset)
 		memcpy(address, sectorBuf + offset, length);
+	callback(address, length);
+
+	EXIUnlock(exi_channel);
 
 	if (--mmc.items) {
 		memcpy(mmc.queue, mmc.queue + 1, mmc.items * sizeof(*mmc.queue));
 		mmc_read_queued();
 	}
-
-	callback(address, length);
 }
 
 int do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
@@ -281,11 +291,6 @@ int do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t secto
 	mmc.queue[mmc.items].callback = callback;
 	if (mmc.items++) return mmc.items;
 
-	if (sector == mmc.last_sector) {
-		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)mmc_done_queued);
-		return 1;
-	}
-
 	mmc_read_queued();
 	return 1;
 }
@@ -299,7 +304,6 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	OSSetInterruptHandler(interrupt, TCIntrruptHandler);
 	exi_imm_read(2, 1);
 	exi_deselect();
-	EXIUnlock(exi_channel);
 
 	mmc_done_queued();
 }

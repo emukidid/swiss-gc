@@ -748,8 +748,7 @@ static void dsp_write(unsigned index, uint16_t value)
 				DSP[12] = (intptr_t)buffer;
 				DSP[13] = ((length >> 5) & 0x7FFF) | 0x8000;
 
-				if (fifo_size() < (count * 3 / 2) * sizeof(sample_t))
-					dtk_fill_buffer();
+				dtk_fill_buffer();
 			} else {
 				DSP[12] = dsp.reg.aima;
 				DSP[13] = dsp.reg.aibl;

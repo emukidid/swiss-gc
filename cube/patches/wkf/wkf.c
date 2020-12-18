@@ -25,6 +25,10 @@
 #include "dolphin/os.h"
 #include "emulator.h"
 
+#ifndef QUEUE_SIZE
+#define QUEUE_SIZE 2
+#endif
+
 static struct {
 	void *buffer;
 	uint32_t length;
@@ -41,7 +45,7 @@ static struct {
 		uint32_t offset;
 		uint32_t sector;
 		read_frag_cb callback;
-	} queue[2];
+	} queue[QUEUE_SIZE];
 } wkf = {
 	.base_sector = -1
 };
@@ -106,12 +110,12 @@ void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	uint32_t sector = wkf.queue[0].sector;
 	read_frag_cb callback = wkf.queue[0].callback;
 
+	callback(address, length);
+
 	if (--wkf.items) {
 		memcpy(wkf.queue, wkf.queue + 1, wkf.items * sizeof(*wkf.queue));
 		wkf_read_queued();
 	}
-
-	callback(address, length);
 }
 
 void schedule_read(OSTick ticks)
@@ -133,9 +137,6 @@ void schedule_read(OSTick ticks)
 		return;
 	}
 
-	#ifdef DTK
-	dtk_fill_buffer();
-	#endif
 	dvd.frag = is_frag_read(dvd.offset, dvd.length);
 
 	if (!dvd.frag)

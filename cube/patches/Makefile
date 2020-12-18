@@ -75,7 +75,7 @@ sd.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDTK
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=3 -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -152,7 +152,7 @@ ideexi-v2.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDTK
-	@$(CC) -Os $(OPTS) -c ide-exi/hddread.c -DDMA_READ=1 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c ide-exi/hddread.c -DDMA_READ=1 -DQUEUE_SIZE=3 -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
@@ -243,7 +243,7 @@ wkf.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK -DWKF
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DDTK
+	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DDTK -DQUEUE_SIZE=3
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DPATCH_FRAGS=1

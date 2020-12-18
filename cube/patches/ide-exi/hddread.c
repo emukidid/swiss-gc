@@ -35,6 +35,9 @@
 #define ATA_SR_DRQ		0x08
 #define ATA_SR_ERR		0x01
 
+#ifndef QUEUE_SIZE
+#define QUEUE_SIZE			2
+#endif
 #define SECTOR_SIZE 		512
 
 #define sectorBuf			((u8*)VAR_SECTOR_BUF + DMA_READ * 0x40000000)
@@ -57,7 +60,7 @@ static struct {
 		uint32_t offset;
 		uint32_t sector;
 		read_frag_cb callback;
-	} queue[2];
+	} queue[QUEUE_SIZE];
 	#endif
 } ata = {
 	.last_sector = -1
@@ -282,6 +285,7 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 }
 #else
 #if DMA_READ
+static void ata_done_queued(void);
 static void ata_read_queued(void)
 {
 	if (!EXILock(exi_channel, EXI_DEVICE_0, (EXICallback)ata_read_queued))
@@ -291,6 +295,11 @@ static void ata_read_queued(void)
 	uint32_t length = ata.queue[0].length;
 	uint32_t offset = ata.queue[0].offset;
 	uint32_t sector = ata.queue[0].sector;
+
+	if (sector == ata.last_sector) {
+		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)ata_done_queued);
+		return;
+	}
 
 	ataReadSector(sector, sectorBuf, 0);
 
@@ -307,13 +316,14 @@ static void ata_done_queued(void)
 
 	if (address != VAR_SECTOR_BUF + offset)
 		memcpy(address, sectorBuf + offset, length);
+	callback(address, length);
+
+	EXIUnlock(exi_channel);
 
 	if (--ata.items) {
 		memcpy(ata.queue, ata.queue + 1, ata.items * sizeof(*ata.queue));
 		ata_read_queued();
 	}
-
-	callback(address, length);
 }
 
 int do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
@@ -329,11 +339,6 @@ int do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t secto
 	ata.queue[ata.items].callback = callback;
 	if (ata.items++) return ata.items;
 
-	if (sector == ata.last_sector) {
-		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)ata_done_queued);
-		return 1;
-	}
-
 	ata_read_queued();
 	return 1;
 }
@@ -343,7 +348,6 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	OSMaskInterrupts(OS_INTERRUPTMASK(interrupt));
 	OSSetInterruptHandler(interrupt, TCIntrruptHandler);
 	exi_deselect();
-	EXIUnlock(exi_channel);
 
 	ata_done_queued();
 }
