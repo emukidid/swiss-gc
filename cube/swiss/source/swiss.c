@@ -729,11 +729,16 @@ int exccomp(const void *a1, const void *b1)
 	if(a && !b) return -1;
 	if(!a && !b) return 0;
 	
-	if(a->type == PATCH_DOL && b->type != PATCH_DOL)
+	if((a->type == PATCH_DOL || a->type == PATCH_ELF) && (b->type != PATCH_DOL && b->type != PATCH_ELF))
 		return -1;
-	if(a->type != PATCH_DOL && b->type == PATCH_DOL)
+	if((a->type != PATCH_DOL && a->type != PATCH_ELF) && (b->type == PATCH_DOL || b->type == PATCH_ELF))
 		return 1;
-
+	
+	if(a->offset == GCMDisk.DOLOffset && b->offset != GCMDisk.DOLOffset)
+		return -1;
+	if(a->offset != GCMDisk.DOLOffset && b->offset == GCMDisk.DOLOffset)
+		return 1;
+	
 	return strcasecmp(a->name, b->name);
 }
 
@@ -749,7 +754,7 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch) {
 	int i = 0, j = 0, max = 0, idx = 0, page = 4;
 	for(i = 0; i < 64; i++) if(filesToPatch[i].offset == 0) break;
 	sortDols(filesToPatch, i);	// Sort DOL to the top
-	for(i = 0; i < 64; i++) if(filesToPatch[i].offset == 0 || filesToPatch[i].type != PATCH_DOL) break;
+	for(i = 0; i < 64; i++) if(filesToPatch[i].offset == 0 || (filesToPatch[i].type != PATCH_DOL && filesToPatch[i].type != PATCH_ELF)) break;
 	int num_files = i;
 	if(num_files < 2) return 0;
 	
@@ -836,11 +841,11 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 			altDol = select_alt_dol(filesToPatch);
 			if(altDol != NULL) {
 				print_gecko("Alt DOL selected :%08X\r\n", altDol->offset);
-				GCMDisk.DOLOffset = altDol->offset;
 				// For a DOL from a TGC, redirect the FST to the TGC FST.
 				if(altDol->tgcFstSize > 0) {
-					GCMDisk.MaxFSTSize = altDol->tgcFstSize;
 					GCMDisk.FSTOffset = altDol->tgcFstOffset;
+					GCMDisk.FSTSize = altDol->tgcFstSize;
+					GCMDisk.MaxFSTSize = altDol->tgcFstSize;
 				}
 			}
 		}
@@ -860,7 +865,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		// Read FST to top of Main Memory (round to 32 byte boundary)
 		u32 fstAddr = (topAddr-GCMDisk.MaxFSTSize)&~31;
 		devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,GCMDisk.MaxFSTSize) != GCMDisk.MaxFSTSize) {
+		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,GCMDisk.FSTSize) != GCMDisk.FSTSize) {
 			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
 			while(1);
 		}
@@ -888,31 +893,51 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		*(volatile u32*)0x800000D4 = (u32)osctxblock;
 		memset(osctxblock, 0, 1024);
 
-		print_gecko("DOL Lives at %08X\r\n", GCMDisk.DOLOffset);
-		
-		// Read the Main DOL header
-		DOLHEADER dolhdr;
-		devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL Header"));
-			while(1);
+		if(altDol != NULL) {
+			print_gecko("DOL Lives at %08X\r\n", altDol->offset);
+			sizeToRead = altDol->size;
+			type = altDol->type;
+			print_gecko("DOL size %i\r\n", sizeToRead);
+			
+			// Read the entire Alt DOL
+			buffer = memalign(32,sizeToRead);
+			print_gecko("DOL buffer %08X\r\n", (u32)buffer);
+			if(!buffer) {
+				return 0;
+			}
+			devices[DEVICE_CUR]->seekFile(&curFile,altDol->offset,DEVICE_HANDLER_SEEK_SET);
+			if(devices[DEVICE_CUR]->readFile(&curFile,buffer,sizeToRead) != sizeToRead) {
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
+				while(1);
+			}
 		}
-		
-		// Figure out the size of the Main DOL so that we can read it all
-		sizeToRead = DOLSize(&dolhdr);
-		type = PATCH_DOL;
-		print_gecko("DOL size %i\r\n", sizeToRead);
+		else {
+			print_gecko("DOL Lives at %08X\r\n", GCMDisk.DOLOffset);
+			
+			// Read the Main DOL header
+			DOLHEADER dolhdr;
+			devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
+			if(devices[DEVICE_CUR]->readFile(&curFile,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL Header"));
+				while(1);
+			}
+			
+			// Figure out the size of the Main DOL so that we can read it all
+			sizeToRead = DOLSize(&dolhdr);
+			type = PATCH_DOL;
+			print_gecko("DOL size %i\r\n", sizeToRead);
 
-		// Read the entire Main DOL
-		buffer = memalign(32,sizeToRead);
-		print_gecko("DOL buffer %08X\r\n", (u32)buffer);
-		if(!buffer) {
-			return 0;
-		}
-		devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,buffer,sizeToRead) != sizeToRead) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
-			while(1);
+			// Read the entire Main DOL
+			buffer = memalign(32,sizeToRead);
+			print_gecko("DOL buffer %08X\r\n", (u32)buffer);
+			if(!buffer) {
+				return 0;
+			}
+			devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
+			if(devices[DEVICE_CUR]->readFile(&curFile,buffer,sizeToRead) != sizeToRead) {
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
+				while(1);
+			}
 		}
 	}
 
@@ -1003,6 +1028,9 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	}
 	else if(type == PATCH_DOL) {
 		DOLtoARAM(buffer, 0, NULL);
+	}
+	else if(type == PATCH_ELF) {
+		ELFtoARAM(buffer, 0, NULL);
 	}
 	return 0;
 }
