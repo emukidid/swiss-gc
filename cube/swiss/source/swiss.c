@@ -1793,6 +1793,7 @@ int info_game()
 	strncpy(&config->game_name[0],&GCMDisk.GameName[0],32);
 	config_find(config);	// populate
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
+	int num_cheats = -1;
 	while(1) {
 		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z)){ VIDEO_WaitVSync (); }
 		while(!(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z))){ VIDEO_WaitVSync (); }
@@ -1824,7 +1825,10 @@ int info_game()
 		}
 		// Look for a cheats file based on the GameID
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
-			int num_cheats = findCheats(false);
+			// don't find cheats again if we've just found some for this game since it'll wipe selections.
+			if(num_cheats == -1) {
+				num_cheats = findCheats(false);
+			}
 			if(num_cheats != 0) {
 				DrawCheatsSelector(getRelativeName(getCurrentDirEntries()[curSelection].name));
 			}
