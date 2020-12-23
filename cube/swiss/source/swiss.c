@@ -1676,8 +1676,10 @@ void load_file()
 			return;
 		}
 		if(endsWith(fileName,".iso") || endsWith(fileName,".gcm")) {
-			if(devices[DEVICE_CUR]->features & FEAT_BOOT_GCM)
+			if(devices[DEVICE_CUR]->features & FEAT_BOOT_GCM) {
 				load_game();
+				memset(&GCMDisk, 0, sizeof(DiskHeader));
+			}
 			else {
 				uiDrawObj_t *msgBox = NULL;
 				if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
