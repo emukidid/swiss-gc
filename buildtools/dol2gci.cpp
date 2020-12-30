@@ -168,11 +168,11 @@ int main (int argc, char * const argv[])
 	// strip path from filename, looking for forward and backslash
 	string name = argv[1];
 	unsigned int i;
-	i = name.find('/');
+	i = name.rfind('/');
 	if (i!=string::npos) {
 		name = name.substr(i+1);
 	}
-	i = name.find('\\');
+	i = name.rfind('\\');
 	if (i!=string::npos) {
 		name = name.substr(i+1);
 	}
