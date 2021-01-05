@@ -1980,7 +1980,7 @@ static void *videoUpdate(void *videoEventQueue) {
 		//Copy EFB->XFB
 		GX_SetCopyClear((GXColor){0, 0, 0, 0xFF}, GX_MAX_Z24);
 		GX_CopyDisp(xfb[whichfb],GX_TRUE);
-		GX_Flush();
+		GX_DrawDone();
 
 		LWP_MutexUnlock(_videomutex);
 		VIDEO_SetNextFramebuffer(xfb[whichfb]);
@@ -2040,4 +2040,11 @@ void DrawShutdown() {
 	threadAlive = 0;
 	LWP_JoinThread(video_thread, NULL);
 	GX_SetCurrentGXThread();
+}
+
+void DrawVideoMode(GXRModeObj *videoMode)
+{
+	LWP_MutexLock(_videomutex);
+	setVideoMode(videoMode);
+	LWP_MutexUnlock(_videomutex);
 }

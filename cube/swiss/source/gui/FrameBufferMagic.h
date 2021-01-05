@@ -176,5 +176,6 @@ void DrawCheatsSelector(char *fileName);
 void DrawGetTextEntry(int entryMode, char *label, void *src, int size);
 void DrawInit();
 void DrawShutdown();
+void DrawVideoMode(GXRModeObj *videoMode);
 
 #endif

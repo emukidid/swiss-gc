@@ -230,7 +230,7 @@ int main ()
 	GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
 	
 	if((forcedMode != NULL) && (forcedMode != getVideoMode())) {
-		setVideoMode(forcedMode);
+		DrawVideoMode(forcedMode);
 	}
 	
 	if(swissSettings.initNetworkAtStart) {

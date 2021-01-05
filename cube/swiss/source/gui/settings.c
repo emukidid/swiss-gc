@@ -709,7 +709,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				// Change Swiss video mode if it was modified.
 				if(tempSettings.uiVMode != swissSettings.uiVMode) {
 					GXRModeObj *newmode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
-					setVideoMode(newmode);
+					DrawVideoMode(newmode);
 				}
 				// Save settings to SRAM
 				if(swissSettings.uiVMode > 0) {
