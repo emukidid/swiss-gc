@@ -112,6 +112,38 @@ static void ARAMStub(void)
 
     /*** Party! ***/
     asm("mtlr 3");
+    asm("li 0,0");
+    asm("lis 1,0x8160");
+    asm("li 2,0");
+    asm("li 3,0");
+    asm("li 4,0");
+    asm("li 5,0");
+    asm("li 6,0");
+    asm("li 7,0");
+    asm("li 8,0");
+    asm("li 9,0");
+    asm("li 10,0");
+    asm("li 11,0");
+    asm("li 12,0");
+    asm("li 13,0");
+    asm("li 14,0");
+    asm("li 15,0");
+    asm("li 16,0");
+    asm("li 17,0");
+    asm("li 18,0");
+    asm("li 19,0");
+    asm("li 20,0");
+    asm("li 21,0");
+    asm("li 22,0");
+    asm("li 23,0");
+    asm("li 24,0");
+    asm("li 25,0");
+    asm("li 26,0");
+    asm("li 27,0");
+    asm("li 28,0");
+    asm("li 29,0");
+    asm("li 30,0");
+    asm("li 31,0");
     asm("blr");			/*** Boot DOL ***/
 
 }
@@ -125,7 +157,7 @@ void ARAMRunStub(void)
 	/*** Copy ARAMStub to 81300000 ***/
 	if (_dst + _len < 0x81300000) p = (void *) 0x81300000;
 	else p = (void *) 0x80003100;
-	memcpy(p, s, 256); /*** Way too much - but who cares ***/
+	memcpy(p, s, ARAMRunStub - ARAMStub);
 
 	/*** Round length to 32 bytes ***/
 	if (_len & 0x1f) _len = (_len & ~0x1f) + 0x20;
