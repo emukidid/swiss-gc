@@ -19,7 +19,7 @@ sdpatch: sd.bin sd.dtk.bin
 ideexipatch: ideexi-v1.bin ideexi-v1.dtk.bin ideexi-v2.bin ideexi-v2.dtk.bin
 dvdpatch: dvd.bin dvd.card.bin
 usbgeckopatch: usbgecko.bin
-wkfpatch: wkf.bin wkf.dtk.bin
+wkfpatch: wkf.bin wkf.card.bin wkf.dtk.bin
 fsppatch: fsp.bin
 gcloaderpatch: gcloader.bin gcloader.card.bin
 
@@ -234,6 +234,25 @@ wkf.bin:
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf.txt
 	@$(OBJCOPY) -O binary wkf.elf wkf.bin
 	@$(BIN2S) wkf.bin > $(DEST)/WKFPatch.s
+	@rm *.bin
+	@rm *.elf
+
+wkf.card.bin:
+	@echo Building WKF Patch + CARD ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DWKF
+	@$(CC) -Os $(OPTS) -c base/emulator_card.c
+	@$(CC) -Os $(OPTS) -c base/igr.c
+	@$(CC) -Os $(OPTS) -c wkf/wkf.c
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/usbgecko.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -o wkf.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o wkf.o sd.o frag.o usbgecko.o os.o
+	@rm -rf *.o
+	@$(OBJDUMP) -D wkf.card.elf > $(DISASM)/wkf.card.txt
+	@$(OBJCOPY) -O binary wkf.card.elf wkf.card.bin
+	@$(BIN2S) wkf.card.bin > $(DEST)/WKFPatch.card.s
 	@rm *.bin
 	@rm *.elf
 

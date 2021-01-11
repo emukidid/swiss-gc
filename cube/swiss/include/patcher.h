@@ -36,6 +36,8 @@ extern u8 usbgecko_bin[];
 extern u32 usbgecko_bin_size;
 extern u8 wkf_bin[];
 extern u32 wkf_bin_size;
+extern u8 wkf_card_bin[];
+extern u32 wkf_card_bin_size;
 extern u8 wkf_dtk_bin[];
 extern u32 wkf_dtk_bin_size;
 extern u8 dvd_bin[];

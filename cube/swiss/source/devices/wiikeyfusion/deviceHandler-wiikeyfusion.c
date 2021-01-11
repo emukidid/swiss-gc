@@ -120,6 +120,33 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 				*(vu32*)VAR_IGR_DOL_SIZE = fno.fsize;
 			}
 		}
+		
+		if(swissSettings.emulateMemoryCard) {
+			memset(&patchFile, 0, sizeof(file_handle));
+			sprintf(&patchFile.name[0], "%sswiss_patches/MemoryCardA.%s.raw", devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			
+			devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
+			devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			
+			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_CARD_A, 16*1024*1024, DEVICE_PATCHES))) {
+				totFrags+=frags;
+				devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			}
+			
+			memset(&patchFile, 0, sizeof(file_handle));
+			sprintf(&patchFile.name[0], "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			
+			devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
+			devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			
+			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_CARD_B, 16*1024*1024, DEVICE_PATCHES))) {
+				totFrags+=frags;
+				devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			}
+		}
+		
 		// Card Type
 		*(vu8*)VAR_SD_SHIFT = (u8)(sdgecko_getAddressingType(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)) ? 9:0);
 		// Copy the actual freq
@@ -210,6 +237,8 @@ bool deviceHandler_WKF_test() {
 u32 deviceHandler_WKF_emulated() {
 	if (GCMDisk.AudioStreaming)
 		return EMU_READ|EMU_AUDIO_STREAMING;
+	else if (swissSettings.emulateMemoryCard)
+		return EMU_READ|EMU_MEMCARD;
 	else
 		return EMU_READ;
 }
@@ -221,7 +250,7 @@ DEVICEHANDLER_INTERFACE __device_wkf = {
 	"Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_WIIKEY, 116, 72},
 	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_AUDIO_STREAMING,
-	EMU_READ|EMU_AUDIO_STREAMING,
+	EMU_READ|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	LOC_DVD_CONNECTOR,
 	&initial_WKF,
 	(_fn_test)&deviceHandler_WKF_test,

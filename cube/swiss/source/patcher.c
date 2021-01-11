@@ -173,6 +173,9 @@ int install_code(int final)
 		if (GCMDisk.AudioStreaming) {
 			patch     = wkf_dtk_bin;
 			patchSize = wkf_dtk_bin_size;
+		} else if (swissSettings.emulateMemoryCard) {
+			patch     = wkf_card_bin;
+			patchSize = wkf_card_bin_size;
 		} else {
 			patch     = wkf_bin;
 			patchSize = wkf_bin_size;
