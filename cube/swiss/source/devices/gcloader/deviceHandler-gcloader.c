@@ -20,7 +20,6 @@
 #include "patcher.h"
 #include "dvd.h"
 
-const DISC_INTERFACE* gcloader = &__io_gcloader;
 FATFS *gcloaderfs = NULL;
 
 file_handle initial_GCLOADER =

@@ -20,16 +20,6 @@
 
 static vu32* const gcloader = (vu32*)0xCC006000;
 
-static bool __gcloader_startup(void)
-{
-    return true;
-}
-
-static bool __gcloader_isInserted(void)
-{
-    return true;
-}
-
 u32 __gcloaderCmdImm(unsigned int cmd, unsigned int p1, unsigned int p2) {
 	gcloader[2] = cmd;
 	gcloader[3] = p1;
@@ -42,54 +32,6 @@ u32 __gcloaderCmdImm(unsigned int cmd, unsigned int p1, unsigned int p2) {
 		retries --;						// Wait for IMM command to finish up
 	}
 	return !retries ? -1 : gcloader[8];
-}
-
-static bool __gcloader_readSectors(u32 sector, u32 numSectors, void *buffer)
-{
-	//print_gecko("GCLoader read %08X, %i sectors\r\n", sector, numSectors);
-    while(numSectors > 0) {
-
-        u32 len = 0;
-        if(numSectors > 16) {
-            len = 16*512;
-            numSectors = numSectors - 16;
-        }
-        else {
-            len = numSectors * 512;
-            numSectors = 0;
-        }
-
-        gcloader[2] = 0xB2000000;
-        gcloader[3] = sector;
-        gcloader[4] = len;
-        gcloader[5] = (u32)buffer;
-        gcloader[6] = len;
-        gcloader[7] = 3; // DMA | START
-        DCInvalidateRange(buffer, len);
-
-        while(gcloader[7] & 1);
-
-        buffer += len;
-        sector = sector + 16;
-
-    }
-
-    return true;
-}
-
-static bool __gcloader_writeSectors(u32 sector, u32 numSectors, void *buffer)
-{
-	return false;
-}
-
-static bool __gcloader_clearStatus(void)
-{
-	return true;
-}
-
-static bool __gcloader_shutdown(void)
-{
-	return true;
 }
 
 u32 gcloaderReadId() {
@@ -109,19 +51,6 @@ void gcloaderWriteFrags(u32 discNum, vu32 *fragList, u32 totFrags) {
     }
 }
 
-
 void gcloaderWriteDiscNum(u32 discNum) {
 	__gcloaderCmdImm(0xB3000002, discNum, 0x00000000);
 }
-
-
-const DISC_INTERFACE __io_gcloader = {
-	DEVICE_TYPE_GC_GCLOADER,
-	FEATURE_MEDIUM_CANREAD | FEATURE_GAMECUBE_DVD,
-	(FN_MEDIUM_STARTUP)&__gcloader_startup,
-	(FN_MEDIUM_ISINSERTED)&__gcloader_isInserted,
-	(FN_MEDIUM_READSECTORS)&__gcloader_readSectors,
-	(FN_MEDIUM_WRITESECTORS)&__gcloader_writeSectors,
-	(FN_MEDIUM_CLEARSTATUS)&__gcloader_clearStatus,
-	(FN_MEDIUM_SHUTDOWN)&__gcloader_shutdown
-} ;
