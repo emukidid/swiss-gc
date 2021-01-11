@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2021, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -25,6 +25,7 @@
 #include "dolphin/os.h"
 #include "emulator.h"
 #include "emulator_card.h"
+#include "frag.h"
 
 static struct {
 	int position;
@@ -110,7 +111,7 @@ void card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
 		case 0x52:
 		{
 			if (card[chan].position >= 5 && type == EXI_READ)
-				read_frag(buffer, length, card[chan].offset);
+				frag_read(buffer, length, card[chan].offset);
 			break;
 		}
 		case 0xF2:
@@ -149,7 +150,7 @@ void card_deselect(unsigned chan)
 				bool success = card[chan].offset % 128 == 0;
 
 				if (card[chan].write_buffer && (card[chan].offset + 128 - card[chan].write_offset) == 512) {
-					success = write_frag(card[chan].write_buffer, 512, card[chan].write_offset) == 512;
+					success = frag_write(card[chan].write_buffer, 512, card[chan].write_offset) == 512;
 					card[chan].write_buffer = NULL;
 				}
 

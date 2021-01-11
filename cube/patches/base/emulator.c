@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2020, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2021, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -29,6 +29,7 @@
 #include "emulator.h"
 #include "emulator_card.h"
 #include "fifo.h"
+#include "frag.h"
 
 static struct {
 	OSInterruptHandler handler[OS_INTERRUPT_MAX];
@@ -357,12 +358,12 @@ bool dtk_fill_buffer(void)
 	#ifndef ISR
 	DCInvalidateRange(__builtin_assume_aligned(dtk.buffer, 32), sizeof(*dtk.buffer));
 	#endif
-	return dtk.reading = read_disc_frag(dtk.buffer, sizeof(*dtk.buffer), dtk.current.position, read_callback);
+	return dtk.reading = frag_read_async(dtk.buffer, sizeof(*dtk.buffer), dtk.current.position, read_callback);
 	#else
 	OSCancelAlarm(&read_alarm);
 	OSTick start = OSGetTick();
 
-	int size = read_frag(dtk.buffer, sizeof(*dtk.buffer), dtk.current.position);
+	int size = frag_read(dtk.buffer, sizeof(*dtk.buffer), dtk.current.position);
 	if (size == sizeof(*dtk.buffer))
 		dtk_decode_buffer(dtk.buffer, size);
 

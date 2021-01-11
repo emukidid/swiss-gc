@@ -1,164 +1,102 @@
-/*
-*
-*   Swiss - The Gamecube IPL replacement
-*
-*	frag.c
-*		- Wrap normal read requests around a fragmented file table
-*/
+/* 
+ * Copyright (c) 2021, Extrems <extrems@extremscorner.org>
+ * 
+ * This file is part of Swiss.
+ * 
+ * Swiss is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * Swiss is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * with Swiss.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
 #include "common.h"
+#include "frag.h"
 
-#ifndef PATCH_FRAGS
-#define PATCH_FRAGS 0
+#define DEVICE_DISC 0
+#ifndef DEVICE_PATCHES
+#define DEVICE_PATCHES DEVICE_DISC
 #endif
 
-int read_disc_frag(void *dst, u32 len, u32 offset, read_frag_cb cb) {
+static const frag_t *frag_get(uint32_t offset, uint32_t size)
+{
+	frag_t *frags = (frag_t *)VAR_FRAG_LIST;
 
-	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
-	u32 amountToRead = len;
-	u32 adjustedOffset = offset;
-	
-	// Locate this offset in the fat table and read as much as we can from a single fragment
-	for(i = 0; i < maxFrags; i++) {
-		u32 fragOffset = fragList[(i*3)+0];
-		u32 fragSize = fragList[(i*3)+1] & ~0x80000000;
-		u32 fragSector = fragList[(i*3)+2];
-		u32 fragOffsetEnd = fragOffset + fragSize;
-		u32 isPatchFrag = PATCH_FRAGS && fragList[(i*3)+1] >> 31;
-		
-		// Find where our read starts and read as much as we can in this frag before returning
-		if(offset >= fragOffset && offset < fragOffsetEnd && !isPatchFrag) {
-			// Does our read get cut off early?
-			if(offset + len > fragOffsetEnd) {
-				if(offset > fragOffsetEnd - 0x20) {
-					continue;
-				}
-				amountToRead = fragOffsetEnd - offset;
-			}
-			adjustedOffset -= fragOffset;
-			return do_read_disc(dst, amountToRead, adjustedOffset, fragSector, cb);
-		}
+	for (int i = 0; i < sizeof(VAR_FRAG_LIST) / sizeof(*frags); i++) {
+		if (!frags[i].size)
+			break;
+		if (offset < frags[i].offset || offset >= frags[i].offset + frags[i].size)
+			continue;
+		if (offset > frags[i].offset + frags[i].size - 32 && size >= 32)
+			continue;
+
+		return &frags[i];
 	}
+
+	return NULL;
+}
+
+bool is_frag_patch(uint32_t offset, uint32_t size)
+{
+	const frag_t *frag = frag_get(offset, size);
+	return frag && frag->device == DEVICE_PATCHES;
+}
+
+bool frag_read_async(void *buffer, uint32_t length, uint32_t offset, frag_read_cb callback)
+{
+	const frag_t *frag = frag_get(offset, length);
+
+	if (frag && frag->device == DEVICE_DISC) {
+		offset = offset - frag->offset;
+		length = MIN(length, frag->size - offset);
+		return do_read_async(buffer, length, offset, frag->sector, callback);
+	}
+
+	return false;
+}
+
+void frag_read_complete(void *buffer, uint32_t length, uint32_t offset)
+{
+	while (length) {
+		int size = frag_read(buffer, length, offset);
+		buffer += size;
+		length -= size;
+		offset += size;
+	}
+}
+
+int frag_read(void *buffer, uint32_t length, uint32_t offset)
+{
+	const frag_t *frag = frag_get(offset, length);
+
+	if (frag && frag->device == DEVICE_PATCHES) {
+		offset = offset - frag->offset;
+		length = MIN(length, frag->size - offset);
+		return do_read(buffer, length, offset, frag->sector);
+	}
+
 	return 0;
 }
 
-// Returns the amount read from the given offset until a frag is hit
-u32 read_frag(void *dst, u32 len, u32 offset) {
+int frag_write(void *buffer, uint32_t length, uint32_t offset)
+{
+	const frag_t *frag = frag_get(offset, length);
 
-	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
-	u32 amountToRead = len;
-	u32 adjustedOffset = offset;
-	
-	// Locate this offset in the fat table and read as much as we can from a single fragment
-	for(i = 0; i < maxFrags; i++) {
-		u32 fragOffset = fragList[(i*3)+0];
-		u32 fragSize = fragList[(i*3)+1] & ~0x80000000;
-		u32 fragSector = fragList[(i*3)+2];
-		u32 fragOffsetEnd = fragOffset + fragSize;
-		u32 isReadFrag = !PATCH_FRAGS || fragList[(i*3)+1] >> 31;
-#ifdef DEBUG_VERBOSE
-		usb_sendbuffer_safe("READ: dst: ",11);
-		print_int_hex(dst);
-		usb_sendbuffer_safe(" len: ",6);
-		print_int_hex(len);
-		usb_sendbuffer_safe(" ofs: ",6);
-		print_int_hex(offset);
-#endif
-		// Find where our read starts and read as much as we can in this frag before returning
-		if(offset >= fragOffset && offset < fragOffsetEnd && isReadFrag) {
-			// Does our read get cut off early?
-			if(offset + len > fragOffsetEnd) {
-				if(offset > fragOffsetEnd - 0x20) {
-					continue;
-				}
-				amountToRead = fragOffsetEnd - offset;
-			}
-			adjustedOffset -= fragOffset;
-			amountToRead = do_read(dst, amountToRead, adjustedOffset, fragSector);
-#ifdef DEBUG_VERBOSE
-			u32 sz = amountToRead;
-			u8* ptr = (u8*)dst;
-			u32 hash = 5381;
-			s32 c;
-			while (c = *ptr++)
-            hash = ((hash << 5) + hash) + c;
-
-			usb_sendbuffer_safe(" checksum: ",11);
-			print_int_hex(hash);
-			usb_sendbuffer_safe("\r\n",2);
-#endif
-			return amountToRead;
-		}
+	if (frag && frag->device == DEVICE_PATCHES) {
+		offset = offset - frag->offset;
+		length = MIN(length, frag->size - offset);
+		return do_write(buffer, length, offset, frag->sector);
 	}
+
 	return 0;
-}
-
-u32 write_frag(void *src, u32 len, u32 offset) {
-
-	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
-	u32 amountToWrite = len;
-	u32 adjustedOffset = offset;
-	
-	// Locate this offset in the fat table and write as much as we can to a single fragment
-	for(i = 0; i < maxFrags; i++) {
-		u32 fragOffset = fragList[(i*3)+0];
-		u32 fragSize = fragList[(i*3)+1] & ~0x80000000;
-		u32 fragSector = fragList[(i*3)+2];
-		u32 fragOffsetEnd = fragOffset + fragSize;
-		u32 isWriteFrag = !PATCH_FRAGS || fragList[(i*3)+1] >> 31;
-		
-		// Find where our write starts and write as much as we can in this frag before returning
-		if(offset >= fragOffset && offset < fragOffsetEnd && isWriteFrag) {
-			// Does our write get cut off early?
-			if(offset + len > fragOffsetEnd) {
-				if(offset > fragOffsetEnd - 0x20) {
-					continue;
-				}
-				amountToWrite = fragOffsetEnd - offset;
-			}
-			adjustedOffset -= fragOffset;
-			amountToWrite = do_write(src, amountToWrite, adjustedOffset, fragSector);
-			return amountToWrite;
-		}
-	}
-	return 0;
-}
-
-int is_frag_read(unsigned int offset, unsigned int len) {
-	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
-	
-	// If we locate that this read lies in our frag area, return true
-	for(i = 0; i < maxFrags; i++) {
-		u32 fragOffset = fragList[(i*3)+0];
-		u32 fragSize = fragList[(i*3)+1] & ~0x80000000;
-		u32 fragSector = fragList[(i*3)+2];
-		u32 fragOffsetEnd = fragOffset + fragSize;
-		u32 isPatchFrag = PATCH_FRAGS && fragList[(i*3)+1] >> 31;
-		
-		if(offset >= fragOffset && offset < fragOffsetEnd && isPatchFrag) {
-			// Does our read get cut off early?
-			if(offset + len > fragOffsetEnd) {
-				if(offset > fragOffsetEnd - 0x20) {
-					continue;
-				}
-				return 2; // TODO Disable DVD Interrupts, perform a read for the overhang, clear interrupts.
-			}
-			return 1;
-		}
-	}
-	return 0;
-}
-
-void device_frag_read(void *dst, u32 len, u32 offset)
-{	
-	while(len != 0) {
-		u32 amountRead = read_frag(dst, len, offset);
-		len-=amountRead;
-		dst+=amountRead;
-		offset+=amountRead;
-	}
 }

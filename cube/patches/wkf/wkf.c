@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2020, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2021, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -24,6 +24,7 @@
 #include "dolphin/exi.h"
 #include "dolphin/os.h"
 #include "emulator.h"
+#include "frag.h"
 
 #ifndef QUEUE_SIZE
 #define QUEUE_SIZE 2
@@ -33,18 +34,18 @@ static struct {
 	void *buffer;
 	uint32_t length;
 	uint32_t offset;
-	bool read, frag;
+	bool read, patch;
 } dvd = {0};
 
 static struct {
 	uint32_t base_sector;
 	int items;
 	struct {
-		void *address;
+		void *buffer;
 		uint32_t length;
 		uint32_t offset;
 		uint32_t sector;
-		read_frag_cb callback;
+		frag_read_cb callback;
 	} queue[QUEUE_SIZE];
 } wkf = {
 	.base_sector = -1
@@ -54,7 +55,7 @@ OSAlarm read_alarm = {0};
 
 static void wkf_read_queued(void)
 {
-	void *address = wkf.queue[0].address;
+	void *buffer = wkf.queue[0].buffer;
 	uint32_t length = wkf.queue[0].length;
 	uint32_t offset = wkf.queue[0].offset;
 	uint32_t sector = wkf.queue[0].sector;
@@ -75,7 +76,7 @@ static void wkf_read_queued(void)
 		DI[2] = 0xA8000000;
 		DI[3] = offset >> 2;
 		DI[4] = length;
-		DI[5] = (uint32_t)address;
+		DI[5] = (uint32_t)buffer;
 		DI[6] = length;
 		DI[7] = 0b011;
 	} else {
@@ -87,30 +88,30 @@ static void wkf_read_queued(void)
 	OSUnmaskInterrupts(OS_INTERRUPTMASK_PI_DI);
 }
 
-int do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
+bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
 {
-	wkf.queue[wkf.items].address = address;
+	wkf.queue[wkf.items].buffer = buffer;
 	wkf.queue[wkf.items].length = length;
 	wkf.queue[wkf.items].offset = offset;
 	wkf.queue[wkf.items].sector = sector;
 	wkf.queue[wkf.items].callback = callback;
-	if (wkf.items++) return wkf.items;
+	if (wkf.items++) return true;
 
 	wkf_read_queued();
-	return 1;
+	return true;
 }
 
 void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	OSMaskInterrupts(OS_INTERRUPTMASK_PI_DI);
 
-	void *address = wkf.queue[0].address;
+	void *buffer = wkf.queue[0].buffer;
 	uint32_t length = wkf.queue[0].length;
 	uint32_t offset = wkf.queue[0].offset;
 	uint32_t sector = wkf.queue[0].sector;
-	read_frag_cb callback = wkf.queue[0].callback;
+	frag_read_cb callback = wkf.queue[0].callback;
 
-	callback(address, length);
+	callback(buffer, length);
 
 	if (--wkf.items) {
 		memcpy(wkf.queue, wkf.queue + 1, wkf.items * sizeof(*wkf.queue));
@@ -137,10 +138,10 @@ void schedule_read(OSTick ticks)
 		return;
 	}
 
-	dvd.frag = is_frag_read(dvd.offset, dvd.length);
+	dvd.patch = is_frag_patch(dvd.offset, dvd.length);
 
-	if (!dvd.frag)
-		read_disc_frag(dvd.buffer, dvd.length, dvd.offset, read_callback);
+	if (!dvd.patch)
+		frag_read_async(dvd.buffer, dvd.length, dvd.offset, read_callback);
 	else
 		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
 }
@@ -157,9 +158,9 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 
 void trickle_read(void)
 {
-	if (dvd.read && dvd.frag) {
+	if (dvd.read && dvd.patch) {
 		OSTick start = OSGetTick();
-		int size = read_frag(dvd.buffer, dvd.length, dvd.offset);
+		int size = frag_read(dvd.buffer, dvd.length, dvd.offset);
 		OSTick end = OSGetTick();
 
 		dvd.buffer += size;

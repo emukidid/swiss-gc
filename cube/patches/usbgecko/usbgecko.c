@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2020, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2021, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -23,12 +23,13 @@
 #include "dolphin/exi.h"
 #include "dolphin/os.h"
 #include "emulator.h"
+#include "frag.h"
 
 static struct {
 	void *buffer;
 	uint32_t length;
 	uint32_t offset;
-	bool read, frag;
+	bool read, patch;
 } dvd = {0};
 
 OSAlarm read_alarm = {0};
@@ -201,9 +202,9 @@ void schedule_read(OSTick ticks, bool request)
 		return;
 	}
 
-	dvd.frag = is_frag_read(dvd.offset, dvd.length);
+	dvd.patch = is_frag_patch(dvd.offset, dvd.length);
 
-	if (!dvd.frag && request)
+	if (!dvd.patch && request)
 		usb_request(dvd.offset, dvd.length);
 
 	OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
@@ -223,8 +224,8 @@ void trickle_read(void)
 {
 	if (dvd.read) {
 		OSTick start = OSGetTick();
-		int size = dvd.frag ? read_frag(dvd.buffer, dvd.length, dvd.offset)
-		                    : usb_receive(dvd.buffer, dvd.length, 0);
+		int size = dvd.patch ? frag_read(dvd.buffer, dvd.length, dvd.offset)
+		                     : usb_receive(dvd.buffer, dvd.length, 0);
 		DCStoreRangeNoSync(dvd.buffer, size);
 		OSTick end = OSGetTick();
 
@@ -233,7 +234,7 @@ void trickle_read(void)
 		dvd.offset += size;
 		dvd.read = !!dvd.length;
 
-		schedule_read(OSDiffTick(end, start), dvd.frag);
+		schedule_read(OSDiffTick(end, start), dvd.patch);
 	}
 }
 

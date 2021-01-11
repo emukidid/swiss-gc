@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2020, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2021, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -25,12 +25,13 @@
 #include "dolphin/exi.h"
 #include "dolphin/os.h"
 #include "emulator.h"
+#include "frag.h"
 
 static struct {
 	void *buffer;
 	uint32_t length;
 	uint32_t offset;
-	bool read, frag;
+	bool read, patch;
 } dvd = {0};
 
 OSAlarm read_alarm = {0};
@@ -64,9 +65,9 @@ void schedule_read(OSTick ticks)
 		return;
 	}
 
-	dvd.frag = is_frag_read(dvd.offset, dvd.length);
+	dvd.patch = is_frag_patch(dvd.offset, dvd.length);
 
-	if (!dvd.frag)
+	if (!dvd.patch)
 		dvd_read(dvd.buffer, dvd.length, dvd.offset);
 	else
 		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
@@ -84,9 +85,9 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 
 void trickle_read(void)
 {
-	if (dvd.read && dvd.frag) {
+	if (dvd.read && dvd.patch) {
 		OSTick start = OSGetTick();
-		int size = read_frag(dvd.buffer, dvd.length, dvd.offset);
+		int size = frag_read(dvd.buffer, dvd.length, dvd.offset);
 		OSTick end = OSGetTick();
 
 		dvd.buffer += size;

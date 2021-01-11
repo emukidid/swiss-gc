@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2020, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2021, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -24,6 +24,7 @@
 #include "dolphin/dolformat.h"
 #include "dolphin/os.h"
 #include "dolphin/pad.h"
+#include "frag.h"
 
 void check_pad(int32_t chan, PADStatus *status)
 {
@@ -39,15 +40,15 @@ void check_pad(int32_t chan, PADStatus *status)
 static void load_dol(uint32_t offset, uint32_t size)
 {
 	DOLImage image;
-	device_frag_read(&image, sizeof(image), offset);
+	frag_read_complete(&image, sizeof(image), offset);
 
 	for (int i = 0; i < DOL_MAX_TEXT; i++) {
-		device_frag_read(image.text[i], image.textLen[i], offset + image.textData[i]);
+		frag_read_complete(image.text[i], image.textLen[i], offset + image.textData[i]);
 		dcache_flush_icache_inv(image.text[i], image.textLen[i]);
 	}
 
 	for (int i = 0; i < DOL_MAX_DATA; i++) {
-		device_frag_read(image.data[i], image.dataLen[i], offset + image.dataData[i]);
+		frag_read_complete(image.data[i], image.dataLen[i], offset + image.dataData[i]);
 		dcache_flush_icache_inv(image.data[i], image.dataLen[i]);
 	}
 

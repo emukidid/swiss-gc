@@ -53,17 +53,6 @@ extern volatile u32 AI[4];
 
 extern volatile u32 EXIEmuRegs[3][5];
 
-typedef void (*read_frag_cb)(void *dst, u32 len);
-
-int do_read_disc(void *dst, u32 len, u32 offset, u32 sector, read_frag_cb cb);
-u32 do_read(void *dst, u32 len, u32 offset, u32 sector);
-u32 do_write(void *src, u32 len, u32 offset, u32 sector);
-void end_read(void);
-int read_disc_frag(void *dst, u32 len, u32 offset, read_frag_cb cb);
-u32 read_frag(void *dst, u32 len, u32 offset);
-u32 write_frag(void *src, u32 len, u32 offset);
-int is_frag_read(unsigned int offset, unsigned int len);
-void device_frag_read(void* dst, u32 len, u32 offset);
 void device_reset(void);
 int switch_fiber(u32 arg0, u32 arg1, u32 arg2, u32 arg3, u32 pc, u32 newsp);
 void dcache_flush_icache_inv(void* dst, u32 len);

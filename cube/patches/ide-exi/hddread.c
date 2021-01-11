@@ -10,6 +10,7 @@
 #include "dolphin/exi.h"
 #include "dolphin/os.h"
 #include "emulator.h"
+#include "frag.h"
 
 // NOTE: cs0 then cs1!
 // ATA registers address        val  - cs0 cs1 a2 a1 a0
@@ -55,11 +56,11 @@ static struct {
 	#if DMA_READ
 	int items;
 	struct {
-		void *address;
+		void *buffer;
 		uint32_t length;
 		uint32_t offset;
 		uint32_t sector;
-		read_frag_cb callback;
+		frag_read_cb callback;
 	} queue[QUEUE_SIZE];
 	#endif
 } ata = {
@@ -238,7 +239,7 @@ static int ataReadSector(u32 lba, void *buffer, int sync)
 }
 
 #ifndef SINGLE_SECTOR
-u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
+int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = len;
@@ -291,7 +292,7 @@ static void ata_read_queued(void)
 	if (!EXILock(exi_channel, EXI_DEVICE_0, (EXICallback)ata_read_queued))
 		return;
 
-	void *address = ata.queue[0].address;
+	void *buffer = ata.queue[0].buffer;
 	uint32_t length = ata.queue[0].length;
 	uint32_t offset = ata.queue[0].offset;
 	uint32_t sector = ata.queue[0].sector;
@@ -308,15 +309,15 @@ static void ata_read_queued(void)
 
 static void ata_done_queued(void)
 {
-	void *address = ata.queue[0].address;
+	void *buffer = ata.queue[0].buffer;
 	uint32_t length = ata.queue[0].length;
 	uint32_t offset = ata.queue[0].offset;
 	uint32_t sector = ata.queue[0].sector;
-	read_frag_cb callback = ata.queue[0].callback;
+	frag_read_cb callback = ata.queue[0].callback;
 
-	if (address != VAR_SECTOR_BUF + offset)
-		memcpy(address, sectorBuf + offset, length);
-	callback(address, length);
+	if (buffer != VAR_SECTOR_BUF + offset)
+		memcpy(buffer, sectorBuf + offset, length);
+	callback(buffer, length);
 
 	EXIUnlock(exi_channel);
 
@@ -326,21 +327,21 @@ static void ata_done_queued(void)
 	}
 }
 
-int do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
+bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
 {
 	sector = offset / SECTOR_SIZE + sector;
 	offset = offset % SECTOR_SIZE;
 	length = MIN(length, SECTOR_SIZE - offset);
 
-	ata.queue[ata.items].address = address;
+	ata.queue[ata.items].buffer = buffer;
 	ata.queue[ata.items].length = length;
 	ata.queue[ata.items].offset = offset;
 	ata.queue[ata.items].sector = sector;
 	ata.queue[ata.items].callback = callback;
-	if (ata.items++) return ata.items;
+	if (ata.items++) return true;
 
 	ata_read_queued();
-	return 1;
+	return true;
 }
 
 void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
@@ -353,7 +354,7 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 }
 #endif
 
-u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
+int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);

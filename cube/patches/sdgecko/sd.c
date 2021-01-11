@@ -10,6 +10,7 @@
 #include "dolphin/exi.h"
 #include "dolphin/os.h"
 #include "emulator.h"
+#include "frag.h"
 
 //CMD12 - Stop multiple block read command
 #define CMD12				0x4C
@@ -39,11 +40,11 @@ static struct {
 	#if ISR_READ
 	int items;
 	struct {
-		void *address;
+		void *buffer;
 		uint32_t length;
 		uint32_t offset;
 		uint32_t sector;
-		read_frag_cb callback;
+		frag_read_cb callback;
 	} queue[QUEUE_SIZE];
 	#endif
 } mmc = {
@@ -191,7 +192,7 @@ static int xmit_datablock(void *src, u32 token) {
 }
 
 #ifndef SINGLE_SECTOR
-u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
+int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = len;
@@ -237,7 +238,7 @@ static void mmc_read_queued(void)
 	if (!EXILock(exi_channel, EXI_DEVICE_0, (EXICallback)mmc_read_queued))
 		return;
 
-	void *address = mmc.queue[0].address;
+	void *buffer = mmc.queue[0].buffer;
 	uint32_t length = mmc.queue[0].length;
 	uint32_t offset = mmc.queue[0].offset;
 	uint32_t sector = mmc.queue[0].sector;
@@ -260,15 +261,15 @@ static void mmc_read_queued(void)
 
 static void mmc_done_queued(void)
 {
-	void *address = mmc.queue[0].address;
+	void *buffer = mmc.queue[0].buffer;
 	uint32_t length = mmc.queue[0].length;
 	uint32_t offset = mmc.queue[0].offset;
 	uint32_t sector = mmc.queue[0].sector;
-	read_frag_cb callback = mmc.queue[0].callback;
+	frag_read_cb callback = mmc.queue[0].callback;
 
-	if (address != VAR_SECTOR_BUF + offset)
-		memcpy(address, sectorBuf + offset, length);
-	callback(address, length);
+	if (buffer != VAR_SECTOR_BUF + offset)
+		memcpy(buffer, sectorBuf + offset, length);
+	callback(buffer, length);
 
 	EXIUnlock(exi_channel);
 
@@ -278,21 +279,21 @@ static void mmc_done_queued(void)
 	}
 }
 
-int do_read_disc(void *address, uint32_t length, uint32_t offset, uint32_t sector, read_frag_cb callback)
+bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
 {
 	sector = offset / SECTOR_SIZE + sector;
 	offset = offset % SECTOR_SIZE;
 	length = MIN(length, SECTOR_SIZE - offset);
 
-	mmc.queue[mmc.items].address = address;
+	mmc.queue[mmc.items].buffer = buffer;
 	mmc.queue[mmc.items].length = length;
 	mmc.queue[mmc.items].offset = offset;
 	mmc.queue[mmc.items].sector = sector;
 	mmc.queue[mmc.items].callback = callback;
-	if (mmc.items++) return mmc.items;
+	if (mmc.items++) return true;
 
 	mmc_read_queued();
-	return 1;
+	return true;
 }
 
 void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
@@ -309,7 +310,7 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 }
 #endif
 
-u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
+int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);
@@ -359,7 +360,7 @@ u32 do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	return numBytes;
 }
 
-u32 do_write(void *src, u32 len, u32 offset, u32 sectorLba) {
+int do_write(void *src, u32 len, u32 offset, u32 sectorLba) {
 	u32 lba = (offset>>9) + sectorLba;
 	u8 lbaShift = *(u8*)VAR_SD_SHIFT;
 	
