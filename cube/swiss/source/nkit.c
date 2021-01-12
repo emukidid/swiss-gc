@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2021, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -79,6 +79,7 @@ static const struct {
 	{ "D69E01\x00\x00", true,  0x9CF6404C, 1390839808 },
 	{ "D72E01\x00\x00", true,  0x04EE6C59, 1098909696 },
 	{ "D73E01\x00\x00", true,  0xCE3FDC74, 1444775936 },
+	{ "D73J01\x00\x00", true,  0xA595A9B7, 1113614336 },
 	{ "D74E01\x00\x00", true,  0x06B3D6F3, 1445627904 },
 	{ "D75E01\x00\x00", true,  0x8AE77C83, 1455917056 },
 	{ "D76E01\x00\x00", true,  0x486465C7, 1455884288 },

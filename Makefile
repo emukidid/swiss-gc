@@ -110,8 +110,8 @@ package:   # create distribution package
 	@mv $(DIST)/GCLoader $(SVN_REVISION)
 	@mv $(DIST)/ActionReplay $(SVN_REVISION)
 	@mv $(DIST)/USBGeckoRemoteServer $(SVN_REVISION)
-	@find ./$(SVN_REVISION) -type f -print0 | xargs -0 md5sum > $(SVN_REVISION).md5
-	@mv $(SVN_REVISION).md5 $(SVN_REVISION)
+	@find ./$(SVN_REVISION) -type f -print0 | xargs -0 sha256sum > $(SVN_REVISION).sha256
+	@mv $(SVN_REVISION).sha256 $(SVN_REVISION)
 	@git log -n 4 > $(SVN_REVISION)-changelog.txt
 	@sed -i "s/emukidid <emukidid@gmail.com>/emu_kidid/g" $(SVN_REVISION)-changelog.txt
 	@mv $(SVN_REVISION)-changelog.txt $(SVN_REVISION)
