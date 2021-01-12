@@ -1275,6 +1275,7 @@ bool manage_file() {
 			destFile->fp = 0;
 			destFile->ffsFp = 0;
 			destFile->fileBase = 0;
+			destFile->offset = 0;
 			destFile->size = 0;
 			destFile->fileAttrib = IS_FILE;
 			// Create a GCI if something is coming out from CARD to another device
@@ -1283,8 +1284,7 @@ bool manage_file() {
 			}
 
 			// If the destination file already exists, ask the user what to do
-			u8 nothing[1];
-			if(devices[DEVICE_DEST]->readFile(destFile, nothing, 1) >= 0) {
+			if(devices[DEVICE_DEST]->readFile(destFile, NULL, 0) == 0) {
 				uiDrawObj_t* dupeBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 350);
 				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 160, "File exists:", 1.0f, true, defaultColor));
 				float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
@@ -1352,7 +1352,7 @@ bool manage_file() {
 							strcpy(destFile->name + cursor, name_backup + extension_start);
 						}
 
-						while(devices[DEVICE_DEST]->readFile(destFile, nothing, 1) >= 0) {
+						while(devices[DEVICE_DEST]->readFile(destFile, NULL, 0) == 0) {
 							devices[DEVICE_DEST]->closeFile(destFile);
 							copy_num++;
 							if(copy_num > 99) {
