@@ -14,20 +14,21 @@ DISASM    = disassembly
 .NOTPARALLEL:
 all: stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch
 
-stub: stub.bin
-sdpatch: sd.bin sd.dtk.bin
-ideexipatch: ideexi-v1.bin ideexi-v1.dtk.bin ideexi-v2.bin ideexi-v2.dtk.bin
-dvdpatch: dvd.bin dvd.card.bin
-usbgeckopatch: usbgecko.bin
-wkfpatch: wkf.bin wkf.card.bin wkf.dtk.bin
-fsppatch: fsp.bin
-gcloaderpatch: gcloader.bin gcloader.card.bin
+stub: create-dir stub.bin
+sdpatch: create-dir sd.bin sd.dtk.bin
+ideexipatch: create-dir ideexi-v1.bin ideexi-v1.dtk.bin ideexi-v2.bin ideexi-v2.dtk.bin
+dvdpatch: create-dir dvd.bin dvd.card.bin
+usbgeckopatch: create-dir usbgecko.bin
+wkfpatch: create-dir wkf.bin wkf.card.bin wkf.dtk.bin
+fsppatch: create-dir fsp.bin
+gcloaderpatch: create-dir gcloader.bin gcloader.card.bin
 
 clean:
 	@rm -rf *.o
-	@rm -rf $(DISASM)/*
-	@-rmdir $(DISASM)
-	@mkdir $(DISASM)
+	@rm -rf $(DISASM)
+
+create-dir:
+	@mkdir -p $(DISASM)
 
 stub.bin:
 	@echo Building Stub ...
