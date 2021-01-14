@@ -12,7 +12,7 @@ DEST    = ../swiss/source/patches
 DISASM    = disassembly
 
 .NOTPARALLEL:
-all: stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch
+all: clean stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch
 
 stub: stub.bin
 sdpatch: sd.bin sd.dtk.bin
@@ -24,10 +24,9 @@ fsppatch: fsp.bin
 gcloaderpatch: gcloader.bin gcloader.card.bin
 
 clean:
-	@rm -rf *.o
-	@rm -rf $(DISASM)/*
-	@-rmdir $(DISASM)
-	@mkdir $(DISASM)
+	@rm -f *.bin *.elf *.o
+	@rm -f $(DEST)/*.s
+	@rm -fr $(DISASM)
 
 stub.bin:
 	@echo Building Stub ...
@@ -38,12 +37,11 @@ stub.bin:
 	@$(CC) -Os $(OPTS) -c stub/pff.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o stub.elf -T stub/stub.ld crt0.o main.o asmfunc.o mmcbbp.o pff.o os.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D stub.elf > $(DISASM)/stub.txt
 	@$(OBJCOPY) -O binary stub.elf stub.bin
 	@$(BIN2S) stub.bin > $(DEST)/Stub.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 sd.bin:
 	@echo Building SD Patch ...
@@ -61,12 +59,11 @@ sd.bin:
 	@$(CC) -Os $(OPTS) -c base/floor.S
 	@$(CC) -Os $(OPTS) -c base/sqrt.S
 	@$(CC) -Os $(OPTS) -o sd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o igr.o blockdevice.o sd.o sd_isr.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D sd.elf > $(DISASM)/sd.txt
 	@$(OBJCOPY) -O binary sd.elf sd.bin
 	@$(BIN2S) sd.bin > $(DEST)/SlotAB-SD.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 sd.dtk.bin:
 	@echo Building SD Patch + DTK ...
@@ -82,12 +79,11 @@ sd.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o sd.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o blockdevice.o sd.o sd_isr.o audio.o frag.o usbgecko.o os.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D sd.dtk.elf > $(DISASM)/sd.dtk.txt
 	@$(OBJCOPY) -O binary sd.dtk.elf sd.dtk.bin
 	@$(BIN2S) sd.dtk.bin > $(DEST)/SlotAB-SD.dtk.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 ideexi-v1.bin:
 	@echo Building IDE-EXI-v1 Patch ...
@@ -100,12 +96,11 @@ ideexi-v1.bin:
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o ideexi-v1.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o blockdevice.o hddread.o frag.o usbgecko.o os.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v1.elf > $(DISASM)/ideexi-v1.txt
 	@$(OBJCOPY) -O binary ideexi-v1.elf ideexi-v1.bin
 	@$(BIN2S) ideexi-v1.bin > $(DEST)/SlotAB-IDEEXI_V1.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 ideexi-v1.dtk.bin:
 	@echo Building IDE-EXI-v1 Patch + DTK ...
@@ -120,12 +115,11 @@ ideexi-v1.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o ideexi-v1.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o blockdevice.o hddread.o audio.o frag.o usbgecko.o os.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v1.dtk.elf > $(DISASM)/ideexi-v1.dtk.txt
 	@$(OBJCOPY) -O binary ideexi-v1.dtk.elf ideexi-v1.dtk.bin
 	@$(BIN2S) ideexi-v1.dtk.bin > $(DEST)/SlotAB-IDEEXI_V1.dtk.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 ideexi-v2.bin:
 	@echo Building IDE-EXI-v2 Patch ...
@@ -138,12 +132,11 @@ ideexi-v2.bin:
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o ideexi-v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o blockdevice.o hddread.o frag.o usbgecko.o os.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.elf > $(DISASM)/ideexi-v2.txt
 	@$(OBJCOPY) -O binary ideexi-v2.elf ideexi-v2.bin
 	@$(BIN2S) ideexi-v2.bin > $(DEST)/SlotAB-IDEEXI_V2.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 ideexi-v2.dtk.bin:
 	@echo Building IDE-EXI-v2 Patch + DTK ...
@@ -158,12 +151,11 @@ ideexi-v2.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o ideexi-v2.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o blockdevice.o hddread.o audio.o frag.o usbgecko.o os.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.dtk.elf > $(DISASM)/ideexi-v2.dtk.txt
 	@$(OBJCOPY) -O binary ideexi-v2.dtk.elf ideexi-v2.dtk.bin
 	@$(BIN2S) ideexi-v2.dtk.bin > $(DEST)/SlotAB-IDEEXI_V2.dtk.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 dvd.bin:
 	@echo Building DVD Patch ...
@@ -176,12 +168,11 @@ dvd.bin:
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o dvd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd.txt
 	@$(OBJCOPY) -O binary dvd.elf dvd.bin
 	@$(BIN2S) dvd.bin > $(DEST)/DVDPatch.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 dvd.card.bin:
 	@echo Building DVD Patch + CARD ...
@@ -195,12 +186,11 @@ dvd.card.bin:
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o dvd.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o dvd.o sd.o frag.o usbgecko.o os.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D dvd.card.elf > $(DISASM)/dvd.card.txt
 	@$(OBJCOPY) -O binary dvd.card.elf dvd.card.bin
 	@$(BIN2S) dvd.card.bin > $(DEST)/DVDPatch.card.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 usbgecko.bin:
 	@echo Building USBGecko Patch ...
@@ -212,12 +202,11 @@ usbgecko.bin:
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o usbgecko.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o usbgecko.o sd.o frag.o os.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usbgecko.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
 	@$(BIN2S) usbgecko.bin > $(DEST)/USBGeckoPatch.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 wkf.bin:
 	@echo Building WKF Patch ...
@@ -230,12 +219,11 @@ wkf.bin:
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o wkf.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o wkf.o sd.o frag.o usbgecko.o os.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf.txt
 	@$(OBJCOPY) -O binary wkf.elf wkf.bin
 	@$(BIN2S) wkf.bin > $(DEST)/WKFPatch.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 wkf.card.bin:
 	@echo Building WKF Patch + CARD ...
@@ -249,12 +237,11 @@ wkf.card.bin:
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o wkf.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o wkf.o sd.o frag.o usbgecko.o os.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.card.elf > $(DISASM)/wkf.card.txt
 	@$(OBJCOPY) -O binary wkf.card.elf wkf.card.bin
 	@$(BIN2S) wkf.card.bin > $(DEST)/WKFPatch.card.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 wkf.dtk.bin:
 	@echo Building WKF Patch + DTK ...
@@ -269,12 +256,11 @@ wkf.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o wkf.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o wkf.o sd.o audio.o frag.o usbgecko.o os.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.dtk.elf > $(DISASM)/wkf.dtk.txt
 	@$(OBJCOPY) -O binary wkf.dtk.elf wkf.dtk.bin
 	@$(BIN2S) wkf.dtk.bin > $(DEST)/WKFPatch.dtk.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 fsp.bin:
 	@echo Building FSP Patch ...
@@ -287,12 +273,11 @@ fsp.bin:
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o fsp.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o bba.o usbgecko.o sd.o frag.o os.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D fsp.elf > $(DISASM)/fsp.txt
 	@$(OBJCOPY) -O binary fsp.elf fsp.bin
 	@$(BIN2S) fsp.bin > $(DEST)/FSPPatch.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 gcloader.bin:
 	@echo Building GCLoader Patch ...
@@ -309,12 +294,11 @@ gcloader.bin:
 	@$(CC) -Os $(OPTS) -c base/floor.S
 	@$(CC) -Os $(OPTS) -c base/sqrt.S
 	@$(CC) -Os $(OPTS) -o gcloader.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader.elf > $(DISASM)/gcloader.txt
 	@$(OBJCOPY) -O binary gcloader.elf gcloader.bin
 	@$(BIN2S) gcloader.bin > $(DEST)/GCLoaderPatch.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
 
 gcloader.card.bin:
 	@echo Building GCLoader Patch + CARD ...
@@ -328,9 +312,8 @@ gcloader.card.bin:
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o gcloader.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o dvd.o sd.o frag.o usbgecko.o os.o
-	@rm -rf *.o
+	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader.card.elf > $(DISASM)/gcloader.card.txt
 	@$(OBJCOPY) -O binary gcloader.card.elf gcloader.card.bin
 	@$(BIN2S) gcloader.card.bin > $(DEST)/GCLoaderPatch.card.s
-	@rm *.bin
-	@rm *.elf
+	@rm -f *.bin *.elf *.o
