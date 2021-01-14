@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include "common.h"
+#include "dolphin/os.h"
 #include "frag.h"
 
 #define DEVICE_DISC 0
@@ -28,39 +29,40 @@
 #define DEVICE_PATCHES DEVICE_DISC
 #endif
 
-static const frag_t *frag_get(uint32_t offset, uint32_t size)
+static bool frag_get(uint32_t offset, size_t size, frag_t *frag)
 {
-	frag_t *frags = (frag_t *)VAR_FRAG_LIST;
+	const frag_t *frags = (frag_t *)VAR_FRAG_LIST;
 
 	for (int i = 0; i < sizeof(VAR_FRAG_LIST) / sizeof(*frags); i++) {
 		if (!frags[i].size)
 			break;
-		if (offset < frags[i].offset || offset >= frags[i].offset + frags[i].size)
+		if (offset < frags[i].offset || offset >= frags[i].offset + frags[i].size) {
+			size = MIN(size, OSRoundUp32B(frags[i].offset - offset));
 			continue;
-		if (offset > frags[i].offset + frags[i].size - 32 && size >= 32)
-			continue;
+		}
 
-		return &frags[i];
+		frag->offset = offset - frags[i].offset;
+		frag->size = MIN(size, OSRoundUp32B(frags[i].size) - frag->offset);
+		frag->device = frags[i].device;
+		frag->sector = frags[i].sector;
+		return true;
 	}
 
-	return NULL;
+	return false;
 }
 
-bool is_frag_patch(uint32_t offset, uint32_t size)
+bool is_frag_patch(uint32_t offset, size_t size)
 {
-	const frag_t *frag = frag_get(offset, size);
-	return frag && frag->device == DEVICE_PATCHES;
+	frag_t frag;
+	return frag_get(offset, size, &frag) && frag.device == DEVICE_PATCHES;
 }
 
 bool frag_read_async(void *buffer, uint32_t length, uint32_t offset, frag_read_cb callback)
 {
-	const frag_t *frag = frag_get(offset, length);
+	frag_t frag;
 
-	if (frag && frag->device == DEVICE_DISC) {
-		offset = offset - frag->offset;
-		length = MIN(length, frag->size - offset);
-		return do_read_async(buffer, length, offset, frag->sector, callback);
-	}
+	if (frag_get(offset, length, &frag) && frag.device == DEVICE_DISC)
+		return do_read_async(buffer, frag.size, frag.offset, frag.sector, callback);
 
 	return false;
 }
@@ -77,26 +79,20 @@ void frag_read_complete(void *buffer, uint32_t length, uint32_t offset)
 
 int frag_read(void *buffer, uint32_t length, uint32_t offset)
 {
-	const frag_t *frag = frag_get(offset, length);
+	frag_t frag;
 
-	if (frag && frag->device == DEVICE_PATCHES) {
-		offset = offset - frag->offset;
-		length = MIN(length, frag->size - offset);
-		return do_read(buffer, length, offset, frag->sector);
-	}
+	if (frag_get(offset, length, &frag) && frag.device == DEVICE_PATCHES)
+		return do_read(buffer, frag.size, frag.offset, frag.sector);
 
 	return 0;
 }
 
 int frag_write(void *buffer, uint32_t length, uint32_t offset)
 {
-	const frag_t *frag = frag_get(offset, length);
+	frag_t frag;
 
-	if (frag && frag->device == DEVICE_PATCHES) {
-		offset = offset - frag->offset;
-		length = MIN(length, frag->size - offset);
-		return do_write(buffer, length, offset, frag->sector);
-	}
+	if (frag_get(offset, length, &frag) && frag.device == DEVICE_PATCHES)
+		return do_write(buffer, frag.size, frag.offset, frag.sector);
 
 	return 0;
 }

@@ -476,11 +476,6 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 
 		sprintf(txtbuffer, "Patching File %i/%i\n%s [%iKB]",i+1,numToPatch,filesToPatch[i].name,filesToPatch[i].size/1024);
 		
-		// Round up to 32 bytes
-		if(filesToPatch[i].size % 0x20) {
-			filesToPatch[i].size += (0x20-(filesToPatch[i].size%0x20));
-		}
-		
 		if(filesToPatch[i].size > 8*1024*1024) {
 			print_gecko("Skipping %s %iKB too large\r\n", filesToPatch[i].name, filesToPatch[i].size/1024);
 			continue;
