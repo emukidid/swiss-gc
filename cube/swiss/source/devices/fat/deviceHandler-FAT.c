@@ -354,16 +354,14 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	}
 	
 	// Check for igr.dol
-	memset(&patchFile, 0, sizeof(file_handle));
-	sprintf(&patchFile.name[0], "%sigr.dol", devices[DEVICE_CUR]->initial->name);
-
-	FILINFO fno;
-	if(f_stat(&patchFile.name[0], &fno) == FR_OK) {
-		print_gecko("IGR Boot DOL exists\r\n");
+	if(swissSettings.igrType == IGR_BOOTBIN) {
+		memset(&patchFile, 0, sizeof(file_handle));
+		sprintf(&patchFile.name[0], "%sigr.dol", devices[DEVICE_CUR]->initial->name);
+		
 		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_IGR_DOL, 0, DEVICE_CUR))) {
+			*(vu32*)VAR_IGR_DOL_SIZE = patchFile.size;
 			totFrags+=frags;
 			devices[DEVICE_CUR]->closeFile(&patchFile);
-			*(vu32*)VAR_IGR_DOL_SIZE = fno.fsize;
 		}
 	}
 	
