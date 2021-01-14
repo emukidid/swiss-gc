@@ -40,6 +40,7 @@ dev: clean compile-patches compile
 clean:
 	@echo Building on $(OS)
 	@rm -rf $(DIST)
+	@cd $(PATCHES) && $(MAKE) clean
 	@cd $(SOURCES)/swiss && $(MAKE) clean
 	@cd $(GECKOSERVER) && $(MAKE) clean
 

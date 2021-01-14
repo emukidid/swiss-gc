@@ -25,6 +25,7 @@ gcloaderpatch: create-dir gcloader.bin gcloader.card.bin
 
 clean:
 	@rm -rf *.o
+	@rm -rf $(DEST)/*.s
 	@rm -rf $(DISASM)
 
 create-dir:
