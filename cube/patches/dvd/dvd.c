@@ -56,6 +56,37 @@ static void dvd_read_diskid(DVDDiskID *diskID)
 	DI[7] = 0b011;
 }
 
+#ifdef GCODE
+static void gcode_set_disc_frags(uint32_t disc, const frag_t *frag, uint32_t count)
+{
+	DI[2] = 0xB3000001;
+	DI[3] = disc;
+	DI[4] = count;
+	DI[7] = 0b001;
+	while (DI[7] & 0b001);
+	if (DI[8]) return;
+
+	while (count--) {
+		DI[2] = frag->offset;
+		DI[3] = frag->size;
+		DI[4] = frag->sector;
+		DI[7] = 0b001;
+		while (DI[7] & 0b001);
+		if (DI[8]) return;
+		frag++;
+	}
+}
+
+static void gcode_set_disc_number(uint32_t disc)
+{
+	DI[2] = 0xB3000002;
+	DI[3] = disc;
+	DI[4] = 0;
+	DI[7] = 0b001;
+	while (DI[7] & 0b001);
+}
+#endif
+
 void schedule_read(OSTick ticks)
 {
 	OSCancelAlarm(&read_alarm);
@@ -114,6 +145,13 @@ void device_reset(void)
 
 		AI[0] &= ~0b0000001;
 	}
+
+	#ifdef GCODE
+	const frag_t *frag = NULL;
+	int count = frag_get_list(FRAGS_DISC_1, &frag);
+	gcode_set_disc_frags(0, frag, count);
+	gcode_set_disc_number(0);
+	#endif
 
 	while (EXI[EXI_CHANNEL_0][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_1][3] & 0b000001);

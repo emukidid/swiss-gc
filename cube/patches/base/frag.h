@@ -38,6 +38,7 @@ int do_read(void *buffer, uint32_t length, uint32_t offset, uint32_t sector);
 int do_write(void *buffer, uint32_t length, uint32_t offset, uint32_t sector);
 void end_read(void);
 
+int frag_get_list(uint32_t offset, const frag_t **frag);
 bool is_frag_patch(uint32_t offset, size_t size);
 
 bool frag_read_async(void *buffer, uint32_t length, uint32_t offset, frag_read_cb callback);

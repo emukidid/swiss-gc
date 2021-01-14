@@ -51,6 +51,28 @@ static bool frag_get(uint32_t offset, size_t size, frag_t *frag)
 	return false;
 }
 
+int frag_get_list(uint32_t offset, const frag_t **frag)
+{
+	const frag_t *frags = (frag_t *)VAR_FRAG_LIST;
+	int count = 0;
+
+	for (int i = 0; i < sizeof(VAR_FRAG_LIST) / sizeof(*frags); i++) {
+		if (!frags[i].size)
+			break;
+		if (frags[i].offset != offset) {
+			if (!count)
+				continue;
+			else break;
+		}
+
+		if (!count) *frag = frags + i;
+		offset += frags[i].size;
+		count++;
+	}
+
+	return count;
+}
+
 bool is_frag_patch(uint32_t offset, size_t size)
 {
 	frag_t frag;

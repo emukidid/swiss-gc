@@ -178,6 +178,14 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 			}
 		}
 		
+		memset(&patchFile, 0, sizeof(file_handle));
+		sprintf(&patchFile.name[0], "%sboot.iso", devices[DEVICE_CUR]->initial->name);
+		
+		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_DISC_1, DISC_SIZE, DEVICE_CUR))) {
+			totFrags+=frags;
+			devices[DEVICE_CUR]->closeFile(&patchFile);
+		}
+		
 		print_frag_list(0);
 		// Card Type
 		*(vu8*)VAR_SD_SHIFT = (u8)(sdgecko_getAddressingType(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)) ? 9:0);
