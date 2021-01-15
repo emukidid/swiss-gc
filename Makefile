@@ -18,12 +18,12 @@ AR_SOURCES    = $(SOURCES)/actionreplay
 ifeq ($(OS),Windows_NT)
 DOLLZ         = $(BUILDTOOLS)/dollz3.exe
 DOL2GCI       = $(BUILDTOOLS)/dol2gci.exe
-MKISOFS       = $(BUILDTOOLS)/mkisofs.exe
 else
 DOLLZ         = $(BUILDTOOLS)/dollz3
 DOL2GCI       = $(BUILDTOOLS)/dol2gci
-MKISOFS       = mkisofs
 endif
+
+MKISOFS       = xorriso -as mkisofs
 
 BUILT_PATCHES = patches
 GECKOSERVER   = pc/usbgecko
@@ -31,11 +31,14 @@ GECKOSERVER   = pc/usbgecko
 #------------------------------------------------------------------
 .NOTPARALLEL:
 
-# Ready to go .7z file with every type of DOL we can think of
-all: clean compile-patches compile build recovery-iso build-gci build-AR build-geckoserver package
-
 # For dev use only, avoid the unnecessary fluff
 dev: clean compile-patches compile
+
+# Everything except PC stuff and the full package
+cube: dev build recovery-iso build-gci build-AR
+
+# Ready to go .7z file with every type of DOL we can think of
+all: cube build-geckoserver package
 
 clean:
 	@echo Building on $(OS)
@@ -75,17 +78,17 @@ build:
 	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/AUTOEXEC.DOL
 	# make ISOs and WKF firmware
 	# NTSC-J
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso -find $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# NTSC
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-u.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-u)".iso -find $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-u.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-u)".iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# PAL
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso -find $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# GCLoader
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/GCLoader/boot.iso -find $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/GCLoader/boot.iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# WODE
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-wode.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/WODE/$(SVN_REVISION)"(wode_extcfg)".iso -find $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-wode.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/WODE/$(SVN_REVISION)"(wode_extcfg)".iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# WKF
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn -find $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -b $(SVN_REVISION)-compressed.dol -o $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	@truncate -s 1856K $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn
 	@cp $(BUILDTOOLS)/wkf/autoboot.fzn.fw $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn.fw
 
