@@ -83,11 +83,8 @@ static void exi_imm_write(u32 data, int len, int sync)
 	exi_regs[4] = data;
 	// Tell EXI if this is a read or a write
 	exi_regs[3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 1;
-
-	if (sync) {
-		// Wait for it to do its thing
-		while (exi_regs[3] & 1);
-	}
+	// Wait for it to do its thing
+	while (sync && (exi_regs[3] & 1));
 }
 
 static u32 exi_imm_read(int len, int sync)
@@ -102,6 +99,14 @@ static u32 exi_imm_read(int len, int sync)
 		// Read the 4 byte data off the EXI bus
 		return exi_regs[4] >> ((4 - len) * 8);
 	}
+}
+
+static void exi_dma_write(void* data, int len, int sync)
+{
+	exi_regs[1] = (unsigned long)data;
+	exi_regs[2] = len;
+	exi_regs[3] = (EXI_WRITE << 2) | 3;
+	while (sync && (exi_regs[3] & 1));
 }
 
 // SD Functions
@@ -176,14 +181,9 @@ static int xmit_datablock(void *src, u32 token) {
 	while(rcvr_spi() != 0xFF);
 
 	exi_imm_write(token<<24, 1, 1);
-
-	u32 i;
-	u32 *ptr = (u32*)src;
-	for(i = 0; i < 128; i++) {
-		exi_imm_write(*ptr++, 4, 1);
-	}
-
+	exi_dma_write(src, SECTOR_SIZE, 1);
 	exi_imm_write(0xFFFF<<16, 2, 1);
+
 	u8 res = rcvr_spi();
 
 	exi_deselect();
