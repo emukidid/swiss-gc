@@ -67,7 +67,7 @@ sd.bin:
 
 sd.card.bin:
 	@echo Building SD Patch + CARD ...
-	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -194,7 +194,7 @@ dvd.bin:
 
 dvd.card.bin:
 	@echo Building DVD Patch + CARD ...
-	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH -DDVD
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -245,7 +245,7 @@ wkf.bin:
 
 wkf.card.bin:
 	@echo Building WKF Patch + CARD ...
-	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DWKF
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -320,7 +320,7 @@ gcloader.bin:
 
 gcloader.card.bin:
 	@echo Building GCLoader Patch + CARD ...
-	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c
 	@$(CC) -Os $(OPTS) -c base/igr.c

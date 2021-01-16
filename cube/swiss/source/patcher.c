@@ -5121,54 +5121,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *__EXIProbe = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__EXIProbe) {
-			switch (j) {
-				case 0:
-					data[i + 19] = 0x7FE3FB78;	// mr		r3, r31
-					data[i + 20] = branchAndLink(EXI_PROBE, __EXIProbe + 20);
-					data[i + 21] = 0x2C030000;	// cmpwi	r3, 0
-					data[i + 22] = 0x41820144;	// beq		+81
-					break;
-				case 1:
-					data[i + 19] = 0x7FE3FB78;	// mr		r3, r31
-					data[i + 20] = branchAndLink(EXI_PROBE, __EXIProbe + 20);
-					data[i + 21] = 0x2C030000;	// cmpwi	r3, 0
-					data[i + 22] = 0x41820150;	// beq		+84
-					break;
-				case 2:
-					data[i + 20] = 0x7FE3FB78;	// mr		r3, r31
-					data[i + 21] = branchAndLink(EXI_PROBE, __EXIProbe + 21);
-					data[i + 22] = 0x2C030000;	// cmpwi	r3, 0
-					data[i + 23] = 0x41820150;	// beq		+84
-					break;
-				case 3:
-					data[i +  8] = data[i + 9];
-					data[i +  9] = 0x7FA3EB78;	// mr		r3, r29
-					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
-					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
-					data[i + 12] = 0x41820124;	// beq		+73
-					break;
-				case 4:
-					data[i +  6] = data[i + 7];
-					data[i +  7] = data[i + 8];
-					data[i +  8] = data[i + 9];
-					data[i +  9] = 0x7F83E378;	// mr		r3, r28
-					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
-					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
-					data[i + 12] = 0x41820130;	// beq		+76
-					break;
-				case 5:
-					data[i +  9] = 0x7FE3FB78;	// mr		r3, r31
-					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
-					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
-					data[i + 12] = 0x41820170;	// beq		+92
-					break;
-				case 6:
-					data[i +  9] = 0x7F83E378;	// mr		r3, r28
-					data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
-					data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
-					data[i + 12] = 0x41820130;	// beq		+76
-					break;
-			}
 			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
 				switch (j) {
 					case 0:
@@ -5189,6 +5141,55 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 					case 6:
 						data[i + 17] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+				}
+			} else {
+				switch (j) {
+					case 0:
+						data[i + 19] = 0x7FE3FB78;	// mr		r3, r31
+						data[i + 20] = branchAndLink(EXI_PROBE, __EXIProbe + 20);
+						data[i + 21] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 22] = 0x41820144;	// beq		+81
+						break;
+					case 1:
+						data[i + 19] = 0x7FE3FB78;	// mr		r3, r31
+						data[i + 20] = branchAndLink(EXI_PROBE, __EXIProbe + 20);
+						data[i + 21] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 22] = 0x41820150;	// beq		+84
+						break;
+					case 2:
+						data[i + 20] = 0x7FE3FB78;	// mr		r3, r31
+						data[i + 21] = branchAndLink(EXI_PROBE, __EXIProbe + 21);
+						data[i + 22] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 23] = 0x41820150;	// beq		+84
+						break;
+					case 3:
+						data[i +  8] = data[i + 9];
+						data[i +  9] = 0x7FA3EB78;	// mr		r3, r29
+						data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
+						data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 12] = 0x41820124;	// beq		+73
+						break;
+					case 4:
+						data[i +  6] = data[i + 7];
+						data[i +  7] = data[i + 8];
+						data[i +  8] = data[i + 9];
+						data[i +  9] = 0x7F83E378;	// mr		r3, r28
+						data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
+						data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 12] = 0x41820130;	// beq		+76
+						break;
+					case 5:
+						data[i +  9] = 0x7FE3FB78;	// mr		r3, r31
+						data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
+						data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 12] = 0x41820170;	// beq		+92
+						break;
+					case 6:
+						data[i +  9] = 0x7F83E378;	// mr		r3, r28
+						data[i + 10] = branchAndLink(EXI_PROBE, __EXIProbe + 10);
+						data[i + 11] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 12] = 0x41820130;	// beq		+76
 						break;
 				}
 			}
@@ -5288,18 +5289,18 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXISelectSD = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISelectSD) {
-			data[i + 17] = 0x41820060;	// beq		+24
-			data[i + 41] = 0x387B0000;	// addi		r3, r27, 0
-			data[i + 42] = 0x389C0000;	// addi		r4, r28, 0
-			data[i + 43] = 0x38BF0000;	// addi		r5, r31, 0
-			data[i + 44] = branchAndLink(EXI_TRY_LOCK, EXISelectSD + 44);
-			data[i + 45] = 0x2C030000;	// cmpwi	r3, 0
-			data[i + 46] = 0x40820014;	// bne		+5
-			
 			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
 				data[i + 55] = 0x3C600C00;	// lis		r3, 0x0C00
 				data[i + 73] = branchAndLink(MASK_IRQ, EXISelectSD + 73);
 				data[i + 76] = branchAndLink(MASK_IRQ, EXISelectSD + 76);
+			} else {
+				data[i + 17] = 0x41820060;	// beq		+24
+				data[i + 41] = 0x387B0000;	// addi		r3, r27, 0
+				data[i + 42] = 0x389C0000;	// addi		r4, r28, 0
+				data[i + 43] = 0x38BF0000;	// addi		r5, r31, 0
+				data[i + 44] = branchAndLink(EXI_TRY_LOCK, EXISelectSD + 44);
+				data[i + 45] = 0x2C030000;	// cmpwi	r3, 0
+				data[i + 46] = 0x40820014;	// bne		+5
 			}
 			print_gecko("Found:[%s] @ %08X\n", EXISelectSDSig.Name, EXISelectSD);
 			patched++;
@@ -5311,55 +5312,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXISelect = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISelect) {
-			switch (j) {
-				case 0:
-				case 1:
-					data[i + 54] = 0x41820028;	// beq		+10
-					data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
-					data[i + 65] = 0x389D0000;	// addi		r4, r29, 0
-					data[i + 66] = 0x38BE0000;	// addi		r5, r30, 0
-					data[i + 67] = branchAndLink(EXI_TRY_LOCK, EXISelect + 67);
-					data[i + 68] = 0x2C030000;	// cmpwi	r3, 0
-					data[i + 69] = 0x40820014;	// bne		+5
-					break;
-				case 2:
-					data[i + 54] = 0x41820028;	// beq		+10
-					data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
-					data[i + 65] = 0x389C0000;	// addi		r4, r28, 0
-					data[i + 66] = 0x38BD0000;	// addi		r5, r29, 0
-					data[i + 67] = branchAndLink(EXI_TRY_LOCK, EXISelect + 67);
-					data[i + 68] = 0x2C030000;	// cmpwi	r3, 0
-					data[i + 69] = 0x40820014;	// bne		+5
-					break;
-				case 3:
-				case 4:
-					data[i + 17] = 0x41820028;	// beq		+10
-					data[i + 27] = 0x387B0000;	// addi		r3, r27, 0
-					data[i + 28] = 0x389C0000;	// addi		r4, r28, 0
-					data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
-					data[i + 30] = branchAndLink(EXI_TRY_LOCK, EXISelect + 30);
-					data[i + 31] = 0x2C030000;	// cmpwi	r3, 0
-					data[i + 32] = 0x40820014;	// bne		+5
-					break;
-				case 5:
-					data[i + 17] = 0x41820028;	// beq		+10
-					data[i + 27] = 0x387E0000;	// addi		r3, r30, 0
-					data[i + 28] = 0x389B0000;	// addi		r4, r27, 0
-					data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
-					data[i + 30] = branchAndLink(EXI_TRY_LOCK, EXISelect + 30);
-					data[i + 31] = 0x2C030000;	// cmpwi	r3, 0
-					data[i + 32] = 0x40820014;	// bne		+5
-					break;
-				case 6:
-					data[i + 17] = 0x41820028;	// beq		+10
-					data[i + 27] = 0x387B0000;	// addi		r3, r27, 0
-					data[i + 28] = 0x389C0000;	// addi		r4, r28, 0
-					data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
-					data[i + 30] = branchAndLink(EXI_TRY_LOCK, EXISelect + 30);
-					data[i + 31] = 0x2C030000;	// cmpwi	r3, 0
-					data[i + 32] = 0x40820014;	// bne		+5
-					break;
-			}
 			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
 				switch (j) {
 					case 0:
@@ -5386,6 +5338,56 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						data[i + 41] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i + 63] = branchAndLink(MASK_IRQ, EXISelect + 63);
 						data[i + 66] = branchAndLink(MASK_IRQ, EXISelect + 66);
+						break;
+				}
+			} else {
+				switch (j) {
+					case 0:
+					case 1:
+						data[i + 54] = 0x41820028;	// beq		+10
+						data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
+						data[i + 65] = 0x389D0000;	// addi		r4, r29, 0
+						data[i + 66] = 0x38BE0000;	// addi		r5, r30, 0
+						data[i + 67] = branchAndLink(EXI_TRY_LOCK, EXISelect + 67);
+						data[i + 68] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 69] = 0x40820014;	// bne		+5
+						break;
+					case 2:
+						data[i + 54] = 0x41820028;	// beq		+10
+						data[i + 64] = 0x387F0000;	// addi		r3, r31, 0
+						data[i + 65] = 0x389C0000;	// addi		r4, r28, 0
+						data[i + 66] = 0x38BD0000;	// addi		r5, r29, 0
+						data[i + 67] = branchAndLink(EXI_TRY_LOCK, EXISelect + 67);
+						data[i + 68] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 69] = 0x40820014;	// bne		+5
+						break;
+					case 3:
+					case 4:
+						data[i + 17] = 0x41820028;	// beq		+10
+						data[i + 27] = 0x387B0000;	// addi		r3, r27, 0
+						data[i + 28] = 0x389C0000;	// addi		r4, r28, 0
+						data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
+						data[i + 30] = branchAndLink(EXI_TRY_LOCK, EXISelect + 30);
+						data[i + 31] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 32] = 0x40820014;	// bne		+5
+						break;
+					case 5:
+						data[i + 17] = 0x41820028;	// beq		+10
+						data[i + 27] = 0x387E0000;	// addi		r3, r30, 0
+						data[i + 28] = 0x389B0000;	// addi		r4, r27, 0
+						data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
+						data[i + 30] = branchAndLink(EXI_TRY_LOCK, EXISelect + 30);
+						data[i + 31] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 32] = 0x40820014;	// bne		+5
+						break;
+					case 6:
+						data[i + 17] = 0x41820028;	// beq		+10
+						data[i + 27] = 0x387B0000;	// addi		r3, r27, 0
+						data[i + 28] = 0x389C0000;	// addi		r4, r28, 0
+						data[i + 29] = 0x38BF0000;	// addi		r5, r31, 0
+						data[i + 30] = branchAndLink(EXI_TRY_LOCK, EXISelect + 30);
+						data[i + 31] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 32] = 0x40820014;	// bne		+5
 						break;
 				}
 			}

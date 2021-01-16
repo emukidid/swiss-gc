@@ -1114,14 +1114,13 @@ void init(void **arenaLo, void **arenaHi)
 	OSFPUContext = context;
 }
 
+#ifndef CARD_EMULATOR
 bool exi_probe(int32_t chan)
 {
 	if (chan == EXI_CHANNEL_2)
 		return false;
-	#ifndef CARD_EMULATOR
 	if (chan == *VAR_EXI_SLOT)
 		return false;
-	#endif
 
 	return true;
 }
@@ -1134,15 +1133,14 @@ bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 	if (chan == EXI_CHANNEL_0 && dev == EXI_DEVICE_2)
 		return false;
 	#endif
-	#ifndef CARD_EMULATOR
 	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
 		return false;
 	if (chan == *VAR_EXI_SLOT)
 		end_read(-1);
-	#endif
 
 	return true;
 }
+#endif
 
 OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
