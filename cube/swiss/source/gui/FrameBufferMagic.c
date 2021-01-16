@@ -858,8 +858,7 @@ uiDrawObj_t* DrawSelectableButton(int x1, int y1, int x2, int y2, const char *me
 	eventData->y2 = y2;
 	eventData->mode = mode;
 	if(message) {
-		eventData->msg = malloc(strlen(message)+1);
-		strcpy(eventData->msg, message);
+		eventData->msg = strdup(message);
 	}
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_SELECTABLEBUTTON;
@@ -908,8 +907,7 @@ static void _DrawTooltip(uiDrawObj_t *evt) {
 uiDrawObj_t* DrawTooltip(const char *tooltip) {
 	drawTooltipEvent_t *eventData = calloc(1, sizeof(drawTooltipEvent_t));
 	if(tooltip && strlen(tooltip) > 0) {
-		eventData->tooltip = malloc(strlen(tooltip)+1);
-		strcpy(eventData->tooltip, tooltip);
+		eventData->tooltip = strdup(tooltip);
 	}
 	else {
 		eventData->tooltip = NULL;
@@ -950,8 +948,7 @@ uiDrawObj_t* DrawStyledLabel(int x, int y, const char *string, float size, bool 
 	eventData->x = x;
 	eventData->y = y;
 	if(string && strlen(string) > 0) {
-		eventData->string = malloc(strlen(string)+1);
-		strcpy(eventData->string, string);
+		eventData->string = strdup(string);
 	}
 	else {
 		eventData->string = NULL;
@@ -984,8 +981,7 @@ uiDrawObj_t* DrawLabel(int x, int y, const char *string)
 	eventData->x = x;
 	eventData->y = y;
 	if(string && strlen(string) > 0) {
-		eventData->string = malloc(strlen(string)+1);
-		strcpy(eventData->string, string);
+		eventData->string = strdup(string);
 	}
 	else {
 		eventData->string = NULL;
@@ -1006,8 +1002,7 @@ uiDrawObj_t* DrawFadingLabel(int x, int y, const char *string, float size)
 	eventData->x = x;
 	eventData->y = y;
 	if(string && strlen(string) > 0) {
-		eventData->string = malloc(strlen(string)+1);
-		strcpy(eventData->string, string);
+		eventData->string = strdup(string);
 	}
 	else {
 		eventData->string = NULL;

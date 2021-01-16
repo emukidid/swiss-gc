@@ -51,7 +51,7 @@ static int configEntriesCount = 0;
 
 
 void strnscpy(char *s1, char *s2, int num) {
-  strlcpy(s1, s2, num+1);
+	strlcpy(s1, s2, num+1);
 }
 
 /** Crappy dynamic string appender */
@@ -255,7 +255,7 @@ int config_update_file() {
 		sprintf(txtbuffer, "ID=%s\r\n",buffer);
 		string_append(configString, txtbuffer);
 		
-		strnscpy(buffer, &configEntries[i].game_name[0], 32);
+		strnscpy(buffer, &configEntries[i].game_name[0], 64);
 		sprintf(txtbuffer, "Name=%s\r\n",buffer);
 		string_append(configString, txtbuffer);
 		
@@ -540,16 +540,13 @@ void config_parse(char *configData) {
 					swissSettings.bs2Boot = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("FTPUserName", name)) {
-					strncpy(&swissSettings.ftpUserName[0], value, sizeof(((SwissSettings*)0)->ftpUserName));
-					swissSettings.ftpUserName[sizeof(((SwissSettings*)0)->ftpUserName)-1] = '\0';
+					strlcpy(&swissSettings.ftpUserName[0], value, sizeof(swissSettings.ftpUserName));
 				}
 				else if(!strcmp("FTPPassword", name)) {
-					strncpy(&swissSettings.ftpPassword[0], value, sizeof(((SwissSettings*)0)->ftpPassword));
-					swissSettings.ftpPassword[sizeof(((SwissSettings*)0)->ftpPassword)-1] = '\0';
+					strlcpy(&swissSettings.ftpPassword[0], value, sizeof(swissSettings.ftpPassword));
 				}
 				else if(!strcmp("FTPHostIP", name)) {
-					strncpy(&swissSettings.ftpHostIp[0], value, sizeof(((SwissSettings*)0)->ftpHostIp));
-					swissSettings.ftpHostIp[sizeof(((SwissSettings*)0)->ftpHostIp)-1] = '\0';
+					strlcpy(&swissSettings.ftpHostIp[0], value, sizeof(swissSettings.ftpHostIp));
 				}
 				else if(!strcmp("FTPPort", name)) {
 					swissSettings.ftpPort = atoi(value);
@@ -558,19 +555,16 @@ void config_parse(char *configData) {
 					swissSettings.ftpUsePasv = !strcmp("Yes", value);
 				}
 				else if(!strcmp("FSPHostIP", name)) {
-					strncpy(&swissSettings.fspHostIp[0], value, sizeof(((SwissSettings*)0)->fspHostIp));
-					swissSettings.fspHostIp[sizeof(((SwissSettings*)0)->fspHostIp)-1] = '\0';
+					strlcpy(&swissSettings.fspHostIp[0], value, sizeof(swissSettings.fspHostIp));
 				}
 				else if(!strcmp("FSPPort", name)) {
 					swissSettings.fspPort = atoi(value);
 				}
 				else if(!strcmp("FSPPassword", name)) {
-					strncpy(&swissSettings.fspPassword[0], value, sizeof(((SwissSettings*)0)->fspPassword));
-					swissSettings.fspPassword[sizeof(((SwissSettings*)0)->fspPassword)-1] = '\0';
+					strlcpy(&swissSettings.fspPassword[0], value, sizeof(swissSettings.fspPassword));
 				}
 				else if(!strcmp("Autoload", name)) {
-					strncpy(&swissSettings.autoload[0], value, sizeof(((SwissSettings*)0)->autoload));
-					swissSettings.autoload[sizeof(((SwissSettings*)0)->autoload)-1] = '\0';
+					strlcpy(&swissSettings.autoload[0], value, sizeof(swissSettings.autoload));
 				}
 			}
 		}

@@ -31,7 +31,6 @@
 #include "httpd.h"
 #include "exi.h"
 #include "patcher.h"
-#include "crc32/crc32.h"
 #include "dvd.h"
 #include "elf.h"
 #include "gcm.h"
@@ -41,6 +40,7 @@
 #include "cheats.h"
 #include "settings.h"
 #include "aram/sidestep.h"
+#include "crc32/crc32.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
@@ -1272,8 +1272,8 @@ bool manage_file() {
 			u32 isDestCard = devices[DEVICE_DEST] == &__device_card_a || devices[DEVICE_DEST] == &__device_card_b;
 			u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
 			
-      strncat(destFile->name, "/", (PATHNAME_MAX-strlen(destFile->name)-1));
-      strncat(destFile->name, stripInvalidChars(getRelativeName(&curFile.name[0])), (PATHNAME_MAX-strlen(destFile->name)-1));
+			strlcat(destFile->name, "/", PATHNAME_MAX);
+			strlcat(destFile->name, stripInvalidChars(getRelativeName(&curFile.name[0])), PATHNAME_MAX);
 			destFile->fp = 0;
 			destFile->ffsFp = 0;
 			destFile->fileBase = 0;
@@ -1282,7 +1282,7 @@ bool manage_file() {
 			destFile->fileAttrib = IS_FILE;
 			// Create a GCI if something is coming out from CARD to another device
 			if(isSrcCard && !isDestCard) {
-        strncat(destFile->name, "%s.gci", (PATHNAME_MAX-strlen(destFile->name)-1));
+				strlcat(destFile->name, ".gci", PATHNAME_MAX);
 			}
 
 			// If the destination file already exists, ask the user what to do
@@ -1794,7 +1794,7 @@ int info_game()
 	// Find the config for this game, or default if we don't know about it
 	config = calloc(1, sizeof(ConfigEntry));
 	memcpy(config->game_id, &GCMDisk.ConsoleID, 4);
-	sprintf(&config->game_name[0], "%.32s", &GCMDisk.GameName[0]);
+	strncpy(&config->game_name[0],&GCMDisk.GameName[0],64);
 	config_find(config);	// populate
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
 	int num_cheats = -1;

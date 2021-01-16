@@ -333,7 +333,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 		memset(&gameID, 0, 8);
 		strncpy((char*)&gameID, (char*)&GCMDisk, 4);
 		memset(&patchFile, 0, sizeof(file_handle));
-		sprintf(&patchFile.name[0], "%.*sswiss_patches/%.4s/%i", PATHNAME_MAX-30, devices[DEVICE_CUR]->initial->name, &gameID[0], i);
+		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/%.4s/%i", devices[DEVICE_CUR]->initial->name, &gameID[0], i);
 
 		FILINFO fno;
 		if(f_stat(&patchFile.name[0], &fno) != FR_OK) {
