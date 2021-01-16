@@ -1083,7 +1083,7 @@ void boot_dol()
 	file_handle *cliArgFile = calloc(1, sizeof(file_handle));
 	
 	// .cli argument file
-	sprintf(cliArgFile->name, "%.*s.cli", PATHNAME_MAX-5, fileName);
+	snprintf(cliArgFile->name, PATHNAME_MAX, "%s.cli", fileName);
 	if(devices[DEVICE_CUR]->readFile(cliArgFile, &readTest, 4) != 4) {
 		free(cliArgFile);
 		cliArgFile = NULL;
@@ -1127,7 +1127,7 @@ void boot_dol()
 	file_handle *dcpArgFile = calloc(1, sizeof(file_handle));
 	
 	// .dcp parameter file
-	sprintf(dcpArgFile->name, "%.*s.dcp", PATHNAME_MAX-5, fileName);
+	snprintf(dcpArgFile->name, PATHNAME_MAX, "%s.dcp", fileName);
 	if(devices[DEVICE_CUR]->readFile(dcpArgFile, &readTest, 4) != 4) {
 		free(dcpArgFile);
 		dcpArgFile = NULL;
@@ -1659,7 +1659,7 @@ void load_file()
 			// Try to read a .fw file too.
 			file_handle fwFile;
 			memset(&fwFile, 0, sizeof(file_handle));
-			sprintf(&fwFile.name[0], "%.*s.fw", PATHNAME_MAX-4, &curFile.name[0]);
+			snprintf(&fwFile.name[0], PATHNAME_MAX, "%s.fw", &curFile.name[0]);
 			u8 *firmware = (u8*)memalign(32, 0x3000);
 			DrawDispose(msgBox);
 			if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR]->readFile(&fwFile,firmware,0x3000) != 0x3000) {

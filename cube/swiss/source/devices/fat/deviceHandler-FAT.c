@@ -143,7 +143,7 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			continue;
 		}
 		memset(&file_name[0],0,PATHNAME_MAX);
-		sprintf(&file_name[0], "%.*s/%.*s", PATHNAME_MAX-257, ffile->name, 255, entry.fname);
+		snprintf(&file_name[0], PATHNAME_MAX, "%s/%s", ffile->name, entry.fname);
 		if(f_stat(file_name, &fno) != FR_OK || (fno.fattrib & AM_HID) || entry.fname[0] == '.') {
 			continue;
 		}
@@ -158,7 +158,7 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 				*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
-			sprintf((*dir)[i].name, "%.*s/%s", PATHNAME_MAX-257, ffile->name, entry.fname);
+			snprintf((*dir)[i].name, PATHNAME_MAX, "%s/%s", ffile->name, entry.fname);
 			(*dir)[i].size     = fno.fsize;
 			(*dir)[i].fileAttrib   = (fno.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
 			++i;
@@ -356,7 +356,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	// Check for igr.dol
 	if(swissSettings.igrType == IGR_BOOTBIN) {
 		memset(&patchFile, 0, sizeof(file_handle));
-		sprintf(&patchFile.name[0], "%.*sigr.dol", PATHNAME_MAX-8, devices[DEVICE_CUR]->initial->name);
+		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sigr.dol", devices[DEVICE_CUR]->initial->name);
 		
 		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_IGR_DOL, 0, DEVICE_CUR))) {
 			*(vu32*)VAR_IGR_DOL_SIZE = patchFile.size;

@@ -119,7 +119,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 			u32 patchInfo[4];
 			memset(patchInfo, 0, 16);
 			memset(&patchFile, 0, sizeof(file_handle));
-			sprintf(&patchFile.name[0], "%.*sswiss_patches/%.4s/%i", PATHNAME_MAX-30, devices[DEVICE_PATCHES]->initial->name, gameID, i);
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/%.4s/%i", devices[DEVICE_PATCHES]->initial->name, gameID, i);
 			print_gecko("Looking for file %s\r\n", &patchFile.name);
 			FILINFO fno;
 			if(f_stat(&patchFile.name[0], &fno) != FR_OK) {
@@ -141,7 +141,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 		// Check for igr.dol
 		if(swissSettings.igrType == IGR_BOOTBIN) {
 			memset(&patchFile, 0, sizeof(file_handle));
-			sprintf(&patchFile.name[0], "%.*sigr.dol", PATHNAME_MAX-8, devices[DEVICE_PATCHES]->initial->name);
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sigr.dol", devices[DEVICE_PATCHES]->initial->name);
 			
 			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_IGR_DOL, 0, DEVICE_PATCHES))) {
 				*(vu32*)VAR_IGR_DOL_SIZE = patchFile.size;
@@ -152,7 +152,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 		
 		if(swissSettings.emulateMemoryCard) {
 			memset(&patchFile, 0, sizeof(file_handle));
-			sprintf(&patchFile.name[0], "%.*sswiss_patches/MemoryCardA.%s.raw", PATHNAME_MAX-34, devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/MemoryCardA.%s.raw", devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
 			
 			devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
@@ -164,7 +164,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 			}
 			
 			memset(&patchFile, 0, sizeof(file_handle));
-			sprintf(&patchFile.name[0], "%.*sswiss_patches/MemoryCardB.%s.raw", PATHNAME_MAX-34, devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
 			
 			devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
@@ -177,7 +177,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 		}
 		
 		memset(&patchFile, 0, sizeof(file_handle));
-		sprintf(&patchFile.name[0], "%.*sboot.iso", PATHNAME_MAX-9, devices[DEVICE_CUR]->initial->name);
+		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sboot.iso", devices[DEVICE_CUR]->initial->name);
 		
 		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_DISC_1, DISC_SIZE, DEVICE_CUR))) {
 			totFrags+=frags;

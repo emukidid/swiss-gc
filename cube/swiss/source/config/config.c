@@ -126,7 +126,7 @@ bool config_set_device() {
 int config_init() {
 	if(!config_set_device()) return 0;
 	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
-	sprintf(configFile->name, "%.*sswiss.ini", PATHNAME_MAX-10, devices[DEVICE_CONFIG]->initial->name);
+	snprintf(configFile->name, PATHNAME_MAX, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
 	
 	// Read config
 	if(devices[DEVICE_CONFIG]->readFile(configFile, txtbuffer, 1) == 1) {
@@ -296,7 +296,7 @@ int config_update_file() {
 	}
 
 	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
-	sprintf(configFile->name, "%.*sswiss.ini", PATHNAME_MAX-10, devices[DEVICE_CONFIG]->initial->name);
+	snprintf(configFile->name, PATHNAME_MAX, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
 
 	u32 len = strlen(configString->mem);
 	// TODO ask overwrite?
