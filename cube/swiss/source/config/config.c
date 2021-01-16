@@ -51,7 +51,7 @@ static int configEntriesCount = 0;
 
 
 void strnscpy(char *s1, char *s2, int num) {
-	sprintf(s1, "%.*s", num, s2);
+  strlcpy(s1, s2, num+1);
 }
 
 /** Crappy dynamic string appender */
