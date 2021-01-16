@@ -501,7 +501,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		}
 		
 		if(filesToPatch[i].type == PATCH_DOL_PRS || filesToPatch[i].type == PATCH_OTHER_PRS) {
-			sizeToRead = pso_prs_decompress_buf(buffer, &buffer, sizeToRead);
+			sizeToRead = pso_prs_decompress_buf(buffer, (uint8_t **)&buffer, sizeToRead);
 			if(sizeToRead < 0) {
 				DrawDispose(progBox);
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to decompress!"));
@@ -550,7 +550,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		}
 		
 		if(filesToPatch[i].type == PATCH_DOL_PRS || filesToPatch[i].type == PATCH_OTHER_PRS) {
-			sizeToRead = pso_prs_compress(buffer, &buffer, sizeToRead);
+			sizeToRead = pso_prs_compress(buffer, (uint8_t **)&buffer, sizeToRead);
 			if(sizeToRead < 0 || sizeToRead > filesToPatch[i].size) {
 				DrawDispose(progBox);
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to recompress!"));

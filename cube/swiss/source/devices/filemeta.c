@@ -200,10 +200,10 @@ file_handle* meta_find_disk2(file_handle* f) {
 		int i;
 		for(i = 0; i < getCurrentDirEntryCount(); i++) {
 			if(dirEntries[i].meta) {
-				if(strncmp(dirEntries[i].meta->diskId.gamename, f->meta->diskId.gamename, 4)) {
+				if(strncmp((const char *)dirEntries[i].meta->diskId.gamename, (const char *)f->meta->diskId.gamename, 4)) {
 					continue;
 				}
-				if(strncmp(dirEntries[i].meta->diskId.company, f->meta->diskId.company, 2)) {
+				if(strncmp((const char *)dirEntries[i].meta->diskId.company, (const char *)f->meta->diskId.company, 2)) {
 					continue;
 				}
 				if(dirEntries[i].meta->diskId.disknum == f->meta->diskId.disknum) {
