@@ -750,7 +750,7 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
 }
 
 // External
-uiDrawObj_t* DrawProgressBar(bool indeterminate, int percent, char *message) {
+uiDrawObj_t* DrawProgressBar(bool indeterminate, int percent, const char *message) {
 	drawProgressEvent_t *eventData = calloc(1, sizeof(drawProgressEvent_t));
 	eventData->percent = percent;
 	eventData->indeterminate = indeterminate;
@@ -797,7 +797,7 @@ static void _DrawMessageBox(uiDrawObj_t *evt) {
 }	
 
 // External
-uiDrawObj_t* DrawMessageBox(int type, char *msg) 
+uiDrawObj_t* DrawMessageBox(int type, const char *msg)
 {
 	drawMsgBoxEvent_t *eventData = calloc(1, sizeof(drawMsgBoxEvent_t));
 	eventData->type = type;
@@ -849,7 +849,7 @@ static void _DrawSelectableButton(uiDrawObj_t *evt) {
 }
 
 // External
-uiDrawObj_t* DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode) 
+uiDrawObj_t* DrawSelectableButton(int x1, int y1, int x2, int y2, const char *message, int mode)
 {	
 	drawSelectableButtonEvent_t *eventData = calloc(1, sizeof(drawSelectableButtonEvent_t));
 	eventData->x1 = x1;
@@ -905,7 +905,7 @@ static void _DrawTooltip(uiDrawObj_t *evt) {
 }
 
 // External
-uiDrawObj_t* DrawTooltip(char *tooltip) {
+uiDrawObj_t* DrawTooltip(const char *tooltip) {
 	drawTooltipEvent_t *eventData = calloc(1, sizeof(drawTooltipEvent_t));
 	if(tooltip && strlen(tooltip) > 0) {
 		eventData->tooltip = malloc(strlen(tooltip)+1);
@@ -944,7 +944,7 @@ static void _DrawStyledLabel(uiDrawObj_t *evt) {
 }
 
 // External
-uiDrawObj_t* DrawStyledLabel(int x, int y, char *string, float size, bool centered, GXColor color) 
+uiDrawObj_t* DrawStyledLabel(int x, int y, const char *string, float size, bool centered, GXColor color)
 {	
 	drawStyledLabelEvent_t *eventData = calloc(1, sizeof(drawStyledLabelEvent_t));
 	eventData->x = x;
@@ -966,7 +966,7 @@ uiDrawObj_t* DrawStyledLabel(int x, int y, char *string, float size, bool center
 }
 
 // External
-uiDrawObj_t* DrawStyledLabelWithCaret(int x, int y, char *string, float size, bool centered, GXColor color, int caretPosition) 
+uiDrawObj_t* DrawStyledLabelWithCaret(int x, int y, const char *string, float size, bool centered, GXColor color, int caretPosition)
 {	
 	uiDrawObj_t *event = DrawStyledLabel(x, y, string, size, centered, color);
 	drawStyledLabelEvent_t *eventData = (drawStyledLabelEvent_t*)event->data;
@@ -978,7 +978,7 @@ uiDrawObj_t* DrawStyledLabelWithCaret(int x, int y, char *string, float size, bo
 }
 
 // External
-uiDrawObj_t* DrawLabel(int x, int y, char *string) 
+uiDrawObj_t* DrawLabel(int x, int y, const char *string)
 {	
 	drawStyledLabelEvent_t *eventData = calloc(1, sizeof(drawStyledLabelEvent_t));
 	eventData->x = x;
@@ -1000,7 +1000,7 @@ uiDrawObj_t* DrawLabel(int x, int y, char *string)
 }
 
 // External
-uiDrawObj_t* DrawFadingLabel(int x, int y, char *string, float size) 
+uiDrawObj_t* DrawFadingLabel(int x, int y, const char *string, float size)
 {	
 	drawStyledLabelEvent_t *eventData = calloc(1, sizeof(drawStyledLabelEvent_t));
 	eventData->x = x;
@@ -1213,7 +1213,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 }
 
 // External
-uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message, file_handle *file, int mode) 
+uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *message, file_handle *file, int mode)
 {
 	drawFileBrowserButtonEvent_t *eventData = calloc(1, sizeof(drawFileBrowserButtonEvent_t));
 	eventData->x1 = x1;
@@ -1258,7 +1258,7 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, char *message
 	return event;
 }
 
-uiDrawObj_t* DrawFileCarouselEntry(int x1, int y1, int x2, int y2, char *message, file_handle *file, int distFromMiddle) {
+uiDrawObj_t* DrawFileCarouselEntry(int x1, int y1, int x2, int y2, const char *message, file_handle *file, int distFromMiddle) {
 	uiDrawObj_t* event = DrawFileBrowserButton(x1, y1, x2, y2, message, file, B_SELECTED);
 	drawFileBrowserButtonEvent_t *data = (drawFileBrowserButtonEvent_t*)event->data;
 	data->isCarousel = true;
@@ -1468,7 +1468,7 @@ static uiDrawObj_t* drawParameterForArgsSelector(Parameter *param, int x, int y,
 }
 
 // External
-void DrawArgsSelector(char *fileName) {
+void DrawArgsSelector(const char *fileName) {
 	Parameters* params = getParameters();
 	int param_selection = 0;
 	int params_per_page = 6;
@@ -1548,7 +1548,7 @@ static uiDrawObj_t* drawCheatForCheatsSelector(CheatEntry *cheat, int x, int y, 
 }
 
 // External
-void DrawCheatsSelector(char *fileName) {
+void DrawCheatsSelector(const char *fileName) {
 	CheatEntries* cheats = getCheats();
 	int cheat_selection = 0;
 	int cheats_per_page = 6;
@@ -1617,7 +1617,7 @@ void DrawCheatsSelector(char *fileName) {
 }
 
 
-void DrawGetTextEntry(int mode, char *label, void *src, int size) {
+void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 	
 	print_gecko("DrawGetTextEntry Modes: Alpha [%s] Numeric [%s] IP [%s] Masked [%s]\r\n", mode & ENTRYMODE_ALPHA ? "Y":"N", mode & ENTRYMODE_NUMERIC ? "Y":"N",
 																		mode & ENTRYMODE_IP ? "Y":"N", mode & ENTRYMODE_MASKED ? "Y":"N");
