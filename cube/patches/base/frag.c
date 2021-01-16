@@ -99,22 +99,12 @@ void frag_read_complete(void *buffer, uint32_t length, uint32_t offset)
 	}
 }
 
-int frag_read(void *buffer, uint32_t length, uint32_t offset)
+int frag_read_write(void *buffer, uint32_t length, uint32_t offset, bool write)
 {
 	frag_t frag;
 
 	if (frag_get(offset, length, &frag) && frag.device == DEVICE_PATCHES)
-		return do_read(buffer, frag.size, frag.offset, frag.sector);
-
-	return 0;
-}
-
-int frag_write(void *buffer, uint32_t length, uint32_t offset)
-{
-	frag_t frag;
-
-	if (frag_get(offset, length, &frag) && frag.device == DEVICE_PATCHES)
-		return do_write(buffer, frag.size, frag.offset, frag.sector);
+		return do_read_write(buffer, frag.size, frag.offset, frag.sector, write);
 
 	return 0;
 }

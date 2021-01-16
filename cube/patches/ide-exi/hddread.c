@@ -354,7 +354,7 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 }
 #endif
 
-int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
+int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);
@@ -362,9 +362,12 @@ int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	if(exi_selected()) {
 		return 0;
 	}
+	if(write) {
+		return 0;
+	}
 	// If we saved this sector
 	if(lba == ata.last_sector) {
-		memcpy(dst, sectorBuf + startByte, numBytes);
+		memcpy(buf, sectorBuf + startByte, numBytes);
 		return numBytes;
 	}
 	if(numBytes < SECTOR_SIZE || DMA_READ) {
@@ -372,17 +375,17 @@ int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 		if(ataReadSector(lba, sectorBuf, 1)) {
 			return 0;
 		}
-		memcpy(dst, sectorBuf + startByte, numBytes);
+		memcpy(buf, sectorBuf + startByte, numBytes);
 		// Save current LBA
 		ata.last_sector = lba;
 	}
 	else {
 		// Read full sector
-		if(ataReadSector(lba, dst, 1)) {
+		if(ataReadSector(lba, buf, 1)) {
 			return 0;
 		}
 		// If we're reusing the sector buffer
-		if(dst == VAR_SECTOR_BUF) {
+		if(buf == VAR_SECTOR_BUF) {
 			// Save current LBA
 			ata.last_sector = lba;
 		}

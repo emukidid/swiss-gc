@@ -310,7 +310,7 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 }
 #endif
 
-int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
+int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);
@@ -319,15 +319,25 @@ int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	if(exi_selected()) {
 		return 0;
 	}
+	if(write) {
+		end_read(lba);
+		// Send single block write command and the LBA we want to write at
+		send_cmd(CMD24, lba << lbaShift);
+		// Write block
+		if(xmit_datablock(buf, 0xFE)) {
+			return SECTOR_SIZE;
+		}
+		return 0;
+	}
 	#if SINGLE_SECTOR < 2
 	// Send single block read command and the LBA we want to read at
 	send_cmd(CMD17, lba << lbaShift);
 	// Read block
-	rcvr_datablock(dst, startByte, numBytes, 1);
+	rcvr_datablock(buf, startByte, numBytes, 1);
 	#else
 	// If we saved this sector
 	if(lba == mmc.last_sector) {
-		memcpy(dst, sectorBuf + startByte, numBytes);
+		memcpy(buf, sectorBuf + startByte, numBytes);
 		return numBytes;
 	}
 	// If we weren't just reading this sector
@@ -339,15 +349,15 @@ int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	if(numBytes < SECTOR_SIZE) {
 		// Read half block
 		rcvr_datablock(sectorBuf, 0, SECTOR_SIZE, 1);
-		memcpy(dst, sectorBuf + startByte, numBytes);
+		memcpy(buf, sectorBuf + startByte, numBytes);
 		// Save current LBA
 		mmc.last_sector = lba;
 	}
 	else {
 		// Read full block
-		rcvr_datablock(dst, 0, SECTOR_SIZE, 1);
+		rcvr_datablock(buf, 0, SECTOR_SIZE, 1);
 		// If we're reusing the sector buffer
-		if(dst == VAR_SECTOR_BUF) {
+		if(buf == VAR_SECTOR_BUF) {
 			// Save current LBA
 			mmc.last_sector = lba;
 		}
@@ -356,23 +366,6 @@ int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	mmc.next_sector = lba + 1;
 	#endif
 	return numBytes;
-}
-
-int do_write(void *src, u32 len, u32 offset, u32 sectorLba) {
-	u32 lba = (offset>>9) + sectorLba;
-	u8 lbaShift = *(u8*)VAR_SD_SHIFT;
-	
-	if(exi_selected()) {
-		return 0;
-	}
-	end_read(lba);
-	// Send single block write command and the LBA we want to write at
-	send_cmd(CMD24, lba << lbaShift);
-	// Write block
-	if(xmit_datablock(src, 0xFE)) {
-		return SECTOR_SIZE;
-	}
-	return 0;
 }
 #endif
 

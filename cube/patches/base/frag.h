@@ -34,8 +34,7 @@ typedef struct {
 typedef void (*frag_read_cb)(void *buffer, uint32_t length);
 
 bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback);
-int do_read(void *buffer, uint32_t length, uint32_t offset, uint32_t sector);
-int do_write(void *buffer, uint32_t length, uint32_t offset, uint32_t sector);
+int do_read_write(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write);
 void end_read(uint32_t sector);
 
 int frag_get_list(uint32_t offset, const frag_t **frag);
@@ -43,7 +42,9 @@ bool is_frag_patch(uint32_t offset, size_t size);
 
 bool frag_read_async(void *buffer, uint32_t length, uint32_t offset, frag_read_cb callback);
 void frag_read_complete(void *buffer, uint32_t length, uint32_t offset);
-int frag_read(void *buffer, uint32_t length, uint32_t offset);
-int frag_write(void *buffer, uint32_t length, uint32_t offset);
+int frag_read_write(void *buffer, uint32_t length, uint32_t offset, bool write);
+
+#define frag_read(buffer, length, offset) frag_read_write(buffer, length, offset, false)
+#define frag_write(buffer, length, offset) frag_read_write(buffer, length, offset, true)
 
 #endif /* FRAG_H */
