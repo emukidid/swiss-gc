@@ -1793,7 +1793,7 @@ int info_game()
 	// Find the config for this game, or default if we don't know about it
 	config = calloc(1, sizeof(ConfigEntry));
 	memcpy(config->game_id, &GCMDisk.ConsoleID, 4);
-	strncpy(&config->game_name[0],&GCMDisk.GameName[0],32);
+	sprintf(&config->game_name[0], "%.32s", &GCMDisk.GameName[0]);
 	config_find(config);	// populate
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
 	int num_cheats = -1;
