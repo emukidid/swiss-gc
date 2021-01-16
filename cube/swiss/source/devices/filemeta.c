@@ -139,7 +139,8 @@ void populate_meta(file_handle *f) {
 								if(strlen(f->meta->bnrDescription.description)) {
 									// Some banners only have empty spaces as padding until they hit a new line in the IPL
 									char *desc_ptr = f->meta->bnrDescription.description;
-									if(desc_ptr = strstr(desc_ptr, "  ")) {
+									desc_ptr = strstr(desc_ptr, "  ");
+									if(desc_ptr) {
 										desc_ptr[0] = '\r';
 										desc_ptr[1] = '\n';
 									}
@@ -147,7 +148,8 @@ void populate_meta(file_handle *f) {
 									desc_ptr = f->meta->bnrDescription.description;
 									if(!strstr(desc_ptr, "\r") && !strstr(desc_ptr, "\n") && strlen(desc_ptr) > 50) {
 										desc_ptr+=(strlen(desc_ptr) / 2);
-										if(desc_ptr = strstr(desc_ptr, " ")) {
+										desc_ptr = strstr(desc_ptr, " ");
+										if(desc_ptr) {
 											desc_ptr[0] = '\r';
 										}
 									}
