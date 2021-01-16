@@ -161,5 +161,5 @@ void device_reset(void)
 	EXI[EXI_CHANNEL_1][0] = 0;
 	EXI[EXI_CHANNEL_2][0] = 0;
 
-	end_read();
+	end_read(-1);
 }

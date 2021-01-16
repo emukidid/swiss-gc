@@ -249,7 +249,7 @@ static void mmc_read_queued(void)
 	}
 
 	if (sector != mmc.next_sector) {
-		end_read();
+		end_read(-1);
 		send_cmd(CMD18, sector << *VAR_SD_SHIFT);
 	}
 
@@ -320,10 +320,8 @@ int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 		return 0;
 	}
 	#if SINGLE_SECTOR < 2
-	// SDHC uses sector addressing, SD uses byte
-	lba <<= lbaShift;
 	// Send single block read command and the LBA we want to read at
-	send_cmd(CMD17, lba);
+	send_cmd(CMD17, lba << lbaShift);
 	// Read block
 	rcvr_datablock(dst, startByte, numBytes, 1);
 	#else
@@ -334,7 +332,7 @@ int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 	}
 	// If we weren't just reading this sector
 	if(lba != mmc.next_sector) {
-		end_read();
+		end_read(-1);
 		// Send multiple block read command and the LBA we want to start reading at
 		send_cmd(CMD18, lba << lbaShift);
 	}
@@ -367,10 +365,9 @@ int do_write(void *src, u32 len, u32 offset, u32 sectorLba) {
 	if(exi_selected()) {
 		return 0;
 	}
-	// SDHC uses sector addressing, SD uses byte
-	lba <<= lbaShift;
+	end_read(lba);
 	// Send single block write command and the LBA we want to write at
-	send_cmd(CMD24, lba);
+	send_cmd(CMD24, lba << lbaShift);
 	// Write block
 	if(xmit_datablock(src, 0xFE)) {
 		return SECTOR_SIZE;
@@ -379,8 +376,11 @@ int do_write(void *src, u32 len, u32 offset, u32 sectorLba) {
 }
 #endif
 
-void end_read() {
+void end_read(u32 lba) {
 	#if SINGLE_SECTOR == 2 || ISR_READ
+	if(mmc.last_sector == lba) {
+		mmc.last_sector = -1;
+	}
 	if(mmc.next_sector != -1) {
 		mmc.next_sector = -1;
 		// End the read by sending CMD12
