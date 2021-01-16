@@ -31,6 +31,7 @@
 #include "httpd.h"
 #include "exi.h"
 #include "patcher.h"
+#include "crc32/crc32.h"
 #include "dvd.h"
 #include "elf.h"
 #include "gcm.h"
