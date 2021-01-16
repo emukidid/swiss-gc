@@ -144,6 +144,9 @@ int install_code(int final)
 		if (GCMDisk.AudioStreaming) {
 			patch     = sd_dtk_bin;
 			patchSize = sd_dtk_bin_size;
+		} else if (swissSettings.emulateMemoryCard && !swissSettings.emulateReadSpeed) {
+			patch     = sd_card_bin;
+			patchSize = sd_card_bin_size;
 		} else {
 			patch     = sd_bin;
 			patchSize = sd_bin_size;

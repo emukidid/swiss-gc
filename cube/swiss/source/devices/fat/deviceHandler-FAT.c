@@ -365,6 +365,32 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 		}
 	}
 	
+	if(swissSettings.emulateMemoryCard) {
+		memset(&patchFile, 0, sizeof(file_handle));
+		sprintf(&patchFile.name[0], "%sswiss_patches/MemoryCardA.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+		
+		devices[DEVICE_CUR]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
+		devices[DEVICE_CUR]->writeFile(&patchFile, NULL, 0);
+		devices[DEVICE_CUR]->closeFile(&patchFile);
+		
+		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_CARD_A, 16*1024*1024, DEVICE_CUR))) {
+			totFrags+=frags;
+			devices[DEVICE_CUR]->closeFile(&patchFile);
+		}
+		
+		memset(&patchFile, 0, sizeof(file_handle));
+		sprintf(&patchFile.name[0], "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+		
+		devices[DEVICE_CUR]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
+		devices[DEVICE_CUR]->writeFile(&patchFile, NULL, 0);
+		devices[DEVICE_CUR]->closeFile(&patchFile);
+		
+		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_CARD_B, 16*1024*1024, DEVICE_CUR))) {
+			totFrags+=frags;
+			devices[DEVICE_CUR]->closeFile(&patchFile);
+		}
+	}
+	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
 	if(!(frags = getFragments(file, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_DISC_1, DISC_SIZE, DEVICE_CUR))) {
 		return 0;
@@ -531,11 +557,20 @@ bool deviceHandler_FAT_test_ide_b() {
 	return ide_exi_inserted(1);
 }
 
-u32 deviceHandler_FAT_emulated() {
+u32 deviceHandler_FAT_emulated_sd() {
 	if (GCMDisk.AudioStreaming)
 		return EMU_READ|EMU_AUDIO_STREAMING;
 	else if (swissSettings.emulateReadSpeed)
 		return EMU_READ|EMU_READ_SPEED;
+	else if (swissSettings.emulateMemoryCard)
+		return EMU_READ|EMU_MEMCARD;
+	else
+		return EMU_READ;
+}
+
+u32 deviceHandler_FAT_emulated_ide() {
+	if (GCMDisk.AudioStreaming)
+		return EMU_READ|EMU_AUDIO_STREAMING;
 	else
 		return EMU_READ;
 }
@@ -547,7 +582,7 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_SDSMALL, 60, 84},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
-	EMU_READ|EMU_READ_SPEED|EMU_AUDIO_STREAMING,
+	EMU_READ|EMU_READ_SPEED|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	LOC_MEMCARD_SLOT_A,
 	&initial_SD_A,
 	(_fn_test)&deviceHandler_FAT_test_sd_a,
@@ -561,7 +596,7 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
-	(_fn_emulated)&deviceHandler_FAT_emulated,
+	(_fn_emulated)&deviceHandler_FAT_emulated_sd,
 };
 
 DEVICEHANDLER_INTERFACE __device_sd_b = {
@@ -571,7 +606,7 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_SDSMALL, 60, 84},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
-	EMU_READ|EMU_READ_SPEED|EMU_AUDIO_STREAMING,
+	EMU_READ|EMU_READ_SPEED|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	LOC_MEMCARD_SLOT_B,
 	&initial_SD_B,
 	(_fn_test)&deviceHandler_FAT_test_sd_b,
@@ -585,7 +620,7 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
-	(_fn_emulated)&deviceHandler_FAT_emulated,
+	(_fn_emulated)&deviceHandler_FAT_emulated_sd,
 };
 
 DEVICEHANDLER_INTERFACE __device_ide_a = {
@@ -609,7 +644,7 @@ DEVICEHANDLER_INTERFACE __device_ide_a = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
-	(_fn_emulated)&deviceHandler_FAT_emulated,
+	(_fn_emulated)&deviceHandler_FAT_emulated_ide,
 };
 
 DEVICEHANDLER_INTERFACE __device_ide_b = {
@@ -633,7 +668,7 @@ DEVICEHANDLER_INTERFACE __device_ide_b = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
-	(_fn_emulated)&deviceHandler_FAT_emulated,
+	(_fn_emulated)&deviceHandler_FAT_emulated_ide,
 };
 
 DEVICEHANDLER_INTERFACE __device_sd_c = {
@@ -643,7 +678,7 @@ DEVICEHANDLER_INTERFACE __device_sd_c = {
 	"SD(HC/XC) Card - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_SDSMALL, 60, 84},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
-	EMU_READ|EMU_READ_SPEED|EMU_AUDIO_STREAMING,
+	EMU_READ|EMU_READ_SPEED|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	LOC_SERIAL_PORT_2,
 	&initial_SD_C,
 	(_fn_test)&deviceHandler_FAT_test_sd_c,
@@ -657,5 +692,5 @@ DEVICEHANDLER_INTERFACE __device_sd_c = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
-	(_fn_emulated)&deviceHandler_FAT_emulated,
+	(_fn_emulated)&deviceHandler_FAT_emulated_sd,
 };

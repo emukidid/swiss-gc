@@ -391,4 +391,4 @@ int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
 }
 #endif
 
-void end_read() {}
+void end_read(u32 lba) {}

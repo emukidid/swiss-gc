@@ -15,7 +15,7 @@ DISASM    = disassembly
 all: clean stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch
 
 stub: stub.bin
-sdpatch: sd.bin sd.dtk.bin
+sdpatch: sd.bin sd.card.bin sd.dtk.bin
 ideexipatch: ideexi-v1.bin ideexi-v1.dtk.bin ideexi-v2.bin ideexi-v2.dtk.bin
 dvdpatch: dvd.bin dvd.card.bin
 usbgeckopatch: usbgecko.bin
@@ -63,6 +63,24 @@ sd.bin:
 	@$(OBJDUMP) -D sd.elf > $(DISASM)/sd.txt
 	@$(OBJCOPY) -O binary sd.elf sd.bin
 	@$(BIN2S) sd.bin > $(DEST)/SlotAB-SD.s
+	@rm -f *.bin *.elf *.o
+
+sd.card.bin:
+	@echo Building SD Patch + CARD ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR
+	@$(CC) -Os $(OPTS) -c base/emulator_card.c
+	@$(CC) -Os $(OPTS) -c base/igr.c
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=2
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/usbgecko.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -o sd.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o blockdevice.o sd.o frag.o usbgecko.o os.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D sd.card.elf > $(DISASM)/sd.card.txt
+	@$(OBJCOPY) -O binary sd.card.elf sd.card.bin
+	@$(BIN2S) sd.card.bin > $(DEST)/SlotAB-SD.card.s
 	@rm -f *.bin *.elf *.o
 
 sd.dtk.bin:

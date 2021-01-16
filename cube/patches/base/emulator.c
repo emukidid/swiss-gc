@@ -229,6 +229,9 @@ static void exi_write(unsigned index, uint32_t value)
 
 			if (chan == EXI_CHANNEL_0) {
 				if ((dev | dev2) & ~(1 << EXI_DEVICE_0)) {
+					if (*VAR_EXI_SLOT == EXI_CHANNEL_0)
+						end_read(-1);
+
 					EXI[chan][0] = (value & 0b10001111111100) | (EXI[chan][0] & 0b00010000000001);
 					OSGlobalInterruptMask = (OSGlobalInterruptMask & ~OS_INTERRUPTMASK_EXI_0_TC) | (OS_INTERRUPTMASK_EXI_0_TC & ~irq.mask);
 				}
@@ -1134,9 +1137,9 @@ bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
 	#ifndef CARD_EMULATOR
 	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
 		return false;
-	#endif
 	if (chan == *VAR_EXI_SLOT)
-		end_read();
+		end_read(-1);
+	#endif
 
 	return true;
 }

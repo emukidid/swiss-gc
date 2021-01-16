@@ -30,6 +30,8 @@ extern u8 ideexi_v2_dtk_bin[];
 extern u32 ideexi_v2_dtk_bin_size;
 extern u8 sd_bin[];
 extern u32 sd_bin_size;
+extern u8 sd_card_bin[];
+extern u32 sd_card_bin_size;
 extern u8 sd_dtk_bin[];
 extern u32 sd_dtk_bin_size;
 extern u8 usbgecko_bin[];
