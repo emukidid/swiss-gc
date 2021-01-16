@@ -367,7 +367,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	
 	if(swissSettings.emulateMemoryCard) {
 		memset(&patchFile, 0, sizeof(file_handle));
-		sprintf(&patchFile.name[0], "%sswiss_patches/MemoryCardA.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/MemoryCardA.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
 		
 		devices[DEVICE_CUR]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 		devices[DEVICE_CUR]->writeFile(&patchFile, NULL, 0);
@@ -379,7 +379,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 		}
 		
 		memset(&patchFile, 0, sizeof(file_handle));
-		sprintf(&patchFile.name[0], "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
 		
 		devices[DEVICE_CUR]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 		devices[DEVICE_CUR]->writeFile(&patchFile, NULL, 0);
