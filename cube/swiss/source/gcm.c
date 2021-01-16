@@ -466,9 +466,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 	memset(&patchDirName, 0, 256);
 	memset(&patchBaseDirName, 0, 256);
 	strncpy((char*)&gameID, (char*)&GCMDisk, 4);
-	sprintf(&patchDirName[0],"%sswiss_patches/%s",devices[DEVICE_PATCHES]->initial->name, &gameID[0]);
+	sprintf(&patchDirName[0], "%.*sswiss_patches/%.4s", 256-19, devices[DEVICE_PATCHES]->initial->name, &gameID[0]);
 	memcpy((char*)&gameID, (char*)&GCMDisk, 12);
-	sprintf(&patchBaseDirName[0],"%sswiss_patches",devices[DEVICE_PATCHES]->initial->name);
+	sprintf(&patchBaseDirName[0], "%.*sswiss_patches", 256-19, devices[DEVICE_PATCHES]->initial->name);  // Use the same truncation as above
 	print_gecko("Patch dir will be: %s if required\r\n", patchDirName);
 	// Go through all the possible files we think need patching..
 	for(i = 0; i < numToPatch; i++) {

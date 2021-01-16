@@ -1082,7 +1082,7 @@ void boot_dol()
 	file_handle *cliArgFile = calloc(1, sizeof(file_handle));
 	
 	// .cli argument file
-	sprintf(cliArgFile->name, "%s.cli", fileName);
+	sprintf(cliArgFile->name, "%.*s.cli", PATHNAME_MAX-5, fileName);
 	if(devices[DEVICE_CUR]->readFile(cliArgFile, &readTest, 4) != 4) {
 		free(cliArgFile);
 		cliArgFile = NULL;
@@ -1126,7 +1126,7 @@ void boot_dol()
 	file_handle *dcpArgFile = calloc(1, sizeof(file_handle));
 	
 	// .dcp parameter file
-	sprintf(dcpArgFile->name, "%s.dcp", fileName);
+	sprintf(dcpArgFile->name, "%.*s.dcp", PATHNAME_MAX-5, fileName);
 	if(devices[DEVICE_CUR]->readFile(dcpArgFile, &readTest, 4) != 4) {
 		free(dcpArgFile);
 		dcpArgFile = NULL;
@@ -1271,7 +1271,8 @@ bool manage_file() {
 			u32 isDestCard = devices[DEVICE_DEST] == &__device_card_a || devices[DEVICE_DEST] == &__device_card_b;
 			u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
 			
-			sprintf(destFile->name, "%s/%s",destFile->name,stripInvalidChars(getRelativeName(&curFile.name[0])));
+      strncat(destFile->name, "/", (PATHNAME_MAX-strlen(destFile->name)-1));
+      strncat(destFile->name, stripInvalidChars(getRelativeName(&curFile.name[0])), (PATHNAME_MAX-strlen(destFile->name)-1));
 			destFile->fp = 0;
 			destFile->ffsFp = 0;
 			destFile->fileBase = 0;
@@ -1280,7 +1281,7 @@ bool manage_file() {
 			destFile->fileAttrib = IS_FILE;
 			// Create a GCI if something is coming out from CARD to another device
 			if(isSrcCard && !isDestCard) {
-				sprintf(destFile->name, "%s.gci",destFile->name);
+        strncat(destFile->name, "%s.gci", (PATHNAME_MAX-strlen(destFile->name)-1));
 			}
 
 			// If the destination file already exists, ask the user what to do
@@ -1657,7 +1658,7 @@ void load_file()
 			// Try to read a .fw file too.
 			file_handle fwFile;
 			memset(&fwFile, 0, sizeof(file_handle));
-			sprintf(&fwFile.name[0],"%s.fw", &curFile.name[0]);
+			sprintf(&fwFile.name[0], "%.*s.fw", PATHNAME_MAX-4, &curFile.name[0]);
 			u8 *firmware = (u8*)memalign(32, 0x3000);
 			DrawDispose(msgBox);
 			if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR]->readFile(&fwFile,firmware,0x3000) != 0x3000) {

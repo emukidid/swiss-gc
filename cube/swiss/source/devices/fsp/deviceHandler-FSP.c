@@ -69,7 +69,7 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 				*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
-			sprintf((*dir)[i].name, "%s/%s", ffile->name, entry.name);
+			sprintf((*dir)[i].name, "%.*s/%s", PATHNAME_MAX-257, ffile->name, entry.name);
 			(*dir)[i].size     = entry.size;
 			(*dir)[i].fileAttrib   = (entry.type & FSP_RDTYPE_DIR) ? IS_DIR : IS_FILE;
 			usedSpace += (*dir)[i].size;
@@ -144,7 +144,7 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 			u32 patchInfo[4];
 			memset(patchInfo, 0, 16);
 			memset(&patchFile, 0, sizeof(file_handle));
-			sprintf(&patchFile.name[0], "%sswiss_patches/%s/%i",devices[DEVICE_PATCHES]->initial->name,gameID, i);
+			sprintf(&patchFile.name[0], "%.*sswiss_patches/%.4s/%i", PATHNAME_MAX-30, devices[DEVICE_PATCHES]->initial->name, gameID, i);
 			print_gecko("Looking for file %s\r\n", &patchFile.name);
 			FILINFO fno;
 			if(f_stat(&patchFile.name[0], &fno) != FR_OK) {
@@ -166,7 +166,7 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 		// Check for igr.dol
 		if(swissSettings.igrType == IGR_BOOTBIN) {
 			memset(&patchFile, 0, sizeof(file_handle));
-			sprintf(&patchFile.name[0], "%sigr.dol", devices[DEVICE_PATCHES]->initial->name);
+			sprintf(&patchFile.name[0], "%.*sigr.dol", PATHNAME_MAX-8, devices[DEVICE_PATCHES]->initial->name);
 			
 			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_IGR_DOL, 0, DEVICE_PATCHES))) {
 				*(vu32*)VAR_IGR_DOL_SIZE = patchFile.size;
