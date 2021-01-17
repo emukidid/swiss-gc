@@ -93,11 +93,8 @@ build:
 
 recovery-iso:
 	@cp $(BUILDTOOLS)/wkf/recovery_bootloader.iso $(DIST)/WiikeyFusion/RecoveryISO/$(SVN_REVISION)"_Recovery".iso
-	# crop swiss iso
-	@dd if=$(DIST)/ISO/$(SVN_REVISION)"(pal)".iso of=$(DIST)/WiikeyFusion/RecoveryISO/pal.iso skip=65536 bs=1
 	# merge bootloader and swiss
-	@dd if=$(DIST)/WiikeyFusion/RecoveryISO/pal.iso of=$(DIST)/WiikeyFusion/RecoveryISO/$(SVN_REVISION)"_Recovery".iso bs=1 seek=65536
-	@rm -rf $(DIST)/WiikeyFusion/RecoveryISO/pal.iso
+	@dd if=$(DIST)/ISO/$(SVN_REVISION)"(pal)".iso of=$(DIST)/WiikeyFusion/RecoveryISO/$(SVN_REVISION)"_Recovery".iso bs=32K skip=1 seek=1
 
 #------------------------------------------------------------------
 
