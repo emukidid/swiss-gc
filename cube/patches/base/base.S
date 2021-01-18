@@ -18,49 +18,50 @@ system_call_exception:
 	mthid0	r9
 	rfi
 
-	.globl exception_handler
-exception_handler:
-	stswi	r0, r4, 12
-	stmw	r6, 24 (r4)
-	mfgqr	r0, 1
-	stw		r0, 424 (r4)
-	mfgqr	r0, 2
-	stw		r0, 428 (r4)
-	mfgqr	r0, 3
-	stw		r0, 432 (r4)
-	mfgqr	r0, 4
-	stw		r0, 436 (r4)
-	mfgqr	r0, 5
-	stw		r0, 440 (r4)
-	mfgqr	r0, 6
-	stw		r0, 444 (r4)
-	mfgqr	r0, 7
-	stw		r0, 448 (r4)
-	mfdsisr	r5
-	mfdar	r6
-	stwu	sp, -8 (sp)
-	bl		service_exception
+	.globl dsi_exception_vector
+dsi_exception_vector:
+	mtsprg	0, r4
+	mtsprg	1, r5
+	mtsprg	2, r6
+	mfsrr1	r6
+	mfcr	r4
+	extrwi.	r5, r6, 1, 29
+	rlwinm	r6, r6, 0, 30, 28
+	bne		1f
+	mtcr	r4
+	lis		r4, dsi_exception_handler@ha
+	addi	r4, r4, dsi_exception_handler@l
+	mfsrr0	r5
+	mtsrr0	r4
+	mfmsr	r4
+	ori		r4, r4, 0x34
+	mtsrr1	r4
+	rfi
+1:	mtcr	r4
+	mtsrr1	r6
+	mfsprg	r6, 2
+	mfsprg	r5, 1
+	mfsprg	r4, 0
+	ba		0x00000304
 
-	.globl load_context, load_context_end
-load_context:
-	bl		realmode
-	lwz		r3, 192 (r0)
-	lswi	r0, r3, 12
-	lmw		r5, 20 (r3)
-	lwz		r4, 424 (r3)
-	mtgqr	1, r4
-	lwz		r4, 428 (r3)
-	mtgqr	2, r4
-	lwz		r4, 432 (r3)
-	mtgqr	3, r4
-	lwz		r4, 436 (r3)
-	mtgqr	4, r4
-	lwz		r4, 440 (r3)
-	mtgqr	5, r4
-	lwz		r4, 444 (r3)
-	mtgqr	6, r4
-	lwz		r4, 448 (r3)
-	mtgqr	7, r4
+dsi_exception_handler:
+	mfcr	r4
+	stw		r4, -712 + 128 (sp)
+	mflr	r4
+	stw		r4, -712 + 132 (sp)
+	mfctr	r4
+	stw		r4, -712 + 136 (sp)
+	mfxer	r4
+	stw		r4, -712 + 140 (sp)
+	mfsprg	r4, 0
+	stw		r5, -712 + 408 (sp)
+	mfsprg	r5, 1
+	stw		r6, -712 + 412 (sp)
+	mfsprg	r6, 2
+	stm		r0, -712 (sp)
+	stwu	sp, -712 - 8 (sp)
+	addi	r3, sp, 8
+	bl		service_exception
 	lwz		r4, 128 (r3)
 	mtcr	r4
 	lwz		r4, 132 (r3)
@@ -73,13 +74,7 @@ load_context:
 	mtsrr0	r4
 	lwz		r4, 412 (r3)
 	mtsrr1	r4
-	lhz		r4, 418 (r3)
-	rlwinm	r4, r4, 0, 31, 29
-	sth		r4, 418 (r3)
-	lwz		r4, 16 (r3)
-	lwz		r3, 12 (r3)
-load_context_end:
-	nop
+	lm		r0, 0 (r3) // :)
 	rfi
 
 	.org 0x80000D00 - 0x80000C00
@@ -103,16 +98,6 @@ _start:
 	b		idle_thread
 	b		check_pad
 	b		fini
-
-	.globl realmode
-realmode:
-	mflr	r3
-	clrlwi	r3, r3, 2
-	mtsrr0	r3
-	mfmsr	r3
-	rlwinm	r3, r3, 0, 28, 25
-	mtsrr1	r3
-	rfi
 
 	.globl switch_fiber
 switch_fiber:
