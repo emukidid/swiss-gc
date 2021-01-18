@@ -843,7 +843,13 @@ static void _DrawSelectableButton(uiDrawObj_t *evt) {
 	}
 	
 	if(data->msg) {
-		float scale = GetTextScaleToFitInWidth(data->msg, (x2-x1)-(borderSize*2));	
+		float scale = GetTextScaleToFitInWidth(data->msg, (x2-x1)-(borderSize*2));
+		// Adjust font when we can't fit vertically too
+		int availHeight = data->y2 - data->y1 - 4;
+		if(GetFontHeight(scale) > availHeight) {
+			int fullHeight = GetFontHeight(1.0f);
+			scale = (float)availHeight / (float)fullHeight;
+		}
 		drawString(data->x1 + borderSize+3, data->y1+2, data->msg, scale, false, defaultColor);
 	}
 }

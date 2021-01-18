@@ -21,6 +21,7 @@
 
 #define in_range(x, a, b) (((x) >= (a)) && ((x) < (b)))
 
+#define RECENT_MAX 8
 #define FILES_PER_PAGE 8
 #define FILES_PER_PAGE_CAROUSEL 10
 extern int current_view_start;
@@ -123,6 +124,7 @@ typedef struct {
 	int fileBrowserType;
 	int bs2Boot;
 	char autoload[PATHNAME_MAX];
+	char recent[RECENT_MAX][PATHNAME_MAX];
 } SwissSettings __attribute__((aligned(32)));
 extern SwissSettings swissSettings;
 

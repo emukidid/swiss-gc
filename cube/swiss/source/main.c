@@ -249,35 +249,8 @@ int main ()
 	// Check for autoload entry
 	if(swissSettings.autoload[0]) {
 		// Check that the path in the autoload entry points at a device that has been detected
-		print_gecko("Autoload entry found [%s]\r\n", swissSettings.autoload);
-		
-		// get the device handler for it
-		DEVICEHANDLER_INTERFACE *autoloadDevice = getDeviceFromPath(&swissSettings.autoload[0]);
-		if(autoloadDevice) {
-			print_gecko("Autoload entry lives on found device [%s]\r\n", autoloadDevice->deviceName);
-			
-			DEVICEHANDLER_INTERFACE *oldDevice = devices[DEVICE_CUR];
-			devices[DEVICE_CUR] = autoloadDevice;
-			// Init the device if it isn't one we were about to browse anyway
-			if(devices[DEVICE_CUR] == oldDevice || devices[DEVICE_CUR]->init(devices[DEVICE_CUR]->initial)) {
-				file_handle *oldPath = calloc(1, sizeof(file_handle));
-				memcpy(oldPath, &curFile, sizeof(file_handle));
-				memset(&curFile, 0, sizeof(file_handle));
-				strcpy(&curFile.name[0], &swissSettings.autoload[0]);
-				if(devices[DEVICE_CUR] == &__device_dvd) curFile.size = DISC_SIZE;
-				if(devices[DEVICE_CUR]->readFile(&curFile, NULL, 0) == 0) {
-					populate_meta(&curFile);
-					load_file();
-				}
-				// User cancelled, clean things up
-				memcpy(&curFile, oldPath, sizeof(file_handle));
-				free(oldPath);
-			}
-			devices[DEVICE_CUR] = oldDevice;
-		}
-		else {
-			print_gecko("Autoload entry device was not found\r\n");
-		}
+		print_gecko("Autoload entry detected [%s]\r\n", swissSettings.autoload);
+		load_existing_entry(&swissSettings.autoload);
 	}
 
 	while(1) {
