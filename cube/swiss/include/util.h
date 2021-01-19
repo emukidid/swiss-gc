@@ -15,6 +15,7 @@ char *stripInvalidChars(char *str);
 void load_auto_dol();
 void print_gecko(const char* fmt, ...);
 extern void __libogc_exit(int status);
+void update_recent();
 int load_existing_entry(char *entry);
 
 #endif 

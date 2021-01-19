@@ -145,9 +145,14 @@ int load_existing_entry(char *entry) {
 			if(devices[DEVICE_CUR] == &__device_dvd) curFile.size = DISC_SIZE;
 			if(devices[DEVICE_CUR]->readFile(&curFile, NULL, 0) == 0) {
 				found = 1;
-				print_gecko("Entry exists, reading meta.\r\n");
-				populate_meta(&curFile);
-				load_file();
+				if(endsWith(entry,".dol") || endsWith(entry,".dol+cli") || endsWith(entry,".elf")) {
+					boot_dol();
+				}
+				else {
+					print_gecko("Entry exists, reading meta.\r\n");
+					populate_meta(&curFile);
+					load_file();
+				}
 			}
 			// User cancelled, clean things up
 			memcpy(&curFile, oldPath, sizeof(file_handle));

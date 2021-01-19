@@ -1120,6 +1120,14 @@ void boot_dol()
 	}
 	DrawDispose(progBar);
 	
+	if(devices[DEVICE_CONFIG] != NULL) {
+		// Update the recent list.
+		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list ..."));
+		update_recent();
+		config_update_file();
+		DrawDispose(msgBox);
+	}
+	
 	// Build a command line to pass to the DOL
 	int argc = 0;
 	char *argv[1024];
