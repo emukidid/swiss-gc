@@ -27,8 +27,8 @@
 #define COMMAND_LATENCY_TICKS OSMicrosecondsToTicks(300)
 
 extern OSAlarm bba_alarm;
+extern OSAlarm di_alarm;
 extern OSAlarm read_alarm;
-extern OSAlarm command_alarm;
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset);
 void trickle_read(void);

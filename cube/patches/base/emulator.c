@@ -445,7 +445,7 @@ void di_close_cover(void)
 	di_update_interrupts();
 }
 
-OSAlarm command_alarm = {0};
+OSAlarm di_alarm = {0};
 
 #ifndef DI_PASSTHROUGH
 static void di_execute_command(void)
@@ -537,7 +537,7 @@ static void di_execute_command(void)
 		{
 			if (!(di.reg.cvr & 0b001) && change_disc()) {
 				di_open_cover();
-				OSSetAlarm(&command_alarm, OSSecondsToTicks(1.5), (OSAlarmHandler)di_close_cover);
+				OSSetAlarm(&di_alarm, OSSecondsToTicks(1.5), (OSAlarmHandler)di_close_cover);
 			}
 			break;
 		}
@@ -1010,8 +1010,8 @@ void init(void **arenaLo, void **arenaHi)
 	#ifdef BBA
 	OSCreateAlarm(&bba_alarm);
 	#endif
+	OSCreateAlarm(&di_alarm);
 	OSCreateAlarm(&read_alarm);
-	OSCreateAlarm(&command_alarm);
 
 	memzero(irq.handler, sizeof(irq.handler));
 	irq.mask = 0;

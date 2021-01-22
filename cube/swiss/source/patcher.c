@@ -4500,6 +4500,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *OSSetAlarm = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (OSSetAlarm) {
+			if (j == 0) {
+				data[i + 10] = 0x38A0FFFF;	// li		r5, -1
+				data[i + 11] = 0x3800FFFF;	// li		r0, -1
+			}
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 0] = (u32)OSSetAlarm;
 			
