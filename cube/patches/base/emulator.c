@@ -915,7 +915,7 @@ static bool ppc_store16(uint32_t address, uint16_t value)
 }
 #endif
 
-static bool ppc_step(OSContext *context)
+static bool ppc_step(ppc_context_t *context)
 {
 	uint32_t opcode = *(uint32_t *)context->srr0;
 
@@ -986,7 +986,7 @@ static bool ppc_step(OSContext *context)
 	return false;
 }
 
-OSContext *service_exception(OSContext *context)
+ppc_context_t *service_exception(ppc_context_t *context)
 {
 	if (ppc_step(context))
 		context->srr0 += 4;

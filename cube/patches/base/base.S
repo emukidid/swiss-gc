@@ -46,20 +46,20 @@ dsi_exception_vector:
 
 dsi_exception_handler:
 	mfcr	r4
-	stw		r4, -712 + 128 (sp)
+	stw		r4, -152 + 128 (sp)
 	mflr	r4
-	stw		r4, -712 + 132 (sp)
+	stw		r4, -152 + 132 (sp)
 	mfctr	r4
-	stw		r4, -712 + 136 (sp)
+	stw		r4, -152 + 136 (sp)
 	mfxer	r4
-	stw		r4, -712 + 140 (sp)
+	stw		r4, -152 + 140 (sp)
 	mfsprg	r4, 0
-	stw		r5, -712 + 408 (sp)
+	stw		r5, -152 + 144 (sp)
 	mfsprg	r5, 1
-	stw		r6, -712 + 412 (sp)
+	stw		r6, -152 + 148 (sp)
 	mfsprg	r6, 2
-	stm		r0, -712 (sp)
-	stwu	sp, -712 - 8 (sp)
+	stm		r0, -152 (sp)
+	stwu	sp, -152 - 8 (sp)
 	addi	r3, sp, 8
 	bl		service_exception
 	lwz		r4, 128 (r3)
@@ -70,9 +70,9 @@ dsi_exception_handler:
 	mtctr	r4
 	lwz		r4, 140 (r3)
 	mtxer	r4
-	lwz		r4, 408 (r3)
+	lwz		r4, 144 (r3)
 	mtsrr0	r4
-	lwz		r4, 412 (r3)
+	lwz		r4, 148 (r3)
 	mtsrr1	r4
 	lm		r0, 0 (r3) // :)
 	rfi
