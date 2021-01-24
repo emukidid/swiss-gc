@@ -145,7 +145,7 @@ void drawSettingEntryString(uiDrawObj_t* page, int *y, char *label, char *key, b
 }
 
 void drawSettingEntryBoolean(uiDrawObj_t* page, int *y, char *label, bool boolval, bool selected, bool enabled) {
-	drawSettingEntryString(page, y, label, boolval ? "Enabled" : "Disabled", selected, enabled);
+	drawSettingEntryString(page, y, label, boolval ? "Yes" : "No", selected, enabled);
 }
 
 void drawSettingEntryNumeric(uiDrawObj_t* page, int *y, char *label, int num, bool selected, bool enabled) {
