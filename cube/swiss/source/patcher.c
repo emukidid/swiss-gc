@@ -9562,6 +9562,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x81300EA2 - 0x81300000) = 1;
 				*(s16 *)(data + 0x81300EAA - 0x81300000) = 1;
 				
+				// Force boot sound.
+				*(u32 *)(data + 0x81302F00 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				
 				// Force text encoding.
 				*(u32 *)(data + 0x8130B3E4 - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
@@ -9596,6 +9599,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Accept any region code.
 				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
 				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
+				
+				// Force boot sound.
+				*(u32 *)(data + 0x81302DE8 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				// Force text encoding.
 				*(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
@@ -9632,6 +9638,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
 				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
 				
+				// Force boot sound.
+				*(u32 *)(data + 0x81302DE8 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				
 				if (newmode->viTVMode >> 2 != VI_PAL)
 					memcpy(data + 0x81380FD0 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
 				
@@ -9645,6 +9654,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Accept any region code.
 				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
 				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
+				
+				// Force boot sound.
+				*(u32 *)(data + 0x81302DE8 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				if (newmode->viTVMode >> 2 != VI_PAL)
 					memcpy(data + 0x8137D910 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
@@ -9661,6 +9673,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Accept any region code.
 				*(s16 *)(data + 0x81300ACE - 0x81300000) = 1;
 				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
+				
+				// Force boot sound.
+				*(u32 *)(data + 0x81303184 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				// Force text encoding.
 				*(u32 *)(data + 0x8130B8D0 - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
@@ -9697,6 +9712,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x81300ACE - 0x81300000) = 1;
 				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
 				
+				// Force boot sound.
+				*(u32 *)(data + 0x8130319C - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				
 				// Force text encoding.
 				*(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
@@ -9731,6 +9749,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Accept any region code.
 				*(s16 *)(data + 0x81300882 - 0x81300000) = 1;
 				*(s16 *)(data + 0x813008A6 - 0x81300000) = 1;
+				
+				// Force boot sound.
+				*(u32 *)(data + 0x81302F50 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				if (newmode->viTVMode >> 2 != VI_PAL)
 					memcpy(data + 0x81382470 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));

@@ -32,6 +32,7 @@ char *emulateReadSpeedStr[] = {"No", "Yes", "Wii"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
 char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL"};
 char *fileBrowserStr[] = {"Standard", "Carousel"};
+char *bs2BootStr[] = {"No", "Yes", "Sound 1", "Sound 2"};
 char *sramLang[] = {"English", "German", "French", "Spanish", "Italian", "Dutch", "Japanese"};
 
 static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
@@ -245,7 +246,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Video Patches:", swissSettings.disableVideoPatches, option == SET_ENABLE_VIDPATCH, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force Video Active:", swissSettings.forceVideoActive, option == SET_FORCE_VIDACTIVE, enabledVideoPatches);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, enabledVideoPatches);
-		drawSettingEntryBoolean(page, &page_y_ofs, "Boot through IPL:", swissSettings.bs2Boot, option == SET_BS2BOOT, true);
+		drawSettingEntryString(page, &page_y_ofs, "Boot through IPL:", bs2BootStr[swissSettings.bs2Boot], option == SET_BS2BOOT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Memory Card:", swissSettings.emulateMemoryCard, option == SET_EMULATE_MEMCARD, emulatedMemoryCard);
 	}
 	else if(page_num == PAGE_GAME_DEFAULTS) {
@@ -459,7 +460,11 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 					swissSettings.forceDTVStatus ^= 1;
 			break;
 			case SET_BS2BOOT:
-				swissSettings.bs2Boot ^= 1;
+				swissSettings.bs2Boot += direction;
+				if(swissSettings.bs2Boot > 3)
+					swissSettings.bs2Boot = 0;
+				if(swissSettings.bs2Boot < 0)
+					swissSettings.bs2Boot = 3;
 			break;
 			case SET_EMULATE_MEMCARD:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_MEMCARD))
