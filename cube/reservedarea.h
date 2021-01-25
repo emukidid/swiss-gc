@@ -126,6 +126,9 @@ extern char VAR_SAR_WIDTH[2];		// sample aspect ratio width
 extern char VAR_SAR_HEIGHT[1];		// sample aspect ratio height
 extern char VAR_NEXT_FIELD[1];		// next video field
 extern char VAR_CURRENT_FIELD[1];	// current video field
+extern char VAR_CARD_IDS[2];		// emulated memory cards
+extern char VAR_CARD_A_ID[1];		// emulated memory card a
+extern char VAR_CARD_B_ID[1];		// emulated memory card b
 extern char VAR_FRAG_LIST[0x1E0];	// 0x1E0 of fragments (40 frags max) (u32 offset, u32 size, u32 rawsector)
 
 extern char VAR_RMODE[4];			// render mode

@@ -42,6 +42,9 @@ VAR_SAR_WIDTH		= VAR_AREA | 0x2E18;	/* sample aspect ratio width */
 VAR_SAR_HEIGHT		= VAR_AREA | 0x2E1A;	/* sample aspect ratio height */
 VAR_NEXT_FIELD		= VAR_AREA | 0x2E1B;	/* next video field */
 VAR_CURRENT_FIELD	= VAR_AREA | 0x2E1C;	/* current video field */
+VAR_CARD_IDS		= VAR_AREA | 0x2E1E;	/* emulated memory cards */
+VAR_CARD_A_ID		= VAR_AREA | 0x2E1E;	/* emulated memory card a */
+VAR_CARD_B_ID		= VAR_AREA | 0x2E1F;	/* emulated memory card b */
 VAR_FRAG_LIST		= VAR_AREA | 0x2E20;	/* 0x1E0 of fragments (40 frags max) (u32 offset, u32 size, u32 rawsector) */
 
 VAR_RMODE			= VAR_AREA | 0x30F8;	/* render mode */

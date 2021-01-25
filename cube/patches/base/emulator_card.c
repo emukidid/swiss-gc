@@ -60,7 +60,7 @@ uint8_t card_imm(unsigned chan, uint8_t data)
 					case 0: result = 0x00; break;
 					case 1: result = 0x00; break;
 					case 2: result = 0x00; break;
-					case 3: result = 0x80; break;
+					case 3: result = VAR_CARD_IDS[chan]; break;
 				}
 			}
 			break;
@@ -68,7 +68,7 @@ uint8_t card_imm(unsigned chan, uint8_t data)
 		case 0x52:
 		{
 			switch (card[chan].position) {
-				case 1: card[chan].offset = (card[chan].offset & ~0xFE0000) | ((data << 17) & 0xFE0000); break;
+				case 1: card[chan].offset = (card[chan].offset & ~0x1FE0000) | ((data << 17) & 0x1FE0000); break;
 				case 2: card[chan].offset = (card[chan].offset & ~0x1FE00) | ((data << 9) & 0x1FE00); break;
 				case 3: card[chan].offset = (card[chan].offset & ~0x180) | ((data << 7) & 0x180); break;
 				case 4: card[chan].offset = (card[chan].offset & ~0x7F) | (data & 0x7F); break;
@@ -90,7 +90,7 @@ uint8_t card_imm(unsigned chan, uint8_t data)
 		case 0xF2:
 		{
 			switch (card[chan].position) {
-				case 1: card[chan].offset = (card[chan].offset & ~0xFE0000) | ((data << 17) & 0xFE0000); break;
+				case 1: card[chan].offset = (card[chan].offset & ~0x1FE0000) | ((data << 17) & 0x1FE0000); break;
 				case 2: card[chan].offset = (card[chan].offset & ~0x1FE00) | ((data << 9) & 0x1FE00); break;
 				case 3: card[chan].offset = (card[chan].offset & ~0x180) | ((data << 7) & 0x180); break;
 				case 4: card[chan].offset = (card[chan].offset & ~0x7F) | (data & 0x7F); break;

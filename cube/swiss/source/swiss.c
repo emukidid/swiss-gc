@@ -1609,6 +1609,8 @@ void load_game() {
 		*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
 		*(vu8*)VAR_IGR_EXIT_TYPE = swissSettings.igrType;
 		*(vu32*)VAR_IGR_DOL_SIZE = 0;
+		*(vu8*)VAR_CARD_A_ID = 0x00;
+		*(vu8*)VAR_CARD_B_ID = 0x00;
 		// Call the special setup for each device (e.g. SD will set the sector(s))
 		if(!devices[DEVICE_CUR]->setupFile(&curFile, secondDisc, numToPatch)) {
 			msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
