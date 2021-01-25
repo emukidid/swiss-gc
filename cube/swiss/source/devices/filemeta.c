@@ -139,8 +139,7 @@ void populate_meta(file_handle *f) {
 								if(strlen(f->meta->bnrDescription.description)) {
 									// Some banners only have empty spaces as padding until they hit a new line in the IPL
 									char *desc_ptr = f->meta->bnrDescription.description;
-									desc_ptr = strstr(desc_ptr, "  ");
-									if(desc_ptr) {
+									if((desc_ptr = strstr(desc_ptr, "  "))) {
 										desc_ptr[0] = '\r';
 										desc_ptr[1] = '\n';
 									}
@@ -148,8 +147,7 @@ void populate_meta(file_handle *f) {
 									desc_ptr = f->meta->bnrDescription.description;
 									if(!strstr(desc_ptr, "\r") && !strstr(desc_ptr, "\n") && strlen(desc_ptr) > 50) {
 										desc_ptr+=(strlen(desc_ptr) / 2);
-										desc_ptr = strstr(desc_ptr, " ");
-										if(desc_ptr) {
+										if((desc_ptr = strstr(desc_ptr, " "))) {
 											desc_ptr[0] = '\r';
 										}
 									}
@@ -202,10 +200,10 @@ file_handle* meta_find_disk2(file_handle* f) {
 		int i;
 		for(i = 0; i < getCurrentDirEntryCount(); i++) {
 			if(dirEntries[i].meta) {
-				if(strncmp((const char *)dirEntries[i].meta->diskId.gamename, (const char *)f->meta->diskId.gamename, 4)) {
+				if(strncmp((const char*)dirEntries[i].meta->diskId.gamename, (const char*)f->meta->diskId.gamename, 4)) {
 					continue;
 				}
-				if(strncmp((const char *)dirEntries[i].meta->diskId.company, (const char *)f->meta->diskId.company, 2)) {
+				if(strncmp((const char*)dirEntries[i].meta->diskId.company, (const char*)f->meta->diskId.company, 2)) {
 					continue;
 				}
 				if(dirEntries[i].meta->diskId.disknum == f->meta->diskId.disknum) {
