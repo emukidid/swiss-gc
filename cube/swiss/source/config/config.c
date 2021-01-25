@@ -49,12 +49,6 @@
 static ConfigEntry configEntries[2048]; // That's a lot of Games!
 static int configEntriesCount = 0;
 
-
-void strnscpy(char *s1, char *s2, int num) {
-	strncpy(s1, s2, num);
-	s1[num] = 0;
-}
-
 /** Crappy dynamic string appender */
 #define APPEND_BLOCKSIZE 256
 typedef struct {
@@ -127,7 +121,7 @@ bool config_set_device() {
 int config_init() {
 	if(!config_set_device()) return 0;
 	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
-	sprintf(configFile->name, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
+	snprintf(configFile->name, PATHNAME_MAX, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
 	
 	// Read config
 	if(devices[DEVICE_CONFIG]->readFile(configFile, txtbuffer, 1) == 1) {
@@ -251,21 +245,16 @@ int config_update_file() {
 	// Write out Game Configs
 	int i;
 	for(i = 0; i < configEntriesCount; i++) {
-		char buffer[256];
-		strnscpy(buffer, &configEntries[i].game_id[0], 4);
-		sprintf(txtbuffer, "ID=%s\r\n",buffer);
+		sprintf(txtbuffer, "ID=%.4s\r\n",configEntries[i].game_id);
 		string_append(configString, txtbuffer);
 		
-		strnscpy(buffer, &configEntries[i].game_name[0], 32);
-		sprintf(txtbuffer, "Name=%s\r\n",buffer);
+		sprintf(txtbuffer, "Name=%.64s\r\n",configEntries[i].game_name);
 		string_append(configString, txtbuffer);
 		
-		strnscpy(buffer, &configEntries[i].comment[0], 128);
-		sprintf(txtbuffer, "Comment=%s\r\n",buffer);
+		sprintf(txtbuffer, "Comment=%.128s\r\n",configEntries[i].comment);
 		string_append(configString, txtbuffer);
 		
-		strnscpy(buffer, &configEntries[i].status[0], 32);
-		sprintf(txtbuffer, "Status=%s\r\n",buffer);
+		sprintf(txtbuffer, "Status=%.32s\r\n",configEntries[i].status);
 		string_append(configString, txtbuffer);
 		
 		sprintf(txtbuffer, "Force Video Mode=%s\r\n",gameVModeStr[configEntries[i].gameVMode]);
@@ -297,7 +286,7 @@ int config_update_file() {
 	}
 
 	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
-	sprintf(configFile->name, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
+	snprintf(configFile->name, PATHNAME_MAX, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
 
 	u32 len = strlen(configString->mem);
 	// TODO ask overwrite?
@@ -496,16 +485,16 @@ void config_parse(char *configData) {
 						swissSettings.uiVMode = 4;
 				}
 				else if(!strcmp("SMBUserName", name)) {
-					strncpy(swissSettings.smbUser, value, 20);
+					strlcpy(&swissSettings.smbUser[0], value, sizeof(swissSettings.smbUser));
 				}
 				else if(!strcmp("SMBPassword", name)) {
-					strncpy(swissSettings.smbPassword, value, 16);
+					strlcpy(&swissSettings.smbPassword[0], value, sizeof(swissSettings.smbPassword));
 				}
 				else if(!strcmp("SMBShareName", name)) {
-					strncpy(swissSettings.smbShare, value, 80);
+					strlcpy(&swissSettings.smbShare[0], value, sizeof(swissSettings.smbShare));
 				}
 				else if(!strcmp("SMBHostIP", name)) {
-					strncpy(swissSettings.smbServerIp, value, 80);
+					strlcpy(&swissSettings.smbServerIp[0], value, sizeof(swissSettings.smbServerIp));
 				}
 				else if(!strcmp("AutoCheats", name)) {
 					swissSettings.autoCheats = !strcmp("Yes", value) ? 1:0;
@@ -548,13 +537,13 @@ void config_parse(char *configData) {
 						swissSettings.bs2Boot = 3;
 				}
 				else if(!strcmp("FTPUserName", name)) {
-					strncpy(swissSettings.ftpUserName, value, sizeof(((SwissSettings*)0)->ftpUserName));
+					strlcpy(&swissSettings.ftpUserName[0], value, sizeof(swissSettings.ftpUserName));
 				}
 				else if(!strcmp("FTPPassword", name)) {
-					strncpy(swissSettings.ftpPassword, value, sizeof(((SwissSettings*)0)->ftpPassword));
+					strlcpy(&swissSettings.ftpPassword[0], value, sizeof(swissSettings.ftpPassword));
 				}
 				else if(!strcmp("FTPHostIP", name)) {
-					strncpy(swissSettings.ftpHostIp, value, sizeof(((SwissSettings*)0)->ftpHostIp));
+					strlcpy(&swissSettings.ftpHostIp[0], value, sizeof(swissSettings.ftpHostIp));
 				}
 				else if(!strcmp("FTPPort", name)) {
 					swissSettings.ftpPort = atoi(value);
@@ -563,16 +552,16 @@ void config_parse(char *configData) {
 					swissSettings.ftpUsePasv = !strcmp("Yes", value);
 				}
 				else if(!strcmp("FSPHostIP", name)) {
-					strncpy(swissSettings.fspHostIp, value, sizeof(((SwissSettings*)0)->fspHostIp));
+					strlcpy(&swissSettings.fspHostIp[0], value, sizeof(swissSettings.fspHostIp));
 				}
 				else if(!strcmp("FSPPort", name)) {
 					swissSettings.fspPort = atoi(value);
 				}
 				else if(!strcmp("FSPPassword", name)) {
-					strncpy(swissSettings.fspPassword, value, sizeof(((SwissSettings*)0)->fspPassword));
+					strlcpy(&swissSettings.fspPassword[0], value, sizeof(swissSettings.fspPassword));
 				}
 				else if(!strcmp("Autoload", name)) {
-					strncpy(swissSettings.autoload, value, sizeof(((SwissSettings*)0)->autoload));
+					strlcpy(&swissSettings.autoload[0], value, sizeof(swissSettings.autoload));
 				}
 			}
 		}

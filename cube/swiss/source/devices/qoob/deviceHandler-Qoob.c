@@ -56,7 +56,7 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 		// DOL blocks are all marked by "ELF "
 		if (*(u32*)&iplBlock[0] == 0x454C4600) { //"ELF "
 			memset(dolName, 0, 64);
-			sprintf(&dolName[0],"%s.dol",&iplBlock[4]);
+			snprintf(&dolName[0], 64, "%s.dol", &iplBlock[4]);
 			dolSize = (*(u16*)&iplBlock[0xFC])*0x10000;
 			__SYS_ReadROM(iplBlock,256,block+256);
 			if (*(u32*)&iplBlock[0] == 0x00000100) { //DOL Header
@@ -66,7 +66,7 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 					*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 				}
 				memset(&(*dir)[i], 0, sizeof(file_handle));
-				sprintf((*dir)[i].name, "%s/%s", ffile->name, (char*)dolName);
+				snprintf((*dir)[i].name, PATHNAME_MAX, "%s/%s", ffile->name, (char*)dolName);
 				(*dir)[i].size		= dolSize;
 				(*dir)[i].fileAttrib = IS_FILE;
 				(*dir)[i].fileBase = block+0x100;

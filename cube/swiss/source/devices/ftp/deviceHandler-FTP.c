@@ -140,7 +140,7 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			continue;
 		}
 		memset(&file_name[0],0, PATHNAME_MAX);
-		sprintf(&file_name[0], "%s/%s", ffile->name, entry->d_name);
+		snprintf(&file_name[0], PATHNAME_MAX, "%s/%s", ffile->name, entry->d_name);
 		stat(&file_name[0],&fstat);
 		// Do we want this one?
 		if((type == -1 || ((fstat.st_mode & S_IFDIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
@@ -153,7 +153,7 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
-			sprintf((*dir)[i].name, "%s/%s", ffile->name, entry->d_name);
+			snprintf((*dir)[i].name, PATHNAME_MAX, "%s/%s", ffile->name, entry->d_name);
 			(*dir)[i].offset = 0;
 			(*dir)[i].size     = fstat.st_size;
 			(*dir)[i].fileAttrib   = (fstat.st_mode & S_IFDIR) ? IS_DIR : IS_FILE;
