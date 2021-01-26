@@ -315,8 +315,7 @@ static void ata_done_queued(void)
 	uint32_t sector = ata.queue[0].sector;
 	frag_read_cb callback = ata.queue[0].callback;
 
-	if (buffer != VAR_SECTOR_BUF + offset)
-		memcpy(buffer, sectorBuf + offset, length);
+	memcpy(buffer, sectorBuf + offset, length);
 	callback(buffer, length);
 
 	EXIUnlock(exi_channel);
@@ -383,11 +382,6 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 		// Read full sector
 		if(ataReadSector(lba, buf, 1)) {
 			return 0;
-		}
-		// If we're reusing the sector buffer
-		if(buf == VAR_SECTOR_BUF) {
-			// Save current LBA
-			ata.last_sector = lba;
 		}
 	}
 	return numBytes;

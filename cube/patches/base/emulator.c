@@ -313,9 +313,7 @@ static struct {
 	} next;
 
 	uint8_t (*buffer)[512];
-} dtk = {
-	.buffer = (void *)VAR_SECTOR_BUF
-};
+} dtk = {0};
 
 #ifdef DTK
 static void dtk_decode_buffer(void *address, uint32_t length)
@@ -358,7 +356,7 @@ bool dtk_fill_buffer(void)
 		dtk_fill_buffer();
 	}
 
-	#ifndef ISR
+	#ifdef WKF
 	DCInvalidateRange(__builtin_assume_aligned(dtk.buffer, 32), sizeof(*dtk.buffer));
 	#endif
 	return dtk.reading = frag_read_async(dtk.buffer, sizeof(*dtk.buffer), dtk.current.position, read_callback);
@@ -1024,6 +1022,7 @@ void init(void **arenaLo, void **arenaHi)
 	#ifdef DTK
 	*arenaHi -= sizeof(*dsp.buffer[0]); dsp.buffer[0] = OSCachedToUncached(*arenaHi);
 	*arenaHi -= sizeof(*dsp.buffer[1]); dsp.buffer[1] = OSCachedToUncached(*arenaHi);
+	*arenaHi -= sizeof(*dtk.buffer); dtk.buffer = *arenaHi;
 	*arenaHi -= 7168; fifo_init(*arenaHi, 7168);
 	#endif
 }
