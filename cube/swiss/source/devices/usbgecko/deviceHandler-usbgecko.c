@@ -126,7 +126,7 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, int 
 			u32 patchInfo[4];
 			memset(patchInfo, 0, 16);
 			memset(&patchFile, 0, sizeof(file_handle));
-			sprintf(&patchFile.name[0], "%sswiss_patches/%s/%i",devices[DEVICE_PATCHES]->initial->name,gameID, i);
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/%.4s/%i", devices[DEVICE_PATCHES]->initial->name, gameID, i);
 			print_gecko("Looking for file %s\r\n", &patchFile.name);
 			FILINFO fno;
 			if(f_stat(&patchFile.name[0], &fno) != FR_OK) {
@@ -148,7 +148,7 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, int 
 		// Check for igr.dol
 		if(swissSettings.igrType == IGR_BOOTBIN) {
 			memset(&patchFile, 0, sizeof(file_handle));
-			sprintf(&patchFile.name[0], "%sigr.dol", devices[DEVICE_PATCHES]->initial->name);
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sigr.dol", devices[DEVICE_PATCHES]->initial->name);
 			
 			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_IGR_DOL, 0, DEVICE_PATCHES))) {
 				*(vu32*)VAR_IGR_DOL_SIZE = patchFile.size;

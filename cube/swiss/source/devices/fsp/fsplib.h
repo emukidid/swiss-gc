@@ -145,7 +145,7 @@ typedef struct FSP_FILE {
 
 typedef union dirent_workaround {
       struct dirent dirent;
-      char fill[offsetof (struct dirent, d_name) + MAXNAMLEN + 1];
+      char fill[offsetof (struct dirent, d_name) + NAME_MAX + 1];
 } dirent_workaround;
  
 /* function prototypes */

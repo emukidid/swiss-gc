@@ -1955,7 +1955,7 @@ bool is_redump_disc(DiskHeader *header)
 
 bool valid_nkit_image(DiskHeader *header, size_t size)
 {
-	if (header->NKitMagicWord != 'NKIT')
+	if (memcmp(&header->NKitMagicWord, "NKIT", 4))
 		return false;
 
 	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)

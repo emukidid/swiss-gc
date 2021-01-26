@@ -27,8 +27,14 @@
 #define COMMAND_LATENCY_TICKS OSMicrosecondsToTicks(300)
 
 extern OSAlarm bba_alarm;
+extern OSAlarm di_alarm;
 extern OSAlarm read_alarm;
-extern OSAlarm command_alarm;
+
+typedef struct {
+	uint32_t gpr[32];
+	uint32_t cr, lr, ctr, xer;
+	uint32_t srr0, srr1;
+} ppc_context_t;
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset);
 void trickle_read(void);

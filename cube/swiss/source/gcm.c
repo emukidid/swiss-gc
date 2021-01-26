@@ -466,9 +466,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 	memset(&patchDirName, 0, 256);
 	memset(&patchBaseDirName, 0, 256);
 	strncpy((char*)&gameID, (char*)&GCMDisk, 4);
-	sprintf(&patchDirName[0],"%sswiss_patches/%s",devices[DEVICE_PATCHES]->initial->name, &gameID[0]);
+	snprintf(&patchDirName[0], 256, "%sswiss_patches/%.4s", devices[DEVICE_PATCHES]->initial->name, &gameID[0]);
 	memcpy((char*)&gameID, (char*)&GCMDisk, 12);
-	sprintf(&patchBaseDirName[0],"%sswiss_patches",devices[DEVICE_PATCHES]->initial->name);
+	snprintf(&patchBaseDirName[0], 256, "%sswiss_patches", devices[DEVICE_PATCHES]->initial->name);
 	print_gecko("Patch dir will be: %s if required\r\n", patchDirName);
 	// Go through all the possible files we think need patching..
 	for(i = 0; i < numToPatch; i++) {
@@ -501,7 +501,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		}
 		
 		if(filesToPatch[i].type == PATCH_DOL_PRS || filesToPatch[i].type == PATCH_OTHER_PRS) {
-			sizeToRead = pso_prs_decompress_buf(buffer, &buffer, sizeToRead);
+			sizeToRead = pso_prs_decompress_buf(buffer, (u8**)&buffer, sizeToRead);
 			if(sizeToRead < 0) {
 				DrawDispose(progBox);
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to decompress!"));
@@ -550,7 +550,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		}
 		
 		if(filesToPatch[i].type == PATCH_DOL_PRS || filesToPatch[i].type == PATCH_OTHER_PRS) {
-			sizeToRead = pso_prs_compress(buffer, &buffer, sizeToRead);
+			sizeToRead = pso_prs_compress(buffer, (u8**)&buffer, sizeToRead);
 			if(sizeToRead < 0 || sizeToRead > filesToPatch[i].size) {
 				DrawDispose(progBox);
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to recompress!"));

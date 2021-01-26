@@ -58,14 +58,6 @@ static uint32_t dvd_buffer_size(void)
 
 void dvd_schedule_read(uint32_t offset, uint32_t length, OSAlarmHandler handler)
 {
-	OSContext *context;
-	OSContext exceptionContext;
-
-	context = OSGetCurrentContext();
-	OSClearContext(&exceptionContext);
-	OSSetCurrentContext(&exceptionContext);
-
-	__attribute((noinline))
 	void dvd_schedule_read(uint32_t offset, uint32_t length, OSAlarmHandler handler)
 	{
 		OSTime current_time = OSGetTime();
@@ -147,15 +139,25 @@ void dvd_schedule_read(uint32_t offset, uint32_t length, OSAlarmHandler handler)
 				read_buffer.end_offset - read_buffer.start_offset));
 		}
 
-		if (ticks_until_execution > 0)
-			OSSetAlarm(&command_alarm, ticks_until_execution, handler);
-		else handler(&command_alarm, &exceptionContext);
+		OSSetAlarm(&read_alarm, ticks_until_execution, handler);
 	}
 
-	dvd_schedule_read(offset, length, handler);
+	static struct {
+		typeof(offset) offset;
+		typeof(length) length;
+		typeof(handler) handler;
+	} args = {0};
 
-	OSClearContext(&exceptionContext);
-	OSSetCurrentContext(context);
+	args.offset = offset;
+	args.length = length;
+	args.handler = handler;
+
+	void trampoline(OSAlarm *alarm, OSContext *context)
+	{
+		dvd_schedule_read(args.offset, args.length, args.handler);
+	}
+
+	OSSetAlarm(&read_alarm, 0, trampoline);
 }
 
 __attribute((always_inline))

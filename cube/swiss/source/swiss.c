@@ -40,6 +40,7 @@
 #include "cheats.h"
 #include "settings.h"
 #include "aram/sidestep.h"
+#include "crc32/crc32.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
@@ -1141,7 +1142,7 @@ void boot_dol()
 	file_handle *cliArgFile = calloc(1, sizeof(file_handle));
 	
 	// .cli argument file
-	sprintf(cliArgFile->name, "%s.cli", fileName);
+	snprintf(cliArgFile->name, PATHNAME_MAX, "%s.cli", fileName);
 	if(devices[DEVICE_CUR]->readFile(cliArgFile, &readTest, 4) != 4) {
 		free(cliArgFile);
 		cliArgFile = NULL;
@@ -1185,7 +1186,7 @@ void boot_dol()
 	file_handle *dcpArgFile = calloc(1, sizeof(file_handle));
 	
 	// .dcp parameter file
-	sprintf(dcpArgFile->name, "%s.dcp", fileName);
+	snprintf(dcpArgFile->name, PATHNAME_MAX, "%s.dcp", fileName);
 	if(devices[DEVICE_CUR]->readFile(dcpArgFile, &readTest, 4) != 4) {
 		free(dcpArgFile);
 		dcpArgFile = NULL;
@@ -1330,7 +1331,8 @@ bool manage_file() {
 			u32 isDestCard = devices[DEVICE_DEST] == &__device_card_a || devices[DEVICE_DEST] == &__device_card_b;
 			u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
 			
-			sprintf(destFile->name, "%s/%s",destFile->name,stripInvalidChars(getRelativeName(&curFile.name[0])));
+			strlcat(destFile->name, "/", PATHNAME_MAX);
+			strlcat(destFile->name, stripInvalidChars(getRelativeName(&curFile.name[0])), PATHNAME_MAX);
 			destFile->fp = 0;
 			destFile->ffsFp = 0;
 			destFile->fileBase = 0;
@@ -1339,7 +1341,7 @@ bool manage_file() {
 			destFile->fileAttrib = IS_FILE;
 			// Create a GCI if something is coming out from CARD to another device
 			if(isSrcCard && !isDestCard) {
-				sprintf(destFile->name, "%s.gci",destFile->name);
+				strlcat(destFile->name, ".gci", PATHNAME_MAX);
 			}
 
 			// If the destination file already exists, ask the user what to do
@@ -1668,6 +1670,8 @@ void load_game() {
 		*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
 		*(vu8*)VAR_IGR_EXIT_TYPE = swissSettings.igrType;
 		*(vu32*)VAR_IGR_DOL_SIZE = 0;
+		*(vu8*)VAR_CARD_A_ID = 0x00;
+		*(vu8*)VAR_CARD_B_ID = 0x00;
 		// Call the special setup for each device (e.g. SD will set the sector(s))
 		if(!devices[DEVICE_CUR]->setupFile(&curFile, secondDisc, numToPatch)) {
 			msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
@@ -1716,7 +1720,7 @@ void load_file()
 			// Try to read a .fw file too.
 			file_handle fwFile;
 			memset(&fwFile, 0, sizeof(file_handle));
-			sprintf(&fwFile.name[0],"%s.fw", &curFile.name[0]);
+			snprintf(&fwFile.name[0], PATHNAME_MAX, "%s.fw", &curFile.name[0]);
 			u8 *firmware = (u8*)memalign(32, 0x3000);
 			DrawDispose(msgBox);
 			if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR]->readFile(&fwFile,firmware,0x3000) != 0x3000) {
@@ -1851,7 +1855,7 @@ int info_game()
 	// Find the config for this game, or default if we don't know about it
 	config = calloc(1, sizeof(ConfigEntry));
 	memcpy(config->game_id, &GCMDisk.ConsoleID, 4);
-	strncpy(&config->game_name[0],&GCMDisk.GameName[0],32);
+	strncpy(&config->game_name[0], &GCMDisk.GameName[0], 64);
 	config_find(config);	// populate
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
 	int num_cheats = -1;

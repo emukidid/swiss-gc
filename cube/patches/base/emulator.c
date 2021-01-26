@@ -445,7 +445,7 @@ void di_close_cover(void)
 	di_update_interrupts();
 }
 
-OSAlarm command_alarm = {0};
+OSAlarm di_alarm = {0};
 
 #ifndef DI_PASSTHROUGH
 static void di_execute_command(void)
@@ -537,7 +537,7 @@ static void di_execute_command(void)
 		{
 			if (!(di.reg.cvr & 0b001) && change_disc()) {
 				di_open_cover();
-				OSSetAlarm(&command_alarm, OSSecondsToTicks(1.5), (OSAlarmHandler)di_close_cover);
+				OSSetAlarm(&di_alarm, OSSecondsToTicks(1.5), (OSAlarmHandler)di_close_cover);
 			}
 			break;
 		}
@@ -915,7 +915,7 @@ static bool ppc_store16(uint32_t address, uint16_t value)
 }
 #endif
 
-static bool ppc_step(OSContext *context)
+static bool ppc_step(ppc_context_t *context)
 {
 	uint32_t opcode = *(uint32_t *)context->srr0;
 
@@ -986,11 +986,17 @@ static bool ppc_step(OSContext *context)
 	return false;
 }
 
-void exception_handler(OSException exception, OSContext *context, ...);
+ppc_context_t *service_exception(ppc_context_t *context)
+{
+	if (ppc_step(context))
+		context->srr0 += 4;
+	else
+		context->srr1 |= 0x4;
 
-extern void load_context(void) __attribute((noreturn));
-extern uint32_t load_context_end[];
+	return context;
+}
 
+void dsi_exception_vector(void);
 void external_interrupt_vector(void);
 
 static void write_branch(void *a, void *b)
@@ -999,50 +1005,61 @@ static void write_branch(void *a, void *b)
 	asm volatile("dcbst 0,%0; sync; icbi 0,%0" :: "r" (a));
 }
 
-void service_exception(OSException exception, OSContext *context, uint32_t dsisr, uint32_t dar)
+void init(void **arenaLo, void **arenaHi)
 {
-	OSExceptionHandler handler;
+	#ifdef BBA
+	OSCreateAlarm(&bba_alarm);
+	#endif
+	OSCreateAlarm(&di_alarm);
+	OSCreateAlarm(&read_alarm);
 
-	switch (exception) {
-		case OS_EXCEPTION_DSI:
-		{
-			handler = OSGetExceptionHandler(OS_EXCEPTION_USER);
+	memzero(irq.handler, sizeof(irq.handler));
+	irq.mask = 0;
 
-			if (ppc_step(context)) {
-				context->srr0 += 4;
-				break;
-			}
-			if (handler) {
-				write_branch(load_context_end, handler);
-				load_context();
-				return;
-			}
-		}
-		default:
-		{
-			OSUnhandledException(exception, context, dsisr, dar);
-			break;
-		}
-	}
+	write_branch((void *)0x80000300, dsi_exception_vector);
+	#ifdef ISR
+	write_branch((void *)0x80000500, external_interrupt_vector);
+	#endif
 
-	*load_context_end = 0x60000000;
-	asm volatile("dcbst 0,%0; sync; icbi 0,%0" :: "r" (load_context_end));
-	load_context();
+	#ifdef DTK
+	*arenaHi -= sizeof(*dsp.buffer[0]); dsp.buffer[0] = OSCachedToUncached(*arenaHi);
+	*arenaHi -= sizeof(*dsp.buffer[1]); dsp.buffer[1] = OSCachedToUncached(*arenaHi);
+	*arenaHi -= 7168; fifo_init(*arenaHi, 7168);
+	#endif
 }
+
+#ifndef CARD_EMULATOR
+bool exi_probe(int32_t chan)
+{
+	if (chan == EXI_CHANNEL_2)
+		return false;
+	if (chan == *VAR_EXI_SLOT)
+		return false;
+
+	return true;
+}
+
+bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
+{
+	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
+		return false;
+	#ifdef BBA
+	if (chan == EXI_CHANNEL_0 && dev == EXI_DEVICE_2)
+		return false;
+	#endif
+	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
+		return false;
+	if (chan == *VAR_EXI_SLOT)
+		end_read(-1);
+
+	return true;
+}
+#endif
 
 static void dispatch_interrupt(OSInterrupt interrupt, OSContext *context)
 {
-	OSInterruptHandler handler;
-	OSContext exceptionContext;
-
-	OSClearContext(&exceptionContext);
-	OSSetCurrentContext(&exceptionContext);
-
-	handler = irq.handler[interrupt];
-	if (handler) handler(interrupt, &exceptionContext);
-
-	OSClearContext(&exceptionContext);
-	OSSetCurrentContext(context);
+	if (irq.handler[interrupt])
+		irq.handler[interrupt](interrupt, context);
 }
 
 static void pi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
@@ -1084,62 +1101,6 @@ static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 
 #ifdef BBA
 void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
-#endif
-
-void init(void **arenaLo, void **arenaHi)
-{
-	#ifdef BBA
-	OSCreateAlarm(&bba_alarm);
-	#endif
-	OSCreateAlarm(&read_alarm);
-	OSCreateAlarm(&command_alarm);
-
-	memzero(irq.handler, sizeof(irq.handler));
-	irq.mask = 0;
-
-	OSSetExceptionHandler(OS_EXCEPTION_DSI, exception_handler);
-	#ifdef ISR
-	write_branch((void *)0x80000500, external_interrupt_vector);
-	#endif
-
-	#ifdef DTK
-	*arenaHi -= sizeof(*dsp.buffer[0]); dsp.buffer[0] = OSCachedToUncached(*arenaHi);
-	*arenaHi -= sizeof(*dsp.buffer[1]); dsp.buffer[1] = OSCachedToUncached(*arenaHi);
-	*arenaHi -= 7168; fifo_init(*arenaHi, 7168);
-	#endif
-
-	OSContext *context = *arenaLo;
-	OSExceptionContext = OSCachedToPhysical(context);
-	OSCurrentContext = 
-	OSFPUContext = context;
-}
-
-#ifndef CARD_EMULATOR
-bool exi_probe(int32_t chan)
-{
-	if (chan == EXI_CHANNEL_2)
-		return false;
-	if (chan == *VAR_EXI_SLOT)
-		return false;
-
-	return true;
-}
-
-bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
-{
-	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
-		return false;
-	#ifdef BBA
-	if (chan == EXI_CHANNEL_0 && dev == EXI_DEVICE_2)
-		return false;
-	#endif
-	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
-		return false;
-	if (chan == *VAR_EXI_SLOT)
-		end_read(-1);
-
-	return true;
-}
 #endif
 
 OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler handler)
