@@ -87,21 +87,43 @@ static void gcode_set_disc_number(uint32_t disc)
 }
 #endif
 
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
+{
+	return false;
+}
+
 void schedule_read(OSTick ticks)
 {
+	#ifdef ASYNC_READ
+	void read_callback(void *address, uint32_t length)
+	{
+		dvd.buffer += length;
+		dvd.length -= length;
+		dvd.offset += length;
+		dvd.read = !!dvd.length;
+
+		schedule_read(COMMAND_LATENCY_TICKS);
+	}
+	#else
 	OSCancelAlarm(&read_alarm);
+	#endif
 
 	if (!dvd.read) {
 		di_complete_transfer();
 		return;
 	}
 
+	#ifdef ASYNC_READ
+	if (!frag_read_async(dvd.buffer, dvd.length, dvd.offset, read_callback))
+		dvd_read(dvd.buffer, dvd.length, dvd.offset);
+	#else
 	dvd.patch = is_frag_patch(dvd.offset, dvd.length);
 
 	if (!dvd.patch)
 		dvd_read(dvd.buffer, dvd.length, dvd.offset);
 	else
 		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
+	#endif
 }
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
@@ -116,6 +138,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 
 void trickle_read(void)
 {
+	#ifndef ASYNC_READ
 	if (dvd.read && dvd.patch) {
 		OSTick start = OSGetTick();
 		int size = frag_read(dvd.buffer, dvd.length, dvd.offset);
@@ -128,6 +151,7 @@ void trickle_read(void)
 
 		schedule_read(OSDiffTick(end, start));
 	}
+	#endif
 }
 
 void device_reset(void)

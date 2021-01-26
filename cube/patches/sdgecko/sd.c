@@ -278,6 +278,19 @@ static void mmc_done_queued(void)
 	}
 }
 
+void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+{
+	if (isr_transferred < SECTOR_SIZE)
+		return;
+
+	OSMaskInterrupts(OS_INTERRUPTMASK(interrupt));
+	OSSetInterruptHandler(interrupt, TCIntrruptHandler);
+	exi_imm_read(2, 1);
+	exi_deselect();
+
+	mmc_done_queued();
+}
+
 bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
 {
 	sector = offset / SECTOR_SIZE + sector;
@@ -294,18 +307,10 @@ bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sect
 	mmc_read_queued();
 	return true;
 }
-
-void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+#else
+bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
 {
-	if (isr_transferred < SECTOR_SIZE)
-		return;
-
-	OSMaskInterrupts(OS_INTERRUPTMASK(interrupt));
-	OSSetInterruptHandler(interrupt, TCIntrruptHandler);
-	exi_imm_read(2, 1);
-	exi_deselect();
-
-	mmc_done_queued();
+	return false;
 }
 #endif
 

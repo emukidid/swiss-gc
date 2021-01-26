@@ -34,6 +34,7 @@ typedef struct {
 typedef void (*frag_read_cb)(void *buffer, uint32_t length);
 
 bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback);
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback);
 int do_read_write(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write);
 void end_read(uint32_t sector);
 

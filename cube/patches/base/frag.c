@@ -83,8 +83,12 @@ bool frag_read_async(void *buffer, uint32_t length, uint32_t offset, frag_read_c
 {
 	frag_t frag;
 
-	if (frag_get(offset, length, &frag) && frag.device == DEVICE_DISC)
-		return do_read_async(buffer, frag.size, frag.offset, frag.sector, callback);
+	if (frag_get(offset, length, &frag)) {
+		if (frag.device == DEVICE_PATCHES)
+			return do_read_async(buffer, frag.size, frag.offset, frag.sector, callback);
+		else
+			return do_read_disc(buffer, frag.size, frag.offset, frag.sector, callback);
+	}
 
 	return false;
 }

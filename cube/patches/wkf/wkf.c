@@ -88,19 +88,6 @@ static void wkf_read_queued(void)
 	OSUnmaskInterrupts(OS_INTERRUPTMASK_PI_DI);
 }
 
-bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
-{
-	wkf.queue[wkf.items].buffer = buffer;
-	wkf.queue[wkf.items].length = length;
-	wkf.queue[wkf.items].offset = offset;
-	wkf.queue[wkf.items].sector = sector;
-	wkf.queue[wkf.items].callback = callback;
-	if (wkf.items++) return true;
-
-	wkf_read_queued();
-	return true;
-}
-
 void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	OSMaskInterrupts(OS_INTERRUPTMASK_PI_DI);
@@ -119,6 +106,19 @@ void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	}
 }
 
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
+{
+	wkf.queue[wkf.items].buffer = buffer;
+	wkf.queue[wkf.items].length = length;
+	wkf.queue[wkf.items].offset = offset;
+	wkf.queue[wkf.items].sector = sector;
+	wkf.queue[wkf.items].callback = callback;
+	if (wkf.items++) return true;
+
+	wkf_read_queued();
+	return true;
+}
+
 void schedule_read(OSTick ticks)
 {
 	void read_callback(void *address, uint32_t length)
@@ -130,20 +130,25 @@ void schedule_read(OSTick ticks)
 
 		schedule_read(COMMAND_LATENCY_TICKS);
 	}
-
+	#ifndef ASYNC_READ
 	OSCancelAlarm(&read_alarm);
+	#endif
 
 	if (!dvd.read) {
 		di_complete_transfer();
 		return;
 	}
 
+	#ifdef ASYNC_READ
+	frag_read_async(dvd.buffer, dvd.length, dvd.offset, read_callback);
+	#else
 	dvd.patch = is_frag_patch(dvd.offset, dvd.length);
 
 	if (!dvd.patch)
 		frag_read_async(dvd.buffer, dvd.length, dvd.offset, read_callback);
 	else
 		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
+	#endif
 }
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
@@ -158,6 +163,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 
 void trickle_read(void)
 {
+	#ifndef ASYNC_READ
 	if (dvd.read && dvd.patch) {
 		OSTick start = OSGetTick();
 		int size = frag_read(dvd.buffer, dvd.length, dvd.offset);
@@ -170,6 +176,7 @@ void trickle_read(void)
 
 		schedule_read(OSDiffTick(end, start));
 	}
+	#endif
 }
 
 void device_reset(void)

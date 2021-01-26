@@ -178,14 +178,15 @@ ideexi-v2.dtk.bin:
 dvd.bin:
 	@echo Building DVD Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DDVD
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DDVD -DISR
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c dvd/dvd.c
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o dvd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o dvd.o sd.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o dvd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o dvd.o sd.o sd_isr.o frag.o usbgecko.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd.txt
 	@$(OBJCOPY) -O binary dvd.elf dvd.bin
@@ -229,14 +230,15 @@ usbgecko.bin:
 wkf.bin:
 	@echo Building WKF Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DWKF
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DISR -DWKF
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c wkf/wkf.c
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o wkf.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o wkf.o sd.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o wkf.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o wkf.o sd.o sd_isr.o frag.o usbgecko.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf.txt
 	@$(OBJCOPY) -O binary wkf.elf wkf.bin
@@ -264,16 +266,17 @@ wkf.card.bin:
 wkf.dtk.bin:
 	@echo Building WKF Patch + DTK ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK -DWKF
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK -DISR -DWKF
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DDTK -DQUEUE_SIZE=3
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ -DQUEUE_SIZE=3
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o wkf.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o wkf.o sd.o audio.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o wkf.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o wkf.o sd.o sd_isr.o audio.o frag.o usbgecko.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.dtk.elf > $(DISASM)/wkf.dtk.txt
 	@$(OBJCOPY) -O binary wkf.dtk.elf wkf.dtk.bin
@@ -300,18 +303,19 @@ fsp.bin:
 gcloader.bin:
 	@echo Building GCLoader Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DDVD_MATH
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DDVD_MATH -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DGCODE
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DGCODE
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/floor.S
 	@$(CC) -Os $(OPTS) -c base/sqrt.S
-	@$(CC) -Os $(OPTS) -o gcloader.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o igr.o dvd.o sd.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
+	@$(CC) -Os $(OPTS) -o gcloader.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o igr.o dvd.o sd.o sd_isr.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader.elf > $(DISASM)/gcloader.txt
 	@$(OBJCOPY) -O binary gcloader.elf gcloader.bin
