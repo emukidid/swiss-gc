@@ -203,6 +203,8 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType);
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt);
 void *Calc_Address(void *data, int dataType, u32 properAddress);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);
+void setTopAddr(u32 addr);
+u32 getTopAddr();
 int install_code(int final);
 
 

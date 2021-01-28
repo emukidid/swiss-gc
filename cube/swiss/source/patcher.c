@@ -20,17 +20,9 @@
 #include "ata.h"
 #include "cheats.h"
 
-static u32 top_addr = (u32)VAR_PATCHES_BASE;
+static u32 top_addr;
 
 static void *patch_locations[PATCHES_MAX];
-
-void checkPatchAddr() {
-	if(top_addr < 0x80001800) {
-		print_gecko("Too many patches applied, top_addr has gone below the reserved area\r\n");
-		// Display something on screen
-		while(1);
-	}
-}
 
 // Returns where the ASM patch has been copied to
 void *installPatch(int patchId) {
@@ -97,10 +89,11 @@ void *installPatch(int patchId) {
 			break;
 	}
 	top_addr -= patchSize;
-	checkPatchAddr();
-	memcpy((void*)top_addr, patchLocation, patchSize);
-	print_gecko("Installed patch %i to %08X\r\n", patchId, top_addr);
-	return (void*)top_addr;
+	patchLocation = memcpy((void*)top_addr, patchLocation, patchSize);
+	DCFlushRange(patchLocation, patchSize);
+	ICInvalidateRange(patchLocation, patchSize);
+	print_gecko("Installed patch %i to %08X\r\n", patchId, patchLocation);
+	return patchLocation;
 }
 
 // See patchIds enum in patcher.h
@@ -113,6 +106,14 @@ void *getPatchAddr(int patchId) {
 		patch_locations[patchId] = installPatch(patchId);
 	}
 	return patch_locations[patchId];
+}
+
+void setTopAddr(u32 addr) {
+	top_addr = addr & ~3;
+}
+
+u32 getTopAddr() {
+	return top_addr & ~31;
 }
 
 int install_code(int final)
@@ -10599,6 +10600,12 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 	void *addr;
 	int patched = 0;
 	
+	if (!strcmp(fileName, "bi2.bin")) {
+		*(u32 *)data = 0x81800000 - getTopAddr();
+		
+		print_gecko("Patched:[%s]\n", fileName);
+		patched++;
+	}
 	if (!strncmp(gameID, "GS8P7D", 6)) {
 		if (!strcasecmp(fileName, "SPYROCFG_NGC.CFG")) {
 			if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
