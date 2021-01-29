@@ -58,21 +58,9 @@
 
 .set VAR_RMODE,				0x30F8	# render mode
 
-# execD replacement lives here (0x817FA000)	- if this is changed, be sure to update the patch Makefile
-.set	EXECD_RUNNER_SPACE,  (0x1000)
-.set	EXECD_RUNNER,	(WIIRD_ENGINE-EXECD_RUNNER_SPACE)
-
-# Cheat Engine + Cheats buffer	(0x817FB000)
-.set	WIIRD_ENGINE_SPACE,  (0x2E00)
-.set	WIIRD_ENGINE,	(DECODED_BUFFER_0-WIIRD_ENGINE_SPACE)
-
-# Audio Streaming buffers	(these live above ArenaHi...)
-.set 	BUFSIZE, 			0xE00
-.set 	CHUNK_48, 			0x400
-.set 	CHUNK_48to32, 		0x600
-.set 	DECODE_WORK_AREA,	(0x81800000-CHUNK_48to32)
-.set 	DECODED_BUFFER_0,	(DECODE_WORK_AREA-(BUFSIZE*2))
-.set 	DECODED_BUFFER_1,	(DECODE_WORK_AREA-(BUFSIZE*1))
+# Cheat Engine + Cheats buffer	(0x817FE000)
+.set	WIIRD_ENGINE_SPACE,	(0x2000)
+.set	WIIRD_ENGINE,		(0x81800000-WIIRD_ENGINE_SPACE)
 
 # IGR Types
 .set IGR_OFF,			0
@@ -133,21 +121,9 @@ extern char VAR_FRAG_LIST[0x1E0];	// 0x1E0 of fragments (40 frags max) (u32 offs
 
 extern char VAR_RMODE[4];			// render mode
 
-// execD replacement lives here (0x817FA000) - if this is changed, be sure to update the patch Makefile
-#define EXECD_RUNNER_SPACE	(0x1000)
-#define EXECD_RUNNER		(WIIRD_ENGINE-EXECD_RUNNER_SPACE)
-
-// Cheat Engine + Cheats buffer (0x817FB000)
-#define WIIRD_ENGINE_SPACE  (0x2E00)
-#define WIIRD_ENGINE		(DECODED_BUFFER_0-WIIRD_ENGINE_SPACE)
-
-// Audio Streaming buffers	(these live above ArenaHi...)
-#define BUFSIZE 			0xE00
-#define CHUNK_48 			0x400
-#define CHUNK_48to32 		0x600
-#define DECODE_WORK_AREA 	(0x81800000-CHUNK_48to32)
-#define DECODED_BUFFER_0 	(DECODE_WORK_AREA-(BUFSIZE*2))
-#define DECODED_BUFFER_1 	(DECODE_WORK_AREA-(BUFSIZE*1))
+// Cheat Engine + Cheats buffer (0x817FE000)
+#define WIIRD_ENGINE_SPACE	(0x2000)
+#define WIIRD_ENGINE		(0x81800000-WIIRD_ENGINE_SPACE)
 
 // IGR Types
 #define IGR_OFF			0

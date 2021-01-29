@@ -12666,8 +12666,10 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 
 // Ocarina cheat engine hook - Patch OSSleepThread
 int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
-	int i;
+	if(type == PATCH_APPLOADER || type == PATCH_DOL_APPLOADER)
+		return 0;
 
+	int i;
 	for( i=0; i < length; i+=4 )
 	{
 		// Find OSSleepThread
