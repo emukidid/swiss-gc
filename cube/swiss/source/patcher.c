@@ -10606,7 +10606,28 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 		print_gecko("Patched:[%s]\n", fileName);
 		patched++;
 	}
-	if (!strncmp(gameID, "GS8P7D", 6)) {
+	if (!strncmp(gameID, "DPOJ8P", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			*(u32 *)(data + 0x4) = 0x1800000;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GHQE7D", 6) || !strncmp(gameID, "GHQP7D", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			*(u32 *)(data + 0x24) = 5;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GMRE70", 6) || !strncmp(gameID, "GMRP70", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			*(u32 *)(data + 0x24) = 5;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GS8P7D", 6)) {
 		if (!strcasecmp(fileName, "SPYROCFG_NGC.CFG")) {
 			if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 				addr = strnstr(data, "\tHeight:\t\t\t496\r\n", length);
