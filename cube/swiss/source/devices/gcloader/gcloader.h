@@ -12,6 +12,7 @@
 #define MAX_GCLOADER_FRAGS_PER_DISC (40)
 
 u32 gcloaderReadId();
+char *gcloaderGetVersion();
 void gcloaderWriteFrags(u32 discNum, vu32 *fragList, u32 totFrags);
 void gcloaderWriteDiscNum(u32 discNum);
 

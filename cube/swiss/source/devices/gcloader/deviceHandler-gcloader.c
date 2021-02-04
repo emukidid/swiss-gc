@@ -270,8 +270,8 @@ u32 deviceHandler_GCLOADER_emulated() {
 
 DEVICEHANDLER_INTERFACE __device_gcloader = {
 	DEVICE_ID_G,
-	"GCLoader",
-	"GCLoader",
+	"GC Loader",
+	"GC Loader",
 	"Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_GCLOADER, 116, 72},
 	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_AUDIO_STREAMING,

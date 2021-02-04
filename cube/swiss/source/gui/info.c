@@ -15,6 +15,7 @@
 #include "ata.h"
 #include "exi.h"
 #include "bba.h"
+#include "gcloader.h"
 #include "wkf.h"
 
 char topStr[256];
@@ -97,6 +98,11 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"DRIVE INTERFACE", 0.65f, true, defaultColor));
 		if(dev == &__device_dvd) {
 			sprintf(topStr, "%s %02X %02X%02X/%02X (%02X)",dev->hwName,driveVersion[2],driveVersion[0],driveVersion[1],driveVersion[3],driveVersion[4]);
+		}
+		else if(dev == &__device_gcloader) {
+			char* gcloaderVersionStr = gcloaderGetVersion();
+			sprintf(topStr, "%s %s",dev->hwName,gcloaderVersionStr);
+			free(gcloaderVersionStr);
 		}
 		else if(dev == &__device_wkf) {
 			sprintf(topStr, "%s (%s)",dev->hwName,wkfGetSerial());
