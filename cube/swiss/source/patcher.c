@@ -10802,11 +10802,11 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 		switch (length) {
 			case 4880320:
 				// Move up DSI exception handler.
-				*(u32 *)(data + 0x80184790 - 0x800055E0 + 0x25E0) = 0x3BC30304;
-				*(u32 *)(data + 0x80184798 - 0x800055E0 + 0x25E0) = 0x3BC00304;
-				*(u32 *)(data + 0x801847A8 - 0x800055E0 + 0x25E0) = 0x38A000E0;
-				*(u32 *)(data + 0x801847B4 - 0x800055E0 + 0x25E0) = 0x388000E0;
-				*(u32 *)(data + 0x801847C0 - 0x800055E0 + 0x25E0) = 0x388000E0;
+				*(s16 *)(data + 0x80184792 - 0x800055E0 + 0x25E0) = 0x0304;
+				*(s16 *)(data + 0x8018479A - 0x800055E0 + 0x25E0) = 0x0304;
+				*(s16 *)(data + 0x801847AA - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				*(s16 *)(data + 0x801847B6 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				*(s16 *)(data + 0x801847C2 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10816,9 +10816,9 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 		switch (length) {
 			case 647104:
 				// Move up jump to DSI exception handler.
-				*(u32 *)(data + 0x80004554 - 0x80003100 + 0x100) = 0x616B0304;
-				*(u32 *)(data + 0x80004560 - 0x80003100 + 0x100) = 0x3929FCFC;
-				*(u32 *)(data + 0x80004564 - 0x80003100 + 0x100) = 0x60630304;
+				*(s16 *)(data + 0x80004556 - 0x80003100 + 0x100) =  0x0304;
+				*(s16 *)(data + 0x80004562 - 0x80003100 + 0x100) = -0x0304;
+				*(s16 *)(data + 0x80004566 - 0x80003100 + 0x100) =  0x0304;
 				
 				// Fix ISI exception check.
 				*(u32 *)(data + 0x80005D84 - 0x80003100 + 0x100) = 0x7CBA02A6;
@@ -10832,11 +10832,11 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 		switch (length) {
 			case 3266176:
 				// Move up DSI exception handler.
-				*(u32 *)(data + 0x8010A748 - 0x800055E0 + 0x25E0) = 0x3BC30304;
-				*(u32 *)(data + 0x8010A750 - 0x800055E0 + 0x25E0) = 0x3BC00304;
-				*(u32 *)(data + 0x8010A760 - 0x800055E0 + 0x25E0) = 0x38A000E0;
-				*(u32 *)(data + 0x8010A76C - 0x800055E0 + 0x25E0) = 0x388000E0;
-				*(u32 *)(data + 0x8010A778 - 0x800055E0 + 0x25E0) = 0x388000E0;
+				*(s16 *)(data + 0x8010A74A - 0x800055E0 + 0x25E0) = 0x0304;
+				*(s16 *)(data + 0x8010A752 - 0x800055E0 + 0x25E0) = 0x0304;
+				*(s16 *)(data + 0x8010A762 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				*(s16 *)(data + 0x8010A76E - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				*(s16 *)(data + 0x8010A77A - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10846,11 +10846,11 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 		switch (length) {
 			case 3268768:
 				// Move up DSI exception handler.
-				*(u32 *)(data + 0x8010AEE0 - 0x800055E0 + 0x25E0) = 0x3BC30304;
-				*(u32 *)(data + 0x8010AEE8 - 0x800055E0 + 0x25E0) = 0x3BC00304;
-				*(u32 *)(data + 0x8010AEF8 - 0x800055E0 + 0x25E0) = 0x38A000E0;
-				*(u32 *)(data + 0x8010AF04 - 0x800055E0 + 0x25E0) = 0x388000E0;
-				*(u32 *)(data + 0x8010AF10 - 0x800055E0 + 0x25E0) = 0x388000E0;
+				*(s16 *)(data + 0x8010AEE2 - 0x800055E0 + 0x25E0) = 0x0304;
+				*(s16 *)(data + 0x8010AEEA - 0x800055E0 + 0x25E0) = 0x0304;
+				*(s16 *)(data + 0x8010AEFA - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				*(s16 *)(data + 0x8010AF06 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				*(s16 *)(data + 0x8010AF12 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10900,10 +10900,10 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 		switch (length) {
 			case 3728640:
 				// Move up DSI exception handler.
-				*(u32 *)(data + 0x80004ACC - 0x80003100 + 0x100) = 0x38A0000D;
-				*(u32 *)(data + 0x80004AD8 - 0x80003100 + 0x100) = 0x38E70304;
-				*(u32 *)(data + 0x80004B00 - 0x80003100 + 0x100) = 0x38800034;
-				*(u32 *)(data + 0x80004B04 - 0x80003100 + 0x100) = 0x38630304;
+				*(s16 *)(data + 0x80004ACE - 0x80003100 + 0x100) = 13;
+				*(s16 *)(data + 0x80004ADA - 0x80003100 + 0x100) = 0x0304;
+				*(s16 *)(data + 0x80004B02 - 0x80003100 + 0x100) = 13 * sizeof(u32);
+				*(s16 *)(data + 0x80004B06 - 0x80003100 + 0x100) = 0x0304;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10913,10 +10913,10 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 		switch (length) {
 			case 3728544:
 				// Move up DSI exception handler.
-				*(u32 *)(data + 0x80004ACC - 0x80003100 + 0x100) = 0x38A0000D;
-				*(u32 *)(data + 0x80004AD8 - 0x80003100 + 0x100) = 0x38E70304;
-				*(u32 *)(data + 0x80004B00 - 0x80003100 + 0x100) = 0x38800034;
-				*(u32 *)(data + 0x80004B04 - 0x80003100 + 0x100) = 0x38630304;
+				*(s16 *)(data + 0x80004ACE - 0x80003100 + 0x100) = 13;
+				*(s16 *)(data + 0x80004ADA - 0x80003100 + 0x100) = 0x0304;
+				*(s16 *)(data + 0x80004B02 - 0x80003100 + 0x100) = 13 * sizeof(u32);
+				*(s16 *)(data + 0x80004B06 - 0x80003100 + 0x100) = 0x0304;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10926,10 +10926,10 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 		switch (length) {
 			case 3728640:
 				// Move up DSI exception handler.
-				*(u32 *)(data + 0x80004ACC - 0x80003100 + 0x100) = 0x38A0000D;
-				*(u32 *)(data + 0x80004AD8 - 0x80003100 + 0x100) = 0x38E70304;
-				*(u32 *)(data + 0x80004B00 - 0x80003100 + 0x100) = 0x38800034;
-				*(u32 *)(data + 0x80004B04 - 0x80003100 + 0x100) = 0x38630304;
+				*(s16 *)(data + 0x80004ACE - 0x80003100 + 0x100) = 13;
+				*(s16 *)(data + 0x80004ADA - 0x80003100 + 0x100) = 0x0304;
+				*(s16 *)(data + 0x80004B02 - 0x80003100 + 0x100) = 13 * sizeof(u32);
+				*(s16 *)(data + 0x80004B06 - 0x80003100 + 0x100) = 0x0304;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10939,10 +10939,10 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 		switch (length) {
 			case 3730336:
 				// Move up DSI exception handler.
-				*(u32 *)(data + 0x80004AE8 - 0x80003100 + 0x100) = 0x38A0000D;
-				*(u32 *)(data + 0x80004AF4 - 0x80003100 + 0x100) = 0x38E70304;
-				*(u32 *)(data + 0x80004B1C - 0x80003100 + 0x100) = 0x38800034;
-				*(u32 *)(data + 0x80004B20 - 0x80003100 + 0x100) = 0x38630304;
+				*(s16 *)(data + 0x80004AEA - 0x80003100 + 0x100) = 13;
+				*(s16 *)(data + 0x80004AF6 - 0x80003100 + 0x100) = 0x0304;
+				*(s16 *)(data + 0x80004B1E - 0x80003100 + 0x100) = 13 * sizeof(u32);
+				*(s16 *)(data + 0x80004B22 - 0x80003100 + 0x100) = 0x0304;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10952,10 +10952,38 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 		switch (length) {
 			case 3728640:
 				// Move up DSI exception handler.
-				*(u32 *)(data + 0x80004ACC - 0x80003100 + 0x100) = 0x38A0000D;
-				*(u32 *)(data + 0x80004AD8 - 0x80003100 + 0x100) = 0x38E70304;
-				*(u32 *)(data + 0x80004B00 - 0x80003100 + 0x100) = 0x38800034;
-				*(u32 *)(data + 0x80004B04 - 0x80003100 + 0x100) = 0x38630304;
+				*(s16 *)(data + 0x80004ACE - 0x80003100 + 0x100) = 13;
+				*(s16 *)(data + 0x80004ADA - 0x80003100 + 0x100) = 0x0304;
+				*(s16 *)(data + 0x80004B02 - 0x80003100 + 0x100) = 13 * sizeof(u32);
+				*(s16 *)(data + 0x80004B06 - 0x80003100 + 0x100) = 0x0304;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if ((!strncmp(gameID, "GT6E70", 6) || !strncmp(gameID, "GT6P70", 6)) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4248480:
+				// Move up jump to DSI exception handler.
+				*(s16 *)(data + 0x801FA75A - 0x800056C0 + 0x2600) =  0x0304;
+				*(s16 *)(data + 0x801FA762 - 0x800056C0 + 0x2600) =  0x0304;
+				*(s16 *)(data + 0x801FA766 - 0x800056C0 + 0x2600) = -0x0304;
+				*(s16 *)(data + 0x801FA776 - 0x800056C0 + 0x2600) =  0x0304;
+				*(s16 *)(data + 0x801FA7BE - 0x800056C0 + 0x2600) = -0x0308;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GT6J70", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4255968:
+				// Move up jump to DSI exception handler.
+				*(s16 *)(data + 0x801FA78A - 0x800056C0 + 0x2600) =  0x0304;
+				*(s16 *)(data + 0x801FA792 - 0x800056C0 + 0x2600) =  0x0304;
+				*(s16 *)(data + 0x801FA796 - 0x800056C0 + 0x2600) = -0x0304;
+				*(s16 *)(data + 0x801FA7A6 - 0x800056C0 + 0x2600) =  0x0304;
+				*(s16 *)(data + 0x801FA7EE - 0x800056C0 + 0x2600) = -0x0308;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10965,7 +10993,7 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 		switch (length) {
 			case 4333056:
 				// Move up DSI exception handler.
-				*(u32 *)(data + 0x802AE0F0 - 0x800056A0 + 0x2600) = 0x38660304;
+				*(s16 *)(data + 0x802AE0F2 - 0x800056A0 + 0x2600) = 0x0304;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10975,7 +11003,7 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 		switch (length) {
 			case 4191264:
 				// Move up DSI exception handler.
-				*(u32 *)(data + 0x802A8B18 - 0x800056A0 + 0x2600) = 0x38660304;
+				*(s16 *)(data + 0x802A8B1A - 0x800056A0 + 0x2600) = 0x0304;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10985,7 +11013,7 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 		switch (length) {
 			case 4573216:
 				// Move up DSI exception handler.
-				*(u32 *)(data + 0x802B0044 - 0x800056A0 + 0x2600) = 0x38660304;
+				*(s16 *)(data + 0x802B0046 - 0x800056A0 + 0x2600) = 0x0304;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
