@@ -33,8 +33,6 @@ static struct {
 	uint8_t status;
 	bool interrupt;
 	uint32_t offset;
-	void *write_buffer;
-	uint32_t write_offset;
 } card[2] = {
 	{
 		.status = 0xC1,
@@ -116,12 +114,10 @@ void card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
 		}
 		case 0xF2:
 		{
-			if (card[chan].position == 5 && type == EXI_WRITE) {
-				if (!card[chan].write_buffer && card[chan].offset % 512 == 0) {
-					card[chan].write_buffer = buffer;
-					card[chan].write_offset = card[chan].offset;
-				}
-			}
+			if (card[chan].position == 5 && type == EXI_WRITE)
+				if (card[chan].offset % 512 == 0)
+					if (frag_write(buffer, 512, card[chan].offset) != 512)
+						card[chan].status |= 0x08;
 			break;
 		}
 	}
@@ -136,6 +132,11 @@ void card_select(unsigned chan)
 void card_deselect(unsigned chan)
 {
 	switch (card[chan].command) {
+		case 0x89:
+		{
+			card[chan].status &= ~0x18;
+			break;
+		}
 		case 0xF1:
 		case 0xF4:
 		{
@@ -146,17 +147,9 @@ void card_deselect(unsigned chan)
 		}
 		case 0xF2:
 		{
-			if (card[chan].position >= 5) {
-				bool success = card[chan].offset % 128 == 0;
-
-				if (card[chan].write_buffer && (card[chan].offset + 128 - card[chan].write_offset) == 512) {
-					success = frag_write(card[chan].write_buffer, 512, card[chan].write_offset) == 512;
-					card[chan].write_buffer = NULL;
-				}
-
-				if (card[chan].interrupt && success)
+			if (card[chan].position >= 5)
+				if (card[chan].interrupt)
 					exi_interrupt(chan);
-			}
 			break;
 		}
 	}
