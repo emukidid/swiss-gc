@@ -61,6 +61,9 @@ dsi_exception_handler:
 	stm		r0, -152 (sp)
 	stwu	sp, -152 - 8 (sp)
 	addi	r3, sp, 8
+	mfmsr	r4
+	rlwinm	r4, r4, 0, 30, 28
+	mtmsr	r4
 	bl		service_exception
 	lwz		r4, 128 (r3)
 	mtcr	r4

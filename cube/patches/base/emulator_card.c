@@ -33,13 +33,22 @@ static struct {
 	uint8_t status;
 	bool interrupt;
 	uint32_t offset;
+	#ifdef ASYNC_READ
+	frag_read_cb read_callback;
+	#endif
 } card[2] = {
 	{
 		.status = 0xC1,
-		.offset = FRAGS_CARD_A
+		.offset = FRAGS_CARD_A,
+		#ifdef ASYNC_READ
+		.read_callback = exi0_complete_transfer
+		#endif
 	}, {
 		.status = 0xC1,
-		.offset = FRAGS_CARD_B
+		.offset = FRAGS_CARD_B,
+		#ifdef ASYNC_READ
+		.read_callback = exi1_complete_transfer
+		#endif
 	}
 };
 
@@ -101,15 +110,20 @@ uint8_t card_imm(unsigned chan, uint8_t data)
 	return result;
 }
 
-void card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
+bool card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
 {
 	void *buffer = OSPhysicalToUncached(address);
 
 	switch (card[chan].command) {
 		case 0x52:
 		{
-			if (card[chan].position >= 5 && type == EXI_READ)
+			if (card[chan].position >= 5 && type == EXI_READ) {
+				#ifdef ASYNC_READ
+				if (chan != *VAR_EXI_SLOT)
+					return frag_read_async(buffer, length, card[chan].offset, card[chan].read_callback);
+				#endif
 				frag_read(buffer, length, card[chan].offset);
+			}
 			break;
 		}
 		case 0xF2:
@@ -123,6 +137,7 @@ void card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
 	}
 
 	card[chan].position += length;
+	return false;
 }
 
 void card_select(unsigned chan)

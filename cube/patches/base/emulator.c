@@ -71,6 +71,8 @@ static struct {
 			uint32_t data;
 		} reg[3];
 	};
+
+	OSAlarm alarm[EXI_CHANNEL_MAX];
 } exi = {
 	.reg = {
 		{ .cpr = 0b11100000000000 },
@@ -121,23 +123,39 @@ void exi_complete_transfer(unsigned chan)
 	exi_update_interrupts(chan);
 }
 
-static OSAlarm exi_alarm[EXI_CHANNEL_MAX] = {0};
+void exi0_complete_transfer()
+{
+	exi_complete_transfer(EXI_CHANNEL_0);
+}
+
+void exi1_complete_transfer()
+{
+	exi_complete_transfer(EXI_CHANNEL_1);
+}
+
+void exi2_complete_transfer()
+{
+	exi_complete_transfer(EXI_CHANNEL_2);
+}
 
 static void exi_transfer(unsigned chan, uint32_t length)
 {
 	OSTick ticks = ((length * (OS_TIMER_CLOCK / 843750)) * 8) >> ((exi.reg[chan].cpr >> 4) & 0b111);
+	OSAlarmHandler handler = NULL;
 
-	void alarm_handler(OSAlarm *alarm, OSContext *context)
-	{
-		if (alarm == &exi_alarm[EXI_CHANNEL_0])
-			exi_complete_transfer(EXI_CHANNEL_0);
-		else if (alarm == &exi_alarm[EXI_CHANNEL_1])
-			exi_complete_transfer(EXI_CHANNEL_1);
-		else if (alarm == &exi_alarm[EXI_CHANNEL_2])
-			exi_complete_transfer(EXI_CHANNEL_2);
+	switch (chan) {
+		case EXI_CHANNEL_0:
+			handler = exi0_complete_transfer;
+			break;
+		case EXI_CHANNEL_1:
+			handler = exi1_complete_transfer;
+			break;
+		case EXI_CHANNEL_2:
+			handler = exi2_complete_transfer;
+			break;
 	}
 
-	OSSetAlarm(&exi_alarm[chan], ticks, alarm_handler);
+	OSSetAlarm(&exi.alarm[chan], ticks, handler);
 }
 
 void exi_insert_device(unsigned chan)
@@ -264,11 +282,12 @@ static void exi_write(unsigned index, uint32_t value)
 						uint32_t address = exi.reg[chan].mar;
 						uint32_t length  = exi.reg[chan].length;
 						int type = (exi.reg[chan].cr >> 2) & 0b11;
+						bool async = false;
 
 						if (ext && (dev & (1 << EXI_DEVICE_0)))
-							card_dma(chan, address, length, type);
+							async = card_dma(chan, address, length, type);
 
-						exi_transfer(chan, length);
+						if (!async) exi_transfer(chan, length);
 					} else {
 						int length = (exi.reg[chan].cr >> 4) & 0b11;
 						char *data = (char *)&exi.reg[chan].data;
@@ -931,10 +950,10 @@ static bool ppc_step(ppc_context_t *context)
 				}
 				case 151:
 				{
-					int rd = (opcode >> 21) & 0x1F;
+					int rs = (opcode >> 21) & 0x1F;
 					int ra = (opcode >> 16) & 0x1F;
 					int rb = (opcode >> 11) & 0x1F;
-					return ppc_store32(context->gpr[ra] + context->gpr[rb], context->gpr[rd]);
+					return ppc_store32(context->gpr[ra] + context->gpr[rb], context->gpr[rs]);
 				}
 			}
 			break;

@@ -68,15 +68,16 @@ sd.bin:
 sd.card.bin:
 	@echo Building SD Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR
-	@$(CC) -Os $(OPTS) -c base/emulator_card.c
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c base/blockdevice.c
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=2
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o sd.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o blockdevice.o sd.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o sd.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o blockdevice.o sd.o sd_isr.o frag.o usbgecko.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D sd.card.elf > $(DISASM)/sd.card.txt
 	@$(OBJCOPY) -O binary sd.card.elf sd.card.bin
@@ -196,15 +197,16 @@ dvd.bin:
 dvd.card.bin:
 	@echo Building DVD Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH -DDVD
-	@$(CC) -Os $(OPTS) -c base/emulator_card.c
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH -DDVD -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c dvd/dvd.c
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o dvd.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o dvd.o sd.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o dvd.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o dvd.o sd.o sd_isr.o frag.o usbgecko.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D dvd.card.elf > $(DISASM)/dvd.card.txt
 	@$(OBJCOPY) -O binary dvd.card.elf dvd.card.bin
@@ -248,15 +250,16 @@ wkf.bin:
 wkf.card.bin:
 	@echo Building WKF Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DWKF
-	@$(CC) -Os $(OPTS) -c base/emulator_card.c
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DISR -DWKF
+	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c wkf/wkf.c
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o wkf.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o wkf.o sd.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o wkf.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o wkf.o sd.o sd_isr.o frag.o usbgecko.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.card.elf > $(DISASM)/wkf.card.txt
 	@$(OBJCOPY) -O binary wkf.card.elf wkf.card.bin
@@ -325,15 +328,16 @@ gcloader.bin:
 gcloader.card.bin:
 	@echo Building GCLoader Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH
-	@$(CC) -Os $(OPTS) -c base/emulator_card.c
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DGCODE
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DGCODE
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o gcloader.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o dvd.o sd.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o gcloader.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o dvd.o sd.o sd_isr.o frag.o usbgecko.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader.card.elf > $(DISASM)/gcloader.card.txt
 	@$(OBJCOPY) -O binary gcloader.card.elf gcloader.card.bin

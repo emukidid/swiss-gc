@@ -41,8 +41,8 @@ static struct {
 	int items;
 	struct {
 		void *buffer;
-		uint32_t length;
-		uint32_t offset;
+		uint16_t length;
+		uint16_t offset;
 		uint32_t sector;
 		frag_read_cb callback;
 	} queue[QUEUE_SIZE];
@@ -239,8 +239,8 @@ static void mmc_read_queued(void)
 		return;
 
 	void *buffer = mmc.queue[0].buffer;
-	uint32_t length = mmc.queue[0].length;
-	uint32_t offset = mmc.queue[0].offset;
+	uint16_t length = mmc.queue[0].length;
+	uint16_t offset = mmc.queue[0].offset;
 	uint32_t sector = mmc.queue[0].sector;
 
 	if (sector == mmc.last_sector) {
@@ -262,8 +262,8 @@ static void mmc_read_queued(void)
 static void mmc_done_queued(void)
 {
 	void *buffer = mmc.queue[0].buffer;
-	uint32_t length = mmc.queue[0].length;
-	uint32_t offset = mmc.queue[0].offset;
+	uint16_t length = mmc.queue[0].length;
+	uint16_t offset = mmc.queue[0].offset;
 	uint32_t sector = mmc.queue[0].sector;
 	frag_read_cb callback = mmc.queue[0].callback;
 
@@ -334,6 +334,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 		return 0;
 	}
 	#if SINGLE_SECTOR < 2
+	end_read(-1);
 	// Send single block read command and the LBA we want to read at
 	send_cmd(CMD17, lba << lbaShift);
 	// Read block

@@ -42,6 +42,9 @@ bool change_disc(void);
 
 void exi_interrupt(unsigned chan);
 void exi_complete_transfer(unsigned chan);
+void exi0_complete_transfer();
+void exi1_complete_transfer();
+void exi2_complete_transfer();
 void exi_insert_device(unsigned chan);
 void exi_remove_device(unsigned chan);
 

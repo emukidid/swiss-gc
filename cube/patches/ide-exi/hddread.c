@@ -57,8 +57,8 @@ static struct {
 	int items;
 	struct {
 		void *buffer;
-		uint32_t length;
-		uint32_t offset;
+		uint16_t length;
+		uint16_t offset;
 		uint32_t sector;
 		frag_read_cb callback;
 	} queue[QUEUE_SIZE];
@@ -293,8 +293,8 @@ static void ata_read_queued(void)
 		return;
 
 	void *buffer = ata.queue[0].buffer;
-	uint32_t length = ata.queue[0].length;
-	uint32_t offset = ata.queue[0].offset;
+	uint16_t length = ata.queue[0].length;
+	uint16_t offset = ata.queue[0].offset;
 	uint32_t sector = ata.queue[0].sector;
 
 	if (sector == ata.last_sector) {
@@ -310,8 +310,8 @@ static void ata_read_queued(void)
 static void ata_done_queued(void)
 {
 	void *buffer = ata.queue[0].buffer;
-	uint32_t length = ata.queue[0].length;
-	uint32_t offset = ata.queue[0].offset;
+	uint16_t length = ata.queue[0].length;
+	uint16_t offset = ata.queue[0].offset;
 	uint32_t sector = ata.queue[0].sector;
 	frag_read_cb callback = ata.queue[0].callback;
 
