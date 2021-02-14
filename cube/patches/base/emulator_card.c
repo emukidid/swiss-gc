@@ -119,10 +119,10 @@ bool card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
 		{
 			if (card[chan].position >= 5 && type == EXI_READ) {
 				#ifdef ASYNC_READ
-				if (chan != *VAR_EXI_SLOT)
-					return frag_read_async(buffer, length, card[chan].offset, card[chan].read_callback);
-				#endif
+				return frag_read_async(buffer, length, card[chan].offset, card[chan].read_callback);
+				#else
 				frag_read(buffer, length, card[chan].offset);
+				#endif
 			}
 			break;
 		}
