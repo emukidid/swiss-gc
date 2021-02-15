@@ -1008,7 +1008,7 @@ ppc_context_t *service_exception(ppc_context_t *context)
 	if (ppc_step(context))
 		context->srr0 += 4;
 	else
-		context->srr1 |= 0x4;
+		__builtin_trap();
 
 	return context;
 }
