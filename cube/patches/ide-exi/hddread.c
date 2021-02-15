@@ -60,7 +60,8 @@ static struct {
 		uint16_t length;
 		uint16_t offset;
 		uint32_t sector;
-		frag_read_cb callback;
+		bool write;
+		frag_callback callback;
 	} queue[QUEUE_SIZE];
 	#endif
 } ata = {
@@ -296,6 +297,7 @@ static void ata_read_queued(void)
 	uint16_t length = ata.queue[0].length;
 	uint16_t offset = ata.queue[0].offset;
 	uint32_t sector = ata.queue[0].sector;
+	bool write = ata.queue[0].write;
 
 	if (sector == ata.last_sector) {
 		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)ata_done_queued);
@@ -313,10 +315,11 @@ static void ata_done_queued(void)
 	uint16_t length = ata.queue[0].length;
 	uint16_t offset = ata.queue[0].offset;
 	uint32_t sector = ata.queue[0].sector;
-	frag_read_cb callback = ata.queue[0].callback;
+	bool write = ata.queue[0].write;
 
-	memcpy(buffer, sectorBuf + offset, length);
-	callback(buffer, length);
+	if (!write)
+		buffer = memcpy(buffer, sectorBuf + offset, length);
+	ata.queue[0].callback(buffer, length);
 
 	EXIUnlock(exi_channel);
 
@@ -335,7 +338,7 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	ata_done_queued();
 }
 
-bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
+bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write, frag_callback callback)
 {
 	sector = offset / SECTOR_SIZE + sector;
 	offset = offset % SECTOR_SIZE;
@@ -345,6 +348,7 @@ bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sect
 	ata.queue[ata.items].length = length;
 	ata.queue[ata.items].offset = offset;
 	ata.queue[ata.items].sector = sector;
+	ata.queue[ata.items].write = write;
 	ata.queue[ata.items].callback = callback;
 	if (ata.items++) return true;
 
@@ -352,7 +356,7 @@ bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sect
 	return true;
 }
 #else
-bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
+bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write, frag_callback callback)
 {
 	return false;
 }

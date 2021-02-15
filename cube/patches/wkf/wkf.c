@@ -45,7 +45,7 @@ static struct {
 		uint32_t length;
 		uint32_t offset;
 		uint32_t sector;
-		frag_read_cb callback;
+		frag_callback callback;
 	} queue[QUEUE_SIZE];
 } wkf = {
 	.base_sector = -1
@@ -96,9 +96,8 @@ void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	uint32_t length = wkf.queue[0].length;
 	uint32_t offset = wkf.queue[0].offset;
 	uint32_t sector = wkf.queue[0].sector;
-	frag_read_cb callback = wkf.queue[0].callback;
 
-	callback(buffer, length);
+	wkf.queue[0].callback(buffer, length);
 
 	if (--wkf.items) {
 		memcpy(wkf.queue, wkf.queue + 1, wkf.items * sizeof(*wkf.queue));
@@ -106,7 +105,7 @@ void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	}
 }
 
-bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_callback callback)
 {
 	wkf.queue[wkf.items].buffer = buffer;
 	wkf.queue[wkf.items].length = length;

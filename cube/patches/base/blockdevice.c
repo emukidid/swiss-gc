@@ -34,9 +34,9 @@ static struct {
 
 OSAlarm read_alarm = {0};
 
-bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_callback callback)
 {
-	return do_read_async(buffer, length, offset, sector, callback);
+	return do_read_write_async(buffer, length, offset, sector, false, callback);
 }
 
 void schedule_read(OSTick ticks)

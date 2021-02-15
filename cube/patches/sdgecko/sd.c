@@ -44,7 +44,8 @@ static struct {
 		uint16_t length;
 		uint16_t offset;
 		uint32_t sector;
-		frag_read_cb callback;
+		bool write;
+		frag_callback callback;
 	} queue[QUEUE_SIZE];
 	#endif
 } mmc = {
@@ -242,6 +243,20 @@ static void mmc_read_queued(void)
 	uint16_t length = mmc.queue[0].length;
 	uint16_t offset = mmc.queue[0].offset;
 	uint32_t sector = mmc.queue[0].sector;
+	bool write = mmc.queue[0].write;
+
+	if (write) {
+		end_read(sector);
+		send_cmd(CMD24, sector << *VAR_SD_SHIFT);
+
+		if (xmit_datablock(buffer, 0xFE))
+			mmc.queue[0].length = SECTOR_SIZE;
+		else
+			mmc.queue[0].length = 0;
+
+		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)mmc_done_queued);
+		return;
+	}
 
 	if (sector == mmc.last_sector) {
 		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)mmc_done_queued);
@@ -265,10 +280,11 @@ static void mmc_done_queued(void)
 	uint16_t length = mmc.queue[0].length;
 	uint16_t offset = mmc.queue[0].offset;
 	uint32_t sector = mmc.queue[0].sector;
-	frag_read_cb callback = mmc.queue[0].callback;
+	bool write = mmc.queue[0].write;
 
-	memcpy(buffer, sectorBuf + offset, length);
-	callback(buffer, length);
+	if (!write)
+		buffer = memcpy(buffer, sectorBuf + offset, length);
+	mmc.queue[0].callback(buffer, length);
 
 	EXIUnlock(exi_channel);
 
@@ -291,7 +307,7 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	mmc_done_queued();
 }
 
-bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
+bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write, frag_callback callback)
 {
 	sector = offset / SECTOR_SIZE + sector;
 	offset = offset % SECTOR_SIZE;
@@ -301,6 +317,7 @@ bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sect
 	mmc.queue[mmc.items].length = length;
 	mmc.queue[mmc.items].offset = offset;
 	mmc.queue[mmc.items].sector = sector;
+	mmc.queue[mmc.items].write = write;
 	mmc.queue[mmc.items].callback = callback;
 	if (mmc.items++) return true;
 
@@ -308,7 +325,7 @@ bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sect
 	return true;
 }
 #else
-bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
+bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write, frag_callback callback)
 {
 	return false;
 }

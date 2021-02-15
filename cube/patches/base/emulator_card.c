@@ -27,6 +27,12 @@
 #include "emulator_card.h"
 #include "frag.h"
 
+#define carda_read_callback exi0_complete_transfer
+#define cardb_read_callback exi1_complete_transfer
+
+static void carda_write_callback(void *address, uint32_t length);
+static void cardb_write_callback(void *address, uint32_t length);
+
 static struct {
 	int position;
 	uint8_t command;
@@ -34,23 +40,38 @@ static struct {
 	bool interrupt;
 	uint32_t offset;
 	#ifdef ASYNC_READ
-	frag_read_cb read_callback;
+	frag_callback read_callback;
+	frag_callback write_callback;
 	#endif
 } card[2] = {
 	{
 		.status = 0xC1,
 		.offset = FRAGS_CARD_A,
 		#ifdef ASYNC_READ
-		.read_callback = exi0_complete_transfer
+		.read_callback  = carda_read_callback,
+		.write_callback = carda_write_callback
 		#endif
 	}, {
 		.status = 0xC1,
 		.offset = FRAGS_CARD_B,
 		#ifdef ASYNC_READ
-		.read_callback = exi1_complete_transfer
+		.read_callback  = cardb_read_callback,
+		.write_callback = cardb_write_callback
 		#endif
 	}
 };
+
+static void carda_write_callback(void *address, uint32_t length)
+{
+	if (length != 512) card[0].status |= 0x08;
+	exi0_complete_transfer();
+}
+
+static void cardb_write_callback(void *address, uint32_t length)
+{
+	if (length != 512) card[1].status |= 0x08;
+	exi1_complete_transfer();
+}
 
 uint8_t card_imm(unsigned chan, uint8_t data)
 {
@@ -128,10 +149,15 @@ bool card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
 		}
 		case 0xF2:
 		{
-			if (card[chan].position == 5 && type == EXI_WRITE)
-				if (card[chan].offset % 512 == 0)
-					if (frag_write(buffer, 512, card[chan].offset) != 512)
-						card[chan].status |= 0x08;
+			if (card[chan].position == 5 && type == EXI_WRITE) {
+				if (card[chan].offset % 512 == 0) {
+					#ifdef ASYNC_READ
+					return frag_write_async(buffer, 512, card[chan].offset, card[chan].write_callback);
+					#else
+					if (frag_write(buffer, 512, card[chan].offset) != 512) card[chan].status |= 0x08;
+					#endif
+				}
+			}
 			break;
 		}
 	}
