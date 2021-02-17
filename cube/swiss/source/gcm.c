@@ -275,8 +275,10 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 				numFiles++;
 			}
 			if(endsWith(filename,".elf")) {
-				if(dolSize == calc_elf_segments_size(file, file_offset, &size) + DOLHDRLENGTH) {
-					continue;
+				if(!strstr(filename,"STUBRDVD.ELF")) {
+					if(dolSize == calc_elf_segments_size(file, file_offset, &size) + DOLHDRLENGTH) {
+						continue;
+					}
 				}
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
