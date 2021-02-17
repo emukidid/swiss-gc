@@ -18,8 +18,10 @@
 #define CMD17				(0x51)
 //CMD18 - Read multiple block command
 #define CMD18				(0x52)
-//CMD24 - Write single block command 
+//CMD24 - Write single block command
 #define CMD24				(0x58)
+//CMD25 - Write multiple block command
+#define CMD25				(0x59)
 
 #ifndef QUEUE_SIZE
 #define QUEUE_SIZE			2
@@ -37,6 +39,7 @@ static OSInterruptHandler TCIntrruptHandler = NULL;
 static struct {
 	uint32_t next_sector;
 	uint32_t last_sector;
+	bool write;
 	#if ISR_READ
 	int items;
 	struct {
@@ -144,9 +147,9 @@ static void exi_read_to_buffer(void *dest, u32 len) {
 }
 
 static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sync) {
-	exi_select();
-
 	if(sync) {
+		exi_select();
+
 		while(rcvr_spi() != 0xFE);
 
 		// Skip the start if it's a misaligned read
@@ -163,6 +166,7 @@ static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sy
 	}
 	else {
 		#if ISR_READ
+		exi_select();
 		exi_clear_interrupts(0, 1, 0);
 		exi_imm_read(1, 0);
 
@@ -182,8 +186,11 @@ static int xmit_datablock(void *src, u32 token) {
 	while(rcvr_spi() != 0xFF);
 
 	exi_imm_write(token<<24, 1, 1);
-	exi_dma_write(src, SECTOR_SIZE, 1);
-	exi_imm_write(0xFFFF<<16, 2, 1);
+
+	if(token != 0xFD) {
+		exi_dma_write(src, SECTOR_SIZE, 1);
+		exi_imm_write(0xFFFF<<16, 2, 1);
+	}
 
 	u8 res = rcvr_spi();
 
@@ -246,13 +253,18 @@ static void mmc_read_queued(void)
 	bool write = mmc.queue[0].write;
 
 	if (write) {
-		end_read(sector);
-		send_cmd(CMD24, sector << *VAR_SD_SHIFT);
+		if (sector != mmc.next_sector || write != mmc.write) {
+			end_read(sector);
+			send_cmd(CMD25, sector << *VAR_SD_SHIFT);
+		}
 
-		if (xmit_datablock(buffer, 0xFE))
+		if (xmit_datablock(buffer, 0xFC))
 			mmc.queue[0].length = SECTOR_SIZE;
 		else
 			mmc.queue[0].length = 0;
+
+		mmc.next_sector = sector + 1;
+		mmc.write = write;
 
 		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)mmc_done_queued);
 		return;
@@ -263,7 +275,7 @@ static void mmc_read_queued(void)
 		return;
 	}
 
-	if (sector != mmc.next_sector) {
+	if (sector != mmc.next_sector || write != mmc.write) {
 		end_read(-1);
 		send_cmd(CMD18, sector << *VAR_SD_SHIFT);
 	}
@@ -272,6 +284,7 @@ static void mmc_read_queued(void)
 
 	mmc.last_sector = sector;
 	mmc.next_sector = sector + 1;
+	mmc.write = write;
 }
 
 static void mmc_done_queued(void)
@@ -363,7 +376,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 		return numBytes;
 	}
 	// If we weren't just reading this sector
-	if(lba != mmc.next_sector) {
+	if(lba != mmc.next_sector || write != mmc.write) {
 		end_read(-1);
 		// Send multiple block read command and the LBA we want to start reading at
 		send_cmd(CMD18, lba << lbaShift);
@@ -381,6 +394,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 	}
 	// Save next LBA
 	mmc.next_sector = lba + 1;
+	mmc.write = write;
 	#endif
 	return numBytes;
 }
@@ -393,8 +407,11 @@ void end_read(u32 lba) {
 	}
 	if(mmc.next_sector != -1) {
 		mmc.next_sector = -1;
-		// End the read by sending CMD12
-		send_cmd(CMD12, 0);
+
+		if(mmc.write)
+			xmit_datablock(0, 0xFD);
+		else
+			send_cmd(CMD12, 0);
 	}
 	#endif
 }
