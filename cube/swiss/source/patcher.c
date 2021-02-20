@@ -11985,6 +11985,22 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	};
 	FuncPattern __CARDGetFontEncodeSig = 
 		{ 2, 0, 0, 0, 0, 0, NULL, 0, "__CARDGetFontEncode" };
+	FuncPattern __CARDGetControlBlockSigs[4] = {
+		{ 46, 11, 6, 2, 5, 4, NULL, 0, "__CARDGetControlBlockD" },
+		{ 46, 11, 6, 2, 5, 4, NULL, 0, "__CARDGetControlBlockD" },
+		{ 44, 12, 7, 2, 5, 4, NULL, 0, "__CARDGetControlBlock" },
+		{ 46, 13, 8, 2, 5, 2, NULL, 0, "__CARDGetControlBlock" }
+	};
+	FuncPattern __CARDPutControlBlockSigs[4] = {
+		{ 29, 8, 3, 3, 1, 3, NULL, 0, "__CARDPutControlBlockD" },
+		{ 34, 9, 4, 3, 2, 3, NULL, 0, "__CARDPutControlBlockD" },
+		{ 20, 5, 5, 2, 1, 2, NULL, 0, "__CARDPutControlBlock" },
+		{ 25, 6, 6, 2, 2, 2, NULL, 0, "__CARDPutControlBlock" }
+	};
+	FuncPattern CARDGetEncodingSigs[2] = {
+		{ 27,  9, 4, 2, 2, 3, NULL, 0, "CARDGetEncodingD" },
+		{ 34, 12, 5, 3, 4, 2, NULL, 0, "CARDGetEncoding" }
+	};
 	FuncPattern VerifyIDSigs[7] = {
 		{ 107, 33, 2, 7, 10, 33, NULL, 0, "VerifyIDD" },
 		{ 107, 33, 2, 7, 10, 33, NULL, 0, "VerifyIDD" },
@@ -12335,6 +12351,25 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 			}
 		}
 		
+		for (j = 0; j < sizeof(CARDGetEncodingSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &CARDGetEncodingSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  8, length, &__CARDGetControlBlockSigs[1]) &&
+							findx_pattern(data, dataType, i + 21, length, &__CARDPutControlBlockSigs[1]))
+							CARDGetEncodingSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_patterns(data, dataType, i +  6, length, &__CARDGetControlBlockSigs[2],
+							                                               &__CARDGetControlBlockSigs[3], NULL) &&
+							findx_pattern (data, dataType, i + 15, length, &OSDisableInterruptsSig) &&
+							findx_pattern (data, dataType, i + 27, length, &OSRestoreInterruptsSig))
+							CARDGetEncodingSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
 		for (j = 0; j < sizeof(VerifyIDSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &VerifyIDSigs[j])) {
 				switch (j) {
@@ -12434,7 +12469,8 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 						if (findx_pattern(data, dataType, i +  83, length, &__OSLockSramExSigs[0]) &&
 							findx_pattern(data, dataType, i + 102, length, &__OSUnlockSramExSigs[0]) &&
 							findx_pattern(data, dataType, i + 108, length, &__OSLockSramExSigs[0]) &&
-							findx_pattern(data, dataType, i + 120, length, &__OSUnlockSramExSigs[0]))
+							findx_pattern(data, dataType, i + 120, length, &__OSUnlockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 167, length, &__CARDPutControlBlockSigs[0]))
 							DoMountSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
@@ -12443,7 +12479,8 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 130, length, &__OSLockSramExSigs[0]) &&
 							findx_pattern(data, dataType, i + 142, length, &__OSUnlockSramExSigs[0]) &&
 							findx_pattern(data, dataType, i + 158, length, &__OSLockSramExSigs[0]) &&
-							findx_pattern(data, dataType, i + 163, length, &__OSUnlockSramExSigs[0]))
+							findx_pattern(data, dataType, i + 163, length, &__OSUnlockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 208, length, &__CARDPutControlBlockSigs[1]))
 							DoMountSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
@@ -12452,7 +12489,8 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 152, length, &__OSLockSramExSigs[0]) &&
 							findx_pattern(data, dataType, i + 164, length, &__OSUnlockSramExSigs[0]) &&
 							findx_pattern(data, dataType, i + 180, length, &__OSLockSramExSigs[0]) &&
-							findx_pattern(data, dataType, i + 185, length, &__OSUnlockSramExSigs[0]))
+							findx_pattern(data, dataType, i + 185, length, &__OSUnlockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 230, length, &__CARDPutControlBlockSigs[1]))
 							DoMountSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
@@ -12461,7 +12499,8 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 137, length, &__OSLockSramExSigs[0]) &&
 							findx_pattern(data, dataType, i + 149, length, &__OSUnlockSramExSigs[0]) &&
 							findx_pattern(data, dataType, i + 165, length, &__OSLockSramExSigs[0]) &&
-							findx_pattern(data, dataType, i + 170, length, &__OSUnlockSramExSigs[0]))
+							findx_pattern(data, dataType, i + 170, length, &__OSUnlockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 215, length, &__CARDPutControlBlockSigs[1]))
 							DoMountSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
@@ -12470,21 +12509,26 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 155, length, &__OSLockSramExSigs[0]) &&
 							findx_pattern(data, dataType, i + 167, length, &__OSUnlockSramExSigs[0]) &&
 							findx_pattern(data, dataType, i + 183, length, &__OSLockSramExSigs[0]) &&
-							findx_pattern(data, dataType, i + 188, length, &__OSUnlockSramExSigs[0]))
+							findx_pattern(data, dataType, i + 188, length, &__OSUnlockSramExSigs[0]) &&
+							findx_pattern(data, dataType, i + 233, length, &__CARDPutControlBlockSigs[1]))
 							DoMountSigs[j].offsetFoundAt = i;
 						break;
 					case 5:
 						if (findx_pattern(data, dataType, i +  70, length, &__OSLockSramExSigs[1]) &&
 							findx_pattern(data, dataType, i + 130, length, &__OSUnlockSramExSigs[1]) &&
 							findx_pattern(data, dataType, i + 132, length, &__OSLockSramExSigs[1]) &&
-							findx_pattern(data, dataType, i + 162, length, &__OSUnlockSramExSigs[1]))
+							findx_pattern(data, dataType, i + 162, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 206, length, &__CARDPutControlBlockSigs[2]) &&
+							findx_pattern(data, dataType, i + 217, length, &__CARDPutControlBlockSigs[2]))
 							DoMountSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
-						if (findx_pattern(data, dataType, i +  76, length, &__OSLockSramExSigs[1]) &&
-							findx_pattern(data, dataType, i + 136, length, &__OSUnlockSramExSigs[1]) &&
-							findx_pattern(data, dataType, i + 141, length, &__OSLockSramExSigs[1]) &&
-							findx_pattern(data, dataType, i + 171, length, &__OSUnlockSramExSigs[1]))
+						if (findx_pattern (data, dataType, i +  76, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern (data, dataType, i + 136, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern (data, dataType, i + 141, length, &__OSLockSramExSigs[1]) &&
+							findx_pattern (data, dataType, i + 171, length, &__OSUnlockSramExSigs[1]) &&
+							findx_patterns(data, dataType, i + 216, length, &__CARDPutControlBlockSigs[2],
+							                                                &__CARDPutControlBlockSigs[3], NULL))
 							DoMountSigs[j].offsetFoundAt = i;
 						break;
 					case 7:
@@ -12493,7 +12537,8 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 163, length, &__OSLockSramExSigs[1]) &&
 							findx_pattern(data, dataType, i + 193, length, &__OSUnlockSramExSigs[1]) &&
 							findx_pattern(data, dataType, i + 209, length, &__OSLockSramExSigs[1]) &&
-							findx_pattern(data, dataType, i + 213, length, &__OSUnlockSramExSigs[1]))
+							findx_pattern(data, dataType, i + 213, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 254, length, &__CARDPutControlBlockSigs[3]))
 							DoMountSigs[j].offsetFoundAt = i;
 						break;
 					case 8:
@@ -12502,7 +12547,8 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 184, length, &__OSLockSramExSigs[1]) &&
 							findx_pattern(data, dataType, i + 214, length, &__OSUnlockSramExSigs[1]) &&
 							findx_pattern(data, dataType, i + 230, length, &__OSLockSramExSigs[1]) &&
-							findx_pattern(data, dataType, i + 234, length, &__OSUnlockSramExSigs[1]))
+							findx_pattern(data, dataType, i + 234, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 275, length, &__CARDPutControlBlockSigs[3]))
 							DoMountSigs[j].offsetFoundAt = i;
 						break;
 					case 9:
@@ -12511,7 +12557,8 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 147, length, &__OSLockSramExSigs[1]) &&
 							findx_pattern(data, dataType, i + 177, length, &__OSUnlockSramExSigs[1]) &&
 							findx_pattern(data, dataType, i + 193, length, &__OSLockSramExSigs[1]) &&
-							findx_pattern(data, dataType, i + 197, length, &__OSUnlockSramExSigs[1]))
+							findx_pattern(data, dataType, i + 197, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 238, length, &__CARDPutControlBlockSigs[3]))
 							DoMountSigs[j].offsetFoundAt = i;
 						break;
 					case 10:
@@ -12520,7 +12567,8 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 164, length, &__OSLockSramExSigs[1]) &&
 							findx_pattern(data, dataType, i + 194, length, &__OSUnlockSramExSigs[1]) &&
 							findx_pattern(data, dataType, i + 210, length, &__OSLockSramExSigs[1]) &&
-							findx_pattern(data, dataType, i + 214, length, &__OSUnlockSramExSigs[1]))
+							findx_pattern(data, dataType, i + 214, length, &__OSUnlockSramExSigs[1]) &&
+							findx_pattern(data, dataType, i + 255, length, &__CARDPutControlBlockSigs[3]))
 							DoMountSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -12747,6 +12795,20 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", SPEC2_MakeStatusSigs[j].Name, j, SPEC2_MakeStatus);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(CARDGetEncodingSigs) / sizeof(FuncPattern); j++)
+	if ((i = CARDGetEncodingSigs[j].offsetFoundAt)) {
+		u32 *CARDGetEncoding = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (CARDGetEncoding) {
+			switch (j) {
+				case 0: data[i + 16] = 0x38000000 | (swissSettings.fontEncode & 0xFFFF); break;
+				case 1: data[i + 12] = 0x38000000 | (swissSettings.fontEncode & 0xFFFF); break;
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", CARDGetEncodingSigs[j].Name, j, CARDGetEncoding);
 			patched++;
 		}
 	}
