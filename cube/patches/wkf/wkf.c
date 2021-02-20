@@ -48,7 +48,7 @@ static struct {
 		frag_callback callback;
 	} queue[QUEUE_SIZE];
 } wkf = {
-	.base_sector = -1
+	.base_sector = ~0
 };
 
 OSAlarm read_alarm = {0};
@@ -190,7 +190,7 @@ void device_reset(void)
 	EXI[EXI_CHANNEL_1][0] = 0;
 	EXI[EXI_CHANNEL_2][0] = 0;
 
-	end_read(-1);
+	end_read();
 }
 
 bool change_disc(void)

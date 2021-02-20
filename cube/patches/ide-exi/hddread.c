@@ -65,7 +65,7 @@ static struct {
 	} queue[QUEUE_SIZE];
 	#endif
 } ata = {
-	.last_sector = -1
+	.last_sector = ~0
 };
 
 void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context);
@@ -397,4 +397,4 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 }
 #endif
 
-void end_read(u32 lba) {}
+void end_read() {}

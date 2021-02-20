@@ -37,8 +37,8 @@
 static OSInterruptHandler TCIntrruptHandler = NULL;
 
 static struct {
-	uint32_t next_sector;
 	uint32_t last_sector;
+	uint32_t next_sector;
 	bool write;
 	#if ISR_READ
 	int items;
@@ -52,8 +52,8 @@ static struct {
 	} queue[QUEUE_SIZE];
 	#endif
 } mmc = {
-	.next_sector = -1,
-	.last_sector = -1
+	.last_sector = ~0,
+	.next_sector = ~0
 };
 
 extern intptr_t isr_registers;
@@ -253,8 +253,11 @@ static void mmc_read_queued(void)
 	bool write = mmc.queue[0].write;
 
 	if (write) {
+		if (mmc.last_sector == sector)
+			mmc.last_sector = ~0;
+
 		if (sector != mmc.next_sector || write != mmc.write) {
-			end_read(sector);
+			end_read();
 			send_cmd(CMD25, sector << *VAR_SD_SHIFT);
 		}
 
@@ -276,7 +279,7 @@ static void mmc_read_queued(void)
 	}
 
 	if (sector != mmc.next_sector || write != mmc.write) {
-		end_read(-1);
+		end_read();
 		send_cmd(CMD18, sector << *VAR_SD_SHIFT);
 	}
 
@@ -354,7 +357,12 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 		return 0;
 	}
 	if(write) {
-		end_read(lba);
+		#if SINGLE_SECTOR == 2 || ISR_READ
+		if(mmc.last_sector == lba) {
+			mmc.last_sector = ~0;
+		}
+		#endif
+		end_read();
 		// Send single block write command and the LBA we want to write at
 		send_cmd(CMD24, lba << lbaShift);
 		// Write block
@@ -364,7 +372,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 		return 0;
 	}
 	#if SINGLE_SECTOR < 2
-	end_read(-1);
+	end_read();
 	// Send single block read command and the LBA we want to read at
 	send_cmd(CMD17, lba << lbaShift);
 	// Read block
@@ -377,7 +385,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 	}
 	// If we weren't just reading this sector
 	if(lba != mmc.next_sector || write != mmc.write) {
-		end_read(-1);
+		end_read();
 		// Send multiple block read command and the LBA we want to start reading at
 		send_cmd(CMD18, lba << lbaShift);
 	}
@@ -400,13 +408,10 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 }
 #endif
 
-void end_read(u32 lba) {
+void end_read() {
 	#if SINGLE_SECTOR == 2 || ISR_READ
-	if(mmc.last_sector == lba) {
-		mmc.last_sector = -1;
-	}
-	if(mmc.next_sector != -1) {
-		mmc.next_sector = -1;
+	if(mmc.next_sector != ~0) {
+		mmc.next_sector = ~0;
 
 		if(mmc.write)
 			xmit_datablock(0, 0xFD);
