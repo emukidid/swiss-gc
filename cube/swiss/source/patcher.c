@@ -134,6 +134,9 @@ int install_code(int final)
 		if (GCMDisk.AudioStreaming) {
 			patch     = !_ideexi_version ? ideexi_v1_dtk_bin      : ideexi_v2_dtk_bin;
 			patchSize = !_ideexi_version ? ideexi_v1_dtk_bin_size : ideexi_v2_dtk_bin_size;
+		} else if (swissSettings.emulateMemoryCard) {
+			patch     = !_ideexi_version ? ideexi_v1_card_bin      : ideexi_v2_card_bin;
+			patchSize = !_ideexi_version ? ideexi_v1_card_bin_size : ideexi_v2_card_bin_size;
 		} else {
 			patch     = !_ideexi_version ? ideexi_v1_bin      : ideexi_v2_bin;
 			patchSize = !_ideexi_version ? ideexi_v1_bin_size : ideexi_v2_bin_size;
