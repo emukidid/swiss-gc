@@ -25,7 +25,7 @@
 #define ATA_REG_STATUS			0x17	//1 0111b
 
 // ATA commands
-#define ATA_CMD_READSECT		0x21
+#define ATA_CMD_READSECT		0x20
 #define ATA_CMD_READSECTEXT		0x24
 #define ATA_CMD_WRITESECT		0x30
 #define ATA_CMD_WRITESECTEXT	0x34
@@ -55,6 +55,8 @@ static OSInterruptHandler TCIntrruptHandler = NULL;
 
 static struct {
 	uint32_t last_sector;
+	uint32_t next_sector;
+	uint8_t count;
 	#if DMA_READ || ISR_READ
 	int items;
 	struct {
@@ -67,7 +69,8 @@ static struct {
 	} queue[QUEUE_SIZE];
 	#endif
 } ata = {
-	.last_sector = ~0
+	.last_sector = ~0,
+	.next_sector = ~0
 };
 
 extern intptr_t isr_registers;
@@ -154,11 +157,53 @@ static void ataWriteu16(u16 data)
 	exi_deselect();
 }
 
-// Reads up to 0xFFFF * 4 bytes of data (~255kb) from the hdd at the given offset
-static void ata_read_buffer(u8 *dst, int sync)
+// Reads sectors from the specified lba
+static void ataReadSectors(u32 sector, u16 count)
 {
-	u32 i = 0;
-	u32 *ptr = (u32*)dst;
+	u8 status;
+
+	// Wait for drive to be ready (BSY to clear)
+	do {
+		status = ataReadStatusReg();
+	} while(status & ATA_SR_BSY);
+
+	// Select the device differently based on 28 or 48bit mode
+	if(!_ata48bit) {
+		ataWriteByte(ATA_REG_DEVICE, 0xE0 | (u8)((sector >> 24) & 0x0F));
+	}
+	else {
+		// Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
+		ataWriteByte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
+
+		ataWriteByte(ATA_REG_SECCOUNT, (u8)((count >> 8) & 0xFF));	// Sector count (Hi)
+		ataWriteByte(ATA_REG_LBALO, (u8)((sector >> 24)& 0xFF));	// LBA 4
+		ataWriteByte(ATA_REG_LBAMID, 0);							// LBA 5
+		ataWriteByte(ATA_REG_LBAHI, 0);								// LBA 6
+	}
+
+	ataWriteByte(ATA_REG_SECCOUNT, (u8)(count & 0xFF));				// Sector count (Lo)
+	ataWriteByte(ATA_REG_LBALO, (u8)(sector & 0xFF));				// LBA 1
+	ataWriteByte(ATA_REG_LBAMID, (u8)((sector >> 8) & 0xFF));		// LBA 2
+	ataWriteByte(ATA_REG_LBAHI, (u8)((sector >> 16) & 0xFF));		// LBA 3
+
+	// Write the appropriate read command
+	ataWriteByte(ATA_REG_COMMAND, !_ata48bit ? ATA_CMD_READSECT : ATA_CMD_READSECTEXT);
+}
+
+static int ataReadBuffer(void *buffer, int sync)
+{
+	u8 status;
+
+	// Wait for drive to request data transfer
+	do {
+		status = ataReadStatusReg();
+		// If the error bit was set, fail.
+		if(status & ATA_SR_ERR) return 0;
+	} while((status & ATA_SR_BSY) || !(status & ATA_SR_DRQ));
+
+	// read data from drive
+	int i;
+	u32 *ptr = (u32*)buffer;
 	u16 dwords = 128;
 	// (31:29) 011b | (28:24) 10000b | (23:16) <num_words_LSB> | (15:8) <num_words_MSB> | (7:0) 00h (4 bytes)
 	exi_select();
@@ -204,130 +249,68 @@ static void ata_read_buffer(u8 *dst, int sync)
 		#endif
 	}
 	#endif
+	return 1;
 }
 
-// Reads sectors from the specified lba, for the specified slot
-// Returns 0 on success, -1 on failure.
-static int ataReadSector(u32 lba, void *buffer, int sync)
+// Writes sectors to the specified lba
+static void ataWriteSectors(u32 sector, u16 count)
 {
-	u32 temp = 0;
-	
+	u8 status;
+
 	// Wait for drive to be ready (BSY to clear)
-	while(ataReadStatusReg() & ATA_SR_BSY);
+	do {
+		status = ataReadStatusReg();
+	} while(status & ATA_SR_BSY);
 
-	// Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
-
-	// Non LBA48
+	// Select the device differently based on 28 or 48bit mode
 	if(!_ata48bit) {
-		ataWriteByte(ATA_REG_DEVICE, 0xE0 | (u8)((lba >> 24) & 0x0F));
-		ataWriteByte(ATA_REG_SECCOUNT, 1);								// Sector count (Lo)
-		ataWriteByte(ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA 1
-		ataWriteByte(ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA 2
-		ataWriteByte(ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA 3
-		ataWriteByte(ATA_REG_COMMAND, ATA_CMD_READSECT);
+		ataWriteByte(ATA_REG_DEVICE, 0xE0 | (u8)((sector >> 24) & 0x0F));
 	}
-	// LBA48
 	else {
+		// Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
 		ataWriteByte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
-		ataWriteByte(ATA_REG_SECCOUNT, 0);								// Sector count (Hi)
-		ataWriteByte(ATA_REG_LBALO, (u8)((lba>>24)& 0xFF));				// LBA 4
-		ataWriteByte(ATA_REG_LBAMID, 0);								// LBA 5
-		ataWriteByte(ATA_REG_LBAHI, 0);									// LBA 6
-		ataWriteByte(ATA_REG_SECCOUNT, 1);								// Sector count (Lo)
-		ataWriteByte(ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA 1
-		ataWriteByte(ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA 2
-		ataWriteByte(ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA 3
-		ataWriteByte(ATA_REG_COMMAND, ATA_CMD_READSECTEXT);
+
+		ataWriteByte(ATA_REG_SECCOUNT, (u8)((count >> 8) & 0xFF));	// Sector count (Hi)
+		ataWriteByte(ATA_REG_LBALO, (u8)((sector >> 24)& 0xFF));	// LBA 4
+		ataWriteByte(ATA_REG_LBAMID, 0);							// LBA 5
+		ataWriteByte(ATA_REG_LBAHI, 0);								// LBA 6
 	}
 
-	// Wait for BSY to clear
-	while((temp = ataReadStatusReg()) & ATA_SR_BSY);
-	
-	// If the error bit was set, fail.
-	if(temp & ATA_SR_ERR) {
-		//*(u32*)buffer = 0x13370001;
-		return 1;
-	}
+	ataWriteByte(ATA_REG_SECCOUNT, (u8)(count & 0xFF));				// Sector count (Lo)
+	ataWriteByte(ATA_REG_LBALO, (u8)(sector & 0xFF));				// LBA 1
+	ataWriteByte(ATA_REG_LBAMID, (u8)((sector >> 8) & 0xFF));		// LBA 2
+	ataWriteByte(ATA_REG_LBAHI, (u8)((sector >> 16) & 0xFF));		// LBA 3
+
+	// Write the appropriate write command
+	ataWriteByte(ATA_REG_COMMAND, !_ata48bit ? ATA_CMD_WRITESECT : ATA_CMD_WRITESECTEXT);
+}
+
+static int ataWriteBuffer(void *buffer)
+{
+	u8 status;
 
 	// Wait for drive to request data transfer
-	while(!(ataReadStatusReg() & ATA_SR_DRQ));
-	
-	// read data from drive
-	ata_read_buffer(buffer, sync);
-
-	if(sync) {
-		temp = ataReadStatusReg();
-		
+	do {
+		status = ataReadStatusReg();
 		// If the error bit was set, fail.
-		if(temp & ATA_SR_ERR) {
-			//*(u32*)buffer = 0x13370002;
-			return 1;
-		}
-	}
-	
-	return 0;
-}
+		if(status & ATA_SR_ERR) return 0;
+	} while((status & ATA_SR_BSY) || !(status & ATA_SR_DRQ));
 
-// Writes sectors to the specified lba, for the specified slot
-// Returns 0 on success, -1 on failure.
-static int ataWriteSector(u32 lba, void *buffer)
-{
-	u32 i, temp;
-	
-	// Wait for drive to be ready (BSY to clear)
-	while(ataReadStatusReg() & ATA_SR_BSY);
-
-	// Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
-
-	// Non LBA48
-	if(!_ata48bit) {
-		ataWriteByte(ATA_REG_DEVICE, 0xE0 | (u8)((lba >> 24) & 0x0F));
-		ataWriteByte(ATA_REG_SECCOUNT, 1);								// Sector count (Lo)
-		ataWriteByte(ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA 1
-		ataWriteByte(ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA 2
-		ataWriteByte(ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA 3
-		ataWriteByte(ATA_REG_COMMAND, ATA_CMD_WRITESECT);
-	}
-	// LBA48
-	else {
-		ataWriteByte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
-		ataWriteByte(ATA_REG_SECCOUNT, 0);								// Sector count (Hi)
-		ataWriteByte(ATA_REG_LBALO, (u8)((lba>>24)& 0xFF));				// LBA 4
-		ataWriteByte(ATA_REG_LBAMID, 0);								// LBA 4
-		ataWriteByte(ATA_REG_LBAHI, 0);									// LBA 5
-		ataWriteByte(ATA_REG_SECCOUNT, 1);								// Sector count (Lo)
-		ataWriteByte(ATA_REG_LBALO, (u8)(lba & 0xFF));					// LBA 1
-		ataWriteByte(ATA_REG_LBAMID, (u8)((lba>>8) & 0xFF));			// LBA 2
-		ataWriteByte(ATA_REG_LBAHI, (u8)((lba>>16) & 0xFF));			// LBA 3
-		ataWriteByte(ATA_REG_COMMAND, ATA_CMD_WRITESECTEXT);
-	}
-
-	// Wait for BSY to clear
-	while((temp = ataReadStatusReg()) & ATA_SR_BSY);
-	
-	// If the error bit was set, fail.
-	if(temp & ATA_SR_ERR) {
-		return 1;
-	}
-
-	// Wait for drive to request data transfer
-	while(!(ataReadStatusReg() & ATA_SR_DRQ));
-	
 	// Write data to the drive
+	int i;
 	u16 *ptr = (u16*)buffer;
-	for (i=0; i<256; i++) {
+	for(i = 0; i < 256; i++) {
 		ataWriteu16(ptr[i]);
 	}
-	
+
 	// Wait for the write to finish
-	while((temp = ataReadStatusReg()) & ATA_SR_BSY);
-	
-	// If the error bit was set, fail.
-	if(temp & ATA_SR_ERR) {
-		return 1;
-	}
-	
-	return 0;
+	do {
+		status = ataReadStatusReg();
+		// If the error bit was set, fail.
+		if(status & ATA_SR_ERR) return 0;
+	} while(status & ATA_SR_BSY);
+
+	return 1;
 }
 
 #ifndef SINGLE_SECTOR
@@ -394,10 +377,13 @@ static void ata_read_queued(void)
 		if (ata.last_sector == sector)
 			ata.last_sector = ~0;
 
-		if (ataWriteSector(sector, buffer))
-			ata.queue[0].length = 0;
-		else
+		ata.count = 0;
+		ataWriteSectors(sector, 1);
+
+		if (ataWriteBuffer(buffer))
 			ata.queue[0].length = SECTOR_SIZE;
+		else
+			ata.queue[0].length = 0;
 
 		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)ata_done_queued);
 		return;
@@ -408,9 +394,20 @@ static void ata_read_queued(void)
 		return;
 	}
 
-	ataReadSector(sector, sectorBuf, 0);
+	if (sector != ata.next_sector || ata.count == 0) {
+		ata.count = 0;
+		ataReadSectors(sector, 0x100);
+	}
 
-	ata.last_sector = sector;
+	if (ataReadBuffer(sectorBuf, 0)) {
+		ata.last_sector = sector;
+		ata.next_sector = sector + 1;
+		ata.count++;
+	} else {
+		ata.count = 0;
+		ata.queue[0].length = 0;
+		ata_done_queued();
+	}
 }
 
 static void ata_done_queued(void)
@@ -449,8 +446,6 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	exi_deselect();
 	#endif
 
-	if (ataReadStatusReg() & ATA_SR_ERR)
-		ata.queue[0].length = 0;
 	ata_done_queued();
 }
 
@@ -490,19 +485,28 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 		if(ata.last_sector == lba) {
 			ata.last_sector = ~0;
 		}
-		if(ataWriteSector(lba, buf)) {
-			return 0;
+		ata.count = 0;
+		ataWriteSectors(lba, 1);
+		// Write full sector
+		if(ataWriteBuffer(buf)) {
+			return SECTOR_SIZE;
 		}
-		return SECTOR_SIZE;
+		return 0;
 	}
 	// If we saved this sector
 	if(lba == ata.last_sector) {
 		memcpy(buf, sectorBuf + startByte, numBytes);
 		return numBytes;
 	}
+	// If we weren't just reading this sector
+	if(lba != ata.next_sector || ata.count == 0) {
+		ata.count = 0;
+		ataReadSectors(lba, 0x100);
+	}
 	if(numBytes < SECTOR_SIZE || DMA_READ) {
 		// Read half sector
-		if(ataReadSector(lba, sectorBuf, 1)) {
+		if(!ataReadBuffer(sectorBuf, 1)) {
+			ata.count = 0;
 			return 0;
 		}
 		memcpy(buf, sectorBuf + startByte, numBytes);
@@ -511,10 +515,14 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 	}
 	else {
 		// Read full sector
-		if(ataReadSector(lba, buf, 1)) {
+		if(!ataReadBuffer(buf, 1)) {
+			ata.count = 0;
 			return 0;
 		}
 	}
+	// Save next LBA
+	ata.next_sector = lba + 1;
+	ata.count++;
 	return numBytes;
 }
 #endif
