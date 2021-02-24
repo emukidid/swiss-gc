@@ -313,53 +313,6 @@ static int ataWriteBuffer(void *buffer)
 	return 1;
 }
 
-#ifndef SINGLE_SECTOR
-int do_read(void *dst, u32 len, u32 offset, u32 sectorLba) {
-	u32 lba = (offset>>9) + sectorLba;
-	u32 startByte = (offset%SECTOR_SIZE);
-	u32 numBytes = len;
-	
-	// Read any half sector if we need to until we're aligned
-	if(startByte) {
-		u32 size_to_copy = MIN(numBytes, SECTOR_SIZE-startByte);
-		if(ataReadSector(lba, sectorBuf, 1)) {
-			//*(u32*)dst = 0x13370003;
-			return len-numBytes;
-		}
-		memcpy(dst, sectorBuf + startByte, size_to_copy);
-		numBytes -= size_to_copy;
-		dst += size_to_copy;
-		lba ++;
-	}
-	// Read any whole sectors
-	while(numBytes >= SECTOR_SIZE) {
-		#if DMA_READ
-		if(ataReadSector(lba, sectorBuf, 1)) {
-			//*(u32*)dst = 0x13370004;
-			return len-numBytes;
-		}
-		memcpy(dst, sectorBuf, SECTOR_SIZE);
-		#else
-		if(ataReadSector(lba, dst, 1)) {
-			//*(u32*)dst = 0x13370004;
-			return len-numBytes;
-		}
-		#endif
-		numBytes -= SECTOR_SIZE;
-		dst += SECTOR_SIZE;
-		lba ++;
-	}
-	// Read the last sector if there's any half sector
-	if(numBytes) {
-		if(ataReadSector(lba, sectorBuf, 1)) {
-			//*(u32*)dst = 0x13370006;
-			return len-numBytes;
-		}
-		memcpy(dst, sectorBuf, numBytes);
-	}	
-	return len;
-}
-#else
 #if DMA_READ || ISR_READ
 static void ata_done_queued(void);
 static void ata_read_queued(void)
@@ -525,6 +478,5 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 	ata.count++;
 	return numBytes;
 }
-#endif
 
 void end_read() {}

@@ -50,7 +50,7 @@ sd.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
@@ -72,7 +72,7 @@ sd.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
@@ -91,7 +91,7 @@ sd.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDTK
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=3 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=3
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -110,7 +110,7 @@ ideexi-v1.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DISR
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=0 -DISR_READ=1 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=0 -DISR_READ=1
 	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
@@ -129,7 +129,7 @@ ideexi-v1.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=0 -DISR_READ=1 -DQUEUE_SIZE=4 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=0 -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
@@ -148,7 +148,7 @@ ideexi-v1.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDTK
-	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=0 -DISR_READ=1 -DQUEUE_SIZE=3 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=0 -DISR_READ=1 -DQUEUE_SIZE=3
 	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -167,7 +167,7 @@ ideexi-v2.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=0 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=0
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
@@ -185,7 +185,7 @@ ideexi-v2.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=0 -DQUEUE_SIZE=4 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=0 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
@@ -203,7 +203,7 @@ ideexi-v2.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDTK
-	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=0 -DQUEUE_SIZE=3 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=0 -DQUEUE_SIZE=3
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
@@ -221,7 +221,7 @@ dvd.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DDVD -DISR
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
@@ -240,7 +240,7 @@ dvd.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
@@ -258,7 +258,7 @@ usbgecko.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c usbgecko/usbgecko.c
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -o usbgecko.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o usbgecko.o sd.o frag.o os.o
@@ -274,7 +274,7 @@ wkf.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DISR -DWKF
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
@@ -293,7 +293,7 @@ wkf.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
@@ -312,7 +312,7 @@ wkf.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ -DQUEUE_SIZE=3
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
@@ -331,7 +331,7 @@ fsp.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DBBA
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c bba/bba.c
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
@@ -349,7 +349,7 @@ gcloader.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DGCODE
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
@@ -371,7 +371,7 @@ gcloader.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DGCODE
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4 -DSINGLE_SECTOR=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
