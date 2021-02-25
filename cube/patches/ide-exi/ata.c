@@ -386,18 +386,13 @@ static void ata_done_queued(void)
 void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	#if ISR_READ
-	if (isr_transferred < SECTOR_SIZE)
+	if (isr_transferred < SECTOR_SIZE + 4)
 		return;
 	#endif
 
 	OSMaskInterrupts(OS_INTERRUPTMASK(interrupt));
 	OSSetInterruptHandler(interrupt, TCIntrruptHandler);
 	exi_deselect();
-	#if !DMA_READ
-	exi_select();
-	exi_imm_read(4, 1);
-	exi_deselect();
-	#endif
 
 	ata_done_queued();
 }
