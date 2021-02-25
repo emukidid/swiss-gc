@@ -9462,14 +9462,17 @@ int Patch_TexFilt(u32 *data, u32 length, int dataType)
 	return 0;
 }
 
-u32 _fontencode_part_a[] = {
-	0x2C000000,	// cmpwi	r0, 0
+u32 _fontencoded[] = {
+	0x3C60CC00,	// lis		r3, 0xCC00
+	0xA003206E,	// lhz		r0, 0x206E (r3)
+	0x540007BD,	// rlwinm.	r0, r0, 0, 30, 30
 	0x4182000C,	// beq		+3
-	0x4180002C,	// blt		+11
-	0x48000028	// b		+10
+	0x38600001,	// li		r3, 1
+	0x48000008,	// b		+2
+	0x38600000	// li		r3, 0
 };
 
-u32 _fontencode_part_b[] = {
+u32 _fontencode_a[] = {
 	0x3C60CC00,	// lis		r3, 0xCC00
 	0xA003206E,	// lhz		r0, 0x206E (r3)
 	0x540007BD,	// rlwinm.	r0, r0, 0, 30, 30
@@ -9479,22 +9482,44 @@ u32 _fontencode_part_b[] = {
 	0x38000000	// li		r0, 0
 };
 
+u32 _fontencode_b[] = {
+	0x3C80CC00,	// lis		r4, 0xCC00
+	0xA004206E,	// lhz		r0, 0x206E (r4)
+	0x540007BD,	// rlwinm.	r0, r0, 0, 30, 30
+	0x4182000C,	// beq		+3
+	0x38000001,	// li		r0, 1
+	0x48000008,	// b		+2
+	0x38000000	// li		r0, 0
+};
+
+u32 _fontencode_c[] = {
+	0x3C60CC00,	// lis		r3, 0xCC00
+	0x38632000,	// addi		r3, r3, 0x2000
+	0xA063006E,	// lhz		r3, 0x006E (r3)
+	0x546307BD,	// rlwinm.	r3, r3, 0, 30, 30
+	0x4182000C,	// beq		+3
+	0x38600001,	// li		r3, 1
+	0x48000008,	// b		+2
+	0x38600000	// li		r3, 0
+};
+
 int Patch_FontEncode(u32 *data, u32 length)
 {
-	int patched = 0;
 	int i;
+	int patched = 0;
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
-		if (!memcmp(data + i + 0, _fontencode_part_a, sizeof(_fontencode_part_a)) &&
-			!memcmp(data + i + 4, _fontencode_part_b, sizeof(_fontencode_part_b))) {
-			data[i +  8] = 0x38000000 | (swissSettings.fontEncode & 0xFFFF);
-			data[i + 10] = 0x38000000 | (swissSettings.fontEncode & 0xFFFF);
-			data[i + 13] = 0x38000000 | (swissSettings.fontEncode & 0xFFFF);
+		if (!memcmp(data + i, _fontencoded, sizeof(_fontencoded))) {
+			data[i + 4] = 0x38600000 | (swissSettings.fontEncode & 0xFFFF);
+			data[i + 6] = 0x38600000 | (swissSettings.fontEncode & 0xFFFF);
 			patched++;
-		}
-		else if (!memcmp(data + i, _fontencode_part_b, sizeof(_fontencode_part_b))) {
+		} else if (!memcmp(data + i, _fontencode_a, sizeof(_fontencode_a)) || !memcmp(data + i, _fontencode_b, sizeof(_fontencode_b))) {
 			data[i + 4] = 0x38000000 | (swissSettings.fontEncode & 0xFFFF);
 			data[i + 6] = 0x38000000 | (swissSettings.fontEncode & 0xFFFF);
+			patched++;
+		} else if (!memcmp(data + i, _fontencode_c, sizeof(_fontencode_c))) {
+			data[i + 5] = 0x38600000 | (swissSettings.fontEncode & 0xFFFF);
+			data[i + 7] = 0x38600000 | (swissSettings.fontEncode & 0xFFFF);
 			patched++;
 		}
 	}
