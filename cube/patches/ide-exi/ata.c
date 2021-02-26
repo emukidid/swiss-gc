@@ -56,7 +56,7 @@ static OSInterruptHandler TCIntrruptHandler = NULL;
 static struct {
 	uint32_t last_sector;
 	uint32_t next_sector;
-	uint8_t count;
+	uint16_t count;
 	#if DMA_READ || ISR_READ
 	int items;
 	struct {
@@ -64,6 +64,7 @@ static struct {
 		uint16_t length;
 		uint16_t offset;
 		uint32_t sector;
+		uint16_t count;
 		bool write;
 		frag_callback callback;
 	} queue[QUEUE_SIZE];
@@ -175,16 +176,16 @@ static void ataReadSectors(u32 sector, u16 count)
 		// Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
 		ataWriteByte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
 
-		ataWriteByte(ATA_REG_SECCOUNT, (u8)((count >> 8) & 0xFF));	// Sector count (Hi)
-		ataWriteByte(ATA_REG_LBALO, (u8)((sector >> 24)& 0xFF));	// LBA 4
-		ataWriteByte(ATA_REG_LBAMID, 0);							// LBA 5
 		ataWriteByte(ATA_REG_LBAHI, 0);								// LBA 6
+		ataWriteByte(ATA_REG_LBAMID, 0);							// LBA 5
+		ataWriteByte(ATA_REG_LBALO, (u8)((sector >> 24) & 0xFF));	// LBA 4
+		ataWriteByte(ATA_REG_SECCOUNT, (u8)((count >> 8) & 0xFF));	// Sector count (Hi)
 	}
 
-	ataWriteByte(ATA_REG_SECCOUNT, (u8)(count & 0xFF));				// Sector count (Lo)
-	ataWriteByte(ATA_REG_LBALO, (u8)(sector & 0xFF));				// LBA 1
-	ataWriteByte(ATA_REG_LBAMID, (u8)((sector >> 8) & 0xFF));		// LBA 2
 	ataWriteByte(ATA_REG_LBAHI, (u8)((sector >> 16) & 0xFF));		// LBA 3
+	ataWriteByte(ATA_REG_LBAMID, (u8)((sector >> 8) & 0xFF));		// LBA 2
+	ataWriteByte(ATA_REG_LBALO, (u8)(sector & 0xFF));				// LBA 1
+	ataWriteByte(ATA_REG_SECCOUNT, (u8)(count & 0xFF));				// Sector count (Lo)
 
 	// Write the appropriate read command
 	ataWriteByte(ATA_REG_COMMAND, !_ata48bit ? ATA_CMD_READSECT : ATA_CMD_READSECTEXT);
@@ -270,16 +271,16 @@ static void ataWriteSectors(u32 sector, u16 count)
 		// Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
 		ataWriteByte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
 
-		ataWriteByte(ATA_REG_SECCOUNT, (u8)((count >> 8) & 0xFF));	// Sector count (Hi)
-		ataWriteByte(ATA_REG_LBALO, (u8)((sector >> 24)& 0xFF));	// LBA 4
-		ataWriteByte(ATA_REG_LBAMID, 0);							// LBA 5
 		ataWriteByte(ATA_REG_LBAHI, 0);								// LBA 6
+		ataWriteByte(ATA_REG_LBAMID, 0);							// LBA 5
+		ataWriteByte(ATA_REG_LBALO, (u8)((sector >> 24) & 0xFF));	// LBA 4
+		ataWriteByte(ATA_REG_SECCOUNT, (u8)((count >> 8) & 0xFF));	// Sector count (Hi)
 	}
 
-	ataWriteByte(ATA_REG_SECCOUNT, (u8)(count & 0xFF));				// Sector count (Lo)
-	ataWriteByte(ATA_REG_LBALO, (u8)(sector & 0xFF));				// LBA 1
-	ataWriteByte(ATA_REG_LBAMID, (u8)((sector >> 8) & 0xFF));		// LBA 2
 	ataWriteByte(ATA_REG_LBAHI, (u8)((sector >> 16) & 0xFF));		// LBA 3
+	ataWriteByte(ATA_REG_LBAMID, (u8)((sector >> 8) & 0xFF));		// LBA 2
+	ataWriteByte(ATA_REG_LBALO, (u8)(sector & 0xFF));				// LBA 1
+	ataWriteByte(ATA_REG_SECCOUNT, (u8)(count & 0xFF));				// Sector count (Lo)
 
 	// Write the appropriate write command
 	ataWriteByte(ATA_REG_COMMAND, !_ata48bit ? ATA_CMD_WRITESECT : ATA_CMD_WRITESECTEXT);
@@ -324,6 +325,7 @@ static void ata_read_queued(void)
 	uint16_t length = ata.queue[0].length;
 	uint16_t offset = ata.queue[0].offset;
 	uint32_t sector = ata.queue[0].sector;
+	uint16_t count = ata.queue[0].count;
 	bool write = ata.queue[0].write;
 
 	if (write) {
@@ -348,14 +350,14 @@ static void ata_read_queued(void)
 	}
 
 	if (sector != ata.next_sector || ata.count == 0) {
-		ata.count = 0;
-		ataReadSectors(sector, 0x100);
+		ata.count = count;
+		ataReadSectors(sector, count);
 	}
 
 	if (ataReadBuffer(sectorBuf, 0)) {
 		ata.last_sector = sector;
 		ata.next_sector = sector + 1;
-		ata.count++;
+		ata.count--;
 	} else {
 		ata.count = 0;
 		ata.queue[0].length = 0;
@@ -369,6 +371,7 @@ static void ata_done_queued(void)
 	uint16_t length = ata.queue[0].length;
 	uint16_t offset = ata.queue[0].offset;
 	uint32_t sector = ata.queue[0].sector;
+	uint16_t count = ata.queue[0].count;
 	bool write = ata.queue[0].write;
 
 	if (!write)
@@ -399,14 +402,18 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 
 bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write, frag_callback callback)
 {
+	uint16_t count;
+
 	sector = offset / SECTOR_SIZE + sector;
 	offset = offset % SECTOR_SIZE;
+	count = MIN((length + SECTOR_SIZE - 1 + offset) / SECTOR_SIZE, 0x100);
 	length = MIN(length, SECTOR_SIZE - offset);
 
 	ata.queue[ata.items].buffer = buffer;
 	ata.queue[ata.items].length = length;
 	ata.queue[ata.items].offset = offset;
 	ata.queue[ata.items].sector = sector;
+	ata.queue[ata.items].count = count;
 	ata.queue[ata.items].write = write;
 	ata.queue[ata.items].callback = callback;
 	if (ata.items++) return true;
@@ -424,6 +431,7 @@ bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_
 int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
+	u32 numSectors = MIN((len+SECTOR_SIZE-1+startByte)>>9, 0x100);
 	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);
 	
 	if(exi_selected()) {
@@ -448,8 +456,8 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 	}
 	// If we weren't just reading this sector
 	if(lba != ata.next_sector || ata.count == 0) {
-		ata.count = 0;
-		ataReadSectors(lba, 0x100);
+		ata.count = numSectors;
+		ataReadSectors(lba, numSectors);
 	}
 	if(numBytes < SECTOR_SIZE || DMA_READ) {
 		// Read half sector
@@ -470,7 +478,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 	}
 	// Save next LBA
 	ata.next_sector = lba + 1;
-	ata.count++;
+	ata.count--;
 	return numBytes;
 }
 
