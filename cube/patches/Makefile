@@ -345,7 +345,7 @@ fsp.bin:
 gcloader.bin:
 	@echo Building GCLoader Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DDVD_MATH -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DDVD_MATH -DGCODE -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DGCODE
@@ -367,7 +367,7 @@ gcloader.bin:
 gcloader.card.bin:
 	@echo Building GCLoader Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH -DGCODE -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DGCODE

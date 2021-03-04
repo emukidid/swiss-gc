@@ -411,7 +411,8 @@ static struct {
 		} reg;
 	};
 
-	uint32_t error;
+	uint32_t status :  8;
+	uint32_t error  : 24;
 	#ifdef DVD
 	int reset;
 	#endif
@@ -431,10 +432,9 @@ static void di_update_interrupts(void)
 
 void di_error(uint32_t error)
 {
-	di.error = error;
-
 	di.reg.sr |=  0b0000100;
 	di.reg.cr &= ~0b001;
+	di.error = error;
 	di_update_interrupts();
 }
 
@@ -453,12 +453,14 @@ void di_complete_transfer(void)
 void di_open_cover(void)
 {
 	di.reg.cvr |=  0b001;
+	di.status = 1;
 }
 
 void di_close_cover(void)
 {
 	di.reg.cvr &= ~0b001;
 	di.reg.cvr |=  0b100;
+	di.status = 0;
 	di_update_interrupts();
 }
 
@@ -476,25 +478,27 @@ static void di_execute_command(void)
 			uint32_t length  = di.reg.length;
 			uint32_t offset  = di.reg.cmdbuf1 << 2 & ~0x80000000;
 
-			if (!(di.reg.cvr & 0b001))
-				perform_read(address, length, offset);
+			if (di.status == 1)
+				di_error(0x023A00);
+			else if (!length)
+				di_error(0x052400);
 			else
-				di_error(0x01023A00);
+				perform_read(address, length, offset);
 			return;
 		}
 		case 0xAB:
 		{
 			uint32_t offset = di.reg.cmdbuf1 << 2 & ~0x80000000;
 
-			if (!(di.reg.cvr & 0b001))
-				perform_read(0, 0, offset);
+			if (di.status == 1)
+				di_error(0x023A00);
 			else
-				di_error(0x01023A00);
+				perform_read(0, 0, offset);
 			return;
 		}
 		case 0xE0:
 		{
-			result = di.error;
+			result = di.error | di.status << 24;
 			di.error = 0;
 			break;
 		}
@@ -552,7 +556,7 @@ static void di_execute_command(void)
 		}
 		case 0xE3:
 		{
-			if (!(di.reg.cvr & 0b001) && change_disc()) {
+			if (di.status == 0 && change_disc()) {
 				di_open_cover();
 				OSSetAlarm(&di_alarm, OSSecondsToTicks(1.5), (OSAlarmHandler)di_close_cover);
 			}
@@ -577,6 +581,13 @@ static void di_execute_command(void)
 			uint32_t address = di.reg.mar;
 			uint32_t length  = di.reg.length;
 			uint32_t offset  = di.reg.cmdbuf1 << 2;
+
+			#ifdef GCODE
+			if (!length) {
+				di_error(0x052400);
+				return;
+			}
+			#endif
 
 			switch (di.reg.cmdbuf0 & 0xC0) {
 				default:
@@ -1102,16 +1113,32 @@ static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	}
 	#endif
 
-	if (DI[0] & 0b1010100) {
+	uint32_t disr  = DI[0];
+	uint32_t dicvr = DI[1];
+
+	if (disr & 0b1010100) {
 		di.reg.cr = DI[7];
 
 		if (di.reg.cr & 0b010) {
 			di.reg.mar    = DI[5];
 			di.reg.length = DI[6];
-		} else {
+		} else
 			di.reg.immbuf = DI[8];
+	}
+
+	#ifdef GCODE
+	if (disr & 0b0010000) {
+		switch (di.reg.cmdbuf0 >> 24) {
+			case 0xE0:
+			{
+				if (!(di.reg.immbuf & 0xFFFFFF))
+					di.reg.immbuf = di.error | (di.reg.immbuf & ~0xFFFFFF);
+				di.error = 0;
+				break;
+			}
 		}
 	}
+	#endif
 
 	dispatch_interrupt(interrupt, context);
 }
