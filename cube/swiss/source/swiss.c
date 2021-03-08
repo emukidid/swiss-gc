@@ -1596,7 +1596,7 @@ void load_game() {
 		setTopAddr(WIIRD_ENGINE);
 	}
 	else {
-		setTopAddr(0x81800000 - 8);
+		setTopAddr(0x81800000);
 	}
 	
 	int numToPatch = 0;

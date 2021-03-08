@@ -88,6 +88,8 @@ void *installPatch(int patchId) {
 		default:
 			break;
 	}
+	if (top_addr == 0x81800000)
+		top_addr -= 8;
 	top_addr -= patchSize;
 	patchLocation = memcpy((void*)top_addr, patchLocation, patchSize);
 	DCFlushRange(patchLocation, patchSize);
@@ -10143,6 +10145,27 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 		}
+	} else if (!strncmp(gameID, "GH9P52", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3420832:
+				// Use debug monitor address instead of 0x81800000/0x83000000.
+				*(u32 *)(data + 0x80014270 - 0x800034A0 + 0x4A0) = 0x3BCD9B18;
+				*(u32 *)(data + 0x80014274 - 0x800034A0 + 0x4A0) = 0x3D208000;
+				*(u32 *)(data + 0x80014278 - 0x800034A0 + 0x4A0) = 0x807E000C;
+				*(u32 *)(data + 0x8001427C - 0x800034A0 + 0x4A0) = 0x38800004;
+				*(u32 *)(data + 0x80014280 - 0x800034A0 + 0x4A0) = 0x83A900EC;
+				*(u32 *)(data + 0x80014284 - 0x800034A0 + 0x4A0) = 0x1C63000C;
+				*(u32 *)(data + 0x800142D8 - 0x800034A0 + 0x4A0) = 0x7FC0E850;
+				
+				*(u32 *)(data + 0x8001454C - 0x800034A0 + 0x4A0) = 0x3D208000;
+				*(u32 *)(data + 0x80014550 - 0x800034A0 + 0x4A0) = 0x7C7D1B78;
+				*(u32 *)(data + 0x80014554 - 0x800034A0 + 0x4A0) = 0x838900EC;
+				*(u32 *)(data + 0x800145A0 - 0x800034A0 + 0x4A0) = 0x7F83E378;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
 	} else if (!strncmp(gameID, "GPOE8P", 6) && (dataType == PATCH_DOL || dataType == PATCH_DOL_PRS)) {
 		switch (length) {
 			case 204480:
@@ -10507,6 +10530,27 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80155A68 - 0x80014140 + 0x2620) = 0x38C00000;
 				*(u32 *)(data + 0x80155A6C - 0x80014140 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80155A70 - 0x80014140 + 0x2620) = branchAndLink((u32 *)0x801996B8, (u32 *)0x80155A70);
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GWJE52", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3420512:
+				// Use debug monitor address instead of 0x81800000/0x83000000.
+				*(u32 *)(data + 0x80014270 - 0x800034A0 + 0x4A0) = 0x3BCD9B08;
+				*(u32 *)(data + 0x80014274 - 0x800034A0 + 0x4A0) = 0x3D208000;
+				*(u32 *)(data + 0x80014278 - 0x800034A0 + 0x4A0) = 0x807E000C;
+				*(u32 *)(data + 0x8001427C - 0x800034A0 + 0x4A0) = 0x38800004;
+				*(u32 *)(data + 0x80014280 - 0x800034A0 + 0x4A0) = 0x83A900EC;
+				*(u32 *)(data + 0x80014284 - 0x800034A0 + 0x4A0) = 0x1C63000C;
+				*(u32 *)(data + 0x800142D8 - 0x800034A0 + 0x4A0) = 0x7FC0E850;
+				
+				*(u32 *)(data + 0x8001454C - 0x800034A0 + 0x4A0) = 0x3D208000;
+				*(u32 *)(data + 0x80014550 - 0x800034A0 + 0x4A0) = 0x7C7D1B78;
+				*(u32 *)(data + 0x80014554 - 0x800034A0 + 0x4A0) = 0x838900EC;
+				*(u32 *)(data + 0x800145A0 - 0x800034A0 + 0x4A0) = 0x7F83E378;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
