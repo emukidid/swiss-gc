@@ -314,6 +314,7 @@ static void exi_write(unsigned index, uint32_t value)
 
 static struct {
 	adpcm_t adpcm;
+	fifo_t fifo;
 
 	bool reading;
 	bool flushing;
@@ -337,10 +338,7 @@ static struct {
 #ifdef DTK
 static void dtk_decode_buffer(void *address, uint32_t length)
 {
-	sample_t stream[448];
-
-	adpcm_decode(&dtk.adpcm, stream, *dtk.buffer, 448);
-	fifo_write(stream, sizeof(stream));
+	adpcm_decode(&dtk.adpcm, &dtk.fifo, *dtk.buffer, 448);
 	dtk.current.position += sizeof(*dtk.buffer);
 
 	if (dtk.current.position == dtk.current.start + dtk.current.length) {
@@ -363,7 +361,7 @@ bool dtk_fill_buffer(void)
 		return true;
 	if (!dtk.playing)
 		return false;
-	if (fifo_space() < 448 * sizeof(sample_t))
+	if (fifo_space(&dtk.fifo) < 448 * sizeof(sample_t))
 		return false;
 
 	#ifdef ASYNC_READ
@@ -537,7 +535,7 @@ static void di_execute_command(void)
 					dtk.flushing = dtk.reading;
 
 					adpcm_reset(&dtk.adpcm);
-					fifo_reset();
+					fifo_reset(&dtk.fifo);
 					#endif
 					break;
 				}
@@ -759,23 +757,7 @@ static void dsp_write(unsigned index, uint16_t value)
 				uint32_t aicr = AI[0];
 				uint32_t aivr = AI[1];
 
-				if (aicr & 0b0000001) {
-					if (aicr & 0b1000000) {
-						sample_t stream[count * 3 / 2];
-
-						if (fifo_size() >= sizeof(stream)) {
-							fifo_read(stream, sizeof(stream));
-							mix_samples(buffer, stream, true, count, aivr, aivr >> 8);
-						}
-					} else {
-						sample_t stream[count];
-
-						if (fifo_size() >= sizeof(stream)) {
-							fifo_read(stream, sizeof(stream));
-							mix_samples(buffer, stream, false, count, aivr, aivr >> 8);
-						}
-					}
-				}
+				if (aicr & 0b0000001) mix_samples(buffer, &dtk.fifo, count, aicr & 0b1000000, aivr, aivr >> 8);
 
 				DSP[12] = (intptr_t)buffer;
 				DSP[13] = ((length >> 5) & 0x7FFF) | 0x8000;
@@ -1053,7 +1035,7 @@ void init(void **arenaLo, void **arenaHi)
 	*arenaHi -= sizeof(*dsp.buffer[0]); dsp.buffer[0] = OSCachedToUncached(*arenaHi);
 	*arenaHi -= sizeof(*dsp.buffer[1]); dsp.buffer[1] = OSCachedToUncached(*arenaHi);
 	*arenaHi -= sizeof(*dtk.buffer); dtk.buffer = *arenaHi;
-	*arenaHi -= 7168; fifo_init(*arenaHi, 7168);
+	*arenaHi -= 7168; fifo_init(&dtk.fifo, *arenaHi, 7168);
 	#endif
 }
 

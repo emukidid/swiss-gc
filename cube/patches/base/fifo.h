@@ -20,11 +20,17 @@
 #ifndef FIFO_H
 #define FIFO_H
 
-void fifo_init(void *buffer, int length);
-void fifo_reset(void);
-int fifo_space(void);
-int fifo_size(void);
-void fifo_read(void *buffer, int length);
-void fifo_write(void *buffer, int length);
+typedef struct {
+	int used, size;
+	void *start_ptr, *end_ptr;
+	void *read_ptr, *write_ptr;
+} fifo_t;
+
+void fifo_init(fifo_t *fifo, void *buffer, int size);
+void fifo_reset(fifo_t *fifo);
+int fifo_space(fifo_t *fifo);
+int fifo_size(fifo_t *fifo);
+void fifo_read(fifo_t *fifo, void *buffer, int length);
+void fifo_write(fifo_t *fifo, void *buffer, int length);
 
 #endif /* FIFO_H */
