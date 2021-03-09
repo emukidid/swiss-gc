@@ -128,7 +128,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 228, "meneerbeer, Dan Kunz, Heather Kent, Joshua Witt, Filyx20, SubElement, KirovAir", 0.60f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 246, "Cristofer Cruz, LemonMeringueTy, badsector, Fernando Avelino, RamblingOkie", 0.60f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 264, "Kory, Lindh0lm154, Alex Mitchell, Haymose", 0.60f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 292, "Extra Greetz: FIX94, megalomaniac, sepp256, StreetWal", 0.60f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 292, "Extra Greetz: FIX94, megalomaniac, sepp256, novenary", 0.60f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(110, 318, "Web/Support", 0.64f, false, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(410, 318, "Source/Updates", 0.64f, false, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(85, 334, "www.gc-forever.com", 0.64f, false, defaultColor));

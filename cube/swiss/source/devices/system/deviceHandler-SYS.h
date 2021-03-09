@@ -1,6 +1,6 @@
 /* deviceHandler-SYS.h
         - virtual device interface for dumping ROMs
-        by Streetwalrus
+        by novenary
  */
 
 #ifndef DEVICE_HANDLER_SYS_H
