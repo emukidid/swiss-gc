@@ -313,8 +313,11 @@ static void exi_write(unsigned index, uint32_t value)
 #endif
 
 static struct {
+	#ifdef DTK
 	adpcm_t adpcm;
 	fifo_t fifo;
+	uint8_t (*buffer)[512];
+	#endif
 
 	bool reading;
 	bool flushing;
@@ -331,8 +334,6 @@ static struct {
 		uint32_t start;
 		uint32_t length;
 	} next;
-
-	uint8_t (*buffer)[512];
 } dtk = {0};
 
 #ifdef DTK
