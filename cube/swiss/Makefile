@@ -7,10 +7,15 @@ ifeq ($(strip $(DEVKITPPC)),)
 $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC")
 endif
 
+include $(DEVKITPPC)/base_rules
+
+PORTLIBS	:=	$(PORTLIBS_PATH)/gamecube $(PORTLIBS_PATH)/ppc
+
+export PATH	:=	$(PORTLIBS_PATH)/gamecube/bin:$(PORTLIBS_PATH)/ppc/bin:$(PATH)
+
 export	LIBOGC_INC	:=	$(DEVKITPRO)/libogc/include
 export	LIBOGC_LIB	:=	$(DEVKITPRO)/libogc/lib/cube
 
-include $(DEVKITPPC)/base_rules
 
 MACHDEP =  -DGEKKO -mvgc -mcpu=750 -meabi -mhard-float
 
@@ -53,7 +58,6 @@ SOURCES		:=  source \
               source/aram \
 			  source/gui \
 			  source/config \
-			  source/crc32 \
               source/devices \
               source/devices/system \
               source/devices/dvd \
@@ -96,13 +100,13 @@ LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x80003
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lbba -logc -lm -lfat -lmad -lasnd -lm -logc -ltinysmb -ldb 
+LIBS	:=	-lbba -logc -lm -lfat -lmad -lasnd -lm -logc -ltinysmb -ldb -lz
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=
+LIBDIRS	:= $(PORTLIBS)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -155,8 +159,7 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 #---------------------------------------------------------------------------------
 # build a list of library paths
 #---------------------------------------------------------------------------------
-export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
-			-L$(LIBOGC_LIB)
+export LIBPATHS	:=	-L$(LIBOGC_LIB) $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 .PHONY: $(BUILD) clean

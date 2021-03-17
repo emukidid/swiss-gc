@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <time.h>
+#include <zlib.h>
 
 #include "swiss.h"
 #include "main.h"
@@ -40,7 +41,6 @@
 #include "cheats.h"
 #include "settings.h"
 #include "aram/sidestep.h"
-#include "crc32/crc32.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
@@ -815,7 +815,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		read_rom_ipl_clear(0x820,buffer,sizeToRead);
 		
 		// Guess BS2's size
-		u32 crc = Crc32_ComputeBuf(0, buffer, sizeToRead);
+		u32 crc = crc32(0, buffer, sizeToRead);
 		switch(crc) {
 			case 0xE4274F2A: sizeToRead = 1435168; break;	// NTSC Revision 1.0
 			case 0x46FB458C: sizeToRead = 1583056; break;	// NTSC Revision 1.1

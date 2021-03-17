@@ -15,14 +15,11 @@
 #include "cheats.h"
 #include "patcher.h"
 #include "sidestep.h"
-#include "crc32/crc32.h"
-#include "psoarchive/PRS.h"
 #include "devices/deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
-#include "../../reservedarea.h"
-#include <sys/stat.h>
-#include <errno.h>
+#include "psoarchive/PRS.h"
+#include <zlib.h>
 
 #define FST_ENTRY_SIZE 12
 
@@ -599,7 +596,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			patchInfo[0] = filesToPatch[i].offset;
 			patchInfo[1] = filesToPatch[i].size;
 			patchInfo[2] = SWISS_MAGIC;
-			patchInfo[3] = Crc32_ComputeBuf(0, buffer, sizeToRead);
+			patchInfo[3] = crc32(0, buffer, sizeToRead);
 
 			// See if this file already exists, if it does, match crc
 			if(!devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0)) {
