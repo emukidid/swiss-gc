@@ -185,8 +185,8 @@ enum patchIds {
 /* Types of files we may patch */
 enum patchTypes {
 	PATCH_APPLOADER = 0,
+	PATCH_BS2,
 	PATCH_DOL,
-	PATCH_DOL_APPLOADER,
 	PATCH_DOL_PRS,
 	PATCH_ELF,
 	PATCH_OTHER,

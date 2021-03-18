@@ -9738,7 +9738,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 			}
 			addr_start += 4;
 		}
-	} else if (dataType == PATCH_APPLOADER) {
+	} else if (dataType == PATCH_BS2) {
 		switch (length) {
 			case 1435168:
 				// __VIInit(newmode->viTVMode & ~0x3);
@@ -12940,7 +12940,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 }
 
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
-	if(dataType == PATCH_DOL || dataType == PATCH_DOL_APPLOADER || dataType == PATCH_DOL_PRS) {
+	if(dataType == PATCH_DOL || dataType == PATCH_DOL_PRS) {
 		int i;
 		DOLHEADER *hdr = (DOLHEADER *) data;
 
@@ -12993,6 +12993,25 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 		}
 	}
 	else if(dataType == PATCH_APPLOADER) {
+		u32 offset = sizeof(ApploaderHeader);
+		ApploaderHeader *apploaderHeader = (ApploaderHeader *) data;
+
+		if(offsetFoundAt >= offset && offsetFoundAt < offset + apploaderHeader->size) {
+			return (void*)(offsetFoundAt+0x81200000-offset);
+		}
+		else if(apploaderHeader->rebootSize) {
+			offset += apploaderHeader->size;
+
+			if(strncmp(apploaderHeader->date, "2004/02/01", 10) < 0) {
+				if(offsetFoundAt >= offset && offsetFoundAt < offset + apploaderHeader->rebootSize)
+					return (void*)(offsetFoundAt+0x81300000-offset);
+			}
+			else {
+				return Calc_ProperAddress(data + offset, PATCH_DOL, offsetFoundAt - offset);
+			}
+		}
+	}
+	else if(dataType == PATCH_BS2) {
 		if(offsetFoundAt < 0x1AF6E0)
 			return (void*)(offsetFoundAt+0x81300000);
 	}
@@ -13000,7 +13019,7 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 }
 
 void *Calc_Address(void *data, int dataType, u32 properAddress) {
-	if(dataType == PATCH_DOL || dataType == PATCH_DOL_APPLOADER || dataType == PATCH_DOL_PRS) {
+	if(dataType == PATCH_DOL || dataType == PATCH_DOL_PRS) {
 		int i;
 		DOLHEADER *hdr = (DOLHEADER *) data;
 
@@ -13053,6 +13072,25 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 		}	
 	}
 	else if(dataType == PATCH_APPLOADER) {
+		u32 offset = sizeof(ApploaderHeader);
+		ApploaderHeader *apploaderHeader = (ApploaderHeader *) data;
+
+		if(properAddress >= 0x81200000 && properAddress < 0x81200000 + apploaderHeader->size) {
+			return data+properAddress-0x81200000+offset;
+		}
+		else if(apploaderHeader->rebootSize) {
+			offset += apploaderHeader->size;
+
+			if(strncmp(apploaderHeader->date, "2004/02/01", 10) < 0) {
+				if(properAddress >= 0x81300000 && properAddress < 0x81300000 + apploaderHeader->rebootSize)
+					return data+properAddress-0x81300000+offset;
+			}
+			else {
+				return Calc_Address(data + offset, PATCH_DOL, properAddress);
+			}
+		}
+	}
+	else if(dataType == PATCH_BS2) {
 		if(properAddress >= 0x81300000 && properAddress < 0x814AF6E0)
 			return data+properAddress-0x81300000;
 	}
@@ -13061,7 +13099,7 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 
 // Ocarina cheat engine hook - Patch OSSleepThread
 int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
-	if(type == PATCH_APPLOADER || type == PATCH_DOL_APPLOADER)
+	if(type == PATCH_APPLOADER || type == PATCH_BS2)
 		return 0;
 
 	int i;

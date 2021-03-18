@@ -807,7 +807,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		
 		// Read BS2
 		sizeToRead = 0x1AFF00-0x820;
-		type = PATCH_APPLOADER;
+		type = PATCH_BS2;
 		buffer = memalign(32,sizeToRead);
 		if(!buffer) {
 			return 0;
@@ -1022,7 +1022,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		print_gecko("set size\r\n");
 		sdgecko_setPageSize(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2), 512);
 	}
-	if(type == PATCH_APPLOADER) {
+	if(type == PATCH_BS2) {
 		BINtoARAM(buffer, sizeToRead, 0x81300000);
 	}
 	else if(type == PATCH_DOL) {

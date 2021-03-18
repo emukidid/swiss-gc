@@ -205,20 +205,18 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 	if(!FST) return -1;
 
 	// Patch the apploader too!
-	// Calc Apploader trailer size
-	u32 appldr_info[8];
+	// Calc Apploader size
+	ApploaderHeader apploaderHeader;
 	devices[DEVICE_CUR]->seekFile(file,0x2440,DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(file,&appldr_info,32) != 32) {
-		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Apploader info"));
+	if(devices[DEVICE_CUR]->readFile(file,&apploaderHeader,sizeof(ApploaderHeader)) != sizeof(ApploaderHeader)) {
+		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Apploader Header"));
 		while(1);
 	}
-	if(appldr_info[6] != 0) {
-		filesToPatch[numFiles].size = appldr_info[6];
-		filesToPatch[numFiles].offset = appldr_info[5] + 0x2460;
-		filesToPatch[numFiles].type = appldr_info[0] == 0x32303034 ? PATCH_DOL_APPLOADER:PATCH_APPLOADER;
-		sprintf(filesToPatch[numFiles].name, "Apploader Trailer");
-		numFiles++;
-	}
+	filesToPatch[numFiles].size = sizeof(ApploaderHeader) + apploaderHeader.size + apploaderHeader.rebootSize;
+	filesToPatch[numFiles].offset = 0x2440;
+	filesToPatch[numFiles].type = PATCH_APPLOADER;
+	sprintf(filesToPatch[numFiles].name, "apploader.img");
+	numFiles++;
 
 	if(GCMDisk.DOLOffset != 0) {
 		// Multi-DOL games may re-load the main DOL, so make sure we patch it too.
@@ -232,7 +230,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		filesToPatch[numFiles].offset = dolOffset = GCMDisk.DOLOffset;
 		filesToPatch[numFiles].size = dolSize = DOLSize(&dolhdr);
 		filesToPatch[numFiles].type = PATCH_DOL;
-		sprintf(filesToPatch[numFiles].name, "Main DOL");
+		sprintf(filesToPatch[numFiles].name, "default.dol");
 		numFiles++;
 	}
 
@@ -286,7 +284,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 			if(strstr(filename,"execD.img")) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
-				filesToPatch[numFiles].type = PATCH_APPLOADER;
+				filesToPatch[numFiles].type = PATCH_BS2;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
@@ -304,8 +302,8 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 	}
 	free(FST);
 	
-	// This need to be last so the monitor size can be determined.
-	if(numFiles > 0) {
+	// This need to be last so the debug monitor size can be determined.
+	if(GCMDisk.DOLOffset != 0) {
 		filesToPatch[numFiles].offset = 0x440;
 		filesToPatch[numFiles].size = 0x2000;
 		filesToPatch[numFiles].type = PATCH_OTHER;
@@ -360,7 +358,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 	filesToPatch[numFiles].tgcFileStartArea = fileAreaStart;
 	filesToPatch[numFiles].tgcFakeOffset = fakeAmount;
 	filesToPatch[numFiles].type = PATCH_DOL;
-	sprintf(&filesToPatch[numFiles].name[0], "%s Main DOL", tgcname);
+	sprintf(filesToPatch[numFiles].name, "%s/%s", tgcname, "default.dol");
 	numFiles++;
 
  	// Alloc and read FST
@@ -415,7 +413,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 			if(strstr(filename,"execD.img")) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
-				filesToPatch[numFiles].type = PATCH_APPLOADER;
+				filesToPatch[numFiles].type = PATCH_BS2;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
