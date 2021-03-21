@@ -173,14 +173,12 @@ enum patchIds {
 
 /* Function jump locations for the hypervisor */
 #define INIT			(u32 *)(LO_RESERVE + 0x104)
-#define EXI_PROBE		(u32 *)(LO_RESERVE + 0x108)
-#define EXI_TRY_LOCK	(u32 *)(LO_RESERVE + 0x10C)
-#define SET_IRQ_HANDLER	(u32 *)(LO_RESERVE + 0x110)
-#define MASK_IRQ		(u32 *)(LO_RESERVE + 0x114)
-#define UNMASK_IRQ		(u32 *)(LO_RESERVE + 0x118)
-#define IDLE_THREAD		(u32 *)(LO_RESERVE + 0x11C)
-#define CHECK_PAD		(u32 *)(LO_RESERVE + 0x120)
-#define FINI			(u32 *)(LO_RESERVE + 0x124)
+#define SET_IRQ_HANDLER	(u32 *)(LO_RESERVE + 0x108)
+#define MASK_IRQ		(u32 *)(LO_RESERVE + 0x10C)
+#define UNMASK_IRQ		(u32 *)(LO_RESERVE + 0x110)
+#define IDLE_THREAD		(u32 *)(LO_RESERVE + 0x114)
+#define CHECK_PAD		(u32 *)(LO_RESERVE + 0x118)
+#define FINI			(u32 *)(LO_RESERVE + 0x11C)
 
 /* Types of files we may patch */
 enum patchTypes {

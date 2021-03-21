@@ -88,13 +88,6 @@ trace_exception:
 	.globl _start
 _start:
 	b		init
-#ifdef CARD_EMULATOR
-	trap
-	trap
-#else
-	b		exi_probe
-	b		exi_try_lock
-#endif
 	b		set_irq_handler
 	b		mask_irq
 	b		unmask_irq

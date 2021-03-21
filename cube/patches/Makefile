@@ -67,7 +67,7 @@ sd.bin:
 
 sd.card.bin:
 	@echo Building SD Patch + CARD ...
-	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
+	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -124,7 +124,7 @@ ideexi-v1.bin:
 
 ideexi-v1.card.bin:
 	@echo Building IDE-EXI-v1 Patch + CARD ...
-	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
+	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -180,7 +180,7 @@ ideexi-v2.bin:
 
 ideexi-v2.card.bin:
 	@echo Building IDE-EXI-v2 Patch + CARD ...
-	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
+	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -235,7 +235,7 @@ dvd.bin:
 
 dvd.card.bin:
 	@echo Building DVD Patch + CARD ...
-	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
+	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH -DDVD -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -288,7 +288,7 @@ wkf.bin:
 
 wkf.card.bin:
 	@echo Building WKF Patch + CARD ...
-	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
+	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DISR -DWKF
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -366,7 +366,7 @@ gcloader.bin:
 
 gcloader.card.bin:
 	@echo Building GCLoader Patch + CARD ...
-	@$(CC) -Os $(OPTS) -c base/base.S -DCARD_EMULATOR
+	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH -DGCODE -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c

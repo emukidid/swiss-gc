@@ -310,6 +310,52 @@ static void exi_write(unsigned index, uint32_t value)
 			break;
 	}
 }
+#else
+static void exi_read(unsigned index, uint32_t *value)
+{
+	unsigned chan = index / 5;
+
+	switch (index) {
+		case 0:
+		case 5:
+			if (chan == *VAR_EXI_SLOT)
+				*value = EXI[chan][0] & ~0b01000000000000;
+			else
+				*value = EXI[chan][0];
+			break;
+		default:
+			*value = (*EXI)[index];
+	}
+}
+
+static void exi_write(unsigned index, uint32_t value)
+{
+	unsigned chan = index / 5;
+	unsigned dev = (EXI[chan][0] >> 7) & 0b111;
+	unsigned dev2;
+
+	switch (index % 5) {
+		case 0:
+			dev2 = (value >> 7) & 0b111;
+
+			if (~dev & dev2) {
+				#ifdef BBA
+				if (chan == EXI_CHANNEL_0 && (dev2 & (1 << EXI_DEVICE_2)))
+					value &= ~0b00001110000000;
+				#endif
+				if (chan == *VAR_EXI_SLOT) {
+					if (dev2 & (1 << EXI_DEVICE_0))
+						value &= ~0b00001110000000;
+					end_read();
+				}
+			}
+
+			EXI[chan][0] = value;
+			break;
+		default:
+			(*EXI)[index] = value;
+	}
+}
 #endif
 
 static struct {
@@ -878,12 +924,10 @@ static bool ppc_load32(uint32_t address, uint32_t *value)
 		di_read((address >> 2) & 0xF, value);
 		return true;
 	}
-	#ifdef CARD_EMULATOR
 	if ((address & ~0x3FC) == 0x0C006800) {
 		exi_read((address >> 2) & 0xF, value);
 		return true;
 	}
-	#endif
 	return false;
 }
 
@@ -897,12 +941,10 @@ static bool ppc_store32(uint32_t address, uint32_t value)
 		di_write((address >> 2) & 0xF, value);
 		return true;
 	}
-	#ifdef CARD_EMULATOR
 	if ((address & ~0x3FC) == 0x0C006800) {
 		exi_write((address >> 2) & 0xF, value);
 		return true;
 	}
-	#endif
 	return false;
 }
 
@@ -931,7 +973,6 @@ static bool ppc_step(ppc_context_t *context)
 	uint32_t opcode = *(uint32_t *)context->srr0;
 
 	switch (opcode >> 26) {
-		#ifdef CARD_EMULATOR
 		case 31:
 		{
 			switch ((opcode >> 1) & 0x3FF) {
@@ -952,7 +993,6 @@ static bool ppc_step(ppc_context_t *context)
 			}
 			break;
 		}
-		#endif
 		case 32:
 		{
 			int rd = (opcode >> 21) & 0x1F;
@@ -1039,34 +1079,6 @@ void init(void **arenaLo, void **arenaHi)
 	*arenaHi -= 7168; fifo_init(&dtk.fifo, *arenaHi, 7168);
 	#endif
 }
-
-#ifndef CARD_EMULATOR
-bool exi_probe(int32_t chan)
-{
-	if (chan == EXI_CHANNEL_2)
-		return false;
-	if (chan == *VAR_EXI_SLOT)
-		return false;
-
-	return true;
-}
-
-bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
-{
-	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
-		return false;
-	#ifdef BBA
-	if (chan == EXI_CHANNEL_0 && dev == EXI_DEVICE_2)
-		return false;
-	#endif
-	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
-		return false;
-	if (chan == *VAR_EXI_SLOT)
-		end_read();
-
-	return true;
-}
-#endif
 
 static void dispatch_interrupt(OSInterrupt interrupt, OSContext *context)
 {
