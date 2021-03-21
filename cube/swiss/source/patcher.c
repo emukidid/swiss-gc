@@ -5197,16 +5197,25 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						data[i +   3] = 0x3C800C00;	// lis		r4, 0x0C00
 						data[i +  31] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i + 110] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 113] = 0x80640010;	// lwz		r3, 0x0010 (r4)
+						data[i + 117] = 0x80640010;	// lwz		r3, 0x0010 (r4)
+						data[i + 121] = 0x80640010;	// lwz		r3, 0x0010 (r4)
 						break;
 					case 10:
 						data[i +  10] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i +  32] = 0x3C800C00;	// lis		r4, 0x0C00
 						data[i + 110] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 113] = 0x80640010;	// lwz		r3, 0x0010 (r4)
+						data[i + 117] = 0x80640010;	// lwz		r3, 0x0010 (r4)
+						data[i + 121] = 0x80640010;	// lwz		r3, 0x0010 (r4)
 						break;
 					case 11:
 						data[i +  10] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i +  32] = 0x3C800C00;	// lis		r4, 0x0C00
 						data[i + 115] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 118] = 0x80640010;	// lwz		r3, 0x0010 (r4)
+						data[i + 122] = 0x80640010;	// lwz		r3, 0x0010 (r4)
+						data[i + 126] = 0x80640010;	// lwz		r3, 0x0010 (r4)
 						break;
 				}
 			}

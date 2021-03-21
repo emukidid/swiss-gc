@@ -1000,15 +1000,6 @@ static bool ppc_step(ppc_context_t *context)
 			short d = opcode & 0xFFFF;
 			return ppc_load32(context->gpr[ra] + d, &context->gpr[rd]);
 		}
-		#ifdef CARD_EMULATOR
-		case 33:
-		{
-			int rd = (opcode >> 21) & 0x1F;
-			int ra = (opcode >> 16) & 0x1F;
-			short d = opcode & 0xFFFF;
-			return ppc_load32(context->gpr[ra] += d, &context->gpr[rd]);
-		}
-		#endif
 		case 36:
 		{
 			int rs = (opcode >> 21) & 0x1F;
