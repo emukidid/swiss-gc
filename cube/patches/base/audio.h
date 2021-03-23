@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "fifo.h"
 
 typedef struct {
 	int32_t l[2];
@@ -34,8 +35,8 @@ typedef struct {
 } sample_t;
 
 void adpcm_reset(adpcm_t *adpcm);
-void adpcm_decode(adpcm_t *adpcm, sample_t *out, uint8_t *in, int count);
+void adpcm_decode(adpcm_t *adpcm, fifo_t *out, uint8_t *in, int count);
 
-void mix_samples(volatile sample_t *out, sample_t *in, bool _3to2, int count, uint8_t volume_l, uint8_t volume_r);
+void mix_samples(volatile sample_t *out, fifo_t *in, int count, bool _3to2, uint8_t volume_l, uint8_t volume_r);
 
 #endif /* AUDIO_H */

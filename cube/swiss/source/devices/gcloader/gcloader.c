@@ -13,6 +13,7 @@
 #include <debug.h>
 #include <ogc/exi.h>
 #include <gcloader.h>
+#include <malloc.h>
 #include "main.h"
 #include "swiss.h"
 #include "gui/FrameBufferMagic.h"
@@ -36,6 +37,29 @@ u32 __gcloaderCmdImm(unsigned int cmd, unsigned int p1, unsigned int p2) {
 
 u32 gcloaderReadId() {
 	return __gcloaderCmdImm(0xB0000000, 0x00000000, 0x00000000);
+}
+
+char *gcloaderGetVersion() {
+	int len = (__gcloaderCmdImm(0xB1000001, 0x00000000, 0x00000000)+31)&~31;
+	if(len <= 0) {
+		return NULL;
+	}
+	char *buffer = memalign(32, len);
+	if(!buffer) {
+		return NULL;
+	}
+	gcloader[2] = 0xB1000000;
+	gcloader[3] = 0;
+	gcloader[4] = 0;
+	gcloader[5] = (u32)buffer;
+	gcloader[6] = len;
+	gcloader[7] = 3; // DMA | START
+	DCInvalidateRange(buffer, len);
+
+	while(gcloader[7] & 1);
+
+	buffer[len-1] = '\0';
+	return buffer;
 }
 
 void gcloaderWriteFrags(u32 discNum, vu32 *fragList, u32 totFrags) {

@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2021, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -21,9 +21,10 @@
 #define EMULATOR_CARD_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 uint8_t card_imm(unsigned chan, uint8_t data);
-void card_dma(unsigned chan, uint32_t address, uint32_t length, int type);
+bool card_dma(unsigned chan, uint32_t address, uint32_t length, int type);
 void card_select(unsigned chan);
 void card_deselect(unsigned chan);
 

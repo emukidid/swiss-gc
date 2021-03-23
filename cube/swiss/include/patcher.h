@@ -22,10 +22,14 @@ extern u8 stub_bin[];
 extern u32 stub_bin_size;
 extern u8 ideexi_v1_bin[];
 extern u32 ideexi_v1_bin_size;
+extern u8 ideexi_v1_card_bin[];
+extern u32 ideexi_v1_card_bin_size;
 extern u8 ideexi_v1_dtk_bin[];
 extern u32 ideexi_v1_dtk_bin_size;
 extern u8 ideexi_v2_bin[];
 extern u32 ideexi_v2_bin_size;
+extern u8 ideexi_v2_card_bin[];
+extern u32 ideexi_v2_card_bin_size;
 extern u8 ideexi_v2_dtk_bin[];
 extern u32 ideexi_v2_dtk_bin_size;
 extern u8 sd_bin[];
@@ -169,20 +173,18 @@ enum patchIds {
 
 /* Function jump locations for the hypervisor */
 #define INIT			(u32 *)(LO_RESERVE + 0x104)
-#define EXI_PROBE		(u32 *)(LO_RESERVE + 0x108)
-#define EXI_TRY_LOCK	(u32 *)(LO_RESERVE + 0x10C)
-#define SET_IRQ_HANDLER	(u32 *)(LO_RESERVE + 0x110)
-#define MASK_IRQ		(u32 *)(LO_RESERVE + 0x114)
-#define UNMASK_IRQ		(u32 *)(LO_RESERVE + 0x118)
-#define IDLE_THREAD		(u32 *)(LO_RESERVE + 0x11C)
-#define CHECK_PAD		(u32 *)(LO_RESERVE + 0x120)
-#define FINI			(u32 *)(LO_RESERVE + 0x124)
+#define SET_IRQ_HANDLER	(u32 *)(LO_RESERVE + 0x108)
+#define MASK_IRQ		(u32 *)(LO_RESERVE + 0x10C)
+#define UNMASK_IRQ		(u32 *)(LO_RESERVE + 0x110)
+#define IDLE_THREAD		(u32 *)(LO_RESERVE + 0x114)
+#define CHECK_PAD		(u32 *)(LO_RESERVE + 0x118)
+#define FINI			(u32 *)(LO_RESERVE + 0x11C)
 
 /* Types of files we may patch */
 enum patchTypes {
 	PATCH_APPLOADER = 0,
+	PATCH_BS2,
 	PATCH_DOL,
-	PATCH_DOL_APPLOADER,
 	PATCH_DOL_PRS,
 	PATCH_ELF,
 	PATCH_OTHER,
@@ -203,6 +205,8 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType);
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt);
 void *Calc_Address(void *data, int dataType, u32 properAddress);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);
+void setTopAddr(u32 addr);
+u32 getTopAddr();
 int install_code(int final);
 
 

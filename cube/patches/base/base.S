@@ -23,22 +23,25 @@ dsi_exception_vector:
 	mtsprg	0, r4
 	mtsprg	1, r5
 	mtsprg	2, r6
-	mfsrr1	r6
 	mfcr	r4
-	extrwi.	r5, r6, 1, 29
-	rlwinm	r6, r6, 0, 30, 28
-	bne		1f
-	mtcr	r4
+	mfdar	r5
+	rlwinm	r6, r5, 16, 16, 31
+	rlwinm	r5, r5, 16, 16, 23
+	cmplwi	cr0, r5, 0x0800
+	cmplwi	cr1, r6, 0x0C00
+	beq		cr1, 1f
+	bne		cr0, 2f
+1:	mtcr	r4
+	mfsrr0	r5
+	mfsrr1	r6
+	mfmsr	r4
+	ori		r4, r4, 0x30
+	mtsrr1	r4
 	lis		r4, dsi_exception_handler@ha
 	addi	r4, r4, dsi_exception_handler@l
-	mfsrr0	r5
 	mtsrr0	r4
-	mfmsr	r4
-	ori		r4, r4, 0x34
-	mtsrr1	r4
 	rfi
-1:	mtcr	r4
-	mtsrr1	r6
+2:	mtcr	r4
 	mfsprg	r6, 2
 	mfsprg	r5, 1
 	mfsprg	r4, 0
@@ -85,13 +88,6 @@ trace_exception:
 	.globl _start
 _start:
 	b		init
-#ifdef CARD_EMULATOR
-	trap
-	trap
-#else
-	b		exi_probe
-	b		exi_try_lock
-#endif
 	b		set_irq_handler
 	b		mask_irq
 	b		unmask_irq

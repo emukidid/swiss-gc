@@ -57,6 +57,33 @@ typedef struct {
 } DiskHeader __attribute__((aligned(32)));
 
 typedef struct {
+	char date[16];
+	u32 entry;
+	u32 size;
+	u32 rebootSize;
+	u32 reserved;
+} ApploaderHeader __attribute__((aligned(32)));
+
+typedef struct {
+	u32 magic;
+	u32 version;
+	u32 headerStart;
+	u32 headerLength;
+	u32 fstStart;
+	u32 fstLength;
+	u32 fstMaxLength;
+	u32 dolStart;
+	u32 dolLength;
+	u32 userStart;
+	u32 userLength;
+	u32 bannerStart;
+	u32 bannerLength;
+	u32 gcmUserStart;
+	u32 apploaderOffset;
+	u32 reserved;
+} TGCHeader __attribute__((aligned(32)));
+
+typedef struct {
 	u32 offset;
 	u32 size;
 	char name[256];

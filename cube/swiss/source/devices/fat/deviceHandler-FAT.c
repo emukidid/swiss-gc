@@ -366,32 +366,36 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	}
 	
 	if(swissSettings.emulateMemoryCard) {
-		memset(&patchFile, 0, sizeof(file_handle));
-		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/MemoryCardA.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
-		
-		if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) != 0) {
-			devices[DEVICE_CUR]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
-			devices[DEVICE_CUR]->writeFile(&patchFile, NULL, 0);
-			devices[DEVICE_CUR]->closeFile(&patchFile);
+		if(devices[DEVICE_CUR] != &__device_sd_a && devices[DEVICE_CUR] != &__device_ide_a) {
+			memset(&patchFile, 0, sizeof(file_handle));
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/MemoryCardA.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			
+			if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) != 0) {
+				devices[DEVICE_CUR]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
+				devices[DEVICE_CUR]->writeFile(&patchFile, NULL, 0);
+				devices[DEVICE_CUR]->closeFile(&patchFile);
+			}
+			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_CARD_A, 31.5*1024*1024, DEVICE_CUR))) {
+				*(vu8*)VAR_CARD_A_ID = (patchFile.size*8/1024/1024) & 0xFC;
+				totFrags+=frags;
+				devices[DEVICE_CUR]->closeFile(&patchFile);
+			}
 		}
-		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_CARD_A, 31.5*1024*1024, DEVICE_CUR))) {
-			*(vu8*)VAR_CARD_A_ID = (patchFile.size*8/1024/1024) & 0xFC;
-			totFrags+=frags;
-			devices[DEVICE_CUR]->closeFile(&patchFile);
-		}
 		
-		memset(&patchFile, 0, sizeof(file_handle));
-		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
-		
-		if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) != 0) {
-			devices[DEVICE_CUR]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
-			devices[DEVICE_CUR]->writeFile(&patchFile, NULL, 0);
-			devices[DEVICE_CUR]->closeFile(&patchFile);
-		}
-		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_CARD_B, 31.5*1024*1024, DEVICE_CUR))) {
-			*(vu8*)VAR_CARD_B_ID = (patchFile.size*8/1024/1024) & 0xFC;
-			totFrags+=frags;
-			devices[DEVICE_CUR]->closeFile(&patchFile);
+		if(devices[DEVICE_CUR] != &__device_sd_b && devices[DEVICE_CUR] != &__device_ide_b) {
+			memset(&patchFile, 0, sizeof(file_handle));
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			
+			if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) != 0) {
+				devices[DEVICE_CUR]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
+				devices[DEVICE_CUR]->writeFile(&patchFile, NULL, 0);
+				devices[DEVICE_CUR]->closeFile(&patchFile);
+			}
+			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_CARD_B, 31.5*1024*1024, DEVICE_CUR))) {
+				*(vu8*)VAR_CARD_B_ID = (patchFile.size*8/1024/1024) & 0xFC;
+				totFrags+=frags;
+				devices[DEVICE_CUR]->closeFile(&patchFile);
+			}
 		}
 	}
 	
@@ -575,6 +579,8 @@ u32 deviceHandler_FAT_emulated_sd() {
 u32 deviceHandler_FAT_emulated_ide() {
 	if (GCMDisk.AudioStreaming)
 		return EMU_READ|EMU_AUDIO_STREAMING;
+	else if (swissSettings.emulateMemoryCard)
+		return EMU_READ|EMU_MEMCARD;
 	else
 		return EMU_READ;
 }
@@ -634,7 +640,7 @@ DEVICEHANDLER_INTERFACE __device_ide_a = {
 	"IDE HDD - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_HDD, 104, 76},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
-	EMU_READ|EMU_AUDIO_STREAMING,
+	EMU_READ|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	LOC_MEMCARD_SLOT_A,
 	&initial_IDE_A,
 	(_fn_test)&deviceHandler_FAT_test_ide_a,
@@ -658,7 +664,7 @@ DEVICEHANDLER_INTERFACE __device_ide_b = {
 	"IDE HDD - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_HDD, 104, 76},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
-	EMU_READ|EMU_AUDIO_STREAMING,
+	EMU_READ|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	LOC_MEMCARD_SLOT_B,
 	&initial_IDE_B,
 	(_fn_test)&deviceHandler_FAT_test_ide_b,

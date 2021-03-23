@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <gccore.h>		/*** Wrapper to include common libogc headers ***/
 #include <ogcsys.h>		/*** Needed for console support ***/
@@ -23,6 +24,7 @@
 #include "swiss.h"
 #include "bba.h"
 #include "dvd.h"
+#include "gcloader.h"
 #include "wkf.h"
 #include "exi.h"
 #include "httpd.h"
@@ -241,9 +243,21 @@ int main ()
 		DrawDispose(msgBox);
 	}
 	
-	// DVD Motor off setting; Always stop the drive if we only started it to read the ID out
-	if((swissSettings.stopMotor && swissSettings.hasDVDDrive) || (swissSettings.hasDVDDrive == 2)) {
-		dvd_motor_off();
+	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(LOC_DVD_CONNECTOR);
+	if(device == &__device_dvd) {
+		// DVD Motor off setting; Always stop the drive if we only started it to read the ID out
+		if((swissSettings.stopMotor && swissSettings.hasDVDDrive) || (swissSettings.hasDVDDrive == 2)) {
+			dvd_motor_off();
+		}
+	}
+	else if(device == &__device_gcloader) {
+		char *gcloaderVersionStr = gcloaderGetVersion();
+		if(gcloaderVersionStr != NULL && strverscmp(gcloaderVersionStr, "1.1.2") < 0) {
+			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\ngc-loader.com/firmware-updates"));
+			wait_press_A();
+			DrawDispose(msgBox);
+		}
+		free(gcloaderVersionStr);
 	}
 	
 	// Check for autoload entry

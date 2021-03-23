@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <time.h>
+#include <zlib.h>
 
 #include "swiss.h"
 #include "main.h"
@@ -40,7 +41,6 @@
 #include "cheats.h"
 #include "settings.h"
 #include "aram/sidestep.h"
-#include "crc32/crc32.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
@@ -858,7 +858,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		
 		// Read BS2
 		sizeToRead = 0x1AFF00-0x820;
-		type = PATCH_APPLOADER;
+		type = PATCH_BS2;
 		buffer = memalign(32,sizeToRead);
 		if(!buffer) {
 			return 0;
@@ -866,7 +866,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		read_rom_ipl_clear(0x820,buffer,sizeToRead);
 		
 		// Guess BS2's size
-		u32 crc = Crc32_ComputeBuf(0, buffer, sizeToRead);
+		u32 crc = crc32(0, buffer, sizeToRead);
 		switch(crc) {
 			case 0xE4274F2A: sizeToRead = 1435168; break;	// NTSC Revision 1.0
 			case 0x46FB458C: sizeToRead = 1583056; break;	// NTSC Revision 1.1
@@ -904,14 +904,8 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 
 		progBox = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
 		
-		// Adjust top of memory
-		u32 topAddr = 0x81800000;
-		
-		// Steal even more if there's cheats!
-		if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
-			topAddr = WIIRD_ENGINE;
-		}
-
+		// Get top of memory
+		u32 topAddr = getTopAddr();
 		print_gecko("Top of RAM simulated as: 0x%08X\r\n", topAddr);
 		
 		// Read FST to top of Main Memory (round to 32 byte boundary)
@@ -936,6 +930,8 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
 
 		*(volatile u32*)0x8000002C = (*(volatile u32*)0xCC00302C >> 28) + (swissSettings.debugUSB ? 0x10000004:0x00000001);
+		*(volatile u32*)0x800000E8 = 0x81800000 - topAddr;
+		*(volatile u32*)0x800000EC = topAddr;
 		*(volatile u32*)0x800000F4 = bi2Addr;								// bi2.bin location
 		*(volatile u32*)0x80000038 = fstAddr;								// FST Location in ram
 		*(volatile u32*)0x8000003C = GCMDisk.MaxFSTSize;					// FST Max Length
@@ -992,6 +988,8 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 			}
 		}
 	}
+
+	setTopAddr((u32)VAR_PATCHES_BASE);
 
 	// Patch hypervisor
 	if(devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
@@ -1075,7 +1073,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		print_gecko("set size\r\n");
 		sdgecko_setPageSize(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2), 512);
 	}
-	if(type == PATCH_APPLOADER) {
+	if(type == PATCH_BS2) {
 		BINtoARAM(buffer, sizeToRead, 0x81300000);
 	}
 	else if(type == PATCH_DOL) {
@@ -1651,6 +1649,13 @@ void load_game() {
 			sleep(1);
 			DrawDispose(msgBox);
 		}
+	}
+	
+	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
+		setTopAddr(WIIRD_ENGINE);
+	}
+	else {
+		setTopAddr(0x81800000);
 	}
 	
 	int numToPatch = 0;

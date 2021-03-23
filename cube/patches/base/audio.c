@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "audio.h"
+#include "fifo.h"
 
 __attribute((always_inline))
 static inline int_fast16_t clamp_s16(int32_t x)
@@ -60,34 +61,56 @@ static int_fast16_t decode_sample(uint8_t header, int sample, int32_t prev[2])
 	return clamp_s16((curr + 32) >> 6);
 }
 
+static void pop_sample(fifo_t *fifo, sample_t *sample)
+{
+	if (fifo_size(fifo) < sizeof(sample_t)) return;
+	*sample = *(sample_t *)fifo->read_ptr;
+
+	fifo->read_ptr += sizeof(sample_t);
+	if (fifo->read_ptr == fifo->end_ptr)
+		fifo->read_ptr = fifo->start_ptr;
+	fifo->used -= sizeof(sample_t);
+}
+
+static void push_sample(fifo_t *fifo, sample_t sample)
+{
+	if (fifo_space(fifo) < sizeof(sample_t)) return;
+	*(sample_t *)fifo->write_ptr = sample;
+
+	fifo->write_ptr += sizeof(sample_t);
+	if (fifo->write_ptr == fifo->end_ptr)
+		fifo->write_ptr = fifo->start_ptr;
+	fifo->used += sizeof(sample_t);
+}
+
 void adpcm_reset(adpcm_t *adpcm)
 {
 	adpcm->l[0] = adpcm->l[1] = 0;
 	adpcm->r[0] = adpcm->r[1] = 0;
 }
 
-void adpcm_decode(adpcm_t *adpcm, sample_t *out, uint8_t *in, int count)
+void adpcm_decode(adpcm_t *adpcm, fifo_t *out, uint8_t *in, int count)
 {
-	for (int j = 0; j < count; j += 28) {
+	for (int j = 0; j < count; j += 28, in += 32) {
 		for (int i = 0; i < 28; i++) {
-			out[i].l = decode_sample(in[0], in[4 + i] & 0xF, adpcm->l);
-			out[i].r = decode_sample(in[1], in[4 + i] >> 4, adpcm->r);
+			sample_t sample;
+			sample.l = decode_sample(in[0], in[4 + i] & 0xF, adpcm->l);
+			sample.r = decode_sample(in[1], in[4 + i] >>  4, adpcm->r);
+			push_sample(out, sample);
 		}
-
-		out += 28;
-		in  += 32;
 	}
 }
 
-void mix_samples(volatile sample_t *out, sample_t *in, bool _3to2, int count, uint8_t volume_l, uint8_t volume_r)
+void mix_samples(volatile sample_t *out, fifo_t *in, int count, bool _3to2, uint8_t volume_l, uint8_t volume_r)
 {
 	for (int i = 0; i < count; i++) {
-		sample_t sample = *in++;
+		sample_t sample = {0};
+		pop_sample(in, &sample);
 		int_fast16_t r = sample.r;
 		int_fast16_t l = sample.l;
 
 		if (i & _3to2) {
-			sample = *in++;
+			pop_sample(in, &sample);
 			r = (r + sample.r) >> 1;
 			l = (l + sample.l) >> 1;
 		}

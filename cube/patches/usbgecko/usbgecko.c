@@ -249,7 +249,7 @@ void device_reset(void)
 	EXI[EXI_CHANNEL_2][0] = 0;
 
 	usb_unlock_file();
-	end_read(-1);
+	end_read();
 }
 
 bool change_disc(void)

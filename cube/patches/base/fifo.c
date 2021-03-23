@@ -21,66 +21,58 @@
 #include "common.h"
 #include "fifo.h"
 
-static struct {
-	int used, size;
-	void *start_ptr, *end_ptr;
-	void *read_ptr, *write_ptr;
-} fifo = {0};
-
-void fifo_init(void *buffer, int length)
+void fifo_init(fifo_t *fifo, void *buffer, int size)
 {
-	fifo.size = length;
-	fifo.start_ptr = buffer;
-	fifo.end_ptr = buffer + length;
+	fifo->size = size;
+	fifo->start_ptr = buffer;
+	fifo->end_ptr = buffer + size;
 
-	fifo_reset();
+	fifo_reset(fifo);
 }
 
-void fifo_reset(void)
+void fifo_reset(fifo_t *fifo)
 {
-	fifo.used = 0;
-	fifo.read_ptr = 
-	fifo.write_ptr = fifo.start_ptr;
+	fifo->used = 0;
+	fifo->read_ptr = 
+	fifo->write_ptr = fifo->start_ptr;
 }
 
-int fifo_space(void)
+int fifo_space(fifo_t *fifo)
 {
-	return fifo.size - fifo.used;
+	return fifo->size - fifo->used;
 }
 
-int fifo_size(void)
+int fifo_size(fifo_t *fifo)
 {
-	return fifo.used;
+	return fifo->used;
 }
 
-void fifo_read(void *buffer, int length)
+void fifo_read(fifo_t *fifo, void *buffer, int length)
 {
 	do {
-		int size = MIN(length, fifo.end_ptr - fifo.read_ptr);
-
-		memcpy(buffer, fifo.read_ptr, size);
+		int size = MIN(length, fifo->end_ptr - fifo->read_ptr);
+		memcpy(buffer, fifo->read_ptr, size);
 		buffer += size;
 		length -= size;
 
-		fifo.read_ptr += size;
-		if (fifo.read_ptr == fifo.end_ptr)
-			fifo.read_ptr = fifo.start_ptr;
-		fifo.used -= size;
+		fifo->read_ptr += size;
+		if (fifo->read_ptr == fifo->end_ptr)
+			fifo->read_ptr = fifo->start_ptr;
+		fifo->used -= size;
 	} while (length);
 }
 
-void fifo_write(void *buffer, int length)
+void fifo_write(fifo_t *fifo, void *buffer, int length)
 {
 	do {
-		int size = MIN(length, fifo.end_ptr - fifo.write_ptr);
-
-		memcpy(fifo.write_ptr, buffer, size);
+		int size = MIN(length, fifo->end_ptr - fifo->write_ptr);
+		memcpy(fifo->write_ptr, buffer, size);
 		buffer += size;
 		length -= size;
 
-		fifo.write_ptr += size;
-		if (fifo.write_ptr == fifo.end_ptr)
-			fifo.write_ptr = fifo.start_ptr;
-		fifo.used += size;
+		fifo->write_ptr += size;
+		if (fifo->write_ptr == fifo->end_ptr)
+			fifo->write_ptr = fifo->start_ptr;
+		fifo->used += size;
 	} while (length);
 }

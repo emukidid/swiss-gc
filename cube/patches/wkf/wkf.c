@@ -45,10 +45,10 @@ static struct {
 		uint32_t length;
 		uint32_t offset;
 		uint32_t sector;
-		frag_read_cb callback;
+		frag_callback callback;
 	} queue[QUEUE_SIZE];
 } wkf = {
-	.base_sector = -1
+	.base_sector = ~0
 };
 
 OSAlarm read_alarm = {0};
@@ -88,7 +88,24 @@ static void wkf_read_queued(void)
 	OSUnmaskInterrupts(OS_INTERRUPTMASK_PI_DI);
 }
 
-bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_read_cb callback)
+void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+{
+	OSMaskInterrupts(OS_INTERRUPTMASK_PI_DI);
+
+	void *buffer = wkf.queue[0].buffer;
+	uint32_t length = wkf.queue[0].length;
+	uint32_t offset = wkf.queue[0].offset;
+	uint32_t sector = wkf.queue[0].sector;
+
+	wkf.queue[0].callback(buffer, length);
+
+	if (--wkf.items) {
+		memcpy(wkf.queue, wkf.queue + 1, wkf.items * sizeof(*wkf.queue));
+		wkf_read_queued();
+	}
+}
+
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_callback callback)
 {
 	wkf.queue[wkf.items].buffer = buffer;
 	wkf.queue[wkf.items].length = length;
@@ -99,24 +116,6 @@ bool do_read_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sect
 
 	wkf_read_queued();
 	return true;
-}
-
-void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
-{
-	OSMaskInterrupts(OS_INTERRUPTMASK_PI_DI);
-
-	void *buffer = wkf.queue[0].buffer;
-	uint32_t length = wkf.queue[0].length;
-	uint32_t offset = wkf.queue[0].offset;
-	uint32_t sector = wkf.queue[0].sector;
-	frag_read_cb callback = wkf.queue[0].callback;
-
-	callback(buffer, length);
-
-	if (--wkf.items) {
-		memcpy(wkf.queue, wkf.queue + 1, wkf.items * sizeof(*wkf.queue));
-		wkf_read_queued();
-	}
 }
 
 void schedule_read(OSTick ticks)
@@ -130,20 +129,25 @@ void schedule_read(OSTick ticks)
 
 		schedule_read(COMMAND_LATENCY_TICKS);
 	}
-
+	#ifndef ASYNC_READ
 	OSCancelAlarm(&read_alarm);
+	#endif
 
 	if (!dvd.read) {
 		di_complete_transfer();
 		return;
 	}
 
+	#ifdef ASYNC_READ
+	frag_read_async(dvd.buffer, dvd.length, dvd.offset, read_callback);
+	#else
 	dvd.patch = is_frag_patch(dvd.offset, dvd.length);
 
 	if (!dvd.patch)
 		frag_read_async(dvd.buffer, dvd.length, dvd.offset, read_callback);
 	else
 		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
+	#endif
 }
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
@@ -158,6 +162,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 
 void trickle_read(void)
 {
+	#ifndef ASYNC_READ
 	if (dvd.read && dvd.patch) {
 		OSTick start = OSGetTick();
 		int size = frag_read(dvd.buffer, dvd.length, dvd.offset);
@@ -170,6 +175,7 @@ void trickle_read(void)
 
 		schedule_read(OSDiffTick(end, start));
 	}
+	#endif
 }
 
 void device_reset(void)
@@ -184,7 +190,7 @@ void device_reset(void)
 	EXI[EXI_CHANNEL_1][0] = 0;
 	EXI[EXI_CHANNEL_2][0] = 0;
 
-	end_read(-1);
+	end_read();
 }
 
 bool change_disc(void)

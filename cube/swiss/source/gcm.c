@@ -15,14 +15,11 @@
 #include "cheats.h"
 #include "patcher.h"
 #include "sidestep.h"
-#include "crc32/crc32.h"
-#include "psoarchive/PRS.h"
 #include "devices/deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
-#include "../../reservedarea.h"
-#include <sys/stat.h>
-#include <errno.h>
+#include "psoarchive/PRS.h"
+#include <zlib.h>
 
 #define FST_ENTRY_SIZE 12
 
@@ -208,20 +205,18 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 	if(!FST) return -1;
 
 	// Patch the apploader too!
-	// Calc Apploader trailer size
-	u32 appldr_info[8];
+	// Calc Apploader size
+	ApploaderHeader apploaderHeader;
 	devices[DEVICE_CUR]->seekFile(file,0x2440,DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(file,&appldr_info,32) != 32) {
-		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Apploader info"));
+	if(devices[DEVICE_CUR]->readFile(file,&apploaderHeader,sizeof(ApploaderHeader)) != sizeof(ApploaderHeader)) {
+		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Apploader Header"));
 		while(1);
 	}
-	if(appldr_info[6] != 0) {
-		filesToPatch[numFiles].size = appldr_info[6];
-		filesToPatch[numFiles].offset = appldr_info[5] + 0x2460;
-		filesToPatch[numFiles].type = appldr_info[0] == 0x32303034 ? PATCH_DOL_APPLOADER:PATCH_APPLOADER;
-		sprintf(filesToPatch[numFiles].name, "Apploader Trailer");
-		numFiles++;
-	}
+	filesToPatch[numFiles].offset = 0x2440;
+	filesToPatch[numFiles].size = sizeof(ApploaderHeader) + apploaderHeader.size + apploaderHeader.rebootSize;
+	filesToPatch[numFiles].type = PATCH_APPLOADER;
+	sprintf(filesToPatch[numFiles].name, "apploader.img");
+	numFiles++;
 
 	if(GCMDisk.DOLOffset != 0) {
 		// Multi-DOL games may re-load the main DOL, so make sure we patch it too.
@@ -235,7 +230,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		filesToPatch[numFiles].offset = dolOffset = GCMDisk.DOLOffset;
 		filesToPatch[numFiles].size = dolSize = DOLSize(&dolhdr);
 		filesToPatch[numFiles].type = PATCH_DOL;
-		sprintf(filesToPatch[numFiles].name, "Main DOL");
+		sprintf(filesToPatch[numFiles].name, "default.dol");
 		numFiles++;
 	}
 
@@ -275,8 +270,10 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 				numFiles++;
 			}
 			if(endsWith(filename,".elf")) {
-				if(dolSize == calc_elf_segments_size(file, file_offset, &size) + DOLHDRLENGTH) {
-					continue;
+				if(!strstr(filename,"STUBRDVD.ELF")) {
+					if(dolSize == calc_elf_segments_size(file, file_offset, &size) + DOLHDRLENGTH) {
+						continue;
+					}
 				}
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
@@ -287,7 +284,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 			if(strstr(filename,"execD.img")) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
-				filesToPatch[numFiles].type = PATCH_APPLOADER;
+				filesToPatch[numFiles].type = PATCH_BS2;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
@@ -305,8 +302,8 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 	}
 	free(FST);
 	
-	// This need to be last so the monitor size can be determined.
-	if(numFiles > 0) {
+	// This need to be last so the debug monitor size can be determined.
+	if(GCMDisk.DOLOffset != 0) {
 		filesToPatch[numFiles].offset = 0x440;
 		filesToPatch[numFiles].size = 0x2000;
 		filesToPatch[numFiles].type = PATCH_OTHER;
@@ -337,40 +334,42 @@ void adjust_tgc_fst(char* FST, u32 tgc_base, u32 fileAreaStart, u32 fakeAmount) 
 int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, char* tgcname) {
 	char	*FST; 
 	char	filename[256];
-	u32 fileAreaStart, fakeAmount, dolOffset, dolSize, numFiles = 0;
+	int		numFiles = 0;
 	
-	// add this embedded GCM's main DOL
-	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x1C,DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file,&dolOffset,4);
-	devices[DEVICE_CUR]->readFile(file,&dolSize,4);
-	devices[DEVICE_CUR]->readFile(file, &fileAreaStart, 4);
-	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x34,DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file, &fakeAmount, 4);
+	TGCHeader tgcHeader;
+	devices[DEVICE_CUR]->seekFile(file,tgc_base,DEVICE_HANDLER_SEEK_SET);
+	devices[DEVICE_CUR]->readFile(file,&tgcHeader,sizeof(TGCHeader));
 	
-	// Grab FST Offset & Size
-	u32 fstOfsAndSize[2];
- 	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x10,DEVICE_HANDLER_SEEK_SET);
- 	devices[DEVICE_CUR]->readFile(file,&fstOfsAndSize,2*sizeof(u32));
+	if(tgcHeader.apploaderOffset != 0) {
+		ApploaderHeader apploaderHeader;
+		devices[DEVICE_CUR]->seekFile(file,tgc_base+tgcHeader.apploaderOffset,DEVICE_HANDLER_SEEK_SET);
+		devices[DEVICE_CUR]->readFile(file,&apploaderHeader,sizeof(ApploaderHeader));
+		
+		filesToPatch[numFiles].offset = tgc_base+tgcHeader.apploaderOffset;
+		filesToPatch[numFiles].size = sizeof(ApploaderHeader) + apploaderHeader.size + apploaderHeader.rebootSize;
+		filesToPatch[numFiles].type = PATCH_APPLOADER;
+		sprintf(filesToPatch[numFiles].name, "%s/%s", tgcname, "apploader.img");
+		numFiles++;
+	}
 	
-	// The TGC main DOL entry
-	filesToPatch[numFiles].offset = tgc_base+dolOffset;
-	filesToPatch[numFiles].size = dolSize;
-	filesToPatch[numFiles].tgcFstOffset = tgc_base+fstOfsAndSize[0];
-	filesToPatch[numFiles].tgcFstSize = fstOfsAndSize[1];
-	filesToPatch[numFiles].tgcBase = tgc_base;
-	filesToPatch[numFiles].tgcFileStartArea = fileAreaStart;
-	filesToPatch[numFiles].tgcFakeOffset = fakeAmount;
+	filesToPatch[numFiles].offset = tgc_base+tgcHeader.dolStart;
+	filesToPatch[numFiles].size = tgcHeader.dolLength;
 	filesToPatch[numFiles].type = PATCH_DOL;
-	sprintf(&filesToPatch[numFiles].name[0], "%s Main DOL", tgcname);
+	filesToPatch[numFiles].tgcFstOffset = tgc_base+tgcHeader.fstStart;
+	filesToPatch[numFiles].tgcFstSize = tgcHeader.fstLength;
+	filesToPatch[numFiles].tgcBase = tgc_base;
+	filesToPatch[numFiles].tgcFileStartArea = tgcHeader.userStart;
+	filesToPatch[numFiles].tgcFakeOffset = tgcHeader.gcmUserStart;
+	sprintf(filesToPatch[numFiles].name, "%s/%s", tgcname, "default.dol");
 	numFiles++;
 
- 	// Alloc and read FST
-	FST=(char*)memalign(32,fstOfsAndSize[1]); 
-	devices[DEVICE_CUR]->seekFile(file,tgc_base+fstOfsAndSize[0],DEVICE_HANDLER_SEEK_SET);
- 	devices[DEVICE_CUR]->readFile(file,FST,fstOfsAndSize[1]);
+	// Alloc and read FST
+	FST=(char*)memalign(32,tgcHeader.fstLength);
+	devices[DEVICE_CUR]->seekFile(file,tgc_base+tgcHeader.fstStart,DEVICE_HANDLER_SEEK_SET);
+	devices[DEVICE_CUR]->readFile(file,FST,tgcHeader.fstLength);
 
 	// Adjust TGC FST offsets
-	adjust_tgc_fst(FST, tgc_base, fileAreaStart, fakeAmount);
+	adjust_tgc_fst(FST, tgc_base, tgcHeader.userStart, tgcHeader.gcmUserStart);
 	
 	u32 entries=*(unsigned int*)&FST[8];
 	u32 string_table_offset=FST_ENTRY_SIZE*entries;
@@ -389,34 +388,39 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
 			if(endsWith(filename,".dol")) {
-				if(dolSize == size || !valid_dol_file(file, file_offset, size)) {
+				if(tgcHeader.dolLength == size || !valid_dol_file(file, file_offset, size)) {
 					continue;
 				}
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL;
-				filesToPatch[numFiles].tgcFstOffset = tgc_base+fstOfsAndSize[0];
-				filesToPatch[numFiles].tgcFstSize = fstOfsAndSize[1];
+				filesToPatch[numFiles].tgcFstOffset = tgc_base+tgcHeader.fstStart;
+				filesToPatch[numFiles].tgcFstSize = tgcHeader.fstLength;
 				filesToPatch[numFiles].tgcBase = tgc_base;
-				filesToPatch[numFiles].tgcFileStartArea = fileAreaStart;
-				filesToPatch[numFiles].tgcFakeOffset = fakeAmount;
+				filesToPatch[numFiles].tgcFileStartArea = tgcHeader.userStart;
+				filesToPatch[numFiles].tgcFakeOffset = tgcHeader.gcmUserStart;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
 			if(endsWith(filename,".elf")) {
-				if(dolSize == calc_elf_segments_size(file, file_offset, &size) + DOLHDRLENGTH) {
+				if(tgcHeader.dolLength == calc_elf_segments_size(file, file_offset, &size) + DOLHDRLENGTH) {
 					continue;
 				}
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_ELF;
+				filesToPatch[numFiles].tgcFstOffset = tgc_base+tgcHeader.fstStart;
+				filesToPatch[numFiles].tgcFstSize = tgcHeader.fstLength;
+				filesToPatch[numFiles].tgcBase = tgc_base;
+				filesToPatch[numFiles].tgcFileStartArea = tgcHeader.userStart;
+				filesToPatch[numFiles].tgcFakeOffset = tgcHeader.gcmUserStart;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
 			if(strstr(filename,"execD.img")) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
-				filesToPatch[numFiles].type = PATCH_APPLOADER;
+				filesToPatch[numFiles].type = PATCH_BS2;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
@@ -597,7 +601,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			patchInfo[0] = filesToPatch[i].offset;
 			patchInfo[1] = filesToPatch[i].size;
 			patchInfo[2] = SWISS_MAGIC;
-			patchInfo[3] = Crc32_ComputeBuf(0, buffer, sizeToRead);
+			patchInfo[3] = crc32(0, buffer, sizeToRead);
 
 			// See if this file already exists, if it does, match crc
 			if(!devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0)) {

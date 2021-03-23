@@ -256,9 +256,9 @@ s32 deviceHandler_CARD_readFile(file_handle* file, void* buffer, u32 length){
 		GCI gci;
 		CARD_GetStatus(slot, cardfile.filenum, &cardstat);
 		memset(&gci, 0, sizeof(GCI));
-		memcpy(&gci.gamecode,cd->gamecode,4);
-		memcpy(&gci.company,cd->company,2);
-		memcpy(&gci.filename,file->name,CARD_FILENAMELEN);
+		memcpy(&gci.gamecode,cardstat.gamecode,4);
+		memcpy(&gci.company,cardstat.company,2);
+		memcpy(&gci.filename,cardstat.filename,CARD_FILENAMELEN);
 		gci.reserved01 = 0xFF;
 		gci.banner_fmt = cardstat.banner_fmt;
 		gci.time = cardstat.time;

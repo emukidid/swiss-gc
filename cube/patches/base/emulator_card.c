@@ -27,23 +27,51 @@
 #include "emulator_card.h"
 #include "frag.h"
 
+#define carda_read_callback exi0_complete_transfer
+#define cardb_read_callback exi1_complete_transfer
+
+static void carda_write_callback(void *address, uint32_t length);
+static void cardb_write_callback(void *address, uint32_t length);
+
 static struct {
 	int position;
 	uint8_t command;
 	uint8_t status;
 	bool interrupt;
 	uint32_t offset;
-	void *write_buffer;
-	uint32_t write_offset;
+	#ifdef ASYNC_READ
+	frag_callback read_callback;
+	frag_callback write_callback;
+	#endif
 } card[2] = {
 	{
 		.status = 0xC1,
-		.offset = FRAGS_CARD_A
+		.offset = FRAGS_CARD_A,
+		#ifdef ASYNC_READ
+		.read_callback  = carda_read_callback,
+		.write_callback = carda_write_callback
+		#endif
 	}, {
 		.status = 0xC1,
-		.offset = FRAGS_CARD_B
+		.offset = FRAGS_CARD_B,
+		#ifdef ASYNC_READ
+		.read_callback  = cardb_read_callback,
+		.write_callback = cardb_write_callback
+		#endif
 	}
 };
+
+static void carda_write_callback(void *address, uint32_t length)
+{
+	if (length != 512) card[0].status |= 0x08;
+	exi0_complete_transfer();
+}
+
+static void cardb_write_callback(void *address, uint32_t length)
+{
+	if (length != 512) card[1].status |= 0x08;
+	exi1_complete_transfer();
+}
 
 uint8_t card_imm(unsigned chan, uint8_t data)
 {
@@ -103,23 +131,31 @@ uint8_t card_imm(unsigned chan, uint8_t data)
 	return result;
 }
 
-void card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
+bool card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
 {
 	void *buffer = OSPhysicalToUncached(address);
 
 	switch (card[chan].command) {
 		case 0x52:
 		{
-			if (card[chan].position >= 5 && type == EXI_READ)
+			if (card[chan].position >= 5 && type == EXI_READ) {
+				#ifdef ASYNC_READ
+				return frag_read_async(buffer, length, card[chan].offset, card[chan].read_callback);
+				#else
 				frag_read(buffer, length, card[chan].offset);
+				#endif
+			}
 			break;
 		}
 		case 0xF2:
 		{
 			if (card[chan].position == 5 && type == EXI_WRITE) {
-				if (!card[chan].write_buffer && card[chan].offset % 512 == 0) {
-					card[chan].write_buffer = buffer;
-					card[chan].write_offset = card[chan].offset;
+				if (card[chan].offset % 512 == 0) {
+					#ifdef ASYNC_READ
+					return frag_write_async(buffer, 512, card[chan].offset, card[chan].write_callback);
+					#else
+					if (frag_write(buffer, 512, card[chan].offset) != 512) card[chan].status |= 0x08;
+					#endif
 				}
 			}
 			break;
@@ -127,6 +163,7 @@ void card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
 	}
 
 	card[chan].position += length;
+	return false;
 }
 
 void card_select(unsigned chan)
@@ -136,6 +173,11 @@ void card_select(unsigned chan)
 void card_deselect(unsigned chan)
 {
 	switch (card[chan].command) {
+		case 0x89:
+		{
+			card[chan].status &= ~0x18;
+			break;
+		}
 		case 0xF1:
 		case 0xF4:
 		{
@@ -146,17 +188,9 @@ void card_deselect(unsigned chan)
 		}
 		case 0xF2:
 		{
-			if (card[chan].position >= 5) {
-				bool success = card[chan].offset % 128 == 0;
-
-				if (card[chan].write_buffer && (card[chan].offset + 128 - card[chan].write_offset) == 512) {
-					success = frag_write(card[chan].write_buffer, 512, card[chan].write_offset) == 512;
-					card[chan].write_buffer = NULL;
-				}
-
-				if (card[chan].interrupt && success)
+			if (card[chan].position >= 5)
+				if (card[chan].interrupt)
 					exi_interrupt(chan);
-			}
 			break;
 		}
 	}

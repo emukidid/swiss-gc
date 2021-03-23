@@ -1,6 +1,6 @@
 /* deviceHandler-SYS.c
         - virtual device interface for dumping ROMs
-        by Streetwalrus
+        by novenary
  */
 
 #include <malloc.h>

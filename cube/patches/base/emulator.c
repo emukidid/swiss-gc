@@ -71,6 +71,8 @@ static struct {
 			uint32_t data;
 		} reg[3];
 	};
+
+	OSAlarm alarm[EXI_CHANNEL_MAX];
 } exi = {
 	.reg = {
 		{ .cpr = 0b11100000000000 },
@@ -121,23 +123,39 @@ void exi_complete_transfer(unsigned chan)
 	exi_update_interrupts(chan);
 }
 
-static OSAlarm exi_alarm[EXI_CHANNEL_MAX] = {0};
+void exi0_complete_transfer()
+{
+	exi_complete_transfer(EXI_CHANNEL_0);
+}
+
+void exi1_complete_transfer()
+{
+	exi_complete_transfer(EXI_CHANNEL_1);
+}
+
+void exi2_complete_transfer()
+{
+	exi_complete_transfer(EXI_CHANNEL_2);
+}
 
 static void exi_transfer(unsigned chan, uint32_t length)
 {
 	OSTick ticks = ((length * (OS_TIMER_CLOCK / 843750)) * 8) >> ((exi.reg[chan].cpr >> 4) & 0b111);
+	OSAlarmHandler handler = NULL;
 
-	void alarm_handler(OSAlarm *alarm, OSContext *context)
-	{
-		if (alarm == &exi_alarm[EXI_CHANNEL_0])
-			exi_complete_transfer(EXI_CHANNEL_0);
-		else if (alarm == &exi_alarm[EXI_CHANNEL_1])
-			exi_complete_transfer(EXI_CHANNEL_1);
-		else if (alarm == &exi_alarm[EXI_CHANNEL_2])
-			exi_complete_transfer(EXI_CHANNEL_2);
+	switch (chan) {
+		case EXI_CHANNEL_0:
+			handler = exi0_complete_transfer;
+			break;
+		case EXI_CHANNEL_1:
+			handler = exi1_complete_transfer;
+			break;
+		case EXI_CHANNEL_2:
+			handler = exi2_complete_transfer;
+			break;
 	}
 
-	OSSetAlarm(&exi_alarm[chan], ticks, alarm_handler);
+	OSSetAlarm(&exi.alarm[chan], ticks, handler);
 }
 
 void exi_insert_device(unsigned chan)
@@ -230,7 +248,7 @@ static void exi_write(unsigned index, uint32_t value)
 			if (chan == EXI_CHANNEL_0) {
 				if ((dev | dev2) & ~(1 << EXI_DEVICE_0)) {
 					if (*VAR_EXI_SLOT == EXI_CHANNEL_0)
-						end_read(-1);
+						end_read();
 
 					EXI[chan][0] = (value & 0b10001111111100) | (EXI[chan][0] & 0b00010000000001);
 					OSGlobalInterruptMask = (OSGlobalInterruptMask & ~OS_INTERRUPTMASK_EXI_0_TC) | (OS_INTERRUPTMASK_EXI_0_TC & ~irq.mask);
@@ -264,11 +282,12 @@ static void exi_write(unsigned index, uint32_t value)
 						uint32_t address = exi.reg[chan].mar;
 						uint32_t length  = exi.reg[chan].length;
 						int type = (exi.reg[chan].cr >> 2) & 0b11;
+						bool async = false;
 
 						if (ext && (dev & (1 << EXI_DEVICE_0)))
-							card_dma(chan, address, length, type);
+							async = card_dma(chan, address, length, type);
 
-						exi_transfer(chan, length);
+						if (!async) exi_transfer(chan, length);
 					} else {
 						int length = (exi.reg[chan].cr >> 4) & 0b11;
 						char *data = (char *)&exi.reg[chan].data;
@@ -291,10 +310,60 @@ static void exi_write(unsigned index, uint32_t value)
 			break;
 	}
 }
+#else
+static void exi_read(unsigned index, uint32_t *value)
+{
+	unsigned chan = index / 5;
+
+	switch (index) {
+		case 0:
+		case 5:
+			if (chan == *VAR_EXI_SLOT)
+				*value = EXI[chan][0] & ~0b01000000000000;
+			else
+				*value = EXI[chan][0];
+			break;
+		default:
+			*value = (*EXI)[index];
+	}
+}
+
+static void exi_write(unsigned index, uint32_t value)
+{
+	unsigned chan = index / 5;
+	unsigned dev = (EXI[chan][0] >> 7) & 0b111;
+	unsigned dev2;
+
+	switch (index % 5) {
+		case 0:
+			dev2 = (value >> 7) & 0b111;
+
+			if (~dev & dev2) {
+				#ifdef BBA
+				if (chan == EXI_CHANNEL_0 && (dev2 & (1 << EXI_DEVICE_2)))
+					value &= ~0b00001110000000;
+				#endif
+				if (chan == *VAR_EXI_SLOT) {
+					if (dev2 & (1 << EXI_DEVICE_0))
+						value &= ~0b00001110000000;
+					end_read();
+				}
+			}
+
+			EXI[chan][0] = value;
+			break;
+		default:
+			(*EXI)[index] = value;
+	}
+}
 #endif
 
 static struct {
+	#ifdef DTK
 	adpcm_t adpcm;
+	fifo_t fifo;
+	uint8_t (*buffer)[512];
+	#endif
 
 	bool reading;
 	bool flushing;
@@ -311,19 +380,12 @@ static struct {
 		uint32_t start;
 		uint32_t length;
 	} next;
-
-	uint8_t (*buffer)[512];
-} dtk = {
-	.buffer = (void *)VAR_SECTOR_BUF
-};
+} dtk = {0};
 
 #ifdef DTK
 static void dtk_decode_buffer(void *address, uint32_t length)
 {
-	sample_t stream[448];
-
-	adpcm_decode(&dtk.adpcm, stream, *dtk.buffer, 448);
-	fifo_write(stream, sizeof(stream));
+	adpcm_decode(&dtk.adpcm, &dtk.fifo, *dtk.buffer, 448);
 	dtk.current.position += sizeof(*dtk.buffer);
 
 	if (dtk.current.position == dtk.current.start + dtk.current.length) {
@@ -346,7 +408,7 @@ bool dtk_fill_buffer(void)
 		return true;
 	if (!dtk.playing)
 		return false;
-	if (fifo_space() < 448 * sizeof(sample_t))
+	if (fifo_space(&dtk.fifo) < 448 * sizeof(sample_t))
 		return false;
 
 	#ifdef ASYNC_READ
@@ -358,7 +420,7 @@ bool dtk_fill_buffer(void)
 		dtk_fill_buffer();
 	}
 
-	#ifndef ISR
+	#ifdef WKF
 	DCInvalidateRange(__builtin_assume_aligned(dtk.buffer, 32), sizeof(*dtk.buffer));
 	#endif
 	return dtk.reading = frag_read_async(dtk.buffer, sizeof(*dtk.buffer), dtk.current.position, read_callback);
@@ -394,7 +456,8 @@ static struct {
 		} reg;
 	};
 
-	uint32_t error;
+	uint32_t status :  8;
+	uint32_t error  : 24;
 	#ifdef DVD
 	int reset;
 	#endif
@@ -414,10 +477,9 @@ static void di_update_interrupts(void)
 
 void di_error(uint32_t error)
 {
-	di.error = error;
-
 	di.reg.sr |=  0b0000100;
 	di.reg.cr &= ~0b001;
+	di.error = error;
 	di_update_interrupts();
 }
 
@@ -436,12 +498,14 @@ void di_complete_transfer(void)
 void di_open_cover(void)
 {
 	di.reg.cvr |=  0b001;
+	di.status = 1;
 }
 
 void di_close_cover(void)
 {
 	di.reg.cvr &= ~0b001;
 	di.reg.cvr |=  0b100;
+	di.status = 0;
 	di_update_interrupts();
 }
 
@@ -459,25 +523,27 @@ static void di_execute_command(void)
 			uint32_t length  = di.reg.length;
 			uint32_t offset  = di.reg.cmdbuf1 << 2 & ~0x80000000;
 
-			if (!(di.reg.cvr & 0b001))
-				perform_read(address, length, offset);
+			if (di.status == 1)
+				di_error(0x023A00);
+			else if (!length)
+				di_error(0x052400);
 			else
-				di_error(0x01023A00);
+				perform_read(address, length, offset);
 			return;
 		}
 		case 0xAB:
 		{
 			uint32_t offset = di.reg.cmdbuf1 << 2 & ~0x80000000;
 
-			if (!(di.reg.cvr & 0b001))
-				perform_read(0, 0, offset);
+			if (di.status == 1)
+				di_error(0x023A00);
 			else
-				di_error(0x01023A00);
+				perform_read(0, 0, offset);
 			return;
 		}
 		case 0xE0:
 		{
-			result = di.error;
+			result = di.error | di.status << 24;
 			di.error = 0;
 			break;
 		}
@@ -516,7 +582,7 @@ static void di_execute_command(void)
 					dtk.flushing = dtk.reading;
 
 					adpcm_reset(&dtk.adpcm);
-					fifo_reset();
+					fifo_reset(&dtk.fifo);
 					#endif
 					break;
 				}
@@ -535,7 +601,7 @@ static void di_execute_command(void)
 		}
 		case 0xE3:
 		{
-			if (!(di.reg.cvr & 0b001) && change_disc()) {
+			if (di.status == 0 && change_disc()) {
 				di_open_cover();
 				OSSetAlarm(&di_alarm, OSSecondsToTicks(1.5), (OSAlarmHandler)di_close_cover);
 			}
@@ -560,6 +626,13 @@ static void di_execute_command(void)
 			uint32_t address = di.reg.mar;
 			uint32_t length  = di.reg.length;
 			uint32_t offset  = di.reg.cmdbuf1 << 2;
+
+			#ifdef GCODE
+			if (!length) {
+				di_error(0x052400);
+				return;
+			}
+			#endif
 
 			switch (di.reg.cmdbuf0 & 0xC0) {
 				default:
@@ -731,23 +804,7 @@ static void dsp_write(unsigned index, uint16_t value)
 				uint32_t aicr = AI[0];
 				uint32_t aivr = AI[1];
 
-				if (aicr & 0b0000001) {
-					if (aicr & 0b1000000) {
-						sample_t stream[count * 3 / 2];
-
-						if (fifo_size() >= sizeof(stream)) {
-							fifo_read(stream, sizeof(stream));
-							mix_samples(buffer, stream, true, count, aivr, aivr >> 8);
-						}
-					} else {
-						sample_t stream[count];
-
-						if (fifo_size() >= sizeof(stream)) {
-							fifo_read(stream, sizeof(stream));
-							mix_samples(buffer, stream, false, count, aivr, aivr >> 8);
-						}
-					}
-				}
+				if (aicr & 0b0000001) mix_samples(buffer, &dtk.fifo, count, aicr & 0b1000000, aivr, aivr >> 8);
 
 				DSP[12] = (intptr_t)buffer;
 				DSP[13] = ((length >> 5) & 0x7FFF) | 0x8000;
@@ -867,12 +924,10 @@ static bool ppc_load32(uint32_t address, uint32_t *value)
 		di_read((address >> 2) & 0xF, value);
 		return true;
 	}
-	#ifdef CARD_EMULATOR
 	if ((address & ~0x3FC) == 0x0C006800) {
 		exi_read((address >> 2) & 0xF, value);
 		return true;
 	}
-	#endif
 	return false;
 }
 
@@ -886,12 +941,10 @@ static bool ppc_store32(uint32_t address, uint32_t value)
 		di_write((address >> 2) & 0xF, value);
 		return true;
 	}
-	#ifdef CARD_EMULATOR
 	if ((address & ~0x3FC) == 0x0C006800) {
 		exi_write((address >> 2) & 0xF, value);
 		return true;
 	}
-	#endif
 	return false;
 }
 
@@ -920,7 +973,6 @@ static bool ppc_step(ppc_context_t *context)
 	uint32_t opcode = *(uint32_t *)context->srr0;
 
 	switch (opcode >> 26) {
-		#ifdef CARD_EMULATOR
 		case 31:
 		{
 			switch ((opcode >> 1) & 0x3FF) {
@@ -933,15 +985,14 @@ static bool ppc_step(ppc_context_t *context)
 				}
 				case 151:
 				{
-					int rd = (opcode >> 21) & 0x1F;
+					int rs = (opcode >> 21) & 0x1F;
 					int ra = (opcode >> 16) & 0x1F;
 					int rb = (opcode >> 11) & 0x1F;
-					return ppc_store32(context->gpr[ra] + context->gpr[rb], context->gpr[rd]);
+					return ppc_store32(context->gpr[ra] + context->gpr[rb], context->gpr[rs]);
 				}
 			}
 			break;
 		}
-		#endif
 		case 32:
 		{
 			int rd = (opcode >> 21) & 0x1F;
@@ -949,15 +1000,6 @@ static bool ppc_step(ppc_context_t *context)
 			short d = opcode & 0xFFFF;
 			return ppc_load32(context->gpr[ra] + d, &context->gpr[rd]);
 		}
-		#ifdef CARD_EMULATOR
-		case 33:
-		{
-			int rd = (opcode >> 21) & 0x1F;
-			int ra = (opcode >> 16) & 0x1F;
-			short d = opcode & 0xFFFF;
-			return ppc_load32(context->gpr[ra] += d, &context->gpr[rd]);
-		}
-		#endif
 		case 36:
 		{
 			int rs = (opcode >> 21) & 0x1F;
@@ -991,7 +1033,7 @@ ppc_context_t *service_exception(ppc_context_t *context)
 	if (ppc_step(context))
 		context->srr0 += 4;
 	else
-		context->srr1 |= 0x4;
+		__builtin_trap();
 
 	return context;
 }
@@ -1024,37 +1066,10 @@ void init(void **arenaLo, void **arenaHi)
 	#ifdef DTK
 	*arenaHi -= sizeof(*dsp.buffer[0]); dsp.buffer[0] = OSCachedToUncached(*arenaHi);
 	*arenaHi -= sizeof(*dsp.buffer[1]); dsp.buffer[1] = OSCachedToUncached(*arenaHi);
-	*arenaHi -= 7168; fifo_init(*arenaHi, 7168);
+	*arenaHi -= sizeof(*dtk.buffer); dtk.buffer = *arenaHi;
+	*arenaHi -= 7168; fifo_init(&dtk.fifo, *arenaHi, 7168);
 	#endif
 }
-
-#ifndef CARD_EMULATOR
-bool exi_probe(int32_t chan)
-{
-	if (chan == EXI_CHANNEL_2)
-		return false;
-	if (chan == *VAR_EXI_SLOT)
-		return false;
-
-	return true;
-}
-
-bool exi_try_lock(int32_t chan, uint32_t dev, EXIControl *exi)
-{
-	if (!(exi->state & EXI_STATE_LOCKED) || exi->dev != dev)
-		return false;
-	#ifdef BBA
-	if (chan == EXI_CHANNEL_0 && dev == EXI_DEVICE_2)
-		return false;
-	#endif
-	if (chan == *VAR_EXI_SLOT && dev == EXI_DEVICE_0)
-		return false;
-	if (chan == *VAR_EXI_SLOT)
-		end_read(-1);
-
-	return true;
-}
-#endif
 
 static void dispatch_interrupt(OSInterrupt interrupt, OSContext *context)
 {
@@ -1084,16 +1099,32 @@ static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	}
 	#endif
 
-	if (DI[0] & 0b1010100) {
+	uint32_t disr  = DI[0];
+	uint32_t dicvr = DI[1];
+
+	if (disr & 0b1010100) {
 		di.reg.cr = DI[7];
 
 		if (di.reg.cr & 0b010) {
 			di.reg.mar    = DI[5];
 			di.reg.length = DI[6];
-		} else {
+		} else
 			di.reg.immbuf = DI[8];
+	}
+
+	#ifdef GCODE
+	if (disr & 0b0010000) {
+		switch (di.reg.cmdbuf0 >> 24) {
+			case 0xE0:
+			{
+				if (!(di.reg.immbuf & 0xFFFFFF))
+					di.reg.immbuf = di.error | (di.reg.immbuf & ~0xFFFFFF);
+				di.error = 0;
+				break;
+			}
 		}
 	}
+	#endif
 
 	dispatch_interrupt(interrupt, context);
 }

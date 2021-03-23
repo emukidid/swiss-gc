@@ -34,6 +34,11 @@ static struct {
 
 OSAlarm read_alarm = {0};
 
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_callback callback)
+{
+	return do_read_write_async(buffer, length, offset, sector, false, callback);
+}
+
 void schedule_read(OSTick ticks)
 {
 	#ifdef ASYNC_READ
@@ -105,7 +110,7 @@ void device_reset(void)
 	EXI[EXI_CHANNEL_1][0] = 0;
 	EXI[EXI_CHANNEL_2][0] = 0;
 
-	end_read(-1);
+	end_read();
 }
 
 bool change_disc(void)
