@@ -327,7 +327,7 @@ void select_recent_entry() {
 				max = i;
 				break;
 			}
-			DrawAddChild(newPanel, DrawSelectableButton(45,fileListBase+(i*(rh+2)), getVideoMode()->fbWidth-45, fileListBase+(i*(rh+2))+rh, getRelativeName(&swissSettings.recent[i]), (i == idx) ? B_SELECTED:B_NOSELECT));
+			DrawAddChild(newPanel, DrawSelectableButton(45,fileListBase+(i*(rh+2)), getVideoMode()->fbWidth-45, fileListBase+(i*(rh+2))+rh, getRelativeName(&swissSettings.recent[i][0]), (i == idx) ? B_SELECTED:B_NOSELECT));
 		}
 		if(container) {
 			DrawDispose(container);
@@ -348,7 +348,7 @@ void select_recent_entry() {
 	}
 	DrawDispose(container);
 	if(idx >= 0) {
-		int res = load_existing_entry(&swissSettings.recent[idx]);
+		int res = load_existing_entry(&swissSettings.recent[idx][0]);
 		if(res) {
 			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,res == RECENT_ERR_ENT_MISSING ? "Recent entry not found.\nPress A to continue." 
 																					:	"Recent device not found.\nPress A to continue.");
@@ -1121,10 +1121,11 @@ void boot_dol()
 	
 	if(devices[DEVICE_CONFIG] != NULL) {
 		// Update the recent list.
-		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list ..."));
-		update_recent();
-		config_update_file();
-		DrawDispose(msgBox);
+		if(update_recent()) {
+			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list ..."));
+			config_update_file();
+			DrawDispose(msgBox);
+		}
 	}
 	
 	// Build a command line to pass to the DOL
@@ -1875,10 +1876,11 @@ int info_game()
 			}
 			if(ret && devices[DEVICE_CONFIG] != NULL) {
 				// Update the recent list.
-				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list ..."));
-				update_recent();
-				config_update_file();
-				DrawDispose(msgBox);
+				if(update_recent()) {
+					uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list ..."));
+					config_update_file();
+					DrawDispose(msgBox);
+				}
 			}
 			break;
 		}

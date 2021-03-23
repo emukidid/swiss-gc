@@ -264,7 +264,7 @@ int main ()
 	if(swissSettings.autoload[0]) {
 		// Check that the path in the autoload entry points at a device that has been detected
 		print_gecko("Autoload entry detected [%s]\r\n", swissSettings.autoload);
-		load_existing_entry(&swissSettings.autoload);
+		load_existing_entry(&swissSettings.autoload[0]);
 	}
 
 	while(1) {

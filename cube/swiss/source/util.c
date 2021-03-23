@@ -1,9 +1,11 @@
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "swiss.h"
 #include "main.h"
 #include "util.h"
 #include "dvd.h"
+#include "devices/filemeta.h"
 
 
 /* File name helper functions */
@@ -37,6 +39,15 @@ char *getRelativeName(char *str) {
 		}
 	}
 	return str;
+}
+
+void getParentPath(char *src, char *dst) {
+	int i;
+	for(i=strlen(src);i>0;i--){
+		if(src[i]=='/') {
+			strncpy(dst, src, i);
+		}
+	}
 }
 
 char stripbuffer[PATHNAME_MAX];
@@ -103,7 +114,7 @@ void print_gecko(const char* fmt, ...)
 }
 
 /* Update recent list with a new entry. */
-void update_recent() {
+bool update_recent() {
 	int i, found_idx = -1, max_idx = RECENT_MAX;
 	// See if this entry already exists in the recent list, if so, we'll move it to the top.
 	for(i = 0; i < RECENT_MAX; i++) {
@@ -115,6 +126,11 @@ void update_recent() {
 			found_idx = i;
 		}
 	}
+	
+	// It's already at the top, nothing to update, return.
+	if(found_idx == 0) {
+		return false;
+	}
 		
 	// Move everything down
 	max_idx = found_idx != -1 ? found_idx : max_idx;
@@ -125,6 +141,7 @@ void update_recent() {
 	
 	// Put our new entry at the top
 	strcpy(&swissSettings.recent[0][0], &curFile.name[0]);
+	return true;
 }
 
 int load_existing_entry(char *entry) {
@@ -138,8 +155,16 @@ int load_existing_entry(char *entry) {
 		// Init the device if it isn't one we were about to browse anyway
 		int found = 0;
 		if(devices[DEVICE_CUR] == oldDevice || devices[DEVICE_CUR]->init(devices[DEVICE_CUR]->initial)) {
+			// Save the old current path in case if we fail to find the recent list entry.
 			file_handle *oldPath = calloc(1, sizeof(file_handle));
 			memcpy(oldPath, &curFile, sizeof(file_handle));
+			
+			// Attempt to read the directory the recent file lives in (required for 2 disc games)
+			memset(&curFile, 0, sizeof(file_handle));
+			getParentPath(entry, &curFile.name[0]);
+			scanFiles();
+			
+			// Finally, read the actual file
 			memset(&curFile, 0, sizeof(file_handle));
 			strcpy(&curFile.name[0], entry);
 			if(devices[DEVICE_CUR] == &__device_dvd) curFile.size = DISC_SIZE;
@@ -157,6 +182,7 @@ int load_existing_entry(char *entry) {
 			// User cancelled, clean things up
 			memcpy(&curFile, oldPath, sizeof(file_handle));
 			free(oldPath);
+			scanFiles();
 		}
 		devices[DEVICE_CUR] = oldDevice;
 		return found ? 0 : RECENT_ERR_ENT_MISSING;
