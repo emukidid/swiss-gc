@@ -1563,13 +1563,11 @@ void load_game() {
 		return;
 	}
 	
-	if(is_redump_disc(&GCMDisk) && curFile.size < DISC_SIZE) {
-		if(!valid_nkit_image(&GCMDisk, curFile.size)) {
-			DrawDispose(msgBox);
-			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Disc shrunk using an unsupported tool.\nPlease recover using NKit."));
-			sleep(5);
-			DrawDispose(msgBox);
-		}
+	if(is_redump_disc(&GCMDisk) && !valid_disc_size(&GCMDisk, curFile.size)) {
+		DrawDispose(msgBox);
+		msgBox = DrawPublish(DrawMessageBox(D_WARN, "Disc shrunk using an unsupported tool.\nPlease recover using NKit."));
+		sleep(5);
+		DrawDispose(msgBox);
 	}
 	
 	DrawDispose(msgBox);

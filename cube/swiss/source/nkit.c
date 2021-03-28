@@ -1909,6 +1909,7 @@ static const struct {
 	{ "GZSJDA\x00\x00", true,  0x047409B7,  953591808 },
 	{ "GZSJDA\x00\x01", true,  0x43E51DC5,  953591808 },
 	{ "GZVJDA\x00\x00", true,  0x13D67703,  845023232 },
+	{ "GZVJDA\x00\x02", true,  0x4843C872,  820238336 },
 	{ "GZWE01\x00\x00", false, 0x673E9CE1,  888039424 },
 	{ "GZWJ01\x00\x00", false, 0xE3338CA2,  864227328 },
 	{ "GZWP01\x00\x00", false, 0xE89580BE,  748150784 },
@@ -1954,10 +1955,23 @@ bool is_redump_disc(DiskHeader *header)
 	return false;
 }
 
-bool valid_nkit_image(DiskHeader *header, size_t size)
+bool valid_disc_crc(DiskHeader *header, uint32_t crc)
+{
+	if (!memcmp(&header->NKitMagicWord, "NKIT", 4))
+		return header->ImageCRC == crc;
+
+	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+		if (!memcmp(header, nkit_dat[i].header, 8) &&
+			crc == nkit_dat[i].crc)
+			return true;
+
+	return false;
+}
+
+bool valid_disc_size(DiskHeader *header, size_t size)
 {
 	if (memcmp(&header->NKitMagicWord, "NKIT", 4))
-		return false;
+		return size >= DISC_SIZE;
 
 	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
 		if (!memcmp(header, nkit_dat[i].header, 8) &&

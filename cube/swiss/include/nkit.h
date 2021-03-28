@@ -25,6 +25,7 @@
 #include "gcm.h"
 
 bool is_redump_disc(DiskHeader *header);
-bool valid_nkit_image(DiskHeader *header, size_t size);
+bool valid_disc_crc(DiskHeader *header, uint32_t crc);
+bool valid_disc_size(DiskHeader *header, size_t size);
 
 #endif /* __NKIT_H */
