@@ -12,8 +12,7 @@ VAR_EXI_SLOT		= VAR_AREA | 0x09B8;	/* is the EXI slot (0 = slot a, 1 = slot b) *
 VAR_EXI_FREQ		= VAR_AREA | 0x09B9;	/* is the EXI frequency (4 = 16mhz, 5 = 32mhz) */
 VAR_SD_SHIFT		= VAR_AREA | 0x09BA;	/* is the SD Card shift amount when issueing read cmds */
 VAR_ATA_LBA48		= VAR_AREA | 0x09BA;	/* Is the HDD in use a 48 bit LBA supported HDD? */
-VAR_IGR_EXIT_TYPE	= VAR_AREA | 0x09BB;	/* IGR exit type */
-VAR_IGR_DOL_SIZE	= VAR_AREA | 0x09BC;	/* IGR DOL Size */
+VAR_IGR_TYPE		= VAR_AREA | 0x09BB;	/* IGR exit type */
 VAR_DISC_1_ID		= VAR_AREA | 0x09C0;	/* disc 1 header */
 VAR_DISC_2_ID		= VAR_AREA | 0x09E0;	/* disc 2 header */
 VAR_SECTOR_BUF		= VAR_AREA | 0x0A00;	/* 0x200 of read data */

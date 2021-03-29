@@ -1246,5 +1246,5 @@ void idle_thread(void)
 	OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
 	OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
 	#endif
-	enable_interrupts();
+	enable_interrupts_idle();
 }

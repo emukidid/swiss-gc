@@ -93,14 +93,17 @@ bool frag_read_write_async(void *buffer, uint32_t length, uint32_t offset, bool 
 	return false;
 }
 
-void frag_read_complete(void *buffer, uint32_t length, uint32_t offset)
+int frag_read_complete(void *buffer, uint32_t length, uint32_t offset)
 {
-	while (length) {
-		int size = frag_read(buffer, length, offset);
-		buffer += size;
-		length -= size;
-		offset += size;
+	int i = 0;
+
+	while (i < length) {
+		int read = frag_read(buffer + i, length - i, offset + i);
+		if (!read) break;
+		i += read;
 	}
+
+	return i;
 }
 
 int frag_read_write(void *buffer, uint32_t length, uint32_t offset, bool write)

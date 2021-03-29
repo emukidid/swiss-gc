@@ -42,7 +42,7 @@ int frag_get_list(uint32_t offset, const frag_t **frag);
 bool is_frag_patch(uint32_t offset, size_t size);
 
 bool frag_read_write_async(void *buffer, uint32_t length, uint32_t offset, bool write, frag_callback callback);
-void frag_read_complete(void *buffer, uint32_t length, uint32_t offset);
+int frag_read_complete(void *buffer, uint32_t length, uint32_t offset);
 int frag_read_write(void *buffer, uint32_t length, uint32_t offset, bool write);
 
 #define frag_read_async(buffer, length, offset, callback) frag_read_write_async(buffer, length, offset, false, callback)

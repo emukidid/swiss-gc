@@ -18,8 +18,6 @@
  */
 
 #include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
 #include "common.h"
 #include "dolphin/dolformat.h"
 #include "dolphin/os.h"
@@ -31,16 +29,18 @@ void check_pad(int32_t chan, PADStatus *status)
 	status->button &= ~PAD_USE_ORIGIN;
 
 	if ((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT) {
-		enable_interrupts();
-		if (OSResetSystem) OSResetSystem(OS_RESET_HOTRESET, 0, 0);
-		disable_interrupts();
+		if (OSResetSystem) {
+			enable_interrupts();
+			OSResetSystem(OS_RESET_HOTRESET, 0, 0);
+			disable_interrupts();
+		}
 	}
 }
 
-static void load_dol(uint32_t offset, uint32_t size)
+static void load_dol(uint32_t offset)
 {
 	DOLImage image;
-	frag_read_complete(&image, sizeof(image), offset);
+	if (frag_read_complete(&image, sizeof(image), offset) != sizeof(image)) return;
 
 	for (int i = 0; i < DOL_MAX_TEXT; i++) {
 		frag_read_complete(image.text[i], image.textLen[i], offset + image.textData[i]);
@@ -61,13 +61,9 @@ void fini(void)
 	disable_interrupts();
 	device_reset();
 
-	uint8_t igr_exit_type = *(uint8_t *)VAR_IGR_EXIT_TYPE;
-	uint32_t igr_dol_size = *(uint32_t *)VAR_IGR_DOL_SIZE;
-
-	switch (igr_exit_type) {
+	switch (*VAR_IGR_TYPE) {
 		case IGR_BOOTBIN:
-			if (igr_dol_size)
-				switch_fiber(FRAGS_IGR_DOL, igr_dol_size, 0, 0, (intptr_t)load_dol, 0x81800000);
+			switch_fiber(FRAGS_IGR_DOL, 0, 0, 0, (intptr_t)load_dol, 0x81800000);
 			break;
 	}
 }

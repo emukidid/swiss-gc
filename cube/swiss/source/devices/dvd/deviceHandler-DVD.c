@@ -459,7 +459,6 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sigr.dol", devices[DEVICE_PATCHES]->initial->name);
 			
 			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_IGR_DOL, 0, DEVICE_PATCHES))) {
-				*(vu32*)VAR_IGR_DOL_SIZE = patchFile.size;
 				totFrags+=frags;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}

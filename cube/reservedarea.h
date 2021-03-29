@@ -84,8 +84,7 @@ extern char VAR_EXI_SLOT[1];		// is the EXI slot (0 = slot a, 1 = slot b)
 extern char VAR_EXI_FREQ[1];		// is the EXI frequency (4 = 16mhz, 5 = 32mhz)
 extern char VAR_SD_SHIFT[1];		// is the SD Card shift amount when issueing read cmds
 extern char VAR_ATA_LBA48[1];		// Is the HDD in use a 48 bit LBA supported HDD?
-extern char VAR_IGR_EXIT_TYPE[1];	// IGR exit type
-extern char VAR_IGR_DOL_SIZE[4];	// IGR DOL Size
+extern char VAR_IGR_TYPE[1];		// IGR exit type
 extern char VAR_DISC_1_ID[0x20];	// disc 1 header
 extern char VAR_DISC_2_ID[0x20];	// disc 2 header
 extern char VAR_SECTOR_BUF[0x200];	// 0x200 of read data

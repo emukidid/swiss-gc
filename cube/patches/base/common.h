@@ -40,6 +40,13 @@ typedef volatile f64 vf64;
 	unsigned long msr; \
 	asm volatile ("mfmsr %0" : "=r" (msr)); \
 	asm volatile ("ori %0,%0,0x8000" : "+r" (msr)); \
+	asm volatile ("mtmsr %0" :: "r" (msr)); \
+})
+
+#define enable_interrupts_idle() ({ \
+	unsigned long msr; \
+	asm volatile ("mfmsr %0" : "=r" (msr)); \
+	asm volatile ("ori %0,%0,0x8000" : "+r" (msr)); \
 	asm volatile ("oris %0,%0,0x0004" : "+r" (msr)); \
 	asm volatile ("sync"); \
 	asm volatile ("mtmsr %0" :: "r" (msr)); \
