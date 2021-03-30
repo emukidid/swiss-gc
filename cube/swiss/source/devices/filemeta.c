@@ -199,6 +199,9 @@ file_handle* meta_find_disk2(file_handle* f) {
 	if(f->meta) {
 		int i;
 		for(i = 0; i < getCurrentDirEntryCount(); i++) {
+			if(!dirEntries[i].meta) {
+				populate_meta(&dirEntries[i]);
+			}
 			if(dirEntries[i].meta) {
 				if(strncmp((const char*)dirEntries[i].meta->diskId.gamename, (const char*)f->meta->diskId.gamename, 4)) {
 					continue;

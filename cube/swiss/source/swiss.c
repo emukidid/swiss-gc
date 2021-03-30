@@ -313,6 +313,52 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 	DrawAddChild(containerPanel, devUsedSizeLabel);
 }
 
+void select_recent_entry() {
+	if(swissSettings.recent[0][0] == 0) return;	// don't draw empty.
+	int i = 0, idx = 0, max = RECENT_MAX;
+	int rh = 22; // row height
+	int fileListBase = 175;
+	uiDrawObj_t *container = NULL;
+	while(1) {
+		uiDrawObj_t *newPanel = DrawEmptyBox(30,fileListBase-30, getVideoMode()->fbWidth-30, 380);
+		DrawAddChild(newPanel, DrawLabel(45, fileListBase-30, "Recent:"));
+		for(i = 0; i < RECENT_MAX; i++) {
+			if(swissSettings.recent[i][0] == 0) {
+				max = i;
+				break;
+			}
+			DrawAddChild(newPanel, DrawSelectableButton(45,fileListBase+(i*(rh+2)), getVideoMode()->fbWidth-45, fileListBase+(i*(rh+2))+rh, getRelativeName(&swissSettings.recent[i][0]), (i == idx) ? B_SELECTED:B_NOSELECT));
+		}
+		if(container) {
+			DrawDispose(container);
+		}
+		DrawPublish(newPanel);
+		container = newPanel;
+		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN))
+			{ VIDEO_WaitVSync (); }
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) > 16){	idx = (--idx < 0) ? max-1 : idx;}
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || PAD_StickY(0) < -16) {idx = (idx + 1) % max;	}
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_A))	break;
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_B))	{ idx = -1; break; }
+		if(PAD_StickY(0) < -16 || PAD_StickY(0) > 16) {
+			usleep(50000 - abs(PAD_StickY(0)*16));
+		}
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)))
+			{ VIDEO_WaitVSync (); }
+	}
+	DrawDispose(container);
+	if(idx >= 0) {
+		int res = load_existing_entry(&swissSettings.recent[idx][0]);
+		if(res) {
+			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,res == RECENT_ERR_ENT_MISSING ? "Recent entry not found.\nPress A to continue." 
+																					:	"Recent device not found.\nPress A to continue.");
+			DrawPublish(msgBox);
+			wait_press_A();
+			DrawDispose(msgBox);
+		}
+	}
+}
+
 // Draws all the files in the current dir.
 void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPanel) {
 	int j = 0;
@@ -365,7 +411,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		DrawPublish(filePanel);
 		DrawDispose(loadingBox);
 		
-		u32 waitButtons = PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R;
+		u32 waitButtons = PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R;
 		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & waitButtons))
 			{ VIDEO_WaitVSync (); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) >= 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
@@ -387,13 +433,13 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			}
 		}
 		
-		if((PAD_ButtonsHeld(0) & PAD_BUTTON_A))	{
+		if((PAD_ButtonsHeld(0) & PAD_BUTTON_A)) {
 			//go into a folder or select a file
 			if((*directory)[curSelection].fileAttrib==IS_DIR) {
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
 				needsRefresh=1;
 			}
-			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL){
+			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL) {
 				int len = strlen(&curFile.name[0]);
 				
 				// Go up a folder
@@ -411,7 +457,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 					curFile.name[len-1] = '\0';
 				needsRefresh=1;
 			}
-			else if((*directory)[curSelection].fileAttrib==IS_FILE){
+			else if((*directory)[curSelection].fileAttrib==IS_FILE) {
 				memcpy(&curDir, &curFile, sizeof(file_handle));
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
 				needsRefresh= manage_file() ? 1:0;
@@ -420,8 +466,10 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			}
 			return filePanel;
 		}
-		
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B)	{
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_START) {
+			select_recent_entry();
+		}
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B) {
 			curMenuLocation=ON_OPTIONS;
 			return filePanel;
 		}
@@ -580,7 +628,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		DrawPublish(filePanel);
 		DrawDispose(loadingBox);
 		
-		u32 waitButtons = PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R;
+		u32 waitButtons = PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R;
 		while ((PAD_StickX(0) > -16 && PAD_StickX(0) < 16) && !(PAD_ButtonsHeld(0) & waitButtons))
 			{ VIDEO_WaitVSync (); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) || PAD_StickX(0) <= -16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
@@ -639,6 +687,9 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B)	{
 			curMenuLocation=ON_OPTIONS;
 			return filePanel;
+		}
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_START) {
+			select_recent_entry();
 		}
 		if(PAD_StickX(0) <= -16 || PAD_StickX(0) >= 16) {
 			usleep((abs(PAD_StickX(0)) > 64 ? 50000:100000) - abs(PAD_StickX(0)*64));
@@ -1067,6 +1118,15 @@ void boot_dol()
   		ptr+=size;
 	}
 	DrawDispose(progBar);
+	
+	if(devices[DEVICE_CONFIG] != NULL) {
+		// Update the recent list.
+		if(update_recent()) {
+			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list ..."));
+			config_update_file();
+			DrawDispose(msgBox);
+		}
+	}
 	
 	// Build a command line to pass to the DOL
 	int argc = 0;
@@ -1811,6 +1871,14 @@ int info_game()
 			if(devices[DEVICE_CUR] == &__device_wode && !ret) {
 				continue;
 			}
+			if(ret && devices[DEVICE_CONFIG] != NULL) {
+				// Update the recent list.
+				if(update_recent()) {
+					uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list ..."));
+					config_update_file();
+					DrawDispose(msgBox);
+				}
+			}
 			break;
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
@@ -1825,7 +1893,7 @@ int info_game()
 				strcpy(&swissSettings.autoload[0], &curFile.name[0]);
 			}
 			// Save config
-			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving changes ..."));
+			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload ..."));
 			config_update_file();
 			DrawDispose(infoPanel);
 			infoPanel = DrawPublish(draw_game_info());
@@ -2052,7 +2120,7 @@ void menu_loop()
 		}
 		else if (curMenuLocation==ON_OPTIONS) {
 			u16 btns = PAD_ButtonsHeld(0);
-			while (!((btns=PAD_ButtonsHeld(0)) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT))) {
+			while (!((btns=PAD_ButtonsHeld(0)) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_START))) {
 				VIDEO_WaitVSync();
 			}
 			
@@ -2088,7 +2156,10 @@ void menu_loop()
 			if((btns & PAD_BUTTON_B) && devices[DEVICE_CUR] != NULL) {
 				curMenuLocation = ON_FILLIST;
 			}
-			while(PAD_ButtonsHeld(0) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT)) {
+			if(PAD_ButtonsHeld(0) & PAD_BUTTON_START) {
+				select_recent_entry();
+			}
+			while(PAD_ButtonsHeld(0) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_START)) {
 				VIDEO_WaitVSync (); 
 			}
 		}

@@ -209,6 +209,12 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "Autoload=%s\r\n",swissSettings.autoload);
 	string_append(configString, txtbuffer);
+	int i;
+	for(i = 0; i < RECENT_MAX; i++) {
+		sprintf(txtbuffer, "Recent_%i=%s\r\n",i,swissSettings.recent[i]);
+		//print_gecko("added recent [%s]\r\n",txtbuffer);
+		string_append(configString, txtbuffer);
+	}
 	// Write out the default game config portion too
 	sprintf(txtbuffer, "Force Video Mode=%s\r\n",gameVModeStr[swissSettings.gameVMode]);
 	string_append(configString, txtbuffer);
@@ -243,7 +249,6 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	
 	// Write out Game Configs
-	int i;
 	for(i = 0; i < configEntriesCount; i++) {
 		sprintf(txtbuffer, "ID=%.4s\r\n",configEntries[i].game_id);
 		string_append(configString, txtbuffer);
@@ -562,6 +567,13 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("Autoload", name)) {
 					strlcpy(&swissSettings.autoload[0], value, sizeof(swissSettings.autoload));
+				}
+				else if(!strncmp("Recent_", name, strlen("Recent_"))) {
+					int recent_slot = atoi(name+strlen("Recent_"));
+					if(recent_slot >= 0 && recent_slot < RECENT_MAX) {
+						//print_gecko("found recent num %i [%s]\r\n", recent_slot, value);
+						strncpy(swissSettings.recent[recent_slot], value, PATHNAME_MAX);
+					}
 				}
 			}
 		}
