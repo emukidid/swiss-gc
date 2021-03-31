@@ -18,7 +18,6 @@ extern u8 kenobigc_dbg_bin[];
 #define CHEATS_ENGINE_START		((void*)(WIIRD_ENGINE+0xA8))
 
 #define CHEATS_NAME_LEN			128
-#define CHEATS_MAX_CODES		128
 #define CHEATS_MAX_FOR_GAME		256
 
 // Example:
@@ -37,7 +36,7 @@ Infinite Health [Ralf]
 
 typedef struct {
 	char name[CHEATS_NAME_LEN];
-	u32 codes[CHEATS_MAX_CODES][2];
+	u32 (*codes)[2];
 	int num_codes;
 	int enabled;
 } CheatEntry __attribute__((aligned(32)));

@@ -98,6 +98,15 @@ void parseCheats(char *filecontents) {
 	int numCheats = 0;
 	line = strtok_r( filecontents, "\n", &linectx );
 
+	// Free previous
+	if(_cheats.num_cheats > 0) {
+		int i;
+		for(i = 0; i < _cheats.num_cheats; i++) {
+			if(_cheats.cheat[i].codes) {
+				free(_cheats.cheat[i].codes);
+			}
+		}
+	}
 	memset(&_cheats, 0, sizeof(CheatEntries));
 	
 	CheatEntry *curCheat = NULL;	// The current one we're parsing
@@ -112,11 +121,13 @@ void parseCheats(char *filecontents) {
 					curCheat->name[strlen(curCheat->name)-1] = 0;
 				//print_gecko("Cheat Name: [%s]\r\n", prevLine);
 			}
-			int numCodes = 0, unsupported = 0;
+			int unsupported = 0;
+			u32 *codesBuf = (u32*)calloc(1, sizeof(u32) * 2 * 512);
+			
 			// Add this valid code as the first code for this cheat
-			curCheat->codes[numCodes][0] = (u32)strtoul(line, NULL, 16);
-			curCheat->codes[numCodes][1] = (u32)strtoul(line+8, NULL, 16);
-			numCodes++;
+			codesBuf[(curCheat->num_codes << 1)+0] = (u32)strtoul(line, NULL, 16);
+			codesBuf[(curCheat->num_codes << 1)+1] = (u32)strtoul(line+8, NULL, 16);
+			curCheat->num_codes++;
 			
 			line = strtok_r( NULL, "\n", &linectx);
 			// Keep going until we're out of codes for this cheat
@@ -128,24 +139,30 @@ void parseCheats(char *filecontents) {
 				}
 				if(isValidCode(line)) {
 					// Add this valid code
-					curCheat->codes[numCodes][0] = (u32)strtoul(line, NULL, 16);
-					curCheat->codes[numCodes][1] = (u32)strtoul(line+8, NULL, 16);
-					numCodes++;
+					codesBuf[(curCheat->num_codes << 1)+0] = (u32)strtoul(line, NULL, 16);
+					codesBuf[(curCheat->num_codes << 1)+1] = (u32)strtoul(line+8, NULL, 16);
+					curCheat->num_codes++;
 				}
 				else {
 					break;
 				}
 				line = strtok_r( NULL, "\n", &linectx);
 			}
-			curCheat->num_codes = numCodes;
+			
 			if(unsupported) {
 				memset(curCheat, 0, sizeof(CheatEntry));
 				while(line != NULL && strlen(line) > 0) {
 					line = strtok_r( NULL, "\n", &linectx);	// finish this unsupported cheat.
 				}
 			}
-			else 
+			else {
 				numCheats++;
+				// Alloc and store it.
+				print_gecko("Allocating %i bytes for %i codes\r\n", sizeof *curCheat->codes * curCheat->num_codes, curCheat->num_codes);
+				curCheat->codes = calloc(1, sizeof *curCheat->codes * curCheat->num_codes );
+				memcpy(codesBuf, curCheat->codes, sizeof *curCheat->codes * curCheat->num_codes);
+			}
+			free(codesBuf);
 		}
 		prevLine = line;
 		// And round we go again
