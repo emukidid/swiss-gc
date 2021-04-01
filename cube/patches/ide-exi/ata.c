@@ -389,7 +389,7 @@ static void ata_done_queued(void)
 void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	#if ISR_READ
-	if (isr_transferred < SECTOR_SIZE + 4)
+	if (isr_transferred < SECTOR_SIZE)
 		return;
 	#endif
 

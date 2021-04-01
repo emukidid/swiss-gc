@@ -26,7 +26,7 @@
 isr_registers:
 	.long	0x0C006800
 isr_transferred:
-	.long	512 + 4
+	.long	512
 
 	.globl external_interrupt_vector
 external_interrupt_vector:
@@ -39,19 +39,15 @@ external_interrupt_vector:
 	eciwx	r5, r0, r4
 	rlwinm	r6, r5, 1, 28, 28
 	and.	r6, r5, r6
-	beq		2f
-	andi.	r5, r5, ((1 << 0) << 7)
-	beq		2f
 	lwz		r6, isr_transferred - 0x80000000 (r0)
-	cmpwi	r6, 512
-	bgt		2f
+	cmpwi	cr7, r6, 512
 	beq		1f
+	bnl		cr7, 1f
 	li		r5, 4*4
 	eciwx	r5, r5, r4
 	stw		r5, VAR_SECTOR_BUF (r6)
-1:	addi	r6, r6, 4
+	addi	r6, r6, 4
 	stw		r6, isr_transferred - 0x80000000 (r0)
-	beq		2f
 	eciwx	r5, r0, r4
 	andi.	r6, r5, 0x405
 	ecowx	r6, r0, r4
@@ -64,14 +60,14 @@ external_interrupt_vector:
 	li		r5, 0x3000
 	eciwx	r5, r5, r4
 	rlwinm.	r6, r5, 0, 16, 14
-	bne		2f
+	bne		1f
 	mfsprg	r6, 3
 	mtcr	r6
 	mfsprg	r6, 2
 	mfsprg	r5, 1
 	mfsprg	r4, 0
 	rfi
-2:	mfsprg	r6, 3
+1:	mfsprg	r6, 3
 	mtcr	r6
 	mfsprg	r6, 2
 	mfsprg	r5, 1

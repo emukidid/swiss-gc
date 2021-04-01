@@ -96,7 +96,7 @@ static void exi_imm_write(u32 data, int len, int sync)
 
 static u32 exi_imm_read(int len, int sync)
 {
-	exi_regs[4] = -1;
+	exi_regs[4] = ~0;
 	// Tell EXI if this is a read or a write
 	exi_regs[3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
 
@@ -174,7 +174,7 @@ static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sy
 		exi_imm_read(1, 0);
 
 		isr_registers = OSUncachedToPhysical(exi_regs);
-		isr_transferred = 0xFEFFFFFF;
+		isr_transferred = -1;
 
 		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_TC + (3 * exi_channel);
 		TCIntrruptHandler = OSSetInterruptHandler(interrupt, tc_interrupt_handler);
@@ -280,7 +280,6 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 
 	OSMaskInterrupts(OS_INTERRUPTMASK(interrupt));
 	OSSetInterruptHandler(interrupt, TCIntrruptHandler);
-	exi_imm_read(2, 1);
 	exi_deselect();
 
 	mmc_done_queued();
