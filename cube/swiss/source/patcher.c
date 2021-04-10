@@ -11109,7 +11109,92 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 {
 	int patched = 0;
 	
-	if (!strncmp(gameID, "D56J01", 6) && dataType == PATCH_DOL) {
+	if (dataType == PATCH_BS2) {
+		switch (length) {
+			case 1435168:
+				*(s16 *)(data + 0x813007C2 - 0x81300000) = 0x0C00;
+				
+				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
+				patched++;
+				break;
+			case 1448248:
+				*(s16 *)(data + 0x813007DA - 0x81300000) = 0x0C00;
+				
+				*(u32 *)(data + 0x813011D0 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x813011D0);
+				*(u32 *)(data + 0x813011DC - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x813011DC);
+				*(u32 *)(data + 0x81301258 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81301258);
+				*(u32 *)(data + 0x81301260 - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x81301260);
+				
+				*(s16 *)(data + 0x81301422 - 0x81300000) = 0x0C00;
+				*(s16 *)(data + 0x81301476 - 0x81300000) = 0x0C00;
+				*(u32 *)(data + 0x81301484 - 0x81300000) = 0x80050004;
+				*(u32 *)(data + 0x813014A8 - 0x81300000) = 0x90050004;
+				
+				*(s16 *)(data + 0x8130170E - 0x81300000) = 0x0C00;
+				
+				*(s16 *)(data + 0x813019AE - 0x81300000) = 0x0C00;
+				
+				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
+				patched++;
+				break;
+			case 1583056:
+				*(s16 *)(data + 0x813005EA - 0x81300000) = 0x0C00;
+				
+				print_gecko("Patched:[%s]\n", "NTSC Revision 1.1");
+				patched++;
+				break;
+			case 1763016:
+				*(s16 *)(data + 0x813005EA - 0x81300000) = 0x0C00;
+				
+				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
+				patched++;
+				break;
+			case 1760120:
+				*(s16 *)(data + 0x8130082E - 0x81300000) = 0x0C00;
+				
+				*(u32 *)(data + 0x81301258 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81301258);
+				*(u32 *)(data + 0x81301264 - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x81301264);
+				*(u32 *)(data + 0x813012D8 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x813012D8);
+				*(u32 *)(data + 0x813012E0 - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x813012E0);
+				
+				*(s16 *)(data + 0x81301496 - 0x81300000) = 0x0C00;
+				*(s16 *)(data + 0x813014E6 - 0x81300000) = 0x0C00;
+				*(u32 *)(data + 0x813014F4 - 0x81300000) = 0x80050004;
+				*(u32 *)(data + 0x81301518 - 0x81300000) = 0x90050004;
+				
+				*(s16 *)(data + 0x81301772 - 0x81300000) = 0x0C00;
+				
+				*(s16 *)(data + 0x813018A6 - 0x81300000) = 0x0C00;
+				
+				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
+				patched++;
+				break;
+			case 1561744:
+				*(s16 *)(data + 0x813005EA - 0x81300000) = 0x0C00;
+				
+				print_gecko("Patched:[%s]\n", "MPAL Revision 1.1");
+				patched++;
+				break;
+			case 1586320:
+				*(s16 *)(data + 0x81300926 - 0x81300000) = 0x0C00;
+				
+				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
+				patched++;
+				break;
+			case 1587472:
+				*(s16 *)(data + 0x81300926 - 0x81300000) = 0x0C00;
+				
+				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
+				patched++;
+				break;
+			case 1766736:
+				*(s16 *)(data + 0x813006DA - 0x81300000) = 0x0C00;
+				
+				print_gecko("Patched:[%s]\n", "PAL  Revision 1.2");
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "D56J01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3055616:
 				// Skip second EXIInit call.
