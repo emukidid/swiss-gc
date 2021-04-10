@@ -1017,11 +1017,12 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 223, 69, 11, 26, 20, 20, NULL, 0, "EXIGetID" },
 		{ 236, 71, 12, 28, 22, 21, NULL, 0, "EXIGetID" }
 	};
-	FuncPattern __DVDInterruptHandlerSigs[9] = {
+	FuncPattern __DVDInterruptHandlerSigs[10] = {
 		{ 157, 49, 21,  9, 18, 12, NULL, 0, "__DVDInterruptHandlerD" },
 		{ 161, 50, 22,  8, 18, 12, NULL, 0, "__DVDInterruptHandlerD" },
 		{ 161, 50, 22,  8, 18, 12, NULL, 0, "__DVDInterruptHandlerD" },
 		{ 121, 32, 13,  4, 15, 14, NULL, 0, "__DVDInterruptHandler" },
+		{ 123, 33, 13,  5, 15, 14, NULL, 0, "__DVDInterruptHandler" },
 		{ 184, 59, 26,  9, 21, 17, NULL, 0, "__DVDInterruptHandler" },
 		{ 186, 60, 26, 10, 21, 17, NULL, 0, "__DVDInterruptHandler" },
 		{ 189, 60, 27,  9, 21, 17, NULL, 0, "__DVDInterruptHandler" },
@@ -3702,6 +3703,14 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
+						if (findx_pattern(data, dataType, i +  33, length, &__OSGetSystemTimeSigs[1]) &&
+							findx_pattern(data, dataType, i +  99, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 101, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 113, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 115, length, &OSSetCurrentContextSig))
+							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
 						if (findx_pattern(data, dataType, i +  16, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  54, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i + 157, length, &OSClearContextSigs[1]) &&
@@ -3710,7 +3719,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 175, length, &OSSetCurrentContextSig))
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
-					case 5:
+					case 6:
 						if (findx_pattern(data, dataType, i +  18, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  56, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i + 159, length, &OSClearContextSigs[1]) &&
@@ -3719,7 +3728,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 177, length, &OSSetCurrentContextSig))
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
-					case 6:
+					case 7:
 						if (findx_pattern(data, dataType, i +  16, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  59, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i + 162, length, &OSClearContextSigs[1]) &&
@@ -3728,7 +3737,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 180, length, &OSSetCurrentContextSig))
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
-					case 7:
+					case 8:
 						if (findx_pattern(data, dataType, i +  11, length, &__OSGetSystemTimeSigs[2]) &&
 							findx_pattern(data, dataType, i +  56, length, &__OSGetSystemTimeSigs[2]) &&
 							findx_pattern(data, dataType, i + 160, length, &OSClearContextSigs[2]) &&
@@ -3737,7 +3746,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 178, length, &OSSetCurrentContextSig))
 							__DVDInterruptHandlerSigs[j].offsetFoundAt = i;
 						break;
-					case 8:
+					case 9:
 						if (findx_pattern(data, dataType, i +  12, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  59, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i + 165, length, &OSClearContextSigs[1]) &&
@@ -5898,6 +5907,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 117] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 3:
+				case 4:
 					data[i +   1] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  28] = 0x3FE00C00;	// lis		r31, 0x0C00
 					data[i +  54] = 0x801F6004;	// lwz		r0, 0x6004 (r31)
@@ -5908,7 +5918,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  85] = 0x90050004;	// stw		r0, 0x0004 (r5)
 					data[i +  89] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 4:
+				case 5:
 					data[i +  29] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  49] = 0x3FE00C00;	// lis		r31, 0x0C00
 					data[i +  75] = 0x801F6004;	// lwz		r0, 0x6004 (r31)
@@ -5919,7 +5929,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 106] = 0x90050004;	// stw		r0, 0x0004 (r5)
 					data[i + 110] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 5:
+				case 6:
 					data[i +  31] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  51] = 0x3FE00C00;	// lis		r31, 0x0C00
 					data[i +  77] = 0x801F6004;	// lwz		r0, 0x6004 (r31)
@@ -5930,7 +5940,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 108] = 0x90050004;	// stw		r0, 0x0004 (r5)
 					data[i + 112] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 6:
+				case 7:
 					data[i +  33] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  54] = 0x3FE00C00;	// lis		r31, 0x0C00
 					data[i +  80] = 0x801F6004;	// lwz		r0, 0x6004 (r31)
@@ -5941,7 +5951,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 111] = 0x90050004;	// stw		r0, 0x0004 (r5)
 					data[i + 115] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 7:
+				case 8:
 					data[i +  28] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  51] = 0x3FE00C00;	// lis		r31, 0x0C00
 					data[i +  78] = 0x801B0004;	// lwz		r0, 0x0004 (r27)
@@ -5952,7 +5962,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 109] = 0x90050004;	// stw		r0, 0x0004 (r5)
 					data[i + 113] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 8:
+				case 9:
 					data[i +  30] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  54] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  80] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -9790,6 +9800,46 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
 				patched++;
 				break;
+			case 1448248:
+				// __VIInit(newmode->viTVMode & ~0x3);
+				*(u32 *)(data + 0x81300710 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300714 - 0x81300000) = 0x38600000 | (newmode->viTVMode & 0xFFFC);
+				
+				// Accept any region code.
+				*(s16 *)(data + 0x8130092E - 0x81300000) = 1;
+				*(s16 *)(data + 0x81300946 - 0x81300000) = 1;
+				*(s16 *)(data + 0x8130094E - 0x81300000) = 1;
+				
+				// Force boot sound.
+				*(u32 *)(data + 0x813046C0 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				
+				// Force text encoding.
+				*(u32 *)(data + 0x8130CBA4 - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
+				
+				// Force English language, the hard way.
+				*(s16 *)(data + 0x8130CBCA - 0x81300000) = 10;
+				*(s16 *)(data + 0x8130CBD2 - 0x81300000) = 38;
+				*(s16 *)(data + 0x8130CBD6 - 0x81300000) = 39;
+				*(s16 *)(data + 0x8130CBE2 - 0x81300000) = 15;
+				*(s16 *)(data + 0x8130CBEE - 0x81300000) = 7;
+				*(s16 *)(data + 0x8130CBFA - 0x81300000) = 1;
+				*(s16 *)(data + 0x8130CC06 - 0x81300000) = 4;
+				*(s16 *)(data + 0x8130CC0E - 0x81300000) = 45;
+				*(s16 *)(data + 0x8130CC12 - 0x81300000) = 46;
+				*(s16 *)(data + 0x8130CC1A - 0x81300000) = 42;
+				*(s16 *)(data + 0x8130CC1E - 0x81300000) = 40;
+				*(s16 *)(data + 0x8130CC26 - 0x81300000) = 43;
+				*(s16 *)(data + 0x8130CC36 - 0x81300000) = 31;
+				*(s16 *)(data + 0x8130CC3E - 0x81300000) = 29;
+				*(s16 *)(data + 0x8130CC42 - 0x81300000) = 30;
+				*(s16 *)(data + 0x8130CC4E - 0x81300000) = 80;
+				
+				if (newmode->viTVMode >> 2 == VI_PAL)
+					memcpy(data + 0x8135FD00 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+				
+				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
+				patched++;
+				break;
 			case 1583056:
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300522 - 0x81300000) = newmode->viTVMode;
@@ -9841,6 +9891,24 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				if (newmode->viTVMode >> 2 != VI_PAL)
 					memcpy(data + 0x81380FD0 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
+				
+				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
+				patched++;
+				break;
+			case 1760120:
+				// __VIInit(newmode->viTVMode);
+				*(u32 *)(data + 0x81300764 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300768 - 0x81300000) = 0x38600000 | (newmode->viTVMode & 0xFFFF);
+				
+				// Accept any region code.
+				*(s16 *)(data + 0x813009D6 - 0x81300000) = 1;
+				*(s16 *)(data + 0x813009FA - 0x81300000) = 1;
+				
+				// Force boot sound.
+				*(u32 *)(data + 0x813043EC - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				
+				if (newmode->viTVMode >> 2 != VI_PAL)
+					memcpy(data + 0x81380384 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
 				
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
 				patched++;
@@ -12032,12 +12100,13 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 143, 23, 10, 5, 22, 13, NULL, 0, "PADOriginUpdateCallback" },	// SN Systems ProDG
 		{  51, 14, 10, 5,  2, 10, NULL, 0, "PADOriginUpdateCallback" }
 	};
-	FuncPattern PADInitSigs[14] = {
+	FuncPattern PADInitSigs[15] = {
 		{  88, 37,  4,  8, 3, 11, NULL, 0, "PADInitD" },
 		{  91, 38,  5,  8, 6, 11, NULL, 0, "PADInitD" },
 		{  90, 37,  5,  8, 6, 11, NULL, 0, "PADInitD" },
 		{  92, 38,  5,  9, 6, 11, NULL, 0, "PADInitD" },
 		{  84, 25,  7, 10, 1, 11, NULL, 0, "PADInit" },
+		{  91, 27,  7, 10, 1, 17, NULL, 0, "PADInit" },
 		{  94, 29,  7, 11, 1, 17, NULL, 0, "PADInit" },
 		{ 113, 31, 11, 11, 1, 17, NULL, 0, "PADInit" },
 		{ 129, 42, 13, 12, 2, 18, NULL, 0, "PADInit" },
@@ -12098,11 +12167,12 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 27,  9, 4, 2, 2, 3, NULL, 0, "CARDGetEncodingD" },
 		{ 34, 12, 5, 3, 4, 2, NULL, 0, "CARDGetEncoding" }
 	};
-	FuncPattern VerifyIDSigs[7] = {
+	FuncPattern VerifyIDSigs[8] = {
 		{ 107, 33, 2, 7, 10, 33, NULL, 0, "VerifyIDD" },
 		{ 107, 33, 2, 7, 10, 33, NULL, 0, "VerifyIDD" },
 		{ 107, 33, 2, 7, 10, 33, NULL, 0, "VerifyIDD" },
 		{ 176, 32, 2, 7, 16, 63, NULL, 0, "VerifyID" },
+		{ 161, 28, 2, 6, 12, 63, NULL, 0, "VerifyID" },
 		{ 161, 28, 2, 6, 12, 63, NULL, 0, "VerifyID" },
 		{ 161, 28, 2, 6, 12, 63, NULL, 0, "VerifyID" },
 		{ 161, 28, 2, 6, 12, 63, NULL, 0, "VerifyID" }
@@ -12260,11 +12330,18 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					case 5:
 						if (findx_pattern(data, dataType, i +  10, length, &PADSetSpecSigs[1]) &&
 							get_immediate(data,  i +  45, i +  46, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  53, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  84, length, &OSRestoreInterruptsSig))
+							PADInitSigs[j].offsetFoundAt = i;
+						break;
+					case 6:
+						if (findx_pattern(data, dataType, i +  10, length, &PADSetSpecSigs[1]) &&
+							get_immediate(data,  i +  45, i +  46, &address) && address == 0x800030E0 &&
 							findx_pattern(data, dataType, i +  56, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  87, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
-					case 6:
+					case 7:
 						if (findx_pattern(data, dataType, i +  12, length, &PADSetSpecSigs[1]) &&
 							get_immediate(data,  i +  47, i +  48, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  49, i +  50, &address) && address == 0x800030E0 &&
@@ -12275,7 +12352,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 106, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
-					case 7:
+					case 8:
 						if (findx_pattern(data, dataType, i +  12, length, &PADSetSpecSigs[1]) &&
 							get_immediate(data,  i +  47, i +  48, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  49, i +  50, &address) && address == 0x800030E0 &&
@@ -12286,7 +12363,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 122, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
-					case 8:
+					case 9:
 						if (findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]) &&
 							get_immediate(data,  i +  50, i +  51, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  52, i +  53, &address) && address == 0x800030E0 &&
@@ -12297,7 +12374,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 125, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
-					case 9:
+					case 10:
 						if (findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]) &&
 							get_immediate(data,  i +  50, i +  51, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  52, i +  53, &address) && address == 0x800030E0 &&
@@ -12308,7 +12385,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 126, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
-					case 10:
+					case 11:
 						if (findx_pattern(data, dataType, i +  14, length, &PADSetSpecSigs[1]) &&
 							get_immediate(data,  i +  52, i +  53, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  54, i +  55, &address) && address == 0x800030E0 &&
@@ -12319,7 +12396,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 125, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
-					case 11:
+					case 12:
 						if (findx_pattern(data, dataType, i +  16, length, &PADSetSpecSigs[1]) &&
 							get_immediate(data,  i +  54, i +  55, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  56, i +  57, &address) && address == 0x800030E0 &&
@@ -12330,7 +12407,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 127, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
-					case 12:
+					case 13:
 						if (findx_pattern(data, dataType, i +  15, length, &PADSetSpecSigs[1]) &&
 							get_immediate(data,  i +  43, i +  47, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  49, i +  51, &address) && address == 0x800030E0 &&
@@ -12338,7 +12415,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 115, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
-					case 13:
+					case 14:
 						if (findx_pattern(data, dataType, i +  16, length, &PADSetSpecSigs[1]) &&
 							get_immediate(data,  i +  54, i +  55, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  56, i +  57, &address) && address == 0x800030E0 &&
@@ -12525,7 +12602,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					case 4:
 						if (findx_pattern(data, dataType, i +  88, length, &OSGetFontEncodeSigs[1]) &&
 							findx_pattern(data, dataType, i +  97, length, &__OSLockSramExSigs[1]) &&
-							get_immediate(data,  i + 100, i + 102, &constant) && constant == 0x3E0F83E1 &&
+							get_immediate(data,  i + 100, i + 102, &constant) && constant == 0x2E8BA2E9 &&
 							get_immediate(data,  i + 108, i + 111, &constant) && constant == 0x41C64E6D &&
 							get_immediate(data,  i + 119,       0, &constant) && constant == 0x3039 &&
 							findx_pattern(data, dataType, i + 132, length, &__OSUnlockSramExSigs[1]) &&
@@ -12536,7 +12613,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					case 5:
 						if (findx_pattern(data, dataType, i +  88, length, &OSGetFontEncodeSigs[1]) &&
 							findx_pattern(data, dataType, i +  97, length, &__OSLockSramExSigs[1]) &&
-							get_immediate(data,  i + 100, i + 102, &constant) && constant == 0x78787879 &&
+							get_immediate(data,  i + 100, i + 102, &constant) && constant == 0x3E0F83E1 &&
 							get_immediate(data,  i + 108, i + 111, &constant) && constant == 0x41C64E6D &&
 							get_immediate(data,  i + 119,       0, &constant) && constant == 0x3039 &&
 							findx_pattern(data, dataType, i + 132, length, &__OSUnlockSramExSigs[1]) &&
@@ -12545,6 +12622,17 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							VerifyIDSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
+						if (findx_pattern(data, dataType, i +  88, length, &OSGetFontEncodeSigs[1]) &&
+							findx_pattern(data, dataType, i +  97, length, &__OSLockSramExSigs[1]) &&
+							get_immediate(data,  i + 100, i + 102, &constant) && constant == 0x78787879 &&
+							get_immediate(data,  i + 108, i + 111, &constant) && constant == 0x41C64E6D &&
+							get_immediate(data,  i + 119,       0, &constant) && constant == 0x3039 &&
+							findx_pattern(data, dataType, i + 132, length, &__OSUnlockSramExSigs[1]) &&
+							get_immediate(data,  i + 147,       0, &constant) && constant == 0x7FFF &&
+							findx_pattern(data, dataType, i + 154, length, &__OSUnlockSramExSigs[1]))
+							VerifyIDSigs[j].offsetFoundAt = i;
+						break;
+					case 7:
 						if (findx_pattern(data, dataType, i +  90, length, &__OSLockSramExSigs[1]) &&
 							get_immediate(data,  i +  93, i +  95, &constant) && constant == 0x78787879 &&
 							get_immediate(data,  i + 101, i + 104, &constant) && constant == 0x41C64E6D &&
