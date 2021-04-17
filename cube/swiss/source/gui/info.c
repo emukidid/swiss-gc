@@ -32,6 +32,9 @@ uiDrawObj_t * info_draw_page(int page_num) {
 			if(*(u32*)&driveVersion[0] == 0x20010831) {
 				sprintf(topStr, "Panasonic Q SL-GC10-S");
 			}
+			else if(!strncmp(&IPLInfo[0x55], "TDEV Revision 1.1", 17)) {
+				sprintf(topStr, "Nintendo GameCube DOT-006");
+			}
 			else if(!strncmp(&IPLInfo[0x55], "MPAL Revision 1.1", 17)) {
 				sprintf(topStr, "Nintendo GameCube DOL-002 (BRA)");
 			}

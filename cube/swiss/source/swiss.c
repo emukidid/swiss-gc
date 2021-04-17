@@ -874,6 +874,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 			case 0xED682C36: sizeToRead = 1763016; break;	// PAL  Revision 1.0
 			case 0xF1D28D14: sizeToRead = 1760120; break;	// PAL  Revision 1.0
 			case 0xCD6CE87D: sizeToRead = 1561744; break;	// MPAL Revision 1.1
+			case 0x94C1C743: sizeToRead = 1607544; break;	// TDEV Revision 1.1
 			case 0x82B82D2A: sizeToRead = 1586320; break;	// NTSC Revision 1.2
 			case 0x8B968F6A: sizeToRead = 1587472; break;	// NTSC Revision 1.2
 			case 0x032CDBB2: sizeToRead = 1766736; break;	// PAL  Revision 1.2

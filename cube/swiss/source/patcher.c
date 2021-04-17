@@ -9932,6 +9932,48 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%s]\n", "MPAL Revision 1.1");
 				patched++;
 				break;
+			case 1607544:
+				// Force 24MB physical memory size.
+				*(s16 *)(data + 0x81300496 - 0x81300000) = 0x1800000 >> 16;
+				
+				// __VIInit(newmode->viTVMode);
+				*(u32 *)(data + 0x813007F0 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x813007F4 - 0x81300000) = 0x38600000 | (newmode->viTVMode & 0xFFFF);
+				
+				// Force production mode.
+				*(s16 *)(data + 0x813008A6 - 0x81300000) = 1;
+				
+				// Accept any region code.
+				*(s16 *)(data + 0x81300C02 - 0x81300000) = 1;
+				*(s16 *)(data + 0x81300C26 - 0x81300000) = 1;
+				
+				// Force boot sound.
+				*(u32 *)(data + 0x813054B0 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				
+				// Force text encoding.
+				*(u32 *)(data + 0x8130DBFC - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
+				
+				// Force English language, the hard way.
+				*(s16 *)(data + 0x8130DC32 - 0x81300000) = 38;
+				*(s16 *)(data + 0x8130DC52 - 0x81300000) = 10;
+				*(s16 *)(data + 0x8130DC5A - 0x81300000) = 39;
+				*(s16 *)(data + 0x8130DC5E - 0x81300000) = 15;
+				*(s16 *)(data + 0x8130DC66 - 0x81300000) = 7;
+				*(s16 *)(data + 0x8130DC6A - 0x81300000) = 1;
+				*(s16 *)(data + 0x8130DC72 - 0x81300000) = 4;
+				*(s16 *)(data + 0x8130DC76 - 0x81300000) = 45;
+				*(s16 *)(data + 0x8130DC7E - 0x81300000) = 46;
+				*(s16 *)(data + 0x8130DC82 - 0x81300000) = 42;
+				*(s16 *)(data + 0x8130DC8A - 0x81300000) = 40;
+				*(s16 *)(data + 0x8130DC8E - 0x81300000) = 43;
+				*(s16 *)(data + 0x8130DCA2 - 0x81300000) = 31;
+				*(s16 *)(data + 0x8130DCA6 - 0x81300000) = 29;
+				*(s16 *)(data + 0x8130DCAE - 0x81300000) = 30;
+				*(s16 *)(data + 0x8130DCBA - 0x81300000) = 80;
+				
+				print_gecko("Patched:[%s]\n", "TDEV Revision 1.1");
+				patched++;
+				break;
 			case 1586320:
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300876 - 0x81300000) = newmode->viTVMode;
@@ -11173,6 +11215,26 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 				*(s16 *)(data + 0x813005EA - 0x81300000) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "MPAL Revision 1.1");
+				patched++;
+				break;
+			case 1607544:
+				*(s16 *)(data + 0x81300A5A - 0x81300000) = 0x0C00;
+				
+				*(u32 *)(data + 0x81301FC8 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81301FC8);
+				*(u32 *)(data + 0x81301FD4 - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x81301FD4);
+				*(u32 *)(data + 0x81302050 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81302050);
+				*(u32 *)(data + 0x81302058 - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x81302058);
+				
+				*(s16 *)(data + 0x8130221A - 0x81300000) = 0x0C00;
+				*(s16 *)(data + 0x8130226E - 0x81300000) = 0x0C00;
+				*(u32 *)(data + 0x8130227C - 0x81300000) = 0x80050004;
+				*(u32 *)(data + 0x813022A0 - 0x81300000) = 0x90050004;
+				
+				*(s16 *)(data + 0x81302506 - 0x81300000) = 0x0C00;
+				
+				*(s16 *)(data + 0x813027A6 - 0x81300000) = 0x0C00;
+				
+				print_gecko("Patched:[%s]\n", "TDEV Revision 1.1");
 				patched++;
 				break;
 			case 1586320:
