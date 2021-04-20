@@ -1952,32 +1952,37 @@ static void *videoUpdate(void *videoEventQueue) {
 		
 		// Draw out every event
 		videoEventQueueEntry = (uiDrawObjQueue_t*)videoEventQueue;
+		int count = 0;
 		while(videoEventQueueEntry != NULL) {
 			uiDrawObj_t *videoEvent = videoEventQueueEntry->event;
 			videoDrawEvent(videoEvent);
 			videoEventQueueEntry = videoEventQueueEntry->next;
+			count++;
+			// Hacky, draw this once after the background, not after everything.
+			if(count == 2) {
+				//if(ticks_to_millisecs(gettick() - lasttime) >= 1000) {
+				//	framerate = frames;
+				//	frames = 0;
+				//	lasttime = gettick();
+				//}
+				char fps[64];
+				memset(fps,0,64);
+				/*sprintf(fps, "fps %i", framerate);
+				drawString(10, 10, fps, 1.0f, false, (GXColor){255,255,255,255});*/
+				
+				s8 cputemp = SYS_GetCoreTemperature();
+				if(cputemp >= 0) {
+					sprintf(fps, "%i\260C", cputemp);
+					drawString(390, 33, fps, 0.55f, false, (GXColor){255,255,255,255});
+				}
+				time_t curtime;
+				time(&curtime);
+				struct tm *info = localtime( &curtime );
+				strftime(fps, 80, "%Y-%m-%d - %H:%M:%S", info);
+				drawString(434, 33, fps, 0.55f, false, (GXColor){255,255,255,255});
+			}
 		}
-		//if(ticks_to_millisecs(gettick() - lasttime) >= 1000) {
-		//	framerate = frames;
-		//	frames = 0;
-		//	lasttime = gettick();
-		//}
-		char fps[64];
-		memset(fps,0,64);
-		/*sprintf(fps, "fps %i", framerate);
-		drawString(10, 10, fps, 1.0f, false, (GXColor){255,255,255,255});*/
 		
-		s8 cputemp = SYS_GetCoreTemperature();
-		if(cputemp >= 0) {
-			sprintf(fps, "%i\260C", cputemp);
-			drawString(390, 33, fps, 0.55f, false, (GXColor){255,255,255,255});
-		}
-		time_t curtime;
-		time(&curtime);
-		struct tm *info = localtime( &curtime );
-		strftime(fps, 80, "%Y-%m-%d - %H:%M:%S", info);
-		drawString(434, 33, fps, 0.55f, false, (GXColor){255,255,255,255});
-
 		//Copy EFB->XFB
 		GX_SetCopyClear((GXColor){0, 0, 0, 0xFF}, GX_MAX_Z24);
 		GX_CopyDisp(xfb[whichfb],GX_TRUE);
