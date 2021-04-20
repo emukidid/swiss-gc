@@ -29,38 +29,54 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		// Model
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"MODEL", 0.65f, true, defaultColor));
 		if(mfpvr() == GC_CPU_VERSION01) {
-			if(*(u32*)&driveVersion[4] == 0x20010831) {
-				sprintf(topStr, "Panasonic Q SL-GC10-S");
+			if(!strncmp(&IPLInfo[0x55], "TDEV Revision 1.1", 17)) {
+				strcpy(topStr, "Nintendo GameCube DOT-006");
 			}
-			else if(!strncmp(&IPLInfo[0x55], "TDEV Revision 1.1", 17)) {
-				sprintf(topStr, "Nintendo GameCube DOT-006");
+			else if(*(u16*)&driveVersion[2] == 0x0200) {
+				if(!strncmp(&IPLInfo[0x55], "PAL  Revision 1.0", 17)) {
+					strcpy(topStr, "Nintendo GameCube DOT-002P");
+				}
+				else {
+					strcpy(topStr, "Nintendo GameCube DOT-002");
+				}
+			}
+			else if(*(u16*)&driveVersion[2] == 0x0001) {
+				if(!strncmp(&IPLInfo[0x55], "PAL  Revision 1.0", 17)) {
+					strcpy(topStr, "Nintendo GameCube DOT-001P");
+				}
+				else {
+					strcpy(topStr, "Nintendo GameCube DOT-001");
+				}
+			}
+			else if(*(u16*)&driveVersion[2] == 0x0000 && driveVersion[9] == 'M') {
+				strcpy(topStr, "Panasonic Q SL-GC10-S");
 			}
 			else if(!strncmp(&IPLInfo[0x55], "MPAL Revision 1.1", 17)) {
-				sprintf(topStr, "Nintendo GameCube DOL-002 (BRA)");
+				strcpy(topStr, "Nintendo GameCube DOL-002 (BRA)");
 			}
 			else {
-				sprintf(topStr, "Nintendo GameCube DOL-001");
+				strcpy(topStr, "Nintendo GameCube DOL-001");
 			}
 		}
 		else if(mfpvr() == GC_CPU_VERSION02) {
-			sprintf(topStr, "Nintendo GameCube DOL-101");
+			strcpy(topStr, "Nintendo GameCube DOL-101");
 		}
 		else {
-			sprintf(topStr, "Nintendo Wii");
+			strcpy(topStr, "Nintendo Wii");
 		}
 		DrawAddChild(container, DrawStyledLabel(640/2, 106, topStr, 0.75f, true, defaultColor));
 		// IPL version string
 		DrawAddChild(container, DrawStyledLabel(640/2, 130, (char*)"IPL VERSION", 0.65f, true, defaultColor));
 		if(is_gamecube()) {
 			if(!IPLInfo[0x55]) {
-				sprintf(topStr, "NTSC Revision 1.0");
+				strcpy(topStr, "NTSC Revision 1.0");
 			}
 			else {
-				sprintf(topStr, "%s", &IPLInfo[0x55]);
+				strcpy(topStr, &IPLInfo[0x55]);
 			}
 		}
 		else {
-			sprintf(topStr, "Wii");
+			strcpy(topStr, "Wii");
 		}
 		DrawAddChild(container, DrawStyledLabel(640/2, 146, topStr, 0.75f, true, defaultColor));
 		

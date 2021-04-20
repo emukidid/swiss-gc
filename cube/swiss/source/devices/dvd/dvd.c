@@ -282,7 +282,7 @@ void dvd_enable_patches()
 	drive_version(driveDate);
 	
 	// NR drive specifically.
-	if(*(u32*)&driveDate[3] == 1) {
+	if(*(u16*)&driveDate[2] == 0x0001) {
 		print_gecko("NR Drive [%08X%08X%02X]\r\nUnlocking drive\r\n",*(u32*)&driveDate[0], *(u32*)&driveDate[4], driveDate[8]);
 		dvd_unlock();
 		print_gecko("Unlocking drive - done\r\n");
