@@ -29,7 +29,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		// Model
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"MODEL", 0.65f, true, defaultColor));
 		if(mfpvr() == GC_CPU_VERSION01) {
-			if(*(u32*)&driveVersion[0] == 0x20010831) {
+			if(*(u32*)&driveVersion[4] == 0x20010831) {
 				sprintf(topStr, "Panasonic Q SL-GC10-S");
 			}
 			else if(!strncmp(&IPLInfo[0x55], "TDEV Revision 1.1", 17)) {
@@ -100,7 +100,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		dev = getDeviceByLocation(LOC_DVD_CONNECTOR);
 		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"DRIVE INTERFACE", 0.65f, true, defaultColor));
 		if(dev == &__device_dvd) {
-			sprintf(topStr, "%s %02X %02X%02X/%02X (%02X)",dev->hwName,driveVersion[2],driveVersion[0],driveVersion[1],driveVersion[3],driveVersion[4]);
+			sprintf(topStr, "%s %02X %02X%02X/%02X (%02X)",dev->hwName,driveVersion[6],driveVersion[4],driveVersion[5],driveVersion[7],driveVersion[8]);
 		}
 		else if(dev == &__device_gcloader) {
 			char* gcloaderVersionStr = gcloaderGetVersion();

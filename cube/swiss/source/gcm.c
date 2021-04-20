@@ -30,7 +30,7 @@ void* get_fst(file_handle* file) {
 	
 	// Grab disc header
 	memset(&header,0,sizeof(DiskHeader));
-	if(devices[DEVICE_CUR] == &__device_dvd) {
+	if(devices[DEVICE_CUR] == &__device_dvd && (dvdDiscTypeInt == GAMECUBE_DISC || dvdDiscTypeInt == MULTIDISC_DISC)) {
 		if(DVD_Read(&header, 0, sizeof(DiskHeader)) != sizeof(DiskHeader)) {
 			return NULL;
 		}
@@ -48,7 +48,7 @@ void* get_fst(file_handle* file) {
 	FST=(char*)memalign(32,header.FSTSize); 
 	if(!FST) return NULL;
 
-	if(devices[DEVICE_CUR] == &__device_dvd) {
+	if(devices[DEVICE_CUR] == &__device_dvd && (dvdDiscTypeInt == GAMECUBE_DISC || dvdDiscTypeInt == MULTIDISC_DISC)) {
 		if(DVD_Read(FST, header.FSTOffset, header.FSTSize) != header.FSTSize) {
 			free(FST);
 			return NULL;

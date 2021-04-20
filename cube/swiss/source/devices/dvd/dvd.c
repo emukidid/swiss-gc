@@ -15,7 +15,7 @@
 /* Simple DVD functions */
 int is_unicode,files,isXenoGC = 0;
 static int last_current_dir = -1;
-u32 inquiryBuf[2048] __attribute__((aligned(32)));
+u32 inquiryBuf[32] __attribute__((aligned(32)));
 file_entries *DVDToc = NULL; //Dynamically allocate this
 volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
 
@@ -281,7 +281,15 @@ void dvd_enable_patches()
 	memset(driveDate,0,32);
 	drive_version(driveDate);
 	
-	u32 driveVersion = *(u32*)&driveDate[0];
+	// NR drive specifically.
+	if(*(u32*)&driveDate[3] == 1) {
+		print_gecko("NR Drive [%08X%08X%02X]\r\nUnlocking drive\r\n",*(u32*)&driveDate[0], *(u32*)&driveDate[4], driveDate[8]);
+		dvd_unlock();
+		print_gecko("Unlocking drive - done\r\n");
+		free(driveDate);
+		return; // Just unlock it so firmware can be dumped.
+	}
+	u32 driveVersion = *(u32*)&driveDate[4];
 	free(driveDate);
 	
 	if(!driveVersion) return;	// Unsupported drive
@@ -290,9 +298,9 @@ void dvd_enable_patches()
 	if(patchCode == NULL) {
 		return;	// Unsupported drive
 	}
-	print_gecko("Drive date %08X\r\nUnlocking DVD\r\n",driveVersion);
+	print_gecko("Drive date %08X\r\nUnlocking drive\r\n",driveVersion);
 	dvd_unlock();
-	print_gecko("Unlocking DVD - done\r\nWrite patch\r\n");
+	print_gecko("Unlocking drive - done\r\nWrite patch\r\n");
 	dvd_writemem_array(0xff40d000, patchCode, 0x1F0);
 	dvd_writemem_32(0x804c, 0x00d04000);
 	print_gecko("Write patch - done\r\nSet extension %08X\r\n",dvd_get_error());
@@ -344,7 +352,7 @@ void drive_version(u8 *buf)
 		buf[0] = 0;
 	}
 	else {
-		memcpy(buf,&inquiryBuf[1],8);
+		memcpy(buf,&inquiryBuf[0],32);
 	}
 }
 

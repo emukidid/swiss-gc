@@ -274,9 +274,11 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	//GCOS or Cobra MultiGame DVD Disc
 	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
 
+		print_gecko("Multi game disc type %i detected\r\n", dvdDiscTypeInt);
 		if(drive_status == NORMAL_MODE) {
 			// This means we're using a drivechip, so our multigame command will be different.
 			isXenoGC = 1;
+			print_gecko("Drive isn't patched, drivechip is present.\r\n");
 		}
 		//Read in the whole table of offsets
 		tmpTable = (unsigned int*)memalign(32,MAX_MULTIGAME*4);
@@ -292,18 +294,20 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				num_entries++;
 			}
 		}
+		print_gecko("%i entries found\r\n", num_entries);
 
 		if(num_entries <= 0) { return num_entries; }
 		// malloc the directory structure
 		*dir = calloc( num_entries * sizeof(file_handle), 1 );
-
+		
 		// parse entries
-		for(i = 0; i < MAX_MULTIGAME; i++) {
+		for(i = 0; i < num_entries; i++) {
 			tmpOffset = (dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC) ? (tmpTable[i]<<2):(tmpTable[i]);
-			if(num >= 1 && tmpOffset) {
+			if(num > 0) {
 				(*dir)[num-1].size = tmpOffset - (*dir)[num-1].fileBase;
 			}
-			if((tmpOffset) && (tmpOffset%(isGC?0x8000:0x20000)==0) && (tmpOffset<(isGC?DISC_SIZE:WII_D9_SIZE))) {
+			print_gecko("fileBase is %016llX isGC? %s\r\n", tmpOffset, isGC ? "yes" : "no");
+			if((tmpOffset%(isGC?0x8000:0x20000)==0) && (tmpOffset<(isGC?DISC_SIZE:WII_D9_SIZE))) {
 				DVD_Read(&tmpName[0],tmpOffset+32, 512);
 				sprintf( (*dir)[num].name,"%s.gcm", &tmpName[0] );
 				(*dir)[num].fileBase = tmpOffset;
@@ -314,13 +318,12 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				(*dir)[num].status = OFFSET_NOTSET;
 				num++;
 			}
-			free(tmpTable);
-			free(tmpName);
 		}
+		free(tmpTable);
+		free(tmpName);
 		usedSpace = (isGC?DISC_SIZE:WII_D9_SIZE);
 	}
 	else if((dvdDiscTypeInt == GAMECUBE_DISC) || (dvdDiscTypeInt == MULTIDISC_DISC)) {
-		// TODO: BCA entry (dump from drive RAM on a GC, dump via BCA command on Wii)
 		// Virtual entries for FST entries :D
 		num_entries = read_fst(ffile, dir, !toc_read ? &usedSpace:NULL);
 	}

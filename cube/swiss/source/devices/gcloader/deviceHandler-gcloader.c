@@ -259,7 +259,7 @@ s32 deviceHandler_GCLOADER_closeFile(file_handle* file) {
 }
 
 bool deviceHandler_GCLOADER_test() {
-	return swissSettings.hasDVDDrive && (*(u32*)&driveVersion[0] == 0x20196C64);
+	return swissSettings.hasDVDDrive && (*(u32*)&driveVersion[4] == 0x20196C64);
 }
 
 u32 deviceHandler_GCLOADER_emulated() {
