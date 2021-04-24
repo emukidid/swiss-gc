@@ -1959,7 +1959,7 @@ static void *videoUpdate(void *videoEventQueue) {
 			videoEventQueueEntry = videoEventQueueEntry->next;
 			count++;
 			// Hacky, draw this once after the background, not after everything.
-			if(count == 2) {
+			if(count == 1) {
 				//if(ticks_to_millisecs(gettick() - lasttime) >= 1000) {
 				//	framerate = frames;
 				//	frames = 0;

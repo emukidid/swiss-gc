@@ -261,7 +261,7 @@ void dvd_motor_on_extra()
 	while (dvd[7] & 1);
 }
 
-void* drive_patch_ptr(u32 driveVersion)
+void* drive_patch_ptr(u64 driveVersion)
 {
 	if(driveVersion == 0x20020402)
 		return &Drive04;
@@ -281,15 +281,7 @@ void dvd_enable_patches()
 	memset(driveDate,0,32);
 	drive_version(driveDate);
 	
-	// NR drive specifically.
-	if(*(u16*)&driveDate[2] == 0x0001) {
-		print_gecko("NR Drive [%08X%08X%02X]\r\nUnlocking drive\r\n",*(u32*)&driveDate[0], *(u32*)&driveDate[4], driveDate[8]);
-		dvd_unlock();
-		print_gecko("Unlocking drive - done\r\n");
-		free(driveDate);
-		return; // Just unlock it so firmware can be dumped.
-	}
-	u32 driveVersion = *(u32*)&driveDate[4];
+	u64 driveVersion = *(u64*)&driveDate[0];
 	free(driveDate);
 	
 	if(!driveVersion) return;	// Unsupported drive
@@ -298,7 +290,7 @@ void dvd_enable_patches()
 	if(patchCode == NULL) {
 		return;	// Unsupported drive
 	}
-	print_gecko("Drive date %08X\r\nUnlocking drive\r\n",driveVersion);
+	print_gecko("Drive date %08X\r\nUnlocking drive\r\n",(u32)(driveVersion&0xFFFFFFFF));
 	dvd_unlock();
 	print_gecko("Unlocking drive - done\r\nWrite patch\r\n");
 	dvd_writemem_array(0xff40d000, patchCode, 0x1F0);

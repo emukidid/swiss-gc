@@ -97,9 +97,9 @@ void Initialise (void)
 	DrawInit();
 	
 	drive_version(&driveVersion[0]);
-	swissSettings.hasDVDDrive = *(u32*)&driveVersion[4] ? 1 : 0;
+	swissSettings.hasDVDDrive = *(u64*)&driveVersion[0] ? 1 : 0;
 	
-	if(!driveVersion[4]) {
+	if(!swissSettings.hasDVDDrive) {
 		// Reset DVD if there was a IPL replacement that hasn't done that for us yet
 		uiDrawObj_t *progBox = DrawPublish(DrawProgressBar(true, 0, "Initialise DVD .. (HOLD B if NO DVD Drive)"));
 		dvd_reset();	// low-level, basic
@@ -108,7 +108,7 @@ void Initialise (void)
 			dvd_set_streaming(*(char*)0x80000008);
 		}
 		drive_version(&driveVersion[0]);
-		swissSettings.hasDVDDrive = *(u32*)&driveVersion[4] ? 2 : 0;
+		swissSettings.hasDVDDrive = *(u64*)&driveVersion[0] ? 2 : 0;
 		if(!swissSettings.hasDVDDrive) {
 			DrawDispose(progBox);
 			progBox = DrawPublish(DrawMessageBox(D_INFO, "No DVD Drive Detected !!"));

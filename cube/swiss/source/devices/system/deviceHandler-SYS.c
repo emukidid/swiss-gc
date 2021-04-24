@@ -189,7 +189,7 @@ int read_rom_dsp_coef(unsigned int offset, void* buffer, unsigned int length) {
 }
 
 int read_rom_dvd_ram_low(unsigned int offset, void* buffer, unsigned int length) {
-	dvd_enable_patches();
+	dvd_unlock();
 	void *ram = (void*)memalign(32, 32*1024);
 	dvd_readmem_array(0x8000, ram, 32*1024);
 	memcpy(buffer, ram + offset, length);
@@ -198,7 +198,7 @@ int read_rom_dvd_ram_low(unsigned int offset, void* buffer, unsigned int length)
 }
 
 int read_rom_dvd_ram_high(unsigned int offset, void* buffer, unsigned int length) {
-	dvd_enable_patches();
+	dvd_unlock();
 	void *ram = (void*)memalign(32, 192*1024);
 	dvd_readmem_array(0x400000, ram, 192*1024);
 	memcpy(buffer, ram + offset, length);
@@ -207,7 +207,7 @@ int read_rom_dvd_ram_high(unsigned int offset, void* buffer, unsigned int length
 }
 
 int read_rom_dvd_rom(unsigned int offset, void* buffer, unsigned int length) {
-	dvd_enable_patches();
+	dvd_unlock();
 	void *rom = (void*)memalign(32, 128*1024);
 	dvd_readmem_array(0xA0000, rom, 128*1024);
 	memcpy(buffer, rom + offset, length);
