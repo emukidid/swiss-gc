@@ -262,7 +262,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if(strstr(filename,"switcher.prs")) {
+			if(!strcasecmp(filename,"switcher.prs")) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL_PRS;
@@ -270,7 +270,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 				numFiles++;
 			}
 			if(endsWith(filename,".elf")) {
-				if(!strstr(filename,"STUBRDVD.ELF")) {
+				if(strcasecmp(filename,"STUBRDVD.ELF")) {
 					if(dolSize == calc_elf_segments_size(file, file_offset, &size) + DOLHDRLENGTH) {
 						continue;
 					}
@@ -281,7 +281,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if(strstr(filename,"execD.img")) {
+			if(!strcasecmp(filename,"execD.img")) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_BS2;
@@ -417,7 +417,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if(strstr(filename,"execD.img")) {
+			if(!strcasecmp(filename,"execD.img")) {
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_BS2;
@@ -486,7 +486,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		}
 		print_gecko("Checking %s %iKb\r\n", filesToPatch[i].name, filesToPatch[i].size/1024);
 		
-		if(strstr(filesToPatch[i].name, "iwanagaD.dol") || strstr(filesToPatch[i].name, "switcherD.dol")) {
+		if(!strcasecmp(filesToPatch[i].name, "iwanagaD.dol") || !strcasecmp(filesToPatch[i].name, "switcherD.dol")) {
 			continue;	// skip unused PSO files
 		}
 		uiDrawObj_t* progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));

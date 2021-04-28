@@ -10266,6 +10266,23 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 		}
+	} else if (!strncmp(gameID, "GGIJ13", 6) && (dataType == PATCH_DOL || dataType == PATCH_ELF)) {
+		switch (length) {
+			case 205696:
+				// Fix framebuffer initialization.
+				*(u32 *)(data + 0x8001501C - 0x800134A0 + 0x4A0) = 0x807E0000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 266324:
+				// Fix framebuffer initialization.
+				*(u32 *)(data + 0x807023F0 - 0x807003A0 + 0x500) = 0x807E0000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
 	} else if (!strncmp(gameID, "GH9P52", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3420832:
@@ -10275,6 +10292,57 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(u32 *)(data + 0x80014598 - 0x800034A0 + 0x4A0) = 0x3D208000;
 				*(u32 *)(data + 0x8001459C - 0x800034A0 + 0x4A0) = 0x812900EC;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if ((!strncmp(gameID, "GOND69", 6) || !strncmp(gameID, "GONE69", 6) || !strncmp(gameID, "GONF69", 6) || !strncmp(gameID, "GONP69", 6)) && (dataType == PATCH_DOL || dataType == PATCH_ELF)) {
+		switch (length) {
+			case 277472:
+				// Fix framebuffer initialization.
+				*(u32 *)(data + 0x80014C54 - 0x800134A0 + 0x4A0) = 0x807E0000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 339500:
+				// Fix framebuffer initialization.
+				*(u32 *)(data + 0x80701C38 - 0x807003A0 + 0x500) = 0x807E0000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GONJ13", 6) && (dataType == PATCH_DOL || dataType == PATCH_ELF)) {
+		switch (length) {
+			case 276416:
+				// Fix framebuffer initialization.
+				*(u32 *)(data + 0x80014C54 - 0x800134A0 + 0x4A0) = 0x807E0000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 338376:
+				// Fix framebuffer initialization.
+				*(u32 *)(data + 0x80701C38 - 0x807003A0 + 0x500) = 0x807E0000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if ((!strncmp(gameID, "GOYD69", 6) || !strncmp(gameID, "GOYE69", 6) || !strncmp(gameID, "GOYF69", 6) || !strncmp(gameID, "GOYP69", 6) || !strncmp(gameID, "GOYS69", 6)) && (dataType == PATCH_DOL || dataType == PATCH_ELF)) {
+		switch (length) {
+			case 207232:
+				// Fix framebuffer initialization.
+				*(u32 *)(data + 0x8001501C - 0x800134A0 + 0x4A0) = 0x807E0000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 268372:
+				// Fix framebuffer initialization.
+				*(u32 *)(data + 0x807023F0 - 0x807003A0 + 0x500) = 0x807E0000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10524,6 +10592,40 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x80005B76 - 0x800056C0 + 0x2600) = (0x80240AA0 & 0xFFFF);
 				
 				*(s16 *)(data + 0x80129362 - 0x800056C0 + 0x2600) = 0x181F;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if ((!strncmp(gameID, "GR8D69", 6) || !strncmp(gameID, "GR8E69", 6) || !strncmp(gameID, "GR8F69", 6) || !strncmp(gameID, "GR8P69", 6)) && (dataType == PATCH_DOL || dataType == PATCH_ELF)) {
+		switch (length) {
+			case 206016:
+				// Fix framebuffer initialization.
+				*(u32 *)(data + 0x80500EB4 - 0x805003A0 + 0x4A0) = 0x387D2720;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 260164:
+				// Fix framebuffer initialization.
+				*(u32 *)(data + 0x80500EB4 - 0x805003A0 + 0x500) = 0x387D2720;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GRZJ13", 6) && (dataType == PATCH_DOL || dataType == PATCH_ELF)) {
+		switch (length) {
+			case 206240:
+				// Fix framebuffer initialization.
+				*(u32 *)(data + 0x80500EB4 - 0x805003A0 + 0x4A0) = 0x387D2800;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 260852:
+				// Fix framebuffer initialization.
+				*(u32 *)(data + 0x80500EB4 - 0x805003A0 + 0x500) = 0x387D2800;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
