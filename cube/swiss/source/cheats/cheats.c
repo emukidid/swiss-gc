@@ -160,7 +160,7 @@ void parseCheats(char *filecontents) {
 				// Alloc and store it.
 				print_gecko("Allocating %i bytes for %i codes\r\n", sizeof *curCheat->codes * curCheat->num_codes, curCheat->num_codes);
 				curCheat->codes = calloc(1, sizeof *curCheat->codes * curCheat->num_codes );
-				memcpy(codesBuf, curCheat->codes, sizeof *curCheat->codes * curCheat->num_codes);
+				memcpy(curCheat->codes, codesBuf, sizeof *curCheat->codes * curCheat->num_codes);
 			}
 			free(codesBuf);
 		}
@@ -205,6 +205,7 @@ void kenobi_install_engine() {
 				// Copy & fix cheats that want to jump to the old cheat engine location 0x800018A8 -> CHEATS_ENGINE+0xA8
 				cheatsLocation[0] = cheat->codes[j][0];
 				cheatsLocation[1] = cheat->codes[j][1] == 0x800018A8 ? (u32)(CHEATS_ENGINE+0xA8) : cheat->codes[j][1];
+				print_gecko("Copied cheat [%08X %08X] to [%08X %08X]\r\n", cheatsLocation[0], cheatsLocation[1], (u32)cheatsLocation, (u32)cheatsLocation+4);
 				cheatsLocation+=2;
 			}
 		}
