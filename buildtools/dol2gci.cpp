@@ -166,19 +166,21 @@ int main (int argc, char * const argv[])
 	} 
 
 	// strip path from filename, looking for forward and backslash
-	string name = argv[1];
+	string name;
 	unsigned int i;
-	i = name.rfind('/');
-	if (i!=string::npos) {
-		name = name.substr(i+1);
-	}
-	i = name.rfind('\\');
-	if (i!=string::npos) {
-		name = name.substr(i+1);
-	}
-
-	if (argc == 4)
+	if (argc == 4) {
 		name = argv[3];
+	} else {
+		name = argv[1];
+		i = name.rfind('/');
+		if (i!=string::npos) {
+			name = name.substr(i+1);
+		}
+		i = name.rfind('\\');
+		if (i!=string::npos) {
+			name = name.substr(i+1);
+		}
+	}
 	
 	// load DOL file
 	u8 *dol_data;

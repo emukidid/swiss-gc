@@ -32,7 +32,7 @@ GECKOSERVER   = pc/usbgecko
 .NOTPARALLEL:
 
 # Ready to go .7z file with every type of DOL we can think of
-all: clean compile-patches compile build recovery-iso build-gci build-AR build-geckoserver package
+all: clean compile-patches compile build recovery-iso build-AR build-geckoserver package
 
 # For dev use only, avoid the unnecessary fluff
 dev: clean compile-patches compile
@@ -68,11 +68,13 @@ build:
 	@cp $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/$(SVN_REVISION).dol
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION).dol
 	@cp $(SOURCES)/swiss/swiss.elf $(DIST)/DOL/$(SVN_REVISION).elf
-	@$(DOLLZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol -v -m
+	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol -v -m
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol
-	@$(DOLLZ) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol -m
+	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol -m
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/AUTOEXEC.DOL
+	# make GCI for memory cards
+	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/GCI/boot.gci boot.dol
 	# make ISOs and WKF firmware
 	# NTSC-J
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/DOL/$(SVN_REVISION).dol
@@ -130,23 +132,7 @@ build-AR: # make ActionReplay
 
 #------------------------------------------------------------------
 
-build-gci: # make GCI for memory cards
-	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/GCI/boot.dol
-	@$(DOL2GCI) $(DIST)/GCI/boot.dol $(DIST)/GCI/boot.gci
-	@rm -f $(DIST)/GCI/boot.dol
-	
-#------------------------------------------------------------------
-
-
 build-geckoserver:
 	@cd $(GECKOSERVER) && $(MAKE)
 	@mkdir $(DIST)/USBGeckoRemoteServer
 	@mv $(GECKOSERVER)/swissserver* $(DIST)/USBGeckoRemoteServer/
-	
-#------------------------------------------------------------------
-
-build-libfat-frag:
-	@cd $(SOURCES)/libfat-frag/src && $(MAKE) cube-release
-	@cp $(SOURCES)/libfat-frag/src/libogc/lib/cube/libfat.a libfat.a
-	@rm -rf $(SOURCES)/libfat-frag/src/libogc/cube_release
-	@rm -rf $(SOURCES)/libfat-frag/src/libogc/lib
