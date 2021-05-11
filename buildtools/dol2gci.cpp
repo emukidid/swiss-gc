@@ -160,8 +160,8 @@ void set_u32be(void * buf, u32 v)
 
 int main (int argc, char * const argv[]) 
 {
-	if (argc != 3) {
-		fprintf(stderr, "dol2gci <dolfile> <gcifile>\n");
+	if (argc != 3 && argc != 4) {
+		fprintf(stderr, "dol2gci <dolfile> <gcifile> [<filename>]\n");
 		return -1;
 	} 
 
@@ -176,6 +176,9 @@ int main (int argc, char * const argv[])
 	if (i!=string::npos) {
 		name = name.substr(i+1);
 	}
+
+	if (argc == 4)
+		name = argv[3];
 	
 	// load DOL file
 	u8 *dol_data;
