@@ -93,7 +93,7 @@ LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x80003
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lbba -logc -lm -lfat -lmad -lasnd -lm -logc -ltinysmb -ldb -lz
+LIBS	:=	-lbba -lmad -lasnd -logc -ltinysmb -ldb -lz
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

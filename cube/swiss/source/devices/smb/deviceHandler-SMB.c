@@ -29,7 +29,6 @@
 #include <sys/dir.h>
 #include <sys/statvfs.h>
 #include <sys/stat.h>
-#include <fat.h>
 #include "swiss.h"
 #include "main.h"
 #include "gui/FrameBufferMagic.h"
@@ -195,21 +194,15 @@ s32 deviceHandler_SMB_init(file_handle* file) {
 extern char *getDeviceMountPath(char *str);
 
 s32 deviceHandler_SMB_deinit(file_handle* file) {
-	if(smb_initialized) {
-		smbClose("smb");
-		smb_initialized = 0;
-	}
 	initial_SMB_info.freeSpaceInKB = 0;
 	initial_SMB_info.totalSpaceInKB = 0;
 	if(file && file->fp) {
 		fclose(file->fp);
 		file->fp = 0;
 	}
-	if(file) {
-		char *mountPath = getDeviceMountPath(file->name);
-		print_gecko("Unmounting [%s]\r\n", mountPath);
-		fatUnmount(mountPath);
-		free(mountPath);
+	if(smb_initialized) {
+		smbClose("smb");
+		smb_initialized = 0;
 	}
 	return 1;
 }

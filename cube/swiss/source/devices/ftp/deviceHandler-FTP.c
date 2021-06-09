@@ -27,7 +27,6 @@
 #include <sys/dir.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-#include <fat.h>
 #include "swiss.h"
 #include "main.h"
 #include "gui/FrameBufferMagic.h"
@@ -188,24 +187,16 @@ s32 deviceHandler_FTP_init(file_handle* file){
 	return 1;
 }
 
-extern char *getDeviceMountPath(char *str);
-
 s32 deviceHandler_FTP_deinit(file_handle* file) {
-	if(ftp_initialized) {
-		ftpClose("ftp");
-		ftp_initialized = 0;
-	}
 	initial_FTP_info.freeSpaceInKB = 0;
 	initial_FTP_info.totalSpaceInKB = 0;
 	if(file && file->fp) {
 		fclose(file->fp);
 		file->fp = 0;
 	}
-	if(file) {
-		char *mountPath = getDeviceMountPath(file->name);
-		print_gecko("Unmounting [%s]\r\n", mountPath);
-		fatUnmount(mountPath);
-		free(mountPath);
+	if(ftp_initialized) {
+		ftpClose("ftp");
+		ftp_initialized = 0;
 	}
 	return 1;
 }

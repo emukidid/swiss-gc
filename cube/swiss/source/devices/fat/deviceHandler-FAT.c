@@ -503,18 +503,6 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 	return ret;
 }
 
-char *getDeviceMountPath(char *str) {
-	char *path = (char*)memalign(32, 64);
-	memset(path, 0, 64);
-	
-	int i;
-	for(i = 0; i < strlen(str); i++)
-		if(str[i] == '/')
-			break;
-	memcpy(path, str, ++i);
-	return path;
-}
-
 s32 deviceHandler_FAT_closeFile(file_handle* file) {
 	int ret = 0;
 	if(file && file->ffsFp) {
