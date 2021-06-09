@@ -528,11 +528,11 @@ s32 deviceHandler_FAT_closeFile(file_handle* file) {
 }
 
 s32 deviceHandler_FAT_deinit(file_handle* file) {
+	deviceHandler_FAT_closeFile(file);
 	device_info* info = deviceHandler_FAT_info(file);
 	info->freeSpaceInKB = 0;
 	info->totalSpaceInKB = 0;
 	if(file) {
-		deviceHandler_FAT_closeFile(file);
 		int isSDCard = IS_SDCARD(file->name);
 		int slot = GET_SLOT(file->name);
 		f_unmount(file->name);

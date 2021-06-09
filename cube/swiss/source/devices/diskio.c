@@ -35,7 +35,9 @@ DSTATUS disk_status (
 		return STA_NOINIT;
 
 	if (disk_isInit[pdrv]) {
-		return (driver[pdrv]->isInserted() ? 0 : STA_NODISK | STA_NOINIT);
+		if (!driver[pdrv]->isInserted())
+			return STA_NODISK | STA_NOINIT;
+		return (driver[pdrv]->features & FEATURE_MEDIUM_CANWRITE ? 0 : STA_PROTECT);
 	}
 
 	// Disk isn't initialized.
@@ -72,7 +74,7 @@ DSTATUS disk_initialize (
 
 	// Device initialized.
 	disk_isInit[pdrv] = true;
-	return 0;
+	return (driver[pdrv]->features & FEATURE_MEDIUM_CANWRITE ? 0 : STA_PROTECT);
 }
 
 /*-----------------------------------------------------------------------*/

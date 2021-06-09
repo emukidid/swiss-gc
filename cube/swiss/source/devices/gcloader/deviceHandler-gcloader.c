@@ -60,7 +60,7 @@ s32 deviceHandler_GCLOADER_readFile(file_handle* file, void* buffer, u32 length)
 
 
 s32 deviceHandler_GCLOADER_writeFile(file_handle* file, void* buffer, u32 length){
-	return -1;
+	return deviceHandler_FAT_writeFile(file, buffer, length);
 }
 
 
@@ -216,6 +216,7 @@ s32 deviceHandler_GCLOADER_init(file_handle* file){
 		f_unmount("gcldr:/");
 		free(gcloaderfs);
 		gcloaderfs = NULL;
+		disk_shutdown(DEV_GCLDR);
 	}
 	gcloaderfs = (FATFS*)malloc(sizeof(FATFS));
 	int ret = 0;
@@ -240,26 +241,44 @@ s32 deviceHandler_GCLOADER_init(file_handle* file){
 	return ret == FR_OK;
 }
 
-s32 deviceHandler_GCLOADER_deinit(file_handle* file) {
+s32 deviceHandler_GCLOADER_closeFile(file_handle* file) {
 	int ret = 0;
 	if(file && file->ffsFp) {
 		ret = f_close(file->ffsFp);
 		free(file->ffsFp);
 		file->ffsFp = 0;
+		disk_flush(DEV_GCLDR);
 	}
 	return ret;
 }
 
-s32 deviceHandler_GCLOADER_deleteFile(file_handle* file) {
-	return -1;
+s32 deviceHandler_GCLOADER_deinit(file_handle* file) {
+	deviceHandler_GCLOADER_closeFile(file);
+	initial_GCLOADER_info.freeSpaceInKB = 0;
+	initial_GCLOADER_info.totalSpaceInKB = 0;
+	if(file) {
+		f_unmount(file->name);
+		free(gcloaderfs);
+		gcloaderfs = NULL;
+		disk_shutdown(DEV_GCLDR);
+	}
+	return 0;
 }
 
-s32 deviceHandler_GCLOADER_closeFile(file_handle* file) {
-    return 0;
+s32 deviceHandler_GCLOADER_deleteFile(file_handle* file) {
+	deviceHandler_GCLOADER_closeFile(file);
+	return f_unlink(file->name);
 }
 
 bool deviceHandler_GCLOADER_test() {
-	return swissSettings.hasDVDDrive && (*(u32*)&driveVersion[4] == 0x20196C64);
+	if (swissSettings.hasDVDDrive && *(u32*)&driveVersion[4] == 0x20196c64) {
+		if (driveVersion[9] == 'w')
+			__device_gcloader.features |=  (FEAT_WRITE|FEAT_CONFIG_DEVICE);
+		else
+			__device_gcloader.features &= ~(FEAT_WRITE|FEAT_CONFIG_DEVICE);
+		return true;
+	}
+	return false;
 }
 
 u32 deviceHandler_GCLOADER_emulated() {
@@ -286,8 +305,8 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	(_fn_init)&deviceHandler_GCLOADER_init,
 	(_fn_readDir)&deviceHandler_GCLOADER_readDir,
 	(_fn_readFile)&deviceHandler_GCLOADER_readFile,
-	(_fn_writeFile)NULL,
-	(_fn_deleteFile)NULL,
+	(_fn_writeFile)deviceHandler_GCLOADER_writeFile,
+	(_fn_deleteFile)deviceHandler_GCLOADER_deleteFile,
 	(_fn_seekFile)&deviceHandler_GCLOADER_seekFile,
 	(_fn_setupFile)&deviceHandler_GCLOADER_setupFile,
 	(_fn_closeFile)&deviceHandler_GCLOADER_closeFile,
