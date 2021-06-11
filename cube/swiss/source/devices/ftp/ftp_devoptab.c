@@ -37,7 +37,6 @@
 #define FTP_MAXPATH					1024
 #define FTP_MAX_LINE				255
 
-#define IOS_O_NONBLOCK				0x04
 #define NET_TIMEOUT					10000  // network connection timeout, in ms
 
 #define SOCKET s32
@@ -173,22 +172,20 @@ static ftp_env* FindFTPEnv(const char *name)
 
 static s32 set_blocking(s32 s, bool blocking)
 {
-	//u32 nodelay;
+	u32 set;
 
 // Switch off Nagle, ON TCP_NODELAY ***/
 
 //  review: do we need this? lack of documentation
 //	nodelay = blocking?0:1;
-	//nodelay = 1;
-	// Line below crashes on GameCube
-	//net_setsockopt(s,IPPROTO_TCP,TCP_NODELAY,&nodelay,sizeof(nodelay));
+	set = 1;
+	net_setsockopt(s,IPPROTO_TCP,TCP_NODELAY,&set,sizeof(set));
 
-    s32 flags;
-    flags = net_fcntl(s, F_GETFL, 0);
-    if (flags >= 0) flags = net_fcntl(s, F_SETFL, blocking ? (flags&~4) : (flags|4));
-    return flags;
+	set = !blocking;
+	return net_ioctl(s,FIONBIO,&set);
 }
 
+#if 0
 //set to blocking before closing socket;
 //allows to send all data before closing
 static s32 net_close_blocking(s32 s)
@@ -196,6 +193,7 @@ static s32 net_close_blocking(s32 s)
     set_blocking(s, true);
     return net_close(s);
 }
+#endif
 
 static void ReplaceForwardSlash(char* str)
 {
@@ -446,7 +444,7 @@ static int ftp_close_data(ftp_env* env)
 	{
 		NET_PRINTF("ftp_close_data()\n", 0);
 
-		net_close_blocking(env->data_socket);
+		net_close(env->data_socket);
 		env->data_socket = INVALID_SOCKET;
 		return ftp_get_response(env);
 	}
@@ -480,8 +478,6 @@ static bool ftp_doconnect( ftp_env* env )
 	char buf[FTP_MAX_LINE];
 	int response;
 	struct sockaddr_in server_addr;
-	u64 t1,t2;
-	s32 ret;
 
 /*
 	LPHOSTENT hostEntry = gethostbyname(env->hostname);
@@ -522,21 +518,12 @@ static bool ftp_doconnect( ftp_env* env )
 
 	set_blocking( env->ctrl_socket, false );
 
-	t1=ticks_to_millisecs(gettime());
-	do
-	{
-		ret = net_connect( env->ctrl_socket, (struct sockaddr*)&server_addr, sizeof(server_addr) );
-		t2=ticks_to_millisecs(gettime());
-		usleep(1000);
-		if(t2-t1 > NET_TIMEOUT) break; // 10 secs to try to connect to handle->server_addr
-	} while(ret!=-EISCONN);
-
-	if( ret!=-EISCONN )
+	// net_connect is always blocking in lwIP 1.1.1
+	if( net_connect( env->ctrl_socket, (struct sockaddr*)&server_addr, sizeof(server_addr) ) < 0 )
 	{
 		NET_PRINTF( "ftp_doconnect() - cant connect to '%s'\n", env->hostname );
 		return false;
 	}
-
 
 	if( ftp_get_response(env) != 220 )
 	{
@@ -578,7 +565,7 @@ static int ftp_reconnect(ftp_env* env)
 
 	NET_PRINTF( "ftp_reconnect()\n",0 );
 
-  	if(env->data_socket)
+	if(env->data_socket != INVALID_SOCKET)
 	{
 		net_close(env->data_socket);
 		env->data_socket = INVALID_SOCKET;
@@ -592,7 +579,7 @@ static int ftp_reconnect(ftp_env* env)
 	else
 	{
 		NET_PRINTF( "ftp_reconnect() - FAILED\n", 0 );
-		if(env->ctrl_socket)
+		if(env->ctrl_socket != INVALID_SOCKET)
 		{
 			net_close(env->ctrl_socket);
 			env->ctrl_socket = INVALID_SOCKET;
@@ -941,7 +928,7 @@ execute_open_actv_retry:
 		NET_PRINTF("Accepted connection from %s\n", inet_ntoa(data_peer_address.sin_addr));
 
 		env->data_socket = *data_sock;
-		net_close_blocking(ssock);
+		net_close(ssock);
 		strcpy(last_cmd, cmd);
 		last_off = offset;
 
@@ -964,7 +951,6 @@ static int ftp_execute_open_pasv(ftp_env* env, char *cmd, char *type, off_t offs
 	int res;
 	struct sockaddr_in server_addr;
 	u64 t1,t2;
-	s32 ret;
 
 	if( (env->data_socket == INVALID_SOCKET) || (offset != last_off) || (strcmp(last_cmd, cmd)) )
 	{
@@ -1120,16 +1106,8 @@ execute_open_retry:
 
 		set_blocking( *data_sock, false );
 
-		t1=ticks_to_millisecs(gettime());
-		do
-		{
-			ret = net_connect(*data_sock,(struct sockaddr*)&server_addr,sizeof(server_addr));
-			t2=ticks_to_millisecs(gettime());
-			usleep(1000);
-			if(t2-t1 > NET_TIMEOUT ) break; // 3 secs to try to connect to handle->server_addr
-		} while(ret!=-EISCONN);
-
-		if(ret!=-EISCONN)
+		// net_connect is always blocking in lwIP 1.1.1
+		if( net_connect( *data_sock, (struct sockaddr*)&server_addr, sizeof(server_addr) ) < 0 )
 		{
 			net_close(*data_sock);
 			return -1;
@@ -1193,15 +1171,15 @@ static void FTP_Close( ftp_env* env )
 		env->dir_cache_list = NULL;
 	}
 
-	if (env->ctrl_socket)
+	if ( env->ctrl_socket != INVALID_SOCKET )
 	{
-		net_close_blocking(env->ctrl_socket);
+		net_close(env->ctrl_socket);
 		env->ctrl_socket = INVALID_SOCKET;
 	}
 
-	if (env->data_socket)
+	if ( env->data_socket != INVALID_SOCKET )
 	{
-		net_close_blocking(env->data_socket);
+		net_close(env->data_socket);
 		env->data_socket = INVALID_SOCKET;
 	}
 
