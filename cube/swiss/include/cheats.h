@@ -39,13 +39,13 @@ typedef struct {
 	u32 (*codes)[2];
 	int num_codes;
 	int enabled;
-} CheatEntry __attribute__((aligned(32)));
+} CheatEntry;
 
 typedef struct {
 	CheatEntry cheat[CHEATS_MAX_FOR_GAME];
 	int num_cheats;
 	int enabled;
-} CheatEntries __attribute__((aligned(32)));
+} CheatEntries;
 
 // Installs the GeckoOS (kenobiGC) cheats engine and sets up variables/copies cheats
 void kenobi_install_engine();

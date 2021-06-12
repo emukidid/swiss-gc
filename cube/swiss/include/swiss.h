@@ -125,7 +125,7 @@ typedef struct {
 	int bs2Boot;
 	char autoload[PATHNAME_MAX];
 	char recent[RECENT_MAX][PATHNAME_MAX];
-} SwissSettings __attribute__((aligned(32)));
+} SwissSettings;
 extern SwissSettings swissSettings;
 
 enum fileOptions

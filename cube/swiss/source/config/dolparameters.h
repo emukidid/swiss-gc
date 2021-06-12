@@ -34,7 +34,7 @@ Values={1, 1}, {2, 2}, {3, 3}
 typedef struct {
 	char value[MAX_PARAM_STRING];	// Value passed to DOL
 	char name[MAX_PARAM_STRING];	// User friendly name
-} ParameterValue __attribute__((aligned(32)));
+} ParameterValue;
 
 typedef struct {
 	ParameterValue arg;	// The parameter itself
@@ -42,12 +42,12 @@ typedef struct {
 	int enable;			// Whether this param is used
 	int currentValueIdx;// Current value index
 	ParameterValue values[MAX_VALUES_PER_PARAM];	// The values
-} Parameter __attribute__((aligned(32)));
+} Parameter;
 
 typedef struct {
 	Parameter parameters[MAX_PARAMS];
 	int num_params;
-} Parameters __attribute__((aligned(32)));
+} Parameters;
 
 void parseParameters(char *filecontents);
 Parameters* getParameters();

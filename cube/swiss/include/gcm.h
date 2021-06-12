@@ -93,7 +93,7 @@ typedef struct {
 	u32 tgcBase;
 	u32 tgcFileStartArea;
 	u32 tgcFakeOffset;
-} ExecutableFile __attribute__((aligned(32)));
+} ExecutableFile;
 
 int parse_gcm(file_handle *file, ExecutableFile *filesToPatch);
 void adjust_tgc_fst(char* FST, u32 tgc_base, u32 fileAreaStart, u32 fakeAmount);

@@ -92,14 +92,14 @@ typedef struct
 	int  lba48Support;
 	char model[48];
 	char serial[24];
-} typeDriveInfo ATTRIBUTE_ALIGN (32);
-extern typeDriveInfo ataDriveInfo;
+} typeDriveInfo;
+
 typedef struct
 {
 	u16 type; //1 = master pw, 0 = user
 	char password[32];
-	u8 reserved[479];
-} unlockStruct ATTRIBUTE_ALIGN (32);
+	u8 reserved[478];
+} unlockStruct;
 
 extern typeDriveInfo ataDriveInfo;
 

@@ -20,7 +20,7 @@ typedef struct {
 	int forceWidescreen;
 	int invertCStick;
 	int emulateReadSpeed;
-} ConfigEntry __attribute__((aligned(32)));
+} ConfigEntry;
 
 void config_parse(char *configData);
 void config_parse_swiss_settings(char *configData);
