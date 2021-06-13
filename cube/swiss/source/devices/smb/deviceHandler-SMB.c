@@ -176,9 +176,13 @@ s32 deviceHandler_SMB_seekFile(file_handle* file, u32 where, u32 type){
 
 s32 deviceHandler_SMB_readFile(file_handle* file, void* buffer, u32 length){
 	if(!file->fp) {
-		file->fp = fopen( file->name, "rb" );
+		file->fp = fopen(file->name, "rb");
 	}
 	if(!file->fp) return -1;
+	if(file->size <= 0) {
+		fseek(file->fp, 0, SEEK_END);
+		file->size = ftell(file->fp);
+	}
 	
 	fseek(file->fp, file->offset, SEEK_SET);
 	int bytes_read = fread(buffer, 1, length, file->fp);
@@ -186,29 +190,45 @@ s32 deviceHandler_SMB_readFile(file_handle* file, void* buffer, u32 length){
 	return bytes_read;
 }
 
+s32 deviceHandler_SMB_writeFile(file_handle* file, void* buffer, u32 length){
+	if(!file->fp) {
+		file->fp = fopen(file->name, "wb");
+	}
+	if(!file->fp) return -1;
+	
+	fseek(file->fp, file->offset, SEEK_SET);
+	int bytes_written = fwrite(buffer, 1, length, file->fp);
+	if(bytes_written > 0) file->offset += bytes_written;
+	return bytes_written;
+}
+
 s32 deviceHandler_SMB_init(file_handle* file) {
 	init_network();
 	return 1;
 }
 
-extern char *getDeviceMountPath(char *str);
-
-s32 deviceHandler_SMB_deinit(file_handle* file) {
-	initial_SMB_info.freeSpaceInKB = 0;
-	initial_SMB_info.totalSpaceInKB = 0;
+s32 deviceHandler_SMB_closeFile(file_handle* file) {
 	if(file && file->fp) {
 		fclose(file->fp);
 		file->fp = 0;
 	}
+	return 0;
+}
+
+s32 deviceHandler_SMB_deinit(file_handle* file) {
+	deviceHandler_SMB_closeFile(file);
+	initial_SMB_info.freeSpaceInKB = 0;
+	initial_SMB_info.totalSpaceInKB = 0;
 	if(smb_initialized) {
 		smbClose("smb");
 		smb_initialized = 0;
 	}
-	return 1;
+	return 0;
 }
 
-s32 deviceHandler_SMB_closeFile(file_handle* file) {
-    return 0;
+s32 deviceHandler_SMB_deleteFile(file_handle* file) {
+	deviceHandler_SMB_closeFile(file);
+	return unlink(file->name);
 }
 
 bool deviceHandler_SMB_test() {
@@ -221,7 +241,7 @@ DEVICEHANDLER_INTERFACE __device_smb = {
 	"SMB 1.0/CIFS",
 	"Configurable via the settings screen",
 	{TEX_SAMBA, 140, 64},
-	FEAT_READ,
+	FEAT_READ|FEAT_WRITE,
 	EMU_NONE,
 	LOC_SERIAL_PORT_1,
 	&initial_SMB,
@@ -230,8 +250,8 @@ DEVICEHANDLER_INTERFACE __device_smb = {
 	(_fn_init)&deviceHandler_SMB_init,
 	(_fn_readDir)&deviceHandler_SMB_readDir,
 	(_fn_readFile)&deviceHandler_SMB_readFile,
-	(_fn_writeFile)NULL,
-	(_fn_deleteFile)NULL,
+	(_fn_writeFile)deviceHandler_SMB_writeFile,
+	(_fn_deleteFile)deviceHandler_SMB_deleteFile,
 	(_fn_seekFile)&deviceHandler_SMB_seekFile,
 	(_fn_setupFile)NULL,
 	(_fn_closeFile)&deviceHandler_SMB_closeFile,

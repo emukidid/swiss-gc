@@ -116,9 +116,9 @@ s32 deviceHandler_FSP_writeFile(file_handle* file, void* buffer, u32 length) {
 	if(!file->fp) return -1;
 	
 	fsp_fseek(file->fp, file->offset, SEEK_SET);
-	s32 bytes_read = fsp_fwrite(buffer, 1, length, file->fp);
-	if(bytes_read > 0) file->offset += bytes_read;
-	return bytes_read;
+	s32 bytes_written = fsp_fwrite(buffer, 1, length, file->fp);
+	if(bytes_written > 0) file->offset += bytes_written;
+	return bytes_written;
 }
 
 s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
