@@ -1777,6 +1777,9 @@ int check_game(ExecutableFile *filesToPatch)
 	
 	u32 numToPatch = parse_gcm(&curFile, filesToPatch);
 	
+	if(!strncmp(gameID, "GCCE01", 6) || !strncmp(gameID, "GCCJGC", 6) || !strncmp(gameID, "GCCP01", 6)) {
+		parse_gcm_add(&curFile, filesToPatch, &numToPatch, "ffcc_cli.bin");
+	}
 	if(!swissSettings.disableVideoPatches) {
 		if(!strncmp(gameID, "GS8P7D", 6)) {
 			parse_gcm_add(&curFile, filesToPatch, &numToPatch, "SPYROCFG_NGC.CFG");

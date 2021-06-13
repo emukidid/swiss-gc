@@ -11078,6 +11078,42 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 			print_gecko("Patched:[%s]\n", fileName);
 			patched++;
 		}
+	} else if (!strncmp(gameID, "GCCE01", 6) || !strncmp(gameID, "GCCP01", 6)) {
+		if (!strcasecmp(fileName, "ffcc_cli.bin")) {
+			*(u16 *)(data + 0x2504) = __builtin_bswap16(0x8004);
+			*(u16 *)(data + 0x2506) = __builtin_bswap16(0x20FF);
+			*(u16 *)(data + 0x2508) = __builtin_bswap16(0x7018);
+			*(u16 *)(data + 0x250A) = __builtin_bswap16(0x705C);
+			*(u16 *)(data + 0x250C) = __builtin_bswap16(0x4904);
+			*(u16 *)(data + 0x250E) = __builtin_bswap16(0x2001);
+			*(u16 *)(data + 0x2510) = __builtin_bswap16(0x7008);
+			*(u16 *)(data + 0x2512) = __builtin_bswap16(0x4901);
+			*(u16 *)(data + 0x2514) = __builtin_bswap16(0x600C);
+			*(u16 *)(data + 0x2516) = __builtin_bswap16(0xE009);
+			
+			*(u32 *)(data + 0x2518) = __builtin_bswap32(0x03000190);
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GCCJGC", 6)) {
+		if (!strcasecmp(fileName, "ffcc_cli.bin")) {
+			*(u16 *)(data + 0x132C) = __builtin_bswap16(0x8004);
+			*(u16 *)(data + 0x132E) = __builtin_bswap16(0x20FF);
+			*(u16 *)(data + 0x1330) = __builtin_bswap16(0x7018);
+			*(u16 *)(data + 0x1332) = __builtin_bswap16(0x705C);
+			*(u16 *)(data + 0x1334) = __builtin_bswap16(0x4904);
+			*(u16 *)(data + 0x1336) = __builtin_bswap16(0x2001);
+			*(u16 *)(data + 0x1338) = __builtin_bswap16(0x7008);
+			*(u16 *)(data + 0x133A) = __builtin_bswap16(0x4901);
+			*(u16 *)(data + 0x133C) = __builtin_bswap16(0x600C);
+			*(u16 *)(data + 0x133E) = __builtin_bswap16(0xE009);
+			
+			*(u32 *)(data + 0x1340) = __builtin_bswap32(0x03000138);
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
 	} else if (!strncmp(gameID, "GHQE7D", 6) || !strncmp(gameID, "GHQP7D", 6)) {
 		if (!strcmp(fileName, "bi2.bin")) {
 			*(u32 *)(data + 0x24) = 5;
