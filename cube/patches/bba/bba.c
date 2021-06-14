@@ -119,14 +119,14 @@ static uint32_t exi_imm_read_write(uint32_t data, uint32_t len)
 	return EXI[EXI_CHANNEL_0][4] >> ((4 - len) * 8);
 }
 
-static void exi_immex_write(const void *buf, uint32_t len)
+static void exi_immex_write(const uint8_t *buf __attribute((vector_size(4))), uint32_t len)
 {
+	uint32_t xlen;
+
 	do {
-		uint32_t xlen = MIN(len, 4);
-		exi_imm_write(*(uint32_t *)buf, xlen);
-		buf += xlen;
-		len -= xlen;
-	} while (len);
+		xlen = MIN(len, 4);
+		exi_imm_write((uint32_t)*buf++, xlen);
+	} while (len -= xlen);
 }
 
 static void exi_dma_read(void *buf, uint32_t len)

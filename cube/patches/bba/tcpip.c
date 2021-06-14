@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2017-2020, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2017-2021, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -204,12 +204,12 @@ static void fsp_get_file(uint32_t offset, size_t size, bool lock)
 	ipv4->ttl = 64;
 	ipv4->protocol = IP_PROTO_UDP;
 	ipv4->checksum = 0x0000;
-	ipv4->src_addr.addr = (*_client_ip).addr;
-	ipv4->dst_addr.addr = (*_server_ip).addr;
+	ipv4->src_addr = *_client_ip;
+	ipv4->dst_addr = *_server_ip;
 	ipv4->checksum = ipv4_checksum(ipv4);
 
-	eth->dst_addr.addr = (*_server_mac).addr;
-	eth->src_addr.addr = (*_client_mac).addr;
+	eth->dst_addr = *_server_mac;
+	eth->src_addr = *_client_mac;
 	eth->type = ETH_TYPE_IPV4;
 	bba_transmit(eth, sizeof(*eth) + ipv4->length);
 
@@ -249,7 +249,7 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 	if (ipv4->src_addr.addr == (*_server_ip).addr &&
 		ipv4->dst_addr.addr == (*_client_ip).addr) {
 
-		(*_server_mac).addr = eth->src_addr.addr;
+		*_server_mac = eth->src_addr;
 
 		if (ipv4->offset == 0) {
 			if (size < sizeof(*udp))
@@ -338,14 +338,14 @@ static void arp_input(bba_page_t page, eth_header_t *eth, arp_packet_t *arp, siz
 
 				arp->operation = ARP_REPLY;
 
-				arp->dst_mac.addr = arp->src_mac.addr;
-				arp->dst_ip.addr  = arp->src_ip.addr;
+				arp->dst_mac = arp->src_mac;
+				arp->dst_ip  = arp->src_ip;
 
-				arp->src_mac.addr = (*_client_mac).addr;
-				arp->src_ip.addr  = (*_client_ip).addr;
+				arp->src_mac = *_client_mac;
+				arp->src_ip  = *_client_ip;
 
-				eth->dst_addr.addr = arp->dst_mac.addr;
-				eth->src_addr.addr = arp->src_mac.addr;
+				eth->dst_addr = arp->dst_mac;
+				eth->src_addr = arp->src_mac;
 
 				bba_transmit(eth, MIN_FRAME_SIZE);
 			}
@@ -355,7 +355,7 @@ static void arp_input(bba_page_t page, eth_header_t *eth, arp_packet_t *arp, siz
 				arp->dst_ip.addr  == (*_client_ip).addr &&
 				arp->src_ip.addr  == (*_server_ip).addr) {
 
-				(*_server_mac).addr = arp->src_mac.addr;
+				*_server_mac = arp->src_mac;
 			}
 			break;
 	}
