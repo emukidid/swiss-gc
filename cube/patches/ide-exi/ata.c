@@ -48,7 +48,8 @@
 #define _ata48bit *(u8*)VAR_ATA_LBA48
 
 #define exi_freq			(*(u8*)VAR_EXI_FREQ)
-#define exi_channel			(*(u8*)VAR_EXI_SLOT)
+#define exi_channel			(*(u8*)VAR_EXI_SLOT & (EXI_CHANNEL_0 | EXI_CHANNEL_1))
+#define exi_device			(*(u8*)VAR_EXI_SLOT & (EXI_DEVICE_0  | EXI_DEVICE_2))
 #define exi_regs			(*(vu32**)VAR_EXI_REGS)
 
 static OSInterruptHandler TCIntrruptHandler = NULL;
@@ -91,7 +92,7 @@ static int exi_selected()
 
 static void exi_select()
 {
-	exi_regs[0] = (exi_regs[0] & 0x405) | ((1 << EXI_DEVICE_0) << 7) | (exi_freq << 4);
+	exi_regs[0] = (exi_regs[0] & 0x405) | ((1 << exi_device) << 7) | (exi_freq << 4);
 }
 
 static void exi_deselect()
@@ -318,7 +319,7 @@ static int ataWriteBuffer(void *buffer)
 static void ata_done_queued(void);
 static void ata_read_queued(void)
 {
-	if (!EXILock(exi_channel, EXI_DEVICE_0, (EXICallback)ata_read_queued))
+	if (!EXILock(exi_channel, exi_device, (EXICallback)ata_read_queued))
 		return;
 
 	void *buffer = ata.queue[0].buffer;

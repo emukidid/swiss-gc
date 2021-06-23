@@ -132,8 +132,9 @@ int main ()
 		allDevices[i] = NULL;
 	i = 0;
 	allDevices[i++] = &__device_wkf;
-	allDevices[i++] = &__device_gcloader;
 	allDevices[i++] = &__device_wode;
+	allDevices[i++] = &__device_gcloader;
+	allDevices[i++] = &__device_ide_c;
 	allDevices[i++] = &__device_sd_c;
 	allDevices[i++] = &__device_sd_a;
 	allDevices[i++] = &__device_sd_b;

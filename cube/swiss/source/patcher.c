@@ -132,7 +132,7 @@ int install_code(int final)
 		print_gecko("Installing Reload Stub\r\n");
 	}
 	// IDE-EXI
-	else if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b) {
+	else if(devices[DEVICE_CUR] == &__device_ide_a || devices[DEVICE_CUR] == &__device_ide_b || devices[DEVICE_CUR] == &__device_ide_c) {
 		if (GCMDisk.AudioStreaming) {
 			patch     = !_ideexi_version ? ideexi_v1_dtk_bin      : ideexi_v2_dtk_bin;
 			patchSize = !_ideexi_version ? ideexi_v1_dtk_bin_size : ideexi_v2_dtk_bin_size;

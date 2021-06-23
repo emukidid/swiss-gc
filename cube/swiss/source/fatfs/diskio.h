@@ -27,14 +27,15 @@ typedef enum {
 
 // Swiss: Device number.
 typedef enum {
-	DEV_SDA	= 0,
-	DEV_SDB	= 1,
-	DEV_SDC	= 2,
-	DEV_IDEA = 3,
-	DEV_IDEB = 4,
-	DEV_WKF = 5,
-	DEV_GCLDR = 6,
-	DEV_MAX = 7
+	DEV_SDA = 0,
+	DEV_SDB,
+	DEV_SDC,
+	DEV_IDEA,
+	DEV_IDEB,
+	DEV_IDEC,
+	DEV_WKF,
+	DEV_GCLDR,
+	DEV_MAX
 } DeviceNumber;
 
 DSTATUS disk_initialize (BYTE pdrv);

@@ -25,7 +25,7 @@
 #define IDE_EXI_V2 1
 
 u16 buffer[256] ATTRIBUTE_ALIGN (32);
-static int __ata_init[2] = {0,0};
+static int __ata_init[3] = {0,0,0};
 int _ideexi_version = IDE_EXI_V1;
 
 // Drive information struct
@@ -40,10 +40,15 @@ static inline u16 bswap16(u16 val)
 // Returns 8 bits from the ATA Status register
 static inline u8 ataReadStatusReg(int chn)
 {
+	int dev = EXI_DEVICE_0;
+	if(chn == EXI_CHANNEL_2) {
+		chn = EXI_CHANNEL_0;
+		dev = EXI_DEVICE_2;
+	}
 	// read ATA_REG_CMDSTATUS1 | 0x00 (dummy)
 	u16 dat = 0x1700;
-	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+	EXI_Lock(chn, dev, NULL);
+	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_ImmEx(chn,&dat,2,EXI_WRITE);
 	EXI_ImmEx(chn,&dat,1,EXI_READ);
 	EXI_Deselect(chn);
@@ -54,10 +59,15 @@ static inline u8 ataReadStatusReg(int chn)
 // Returns 8 bits from the ATA Error register
 static inline u8 ataReadErrorReg(int chn)
 {
+	int dev = EXI_DEVICE_0;
+	if(chn == EXI_CHANNEL_2) {
+		chn = EXI_CHANNEL_0;
+		dev = EXI_DEVICE_2;
+	}
 	// read ATA_REG_ERROR | 0x00 (dummy)
 	u16 dat = 0x1100;
-	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+	EXI_Lock(chn, dev, NULL);
+	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_ImmEx(chn,&dat,2,EXI_WRITE);
 	EXI_ImmEx(chn,&dat,1,EXI_READ);
 	EXI_Deselect(chn);
@@ -68,10 +78,15 @@ static inline u8 ataReadErrorReg(int chn)
 // Writes 8 bits of data out to the specified ATA Register
 static inline void ataWriteByte(int chn, u8 addr, u8 data)
 {
+	int dev = EXI_DEVICE_0;
+	if(chn == EXI_CHANNEL_2) {
+		chn = EXI_CHANNEL_0;
+		dev = EXI_DEVICE_2;
+	}
 	u32 dat = 0x80000000 | (addr << 24) | (data<<16);
-	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-	EXI_ImmEx(chn,&dat,3,EXI_WRITE);	
+	EXI_Lock(chn, dev, NULL);
+	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+	EXI_ImmEx(chn,&dat,3,EXI_WRITE);
 	EXI_Deselect(chn);
 	EXI_Unlock(chn);
 }
@@ -79,10 +94,15 @@ static inline void ataWriteByte(int chn, u8 addr, u8 data)
 // Writes 16 bits to the ATA Data register
 static inline void ataWriteu16(int chn, u16 data) 
 {
+	int dev = EXI_DEVICE_0;
+	if(chn == EXI_CHANNEL_2) {
+		chn = EXI_CHANNEL_0;
+		dev = EXI_DEVICE_2;
+	}
 	// write 16 bit to ATA_REG_DATA | data LSB | data MSB | 0x00 (dummy)
 	u32 dat = 0xD0000000 | (((data>>8) & 0xff)<<16) | ((data & 0xff)<<8);
-	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+	EXI_Lock(chn, dev, NULL);
+	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_ImmEx(chn,&dat,4,EXI_WRITE);
 	EXI_Deselect(chn);
 	EXI_Unlock(chn);
@@ -92,10 +112,15 @@ static inline void ataWriteu16(int chn, u16 data)
 // Returns 16 bits from the ATA Data register
 static inline u16 ataReadu16(int chn) 
 {
+	int dev = EXI_DEVICE_0;
+	if(chn == EXI_CHANNEL_2) {
+		chn = EXI_CHANNEL_0;
+		dev = EXI_DEVICE_2;
+	}
 	// read 16 bit from ATA_REG_DATA | 0x00 (dummy)
-	u16 dat = 0x5000;  	
-	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+	u16 dat = 0x5000;
+	EXI_Lock(chn, dev, NULL);
+	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_ImmEx(chn,&dat,2,EXI_WRITE);
 	EXI_ImmEx(chn,&dat,2,EXI_READ); // read LSB & MSB
 	EXI_Deselect(chn);
@@ -107,11 +132,16 @@ static inline u16 ataReadu16(int chn)
 // Reads 512 bytes
 static inline void ata_read_buffer(int chn, u32 *dst) 
 {
+	int dev = EXI_DEVICE_0;
+	if(chn == EXI_CHANNEL_2) {
+		chn = EXI_CHANNEL_0;
+		dev = EXI_DEVICE_2;
+	}
 	u16 dwords = 128;	// 128 * 4 = 512 bytes
 	// (31:29) 011b | (28:24) 10000b | (23:16) <num_words_LSB> | (15:8) <num_words_MSB> | (7:0) 00h (4 bytes)
 	u32 dat = 0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8);
-	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+	EXI_Lock(chn, dev, NULL);
+	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_ImmEx(chn,&dat,4,EXI_WRITE);
 	if(_ideexi_version == IDE_EXI_V1) {
 		// IDE_EXI_V1, select / deselect for every 4 bytes
@@ -120,15 +150,15 @@ static inline void ata_read_buffer(int chn, u32 *dst)
 		u32 i = 0;
 		u32 *ptr = dst;
 		for(i = 0; i < dwords; i++) {
-			EXI_Lock(chn, 0, NULL);
-			EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+			EXI_Lock(chn, dev, NULL);
+			EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 			EXI_ImmEx(chn,ptr,4,EXI_READ);
 			ptr++;
 			EXI_Deselect(chn);
 			EXI_Unlock(chn);
 		}
-		EXI_Lock(chn, 0, NULL);
-		EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+		EXI_Lock(chn, dev, NULL);
+		EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 		EXI_ImmEx(chn,&dat,4,EXI_READ);
 		EXI_Deselect(chn);
 		EXI_Unlock(chn);
@@ -155,11 +185,16 @@ static inline void ata_read_buffer(int chn, u32 *dst)
 
 static inline void ata_write_buffer(int chn, u32 *src) 
 {
+	int dev = EXI_DEVICE_0;
+	if(chn == EXI_CHANNEL_2) {
+		chn = EXI_CHANNEL_0;
+		dev = EXI_DEVICE_2;
+	}
 	u16 dwords = 128;	// 128 * 4 = 512 bytes
 	// (23:21) 111b | (20:16) 10000b | (15:8) <num_words_LSB> | (7:0) <num_words_MSB> (3 bytes)
 	u32 dat = 0xF0000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8);
-	EXI_Lock(chn, 0, NULL);
-	EXI_Select(chn,0,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+	EXI_Lock(chn, dev, NULL);
+	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_ImmEx(chn,&dat,3,EXI_WRITE);
 	EXI_ImmEx(chn, src,512,EXI_WRITE);
 	dat = 0;
@@ -177,11 +212,21 @@ void print_hdd_sector(u32 *dest) {
 
 // works for V2 IDE-EXI only
 int ide_exi_inserted(int chn) {
-	return exi_get_id(chn,EXI_DEVICE_0) == EXI_IDEEXIV2_ID;
+	int dev = EXI_DEVICE_0;
+	if(chn == EXI_CHANNEL_2) {
+		chn = EXI_CHANNEL_0;
+		dev = EXI_DEVICE_2;
+	}
+	return exi_get_id(chn,dev) == EXI_IDEEXIV2_ID;
 }
 
 int _ideExiVersion(int chn) {
-	u32 cid = exi_get_id(chn,EXI_DEVICE_0);
+	int dev = EXI_DEVICE_0;
+	if(chn == EXI_CHANNEL_2) {
+		chn = EXI_CHANNEL_0;
+		dev = EXI_DEVICE_2;
+	}
+	u32 cid = exi_get_id(chn,dev);
 	print_gecko("IDE-EXI ID: %08X\r\n",cid);
 	if(cid==EXI_IDEEXIV2_ID) {
 		print_gecko("IDE-EXI v2 detected\r\n");
@@ -616,8 +661,38 @@ static bool __atab_shutdown(void)
 	return true;
 }
 
+static bool __atac_startup(void)
+{
+	return ataIsInserted(2);
+}
+
+static bool __atac_isInserted(void)
+{
+	return ataIsInserted(2);
+}
+
+static bool __atac_readSectors(sec_t sector, sec_t numSectors, void *buffer)
+{
+	return !ataReadSectors(2, (u64)sector, numSectors, buffer);
+}
+
+static bool __atac_writeSectors(sec_t sector, sec_t numSectors, void *buffer)
+{
+	return !ataWriteSectors(2, (u64)sector, numSectors, buffer);
+}
+
+static bool __atac_clearStatus(void)
+{
+	return true;
+}
+
+static bool __atac_shutdown(void)
+{
+	return true;
+}
+
 const DISC_INTERFACE __io_ataa = {
-	DEVICE_TYPE_GC_SD,
+	DEVICE_TYPE_GC_ATA,
 	FEATURE_MEDIUM_CANREAD | FEATURE_MEDIUM_CANWRITE | FEATURE_GAMECUBE_SLOTA,
 	(FN_MEDIUM_STARTUP)&__ataa_startup,
 	(FN_MEDIUM_ISINSERTED)&__ataa_isInserted,
@@ -627,7 +702,7 @@ const DISC_INTERFACE __io_ataa = {
 	(FN_MEDIUM_SHUTDOWN)&__ataa_shutdown
 } ;
 const DISC_INTERFACE __io_atab = {
-	DEVICE_TYPE_GC_SD,
+	DEVICE_TYPE_GC_ATA,
 	FEATURE_MEDIUM_CANREAD | FEATURE_MEDIUM_CANWRITE | FEATURE_GAMECUBE_SLOTB,
 	(FN_MEDIUM_STARTUP)&__atab_startup,
 	(FN_MEDIUM_ISINSERTED)&__atab_isInserted,
@@ -635,4 +710,14 @@ const DISC_INTERFACE __io_atab = {
 	(FN_MEDIUM_WRITESECTORS)&__atab_writeSectors,
 	(FN_MEDIUM_CLEARSTATUS)&__atab_clearStatus,
 	(FN_MEDIUM_SHUTDOWN)&__atab_shutdown
+} ;
+const DISC_INTERFACE __io_atac = {
+	DEVICE_TYPE_GC_ATA,
+	FEATURE_MEDIUM_CANREAD | FEATURE_MEDIUM_CANWRITE | FEATURE_GAMECUBE_PORT1,
+	(FN_MEDIUM_STARTUP)&__atac_startup,
+	(FN_MEDIUM_ISINSERTED)&__atac_isInserted,
+	(FN_MEDIUM_READSECTORS)&__atac_readSectors,
+	(FN_MEDIUM_WRITESECTORS)&__atac_writeSectors,
+	(FN_MEDIUM_CLEARSTATUS)&__atac_clearStatus,
+	(FN_MEDIUM_SHUTDOWN)&__atac_shutdown
 } ;

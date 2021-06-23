@@ -13,10 +13,11 @@
 #include <gccore.h>
 #include <ogc/disc_io.h>
 
-#define DEVICE_TYPE_GC_SD	(('G'<<24)|('C'<<16)|('S'<<8)|'D')
+#define DEVICE_TYPE_GC_ATA	(('G'<<24)|('A'<<16)|('T'<<8)|'A')
 
 extern const DISC_INTERFACE __io_ataa;
 extern const DISC_INTERFACE __io_atab;
+extern const DISC_INTERFACE __io_atac;
 extern int _ideexi_version;
 
 // ATA status register bits

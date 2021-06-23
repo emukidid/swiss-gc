@@ -15,7 +15,7 @@
 #include "wode/WodeInterface.h"
 #include "bnr.h"
 
-#define MAX_DEVICES 18
+#define MAX_DEVICES 19
 #define PATHNAME_MAX 1024
 
 typedef struct {
@@ -117,7 +117,8 @@ typedef u32 (* _fn_emulated)(void);
 #define DEVICE_ID_E			0x0E
 #define DEVICE_ID_F			0x0F
 #define DEVICE_ID_G			0x10
-#define DEVICE_ID_MAX		DEVICE_ID_G
+#define DEVICE_ID_H			0x11
+#define DEVICE_ID_MAX		DEVICE_ID_H
 #define DEVICE_ID_UNK		(DEVICE_ID_MAX + 1)
 
 struct DEVICEHANDLER_STRUCT {
