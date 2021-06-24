@@ -566,12 +566,12 @@ static bool __ataa_isInserted(void)
 	return ataIsInserted(0);
 }
 
-static bool __ataa_readSectors(u32 sector, u32 numSectors, void *buffer)
+static bool __ataa_readSectors(sec_t sector, sec_t numSectors, void *buffer)
 {
 	return !ataReadSectors(0, (u64)sector, numSectors, buffer);
 }
 
-static bool __ataa_writeSectors(u32 sector, u32 numSectors, void *buffer)
+static bool __ataa_writeSectors(sec_t sector, sec_t numSectors, void *buffer)
 {
 	return !ataWriteSectors(0, (u64)sector, numSectors, buffer);
 }
@@ -596,12 +596,12 @@ static bool __atab_isInserted(void)
 	return ataIsInserted(1);
 }
 
-static bool __atab_readSectors(u32 sector, u32 numSectors, void *buffer)
+static bool __atab_readSectors(sec_t sector, sec_t numSectors, void *buffer)
 {
 	return !ataReadSectors(1, (u64)sector, numSectors, buffer);
 }
 
-static bool __atab_writeSectors(u32 sector, u32 numSectors, void *buffer)
+static bool __atab_writeSectors(sec_t sector, sec_t numSectors, void *buffer)
 {
 	return !ataWriteSectors(1, (u64)sector, numSectors, buffer);
 }

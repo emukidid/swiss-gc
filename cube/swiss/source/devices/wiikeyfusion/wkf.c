@@ -426,13 +426,13 @@ static bool __wkf_isInserted(void)
 	return wkfIsInserted(0);
 }
 
-static bool __wkf_readSectors(u32 sector, u32 numSectors, void *buffer)
+static bool __wkf_readSectors(sec_t sector, sec_t numSectors, void *buffer)
 {
 	wkfReadSectors(0, sector, numSectors, buffer);
 	return true;
 }
 
-static bool __wkf_writeSectors(u32 sector, u32 numSectors, void *buffer)
+static bool __wkf_writeSectors(sec_t sector, sec_t numSectors, void *buffer)
 {
 	return false;
 }

@@ -10,7 +10,6 @@
 #include "ff.h"			/* Obtains integer types */
 #include "diskio.h"		/* Declarations of disk functions */
 
-#include <limits.h>
 #include <sdcard/gcsd.h>
 #include "ata.h"
 #include "wkf.h"
@@ -69,8 +68,8 @@ DSTATUS disk_initialize (
 	// - DEFAULT_CACHE_PAGES = 4
 	// - DEFAULT_SECTORS_PAGE = 64
 	// NOTE: endOfPartition isn't usable, since this is a
-	// per-disk cache, not per-partition. Use UINT_MAX-1.
-	cache[pdrv] = _FAT_cache_constructor(4, 64, driver[pdrv], UINT_MAX-1, 512);
+	// per-disk cache, not per-partition. Use UINT_MAX.
+	cache[pdrv] = _FAT_cache_constructor(4, 64, driver[pdrv], (sec_t)-1, 512);
 
 	// Device initialized.
 	disk_isInit[pdrv] = true;
@@ -89,6 +88,8 @@ DRESULT disk_read (
 )
 {
 	if (pdrv >= DEV_MAX || count == 0)
+		return RES_PARERR;
+	if (__builtin_add_overflow_p(sector, count, (sec_t)0))
 		return RES_PARERR;
 
 	// Read from the cache.
@@ -118,6 +119,8 @@ DRESULT disk_write (
 )
 {
 	if (pdrv >= DEV_MAX || count == 0)
+		return RES_PARERR;
+	if (__builtin_add_overflow_p(sector, count, (sec_t)0))
 		return RES_PARERR;
 
 	// Write to the cache.

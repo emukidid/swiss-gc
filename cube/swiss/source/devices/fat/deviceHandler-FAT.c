@@ -301,8 +301,8 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 	s32 numFrags = 0;
 	for(i = 1; i < (clmt[0]); i+=2) {
 		if(clmt[i] == 0) break;	// No more
-		DWORD size = (clmt[i]) * fatFS->csize * 512;
-		DWORD sector = clst2sect(fatFS, clmt[i+1]);
+		FSIZE_t size = (clmt[i]) * fatFS->csize * fatFS->ssize;
+		LBA_t sector = clst2sect(fatFS, clmt[i+1]);
 		// this frag offset in the file is the last frag offset+size
 		size = forceSize < size ? forceSize : size;
 		fragTbl[numFrags*3] = forceBaseOffset;
