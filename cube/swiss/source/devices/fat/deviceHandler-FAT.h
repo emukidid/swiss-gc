@@ -12,9 +12,9 @@
 extern DEVICEHANDLER_INTERFACE __device_sd_a;
 extern DEVICEHANDLER_INTERFACE __device_sd_b;
 extern DEVICEHANDLER_INTERFACE __device_sd_c;
-extern DEVICEHANDLER_INTERFACE __device_ide_a;
-extern DEVICEHANDLER_INTERFACE __device_ide_b;
-extern DEVICEHANDLER_INTERFACE __device_ide_c;
+extern DEVICEHANDLER_INTERFACE __device_ata_a;
+extern DEVICEHANDLER_INTERFACE __device_ata_b;
+extern DEVICEHANDLER_INTERFACE __device_ata_c;
 
 extern s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type);
 extern s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length);

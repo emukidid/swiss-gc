@@ -64,8 +64,8 @@ file_handle initial_SD_C =
 	  0
 	};	
 	
-file_handle initial_IDE_A =
-	{ "idea:/",       // directory
+file_handle initial_ATA_A =
+	{ "ataa:/",       // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
 	  0,        // size
@@ -74,8 +74,8 @@ file_handle initial_IDE_A =
 	  0
 	};
 	
-file_handle initial_IDE_B =
-	{ "ideb:/",       // directory
+file_handle initial_ATA_B =
+	{ "atab:/",       // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
 	  0,        // size
@@ -84,8 +84,8 @@ file_handle initial_IDE_B =
 	  0
 	};
 	
-file_handle initial_IDE_C =
-	{ "idec:/",       // directory
+file_handle initial_ATA_C =
+	{ "atac:/",       // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
 	  0,        // size
@@ -109,10 +109,10 @@ void populateDeviceInfo(file_handle* file) {
 		int isSDCard = IS_SDCARD(file->name);
 		int slot = GET_SLOT(file->name);
 		
-		sprintf(txtbuffer, "Reading filesystem info for %s%c:/", isSDCard ? "sd":"ide", ('a'+slot));
+		sprintf(txtbuffer, "Reading filesystem info for %s%c:/", isSDCard ? "sd":"ata", ('a'+slot));
 		print_gecko(txtbuffer);
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
-		sprintf(txtbuffer, "%s%c:/",isSDCard ? "sd":"ide", ('a'+slot));
+		sprintf(txtbuffer, "%s%c:/",isSDCard ? "sd":"ata", ('a'+slot));
 		DWORD free_clusters, free_sectors, total_sectors = 0;
 		FATFS *fsptr = fs[(isSDCard ? slot : SD_COUNT + slot)];
 		if(f_getfree(txtbuffer, &free_clusters, &fsptr) == FR_OK) {
@@ -372,7 +372,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	}
 	
 	if(swissSettings.emulateMemoryCard) {
-		if(devices[DEVICE_CUR] != &__device_sd_a && devices[DEVICE_CUR] != &__device_ide_a) {
+		if(devices[DEVICE_CUR] != &__device_sd_a && devices[DEVICE_CUR] != &__device_ata_a && devices[DEVICE_CUR] != &__device_ata_c) {
 			memset(&patchFile, 0, sizeof(file_handle));
 			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/MemoryCardA.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
 			
@@ -388,7 +388,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 			}
 		}
 		
-		if(devices[DEVICE_CUR] != &__device_sd_b && devices[DEVICE_CUR] != &__device_ide_b) {
+		if(devices[DEVICE_CUR] != &__device_sd_b && devices[DEVICE_CUR] != &__device_ata_b) {
 			memset(&patchFile, 0, sizeof(file_handle));
 			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
 			
@@ -463,7 +463,7 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 	int isSDCard = IS_SDCARD(file->name);
 	int slot = GET_SLOT(file->name);
 	int ret = 0;
-	print_gecko("Init %s %i\r\n", (isSDCard ? "SD":"IDE"), slot);
+	print_gecko("Init %s %i\r\n", (isSDCard ? "SD":"ATA"), slot);
 	// SD Card - Slot A
 	if(isSDCard && slot == 0) {
 		setSDGeckoSpeed(slot, swissSettings.exiSpeed);
@@ -499,15 +499,15 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 	}
 	// IDE-EXI - Slot A
 	if(!isSDCard && slot == 0) {
-		ret = fatFs_Mount(DEV_IDEA, "idea:/");
+		ret = fatFs_Mount(DEV_ATAA, "ataa:/");
 	}
 	// IDE-EXI - Slot B
 	if(!isSDCard && slot == 1) {
-		ret = fatFs_Mount(DEV_IDEB, "ideb:/");
+		ret = fatFs_Mount(DEV_ATAB, "atab:/");
 	}
 	// M.2 Loader
 	if(!isSDCard && slot == 2) {
-		ret = fatFs_Mount(DEV_IDEC, "idec:/");
+		ret = fatFs_Mount(DEV_ATAC, "atac:/");
 	}
 	if(ret)
 		populateDeviceInfo(file);
@@ -556,13 +556,13 @@ bool deviceHandler_FAT_test_sd_b() {
 bool deviceHandler_FAT_test_sd_c() {
 	return cardc->startup() && cardc->shutdown();
 }
-bool deviceHandler_FAT_test_ide_a() {
+bool deviceHandler_FAT_test_ata_a() {
 	return ide_exi_inserted(0);
 }
-bool deviceHandler_FAT_test_ide_b() {
+bool deviceHandler_FAT_test_ata_b() {
 	return ide_exi_inserted(1);
 }
-bool deviceHandler_FAT_test_ide_c() {
+bool deviceHandler_FAT_test_ata_c() {
 	return ide_exi_inserted(2);
 }
 
@@ -577,7 +577,7 @@ u32 deviceHandler_FAT_emulated_sd() {
 		return EMU_READ;
 }
 
-u32 deviceHandler_FAT_emulated_ide() {
+u32 deviceHandler_FAT_emulated_ata() {
 	if (GCMDisk.AudioStreaming)
 		return EMU_READ|EMU_AUDIO_STREAMING;
 	else if (swissSettings.emulateMemoryCard)
@@ -634,17 +634,17 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 	(_fn_emulated)&deviceHandler_FAT_emulated_sd,
 };
 
-DEVICEHANDLER_INTERFACE __device_ide_a = {
+DEVICEHANDLER_INTERFACE __device_ata_a = {
 	DEVICE_ID_3,
 	"IDE-EXI",
 	"IDE-EXI - Slot A",
-	"IDE HDD - Supported File System(s): FAT16, FAT32, exFAT",
+	"IDE/PATA HDD - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_HDD, 104, 76},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
 	EMU_READ|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	LOC_MEMCARD_SLOT_A,
-	&initial_IDE_A,
-	(_fn_test)&deviceHandler_FAT_test_ide_a,
+	&initial_ATA_A,
+	(_fn_test)&deviceHandler_FAT_test_ata_a,
 	(_fn_info)&deviceHandler_FAT_info,
 	(_fn_init)&deviceHandler_FAT_init,
 	(_fn_readDir)&deviceHandler_FAT_readDir,
@@ -655,20 +655,20 @@ DEVICEHANDLER_INTERFACE __device_ide_a = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
-	(_fn_emulated)&deviceHandler_FAT_emulated_ide,
+	(_fn_emulated)&deviceHandler_FAT_emulated_ata,
 };
 
-DEVICEHANDLER_INTERFACE __device_ide_b = {
+DEVICEHANDLER_INTERFACE __device_ata_b = {
 	DEVICE_ID_4,
 	"IDE-EXI",
 	"IDE-EXI - Slot B",
-	"IDE HDD - Supported File System(s): FAT16, FAT32, exFAT",
+	"IDE/PATA HDD - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_HDD, 104, 76},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
 	EMU_READ|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	LOC_MEMCARD_SLOT_B,
-	&initial_IDE_B,
-	(_fn_test)&deviceHandler_FAT_test_ide_b,
+	&initial_ATA_B,
+	(_fn_test)&deviceHandler_FAT_test_ata_b,
 	(_fn_info)&deviceHandler_FAT_info,
 	(_fn_init)&deviceHandler_FAT_init,
 	(_fn_readDir)&deviceHandler_FAT_readDir,
@@ -679,7 +679,7 @@ DEVICEHANDLER_INTERFACE __device_ide_b = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
-	(_fn_emulated)&deviceHandler_FAT_emulated_ide,
+	(_fn_emulated)&deviceHandler_FAT_emulated_ata,
 };
 
 DEVICEHANDLER_INTERFACE __device_sd_c = {
@@ -706,7 +706,7 @@ DEVICEHANDLER_INTERFACE __device_sd_c = {
 	(_fn_emulated)&deviceHandler_FAT_emulated_sd,
 };
 
-DEVICEHANDLER_INTERFACE __device_ide_c = {
+DEVICEHANDLER_INTERFACE __device_ata_c = {
 	DEVICE_ID_H,
 	"M.2 Loader",
 	"M.2 Loader",
@@ -715,8 +715,8 @@ DEVICEHANDLER_INTERFACE __device_ide_c = {
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
 	EMU_READ|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	LOC_SERIAL_PORT_1,
-	&initial_IDE_C,
-	(_fn_test)&deviceHandler_FAT_test_ide_c,
+	&initial_ATA_C,
+	(_fn_test)&deviceHandler_FAT_test_ata_c,
 	(_fn_info)&deviceHandler_FAT_info,
 	(_fn_init)&deviceHandler_FAT_init,
 	(_fn_readDir)&deviceHandler_FAT_readDir,
@@ -727,5 +727,5 @@ DEVICEHANDLER_INTERFACE __device_ide_c = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
-	(_fn_emulated)&deviceHandler_FAT_emulated_ide,
+	(_fn_emulated)&deviceHandler_FAT_emulated_ata,
 };

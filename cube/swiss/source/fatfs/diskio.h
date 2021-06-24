@@ -30,9 +30,9 @@ typedef enum {
 	DEV_SDA = 0,
 	DEV_SDB,
 	DEV_SDC,
-	DEV_IDEA,
-	DEV_IDEB,
-	DEV_IDEC,
+	DEV_ATAA,
+	DEV_ATAB,
+	DEV_ATAC,
 	DEV_WKF,
 	DEV_GCLDR,
 	DEV_MAX
