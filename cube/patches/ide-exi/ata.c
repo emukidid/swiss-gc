@@ -122,6 +122,20 @@ static u32 exi_imm_read(int len, int sync)
 	}
 }
 
+static u32 exi_imm_read_write(u32 data, int len, int sync)
+{
+	exi_regs[4] = data;
+	// Tell EXI if this is a read or a write
+	exi_regs[3] = ((len - 1) << 4) | (EXI_READ_WRITE << 2) | 1;
+
+	if (sync) {
+		// Wait for it to do its thing
+		while (exi_regs[3] & 1);
+		// Read the 4 byte data off the EXI bus
+		return exi_regs[4] >> ((4 - len) * 8);
+	}
+}
+
 static void exi_dma_read(void* data, int len, int sync)
 {
 	exi_regs[1] = (unsigned long)data;
@@ -136,8 +150,7 @@ static u8 ataReadStatusReg()
 	// read ATA_REG_CMDSTATUS1 | 0x00 (dummy)
 	u8 dat;
 	exi_select();
-	exi_imm_write(0x17000000, 2, 1);
-	dat=exi_imm_read(1, 1);
+	dat=exi_imm_read_write(0x17000000, 3, 1);
 	exi_deselect();
 	return dat;
 }
@@ -192,7 +205,7 @@ static void ataReadSectors(u32 sector, u16 count)
 	ataWriteByte(ATA_REG_COMMAND, !_ata48bit ? ATA_CMD_READSECT : ATA_CMD_READSECTEXT);
 }
 
-static int ataReadBuffer(void *buffer, int sync)
+static int ataReadBuffer(void *buffer)
 {
 	u8 status;
 
@@ -212,46 +225,36 @@ static int ataReadBuffer(void *buffer, int sync)
 	exi_imm_write(0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8), 4, 1);
 	#if DMA_READ
 	// v2, no deselect or extra read required.
-	if(sync) {
-		exi_dma_read(ptr, SECTOR_SIZE, 1);
-		exi_deselect();
-	}
-	else {
-		exi_clear_interrupts(0, 1, 0);
-		exi_dma_read(ptr, SECTOR_SIZE, 0);
-
-		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_TC + (3 * exi_channel);
-		TCIntrruptHandler = OSSetInterruptHandler(interrupt, tc_interrupt_handler);
-		OSUnmaskInterrupts(OS_INTERRUPTMASK(interrupt));
-	}
+	exi_dma_read(ptr, SECTOR_SIZE, 1);
+	exi_deselect();
 	#else
 	exi_deselect();
-	if(sync) {
-		for(i = 0; i < dwords; i++) {
-			exi_select();
-			*ptr++ = exi_imm_read(4, 1);
-			exi_deselect();
-		}
+	for(i = 0; i < dwords; i++) {
 		exi_select();
-		exi_imm_read(4, 1);
+		*ptr++ = exi_imm_read(4, 1);
 		exi_deselect();
 	}
-	else {
-		#if ISR_READ
-		exi_select();
-		exi_clear_interrupts(0, 1, 0);
-		exi_imm_read(4, 0);
-
-		isr_registers = OSUncachedToPhysical(exi_regs);
-		isr_transferred = 0;
-
-		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_TC + (3 * exi_channel);
-		TCIntrruptHandler = OSSetInterruptHandler(interrupt, tc_interrupt_handler);
-		OSUnmaskInterrupts(OS_INTERRUPTMASK(interrupt));
-		#endif
-	}
+	exi_select();
+	exi_imm_read(4, 1);
+	exi_deselect();
 	#endif
 	return 1;
+}
+
+static void ataReadBufferAsync(void *buffer)
+{
+	#if ISR_READ
+	exi_select();
+	exi_clear_interrupts(0, 1, 0);
+	exi_imm_read_write(0x17000000, 3, 0);
+
+	isr_registers = OSUncachedToPhysical(exi_regs);
+	isr_transferred = -1;
+
+	OSInterrupt interrupt = OS_INTERRUPT_EXI_0_TC + (3 * exi_channel);
+	TCIntrruptHandler = OSSetInterruptHandler(interrupt, tc_interrupt_handler);
+	OSUnmaskInterrupts(OS_INTERRUPTMASK(interrupt));
+	#endif
 }
 
 // Writes sectors to the specified lba
@@ -355,15 +358,11 @@ static void ata_read_queued(void)
 		ataReadSectors(sector, count);
 	}
 
-	if (ataReadBuffer(sectorBuf, 0)) {
-		ata.last_sector = sector;
-		ata.next_sector = sector + 1;
-		ata.count--;
-	} else {
-		ata.count = 0;
-		ata.queue[0].length = 0;
-		ata_done_queued();
-	}
+	ataReadBufferAsync(sectorBuf);
+
+	ata.last_sector = sector;
+	ata.next_sector = sector + 1;
+	ata.count--;
 }
 
 static void ata_done_queued(void)
@@ -462,7 +461,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 	}
 	if(numBytes < SECTOR_SIZE || DMA_READ) {
 		// Read half sector
-		if(!ataReadBuffer(sectorBuf, 1)) {
+		if(!ataReadBuffer(sectorBuf)) {
 			ata.count = 0;
 			return 0;
 		}
@@ -472,7 +471,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
 	}
 	else {
 		// Read full sector
-		if(!ataReadBuffer(buf, 1)) {
+		if(!ataReadBuffer(buf)) {
 			ata.count = 0;
 			return 0;
 		}

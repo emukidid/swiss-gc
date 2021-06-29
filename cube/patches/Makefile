@@ -164,14 +164,15 @@ ideexi-v1.dtk.bin:
 ideexi-v2.bin:
 	@echo Building IDE-EXI-v2 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DISR
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=0
+	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=1
+	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S -DDMA
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o ideexi-v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o blockdevice.o ata.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o ideexi-v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o blockdevice.o ata.o ata_isr.o frag.o usbgecko.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.elf > $(DISASM)/ideexi-v2.txt
 	@$(OBJCOPY) -O binary ideexi-v2.elf ideexi-v2.bin
@@ -181,15 +182,16 @@ ideexi-v2.bin:
 ideexi-v2.card.bin:
 	@echo Building IDE-EXI-v2 Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=0 -DQUEUE_SIZE=4
+	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=1 -DQUEUE_SIZE=4
+	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S -DDMA
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o ideexi-v2.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o blockdevice.o ata.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o ideexi-v2.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o igr.o blockdevice.o ata.o ata_isr.o frag.o usbgecko.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.card.elf > $(DISASM)/ideexi-v2.card.txt
 	@$(OBJCOPY) -O binary ideexi-v2.card.elf ideexi-v2.card.bin
@@ -199,16 +201,17 @@ ideexi-v2.card.bin:
 ideexi-v2.dtk.bin:
 	@echo Building IDE-EXI-v2 Patch + DTK ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK -DISR
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDTK
-	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=0 -DQUEUE_SIZE=3
+	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=1 -DQUEUE_SIZE=3
+	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S -DDMA
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o ideexi-v2.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o blockdevice.o ata.o audio.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -o ideexi-v2.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o fifo.o igr.o blockdevice.o ata.o ata_isr.o audio.o frag.o usbgecko.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.dtk.elf > $(DISASM)/ideexi-v2.dtk.txt
 	@$(OBJCOPY) -O binary ideexi-v2.dtk.elf ideexi-v2.dtk.bin

@@ -41,14 +41,20 @@ external_interrupt_vector:
 	and.	r6, r5, r6
 	lwz		r6, isr_transferred - 0x80000000 (r0)
 	cmpwi	cr7, r6, 512
-	beq		1f
-	bnl		cr7, 1f
+	cmpwi	cr6, r6, 0
+	beq		7f
+	bnl		cr7, 7f
+#ifdef DMA
+	bnl		cr6, 6f
+#endif
 	li		r5, 4*4
 	eciwx	r5, r5, r4
+#ifndef DMA
+	blt		cr6, 2f
 	stw		r5, VAR_SECTOR_BUF (r6)
 	addi	r6, r6, 4
 	stw		r6, isr_transferred - 0x80000000 (r0)
-	eciwx	r5, r0, r4
+1:	eciwx	r5, r0, r4
 	andi.	r6, r5, 0x405
 	ecowx	r6, r0, r4
 	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
@@ -56,18 +62,70 @@ external_interrupt_vector:
 	li		r5, 3*4
 	li		r6, ((4 - 1) << 4) | 0b01
 	ecowx	r6, r5, r4
-	lis		r4, 0x0C00
+	b		5f
+#endif
+2:	andi.	r6, r5, 0x0800
+	bne		3f
+	eciwx	r5, r0, r4
+	andi.	r6, r5, 0x405
+	ecowx	r6, r0, r4
+	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
+	ecowx	r5, r0, r4
+	li		r5, 4*4
+	lis		r6, 0x1700
+	ecowx	r6, r5, r4
+	li		r5, 3*4
+	li		r6, ((3 - 1) << 4) | 0b01
+	ecowx	r6, r5, r4
+	b		5f
+3:	eciwx	r5, r0, r4
+	andi.	r6, r5, 0x405
+	ecowx	r6, r0, r4
+	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
+	ecowx	r5, r0, r4
+	li		r5, 4*4
+	lis		r6, 0x7000 | 128
+	ecowx	r6, r5, r4
+	li		r5, 3*4
+	li		r6, ((4 - 1) << 4) | 0b01
+	ecowx	r6, r5, r4
+4:	eciwx	r6, r5, r4
+	andi.	r6, r6, 0b01
+	bne		4b
+	li		r6, 0
+	stw		r6, isr_transferred - 0x80000000 (r0)
+#ifndef DMA
+	b		1b
+#else
+	eciwx	r5, r0, r4
+	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
+	ecowx	r5, r0, r4
+	li		r5, 1*4
+	li		r6, VAR_SECTOR_BUF
+	ecowx	r6, r5, r4
+	li		r5, 2*4
+	li		r6, 512
+	ecowx	r6, r5, r4
+	li		r5, 3*4
+	li		r6, 0b11
+	ecowx	r6, r5, r4
+#endif
+5:	lis		r4, 0x0C00
 	li		r5, 0x3000
 	eciwx	r5, r5, r4
 	rlwinm.	r6, r5, 0, 16, 14
-	bne		1f
+	bne		7f
 	mfsprg	r6, 3
 	mtcr	r6
 	mfsprg	r6, 2
 	mfsprg	r5, 1
 	mfsprg	r4, 0
 	rfi
-1:	mfsprg	r6, 3
+#ifdef DMA
+6:	li		r6, 512
+	stw		r6, isr_transferred - 0x80000000 (r0)
+#endif
+7:	mfsprg	r6, 3
 	mtcr	r6
 	mfsprg	r6, 2
 	mfsprg	r5, 1
