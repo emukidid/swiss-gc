@@ -9,6 +9,7 @@
 #define RECENT_ERR_DEV_MISSING 2
 
 int endsWith(char *str, char *end);
+bool canLoadFileType(char *filename);
 bool checkExtension(char *filename);
 char *getRelativeName(char *str);
 char *stripInvalidChars(char *str);

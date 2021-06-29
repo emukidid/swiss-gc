@@ -73,7 +73,7 @@ extern void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *conta
 extern void select_speed();
 extern int select_slot();
 extern void select_device(int type);
-extern void select_dest_dir(file_handle* directory, file_handle* selection);
+extern bool select_dest_dir(file_handle* directory, file_handle* selection);
 
 typedef struct {
 	int debugUSB; // Debug prints over USBGecko

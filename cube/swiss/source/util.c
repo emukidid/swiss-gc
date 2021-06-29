@@ -19,9 +19,7 @@ int endsWith(char *str, char *end) {
 	return !strcasecmp(str + len_str - len_end, end);
 }
 
-bool checkExtension(char *filename) {
-	if(!swissSettings.hideUnknownFileTypes)
-		return true;
+bool canLoadFileType(char *filename) {
 	int i;
 	for(i = 0; i < sizeof(knownExtensions)/sizeof(char*); i++) {
 		if(endsWith(filename, knownExtensions[i])) {
@@ -29,6 +27,12 @@ bool checkExtension(char *filename) {
 		}
 	}
 	return false;
+}
+
+bool checkExtension(char *filename) {
+	if(!swissSettings.hideUnknownFileTypes)
+		return true;
+	return canLoadFileType(filename);
 }
 
 char *getRelativeName(char *str) {

@@ -390,6 +390,26 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 	}
 }
 
+// Modify curFile to go up a directory.
+void upToParent() 
+{
+	int len = strlen(&curFile.name[0]);
+	
+	// Go up a folder
+	while(len && curFile.name[len-1]!='/')
+		len--;
+	if(len != strlen(&curFile.name[0]))
+		curFile.name[len-1] = '\0';
+
+	// If we're a file, go up to the parent of the file
+	if(curFile.fileAttrib == IS_FILE) {
+		while(len && curFile.name[len-1]!='/')
+			len--;
+	}
+	if(len != strlen(&curFile.name[0]))
+		curFile.name[len-1] = '\0';
+}
+
 uiDrawObj_t* loadingBox = NULL;
 uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t* filePanel)
 {
@@ -411,7 +431,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		DrawPublish(filePanel);
 		DrawDispose(loadingBox);
 		
-		u32 waitButtons = PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R;
+		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R;
 		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & waitButtons))
 			{ VIDEO_WaitVSync (); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) >= 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
@@ -433,28 +453,14 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			}
 		}
 		
-		if((PAD_ButtonsHeld(0) & PAD_BUTTON_A)) {
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_A) {
 			//go into a folder or select a file
 			if((*directory)[curSelection].fileAttrib==IS_DIR) {
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
 				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL) {
-				int len = strlen(&curFile.name[0]);
-				
-				// Go up a folder
-				while(len && curFile.name[len-1]!='/')
-      				len--;
-				if(len != strlen(&curFile.name[0]))
-					curFile.name[len-1] = '\0';
-
-				// If we're a file, go up to the parent of the file
-				if(curFile.fileAttrib == IS_FILE) {
-					while(len && curFile.name[len-1]!='/')
-						len--;
-				}
-				if(len != strlen(&curFile.name[0]))
-					curFile.name[len-1] = '\0';
+				upToParent();
 				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_FILE) {
@@ -464,6 +470,12 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 				// If we return from doing something with a file, refresh the device in the same dir we were at
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 			}
+			return filePanel;
+		}
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
+			upToParent();
+			needsRefresh=1;
+			while((PAD_ButtonsHeld(0) & PAD_BUTTON_X));
 			return filePanel;
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_START) {
@@ -628,7 +640,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		DrawPublish(filePanel);
 		DrawDispose(loadingBox);
 		
-		u32 waitButtons = PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R;
+		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R;
 		while ((PAD_StickX(0) > -16 && PAD_StickX(0) < 16) && !(PAD_ButtonsHeld(0) & waitButtons))
 			{ VIDEO_WaitVSync (); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) || PAD_StickX(0) <= -16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
@@ -657,21 +669,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL){
-				int len = strlen(&curFile.name[0]);
-				
-				// Go up a folder
-				while(len && curFile.name[len-1]!='/')
-      				len--;
-				if(len != strlen(&curFile.name[0]))
-					curFile.name[len-1] = '\0';
-
-				// If we're a file, go up to the parent of the file
-				if(curFile.fileAttrib == IS_FILE) {
-					while(len && curFile.name[len-1]!='/')
-						len--;
-				}
-				if(len != strlen(&curFile.name[0]))
-					curFile.name[len-1] = '\0';
+				upToParent();
 				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_FILE){
@@ -681,6 +679,12 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 				// If we return from doing something with a file, refresh the device in the same dir we were at
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 			}
+			return filePanel;
+		}
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
+			upToParent();
+			needsRefresh=1;
+			while((PAD_ButtonsHeld(0) & PAD_BUTTON_X));
 			return filePanel;
 		}
 		
@@ -702,13 +706,14 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 	return filePanel;
 }
 
-void select_dest_dir(file_handle* directory, file_handle* selection)
+bool select_dest_dir(file_handle* directory, file_handle* selection)
 {
 	file_handle *directories = NULL;
 	file_handle curDir;
 	memcpy(&curDir, directory, sizeof(file_entry));
 	int i = 0, j = 0, max = 0, refresh = 1, num_files =0, idx = 0;
 	
+	bool cancelled = false;
 	int fileListBase = 90;
 	int scrollBarHeight = (FILES_PER_PAGE*40);
 	int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
@@ -735,7 +740,7 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 		}
 		destDirBox = tempBox;
 		DrawPublish(destDirBox);
-		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN))
+		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & (PAD_BUTTON_X|PAD_BUTTON_A|PAD_BUTTON_B|PAD_BUTTON_UP|PAD_BUTTON_DOWN)))
 			{ VIDEO_WaitVSync (); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) > 16){	idx = (--idx < 0) ? num_files-1 : idx;}
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) || PAD_StickY(0) < -16) {idx = (idx + 1) % num_files;	}
@@ -760,15 +765,20 @@ void select_dest_dir(file_handle* directory, file_handle* selection)
 		if(PAD_StickY(0) < -16 || PAD_StickY(0) > 16) {
 			usleep(50000 - abs(PAD_StickY(0)*256));
 		}
-		if((PAD_ButtonsHeld(0) & PAD_BUTTON_X))	{
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X)	{
 			memcpy(selection, &curDir, sizeof(file_handle));
 			break;
 		}
-		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)))
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B)	{
+			cancelled = true;
+			break;
+		}
+		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_X) && !(PAD_ButtonsHeld(0) & (PAD_BUTTON_X|PAD_BUTTON_A|PAD_BUTTON_B|PAD_BUTTON_UP|PAD_BUTTON_DOWN))))
 			{ VIDEO_WaitVSync (); }
 	}
 	DrawDispose(destDirBox);
 	free(directories);
+	return cancelled;
 }
 
 // Alt DOL sorting/selecting code
@@ -1240,12 +1250,11 @@ bool manage_file() {
 		DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 160, "Manage File:", 1.0f, true, defaultColor));
 		float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
 		DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor));
-		if(devices[DEVICE_CUR]->features & FEAT_WRITE) {
-			DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 230, "(A) Load (X) Copy (Y) Move (Z) Delete", 1.0f, true, defaultColor));
-		}
-		else {
-			DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 230, "(A) Load (X) Copy", 1.0f, true, defaultColor));
-		}
+		bool knownFile = canLoadFileType(&curFile.name);
+		sprintf(txtbuffer, "%s (X) Copy %s", 
+						knownFile ? "(A) Load" : "", 
+						devices[DEVICE_CUR]->features & FEAT_WRITE ? "(Y) Move (Z) Delete" : "");
+		DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 230, txtbuffer, 1.0f, true, defaultColor));
 		DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 300, "Press an option to continue, or B to return", 1.0f, true, defaultColor));
 		DrawPublish(manageFileBox);
 		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
@@ -1328,7 +1337,11 @@ bool manage_file() {
 			memset(destFile, 0, sizeof(file_handle));
 			
 			// Show a directory only browser and get the destination file location
-			select_dest_dir(devices[DEVICE_DEST]->initial, destFile);
+			ret = select_dest_dir(devices[DEVICE_DEST]->initial, destFile);
+			if(!ret) {
+				devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );
+				return false;
+			}
 			
 			u32 isDestCard = devices[DEVICE_DEST] == &__device_card_a || devices[DEVICE_DEST] == &__device_card_b;
 			u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
@@ -1578,11 +1591,12 @@ bool manage_file() {
 						msgBox = DrawMessageBox(D_INFO,"Move Complete!");
 					}
 					else {
-						msgBox = DrawMessageBox(D_INFO,"Copy Complete! Press A to continue");
+						msgBox = DrawMessageBox(D_INFO,"Copy Complete.\nPress A to continue");
 					}
 				} 
 				else {
-					msgBox = DrawMessageBox(D_INFO,"Operation Cancelled! Press A to continue");
+					sprintf(txtbuffer, "%s cancelled.\nPress A to continue", (option == MOVE_OPTION) ? "Move" : "Copy");
+					msgBox = DrawMessageBox(D_INFO,txtbuffer);
 				}
 				DrawPublish(msgBox);
 				wait_press_A();
