@@ -155,6 +155,7 @@ static const struct {
 	{ "E27J01\x00\x00", true,  0x0B3CDF9B, 1419474944 },
 	{ "E32J01\x00\x00", true,  0xE3D27B56, 1345034240 },
 	{ "E34J01\x00\x00", false, 0x0F9852A4, 1353920512 },
+	{ "E36J01\x00\x00", true,  0x78927D2F, 1281083392 },
 	{ "E37J01\x00\x00", true,  0x241FE2D0, 1201917952 },
 	{ "G2BE5G\x00\x00", false, 0x73C2BBB8,  978098176 },
 	{ "G2BP7D\x00\x00", false, 0xD28DEDBC, 1253945344 },
