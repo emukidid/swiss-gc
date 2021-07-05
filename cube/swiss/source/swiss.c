@@ -1276,7 +1276,7 @@ bool manage_file() {
 				while(PAD_ButtonsHeld(0) & PAD_TRIGGER_Z){ VIDEO_WaitVSync (); }
 				break;
 			}
-			if(buttons & PAD_BUTTON_A) {
+			if(knownFile && (buttons & PAD_BUTTON_A)) {
 				DrawDispose(manageFileBox);
 				load_file();
 				return false;
