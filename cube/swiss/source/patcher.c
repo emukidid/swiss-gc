@@ -135,6 +135,7 @@ int install_code(int final)
 	else if(devices[DEVICE_CUR] == &__device_ata_a || devices[DEVICE_CUR] == &__device_ata_b || devices[DEVICE_CUR] == &__device_ata_c) {
 		switch (devices[DEVICE_CUR]->emulated()) {
 			case EMU_READ:
+			case EMU_READ | EMU_READ_SPEED:
 				patch     = !_ideexi_version ? ideexi_v1_bin      : ideexi_v2_bin;
 				patchSize = !_ideexi_version ? ideexi_v1_bin_size : ideexi_v2_bin_size;
 				break;

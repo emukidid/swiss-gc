@@ -107,7 +107,8 @@ sd.dtk.bin:
 ideexi-v1.bin:
 	@echo Building IDE-EXI-v1 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DDVD_MATH -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=0 -DISR_READ=1
@@ -115,7 +116,10 @@ ideexi-v1.bin:
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o ideexi-v1.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o blockdevice.o ata.o ata_isr.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -c base/DVDMath.c
+	@$(CC) -Os $(OPTS) -c base/floor.S
+	@$(CC) -Os $(OPTS) -c base/sqrt.S
+	@$(CC) -Os $(OPTS) -o ideexi-v1.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o igr.o blockdevice.o ata.o ata_isr.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v1.elf > $(DISASM)/ideexi-v1.txt
 	@$(OBJCOPY) -O binary ideexi-v1.elf ideexi-v1.bin
@@ -164,7 +168,8 @@ ideexi-v1.dtk.bin:
 ideexi-v2.bin:
 	@echo Building IDE-EXI-v2 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DDVD_MATH -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=1
@@ -172,7 +177,10 @@ ideexi-v2.bin:
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/usbgecko.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o ideexi-v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o igr.o blockdevice.o ata.o ata_isr.o frag.o usbgecko.o os.o
+	@$(CC) -Os $(OPTS) -c base/DVDMath.c
+	@$(CC) -Os $(OPTS) -c base/floor.S
+	@$(CC) -Os $(OPTS) -c base/sqrt.S
+	@$(CC) -Os $(OPTS) -o ideexi-v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o igr.o blockdevice.o ata.o ata_isr.o frag.o usbgecko.o os.o DVDMath.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.elf > $(DISASM)/ideexi-v2.txt
 	@$(OBJCOPY) -O binary ideexi-v2.elf ideexi-v2.bin

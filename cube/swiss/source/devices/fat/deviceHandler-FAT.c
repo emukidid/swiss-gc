@@ -713,7 +713,7 @@ DEVICEHANDLER_INTERFACE __device_ata_c = {
 	"M.2 SATA SSD - Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_HDD, 104, 76},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
-	EMU_READ|EMU_AUDIO_STREAMING|EMU_MEMCARD,
+	EMU_READ|EMU_READ_SPEED|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	LOC_SERIAL_PORT_1,
 	&initial_ATA_C,
 	(_fn_test)&deviceHandler_FAT_test_ata_c,
@@ -727,5 +727,5 @@ DEVICEHANDLER_INTERFACE __device_ata_c = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
-	(_fn_emulated)&deviceHandler_FAT_emulated_ata,
+	(_fn_emulated)&deviceHandler_FAT_emulated_sd,
 };
