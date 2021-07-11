@@ -32,7 +32,7 @@ GECKOSERVER   = pc/usbgecko
 .NOTPARALLEL:
 
 # Ready to go .7z file with every type of DOL we can think of
-all: clean compile-patches compile build recovery-iso build-AR build-geckoserver package
+all: clean compile-patches compile build recovery-iso build-gci build-AR build-geckoserver package
 
 # For dev use only, avoid the unnecessary fluff
 dev: clean compile-patches compile
@@ -73,8 +73,6 @@ build:
 	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol -m
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/AUTOEXEC.DOL
-	# make GCI for memory cards
-	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/GCI/boot.gci boot.dol
 	# make ISOs and WKF firmware
 	# NTSC-J
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/DOL/$(SVN_REVISION).dol
@@ -129,6 +127,12 @@ build-AR: # make ActionReplay
 	@$(LD) -o $(AR_SOURCES)/sdloader.elf $(AR_SOURCES)/startup.o $(AR_SOURCES)/main.o $(AR_SOURCES)/autoexec.o --section-start .text=0x81700000
 	@$(OBJCOPY) -O binary $(AR_SOURCES)/sdloader.elf $(DIST)/ActionReplay/SDLOADER.BIN
 	@rm -f $(AR_SOURCES)/*.o $(AR_SOURCES)/*.elf $(AR_SOURCES)/autoexec.s
+
+#------------------------------------------------------------------
+
+build-gci: # make GCI for memory cards
+	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/GCI/boot.gci boot.dol
+	@cp $(BUILDTOOLS)/dol2gci* $(DIST)/GCI/
 
 #------------------------------------------------------------------
 

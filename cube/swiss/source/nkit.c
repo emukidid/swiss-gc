@@ -1233,6 +1233,7 @@ static const struct {
 	{ "GNHE5d\x00\x00", false, 0xEB7F7BC6,     800768 },
 	{ "GNHE5d\x00\x00", false, 0xF09DCE69,     860160 },
 	{ "GNHE5d\x00\x00", false, 0xF61CF908,    3311616 },
+	{ "GNHE5d\x00\x00", false, 0xF788D099,    1245184 },
 	{ "GNHE5d\x00\x00", false, 0xF9450866,   12331008 },
 	{ "GNHE5d\x00\x00", false, 0xF9FEDBF8,    1181696 },
 	{ "GNHP5D\x00\x01", false, 0xF8F19D9C,  857634816 },
