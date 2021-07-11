@@ -64,25 +64,6 @@ int needsRefresh = 0;
 int current_view_start = 0;
 int current_view_end = 0;
 
-/* The default boot up MEM1 lowmem values (from ipl when booting a game) */
-static const u32 GC_DefaultConfig[56] =
-{
-	0x0D15EA5E, 0x00000001, 0x01800000, 0x00000003, //  0.. 3 80000020
-	0x00000000, 0x00000000, 0x00000000, 0x00000000, //  4.. 7 80000030
-	0x00000000, 0x00000000, 0x00000000, 0x00000000, //  8..11 80000040
-	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 12..15 80000050
-	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 16..19 80000060
-	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 20..23 80000070
-	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 24..27 80000080
-	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 28..31 80000090
-	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 32..35 800000A0
-	0x00000000, 0x00000000, 0x00000000, 0x00000000, // 36..39 800000B0
-	0x015D47F8, 0xF8248360, 0x00000000, 0x00000000, // 40..43 800000C0
-	0x01000000, 0x00000000, 0x00000000, 0x00000000, // 44..47 800000D0
-	0x00000000, 0x00000000, 0x00000000, 0x81800000, // 48..51 800000E0
-	0x01800000, 0x00000000, 0x09A7EC80, 0x1CF7C580  // 52..55 800000F0
-};
-
 char *DiscIDNoNTSC[] = {"DLSP64", "G3FD69", "G3FF69", "G3FP69", "G3FS69", "GFZP01", "GLRD64", "GLRF64", "GLRP64", "GM8P01", "GMSP01", "GSWD64", "GSWF64", "GSWI64", "GSWP64", "GSWS64"};
 
 /* re-init video for a given game */
@@ -863,6 +844,31 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	int sizeToRead, type;
 	void *buffer;
 	
+	// Clear OSLoMem
+	memset((void*)0x80000000,0,0x100);
+	memset((void*)0x80003000,0,0x100);
+	
+	// Read the game header to 0x80000000
+	devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
+	if(devices[DEVICE_CUR]->readFile(&curFile,gameID,0x20) != 0x20) {
+		DrawPublish(DrawMessageBox(D_FAIL, "Game Header Failed to read"));
+		while(1);
+	}
+	
+	// Get top of memory
+	u32 topAddr = getTopAddr();
+	print_gecko("Top of RAM simulated as: 0x%08X\r\n", topAddr);
+	
+	*(volatile u32*)0x80000028 = 0x01800000;
+	*(volatile u32*)0x8000002C = (swissSettings.debugUSB ? 0x10000004:0x00000001) + (*(volatile u32*)0xCC00302C >> 28);
+	*(volatile u32*)0x800000D0 = 0x01000000;
+	*(volatile u32*)0x800000E8 = 0x81800000 - topAddr;
+	*(volatile u32*)0x800000EC = topAddr;
+	asm volatile("mtdabr %0" :: "r" (0x800000E8 | 0b110));
+	*(volatile u32*)0x800000F0 = 0x01800000;
+	*(volatile u32*)0x800000F8 = TB_BUS_CLOCK;
+	*(volatile u32*)0x800000FC = TB_CORE_CLOCK;
+	
 	if(GCMDisk.DOLOffset == 0 || swissSettings.bs2Boot) {
 		progBox = DrawPublish(DrawProgressBar(true, 0, "Loading BS2"));
 		
@@ -891,15 +897,6 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		}
 	}
 	else {
-		memcpy((void*)0x80000020,GC_DefaultConfig,0xE0);
-		
-		// Read the game header to 0x80000000 & apploader header
-		devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,(unsigned char*)0x80000000,32) != 32) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Game Header Failed to read"));
-			while(1);
-		}
-		
 		// Prompt for DOL selection if multi-dol
 		ExecutableFile* altDol = NULL;
 		if(filesToPatch != NULL && numToPatch > 0) {
@@ -915,12 +912,6 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 			}
 		}
 
-		progBox = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
-		
-		// Get top of memory
-		u32 topAddr = getTopAddr();
-		print_gecko("Top of RAM simulated as: 0x%08X\r\n", topAddr);
-		
 		// Read FST to top of Main Memory (round to 32 byte boundary)
 		u32 fstAddr = (topAddr-GCMDisk.MaxFSTSize)&~31;
 		devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
@@ -942,17 +933,14 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		// Patch bi2.bin
 		Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
 
-		*(volatile u32*)0x8000002C = (*(volatile u32*)0xCC00302C >> 28) + (swissSettings.debugUSB ? 0x10000004:0x00000001);
-		*(volatile u32*)0x800000E8 = 0x81800000 - topAddr;
-		*(volatile u32*)0x800000EC = topAddr;
-		*(volatile u32*)0x800000F4 = bi2Addr;								// bi2.bin location
+		*(volatile u32*)0x80000020 = 0x0D15EA5E;
+		*(volatile u32*)0x80000024 = 1;
+		*(volatile u32*)0x80000034 = fstAddr;								// Arena Hi
 		*(volatile u32*)0x80000038 = fstAddr;								// FST Location in ram
 		*(volatile u32*)0x8000003C = GCMDisk.MaxFSTSize;					// FST Max Length
-		*(volatile u32*)0x80000034 = fstAddr;								// Arena Hi
-		u32* osctxblock = (u32*)memalign(32, 1024);
-		*(volatile u32*)0x800000C0 = (u32)osctxblock & 0x7FFFFFFF;
-		*(volatile u32*)0x800000D4 = (u32)osctxblock;
-		memset(osctxblock, 0, 1024);
+		*(volatile u32*)0x800000F4 = bi2Addr;								// bi2.bin location
+
+		progBox = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
 
 		if(altDol != NULL) {
 			print_gecko("DOL Lives at %08X\r\n", altDol->offset);

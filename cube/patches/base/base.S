@@ -24,13 +24,17 @@ dsi_exception_vector:
 	mtsprg	1, r5
 	mtsprg	2, r6
 	mfcr	r4
-	mfdar	r5
-	rlwinm	r6, r5, 16, 16, 31
-	rlwinm	r5, r5, 16, 16, 23
-	cmplwi	cr0, r5, 0x0800
-	cmplwi	cr1, r6, 0x0C00
-	beq		cr1, 1f
-	bne		cr0, 2f
+	mfdsisr	r5
+	mfdar	r6
+	rlwinm.	r5, r5, 0, 9, 9
+	rlwinm	r5, r6, 16, 16, 31
+	rlwinm	r6, r6, 16, 16, 23
+	cmplwi	cr7, r6, 0x0800
+	cmplwi	cr6, r5, 0x0C00
+	bne		1f
+	beq		cr7, 1f
+	beq		cr6, 1f
+	b		unhandled_exception
 1:	mtcr	r4
 	mfsrr0	r5
 	mfsrr1	r6
@@ -41,11 +45,6 @@ dsi_exception_vector:
 	addi	r4, r4, dsi_exception_handler@l
 	mtsrr0	r4
 	rfi
-2:	mtcr	r4
-	mfsprg	r6, 2
-	mfsprg	r5, 1
-	mfsprg	r4, 0
-	ba		0x00000304
 
 dsi_exception_handler:
 	mfcr	r4
@@ -94,6 +93,13 @@ _start:
 	b		idle_thread
 	b		check_pad
 	b		fini
+
+unhandled_exception:
+	mtcr	r4
+	mfsprg	r6, 2
+	mfsprg	r5, 1
+	mfsprg	r4, 0
+	ba		0x00000304
 
 	.globl switch_fiber
 switch_fiber:

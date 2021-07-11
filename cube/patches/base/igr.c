@@ -63,7 +63,7 @@ void fini(void)
 
 	switch (*VAR_IGR_TYPE) {
 		case IGR_BOOTBIN:
-			switch_fiber(FRAGS_IGR_DOL, 0, 0, 0, (intptr_t)load_dol, 0x81800000);
+			switch_fiber(FRAGS_IGR_DOL, 0, 0, 0, (intptr_t)load_dol, (intptr_t)OSDebugMonitor);
 			break;
 	}
 }

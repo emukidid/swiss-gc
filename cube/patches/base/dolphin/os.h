@@ -124,6 +124,9 @@ static OSContext *OSGetCurrentContext(void)
 
 void OSClearContext(OSContext *context);
 
+extern u32 OSDebugMonitorSize;
+extern void *OSDebugMonitor;
+
 typedef enum OSException {
 	OS_EXCEPTION_SYSTEM_RESET = 0,
 	OS_EXCEPTION_MACHINE_CHECK,

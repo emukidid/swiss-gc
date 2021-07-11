@@ -186,12 +186,8 @@ void ARAMRun(u32 entrypoint, u32 dst, u32 src, u32 len)
 	GX_AbortFrame();
 	ASND_End();
 	u32 bi2Addr = *(volatile u32*)0x800000F4;
-	u32 osctxphys = *(volatile u32*)0x800000C0;
-	u32 osctxvirt = *(volatile u32*)0x800000D4;
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
 	*(volatile u32*)0x800000F4 = bi2Addr;
-	*(volatile u32*)0x800000C0 = osctxphys;
-	*(volatile u32*)0x800000D4 = osctxvirt;
 	install_code(1);	// Must happen here because libOGC likes to write over all exception handlers.
 	/*** Shutdown all threads and exit to this method ***/
 	__lwp_thread_stopmultitasking(ARAMRunStub);

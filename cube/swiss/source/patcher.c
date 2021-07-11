@@ -9803,6 +9803,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (dataType == PATCH_BS2) {
 		switch (length) {
 			case 1435168:
+				// Don't clear OSLoMem.
+				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
+				
 				// __VIInit(newmode->viTVMode & ~0x3);
 				*(s16 *)(data + 0x81300712 - 0x81300000) = newmode->viTVMode & ~0x3;
 				
@@ -9842,6 +9846,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 			case 1448248:
+				// Don't clear OSLoMem.
+				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
+				
 				// __VIInit(newmode->viTVMode & ~0x3);
 				*(u32 *)(data + 0x81300710 - 0x81300000) = 0x60000000;
 				*(u32 *)(data + 0x81300714 - 0x81300000) = 0x38600000 | (newmode->viTVMode & 0xFFFC);
@@ -9882,6 +9890,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 			case 1583056:
+				// Don't clear OSLoMem.
+				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
+				
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300522 - 0x81300000) = newmode->viTVMode;
 				
@@ -9920,6 +9932,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 			case 1763016:
+				// Don't clear OSLoMem.
+				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
+				
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300522 - 0x81300000) = newmode->viTVMode;
 				
@@ -9937,6 +9953,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 			case 1760120:
+				// Don't clear OSLoMem.
+				*(u32 *)(data + 0x81300458 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x8130046C - 0x81300000) = 0x60000000;
+				
 				// __VIInit(newmode->viTVMode);
 				*(u32 *)(data + 0x81300764 - 0x81300000) = 0x60000000;
 				*(u32 *)(data + 0x81300768 - 0x81300000) = 0x38600000 | (newmode->viTVMode & 0xFFFF);
@@ -9955,6 +9975,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 			case 1561744:
+				// Don't clear OSLoMem.
+				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
+				
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300522 - 0x81300000) = newmode->viTVMode;
 				
@@ -9974,6 +9998,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 			case 1607544:
+				// Don't clear OSLoMem.
+				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
+				
 				// Force 24MB physical memory size.
 				*(s16 *)(data + 0x81300496 - 0x81300000) = 0x1800000 >> 16;
 				
@@ -10016,6 +10044,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 			case 1586320:
+				// Don't clear OSLoMem.
+				*(u32 *)(data + 0x81300474 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300488 - 0x81300000) = 0x60000000;
+				
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300876 - 0x81300000) = newmode->viTVMode;
 				
@@ -10054,6 +10086,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 			case 1587472:
+				// Don't clear OSLoMem.
+				*(u32 *)(data + 0x81300474 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300488 - 0x81300000) = 0x60000000;
+				
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300876 - 0x81300000) = newmode->viTVMode;
 				
@@ -10092,6 +10128,10 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 			case 1766736:
+				// Don't clear OSLoMem.
+				*(u32 *)(data + 0x81300474 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300488 - 0x81300000) = 0x60000000;
+				
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300612 - 0x81300000) = newmode->viTVMode;
 				
@@ -11106,12 +11146,6 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 	void *addr;
 	int patched = 0;
 	
-	if (!strcmp(fileName, "bi2.bin")) {
-		*(u32 *)data = 0x81800000 - getTopAddr();
-		
-		print_gecko("Patched:[%s]\n", fileName);
-		patched++;
-	}
 	if (!strncmp(gameID, "DPOJ8P", 6)) {
 		if (!strcmp(fileName, "bi2.bin")) {
 			*(u32 *)(data + 0x4) = 0x1800000;

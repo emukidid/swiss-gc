@@ -303,13 +303,11 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 	free(FST);
 	
 	// This need to be last so the debug monitor size can be determined.
-	if(GCMDisk.DOLOffset != 0) {
-		filesToPatch[numFiles].offset = 0x440;
-		filesToPatch[numFiles].size = 0x2000;
-		filesToPatch[numFiles].type = PATCH_OTHER;
-		sprintf(filesToPatch[numFiles].name, "bi2.bin");
-		numFiles++;
-	}
+	filesToPatch[numFiles].offset = 0x440;
+	filesToPatch[numFiles].size = 0x2000;
+	filesToPatch[numFiles].type = PATCH_OTHER;
+	sprintf(filesToPatch[numFiles].name, "bi2.bin");
+	numFiles++;
 	return numFiles;
 }
 

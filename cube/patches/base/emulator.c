@@ -945,6 +945,9 @@ static bool ppc_store32(uint32_t address, uint32_t value)
 		exi_write((address >> 2) & 0xF, value);
 		return true;
 	}
+	if ((address & ~0b111) == 0x800000E8) {
+		return true;
+	}
 	return false;
 }
 
