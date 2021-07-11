@@ -951,6 +951,14 @@ static bool ppc_store32(uint32_t address, uint32_t value)
 	return false;
 }
 
+static bool ppc_store8(uint32_t address, uint8_t value)
+{
+	if ((address & ~0b111) == 0x800000E8) {
+		return true;
+	}
+	return false;
+}
+
 #ifdef DTK
 static bool ppc_load16(uint32_t address, uint32_t *value)
 {
@@ -1009,6 +1017,13 @@ static bool ppc_step(ppc_context_t *context)
 			int ra = (opcode >> 16) & 0x1F;
 			short d = opcode & 0xFFFF;
 			return ppc_store32(context->gpr[ra] + d, context->gpr[rs]);
+		}
+		case 39:
+		{
+			int rs = (opcode >> 21) & 0x1F;
+			int ra = (opcode >> 16) & 0x1F;
+			short d = opcode & 0xFFFF;
+			return ppc_store8(context->gpr[ra] += d, context->gpr[rs]);
 		}
 		#ifdef DTK
 		case 40:
