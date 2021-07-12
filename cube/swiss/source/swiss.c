@@ -908,6 +908,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 					GCMDisk.FSTOffset = altDol->tgcFstOffset;
 					GCMDisk.FSTSize = altDol->tgcFstSize;
 					GCMDisk.MaxFSTSize = altDol->tgcFstSize;
+					*(vu32*)0x800030F4 = altDol->tgcBase;
 				}
 			}
 		}

@@ -13461,7 +13461,7 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 		else if(apploaderHeader->rebootSize) {
 			offset += apploaderHeader->size;
 
-			if(strncmp(apploaderHeader->date, "2004/02/01", 10) < 0) {
+			if(strncmp(apploaderHeader->date, "2004/02/01", 10) <= 0) {
 				if(offsetFoundAt >= offset && offsetFoundAt < offset + apploaderHeader->rebootSize)
 					return (void*)(offsetFoundAt+0x81300000-offset);
 			}
@@ -13540,7 +13540,7 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 		else if(apploaderHeader->rebootSize) {
 			offset += apploaderHeader->size;
 
-			if(strncmp(apploaderHeader->date, "2004/02/01", 10) < 0) {
+			if(strncmp(apploaderHeader->date, "2004/02/01", 10) <= 0) {
 				if(properAddress >= 0x81300000 && properAddress < 0x81300000 + apploaderHeader->rebootSize)
 					return data+properAddress-0x81300000+offset;
 			}
