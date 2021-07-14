@@ -1630,10 +1630,19 @@ void load_game() {
 	}
 	
 	if(is_redump_disc(&GCMDisk) && !valid_disc_size(&GCMDisk, curFile.size)) {
-		DrawDispose(msgBox);
-		msgBox = DrawPublish(DrawMessageBox(D_WARN, "Disc shrunk using an unsupported tool.\nPlease recover using NKit."));
-		sleep(5);
-		DrawDispose(msgBox);
+		if(GCMDisk.AudioStreaming) {
+			DrawDispose(msgBox);
+			msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump and is not playable.\nPlease attempt recovery using NKit."));
+			sleep(5);
+			DrawDispose(msgBox);
+			return;
+		}
+		else {
+			DrawDispose(msgBox);
+			msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump, but may be playable.\nPlease attempt recovery using NKit."));
+			sleep(5);
+			DrawDispose(msgBox);
+		}
 	}
 	
 	DrawDispose(msgBox);
