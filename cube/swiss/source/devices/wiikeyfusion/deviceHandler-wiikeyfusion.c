@@ -200,12 +200,12 @@ s32 deviceHandler_WKF_init(file_handle* file){
 		sprintf(txtbuffer, "Reading filesystem info for wkf:/");
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
 		
-		DWORD free_clusters, free_sectors, total_sectors = 0;
-		if(f_getfree("wkf:/", &free_clusters, &wkffs) == FR_OK) {
-			total_sectors = (wkffs->n_fatent - 2) * wkffs->csize;
-			free_sectors = free_clusters * wkffs->csize;
-			initial_WKF_info.freeSpaceInKB = (u32)((free_sectors)>>1);
-			initial_WKF_info.totalSpaceInKB = (u32)((total_sectors)>>1);
+		DWORD freeClusters;
+		if(f_getfree("wkf:/", &freeClusters, &wkffs) == FR_OK) {
+			LBA_t totalSectors = (LBA_t)(wkffs->n_fatent - 2) * wkffs->csize;
+			LBA_t freeSectors = (LBA_t)freeClusters * wkffs->csize;
+			initial_WKF_info.freeSpaceInKB = (u32)((u64)freeSectors * wkffs->ssize / 1024);
+			initial_WKF_info.totalSpaceInKB = (u32)((u64)totalSectors * wkffs->ssize / 1024);
 		}
 		DrawDispose(msgBox);
 	}

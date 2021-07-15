@@ -112,14 +112,15 @@ void populateDeviceInfo(file_handle* file) {
 		sprintf(txtbuffer, "Reading filesystem info for %s%c:/", isSDCard ? "sd":"ata", ('a'+slot));
 		print_gecko(txtbuffer);
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
-		sprintf(txtbuffer, "%s%c:/",isSDCard ? "sd":"ata", ('a'+slot));
-		DWORD free_clusters, free_sectors, total_sectors = 0;
-		FATFS *fsptr = fs[(isSDCard ? slot : SD_COUNT + slot)];
-		if(f_getfree(txtbuffer, &free_clusters, &fsptr) == FR_OK) {
-			total_sectors = (fsptr->n_fatent - 2) * fsptr->csize;
-			free_sectors = free_clusters * fsptr->csize;
-			info->freeSpaceInKB = (u32)((free_sectors)>>1);
-			info->totalSpaceInKB = (u32)((total_sectors)>>1);
+		
+		sprintf(txtbuffer, "%s%c:/", isSDCard ? "sd":"ata", ('a'+slot));
+		FATFS *fatfs = fs[(isSDCard ? slot : SD_COUNT + slot)];
+		DWORD freeClusters;
+		if(f_getfree(txtbuffer, &freeClusters, &fatfs) == FR_OK) {
+			LBA_t totalSectors = (LBA_t)(fatfs->n_fatent - 2) * fatfs->csize;
+			LBA_t freeSectors = (LBA_t)freeClusters * fatfs->csize;
+			info->freeSpaceInKB = (u32)((u64)freeSectors * fatfs->ssize / 1024);
+			info->totalSpaceInKB = (u32)((u64)totalSectors * fatfs->ssize / 1024);
 		}
 		else {
 			info->freeSpaceInKB = info->totalSpaceInKB = 0;
@@ -291,16 +292,16 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 	print_gecko("getFragments [%s] - found %i fragments [%i arr]\r\n",file->name, (clmt[0] >> 1)-1, clmt[0]);
 	
 	// WKF also uses this, make sure we use the right fs obj
-	FATFS* fatFS = NULL;
+	FATFS* fatfs = NULL;
 	if(file->name[0] == 'w') {
-		fatFS = wkffs;
+		fatfs = wkffs;
 	}
 	else if(file->name[0] == 'g') {
-		fatFS = gcloaderfs;
+		fatfs = gcloaderfs;
 	}
 	else {
 		int slot = GET_SLOT(file->name);
-		fatFS = fs[IS_SDCARD(file->name) ? slot : SD_COUNT+slot];
+		fatfs = fs[IS_SDCARD(file->name) ? slot : SD_COUNT+slot];
 	}
 	if(forceSize == 0) {
 		forceSize = file->size;
@@ -308,8 +309,8 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 	s32 numFrags = 0;
 	for(i = 1; i < (clmt[0]); i+=2) {
 		if(clmt[i] == 0) break;	// No more
-		FSIZE_t size = (clmt[i]) * fatFS->csize * fatFS->ssize;
-		LBA_t sector = clst2sect(fatFS, clmt[i+1]);
+		FSIZE_t size = (FSIZE_t)clmt[i] * fatfs->csize * fatfs->ssize;
+		LBA_t sector = clst2sect(fatfs, clmt[i+1]);
 		// this frag offset in the file is the last frag offset+size
 		size = forceSize < size ? forceSize : size;
 		fragTbl[numFrags*3] = forceBaseOffset;

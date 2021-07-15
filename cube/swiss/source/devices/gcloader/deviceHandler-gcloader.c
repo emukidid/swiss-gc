@@ -224,12 +224,12 @@ s32 deviceHandler_GCLOADER_init(file_handle* file){
 		sprintf(txtbuffer, "Reading filesystem info for gcldr:/");
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
 		
-		DWORD free_clusters, free_sectors, total_sectors = 0;
-		if(f_getfree("gcldr:/", &free_clusters, &gcloaderfs) == FR_OK) {
-			total_sectors = (gcloaderfs->n_fatent - 2) * gcloaderfs->csize;
-			free_sectors = free_clusters * gcloaderfs->csize;
-			initial_GCLOADER_info.freeSpaceInKB = (u32)((free_sectors)>>1);
-			initial_GCLOADER_info.totalSpaceInKB = (u32)((total_sectors)>>1);
+		DWORD freeClusters;
+		if(f_getfree("gcldr:/", &freeClusters, &gcloaderfs) == FR_OK) {
+			LBA_t totalSectors = (LBA_t)(gcloaderfs->n_fatent - 2) * gcloaderfs->csize;
+			LBA_t freeSectors = (LBA_t)freeClusters * gcloaderfs->csize;
+			initial_GCLOADER_info.freeSpaceInKB = (u32)((u64)freeSectors * gcloaderfs->ssize / 1024);
+			initial_GCLOADER_info.totalSpaceInKB = (u32)((u64)totalSectors * gcloaderfs->ssize / 1024);
 		}
 		DrawDispose(msgBox);
 	}
