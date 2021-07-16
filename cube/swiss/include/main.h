@@ -68,6 +68,7 @@ enum setupStream
 };
 
 #define DVD_MAGIC   0xC2339F3D
+#define TGC_MAGIC   0xAE0F38A2
 
 //Disc Types
 #define CobraStr    "Cobra MultiGame"

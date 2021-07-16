@@ -338,6 +338,8 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 	devices[DEVICE_CUR]->seekFile(file,tgc_base,DEVICE_HANDLER_SEEK_SET);
 	devices[DEVICE_CUR]->readFile(file,&tgcHeader,sizeof(TGCHeader));
 	
+	if(tgcHeader.magic != TGC_MAGIC) return -1;
+	
 	if(tgcHeader.apploaderOffset != 0) {
 		ApploaderHeader apploaderHeader;
 		devices[DEVICE_CUR]->seekFile(file,tgc_base+tgcHeader.apploaderOffset,DEVICE_HANDLER_SEEK_SET);

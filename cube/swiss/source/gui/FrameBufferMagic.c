@@ -1243,6 +1243,7 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 	if(file->fileAttrib == IS_FILE) {
 		if(endsWith(eventData->displayName,".gcm") 
 			|| endsWith(eventData->displayName,".iso")
+			|| endsWith(eventData->displayName,".tgc")
 			|| endsWith(eventData->displayName,".dol")
 			|| endsWith(eventData->displayName,".dol+cli")
 			|| endsWith(eventData->displayName,".elf")) {

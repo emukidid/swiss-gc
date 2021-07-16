@@ -74,6 +74,53 @@ void meta_create_direct_texture(file_meta* meta) {
 	GX_InitTexObjFilterMode(&meta->bannerTexObj, GX_LINEAR, GX_NEAR);
 }
 
+file_meta* create_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
+	file_meta* meta = (file_meta*)meta_alloc(sizeof(file_meta));
+	memset(meta, 0, sizeof(file_meta));
+	meta->bannerSize = BNR_PIXELDATA_LEN;
+	meta->banner = memalign(32,BNR_PIXELDATA_LEN);
+	if(!bannerOffset || bannerOffset > f->size) {
+		print_gecko("Banner not found or out of range\r\n");
+		memcpy(meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
+	}
+	else {
+		BNR *banner = memalign(32, bannerSize);
+		devices[DEVICE_CUR]->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(f, banner, bannerSize) != bannerSize) {
+			print_gecko("Banner read failed %i from offset %08X\r\n", bannerSize, bannerOffset);
+			memcpy(meta->banner, blankbanner+0x20, BNR_PIXELDATA_LEN);
+		}
+		else {
+			memcpy(meta->banner, &banner->pixelData, BNR_PIXELDATA_LEN);
+			if(!strncmp(banner->magic, "BNR2", 4)) {
+				memcpy(&meta->bnrDescription, &banner->desc[swissSettings.sramLanguage], sizeof(BNRDesc));
+			}
+			else {
+				memcpy(&meta->bnrDescription, &banner->desc[0], sizeof(BNRDesc));
+			}
+			if(strlen(meta->bnrDescription.description)) {
+				// Some banners only have empty spaces as padding until they hit a new line in the IPL
+				char *desc_ptr = meta->bnrDescription.description;
+				if((desc_ptr = strstr(desc_ptr, "  "))) {
+					desc_ptr[0] = '\r';
+					desc_ptr[1] = '\n';
+				}
+				// ...and some banners have no CR/LF and we'd like a sane wrap point
+				desc_ptr = meta->bnrDescription.description;
+				if(!strstr(desc_ptr, "\r") && !strstr(desc_ptr, "\n") && strlen(desc_ptr) > 50) {
+					desc_ptr+=(strlen(desc_ptr) / 2);
+					if((desc_ptr = strstr(desc_ptr, " "))) {
+						desc_ptr[0] = '\r';
+					}
+				}
+			}
+		}
+		free(banner);
+	}
+	meta_create_direct_texture(meta);
+	return meta;
+}
+
 void populate_meta(file_handle *f) {
 	// If the meta hasn't been created, lets read it.
 	
@@ -81,14 +128,15 @@ void populate_meta(file_handle *f) {
 		
 		// File detection (GCM, DOL, MP3 etc)
 		if(f->fileAttrib==IS_FILE) {
-			//print_gecko("Creating Meta for FILE %s\r\n", f->name);
-			
 			// If it's a GCM or ISO or DVD Disc
 			if(endsWith(f->name,".iso") || endsWith(f->name,".gcm")) {
-				
-				f->meta = (file_meta*)meta_alloc(sizeof(file_meta));
-				memset(f->meta, 0, sizeof(file_meta));
 				if(devices[DEVICE_CUR] == &__device_wode) {
+					f->meta = (file_meta*)meta_alloc(sizeof(file_meta));
+					memset(f->meta, 0, sizeof(file_meta));
+					f->meta->bannerSize = BNR_PIXELDATA_LEN;
+					f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
+					memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
+					meta_create_direct_texture(f->meta);
 					// Assign GCM region texture
 					ISOInfo_t* isoInfo = (ISOInfo_t*)&f->other;
 					char region = wodeRegionToChar(isoInfo->iso_region);
@@ -98,66 +146,16 @@ void populate_meta(file_handle *f) {
 						f->meta->regionTexId = TEX_NTSCU;
 					else if(region == 'P')
 						f->meta->regionTexId = TEX_PAL;
-					f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
-					memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
-					f->meta->bannerSize = BNR_PIXELDATA_LEN;
-					meta_create_direct_texture(f->meta);
 				}
 				else {
 					DiskHeader *header = memalign(32, sizeof(DiskHeader));
 					devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
 					devices[DEVICE_CUR]->readFile(f, header, sizeof(DiskHeader));
-					memcpy(&f->meta->diskId, header, sizeof(dvddiskid));
-					
-					if(header->DVDMagicWord == DVD_MAGIC) {					
-						//print_gecko("FILE identifed as valid GCM\r\n");
-						unsigned int bannerOffset = getBannerOffset(f);
-
-						f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
-						if(!bannerOffset || bannerOffset > f->size) {
-							print_gecko("Banner not found or out of range\r\n");
-							memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
-						}
-						else
-						{
-							BNR *banner = calloc(1, sizeof(BNR));
-							devices[DEVICE_CUR]->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
-							// Can't always assume BNR2 size when reading cause we might fall off the end of the file when a game has placed it as the last file on disc
-							int readSize = bannerOffset + sizeof(BNR) > f->size ? (f->size - bannerOffset) : sizeof(BNR);
-							if(devices[DEVICE_CUR]->readFile(f, banner, readSize) != readSize) {
-								memcpy(f->meta->banner, blankbanner+0x20, BNR_PIXELDATA_LEN);
-								print_gecko("Banner read failed %i from offset %08X\r\n", readSize, bannerOffset);
-							}
-							else {
-								memcpy(f->meta->banner, &banner->pixelData, BNR_PIXELDATA_LEN);						
-								if(!strncmp(banner->magic, "BNR2", 4)) {
-									memcpy(&f->meta->bnrDescription, &banner->desc[swissSettings.sramLanguage], sizeof(BNRDesc));
-								}
-								else {
-									memcpy(&f->meta->bnrDescription, &banner->desc[0], sizeof(BNRDesc));
-								}
-								if(strlen(f->meta->bnrDescription.description)) {
-									// Some banners only have empty spaces as padding until they hit a new line in the IPL
-									char *desc_ptr = f->meta->bnrDescription.description;
-									if((desc_ptr = strstr(desc_ptr, "  "))) {
-										desc_ptr[0] = '\r';
-										desc_ptr[1] = '\n';
-									}
-									// ...and some banners have no CR/LF and we'd like a sane wrap point
-									desc_ptr = f->meta->bnrDescription.description;
-									if(!strstr(desc_ptr, "\r") && !strstr(desc_ptr, "\n") && strlen(desc_ptr) > 50) {
-										desc_ptr+=(strlen(desc_ptr) / 2);
-										if((desc_ptr = strstr(desc_ptr, " "))) {
-											desc_ptr[0] = '\r';
-										}
-									}
-								}
-							}
-							free(banner);
-						}
-						f->meta->bannerSize = BNR_PIXELDATA_LEN;
-						meta_create_direct_texture(f->meta);
-						//print_gecko("Meta Gathering complete\r\n\r\n");
+					if(header->DVDMagicWord == DVD_MAGIC) {
+						u32 bannerOffset = getBannerOffset(f);
+						// Can't always assume BNR2 size when reading cause we might fall off the end of the file when a game has placed it as the last file on disc
+						u32 bannerSize = bannerOffset + sizeof(BNR) > f->size ? (f->size - bannerOffset) : sizeof(BNR);
+						f->meta = create_game_meta(f, bannerOffset, bannerSize);
 						// Assign GCM region texture
 						char region = wodeRegionToChar(header->RegionCode);
 						if(region == 'J')
@@ -166,10 +164,23 @@ void populate_meta(file_handle *f) {
 							f->meta->regionTexId = TEX_NTSCU;
 						else if(region == 'P')
 							f->meta->regionTexId = TEX_PAL;
-							
-						// TODO GCM file type fileTypeTexId
+						memcpy(&f->meta->diskId, header, sizeof(dvddiskid));
 					}
-					if(header) free(header);
+					else {
+						f->meta = create_basic_meta(&fileimgTexObj);
+					}
+					free(header);
+				}
+			}
+			else if(endsWith(f->name,".tgc")) {	//TGC
+				TGCHeader tgcHeader;
+				devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
+				devices[DEVICE_CUR]->readFile(f, &tgcHeader, sizeof(TGCHeader));
+				if(tgcHeader.magic == TGC_MAGIC) {
+					f->meta = create_game_meta(f, tgcHeader.bannerStart, tgcHeader.bannerLength);
+				}
+				else {
+					f->meta = create_basic_meta(&fileimgTexObj);
 				}
 			}
 			else if(endsWith(f->name,".mp3")) {	//MP3
@@ -194,7 +205,7 @@ void populate_meta(file_handle *f) {
 	}
 }
 
-file_handle* meta_find_disk2(file_handle* f) {
+file_handle* meta_find_disk2(file_handle *f) {
 	file_handle* dirEntries = getCurrentDirEntries();
 	if(f->meta) {
 		int i;
