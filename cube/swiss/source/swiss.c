@@ -885,12 +885,6 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		
 		// Read FST to top of Main Memory (round to 32 byte boundary)
 		u32 fstAddr = (topAddr-tgcFile.fstMaxLength)&~31;
-		devices[DEVICE_CUR]->seekFile(&curFile,tgcFile.fstStart,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,tgcFile.fstLength) != tgcFile.fstLength) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
-			while(1);
-		}
-		adjust_tgc_fst((void*)fstAddr, curFile.fileBase, tgcFile.userStart, tgcFile.gcmUserStart);
 		
 		// Read bi2.bin (Disk Header Information) to just under the FST
 		u32 bi2Addr = (fstAddr-0x2000)&~31;
@@ -901,6 +895,13 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		}
 		// Patch bi2.bin
 		Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
+		
+		devices[DEVICE_CUR]->seekFile(&curFile,tgcFile.fstStart,DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,tgcFile.fstLength) != tgcFile.fstLength) {
+			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
+			while(1);
+		}
+		adjust_tgc_fst((void*)fstAddr, curFile.fileBase, tgcFile.userStart, tgcFile.gcmUserStart);
 
 		*(volatile u32*)0x80000020 = 0x0D15EA5E;
 		*(volatile u32*)0x80000024 = 1;
@@ -982,14 +983,6 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		
 		// Read FST to top of Main Memory (round to 32 byte boundary)
 		u32 fstAddr = (topAddr-GCMDisk.MaxFSTSize)&~31;
-		devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,GCMDisk.FSTSize) != GCMDisk.FSTSize) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
-			while(1);
-		}
-		if(altDol != NULL && altDol->tgcBase != 0) {
-			adjust_tgc_fst((void*)fstAddr, altDol->tgcBase, altDol->tgcFileStartArea, altDol->tgcFakeOffset);
-		}
 		
 		// Read bi2.bin (Disk Header Information) to just under the FST
 		u32 bi2Addr = (fstAddr-0x2000)&~31;
@@ -1000,6 +993,15 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		}
 		// Patch bi2.bin
 		Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
+		
+		devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,GCMDisk.FSTSize) != GCMDisk.FSTSize) {
+			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
+			while(1);
+		}
+		if(altDol != NULL && altDol->tgcBase != 0) {
+			adjust_tgc_fst((void*)fstAddr, altDol->tgcBase, altDol->tgcFileStartArea, altDol->tgcFakeOffset);
+		}
 
 		*(volatile u32*)0x80000020 = 0x0D15EA5E;
 		*(volatile u32*)0x80000024 = 1;
