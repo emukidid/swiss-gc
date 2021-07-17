@@ -49,7 +49,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 
 static char *tooltips_advanced[PAGE_ADVANCED_MAX+1] = {
 	"Enable USB Gecko Debug via Slot B:\n\nIf a USB Gecko is present in slot B, debug output from\nSwiss & in game (if the game supported output over OSReport)\nwill be output. If nothing is reading the data out from the\ndevice it may cause Swiss/games to hang.",
-	"Hide Unknown file types:\n\nDisabled - Show all files (default)\nEnabled - Swiss will hide unknown file types from being displayed\n\nKnown file types are:\n GameCube Executables (.dol)\n Disc backups (.iso/.gcm)\n MP3 Music (.mp3)\n WASP/WKF Flash files (.fzn)\n GameCube Memory Card Files (.gci)\n GameCube Executables with parameters appended (.dol+cli)\n GameCube ELF files (.elf)",
+	"Hide Unknown file types:\n\nDisabled - Show all files (default)\nEnabled - Swiss will hide unknown file types from being displayed\n\nKnown file types are:\n GameCube Executables (.dol)\n Disc backups (.iso/.gcm/.tgc)\n MP3 Music (.mp3)\n WASP/WKF Flash files (.fzn)\n GameCube Memory Card Files (.gci)\n GameCube Executables with parameters appended (.dol+cli)\n GameCube ELF files (.elf)",
 	"Stop DVD Motor on startup\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the DVD drive from spinning when Swiss starts\n\nThis option is mostly for users booting from game\nexploits where the disc will already be spinning.",
 	"WiiRD debugging:\n\nDisabled - Boot as normal (default)\nEnabled - This will start a game with the WiiRD debugger enabled & paused\n\nThe WiiRD debugger takes up more memory and can cause issues.",
 	"File Management:\n\nDisabled - Known files will load immediately instead (default)\nEnabled - A file management prompt will be displayed for all files",
