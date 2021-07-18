@@ -94,14 +94,12 @@ void get_fst_details(char *FST, char *searchFileName, u32 *file_offset, u32 *fil
 }
 
 //Lets parse the entire game FST in search for the banner
-unsigned int getBannerOffset(file_handle *file) {
+void get_gcm_banner(file_handle *file, u32 *file_offset, u32 *file_size) {
 	char *FST = get_fst(file);
-	if(!FST) return 0;
+	if(!FST) return;
 	
-	u32 file_offset, file_size;
-	get_fst_details(FST, "opening.bnr", &file_offset, &file_size);
+	get_fst_details(FST, "opening.bnr", file_offset, file_size);
 	free(FST);
-	return file_offset;
 }
 
 // Add a file to our current filesToPatch based on fileName

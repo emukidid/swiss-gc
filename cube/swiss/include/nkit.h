@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2021, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -21,11 +21,13 @@
 #define __NKIT_H
 
 #include <stdbool.h>
-#include <stddef.h>
+#include <stdint.h>
+#include <sys/types.h>
 #include "gcm.h"
 
 bool is_redump_disc(DiskHeader *header);
-bool valid_disc_crc(DiskHeader *header, uint32_t crc);
-bool valid_disc_size(DiskHeader *header, size_t size);
+bool get_gcm_banner_fast(DiskHeader *header, uint32_t *offset, uint32_t *size);
+bool valid_gcm_crc32(DiskHeader *header, uint32_t crc);
+bool valid_gcm_size(DiskHeader *header, off_t size);
 
 #endif /* __NKIT_H */

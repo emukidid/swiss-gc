@@ -1711,7 +1711,7 @@ void load_game() {
 			return;
 		}
 		
-		if(is_redump_disc(&GCMDisk) && !valid_disc_size(&GCMDisk, curFile.size)) {
+		if(is_redump_disc(&GCMDisk) && !valid_gcm_size(&GCMDisk, curFile.size)) {
 			if(GCMDisk.AudioStreaming) {
 				DrawDispose(msgBox);
 				msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump and is not playable.\nPlease attempt recovery using NKit."));

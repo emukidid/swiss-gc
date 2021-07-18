@@ -17,6 +17,7 @@
 #include <ogc/lwp_heap.h>
 #include "dvd.h"
 #include "filemeta.h"
+#include "nkit.h"
 #include "swiss.h"
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
@@ -152,9 +153,9 @@ void populate_meta(file_handle *f) {
 					devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
 					devices[DEVICE_CUR]->readFile(f, header, sizeof(DiskHeader));
 					if(header->DVDMagicWord == DVD_MAGIC) {
-						u32 bannerOffset = getBannerOffset(f);
-						// Can't always assume BNR2 size when reading cause we might fall off the end of the file when a game has placed it as the last file on disc
-						u32 bannerSize = bannerOffset + sizeof(BNR) > f->size ? (f->size - bannerOffset) : sizeof(BNR);
+						u32 bannerOffset = 0, bannerSize = f->size;
+						if(!get_gcm_banner_fast(header, &bannerOffset, &bannerSize))
+							get_gcm_banner(f, &bannerOffset, &bannerSize);
 						f->meta = create_game_meta(f, bannerOffset, bannerSize);
 						// Assign GCM region texture
 						char region = wodeRegionToChar(header->RegionCode);
