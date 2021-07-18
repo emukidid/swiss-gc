@@ -46,11 +46,6 @@ void freeFiles() {
 		int i;
 		for(i = 0; i < curDirEntryCount; i++) {
 			if(curDirEntries[i].meta) {
-				if(curDirEntries[i].meta->banner) {
-					free(curDirEntries[i].meta->banner);
-					curDirEntries[i].meta->banner = NULL;
-				}
-				memset(curDirEntries[i].meta, 0, sizeof(file_meta));
 				meta_free(curDirEntries[i].meta);
 				curDirEntries[i].meta = NULL;
 			}

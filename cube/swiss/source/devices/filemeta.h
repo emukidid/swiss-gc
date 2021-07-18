@@ -13,6 +13,6 @@
 void meta_create_direct_texture(file_meta* meta);
 void populate_meta(file_handle *f);
 file_handle* meta_find_disk2(file_handle *f);
-void meta_free(void* ptr);
+void meta_free(file_meta* meta);
 #endif
 

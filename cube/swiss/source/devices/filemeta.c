@@ -30,22 +30,26 @@ extern char blankbanner[];
 
 static heap_cntrl* meta_cache = NULL;
 
-void meta_free(void* ptr) {
-	if(meta_cache && ptr) {
-		__lwp_heap_free(meta_cache, ptr);
+void meta_free(file_meta* meta) {
+	if(meta_cache && meta) {
+		if(meta->banner) {
+			free(meta->banner);
+			meta->banner = NULL;
+		}
+		__lwp_heap_free(meta_cache, meta);
 	}
 }
 
-void* meta_alloc(unsigned int size){
+file_meta* meta_alloc() {
 	if(!meta_cache){
 		meta_cache = memalign(32, sizeof(heap_cntrl));
 		__lwp_heap_init(meta_cache, memalign(32,META_CACHE_SIZE), META_CACHE_SIZE, 32);
 	}
 
-	void* ptr = __lwp_heap_allocate(meta_cache, size);
+	file_meta* meta = __lwp_heap_allocate(meta_cache, sizeof(file_meta));
 	// While there's no room to allocate, call release
 	file_handle* dirEntries = getCurrentDirEntries();
-	while(!ptr) {
+	while(!meta) {
 		int i = 0;
 		for (i = 0; i < getCurrentDirEntryCount(); i++) {
 			if(!(i >= current_view_start && i <= current_view_end)) {
@@ -56,15 +60,14 @@ void* meta_alloc(unsigned int size){
 				}
 			}
 		}
-		ptr = __lwp_heap_allocate(meta_cache, size);
+		meta = __lwp_heap_allocate(meta_cache, sizeof(file_meta));
 	}
-	
-	return ptr;
+	memset(meta, 0, sizeof(file_meta));
+	return meta;
 }
 
 file_meta* create_basic_meta(void* tplTexObj) {
-	file_meta* meta = (file_meta*)meta_alloc(sizeof(file_meta));
-	memset(meta, 0, sizeof(file_meta));
+	file_meta* meta = meta_alloc();
 	meta->tplLocation = tplTexObj;
 	return meta;
 }
@@ -76,8 +79,7 @@ void meta_create_direct_texture(file_meta* meta) {
 }
 
 file_meta* create_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
-	file_meta* meta = (file_meta*)meta_alloc(sizeof(file_meta));
-	memset(meta, 0, sizeof(file_meta));
+	file_meta* meta = meta_alloc();
 	meta->bannerSize = BNR_PIXELDATA_LEN;
 	meta->banner = memalign(32,BNR_PIXELDATA_LEN);
 	if(!bannerOffset || bannerOffset > f->size) {
@@ -132,8 +134,7 @@ void populate_meta(file_handle *f) {
 			// If it's a GCM or ISO or DVD Disc
 			if(endsWith(f->name,".iso") || endsWith(f->name,".gcm")) {
 				if(devices[DEVICE_CUR] == &__device_wode) {
-					f->meta = (file_meta*)meta_alloc(sizeof(file_meta));
-					memset(f->meta, 0, sizeof(file_meta));
+					f->meta = meta_alloc();
 					f->meta->bannerSize = BNR_PIXELDATA_LEN;
 					f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
 					memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
