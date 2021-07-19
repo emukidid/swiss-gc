@@ -1951,19 +1951,25 @@ static const struct {
 	{ "UGPP01\x00\x02", false, 0x1E26380C,    5079040, {    2317764, 8096 }},
 };
 
-bool is_redump_disc(DiskHeader *header)
+bool is_redump_disc(const DiskHeader *header)
 {
-	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++) {
-		if (!memcmp(header, nkit_dat[i].header, 8)) {
-			header->AudioStreaming = nkit_dat[i].streaming;
+	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+		if (!memcmp(header, nkit_dat[i].header, 8))
 			return true;
-		}
-	}
 
 	return false;
 }
 
-bool get_gcm_banner_fast(DiskHeader *header, uint32_t *offset, uint32_t *size)
+bool is_streaming_disc(const DiskHeader *header)
+{
+	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+		if (!memcmp(header, nkit_dat[i].header, 8))
+			return nkit_dat[i].streaming;
+
+	return header->AudioStreaming;
+}
+
+bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *size)
 {
 	*offset = 0;
 
@@ -1983,7 +1989,7 @@ bool get_gcm_banner_fast(DiskHeader *header, uint32_t *offset, uint32_t *size)
 	return false;
 }
 
-bool valid_gcm_crc32(DiskHeader *header, uint32_t crc)
+bool valid_gcm_crc32(const DiskHeader *header, uint32_t crc)
 {
 	if (!memcmp(&header->NKitMagicWord, "NKIT", 4))
 		return header->ImageCRC == crc;
@@ -1996,7 +2002,7 @@ bool valid_gcm_crc32(DiskHeader *header, uint32_t crc)
 	return false;
 }
 
-bool valid_gcm_size(DiskHeader *header, off_t size)
+bool valid_gcm_size(const DiskHeader *header, off_t size)
 {
 	if (memcmp(&header->NKitMagicWord, "NKIT", 4))
 		return size == DISC_SIZE;

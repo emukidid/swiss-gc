@@ -875,33 +875,25 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	*(volatile u32*)0x800000F8 = TB_BUS_CLOCK;
 	*(volatile u32*)0x800000FC = TB_CORE_CLOCK;
 	
+	// Copy the game header to 0x80000000
+	memcpy(gameID,(char*)&GCMDisk,0x20);
+	
 	if(tgcFile.magic == TGC_MAGIC) {
-		// Read the game header to 0x80000000
-		devices[DEVICE_CUR]->seekFile(&curFile,tgcFile.headerStart,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,gameID,0x20) != 0x20) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Game Header Failed to read"));
-			while(1);
-		}
-		
 		// Read FST to top of Main Memory (round to 32 byte boundary)
 		u32 fstAddr = (topAddr-tgcFile.fstMaxLength)&~31;
-		
-		// Read bi2.bin (Disk Header Information) to just under the FST
-		u32 bi2Addr = (fstAddr-0x2000)&~31;
-		devices[DEVICE_CUR]->seekFile(&curFile,tgcFile.headerStart+0x440,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)bi2Addr,0x2000) != 0x2000) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read bi2.bin"));
-			while(1);
-		}
-		// Patch bi2.bin
-		Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
-		
 		devices[DEVICE_CUR]->seekFile(&curFile,tgcFile.fstStart,DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,tgcFile.fstLength) != tgcFile.fstLength) {
 			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
 			while(1);
 		}
 		adjust_tgc_fst((void*)fstAddr, curFile.fileBase, tgcFile.userStart, tgcFile.gcmUserStart);
+		
+		// Copy bi2.bin (Disk Header Information) to just under the FST
+		u32 bi2Addr = (fstAddr-0x2000)&~31;
+		memcpy((void*)bi2Addr,(void*)&GCMDisk+0x440,0x2000);
+		
+		// Patch bi2.bin
+		Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
 
 		*(volatile u32*)0x80000020 = 0x0D15EA5E;
 		*(volatile u32*)0x80000024 = 1;
@@ -974,26 +966,8 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 			}
 		}
 
-		// Read the game header to 0x80000000
-		devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,gameID,0x20) != 0x20) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Game Header Failed to read"));
-			while(1);
-		}
-		
 		// Read FST to top of Main Memory (round to 32 byte boundary)
 		u32 fstAddr = (topAddr-GCMDisk.MaxFSTSize)&~31;
-		
-		// Read bi2.bin (Disk Header Information) to just under the FST
-		u32 bi2Addr = (fstAddr-0x2000)&~31;
-		devices[DEVICE_CUR]->seekFile(&curFile,0x440,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)bi2Addr,0x2000) != 0x2000) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read bi2.bin"));
-			while(1);
-		}
-		// Patch bi2.bin
-		Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
-		
 		devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,GCMDisk.FSTSize) != GCMDisk.FSTSize) {
 			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
@@ -1002,6 +976,13 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		if(altDol != NULL && altDol->tgcBase != 0) {
 			adjust_tgc_fst((void*)fstAddr, altDol->tgcBase, altDol->tgcFileStartArea, altDol->tgcFakeOffset);
 		}
+		
+		// Copy bi2.bin (Disk Header Information) to just under the FST
+		u32 bi2Addr = (fstAddr-0x2000)&~31;
+		memcpy((void*)bi2Addr,(void*)&GCMDisk+0x440,0x2000);
+		
+		// Patch bi2.bin
+		Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
 
 		*(volatile u32*)0x80000020 = 0x0D15EA5E;
 		*(volatile u32*)0x80000024 = 1;
@@ -1700,6 +1681,8 @@ void load_game() {
 			DrawDispose(msgBox);
 			return;
 		}
+		
+		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
 	}
 	else {
 		devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
@@ -1711,8 +1694,10 @@ void load_game() {
 			return;
 		}
 		
+		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
+		
 		if(is_redump_disc(&GCMDisk) && !valid_gcm_size(&GCMDisk, curFile.size)) {
-			if(GCMDisk.AudioStreaming) {
+			if(swissSettings.audioStreaming) {
 				DrawDispose(msgBox);
 				msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump and is not playable.\nPlease attempt recovery using NKit."));
 				sleep(5);
@@ -1935,7 +1920,7 @@ uiDrawObj_t* draw_game_info() {
 		}
 	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
-		sprintf(txtbuffer, "Game ID: [%.6s] Audio Streaming: [%s]", (char*)&GCMDisk, (GCMDisk.AudioStreaming ? "Yes":"No"));
+		sprintf(txtbuffer, "Game ID: [%.6s] Audio Streaming: [%s]", (char*)&GCMDisk, (swissSettings.audioStreaming ? "Yes":"No"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 200, txtbuffer, 0.8f, true, defaultColor));
 
 		if(GCMDisk.TotalDisc > 1) {

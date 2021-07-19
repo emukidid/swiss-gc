@@ -88,6 +88,7 @@ typedef struct {
 	int forceAnisotropy;
 	int forceWidescreen;
 	int fontEncode;
+	int audioStreaming;
 	int invertCStick;
 	int wiirdDebug;	// Enable WiiRD debug
 	int hideUnknownFileTypes;

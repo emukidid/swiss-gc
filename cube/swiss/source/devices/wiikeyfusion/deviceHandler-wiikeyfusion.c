@@ -238,7 +238,7 @@ bool deviceHandler_WKF_test() {
 }
 
 u32 deviceHandler_WKF_emulated() {
-	if (GCMDisk.AudioStreaming)
+	if (swissSettings.audioStreaming)
 		return EMU_READ|EMU_AUDIO_STREAMING;
 	else if (swissSettings.emulateMemoryCard)
 		return EMU_READ|EMU_MEMCARD;

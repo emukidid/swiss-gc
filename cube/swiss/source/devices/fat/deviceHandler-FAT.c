@@ -566,7 +566,7 @@ bool deviceHandler_FAT_test_ata_c() {
 }
 
 u32 deviceHandler_FAT_emulated_sd() {
-	if (GCMDisk.AudioStreaming)
+	if (swissSettings.audioStreaming)
 		return EMU_READ|EMU_AUDIO_STREAMING;
 	else if (swissSettings.emulateReadSpeed)
 		return EMU_READ|EMU_READ_SPEED;
@@ -577,7 +577,7 @@ u32 deviceHandler_FAT_emulated_sd() {
 }
 
 u32 deviceHandler_FAT_emulated_ata() {
-	if (GCMDisk.AudioStreaming)
+	if (swissSettings.audioStreaming)
 		return EMU_READ|EMU_AUDIO_STREAMING;
 	else if (swissSettings.emulateMemoryCard)
 		return EMU_READ|EMU_MEMCARD;
