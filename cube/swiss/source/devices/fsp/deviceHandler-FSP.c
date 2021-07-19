@@ -31,8 +31,8 @@ file_handle initial_FSP =
 	};
 
 device_info initial_FSP_info = {
-	0,
-	0
+	0LL,
+	0LL
 };
 
 device_info* deviceHandler_FSP_info(file_handle* file) {
@@ -76,8 +76,7 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			++i;
 		}
 	}
-	usedSpace >>= 10;
-	initial_FSP_info.totalSpaceInKB = (u32)(usedSpace);
+	initial_FSP_info.totalSpace = usedSpace;
 	fsp_closedir(dp);
 	return num_entries;
 }

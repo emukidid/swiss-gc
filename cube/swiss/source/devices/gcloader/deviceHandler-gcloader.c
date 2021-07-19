@@ -33,8 +33,8 @@ file_handle initial_GCLOADER =
 
 
 device_info initial_GCLOADER_info = {
-	0,
-	0
+	0LL,
+	0LL
 };
 	
 device_info* deviceHandler_GCLOADER_info() {
@@ -225,16 +225,15 @@ s32 deviceHandler_GCLOADER_init(file_handle* file){
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
 		
 		DWORD freeClusters;
-		if(f_getfree("gcldr:/", &freeClusters, &gcloaderfs) == FR_OK) {
-			LBA_t totalSectors = (LBA_t)(gcloaderfs->n_fatent - 2) * gcloaderfs->csize;
-			LBA_t freeSectors = (LBA_t)freeClusters * gcloaderfs->csize;
-			initial_GCLOADER_info.freeSpaceInKB = (u32)((u64)freeSectors * gcloaderfs->ssize / 1024);
-			initial_GCLOADER_info.totalSpaceInKB = (u32)((u64)totalSectors * gcloaderfs->ssize / 1024);
+		FATFS *fatfs;
+		if(f_getfree("gcldr:/", &freeClusters, &fatfs) == FR_OK) {
+			initial_GCLOADER_info.freeSpace = (u64)(freeClusters) * fatfs->csize * fatfs->ssize;
+			initial_GCLOADER_info.totalSpace = (u64)(fatfs->n_fatent - 2) * fatfs->csize * fatfs->ssize;
 		}
 		DrawDispose(msgBox);
 	}
 	else {
-		initial_GCLOADER_info.freeSpaceInKB = initial_GCLOADER_info.totalSpaceInKB = 0;	
+		initial_GCLOADER_info.freeSpace = initial_GCLOADER_info.totalSpace = 0LL;
 	}
 
 	return ret == FR_OK;
@@ -253,8 +252,8 @@ s32 deviceHandler_GCLOADER_closeFile(file_handle* file) {
 
 s32 deviceHandler_GCLOADER_deinit(file_handle* file) {
 	deviceHandler_GCLOADER_closeFile(file);
-	initial_GCLOADER_info.freeSpaceInKB = 0;
-	initial_GCLOADER_info.totalSpaceInKB = 0;
+	initial_GCLOADER_info.freeSpace = 0LL;
+	initial_GCLOADER_info.totalSpace = 0LL;
 	if(file) {
 		f_unmount(file->name);
 		free(gcloaderfs);

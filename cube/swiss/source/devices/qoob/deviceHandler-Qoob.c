@@ -28,8 +28,8 @@ file_handle initial_Qoob =
 	};
 	
 device_info initial_Qoob_info = {
-	0,
-	2048
+	0x200000,
+	0x200000
 };
 	
 device_info* deviceHandler_Qoob_info(file_handle* file) {
@@ -74,8 +74,7 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 			}
 		}	
 	}
-	usedSpace >>= 10;
-	initial_Qoob_info.freeSpaceInKB = initial_Qoob_info.totalSpaceInKB - usedSpace;
+	initial_Qoob_info.freeSpace = initial_Qoob_info.totalSpace - usedSpace;
 	DrawDispose(msgBox);
 	return num_entries;
 }

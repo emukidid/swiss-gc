@@ -34,8 +34,8 @@ file_handle initial_WKF =
 
 
 device_info initial_WKF_info = {
-	0,
-	0
+	0LL,
+	0LL
 };
 	
 device_info* deviceHandler_WKF_info(file_handle* file) {
@@ -201,16 +201,15 @@ s32 deviceHandler_WKF_init(file_handle* file){
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
 		
 		DWORD freeClusters;
-		if(f_getfree("wkf:/", &freeClusters, &wkffs) == FR_OK) {
-			LBA_t totalSectors = (LBA_t)(wkffs->n_fatent - 2) * wkffs->csize;
-			LBA_t freeSectors = (LBA_t)freeClusters * wkffs->csize;
-			initial_WKF_info.freeSpaceInKB = (u32)((u64)freeSectors * wkffs->ssize / 1024);
-			initial_WKF_info.totalSpaceInKB = (u32)((u64)totalSectors * wkffs->ssize / 1024);
+		FATFS *fatfs;
+		if(f_getfree("wkf:/", &freeClusters, &fatfs) == FR_OK) {
+			initial_WKF_info.freeSpace = (u64)(freeClusters) * fatfs->csize * fatfs->ssize;
+			initial_WKF_info.totalSpace = (u64)(fatfs->n_fatent - 2) * fatfs->csize * fatfs->ssize;
 		}
 		DrawDispose(msgBox);
 	}
 	else {
-		initial_WKF_info.freeSpaceInKB = initial_WKF_info.totalSpaceInKB = 0;	
+		initial_WKF_info.freeSpace = initial_WKF_info.totalSpace = 0LL;
 	}
 
 	return ret == FR_OK;

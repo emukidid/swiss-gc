@@ -260,43 +260,43 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 	// Total space
 	uiDrawObj_t *devTotalLabel = DrawStyledLabel(83, 233, "Total:", 0.6f, true, defaultColor);
 	DrawAddChild(containerPanel, devTotalLabel);
-	if(info->totalSpaceInKB < 1024)	// < 1 MB
-		sprintf(txtbuffer,"%uKB", info->totalSpaceInKB);
-	else if(info->totalSpaceInKB < 1024*1024)	// < 1 GB
-		sprintf(txtbuffer,"%.2fMB", (float)info->totalSpaceInKB/1024);
-	else if(info->totalSpaceInKB < 1024*1024*1024)	// < 1 TB
-		sprintf(txtbuffer,"%.2fGB", (float)info->totalSpaceInKB/(1024*1024));
+	if(info->totalSpace < 0x1p20)	// < 1 MB
+		sprintf(txtbuffer,"%.2fKB", info->totalSpace / 0x1p10);
+	else if(info->totalSpace < 0x1p30)	// < 1 GB
+		sprintf(txtbuffer,"%.2fMB", info->totalSpace / 0x1p20);
+	else if(info->totalSpace < 0x1p40)	// < 1 TB
+		sprintf(txtbuffer,"%.2fGB", info->totalSpace / 0x1p30);
 	else
-		sprintf(txtbuffer,"%.2fTB", (float)info->totalSpaceInKB/(1024*1024*1024));
+		sprintf(txtbuffer,"%.2fTB", info->totalSpace / 0x1p40);
 	uiDrawObj_t *devTotalSizeLabel = DrawStyledLabel(83, 248, txtbuffer, 0.6f, true, defaultColor);
 	DrawAddChild(containerPanel, devTotalSizeLabel);
 	
 	// Free space
 	uiDrawObj_t *devFreeLabel = DrawStyledLabel(83, 268, "Free:", 0.6f, true, defaultColor);
 	DrawAddChild(containerPanel, devFreeLabel);
-	if(info->freeSpaceInKB < 1024)	// < 1 MB
-		sprintf(txtbuffer,"%uKB", info->freeSpaceInKB);
-	else if(info->freeSpaceInKB < 1024*1024)	// < 1 GB
-		sprintf(txtbuffer,"%.2fMB", (float)info->freeSpaceInKB/1024);
-	else if(info->freeSpaceInKB < 1024*1024*1024)	// < 1 TB
-		sprintf(txtbuffer,"%.2fGB", (float)info->freeSpaceInKB/(1024*1024));
+	if(info->freeSpace < 0x1p20)	// < 1 MB
+		sprintf(txtbuffer,"%.2fKB", info->freeSpace / 0x1p10);
+	else if(info->freeSpace < 0x1p30)	// < 1 GB
+		sprintf(txtbuffer,"%.2fMB", info->freeSpace / 0x1p20);
+	else if(info->freeSpace < 0x1p40)	// < 1 TB
+		sprintf(txtbuffer,"%.2fGB", info->freeSpace / 0x1p30);
 	else
-		sprintf(txtbuffer,"%.2fTB", (float)info->freeSpaceInKB/(1024*1024*1024));
+		sprintf(txtbuffer,"%.2fTB", info->freeSpace / 0x1p40);
 	uiDrawObj_t *devFreeSizeLabel = DrawStyledLabel(83, 283, txtbuffer, 0.6f, true, defaultColor);
 	DrawAddChild(containerPanel, devFreeSizeLabel);
 	
 	// Used space
 	uiDrawObj_t *devUsedLabel = DrawStyledLabel(83, 303, "Used:", 0.6f, true, defaultColor);
 	DrawAddChild(containerPanel, devUsedLabel);
-	u32 usedSpaceInKB = (info->totalSpaceInKB)-(info->freeSpaceInKB);
-	if(usedSpaceInKB < 1024)	// < 1 MB
-		sprintf(txtbuffer,"%uKB", usedSpaceInKB);
-	else if(usedSpaceInKB < 1024*1024)	// < 1 GB
-		sprintf(txtbuffer,"%.2fMB", (float)usedSpaceInKB/1024);
-	else if(usedSpaceInKB < 1024*1024*1024)	// < 1 TB
-		sprintf(txtbuffer,"%.2fGB", (float)usedSpaceInKB/(1024*1024));
+	u64 usedSpace = info->totalSpace - info->freeSpace;
+	if(usedSpace < 0x1p20)	// < 1 MB
+		sprintf(txtbuffer,"%.2fKB", usedSpace / 0x1p10);
+	else if(usedSpace < 0x1p30)	// < 1 GB
+		sprintf(txtbuffer,"%.2fMB", usedSpace / 0x1p20);
+	else if(usedSpace < 0x1p40)	// < 1 TB
+		sprintf(txtbuffer,"%.2fGB", usedSpace / 0x1p30);
 	else
-		sprintf(txtbuffer,"%.2fTB", (float)usedSpaceInKB/(1024*1024*1024));
+		sprintf(txtbuffer,"%.2fTB", usedSpace / 0x1p40);
 	uiDrawObj_t *devUsedSizeLabel = DrawStyledLabel(83, 318, txtbuffer, 0.6f, true, defaultColor);
 	DrawAddChild(containerPanel, devUsedSizeLabel);
 }
@@ -496,15 +496,15 @@ void drawCurrentDeviceCarousel(uiDrawObj_t *containerPanel) {
 	DrawAddChild(containerPanel, devNameLabel);
 	
 	// Used space
-	u32 usedSpaceInKB = (info->totalSpaceInKB)-(info->freeSpaceInKB);
-	if(usedSpaceInKB < 1024)	// < 1 MB
-		sprintf(txtbuffer,"%uKB", usedSpaceInKB);
-	else if(usedSpaceInKB < 1024*1024)	// < 1 GB
-		sprintf(txtbuffer,"%.2fMB", (float)usedSpaceInKB/1024);
-	else if(usedSpaceInKB < 1024*1024*1024)	// < 1 TB
-		sprintf(txtbuffer,"%.2fGB", (float)usedSpaceInKB/(1024*1024));
+	u64 usedSpace = info->totalSpace - info->freeSpace;
+	if(usedSpace < 0x1p20)	// < 1 MB
+		sprintf(txtbuffer,"%.2fKB", usedSpace / 0x1p10);
+	else if(usedSpace < 0x1p30)	// < 1 GB
+		sprintf(txtbuffer,"%.2fMB", usedSpace / 0x1p20);
+	else if(usedSpace < 0x1p40)	// < 1 TB
+		sprintf(txtbuffer,"%.2fGB", usedSpace / 0x1p30);
 	else
-		sprintf(txtbuffer,"%.2fTB", (float)usedSpaceInKB/(1024*1024*1024));
+		sprintf(txtbuffer,"%.2fTB", usedSpace / 0x1p40);
 	int starting_pos = getVideoMode()->fbWidth-50-GetTextSizeInPixels(txtbuffer)*0.5;
 	uiDrawObj_t *devUsedSizeLabel = DrawStyledLabel(starting_pos, 400, txtbuffer, 0.5f, false, defaultColor);
 	DrawAddChild(containerPanel, devUsedSizeLabel);
@@ -514,14 +514,14 @@ void drawCurrentDeviceCarousel(uiDrawObj_t *containerPanel) {
 	DrawAddChild(containerPanel, devUsedLabel);
 	
 	// Free space
-	if(info->freeSpaceInKB < 1024)	// < 1 MB
-		sprintf(txtbuffer,"%uKB", info->freeSpaceInKB);
-	else if(info->freeSpaceInKB < 1024*1024)	// < 1 GB
-		sprintf(txtbuffer,"%.2fMB", (float)info->freeSpaceInKB/1024);
-	else if(info->freeSpaceInKB < 1024*1024*1024)	// < 1 TB
-		sprintf(txtbuffer,"%.2fGB", (float)info->freeSpaceInKB/(1024*1024));
+	if(info->freeSpace < 0x1p20)	// < 1 MB
+		sprintf(txtbuffer,"%.2fKB", info->freeSpace / 0x1p10);
+	else if(info->freeSpace < 0x1p30)	// < 1 GB
+		sprintf(txtbuffer,"%.2fMB", info->freeSpace / 0x1p20);
+	else if(info->freeSpace < 0x1p40)	// < 1 TB
+		sprintf(txtbuffer,"%.2fGB", info->freeSpace / 0x1p30);
 	else
-		sprintf(txtbuffer,"%.2fTB", (float)info->freeSpaceInKB/(1024*1024*1024));
+		sprintf(txtbuffer,"%.2fTB", info->freeSpace / 0x1p40);
 	starting_pos -= GetTextSizeInPixels(txtbuffer)*0.5;
 	uiDrawObj_t *devFreeSizeLabel = DrawStyledLabel(starting_pos, 400, txtbuffer, 0.5f, false, defaultColor);
 	DrawAddChild(containerPanel, devFreeSizeLabel);
@@ -531,14 +531,14 @@ void drawCurrentDeviceCarousel(uiDrawObj_t *containerPanel) {
 	DrawAddChild(containerPanel, devFreeLabel);
 	
 	// Total space
-	if(info->totalSpaceInKB < 1024)	// < 1 MB
-		sprintf(txtbuffer,"%uKB", info->totalSpaceInKB);
-	else if(info->totalSpaceInKB < 1024*1024)	// < 1 GB
-		sprintf(txtbuffer,"%.2fMB", (float)info->totalSpaceInKB/1024);
-	else if(info->totalSpaceInKB < 1024*1024*1024)	// < 1 TB
-		sprintf(txtbuffer,"%.2fGB", (float)info->totalSpaceInKB/(1024*1024));
+	if(info->totalSpace < 0x1p20)	// < 1 MB
+		sprintf(txtbuffer,"%.2fKB", info->totalSpace / 0x1p10);
+	else if(info->totalSpace < 0x1p30)	// < 1 GB
+		sprintf(txtbuffer,"%.2fMB", info->totalSpace / 0x1p20);
+	else if(info->totalSpace < 0x1p40)	// < 1 TB
+		sprintf(txtbuffer,"%.2fGB", info->totalSpace / 0x1p30);
 	else
-		sprintf(txtbuffer,"%.2fTB", (float)info->totalSpaceInKB/(1024*1024*1024));
+		sprintf(txtbuffer,"%.2fTB", info->totalSpace / 0x1p40);
 	starting_pos -= GetTextSizeInPixels(txtbuffer)*0.5;
 	uiDrawObj_t *devTotalSizeLabel = DrawStyledLabel(starting_pos, 400, txtbuffer, 0.5f, false, defaultColor);
 	DrawAddChild(containerPanel, devTotalSizeLabel);

@@ -31,8 +31,8 @@ file_handle initial_WODE =
 	  DRV_ERROR
 	};
 device_info initial_WODE_info = {
-	0,
-	0
+	0LL,
+	0LL
 };
 	
 int startupWode() {
@@ -99,7 +99,7 @@ s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		}
 	}
 	DrawDispose(msgBox);
-	initial_WODE_info.totalSpaceInKB = num_entries;
+	initial_WODE_info.totalSpace = num_entries;
 	return num_entries;
 }
 
@@ -128,7 +128,7 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, int numT
 
 s32 deviceHandler_WODE_init(file_handle* file){
 	wodeInited = startupWode() == 0 ? 1:0;
-	initial_WODE_info.totalSpaceInKB = 0;
+	initial_WODE_info.totalSpace = 0LL;
 	return wodeInited;
 }
 

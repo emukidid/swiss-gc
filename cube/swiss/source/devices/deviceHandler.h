@@ -44,8 +44,8 @@ typedef struct {
 } file_handle;	// Note: If the contents of this change, recompile pc/usbgecko/main.c
 
 typedef struct {
-	u32 freeSpaceInKB;		// 4TB Max
-	u32 totalSpaceInKB;		// 4TB Max
+	u64 freeSpace;
+	u64 totalSpace;
 } device_info;
 
 typedef struct {

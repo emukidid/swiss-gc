@@ -26,8 +26,8 @@ file_handle initial_USBGecko =
 	};
 
 device_info initial_USBGecko_info = {
-	0,
-	0
+	0LL,
+	0LL
 };
 
 extern char *getRelativeName(char *str);
@@ -70,8 +70,7 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 		usedSpace += (*dir)[i].size;
 		++i;
 	}
-	usedSpace >>= 10;
-	initial_USBGecko_info.totalSpaceInKB = (u32)(usedSpace);
+	initial_USBGecko_info.totalSpace = usedSpace;
 	DrawDispose(msgBox);
 	return num_entries;
 }

@@ -138,8 +138,7 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	}
 	free(memcard_dir);
 	
-	usedSpace >>= 10;
-	initial_CARD_info[slot].freeSpaceInKB = initial_CARD_info[slot].totalSpaceInKB-usedSpace;
+	initial_CARD_info[slot].freeSpace = initial_CARD_info[slot].totalSpace - usedSpace;
 
 	return num_entries;
 }
@@ -440,11 +439,11 @@ s32 deviceHandler_CARD_init(file_handle* file){
 	s32 memSize = 0, sectSize = 0;
 	int ret = CARD_ProbeEx(slot,&memSize,&sectSize);
 	if(ret==CARD_ERROR_READY) {
-		initial_CARD_info[slot].totalSpaceInKB = (memSize<<7);
+		initial_CARD_info[slot].totalSpace = (u64)(memSize<<17);
 	} else {
 		print_gecko("CARD_ProbeEx failed %i\r\n", ret);
 	}
-	initial_CARD_info[slot].freeSpaceInKB = 0;
+	initial_CARD_info[slot].freeSpace = 0LL;
 	
 	return file->status == CARD_ERROR_READY ? 1 : 0;
 }

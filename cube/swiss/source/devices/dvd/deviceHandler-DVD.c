@@ -33,8 +33,8 @@ file_handle initial_DVD =
 };
 
 device_info initial_DVD_info = {
-	1425760,
-	1425760
+	DISC_SIZE,
+	DISC_SIZE
 };
 
 static char error_str[256];
@@ -355,8 +355,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		if(strlen((*dir)[0].name) == 0)
 			strcpy( (*dir)[0].name, ".." );
 	}
-	usedSpace >>= 10;
-	initial_DVD_info.freeSpaceInKB = initial_DVD_info.totalSpaceInKB - (u32)(usedSpace & 0xFFFFFFFF);
+	initial_DVD_info.freeSpace = initial_DVD_info.totalSpace - usedSpace;
 	return num_entries;
 }
 

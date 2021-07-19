@@ -74,8 +74,8 @@ file_handle initial_SYS =
 
 device_info initial_SYS_info =
 {
-	0,
-	0
+	0LL,
+	0LL
 };
 
 device_info* deviceHandler_SYS_info(file_handle* file) {
@@ -245,10 +245,8 @@ s32 deviceHandler_SYS_init(file_handle* file) {
 	s32 i;
 
 	for(i = 0; i < NUM_ROMS; i++) {
-		initial_SYS_info.totalSpaceInKB += rom_sizes[i];
+		initial_SYS_info.totalSpace += rom_sizes[i];
 	}
-
-	initial_SYS_info.totalSpaceInKB >>= 10;
 
 	return 1;
 }

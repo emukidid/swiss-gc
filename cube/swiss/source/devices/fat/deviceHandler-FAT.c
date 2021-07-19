@@ -114,16 +114,14 @@ void populateDeviceInfo(file_handle* file) {
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
 		
 		sprintf(txtbuffer, "%s%c:/", isSDCard ? "sd":"ata", ('a'+slot));
-		FATFS *fatfs = fs[(isSDCard ? slot : SD_COUNT + slot)];
 		DWORD freeClusters;
+		FATFS *fatfs;
 		if(f_getfree(txtbuffer, &freeClusters, &fatfs) == FR_OK) {
-			LBA_t totalSectors = (LBA_t)(fatfs->n_fatent - 2) * fatfs->csize;
-			LBA_t freeSectors = (LBA_t)freeClusters * fatfs->csize;
-			info->freeSpaceInKB = (u32)((u64)freeSectors * fatfs->ssize / 1024);
-			info->totalSpaceInKB = (u32)((u64)totalSectors * fatfs->ssize / 1024);
+			info->freeSpace = (u64)(freeClusters) * fatfs->csize * fatfs->ssize;
+			info->totalSpace = (u64)(fatfs->n_fatent - 2) * fatfs->csize * fatfs->ssize;
 		}
 		else {
-			info->freeSpaceInKB = info->totalSpaceInKB = 0;
+			info->freeSpace = info->totalSpace = 0LL;
 		}
 		DrawDispose(msgBox);
 	}
@@ -309,7 +307,7 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 	s32 numFrags = 0;
 	for(i = 1; i < (clmt[0]); i+=2) {
 		if(clmt[i] == 0) break;	// No more
-		FSIZE_t size = (FSIZE_t)clmt[i] * fatfs->csize * fatfs->ssize;
+		FSIZE_t size = (FSIZE_t)(clmt[i]) * fatfs->csize * fatfs->ssize;
 		LBA_t sector = clst2sect(fatfs, clmt[i+1]);
 		// this frag offset in the file is the last frag offset+size
 		size = forceSize < size ? forceSize : size;
@@ -530,8 +528,8 @@ s32 deviceHandler_FAT_closeFile(file_handle* file) {
 s32 deviceHandler_FAT_deinit(file_handle* file) {
 	deviceHandler_FAT_closeFile(file);
 	device_info* info = deviceHandler_FAT_info(file);
-	info->freeSpaceInKB = 0;
-	info->totalSpaceInKB = 0;
+	info->freeSpace = 0LL;
+	info->totalSpace = 0LL;
 	if(file) {
 		int isSDCard = IS_SDCARD(file->name);
 		int slot = GET_SLOT(file->name);

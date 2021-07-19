@@ -54,8 +54,8 @@ file_handle initial_SMB =
 	};
 
 device_info initial_SMB_info = {
-	0,
-	0
+	0LL,
+	0LL
 };
 	
 device_info* deviceHandler_SMB_info(file_handle* file) {
@@ -67,8 +67,8 @@ void readDeviceInfoSMB() {
 	memset(&buf, 0, sizeof(statvfs));
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading filesystem info for smb:/"));
 	int res = statvfs("smb:/", &buf);
-	initial_SMB_info.freeSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_bfree)/1024LL):0;
-	initial_SMB_info.totalSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_blocks)/1024LL):0;
+	initial_SMB_info.freeSpace = !res ? (u64)((u64)buf.f_bfree*(u64)buf.f_bsize):0LL;
+	initial_SMB_info.totalSpace = !res ? (u64)((u64)buf.f_blocks*(u64)buf.f_bsize):0LL;
 	DrawDispose(msgBox);
 }
 	
@@ -217,8 +217,8 @@ s32 deviceHandler_SMB_closeFile(file_handle* file) {
 
 s32 deviceHandler_SMB_deinit(file_handle* file) {
 	deviceHandler_SMB_closeFile(file);
-	initial_SMB_info.freeSpaceInKB = 0;
-	initial_SMB_info.totalSpaceInKB = 0;
+	initial_SMB_info.freeSpace = 0LL;
+	initial_SMB_info.totalSpace = 0LL;
 	if(smb_initialized) {
 		smbClose("smb");
 		smb_initialized = 0;

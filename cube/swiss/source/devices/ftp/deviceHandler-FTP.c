@@ -52,8 +52,8 @@ file_handle initial_FTP =
 	};
 
 device_info initial_FTP_info = {
-	0,
-	0
+	0LL,
+	0LL
 };
 	
 device_info* deviceHandler_FTP_info(file_handle* file) {
@@ -65,8 +65,8 @@ void readDeviceInfoFTP() {
 	memset(&buf, 0, sizeof(statvfs));
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading filesystem info for ftp:/"));
 	int res = statvfs("ftp:/", &buf);
-	initial_FTP_info.freeSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_bfree)/1024LL):0;
-	initial_FTP_info.totalSpaceInKB = !res ? (u32)((uint64_t)((uint64_t)buf.f_bsize*(uint64_t)buf.f_blocks)/1024LL):0;
+	initial_FTP_info.freeSpace = !res ? (u64)((u64)buf.f_bfree*(u64)buf.f_bsize):0LL;
+	initial_FTP_info.totalSpace = !res ? (u64)((u64)buf.f_blocks*(u64)buf.f_bsize):0LL;
 	DrawDispose(msgBox);
 }
 	
@@ -213,8 +213,8 @@ s32 deviceHandler_FTP_closeFile(file_handle* file) {
 
 s32 deviceHandler_FTP_deinit(file_handle* file) {
 	deviceHandler_FTP_closeFile(file);
-	initial_FTP_info.freeSpaceInKB = 0;
-	initial_FTP_info.totalSpaceInKB = 0;
+	initial_FTP_info.freeSpace = 0LL;
+	initial_FTP_info.totalSpace = 0LL;
 	if(ftp_initialized) {
 		ftpClose("ftp");
 		ftp_initialized = 0;
