@@ -1687,10 +1687,18 @@ void load_game() {
 	else {
 		devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(&curFile,&GCMDisk,sizeof(DiskHeader)) != sizeof(DiskHeader) || GCMDisk.DVDMagicWord != DVD_MAGIC) {
-			DrawDispose(msgBox);
-			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
-			sleep(2);
-			DrawDispose(msgBox);
+			if(GCMDisk.ConsoleID || memcmp(&GCMDisk.ConsoleID, &GCMDisk.GamecodeA, sizeof(DiskHeader) - 1)) {
+				DrawDispose(msgBox);
+				msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
+				sleep(2);
+				DrawDispose(msgBox);
+			}
+			else {
+				DrawDispose(msgBox);
+				msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File! (Fake SD Card?)"));
+				sleep(2);
+				DrawDispose(msgBox);
+			}
 			return;
 		}
 		
