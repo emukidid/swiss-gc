@@ -628,8 +628,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			devices[DEVICE_PATCHES]->writeFile(&patchFile, patchInfo, 16);
 			devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			num_patched++;
-			DrawDispose(progBox);
 		}
+		DrawDispose(progBox);
 		free(buffer);
 	}
 

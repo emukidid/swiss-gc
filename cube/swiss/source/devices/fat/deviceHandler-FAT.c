@@ -326,36 +326,34 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	// If there are 2 discs, we only allow 21 fragments per disc.
 	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
 	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
+	s32 frags = 0, totFrags = 0;
 	
 	memset(VAR_FRAG_LIST, 0, sizeof(VAR_FRAG_LIST));
 	
   	// Look for patch files, if we find some, open them and add them as fragments
 	file_handle patchFile;
-	s32 frags = 0, totFrags = 0;
 	for(i = 0; i < numToPatch; i++) {
-		u32 patchInfo[4];
-		memset(patchInfo, 0, 16);
-		char gameID[8];
-		memset(&gameID, 0, 8);
-		strncpy((char*)&gameID, (char*)&GCMDisk, 4);
 		memset(&patchFile, 0, sizeof(file_handle));
-		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/%.4s/%i", devices[DEVICE_CUR]->initial->name, &gameID[0], i);
-
-		FILINFO fno;
-		if(f_stat(&patchFile.name[0], &fno) != FR_OK) {
-			break;	// Patch file doesn't exist, don't bother with fragments
-		}
-
-		devices[DEVICE_CUR]->seekFile(&patchFile,fno.fsize-16,DEVICE_HANDLER_SEEK_SET);
-		if((devices[DEVICE_CUR]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-			if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, patchInfo[0], patchInfo[1], DEVICE_CUR))) {
+		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/%.4s/%i", devices[DEVICE_CUR]->initial->name, (char*)&GCMDisk, i);
+		
+		if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) == 0) {
+			u32 patchInfo[4];
+			memset(patchInfo, 0, 16);
+			devices[DEVICE_CUR]->seekFile(&patchFile, patchFile.size-16, DEVICE_HANDLER_SEEK_SET);
+			if((devices[DEVICE_CUR]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
+				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, patchInfo[0], patchInfo[1], DEVICE_CUR))) {
+					return 0;
+				}
+				totFrags+=frags;
+				devices[DEVICE_CUR]->closeFile(&patchFile);
+			}
+			else {
+				devices[DEVICE_CUR]->deleteFile(&patchFile);
 				return 0;
 			}
-			totFrags+=frags;
-			devices[DEVICE_CUR]->closeFile(&patchFile);
 		}
 		else {
-			break;
+			return 0;
 		}
 	}
 	

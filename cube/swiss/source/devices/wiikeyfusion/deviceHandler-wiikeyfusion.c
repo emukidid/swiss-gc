@@ -79,31 +79,28 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 		
 		// Look for patch files, if we find some, open them and add them as fragments
 		file_handle patchFile;
-		char gameID[8];
-		memset(&gameID, 0, 8);
-		strncpy((char*)&gameID, (char*)&GCMDisk, 4);
-		
 		for(i = 0; i < numToPatch; i++) {
-			u32 patchInfo[4];
-			memset(patchInfo, 0, 16);
 			memset(&patchFile, 0, sizeof(file_handle));
-			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/%.4s/%i", devices[DEVICE_PATCHES]->initial->name, gameID, i);
-			print_gecko("Looking for file %s\r\n", &patchFile.name);
-			FILINFO fno;
-			if(f_stat(&patchFile.name[0], &fno) != FR_OK) {
-				break;	// Patch file doesn't exist, don't bother with fragments
-			}
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/%.4s/%i", devices[DEVICE_PATCHES]->initial->name, (char*)&GCMDisk, i);
 			
-			devices[DEVICE_PATCHES]->seekFile(&patchFile,fno.fsize-16,DEVICE_HANDLER_SEEK_SET);
-			if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
+			if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) == 0) {
+				u32 patchInfo[4];
+				memset(patchInfo, 0, 16);
+				devices[DEVICE_PATCHES]->seekFile(&patchFile, patchFile.size-16, DEVICE_HANDLER_SEEK_SET);
+				if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
+					if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
+						return 0;
+					}
+					totFrags+=frags;
+					devices[DEVICE_PATCHES]->closeFile(&patchFile);
+				}
+				else {
+					devices[DEVICE_PATCHES]->deleteFile(&patchFile);
 					return 0;
 				}
-				totFrags+=frags;
-				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
 			else {
-				break;
+				return 0;
 			}
 		}
 		// Check for igr.dol
