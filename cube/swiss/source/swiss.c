@@ -1687,18 +1687,21 @@ void load_game() {
 	else {
 		devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(&curFile,&GCMDisk,sizeof(DiskHeader)) != sizeof(DiskHeader) || GCMDisk.DVDMagicWord != DVD_MAGIC) {
-			if(GCMDisk.ConsoleID || memcmp(&GCMDisk.ConsoleID, &GCMDisk.GamecodeA, sizeof(DiskHeader) - 1)) {
-				DrawDispose(msgBox);
-				msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
-				sleep(2);
-				DrawDispose(msgBox);
+			if(!GCMDisk.ConsoleID && !memcmp(&GCMDisk.ConsoleID, &GCMDisk.GamecodeA, sizeof(DiskHeader) - 1)) {
+				devices[DEVICE_CUR]->seekFile(&curFile,0x8000,DEVICE_HANDLER_SEEK_SET);
+				if(devices[DEVICE_CUR]->readFile(&curFile,&GCMDisk,sizeof(DiskHeader)) == sizeof(DiskHeader) &&
+					!GCMDisk.ConsoleID && !memcmp(&GCMDisk.ConsoleID, &GCMDisk.GamecodeA, sizeof(DiskHeader) - 1)) {
+					DrawDispose(msgBox);
+					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File! (Fake SD Card?)"));
+					sleep(2);
+					DrawDispose(msgBox);
+					return;
+				}
 			}
-			else {
-				DrawDispose(msgBox);
-				msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File! (Fake SD Card?)"));
-				sleep(2);
-				DrawDispose(msgBox);
-			}
+			DrawDispose(msgBox);
+			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
+			sleep(2);
+			DrawDispose(msgBox);
 			return;
 		}
 		
@@ -1716,7 +1719,6 @@ void load_game() {
 				DrawDispose(msgBox);
 				msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump, but may be playable.\nPlease attempt recovery using NKit."));
 				sleep(5);
-				DrawDispose(msgBox);
 			}
 		}
 	}
