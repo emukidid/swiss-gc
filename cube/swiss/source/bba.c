@@ -17,7 +17,7 @@ void init_network(void *args) {
 
 	bba_exists = exi_bba_exists();
 	if(bba_exists && !net_initialized) {
-		res = if_config(bba_ip, NULL, NULL, true, 20);
+		res = if_config(bba_ip, NULL, NULL, true);
 		if(res >= 0 && strcmp("255.255.255.255", bba_ip)) {
 			net_initialized = 1;
 		}

@@ -2602,7 +2602,7 @@ bool ftpInitDevice(const char* name, const char *user, const char *password, con
 	for(i=0;i<MAX_FTP_MOUNTED && FTPEnv[i].name!=NULL;i++);
 	if(i==MAX_FTP_MOUNTED) return false; //all allowed ftp connections reached
 
-	if (if_config(bba_ip, NULL, NULL, true, 20) < 0)
+	if (if_config(bba_ip, NULL, NULL, true) < 0)
 		return false;
 
 	_FTP_lock();
