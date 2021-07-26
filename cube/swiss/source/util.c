@@ -119,6 +119,9 @@ void print_gecko(const char* fmt, ...)
 
 /* Update recent list with a new entry. */
 bool update_recent() {
+	// Off
+	if(swissSettings.recentListLevel == 2) return false;
+	
 	int i, found_idx = -1, max_idx = RECENT_MAX-1;
 	// See if this entry already exists in the recent list, if so, we'll move it to the top.
 	for(i = 0; i < RECENT_MAX; i++) {
@@ -131,8 +134,8 @@ bool update_recent() {
 		}
 	}
 	
-	// It's already at the top, nothing to update, return.
-	if(found_idx == 0) {
+	// It's already at the top (or the recent list is set to "lazy" update mode), we have nothing to update, return.
+	if(found_idx == 0 || (found_idx != -1 && swissSettings.recentListLevel == 1)) {
 		return false;
 	}
 		

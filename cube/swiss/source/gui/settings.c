@@ -34,6 +34,7 @@ char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL"};
 char *fileBrowserStr[] = {"Standard", "Carousel"};
 char *bs2BootStr[] = {"No", "Yes", "Sound 1", "Sound 2"};
 char *sramLang[] = {"English", "German", "French", "Spanish", "Italian", "Dutch", "Japanese"};
+char *recentListLevelStr[] = {"On", "Lazy", "Off"};
 
 static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"System Sound:\n\nSets the default audio output type used by most games",
@@ -44,7 +45,9 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"In-Game Reset: (B + R + Z + DPad Down)\n\nReboot: Soft-Reset the GameCube\nigr.dol: Low mem (< 0x81300000) igr.dol at the root of SD Card",
 	"Configuration Device:\n\nThe device that Swiss will use to load and save swiss.ini from.\nThis setting is stored in SRAM and will remain on reboot.",
 	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply firmware workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
-	"File Browser Type:\n\nStandard - Displays files with minimal detail (default)\n\nCarousel - Suited towards Game/DOL only use, consider combining\nthis option with the File Management setting turned off\nand Hide Unknown File Types turned on for a better experience."
+	"File Browser Type:\n\nStandard - Displays files with minimal detail (default)\n\nCarousel - Suited towards Game/DOL only use, consider combining\nthis option with the File Management setting turned off\nand Hide Unknown File Types turned on for a better experience.",
+	NULL,
+	"Recent List:\n\n(On) - Press Start while browsing to show a recent list.\n(Lazy) - Same as On but list updates only for new entries.\n(Off) - Recent list is completely disabled.\n\nThe lazy/off options exist to minimise SD card writes."
 };
 
 static char *tooltips_advanced[PAGE_ADVANCED_MAX+1] = {
@@ -169,6 +172,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 	// Configuration Device [Writable device name]
 	// AVE Compatibility
 	// Filebrowser Type [Standard / Carousel]
+	// ShowHiddenFiles [Yes/No]
+	// Recent List: [On/Lazy/Off]
 
 	/** Advanced Settings (Page 2/) */
 	// Enable USB Gecko Debug via Slot B [Yes/No]
@@ -220,6 +225,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
 		drawSettingEntryString(page, &page_y_ofs, "File Browser Type:", fileBrowserStr[swissSettings.fileBrowserType], option == SET_FILEBROWSER_TYPE, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Show hidden files:", swissSettings.showHiddenFiles, option == SET_SHOW_HIDDEN, true);
+		drawSettingEntryString(page, &page_y_ofs, "Recent List:", recentListLevelStr[swissSettings.recentListLevel], option == SET_RECENT_LIST, true);
+		
 	}
 	else if(page_num == PAGE_NETWORK) {
 		bool netEnable = exi_bba_exists();
@@ -398,6 +405,13 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			break;
 			case SET_SHOW_HIDDEN:
 				swissSettings.showHiddenFiles ^= 1;
+			break;
+			case SET_RECENT_LIST:
+				swissSettings.recentListLevel += direction;
+				if(swissSettings.recentListLevel > 2)
+					swissSettings.recentListLevel = 0;
+				if(swissSettings.recentListLevel < 0)
+					swissSettings.recentListLevel = 2;
 			break;
 		}	
 	}

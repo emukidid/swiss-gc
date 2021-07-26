@@ -209,6 +209,8 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "ShowHiddenFiles=%s\r\n", (swissSettings.showHiddenFiles ? "Yes":"No"));
 	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "RecentListLevel=%s\r\n", (recentListLevelStr[swissSettings.recentListLevel]));
+	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "Autoload=%s\r\n",swissSettings.autoload);
 	string_append(configString, txtbuffer);
 	int i;
@@ -569,6 +571,14 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("ShowHiddenFiles", name)) {
 					swissSettings.showHiddenFiles = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("RecentListLevel", name)) {
+					if(!strcmp(recentListLevelStr[0], value))
+						swissSettings.recentListLevel = 0;
+					else if(!strcmp(recentListLevelStr[1], value))
+						swissSettings.recentListLevel = 1;
+					else if(!strcmp(recentListLevelStr[2], value))
+						swissSettings.recentListLevel = 2;
 				}
 				else if(!strcmp("Autoload", name)) {
 					strlcpy(&swissSettings.autoload[0], value, sizeof(swissSettings.autoload));

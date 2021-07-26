@@ -125,6 +125,7 @@ typedef struct {
 	int fileBrowserType;
 	int bs2Boot;
 	int showHiddenFiles;
+	int recentListLevel;	// on, lazy, off
 	char autoload[PATHNAME_MAX];
 	char recent[RECENT_MAX][PATHNAME_MAX];
 } SwissSettings;

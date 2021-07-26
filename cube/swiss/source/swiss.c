@@ -481,7 +481,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			}
 		}
 		
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_START) {
+		if((swissSettings.recentListLevel != 2) && (PAD_ButtonsHeld(0) & PAD_BUTTON_START)) {
 			select_recent_entry();
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B) {
@@ -714,7 +714,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			curMenuLocation=ON_OPTIONS;
 			return filePanel;
 		}
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_START) {
+		if((swissSettings.recentListLevel != 2) && (PAD_ButtonsHeld(0) & PAD_BUTTON_START)) {
 			select_recent_entry();
 		}
 		if(PAD_StickX(0) <= -16 || PAD_StickX(0) >= 16) {
@@ -2314,7 +2314,7 @@ void menu_loop()
 			if((btns & PAD_BUTTON_B) && devices[DEVICE_CUR] != NULL) {
 				curMenuLocation = ON_FILLIST;
 			}
-			if(PAD_ButtonsHeld(0) & PAD_BUTTON_START) {
+			if((swissSettings.recentListLevel != 2) && (PAD_ButtonsHeld(0) & PAD_BUTTON_START)) {
 				select_recent_entry();
 			}
 			while(PAD_ButtonsHeld(0) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_START)) {
