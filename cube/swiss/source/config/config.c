@@ -207,6 +207,8 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "FSPPassword=%s\r\n",swissSettings.fspPassword);
 	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "ShowHiddenFiles=%s\r\n", (swissSettings.showHiddenFiles ? "Yes":"No"));
+	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "Autoload=%s\r\n",swissSettings.autoload);
 	string_append(configString, txtbuffer);
 	int i;
@@ -564,6 +566,9 @@ void config_parse(char *configData) {
 				}
 				else if(!strcmp("FSPPassword", name)) {
 					strlcpy(&swissSettings.fspPassword[0], value, sizeof(swissSettings.fspPassword));
+				}
+				else if(!strcmp("ShowHiddenFiles", name)) {
+					swissSettings.showHiddenFiles = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("Autoload", name)) {
 					strlcpy(&swissSettings.autoload[0], value, sizeof(swissSettings.autoload));

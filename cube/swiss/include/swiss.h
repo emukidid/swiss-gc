@@ -124,6 +124,7 @@ typedef struct {
 	u8 configDeviceId;	// see deviceHandler.h
 	int fileBrowserType;
 	int bs2Boot;
+	int showHiddenFiles;
 	char autoload[PATHNAME_MAX];
 	char recent[RECENT_MAX][PATHNAME_MAX];
 } SwissSettings;
@@ -133,7 +134,8 @@ enum fileOptions
 {
 	COPY_OPTION=0,
 	MOVE_OPTION,
-	DELETE_OPTION
+	DELETE_OPTION,
+	RENAME_OPTION
 };
 
 enum fileBrowserTypes

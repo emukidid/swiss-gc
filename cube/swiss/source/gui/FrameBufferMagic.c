@@ -1622,8 +1622,8 @@ void DrawCheatsSelector(const char *fileName) {
 
 void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 	
-	print_gecko("DrawGetTextEntry Modes: Alpha [%s] Numeric [%s] IP [%s] Masked [%s]\r\n", mode & ENTRYMODE_ALPHA ? "Y":"N", mode & ENTRYMODE_NUMERIC ? "Y":"N",
-																		mode & ENTRYMODE_IP ? "Y":"N", mode & ENTRYMODE_MASKED ? "Y":"N");
+	print_gecko("DrawGetTextEntry Modes: Alpha [%s] Numeric [%s] IP [%s] Masked [%s] File [%s]\r\n", mode & ENTRYMODE_ALPHA ? "Y":"N", mode & ENTRYMODE_NUMERIC ? "Y":"N",
+																		mode & ENTRYMODE_IP ? "Y":"N", mode & ENTRYMODE_MASKED ? "Y":"N", mode & ENTRYMODE_FILE ? "Y":"N");
 	char *text = calloc(1, size);
 	if(mode & (ENTRYMODE_ALPHA|ENTRYMODE_IP)) {
 		strncpy(text, src, size);
@@ -1648,6 +1648,9 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 	char *num_mode_chars = "1234567890\b";
 	char *txt_mode_chars_lower = "1234567890-=\bqwertyuiop[]\\asdfghjkl;'zxcvbnm,./`!@\a#$%";
 	char *txt_mode_chars_upper = "1234567890_+\bQWERTYUIOP{}|ASDFGHJKL:\"ZXCVBNM<>?^&*\a()~";
+	char *txt_mode_file_chars_lower = "1234567890-=\bqwertyuiop[]asdfghjkl;'zxcvbnm.`!\a#$%";
+	char *txt_mode_file_chars_upper = "1234567890_+\bQWERTYUIOP{}ASDFGHJKL^&ZXCVBNM,@~\a()%";
+	
 	int cur_txt_mode = 0;
 	char *gridText = NULL;
 	
@@ -1694,8 +1697,8 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 		// TODO if we ever have to.
 	}
 	
-	// Alphanumeric
-	else if((mode & (ENTRYMODE_NUMERIC | ENTRYMODE_ALPHA)) && !(mode & ENTRYMODE_IP)) {
+	// Alphanumeric (not file)
+	else if((mode & (ENTRYMODE_NUMERIC | ENTRYMODE_ALPHA)) && !(mode & ENTRYMODE_IP) && !(mode & ENTRYMODE_FILE)) {
 		/* Mode 0:
 		 1234567890-=<\b aka backspace>
 		 qwertyuiop[]\
@@ -1726,6 +1729,38 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 		pos_for_row[4] = 160;
 	}
 	
+	// Alphanumeric (file)
+	else if(mode & ENTRYMODE_FILE) {
+		/* Mode 0:
+		 1234567890-=<\b aka backspace>
+		 qwertyuiop[]\
+		 asdfghjkl;'
+		 zxcvbnm
+		 .`!<\a aka space>#$%
+		
+		 Mode 1:
+		 1234567890_+<\b aka backspace>
+		 QWERTYUIOP{}
+		 ASDFGHJKL^&
+		 ZXCVBNM
+		 ,@~<\a aka space>()%
+		*/
+		
+		num_txt_modes = 2;
+		num_rows = 5;
+		grid_gap = 10;
+		num_per_row[0] = 13;
+		pos_for_row[0] = 40;
+		num_per_row[1] = 12;
+		pos_for_row[1] = 60;
+		num_per_row[2] = 11;
+		pos_for_row[2] = 100;
+		num_per_row[3] = 7;
+		pos_for_row[3] = 120;
+		num_per_row[4] = 7;
+		pos_for_row[4] = 160;
+	}
+	
 	// Wait for any A or Left/Right presses to finish
 	while ((PAD_ButtonsHeld(0) & (PAD_BUTTON_A|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT))){ VIDEO_WaitVSync (); }
 	uiDrawObj_t *container = NULL;
@@ -1743,7 +1778,10 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 
 		// Alphanumeric has a little "mode" hint at the bottom (upper/lower case set switching)
 		if(mode & ENTRYMODE_ALPHA) {
-			gridText = cur_txt_mode == 0 ? txt_mode_chars_lower : txt_mode_chars_upper;
+			gridText = cur_txt_mode == 0 ? 
+				(mode & ENTRYMODE_FILE ? txt_mode_file_chars_lower : txt_mode_chars_lower)
+				: 
+				(mode & ENTRYMODE_FILE ? txt_mode_file_chars_upper : txt_mode_chars_upper);
 			sprintf(txtbuffer, "Press X to change to [%s], current mode is [%s]",
 													txt_modes_str[(cur_txt_mode + 1 >= num_txt_modes ? 0 : cur_txt_mode + 1)], txt_modes_str[cur_txt_mode]);
 			DrawAddChild(newPanel, DrawStyledLabel(25, 420, txtbuffer, 0.65f, false, defaultColor));
@@ -1858,6 +1896,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 		while (PAD_ButtonsHeld(0) & (PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_START))
 			{ VIDEO_WaitVSync (); }
 	}
+	if(text) free(text);
 	DrawDispose(container);
 }
 

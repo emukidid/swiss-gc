@@ -9,7 +9,7 @@
 
 
 /* File name helper functions */
-char *knownExtensions[] = {".dol", ".iso", ".gcm", ".mp3", ".fzn", ".gci", ".dol+cli", ".elf", ".tgc"};
+char *knownExtensions[] = {".dol", ".iso", ".gcm", ".mp3", ".fzn", ".dol+cli", ".elf", ".tgc"};
 
 int endsWith(char *str, char *end) {
 	size_t len_str = strlen(str);
@@ -193,4 +193,26 @@ int load_existing_entry(char *entry) {
 	}
 	print_gecko("Device was not found\r\n");
 	return RECENT_ERR_DEV_MISSING;
+}
+
+bool deleteFileOrDir(file_handle* entry) {
+	if(entry->fileAttrib == IS_DIR) {
+		print_gecko("Entering dir for deletion: %s\r\n", entry);
+		file_handle* dirEntries = NULL;
+		int dirEntryCount = devices[DEVICE_CUR]->readDir(entry, &dirEntries, -1);
+		int i;
+		for(i = 0; i < dirEntryCount; i++) {
+			if(!deleteFileOrDir(&dirEntries[i])) {
+				return false;
+			}
+		}
+		if(dirEntries) free(dirEntries);
+		print_gecko("Finally, deleting empty directory: %s\r\n", entry);
+		return !devices[DEVICE_CUR]->deleteFile(entry);
+	}
+	if(entry->fileAttrib == IS_FILE) {
+		print_gecko("Deleting file: %s\r\n", entry);
+		return !devices[DEVICE_CUR]->deleteFile(entry);
+	}
+	return true;	// IS_SPECIAL can be ignored.
 }

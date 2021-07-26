@@ -52,7 +52,7 @@ static char *tooltips_advanced[PAGE_ADVANCED_MAX+1] = {
 	"Hide Unknown file types:\n\nDisabled - Show all files (default)\nEnabled - Swiss will hide unknown file types from being displayed\n\nKnown file types are:\n GameCube Executables (.dol)\n Disc backups (.iso/.gcm/.tgc)\n MP3 Music (.mp3)\n WASP/WKF Flash files (.fzn)\n GameCube Memory Card Files (.gci)\n GameCube Executables with parameters appended (.dol+cli)\n GameCube ELF files (.elf)",
 	"Stop DVD Motor on startup\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the DVD drive from spinning when Swiss starts\n\nThis option is mostly for users booting from game\nexploits where the disc will already be spinning.",
 	"WiiRD debugging:\n\nDisabled - Boot as normal (default)\nEnabled - This will start a game with the WiiRD debugger enabled & paused\n\nThe WiiRD debugger takes up more memory and can cause issues.",
-	"File Management:\n\nDisabled - Known files will load immediately instead (default)\nEnabled - A file management prompt will be displayed for all files",
+	"File Management:\n\nWhen enabled, pressing Z on an entry in the file browser will allow it to be managed.",
 	"Auto-load all cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. sd:/cheats/GPOP8D.txt (on a compatible device)\nthen all cheats in the file will be enabled",
 	NULL,
 	NULL,
@@ -219,6 +219,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryString(page, &page_y_ofs, "Configuration Device:", getConfigDeviceName(&swissSettings), option == SET_CONFIG_DEV, true);
 		drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
 		drawSettingEntryString(page, &page_y_ofs, "File Browser Type:", fileBrowserStr[swissSettings.fileBrowserType], option == SET_FILEBROWSER_TYPE, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Show hidden files:", swissSettings.showHiddenFiles, option == SET_SHOW_HIDDEN, true);
 	}
 	else if(page_num == PAGE_NETWORK) {
 		bool netEnable = exi_bba_exists();
@@ -394,6 +395,9 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			break;
 			case SET_FILEBROWSER_TYPE:
 				swissSettings.fileBrowserType ^= 1;
+			break;
+			case SET_SHOW_HIDDEN:
+				swissSettings.showHiddenFiles ^= 1;
 			break;
 		}	
 	}

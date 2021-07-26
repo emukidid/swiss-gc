@@ -145,6 +145,7 @@ typedef struct kbBtn_ {
 #define ENTRYMODE_NUMERIC 	(1<<1)
 #define ENTRYMODE_IP	 	(1<<2)
 #define ENTRYMODE_MASKED 	(1<<3)
+#define ENTRYMODE_FILE	 	(1<<4)
 
 uiDrawObj_t* DrawImage(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);
 uiDrawObj_t* DrawTexObj(GXTexObj *texObj, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered);

@@ -334,6 +334,7 @@ void select_recent_entry() {
 		while (!(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_A) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_UP) && !(PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN)))
 			{ VIDEO_WaitVSync (); }
 	}
+	do {VIDEO_WaitVSync();} while (PAD_ButtonsHeld(0) & PAD_BUTTON_B);
 	DrawDispose(container);
 	if(idx >= 0) {
 		int res = load_existing_entry(&swissSettings.recent[idx][0]);
@@ -419,7 +420,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		DrawPublish(filePanel);
 		DrawDispose(loadingBox);
 		
-		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R;
+		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z;
 		while ((PAD_StickY(0) > -16 && PAD_StickY(0) < 16) && !(PAD_ButtonsHeld(0) & waitButtons))
 			{ VIDEO_WaitVSync (); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_UP) || PAD_StickY(0) >= 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
@@ -454,8 +455,9 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			else if((*directory)[curSelection].fileAttrib==IS_FILE) {
 				memcpy(&curDir, &curFile, sizeof(file_handle));
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
-				needsRefresh= manage_file() ? 1:0;
-				// If we return from doing something with a file, refresh the device in the same dir we were at
+				if(canLoadFileType(&curFile.name[0])) {
+					load_file();
+				}
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 			}
 			return filePanel;
@@ -463,9 +465,22 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
 			upToParent();
 			needsRefresh=1;
-			while((PAD_ButtonsHeld(0) & PAD_BUTTON_X));
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_X) VIDEO_WaitVSync();
 			return filePanel;
 		}
+		if((PAD_ButtonsHeld(0) & PAD_TRIGGER_Z) && swissSettings.enableFileManagement 
+			&& ((*directory)[curSelection].fileAttrib == IS_FILE || (*directory)[curSelection].fileAttrib == IS_DIR)) {
+			memcpy(&curDir, &curFile, sizeof(file_handle));
+			memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
+			needsRefresh = manage_file() ? 1:0;
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_B) VIDEO_WaitVSync();
+			memcpy(&curFile, &curDir, sizeof(file_handle));
+			if(needsRefresh) {
+				// If we return from doing something with a file, refresh the device in the same dir we were at
+				return filePanel;
+			}
+		}
+		
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_START) {
 			select_recent_entry();
 		}
@@ -634,7 +649,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		DrawPublish(filePanel);
 		DrawDispose(loadingBox);
 		
-		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R;
+		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z;
 		while ((PAD_StickX(0) > -16 && PAD_StickX(0) < 16) && !(PAD_ButtonsHeld(0) & waitButtons))
 			{ VIDEO_WaitVSync (); }
 		if((PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) || PAD_StickX(0) <= -16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
@@ -669,8 +684,9 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			else if((*directory)[curSelection].fileAttrib==IS_FILE){
 				memcpy(&curDir, &curFile, sizeof(file_handle));
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
-				needsRefresh= manage_file() ? 1:0;
-				// If we return from doing something with a file, refresh the device in the same dir we were at
+				if(canLoadFileType(&curFile.name[0])) {
+					load_file();
+				}
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 			}
 			return filePanel;
@@ -678,8 +694,20 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
 			upToParent();
 			needsRefresh=1;
-			while((PAD_ButtonsHeld(0) & PAD_BUTTON_X));
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_X) VIDEO_WaitVSync();
 			return filePanel;
+		}
+		if((PAD_ButtonsHeld(0) & PAD_TRIGGER_Z) && swissSettings.enableFileManagement
+			&& ((*directory)[curSelection].fileAttrib == IS_FILE || (*directory)[curSelection].fileAttrib == IS_DIR)) {
+			memcpy(&curDir, &curFile, sizeof(file_handle));
+			memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
+			needsRefresh = manage_file() ? 1:0;
+			memcpy(&curFile, &curDir, sizeof(file_handle));
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_B) VIDEO_WaitVSync();
+			if(needsRefresh) {
+				// If we return from doing something with a file, refresh the device in the same dir we were at
+				return filePanel;
+			}
 		}
 		
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B)	{
@@ -1278,334 +1306,334 @@ void boot_dol()
 
 /* Manage file  - The user will be asked what they want to do with the currently selected file - copy/move/delete*/
 bool manage_file() {
-	// If it's a file
-	if(curFile.fileAttrib == IS_FILE) {
-		if(!swissSettings.enableFileManagement) {
-			load_file();
+	bool isFile = curFile.fileAttrib == IS_FILE;
+	bool canWrite = devices[DEVICE_CUR]->features & FEAT_WRITE;
+	bool canMove = canWrite && isFile;
+	bool canCopy = isFile;
+	bool canDelete = canWrite;
+	bool canRename = canWrite && devices[DEVICE_CUR]->features & FEAT_FAT_FUNCS;
+	
+	// Ask the user what they want to do with the selected entry
+	uiDrawObj_t* manageFileBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 320);
+	sprintf(txtbuffer, "Manage %s:", isFile ? "File" : "Directory");
+	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 160, txtbuffer, 1.0f, true, defaultColor));
+	float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
+	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 190, getRelativeName(curFile.name), scale, true, defaultColor));
+	sprintf(txtbuffer, "%s%s%s%s", 
+					canCopy ? " (X) Copy " : "",
+					canMove ? " (Y) Move " : "",
+					canDelete ? " (Z) Delete " : "",
+					canRename ? " (R) Rename" : "");
+	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 250, txtbuffer, 1.0f, true, defaultColor));
+	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 310, "Press an option to continue, or B to return", 1.0f, true, defaultColor));
+	DrawPublish(manageFileBox);
+	u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_B|PAD_TRIGGER_Z|PAD_TRIGGER_R;
+	do {VIDEO_WaitVSync();} while (PAD_ButtonsHeld(0) & waitButtons);
+	int option = 0;
+	while(1) {
+		u32 buttons = PAD_ButtonsHeld(0);
+		if(canCopy && (buttons & PAD_BUTTON_X)) {
+			option = COPY_OPTION;
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_X){ VIDEO_WaitVSync (); }
+			break;
+		}
+		if(canMove && (buttons & PAD_BUTTON_Y)) {
+			option = MOVE_OPTION;
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
+			break;
+		}
+		if(canDelete && (buttons & PAD_TRIGGER_Z)) {
+			option = DELETE_OPTION;
+			while(PAD_ButtonsHeld(0) & PAD_TRIGGER_Z){ VIDEO_WaitVSync (); }
+			break;
+		}
+		if(canRename && (buttons & PAD_TRIGGER_R)) {
+			option = RENAME_OPTION;
+			while(PAD_ButtonsHeld(0) & PAD_TRIGGER_R){ VIDEO_WaitVSync (); }
+			break;
+		}
+		if(buttons & PAD_BUTTON_B) {
+			DrawDispose(manageFileBox);
 			return false;
 		}
-		// Ask the user what they want to do with it
-		uiDrawObj_t* manageFileBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 350);
-		DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 160, "Manage File:", 1.0f, true, defaultColor));
-		float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
-		DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor));
-		bool knownFile = canLoadFileType(&curFile.name);
-		sprintf(txtbuffer, "%s (X) Copy %s", 
-						knownFile ? "(A) Load" : "", 
-						devices[DEVICE_CUR]->features & FEAT_WRITE ? "(Y) Move (Z) Delete" : "");
-		DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 230, txtbuffer, 1.0f, true, defaultColor));
-		DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 300, "Press an option to continue, or B to return", 1.0f, true, defaultColor));
-		DrawPublish(manageFileBox);
-		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
-		int option = 0;
-		while(1) {
-			u32 buttons = PAD_ButtonsHeld(0);
-			if(buttons & PAD_BUTTON_X) {
-				option = COPY_OPTION;
-				while(PAD_ButtonsHeld(0) & PAD_BUTTON_X){ VIDEO_WaitVSync (); }
-				break;
-			}
-			if((devices[DEVICE_CUR]->features & FEAT_WRITE) && (buttons & PAD_BUTTON_Y)) {
-				option = MOVE_OPTION;
-				while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
-				break;
-			}
-			if((devices[DEVICE_CUR]->features & FEAT_WRITE) && (buttons & PAD_TRIGGER_Z)) {
-				option = DELETE_OPTION;
-				while(PAD_ButtonsHeld(0) & PAD_TRIGGER_Z){ VIDEO_WaitVSync (); }
-				break;
-			}
-			if(knownFile && (buttons & PAD_BUTTON_A)) {
-				DrawDispose(manageFileBox);
-				load_file();
-				return false;
-			}
-			if(buttons & PAD_BUTTON_B) {
-				DrawDispose(manageFileBox);
-				return false;
-			}
-		}
-		DrawDispose(manageFileBox);
+	}
+	do {VIDEO_WaitVSync();} while (PAD_ButtonsHeld(0) & waitButtons);
+	DrawDispose(manageFileBox);
 	
-		// If delete, delete it + refresh the device
-		if(option == DELETE_OPTION) {
-			if(!devices[DEVICE_CUR]->deleteFile(&curFile)) {
-				//go up a folder
-				int len = strlen(&curFile.name[0]);
-				while(len && curFile.name[len-1]!='/') {
-      				len--;
-				}
-				curFile.name[len-1] = '\0';
-				uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"File deleted! Press A to continue");
-				DrawPublish(msgBox);
-				wait_press_A();
-				DrawDispose(msgBox);
-				needsRefresh=1;
+	// "Are you sure option" for deletes.
+	if(option == DELETE_OPTION) {
+		uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, "Delete confirmation required.\n \nPress L + A to continue, or B to cancel.");
+		DrawPublish(msgBox);
+		bool cancel = false;
+		while(1) {
+			u16 btns = PAD_ButtonsHeld(0);
+			if ((btns & (PAD_BUTTON_A|PAD_TRIGGER_L)) == (PAD_BUTTON_A|PAD_TRIGGER_L)) {
+				break;
 			}
-			else {
-				uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Delete Failed! Press A to continue");
-				DrawPublish(msgBox);
-				wait_press_A();
-				DrawDispose(msgBox);
+			else if (btns & PAD_BUTTON_B) {
+				cancel = true;
+				break;
 			}
+			VIDEO_WaitVSync();
 		}
-		// If copy, ask which device is the destination device and copy
-		else if((option == COPY_OPTION) || (option == MOVE_OPTION)) {
-			u32 ret = 0;
-			// Show a list of destination devices (the same device is also a possibility)
-			select_device(DEVICE_DEST);
-			if(devices[DEVICE_DEST] == NULL) return false;
+		do {VIDEO_WaitVSync();} while (PAD_ButtonsHeld(0) & (PAD_BUTTON_A|PAD_TRIGGER_L|PAD_BUTTON_B));
+		DrawDispose(msgBox);
+		if(cancel) {
+			return false;
+		}
+	}
 
-			// If the devices are not the same, init the destination, fail on non-existing device/etc
-			if(devices[DEVICE_CUR] != devices[DEVICE_DEST]) {
-				devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );	
-				deviceHandler_setStatEnabled(0);
-				if(!devices[DEVICE_DEST]->init( devices[DEVICE_DEST]->initial )) {
-					sprintf(txtbuffer, "Failed to init destination device! (%ul)\nPress A to continue.",ret);
-					uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-					DrawPublish(msgBox);
-					wait_press_A();
-					DrawDispose(msgBox);
-					deviceHandler_setStatEnabled(1);
-					return false;
-				}
+	// Handles renaming directories or files on FAT FS devices.
+	if(canRename && option == RENAME_OPTION) {
+		char *nameBuffer = calloc(1, sizeof(curFile.name));
+		char *parentPath = calloc(1, sizeof(curFile.name));
+		getParentPath(&curFile.name[0], parentPath);
+		strcpy(nameBuffer, getRelativeName(&curFile.name[0]));
+		DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_FILE, "Rename", nameBuffer, sizeof(curFile.name)-(strlen(parentPath)+1));
+		sprintf(txtbuffer, "%s/%s", parentPath, nameBuffer);
+		bool modified = (strcmp(&curFile.name[0], txtbuffer) != 0) && strlen(nameBuffer) > 0;
+		if(modified) {
+			print_gecko("Renaming %s to %s\r\n", &curFile.name[0], txtbuffer);
+			u32 ret = f_rename(&curFile.name[0], txtbuffer);
+			sprintf(txtbuffer, "%s renamed!\nPress A to continue.", isFile ? "File" : "Directory");
+			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, ret ? "Move Failed! Press A to continue" : txtbuffer);
+			DrawPublish(msgBox);
+			wait_press_A();
+			DrawDispose(msgBox);
+		}
+		free(nameBuffer);
+		free(parentPath);
+		do {VIDEO_WaitVSync();} while (PAD_ButtonsHeld(0) & (PAD_BUTTON_B|PAD_BUTTON_START));
+		return modified;
+	}
+	// Handle deletes (dir or file)
+	else if(option == DELETE_OPTION) {
+		uiDrawObj_t *progBar = DrawPublish(DrawProgressBar(true, 0, "Deleting ..."));
+		bool deleted = deleteFileOrDir(&curFile);
+		DrawDispose(progBar);
+		sprintf(txtbuffer, "%s %s\nPress A to continue.", isFile ? "File" : "Directory", deleted ? "deleted successfully" : "failed to delete!");
+		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(deleted ? D_INFO : D_FAIL, txtbuffer));
+		wait_press_A();
+		DrawDispose(msgBox);
+		return deleted;
+	}
+	// If copy, ask which device is the destination device and copy
+	else if((option == COPY_OPTION) || (option == MOVE_OPTION)) {
+		u32 ret = 0;
+		// Show a list of destination devices (the same device is also a possibility)
+		select_device(DEVICE_DEST);
+		if(devices[DEVICE_DEST] == NULL) return false;
+
+		// If the devices are not the same, init the destination, fail on non-existing device/etc
+		if(devices[DEVICE_CUR] != devices[DEVICE_DEST]) {
+			devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );	
+			deviceHandler_setStatEnabled(0);
+			if(!devices[DEVICE_DEST]->init( devices[DEVICE_DEST]->initial )) {
+				sprintf(txtbuffer, "Failed to init destination device! (%ul)\nPress A to continue.",ret);
+				uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+				DrawPublish(msgBox);
+				wait_press_A();
+				DrawDispose(msgBox);
 				deviceHandler_setStatEnabled(1);
-			}
-			// Traverse this destination device and let the user select a directory to dump the file in
-			file_handle *destFile = memalign(32,sizeof(file_handle));
-			memset(destFile, 0, sizeof(file_handle));
-			
-			// Show a directory only browser and get the destination file location
-			ret = select_dest_dir(devices[DEVICE_DEST]->initial, destFile);
-			if(!ret) {
-				devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );
 				return false;
 			}
-			
-			u32 isDestCard = devices[DEVICE_DEST] == &__device_card_a || devices[DEVICE_DEST] == &__device_card_b;
-			u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
-			
-			strlcat(destFile->name, "/", PATHNAME_MAX);
-			strlcat(destFile->name, stripInvalidChars(getRelativeName(&curFile.name[0])), PATHNAME_MAX);
-			destFile->fp = 0;
-			destFile->ffsFp = 0;
-			destFile->fileBase = 0;
-			destFile->offset = 0;
-			destFile->size = 0;
-			destFile->fileAttrib = IS_FILE;
-			// Create a GCI if something is coming out from CARD to another device
-			if(isSrcCard && !isDestCard) {
-				strlcat(destFile->name, ".gci", PATHNAME_MAX);
-			}
+			deviceHandler_setStatEnabled(1);
+		}
+		// Traverse this destination device and let the user select a directory to dump the file in
+		file_handle *destFile = memalign(32,sizeof(file_handle));
+		memset(destFile, 0, sizeof(file_handle));
+		
+		// Show a directory only browser and get the destination file location
+		ret = select_dest_dir(devices[DEVICE_DEST]->initial, destFile);
+		if(!ret) {
+			devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );
+			return false;
+		}
+		
+		u32 isDestCard = devices[DEVICE_DEST] == &__device_card_a || devices[DEVICE_DEST] == &__device_card_b;
+		u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
+		
+		strlcat(destFile->name, "/", PATHNAME_MAX);
+		strlcat(destFile->name, stripInvalidChars(getRelativeName(&curFile.name[0])), PATHNAME_MAX);
+		destFile->fp = 0;
+		destFile->ffsFp = 0;
+		destFile->fileBase = 0;
+		destFile->offset = 0;
+		destFile->size = 0;
+		destFile->fileAttrib = IS_FILE;
+		// Create a GCI if something is coming out from CARD to another device
+		if(isSrcCard && !isDestCard) {
+			strlcat(destFile->name, ".gci", PATHNAME_MAX);
+		}
 
-			// If the destination file already exists, ask the user what to do
-			if(devices[DEVICE_DEST]->readFile(destFile, NULL, 0) == 0) {
-				uiDrawObj_t* dupeBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 350);
-				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 160, "File exists:", 1.0f, true, defaultColor));
-				float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
-				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor));
-				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 230, "(A) Rename (Z) Overwrite", 1.0f, true, defaultColor));
-				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 300, "Press an option to continue, or B to return", 1.0f, true, defaultColor));
-				DrawPublish(dupeBox);
-				while(PAD_ButtonsHeld(0) & (PAD_BUTTON_A | PAD_TRIGGER_Z)) { VIDEO_WaitVSync (); }
-				while(1) {
-					u32 buttons = PAD_ButtonsHeld(0);
-					if(buttons & PAD_TRIGGER_Z) {
-						if(!strcmp(curFile.name, destFile->name)) {
+		// If the destination file already exists, ask the user what to do
+		if(devices[DEVICE_DEST]->readFile(destFile, NULL, 0) == 0) {
+			uiDrawObj_t* dupeBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 350);
+			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 160, "File exists:", 1.0f, true, defaultColor));
+			float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
+			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor));
+			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 230, "(A) Rename (Z) Overwrite", 1.0f, true, defaultColor));
+			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 300, "Press an option to continue, or B to return", 1.0f, true, defaultColor));
+			DrawPublish(dupeBox);
+			while(PAD_ButtonsHeld(0) & (PAD_BUTTON_A | PAD_TRIGGER_Z)) { VIDEO_WaitVSync (); }
+			while(1) {
+				u32 buttons = PAD_ButtonsHeld(0);
+				if(buttons & PAD_TRIGGER_Z) {
+					if(!strcmp(curFile.name, destFile->name)) {
+						DrawDispose(dupeBox);
+						uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Can't overwrite a file with itself!");
+						DrawPublish(msgBox);
+						wait_press_A();
+						DrawDispose(msgBox);
+						return false; 
+					}
+					else {
+						devices[DEVICE_DEST]->deleteFile(destFile);
+					}
+
+					while(PAD_ButtonsHeld(0) & PAD_TRIGGER_Z){ VIDEO_WaitVSync (); }
+					break;
+				}
+				if(buttons & PAD_BUTTON_A) {
+					int cursor, extension_start = -1, copy_num = 0;
+					char name_backup[1024];
+					for(cursor = 0; destFile->name[cursor]; cursor++) {
+						if(destFile->name[cursor] == '.' && destFile->name[cursor - 1] != '/'
+							&& cursor > 0)
+							extension_start = cursor;
+						if(destFile->name[cursor] == '/')
+							extension_start = -1;
+						name_backup[cursor] = destFile->name[cursor];
+					}
+
+					devices[DEVICE_DEST]->closeFile(destFile);
+
+					if(extension_start >= 0) {
+						destFile->name[extension_start] = 0;
+						cursor = extension_start;
+					}
+
+					if(destFile->name[cursor - 3] == '_' && in_range(destFile->name[cursor - 2], '0', '9')
+							&& in_range(destFile->name[cursor - 1], '0', '9')) {
+						copy_num = (int) strtol(destFile->name + cursor - 2, 0, 10);
+					}
+					else {
+						cursor += 3;
+						if((strlen(name_backup) + 4) >= 1024) {
 							DrawDispose(dupeBox);
-							uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Can't overwrite a file with itself!");
+							uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "File name too long!");
 							DrawPublish(msgBox);
 							wait_press_A();
 							DrawDispose(msgBox);
-							return false; 
+							return false;
 						}
-						else {
-							devices[DEVICE_DEST]->deleteFile(destFile);
-						}
-
-						while(PAD_ButtonsHeld(0) & PAD_TRIGGER_Z){ VIDEO_WaitVSync (); }
-						break;
+						destFile->name[cursor - 3] = '_';
+						sprintf(destFile->name + cursor - 2, "%02i", copy_num);
 					}
-					if(buttons & PAD_BUTTON_A) {
-						int cursor, extension_start = -1, copy_num = 0;
-						char name_backup[1024];
-						for(cursor = 0; destFile->name[cursor]; cursor++) {
-							if(destFile->name[cursor] == '.' && destFile->name[cursor - 1] != '/'
-								&& cursor > 0)
-								extension_start = cursor;
-							if(destFile->name[cursor] == '/')
-								extension_start = -1;
-							name_backup[cursor] = destFile->name[cursor];
-						}
 
+					if(extension_start >= 0) {
+						strcpy(destFile->name + cursor, name_backup + extension_start);
+					}
+
+					while(devices[DEVICE_DEST]->readFile(destFile, NULL, 0) == 0) {
 						devices[DEVICE_DEST]->closeFile(destFile);
-
-						if(extension_start >= 0) {
-							destFile->name[extension_start] = 0;
-							cursor = extension_start;
+						copy_num++;
+						if(copy_num > 99) {
+							DrawDispose(dupeBox);
+							uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Too many copies!");
+							DrawPublish(msgBox);
+							wait_press_A();
+							DrawDispose(msgBox);
+							return false;
 						}
-
-						if(destFile->name[cursor - 3] == '_' && in_range(destFile->name[cursor - 2], '0', '9')
-							    && in_range(destFile->name[cursor - 1], '0', '9')) {
-							copy_num = (int) strtol(destFile->name + cursor - 2, 0, 10);
-						}
-						else {
-							cursor += 3;
-							if((strlen(name_backup) + 4) >= 1024) {
-								DrawDispose(dupeBox);
-								uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "File name too long!");
-								DrawPublish(msgBox);
-								wait_press_A();
-								DrawDispose(msgBox);
-								return false;
-							}
-							destFile->name[cursor - 3] = '_';
-							sprintf(destFile->name + cursor - 2, "%02i", copy_num);
-						}
-
+						sprintf(destFile->name + cursor - 2, "%02i", copy_num);
 						if(extension_start >= 0) {
 							strcpy(destFile->name + cursor, name_backup + extension_start);
 						}
-
-						while(devices[DEVICE_DEST]->readFile(destFile, NULL, 0) == 0) {
-							devices[DEVICE_DEST]->closeFile(destFile);
-							copy_num++;
-							if(copy_num > 99) {
-								DrawDispose(dupeBox);
-								uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Too many copies!");
-								DrawPublish(msgBox);
-								wait_press_A();
-								DrawDispose(msgBox);
-								return false;
-							}
-							sprintf(destFile->name + cursor - 2, "%02i", copy_num);
-							if(extension_start >= 0) {
-								strcpy(destFile->name + cursor, name_backup + extension_start);
-							}
-						}
-
-						while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
-						break;
 					}
-					if(buttons & PAD_BUTTON_B) {
-						DrawDispose(dupeBox);
-						return false;
-					}
+
+					while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
+					break;
 				}
-				DrawDispose(dupeBox);
+				if(buttons & PAD_BUTTON_B) {
+					DrawDispose(dupeBox);
+					return false;
+				}
 			}
+			DrawDispose(dupeBox);
+		}
 
-			// Seek back to 0 after all these reads
-			devices[DEVICE_DEST]->seekFile(destFile, 0, DEVICE_HANDLER_SEEK_SET);
+		// Seek back to 0 after all these reads
+		devices[DEVICE_DEST]->seekFile(destFile, 0, DEVICE_HANDLER_SEEK_SET);
+		
+		// Same (fat based) device and user wants to move the file, just rename ;)
+		if(devices[DEVICE_CUR] == devices[DEVICE_DEST]
+			&& option == MOVE_OPTION 
+			&& (devices[DEVICE_CUR]->features & FEAT_FAT_FUNCS)) {
+			ret = f_rename(&curFile.name[0], &destFile->name[0]);
+			needsRefresh=1;
+			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,ret ? "Move Failed! Press A to continue":"File moved! Press A to continue");
+			DrawPublish(msgBox);
+			wait_press_A();
+			DrawDispose(msgBox);
+		}
+		else {
+			// If we're copying out from memory card, make a .GCI
+			if(isSrcCard) {
+				setCopyGCIMode(TRUE);
+				curFile.size += sizeof(GCI);
+			}
+			// If we're copying a .gci to a memory card, do it properly
+			if(isDestCard && (endsWith(destFile->name,".gci"))) {
+				// Read the header
+				char *gciHeader = memalign(32, sizeof(GCI));
+				devices[DEVICE_CUR]->seekFile(&curFile, 0, DEVICE_HANDLER_SEEK_SET);
+				devices[DEVICE_CUR]->readFile(&curFile, gciHeader, sizeof(GCI));
+				devices[DEVICE_CUR]->seekFile(&curFile, 0, DEVICE_HANDLER_SEEK_SET);
+				setGCIInfo(gciHeader);
+				free(gciHeader);
+			}
 			
-			// Same (fat based) device and user wants to move the file, just rename ;)
-			if(devices[DEVICE_CUR] == devices[DEVICE_DEST]
-				&& option == MOVE_OPTION 
-				&& (devices[DEVICE_CUR]->features & FEAT_FAT_FUNCS)) {
-				ret = f_rename(&curFile.name[0], &destFile->name[0]);
-				//go up a folder
-				int len = strlen(&curFile.name[0]);
-				while(len && curFile.name[len-1]!='/') {
-					len--;
+			// Read from one file and write to the new directory
+			u32 isCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
+			u32 curOffset = 0, cancelled = 0, chunkSize = (isCard||isDestCard) ? curFile.size : (256*1024);
+			char *readBuffer = (char*)memalign(32,chunkSize);
+			sprintf(txtbuffer, "Copying to: %s",getRelativeName(destFile->name));
+			uiDrawObj_t* progBar = DrawProgressBar(false, 0, txtbuffer);
+			DrawPublish(progBar);
+			
+			u64 startTime = gettime();
+			u64 lastTime = gettime();
+			u32 lastOffset = 0;
+			int speed = 0;
+			int timeremain = 0;
+			while(curOffset < curFile.size) {
+				u32 buttons = PAD_ButtonsHeld(0);
+				if(buttons & PAD_BUTTON_B) {
+					cancelled = 1;
+					break;
 				}
-				curFile.name[len-1] = '\0';
-				needsRefresh=1;
-				uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,ret ? "Move Failed! Press A to continue":"File moved! Press A to continue");
-				DrawPublish(msgBox);
-				wait_press_A();
-				DrawDispose(msgBox);
-			}
-			else {
-				// If we're copying out from memory card, make a .GCI
-				if(isSrcCard) {
-					setCopyGCIMode(TRUE);
-					curFile.size += sizeof(GCI);
+				u32 timeDiff = diff_msec(lastTime, gettime());
+				u32 timeStart = diff_msec(startTime, gettime());
+				if(timeDiff >= 1000) {
+					speed = (int)((float)(curOffset-lastOffset) / (float)(timeDiff/1000.0f));
+					timeremain = (curFile.size - curOffset) / speed;
+					lastTime = gettime();
+					lastOffset = curOffset;
 				}
-				// If we're copying a .gci to a memory card, do it properly
-				if(isDestCard && (endsWith(destFile->name,".gci"))) {
-					// Read the header
-					char *gciHeader = memalign(32, sizeof(GCI));
-					devices[DEVICE_CUR]->seekFile(&curFile, 0, DEVICE_HANDLER_SEEK_SET);
-					devices[DEVICE_CUR]->readFile(&curFile, gciHeader, sizeof(GCI));
-					devices[DEVICE_CUR]->seekFile(&curFile, 0, DEVICE_HANDLER_SEEK_SET);
-					setGCIInfo(gciHeader);
-					free(gciHeader);
-				}
-				
-				// Read from one file and write to the new directory
-				u32 isCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
-				u32 curOffset = 0, cancelled = 0, chunkSize = (isCard||isDestCard) ? curFile.size : (256*1024);
-				char *readBuffer = (char*)memalign(32,chunkSize);
-				sprintf(txtbuffer, "Copying to: %s",getRelativeName(destFile->name));
-				uiDrawObj_t* progBar = DrawProgressBar(false, 0, txtbuffer);
-				DrawPublish(progBar);
-				
-				u64 startTime = gettime();
-				u64 lastTime = gettime();
-				u32 lastOffset = 0;
-				int speed = 0;
-				int timeremain = 0;
-				while(curOffset < curFile.size) {
-					u32 buttons = PAD_ButtonsHeld(0);
-					if(buttons & PAD_BUTTON_B) {
-						cancelled = 1;
-						break;
-					}
-					u32 timeDiff = diff_msec(lastTime, gettime());
-					u32 timeStart = diff_msec(startTime, gettime());
-					if(timeDiff >= 1000) {
-						speed = (int)((float)(curOffset-lastOffset) / (float)(timeDiff/1000.0f));
-						timeremain = (curFile.size - curOffset) / speed;
-						lastTime = gettime();
-						lastOffset = curOffset;
-					}
-					DrawUpdateProgressBarDetail(progBar, (int)((float)((float)curOffset/(float)curFile.size)*100), speed, timeStart/1000, timeremain);
-					u32 amountToCopy = curOffset + chunkSize > curFile.size ? curFile.size - curOffset : chunkSize;
+				DrawUpdateProgressBarDetail(progBar, (int)((float)((float)curOffset/(float)curFile.size)*100), speed, timeStart/1000, timeremain);
+				u32 amountToCopy = curOffset + chunkSize > curFile.size ? curFile.size - curOffset : chunkSize;
+				devices[DEVICE_CUR]->seekFile(&curFile, curOffset, DEVICE_HANDLER_SEEK_SET);
+				ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
+				if(ret != amountToCopy) {	// Retry the read.
 					devices[DEVICE_CUR]->seekFile(&curFile, curOffset, DEVICE_HANDLER_SEEK_SET);
 					ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
-					if(ret != amountToCopy) {	// Retry the read.
-						devices[DEVICE_CUR]->seekFile(&curFile, curOffset, DEVICE_HANDLER_SEEK_SET);
-						ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
-						if(ret != amountToCopy) {
-							DrawDispose(progBar);
-							free(readBuffer);
-							devices[DEVICE_CUR]->closeFile(&curFile);
-							devices[DEVICE_DEST]->closeFile(destFile);
-							sprintf(txtbuffer, "Failed to Read! (%d %d)\n%s",amountToCopy,ret, &curFile.name[0]);
-							uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-							DrawPublish(msgBox);
-							wait_press_A();
-							setGCIInfo(NULL);
-							setCopyGCIMode(FALSE);
-							DrawDispose(msgBox);
-							return true;
-						}
-					}
-					ret = devices[DEVICE_DEST]->writeFile(destFile, readBuffer, amountToCopy);
 					if(ret != amountToCopy) {
 						DrawDispose(progBar);
 						free(readBuffer);
 						devices[DEVICE_CUR]->closeFile(&curFile);
 						devices[DEVICE_DEST]->closeFile(destFile);
-						sprintf(txtbuffer, "Failed to Write! (%ul %ul)\n%s",amountToCopy,ret,destFile->name);
-						uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-						DrawPublish(msgBox);
-						wait_press_A();
-						setGCIInfo(NULL);
-						setCopyGCIMode(FALSE);
-						DrawDispose(msgBox);
-						return true;
-					}
-					curOffset+=amountToCopy;
-				}
-				DrawDispose(progBar);
-
-				// Handle empty files as a special case
-				if(curFile.size == 0) {
-					ret = devices[DEVICE_DEST]->writeFile(destFile, readBuffer, 0);
-					if(ret != 0) {
-						free(readBuffer);
-						sprintf(txtbuffer, "Failed to Write! (%ul)\n%s",ret,destFile->name);
+						sprintf(txtbuffer, "Failed to Read! (%d %d)\n%s",amountToCopy,ret, &curFile.name[0]);
 						uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
 						DrawPublish(msgBox);
 						wait_press_A();
@@ -1615,41 +1643,68 @@ bool manage_file() {
 						return true;
 					}
 				}
-				free(readBuffer);
-				devices[DEVICE_CUR]->closeFile(&curFile);
-				devices[DEVICE_DEST]->closeFile(destFile);
-				setGCIInfo(NULL);
-				setCopyGCIMode(FALSE);
-				free(destFile);
-				uiDrawObj_t *msgBox = NULL;
-				if(!cancelled) {
-					// If cut, delete from source device
-					if(option == MOVE_OPTION) {
-						devices[DEVICE_CUR]->deleteFile(&curFile);
-						needsRefresh=1;
-						msgBox = DrawMessageBox(D_INFO,"Move Complete!");
-					}
-					else {
-						msgBox = DrawMessageBox(D_INFO,"Copy Complete.\nPress A to continue");
-					}
-				} 
-				else {
-					sprintf(txtbuffer, "%s cancelled.\nPress A to continue", (option == MOVE_OPTION) ? "Move" : "Copy");
-					msgBox = DrawMessageBox(D_INFO,txtbuffer);
+				ret = devices[DEVICE_DEST]->writeFile(destFile, readBuffer, amountToCopy);
+				if(ret != amountToCopy) {
+					DrawDispose(progBar);
+					free(readBuffer);
+					devices[DEVICE_CUR]->closeFile(&curFile);
+					devices[DEVICE_DEST]->closeFile(destFile);
+					sprintf(txtbuffer, "Failed to Write! (%ul %ul)\n%s",amountToCopy,ret,destFile->name);
+					uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+					DrawPublish(msgBox);
+					wait_press_A();
+					setGCIInfo(NULL);
+					setCopyGCIMode(FALSE);
+					DrawDispose(msgBox);
+					return true;
 				}
-				DrawPublish(msgBox);
-				wait_press_A();
-				DrawDispose(msgBox);
+				curOffset+=amountToCopy;
 			}
+			DrawDispose(progBar);
+
+			// Handle empty files as a special case
+			if(curFile.size == 0) {
+				ret = devices[DEVICE_DEST]->writeFile(destFile, readBuffer, 0);
+				if(ret != 0) {
+					free(readBuffer);
+					sprintf(txtbuffer, "Failed to Write! (%ul)\n%s",ret,destFile->name);
+					uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+					DrawPublish(msgBox);
+					wait_press_A();
+					setGCIInfo(NULL);
+					setCopyGCIMode(FALSE);
+					DrawDispose(msgBox);
+					return true;
+				}
+			}
+			free(readBuffer);
+			devices[DEVICE_CUR]->closeFile(&curFile);
+			devices[DEVICE_DEST]->closeFile(destFile);
+			setGCIInfo(NULL);
+			setCopyGCIMode(FALSE);
+			free(destFile);
+			uiDrawObj_t *msgBox = NULL;
+			if(!cancelled) {
+				// If cut, delete from source device
+				if(option == MOVE_OPTION) {
+					devices[DEVICE_CUR]->deleteFile(&curFile);
+					needsRefresh=1;
+					msgBox = DrawMessageBox(D_INFO,"Move Complete!");
+				}
+				else {
+					msgBox = DrawMessageBox(D_INFO,"Copy Complete.\nPress A to continue");
+				}
+			} 
+			else {
+				sprintf(txtbuffer, "%s cancelled.\nPress A to continue", (option == MOVE_OPTION) ? "Move" : "Copy");
+				msgBox = DrawMessageBox(D_INFO,txtbuffer);
+			}
+			DrawPublish(msgBox);
+			wait_press_A();
+			DrawDispose(msgBox);
 		}
 	}
-	// Else if directory, mention support not yet implemented.
-	else {
-		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Directory support not implemented");
-		DrawPublish(msgBox);
-		sleep(2);
-		DrawDispose(msgBox);
-	}
+
 	return true;
 }
 
@@ -1852,7 +1907,8 @@ void load_file()
 			}
 			return;
 		}
-		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Unknown File Type\nEnable file management to manage this file."));
+		// This should be unreachable now anyway.
+		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Unknown File Type!"));
 		sleep(1);
 		DrawDispose(msgBox);
 		return;			
