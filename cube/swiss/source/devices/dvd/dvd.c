@@ -407,6 +407,7 @@ void npdp_start()
 		npdp_getid(buf);
 		print_gecko("NPDP ID: [%s]\r\n", buf);
 	}
+	free(buf);
 }
 
 
