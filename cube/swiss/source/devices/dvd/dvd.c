@@ -395,6 +395,20 @@ unsigned int npdp_getid(unsigned char *dst)
 	return 0;
 }
 
+void npdp_start()
+{
+	// Get the drive date
+	u8* buf = (u8*)memalign(32,64);
+	memset(buf,0,64);
+	drive_version(buf);
+
+	if(*(u16*)&buf[2] == 0x0200) {
+		npdp_inquiry(buf);
+		npdp_getid(buf);
+		print_gecko("NPDP ID: [%s]\r\n", buf);
+	}
+}
+
 
 /* 
 DVD_LowRead64(void* dst, unsigned int len, uint64_t offset)

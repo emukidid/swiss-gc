@@ -146,6 +146,7 @@ int initialize_disc(u32 streaming) {
 		DrawDispose(progBar);
 		progBar = DrawPublish(DrawProgressBar(true, 0, "Resetting DVD drive - Detect Media"));
 		dvd_reset();
+		npdp_start();
 		dvd_read_id();
 		// Avoid lid open scenario
 		if((dvd_get_error()>>24) && (dvd_get_error()>>24 != 1)) {
