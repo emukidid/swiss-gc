@@ -17,8 +17,8 @@
 #include "dvd.h"
 #include "WodeInterface.h"
 
-char wode_regions[]  = {'J','E','P','U','K'};
-char *wode_regions_str[] = {"JPN","USA","EUR","UNK","KOR"};
+char wode_regions[]  = {'J','E','P','A','K'};
+char *wode_regions_str[] = {"JPN","USA","EUR","ALL","KOR"};
 char disktype[] = {'?', 'G','W','W','I' };
 int wodeInited = 0;
 
