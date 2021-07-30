@@ -1445,8 +1445,10 @@ bool manage_file() {
 		
 		// Show a directory only browser and get the destination file location
 		ret = select_dest_dir(devices[DEVICE_DEST]->initial, destFile);
-		if(!ret) {
-			devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );
+		if(ret) {
+			if(devices[DEVICE_DEST] != devices[DEVICE_CUR]) {
+				devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );
+			}
 			return false;
 		}
 		
@@ -1607,6 +1609,7 @@ bool manage_file() {
 			u32 lastOffset = 0;
 			int speed = 0;
 			int timeremain = 0;
+			print_gecko("Copying %i byte file from %s to %s\r\n", curFile.size, &curFile.name[0], destFile->name);
 			while(curOffset < curFile.size) {
 				u32 buttons = PAD_ButtonsHeld(0);
 				if(buttons & PAD_BUTTON_B) {
