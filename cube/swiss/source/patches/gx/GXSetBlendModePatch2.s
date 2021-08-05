@@ -14,15 +14,15 @@ GXSetBlendModePatch2:
 	cmpwi	%cr6, %r4, 0
 	insrwi	%r9, %r5, 3, 24
 	cmpwi	%cr7, %r5, 0
-	crand	4*%cr7+gt, 4*%cr7+gt, 4*%cr6+gt
-	cror	4*%cr7+gt, 4*%cr7+gt, 4*%cr0+gt
+	crand	4*%cr6+so, 4*%cr6+gt, 4*%cr0+eq
+	crand	4*%cr7+so, 4*%cr7+gt, 4*%cr6+so
 	insrwi	%r9, %r6, 4, 16
 	mfcr	%r0
 	rlwimi	%r9, %r0, 4, 31, 31
 	rlwimi	%r9, %r0, 8, 30, 30
 	rlwimi	%r9, %r0, 2, 20, 20
 	stw		%r9, 464 (%r10)
-	rlwinm	%r0, %r0, 0, 29, 29
+	rlwinm	%r0, %r0, 2, 29, 29
 	andc	%r9, %r9, %r0
 	b		1f
 	lwz		%r10, 0 (0)
