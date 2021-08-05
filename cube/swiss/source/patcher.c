@@ -12502,6 +12502,10 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 93, 26, 0, 0, 11, 9, NULL, 0, "SPEC1_MakeStatus" },
 		{ 85, 18, 0, 0,  2, 8, NULL, 0, "SPEC1_MakeStatus" }	// SN Systems ProDG
 	};
+	FuncPattern ClampS8Sig = 
+		{ 23, 1, 1, 0, 5, 7, NULL, 0, "ClampS8D" };
+	FuncPattern ClampU8Sig = 
+		{ 7, 0, 0, 0, 1, 3, NULL, 0, "ClampU8" };
 	FuncPattern SPEC2_MakeStatusSigs[5] = {
 		{ 186, 43, 3, 6, 20, 14, NULL, 0, "SPEC2_MakeStatusD" },
 		{ 218, 54, 4, 6, 22, 19, NULL, 0, "SPEC2_MakeStatusD" },
@@ -12880,6 +12884,31 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findp_pattern(data, dataType, i + 149, 13, length, &SPEC2_MakeStatusSigs[4]);
 							PADReadSigs[j].offsetFoundAt = i;
 						}
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(SPEC2_MakeStatusSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &SPEC2_MakeStatusSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i + 159, length, &ClampS8Sig) &&
+							findx_pattern(data, dataType, i + 163, length, &ClampS8Sig) &&
+							findx_pattern(data, dataType, i + 167, length, &ClampS8Sig) &&
+							findx_pattern(data, dataType, i + 171, length, &ClampS8Sig) &&
+							findx_pattern(data, dataType, i + 175, length, &ClampU8Sig) &&
+							findx_pattern(data, dataType, i + 179, length, &ClampU8Sig))
+							SPEC2_MakeStatusSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i + 191, length, &ClampS8Sig) &&
+							findx_pattern(data, dataType, i + 195, length, &ClampS8Sig) &&
+							findx_pattern(data, dataType, i + 199, length, &ClampS8Sig) &&
+							findx_pattern(data, dataType, i + 203, length, &ClampS8Sig) &&
+							findx_pattern(data, dataType, i + 207, length, &ClampU8Sig) &&
+							findx_pattern(data, dataType, i + 211, length, &ClampU8Sig))
+							SPEC2_MakeStatusSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -13316,11 +13345,55 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		}
 	}
 	
+	if ((i = ClampS8Sig.offsetFoundAt)) {
+		u32 *ClampS8 = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (ClampS8) {
+			data[i + 3] = 0x41800020;	// blt		+8
+			data[i + 4] = 0x3BE4FF81;	// subi		r31, r4, 127
+			
+			print_gecko("Found:[%s] @ %08X\n", ClampS8Sig.Name, ClampS8);
+			patched++;
+		}
+	}
+	
 	for (j = 0; j < sizeof(SPEC2_MakeStatusSigs) / sizeof(FuncPattern); j++)
 	if ((i = SPEC2_MakeStatusSigs[j].offsetFoundAt)) {
 		u32 *SPEC2_MakeStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SPEC2_MakeStatus) {
+			switch (j) {
+				case 2:
+					data[i + 150] = 0x41800024;	// blt		+9
+					data[i + 152] = 0x3805FF81;	// subi		r0, r5, 127
+					data[i + 173] = 0x41800024;	// blt		+9
+					data[i + 175] = 0x3805FF81;	// subi		r0, r5, 127
+					data[i + 196] = 0x41800024;	// blt		+9
+					data[i + 198] = 0x3805FF81;	// subi		r0, r5, 127
+					data[i + 219] = 0x41800024;	// blt		+9
+					data[i + 221] = 0x3805FF81;	// subi		r0, r5, 127
+					break;
+				case 3:
+					data[i + 138] = 0x41800020;	// blt		+8
+					data[i + 139] = 0x38A7FF81;	// subi		r5, r7, 127
+					data[i + 159] = 0x41800020;	// blt		+8
+					data[i + 160] = 0x38A7FF81;	// subi		r5, r7, 127
+					data[i + 180] = 0x41800020;	// blt		+8
+					data[i + 181] = 0x38A7FF81;	// subi		r5, r7, 127
+					data[i + 201] = 0x41800020;	// blt		+8
+					data[i + 202] = 0x38A7FF81;	// subi		r5, r7, 127
+					break;
+				case 4:
+					data[i + 180] = 0x41800024;	// blt		+9
+					data[i + 182] = 0x3805FF81;	// subi		r0, r5, 127
+					data[i + 203] = 0x41800024;	// blt		+9
+					data[i + 205] = 0x3805FF81;	// subi		r0, r5, 127
+					data[i + 226] = 0x41800024;	// blt		+9
+					data[i + 228] = 0x3805FF81;	// subi		r0, r5, 127
+					data[i + 249] = 0x41800024;	// blt		+9
+					data[i + 251] = 0x3805FF81;	// subi		r0, r5, 127
+					break;
+			}
 			if (swissSettings.invertCStick & 1) {
 				switch (j) {
 					case 0:
