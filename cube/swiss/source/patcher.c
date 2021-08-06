@@ -9839,9 +9839,26 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130B482 - 0x81300000) = 30;
 				*(s16 *)(data + 0x8130B48E - 0x81300000) = 80;
 				
-				if (newmode->viTVMode >> 2 == VI_PAL)
+				if (newmode->viTVMode >> 2 == VI_PAL) {
+					// Fix logo animation speed.
+					*(s16 *)(data + 0x8130E8B2 - 0x81300000) = 8;
+					*(s16 *)(data + 0x8130E8B6 - 0x81300000) = 15;
+					*(s16 *)(data + 0x8130E8C2 - 0x81300000) = 6;
+					*(s16 *)(data + 0x8130E8C6 - 0x81300000) = 5;
+					*(s16 *)(data + 0x8130E8CA - 0x81300000) = 4;
+					*(s16 *)(data + 0x8130E8CE - 0x81300000) = 13;
+					*(s16 *)(data + 0x8130E8D2 - 0x81300000) = 255;
+					*(s16 *)(data + 0x8130E8D6 - 0x81300000) = 17;
+					*(s16 *)(data + 0x8130E8DE - 0x81300000) = 33;
+					*(s16 *)(data + 0x8130E8E2 - 0x81300000) = 50;
+					*(u32 *)(data + 0x8130E91C - 0x81300000) = 0xB1630016;
+					*(u32 *)(data + 0x8130E924 - 0x81300000) = 0x9943000B;
+					*(u32 *)(data + 0x8130E928 - 0x81300000) = 0x9BA3001C;
+					*(u32 *)(data + 0x8130E92C - 0x81300000) = 0x9B830037;
+					*(u32 *)(data + 0x8130E930 - 0x81300000) = 0x99630035;
+					
 					memcpy(data + 0x8135DDE0 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
-				
+				}
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
 				patched++;
 				break;
@@ -9883,9 +9900,26 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130CC42 - 0x81300000) = 30;
 				*(s16 *)(data + 0x8130CC4E - 0x81300000) = 80;
 				
-				if (newmode->viTVMode >> 2 == VI_PAL)
+				if (newmode->viTVMode >> 2 == VI_PAL) {
+					// Fix logo animation speed.
+					*(s16 *)(data + 0x81310072 - 0x81300000) = 8;
+					*(s16 *)(data + 0x81310076 - 0x81300000) = 15;
+					*(s16 *)(data + 0x81310082 - 0x81300000) = 6;
+					*(s16 *)(data + 0x81310086 - 0x81300000) = 5;
+					*(s16 *)(data + 0x8131008A - 0x81300000) = 4;
+					*(s16 *)(data + 0x8131008E - 0x81300000) = 13;
+					*(s16 *)(data + 0x81310092 - 0x81300000) = 255;
+					*(s16 *)(data + 0x81310096 - 0x81300000) = 17;
+					*(s16 *)(data + 0x8131009E - 0x81300000) = 33;
+					*(s16 *)(data + 0x813100A2 - 0x81300000) = 50;
+					*(u32 *)(data + 0x813100DC - 0x81300000) = 0xB1630016;
+					*(u32 *)(data + 0x813100E4 - 0x81300000) = 0x9943000B;
+					*(u32 *)(data + 0x813100E8 - 0x81300000) = 0x9BA3001C;
+					*(u32 *)(data + 0x813100EC - 0x81300000) = 0x9B830037;
+					*(u32 *)(data + 0x813100F0 - 0x81300000) = 0x99630035;
+					
 					memcpy(data + 0x8135FD00 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
-				
+				}
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
 				patched++;
 				break;
@@ -9925,9 +9959,26 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130B60E - 0x81300000) = 30;
 				*(s16 *)(data + 0x8130B61A - 0x81300000) = 80;
 				
-				if (newmode->viTVMode >> 2 == VI_PAL)
+				if (newmode->viTVMode >> 2 == VI_PAL) {
+					// Fix logo animation speed.
+					*(s16 *)(data + 0x8130EAAA - 0x81300000) = 8;
+					*(s16 *)(data + 0x8130EAAE - 0x81300000) = 15;
+					*(s16 *)(data + 0x8130EABA - 0x81300000) = 6;
+					*(s16 *)(data + 0x8130EABE - 0x81300000) = 5;
+					*(s16 *)(data + 0x8130EAC2 - 0x81300000) = 4;
+					*(s16 *)(data + 0x8130EAC6 - 0x81300000) = 13;
+					*(s16 *)(data + 0x8130EACA - 0x81300000) = 255;
+					*(s16 *)(data + 0x8130EACE - 0x81300000) = 17;
+					*(s16 *)(data + 0x8130EAD6 - 0x81300000) = 33;
+					*(s16 *)(data + 0x8130EADA - 0x81300000) = 50;
+					*(u32 *)(data + 0x8130EB14 - 0x81300000) = 0xB1630016;
+					*(u32 *)(data + 0x8130EB1C - 0x81300000) = 0x9943000B;
+					*(u32 *)(data + 0x8130EB20 - 0x81300000) = 0x9BA3001C;
+					*(u32 *)(data + 0x8130EB24 - 0x81300000) = 0x9B830037;
+					*(u32 *)(data + 0x8130EB28 - 0x81300000) = 0x99630035;
+					
 					memcpy(data + 0x8137D9F0 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
-				
+				}
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.1");
 				patched++;
 				break;
@@ -9946,9 +9997,26 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force boot sound.
 				*(u32 *)(data + 0x81302DE8 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
-				if (newmode->viTVMode >> 2 != VI_PAL)
+				if (newmode->viTVMode >> 2 != VI_PAL) {
+					// Fix logo animation speed.
+					*(s16 *)(data + 0x8130F1C6 - 0x81300000) = 10;
+					*(s16 *)(data + 0x8130F1CA - 0x81300000) = 255;
+					*(s16 *)(data + 0x8130F1D6 - 0x81300000) = 7;
+					*(s16 *)(data + 0x8130F1DA - 0x81300000) = 6;
+					*(s16 *)(data + 0x8130F1DE - 0x81300000) = 5;
+					*(s16 *)(data + 0x8130F1E2 - 0x81300000) = 16;
+					*(s16 *)(data + 0x8130F1E6 - 0x81300000) = 18;
+					*(s16 *)(data + 0x8130F1EA - 0x81300000) = 20;
+					*(s16 *)(data + 0x8130F1F2 - 0x81300000) = 40;
+					*(s16 *)(data + 0x8130F1F6 - 0x81300000) = 60;
+					*(u32 *)(data + 0x8130F230 - 0x81300000) = 0xB3E30016;
+					*(u32 *)(data + 0x8130F238 - 0x81300000) = 0x9963000B;
+					*(u32 *)(data + 0x8130F23C - 0x81300000) = 0x9BC3001C;
+					*(u32 *)(data + 0x8130F240 - 0x81300000) = 0x9BA30037;
+					*(u32 *)(data + 0x8130F244 - 0x81300000) = 0x99430035;
+					
 					memcpy(data + 0x81380FD0 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
-				
+				}
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
 				patched++;
 				break;
@@ -9968,9 +10036,26 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force boot sound.
 				*(u32 *)(data + 0x813043EC - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
-				if (newmode->viTVMode >> 2 != VI_PAL)
+				if (newmode->viTVMode >> 2 != VI_PAL) {
+					// Fix logo animation speed.
+					*(s16 *)(data + 0x8130FDDA - 0x81300000) = 10;
+					*(s16 *)(data + 0x8130FDDE - 0x81300000) = 255;
+					*(s16 *)(data + 0x8130FDEA - 0x81300000) = 7;
+					*(s16 *)(data + 0x8130FDEE - 0x81300000) = 6;
+					*(s16 *)(data + 0x8130FDF2 - 0x81300000) = 5;
+					*(s16 *)(data + 0x8130FDF6 - 0x81300000) = 16;
+					*(s16 *)(data + 0x8130FDFA - 0x81300000) = 18;
+					*(s16 *)(data + 0x8130FDFE - 0x81300000) = 20;
+					*(s16 *)(data + 0x8130FE06 - 0x81300000) = 40;
+					*(s16 *)(data + 0x8130FE0A - 0x81300000) = 60;
+					*(u32 *)(data + 0x8130FE44 - 0x81300000) = 0xB3E30016;
+					*(u32 *)(data + 0x8130FE4C - 0x81300000) = 0x9963000B;
+					*(u32 *)(data + 0x8130FE50 - 0x81300000) = 0x9BC3001C;
+					*(u32 *)(data + 0x8130FE54 - 0x81300000) = 0x9BA30037;
+					*(u32 *)(data + 0x8130FE58 - 0x81300000) = 0x99430035;
+					
 					memcpy(data + 0x81380384 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
-				
+				}
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
 				patched++;
 				break;
@@ -9989,11 +10074,28 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force boot sound.
 				*(u32 *)(data + 0x81302DE8 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
-				if (newmode->viTVMode >> 2 != VI_PAL)
+				if (newmode->viTVMode >> 2 != VI_PAL) {
 					memcpy(data + 0x8137D910 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
-				else
+				} else {
+					// Fix logo animation speed.
+					*(s16 *)(data + 0x8130E9D6 - 0x81300000) = 8;
+					*(s16 *)(data + 0x8130E9DA - 0x81300000) = 15;
+					*(s16 *)(data + 0x8130E9E6 - 0x81300000) = 6;
+					*(s16 *)(data + 0x8130E9EA - 0x81300000) = 5;
+					*(s16 *)(data + 0x8130E9EE - 0x81300000) = 4;
+					*(s16 *)(data + 0x8130E9F2 - 0x81300000) = 13;
+					*(s16 *)(data + 0x8130E9F6 - 0x81300000) = 255;
+					*(s16 *)(data + 0x8130E9FA - 0x81300000) = 17;
+					*(s16 *)(data + 0x8130EA02 - 0x81300000) = 33;
+					*(s16 *)(data + 0x8130EA06 - 0x81300000) = 50;
+					*(u32 *)(data + 0x8130EA40 - 0x81300000) = 0xB1630016;
+					*(u32 *)(data + 0x8130EA48 - 0x81300000) = 0x9943000B;
+					*(u32 *)(data + 0x8130EA4C - 0x81300000) = 0x9BA3001C;
+					*(u32 *)(data + 0x8130EA50 - 0x81300000) = 0x9B830037;
+					*(u32 *)(data + 0x8130EA54 - 0x81300000) = 0x99630035;
+					
 					memcpy(data + 0x8137D910 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
-				
+				}
 				print_gecko("Patched:[%s]\n", "MPAL Revision 1.1");
 				patched++;
 				break;
@@ -10040,6 +10142,24 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130DCAE - 0x81300000) = 30;
 				*(s16 *)(data + 0x8130DCBA - 0x81300000) = 80;
 				
+				if (newmode->viTVMode >> 2 == VI_PAL) {
+					// Fix logo animation speed.
+					*(s16 *)(data + 0x8131114A - 0x81300000) = 8;
+					*(s16 *)(data + 0x8131114E - 0x81300000) = 15;
+					*(s16 *)(data + 0x8131115A - 0x81300000) = 6;
+					*(s16 *)(data + 0x8131115E - 0x81300000) = 5;
+					*(s16 *)(data + 0x81311162 - 0x81300000) = 4;
+					*(s16 *)(data + 0x81311166 - 0x81300000) = 13;
+					*(s16 *)(data + 0x8131116A - 0x81300000) = 255;
+					*(s16 *)(data + 0x8131116E - 0x81300000) = 17;
+					*(s16 *)(data + 0x81311176 - 0x81300000) = 33;
+					*(s16 *)(data + 0x8131117A - 0x81300000) = 50;
+					*(u32 *)(data + 0x813111B4 - 0x81300000) = 0xB1630016;
+					*(u32 *)(data + 0x813111BC - 0x81300000) = 0x9943000B;
+					*(u32 *)(data + 0x813111C0 - 0x81300000) = 0x9BA3001C;
+					*(u32 *)(data + 0x813111C4 - 0x81300000) = 0x9B830037;
+					*(u32 *)(data + 0x813111C8 - 0x81300000) = 0x99630035;
+				}
 				print_gecko("Patched:[%s]\n", "TDEV Revision 1.1");
 				patched++;
 				break;
@@ -10079,9 +10199,26 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130B982 - 0x81300000) = 30;
 				*(s16 *)(data + 0x8130B98E - 0x81300000) = 80;
 				
-				if (newmode->viTVMode >> 2 == VI_PAL)
+				if (newmode->viTVMode >> 2 == VI_PAL) {
+					// Fix logo animation speed.
+					*(s16 *)(data + 0x8130EE1E - 0x81300000) = 8;
+					*(s16 *)(data + 0x8130EE22 - 0x81300000) = 15;
+					*(s16 *)(data + 0x8130EE2E - 0x81300000) = 6;
+					*(s16 *)(data + 0x8130EE32 - 0x81300000) = 5;
+					*(s16 *)(data + 0x8130EE36 - 0x81300000) = 4;
+					*(s16 *)(data + 0x8130EE3A - 0x81300000) = 13;
+					*(s16 *)(data + 0x8130EE3E - 0x81300000) = 255;
+					*(s16 *)(data + 0x8130EE42 - 0x81300000) = 17;
+					*(s16 *)(data + 0x8130EE4A - 0x81300000) = 33;
+					*(s16 *)(data + 0x8130EE4E - 0x81300000) = 50;
+					*(u32 *)(data + 0x8130EE88 - 0x81300000) = 0xB1630016;
+					*(u32 *)(data + 0x8130EE90 - 0x81300000) = 0x9943000B;
+					*(u32 *)(data + 0x8130EE94 - 0x81300000) = 0x9BA3001C;
+					*(u32 *)(data + 0x8130EE98 - 0x81300000) = 0x9B830037;
+					*(u32 *)(data + 0x8130EE9C - 0x81300000) = 0x99630035;
+					
 					memcpy(data + 0x8137ECB8 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
-				
+				}
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
 				patched++;
 				break;
@@ -10121,9 +10258,26 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130B99A - 0x81300000) = 30;
 				*(s16 *)(data + 0x8130B9A6 - 0x81300000) = 80;
 				
-				if (newmode->viTVMode >> 2 == VI_PAL)
+				if (newmode->viTVMode >> 2 == VI_PAL) {
+					// Fix logo animation speed.
+					*(s16 *)(data + 0x8130EE36 - 0x81300000) = 8;
+					*(s16 *)(data + 0x8130EE3A - 0x81300000) = 15;
+					*(s16 *)(data + 0x8130EE46 - 0x81300000) = 6;
+					*(s16 *)(data + 0x8130EE4A - 0x81300000) = 5;
+					*(s16 *)(data + 0x8130EE4E - 0x81300000) = 4;
+					*(s16 *)(data + 0x8130EE52 - 0x81300000) = 13;
+					*(s16 *)(data + 0x8130EE56 - 0x81300000) = 255;
+					*(s16 *)(data + 0x8130EE5A - 0x81300000) = 17;
+					*(s16 *)(data + 0x8130EE62 - 0x81300000) = 33;
+					*(s16 *)(data + 0x8130EE66 - 0x81300000) = 50;
+					*(u32 *)(data + 0x8130EEA0 - 0x81300000) = 0xB1630016;
+					*(u32 *)(data + 0x8130EEA8 - 0x81300000) = 0x9943000B;
+					*(u32 *)(data + 0x8130EEAC - 0x81300000) = 0x9BA3001C;
+					*(u32 *)(data + 0x8130EEB0 - 0x81300000) = 0x9B830037;
+					*(u32 *)(data + 0x8130EEB4 - 0x81300000) = 0x99630035;
+					
 					memcpy(data + 0x8137F138 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
-				
+				}
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
 				patched++;
 				break;
@@ -10142,9 +10296,26 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force boot sound.
 				*(u32 *)(data + 0x81302F50 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
-				if (newmode->viTVMode >> 2 != VI_PAL)
+				if (newmode->viTVMode >> 2 != VI_PAL) {
+					// Fix logo animation speed.
+					*(s16 *)(data + 0x8130F306 - 0x81300000) = 10;
+					*(s16 *)(data + 0x8130F30A - 0x81300000) = 255;
+					*(s16 *)(data + 0x8130F316 - 0x81300000) = 7;
+					*(s16 *)(data + 0x8130F31A - 0x81300000) = 6;
+					*(s16 *)(data + 0x8130F31E - 0x81300000) = 5;
+					*(s16 *)(data + 0x8130F322 - 0x81300000) = 16;
+					*(s16 *)(data + 0x8130F326 - 0x81300000) = 18;
+					*(s16 *)(data + 0x8130F32A - 0x81300000) = 20;
+					*(s16 *)(data + 0x8130F332 - 0x81300000) = 40;
+					*(s16 *)(data + 0x8130F336 - 0x81300000) = 60;
+					*(u32 *)(data + 0x8130F370 - 0x81300000) = 0xB3E30016;
+					*(u32 *)(data + 0x8130F378 - 0x81300000) = 0x9963000B;
+					*(u32 *)(data + 0x8130F37C - 0x81300000) = 0x9BC3001C;
+					*(u32 *)(data + 0x8130F380 - 0x81300000) = 0x9BA30037;
+					*(u32 *)(data + 0x8130F384 - 0x81300000) = 0x99430035;
+					
 					memcpy(data + 0x81382470 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
-				
+				}
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.2");
 				patched++;
 				break;
