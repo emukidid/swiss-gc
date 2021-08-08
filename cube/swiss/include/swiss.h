@@ -126,6 +126,7 @@ typedef struct {
 	int bs2Boot;
 	int showHiddenFiles;
 	int recentListLevel;	// on, lazy, off
+	char gcloaderTopVersion[32];
 	char autoload[PATHNAME_MAX];
 	char recent[RECENT_MAX][PATHNAME_MAX];
 } SwissSettings;

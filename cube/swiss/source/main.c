@@ -253,10 +253,15 @@ int main ()
 	}
 	else if(device == &__device_gcloader) {
 		char *gcloaderVersionStr = gcloaderGetVersion();
-		if(gcloaderVersionStr != NULL && strverscmp(gcloaderVersionStr, "1.1.2") < 0) {
-			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\ngc-loader.com/firmware-updates"));
-			wait_press_A();
-			DrawDispose(msgBox);
+		if(gcloaderVersionStr != NULL) {
+			if(strverscmp(swissSettings.gcloaderTopVersion, gcloaderVersionStr) < 0) {
+				strlcpy(swissSettings.gcloaderTopVersion, gcloaderVersionStr, sizeof(swissSettings.gcloaderTopVersion));
+			}
+			if(strverscmp(swissSettings.gcloaderTopVersion, "1.1.2") < 0) {
+				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\ngc-loader.com/firmware-updates"));
+				wait_press_A();
+				DrawDispose(msgBox);
+			}
 		}
 		free(gcloaderVersionStr);
 	}

@@ -211,6 +211,8 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "RecentListLevel=%s\r\n", (recentListLevelStr[swissSettings.recentListLevel]));
 	string_append(configString, txtbuffer);
+	sprintf(txtbuffer, "GCLoaderTopVersion=%s\r\n",swissSettings.gcloaderTopVersion);
+	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "Autoload=%s\r\n",swissSettings.autoload);
 	string_append(configString, txtbuffer);
 	int i;
@@ -579,6 +581,9 @@ void config_parse(char *configData) {
 						swissSettings.recentListLevel = 1;
 					else if(!strcmp(recentListLevelStr[2], value))
 						swissSettings.recentListLevel = 2;
+				}
+				else if(!strcmp("GCLoaderTopVersion", name)) {
+					strlcpy(&swissSettings.gcloaderTopVersion[0], value, sizeof(swissSettings.gcloaderTopVersion));
 				}
 				else if(!strcmp("Autoload", name)) {
 					strlcpy(&swissSettings.autoload[0], value, sizeof(swissSettings.autoload));
