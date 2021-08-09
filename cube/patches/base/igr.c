@@ -59,6 +59,7 @@ static void load_dol(uint32_t offset)
 void fini(void)
 {
 	disable_interrupts();
+	asm volatile("mtdabr %0" :: "r" (0));
 	device_reset();
 
 	switch (*VAR_IGR_TYPE) {

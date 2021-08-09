@@ -886,6 +886,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	void *buffer;
 	
 	// Clear OSLoMem
+	asm volatile("mtdabr %0" :: "r" (0));
 	memset((void*)0x80000000,0,0x100);
 	memset((void*)0x80003000,0,0x100);
 	
