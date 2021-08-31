@@ -12503,6 +12503,60 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
+	} else if (!strncmp(gameID, "GK7E08", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 2866304:
+				*(u16 *)(data + 0x802B1002 - 0x80269E80 + 0x266E80) = 8;
+				*(u16 *)(data + 0x802B1006 - 0x80269E80 + 0x266E80) = 704;
+				
+				*(u16 *)(data + 0x802B103E - 0x80269E80 + 0x266E80) = 8;
+				*(u16 *)(data + 0x802B1042 - 0x80269E80 + 0x266E80) = 704;
+				
+				*(u16 *)(data + 0x802B107A - 0x80269E80 + 0x266E80) = 8;
+				*(u16 *)(data + 0x802B107E - 0x80269E80 + 0x266E80) = 704;
+				
+				*(u16 *)(data + 0x802B10F2 - 0x80269E80 + 0x266E80) = 8;
+				*(u16 *)(data + 0x802B10F6 - 0x80269E80 + 0x266E80) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GK7J08", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 2891072:
+				*(u16 *)(data + 0x802B7082 - 0x8026C680 + 0x269680) = 8;
+				*(u16 *)(data + 0x802B7086 - 0x8026C680 + 0x269680) = 704;
+				
+				*(u16 *)(data + 0x802B70BE - 0x8026C680 + 0x269680) = 8;
+				*(u16 *)(data + 0x802B70C2 - 0x8026C680 + 0x269680) = 704;
+				
+				*(u16 *)(data + 0x802B70FA - 0x8026C680 + 0x269680) = 8;
+				*(u16 *)(data + 0x802B70FE - 0x8026C680 + 0x269680) = 704;
+				
+				*(u16 *)(data + 0x802B7172 - 0x8026C680 + 0x269680) = 8;
+				*(u16 *)(data + 0x802B7176 - 0x8026C680 + 0x269680) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GK7P08", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 2961056:
+				*(u16 *)(data + 0x8027D282 - 0x8027D200 + 0x27A200) = 8;
+				*(u16 *)(data + 0x8027D286 - 0x8027D200 + 0x27A200) = 704;
+				
+				*(u16 *)(data + 0x802C81C2 - 0x8027D200 + 0x27A200) = 8;
+				*(u16 *)(data + 0x802C81C6 - 0x8027D200 + 0x27A200) = 704;
+				
+				*(u16 *)(data + 0x802C81FE - 0x8027D200 + 0x27A200) = 8;
+				*(u16 *)(data + 0x802C8202 - 0x8027D200 + 0x27A200) = 704;
+				
+				*(u16 *)(data + 0x802C8276 - 0x8027D200 + 0x27A200) = 8;
+				*(u16 *)(data + 0x802C827A - 0x8027D200 + 0x27A200) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
 	} else if (!strncmp(gameID, "GPTP41", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4017536:
