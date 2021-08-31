@@ -12584,6 +12584,54 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
+	} else if (!strncmp(gameID, "GWRE01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3431456:
+				*(u16 *)(data + 0x8034142A - 0x80173DA0 + 0x170DA0) = 8;
+				*(u16 *)(data + 0x8034142E - 0x80173DA0 + 0x170DA0) = 704;
+				
+				*(u16 *)(data + 0x80341466 - 0x80173DA0 + 0x170DA0) = 8;
+				*(u16 *)(data + 0x8034146A - 0x80173DA0 + 0x170DA0) = 704;
+				
+				*(u16 *)(data + 0x803414A2 - 0x80173DA0 + 0x170DA0) = 8;
+				*(u16 *)(data + 0x803414A6 - 0x80173DA0 + 0x170DA0) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GWRJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3418464:
+				*(u16 *)(data + 0x8033E1EA - 0x80170880 + 0x16D880) = 8;
+				*(u16 *)(data + 0x8033E1EE - 0x80170880 + 0x16D880) = 704;
+				
+				*(u16 *)(data + 0x8033E226 - 0x80170880 + 0x16D880) = 8;
+				*(u16 *)(data + 0x8033E22A - 0x80170880 + 0x16D880) = 704;
+				
+				*(u16 *)(data + 0x8033E262 - 0x80170880 + 0x16D880) = 8;
+				*(u16 *)(data + 0x8033E266 - 0x80170880 + 0x16D880) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GWRP01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3442880:
+				*(u16 *)(data + 0x80252ACA - 0x80176760 + 0x173760) = 8;
+				*(u16 *)(data + 0x80252ACE - 0x80176760 + 0x173760) = 704;
+				
+				*(u16 *)(data + 0x80343FCA - 0x80176760 + 0x173760) = 8;
+				*(u16 *)(data + 0x80343FCE - 0x80176760 + 0x173760) = 704;
+				
+				*(u16 *)(data + 0x80344006 - 0x80176760 + 0x173760) = 8;
+				*(u16 *)(data + 0x8034400A - 0x80176760 + 0x173760) = 704;
+				
+				*(u16 *)(data + 0x80344042 - 0x80176760 + 0x173760) = 8;
+				*(u16 *)(data + 0x80344046 - 0x80176760 + 0x173760) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
 	} else if ((!strncmp(gameID, "GX2D52", 6) || !strncmp(gameID, "GX2P52", 6) || !strncmp(gameID, "GX2S52", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4055712:
