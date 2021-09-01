@@ -12616,6 +12616,100 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
+	} else if (!strncmp(gameID, "GPIE01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3102432:
+				*(u16 *)(data + 0x802A566E - 0x80222D20 + 0x21FD20) = 8;
+				*(u16 *)(data + 0x802A5672 - 0x80222D20 + 0x21FD20) = 704;
+				
+				*(u16 *)(data + 0x802A56AA - 0x80222D20 + 0x21FD20) = 8;
+				*(u16 *)(data + 0x802A56AE - 0x80222D20 + 0x21FD20) = 704;
+				
+				*(u16 *)(data + 0x802E8D32 - 0x80222D20 + 0x21FD20) = 8;
+				*(u16 *)(data + 0x802E8D36 - 0x80222D20 + 0x21FD20) = 704;
+				
+				*(u16 *)(data + 0x802E8D6E - 0x80222D20 + 0x21FD20) = 8;
+				*(u16 *)(data + 0x802E8D72 - 0x80222D20 + 0x21FD20) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+			case 3102592:
+				*(u16 *)(data + 0x802A570E - 0x80222DC0 + 0x21FDC0) = 8;
+				*(u16 *)(data + 0x802A5712 - 0x80222DC0 + 0x21FDC0) = 704;
+				
+				*(u16 *)(data + 0x802A574A - 0x80222DC0 + 0x21FDC0) = 8;
+				*(u16 *)(data + 0x802A574E - 0x80222DC0 + 0x21FDC0) = 704;
+				
+				*(u16 *)(data + 0x802E8DD2 - 0x80222DC0 + 0x21FDC0) = 8;
+				*(u16 *)(data + 0x802E8DD6 - 0x80222DC0 + 0x21FDC0) = 704;
+				
+				*(u16 *)(data + 0x802E8E0E - 0x80222DC0 + 0x21FDC0) = 8;
+				*(u16 *)(data + 0x802E8E12 - 0x80222DC0 + 0x21FDC0) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GPIJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3127584:
+				*(u16 *)(data + 0x802AABD6 - 0x80227EA0 + 0x224EA0) = 8;
+				*(u16 *)(data + 0x802AABDA - 0x80227EA0 + 0x224EA0) = 704;
+				
+				*(u16 *)(data + 0x802AAC12 - 0x80227EA0 + 0x224EA0) = 8;
+				*(u16 *)(data + 0x802AAC16 - 0x80227EA0 + 0x224EA0) = 704;
+				
+				*(u16 *)(data + 0x802EEF12 - 0x80227EA0 + 0x224EA0) = 8;
+				*(u16 *)(data + 0x802EEF16 - 0x80227EA0 + 0x224EA0) = 704;
+				
+				*(u16 *)(data + 0x802EEF4E - 0x80227EA0 + 0x224EA0) = 8;
+				*(u16 *)(data + 0x802EEF52 - 0x80227EA0 + 0x224EA0) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+			case 3128832:
+				*(u16 *)(data + 0x802AB0B6 - 0x80228380 + 0x225380) = 8;
+				*(u16 *)(data + 0x802AB0BA - 0x80228380 + 0x225380) = 704;
+				
+				*(u16 *)(data + 0x802AB0F2 - 0x80228380 + 0x225380) = 8;
+				*(u16 *)(data + 0x802AB0F6 - 0x80228380 + 0x225380) = 704;
+				
+				*(u16 *)(data + 0x802EF3F2 - 0x80228380 + 0x225380) = 8;
+				*(u16 *)(data + 0x802EF3F6 - 0x80228380 + 0x225380) = 704;
+				
+				*(u16 *)(data + 0x802EF42E - 0x80228380 + 0x225380) = 8;
+				*(u16 *)(data + 0x802EF432 - 0x80228380 + 0x225380) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GPIP01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3113952:
+				*(u32 *)(data + 0x802A7CB4 - 0x80224BC0 + 0x221BC0) = VI_TVMODE_EURGB60_INT;
+				*(u16 *)(data + 0x802A7CBE - 0x80224BC0 + 0x221BC0) = 8;
+				*(u16 *)(data + 0x802A7CC0 - 0x80224BC0 + 0x221BC0) = 0;
+				*(u16 *)(data + 0x802A7CC2 - 0x80224BC0 + 0x221BC0) = 704;
+				*(u32 *)(data + 0x802A7CC8 - 0x80224BC0 + 0x221BC0) = VI_XFBMODE_DF;
+				
+				memcpy(data + 0x802A7CE6 - 0x80224BC0 + 0x221BC0, (u8[]){5, 6, 14, 14, 14, 6, 5}, 7);
+				
+				*(u16 *)(data + 0x802EB9FA - 0x80224BC0 + 0x221BC0) = 8;
+				*(u16 *)(data + 0x802EB9FE - 0x80224BC0 + 0x221BC0) = 704;
+				
+				*(u16 *)(data + 0x802EBA36 - 0x80224BC0 + 0x221BC0) = 8;
+				*(u16 *)(data + 0x802EBA3A - 0x80224BC0 + 0x221BC0) = 704;
+				
+				*(u16 *)(data + 0x802EBAAE - 0x80224BC0 + 0x221BC0) = 8;
+				*(u16 *)(data + 0x802EBAB2 - 0x80224BC0 + 0x221BC0) = 704;
+				
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
+					*(u32 *)(data + 0x803E24F0 - 0x803E1C60 + 0x2E9380) = 0x802A7CB4;
+					
+					*(f32 *)(data + 0x803ED5B0 - 0x803ED120 + 0x2F3DE0) = 1.0f;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
 	} else if (!strncmp(gameID, "GPTP41", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4017536:
