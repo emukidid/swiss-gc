@@ -12557,6 +12557,65 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
+	} else if (!strncmp(gameID, "GLME01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3799584:
+				*(u16 *)(data + 0x802181DA - 0x80218100 + 0x215100) = 8;
+				*(u16 *)(data + 0x802181DE - 0x80218100 + 0x215100) = 704;
+				
+				*(u16 *)(data + 0x80395C4A - 0x80218100 + 0x215100) = 8;
+				*(u16 *)(data + 0x80395C4E - 0x80218100 + 0x215100) = 704;
+				
+				*(u16 *)(data + 0x80395C86 - 0x80218100 + 0x215100) = 8;
+				*(u16 *)(data + 0x80395C8A - 0x80218100 + 0x215100) = 704;
+				
+				*(u16 *)(data + 0x80395CC2 - 0x80218100 + 0x215100) = 8;
+				*(u16 *)(data + 0x80395CC6 - 0x80218100 + 0x215100) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GLMJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3754304:
+				*(u16 *)(data + 0x8020D4BA - 0x8020D3E0 + 0x20A3E0) = 8;
+				*(u16 *)(data + 0x8020D4BE - 0x8020D3E0 + 0x20A3E0) = 704;
+				
+				*(u16 *)(data + 0x8038ABAA - 0x8020D3E0 + 0x20A3E0) = 8;
+				*(u16 *)(data + 0x8038ABAE - 0x8020D3E0 + 0x20A3E0) = 704;
+				
+				*(u16 *)(data + 0x8038ABE6 - 0x8020D3E0 + 0x20A3E0) = 8;
+				*(u16 *)(data + 0x8038ABEA - 0x8020D3E0 + 0x20A3E0) = 704;
+				
+				*(u16 *)(data + 0x8038AC22 - 0x8020D3E0 + 0x20A3E0) = 8;
+				*(u16 *)(data + 0x8038AC26 - 0x8020D3E0 + 0x20A3E0) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GLMP01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3739680:
+				*(u16 *)(data + 0x803870B2 - 0x8021D240 + 0x21A240) = 8;
+				*(u16 *)(data + 0x803870B6 - 0x8021D240 + 0x21A240) = 704;
+				
+				*(u16 *)(data + 0x803870EE - 0x8021D240 + 0x21A240) = 8;
+				*(u16 *)(data + 0x803870F2 - 0x8021D240 + 0x21A240) = 704;
+				
+				*(u16 *)(data + 0x8038712A - 0x8021D240 + 0x21A240) = 8;
+				*(u16 *)(data + 0x8038712E - 0x8021D240 + 0x21A240) = 704;
+				
+				*(u16 *)(data + 0x803871A2 - 0x8021D240 + 0x21A240) = 8;
+				*(u16 *)(data + 0x803871A6 - 0x8021D240 + 0x21A240) = 704;
+				
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
+					*(s16 *)(data + 0x80007596 - 0x800057C0 + 0x2520) = 116;
+					
+					*(u32 *)(data + 0x804BD630 - 0x804BD620 + 0x384E80) = 0x803908D4;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
 	} else if (!strncmp(gameID, "GPTP41", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 4017536:
