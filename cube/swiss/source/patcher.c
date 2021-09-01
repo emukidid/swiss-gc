@@ -12596,6 +12596,9 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GLMP01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3739680:
+				*(s16 *)(data + 0x8000739E - 0x800057C0 + 0x2520) = 40;
+				*(s16 *)(data + 0x800073A6 - 0x800057C0 + 0x2520) = 640;
+				
 				*(u16 *)(data + 0x803870B2 - 0x8021D240 + 0x21A240) = 8;
 				*(u16 *)(data + 0x803870B6 - 0x8021D240 + 0x21A240) = 704;
 				
@@ -12693,6 +12696,9 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				
 				memcpy(data + 0x802A7CE6 - 0x80224BC0 + 0x221BC0, (u8[]){5, 6, 14, 14, 14, 6, 5}, 7);
 				
+				*(u16 *)(data + 0x802A7CFA - 0x80224BC0 + 0x221BC0) = 40;
+				*(u16 *)(data + 0x802A7CFE - 0x80224BC0 + 0x221BC0) = 640;
+				
 				*(u16 *)(data + 0x802EB9FA - 0x80224BC0 + 0x221BC0) = 8;
 				*(u16 *)(data + 0x802EB9FE - 0x80224BC0 + 0x221BC0) = 704;
 				
@@ -12733,6 +12739,197 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					*(s16 *)(data + 0x8002E666 - 0x8000B400 + 0x2600) = (0x80098534 & 0xFFFF);
 					*(s16 *)(data + 0x8002E676 - 0x8000B400 + 0x2600) = 40;
 					*(s16 *)(data + 0x8002E67E - 0x8000B400 + 0x2600) = 40;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GSAE01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3398976:
+				memset(data + 0x80049504 - 0x800066E0 + 0x2620, 0, 0x80049550 - 0x80049504);
+				
+				*(u32 *)(data + 0x80049504 - 0x800066E0 + 0x2620) = 0x9421FFF0;
+				*(u32 *)(data + 0x80049508 - 0x800066E0 + 0x2620) = 0x7C0802A6;
+				*(u32 *)(data + 0x8004950C - 0x800066E0 + 0x2620) = 0x90010014;
+				*(u32 *)(data + 0x80049510 - 0x800066E0 + 0x2620) = 0x806D9B10;
+				*(u32 *)(data + 0x80049514 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024CDB8, (u32 *)0x80049514);
+				*(u32 *)(data + 0x80049518 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024D554, (u32 *)0x80049518);
+				*(u32 *)(data + 0x8004951C - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024C8F0, (u32 *)0x8004951C);
+				*(u32 *)(data + 0x80049520 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024C8F0, (u32 *)0x80049520);
+				*(u32 *)(data + 0x80049524 - 0x800066E0 + 0x2620) = 0x80010014;
+				*(u32 *)(data + 0x80049528 - 0x800066E0 + 0x2620) = 0x7C0803A6;
+				*(u32 *)(data + 0x8004952C - 0x800066E0 + 0x2620) = 0x38210010;
+				*(u32 *)(data + 0x80049530 - 0x800066E0 + 0x2620) = 0x4E800020;
+				
+				*(u16 *)(data + 0x8032E62A - 0x802C2D60 + 0x2BFD60) = 8;
+				*(u16 *)(data + 0x8032E62E - 0x802C2D60 + 0x2BFD60) = 704;
+				
+				*(u16 *)(data + 0x8032E666 - 0x802C2D60 + 0x2BFD60) = 8;
+				*(u16 *)(data + 0x8032E66A - 0x802C2D60 + 0x2BFD60) = 704;
+				
+				*(u16 *)(data + 0x8032E6A2 - 0x802C2D60 + 0x2BFD60) = 8;
+				*(u16 *)(data + 0x8032E6A6 - 0x802C2D60 + 0x2BFD60) = 704;
+				
+				*(u16 *)(data + 0x8032E71A - 0x802C2D60 + 0x2BFD60) = 8;
+				*(u16 *)(data + 0x8032E71E - 0x802C2D60 + 0x2BFD60) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+			case 3402176:
+				memset(data + 0x80049680 - 0x800066E0 + 0x2620, 0, 0x800496CC - 0x80049680);
+				
+				*(u32 *)(data + 0x80049680 - 0x800066E0 + 0x2620) = 0x9421FFF0;
+				*(u32 *)(data + 0x80049684 - 0x800066E0 + 0x2620) = 0x7C0802A6;
+				*(u32 *)(data + 0x80049688 - 0x800066E0 + 0x2620) = 0x90010014;
+				*(u32 *)(data + 0x8004968C - 0x800066E0 + 0x2620) = 0x806D9B30;
+				*(u32 *)(data + 0x80049690 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024D51C, (u32 *)0x80049690);
+				*(u32 *)(data + 0x80049694 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024DCB8, (u32 *)0x80049694);
+				*(u32 *)(data + 0x80049698 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024D054, (u32 *)0x80049698);
+				*(u32 *)(data + 0x8004969C - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024D054, (u32 *)0x8004969C);
+				*(u32 *)(data + 0x800496A0 - 0x800066E0 + 0x2620) = 0x80010014;
+				*(u32 *)(data + 0x800496A4 - 0x800066E0 + 0x2620) = 0x7C0803A6;
+				*(u32 *)(data + 0x800496A8 - 0x800066E0 + 0x2620) = 0x38210010;
+				*(u32 *)(data + 0x800496AC - 0x800066E0 + 0x2620) = 0x4E800020;
+				
+				*(u16 *)(data + 0x8032F282 - 0x802C34E0 + 0x2C04E0) = 8;
+				*(u16 *)(data + 0x8032F286 - 0x802C34E0 + 0x2C04E0) = 704;
+				
+				*(u16 *)(data + 0x8032F2BE - 0x802C34E0 + 0x2C04E0) = 8;
+				*(u16 *)(data + 0x8032F2C2 - 0x802C34E0 + 0x2C04E0) = 704;
+				
+				*(u16 *)(data + 0x8032F2FA - 0x802C34E0 + 0x2C04E0) = 8;
+				*(u16 *)(data + 0x8032F2FE - 0x802C34E0 + 0x2C04E0) = 704;
+				
+				*(u16 *)(data + 0x8032F372 - 0x802C34E0 + 0x2C04E0) = 8;
+				*(u16 *)(data + 0x8032F376 - 0x802C34E0 + 0x2C04E0) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GSAJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3399264:
+				memset(data + 0x80049524 - 0x800066E0 + 0x2620, 0, 0x80049570 - 0x80049524);
+				
+				*(u32 *)(data + 0x80049524 - 0x800066E0 + 0x2620) = 0x9421FFF0;
+				*(u32 *)(data + 0x80049528 - 0x800066E0 + 0x2620) = 0x7C0802A6;
+				*(u32 *)(data + 0x8004952C - 0x800066E0 + 0x2620) = 0x90010014;
+				*(u32 *)(data + 0x80049530 - 0x800066E0 + 0x2620) = 0x806D9B10;
+				*(u32 *)(data + 0x80049534 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024CEA8, (u32 *)0x80049534);
+				*(u32 *)(data + 0x80049538 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024D644, (u32 *)0x80049538);
+				*(u32 *)(data + 0x8004953C - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024C9E0, (u32 *)0x8004953C);
+				*(u32 *)(data + 0x80049540 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024C9E0, (u32 *)0x80049540);
+				*(u32 *)(data + 0x80049544 - 0x800066E0 + 0x2620) = 0x80010014;
+				*(u32 *)(data + 0x80049548 - 0x800066E0 + 0x2620) = 0x7C0803A6;
+				*(u32 *)(data + 0x8004954C - 0x800066E0 + 0x2620) = 0x38210010;
+				*(u32 *)(data + 0x80049550 - 0x800066E0 + 0x2620) = 0x4E800020;
+				
+				*(u16 *)(data + 0x8032E74A - 0x802C2E60 + 0x2BFE60) = 8;
+				*(u16 *)(data + 0x8032E74E - 0x802C2E60 + 0x2BFE60) = 704;
+				
+				*(u16 *)(data + 0x8032E786 - 0x802C2E60 + 0x2BFE60) = 8;
+				*(u16 *)(data + 0x8032E78A - 0x802C2E60 + 0x2BFE60) = 704;
+				
+				*(u16 *)(data + 0x8032E7C2 - 0x802C2E60 + 0x2BFE60) = 8;
+				*(u16 *)(data + 0x8032E7C6 - 0x802C2E60 + 0x2BFE60) = 704;
+				
+				*(u16 *)(data + 0x8032E83A - 0x802C2E60 + 0x2BFE60) = 8;
+				*(u16 *)(data + 0x8032E83E - 0x802C2E60 + 0x2BFE60) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+			case 3402176:
+				memset(data + 0x80049680 - 0x800066E0 + 0x2620, 0, 0x800496CC - 0x80049680);
+				
+				*(u32 *)(data + 0x80049680 - 0x800066E0 + 0x2620) = 0x9421FFF0;
+				*(u32 *)(data + 0x80049684 - 0x800066E0 + 0x2620) = 0x7C0802A6;
+				*(u32 *)(data + 0x80049688 - 0x800066E0 + 0x2620) = 0x90010014;
+				*(u32 *)(data + 0x8004968C - 0x800066E0 + 0x2620) = 0x806D9B30;
+				*(u32 *)(data + 0x80049690 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024D51C, (u32 *)0x80049690);
+				*(u32 *)(data + 0x80049694 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024DCB8, (u32 *)0x80049694);
+				*(u32 *)(data + 0x80049698 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024D054, (u32 *)0x80049698);
+				*(u32 *)(data + 0x8004969C - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024D054, (u32 *)0x8004969C);
+				*(u32 *)(data + 0x800496A0 - 0x800066E0 + 0x2620) = 0x80010014;
+				*(u32 *)(data + 0x800496A4 - 0x800066E0 + 0x2620) = 0x7C0803A6;
+				*(u32 *)(data + 0x800496A8 - 0x800066E0 + 0x2620) = 0x38210010;
+				*(u32 *)(data + 0x800496AC - 0x800066E0 + 0x2620) = 0x4E800020;
+				
+				*(u16 *)(data + 0x8032F282 - 0x802C34E0 + 0x2C04E0) = 8;
+				*(u16 *)(data + 0x8032F286 - 0x802C34E0 + 0x2C04E0) = 704;
+				
+				*(u16 *)(data + 0x8032F2BE - 0x802C34E0 + 0x2C04E0) = 8;
+				*(u16 *)(data + 0x8032F2C2 - 0x802C34E0 + 0x2C04E0) = 704;
+				
+				*(u16 *)(data + 0x8032F2FA - 0x802C34E0 + 0x2C04E0) = 8;
+				*(u16 *)(data + 0x8032F2FE - 0x802C34E0 + 0x2C04E0) = 704;
+				
+				*(u16 *)(data + 0x8032F372 - 0x802C34E0 + 0x2C04E0) = 8;
+				*(u16 *)(data + 0x8032F376 - 0x802C34E0 + 0x2C04E0) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GSAP01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3405152:
+				memset(data + 0x8004971C - 0x800066E0 + 0x2620, 0, 0x80049768 - 0x8004971C);
+				
+				*(u32 *)(data + 0x8004971C - 0x800066E0 + 0x2620) = 0x9421FFF0;
+				*(u32 *)(data + 0x80049720 - 0x800066E0 + 0x2620) = 0x7C0802A6;
+				*(u32 *)(data + 0x80049724 - 0x800066E0 + 0x2620) = 0x90010014;
+				*(u32 *)(data + 0x80049728 - 0x800066E0 + 0x2620) = 0x806D9B68;
+				*(u32 *)(data + 0x8004972C - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024D62C, (u32 *)0x8004972C);
+				*(u32 *)(data + 0x80049730 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024DDC8, (u32 *)0x80049730);
+				*(u32 *)(data + 0x80049734 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024D164, (u32 *)0x80049734);
+				*(u32 *)(data + 0x80049738 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024D164, (u32 *)0x80049738);
+				*(u32 *)(data + 0x8004973C - 0x800066E0 + 0x2620) = 0x80010014;
+				*(u32 *)(data + 0x80049740 - 0x800066E0 + 0x2620) = 0x7C0803A6;
+				*(u32 *)(data + 0x80049744 - 0x800066E0 + 0x2620) = 0x38210010;
+				*(u32 *)(data + 0x80049748 - 0x800066E0 + 0x2620) = 0x4E800020;
+				
+				*(u16 *)(data + 0x8032FE02 - 0x802C35A0 + 0x2C05A0) = 8;
+				*(u16 *)(data + 0x8032FE06 - 0x802C35A0 + 0x2C05A0) = 704;
+				
+				*(u16 *)(data + 0x8032FE3E - 0x802C35A0 + 0x2C05A0) = 8;
+				*(u16 *)(data + 0x8032FE42 - 0x802C35A0 + 0x2C05A0) = 704;
+				
+				*(u16 *)(data + 0x8032FEB6 - 0x802C35A0 + 0x2C05A0) = 8;
+				*(u16 *)(data + 0x8032FEBA - 0x802C35A0 + 0x2C05A0) = 704;
+				
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
+					*(s16 *)(data + 0x80020FFA - 0x800066E0 + 0x2620) = (0x8032FEAC + 0x8000) >> 16;
+					*(s16 *)(data + 0x80020FFE - 0x800066E0 + 0x2620) = (0x8032FEAC & 0xFFFF);
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+			case 3405600:
+				memset(data + 0x8004971C - 0x800066E0 + 0x2620, 0, 0x80049768 - 0x8004971C);
+				
+				*(u32 *)(data + 0x8004971C - 0x800066E0 + 0x2620) = 0x9421FFF0;
+				*(u32 *)(data + 0x80049720 - 0x800066E0 + 0x2620) = 0x7C0802A6;
+				*(u32 *)(data + 0x80049724 - 0x800066E0 + 0x2620) = 0x90010014;
+				*(u32 *)(data + 0x80049728 - 0x800066E0 + 0x2620) = 0x806D9B68;
+				*(u32 *)(data + 0x8004972C - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024D764, (u32 *)0x8004972C);
+				*(u32 *)(data + 0x80049730 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024DF00, (u32 *)0x80049730);
+				*(u32 *)(data + 0x80049734 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024D29C, (u32 *)0x80049734);
+				*(u32 *)(data + 0x80049738 - 0x800066E0 + 0x2620) = branchAndLink((u32 *)0x8024D29C, (u32 *)0x80049738);
+				*(u32 *)(data + 0x8004973C - 0x800066E0 + 0x2620) = 0x80010014;
+				*(u32 *)(data + 0x80049740 - 0x800066E0 + 0x2620) = 0x7C0803A6;
+				*(u32 *)(data + 0x80049744 - 0x800066E0 + 0x2620) = 0x38210010;
+				*(u32 *)(data + 0x80049748 - 0x800066E0 + 0x2620) = 0x4E800020;
+				
+				*(u16 *)(data + 0x8032FFC2 - 0x802C36E0 + 0x2C06E0) = 8;
+				*(u16 *)(data + 0x8032FFC6 - 0x802C36E0 + 0x2C06E0) = 704;
+				
+				*(u16 *)(data + 0x8032FFFE - 0x802C36E0 + 0x2C06E0) = 8;
+				*(u16 *)(data + 0x80330002 - 0x802C36E0 + 0x2C06E0) = 704;
+				
+				*(u16 *)(data + 0x80330076 - 0x802C36E0 + 0x2C06E0) = 8;
+				*(u16 *)(data + 0x8033007A - 0x802C36E0 + 0x2C06E0) = 704;
+				
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
+					*(s16 *)(data + 0x80020FFA - 0x800066E0 + 0x2620) = (0x8033006C + 0x8000) >> 16;
+					*(s16 *)(data + 0x80020FFE - 0x800066E0 + 0x2620) = (0x8033006C & 0xFFFF);
 				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
