@@ -12477,6 +12477,95 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
+	} else if (!strncmp(gameID, "GEDE01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3156384:
+				*(u16 *)(data + 0x802FC50A - 0x8023B940 + 0x238940) = 8;
+				*(u16 *)(data + 0x802FC50E - 0x8023B940 + 0x238940) = 704;
+				
+				*(u16 *)(data + 0x802FC612 - 0x8023B940 + 0x238940) = 8;
+				*(u16 *)(data + 0x802FC616 - 0x8023B940 + 0x238940) = 704;
+				
+				*(u16 *)(data + 0x802FEFA2 - 0x8023B940 + 0x238940) = 8;
+				*(u16 *)(data + 0x802FEFA6 - 0x8023B940 + 0x238940) = 704;
+				
+				*(u16 *)(data + 0x802FEFDE - 0x8023B940 + 0x238940) = 8;
+				*(u16 *)(data + 0x802FEFE2 - 0x8023B940 + 0x238940) = 704;
+				
+				*(u16 *)(data + 0x802FF056 - 0x8023B940 + 0x238940) = 8;
+				*(u16 *)(data + 0x802FF05A - 0x8023B940 + 0x238940) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GEDJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3106464:
+				*(u16 *)(data + 0x802EE64A - 0x8023C240 + 0x239240) = 8;
+				*(u16 *)(data + 0x802EE64E - 0x8023C240 + 0x239240) = 704;
+				
+				*(u16 *)(data + 0x802EE752 - 0x8023C240 + 0x239240) = 8;
+				*(u16 *)(data + 0x802EE756 - 0x8023C240 + 0x239240) = 704;
+				
+				*(u16 *)(data + 0x802F10E2 - 0x8023C240 + 0x239240) = 8;
+				*(u16 *)(data + 0x802F10E6 - 0x8023C240 + 0x239240) = 704;
+				
+				*(u16 *)(data + 0x802F111E - 0x8023C240 + 0x239240) = 8;
+				*(u16 *)(data + 0x802F1122 - 0x8023C240 + 0x239240) = 704;
+				
+				*(u16 *)(data + 0x802F1196 - 0x8023C240 + 0x239240) = 8;
+				*(u16 *)(data + 0x802F119A - 0x8023C240 + 0x239240) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GEDP01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3183200:
+				*(u16 *)(data + 0x8030114A - 0x8023B920 + 0x238920) = 8;
+				*(u16 *)(data + 0x8030114E - 0x8023B920 + 0x238920) = 704;
+				
+				*(u16 *)(data + 0x80303BE2 - 0x8023B920 + 0x238920) = 8;
+				*(u16 *)(data + 0x80303BE6 - 0x8023B920 + 0x238920) = 704;
+				
+				*(u16 *)(data + 0x80303C1E - 0x8023B920 + 0x238920) = 8;
+				*(u16 *)(data + 0x80303C22 - 0x8023B920 + 0x238920) = 704;
+				
+				*(u16 *)(data + 0x80303C96 - 0x8023B920 + 0x238920) = 8;
+				*(u16 *)(data + 0x80303C9A - 0x8023B920 + 0x238920) = 704;
+				
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
+					*(s16 *)(data + 0x80018436 - 0x800068E0 + 0x2600) = (0x80301140 + 0x8000) >> 16;
+					*(s16 *)(data + 0x80018442 - 0x800068E0 + 0x2600) = (0x80301140 & 0xFFFF);
+					
+					*(u32 *)(data + 0x8061EB08 - 0x8061D420 + 0x303FA0) = 0;
+					
+					*(u32 *)(data + 0x8061EB18 - 0x8061D420 + 0x303FA0) = 0x80301140;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GEDW01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3101184:
+				*(u16 *)(data + 0x802E926A - 0x8023B700 + 0x238700) = 8;
+				*(u16 *)(data + 0x802E926E - 0x8023B700 + 0x238700) = 704;
+				
+				*(u16 *)(data + 0x802E9372 - 0x8023B700 + 0x238700) = 8;
+				*(u16 *)(data + 0x802E9376 - 0x8023B700 + 0x238700) = 704;
+				
+				*(u16 *)(data + 0x802EBD02 - 0x8023B700 + 0x238700) = 8;
+				*(u16 *)(data + 0x802EBD06 - 0x8023B700 + 0x238700) = 704;
+				
+				*(u16 *)(data + 0x802EBD3E - 0x8023B700 + 0x238700) = 8;
+				*(u16 *)(data + 0x802EBD42 - 0x8023B700 + 0x238700) = 704;
+				
+				*(u16 *)(data + 0x802EBDB6 - 0x8023B700 + 0x238700) = 8;
+				*(u16 *)(data + 0x802EBDBA - 0x8023B700 + 0x238700) = 704;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
 	} else if (!strncmp(gameID, "GEME7F", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1483520:
