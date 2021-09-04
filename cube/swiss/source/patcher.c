@@ -11929,6 +11929,12 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 
 void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dataType)
 {
+#define SET_VI_WIDTH(rmodeobj, width) \
+{ \
+	GXRModeObj *rmode = (GXRModeObj *) (rmodeobj); \
+	rmode->viXOrigin = (u16) ((720 - (width)) / 2); \
+	rmode->viWidth = (u16) (width); \
+}
 	if (!strncmp(gameID, "GAEJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1069088:
@@ -11947,32 +11953,16 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(s16 *)(data + 0x80007766 - 0x80005760 + 0x26C0) = 640;
 				*(s16 *)(data + 0x8000776A - 0x80005760 + 0x26C0) = 480;
 				
-				*(u16 *)(data + 0x800D6DBA - 0x800D67E0 + 0xD37E0) = 40;
-				*(u16 *)(data + 0x800D6DBE - 0x800D67E0 + 0xD37E0) = 640;
+				SET_VI_WIDTH(data + 0x800D6DB0 - 0x800D67E0 + 0xD37E0, 640);
+				SET_VI_WIDTH(data + 0x800D6DEC - 0x800D67E0 + 0xD37E0, 640);
+				SET_VI_WIDTH(data + 0x800D6E28 - 0x800D67E0 + 0xD37E0, 640);
+				SET_VI_WIDTH(data + 0x800D6E64 - 0x800D67E0 + 0xD37E0, 704);
+				SET_VI_WIDTH(data + 0x800D6EA0 - 0x800D67E0 + 0xD37E0, 704);
 				
-				*(u16 *)(data + 0x800D6DF6 - 0x800D67E0 + 0xD37E0) = 40;
-				*(u16 *)(data + 0x800D6DFA - 0x800D67E0 + 0xD37E0) = 640;
-				
-				*(u16 *)(data + 0x800D6E32 - 0x800D67E0 + 0xD37E0) = 40;
-				*(u16 *)(data + 0x800D6E36 - 0x800D67E0 + 0xD37E0) = 640;
-				
-				*(u16 *)(data + 0x800D6E6E - 0x800D67E0 + 0xD37E0) = 8;
-				*(u16 *)(data + 0x800D6E72 - 0x800D67E0 + 0xD37E0) = 704;
-				
-				*(u16 *)(data + 0x800D6EAA - 0x800D67E0 + 0xD37E0) = 8;
-				*(u16 *)(data + 0x800D6EAE - 0x800D67E0 + 0xD37E0) = 704;
-				
-				*(u16 *)(data + 0x80105DEA - 0x800D67E0 + 0xD37E0) = 8;
-				*(u16 *)(data + 0x80105DEE - 0x800D67E0 + 0xD37E0) = 704;
-				
-				*(u16 *)(data + 0x80105E26 - 0x800D67E0 + 0xD37E0) = 8;
-				*(u16 *)(data + 0x80105E2A - 0x800D67E0 + 0xD37E0) = 704;
-				
-				*(u16 *)(data + 0x80105E62 - 0x800D67E0 + 0xD37E0) = 8;
-				*(u16 *)(data + 0x80105E66 - 0x800D67E0 + 0xD37E0) = 704;
-				
-				*(u16 *)(data + 0x80105EDA - 0x800D67E0 + 0xD37E0) = 8;
-				*(u16 *)(data + 0x80105EDE - 0x800D67E0 + 0xD37E0) = 704;
+				SET_VI_WIDTH(data + 0x80105DE0 - 0x800D67E0 + 0xD37E0, 704);
+				SET_VI_WIDTH(data + 0x80105E1C - 0x800D67E0 + 0xD37E0, 704);
+				SET_VI_WIDTH(data + 0x80105E58 - 0x800D67E0 + 0xD37E0, 704);
+				SET_VI_WIDTH(data + 0x80105ED0 - 0x800D67E0 + 0xD37E0, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -11992,32 +11982,16 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(s16 *)(data + 0x800076B6 - 0x800056A0 + 0x2600) = 640;
 				*(s16 *)(data + 0x800076BA - 0x800056A0 + 0x2600) = 480;
 				
-				*(u16 *)(data + 0x800D8982 - 0x800D83A0 + 0xD53A0) = 40;
-				*(u16 *)(data + 0x800D8986 - 0x800D83A0 + 0xD53A0) = 640;
+				SET_VI_WIDTH(data + 0x800D8978 - 0x800D83A0 + 0xD53A0, 640);
+				SET_VI_WIDTH(data + 0x800D89B4 - 0x800D83A0 + 0xD53A0, 640);
+				SET_VI_WIDTH(data + 0x800D89F0 - 0x800D83A0 + 0xD53A0, 640);
+				SET_VI_WIDTH(data + 0x800D8A2C - 0x800D83A0 + 0xD53A0, 704);
+				SET_VI_WIDTH(data + 0x800D8A68 - 0x800D83A0 + 0xD53A0, 704);
 				
-				*(u16 *)(data + 0x800D89BE - 0x800D83A0 + 0xD53A0) = 40;
-				*(u16 *)(data + 0x800D89C2 - 0x800D83A0 + 0xD53A0) = 640;
-				
-				*(u16 *)(data + 0x800D89FA - 0x800D83A0 + 0xD53A0) = 40;
-				*(u16 *)(data + 0x800D89FE - 0x800D83A0 + 0xD53A0) = 640;
-				
-				*(u16 *)(data + 0x800D8A36 - 0x800D83A0 + 0xD53A0) = 8;
-				*(u16 *)(data + 0x800D8A3A - 0x800D83A0 + 0xD53A0) = 704;
-				
-				*(u16 *)(data + 0x800D8A72 - 0x800D83A0 + 0xD53A0) = 8;
-				*(u16 *)(data + 0x800D8A76 - 0x800D83A0 + 0xD53A0) = 704;
-				
-				*(u16 *)(data + 0x80107BAA - 0x800D83A0 + 0xD53A0) = 8;
-				*(u16 *)(data + 0x80107BAE - 0x800D83A0 + 0xD53A0) = 704;
-				
-				*(u16 *)(data + 0x80107BE6 - 0x800D83A0 + 0xD53A0) = 8;
-				*(u16 *)(data + 0x80107BEA - 0x800D83A0 + 0xD53A0) = 704;
-				
-				*(u16 *)(data + 0x80107C22 - 0x800D83A0 + 0xD53A0) = 8;
-				*(u16 *)(data + 0x80107C26 - 0x800D83A0 + 0xD53A0) = 704;
-				
-				*(u16 *)(data + 0x80107C9A - 0x800D83A0 + 0xD53A0) = 8;
-				*(u16 *)(data + 0x80107C9E - 0x800D83A0 + 0xD53A0) = 704;
+				SET_VI_WIDTH(data + 0x80107BA0 - 0x800D83A0 + 0xD53A0, 704);
+				SET_VI_WIDTH(data + 0x80107BDC - 0x800D83A0 + 0xD53A0, 704);
+				SET_VI_WIDTH(data + 0x80107C18 - 0x800D83A0 + 0xD53A0, 704);
+				SET_VI_WIDTH(data + 0x80107C90 - 0x800D83A0 + 0xD53A0, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12035,35 +12009,17 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(s16 *)(data + 0x80006EFA - 0x800056C0 + 0x2620) = 640;
 				*(s16 *)(data + 0x80006EFE - 0x800056C0 + 0x2620) = 480;
 				
-				*(u16 *)(data + 0x800AFE62 - 0x800AF860 + 0xAC860) = 40;
-				*(u16 *)(data + 0x800AFE66 - 0x800AF860 + 0xAC860) = 640;
+				SET_VI_WIDTH(data + 0x800AFE58 - 0x800AF860 + 0xAC860, 640);
+				SET_VI_WIDTH(data + 0x800AFE94 - 0x800AF860 + 0xAC860, 640);
+				SET_VI_WIDTH(data + 0x800AFED0 - 0x800AF860 + 0xAC860, 640);
+				SET_VI_WIDTH(data + 0x800AFF0C - 0x800AF860 + 0xAC860, 640);
+				SET_VI_WIDTH(data + 0x800AFF48 - 0x800AF860 + 0xAC860, 704);
+				SET_VI_WIDTH(data + 0x800AFF84 - 0x800AF860 + 0xAC860, 704);
 				
-				*(u16 *)(data + 0x800AFE9E - 0x800AF860 + 0xAC860) = 40;
-				*(u16 *)(data + 0x800AFEA2 - 0x800AF860 + 0xAC860) = 640;
-				
-				*(u16 *)(data + 0x800AFEDA - 0x800AF860 + 0xAC860) = 40;
-				*(u16 *)(data + 0x800AFEDE - 0x800AF860 + 0xAC860) = 640;
-				
-				*(u16 *)(data + 0x800AFF16 - 0x800AF860 + 0xAC860) = 40;
-				*(u16 *)(data + 0x800AFF1A - 0x800AF860 + 0xAC860) = 640;
-				
-				*(u16 *)(data + 0x800AFF52 - 0x800AF860 + 0xAC860) = 8;
-				*(u16 *)(data + 0x800AFF56 - 0x800AF860 + 0xAC860) = 704;
-				
-				*(u16 *)(data + 0x800AFF8E - 0x800AF860 + 0xAC860) = 8;
-				*(u16 *)(data + 0x800AFF92 - 0x800AF860 + 0xAC860) = 704;
-				
-				*(u16 *)(data + 0x800E15BA - 0x800AF860 + 0xAC860) = 8;
-				*(u16 *)(data + 0x800E15BE - 0x800AF860 + 0xAC860) = 704;
-				
-				*(u16 *)(data + 0x800E15F6 - 0x800AF860 + 0xAC860) = 8;
-				*(u16 *)(data + 0x800E15FA - 0x800AF860 + 0xAC860) = 704;
-				
-				*(u16 *)(data + 0x800E1632 - 0x800AF860 + 0xAC860) = 8;
-				*(u16 *)(data + 0x800E1636 - 0x800AF860 + 0xAC860) = 704;
-				
-				*(u16 *)(data + 0x800E16AA - 0x800AF860 + 0xAC860) = 8;
-				*(u16 *)(data + 0x800E16AE - 0x800AF860 + 0xAC860) = 704;
+				SET_VI_WIDTH(data + 0x800E15B0 - 0x800AF860 + 0xAC860, 704);
+				SET_VI_WIDTH(data + 0x800E15EC - 0x800AF860 + 0xAC860, 704);
+				SET_VI_WIDTH(data + 0x800E1628 - 0x800AF860 + 0xAC860, 704);
+				SET_VI_WIDTH(data + 0x800E16A0 - 0x800AF860 + 0xAC860, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12088,17 +12044,10 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(s16 *)(data + 0x80006922 - 0x800055C0 + 0x2520) = 640;
 				*(s16 *)(data + 0x8000692A - 0x800055C0 + 0x2520) = 480;
 				
-				*(u16 *)(data + 0x800DA9AE - 0x800AC1C0 + 0xA91C0) = 8;
-				*(u16 *)(data + 0x800DA9B2 - 0x800AC1C0 + 0xA91C0) = 704;
-				
-				*(u16 *)(data + 0x800DA9EA - 0x800AC1C0 + 0xA91C0) = 8;
-				*(u16 *)(data + 0x800DA9EE - 0x800AC1C0 + 0xA91C0) = 704;
-				
-				*(u16 *)(data + 0x800DAA26 - 0x800AC1C0 + 0xA91C0) = 8;
-				*(u16 *)(data + 0x800DAA2A - 0x800AC1C0 + 0xA91C0) = 704;
-				
-				*(u16 *)(data + 0x800DAA62 - 0x800AC1C0 + 0xA91C0) = 8;
-				*(u16 *)(data + 0x800DAA66 - 0x800AC1C0 + 0xA91C0) = 704;
+				SET_VI_WIDTH(data + 0x800DA9A4 - 0x800AC1C0 + 0xA91C0, 704);
+				SET_VI_WIDTH(data + 0x800DA9E0 - 0x800AC1C0 + 0xA91C0, 704);
+				SET_VI_WIDTH(data + 0x800DAA1C - 0x800AC1C0 + 0xA91C0, 704);
+				SET_VI_WIDTH(data + 0x800DAA58 - 0x800AC1C0 + 0xA91C0, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12120,17 +12069,10 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(s16 *)(data + 0x80006922 - 0x800055C0 + 0x2520) = 640;
 				*(s16 *)(data + 0x8000692A - 0x800055C0 + 0x2520) = 480;
 				
-				*(u16 *)(data + 0x800DAEEE - 0x800AC4E0 + 0xA94E0) = 8;
-				*(u16 *)(data + 0x800DAEF2 - 0x800AC4E0 + 0xA94E0) = 704;
-				
-				*(u16 *)(data + 0x800DAF2A - 0x800AC4E0 + 0xA94E0) = 8;
-				*(u16 *)(data + 0x800DAF2E - 0x800AC4E0 + 0xA94E0) = 704;
-				
-				*(u16 *)(data + 0x800DAF66 - 0x800AC4E0 + 0xA94E0) = 8;
-				*(u16 *)(data + 0x800DAF6A - 0x800AC4E0 + 0xA94E0) = 704;
-				
-				*(u16 *)(data + 0x800DAFA2 - 0x800AC4E0 + 0xA94E0) = 8;
-				*(u16 *)(data + 0x800DAFA6 - 0x800AC4E0 + 0xA94E0) = 704;
+				SET_VI_WIDTH(data + 0x800DAEE4 - 0x800AC4E0 + 0xA94E0, 704);
+				SET_VI_WIDTH(data + 0x800DAF20 - 0x800AC4E0 + 0xA94E0, 704);
+				SET_VI_WIDTH(data + 0x800DAF5C - 0x800AC4E0 + 0xA94E0, 704);
+				SET_VI_WIDTH(data + 0x800DAF98 - 0x800AC4E0 + 0xA94E0, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12155,41 +12097,26 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(s16 *)(data + 0x800074AA - 0x80005680 + 0x25E0) = 640;
 				*(s16 *)(data + 0x800074AE - 0x80005680 + 0x25E0) = 574;
 				
-				*(u16 *)(data + 0x800BB662 - 0x800BAFC0 + 0xB7FC0) = 40;
-				*(u16 *)(data + 0x800BB666 - 0x800BAFC0 + 0xB7FC0) = 640;
-				
-				*(u16 *)(data + 0x800BB69E - 0x800BAFC0 + 0xB7FC0) = 40;
-				*(u16 *)(data + 0x800BB6A2 - 0x800BAFC0 + 0xB7FC0) = 640;
-				
-				*(u16 *)(data + 0x800BB6DA - 0x800BAFC0 + 0xB7FC0) = 40;
-				*(u16 *)(data + 0x800BB6DE - 0x800BAFC0 + 0xB7FC0) = 640;
+				SET_VI_WIDTH(data + 0x800BB658 - 0x800BAFC0 + 0xB7FC0, 640);
+				SET_VI_WIDTH(data + 0x800BB694 - 0x800BAFC0 + 0xB7FC0, 640);
+				SET_VI_WIDTH(data + 0x800BB6D0 - 0x800BAFC0 + 0xB7FC0, 640);
+				SET_VI_WIDTH(data + 0x800BB70C - 0x800BAFC0 + 0xB7FC0, 640);
 				
 				*(u16 *)(data + 0x800BB714 - 0x800BAFC0 + 0xB7FC0) = 574;
-				*(u16 *)(data + 0x800BB716 - 0x800BAFC0 + 0xB7FC0) = 40;
 				*(u16 *)(data + 0x800BB718 - 0x800BAFC0 + 0xB7FC0) = 0;
-				*(u16 *)(data + 0x800BB71A - 0x800BAFC0 + 0xB7FC0) = 640;
 				*(u16 *)(data + 0x800BB71C - 0x800BAFC0 + 0xB7FC0) = 574;
 				
 				*(u16 *)(data + 0x800BB750 - 0x800BAFC0 + 0xB7FC0) = 574;
-				*(u16 *)(data + 0x800BB752 - 0x800BAFC0 + 0xB7FC0) = 8;
 				*(u16 *)(data + 0x800BB754 - 0x800BAFC0 + 0xB7FC0) = 0;
-				*(u16 *)(data + 0x800BB756 - 0x800BAFC0 + 0xB7FC0) = 704;
 				*(u16 *)(data + 0x800BB758 - 0x800BAFC0 + 0xB7FC0) = 574;
 				
-				*(u16 *)(data + 0x800BB78E - 0x800BAFC0 + 0xB7FC0) = 8;
-				*(u16 *)(data + 0x800BB792 - 0x800BAFC0 + 0xB7FC0) = 704;
+				SET_VI_WIDTH(data + 0x800BB748 - 0x800BAFC0 + 0xB7FC0, 704);
+				SET_VI_WIDTH(data + 0x800BB784 - 0x800BAFC0 + 0xB7FC0, 704);
 				
-				*(u16 *)(data + 0x800EE1CA - 0x800BAFC0 + 0xB7FC0) = 8;
-				*(u16 *)(data + 0x800EE1CE - 0x800BAFC0 + 0xB7FC0) = 704;
-				
-				*(u16 *)(data + 0x800EE206 - 0x800BAFC0 + 0xB7FC0) = 8;
-				*(u16 *)(data + 0x800EE20A - 0x800BAFC0 + 0xB7FC0) = 704;
-				
-				*(u16 *)(data + 0x800EE242 - 0x800BAFC0 + 0xB7FC0) = 8;
-				*(u16 *)(data + 0x800EE246 - 0x800BAFC0 + 0xB7FC0) = 704;
-				
-				*(u16 *)(data + 0x800EE2BA - 0x800BAFC0 + 0xB7FC0) = 8;
-				*(u16 *)(data + 0x800EE2BE - 0x800BAFC0 + 0xB7FC0) = 704;
+				SET_VI_WIDTH(data + 0x800EE1C0 - 0x800BAFC0 + 0xB7FC0, 704);
+				SET_VI_WIDTH(data + 0x800EE1FC - 0x800BAFC0 + 0xB7FC0, 704);
+				SET_VI_WIDTH(data + 0x800EE238 - 0x800BAFC0 + 0xB7FC0, 704);
+				SET_VI_WIDTH(data + 0x800EE2B0 - 0x800BAFC0 + 0xB7FC0, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12211,41 +12138,26 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(s16 *)(data + 0x800074AA - 0x80005680 + 0x25E0) = 640;
 				*(s16 *)(data + 0x800074AE - 0x80005680 + 0x25E0) = 574;
 				
-				*(u16 *)(data + 0x800BB402 - 0x800BAD60 + 0xB7D60) = 40;
-				*(u16 *)(data + 0x800BB406 - 0x800BAD60 + 0xB7D60) = 640;
-				
-				*(u16 *)(data + 0x800BB43E - 0x800BAD60 + 0xB7D60) = 40;
-				*(u16 *)(data + 0x800BB442 - 0x800BAD60 + 0xB7D60) = 640;
-				
-				*(u16 *)(data + 0x800BB47A - 0x800BAD60 + 0xB7D60) = 40;
-				*(u16 *)(data + 0x800BB47E - 0x800BAD60 + 0xB7D60) = 640;
+				SET_VI_WIDTH(data + 0x800BB3F8 - 0x800BAD60 + 0xB7D60, 640);
+				SET_VI_WIDTH(data + 0x800BB434 - 0x800BAD60 + 0xB7D60, 640);
+				SET_VI_WIDTH(data + 0x800BB470 - 0x800BAD60 + 0xB7D60, 640);
+				SET_VI_WIDTH(data + 0x800BB4AC - 0x800BAD60 + 0xB7D60, 640);
 				
 				*(u16 *)(data + 0x800BB4B4 - 0x800BAD60 + 0xB7D60) = 574;
-				*(u16 *)(data + 0x800BB4B6 - 0x800BAD60 + 0xB7D60) = 40;
 				*(u16 *)(data + 0x800BB4B8 - 0x800BAD60 + 0xB7D60) = 0;
-				*(u16 *)(data + 0x800BB4BA - 0x800BAD60 + 0xB7D60) = 640;
 				*(u16 *)(data + 0x800BB4BC - 0x800BAD60 + 0xB7D60) = 574;
 				
 				*(u16 *)(data + 0x800BB4F0 - 0x800BAD60 + 0xB7D60) = 574;
-				*(u16 *)(data + 0x800BB4F2 - 0x800BAD60 + 0xB7D60) = 8;
 				*(u16 *)(data + 0x800BB4F4 - 0x800BAD60 + 0xB7D60) = 0;
-				*(u16 *)(data + 0x800BB4F6 - 0x800BAD60 + 0xB7D60) = 704;
 				*(u16 *)(data + 0x800BB4F8 - 0x800BAD60 + 0xB7D60) = 574;
 				
-				*(u16 *)(data + 0x800BB52E - 0x800BAD60 + 0xB7D60) = 8;
-				*(u16 *)(data + 0x800BB532 - 0x800BAD60 + 0xB7D60) = 704;
+				SET_VI_WIDTH(data + 0x800BB4E8 - 0x800BAD60 + 0xB7D60, 704);
+				SET_VI_WIDTH(data + 0x800BB524 - 0x800BAD60 + 0xB7D60, 704);
 				
-				*(u16 *)(data + 0x800EEBEA - 0x800BAD60 + 0xB7D60) = 8;
-				*(u16 *)(data + 0x800EEBEE - 0x800BAD60 + 0xB7D60) = 704;
-				
-				*(u16 *)(data + 0x800EEC26 - 0x800BAD60 + 0xB7D60) = 8;
-				*(u16 *)(data + 0x800EEC2A - 0x800BAD60 + 0xB7D60) = 704;
-				
-				*(u16 *)(data + 0x800EEC62 - 0x800BAD60 + 0xB7D60) = 8;
-				*(u16 *)(data + 0x800EEC66 - 0x800BAD60 + 0xB7D60) = 704;
-				
-				*(u16 *)(data + 0x800EECDA - 0x800BAD60 + 0xB7D60) = 8;
-				*(u16 *)(data + 0x800EECDE - 0x800BAD60 + 0xB7D60) = 704;
+				SET_VI_WIDTH(data + 0x800EEBE0 - 0x800BAD60 + 0xB7D60, 704);
+				SET_VI_WIDTH(data + 0x800EEC1C - 0x800BAD60 + 0xB7D60, 704);
+				SET_VI_WIDTH(data + 0x800EEC58 - 0x800BAD60 + 0xB7D60, 704);
+				SET_VI_WIDTH(data + 0x800EECD0 - 0x800BAD60 + 0xB7D60, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12267,41 +12179,26 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(s16 *)(data + 0x800074AA - 0x80005680 + 0x25E0) = 640;
 				*(s16 *)(data + 0x800074AE - 0x80005680 + 0x25E0) = 574;
 				
-				*(u16 *)(data + 0x800BB522 - 0x800BAE80 + 0xB7E80) = 40;
-				*(u16 *)(data + 0x800BB526 - 0x800BAE80 + 0xB7E80) = 640;
-				
-				*(u16 *)(data + 0x800BB55E - 0x800BAE80 + 0xB7E80) = 40;
-				*(u16 *)(data + 0x800BB562 - 0x800BAE80 + 0xB7E80) = 640;
-				
-				*(u16 *)(data + 0x800BB59A - 0x800BAE80 + 0xB7E80) = 40;
-				*(u16 *)(data + 0x800BB59E - 0x800BAE80 + 0xB7E80) = 640;
+				SET_VI_WIDTH(data + 0x800BB518 - 0x800BAE80 + 0xB7E80, 640);
+				SET_VI_WIDTH(data + 0x800BB554 - 0x800BAE80 + 0xB7E80, 640);
+				SET_VI_WIDTH(data + 0x800BB590 - 0x800BAE80 + 0xB7E80, 640);
+				SET_VI_WIDTH(data + 0x800BB5CC - 0x800BAE80 + 0xB7E80, 640);
 				
 				*(u16 *)(data + 0x800BB5D4 - 0x800BAE80 + 0xB7E80) = 574;
-				*(u16 *)(data + 0x800BB5D6 - 0x800BAE80 + 0xB7E80) = 40;
 				*(u16 *)(data + 0x800BB5D8 - 0x800BAE80 + 0xB7E80) = 0;
-				*(u16 *)(data + 0x800BB5DA - 0x800BAE80 + 0xB7E80) = 640;
 				*(u16 *)(data + 0x800BB5DC - 0x800BAE80 + 0xB7E80) = 574;
 				
 				*(u16 *)(data + 0x800BB610 - 0x800BAE80 + 0xB7E80) = 574;
-				*(u16 *)(data + 0x800BB612 - 0x800BAE80 + 0xB7E80) = 8;
 				*(u16 *)(data + 0x800BB614 - 0x800BAE80 + 0xB7E80) = 0;
-				*(u16 *)(data + 0x800BB616 - 0x800BAE80 + 0xB7E80) = 704;
 				*(u16 *)(data + 0x800BB618 - 0x800BAE80 + 0xB7E80) = 574;
 				
-				*(u16 *)(data + 0x800BB64E - 0x800BAE80 + 0xB7E80) = 8;
-				*(u16 *)(data + 0x800BB652 - 0x800BAE80 + 0xB7E80) = 704;
+				SET_VI_WIDTH(data + 0x800BB608 - 0x800BAE80 + 0xB7E80, 704);
+				SET_VI_WIDTH(data + 0x800BB644 - 0x800BAE80 + 0xB7E80, 704);
 				
-				*(u16 *)(data + 0x800EFAAA - 0x800BAE80 + 0xB7E80) = 8;
-				*(u16 *)(data + 0x800EFAAE - 0x800BAE80 + 0xB7E80) = 704;
-				
-				*(u16 *)(data + 0x800EFAE6 - 0x800BAE80 + 0xB7E80) = 8;
-				*(u16 *)(data + 0x800EFAEA - 0x800BAE80 + 0xB7E80) = 704;
-				
-				*(u16 *)(data + 0x800EFB22 - 0x800BAE80 + 0xB7E80) = 8;
-				*(u16 *)(data + 0x800EFB26 - 0x800BAE80 + 0xB7E80) = 704;
-				
-				*(u16 *)(data + 0x800EFB9A - 0x800BAE80 + 0xB7E80) = 8;
-				*(u16 *)(data + 0x800EFB9E - 0x800BAE80 + 0xB7E80) = 704;
+				SET_VI_WIDTH(data + 0x800EFAA0 - 0x800BAE80 + 0xB7E80, 704);
+				SET_VI_WIDTH(data + 0x800EFADC - 0x800BAE80 + 0xB7E80, 704);
+				SET_VI_WIDTH(data + 0x800EFB18 - 0x800BAE80 + 0xB7E80, 704);
+				SET_VI_WIDTH(data + 0x800EFB90 - 0x800BAE80 + 0xB7E80, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12323,41 +12220,26 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(s16 *)(data + 0x800074AA - 0x80005680 + 0x25E0) = 640;
 				*(s16 *)(data + 0x800074AE - 0x80005680 + 0x25E0) = 574;
 				
-				*(u16 *)(data + 0x800BB282 - 0x800BABE0 + 0xB7BE0) = 40;
-				*(u16 *)(data + 0x800BB286 - 0x800BABE0 + 0xB7BE0) = 640;
-				
-				*(u16 *)(data + 0x800BB2BE - 0x800BABE0 + 0xB7BE0) = 40;
-				*(u16 *)(data + 0x800BB2C2 - 0x800BABE0 + 0xB7BE0) = 640;
-				
-				*(u16 *)(data + 0x800BB2FA - 0x800BABE0 + 0xB7BE0) = 40;
-				*(u16 *)(data + 0x800BB2FE - 0x800BABE0 + 0xB7BE0) = 640;
+				SET_VI_WIDTH(data + 0x800BB278 - 0x800BABE0 + 0xB7BE0, 640);
+				SET_VI_WIDTH(data + 0x800BB2B4 - 0x800BABE0 + 0xB7BE0, 640);
+				SET_VI_WIDTH(data + 0x800BB2F0 - 0x800BABE0 + 0xB7BE0, 640);
+				SET_VI_WIDTH(data + 0x800BB32C - 0x800BABE0 + 0xB7BE0, 640);
 				
 				*(u16 *)(data + 0x800BB334 - 0x800BABE0 + 0xB7BE0) = 574;
-				*(u16 *)(data + 0x800BB336 - 0x800BABE0 + 0xB7BE0) = 40;
 				*(u16 *)(data + 0x800BB338 - 0x800BABE0 + 0xB7BE0) = 0;
-				*(u16 *)(data + 0x800BB33A - 0x800BABE0 + 0xB7BE0) = 640;
 				*(u16 *)(data + 0x800BB33C - 0x800BABE0 + 0xB7BE0) = 574;
 				
 				*(u16 *)(data + 0x800BB370 - 0x800BABE0 + 0xB7BE0) = 574;
-				*(u16 *)(data + 0x800BB372 - 0x800BABE0 + 0xB7BE0) = 8;
 				*(u16 *)(data + 0x800BB374 - 0x800BABE0 + 0xB7BE0) = 0;
-				*(u16 *)(data + 0x800BB376 - 0x800BABE0 + 0xB7BE0) = 704;
 				*(u16 *)(data + 0x800BB378 - 0x800BABE0 + 0xB7BE0) = 574;
 				
-				*(u16 *)(data + 0x800BB3AE - 0x800BABE0 + 0xB7BE0) = 8;
-				*(u16 *)(data + 0x800BB3B2 - 0x800BABE0 + 0xB7BE0) = 704;
+				SET_VI_WIDTH(data + 0x800BB368 - 0x800BABE0 + 0xB7BE0, 704);
+				SET_VI_WIDTH(data + 0x800BB3A4 - 0x800BABE0 + 0xB7BE0, 704);
 				
-				*(u16 *)(data + 0x800EEA6A - 0x800BABE0 + 0xB7BE0) = 8;
-				*(u16 *)(data + 0x800EEA6E - 0x800BABE0 + 0xB7BE0) = 704;
-				
-				*(u16 *)(data + 0x800EEAA6 - 0x800BABE0 + 0xB7BE0) = 8;
-				*(u16 *)(data + 0x800EEAAA - 0x800BABE0 + 0xB7BE0) = 704;
-				
-				*(u16 *)(data + 0x800EEAE2 - 0x800BABE0 + 0xB7BE0) = 8;
-				*(u16 *)(data + 0x800EEAE6 - 0x800BABE0 + 0xB7BE0) = 704;
-				
-				*(u16 *)(data + 0x800EEB5A - 0x800BABE0 + 0xB7BE0) = 8;
-				*(u16 *)(data + 0x800EEB5E - 0x800BABE0 + 0xB7BE0) = 704;
+				SET_VI_WIDTH(data + 0x800EEA60 - 0x800BABE0 + 0xB7BE0, 704);
+				SET_VI_WIDTH(data + 0x800EEA9C - 0x800BABE0 + 0xB7BE0, 704);
+				SET_VI_WIDTH(data + 0x800EEAD8 - 0x800BABE0 + 0xB7BE0, 704);
+				SET_VI_WIDTH(data + 0x800EEB50 - 0x800BABE0 + 0xB7BE0, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12379,41 +12261,26 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(s16 *)(data + 0x800074AA - 0x80005680 + 0x25E0) = 640;
 				*(s16 *)(data + 0x800074AE - 0x80005680 + 0x25E0) = 574;
 				
-				*(u16 *)(data + 0x800BB3A2 - 0x800BAD00 + 0xB7D00) = 40;
-				*(u16 *)(data + 0x800BB3A6 - 0x800BAD00 + 0xB7D00) = 640;
-				
-				*(u16 *)(data + 0x800BB3DE - 0x800BAD00 + 0xB7D00) = 40;
-				*(u16 *)(data + 0x800BB3E2 - 0x800BAD00 + 0xB7D00) = 640;
-				
-				*(u16 *)(data + 0x800BB41A - 0x800BAD00 + 0xB7D00) = 40;
-				*(u16 *)(data + 0x800BB41E - 0x800BAD00 + 0xB7D00) = 640;
+				SET_VI_WIDTH(data + 0x800BB398 - 0x800BAD00 + 0xB7D00, 640);
+				SET_VI_WIDTH(data + 0x800BB3D4 - 0x800BAD00 + 0xB7D00, 640);
+				SET_VI_WIDTH(data + 0x800BB410 - 0x800BAD00 + 0xB7D00, 640);
+				SET_VI_WIDTH(data + 0x800BB44C - 0x800BAD00 + 0xB7D00, 640);
 				
 				*(u16 *)(data + 0x800BB454 - 0x800BAD00 + 0xB7D00) = 574;
-				*(u16 *)(data + 0x800BB456 - 0x800BAD00 + 0xB7D00) = 40;
 				*(u16 *)(data + 0x800BB458 - 0x800BAD00 + 0xB7D00) = 0;
-				*(u16 *)(data + 0x800BB45A - 0x800BAD00 + 0xB7D00) = 640;
 				*(u16 *)(data + 0x800BB45E - 0x800BAD00 + 0xB7D00) = 574;
 				
 				*(u16 *)(data + 0x800BB490 - 0x800BAD00 + 0xB7D00) = 574;
-				*(u16 *)(data + 0x800BB492 - 0x800BAD00 + 0xB7D00) = 8;
 				*(u16 *)(data + 0x800BB494 - 0x800BAD00 + 0xB7D00) = 0;
-				*(u16 *)(data + 0x800BB496 - 0x800BAD00 + 0xB7D00) = 704;
 				*(u16 *)(data + 0x800BB498 - 0x800BAD00 + 0xB7D00) = 574;
 				
-				*(u16 *)(data + 0x800BB4CE - 0x800BAD00 + 0xB7D00) = 8;
-				*(u16 *)(data + 0x800BB4D2 - 0x800BAD00 + 0xB7D00) = 704;
+				SET_VI_WIDTH(data + 0x800BB488 - 0x800BAD00 + 0xB7D00, 704);
+				SET_VI_WIDTH(data + 0x800BB4C4 - 0x800BAD00 + 0xB7D00, 704);
 				
-				*(u16 *)(data + 0x800EF96A - 0x800BAD00 + 0xB7D00) = 8;
-				*(u16 *)(data + 0x800EF96E - 0x800BAD00 + 0xB7D00) = 704;
-				
-				*(u16 *)(data + 0x800EF9A6 - 0x800BAD00 + 0xB7D00) = 8;
-				*(u16 *)(data + 0x800EF9AA - 0x800BAD00 + 0xB7D00) = 704;
-				
-				*(u16 *)(data + 0x800EF9E2 - 0x800BAD00 + 0xB7D00) = 8;
-				*(u16 *)(data + 0x800EF9E6 - 0x800BAD00 + 0xB7D00) = 704;
-				
-				*(u16 *)(data + 0x800EFA5A - 0x800BAD00 + 0xB7D00) = 8;
-				*(u16 *)(data + 0x800EFA5E - 0x800BAD00 + 0xB7D00) = 704;
+				SET_VI_WIDTH(data + 0x800EF960 - 0x800BAD00 + 0xB7D00, 704);
+				SET_VI_WIDTH(data + 0x800EF99C - 0x800BAD00 + 0xB7D00, 704);
+				SET_VI_WIDTH(data + 0x800EF9D8 - 0x800BAD00 + 0xB7D00, 704);
+				SET_VI_WIDTH(data + 0x800EFA50 - 0x800BAD00 + 0xB7D00, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12438,41 +12305,26 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(s16 *)(data + 0x80006FC6 - 0x80005680 + 0x25E0) = 640;
 				*(s16 *)(data + 0x80006FCA - 0x80005680 + 0x25E0) = 574;
 				
-				*(u16 *)(data + 0x800BA3A2 - 0x800B9DA0 + 0xB6DA0) = 40;
-				*(u16 *)(data + 0x800BA3A6 - 0x800B9DA0 + 0xB6DA0) = 640;
-				
-				*(u16 *)(data + 0x800BA3DE - 0x800B9DA0 + 0xB6DA0) = 40;
-				*(u16 *)(data + 0x800BA3E2 - 0x800B9DA0 + 0xB6DA0) = 640;
-				
-				*(u16 *)(data + 0x800BA41A - 0x800B9DA0 + 0xB6DA0) = 40;
-				*(u16 *)(data + 0x800BA41E - 0x800B9DA0 + 0xB6DA0) = 640;
+				SET_VI_WIDTH(data + 0x800BA398 - 0x800B9DA0 + 0xB6DA0, 640);
+				SET_VI_WIDTH(data + 0x800BA3D4 - 0x800B9DA0 + 0xB6DA0, 640);
+				SET_VI_WIDTH(data + 0x800BA410 - 0x800B9DA0 + 0xB6DA0, 640);
+				SET_VI_WIDTH(data + 0x800BA44C - 0x800B9DA0 + 0xB6DA0, 640);
 				
 				*(u16 *)(data + 0x800BA454 - 0x800B9DA0 + 0xB6DA0) = 574;
-				*(u16 *)(data + 0x800BA456 - 0x800B9DA0 + 0xB6DA0) = 40;
 				*(u16 *)(data + 0x800BA458 - 0x800B9DA0 + 0xB6DA0) = 0;
-				*(u16 *)(data + 0x800BA45A - 0x800B9DA0 + 0xB6DA0) = 640;
 				*(u16 *)(data + 0x800BA45C - 0x800B9DA0 + 0xB6DA0) = 574;
 				
 				*(u16 *)(data + 0x800BA490 - 0x800B9DA0 + 0xB6DA0) = 574;
-				*(u16 *)(data + 0x800BA492 - 0x800B9DA0 + 0xB6DA0) = 8;
 				*(u16 *)(data + 0x800BA494 - 0x800B9DA0 + 0xB6DA0) = 0;
-				*(u16 *)(data + 0x800BA496 - 0x800B9DA0 + 0xB6DA0) = 704;
 				*(u16 *)(data + 0x800BA498 - 0x800B9DA0 + 0xB6DA0) = 574;
 				
-				*(u16 *)(data + 0x800BA4CE - 0x800B9DA0 + 0xB6DA0) = 8;
-				*(u16 *)(data + 0x800BA4D2 - 0x800B9DA0 + 0xB6DA0) = 704;
+				SET_VI_WIDTH(data + 0x800BA488 - 0x800B9DA0 + 0xB6DA0, 704);
+				SET_VI_WIDTH(data + 0x800BA4C4 - 0x800B9DA0 + 0xB6DA0, 704);
 				
-				*(u16 *)(data + 0x800EC44A - 0x800B9DA0 + 0xB6DA0) = 8;
-				*(u16 *)(data + 0x800EC44E - 0x800B9DA0 + 0xB6DA0) = 704;
-				
-				*(u16 *)(data + 0x800EC486 - 0x800B9DA0 + 0xB6DA0) = 8;
-				*(u16 *)(data + 0x800EC48A - 0x800B9DA0 + 0xB6DA0) = 704;
-				
-				*(u16 *)(data + 0x800EC4C2 - 0x800B9DA0 + 0xB6DA0) = 8;
-				*(u16 *)(data + 0x800EC4C6 - 0x800B9DA0 + 0xB6DA0) = 704;
-				
-				*(u16 *)(data + 0x800EC53A - 0x800B9DA0 + 0xB6DA0) = 8;
-				*(u16 *)(data + 0x800EC53E - 0x800B9DA0 + 0xB6DA0) = 704;
+				SET_VI_WIDTH(data + 0x800EC440 - 0x800B9DA0 + 0xB6DA0, 704);
+				SET_VI_WIDTH(data + 0x800EC47C - 0x800B9DA0 + 0xB6DA0, 704);
+				SET_VI_WIDTH(data + 0x800EC4B8 - 0x800B9DA0 + 0xB6DA0, 704);
+				SET_VI_WIDTH(data + 0x800EC530 - 0x800B9DA0 + 0xB6DA0, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12480,20 +12332,12 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GEDE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3156384:
-				*(u16 *)(data + 0x802FC50A - 0x8023B940 + 0x238940) = 8;
-				*(u16 *)(data + 0x802FC50E - 0x8023B940 + 0x238940) = 704;
+				SET_VI_WIDTH(data + 0x802FC500 - 0x8023B940 + 0x238940, 704);
+				SET_VI_WIDTH(data + 0x802FC608 - 0x8023B940 + 0x238940, 704);
 				
-				*(u16 *)(data + 0x802FC612 - 0x8023B940 + 0x238940) = 8;
-				*(u16 *)(data + 0x802FC616 - 0x8023B940 + 0x238940) = 704;
-				
-				*(u16 *)(data + 0x802FEFA2 - 0x8023B940 + 0x238940) = 8;
-				*(u16 *)(data + 0x802FEFA6 - 0x8023B940 + 0x238940) = 704;
-				
-				*(u16 *)(data + 0x802FEFDE - 0x8023B940 + 0x238940) = 8;
-				*(u16 *)(data + 0x802FEFE2 - 0x8023B940 + 0x238940) = 704;
-				
-				*(u16 *)(data + 0x802FF056 - 0x8023B940 + 0x238940) = 8;
-				*(u16 *)(data + 0x802FF05A - 0x8023B940 + 0x238940) = 704;
+				SET_VI_WIDTH(data + 0x802FEF98 - 0x8023B940 + 0x238940, 704);
+				SET_VI_WIDTH(data + 0x802FEFD4 - 0x8023B940 + 0x238940, 704);
+				SET_VI_WIDTH(data + 0x802FF04C - 0x8023B940 + 0x238940, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12501,20 +12345,12 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GEDJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3106464:
-				*(u16 *)(data + 0x802EE64A - 0x8023C240 + 0x239240) = 8;
-				*(u16 *)(data + 0x802EE64E - 0x8023C240 + 0x239240) = 704;
+				SET_VI_WIDTH(data + 0x802EE640 - 0x8023C240 + 0x239240, 704);
+				SET_VI_WIDTH(data + 0x802EE748 - 0x8023C240 + 0x239240, 704);
 				
-				*(u16 *)(data + 0x802EE752 - 0x8023C240 + 0x239240) = 8;
-				*(u16 *)(data + 0x802EE756 - 0x8023C240 + 0x239240) = 704;
-				
-				*(u16 *)(data + 0x802F10E2 - 0x8023C240 + 0x239240) = 8;
-				*(u16 *)(data + 0x802F10E6 - 0x8023C240 + 0x239240) = 704;
-				
-				*(u16 *)(data + 0x802F111E - 0x8023C240 + 0x239240) = 8;
-				*(u16 *)(data + 0x802F1122 - 0x8023C240 + 0x239240) = 704;
-				
-				*(u16 *)(data + 0x802F1196 - 0x8023C240 + 0x239240) = 8;
-				*(u16 *)(data + 0x802F119A - 0x8023C240 + 0x239240) = 704;
+				SET_VI_WIDTH(data + 0x802F10D8 - 0x8023C240 + 0x239240, 704);
+				SET_VI_WIDTH(data + 0x802F1114 - 0x8023C240 + 0x239240, 704);
+				SET_VI_WIDTH(data + 0x802F118C - 0x8023C240 + 0x239240, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12522,17 +12358,11 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GEDP01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3183200:
-				*(u16 *)(data + 0x8030114A - 0x8023B920 + 0x238920) = 8;
-				*(u16 *)(data + 0x8030114E - 0x8023B920 + 0x238920) = 704;
+				SET_VI_WIDTH(data + 0x80301140 - 0x8023B920 + 0x238920, 704);
 				
-				*(u16 *)(data + 0x80303BE2 - 0x8023B920 + 0x238920) = 8;
-				*(u16 *)(data + 0x80303BE6 - 0x8023B920 + 0x238920) = 704;
-				
-				*(u16 *)(data + 0x80303C1E - 0x8023B920 + 0x238920) = 8;
-				*(u16 *)(data + 0x80303C22 - 0x8023B920 + 0x238920) = 704;
-				
-				*(u16 *)(data + 0x80303C96 - 0x8023B920 + 0x238920) = 8;
-				*(u16 *)(data + 0x80303C9A - 0x8023B920 + 0x238920) = 704;
+				SET_VI_WIDTH(data + 0x80303BD8 - 0x8023B920 + 0x238920, 704);
+				SET_VI_WIDTH(data + 0x80303C14 - 0x8023B920 + 0x238920, 704);
+				SET_VI_WIDTH(data + 0x80303C8C - 0x8023B920 + 0x238920, 704);
 				
 				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 					*(s16 *)(data + 0x80018436 - 0x800068E0 + 0x2600) = (0x80301140 + 0x8000) >> 16;
@@ -12548,20 +12378,12 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GEDW01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3101184:
-				*(u16 *)(data + 0x802E926A - 0x8023B700 + 0x238700) = 8;
-				*(u16 *)(data + 0x802E926E - 0x8023B700 + 0x238700) = 704;
+				SET_VI_WIDTH(data + 0x802E9260 - 0x8023B700 + 0x238700, 704);
+				SET_VI_WIDTH(data + 0x802E9368 - 0x8023B700 + 0x238700, 704);
 				
-				*(u16 *)(data + 0x802E9372 - 0x8023B700 + 0x238700) = 8;
-				*(u16 *)(data + 0x802E9376 - 0x8023B700 + 0x238700) = 704;
-				
-				*(u16 *)(data + 0x802EBD02 - 0x8023B700 + 0x238700) = 8;
-				*(u16 *)(data + 0x802EBD06 - 0x8023B700 + 0x238700) = 704;
-				
-				*(u16 *)(data + 0x802EBD3E - 0x8023B700 + 0x238700) = 8;
-				*(u16 *)(data + 0x802EBD42 - 0x8023B700 + 0x238700) = 704;
-				
-				*(u16 *)(data + 0x802EBDB6 - 0x8023B700 + 0x238700) = 8;
-				*(u16 *)(data + 0x802EBDBA - 0x8023B700 + 0x238700) = 704;
+				SET_VI_WIDTH(data + 0x802EBCF8 - 0x8023B700 + 0x238700, 704);
+				SET_VI_WIDTH(data + 0x802EBD34 - 0x8023B700 + 0x238700, 704);
+				SET_VI_WIDTH(data + 0x802EBDAC - 0x8023B700 + 0x238700, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12595,17 +12417,10 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GK7E08", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 2866304:
-				*(u16 *)(data + 0x802B1002 - 0x80269E80 + 0x266E80) = 8;
-				*(u16 *)(data + 0x802B1006 - 0x80269E80 + 0x266E80) = 704;
-				
-				*(u16 *)(data + 0x802B103E - 0x80269E80 + 0x266E80) = 8;
-				*(u16 *)(data + 0x802B1042 - 0x80269E80 + 0x266E80) = 704;
-				
-				*(u16 *)(data + 0x802B107A - 0x80269E80 + 0x266E80) = 8;
-				*(u16 *)(data + 0x802B107E - 0x80269E80 + 0x266E80) = 704;
-				
-				*(u16 *)(data + 0x802B10F2 - 0x80269E80 + 0x266E80) = 8;
-				*(u16 *)(data + 0x802B10F6 - 0x80269E80 + 0x266E80) = 704;
+				SET_VI_WIDTH(data + 0x802B0FF8 - 0x80269E80 + 0x266E80, 704);
+				SET_VI_WIDTH(data + 0x802B1034 - 0x80269E80 + 0x266E80, 704);
+				SET_VI_WIDTH(data + 0x802B1070 - 0x80269E80 + 0x266E80, 704);
+				SET_VI_WIDTH(data + 0x802B10E8 - 0x80269E80 + 0x266E80, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12613,17 +12428,10 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GK7J08", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 2891072:
-				*(u16 *)(data + 0x802B7082 - 0x8026C680 + 0x269680) = 8;
-				*(u16 *)(data + 0x802B7086 - 0x8026C680 + 0x269680) = 704;
-				
-				*(u16 *)(data + 0x802B70BE - 0x8026C680 + 0x269680) = 8;
-				*(u16 *)(data + 0x802B70C2 - 0x8026C680 + 0x269680) = 704;
-				
-				*(u16 *)(data + 0x802B70FA - 0x8026C680 + 0x269680) = 8;
-				*(u16 *)(data + 0x802B70FE - 0x8026C680 + 0x269680) = 704;
-				
-				*(u16 *)(data + 0x802B7172 - 0x8026C680 + 0x269680) = 8;
-				*(u16 *)(data + 0x802B7176 - 0x8026C680 + 0x269680) = 704;
+				SET_VI_WIDTH(data + 0x802B7078 - 0x8026C680 + 0x269680, 704);
+				SET_VI_WIDTH(data + 0x802B70B4 - 0x8026C680 + 0x269680, 704);
+				SET_VI_WIDTH(data + 0x802B70F0 - 0x8026C680 + 0x269680, 704);
+				SET_VI_WIDTH(data + 0x802B7168 - 0x8026C680 + 0x269680, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12631,17 +12439,11 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GK7P08", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 2961056:
-				*(u16 *)(data + 0x8027D282 - 0x8027D200 + 0x27A200) = 8;
-				*(u16 *)(data + 0x8027D286 - 0x8027D200 + 0x27A200) = 704;
+				SET_VI_WIDTH(data + 0x8027D278 - 0x8027D200 + 0x27A200, 704);
 				
-				*(u16 *)(data + 0x802C81C2 - 0x8027D200 + 0x27A200) = 8;
-				*(u16 *)(data + 0x802C81C6 - 0x8027D200 + 0x27A200) = 704;
-				
-				*(u16 *)(data + 0x802C81FE - 0x8027D200 + 0x27A200) = 8;
-				*(u16 *)(data + 0x802C8202 - 0x8027D200 + 0x27A200) = 704;
-				
-				*(u16 *)(data + 0x802C8276 - 0x8027D200 + 0x27A200) = 8;
-				*(u16 *)(data + 0x802C827A - 0x8027D200 + 0x27A200) = 704;
+				SET_VI_WIDTH(data + 0x802C81B8 - 0x8027D200 + 0x27A200, 704);
+				SET_VI_WIDTH(data + 0x802C81F4 - 0x8027D200 + 0x27A200, 704);
+				SET_VI_WIDTH(data + 0x802C826C - 0x8027D200 + 0x27A200, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12652,20 +12454,12 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(s16 *)(data + 0x80015E36 - 0x8000BEA0 + 0x2520) = 704;
 				*(s16 *)(data + 0x80015E3E - 0x8000BEA0 + 0x2520) = 8;
 				
-				*(u16 *)(data + 0x800F394E - 0x800ECE80 + 0xE9E80) = 8;
-				*(u16 *)(data + 0x800F3952 - 0x800ECE80 + 0xE9E80) = 704;
+				SET_VI_WIDTH(data + 0x800F3944 - 0x800ECE80 + 0xE9E80, 704);
 				
-				*(u16 *)(data + 0x801019AA - 0x800ECE80 + 0xE9E80) = 8;
-				*(u16 *)(data + 0x801019AE - 0x800ECE80 + 0xE9E80) = 704;
-				
-				*(u16 *)(data + 0x801019E6 - 0x800ECE80 + 0xE9E80) = 8;
-				*(u16 *)(data + 0x801019EA - 0x800ECE80 + 0xE9E80) = 704;
-				
-				*(u16 *)(data + 0x80101A22 - 0x800ECE80 + 0xE9E80) = 8;
-				*(u16 *)(data + 0x80101A26 - 0x800ECE80 + 0xE9E80) = 704;
-				
-				*(u16 *)(data + 0x80101A9A - 0x800ECE80 + 0xE9E80) = 8;
-				*(u16 *)(data + 0x80101A9E - 0x800ECE80 + 0xE9E80) = 704;
+				SET_VI_WIDTH(data + 0x801019A0 - 0x800ECE80 + 0xE9E80, 704);
+				SET_VI_WIDTH(data + 0x801019DC - 0x800ECE80 + 0xE9E80, 704);
+				SET_VI_WIDTH(data + 0x80101A18 - 0x800ECE80 + 0xE9E80, 704);
+				SET_VI_WIDTH(data + 0x80101A90 - 0x800ECE80 + 0xE9E80, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12673,17 +12467,11 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GLME01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3799584:
-				*(u16 *)(data + 0x802181DA - 0x80218100 + 0x215100) = 8;
-				*(u16 *)(data + 0x802181DE - 0x80218100 + 0x215100) = 704;
+				SET_VI_WIDTH(data + 0x802181D0 - 0x80218100 + 0x215100, 704);
 				
-				*(u16 *)(data + 0x80395C4A - 0x80218100 + 0x215100) = 8;
-				*(u16 *)(data + 0x80395C4E - 0x80218100 + 0x215100) = 704;
-				
-				*(u16 *)(data + 0x80395C86 - 0x80218100 + 0x215100) = 8;
-				*(u16 *)(data + 0x80395C8A - 0x80218100 + 0x215100) = 704;
-				
-				*(u16 *)(data + 0x80395CC2 - 0x80218100 + 0x215100) = 8;
-				*(u16 *)(data + 0x80395CC6 - 0x80218100 + 0x215100) = 704;
+				SET_VI_WIDTH(data + 0x80395C40 - 0x80218100 + 0x215100, 704);
+				SET_VI_WIDTH(data + 0x80395C7C - 0x80218100 + 0x215100, 704);
+				SET_VI_WIDTH(data + 0x80395CB8 - 0x80218100 + 0x215100, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12691,17 +12479,11 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GLMJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3754304:
-				*(u16 *)(data + 0x8020D4BA - 0x8020D3E0 + 0x20A3E0) = 8;
-				*(u16 *)(data + 0x8020D4BE - 0x8020D3E0 + 0x20A3E0) = 704;
+				SET_VI_WIDTH(data + 0x8020D4B0 - 0x8020D3E0 + 0x20A3E0, 704);
 				
-				*(u16 *)(data + 0x8038ABAA - 0x8020D3E0 + 0x20A3E0) = 8;
-				*(u16 *)(data + 0x8038ABAE - 0x8020D3E0 + 0x20A3E0) = 704;
-				
-				*(u16 *)(data + 0x8038ABE6 - 0x8020D3E0 + 0x20A3E0) = 8;
-				*(u16 *)(data + 0x8038ABEA - 0x8020D3E0 + 0x20A3E0) = 704;
-				
-				*(u16 *)(data + 0x8038AC22 - 0x8020D3E0 + 0x20A3E0) = 8;
-				*(u16 *)(data + 0x8038AC26 - 0x8020D3E0 + 0x20A3E0) = 704;
+				SET_VI_WIDTH(data + 0x8038ABA0 - 0x8020D3E0 + 0x20A3E0, 704);
+				SET_VI_WIDTH(data + 0x8038ABDC - 0x8020D3E0 + 0x20A3E0, 704);
+				SET_VI_WIDTH(data + 0x8038AC18 - 0x8020D3E0 + 0x20A3E0, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12712,17 +12494,10 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(s16 *)(data + 0x8000739E - 0x800057C0 + 0x2520) = 40;
 				*(s16 *)(data + 0x800073A6 - 0x800057C0 + 0x2520) = 640;
 				
-				*(u16 *)(data + 0x803870B2 - 0x8021D240 + 0x21A240) = 8;
-				*(u16 *)(data + 0x803870B6 - 0x8021D240 + 0x21A240) = 704;
-				
-				*(u16 *)(data + 0x803870EE - 0x8021D240 + 0x21A240) = 8;
-				*(u16 *)(data + 0x803870F2 - 0x8021D240 + 0x21A240) = 704;
-				
-				*(u16 *)(data + 0x8038712A - 0x8021D240 + 0x21A240) = 8;
-				*(u16 *)(data + 0x8038712E - 0x8021D240 + 0x21A240) = 704;
-				
-				*(u16 *)(data + 0x803871A2 - 0x8021D240 + 0x21A240) = 8;
-				*(u16 *)(data + 0x803871A6 - 0x8021D240 + 0x21A240) = 704;
+				SET_VI_WIDTH(data + 0x803870A8 - 0x8021D240 + 0x21A240, 704);
+				SET_VI_WIDTH(data + 0x803870E4 - 0x8021D240 + 0x21A240, 704);
+				SET_VI_WIDTH(data + 0x80387120 - 0x8021D240 + 0x21A240, 704);
+				SET_VI_WIDTH(data + 0x80387198 - 0x8021D240 + 0x21A240, 704);
 				
 				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 					*(s16 *)(data + 0x80007596 - 0x800057C0 + 0x2520) = 116;
@@ -12735,32 +12510,20 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GPIE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3102432:
-				*(u16 *)(data + 0x802A566E - 0x80222D20 + 0x21FD20) = 8;
-				*(u16 *)(data + 0x802A5672 - 0x80222D20 + 0x21FD20) = 704;
+				SET_VI_WIDTH(data + 0x802A5664 - 0x80222D20 + 0x21FD20, 704);
+				SET_VI_WIDTH(data + 0x802A56A0 - 0x80222D20 + 0x21FD20, 704);
 				
-				*(u16 *)(data + 0x802A56AA - 0x80222D20 + 0x21FD20) = 8;
-				*(u16 *)(data + 0x802A56AE - 0x80222D20 + 0x21FD20) = 704;
-				
-				*(u16 *)(data + 0x802E8D32 - 0x80222D20 + 0x21FD20) = 8;
-				*(u16 *)(data + 0x802E8D36 - 0x80222D20 + 0x21FD20) = 704;
-				
-				*(u16 *)(data + 0x802E8D6E - 0x80222D20 + 0x21FD20) = 8;
-				*(u16 *)(data + 0x802E8D72 - 0x80222D20 + 0x21FD20) = 704;
+				SET_VI_WIDTH(data + 0x802E8D28 - 0x80222D20 + 0x21FD20, 704);
+				SET_VI_WIDTH(data + 0x802E8D64 - 0x80222D20 + 0x21FD20, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 			case 3102592:
-				*(u16 *)(data + 0x802A570E - 0x80222DC0 + 0x21FDC0) = 8;
-				*(u16 *)(data + 0x802A5712 - 0x80222DC0 + 0x21FDC0) = 704;
+				SET_VI_WIDTH(data + 0x802A5704 - 0x80222DC0 + 0x21FDC0, 704);
+				SET_VI_WIDTH(data + 0x802A5740 - 0x80222DC0 + 0x21FDC0, 704);
 				
-				*(u16 *)(data + 0x802A574A - 0x80222DC0 + 0x21FDC0) = 8;
-				*(u16 *)(data + 0x802A574E - 0x80222DC0 + 0x21FDC0) = 704;
-				
-				*(u16 *)(data + 0x802E8DD2 - 0x80222DC0 + 0x21FDC0) = 8;
-				*(u16 *)(data + 0x802E8DD6 - 0x80222DC0 + 0x21FDC0) = 704;
-				
-				*(u16 *)(data + 0x802E8E0E - 0x80222DC0 + 0x21FDC0) = 8;
-				*(u16 *)(data + 0x802E8E12 - 0x80222DC0 + 0x21FDC0) = 704;
+				SET_VI_WIDTH(data + 0x802E8DC8 - 0x80222DC0 + 0x21FDC0, 704);
+				SET_VI_WIDTH(data + 0x802E8E04 - 0x80222DC0 + 0x21FDC0, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12768,32 +12531,20 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GPIJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3127584:
-				*(u16 *)(data + 0x802AABD6 - 0x80227EA0 + 0x224EA0) = 8;
-				*(u16 *)(data + 0x802AABDA - 0x80227EA0 + 0x224EA0) = 704;
+				SET_VI_WIDTH(data + 0x802AABCC - 0x80227EA0 + 0x224EA0, 704);
+				SET_VI_WIDTH(data + 0x802AAC08 - 0x80227EA0 + 0x224EA0, 704);
 				
-				*(u16 *)(data + 0x802AAC12 - 0x80227EA0 + 0x224EA0) = 8;
-				*(u16 *)(data + 0x802AAC16 - 0x80227EA0 + 0x224EA0) = 704;
-				
-				*(u16 *)(data + 0x802EEF12 - 0x80227EA0 + 0x224EA0) = 8;
-				*(u16 *)(data + 0x802EEF16 - 0x80227EA0 + 0x224EA0) = 704;
-				
-				*(u16 *)(data + 0x802EEF4E - 0x80227EA0 + 0x224EA0) = 8;
-				*(u16 *)(data + 0x802EEF52 - 0x80227EA0 + 0x224EA0) = 704;
+				SET_VI_WIDTH(data + 0x802EEF08 - 0x80227EA0 + 0x224EA0, 704);
+				SET_VI_WIDTH(data + 0x802EEF44 - 0x80227EA0 + 0x224EA0, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 			case 3128832:
-				*(u16 *)(data + 0x802AB0B6 - 0x80228380 + 0x225380) = 8;
-				*(u16 *)(data + 0x802AB0BA - 0x80228380 + 0x225380) = 704;
+				SET_VI_WIDTH(data + 0x802AB0AC - 0x80228380 + 0x225380, 704);
+				SET_VI_WIDTH(data + 0x802AB0E8 - 0x80228380 + 0x225380, 704);
 				
-				*(u16 *)(data + 0x802AB0F2 - 0x80228380 + 0x225380) = 8;
-				*(u16 *)(data + 0x802AB0F6 - 0x80228380 + 0x225380) = 704;
-				
-				*(u16 *)(data + 0x802EF3F2 - 0x80228380 + 0x225380) = 8;
-				*(u16 *)(data + 0x802EF3F6 - 0x80228380 + 0x225380) = 704;
-				
-				*(u16 *)(data + 0x802EF42E - 0x80228380 + 0x225380) = 8;
-				*(u16 *)(data + 0x802EF432 - 0x80228380 + 0x225380) = 704;
+				SET_VI_WIDTH(data + 0x802EF3E8 - 0x80228380 + 0x225380, 704);
+				SET_VI_WIDTH(data + 0x802EF424 - 0x80228380 + 0x225380, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12802,24 +12553,16 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 		switch (length) {
 			case 3113952:
 				*(u32 *)(data + 0x802A7CB4 - 0x80224BC0 + 0x221BC0) = VI_TVMODE_EURGB60_INT;
-				*(u16 *)(data + 0x802A7CBE - 0x80224BC0 + 0x221BC0) = 8;
 				*(u16 *)(data + 0x802A7CC0 - 0x80224BC0 + 0x221BC0) = 0;
-				*(u16 *)(data + 0x802A7CC2 - 0x80224BC0 + 0x221BC0) = 704;
 				*(u32 *)(data + 0x802A7CC8 - 0x80224BC0 + 0x221BC0) = VI_XFBMODE_DF;
-				
 				memcpy(data + 0x802A7CE6 - 0x80224BC0 + 0x221BC0, (u8[]){5, 6, 14, 14, 14, 6, 5}, 7);
 				
-				*(u16 *)(data + 0x802A7CFA - 0x80224BC0 + 0x221BC0) = 40;
-				*(u16 *)(data + 0x802A7CFE - 0x80224BC0 + 0x221BC0) = 640;
+				SET_VI_WIDTH(data + 0x802A7CB4 - 0x80224BC0 + 0x221BC0, 704);
+				SET_VI_WIDTH(data + 0x802A7CF0 - 0x80224BC0 + 0x221BC0, 640);
 				
-				*(u16 *)(data + 0x802EB9FA - 0x80224BC0 + 0x221BC0) = 8;
-				*(u16 *)(data + 0x802EB9FE - 0x80224BC0 + 0x221BC0) = 704;
-				
-				*(u16 *)(data + 0x802EBA36 - 0x80224BC0 + 0x221BC0) = 8;
-				*(u16 *)(data + 0x802EBA3A - 0x80224BC0 + 0x221BC0) = 704;
-				
-				*(u16 *)(data + 0x802EBAAE - 0x80224BC0 + 0x221BC0) = 8;
-				*(u16 *)(data + 0x802EBAB2 - 0x80224BC0 + 0x221BC0) = 704;
+				SET_VI_WIDTH(data + 0x802EB9F0 - 0x80224BC0 + 0x221BC0, 704);
+				SET_VI_WIDTH(data + 0x802EBA2C - 0x80224BC0 + 0x221BC0, 704);
+				SET_VI_WIDTH(data + 0x802EBAA4 - 0x80224BC0 + 0x221BC0, 704);
 				
 				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 					*(u32 *)(data + 0x803E24F0 - 0x803E1C60 + 0x2E9380) = 0x802A7CB4;
@@ -12860,7 +12603,6 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 		switch (length) {
 			case 3398976:
 				memset(data + 0x80049504 - 0x800066E0 + 0x2620, 0, 0x80049550 - 0x80049504);
-				
 				*(u32 *)(data + 0x80049504 - 0x800066E0 + 0x2620) = 0x9421FFF0;
 				*(u32 *)(data + 0x80049508 - 0x800066E0 + 0x2620) = 0x7C0802A6;
 				*(u32 *)(data + 0x8004950C - 0x800066E0 + 0x2620) = 0x90010014;
@@ -12874,23 +12616,15 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(u32 *)(data + 0x8004952C - 0x800066E0 + 0x2620) = 0x38210010;
 				*(u32 *)(data + 0x80049530 - 0x800066E0 + 0x2620) = 0x4E800020;
 				
-				*(u16 *)(data + 0x8032E62A - 0x802C2D60 + 0x2BFD60) = 8;
-				*(u16 *)(data + 0x8032E62E - 0x802C2D60 + 0x2BFD60) = 704;
-				
-				*(u16 *)(data + 0x8032E666 - 0x802C2D60 + 0x2BFD60) = 8;
-				*(u16 *)(data + 0x8032E66A - 0x802C2D60 + 0x2BFD60) = 704;
-				
-				*(u16 *)(data + 0x8032E6A2 - 0x802C2D60 + 0x2BFD60) = 8;
-				*(u16 *)(data + 0x8032E6A6 - 0x802C2D60 + 0x2BFD60) = 704;
-				
-				*(u16 *)(data + 0x8032E71A - 0x802C2D60 + 0x2BFD60) = 8;
-				*(u16 *)(data + 0x8032E71E - 0x802C2D60 + 0x2BFD60) = 704;
+				SET_VI_WIDTH(data + 0x8032E620 - 0x802C2D60 + 0x2BFD60, 704);
+				SET_VI_WIDTH(data + 0x8032E65C - 0x802C2D60 + 0x2BFD60, 704);
+				SET_VI_WIDTH(data + 0x8032E698 - 0x802C2D60 + 0x2BFD60, 704);
+				SET_VI_WIDTH(data + 0x8032E710 - 0x802C2D60 + 0x2BFD60, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 			case 3402176:
 				memset(data + 0x80049680 - 0x800066E0 + 0x2620, 0, 0x800496CC - 0x80049680);
-				
 				*(u32 *)(data + 0x80049680 - 0x800066E0 + 0x2620) = 0x9421FFF0;
 				*(u32 *)(data + 0x80049684 - 0x800066E0 + 0x2620) = 0x7C0802A6;
 				*(u32 *)(data + 0x80049688 - 0x800066E0 + 0x2620) = 0x90010014;
@@ -12904,17 +12638,10 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(u32 *)(data + 0x800496A8 - 0x800066E0 + 0x2620) = 0x38210010;
 				*(u32 *)(data + 0x800496AC - 0x800066E0 + 0x2620) = 0x4E800020;
 				
-				*(u16 *)(data + 0x8032F282 - 0x802C34E0 + 0x2C04E0) = 8;
-				*(u16 *)(data + 0x8032F286 - 0x802C34E0 + 0x2C04E0) = 704;
-				
-				*(u16 *)(data + 0x8032F2BE - 0x802C34E0 + 0x2C04E0) = 8;
-				*(u16 *)(data + 0x8032F2C2 - 0x802C34E0 + 0x2C04E0) = 704;
-				
-				*(u16 *)(data + 0x8032F2FA - 0x802C34E0 + 0x2C04E0) = 8;
-				*(u16 *)(data + 0x8032F2FE - 0x802C34E0 + 0x2C04E0) = 704;
-				
-				*(u16 *)(data + 0x8032F372 - 0x802C34E0 + 0x2C04E0) = 8;
-				*(u16 *)(data + 0x8032F376 - 0x802C34E0 + 0x2C04E0) = 704;
+				SET_VI_WIDTH(data + 0x8032F278 - 0x802C34E0 + 0x2C04E0, 704);
+				SET_VI_WIDTH(data + 0x8032F2B4 - 0x802C34E0 + 0x2C04E0, 704);
+				SET_VI_WIDTH(data + 0x8032F2F0 - 0x802C34E0 + 0x2C04E0, 704);
+				SET_VI_WIDTH(data + 0x8032F368 - 0x802C34E0 + 0x2C04E0, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12923,7 +12650,6 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 		switch (length) {
 			case 3399264:
 				memset(data + 0x80049524 - 0x800066E0 + 0x2620, 0, 0x80049570 - 0x80049524);
-				
 				*(u32 *)(data + 0x80049524 - 0x800066E0 + 0x2620) = 0x9421FFF0;
 				*(u32 *)(data + 0x80049528 - 0x800066E0 + 0x2620) = 0x7C0802A6;
 				*(u32 *)(data + 0x8004952C - 0x800066E0 + 0x2620) = 0x90010014;
@@ -12937,23 +12663,15 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(u32 *)(data + 0x8004954C - 0x800066E0 + 0x2620) = 0x38210010;
 				*(u32 *)(data + 0x80049550 - 0x800066E0 + 0x2620) = 0x4E800020;
 				
-				*(u16 *)(data + 0x8032E74A - 0x802C2E60 + 0x2BFE60) = 8;
-				*(u16 *)(data + 0x8032E74E - 0x802C2E60 + 0x2BFE60) = 704;
-				
-				*(u16 *)(data + 0x8032E786 - 0x802C2E60 + 0x2BFE60) = 8;
-				*(u16 *)(data + 0x8032E78A - 0x802C2E60 + 0x2BFE60) = 704;
-				
-				*(u16 *)(data + 0x8032E7C2 - 0x802C2E60 + 0x2BFE60) = 8;
-				*(u16 *)(data + 0x8032E7C6 - 0x802C2E60 + 0x2BFE60) = 704;
-				
-				*(u16 *)(data + 0x8032E83A - 0x802C2E60 + 0x2BFE60) = 8;
-				*(u16 *)(data + 0x8032E83E - 0x802C2E60 + 0x2BFE60) = 704;
+				SET_VI_WIDTH(data + 0x8032E740 - 0x802C2E60 + 0x2BFE60, 704);
+				SET_VI_WIDTH(data + 0x8032E77C - 0x802C2E60 + 0x2BFE60, 704);
+				SET_VI_WIDTH(data + 0x8032E7B8 - 0x802C2E60 + 0x2BFE60, 704);
+				SET_VI_WIDTH(data + 0x8032E830 - 0x802C2E60 + 0x2BFE60, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 			case 3402176:
 				memset(data + 0x80049680 - 0x800066E0 + 0x2620, 0, 0x800496CC - 0x80049680);
-				
 				*(u32 *)(data + 0x80049680 - 0x800066E0 + 0x2620) = 0x9421FFF0;
 				*(u32 *)(data + 0x80049684 - 0x800066E0 + 0x2620) = 0x7C0802A6;
 				*(u32 *)(data + 0x80049688 - 0x800066E0 + 0x2620) = 0x90010014;
@@ -12967,17 +12685,10 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(u32 *)(data + 0x800496A8 - 0x800066E0 + 0x2620) = 0x38210010;
 				*(u32 *)(data + 0x800496AC - 0x800066E0 + 0x2620) = 0x4E800020;
 				
-				*(u16 *)(data + 0x8032F282 - 0x802C34E0 + 0x2C04E0) = 8;
-				*(u16 *)(data + 0x8032F286 - 0x802C34E0 + 0x2C04E0) = 704;
-				
-				*(u16 *)(data + 0x8032F2BE - 0x802C34E0 + 0x2C04E0) = 8;
-				*(u16 *)(data + 0x8032F2C2 - 0x802C34E0 + 0x2C04E0) = 704;
-				
-				*(u16 *)(data + 0x8032F2FA - 0x802C34E0 + 0x2C04E0) = 8;
-				*(u16 *)(data + 0x8032F2FE - 0x802C34E0 + 0x2C04E0) = 704;
-				
-				*(u16 *)(data + 0x8032F372 - 0x802C34E0 + 0x2C04E0) = 8;
-				*(u16 *)(data + 0x8032F376 - 0x802C34E0 + 0x2C04E0) = 704;
+				SET_VI_WIDTH(data + 0x8032F278 - 0x802C34E0 + 0x2C04E0, 704);
+				SET_VI_WIDTH(data + 0x8032F2B4 - 0x802C34E0 + 0x2C04E0, 704);
+				SET_VI_WIDTH(data + 0x8032F2F0 - 0x802C34E0 + 0x2C04E0, 704);
+				SET_VI_WIDTH(data + 0x8032F368 - 0x802C34E0 + 0x2C04E0, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -12986,7 +12697,6 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 		switch (length) {
 			case 3405152:
 				memset(data + 0x8004971C - 0x800066E0 + 0x2620, 0, 0x80049768 - 0x8004971C);
-				
 				*(u32 *)(data + 0x8004971C - 0x800066E0 + 0x2620) = 0x9421FFF0;
 				*(u32 *)(data + 0x80049720 - 0x800066E0 + 0x2620) = 0x7C0802A6;
 				*(u32 *)(data + 0x80049724 - 0x800066E0 + 0x2620) = 0x90010014;
@@ -13000,14 +12710,9 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(u32 *)(data + 0x80049744 - 0x800066E0 + 0x2620) = 0x38210010;
 				*(u32 *)(data + 0x80049748 - 0x800066E0 + 0x2620) = 0x4E800020;
 				
-				*(u16 *)(data + 0x8032FE02 - 0x802C35A0 + 0x2C05A0) = 8;
-				*(u16 *)(data + 0x8032FE06 - 0x802C35A0 + 0x2C05A0) = 704;
-				
-				*(u16 *)(data + 0x8032FE3E - 0x802C35A0 + 0x2C05A0) = 8;
-				*(u16 *)(data + 0x8032FE42 - 0x802C35A0 + 0x2C05A0) = 704;
-				
-				*(u16 *)(data + 0x8032FEB6 - 0x802C35A0 + 0x2C05A0) = 8;
-				*(u16 *)(data + 0x8032FEBA - 0x802C35A0 + 0x2C05A0) = 704;
+				SET_VI_WIDTH(data + 0x8032FDF8 - 0x802C35A0 + 0x2C05A0, 704);
+				SET_VI_WIDTH(data + 0x8032FE34 - 0x802C35A0 + 0x2C05A0, 704);
+				SET_VI_WIDTH(data + 0x8032FEAC - 0x802C35A0 + 0x2C05A0, 704);
 				
 				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 					*(s16 *)(data + 0x80020FFA - 0x800066E0 + 0x2620) = (0x8032FEAC + 0x8000) >> 16;
@@ -13017,7 +12722,6 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				break;
 			case 3405600:
 				memset(data + 0x8004971C - 0x800066E0 + 0x2620, 0, 0x80049768 - 0x8004971C);
-				
 				*(u32 *)(data + 0x8004971C - 0x800066E0 + 0x2620) = 0x9421FFF0;
 				*(u32 *)(data + 0x80049720 - 0x800066E0 + 0x2620) = 0x7C0802A6;
 				*(u32 *)(data + 0x80049724 - 0x800066E0 + 0x2620) = 0x90010014;
@@ -13031,14 +12735,9 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				*(u32 *)(data + 0x80049744 - 0x800066E0 + 0x2620) = 0x38210010;
 				*(u32 *)(data + 0x80049748 - 0x800066E0 + 0x2620) = 0x4E800020;
 				
-				*(u16 *)(data + 0x8032FFC2 - 0x802C36E0 + 0x2C06E0) = 8;
-				*(u16 *)(data + 0x8032FFC6 - 0x802C36E0 + 0x2C06E0) = 704;
-				
-				*(u16 *)(data + 0x8032FFFE - 0x802C36E0 + 0x2C06E0) = 8;
-				*(u16 *)(data + 0x80330002 - 0x802C36E0 + 0x2C06E0) = 704;
-				
-				*(u16 *)(data + 0x80330076 - 0x802C36E0 + 0x2C06E0) = 8;
-				*(u16 *)(data + 0x8033007A - 0x802C36E0 + 0x2C06E0) = 704;
+				SET_VI_WIDTH(data + 0x8032FFB8 - 0x802C36E0 + 0x2C06E0, 704);
+				SET_VI_WIDTH(data + 0x8032FFF4 - 0x802C36E0 + 0x2C06E0, 704);
+				SET_VI_WIDTH(data + 0x8033006C - 0x802C36E0 + 0x2C06E0, 704);
 				
 				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 					*(s16 *)(data + 0x80020FFA - 0x800066E0 + 0x2620) = (0x8033006C + 0x8000) >> 16;
@@ -13050,14 +12749,9 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GWRE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3431456:
-				*(u16 *)(data + 0x8034142A - 0x80173DA0 + 0x170DA0) = 8;
-				*(u16 *)(data + 0x8034142E - 0x80173DA0 + 0x170DA0) = 704;
-				
-				*(u16 *)(data + 0x80341466 - 0x80173DA0 + 0x170DA0) = 8;
-				*(u16 *)(data + 0x8034146A - 0x80173DA0 + 0x170DA0) = 704;
-				
-				*(u16 *)(data + 0x803414A2 - 0x80173DA0 + 0x170DA0) = 8;
-				*(u16 *)(data + 0x803414A6 - 0x80173DA0 + 0x170DA0) = 704;
+				SET_VI_WIDTH(data + 0x80341420 - 0x80173DA0 + 0x170DA0, 704);
+				SET_VI_WIDTH(data + 0x8034145C - 0x80173DA0 + 0x170DA0, 704);
+				SET_VI_WIDTH(data + 0x80341498 - 0x80173DA0 + 0x170DA0, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -13065,14 +12759,9 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GWRJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3418464:
-				*(u16 *)(data + 0x8033E1EA - 0x80170880 + 0x16D880) = 8;
-				*(u16 *)(data + 0x8033E1EE - 0x80170880 + 0x16D880) = 704;
-				
-				*(u16 *)(data + 0x8033E226 - 0x80170880 + 0x16D880) = 8;
-				*(u16 *)(data + 0x8033E22A - 0x80170880 + 0x16D880) = 704;
-				
-				*(u16 *)(data + 0x8033E262 - 0x80170880 + 0x16D880) = 8;
-				*(u16 *)(data + 0x8033E266 - 0x80170880 + 0x16D880) = 704;
+				SET_VI_WIDTH(data + 0x8033E1E0 - 0x80170880 + 0x16D880, 704);
+				SET_VI_WIDTH(data + 0x8033E21C - 0x80170880 + 0x16D880, 704);
+				SET_VI_WIDTH(data + 0x8033E258 - 0x80170880 + 0x16D880, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -13080,17 +12769,11 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GWRP01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3442880:
-				*(u16 *)(data + 0x80252ACA - 0x80176760 + 0x173760) = 8;
-				*(u16 *)(data + 0x80252ACE - 0x80176760 + 0x173760) = 704;
+				SET_VI_WIDTH(data + 0x80252AC0 - 0x80176760 + 0x173760, 704);
 				
-				*(u16 *)(data + 0x80343FCA - 0x80176760 + 0x173760) = 8;
-				*(u16 *)(data + 0x80343FCE - 0x80176760 + 0x173760) = 704;
-				
-				*(u16 *)(data + 0x80344006 - 0x80176760 + 0x173760) = 8;
-				*(u16 *)(data + 0x8034400A - 0x80176760 + 0x173760) = 704;
-				
-				*(u16 *)(data + 0x80344042 - 0x80176760 + 0x173760) = 8;
-				*(u16 *)(data + 0x80344046 - 0x80176760 + 0x173760) = 704;
+				SET_VI_WIDTH(data + 0x80343FC0 - 0x80176760 + 0x173760, 704);
+				SET_VI_WIDTH(data + 0x80343FFC - 0x80176760 + 0x173760, 704);
+				SET_VI_WIDTH(data + 0x80344038 - 0x80176760 + 0x173760, 704);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
@@ -13100,7 +12783,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 			case 4055712:
 				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 					*(s16 *)(data + 0x80010A1A - 0x80005760 + 0x2540) = (0x80368D5C + 0x8000) >> 16;
-					*(s16 *)(data + 0x80010A1E - 0x80005760 + 0x2540) = 5;
+					*(s16 *)(data + 0x80010A1E - 0x80005760 + 0x2540) = VI_EURGB60;
 					*(s16 *)(data + 0x80010A22 - 0x80005760 + 0x2540) = (0x80368D5C & 0xFFFF);
 				}
 				print_gecko("Patched:[%.6s]\n", gameID);
@@ -13111,7 +12794,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 			case 4182304:
 				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 					*(s16 *)(data + 0x8000E9F6 - 0x80005760 + 0x2540) = (0x80384784 + 0x8000) >> 16;
-					*(s16 *)(data + 0x8000E9FA - 0x80005760 + 0x2540) = 5;
+					*(s16 *)(data + 0x8000E9FA - 0x80005760 + 0x2540) = VI_EURGB60;
 					*(s16 *)(data + 0x8000E9FE - 0x80005760 + 0x2540) = (0x80384784 & 0xFFFF);
 				}
 				print_gecko("Patched:[%.6s]\n", gameID);
@@ -13122,13 +12805,14 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 			case 4182624:
 				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
 					*(s16 *)(data + 0x8000E9F6 - 0x80005760 + 0x2540) = (0x803848C4 + 0x8000) >> 16;
-					*(s16 *)(data + 0x8000E9FA - 0x80005760 + 0x2540) = 5;
+					*(s16 *)(data + 0x8000E9FA - 0x80005760 + 0x2540) = VI_EURGB60;
 					*(s16 *)(data + 0x8000E9FE - 0x80005760 + 0x2540) = (0x803848C4 & 0xFFFF);
 				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	}
+#undef SET_VI_WIDTH
 }
 
 int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
