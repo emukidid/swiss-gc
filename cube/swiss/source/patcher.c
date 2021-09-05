@@ -12329,6 +12329,33 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
+	} else if (!strncmp(gameID, "GBOE51", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1934336:
+				SET_VI_WIDTH(data + 0x801D3588 - 0x80189060 + 0x186040, 704);
+				SET_VI_WIDTH(data + 0x801D35C4 - 0x80189060 + 0x186040, 704);
+				SET_VI_WIDTH(data + 0x801D3600 - 0x80189060 + 0x186040, 704);
+				SET_VI_WIDTH(data + 0x801D3678 - 0x80189060 + 0x186040, 704);
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GBOP51", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1934688:
+				SET_VI_WIDTH(data + 0x801D3708 - 0x80189180 + 0x186180, 704);
+				SET_VI_WIDTH(data + 0x801D3744 - 0x80189180 + 0x186180, 704);
+				SET_VI_WIDTH(data + 0x801D37BC - 0x80189180 + 0x186180, 704);
+				
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
+					*(s16 *)(data + 0x8000AA0E - 0x800057E0 + 0x2600) = 0;
+					
+					*(s16 *)(data + 0x800ADF46 - 0x800057E0 + 0x2600) = (0x801D37BC + 0x8000) >> 16;
+					*(s16 *)(data + 0x800ADF4E - 0x800057E0 + 0x2600) = (0x801D37BC & 0xFFFF);
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
 	} else if (!strncmp(gameID, "GEDE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3156384:
