@@ -1784,8 +1784,33 @@ void load_game() {
 	
 	DrawDispose(msgBox);
 	// Show game info or return to the menu
-	if(!info_game()) {
-		return;
+	int bootMode = info_game();
+	if(!bootMode) return;
+	
+	if(bootMode == 2 && tgcFile.magic != TGC_MAGIC) {
+		if(devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
+			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support clean boot."));
+			sleep(2);
+			DrawDispose(msgBox);
+			config_unload_current();
+			return;
+		}
+		if(devices[DEVICE_CUR] != &__device_wode) {
+			file_handle *disc2File = meta_find_disk2(&curFile);
+			if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, 0)) {
+				msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
+				wait_press_A();
+				DrawDispose(msgBox);
+				config_unload_current();
+				return;
+			}
+		}
+		if(devices[DEVICE_CUR] != &__device_dvd) {
+			devices[DEVICE_CUR]->deinit(&curFile);
+		}
+		
+		SYS_ResetSystem(SYS_HOTRESET, 0, FALSE);
+		__builtin_unreachable();
 	}
 	
 	// setup the video mode before we kill libOGC kernel
@@ -1818,17 +1843,17 @@ void load_game() {
 		numToPatch = check_game(filesToPatch);
 	}
 	
-  	if(devices[DEVICE_CUR] != &__device_wode) {
-		file_handle *secondDisc = meta_find_disk2(&curFile);
+	if(devices[DEVICE_CUR] != &__device_wode) {
+		file_handle *disc2File = meta_find_disk2(&curFile);
 		*(vu8*)VAR_CURRENT_DISC = 0;
-		*(vu8*)VAR_SECOND_DISC = secondDisc ? 1:0;
+		*(vu8*)VAR_SECOND_DISC = disc2File ? 1:0;
 		*(vu8*)VAR_DRIVE_PATCHED = 0;
 		*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
 		*(vu8*)VAR_IGR_TYPE = swissSettings.igrType;
 		*(vu8*)VAR_CARD_A_ID = 0x00;
 		*(vu8*)VAR_CARD_B_ID = 0x00;
 		// Call the special setup for each device (e.g. SD will set the sector(s))
-		if(!devices[DEVICE_CUR]->setupFile(&curFile, secondDisc, numToPatch)) {
+		if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, numToPatch)) {
 			msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
 			wait_press_A();
 			free(filesToPatch);
@@ -1901,10 +1926,10 @@ void load_file()
 			else {
 				uiDrawObj_t *msgBox = NULL;
 				if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
-					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support game boot.\nSet EXI Speed to 16 MHz to bypass."));
+					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support disc images.\nSet EXI Speed to 16 MHz to bypass."));
 				}
 				else {
-					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support game boot."));
+					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support disc images."));
 				}
 				sleep(5);
 				DrawDispose(msgBox);
@@ -2027,8 +2052,9 @@ int info_game()
 	while(1) {
 		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z)){ VIDEO_WaitVSync (); }
 		while(!(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z))){ VIDEO_WaitVSync (); }
-		if(PAD_ButtonsHeld(0) & (PAD_BUTTON_B|PAD_BUTTON_A)){
-			ret = (PAD_ButtonsHeld(0) & PAD_BUTTON_A) ? 1:0;
+		u32 buttons = PAD_ButtonsHeld(0);
+		if(buttons & (PAD_BUTTON_B|PAD_BUTTON_A)){
+			ret = (buttons & PAD_BUTTON_A) ? (buttons & PAD_TRIGGER_L) ? 2:1:0;
 			// WODE can't return from here.
 			if(devices[DEVICE_CUR] == &__device_wode && !ret) {
 				continue;
@@ -2043,10 +2069,10 @@ int info_game()
 			}
 			break;
 		}
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
+		if(buttons & PAD_BUTTON_X) {
 			show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC && GCMDisk.DOLOffset != 0) ? &curFile : NULL, config);
 		}
-		if(devices[DEVICE_CONFIG] != NULL && (PAD_ButtonsHeld(0) & PAD_TRIGGER_Z)) {
+		if((buttons & PAD_TRIGGER_Z) && devices[DEVICE_CONFIG] != NULL) {
 			// Toggle autoload
 			if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])) {
 				memset(&swissSettings.autoload[0], 0, PATHNAME_MAX);
@@ -2062,7 +2088,7 @@ int info_game()
 			DrawDispose(msgBox);
 		}
 		// Look for a cheats file based on the GameID
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
+		if(buttons & PAD_BUTTON_Y) {
 			// don't find cheats again if we've just found some for this game since it'll wipe selections.
 			if(num_cheats == -1) {
 				num_cheats = findCheats(false);
@@ -2312,6 +2338,7 @@ void menu_loop()
 						break;
 					case 4:
 						SYS_ResetSystem(SYS_HOTRESET, 0, TRUE);
+						__builtin_unreachable();
 						break;
 				}
 			}
