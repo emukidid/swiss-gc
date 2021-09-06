@@ -12442,9 +12442,13 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GEME7F", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1483520:
+				SET_VI_WIDTH(data + 0x80167190 - 0x800945C0 + 0x915C0, 704);
+				SET_VI_WIDTH(data + 0x801671CC - 0x800945C0 + 0x915C0, 704);
+				SET_VI_WIDTH(data + 0x80167208 - 0x800945C0 + 0x915C0, 704);
+				SET_VI_WIDTH(data + 0x80167280 - 0x800945C0 + 0x915C0, 704);
+				
 				if (swissSettings.gameVMode > 0) {
 					*(s16 *)(data + 0x800331BE - 0x80005740 + 0x2520) = 448;
-					
 					*(u32 *)(data + 0x800331FC - 0x80005740 + 0x2520) = 0x60000000;
 					
 					*(u32 *)(data + 0x806D0898 - 0x806D06C0 + 0x169120) = 0x801671CC;
@@ -12455,12 +12459,71 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	} else if (!strncmp(gameID, "GEMJ28", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1483264:
+				SET_VI_WIDTH(data + 0x80167068 - 0x80094500 + 0x91500, 704);
+				SET_VI_WIDTH(data + 0x801670A4 - 0x80094500 + 0x91500, 704);
+				SET_VI_WIDTH(data + 0x801670E0 - 0x80094500 + 0x91500, 704);
+				SET_VI_WIDTH(data + 0x80167158 - 0x80094500 + 0x91500, 704);
+				
 				if (swissSettings.gameVMode > 0) {
 					*(s16 *)(data + 0x80033062 - 0x80005740 + 0x2520) = 448;
-					
 					*(u32 *)(data + 0x800330A0 - 0x80005740 + 0x2520) = 0x60000000;
 					
 					*(u32 *)(data + 0x806D0660 - 0x806D0480 + 0x169000) = 0x801670A4;
+				}
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GEMP7F", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1485472:
+				*(u16 *)(data + 0x8016791E - 0x80094B80 + 0x91B80) = 448;
+				*(u16 *)(data + 0x80167920 - 0x80094B80 + 0x91B80) = 448;
+				*(u16 *)(data + 0x80167924 - 0x80094B80 + 0x91B80) = 16;
+				*(u16 *)(data + 0x80167928 - 0x80094B80 + 0x91B80) = 448;
+				
+				*(u16 *)(data + 0x8016795A - 0x80094B80 + 0x91B80) = 448;
+				*(u16 *)(data + 0x8016795C - 0x80094B80 + 0x91B80) = 448;
+				*(u16 *)(data + 0x80167960 - 0x80094B80 + 0x91B80) = 16;
+				*(u16 *)(data + 0x80167964 - 0x80094B80 + 0x91B80) = 448;
+				
+				*(u16 *)(data + 0x80167996 - 0x80094B80 + 0x91B80) = 269;
+				*(u16 *)(data + 0x80167998 - 0x80094B80 + 0x91B80) = 269;
+				*(u16 *)(data + 0x8016799C - 0x80094B80 + 0x91B80) = 18;
+				*(u16 *)(data + 0x801679A0 - 0x80094B80 + 0x91B80) = 538;
+				
+				*(u16 *)(data + 0x801679D2 - 0x80094B80 + 0x91B80) = 448;
+				*(u16 *)(data + 0x801679D4 - 0x80094B80 + 0x91B80) = 538;
+				*(u16 *)(data + 0x801679D8 - 0x80094B80 + 0x91B80) = 18;
+				*(u16 *)(data + 0x801679DC - 0x80094B80 + 0x91B80) = 538;
+				
+				*(u16 *)(data + 0x80167A0E - 0x80094B80 + 0x91B80) = 448;
+				*(u16 *)(data + 0x80167A10 - 0x80094B80 + 0x91B80) = 448;
+				*(u16 *)(data + 0x80167A14 - 0x80094B80 + 0x91B80) = 16;
+				*(u16 *)(data + 0x80167A18 - 0x80094B80 + 0x91B80) = 448;
+				
+				SET_VI_WIDTH(data + 0x80167918 - 0x80094B80 + 0x91B80, 704);
+				SET_VI_WIDTH(data + 0x80167954 - 0x80094B80 + 0x91B80, 704);
+				SET_VI_WIDTH(data + 0x80167990 - 0x80094B80 + 0x91B80, 704);
+				SET_VI_WIDTH(data + 0x801679CC - 0x80094B80 + 0x91B80, 704);
+				SET_VI_WIDTH(data + 0x80167A08 - 0x80094B80 + 0x91B80, 704);
+				
+				if (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7) {
+					*(s16 *)(data + 0x80061BE2 - 0x80005740 + 0x2520) = (0x80167990 + 0x8000) >> 16;
+					*(s16 *)(data + 0x80061BE6 - 0x80005740 + 0x2520) = (0x80167990 & 0xFFFF);
+					
+					*(s16 *)(data + 0x80078FB6 - 0x80005740 + 0x2520) = (0x80167990 + 0x8000) >> 16;
+					*(s16 *)(data + 0x80078FBA - 0x80005740 + 0x2520) = (0x80167990 & 0xFFFF);
+					
+					memmove(data + 0x80167990 - 0x80094B80 + 0x91B80,
+					        data + 0x801679CC - 0x80094B80 + 0x91B80, 0x80167A44 - 0x801679CC);
+					
+					*(u16 *)(data + 0x801679D2 - 0x80094B80 + 0x91B80) = 224;
+					*(u16 *)(data + 0x801679D4 - 0x80094B80 + 0x91B80) = 224;
+					*(u32 *)(data + 0x801679E0 - 0x80094B80 + 0x91B80) = VI_XFBMODE_SF;
+					*(u8 *)(data + 0x801679E4 - 0x80094B80 + 0x91B80) = GX_TRUE;
+					memcpy(data + 0x801679FE - 0x80094B80 + 0x91B80, (u8[]){0, 0, 21, 22, 21, 0, 0}, 7);
+					
+					*(u32 *)(data + 0x806D0F58 - 0x806D0D80 + 0x1698C0) = 0x801679CC;
 				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
