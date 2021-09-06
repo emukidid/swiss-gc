@@ -24,7 +24,7 @@ static float label_size = 0.75f;
 SwissSettings tempSettings;
 char *uiVModeStr[] = {"Auto", "480i", "480p", "576i", "576p"};
 char *gameVModeStr[] = {"No", "480i", "480sf", "240p", "960i", "480p", "1080i60", "540p60", "576i", "576sf", "288p", "1152i", "576p", "1080i50", "540p50"};
-char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "704px", "720px"};
+char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "656px", "672px", "704px", "720px"};
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
@@ -186,7 +186,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 	
 	/** Current Game Settings - only if a valid GCM file is highlighted (Page 3/) */
 	// Force Video Mode [576i (PAL 50Hz), 480i (NTSC 60Hz), 480p (NTSC 60Hz), Auto, etc]
-	// Force Horizontal Scale [Auto/1:1/11:10/9:8/704px/720px]
+	// Force Horizontal Scale [Auto/1:1/11:10/9:8/640px/656px/672px/704px/720px]
 	// Force Vertical Offset [+/-0]
 	// Force Vertical Filter [Auto/0/1/2]
 	// Force Anisotropic Filter [Yes/No]
@@ -520,10 +520,10 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			case SET_DEFAULT_HORIZ_SCALE:
 				if(!swissSettings.disableVideoPatches) {
 					swissSettings.forceHScale += direction;
-					if(swissSettings.forceHScale > 6)
+					if(swissSettings.forceHScale > 8)
 						swissSettings.forceHScale = 0;
 					if(swissSettings.forceHScale < 0)
-						swissSettings.forceHScale = 6;
+						swissSettings.forceHScale = 8;
 				}
 			break;
 			case SET_DEFAULT_VERT_OFFSET:
@@ -601,10 +601,10 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			case SET_HORIZ_SCALE:
 				if(!swissSettings.disableVideoPatches) {
 					gameConfig->forceHScale += direction;
-					if(gameConfig->forceHScale > 6)
+					if(gameConfig->forceHScale > 8)
 						gameConfig->forceHScale = 0;
 					if(gameConfig->forceHScale < 0)
-						gameConfig->forceHScale = 6;
+						gameConfig->forceHScale = 8;
 				}
 			break;
 			case SET_VERT_OFFSET:
