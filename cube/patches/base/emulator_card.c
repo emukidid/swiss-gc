@@ -37,7 +37,6 @@ static struct {
 	int position;
 	uint8_t command;
 	uint8_t status;
-	bool interrupt;
 	uint32_t offset;
 	#ifdef ASYNC_READ
 	frag_callback read_callback;
@@ -45,14 +44,14 @@ static struct {
 	#endif
 } card[2] = {
 	{
-		.status = 0xC1,
+		.status = 0b11000001,
 		.offset = FRAGS_CARD_A,
 		#ifdef ASYNC_READ
 		.read_callback  = carda_read_callback,
 		.write_callback = carda_write_callback
 		#endif
 	}, {
-		.status = 0xC1,
+		.status = 0b11000001,
 		.offset = FRAGS_CARD_B,
 		#ifdef ASYNC_READ
 		.read_callback  = cardb_read_callback,
@@ -63,13 +62,13 @@ static struct {
 
 static void carda_write_callback(void *address, uint32_t length)
 {
-	if (length != 512) card[0].status |= 0x08;
+	if (length != 512) card[0].status |= 0b00001000;
 	exi0_complete_transfer();
 }
 
 static void cardb_write_callback(void *address, uint32_t length)
 {
-	if (length != 512) card[1].status |= 0x08;
+	if (length != 512) card[1].status |= 0b00001000;
 	exi1_complete_transfer();
 }
 
@@ -96,7 +95,7 @@ uint8_t card_imm(unsigned chan, uint8_t data)
 		case 0x52:
 		{
 			switch (card[chan].position) {
-				case 1: card[chan].offset = (card[chan].offset & ~0x1FE0000) | ((data << 17) & 0x1FE0000); break;
+				case 1: card[chan].offset = (card[chan].offset & ~0xFE0000) | ((data << 17) & 0xFE0000); break;
 				case 2: card[chan].offset = (card[chan].offset & ~0x1FE00) | ((data << 9) & 0x1FE00); break;
 				case 3: card[chan].offset = (card[chan].offset & ~0x180) | ((data << 7) & 0x180); break;
 				case 4: card[chan].offset = (card[chan].offset & ~0x7F) | (data & 0x7F); break;
@@ -106,7 +105,7 @@ uint8_t card_imm(unsigned chan, uint8_t data)
 		case 0x81:
 		{
 			if (card[chan].position == 1)
-				card[chan].interrupt = data & 1;
+				card[chan].status = (card[chan].status & ~0b00000010) | ((data << 1) & 0b00000010);
 			break;
 		}
 		case 0x83:
@@ -115,10 +114,16 @@ uint8_t card_imm(unsigned chan, uint8_t data)
 				result = card[chan].status;
 			break;
 		}
+		case 0x85:
+		{
+			if (card[chan].position >= 1)
+				result = 0xEC;
+			break;
+		}
 		case 0xF2:
 		{
 			switch (card[chan].position) {
-				case 1: card[chan].offset = (card[chan].offset & ~0x1FE0000) | ((data << 17) & 0x1FE0000); break;
+				case 1: card[chan].offset = (card[chan].offset & ~0xFE0000) | ((data << 17) & 0xFE0000); break;
 				case 2: card[chan].offset = (card[chan].offset & ~0x1FE00) | ((data << 9) & 0x1FE00); break;
 				case 3: card[chan].offset = (card[chan].offset & ~0x180) | ((data << 7) & 0x180); break;
 				case 4: card[chan].offset = (card[chan].offset & ~0x7F) | (data & 0x7F); break;
@@ -154,7 +159,7 @@ bool card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
 					#ifdef ASYNC_READ
 					return frag_write_async(buffer, 512, card[chan].offset, card[chan].write_callback);
 					#else
-					if (frag_write(buffer, 512, card[chan].offset) != 512) card[chan].status |= 0x08;
+					if (frag_write(buffer, 512, card[chan].offset) != 512) card[chan].status |= 0b00001000;
 					#endif
 				}
 			}
@@ -175,21 +180,21 @@ void card_deselect(unsigned chan)
 	switch (card[chan].command) {
 		case 0x89:
 		{
-			card[chan].status &= ~0x18;
+			card[chan].status &= ~0b00011100;
 			break;
 		}
 		case 0xF1:
 		case 0xF4:
 		{
 			if (card[chan].position >= 3)
-				if (card[chan].interrupt)
+				if (card[chan].status & 0b00000010)
 					exi_interrupt(chan);
 			break;
 		}
 		case 0xF2:
 		{
 			if (card[chan].position >= 5)
-				if (card[chan].interrupt)
+				if (card[chan].status & 0b00000010)
 					exi_interrupt(chan);
 			break;
 		}
