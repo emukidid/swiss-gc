@@ -540,8 +540,10 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			
 			patched += Patch_FontEncode(buffer, sizeToRead);
 			
-			if(!swissSettings.disableVideoPatches) {
-				Patch_GameSpecificVideo(buffer, sizeToRead, gameID, filesToPatch[i].type);
+			if(swissSettings.disableVideoPatches < 2) {
+				if(swissSettings.disableVideoPatches < 1) {
+					Patch_GameSpecificVideo(buffer, sizeToRead, gameID, filesToPatch[i].type);
+				}
 				Patch_VideoMode(buffer, sizeToRead, filesToPatch[i].type);
 			}
 			

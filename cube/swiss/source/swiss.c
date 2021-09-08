@@ -76,7 +76,7 @@ void ogc_video__reset()
 	
 	swissSettings.fontEncode = region == 'J';
 	
-	if(!swissSettings.gameVMode || swissSettings.disableVideoPatches) {
+	if(!(swissSettings.gameVMode > 0 && swissSettings.disableVideoPatches < 2)) {
 		if(region == 'P')
 			swissSettings.gameVMode = -2;
 		else
@@ -1089,8 +1089,10 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		Patch_Fwrite(buffer, sizeToRead);
 	}
 	// Force Video Mode
-	if(!swissSettings.disableVideoPatches) {
-		Patch_GameSpecificVideo(buffer, sizeToRead, gameID, type);
+	if(swissSettings.disableVideoPatches < 2) {
+		if(swissSettings.disableVideoPatches < 1) {
+			Patch_GameSpecificVideo(buffer, sizeToRead, gameID, type);
+		}
 		Patch_VideoMode(buffer, sizeToRead, type);
 	}
 	// Force Widescreen
@@ -1960,7 +1962,7 @@ int check_game(ExecutableFile *filesToPatch)
 		if(!strncmp(gameID, "GCCE01", 6) || !strncmp(gameID, "GCCJGC", 6) || !strncmp(gameID, "GCCP01", 6)) {
 			parse_gcm_add(&curFile, filesToPatch, &numToPatch, "ffcc_cli.bin");
 		}
-		if(!swissSettings.disableVideoPatches) {
+		if(swissSettings.disableVideoPatches < 1) {
 			if(!strncmp(gameID, "GS8P7D", 6)) {
 				parse_gcm_add(&curFile, filesToPatch, &numToPatch, "SPYROCFG_NGC.CFG");
 			}

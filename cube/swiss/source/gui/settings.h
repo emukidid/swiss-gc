@@ -113,6 +113,7 @@ extern char *forceHScaleStr[];
 extern char *forceVFilterStr[];
 extern char *forceWidescreenStr[];
 extern char *invertCStickStr[];
+extern char *disableVideoPatchesStr[];
 extern char *emulateReadSpeedStr[];
 extern char *igrTypeStr[];
 extern char *aveCompatStr[];

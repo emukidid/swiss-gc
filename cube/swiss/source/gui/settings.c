@@ -28,6 +28,7 @@ char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "656px", "672p
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
+char *disableVideoPatchesStr[] = {"None", "Game", "All"};
 char *emulateReadSpeedStr[] = {"No", "Yes", "Wii"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
 char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL"};
@@ -243,7 +244,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 	}
 	else if(page_num == PAGE_ADVANCED) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Advanced Settings (3/5):"));
-		bool enabledVideoPatches = !swissSettings.disableVideoPatches;
+		bool enabledVideoPatches = swissSettings.disableVideoPatches < 2;
 		bool emulatedMemoryCard = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_MEMCARD);
 		drawSettingEntryBoolean(page, &page_y_ofs, "USB Gecko Debug via Slot B:", swissSettings.debugUSB, option == SET_ENABLE_USBGECKODBG, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Hide Unknown file types:", swissSettings.hideUnknownFileTypes, option == SET_HIDE_UNK, true);
@@ -251,7 +252,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryBoolean(page, &page_y_ofs, "WiiRD debugging:", swissSettings.wiirdDebug, option == SET_WIIRDDBG, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "File Management:", swissSettings.enableFileManagement, option == SET_FILE_MGMT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Auto-load all cheats:", swissSettings.autoCheats, option == SET_ALL_CHEATS, true);
-		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Video Patches:", swissSettings.disableVideoPatches, option == SET_ENABLE_VIDPATCH, true);
+		drawSettingEntryString(page, &page_y_ofs, "Disable Video Patches:", disableVideoPatchesStr[swissSettings.disableVideoPatches], option == SET_ENABLE_VIDPATCH, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force Video Active:", swissSettings.forceVideoActive, option == SET_FORCE_VIDACTIVE, enabledVideoPatches);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, enabledVideoPatches);
 		drawSettingEntryString(page, &page_y_ofs, "Boot through IPL:", bs2BootStr[swissSettings.bs2Boot], option == SET_BS2BOOT, true);
@@ -259,7 +260,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 	}
 	else if(page_num == PAGE_GAME_DEFAULTS) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Default Game Settings (4/5):"));
-		bool enabledVideoPatches = !swissSettings.disableVideoPatches;
+		bool enabledVideoPatches = swissSettings.disableVideoPatches < 2;
 		bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
 		drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_DEFAULT_FORCE_VIDEOMODE, enabledVideoPatches);
 		drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, enabledVideoPatches);
@@ -276,7 +277,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Current Game Settings (5/5):"));
 		bool enabledGamePatches = file != NULL && gameConfig != NULL;
 		if(enabledGamePatches) {
-			bool enabledVideoPatches = !swissSettings.disableVideoPatches;
+			bool enabledVideoPatches = swissSettings.disableVideoPatches < 2;
 			bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
 			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[gameConfig->forceHScale], option == SET_HORIZ_SCALE, enabledVideoPatches);
@@ -467,14 +468,18 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 				swissSettings.autoCheats ^=1;
 			break;
 			case SET_ENABLE_VIDPATCH:
-				swissSettings.disableVideoPatches ^= 1;
+				swissSettings.disableVideoPatches += direction;
+				if(swissSettings.disableVideoPatches > 2)
+					swissSettings.disableVideoPatches = 0;
+				if(swissSettings.disableVideoPatches < 0)
+					swissSettings.disableVideoPatches = 2;
 			break;
 			case SET_FORCE_VIDACTIVE:
-				if(!swissSettings.disableVideoPatches)
+				if(swissSettings.disableVideoPatches < 2)
 					swissSettings.forceVideoActive ^= 1;
 			break;
 			case SET_FORCE_DTVSTATUS:
-				if(!swissSettings.disableVideoPatches)
+				if(swissSettings.disableVideoPatches < 2)
 					swissSettings.forceDTVStatus ^= 1;
 			break;
 			case SET_BS2BOOT:
@@ -493,7 +498,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 	else if(page == PAGE_GAME_DEFAULTS) {
 		switch(option) {
 			case SET_DEFAULT_FORCE_VIDEOMODE:
-				if(!swissSettings.disableVideoPatches) {
+				if(swissSettings.disableVideoPatches < 2) {
 					swissSettings.gameVMode += direction;
 					if(swissSettings.gameVMode > 14)
 						swissSettings.gameVMode = 0;
@@ -518,7 +523,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 				}
 			break;
 			case SET_DEFAULT_HORIZ_SCALE:
-				if(!swissSettings.disableVideoPatches) {
+				if(swissSettings.disableVideoPatches < 2) {
 					swissSettings.forceHScale += direction;
 					if(swissSettings.forceHScale > 8)
 						swissSettings.forceHScale = 0;
@@ -527,11 +532,11 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 				}
 			break;
 			case SET_DEFAULT_VERT_OFFSET:
-				if(!swissSettings.disableVideoPatches)
+				if(swissSettings.disableVideoPatches < 2)
 					swissSettings.forceVOffset += direction;
 			break;
 			case SET_DEFAULT_VERT_FILTER:
-				if(!swissSettings.disableVideoPatches) {
+				if(swissSettings.disableVideoPatches < 2) {
 					swissSettings.forceVFilter += direction;
 					if(swissSettings.forceVFilter > 3)
 						swissSettings.forceVFilter = 0;
@@ -540,7 +545,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 				}
 			break;
 			case SET_DEFAULT_ALPHA_DITHER:
-				if(!swissSettings.disableVideoPatches)
+				if(swissSettings.disableVideoPatches < 2)
 					swissSettings.disableDithering ^= 1;
 			break;
 			case SET_DEFAULT_ANISO_FILTER:
@@ -574,7 +579,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 	else if(page == PAGE_GAME && file != NULL && gameConfig != NULL) {
 		switch(option) {
 			case SET_FORCE_VIDEOMODE:
-				if(!swissSettings.disableVideoPatches) {
+				if(swissSettings.disableVideoPatches < 2) {
 					gameConfig->gameVMode += direction;
 					if(gameConfig->gameVMode > 14)
 						gameConfig->gameVMode = 0;
@@ -599,7 +604,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 				}
 			break;
 			case SET_HORIZ_SCALE:
-				if(!swissSettings.disableVideoPatches) {
+				if(swissSettings.disableVideoPatches < 2) {
 					gameConfig->forceHScale += direction;
 					if(gameConfig->forceHScale > 8)
 						gameConfig->forceHScale = 0;
@@ -608,11 +613,11 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 				}
 			break;
 			case SET_VERT_OFFSET:
-				if(!swissSettings.disableVideoPatches)
+				if(swissSettings.disableVideoPatches < 2)
 					gameConfig->forceVOffset += direction;
 			break;
 			case SET_VERT_FILTER:
-				if(!swissSettings.disableVideoPatches) {
+				if(swissSettings.disableVideoPatches < 2) {
 					gameConfig->forceVFilter += direction;
 					if(gameConfig->forceVFilter > 3)
 						gameConfig->forceVFilter = 0;
@@ -621,7 +626,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 				}
 			break;
 			case SET_ALPHA_DITHER:
-				if(!swissSettings.disableVideoPatches)
+				if(swissSettings.disableVideoPatches < 2)
 					gameConfig->disableDithering ^= 1;
 			break;
 			case SET_ANISO_FILTER:

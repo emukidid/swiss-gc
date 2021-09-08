@@ -165,7 +165,7 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "Enable File Management=%s\r\n",(swissSettings.enableFileManagement ? "Yes":"No"));
 	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "Disable Video Patches=%s\r\n",(swissSettings.disableVideoPatches ? "Yes":"No"));
+	sprintf(txtbuffer, "Disable Video Patches=%s\r\n",(disableVideoPatchesStr[swissSettings.disableVideoPatches]));
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "Force Video Active=%s\r\n",(swissSettings.forceVideoActive ? "Yes":"No"));
 	string_append(configString, txtbuffer);
@@ -475,7 +475,12 @@ void config_parse(char *configData) {
 					swissSettings.enableFileManagement = !strcmp("Yes", value) ? 1:0;
 				}
 				else if(!strcmp("Disable Video Patches", name)) {
-					swissSettings.disableVideoPatches = !strcmp("Yes", value) ? 1:0;
+					if(!strcmp(disableVideoPatchesStr[0], value))
+						swissSettings.disableVideoPatches = 0;
+					else if(!strcmp(disableVideoPatchesStr[1], value))
+						swissSettings.disableVideoPatches = 1;
+					else if(!strcmp(disableVideoPatchesStr[2], value))
+						swissSettings.disableVideoPatches = 2;
 				}
 				else if(!strcmp("Force Video Active", name)) {
 					swissSettings.forceVideoActive = !strcmp("Yes", value) ? 1:0;
