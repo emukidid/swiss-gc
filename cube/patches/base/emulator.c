@@ -509,7 +509,7 @@ void di_close_cover(void)
 	di_update_interrupts();
 }
 
-OSAlarm di_alarm = {0};
+OSAlarm di_alarm = {0}, cover_alarm = {0};
 
 #ifndef DI_PASSTHROUGH
 static void di_execute_command(void)
@@ -603,7 +603,7 @@ static void di_execute_command(void)
 		{
 			if (di.status == 0 && change_disc()) {
 				di_open_cover();
-				OSSetAlarm(&di_alarm, OSSecondsToTicks(1.5), (OSAlarmHandler)di_close_cover);
+				OSSetAlarm(&cover_alarm, OSSecondsToTicks(1.5), (OSAlarmHandler)di_close_cover);
 			}
 			break;
 		}
@@ -722,24 +722,11 @@ static void di_write(unsigned index, uint32_t value)
 			di.regs[index] = value & 0b111;
 
 			if (value & 0b001) {
-				#ifdef DVD_MATH
-				if (*VAR_EMU_READ_SPEED) {
-					switch (di.reg.cmdbuf0 >> 24) {
-						case 0xA8:
-						{
-							dvd_schedule_read(di.reg.cmdbuf1 << 2, di.reg.cmdbuf2, (OSAlarmHandler)di_execute_command);
-							return;
-						}
-						case 0xAB:
-						{
-							dvd_schedule_read(di.reg.cmdbuf1 << 2, 0, (OSAlarmHandler)di_execute_command);
-							return;
-						}
-					}
-				}
-				#endif
-
+				#ifndef DVD
+				OSSetAlarm(&di_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)di_execute_command);
+				#else
 				di_execute_command();
+				#endif
 			}
 			break;
 	}
@@ -1071,6 +1058,7 @@ void init(void **arenaLo, void **arenaHi)
 	OSCreateAlarm(&bba_alarm);
 	#endif
 	OSCreateAlarm(&di_alarm);
+	OSCreateAlarm(&cover_alarm);
 	OSCreateAlarm(&read_alarm);
 
 	memzero(irq.handler, sizeof(irq.handler));

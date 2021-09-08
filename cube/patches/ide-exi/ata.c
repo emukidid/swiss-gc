@@ -344,12 +344,12 @@ static void ata_read_queued(void)
 		else
 			ata.queue[0].length = 0;
 
-		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)ata_done_queued);
+		ata_done_queued();
 		return;
 	}
 
 	if (sector == ata.last_sector) {
-		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)ata_done_queued);
+		ata_done_queued();
 		return;
 	}
 

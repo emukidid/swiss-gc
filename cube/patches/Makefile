@@ -46,10 +46,10 @@ stub.bin:
 sd.bin:
 	@echo Building SD Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DDVD_MATH -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDVD_MATH
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -107,10 +107,10 @@ sd.dtk.bin:
 ideexi-v1.bin:
 	@echo Building IDE-EXI-v1 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DDVD_MATH -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDVD_MATH
 	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=0 -DISR_READ=1
 	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -168,10 +168,10 @@ ideexi-v1.dtk.bin:
 ideexi-v2.bin:
 	@echo Building IDE-EXI-v2 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DDVD_MATH -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDVD_MATH
 	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=1
 	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S -DDMA
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -356,10 +356,10 @@ fsp.bin:
 gcloader.bin:
 	@echo Building GCLoader Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DDVD_MATH -DGCODE -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DGCODE -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DGCODE
+	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DDVD_MATH -DGCODE
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1

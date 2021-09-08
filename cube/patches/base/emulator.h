@@ -28,6 +28,7 @@
 
 extern OSAlarm bba_alarm;
 extern OSAlarm di_alarm;
+extern OSAlarm cover_alarm;
 extern OSAlarm read_alarm;
 
 typedef struct {

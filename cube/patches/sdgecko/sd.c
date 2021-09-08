@@ -232,12 +232,12 @@ static void mmc_read_queued(void)
 		mmc.next_sector = sector + 1;
 		mmc.write = write;
 
-		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)mmc_done_queued);
+		mmc_done_queued();
 		return;
 	}
 
 	if (sector == mmc.last_sector) {
-		OSSetAlarm(&read_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)mmc_done_queued);
+		mmc_done_queued();
 		return;
 	}
 

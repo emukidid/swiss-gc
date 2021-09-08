@@ -56,108 +56,89 @@ static uint32_t dvd_buffer_size(void)
 	return (*VAR_EMU_READ_SPEED == 1 ? id->streaming ? 5 : 15 : 32) * DVD_ECC_BLOCK_SIZE;
 }
 
+__attribute((noinline))
 void dvd_schedule_read(uint32_t offset, uint32_t length, OSAlarmHandler handler)
 {
-	void dvd_schedule_read(uint32_t offset, uint32_t length, OSAlarmHandler handler)
-	{
-		OSTime current_time = OSGetTime();
+	OSTime current_time = OSGetTime();
 
-		uint32_t head_position;
+	uint32_t head_position;
 
-		uint32_t buffer_start, buffer_end;
-		uint32_t buffer_size = dvd_buffer_size();
+	uint32_t buffer_start, buffer_end;
+	uint32_t buffer_size = dvd_buffer_size();
 
-		uint32_t dvd_offset = DVDRoundDown32KB(offset);
+	uint32_t dvd_offset = DVDRoundDown32KB(offset);
 
-		if (read_buffer.start_time == read_buffer.end_time) {
-			buffer_start = buffer_end = head_position = 0;
+	if (read_buffer.start_time == read_buffer.end_time) {
+		buffer_start = buffer_end = head_position = 0;
+	} else {
+		if (current_time >= read_buffer.end_time) {
+			head_position = read_buffer.end_offset;
 		} else {
-			if (current_time >= read_buffer.end_time) {
-				head_position = read_buffer.end_offset;
-			} else {
-				head_position = read_buffer.start_offset +
-					OSDiffTick(current_time, read_buffer.start_time) *
-					(read_buffer.end_block - read_buffer.start_block) /
-					OSDiffTick(read_buffer.end_time, read_buffer.start_time) *
-					DVD_ECC_BLOCK_SIZE;
-			}
-
-			buffer_start = read_buffer.end_offset >= buffer_size ? read_buffer.end_offset - buffer_size : 0;
-
-			if (dvd_offset < buffer_start)
-				buffer_start = buffer_end = 0;
-			else buffer_end = head_position;
+			head_position = read_buffer.start_offset +
+				OSDiffTick(current_time, read_buffer.start_time) *
+				(read_buffer.end_block - read_buffer.start_block) /
+				OSDiffTick(read_buffer.end_time, read_buffer.start_time) *
+				DVD_ECC_BLOCK_SIZE;
 		}
 
-		OSTick ticks_until_execution = 0;
-		OSTick ticks_until_completion = COMMAND_LATENCY_TICKS;
+		buffer_start = read_buffer.end_offset >= buffer_size ? read_buffer.end_offset - buffer_size : 0;
 
-		do {
-			OSTick ticks = 0;
+		if (dvd_offset < buffer_start)
+			buffer_start = buffer_end = 0;
+		else buffer_end = head_position;
+	}
 
-			uint32_t chunk_length = MIN(length, DVD_ECC_BLOCK_SIZE - offset % DVD_ECC_BLOCK_SIZE);
+	OSTick ticks_until_execution = 0;
+	OSTick ticks_until_completion = COMMAND_LATENCY_TICKS;
 
-			if (dvd_offset >= buffer_start && dvd_offset < buffer_end) {
-				ticks += COMMAND_LATENCY_TICKS;
-				ticks += OSSecondsToTicks(chunk_length / BUFFER_TRANSFER_RATE);
-			} else {
-				if (dvd_offset != head_position) {
-					ticks += OSSecondsToTicks(CalculateSeekTime(head_position, dvd_offset));
-					ticks += OSSecondsToTicks(CalculateRotationalLatency(dvd_offset,
-						OSTicksToSeconds((double)(current_time + ticks_until_completion + ticks))));
+	do {
+		OSTick ticks = 0;
 
-					#if READ_SPEED_TIER == 2
-					ticks_until_execution += ticks;
-					#endif
-				} else {
-					ticks += OSSecondsToTicks(CalculateRawDiscReadTime(dvd_offset, DVD_ECC_BLOCK_SIZE));
-				}
+		uint32_t chunk_length = MIN(length, DVD_ECC_BLOCK_SIZE - offset % DVD_ECC_BLOCK_SIZE);
 
-				#if READ_SPEED_TIER == 1
+		if (dvd_offset >= buffer_start && dvd_offset < buffer_end) {
+			ticks += COMMAND_LATENCY_TICKS;
+			ticks += OSSecondsToTicks(chunk_length / BUFFER_TRANSFER_RATE);
+		} else {
+			if (dvd_offset != head_position) {
+				ticks += OSSecondsToTicks(CalculateSeekTime(head_position, dvd_offset));
+				ticks += OSSecondsToTicks(CalculateRotationalLatency(dvd_offset,
+					OSTicksToSeconds((double)(current_time + ticks_until_completion + ticks))));
+
+				#if READ_SPEED_TIER == 2
 				ticks_until_execution += ticks;
 				#endif
-				head_position = dvd_offset + DVD_ECC_BLOCK_SIZE;
+			} else {
+				ticks += OSSecondsToTicks(CalculateRawDiscReadTime(dvd_offset, DVD_ECC_BLOCK_SIZE));
 			}
 
-			#if READ_SPEED_TIER == 0
+			#if READ_SPEED_TIER == 1
 			ticks_until_execution += ticks;
 			#endif
-			ticks_until_completion += ticks;
-
-			offset += chunk_length;
-			length -= chunk_length;
-			dvd_offset += DVD_ECC_BLOCK_SIZE;
-		} while (length);
-
-		if (dvd_offset != buffer_start + DVD_ECC_BLOCK_SIZE || buffer_start == buffer_end) {
-			read_buffer.start_offset = dvd_offset >= buffer_end ? dvd_offset : buffer_end;
-			read_buffer.end_offset = dvd_offset + buffer_size - DVD_ECC_BLOCK_SIZE;
-
-			read_buffer.start_time = current_time + ticks_until_completion;
-			read_buffer.end_time = read_buffer.start_time +
-				(OSTick)OSSecondsToTicks(CalculateRawDiscReadTime(read_buffer.start_offset,
-				read_buffer.end_offset - read_buffer.start_offset));
+			head_position = dvd_offset + DVD_ECC_BLOCK_SIZE;
 		}
 
-		OSSetAlarm(&read_alarm, ticks_until_execution, handler);
+		#if READ_SPEED_TIER == 0
+		ticks_until_execution += ticks;
+		#endif
+		ticks_until_completion += ticks;
+
+		offset += chunk_length;
+		length -= chunk_length;
+		dvd_offset += DVD_ECC_BLOCK_SIZE;
+	} while (length);
+
+	if (dvd_offset != buffer_start + DVD_ECC_BLOCK_SIZE || buffer_start == buffer_end) {
+		read_buffer.start_offset = dvd_offset >= buffer_end ? dvd_offset : buffer_end;
+		read_buffer.end_offset = dvd_offset + buffer_size - DVD_ECC_BLOCK_SIZE;
+
+		read_buffer.start_time = current_time + ticks_until_completion;
+		read_buffer.end_time = read_buffer.start_time +
+			(OSTick)OSSecondsToTicks(CalculateRawDiscReadTime(read_buffer.start_offset,
+			read_buffer.end_offset - read_buffer.start_offset));
 	}
 
-	static struct {
-		typeof(offset) offset;
-		typeof(length) length;
-		typeof(handler) handler;
-	} args = {0};
-
-	args.offset = offset;
-	args.length = length;
-	args.handler = handler;
-
-	void trampoline(OSAlarm *alarm, OSContext *context)
-	{
-		dvd_schedule_read(args.offset, args.length, args.handler);
-	}
-
-	OSSetAlarm(&read_alarm, 0, trampoline);
+	OSSetAlarm(&read_alarm, ticks_until_execution, handler);
 }
 
 __attribute((always_inline))

@@ -102,7 +102,7 @@ void schedule_read(OSTick ticks)
 		dvd.offset += length;
 		dvd.read = !!dvd.length;
 
-		schedule_read(COMMAND_LATENCY_TICKS);
+		schedule_read(0);
 	}
 	#else
 	OSCancelAlarm(&read_alarm);
@@ -133,7 +133,19 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	dvd.offset = offset;
 	dvd.read = true;
 
-	schedule_read(COMMAND_LATENCY_TICKS);
+	#ifdef DVD_MATH
+	void alarm_handler(OSAlarm *alarm, OSContext *context)
+	{
+		schedule_read(0);
+	}
+
+	if (*VAR_EMU_READ_SPEED) {
+		dvd_schedule_read(offset, length, alarm_handler);
+		return;
+	}
+	#endif
+
+	schedule_read(0);
 }
 
 void trickle_read(void)
