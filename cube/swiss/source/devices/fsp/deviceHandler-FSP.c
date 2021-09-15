@@ -238,7 +238,7 @@ u32 deviceHandler_FSP_emulated() {
 
 DEVICEHANDLER_INTERFACE __device_fsp = {
 	DEVICE_ID_E,
-	"BBA",
+	"Broadband Adapter",
 	"File Service Protocol",
 	"Configurable via the settings screen",
 	{TEX_SAMBA, 140, 64},

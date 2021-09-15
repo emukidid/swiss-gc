@@ -183,6 +183,8 @@ extern DEVICEHANDLER_INTERFACE* getDeviceByUniqueId(u8 id);
 extern DEVICEHANDLER_INTERFACE* getDeviceByLocation(u32 location);
 extern DEVICEHANDLER_INTERFACE* getDeviceFromPath(char *path);
 
+extern const char* getHwNameByLocation(u32 location);
+
 extern void print_frag_list(int hasDisc2);
 
 #endif

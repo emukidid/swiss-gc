@@ -233,7 +233,7 @@ bool deviceHandler_FTP_test() {
 
 DEVICEHANDLER_INTERFACE __device_ftp = {
 	DEVICE_ID_D,
-	"BBA",
+	"Broadband Adapter",
 	"File Transfer Protocol",
 	"Configurable via the settings screen",
 	{TEX_SAMBA, 140, 64},

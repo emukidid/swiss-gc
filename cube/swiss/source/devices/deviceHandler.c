@@ -106,3 +106,29 @@ DEVICEHANDLER_INTERFACE* getDeviceFromPath(char *path) {
 	}	
 	return NULL;
 }
+
+const char* getHwNameByLocation(u32 location) {
+	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(location);
+	if(device != NULL) {
+		return device->hwName;
+	}
+	u32 type;
+	switch(location) {
+		case LOC_MEMCARD_SLOT_A:
+			if(EXI_GetType(EXI_CHANNEL_0, EXI_DEVICE_0, &type) && ~type) return EXI_GetTypeString(type);
+			break;
+		case LOC_MEMCARD_SLOT_B:
+			if(EXI_GetType(EXI_CHANNEL_1, EXI_DEVICE_0, &type) && ~type) return EXI_GetTypeString(type);
+			break;
+		case LOC_SERIAL_PORT_1:
+			if(EXI_GetType(EXI_CHANNEL_0, EXI_DEVICE_2, &type) && ~type) return EXI_GetTypeString(type);
+			break;
+		case LOC_SERIAL_PORT_2:
+			if(EXI_GetType(EXI_CHANNEL_2, EXI_DEVICE_0, &type) && ~type) return EXI_GetTypeString(type);
+			break;
+		case LOC_SYSTEM:
+			if(EXI_GetType(EXI_CHANNEL_0, EXI_DEVICE_1, &type) && ~type) return EXI_GetTypeString(type);
+			break;
+	}
+	return "Empty";
+}

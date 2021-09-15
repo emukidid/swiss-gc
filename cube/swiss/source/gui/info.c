@@ -98,39 +98,36 @@ uiDrawObj_t * info_draw_page(int page_num) {
 	else if(page_num == 1) {
 		DrawAddChild(container, DrawLabel(30, 55, "Device Info (2/3):"));
 		
-		DEVICEHANDLER_INTERFACE* dev = getDeviceByLocation(LOC_MEMCARD_SLOT_A);
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"SLOT-A", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 106, (char*)(dev == NULL ? "Empty" : dev->hwName), 0.75f, true, defaultColor));
-		dev = getDeviceByLocation(LOC_MEMCARD_SLOT_B);
+		DrawAddChild(container, DrawStyledLabel(640/2, 106, getHwNameByLocation(LOC_MEMCARD_SLOT_A), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 130, (char*)"SLOT-B", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 146, (char*)(dev == NULL ? "Empty" : dev->hwName), 0.75f, true, defaultColor));
-		dev = getDeviceByLocation(LOC_SERIAL_PORT_1);
+		DrawAddChild(container, DrawStyledLabel(640/2, 146, getHwNameByLocation(LOC_MEMCARD_SLOT_B), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 170, (char*)"SERIAL PORT 1", 0.65f, true, defaultColor));
-		if(exi_bba_exists()) {
-			sprintf(topStr, "%s (%s)",dev->hwName, !net_initialized ? "Not initialized" : bba_ip);
+		if(bba_exists) {
+			sprintf(topStr, "%s (%s)", getHwNameByLocation(LOC_SERIAL_PORT_1), !net_initialized ? "Not initialized" : bba_ip);
 		}
 		else {
-			strcpy(topStr, (dev == NULL ? "Empty" : dev->hwName));
+			strcpy(topStr, getHwNameByLocation(LOC_SERIAL_PORT_1));
 		}
-		DrawAddChild(container, DrawStyledLabel(640/2, 186, (char*)(dev == NULL ? "Empty" : topStr), 0.75f, true, defaultColor));
-		dev = getDeviceByLocation(LOC_SERIAL_PORT_2);
+		DrawAddChild(container, DrawStyledLabel(640/2, 186, topStr, 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 210, (char*)"SERIAL PORT 2", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 226, (char*)(dev == NULL ? "Empty" : dev->hwName), 0.75f, true, defaultColor));
-		dev = getDeviceByLocation(LOC_DVD_CONNECTOR);
+		DrawAddChild(container, DrawStyledLabel(640/2, 226, getHwNameByLocation(LOC_SERIAL_PORT_2), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"DRIVE INTERFACE", 0.65f, true, defaultColor));
-		if(dev == &__device_dvd) {
-			sprintf(topStr, "%s %02X %02X%02X/%02X (%02X)",dev->hwName,driveVersion[6],driveVersion[4],driveVersion[5],driveVersion[7],driveVersion[8]);
+		
+		DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(LOC_DVD_CONNECTOR);
+		if(device == &__device_dvd) {
+			sprintf(topStr, "%s %02X %02X%02X/%02X (%02X)",device->hwName,driveVersion[6],driveVersion[4],driveVersion[5],driveVersion[7],driveVersion[8]);
 		}
-		else if(dev == &__device_gcloader) {
+		else if(device == &__device_gcloader) {
 			char* gcloaderVersionStr = gcloaderGetVersion();
-			sprintf(topStr, "%s %s",dev->hwName,gcloaderVersionStr);
+			sprintf(topStr, "%s %s",device->hwName,gcloaderVersionStr);
 			free(gcloaderVersionStr);
 		}
-		else if(dev == &__device_wkf) {
-			sprintf(topStr, "%s (%s)",dev->hwName,wkfGetSerial());
+		else if(device == &__device_wkf) {
+			sprintf(topStr, "%s (%s)",device->hwName,wkfGetSerial());
 		}
 		else {
-			strcpy(topStr, (dev == NULL ? "Empty" : dev->hwName));
+			strcpy(topStr, getHwNameByLocation(LOC_DVD_CONNECTOR));
 		}
 		DrawAddChild(container, DrawStyledLabel(640/2, 266, topStr, 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"PROGRESSIVE VIDEO", 0.65f, true, defaultColor));
