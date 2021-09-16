@@ -29,7 +29,10 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		// Model
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"MODEL", 0.65f, true, defaultColor));
 		if(mfpvr() == GC_CPU_VERSION01) {
-			if(!strncmp(&IPLInfo[0x55], "TDEV Revision 1.1", 17)) {
+			if(*(u16*)&driveVersion[2] == 0x0201) {
+				strcpy(topStr, "NPDP-GDEV (GCT-0100)");
+			}
+			else if(!strncmp(&IPLInfo[0x55], "TDEV Revision 1.1", 17)) {
 				strcpy(topStr, "Nintendo GameCube DOT-006");
 			}
 			else if(*(u16*)&driveVersion[2] == 0x0200) {
