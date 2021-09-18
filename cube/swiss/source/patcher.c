@@ -27,7 +27,7 @@ static void *patch_locations[PATCHES_MAX];
 // Returns where the ASM patch has been copied to
 void *installPatch(int patchId) {
 	u32 patchSize = 0;
-	void* patchLocation = 0;
+	void *patchLocation = NULL;
 	switch(patchId) {
 		case GX_COPYDISPHOOK:
 			patchSize = GXCopyDispHook_length; patchLocation = GXCopyDispHook; break;
@@ -47,6 +47,8 @@ void *installPatch(int patchId) {
 			patchSize = MTXOrthoHook_length; patchLocation = MTXOrthoHook; break;
 		case MTX_PERSPECTIVEHOOK:
 			patchSize = MTXPerspectiveHook_length; patchLocation = MTXPerspectiveHook; break;
+		case OS_RESERVED:
+			patchSize = 0x1800; break;
 		case VI_CONFIGURE240P:
 			patchSize = VIConfigure240p_length; patchLocation = VIConfigure240p; break;
 		case VI_CONFIGURE288P:
@@ -97,7 +99,13 @@ void *installPatch2(void *patchLocation, u32 patchSize) {
 	if (top_addr == 0x81800000)
 		top_addr -= 8;
 	top_addr -= patchSize;
-	patchLocation = memcpy((void*)top_addr, patchLocation, patchSize);
+	if (patchLocation) {
+		top_addr &= ~3;
+		patchLocation = memcpy((void*)top_addr, patchLocation, patchSize);
+	} else {
+		top_addr &= ~31;
+		patchLocation = memset((void*)top_addr, 0, patchSize);
+	}
 	DCFlushRange(patchLocation, patchSize);
 	ICInvalidateRange(patchLocation, patchSize);
 	return patchLocation;
@@ -9786,6 +9794,7 @@ u8 BS2Pal520IntAa[] = {
 // Apply specific per-game hacks/workarounds
 int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 {
+	void *addr;
 	int patched = 0;
 	
 	// Fix Zelda WW on Wii (__GXSetVAT patch)
@@ -10616,37 +10625,37 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (!strncmp(gameID, "GPOE8P", 6) && (dataType == PATCH_DOL || dataType == PATCH_DOL_PRS)) {
 		switch (length) {
 			case 204480:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x806C7A76 - 0x806C7500 + 0x2600) = (0x8070DAC0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x806C7A82 - 0x806C7500 + 0x2600) = (0x8070DAC0 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x806C7E2A - 0x806C7500 + 0x2600) = (0x8070DAC0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x806C7E32 - 0x806C7500 + 0x2600) = (0x8070DAC0 & 0xFFFF);
+				*(s16 *)(data + 0x806C7A76 - 0x806C7500 + 0x2600) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7A82 - 0x806C7500 + 0x2600) = ((u32)addr & 0xFFFF);
 				
-				*(s16 *)(data + 0x806C84B2 - 0x806C7500 + 0x2600) = 0x181F;
+				*(s16 *)(data + 0x806C7E2A - 0x806C7500 + 0x2600) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7E32 - 0x806C7500 + 0x2600) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 213952:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x8000F2BE - 0x8000E780 + 0x2620) = (0x80057100 + 0x8000) >> 16;
-				*(s16 *)(data + 0x8000F2C6 - 0x8000E780 + 0x2620) = (0x80057100 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x8000F566 - 0x8000E780 + 0x2620) = (0x80057100 + 0x8000) >> 16;
-				*(s16 *)(data + 0x8000F56E - 0x8000E780 + 0x2620) = (0x80057100 & 0xFFFF);
+				*(s16 *)(data + 0x8000F2BE - 0x8000E780 + 0x2620) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F2C6 - 0x8000E780 + 0x2620) = ((u32)addr & 0xFFFF);
 				
-				*(s16 *)(data + 0x8000FDAA - 0x8000E780 + 0x2620) = 0x181F;
+				*(s16 *)(data + 0x8000F566 - 0x8000E780 + 0x2620) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F56E - 0x8000E780 + 0x2620) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 5233088:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x8036F5C6 - 0x8000F740 + 0x2620) = (0x805F1240 + 0x8000) >> 16;
-				*(s16 *)(data + 0x8036F5CE - 0x8000F740 + 0x2620) = (0x805F1240 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x8036FCF2 - 0x8000F740 + 0x2620) = 0x181F;
+				*(s16 *)(data + 0x8036F5C6 - 0x8000F740 + 0x2620) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x8036F5CE - 0x8000F740 + 0x2620) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10655,37 +10664,37 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (!strncmp(gameID, "GPOJ8P", 6) && (dataType == PATCH_DOL || dataType == PATCH_DOL_PRS)) {
 		switch (length) {
 			case 211360:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x806C7B36 - 0x806C75C0 + 0x26C0) = (0x8070F680 + 0x8000) >> 16;
-				*(s16 *)(data + 0x806C7B42 - 0x806C75C0 + 0x26C0) = (0x8070F680 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x806C7EEA - 0x806C75C0 + 0x26C0) = (0x8070F680 + 0x8000) >> 16;
-				*(s16 *)(data + 0x806C7EF2 - 0x806C75C0 + 0x26C0) = (0x8070F680 & 0xFFFF);
+				*(s16 *)(data + 0x806C7B36 - 0x806C75C0 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7B42 - 0x806C75C0 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				*(s16 *)(data + 0x806C8742 - 0x806C75C0 + 0x26C0) = 0x181F;
+				*(s16 *)(data + 0x806C7EEA - 0x806C75C0 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7EF2 - 0x806C75C0 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 214880:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x8000F2BE - 0x8000E780 + 0x2620) = (0x800574A0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x8000F2C6 - 0x8000E780 + 0x2620) = (0x800574A0 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x8000F566 - 0x8000E780 + 0x2620) = (0x800574A0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x8000F56E - 0x8000E780 + 0x2620) = (0x800574A0 & 0xFFFF);
+				*(s16 *)(data + 0x8000F2BE - 0x8000E780 + 0x2620) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F2C6 - 0x8000E780 + 0x2620) = ((u32)addr & 0xFFFF);
 				
-				*(s16 *)(data + 0x8000FDAA - 0x8000E780 + 0x2620) = 0x181F;
+				*(s16 *)(data + 0x8000F566 - 0x8000E780 + 0x2620) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F56E - 0x8000E780 + 0x2620) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 5234880:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x8036F1FA - 0x8000F740 + 0x2620) = (0x805F1940 + 0x8000) >> 16;
-				*(s16 *)(data + 0x8036F202 - 0x8000F740 + 0x2620) = (0x805F1940 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x8036F926 - 0x8000F740 + 0x2620) = 0x181F;
+				*(s16 *)(data + 0x8036F1FA - 0x8000F740 + 0x2620) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x8036F202 - 0x8000F740 + 0x2620) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10694,40 +10703,40 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (!strncmp(gameID, "GPSE8P", 6) && (dataType == PATCH_DOL || dataType == PATCH_DOL_PRS)) {
 		switch (length) {
 			case 211648:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x806C7C92 - 0x806C75C0 + 0x26C0) = (0x8070F6E0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x806C7C9E - 0x806C75C0 + 0x26C0) = (0x8070F6E0 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x806C805E - 0x806C75C0 + 0x26C0) = (0x8070F6E0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x806C8066 - 0x806C75C0 + 0x26C0) = (0x8070F6E0 & 0xFFFF);
+				*(s16 *)(data + 0x806C7C92 - 0x806C75C0 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7C9E - 0x806C75C0 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				*(s16 *)(data + 0x806C88B6 - 0x806C75C0 + 0x26C0) = 0x181F;
+				*(s16 *)(data + 0x806C805E - 0x806C75C0 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C8066 - 0x806C75C0 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 220800:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x8000F35E - 0x8000E820 + 0x26C0) = (0x80058BE0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x8000F366 - 0x8000E820 + 0x26C0) = (0x80058BE0 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x8000F742 - 0x8000E820 + 0x26C0) = (0x80058BE0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x8000F74A - 0x8000E820 + 0x26C0) = (0x80058BE0 & 0xFFFF);
+				*(s16 *)(data + 0x8000F35E - 0x8000E820 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F366 - 0x8000E820 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				*(s16 *)(data + 0x80010156 - 0x8000E820 + 0x26C0) = 0x181F;
+				*(s16 *)(data + 0x8000F742 - 0x8000E820 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F74A - 0x8000E820 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 4785536:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x800590F6 - 0x8000E680 + 0x26C0) = (0x100B2650 + 0x8000) >> 16;
-				*(s16 *)(data + 0x800590FE - 0x8000E680 + 0x26C0) = (0x100B2650 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x80315B92 - 0x8000E680 + 0x26C0) = (0x80593280 + 0x8000) >> 16;
-				*(s16 *)(data + 0x80315B9A - 0x8000E680 + 0x26C0) = (0x80593280 & 0xFFFF);
+				*(s16 *)(data + 0x800590F6 - 0x8000E680 + 0x26C0) = (((u32)addr >> 3) + 0x8000) >> 16;
+				*(s16 *)(data + 0x800590FE - 0x8000E680 + 0x26C0) = (((u32)addr >> 3) & 0xFFFF);
 				
-				*(s16 *)(data + 0x80316BAE - 0x8000E680 + 0x26C0) = 0x181F;
+				*(s16 *)(data + 0x80315B92 - 0x8000E680 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x80315B9A - 0x8000E680 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10736,40 +10745,40 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (!strncmp(gameID, "GPSJ8P", 6) && (dataType == PATCH_DOL || dataType == PATCH_DOL_PRS)) {
 		switch (length) {
 			case 212928:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x806C7B36 - 0x806C75C0 + 0x26C0) = (0x8070FBE0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x806C7B42 - 0x806C75C0 + 0x26C0) = (0x8070FBE0 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x806C7EEA - 0x806C75C0 + 0x26C0) = (0x8070FBE0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x806C7EF2 - 0x806C75C0 + 0x26C0) = (0x8070FBE0 & 0xFFFF);
+				*(s16 *)(data + 0x806C7B36 - 0x806C75C0 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7B42 - 0x806C75C0 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				*(s16 *)(data + 0x806C8742 - 0x806C75C0 + 0x26C0) = 0x181F;
+				*(s16 *)(data + 0x806C7EEA - 0x806C75C0 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7EF2 - 0x806C75C0 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 222048:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x8000F35E - 0x8000E820 + 0x26C0) = (0x800590C0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x8000F366 - 0x8000E820 + 0x26C0) = (0x800590C0 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x8000F606 - 0x8000E820 + 0x26C0) = (0x800590C0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x8000F60E - 0x8000E820 + 0x26C0) = (0x800590C0 & 0xFFFF);
+				*(s16 *)(data + 0x8000F35E - 0x8000E820 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F366 - 0x8000E820 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				*(s16 *)(data + 0x8001001A - 0x8000E820 + 0x26C0) = 0x181F;
+				*(s16 *)(data + 0x8000F606 - 0x8000E820 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F60E - 0x8000E820 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 4781856:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x800591A2 - 0x8000E680 + 0x26C0) = (0x100B2484 + 0x8000) >> 16;
-				*(s16 *)(data + 0x800591AA - 0x8000E680 + 0x26C0) = (0x100B2484 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x80314B3A - 0x8000E680 + 0x26C0) = (0x80592420 + 0x8000) >> 16;
-				*(s16 *)(data + 0x80314B42 - 0x8000E680 + 0x26C0) = (0x80592420 & 0xFFFF);
+				*(s16 *)(data + 0x800591A2 - 0x8000E680 + 0x26C0) = (((u32)addr >> 3) + 0x8000) >> 16;
+				*(s16 *)(data + 0x800591AA - 0x8000E680 + 0x26C0) = (((u32)addr >> 3) & 0xFFFF);
 				
-				*(s16 *)(data + 0x80315B56 - 0x8000E680 + 0x26C0) = 0x181F;
+				*(s16 *)(data + 0x80314B3A - 0x8000E680 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x80314B42 - 0x8000E680 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10778,40 +10787,40 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (!strncmp(gameID, "GPSP8P", 6) && (dataType == PATCH_DOL || dataType == PATCH_DOL_PRS)) {
 		switch (length) {
 			case 212000:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x806C7C92 - 0x806C75C0 + 0x26C0) = (0x8070F840 + 0x8000) >> 16;
-				*(s16 *)(data + 0x806C7C9E - 0x806C75C0 + 0x26C0) = (0x8070F840 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x806C805E - 0x806C75C0 + 0x26C0) = (0x8070F840 + 0x8000) >> 16;
-				*(s16 *)(data + 0x806C8066 - 0x806C75C0 + 0x26C0) = (0x8070F840 & 0xFFFF);
+				*(s16 *)(data + 0x806C7C92 - 0x806C75C0 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C7C9E - 0x806C75C0 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				*(s16 *)(data + 0x806C88B6 - 0x806C75C0 + 0x26C0) = 0x181F;
+				*(s16 *)(data + 0x806C805E - 0x806C75C0 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x806C8066 - 0x806C75C0 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 221152:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x8000F35E - 0x8000E820 + 0x26C0) = (0x80058D40 + 0x8000) >> 16;
-				*(s16 *)(data + 0x8000F366 - 0x8000E820 + 0x26C0) = (0x80058D40 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x8000F742 - 0x8000E820 + 0x26C0) = (0x80058D40 + 0x8000) >> 16;
-				*(s16 *)(data + 0x8000F74A - 0x8000E820 + 0x26C0) = (0x80058D40 & 0xFFFF);
+				*(s16 *)(data + 0x8000F35E - 0x8000E820 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F366 - 0x8000E820 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				*(s16 *)(data + 0x80010156 - 0x8000E820 + 0x26C0) = 0x181F;
+				*(s16 *)(data + 0x8000F742 - 0x8000E820 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x8000F74A - 0x8000E820 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 4794720:
-				// Move buffer from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x8005925E - 0x8000E680 + 0x26C0) = (0x100B2AD8 + 0x8000) >> 16;
-				*(s16 *)(data + 0x80059266 - 0x8000E680 + 0x26C0) = (0x100B2AD8 & 0xFFFF);
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x803167F2 - 0x8000E680 + 0x26C0) = (0x805956C0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x803167FA - 0x8000E680 + 0x26C0) = (0x805956C0 & 0xFFFF);
+				*(s16 *)(data + 0x8005925E - 0x8000E680 + 0x26C0) = (((u32)addr >> 3) + 0x8000) >> 16;
+				*(s16 *)(data + 0x80059266 - 0x8000E680 + 0x26C0) = (((u32)addr >> 3) & 0xFFFF);
 				
-				*(s16 *)(data + 0x8031780E - 0x8000E680 + 0x26C0) = 0x181F;
+				*(s16 *)(data + 0x803167F2 - 0x8000E680 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x803167FA - 0x8000E680 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10820,13 +10829,13 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (!strncmp(gameID, "GPXE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 2065728:
-				// Move structures from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x80005B56 - 0x800056C0 + 0x2600) = (0x8023D3E0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x80005B5A - 0x800056C0 + 0x2600) = (0x8023D3E0 & 0xFFFF);
-				*(s16 *)(data + 0x80005B72 - 0x800056C0 + 0x2600) = (0x8023E1E0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x80005B76 - 0x800056C0 + 0x2600) = (0x8023E1E0 & 0xFFFF);
+				// Move structures from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x80127F06 - 0x800056C0 + 0x2600) = 0x181F;
+				*(s16 *)(data + 0x80005B56 - 0x800056C0 + 0x2600) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x80005B5A - 0x800056C0 + 0x2600) = ((u32)addr & 0xFFFF);
+				*(s16 *)(data + 0x80005B72 - 0x800056C0 + 0x2600) = (((u32)addr + 0xE00) + 0x8000) >> 16;
+				*(s16 *)(data + 0x80005B76 - 0x800056C0 + 0x2600) = (((u32)addr + 0xE00) & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10835,13 +10844,13 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (!strncmp(gameID, "GPXJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1940480:
-				// Move structures from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x80005B56 - 0x800056C0 + 0x2600) = (0x8021C1E0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x80005B5A - 0x800056C0 + 0x2600) = (0x8021C1E0 & 0xFFFF);
-				*(s16 *)(data + 0x80005B72 - 0x800056C0 + 0x2600) = (0x8021CFE0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x80005B76 - 0x800056C0 + 0x2600) = (0x8021CFE0 & 0xFFFF);
+				// Move structures from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x8012501A - 0x800056C0 + 0x2600) = 0x181F;
+				*(s16 *)(data + 0x80005B56 - 0x800056C0 + 0x2600) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x80005B5A - 0x800056C0 + 0x2600) = ((u32)addr & 0xFFFF);
+				*(s16 *)(data + 0x80005B72 - 0x800056C0 + 0x2600) = (((u32)addr + 0xE00) + 0x8000) >> 16;
+				*(s16 *)(data + 0x80005B76 - 0x800056C0 + 0x2600) = (((u32)addr + 0xE00) & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10850,13 +10859,13 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 	} else if (!strncmp(gameID, "GPXP01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 2076160:
-				// Move structures from 0x80001800 to low arena boundary.
-				*(s16 *)(data + 0x80005B56 - 0x800056C0 + 0x2600) = (0x8023FCA0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x80005B5A - 0x800056C0 + 0x2600) = (0x8023FCA0 & 0xFFFF);
-				*(s16 *)(data + 0x80005B72 - 0x800056C0 + 0x2600) = (0x80240AA0 + 0x8000) >> 16;
-				*(s16 *)(data + 0x80005B76 - 0x800056C0 + 0x2600) = (0x80240AA0 & 0xFFFF);
+				// Move structures from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
 				
-				*(s16 *)(data + 0x80129362 - 0x800056C0 + 0x2600) = 0x181F;
+				*(s16 *)(data + 0x80005B56 - 0x800056C0 + 0x2600) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x80005B5A - 0x800056C0 + 0x2600) = ((u32)addr & 0xFFFF);
+				*(s16 *)(data + 0x80005B72 - 0x800056C0 + 0x2600) = (((u32)addr + 0xE00) + 0x8000) >> 16;
+				*(s16 *)(data + 0x80005B76 - 0x800056C0 + 0x2600) = (((u32)addr + 0xE00) & 0xFFFF);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
