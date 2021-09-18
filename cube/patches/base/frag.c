@@ -31,11 +31,12 @@
 
 static bool frag_get(uint32_t offset, size_t size, frag_t *frag)
 {
-	const frag_t *frags = (frag_t *)VAR_FRAG_LIST;
+	const frag_t *frags = *(frag_t **)VAR_FRAG_LIST;
 
-	for (int i = 0; i < sizeof(VAR_FRAG_LIST) / sizeof(*frags); i++) {
-		if (!frags[i].size)
-			break;
+	if (!frags)
+		return false;
+
+	for (int i = 0; frags[i].size; i++) {
 		if (offset < frags[i].offset || offset >= frags[i].offset + frags[i].size) {
 			size = MIN(size, OSRoundUp32B(frags[i].offset - offset));
 			continue;
@@ -53,12 +54,13 @@ static bool frag_get(uint32_t offset, size_t size, frag_t *frag)
 
 int frag_get_list(uint32_t offset, const frag_t **frag)
 {
-	const frag_t *frags = (frag_t *)VAR_FRAG_LIST;
+	const frag_t *frags = *(frag_t **)VAR_FRAG_LIST;
 	int count = 0;
 
-	for (int i = 0; i < sizeof(VAR_FRAG_LIST) / sizeof(*frags); i++) {
-		if (!frags[i].size)
-			break;
+	if (!frags)
+		return 0;
+
+	for (int i = 0; frags[i].size; i++) {
 		if (frags[i].offset != offset) {
 			if (!count)
 				continue;

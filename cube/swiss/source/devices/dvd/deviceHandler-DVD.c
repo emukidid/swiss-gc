@@ -416,13 +416,10 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 		print_gecko("Streaming %s %08X\r\n",diskId->streaming?"Enabled":"Disabled",dvd_get_error());
 	}
 
-	// Set up Swiss game patches using a patch supporting device
-	memset(VAR_FRAG_LIST, 0, sizeof(VAR_FRAG_LIST));
-
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
-		int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
-		vu32 *fragList = (vu32*)VAR_FRAG_LIST;
+		int i;
+		u32 (*fragList)[3] = NULL;
 		s32 frags = 0, totFrags = 0;
 		
 		print_gecko("Save Patch device found\r\n");
@@ -438,7 +435,11 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 				memset(patchInfo, 0, 16);
 				devices[DEVICE_PATCHES]->seekFile(&patchFile, patchFile.size-16, DEVICE_HANDLER_SEEK_SET);
 				if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-					if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
+					if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+						return 0;
+					}
+					if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
+						free(fragList);
 						return 0;
 					}
 					totFrags+=frags;
@@ -446,19 +447,25 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 				}
 				else {
 					devices[DEVICE_PATCHES]->deleteFile(&patchFile);
+					free(fragList);
 					return 0;
 				}
 			}
 			else {
+				free(fragList);
 				return 0;
 			}
 		}
+		
 		// Check for igr.dol
 		if(swissSettings.igrType == IGR_BOOTBIN) {
 			memset(&patchFile, 0, sizeof(file_handle));
 			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sigr.dol", devices[DEVICE_PATCHES]->initial->name);
 			
-			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_IGR_DOL, 0, DEVICE_PATCHES))) {
+			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+				return 0;
+			}
+			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_IGR_DOL, 0, DEVICE_PATCHES))) {
 				totFrags+=frags;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
@@ -474,7 +481,11 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 					devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				}
-				if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_CARD_A, 31.5*1024*1024, DEVICE_PATCHES))) {
+				
+				if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+					return 0;
+				}
+				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_A, 31.5*1024*1024, DEVICE_PATCHES))) {
 					*(vu8*)VAR_CARD_A_ID = (patchFile.size*8/1024/1024) & 0xFC;
 					totFrags+=frags;
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
@@ -490,7 +501,11 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 					devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				}
-				if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_CARD_B, 31.5*1024*1024, DEVICE_PATCHES))) {
+				
+				if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+					return 0;
+				}
+				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_B, 31.5*1024*1024, DEVICE_PATCHES))) {
 					*(vu8*)VAR_CARD_B_ID = (patchFile.size*8/1024/1024) & 0xFC;
 					totFrags+=frags;
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
@@ -498,7 +513,15 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 			}
 		}
 		
-		print_frag_list(0);
+		if(fragList) {
+			memset(&fragList[totFrags], 0, sizeof(*fragList));
+			print_frag_list(fragList);
+			
+			*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (totFrags + 1) * sizeof(*fragList));
+			free(fragList);
+			fragList = NULL;
+		}
+		
 		// Card Type
 		*(vu8*)VAR_SD_SHIFT = (u8)(sdgecko_getAddressingType(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)) ? 9:0);
 		// Copy the actual freq

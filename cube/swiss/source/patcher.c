@@ -88,13 +88,18 @@ void *installPatch(int patchId) {
 		default:
 			break;
 	}
+	patchLocation = installPatch2(patchLocation, patchSize);
+	print_gecko("Installed patch %i to %08X\r\n", patchId, patchLocation);
+	return patchLocation;
+}
+
+void *installPatch2(void *patchLocation, u32 patchSize) {
 	if (top_addr == 0x81800000)
 		top_addr -= 8;
 	top_addr -= patchSize;
 	patchLocation = memcpy((void*)top_addr, patchLocation, patchSize);
 	DCFlushRange(patchLocation, patchSize);
 	ICInvalidateRange(patchLocation, patchSize);
-	print_gecko("Installed patch %i to %08X\r\n", patchId, patchLocation);
 	return patchLocation;
 }
 

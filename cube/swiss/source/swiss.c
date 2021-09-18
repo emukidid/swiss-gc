@@ -1852,6 +1852,7 @@ void load_game() {
 		*(vu8*)VAR_DRIVE_PATCHED = 0;
 		*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
 		*(vu8*)VAR_IGR_TYPE = swissSettings.igrType;
+		*(vu32**)VAR_FRAG_LIST = NULL;
 		*(vu8*)VAR_CARD_A_ID = 0x00;
 		*(vu8*)VAR_CARD_B_ID = 0x00;
 		// Call the special setup for each device (e.g. SD will set the sector(s))

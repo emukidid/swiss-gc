@@ -236,23 +236,12 @@ s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length) {
 	return bytes_written;
 }
 
-void print_frag_list(int hasDisc2) {
+void print_frag_list(u32 (*fragList)[3]) {
 	print_gecko("== Fragments List ==\r\n");
-	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
-	int maxFrags = hasDisc2 ? ((sizeof(VAR_FRAG_LIST)/12)/2) : (sizeof(VAR_FRAG_LIST)/12), i = 0;
-	for(i = 0; i < maxFrags; i++) {
-		if(!fragList[(i*3)+1]) break;
-		
-		print_gecko("Disc 1 Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%08X]\r\n", 
-					i, fragList[(i*3)+0], fragList[(i*3)+1], fragList[(i*3)+2]);
-	}
-	if(hasDisc2) {
-		for(i = 0; i < maxFrags; i++) {
-			if(!fragList[(i*3)+1+(maxFrags*3)]) break;
-		
-			print_gecko("Disc 2 Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%08X]\r\n", 
-					i, fragList[(i*3)+0+(maxFrags*3)], fragList[(i*3)+1+(maxFrags*3)], fragList[(i*3)+2+(maxFrags*3)]);
-		}
+	int i;
+	for(i = 0; fragList[i][1]; i++) {
+		print_gecko("Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%08X]\r\n",
+					i, fragList[i][0], fragList[i][1], fragList[i][2]);
 	}
 	print_gecko("== Fragments End ==\r\n");
 }
@@ -260,14 +249,14 @@ void print_frag_list(int hasDisc2) {
 
 /* 
 	file: the file to get the fragments for
-	fragTbl: a table of u32's {offsetInFile, size, sector},...
+	fragList: a table of u32's {offsetInFile, size, sector},...
 	maxFrags: maximum number of fragments allowed
 	forceBaseOffset: only use this if the fragments need to fake a position in a larger file (e.g. patch files)
 	forceSize: only use this to fake a total size (e.g. patch files again)
 	
 	return numfrags on success, 0 on failure
 */ 
-s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOffset, u32 forceSize, u32 dev) {
+s32 getFragments(file_handle* file, u32 (*fragList)[3], s32 maxFrags, u32 forceBaseOffset, u32 forceSize, u32 dev) {
 	int i;
 	if(!file->ffsFp) {
 		devices[dev]->readFile(file, NULL, 0);	// open the file (should be open already)
@@ -311,9 +300,9 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 		LBA_t sector = clst2sect(fatfs, clmt[i+1]);
 		// this frag offset in the file is the last frag offset+size
 		size = forceSize < size ? forceSize : size;
-		fragTbl[numFrags*3] = forceBaseOffset;
-		fragTbl[(numFrags*3)+1] = size | (dev == DEVICE_PATCHES) << 31;
-		fragTbl[(numFrags*3)+2] = sector;
+		fragList[numFrags][0] = forceBaseOffset;
+		fragList[numFrags][1] = size | (dev == DEVICE_PATCHES) << 31;
+		fragList[numFrags][2] = sector;
 		forceBaseOffset += size;
 		forceSize -= size;
 		numFrags++;
@@ -322,15 +311,11 @@ s32 getFragments(file_handle* file, vu32* fragTbl, s32 maxFrags, u32 forceBaseOf
 }
 
 s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
-	
-	// If there are 2 discs, we only allow 21 fragments per disc.
-	int maxFrags = (sizeof(VAR_FRAG_LIST)/12), i = 0;
-	vu32 *fragList = (vu32*)VAR_FRAG_LIST;
+	int i;
+	u32 (*fragList)[3] = NULL;
 	s32 frags = 0, totFrags = 0;
 	
-	memset(VAR_FRAG_LIST, 0, sizeof(VAR_FRAG_LIST));
-	
-  	// Look for patch files, if we find some, open them and add them as fragments
+	// Look for patch files, if we find some, open them and add them as fragments
 	file_handle patchFile;
 	for(i = 0; i < numToPatch; i++) {
 		memset(&patchFile, 0, sizeof(file_handle));
@@ -341,7 +326,11 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 			memset(patchInfo, 0, 16);
 			devices[DEVICE_CUR]->seekFile(&patchFile, patchFile.size-16, DEVICE_HANDLER_SEEK_SET);
 			if((devices[DEVICE_CUR]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-				if(!(frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, patchInfo[0], patchInfo[1], DEVICE_CUR))) {
+				if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+					return 0;
+				}
+				if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, patchInfo[0], patchInfo[1], DEVICE_CUR))) {
+					free(fragList);
 					return 0;
 				}
 				totFrags+=frags;
@@ -349,10 +338,12 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 			}
 			else {
 				devices[DEVICE_CUR]->deleteFile(&patchFile);
+				free(fragList);
 				return 0;
 			}
 		}
 		else {
+			free(fragList);
 			return 0;
 		}
 	}
@@ -362,7 +353,10 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 		memset(&patchFile, 0, sizeof(file_handle));
 		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sigr.dol", devices[DEVICE_CUR]->initial->name);
 		
-		if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_IGR_DOL, 0, DEVICE_CUR))) {
+		if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+			return 0;
+		}
+		if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_IGR_DOL, 0, DEVICE_CUR))) {
 			totFrags+=frags;
 			devices[DEVICE_CUR]->closeFile(&patchFile);
 		}
@@ -378,7 +372,11 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 				devices[DEVICE_CUR]->writeFile(&patchFile, NULL, 0);
 				devices[DEVICE_CUR]->closeFile(&patchFile);
 			}
-			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_CARD_A, 31.5*1024*1024, DEVICE_CUR))) {
+			
+			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+				return 0;
+			}
+			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_A, 31.5*1024*1024, DEVICE_CUR))) {
 				*(vu8*)VAR_CARD_A_ID = (patchFile.size*8/1024/1024) & 0xFC;
 				totFrags+=frags;
 				devices[DEVICE_CUR]->closeFile(&patchFile);
@@ -394,7 +392,11 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 				devices[DEVICE_CUR]->writeFile(&patchFile, NULL, 0);
 				devices[DEVICE_CUR]->closeFile(&patchFile);
 			}
-			if((frags = getFragments(&patchFile, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_CARD_B, 31.5*1024*1024, DEVICE_CUR))) {
+			
+			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+				return 0;
+			}
+			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_B, 31.5*1024*1024, DEVICE_CUR))) {
 				*(vu8*)VAR_CARD_B_ID = (patchFile.size*8/1024/1024) & 0xFC;
 				totFrags+=frags;
 				devices[DEVICE_CUR]->closeFile(&patchFile);
@@ -403,7 +405,11 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	}
 	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!(frags = getFragments(file, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_DISC_1, DISC_SIZE, DEVICE_CUR))) {
+	if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+		return 0;
+	}
+	if(!(frags = getFragments(file, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, DISC_SIZE, DEVICE_CUR))) {
+		free(fragList);
 		return 0;
 	}
 	totFrags += frags;
@@ -411,13 +417,24 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
 		// TODO fix 2 disc patched games
-		if(!(frags = getFragments(file2, &fragList[totFrags*3], maxFrags-totFrags, FRAGS_DISC_2, DISC_SIZE, DEVICE_CUR))) {
+		if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+			return 0;
+		}
+		if(!(frags = getFragments(file2, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_2, DISC_SIZE, DEVICE_CUR))) {
+			free(fragList);
 			return 0;
 		}
 		totFrags += frags;
 	}
 	
-	memset(VAR_SECTOR_BUF, 0, sizeof(VAR_SECTOR_BUF));
+	if(fragList) {
+		memset(&fragList[totFrags], 0, sizeof(*fragList));
+		print_frag_list(fragList);
+		
+		*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (totFrags + 1) * sizeof(*fragList));
+		free(fragList);
+		fragList = NULL;
+	}
 	
 	int isSDCard = IS_SDCARD(file->name);
 	int slot = GET_SLOT(file->name);
@@ -435,7 +452,6 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 		// Is the HDD in use a 48 bit LBA supported HDD?
 		*(vu8*)VAR_ATA_LBA48 = ataDriveInfo.lba48Support;
 	}
-	print_frag_list(0);
 	return 1;
 }
 
