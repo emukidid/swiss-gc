@@ -9837,6 +9837,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x81300EA2 - 0x81300000) = 1;
 				*(s16 *)(data + 0x81300EAA - 0x81300000) = 1;
 				
+				// Don't panic on field rendering.
+				*(u32 *)(data + 0x813016A0 - 0x81300000) = 0x60000000;
+				
 				// Force boot sound.
 				*(u32 *)(data + 0x81302F00 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
@@ -9898,6 +9901,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x81300946 - 0x81300000) = 1;
 				*(s16 *)(data + 0x8130094E - 0x81300000) = 1;
 				
+				// Don't panic on field rendering.
+				*(u32 *)(data + 0x81302E60 - 0x81300000) = 0x60000000;
+				
 				// Force boot sound.
 				*(u32 *)(data + 0x813046C0 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
@@ -9956,6 +9962,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Accept any region code.
 				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
 				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
+				
+				// Don't panic on field rendering.
+				*(u32 *)(data + 0x813014A8 - 0x81300000) = 0x60000000;
 				
 				// Force boot sound.
 				*(u32 *)(data + 0x81302DE8 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
@@ -10016,6 +10025,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
 				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
 				
+				// Don't panic on field rendering.
+				*(u32 *)(data + 0x813014A8 - 0x81300000) = 0x60000000;
+				
 				// Force boot sound.
 				*(u32 *)(data + 0x81302DE8 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
@@ -10055,6 +10067,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x813009D6 - 0x81300000) = 1;
 				*(s16 *)(data + 0x813009FA - 0x81300000) = 1;
 				
+				// Don't panic on field rendering.
+				*(u32 *)(data + 0x81302AEC - 0x81300000) = 0x60000000;
+				
 				// Force boot sound.
 				*(u32 *)(data + 0x813043EC - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
@@ -10092,6 +10107,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Accept any region code.
 				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
 				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
+				
+				// Don't panic on field rendering.
+				*(u32 *)(data + 0x813014A8 - 0x81300000) = 0x60000000;
 				
 				// Force boot sound.
 				*(u32 *)(data + 0x81302DE8 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
@@ -10139,6 +10157,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Accept any region code.
 				*(s16 *)(data + 0x81300C02 - 0x81300000) = 1;
 				*(s16 *)(data + 0x81300C26 - 0x81300000) = 1;
+				
+				// Don't panic on field rendering.
+				*(u32 *)(data + 0x81303BF4 - 0x81300000) = 0x60000000;
 				
 				// Force boot sound.
 				*(u32 *)(data + 0x813054B0 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
@@ -10196,6 +10217,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Accept any region code.
 				*(s16 *)(data + 0x81300ACE - 0x81300000) = 1;
 				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
+				
+				// Don't panic on field rendering.
+				*(u32 *)(data + 0x8130185C - 0x81300000) = 0x60000000;
 				
 				// Force boot sound.
 				*(u32 *)(data + 0x81303184 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
@@ -10256,6 +10280,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x81300ACE - 0x81300000) = 1;
 				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
 				
+				// Don't panic on field rendering.
+				*(u32 *)(data + 0x81301874 - 0x81300000) = 0x60000000;
+				
 				// Force boot sound.
 				*(u32 *)(data + 0x8130319C - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
@@ -10314,6 +10341,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Accept any region code.
 				*(s16 *)(data + 0x81300882 - 0x81300000) = 1;
 				*(s16 *)(data + 0x813008A6 - 0x81300000) = 1;
+				
+				// Don't panic on field rendering.
+				*(u32 *)(data + 0x81301628 - 0x81300000) = 0x60000000;
 				
 				// Force boot sound.
 				*(u32 *)(data + 0x81302F50 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
