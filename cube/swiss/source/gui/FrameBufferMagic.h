@@ -93,6 +93,7 @@
 #include "loading_16.h"
 #include "gcloaderimg_tpl.h"
 #include "gcloaderimg.h"
+#include "m2loaderimg_tpl.h"
 
 typedef struct uiDrawObj {
     int type;
@@ -126,7 +127,8 @@ enum TextureId
 	TEX_PAL,
 	TEX_CHECKED,
 	TEX_UNCHECKED,
-	TEX_GCLOADER
+	TEX_GCLOADER,
+	TEX_M2LOADER
 };
 
 extern GXTexObj mp3imgTexObj;

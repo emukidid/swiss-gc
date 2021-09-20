@@ -94,6 +94,8 @@ TPLFile dirimgTPL;
 GXTexObj dirimgTexObj;
 TPLFile gcloaderTPL;
 GXTexObj gcloaderTexObj;
+TPLFile m2loaderTPL;
+GXTexObj m2loaderTexObj;
 
 static char fbTextBuffer[256];
 
@@ -403,6 +405,8 @@ static void init_textures()
 	TPL_GetTexture(&dirimgTPL,0,&dirimgTexObj);
 	TPL_OpenTPLFromMemory(&gcloaderTPL, (void *)gcloaderimg_tpl, gcloaderimg_tpl_size);
 	TPL_GetTexture(&gcloaderTPL,gcloaderimg,&gcloaderTexObj);
+	TPL_OpenTPLFromMemory(&m2loaderTPL, (void *)m2loaderimg_tpl, m2loaderimg_tpl_size);
+	TPL_GetTexture(&m2loaderTPL,0,&m2loaderTexObj);
 }
 
 static void drawInit()
@@ -569,6 +573,9 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			break;
 		case TEX_GCLOADER:
 			GX_LoadTexObj(&gcloaderTexObj, GX_TEXMAP0);
+			break;
+		case TEX_M2LOADER:
+			GX_LoadTexObj(&m2loaderTexObj, GX_TEXMAP0);
 			break;
 	}
 	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
