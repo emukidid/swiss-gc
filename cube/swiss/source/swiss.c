@@ -76,27 +76,33 @@ void ogc_video__reset()
 	
 	swissSettings.fontEncode = region == 'J';
 	
-	if(!(swissSettings.gameVMode > 0 && swissSettings.disableVideoPatches < 2)) {
-		if(region == 'P')
-			swissSettings.gameVMode = -2;
-		else
-			swissSettings.gameVMode = -1;
-		
-		if(swissSettings.uiVMode > 0) {
-			swissSettings.sram60Hz = (swissSettings.uiVMode >= 1) && (swissSettings.uiVMode <= 2);
-			swissSettings.sramProgressive = (swissSettings.uiVMode == 2) || (swissSettings.uiVMode == 4);
-		}
-	} else {
+	if(region == 'P')
+		swissSettings.sramVideo = SYS_VIDEO_PAL;
+	else if(swissSettings.sramVideo == SYS_VIDEO_PAL)
+		swissSettings.sramVideo = SYS_VIDEO_NTSC;
+	
+	if(swissSettings.gameVMode > 0 && swissSettings.disableVideoPatches < 2) {
 		swissSettings.sram60Hz = (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7);
 		swissSettings.sramProgressive = (swissSettings.gameVMode >= 4 && swissSettings.gameVMode <= 7) ||
 										(swissSettings.gameVMode >= 11 && swissSettings.gameVMode <= 14);
 		
-		if(swissSettings.sramProgressive && !getDTVStatus()) {
-			if(region == 'P')
-				swissSettings.gameVMode = -2;
-			else
-				swissSettings.gameVMode = -1;
+		if(swissSettings.sram60Hz) {
+			for(i = 0; i < sizeof(DiscIDNoNTSC)/sizeof(char*); i++) {
+				if(!strncmp(gameID, DiscIDNoNTSC[i], 6)) {
+					swissSettings.gameVMode += 7;
+					break;
+				}
+			}
 		}
+		if(swissSettings.sramProgressive && !getDTVStatus())
+			swissSettings.gameVMode = 0;
+	}
+	else {
+		if(swissSettings.uiVMode > 0) {
+			swissSettings.sram60Hz = (swissSettings.uiVMode >= 1 && swissSettings.uiVMode <= 2);
+			swissSettings.sramProgressive = (swissSettings.uiVMode == 2 || swissSettings.uiVMode == 4);
+		}
+		swissSettings.gameVMode = 0;
 	}
 	
 	if(!strncmp(gameID, "GB3E51", 6)
@@ -110,27 +116,23 @@ void ogc_video__reset()
 	__SYS_UnlockSram(1);
 	while(!__SYS_SyncSram());
 	
-	if(region == 'P' && swissSettings.bs2Boot) {
-		if(swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7)
-			swissSettings.gameVMode += 7;
-	}
-	
-	for(i = 0; i < sizeof(DiscIDNoNTSC)/sizeof(char*); i++) {
-		if(!strncmp(gameID, DiscIDNoNTSC[i], 6)) {
-			if(swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7)
-				swissSettings.gameVMode += 7;
-			break;
-		}
-	}
-	
 	/* set TV mode for current game */
 	uiDrawObj_t *msgBox = NULL;
 	switch(swissSettings.gameVMode) {
-		case -1:
+		case 0:
 			if(swissSettings.sramVideo == SYS_VIDEO_MPAL && !getDTVStatus()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL-M 480i");
 				newmode = &TVMpal480IntDf;
-			} else {
+			}
+			else if(swissSettings.sramVideo == SYS_VIDEO_PAL) {
+				if(swissSettings.sramProgressive && !getDTVStatus())
+					msgBox = DrawMessageBox(D_WARN, "Video Mode: PAL 576i\nComponent Cable not detected.");
+				else
+					msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 576i");
+				
+				newmode = &TVPal576IntDfScale;
+			}
+			else {
 				if(swissSettings.sramProgressive && !getDTVStatus())
 					msgBox = DrawMessageBox(D_WARN, "Video Mode: NTSC 480i\nComponent Cable not detected.");
 				else
@@ -139,41 +141,33 @@ void ogc_video__reset()
 				newmode = &TVNtsc480IntDf;
 			}
 			break;
-		case -2:
-			if(swissSettings.sramProgressive && !getDTVStatus())
-				msgBox = DrawMessageBox(D_WARN, "Video Mode: PAL 576i\nComponent Cable not detected.");
-			else
-				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 576i");
-			
-			newmode = &TVPal576IntDfScale;
-			break;
 		case 1:
 			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480i");
-			newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
+			newmode = &TVNtsc480IntDf;
 			break;
 		case 2:
 			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480sf");
-			newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
+			newmode = &TVNtsc480IntDf;
 			break;
 		case 3:
 			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 240p");
-			newmode = region == 'P' ? &TVPal576IntDfScale : &TVNtsc480IntDf;
+			newmode = &TVNtsc480IntDf;
 			break;
 		case 4:
 			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 960i");
-			newmode = region == 'P' ? &TVPal576ProgScale : &TVNtsc480Prog;
+			newmode = &TVNtsc480Prog;
 			break;
 		case 5:
 			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480p");
-			newmode = region == 'P' ? &TVPal576ProgScale : &TVNtsc480Prog;
+			newmode = &TVNtsc480Prog;
 			break;
 		case 6:
 			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 1080i");
-			newmode = region == 'P' ? &TVPal576ProgScale : &TVNtsc480Prog;
+			newmode = &TVNtsc480Prog;
 			break;
 		case 7:
 			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 540p");
-			newmode = region == 'P' ? &TVPal576ProgScale : &TVNtsc480Prog;
+			newmode = &TVNtsc480Prog;
 			break;
 		case 8:
 			msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 576i");
@@ -896,6 +890,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	
 	*(volatile u32*)0x80000028 = 0x01800000;
 	*(volatile u32*)0x8000002C = (swissSettings.debugUSB ? 0x10000004:0x00000001) + (*(volatile u32*)0xCC00302C >> 28);
+	*(volatile u32*)0x800000CC = swissSettings.sramVideo;
 	*(volatile u32*)0x800000D0 = 0x01000000;
 	*(volatile u32*)0x800000E8 = 0x81800000 - topAddr;
 	*(volatile u32*)0x800000EC = topAddr;
@@ -1134,7 +1129,6 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	
 	do_videomode_swap();
 	VIDEO_SetPostRetraceCallback (NULL);
-	*(vu32*)VAR_TVMODE = VIDEO_GetCurrentTvMode();
 	DCFlushRange((void*)0x80000000, 0x3100);
 	ICInvalidateRange((void*)0x80000000, 0x3100);
 	
