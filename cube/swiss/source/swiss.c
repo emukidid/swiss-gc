@@ -141,60 +141,24 @@ void ogc_video__reset()
 				newmode = &TVNtsc480IntDf;
 			}
 			break;
-		case 1:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480i");
+		case 1 ... 3:
+			sprintf(txtbuffer, "Video Mode: %s %s", "NTSC", gameVModeStr[swissSettings.gameVMode]);
+			msgBox = DrawMessageBox(D_INFO, txtbuffer);
 			newmode = &TVNtsc480IntDf;
 			break;
-		case 2:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480sf");
-			newmode = &TVNtsc480IntDf;
-			break;
-		case 3:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 240p");
-			newmode = &TVNtsc480IntDf;
-			break;
-		case 4:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 960i");
+		case 4 ... 7:
+			sprintf(txtbuffer, "Video Mode: %s %s", "NTSC", gameVModeStr[swissSettings.gameVMode]);
+			msgBox = DrawMessageBox(D_INFO, txtbuffer);
 			newmode = &TVNtsc480Prog;
 			break;
-		case 5:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480p");
-			newmode = &TVNtsc480Prog;
-			break;
-		case 6:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 1080i");
-			newmode = &TVNtsc480Prog;
-			break;
-		case 7:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 540p");
-			newmode = &TVNtsc480Prog;
-			break;
-		case 8:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 576i");
+		case 8 ... 10:
+			sprintf(txtbuffer, "Video Mode: %s %s\n%s Mode selected.", "PAL", gameVModeStr[swissSettings.gameVMode], swissSettings.sram60Hz ? "60Hz":"50Hz");
+			msgBox = DrawMessageBox(D_INFO, txtbuffer);
 			newmode = &TVPal576IntDfScale;
 			break;
-		case 9:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 576sf");
-			newmode = &TVPal576IntDfScale;
-			break;
-		case 10:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 288p");
-			newmode = &TVPal576IntDfScale;
-			break;
-		case 11:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 1152i");
-			newmode = &TVPal576ProgScale;
-			break;
-		case 12:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 576p");
-			newmode = &TVPal576ProgScale;
-			break;
-		case 13:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 1080i");
-			newmode = &TVPal576ProgScale;
-			break;
-		case 14:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 540p");
+		case 11 ... 14:
+			sprintf(txtbuffer, "Video Mode: %s %s\n%s Mode selected.", "PAL", gameVModeStr[swissSettings.gameVMode], swissSettings.sram60Hz ? "60Hz":"50Hz");
+			msgBox = DrawMessageBox(D_INFO, txtbuffer);
 			newmode = &TVPal576ProgScale;
 			break;
 	}
