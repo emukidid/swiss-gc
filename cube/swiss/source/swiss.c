@@ -1709,9 +1709,11 @@ bool manage_file() {
 }
 
 void load_game() {
+	file_handle *disc2File = meta_find_disk2(&curFile);
+	
 	if(devices[DEVICE_CUR] == &__device_wode) {
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Setup base offset please Wait .."));
-		devices[DEVICE_CUR]->setupFile(&curFile, NULL, 0);
+		devices[DEVICE_CUR]->setupFile(&curFile, disc2File, -1);
 		DrawDispose(msgBox);
 	}
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading ..."));
@@ -1791,15 +1793,12 @@ void load_game() {
 			config_unload_current();
 			return;
 		}
-		if(devices[DEVICE_CUR] != &__device_wode) {
-			file_handle *disc2File = meta_find_disk2(&curFile);
-			if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, 0)) {
-				msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
-				wait_press_A();
-				DrawDispose(msgBox);
-				config_unload_current();
-				return;
-			}
+		if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, 0)) {
+			msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
+			wait_press_A();
+			DrawDispose(msgBox);
+			config_unload_current();
+			return;
 		}
 		if(devices[DEVICE_CUR] != &__device_dvd) {
 			devices[DEVICE_CUR]->deinit(&curFile);
@@ -1839,25 +1838,27 @@ void load_game() {
 		numToPatch = check_game(filesToPatch);
 	}
 	
-	if(devices[DEVICE_CUR] != &__device_wode) {
-		file_handle *disc2File = meta_find_disk2(&curFile);
-		*(vu8*)VAR_CURRENT_DISC = 0;
-		*(vu8*)VAR_SECOND_DISC = disc2File ? 1:0;
-		*(vu8*)VAR_DRIVE_PATCHED = 0;
-		*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
-		*(vu8*)VAR_IGR_TYPE = swissSettings.igrType;
-		*(vu32**)VAR_FRAG_LIST = NULL;
-		*(vu8*)VAR_CARD_A_ID = 0x00;
-		*(vu8*)VAR_CARD_B_ID = 0x00;
-		// Call the special setup for each device (e.g. SD will set the sector(s))
-		if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, numToPatch)) {
-			msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
-			wait_press_A();
-			free(filesToPatch);
-			DrawDispose(msgBox);
-			config_unload_current();
-			return;
-		}
+	*(vu8*)VAR_CURRENT_DISC = 0;
+	*(vu8*)VAR_SECOND_DISC = disc2File ? 1:0;
+	*(vu8*)VAR_DRIVE_PATCHED = 0;
+	*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
+	*(vu32**)VAR_EXI_REGS = NULL;
+	*(vu8*)VAR_EXI_SLOT = EXI_CHANNEL_0;
+	*(vu8*)VAR_EXI_FREQ = EXI_SPEED1MHZ;
+	*(vu8*)VAR_SD_SHIFT = 0;
+	*(vu8*)VAR_IGR_TYPE = swissSettings.igrType;
+	*(vu32**)VAR_FRAG_LIST = NULL;
+	*(vu8*)VAR_CARD_A_ID = 0x00;
+	*(vu8*)VAR_CARD_B_ID = 0x00;
+	
+	// Call the special setup for each device (e.g. SD will set the sector(s))
+	if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, numToPatch)) {
+		msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
+		wait_press_A();
+		free(filesToPatch);
+		DrawDispose(msgBox);
+		config_unload_current();
+		return;
 	}
 
 	load_app(filesToPatch, numToPatch);

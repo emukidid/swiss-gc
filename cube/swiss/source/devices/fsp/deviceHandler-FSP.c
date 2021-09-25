@@ -184,12 +184,6 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 		*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
 		*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[*(vu8*)VAR_EXI_SLOT];
 	}
-	else {
-		*(vu8*)VAR_SD_SHIFT = 32;
-		*(vu8*)VAR_EXI_FREQ = EXI_SPEED1MHZ;
-		*(vu8*)VAR_EXI_SLOT = EXI_CHANNEL_MAX;
-		*(vu32**)VAR_EXI_REGS = NULL;
-	}
 	
 	if(fragList) {
 		memset(&fragList[totFrags], 0, sizeof(*fragList));

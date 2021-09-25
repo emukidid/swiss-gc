@@ -383,18 +383,9 @@ s32 deviceHandler_DVD_readFile(file_handle* file, void* buffer, u32 length){
 }
 
 s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
-
-	if(file2) {
-		devices[DEVICE_CUR]->seekFile(file2, 0, DEVICE_HANDLER_SEEK_SET);
-		devices[DEVICE_CUR]->readFile(file2, VAR_DISC_2_ID, sizeof(VAR_DISC_2_ID));
-	}
-	devices[DEVICE_CUR]->seekFile(file, 0, DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file, VAR_DISC_1_ID, sizeof(VAR_DISC_1_ID));
-
 	// Multi-Game disc audio streaming setup
 	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
-		dvddiskid *diskId = (dvddiskid*)VAR_DISC_1_ID;
-		if(diskId->streaming && !isXenoGC) {
+		if(swissSettings.audioStreaming && !isXenoGC) {
 			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "One moment, setting up audio streaming."));
 			dvd_motor_off();
 			print_gecko("Set extension %08X\r\n",dvd_get_error());
@@ -408,14 +399,14 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 			print_gecko("Set Status - done %08X\r\n",dvd_get_error());
 			dvd_read_id();
 			print_gecko("Read ID %08X\r\n",dvd_get_error());
-			dvd_set_streaming(diskId->streaming);
+			dvd_set_streaming(swissSettings.audioStreaming);
 			DrawDispose(msgBox);
 		}
 		dvd_set_offset(file->fileBase);
 		file->status = OFFSET_SET;
-		print_gecko("Streaming %s %08X\r\n",diskId->streaming?"Enabled":"Disabled",dvd_get_error());
+		print_gecko("Streaming %s %08X\r\n",swissSettings.audioStreaming?"Enabled":"Disabled",dvd_get_error());
 	}
-
+	
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
 		int i;
@@ -530,14 +521,8 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 		*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
 		*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[*(vu8*)VAR_EXI_SLOT];
 	}
-	else {
-		*(vu8*)VAR_SD_SHIFT = 32;
-		*(vu8*)VAR_EXI_FREQ = EXI_SPEED1MHZ;
-		*(vu8*)VAR_EXI_SLOT = EXI_CHANNEL_MAX;
-		*(vu32**)VAR_EXI_REGS = NULL;
-	}
-
 	*(vu8*)VAR_DRIVE_PATCHED = drive_status == DEBUG_MODE;
+	memcpy(VAR_DISC_1_ID, (char*)&GCMDisk, sizeof(VAR_DISC_1_ID));
 	return 1;
 }
 

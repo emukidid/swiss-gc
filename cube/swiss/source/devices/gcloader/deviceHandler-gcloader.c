@@ -64,7 +64,6 @@ s32 deviceHandler_GCLOADER_writeFile(file_handle* file, void* buffer, u32 length
 
 
 s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
-	
 	// GCLoader disc/file fragment setup
 	s32 maxDiscFrags = MAX_GCLOADER_FRAGS_PER_DISC;
 	u32 discFragList[maxDiscFrags][3];
@@ -72,9 +71,6 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
-		devices[DEVICE_CUR]->seekFile(file2, 0, DEVICE_HANDLER_SEEK_SET);
-		devices[DEVICE_CUR]->readFile(file2, VAR_DISC_2_ID, sizeof(VAR_DISC_2_ID));
-		
 		if(!(disc2Frags = getFragments(file2, &discFragList[0], maxDiscFrags, 0, DISC_SIZE, DEVICE_CUR))) {
 			return 0;
 		}
@@ -83,9 +79,6 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 	// write disc 2 frags
 	gcloaderWriteFrags(1, &discFragList[0], disc2Frags);
 
-	devices[DEVICE_CUR]->seekFile(file, 0, DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file, VAR_DISC_1_ID, sizeof(VAR_DISC_1_ID));
-	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
 	if(!(disc1Frags = getFragments(file, &discFragList[0], maxDiscFrags, 0, DISC_SIZE, DEVICE_CUR))) {
 		return 0;
@@ -222,13 +215,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 		*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
 		*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[*(vu8*)VAR_EXI_SLOT];
 	}
-	else {
-		*(vu8*)VAR_SD_SHIFT = 32;
-		*(vu8*)VAR_EXI_FREQ = EXI_SPEED1MHZ;
-		*(vu8*)VAR_EXI_SLOT = EXI_CHANNEL_MAX;
-		*(vu32**)VAR_EXI_REGS = NULL;
-	}
-
+	memcpy(VAR_DISC_1_ID, (char*)&GCMDisk, sizeof(VAR_DISC_1_ID));
 	return 1;
 }
 

@@ -187,7 +187,7 @@ int install_code(int final)
 		print_gecko("Installing Patch for SD Card over EXI\r\n");
 	}
 	// DVD
-	else if(devices[DEVICE_CUR] == &__device_dvd) {
+	else if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_wode) {
 		switch (devices[DEVICE_CUR]->emulated()) {
 			case EMU_NONE:
 				patch     = dvd_bin;
