@@ -1673,7 +1673,7 @@ bool manage_file() {
 }
 
 void load_game() {
-	file_handle *disc2File = meta_find_disk2(&curFile);
+	file_handle *disc2File = meta_find_disc2(&curFile);
 	
 	if(devices[DEVICE_CUR] == &__device_wode) {
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Setup base offset please Wait .."));
@@ -1703,7 +1703,7 @@ void load_game() {
 			return;
 		}
 		
-		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
+		swissSettings.audioStreaming = is_streaming_disc((dvddiskid*)&GCMDisk);
 	}
 	else {
 		devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
@@ -1726,9 +1726,9 @@ void load_game() {
 			return;
 		}
 		
-		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
+		swissSettings.audioStreaming = is_streaming_disc((dvddiskid*)&GCMDisk);
 		
-		if(is_redump_disc(&GCMDisk) && !valid_gcm_size(&GCMDisk, curFile.size)) {
+		if(is_redump_disc((dvddiskid*)&GCMDisk) && !valid_gcm_size(&GCMDisk, curFile.size)) {
 			if(swissSettings.audioStreaming) {
 				DrawDispose(msgBox);
 				msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump and is not playable.\nPlease attempt recovery using NKit."));
@@ -1981,7 +1981,7 @@ uiDrawObj_t* draw_game_info() {
 		DrawAddChild(container, DrawStyledLabel(640/2, 200, txtbuffer, 0.8f, true, defaultColor));
 
 		if(GCMDisk.TotalDisc > 1) {
-			sprintf(txtbuffer, "Disc %i/%i [Found: %s]", GCMDisk.DiscID+1, GCMDisk.TotalDisc, meta_find_disk2(&curFile) ? "Yes":"No");
+			sprintf(txtbuffer, "Disc %i/%i [Found: %s]", GCMDisk.DiscID+1, GCMDisk.TotalDisc, meta_find_disc2(&curFile) ? "Yes":"No");
 			DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.6f, true, defaultColor));
 		}
 	}

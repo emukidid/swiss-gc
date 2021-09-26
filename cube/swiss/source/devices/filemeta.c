@@ -207,11 +207,10 @@ void populate_meta(file_handle *f) {
 	}
 }
 
-file_handle* meta_find_disk2(file_handle *f) {
-	file_handle* dirEntries = getCurrentDirEntries();
-	if(f->meta) {
-		int i;
-		for(i = 0; i < getCurrentDirEntryCount(); i++) {
+file_handle* meta_find_disc2(file_handle *f) {
+	if(f->meta && is_multi_disc(&f->meta->diskId)) {
+		file_handle* dirEntries = getCurrentDirEntries();
+		for(int i = 0; i < getCurrentDirEntryCount(); i++) {
 			if(!dirEntries[i].meta) {
 				populate_meta(&dirEntries[i]);
 			}

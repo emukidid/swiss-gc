@@ -25,9 +25,12 @@
 #include <sys/types.h>
 #include "gcm.h"
 
-bool is_redump_disc(const DiskHeader *header);
-bool is_streaming_disc(const DiskHeader *header);
+bool is_multi_disc(const dvddiskid *header);
+bool is_redump_disc(const dvddiskid *header);
+bool is_streaming_disc(const dvddiskid *header);
+
 bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *size);
+
 bool valid_gcm_crc32(const DiskHeader *header, uint32_t crc);
 bool valid_gcm_size(const DiskHeader *header, off_t size);
 
