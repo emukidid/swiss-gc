@@ -15,11 +15,14 @@ int read_rom_sram(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_dsp_rom(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_dsp_coef(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_dvd_ram_low(unsigned int offset, void* buffer, unsigned int length);
-int read_rom_dvd_ram_high(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_dvd_rom(unsigned int offset, void* buffer, unsigned int length);
+int read_rom_dvd_ram_high(unsigned int offset, void* buffer, unsigned int length);
+int read_rom_dvd_disk_bca(unsigned int offset, void* buffer, unsigned int length);
+int read_rom_dvd_disk_pfi(unsigned int offset, void* buffer, unsigned int length);
+int read_rom_dvd_disk_dmi(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_aram(unsigned int offset, void* buffer, unsigned int length);
 
-#define NUM_ROMS 9
+#define NUM_ROMS 12
 
 const char* rom_names[] =
 {
@@ -28,8 +31,11 @@ const char* rom_names[] =
 	"dsp_rom.bin",
 	"dsp_coef.bin",
 	"dvd_ram_low.bin",
-	"dvd_ram_high.bin",
 	"dvd_rom.bin",
+	"dvd_ram_high.bin",
+	"dvd_disk_bca.bin",
+	"dvd_disk_pfi.bin",
+	"dvd_disk_dmi.bin",
 	"sram.bin",
 	"aram.bin"
 };
@@ -41,8 +47,11 @@ const int rom_sizes[] =
 	8 * 1024,
 	4 * 1024,
 	32 * 1024,
-	192 * 1024,
 	128 * 1024,
+	192 * 1024,
+	112,
+	2048,
+	2048,
 	64,
 	16 * 1024 * 1024
 };
@@ -54,8 +63,11 @@ int (*read_rom[])(unsigned int offset, void* buffer, unsigned int length) =
 	read_rom_dsp_rom,
 	read_rom_dsp_coef,
 	read_rom_dvd_ram_low,
-	read_rom_dvd_ram_high,
 	read_rom_dvd_rom,
+	read_rom_dvd_ram_high,
+	read_rom_dvd_disk_bca,
+	read_rom_dvd_disk_pfi,
+	read_rom_dvd_disk_dmi,
 	read_rom_sram,
 	read_rom_aram
 };
@@ -190,28 +202,46 @@ int read_rom_dsp_coef(unsigned int offset, void* buffer, unsigned int length) {
 
 int read_rom_dvd_ram_low(unsigned int offset, void* buffer, unsigned int length) {
 	dvd_unlock();
-	void *ram = (void*)memalign(32, 32*1024);
-	dvd_readmem_array(0x8000, ram, 32*1024);
-	memcpy(buffer, ram + offset, length);
-	free(ram);
-	return length;
-}
-
-int read_rom_dvd_ram_high(unsigned int offset, void* buffer, unsigned int length) {
-	dvd_unlock();
-	void *ram = (void*)memalign(32, 192*1024);
-	dvd_readmem_array(0x400000, ram, 192*1024);
-	memcpy(buffer, ram + offset, length);
-	free(ram);
+	dvd_readmem_array(0x8000 + offset, buffer, length);
 	return length;
 }
 
 int read_rom_dvd_rom(unsigned int offset, void* buffer, unsigned int length) {
 	dvd_unlock();
-	void *rom = (void*)memalign(32, 128*1024);
-	dvd_readmem_array(0xA0000, rom, 128*1024);
-	memcpy(buffer, rom + offset, length);
-	free(rom);
+	dvd_readmem_array(0xA0000 + offset, buffer, length);
+	return length;
+}
+
+int read_rom_dvd_ram_high(unsigned int offset, void* buffer, unsigned int length) {
+	dvd_unlock();
+	dvd_readmem_array(0x400000 + offset, buffer, length);
+	return length;
+}
+
+int read_rom_dvd_disk_bca(unsigned int offset, void* buffer, unsigned int length) {
+	if((dvd_get_error()>>24) != 5) {
+		dvd_reset();
+	}
+	dvd_unlock();
+	dvd_readmem_array(0x415460 + offset, buffer, length);
+	return length;
+}
+
+int read_rom_dvd_disk_pfi(unsigned int offset, void* buffer, unsigned int length) {
+	if((dvd_get_error()>>24) != 5) {
+		dvd_reset();
+	}
+	dvd_unlock();
+	dvd_readmem_array(0x41710C + offset, buffer, length);
+	return length;
+}
+
+int read_rom_dvd_disk_dmi(unsigned int offset, void* buffer, unsigned int length) {
+	if((dvd_get_error()>>24) != 5) {
+		dvd_reset();
+	}
+	dvd_unlock();
+	dvd_readmem_array(0x41791C + offset, buffer, length);
 	return length;
 }
 
