@@ -94,12 +94,16 @@ file_meta* create_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 			memcpy(meta->banner, blankbanner+0x20, BNR_PIXELDATA_LEN);
 		}
 		else {
-			memcpy(meta->banner, &banner->pixelData, BNR_PIXELDATA_LEN);
-			if(!strncmp(banner->magic, "BNR2", 4)) {
+			if(!memcmp(banner->magic, "BNR1", 4)) {
+				memcpy(meta->banner, banner->pixelData, BNR_PIXELDATA_LEN);
+				memcpy(&meta->bnrDescription, &banner->desc[0], sizeof(BNRDesc));
+			}
+			else if(!memcmp(banner->magic, "BNR2", 4)) {
+				memcpy(meta->banner, banner->pixelData, BNR_PIXELDATA_LEN);
 				memcpy(&meta->bnrDescription, &banner->desc[swissSettings.sramLanguage], sizeof(BNRDesc));
 			}
 			else {
-				memcpy(&meta->bnrDescription, &banner->desc[0], sizeof(BNRDesc));
+				memcpy(meta->banner, blankbanner+0x20, BNR_PIXELDATA_LEN);
 			}
 			if(strlen(meta->bnrDescription.description)) {
 				// Some banners only have empty spaces as padding until they hit a new line in the IPL
