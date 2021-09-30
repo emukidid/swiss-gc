@@ -107,6 +107,8 @@ void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 
 bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_callback callback)
 {
+	length = MIN(length, 32768 - OSRoundUp32B(offset) % 32768);
+
 	wkf.queue[wkf.items].buffer = buffer;
 	wkf.queue[wkf.items].length = length;
 	wkf.queue[wkf.items].offset = offset;
