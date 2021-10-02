@@ -285,7 +285,7 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	mmc_done_queued();
 }
 
-bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write, frag_callback callback)
+bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write, frag_callback callback)
 {
 	sector = offset / SECTOR_SIZE + sector;
 	offset = offset % SECTOR_SIZE;
@@ -303,13 +303,13 @@ bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_
 	return true;
 }
 #else
-bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write, frag_callback callback)
+bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write, frag_callback callback)
 {
 	return false;
 }
 #endif
 
-int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
+int do_read_write(void *buf, u32 len, u32 offset, u64 sectorLba, bool write) {
 	u32 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);

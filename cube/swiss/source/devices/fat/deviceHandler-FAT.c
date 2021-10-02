@@ -236,12 +236,12 @@ s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length) {
 	return bytes_written;
 }
 
-void print_frag_list(u32 (*fragList)[3]) {
+void print_frag_list(u32 (*fragList)[4]) {
 	print_gecko("== Fragments List ==\r\n");
 	int i;
 	for(i = 0; fragList[i][1]; i++) {
-		print_gecko("Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%08X]\r\n",
-					i, fragList[i][0], fragList[i][1], fragList[i][2]);
+		print_gecko("Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%016llX]\r\n",
+					i, fragList[i][0], fragList[i][1], (u64)(((u64)fragList[i][2] << 32) | fragList[i][3]));
 	}
 	print_gecko("== Fragments End ==\r\n");
 }
@@ -256,7 +256,7 @@ void print_frag_list(u32 (*fragList)[3]) {
 	
 	return numfrags on success, 0 on failure
 */ 
-s32 getFragments(file_handle* file, u32 (*fragList)[3], s32 maxFrags, u32 forceBaseOffset, u32 forceSize, u32 dev) {
+s32 getFragments(file_handle* file, u32 (*fragList)[4], s32 maxFrags, u32 forceBaseOffset, u32 forceSize, u32 dev) {
 	int i;
 	if(!file->ffsFp) {
 		devices[dev]->readFile(file, NULL, 0);	// open the file (should be open already)
@@ -301,8 +301,9 @@ s32 getFragments(file_handle* file, u32 (*fragList)[3], s32 maxFrags, u32 forceB
 		// this frag offset in the file is the last frag offset+size
 		size = forceSize < size ? forceSize : size;
 		fragList[numFrags][0] = forceBaseOffset;
-		fragList[numFrags][1] = size | (dev == DEVICE_PATCHES) << 31;
-		fragList[numFrags][2] = sector;
+		fragList[numFrags][1] = (size & ~0x80000000) | ((dev == DEVICE_PATCHES) << 31);
+		fragList[numFrags][2] = sector >> 32;
+		fragList[numFrags][3] = sector & 0xFFFFFFFF;
 		forceBaseOffset += size;
 		forceSize -= size;
 		numFrags++;
@@ -312,7 +313,7 @@ s32 getFragments(file_handle* file, u32 (*fragList)[3], s32 maxFrags, u32 forceB
 
 s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	int i;
-	u32 (*fragList)[3] = NULL;
+	u32 (*fragList)[4] = NULL;
 	s32 frags = 0, totFrags = 0;
 	
 	// Look for patch files, if we find some, open them and add them as fragments

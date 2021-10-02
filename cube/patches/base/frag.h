@@ -28,14 +28,14 @@ typedef struct {
 	uint32_t offset;
 	uint32_t device :  1;
 	uint32_t size   : 31;
-	uint32_t sector;
+	uint64_t sector;
 } frag_t;
 
 typedef void (*frag_callback)(void *buffer, uint32_t length);
 
-bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write, frag_callback callback);
-bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, frag_callback callback);
-int do_read_write(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write);
+bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write, frag_callback callback);
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, frag_callback callback);
+int do_read_write(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write);
 void end_read(void);
 
 int frag_get_list(uint32_t offset, const frag_t **frag);

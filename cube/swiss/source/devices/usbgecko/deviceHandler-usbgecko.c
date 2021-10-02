@@ -104,7 +104,7 @@ s32 deviceHandler_USBGecko_writeFile(file_handle* file, void* buffer, u32 length
 
 s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	int i;
-	u32 (*fragList)[3] = NULL;
+	u32 (*fragList)[4] = NULL;
 	s32 frags = 0, totFrags = 0;
 	
 	// Check if there are any fragments in our patch location for this game

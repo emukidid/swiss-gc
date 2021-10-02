@@ -55,15 +55,15 @@
 static OSInterruptHandler TCIntrruptHandler = NULL;
 
 static struct {
-	uint32_t last_sector;
-	uint32_t next_sector;
+	uint64_t last_sector;
+	uint64_t next_sector;
 	uint16_t count;
 	#if DMA_READ || ISR_READ
 	struct {
 		void *buffer;
 		uint16_t length;
 		uint16_t offset;
-		uint32_t sector;
+		uint64_t sector;
 		uint16_t count;
 		bool write;
 		frag_callback callback;
@@ -172,7 +172,7 @@ static void ataWriteu16(u16 data)
 }
 
 // Reads sectors from the specified lba
-static void ataReadSectors(u32 sector, u16 count)
+static void ataReadSectors(u64 sector, u16 count)
 {
 	u8 status;
 
@@ -189,8 +189,8 @@ static void ataReadSectors(u32 sector, u16 count)
 		// Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
 		ataWriteByte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
 
-		ataWriteByte(ATA_REG_LBAHI, 0);								// LBA 6
-		ataWriteByte(ATA_REG_LBAMID, 0);							// LBA 5
+		ataWriteByte(ATA_REG_LBAHI, (u8)((sector >> 40) & 0xFF));	// LBA 6
+		ataWriteByte(ATA_REG_LBAMID, (u8)((sector >> 32) & 0xFF));	// LBA 5
 		ataWriteByte(ATA_REG_LBALO, (u8)((sector >> 24) & 0xFF));	// LBA 4
 		ataWriteByte(ATA_REG_SECCOUNT, (u8)((count >> 8) & 0xFF));	// Sector count (Hi)
 	}
@@ -257,7 +257,7 @@ static void ataReadBufferAsync(void *buffer)
 }
 
 // Writes sectors to the specified lba
-static void ataWriteSectors(u32 sector, u16 count)
+static void ataWriteSectors(u64 sector, u16 count)
 {
 	u8 status;
 
@@ -274,8 +274,8 @@ static void ataWriteSectors(u32 sector, u16 count)
 		// Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
 		ataWriteByte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
 
-		ataWriteByte(ATA_REG_LBAHI, 0);								// LBA 6
-		ataWriteByte(ATA_REG_LBAMID, 0);							// LBA 5
+		ataWriteByte(ATA_REG_LBAHI, (u8)((sector >> 40) & 0xFF));	// LBA 6
+		ataWriteByte(ATA_REG_LBAMID, (u8)((sector >> 32) & 0xFF));	// LBA 5
 		ataWriteByte(ATA_REG_LBALO, (u8)((sector >> 24) & 0xFF));	// LBA 4
 		ataWriteByte(ATA_REG_SECCOUNT, (u8)((count >> 8) & 0xFF));	// Sector count (Hi)
 	}
@@ -327,7 +327,7 @@ static void ata_read_queued(void)
 	void *buffer = ata.queued->buffer;
 	uint16_t length = ata.queued->length;
 	uint16_t offset = ata.queued->offset;
-	uint32_t sector = ata.queued->sector;
+	uint64_t sector = ata.queued->sector;
 	uint16_t count = ata.queued->count;
 	bool write = ata.queued->write;
 
@@ -369,7 +369,7 @@ static void ata_done_queued(void)
 	void *buffer = ata.queued->buffer;
 	uint16_t length = ata.queued->length;
 	uint16_t offset = ata.queued->offset;
-	uint32_t sector = ata.queued->sector;
+	uint64_t sector = ata.queued->sector;
 	uint16_t count = ata.queued->count;
 	bool write = ata.queued->write;
 
@@ -421,7 +421,7 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	ata_done_queued();
 }
 
-bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write, frag_callback callback)
+bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write, frag_callback callback)
 {
 	length = MIN(length, 32768 - OSRoundUp32B(offset) % 32768);
 
@@ -452,14 +452,14 @@ bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_
 	return false;
 }
 #else
-bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write, frag_callback callback)
+bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write, frag_callback callback)
 {
 	return false;
 }
 #endif
 
-int do_read_write(void *buf, u32 len, u32 offset, u32 sectorLba, bool write) {
-	u32 lba = (offset>>9) + sectorLba;
+int do_read_write(void *buf, u32 len, u32 offset, u64 sectorLba, bool write) {
+	u64 lba = (offset>>9) + sectorLba;
 	u32 startByte = (offset%SECTOR_SIZE);
 	u32 numSectors = MIN((len+SECTOR_SIZE-1+startByte)>>9, 0x100);
 	u32 numBytes = MIN(len, SECTOR_SIZE-startByte);

@@ -66,7 +66,7 @@ s32 deviceHandler_GCLOADER_writeFile(file_handle* file, void* buffer, u32 length
 s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	// GCLoader disc/file fragment setup
 	s32 maxDiscFrags = MAX_GCLOADER_FRAGS_PER_DISC;
-	u32 discFragList[maxDiscFrags][3];
+	u32 discFragList[maxDiscFrags][4];
 	s32 disc1Frags = 0, disc2Frags = 0;
 
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
@@ -93,7 +93,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
 		int i;
-		u32 (*fragList)[3] = NULL;
+		u32 (*fragList)[4] = NULL;
 		s32 frags = 0, totFrags = 0;
 		
 		print_gecko("Save Patch device found\r\n");

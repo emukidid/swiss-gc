@@ -410,7 +410,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
 		int i;
-		u32 (*fragList)[3] = NULL;
+		u32 (*fragList)[4] = NULL;
 		s32 frags = 0, totFrags = 0;
 		
 		print_gecko("Save Patch device found\r\n");

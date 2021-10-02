@@ -186,7 +186,7 @@ extern const char* getHwNameByLocation(u32 location);
 
 #define MAX_FRAGS 40
 
-extern void print_frag_list(u32 (*fragList)[3]);
+extern void print_frag_list(u32 (*fragList)[4]);
 
 #endif
 
