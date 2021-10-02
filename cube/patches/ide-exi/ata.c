@@ -59,7 +59,6 @@ static struct {
 	uint32_t next_sector;
 	uint16_t count;
 	#if DMA_READ || ISR_READ
-	int items;
 	struct {
 		void *buffer;
 		uint16_t length;
@@ -68,7 +67,7 @@ static struct {
 		uint16_t count;
 		bool write;
 		frag_callback callback;
-	} queue[QUEUE_SIZE];
+	} queue[QUEUE_SIZE], *queued;
 	#endif
 } ata = {
 	.last_sector = ~0,
@@ -325,12 +324,12 @@ static void ata_read_queued(void)
 	if (!EXILock(exi_channel, exi_device, (EXICallback)ata_read_queued))
 		return;
 
-	void *buffer = ata.queue[0].buffer;
-	uint16_t length = ata.queue[0].length;
-	uint16_t offset = ata.queue[0].offset;
-	uint32_t sector = ata.queue[0].sector;
-	uint16_t count = ata.queue[0].count;
-	bool write = ata.queue[0].write;
+	void *buffer = ata.queued->buffer;
+	uint16_t length = ata.queued->length;
+	uint16_t offset = ata.queued->offset;
+	uint32_t sector = ata.queued->sector;
+	uint16_t count = ata.queued->count;
+	bool write = ata.queued->write;
 
 	if (write) {
 		if (ata.last_sector == sector)
@@ -340,9 +339,9 @@ static void ata_read_queued(void)
 		ataWriteSectors(sector, 1);
 
 		if (ataWriteBuffer(buffer))
-			ata.queue[0].length = SECTOR_SIZE;
+			ata.queued->length = SECTOR_SIZE;
 		else
-			ata.queue[0].length = 0;
+			ata.queued->length = 0;
 
 		ata_done_queued();
 		return;
@@ -367,22 +366,44 @@ static void ata_read_queued(void)
 
 static void ata_done_queued(void)
 {
-	void *buffer = ata.queue[0].buffer;
-	uint16_t length = ata.queue[0].length;
-	uint16_t offset = ata.queue[0].offset;
-	uint32_t sector = ata.queue[0].sector;
-	uint16_t count = ata.queue[0].count;
-	bool write = ata.queue[0].write;
+	void *buffer = ata.queued->buffer;
+	uint16_t length = ata.queued->length;
+	uint16_t offset = ata.queued->offset;
+	uint32_t sector = ata.queued->sector;
+	uint16_t count = ata.queued->count;
+	bool write = ata.queued->write;
 
 	if (!write)
 		buffer = memcpy(buffer, sectorBuf + offset, length);
-	ata.queue[0].callback(buffer, length);
+	ata.queued->callback(buffer, length);
 
 	EXIUnlock(exi_channel);
 
-	if (--ata.items) {
-		memcpy(ata.queue, ata.queue + 1, ata.items * sizeof(*ata.queue));
-		ata_read_queued();
+	ata.queued->callback = NULL;
+	ata.queued = NULL;
+
+	if (ata.count > 0) {
+		for (int i = 0; i < QUEUE_SIZE; i++) {
+			if (ata.queue[i].callback != NULL && ata.queue[i].sector == ata.next_sector) {
+				ata.queued = &ata.queue[i];
+				ata_read_queued();
+				return;
+			}
+		}
+	}
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		if (ata.queue[i].callback != NULL && ata.queue[i].count == 1) {
+			ata.queued = &ata.queue[i];
+			ata_read_queued();
+			return;
+		}
+	}
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		if (ata.queue[i].callback != NULL) {
+			ata.queued = &ata.queue[i];
+			ata_read_queued();
+			return;
+		}
 	}
 }
 
@@ -402,24 +423,32 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 
 bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write, frag_callback callback)
 {
-	uint16_t count;
+	length = MIN(length, 32768 - OSRoundUp32B(offset) % 32768);
 
+	uint16_t count;
 	sector = offset / SECTOR_SIZE + sector;
 	offset = offset % SECTOR_SIZE;
 	count = MIN((length + SECTOR_SIZE - 1 + offset) / SECTOR_SIZE, 0x100);
 	length = MIN(length, SECTOR_SIZE - offset);
 
-	ata.queue[ata.items].buffer = buffer;
-	ata.queue[ata.items].length = length;
-	ata.queue[ata.items].offset = offset;
-	ata.queue[ata.items].sector = sector;
-	ata.queue[ata.items].count = count;
-	ata.queue[ata.items].write = write;
-	ata.queue[ata.items].callback = callback;
-	if (ata.items++) return true;
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		if (ata.queue[i].callback == NULL) {
+			ata.queue[i].buffer = buffer;
+			ata.queue[i].length = length;
+			ata.queue[i].offset = offset;
+			ata.queue[i].sector = sector;
+			ata.queue[i].count = count;
+			ata.queue[i].write = write;
+			ata.queue[i].callback = callback;
 
-	ata_read_queued();
-	return true;
+			if (ata.queued == NULL) {
+				ata.queued = &ata.queue[i];
+				ata_read_queued();
+			}
+			return true;
+		}
+	}
+	return false;
 }
 #else
 bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_t sector, bool write, frag_callback callback)
