@@ -39,14 +39,13 @@ static struct {
 
 static struct {
 	uint32_t base_sector;
-	int items;
 	struct {
 		void *buffer;
 		uint32_t length;
 		uint32_t offset;
 		uint32_t sector;
 		frag_callback callback;
-	} queue[QUEUE_SIZE];
+	} queue[QUEUE_SIZE], *queued;
 } wkf = {
 	.base_sector = ~0
 };
@@ -55,10 +54,10 @@ OSAlarm read_alarm = {0};
 
 static void wkf_read_queued(void)
 {
-	void *buffer = wkf.queue[0].buffer;
-	uint32_t length = wkf.queue[0].length;
-	uint32_t offset = wkf.queue[0].offset;
-	uint32_t sector = wkf.queue[0].sector;
+	void *buffer = wkf.queued->buffer;
+	uint32_t length = wkf.queued->length;
+	uint32_t offset = wkf.queued->offset;
+	uint32_t sector = wkf.queued->sector;
 
 	if (wkf.base_sector != sector) {
 		DI[2] = 0xDE000000;
@@ -92,16 +91,29 @@ void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	OSMaskInterrupts(OS_INTERRUPTMASK_PI_DI);
 
-	void *buffer = wkf.queue[0].buffer;
-	uint32_t length = wkf.queue[0].length;
-	uint32_t offset = wkf.queue[0].offset;
-	uint32_t sector = wkf.queue[0].sector;
+	void *buffer = wkf.queued->buffer;
+	uint32_t length = wkf.queued->length;
+	uint32_t offset = wkf.queued->offset;
+	uint32_t sector = wkf.queued->sector;
 
-	wkf.queue[0].callback(buffer, length);
+	wkf.queued->callback(buffer, length);
 
-	if (--wkf.items) {
-		memcpy(wkf.queue, wkf.queue + 1, wkf.items * sizeof(*wkf.queue));
-		wkf_read_queued();
+	wkf.queued->callback = NULL;
+	wkf.queued = NULL;
+
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		if (wkf.queue[i].callback != NULL && wkf.queue[i].length + wkf.queue[i].offset % 512 <= 512) {
+			wkf.queued = &wkf.queue[i];
+			wkf_read_queued();
+			return;
+		}
+	}
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		if (wkf.queue[i].callback != NULL) {
+			wkf.queued = &wkf.queue[i];
+			wkf_read_queued();
+			return;
+		}
 	}
 }
 
@@ -109,15 +121,23 @@ bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint32_t secto
 {
 	length = MIN(length, 32768 - OSRoundUp32B(offset) % 32768);
 
-	wkf.queue[wkf.items].buffer = buffer;
-	wkf.queue[wkf.items].length = length;
-	wkf.queue[wkf.items].offset = offset;
-	wkf.queue[wkf.items].sector = sector;
-	wkf.queue[wkf.items].callback = callback;
-	if (wkf.items++) return true;
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		if (wkf.queue[i].callback == NULL) {
+			wkf.queue[i].buffer = buffer;
+			wkf.queue[i].length = length;
+			wkf.queue[i].offset = offset;
+			wkf.queue[i].sector = sector;
+			wkf.queue[i].callback = callback;
 
-	wkf_read_queued();
-	return true;
+			if (wkf.queued == NULL) {
+				wkf.queued = &wkf.queue[i];
+				wkf_read_queued();
+			}
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void schedule_read(OSTick ticks)

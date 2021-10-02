@@ -448,6 +448,7 @@ bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint32_
 			return true;
 		}
 	}
+
 	return false;
 }
 #else
