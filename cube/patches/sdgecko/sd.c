@@ -44,15 +44,15 @@ static struct {
 	uint32_t next_sector;
 	bool write;
 	#if ISR_READ
-	int items;
 	struct {
 		void *buffer;
 		uint16_t length;
 		uint16_t offset;
 		uint32_t sector;
+		uint16_t count;
 		bool write;
 		frag_callback callback;
-	} queue[QUEUE_SIZE];
+	} queue[QUEUE_SIZE], *queued;
 	#endif
 } mmc = {
 	.last_sector = ~0,
@@ -209,11 +209,11 @@ static void mmc_read_queued(void)
 	if (!EXILock(exi_channel, EXI_DEVICE_0, (EXICallback)mmc_read_queued))
 		return;
 
-	void *buffer = mmc.queue[0].buffer;
-	uint16_t length = mmc.queue[0].length;
-	uint16_t offset = mmc.queue[0].offset;
-	uint32_t sector = mmc.queue[0].sector;
-	bool write = mmc.queue[0].write;
+	void *buffer = mmc.queued->buffer;
+	uint16_t length = mmc.queued->length;
+	uint16_t offset = mmc.queued->offset;
+	uint32_t sector = mmc.queued->sector;
+	bool write = mmc.queued->write;
 
 	if (write) {
 		if (mmc.last_sector == sector)
@@ -225,9 +225,9 @@ static void mmc_read_queued(void)
 		}
 
 		if (xmit_datablock(buffer, 0xFC))
-			mmc.queue[0].length = SECTOR_SIZE;
+			mmc.queued->length = SECTOR_SIZE;
 		else
-			mmc.queue[0].length = 0;
+			mmc.queued->length = 0;
 
 		mmc.next_sector = sector + 1;
 		mmc.write = write;
@@ -255,21 +255,34 @@ static void mmc_read_queued(void)
 
 static void mmc_done_queued(void)
 {
-	void *buffer = mmc.queue[0].buffer;
-	uint16_t length = mmc.queue[0].length;
-	uint16_t offset = mmc.queue[0].offset;
-	uint32_t sector = mmc.queue[0].sector;
-	bool write = mmc.queue[0].write;
+	void *buffer = mmc.queued->buffer;
+	uint16_t length = mmc.queued->length;
+	uint16_t offset = mmc.queued->offset;
+	uint32_t sector = mmc.queued->sector;
+	bool write = mmc.queued->write;
 
 	if (!write)
 		buffer = memcpy(buffer, sectorBuf + offset, length);
-	mmc.queue[0].callback(buffer, length);
+	mmc.queued->callback(buffer, length);
 
 	EXIUnlock(exi_channel);
 
-	if (--mmc.items) {
-		memcpy(mmc.queue, mmc.queue + 1, mmc.items * sizeof(*mmc.queue));
-		mmc_read_queued();
+	mmc.queued->callback = NULL;
+	mmc.queued = NULL;
+
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		if (mmc.queue[i].callback != NULL && mmc.queue[i].count == 1) {
+			mmc.queued = &mmc.queue[i];
+			mmc_read_queued();
+			return;
+		}
+	}
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		if (mmc.queue[i].callback != NULL) {
+			mmc.queued = &mmc.queue[i];
+			mmc_read_queued();
+			return;
+		}
 	}
 }
 
@@ -287,20 +300,31 @@ void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 
 bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write, frag_callback callback)
 {
+	uint16_t count;
 	sector = offset / SECTOR_SIZE + sector;
 	offset = offset % SECTOR_SIZE;
+	count = (length + SECTOR_SIZE - 1 + offset) / SECTOR_SIZE;
 	length = MIN(length, SECTOR_SIZE - offset);
 
-	mmc.queue[mmc.items].buffer = buffer;
-	mmc.queue[mmc.items].length = length;
-	mmc.queue[mmc.items].offset = offset;
-	mmc.queue[mmc.items].sector = sector;
-	mmc.queue[mmc.items].write = write;
-	mmc.queue[mmc.items].callback = callback;
-	if (mmc.items++) return true;
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		if (mmc.queue[i].callback == NULL) {
+			mmc.queue[i].buffer = buffer;
+			mmc.queue[i].length = length;
+			mmc.queue[i].offset = offset;
+			mmc.queue[i].sector = sector;
+			mmc.queue[i].count = count;
+			mmc.queue[i].write = write;
+			mmc.queue[i].callback = callback;
 
-	mmc_read_queued();
-	return true;
+			if (mmc.queued == NULL) {
+				mmc.queued = &mmc.queue[i];
+				mmc_read_queued();
+			}
+			return true;
+		}
+	}
+
+	return false;
 }
 #else
 bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write, frag_callback callback)
