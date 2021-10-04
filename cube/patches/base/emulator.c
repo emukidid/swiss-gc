@@ -640,7 +640,7 @@ static void di_execute_command(void)
 					DVDDiskID *id1 = (DVDDiskID *)VAR_AREA;
 					DVDDiskID *id2 = (DVDDiskID *)VAR_DISC_1_ID;
 
-					if (!memeq(id1, id2, sizeof(DVDDiskID)))
+					if (!memeq(id1, id2, 8))
 						break;
 
 					perform_read(address, length, offset);

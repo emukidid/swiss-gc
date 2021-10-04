@@ -26,9 +26,9 @@
 .set VAR_ATA_LBA48,			0x09BA	# Is the HDD in use a 48 bit LBA supported HDD?
 .set VAR_IGR_EXIT_TYPE,		0x09BB	# IGR exit type
 .set VAR_FRAG_LIST,			0x09BC	# pointer to fragments (u32 offset, u32 size, u32 rawsector)
+
 .set VAR_DISC_1_ID,			0x09C0	# disc 1 header
-.set VAR_DISC_2_ID,			0x09E0	# disc 2 header
-.set VAR_SECTOR_BUF,		0x0A00	# 0x200 of read data
+.set VAR_DISC_2_ID,			0x09CA	# disc 2 header
 
 .set VAR_SERVER_MAC,		0x09C0	# server MAC address
 .set VAR_CLIENT_MAC,		0x09C6	# client MAC address
@@ -37,26 +37,28 @@
 .set VAR_SERVER_PORT,		0x09D4	# server UDP port
 .set VAR_FSP_KEY,			0x09D6	# FSP session key
 
+.set VAR_FLOAT1_6,			0x09E0	# constant 1/6
+.set VAR_FLOAT9_16,			0x09E4	# constant 9/16
+.set VAR_FLOAT3_4,			0x09E8	# constant 3/4
+.set VAR_FLOATM_1,			0x09EC	# constant -1
+.set VAR_VFILTER_ON,		0x09F0	# vertical filter on
+.set VAR_VFILTER,			0x09F1	# vertical filter
+.set VAR_SAR_WIDTH,			0x09F8	# sample aspect ratio width
+.set VAR_SAR_HEIGHT,		0x09FA	# sample aspect ratio height
+.set VAR_NEXT_FIELD,		0x09FB	# next video field
+.set VAR_CURRENT_FIELD,		0x09FC	# current video field
+.set VAR_CARD_IDS,			0x09FE	# emulated memory cards
+.set VAR_CARD_A_ID,			0x09FE	# emulated memory card a
+.set VAR_CARD_B_ID,			0x09FF	# emulated memory card b
+
+.set VAR_SECTOR_BUF,		0x0A00	# 0x200 of read data
+
 .set VAR_DISC_1_FNLEN,		0x0A00	# disc 1 filename length
 .set VAR_DISC_1_FN,			0x0A01	# disc 1 filename
 .set VAR_DISC_2_FNLEN,		0x0B00	# disc 2 filename length
 .set VAR_DISC_2_FN,			0x0B01	# disc 2 filename
 
-.set VAR_PATCHES_BASE,		0x2FE0	# Patches get copied to below this area.
-
-.set VAR_FLOAT1_6,			0x2FE0	# constant 1/6
-.set VAR_FLOAT9_16,			0x2FE4	# constant 9/16
-.set VAR_FLOAT3_4,			0x2FE8	# constant 3/4
-.set VAR_FLOATM_1,			0x2FEC	# constant -1
-.set VAR_VFILTER_ON,		0x2FF0	# vertical filter on
-.set VAR_VFILTER,			0x2FF1	# vertical filter
-.set VAR_SAR_WIDTH,			0x2FF8	# sample aspect ratio width
-.set VAR_SAR_HEIGHT,		0x2FFA	# sample aspect ratio height
-.set VAR_NEXT_FIELD,		0x2FFB	# next video field
-.set VAR_CURRENT_FIELD,		0x2FFC	# current video field
-.set VAR_CARD_IDS,			0x2FFE	# emulated memory cards
-.set VAR_CARD_A_ID,			0x2FFE	# emulated memory card a
-.set VAR_CARD_B_ID,			0x2FFF	# emulated memory card b
+.set VAR_PATCHES_BASE,		0x3000	# Patches get copied to below this area.
 
 .set VAR_RMODE,				0x30F8	# render mode
 
@@ -88,9 +90,9 @@ extern char VAR_SD_SHIFT[1];		// is the SD Card shift amount when issueing read 
 extern char VAR_ATA_LBA48[1];		// Is the HDD in use a 48 bit LBA supported HDD?
 extern char VAR_IGR_TYPE[1];		// IGR exit type
 extern char VAR_FRAG_LIST[4];		// pointer to fragments (u32 offset, u32 size, u32 rawsector)
-extern char VAR_DISC_1_ID[0x20];	// disc 1 header
-extern char VAR_DISC_2_ID[0x20];	// disc 2 header
-extern char VAR_SECTOR_BUF[0x200];	// 0x200 of read data
+
+extern char VAR_DISC_1_ID[10];		// disc 1 header
+extern char VAR_DISC_2_ID[10];		// disc 2 header
 
 extern char VAR_SERVER_MAC[6];		// server MAC address
 extern char VAR_CLIENT_MAC[6];		// client MAC address
@@ -98,13 +100,6 @@ extern char VAR_SERVER_IP[4];		// server IPv4 address
 extern char VAR_CLIENT_IP[4];		// client IPv4 address
 extern char VAR_SERVER_PORT[2];		// server UDP port
 extern char VAR_FSP_KEY[2];			// FSP session key
-
-extern char VAR_DISC_1_FNLEN[1];	// disc 1 filename length
-extern char VAR_DISC_1_FN[0xFF];	// disc 1 filename
-extern char VAR_DISC_2_FNLEN[1];	// disc 2 filename length
-extern char VAR_DISC_2_FN[0xFF];	// disc 2 filename
-
-extern char VAR_PATCHES_BASE[];		// Patches get copied to below this area.
 
 extern char VAR_FLOAT1_6[4];		// constant 1/6
 extern char VAR_FLOAT9_16[4];		// constant 9/16
@@ -119,6 +114,15 @@ extern char VAR_CURRENT_FIELD[1];	// current video field
 extern char VAR_CARD_IDS[2];		// emulated memory cards
 extern char VAR_CARD_A_ID[1];		// emulated memory card a
 extern char VAR_CARD_B_ID[1];		// emulated memory card b
+
+extern char VAR_SECTOR_BUF[0x200];	// 0x200 of read data
+
+extern char VAR_DISC_1_FNLEN[1];	// disc 1 filename length
+extern char VAR_DISC_1_FN[0xFF];	// disc 1 filename
+extern char VAR_DISC_2_FNLEN[1];	// disc 2 filename length
+extern char VAR_DISC_2_FN[0xFF];	// disc 2 filename
+
+extern char VAR_PATCHES_BASE[];		// Patches get copied to below this area.
 
 extern char VAR_RMODE[4];			// render mode
 
