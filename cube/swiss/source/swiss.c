@@ -858,7 +858,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	*(volatile u32*)0x800000D0 = 0x01000000;
 	*(volatile u32*)0x800000E8 = 0x81800000 - topAddr;
 	*(volatile u32*)0x800000EC = topAddr;
-	asm volatile("mtdabr %0" :: "r" (0x800000E8 | 0b110));
+	if (topAddr != 0x81800000) asm volatile("mtdabr %0" :: "r" (0x800000E8 | 0b110));
 	*(volatile u32*)0x800000F0 = 0x01800000;
 	*(volatile u32*)0x800000F8 = TB_BUS_CLOCK;
 	*(volatile u32*)0x800000FC = TB_CORE_CLOCK;

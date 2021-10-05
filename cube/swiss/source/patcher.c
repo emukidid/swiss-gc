@@ -138,7 +138,8 @@ int install_code(int final)
 	
 	// Reload Stub
 	if (GCMDisk.DVDMagicWord != DVD_MAGIC) {
-		location  = 0x80001800;
+		location = 0x80001800;
+		setTopAddr(0x80003000);
 		patch     = stub_bin;
 		patchSize = stub_bin_size;
 		
