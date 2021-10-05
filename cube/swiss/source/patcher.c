@@ -9970,6 +9970,74 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
 				patched++;
 				break;
+			case 1449816:
+				// Don't clear OSLoMem.
+				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
+				
+				// Force 24MB physical memory size.
+				*(s16 *)(data + 0x813004AE - 0x81300000) = 0x1800000 >> 16;
+				
+				// __VIInit(newmode->viTVMode & ~0x3);
+				*(u32 *)(data + 0x813009BC - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x813009C0 - 0x81300000) = 0x38600000 | (newmode->viTVMode & 0xFFFC);
+				
+				// Force production mode.
+				*(s16 *)(data + 0x81300A4E - 0x81300000) = 1;
+				
+				// Accept any region code.
+				*(s16 *)(data + 0x8130121E - 0x81300000) = 1;
+				
+				// Don't panic on field rendering.
+				*(u32 *)(data + 0x813031A0 - 0x81300000) = 0x60000000;
+				
+				// Force boot sound.
+				*(u32 *)(data + 0x8130497C - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				
+				// Force text encoding.
+				*(u32 *)(data + 0x8130CE60 - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
+				
+				// Force English language, the hard way.
+				*(s16 *)(data + 0x8130CE86 - 0x81300000) = 10;
+				*(s16 *)(data + 0x8130CE8E - 0x81300000) = 38;
+				*(s16 *)(data + 0x8130CE92 - 0x81300000) = 39;
+				*(s16 *)(data + 0x8130CE9E - 0x81300000) = 15;
+				*(s16 *)(data + 0x8130CEAA - 0x81300000) = 7;
+				*(s16 *)(data + 0x8130CEB6 - 0x81300000) = 1;
+				*(s16 *)(data + 0x8130CEC2 - 0x81300000) = 4;
+				*(s16 *)(data + 0x8130CECA - 0x81300000) = 45;
+				*(s16 *)(data + 0x8130CECE - 0x81300000) = 46;
+				*(s16 *)(data + 0x8130CED6 - 0x81300000) = 42;
+				*(s16 *)(data + 0x8130CEDA - 0x81300000) = 40;
+				*(s16 *)(data + 0x8130CEE2 - 0x81300000) = 43;
+				*(s16 *)(data + 0x8130CEF2 - 0x81300000) = 31;
+				*(s16 *)(data + 0x8130CEFA - 0x81300000) = 29;
+				*(s16 *)(data + 0x8130CEFE - 0x81300000) = 30;
+				*(s16 *)(data + 0x8130CF0A - 0x81300000) = 80;
+				
+				if (newmode->viTVMode >> 2 == VI_PAL) {
+					// Fix logo animation speed.
+					*(s16 *)(data + 0x8131032E - 0x81300000) = 8;
+					*(s16 *)(data + 0x81310332 - 0x81300000) = 15;
+					*(s16 *)(data + 0x8131033E - 0x81300000) = 6;
+					*(s16 *)(data + 0x81310342 - 0x81300000) = 5;
+					*(s16 *)(data + 0x81310346 - 0x81300000) = 4;
+					*(s16 *)(data + 0x8131034A - 0x81300000) = 13;
+					*(s16 *)(data + 0x8131034E - 0x81300000) = 255;
+					*(s16 *)(data + 0x81310352 - 0x81300000) = 17;
+					*(s16 *)(data + 0x8131035A - 0x81300000) = 33;
+					*(s16 *)(data + 0x8131035E - 0x81300000) = 50;
+					*(u32 *)(data + 0x81310398 - 0x81300000) = 0xB1630016;
+					*(u32 *)(data + 0x813103A0 - 0x81300000) = 0x9943000B;
+					*(u32 *)(data + 0x813103A4 - 0x81300000) = 0x9BA3001C;
+					*(u32 *)(data + 0x813103A8 - 0x81300000) = 0x9B830037;
+					*(u32 *)(data + 0x813103AC - 0x81300000) = 0x99630035;
+					
+					memcpy(data + 0x81360160 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+				}
+				print_gecko("Patched:[%s]\n", "DEV  Revision 1.0");
+				patched++;
+				break;
 			case 1583056:
 				// Don't clear OSLoMem.
 				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
@@ -11632,6 +11700,26 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 				*(s16 *)(data + 0x813019AE - 0x81300000) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
+				patched++;
+				break;
+			case 1449816:
+				*(s16 *)(data + 0x81300B4E - 0x81300000) = 0x0C00;
+				
+				*(u32 *)(data + 0x81301510 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81301510);
+				*(u32 *)(data + 0x8130151C - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x8130151C);
+				*(u32 *)(data + 0x81301598 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81301598);
+				*(u32 *)(data + 0x813015A0 - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x813015A0);
+				
+				*(s16 *)(data + 0x81301762 - 0x81300000) = 0x0C00;
+				*(s16 *)(data + 0x813017B6 - 0x81300000) = 0x0C00;
+				*(u32 *)(data + 0x813017C4 - 0x81300000) = 0x80050004;
+				*(u32 *)(data + 0x813017E8 - 0x81300000) = 0x90050004;
+				
+				*(s16 *)(data + 0x81301A4E - 0x81300000) = 0x0C00;
+				
+				*(s16 *)(data + 0x81301CEE - 0x81300000) = 0x0C00;
+				
+				print_gecko("Patched:[%s]\n", "DEV  Revision 1.0");
 				patched++;
 				break;
 			case 1583056:

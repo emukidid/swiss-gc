@@ -927,6 +927,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		switch(crc) {
 			case 0xE4274F2A: sizeToRead = 1435168; break;	// NTSC Revision 1.0
 			case 0x3A94171C: sizeToRead = 1448248; break;	// NTSC Revision 1.0
+			case 0x77542AD5: sizeToRead = 1449816; break;	// DEV  Revision 1.0
 			case 0x46FB458C: sizeToRead = 1583056; break;	// NTSC Revision 1.1
 			case 0xED682C36: sizeToRead = 1763016; break;	// PAL  Revision 1.0
 			case 0xF1D28D14: sizeToRead = 1760120; break;	// PAL  Revision 1.0
