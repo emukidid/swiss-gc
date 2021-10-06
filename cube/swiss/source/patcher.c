@@ -1242,10 +1242,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateGettingError" },
 		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateGettingError" }	// SN Systems ProDG
 	};
-	FuncPattern cbForStateGettingErrorSigs[7] = {
+	FuncPattern cbForStateGettingErrorSigs[8] = {
 		{ 127, 39,  9, 13, 16, 4, NULL, 0, "cbForStateGettingErrorD" },
 		{ 115, 31,  5, 13, 16, 4, NULL, 0, "cbForStateGettingErrorD" },
 		{ 231, 82, 21,  9, 36, 2, NULL, 0, "cbForStateGettingError" },
+		{ 249, 94, 29,  9, 36, 2, NULL, 0, "cbForStateGettingError" },
 		{ 162, 68, 16, 17, 18, 2, NULL, 0, "cbForStateGettingError" },
 		{ 165, 70, 17, 17, 18, 2, NULL, 0, "cbForStateGettingError" },
 		{ 202, 73, 22, 14, 27, 3, NULL, 0, "cbForStateGettingError" },	// SN Systems ProDG
@@ -1272,9 +1273,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateMotorStopped" },
 		{ 10, 4, 2, 1, 0, 2, NULL, 0, "stateMotorStopped" }	// SN Systems ProDG
 	};
-	FuncPattern cbForStateMotorStoppedSigs[5] = {
+	FuncPattern cbForStateMotorStoppedSigs[6] = {
 		{ 24, 11, 5, 2, 1, 2, NULL, 0, "cbForStateMotorStoppedD" },
 		{ 50, 19, 6, 5, 9, 2, NULL, 0, "cbForStateMotorStopped" },
+		{ 52, 20, 7, 5, 9, 2, NULL, 0, "cbForStateMotorStopped" },
 		{ 57, 22, 6, 5, 9, 3, NULL, 0, "cbForStateMotorStopped" },
 		{ 56, 23, 5, 5, 9, 3, NULL, 0, "cbForStateMotorStopped" },	// SN Systems ProDG
 		{ 59, 23, 7, 5, 9, 3, NULL, 0, "cbForStateMotorStopped" }
@@ -1292,12 +1294,13 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 187, 105, 23, 16, 18, 11, NULL, 0, "stateBusy" },	// SN Systems ProDG
 		{ 208, 123, 24, 17, 21, 10, NULL, 0, "stateBusy" }
 	};
-	FuncPattern cbForStateBusySigs[11] = {
+	FuncPattern cbForStateBusySigs[12] = {
 		{ 329, 142, 27, 21, 45,  6, NULL, 0, "cbForStateBusyD" },
 		{ 305, 133, 27, 24, 39,  6, NULL, 0, "cbForStateBusyD" },
 		{ 296, 127, 24, 24, 39,  6, NULL, 0, "cbForStateBusyD" },
 		{ 316, 136, 27, 25, 41,  6, NULL, 0, "cbForStateBusyD" },
 		{ 261, 108, 22, 12, 43,  5, NULL, 0, "cbForStateBusy" },
+		{ 279, 116, 32, 12, 43,  5, NULL, 0, "cbForStateBusy" },
 		{ 370, 156, 40, 21, 52,  6, NULL, 0, "cbForStateBusy" },
 		{ 373, 158, 41, 21, 52,  6, NULL, 0, "cbForStateBusy" },
 		{ 398, 167, 41, 21, 58, 11, NULL, 0, "cbForStateBusy" },
@@ -4092,14 +4095,15 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						if (findi_patterns(data, dataType, i + 1, i + 3, length, &cbForStateGettingErrorSigs[2],
 							                                                     &cbForStateGettingErrorSigs[3],
 							                                                     &cbForStateGettingErrorSigs[4],
-							                                                     &cbForStateGettingErrorSigs[6], NULL) &&
+							                                                     &cbForStateGettingErrorSigs[5],
+							                                                     &cbForStateGettingErrorSigs[7], NULL) &&
 							findx_patterns(data, dataType, i + 5, length, &DVDLowRequestErrorSigs[2],
 							                                              &DVDLowRequestErrorSigs[3],
 							                                              &DVDLowRequestErrorSigs[4], NULL))
 							stateGettingErrorSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (findi_pattern(data, dataType, i + 2, i + 4, length, &cbForStateGettingErrorSigs[5]) &&
+						if (findi_pattern(data, dataType, i + 2, i + 4, length, &cbForStateGettingErrorSigs[6]) &&
 							findx_pattern(data, dataType, i + 5, length, &DVDLowRequestErrorSigs[5]))
 							stateGettingErrorSigs[j].offsetFoundAt = i;
 						break;
@@ -4157,13 +4161,14 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					case 1:
 						if (findi_patterns(data, dataType, i + 1, i + 3, length, &cbForStateMotorStoppedSigs[1],
 							                                                     &cbForStateMotorStoppedSigs[2],
-							                                                     &cbForStateMotorStoppedSigs[4], NULL) &&
+							                                                     &cbForStateMotorStoppedSigs[3],
+							                                                     &cbForStateMotorStoppedSigs[5], NULL) &&
 							findx_patterns(data, dataType, i + 5, length, &DVDLowWaitCoverCloseSigs[2],
 							                                              &DVDLowWaitCoverCloseSigs[3], NULL))
 							stateMotorStoppedSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (findi_pattern(data, dataType, i + 2, i + 4, length, &cbForStateMotorStoppedSigs[3]) &&
+						if (findi_pattern(data, dataType, i + 2, i + 4, length, &cbForStateMotorStoppedSigs[4]) &&
 							findx_pattern(data, dataType, i + 3, length, &DVDLowWaitCoverCloseSigs[4]))
 							stateMotorStoppedSigs[j].offsetFoundAt = i;
 						break;
@@ -4476,26 +4481,30 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 5:
-								if (findx_pattern(data, dataType, i + 175, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 161, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 6:
-								if (findx_pattern(data, dataType, i + 178, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 175, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 7:
-								if (findx_pattern(data, dataType, i + 190, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 178, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 8:
-								if (findx_pattern(data, dataType, i + 182, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 190, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 9:
-								if (findx_pattern(data, dataType, i + 184, length, &stateBusySigs[j]))
+								if (findx_pattern(data, dataType, i + 182, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
 							case 10:
+								if (findx_pattern(data, dataType, i + 184, length, &stateBusySigs[j]))
+									cbForStateBusySigs[k].offsetFoundAt = i;
+								break;
+							case 11:
 								if (findx_pattern(data, dataType, i + 201, length, &stateBusySigs[j]))
 									cbForStateBusySigs[k].offsetFoundAt = i;
 								break;
@@ -6624,15 +6633,18 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 17] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 3:
-					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 23] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 4:
-					data[i + 31] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 5:
-					data[i + 26] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 31] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 6:
+					data[i + 26] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 7:
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
@@ -6682,12 +6694,13 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					break;
 				case 1:
 				case 2:
+				case 3:
 					data[i +  1] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 3:
+				case 4:
 					data[i +  2] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 4:
+				case 5:
 					data[i +  1] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
@@ -6889,36 +6902,42 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 207] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 5:
+					data[i +  82] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 194] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 198] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 221] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 6:
 					data[i +  93] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 208] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 212] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 235] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 6:
+				case 7:
 					data[i +  96] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 211] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 215] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 238] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 7:
+				case 8:
 					data[i + 102] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 236] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 240] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 263] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 8:
+				case 9:
 					data[i +  94] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 230] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 234] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 256] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 9:
+				case 10:
 					data[i +  96] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 230] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 234] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 257] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
-				case 10:
+				case 11:
 					data[i +  96] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 247] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 251] = 0x3C600C00;	// lis		r3, 0x0C00
