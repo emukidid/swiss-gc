@@ -1808,7 +1808,7 @@ void load_game() {
 	*(vu8*)VAR_DRIVE_PATCHED = 0;
 	*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
 	*(vu32**)VAR_EXI_REGS = NULL;
-	*(vu8*)VAR_EXI_SLOT = EXI_CHANNEL_0;
+	*(vu8*)VAR_EXI_SLOT = EXI_CHANNEL_MAX;
 	*(vu8*)VAR_EXI_FREQ = EXI_SPEED1MHZ;
 	*(vu8*)VAR_SD_SHIFT = 0;
 	*(vu8*)VAR_IGR_TYPE = swissSettings.igrType;

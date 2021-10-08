@@ -34,7 +34,7 @@
 #define sectorBuf			((u8*)VAR_SECTOR_BUF)
 
 #define exi_freq			(*(u8*)VAR_EXI_FREQ)
-#define exi_channel			(*(u8*)VAR_EXI_SLOT)
+#define exi_channel			({ if (*VAR_EXI_SLOT >= EXI_CHANNEL_MAX) __builtin_trap(); *VAR_EXI_SLOT; })
 #define exi_regs			(*(vu32**)VAR_EXI_REGS)
 
 static OSInterruptHandler TCIntrruptHandler = NULL;
