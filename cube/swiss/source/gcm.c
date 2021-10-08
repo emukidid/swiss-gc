@@ -249,10 +249,12 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
 			if(endsWith(filename,".dol")) {
-				// Some games contain a single "default.dol", these do not need 
-				// pre-patching because they are what is actually pointed to by the apploader (and loaded by us)
-				if(dolOffset == file_offset || dolSize == size || !valid_dol_file(file, file_offset, size)) {
-					continue;
+				if(strcasecmp(filename,"ffe.dol")) {
+					// Some games contain a single "default.dol", these do not need 
+					// pre-patching because they are what is actually pointed to by the apploader (and loaded by us)
+					if(dolOffset == file_offset || dolSize == size || !valid_dol_file(file, file_offset, size)) {
+						continue;
+					}
 				}
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
