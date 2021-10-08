@@ -66,9 +66,7 @@ SOURCES		:=  source \
 			  source/devices/wiikeyfusion \
               source/cheats \
               source/patches \
-			  source/patches/card \
-			  source/patches/misc \
-			  source/patches/exi \
+			  source/patches/dvd \
 			  source/patches/gx \
 			  source/patches/mtx \
 			  source/patches/vi \

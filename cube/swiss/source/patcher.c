@@ -29,6 +29,8 @@ void *installPatch(int patchId) {
 	u32 patchSize = 0;
 	void *patchLocation = NULL;
 	switch(patchId) {
+		case DVD_LOWTESTALARMHOOK:
+			patchSize = DVDLowTestAlarmHook_length; patchLocation = DVDLowTestAlarmHook; break;
 		case GX_COPYDISPHOOK:
 			patchSize = GXCopyDispHook_length; patchLocation = GXCopyDispHook; break;
 		case GX_INITTEXOBJLODHOOK:
@@ -1225,6 +1227,8 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 37, 14, 2, 1, 4,  9, NULL, 0, "DVDLowGetCoverStatus" },
 		{ 35, 13, 2, 1, 2, 10, NULL, 0, "DVDLowGetCoverStatus" }	// SN Systems ProDG
 	};
+	FuncPattern __DVDLowTestAlarmSig = 
+		{ 14, 7, 0, 0, 0, 2, NULL, 0, "__DVDLowTestAlarm" };
 	FuncPattern DVDGetTransferredSizeSig = 
 		{ 18, 2, 0, 0, 6, 0, NULL, 0, "DVDGetTransferredSize" };
 	FuncPattern DVDInitSigs[8] = {
@@ -1334,6 +1338,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 57, 19, 3, 2, 10, 5, NULL, 0, "DVDCheckDisk" },
 		{ 61, 19, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk" },	// SN Systems ProDG
 		{ 62, 20, 3, 2, 12, 5, NULL, 0, "DVDCheckDisk" }
+	};
+	FuncPattern __DVDTestAlarmSigs[2] = {
+		{ 18, 6, 3, 1, 1, 4, NULL, 0, "__DVDTestAlarmD" },
+		{ 14, 5, 2, 1, 1, 3, NULL, 0, "__DVDTestAlarm" }
 	};
 	FuncPattern __DVDClearWaitingQueueSigs[3] = {
 		{ 16, 3, 3, 0, 2, 0, NULL, 0, "__DVDClearWaitingQueueD" },
@@ -4705,6 +4713,21 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			}
 		}
 		
+		for (j = 0; j < sizeof(__DVDTestAlarmSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &__DVDTestAlarmSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i + 12, length, &__DVDLowTestAlarmSig))
+							__DVDTestAlarmSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  9, length, &__DVDLowTestAlarmSig))
+							__DVDTestAlarmSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
 		for (j = 0; j < sizeof(AIInitDMASigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &AIInitDMASigs[j])) {
 				switch (j) {
@@ -6551,6 +6574,21 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		}
 	}
 	
+	if ((i = __DVDLowTestAlarmSig.offsetFoundAt)) {
+		u32 *__DVDLowTestAlarm = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		u32 *__DVDLowTestAlarmHook;
+		
+		if (__DVDLowTestAlarm) {
+			__DVDLowTestAlarmHook = getPatchAddr(DVD_LOWTESTALARMHOOK);
+			
+			data[i + 12] = 0x38000000;	// li		r0, 0
+			data[i + 13] = branch(__DVDLowTestAlarmHook, __DVDLowTestAlarm + 13);
+			
+			print_gecko("Found:[%s] @ %08X\n", __DVDLowTestAlarmSig.Name, __DVDLowTestAlarm);
+			patched++;
+		}
+	}
+	
 	if ((i = DVDGetTransferredSizeSig.offsetFoundAt)) {
 		u32 *DVDGetTransferredSize = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
@@ -7078,7 +7116,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			data[i +  5] = 0x7CBA02A6;	// mfsrr0	r5
 			data[i + 10] = 0x7CBA02A6;	// mfsrr0	r5
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", __VMBASEISIExceptionHandlerSig.Name, j, __VMBASEISIExceptionHandler);
+			print_gecko("Found:[%s] @ %08X\n", __VMBASEISIExceptionHandlerSig.Name, __VMBASEISIExceptionHandler);
 			patched++;
 		}
 	}
