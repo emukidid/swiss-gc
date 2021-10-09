@@ -9963,7 +9963,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
 				patched++;
 				break;
-			case 1448248:
+			case 1448256:
 				// Don't clear OSLoMem.
 				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
 				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
@@ -10027,7 +10027,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
 				patched++;
 				break;
-			case 1449816:
+			case 1449824:
 				// Don't clear OSLoMem.
 				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
 				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
@@ -10095,7 +10095,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%s]\n", "DEV  Revision 1.0");
 				patched++;
 				break;
-			case 1583056:
+			case 1583072:
 				// Don't clear OSLoMem.
 				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
 				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
@@ -10157,7 +10157,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.1");
 				patched++;
 				break;
-			case 1763016:
+			case 1763040:
 				// Don't clear OSLoMem.
 				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
 				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
@@ -10198,7 +10198,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
 				patched++;
 				break;
-			case 1760120:
+			case 1760128:
 				// Don't clear OSLoMem.
 				*(u32 *)(data + 0x81300458 - 0x81300000) = 0x60000000;
 				*(u32 *)(data + 0x8130046C - 0x81300000) = 0x60000000;
@@ -10240,7 +10240,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
 				patched++;
 				break;
-			case 1561744:
+			case 1561760:
 				// Don't clear OSLoMem.
 				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
 				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
@@ -10283,7 +10283,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%s]\n", "MPAL Revision 1.1");
 				patched++;
 				break;
-			case 1607544:
+			case 1607552:
 				// Don't clear OSLoMem.
 				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
 				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
@@ -10350,7 +10350,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%s]\n", "TDEV Revision 1.1");
 				patched++;
 				break;
-			case 1586320:
+			case 1586336:
 				// Don't clear OSLoMem.
 				*(u32 *)(data + 0x81300474 - 0x81300000) = 0x60000000;
 				*(u32 *)(data + 0x81300488 - 0x81300000) = 0x60000000;
@@ -10412,7 +10412,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
 				patched++;
 				break;
-			case 1587472:
+			case 1587488:
 				// Don't clear OSLoMem.
 				*(u32 *)(data + 0x81300474 - 0x81300000) = 0x60000000;
 				*(u32 *)(data + 0x81300488 - 0x81300000) = 0x60000000;
@@ -10474,7 +10474,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
 				patched++;
 				break;
-			case 1766736:
+			case 1766752:
 				// Don't clear OSLoMem.
 				*(u32 *)(data + 0x81300474 - 0x81300000) = 0x60000000;
 				*(u32 *)(data + 0x81300488 - 0x81300000) = 0x60000000;
@@ -11739,7 +11739,7 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
 				patched++;
 				break;
-			case 1448248:
+			case 1448256:
 				*(s16 *)(data + 0x813007DA - 0x81300000) = 0x0C00;
 				
 				*(u32 *)(data + 0x813011D0 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x813011D0);
@@ -11759,7 +11759,7 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
 				patched++;
 				break;
-			case 1449816:
+			case 1449824:
 				*(s16 *)(data + 0x81300B4E - 0x81300000) = 0x0C00;
 				
 				*(u32 *)(data + 0x81301510 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81301510);
@@ -11779,19 +11779,19 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 				print_gecko("Patched:[%s]\n", "DEV  Revision 1.0");
 				patched++;
 				break;
-			case 1583056:
+			case 1583072:
 				*(s16 *)(data + 0x813005EA - 0x81300000) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.1");
 				patched++;
 				break;
-			case 1763016:
+			case 1763040:
 				*(s16 *)(data + 0x813005EA - 0x81300000) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
 				patched++;
 				break;
-			case 1760120:
+			case 1760128:
 				*(s16 *)(data + 0x8130082E - 0x81300000) = 0x0C00;
 				
 				*(u32 *)(data + 0x81301258 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81301258);
@@ -11811,13 +11811,13 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
 				patched++;
 				break;
-			case 1561744:
+			case 1561760:
 				*(s16 *)(data + 0x813005EA - 0x81300000) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "MPAL Revision 1.1");
 				patched++;
 				break;
-			case 1607544:
+			case 1607552:
 				*(s16 *)(data + 0x81300A5A - 0x81300000) = 0x0C00;
 				
 				*(u32 *)(data + 0x81301FC8 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81301FC8);
@@ -11837,19 +11837,19 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 				print_gecko("Patched:[%s]\n", "TDEV Revision 1.1");
 				patched++;
 				break;
-			case 1586320:
+			case 1586336:
 				*(s16 *)(data + 0x81300926 - 0x81300000) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
 				patched++;
 				break;
-			case 1587472:
+			case 1587488:
 				*(s16 *)(data + 0x81300926 - 0x81300000) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
 				patched++;
 				break;
-			case 1766736:
+			case 1766752:
 				*(s16 *)(data + 0x813006DA - 0x81300000) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.2");

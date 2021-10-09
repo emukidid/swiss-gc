@@ -914,29 +914,16 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		progBox = DrawPublish(DrawProgressBar(true, 0, "Loading BS2"));
 		
 		// Read BS2
-		sizeToRead = 0x1AFF00-0x820;
+		u32 bs2Header[8] __attribute__((aligned(32)));
+		read_rom_ipl_clear(0x800,bs2Header,32);
+		
+		sizeToRead = (bs2Header[0]-0x81300000+31)&~31;
 		type = PATCH_BS2;
 		buffer = memalign(32,sizeToRead);
 		if(!buffer) {
 			return 0;
 		}
 		read_rom_ipl_clear(0x820,buffer,sizeToRead);
-		
-		// Guess BS2's size
-		u32 crc = crc32(0, buffer, sizeToRead);
-		switch(crc) {
-			case 0xE4274F2A: sizeToRead = 1435168; break;	// NTSC Revision 1.0
-			case 0x3A94171C: sizeToRead = 1448248; break;	// NTSC Revision 1.0
-			case 0x77542AD5: sizeToRead = 1449816; break;	// DEV  Revision 1.0
-			case 0x46FB458C: sizeToRead = 1583056; break;	// NTSC Revision 1.1
-			case 0xED682C36: sizeToRead = 1763016; break;	// PAL  Revision 1.0
-			case 0xF1D28D14: sizeToRead = 1760120; break;	// PAL  Revision 1.0
-			case 0xCD6CE87D: sizeToRead = 1561744; break;	// MPAL Revision 1.1
-			case 0x94C1C743: sizeToRead = 1607544; break;	// TDEV Revision 1.1
-			case 0x82B82D2A: sizeToRead = 1586320; break;	// NTSC Revision 1.2
-			case 0x8B968F6A: sizeToRead = 1587472; break;	// NTSC Revision 1.2
-			case 0x032CDBB2: sizeToRead = 1766736; break;	// PAL  Revision 1.2
-		}
 	}
 	else {
 		// Prompt for DOL selection if multi-dol
