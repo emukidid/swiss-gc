@@ -12,5 +12,6 @@ char* getVideoModeString();
 GXRModeObj* getVideoMode();
 GXRModeObj* getVideoModeFromSwissSetting(int uiVMode);
 int getDTVStatus();
+int getFontEncode();
 
 #endif 

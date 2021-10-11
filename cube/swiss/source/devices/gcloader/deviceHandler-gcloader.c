@@ -67,28 +67,51 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 	// GCLoader disc/file fragment setup
 	s32 maxDiscFrags = MAX_GCLOADER_FRAGS_PER_DISC;
 	u32 discFragList[maxDiscFrags][4];
-	s32 disc1Frags = 0, disc2Frags = 0;
-
+	s32 discFrags = 0, disc1Frags = 0, disc2Frags = 0;
+	
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
-		if(!(disc2Frags = getFragments(file2, &discFragList[0], maxDiscFrags, 0, DISC_SIZE, DEVICE_CUR))) {
+		if(!(discFrags = getFragments(file2, &discFragList[disc2Frags], maxDiscFrags-disc2Frags, 0, 0, DEVICE_CUR))) {
 			return 0;
 		}
+		disc2Frags+=discFrags;
 	}
-
+	
 	// write disc 2 frags
-	gcloaderWriteFrags(1, &discFragList[0], disc2Frags);
-
+	gcloaderWriteFrags(1, discFragList, disc2Frags);
+	
+	if(numToPatch < 0) {
+		file_handle bootFile;
+		memset(&bootFile, 0, sizeof(file_handle));
+		snprintf(&bootFile.name[0], PATHNAME_MAX, "%sboot.bin", devices[DEVICE_CUR]->initial->name);
+		
+		if(strstr(IPLInfo,"MPAL")!=NULL)
+			GCMDisk.RegionCode = 1;
+		else if(strstr(IPLInfo,"PAL")!=NULL)
+			GCMDisk.RegionCode = 2;
+		else
+			GCMDisk.RegionCode = getFontEncode() ? 0:1;
+		
+		if(devices[DEVICE_CUR]->writeFile(&bootFile, &GCMDisk, sizeof(DiskHeader)) == sizeof(DiskHeader)) {
+			if(!(discFrags = getFragments(&bootFile, &discFragList[disc1Frags], maxDiscFrags-disc1Frags, 0, sizeof(DiskHeader), DEVICE_CUR))) {
+				return 0;
+			}
+			disc1Frags+=discFrags;
+			devices[DEVICE_CUR]->closeFile(&bootFile);
+		}
+	}
+	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!(disc1Frags = getFragments(file, &discFragList[0], maxDiscFrags, 0, DISC_SIZE, DEVICE_CUR))) {
+	if(!(discFrags = getFragments(file, &discFragList[disc1Frags], maxDiscFrags-disc1Frags, 0, 0, DEVICE_CUR))) {
 		return 0;
 	}
+	disc1Frags+=discFrags;
 	
 	// write disc 1 frags
-    gcloaderWriteFrags(0, &discFragList[0], disc1Frags);
+	gcloaderWriteFrags(0, discFragList, disc1Frags);
 	
-    // set disc 1 as active disc
-    gcloaderWriteDiscNum(0);
+	// set disc 1 as active disc
+	gcloaderWriteDiscNum(0);
 	
 	if(numToPatch < 0) {
 		return 1;

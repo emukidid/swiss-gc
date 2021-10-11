@@ -53,6 +53,11 @@ int getDTVStatus() {
 	return swissSettings.forceDTVStatus || (vireg[55] & 1);
 }
 
+int getFontEncode() {
+	volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
+	return (vireg[55] >> 1) & 1;
+}
+
 GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 	switch(uiVMode) {
 		case 1:
