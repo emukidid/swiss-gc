@@ -65,6 +65,15 @@ s32 deviceHandler_WKF_writeFile(file_handle* file, void* buffer, u32 length){
 
 
 s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
+	if(numToPatch < 0) {
+		u32 frag[4];
+		if(!getFragments(file, &frag, 1, 0, 0, DEVICE_CUR)) {
+			return 0;
+		}
+		wkfWriteOffset(frag[3]);
+		return 1;
+	}
+	
 	int i;
 	u32 (*fragList)[4] = NULL;
 	s32 frags = 0, totFrags = 0;

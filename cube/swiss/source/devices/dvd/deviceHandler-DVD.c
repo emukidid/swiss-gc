@@ -406,7 +406,9 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 		file->status = OFFSET_SET;
 		print_gecko("Streaming %s %08X\r\n",swissSettings.audioStreaming?"Enabled":"Disabled",dvd_get_error());
 	}
-	
+	if(numToPatch < 0) {
+		return 1;
+	}
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
 		int i;

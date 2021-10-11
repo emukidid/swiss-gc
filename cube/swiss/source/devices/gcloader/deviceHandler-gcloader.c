@@ -89,7 +89,11 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 	
     // set disc 1 as active disc
     gcloaderWriteDiscNum(0);
-
+	
+	if(numToPatch < 0) {
+		return 1;
+	}
+	
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
 		int i;

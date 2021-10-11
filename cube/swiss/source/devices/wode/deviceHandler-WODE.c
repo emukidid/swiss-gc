@@ -120,11 +120,13 @@ s32 deviceHandler_WODE_readFile(file_handle* file, void* buffer, u32 length) {
 
 s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	if(numToPatch < 0) {
-		ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
-		SetISO(isoInfo->iso_partition,isoInfo->iso_number);
-		sleep(2);
-		DVD_Reset(DVD_RESETHARD);
-		while(dvd_get_error()) {dvd_read_id();}
+		if(numToPatch == -1) {
+			ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
+			SetISO(isoInfo->iso_partition,isoInfo->iso_number);
+			sleep(2);
+			DVD_Reset(DVD_RESETHARD);
+			while(dvd_get_error()) {dvd_read_id();}
+		}
 		return 1;
 	}
 	

@@ -1745,7 +1745,7 @@ void load_game() {
 			config_unload_current();
 			return;
 		}
-		if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, 0)) {
+		if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, -2)) {
 			msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
 			wait_press_A();
 			DrawDispose(msgBox);
