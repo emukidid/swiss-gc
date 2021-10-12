@@ -62,6 +62,7 @@ s32 deviceHandler_GCLOADER_writeFile(file_handle* file, void* buffer, u32 length
 	return deviceHandler_FAT_writeFile(file, buffer, length);
 }
 
+static char *bootFile_names[] = {"boot.iso", "boot.iso.iso", "boot.gcm", "boot.gcm.gcm"};
 
 s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	// GCLoader disc/file fragment setup
@@ -71,7 +72,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 	
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
-		if(!(discFrags = getFragments(file2, &discFragList[disc2Frags], maxDiscFrags-disc2Frags, 0, 0, DEVICE_CUR))) {
+		if(!(discFrags = getFragments(file2, &discFragList[disc2Frags], maxDiscFrags-disc2Frags, 0, UINT32_MAX, DEVICE_CUR))) {
 			return 0;
 		}
 		disc2Frags+=discFrags;
@@ -102,7 +103,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 	}
 	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!(discFrags = getFragments(file, &discFragList[disc1Frags], maxDiscFrags-disc1Frags, 0, 0, DEVICE_CUR))) {
+	if(!(discFrags = getFragments(file, &discFragList[disc1Frags], maxDiscFrags-disc1Frags, 0, UINT32_MAX, DEVICE_CUR))) {
 		return 0;
 	}
 	disc1Frags+=discFrags;
@@ -214,15 +215,18 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 			}
 		}
 		
-		memset(&patchFile, 0, sizeof(file_handle));
-		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sboot.iso", devices[DEVICE_CUR]->initial->name);
-		
-		if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-			return 0;
-		}
-		if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, DISC_SIZE, DEVICE_CUR))) {
-			totFrags+=frags;
-			devices[DEVICE_CUR]->closeFile(&patchFile);
+		for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
+			memset(&patchFile, 0, sizeof(file_handle));
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%s%s", devices[DEVICE_CUR]->initial->name, bootFile_names[i]);
+			
+			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+				return 0;
+			}
+			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, DISC_SIZE, DEVICE_CUR))) {
+				totFrags+=frags;
+				devices[DEVICE_CUR]->closeFile(&patchFile);
+				break;
+			}
 		}
 		
 		if(fragList) {
