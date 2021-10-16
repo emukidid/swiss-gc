@@ -61,4 +61,6 @@ typedef struct EXIControl {
 extern s32 (*EXILock)(s32 chan, u32 dev, EXICallback unlockedCallback);
 extern s32 (*EXIUnlock)(s32 chan);
 
+s32 WriteUARTN(const void *buf, u32 len);
+
 #endif /* EXI_H */

@@ -532,10 +532,6 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			// Patch CARD, PAD
 			patched += Patch_Miscellaneous(buffer, sizeToRead, filesToPatch[i].type);
 			
-			if(swissSettings.debugUSB && usb_isgeckoalive(1) && !swissSettings.wiirdDebug) {
-				patched += Patch_Fwrite(buffer, sizeToRead);
-			}
-			
 			if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 				Patch_CheatsHook(buffer, sizeToRead, filesToPatch[i].type);
 			}

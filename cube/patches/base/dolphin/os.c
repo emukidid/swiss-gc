@@ -100,5 +100,5 @@ void OSClearContext(OSContext *context)
 	context->state = 0;
 
 	if (OSFPUContext == context)
-		OSFPUContext = 0;
+		OSFPUContext = NULL;
 }

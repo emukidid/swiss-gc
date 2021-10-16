@@ -62,7 +62,7 @@ struct OSAlarm {
 
 static void OSCreateAlarm(OSAlarm *alarm)
 {
-	alarm->handler = 0;
+	alarm->handler = NULL;
 }
 
 extern void (*OSSetAlarm)(OSAlarm *alarm, OSTime tick, OSAlarmHandler handler);

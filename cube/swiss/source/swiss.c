@@ -1031,10 +1031,6 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	// Patch CARD, PAD
 	Patch_Miscellaneous(buffer, sizeToRead, type);
 	
-	// Patch OSReport to print out over USBGecko
-	if(swissSettings.debugUSB && usb_isgeckoalive(1) && !swissSettings.wiirdDebug) {
-		Patch_Fwrite(buffer, sizeToRead);
-	}
 	// Force Video Mode
 	if(swissSettings.disableVideoPatches < 2) {
 		if(swissSettings.disableVideoPatches < 1) {

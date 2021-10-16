@@ -428,10 +428,29 @@ bool get_immediate(u32 *data, u32 offsetFoundAt, u32 offsetFoundAt2, u32 *immedi
 	switch (word >> 26) {
 		case 15:
 		{
+			u32 word2 = data[offsetFoundAt2];
+			
+			switch (word2 >> 26) {
+				case 10:
+				{
+					if (((word2 >> 16) & 0x1F) != ((word >> 21) & 0x1F))
+						return false;
+					
+					*immediate = -(word << 16) + (u16)word2;
+					return true;
+				}
+				case 11:
+				{
+					if (((word2 >> 16) & 0x1F) != ((word >> 21) & 0x1F))
+						return false;
+					
+					*immediate = -(word << 16) + (s16)word2;
+					return true;
+				}
+			}
+			
 			if (((word >> 16) & 0x1F) != 0)
 				return false;
-			
-			u32 word2 = data[offsetFoundAt2];
 			
 			switch (word2 >> 26) {
 				case 14:
@@ -9688,103 +9707,6 @@ int Patch_FontEncode(u32 *data, u32 length)
 	return patched;
 }
 
-/** SDK fwrite USB Gecko Slot B redirect */
-u32 sig_fwrite[8] = {
-  0x9421FFD0,
-  0x7C0802A6,
-  0x90010034,
-  0xBF210014,
-  0x7C992378,
-  0x7CDA3378,
-  0x7C7B1B78,
-  0x7CBC2B78
-};
-
-u32 sig_fwrite_alt[8] = {
-  0x7C0802A6,
-  0x90010004,
-  0x9421FFB8,
-  0xBF21002C,
-  0x3B440000,
-  0x3B660000,
-  0x3B830000,
-  0x3B250000
-};
-
-u32 sig_fwrite_alt2[8] = {
-  0x7C0802A6,
-  0x90010004,
-  0x9421FFD0,
-  0xBF410018,
-  0x3BC30000,
-  0x3BE40000,
-  0x80ADB430,
-  0x3C055A01 
-};
-
-static const u32 geckoPatch[31] = {
-  0x7C8521D7,
-  0x40810070,
-  0x3CE0CC00,
-  0x38C00000,
-  0x7C0618AE,
-  0x5400A016,
-  0x6408B000,
-  0x380000D0,
-  0x90076814,
-  0x7C0006AC,
-  0x91076824,
-  0x7C0006AC,
-  0x38000019,
-  0x90076820,
-  0x7C0006AC,
-  0x80076820,
-  0x7C0004AC,
-  0x70090001,
-  0x4082FFF4,
-  0x80076824,
-  0x7C0004AC,
-  0x39200000,
-  0x91276814,
-  0x7C0006AC,
-  0x74090400,
-  0x4182FFB8,
-  0x38C60001,
-  0x7F862000,
-  0x409EFFA0,
-  0x7CA32B78,
-  0x4E800020
-};
-
-int Patch_Fwrite(void *addr, u32 length) {
-	void *addr_start = addr;
-	void *addr_end = addr+length;	
-	
-	while(addr_start<addr_end) 
-	{
-		if(memcmp(addr_start,&sig_fwrite[0],sizeof(sig_fwrite))==0) 
-		{
-			print_gecko("Found:[fwrite]\r\n");
- 			memcpy(addr_start,&geckoPatch[0],sizeof(geckoPatch));	
-			return 1;
-		}
-		if(memcmp(addr_start,&sig_fwrite_alt[0],sizeof(sig_fwrite_alt))==0) 
-		{
-			print_gecko("Found:[fwrite1]\r\n");
- 			memcpy(addr_start,&geckoPatch[0],sizeof(geckoPatch));	
-			return 1;
-		}
-		if(memcmp(addr_start,&sig_fwrite_alt2[0],sizeof(sig_fwrite_alt2))==0) 
-		{
-			print_gecko("Found:[fwrite2]\r\n");
- 			memcpy(addr_start,&geckoPatch[0],sizeof(geckoPatch));
-			return 1;
-		}
-		addr_start += 4;
-	}
-	return 0;
-}
-
 /** SDK GXSetVAT patch for Wii compatibility - specific for Zelda WW */
 
 u32 GXSETVAT_PAL_orig[32] = {
@@ -13150,6 +13072,11 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	int i, j;
 	int patched = 0;
 	u32 address, constant;
+	FuncPattern OSGetConsoleTypeSigs[] = {
+		{ 13, 7, 0, 0, 2, 0, NULL, 0, "OSGetConsoleTypeD" },
+		{ 10, 4, 0, 0, 2, 0, NULL, 0, "OSGetConsoleType" },
+		{  9, 4, 0, 0, 1, 0, NULL, 0, "OSGetConsoleType" }	// SN Systems ProDG
+	};
 	FuncPattern OSSetAlarmSigs[3] = {
 		{ 58, 18, 4, 8, 0, 9, NULL, 0, "OSSetAlarmD" },
 		{ 26,  5, 4, 4, 0, 5, NULL, 0, "OSSetAlarm" },
@@ -13187,6 +13114,22 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 11,  4,  3, 1, 0, 2, NULL, 0, "__OSUnlockSramExD" },
 		{  9,  3,  2, 1, 0, 2, NULL, 0, "__OSUnlockSramEx" },
 		{ 98, 43, 11, 9, 5, 6, NULL, 0, "__OSUnlockSramEx" }	// SN Systems ProDG
+	};
+	FuncPattern InitializeUARTSigs[5] = {
+		{ 18,  7, 4, 1, 1, 2, NULL, 0, "InitializeUARTD" },
+		{ 28, 12, 6, 1, 2, 2, NULL, 0, "InitializeUARTD" },
+		{ 16,  6, 3, 1, 1, 2, NULL, 0, "InitializeUART" },
+		{ 18,  7, 4, 1, 1, 2, NULL, 0, "InitializeUART" },
+		{ 28, 12, 6, 1, 2, 2, NULL, 0, "InitializeUART" }
+	};
+	FuncPattern QueueLengthSig = 
+		{ 38, 21, 3, 6, 1, 2, NULL, 0, "QueueLengthD" };
+	FuncPattern WriteUARTNSigs[5] = {
+		{  99, 28, 3,  9, 17, 8, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTND" },
+		{ 105, 28, 3, 12, 17, 9, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTND" },
+		{ 128, 48, 4, 14, 18, 7, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" },
+		{ 128, 47, 4, 14, 18, 7, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" },
+		{ 135, 47, 4, 17, 18, 9, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" }
 	};
 	FuncPattern SIGetResponseSigs[6] = {
 		{ 36, 13, 4, 1, 2,  4, NULL, 0, "SIGetResponseD" },
@@ -13363,6 +13306,72 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		
 		FuncPattern fp;
 		make_pattern(data, i, length, &fp);
+		
+		for (j = 0; j < sizeof(InitializeUARTSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &InitializeUARTSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  3, length, &OSGetConsoleTypeSigs[0]) &&
+							get_immediate(data,   i + 10, i + 11, &constant) && constant == 0xA5FF005A)
+							InitializeUARTSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_patterns(data, dataType, i +  9, length, &OSGetConsoleTypeSigs[0],
+							                                               &OSGetConsoleTypeSigs[1], NULL) &&
+							get_immediate (data,   i + 20, i + 21, &constant) && constant == 0xA5FF005A)
+							InitializeUARTSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  3, length, &OSGetConsoleTypeSigs[1]) &&
+							get_immediate(data,   i +  8, i +  9, &constant) && constant == 0xA5FF005A)
+							InitializeUARTSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i +  3, length, &OSGetConsoleTypeSigs[1]) &&
+							get_immediate(data,   i + 10, i + 11, &constant) && constant == 0xA5FF005A)
+							InitializeUARTSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_patterns(data, dataType, i +  9, length, &OSGetConsoleTypeSigs[1],
+							                                               &OSGetConsoleTypeSigs[2], NULL) &&
+							get_immediate (data,   i + 16, i + 17, &constant) && constant == 0xA5FF005A)
+							InitializeUARTSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(WriteUARTNSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &WriteUARTNSigs[j])) {
+				switch (j) {
+					case 0:
+						if (get_immediate(data,  i +   7, i +   8, &constant) && constant == 0xA5FF005A &&
+							findx_pattern(data, dataType, i +  36, length, &QueueLengthSig))
+							WriteUARTNSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (get_immediate(data,  i +   7, i +   8, &constant) && constant == 0xA5FF005A &&
+							findx_pattern(data, dataType, i +  12, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  22, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  40, length, &QueueLengthSig) &&
+							findx_pattern(data, dataType, i +  98, length, &OSRestoreInterruptsSig))
+							WriteUARTNSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+					case 3:
+						if (get_immediate(data,  i +   7, i +   8, &constant) && constant == 0xA5FF005A)
+							WriteUARTNSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (get_immediate(data,  i +   7, i +   8, &constant) && constant == 0xA5FF005A &&
+							findx_pattern(data, dataType, i +  12, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  22, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 128, length, &OSRestoreInterruptsSig))
+							WriteUARTNSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
 		
 		for (j = 0; j < sizeof(PADOriginCallbackSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &PADOriginCallbackSigs[j])) {
@@ -13705,46 +13714,46 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i +  6, length, &OSCancelAlarmSigs[0]) &&
-							get_immediate(data,   i + 19, i + 20, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,   i + 19, i + 20, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i + 26, i + 27, length, &TimeoutHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 28, length, &OSSetAlarmSigs[0]) &&
-							get_immediate(data,   i + 35, i + 36, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,   i + 35, i + 36, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i + 53, i + 54, length, &TimeoutHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 55, length, &OSSetAlarmSigs[0]))
 							SetupTimeoutAlarmSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i +  6, length, &OSCancelAlarmSigs[0]) &&
-							get_immediate(data,   i + 19, i + 20, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,   i + 19, i + 20, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i + 26, i + 27, length, &TimeoutHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 28, length, &OSSetAlarmSigs[0]) &&
-							get_immediate(data,   i + 38, i + 39, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,   i + 38, i + 39, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i + 56, i + 57, length, &TimeoutHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 58, length, &OSSetAlarmSigs[0]) &&
-							get_immediate(data,   i + 65, i + 66, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,   i + 65, i + 66, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i + 83, i + 84, length, &TimeoutHandlerSigs[0]) &&
 							findx_pattern(data, dataType, i + 85, length, &OSSetAlarmSigs[0]))
 							SetupTimeoutAlarmSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i +  6, length, &OSCancelAlarmSigs[1]) &&
-							get_immediate(data,   i + 18, i + 19, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,   i + 18, i + 19, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i + 21, i + 27, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i + 30, length, &OSSetAlarmSigs[1]) &&
-							get_immediate(data,   i + 32, i + 34, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,   i + 32, i + 34, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i + 35, i + 49, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i + 56, length, &OSSetAlarmSigs[1]))
 							SetupTimeoutAlarmSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
 						if (findx_pattern(data, dataType, i +  6, length, &OSCancelAlarmSigs[1]) &&
-							get_immediate(data,   i + 18, i + 19, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,   i + 18, i + 19, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i + 21, i + 27, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i + 30, length, &OSSetAlarmSigs[1]) &&
-							get_immediate(data,   i + 35, i + 37, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,   i + 35, i + 37, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i + 38, i + 52, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i + 59, length, &OSSetAlarmSigs[1]) &&
-							get_immediate(data,   i + 61, i + 63, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,   i + 61, i + 63, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i + 64, i + 78, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i + 85, length, &OSSetAlarmSigs[1]))
 							SetupTimeoutAlarmSigs[j].offsetFoundAt = i;
@@ -13766,30 +13775,30 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i +  21, length, &OSCancelAlarmSigs[1]) &&
-							get_immediate(data,  i +  31, i +  33, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,  i +  31, i +  33, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i +  34, i +  48, length, &TimeoutHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i +  55, length, &OSSetAlarmSigs[1]))
 							RetrySigs[j].offsetFoundAt = i;
 						break;
 					case 3:
 						if (findx_pattern(data, dataType, i +  21, length, &OSCancelAlarmSigs[1]) &&
-							get_immediate(data,  i +  33, i +  34, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,  i +  33, i +  34, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i +  36, i +  42, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i +  45, length, &OSSetAlarmSigs[1]) &&
-							get_immediate(data,  i +  47, i +  49, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,  i +  47, i +  49, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i +  50, i +  64, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i +  71, length, &OSSetAlarmSigs[1]))
 							RetrySigs[j].offsetFoundAt = i;
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i +  21, length, &OSCancelAlarmSigs[1]) &&
-							get_immediate(data,  i +  33, i +  34, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,  i +  33, i +  34, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i +  36, i +  42, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i +  45, length, &OSSetAlarmSigs[1]) &&
-							get_immediate(data,  i +  50, i +  52, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,  i +  50, i +  52, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i +  53, i +  67, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i +  74, length, &OSSetAlarmSigs[1]) &&
-							get_immediate(data,  i +  76, i +  78, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,  i +  76, i +  78, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i +  79, i +  93, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i + 100, length, &OSSetAlarmSigs[1]))
 							RetrySigs[j].offsetFoundAt = i;
@@ -13814,17 +13823,17 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i +  46, length, &OSCancelAlarmSigs[1]) &&
-							get_immediate(data,  i +  56, i +  58, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,  i +  56, i +  58, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i +  59, i +  73, length, &TimeoutHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i +  80, length, &OSSetAlarmSigs[1]))
 							__CARDStartSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
 						if (findx_pattern(data, dataType, i +  46, length, &OSCancelAlarmSigs[1]) &&
-							get_immediate(data,  i +  58, i +  59, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,  i +  58, i +  59, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i +  61, i +  67, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i +  70, length, &OSSetAlarmSigs[1]) &&
-							get_immediate(data,  i +  72, i +  74, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,  i +  72, i +  74, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i +  75, i +  89, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i +  96, length, &OSSetAlarmSigs[1]))
 							__CARDStartSigs[j].offsetFoundAt = i;
@@ -13832,10 +13841,10 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					case 4:
 						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  49, length, &OSCancelAlarmSigs[1]) &&
-							get_immediate(data,  i +  61, i +  62, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,  i +  61, i +  62, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i +  64, i +  70, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i +  73, length, &OSSetAlarmSigs[1]) &&
-							get_immediate(data,  i +  75, i +  77, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,  i +  75, i +  77, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i +  78, i +  92, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i +  99, length, &OSSetAlarmSigs[1]) &&
 							findx_pattern(data, dataType, i + 102, length, &OSRestoreInterruptsSig))
@@ -13844,13 +13853,13 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					case 5:
 						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  49, length, &OSCancelAlarmSigs[1]) &&
-							get_immediate(data,  i +  61, i +  62, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,  i +  61, i +  62, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i +  64, i +  70, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i +  73, length, &OSSetAlarmSigs[1]) &&
-							get_immediate(data,  i +  78, i +  80, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,  i +  78, i +  80, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i +  93, i +  94, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i + 101, length, &OSSetAlarmSigs[1]) &&
-							get_immediate(data,  i + 103, i + 105, &constant) && constant == 0x800000F8 &&
+							get_immediate(data,  i + 103, i + 105, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i + 106, i + 120, length, &TimeoutHandlerSigs[2]) &&
 							findx_pattern(data, dataType, i + 127, length, &OSSetAlarmSigs[1]) &&
 							findx_pattern(data, dataType, i + 130, length, &OSRestoreInterruptsSig))
@@ -14095,6 +14104,36 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 			}
 		}
 		i += fp.Length - 1;
+	}
+	
+	for (j = 0; j < sizeof(InitializeUARTSigs) / sizeof(FuncPattern); j++)
+	if ((i = InitializeUARTSigs[j].offsetFoundAt)) {
+		u32 *InitializeUART = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (InitializeUART) {
+			if (swissSettings.debugUSB && !swissSettings.wiirdDebug) {
+				memset(data + i, 0, InitializeUARTSigs[j].Length * sizeof(u32));
+				
+				data[i + 0] = 0x38600000;	// li		r3, 0
+				data[i + 1] = 0x4E800020;	// blr
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", InitializeUARTSigs[j].Name, j, InitializeUART);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(WriteUARTNSigs) / sizeof(FuncPattern); j++)
+	if ((i = WriteUARTNSigs[j].offsetFoundAt)) {
+		u32 *WriteUARTN = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (WriteUARTN) {
+			if (swissSettings.debugUSB && !swissSettings.wiirdDebug) {
+				memset(data + i, 0, WriteUARTNSigs[j].Length * sizeof(u32));
+				memcpy(data + i, WriteUARTNSigs[j].Patch, WriteUARTNSigs[j].PatchLength);
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", WriteUARTNSigs[j].Name, j, WriteUARTN);
+			patched++;
+		}
 	}
 	
 	for (j = 0; j < sizeof(UpdateOriginSigs) / sizeof(FuncPattern); j++)

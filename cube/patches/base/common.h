@@ -24,16 +24,22 @@ typedef volatile u64 vu64;
 typedef volatile s64 vs64;
 typedef volatile f64 vf64;
 
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 
 #define assert_interrupt() *(volatile u32 *)0xC4000000
 
 #define disable_interrupts() ({ \
-	unsigned long msr; \
+	unsigned long msr, level; \
 	asm volatile ("mfmsr %0" : "=r" (msr)); \
+	asm ("extrwi %0,%1,1,16" : "=r" (level) : "r" (msr)); \
 	asm volatile ("rlwinm %0,%0,0,17,15" : "+r" (msr)); \
 	asm volatile ("mtmsr %0" :: "r" (msr)); \
+	level; \
 })
 
 #define enable_interrupts() ({ \
@@ -53,6 +59,13 @@ typedef volatile f64 vf64;
 	asm volatile ("isync"); \
 })
 
+#define restore_interrupts(level) ({ \
+	unsigned long msr; \
+	asm volatile ("mfmsr %0" : "=r" (msr)); \
+	asm volatile ("insrwi %0,%1,1,16" : "+r" (msr) : "r" (level)); \
+	asm volatile ("mtmsr %0" :: "r" (msr)); \
+})
+
 extern volatile u16 PE[24];
 extern volatile u32 PI[13];
 extern volatile u16 MI[46];
@@ -66,7 +79,5 @@ extern volatile u32 EXIEmuRegs[3][5];
 void device_reset(void);
 int switch_fiber(u32 arg0, u32 arg1, u32 arg2, u32 arg3, u32 pc, u32 newsp);
 void dcache_flush_icache_inv(void* dst, u32 len);
-
-int usb_sendbuffer_safe(const void *buffer,int size);
 
 #endif
