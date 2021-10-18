@@ -66,8 +66,8 @@ char *cardError(int error_code) {
 }
 
 #define CARD_SetGameAndCompany() \
-	CARD_SetGamecode("SWIS\0"); \
-	CARD_SetCompany("S0\0");
+	CARD_SetGamecode("SWIS"); \
+	CARD_SetCompany("S0");
 
 
 int initialize_card(int slot) {
@@ -128,7 +128,7 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		}
 		memset(&(*dir)[i], 0, sizeof(file_handle));
 		strcpy((*dir)[i].name, ffile->name);
-		strncat((*dir)[i].name, (char*)memcard_dir->filename, CARD_FILENAMELEN);
+		strncat((*dir)[i].name, memcard_dir->filename, CARD_FILENAMELEN);
 		(*dir)[i].fileAttrib = IS_FILE;
 		(*dir)[i].size     = memcard_dir->filelen;
 		memcpy( (*dir)[i].other, memcard_dir, sizeof(card_dir));
@@ -155,7 +155,7 @@ bool findFile(file_handle* file) {
  	
 	ret = CARD_FindFirst (slot, memcard_dir, true);
 	while (CARD_ERROR_NOFILE != ret && !found) {
-		if(!strcasecmp((const char*)filename, (char*)memcard_dir->filename)) {
+		if(!strncmp(filename, memcard_dir->filename, CARD_FILENAMELEN)) {
 			file->size = memcard_dir->filelen;
 			memcpy( file->other, memcard_dir, sizeof(card_dir));
 			found = true;
@@ -462,12 +462,21 @@ s32 deviceHandler_CARD_deleteFile(file_handle* file) {
 	char *filename = getRelativeName(file->name);
 	card_dir* cd = (card_dir*)&file->other;
 	
-	CARD_SetCompany((const char*)cd->company);
-	CARD_SetGamecode((const char*)cd->gamecode);
-	
+	if(cd->company[0] == '\0' && cd->gamecode[0] == '\0') {
+		// Find the file we don't know about and populate this file_handle if we find it.
+		if(!findFile(file)) {
+			return CARD_ERROR_NOFILE;
+		}
+		CARD_SetCompany((const char*)cd->company);
+		CARD_SetGamecode((const char*)cd->gamecode);
+	}
+	else {
+		CARD_SetCompany((const char*)cd->company);
+		CARD_SetGamecode((const char*)cd->gamecode);
+	}
 	print_gecko("Deleting: %s from slot %i\r\n", filename, slot);
 	
-	int ret = CARD_DeleteEntry(slot, cd);
+	int ret = CARD_Delete(slot, filename);
 	if(ret != CARD_ERROR_READY) {
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,cardError(ret));
 		DrawPublish(msgBox);
