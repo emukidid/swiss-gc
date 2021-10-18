@@ -1235,26 +1235,25 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 	if(file->meta) {
 		eventData->file->meta = calloc(1, sizeof(file_meta));
 		memcpy(eventData->file->meta, file->meta, sizeof(file_meta));
-		memset(&eventData->file->meta->bannerTexObj, 0, sizeof(GXTexObj));
 		if(file->meta->banner) {
+			// Make a copy cause we want this one to be killed off when the display event is disposed
 			eventData->file->meta->banner = memalign(32, eventData->file->meta->bannerSize);
 			memcpy(eventData->file->meta->banner, file->meta->banner, eventData->file->meta->bannerSize);
-			// Make a copy cause we want this one to be killed off when the display event is disposed
-			if(eventData->file->meta->bannerSize == BNR_PIXELDATA_LEN) {
-				meta_create_direct_texture(eventData->file->meta);
-			}
+			DCFlushRange(eventData->file->meta->banner, eventData->file->meta->bannerSize);
+			GX_InitTexObjData(&eventData->file->meta->bannerTexObj, eventData->file->meta->banner);
 		}
 	}
 	strcpy(eventData->displayName, message);
 	// Hide extension when rendering certain files
 	if(file->fileAttrib == IS_FILE) {
-		if(endsWith(eventData->displayName,".iso")
-			|| endsWith(eventData->displayName,".gcm")
-			|| endsWith(eventData->displayName,".tgc")
-			|| endsWith(eventData->displayName,".mp3")
-			|| endsWith(eventData->displayName,".dol")
+		if(endsWith(eventData->displayName,".dol")
 			|| endsWith(eventData->displayName,".dol+cli")
-			|| endsWith(eventData->displayName,".elf")) {
+			|| endsWith(eventData->displayName,".elf")
+			|| endsWith(eventData->displayName,".gci")
+			|| endsWith(eventData->displayName,".gcm")
+			|| endsWith(eventData->displayName,".iso")
+			|| endsWith(eventData->displayName,".mp3")
+			|| endsWith(eventData->displayName,".tgc")) {
 			if(endsWith(eventData->displayName,".nkit.iso")) {
 				eventData->displayName[((u32)strrchr(eventData->displayName, '.'))-((u32)eventData->displayName)] = '\0';
 			}

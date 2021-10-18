@@ -78,20 +78,40 @@ void meta_create_direct_texture(file_meta* meta) {
 	GX_InitTexObjFilterMode(&meta->bannerTexObj, GX_LINEAR, GX_NEAR);
 }
 
+file_meta* create_card_meta(file_handle *f, u32 bannerOffset, u8 bannerFormat) {
+	if(bannerOffset != -1) {
+		switch(bannerFormat & CARD_BANNER_MASK) {
+			case CARD_BANNER_RGB:
+			{
+				file_meta* meta = meta_alloc();
+				meta->bannerSize = CARD_BANNER_W * CARD_BANNER_H * 2;
+				meta->banner = memalign(32, meta->bannerSize);
+				devices[DEVICE_CUR]->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
+				if(devices[DEVICE_CUR]->readFile(f, meta->banner, meta->bannerSize) == meta->bannerSize) {
+					meta_create_direct_texture(meta);
+					return meta;
+				}
+				meta_free(meta);
+				break;
+			}
+		}
+	}
+	return NULL;
+}
+
 file_meta* create_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 	file_meta* meta = meta_alloc();
 	meta->bannerSize = BNR_PIXELDATA_LEN;
 	meta->banner = memalign(32,BNR_PIXELDATA_LEN);
+	memcpy(meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
 	if(!bannerOffset || bannerOffset > f->size) {
 		print_gecko("Banner not found or out of range\r\n");
-		memcpy(meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
 	}
 	else {
 		BNR *banner = memalign(32, bannerSize);
 		devices[DEVICE_CUR]->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(f, banner, bannerSize) != bannerSize) {
 			print_gecko("Banner read failed %i from offset %08X\r\n", bannerSize, bannerOffset);
-			memcpy(meta->banner, blankbanner+0x20, BNR_PIXELDATA_LEN);
 		}
 		else {
 			if(!memcmp(banner->magic, "BNR1", 4)) {
@@ -101,9 +121,6 @@ file_meta* create_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 			else if(!memcmp(banner->magic, "BNR2", 4)) {
 				memcpy(meta->banner, banner->pixelData, BNR_PIXELDATA_LEN);
 				memcpy(&meta->bnrDescription, &banner->desc[swissSettings.sramLanguage], sizeof(BNRDesc));
-			}
-			else {
-				memcpy(meta->banner, blankbanner+0x20, BNR_PIXELDATA_LEN);
 			}
 			if(strlen(meta->bnrDescription.description)) {
 				// Some banners only have empty spaces as padding until they hit a new line in the IPL
@@ -130,79 +147,84 @@ file_meta* create_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 
 void populate_meta(file_handle *f) {
 	// If the meta hasn't been created, lets read it.
-	
 	if(!f->meta) {
-		
 		// File detection (GCM, DOL, MP3 etc)
 		if(f->fileAttrib==IS_FILE) {
-			// If it's a GCM or ISO or DVD Disc
-			if(endsWith(f->name,".iso") || endsWith(f->name,".gcm")) {
-				if(devices[DEVICE_CUR] == &__device_wode) {
-					f->meta = meta_alloc();
-					f->meta->bannerSize = BNR_PIXELDATA_LEN;
-					f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
-					memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
-					meta_create_direct_texture(f->meta);
+			if(devices[DEVICE_CUR] == &__device_wode) {
+				f->meta = meta_alloc();
+				f->meta->bannerSize = BNR_PIXELDATA_LEN;
+				f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
+				memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
+				meta_create_direct_texture(f->meta);
+				// Assign GCM region texture
+				ISOInfo_t* isoInfo = (ISOInfo_t*)&f->other;
+				char region = wodeRegionToChar(isoInfo->iso_region);
+				if(region == 'J')
+					f->meta->regionTexId = TEX_NTSCJ;
+				else if(region == 'E')
+					f->meta->regionTexId = TEX_NTSCU;
+				else if(region == 'P')
+					f->meta->regionTexId = TEX_PAL;
+			}
+			else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
+				card_dir* dir = (card_dir*)&f->other;
+				card_stat stat;
+				if(CARD_GetStatus(dir->chn, dir->fileno, &stat) == CARD_ERROR_READY) {
+					f->meta = create_card_meta(f, stat.icon_addr, stat.banner_fmt);
+				}
+			}
+			else if(endsWith(f->name,".gci")) {
+				GCI gci;
+				devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
+				if(devices[DEVICE_CUR]->readFile(f, &gci, sizeof(GCI)) == sizeof(GCI)) {
+					if(gci.icon_addr != -1) gci.icon_addr += sizeof(GCI);
+					if(gci.comment_addr != -1) gci.comment_addr += sizeof(GCI);
+					f->meta = create_card_meta(f, gci.icon_addr, gci.banner_fmt);
+				}
+			}
+			else if(endsWith(f->name,".gcm") || endsWith(f->name,".iso")) {
+				DiskHeader *header = memalign(32, sizeof(DiskHeader));
+				devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
+				if(devices[DEVICE_CUR]->readFile(f, header, sizeof(DiskHeader)) == sizeof(DiskHeader) && header->DVDMagicWord == DVD_MAGIC) {
+					u32 bannerOffset = 0, bannerSize = f->size;
+					if(!get_gcm_banner_fast(header, &bannerOffset, &bannerSize))
+						get_gcm_banner(f, &bannerOffset, &bannerSize);
+					f->meta = create_game_meta(f, bannerOffset, bannerSize);
 					// Assign GCM region texture
-					ISOInfo_t* isoInfo = (ISOInfo_t*)&f->other;
-					char region = wodeRegionToChar(isoInfo->iso_region);
+					char region = wodeRegionToChar(header->RegionCode);
 					if(region == 'J')
 						f->meta->regionTexId = TEX_NTSCJ;
 					else if(region == 'E')
 						f->meta->regionTexId = TEX_NTSCU;
 					else if(region == 'P')
 						f->meta->regionTexId = TEX_PAL;
+					memcpy(&f->meta->diskId, header, sizeof(dvddiskid));
 				}
-				else {
-					DiskHeader *header = memalign(32, sizeof(DiskHeader));
-					devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
-					devices[DEVICE_CUR]->readFile(f, header, sizeof(DiskHeader));
-					if(header->DVDMagicWord == DVD_MAGIC) {
-						u32 bannerOffset = 0, bannerSize = f->size;
-						if(!get_gcm_banner_fast(header, &bannerOffset, &bannerSize))
-							get_gcm_banner(f, &bannerOffset, &bannerSize);
-						f->meta = create_game_meta(f, bannerOffset, bannerSize);
-						// Assign GCM region texture
-						char region = wodeRegionToChar(header->RegionCode);
-						if(region == 'J')
-							f->meta->regionTexId = TEX_NTSCJ;
-						else if(region == 'E')
-							f->meta->regionTexId = TEX_NTSCU;
-						else if(region == 'P')
-							f->meta->regionTexId = TEX_PAL;
-						memcpy(&f->meta->diskId, header, sizeof(dvddiskid));
-					}
-					else {
-						f->meta = create_basic_meta(&fileimgTexObj);
-					}
-					free(header);
-				}
+				free(header);
 			}
-			else if(endsWith(f->name,".tgc")) {	//TGC
+			else if(endsWith(f->name,".tgc")) {
 				TGCHeader tgcHeader;
 				devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
-				devices[DEVICE_CUR]->readFile(f, &tgcHeader, sizeof(TGCHeader));
-				if(tgcHeader.magic == TGC_MAGIC) {
+				if(devices[DEVICE_CUR]->readFile(f, &tgcHeader, sizeof(TGCHeader)) == sizeof(TGCHeader) && tgcHeader.magic == TGC_MAGIC) {
 					f->meta = create_game_meta(f, tgcHeader.bannerStart, tgcHeader.bannerLength);
+				}
+			}
+			if(!f->meta) {
+				if(endsWith(f->name,".dol")) {
+					f->meta = create_basic_meta(&dolimgTexObj);
+				}
+				else if(endsWith(f->name,".dol+cli")) {
+					f->meta = create_basic_meta(&dolcliimgTexObj);
+				}
+				else if(endsWith(f->name,".elf")) {
+					f->meta = create_basic_meta(&elfimgTexObj);
+				}
+				else if(endsWith(f->name,".mp3")) {
+					f->meta = create_basic_meta(&mp3imgTexObj);
 				}
 				else {
 					f->meta = create_basic_meta(&fileimgTexObj);
 				}
-			}
-			else if(endsWith(f->name,".mp3")) {	//MP3
-				f->meta = create_basic_meta(&mp3imgTexObj);
-			}
-			else if(endsWith(f->name,".dol")) {	//DOL
-				f->meta = create_basic_meta(&dolimgTexObj);
-			}
-			else if(endsWith(f->name,".dol+cli")) {	//DOL+CLI
-				f->meta = create_basic_meta(&dolcliimgTexObj);
-			}
-			else if(endsWith(f->name,".elf")) {	//ELF
-				f->meta = create_basic_meta(&elfimgTexObj);
-			}
-			else {
-				f->meta = create_basic_meta(&fileimgTexObj);
 			}
 		}
 		else if (f->fileAttrib == IS_DIR) {
