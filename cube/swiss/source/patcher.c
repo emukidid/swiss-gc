@@ -14111,7 +14111,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		u32 *InitializeUART = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (InitializeUART) {
-			if (swissSettings.debugUSB && !swissSettings.wiirdDebug) {
+			if ((devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) && swissSettings.debugUSB && !swissSettings.wiirdDebug) {
 				memset(data + i, 0, InitializeUARTSigs[j].Length * sizeof(u32));
 				
 				data[i + 0] = 0x38600000;	// li		r3, 0
@@ -14127,7 +14127,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		u32 *WriteUARTN = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (WriteUARTN) {
-			if (swissSettings.debugUSB && !swissSettings.wiirdDebug) {
+			if ((devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) && swissSettings.debugUSB && !swissSettings.wiirdDebug) {
 				memset(data + i, 0, WriteUARTNSigs[j].Length * sizeof(u32));
 				memcpy(data + i, WriteUARTNSigs[j].Patch, WriteUARTNSigs[j].PatchLength);
 			}

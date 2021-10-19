@@ -30,7 +30,7 @@ clean:
 
 cpatches:
 	@echo Building C Patches ...
-	@$(CC) -O3 $(OPTS) -c usbgecko/uart.c
+	@$(CC) -O3 $(OPTS) -c usbgecko/uart.c -DEXI=EXIEmuRegs
 	@$(CC) -O3 $(OPTS) -o WriteUARTN.elf -e WriteUARTN -T base/common.ld -T base/dolphin/os.ld uart.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D WriteUARTN.elf > $(DISASM)/WriteUARTN.txt
@@ -276,7 +276,7 @@ dvd.card.bin:
 usbgecko.bin:
 	@echo Building USBGecko Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DUSB
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c usbgecko/usbgecko.c

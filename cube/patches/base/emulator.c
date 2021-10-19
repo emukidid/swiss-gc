@@ -318,7 +318,11 @@ static void exi_read(unsigned index, uint32_t *value)
 	switch (index) {
 		case 0:
 		case 5:
+			#ifdef USB
+			if (chan == *VAR_EXI_SLOT || chan == EXI_CHANNEL_1)
+			#else
 			if (chan == *VAR_EXI_SLOT)
+			#endif
 				*value = EXI[chan][0] & ~0b01000000000000;
 			else
 				*value = EXI[chan][0];
@@ -341,6 +345,10 @@ static void exi_write(unsigned index, uint32_t value)
 			if (~dev & dev2) {
 				#ifdef BBA
 				if (chan == EXI_CHANNEL_0 && (dev2 & (1 << EXI_DEVICE_2)))
+					value &= ~0b00001110000000;
+				#endif
+				#ifdef USB
+				if (chan == EXI_CHANNEL_1 && (dev2 & (1 << EXI_DEVICE_0)))
 					value &= ~0b00001110000000;
 				#endif
 				if (chan == *VAR_EXI_SLOT) {
