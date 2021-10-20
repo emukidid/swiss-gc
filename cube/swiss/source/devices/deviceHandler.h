@@ -25,6 +25,7 @@ typedef struct {
 	u8 *banner;
 	int bannerSize;
 	GXTexObj bannerTexObj;
+	GXTlutObj bannerTlutObj;
 	BNRDesc bnrDescription;
 } file_meta;
 

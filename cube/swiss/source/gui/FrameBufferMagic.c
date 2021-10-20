@@ -616,6 +616,8 @@ static void _DrawTexObjNow(GXTexObj *texObj, int x, int y, int width, int height
 {
 	GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
 	GX_InvalidateTexAll();
+	GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
+	if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
 	GX_LoadTexObj(texObj, GX_TEXMAP0);
 	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 		GX_Position3f32((float) x,(float) y,(float) depth );
@@ -1055,11 +1057,14 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			file_handle *file = data->file;
 			// Draw banner if there is one
 			if(file->meta && (file->meta->banner || file->meta->fileTypeTexObj)) {
+				GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
 				bnr_width *= (file->meta->banner ? 2 : 1);
 				bnr_height *= (file->meta->banner ? 2 : 1);
 				GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
 				GX_InvalidateTexAll();
-				GX_LoadTexObj(file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj, GX_TEXMAP0);
+				GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
+				if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
+				GX_LoadTexObj(texObj, GX_TEXMAP0);
 				int bnr_x = x_mid - (bnr_width/2);
 				GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 					GX_Position3f32((float) bnr_x,(float) data->y1+borderSize+40, 0.0f );
@@ -1129,9 +1134,12 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			// Draw banner if there is one
 			file_handle *file = data->file;
 			if(file->meta && (file->meta->banner || file->meta->fileTypeTexObj)) {
+				GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
 				GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
 				GX_InvalidateTexAll();
-				GX_LoadTexObj(file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj, GX_TEXMAP0);
+				GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
+				if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
+				GX_LoadTexObj(texObj, GX_TEXMAP0);
 				GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 					GX_Position3f32((float)x_start,(float) data->y2-borderSize, 0.0f ); // bottom left
 					GX_Color4u8(255, 255, 255, 255);
@@ -1164,9 +1172,12 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 		// Draw banner if there is one
 		file_handle *file = data->file;
 		if(file->meta && (file->meta->banner || file->meta->fileTypeTexObj)) {
+			GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
 			GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
 			GX_InvalidateTexAll();
-			GX_LoadTexObj(file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj, GX_TEXMAP0);
+			GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
+			if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
+			GX_LoadTexObj(texObj, GX_TEXMAP0);
 			GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 				GX_Position3f32((float) data->x1+7,(float) data->y1+4, 0.0f );
 				GX_Color4u8(255, 255, 255, 255);
@@ -1236,6 +1247,9 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 			memcpy(eventData->file->meta->banner, file->meta->banner, eventData->file->meta->bannerSize);
 			DCFlushRange(eventData->file->meta->banner, eventData->file->meta->bannerSize);
 			GX_InitTexObjData(&eventData->file->meta->bannerTexObj, eventData->file->meta->banner);
+			if(GX_GetTexObjUserData(&eventData->file->meta->bannerTexObj) == &file->meta->bannerTlutObj) {
+				GX_InitTexObjUserData(&eventData->file->meta->bannerTexObj, &eventData->file->meta->bannerTlutObj);
+			}
 		}
 	}
 	// Hide extension when rendering certain files

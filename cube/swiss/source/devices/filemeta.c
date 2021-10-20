@@ -78,9 +78,30 @@ void meta_create_direct_texture(file_meta* meta) {
 	GX_InitTexObjFilterMode(&meta->bannerTexObj, GX_LINEAR, GX_NEAR);
 }
 
+void meta_create_direct_texture_ci(file_meta* meta) {
+	DCFlushRange(meta->banner, meta->bannerSize);
+	GX_InitTlutObj(&meta->bannerTlutObj, meta->banner + 96 * 32, GX_TL_RGB5A3, 256);
+	GX_InitTexObjCI(&meta->bannerTexObj, meta->banner, 96, 32, GX_TF_CI8, GX_CLAMP, GX_CLAMP, GX_FALSE, GX_TLUT0);
+	GX_InitTexObjFilterMode(&meta->bannerTexObj, GX_LINEAR, GX_NEAR);
+	GX_InitTexObjUserData(&meta->bannerTexObj, &meta->bannerTlutObj);
+}
+
 file_meta* create_card_meta(file_handle *f, u32 bannerOffset, u8 bannerFormat) {
 	if(bannerOffset != -1) {
 		switch(bannerFormat & CARD_BANNER_MASK) {
+			case CARD_BANNER_CI:
+			{
+				file_meta* meta = meta_alloc();
+				meta->bannerSize = CARD_BANNER_W * CARD_BANNER_H + 256 * 2;
+				meta->banner = memalign(32, meta->bannerSize);
+				devices[DEVICE_CUR]->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
+				if(devices[DEVICE_CUR]->readFile(f, meta->banner, meta->bannerSize) == meta->bannerSize) {
+					meta_create_direct_texture_ci(meta);
+					return meta;
+				}
+				meta_free(meta);
+				break;
+			}
 			case CARD_BANNER_RGB:
 			{
 				file_meta* meta = meta_alloc();
