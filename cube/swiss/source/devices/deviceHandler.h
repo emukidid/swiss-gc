@@ -19,10 +19,9 @@
 #define PATHNAME_MAX 1024
 
 typedef struct {
-	void *tplLocation;
-	int fileTypeTexId;
-	int regionTexId;
 	dvddiskid diskId;
+	GXTexObj *fileTypeTexObj;
+	GXTexObj *regionTexObj;
 	u8 *banner;
 	int bannerSize;
 	GXTexObj bannerTexObj;

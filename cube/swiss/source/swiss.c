@@ -1946,8 +1946,8 @@ uiDrawObj_t* draw_game_info() {
 		if(curFile.meta) {
 			if(curFile.meta->banner)
 				DrawAddChild(container, DrawTexObj(&curFile.meta->bannerTexObj, 215, 240, 192, 64, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-			if(curFile.meta->regionTexId != -1 && curFile.meta->regionTexId != 0)
-				DrawAddChild(container, DrawImage(curFile.meta->regionTexId, 450, 262, 30,20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+			if(curFile.meta->regionTexObj)
+				DrawAddChild(container, DrawTexObj(curFile.meta->regionTexObj, 450, 262, 30,20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 
 			sprintf(txtbuffer, "%s", curFile.meta->bnrDescription.description);
 			char* rest = &txtbuffer[0]; 

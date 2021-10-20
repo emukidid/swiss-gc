@@ -122,15 +122,15 @@ enum TextureId
 	TEX_SYSTEM,
 	TEX_USBGECKO,
 	TEX_SAMBA,
-	TEX_NTSCJ,
-	TEX_NTSCU,
-	TEX_PAL,
 	TEX_CHECKED,
 	TEX_UNCHECKED,
 	TEX_GCLOADER,
 	TEX_M2LOADER
 };
 
+extern GXTexObj ntscjTexObj;
+extern GXTexObj ntscuTexObj;
+extern GXTexObj palTexObj;
 extern GXTexObj mp3imgTexObj;
 extern GXTexObj dolimgTexObj;
 extern GXTexObj dolcliimgTexObj;

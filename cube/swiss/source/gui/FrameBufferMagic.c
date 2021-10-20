@@ -556,15 +556,6 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 		case TEX_BTNEXIT:
 			GX_LoadTexObj(&btnexitTexObj, GX_TEXMAP0);
 			break;
-		case TEX_NTSCJ:
-			GX_LoadTexObj(&ntscjTexObj, GX_TEXMAP0);
-			break;
-		case TEX_NTSCU:
-			GX_LoadTexObj(&ntscuTexObj, GX_TEXMAP0);
-			break;
-		case TEX_PAL:
-			GX_LoadTexObj(&palTexObj, GX_TEXMAP0);
-			break;
 		case TEX_CHECKED:
 			GX_LoadTexObj(&checkedTexObj, GX_TEXMAP0);
 			break;
@@ -621,26 +612,32 @@ uiDrawObj_t* DrawImage(int textureId, int x, int y, int width, int height, int d
 }
 
 // Internal
+static void _DrawTexObjNow(GXTexObj *texObj, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered)
+{
+	GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
+	GX_InvalidateTexAll();
+	GX_LoadTexObj(texObj, GX_TEXMAP0);
+	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+		GX_Position3f32((float) x,(float) y,(float) depth );
+		GX_Color4u8(255, 255, 255, 255);
+		GX_TexCoord2f32(s1,t1);
+		GX_Position3f32((float) (x+width),(float) y,(float) depth );
+		GX_Color4u8(255, 255, 255, 255);
+		GX_TexCoord2f32(s2,t1);
+		GX_Position3f32((float) (x+width),(float) (y+height),(float) depth );
+		GX_Color4u8(255, 255, 255, 255);
+		GX_TexCoord2f32(s2,t2);
+		GX_Position3f32((float) x,(float) (y+height),(float) depth );
+		GX_Color4u8(255, 255, 255, 255);
+		GX_TexCoord2f32(s1,t2);
+	GX_End();
+}
+
+// Internal
 static void _DrawTexObj(uiDrawObj_t *evt)
 {
 	drawTexObjEvent_t *data = (drawTexObjEvent_t*)evt->data;
-	GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
-	GX_InvalidateTexAll();
-	GX_LoadTexObj(data->texObj, GX_TEXMAP0);
-	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-		GX_Position3f32((float) data->x,(float) data->y,(float) data->depth );
-		GX_Color4u8(255, 255, 255, 255);
-		GX_TexCoord2f32(data->s1,data->t1);
-		GX_Position3f32((float) (data->x+data->width),(float) data->y,(float) data->depth );
-		GX_Color4u8(255, 255, 255, 255);
-		GX_TexCoord2f32(data->s2,data->t1);
-		GX_Position3f32((float) (data->x+data->width),(float) (data->y+data->height),(float) data->depth );
-		GX_Color4u8(255, 255, 255, 255);
-		GX_TexCoord2f32(data->s2,data->t2);
-		GX_Position3f32((float) data->x,(float) (data->y+data->height),(float) data->depth );
-		GX_Color4u8(255, 255, 255, 255);
-		GX_TexCoord2f32(data->s1,data->t2);
-	GX_End();
+	_DrawTexObjNow(data->texObj, data->x, data->y, data->width, data->height, data->depth, data->s1, data->s2, data->t1, data->t2, 0);
 }
 
 // External
@@ -1057,12 +1054,12 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			int bnr_height = 32;
 			file_handle *file = data->file;
 			// Draw banner if there is one
-			if(file->meta && (file->meta->banner || file->meta->tplLocation)) {
-				bnr_width *= (file->meta->tplLocation ? 1 : 2);
-				bnr_height *= (file->meta->tplLocation ? 1 : 2);
+			if(file->meta && (file->meta->banner || file->meta->fileTypeTexObj)) {
+				bnr_width *= (file->meta->banner ? 2 : 1);
+				bnr_height *= (file->meta->banner ? 2 : 1);
 				GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
 				GX_InvalidateTexAll();
-				GX_LoadTexObj(file->meta->tplLocation ? file->meta->tplLocation : &file->meta->bannerTexObj, GX_TEXMAP0);
+				GX_LoadTexObj(file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj, GX_TEXMAP0);
 				int bnr_x = x_mid - (bnr_width/2);
 				GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 					GX_Position3f32((float) bnr_x,(float) data->y1+borderSize+40, 0.0f );
@@ -1093,7 +1090,11 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 					drawString(x_mid, data->y1+(borderSize*2)+40+bnr_height+60+(line*scale*24), tok, scale, true, defaultColor);
 					line++;
 				}
-								
+			}
+			// Region
+			if(file->meta && file->meta->regionTexObj) {
+				drawString(data->x2 - borderSize - 83, data->y2-(borderSize+46), "Region:", 0.45f, false, defaultColor);
+				_DrawTexObjNow(file->meta->regionTexObj, data->x2 - 43, data->y2-(borderSize+50), 30, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 			}
 			
 			// fullGameName displays some titles with incorrect encoding, use displayName instead
@@ -1117,12 +1118,6 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				}
 				drawString(data->x2 - (borderSize + (GetTextSizeInPixels(fbTextBuffer)*0.45f)), 
 					data->y2-(borderSize+24), fbTextBuffer, 0.45f, false, defaultColor);
-									
-				// Region
-				if(file->meta && file->meta->regionTexId != -1 && file->meta->regionTexId != 0) {
-					drawString(data->x2 - borderSize - 83, data->y2-(borderSize+46), "Region:", 0.45f, false, defaultColor);
-					_DrawImageNow(file->meta->regionTexId, data->x2 - 43, data->y2-(borderSize+50), 30, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-				}
 			}
 		}
 		else {
@@ -1133,10 +1128,10 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			int x_start = (data->x2-((data->x2-data->x1)/2)) - (bnr_height/2);
 			// Draw banner if there is one
 			file_handle *file = data->file;
-			if(file->meta && (file->meta->banner || file->meta->tplLocation)) {
+			if(file->meta && (file->meta->banner || file->meta->fileTypeTexObj)) {
 				GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
 				GX_InvalidateTexAll();
-				GX_LoadTexObj(file->meta->tplLocation ? file->meta->tplLocation : &file->meta->bannerTexObj, GX_TEXMAP0);
+				GX_LoadTexObj(file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj, GX_TEXMAP0);
 				GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 					GX_Position3f32((float)x_start,(float) data->y2-borderSize, 0.0f ); // bottom left
 					GX_Color4u8(255, 255, 255, 255);
@@ -1168,10 +1163,10 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 		
 		// Draw banner if there is one
 		file_handle *file = data->file;
-		if(file->meta && (file->meta->banner || file->meta->tplLocation)) {
+		if(file->meta && (file->meta->banner || file->meta->fileTypeTexObj)) {
 			GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
 			GX_InvalidateTexAll();
-			GX_LoadTexObj(file->meta->tplLocation ? file->meta->tplLocation : &file->meta->bannerTexObj, GX_TEXMAP0);
+			GX_LoadTexObj(file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj, GX_TEXMAP0);
 			GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 				GX_Position3f32((float) data->x1+7,(float) data->y1+4, 0.0f );
 				GX_Color4u8(255, 255, 255, 255);
@@ -1187,8 +1182,8 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				GX_TexCoord2f32(0.0f,1.0f);
 			GX_End();
 		}
-		if(file->meta && file->meta->regionTexId != -1 && file->meta->regionTexId != 0) {
-			_DrawImageNow(file->meta->regionTexId, data->x2 - 38, data->y1+borderSize+1, 30, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+		if(file->meta && file->meta->regionTexObj) {
+			_DrawTexObjNow(file->meta->regionTexObj, data->x2 - 38, data->y1+borderSize+1, 30, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 		}
 
 		// fullGameName displays some titles with incorrect encoding, use displayName instead
@@ -1228,7 +1223,7 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 	eventData->y1 = y1;
 	eventData->x2 = x2;
 	eventData->y2 = y2;
-	eventData->displayName = calloc(1, PATHNAME_MAX);
+	eventData->displayName = strdup(message);
 	eventData->mode = mode;
 	eventData->file = calloc(1, sizeof(file_handle));
 	memcpy(eventData->file, file, sizeof(file_handle));
@@ -1243,7 +1238,6 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 			GX_InitTexObjData(&eventData->file->meta->bannerTexObj, eventData->file->meta->banner);
 		}
 	}
-	strcpy(eventData->displayName, message);
 	// Hide extension when rendering certain files
 	if(file->fileAttrib == IS_FILE) {
 		if(endsWith(eventData->displayName,".dol")

@@ -66,9 +66,9 @@ file_meta* meta_alloc() {
 	return meta;
 }
 
-file_meta* create_basic_meta(void* tplTexObj) {
+file_meta* create_basic_meta(GXTexObj* texObj) {
 	file_meta* meta = meta_alloc();
-	meta->tplLocation = tplTexObj;
+	meta->fileTypeTexObj = texObj;
 	return meta;
 }
 
@@ -160,11 +160,11 @@ void populate_meta(file_handle *f) {
 				ISOInfo_t* isoInfo = (ISOInfo_t*)&f->other;
 				char region = wodeRegionToChar(isoInfo->iso_region);
 				if(region == 'J')
-					f->meta->regionTexId = TEX_NTSCJ;
+					f->meta->regionTexObj = &ntscjTexObj;
 				else if(region == 'E')
-					f->meta->regionTexId = TEX_NTSCU;
+					f->meta->regionTexObj = &ntscuTexObj;
 				else if(region == 'P')
-					f->meta->regionTexId = TEX_PAL;
+					f->meta->regionTexObj = &palTexObj;
 			}
 			else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
 				card_dir* dir = (card_dir*)&f->other;
@@ -193,11 +193,11 @@ void populate_meta(file_handle *f) {
 					// Assign GCM region texture
 					char region = wodeRegionToChar(header->RegionCode);
 					if(region == 'J')
-						f->meta->regionTexId = TEX_NTSCJ;
+						f->meta->regionTexObj = &ntscjTexObj;
 					else if(region == 'E')
-						f->meta->regionTexId = TEX_NTSCU;
+						f->meta->regionTexObj = &ntscuTexObj;
 					else if(region == 'P')
-						f->meta->regionTexId = TEX_PAL;
+						f->meta->regionTexObj = &palTexObj;
 					memcpy(&f->meta->diskId, header, sizeof(dvddiskid));
 				}
 				free(header);
