@@ -429,6 +429,35 @@ void setGCIInfo(void *buffer) {
 	}
 }
 
+char getGCIRegion(const char *gameID)
+{
+	if (!strncmp(gameID, "DOLX00", 6) || !strncmp(gameID, "SWISS0", 6))
+		return 'A';
+
+	switch (gameID[3]) {
+		case 'J':
+		case 'K':
+		case 'W':
+			return 'J';
+		case 'E':
+			return 'E';
+		case 'D':
+		case 'F':
+		case 'H':
+		case 'I':
+		case 'P':
+		case 'S':
+		case 'U':
+		case 'X':
+		case 'Y':
+			return 'P';
+		case 'A':
+			return 'A';
+		default:
+			return '?';
+	}
+}
+
 s32 deviceHandler_CARD_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	return 1;
 }

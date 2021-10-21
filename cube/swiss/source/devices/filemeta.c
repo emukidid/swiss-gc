@@ -190,6 +190,13 @@ void populate_meta(file_handle *f) {
 				card_stat stat;
 				if(CARD_GetStatus(dir->chn, dir->fileno, &stat) == CARD_ERROR_READY) {
 					populate_save_meta(f, stat.banner_fmt, stat.icon_addr, stat.comment_addr);
+					char region = getGCIRegion((const char*)stat.gamecode);
+					if(region == 'J')
+						f->meta->regionTexObj = &ntscjTexObj;
+					else if(region == 'E')
+						f->meta->regionTexObj = &ntscuTexObj;
+					else if(region == 'P')
+						f->meta->regionTexObj = &palTexObj;
 				}
 			}
 			else if(endsWith(f->name,".gci")) {
@@ -199,6 +206,13 @@ void populate_meta(file_handle *f) {
 					if(gci.icon_addr != -1) gci.icon_addr += sizeof(GCI);
 					if(gci.comment_addr != -1) gci.comment_addr += sizeof(GCI);
 					populate_save_meta(f, gci.banner_fmt, gci.icon_addr, gci.comment_addr);
+					char region = getGCIRegion((const char*)gci.gamecode);
+					if(region == 'J')
+						f->meta->regionTexObj = &ntscjTexObj;
+					else if(region == 'E')
+						f->meta->regionTexObj = &ntscuTexObj;
+					else if(region == 'P')
+						f->meta->regionTexObj = &palTexObj;
 				}
 			}
 			else if(endsWith(f->name,".gcm") || endsWith(f->name,".iso")) {
