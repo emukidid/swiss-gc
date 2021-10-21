@@ -1949,7 +1949,7 @@ uiDrawObj_t* draw_game_info() {
 			if(curFile.meta->regionTexObj)
 				DrawAddChild(container, DrawTexObj(curFile.meta->regionTexObj, 450, 262, 30,20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 
-			sprintf(txtbuffer, "%s", curFile.meta->bnrDescription.description);
+			sprintf(txtbuffer, "%s", curFile.meta->bannerDesc.description);
 			char* rest = &txtbuffer[0]; 
 			char* tok;
 			int line = 0;

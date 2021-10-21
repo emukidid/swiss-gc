@@ -66,12 +66,6 @@ file_meta* meta_alloc() {
 	return meta;
 }
 
-file_meta* create_basic_meta(GXTexObj* texObj) {
-	file_meta* meta = meta_alloc();
-	meta->fileTypeTexObj = texObj;
-	return meta;
-}
-
 void meta_create_direct_texture(file_meta* meta) {
 	DCFlushRange(meta->banner, meta->bannerSize);
 	GX_InitTexObj(&meta->bannerTexObj, meta->banner, 96, 32, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
@@ -86,45 +80,50 @@ void meta_create_direct_texture_ci(file_meta* meta) {
 	GX_InitTexObjUserData(&meta->bannerTexObj, &meta->bannerTlutObj);
 }
 
-file_meta* create_card_meta(file_handle *f, u32 bannerOffset, u8 bannerFormat) {
+void populate_save_meta(file_handle *f, u8 bannerFormat, u32 bannerOffset, u32 commentOffset) {
 	if(bannerOffset != -1) {
 		switch(bannerFormat & CARD_BANNER_MASK) {
 			case CARD_BANNER_CI:
-			{
-				file_meta* meta = meta_alloc();
-				meta->bannerSize = CARD_BANNER_W * CARD_BANNER_H + 256 * 2;
-				meta->banner = memalign(32, meta->bannerSize);
+				f->meta->bannerSize = CARD_BANNER_W * CARD_BANNER_H + 256 * 2;
+				f->meta->banner = memalign(32, f->meta->bannerSize);
 				devices[DEVICE_CUR]->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
-				if(devices[DEVICE_CUR]->readFile(f, meta->banner, meta->bannerSize) == meta->bannerSize) {
-					meta_create_direct_texture_ci(meta);
-					return meta;
+				if(devices[DEVICE_CUR]->readFile(f, f->meta->banner, f->meta->bannerSize) == f->meta->bannerSize) {
+					meta_create_direct_texture_ci(f->meta);
 				}
-				meta_free(meta);
+				else {
+					free(f->meta->banner);
+					f->meta->banner = NULL;
+				}
 				break;
-			}
 			case CARD_BANNER_RGB:
-			{
-				file_meta* meta = meta_alloc();
-				meta->bannerSize = CARD_BANNER_W * CARD_BANNER_H * 2;
-				meta->banner = memalign(32, meta->bannerSize);
+				f->meta->bannerSize = CARD_BANNER_W * CARD_BANNER_H * 2;
+				f->meta->banner = memalign(32, f->meta->bannerSize);
 				devices[DEVICE_CUR]->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
-				if(devices[DEVICE_CUR]->readFile(f, meta->banner, meta->bannerSize) == meta->bannerSize) {
-					meta_create_direct_texture(meta);
-					return meta;
+				if(devices[DEVICE_CUR]->readFile(f, f->meta->banner, f->meta->bannerSize) == f->meta->bannerSize) {
+					meta_create_direct_texture(f->meta);
 				}
-				meta_free(meta);
+				else {
+					free(f->meta->banner);
+					f->meta->banner = NULL;
+				}
 				break;
-			}
 		}
 	}
-	return NULL;
+	if(commentOffset != -1) {
+		char comment[64];
+		devices[DEVICE_CUR]->seekFile(f, commentOffset, DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(f, comment, 64) == 64) {
+			strncat(f->meta->bannerDesc.description, &comment[0], 32);
+			strlcat(f->meta->bannerDesc.description, "\r\n", BNR_DESC_LEN);
+			strncat(f->meta->bannerDesc.description, &comment[32], 32);
+		}
+	}
 }
 
-file_meta* create_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
-	file_meta* meta = meta_alloc();
-	meta->bannerSize = BNR_PIXELDATA_LEN;
-	meta->banner = memalign(32,BNR_PIXELDATA_LEN);
-	memcpy(meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
+void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
+	f->meta->bannerSize = BNR_PIXELDATA_LEN;
+	f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
+	memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
 	if(!bannerOffset || bannerOffset > f->size) {
 		print_gecko("Banner not found or out of range\r\n");
 	}
@@ -136,22 +135,22 @@ file_meta* create_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 		}
 		else {
 			if(!memcmp(banner->magic, "BNR1", 4)) {
-				memcpy(meta->banner, banner->pixelData, BNR_PIXELDATA_LEN);
-				memcpy(&meta->bnrDescription, &banner->desc[0], sizeof(BNRDesc));
+				memcpy(f->meta->banner, banner->pixelData, BNR_PIXELDATA_LEN);
+				memcpy(&f->meta->bannerDesc, &banner->desc[0], sizeof(BNRDesc));
 			}
 			else if(!memcmp(banner->magic, "BNR2", 4)) {
-				memcpy(meta->banner, banner->pixelData, BNR_PIXELDATA_LEN);
-				memcpy(&meta->bnrDescription, &banner->desc[swissSettings.sramLanguage], sizeof(BNRDesc));
+				memcpy(f->meta->banner, banner->pixelData, BNR_PIXELDATA_LEN);
+				memcpy(&f->meta->bannerDesc, &banner->desc[swissSettings.sramLanguage], sizeof(BNRDesc));
 			}
-			if(strlen(meta->bnrDescription.description)) {
+			if(strlen(f->meta->bannerDesc.description)) {
 				// Some banners only have empty spaces as padding until they hit a new line in the IPL
-				char *desc_ptr = meta->bnrDescription.description;
+				char *desc_ptr = f->meta->bannerDesc.description;
 				if((desc_ptr = strstr(desc_ptr, "  "))) {
 					desc_ptr[0] = '\r';
 					desc_ptr[1] = '\n';
 				}
 				// ...and some banners have no CR/LF and we'd like a sane wrap point
-				desc_ptr = meta->bnrDescription.description;
+				desc_ptr = f->meta->bannerDesc.description;
 				if(!strstr(desc_ptr, "\r") && !strstr(desc_ptr, "\n") && strlen(desc_ptr) > 50) {
 					desc_ptr+=(strlen(desc_ptr) / 2);
 					if((desc_ptr = strstr(desc_ptr, " "))) {
@@ -162,17 +161,16 @@ file_meta* create_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 		}
 		free(banner);
 	}
-	meta_create_direct_texture(meta);
-	return meta;
+	meta_create_direct_texture(f->meta);
 }
 
 void populate_meta(file_handle *f) {
 	// If the meta hasn't been created, lets read it.
 	if(!f->meta) {
+		f->meta = meta_alloc();
 		// File detection (GCM, DOL, MP3 etc)
 		if(f->fileAttrib==IS_FILE) {
 			if(devices[DEVICE_CUR] == &__device_wode) {
-				f->meta = meta_alloc();
 				f->meta->bannerSize = BNR_PIXELDATA_LEN;
 				f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
 				memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
@@ -191,7 +189,7 @@ void populate_meta(file_handle *f) {
 				card_dir* dir = (card_dir*)&f->other;
 				card_stat stat;
 				if(CARD_GetStatus(dir->chn, dir->fileno, &stat) == CARD_ERROR_READY) {
-					f->meta = create_card_meta(f, stat.icon_addr, stat.banner_fmt);
+					populate_save_meta(f, stat.banner_fmt, stat.icon_addr, stat.comment_addr);
 				}
 			}
 			else if(endsWith(f->name,".gci")) {
@@ -200,7 +198,7 @@ void populate_meta(file_handle *f) {
 				if(devices[DEVICE_CUR]->readFile(f, &gci, sizeof(GCI)) == sizeof(GCI)) {
 					if(gci.icon_addr != -1) gci.icon_addr += sizeof(GCI);
 					if(gci.comment_addr != -1) gci.comment_addr += sizeof(GCI);
-					f->meta = create_card_meta(f, gci.icon_addr, gci.banner_fmt);
+					populate_save_meta(f, gci.banner_fmt, gci.icon_addr, gci.comment_addr);
 				}
 			}
 			else if(endsWith(f->name,".gcm") || endsWith(f->name,".iso")) {
@@ -210,7 +208,7 @@ void populate_meta(file_handle *f) {
 					u32 bannerOffset = 0, bannerSize = f->size;
 					if(!get_gcm_banner_fast(header, &bannerOffset, &bannerSize))
 						get_gcm_banner(f, &bannerOffset, &bannerSize);
-					f->meta = create_game_meta(f, bannerOffset, bannerSize);
+					populate_game_meta(f, bannerOffset, bannerSize);
 					// Assign GCM region texture
 					char region = wodeRegionToChar(header->RegionCode);
 					if(region == 'J')
@@ -227,29 +225,22 @@ void populate_meta(file_handle *f) {
 				TGCHeader tgcHeader;
 				devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
 				if(devices[DEVICE_CUR]->readFile(f, &tgcHeader, sizeof(TGCHeader)) == sizeof(TGCHeader) && tgcHeader.magic == TGC_MAGIC) {
-					f->meta = create_game_meta(f, tgcHeader.bannerStart, tgcHeader.bannerLength);
+					populate_game_meta(f, tgcHeader.bannerStart, tgcHeader.bannerLength);
 				}
 			}
-			if(!f->meta) {
-				if(endsWith(f->name,".dol")) {
-					f->meta = create_basic_meta(&dolimgTexObj);
-				}
-				else if(endsWith(f->name,".dol+cli")) {
-					f->meta = create_basic_meta(&dolcliimgTexObj);
-				}
-				else if(endsWith(f->name,".elf")) {
-					f->meta = create_basic_meta(&elfimgTexObj);
-				}
-				else if(endsWith(f->name,".mp3")) {
-					f->meta = create_basic_meta(&mp3imgTexObj);
-				}
-				else {
-					f->meta = create_basic_meta(&fileimgTexObj);
-				}
-			}
+			if(endsWith(f->name,".dol"))
+				f->meta->fileTypeTexObj = &dolimgTexObj;
+			else if(endsWith(f->name,".dol+cli"))
+				f->meta->fileTypeTexObj = &dolcliimgTexObj;
+			else if(endsWith(f->name,".elf"))
+				f->meta->fileTypeTexObj = &elfimgTexObj;
+			else if(endsWith(f->name,".mp3"))
+				f->meta->fileTypeTexObj = &mp3imgTexObj;
+			else
+				f->meta->fileTypeTexObj = &fileimgTexObj;
 		}
 		else if (f->fileAttrib == IS_DIR) {
-			f->meta = create_basic_meta(&dirimgTexObj);
+			f->meta->fileTypeTexObj = &dirimgTexObj;
 		}
 	}
 }

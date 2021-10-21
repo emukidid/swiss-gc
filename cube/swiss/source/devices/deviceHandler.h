@@ -26,7 +26,7 @@ typedef struct {
 	int bannerSize;
 	GXTexObj bannerTexObj;
 	GXTlutObj bannerTlutObj;
-	BNRDesc bnrDescription;
+	BNRDesc bannerDesc;
 } file_meta;
 
 typedef struct {

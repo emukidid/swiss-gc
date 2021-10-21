@@ -1082,11 +1082,11 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				GX_End();
 				
 				// Company
-				float scale = GetTextScaleToFitInWidth(file->meta->bnrDescription.fullCompany,(data->x2-data->x1)-(borderSize*2));
-				drawString(x_mid, data->y1+(borderSize*2)+40+bnr_height+20, file->meta->bnrDescription.fullCompany, scale, true, defaultColor);				
+				float scale = GetTextScaleToFitInWidth(file->meta->bannerDesc.fullCompany,(data->x2-data->x1)-(borderSize*2));
+				drawString(x_mid, data->y1+(borderSize*2)+40+bnr_height+20, file->meta->bannerDesc.fullCompany, scale, true, defaultColor);
 				
 				// Description
-				sprintf(fbTextBuffer, "%s", file->meta->bnrDescription.description);
+				sprintf(fbTextBuffer, "%s", file->meta->bannerDesc.description);
 				char* rest = &fbTextBuffer[0];
 				char* tok;
 				int line = 0;
