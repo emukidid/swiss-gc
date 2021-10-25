@@ -15,6 +15,7 @@
 #include <sdcard/card_cmn.h>
 #include <ogc/lwp_threads.h>
 #include <ogc/machine/processor.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -910,7 +911,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 			while(1);
 		}
 	}
-	else if(GCMDisk.DOLOffset == 0 || swissSettings.bs2Boot) {
+	else if(swissSettings.bs2Boot || GCMDisk.DOLOffset == 0) {
 		progBox = DrawPublish(DrawProgressBar(true, 0, "Loading BS2"));
 		
 		// Read BS2
@@ -1733,7 +1734,14 @@ void load_game() {
 	int bootMode = info_game();
 	if(!bootMode) return;
 	
-	if(bootMode == 2 && tgcFile.magic != TGC_MAGIC) {
+	if(tgcFile.magic == TGC_MAGIC) {
+		bootMode = 1;
+	}
+	else if(isdigit(GCMDisk.ConsoleID) || GCMDisk.DOLOffset == 0) {
+		bootMode = 2;
+	}
+	
+	if(bootMode == 2) {
 		if(devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support clean boot."));
 			sleep(2);
@@ -2016,7 +2024,7 @@ int info_game()
 			break;
 		}
 		if(buttons & PAD_BUTTON_X) {
-			show_settings((GCMDisk.DVDMagicWord == DVD_MAGIC && GCMDisk.DOLOffset != 0) ? &curFile : NULL, config);
+			show_settings((isdigit(GCMDisk.ConsoleID) || GCMDisk.DOLOffset == 0) ? NULL : &curFile, config);
 		}
 		if((buttons & PAD_TRIGGER_Z) && devices[DEVICE_CONFIG] != NULL) {
 			// Toggle autoload
