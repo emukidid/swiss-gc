@@ -291,7 +291,7 @@ void schedule_read(OSTick ticks, bool lock)
 		return;
 	}
 
-	dvd.patch = is_frag_patch(dvd.offset, dvd.length);
+	dvd.patch = is_frag_patch(*VAR_CURRENT_DISC, dvd.offset, dvd.length);
 
 	if (!dvd.patch)
 		fsp_get_file(dvd.offset, dvd.length, lock);
@@ -308,7 +308,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
 	dvd.buffer = OSPhysicalToCached(address);
 	dvd.length = length;
-	dvd.offset = offset | *VAR_CURRENT_DISC << 31;
+	dvd.offset = offset;
 	dvd.read = true;
 
 	schedule_read(0, true);
@@ -318,7 +318,7 @@ void trickle_read(void)
 {
 	if (dvd.read && dvd.patch) {
 		OSTick start = OSGetTick();
-		int size = frag_read(dvd.buffer, dvd.length, dvd.offset);
+		int size = frag_read(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset);
 		DCStoreRangeNoSync(dvd.buffer, size);
 		OSTick end = OSGetTick();
 
@@ -336,10 +336,6 @@ void device_reset(void)
 	while (EXI[EXI_CHANNEL_0][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
-
-	EXI[EXI_CHANNEL_0][0] = 0;
-	EXI[EXI_CHANNEL_1][0] = 0;
-	EXI[EXI_CHANNEL_2][0] = 0;
 
 	end_read();
 }

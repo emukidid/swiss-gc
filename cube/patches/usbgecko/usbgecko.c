@@ -52,7 +52,7 @@ typedef struct {
 
 static void usb_request(uint32_t offset, uint32_t size)
 {
-	usb_request_t request = {offset & ~0x80000000, size};
+	usb_request_t request = {offset, size};
 	usb_transmit(&request, sizeof(request), sizeof(request));
 }
 
@@ -102,7 +102,7 @@ void schedule_read(OSTick ticks, bool request)
 		return;
 	}
 
-	dvd.patch = is_frag_patch(dvd.offset, dvd.length);
+	dvd.patch = is_frag_patch(*VAR_CURRENT_DISC, dvd.offset, dvd.length);
 
 	if (!dvd.patch && request)
 		usb_request(dvd.offset, dvd.length);
@@ -114,7 +114,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
 	dvd.buffer = OSPhysicalToCached(address);
 	dvd.length = length;
-	dvd.offset = offset | *VAR_CURRENT_DISC << 31;
+	dvd.offset = offset;
 	dvd.read = true;
 
 	schedule_read(0, true);
@@ -124,7 +124,7 @@ void trickle_read(void)
 {
 	if (dvd.read) {
 		OSTick start = OSGetTick();
-		int size = dvd.patch ? frag_read(dvd.buffer, dvd.length, dvd.offset)
+		int size = dvd.patch ? frag_read(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset)
 		                     : usb_receive(dvd.buffer, dvd.length, 0);
 		DCStoreRangeNoSync(dvd.buffer, size);
 		OSTick end = OSGetTick();
@@ -143,10 +143,6 @@ void device_reset(void)
 	while (EXI[EXI_CHANNEL_0][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
-
-	EXI[EXI_CHANNEL_0][0] = 0;
-	EXI[EXI_CHANNEL_1][0] = 0;
-	EXI[EXI_CHANNEL_2][0] = 0;
 
 	usb_unlock_file();
 	end_read();

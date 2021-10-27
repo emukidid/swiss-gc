@@ -143,7 +143,7 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 					if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 						return 0;
 					}
-					if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
+					if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
 						free(fragList);
 						return 0;
 					}
@@ -170,7 +170,7 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 				return 0;
 			}
-			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_IGR_DOL, 0, DEVICE_PATCHES))) {
+			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_IGR_DOL, 0, 0, DEVICE_PATCHES))) {
 				totFrags+=frags;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}

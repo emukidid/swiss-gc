@@ -67,7 +67,7 @@ s32 deviceHandler_WKF_writeFile(file_handle* file, void* buffer, u32 length){
 s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	if(numToPatch < 0) {
 		u32 frag[4];
-		if(!getFragments(file, &frag, 1, 0, 0, DEVICE_CUR)) {
+		if(!getFragments(file, &frag, 1, 0, 0, 0, DEVICE_CUR)) {
 			return 0;
 		}
 		wkfWriteOffset(frag[3]);
@@ -96,7 +96,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 					if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 						return 0;
 					}
-					if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
+					if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
 						free(fragList);
 						return 0;
 					}
@@ -123,7 +123,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 				return 0;
 			}
-			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_IGR_DOL, 0, DEVICE_PATCHES))) {
+			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_IGR_DOL, 0, 0, DEVICE_PATCHES))) {
 				totFrags+=frags;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
@@ -143,7 +143,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 				if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 					return 0;
 				}
-				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_A, 31.5*1024*1024, DEVICE_PATCHES))) {
+				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_A, 0, 31.5*1024*1024, DEVICE_PATCHES))) {
 					*(vu8*)VAR_CARD_A_ID = (patchFile.size*8/1024/1024) & 0xFC;
 					totFrags+=frags;
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
@@ -163,7 +163,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 				if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 					return 0;
 				}
-				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_B, 31.5*1024*1024, DEVICE_PATCHES))) {
+				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_B, 0, 31.5*1024*1024, DEVICE_PATCHES))) {
 					*(vu8*)VAR_CARD_B_ID = (patchFile.size*8/1024/1024) & 0xFC;
 					totFrags+=frags;
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
@@ -184,7 +184,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 	if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 		return 0;
 	}
-	if(!(frags = getFragments(file, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, DISC_SIZE, DEVICE_CUR))) {
+	if(!(frags = getFragments(file, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, 0, UINT32_MAX, DEVICE_CUR))) {
 		return 0;
 	}
 	totFrags += frags;
@@ -195,7 +195,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 		if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 			return 0;
 		}
-		if(!(frags = getFragments(file2, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_2, DISC_SIZE, DEVICE_CUR))) {
+		if(!(frags = getFragments(file2, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_2, 0, UINT32_MAX, DEVICE_CUR))) {
 			return 0;
 		}
 		totFrags += frags;

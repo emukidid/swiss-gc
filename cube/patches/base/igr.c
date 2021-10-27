@@ -37,18 +37,18 @@ void check_pad(int32_t chan, PADStatus *status)
 	}
 }
 
-static void load_dol(uint32_t offset)
+static void load_igr_dol(void)
 {
 	DOLImage image;
-	if (frag_read_complete(&image, sizeof(image), offset) != sizeof(image)) return;
+	if (frag_read_complete(FRAGS_IGR_DOL, &image, sizeof(image), 0) != sizeof(image)) return;
 
 	for (int i = 0; i < DOL_MAX_TEXT; i++) {
-		frag_read_complete(image.text[i], image.textLen[i], offset + image.textData[i]);
+		frag_read_complete(FRAGS_IGR_DOL, image.text[i], image.textLen[i], image.textData[i]);
 		dcache_flush_icache_inv(image.text[i], image.textLen[i]);
 	}
 
 	for (int i = 0; i < DOL_MAX_DATA; i++) {
-		frag_read_complete(image.data[i], image.dataLen[i], offset + image.dataData[i]);
+		frag_read_complete(FRAGS_IGR_DOL, image.data[i], image.dataLen[i], image.dataData[i]);
 		dcache_flush_icache_inv(image.data[i], image.dataLen[i]);
 	}
 
@@ -64,7 +64,7 @@ void fini(void)
 
 	switch (*VAR_IGR_TYPE) {
 		case IGR_BOOTBIN:
-			switch_fiber(FRAGS_IGR_DOL, 0, 0, 0, (intptr_t)load_dol, (intptr_t)OSDebugMonitor);
+			switch_fiber(0, 0, 0, 0, (intptr_t)load_igr_dol, (intptr_t)OSDebugMonitor);
 			break;
 	}
 }

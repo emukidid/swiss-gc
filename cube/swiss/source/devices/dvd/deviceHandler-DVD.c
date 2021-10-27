@@ -431,7 +431,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 					if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 						return 0;
 					}
-					if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
+					if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
 						free(fragList);
 						return 0;
 					}
@@ -458,7 +458,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 				return 0;
 			}
-			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_IGR_DOL, 0, DEVICE_PATCHES))) {
+			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_IGR_DOL, 0, 0, DEVICE_PATCHES))) {
 				totFrags+=frags;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
@@ -478,7 +478,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 				if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 					return 0;
 				}
-				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_A, 31.5*1024*1024, DEVICE_PATCHES))) {
+				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_A, 0, 31.5*1024*1024, DEVICE_PATCHES))) {
 					*(vu8*)VAR_CARD_A_ID = (patchFile.size*8/1024/1024) & 0xFC;
 					totFrags+=frags;
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
@@ -498,7 +498,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 				if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 					return 0;
 				}
-				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_B, 31.5*1024*1024, DEVICE_PATCHES))) {
+				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_B, 0, 31.5*1024*1024, DEVICE_PATCHES))) {
 					*(vu8*)VAR_CARD_B_ID = (patchFile.size*8/1024/1024) & 0xFC;
 					totFrags+=frags;
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);

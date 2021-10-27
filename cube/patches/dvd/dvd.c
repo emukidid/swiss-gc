@@ -114,10 +114,10 @@ void schedule_read(OSTick ticks)
 	}
 
 	#ifdef ASYNC_READ
-	if (!frag_read_async(dvd.buffer, dvd.length, dvd.offset, read_callback))
+	if (!frag_read_async(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, read_callback))
 		dvd_read(dvd.buffer, dvd.length, dvd.offset);
 	#else
-	dvd.patch = is_frag_patch(dvd.offset, dvd.length);
+	dvd.patch = is_frag_patch(*VAR_CURRENT_DISC, dvd.offset, dvd.length);
 
 	if (!dvd.patch)
 		dvd_read(dvd.buffer, dvd.length, dvd.offset);
@@ -153,7 +153,7 @@ void trickle_read(void)
 	#ifndef ASYNC_READ
 	if (dvd.read && dvd.patch) {
 		OSTick start = OSGetTick();
-		int size = frag_read(dvd.buffer, dvd.length, dvd.offset);
+		int size = frag_read(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset);
 		OSTick end = OSGetTick();
 
 		dvd.buffer += size;
@@ -184,7 +184,7 @@ void device_reset(void)
 
 	#ifdef GCODE
 	const frag_t *frag = NULL;
-	int count = frag_get_list(FRAGS_DISC_1, &frag);
+	int count = frag_get_list(FRAGS_BOOT_GCM, &frag);
 	gcode_set_disc_frags(0, frag, count);
 	gcode_set_disc_number(0);
 	#endif
@@ -192,10 +192,6 @@ void device_reset(void)
 	while (EXI[EXI_CHANNEL_0][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
-
-	EXI[EXI_CHANNEL_0][0] = 0;
-	EXI[EXI_CHANNEL_1][0] = 0;
-	EXI[EXI_CHANNEL_2][0] = 0;
 
 	end_read();
 }

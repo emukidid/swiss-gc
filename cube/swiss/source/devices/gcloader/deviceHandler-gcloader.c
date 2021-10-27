@@ -72,7 +72,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 	
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
-		if(!(discFrags = getFragments(file2, &discFragList[disc2Frags], maxDiscFrags-disc2Frags, 0, UINT32_MAX, DEVICE_CUR))) {
+		if(!(discFrags = getFragments(file2, &discFragList[disc2Frags], maxDiscFrags-disc2Frags, 0, 0, UINT32_MAX, DEVICE_CUR))) {
 			return 0;
 		}
 		disc2Frags+=discFrags;
@@ -94,7 +94,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 			GCMDisk.RegionCode = getFontEncode() ? 0:1;
 		
 		if(devices[DEVICE_CUR]->writeFile(&bootFile, &GCMDisk, sizeof(DiskHeader)) == sizeof(DiskHeader)) {
-			if(!(discFrags = getFragments(&bootFile, &discFragList[disc1Frags], maxDiscFrags-disc1Frags, 0, sizeof(DiskHeader), DEVICE_CUR))) {
+			if(!(discFrags = getFragments(&bootFile, &discFragList[disc1Frags], maxDiscFrags-disc1Frags, 0, 0, sizeof(DiskHeader), DEVICE_CUR))) {
 				return 0;
 			}
 			disc1Frags+=discFrags;
@@ -103,7 +103,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 	}
 	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!(discFrags = getFragments(file, &discFragList[disc1Frags], maxDiscFrags-disc1Frags, 0, UINT32_MAX, DEVICE_CUR))) {
+	if(!(discFrags = getFragments(file, &discFragList[disc1Frags], maxDiscFrags-disc1Frags, 0, 0, UINT32_MAX, DEVICE_CUR))) {
 		return 0;
 	}
 	disc1Frags+=discFrags;
@@ -140,7 +140,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 					if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 						return 0;
 					}
-					if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
+					if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
 						free(fragList);
 						return 0;
 					}
@@ -159,6 +159,20 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 			}
 		}
 		
+		for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
+			memset(&patchFile, 0, sizeof(file_handle));
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%s%s", devices[DEVICE_CUR]->initial->name, bootFile_names[i]);
+			
+			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+				return 0;
+			}
+			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_BOOT_GCM, 0, UINT32_MAX, DEVICE_CUR))) {
+				totFrags+=frags;
+				devices[DEVICE_CUR]->closeFile(&patchFile);
+				break;
+			}
+		}
+		
 		// Check for igr.dol
 		if(swissSettings.igrType == IGR_BOOTBIN) {
 			memset(&patchFile, 0, sizeof(file_handle));
@@ -167,7 +181,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 				return 0;
 			}
-			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_IGR_DOL, 0, DEVICE_PATCHES))) {
+			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_IGR_DOL, 0, 0, DEVICE_PATCHES))) {
 				totFrags+=frags;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
@@ -187,7 +201,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 				if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 					return 0;
 				}
-				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_A, 31.5*1024*1024, DEVICE_PATCHES))) {
+				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_A, 0, 31.5*1024*1024, DEVICE_PATCHES))) {
 					*(vu8*)VAR_CARD_A_ID = (patchFile.size*8/1024/1024) & 0xFC;
 					totFrags+=frags;
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
@@ -207,25 +221,11 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 				if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 					return 0;
 				}
-				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_B, 31.5*1024*1024, DEVICE_PATCHES))) {
+				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_B, 0, 31.5*1024*1024, DEVICE_PATCHES))) {
 					*(vu8*)VAR_CARD_B_ID = (patchFile.size*8/1024/1024) & 0xFC;
 					totFrags+=frags;
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				}
-			}
-		}
-		
-		for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
-			memset(&patchFile, 0, sizeof(file_handle));
-			snprintf(&patchFile.name[0], PATHNAME_MAX, "%s%s", devices[DEVICE_CUR]->initial->name, bootFile_names[i]);
-			
-			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-				return 0;
-			}
-			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, DISC_SIZE, DEVICE_CUR))) {
-				totFrags+=frags;
-				devices[DEVICE_CUR]->closeFile(&patchFile);
-				break;
 			}
 		}
 		

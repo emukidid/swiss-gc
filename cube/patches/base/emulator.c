@@ -431,12 +431,12 @@ bool dtk_fill_buffer(void)
 	#ifdef WKF
 	DCInvalidateRange(__builtin_assume_aligned(dtk.buffer, 32), sizeof(*dtk.buffer));
 	#endif
-	return dtk.reading = frag_read_async(dtk.buffer, sizeof(*dtk.buffer), dtk.current.position, read_callback);
+	return dtk.reading = frag_read_async(*VAR_CURRENT_DISC, dtk.buffer, sizeof(*dtk.buffer), dtk.current.position, read_callback);
 	#else
 	OSCancelAlarm(&read_alarm);
 	OSTick start = OSGetTick();
 
-	int size = frag_read(dtk.buffer, sizeof(*dtk.buffer), dtk.current.position);
+	int size = frag_read(*VAR_CURRENT_DISC, dtk.buffer, sizeof(*dtk.buffer), dtk.current.position);
 	if (size == sizeof(*dtk.buffer))
 		dtk_decode_buffer(dtk.buffer, size);
 
@@ -529,7 +529,7 @@ static void di_execute_command(void)
 		{
 			uint32_t address = di.reg.mar;
 			uint32_t length  = di.reg.length;
-			uint32_t offset  = di.reg.cmdbuf1 << 2 & ~0x80000000;
+			uint32_t offset  = di.reg.cmdbuf1 << 2;
 
 			if (di.status == 1)
 				di_error(0x023A00);
@@ -541,7 +541,7 @@ static void di_execute_command(void)
 		}
 		case 0xAB:
 		{
-			uint32_t offset = di.reg.cmdbuf1 << 2 & ~0x80000000;
+			uint32_t offset = di.reg.cmdbuf1 << 2;
 
 			if (di.status == 1)
 				di_error(0x023A00);
@@ -560,7 +560,7 @@ static void di_execute_command(void)
 			switch ((di.reg.cmdbuf0 >> 16) & 0x03) {
 				case 0x00:
 				{
-					uint32_t offset = DVDRoundDown32KB(di.reg.cmdbuf1 << 2) & ~0x80000000;
+					uint32_t offset = DVDRoundDown32KB(di.reg.cmdbuf1 << 2);
 					uint32_t length = DVDRoundDown32KB(di.reg.cmdbuf2);
 
 					if (!offset && !length) {
@@ -601,8 +601,8 @@ static void di_execute_command(void)
 		{
 			switch ((di.reg.cmdbuf0 >> 16) & 0x03) {
 				case 0x00: result = dtk.playing; break;
-				case 0x01: result = DVDRoundDown32KB(dtk.current.position & ~0x80000000) >> 2; break;
-				case 0x02: result = DVDRoundDown32KB(dtk.current.start & ~0x80000000) >> 2; break;
+				case 0x01: result = DVDRoundDown32KB(dtk.current.position) >> 2; break;
+				case 0x02: result = DVDRoundDown32KB(dtk.current.start) >> 2; break;
 				case 0x03: result = dtk.current.length; break;
 			}
 			break;

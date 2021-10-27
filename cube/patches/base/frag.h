@@ -26,9 +26,15 @@
 
 typedef struct {
 	uint32_t offset;
-	uint32_t device :  1;
-	uint32_t size   : 31;
-	uint64_t sector;
+	uint32_t size;
+	union {
+		uint64_t data;
+		struct {
+			uint64_t file   :  8;
+			uint64_t device :  8;
+			uint64_t sector : 48;
+		};
+	};
 } frag_t;
 
 typedef void (*frag_callback)(void *buffer, uint32_t length);
@@ -38,17 +44,17 @@ bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t secto
 int do_read_write(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write);
 void end_read(void);
 
-int frag_get_list(uint32_t offset, const frag_t **frag);
-bool is_frag_patch(uint32_t offset, size_t size);
+int frag_get_list(int file, const frag_t **frag);
+bool is_frag_patch(int file, uint32_t offset, size_t size);
 
-bool frag_read_write_async(void *buffer, uint32_t length, uint32_t offset, bool write, frag_callback callback);
-int frag_read_complete(void *buffer, uint32_t length, uint32_t offset);
-int frag_read_write(void *buffer, uint32_t length, uint32_t offset, bool write);
+bool frag_read_write_async(int file, void *buffer, uint32_t length, uint32_t offset, bool write, frag_callback callback);
+int frag_read_complete(int file, void *buffer, uint32_t length, uint32_t offset);
+int frag_read_write(int file, void *buffer, uint32_t length, uint32_t offset, bool write);
 
-#define frag_read_async(buffer, length, offset, callback) frag_read_write_async(buffer, length, offset, false, callback)
-#define frag_write_async(buffer, length, offset, callback) frag_read_write_async(buffer, length, offset, true, callback)
+#define frag_read_async(file, buffer, length, offset, callback) frag_read_write_async(file, buffer, length, offset, false, callback)
+#define frag_write_async(file, buffer, length, offset, callback) frag_read_write_async(file, buffer, length, offset, true, callback)
 
-#define frag_read(buffer, length, offset) frag_read_write(buffer, length, offset, false)
-#define frag_write(buffer, length, offset) frag_read_write(buffer, length, offset, true)
+#define frag_read(file, buffer, length, offset) frag_read_write(file, buffer, length, offset, false)
+#define frag_write(file, buffer, length, offset) frag_read_write(file, buffer, length, offset, true)
 
 #endif /* FRAG_H */

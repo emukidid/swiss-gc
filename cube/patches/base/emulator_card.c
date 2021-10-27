@@ -45,14 +45,12 @@ static struct {
 } card[2] = {
 	{
 		.status = 0b11000001,
-		.offset = FRAGS_CARD_A,
 		#ifdef ASYNC_READ
 		.read_callback  = carda_read_callback,
 		.write_callback = carda_write_callback
 		#endif
 	}, {
 		.status = 0b11000001,
-		.offset = FRAGS_CARD_B,
 		#ifdef ASYNC_READ
 		.read_callback  = cardb_read_callback,
 		.write_callback = cardb_write_callback
@@ -145,9 +143,9 @@ bool card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
 		{
 			if (card[chan].position >= 5 && type == EXI_READ) {
 				#ifdef ASYNC_READ
-				return frag_read_async(buffer, length, card[chan].offset, card[chan].read_callback);
+				return frag_read_async(FRAGS_CARD(chan), buffer, length, card[chan].offset, card[chan].read_callback);
 				#else
-				frag_read(buffer, length, card[chan].offset);
+				frag_read(FRAGS_CARD(chan), buffer, length, card[chan].offset);
 				#endif
 			}
 			break;
@@ -157,9 +155,9 @@ bool card_dma(unsigned chan, uint32_t address, uint32_t length, int type)
 			if (card[chan].position == 5 && type == EXI_WRITE) {
 				if (card[chan].offset % 512 == 0) {
 					#ifdef ASYNC_READ
-					return frag_write_async(buffer, 512, card[chan].offset, card[chan].write_callback);
+					return frag_write_async(FRAGS_CARD(chan), buffer, 512, card[chan].offset, card[chan].write_callback);
 					#else
-					if (frag_write(buffer, 512, card[chan].offset) != 512) card[chan].status |= 0b00001000;
+					if (frag_write(FRAGS_CARD(chan), buffer, 512, card[chan].offset) != 512) card[chan].status |= 0b00001000;
 					#endif
 				}
 			}

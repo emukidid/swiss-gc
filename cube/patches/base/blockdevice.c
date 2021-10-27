@@ -61,7 +61,7 @@ void schedule_read(OSTick ticks)
 	}
 
 	#ifdef ASYNC_READ
-	frag_read_async(dvd.buffer, dvd.length, dvd.offset, read_callback);
+	frag_read_async(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, read_callback);
 	#else
 	OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
 	#endif
@@ -71,7 +71,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
 	dvd.buffer = OSPhysicalToUncached(address);
 	dvd.length = length;
-	dvd.offset = offset | *VAR_CURRENT_DISC << 31;
+	dvd.offset = offset;
 	dvd.read = true;
 
 	#ifdef DVD_MATH
@@ -99,7 +99,7 @@ void trickle_read(void)
 
 	if (dvd.read) {
 		OSTick start = OSGetTick();
-		int size = frag_read(dvd.buffer, dvd.length, dvd.offset);
+		int size = frag_read(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset);
 		OSTick end = OSGetTick();
 
 		dvd.buffer += size;
@@ -117,10 +117,6 @@ void device_reset(void)
 	while (EXI[EXI_CHANNEL_0][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
-
-	EXI[EXI_CHANNEL_0][0] = 0;
-	EXI[EXI_CHANNEL_1][0] = 0;
-	EXI[EXI_CHANNEL_2][0] = 0;
 
 	end_read();
 }

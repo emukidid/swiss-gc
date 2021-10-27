@@ -256,7 +256,7 @@ void print_frag_list(u32 (*fragList)[4]) {
 	
 	return numfrags on success, 0 on failure
 */ 
-s32 getFragments(file_handle* file, u32 (*fragList)[4], s32 maxFrags, u32 forceBaseOffset, u32 forceSize, u32 dev) {
+s32 getFragments(file_handle* file, u32 (*fragList)[4], s32 maxFrags, u8 fileNum, u32 forceBaseOffset, u32 forceSize, u32 dev) {
 	int i;
 	if(!file->ffsFp) {
 		devices[dev]->readFile(file, NULL, 0);	// open the file (should be open already)
@@ -301,9 +301,9 @@ s32 getFragments(file_handle* file, u32 (*fragList)[4], s32 maxFrags, u32 forceB
 		// this frag offset in the file is the last frag offset+size
 		size = forceSize < size ? forceSize : size;
 		fragList[numFrags][0] = forceBaseOffset;
-		fragList[numFrags][1] = (size & ~0x80000000) | ((dev == DEVICE_PATCHES) << 31);
-		fragList[numFrags][2] = sector >> 32;
-		fragList[numFrags][3] = sector & 0xFFFFFFFF;
+		fragList[numFrags][1] = size;
+		fragList[numFrags][2] = (u16)(sector >> 32) | ((dev == DEVICE_PATCHES) << 16) | (fileNum << 24);
+		fragList[numFrags][3] = (u32)(sector);
 		forceBaseOffset += size;
 		forceSize -= size;
 		numFrags++;
@@ -330,7 +330,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 				if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 					return 0;
 				}
-				if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, patchInfo[0], patchInfo[1], DEVICE_CUR))) {
+				if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, patchInfo[0], patchInfo[1], DEVICE_CUR))) {
 					free(fragList);
 					return 0;
 				}
@@ -349,6 +349,29 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 		}
 	}
 	
+	// If disc 1 is fragmented, make a note of the fragments and their sizes
+	if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+		return 0;
+	}
+	if(!(frags = getFragments(file, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, 0, UINT32_MAX, DEVICE_CUR))) {
+		free(fragList);
+		return 0;
+	}
+	totFrags += frags;
+	
+	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
+	if(file2) {
+		// TODO fix 2 disc patched games
+		if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+			return 0;
+		}
+		if(!(frags = getFragments(file2, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_2, 0, UINT32_MAX, DEVICE_CUR))) {
+			free(fragList);
+			return 0;
+		}
+		totFrags += frags;
+	}
+	
 	// Check for igr.dol
 	if(swissSettings.igrType == IGR_BOOTBIN) {
 		memset(&patchFile, 0, sizeof(file_handle));
@@ -357,7 +380,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 		if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 			return 0;
 		}
-		if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_IGR_DOL, 0, DEVICE_CUR))) {
+		if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_IGR_DOL, 0, 0, DEVICE_CUR))) {
 			totFrags+=frags;
 			devices[DEVICE_CUR]->closeFile(&patchFile);
 		}
@@ -377,7 +400,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 				return 0;
 			}
-			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_A, 31.5*1024*1024, DEVICE_CUR))) {
+			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_A, 0, 31.5*1024*1024, DEVICE_CUR))) {
 				*(vu8*)VAR_CARD_A_ID = (patchFile.size*8/1024/1024) & 0xFC;
 				totFrags+=frags;
 				devices[DEVICE_CUR]->closeFile(&patchFile);
@@ -397,35 +420,12 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 				return 0;
 			}
-			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_B, 31.5*1024*1024, DEVICE_CUR))) {
+			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_B, 0, 31.5*1024*1024, DEVICE_CUR))) {
 				*(vu8*)VAR_CARD_B_ID = (patchFile.size*8/1024/1024) & 0xFC;
 				totFrags+=frags;
 				devices[DEVICE_CUR]->closeFile(&patchFile);
 			}
 		}
-	}
-	
-	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-		return 0;
-	}
-	if(!(frags = getFragments(file, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, DISC_SIZE, DEVICE_CUR))) {
-		free(fragList);
-		return 0;
-	}
-	totFrags += frags;
-
-	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
-	if(file2) {
-		// TODO fix 2 disc patched games
-		if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-			return 0;
-		}
-		if(!(frags = getFragments(file2, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_2, DISC_SIZE, DEVICE_CUR))) {
-			free(fragList);
-			return 0;
-		}
-		totFrags += frags;
 	}
 	
 	if(fragList) {
