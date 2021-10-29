@@ -892,7 +892,13 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		*(volatile u32*)0x800000F4 = bi2Addr;								// bi2.bin location
 		*(volatile u32*)0x800030F4 = curFile.fileBase;
 
-		progBox = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
+		if(devices[DEVICE_PATCHES] && devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
+			sprintf(txtbuffer, "Loading DOL\nDo not remove %s", devices[DEVICE_PATCHES]->deviceName);
+			progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
+		}
+		else {
+			progBox = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
+		}
 
 		print_gecko("DOL Lives at %08X\r\n", tgcFile.dolStart);
 		sizeToRead = tgcFile.dolLength;
@@ -912,7 +918,13 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		}
 	}
 	else if(swissSettings.bs2Boot || GCMDisk.DOLOffset == 0) {
-		progBox = DrawPublish(DrawProgressBar(true, 0, "Loading BS2"));
+		if(devices[DEVICE_PATCHES] && devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
+			sprintf(txtbuffer, "Loading BS2\nDo not remove %s", devices[DEVICE_PATCHES]->deviceName);
+			progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
+		}
+		else {
+			progBox = DrawPublish(DrawProgressBar(true, 0, "Loading BS2"));
+		}
 		
 		// Read BS2
 		u32 bs2Header[8] __attribute__((aligned(32)));
@@ -968,7 +980,13 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		*(volatile u32*)0x8000003C = GCMDisk.MaxFSTSize;					// FST Max Length
 		*(volatile u32*)0x800000F4 = bi2Addr;								// bi2.bin location
 
-		progBox = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
+		if(devices[DEVICE_PATCHES] && devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
+			sprintf(txtbuffer, "Loading DOL\nDo not remove %s", devices[DEVICE_PATCHES]->deviceName);
+			progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
+		}
+		else {
+			progBox = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
+		}
 
 		if(altDol != NULL) {
 			print_gecko("DOL Lives at %08X\r\n", altDol->offset);
