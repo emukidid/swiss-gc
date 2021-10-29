@@ -28,12 +28,17 @@ typedef struct {
 	uint32_t offset;
 	uint32_t size;
 	union {
-		uint64_t data;
 		struct {
 			uint64_t file   :  8;
 			uint64_t device :  8;
 			uint64_t sector : 48;
 		};
+		struct {
+			uint16_t        : 16;
+			uint16_t pathlen;
+			const char *path;
+		};
+		uint64_t data;
 	};
 } frag_t;
 

@@ -62,7 +62,7 @@ int frag_get_list(int file, const frag_t **frag)
 		return 0;
 
 	for (int i = 0; frags[i].size; i++) {
-		if (file != frags[i].file) {
+		if (file != frags[i].file || frags[i].device != DEVICE_DISC) {
 			if (!count) continue;
 			else break;
 		} else if (!count)

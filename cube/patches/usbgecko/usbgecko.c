@@ -59,23 +59,19 @@ static void usb_request(uint32_t offset, uint32_t size)
 static bool usb_serve_file(void)
 {
 	uint8_t val = ASK_SERVEFILE;
+	const frag_t *frag = NULL;
 
-	usb_transmit(&val, 1, 1);
-	usb_receive(&val, 1, 1);
+	if (frag_get_list(*VAR_CURRENT_DISC, &frag)) {
+		usb_transmit(&val, 1, 1);
+		usb_receive(&val, 1, 1);
 
-	if (val == ANS_READY) {
-		const char *file = (const char *)VAR_DISC_1_FN;
-		uint8_t filelen = *(uint8_t *)VAR_DISC_1_FNLEN;
-
-		if (*VAR_CURRENT_DISC) {
-			file    =  (const char *)VAR_DISC_2_FN;
-			filelen = *(uint8_t *)VAR_DISC_2_FNLEN;
+		if (val == ANS_READY) {
+			usb_transmit(frag->path, frag->pathlen, frag->pathlen);
+			return true;
 		}
-
-		usb_transmit(file, 1024, 1024);
 	}
 
-	return val == ANS_READY;
+	return false;
 }
 
 static bool usb_lock_file(void)

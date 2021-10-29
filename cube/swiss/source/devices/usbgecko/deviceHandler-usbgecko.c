@@ -167,6 +167,23 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, int 
 		*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[*(vu8*)VAR_EXI_SLOT];
 	}
 	
+	if(!(fragList = realloc(fragList, (totFrags + 1 + !!file2 + 1) * sizeof(*fragList)))) {
+		return 0;
+	}
+	fragList[totFrags][0] = 0;
+	fragList[totFrags][1] = file->size;
+	fragList[totFrags][2] = (u16)PATHNAME_MAX | ((u8)FRAGS_DISC_1 << 24);
+	fragList[totFrags][3] = (u32)installPatch2(file->name, PATHNAME_MAX);
+	totFrags++;
+	
+	if(file2) {
+		fragList[totFrags][0] = 0;
+		fragList[totFrags][1] = file2->size;
+		fragList[totFrags][2] = (u16)PATHNAME_MAX | ((u8)FRAGS_DISC_2 << 24);
+		fragList[totFrags][3] = (u32)installPatch2(file2->name, PATHNAME_MAX);
+		totFrags++;
+	}
+	
 	if(fragList) {
 		memset(&fragList[totFrags], 0, sizeof(*fragList));
 		print_frag_list(fragList);
@@ -175,9 +192,6 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, int 
 		free(fragList);
 		fragList = NULL;
 	}
-	
-	*(vu8*)VAR_DISC_1_FNLEN = snprintf(VAR_DISC_1_FN, sizeof(VAR_DISC_1_FN), "%s", file->name) + 1;
-	*(vu8*)VAR_DISC_2_FNLEN = snprintf(VAR_DISC_2_FN, sizeof(VAR_DISC_2_FN), "%s", file2 ? file2->name : file->name) + 1;
 	return 1;
 }
 
