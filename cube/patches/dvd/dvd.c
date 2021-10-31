@@ -89,7 +89,8 @@ static void gcode_set_disc_number(uint32_t disc)
 
 bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, frag_callback callback)
 {
-	return false;
+	dvd_read(buffer, length, offset);
+	return true;
 }
 
 void schedule_read(OSTick ticks)

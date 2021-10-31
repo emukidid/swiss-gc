@@ -137,6 +137,7 @@ extern char VAR_RMODE[4];			// render mode
 #define IGR_USBGKOFLASH	3
 
 // FAT Fragments
+#define FRAGS_NULL		-1
 #define FRAGS_DISC_1	0
 #define FRAGS_DISC_2	1
 #define FRAGS_BOOT_GCM	2

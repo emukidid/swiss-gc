@@ -450,6 +450,23 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 			}
 		}
 		
+		if(!(fragList = realloc(fragList, (totFrags + 1 + !!file2 + 1) * sizeof(*fragList)))) {
+			return 0;
+		}
+		fragList[totFrags][0] = 0;
+		fragList[totFrags][1] = file->size;
+		fragList[totFrags][2] = (u16)(file->fileBase >> 32) | ((u8)FRAGS_DISC_1 << 24);
+		fragList[totFrags][3] = (u32)(file->fileBase);
+		totFrags++;
+		
+		if(file2) {
+			fragList[totFrags][0] = 0;
+			fragList[totFrags][1] = file2->size;
+			fragList[totFrags][2] = (u16)(file2->fileBase >> 32) | ((u8)FRAGS_DISC_2 << 24);
+			fragList[totFrags][3] = (u32)(file2->fileBase);
+			totFrags++;
+		}
+		
 		// Check for igr.dol
 		if(swissSettings.igrType == IGR_BOOTBIN) {
 			memset(&patchFile, 0, sizeof(file_handle));

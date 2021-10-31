@@ -1090,6 +1090,10 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	if(devices[DEVICE_CUR] != &__device_dvd) {
 		devices[DEVICE_CUR]->deinit(&curFile);
 	}
+	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
+		// Check DVD Status, make sure it's error code 0
+		print_gecko("DVD: %08X\r\n",dvd_get_error());
+	}
 	
 	DrawDispose(progBox);
 	DrawShutdown();
@@ -1098,11 +1102,6 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	VIDEO_SetPostRetraceCallback (NULL);
 	DCFlushRange((void*)0x80000000, 0x3100);
 	ICInvalidateRange((void*)0x80000000, 0x3100);
-	
-	if(swissSettings.hasDVDDrive) {
-		// Check DVD Status, make sure it's error code 0
-		print_gecko("DVD: %08X\r\n",dvd_get_error());
-	}
 	
 	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 		kenobi_install_engine();
@@ -1812,7 +1811,7 @@ void load_game() {
 		numToPatch = check_game(filesToPatch);
 	}
 	
-	*(vu8*)VAR_CURRENT_DISC = 0;
+	*(vu8*)VAR_CURRENT_DISC = FRAGS_DISC_1;
 	*(vu8*)VAR_SECOND_DISC = disc2File ? 1:0;
 	*(vu8*)VAR_DRIVE_PATCHED = 0;
 	*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;

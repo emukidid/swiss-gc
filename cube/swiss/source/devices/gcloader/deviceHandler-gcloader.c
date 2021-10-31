@@ -159,6 +159,23 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 			}
 		}
 		
+		if(!(fragList = realloc(fragList, (totFrags + 1 + !!file2 + 1) * sizeof(*fragList)))) {
+			return 0;
+		}
+		fragList[totFrags][0] = 0;
+		fragList[totFrags][1] = file->size;
+		fragList[totFrags][2] = (u16)(file->fileBase >> 32) | ((u8)FRAGS_DISC_1 << 24);
+		fragList[totFrags][3] = (u32)(file->fileBase);
+		totFrags++;
+		
+		if(file2) {
+			fragList[totFrags][0] = 0;
+			fragList[totFrags][1] = file2->size;
+			fragList[totFrags][2] = (u16)(file2->fileBase >> 32) | ((u8)FRAGS_DISC_2 << 24);
+			fragList[totFrags][3] = (u32)(file2->fileBase);
+			totFrags++;
+		}
+		
 		for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
 			memset(&patchFile, 0, sizeof(file_handle));
 			snprintf(&patchFile.name[0], PATHNAME_MAX, "%s%s", devices[DEVICE_CUR]->initial->name, bootFile_names[i]);

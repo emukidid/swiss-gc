@@ -645,19 +645,18 @@ static void di_execute_command(void)
 			switch (di.reg.cmdbuf0 & 0xC0) {
 				default:
 				{
-					DVDDiskID *id1 = (DVDDiskID *)VAR_AREA;
-					DVDDiskID *id2 = (DVDDiskID *)VAR_DISC_1_ID;
-
-					if (!memeq(id1, id2, 8))
-						break;
+					if (memeq(VAR_AREA, VAR_DISC_1_ID, 8))
+						*VAR_CURRENT_DISC = FRAGS_DISC_1;
+					else if (memeq(VAR_AREA, VAR_DISC_2_ID, 8))
+						*VAR_CURRENT_DISC = FRAGS_DISC_2;
+					else
+						*VAR_CURRENT_DISC = FRAGS_NULL;
 
 					perform_read(address, length, offset);
 					return;
 				}
 				case 0x40:
 				{
-					DVDDiskID *id = (DVDDiskID *)VAR_AREA;
-					DCBlockInvalidate(id);
 					break;
 				}
 			}
@@ -1113,32 +1112,36 @@ static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	}
 	#endif
 
-	uint32_t disr  = DI[0];
-	uint32_t dicvr = DI[1];
+	uint32_t dicr = DI[7];
 
-	if (disr & 0b1010100) {
-		di.reg.cr = DI[7];
+	if ((di.reg.cr & ~dicr) & 0b001) {
+		di.reg.cr = dicr;
 
 		if (di.reg.cr & 0b010) {
 			di.reg.mar    = DI[5];
 			di.reg.length = DI[6];
-		} else
-			di.reg.immbuf = DI[8];
-	}
 
-	#ifdef GCODE
-	if (disr & 0b0010000) {
-		switch (di.reg.cmdbuf0 >> 24) {
-			case 0xE0:
-			{
-				if (!(di.reg.immbuf & 0xFFFFFF))
-					di.reg.immbuf = di.error | (di.reg.immbuf & ~0xFFFFFF);
-				di.error = 0;
-				break;
+			switch (di.reg.cmdbuf0 >> 24) {
+				case 0xA8:
+				{
+					di.reg.length += OSRoundDown32B(di.reg.cmdbuf2 - DI[4]);
+					break;
+				}
+			}
+		} else {
+			di.reg.immbuf = DI[8];
+
+			switch (di.reg.cmdbuf0 >> 24) {
+				case 0xE0:
+				{
+					if (!(di.reg.immbuf & 0xFFFFFF))
+						di.reg.immbuf = di.error | (di.reg.immbuf & ~0xFFFFFF);
+					di.error = 0;
+					break;
+				}
 			}
 		}
 	}
-	#endif
 
 	dispatch_interrupt(interrupt, context);
 }
