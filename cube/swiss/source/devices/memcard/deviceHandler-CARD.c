@@ -37,7 +37,7 @@ file_handle initial_CARDB =
 
 static device_info initial_CARD_info[2];
 
-static unsigned char *sys_area = NULL;
+static unsigned char *sys_area[2] = {NULL, NULL};
 static int card_init[2] = {0,0};
 static u32 card_sectorsize[2] = {8192, 8192};
 static GCI *gciInfo;
@@ -77,11 +77,11 @@ int initialize_card(int slot) {
 	if(!card_init[slot]) {
 		/* Pass company identifier and number */
 		CARD_Init ("SWIS", "S0");
-		if(!sys_area) sys_area = memalign(32,CARD_WORKAREA);
+		if(!sys_area[slot]) sys_area[slot] = memalign(32,CARD_WORKAREA);
 		  
 		/* Lets try 50 times to mount it. Sometimes it takes a while */
 		for(i = 0; i<50; i++) {
-			slot_error = CARD_Mount (slot, sys_area, card_removed_cb);
+			slot_error = CARD_Mount (slot, sys_area[slot], card_removed_cb);
 			if(slot_error == CARD_ERROR_READY) {
 				CARD_GetSectorSize (slot, &card_sectorsize[slot]);
 				break;
