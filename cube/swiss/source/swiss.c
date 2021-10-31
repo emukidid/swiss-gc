@@ -1777,6 +1777,7 @@ void load_game() {
 			devices[DEVICE_CUR]->deinit(&curFile);
 		}
 		
+		DrawShutdown();
 		SYS_ResetSystem(SYS_HOTRESET, 0, FALSE);
 		__builtin_unreachable();
 	}
@@ -2308,6 +2309,7 @@ void menu_loop()
 						needsRefresh=1;
 						break;
 					case 4:
+						DrawShutdown();
 						SYS_ResetSystem(SYS_HOTRESET, 0, TRUE);
 						__builtin_unreachable();
 						break;
