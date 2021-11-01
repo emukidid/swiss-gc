@@ -436,7 +436,10 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 	// TODO expand this to support IDE-EXI and other writable devices (requires dvd patch re-write/modularity)
 	bool patchDeviceReady = false;
 	if(!(devices[DEVICE_CUR]->features & FEAT_PATCHES)) {
-		if(deviceHandler_test(&__device_sd_c)) {
+		if(devices[DEVICE_CONFIG] == &__device_sd_a || devices[DEVICE_CONFIG] == &__device_sd_b || devices[DEVICE_CONFIG] == &__device_sd_c) {
+			devices[DEVICE_PATCHES] = devices[DEVICE_CONFIG];
+		}
+		else if(deviceHandler_test(&__device_sd_c)) {
 			devices[DEVICE_PATCHES] = &__device_sd_c;
 		}
 		else if(deviceHandler_test(&__device_sd_b)) {

@@ -135,9 +135,9 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 266, topStr, 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"PROGRESSIVE VIDEO", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 306, (char*)(getDTVStatus() ? "Yes" : "No"), 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 330, (char*)"CURRENT MEDIUM", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 330, (char*)"CURRENT DEVICE", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 346, (char*)(devices[DEVICE_CUR] != NULL ? devices[DEVICE_CUR]->deviceName : "None"), 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 370, (char*)"CONFIG MEDIUM", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 370, (char*)"CONFIGURATION DEVICE", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 386, (char*)(devices[DEVICE_CONFIG] != NULL ? devices[DEVICE_CONFIG]->deviceName : "None"), 0.75f, true, defaultColor));
 	}
 	else if(page_num == 2) {
