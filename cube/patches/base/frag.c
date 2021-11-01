@@ -88,6 +88,10 @@ bool frag_read_write_async(int file, void *buffer, uint32_t length, uint32_t off
 			return do_read_write_async(buffer, frag.size, frag.offset, frag.sector, write, callback);
 		else if (!write)
 			return do_read_disc(buffer, frag.size, frag.offset, frag.sector, callback);
+	#ifdef DIRECT_DISC
+	} else if (!write) {
+		return do_read_disc(buffer, length, offset, 0, callback);
+	#endif
 	}
 
 	return false;
@@ -104,6 +108,24 @@ int frag_read_complete(int file, void *buffer, uint32_t length, uint32_t offset)
 	}
 
 	return i;
+}
+
+bool frag_read_patch(int file, void *buffer, uint32_t length, uint32_t offset, frag_callback callback)
+{
+	frag_t frag;
+
+	if (frag_get(file, offset, length, &frag)) {
+		if (frag.device == DEVICE_PATCHES)
+			return true;
+		else
+			do_read_disc(buffer, frag.size, frag.offset, frag.sector, callback);
+	#ifdef DIRECT_DISC
+	} else {
+		do_read_disc(buffer, length, offset, 0, callback);
+	#endif
+	}
+
+	return false;
 }
 
 int frag_read_write(int file, void *buffer, uint32_t length, uint32_t offset, bool write)

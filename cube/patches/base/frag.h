@@ -54,6 +54,7 @@ bool is_frag_patch(int file, uint32_t offset, size_t size);
 
 bool frag_read_write_async(int file, void *buffer, uint32_t length, uint32_t offset, bool write, frag_callback callback);
 int frag_read_complete(int file, void *buffer, uint32_t length, uint32_t offset);
+bool frag_read_patch(int file, void *buffer, uint32_t length, uint32_t offset, frag_callback callback);
 int frag_read_write(int file, void *buffer, uint32_t length, uint32_t offset, bool write);
 
 #define frag_read_async(file, buffer, length, offset, callback) frag_read_write_async(file, buffer, length, offset, false, callback)

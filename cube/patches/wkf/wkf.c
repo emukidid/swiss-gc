@@ -163,11 +163,9 @@ void schedule_read(OSTick ticks)
 	#ifdef ASYNC_READ
 	frag_read_async(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, read_callback);
 	#else
-	dvd.patch = is_frag_patch(*VAR_CURRENT_DISC, dvd.offset, dvd.length);
+	dvd.patch = frag_read_patch(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, read_callback);
 
-	if (!dvd.patch)
-		frag_read_async(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, read_callback);
-	else
+	if (dvd.patch)
 		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
 	#endif
 }

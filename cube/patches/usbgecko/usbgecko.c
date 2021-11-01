@@ -29,6 +29,7 @@ static struct {
 	void *buffer;
 	uint32_t length;
 	uint32_t offset;
+	uint32_t requested;
 	bool read, patch;
 } dvd = {0};
 
@@ -86,10 +87,19 @@ static bool usb_lock_file(void)
 
 static void usb_unlock_file(void)
 {
+	usb_receive(dvd.buffer, dvd.requested, dvd.requested);
+	dvd.requested = 0;
 	usb_request(0, 0);
 }
 
-void schedule_read(OSTick ticks, bool request)
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, frag_callback callback)
+{
+	usb_request(offset, length);
+	dvd.requested = length;
+	return true;
+}
+
+void schedule_read(OSTick ticks)
 {
 	OSCancelAlarm(&read_alarm);
 
@@ -98,10 +108,8 @@ void schedule_read(OSTick ticks, bool request)
 		return;
 	}
 
-	dvd.patch = is_frag_patch(*VAR_CURRENT_DISC, dvd.offset, dvd.length);
-
-	if (!dvd.patch && request)
-		usb_request(dvd.offset, dvd.length);
+	if (!dvd.requested)
+		dvd.patch = frag_read_patch(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, NULL);
 
 	OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
 }
@@ -113,24 +121,38 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	dvd.offset = offset;
 	dvd.read = true;
 
-	schedule_read(0, true);
+	schedule_read(0);
 }
 
 void trickle_read(void)
 {
 	if (dvd.read) {
-		OSTick start = OSGetTick();
-		int size = dvd.patch ? frag_read(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset)
-		                     : usb_receive(dvd.buffer, dvd.length, 0);
-		DCStoreRangeNoSync(dvd.buffer, size);
-		OSTick end = OSGetTick();
+		if (dvd.patch) {
+			OSTick start = OSGetTick();
+			int size = frag_read(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset);
+			DCStoreRangeNoSync(dvd.buffer, size);
+			OSTick end = OSGetTick();
 
-		dvd.buffer += size;
-		dvd.length -= size;
-		dvd.offset += size;
-		dvd.read = !!dvd.length;
+			dvd.buffer += size;
+			dvd.length -= size;
+			dvd.offset += size;
+			dvd.read = !!dvd.length;
 
-		schedule_read(OSDiffTick(end, start), dvd.patch);
+			schedule_read(OSDiffTick(end, start));
+		} else {
+			OSTick start = OSGetTick();
+			int size = usb_receive(dvd.buffer, dvd.requested, 0);
+			DCStoreRangeNoSync(dvd.buffer, size);
+			OSTick end = OSGetTick();
+
+			dvd.buffer += size;
+			dvd.length -= size;
+			dvd.offset += size;
+			dvd.requested -= size;
+			dvd.read = !!dvd.length;
+
+			schedule_read(OSDiffTick(end, start));
+		}
 	}
 }
 

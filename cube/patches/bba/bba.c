@@ -293,10 +293,10 @@ void schedule_read(OSTick ticks, bool lock)
 
 	dvd.patch = is_frag_patch(*VAR_CURRENT_DISC, dvd.offset, dvd.length);
 
-	if (!dvd.patch)
-		fsp_get_file(dvd.offset, dvd.length, lock);
-	else
+	if (dvd.patch)
 		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
+	else
+		fsp_get_file(dvd.offset, dvd.length, lock);
 }
 
 void retry_read(void)

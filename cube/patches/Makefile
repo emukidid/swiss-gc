@@ -240,7 +240,7 @@ dvd.bin:
 	@echo Building DVD Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DDVD -DISR
-	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1
@@ -259,7 +259,7 @@ dvd.card.bin:
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH -DDVD -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
@@ -369,7 +369,7 @@ gcloader.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DGCODE -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
-	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DDVD_MATH -DGCODE
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1
@@ -390,7 +390,7 @@ gcloader.card.bin:
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH -DGCODE -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DGCODE
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4

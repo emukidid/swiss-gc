@@ -89,8 +89,13 @@ static void gcode_set_disc_number(uint32_t disc)
 
 bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, frag_callback callback)
 {
-	dvd_read(buffer, length, offset);
-	return true;
+	if (dvd.read) {
+		dvd_read(buffer, length, offset);
+		dvd.read = false;
+		return true;
+	}
+
+	return false;
 }
 
 void schedule_read(OSTick ticks)
@@ -115,14 +120,11 @@ void schedule_read(OSTick ticks)
 	}
 
 	#ifdef ASYNC_READ
-	if (!frag_read_async(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, read_callback))
-		dvd_read(dvd.buffer, dvd.length, dvd.offset);
+	frag_read_async(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, read_callback);
 	#else
-	dvd.patch = is_frag_patch(*VAR_CURRENT_DISC, dvd.offset, dvd.length);
+	dvd.patch = frag_read_patch(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, NULL);
 
-	if (!dvd.patch)
-		dvd_read(dvd.buffer, dvd.length, dvd.offset);
-	else
+	if (dvd.patch)
 		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
 	#endif
 }
