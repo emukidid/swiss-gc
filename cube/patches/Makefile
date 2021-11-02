@@ -276,13 +276,14 @@ dvd.card.bin:
 usbgecko.bin:
 	@echo Building USBGecko Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DUSB
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DISR -DUSB
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c usbgecko/usbgecko.c
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c
+	@$(CC) -Os $(OPTS) -c usbgecko/usbgecko.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o usbgecko.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o igr.o usbgecko.o sd.o os.o
+	@$(CC) -Os $(OPTS) -o usbgecko.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o igr.o usbgecko.o sd.o sd_isr.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usbgecko.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin

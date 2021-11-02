@@ -188,6 +188,7 @@ static void exi_read(unsigned index, uint32_t *value)
 			else
 				*value = exi.regs[index];
 			break;
+		#ifndef USB
 		case 5:
 			if (!dev && chan != *VAR_EXI_SLOT) {
 				if (exi.reg[chan].cpr & 0b01000000000000) {
@@ -208,6 +209,7 @@ static void exi_read(unsigned index, uint32_t *value)
 			else
 				*value = exi.regs[index];
 			break;
+		#endif
 		case 10:
 			*value = exi.reg[chan].cpr | (EXI[chan][0] & 0b00000000000011);
 			break;
@@ -227,10 +229,12 @@ static void exi_write(unsigned index, uint32_t value)
 	switch (index % 5) {
 		case 0:
 			if (chan == EXI_CHANNEL_1) {
+				#ifndef USB
 				if (!(exi.reg[chan].cpr & 0b01100000000000)) {
 					EXI[chan][0] = value;
 					OSGlobalInterruptMask = (OSGlobalInterruptMask & ~OS_INTERRUPTMASK_EXI_1) | (OS_INTERRUPTMASK_EXI_1 & ~irq.mask);
 				}
+				#endif
 			} else if (chan == EXI_CHANNEL_2) {
 				EXI[chan][0] = (value & 0b00000000000011) | (EXI[chan][0] & 0b00011111110100);
 				OSGlobalInterruptMask = (OSGlobalInterruptMask & ~OS_INTERRUPTMASK_EXI_2_EXI) | (OS_INTERRUPTMASK_EXI_2_EXI & ~irq.mask);
@@ -271,8 +275,12 @@ static void exi_write(unsigned index, uint32_t value)
 			exi.regs[index] = value & 0b111111;
 
 			if (value & 0b000001) {
+				#ifdef USB
+				if (chan == EXI_CHANNEL_0 && (dev & ~(1 << EXI_DEVICE_0))) {
+				#else
 				if ((chan == EXI_CHANNEL_0 && (dev & ~(1 << EXI_DEVICE_0))) ||
 					(chan == EXI_CHANNEL_1 && !ext)) {
+				#endif
 					EXI[chan][1] = exi.reg[chan].mar;
 					EXI[chan][2] = exi.reg[chan].length;
 					EXI[chan][4] = exi.reg[chan].data;
@@ -729,10 +737,10 @@ static void di_write(unsigned index, uint32_t value)
 			di.regs[index] = value & 0b111;
 
 			if (value & 0b001) {
-				#ifndef DVD
-				OSSetAlarm(&di_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)di_execute_command);
-				#else
+				#ifdef DVD
 				di_execute_command();
+				#else
+				OSSetAlarm(&di_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)di_execute_command);
 				#endif
 			}
 			break;

@@ -94,13 +94,31 @@ static void usb_unlock_file(void)
 
 bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, frag_callback callback)
 {
-	usb_request(offset, length);
-	dvd.requested = length;
-	return true;
+	if (dvd.read && buffer == dvd.buffer) {
+		usb_request(offset, length);
+		dvd.requested += length;
+		return true;
+	}
+
+	return false;
 }
 
 void schedule_read(OSTick ticks)
 {
+	#ifdef ASYNC_READ
+	void read_callback(void *address, uint32_t length)
+	{
+		DCStoreRangeNoSync(address, length);
+
+		dvd.buffer += length;
+		dvd.length -= length;
+		dvd.offset += length;
+		dvd.read = !!dvd.length;
+
+		schedule_read(0);
+	}
+	#endif
+
 	OSCancelAlarm(&read_alarm);
 
 	if (!dvd.read) {
@@ -108,10 +126,17 @@ void schedule_read(OSTick ticks)
 		return;
 	}
 
+	#ifdef ASYNC_READ
+	if (!dvd.requested)
+		frag_read_async(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, read_callback);
+	if (dvd.requested)
+		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
+	#else
 	if (!dvd.requested)
 		dvd.patch = frag_read_patch(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, NULL);
 
 	OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
+	#endif
 }
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
@@ -127,6 +152,9 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 void trickle_read(void)
 {
 	if (dvd.read) {
+		#ifdef ASYNC_READ
+		if (dvd.requested) {
+		#else
 		if (dvd.patch) {
 			OSTick start = OSGetTick();
 			int size = frag_read(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset);
@@ -140,6 +168,7 @@ void trickle_read(void)
 
 			schedule_read(OSDiffTick(end, start));
 		} else {
+		#endif
 			OSTick start = OSGetTick();
 			int size = usb_receive(dvd.buffer, dvd.requested, 0);
 			DCStoreRangeNoSync(dvd.buffer, size);
