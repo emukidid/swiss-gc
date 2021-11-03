@@ -31,8 +31,6 @@
 #endif
 #define SECTOR_SIZE 		512
 
-#define sectorBuf			((u8*)VAR_SECTOR_BUF)
-
 #define exi_freq			(*(u8*)VAR_EXI_FREQ)
 #define exi_channel			({ if (*VAR_EXI_SLOT >= EXI_CHANNEL_MAX) __builtin_trap(); *VAR_EXI_SLOT; })
 #define exi_regs			(*(vu32**)VAR_EXI_REGS)
@@ -40,6 +38,7 @@
 static OSInterruptHandler TCIntrruptHandler = NULL;
 
 static struct {
+	char (*buffer)[SECTOR_SIZE];
 	uint32_t last_sector;
 	uint32_t next_sector;
 	bool write;
@@ -55,6 +54,7 @@ static struct {
 	} queue[QUEUE_SIZE], *queued;
 	#endif
 } mmc = {
+	.buffer = &VAR_SECTOR_BUF,
 	.last_sector = ~0,
 	.next_sector = ~0
 };
@@ -246,7 +246,7 @@ static void mmc_read_queued(void)
 		send_cmd(CMD18, sector << *VAR_SD_SHIFT);
 	}
 
-	rcvr_datablock(sectorBuf, 0, SECTOR_SIZE, 0);
+	rcvr_datablock(mmc.buffer, 0, SECTOR_SIZE, 0);
 
 	mmc.last_sector = sector;
 	mmc.next_sector = sector + 1;
@@ -262,7 +262,7 @@ static void mmc_done_queued(void)
 	bool write = mmc.queued->write;
 
 	if (!write)
-		buffer = memcpy(buffer, sectorBuf + offset, length);
+		buffer = memcpy(buffer, *mmc.buffer + offset, length);
 	mmc.queued->callback(buffer, length);
 
 	EXIUnlock(exi_channel);
@@ -366,7 +366,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u64 sectorLba, bool write) {
 	#else
 	// If we saved this sector
 	if(lba == mmc.last_sector) {
-		memcpy(buf, sectorBuf + startByte, numBytes);
+		memcpy(buf, *mmc.buffer + startByte, numBytes);
 		return numBytes;
 	}
 	// If we weren't just reading this sector
@@ -377,8 +377,8 @@ int do_read_write(void *buf, u32 len, u32 offset, u64 sectorLba, bool write) {
 	}
 	if(numBytes < SECTOR_SIZE) {
 		// Read half block
-		rcvr_datablock(sectorBuf, 0, SECTOR_SIZE, 1);
-		memcpy(buf, sectorBuf + startByte, numBytes);
+		rcvr_datablock(mmc.buffer, 0, SECTOR_SIZE, 1);
+		memcpy(buf, *mmc.buffer + startByte, numBytes);
 		// Save current LBA
 		mmc.last_sector = lba;
 	}

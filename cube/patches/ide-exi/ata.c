@@ -43,8 +43,6 @@
 #endif
 #define SECTOR_SIZE 		512
 
-#define sectorBuf			((u8*)VAR_SECTOR_BUF + DMA_READ * 0x40000000)
-
 #define _ata48bit *(u8*)VAR_ATA_LBA48
 
 #define exi_freq			(*(u8*)VAR_EXI_FREQ)
@@ -55,6 +53,7 @@
 static OSInterruptHandler TCIntrruptHandler = NULL;
 
 static struct {
+	char (*buffer)[SECTOR_SIZE];
 	uint64_t last_sector;
 	uint64_t next_sector;
 	uint16_t count;
@@ -70,6 +69,11 @@ static struct {
 	} queue[QUEUE_SIZE], *queued;
 	#endif
 } ata = {
+	#if DMA_READ
+	.buffer = OSCachedToUncached(&VAR_SECTOR_BUF),
+	#else
+	.buffer = &VAR_SECTOR_BUF,
+	#endif
 	.last_sector = ~0,
 	.next_sector = ~0
 };
@@ -357,7 +361,7 @@ static void ata_read_queued(void)
 		ataReadSectors(sector, count);
 	}
 
-	ataReadBufferAsync(sectorBuf);
+	ataReadBufferAsync(ata.buffer);
 
 	ata.last_sector = sector;
 	ata.next_sector = sector + 1;
@@ -374,7 +378,7 @@ static void ata_done_queued(void)
 	bool write = ata.queued->write;
 
 	if (!write)
-		buffer = memcpy(buffer, sectorBuf + offset, length);
+		buffer = memcpy(buffer, *ata.buffer + offset, length);
 	ata.queued->callback(buffer, length);
 
 	EXIUnlock(exi_channel);
@@ -481,7 +485,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u64 sectorLba, bool write) {
 	}
 	// If we saved this sector
 	if(lba == ata.last_sector) {
-		memcpy(buf, sectorBuf + startByte, numBytes);
+		memcpy(buf, *ata.buffer + startByte, numBytes);
 		return numBytes;
 	}
 	// If we weren't just reading this sector
@@ -491,11 +495,11 @@ int do_read_write(void *buf, u32 len, u32 offset, u64 sectorLba, bool write) {
 	}
 	if(numBytes < SECTOR_SIZE || DMA_READ) {
 		// Read half sector
-		if(!ataReadBuffer(sectorBuf)) {
+		if(!ataReadBuffer(ata.buffer)) {
 			ata.count = 0;
 			return 0;
 		}
-		memcpy(buf, sectorBuf + startByte, numBytes);
+		memcpy(buf, *ata.buffer + startByte, numBytes);
 		// Save current LBA
 		ata.last_sector = lba;
 	}
