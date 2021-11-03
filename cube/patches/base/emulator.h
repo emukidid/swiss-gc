@@ -51,6 +51,20 @@ void exi_remove_device(unsigned chan);
 
 bool dtk_fill_buffer(void);
 
+#define DI_CMD_INQUIRY              0x12
+#define DI_CMD_READ                 0xA8
+#define DI_CMD_SEEK                 0xAB
+#define DI_CMD_REQUEST_ERROR        0xE0
+#define DI_CMD_AUDIO_STREAM         0xE1
+#define DI_CMD_REQUEST_AUDIO_STATUS 0xE2
+#define DI_CMD_STOP_MOTOR           0xE3
+#define DI_CMD_AUDIO_BUFFER_CONFIG  0xE4
+
+#define DI_CMD_GCODE_READ           0xB2
+#define DI_CMD_GCODE_SET_DISC_FRAGS 0xB3
+#define DI_CMD_GCODE_WRITE_BUFFER   0xB9
+#define DI_CMD_GCODE_WRITE          0xBA
+
 void di_error(uint32_t error);
 void di_complete_transfer(void);
 void di_open_cover(void);

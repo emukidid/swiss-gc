@@ -38,7 +38,7 @@ OSAlarm read_alarm = {0};
 
 static void dvd_read(void *address, uint32_t length, uint32_t offset)
 {
-	DI[2] = 0xA8000000;
+	DI[2] = DI_CMD_READ << 24;
 	DI[3] = offset >> 2;
 	DI[4] = length;
 	DI[5] = (uint32_t)address;
@@ -48,7 +48,7 @@ static void dvd_read(void *address, uint32_t length, uint32_t offset)
 
 static void dvd_read_diskid(DVDDiskID *diskID)
 {
-	DI[2] = 0xA8000040;
+	DI[2] = DI_CMD_READ << 24 | 0x40;
 	DI[3] = 0;
 	DI[4] = sizeof(DVDDiskID);
 	DI[5] = (uint32_t)diskID;
@@ -59,7 +59,7 @@ static void dvd_read_diskid(DVDDiskID *diskID)
 #ifdef GCODE
 static void gcode_set_disc_frags(uint32_t disc, const frag_t *frag, uint32_t count)
 {
-	DI[2] = 0xB3000001;
+	DI[2] = DI_CMD_GCODE_SET_DISC_FRAGS << 24 | 0x01;
 	DI[3] = disc;
 	DI[4] = count;
 	DI[7] = 0b001;
@@ -79,9 +79,8 @@ static void gcode_set_disc_frags(uint32_t disc, const frag_t *frag, uint32_t cou
 
 static void gcode_set_disc_number(uint32_t disc)
 {
-	DI[2] = 0xB3000002;
+	DI[2] = DI_CMD_GCODE_SET_DISC_FRAGS << 24 | 0x02;
 	DI[3] = disc;
-	DI[4] = 0;
 	DI[7] = 0b001;
 	while (DI[7] & 0b001);
 }
@@ -178,7 +177,7 @@ void device_reset(void)
 	if (id->streaming) {
 		AI[1] = 0;
 
-		DI[2] = 0xE1010000;
+		DI[2] = DI_CMD_AUDIO_STREAM << 24 | 0x01 << 16;
 		DI[7] = 0b001;
 		while (DI[7] & 0b001);
 

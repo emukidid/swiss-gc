@@ -18,6 +18,7 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
 #include "common.h"
@@ -72,14 +73,14 @@ static void wkf_read_queued(void)
 	DI[1] = 0;
 
 	if (length) {
-		DI[2] = 0xA8000000;
+		DI[2] = DI_CMD_READ << 24;
 		DI[3] = offset >> 2;
 		DI[4] = length;
 		DI[5] = (uint32_t)buffer;
 		DI[6] = length;
 		DI[7] = 0b011;
 	} else {
-		DI[2] = 0xAB000000;
+		DI[2] = DI_CMD_SEEK << 24;
 		DI[3] = offset >> 2;
 		DI[7] = 0b001;
 	}

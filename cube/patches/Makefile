@@ -21,7 +21,7 @@ dvdpatch: dvd.bin dvd.card.bin
 usbgeckopatch: usbgecko.bin
 wkfpatch: wkf.bin wkf.card.bin wkf.dtk.bin
 fsppatch: fsp.bin
-gcloaderpatch: gcloader.bin gcloader.card.bin
+gcloaderpatch: gcloader-v1.bin gcloader-v1.card.bin gcloader-v2.bin gcloader-v2.card.bin
 
 clean:
 	@rm -f *.bin *.elf *.o
@@ -364,8 +364,8 @@ fsp.bin:
 	@$(BIN2S) fsp.bin > $(DEST)/FSPPatch.s
 	@rm -f *.bin *.elf *.o
 
-gcloader.bin:
-	@echo Building GCLoader Patch ...
+gcloader-v1.bin:
+	@echo Building GCLoader-v1 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DGCODE -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
@@ -379,15 +379,15 @@ gcloader.bin:
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/floor.S
 	@$(CC) -Os $(OPTS) -c base/sqrt.S
-	@$(CC) -Os $(OPTS) -o gcloader.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o igr.o dvd.o sd.o sd_isr.o uart.o os.o floor.o sqrt.o
+	@$(CC) -Os $(OPTS) -o gcloader-v1.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o igr.o dvd.o sd.o sd_isr.o uart.o os.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
-	@$(OBJDUMP) -D gcloader.elf > $(DISASM)/gcloader.txt
-	@$(OBJCOPY) -O binary gcloader.elf gcloader.bin
-	@$(BIN2S) gcloader.bin > $(DEST)/GCLoaderPatch.s
+	@$(OBJDUMP) -D gcloader-v1.elf > $(DISASM)/gcloader-v1.txt
+	@$(OBJCOPY) -O binary gcloader-v1.elf gcloader-v1.bin
+	@$(BIN2S) gcloader-v1.bin > $(DEST)/GCLoaderPatch1.s
 	@rm -f *.bin *.elf *.o
 
-gcloader.card.bin:
-	@echo Building GCLoader Patch + CARD ...
+gcloader-v1.card.bin:
+	@echo Building GCLoader-v1 Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH -DGCODE -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
@@ -398,9 +398,46 @@ gcloader.card.bin:
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o gcloader.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o igr.o dvd.o sd.o sd_isr.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o gcloader-v1.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o igr.o dvd.o sd.o sd_isr.o uart.o os.o
 	@mkdir -p $(DISASM)
-	@$(OBJDUMP) -D gcloader.card.elf > $(DISASM)/gcloader.card.txt
-	@$(OBJCOPY) -O binary gcloader.card.elf gcloader.card.bin
-	@$(BIN2S) gcloader.card.bin > $(DEST)/GCLoaderPatch.card.s
+	@$(OBJDUMP) -D gcloader-v1.card.elf > $(DISASM)/gcloader-v1.card.txt
+	@$(OBJCOPY) -O binary gcloader-v1.card.elf gcloader-v1.card.bin
+	@$(BIN2S) gcloader-v1.card.bin > $(DEST)/GCLoaderPatch1.card.s
+	@rm -f *.bin *.elf *.o
+
+gcloader-v2.bin:
+	@echo Building GCLoader-v2 Patch ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DGCODE
+	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
+	@$(CC) -Os $(OPTS) -c base/DVDMath.c
+	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/igr.c
+	@$(CC) -Os $(OPTS) -c gcloader/gcloader.c -DDVD_MATH
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/floor.S
+	@$(CC) -Os $(OPTS) -c base/sqrt.S
+	@$(CC) -Os $(OPTS) -o gcloader-v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o igr.o gcloader.o uart.o os.o floor.o sqrt.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D gcloader-v2.elf > $(DISASM)/gcloader-v2.txt
+	@$(OBJCOPY) -O binary gcloader-v2.elf gcloader-v2.bin
+	@$(BIN2S) gcloader-v2.bin > $(DEST)/GCLoaderPatch2.s
+	@rm -f *.bin *.elf *.o
+
+gcloader-v2.card.bin:
+	@echo Building GCLoader-v2 Patch + CARD ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DGCODE
+	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/igr.c
+	@$(CC) -Os $(OPTS) -c gcloader/gcloader.c -DQUEUE_SIZE=4
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -o gcloader-v2.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o igr.o gcloader.o uart.o os.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D gcloader-v2.card.elf > $(DISASM)/gcloader-v2.card.txt
+	@$(OBJCOPY) -O binary gcloader-v2.card.elf gcloader-v2.card.bin
+	@$(BIN2S) gcloader-v2.card.bin > $(DEST)/GCLoaderPatch2.card.s
 	@rm -f *.bin *.elf *.o

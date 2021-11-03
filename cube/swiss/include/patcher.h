@@ -52,10 +52,14 @@ extern u8 dvd_card_bin[];
 extern u32 dvd_card_bin_size;
 extern u8 fsp_bin[];
 extern u32 fsp_bin_size;
-extern u8 gcloader_bin[];
-extern u32 gcloader_bin_size;
-extern u8 gcloader_card_bin[];
-extern u32 gcloader_card_bin_size;
+extern u8 gcloader_v1_bin[];
+extern u32 gcloader_v1_bin_size;
+extern u8 gcloader_v1_card_bin[];
+extern u32 gcloader_v1_card_bin_size;
+extern u8 gcloader_v2_bin[];
+extern u32 gcloader_v2_bin_size;
+extern u8 gcloader_v2_card_bin[];
+extern u32 gcloader_v2_card_bin_size;
 
 /* SDK patches */
 extern u8 DVDLowTestAlarmHook[];

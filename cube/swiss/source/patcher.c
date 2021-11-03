@@ -251,18 +251,34 @@ int install_code(int final)
 	}
 	// GC Loader
 	else if(devices[DEVICE_CUR] == &__device_gcloader) {
-		switch (devices[DEVICE_CUR]->emulated()) {
-			case EMU_NONE:
-			case EMU_READ_SPEED:
-				patch     = gcloader_bin;
-				patchSize = gcloader_bin_size;
-				break;
-			case EMU_MEMCARD:
-				patch     = gcloader_card_bin;
-				patchSize = gcloader_card_bin_size;
-				break;
-			default:
-				return 0;
+		if (devices[DEVICE_PATCHES] == &__device_gcloader) {
+			switch (devices[DEVICE_CUR]->emulated()) {
+				case EMU_NONE:
+				case EMU_READ_SPEED:
+					patch     = gcloader_v2_bin;
+					patchSize = gcloader_v2_bin_size;
+					break;
+				case EMU_MEMCARD:
+					patch     = gcloader_v2_card_bin;
+					patchSize = gcloader_v2_card_bin_size;
+					break;
+				default:
+					return 0;
+			}
+		} else {
+			switch (devices[DEVICE_CUR]->emulated()) {
+				case EMU_NONE:
+				case EMU_READ_SPEED:
+					patch     = gcloader_v1_bin;
+					patchSize = gcloader_v1_bin_size;
+					break;
+				case EMU_MEMCARD:
+					patch     = gcloader_v1_card_bin;
+					patchSize = gcloader_v1_card_bin_size;
+					break;
+				default:
+					return 0;
+			}
 		}
 		print_gecko("Installing Patch for GC Loader\r\n");
 	}

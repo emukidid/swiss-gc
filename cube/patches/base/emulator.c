@@ -436,7 +436,7 @@ bool dtk_fill_buffer(void)
 		dtk_fill_buffer();
 	}
 
-	#ifdef WKF
+	#if defined GCODE || defined WKF
 	DCInvalidateRange(__builtin_assume_aligned(dtk.buffer, 32), sizeof(*dtk.buffer));
 	#endif
 	return dtk.reading = frag_read_async(*VAR_CURRENT_DISC, dtk.buffer, sizeof(*dtk.buffer), dtk.current.position, read_callback);
@@ -528,12 +528,16 @@ void di_close_cover(void)
 OSAlarm di_alarm = {0}, cover_alarm = {0};
 
 #ifndef DI_PASSTHROUGH
+#ifdef GCODE
+bool gcode_push_queue(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, uint32_t command, frag_callback callback);
+#endif
+
 static void di_execute_command(void)
 {
 	uint32_t result = 0;
 
 	switch (di.reg.cmdbuf0 >> 24) {
-		case 0xA8:
+		case DI_CMD_READ:
 		{
 			uint32_t address = di.reg.mar;
 			uint32_t length  = di.reg.length;
@@ -547,7 +551,7 @@ static void di_execute_command(void)
 				perform_read(address, length, offset);
 			return;
 		}
-		case 0xAB:
+		case DI_CMD_SEEK:
 		{
 			uint32_t offset = di.reg.cmdbuf1 << 2;
 
@@ -557,13 +561,21 @@ static void di_execute_command(void)
 				perform_read(0, 0, offset);
 			return;
 		}
-		case 0xE0:
+		case DI_CMD_REQUEST_ERROR:
 		{
 			result = di.error | di.status << 24;
 			di.error = 0;
 			break;
 		}
-		case 0xE1:
+		#if defined GCODE && !defined DTK
+		case DI_CMD_AUDIO_STREAM:
+		case DI_CMD_REQUEST_AUDIO_STATUS:
+		{
+			gcode_push_queue(&di.reg.immbuf, di.reg.cmdbuf2, di.reg.cmdbuf1, 0, di.reg.cmdbuf0, (frag_callback)di_complete_transfer);
+			return;
+		}
+		#else
+		case DI_CMD_AUDIO_STREAM:
 		{
 			switch ((di.reg.cmdbuf0 >> 16) & 0x03) {
 				case 0x00:
@@ -605,7 +617,7 @@ static void di_execute_command(void)
 			}
 			break;
 		}
-		case 0xE2:
+		case DI_CMD_REQUEST_AUDIO_STATUS:
 		{
 			switch ((di.reg.cmdbuf0 >> 16) & 0x03) {
 				case 0x00: result = dtk.playing; break;
@@ -615,11 +627,14 @@ static void di_execute_command(void)
 			}
 			break;
 		}
-		case 0xE3:
+		#endif
+		case DI_CMD_STOP_MOTOR:
 		{
 			if (di.status == 0 && change_disc()) {
 				di_open_cover();
+				#ifndef GCODE
 				OSSetAlarm(&cover_alarm, OSSecondsToTicks(1.5), (OSAlarmHandler)di_close_cover);
+				#endif
 			}
 			break;
 		}
@@ -637,7 +652,7 @@ static void di_execute_command(void)
 	#endif
 
 	switch (di.reg.cmdbuf0 >> 24) {
-		case 0xA8:
+		case DI_CMD_READ:
 		{
 			uint32_t address = di.reg.mar;
 			uint32_t length  = di.reg.length;
@@ -1108,9 +1123,7 @@ static void pi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	PI[0] = 1;
 }
 
-#if defined WKF
-void di_interrupt_handler(OSInterrupt interrupt, OSContext *context);
-#elif defined DI_PASSTHROUGH
+#if defined DI_PASSTHROUGH
 static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	#ifdef DVD
@@ -1130,7 +1143,7 @@ static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 			di.reg.length = DI[6];
 
 			switch (di.reg.cmdbuf0 >> 24) {
-				case 0xA8:
+				case DI_CMD_READ:
 				{
 					di.reg.length += OSRoundDown32B(di.reg.cmdbuf2 - DI[4]);
 					break;
@@ -1140,7 +1153,7 @@ static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 			di.reg.immbuf = DI[8];
 
 			switch (di.reg.cmdbuf0 >> 24) {
-				case 0xE0:
+				case DI_CMD_REQUEST_ERROR:
 				{
 					if (!(di.reg.immbuf & 0xFFFFFF))
 						di.reg.immbuf = di.error | (di.reg.immbuf & ~0xFFFFFF);
@@ -1153,6 +1166,8 @@ static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 
 	dispatch_interrupt(interrupt, context);
 }
+#elif defined GCODE || defined WKF
+void di_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 #endif
 
 #ifdef BBA
@@ -1177,7 +1192,7 @@ OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler han
 			OSSetInterruptHandler(interrupt, dispatch_interrupt);
 			break;
 		case OS_INTERRUPT_PI_DI:
-			#if defined WKF || defined DI_PASSTHROUGH
+			#if defined GCODE || defined WKF || defined DI_PASSTHROUGH
 			OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
 			#endif
 			OSSetInterruptHandler(OS_INTERRUPT_PI_ERROR, pi_interrupt_handler);
