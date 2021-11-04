@@ -38,7 +38,7 @@ static struct {
 OSAlarm bba_alarm = {0}, read_alarm = {0};
 
 void schedule_read(OSTick ticks, bool lock);
-void retry_read(void);
+void retry_read();
 
 #include "tcpip.c"
 
@@ -294,12 +294,12 @@ void schedule_read(OSTick ticks, bool lock)
 	dvd.patch = is_frag_patch(*VAR_CURRENT_DISC, dvd.offset, dvd.length);
 
 	if (dvd.patch)
-		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
+		OSSetAlarm(&read_alarm, ticks, trickle_read);
 	else
 		fsp_get_file(dvd.offset, dvd.length, lock);
 }
 
-void retry_read(void)
+void retry_read()
 {
 	fsp_get_file(dvd.offset, dvd.length, true);
 }
@@ -314,7 +314,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	schedule_read(0, true);
 }
 
-void trickle_read(void)
+void trickle_read()
 {
 	if (dvd.read && dvd.patch) {
 		OSTick start = OSGetTick();
@@ -331,15 +331,6 @@ void trickle_read(void)
 	}
 }
 
-void device_reset(void)
-{
-	while (EXI[EXI_CHANNEL_0][3] & 0b000001);
-	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
-	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
-
-	end_read();
-}
-
 bool change_disc(void)
 {
 	if (*VAR_SECOND_DISC) {
@@ -348,4 +339,13 @@ bool change_disc(void)
 	}
 
 	return false;
+}
+
+void device_reset(void)
+{
+	while (EXI[EXI_CHANNEL_0][3] & 0b000001);
+	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
+	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
+
+	end_read();
 }

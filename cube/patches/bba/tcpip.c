@@ -212,7 +212,7 @@ static void fsp_get_file(uint32_t offset, size_t size, bool lock)
 	eth->type = ETH_TYPE_IPV4;
 	bba_transmit(eth, sizeof(*eth) + ipv4->length);
 
-	OSSetAlarm(&read_alarm, OSSecondsToTicks(1), (OSAlarmHandler)retry_read);
+	OSSetAlarm(&read_alarm, OSSecondsToTicks(1), retry_read);
 
 	if (lock) EXIUnlock(EXI_CHANNEL_0);
 }

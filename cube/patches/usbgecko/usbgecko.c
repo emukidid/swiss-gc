@@ -18,6 +18,7 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include "common.h"
 #include "dolphin/exi.h"
@@ -130,12 +131,12 @@ void schedule_read(OSTick ticks)
 	if (!dvd.requested)
 		frag_read_async(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, read_callback);
 	if (dvd.requested)
-		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
+		OSSetAlarm(&read_alarm, ticks, trickle_read);
 	#else
 	if (!dvd.requested)
 		dvd.patch = frag_read_patch(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, NULL);
 
-	OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
+	OSSetAlarm(&read_alarm, ticks, trickle_read);
 	#endif
 }
 
@@ -149,7 +150,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	schedule_read(0);
 }
 
-void trickle_read(void)
+void trickle_read()
 {
 	if (dvd.read) {
 		#ifdef ASYNC_READ
@@ -185,16 +186,6 @@ void trickle_read(void)
 	}
 }
 
-void device_reset(void)
-{
-	while (EXI[EXI_CHANNEL_0][3] & 0b000001);
-	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
-	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
-
-	usb_unlock_file();
-	end_read();
-}
-
 bool change_disc(void)
 {
 	if (*VAR_SECOND_DISC) {
@@ -204,4 +195,14 @@ bool change_disc(void)
 	}
 
 	return false;
+}
+
+void device_reset(void)
+{
+	while (EXI[EXI_CHANNEL_0][3] & 0b000001);
+	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
+	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
+
+	usb_unlock_file();
+	end_read();
 }

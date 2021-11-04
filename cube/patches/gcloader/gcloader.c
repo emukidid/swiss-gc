@@ -322,7 +322,18 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	schedule_read(0);
 }
 
-void trickle_read(void) {}
+bool change_disc(void)
+{
+	void callback(void *address, uint32_t length)
+	{
+		OSSetAlarm(&cover_alarm, OSSecondsToTicks(1.5), di_close_cover);
+	}
+
+	if (*VAR_SECOND_DISC)
+		return gcode_push_queue(NULL, 0, *VAR_CURRENT_DISC ^ 1, 0, DI_CMD_GCODE_SET_DISC_FRAGS << 24 | 0x02, callback);
+
+	return false;
+}
 
 void device_reset(void)
 {
@@ -350,17 +361,4 @@ void device_reset(void)
 	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
 
 	end_read();
-}
-
-bool change_disc(void)
-{
-	void callback()
-	{
-		OSSetAlarm(&cover_alarm, OSSecondsToTicks(1.5), (OSAlarmHandler)di_close_cover);
-	}
-
-	if (*VAR_SECOND_DISC)
-		return gcode_push_queue(NULL, 0, *VAR_CURRENT_DISC ^ 1, 0, DI_CMD_GCODE_SET_DISC_FRAGS << 24 | 0x02, callback);
-
-	return false;
 }

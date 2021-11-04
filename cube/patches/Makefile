@@ -5,7 +5,7 @@ LD      = $(DIR)/powerpc-eabi-ld
 OBJDUMP = $(DIR)/powerpc-eabi-objdump
 OBJCOPY = $(DIR)/powerpc-eabi-objcopy
 
-OPTS	= -ffast-math -flto -fno-tree-loop-distribute-patterns -ffunction-sections -fdata-sections -fno-zero-initialized-in-bss -Wl,--gc-sections -Ibase
+OPTS	= -ffast-math -flto -fno-tree-loop-distribute-patterns -ffunction-sections -fdata-sections -fno-zero-initialized-in-bss -Wl,--gc-sections -mprototype -Ibase
 
 DEST    = ../swiss/source/patches
 
@@ -56,7 +56,7 @@ stub.bin:
 sd.bin:
 	@echo Building SD Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -78,7 +78,7 @@ sd.bin:
 sd.card.bin:
 	@echo Building SD Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -117,7 +117,7 @@ sd.dtk.bin:
 ideexi-v1.bin:
 	@echo Building IDE-EXI-v1 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -139,7 +139,7 @@ ideexi-v1.bin:
 ideexi-v1.card.bin:
 	@echo Building IDE-EXI-v1 Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -178,7 +178,7 @@ ideexi-v1.dtk.bin:
 ideexi-v2.bin:
 	@echo Building IDE-EXI-v2 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -200,7 +200,7 @@ ideexi-v2.bin:
 ideexi-v2.card.bin:
 	@echo Building IDE-EXI-v2 Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -239,7 +239,7 @@ ideexi-v2.dtk.bin:
 dvd.bin:
 	@echo Building DVD Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DDVD -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDI_PASSTHROUGH -DDVD -DISR
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ
@@ -257,7 +257,7 @@ dvd.bin:
 dvd.card.bin:
 	@echo Building DVD Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH -DDVD -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DDI_PASSTHROUGH -DDVD -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -293,7 +293,7 @@ usbgecko.bin:
 wkf.bin:
 	@echo Building WKF Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DISR -DWKF
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DISR -DWKF
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ
@@ -311,7 +311,7 @@ wkf.bin:
 wkf.card.bin:
 	@echo Building WKF Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DISR -DWKF
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DISR -DWKF
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -367,7 +367,7 @@ fsp.bin:
 gcloader-v1.bin:
 	@echo Building GCLoader-v1 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DDI_PASSTHROUGH -DGCODE -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDI_PASSTHROUGH -DGCODE -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
@@ -389,7 +389,7 @@ gcloader-v1.bin:
 gcloader-v1.card.bin:
 	@echo Building GCLoader-v1 Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DDI_PASSTHROUGH -DGCODE -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DDI_PASSTHROUGH -DGCODE -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -408,7 +408,7 @@ gcloader-v1.card.bin:
 gcloader-v2.bin:
 	@echo Building GCLoader-v2 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DGCODE
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DGCODE
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
@@ -428,7 +428,7 @@ gcloader-v2.bin:
 gcloader-v2.card.bin:
 	@echo Building GCLoader-v2 Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DCARD_EMULATOR -DGCODE
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DGCODE
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/igr.c

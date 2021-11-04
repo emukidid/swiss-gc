@@ -63,7 +63,7 @@ void schedule_read(OSTick ticks)
 	#ifdef ASYNC_READ
 	frag_read_async(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, read_callback);
 	#else
-	OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
+	OSSetAlarm(&read_alarm, ticks, trickle_read);
 	#endif
 }
 
@@ -89,9 +89,9 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	schedule_read(0);
 }
 
-void trickle_read(void)
+#ifndef ASYNC_READ
+void trickle_read()
 {
-	#ifndef ASYNC_READ
 	#ifdef DTK
 	if (dtk_fill_buffer())
 		return;
@@ -109,17 +109,8 @@ void trickle_read(void)
 
 		schedule_read(OSDiffTick(end, start));
 	}
-	#endif
 }
-
-void device_reset(void)
-{
-	while (EXI[EXI_CHANNEL_0][3] & 0b000001);
-	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
-	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
-
-	end_read();
-}
+#endif
 
 bool change_disc(void)
 {
@@ -129,4 +120,13 @@ bool change_disc(void)
 	}
 
 	return false;
+}
+
+void device_reset(void)
+{
+	while (EXI[EXI_CHANNEL_0][3] & 0b000001);
+	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
+	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
+
+	end_read();
 }

@@ -38,7 +38,7 @@ typedef struct {
 } ppc_context_t;
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset);
-void trickle_read(void);
+void trickle_read();
 bool change_disc(void);
 
 void exi_interrupt(unsigned chan);
@@ -66,9 +66,9 @@ bool dtk_fill_buffer(void);
 #define DI_CMD_GCODE_WRITE          0xBA
 
 void di_error(uint32_t error);
-void di_complete_transfer(void);
+void di_complete_transfer();
 void di_open_cover(void);
-void di_close_cover(void);
+void di_close_cover();
 
 void dvd_schedule_read(uint32_t offset, uint32_t length, OSAlarmHandler handler);
 

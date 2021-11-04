@@ -167,7 +167,7 @@ void schedule_read(OSTick ticks)
 	dvd.patch = frag_read_patch(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, read_callback);
 
 	if (dvd.patch)
-		OSSetAlarm(&read_alarm, ticks, (OSAlarmHandler)trickle_read);
+		OSSetAlarm(&read_alarm, ticks, trickle_read);
 	#endif
 }
 
@@ -181,9 +181,9 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	schedule_read(0);
 }
 
-void trickle_read(void)
+#ifndef ASYNC_READ
+void trickle_read()
 {
-	#ifndef ASYNC_READ
 	if (dvd.read && dvd.patch) {
 		OSTick start = OSGetTick();
 		int size = frag_read(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset);
@@ -196,7 +196,17 @@ void trickle_read(void)
 
 		schedule_read(OSDiffTick(end, start));
 	}
-	#endif
+}
+#endif
+
+bool change_disc(void)
+{
+	if (*VAR_SECOND_DISC) {
+		*VAR_CURRENT_DISC ^= 1;
+		return true;
+	}
+
+	return false;
 }
 
 void device_reset(void)
@@ -208,14 +218,4 @@ void device_reset(void)
 	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
 
 	end_read();
-}
-
-bool change_disc(void)
-{
-	if (*VAR_SECOND_DISC) {
-		*VAR_CURRENT_DISC ^= 1;
-		return true;
-	}
-
-	return false;
 }

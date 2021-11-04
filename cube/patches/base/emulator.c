@@ -449,7 +449,7 @@ bool dtk_fill_buffer(void)
 		dtk_decode_buffer(dtk.buffer, size);
 
 	OSTick end = OSGetTick();
-	OSSetAlarm(&read_alarm, OSDiffTick(end, start), (OSAlarmHandler)trickle_read);
+	OSSetAlarm(&read_alarm, OSDiffTick(end, start), trickle_read);
 
 	return true;
 	#endif
@@ -499,7 +499,7 @@ void di_error(uint32_t error)
 	di_update_interrupts();
 }
 
-void di_complete_transfer(void)
+void di_complete_transfer()
 {
 	if (di.reg.cr & 0b010) {
 		di.reg.mar += di.reg.length;
@@ -517,7 +517,7 @@ void di_open_cover(void)
 	di.status = 1;
 }
 
-void di_close_cover(void)
+void di_close_cover()
 {
 	di.reg.cvr &= ~0b001;
 	di.reg.cvr |=  0b100;
@@ -532,7 +532,7 @@ OSAlarm di_alarm = {0}, cover_alarm = {0};
 bool gcode_push_queue(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, uint32_t command, frag_callback callback);
 #endif
 
-static void di_execute_command(void)
+static void di_execute_command()
 {
 	uint32_t result = 0;
 
@@ -571,7 +571,7 @@ static void di_execute_command(void)
 		case DI_CMD_AUDIO_STREAM:
 		case DI_CMD_REQUEST_AUDIO_STATUS:
 		{
-			gcode_push_queue(&di.reg.immbuf, di.reg.cmdbuf2, di.reg.cmdbuf1, 0, di.reg.cmdbuf0, (frag_callback)di_complete_transfer);
+			gcode_push_queue(&di.reg.immbuf, di.reg.cmdbuf2, di.reg.cmdbuf1, 0, di.reg.cmdbuf0, di_complete_transfer);
 			return;
 		}
 		#else
@@ -633,7 +633,7 @@ static void di_execute_command(void)
 			if (di.status == 0 && change_disc()) {
 				di_open_cover();
 				#ifndef GCODE
-				OSSetAlarm(&cover_alarm, OSSecondsToTicks(1.5), (OSAlarmHandler)di_close_cover);
+				OSSetAlarm(&cover_alarm, OSSecondsToTicks(1.5), di_close_cover);
 				#endif
 			}
 			break;
@@ -644,7 +644,7 @@ static void di_execute_command(void)
 	di_complete_transfer();
 }
 #else
-static void di_execute_command(void)
+static void di_execute_command()
 {
 	#ifdef DVD
 	if (di.reset)
@@ -755,7 +755,7 @@ static void di_write(unsigned index, uint32_t value)
 				#ifdef DVD
 				di_execute_command();
 				#else
-				OSSetAlarm(&di_alarm, COMMAND_LATENCY_TICKS, (OSAlarmHandler)di_execute_command);
+				OSSetAlarm(&di_alarm, COMMAND_LATENCY_TICKS, di_execute_command);
 				#endif
 			}
 			break;
@@ -1281,7 +1281,9 @@ OSInterruptMask unmask_irq(OSInterruptMask mask)
 void idle_thread(void)
 {
 	disable_interrupts();
+	#ifndef ASYNC_READ
 	trickle_read();
+	#endif
 	#ifdef BBA
 	OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
 	OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
