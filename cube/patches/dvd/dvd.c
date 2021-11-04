@@ -72,7 +72,7 @@ static void gcode_set_disc_frags(uint32_t disc, const frag_t *frag, uint32_t cou
 		DI[4] = frag->sector;
 		DI[7] = 0b001;
 		while (DI[7] & 0b001);
-		if (DI[8]) return;
+		if (!DI[8]) break;
 		frag++;
 	}
 }

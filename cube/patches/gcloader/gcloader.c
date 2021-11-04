@@ -73,7 +73,7 @@ static void gcode_set_disc_frags(uint32_t disc, const frag_t *frag, uint32_t cou
 		DI[4] = frag->sector;
 		DI[7] = 0b001;
 		while (DI[7] & 0b001);
-		if (DI[8]) return;
+		if (!DI[8]) break;
 		frag++;
 	}
 }
@@ -187,6 +187,25 @@ static void gcode_done_queued(void)
 			break;
 		case DI_CMD_GCODE_SET_DISC_FRAGS:
 			switch (command & 0xFF) {
+				case 0x01:
+					if (DI[8]) {
+						length = 0;
+					} else {
+						const frag_t *frag = buffer;
+
+						for (int i = 0; i < length; i++) {
+							DI[2] = frag[i].offset;
+							DI[3] = frag[i].size;
+							DI[4] = frag[i].sector;
+							DI[7] = 0b001;
+							while (DI[7] & 0b001);
+							if (!DI[8]) {
+								*VAR_CURRENT_DISC = frag[i].file;
+								break;
+							}
+						}
+					}
+					break;
 				case 0x02:
 					if (!DI[8])
 						*VAR_CURRENT_DISC = offset;
@@ -329,8 +348,12 @@ bool change_disc(void)
 		OSSetAlarm(&cover_alarm, OSSecondsToTicks(1.5), di_close_cover);
 	}
 
-	if (*VAR_SECOND_DISC)
-		return gcode_push_queue(NULL, 0, *VAR_CURRENT_DISC ^ 1, 0, DI_CMD_GCODE_SET_DISC_FRAGS << 24 | 0x02, callback);
+	if (*VAR_SECOND_DISC) {
+		const frag_t *frag = NULL;
+		int count = frag_get_list(*VAR_CURRENT_DISC ^ 1, &frag);
+		if (count)
+			return gcode_push_queue((void *)(frag + 1), count - 1, 0, 0, DI_CMD_GCODE_SET_DISC_FRAGS << 24 | 0x01, callback);
+	}
 
 	return false;
 }
