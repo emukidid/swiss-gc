@@ -435,7 +435,16 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 	// If the current device isn't SD via EXI, init one slot to write patches.
 	// TODO expand this to support IDE-EXI and other writable devices (requires dvd patch re-write/modularity)
 	bool patchDeviceReady = false;
-	if(!(devices[DEVICE_CUR]->features & FEAT_PATCHES)) {
+	if(devices[DEVICE_CUR]->features & FEAT_PATCHES) {
+		if(devices[DEVICE_CUR] == &__device_gcloader && (devices[DEVICE_CONFIG] == &__device_sd_a || devices[DEVICE_CONFIG] == &__device_sd_b || devices[DEVICE_CONFIG] == &__device_sd_c)) {
+			devices[DEVICE_PATCHES] = devices[DEVICE_CONFIG];
+		}
+		else {
+			devices[DEVICE_PATCHES] = devices[DEVICE_CUR];
+			patchDeviceReady = true;
+		}
+	}
+	else {
 		if(devices[DEVICE_CONFIG] == &__device_sd_a || devices[DEVICE_CONFIG] == &__device_sd_b || devices[DEVICE_CONFIG] == &__device_sd_c) {
 			devices[DEVICE_PATCHES] = devices[DEVICE_CONFIG];
 		}
@@ -452,11 +461,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			devices[DEVICE_PATCHES] = NULL;
 		}
 	}
-	else {
-		devices[DEVICE_PATCHES] = devices[DEVICE_CUR];
-		patchDeviceReady = true;
-	}
-		
+
 	if(devices[DEVICE_PATCHES] == NULL) {
 		if(numToPatch > 0) {
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "No writable device available.\nAn SD Card Adapter is necessary in order\nfor patches to survive application restart."));
