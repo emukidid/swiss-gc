@@ -81,7 +81,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 	// write disc 2 frags
 	gcloaderWriteFrags(1, discFragList, disc2Frags);
 	
-	if(numToPatch < 0) {
+	if(numToPatch < -1) {
 		file_handle bootFile;
 		memset(&bootFile, 0, sizeof(file_handle));
 		snprintf(&bootFile.name[0], PATHNAME_MAX, "%sboot.bin", devices[DEVICE_CUR]->initial->name);

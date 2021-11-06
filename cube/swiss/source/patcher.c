@@ -127,6 +127,10 @@ void *getPatchAddr(int patchId) {
 
 void setTopAddr(u32 addr) {
 	top_addr = addr & ~3;
+	int patchId;
+	for (patchId = 0; patchId < PATCHES_MAX; patchId++)
+		if (patch_locations[patchId] < (void*)top_addr)
+			patch_locations[patchId] = NULL;
 }
 
 u32 getTopAddr() {

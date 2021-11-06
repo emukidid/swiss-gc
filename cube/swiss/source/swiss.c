@@ -1079,7 +1079,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	// See if the combination of our patches has exhausted our play area.
 	if(!install_code(0)) {
 		DrawDispose(progBox);
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Too many patches enabled, memory limit reached!");
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Exhausted reserved memory.\nAn SD Card Adapter is necessary in order\nfor patches to reserve additional memory.");
 		DrawPublish(msgBox);
 		wait_press_A();
 		DrawDispose(msgBox);
@@ -1893,6 +1893,10 @@ void load_file()
 		if(endsWith(fileName,".iso") || endsWith(fileName,".gcm") || endsWith(fileName,".tgc")) {
 			if(devices[DEVICE_CUR]->features & FEAT_BOOT_GCM) {
 				load_game();
+				if(devices[DEVICE_PATCHES] && devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
+					devices[DEVICE_PATCHES]->deinit(devices[DEVICE_PATCHES]->initial);
+				}
+				devices[DEVICE_PATCHES] = NULL;
 				memset(&GCMDisk, 0, sizeof(DiskHeader));
 			}
 			else {
