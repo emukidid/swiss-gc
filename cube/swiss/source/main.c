@@ -118,6 +118,18 @@ void Initialise (void)
 	}
 }
 
+uiDrawObj_t *configProgBar = NULL;
+void config_migration(char* text, int state) {
+	if(state) {
+		configProgBar = DrawPublish(DrawProgressBar(true, 0, text));
+	}
+	else {
+		if(configProgBar) {
+			DrawDispose(configProgBar);
+		}
+	}
+}
+
 /****************************************************************************
 * Main
 ****************************************************************************/
@@ -223,11 +235,8 @@ int main ()
 		}
 	}
 	
-	// Try to open up the config .ini in case it hasn't been opened already
-	if(config_init()) {
-		// TODO notification area this
-		print_gecko("Loaded %i entries from the config file\r\n",config_get_count());
-	}
+	// Read Swiss settings
+	config_init(&config_migration);
 	
 	// Swiss video mode force
 	GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);

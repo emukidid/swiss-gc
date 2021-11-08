@@ -64,7 +64,7 @@ static char *tooltips_advanced[PAGE_ADVANCED_MAX+1] = {
 };
 
 static char *tooltips_network[PAGE_NETWORK_MAX+1] = {
-		"Init network at startup:\n\nDisabled - Do not initialise the BBA even if present (default)\nEnabled - If a BBA is present, it will be initialised at startup\n\nIf initialised, navigate to the IP in a web browser to backup various data"
+	"Init network at startup:\n\nDisabled - Do not initialise the BBA even if present (default)\nEnabled - If a BBA is present, it will be initialised at startup\n\nIf initialised, navigate to the IP in a web browser to backup various data"
 };
 
 static char *tooltips_game[PAGE_GAME_MAX+1] = {
@@ -763,11 +763,11 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				while(!__SYS_SyncSram());
 				// Update our .ini (in memory)
 				if(config != NULL) {
-					config_update(config);
+					config_update_game(config);
 					DrawDispose(msgBox);
 				}
 				// flush settings to .ini
-				if(config_update_file()) {
+				if(config_update_global()) {
 					DrawDispose(msgBox);
 					msgBox = DrawPublish(DrawMessageBox(D_INFO,"Config Saved Successfully!"));
 					sleep(1);

@@ -22,14 +22,11 @@ typedef struct {
 	int emulateReadSpeed;
 } ConfigEntry;
 
-void config_parse(char *configData);
-void config_parse_swiss_settings(char *configData);
 void config_find(ConfigEntry *entry);
-int config_update(ConfigEntry *entry);
-int config_create();
-int config_init();
-int config_get_count();
-int config_update_file();
+int config_update_game(ConfigEntry *entry);
+int config_update_global();
+int config_update_recent();
+int config_init(void (*progress_indicator)(char*, int));
 void config_load_current(ConfigEntry *config);
 void config_unload_current();
 
