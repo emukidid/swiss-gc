@@ -107,6 +107,11 @@ static void gcode_read_queued(void)
 			DI[6] = length;
 			DI[7] = 0b011;
 			break;
+		case DI_CMD_SEEK:
+			DI[2] = command;
+			DI[3] = offset;
+			DI[7] = 0b001;
+			break;
 		case DI_CMD_GCODE_READ:
 			switch (command & 0xFF) {
 				default:
@@ -289,7 +294,10 @@ bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_
 
 bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, frag_callback callback)
 {
-	return gcode_push_queue(buffer, length, offset >> 2, sector, DI_CMD_READ << 24, callback);
+	if (length)
+		return gcode_push_queue(buffer, length, offset >> 2, sector, DI_CMD_READ << 24, callback);
+	else
+		return gcode_push_queue(buffer, length, offset >> 2, sector, DI_CMD_SEEK << 24, callback);
 }
 
 int do_read_write(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write)
