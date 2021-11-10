@@ -18,6 +18,8 @@ typedef struct FuncPattern
 } FuncPattern;
 
 /* the SDGecko/IDE-EXI patches */
+extern u8 reboot_bin[];
+extern u32 reboot_bin_size;
 extern u8 stub_bin[];
 extern u32 stub_bin_size;
 extern u8 ideexi_v1_bin[];

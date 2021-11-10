@@ -137,11 +137,11 @@ extern char VAR_RMODE[4];			// render mode
 #define IGR_USBGKOFLASH	3
 
 // FAT Fragments
-#define FRAGS_NULL		-1
+#define FRAGS_NULL		(char)-1
 #define FRAGS_DISC_1	0
 #define FRAGS_DISC_2	1
 #define FRAGS_BOOT_GCM	2
-#define FRAGS_IGR_DOL	3
+#define FRAGS_APPLOADER	3
 #define FRAGS_CARD(n)	(4 + (n))
 #define FRAGS_CARD_A	FRAGS_CARD(0)
 #define FRAGS_CARD_B	FRAGS_CARD(1)

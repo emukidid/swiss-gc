@@ -173,6 +173,11 @@ void schedule_read(OSTick ticks)
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
+	if ((*VAR_IGR_TYPE & 0x80) && offset == 0x2440) {
+		*VAR_CURRENT_DISC = FRAGS_APPLOADER;
+		*VAR_SECOND_DISC = 0;
+	}
+
 	dvd.buffer = OSPhysicalToUncached(address);
 	dvd.length = length;
 	dvd.offset = offset;
@@ -209,7 +214,7 @@ bool change_disc(void)
 	return false;
 }
 
-void device_reset(void)
+void reset_device(void)
 {
 	while (DI[7] & 0b001);
 

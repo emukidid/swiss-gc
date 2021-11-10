@@ -128,8 +128,47 @@ void schedule_read(OSTick ticks)
 	#endif
 }
 
+static bool memeq(const void *a, const void *b, size_t size)
+{
+	const uint8_t *x = a;
+	const uint8_t *y = b;
+	size_t i;
+
+	for (i = 0; i < size; ++i)
+		if (x[i] != y[i])
+			return false;
+
+	return true;
+}
+
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
+	if ((*VAR_IGR_TYPE & 0x80) && offset == 0x2440) {
+		*VAR_CURRENT_DISC = FRAGS_APPLOADER;
+		*VAR_SECOND_DISC = 0;
+	} else {
+		switch (*VAR_CURRENT_DISC) {
+			case FRAGS_DISC_1:
+				if (memeq(VAR_AREA, VAR_DISC_2_ID, 8))
+					*VAR_CURRENT_DISC = FRAGS_DISC_2;
+				else if (!memeq(VAR_AREA, VAR_DISC_1_ID, 8))
+					*VAR_CURRENT_DISC = FRAGS_NULL;
+				break;
+			case FRAGS_DISC_2:
+				if (memeq(VAR_AREA, VAR_DISC_1_ID, 8))
+					*VAR_CURRENT_DISC = FRAGS_DISC_1;
+				else if (!memeq(VAR_AREA, VAR_DISC_2_ID, 8))
+					*VAR_CURRENT_DISC = FRAGS_NULL;
+				break;
+			case FRAGS_NULL:
+				if (memeq(VAR_AREA, VAR_DISC_1_ID, 8))
+					*VAR_CURRENT_DISC = FRAGS_DISC_1;
+				else if (memeq(VAR_AREA, VAR_DISC_2_ID, 8))
+					*VAR_CURRENT_DISC = FRAGS_DISC_2;
+				break;
+		}
+	}
+
 	dvd.buffer = OSPhysicalToUncached(address);
 	dvd.length = length;
 	dvd.offset = offset;
@@ -168,7 +207,7 @@ void trickle_read()
 }
 #endif
 
-void device_reset(void)
+void reset_device(void)
 {
 	DVDDiskID *id = (DVDDiskID *)VAR_AREA;
 

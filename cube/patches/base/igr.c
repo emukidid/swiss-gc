@@ -19,52 +19,37 @@
 
 #include <stdint.h>
 #include "common.h"
-#include "dolphin/dolformat.h"
 #include "dolphin/os.h"
 #include "dolphin/pad.h"
-#include "frag.h"
+#include "emulator.h"
 
 void check_pad(int32_t chan, PADStatus *status)
 {
-	status->button &= ~PAD_USE_ORIGIN;
-
 	if ((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT) {
-		if (OSResetSystem) {
-			enable_interrupts();
-			OSResetSystem(OS_RESET_HOTRESET, 0, 0);
-			disable_interrupts();
+		switch (*VAR_IGR_TYPE) {
+			case IGR_HARDRESET:
+				if (OSResetSystem) {
+					enable_interrupts();
+					OSResetSystem(OS_RESET_HOTRESET, 0, 0);
+					disable_interrupts();
+				}
+				break;
+			case IGR_BOOTBIN:
+				if (OSResetSystem) {
+					*VAR_IGR_TYPE |= 0x80;
+					enable_interrupts();
+					OSResetSystem(OS_RESET_RESTART, 0, 0);
+					disable_interrupts();
+				}
+				break;
 		}
 	}
-}
 
-static void load_igr_dol(void)
-{
-	DOLImage image;
-	if (frag_read_complete(FRAGS_IGR_DOL, &image, sizeof(image), 0) != sizeof(image)) return;
-
-	for (int i = 0; i < DOL_MAX_TEXT; i++) {
-		frag_read_complete(FRAGS_IGR_DOL, image.text[i], image.textLen[i], image.textData[i]);
-		dcache_flush_icache_inv(image.text[i], image.textLen[i]);
-	}
-
-	for (int i = 0; i < DOL_MAX_DATA; i++) {
-		frag_read_complete(FRAGS_IGR_DOL, image.data[i], image.dataLen[i], image.dataData[i]);
-		dcache_flush_icache_inv(image.data[i], image.dataLen[i]);
-	}
-
-	end_read();
-	image.entry();
+	status->button &= ~PAD_USE_ORIGIN;
 }
 
 void fini(void)
 {
 	disable_interrupts();
-	asm volatile("mtdabr %0" :: "r" (0));
-	device_reset();
-
-	switch (*VAR_IGR_TYPE) {
-		case IGR_BOOTBIN:
-			switch_fiber(0, 0, 0, 0, (intptr_t)load_igr_dol, (intptr_t)OSDebugMonitor);
-			break;
-	}
+	reset_device();
 }

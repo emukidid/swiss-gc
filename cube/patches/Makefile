@@ -14,7 +14,7 @@ DISASM    = disassembly
 .NOTPARALLEL:
 all: clean cpatches stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch
 
-stub: stub.bin
+stub: reboot.bin stub.bin
 sdpatch: sd.bin sd.card.bin sd.dtk.bin
 ideexipatch: ideexi-v1.bin ideexi-v1.card.bin ideexi-v1.dtk.bin ideexi-v2.bin ideexi-v2.card.bin ideexi-v2.dtk.bin
 dvdpatch: dvd.bin dvd.card.bin
@@ -36,6 +36,21 @@ cpatches:
 	@$(OBJDUMP) -D WriteUARTN.elf > $(DISASM)/WriteUARTN.txt
 	@$(OBJCOPY) -O binary WriteUARTN.elf WriteUARTN.bin
 	@$(BIN2S) WriteUARTN.bin > $(DEST)/WriteUARTN.s
+	@rm -f *.bin *.elf *.o
+
+reboot.bin:
+	@echo Building Reboot ...
+	@$(CC) -Os $(OPTS) -c stub/crt0.S -DAPPLOADER
+	@$(CC) -Os $(OPTS) -c stub/main.c
+	@$(CC) -Os $(OPTS) -c stub/asmfunc.S -DAPPLOADER
+	@$(CC) -Os $(OPTS) -c stub/mmcbbp.c
+	@$(CC) -Os $(OPTS) -c stub/pff.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -o reboot.elf -T stub/reboot.ld crt0.o main.o asmfunc.o mmcbbp.o pff.o os.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D reboot.elf > $(DISASM)/reboot.txt
+	@$(OBJCOPY) -O binary reboot.elf reboot.bin
+	@$(BIN2S) reboot.bin > $(DEST)/Reboot.s
 	@rm -f *.bin *.elf *.o
 
 stub.bin:

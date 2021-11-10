@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2021, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -23,6 +23,21 @@
 .section .init
 	.globl _start
 _start:
+#ifdef APPLOADER
+	lis		r3, 0x8000
+	li		r4, 0x3100 / 32
+	mtctr	r4
+1:	dcbz	r0, r3
+	addi	r3, r3, 32
+	bdnz	1b
+
+	li		r3, 0
+	mtsrr1	r3
+	lis		r3, startup@ha
+	addi	r3, r3, startup@l
+	mtsrr0	r3
+	rfi
+#else
 	mfmsr	r3
 	b		1f
 	.asciz	"STUBHAXX"
@@ -33,6 +48,7 @@ _start:
 	li		r3, startup
 	mtsrr0	r3
 	rfi
+#endif
 
 startup:
 	lis		r0, 0x8000
@@ -40,8 +56,8 @@ startup:
 	mtear	r0
 
 	li		r3, 0
-	lis		r0, 0x4800
-	ori		r0, r0, 0x0002 + reset
+	lis		r0, reset@h + 0x48000002
+	ori		r0, r0, reset@l + 0x48000002
 1:	stwu	r0, 0x0100 (r3)
 	dcbst	r0, r3
 	sync
@@ -50,7 +66,11 @@ startup:
 	blt		1b
 
 	li		r0, 0
+#ifdef APPLOADER
+	lis		sp, 0x0180
+#else
 	li		sp, 0x3000
+#endif
 	stwu	r0, -8 (sp)
 
 	bl		_main

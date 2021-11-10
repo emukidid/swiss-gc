@@ -37,28 +37,6 @@ static struct {
 	OSInterruptMask mask;
 } irq = {0};
 
-bool memeq(const void *a, const void *b, size_t size)
-{
-	const uint8_t *x = a;
-	const uint8_t *y = b;
-	size_t i;
-
-	for (i = 0; i < size; ++i)
-		if (x[i] != y[i])
-			return false;
-
-	return true;
-}
-
-void memzero(void *buf, size_t size)
-{
-	uint8_t *b = buf;
-	uint8_t *e = b + size;
-
-	while (b != e)
-		*b++ = '\0';
-}
-
 #ifdef CARD_EMULATOR
 static struct {
 	union {
@@ -665,23 +643,9 @@ static void di_execute_command()
 			}
 			#endif
 
-			switch (di.reg.cmdbuf0 & 0xC0) {
-				default:
-				{
-					if (memeq(VAR_AREA, VAR_DISC_1_ID, 8))
-						*VAR_CURRENT_DISC = FRAGS_DISC_1;
-					else if (memeq(VAR_AREA, VAR_DISC_2_ID, 8))
-						*VAR_CURRENT_DISC = FRAGS_DISC_2;
-					else
-						*VAR_CURRENT_DISC = FRAGS_NULL;
-
-					perform_read(address, length, offset);
-					return;
-				}
-				case 0x40:
-				{
-					break;
-				}
+			if ((di.reg.cmdbuf0 & 0xC0) != 0x40) {
+				perform_read(address, length, offset);
+				return;
 			}
 			break;
 		}
@@ -996,6 +960,19 @@ static bool ppc_store16(uint32_t address, uint16_t value)
 }
 #endif
 
+static bool ppc_dcbz(uint32_t address)
+{
+	uint32_t dabr; asm("mfdabr %0" : "=r" (dabr));
+
+	if ((address & ~0b11111) == (dabr & ~0b11111)) {
+		asm volatile("mtdabr %0; dcbz 0,%1" :: "r" (0), "r" (address));
+		reset_device();
+		return true;
+	}
+
+	return false;
+}
+
 static bool ppc_step(ppc_context_t *context)
 {
 	uint32_t opcode = *(uint32_t *)context->srr0;
@@ -1009,14 +986,20 @@ static bool ppc_step(ppc_context_t *context)
 					int rd = (opcode >> 21) & 0x1F;
 					int ra = (opcode >> 16) & 0x1F;
 					int rb = (opcode >> 11) & 0x1F;
-					return ppc_load32(context->gpr[ra] + context->gpr[rb], &context->gpr[rd]);
+					return ppc_load32(ra ? context->gpr[ra] + context->gpr[rb] : context->gpr[rb], &context->gpr[rd]);
 				}
 				case 151:
 				{
 					int rs = (opcode >> 21) & 0x1F;
 					int ra = (opcode >> 16) & 0x1F;
 					int rb = (opcode >> 11) & 0x1F;
-					return ppc_store32(context->gpr[ra] + context->gpr[rb], context->gpr[rs]);
+					return ppc_store32(ra ? context->gpr[ra] + context->gpr[rb] : context->gpr[rb], context->gpr[rs]);
+				}
+				case 1014:
+				{
+					int ra = (opcode >> 16) & 0x1F;
+					int rb = (opcode >> 11) & 0x1F;
+					return ppc_dcbz(ra ? context->gpr[ra] + context->gpr[rb] : context->gpr[rb]);
 				}
 			}
 			break;
@@ -1026,21 +1009,21 @@ static bool ppc_step(ppc_context_t *context)
 			int rd = (opcode >> 21) & 0x1F;
 			int ra = (opcode >> 16) & 0x1F;
 			short d = opcode & 0xFFFF;
-			return ppc_load32(context->gpr[ra] + d, &context->gpr[rd]);
+			return ppc_load32(ra ? context->gpr[ra] + d : d, &context->gpr[rd]);
 		}
 		case 36:
 		{
 			int rs = (opcode >> 21) & 0x1F;
 			int ra = (opcode >> 16) & 0x1F;
 			short d = opcode & 0xFFFF;
-			return ppc_store32(context->gpr[ra] + d, context->gpr[rs]);
+			return ppc_store32(ra ? context->gpr[ra] + d : d, context->gpr[rs]);
 		}
 		case 39:
 		{
 			int rs = (opcode >> 21) & 0x1F;
 			int ra = (opcode >> 16) & 0x1F;
 			short d = opcode & 0xFFFF;
-			return ppc_store8(context->gpr[ra] += d, context->gpr[rs]);
+			return ppc_store8(ra ? context->gpr[ra] += d : d, context->gpr[rs]);
 		}
 		#ifdef DTK
 		case 40:
@@ -1048,14 +1031,14 @@ static bool ppc_step(ppc_context_t *context)
 			int rd = (opcode >> 21) & 0x1F;
 			int ra = (opcode >> 16) & 0x1F;
 			short d = opcode & 0xFFFF;
-			return ppc_load16(context->gpr[ra] + d, &context->gpr[rd]);
+			return ppc_load16(ra ? context->gpr[ra] + d : d, &context->gpr[rd]);
 		}
 		case 44:
 		{
 			int rs = (opcode >> 21) & 0x1F;
 			int ra = (opcode >> 16) & 0x1F;
 			short d = opcode & 0xFFFF;
-			return ppc_store16(context->gpr[ra] + d, context->gpr[rs]);
+			return ppc_store16(ra ? context->gpr[ra] + d : d, context->gpr[rs]);
 		}
 		#endif
 	}
@@ -1071,6 +1054,15 @@ ppc_context_t *service_exception(ppc_context_t *context)
 		__builtin_trap();
 
 	return context;
+}
+
+static void memzero(void *buf, size_t size)
+{
+	uint8_t *b = buf;
+	uint8_t *e = b + size;
+
+	while (b != e)
+		*b++ = '\0';
 }
 
 void dsi_exception_vector(void);

@@ -14221,7 +14221,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		u32 *PADRead = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (PADRead) {
-			if ((devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) && swissSettings.igrType != IGR_OFF) {
+			if (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
 				switch (j) {
 					case 0:
 						data[i + 159] = 0x387E0000;	// addi		r3, r30, 0

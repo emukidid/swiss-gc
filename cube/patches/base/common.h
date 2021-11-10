@@ -76,8 +76,4 @@ extern volatile u32 AI[4];
 
 extern volatile u32 EXIEmuRegs[3][5];
 
-void device_reset(void);
-int switch_fiber(u32 arg0, u32 arg1, u32 arg2, u32 arg3, u32 pc, u32 newsp);
-void dcache_flush_icache_inv(void* dst, u32 len);
-
 #endif

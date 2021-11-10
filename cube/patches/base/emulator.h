@@ -40,6 +40,7 @@ typedef struct {
 void perform_read(uint32_t address, uint32_t length, uint32_t offset);
 void trickle_read();
 bool change_disc(void);
+void reset_device(void);
 
 void exi_interrupt(unsigned chan);
 void exi_complete_transfer(unsigned chan);
