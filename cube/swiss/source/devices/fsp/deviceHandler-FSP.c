@@ -164,9 +164,8 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 		
 		if(swissSettings.igrType == IGR_BOOTBIN) {
 			memset(&patchFile, 0, sizeof(file_handle));
-			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss/igr/apploader.img", devices[DEVICE_PATCHES]->initial->name);
-			ensure_path(DEVICE_PATCHES, "swiss/igr", NULL);
-
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss/patches/apploader.img", devices[DEVICE_PATCHES]->initial->name);
+			
 			ApploaderHeader apploaderHeader;
 			if(devices[DEVICE_PATCHES]->readFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader)) != sizeof(ApploaderHeader) || apploaderHeader.rebootSize != reboot_bin_size) {
 				devices[DEVICE_PATCHES]->deleteFile(&patchFile);
