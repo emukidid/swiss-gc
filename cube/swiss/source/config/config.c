@@ -12,7 +12,7 @@
 #include "config.h"
 #include "settings.h"
 
-// This is an example Swiss settings entry (sits at the top of swiss.ini)
+// This is an example Swiss settings entry (sits at the top of global.ini)
 //!!Swiss Settings Start!!
 //SD/IDE Speed=32MHz
 //Swiss Video Mode=Auto
@@ -46,8 +46,12 @@
 //No Disc Mode=Yes
 //Force Widescreen=Yes
 
-static ConfigEntry configEntries[2048]; // That's a lot of Games!
-static int configEntriesCount = 0;
+#define SWISS_SETTINGS_FILENAME_LEGACY "swiss.ini"
+#define SWISS_SETTINGS_FILENAME "global.ini"
+#define SWISS_RECENTLIST_FILENAME "recent.ini"
+#define SWISS_BASE_DIR "swiss"
+#define SWISS_SETTINGS_DIR "swiss/settings"
+#define SWISS_GAME_SETTINGS_DIR "swiss/settings/game"
 
 /** Crappy dynamic string appender */
 #define APPEND_BLOCKSIZE 256
@@ -61,7 +65,7 @@ appended_string *string_append(appended_string *appstr, char* str) {
 	if(appstr == NULL) {
 		appstr = calloc(1, sizeof(appended_string));
 		appstr->memlen = (str != NULL) ? strlen(str) : APPEND_BLOCKSIZE;
-		appstr->memlen += APPEND_BLOCKSIZE-(appstr->memlen % APPEND_BLOCKSIZE);	// 64b sized blocks
+		appstr->memlen += APPEND_BLOCKSIZE-(appstr->memlen % APPEND_BLOCKSIZE);	// 256b sized blocks
 		appstr->mem = calloc(1, appstr->memlen);
 		if(appstr->mem != NULL && str != NULL) {
 			strcpy(appstr->mem, str);
@@ -99,7 +103,7 @@ bool config_set_device() {
 	if(devices[DEVICE_CONFIG] == NULL) {
 		return false;
 	}
-	print_gecko("Save device is %s\r\n", devices[DEVICE_CONFIG]->deviceName);
+	//print_gecko("Save device is %s\r\n", devices[DEVICE_CONFIG]->deviceName);
 	deviceHandler_setStatEnabled(0);
 	// If we're not using this device already, init it.
 	if(devices[DEVICE_CONFIG] != devices[DEVICE_CUR]) {
@@ -114,40 +118,53 @@ bool config_set_device() {
 	return true;
 }
 
-/** 
-	Initialises the configuration file
-	Returns 1 on successful file open, 0 otherwise
-*/
-int config_init() {
-	if(!config_set_device()) return 0;
+// Reads from a file and returns a populated buffer, NULL if anything goes wrong.
+char* config_file_read(char* filename) {
+	char* readBuffer = NULL;
 	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
-	snprintf(configFile->name, PATHNAME_MAX, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
-	
-	// Read config
+	snprintf(configFile->name, PATHNAME_MAX, "%s%s", devices[DEVICE_CONFIG]->initial->name, filename);
+	print_gecko("config_file_read: looking for %s\r\n", configFile->name);
 	if(devices[DEVICE_CONFIG]->readFile(configFile, txtbuffer, 1) == 1) {
 		devices[DEVICE_CONFIG]->seekFile(configFile, 0, DEVICE_HANDLER_SEEK_SET);
-		char *configData = (char*) memalign(32, configFile->size);
-		configEntriesCount = 0;
-		if (configData) {
-			print_gecko("Config Size %i\r\n", configFile->size);
-			memset(configData, 0, configFile->size);
-			devices[DEVICE_CONFIG]->readFile(configFile, configData, configFile->size);
+		readBuffer = (char*) calloc(1, configFile->size);
+		if (readBuffer) {
+			print_gecko("config_file_read: reading %i byte file\r\n", configFile->size);
+			devices[DEVICE_CONFIG]->readFile(configFile, readBuffer, configFile->size);
 			devices[DEVICE_CONFIG]->closeFile(configFile);
-			if(devices[DEVICE_CONFIG] != devices[DEVICE_CUR]) {
-				devices[DEVICE_CONFIG]->deinit(devices[DEVICE_CONFIG]->initial);
-			}
-			config_parse(configData);
-			free(configData);
-			return 1;
 		}
 	}
+	free(configFile);
+	return readBuffer;
+}
+
+int config_file_write(char* filename, char* contents) {
+	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
+	snprintf(configFile->name, PATHNAME_MAX, "%s%s", devices[DEVICE_CONFIG]->initial->name, filename);
+
+	u32 len = strlen(contents);
+	print_gecko("config_file_write: writing %i bytes to %s\r\n", len, configFile->name);
+	devices[DEVICE_CONFIG]->deleteFile(configFile);
+	if(devices[DEVICE_CONFIG]->writeFile(configFile, contents, len) == len) {
+		devices[DEVICE_CONFIG]->closeFile(configFile);
+		free(configFile);
+		return 1;
+	}
+	free(configFile);
 	return 0;
 }
 
-int config_update_file() {
+void config_file_delete(char* filename) {
+	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
+	snprintf(configFile->name, PATHNAME_MAX, "%s%s", devices[DEVICE_CONFIG]->initial->name, filename);
+	print_gecko("config_file_delete: deleting %s\r\n", configFile->name);
+	devices[DEVICE_CONFIG]->deleteFile(configFile);
+	devices[DEVICE_CONFIG]->closeFile(configFile);
+	free(configFile);
+}
+
+int config_update_global() {
 	if(!config_set_device()) return 0;
 
-	// Write out header every time
 	char *str = "# Swiss Configuration File!\r\n# Anything written in here will be lost!\r\n\r\n#!!Swiss Settings Start!!\r\n";
 	appended_string *configString = string_append(NULL, str);
 	// Write out Swiss settings
@@ -215,12 +232,7 @@ int config_update_file() {
 	string_append(configString, txtbuffer);
 	sprintf(txtbuffer, "Autoload=%s\r\n",swissSettings.autoload);
 	string_append(configString, txtbuffer);
-	int i;
-	for(i = 0; i < RECENT_MAX; i++) {
-		sprintf(txtbuffer, "Recent_%i=%s\r\n",i,swissSettings.recent[i]);
-		//print_gecko("added recent [%s]\r\n",txtbuffer);
-		string_append(configString, txtbuffer);
-	}
+
 	// Write out the default game config portion too
 	sprintf(txtbuffer, "Force Video Mode=%s\r\n",gameVModeStr[swissSettings.gameVMode]);
 	string_append(configString, txtbuffer);
@@ -254,67 +266,78 @@ int config_update_file() {
 	sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
 	string_append(configString, txtbuffer);
 	
-	// Write out Game Configs
-	for(i = 0; i < configEntriesCount; i++) {
-		sprintf(txtbuffer, "ID=%.4s\r\n",configEntries[i].game_id);
-		string_append(configString, txtbuffer);
-		
-		sprintf(txtbuffer, "Name=%.64s\r\n",configEntries[i].game_name);
-		string_append(configString, txtbuffer);
-		
-		sprintf(txtbuffer, "Comment=%.128s\r\n",configEntries[i].comment);
-		string_append(configString, txtbuffer);
-		
-		sprintf(txtbuffer, "Status=%.32s\r\n",configEntries[i].status);
-		string_append(configString, txtbuffer);
-		
-		sprintf(txtbuffer, "Force Video Mode=%s\r\n",gameVModeStr[configEntries[i].gameVMode]);
-		string_append(configString, txtbuffer);
-		
-		sprintf(txtbuffer, "Force Horizontal Scale=%s\r\n",forceHScaleStr[configEntries[i].forceHScale]);
-		string_append(configString, txtbuffer);
-		
-		sprintf(txtbuffer, "Force Vertical Offset=%+hi\r\n",configEntries[i].forceVOffset);
-		string_append(configString, txtbuffer);
-		
-		sprintf(txtbuffer, "Force Vertical Filter=%s\r\n",forceVFilterStr[configEntries[i].forceVFilter]);
-		string_append(configString, txtbuffer);
-		
-		sprintf(txtbuffer, "Disable Alpha Dithering=%s\r\n",(configEntries[i].disableDithering ? "Yes":"No"));
-		string_append(configString, txtbuffer);
-		
-		sprintf(txtbuffer, "Force Anisotropic Filter=%s\r\n",(configEntries[i].forceAnisotropy ? "Yes":"No"));
-		string_append(configString, txtbuffer);
-		
-		sprintf(txtbuffer, "Force Widescreen=%s\r\n",forceWidescreenStr[configEntries[i].forceWidescreen]);
-		string_append(configString, txtbuffer);
-		
-		sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[configEntries[i].invertCStick]);
-		string_append(configString, txtbuffer);
-		
-		sprintf(txtbuffer, "Emulate Read Speed=%s\r\n",emulateReadSpeedStr[configEntries[i].emulateReadSpeed]);
+	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", SWISS_SETTINGS_DIR, SWISS_SETTINGS_FILENAME);
+	int res = config_file_write(txtbuffer, configString->mem);
+	free(configString);
+	return res;
+}
+
+int config_update_recent() {
+	if(!config_set_device()) return 0;
+
+	char *str = "# Recent list. Created by Swiss\r\n";
+	appended_string *configString = string_append(NULL, str);
+	int i;
+	for(i = 0; i < RECENT_MAX; i++) {
+		sprintf(txtbuffer, "Recent_%i=%s\r\n",i,swissSettings.recent[i]);
+		//print_gecko("added recent [%s]\r\n",txtbuffer);
 		string_append(configString, txtbuffer);
 	}
+	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", SWISS_SETTINGS_DIR, SWISS_RECENTLIST_FILENAME);
+	int res = config_file_write(txtbuffer, configString->mem);
+	free(configString);
+	return res;
+}
 
-	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
-	snprintf(configFile->name, PATHNAME_MAX, "%sswiss.ini", devices[DEVICE_CONFIG]->initial->name);
 
-	u32 len = strlen(configString->mem);
-	// TODO ask overwrite?
-	// TODO rename old file then delete if write successful
-	devices[DEVICE_CONFIG]->deleteFile(configFile);
-	if(devices[DEVICE_CONFIG]->writeFile(configFile, configString->mem, len) == len) {
-		devices[DEVICE_CONFIG]->closeFile(configFile);
-		if(devices[DEVICE_CONFIG] != devices[DEVICE_CUR]) {
-			devices[DEVICE_CONFIG]->deinit(devices[DEVICE_CONFIG]->initial);
-		}
-		return 1;
-	}
-	else {
-		return 0;
-	}
+int config_update_game(ConfigEntry* entry) {
+	if(!config_set_device()) return 0;
 
-	return 1;
+	char *str = "# Game specific configuration file. Created by Swiss\r\n";
+	appended_string *configString = string_append(NULL, str);
+	sprintf(txtbuffer, "ID=%.4s\r\n",entry->game_id);
+	string_append(configString, txtbuffer);
+		
+	sprintf(txtbuffer, "Name=%.64s\r\n",entry->game_name);
+	string_append(configString, txtbuffer);
+	
+	sprintf(txtbuffer, "Comment=%.128s\r\n",entry->comment);
+	string_append(configString, txtbuffer);
+	
+	sprintf(txtbuffer, "Status=%.32s\r\n",entry->status);
+	string_append(configString, txtbuffer);
+	
+	sprintf(txtbuffer, "Force Video Mode=%s\r\n",gameVModeStr[entry->gameVMode]);
+	string_append(configString, txtbuffer);
+		
+	sprintf(txtbuffer, "Force Horizontal Scale=%s\r\n",forceHScaleStr[entry->forceHScale]);
+	string_append(configString, txtbuffer);
+	
+	sprintf(txtbuffer, "Force Vertical Offset=%+hi\r\n",entry->forceVOffset);
+	string_append(configString, txtbuffer);
+	
+	sprintf(txtbuffer, "Force Vertical Filter=%s\r\n",forceVFilterStr[entry->forceVFilter]);
+	string_append(configString, txtbuffer);
+	
+	sprintf(txtbuffer, "Disable Alpha Dithering=%s\r\n",(entry->disableDithering ? "Yes":"No"));
+	string_append(configString, txtbuffer);
+	
+	sprintf(txtbuffer, "Force Anisotropic Filter=%s\r\n",(entry->forceAnisotropy ? "Yes":"No"));
+	string_append(configString, txtbuffer);
+	
+	sprintf(txtbuffer, "Force Widescreen=%s\r\n",forceWidescreenStr[entry->forceWidescreen]);
+	string_append(configString, txtbuffer);
+	
+	sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[entry->invertCStick]);
+	string_append(configString, txtbuffer);
+	
+	sprintf(txtbuffer, "Emulate Read Speed=%s\r\n",emulateReadSpeedStr[entry->emulateReadSpeed]);
+	string_append(configString, txtbuffer);
+
+	snprintf(txtbuffer, PATHNAME_MAX, "%s/%.4s.ini", SWISS_GAME_SETTINGS_DIR, entry->game_id);
+	int res = config_file_write(txtbuffer, configString->mem);
+	free(configString);
+	return res;
 }
 
 static char emulateReadSpeedEntries[][4] = {"GQSD", "GQSE", "GQSF", "GQSI", "GQSP", "GQSS", "GTOJ"};
@@ -341,7 +364,10 @@ void config_defaults(ConfigEntry *entry) {
 	}
 }
 
-void config_parse(char *configData) {
+// TODO kill this off in one major version from now. Don't add new settings to it.
+void config_parse_legacy(char *configData) {
+	ConfigEntry configEntries[2048]; // That's a lot of Games!
+	int configEntriesCount = 0;
 	// Parse each entry and put it into our array
 	char *line, *linectx = NULL;
 	int first = 1;
@@ -609,43 +635,426 @@ void config_parse(char *configData) {
 	if(configEntriesCount > 0 || !first)
 		configEntriesCount++;
 	
-	 print_gecko("Found %i entries in the config file\r\n",configEntriesCount);
+	 print_gecko("Found %i entries in the (legacy) config file\r\n",configEntriesCount);
+	 
+	 // Write out to individual files.
+	 int i;
+	 for(i = 0; i < configEntriesCount; i++) {
+		 config_update_game(&configEntries[i]);
+	 }
+	 // Write out a new swiss.ini
+	 config_update_global();
+	 // Write out new recent.ini
+	 config_update_recent();
+	 // Kill off the old swiss.ini
+	 config_file_delete(SWISS_SETTINGS_FILENAME_LEGACY);
+}
+
+void config_parse_global(char *configData) {
+	char *line, *linectx = NULL;
+	line = strtok_r( configData, "\r\n", &linectx );
+	while( line != NULL ) {
+		//print_gecko("Line [%s]\r\n", line);
+		if(line[0] != '#') {
+			char *name, *namectx = NULL;
+			char *value = NULL;
+			name = strtok_r(line, "=", &namectx);
+			if(name != NULL)
+				value = strtok_r(NULL, "=", &namectx);
+			
+			if(value != NULL) {
+				//print_gecko("Name [%s] Value [%s]\r\n", name, value);
+
+				if(!strcmp("Force Video Mode", name)) {
+					for(int i = 0; i < 15; i++) {
+						if(!strcmp(gameVModeStr[i], value)) {
+							swissSettings.gameVMode = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Force Horizontal Scale", name)) {
+					for(int i = 0; i < 9; i++) {
+						if(!strcmp(forceHScaleStr[i], value)) {
+							swissSettings.forceHScale = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Force Vertical Offset", name)) {
+					swissSettings.forceVOffset = atoi(value);
+				}
+				else if(!strcmp("Force Vertical Filter", name)) {
+					for(int i = 0; i < 4; i++) {
+						if(!strcmp(forceVFilterStr[i], value)) {
+							swissSettings.forceVFilter = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Disable Alpha Dithering", name)) {
+					swissSettings.disableDithering = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Force Anisotropic Filter", name)) {
+					swissSettings.forceAnisotropy = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Force Widescreen", name)) {
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(forceWidescreenStr[i], value)) {
+							swissSettings.forceWidescreen = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Invert Camera Stick", name)) {
+					for(int i = 0; i < 4; i++) {
+						if(!strcmp(invertCStickStr[i], value)) {
+							swissSettings.invertCStick = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Emulate Read Speed", name)) {
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(emulateReadSpeedStr[i], value)) {
+							swissSettings.emulateReadSpeed = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Emulate Memory Card", name)) {
+					swissSettings.emulateMemoryCard = !strcmp("Yes", value) ? 1:0;
+				}
+				
+				// Swiss settings
+				else if(!strcmp("SD/IDE Speed", name)) {
+					swissSettings.exiSpeed = !strcmp("32MHz", value) ? 1:0;
+				}
+				else if(!strcmp("Enable Debug", name)) {
+					swissSettings.debugUSB = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Hide Unknown file types", name)) {
+					swissSettings.hideUnknownFileTypes = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Stop DVD Motor on startup", name)) {
+					swissSettings.stopMotor = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Enable WiiRD debug", name)) {
+					swissSettings.wiirdDebug = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Enable File Management", name)) {
+					swissSettings.enableFileManagement = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Disable Video Patches", name)) {
+					if(!strcmp(disableVideoPatchesStr[0], value))
+						swissSettings.disableVideoPatches = 0;
+					else if(!strcmp(disableVideoPatchesStr[1], value))
+						swissSettings.disableVideoPatches = 1;
+					else if(!strcmp(disableVideoPatchesStr[2], value))
+						swissSettings.disableVideoPatches = 2;
+				}
+				else if(!strcmp("Force Video Active", name)) {
+					swissSettings.forceVideoActive = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Force DTV Status", name)) {
+					swissSettings.forceDTVStatus = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Swiss Video Mode", name)) {
+					if(!strcmp(uiVModeStr[0], value))
+						swissSettings.uiVMode = 0;
+					else if(!strcmp(uiVModeStr[1], value))
+						swissSettings.uiVMode = 1;
+					else if(!strcmp(uiVModeStr[2], value))
+						swissSettings.uiVMode = 2;
+					else if(!strcmp(uiVModeStr[3], value))
+						swissSettings.uiVMode = 3;
+					else if(!strcmp(uiVModeStr[4], value))
+						swissSettings.uiVMode = 4;
+				}
+				else if(!strcmp("SMBUserName", name)) {
+					strlcpy(&swissSettings.smbUser[0], value, sizeof(swissSettings.smbUser));
+				}
+				else if(!strcmp("SMBPassword", name)) {
+					strlcpy(&swissSettings.smbPassword[0], value, sizeof(swissSettings.smbPassword));
+				}
+				else if(!strcmp("SMBShareName", name)) {
+					strlcpy(&swissSettings.smbShare[0], value, sizeof(swissSettings.smbShare));
+				}
+				else if(!strcmp("SMBHostIP", name)) {
+					strlcpy(&swissSettings.smbServerIp[0], value, sizeof(swissSettings.smbServerIp));
+				}
+				else if(!strcmp("AutoCheats", name)) {
+					swissSettings.autoCheats = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("InitNetwork", name)) {
+					swissSettings.initNetworkAtStart = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("IGRType", name)) {
+					if(!strcmp(igrTypeStr[0], value))
+						swissSettings.igrType = 0;
+					else if(!strcmp(igrTypeStr[1], value))
+						swissSettings.igrType = 1;
+					else if(!strcmp(igrTypeStr[2], value))
+						swissSettings.igrType = 2;
+				}
+				else if(!strcmp("AVECompat", name)) {
+					if(!strcmp(aveCompatStr[0], value))
+						swissSettings.aveCompat = 0;
+					else if(!strcmp(aveCompatStr[1], value))
+						swissSettings.aveCompat = 1;
+					else if(!strcmp(aveCompatStr[2], value))
+						swissSettings.aveCompat = 2;
+					else if(!strcmp(aveCompatStr[3], value))
+						swissSettings.aveCompat = 3;
+				}
+				else if(!strcmp("FileBrowserType", name)) {
+					if(!strcmp(fileBrowserStr[0], value))
+						swissSettings.fileBrowserType = 0;
+					else if(!strcmp(fileBrowserStr[1], value))
+						swissSettings.fileBrowserType = 1;
+				}
+				else if(!strcmp("BS2Boot", name)) {
+					if(!strcmp(bs2BootStr[0], value))
+						swissSettings.bs2Boot = 0;
+					else if(!strcmp(bs2BootStr[1], value))
+						swissSettings.bs2Boot = 1;
+					else if(!strcmp(bs2BootStr[2], value))
+						swissSettings.bs2Boot = 2;
+					else if(!strcmp(bs2BootStr[3], value))
+						swissSettings.bs2Boot = 3;
+				}
+				else if(!strcmp("FTPUserName", name)) {
+					strlcpy(&swissSettings.ftpUserName[0], value, sizeof(swissSettings.ftpUserName));
+				}
+				else if(!strcmp("FTPPassword", name)) {
+					strlcpy(&swissSettings.ftpPassword[0], value, sizeof(swissSettings.ftpPassword));
+				}
+				else if(!strcmp("FTPHostIP", name)) {
+					strlcpy(&swissSettings.ftpHostIp[0], value, sizeof(swissSettings.ftpHostIp));
+				}
+				else if(!strcmp("FTPPort", name)) {
+					swissSettings.ftpPort = atoi(value);
+				}
+				else if(!strcmp("FTPUsePasv", name)) {
+					swissSettings.ftpUsePasv = !strcmp("Yes", value);
+				}
+				else if(!strcmp("FSPHostIP", name)) {
+					strlcpy(&swissSettings.fspHostIp[0], value, sizeof(swissSettings.fspHostIp));
+				}
+				else if(!strcmp("FSPPort", name)) {
+					swissSettings.fspPort = atoi(value);
+				}
+				else if(!strcmp("FSPPassword", name)) {
+					strlcpy(&swissSettings.fspPassword[0], value, sizeof(swissSettings.fspPassword));
+				}
+				else if(!strcmp("ShowHiddenFiles", name)) {
+					swissSettings.showHiddenFiles = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("RecentListLevel", name)) {
+					if(!strcmp(recentListLevelStr[0], value))
+						swissSettings.recentListLevel = 0;
+					else if(!strcmp(recentListLevelStr[1], value))
+						swissSettings.recentListLevel = 1;
+					else if(!strcmp(recentListLevelStr[2], value))
+						swissSettings.recentListLevel = 2;
+				}
+				else if(!strcmp("GCLoaderTopVersion", name)) {
+					strlcpy(&swissSettings.gcloaderTopVersion[0], value, sizeof(swissSettings.gcloaderTopVersion));
+				}
+				else if(!strcmp("Autoload", name)) {
+					strlcpy(&swissSettings.autoload[0], value, sizeof(swissSettings.autoload));
+				}
+				else if(!strncmp("Recent_", name, strlen("Recent_"))) {
+					int recent_slot = atoi(name+strlen("Recent_"));
+					if(recent_slot >= 0 && recent_slot < RECENT_MAX) {
+						//print_gecko("found recent num %i [%s]\r\n", recent_slot, value);
+						strncpy(swissSettings.recent[recent_slot], value, PATHNAME_MAX);
+					}
+				}
+			}
+		}
+		// And round we go again
+		line = strtok_r( NULL, "\r\n", &linectx);
+	}
+}
+
+void config_parse_recent(char *configData) {
+	char *line, *linectx = NULL;
+	line = strtok_r( configData, "\r\n", &linectx );
+	while( line != NULL ) {
+		//print_gecko("Line [%s]\r\n", line);
+		if(line[0] != '#') {
+			char *name, *namectx = NULL;
+			char *value = NULL;
+			name = strtok_r(line, "=", &namectx);
+			if(name != NULL)
+				value = strtok_r(NULL, "=", &namectx);
+			
+			if(value != NULL) {
+				//print_gecko("Name [%s] Value [%s]\r\n", name, value);
+				if(!strncmp("Recent_", name, strlen("Recent_"))) {
+					int recent_slot = atoi(name+strlen("Recent_"));
+					if(recent_slot >= 0 && recent_slot < RECENT_MAX) {
+						//print_gecko("found recent num %i [%s]\r\n", recent_slot, value);
+						strncpy(swissSettings.recent[recent_slot], value, PATHNAME_MAX);
+					}
+				}
+			}
+		}
+		// And round we go again
+		line = strtok_r( NULL, "\r\n", &linectx);
+	}
+}
+
+void config_parse_game(char *configData, ConfigEntry *entry) {
+	// Parse each entry and put it into our array
+	char *line, *linectx = NULL;
+	line = strtok_r( configData, "\r\n", &linectx );
+	while( line != NULL ) {
+		//print_gecko("Line [%s]\r\n", line);
+		if(line[0] != '#') {
+			char *name, *namectx = NULL;
+			char *value = NULL;
+			name = strtok_r(line, "=", &namectx);
+			if(name != NULL)
+				value = strtok_r(NULL, "=", &namectx);
+			
+			if(value != NULL) {
+				//print_gecko("Name [%s] Value [%s]\r\n", name, value);
+				if(!strcmp("Name", name)) {
+					strncpy(entry->game_name, value, 64);
+				}
+				else if(!strcmp("Comment", name)) {
+					strncpy(entry->comment, value, 128);
+				}
+				else if(!strcmp("Status", name)) {
+					strncpy(entry->status, value, 32);
+				}
+				else if(!strcmp("Force Video Mode", name)) {
+					for(int i = 0; i < 15; i++) {
+						if(!strcmp(gameVModeStr[i], value)) {
+							entry->gameVMode = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Force Horizontal Scale", name)) {
+					for(int i = 0; i < 9; i++) {
+						if(!strcmp(forceHScaleStr[i], value)) {
+							entry->forceHScale = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Force Vertical Offset", name)) {
+					entry->forceVOffset = atoi(value);
+				}
+				else if(!strcmp("Force Vertical Filter", name)) {
+					for(int i = 0; i < 4; i++) {
+						if(!strcmp(forceVFilterStr[i], value)) {
+							entry->forceVFilter = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Disable Alpha Dithering", name)) {
+					entry->disableDithering = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Force Anisotropic Filter", name)) {
+					entry->forceAnisotropy = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strcmp("Force Widescreen", name)) {
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(forceWidescreenStr[i], value)) {
+							entry->forceWidescreen = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Invert Camera Stick", name)) {
+					for(int i = 0; i < 4; i++) {
+						if(!strcmp(invertCStickStr[i], value)) {
+							entry->invertCStick = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Emulate Read Speed", name)) {
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(emulateReadSpeedStr[i], value)) {
+							entry->emulateReadSpeed = i;
+							break;
+						}
+					}
+				}
+			}
+		}
+		// And round we go again
+		line = strtok_r( NULL, "\r\n", &linectx);
+	}
 }
 
 void config_find(ConfigEntry *entry) {
-	//print_gecko("config_find: Looking for game with ID %s\r\n",entry->game_id);
-	// Try to lookup this game based on game_id
-	int i;
-	for(i = 0; i < configEntriesCount; i++) {
-		if(!strncmp(entry->game_id, configEntries[i].game_id, 4)) {
-			memcpy(entry, &configEntries[i], sizeof(ConfigEntry));
-			//print_gecko("config_find: Found %s\r\n",entry->game_id);
-			return;
-		}
-	}
-	// Didn't find it, setup defaults and add this entry
+	// Fill out defaults
 	config_defaults(entry);
-	// Add this new entry to our collection
-	memcpy(&configEntries[configEntriesCount], entry, sizeof(ConfigEntry));
-	configEntriesCount++;
-	//print_gecko("config_find: Couldn't find, creating %s\r\n",entry->game_id);
+	
+	if(!config_set_device()) {
+		return;
+	}
+	print_gecko("config_find: Looking for config file with ID %s\r\n",entry->game_id);
+	// See if we have an actual config file for this game
+	snprintf(txtbuffer, PATHNAME_MAX, "%s/%.4s.ini", SWISS_GAME_SETTINGS_DIR, entry->game_id);
+	char* configEntry = config_file_read(txtbuffer);
+	if(configEntry) {
+		config_parse_game(configEntry, entry);
+		free(configEntry);
+	}
 }
 
-int config_update(ConfigEntry *entry) {
-	//print_gecko("config_update: Looking for game with ID %s\r\n",entry->game_id);
-	int i;
-	for(i = 0; i < configEntriesCount; i++) {
-		if(!strncmp(entry->game_id, configEntries[i].game_id, 4)) {
-			//print_gecko("config_update: Found %s\r\n",entry->game_id);
-			memcpy(&configEntries[i], entry, sizeof(ConfigEntry));
-			return config_update_file();	// Write out the file now
+/** 
+	Initialises the configuration file
+	Returns 1 on successful file open, 0 otherwise
+*/
+int config_init(void (*progress_indicator)(char*, int)) {
+	progress_indicator("Loading settings", 1);
+	if(!config_set_device()) return 0;
+	
+	// Make the new settings base dir(s) if we don't have them already
+	snprintf(txtbuffer, PATHNAME_MAX, "%s%s", devices[DEVICE_CONFIG]->initial->name, SWISS_BASE_DIR);
+	f_mkdir(txtbuffer);
+	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", devices[DEVICE_CONFIG]->initial->name, SWISS_SETTINGS_DIR);
+	f_mkdir(txtbuffer);
+	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", devices[DEVICE_CONFIG]->initial->name, SWISS_GAME_SETTINGS_DIR);
+	f_mkdir(txtbuffer);
+	
+	// Read config (legacy /swiss.ini format)
+	char* configData = config_file_read(SWISS_SETTINGS_FILENAME_LEGACY);
+	if(configData != NULL) {
+		progress_indicator(NULL, 0);
+		progress_indicator("Migrating settings to new format.\nThis will only take a moment.", 1);
+		config_parse_legacy(configData);
+		free(configData);
+	}
+	
+	// Read config (new format)
+	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", SWISS_SETTINGS_DIR, SWISS_SETTINGS_FILENAME);
+	configData = config_file_read(txtbuffer);
+	if(configData != NULL) {
+		config_parse_global(configData);
+		free(configData);
+	}
+	
+	// Read the recent list if enabled
+	if(swissSettings.recentListLevel != 2) {
+		snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", SWISS_SETTINGS_DIR, SWISS_RECENTLIST_FILENAME);
+		configData = config_file_read(txtbuffer);
+		if(configData != NULL) {
+			config_parse_recent(configData);
+			free(configData);
 		}
 	}
-	return 0; // should never happen since we add in the game
-}
-
-int config_get_count() {
-	return configEntriesCount;
+	progress_indicator(NULL, 0);
+	return 0;
 }
 
 SwissSettings backup;
