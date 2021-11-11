@@ -763,7 +763,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				while(!__SYS_SyncSram());
 				// Update our .ini (in memory)
 				if(config != NULL) {
-					config_update_game(config);
+					config_update_game(config, true);
 					DrawDispose(msgBox);
 				}
 				// flush settings to .ini

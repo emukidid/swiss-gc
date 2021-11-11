@@ -478,9 +478,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 	memset(&patchDirName, 0, 256);
 	memset(&patchBaseDirName, 0, 256);
 	strncpy((char*)&gameID, (char*)&GCMDisk, 4);
-	snprintf(&patchDirName[0], 256, "%sswiss_patches/%.4s", devices[DEVICE_PATCHES]->initial->name, &gameID[0]);
+	snprintf(&patchDirName[0], 256, "%sswiss/patches/%.4s", devices[DEVICE_PATCHES]->initial->name, &gameID[0]);
 	memcpy((char*)&gameID, (char*)&GCMDisk, 12);
-	snprintf(&patchBaseDirName[0], 256, "%sswiss_patches", devices[DEVICE_PATCHES]->initial->name);
+	snprintf(&patchBaseDirName[0], 256, "%sswiss/patches", devices[DEVICE_PATCHES]->initial->name);
 	print_gecko("Patch dir will be: %s if required\r\n", patchDirName);
 	// Go through all the possible files we think need patching..
 	for(i = 0; i < numToPatch; i++) {
@@ -581,6 +581,13 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 				deviceHandler_setStatEnabled(1);
 				patchDeviceReady = true;
 			}
+			
+			// Make /swiss/, it'll likely exist already anyway.
+			ensure_path(DEVICE_PATCHES, "swiss", NULL);
+			
+			// If the old directory exists, lets move it to the new location (swiss_patches is now just patches under /swiss/)
+			ensure_path(DEVICE_PATCHES, "swiss/patches", "swiss_patches");	// TODO kill this off in our next major release.
+			
 			// File handle for a patch we might need to write
 			file_handle patchFile;
 			memset(&patchFile, 0, sizeof(file_handle));

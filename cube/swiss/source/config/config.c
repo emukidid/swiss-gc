@@ -118,6 +118,12 @@ bool config_set_device() {
 	return true;
 }
 
+void config_unset_device() {
+	if(devices[DEVICE_CONFIG] != devices[DEVICE_CUR]) {
+		devices[DEVICE_CONFIG]->deinit(devices[DEVICE_CONFIG]->initial);
+	}
+}
+
 // Reads from a file and returns a populated buffer, NULL if anything goes wrong.
 char* config_file_read(char* filename) {
 	char* readBuffer = NULL;
@@ -269,6 +275,7 @@ int config_update_global() {
 	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", SWISS_SETTINGS_DIR, SWISS_SETTINGS_FILENAME);
 	int res = config_file_write(txtbuffer, configString->mem);
 	free(configString);
+	config_unset_device();
 	return res;
 }
 
@@ -286,12 +293,13 @@ int config_update_recent() {
 	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", SWISS_SETTINGS_DIR, SWISS_RECENTLIST_FILENAME);
 	int res = config_file_write(txtbuffer, configString->mem);
 	free(configString);
+	config_unset_device();
 	return res;
 }
 
 
-int config_update_game(ConfigEntry* entry) {
-	if(!config_set_device()) return 0;
+int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
+	if(checkConfigDevice && !config_set_device()) return 0;
 
 	char *str = "# Game specific configuration file. Created by Swiss\r\n";
 	appended_string *configString = string_append(NULL, str);
@@ -337,6 +345,9 @@ int config_update_game(ConfigEntry* entry) {
 	snprintf(txtbuffer, PATHNAME_MAX, "%s/%.4s.ini", SWISS_GAME_SETTINGS_DIR, entry->game_id);
 	int res = config_file_write(txtbuffer, configString->mem);
 	free(configString);
+	if(checkConfigDevice) {
+		config_unset_device();
+	}
 	return res;
 }
 
@@ -365,7 +376,7 @@ void config_defaults(ConfigEntry *entry) {
 }
 
 // TODO kill this off in one major version from now. Don't add new settings to it.
-void config_parse_legacy(char *configData) {
+void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int, int)) {
 	ConfigEntry configEntries[2048]; // That's a lot of Games!
 	int configEntriesCount = 0;
 	// Parse each entry and put it into our array
@@ -640,7 +651,8 @@ void config_parse_legacy(char *configData) {
 	 // Write out to individual files.
 	 int i;
 	 for(i = 0; i < configEntriesCount; i++) {
-		 config_update_game(&configEntries[i]);
+		 progress_indicator("Migrating settings to new format.", 1, (int)(((float)i / (float)configEntriesCount) * 100));
+		 config_update_game(&configEntries[i], false);
 	 }
 	 // Write out a new swiss.ini
 	 config_update_global();
@@ -1009,15 +1021,19 @@ void config_find(ConfigEntry *entry) {
 		config_parse_game(configEntry, entry);
 		free(configEntry);
 	}
+	config_unset_device();
 }
 
 /** 
 	Initialises the configuration file
 	Returns 1 on successful file open, 0 otherwise
 */
-int config_init(void (*progress_indicator)(char*, int)) {
-	progress_indicator("Loading settings", 1);
-	if(!config_set_device()) return 0;
+int config_init(void (*progress_indicator)(char*, int, int)) {
+	progress_indicator("Loading settings", 1, -2);
+	if(!config_set_device()) {
+		progress_indicator(NULL, 0, 0);
+		return 0;
+	}
 	
 	// Make the new settings base dir(s) if we don't have them already
 	snprintf(txtbuffer, PATHNAME_MAX, "%s%s", devices[DEVICE_CONFIG]->initial->name, SWISS_BASE_DIR);
@@ -1030,9 +1046,9 @@ int config_init(void (*progress_indicator)(char*, int)) {
 	// Read config (legacy /swiss.ini format)
 	char* configData = config_file_read(SWISS_SETTINGS_FILENAME_LEGACY);
 	if(configData != NULL) {
-		progress_indicator(NULL, 0);
-		progress_indicator("Migrating settings to new format.\nThis will only take a moment.", 1);
-		config_parse_legacy(configData);
+		progress_indicator(NULL, 0, 0);
+		progress_indicator("Migrating settings to new format.", 1, -1);
+		config_parse_legacy(configData, progress_indicator);
 		free(configData);
 	}
 	
@@ -1053,7 +1069,8 @@ int config_init(void (*progress_indicator)(char*, int)) {
 			free(configData);
 		}
 	}
-	progress_indicator(NULL, 0);
+	progress_indicator(NULL, 0, 0);
+	config_unset_device();
 	return 0;
 }
 

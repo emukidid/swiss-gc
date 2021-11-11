@@ -115,7 +115,7 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, int 
 		file_handle patchFile;
 		for(i = 0; i < numToPatch; i++) {
 			memset(&patchFile, 0, sizeof(file_handle));
-			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/%.4s/%i", devices[DEVICE_PATCHES]->initial->name, (char*)&GCMDisk, i);
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss/patches/%.4s/%i", devices[DEVICE_PATCHES]->initial->name, (char*)&GCMDisk, i);
 			
 			if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) == 0) {
 				u32 patchInfo[4];
@@ -146,8 +146,9 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, int 
 		
 		if(swissSettings.igrType == IGR_BOOTBIN) {
 			memset(&patchFile, 0, sizeof(file_handle));
-			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/apploader.img", devices[DEVICE_PATCHES]->initial->name);
-			
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss/igr/apploader.img", devices[DEVICE_PATCHES]->initial->name);
+			ensure_path(DEVICE_PATCHES, "swiss/igr", NULL);
+
 			ApploaderHeader apploaderHeader;
 			if(devices[DEVICE_PATCHES]->readFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader)) != sizeof(ApploaderHeader) || apploaderHeader.rebootSize != reboot_bin_size) {
 				devices[DEVICE_PATCHES]->deleteFile(&patchFile);

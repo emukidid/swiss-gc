@@ -23,10 +23,10 @@ typedef struct {
 } ConfigEntry;
 
 void config_find(ConfigEntry *entry);
-int config_update_game(ConfigEntry *entry);
+int config_update_game(ConfigEntry *entry, bool checkConfigDevice);
 int config_update_global();
 int config_update_recent();
-int config_init(void (*progress_indicator)(char*, int));
+int config_init(void (*progress_indicator)(char*, int, int));
 void config_load_current(ConfigEntry *config);
 void config_unload_current();
 

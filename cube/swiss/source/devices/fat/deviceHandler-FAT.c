@@ -320,7 +320,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	file_handle patchFile;
 	for(i = 0; i < numToPatch; i++) {
 		memset(&patchFile, 0, sizeof(file_handle));
-		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/%.4s/%i", devices[DEVICE_CUR]->initial->name, (char*)&GCMDisk, i);
+		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss/patches/%.4s/%i", devices[DEVICE_CUR]->initial->name, (char*)&GCMDisk, i);
 		
 		if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) == 0) {
 			u32 patchInfo[4];
@@ -374,8 +374,9 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	
 	if(swissSettings.igrType == IGR_BOOTBIN) {
 		memset(&patchFile, 0, sizeof(file_handle));
-		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/apploader.img", devices[DEVICE_CUR]->initial->name);
-		
+		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss/igr/apploader.img", devices[DEVICE_CUR]->initial->name);
+		ensure_path(DEVICE_PATCHES, "swiss/igr", NULL);
+
 		ApploaderHeader apploaderHeader;
 		if(devices[DEVICE_CUR]->readFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader)) != sizeof(ApploaderHeader) || apploaderHeader.rebootSize != reboot_bin_size) {
 			devices[DEVICE_CUR]->deleteFile(&patchFile);
@@ -401,8 +402,11 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	if(swissSettings.emulateMemoryCard) {
 		if(devices[DEVICE_CUR] != &__device_sd_a && devices[DEVICE_CUR] != &__device_ata_a && devices[DEVICE_CUR] != &__device_ata_c) {
 			memset(&patchFile, 0, sizeof(file_handle));
-			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/MemoryCardA.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
-			
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss/memcard/MemoryCardA.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			ensure_path(DEVICE_PATCHES, "swiss/memcard", NULL);
+			snprintf(txtbuffer, PATHNAME_MAX, "%sswiss_patches/MemoryCardA.%s.raw", devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			f_rename(txtbuffer, &patchFile.name[0]);	// TODO remove this in our next major release
+
 			if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) != 0) {
 				devices[DEVICE_CUR]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 				devices[DEVICE_CUR]->writeFile(&patchFile, NULL, 0);
@@ -421,8 +425,11 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 		
 		if(devices[DEVICE_CUR] != &__device_sd_b && devices[DEVICE_CUR] != &__device_ata_b) {
 			memset(&patchFile, 0, sizeof(file_handle));
-			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
-			
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss/memcard/MemoryCardB.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			ensure_path(DEVICE_PATCHES, "swiss/memcard", NULL);
+			snprintf(txtbuffer, PATHNAME_MAX, "%sswiss_patches/MemoryCardB.%s.raw", devices[DEVICE_PATCHES]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			f_rename(txtbuffer, &patchFile.name[0]);	// TODO remove this in our next major release
+
 			if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) != 0) {
 				devices[DEVICE_CUR]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 				devices[DEVICE_CUR]->writeFile(&patchFile, NULL, 0);

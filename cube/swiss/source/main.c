@@ -119,9 +119,14 @@ void Initialise (void)
 }
 
 uiDrawObj_t *configProgBar = NULL;
-void config_migration(char* text, int state) {
+void config_migration(char* text, int state, int percent) {
 	if(state) {
-		configProgBar = DrawPublish(DrawProgressBar(true, 0, text));
+		if(percent < 0) {
+			configProgBar = DrawPublish(DrawProgressBar(percent == -2, 0, text));
+		}
+		else {
+			DrawUpdateProgressBar(configProgBar, percent);
+		}
 	}
 	else {
 		if(configProgBar) {
