@@ -272,6 +272,9 @@ int config_update_global() {
 	sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
 	string_append(configString, txtbuffer);
 	
+	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
+	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL);
+	
 	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", SWISS_SETTINGS_DIR, SWISS_SETTINGS_FILENAME);
 	int res = config_file_write(txtbuffer, configString->mem);
 	free(configString);
@@ -290,6 +293,9 @@ int config_update_recent() {
 		//print_gecko("added recent [%s]\r\n",txtbuffer);
 		string_append(configString, txtbuffer);
 	}
+	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
+	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL);
+	
 	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", SWISS_SETTINGS_DIR, SWISS_RECENTLIST_FILENAME);
 	int res = config_file_write(txtbuffer, configString->mem);
 	free(configString);
@@ -342,6 +348,10 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	sprintf(txtbuffer, "Emulate Read Speed=%s\r\n",emulateReadSpeedStr[entry->emulateReadSpeed]);
 	string_append(configString, txtbuffer);
 
+	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
+	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL);
+	ensure_path(DEVICE_CONFIG, SWISS_GAME_SETTINGS_DIR, NULL);
+	
 	snprintf(txtbuffer, PATHNAME_MAX, "%s/%.4s.ini", SWISS_GAME_SETTINGS_DIR, entry->game_id);
 	int res = config_file_write(txtbuffer, configString->mem);
 	free(configString);
@@ -1036,12 +1046,9 @@ int config_init(void (*progress_indicator)(char*, int, int)) {
 	}
 	
 	// Make the new settings base dir(s) if we don't have them already
-	snprintf(txtbuffer, PATHNAME_MAX, "%s%s", devices[DEVICE_CONFIG]->initial->name, SWISS_BASE_DIR);
-	f_mkdir(txtbuffer);
-	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", devices[DEVICE_CONFIG]->initial->name, SWISS_SETTINGS_DIR);
-	f_mkdir(txtbuffer);
-	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", devices[DEVICE_CONFIG]->initial->name, SWISS_GAME_SETTINGS_DIR);
-	f_mkdir(txtbuffer);
+	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
+	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL);
+	ensure_path(DEVICE_CONFIG, SWISS_GAME_SETTINGS_DIR, NULL);
 	
 	// Read config (legacy /swiss.ini format)
 	char* configData = config_file_read(SWISS_SETTINGS_FILENAME_LEGACY);
@@ -1058,6 +1065,9 @@ int config_init(void (*progress_indicator)(char*, int, int)) {
 	if(configData != NULL) {
 		config_parse_global(configData);
 		free(configData);
+	} else {
+		// Store current/defaults.
+		config_update_global();
 	}
 	
 	// Read the recent list if enabled
