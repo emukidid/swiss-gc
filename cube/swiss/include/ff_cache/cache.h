@@ -43,7 +43,7 @@ typedef struct {
 	sec_t        sector;
 	unsigned int count;
 	unsigned int last_access;
-	bool         dirty;
+	uint64_t     dirty;
 	uint8_t*     cache;
 } CACHE_ENTRY;
 
