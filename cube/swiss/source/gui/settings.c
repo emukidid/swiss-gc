@@ -767,7 +767,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 					DrawDispose(msgBox);
 				}
 				// flush settings to .ini
-				if(config_update_global()) {
+				if(config_update_global(true)) {
 					DrawDispose(msgBox);
 					msgBox = DrawPublish(DrawMessageBox(D_INFO,"Config Saved Successfully!"));
 					sleep(1);

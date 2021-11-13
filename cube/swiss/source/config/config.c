@@ -168,8 +168,8 @@ void config_file_delete(char* filename) {
 	free(configFile);
 }
 
-int config_update_global() {
-	if(!config_set_device()) return 0;
+int config_update_global(bool checkConfigDevice) {
+	if(checkConfigDevice && !config_set_device()) return 0;
 
 	char *str = "# Swiss Configuration File!\r\n# Anything written in here will be lost!\r\n\r\n#!!Swiss Settings Start!!\r\n";
 	appended_string *configString = string_append(NULL, str);
@@ -278,12 +278,14 @@ int config_update_global() {
 	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", SWISS_SETTINGS_DIR, SWISS_SETTINGS_FILENAME);
 	int res = config_file_write(txtbuffer, configString->mem);
 	free(configString);
-	config_unset_device();
+	if(checkConfigDevice) {
+		config_unset_device();
+	}
 	return res;
 }
 
-int config_update_recent() {
-	if(!config_set_device()) return 0;
+int config_update_recent(bool checkConfigDevice) {
+	if(checkConfigDevice && !config_set_device()) return 0;
 
 	char *str = "# Recent list. Created by Swiss\r\n";
 	appended_string *configString = string_append(NULL, str);
@@ -299,7 +301,9 @@ int config_update_recent() {
 	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", SWISS_SETTINGS_DIR, SWISS_RECENTLIST_FILENAME);
 	int res = config_file_write(txtbuffer, configString->mem);
 	free(configString);
-	config_unset_device();
+	if(checkConfigDevice) {
+		config_unset_device();
+	}
 	return res;
 }
 
@@ -665,9 +669,9 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 		 config_update_game(&configEntries[i], false);
 	 }
 	 // Write out a new swiss.ini
-	 config_update_global();
+	 config_update_global(false);
 	 // Write out new recent.ini
-	 config_update_recent();
+	 config_update_recent(false);
 	 // Kill off the old swiss.ini
 	 config_file_delete(SWISS_SETTINGS_FILENAME_LEGACY);
 }
@@ -1067,7 +1071,7 @@ int config_init(void (*progress_indicator)(char*, int, int)) {
 		free(configData);
 	} else {
 		// Store current/defaults.
-		config_update_global();
+		config_update_global(false);
 	}
 	
 	// Read the recent list if enabled

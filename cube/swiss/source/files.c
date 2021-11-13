@@ -77,11 +77,11 @@ int getCurrentDirEntryCount() {
 
 // Either renames a path to a new one, or creates one.
 void ensure_path(int deviceSlot, char *path, char *oldPath) {
-	char *fullPath = calloc(1, PATHNAME_MAX*2);
+	char *fullPath = calloc(1, PATHNAME_MAX);
 	if(oldPath) {
-		char *oldFullPath = calloc(1, PATHNAME_MAX*2);
-		snprintf(oldFullPath, 256, "%s%s", devices[DEVICE_PATCHES]->initial->name, oldPath);
-		snprintf(fullPath, 256, "%s%s", devices[DEVICE_PATCHES]->initial->name, path);
+		char *oldFullPath = calloc(1, PATHNAME_MAX);
+		snprintf(oldFullPath, PATHNAME_MAX, "%s%s", devices[DEVICE_PATCHES]->initial->name, oldPath);
+		snprintf(fullPath, PATHNAME_MAX, "%s%s", devices[DEVICE_PATCHES]->initial->name, path);
 		f_rename(oldFullPath, fullPath);
 		free(oldFullPath);
 	}

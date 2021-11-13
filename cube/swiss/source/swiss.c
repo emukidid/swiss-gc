@@ -1166,7 +1166,7 @@ void boot_dol()
 		// Update the recent list.
 		if(update_recent()) {
 			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list ..."));
-			config_update_recent();
+			config_update_recent(true);
 			DrawDispose(msgBox);
 		}
 	}
@@ -2039,7 +2039,7 @@ int info_game()
 				// Update the recent list.
 				if(update_recent()) {
 					uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list ..."));
-					config_update_recent();
+					config_update_recent(true);
 					DrawDispose(msgBox);
 				}
 			}
@@ -2058,7 +2058,7 @@ int info_game()
 			}
 			// Save config
 			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload ..."));
-			config_update_global();
+			config_update_global(true);
 			DrawDispose(infoPanel);
 			infoPanel = DrawPublish(draw_game_info());
 			DrawDispose(msgBox);
