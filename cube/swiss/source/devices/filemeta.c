@@ -260,6 +260,7 @@ void populate_meta(file_handle *f) {
 }
 
 file_handle* meta_find_disc2(file_handle *f) {
+	file_handle* disc2File = NULL;
 	if(f->meta && is_multi_disc(&f->meta->diskId)) {
 		file_handle* dirEntries = getCurrentDirEntries();
 		for(int i = 0; i < getCurrentDirEntryCount(); i++) {
@@ -280,11 +281,12 @@ file_handle* meta_find_disc2(file_handle *f) {
 					continue;
 				}
 				if(strcasecmp(dirEntries[i].name, f->name) != dirEntries[i].meta->diskId.disknum - f->meta->diskId.disknum) {
+					disc2File = &dirEntries[i];
 					continue;
 				}
 				return &dirEntries[i];
 			}
 		}
 	}
-	return NULL;
+	return disc2File;
 }
