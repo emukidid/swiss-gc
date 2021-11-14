@@ -43,7 +43,7 @@
 #include "ff_cache/mem_allocate.h"
 #include "ff_cache/bit_ops.h"
 
-#define CACHE_FREE UINT_MAX
+#define CACHE_FREE ((sec_t)-1)
 
 CACHE* _FAT_cache_constructor (unsigned int numberOfPages, unsigned int sectorsPerPage, const DISC_INTERFACE* discInterface, sec_t endOfPartition, unsigned int bytesPerSector) {
 	CACHE* cache;
@@ -138,8 +138,8 @@ static CACHE_ENTRY* _FAT_cache_getPage(CACHE *cache,sec_t sector)
 	}
 
 	if(foundFree==false && cacheEntries[oldUsed].dirty!=0) {
-		sec_t sec = __builtin_ctzll(cacheEntries[oldUsed].dirty);
-		sec_t secs_to_write = (64-__builtin_clzll(cacheEntries[oldUsed].dirty))-sec;
+		sec_t sec = ffsll(cacheEntries[oldUsed].dirty)-1;
+		sec_t secs_to_write = flsll(cacheEntries[oldUsed].dirty)-sec;
 
 		if(!_FAT_disc_writeSectors(cache->disc,cacheEntries[oldUsed].sector+sec,secs_to_write,cacheEntries[oldUsed].cache+(sec*cache->bytesPerSector))) return NULL;
 
@@ -293,8 +293,9 @@ bool _FAT_cache_writeSectors (CACHE* cache, sec_t sector, sec_t numSectors, cons
 		sector += secs_to_write;
 		numSectors -= secs_to_write;
 
-		entry->dirty |= ((1ULL << secs_to_write) - 1) << sec;
+		entry->dirty |= ((1ULL << secs_to_write)-1) << sec;
 	}
+
 	return true;
 }
 
@@ -311,8 +312,8 @@ bool _FAT_cache_flush (CACHE* cache) {
 		entry = &(cache->cacheEntries[i]);
 
 		if (entry->dirty) {
-			sec = __builtin_ctzll(entry->dirty);
-			secs_to_write = (64 - __builtin_clzll(entry->dirty)) - sec;
+			sec = ffsll(entry->dirty) - 1;
+			secs_to_write = flsll(entry->dirty) - sec;
 
 			if (!_FAT_disc_writeSectors(cache->disc, entry->sector + sec, secs_to_write, entry->cache + (sec * cache->bytesPerSector))) return false;
 
