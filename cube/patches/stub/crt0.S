@@ -73,7 +73,8 @@ startup:
 #endif
 	stwu	r0, -8 (sp)
 
-	bl		_main
+	bl		pf_main
+	bl		dvd_main
 
 reset:
 	li		r0, 0

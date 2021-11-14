@@ -82,3 +82,41 @@ xmit_spi:
 	eciwx	r0, r5, r4
 	srwi	r3, r0, 24
 	blr
+
+	.globl dvd_read
+dvd_read:
+	addi	r4, r4, 31
+	rlwinm	r3, r3, 0, 6, 26
+	rlwinm.	r4, r4, 0, 6, 26
+	srwi	r5, r5, 2
+	beq		3f
+	li		r6, 0
+	srwi	r7, r4, 5
+	mtctr	r7
+1:	dcbi	r6, r3
+	addi	r6, r6, 32
+	bdnz	1b
+	lis		r0, 0xA800
+	lis		r6, 0x0C00
+	li		r7, 0x6000 + 2*4
+	ecowx	r0, r7, r6
+	li		r7, 0x6000 + 3*4
+	ecowx	r5, r7, r6
+	li		r7, 0x6000 + 4*4
+	ecowx	r4, r7, r6
+	li		r7, 0x6000 + 5*4
+	ecowx	r3, r7, r6
+	li		r7, 0x6000 + 6*4
+	ecowx	r4, r7, r6
+	li		r7, 0x6000 + 7*4
+	li		r0, 0b011
+	ecowx	r0, r7, r6
+2:	eciwx	r0, r7, r6
+	andi.	r0, r0, 0b001
+	bne		2b
+	li		r7, 0x6000 + 5*4
+	eciwx	r0, r7, r6
+	subf	r3, r3, r0
+	blr
+3:	li		r3, 0
+	blr
