@@ -15,7 +15,6 @@
 #include <sdcard/card_cmn.h>
 #include <ogc/lwp_threads.h>
 #include <ogc/machine/processor.h>
-#include <ctype.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1754,7 +1753,7 @@ void load_game() {
 	if(tgcFile.magic == TGC_MAGIC) {
 		bootMode = 1;
 	}
-	else if(isdigit(GCMDisk.ConsoleID) || GCMDisk.DOLOffset == 0) {
+	else if(!valid_gcm_boot(&GCMDisk)) {
 		bootMode = 2;
 	}
 	
@@ -2046,7 +2045,7 @@ int info_game()
 			break;
 		}
 		if(buttons & PAD_BUTTON_X) {
-			show_settings((isdigit(GCMDisk.ConsoleID) || GCMDisk.DOLOffset == 0) ? NULL : &curFile, config);
+			show_settings(valid_gcm_boot(&GCMDisk) ? &curFile : NULL, config);
 		}
 		if((buttons & PAD_TRIGGER_Z) && devices[DEVICE_CONFIG] != NULL) {
 			// Toggle autoload

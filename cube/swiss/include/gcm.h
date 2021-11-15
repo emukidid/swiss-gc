@@ -37,9 +37,9 @@ typedef struct {
 	u32 FSTOffset;		//offset of the FST ("fst.bin")
 	u32	FSTSize;		//size of FST
 	u32	MaxFSTSize;		//maximum size of FST (usually same as FSTSize)*
+	u32 FSTAddress;
 	u32 UserPos;		//user position(?)
 	u32 UserLength;		//user length(?)
-	u32 unknown_1;		//(?)
 	u32 unused_5;
 	u32 DebugMonSize;
 	u32 SimMemSize;

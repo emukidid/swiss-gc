@@ -17,6 +17,7 @@
  * with Swiss.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -2034,6 +2035,14 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 	}
 
 	return false;
+}
+
+bool valid_gcm_boot(const DiskHeader *header)
+{
+	if (isdigit(header->ConsoleID) && header->MakerCodeA == '0' && header->MakerCodeB == '1')
+		return false;
+
+	return header->DOLOffset != 0 && header->FSTAddress != 0;
 }
 
 bool valid_gcm_crc32(const DiskHeader *header, uint32_t crc)
