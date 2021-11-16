@@ -211,7 +211,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		while(1);
 	}
 	filesToPatch[numFiles].offset = 0x2440;
-	filesToPatch[numFiles].size = sizeof(ApploaderHeader) + apploaderHeader.size + apploaderHeader.rebootSize;
+	filesToPatch[numFiles].size = sizeof(ApploaderHeader) + ((apploaderHeader.size + 31) & ~31) + ((apploaderHeader.rebootSize + 31) & ~31);
 	filesToPatch[numFiles].type = PATCH_APPLOADER;
 	sprintf(filesToPatch[numFiles].name, "apploader.img");
 	numFiles++;
@@ -346,7 +346,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 		devices[DEVICE_CUR]->readFile(file,&apploaderHeader,sizeof(ApploaderHeader));
 		
 		filesToPatch[numFiles].offset = tgc_base+tgcHeader.apploaderOffset;
-		filesToPatch[numFiles].size = sizeof(ApploaderHeader) + apploaderHeader.size + apploaderHeader.rebootSize;
+		filesToPatch[numFiles].size = sizeof(ApploaderHeader) + ((apploaderHeader.size + 31) & ~31) + ((apploaderHeader.rebootSize + 31) & ~31);
 		filesToPatch[numFiles].type = PATCH_APPLOADER;
 		sprintf(filesToPatch[numFiles].name, "%s/%s", tgcname, "apploader.img");
 		numFiles++;
