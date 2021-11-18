@@ -16,10 +16,12 @@
 #include "settings.h"
 #include "exi.h"
 
-static int page_x_ofs_key = 30;
-static int page_x_ofs_val = 410;
-static int page_y_line = 25;
-static float label_size = 0.75f;
+#define page_x_ofs_key (30)
+#define page_x_ofs_val (410)
+#define page_y_line (25)
+#define page_nav_y (390)
+#define page_saveexit_y (425)
+#define label_size (0.75f)
 	
 SwissSettings tempSettings;
 char *uiVModeStr[] = {"Auto", "480i", "480p", "576i", "576p"};
@@ -142,17 +144,30 @@ void add_tooltip_label(uiDrawObj_t* page, int page_num, int option) {
 	}
 }
 
+void drawSelectIndicator(uiDrawObj_t* page, int y) {
+	DrawAddChild(page, DrawStyledLabel(20, y + (page_y_line / 4), "*", 0.35f, false, disabledColor));	
+}
+
 void drawSettingEntryString(uiDrawObj_t* page, int *y, char *label, char *key, bool selected, bool enabled) {
+	if(selected) {
+		drawSelectIndicator(page, *y);
+	}
 	DrawAddChild(page, DrawStyledLabel(page_x_ofs_key, *y, label, label_size, false, enabled ? defaultColor:deSelectedColor));
 	DrawAddChild(page, DrawStyledLabel(page_x_ofs_val, *y, key, label_size, false, enabled && selected ? defaultColor:deSelectedColor));
 	*y += page_y_line; 
 }
 
 void drawSettingEntryBoolean(uiDrawObj_t* page, int *y, char *label, bool boolval, bool selected, bool enabled) {
+	if(selected) {
+		drawSelectIndicator(page, *y);
+	}
 	drawSettingEntryString(page, y, label, boolval ? "Yes" : "No", selected, enabled);
 }
 
 void drawSettingEntryNumeric(uiDrawObj_t* page, int *y, char *label, int num, bool selected, bool enabled) {
+	if(selected) {
+		drawSelectIndicator(page, *y);
+	}
 	sprintf(txtbuffer, "%i", num);
 	drawSettingEntryString(page, y, label, txtbuffer, selected, enabled);
 }
@@ -199,19 +214,17 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 	// Add paging and save/cancel buttons
 	if(page_num != PAGE_MIN) {
 		isNavOption = option == settings_count_pp[page_num]-(page_num != PAGE_MAX ? 3:2);
-		DrawAddChild(page, DrawSelectableButton(50, 390, -1, 420, "Back", isNavOption));
+		DrawAddChild(page, DrawSelectableButton(50, page_nav_y, -1, 420, "Back", isNavOption));
 	}
 	if(page_num != PAGE_MAX) {
 		isNavOption = isNavOption || option == settings_count_pp[page_num]-2;
-		DrawAddChild(page, DrawSelectableButton(510, 390, -1, 420, "Next", option == settings_count_pp[page_num]-2 ? B_SELECTED:B_NOSELECT));
+		DrawAddChild(page, DrawSelectableButton(510, page_nav_y, -1, 420, "Next", option == settings_count_pp[page_num]-2 ? B_SELECTED:B_NOSELECT));
 	}
-	DrawAddChild(page, DrawSelectableButton(120, 425, -1, 455, "Save & Exit", option == settings_count_pp[page_num]-1 ? B_SELECTED:B_NOSELECT));
-	DrawAddChild(page, DrawSelectableButton(320, 425, -1, 455, "Discard & Exit", option ==  settings_count_pp[page_num] ? B_SELECTED:B_NOSELECT));
+	DrawAddChild(page, DrawSelectableButton(120, page_saveexit_y, -1, 455, "Save & Exit", option == settings_count_pp[page_num]-1 ? B_SELECTED:B_NOSELECT));
+	DrawAddChild(page, DrawSelectableButton(320, page_saveexit_y, -1, 455, "Discard & Exit", option ==  settings_count_pp[page_num] ? B_SELECTED:B_NOSELECT));
 	isNavOption = isNavOption || (option >= settings_count_pp[page_num]-1);
 	
 	int page_y_ofs = 110;
-	if(!isNavOption)
-		DrawAddChild(page, DrawStyledLabel(20, page_y_ofs + (page_y_line * option) + (page_y_line / 4), "*", 0.35f, false, disabledColor));
 	// Page specific buttons
 	if(page_num == PAGE_GLOBAL) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Global Settings (1/5):"));
@@ -230,17 +243,29 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		
 	}
 	else if(page_num == PAGE_NETWORK) {
+		int settings_per_page = 10;
+		int scrollBarHeight = 90+(settings_per_page*20);
+		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)SET_SMB_PASS);
+		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, page_y_ofs, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_2_BACK-1)),scrollBarTabHeight));
 		bool netEnable = exi_bba_exists();
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Network Settings (2/5):"));	
-		drawSettingEntryBoolean(page, &page_y_ofs, "Init network at startup:", swissSettings.initNetworkAtStart, option == SET_INIT_NET, netEnable);
-		drawSettingEntryString(page, &page_y_ofs, "FTP Host IP:", swissSettings.ftpHostIp, option == SET_FTP_HOSTIP, netEnable);
-		drawSettingEntryNumeric(page, &page_y_ofs, "FTP Port:", swissSettings.ftpPort, option == SET_FTP_PORT, netEnable);
-		drawSettingEntryString(page, &page_y_ofs, "FTP Username:", swissSettings.ftpUserName, option == SET_FTP_USER, netEnable);
-		drawSettingEntryString(page, &page_y_ofs, "FTP Password:", "*****", option == SET_FTP_PASS, netEnable);
-		drawSettingEntryBoolean(page, &page_y_ofs, "FTP PASV Mode:", swissSettings.ftpUsePasv, option == SET_FTP_PASV, netEnable);
-		drawSettingEntryString(page, &page_y_ofs, "FSP Host IP:", swissSettings.fspHostIp, option == SET_FSP_HOSTIP, netEnable);
-		drawSettingEntryNumeric(page, &page_y_ofs, "FSP Port:", swissSettings.fspPort, option == SET_FSP_PORT, netEnable);
-		drawSettingEntryString(page, &page_y_ofs, "FSP Password:", "*****", option == SET_FSP_PASS, netEnable);
+		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
+		if(option < SET_SMB_HOSTIP) {
+			drawSettingEntryBoolean(page, &page_y_ofs, "Init network at startup:", swissSettings.initNetworkAtStart, option == SET_INIT_NET, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "FTP Host IP:", swissSettings.ftpHostIp, option == SET_FTP_HOSTIP, netEnable);
+			drawSettingEntryNumeric(page, &page_y_ofs, "FTP Port:", swissSettings.ftpPort, option == SET_FTP_PORT, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "FTP Username:", swissSettings.ftpUserName, option == SET_FTP_USER, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "FTP Password:", "*****", option == SET_FTP_PASS, netEnable);
+			drawSettingEntryBoolean(page, &page_y_ofs, "FTP PASV Mode:", swissSettings.ftpUsePasv, option == SET_FTP_PASV, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "FSP Host IP:", swissSettings.fspHostIp, option == SET_FSP_HOSTIP, netEnable);
+			drawSettingEntryNumeric(page, &page_y_ofs, "FSP Port:", swissSettings.fspPort, option == SET_FSP_PORT, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "FSP Password:", "*****", option == SET_FSP_PASS, netEnable);
+		} else {
+			drawSettingEntryString(page, &page_y_ofs, "SMB Host IP:", swissSettings.smbServerIp, option == SET_SMB_HOSTIP, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "SMB Share:", swissSettings.smbShare, option == SET_SMB_SHARE, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "SMB Username:", swissSettings.smbUser, option == SET_SMB_USER, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "SMB Password:", "*****", option == SET_SMB_PASS, netEnable);
+		}
 	}
 	else if(page_num == PAGE_ADVANCED) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Advanced Settings (3/5):"));
@@ -444,6 +469,18 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			break;
 			case SET_FSP_PASS:
 				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_MASKED, "FSP Password", &swissSettings.fspPassword, sizeof(swissSettings.fspPassword));
+			break;
+			case SET_SMB_HOSTIP:
+				DrawGetTextEntry(ENTRYMODE_IP, "SMB Host IP", &swissSettings.smbServerIp, sizeof(swissSettings.smbServerIp));
+			break;
+			case SET_SMB_SHARE:
+				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA, "SMB Share", &swissSettings.smbShare, sizeof(swissSettings.smbShare));
+			break;
+			case SET_SMB_USER:
+				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA, "SMB Username", &swissSettings.smbUser, sizeof(swissSettings.smbUser));
+			break;
+			case SET_SMB_PASS:
+				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_MASKED, "SMB Password", &swissSettings.smbPassword, sizeof(swissSettings.smbPassword));
 			break;
 		}
 	}
@@ -796,7 +833,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				page--; option = 0;
 			}
 			// These use text input, allow them to be accessed with the A button
-			if(page == PAGE_NETWORK && ((option >= SET_FTP_HOSTIP && option <= SET_FTP_PASS) || (option >= SET_FSP_HOSTIP && option <= SET_FSP_PASS))) {
+			if(page == PAGE_NETWORK && ((option >= SET_FTP_HOSTIP && option <= SET_FTP_PASS) || (option >= SET_FSP_HOSTIP && option <= SET_SMB_PASS))) {
 				settings_toggle(page, option, -1, file, config);
 			}
 		}
