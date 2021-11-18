@@ -39,10 +39,13 @@ static const struct {
 		uint32_t size;
 	} banner;
 } nkit_dat[] = {
+	{ "D28J01\x00\x00", true,  1, 0x8FC6, 0x8EFBB42B,  794134528, {  394649296,  +665814992, 6496 }},
+	{ "GW7E69\x00\x00", false, 1, 0xAD23, 0x64886672, 1341470720, {  663025884,      +12320, 6496 }},
+	{ "RELSAB\x00\x00", false, 1, 0x4535, 0x5DC67D47, 1298782208, {          0,          +0,    0 }},
+#define REDUMP_INDEX 3
 	{ "102E01\x00\x07", true,  1, 0x10B2, 0x4CA6F4EB, 1450858496, {  122984064,    +1245184, 6496 }},
 	{ "301E01\x00\x00", true,  1, 0x2291, 0xBE031BBE,  220121088, {  152535040, +1239842816, 6496 }},
 	{ "D23J01\x00\x00", true,  1, 0x54F8, 0x385BDC6A, 1310650368, {  584824840,  +149335704, 6496 }},
-	{ "D28J01\x00\x00", true,  1, 0x8FC6, 0x8EFBB42B,  794134528, {  394649296,  +665814992, 6496 }},
 	{ "D29J01\x00\x00", true,  1, 0x944D, 0x87E9B682,  967475200, {  473567348,  +492492332, 6496 }},
 	{ "D32J01\x00\x00", true,  1, 0x264C, 0x8C63ED7D, 1017810944, {  688658456,  +442125960, 6496 }},
 	{ "D33J01\x00\x00", true,  1, 0xED1C, 0x86DACAB6, 1442138112, {  920004864,   +17849108, 6496 }},
@@ -1761,7 +1764,6 @@ static const struct {
 	{ "GW6JEM\x00\x00", false, 1, 0x8B72, 0x07F76BCC,  528504832, {  469333896,      +30772, 6496 }},
 	{ "GW7D69\x00\x00", false, 1, 0x7F56, 0x43C1D6A0, 1295890432, {  659303432,      +12384, 6496 }},
 	{ "GW7E69\x00\x00", false, 1, 0x4B6A, 0x04486E6C, 1341470720, {  663024492,      +11808, 6496 }},
-	{ "GW7E69\x00\x00", false, 1, 0xAD23, 0x64886672, 1341470720, {  663025884,      +12320, 6496 }},
 	{ "GW7E69\x00\x01", false, 1, 0x3679, 0xE9A1E1B2, 1341470720, {  663024948,      +11784, 6496 }},
 	{ "GW7F69\x00\x00", false, 1, 0x249D, 0x970521DE, 1294770176, {  658310188,      +12384, 6496 }},
 	{ "GW7P69\x00\x00", false, 1, 0xEF30, 0xE3B90F14, 1302865920, {  665036364,      +12384, 6496 }},
@@ -1982,7 +1984,7 @@ static uint16_t fletcher16(const void *buffer, size_t size)
 
 bool is_multi_disc(const dvddiskid *header)
 {
-	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+	for (int i = REDUMP_INDEX; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
 		if (!memcmp(header, nkit_dat[i].header, 8))
 			return nkit_dat[i].discs > 1;
 
@@ -1991,7 +1993,7 @@ bool is_multi_disc(const dvddiskid *header)
 
 bool is_redump_disc(const dvddiskid *header)
 {
-	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+	for (int i = REDUMP_INDEX; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
 		if (!memcmp(header, nkit_dat[i].header, 8))
 			return true;
 
@@ -2000,7 +2002,7 @@ bool is_redump_disc(const dvddiskid *header)
 
 bool is_streaming_disc(const dvddiskid *header)
 {
-	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+	for (int i = REDUMP_INDEX; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
 		if (!memcmp(header, nkit_dat[i].header, 8))
 			return nkit_dat[i].streaming;
 
