@@ -2220,7 +2220,12 @@ void select_device(int type)
 	}
 	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	// Deinit any existing device
-	if(devices[type] != NULL) devices[type]->deinit( devices[type]->initial );
+	if(devices[type] != NULL) {
+		// Don't deinit our current device when selecting a destination device
+		if(!(type == DEVICE_DEST && devices[type] == devices[DEVICE_CUR])) {
+			devices[type]->deinit( devices[type]->initial );
+		}
+	}
 	DrawDispose(deviceSelectBox);
 	devices[type] = allDevices[curDevice];
 }
