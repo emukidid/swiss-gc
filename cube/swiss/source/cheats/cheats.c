@@ -285,7 +285,7 @@ int findCheats(bool silent) {
 		deviceHandler_setStatEnabled(1);
 	}
 	// Still fail?
-	if(devices[DEVICE_TEMP] == NULL) {
+	if(devices[DEVICE_TEMP] == NULL || devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 		if(!silent) {
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
 			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"No cheats file found.\nPress A to continue.");
