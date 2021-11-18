@@ -86,7 +86,11 @@ int isValidCode(char *code) {
 }
 
 int containsXX(char *line) {
-	return (strlen(line)>=16 && (tolower((int)line[15]) == 'x'||tolower((int)line[15]) == 'y'));
+	return strlen(line)>=16 
+			&& (
+				(tolower((int)line[6]) > 0x66 || tolower((int)line[7]) > 0x66 || tolower((int)line[15]) > 0x66 || tolower((int)line[16]) > 0x66)
+				)
+			;
 }
 
 /** 
@@ -110,10 +114,10 @@ void parseCheats(char *filecontents) {
 	memset(&_cheats, 0, sizeof(CheatEntries));
 	
 	CheatEntry *curCheat = NULL;	// The current one we're parsing
-	while( line != NULL ) {
+	while( line != NULL && numCheats < CHEATS_MAX_FOR_GAME) {
 		//print_gecko("Line [%s]\r\n", line);
 		
-		if(isValidCode(line) && (prevLine != NULL && !containsXX(prevLine))) {		// The line looks like a valid code
+		if(isValidCode(line)) {		// The line looks like a valid code
 			if(prevLine != NULL) {
 				curCheat = &_cheats.cheat[numCheats];
 				strncpy(curCheat->name, prevLine, strlen(prevLine) > CHEATS_NAME_LEN ? CHEATS_NAME_LEN-1:strlen(prevLine));
@@ -122,7 +126,7 @@ void parseCheats(char *filecontents) {
 				//print_gecko("Cheat Name: [%s]\r\n", prevLine);
 			}
 			int unsupported = 0;
-			u32 *codesBuf = (u32*)calloc(1, sizeof(u32) * 2 * 512);
+			u32 *codesBuf = (u32*)calloc(1, sizeof(u32) * 2 * SINGLE_CHEAT_MAX_LINES);
 			
 			// Add this valid code as the first code for this cheat
 			codesBuf[(curCheat->num_codes << 1)+0] = (u32)strtoul(line, NULL, 16);
@@ -131,7 +135,11 @@ void parseCheats(char *filecontents) {
 			
 			line = strtok_r( NULL, "\n", &linectx);
 			// Keep going until we're out of codes for this cheat
-			while( line != NULL ) {
+			while( line != NULL) {
+				if(curCheat->num_codes == SINGLE_CHEAT_MAX_LINES) {
+					unsupported = 1;
+					break;
+				}
 				// If a code contains "XX" in it, it is unsupported, discard it entirely
 				if(containsXX(line)) {
 					unsupported = 1;
@@ -151,7 +159,7 @@ void parseCheats(char *filecontents) {
 			
 			if(unsupported) {
 				memset(curCheat, 0, sizeof(CheatEntry));
-				while(line != NULL && strlen(line) > 0) {
+				while(line != NULL && strlen(line) >=2) {
 					line = strtok_r( NULL, "\n", &linectx);	// finish this unsupported cheat.
 				}
 			}

@@ -1595,7 +1595,7 @@ void DrawCheatsSelector(const char *fileName) {
 			, getEnabledCheatsSize(), kenobi_get_maxsize(), 100.0f-percent);
 		DrawAddChild(newPanel, DrawStyledLabel(33, 345, txtbuffer, 0.8f, false, defaultColor));
 		
-		sprintf(txtbuffer, "Number of cheats enabled: %i", getEnabledCheatsCount());
+		sprintf(txtbuffer, "Enabled: %i Total: %i", getEnabledCheatsCount(), cheats->num_cheats);
 		DrawAddChild(newPanel, DrawStyledLabel(33, 370, txtbuffer, 0.8f, false, defaultColor));
 		
 		sprintf(txtbuffer, "WiiRD Debug %s", swissSettings.wiirdDebug ? "Enabled":"Disabled");
@@ -1608,13 +1608,19 @@ void DrawCheatsSelector(const char *fileName) {
 		DrawPublish(newPanel);
 		container = newPanel;
 		
-		while (!(PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X)))
+		while (!(PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R)))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = PAD_ButtonsHeld(0);
 		if(btns & (PAD_BUTTON_UP|PAD_BUTTON_DOWN)) {
 			cheat_selection = btns & PAD_BUTTON_UP ? 
 				((--cheat_selection < 0) ? cheats->num_cheats-1 : cheat_selection)
 				:((cheat_selection + 1) % cheats->num_cheats);
+		}
+		if(btns & (PAD_BUTTON_LEFT|PAD_TRIGGER_L)) {
+			cheat_selection = (cheat_selection ? ((cheat_selection - cheats_per_page < 0) ? 0 : cheat_selection - cheats_per_page):(cheats->num_cheats-1));
+		}
+		if(btns & (PAD_BUTTON_RIGHT|PAD_TRIGGER_R)) {
+			cheat_selection = cheat_selection == cheats->num_cheats-1 ? 0 : ((cheat_selection + cheats_per_page > cheats->num_cheats-1) ? cheats->num_cheats-1 : (cheat_selection + cheats_per_page) % cheats->num_cheats);
 		}
 		if(btns & PAD_BUTTON_A) {
 			cheats->cheat[cheat_selection].enabled ^= 1;
@@ -1627,7 +1633,7 @@ void DrawCheatsSelector(const char *fileName) {
 		if(btns & PAD_BUTTON_B) {
 			break;
 		}
-		while (PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X))
+		while (PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R))
 			{ VIDEO_WaitVSync (); }
 	}
 	DrawDispose(container);

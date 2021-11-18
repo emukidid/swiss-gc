@@ -18,7 +18,8 @@ extern u8 kenobigc_dbg_bin[];
 #define CHEATS_ENGINE_START		((void*)(WIIRD_ENGINE+0xA8))
 
 #define CHEATS_NAME_LEN			128
-#define CHEATS_MAX_FOR_GAME		256
+#define CHEATS_MAX_FOR_GAME		400
+#define SINGLE_CHEAT_MAX_LINES	512
 
 // Example:
 /*
