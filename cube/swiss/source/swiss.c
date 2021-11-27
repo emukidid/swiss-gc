@@ -1391,7 +1391,7 @@ bool manage_file() {
 			devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );	
 			deviceHandler_setStatEnabled(0);
 			if(!devices[DEVICE_DEST]->init( devices[DEVICE_DEST]->initial )) {
-				sprintf(txtbuffer, "Failed to init destination device! (%ul)\nPress A to continue.",ret);
+				sprintf(txtbuffer, "Failed to init destination device! (%lu)\nPress A to continue.",ret);
 				uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
 				DrawPublish(msgBox);
 				wait_press_A();
@@ -1614,7 +1614,7 @@ bool manage_file() {
 					free(readBuffer);
 					devices[DEVICE_CUR]->closeFile(&curFile);
 					devices[DEVICE_DEST]->closeFile(destFile);
-					sprintf(txtbuffer, "Failed to Write! (%ul %ul)\n%s",amountToCopy,ret,destFile->name);
+					sprintf(txtbuffer, "Failed to Write! (%lu %lu)\n%s",amountToCopy,ret,destFile->name);
 					uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
 					DrawPublish(msgBox);
 					wait_press_A();
@@ -1632,7 +1632,7 @@ bool manage_file() {
 				ret = devices[DEVICE_DEST]->writeFile(destFile, readBuffer, 0);
 				if(ret != 0) {
 					free(readBuffer);
-					sprintf(txtbuffer, "Failed to Write! (%ul)\n%s",ret,destFile->name);
+					sprintf(txtbuffer, "Failed to Write! (%lu)\n%s",ret,destFile->name);
 					uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
 					DrawPublish(msgBox);
 					wait_press_A();
@@ -1953,7 +1953,7 @@ uiDrawObj_t* draw_game_info() {
 	DrawAddChild(container, DrawStyledLabel(640/2, 130, txtbuffer, scale, true, defaultColor));
 
 	if(devices[DEVICE_CUR] == &__device_qoob) {
-		sprintf(txtbuffer,"Size: %.2fKB (%ul blocks)", (float)curFile.size/1024, curFile.size/0x10000);
+		sprintf(txtbuffer,"Size: %.2fKB (%lu blocks)", (float)curFile.size/1024, curFile.size/0x10000);
 		DrawAddChild(container, DrawStyledLabel(640/2, 160, txtbuffer, 0.8f, true, defaultColor));
 		sprintf(txtbuffer,"Position on Flash: %08X",(u32)(curFile.fileBase&0xFFFFFFFF));
 		DrawAddChild(container, DrawStyledLabel(640/2, 180, txtbuffer, 0.8f, true, defaultColor));
@@ -1964,7 +1964,7 @@ uiDrawObj_t* draw_game_info() {
 		DrawAddChild(container, DrawStyledLabel(640/2, 160, txtbuffer, 0.8f, true, defaultColor));
 	}
 	else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
-		sprintf(txtbuffer,"Size: %.2fKB (%ul blocks)", (float)curFile.size/1024, curFile.size/8192);
+		sprintf(txtbuffer,"Size: %.2fKB (%lu blocks)", (float)curFile.size/1024, curFile.size/8192);
 		DrawAddChild(container, DrawStyledLabel(640/2, 160, txtbuffer, 0.8f, true, defaultColor));
 		sprintf(txtbuffer,"Position on Card: %08X",curFile.offset);
 		DrawAddChild(container, DrawStyledLabel(640/2, 180, txtbuffer, 0.8f, true, defaultColor));

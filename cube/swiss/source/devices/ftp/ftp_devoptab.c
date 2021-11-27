@@ -773,7 +773,7 @@ execute_open_actv_retry:
 
 		addr.sin_addr.s_addr = inet_addr(bba_ip);
 
-		sprintf(buf, "PORT %ul,%ul,%ul,%ul,%u,%u",
+		sprintf(buf, "PORT %lu,%lu,%lu,%lu,%u,%u",
 			(ntohl(addr.sin_addr.s_addr) >> 24) & 0xff,
 			(ntohl(addr.sin_addr.s_addr) >> 16) & 0xff,
 			(ntohl(addr.sin_addr.s_addr) >> 8) & 0xff,
@@ -835,7 +835,7 @@ execute_open_actv_retry:
 
 			NET_PRINTF("offset=%u:%u\n", (u32)(offset >> 32), (u32)(offset & 0xffffFFFF));
 
-			sprintf(buf, "REST %ul%ul", high_part, low_part );
+			sprintf(buf, "REST %lu%lu", high_part, low_part );
 			NET_PRINTF("REST=%s\n",buf);
 			if((res = ftp_execute(env, buf, 350, 1)) < 0)
 			{
@@ -1043,7 +1043,7 @@ execute_open_retry:
 
 			NET_PRINTF("offset=%u:%u\n", (u32)(offset >> 32), (u32)(offset & 0xffffFFFF));
 
-			sprintf(buf, "REST %ul%ul", high_part, low_part );
+			sprintf(buf, "REST %lu%lu", high_part, low_part );
 			NET_PRINTF("REST=%s\n",buf);
 			if((res = ftp_execute(env, buf, 350, 1)) < 0)
 			{
