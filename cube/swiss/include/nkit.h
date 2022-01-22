@@ -33,6 +33,7 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 
 bool valid_gcm_boot(const DiskHeader *header);
 bool valid_gcm_crc32(const DiskHeader *header, uint32_t crc);
+bool valid_gcm_magic(DiskHeader *header);
 bool valid_gcm_size(const DiskHeader *header, off_t size);
 
 #endif /* __NKIT_H */

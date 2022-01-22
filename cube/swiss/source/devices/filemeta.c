@@ -218,7 +218,7 @@ void populate_meta(file_handle *f) {
 			else if(endsWith(f->name,".gcm") || endsWith(f->name,".iso")) {
 				DiskHeader *header = memalign(32, sizeof(DiskHeader));
 				devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
-				if(devices[DEVICE_CUR]->readFile(f, header, sizeof(DiskHeader)) == sizeof(DiskHeader) && header->DVDMagicWord == DVD_MAGIC) {
+				if(devices[DEVICE_CUR]->readFile(f, header, sizeof(DiskHeader)) == sizeof(DiskHeader) && valid_gcm_magic(header)) {
 					u32 bannerOffset = 0, bannerSize = f->size;
 					if(!get_gcm_banner_fast(header, &bannerOffset, &bannerSize))
 						get_gcm_banner(f, &bannerOffset, &bannerSize);

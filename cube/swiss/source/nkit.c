@@ -24,7 +24,13 @@
 #include <sys/types.h>
 #include "dvd.h"
 #include "gcm.h"
+#include "main.h"
 #include "nkit.h"
+
+static const dvddiskid NDDEMO = {
+	"00\0E",
+	"01"
+};
 
 static const struct {
 	uint8_t header[8];
@@ -39,11 +45,13 @@ static const struct {
 		uint32_t size;
 	} banner;
 } nkit_dat[] = {
+	{ "00\0E01\x00\x00",false, 1, 0x21CF, 0xBF114CB3,   31170560, {    7795364,      +23900, 6496 }},
+	{ "00\0E01\x00\x00",false, 1, 0x42A2, 0x499CF1AB,   31170560, {    7795364,      +23900, 6496 }},
 	{ "D28J01\x00\x00", true,  1, 0x8FC6, 0x8EFBB42B,  794134528, {  394649296,  +665814992, 6496 }},
 	{ "GQPE78\x00\x01", false, 1, 0x5626, 0xD660A50C, 1168551936, { 1053698804,  +291428124, 6496 }},
 	{ "GW7E69\x00\x00", false, 1, 0xAD23, 0x64886672, 1341470720, {  663025884,      +12320, 6496 }},
 	{ "RELSAB\x00\x00", false, 1, 0x4535, 0x5DC67D47, 1298782208, {          0,          +0,    0 }},
-#define REDUMP_INDEX 4
+#define REDUMP_INDEX 6
 	{ "102E01\x00\x07", true,  1, 0x10B2, 0x4CA6F4EB, 1450858496, {  122984064,    +1245184, 6496 }},
 	{ "301E01\x00\x00", true,  1, 0x2291, 0xBE031BBE,  220121088, {  152535040, +1239842816, 6496 }},
 	{ "D23J01\x00\x00", true,  1, 0x54F8, 0x385BDC6A, 1310650368, {  584824840,  +149335704, 6496 }},
@@ -143,6 +151,7 @@ static const struct {
 	{ "D93E01\x00\x00", true,  1, 0x2872, 0xDE89FC11, 1394837504, {  616152288,   +62037772, 6496 }},
 	{ "D93P01\x00\x00", true,  1, 0x88B7, 0x5400521F,  906659840, {  256531664,  +541547300, 6496 }},
 	{ "D93U01\x00\x00", false, 1, 0x9AB8, 0xF4740C7E,  858005504, {  857998696,   +65469080, 6496 }},
+	{ "D94J01\x00\x00", true,  1, 0xC3AF, 0x7070BD13, 1365735424, {    7054584,   +87867816, 6496 }},
 	{ "D94P01\x00\x00", true,  1, 0x9E77, 0x76A3D320, 1204291584, {  561640168,  +239632352, 6496 }},
 	{ "D94U01\x00\x00", true,  1, 0xD4B1, 0x2435A8F1, 1353400320, { 1353392556,  +106421844, 6496 }},
 	{ "D95P01\x00\x00", true,  1, 0x0E2E, 0x271B16D3, 1383802880, {  681592764,   +49134544, 6496 }},
@@ -2046,6 +2055,9 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 
 bool valid_gcm_boot(const DiskHeader *header)
 {
+	if (!memcmp(header, &NDDEMO, offsetof(DiskHeader, DVDMagicWord)) &&
+		!strcmp(header->GameName, "NDDEMO")) return true;
+
 	if (isdigit(header->ConsoleID) && header->MakerCodeA == '0' && header->MakerCodeB == '1')
 		return false;
 
@@ -2062,6 +2074,17 @@ bool valid_gcm_crc32(const DiskHeader *header, uint32_t crc)
 			crc == nkit_dat[i].crc) return true;
 
 	return false;
+}
+
+bool valid_gcm_magic(DiskHeader *header)
+{
+	if (!memcmp(header, &NDDEMO, offsetof(DiskHeader, DVDMagicWord)) &&
+		!strcmp(header->GameName, "NDDEMO")) {
+		header->DVDMagicWord = DVD_MAGIC;
+		return true;
+	}
+
+	return header->DVDMagicWord == DVD_MAGIC;
 }
 
 bool valid_gcm_size(const DiskHeader *header, off_t size)
