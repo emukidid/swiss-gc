@@ -264,6 +264,9 @@ int config_update_global(bool checkConfigDevice) {
 	sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[swissSettings.invertCStick]);
 	string_append(configString, txtbuffer);
 	
+	sprintf(txtbuffer, "Digital Trigger Level=%hhu\r\n",swissSettings.triggerLevel);
+	string_append(configString, txtbuffer);
+	
 	sprintf(txtbuffer, "Emulate Read Speed=%s\r\n",emulateReadSpeedStr[swissSettings.emulateReadSpeed]);
 	string_append(configString, txtbuffer);
 	
@@ -349,6 +352,9 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[entry->invertCStick]);
 	string_append(configString, txtbuffer);
 	
+	sprintf(txtbuffer, "Digital Trigger Level=%hhu\r\n",entry->triggerLevel);
+	string_append(configString, txtbuffer);
+	
 	sprintf(txtbuffer, "Emulate Read Speed=%s\r\n",emulateReadSpeedStr[entry->emulateReadSpeed]);
 	string_append(configString, txtbuffer);
 
@@ -379,6 +385,7 @@ void config_defaults(ConfigEntry *entry) {
 	entry->forceAnisotropy = swissSettings.forceAnisotropy;
 	entry->forceWidescreen = swissSettings.forceWidescreen;
 	entry->invertCStick = swissSettings.invertCStick;
+	entry->triggerLevel = swissSettings.triggerLevel;
 	entry->emulateReadSpeed = swissSettings.emulateReadSpeed;
 
 	for(int i = 0; i < sizeof(emulateReadSpeedEntries) / sizeof(*emulateReadSpeedEntries); i++) {
@@ -740,6 +747,9 @@ void config_parse_global(char *configData) {
 						}
 					}
 				}
+				else if(!strcmp("Digital Trigger Level", name)) {
+					swissSettings.triggerLevel = atoi(value);
+				}
 				else if(!strcmp("Emulate Read Speed", name)) {
 					for(int i = 0; i < 3; i++) {
 						if(!strcmp(emulateReadSpeedStr[i], value)) {
@@ -1005,6 +1015,9 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 						}
 					}
 				}
+				else if(!strcmp("Digital Trigger Level", name)) {
+					entry->triggerLevel = atoi(value);
+				}
 				else if(!strcmp("Emulate Read Speed", name)) {
 					for(int i = 0; i < 3; i++) {
 						if(!strcmp(emulateReadSpeedStr[i], value)) {
@@ -1101,6 +1114,7 @@ void config_load_current(ConfigEntry *config) {
 	swissSettings.forceAnisotropy = config->forceAnisotropy;
 	swissSettings.forceWidescreen = config->forceWidescreen;
 	swissSettings.invertCStick = config->invertCStick;
+	swissSettings.triggerLevel = config->triggerLevel;
 	swissSettings.emulateReadSpeed = config->emulateReadSpeed;
 }
 
@@ -1113,5 +1127,6 @@ void config_unload_current() {
 	swissSettings.forceAnisotropy = backup.forceAnisotropy;
 	swissSettings.forceWidescreen = backup.forceWidescreen;
 	swissSettings.invertCStick = backup.invertCStick;
+	swissSettings.triggerLevel = backup.triggerLevel;
 	swissSettings.emulateReadSpeed = backup.emulateReadSpeed;
 }

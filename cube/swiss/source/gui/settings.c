@@ -78,6 +78,7 @@ static char *tooltips_game[PAGE_GAME_MAX+1] = {
 	NULL,
 	NULL,
 	"Invert Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Invert X-axis of the C Stick\nY - Invert Y-axis of the C Stick\nX&Y - Invert both axes of the C Stick",
+	"Digital Trigger Level:\n\nSets the level where the L/R Button is fully pressed.",
 	"Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated\nby the original medium, or for speedrunning."
 };
 
@@ -176,6 +177,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 	uiDrawObj_t* page = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 	char sramHOffsetStr[8];
 	char forceVOffsetStr[8];
+	char triggerLevelStr[8];
 	
 	// Save Settings to current device (**Shown on all tabs**)
 	/** Global Settings (Page 1/) */
@@ -296,6 +298,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_DEFAULT_ANISO_FILTER, true);
 		drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, true);
 		drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, true);
+		sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
+		drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_DEFAULT_TRIGGER_LEVEL, true);
 		drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_DEFAULT_READ_SPEED, emulatedReadSpeed);
 	}
 	else if(page_num == PAGE_GAME) {
@@ -313,20 +317,24 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", gameConfig->forceAnisotropy, option == SET_ANISO_FILTER, true);
 			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[gameConfig->forceWidescreen], option == SET_WIDESCREEN, true);
 			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, true);
+			sprintf(triggerLevelStr, "%hhu", gameConfig->triggerLevel);
+			drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_TRIGGER_LEVEL, true);
 			drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[gameConfig->emulateReadSpeed], option == SET_READ_SPEED, emulatedReadSpeed);
 		}
 		else {
 			// Just draw the defaults again
-			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_DEFAULT_FORCE_VIDEOMODE, false);
-			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_FORCE_VIDEOMODE, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_HORIZ_SCALE, false);
 			sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
-			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_DEFAULT_VERT_OFFSET, false);
-			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_DEFAULT_VERT_FILTER, false);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_DEFAULT_ALPHA_DITHER, false);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_DEFAULT_ANISO_FILTER, false);
-			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, false);
-			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, false);
-			drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_DEFAULT_READ_SPEED, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_VERT_OFFSET, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_VERT_FILTER, false);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_ALPHA_DITHER, false);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_ANISO_FILTER, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_WIDESCREEN, false);
+			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_INVERT_CAMERA, false);
+			sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
+			drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_TRIGGER_LEVEL, false);
+			drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_READ_SPEED, false);
 		}
 	}
 	// If we have a tooltip for this page/option, add a fading label telling the user to press Y for help
@@ -602,6 +610,13 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 				if(swissSettings.invertCStick < 0)
 					swissSettings.invertCStick = 3;
 			break;
+			case SET_DEFAULT_TRIGGER_LEVEL:
+				swissSettings.triggerLevel += direction * 10;
+				if(swissSettings.triggerLevel > 200)
+					swissSettings.triggerLevel = 0;
+				if(swissSettings.triggerLevel < 0)
+					swissSettings.triggerLevel = 200;
+			break;
 			case SET_DEFAULT_READ_SPEED:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED)) {
 					swissSettings.emulateReadSpeed += direction;
@@ -682,6 +697,13 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 					gameConfig->invertCStick = 0;
 				if(gameConfig->invertCStick < 0)
 					gameConfig->invertCStick = 3;
+			break;
+			case SET_TRIGGER_LEVEL:
+				gameConfig->triggerLevel += direction * 10;
+				if(gameConfig->triggerLevel > 200)
+					gameConfig->triggerLevel = 0;
+				if(gameConfig->triggerLevel < 0)
+					gameConfig->triggerLevel = 200;
 			break;
 			case SET_READ_SPEED:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED)) {

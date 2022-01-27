@@ -47,6 +47,7 @@
 .set VAR_SAR_HEIGHT,		0x09FA	# sample aspect ratio height
 .set VAR_NEXT_FIELD,		0x09FB	# next video field
 .set VAR_CURRENT_FIELD,		0x09FC	# current video field
+.set VAR_TRIGGER_LEVEL,		0x09FD	# digital trigger level
 .set VAR_CARD_IDS,			0x09FE	# emulated memory cards
 .set VAR_CARD_A_ID,			0x09FE	# emulated memory card a
 .set VAR_CARD_B_ID,			0x09FF	# emulated memory card b
@@ -111,6 +112,7 @@ extern char VAR_SAR_WIDTH[2];		// sample aspect ratio width
 extern char VAR_SAR_HEIGHT[1];		// sample aspect ratio height
 extern char VAR_NEXT_FIELD[1];		// next video field
 extern char VAR_CURRENT_FIELD[1];	// current video field
+extern char VAR_TRIGGER_LEVEL[1];	// digital trigger level
 extern char VAR_CARD_IDS[2];		// emulated memory cards
 extern char VAR_CARD_A_ID[1];		// emulated memory card a
 extern char VAR_CARD_B_ID[1];		// emulated memory card b

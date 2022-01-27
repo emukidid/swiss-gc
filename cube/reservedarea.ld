@@ -35,6 +35,7 @@ VAR_SAR_WIDTH		= VAR_AREA | 0x09F8;	/* sample aspect ratio width */
 VAR_SAR_HEIGHT		= VAR_AREA | 0x09FA;	/* sample aspect ratio height */
 VAR_NEXT_FIELD		= VAR_AREA | 0x09FB;	/* next video field */
 VAR_CURRENT_FIELD	= VAR_AREA | 0x09FC;	/* current video field */
+VAR_TRIGGER_LEVEL	= VAR_AREA | 0x09FD;	/* digital trigger level */
 VAR_CARD_IDS		= VAR_AREA | 0x09FE;	/* emulated memory cards */
 VAR_CARD_A_ID		= VAR_AREA | 0x09FE;	/* emulated memory card a */
 VAR_CARD_B_ID		= VAR_AREA | 0x09FF;	/* emulated memory card b */

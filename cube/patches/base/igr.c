@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2021, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2022, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -25,6 +25,13 @@
 
 void check_pad(int32_t chan, PADStatus *status)
 {
+	if (*VAR_TRIGGER_LEVEL > 0) {
+		if (status->triggerL >= *VAR_TRIGGER_LEVEL)
+			status->button |= PAD_BUTTON_L;
+		if (status->triggerR >= *VAR_TRIGGER_LEVEL)
+			status->button |= PAD_BUTTON_R;
+	}
+
 	if ((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT) {
 		switch (*VAR_IGR_TYPE) {
 			case IGR_HARDRESET:

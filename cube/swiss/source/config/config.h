@@ -19,6 +19,7 @@ typedef struct {
 	int forceAnisotropy;
 	int forceWidescreen;
 	int invertCStick;
+	int triggerLevel;
 	int emulateReadSpeed;
 } ConfigEntry;
 

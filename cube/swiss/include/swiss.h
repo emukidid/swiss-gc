@@ -90,6 +90,7 @@ typedef struct {
 	int fontEncode;
 	int audioStreaming;
 	int invertCStick;
+	int triggerLevel;
 	int wiirdDebug;	// Enable WiiRD debug
 	int hideUnknownFileTypes;
 	int sram60Hz;
