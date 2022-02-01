@@ -169,6 +169,11 @@ static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 
 bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, frag_callback callback)
 {
+	if (!length) {
+		callback(buffer, length);
+		return true;
+	}
+
 	for (int i = 0; i < QUEUE_SIZE; i++) {
 		if (usb.queue[i].callback == NULL) {
 			usb.queue[i].buffer = buffer;
