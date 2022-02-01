@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2017-2021, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2017-2022, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -35,7 +35,7 @@ static struct {
 	bool read, patch;
 } dvd = {0};
 
-OSAlarm bba_alarm = {0}, read_alarm = {0};
+OSAlarm bba_alarm = {0};
 
 void schedule_read(OSTick ticks, bool lock);
 void retry_read();

@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2021, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2022, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -32,13 +32,6 @@
 #endif
 
 static struct {
-	void *buffer;
-	uint32_t length;
-	uint32_t offset;
-	bool read, patch;
-} dvd = {0};
-
-static struct {
 	uint32_t base_sector;
 	struct {
 		void *buffer;
@@ -51,7 +44,12 @@ static struct {
 	.base_sector = ~0
 };
 
-OSAlarm read_alarm = {0};
+static struct {
+	void *buffer;
+	uint32_t length;
+	uint32_t offset;
+	bool read, patch;
+} dvd = {0};
 
 static void wkf_read_queued(void)
 {
@@ -88,10 +86,8 @@ static void wkf_read_queued(void)
 	OSUnmaskInterrupts(OS_INTERRUPTMASK_PI_DI);
 }
 
-void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+static void wkf_done_queued(void)
 {
-	OSMaskInterrupts(OS_INTERRUPTMASK_PI_DI);
-
 	void *buffer = wkf.queued->buffer;
 	uint32_t length = wkf.queued->length;
 	uint32_t offset = wkf.queued->offset;
@@ -116,6 +112,13 @@ void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 			return;
 		}
 	}
+}
+
+void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+{
+	OSMaskInterrupts(OS_INTERRUPTMASK_PI_DI);
+
+	wkf_done_queued();
 }
 
 bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, frag_callback callback)

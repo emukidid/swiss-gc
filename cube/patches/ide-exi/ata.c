@@ -50,7 +50,12 @@
 #define exi_device			(*(u8*)VAR_EXI_SLOT & (EXI_DEVICE_0  | EXI_DEVICE_2))
 #define exi_regs			(*(vu32**)VAR_EXI_REGS)
 
-static OSInterruptHandler TCIntrruptHandler = NULL;
+#if ISR_READ
+extern struct {
+	int transferred;
+	intptr_t registers;
+} _ata;
+#endif
 
 static struct {
 	char (*buffer)[SECTOR_SIZE];
@@ -78,10 +83,8 @@ static struct {
 	.next_sector = ~0
 };
 
-extern intptr_t isr_registers;
-extern int isr_transferred;
-
-void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context);
+static OSInterruptHandler TCIntrruptHandler = NULL;
+static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 
 static void exi_clear_interrupts(bool exi, bool tc, bool ext)
 {
@@ -247,12 +250,12 @@ static int ataReadBuffer(void *buffer)
 static void ataReadBufferAsync(void *buffer)
 {
 	#if ISR_READ
+	_ata.registers = OSUncachedToPhysical(exi_regs);
+	_ata.transferred = -1;
+
 	exi_select();
 	exi_clear_interrupts(0, 1, 0);
 	exi_imm_read_write(0x17000000, 3, 0);
-
-	isr_registers = OSUncachedToPhysical(exi_regs);
-	isr_transferred = -1;
 
 	OSInterrupt interrupt = OS_INTERRUPT_EXI_0_TC + (3 * exi_channel);
 	TCIntrruptHandler = OSSetInterruptHandler(interrupt, tc_interrupt_handler);
@@ -411,10 +414,10 @@ static void ata_done_queued(void)
 	}
 }
 
-void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	#if ISR_READ
-	if (isr_transferred < SECTOR_SIZE)
+	if (_ata.transferred < SECTOR_SIZE)
 		return;
 	#endif
 

@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2021, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2021-2022, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -34,13 +34,6 @@
 #define SECTOR_SIZE 512
 
 static struct {
-	void *buffer;
-	uint32_t length;
-	uint32_t offset;
-	bool read;
-} dvd = {0};
-
-static struct {
 	char (*buffer)[SECTOR_SIZE];
 	uint32_t last_sector;
 	struct {
@@ -56,7 +49,12 @@ static struct {
 	.last_sector = ~0
 };
 
-OSAlarm read_alarm = {0};
+static struct {
+	void *buffer;
+	uint32_t length;
+	uint32_t offset;
+	bool read;
+} dvd = {0};
 
 static void gcode_set_disc_frags(uint32_t disc, const frag_t *frag, uint32_t count)
 {

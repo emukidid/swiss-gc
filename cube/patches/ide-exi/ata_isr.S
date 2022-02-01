@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2021, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2021-2022, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -22,11 +22,12 @@
 
 .section .text.external_interrupt_vector,"ax",@progbits
 	.balign 32
-	.globl isr_registers, isr_transferred
-isr_registers:
-	.long	0x0C006800
-isr_transferred:
+	.globl _ata
+_ata:
+_ata_transferred:
 	.long	512
+_ata_registers:
+	.long	0x0C006800
 
 	.globl external_interrupt_vector
 external_interrupt_vector:
@@ -35,11 +36,11 @@ external_interrupt_vector:
 	mtsprg	2, r6
 	mfcr	r6
 	mtsprg	3, r6
-	lwz		r4, isr_registers - 0x80000000 (r0)
+	lwz		r4, _ata_registers - 0x80000000 (r0)
 	eciwx	r5, r0, r4
 	rlwinm	r6, r5, 1, 28, 28
 	and.	r6, r5, r6
-	lwz		r6, isr_transferred - 0x80000000 (r0)
+	lwz		r6, _ata_transferred - 0x80000000 (r0)
 	cmpwi	cr7, r6, 512
 	cmpwi	cr6, r6, 0
 	beq		7f
@@ -53,7 +54,7 @@ external_interrupt_vector:
 	blt		cr6, 2f
 	stw		r5, VAR_SECTOR_BUF (r6)
 	addi	r6, r6, 4
-	stw		r6, isr_transferred - 0x80000000 (r0)
+	stw		r6, _ata_transferred - 0x80000000 (r0)
 1:	eciwx	r5, r0, r4
 	andi.	r6, r5, 0x405
 	ecowx	r6, r0, r4
@@ -93,7 +94,7 @@ external_interrupt_vector:
 	andi.	r6, r6, 0b01
 	bne		4b
 	li		r6, 0
-	stw		r6, isr_transferred - 0x80000000 (r0)
+	stw		r6, _ata_transferred - 0x80000000 (r0)
 #ifndef DMA
 	b		1b
 #else
@@ -123,7 +124,7 @@ external_interrupt_vector:
 	rfi
 #ifdef DMA
 6:	li		r6, 512
-	stw		r6, isr_transferred - 0x80000000 (r0)
+	stw		r6, _ata_transferred - 0x80000000 (r0)
 #endif
 7:	mfsprg	r6, 3
 	mtcr	r6

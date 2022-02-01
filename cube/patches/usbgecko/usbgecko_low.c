@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2021, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2022, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -22,6 +22,11 @@
 #include "common.h"
 #include "dolphin/exi.h"
 
+static void exi_clear_interrupts(bool exi, bool tc, bool ext)
+{
+	EXI[EXI_CHANNEL_1][0] = (EXI[EXI_CHANNEL_1][0] & ~0x80A) | (ext << 11) | (tc << 3) | (exi << 1);
+}
+
 static void exi_select(void)
 {
 	EXI[EXI_CHANNEL_1][0] = (EXI[EXI_CHANNEL_1][0] & 0x405) | ((1 << EXI_DEVICE_0) << 7) | (EXI_SPEED_32MHZ << 4);
@@ -32,12 +37,15 @@ static void exi_deselect(void)
 	EXI[EXI_CHANNEL_1][0] &= 0x405;
 }
 
-static uint32_t exi_imm_read_write(uint32_t data, uint32_t len)
+static uint32_t exi_imm_read_write(uint32_t data, uint32_t len, bool sync)
 {
 	EXI[EXI_CHANNEL_1][4] = data;
 	EXI[EXI_CHANNEL_1][3] = ((len - 1) << 4) | (EXI_READ_WRITE << 2) | 0b01;
-	while (EXI[EXI_CHANNEL_1][3] & 0b01);
-	return EXI[EXI_CHANNEL_1][4] >> ((4 - len) * 8);
+
+	if (sync) {
+		while (EXI[EXI_CHANNEL_1][3] & 0b01);
+		return EXI[EXI_CHANNEL_1][4] >> ((4 - len) * 8);
+	}
 }
 
 static bool usb_probe(void)
@@ -45,7 +53,7 @@ static bool usb_probe(void)
 	uint16_t val;
 
 	exi_select();
-	val = exi_imm_read_write(0x9 << 28, 2);
+	val = exi_imm_read_write(0x9 << 28, 2, 1);
 	exi_deselect();
 
 	return val == 0x470;
@@ -56,7 +64,7 @@ static bool usb_receive_byte(uint8_t *data)
 	uint16_t val;
 
 	exi_select();
-	val = exi_imm_read_write(0xA << 28, 2); *data = val;
+	val = exi_imm_read_write(0xA << 28, 2, 1); *data = val;
 	exi_deselect();
 
 	return !(val & 0x800);
@@ -67,7 +75,7 @@ static bool usb_transmit_byte(const uint8_t *data)
 	uint16_t val;
 
 	exi_select();
-	val = exi_imm_read_write(0xB << 28 | *data << 20, 2);
+	val = exi_imm_read_write(0xB << 28 | *data << 20, 2, 1);
 	exi_deselect();
 
 	return !(val & 0x400);
@@ -78,7 +86,7 @@ static bool usb_transmit_check(void)
 	uint8_t val;
 
 	exi_select();
-	val = exi_imm_read_write(0xC << 28, 1);
+	val = exi_imm_read_write(0xC << 28, 1, 1);
 	exi_deselect();
 
 	return !(val & 0x4);
@@ -89,7 +97,7 @@ static bool usb_receive_check(void)
 	uint8_t val;
 
 	exi_select();
-	val = exi_imm_read_write(0xD << 28, 1);
+	val = exi_imm_read_write(0xD << 28, 1, 1);
 	exi_deselect();
 
 	return !(val & 0x4);

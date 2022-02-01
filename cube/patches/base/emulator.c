@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2021, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2022, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -503,7 +503,9 @@ void di_close_cover()
 	di_update_interrupts();
 }
 
-OSAlarm di_alarm = {0}, cover_alarm = {0};
+OSAlarm di_alarm = {0};
+OSAlarm cover_alarm = {0};
+OSAlarm read_alarm = {0};
 
 #ifndef DI_PASSTHROUGH
 #ifdef GCODE

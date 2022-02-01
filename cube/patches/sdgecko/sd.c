@@ -35,7 +35,12 @@
 #define exi_channel			({ if (*VAR_EXI_SLOT >= EXI_CHANNEL_MAX) __builtin_trap(); *VAR_EXI_SLOT; })
 #define exi_regs			(*(vu32**)VAR_EXI_REGS)
 
-static OSInterruptHandler TCIntrruptHandler = NULL;
+#if ISR_READ
+extern struct {
+	int transferred;
+	intptr_t registers;
+} _mmc;
+#endif
 
 static struct {
 	char (*buffer)[SECTOR_SIZE];
@@ -59,10 +64,8 @@ static struct {
 	.next_sector = ~0
 };
 
-extern intptr_t isr_registers;
-extern int isr_transferred;
-
-void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context);
+static OSInterruptHandler TCIntrruptHandler = NULL;
+static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 
 // EXI Functions
 static void exi_clear_interrupts(bool exi, bool tc, bool ext)
@@ -169,12 +172,12 @@ static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sy
 	}
 	else {
 		#if ISR_READ
+		_mmc.registers = OSUncachedToPhysical(exi_regs);
+		_mmc.transferred = -1;
+
 		exi_select();
 		exi_clear_interrupts(0, 1, 0);
 		exi_imm_read(1, 0);
-
-		isr_registers = OSUncachedToPhysical(exi_regs);
-		isr_transferred = -1;
 
 		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_TC + (3 * exi_channel);
 		TCIntrruptHandler = OSSetInterruptHandler(interrupt, tc_interrupt_handler);
@@ -286,9 +289,9 @@ static void mmc_done_queued(void)
 	}
 }
 
-void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	if (isr_transferred < SECTOR_SIZE)
+	if (_mmc.transferred < SECTOR_SIZE)
 		return;
 
 	OSMaskInterrupts(OS_INTERRUPTMASK(interrupt));
