@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2021, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2021-2022, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -87,10 +87,10 @@ bool frag_read_write_async(int file, void *buffer, uint32_t length, uint32_t off
 		if (frag.device == DEVICE_PATCHES)
 			return do_read_write_async(buffer, frag.size, frag.offset, frag.sector, write, callback);
 		else if (!write)
-			return do_read_disc(buffer, frag.size, frag.offset, frag.sector, callback);
+			return do_read_disc(buffer, frag.size, frag.offset, &frag, callback);
 	#ifdef DIRECT_DISC
 	} else if (!write) {
-		return do_read_disc(buffer, length, offset, 0, callback);
+		return do_read_disc(buffer, length, offset, NULL, callback);
 	#endif
 	}
 
@@ -118,10 +118,10 @@ bool frag_read_patch(int file, void *buffer, uint32_t length, uint32_t offset, f
 		if (frag.device == DEVICE_PATCHES)
 			return true;
 		else
-			do_read_disc(buffer, frag.size, frag.offset, frag.sector, callback);
+			do_read_disc(buffer, frag.size, frag.offset, &frag, callback);
 	#ifdef DIRECT_DISC
 	} else {
-		do_read_disc(buffer, length, offset, 0, callback);
+		do_read_disc(buffer, length, offset, NULL, callback);
 	#endif
 	}
 

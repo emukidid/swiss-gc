@@ -365,14 +365,15 @@ wkf.dtk.bin:
 fsp.bin:
 	@echo Building FSP Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DBBA
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DISR
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/igr.c
-	@$(CC) -Os $(OPTS) -c bba/bba.c
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c
+	@$(CC) -Os $(OPTS) -c bba/bba.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o fsp.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o igr.o bba.o sd.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o fsp.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o igr.o bba.o sd.o sd_isr.o uart.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D fsp.elf > $(DISASM)/fsp.txt
 	@$(OBJCOPY) -O binary fsp.elf fsp.bin

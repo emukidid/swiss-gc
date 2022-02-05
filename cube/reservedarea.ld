@@ -23,7 +23,6 @@ VAR_CLIENT_MAC		= VAR_AREA | 0x09C6;	/* client MAC address */
 VAR_SERVER_IP		= VAR_AREA | 0x09CC;	/* server IPv4 address */
 VAR_CLIENT_IP		= VAR_AREA | 0x09D0;	/* client IPv4 address */
 VAR_SERVER_PORT		= VAR_AREA | 0x09D4;	/* server UDP port */
-VAR_FSP_KEY			= VAR_AREA | 0x09D6;	/* FSP session key */
 
 VAR_FLOAT1_6		= VAR_AREA | 0x09E0;	/* constant 1/6 */
 VAR_FLOAT9_16		= VAR_AREA | 0x09E4;	/* constant 9/16 */
@@ -41,11 +40,6 @@ VAR_CARD_A_ID		= VAR_AREA | 0x09FE;	/* emulated memory card a */
 VAR_CARD_B_ID		= VAR_AREA | 0x09FF;	/* emulated memory card b */
 
 VAR_SECTOR_BUF		= VAR_AREA | 0x0A00;	/* 0x200 of read data */
-
-VAR_DISC_1_FNLEN	= VAR_AREA | 0x0A00;	/* disc 1 filename length */
-VAR_DISC_1_FN		= VAR_AREA | 0x0A01;	/* disc 1 filename */
-VAR_DISC_2_FNLEN	= VAR_AREA | 0x0B00;	/* disc 2 filename length */
-VAR_DISC_2_FN		= VAR_AREA | 0x0B01;	/* disc 2 filename */
 
 VAR_PATCHES_BASE	= VAR_AREA | 0x3000;	/* Patches get copied to below this area. */
 

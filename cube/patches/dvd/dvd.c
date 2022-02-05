@@ -84,7 +84,7 @@ static void gcode_set_disc_number(uint32_t disc)
 }
 #endif
 
-bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, frag_callback callback)
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *frag, frag_callback callback)
 {
 	if (dvd.read && buffer == dvd.buffer) {
 		dvd_read(buffer, length, offset);

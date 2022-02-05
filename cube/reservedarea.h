@@ -35,7 +35,6 @@
 .set VAR_SERVER_IP,			0x09CC	# server IPv4 address
 .set VAR_CLIENT_IP,			0x09D0	# client IPv4 address
 .set VAR_SERVER_PORT,		0x09D4	# server UDP port
-.set VAR_FSP_KEY,			0x09D6	# FSP session key
 
 .set VAR_FLOAT1_6,			0x09E0	# constant 1/6
 .set VAR_FLOAT9_16,			0x09E4	# constant 9/16
@@ -53,11 +52,6 @@
 .set VAR_CARD_B_ID,			0x09FF	# emulated memory card b
 
 .set VAR_SECTOR_BUF,		0x0A00	# 0x200 of read data
-
-.set VAR_DISC_1_FNLEN,		0x0A00	# disc 1 filename length
-.set VAR_DISC_1_FN,			0x0A01	# disc 1 filename
-.set VAR_DISC_2_FNLEN,		0x0B00	# disc 2 filename length
-.set VAR_DISC_2_FN,			0x0B01	# disc 2 filename
 
 .set VAR_PATCHES_BASE,		0x3000	# Patches get copied to below this area.
 
@@ -100,7 +94,6 @@ extern char VAR_CLIENT_MAC[6];		// client MAC address
 extern char VAR_SERVER_IP[4];		// server IPv4 address
 extern char VAR_CLIENT_IP[4];		// client IPv4 address
 extern char VAR_SERVER_PORT[2];		// server UDP port
-extern char VAR_FSP_KEY[2];			// FSP session key
 
 extern char VAR_FLOAT1_6[4];		// constant 1/6
 extern char VAR_FLOAT9_16[4];		// constant 9/16
@@ -118,11 +111,6 @@ extern char VAR_CARD_A_ID[1];		// emulated memory card a
 extern char VAR_CARD_B_ID[1];		// emulated memory card b
 
 extern char VAR_SECTOR_BUF[0x200];	// 0x200 of read data
-
-extern char VAR_DISC_1_FNLEN[1];	// disc 1 filename length
-extern char VAR_DISC_1_FN[0xFF];	// disc 1 filename
-extern char VAR_DISC_2_FNLEN[1];	// disc 2 filename length
-extern char VAR_DISC_2_FN[0xFF];	// disc 2 filename
 
 extern char VAR_PATCHES_BASE[];		// Patches get copied to below this area.
 

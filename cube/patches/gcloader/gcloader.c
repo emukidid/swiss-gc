@@ -290,12 +290,12 @@ bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_
 	return gcode_push_queue(buffer, length, offset, sector, command, callback);
 }
 
-bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, frag_callback callback)
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *frag, frag_callback callback)
 {
 	if (length)
-		return gcode_push_queue(buffer, length, offset >> 2, sector, DI_CMD_READ << 24, callback);
+		return gcode_push_queue(buffer, length, offset >> 2, frag->sector, DI_CMD_READ << 24, callback);
 	else
-		return gcode_push_queue(buffer, length, offset >> 2, sector, DI_CMD_SEEK << 24, callback);
+		return gcode_push_queue(buffer, length, offset >> 2, frag->sector, DI_CMD_SEEK << 24, callback);
 }
 
 int do_read_write(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write)

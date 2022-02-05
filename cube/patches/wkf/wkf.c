@@ -121,7 +121,7 @@ void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	wkf_done_queued();
 }
 
-bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, frag_callback callback)
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *frag, frag_callback callback)
 {
 	length = MIN(length, 32768 - OSRoundUp32B(offset) % 32768);
 
@@ -130,7 +130,7 @@ bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t secto
 			wkf.queue[i].buffer = buffer;
 			wkf.queue[i].length = length;
 			wkf.queue[i].offset = offset;
-			wkf.queue[i].sector = sector;
+			wkf.queue[i].sector = frag->sector;
 			wkf.queue[i].callback = callback;
 
 			if (wkf.queued == NULL) {

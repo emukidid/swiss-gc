@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2017-2021, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2017-2022, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -18,12 +18,18 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
 #include <string.h>
 #include "bba.h"
 #include "common.h"
 #include "dolphin/exi.h"
 #include "dolphin/os.h"
-#include "globals.h"
+#include "frag.h"
+
+#ifndef QUEUE_SIZE
+#define QUEUE_SIZE 2
+#endif
 
 #define MIN_FRAME_SIZE 60
 
@@ -123,13 +129,24 @@ static struct eth_addr  *const _client_mac = (struct eth_addr  *)VAR_CLIENT_MAC;
 static struct ipv4_addr *const _client_ip  = (struct ipv4_addr *)VAR_CLIENT_IP;
 static struct eth_addr  *const _server_mac = (struct eth_addr  *)VAR_SERVER_MAC;
 static struct ipv4_addr *const _server_ip  = (struct ipv4_addr *)VAR_SERVER_IP;
+static uint16_t         *const _port       = (uint16_t         *)VAR_SERVER_PORT;
 
 static struct {
-	uint16_t packet_id;
 	uint8_t command;
+	uint16_t key;
 	uint16_t sequence;
 	uint16_t data_length;
 	uint32_t position;
+	uint16_t fragment_id;
+	struct {
+		void *buffer;
+		uint32_t length;
+		uint32_t offset;
+		uint32_t position;
+		const char *path;
+		uint16_t pathlen;
+		frag_callback callback;
+	} queue[QUEUE_SIZE], *queued;
 } _fsp = {0};
 
 static uint16_t ipv4_checksum(ipv4_header_t *header)
@@ -159,32 +176,26 @@ static uint8_t fsp_checksum(fsp_header_t *header, size_t size)
 	return sum;
 }
 
-static void fsp_get_file(uint32_t offset, size_t size, bool lock)
+static void fsp_get_file(uint32_t offset, uint32_t length, const void *path, uint16_t pathlen)
 {
-	const char *file = _file;
-	uint8_t filelen = *_filelen;
-
-	if (*VAR_CURRENT_DISC) {
-		file    =  _file2;
-		filelen = *_file2len;
-	}
-
-	if (lock && !EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, (EXICallback)retry_read))
-		return;
-
-	uint8_t data[MIN_FRAME_SIZE + filelen];
+	uint8_t data[MIN_FRAME_SIZE + pathlen];
 	eth_header_t *eth = (eth_header_t *)data;
 	ipv4_header_t *ipv4 = (ipv4_header_t *)eth->data;
 	udp_header_t *udp = (udp_header_t *)ipv4->data;
 	fsp_header_t *fsp = (fsp_header_t *)udp->data;
 
-	fsp->command = _fsp.command = CC_GET_FILE;
+	_fsp.command = CC_GET_FILE;
+	_fsp.sequence++;
+	_fsp.position = offset;
+	_fsp.data_length = MIN(length, UINT16_MAX);
+
+	fsp->command = _fsp.command;
 	fsp->checksum = 0x00;
-	fsp->key = *_key;
-	fsp->sequence = ++_fsp.sequence;
-	fsp->data_length = filelen;
-	fsp->position = _fsp.position = offset;
-	*(uint16_t *)(memcpy(fsp->data, file, filelen) + fsp->data_length) = MIN(size, UINT16_MAX);
+	fsp->key = _fsp.key;
+	fsp->sequence = _fsp.sequence;
+	fsp->position = _fsp.position;
+	fsp->data_length = pathlen;
+	*(uint16_t *)(memcpy(fsp->data, path, pathlen) + fsp->data_length) = _fsp.data_length;
 	fsp->checksum = fsp_checksum(fsp, sizeof(*fsp) + fsp->data_length + sizeof(uint16_t));
 
 	udp->src_port = *_port;
@@ -211,10 +222,69 @@ static void fsp_get_file(uint32_t offset, size_t size, bool lock)
 	eth->src_addr = *_client_mac;
 	eth->type = ETH_TYPE_IPV4;
 	bba_transmit(eth, sizeof(*eth) + ipv4->length);
+}
 
-	OSSetAlarm(&read_alarm, OSSecondsToTicks(1), retry_read);
+static void fsp_read_queued(void)
+{
+	if (!bba.lock && !EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, (EXICallback)fsp_read_queued))
+		return;
 
-	if (lock) EXIUnlock(EXI_CHANNEL_0);
+	void *buffer = _fsp.queued->buffer + _fsp.queued->offset;
+	uint32_t length = _fsp.queued->length - _fsp.queued->offset;
+	uint32_t offset = _fsp.queued->position + _fsp.queued->offset;
+	const char *path = _fsp.queued->path;
+	uint16_t pathlen = _fsp.queued->pathlen;
+
+	fsp_get_file(offset, length, path, pathlen);
+
+	OSSetAlarm(&read_alarm, OSSecondsToTicks(1), (OSAlarmHandler)fsp_read_queued);
+
+	if (!bba.lock) EXIUnlock(EXI_CHANNEL_0);
+}
+
+static void fsp_done_queued(void)
+{
+	void *buffer = _fsp.queued->buffer;
+	uint32_t length = _fsp.queued->length;
+	uint32_t offset = _fsp.queued->offset;
+	const char *path = _fsp.queued->path;
+	uint16_t pathlen = _fsp.queued->pathlen;
+
+	_fsp.queued->callback(buffer, offset);
+
+	_fsp.queued->callback = NULL;
+	_fsp.queued = NULL;
+
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		if (_fsp.queue[i].callback != NULL) {
+			_fsp.queued = &_fsp.queue[i];
+			fsp_read_queued();
+			return;
+		}
+	}
+}
+
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *frag, frag_callback callback)
+{
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		if (_fsp.queue[i].callback == NULL) {
+			_fsp.queue[i].buffer = buffer;
+			_fsp.queue[i].length = length;
+			_fsp.queue[i].offset = 0;
+			_fsp.queue[i].position = offset;
+			_fsp.queue[i].path = frag->path;
+			_fsp.queue[i].pathlen = frag->pathlen;
+			_fsp.queue[i].callback = callback;
+
+			if (_fsp.queued == NULL) {
+				_fsp.queued = &_fsp.queue[i];
+				fsp_read_queued();
+			}
+			return true;
+		}
+	}
+
+	return false;
 }
 
 static void fsp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, size_t size)
@@ -234,13 +304,13 @@ static void fsp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 				fsp->sequence == _fsp.sequence &&
 				fsp->position == _fsp.position) {
 
-				_fsp.packet_id   = ipv4->id;
+				_fsp.fragment_id = ipv4->id;
 				_fsp.data_length = fsp->data_length;
 			}
 			break;
 	}
 
-	*_key = fsp->key;
+	_fsp.key = fsp->key;
 }
 
 static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, size_t size)
@@ -263,12 +333,12 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 				fsp_input(page, eth, ipv4, udp, (void *)udp->data, size);
 		}
 
-		if (ipv4->id == _fsp.packet_id) {
+		if (ipv4->id == _fsp.fragment_id) {
 			switch (_fsp.command) {
 				case CC_GET_FILE:
 				{
-					uint8_t *data = dvd.buffer;
-					int data_size = MIN(_fsp.data_length, dvd.length);
+					uint8_t *data = _fsp.queued->buffer + _fsp.queued->offset;
+					int data_size = MIN(_fsp.data_length, _fsp.queued->length - _fsp.queued->offset);
 
 					int offset = ipv4->offset * 8 - sizeof(udp_header_t) - sizeof(fsp_header_t);
 					int udp_offset = MAX(-offset, 0);
@@ -282,19 +352,22 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 					data_offset += page_size;
 					size        -= page_size;
 
-					if (!(ipv4->flags & 0b001)) {
+					if (ipv4->flags & 0b001) {
+						bba_receive_end(page, data + data_offset, size);
+					} else {
+						OSCancelAlarm(&read_alarm);
+
 						_fsp.command = 0x00;
+						_fsp.queued->offset += data_size;
 
-						dvd.buffer += data_size;
-						dvd.length -= data_size;
-						dvd.offset += data_size;
-						dvd.read = !!dvd.length;
+						if (_fsp.queued->offset != _fsp.queued->length)
+							fsp_read_queued();
 
-						schedule_read(0, false);
+						bba_receive_end(page, data + data_offset, size);
+
+						if (_fsp.queued->offset == _fsp.queued->length)
+							fsp_done_queued();
 					}
-
-					bba_receive_end(page, data + data_offset, size);
-					DCStoreRangeNoSync(data, data_size);
 					break;
 				}
 			}

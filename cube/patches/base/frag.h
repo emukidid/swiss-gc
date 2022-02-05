@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2021, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2021-2022, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -45,7 +45,7 @@ typedef struct {
 typedef void (*frag_callback)(void *buffer, uint32_t length);
 
 bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write, frag_callback callback);
-bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, frag_callback callback);
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *frag, frag_callback callback);
 int do_read_write(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write);
 void end_read(void);
 

@@ -167,7 +167,7 @@ static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	usb_done_queued();
 }
 
-bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, frag_callback callback)
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *frag, frag_callback callback)
 {
 	if (!length) {
 		callback(buffer, length);

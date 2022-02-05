@@ -197,6 +197,28 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 		*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[*(vu8*)VAR_EXI_SLOT];
 	}
 	
+	if(!(fragList = realloc(fragList, (totFrags + 1 + !!file2 + 1) * sizeof(*fragList)))) {
+		return 0;
+	}
+	char *path = NULL;
+	int pathlen = asprintf(&path, "%s\n%s", strchr(file->name, '/'), swissSettings.fspPassword) + 1;
+	
+	fragList[totFrags][0] = 0;
+	fragList[totFrags][1] = file->size;
+	fragList[totFrags][2] = (u16)pathlen | ((u8)FRAGS_DISC_1 << 24);
+	fragList[totFrags][3] = (u32)installPatch2(path, pathlen); free(path);
+	totFrags++;
+	
+	if(file2) {
+		pathlen = asprintf(&path, "%s\n%s", strchr(file2->name, '/'), swissSettings.fspPassword) + 1;
+		
+		fragList[totFrags][0] = 0;
+		fragList[totFrags][1] = file2->size;
+		fragList[totFrags][2] = (u16)pathlen | ((u8)FRAGS_DISC_2 << 24);
+		fragList[totFrags][3] = (u32)installPatch2(path, pathlen); free(path);
+		totFrags++;
+	}
+	
 	if(fragList) {
 		memset(&fragList[totFrags], 0, sizeof(*fragList));
 		print_frag_list(fragList);
@@ -216,9 +238,6 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 	((vu8*)VAR_SERVER_MAC)[5] = 0xFF;
 	*(vu32*)VAR_SERVER_IP = inet_addr(swissSettings.fspHostIp);
 	*(vu16*)VAR_SERVER_PORT = swissSettings.fspPort ? swissSettings.fspPort : 21;
-	*(vu8*)VAR_DISC_1_FNLEN = snprintf(VAR_DISC_1_FN, sizeof(VAR_DISC_1_FN), "%s\n%s", strchr(file->name, '/'), swissSettings.fspPassword) + 1;
-	*(vu8*)VAR_DISC_2_FNLEN = snprintf(VAR_DISC_2_FN, sizeof(VAR_DISC_2_FN), "%s\n%s", strchr(file2 ? file2->name : file->name, '/'), swissSettings.fspPassword) + 1;
-	*(vu16*)VAR_FSP_KEY = 0;
 	return 1;
 }
 

@@ -26,7 +26,11 @@
 #include "dolphin/os.h"
 #include "emulator.h"
 #include "frag.h"
-#include "globals.h"
+
+static struct {
+	bool lock;
+	OSAlarm alarm;
+} bba = {0};
 
 static struct {
 	void *buffer;
@@ -34,11 +38,6 @@ static struct {
 	uint32_t offset;
 	bool read, patch;
 } dvd = {0};
-
-OSAlarm bba_alarm = {0};
-
-void schedule_read(OSTick ticks, bool lock);
-void retry_read();
 
 #include "tcpip.c"
 
@@ -257,7 +256,9 @@ static void exi_callback(int32_t chan, uint32_t dev)
 	}
 
 	if (EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, exi_callback)) {
-		OSCancelAlarm(&bba_alarm);
+		bba.lock = true;
+
+		OSCancelAlarm(&bba.alarm);
 		OSTick start = OSGetTick();
 
 		uint8_t status = bba_cmd_in8(0x03);
@@ -269,9 +270,11 @@ static void exi_callback(int32_t chan, uint32_t dev)
 		bba_cmd_out8(0x02, BBA_CMD_IRMASKNONE);
 
 		OSTick end = OSGetTick();
-		OSSetAlarm(&bba_alarm, OSDiffTick(end, start), alarm_handler);
+		OSSetAlarm(&bba.alarm, OSDiffTick(end, start), alarm_handler);
 
 		OSMaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
+
+		bba.lock = false;
 		EXIUnlock(EXI_CHANNEL_0);
 	}
 }
@@ -282,26 +285,36 @@ void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	exi_callback(EXI_CHANNEL_0, EXI_DEVICE_2);
 }
 
-void schedule_read(OSTick ticks, bool lock)
+void schedule_read(OSTick ticks)
 {
+	void read_callback(void *address, uint32_t length)
+	{
+		DCStoreRangeNoSync(address, length);
+
+		dvd.buffer += length;
+		dvd.length -= length;
+		dvd.offset += length;
+		dvd.read = !!dvd.length;
+
+		schedule_read(0);
+	}
+	#ifndef ASYNC_READ
 	OSCancelAlarm(&read_alarm);
+	#endif
 
 	if (!dvd.read) {
 		di_complete_transfer();
 		return;
 	}
 
-	dvd.patch = is_frag_patch(*VAR_CURRENT_DISC, dvd.offset, dvd.length);
+	#ifdef ASYNC_READ
+	frag_read_async(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, read_callback);
+	#else
+	dvd.patch = frag_read_patch(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset, read_callback);
 
 	if (dvd.patch)
 		OSSetAlarm(&read_alarm, ticks, trickle_read);
-	else
-		fsp_get_file(dvd.offset, dvd.length, lock);
-}
-
-void retry_read()
-{
-	fsp_get_file(dvd.offset, dvd.length, true);
+	#endif
 }
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
@@ -316,9 +329,10 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 	dvd.offset = offset;
 	dvd.read = true;
 
-	schedule_read(0, true);
+	schedule_read(0);
 }
 
+#ifndef ASYNC_READ
 void trickle_read()
 {
 	if (dvd.read && dvd.patch) {
@@ -332,9 +346,10 @@ void trickle_read()
 		dvd.offset += size;
 		dvd.read = !!dvd.length;
 
-		schedule_read(OSDiffTick(end, start), true);
+		schedule_read(OSDiffTick(end, start));
 	}
 }
+#endif
 
 bool change_disc(void)
 {

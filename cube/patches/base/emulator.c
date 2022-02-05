@@ -1078,9 +1078,6 @@ static void write_branch(void *a, void *b)
 
 void init(void **arenaLo, void **arenaHi)
 {
-	#ifdef BBA
-	OSCreateAlarm(&bba_alarm);
-	#endif
 	OSCreateAlarm(&di_alarm);
 	OSCreateAlarm(&cover_alarm);
 	OSCreateAlarm(&read_alarm);

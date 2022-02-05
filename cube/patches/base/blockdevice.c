@@ -32,9 +32,9 @@ static struct {
 	bool read;
 } dvd = {0};
 
-bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, frag_callback callback)
+bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *frag, frag_callback callback)
 {
-	return do_read_write_async(buffer, length, offset, sector, false, callback);
+	return do_read_write_async(buffer, length, offset, frag->sector, false, callback);
 }
 
 void schedule_read(OSTick ticks)

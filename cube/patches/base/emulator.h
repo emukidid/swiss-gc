@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2021, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2022, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -26,7 +26,6 @@
 
 #define COMMAND_LATENCY_TICKS OSMicrosecondsToTicks(300)
 
-extern OSAlarm bba_alarm;
 extern OSAlarm di_alarm;
 extern OSAlarm cover_alarm;
 extern OSAlarm read_alarm;
