@@ -34,7 +34,11 @@ typedef struct {
 	uint32_t gpr[32];
 	uint32_t cr, lr, ctr, xer;
 	uint32_t srr0, srr1;
+	uint32_t padding[2];
 } ppc_context_t;
+
+int setjmp(ppc_context_t *);
+void longjmp(ppc_context_t *, int);
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset);
 void trickle_read();

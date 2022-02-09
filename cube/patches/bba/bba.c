@@ -29,8 +29,12 @@
 
 static struct {
 	bool lock;
-	OSAlarm alarm;
-} bba = {0};
+	uint8_t rwp;
+	uint8_t rrp;
+	bba_page_t (*page)[8];
+	ppc_context_t *entry;
+	ppc_context_t *exit;
+} _bba = {0};
 
 static struct {
 	void *buffer;
@@ -132,7 +136,6 @@ static void exi_dma_read(void *buf, uint32_t len)
 	EXI[EXI_CHANNEL_0][1] = (uint32_t)buf;
 	EXI[EXI_CHANNEL_0][2] = OSRoundUp32B(len);
 	EXI[EXI_CHANNEL_0][3] = (EXI_READ << 2) | 0b11;
-	while (EXI[EXI_CHANNEL_0][3] & 0b01);
 }
 
 static uint8_t bba_in8(uint16_t reg)
@@ -177,7 +180,15 @@ static void bba_ins(uint16_t reg, void *val, uint32_t len)
 {
 	exi_select();
 	exi_imm_write(0x80 << 24 | reg << 8, 4);
+	exi_clear_interrupts(EXI_CHANNEL_0, 0, 1, 0);
 	exi_dma_read(val, len);
+
+	bool lock = _bba.lock;
+	_bba.lock = false;
+	if (!setjmp(_bba.entry))
+		longjmp(_bba.exit, 1);
+	_bba.lock = lock;
+
 	exi_deselect();
 }
 
@@ -196,70 +207,68 @@ void bba_transmit(const void *data, size_t size)
 	bba_out8(BBA_NCRA, (bba_in8(BBA_NCRA) & ~BBA_NCRA_ST0) | BBA_NCRA_ST1);
 }
 
-void bba_receive_end(bba_page_t page, void *data, size_t size)
+void bba_receive_end(void *data, size_t size)
 {
-	uint8_t rrp;
+	if (!size) return;
+	bba_page_t *page = _bba.page[1];
+	DCInvalidateRange(page, size);
 
-	page = OSCachedToUncached(page);
+	int page_wrap = MIN(size, (BBA_INIT_RHBP + 1 - _bba.rrp) << 8);
 
-	while (size) {
-		int page_size = MIN(size, sizeof(bba_page_t));
+	if (page_wrap < size) {
+		bba_ins(_bba.rrp << 8, page, page_wrap);
+		_bba.rrp = BBA_INIT_RRP;
+		bba_ins(_bba.rrp << 8, *page + page_wrap, size - page_wrap);
+	} else
+		bba_ins(_bba.rrp << 8, page, size);
 
-		rrp = bba_in8(BBA_RRP) % BBA_INIT_RHBP + 1;
-		bba_out8(BBA_RRP, rrp);
-		bba_ins(rrp << 8, page, page_size);
-
-		memcpy(data, page, page_size);
-		data += page_size;
-		size -= page_size;
-	}
+	memcpy(data, page, size);
 }
 
-static bool bba_receive(void)
+static void bba_receive(void)
 {
-	uint8_t rwp = bba_in8(BBA_RWP);
-	uint8_t rrp = bba_in8(BBA_RRP);
+	_bba.rwp = bba_in8(BBA_RWP);
+	_bba.rrp = bba_in8(BBA_RRP);
 
-	if (rrp != rwp) {
-		bba_page_t page;
+	while (_bba.rrp != _bba.rwp) {
+		bba_page_t *page = _bba.page[0];
 		bba_header_t *bba = (bba_header_t *)page;
 		size_t size = sizeof(bba_page_t);
 
 		DCInvalidateRange(page, size);
-		bba_ins(rrp << 8, page, size);
+		bba_ins(_bba.rrp << 8, page, size);
+		_bba.rrp = _bba.rrp % BBA_INIT_RHBP + 1;
 
 		size = bba->length - sizeof(*bba);
 
 		eth_input(page, (void *)bba->data, size);
-		bba_out8(BBA_RRP, rrp = bba->next);
-		rwp = bba_in8(BBA_RWP);
+		bba_out8(BBA_RRP, _bba.rrp = bba->next);
+		_bba.rwp = bba_in8(BBA_RWP);
 	}
-
-	return rrp != rwp;
 }
 
 static void bba_interrupt(void)
 {
 	uint8_t ir = bba_in8(BBA_IR);
 
-	if ((ir & BBA_IR_RI) && bba_receive())
-		ir &= ~BBA_IR_RI;
+	if (ir & BBA_IR_RI) bba_receive();
 
 	bba_out8(BBA_IR, ir);
 }
 
-static void exi_callback(int32_t chan, uint32_t dev)
+static void exi_callback()
 {
-	void alarm_handler(OSAlarm *alarm, OSContext *context)
-	{
-		OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
-	}
+	if (!setjmp(_bba.exit))
+		longjmp(_bba.entry, 1);
+}
 
+static void exi_coroutine()
+{
 	if (EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, exi_callback)) {
-		bba.lock = true;
+		_bba.lock = true;
 
-		OSCancelAlarm(&bba.alarm);
-		OSTick start = OSGetTick();
+		OSInterruptHandler TCIntrruptHandler = OSSetInterruptHandler(OS_INTERRUPT_EXI_0_TC, exi_callback);
+		OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_0_TC);
 
 		uint8_t status = bba_cmd_in8(0x03);
 		bba_cmd_out8(0x02, BBA_CMD_IRMASKALL);
@@ -269,20 +278,34 @@ static void exi_callback(int32_t chan, uint32_t dev)
 		bba_cmd_out8(0x03, status);
 		bba_cmd_out8(0x02, BBA_CMD_IRMASKNONE);
 
-		OSTick end = OSGetTick();
-		OSSetAlarm(&bba.alarm, OSDiffTick(end, start), alarm_handler);
+		OSMaskInterrupts(OS_INTERRUPTMASK_EXI_0_TC);
+		OSSetInterruptHandler(OS_INTERRUPT_EXI_0_TC, TCIntrruptHandler);
 
-		OSMaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
-
-		bba.lock = false;
+		_bba.lock = false;
 		EXIUnlock(EXI_CHANNEL_0);
 	}
+
+	if (!setjmp(_bba.entry))
+		longjmp(_bba.exit, 1);
 }
 
 void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	exi_clear_interrupts(EXI_CHANNEL_2, 1, 0, 0);
-	exi_callback(EXI_CHANNEL_0, EXI_DEVICE_2);
+	exi_callback();
+}
+
+void bba_init(void **arenaLo, void **arenaHi)
+{
+	*arenaHi -= sizeof(*_bba.exit);  _bba.exit  = *arenaHi;
+	*arenaHi -= sizeof(*_bba.entry); _bba.entry = *arenaHi;
+
+	void **sp = *arenaHi; sp[-2] = sp;
+	_bba.entry->gpr[1] = (intptr_t)sp - 8;
+	_bba.entry->lr = (intptr_t)exi_coroutine;
+
+	*arenaHi -= 2048;
+	*arenaHi -= sizeof(*_bba.page); _bba.page = *arenaHi;
 }
 
 void schedule_read(OSTick ticks)

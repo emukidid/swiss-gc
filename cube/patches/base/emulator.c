@@ -1076,6 +1076,10 @@ static void write_branch(void *a, void *b)
 	asm volatile("dcbst 0,%0; sync; icbi 0,%0" :: "r" (a));
 }
 
+#ifdef BBA
+void bba_init(void **arenaLo, void **arenaHi);
+#endif
+
 void init(void **arenaLo, void **arenaHi)
 {
 	OSCreateAlarm(&di_alarm);
@@ -1090,6 +1094,9 @@ void init(void **arenaLo, void **arenaHi)
 	write_branch((void *)0x80000500, external_interrupt_vector);
 	#endif
 
+	#ifdef BBA
+	bba_init(arenaLo, arenaHi);
+	#endif
 	#ifdef DTK
 	*arenaHi -= sizeof(*dsp.buffer[0]); dsp.buffer[0] = OSCachedToUncached(*arenaHi);
 	*arenaHi -= sizeof(*dsp.buffer[1]); dsp.buffer[1] = OSCachedToUncached(*arenaHi);
@@ -1274,10 +1281,6 @@ void idle_thread(void)
 	disable_interrupts();
 	#ifndef ASYNC_READ
 	trickle_read();
-	#endif
-	#ifdef BBA
-	OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
-	OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_2_EXI);
 	#endif
 	enable_interrupts_idle();
 }

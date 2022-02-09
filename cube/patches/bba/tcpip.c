@@ -187,7 +187,7 @@ static void fsp_get_file(uint32_t offset, uint32_t length, const void *path, uin
 	_fsp.command = CC_GET_FILE;
 	_fsp.sequence++;
 	_fsp.position = offset;
-	_fsp.data_length = MIN(length, UINT16_MAX);
+	_fsp.data_length = MIN(length, 1500 - (fsp->data - eth->data));
 
 	fsp->command = _fsp.command;
 	fsp->checksum = 0x00;
@@ -226,7 +226,7 @@ static void fsp_get_file(uint32_t offset, uint32_t length, const void *path, uin
 
 static void fsp_read_queued(void)
 {
-	if (!bba.lock && !EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, (EXICallback)fsp_read_queued))
+	if (!_bba.lock && !EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, (EXICallback)fsp_read_queued))
 		return;
 
 	void *buffer = _fsp.queued->buffer + _fsp.queued->offset;
@@ -239,7 +239,7 @@ static void fsp_read_queued(void)
 
 	OSSetAlarm(&read_alarm, OSSecondsToTicks(1), (OSAlarmHandler)fsp_read_queued);
 
-	if (!bba.lock) EXIUnlock(EXI_CHANNEL_0);
+	if (!_bba.lock) EXIUnlock(EXI_CHANNEL_0);
 }
 
 static void fsp_done_queued(void)
@@ -287,7 +287,7 @@ bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *
 	return false;
 }
 
-static void fsp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, size_t size)
+static void fsp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, size_t size)
 {
 	if (size < sizeof(*fsp))
 		return;
@@ -313,7 +313,7 @@ static void fsp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 	_fsp.key = fsp->key;
 }
 
-static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, size_t size)
+static void udp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, size_t size)
 {
 	if (ipv4->src_addr.addr == (*_server_ip).addr &&
 		ipv4->dst_addr.addr == (*_client_ip).addr) {
@@ -343,17 +343,17 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 					int offset = ipv4->offset * 8 - sizeof(udp_header_t) - sizeof(fsp_header_t);
 					int udp_offset = MAX(-offset, 0);
 					int data_offset = MAX(offset, 0);
-					int page_offset = (uint8_t *)udp + udp_offset - page;
+					int page_offset = (uint8_t *)udp + udp_offset - *page;
 
 					size = MIN(MAX(data_size - data_offset, 0), size);
 
 					int page_size = MIN(size, sizeof(bba_page_t) - page_offset);
-					memcpy(data + data_offset, page + page_offset, page_size);
+					memcpy(data + data_offset, *page + page_offset, page_size);
 					data_offset += page_size;
 					size        -= page_size;
 
 					if (ipv4->flags & 0b001) {
-						bba_receive_end(page, data + data_offset, size);
+						bba_receive_end(data + data_offset, size);
 					} else {
 						OSCancelAlarm(&read_alarm);
 
@@ -363,7 +363,7 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 						if (_fsp.queued->offset != _fsp.queued->length)
 							fsp_read_queued();
 
-						bba_receive_end(page, data + data_offset, size);
+						bba_receive_end(data + data_offset, size);
 
 						if (_fsp.queued->offset == _fsp.queued->length)
 							fsp_done_queued();
@@ -375,7 +375,7 @@ static void udp_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, u
 	}
 }
 
-static void ipv4_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, size_t size)
+static void ipv4_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, size_t size)
 {
 	if (ipv4->version != 4)
 		return;
@@ -395,7 +395,7 @@ static void ipv4_input(bba_page_t page, eth_header_t *eth, ipv4_header_t *ipv4, 
 	}
 }
 
-static void arp_input(bba_page_t page, eth_header_t *eth, arp_packet_t *arp, size_t size)
+static void arp_input(bba_page_t *page, eth_header_t *eth, arp_packet_t *arp, size_t size)
 {
 	if (arp->hardware_type != HW_ETHERNET || arp->hardware_length != sizeof(struct eth_addr))
 		return;
@@ -433,7 +433,7 @@ static void arp_input(bba_page_t page, eth_header_t *eth, arp_packet_t *arp, siz
 	}
 }
 
-static void eth_input(bba_page_t page, eth_header_t *eth, size_t size)
+static void eth_input(bba_page_t *page, eth_header_t *eth, size_t size)
 {
 	if (size < MIN_FRAME_SIZE)
 		return;

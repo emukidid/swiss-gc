@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2022, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -17,21 +17,30 @@
  * with Swiss.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BBA_H
-#define BBA_H
+#define _LANGUAGE_ASSEMBLY
+#include "../../reservedarea.h"
 
-#include <stdint.h>
+.section .text
+	.globl setjmp
+setjmp:
+	stmw	r14, 56 (r3)
+	mfcr	r0
+	stw		r0, 128 (r3)
+	mflr	r0
+	stw		r0, 132 (r3)
+	stw		sp, 4 (r3)
+	li		r3, 0
+	blr
 
-typedef struct {
-	uint32_t next   : 12;
-	uint32_t length : 12;
-	uint32_t status : 8;
-	uint8_t data[];
-} __attribute((packed, scalar_storage_order("little-endian"))) bba_header_t;
-
-typedef uint8_t bba_page_t[256] __attribute((aligned(32)));
-
-void bba_transmit(const void *data, size_t size);
-void bba_receive_end(void *data, size_t size);
-
-#endif /* BBA_H */
+	.globl longjmp
+longjmp:
+	lmw		r14, 56 (r3)
+	lwz		r0, 128 (r3)
+	mtcr	r0
+	lwz		r0, 132 (r3)
+	mtlr	r0
+	lwz		sp, 4 (r3)
+	mr.		r3, r4
+	bnelr
+	li		r3, 1
+	blr
