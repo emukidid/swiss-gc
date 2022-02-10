@@ -80,9 +80,11 @@ void ensure_path(int deviceSlot, char *path, char *oldPath) {
 	char *fullPath = calloc(1, PATHNAME_MAX);
 	if(oldPath) {
 		char *oldFullPath = calloc(1, PATHNAME_MAX);
-		snprintf(oldFullPath, PATHNAME_MAX, "%s%s", devices[DEVICE_PATCHES]->initial->name, oldPath);
-		snprintf(fullPath, PATHNAME_MAX, "%s%s", devices[DEVICE_PATCHES]->initial->name, path);
-		f_rename(oldFullPath, fullPath);
+		snprintf(oldFullPath, PATHNAME_MAX, "%s%s", devices[deviceSlot]->initial->name, oldPath);
+		snprintf(fullPath, PATHNAME_MAX, "%s%s", devices[deviceSlot]->initial->name, path);
+		if(f_rename(oldFullPath, fullPath) != FR_OK) {
+			f_mkdir(fullPath);
+		}
 		free(oldFullPath);
 	}
 	else {

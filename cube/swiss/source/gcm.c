@@ -475,16 +475,13 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 	}
 
 	char patchDirName[256];
-	char patchBaseDirName[256];
 	char gameID[16];
 	memset(&gameID, 0, 16);
 	memset(&patchDirName, 0, 256);
-	memset(&patchBaseDirName, 0, 256);
 	strncpy((char*)&gameID, (char*)&GCMDisk, 4);
-	snprintf(&patchDirName[0], 256, "%sswiss/patches/%.4s", devices[DEVICE_PATCHES]->initial->name, &gameID[0]);
+	snprintf(&patchDirName[0], 256, "swiss/patches/%.4s", &gameID[0]);
 	memcpy((char*)&gameID, (char*)&GCMDisk, 12);
-	snprintf(&patchBaseDirName[0], 256, "%sswiss/patches", devices[DEVICE_PATCHES]->initial->name);
-	print_gecko("Patch dir will be: %s if required\r\n", patchDirName);
+	print_gecko("Patch dir will be: %s%s if required\r\n", devices[DEVICE_PATCHES]->initial->name, patchDirName);
 	// Go through all the possible files we think need patching..
 	for(i = 0; i < numToPatch; i++) {
 		u32 patched = 0;
@@ -590,24 +587,12 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			
 			// If the old directory exists, lets move it to the new location (swiss_patches is now just patches under /swiss/)
 			ensure_path(DEVICE_PATCHES, "swiss/patches", "swiss_patches");	// TODO kill this off in our next major release.
+			ensure_path(DEVICE_PATCHES, patchDirName, NULL);
 			
 			// File handle for a patch we might need to write
 			file_handle patchFile;
 			memset(&patchFile, 0, sizeof(file_handle));
-		
-			int res;
-			// Make a base patches dir if we don't have one already
-			if((res=f_mkdir(&patchBaseDirName[0])) != FR_OK) {
-				if(res != FR_EXIST) {
-					print_gecko("Warning: %i [%s]\r\n",res, patchBaseDirName);
-				}
-			}
-			if((res=f_mkdir(&patchDirName[0])) != FR_OK) {
-				if(res != FR_EXIST) {
-					print_gecko("Warning: %i [%s]\r\n",res, patchDirName);
-				}
-			}
-			sprintf(patchFile.name, "%s/%i",patchDirName, num_patched);
+			snprintf(&patchFile.name[0], PATHNAME_MAX, "%s%s/%i", devices[DEVICE_PATCHES]->initial->name, patchDirName, num_patched);
 
 			// Make patch trailer
 			u32 patchInfo[4];
