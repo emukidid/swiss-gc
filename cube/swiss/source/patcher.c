@@ -11455,6 +11455,17 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 	void *addr;
 	int patched = 0;
 	
+	if (!strcmp(fileName, "boot.bin")) {
+		memcpy(data, &GCMDisk, length);
+		memset(data + 0x200, 0, 0x200);
+		
+		print_gecko("Patched:[%s]\n", fileName);
+		patched++;
+		
+		data    += 0x440;
+		length  -= 0x440;
+		fileName = "bi2.bin";
+	}
 	if (!strncmp(gameID, "DPOJ8P", 6)) {
 		if (!strcmp(fileName, "bi2.bin")) {
 			*(u32 *)(data + 0x4) = 0x1800000;

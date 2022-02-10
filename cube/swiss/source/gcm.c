@@ -302,11 +302,11 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 	}
 	free(FST);
 	
-	// This need to be last so the debug monitor size can be determined.
-	filesToPatch[numFiles].offset = 0x440;
-	filesToPatch[numFiles].size = 0x2000;
+	// This need to be last.
+	filesToPatch[numFiles].offset = 0;
+	filesToPatch[numFiles].size = 0x2440;
 	filesToPatch[numFiles].type = PATCH_OTHER;
-	sprintf(filesToPatch[numFiles].name, "bi2.bin");
+	sprintf(filesToPatch[numFiles].name, "boot.bin");
 	numFiles++;
 	return numFiles;
 }
@@ -339,6 +339,9 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 	devices[DEVICE_CUR]->readFile(file,&tgcHeader,sizeof(TGCHeader));
 	
 	if(tgcHeader.magic != TGC_MAGIC) return -1;
+	if(tgcHeader.fstMaxLength > GCMDisk.MaxFSTSize) {
+		GCMDisk.MaxFSTSize = tgcHeader.fstMaxLength;
+	}
 	
 	if(tgcHeader.apploaderOffset != 0) {
 		ApploaderHeader apploaderHeader;
