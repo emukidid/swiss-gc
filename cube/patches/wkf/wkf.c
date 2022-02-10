@@ -98,6 +98,7 @@ static void wkf_done_queued(void)
 	wkf.queued->callback = NULL;
 	wkf.queued = NULL;
 
+	#if QUEUE_SIZE > 2
 	for (int i = 0; i < QUEUE_SIZE; i++) {
 		if (wkf.queue[i].callback != NULL && wkf.queue[i].length + wkf.queue[i].offset % 512 <= 512) {
 			wkf.queued = &wkf.queue[i];
@@ -105,6 +106,7 @@ static void wkf_done_queued(void)
 			return;
 		}
 	}
+	#endif
 	for (int i = 0; i < QUEUE_SIZE; i++) {
 		if (wkf.queue[i].callback != NULL) {
 			wkf.queued = &wkf.queue[i];

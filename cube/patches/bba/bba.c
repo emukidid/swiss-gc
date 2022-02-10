@@ -211,7 +211,7 @@ void bba_receive_end(void *data, size_t size)
 {
 	if (!size) return;
 	bba_page_t *page = _bba.page[1];
-	DCInvalidateRange(page, size);
+	DCInvalidateRange(__builtin_assume_aligned(page, 32), size);
 
 	int page_wrap = MIN(size, (BBA_INIT_RHBP + 1 - _bba.rrp) << 8);
 
@@ -235,7 +235,7 @@ static void bba_receive(void)
 		bba_header_t *bba = (bba_header_t *)page;
 		size_t size = sizeof(bba_page_t);
 
-		DCInvalidateRange(page, size);
+		DCInvalidateRange(__builtin_assume_aligned(page, 32), size);
 		bba_ins(_bba.rrp << 8, page, size);
 		_bba.rrp = _bba.rrp % BBA_INIT_RHBP + 1;
 

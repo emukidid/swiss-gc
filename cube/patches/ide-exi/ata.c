@@ -42,6 +42,9 @@
 #define QUEUE_SIZE			2
 #endif
 #define SECTOR_SIZE 		512
+#ifndef WRITE
+#define WRITE				write
+#endif
 
 #define _ata48bit *(u8*)VAR_ATA_LBA48
 
@@ -338,7 +341,7 @@ static void ata_read_queued(void)
 	uint16_t count = ata.queued->count;
 	bool write = ata.queued->write;
 
-	if (write) {
+	if (WRITE) {
 		if (ata.last_sector == sector)
 			ata.last_sector = ~0;
 
@@ -380,7 +383,7 @@ static void ata_done_queued(void)
 	uint16_t count = ata.queued->count;
 	bool write = ata.queued->write;
 
-	if (!write)
+	if (!WRITE)
 		buffer = memcpy(buffer, *ata.buffer + offset, length);
 	ata.queued->callback(buffer, length);
 
@@ -398,6 +401,7 @@ static void ata_done_queued(void)
 			}
 		}
 	}
+	#if QUEUE_SIZE > 2
 	for (int i = 0; i < QUEUE_SIZE; i++) {
 		if (ata.queue[i].callback != NULL && ata.queue[i].count == 1) {
 			ata.queued = &ata.queue[i];
@@ -405,6 +409,7 @@ static void ata_done_queued(void)
 			return;
 		}
 	}
+	#endif
 	for (int i = 0; i < QUEUE_SIZE; i++) {
 		if (ata.queue[i].callback != NULL) {
 			ata.queued = &ata.queue[i];
@@ -445,7 +450,7 @@ bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_
 			ata.queue[i].offset = offset;
 			ata.queue[i].sector = sector;
 			ata.queue[i].count = count;
-			ata.queue[i].write = write;
+			ata.queue[i].write = WRITE;
 			ata.queue[i].callback = callback;
 
 			if (ata.queued == NULL) {
@@ -474,7 +479,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u64 sectorLba, bool write) {
 	if(exi_selected()) {
 		return 0;
 	}
-	if(write) {
+	if(WRITE) {
 		if(ata.last_sector == lba) {
 			ata.last_sector = ~0;
 		}

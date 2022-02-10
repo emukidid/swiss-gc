@@ -3,6 +3,7 @@
 	by Extrems
  */
 
+#define _GNU_SOURCE
 #include <string.h>
 #include <unistd.h>
 #include <malloc.h>

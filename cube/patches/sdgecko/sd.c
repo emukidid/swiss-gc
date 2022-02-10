@@ -30,6 +30,9 @@
 #define READ_MULTIPLE		0
 #endif
 #define SECTOR_SIZE 		512
+#ifndef WRITE
+#define WRITE				write
+#endif
 
 #define exi_freq			(*(u8*)VAR_EXI_FREQ)
 #define exi_channel			({ if (*VAR_EXI_SLOT >= EXI_CHANNEL_MAX) __builtin_trap(); *VAR_EXI_SLOT; })
@@ -218,7 +221,7 @@ static void mmc_read_queued(void)
 	uint32_t sector = mmc.queued->sector;
 	bool write = mmc.queued->write;
 
-	if (write) {
+	if (WRITE) {
 		if (mmc.last_sector == sector)
 			mmc.last_sector = ~0;
 
@@ -244,7 +247,7 @@ static void mmc_read_queued(void)
 		return;
 	}
 
-	if (sector != mmc.next_sector || write != mmc.write) {
+	if (sector != mmc.next_sector || WRITE != mmc.write) {
 		end_read();
 		send_cmd(CMD18, sector << *VAR_SD_SHIFT);
 	}
@@ -253,7 +256,7 @@ static void mmc_read_queued(void)
 
 	mmc.last_sector = sector;
 	mmc.next_sector = sector + 1;
-	mmc.write = write;
+	mmc.write = WRITE;
 }
 
 static void mmc_done_queued(void)
@@ -264,7 +267,7 @@ static void mmc_done_queued(void)
 	uint32_t sector = mmc.queued->sector;
 	bool write = mmc.queued->write;
 
-	if (!write)
+	if (!WRITE)
 		buffer = memcpy(buffer, *mmc.buffer + offset, length);
 	mmc.queued->callback(buffer, length);
 
@@ -273,6 +276,7 @@ static void mmc_done_queued(void)
 	mmc.queued->callback = NULL;
 	mmc.queued = NULL;
 
+	#if QUEUE_SIZE > 2
 	for (int i = 0; i < QUEUE_SIZE; i++) {
 		if (mmc.queue[i].callback != NULL && mmc.queue[i].count == 1) {
 			mmc.queued = &mmc.queue[i];
@@ -280,6 +284,7 @@ static void mmc_done_queued(void)
 			return;
 		}
 	}
+	#endif
 	for (int i = 0; i < QUEUE_SIZE; i++) {
 		if (mmc.queue[i].callback != NULL) {
 			mmc.queued = &mmc.queue[i];
@@ -316,7 +321,7 @@ bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_
 			mmc.queue[i].offset = offset;
 			mmc.queue[i].sector = sector;
 			mmc.queue[i].count = count;
-			mmc.queue[i].write = write;
+			mmc.queue[i].write = WRITE;
 			mmc.queue[i].callback = callback;
 
 			if (mmc.queued == NULL) {
@@ -345,7 +350,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u64 sectorLba, bool write) {
 	if(exi_selected()) {
 		return 0;
 	}
-	if(write) {
+	if(WRITE) {
 		#if ISR_READ || READ_MULTIPLE
 		if(mmc.last_sector == lba) {
 			mmc.last_sector = ~0;
@@ -373,7 +378,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u64 sectorLba, bool write) {
 		return numBytes;
 	}
 	// If we weren't just reading this sector
-	if(lba != mmc.next_sector || write != mmc.write) {
+	if(lba != mmc.next_sector || WRITE != mmc.write) {
 		end_read();
 		// Send multiple block read command and the LBA we want to start reading at
 		send_cmd(CMD18, lba << lbaShift);
@@ -391,7 +396,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u64 sectorLba, bool write) {
 	}
 	// Save next LBA
 	mmc.next_sector = lba + 1;
-	mmc.write = write;
+	mmc.write = WRITE;
 	#endif
 	return numBytes;
 }
