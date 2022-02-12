@@ -301,8 +301,7 @@ void bba_init(void **arenaLo, void **arenaHi)
 	_bba.entry->gpr[1] = (intptr_t)sp - 8;
 	_bba.entry->lr = (intptr_t)exi_coroutine;
 
-	*arenaHi -= 2048;
-	*arenaHi -= sizeof(*_bba.page); _bba.page = *arenaHi;
+	*arenaHi -= sizeof(*_bba.page);  _bba.page  = *arenaHi;
 }
 
 void schedule_read(OSTick ticks)

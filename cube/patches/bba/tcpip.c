@@ -309,7 +309,7 @@ static void fsp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, 
 				OSCancelAlarm(&read_alarm);
 
 				uint8_t *data = _fsp.queued->buffer + _fsp.queued->offset;
-				int data_size = MIN(fsp->data_length, _fsp.queued->length - _fsp.queued->offset);
+				int data_size = MIN(fsp->data_length, _fsp.data_length);
 				int page_size = MIN(page[1] - fsp->data, data_size);
 
 				_fsp.command = CC_NULL;
