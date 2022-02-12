@@ -207,10 +207,9 @@ void bba_transmit(const void *data, size_t size)
 	bba_out8(BBA_NCRA, (bba_in8(BBA_NCRA) & ~BBA_NCRA_ST0) | BBA_NCRA_ST1);
 }
 
-void bba_receive_end(void *data, size_t size)
+void bba_receive_end(bba_page_t page, size_t size)
 {
 	if (!size) return;
-	bba_page_t *page = _bba.page[1];
 	DCInvalidateRange(__builtin_assume_aligned(page, 32), size);
 
 	int page_wrap = MIN(size, (BBA_INIT_RHBP + 1 - _bba.rrp) << 8);
@@ -218,11 +217,9 @@ void bba_receive_end(void *data, size_t size)
 	if (page_wrap < size) {
 		bba_ins(_bba.rrp << 8, page, page_wrap);
 		_bba.rrp = BBA_INIT_RRP;
-		bba_ins(_bba.rrp << 8, *page + page_wrap, size - page_wrap);
+		bba_ins(_bba.rrp << 8, page + page_wrap, size - page_wrap);
 	} else
 		bba_ins(_bba.rrp << 8, page, size);
-
-	memcpy(data, page, size);
 }
 
 static void bba_receive(void)
@@ -231,7 +228,7 @@ static void bba_receive(void)
 	_bba.rrp = bba_in8(BBA_RRP);
 
 	while (_bba.rrp != _bba.rwp) {
-		bba_page_t *page = _bba.page[0];
+		bba_page_t *page = *_bba.page;
 		bba_header_t *bba = (bba_header_t *)page;
 		size_t size = sizeof(bba_page_t);
 

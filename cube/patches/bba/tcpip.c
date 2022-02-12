@@ -48,6 +48,7 @@ enum {
 };
 
 enum {
+	CC_NULL    = 0x00,
 	CC_VERSION = 0x10,
 	CC_ERR     = 0x40,
 	CC_GET_DIR,
@@ -137,7 +138,6 @@ static struct {
 	uint16_t sequence;
 	uint16_t data_length;
 	uint32_t position;
-	uint16_t fragment_id;
 	struct {
 		void *buffer;
 		uint32_t length;
@@ -289,12 +289,14 @@ bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *
 
 static void fsp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, size_t size)
 {
-	if (size < sizeof(*fsp))
+	if (size < sizeof(*fsp) + fsp->data_length)
 		return;
 	if (udp->length < sizeof(*udp) + sizeof(*fsp) + fsp->data_length)
 		return;
 
 	size -= sizeof(*fsp);
+
+	_fsp.key = fsp->key;
 
 	switch (fsp->command) {
 		case CC_ERR:
@@ -304,74 +306,45 @@ static void fsp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, 
 				fsp->sequence == _fsp.sequence &&
 				fsp->position == _fsp.position) {
 
-				_fsp.fragment_id = ipv4->id;
-				_fsp.data_length = fsp->data_length;
+				OSCancelAlarm(&read_alarm);
+
+				uint8_t *data = _fsp.queued->buffer + _fsp.queued->offset;
+				int data_size = MIN(fsp->data_length, _fsp.queued->length - _fsp.queued->offset);
+				int page_size = MIN(page[1] - fsp->data, data_size);
+
+				_fsp.command = CC_NULL;
+				_fsp.queued->offset += data_size;
+
+				if (_fsp.queued->offset != _fsp.queued->length)
+					fsp_read_queued();
+
+				bba_receive_end(page[1], data_size - page_size);
+				memcpy(data, fsp->data, data_size);
+
+				if (_fsp.queued->offset == _fsp.queued->length)
+					fsp_done_queued();
 			}
 			break;
 	}
-
-	_fsp.key = fsp->key;
 }
 
 static void udp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, size_t size)
 {
+	if (size < sizeof(*udp))
+		return;
+	if (udp->length < sizeof(*udp))
+		return;
+
+	size -= sizeof(*udp);
+
 	if (ipv4->src_addr.addr == (*_server_ip).addr &&
 		ipv4->dst_addr.addr == (*_client_ip).addr) {
 
 		*_server_mac = eth->src_addr;
 
-		if (ipv4->offset == 0) {
-			if (size < sizeof(*udp))
-				return;
-			if (udp->length < sizeof(*udp))
-				return;
-
-			size -= sizeof(*udp);
-
-			if (udp->src_port == *_port &&
-				udp->dst_port == *_port)
-				fsp_input(page, eth, ipv4, udp, (void *)udp->data, size);
-		}
-
-		if (ipv4->id == _fsp.fragment_id) {
-			switch (_fsp.command) {
-				case CC_GET_FILE:
-				{
-					uint8_t *data = _fsp.queued->buffer + _fsp.queued->offset;
-					int data_size = MIN(_fsp.data_length, _fsp.queued->length - _fsp.queued->offset);
-
-					int offset = ipv4->offset * 8 - sizeof(udp_header_t) - sizeof(fsp_header_t);
-					int udp_offset = MAX(-offset, 0);
-					int data_offset = MAX(offset, 0);
-					int page_offset = (uint8_t *)udp + udp_offset - *page;
-
-					size = MIN(MAX(data_size - data_offset, 0), size);
-
-					int page_size = MIN(size, sizeof(bba_page_t) - page_offset);
-					memcpy(data + data_offset, *page + page_offset, page_size);
-					data_offset += page_size;
-					size        -= page_size;
-
-					if (ipv4->flags & 0b001) {
-						bba_receive_end(data + data_offset, size);
-					} else {
-						OSCancelAlarm(&read_alarm);
-
-						_fsp.command = 0x00;
-						_fsp.queued->offset += data_size;
-
-						if (_fsp.queued->offset != _fsp.queued->length)
-							fsp_read_queued();
-
-						bba_receive_end(data + data_offset, size);
-
-						if (_fsp.queued->offset == _fsp.queued->length)
-							fsp_done_queued();
-					}
-					break;
-				}
-			}
-		}
+		if (udp->src_port == *_port &&
+			udp->dst_port == *_port)
+			fsp_input(page, eth, ipv4, udp, (void *)udp->data, size);
 	}
 }
 
@@ -382,6 +355,8 @@ static void ipv4_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4,
 	if (ipv4->words < 5 || ipv4->words * 4 > ipv4->length)
 		return;
 	if (size < ipv4->length)
+		return;
+	if (ipv4->offset != 0 || (ipv4->flags & 0b001))
 		return;
 	if (ipv4_checksum(ipv4))
 		return;
