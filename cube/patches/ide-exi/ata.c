@@ -77,11 +77,7 @@ static struct {
 	} queue[QUEUE_SIZE], *queued;
 	#endif
 } ata = {
-	#if DMA_READ
-	.buffer = OSCachedToUncached(&VAR_SECTOR_BUF),
-	#else
 	.buffer = &VAR_SECTOR_BUF,
-	#endif
 	.last_sector = ~0,
 	.next_sector = ~0
 };
@@ -234,6 +230,7 @@ static int ataReadBuffer(void *buffer)
 	exi_imm_write(0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8), 4, 1);
 	#if DMA_READ
 	// v2, no deselect or extra read required.
+	DCInvalidateRange(__builtin_assume_aligned(ptr, 32), SECTOR_SIZE);
 	exi_dma_read(ptr, SECTOR_SIZE, 1);
 	exi_deselect();
 	#else
@@ -252,6 +249,9 @@ static int ataReadBuffer(void *buffer)
 
 static void ataReadBufferAsync(void *buffer)
 {
+	#if DMA_READ
+	DCInvalidateRange(__builtin_assume_aligned(buffer, 32), SECTOR_SIZE);
+	#endif
 	#if ISR_READ
 	_ata.registers = OSUncachedToPhysical(exi_regs);
 	_ata.transferred = -1;

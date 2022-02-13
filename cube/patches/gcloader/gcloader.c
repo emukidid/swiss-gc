@@ -45,7 +45,7 @@ static struct {
 		frag_callback callback;
 	} queue[QUEUE_SIZE], *queued;
 } gcode = {
-	.buffer = OSCachedToUncached(&VAR_SECTOR_BUF),
+	.buffer = &VAR_SECTOR_BUF,
 	.last_sector = ~0
 };
 
@@ -126,11 +126,14 @@ static void gcode_read_queued(void)
 						return;
 					} else {
 						gcode.last_sector = sector;
+						buffer = gcode.buffer;
+
+						DCInvalidateRange(__builtin_assume_aligned(buffer, 32), SECTOR_SIZE);
 
 						DI[2] = DI_CMD_GCODE_READ << 24;
 						DI[3] = sector;
 						DI[4] = SECTOR_SIZE;
-						DI[5] = (uint32_t)gcode.buffer;
+						DI[5] = (uint32_t)buffer;
 						DI[6] = SECTOR_SIZE;
 						DI[7] = 0b011;
 					}
