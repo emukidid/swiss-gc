@@ -56,6 +56,9 @@
 #if ISR_READ
 extern struct {
 	int transferred;
+	#if DMA_READ
+	intptr_t buffer;
+	#endif
 	intptr_t registers;
 } _ata;
 #endif
@@ -249,11 +252,11 @@ static int ataReadBuffer(void *buffer)
 
 static void ataReadBufferAsync(void *buffer)
 {
-	#if DMA_READ
-	DCInvalidateRange(__builtin_assume_aligned(buffer, 32), SECTOR_SIZE);
-	#endif
 	#if ISR_READ
 	_ata.registers = OSUncachedToPhysical(exi_regs);
+	#if DMA_READ
+	_ata.buffer = (intptr_t)buffer;
+	#endif
 	_ata.transferred = -1;
 
 	exi_select();
@@ -345,7 +348,6 @@ static void ata_read_queued(void)
 		if (ata.last_sector == sector)
 			ata.last_sector = ~0;
 
-		ata.count = 0;
 		ataWriteSectors(sector, 1);
 
 		if (ataWriteBuffer(buffer))
@@ -353,6 +355,7 @@ static void ata_read_queued(void)
 		else
 			ata.queued->length = 0;
 
+		ata.count = 0;
 		ata_done_queued();
 		return;
 	}
@@ -362,14 +365,21 @@ static void ata_read_queued(void)
 		return;
 	}
 
+	if ((uintptr_t)buffer % 32 || length < SECTOR_SIZE || !DMA_READ) {
+		ata.last_sector = sector;
+		buffer = ata.buffer;
+
+		#if DMA_READ
+		DCInvalidateRange(__builtin_assume_aligned(buffer, 32), SECTOR_SIZE);
+		#endif
+	}
+
 	if (sector != ata.next_sector || ata.count == 0) {
 		ata.count = count;
 		ataReadSectors(sector, count);
 	}
 
-	ataReadBufferAsync(ata.buffer);
-
-	ata.last_sector = sector;
+	ataReadBufferAsync(buffer);
 	ata.next_sector = sector + 1;
 	ata.count--;
 }
@@ -383,7 +393,7 @@ static void ata_done_queued(void)
 	uint16_t count = ata.queued->count;
 	bool write = ata.queued->write;
 
-	if (!WRITE)
+	if (!WRITE && (sector == ata.last_sector || !DMA_READ))
 		buffer = memcpy(buffer, *ata.buffer + offset, length);
 	ata.queued->callback(buffer, length);
 

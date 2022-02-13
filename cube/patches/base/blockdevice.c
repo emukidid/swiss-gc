@@ -42,8 +42,6 @@ void schedule_read(OSTick ticks)
 	#ifdef ASYNC_READ
 	void read_callback(void *address, uint32_t length)
 	{
-		DCStoreRangeNoSync(address, length);
-
 		dvd.buffer += length;
 		dvd.length -= length;
 		dvd.offset += length;
@@ -74,7 +72,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 		*VAR_SECOND_DISC = 0;
 	}
 
-	dvd.buffer = OSPhysicalToCached(address);
+	dvd.buffer = OSPhysicalToUncached(address);
 	dvd.length = length;
 	dvd.offset = offset;
 	dvd.read = true;

@@ -237,7 +237,6 @@ static void mmc_read_queued(void)
 
 		mmc.next_sector = sector + 1;
 		mmc.write = write;
-
 		mmc_done_queued();
 		return;
 	}
@@ -253,7 +252,6 @@ static void mmc_read_queued(void)
 	}
 
 	rcvr_datablock(mmc.buffer, 0, SECTOR_SIZE, 0);
-
 	mmc.last_sector = sector;
 	mmc.next_sector = sector + 1;
 	mmc.write = WRITE;

@@ -26,6 +26,10 @@
 _ata:
 _ata_transferred:
 	.long	512
+#ifdef DMA
+_ata_buffer:
+	.long	0
+#endif
 _ata_registers:
 	.long	0x0C006800
 
@@ -102,7 +106,7 @@ external_interrupt_vector:
 	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
 	ecowx	r5, r0, r4
 	li		r5, 1*4
-	li		r6, VAR_SECTOR_BUF
+	lwz		r6, _ata_buffer - 0x80000000 (r0)
 	ecowx	r6, r5, r4
 	li		r5, 2*4
 	li		r6, 512

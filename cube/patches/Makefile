@@ -193,7 +193,7 @@ ideexi-v1.dtk.bin:
 ideexi-v2.bin:
 	@echo Building IDE-EXI-v2 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDMA -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -215,7 +215,7 @@ ideexi-v2.bin:
 ideexi-v2.card.bin:
 	@echo Building IDE-EXI-v2 Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DDMA -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -234,7 +234,7 @@ ideexi-v2.card.bin:
 ideexi-v2.dtk.bin:
 	@echo Building IDE-EXI-v2 Patch + DTK ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDMA -DDTK -DISR
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -308,7 +308,7 @@ usbgecko.bin:
 wkf.bin:
 	@echo Building WKF Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DISR -DWKF
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDMA -DISR -DWKF
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/igr.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ
@@ -326,7 +326,7 @@ wkf.bin:
 wkf.card.bin:
 	@echo Building WKF Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DISR -DWKF
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DDMA -DISR -DWKF
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/igr.c
@@ -345,7 +345,7 @@ wkf.card.bin:
 wkf.dtk.bin:
 	@echo Building WKF Patch + DTK ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK -DISR -DWKF
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDMA -DDTK -DISR -DWKF
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
@@ -425,7 +425,7 @@ gcloader-v1.card.bin:
 gcloader-v2.bin:
 	@echo Building GCLoader-v2 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DGCODE
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDMA -DGCODE
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
@@ -445,7 +445,7 @@ gcloader-v2.bin:
 gcloader-v2.card.bin:
 	@echo Building GCLoader-v2 Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DGCODE
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DDMA -DGCODE
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/igr.c

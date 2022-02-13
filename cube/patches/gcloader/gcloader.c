@@ -284,7 +284,7 @@ bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_
 	if (write) {
 		length = SECTOR_SIZE;
 		command = DI_CMD_GCODE_WRITE_BUFFER << 24;
-	} else if ((intptr_t)buffer % 32 + offset) {
+	} else if ((uintptr_t)buffer % 32 + offset) {
 		length = MIN(length, SECTOR_SIZE - offset);
 		command = DI_CMD_GCODE_READ << 24 | 0x01;
 	} else
