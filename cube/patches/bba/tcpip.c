@@ -178,7 +178,7 @@ static uint8_t fsp_checksum(fsp_header_t *header, size_t size)
 
 static void fsp_get_file(uint32_t offset, uint32_t length, const void *path, uint16_t pathlen)
 {
-	uint8_t data[MIN_FRAME_SIZE + pathlen];
+	uint8_t *data = (*_bba.page)[1];
 	eth_header_t *eth = (eth_header_t *)data;
 	ipv4_header_t *ipv4 = (ipv4_header_t *)eth->data;
 	udp_header_t *udp = (udp_header_t *)ipv4->data;
@@ -221,7 +221,7 @@ static void fsp_get_file(uint32_t offset, uint32_t length, const void *path, uin
 	eth->dst_addr = *_server_mac;
 	eth->src_addr = *_client_mac;
 	eth->type = ETH_TYPE_IPV4;
-	bba_transmit(eth, sizeof(*eth) + ipv4->length);
+	bba_transmit_fifo(eth, sizeof(*eth) + ipv4->length);
 }
 
 static void fsp_read_queued(void)
@@ -318,7 +318,7 @@ static void fsp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, 
 				if (_fsp.queued->offset != _fsp.queued->length)
 					fsp_read_queued();
 
-				bba_receive_end(page[1], data_size - page_size);
+				bba_receive_dma(page[1], data_size - page_size);
 				memcpy(data, fsp->data, data_size);
 
 				if (_fsp.queued->offset == _fsp.queued->length)
@@ -370,6 +370,28 @@ static void ipv4_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4,
 	}
 }
 
+static void arp_reply(arp_packet_t *request)
+{
+	uint8_t *data = (*_bba.page)[1];
+	eth_header_t *eth = (eth_header_t *)data;
+	arp_packet_t *arp = (arp_packet_t *)eth->data;
+
+	arp->hardware_type = HW_ETHERNET;
+	arp->hardware_length = sizeof(struct eth_addr);
+	arp->protocol_type = ETH_TYPE_IPV4;
+	arp->protocol_length = sizeof(struct ipv4_addr);
+	arp->operation = ARP_REPLY;
+	arp->src_mac = *_client_mac;
+	arp->src_ip = *_client_ip;
+	arp->dst_mac = request->src_mac;
+	arp->dst_ip = request->src_ip;
+
+	eth->dst_addr = arp->dst_mac;
+	eth->src_addr = arp->src_mac;
+	eth->type = ETH_TYPE_ARP;
+	bba_transmit_fifo(eth, MIN_FRAME_SIZE);
+}
+
 static void arp_input(bba_page_t *page, eth_header_t *eth, arp_packet_t *arp, size_t size)
 {
 	if (arp->hardware_type != HW_ETHERNET || arp->hardware_length != sizeof(struct eth_addr))
@@ -381,29 +403,14 @@ static void arp_input(bba_page_t *page, eth_header_t *eth, arp_packet_t *arp, si
 		case ARP_REQUEST:
 			if ((!arp->dst_mac.addr ||
 				arp->dst_mac.addr == (*_client_mac).addr) &&
-				arp->dst_ip.addr  == (*_client_ip).addr) {
-
-				arp->operation = ARP_REPLY;
-
-				arp->dst_mac = arp->src_mac;
-				arp->dst_ip  = arp->src_ip;
-
-				arp->src_mac = *_client_mac;
-				arp->src_ip  = *_client_ip;
-
-				eth->dst_addr = arp->dst_mac;
-				eth->src_addr = arp->src_mac;
-
-				bba_transmit(eth, MIN_FRAME_SIZE);
-			}
+				arp->dst_ip.addr  == (*_client_ip).addr)
+				arp_reply(arp);
 			break;
 		case ARP_REPLY:
 			if (arp->dst_mac.addr == (*_client_mac).addr &&
 				arp->dst_ip.addr  == (*_client_ip).addr &&
-				arp->src_ip.addr  == (*_server_ip).addr) {
-
+				arp->src_ip.addr  == (*_server_ip).addr)
 				*_server_mac = arp->src_mac;
-			}
 			break;
 	}
 }

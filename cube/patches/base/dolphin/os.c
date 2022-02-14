@@ -38,6 +38,20 @@ void DCFlushRangeNoSync(void *addr, u32 nBytes)
 	} while (--i);
 }
 
+void DCStoreRange(void *addr, u32 nBytes)
+{
+	if (!nBytes) return;
+	nBytes = OSRoundUp32B(((u32)(addr) & (32 - 1)) + nBytes);
+	int i = nBytes / 32;
+
+	do {
+		DCBlockStore(addr);
+		addr += 32;
+	} while (--i);
+
+	asm volatile("sc" ::: "r9", "r10");
+}
+
 void DCStoreRangeNoSync(void *addr, u32 nBytes)
 {
 	if (!nBytes) return;

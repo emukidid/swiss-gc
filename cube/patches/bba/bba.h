@@ -31,7 +31,7 @@ typedef struct {
 
 typedef uint8_t bba_page_t[256] __attribute((aligned(32)));
 
-void bba_transmit(const void *data, size_t size);
-void bba_receive_end(bba_page_t page, size_t size);
+void bba_transmit_fifo(const void *data, size_t size);
+void bba_receive_dma(bba_page_t page, size_t size);
 
 #endif /* BBA_H */

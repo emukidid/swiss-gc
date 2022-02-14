@@ -131,11 +131,20 @@ static void exi_immex_write(const uint8_t *buf __attribute((vector_size(4))), ui
 	} while (len -= xlen);
 }
 
-static void exi_dma_read(void *buf, uint32_t len)
+static void exi_dma_write(const void *buf, uint32_t len, bool sync)
+{
+	EXI[EXI_CHANNEL_0][1] = (uint32_t)buf;
+	EXI[EXI_CHANNEL_0][2] = OSRoundUp32B(len);
+	EXI[EXI_CHANNEL_0][3] = (EXI_WRITE << 2) | 0b11;
+	while (sync && (EXI[EXI_CHANNEL_0][3] & 0b01));
+}
+
+static void exi_dma_read(void *buf, uint32_t len, bool sync)
 {
 	EXI[EXI_CHANNEL_0][1] = (uint32_t)buf;
 	EXI[EXI_CHANNEL_0][2] = OSRoundUp32B(len);
 	EXI[EXI_CHANNEL_0][3] = (EXI_READ << 2) | 0b11;
+	while (sync && (EXI[EXI_CHANNEL_0][3] & 0b01));
 }
 
 static uint8_t bba_in8(uint16_t reg)
@@ -181,7 +190,7 @@ static void bba_ins(uint16_t reg, void *val, uint32_t len)
 	exi_select();
 	exi_imm_write(0x80 << 24 | reg << 8, 4);
 	exi_clear_interrupts(EXI_CHANNEL_0, 0, 1, 0);
-	exi_dma_read(val, len);
+	exi_dma_read(val, len, 0);
 
 	bool lock = _bba.lock;
 	_bba.lock = false;
@@ -196,18 +205,21 @@ static void bba_outs(uint16_t reg, const void *val, uint32_t len)
 {
 	exi_select();
 	exi_imm_write(0xC0 << 24 | reg << 8, 4);
-	exi_immex_write(val, len);
+	exi_dma_write(val, len, 1);
 	exi_deselect();
 }
 
-void bba_transmit(const void *data, size_t size)
+void bba_transmit_fifo(const void *data, size_t size)
 {
+	if (!size) return;
+	DCStoreRange(__builtin_assume_aligned(data, 32), size);
+
 	while (bba_in8(BBA_NCRA) & (BBA_NCRA_ST0 | BBA_NCRA_ST1));
 	bba_outs(BBA_WRTXFIFOD, data, size);
 	bba_out8(BBA_NCRA, (bba_in8(BBA_NCRA) & ~BBA_NCRA_ST0) | BBA_NCRA_ST1);
 }
 
-void bba_receive_end(bba_page_t page, size_t size)
+void bba_receive_dma(bba_page_t page, size_t size)
 {
 	if (!size) return;
 	DCInvalidateRange(__builtin_assume_aligned(page, 32), size);
