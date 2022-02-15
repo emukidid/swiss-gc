@@ -345,7 +345,6 @@ s32 deviceHandler_GCLOADER_closeFile(file_handle* file) {
 		ret = f_close(file->ffsFp);
 		free(file->ffsFp);
 		file->ffsFp = 0;
-		disk_flush(DEV_GCLDR);
 	}
 	return ret;
 }

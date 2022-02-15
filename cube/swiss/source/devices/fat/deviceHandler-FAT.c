@@ -133,29 +133,24 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	memset(dp, 0, sizeof(DIRF));
 	if(f_opendir(dp, ffile->name) != FR_OK) return -1;
 	FILINFO entry;
-	FILINFO fno;
 	
 	// Set everything up to read
 	int num_entries = 1, i = 1;
-	char file_name[PATHNAME_MAX];
 	*dir = calloc(sizeof(file_handle), 1);
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 	strcpy((*dir)[0].name, "..");
-	memset(&entry, 0, sizeof(FILINFO));
 
 	// Read each entry of the directory
 	while( f_readdir(dp, &entry) == FR_OK && entry.fname[0] != '\0') {
 		if(strlen(entry.fname) <= 2  && (entry.fname[0] == '.' || entry.fname[1] == '.')) {
 			continue;
 		}
-		memset(&file_name[0],0,PATHNAME_MAX);
-		snprintf(&file_name[0], PATHNAME_MAX, "%s/%s", ffile->name, entry.fname);
-		if(f_stat(file_name, &fno) != FR_OK || (!swissSettings.showHiddenFiles && fno.fattrib & AM_HID) || entry.fname[0] == '.') {
+		if(!swissSettings.showHiddenFiles && ((entry.fattrib & AM_HID) || entry.fname[0] == '.')) {
 			continue;
 		}
 		// Do we want this one?
-		if((type == -1 || ((fno.fattrib & AM_DIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
-			if(!(fno.fattrib & AM_DIR)) {
+		if((type == -1 || ((entry.fattrib & AM_DIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
+			if(!(entry.fattrib & AM_DIR)) {
 				if(!checkExtension(entry.fname)) continue;
 			}
 			// Make sure we have room for this one
@@ -165,8 +160,8 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
 			snprintf((*dir)[i].name, PATHNAME_MAX, "%s/%s", ffile->name, entry.fname);
-			(*dir)[i].size     = fno.fsize;
-			(*dir)[i].fileAttrib   = (fno.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
+			(*dir)[i].size     = entry.fsize;
+			(*dir)[i].fileAttrib   = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
 			++i;
 		}
 	}
@@ -190,15 +185,9 @@ s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
 			file->ffsFp = 0;
 			return -1;
 		}
-		if(file->size <= 0) {
-			FILINFO fno;
-			if(f_stat(file->name, &fno) != FR_OK) {
-				free(file->ffsFp);
-				file->ffsFp = 0;
-				return -1;
-			}
-			file->size = fno.fsize;
-		}
+	}
+	if(file->size <= 0) {
+		file->size = f_size(file->ffsFp);
 	}
 	
 	f_lseek(file->ffsFp, file->offset);
@@ -216,14 +205,10 @@ s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
 s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length) {
 	if(!file->ffsFp) {
 		file->ffsFp = malloc(sizeof(FIL));
-		// Append
-		if(f_open(file->ffsFp, file->name, FA_READ | FA_WRITE ) != FR_OK) {
-			// Try to create
-			if(f_open(file->ffsFp, file->name, FA_CREATE_NEW | FA_WRITE | FA_READ ) != FR_OK) {
-				free(file->ffsFp);
-				file->ffsFp = 0;
-				return -1;
-			}
+		if(f_open(file->ffsFp, file->name, FA_CREATE_ALWAYS | FA_WRITE ) != FR_OK) {
+			free(file->ffsFp);
+			file->ffsFp = 0;
+			return -1;
 		}
 	}
 	f_lseek(file->ffsFp, file->offset);
@@ -552,8 +537,6 @@ s32 deviceHandler_FAT_closeFile(file_handle* file) {
 		ret = f_close(file->ffsFp);
 		free(file->ffsFp);
 		file->ffsFp = 0;
-		int slot = GET_SLOT(file->name);
-		disk_flush(IS_SDCARD(file->name) ? slot : SD_COUNT+slot);
 	}
 	return ret;
 }
