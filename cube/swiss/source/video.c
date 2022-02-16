@@ -106,8 +106,12 @@ void setVideoMode(GXRModeObj *m) {
 	VIDEO_Configure (m);
 	if(xfb[0]) free(MEM_K1_TO_K0(xfb[0]));
 	if(xfb[1]) free(MEM_K1_TO_K0(xfb[1]));
-	xfb[0] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (m));
-	xfb[1] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (m));
+	xfb[0] = (u32 *) SYS_AllocateFramebuffer (m);
+	xfb[1] = (u32 *) SYS_AllocateFramebuffer (m);
+	DCInvalidateRange(xfb[0], VIDEO_GetFrameBufferSize(m));
+	DCInvalidateRange(xfb[1], VIDEO_GetFrameBufferSize(m));
+	xfb[0] = (u32 *) MEM_K0_TO_K1 (xfb[0]);
+	xfb[1] = (u32 *) MEM_K0_TO_K1 (xfb[1]);
 	VIDEO_ClearFrameBuffer (m, xfb[0], COLOR_BLACK);
 	VIDEO_ClearFrameBuffer (m, xfb[1], COLOR_BLACK);
 	VIDEO_SetNextFramebuffer (xfb[0]);
