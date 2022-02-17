@@ -1,6 +1,7 @@
 name: Feature request
 description: If you want a feature to be added you can fill in the report here.
 title: "[Feature request]: "
+labels: enhancement
 body:
   - type: markdown
     attributes:
