@@ -38,7 +38,7 @@ memcpy:
 	addi	r4, r4, 32
 	addi	r3, r3, 32
 	bdnz	1b
-2:	lswi	r5, r4, 32
+2:	lswx	r5, r0, r4
 	stswx	r5, r0, r3
 	mr		r3, r0
 	blr

@@ -618,6 +618,29 @@ bool findx_patterns(u32 *data, int dataType, u32 offsetFoundAt, u32 length, ...)
 	return functionPattern;
 }
 
+u32 _memcpy[] = {
+	0x7C041840,	// cmplw	r4, r3
+	0x41800028,	// blt		+10
+	0x3884FFFF,	// subi		r4, r4, 1
+	0x38C3FFFF,	// subi		r6, r3, 1
+	0x38A50001,	// addi		r5, r5, 1
+	0x4800000C,	// b		+3
+	0x8C040001,	// lbzu		r0, 1 (r4)
+	0x9C060001,	// stbu		r0, 1 (r6)
+	0x34A5FFFF,	// subic.	r5, r5, 1
+	0x4082FFF4,	// bne		-3
+	0x4E800020,	// blr
+	0x7C842A14,	// add		r4, r4, r5
+	0x7CC32A14,	// add		r6, r3, r5
+	0x38A50001,	// addi		r5, r5, 1
+	0x4800000C,	// b		+3
+	0x8C04FFFF,	// lbzu		r0, -1 (r4)
+	0x9C06FFFF,	// stbu		r0, -1 (r6)
+	0x34A5FFFF,	// subic.	r5, r5, 1
+	0x4082FFF4,	// bne		-3
+	0x4E800020	// blr
+};
+
 u32 _ppchalt[] = {
 	0x7C0004AC,	// sync
 	0x60000000,	// nop
@@ -719,6 +742,8 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	int i, j, k;
 	int patched = 0;
 	u32 address;
+	FuncPattern memcpySig = 
+		{ 11, 3, 0, 0, 2, 1, memcpy_bin, memcpy_bin_size, "memcpy" };
 	FuncPattern PrepareExecSigs[2] = {
 		{ 54, 19, 3, 17,  3, 3, NULL, 0, "PrepareExecD" },
 		{ 60, 15, 3, 16, 13, 2, NULL, 0, "PrepareExec" }
@@ -1434,7 +1459,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			continue;
 		
 		if (data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) {
-			if (!memcmp(data + i, _ppchalt, sizeof(_ppchalt)))
+			if (!memcmp(data + i, _memcpy, sizeof(_memcpy)))
+				memcpySig.offsetFoundAt = i;
+			else if (!memcmp(data + i, _ppchalt, sizeof(_ppchalt)))
 				PPCHaltSig.offsetFoundAt = i;
 			else if (!memcmp(data + i, _dvdgettransferredsize, sizeof(_dvdgettransferredsize)))
 				DVDGetTransferredSizeSig.offsetFoundAt = i;
@@ -4828,6 +4855,18 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	if ((i = SystemCallVectorSig.offsetFoundAt))
 		for (j = 0; j < SystemCallVectorSig.Length; j++)
 			data[i + j] = 0;
+	
+	if ((i = memcpySig.offsetFoundAt)) {
+		u32 *__memcpy = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__memcpy) {
+			memset(data + i, 0, memcpySig.Length * sizeof(u32));
+			memcpy(data + i, memcpySig.Patch, memcpySig.PatchLength);
+			
+			print_gecko("Found:[%s] @ %08X\n", memcpySig.Name, __memcpy);
+			patched++;
+		}
+	}
 	
 	for (j = 0; j < sizeof(PrepareExecSigs) / sizeof(FuncPattern); j++)
 	if ((i = PrepareExecSigs[j].offsetFoundAt)) {

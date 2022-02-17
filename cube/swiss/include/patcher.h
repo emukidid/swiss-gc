@@ -64,6 +64,8 @@ extern u8 gcloader_v2_card_bin[];
 extern u32 gcloader_v2_card_bin_size;
 
 /* SDK patches */
+extern u8 memcpy_bin[];
+extern u32 memcpy_bin_size;
 extern u8 DVDLowTestAlarmHook[];
 extern u32 DVDLowTestAlarmHook_length;
 extern u8 GXAdjustForOverscanPatch[];

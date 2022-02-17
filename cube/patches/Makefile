@@ -30,11 +30,14 @@ clean:
 
 cpatches:
 	@echo Building C Patches ...
+	@$(CC) -O3 $(OPTS) -c base/memcpy.S
 	@$(CC) -O3 $(OPTS) -c usbgecko/uart.c -DEXI=EXIEmuRegs
 	@$(CC) -O3 $(OPTS) -o WriteUARTN.elf -e WriteUARTN -T base/common.ld -T base/dolphin/os.ld uart.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D WriteUARTN.elf > $(DISASM)/WriteUARTN.txt
+	@$(OBJCOPY) -O binary memcpy.o memcpy.bin
 	@$(OBJCOPY) -O binary WriteUARTN.elf WriteUARTN.bin
+	@$(BIN2S) memcpy.bin > $(DEST)/memcpy.s
 	@$(BIN2S) WriteUARTN.bin > $(DEST)/WriteUARTN.s
 	@rm -f *.bin *.elf *.o
 
