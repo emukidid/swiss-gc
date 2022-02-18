@@ -1,0 +1,37 @@
+name: Swiss build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build Swiss
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitppc:latest
+
+    steps:
+    - name: Install packages
+      run: sudo apt-get install -y --no-install-recommends gcc gcc-mingw-w64-i686 libc6-dev libc6-i386 p7zip-full xorriso
+
+    - name: Checkout swiss-gc
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Checkout libogc2
+      uses: actions/checkout@v2
+      with:
+        repository: extremscorner/libogc2
+        path: cube/libogc2
+
+    - name: Build libogc2
+      run: make install
+      working-directory: cube/libogc2
+
+    - name: Build Swiss artifacts
+      run: make
+
+    - name: Upload Swiss artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: swiss-gc-${{ github.ref_name }}
+        path: swiss_r*/*

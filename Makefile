@@ -18,11 +18,15 @@ AR_SOURCES    = $(SOURCES)/actionreplay
 ifeq ($(OS),Windows_NT)
 DOLLZ         = $(BUILDTOOLS)/dollz3.exe
 DOL2GCI       = $(BUILDTOOLS)/dol2gci.exe
-MKISOFS       = xorrisofs
 else
 DOLLZ         = $(BUILDTOOLS)/dollz3
 DOL2GCI       = $(BUILDTOOLS)/dol2gci
+endif
+
+ifneq ($(shell which mkisofs),)
 MKISOFS       = mkisofs
+else
+MKISOFS       = xorrisofs
 endif
 
 BUILT_PATCHES = patches
