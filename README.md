@@ -1,7 +1,9 @@
 # Swiss
 
+[![Build Status](https://github.com/emukidid/swiss-gc/actions/workflows/continuous-integration-workflow.yml/badge.svg)](https://github.com/emukidid/swiss-gc/actions/workflows/continuous-integration-workflow.yml)
+
 ## Table of Contents
-- [Purpose](#purpose)
+ - [Purpose](#purpose)
  - [Main Features](#main-features)
  - [Requirements](#requirements)
  - [Usage](#usage)
