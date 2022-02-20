@@ -1,31 +1,31 @@
-name: Bug Report
-description: If you are experiencing an issue you can fill in a bug report here.
+name: Bug report
+description: If you are experiencing an issue, please fill out this form.
 title: "[Issue]: "
 labels: bug
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        Thank you for taking the time to fill out this bug report form!
   - type: textarea
     id: describe-bug
     attributes:
       label: Describe the bug
-      description: Describe the bug as accurate as possible.
+      description: Describe the bug as accurately as possible.
     validations:
       required: true
   - type: textarea
     id: steps-reproduce
     attributes:
       label: Steps to reproduce
-      description: Describe the steps to reproduce the bug as accurate as possible.
+      description: Describe the steps to reproduce the bug as accurately as possible.
     validations:
       required: true
   - type: textarea
     id: expected-behavior
     attributes:
       label: Expected behavior
-      description: Describe what you expect to happen.
+      description: Describe what you expected to happen.
     validations:
       required: true
   - type: textarea
