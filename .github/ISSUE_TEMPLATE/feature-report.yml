@@ -1,12 +1,12 @@
 name: Feature request
-description: If you want to have a feature to be added, please fill out this form.
+description: If you want to have a feature added, please fill out this form.
 title: "[Feature request]: "
 labels: enhancement
 body:
   - type: markdown
     attributes:
       value: |
-        Thank you for taking the time to fill out this feature form!
+        Thank you for taking the time to fill out this feature request form!
   - type: textarea
     id: feature
     attributes:
