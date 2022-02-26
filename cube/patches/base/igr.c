@@ -32,7 +32,8 @@ void check_pad(int32_t chan, PADStatus *status)
 			status->button |= PAD_BUTTON_R;
 	}
 
-	if ((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT) {
+	if ((status->button & PAD_COMBO_EXIT1) == PAD_COMBO_EXIT1 ||
+		(status->button & PAD_COMBO_EXIT2) == PAD_COMBO_EXIT2) {
 		switch (*VAR_IGR_TYPE) {
 			case IGR_HARDRESET:
 				if (OSResetSystem) {
