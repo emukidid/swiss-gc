@@ -121,6 +121,7 @@ void populate_save_meta(file_handle *f, u8 bannerFormat, u32 bannerOffset, u32 c
 }
 
 void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
+	f->meta->bannerSum = 0xFFFF;
 	f->meta->bannerSize = BNR_PIXELDATA_LEN;
 	f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
 	memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
@@ -135,12 +136,14 @@ void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 		}
 		else {
 			if(!memcmp(banner->magic, "BNR1", 4)) {
-				memcpy(f->meta->banner, banner->pixelData, BNR_PIXELDATA_LEN);
-				memcpy(&f->meta->bannerDesc, &banner->desc[0], sizeof(BNRDesc));
+				f->meta->bannerSum = fletcher16(banner, bannerSize);
+				memcpy(f->meta->banner, banner->pixelData, f->meta->bannerSize);
+				memcpy(&f->meta->bannerDesc, &banner->desc[0], sizeof(f->meta->bannerDesc));
 			}
 			else if(!memcmp(banner->magic, "BNR2", 4)) {
-				memcpy(f->meta->banner, banner->pixelData, BNR_PIXELDATA_LEN);
-				memcpy(&f->meta->bannerDesc, &banner->desc[swissSettings.sramLanguage], sizeof(BNRDesc));
+				f->meta->bannerSum = fletcher16(banner, bannerSize);
+				memcpy(f->meta->banner, banner->pixelData, f->meta->bannerSize);
+				memcpy(&f->meta->bannerDesc, &banner->desc[swissSettings.sramLanguage], sizeof(f->meta->bannerDesc));
 			}
 			if(strlen(f->meta->bannerDesc.description)) {
 				// Some banners only have empty spaces as padding until they hit a new line in the IPL
@@ -171,6 +174,7 @@ void populate_meta(file_handle *f) {
 		// File detection (GCM, DOL, MP3 etc)
 		if(f->fileAttrib==IS_FILE) {
 			if(devices[DEVICE_CUR] == &__device_wode) {
+				f->meta->bannerSum = 0xFFFF;
 				f->meta->bannerSize = BNR_PIXELDATA_LEN;
 				f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
 				memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
@@ -261,7 +265,7 @@ void populate_meta(file_handle *f) {
 
 file_handle* meta_find_disc2(file_handle *f) {
 	file_handle* disc2File = NULL;
-	if(f->meta && is_multi_disc(&f->meta->diskId)) {
+	if(is_multi_disc(f->meta)) {
 		file_handle* dirEntries = getCurrentDirEntries();
 		for(int i = 0; i < getCurrentDirEntryCount(); i++) {
 			if(!dirEntries[i].meta) {

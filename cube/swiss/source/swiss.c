@@ -1704,7 +1704,7 @@ void load_game() {
 			return;
 		}
 		
-		swissSettings.audioStreaming = is_streaming_disc((dvddiskid*)&GCMDisk);
+		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
 	}
 	else {
 		devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
@@ -1727,8 +1727,8 @@ void load_game() {
 			return;
 		}
 		
-		swissSettings.audioStreaming = is_streaming_disc((dvddiskid*)&GCMDisk);
-		if(is_redump_disc((dvddiskid*)&GCMDisk) && !valid_gcm_size(&GCMDisk, curFile.size)) {
+		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
+		if(is_redump_disc(curFile.meta) && !valid_gcm_size(&GCMDisk, curFile.size)) {
 			if(swissSettings.audioStreaming) {
 				DrawDispose(msgBox);
 				msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump and is not playable.\nPlease attempt recovery using NKit."));

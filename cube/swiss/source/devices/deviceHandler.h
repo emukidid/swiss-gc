@@ -23,7 +23,8 @@ typedef struct {
 	GXTexObj *fileTypeTexObj;
 	GXTexObj *regionTexObj;
 	u8 *banner;
-	int bannerSize;
+	u16 bannerSize;
+	u16 bannerSum;
 	GXTexObj bannerTexObj;
 	GXTlutObj bannerTlutObj;
 	BNRDesc bannerDesc;

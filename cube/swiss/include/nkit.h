@@ -25,9 +25,11 @@
 #include <sys/types.h>
 #include "gcm.h"
 
-bool is_multi_disc(const dvddiskid *header);
-bool is_redump_disc(const dvddiskid *header);
-bool is_streaming_disc(const dvddiskid *header);
+uint16_t fletcher16(const void *buffer, size_t size);
+
+bool is_multi_disc(const file_meta *meta);
+bool is_redump_disc(const file_meta *meta);
+bool is_streaming_disc(const DiskHeader *header);
 
 bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *size);
 
