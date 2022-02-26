@@ -6,11 +6,12 @@
 #include <string.h>
 #include <math.h>
 #include <malloc.h>
+#include "dvd.h"
 #include "elf.h"
 #include "gcm.h"
 #include "main.h"
+#include "nkit.h"
 #include "util.h"
-#include "dvd.h"
 #include "swiss.h"
 #include "cheats.h"
 #include "patcher.h"
@@ -42,7 +43,7 @@ void* get_fst(file_handle* file) {
 		}
 	}
 	
-	if(header.DVDMagicWord != DVD_MAGIC) return NULL;
+	if(!valid_gcm_magic(&header)) return NULL;
 	
 	// Alloc and read FST
 	FST=(char*)memalign(32,header.FSTSize); 
