@@ -261,7 +261,7 @@ void populate_meta(file_handle *f) {
 			f->meta->fileTypeTexObj = &dirimgTexObj;
 			
 			file_handle *bannerFile = calloc(1, sizeof(file_handle));
-			snprintf(bannerFile->name, PATHNAME_MAX, "%s/opening.bnr", f->name);
+			concat_path(bannerFile->name, f->name, "opening.bnr");
 			bannerFile->meta = f->meta;
 			
 			if (devices[DEVICE_CUR]->readFile(bannerFile, NULL, 0) == 0 && (bannerFile->size == 6496 || bannerFile->size == 8096)) {

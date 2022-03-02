@@ -65,12 +65,12 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 					*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 				}
 				memset(&(*dir)[i], 0, sizeof(file_handle));
-				snprintf((*dir)[i].name, PATHNAME_MAX, "%s/%s", ffile->name, (char*)dolName);
-				(*dir)[i].size		= dolSize;
+				concat_path((*dir)[i].name, ffile->name, dolName);
+				(*dir)[i].size       = dolSize;
 				(*dir)[i].fileAttrib = IS_FILE;
-				(*dir)[i].fileBase = block+0x100;
+				(*dir)[i].fileBase   = block+256;
+				usedSpace += (*dir)[i].size;
 				++i;
-				usedSpace += dolSize;
 			}
 		}	
 	}

@@ -159,9 +159,9 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 				*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
-			snprintf((*dir)[i].name, PATHNAME_MAX, "%s/%s", ffile->name, entry.fname);
-			(*dir)[i].size     = entry.fsize;
-			(*dir)[i].fileAttrib   = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
+			concat_path((*dir)[i].name, ffile->name, entry.fname);
+			(*dir)[i].size       = entry.fsize;
+			(*dir)[i].fileAttrib = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
 			++i;
 		}
 	}

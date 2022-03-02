@@ -694,8 +694,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 	}
 	
 	u32 filename_offset=((*(u32*)&FST[parent_dir_offset*0x0C]) & 0x00FFFFFF); 
-	memset(&filename[0],0,PATHNAME_MAX);
-	sprintf(&filename[0], "%s/%s", file->name, &FST[string_table_offset+filename_offset]);
+	concat_path(filename, file->name, &FST[string_table_offset+filename_offset]);
 	dir_end_offset = *(u32*)&FST[(parent_dir_offset*0x0C) + 8];
 	
 	if(!isRoot) {
@@ -705,7 +704,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 			*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
 		}
 		memset(&(*dir)[idx], 0, sizeof(file_handle));
-		sprintf((*dir)[idx].name, "%s/..", file->name);
+		concat_path((*dir)[idx].name, file->name, "..");
 		(*dir)[idx].fileBase = *(u32*)&FST[(parent_dir_offset*0x0C)+4];
 		(*dir)[idx].offset = 0;
 		(*dir)[idx].size = 0;
@@ -722,8 +721,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		u32 offset=i*0x0c;
 		u32 file_offset,size = 0;
 		u32 filename_offset=((*(unsigned int*)&FST[offset]) & 0x00FFFFFF); 
-		memset(&filename[0],0,PATHNAME_MAX);
-		sprintf(&filename[0], "%s/%s", file->name, &FST[string_table_offset+filename_offset]);
+		concat_path(filename, file->name, &FST[string_table_offset+filename_offset]);
 		memcpy(&file_offset,&FST[offset+4],4);
 		memcpy(&size,&FST[offset+8],4);
 		
@@ -736,7 +734,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 					*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
 				}
 				memset(&(*dir)[idx], 0, sizeof(file_handle));
-				memcpy((*dir)[idx].name, &filename[0], PATHNAME_MAX);
+				strcpy((*dir)[idx].name, filename);
 				(*dir)[idx].fileBase = i;
 				(*dir)[idx].offset = 0;
 				(*dir)[idx].size = size;
@@ -755,7 +753,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 				*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
 			}
 			memset(&(*dir)[idx], 0, sizeof(file_handle));
-			memcpy((*dir)[idx].name, &filename[0], PATHNAME_MAX);
+			strcpy((*dir)[idx].name, filename);
 			(*dir)[idx].fileBase = file_offset;
 			(*dir)[idx].offset = 0;
 			(*dir)[idx].size = size;

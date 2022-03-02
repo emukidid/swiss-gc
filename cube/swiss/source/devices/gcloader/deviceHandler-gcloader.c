@@ -84,7 +84,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 	if(numToPatch < -1) {
 		file_handle bootFile;
 		memset(&bootFile, 0, sizeof(file_handle));
-		snprintf(&bootFile.name[0], PATHNAME_MAX, "%sboot.bin", devices[DEVICE_CUR]->initial->name);
+		concat_path(bootFile.name, devices[DEVICE_CUR]->initial->name, "boot.bin");
 		
 		if(strstr(IPLInfo,"MPAL")!=NULL)
 			GCMDisk.RegionCode = 1;
@@ -200,7 +200,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 		
 		for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
 			memset(&patchFile, 0, sizeof(file_handle));
-			snprintf(&patchFile.name[0], PATHNAME_MAX, "%s%s", devices[DEVICE_CUR]->initial->name, bootFile_names[i]);
+			concat_path(patchFile.name, devices[DEVICE_CUR]->initial->name, bootFile_names[i]);
 			
 			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
 				return 0;

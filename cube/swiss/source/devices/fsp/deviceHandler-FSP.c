@@ -42,7 +42,7 @@ device_info* deviceHandler_FSP_info(file_handle* file) {
 
 s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 
-	FSP_DIR* dp = fsp_opendir(fsp_session, strchr(ffile->name, '/'));
+	FSP_DIR* dp = fsp_opendir(fsp_session, strchr(ffile->name, ':') + 1);
 	if(!dp) return -1;
 	FSP_RDENTRY entry;
 	FSP_RDENTRY *result;
@@ -60,8 +60,8 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			continue;
 		}
 		// Do we want this one?
-		if((type == -1 || ((entry.type & FSP_RDTYPE_DIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
-			if(!(entry.type & FSP_RDTYPE_DIR)) {
+		if((type == -1 || ((entry.type == FSP_RDTYPE_DIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
+			if(entry.type == FSP_RDTYPE_FILE) {
 				if(!checkExtension(entry.name)) continue;
 			}
 			// Make sure we have room for this one
@@ -70,9 +70,9 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 				*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
-			snprintf((*dir)[i].name, PATHNAME_MAX, "%s/%s", ffile->name, entry.name);
-			(*dir)[i].size     = entry.size;
-			(*dir)[i].fileAttrib   = (entry.type & FSP_RDTYPE_DIR) ? IS_DIR : IS_FILE;
+			concat_path((*dir)[i].name, ffile->name, entry.name);
+			(*dir)[i].size       = entry.size;
+			(*dir)[i].fileAttrib = (entry.type == FSP_RDTYPE_DIR) ? IS_DIR : IS_FILE;
 			usedSpace += (*dir)[i].size;
 			++i;
 		}
@@ -90,12 +90,12 @@ s32 deviceHandler_FSP_seekFile(file_handle* file, u32 where, u32 type) {
 
 s32 deviceHandler_FSP_readFile(file_handle* file, void* buffer, u32 length) {
 	if(!file->fp) {
-		file->fp = fsp_fopen(fsp_session, strchr(file->name, '/'), "rb");
+		file->fp = fsp_fopen(fsp_session, strchr(file->name, ':') + 1, "rb");
 	}
 	if(!file->fp) return -1;
 	if(file->size <= 0) {
 		struct stat fstat;
-		if(fsp_stat(fsp_session, strchr(file->name, '/'), &fstat)) {
+		if(fsp_stat(fsp_session, strchr(file->name, ':') + 1, &fstat)) {
 			fsp_fclose(file->fp);
 			file->fp = NULL;
 			return -1;
@@ -111,7 +111,7 @@ s32 deviceHandler_FSP_readFile(file_handle* file, void* buffer, u32 length) {
 
 s32 deviceHandler_FSP_writeFile(file_handle* file, void* buffer, u32 length) {
 	if(!file->fp) {
-		file->fp = fsp_fopen(fsp_session, strchr(file->name, '/'), "wb");
+		file->fp = fsp_fopen(fsp_session, strchr(file->name, ':') + 1, "wb");
 	}
 	if(!file->fp) return -1;
 	
@@ -202,7 +202,7 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 		return 0;
 	}
 	char *path = NULL;
-	int pathlen = asprintf(&path, "%s\n%s", strchr(file->name, '/'), swissSettings.fspPassword) + 1;
+	int pathlen = asprintf(&path, "%s\n%s", strchr(file->name, ':') + 1, swissSettings.fspPassword) + 1;
 	
 	fragList[totFrags][0] = 0;
 	fragList[totFrags][1] = file->size;
@@ -211,7 +211,7 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 	totFrags++;
 	
 	if(file2) {
-		pathlen = asprintf(&path, "%s\n%s", strchr(file2->name, '/'), swissSettings.fspPassword) + 1;
+		pathlen = asprintf(&path, "%s\n%s", strchr(file2->name, ':') + 1, swissSettings.fspPassword) + 1;
 		
 		fragList[totFrags][0] = 0;
 		fragList[totFrags][1] = file2->size;
@@ -265,7 +265,7 @@ s32 deviceHandler_FSP_deinit(file_handle* file) {
 
 s32 deviceHandler_FSP_deleteFile(file_handle* file) {
 	deviceHandler_FSP_closeFile(file);
-	return fsp_unlink(fsp_session, strchr(file->name, '/'));
+	return fsp_unlink(fsp_session, strchr(file->name, ':') + 1);
 }
 
 bool deviceHandler_FSP_test() {

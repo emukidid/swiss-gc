@@ -11,6 +11,7 @@ void freeFiles();
 void scanFiles();
 file_handle* getCurrentDirEntries();
 int getCurrentDirEntryCount();
+void concat_path(char *pathName, char *dirName, char *baseName);
 void ensure_path(int deviceSlot, char *path, char *oldPath);
 
 #endif 

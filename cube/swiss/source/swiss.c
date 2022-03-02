@@ -1352,7 +1352,7 @@ bool manage_file() {
 		getParentPath(&curFile.name[0], parentPath);
 		strcpy(nameBuffer, getRelativeName(&curFile.name[0]));
 		DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_FILE, "Rename", nameBuffer, sizeof(curFile.name)-(strlen(parentPath)+1));
-		sprintf(txtbuffer, "%s/%s", parentPath, nameBuffer);
+		concat_path(txtbuffer, parentPath, nameBuffer);
 		bool modified = (strcmp(&curFile.name[0], txtbuffer) != 0) && strlen(nameBuffer) > 0;
 		if(modified) {
 			print_gecko("Renaming %s to %s\r\n", &curFile.name[0], txtbuffer);

@@ -128,7 +128,7 @@ void config_unset_device() {
 char* config_file_read(char* filename) {
 	char* readBuffer = NULL;
 	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
-	snprintf(configFile->name, PATHNAME_MAX, "%s%s", devices[DEVICE_CONFIG]->initial->name, filename);
+	concat_path(configFile->name, devices[DEVICE_CONFIG]->initial->name, filename);
 	print_gecko("config_file_read: looking for %s\r\n", configFile->name);
 	if(devices[DEVICE_CONFIG]->readFile(configFile, txtbuffer, 1) == 1) {
 		devices[DEVICE_CONFIG]->seekFile(configFile, 0, DEVICE_HANDLER_SEEK_SET);
@@ -145,7 +145,7 @@ char* config_file_read(char* filename) {
 
 int config_file_write(char* filename, char* contents) {
 	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
-	snprintf(configFile->name, PATHNAME_MAX, "%s%s", devices[DEVICE_CONFIG]->initial->name, filename);
+	concat_path(configFile->name, devices[DEVICE_CONFIG]->initial->name, filename);
 
 	u32 len = strlen(contents);
 	print_gecko("config_file_write: writing %i bytes to %s\r\n", len, configFile->name);
@@ -161,7 +161,7 @@ int config_file_write(char* filename, char* contents) {
 
 void config_file_delete(char* filename) {
 	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
-	snprintf(configFile->name, PATHNAME_MAX, "%s%s", devices[DEVICE_CONFIG]->initial->name, filename);
+	concat_path(configFile->name, devices[DEVICE_CONFIG]->initial->name, filename);
 	print_gecko("config_file_delete: deleting %s\r\n", configFile->name);
 	devices[DEVICE_CONFIG]->deleteFile(configFile);
 	devices[DEVICE_CONFIG]->closeFile(configFile);
@@ -278,7 +278,7 @@ int config_update_global(bool checkConfigDevice) {
 	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
 	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL);
 	
-	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", SWISS_SETTINGS_DIR, SWISS_SETTINGS_FILENAME);
+	concat_path(txtbuffer, SWISS_SETTINGS_DIR, SWISS_SETTINGS_FILENAME);
 	int res = config_file_write(txtbuffer, configString->mem);
 	free(configString);
 	if(checkConfigDevice) {
@@ -301,7 +301,7 @@ int config_update_recent(bool checkConfigDevice) {
 	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
 	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL);
 	
-	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", SWISS_SETTINGS_DIR, SWISS_RECENTLIST_FILENAME);
+	concat_path(txtbuffer, SWISS_SETTINGS_DIR, SWISS_RECENTLIST_FILENAME);
 	int res = config_file_write(txtbuffer, configString->mem);
 	free(configString);
 	if(checkConfigDevice) {
@@ -1077,7 +1077,7 @@ int config_init(void (*progress_indicator)(char*, int, int)) {
 	}
 	
 	// Read config (new format)
-	snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", SWISS_SETTINGS_DIR, SWISS_SETTINGS_FILENAME);
+	concat_path(txtbuffer, SWISS_SETTINGS_DIR, SWISS_SETTINGS_FILENAME);
 	configData = config_file_read(txtbuffer);
 	if(configData != NULL) {
 		config_parse_global(configData);
@@ -1089,7 +1089,7 @@ int config_init(void (*progress_indicator)(char*, int, int)) {
 	
 	// Read the recent list if enabled
 	if(swissSettings.recentListLevel != 2) {
-		snprintf(txtbuffer, PATHNAME_MAX, "%s/%s", SWISS_SETTINGS_DIR, SWISS_RECENTLIST_FILENAME);
+		concat_path(txtbuffer, SWISS_SETTINGS_DIR, SWISS_RECENTLIST_FILENAME);
 		configData = config_file_read(txtbuffer);
 		if(configData != NULL) {
 			config_parse_recent(configData);

@@ -127,7 +127,6 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	
 	// Set everything up to read
 	int num_entries = 1, i = 1;
-	char file_name[PATHNAME_MAX];
 	*dir = malloc( num_entries * sizeof(file_handle) );
 	memset(*dir,0,sizeof(file_handle) * num_entries);
 	(*dir)[0].fileAttrib = IS_SPECIAL;
@@ -138,12 +137,9 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		if(strlen(entry->d_name) <= 2  && (entry->d_name[0] == '.' || entry->d_name[1] == '.')) {
 			continue;
 		}
-		memset(&file_name[0],0, PATHNAME_MAX);
-		snprintf(&file_name[0], PATHNAME_MAX, "%s/%s", ffile->name, entry->d_name);
-		stat(&file_name[0],&fstat);
 		// Do we want this one?
-		if((type == -1 || ((fstat.st_mode & S_IFDIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
-			if(!(fstat.st_mode & S_IFDIR)) {
+		if((type == -1 || ((entry->d_type == DT_DIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
+			if(entry->d_type == DT_REG) {
 				if(!checkExtension(entry->d_name)) continue;
 			}
 			// Make sure we have room for this one
@@ -152,10 +148,10 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
-			snprintf((*dir)[i].name, PATHNAME_MAX, "%s/%s", ffile->name, entry->d_name);
-			(*dir)[i].offset = 0;
-			(*dir)[i].size     = fstat.st_size;
-			(*dir)[i].fileAttrib   = (fstat.st_mode & S_IFDIR) ? IS_DIR : IS_FILE;
+			concat_path((*dir)[i].name, ffile->name, entry->d_name);
+			stat((*dir)[i].name, &fstat);
+			(*dir)[i].size       = fstat.st_size;
+			(*dir)[i].fileAttrib = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
 			++i;
 		}
 	}

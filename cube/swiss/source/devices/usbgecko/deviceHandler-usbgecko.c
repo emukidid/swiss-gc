@@ -64,9 +64,9 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 			*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 		}
 		memset(&(*dir)[i], 0, sizeof(file_handle));
-		sprintf((*dir)[i].name, "%s", entry->name);
-		(*dir)[i].size			= entry->size;
-		(*dir)[i].fileAttrib	= entry->fileAttrib;
+		strcpy((*dir)[i].name, entry->name);
+		(*dir)[i].size       = entry->size;
+		(*dir)[i].fileAttrib = entry->fileAttrib;
 		usedSpace += (*dir)[i].size;
 		++i;
 	}

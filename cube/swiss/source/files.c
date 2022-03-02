@@ -75,20 +75,28 @@ int getCurrentDirEntryCount() {
 	return curDirEntryCount;
 }
 
+void concat_path(char *pathName, char *dirName, char *baseName)
+{
+	if (dirName[0] == '\0' || dirName[strlen(dirName) - 1] == '/')
+		snprintf(pathName, PATHNAME_MAX, "%s%s", dirName, baseName);
+	else
+		snprintf(pathName, PATHNAME_MAX, "%s/%s", dirName, baseName);
+}
+
 // Either renames a path to a new one, or creates one.
 void ensure_path(int deviceSlot, char *path, char *oldPath) {
 	char *fullPath = calloc(1, PATHNAME_MAX);
 	if(oldPath) {
 		char *oldFullPath = calloc(1, PATHNAME_MAX);
-		snprintf(oldFullPath, PATHNAME_MAX, "%s%s", devices[deviceSlot]->initial->name, oldPath);
-		snprintf(fullPath, PATHNAME_MAX, "%s%s", devices[deviceSlot]->initial->name, path);
+		concat_path(oldFullPath, devices[deviceSlot]->initial->name, oldPath);
+		concat_path(fullPath, devices[deviceSlot]->initial->name, path);
 		if(f_rename(oldFullPath, fullPath) != FR_OK) {
 			f_mkdir(fullPath);
 		}
 		free(oldFullPath);
 	}
 	else {
-		snprintf(fullPath, PATHNAME_MAX, "%s%s", devices[deviceSlot]->initial->name, path);
+		concat_path(fullPath, devices[deviceSlot]->initial->name, path);
 		f_mkdir(fullPath);
 	}
 	free(fullPath);
