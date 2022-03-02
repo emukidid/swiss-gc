@@ -264,7 +264,7 @@ void populate_meta(file_handle *f) {
 			snprintf(bannerFile->name, PATHNAME_MAX, "%s/opening.bnr", f->name);
 			bannerFile->meta = f->meta;
 			
-			if (devices[DEVICE_CUR]->readFile(bannerFile, NULL, 0) == 0) {
+			if (devices[DEVICE_CUR]->readFile(bannerFile, NULL, 0) == 0 && (bannerFile->size == 6496 || bannerFile->size == 8096)) {
 				populate_game_meta(bannerFile, 0, bannerFile->size);
 				devices[DEVICE_CUR]->closeFile(bannerFile);
 			}
