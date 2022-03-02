@@ -125,10 +125,10 @@ void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 	f->meta->bannerSize = BNR_PIXELDATA_LEN;
 	f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
 	memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
-	if(!bannerOffset || bannerOffset > f->size) {
+	if(bannerOffset == -1 || bannerOffset + bannerSize > f->size) {
 		print_gecko("Banner not found or out of range\r\n");
 	}
-	else {
+	else if(bannerSize) {
 		BNR *banner = memalign(32, bannerSize);
 		devices[DEVICE_CUR]->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(f, banner, bannerSize) != bannerSize) {
@@ -259,6 +259,16 @@ void populate_meta(file_handle *f) {
 		}
 		else if (f->fileAttrib == IS_DIR) {
 			f->meta->fileTypeTexObj = &dirimgTexObj;
+			
+			file_handle *bannerFile = calloc(1, sizeof(file_handle));
+			snprintf(bannerFile->name, PATHNAME_MAX, "%s/opening.bnr", f->name);
+			bannerFile->meta = f->meta;
+			
+			if (devices[DEVICE_CUR]->readFile(bannerFile, NULL, 0) == 0) {
+				populate_game_meta(bannerFile, 0, bannerFile->size);
+				devices[DEVICE_CUR]->closeFile(bannerFile);
+			}
+			free(bannerFile);
 		}
 	}
 }

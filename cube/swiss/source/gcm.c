@@ -90,8 +90,7 @@ void get_fst_details(char *FST, char *searchFileName, u32 *file_offset, u32 *fil
 			}		
 		} 
 	}
-	*file_offset = 0;
-	*file_size = 0;
+	*file_offset = -1;
 }
 
 //Lets parse the entire game FST in search for the banner
@@ -111,7 +110,7 @@ void parse_gcm_add(file_handle *file, ExecutableFile *filesToPatch, u32 *numToPa
 	u32 file_offset, file_size;
 	get_fst_details(FST, fileName, &file_offset, &file_size);
 	free(FST);
-	if(file_offset != 0 && file_size != 0) {
+	if(file_offset != -1) {
 		filesToPatch[*numToPatch].offset = file_offset;
 		filesToPatch[*numToPatch].size = file_size;
 		filesToPatch[*numToPatch].type = endsWith(fileName,".prs") ? PATCH_OTHER_PRS:PATCH_OTHER;
