@@ -77,10 +77,19 @@ int getCurrentDirEntryCount() {
 
 void concat_path(char *pathName, char *dirName, char *baseName)
 {
-	if (dirName[0] == '\0' || dirName[strlen(dirName) - 1] == '/')
-		snprintf(pathName, PATHNAME_MAX, "%s%s", dirName, baseName);
+	size_t len;
+
+	if (pathName == dirName)
+		len = strlen(pathName);
 	else
-		snprintf(pathName, PATHNAME_MAX, "%s/%s", dirName, baseName);
+		len = strlcpy(pathName, dirName, PATHNAME_MAX);
+
+	if (len && pathName[len - 1] != '/') {
+		pathName[len++] = '/';
+		pathName[len++] = '\0';
+	}
+
+	strlcat(pathName, baseName, PATHNAME_MAX);
 }
 
 // Either renames a path to a new one, or creates one.

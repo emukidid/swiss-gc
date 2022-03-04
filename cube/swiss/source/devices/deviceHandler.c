@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <time.h>
+#include "util.h"
 #include "deviceHandler.h"
 
 #ifndef NULL
@@ -95,8 +96,8 @@ DEVICEHANDLER_INTERFACE* getDeviceByLocation(u32 location) {
 }
 
 DEVICEHANDLER_INTERFACE* getDeviceFromPath(char *path) {
-	char *devpos = strchr(path, '/');
-	if(!devpos) {
+	char *devpos = getDevicePath(path);
+	if(devpos == path) {
 		return NULL;	// garbage
 	}
 	for(int i = 0; i < MAX_DEVICES; i++) {

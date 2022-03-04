@@ -39,19 +39,16 @@ device_info* deviceHandler_USBGecko_info(file_handle* file) {
 s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 type){	
   
 	// Set everything up to read
-	s32 num_entries = 0, i = 0;
+	s32 num_entries = 1, i = 1;
 	file_handle *entry = NULL;
-	if(strlen(ffile->name)!=1) {
-		i = num_entries = 1;
-		*dir = malloc( num_entries * sizeof(file_handle) );
-		memset(*dir,0,sizeof(file_handle) * num_entries);
-		(*dir)[0].fileAttrib = IS_SPECIAL;
-		strcpy((*dir)[0].name, "..");
-	}
+	*dir = malloc( num_entries * sizeof(file_handle) );
+	memset(*dir,0,sizeof(file_handle) * num_entries);
+	(*dir)[0].fileAttrib = IS_SPECIAL;
+	strcpy((*dir)[0].name, "..");
 	
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading directory"));
 	// Read each entry of the directory
-	s32 res = usbgecko_open_dir(&ffile->name[0]);
+	s32 res = usbgecko_open_dir(ffile->name);
 	if(!res) return -1;
 	u64 usedSpace = 0LL;
 	while( (entry = usbgecko_get_entry()) != NULL ){

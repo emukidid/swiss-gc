@@ -36,13 +36,9 @@ bool checkExtension(char *filename) {
 }
 
 char *getRelativeName(char *str) {
-	int i;
-	for(i=strlen(str);i>0;i--){
-		if(str[i]=='/') {
-			return str+i+1;
-		}
-	}
-	return str;
+	char *chr = strrchr(str, '/');
+	if (!chr) chr = strchr(str, ':');
+	return chr ? chr + 1 : str;
 }
 
 void getParentPath(char *src, char *dst) {
@@ -52,6 +48,11 @@ void getParentPath(char *src, char *dst) {
 			strncpy(dst, src, i);
 		}
 	}
+}
+
+char *getDevicePath(char *str) {
+	char *chr = strchr(str, ':');
+	return chr ? chr + 1 : str;
 }
 
 char stripbuffer[PATHNAME_MAX];
