@@ -230,15 +230,23 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 	}
 	
 	net_get_mac_address(VAR_CLIENT_MAC);
-	*(vu32*)VAR_CLIENT_IP = net_gethostip();
-	((vu8*)VAR_SERVER_MAC)[0] = 0xFF;
-	((vu8*)VAR_SERVER_MAC)[1] = 0xFF;
-	((vu8*)VAR_SERVER_MAC)[2] = 0xFF;
-	((vu8*)VAR_SERVER_MAC)[3] = 0xFF;
-	((vu8*)VAR_SERVER_MAC)[4] = 0xFF;
-	((vu8*)VAR_SERVER_MAC)[5] = 0xFF;
-	*(vu32*)VAR_SERVER_IP = inet_addr(swissSettings.fspHostIp);
-	*(vu16*)VAR_SERVER_PORT = swissSettings.fspPort ? swissSettings.fspPort : 21;
+	((vu8*)VAR_ROUTER_MAC)[0] = 0xFF;
+	((vu8*)VAR_ROUTER_MAC)[1] = 0xFF;
+	((vu8*)VAR_ROUTER_MAC)[2] = 0xFF;
+	((vu8*)VAR_ROUTER_MAC)[3] = 0xFF;
+	((vu8*)VAR_ROUTER_MAC)[4] = 0xFF;
+	((vu8*)VAR_ROUTER_MAC)[5] = 0xFF;
+	
+	u32 local_ip = inet_addr(bba_local_ip);
+	u32 netmask = inet_addr(bba_netmask);
+	u32 gateway = inet_addr(bba_gateway);
+	u32 host_ip = inet_addr(swissSettings.fspHostIp);
+	u16 port = swissSettings.fspPort ? swissSettings.fspPort : 21;
+	
+	*(vu32*)VAR_CLIENT_IP = local_ip;
+	*(vu32*)VAR_ROUTER_IP = (host_ip & netmask) == (local_ip & netmask) ? host_ip : gateway;
+	*(vu32*)VAR_SERVER_IP = host_ip;
+	*(vu16*)VAR_SERVER_PORT = port;
 	return 1;
 }
 

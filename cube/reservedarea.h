@@ -30,11 +30,12 @@
 .set VAR_DISC_1_ID,			0x09C0	# disc 1 header
 .set VAR_DISC_2_ID,			0x09CA	# disc 2 header
 
-.set VAR_SERVER_MAC,		0x09C0	# server MAC address
-.set VAR_CLIENT_MAC,		0x09C6	# client MAC address
-.set VAR_SERVER_IP,			0x09CC	# server IPv4 address
-.set VAR_CLIENT_IP,			0x09D0	# client IPv4 address
-.set VAR_SERVER_PORT,		0x09D4	# server UDP port
+.set VAR_CLIENT_MAC,		0x09C0	# client MAC address
+.set VAR_ROUTER_MAC,		0x09C6	# router MAC address
+.set VAR_CLIENT_IP,			0x09CC	# client IPv4 address
+.set VAR_ROUTER_IP,			0x09D0	# router IPv4 address
+.set VAR_SERVER_IP,			0x09D4	# server IPv4 address
+.set VAR_SERVER_PORT,		0x09D8	# server UDP port
 
 .set VAR_FLOAT1_6,			0x09E0	# constant 1/6
 .set VAR_FLOAT9_16,			0x09E4	# constant 9/16
@@ -89,10 +90,11 @@ extern char VAR_FRAG_LIST[4];		// pointer to fragments (u32 offset, u32 size, u3
 extern char VAR_DISC_1_ID[10];		// disc 1 header
 extern char VAR_DISC_2_ID[10];		// disc 2 header
 
-extern char VAR_SERVER_MAC[6];		// server MAC address
 extern char VAR_CLIENT_MAC[6];		// client MAC address
-extern char VAR_SERVER_IP[4];		// server IPv4 address
+extern char VAR_ROUTER_MAC[6];		// router MAC address
 extern char VAR_CLIENT_IP[4];		// client IPv4 address
+extern char VAR_ROUTER_IP[4];		// router IPv4 address
+extern char VAR_SERVER_IP[4];		// server IPv4 address
 extern char VAR_SERVER_PORT[2];		// server UDP port
 
 extern char VAR_FLOAT1_6[4];		// constant 1/6

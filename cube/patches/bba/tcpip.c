@@ -127,8 +127,9 @@ typedef struct {
 } __attribute((packed)) fsp_header_t;
 
 static struct eth_addr  *const _client_mac = (struct eth_addr  *)VAR_CLIENT_MAC;
+static struct eth_addr  *const _router_mac = (struct eth_addr  *)VAR_ROUTER_MAC;
 static struct ipv4_addr *const _client_ip  = (struct ipv4_addr *)VAR_CLIENT_IP;
-static struct eth_addr  *const _server_mac = (struct eth_addr  *)VAR_SERVER_MAC;
+static struct ipv4_addr *const _router_ip  = (struct ipv4_addr *)VAR_ROUTER_IP;
 static struct ipv4_addr *const _server_ip  = (struct ipv4_addr *)VAR_SERVER_IP;
 static uint16_t         *const _port       = (uint16_t         *)VAR_SERVER_PORT;
 
@@ -218,7 +219,7 @@ static void fsp_get_file(uint32_t offset, uint32_t length, const void *path, uin
 	ipv4->dst_addr = *_server_ip;
 	ipv4->checksum = ipv4_checksum(ipv4);
 
-	eth->dst_addr = *_server_mac;
+	eth->dst_addr = *_router_mac;
 	eth->src_addr = *_client_mac;
 	eth->type = ETH_TYPE_IPV4;
 	bba_transmit_fifo(eth, sizeof(*eth) + ipv4->length);
@@ -340,7 +341,7 @@ static void udp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, 
 	if (ipv4->src_addr.addr == (*_server_ip).addr &&
 		ipv4->dst_addr.addr == (*_client_ip).addr) {
 
-		*_server_mac = eth->src_addr;
+		*_router_mac = eth->src_addr;
 
 		if (udp->src_port == *_port &&
 			udp->dst_port == *_port)
@@ -403,14 +404,18 @@ static void arp_input(bba_page_t *page, eth_header_t *eth, arp_packet_t *arp, si
 		case ARP_REQUEST:
 			if ((!arp->dst_mac.addr ||
 				arp->dst_mac.addr == (*_client_mac).addr) &&
-				arp->dst_ip.addr  == (*_client_ip).addr)
+				arp->dst_ip.addr  == (*_client_ip).addr) {
 				arp_reply(arp);
+
+				if (arp->src_ip.addr  == (*_router_ip).addr)
+					*_router_mac = arp->src_mac;
+			}
 			break;
 		case ARP_REPLY:
 			if (arp->dst_mac.addr == (*_client_mac).addr &&
 				arp->dst_ip.addr  == (*_client_ip).addr &&
-				arp->src_ip.addr  == (*_server_ip).addr)
-				*_server_mac = arp->src_mac;
+				arp->src_ip.addr  == (*_router_ip).addr)
+				*_router_mac = arp->src_mac;
 			break;
 	}
 }
