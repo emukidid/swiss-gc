@@ -8,7 +8,9 @@
 /* Network Globals */
 int net_initialized = 0;
 int bba_exists = 0;
-char bba_ip[16];
+char bba_local_ip[16];
+char bba_netmask[16];
+char bba_gateway[16];
 
 // Init the GC net interface (bba)
 void init_network(void *args) {
@@ -17,12 +19,11 @@ void init_network(void *args) {
 
 	bba_exists = exi_bba_exists();
 	if(bba_exists && !net_initialized) {
-		res = if_config(bba_ip, NULL, NULL, true);
-		if(res >= 0 && strcmp("255.255.255.255", bba_ip)) {
+		res = if_config(bba_local_ip, bba_netmask, bba_gateway, true);
+		if(res >= 0 && strcmp("255.255.255.255", bba_local_ip)) {
 			net_initialized = 1;
 		}
 		else {
-			memset(bba_ip, 0, sizeof(bba_ip));
 			net_initialized = 0;
 		}
 	}

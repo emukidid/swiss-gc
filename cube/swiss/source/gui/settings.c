@@ -252,19 +252,19 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 		bool netEnable = exi_bba_exists();
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Network Settings (2/5):"));	
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
-		if(option < SET_SMB_HOSTIP) {
+		if(option < SET_SMB_USER) {
 			drawSettingEntryBoolean(page, &page_y_ofs, "Init network at startup:", swissSettings.initNetworkAtStart, option == SET_INIT_NET, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "FSP Host IP:", swissSettings.fspHostIp, option == SET_FSP_HOSTIP, netEnable);
+			drawSettingEntryNumeric(page, &page_y_ofs, "FSP Port:", swissSettings.fspPort, option == SET_FSP_PORT, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "FSP Password:", "*****", option == SET_FSP_PASS, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "FTP Host IP:", swissSettings.ftpHostIp, option == SET_FTP_HOSTIP, netEnable);
 			drawSettingEntryNumeric(page, &page_y_ofs, "FTP Port:", swissSettings.ftpPort, option == SET_FTP_PORT, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "FTP Username:", swissSettings.ftpUserName, option == SET_FTP_USER, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "FTP Password:", "*****", option == SET_FTP_PASS, netEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "FTP PASV Mode:", swissSettings.ftpUsePasv, option == SET_FTP_PASV, netEnable);
-			drawSettingEntryString(page, &page_y_ofs, "FSP Host IP:", swissSettings.fspHostIp, option == SET_FSP_HOSTIP, netEnable);
-			drawSettingEntryNumeric(page, &page_y_ofs, "FSP Port:", swissSettings.fspPort, option == SET_FSP_PORT, netEnable);
-			drawSettingEntryString(page, &page_y_ofs, "FSP Password:", "*****", option == SET_FSP_PASS, netEnable);
-		} else {
 			drawSettingEntryString(page, &page_y_ofs, "SMB Host IP:", swissSettings.smbServerIp, option == SET_SMB_HOSTIP, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "SMB Share:", swissSettings.smbShare, option == SET_SMB_SHARE, netEnable);
+		} else {
 			drawSettingEntryString(page, &page_y_ofs, "SMB Username:", swissSettings.smbUser, option == SET_SMB_USER, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "SMB Password:", "*****", option == SET_SMB_PASS, netEnable);
 		}
@@ -454,6 +454,15 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			case SET_INIT_NET:
 				swissSettings.initNetworkAtStart ^= 1;
 			break;
+			case SET_FSP_HOSTIP:
+				DrawGetTextEntry(ENTRYMODE_IP, "FSP Host IP", &swissSettings.fspHostIp, sizeof(swissSettings.fspHostIp));
+			break;
+			case SET_FSP_PORT:
+				DrawGetTextEntry(ENTRYMODE_NUMERIC, "FSP Port", &swissSettings.fspPort, 5);
+			break;
+			case SET_FSP_PASS:
+				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_MASKED, "FSP Password", &swissSettings.fspPassword, sizeof(swissSettings.fspPassword));
+			break;
 			case SET_FTP_HOSTIP:
 				DrawGetTextEntry(ENTRYMODE_IP, "FTP Host IP", &swissSettings.ftpHostIp, sizeof(swissSettings.ftpHostIp));
 			break;
@@ -468,15 +477,6 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			break;
 			case SET_FTP_PASV:
 				swissSettings.ftpUsePasv ^= 1;
-			break;
-			case SET_FSP_HOSTIP:
-				DrawGetTextEntry(ENTRYMODE_IP, "FSP Host IP", &swissSettings.fspHostIp, sizeof(swissSettings.fspHostIp));
-			break;
-			case SET_FSP_PORT:
-				DrawGetTextEntry(ENTRYMODE_NUMERIC, "FSP Port", &swissSettings.fspPort, 5);
-			break;
-			case SET_FSP_PASS:
-				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_MASKED, "FSP Password", &swissSettings.fspPassword, sizeof(swissSettings.fspPassword));
 			break;
 			case SET_SMB_HOSTIP:
 				DrawGetTextEntry(ENTRYMODE_IP, "SMB Host IP", &swissSettings.smbServerIp, sizeof(swissSettings.smbServerIp));

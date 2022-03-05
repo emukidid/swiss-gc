@@ -244,7 +244,21 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 
 s32 deviceHandler_FSP_init(file_handle* file) {
 	init_network();
+	if(!net_initialized) {
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Network has not been initialised");
+		DrawPublish(msgBox);
+		wait_press_A();
+		DrawDispose(msgBox);
+		return 0;
+	}
 	fsp_session = fsp_open_session(swissSettings.fspHostIp, swissSettings.fspPort, swissSettings.fspPassword);
+	if(!fsp_session) {
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Check FSP Configuration");
+		DrawPublish(msgBox);
+		wait_press_A();
+		DrawDispose(msgBox);
+		return 0;
+	}
 	return 1;
 }
 

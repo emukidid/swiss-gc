@@ -18,7 +18,6 @@
 #include <ogc/lwp_watchdog.h>
 #include <ogc/mutex.h>
 #include <network.h>
-#include "bba.h"
 
 #include "ftp_devoptab.h"
 
@@ -771,7 +770,7 @@ execute_open_actv_retry:
 		}
 
 
-		addr.sin_addr.s_addr = inet_addr(bba_ip);
+		addr.sin_addr.s_addr = net_gethostip();
 
 		sprintf(buf, "PORT %u,%u,%u,%u,%u,%u",
 			(ntohl(addr.sin_addr.s_addr) >> 24) & 0xff,
@@ -2601,9 +2600,6 @@ bool ftpInitDevice(const char* name, const char *user, const char *password, con
 
 	for(i=0;i<MAX_FTP_MOUNTED && FTPEnv[i].name!=NULL;i++);
 	if(i==MAX_FTP_MOUNTED) return false; //all allowed ftp connections reached
-
-	if (if_config(bba_ip, NULL, NULL, true) < 0)
-		return false;
 
 	_FTP_lock();
 

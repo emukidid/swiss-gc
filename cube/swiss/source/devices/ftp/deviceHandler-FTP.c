@@ -90,7 +90,7 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
    
 	// We need at least a share name and ip addr in the settings filled out
 	if(!strlen(&swissSettings.ftpHostIp[0])) {
-		sprintf(txtbuffer, "Check FTP Configuration in swiss.ini");
+		sprintf(txtbuffer, "Check FTP Configuration");
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
 		DrawPublish(msgBox);
 		wait_press_A();
@@ -99,7 +99,7 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	}
 
 	if(!net_initialized) {       //Init if we have to
-		sprintf(txtbuffer, "Network has not been initialised yet");
+		sprintf(txtbuffer, "Network has not been initialised");
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
 		DrawPublish(msgBox);
 		wait_press_A();
