@@ -1,4 +1,5 @@
 #include <gccore.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include "swiss.h"
 #include "main.h"
@@ -84,12 +85,32 @@ void concat_path(char *pathName, char *dirName, char *baseName)
 	else
 		len = strlcpy(pathName, dirName, PATHNAME_MAX);
 
-	if (len && pathName[len - 1] != '/') {
+	if (len && pathName[len - 1] != '/' && baseName[0] != '/') {
 		pathName[len++] = '/';
-		pathName[len++] = '\0';
+		pathName[len] = '\0';
 	}
 
 	strlcat(pathName, baseName, PATHNAME_MAX);
+}
+
+void concatf_path(char *pathName, char *dirName, char *baseName, ...)
+{
+	size_t len;
+
+	if (pathName == dirName)
+		len = strlen(pathName);
+	else
+		len = strlcpy(pathName, dirName, PATHNAME_MAX);
+
+	if (len && pathName[len - 1] != '/' && baseName[0] != '/') {
+		pathName[len++] = '/';
+		pathName[len] = '\0';
+	}
+
+	va_list args;
+	va_start(args, baseName);
+	vsnprintf(pathName + len, PATHNAME_MAX - len, baseName, args);
+	va_end(args);
 }
 
 // Either renames a path to a new one, or creates one.

@@ -305,7 +305,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	file_handle patchFile;
 	for(i = 0; i < numToPatch; i++) {
 		memset(&patchFile, 0, sizeof(file_handle));
-		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss/patches/%.4s/%i", devices[DEVICE_CUR]->initial->name, (char*)&GCMDisk, i);
+		concatf_path(patchFile.name, devices[DEVICE_CUR]->initial->name, "swiss/patches/%.4s/%i", (char*)&GCMDisk, i);
 		
 		if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) == 0) {
 			u32 patchInfo[4];
@@ -359,7 +359,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	
 	if(swissSettings.igrType == IGR_BOOTBIN) {
 		memset(&patchFile, 0, sizeof(file_handle));
-		snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss/patches/apploader.img", devices[DEVICE_CUR]->initial->name);
+		concat_path(patchFile.name, devices[DEVICE_CUR]->initial->name, "swiss/patches/apploader.img");
 		
 		ApploaderHeader apploaderHeader;
 		if(devices[DEVICE_CUR]->readFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader)) != sizeof(ApploaderHeader) || apploaderHeader.rebootSize != reboot_bin_size) {
@@ -386,8 +386,8 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	if(swissSettings.emulateMemoryCard) {
 		if(devices[DEVICE_CUR] != &__device_sd_a && devices[DEVICE_CUR] != &__device_ata_a && devices[DEVICE_CUR] != &__device_ata_c) {
 			memset(&patchFile, 0, sizeof(file_handle));
-			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss/saves/MemoryCardA.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
-			snprintf(txtbuffer, PATHNAME_MAX, "%sswiss/patches/MemoryCardA.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			concatf_path(patchFile.name, devices[DEVICE_CUR]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+			concatf_path(txtbuffer, devices[DEVICE_CUR]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 			ensure_path(DEVICE_CUR, "swiss/saves", NULL);
 			f_rename(txtbuffer, &patchFile.name[0]);	// TODO remove this in our next major release
 			
@@ -409,8 +409,8 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 		
 		if(devices[DEVICE_CUR] != &__device_sd_b && devices[DEVICE_CUR] != &__device_ata_b) {
 			memset(&patchFile, 0, sizeof(file_handle));
-			snprintf(&patchFile.name[0], PATHNAME_MAX, "%sswiss/saves/MemoryCardB.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
-			snprintf(txtbuffer, PATHNAME_MAX, "%sswiss/patches/MemoryCardB.%s.raw", devices[DEVICE_CUR]->initial->name, wodeRegionToString(GCMDisk.RegionCode));
+			concatf_path(patchFile.name, devices[DEVICE_CUR]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+			concatf_path(txtbuffer, devices[DEVICE_CUR]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 			ensure_path(DEVICE_CUR, "swiss/saves", NULL);
 			f_rename(txtbuffer, &patchFile.name[0]);	// TODO remove this in our next major release
 			

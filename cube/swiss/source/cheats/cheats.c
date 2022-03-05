@@ -233,7 +233,7 @@ int findCheats(bool silent) {
 	memcpy(trimmedGameId, (char*)&GCMDisk, 6);
 	file_handle *cheatsFile = memalign(32,sizeof(file_handle));
 	memset(cheatsFile, 0, sizeof(file_handle));
-	snprintf(cheatsFile->name, PATHNAME_MAX, "%s/cheats/%.6s.txt", devices[DEVICE_CUR]->initial->name, trimmedGameId);
+	concatf_path(cheatsFile->name, devices[DEVICE_CUR]->initial->name, "cheats/%.6s.txt", trimmedGameId);
 	print_gecko("Looking for cheats file @ [%s]\r\n", cheatsFile->name);
 
 	devices[DEVICE_TEMP] = devices[DEVICE_CUR];
@@ -249,7 +249,7 @@ int findCheats(bool silent) {
 		}
 		file_handle *slotFile = devices[DEVICE_TEMP]->initial;
 		memset(cheatsFile, 0, sizeof(file_handle));
-		snprintf(cheatsFile->name, PATHNAME_MAX, "%s/cheats/%.6s.txt", slotFile->name, trimmedGameId);
+		concatf_path(cheatsFile->name, slotFile->name, "cheats/%.6s.txt", trimmedGameId);
 		print_gecko("Looking for cheats file @ [%s]\r\n", cheatsFile->name);
 
 		deviceHandler_setStatEnabled(0);
@@ -262,7 +262,7 @@ int findCheats(bool silent) {
 				devices[DEVICE_TEMP] = &__device_sd_b;
 				slotFile = devices[DEVICE_TEMP]->initial;
 				memset(cheatsFile, 0, sizeof(file_handle));
-				snprintf(cheatsFile->name, PATHNAME_MAX, "%s/cheats/%.6s.txt", slotFile->name, trimmedGameId);
+				concatf_path(cheatsFile->name, slotFile->name, "cheats/%.6s.txt", trimmedGameId);
 				print_gecko("Looking for cheats file @[%s]\r\n", cheatsFile->name);
 
 				devices[DEVICE_TEMP]->init(cheatsFile);
@@ -273,7 +273,7 @@ int findCheats(bool silent) {
 			if (devices[DEVICE_TEMP] == &__device_sd_c && devices[DEVICE_CUR] != &__device_sd_c) {
 				slotFile = devices[DEVICE_TEMP]->initial;
 				memset(cheatsFile, 0, sizeof(file_handle));
-				snprintf(cheatsFile->name, PATHNAME_MAX, "%s/cheats/%.6s.txt", slotFile->name, trimmedGameId);
+				concatf_path(cheatsFile->name, slotFile->name, "cheats/%.6s.txt", trimmedGameId);
 				print_gecko("Looking for cheats file @[%s]\r\n", cheatsFile->name);
 
 				devices[DEVICE_TEMP]->init(cheatsFile);

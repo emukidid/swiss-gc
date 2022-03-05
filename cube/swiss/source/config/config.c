@@ -362,7 +362,7 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL);
 	ensure_path(DEVICE_CONFIG, SWISS_GAME_SETTINGS_DIR, NULL);
 	
-	snprintf(txtbuffer, PATHNAME_MAX, "%s/%.4s.ini", SWISS_GAME_SETTINGS_DIR, entry->game_id);
+	concatf_path(txtbuffer, SWISS_GAME_SETTINGS_DIR, "%.4s.ini", entry->game_id);
 	int res = config_file_write(txtbuffer, configString->mem);
 	free(configString);
 	if(checkConfigDevice) {
@@ -1042,7 +1042,7 @@ void config_find(ConfigEntry *entry) {
 	}
 	print_gecko("config_find: Looking for config file with ID %s\r\n",entry->game_id);
 	// See if we have an actual config file for this game
-	snprintf(txtbuffer, PATHNAME_MAX, "%s/%.4s.ini", SWISS_GAME_SETTINGS_DIR, entry->game_id);
+	concatf_path(txtbuffer, SWISS_GAME_SETTINGS_DIR, "%.4s.ini", entry->game_id);
 	char* configEntry = config_file_read(txtbuffer);
 	if(configEntry) {
 		config_parse_game(configEntry, entry);

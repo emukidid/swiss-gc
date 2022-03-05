@@ -127,12 +127,11 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
 		}
 		memset(&(*dir)[i], 0, sizeof(file_handle));
-		strcpy((*dir)[i].name, ffile->name);
-		strncat((*dir)[i].name, memcard_dir->filename, CARD_FILENAMELEN);
+		concatf_path((*dir)[i].name, ffile->name, "%.*s", CARD_FILENAMELEN, memcard_dir->filename);
+		(*dir)[i].size       = memcard_dir->filelen;
 		(*dir)[i].fileAttrib = IS_FILE;
-		(*dir)[i].size     = memcard_dir->filelen;
 		memcpy( (*dir)[i].other, memcard_dir, sizeof(card_dir));
-		usedSpace += memcard_dir->filelen;
+		usedSpace += (*dir)[i].size;
 		ret = CARD_FindNext (memcard_dir);
 		++i;
 	}

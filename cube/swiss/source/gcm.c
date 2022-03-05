@@ -592,7 +592,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			// File handle for a patch we might need to write
 			file_handle patchFile;
 			memset(&patchFile, 0, sizeof(file_handle));
-			snprintf(&patchFile.name[0], PATHNAME_MAX, "%s%s/%i", devices[DEVICE_PATCHES]->initial->name, patchDirName, num_patched);
+			concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/%.4s/%i", gameID, num_patched);
 
 			// Make patch trailer
 			u32 patchInfo[4];
