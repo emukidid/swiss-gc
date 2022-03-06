@@ -193,7 +193,7 @@ int main (int argc, char * const argv[])
 	// calculate overal size
 	int icon_size = ((sizeof(dol_icon) + 31) & ~31);
 	int data_size = 64 + icon_size + dol_size;
-	int data_blocks = (data_size + 8291) / 8192;
+	int data_blocks = (data_size + 8191) / 8192;
 	
 	// create GCI file
 	int gci_size = 64 + data_blocks * 8192;
