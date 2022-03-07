@@ -562,6 +562,14 @@ s32 deviceHandler_FAT_deleteFile(file_handle* file) {
 	return f_unlink(file->name);
 }
 
+s32 deviceHandler_FAT_rename(file_handle* old, file_handle* new) {
+	return f_rename(old->name, new->name);
+}
+
+s32 deviceHandler_FAT_mkdir(file_handle* dir) {
+	return f_mkdir(dir->name);
+}
+
 bool deviceHandler_FAT_test_sd_a() {
 	return carda->startup() && carda->shutdown();
 }
@@ -618,6 +626,8 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 	(_fn_readFile)&deviceHandler_FAT_readFile,
 	(_fn_writeFile)&deviceHandler_FAT_writeFile,
 	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_rename)&deviceHandler_FAT_rename,
+	(_fn_mkdir)&deviceHandler_FAT_mkdir,
 	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
@@ -642,6 +652,8 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 	(_fn_readFile)&deviceHandler_FAT_readFile,
 	(_fn_writeFile)&deviceHandler_FAT_writeFile,
 	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_rename)&deviceHandler_FAT_rename,
+	(_fn_mkdir)&deviceHandler_FAT_mkdir,
 	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
@@ -666,6 +678,8 @@ DEVICEHANDLER_INTERFACE __device_ata_a = {
 	(_fn_readFile)&deviceHandler_FAT_readFile,
 	(_fn_writeFile)&deviceHandler_FAT_writeFile,
 	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_rename)&deviceHandler_FAT_rename,
+	(_fn_mkdir)&deviceHandler_FAT_mkdir,
 	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
@@ -690,6 +704,8 @@ DEVICEHANDLER_INTERFACE __device_ata_b = {
 	(_fn_readFile)&deviceHandler_FAT_readFile,
 	(_fn_writeFile)&deviceHandler_FAT_writeFile,
 	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_rename)&deviceHandler_FAT_rename,
+	(_fn_mkdir)&deviceHandler_FAT_mkdir,
 	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
@@ -714,6 +730,8 @@ DEVICEHANDLER_INTERFACE __device_sd_c = {
 	(_fn_readFile)&deviceHandler_FAT_readFile,
 	(_fn_writeFile)&deviceHandler_FAT_writeFile,
 	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_rename)&deviceHandler_FAT_rename,
+	(_fn_mkdir)&deviceHandler_FAT_mkdir,
 	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
@@ -738,6 +756,8 @@ DEVICEHANDLER_INTERFACE __device_ata_c = {
 	(_fn_readFile)&deviceHandler_FAT_readFile,
 	(_fn_writeFile)&deviceHandler_FAT_writeFile,
 	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_rename)&deviceHandler_FAT_rename,
+	(_fn_mkdir)&deviceHandler_FAT_mkdir,
 	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,

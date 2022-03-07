@@ -115,19 +115,17 @@ void concatf_path(char *pathName, char *dirName, char *baseName, ...)
 
 // Either renames a path to a new one, or creates one.
 void ensure_path(int deviceSlot, char *path, char *oldPath) {
-	char *fullPath = calloc(1, PATHNAME_MAX);
+	file_handle fhFullPath;
 	if(oldPath) {
-		char *oldFullPath = calloc(1, PATHNAME_MAX);
-		concat_path(oldFullPath, devices[deviceSlot]->initial->name, oldPath);
-		concat_path(fullPath, devices[deviceSlot]->initial->name, path);
-		if(f_rename(oldFullPath, fullPath) != FR_OK) {
-			f_mkdir(fullPath);
+		file_handle fhOldFullPath;
+		concat_path(fhOldFullPath.name, devices[deviceSlot]->initial->name, oldPath);
+		concat_path(fhFullPath.name, devices[deviceSlot]->initial->name, path);
+		if(devices[deviceSlot]->rename(&fhOldFullPath, &fhFullPath) != FR_OK) {
+			devices[deviceSlot]->mkdir(&fhFullPath);
 		}
-		free(oldFullPath);
 	}
 	else {
-		concat_path(fullPath, devices[deviceSlot]->initial->name, path);
-		f_mkdir(fullPath);
+		concat_path(fhFullPath.name, devices[deviceSlot]->initial->name, path);
+		devices[deviceSlot]->mkdir(&fhFullPath);
 	}
-	free(fullPath);
 }

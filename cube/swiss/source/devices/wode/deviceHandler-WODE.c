@@ -316,6 +316,8 @@ DEVICEHANDLER_INTERFACE __device_wode = {
 	(_fn_readFile)&deviceHandler_WODE_readFile,
 	(_fn_writeFile)NULL,
 	(_fn_deleteFile)NULL,
+	(_fn_rename)NULL,
+	(_fn_mkdir)NULL,
 	(_fn_seekFile)&deviceHandler_WODE_seekFile,
 	(_fn_setupFile)&deviceHandler_WODE_setupFile,
 	(_fn_closeFile)&deviceHandler_WODE_closeFile,

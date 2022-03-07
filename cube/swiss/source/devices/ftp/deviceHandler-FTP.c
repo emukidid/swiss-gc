@@ -223,6 +223,16 @@ s32 deviceHandler_FTP_deleteFile(file_handle* file) {
 	return unlink(file->name);
 }
 
+s32 deviceHandler_FTP_rename(file_handle* old, file_handle* new) {
+	// TODO Implement
+	return 0;
+}
+
+s32 deviceHandler_FTP_mkdir(file_handle* dir) {
+	// TODO Implement
+	return 0;
+}
+
 bool deviceHandler_FTP_test() {
 	return exi_bba_exists();
 }
@@ -244,6 +254,8 @@ DEVICEHANDLER_INTERFACE __device_ftp = {
 	(_fn_readFile)&deviceHandler_FTP_readFile,
 	(_fn_writeFile)deviceHandler_FTP_writeFile,
 	(_fn_deleteFile)deviceHandler_FTP_deleteFile,
+	(_fn_rename)&deviceHandler_FTP_rename,
+	(_fn_mkdir)&deviceHandler_FTP_mkdir,
 	(_fn_seekFile)&deviceHandler_FTP_seekFile,
 	(_fn_setupFile)NULL,
 	(_fn_closeFile)&deviceHandler_FTP_closeFile,

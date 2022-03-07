@@ -290,6 +290,14 @@ s32 deviceHandler_FSP_deleteFile(file_handle* file) {
 	return fsp_unlink(fsp_session, getDevicePath(file->name));
 }
 
+s32 deviceHandler_FSP_rename(file_handle* old, file_handle* new) {
+	return 0;	// TODO Implement
+}
+
+s32 deviceHandler_FSP_mkdir(file_handle* dir) {
+	return 0;	// TODO Implement
+}
+
 bool deviceHandler_FSP_test() {
 	return exi_bba_exists();
 }
@@ -315,6 +323,8 @@ DEVICEHANDLER_INTERFACE __device_fsp = {
 	(_fn_readFile)&deviceHandler_FSP_readFile,
 	(_fn_writeFile)&deviceHandler_FSP_writeFile,
 	(_fn_deleteFile)&deviceHandler_FSP_deleteFile,
+	(_fn_rename)&deviceHandler_FSP_rename,
+	(_fn_mkdir)&deviceHandler_FSP_mkdir,
 	(_fn_seekFile)&deviceHandler_FSP_seekFile,
 	(_fn_setupFile)&deviceHandler_FSP_setupFile,
 	(_fn_closeFile)&deviceHandler_FSP_closeFile,

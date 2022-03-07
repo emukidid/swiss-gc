@@ -367,6 +367,14 @@ s32 deviceHandler_GCLOADER_deleteFile(file_handle* file) {
 	return f_unlink(file->name);
 }
 
+s32 deviceHandler_GCLOADER_rename(file_handle* old, file_handle* new) {
+	return f_rename(old->name, new->name);
+}
+
+s32 deviceHandler_GCLOADER_mkdir(file_handle* dir) {
+	return f_mkdir(dir->name);
+}
+
 bool deviceHandler_GCLOADER_test() {
 	if (swissSettings.hasDVDDrive && *(u32*)&driveVersion[4] == 0x20196c64) {
 		if (driveVersion[9] == 'w')
@@ -404,6 +412,8 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	(_fn_readFile)&deviceHandler_GCLOADER_readFile,
 	(_fn_writeFile)deviceHandler_GCLOADER_writeFile,
 	(_fn_deleteFile)deviceHandler_GCLOADER_deleteFile,
+	(_fn_rename)&deviceHandler_GCLOADER_rename,
+	(_fn_mkdir)&deviceHandler_GCLOADER_mkdir,
 	(_fn_seekFile)&deviceHandler_GCLOADER_seekFile,
 	(_fn_setupFile)&deviceHandler_GCLOADER_setupFile,
 	(_fn_closeFile)&deviceHandler_GCLOADER_closeFile,

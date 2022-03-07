@@ -354,6 +354,8 @@ DEVICEHANDLER_INTERFACE __device_sys = {
 	(_fn_readFile)&deviceHandler_SYS_readFile,
 	(_fn_writeFile)NULL,
 	(_fn_deleteFile)NULL,
+	(_fn_rename)NULL,
+	(_fn_mkdir)NULL,
 	(_fn_seekFile)&deviceHandler_SYS_seekFile,
 	(_fn_setupFile)&deviceHandler_SYS_setupFile,
 	(_fn_closeFile)&deviceHandler_SYS_closeFile,

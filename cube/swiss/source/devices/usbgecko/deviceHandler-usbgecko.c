@@ -267,6 +267,8 @@ DEVICEHANDLER_INTERFACE __device_usbgecko = {
 	(_fn_readFile)&deviceHandler_USBGecko_readFile,
 	(_fn_writeFile)NULL,
 	(_fn_deleteFile)NULL,
+	(_fn_rename)NULL,
+	(_fn_mkdir)NULL,
 	(_fn_seekFile)&deviceHandler_USBGecko_seekFile,
 	(_fn_setupFile)&deviceHandler_USBGecko_setupFile,
 	(_fn_closeFile)&deviceHandler_USBGecko_closeFile,

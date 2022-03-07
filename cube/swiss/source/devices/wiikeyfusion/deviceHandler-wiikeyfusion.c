@@ -308,6 +308,8 @@ DEVICEHANDLER_INTERFACE __device_wkf = {
 	(_fn_readFile)&deviceHandler_WKF_readFile,
 	(_fn_writeFile)NULL,
 	(_fn_deleteFile)NULL,
+	(_fn_rename)NULL,
+	(_fn_mkdir)NULL,
 	(_fn_seekFile)&deviceHandler_WKF_seekFile,
 	(_fn_setupFile)&deviceHandler_WKF_setupFile,
 	(_fn_closeFile)&deviceHandler_WKF_closeFile,

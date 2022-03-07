@@ -66,6 +66,8 @@ typedef s32 (* _fn_readDir)(file_handle*, file_handle**, u32);
 typedef s32 (* _fn_readFile)(file_handle*, void*, u32);
 typedef s32 (* _fn_writeFile)(file_handle*, void*, u32);
 typedef s32 (* _fn_deleteFile)(file_handle*);
+typedef s32 (* _fn_mkdir)(file_handle*);
+typedef s32 (* _fn_rename)(file_handle*, file_handle*);
 typedef s32 (* _fn_seekFile)(file_handle*,  u32, u32);
 typedef s32 (* _fn_setupFile)(file_handle*, file_handle*, int);
 typedef s32 (* _fn_closeFile)(file_handle*);
@@ -139,6 +141,8 @@ struct DEVICEHANDLER_STRUCT {
 	_fn_readFile	readFile;
 	_fn_writeFile	writeFile;
 	_fn_deleteFile	deleteFile;
+	_fn_rename		rename;
+	_fn_mkdir		mkdir;
 	_fn_seekFile	seekFile;
 	_fn_setupFile	setupFile;
 	_fn_closeFile	closeFile;

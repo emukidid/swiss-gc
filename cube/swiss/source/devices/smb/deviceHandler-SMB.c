@@ -227,6 +227,14 @@ s32 deviceHandler_SMB_deleteFile(file_handle* file) {
 	return unlink(file->name);
 }
 
+s32 deviceHandler_SMB_rename(file_handle* old, file_handle* new) {
+	return 0;	// TODO Implement
+}
+
+s32 deviceHandler_SMB_mkdir(file_handle* dir) {
+	return 0;	// TODO Implement
+}
+
 bool deviceHandler_SMB_test() {
 	return exi_bba_exists();
 }
@@ -246,8 +254,10 @@ DEVICEHANDLER_INTERFACE __device_smb = {
 	(_fn_init)&deviceHandler_SMB_init,
 	(_fn_readDir)&deviceHandler_SMB_readDir,
 	(_fn_readFile)&deviceHandler_SMB_readFile,
-	(_fn_writeFile)deviceHandler_SMB_writeFile,
-	(_fn_deleteFile)deviceHandler_SMB_deleteFile,
+	(_fn_writeFile)&deviceHandler_SMB_writeFile,
+	(_fn_deleteFile)&deviceHandler_SMB_deleteFile,
+	(_fn_rename)&deviceHandler_SMB_rename,
+	(_fn_mkdir)&deviceHandler_SMB_mkdir,
 	(_fn_seekFile)&deviceHandler_SMB_seekFile,
 	(_fn_setupFile)NULL,
 	(_fn_closeFile)&deviceHandler_SMB_closeFile,

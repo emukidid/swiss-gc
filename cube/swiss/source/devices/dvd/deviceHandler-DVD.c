@@ -614,6 +614,8 @@ DEVICEHANDLER_INTERFACE __device_dvd = {
 	(_fn_readFile)&deviceHandler_DVD_readFile,
 	(_fn_writeFile)NULL,
 	(_fn_deleteFile)NULL,
+	(_fn_rename)NULL,
+	(_fn_mkdir)NULL,
 	(_fn_seekFile)&deviceHandler_DVD_seekFile,
 	(_fn_setupFile)&deviceHandler_DVD_setupFile,
 	(_fn_closeFile)&deviceHandler_DVD_closeFile,
