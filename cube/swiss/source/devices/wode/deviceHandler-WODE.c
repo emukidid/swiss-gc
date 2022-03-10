@@ -200,10 +200,10 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, int numT
 		if(swissSettings.emulateMemoryCard) {
 			if(devices[DEVICE_PATCHES] != &__device_sd_a) {
 				memset(&patchFile, 0, sizeof(file_handle));
-				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL);
-				f_rename(txtbuffer, &patchFile.name[0]);	// TODO remove this in our next major release
+				devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 				
 				if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) != 0) {
 					devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
@@ -223,10 +223,10 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, int numT
 			
 			if(devices[DEVICE_PATCHES] != &__device_sd_b) {
 				memset(&patchFile, 0, sizeof(file_handle));
-				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL);
-				f_rename(txtbuffer, &patchFile.name[0]);	// TODO remove this in our next major release
+				devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 				
 				if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) != 0) {
 					devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
@@ -312,15 +312,15 @@ DEVICEHANDLER_INTERFACE __device_wode = {
 	(_fn_test)&deviceHandler_WODE_test,
 	(_fn_info)&deviceHandler_WODE_info,
 	(_fn_init)&deviceHandler_WODE_init,
+	(_fn_makeDir)NULL,
 	(_fn_readDir)&deviceHandler_WODE_readDir,
+	(_fn_seekFile)&deviceHandler_WODE_seekFile,
 	(_fn_readFile)&deviceHandler_WODE_readFile,
 	(_fn_writeFile)NULL,
-	(_fn_deleteFile)NULL,
-	(_fn_rename)NULL,
-	(_fn_mkdir)NULL,
-	(_fn_seekFile)&deviceHandler_WODE_seekFile,
-	(_fn_setupFile)&deviceHandler_WODE_setupFile,
 	(_fn_closeFile)&deviceHandler_WODE_closeFile,
+	(_fn_deleteFile)NULL,
+	(_fn_renameFile)NULL,
+	(_fn_setupFile)&deviceHandler_WODE_setupFile,
 	(_fn_deinit)&deviceHandler_WODE_deinit,
 	(_fn_emulated)&deviceHandler_WODE_emulated,
 };

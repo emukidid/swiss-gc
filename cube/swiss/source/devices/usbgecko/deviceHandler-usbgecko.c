@@ -234,10 +234,6 @@ s32 deviceHandler_USBGecko_deinit(file_handle* file) {
 	return 0;
 }
 
-s32 deviceHandler_USBGecko_deleteFile(file_handle* file) {
-	return -1;
-}
-
 s32 deviceHandler_USBGecko_closeFile(file_handle* file) {
     return 0;
 }
@@ -263,15 +259,15 @@ DEVICEHANDLER_INTERFACE __device_usbgecko = {
 	(_fn_test)&deviceHandler_USBGecko_test,
 	(_fn_info)&deviceHandler_USBGecko_info,
 	(_fn_init)&deviceHandler_USBGecko_init,
+	(_fn_makeDir)NULL,
 	(_fn_readDir)&deviceHandler_USBGecko_readDir,
+	(_fn_seekFile)&deviceHandler_USBGecko_seekFile,
 	(_fn_readFile)&deviceHandler_USBGecko_readFile,
 	(_fn_writeFile)NULL,
-	(_fn_deleteFile)NULL,
-	(_fn_rename)NULL,
-	(_fn_mkdir)NULL,
-	(_fn_seekFile)&deviceHandler_USBGecko_seekFile,
-	(_fn_setupFile)&deviceHandler_USBGecko_setupFile,
 	(_fn_closeFile)&deviceHandler_USBGecko_closeFile,
+	(_fn_deleteFile)NULL,
+	(_fn_renameFile)NULL,
+	(_fn_setupFile)&deviceHandler_USBGecko_setupFile,
 	(_fn_deinit)&deviceHandler_USBGecko_deinit,
 	(_fn_emulated)&deviceHandler_USBGecko_emulated,
 };

@@ -457,10 +457,6 @@ char getGCIRegion(const char *gameID)
 	}
 }
 
-s32 deviceHandler_CARD_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
-	return 1;
-}
-
 s32 deviceHandler_CARD_init(file_handle* file){
 	int slot = (!strncmp((const char*)initial_CARDB.name, file->name, 7));
 	file->status = initialize_card(slot);
@@ -514,6 +510,10 @@ s32 deviceHandler_CARD_deleteFile(file_handle* file) {
 	return ret;
 }
 
+s32 deviceHandler_CARD_renameFile(file_handle* file, char* name) {
+	return 0;	// TODO Implement
+}
+
 s32 deviceHandler_CARD_closeFile(file_handle* file) {
     return 0;
 }
@@ -541,15 +541,15 @@ DEVICEHANDLER_INTERFACE __device_card_a = {
 	(_fn_test)&deviceHandler_CARD_test_a,
 	(_fn_info)&deviceHandler_CARD_info,
 	(_fn_init)&deviceHandler_CARD_init,
+	(_fn_makeDir)NULL,
 	(_fn_readDir)&deviceHandler_CARD_readDir,
+	(_fn_seekFile)&deviceHandler_CARD_seekFile,
 	(_fn_readFile)&deviceHandler_CARD_readFile,
 	(_fn_writeFile)&deviceHandler_CARD_writeFile,
-	(_fn_deleteFile)&deviceHandler_CARD_deleteFile,
-	(_fn_rename)NULL,
-	(_fn_mkdir)NULL,
-	(_fn_seekFile)&deviceHandler_CARD_seekFile,
-	(_fn_setupFile)&deviceHandler_CARD_setupFile,
 	(_fn_closeFile)&deviceHandler_CARD_closeFile,
+	(_fn_deleteFile)&deviceHandler_CARD_deleteFile,
+	(_fn_renameFile)&deviceHandler_CARD_renameFile,
+	(_fn_setupFile)NULL,
 	(_fn_deinit)&deviceHandler_CARD_deinit,
 	(_fn_emulated)NULL,
 };
@@ -567,15 +567,15 @@ DEVICEHANDLER_INTERFACE __device_card_b = {
 	(_fn_test)&deviceHandler_CARD_test_b,
 	(_fn_info)&deviceHandler_CARD_info,
 	(_fn_init)&deviceHandler_CARD_init,
+	(_fn_makeDir)NULL,
 	(_fn_readDir)&deviceHandler_CARD_readDir,
+	(_fn_seekFile)&deviceHandler_CARD_seekFile,
 	(_fn_readFile)&deviceHandler_CARD_readFile,
 	(_fn_writeFile)&deviceHandler_CARD_writeFile,
-	(_fn_deleteFile)&deviceHandler_CARD_deleteFile,
-	(_fn_rename)NULL,
-	(_fn_mkdir)NULL,
-	(_fn_seekFile)&deviceHandler_CARD_seekFile,
-	(_fn_setupFile)&deviceHandler_CARD_setupFile,
 	(_fn_closeFile)&deviceHandler_CARD_closeFile,
+	(_fn_deleteFile)&deviceHandler_CARD_deleteFile,
+	(_fn_renameFile)&deviceHandler_CARD_renameFile,
+	(_fn_setupFile)NULL,
 	(_fn_deinit)&deviceHandler_CARD_deinit,
 	(_fn_emulated)NULL,
 };

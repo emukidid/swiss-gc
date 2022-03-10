@@ -204,11 +204,12 @@ s32 deviceHandler_SMB_init(file_handle* file) {
 }
 
 s32 deviceHandler_SMB_closeFile(file_handle* file) {
+	int ret = 0;
 	if(file && file->fp) {
-		fclose(file->fp);
-		file->fp = 0;
+		ret = fclose(file->fp);
+		file->fp = NULL;
 	}
-	return 0;
+	return ret;
 }
 
 s32 deviceHandler_SMB_deinit(file_handle* file) {
@@ -227,12 +228,15 @@ s32 deviceHandler_SMB_deleteFile(file_handle* file) {
 	return unlink(file->name);
 }
 
-s32 deviceHandler_SMB_rename(file_handle* old, file_handle* new) {
-	return 0;	// TODO Implement
+s32 deviceHandler_SMB_renameFile(file_handle* file, char* name) {
+	deviceHandler_SMB_closeFile(file);
+	int ret = rename(file->name, name);
+	strcpy(file->name, name);
+	return ret;
 }
 
-s32 deviceHandler_SMB_mkdir(file_handle* dir) {
-	return 0;	// TODO Implement
+s32 deviceHandler_SMB_makeDir(file_handle* dir) {
+	return mkdir(dir->name, 0777);
 }
 
 bool deviceHandler_SMB_test() {
@@ -252,15 +256,15 @@ DEVICEHANDLER_INTERFACE __device_smb = {
 	(_fn_test)&deviceHandler_SMB_test,
 	(_fn_info)&deviceHandler_SMB_info,
 	(_fn_init)&deviceHandler_SMB_init,
+	(_fn_makeDir)&deviceHandler_SMB_makeDir,
 	(_fn_readDir)&deviceHandler_SMB_readDir,
+	(_fn_seekFile)&deviceHandler_SMB_seekFile,
 	(_fn_readFile)&deviceHandler_SMB_readFile,
 	(_fn_writeFile)&deviceHandler_SMB_writeFile,
-	(_fn_deleteFile)&deviceHandler_SMB_deleteFile,
-	(_fn_rename)&deviceHandler_SMB_rename,
-	(_fn_mkdir)&deviceHandler_SMB_mkdir,
-	(_fn_seekFile)&deviceHandler_SMB_seekFile,
-	(_fn_setupFile)NULL,
 	(_fn_closeFile)&deviceHandler_SMB_closeFile,
+	(_fn_deleteFile)&deviceHandler_SMB_deleteFile,
+	(_fn_renameFile)&deviceHandler_SMB_renameFile,
+	(_fn_setupFile)NULL,
 	(_fn_deinit)&deviceHandler_SMB_deinit,
 	(_fn_emulated)NULL,
 };

@@ -307,22 +307,10 @@ s32 deviceHandler_SYS_readFile(file_handle* file, void* buffer, u32 length) {
 	return ret;
 }
 
-s32 deviceHandler_SYS_writeFile(file_handle* file, void* buffer, u32 length) {
-	return 1;
-}
-
-s32 deviceHandler_SYS_deleteFile(file_handle* file) {
-	return 1;
-}
-
 s32 deviceHandler_SYS_seekFile(file_handle* file, u32 where, u32 type) {
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
 	return file->offset;
-}
-
-s32 deviceHandler_SYS_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
-	return 1;
 }
 
 s32 deviceHandler_SYS_closeFile(file_handle* file) {
@@ -350,15 +338,15 @@ DEVICEHANDLER_INTERFACE __device_sys = {
 	(_fn_test)&deviceHandler_SYS_test,
 	(_fn_info)&deviceHandler_SYS_info,
 	(_fn_init)&deviceHandler_SYS_init,
+	(_fn_makeDir)NULL,
 	(_fn_readDir)&deviceHandler_SYS_readDir,
+	(_fn_seekFile)&deviceHandler_SYS_seekFile,
 	(_fn_readFile)&deviceHandler_SYS_readFile,
 	(_fn_writeFile)NULL,
-	(_fn_deleteFile)NULL,
-	(_fn_rename)NULL,
-	(_fn_mkdir)NULL,
-	(_fn_seekFile)&deviceHandler_SYS_seekFile,
-	(_fn_setupFile)&deviceHandler_SYS_setupFile,
 	(_fn_closeFile)&deviceHandler_SYS_closeFile,
+	(_fn_deleteFile)NULL,
+	(_fn_renameFile)NULL,
+	(_fn_setupFile)NULL,
 	(_fn_deinit)&deviceHandler_SYS_deinit,
 	(_fn_emulated)NULL,
 };

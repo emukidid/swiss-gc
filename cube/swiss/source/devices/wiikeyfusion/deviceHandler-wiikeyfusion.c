@@ -42,28 +42,6 @@ device_info* deviceHandler_WKF_info(file_handle* file) {
 	return &initial_WKF_info;
 }
 
-s32 deviceHandler_WKF_readDir(file_handle* ffile, file_handle** dir, u32 type){	
-	return deviceHandler_FAT_readDir(ffile, dir, type);
-}
-
-
-s32 deviceHandler_WKF_seekFile(file_handle* file, u32 where, u32 type){
-	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
-	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
-	return file->offset;
-}
-
-
-s32 deviceHandler_WKF_readFile(file_handle* file, void* buffer, u32 length){
-	return deviceHandler_FAT_readFile(file, buffer, length);	// Same as FAT
-}
-
-
-s32 deviceHandler_WKF_writeFile(file_handle* file, void* buffer, u32 length){
-	return -1;
-}
-
-
 s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	if(numToPatch < 0) {
 		u32 frag[4];
@@ -144,10 +122,10 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 		if(swissSettings.emulateMemoryCard) {
 			if(devices[DEVICE_PATCHES] != &__device_sd_a) {
 				memset(&patchFile, 0, sizeof(file_handle));
-				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL);
-				f_rename(txtbuffer, &patchFile.name[0]);	// TODO remove this in our next major release
+				devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 				
 				if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) != 0) {
 					devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
@@ -167,10 +145,10 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 			
 			if(devices[DEVICE_PATCHES] != &__device_sd_b) {
 				memset(&patchFile, 0, sizeof(file_handle));
-				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL);
-				f_rename(txtbuffer, &patchFile.name[0]);	// TODO remove this in our next major release
+				devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 				
 				if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) != 0) {
 					devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
@@ -237,6 +215,7 @@ s32 deviceHandler_WKF_init(file_handle* file){
 		f_unmount("wkf:/");
 		free(wkffs);
 		wkffs = NULL;
+		disk_shutdown(DEV_WKF);
 	}
 	wkffs = (FATFS*)malloc(sizeof(FATFS));
 	int ret = 0;
@@ -261,21 +240,16 @@ s32 deviceHandler_WKF_init(file_handle* file){
 }
 
 s32 deviceHandler_WKF_deinit(file_handle* file) {
-	int ret = 0;
-	if(file && file->ffsFp) {
-		ret = f_close(file->ffsFp);
-		free(file->ffsFp);
-		file->ffsFp = 0;
+	deviceHandler_FAT_closeFile(file);
+	initial_WKF_info.freeSpace = 0LL;
+	initial_WKF_info.totalSpace = 0LL;
+	if(file) {
+		f_unmount(file->name);
+		free(wkffs);
+		wkffs = NULL;
+		disk_shutdown(DEV_WKF);
 	}
-	return ret;
-}
-
-s32 deviceHandler_WKF_deleteFile(file_handle* file) {
-	return -1;
-}
-
-s32 deviceHandler_WKF_closeFile(file_handle* file) {
-    return 0;
+	return 0;
 }
 
 bool deviceHandler_WKF_test() {
@@ -304,15 +278,15 @@ DEVICEHANDLER_INTERFACE __device_wkf = {
 	(_fn_test)&deviceHandler_WKF_test,
 	(_fn_info)&deviceHandler_WKF_info,
 	(_fn_init)&deviceHandler_WKF_init,
-	(_fn_readDir)&deviceHandler_WKF_readDir,
-	(_fn_readFile)&deviceHandler_WKF_readFile,
-	(_fn_writeFile)NULL,
-	(_fn_deleteFile)NULL,
-	(_fn_rename)NULL,
-	(_fn_mkdir)NULL,
-	(_fn_seekFile)&deviceHandler_WKF_seekFile,
+	(_fn_makeDir)&deviceHandler_FAT_makeDir,
+	(_fn_readDir)&deviceHandler_FAT_readDir,
+	(_fn_seekFile)&deviceHandler_FAT_seekFile,
+	(_fn_readFile)&deviceHandler_FAT_readFile,
+	(_fn_writeFile)&deviceHandler_FAT_writeFile,
+	(_fn_closeFile)&deviceHandler_FAT_closeFile,
+	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_renameFile)&deviceHandler_FAT_renameFile,
 	(_fn_setupFile)&deviceHandler_WKF_setupFile,
-	(_fn_closeFile)&deviceHandler_WKF_closeFile,
 	(_fn_deinit)&deviceHandler_WKF_deinit,
 	(_fn_emulated)&deviceHandler_WKF_emulated,
 };

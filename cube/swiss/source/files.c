@@ -115,17 +115,16 @@ void concatf_path(char *pathName, char *dirName, char *baseName, ...)
 
 // Either renames a path to a new one, or creates one.
 void ensure_path(int deviceSlot, char *path, char *oldPath) {
-	file_handle fhFullPath;
+	file_handle fhFullPath = { .fileAttrib = IS_DIR };
+	concat_path(fhFullPath.name, devices[deviceSlot]->initial->name, path);
 	if(oldPath) {
-		file_handle fhOldFullPath;
+		file_handle fhOldFullPath = { .fileAttrib = IS_DIR };
 		concat_path(fhOldFullPath.name, devices[deviceSlot]->initial->name, oldPath);
-		concat_path(fhFullPath.name, devices[deviceSlot]->initial->name, path);
-		if(devices[deviceSlot]->rename(&fhOldFullPath, &fhFullPath) != FR_OK) {
-			devices[deviceSlot]->mkdir(&fhFullPath);
+		if(devices[deviceSlot]->renameFile(&fhOldFullPath, fhFullPath.name)) {
+			devices[deviceSlot]->makeDir(&fhFullPath);
 		}
 	}
 	else {
-		concat_path(fhFullPath.name, devices[deviceSlot]->initial->name, path);
-		devices[deviceSlot]->mkdir(&fhFullPath);
+		devices[deviceSlot]->makeDir(&fhFullPath);
 	}
 }

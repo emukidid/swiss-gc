@@ -386,10 +386,10 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	if(swissSettings.emulateMemoryCard) {
 		if(devices[DEVICE_CUR] != &__device_sd_a && devices[DEVICE_CUR] != &__device_ata_a && devices[DEVICE_CUR] != &__device_ata_c) {
 			memset(&patchFile, 0, sizeof(file_handle));
-			concatf_path(patchFile.name, devices[DEVICE_CUR]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-			concatf_path(txtbuffer, devices[DEVICE_CUR]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+			concatf_path(patchFile.name, devices[DEVICE_CUR]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+			concatf_path(txtbuffer, devices[DEVICE_CUR]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 			ensure_path(DEVICE_CUR, "swiss/saves", NULL);
-			f_rename(txtbuffer, &patchFile.name[0]);	// TODO remove this in our next major release
+			devices[DEVICE_CUR]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 			
 			if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) != 0) {
 				devices[DEVICE_CUR]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
@@ -409,10 +409,10 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 		
 		if(devices[DEVICE_CUR] != &__device_sd_b && devices[DEVICE_CUR] != &__device_ata_b) {
 			memset(&patchFile, 0, sizeof(file_handle));
-			concatf_path(patchFile.name, devices[DEVICE_CUR]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-			concatf_path(txtbuffer, devices[DEVICE_CUR]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+			concatf_path(patchFile.name, devices[DEVICE_CUR]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+			concatf_path(txtbuffer, devices[DEVICE_CUR]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 			ensure_path(DEVICE_CUR, "swiss/saves", NULL);
-			f_rename(txtbuffer, &patchFile.name[0]);	// TODO remove this in our next major release
+			devices[DEVICE_CUR]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 			
 			if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) != 0) {
 				devices[DEVICE_CUR]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
@@ -562,11 +562,14 @@ s32 deviceHandler_FAT_deleteFile(file_handle* file) {
 	return f_unlink(file->name);
 }
 
-s32 deviceHandler_FAT_rename(file_handle* old, file_handle* new) {
-	return f_rename(old->name, new->name);
+s32 deviceHandler_FAT_renameFile(file_handle* file, char* name) {
+	deviceHandler_FAT_closeFile(file);
+	int ret = f_rename(file->name, name);
+	strcpy(file->name, name);
+	return ret;
 }
 
-s32 deviceHandler_FAT_mkdir(file_handle* dir) {
+s32 deviceHandler_FAT_makeDir(file_handle* dir) {
 	return f_mkdir(dir->name);
 }
 
@@ -622,15 +625,15 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 	(_fn_test)&deviceHandler_FAT_test_sd_a,
 	(_fn_info)&deviceHandler_FAT_info,
 	(_fn_init)&deviceHandler_FAT_init,
+	(_fn_makeDir)&deviceHandler_FAT_makeDir,
 	(_fn_readDir)&deviceHandler_FAT_readDir,
+	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_readFile)&deviceHandler_FAT_readFile,
 	(_fn_writeFile)&deviceHandler_FAT_writeFile,
-	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
-	(_fn_rename)&deviceHandler_FAT_rename,
-	(_fn_mkdir)&deviceHandler_FAT_mkdir,
-	(_fn_seekFile)&deviceHandler_FAT_seekFile,
-	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
+	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_renameFile)&deviceHandler_FAT_renameFile,
+	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
 	(_fn_emulated)&deviceHandler_FAT_emulated_sd,
 };
@@ -648,15 +651,15 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 	(_fn_test)&deviceHandler_FAT_test_sd_b,
 	(_fn_info)&deviceHandler_FAT_info,
 	(_fn_init)&deviceHandler_FAT_init,
+	(_fn_makeDir)&deviceHandler_FAT_makeDir,
 	(_fn_readDir)&deviceHandler_FAT_readDir,
+	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_readFile)&deviceHandler_FAT_readFile,
 	(_fn_writeFile)&deviceHandler_FAT_writeFile,
-	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
-	(_fn_rename)&deviceHandler_FAT_rename,
-	(_fn_mkdir)&deviceHandler_FAT_mkdir,
-	(_fn_seekFile)&deviceHandler_FAT_seekFile,
-	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
+	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_renameFile)&deviceHandler_FAT_renameFile,
+	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
 	(_fn_emulated)&deviceHandler_FAT_emulated_sd,
 };
@@ -674,15 +677,15 @@ DEVICEHANDLER_INTERFACE __device_ata_a = {
 	(_fn_test)&deviceHandler_FAT_test_ata_a,
 	(_fn_info)&deviceHandler_FAT_info,
 	(_fn_init)&deviceHandler_FAT_init,
+	(_fn_makeDir)&deviceHandler_FAT_makeDir,
 	(_fn_readDir)&deviceHandler_FAT_readDir,
+	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_readFile)&deviceHandler_FAT_readFile,
 	(_fn_writeFile)&deviceHandler_FAT_writeFile,
-	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
-	(_fn_rename)&deviceHandler_FAT_rename,
-	(_fn_mkdir)&deviceHandler_FAT_mkdir,
-	(_fn_seekFile)&deviceHandler_FAT_seekFile,
-	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
+	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_renameFile)&deviceHandler_FAT_renameFile,
+	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
 	(_fn_emulated)&deviceHandler_FAT_emulated_ata,
 };
@@ -700,15 +703,15 @@ DEVICEHANDLER_INTERFACE __device_ata_b = {
 	(_fn_test)&deviceHandler_FAT_test_ata_b,
 	(_fn_info)&deviceHandler_FAT_info,
 	(_fn_init)&deviceHandler_FAT_init,
+	(_fn_makeDir)&deviceHandler_FAT_makeDir,
 	(_fn_readDir)&deviceHandler_FAT_readDir,
+	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_readFile)&deviceHandler_FAT_readFile,
 	(_fn_writeFile)&deviceHandler_FAT_writeFile,
-	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
-	(_fn_rename)&deviceHandler_FAT_rename,
-	(_fn_mkdir)&deviceHandler_FAT_mkdir,
-	(_fn_seekFile)&deviceHandler_FAT_seekFile,
-	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
+	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_renameFile)&deviceHandler_FAT_renameFile,
+	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
 	(_fn_emulated)&deviceHandler_FAT_emulated_ata,
 };
@@ -726,15 +729,15 @@ DEVICEHANDLER_INTERFACE __device_sd_c = {
 	(_fn_test)&deviceHandler_FAT_test_sd_c,
 	(_fn_info)&deviceHandler_FAT_info,
 	(_fn_init)&deviceHandler_FAT_init,
+	(_fn_makeDir)&deviceHandler_FAT_makeDir,
 	(_fn_readDir)&deviceHandler_FAT_readDir,
+	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_readFile)&deviceHandler_FAT_readFile,
 	(_fn_writeFile)&deviceHandler_FAT_writeFile,
-	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
-	(_fn_rename)&deviceHandler_FAT_rename,
-	(_fn_mkdir)&deviceHandler_FAT_mkdir,
-	(_fn_seekFile)&deviceHandler_FAT_seekFile,
-	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
+	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_renameFile)&deviceHandler_FAT_renameFile,
+	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
 	(_fn_emulated)&deviceHandler_FAT_emulated_sd,
 };
@@ -752,15 +755,15 @@ DEVICEHANDLER_INTERFACE __device_ata_c = {
 	(_fn_test)&deviceHandler_FAT_test_ata_c,
 	(_fn_info)&deviceHandler_FAT_info,
 	(_fn_init)&deviceHandler_FAT_init,
+	(_fn_makeDir)&deviceHandler_FAT_makeDir,
 	(_fn_readDir)&deviceHandler_FAT_readDir,
+	(_fn_seekFile)&deviceHandler_FAT_seekFile,
 	(_fn_readFile)&deviceHandler_FAT_readFile,
 	(_fn_writeFile)&deviceHandler_FAT_writeFile,
-	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
-	(_fn_rename)&deviceHandler_FAT_rename,
-	(_fn_mkdir)&deviceHandler_FAT_mkdir,
-	(_fn_seekFile)&deviceHandler_FAT_seekFile,
-	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
+	(_fn_deleteFile)&deviceHandler_FAT_deleteFile,
+	(_fn_renameFile)&deviceHandler_FAT_renameFile,
+	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
 	(_fn_emulated)&deviceHandler_FAT_emulated_sd,
 };

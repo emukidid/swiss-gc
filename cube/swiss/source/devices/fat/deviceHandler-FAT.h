@@ -16,9 +16,14 @@ extern DEVICEHANDLER_INTERFACE __device_ata_a;
 extern DEVICEHANDLER_INTERFACE __device_ata_b;
 extern DEVICEHANDLER_INTERFACE __device_ata_c;
 
+extern s32 deviceHandler_FAT_makeDir(file_handle* dir);
 extern s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type);
+extern s32 deviceHandler_FAT_seekFile(file_handle* file, u32 where, u32 type);
 extern s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length);
 extern s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length);
+extern s32 deviceHandler_FAT_closeFile(file_handle* file);
+extern s32 deviceHandler_FAT_deleteFile(file_handle* file);
+extern s32 deviceHandler_FAT_renameFile(file_handle* file, char* name);
 extern s32 getFragments(file_handle* file, u32 (*fragList)[4], s32 maxFrags, u8 fileNum, u32 forceBaseOffset, u32 forceSize, u32 dev);
 
 #endif

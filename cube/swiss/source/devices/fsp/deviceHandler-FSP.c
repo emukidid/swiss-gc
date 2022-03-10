@@ -271,11 +271,12 @@ s32 deviceHandler_FSP_init(file_handle* file) {
 }
 
 s32 deviceHandler_FSP_closeFile(file_handle* file) {
+	int ret = 0;
 	if(file && file->fp) {
-		fsp_fclose(file->fp);
+		ret = fsp_fclose(file->fp);
 		file->fp = NULL;
 	}
-	return 0;
+	return ret;
 }
 
 s32 deviceHandler_FSP_deinit(file_handle* file) {
@@ -287,15 +288,21 @@ s32 deviceHandler_FSP_deinit(file_handle* file) {
 
 s32 deviceHandler_FSP_deleteFile(file_handle* file) {
 	deviceHandler_FSP_closeFile(file);
-	return fsp_unlink(fsp_session, getDevicePath(file->name));
+	if(file->fileAttrib == IS_DIR)
+		return fsp_rmdir(fsp_session, getDevicePath(file->name));
+	else
+		return fsp_unlink(fsp_session, getDevicePath(file->name));
 }
 
-s32 deviceHandler_FSP_rename(file_handle* old, file_handle* new) {
-	return 0;	// TODO Implement
+s32 deviceHandler_FSP_renameFile(file_handle* file, char* name) {
+	deviceHandler_FSP_closeFile(file);
+	int ret = fsp_rename(fsp_session, getDevicePath(file->name), getDevicePath(name));
+	strcpy(file->name, name);
+	return ret;
 }
 
-s32 deviceHandler_FSP_mkdir(file_handle* dir) {
-	return 0;	// TODO Implement
+s32 deviceHandler_FSP_makeDir(file_handle* dir) {
+	return fsp_mkdir(fsp_session, getDevicePath(dir->name));
 }
 
 bool deviceHandler_FSP_test() {
@@ -319,15 +326,15 @@ DEVICEHANDLER_INTERFACE __device_fsp = {
 	(_fn_test)&deviceHandler_FSP_test,
 	(_fn_info)&deviceHandler_FSP_info,
 	(_fn_init)&deviceHandler_FSP_init,
+	(_fn_makeDir)&deviceHandler_FSP_makeDir,
 	(_fn_readDir)&deviceHandler_FSP_readDir,
+	(_fn_seekFile)&deviceHandler_FSP_seekFile,
 	(_fn_readFile)&deviceHandler_FSP_readFile,
 	(_fn_writeFile)&deviceHandler_FSP_writeFile,
-	(_fn_deleteFile)&deviceHandler_FSP_deleteFile,
-	(_fn_rename)&deviceHandler_FSP_rename,
-	(_fn_mkdir)&deviceHandler_FSP_mkdir,
-	(_fn_seekFile)&deviceHandler_FSP_seekFile,
-	(_fn_setupFile)&deviceHandler_FSP_setupFile,
 	(_fn_closeFile)&deviceHandler_FSP_closeFile,
+	(_fn_deleteFile)&deviceHandler_FSP_deleteFile,
+	(_fn_renameFile)&deviceHandler_FSP_renameFile,
+	(_fn_setupFile)&deviceHandler_FSP_setupFile,
 	(_fn_deinit)&deviceHandler_FSP_deinit,
 	(_fn_emulated)&deviceHandler_FSP_emulated,
 };

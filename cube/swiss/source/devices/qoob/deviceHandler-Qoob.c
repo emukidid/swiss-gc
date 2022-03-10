@@ -93,10 +93,6 @@ s32 deviceHandler_Qoob_readFile(file_handle* file, void* buffer, u32 length) {
 	return length;
 }
 
-s32 deviceHandler_Qoob_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
-	return 1;
-}
-
 s32 deviceHandler_Qoob_init(file_handle* file) {
 	ipl_set_config(0);
 	return 1;
@@ -152,15 +148,15 @@ DEVICEHANDLER_INTERFACE __device_qoob = {
 	(_fn_test)&deviceHandler_Qoob_test,
 	(_fn_info)&deviceHandler_Qoob_info,
 	(_fn_init)&deviceHandler_Qoob_init,
+	(_fn_makeDir)NULL,
 	(_fn_readDir)&deviceHandler_Qoob_readDir,
+	(_fn_seekFile)&deviceHandler_Qoob_seekFile,
 	(_fn_readFile)&deviceHandler_Qoob_readFile,
 	(_fn_writeFile)NULL,
-	(_fn_deleteFile)NULL,
-	(_fn_rename)NULL,
-	(_fn_mkdir)NULL,
-	(_fn_seekFile)&deviceHandler_Qoob_seekFile,
-	(_fn_setupFile)NULL,
 	(_fn_closeFile)&deviceHandler_Qoob_closeFile,
+	(_fn_deleteFile)NULL,
+	(_fn_renameFile)NULL,
+	(_fn_setupFile)NULL,
 	(_fn_deinit)&deviceHandler_Qoob_deinit,
 	(_fn_emulated)NULL,
 };

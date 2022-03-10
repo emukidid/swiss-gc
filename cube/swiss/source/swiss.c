@@ -1273,7 +1273,7 @@ bool manage_file() {
 	bool canMove = canWrite && isFile;
 	bool canCopy = isFile;
 	bool canDelete = canWrite;
-	bool canRename = canWrite && devices[DEVICE_CUR]->features & FEAT_FAT_FUNCS;
+	bool canRename = canWrite;
 	
 	// Ask the user what they want to do with the selected entry
 	uiDrawObj_t* manageFileBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 320);
@@ -1356,7 +1356,7 @@ bool manage_file() {
 		bool modified = (strcmp(&curFile.name[0], txtbuffer) != 0) && strlen(nameBuffer) > 0;
 		if(modified) {
 			print_gecko("Renaming %s to %s\r\n", &curFile.name[0], txtbuffer);
-			u32 ret = f_rename(&curFile.name[0], txtbuffer);
+			u32 ret = devices[DEVICE_CUR]->renameFile(&curFile, txtbuffer);
 			sprintf(txtbuffer, "%s renamed!\nPress A to continue.", isFile ? "File" : "Directory");
 			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, ret ? "Move Failed! Press A to continue" : txtbuffer);
 			DrawPublish(msgBox);
@@ -1532,9 +1532,8 @@ bool manage_file() {
 		
 		// Same (fat based) device and user wants to move the file, just rename ;)
 		if(devices[DEVICE_CUR] == devices[DEVICE_DEST]
-			&& option == MOVE_OPTION 
-			&& (devices[DEVICE_CUR]->features & FEAT_FAT_FUNCS)) {
-			ret = f_rename(&curFile.name[0], &destFile->name[0]);
+			&& canRename && option == MOVE_OPTION) {
+			ret = devices[DEVICE_CUR]->renameFile(&curFile, destFile->name);
 			needsRefresh=1;
 			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,ret ? "Move Failed! Press A to continue":"File moved! Press A to continue");
 			DrawPublish(msgBox);

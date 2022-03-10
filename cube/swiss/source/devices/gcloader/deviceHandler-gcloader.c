@@ -41,27 +41,6 @@ device_info* deviceHandler_GCLOADER_info() {
 	return &initial_GCLOADER_info;
 }
 
-s32 deviceHandler_GCLOADER_readDir(file_handle* ffile, file_handle** dir, u32 type){	
-	return deviceHandler_FAT_readDir(ffile, dir, type);
-}
-
-
-s32 deviceHandler_GCLOADER_seekFile(file_handle* file, u32 where, u32 type){
-	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
-	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
-	return file->offset;
-}
-
-
-s32 deviceHandler_GCLOADER_readFile(file_handle* file, void* buffer, u32 length){
-	return deviceHandler_FAT_readFile(file, buffer, length);	// Same as FAT
-}
-
-
-s32 deviceHandler_GCLOADER_writeFile(file_handle* file, void* buffer, u32 length){
-	return deviceHandler_FAT_writeFile(file, buffer, length);
-}
-
 static char *bootFile_names[] = {"boot.iso", "boot.iso.iso", "boot.gcm", "boot.gcm.gcm"};
 
 s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
@@ -241,10 +220,10 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 		if(swissSettings.emulateMemoryCard) {
 			if(devices[DEVICE_PATCHES] != &__device_sd_a) {
 				memset(&patchFile, 0, sizeof(file_handle));
-				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL);
-				f_rename(txtbuffer, &patchFile.name[0]);	// TODO remove this in our next major release
+				devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 				
 				if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) != 0) {
 					devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
@@ -264,10 +243,10 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 			
 			if(devices[DEVICE_PATCHES] != &__device_sd_b) {
 				memset(&patchFile, 0, sizeof(file_handle));
-				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL);
-				f_rename(txtbuffer, &patchFile.name[0]);	// TODO remove this in our next major release
+				devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 				
 				if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) != 0) {
 					devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
@@ -339,18 +318,8 @@ s32 deviceHandler_GCLOADER_init(file_handle* file){
 	return ret == FR_OK;
 }
 
-s32 deviceHandler_GCLOADER_closeFile(file_handle* file) {
-	int ret = 0;
-	if(file && file->ffsFp) {
-		ret = f_close(file->ffsFp);
-		free(file->ffsFp);
-		file->ffsFp = 0;
-	}
-	return ret;
-}
-
 s32 deviceHandler_GCLOADER_deinit(file_handle* file) {
-	deviceHandler_GCLOADER_closeFile(file);
+	deviceHandler_FAT_closeFile(file);
 	initial_GCLOADER_info.freeSpace = 0LL;
 	initial_GCLOADER_info.totalSpace = 0LL;
 	if(file) {
@@ -360,19 +329,6 @@ s32 deviceHandler_GCLOADER_deinit(file_handle* file) {
 		disk_shutdown(DEV_GCLDR);
 	}
 	return 0;
-}
-
-s32 deviceHandler_GCLOADER_deleteFile(file_handle* file) {
-	deviceHandler_GCLOADER_closeFile(file);
-	return f_unlink(file->name);
-}
-
-s32 deviceHandler_GCLOADER_rename(file_handle* old, file_handle* new) {
-	return f_rename(old->name, new->name);
-}
-
-s32 deviceHandler_GCLOADER_mkdir(file_handle* dir) {
-	return f_mkdir(dir->name);
 }
 
 bool deviceHandler_GCLOADER_test() {
@@ -408,15 +364,15 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	(_fn_test)&deviceHandler_GCLOADER_test,
 	(_fn_info)&deviceHandler_GCLOADER_info,
 	(_fn_init)&deviceHandler_GCLOADER_init,
-	(_fn_readDir)&deviceHandler_GCLOADER_readDir,
-	(_fn_readFile)&deviceHandler_GCLOADER_readFile,
-	(_fn_writeFile)deviceHandler_GCLOADER_writeFile,
-	(_fn_deleteFile)deviceHandler_GCLOADER_deleteFile,
-	(_fn_rename)&deviceHandler_GCLOADER_rename,
-	(_fn_mkdir)&deviceHandler_GCLOADER_mkdir,
-	(_fn_seekFile)&deviceHandler_GCLOADER_seekFile,
+	(_fn_makeDir)&deviceHandler_FAT_makeDir,
+	(_fn_readDir)&deviceHandler_FAT_readDir,
+	(_fn_seekFile)&deviceHandler_FAT_seekFile,
+	(_fn_readFile)&deviceHandler_FAT_readFile,
+	(_fn_writeFile)deviceHandler_FAT_writeFile,
+	(_fn_closeFile)&deviceHandler_FAT_closeFile,
+	(_fn_deleteFile)deviceHandler_FAT_deleteFile,
+	(_fn_renameFile)&deviceHandler_FAT_renameFile,
 	(_fn_setupFile)&deviceHandler_GCLOADER_setupFile,
-	(_fn_closeFile)&deviceHandler_GCLOADER_closeFile,
 	(_fn_deinit)&deviceHandler_GCLOADER_deinit,
 	(_fn_emulated)&deviceHandler_GCLOADER_emulated,
 };

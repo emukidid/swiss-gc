@@ -200,11 +200,12 @@ s32 deviceHandler_FTP_init(file_handle* file){
 }
 
 s32 deviceHandler_FTP_closeFile(file_handle* file) {
+	int ret = 0;
 	if(file && file->fp) {
-		fclose(file->fp);
-		file->fp = 0;
+		ret = fclose(file->fp);
+		file->fp = NULL;
 	}
-	return 0;
+	return ret;
 }
 
 s32 deviceHandler_FTP_deinit(file_handle* file) {
@@ -223,14 +224,15 @@ s32 deviceHandler_FTP_deleteFile(file_handle* file) {
 	return unlink(file->name);
 }
 
-s32 deviceHandler_FTP_rename(file_handle* old, file_handle* new) {
-	// TODO Implement
-	return 0;
+s32 deviceHandler_FTP_renameFile(file_handle* file, char* name) {
+	deviceHandler_FTP_closeFile(file);
+	int ret = rename(file->name, name);
+	strcpy(file->name, name);
+	return ret;
 }
 
-s32 deviceHandler_FTP_mkdir(file_handle* dir) {
-	// TODO Implement
-	return 0;
+s32 deviceHandler_FTP_makeDir(file_handle* dir) {
+	return mkdir(dir->name, 0777);
 }
 
 bool deviceHandler_FTP_test() {
@@ -250,15 +252,15 @@ DEVICEHANDLER_INTERFACE __device_ftp = {
 	(_fn_test)&deviceHandler_FTP_test,
 	(_fn_info)&deviceHandler_FTP_info,
 	(_fn_init)&deviceHandler_FTP_init,
+	(_fn_makeDir)&deviceHandler_FTP_makeDir,
 	(_fn_readDir)&deviceHandler_FTP_readDir,
+	(_fn_seekFile)&deviceHandler_FTP_seekFile,
 	(_fn_readFile)&deviceHandler_FTP_readFile,
 	(_fn_writeFile)deviceHandler_FTP_writeFile,
-	(_fn_deleteFile)deviceHandler_FTP_deleteFile,
-	(_fn_rename)&deviceHandler_FTP_rename,
-	(_fn_mkdir)&deviceHandler_FTP_mkdir,
-	(_fn_seekFile)&deviceHandler_FTP_seekFile,
-	(_fn_setupFile)NULL,
 	(_fn_closeFile)&deviceHandler_FTP_closeFile,
+	(_fn_deleteFile)deviceHandler_FTP_deleteFile,
+	(_fn_renameFile)&deviceHandler_FTP_renameFile,
+	(_fn_setupFile)NULL,
 	(_fn_deinit)&deviceHandler_FTP_deinit,
 	(_fn_emulated)NULL,
 };
