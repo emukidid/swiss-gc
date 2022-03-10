@@ -1417,8 +1417,7 @@ bool manage_file() {
 		u32 isDestCard = devices[DEVICE_DEST] == &__device_card_a || devices[DEVICE_DEST] == &__device_card_b;
 		u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
 		
-		strlcat(destFile->name, "/", PATHNAME_MAX);
-		strlcat(destFile->name, stripInvalidChars(getRelativeName(&curFile.name[0])), PATHNAME_MAX);
+		concat_path(destFile->name, destFile->name, stripInvalidChars(getRelativeName(curFile.name)));
 		destFile->fp = 0;
 		destFile->ffsFp = 0;
 		destFile->fileBase = 0;
