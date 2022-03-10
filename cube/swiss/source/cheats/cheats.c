@@ -233,12 +233,13 @@ int findCheats(bool silent) {
 	memcpy(trimmedGameId, (char*)&GCMDisk, 6);
 	file_handle *cheatsFile = memalign(32,sizeof(file_handle));
 	memset(cheatsFile, 0, sizeof(file_handle));
-	concatf_path(cheatsFile->name, devices[DEVICE_CUR]->initial->name, "cheats/%.6s.txt", trimmedGameId);
+	concatf_path(cheatsFile->name, devices[DEVICE_CUR]->initial->name, "swiss/cheats/%.6s.txt", trimmedGameId);
 	print_gecko("Looking for cheats file @ [%s]\r\n", cheatsFile->name);
 
 	devices[DEVICE_TEMP] = devices[DEVICE_CUR];
 
 	// Check SD in all slots if we're not already running from SD, or if we fail from current device
+	ensure_path(DEVICE_TEMP, "swiss/cheats", "cheats");	// TODO kill this off in our next major release.
 	if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 		// Try SD slots now
 		if(devices[DEVICE_CUR] != &__device_sd_a) {
@@ -247,36 +248,36 @@ int findCheats(bool silent) {
 		else {
 			devices[DEVICE_TEMP] = &__device_sd_b;
 		}
-		file_handle *slotFile = devices[DEVICE_TEMP]->initial;
 		memset(cheatsFile, 0, sizeof(file_handle));
-		concatf_path(cheatsFile->name, slotFile->name, "cheats/%.6s.txt", trimmedGameId);
+		concatf_path(cheatsFile->name, devices[DEVICE_TEMP]->initial->name, "swiss/cheats/%.6s.txt", trimmedGameId);
 		print_gecko("Looking for cheats file @ [%s]\r\n", cheatsFile->name);
 
 		deviceHandler_setStatEnabled(0);
 		devices[DEVICE_TEMP]->init(cheatsFile);
+		ensure_path(DEVICE_TEMP, "swiss/cheats", "cheats");	// TODO kill this off in our next major release.
 		if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 			if(devices[DEVICE_TEMP] == &__device_sd_b) {
 				devices[DEVICE_TEMP] = &__device_sd_c;	// We already tried A & failed, so last thing to try is SP2 slot.
 			}
 			else if (devices[DEVICE_CUR] != &__device_sd_b) {
 				devices[DEVICE_TEMP] = &__device_sd_b;
-				slotFile = devices[DEVICE_TEMP]->initial;
 				memset(cheatsFile, 0, sizeof(file_handle));
-				concatf_path(cheatsFile->name, slotFile->name, "cheats/%.6s.txt", trimmedGameId);
+				concatf_path(cheatsFile->name, devices[DEVICE_TEMP]->initial->name, "swiss/cheats/%.6s.txt", trimmedGameId);
 				print_gecko("Looking for cheats file @[%s]\r\n", cheatsFile->name);
 
 				devices[DEVICE_TEMP]->init(cheatsFile);
+				ensure_path(DEVICE_TEMP, "swiss/cheats", "cheats");	// TODO kill this off in our next major release.
 				if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 					devices[DEVICE_TEMP] = &__device_sd_c; // Last thing to try is SP2 slot.
 				}
 			}
 			if (devices[DEVICE_TEMP] == &__device_sd_c && devices[DEVICE_CUR] != &__device_sd_c) {
-				slotFile = devices[DEVICE_TEMP]->initial;
 				memset(cheatsFile, 0, sizeof(file_handle));
-				concatf_path(cheatsFile->name, slotFile->name, "cheats/%.6s.txt", trimmedGameId);
+				concatf_path(cheatsFile->name, devices[DEVICE_TEMP]->initial->name, "swiss/cheats/%.6s.txt", trimmedGameId);
 				print_gecko("Looking for cheats file @[%s]\r\n", cheatsFile->name);
 
 				devices[DEVICE_TEMP]->init(cheatsFile);
+				ensure_path(DEVICE_TEMP, "swiss/cheats", "cheats");	// TODO kill this off in our next major release.
 				if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 					devices[DEVICE_TEMP] = NULL; // All three have failed.
 				}
