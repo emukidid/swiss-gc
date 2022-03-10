@@ -207,11 +207,9 @@ void trickle_read()
 
 void reset_device(void)
 {
-	DVDDiskID *id = (DVDDiskID *)VAR_AREA;
-
 	while (DI[7] & 0b001);
 
-	if (id->streaming) {
+	if (AI[0] & 0b0000001) {
 		AI[1] = 0;
 
 		DI[2] = DI_CMD_AUDIO_STREAM << 24 | 0x01 << 16;
