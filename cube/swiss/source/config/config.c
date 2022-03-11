@@ -150,8 +150,8 @@ int config_file_write(char* filename, char* contents) {
 	u32 len = strlen(contents);
 	print_gecko("config_file_write: writing %i bytes to %s\r\n", len, configFile->name);
 	devices[DEVICE_CONFIG]->deleteFile(configFile);
-	if(devices[DEVICE_CONFIG]->writeFile(configFile, contents, len) == len) {
-		devices[DEVICE_CONFIG]->closeFile(configFile);
+	if(devices[DEVICE_CONFIG]->writeFile(configFile, contents, len) == len &&
+		!devices[DEVICE_CONFIG]->closeFile(configFile)) {
 		free(configFile);
 		return 1;
 	}
@@ -164,7 +164,6 @@ void config_file_delete(char* filename) {
 	concat_path(configFile->name, devices[DEVICE_CONFIG]->initial->name, filename);
 	print_gecko("config_file_delete: deleting %s\r\n", configFile->name);
 	devices[DEVICE_CONFIG]->deleteFile(configFile);
-	devices[DEVICE_CONFIG]->closeFile(configFile);
 	free(configFile);
 }
 

@@ -1600,9 +1600,9 @@ bool manage_file() {
 						uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
 						DrawPublish(msgBox);
 						wait_press_A();
+						DrawDispose(msgBox);
 						setGCIInfo(NULL);
 						setCopyGCIMode(FALSE);
-						DrawDispose(msgBox);
 						return true;
 					}
 				}
@@ -1616,33 +1616,30 @@ bool manage_file() {
 					uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
 					DrawPublish(msgBox);
 					wait_press_A();
+					DrawDispose(msgBox);
 					setGCIInfo(NULL);
 					setCopyGCIMode(FALSE);
-					DrawDispose(msgBox);
 					return true;
 				}
 				curOffset+=amountToCopy;
 			}
 			DrawDispose(progBar);
-
-			// Handle empty files as a special case
-			if(curFile.size == 0) {
-				ret = devices[DEVICE_DEST]->writeFile(destFile, readBuffer, 0);
-				if(ret != 0) {
-					free(readBuffer);
-					sprintf(txtbuffer, "Failed to Write! (%u)\n%s",ret,destFile->name);
-					uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-					DrawPublish(msgBox);
-					wait_press_A();
-					setGCIInfo(NULL);
-					setCopyGCIMode(FALSE);
-					DrawDispose(msgBox);
-					return true;
-				}
-			}
 			free(readBuffer);
 			devices[DEVICE_CUR]->closeFile(&curFile);
-			devices[DEVICE_DEST]->closeFile(destFile);
+
+			ret = devices[DEVICE_DEST]->writeFile(destFile, NULL, 0);
+			if(ret == 0)
+				ret = devices[DEVICE_DEST]->closeFile(destFile);
+			if(ret != 0) {
+				sprintf(txtbuffer, "Failed to Write! (%u)\n%s",ret,destFile->name);
+				uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+				DrawPublish(msgBox);
+				wait_press_A();
+				DrawDispose(msgBox);
+				setGCIInfo(NULL);
+				setCopyGCIMode(FALSE);
+				return true;
+			}
 			setGCIInfo(NULL);
 			setCopyGCIMode(FALSE);
 			free(destFile);
