@@ -1612,7 +1612,7 @@ bool manage_file() {
 					free(readBuffer);
 					devices[DEVICE_CUR]->closeFile(&curFile);
 					devices[DEVICE_DEST]->closeFile(destFile);
-					sprintf(txtbuffer, "Failed to Write! (%u %u)\n%s",amountToCopy,ret,destFile->name);
+					sprintf(txtbuffer, "Failed to Write! (%d %d)\n%s",amountToCopy,ret,destFile->name);
 					uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
 					DrawPublish(msgBox);
 					wait_press_A();
@@ -1631,7 +1631,7 @@ bool manage_file() {
 			if(ret == 0)
 				ret = devices[DEVICE_DEST]->closeFile(destFile);
 			if(ret != 0) {
-				sprintf(txtbuffer, "Failed to Write! (%u)\n%s",ret,destFile->name);
+				sprintf(txtbuffer, "Failed to Write! (%d)\n%s",ret,destFile->name);
 				uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
 				DrawPublish(msgBox);
 				wait_press_A();
@@ -1666,6 +1666,66 @@ bool manage_file() {
 	}
 
 	return true;
+}
+
+void verify_game()
+{
+	u32 crc = 0;
+	u32 curOffset = 0, cancelled = 0, chunkSize = (32*1024);
+	unsigned char *readBuffer = (unsigned char*)memalign(32,chunkSize);
+	uiDrawObj_t* progBar = DrawProgressBar(false, 0, "Verifying ...");
+	DrawPublish(progBar);
+	
+	u64 startTime = gettime();
+	u64 lastTime = gettime();
+	u32 lastOffset = 0;
+	int speed = 0;
+	int timeremain = 0;
+	while(curOffset < curFile.size) {
+		u32 buttons = PAD_ButtonsHeld(0);
+		if(buttons & PAD_BUTTON_B) {
+			cancelled = 1;
+			break;
+		}
+		u32 timeDiff = diff_msec(lastTime, gettime());
+		u32 timeStart = diff_msec(startTime, gettime());
+		if(timeDiff >= 1000) {
+			speed = (int)((float)(curOffset-lastOffset) / (float)(timeDiff/1000.0f));
+			timeremain = (curFile.size - curOffset) / speed;
+			lastTime = gettime();
+			lastOffset = curOffset;
+		}
+		DrawUpdateProgressBarDetail(progBar, (int)((float)((float)curOffset/(float)curFile.size)*100), speed, timeStart/1000, timeremain);
+		u32 amountToRead = curOffset + chunkSize > curFile.size ? curFile.size - curOffset : chunkSize;
+		devices[DEVICE_CUR]->seekFile(&curFile, curOffset, DEVICE_HANDLER_SEEK_SET);
+		u32 ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToRead);
+		if(ret != amountToRead) {
+			DrawDispose(progBar);
+			free(readBuffer);
+			sprintf(txtbuffer, "Failed to Read! (%d %d)\n%s",amountToRead,ret, &curFile.name[0]);
+			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+			DrawPublish(msgBox);
+			wait_press_A();
+			DrawDispose(msgBox);
+			return;
+		}
+		crc = crc32(crc,readBuffer,amountToRead);
+		curOffset+=amountToRead;
+	}
+	DrawDispose(progBar);
+	free(readBuffer);
+	if(!cancelled) {
+		uiDrawObj_t *msgBox = NULL;
+		if(valid_gcm_crc32(&GCMDisk, crc)) {
+			msgBox = DrawMessageBox(D_PASS,"Passed integrity verification!\nPress A to continue.");
+		}
+		else {
+			msgBox = DrawMessageBox(D_FAIL,"Failed integrity verification!\nPress A to continue.");
+		}
+		DrawPublish(msgBox);
+		wait_press_A();
+		DrawDispose(msgBox);
+	}
 }
 
 void load_game() {
@@ -1985,6 +2045,7 @@ uiDrawObj_t* draw_game_info() {
 		}
 	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
+		DrawAddChild(container, DrawStyledLabel(640/2, 180, "Verify (R)", 0.6f, true, defaultColor));
 		sprintf(txtbuffer, "Game ID: [%.6s] Audio Streaming: [%s]", (char*)&GCMDisk, (swissSettings.audioStreaming ? "Yes":"No"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 200, txtbuffer, 0.8f, true, defaultColor));
 
@@ -2020,8 +2081,8 @@ int info_game()
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
 	int num_cheats = -1;
 	while(1) {
-		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z)){ VIDEO_WaitVSync (); }
-		while(!(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z))){ VIDEO_WaitVSync (); }
+		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PAD_TRIGGER_R)){ VIDEO_WaitVSync (); }
+		while(!(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PAD_TRIGGER_R))){ VIDEO_WaitVSync (); }
 		u32 buttons = PAD_ButtonsHeld(0);
 		if(buttons & (PAD_BUTTON_B|PAD_BUTTON_A)){
 			ret = (buttons & PAD_BUTTON_A) ? (buttons & PAD_TRIGGER_L) ? 2:1:0;
@@ -2038,6 +2099,9 @@ int info_game()
 				}
 			}
 			break;
+		}
+		if(buttons & PAD_TRIGGER_R) {
+			verify_game();
 		}
 		if(buttons & PAD_BUTTON_X) {
 			show_settings(valid_gcm_boot(&GCMDisk) ? &curFile : NULL, config);
