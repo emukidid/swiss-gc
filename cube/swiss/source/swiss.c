@@ -2045,7 +2045,9 @@ uiDrawObj_t* draw_game_info() {
 		}
 	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
-		DrawAddChild(container, DrawStyledLabel(640/2, 180, "Verify (R)", 0.6f, true, defaultColor));
+		if(is_verifiable_disc(&GCMDisk)) {
+			DrawAddChild(container, DrawStyledLabel(640/2, 180, "Verify (R)", 0.6f, true, defaultColor));
+		}
 		sprintf(txtbuffer, "Game ID: [%.6s] Audio Streaming: [%s]", (char*)&GCMDisk, (swissSettings.audioStreaming ? "Yes":"No"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 200, txtbuffer, 0.8f, true, defaultColor));
 
@@ -2100,7 +2102,7 @@ int info_game()
 			}
 			break;
 		}
-		if(buttons & PAD_TRIGGER_R) {
+		if((buttons & PAD_TRIGGER_R) && is_verifiable_disc(&GCMDisk)) {
 			verify_game();
 		}
 		if(buttons & PAD_BUTTON_X) {

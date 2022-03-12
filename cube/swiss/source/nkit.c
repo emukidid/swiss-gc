@@ -241,6 +241,7 @@ static const struct {
 	{ "DTLX01\x00\x00", false, 1, 0x2535, 0xCD1D9D4B,    1216512, +1458761728, {      94248,       +4056, 6496, 0x82CD }},
 	{ "DVJP08\x00\x00", false, 1, 0xED77, 0xAFF83635,  190525440, +1269452800, {   30065764, +1269078236, 6496, 0x721F }},
 	{ "DYFJA4\x00\x00", false, 1, 0xC126, 0x3D2EE92C,  587479040,  +872499200, {  347630664,    +1443208, 6496, 0x0843 }},
+	{ "E23J01\x00\x00", true,  1, 0x2F81, 0x6CF1CD61, 1428504576,   +31473664, {   12125000,   +20308824, 6496, 0x1AD2 }},
 	{ "E24J01\x00\x00", true,  1, 0xFA93, 0x14683962, 1406525440,   +53452800, {   12125000,   +40723288, 6496, 0x5210 }},
 	{ "E25J01\x00\x00", true,  1, 0x19B7, 0x4C905D86, 1408528384,   +51449856, {   12125000,   +38101848, 6496, 0x469A }},
 	{ "E27J01\x00\x00", true,  1, 0x8887, 0x0B3CDF9B, 1419474944,   +40503296, {   12125000,   +31056728, 6496, 0x0917 }},
@@ -1188,6 +1189,7 @@ static const struct {
 	{ "GMFP69\x00\x00", false, 1, 0x2F13, 0x2430A324, 1440763904,   +19214336, { 1440755692,    +7228172, 6496, 0xA442 }},
 	{ "GMFS69\x00\x00", false, 1, 0x731D, 0x315BB8BA, 1423435776,   +36542464, { 1423428992,    +7221368, 6496, 0xA442 }},
 	{ "GMHE52\x00\x00", false, 1, 0x6A24, 0xCDFAD5B1, 1368770560,   +91207680, {  146172096,      +19420, 6496, 0xC51B }},
+	{ "GMHF52\x00\x00", false, 1, 0x8BE7, 0x3BD2ECED, 1362995200,   +96983040, {  146147072,      +13092, 6496, 0xC51B }},
 	{ "GMHP52\x00\x00", false, 1, 0x2644, 0x7DD73EB3, 1358788608,  +101189632, {  146111812,      +14044, 6496, 0xC51B }},
 	{ "GMIE70\x00\x00", false, 1, 0x110D, 0x5595D6BB, 1246803968,  +213174272, { 1246603392,  +213174428, 6496, 0x7B70 }},
 	{ "GMIJ70\x00\x00", false, 1, 0xE6DB, 0x4FD53BC6, 1248081920,  +211896320, { 1246933044,  +211896992, 6496, 0x3C44 }},
@@ -2093,6 +2095,18 @@ bool is_streaming_disc(const DiskHeader *header)
 			return nkit_dat[i].streaming;
 
 	return header->AudioStreaming;
+}
+
+bool is_verifiable_disc(const DiskHeader *header)
+{
+	if (!memcmp(&header->NKitMagicWord, "NKIT", 4))
+		return true;
+
+	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+		if (!memcmp(header, nkit_dat[i].header, 8))
+			return true;
+
+	return false;
 }
 
 bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *size)
