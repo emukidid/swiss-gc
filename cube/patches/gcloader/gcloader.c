@@ -364,9 +364,13 @@ bool change_disc(void)
 
 	if (*VAR_SECOND_DISC) {
 		const frag_t *frag = NULL;
-		int count = frag_get_list(*VAR_CURRENT_DISC ^ 1, &frag);
-		if (count)
-			return gcode_push_queue((void *)(frag + 1), count - 1, 0, 0, DI_CMD_GCODE_SET_DISC_FRAGS << 24 | 0x01, callback);
+		int fragnum = frag_get_list(*VAR_CURRENT_DISC ^ 1, &frag);
+
+		if (fragnum == 1) {
+			frag    = (*frag).frag;
+			fragnum = (*frag).fragnum;
+			return gcode_push_queue((void *)frag, fragnum, 0, 0, DI_CMD_GCODE_SET_DISC_FRAGS << 24 | 0x01, callback);
+		}
 	}
 
 	return false;
@@ -387,8 +391,8 @@ void reset_device(void)
 	}
 
 	const frag_t *frag = NULL;
-	int count = frag_get_list(FRAGS_BOOT_GCM, &frag);
-	gcode_set_disc_frags(0, frag, count);
+	int fragnum = frag_get_list(FRAGS_BOOT_GCM, &frag);
+	gcode_set_disc_frags(0, frag, fragnum);
 	gcode_set_disc_number(0);
 
 	while (EXI[EXI_CHANNEL_0][3] & 0b000001);

@@ -24,7 +24,6 @@ extern s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 leng
 extern s32 deviceHandler_FAT_closeFile(file_handle* file);
 extern s32 deviceHandler_FAT_deleteFile(file_handle* file);
 extern s32 deviceHandler_FAT_renameFile(file_handle* file, char* name);
-extern s32 getFragments(file_handle* file, u32 (*fragList)[4], s32 maxFrags, u8 fileNum, u32 forceBaseOffset, u32 forceSize, u32 dev);
 
 #endif
 

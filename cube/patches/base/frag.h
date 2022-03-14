@@ -24,7 +24,11 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-typedef struct {
+typedef struct frag frag_t;
+
+typedef void (*frag_callback)(void *buffer, uint32_t length);
+
+struct frag {
 	uint32_t offset;
 	uint32_t size;
 	union {
@@ -38,11 +42,14 @@ typedef struct {
 			uint16_t pathlen;
 			const char *path;
 		};
+		struct {
+			uint16_t        : 16;
+			uint16_t fragnum;
+			const frag_t *frag;
+		};
 		uint64_t data;
 	};
-} frag_t;
-
-typedef void (*frag_callback)(void *buffer, uint32_t length);
+};
 
 bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write, frag_callback callback);
 bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *frag, frag_callback callback);

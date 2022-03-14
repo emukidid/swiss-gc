@@ -43,18 +43,19 @@ device_info* deviceHandler_WKF_info(file_handle* file) {
 }
 
 s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
+	int i;
+	file_frag *fragList = NULL;
+	u32 numFrags = 0;
+	
 	if(numToPatch < 0) {
-		u32 frag[4];
-		if(!getFragments(file, &frag, 1, 0, 0, 0, DEVICE_CUR)) {
+		if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, 0, 0, 0) || numFrags != 1) {
+			free(fragList);
 			return 0;
 		}
-		wkfWriteOffset(frag[3]);
+		wkfWriteOffset((*fragList).fileBase);
+		free(fragList);
 		return 1;
 	}
-	
-	int i;
-	u32 (*fragList)[4] = NULL;
-	s32 frags = 0, totFrags = 0;
 	
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
@@ -71,14 +72,11 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 				memset(patchInfo, 0, 16);
 				devices[DEVICE_PATCHES]->seekFile(&patchFile, patchFile.size-16, DEVICE_HANDLER_SEEK_SET);
 				if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-					if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-						return 0;
-					}
-					if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
+					if(!getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_DISC_1, patchInfo[0], patchInfo[1])) {
+						devices[DEVICE_PATCHES]->closeFile(&patchFile);
 						free(fragList);
 						return 0;
 					}
-					totFrags+=frags;
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				}
 				else {
@@ -110,13 +108,8 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
 			
-			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-				return 0;
-			}
-			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_APPLOADER, 0x2440, 0, DEVICE_PATCHES))) {
-				totFrags+=frags;
-				devices[DEVICE_PATCHES]->closeFile(&patchFile);
-			}
+			getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_APPLOADER, 0x2440, 0);
+			devices[DEVICE_PATCHES]->closeFile(&patchFile);
 		}
 		
 		if(swissSettings.emulateMemoryCard) {
@@ -133,14 +126,9 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				}
 				
-				if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-					return 0;
-				}
-				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_A, 0, 31.5*1024*1024, DEVICE_PATCHES))) {
-					*(vu8*)VAR_CARD_A_ID = (patchFile.size*8/1024/1024) & 0xFC;
-					totFrags+=frags;
-					devices[DEVICE_PATCHES]->closeFile(&patchFile);
-				}
+				if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_A, 0, 31.5*1024*1024))
+					*(vu8*)VAR_CARD_A_ID = (patchFile.size * 8/1024/1024) & 0xFC;
+				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
 			
 			if(devices[DEVICE_PATCHES] != &__device_sd_b) {
@@ -156,14 +144,9 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				}
 				
-				if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-					return 0;
-				}
-				if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_B, 0, 31.5*1024*1024, DEVICE_PATCHES))) {
-					*(vu8*)VAR_CARD_B_ID = (patchFile.size*8/1024/1024) & 0xFC;
-					totFrags+=frags;
-					devices[DEVICE_PATCHES]->closeFile(&patchFile);
-				}
+				if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_B, 0, 31.5*1024*1024))
+					*(vu8*)VAR_CARD_B_ID = (patchFile.size * 8/1024/1024) & 0xFC;
+				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
 		}
 		
@@ -177,31 +160,23 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 	}
 	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+	if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, FRAGS_DISC_1, 0, UINT32_MAX)) {
+		free(fragList);
 		return 0;
 	}
-	if(!(frags = getFragments(file, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, 0, UINT32_MAX, DEVICE_CUR))) {
-		return 0;
-	}
-	totFrags += frags;
 	
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
 		// TODO fix 2 disc patched games
-		if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
+		if(!getFragments(DEVICE_CUR, file2, &fragList, &numFrags, FRAGS_DISC_2, 0, UINT32_MAX)) {
+			free(fragList);
 			return 0;
 		}
-		if(!(frags = getFragments(file2, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_2, 0, UINT32_MAX, DEVICE_CUR))) {
-			return 0;
-		}
-		totFrags += frags;
 	}
 	
 	if(fragList) {
-		memset(&fragList[totFrags], 0, sizeof(*fragList));
-		print_frag_list(fragList);
-		
-		*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (totFrags + 1) * sizeof(*fragList));
+		print_frag_list(fragList, numFrags);
+		*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (numFrags + 1) * sizeof(file_frag));
 		free(fragList);
 		fragList = NULL;
 	}

@@ -3,6 +3,7 @@
 	by emu_kidid
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <ogcsys.h>
 #include <unistd.h>
@@ -12,14 +13,12 @@
 #include <sys/time.h>
 #include <time.h>
 #include "util.h"
+#include "swiss.h"
+#include "patcher.h"
 #include "deviceHandler.h"
 
-#ifndef NULL
-#define NULL 0
-#endif
-
 DEVICEHANDLER_INTERFACE* allDevices[MAX_DEVICES];	// All devices registered in Swiss
-DEVICEHANDLER_INTERFACE* devices[MAX_DEVICES];		// Currently used devices
+DEVICEHANDLER_INTERFACE* devices[MAX_DEVICE_SLOTS];	// Currently used devices
 
 
 // Device stat global disable status
@@ -132,4 +131,103 @@ const char* getHwNameByLocation(u32 location) {
 			break;
 	}
 	return "Empty";
+}
+
+bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *totFrags, u8 fileNum, u32 forceBaseOffset, u32 forceSize) {
+	file_frag *frags = *fragList;
+	u32 numFrags = *totFrags;
+	
+	// open the file (should be open already)
+	if(devices[deviceSlot]->readFile(file, NULL, 0) != 0) {
+		return false;
+	}
+	if(forceSize == 0) {
+		forceSize = file->size;
+	}
+	if(!file->status && file->ffsFp) {
+		FATFS* fatfs = file->ffsFp->obj.fs;
+		// fatfs - Cluster link table map buffer
+		DWORD clmt[(MAX_FRAGS+1)*2];
+		file->ffsFp->cltbl = clmt;
+		*file->ffsFp->cltbl = sizeof(clmt)/sizeof(DWORD);
+		if(f_lseek(file->ffsFp, CREATE_LINKMAP) != FR_OK) {
+			file->ffsFp->cltbl = NULL;
+			return false;	// Too many fragments for our buffer
+		}
+		file->ffsFp->cltbl = NULL;
+		
+		print_gecko("getFragments [%s] - found %i fragments [%i arr]\r\n", file->name, (clmt[0]/2)-1, clmt[0]);
+		
+		frags = realloc(frags, sizeof(file_frag) * (numFrags + (clmt[0]/2)));
+		if(frags == NULL) {
+			return false;
+		}
+		for(int i = 1; forceSize && clmt[i]; i+=2) {
+			FSIZE_t size = (FSIZE_t)clmt[i] * fatfs->csize * fatfs->ssize;
+			LBA_t sector = clst2sect(fatfs, clmt[i+1]);
+			// this frag offset in the file is the last frag offset+size
+			size = forceSize < size ? forceSize : size;
+			frags[numFrags].offset = forceBaseOffset;
+			frags[numFrags].size = size;
+			frags[numFrags].fileNum = fileNum;
+			frags[numFrags].devNum = deviceSlot == DEVICE_PATCHES;
+			frags[numFrags].fileBase = sector;
+			forceBaseOffset += size;
+			forceSize -= size;
+			numFrags++;
+		}
+		file->status = 1;
+	}
+	else if(devices[deviceSlot] == &__device_fsp) {
+		frags = realloc(frags, sizeof(file_frag) * (numFrags + 2));
+		if(frags == NULL) {
+			return false;
+		}
+		char *path = NULL;
+		int pathlen = asprintf(&path, "%s\n%s", getDevicePath(file->name), swissSettings.fspPassword) + 1;
+		frags[numFrags].offset = forceBaseOffset;
+		frags[numFrags].size = forceSize;
+		frags[numFrags].fileNum = fileNum;
+		frags[numFrags].devNum = 0;
+		frags[numFrags].fileBase = (u32)installPatch2(path, pathlen) | ((u64)pathlen << 32);
+		free(path);
+		numFrags++;
+	}
+	else if(devices[deviceSlot] == &__device_usbgecko) {
+		frags = realloc(frags, sizeof(file_frag) * (numFrags + 2));
+		if(frags == NULL) {
+			return false;
+		}
+		frags[numFrags].offset = forceBaseOffset;
+		frags[numFrags].size = forceSize;
+		frags[numFrags].fileNum = fileNum;
+		frags[numFrags].devNum = 0;
+		frags[numFrags].fileBase = (u32)installPatch2(file->name, PATHNAME_MAX) | ((u64)PATHNAME_MAX << 32);
+		numFrags++;
+	}
+	else {
+		frags = realloc(frags, sizeof(file_frag) * (numFrags + 2));
+		if(frags == NULL) {
+			return false;
+		}
+		frags[numFrags].offset = forceBaseOffset;
+		frags[numFrags].size = forceSize;
+		frags[numFrags].fileNum = fileNum;
+		frags[numFrags].devNum = 0;
+		frags[numFrags].fileBase = file->fileBase;
+		numFrags++;
+	}
+	*fragList = frags;
+	*totFrags = numFrags;
+	memset(&frags[numFrags], 0, sizeof(file_frag));
+	return true;
+}
+
+void print_frag_list(file_frag *fragList, u32 totFrags) {
+	print_gecko("== Fragments List ==\r\n");
+	for(int i = 0; i < totFrags; i++) {
+		print_gecko("Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%012llX]\r\n",
+					i, fragList[i].offset, fragList[i].size, fragList[i].fileBase);
+	}
+	print_gecko("== Fragments End ==\r\n");
 }

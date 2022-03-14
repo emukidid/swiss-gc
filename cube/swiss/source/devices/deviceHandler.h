@@ -19,6 +19,14 @@
 #define PATHNAME_MAX 1024
 
 typedef struct {
+	u32 offset;
+	u32 size;
+	u64 fileNum  :  8;
+	u64 devNum   :  8;
+	u64 fileBase : 48;
+} file_frag;
+
+typedef struct {
 	dvddiskid diskId;
 	GXTexObj *fileTypeTexObj;
 	GXTexObj *regionTexObj;
@@ -181,7 +189,7 @@ extern void deviceHandler_setDeviceAvailable(DEVICEHANDLER_INTERFACE *dev, bool 
 extern void deviceHandler_setAllDevicesAvailable();
 
 extern DEVICEHANDLER_INTERFACE* allDevices[MAX_DEVICES];
-extern DEVICEHANDLER_INTERFACE* devices[MAX_DEVICES];
+extern DEVICEHANDLER_INTERFACE* devices[MAX_DEVICE_SLOTS];
 
 extern int deviceHandler_test(DEVICEHANDLER_INTERFACE *device);
 extern DEVICEHANDLER_INTERFACE* getDeviceByUniqueId(u8 id);
@@ -191,7 +199,8 @@ extern const char* getHwNameByLocation(u32 location);
 
 #define MAX_FRAGS 40
 
-extern void print_frag_list(u32 (*fragList)[4]);
+extern bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *totFrags, u8 fileNum, u32 forceBaseOffset, u32 forceSize);
+extern void print_frag_list(file_frag *fragList, u32 totFrags);
 
 #endif
 

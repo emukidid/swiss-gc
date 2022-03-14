@@ -177,7 +177,7 @@ static uint8_t fsp_checksum(fsp_header_t *header, size_t size)
 	return sum;
 }
 
-static void fsp_get_file(uint32_t offset, uint32_t length, const void *path, uint16_t pathlen)
+static void fsp_get_file(uint32_t offset, uint32_t length, const char *path, uint16_t pathlen)
 {
 	uint8_t *data = (*_bba.page)[1];
 	eth_header_t *eth = (eth_header_t *)data;

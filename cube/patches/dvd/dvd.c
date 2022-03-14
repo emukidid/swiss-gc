@@ -221,8 +221,8 @@ void reset_device(void)
 
 	#ifdef GCODE
 	const frag_t *frag = NULL;
-	int count = frag_get_list(FRAGS_BOOT_GCM, &frag);
-	gcode_set_disc_frags(0, frag, count);
+	int fragnum = frag_get_list(FRAGS_BOOT_GCM, &frag);
+	gcode_set_disc_frags(0, frag, fragnum);
 	gcode_set_disc_number(0);
 	#endif
 

@@ -21,8 +21,6 @@
 const DISC_INTERFACE* carda = &__io_gcsda;
 const DISC_INTERFACE* cardb = &__io_gcsdb;
 const DISC_INTERFACE* cardc = &__io_gcsd2;
-extern FATFS *wkffs;
-extern FATFS *gcloaderfs;
 FATFS *fs[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
 #define SD_COUNT 3
 #define IS_SDCARD(v) (v[0] == 's' && v[1] == 'd')
@@ -182,7 +180,7 @@ s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
 		file->ffsFp = malloc(sizeof(FIL));
 		if(f_open(file->ffsFp, file->name, FA_READ ) != FR_OK) {
 			free(file->ffsFp);
-			file->ffsFp = 0;
+			file->ffsFp = NULL;
 			return -1;
 		}
 	}
@@ -207,7 +205,7 @@ s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length) {
 		file->ffsFp = malloc(sizeof(FIL));
 		if(f_open(file->ffsFp, file->name, FA_CREATE_ALWAYS | FA_WRITE ) != FR_OK) {
 			free(file->ffsFp);
-			file->ffsFp = 0;
+			file->ffsFp = NULL;
 			return -1;
 		}
 	}
@@ -221,85 +219,10 @@ s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length) {
 	return bytes_written;
 }
 
-void print_frag_list(u32 (*fragList)[4]) {
-	print_gecko("== Fragments List ==\r\n");
-	int i;
-	for(i = 0; fragList[i][1]; i++) {
-		print_gecko("Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%016llX]\r\n",
-					i, fragList[i][0], fragList[i][1], (u64)(((u64)fragList[i][2] << 32) | fragList[i][3]));
-	}
-	print_gecko("== Fragments End ==\r\n");
-}
-
-
-/* 
-	file: the file to get the fragments for
-	fragList: a table of u32's {offsetInFile, size, sector},...
-	maxFrags: maximum number of fragments allowed
-	forceBaseOffset: only use this if the fragments need to fake a position in a larger file (e.g. patch files)
-	forceSize: only use this to fake a total size (e.g. patch files again)
-	
-	return numfrags on success, 0 on failure
-*/ 
-s32 getFragments(file_handle* file, u32 (*fragList)[4], s32 maxFrags, u8 fileNum, u32 forceBaseOffset, u32 forceSize, u32 dev) {
-	int i;
-	if(!file->ffsFp) {
-		devices[dev]->readFile(file, NULL, 0);	// open the file (should be open already)
-	}
-	
-	if(!file->ffsFp) {
-		return 0;
-	}
-
-	// fatfs - Cluster link table map buffer
-	DWORD clmt[(maxFrags+1)*2];
-	clmt[0] = (maxFrags+1)*2;
-	file->ffsFp->cltbl = &clmt[0];
-	if(f_lseek(file->ffsFp, CREATE_LINKMAP) != FR_OK) {
-		file->ffsFp->cltbl = NULL;
-		return 0;	// Too many fragments for our buffer
-	}
-	file->ffsFp->cltbl = NULL;
-	
-	print_gecko("getFragments [%s] - found %i fragments [%i arr]\r\n",file->name, (clmt[0] >> 1)-1, clmt[0]);
-	
-	// WKF also uses this, make sure we use the right fs obj
-	FATFS* fatfs = NULL;
-	if(file->name[0] == 'w') {
-		fatfs = wkffs;
-	}
-	else if(file->name[0] == 'g') {
-		fatfs = gcloaderfs;
-	}
-	else {
-		int slot = GET_SLOT(file->name);
-		fatfs = fs[IS_SDCARD(file->name) ? slot : SD_COUNT+slot];
-	}
-	if(forceSize == 0) {
-		forceSize = file->size;
-	}
-	s32 numFrags = 0;
-	for(i = 1; i < (clmt[0]); i+=2) {
-		if(clmt[i] == 0) break;	// No more
-		FSIZE_t size = (FSIZE_t)(clmt[i]) * fatfs->csize * fatfs->ssize;
-		LBA_t sector = clst2sect(fatfs, clmt[i+1]);
-		// this frag offset in the file is the last frag offset+size
-		size = forceSize < size ? forceSize : size;
-		fragList[numFrags][0] = forceBaseOffset;
-		fragList[numFrags][1] = size;
-		fragList[numFrags][2] = (u16)(sector >> 32) | ((dev == DEVICE_PATCHES) << 16) | (fileNum << 24);
-		fragList[numFrags][3] = (u32)(sector);
-		forceBaseOffset += size;
-		forceSize -= size;
-		numFrags++;
-	}
-	return numFrags;
-}
-
 s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	int i;
-	u32 (*fragList)[4] = NULL;
-	s32 frags = 0, totFrags = 0;
+	file_frag *fragList = NULL;
+	u32 numFrags = 0;
 	
 	// Look for patch files, if we find some, open them and add them as fragments
 	file_handle patchFile;
@@ -312,14 +235,11 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 			memset(patchInfo, 0, 16);
 			devices[DEVICE_CUR]->seekFile(&patchFile, patchFile.size-16, DEVICE_HANDLER_SEEK_SET);
 			if((devices[DEVICE_CUR]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-				if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-					return 0;
-				}
-				if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, patchInfo[0], patchInfo[1], DEVICE_CUR))) {
+				if(!getFragments(DEVICE_CUR, &patchFile, &fragList, &numFrags, FRAGS_DISC_1, patchInfo[0], patchInfo[1])) {
+					devices[DEVICE_CUR]->closeFile(&patchFile);
 					free(fragList);
 					return 0;
 				}
-				totFrags+=frags;
 				devices[DEVICE_CUR]->closeFile(&patchFile);
 			}
 			else {
@@ -335,26 +255,18 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	}
 	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-		return 0;
-	}
-	if(!(frags = getFragments(file, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, 0, UINT32_MAX, DEVICE_CUR))) {
+	if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, FRAGS_DISC_1, 0, UINT32_MAX)) {
 		free(fragList);
 		return 0;
 	}
-	totFrags += frags;
 	
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
 		// TODO fix 2 disc patched games
-		if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-			return 0;
-		}
-		if(!(frags = getFragments(file2, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_2, 0, UINT32_MAX, DEVICE_CUR))) {
+		if(!getFragments(DEVICE_CUR, file2, &fragList, &numFrags, FRAGS_DISC_2, 0, UINT32_MAX)) {
 			free(fragList);
 			return 0;
 		}
-		totFrags += frags;
 	}
 	
 	if(swissSettings.igrType == IGR_BOOTBIN) {
@@ -374,13 +286,8 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 			devices[DEVICE_CUR]->closeFile(&patchFile);
 		}
 		
-		if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-			return 0;
-		}
-		if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_APPLOADER, 0x2440, 0, DEVICE_CUR))) {
-			totFrags+=frags;
-			devices[DEVICE_CUR]->closeFile(&patchFile);
-		}
+		getFragments(DEVICE_CUR, &patchFile, &fragList, &numFrags, FRAGS_APPLOADER, 0x2440, 0);
+		devices[DEVICE_CUR]->closeFile(&patchFile);
 	}
 	
 	if(swissSettings.emulateMemoryCard) {
@@ -397,14 +304,9 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 				devices[DEVICE_CUR]->closeFile(&patchFile);
 			}
 			
-			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-				return 0;
-			}
-			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_A, 0, 31.5*1024*1024, DEVICE_CUR))) {
-				*(vu8*)VAR_CARD_A_ID = (patchFile.size*8/1024/1024) & 0xFC;
-				totFrags+=frags;
-				devices[DEVICE_CUR]->closeFile(&patchFile);
-			}
+			if(getFragments(DEVICE_CUR, &patchFile, &fragList, &numFrags, FRAGS_CARD_A, 0, 31.5*1024*1024))
+				*(vu8*)VAR_CARD_A_ID = (patchFile.size * 8/1024/1024) & 0xFC;
+			devices[DEVICE_CUR]->closeFile(&patchFile);
 		}
 		
 		if(devices[DEVICE_CUR] != &__device_sd_b && devices[DEVICE_CUR] != &__device_ata_b) {
@@ -420,22 +322,15 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 				devices[DEVICE_CUR]->closeFile(&patchFile);
 			}
 			
-			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-				return 0;
-			}
-			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_CARD_B, 0, 31.5*1024*1024, DEVICE_CUR))) {
-				*(vu8*)VAR_CARD_B_ID = (patchFile.size*8/1024/1024) & 0xFC;
-				totFrags+=frags;
-				devices[DEVICE_CUR]->closeFile(&patchFile);
-			}
+			if(getFragments(DEVICE_CUR, &patchFile, &fragList, &numFrags, FRAGS_CARD_B, 0, 31.5*1024*1024))
+				*(vu8*)VAR_CARD_B_ID = (patchFile.size * 8/1024/1024) & 0xFC;
+			devices[DEVICE_CUR]->closeFile(&patchFile);
 		}
 	}
 	
 	if(fragList) {
-		memset(&fragList[totFrags], 0, sizeof(*fragList));
-		print_frag_list(fragList);
-		
-		*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (totFrags + 1) * sizeof(*fragList));
+		print_frag_list(fragList, numFrags);
+		*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (numFrags + 1) * sizeof(file_frag));
 		free(fragList);
 		fragList = NULL;
 	}
@@ -536,7 +431,7 @@ s32 deviceHandler_FAT_closeFile(file_handle* file) {
 	if(file && file->ffsFp) {
 		ret = f_close(file->ffsFp);
 		free(file->ffsFp);
-		file->ffsFp = 0;
+		file->ffsFp = NULL;
 	}
 	return ret;
 }

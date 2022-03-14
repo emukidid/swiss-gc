@@ -101,8 +101,8 @@ s32 deviceHandler_USBGecko_writeFile(file_handle* file, void* buffer, u32 length
 
 s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	int i;
-	u32 (*fragList)[4] = NULL;
-	s32 frags = 0, totFrags = 0;
+	file_frag *fragList = NULL;
+	u32 numFrags = 0;
 	
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
@@ -119,14 +119,11 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, int 
 				memset(patchInfo, 0, 16);
 				devices[DEVICE_PATCHES]->seekFile(&patchFile, patchFile.size-16, DEVICE_HANDLER_SEEK_SET);
 				if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-					if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-						return 0;
-					}
-					if(!(frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_DISC_1, patchInfo[0], patchInfo[1], DEVICE_PATCHES))) {
+					if(!getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_DISC_1, patchInfo[0], patchInfo[1])) {
+						devices[DEVICE_PATCHES]->closeFile(&patchFile);
 						free(fragList);
 						return 0;
 					}
-					totFrags+=frags;
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				}
 				else {
@@ -158,13 +155,8 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, int 
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
 			
-			if(!(fragList = realloc(fragList, (totFrags + MAX_FRAGS + 1) * sizeof(*fragList)))) {
-				return 0;
-			}
-			if((frags = getFragments(&patchFile, &fragList[totFrags], MAX_FRAGS, FRAGS_APPLOADER, 0x2440, 0, DEVICE_PATCHES))) {
-				totFrags+=frags;
-				devices[DEVICE_PATCHES]->closeFile(&patchFile);
-			}
+			getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_APPLOADER, 0x2440, 0);
+			devices[DEVICE_PATCHES]->closeFile(&patchFile);
 		}
 		
 		// Card Type
@@ -176,28 +168,21 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, int 
 		*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[*(vu8*)VAR_EXI_SLOT];
 	}
 	
-	if(!(fragList = realloc(fragList, (totFrags + 1 + !!file2 + 1) * sizeof(*fragList)))) {
+	if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, FRAGS_DISC_1, 0, 0)) {
+		free(fragList);
 		return 0;
 	}
-	fragList[totFrags][0] = 0;
-	fragList[totFrags][1] = file->size;
-	fragList[totFrags][2] = (u16)PATHNAME_MAX | ((u8)FRAGS_DISC_1 << 24);
-	fragList[totFrags][3] = (u32)installPatch2(file->name, PATHNAME_MAX);
-	totFrags++;
 	
 	if(file2) {
-		fragList[totFrags][0] = 0;
-		fragList[totFrags][1] = file2->size;
-		fragList[totFrags][2] = (u16)PATHNAME_MAX | ((u8)FRAGS_DISC_2 << 24);
-		fragList[totFrags][3] = (u32)installPatch2(file2->name, PATHNAME_MAX);
-		totFrags++;
+		if(!getFragments(DEVICE_CUR, file2, &fragList, &numFrags, FRAGS_DISC_2, 0, 0)) {
+			free(fragList);
+			return 0;
+		}
 	}
 	
 	if(fragList) {
-		memset(&fragList[totFrags], 0, sizeof(*fragList));
-		print_frag_list(fragList);
-		
-		*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (totFrags + 1) * sizeof(*fragList));
+		print_frag_list(fragList, numFrags);
+		*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (numFrags + 1) * sizeof(file_frag));
 		free(fragList);
 		fragList = NULL;
 	}
