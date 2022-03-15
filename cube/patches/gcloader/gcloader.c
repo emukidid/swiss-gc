@@ -367,8 +367,8 @@ bool change_disc(void)
 		int fragnum = frag_get_list(*VAR_CURRENT_DISC ^ 1, &frag);
 
 		if (fragnum == 1) {
-			frag    = (*frag).frag;
-			fragnum = (*frag).fragnum;
+			fragnum = frag->fragnum;
+			frag    = frag->frag;
 			return gcode_push_queue((void *)frag, fragnum, 0, 0, DI_CMD_GCODE_SET_DISC_FRAGS << 24 | 0x01, callback);
 		}
 	}
