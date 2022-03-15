@@ -100,17 +100,15 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 		return 1;
 	}
 	
-	if(devices[DEVICE_PATCHES] == &__device_gcloader) {
-		if(file2) {
-			file2->fileBase = (u32)installPatch2(disc2FragList, (disc2Frags + 1) * sizeof(file_frag)) | ((u64)disc2Frags << 32);
-			free(disc2FragList);
-			disc2FragList = NULL;
-		}
-		
-		file->fileBase = (u32)installPatch2(disc1FragList, (disc1Frags + 1) * sizeof(file_frag)) | ((u64)disc1Frags << 32);
-		free(disc1FragList);
-		disc1FragList = NULL;
+	if(file2 && devices[DEVICE_PATCHES] == devices[DEVICE_CUR]) {
+		file2->fileBase = (u32)installPatch2(disc2FragList, (disc2Frags + 1) * sizeof(file_frag)) | ((u64)disc2Frags << 32);
+		file->fileBase  = (u32)installPatch2(disc1FragList, (disc1Frags + 1) * sizeof(file_frag)) | ((u64)disc1Frags << 32);
 	}
+	
+	free(disc1FragList);
+	free(disc2FragList);
+	disc1FragList = NULL;
+	disc2FragList = NULL;
 	
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
@@ -238,7 +236,7 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 			fragList = NULL;
 		}
 		
-		if(devices[DEVICE_PATCHES] != &__device_gcloader) {
+		if(devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
 			// Card Type
 			*(vu8*)VAR_SD_SHIFT = (u8)(sdgecko_getAddressingType(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)) ? 9:0);
 			// Copy the actual freq
@@ -301,6 +299,7 @@ bool deviceHandler_GCLOADER_test() {
 			__device_gcloader.features |=  (FEAT_WRITE|FEAT_CONFIG_DEVICE|FEAT_PATCHES);
 		else
 			__device_gcloader.features &= ~(FEAT_WRITE|FEAT_CONFIG_DEVICE|FEAT_PATCHES);
+		
 		return true;
 	}
 	return false;
