@@ -20,7 +20,7 @@ ideexipatch: ideexi-v1.bin ideexi-v1.card.bin ideexi-v1.dtk.bin ideexi-v2.bin id
 dvdpatch: dvd.bin dvd.card.bin
 usbgeckopatch: usbgecko.bin
 wkfpatch: wkf.bin wkf.card.bin wkf.dtk.bin
-fsppatch: fsp.bin
+fsppatch: fsp.bin fsp.dtk.bin
 gcloaderpatch: gcloader-v1.bin gcloader-v1.card.bin gcloader-v2.bin gcloader-v2.card.bin
 
 clean:
@@ -382,6 +382,25 @@ fsp.bin:
 	@$(OBJDUMP) -D fsp.elf > $(DISASM)/fsp.txt
 	@$(OBJCOPY) -O binary fsp.elf fsp.bin
 	@$(BIN2S) fsp.bin > $(DEST)/FSPPatch.s
+	@rm -f *.bin *.elf *.o
+
+fsp.dtk.bin:
+	@echo Building FSP Patch + DTK ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DDTK
+	@$(CC) -Os $(OPTS) -c base/audio.c
+	@$(CC) -Os $(OPTS) -c base/fifo.c
+	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/igr.c
+	@$(CC) -Os $(OPTS) -c bba/bba.c -DASYNC_READ -DQUEUE_SIZE=3
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/setjmp.S
+	@$(CC) -Os $(OPTS) -o fsp.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o igr.o bba.o uart.o os.o setjmp.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D fsp.dtk.elf > $(DISASM)/fsp.dtk.txt
+	@$(OBJCOPY) -O binary fsp.dtk.elf fsp.dtk.bin
+	@$(BIN2S) fsp.dtk.bin > $(DEST)/FSPPatch.dtk.s
 	@rm -f *.bin *.elf *.o
 
 gcloader-v1.bin:

@@ -243,13 +243,28 @@ int install_code(int final)
 	}
 	// Broadband Adapter
 	else if(devices[DEVICE_CUR] == &__device_fsp) {
-		switch (devices[DEVICE_CUR]->emulated()) {
-			case EMU_READ:
-				patch     = fsp_bin;
-				patchSize = fsp_bin_size;
-				break;
-			default:
-				return 0;
+		if (devices[DEVICE_PATCHES] != &__device_fsp) {
+			switch (devices[DEVICE_CUR]->emulated()) {
+				case EMU_READ:
+					patch     = fsp_bin;
+					patchSize = fsp_bin_size;
+					break;
+				default:
+					return 0;
+			}
+		} else {
+			switch (devices[DEVICE_CUR]->emulated()) {
+				case EMU_READ:
+					patch     = fsp_bin;
+					patchSize = fsp_bin_size;
+					break;
+				case EMU_READ | EMU_AUDIO_STREAMING:
+					patch     = fsp_dtk_bin;
+					patchSize = fsp_dtk_bin_size;
+					break;
+				default:
+					return 0;
+			}
 		}
 		print_gecko("Installing Patch for File Service Protocol\r\n");
 	}

@@ -332,11 +332,6 @@ bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_
 
 	return false;
 }
-#else
-bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write, frag_callback callback)
-{
-	return false;
-}
 #endif
 
 int do_read_write(void *buf, u32 len, u32 offset, u64 sectorLba, bool write) {

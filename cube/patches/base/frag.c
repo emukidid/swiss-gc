@@ -29,6 +29,24 @@
 #define DEVICE_PATCHES DEVICE_DISC
 #endif
 
+__attribute((weak))
+bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write, frag_callback callback)
+{
+	return false;
+}
+
+__attribute((weak))
+int do_read_write(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write)
+{
+	return 0;
+}
+
+__attribute((weak))
+void end_read(void)
+{
+	return;
+}
+
 static bool frag_get(int file, uint32_t offset, size_t size, frag_t *frag)
 {
 	const frag_t *frags = *(frag_t **)VAR_FRAG_LIST;

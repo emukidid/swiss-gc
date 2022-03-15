@@ -243,6 +243,26 @@ static void fsp_read_queued(void)
 	if (!_bba.lock) EXIUnlock(EXI_CHANNEL_0);
 }
 
+static void fsp_pop_queue(void)
+{
+	#if QUEUE_SIZE > 2
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		if (_fsp.queue[i].callback != NULL && _fsp.queue[i].length + _fsp.queue[i].position % 512 <= 512) {
+			_fsp.queued = &_fsp.queue[i];
+			fsp_read_queued();
+			return;
+		}
+	}
+	#endif
+	for (int i = 0; i < QUEUE_SIZE; i++) {
+		if (_fsp.queue[i].callback != NULL) {
+			_fsp.queued = &_fsp.queue[i];
+			fsp_read_queued();
+			return;
+		}
+	}
+}
+
 static void fsp_done_queued(void)
 {
 	void *buffer = _fsp.queued->buffer;
@@ -256,13 +276,7 @@ static void fsp_done_queued(void)
 	_fsp.queued->callback = NULL;
 	_fsp.queued = NULL;
 
-	for (int i = 0; i < QUEUE_SIZE; i++) {
-		if (_fsp.queue[i].callback != NULL) {
-			_fsp.queued = &_fsp.queue[i];
-			fsp_read_queued();
-			return;
-		}
-	}
+	fsp_pop_queue();
 }
 
 bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *frag, frag_callback callback)
@@ -317,7 +331,7 @@ static void fsp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, 
 				_fsp.queued->offset += data_size;
 
 				if (_fsp.queued->offset != _fsp.queued->length)
-					fsp_read_queued();
+					fsp_pop_queue();
 
 				bba_receive_dma(page[1], data_size - page_size);
 				memcpy(data, fsp->data, data_size);

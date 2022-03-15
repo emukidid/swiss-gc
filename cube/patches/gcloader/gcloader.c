@@ -301,13 +301,6 @@ bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *
 		return gcode_push_queue(buffer, length, offset >> 2, frag->sector, DI_CMD_SEEK << 24, callback);
 }
 
-int do_read_write(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write)
-{
-	return 0;
-}
-
-void end_read(void) {}
-
 void schedule_read(OSTick ticks)
 {
 	void read_callback(void *address, uint32_t length)

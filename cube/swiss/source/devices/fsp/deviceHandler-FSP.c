@@ -180,13 +180,15 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 			devices[DEVICE_PATCHES]->closeFile(&patchFile);
 		}
 		
-		// Card Type
-		*(vu8*)VAR_SD_SHIFT = (u8)(sdgecko_getAddressingType(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)) ? 9:0);
-		// Copy the actual freq
-		*(vu8*)VAR_EXI_FREQ = (u8)(sdgecko_getSpeed(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)));
-		// Device slot (0, 1 or 2)
-		*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
-		*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[*(vu8*)VAR_EXI_SLOT];
+		if(devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
+			// Card Type
+			*(vu8*)VAR_SD_SHIFT = (u8)(sdgecko_getAddressingType(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)) ? 9:0);
+			// Copy the actual freq
+			*(vu8*)VAR_EXI_FREQ = (u8)(sdgecko_getSpeed(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2)));
+			// Device slot (0, 1 or 2)
+			*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
+			*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[*(vu8*)VAR_EXI_SLOT];
+		}
 	}
 	
 	if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, FRAGS_DISC_1, 0, 0)) {
@@ -238,6 +240,7 @@ s32 deviceHandler_FSP_init(file_handle* file) {
 		DrawDispose(msgBox);
 		return 0;
 	}
+	
 	fsp_session = fsp_open_session(swissSettings.fspHostIp, swissSettings.fspPort, swissSettings.fspPassword);
 	if(!fsp_session) {
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Check FSP Configuration");
@@ -246,6 +249,19 @@ s32 deviceHandler_FSP_init(file_handle* file) {
 		DrawDispose(msgBox);
 		return 0;
 	}
+	
+	u8 dirpro;
+	if(fsp_getpro(fsp_session, "swiss/patches", &dirpro) &&
+		fsp_getpro(fsp_session, "swiss", &dirpro) &&
+		fsp_getpro(fsp_session, "", &dirpro))
+		dirpro = 0;
+	
+	if((dirpro & (FSP_DIR_MKDIR|FSP_DIR_ADD|FSP_DIR_DEL|FSP_DIR_GET)) == (FSP_DIR_MKDIR|FSP_DIR_ADD|FSP_DIR_DEL) ||
+		(dirpro & FSP_DIR_OWNER))
+		__device_fsp.features |=  FEAT_PATCHES;
+	else
+		__device_fsp.features &= ~FEAT_PATCHES;
+	
 	return 1;
 }
 
@@ -289,7 +305,10 @@ bool deviceHandler_FSP_test() {
 }
 
 u32 deviceHandler_FSP_emulated() {
-	return EMU_READ;
+	if (swissSettings.audioStreaming)
+		return EMU_READ|EMU_AUDIO_STREAMING;
+	else
+		return EMU_READ;
 }
 
 DEVICEHANDLER_INTERFACE __device_fsp = {
@@ -298,8 +317,8 @@ DEVICEHANDLER_INTERFACE __device_fsp = {
 	"File Service Protocol",
 	"Configurable via the settings screen",
 	{TEX_SAMBA, 140, 64},
-	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_HYPERVISOR,
-	EMU_READ,
+	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_HYPERVISOR|FEAT_AUDIO_STREAMING,
+	EMU_READ|EMU_AUDIO_STREAMING,
 	LOC_SERIAL_PORT_1,
 	&initial_FSP,
 	(_fn_test)&deviceHandler_FSP_test,
