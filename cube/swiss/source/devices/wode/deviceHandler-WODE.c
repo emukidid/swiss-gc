@@ -168,7 +168,7 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, int numT
 			}
 		}
 		
-		if(swissSettings.igrType == IGR_BOOTBIN) {
+		if(swissSettings.igrType == IGR_BOOTBIN || endsWith(file->name,".tgc")) {
 			memset(&patchFile, 0, sizeof(file_handle));
 			concat_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/apploader.img");
 			

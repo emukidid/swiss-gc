@@ -1873,7 +1873,7 @@ void load_game() {
 	*(vu8*)VAR_EXI_SLOT = EXI_CHANNEL_MAX;
 	*(vu8*)VAR_EXI_FREQ = EXI_SPEED1MHZ;
 	*(vu8*)VAR_SD_SHIFT = 0;
-	*(vu8*)VAR_IGR_TYPE = swissSettings.igrType;
+	*(vu8*)VAR_IGR_TYPE = swissSettings.igrType | (tgcFile.magic == TGC_MAGIC ? 0x80:0x00);
 	*(vu32**)VAR_FRAG_LIST = NULL;
 	*(vu8*)VAR_TRIGGER_LEVEL = swissSettings.triggerLevel;
 	*(vu8*)VAR_CARD_A_ID = 0x00;
@@ -1890,6 +1890,7 @@ void load_game() {
 	}
 
 	load_app(filesToPatch, numToPatch);
+	free(filesToPatch);
 	config_unload_current();
 }
 
