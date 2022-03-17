@@ -21,9 +21,8 @@
 #include "common.h"
 #include "dolphin/os.h"
 #include "dolphin/pad.h"
-#include "emulator.h"
 
-void check_pad(int32_t chan, PADStatus *status)
+void check_status(int32_t chan, PADStatus *status)
 {
 	if (*VAR_TRIGGER_LEVEL > 0) {
 		if (status->triggerL >= *VAR_TRIGGER_LEVEL)
@@ -32,32 +31,28 @@ void check_pad(int32_t chan, PADStatus *status)
 			status->button |= PAD_BUTTON_R;
 	}
 
-	if ((status->button & PAD_COMBO_EXIT1) == PAD_COMBO_EXIT1 ||
-		(status->button & PAD_COMBO_EXIT2) == PAD_COMBO_EXIT2) {
-		switch (*VAR_IGR_TYPE) {
-			case IGR_HARDRESET:
-				if (OSResetSystem) {
-					enable_interrupts();
-					OSResetSystem(OS_RESET_HOTRESET, 0, 0);
-					disable_interrupts();
-				}
-				break;
-			case IGR_BOOTBIN:
-				if (OSResetSystem) {
-					*VAR_IGR_TYPE |= 0x80;
-					enable_interrupts();
+	uint8_t igr_type = *VAR_IGR_TYPE & ~0x80;
+
+	if (igr_type != IGR_OFF) {
+		if ((status->button & PAD_COMBO_EXIT1) == PAD_COMBO_EXIT1 ||
+			(status->button & PAD_COMBO_EXIT2) == PAD_COMBO_EXIT2) {
+			if (OSResetSystem) {
+				enable_interrupts();
+				*VAR_IGR_TYPE = IGR_OFF | 0x80;
+				if (igr_type == IGR_BOOTBIN)
 					OSResetSystem(OS_RESET_RESTART, 0, 0);
-					disable_interrupts();
-				}
-				break;
+				else
+					OSResetSystem(OS_RESET_HOTRESET, 0, 0);
+				__builtin_trap();
+			}
+		} else if ((status->button & PAD_COMBO_RESTART) == PAD_COMBO_RESTART) {
+			if (OSResetSystem) {
+				enable_interrupts();
+				OSResetSystem(OS_RESET_RESTART, 0, 0);
+				__builtin_trap();
+			}
 		}
 	}
 
 	status->button &= ~PAD_USE_ORIGIN;
-}
-
-void fini(void)
-{
-	disable_interrupts();
-	reset_device();
 }

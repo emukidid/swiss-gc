@@ -1284,3 +1284,9 @@ void idle_thread(void)
 	#endif
 	enable_interrupts_idle();
 }
+
+void fini(void)
+{
+	disable_interrupts();
+	reset_device();
+}

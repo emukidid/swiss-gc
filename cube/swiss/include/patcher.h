@@ -193,7 +193,7 @@ enum patchIds {
 #define MASK_IRQ		(u32 *)(LO_RESERVE + 0x10C)
 #define UNMASK_IRQ		(u32 *)(LO_RESERVE + 0x110)
 #define IDLE_THREAD		(u32 *)(LO_RESERVE + 0x114)
-#define CHECK_PAD		(u32 *)(LO_RESERVE + 0x118)
+#define CHECK_STATUS	(u32 *)(LO_RESERVE + 0x118)
 #define FINI			(u32 *)(LO_RESERVE + 0x11C)
 
 /* Types of files we may patch */
