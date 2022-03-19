@@ -25,6 +25,7 @@
 #include "dolphin/os.h"
 #include "emulator.h"
 #include "frag.h"
+#include "ipl.h"
 
 #ifndef QUEUE_SIZE
 #define QUEUE_SIZE 2
@@ -275,6 +276,7 @@ void reset_device(void)
 	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
 
-	usb_unlock_file();
 	end_read();
+	usb_unlock_file();
+	ipl_set_config(0);
 }
