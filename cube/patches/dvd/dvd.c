@@ -206,7 +206,7 @@ void trickle_read()
 }
 #endif
 
-void reset_device(void)
+void reset_devices(void)
 {
 	while (DI[7] & 0b001);
 
@@ -231,6 +231,6 @@ void reset_device(void)
 	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
 
-	end_read();
+	reset_device();
 	ipl_set_config(0);
 }

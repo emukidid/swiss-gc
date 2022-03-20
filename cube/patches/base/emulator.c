@@ -968,7 +968,7 @@ static bool ppc_dcbz(uint32_t address)
 
 	if ((address & ~0b11111) == (dabr & ~0b11111)) {
 		asm volatile("mtdabr %0; dcbz 0,%1" :: "r" (0), "r" (address));
-		reset_device();
+		reset_devices();
 		return true;
 	}
 
@@ -1288,5 +1288,5 @@ void idle_thread(void)
 void fini(void)
 {
 	disable_interrupts();
-	reset_device();
+	reset_devices();
 }

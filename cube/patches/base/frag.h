@@ -55,6 +55,7 @@ bool do_read_write_async(void *buffer, uint32_t length, uint32_t offset, uint64_
 bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *frag, frag_callback callback);
 int do_read_write(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, bool write);
 void end_read(void);
+void reset_device(void);
 
 int frag_get_list(int file, const frag_t **frag);
 bool is_frag_patch(int file, uint32_t offset, size_t size);

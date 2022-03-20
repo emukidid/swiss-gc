@@ -393,12 +393,12 @@ bool change_disc(void)
 	return false;
 }
 
-void reset_device(void)
+void reset_devices(void)
 {
 	while (EXI[EXI_CHANNEL_0][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
 
-	end_read();
+	reset_device();
 	ipl_set_config(0);
 }

@@ -12,6 +12,8 @@
 #include "emulator.h"
 #include "frag.h"
 
+//CMD0 - Reset command
+#define CMD0				0x40
 //CMD12 - Stop multiple block read command
 #define CMD12				0x4C
 //CMD17 - Read single block command
@@ -405,6 +407,11 @@ void end_read() {
 			send_cmd(CMD12, 0);
 	}
 	#endif
+}
+
+void reset_device() {
+	end_read();
+	send_cmd(CMD0, 0);
 }
 
 /* End of SD functions */

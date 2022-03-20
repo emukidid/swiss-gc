@@ -47,6 +47,12 @@ void end_read(void)
 	return;
 }
 
+__attribute((weak))
+void reset_device(void)
+{
+	end_read();
+}
+
 static bool frag_get(int file, uint32_t offset, size_t size, frag_t *frag)
 {
 	const frag_t *frags = *(frag_t **)VAR_FRAG_LIST;
