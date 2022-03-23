@@ -30,71 +30,40 @@
 
 #define GUI_MSGBOX_ALPHA 225
 
-TPLFile backdropTPL;
+TPLFile imagesTPL;
+TPLFile buttonsTPL;
 GXTexObj backdropTexObj;
-TPLFile gcdvdsmallTPL;
 GXTexObj gcdvdsmallTexObj;
-TPLFile sdsmallTPL;
 GXTexObj sdsmallTexObj;
-TPLFile hddTPL;
 GXTexObj hddTexObj;
-TPLFile qoobTPL;
 GXTexObj qoobTexObj;
-TPLFile wodeimgTPL;
 GXTexObj wodeimgTexObj;
-TPLFile usbgeckoTPL;
 GXTexObj usbgeckoTexObj;
-TPLFile memcardTPL;
 GXTexObj memcardTexObj;
-TPLFile sambaTPL;
 GXTexObj sambaTexObj;
-TPLFile wiikeyTPL;
 GXTexObj wiikeyTexObj;
-TPLFile systemTPL;
 GXTexObj systemTexObj;
-TPLFile btnhilightTPL;
 GXTexObj btnhilightTexObj;
-TPLFile btndeviceTPL;
 GXTexObj btndeviceTexObj;
-TPLFile btnsettingsTPL;
 GXTexObj btnsettingsTexObj;
-TPLFile btninfoTPL;
 GXTexObj btninfoTexObj;
-TPLFile btnrefreshTPL;
 GXTexObj btnrefreshTexObj;
-TPLFile btnexitTPL;
 GXTexObj btnexitTexObj;
-TPLFile boxinnerTPL;
 GXTexObj boxinnerTexObj;
-TPLFile boxouterTPL;
 GXTexObj boxouterTexObj;
-TPLFile ntscjTPL;
 GXTexObj ntscjTexObj;
-TPLFile ntscuTPL;
 GXTexObj ntscuTexObj;
-TPLFile palTPL;
 GXTexObj palTexObj;
-TPLFile checkedTPL;
 GXTexObj checkedTexObj;
-TPLFile uncheckedTPL;
 GXTexObj uncheckedTexObj;
-TPLFile loadingTPL;
 GXTexObj loadingTexObj;
-TPLFile mp3imgTPL;
 GXTexObj mp3imgTexObj;
-TPLFile dolimgTPL;
 GXTexObj dolimgTexObj;
-TPLFile dolcliimgTPL;
 GXTexObj dolcliimgTexObj;
-TPLFile elfimgTPL;
 GXTexObj elfimgTexObj;
-TPLFile fileimgTPL;
 GXTexObj fileimgTexObj;
-TPLFile dirimgTPL;
 GXTexObj dirimgTexObj;
-TPLFile gcloaderTPL;
 GXTexObj gcloaderTexObj;
-TPLFile m2loaderTPL;
 GXTexObj m2loaderTexObj;
 
 static char fbTextBuffer[256];
@@ -338,75 +307,44 @@ static void disposeEvent(uiDrawObj_t *event) {
 
 static void init_textures() 
 {
-	TPL_OpenTPLFromMemory(&backdropTPL, (void *)backdrop_tpl, backdrop_tpl_size);
-	TPL_GetTexture(&backdropTPL,backdrop,&backdropTexObj);
-	TPL_OpenTPLFromMemory(&gcdvdsmallTPL, (void *)gcdvdsmall_tpl, gcdvdsmall_tpl_size);
-	TPL_GetTexture(&gcdvdsmallTPL,gcdvdsmall,&gcdvdsmallTexObj);
-	TPL_OpenTPLFromMemory(&sdsmallTPL, (void *)sdsmall_tpl, sdsmall_tpl_size);
-	TPL_GetTexture(&sdsmallTPL,sdsmall,&sdsmallTexObj);
-	TPL_OpenTPLFromMemory(&hddTPL, (void *)hdd_tpl, hdd_tpl_size);
-	TPL_GetTexture(&hddTPL,hdd,&hddTexObj);
-	TPL_OpenTPLFromMemory(&qoobTPL, (void *)qoob_tpl, qoob_tpl_size);
-	TPL_GetTexture(&qoobTPL,qoob,&qoobTexObj);
-	TPL_OpenTPLFromMemory(&wodeimgTPL, (void *)wodeimg_tpl, wodeimg_tpl_size);
-	TPL_GetTexture(&wodeimgTPL,wodeimg,&wodeimgTexObj);
-	TPL_OpenTPLFromMemory(&wiikeyTPL, (void *)wiikeyimg_tpl, wiikeyimg_tpl_size);
-	TPL_GetTexture(&wiikeyTPL,wiikeyimg,&wiikeyTexObj);
-	TPL_OpenTPLFromMemory(&systemTPL, (void *)systemimg_tpl, systemimg_tpl_size);
-	TPL_GetTexture(&systemTPL,systemimg,&systemTexObj);
-	TPL_OpenTPLFromMemory(&memcardTPL, (void *)memcardimg_tpl, memcardimg_tpl_size);
-	TPL_GetTexture(&memcardTPL,memcardimg,&memcardTexObj);
-	TPL_OpenTPLFromMemory(&usbgeckoTPL, (void *)usbgeckoimg_tpl, usbgeckoimg_tpl_size);
-	TPL_GetTexture(&usbgeckoTPL,usbgeckoimg,&usbgeckoTexObj);
-	TPL_OpenTPLFromMemory(&sambaTPL, (void *)sambaimg_tpl, sambaimg_tpl_size);
-	TPL_GetTexture(&sambaTPL,sambaimg,&sambaTexObj);
-	TPL_OpenTPLFromMemory(&btnhilightTPL, (void *)btnhilight_tpl, btnhilight_tpl_size);
-	TPL_GetTexture(&btnhilightTPL,btnhilight,&btnhilightTexObj);
-	TPL_OpenTPLFromMemory(&btndeviceTPL, (void *)btndevice_tpl, btndevice_tpl_size);
-	TPL_GetTexture(&btndeviceTPL,btndevice,&btndeviceTexObj);
-	TPL_OpenTPLFromMemory(&btnsettingsTPL, (void *)btnsettings_tpl, btnsettings_tpl_size);
-	TPL_GetTexture(&btnsettingsTPL,btnsettings,&btnsettingsTexObj);
-	TPL_OpenTPLFromMemory(&btninfoTPL, (void *)btninfo_tpl, btninfo_tpl_size);
-	TPL_GetTexture(&btninfoTPL,btninfo,&btninfoTexObj);
-	TPL_OpenTPLFromMemory(&btnrefreshTPL, (void *)btnrefresh_tpl, btnrefresh_tpl_size);
-	TPL_GetTexture(&btnrefreshTPL,btnrefresh,&btnrefreshTexObj);
-	TPL_OpenTPLFromMemory(&btnexitTPL, (void *)btnexit_tpl, btnexit_tpl_size);
-	TPL_GetTexture(&btnexitTPL,btnexit,&btnexitTexObj);
-	TPL_OpenTPLFromMemory(&boxinnerTPL, (void *)boxinner_tpl, boxinner_tpl_size);
-	TPL_GetTexture(&boxinnerTPL,boxinner,&boxinnerTexObj);
+	TPL_OpenTPLFromMemory(&imagesTPL, (void *)images_tpl, images_tpl_size);
+	TPL_OpenTPLFromMemory(&buttonsTPL, (void *)buttons_tpl, buttons_tpl_size);
+	TPL_GetTexture(&imagesTPL, backdrop, &backdropTexObj);
+	TPL_GetTexture(&imagesTPL, gcdvdsmall, &gcdvdsmallTexObj);
+	TPL_GetTexture(&imagesTPL, sdsmall, &sdsmallTexObj);
+	TPL_GetTexture(&imagesTPL, hdd, &hddTexObj);
+	TPL_GetTexture(&imagesTPL, qoob, &qoobTexObj);
+	TPL_GetTexture(&imagesTPL, wodeimg, &wodeimgTexObj);
+	TPL_GetTexture(&imagesTPL, wiikeyimg, &wiikeyTexObj);
+	TPL_GetTexture(&imagesTPL, systemimg, &systemTexObj);
+	TPL_GetTexture(&imagesTPL, memcardimg, &memcardTexObj);
+	TPL_GetTexture(&imagesTPL, usbgeckoimg, &usbgeckoTexObj);
+	TPL_GetTexture(&imagesTPL, sambaimg, &sambaTexObj);
+	TPL_GetTexture(&buttonsTPL, btnhilight, &btnhilightTexObj);
+	TPL_GetTexture(&buttonsTPL, btndevice, &btndeviceTexObj);
+	TPL_GetTexture(&buttonsTPL, btnsettings, &btnsettingsTexObj);
+	TPL_GetTexture(&buttonsTPL, btninfo, &btninfoTexObj);
+	TPL_GetTexture(&buttonsTPL, btnrefresh, &btnrefreshTexObj);
+	TPL_GetTexture(&buttonsTPL, btnexit, &btnexitTexObj);
+	TPL_GetTexture(&buttonsTPL, boxinner, &boxinnerTexObj);
 	GX_InitTexObjWrapMode(&boxinnerTexObj, GX_CLAMP, GX_CLAMP);
-	TPL_OpenTPLFromMemory(&boxouterTPL, (void *)boxouter_tpl, boxouter_tpl_size);
-	TPL_GetTexture(&boxouterTPL,boxouter,&boxouterTexObj);
+	TPL_GetTexture(&buttonsTPL, boxouter, &boxouterTexObj);
 	GX_InitTexObjWrapMode(&boxouterTexObj, GX_CLAMP, GX_CLAMP);
-	TPL_OpenTPLFromMemory(&ntscjTPL, (void *)ntscj_tpl, ntscj_tpl_size);
-	TPL_GetTexture(&ntscjTPL,ntscjimg,&ntscjTexObj);
-	TPL_OpenTPLFromMemory(&ntscuTPL, (void *)ntscu_tpl, ntscu_tpl_size);
-	TPL_GetTexture(&ntscuTPL,ntscuimg,&ntscuTexObj);
-	TPL_OpenTPLFromMemory(&palTPL, (void *)pal_tpl, pal_tpl_size);
-	TPL_GetTexture(&palTPL,palimg,&palTexObj);
-	TPL_OpenTPLFromMemory(&checkedTPL, (void *)checked_32_tpl, checked_32_tpl_size);
-	TPL_GetTexture(&checkedTPL,checked_32,&checkedTexObj);
-	TPL_OpenTPLFromMemory(&uncheckedTPL, (void *)unchecked_32_tpl, unchecked_32_tpl_size);
-	TPL_GetTexture(&uncheckedTPL,unchecked_32,&uncheckedTexObj);
-	TPL_OpenTPLFromMemory(&loadingTPL, (void *)loading_16_tpl, loading_16_tpl_size);
-	TPL_GetTexture(&loadingTPL,loading_16,&loadingTexObj);
+	TPL_GetTexture(&imagesTPL, ntscjimg, &ntscjTexObj);
+	TPL_GetTexture(&imagesTPL, ntscuimg, &ntscuTexObj);
+	TPL_GetTexture(&imagesTPL, palimg, &palTexObj);
+	TPL_GetTexture(&buttonsTPL, checked_32, &checkedTexObj);
+	TPL_GetTexture(&buttonsTPL, unchecked_32, &uncheckedTexObj);
+	TPL_GetTexture(&buttonsTPL, loading_16, &loadingTexObj);
 	GX_InitTexObjWrapMode(&loadingTexObj, GX_MIRROR, GX_MIRROR);
-	TPL_OpenTPLFromMemory(&mp3imgTPL, (void *)mp3img_tpl, mp3img_tpl_size);
-	TPL_GetTexture(&mp3imgTPL,0,&mp3imgTexObj);
-	TPL_OpenTPLFromMemory(&dolimgTPL, (void *)dolimg_tpl, dolimg_tpl_size);
-	TPL_GetTexture(&dolimgTPL,0,&dolimgTexObj);
-	TPL_OpenTPLFromMemory(&dolcliimgTPL, (void *)dolcliimg_tpl, dolcliimg_tpl_size);
-	TPL_GetTexture(&dolcliimgTPL,0,&dolcliimgTexObj);
-	TPL_OpenTPLFromMemory(&elfimgTPL, (void *)elfimg_tpl, elfimg_tpl_size);
-	TPL_GetTexture(&elfimgTPL,0,&elfimgTexObj);
-	TPL_OpenTPLFromMemory(&fileimgTPL, (void *)fileimg_tpl, fileimg_tpl_size);
-	TPL_GetTexture(&fileimgTPL,0,&fileimgTexObj);
-	TPL_OpenTPLFromMemory(&dirimgTPL, (void *)dirimg_tpl, dirimg_tpl_size);
-	TPL_GetTexture(&dirimgTPL,0,&dirimgTexObj);
-	TPL_OpenTPLFromMemory(&gcloaderTPL, (void *)gcloaderimg_tpl, gcloaderimg_tpl_size);
-	TPL_GetTexture(&gcloaderTPL,gcloaderimg,&gcloaderTexObj);
-	TPL_OpenTPLFromMemory(&m2loaderTPL, (void *)m2loaderimg_tpl, m2loaderimg_tpl_size);
-	TPL_GetTexture(&m2loaderTPL,0,&m2loaderTexObj);
+	TPL_GetTexture(&imagesTPL, mp3img, &mp3imgTexObj);
+	TPL_GetTexture(&imagesTPL, dolimg, &dolimgTexObj);
+	TPL_GetTexture(&imagesTPL, dolcliimg, &dolcliimgTexObj);
+	TPL_GetTexture(&imagesTPL, elfimg, &elfimgTexObj);
+	TPL_GetTexture(&imagesTPL, fileimg, &fileimgTexObj);
+	TPL_GetTexture(&imagesTPL, dirimg, &dirimgTexObj);
+	TPL_GetTexture(&imagesTPL, gcloaderimg, &gcloaderTexObj);
+	TPL_GetTexture(&imagesTPL, m2loaderimg, &m2loaderTexObj);
 }
 
 static void drawInit()
@@ -444,12 +382,20 @@ static void drawInit()
 	GX_SetNumTexGens (1);
 	GX_SetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
 
-	GX_SetNumTevStages (1);
+	GX_SetNumTevStages (2);
 	GX_SetTevOrder (GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
-	GX_SetTevOp (GX_TEVSTAGE0, GX_PASSCLR);
+	GX_SetTevColorIn (GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO);
+	GX_SetTevColorOp (GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+	GX_SetTevAlphaIn (GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_TEXA, GX_CA_RASA, GX_CA_ZERO);
+	GX_SetTevAlphaOp (GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+	GX_SetTevOrder (GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+	GX_SetTevColorIn (GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_RASA, GX_CC_ZERO);
+	GX_SetTevColorOp (GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+	GX_SetTevAlphaIn (GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_TEXA, GX_CA_RASA, GX_CA_ZERO);
+	GX_SetTevAlphaOp (GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
 
 	//set blend mode
-	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR); //Fix src alpha
+	GX_SetBlendMode(GX_BM_BLEND, GX_BL_ONE, GX_BL_INVSRCALPHA, GX_LO_CLEAR); //Fix src alpha
 	GX_SetColorUpdate(GX_ENABLE);
 //	GX_SetAlphaUpdate(GX_ENABLE);
 //	GX_SetDstAlpha(GX_DISABLE, 0xFF);
@@ -480,7 +426,6 @@ static void _DrawSimpleBox(int x, int y, int width, int height, int depth, GXCol
 	//Adjust for blank texture border
 	x-=4; y-=4; width+=8; height+=8;
 	
-	GX_SetTevOp (GX_TEVSTAGE0, GX_MODULATE);
 	GX_InvalidateTexAll();
 	GX_LoadTexObj(&boxinnerTexObj, GX_TEXMAP0);
 
@@ -500,89 +445,82 @@ static void _DrawSimpleBox(int x, int y, int width, int height, int depth, GXCol
 
 // Internal
 static void _DrawImageNow(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered) {
-	GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
-	GX_InvalidateTexAll();
-
+	GXTexObj *texObj = NULL;
+	GXColor color = (GXColor) {255,255,255,255};
+	
 	switch(textureId)
 	{
 		case TEX_BACKDROP:
-			GX_LoadTexObj(&backdropTexObj, GX_TEXMAP0);
+			texObj = &backdropTexObj;
 			break;
 		case TEX_GCDVDSMALL:
-			GX_LoadTexObj(&gcdvdsmallTexObj, GX_TEXMAP0);
+			texObj = &gcdvdsmallTexObj;
 			break;
 		case TEX_SDSMALL:
-			GX_LoadTexObj(&sdsmallTexObj, GX_TEXMAP0);
+			texObj = &sdsmallTexObj;
 			break;
 		case TEX_HDD:
-			GX_LoadTexObj(&hddTexObj, GX_TEXMAP0);
+			texObj = &hddTexObj;
 			break;
 		case TEX_QOOB:
-			GX_LoadTexObj(&qoobTexObj, GX_TEXMAP0);
+			texObj = &qoobTexObj;
 			break;
 		case TEX_WODEIMG:
-			GX_LoadTexObj(&wodeimgTexObj, GX_TEXMAP0);
+			texObj = &wodeimgTexObj; color = (GXColor) {216,216,216,255};
 			break;
 		case TEX_USBGECKO:
-			GX_LoadTexObj(&usbgeckoTexObj, GX_TEXMAP0);
+			texObj = &usbgeckoTexObj;
 			break;
 		case TEX_WIIKEY:
-			GX_LoadTexObj(&wiikeyTexObj, GX_TEXMAP0);
+			texObj = &wiikeyTexObj; color = (GXColor) {216,216,216,255};
 			break;
 		case TEX_SYSTEM:
-			GX_LoadTexObj(&systemTexObj, GX_TEXMAP0);
+			texObj = &systemTexObj;
 			break;
 		case TEX_MEMCARD:
-			GX_LoadTexObj(&memcardTexObj, GX_TEXMAP0);
+			texObj = &memcardTexObj;
 			break;
 		case TEX_SAMBA:
-			GX_LoadTexObj(&sambaTexObj, GX_TEXMAP0);
+			texObj = &sambaTexObj;
 			break;
 		case TEX_BTNHILIGHT:
-			GX_LoadTexObj(&btnhilightTexObj, GX_TEXMAP0);
+			texObj = &btnhilightTexObj;
 			break;
 		case TEX_BTNDEVICE:
-			GX_LoadTexObj(&btndeviceTexObj, GX_TEXMAP0);
+			texObj = &btndeviceTexObj;
 			break;
 		case TEX_BTNSETTINGS:
-			GX_LoadTexObj(&btnsettingsTexObj, GX_TEXMAP0);
+			texObj = &btnsettingsTexObj;
 			break;
 		case TEX_BTNINFO:
-			GX_LoadTexObj(&btninfoTexObj, GX_TEXMAP0);
+			texObj = &btninfoTexObj;
 			break;
 		case TEX_BTNREFRESH:
-			GX_LoadTexObj(&btnrefreshTexObj, GX_TEXMAP0);
+			texObj = &btnrefreshTexObj;
 			break;
 		case TEX_BTNEXIT:
-			GX_LoadTexObj(&btnexitTexObj, GX_TEXMAP0);
+			texObj = &btnexitTexObj;
 			break;
 		case TEX_CHECKED:
-			GX_LoadTexObj(&checkedTexObj, GX_TEXMAP0);
+			texObj = &checkedTexObj; color = (GXColor) {0,128,0,255};
 			break;
 		case TEX_UNCHECKED:
-			GX_LoadTexObj(&uncheckedTexObj, GX_TEXMAP0);
+			texObj = &uncheckedTexObj; color = (GXColor) {87,87,87,255};
 			break;
 		case TEX_GCLOADER:
-			GX_LoadTexObj(&gcloaderTexObj, GX_TEXMAP0);
+			texObj = &gcloaderTexObj; color = (GXColor) {216,216,216,255};
 			break;
 		case TEX_M2LOADER:
-			GX_LoadTexObj(&m2loaderTexObj, GX_TEXMAP0);
+			texObj = &m2loaderTexObj;
 			break;
 	}
-	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-		GX_Position3f32((float) x,(float) y,(float) depth );
-		GX_Color4u8(255, 255, 255, 255);
-		GX_TexCoord2f32(s1,t1);
-		GX_Position3f32((float) (x+width), (float)y, (float)depth );
-		GX_Color4u8(255, 255, 255, 255);
-		GX_TexCoord2f32(s2,t1);
-		GX_Position3f32((float) (x+width),(float) (y+height),(float) depth );
-		GX_Color4u8(255, 255, 255, 255);
-		GX_TexCoord2f32(s2,t2);
-		GX_Position3f32((float) x,(float) (y+height),(float) depth );
-		GX_Color4u8(255, 255, 255, 255);
-		GX_TexCoord2f32(s1,t2);
-	GX_End();
+	
+	GX_InvalidateTexAll();
+	GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
+	if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
+	GX_LoadTexObj(texObj, GX_TEXMAP0);
+	
+	_drawRect(x, y, width, height, depth, color, s1, s2, t1, t2);
 }
 
 // Internal
@@ -614,7 +552,6 @@ uiDrawObj_t* DrawImage(int textureId, int x, int y, int width, int height, int d
 // Internal
 static void _DrawTexObjNow(GXTexObj *texObj, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered)
 {
-	GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
 	GX_InvalidateTexAll();
 	GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
 	if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
@@ -686,7 +623,6 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
 		int numSegments = (data->percent*8)/100;
 		data->percent += (data->percent + 2 > 200 ? -200 : 2);
 		data->miniModeAlpha = (data->miniModeAlpha + 2 > 255 ? 255 : data->miniModeAlpha + 2);
-		GX_SetTevOp (GX_TEVSTAGE0, GX_MODULATE);
 		GX_InvalidateTexAll();
 		GX_LoadTexObj(&loadingTexObj, GX_TEXMAP0);
 		_drawRect(x-8, y-8, 16, 16, 0, loadingColor, (float) (numSegments)/8, (float) (numSegments+1)/8, 0.0f, 1.0f);
@@ -1060,7 +996,10 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
 				bnr_width *= (file->meta->banner ? 2 : 1);
 				bnr_height *= (file->meta->banner ? 2 : 1);
-				GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
+				if(file->meta->banner) {
+					GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_APREV, GX_CC_ZERO);
+					GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_TEXA,  GX_CA_RASA,  GX_CA_ZERO);
+				}
 				GX_InvalidateTexAll();
 				GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
 				if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
@@ -1099,7 +1038,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			// Region
 			if(file->meta && file->meta->regionTexObj) {
 				drawString(data->x2 - borderSize - 83, data->y2-(borderSize+46), "Region:", 0.45f, false, defaultColor);
-				_DrawTexObjNow(file->meta->regionTexObj, data->x2 - 43, data->y2-(borderSize+50), 30, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+				_DrawTexObjNow(file->meta->regionTexObj, data->x2 - 44, data->y2-(borderSize+50), 32, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 			}
 			
 			// fullGameName displays some titles with incorrect encoding, use displayName instead
@@ -1135,7 +1074,10 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			file_handle *file = data->file;
 			if(file->meta && (file->meta->banner || file->meta->fileTypeTexObj)) {
 				GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
-				GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
+				if(file->meta->banner) {
+					GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_APREV, GX_CC_ZERO);
+					GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_TEXA,  GX_CA_RASA,  GX_CA_ZERO);
+				}
 				GX_InvalidateTexAll();
 				GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
 				if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
@@ -1173,7 +1115,10 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 		file_handle *file = data->file;
 		if(file->meta && (file->meta->banner || file->meta->fileTypeTexObj)) {
 			GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
-			GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
+			if(file->meta->banner) {
+				GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_APREV, GX_CC_ZERO);
+				GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_TEXA,  GX_CA_RASA,  GX_CA_ZERO);
+			}
 			GX_InvalidateTexAll();
 			GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
 			if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
@@ -1194,7 +1139,8 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			GX_End();
 		}
 		if(file->meta && file->meta->regionTexObj) {
-			_DrawTexObjNow(file->meta->regionTexObj, data->x2 - 38, data->y1+borderSize+1, 30, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+			drawInit();
+			_DrawTexObjNow(file->meta->regionTexObj, data->x2 - 39, data->y1+borderSize+1, 32, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 		}
 
 		// fullGameName displays some titles with incorrect encoding, use displayName instead
@@ -1369,15 +1315,15 @@ static void _DrawMenuButtons(uiDrawObj_t *evt) {
 	for(i=0;i<5;i++)
 	{
 		if(data->selection==i) 
-			_DrawImageNow(TEX_BTNHILIGHT, 48+(i*119), 428, BTNHILIGHT_WIDTH,BTNHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+			_DrawImageNow(TEX_BTNHILIGHT, 48+(i*119), 428, BTNHILIGHT_WIDTH, BTNHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	}
 
 	// Draw the buttons	
-	_DrawImageNow(TEX_BTNDEVICE, 32+(0*119), 428, BTNDEVICE_WIDTH,BTNDEVICE_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNSETTINGS, 32+(1*119), 428, BTNSETTINGS_WIDTH,BTNSETTINGS_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNINFO, 32+(2*119), 428, BTNINFO_WIDTH,BTNINFO_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNREFRESH, 32+(3*119), 428, BTNREFRESH_WIDTH,BTNREFRESH_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNEXIT, 32+(4*119), 428, BTNEXIT_WIDTH,BTNEXIT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNDEVICE, 48+(0*119)+BTNDEVICE_X, 428+BTNDEVICE_Y, BTNDEVICE_WIDTH, BTNDEVICE_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNSETTINGS, 48+(1*119)+BTNSETTINGS_X, 428+BTNSETTINGS_Y, BTNSETTINGS_WIDTH, BTNSETTINGS_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNINFO, 48+(2*119)+BTNINFO_X, 428+BTNINFO_Y, BTNINFO_WIDTH, BTNINFO_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNREFRESH, 48+(3*119)+BTNREFRESH_X, 428+BTNREFRESH_Y, BTNREFRESH_WIDTH, BTNREFRESH_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNEXIT, 48+(4*119)+BTNEXIT_X, 428+BTNEXIT_Y, BTNEXIT_WIDTH, BTNEXIT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 }
 
 // External

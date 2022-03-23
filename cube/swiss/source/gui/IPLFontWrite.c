@@ -162,7 +162,7 @@ void init_font(void)
 	free(fontArea);
 }
 
-void drawFontInit(GXColor fontColor)
+void drawFontInit(void)
 {
 	Mtx44 GXprojection2D;
 	Mtx GXmodelView2D;
@@ -201,17 +201,20 @@ void drawFontInit(GXColor fontColor)
 	GX_InitTexObjLOD(&fontTexObj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_TRUE, GX_TRUE, GX_ANISO_4);
 	GX_LoadTexObj(&fontTexObj, GX_TEXMAP0);
 
-	GX_SetTevColor(GX_TEVREG1,fontColor);
-
-	GX_SetNumTevStages (1);
+	GX_SetNumTevStages (2);
 	GX_SetTevOrder (GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0); // change to (u8) tile later
-	GX_SetTevColorIn (GX_TEVSTAGE0, GX_CC_C1, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO);
+	GX_SetTevColorIn (GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO);
 	GX_SetTevColorOp (GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
-	GX_SetTevAlphaIn (GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_A1, GX_CA_TEXA, GX_CA_ZERO);
+	GX_SetTevAlphaIn (GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_TEXA, GX_CA_RASA, GX_CA_ZERO);
 	GX_SetTevAlphaOp (GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+	GX_SetTevOrder (GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+	GX_SetTevColorIn (GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_RASA, GX_CC_ZERO);
+	GX_SetTevColorOp (GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+	GX_SetTevAlphaIn (GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_TEXA, GX_CA_RASA, GX_CA_ZERO);
+	GX_SetTevAlphaOp (GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
 
 	//set blend mode
-	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR); //Fix src alpha
+	GX_SetBlendMode(GX_BM_BLEND, GX_BL_ONE, GX_BL_INVSRCALPHA, GX_LO_CLEAR); //Fix src alpha
 	GX_SetColorUpdate(GX_ENABLE);
 	//set cull mode
 	GX_SetCullMode (GX_CULL_NONE);
@@ -222,7 +225,7 @@ void drawString(int x, int y, char *string, float scale, bool centered, GXColor 
 	if(string == NULL) {
 		return;
 	}
-	drawFontInit(fontColor);
+	drawFontInit();
 	if(centered)
 	{
 		int strWidth = 0;
@@ -267,7 +270,7 @@ void drawStringWithCaret(int x, int y, char *string, float scale, bool centered,
 	if(string == NULL) {
 		string = "";
 	}
-	drawFontInit(fontColor);
+	drawFontInit();
 	if(centered)
 	{
 		int strWidth = 0;
@@ -289,10 +292,6 @@ void drawStringWithCaret(int x, int y, char *string, float scale, bool centered,
 		unsigned char c = *string;
 		if(pos == caretPosition) { 
 			c = '|';
-			drawFontInit(caretColor);
-		}
-		else {
-			drawFontInit(fontColor);
 		}
 		if(c == '\n') break;
 		int i;
@@ -347,7 +346,7 @@ void drawStringEllipsis(int x, int y, char *string, float scale, bool centered, 
 	if(string == NULL) {
 		return;
 	}
-	drawFontInit(fontColor);
+	drawFontInit();
 	if(centered)
 	{
 		int strWidth = 0;

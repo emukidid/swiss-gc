@@ -183,14 +183,14 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 	uiDrawObj_t *bgBox = DrawTransparentBox(30, 100, 135, 200);	// Device icon + slot box
 	DrawAddChild(containerPanel, bgBox);
 	// Draw the device image
-	float scale = 1;
+	float scale = 1.0f;
 	if (devices[DEVICE_CUR]->deviceTexture.width > devices[DEVICE_CUR]->deviceTexture.height) {
-		scale = 104.0f / devices[DEVICE_CUR]->deviceTexture.width;
+		scale = MIN(1.0f, 104.0f / devices[DEVICE_CUR]->deviceTexture.width);
 	} else {
-		scale = 84.0f / devices[DEVICE_CUR]->deviceTexture.height;
+		scale = MIN(1.0f, 84.0f / devices[DEVICE_CUR]->deviceTexture.height);
 	}
-	int scaledWidth = devices[DEVICE_CUR]->deviceTexture.width*scale;
-	int scaledHeight = devices[DEVICE_CUR]->deviceTexture.height*scale;
+	int scaledWidth = devices[DEVICE_CUR]->deviceTexture.realWidth*scale;
+	int scaledHeight = devices[DEVICE_CUR]->deviceTexture.realHeight*scale;
 	uiDrawObj_t *devImageLabel = DrawImage(devices[DEVICE_CUR]->deviceTexture.textureId
 				, 30 + ((135-30) / 2) - (scaledWidth/2), 92 + ((200-100) /2) - (scaledHeight/2)	// center x,y
 				, scaledWidth, scaledHeight, // scaled image
@@ -2205,7 +2205,7 @@ void select_device(int type)
 		}
 
 		textureImage *devImage = &allDevices[curDevice]->deviceTexture;
-		uiDrawObj_t *deviceImage = DrawImage(devImage->textureId, 640/2, 270-(devImage->height/2), devImage->width, devImage->height, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
+		uiDrawObj_t *deviceImage = DrawImage(devImage->textureId, 640/2, 270-(devImage->realHeight/2), devImage->realWidth, devImage->realHeight, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
 		uiDrawObj_t *deviceNameLabel = DrawStyledLabel(640/2, 330, (char*)allDevices[curDevice]->deviceName, 0.85f, true, defaultColor);
 		uiDrawObj_t *deviceDescLabel = DrawStyledLabel(640/2, 350, (char*)allDevices[curDevice]->deviceDescription, 0.65f, true, defaultColor);
 		DrawAddChild(deviceSelectBox, deviceImage);

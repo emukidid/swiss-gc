@@ -59,8 +59,10 @@ typedef struct {
 
 typedef struct {
 	int textureId;
-	u32 width;
-	u32 height;
+	u16 width;
+	u16 height;
+	u16 realWidth;
+	u16 realHeight;
 } textureImage;
 
 #define DEVICE_HANDLER_SEEK_SET 0

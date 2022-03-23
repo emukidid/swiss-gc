@@ -248,7 +248,7 @@ DEVICEHANDLER_INTERFACE __device_smb = {
 	"Broadband Adapter",
 	"SMB 1.0/CIFS",
 	"Configurable via the settings screen",
-	{TEX_SAMBA, 140, 64},
+	{TEX_SAMBA, 140, 64, 140, 64},
 	FEAT_READ|FEAT_WRITE,
 	EMU_NONE,
 	LOC_SERIAL_PORT_1,

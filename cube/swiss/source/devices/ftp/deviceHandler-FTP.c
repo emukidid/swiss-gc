@@ -244,7 +244,7 @@ DEVICEHANDLER_INTERFACE __device_ftp = {
 	"Broadband Adapter",
 	"File Transfer Protocol",
 	"Configurable via the settings screen",
-	{TEX_SAMBA, 140, 64},
+	{TEX_SAMBA, 140, 64, 140, 64},
 	FEAT_READ|FEAT_WRITE,
 	EMU_NONE,
 	LOC_SERIAL_PORT_1,

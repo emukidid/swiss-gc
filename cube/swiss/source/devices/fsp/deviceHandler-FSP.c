@@ -316,7 +316,7 @@ DEVICEHANDLER_INTERFACE __device_fsp = {
 	"Broadband Adapter",
 	"File Service Protocol",
 	"Configurable via the settings screen",
-	{TEX_SAMBA, 140, 64},
+	{TEX_SAMBA, 140, 64, 140, 64},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_HYPERVISOR|FEAT_AUDIO_STREAMING,
 	EMU_READ|EMU_AUDIO_STREAMING,
 	LOC_SERIAL_PORT_1,

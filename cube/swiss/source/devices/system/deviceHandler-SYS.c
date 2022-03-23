@@ -330,7 +330,7 @@ DEVICEHANDLER_INTERFACE __device_sys = {
 	"Various",
 	"System",
 	"Backup IPL, DSP, DVD, SRAM",
-	{TEX_SYSTEM, 80, 84}, 
+	{TEX_SYSTEM, 75, 48, 76, 48},
 	FEAT_READ,
 	EMU_NONE,
 	LOC_SYSTEM,
