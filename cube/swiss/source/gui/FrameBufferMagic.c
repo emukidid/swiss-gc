@@ -391,7 +391,7 @@ static void drawInit()
 	GX_SetTevOrder (GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
 	GX_SetTevColorIn (GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_RASA, GX_CC_ZERO);
 	GX_SetTevColorOp (GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
-	GX_SetTevAlphaIn (GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_TEXA, GX_CA_RASA, GX_CA_ZERO);
+	GX_SetTevAlphaIn (GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
 	GX_SetTevAlphaOp (GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
 
 	//set blend mode
@@ -484,7 +484,10 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			texObj = &sambaTexObj;
 			break;
 		case TEX_BTNHILIGHT:
-			texObj = &btnhilightTexObj;
+			texObj = &btnhilightTexObj; color = (GXColor) {127,134,255,255};
+			
+			GX_SetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO);
+			GX_SetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
 			break;
 		case TEX_BTNDEVICE:
 			texObj = &btndeviceTexObj;
@@ -998,7 +1001,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				bnr_height *= (file->meta->banner ? 2 : 1);
 				if(file->meta->banner) {
 					GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_APREV, GX_CC_ZERO);
-					GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_TEXA,  GX_CA_RASA,  GX_CA_ZERO);
+					GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO,  GX_CA_ZERO,  GX_CA_APREV);
 				}
 				GX_InvalidateTexAll();
 				GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
@@ -1076,7 +1079,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
 				if(file->meta->banner) {
 					GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_APREV, GX_CC_ZERO);
-					GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_TEXA,  GX_CA_RASA,  GX_CA_ZERO);
+					GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO,  GX_CA_ZERO,  GX_CA_APREV);
 				}
 				GX_InvalidateTexAll();
 				GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
@@ -1117,7 +1120,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
 			if(file->meta->banner) {
 				GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_APREV, GX_CC_ZERO);
-				GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_TEXA,  GX_CA_RASA,  GX_CA_ZERO);
+				GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO,  GX_CA_ZERO,  GX_CA_APREV);
 			}
 			GX_InvalidateTexAll();
 			GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
@@ -1319,6 +1322,7 @@ static void _DrawMenuButtons(uiDrawObj_t *evt) {
 	}
 
 	// Draw the buttons	
+	drawInit();
 	_DrawImageNow(TEX_BTNDEVICE, 48+(0*119)+BTNDEVICE_X, 428+BTNDEVICE_Y, BTNDEVICE_WIDTH, BTNDEVICE_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	_DrawImageNow(TEX_BTNSETTINGS, 48+(1*119)+BTNSETTINGS_X, 428+BTNSETTINGS_Y, BTNSETTINGS_WIDTH, BTNSETTINGS_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	_DrawImageNow(TEX_BTNINFO, 48+(2*119)+BTNINFO_X, 428+BTNINFO_Y, BTNINFO_WIDTH, BTNINFO_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
