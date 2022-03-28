@@ -9,6 +9,14 @@ endif
 
 include $(DEVKITPPC)/base_rules
 
+BUILDTOOLS	:=	$(shell git rev-parse --show-toplevel)/buildtools
+
+ifeq ($(OS),Windows_NT)
+GXTEXCONV	:=	$(BUILDTOOLS)/gxtexconv.exe
+else
+GXTEXCONV	:=	$(BUILDTOOLS)/gxtexconv
+endif
+
 PORTLIBS	:=	$(PORTLIBS_PATH)/gamecube $(PORTLIBS_PATH)/ppc
 
 export PATH	:=	$(PORTLIBS_PATH)/gamecube/bin:$(PORTLIBS_PATH)/ppc/bin:$(PATH)
@@ -27,7 +35,7 @@ MACHDEP =  -DGEKKO -mvgc -mcpu=750 -meabi -mhard-float
 #---------------------------------------------------------------------------------
 %.tpl : %.scf
 	$(SILENTMSG) $(notdir $<)
-	$(SILENTCMD)gxtexconv -s $< -d $(DEPSDIR)/$*.d -o $@
+	$(SILENTCMD)$(GXTEXCONV) -s $< -d $(DEPSDIR)/$*.d -o $@
 
 #---------------------------------------------------------------------------------
 %.elf:

@@ -140,7 +140,7 @@ DEVICEHANDLER_INTERFACE __device_qoob = {
 	"Qoob Modchip",
 	"Qoob Pro",
 	"Qoob Pro Flash File System",
-	{TEX_QOOB, 82, 84, 84, 84},
+	{TEX_QOOB, 82, 84, 88, 88},
 	FEAT_READ,
 	EMU_NONE,
 	LOC_SYSTEM,

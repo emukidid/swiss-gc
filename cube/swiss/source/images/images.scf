@@ -1,4 +1,4 @@
-<filepath="backdrop.png" id="backdrop" colfmt=3 />
+<filepath="backdrop.tif" id="backdrop" colfmt=9 palfmt=0 />
 <filepath="dir.tif" id="dirimg" colfmt=6 />
 <filepath="dol.tif" id="dolimg" colfmt=6 />
 <filepath="dolcli.tif" id="dolcliimg" colfmt=6 />
@@ -6,17 +6,17 @@
 <filepath="file.tif" id="fileimg" colfmt=6 />
 <filepath="gcdvdsmall.tif" id="gcdvdsmall" colfmt=3 />
 <filepath="gcloader.tif" id="gcloaderimg" colfmt=0 />
-<filepath="hdd.tif" id="hdd" colfmt=3 />
+<filepath="hdd.tif" id="hdd" colfmt=9 palfmt=0 />
 <filepath="m2loader.tif" id="m2loaderimg" colfmt=0 />
-<filepath="memcard.tif" id="memcardimg" colfmt=3 />
+<filepath="memcard.tif" id="memcardimg" colfmt=9 palfmt=0 />
 <filepath="mp3.tif" id="mp3img" colfmt=6 />
 <filepath="ntscj.tif" id="ntscjimg" colfmt=5 />
 <filepath="ntscu.tif" id="ntscuimg" colfmt=5 />
 <filepath="pal.tif" id="palimg" colfmt=5 />
-<filepath="qoob.tif" id="qoob" colfmt=3 />
+<filepath="qoob.tif" id="qoob" colfmt=9 palfmt=0 />
 <filepath="samba.tif" id="sambaimg" colfmt=3 />
-<filepath="sdsmall.tif" id="sdsmall" colfmt=3 />
+<filepath="sdsmall.tif" id="sdsmall" colfmt=9 palfmt=0 />
 <filepath="systemimg.tif" id="systemimg" colfmt=3 />
-<filepath="usbgecko.tif" id="usbgeckoimg" colfmt=3 />
+<filepath="usbgecko.tif" id="usbgeckoimg" colfmt=9 palfmt=0 />
 <filepath="wiikey.tif" id="wiikeyimg" colfmt=0 />
 <filepath="wodeimg.tif" id="wodeimg" colfmt=0 />
