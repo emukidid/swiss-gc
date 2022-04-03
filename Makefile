@@ -136,6 +136,7 @@ build-AR: # make ActionReplay
 
 build-gci: # make GCI for memory cards
 	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/GCI/boot.gci boot.dol
+	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/GCI/xeno.gci xeno.dol
 	@cp $(BUILDTOOLS)/dol2gci* $(DIST)/GCI/
 
 #------------------------------------------------------------------

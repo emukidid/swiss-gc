@@ -58,6 +58,7 @@ reboot.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D reboot.elf > $(DISASM)/reboot.txt
 	@$(OBJCOPY) -O binary reboot.elf reboot.bin
+	@truncate -s %32 reboot.bin
 	@$(BIN2S) reboot.bin > $(DEST)/Reboot.s
 	@rm -f *.bin *.elf *.o
 
