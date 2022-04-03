@@ -570,6 +570,10 @@ uiDrawObj_t* DrawImage(int textureId, int x, int y, int width, int height, int d
 // Internal
 static void _DrawTexObjNow(GXTexObj *texObj, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered)
 {
+	if(GX_GetTexObjMagFilt(texObj) == GX_NEAR) {
+		GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_APREV, GX_CC_ZERO);
+		GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO,  GX_CA_ZERO,  GX_CA_APREV);
+	}
 	GX_InvalidateTexAll();
 	GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
 	if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
