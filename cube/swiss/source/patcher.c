@@ -51,6 +51,8 @@ void *installPatch(int patchId) {
 			patchSize = MTXPerspectiveHook_length; patchLocation = MTXPerspectiveHook; break;
 		case OS_RESERVED:
 			patchSize = 0x1800; break;
+		case PAD_CHECKSTATUS:
+			patchSize = CheckStatus_bin_size; patchLocation = CheckStatus_bin; break;
 		case VI_CONFIGURE240P:
 			patchSize = VIConfigure240p_length; patchLocation = VIConfigure240p; break;
 		case VI_CONFIGURE288P:
@@ -14368,56 +14370,57 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(PADReadSigs) / sizeof(FuncPattern); j++)
 	if ((i = PADReadSigs[j].offsetFoundAt)) {
 		u32 *PADRead = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		u32 *CheckStatus;
 		
 		if (PADRead) {
-			if (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
-				switch (j) {
-					case 0:
-						data[i + 159] = 0x387E0000;	// addi		r3, r30, 0
-						data[i + 160] = 0x389F0000;	// addi		r4, r31, 0
-						data[i + 161] = branchAndLink(CHECK_STATUS, PADRead + 161);
-						break;
-					case 1:
-						data[i + 156] = 0x387E0000;	// addi		r3, r30, 0
-						data[i + 157] = 0x389F0000;	// addi		r4, r31, 0
-						data[i + 158] = branchAndLink(CHECK_STATUS, PADRead + 158);
-						break;
-					case 2:
-						data[i + 100] = 0x387D0000;	// addi		r3, r29, 0
-						data[i + 101] = 0x389B0000;	// addi		r4, r27, 0
-						data[i + 102] = branchAndLink(CHECK_STATUS, PADRead + 102);
-						break;
-					case 3:
-						data[i + 185] = 0x38760000;	// addi		r3, r22, 0
-						data[i + 186] = 0x38950000;	// addi		r4, r21, 0
-						data[i + 187] = branchAndLink(CHECK_STATUS, PADRead + 187);
-						break;
-					case 4:
-						data[i + 190] = 0x38770000;	// addi		r3, r23, 0
-						data[i + 191] = 0x38950000;	// addi		r4, r21, 0
-						data[i + 192] = branchAndLink(CHECK_STATUS, PADRead + 192);
-						break;
-					case 5:
-						data[i + 221] = 0x38750000;	// addi		r3, r21, 0
-						data[i + 222] = 0x389F0000;	// addi		r4, r31, 0
-						data[i + 223] = branchAndLink(CHECK_STATUS, PADRead + 223);
-						break;
-					case 6:
-						data[i + 219] = 0x38750000;	// addi		r3, r21, 0
-						data[i + 220] = 0x389F0000;	// addi		r4, r31, 0
-						data[i + 221] = branchAndLink(CHECK_STATUS, PADRead + 221);
-						break;
-					case 7:
-						data[i + 216] = 0x7F63DB78;	// mr		r3, r27
-						data[i + 217] = 0x7F24CB78;	// mr		r4, r25
-						data[i + 218] = branchAndLink(CHECK_STATUS, PADRead + 218);
-						break;
-					case 8:
-						data[i + 176] = 0x38790000;	// addi		r3, r25, 0
-						data[i + 177] = 0x38970000;	// addi		r4, r23, 0
-						data[i + 178] = branchAndLink(CHECK_STATUS, PADRead + 178);
-						break;
-				}
+			CheckStatus = getPatchAddr(PAD_CHECKSTATUS);
+			
+			switch (j) {
+				case 0:
+					data[i + 159] = 0x387E0000;	// addi		r3, r30, 0
+					data[i + 160] = 0x389F0000;	// addi		r4, r31, 0
+					data[i + 161] = branchAndLink(CheckStatus, PADRead + 161);
+					break;
+				case 1:
+					data[i + 156] = 0x387E0000;	// addi		r3, r30, 0
+					data[i + 157] = 0x389F0000;	// addi		r4, r31, 0
+					data[i + 158] = branchAndLink(CheckStatus, PADRead + 158);
+					break;
+				case 2:
+					data[i + 100] = 0x387D0000;	// addi		r3, r29, 0
+					data[i + 101] = 0x389B0000;	// addi		r4, r27, 0
+					data[i + 102] = branchAndLink(CheckStatus, PADRead + 102);
+					break;
+				case 3:
+					data[i + 185] = 0x38760000;	// addi		r3, r22, 0
+					data[i + 186] = 0x38950000;	// addi		r4, r21, 0
+					data[i + 187] = branchAndLink(CheckStatus, PADRead + 187);
+					break;
+				case 4:
+					data[i + 190] = 0x38770000;	// addi		r3, r23, 0
+					data[i + 191] = 0x38950000;	// addi		r4, r21, 0
+					data[i + 192] = branchAndLink(CheckStatus, PADRead + 192);
+					break;
+				case 5:
+					data[i + 221] = 0x38750000;	// addi		r3, r21, 0
+					data[i + 222] = 0x389F0000;	// addi		r4, r31, 0
+					data[i + 223] = branchAndLink(CheckStatus, PADRead + 223);
+					break;
+				case 6:
+					data[i + 219] = 0x38750000;	// addi		r3, r21, 0
+					data[i + 220] = 0x389F0000;	// addi		r4, r31, 0
+					data[i + 221] = branchAndLink(CheckStatus, PADRead + 221);
+					break;
+				case 7:
+					data[i + 216] = 0x7F63DB78;	// mr		r3, r27
+					data[i + 217] = 0x7F24CB78;	// mr		r4, r25
+					data[i + 218] = branchAndLink(CheckStatus, PADRead + 218);
+					break;
+				case 8:
+					data[i + 176] = 0x38790000;	// addi		r3, r25, 0
+					data[i + 177] = 0x38970000;	// addi		r4, r23, 0
+					data[i + 178] = branchAndLink(CheckStatus, PADRead + 178);
+					break;
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", PADReadSigs[j].Name, j, PADRead);
 			patched++;

@@ -17,12 +17,11 @@
  * with Swiss.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdint.h>
 #include "common.h"
 #include "dolphin/os.h"
 #include "dolphin/pad.h"
 
-void check_status(int32_t chan, PADStatus *status)
+void CheckStatus(s32 chan, PADStatus *status)
 {
 	if (*VAR_TRIGGER_LEVEL > 0) {
 		if (status->triggerL >= *VAR_TRIGGER_LEVEL)
@@ -31,7 +30,7 @@ void check_status(int32_t chan, PADStatus *status)
 			status->button |= PAD_BUTTON_R;
 	}
 
-	uint8_t igr_type = *VAR_IGR_TYPE & ~0x80;
+	u8 igr_type = *VAR_IGR_TYPE & ~0x80;
 
 	if (igr_type != IGR_OFF) {
 		if ((status->button & PAD_COMBO_EXIT1) == PAD_COMBO_EXIT1 ||

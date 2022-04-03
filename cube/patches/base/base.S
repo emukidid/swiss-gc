@@ -91,7 +91,6 @@ _start:
 	b		mask_irq
 	b		unmask_irq
 	b		idle_thread
-	b		check_status
 	b		fini
 
 unhandled_exception:

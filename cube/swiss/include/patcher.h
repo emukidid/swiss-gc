@@ -70,6 +70,8 @@ extern u8 memcpy_bin[];
 extern u32 memcpy_bin_size;
 extern u8 DVDLowTestAlarmHook[];
 extern u32 DVDLowTestAlarmHook_length;
+extern u8 WriteUARTN_bin[];
+extern u32 WriteUARTN_bin_size;
 extern u8 GXAdjustForOverscanPatch[];
 extern u32 GXAdjustForOverscanPatch_length;
 extern u8 GXCopyDispHook[];
@@ -96,8 +98,6 @@ extern u8 GXSetViewportJitterPatch[];
 extern u32 GXSetViewportJitterPatch_length;
 extern u8 GXSetViewportPatch[];
 extern u32 GXSetViewportPatch_length;
-extern u8 WriteUARTN_bin[];
-extern u32 WriteUARTN_bin_size;
 extern u8 MTXFrustumHook[];
 extern u32 MTXFrustumHook_length;
 extern u8 MTXLightFrustumHook[];
@@ -108,6 +108,8 @@ extern u8 MTXOrthoHook[];
 extern u32 MTXOrthoHook_length;
 extern u8 MTXPerspectiveHook[];
 extern u32 MTXPerspectiveHook_length;
+extern u8 CheckStatus_bin[];
+extern u32 CheckStatus_bin_size;
 extern u8 getTimingPatch[];
 extern u32 getTimingPatch_length;
 extern u8 VIConfigure240p[];
@@ -161,6 +163,7 @@ enum patchIds {
 	MTX_ORTHOHOOK,
 	MTX_PERSPECTIVEHOOK,
 	OS_RESERVED,
+	PAD_CHECKSTATUS,
 	VI_CONFIGURE240P,
 	VI_CONFIGURE288P,
 	VI_CONFIGURE480I,
@@ -193,8 +196,7 @@ enum patchIds {
 #define MASK_IRQ		(u32 *)(LO_RESERVE + 0x10C)
 #define UNMASK_IRQ		(u32 *)(LO_RESERVE + 0x110)
 #define IDLE_THREAD		(u32 *)(LO_RESERVE + 0x114)
-#define CHECK_STATUS	(u32 *)(LO_RESERVE + 0x118)
-#define FINI			(u32 *)(LO_RESERVE + 0x11C)
+#define FINI			(u32 *)(LO_RESERVE + 0x118)
 
 /* Types of files we may patch */
 enum patchTypes {
