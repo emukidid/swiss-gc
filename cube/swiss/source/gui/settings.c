@@ -59,7 +59,7 @@ static char *tooltips_advanced[PAGE_ADVANCED_MAX+1] = {
 	"Stop DVD Motor on startup\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the DVD drive from spinning when Swiss starts\n\nThis option is mostly for users booting from game\nexploits where the disc will already be spinning.",
 	"WiiRD debugging:\n\nDisabled - Boot as normal (default)\nEnabled - This will start a game with the WiiRD debugger enabled & paused\n\nThe WiiRD debugger takes up more memory and can cause issues.",
 	"File Management:\n\nWhen enabled, pressing Z on an entry in the file browser will allow it to be managed.",
-	"Auto-load all cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. sd:/cheats/GPOP8D.txt (on a compatible device)\nthen all cheats in the file will be enabled",
+	"Auto-load all cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. /swiss/cheats/GPOP8D.txt (on a compatible device)\nthen all cheats in the file will be enabled",
 	NULL,
 	NULL,
 	"Force DTV Status:\n\nDisabled - Use signal from the video interface (default)\nEnabled - Force on in case of hardware fault"

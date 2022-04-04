@@ -239,6 +239,7 @@ int findCheats(bool silent) {
 	devices[DEVICE_TEMP] = devices[DEVICE_CUR];
 
 	// Check SD in all slots if we're not already running from SD, or if we fail from current device
+	ensure_path(DEVICE_TEMP, "swiss", NULL);
 	ensure_path(DEVICE_TEMP, "swiss/cheats", "cheats");	// TODO kill this off in our next major release.
 	if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 		// Try SD slots now
@@ -254,6 +255,7 @@ int findCheats(bool silent) {
 
 		deviceHandler_setStatEnabled(0);
 		devices[DEVICE_TEMP]->init(cheatsFile);
+		ensure_path(DEVICE_TEMP, "swiss", NULL);
 		ensure_path(DEVICE_TEMP, "swiss/cheats", "cheats");	// TODO kill this off in our next major release.
 		if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 			if(devices[DEVICE_TEMP] == &__device_sd_b) {
@@ -266,6 +268,7 @@ int findCheats(bool silent) {
 				print_gecko("Looking for cheats file @[%s]\r\n", cheatsFile->name);
 
 				devices[DEVICE_TEMP]->init(cheatsFile);
+				ensure_path(DEVICE_TEMP, "swiss", NULL);
 				ensure_path(DEVICE_TEMP, "swiss/cheats", "cheats");	// TODO kill this off in our next major release.
 				if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 					devices[DEVICE_TEMP] = &__device_sd_c; // Last thing to try is SP2 slot.
@@ -277,6 +280,7 @@ int findCheats(bool silent) {
 				print_gecko("Looking for cheats file @[%s]\r\n", cheatsFile->name);
 
 				devices[DEVICE_TEMP]->init(cheatsFile);
+				ensure_path(DEVICE_TEMP, "swiss", NULL);
 				ensure_path(DEVICE_TEMP, "swiss/cheats", "cheats");	// TODO kill this off in our next major release.
 				if(devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 					devices[DEVICE_TEMP] = NULL; // All three have failed.
