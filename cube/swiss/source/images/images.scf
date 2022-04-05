@@ -1,4 +1,4 @@
-<filepath="backdrop.tif" id="backdrop" colfmt=9 palfmt=0 />
+<filepath="backdrop.tif" id="backdrop" colfmt=8 palfmt=0 />
 <filepath="dir.tif" id="dirimg" colfmt=6 />
 <filepath="dol.tif" id="dolimg" colfmt=6 />
 <filepath="dolcli.tif" id="dolcliimg" colfmt=6 />

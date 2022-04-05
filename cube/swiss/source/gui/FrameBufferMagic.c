@@ -96,7 +96,8 @@ enum VideoEventType
 	EV_STYLEDLABEL,
 	EV_CONTAINER,
 	EV_MENUBUTTONS,
-	EV_TOOLTIP
+	EV_TOOLTIP,
+	EV_TITLEBAR
 };
 
 char * typeStrings[] = {"TexObj", "MsgBox", "Image", "Progress", "SelectableButton", "EmptyBox", "TransparentBox",
@@ -1328,9 +1329,46 @@ uiDrawObj_t* DrawTransparentBox(int x1, int y1, int x2, int y2)
 }
 
 // Internal
+static void _DrawTitleBar(uiDrawObj_t *evt) {
+	
+	GXColor fillColor = (GXColor) {0,0,0,128}; //black
+	GXColor noColor = (GXColor) {0,0,0,0}; //blank
+	
+	_DrawSimpleBox(19, 17, 602, 62, 0, fillColor, noColor);
+	
+	drawString(40, 28, "Swiss v0.6", 1.5f, false, defaultColor);
+	sprintf(fbTextBuffer, "commit: %s rev: %s", GITREVISION, GITVERSION);
+	drawString(425, 50, fbTextBuffer, 0.55f, false, defaultColor);
+	
+	s8 cputemp = SYS_GetCoreTemperature();
+	if(cputemp >= 0) {
+		sprintf(fbTextBuffer, "%i\260C", cputemp);
+		drawString(390, 33, fbTextBuffer, 0.55f, false, defaultColor);
+	}
+	time_t curtime;
+	if(time(&curtime) != (time_t)-1) {
+		strftime(fbTextBuffer, sizeof(fbTextBuffer), "%Y-%m-%d - %H:%M:%S", localtime(&curtime));
+		drawString(434, 33, fbTextBuffer, 0.55f, false, defaultColor);
+	}
+}
+
+// External
+uiDrawObj_t* DrawTitleBar()
+{
+	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
+	event->type = EV_TITLEBAR;
+	return event;
+}
+
+// Internal
 static void _DrawMenuButtons(uiDrawObj_t *evt) {
 	
 	drawMenuButtonsEvent_t *data = (drawMenuButtonsEvent_t*)evt->data;
+	
+	GXColor fillColor = (GXColor) {255,255,255,51}; //white
+	GXColor noColor = (GXColor) {0,0,0,0}; //blank
+	
+	_DrawSimpleBox(19, 426, 602, 602, 0, fillColor, noColor);
 	
 	// Highlight selected
 	int i;
@@ -1930,6 +1968,9 @@ static void videoDrawEvent(uiDrawObj_t *videoEvent) {
 		case EV_TOOLTIP:
 			_DrawTooltip(videoEvent);
 			break;
+		case EV_TITLEBAR:
+			_DrawTitleBar(videoEvent);
+			break;
 		default:
 			break;
 	}
@@ -1982,35 +2023,10 @@ static void *videoUpdate(void *videoEventQueue) {
 		
 		// Draw out every event
 		videoEventQueueEntry = (uiDrawObjQueue_t*)videoEventQueue;
-		int count = 0;
 		while(videoEventQueueEntry != NULL) {
 			uiDrawObj_t *videoEvent = videoEventQueueEntry->event;
 			videoDrawEvent(videoEvent);
 			videoEventQueueEntry = videoEventQueueEntry->next;
-			count++;
-			// Hacky, draw this once after the background, not after everything.
-			if(count == 1) {
-				//if(ticks_to_millisecs(gettick() - lasttime) >= 1000) {
-				//	framerate = frames;
-				//	frames = 0;
-				//	lasttime = gettick();
-				//}
-				char fps[64];
-				memset(fps,0,64);
-				/*sprintf(fps, "fps %i", framerate);
-				drawString(10, 10, fps, 1.0f, false, (GXColor){255,255,255,255});*/
-				
-				s8 cputemp = SYS_GetCoreTemperature();
-				if(cputemp >= 0) {
-					sprintf(fps, "%i\260C", cputemp);
-					drawString(390, 33, fps, 0.55f, false, (GXColor){255,255,255,255});
-				}
-				time_t curtime;
-				time(&curtime);
-				struct tm *info = localtime( &curtime );
-				strftime(fps, 80, "%Y-%m-%d - %H:%M:%S", info);
-				drawString(434, 33, fps, 0.55f, false, (GXColor){255,255,255,255});
-			}
 		}
 		
 		//Copy EFB->XFB
@@ -2060,9 +2076,7 @@ void DrawInit() {
 	init_textures();
 	uiDrawObj_t *container = DrawContainer();
 	DrawAddChild(container, DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-	DrawAddChild(container, DrawStyledLabel(40,28, "Swiss v0.6", 1.5f, false, defaultColor));
-	sprintf(fbTextBuffer, "commit: %s rev: %s", GITREVISION, GITVERSION);
-	DrawAddChild(container, DrawStyledLabel(425,50, fbTextBuffer, 0.55f, false, defaultColor));
+	DrawAddChild(container, DrawTitleBar());
 	buttonPanel = DrawMenuButtons(-1);
 	DrawAddChild(container, buttonPanel);
 	DrawPublish(container);

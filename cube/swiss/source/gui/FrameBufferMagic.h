@@ -110,6 +110,7 @@ uiDrawObj_t* DrawLabel(int x, int y, const char *string);
 uiDrawObj_t* DrawFadingLabel(int x, int y, const char *string, float size);
 uiDrawObj_t* DrawMenuButtons(int selection);
 uiDrawObj_t* DrawTooltip(const char *tooltip);
+uiDrawObj_t* DrawTitleBar();
 void DrawUpdateProgressBar(uiDrawObj_t *evt, int percent);
 void DrawUpdateProgressBarDetail(uiDrawObj_t *evt, int percent, int speed, int timestart, int timeremain);
 void DrawUpdateMenuButtons(u32 selection);
