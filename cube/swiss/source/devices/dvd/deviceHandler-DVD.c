@@ -359,9 +359,10 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	return num_entries;
 }
 
-s32 deviceHandler_DVD_seekFile(file_handle* file, u32 where, u32 type){
+s64 deviceHandler_DVD_seekFile(file_handle* file, s64 where, u32 type){
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
-	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
+	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset = file->offset + where;
+	else if(type == DEVICE_HANDLER_SEEK_END) file->offset = file->size + where;
 	return file->offset;
 }
 
@@ -425,7 +426,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, int numTo
 			if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) == 0) {
 				u32 patchInfo[4];
 				memset(patchInfo, 0, 16);
-				devices[DEVICE_PATCHES]->seekFile(&patchFile, patchFile.size-16, DEVICE_HANDLER_SEEK_SET);
+				devices[DEVICE_PATCHES]->seekFile(&patchFile, -16, DEVICE_HANDLER_SEEK_END);
 				if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
 					if(!getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_DISC_1, patchInfo[0], patchInfo[1])) {
 						devices[DEVICE_PATCHES]->closeFile(&patchFile);

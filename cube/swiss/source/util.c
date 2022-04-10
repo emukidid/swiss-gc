@@ -82,9 +82,7 @@ void load_auto_dol() {
 				// Official Swiss releases have the short commit hash appended to
 				// the end of the DOL, compare it to our own to make sure we don't
 				// bootloop the same version
-				devices[DEVICE_CUR]->seekFile(&curDirEntries[i],
-						curDirEntries[i].size - sizeof(rev_buf),
-						DEVICE_HANDLER_SEEK_SET);
+				devices[DEVICE_CUR]->seekFile(&curDirEntries[i], -sizeof(rev_buf), DEVICE_HANDLER_SEEK_END);
 				devices[DEVICE_CUR]->readFile(&curDirEntries[i], rev_buf, sizeof(rev_buf));
 				if (memcmp(GITREVISION, rev_buf, sizeof(rev_buf)) != 0) {
 					// Emulate some of the menu's behavior to satisfy boot_dol

@@ -67,6 +67,7 @@ typedef struct {
 
 #define DEVICE_HANDLER_SEEK_SET 0
 #define DEVICE_HANDLER_SEEK_CUR 1
+#define DEVICE_HANDLER_SEEK_END 2
 
 // Device struct
 typedef bool (* _fn_test)(void);
@@ -74,7 +75,7 @@ typedef device_info* (* _fn_info)(file_handle*);
 typedef s32 (* _fn_init)(file_handle*);
 typedef s32 (* _fn_makeDir)(file_handle*);
 typedef s32 (* _fn_readDir)(file_handle*, file_handle**, u32);
-typedef s32 (* _fn_seekFile)(file_handle*, u32, u32);
+typedef s64 (* _fn_seekFile)(file_handle*, s64, u32);
 typedef s32 (* _fn_readFile)(file_handle*, void*, u32);
 typedef s32 (* _fn_writeFile)(file_handle*, void*, u32);
 typedef s32 (* _fn_closeFile)(file_handle*);
@@ -203,6 +204,8 @@ extern const char* getHwNameByLocation(u32 location);
 
 extern bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *totFrags, u8 fileNum, u32 forceBaseOffset, u32 forceSize);
 extern void print_frag_list(file_frag *fragList, u32 totFrags);
+
+extern FILE* openFileStream(int deviceSlot, file_handle *file);
 
 #endif
 

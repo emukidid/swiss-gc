@@ -18,7 +18,7 @@ extern DEVICEHANDLER_INTERFACE __device_ata_c;
 
 extern s32 deviceHandler_FAT_makeDir(file_handle* dir);
 extern s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type);
-extern s32 deviceHandler_FAT_seekFile(file_handle* file, u32 where, u32 type);
+extern s64 deviceHandler_FAT_seekFile(file_handle* file, s64 where, u32 type);
 extern s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length);
 extern s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length);
 extern s32 deviceHandler_FAT_closeFile(file_handle* file);

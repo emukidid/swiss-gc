@@ -606,7 +606,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 				//print_gecko("Old Patch exists\r\n");
 				u32 oldPatchInfo[4];
 				memset(oldPatchInfo, 0, 16);
-				devices[DEVICE_PATCHES]->seekFile(&patchFile, patchFile.size-16, DEVICE_HANDLER_SEEK_SET);
+				devices[DEVICE_PATCHES]->seekFile(&patchFile, -16, DEVICE_HANDLER_SEEK_END);
 				devices[DEVICE_PATCHES]->readFile(&patchFile, oldPatchInfo, 16);
 				if(!memcmp(oldPatchInfo, patchInfo, 16)) {
 					num_patched++;

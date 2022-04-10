@@ -164,9 +164,10 @@ s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	return num_entries;
 }
 
-s32 deviceHandler_SMB_seekFile(file_handle* file, u32 where, u32 type){
+s64 deviceHandler_SMB_seekFile(file_handle* file, s64 where, u32 type){
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
-	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset += where;
+	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset = file->offset + where;
+	else if(type == DEVICE_HANDLER_SEEK_END) file->offset = file->size + where;
 	return file->offset;
 }
 

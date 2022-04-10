@@ -231,3 +231,15 @@ void print_frag_list(file_frag *fragList, u32 totFrags) {
 	}
 	print_gecko("== Fragments End ==\r\n");
 }
+
+FILE* openFileStream(int deviceSlot, file_handle *file)
+{
+	if(devices[deviceSlot]->readFile(file, NULL, 0) != 0 || !file->size) {
+		return NULL;
+	}
+	return funopen((const void *)file,
+		(int (*)(void *, char *, int))devices[deviceSlot]->readFile,
+		(int (*)(void *, const char *, int))NULL,
+		(fpos_t (*)(void *, fpos_t, int))devices[deviceSlot]->seekFile,
+		(int (*)(void *))devices[deviceSlot]->closeFile);
+}
