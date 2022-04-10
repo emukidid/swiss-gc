@@ -32,6 +32,7 @@
 
 TPLFile imagesTPL;
 TPLFile buttonsTPL;
+TPLFile backdropTPL;
 GXTexObj backdropTexObj;
 GXTlutObj backdropTlutObj;
 GXTexObj gcdvdsmallTexObj;
@@ -101,7 +102,7 @@ enum VideoEventType
 };
 
 char * typeStrings[] = {"TexObj", "MsgBox", "Image", "Progress", "SelectableButton", "EmptyBox", "TransparentBox",
-						"FileBrowserButton", "VertScrollbar", "StyledLabel", "Container", "MenuButtons", "Tooltip"};
+						"FileBrowserButton", "VertScrollbar", "StyledLabel", "Container", "MenuButtons", "Tooltip", "TitleBar"};
 
 typedef struct drawTexObjEvent {
 	GXTexObj *texObj;
@@ -464,10 +465,25 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 	switch(textureId)
 	{
 		case TEX_BACKDROP:
-			texObj = &backdropTexObj; color = (GXColor) {0,0,255,255};
-			
-			GX_SetTevColorIn(GX_TEVSTAGE0, GX_CC_TEXA, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO);
-			GX_SetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
+			switch(GX_GetTexObjFmt(&backdropTexObj)) {
+				case GX_TF_CI4:
+				case GX_TF_CI8:
+				case GX_TF_CI14:
+					if(GX_GetTlutObjFmt(&backdropTlutObj) != GX_TL_IA8) {
+						texObj = &backdropTexObj;
+						break;
+					}
+				case GX_TF_IA4:
+				case GX_TF_IA8:
+					texObj = &backdropTexObj; color = (GXColor) {0,0,255,255};
+					
+					GX_SetTevColorIn(GX_TEVSTAGE0, GX_CC_TEXA, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO);
+					GX_SetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
+					break;
+				default:
+					texObj = &backdropTexObj;
+					break;
+			}
 			break;
 		case TEX_GCDVDSMALL:
 			texObj = &gcdvdsmallTexObj;
@@ -2083,6 +2099,32 @@ void DrawInit() {
 	LWP_MutexInit(&_videomutex, 0);
 	threadAlive = 1;
 	LWP_CreateThread(&video_thread, videoUpdate, videoEventQueue, video_thread_stack, VIDEO_STACK_SIZE, VIDEO_PRIORITY);
+}
+
+void DrawLoadBackdrop() {
+	file_handle *backdropFile = calloc(1, sizeof(file_handle));
+	concat_path(backdropFile->name, devices[DEVICE_CUR]->initial->name, "swiss/backdrop.tpl");
+	
+	u32 fmt;
+	u16 width, height;
+	if(TPL_OpenTPLFromHandle(&backdropTPL, openFileStream(DEVICE_CUR, backdropFile)) >= 0
+		&& TPL_GetTextureInfo(&backdropTPL, 0, &fmt, &width, &height) >= 0) {
+		switch(fmt) {
+			case GX_TF_CI4:
+			case GX_TF_CI8:
+			case GX_TF_CI14:
+				TPL_GetTextureCI(&backdropTPL, 0, &backdropTexObj, &backdropTlutObj, GX_TLUT0);
+				GX_InitTexObjUserData(&backdropTexObj, &backdropTlutObj);
+				break;
+			default:
+				TPL_GetTexture(&backdropTPL, 0, &backdropTexObj);
+				break;
+		}
+	}
+	else {
+		TPL_CloseTPLFile(&backdropTPL);
+		free(backdropFile);
+	}
 }
 
 void DrawShutdown() {

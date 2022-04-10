@@ -219,6 +219,7 @@ int main ()
 			}
 			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 			needsDeviceChange = 0;
+			DrawLoadBackdrop();
 		}
 	}
 
