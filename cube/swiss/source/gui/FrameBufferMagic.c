@@ -2105,20 +2105,64 @@ void DrawLoadBackdrop() {
 	file_handle *backdropFile = calloc(1, sizeof(file_handle));
 	concat_path(backdropFile->name, devices[DEVICE_CUR]->initial->name, "swiss/backdrop.tpl");
 	
+	s32 id = 0;
 	u32 fmt;
 	u16 width, height;
-	if(TPL_OpenTPLFromHandle(&backdropTPL, openFileStream(DEVICE_CUR, backdropFile)) >= 0
-		&& TPL_GetTextureInfo(&backdropTPL, 0, &fmt, &width, &height) >= 0) {
-		switch(fmt) {
-			case GX_TF_CI4:
-			case GX_TF_CI8:
-			case GX_TF_CI14:
-				TPL_GetTextureCI(&backdropTPL, 0, &backdropTexObj, &backdropTlutObj, GX_TLUT0);
-				GX_InitTexObjUserData(&backdropTexObj, &backdropTlutObj);
-				break;
-			default:
-				TPL_GetTexture(&backdropTPL, 0, &backdropTexObj);
-				break;
+	if(TPL_OpenTPLFromHandle(&backdropTPL, openFileStream(DEVICE_CUR, backdropFile)) >= 0) {
+		time_t curtime;
+		if(time(&curtime) != (time_t)-1) {
+			struct tm *tm = localtime(&curtime);
+			switch(backdropTPL.ntextures) {
+				case 2:
+					id = (tm->tm_mon + 2) % 12 / 6;
+					break;
+				case 3:
+					id = (tm->tm_mon + 2) % 12 / 4;
+					break;
+				case 4:
+					id = (tm->tm_mon + 1) % 12 / 3;
+					break;
+				case 6:
+					id = (tm->tm_mon + 1) % 12 / 2;
+					break;
+				case 7:
+					id = tm->tm_wday;
+					break;
+				case 12:
+					id = tm->tm_mon;
+					break;
+				case 24:
+					id = tm->tm_hour;
+					break;
+				case 30 ... 31:
+					id = tm->tm_mday - 1;
+					break;
+				case 365 ... 366:
+					id = tm->tm_yday;
+					break;
+				default:
+					srand(curtime);
+					id = rand();
+					break;
+			}
+			id %= backdropTPL.ntextures;
+		}
+		if(TPL_GetTextureInfo(&backdropTPL, id, &fmt, &width, &height) >= 0) {
+			switch(fmt) {
+				case GX_TF_CI4:
+				case GX_TF_CI8:
+				case GX_TF_CI14:
+					TPL_GetTextureCI(&backdropTPL, id, &backdropTexObj, &backdropTlutObj, fmt == GX_TF_CI14 ? GX_BIGTLUT0 : GX_TLUT0);
+					GX_InitTexObjUserData(&backdropTexObj, &backdropTlutObj);
+					break;
+				default:
+					TPL_GetTexture(&backdropTPL, id, &backdropTexObj);
+					break;
+			}
+		}
+		else {
+			TPL_CloseTPLFile(&backdropTPL);
+			free(backdropFile);
 		}
 	}
 	else {
