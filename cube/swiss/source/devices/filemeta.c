@@ -23,7 +23,7 @@
 #include "FrameBufferMagic.h"
 
 //this is the blank banner that will be shown if no banner is found on a disc
-extern char blankbanner[];
+extern BNR blankbanner;
 
 #define NUM_META_MAX (512)
 #define META_CACHE_SIZE (sizeof(file_meta) * NUM_META_MAX)
@@ -124,7 +124,7 @@ void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 	f->meta->bannerSum = 0xFFFF;
 	f->meta->bannerSize = BNR_PIXELDATA_LEN;
 	f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
-	memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
+	memcpy(f->meta->banner,blankbanner.pixelData,BNR_PIXELDATA_LEN);
 	if(bannerOffset == -1 || bannerOffset + bannerSize > f->size) {
 		print_gecko("Banner not found or out of range\r\n");
 	}
@@ -145,6 +145,7 @@ void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 				memcpy(f->meta->banner, banner->pixelData, f->meta->bannerSize);
 				memcpy(&f->meta->bannerDesc, &banner->desc[swissSettings.sramLanguage], sizeof(f->meta->bannerDesc));
 			}
+			f->meta->gameName = f->meta->bannerDesc.fullGameName;
 			if(strlen(f->meta->bannerDesc.description)) {
 				// Some banners only have empty spaces as padding until they hit a new line in the IPL
 				char *desc_ptr = f->meta->bannerDesc.description;
@@ -177,7 +178,7 @@ void populate_meta(file_handle *f) {
 				f->meta->bannerSum = 0xFFFF;
 				f->meta->bannerSize = BNR_PIXELDATA_LEN;
 				f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
-				memcpy(f->meta->banner,blankbanner+0x20,BNR_PIXELDATA_LEN);
+				memcpy(f->meta->banner,blankbanner.pixelData,BNR_PIXELDATA_LEN);
 				meta_create_direct_texture(f->meta);
 				// Assign GCM region texture
 				ISOInfo_t* isoInfo = (ISOInfo_t*)&f->other;
@@ -227,6 +228,7 @@ void populate_meta(file_handle *f) {
 					if(!get_gcm_banner_fast(header, &bannerOffset, &bannerSize))
 						get_gcm_banner(f, &bannerOffset, &bannerSize);
 					populate_game_meta(f, bannerOffset, bannerSize);
+					get_gcm_title(header, f->meta);
 					// Assign GCM region texture
 					char region = wodeRegionToChar(header->RegionCode);
 					if(region == 'J')

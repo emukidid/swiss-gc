@@ -28,6 +28,7 @@ typedef struct {
 
 typedef struct {
 	dvddiskid diskId;
+	const char *gameName;
 	GXTexObj *fileTypeTexObj;
 	GXTexObj *regionTexObj;
 	u8 *banner;

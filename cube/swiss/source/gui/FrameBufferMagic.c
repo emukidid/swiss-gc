@@ -1236,6 +1236,9 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 				GX_InitTexObjUserData(&eventData->file->meta->bannerTexObj, &eventData->file->meta->bannerTlutObj);
 			}
 		}
+		if(eventData->file->meta->gameName == file->meta->bannerDesc.fullGameName) {
+			eventData->file->meta->gameName = eventData->file->meta->bannerDesc.fullGameName;
+		}
 	}
 	// Hide extension when rendering certain files
 	if(file->fileAttrib == IS_FILE) {
