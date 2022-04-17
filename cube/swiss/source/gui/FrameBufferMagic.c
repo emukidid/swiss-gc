@@ -1060,11 +1060,12 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				GX_End();
 				
 				// Company
-				float scale = GetTextScaleToFitInWidth(file->meta->bannerDesc.fullCompany,(data->x2-data->x1)-(borderSize*2));
-				drawString(x_mid, data->y1+(borderSize*2)+40+bnr_height+20, file->meta->bannerDesc.fullCompany, scale, true, defaultColor);
+				sprintf(fbTextBuffer, "%.*s", BNR_FULL_TEXT_LEN, file->meta->bannerDesc.fullCompany);
+				float scale = GetTextScaleToFitInWidth(fbTextBuffer,(data->x2-data->x1)-(borderSize*2));
+				drawString(x_mid, data->y1+(borderSize*2)+40+bnr_height+20, fbTextBuffer, scale, true, defaultColor);
 				
 				// Description
-				sprintf(fbTextBuffer, "%s", file->meta->bannerDesc.description);
+				sprintf(fbTextBuffer, "%.*s", BNR_DESC_LEN, file->meta->bannerDesc.description);
 				char* rest = &fbTextBuffer[0];
 				char* tok;
 				int line = 0;
@@ -1264,6 +1265,9 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 }
 
 uiDrawObj_t* DrawFileCarouselEntry(int x1, int y1, int x2, int y2, const char *message, file_handle *file, int distFromMiddle) {
+	if(file->meta && file->meta->gameName) {
+		message = file->meta->gameName;
+	}
 	uiDrawObj_t* event = DrawFileBrowserButton(x1, y1, x2, y2, message, file, B_SELECTED);
 	drawFileBrowserButtonEvent_t *data = (drawFileBrowserButtonEvent_t*)event->data;
 	data->isCarousel = true;

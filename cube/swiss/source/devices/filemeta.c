@@ -3,6 +3,7 @@
 	by emu_kidid
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <ogcsys.h>
 #include <unistd.h>
@@ -80,6 +81,28 @@ void meta_create_direct_texture_ci(file_meta* meta) {
 	GX_InitTexObjUserData(&meta->bannerTexObj, &meta->bannerTlutObj);
 }
 
+void fixBannerDesc(char *str, int len) {
+	const char *end = str + len;
+	for (char *s1 = str; s1 < end && *s1; s1++) {
+		if (*s1 == ' ') {
+			for (char *s2 = s1;;) {
+				if (++s2 == end || *s2 == '\0') {
+					memset(s1, '\0', s2 - s1);
+					return;
+				} else if (*s2 != ' ') {
+					if (s2 - s1 > 2) {
+						if (*s2 != '\n')
+							*s1++ = '\n';
+						s2 = mempcpy(s1, s2, end - s2);
+						memset(s2, '\0', end - s2);
+					}
+					break;
+				}
+			}
+		}
+	}
+}
+
 void populate_save_meta(file_handle *f, u8 bannerFormat, u32 bannerOffset, u32 commentOffset) {
 	if(bannerOffset != -1) {
 		switch(bannerFormat & CARD_BANNER_MASK) {
@@ -114,8 +137,9 @@ void populate_save_meta(file_handle *f, u8 bannerFormat, u32 bannerOffset, u32 c
 		devices[DEVICE_CUR]->seekFile(f, commentOffset, DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(f, comment, 64) == 64) {
 			strncat(f->meta->bannerDesc.description, &comment[0], 32);
-			strlcat(f->meta->bannerDesc.description, "\r\n", BNR_DESC_LEN);
+			strlcat(f->meta->bannerDesc.description, "\n", BNR_DESC_LEN);
 			strncat(f->meta->bannerDesc.description, &comment[32], 32);
+			fixBannerDesc(f->meta->bannerDesc.description, BNR_DESC_LEN);
 		}
 	}
 }
@@ -145,20 +169,20 @@ void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 				memcpy(f->meta->banner, banner->pixelData, f->meta->bannerSize);
 				memcpy(&f->meta->bannerDesc, &banner->desc[swissSettings.sramLanguage], sizeof(f->meta->bannerDesc));
 			}
+			fixBannerDesc(f->meta->bannerDesc.gameName, BNR_SHORT_TEXT_LEN);
+			fixBannerDesc(f->meta->bannerDesc.company, BNR_SHORT_TEXT_LEN);
 			f->meta->gameName = f->meta->bannerDesc.fullGameName;
-			if(strlen(f->meta->bannerDesc.description)) {
-				// Some banners only have empty spaces as padding until they hit a new line in the IPL
+			fixBannerDesc(f->meta->bannerDesc.fullGameName, BNR_FULL_TEXT_LEN);
+			fixBannerDesc(f->meta->bannerDesc.fullCompany, BNR_FULL_TEXT_LEN);
+			// Some banners only have empty spaces as padding until they hit a new line in the IPL
+			fixBannerDesc(f->meta->bannerDesc.description, BNR_DESC_LEN);
+			// ...and some banners have no CR/LF and we'd like a sane wrap point
+			if(strlen(f->meta->bannerDesc.description) > 50) {
 				char *desc_ptr = f->meta->bannerDesc.description;
-				if((desc_ptr = strstr(desc_ptr, "  "))) {
-					desc_ptr[0] = '\r';
-					desc_ptr[1] = '\n';
-				}
-				// ...and some banners have no CR/LF and we'd like a sane wrap point
-				desc_ptr = f->meta->bannerDesc.description;
-				if(!strstr(desc_ptr, "\r") && !strstr(desc_ptr, "\n") && strlen(desc_ptr) > 50) {
+				if(!strchr(desc_ptr, '\n')) {
 					desc_ptr+=(strlen(desc_ptr) / 2);
-					if((desc_ptr = strstr(desc_ptr, " "))) {
-						desc_ptr[0] = '\r';
+					if((desc_ptr = strchr(desc_ptr, ' '))) {
+						*desc_ptr = '\n';
 					}
 				}
 			}
