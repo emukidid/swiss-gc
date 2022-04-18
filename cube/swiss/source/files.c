@@ -63,9 +63,15 @@ void scanFiles() {
 	if(curDirEntries){ free(curDirEntries); curDirEntries = NULL; }
 	print_gecko("Reading directory: %s\r\n",curFile.name);
 	curDirEntryCount = devices[DEVICE_CUR]->readDir(&curFile, &curDirEntries, -1);
-	memcpy(&curDir, &curFile, sizeof(file_handle));
-	sortFiles(curDirEntries, curDirEntryCount);
 	print_gecko("Found %i entries\r\n",curDirEntryCount);
+	sortFiles(curDirEntries, curDirEntryCount);
+	for(int i = 0; i < curDirEntryCount; i++) {
+		if(!strcmp(curDirEntries[i].name, curDir.name)) {
+			curSelection = i;
+			break;
+		}
+	}
+	memcpy(&curDir, &curFile, sizeof(file_handle));
 }
 
 file_handle* getCurrentDirEntries() {

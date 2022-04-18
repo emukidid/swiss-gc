@@ -337,24 +337,24 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 	}
 }
 
-// Modify curFile to go up a directory.
-void upToParent() 
+// Modify entry to go up a directory.
+void upToParent(file_handle* entry)
 {
-	int len = strlen(&curFile.name[0]);
+	int len = strlen(entry->name);
 	
 	// Go up a folder
-	while(len && curFile.name[len-1]!='/')
+	while(len && entry->name[len-1]!='/')
 		len--;
-	if(len != strlen(&curFile.name[0]))
-		curFile.name[len-1] = '\0';
+	if(len != strlen(entry->name))
+		entry->name[len-1] = '\0';
 
 	// If we're a file, go up to the parent of the file
-	if(curFile.fileAttrib == IS_FILE) {
-		while(len && curFile.name[len-1]!='/')
+	if(entry->fileAttrib == IS_FILE) {
+		while(len && entry->name[len-1]!='/')
 			len--;
+		if(len != strlen(entry->name))
+			entry->name[len-1] = '\0';
 	}
-	if(len != strlen(&curFile.name[0]))
-		curFile.name[len-1] = '\0';
 }
 
 uiDrawObj_t* loadingBox = NULL;
@@ -407,7 +407,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL) {
-				upToParent();
+				upToParent(&curFile);
 				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_FILE) {
@@ -421,7 +421,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			return filePanel;
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
-			upToParent();
+			upToParent(&curFile);
 			needsRefresh=1;
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_X) VIDEO_WaitVSync();
 			return filePanel;
@@ -636,7 +636,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL){
-				upToParent();
+				upToParent(&curFile);
 				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_FILE){
@@ -650,7 +650,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			return filePanel;
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
-			upToParent();
+			upToParent(&curFile);
 			needsRefresh=1;
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_X) VIDEO_WaitVSync();
 			return filePanel;
@@ -731,15 +731,8 @@ bool select_dest_dir(file_handle* directory, file_handle* selection)
 				refresh=1;
 			}
 			else if(directories[idx].fileAttrib==IS_SPECIAL){
-				//go up a folder
-				int len = strlen(&curDir.name[0]);
-				while(len && curDir.name[len-1]!='/') {
-      				len--;
-				}
-				if(len != strlen(&curDir.name[0])) {
-					curDir.name[len-1] = '\0';
-					refresh=1;
-				}
+				upToParent(&curDir);
+				refresh=1;
 			}
 		}
 		if(PAD_StickY(0) < -16 || PAD_StickY(0) > 16) {
