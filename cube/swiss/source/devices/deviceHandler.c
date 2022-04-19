@@ -3,7 +3,6 @@
 	by emu_kidid
  */
 
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <ogcsys.h>
 #include <unistd.h>

@@ -17,7 +17,6 @@
  * with Swiss.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define _GNU_SOURCE
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdint.h>

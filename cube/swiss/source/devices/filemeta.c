@@ -3,7 +3,6 @@
 	by emu_kidid
  */
 
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <ogcsys.h>
 #include <unistd.h>
@@ -228,20 +227,32 @@ void populate_meta(file_handle *f) {
 						f->meta->regionTexObj = &palTexObj;
 				}
 			}
-			else if(endsWith(f->name,".gci")) {
+			else if(endsWith(f->name,".gci") || endsWith(f->name,".gcs") || endsWith(f->name,".sav")) {
 				GCI gci;
 				devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
 				if(devices[DEVICE_CUR]->readFile(f, &gci, sizeof(GCI)) == sizeof(GCI)) {
-					if(gci.icon_addr != -1) gci.icon_addr += sizeof(GCI);
-					if(gci.comment_addr != -1) gci.comment_addr += sizeof(GCI);
-					populate_save_meta(f, gci.banner_fmt, gci.icon_addr, gci.comment_addr);
-					char region = getGCIRegion((const char*)gci.gamecode);
-					if(region == 'J')
-						f->meta->regionTexObj = &ntscjTexObj;
-					else if(region == 'E')
-						f->meta->regionTexObj = &ntscuTexObj;
-					else if(region == 'P')
-						f->meta->regionTexObj = &palTexObj;
+					if(!memcmp(&gci, "DATELGC_SAVE", 12)) {
+						devices[DEVICE_CUR]->seekFile(f, 0x80, DEVICE_HANDLER_SEEK_SET);
+						devices[DEVICE_CUR]->readFile(f, &gci, sizeof(GCI));
+						swab(&gci.reserved01, &gci.reserved01, 2);
+						swab(&gci.icon_addr,  &gci.icon_addr, 20);
+					}
+					else if(!memcmp(&gci, "GCSAVE", 6)) {
+						devices[DEVICE_CUR]->seekFile(f, 0x110, DEVICE_HANDLER_SEEK_SET);
+						devices[DEVICE_CUR]->readFile(f, &gci, sizeof(GCI));
+					}
+					if(f->size - f->offset == gci.filesize8 * 8192) {
+						if(gci.icon_addr != -1) gci.icon_addr += f->offset;
+						if(gci.comment_addr != -1) gci.comment_addr += f->offset;
+						populate_save_meta(f, gci.banner_fmt, gci.icon_addr, gci.comment_addr);
+						char region = getGCIRegion((const char*)gci.gamecode);
+						if(region == 'J')
+							f->meta->regionTexObj = &ntscjTexObj;
+						else if(region == 'E')
+							f->meta->regionTexObj = &ntscuTexObj;
+						else if(region == 'P')
+							f->meta->regionTexObj = &palTexObj;
+					}
 				}
 			}
 			else if(endsWith(f->name,".gcm") || endsWith(f->name,".iso")) {

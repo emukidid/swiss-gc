@@ -91,7 +91,7 @@ INCLUDES	:= include $(SOURCES)
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS		= -g -O2 -Wall -Wno-format-truncation -fno-strict-aliasing $(MACHDEP) $(INCLUDE) -D'GITREVISION="$(shell git rev-parse --short HEAD)"' -D'GITVERSION="$(shell git rev-list HEAD | wc -l)"'
+CFLAGS		= -g -O2 -Wall -Wno-format-truncation -fno-strict-aliasing -D_GNU_SOURCE $(MACHDEP) $(INCLUDE) -D'GITREVISION="$(shell git rev-parse --short HEAD)"' -D'GITVERSION="$(shell git rev-list HEAD | wc -l)"'
 CXXFLAGS	= $(CFLAGS)
 
 LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x80003100 -T../../linker-script/vgcogc.ld -T ../../reservedarea.ld

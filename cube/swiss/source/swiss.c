@@ -1520,6 +1520,7 @@ bool manage_file() {
 		}
 
 		// Seek back to 0 after all these reads
+		devices[DEVICE_CUR]->seekFile(&curFile, 0, DEVICE_HANDLER_SEEK_SET);
 		devices[DEVICE_DEST]->seekFile(destFile, 0, DEVICE_HANDLER_SEEK_SET);
 		
 		// Same (fat based) device and user wants to move the file, just rename ;)
@@ -1539,19 +1540,28 @@ bool manage_file() {
 				curFile.size += sizeof(GCI);
 			}
 			// If we're copying a .gci to a memory card, do it properly
-			if(isDestCard && (endsWith(destFile->name,".gci"))) {
-				// Read the header
-				char *gciHeader = memalign(32, sizeof(GCI));
+			if(isDestCard && (endsWith(curFile.name,".gci") || endsWith(curFile.name,".gcs") || endsWith(curFile.name,".sav"))) {
+				GCI gci;
 				devices[DEVICE_CUR]->seekFile(&curFile, 0, DEVICE_HANDLER_SEEK_SET);
-				devices[DEVICE_CUR]->readFile(&curFile, gciHeader, sizeof(GCI));
-				devices[DEVICE_CUR]->seekFile(&curFile, 0, DEVICE_HANDLER_SEEK_SET);
-				setGCIInfo(gciHeader);
-				free(gciHeader);
+				if(devices[DEVICE_CUR]->readFile(&curFile, &gci, sizeof(GCI)) == sizeof(GCI)) {
+					if(!memcmp(&gci, "DATELGC_SAVE", 12)) {
+						devices[DEVICE_CUR]->seekFile(&curFile, 0x80, DEVICE_HANDLER_SEEK_SET);
+						devices[DEVICE_CUR]->readFile(&curFile, &gci, sizeof(GCI));
+						swab(&gci.reserved01, &gci.reserved01, 2);
+						swab(&gci.icon_addr,  &gci.icon_addr, 20);
+					}
+					else if(!memcmp(&gci, "GCSAVE", 6)) {
+						devices[DEVICE_CUR]->seekFile(&curFile, 0x110, DEVICE_HANDLER_SEEK_SET);
+						devices[DEVICE_CUR]->readFile(&curFile, &gci, sizeof(GCI));
+					}
+					if(curFile.size - curFile.offset == gci.filesize8 * 8192) setGCIInfo(&gci);
+					devices[DEVICE_CUR]->seekFile(&curFile, -sizeof(GCI), DEVICE_HANDLER_SEEK_CUR);
+				}
 			}
 			
 			// Read from one file and write to the new directory
 			u32 isCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
-			u32 curOffset = 0, cancelled = 0, chunkSize = (isCard||isDestCard) ? curFile.size : (256*1024);
+			u32 curOffset = curFile.offset, cancelled = 0, chunkSize = (isCard||isDestCard) ? curFile.size : (256*1024);
 			char *readBuffer = (char*)memalign(32,chunkSize);
 			sprintf(txtbuffer, "Copying to: %s",getRelativeName(destFile->name));
 			uiDrawObj_t* progBar = DrawProgressBar(false, 0, txtbuffer);
