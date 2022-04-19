@@ -15,7 +15,7 @@ typedef struct {
 	u8 company[2];
 	u8 reserved01;	/*** Always 0xff ***/
 	u8 banner_fmt;
-	u8 filename[CARD_FILENAMELEN];
+	char filename[CARD_FILENAMELEN];
 	u32 time;
 	u32 icon_addr;
 	u16 icon_fmt;

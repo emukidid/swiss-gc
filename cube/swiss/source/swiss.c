@@ -2007,7 +2007,7 @@ int check_game(ExecutableFile *filesToPatch)
 uiDrawObj_t* draw_game_info() {
 	uiDrawObj_t *container = DrawEmptyBox(75,120, getVideoMode()->fbWidth-78, 400);
 
-	sprintf(txtbuffer, "%s", curFile.meta && curFile.meta->gameName ? curFile.meta->gameName : getRelativeName(curFile.name));
+	sprintf(txtbuffer, "%s", curFile.meta && curFile.meta->displayName ? curFile.meta->displayName : getRelativeName(curFile.name));
 	float scale = GetTextScaleToFitInWidth(txtbuffer,(getVideoMode()->fbWidth-78)-75);
 	DrawAddChild(container, DrawStyledLabel(640/2, 130, txtbuffer, scale, true, defaultColor));
 

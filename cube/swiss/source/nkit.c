@@ -2157,16 +2157,14 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 
 const char *get_gcm_title(const DiskHeader *header, file_meta *meta)
 {
-	if (meta->bannerSum == 0xFFFF) {
-		strncpy(meta->bannerDesc.fullGameName, header->GameName, BNR_FULL_TEXT_LEN);
-		meta->gameName = meta->bannerDesc.fullGameName;
-	}
+	if (meta->bannerSum == 0xFFFF)
+		meta->displayName = strncpy(meta->bannerDesc.fullGameName, header->GameName, BNR_FULL_TEXT_LEN);
 
 	if (!memcmp(&header->NKitMagicWord, "NKIT v01", 8)) {
 		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++) {
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header->ImageCRC == nkit_dat[i].crc) {
-				meta->gameName = nkit_dat[i].title;
+				meta->displayName = nkit_dat[i].title;
 				return nkit_dat[i].title;
 			}
 		}
@@ -2177,7 +2175,7 @@ const char *get_gcm_title(const DiskHeader *header, file_meta *meta)
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header_sum == nkit_dat[i].header_sum &&
 				meta->bannerSum == nkit_dat[i].banner.sum) {
-				meta->gameName = nkit_dat[i].title;
+				meta->displayName = nkit_dat[i].title;
 				return nkit_dat[i].title;
 			}
 		}
@@ -2185,13 +2183,13 @@ const char *get_gcm_title(const DiskHeader *header, file_meta *meta)
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header_sum == nkit_dat[i].header_sum &&
 				meta->bannerSum == nkit_dat[i].banner.sum) {
-				meta->gameName = nkit_dat[i].title;
+				meta->displayName = nkit_dat[i].title;
 				return nkit_dat[i].title;
 			}
 		}
 	}
 
-	return meta->gameName;
+	return meta->displayName;
 }
 
 bool valid_gcm_boot(const DiskHeader *header)

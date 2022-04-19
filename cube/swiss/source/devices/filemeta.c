@@ -169,9 +169,12 @@ void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 				memcpy(&f->meta->bannerDesc, &banner->desc[swissSettings.sramLanguage], sizeof(f->meta->bannerDesc));
 			}
 			fixBannerDesc(f->meta->bannerDesc.gameName, BNR_SHORT_TEXT_LEN);
+			if(strnlen(f->meta->bannerDesc.gameName, BNR_SHORT_TEXT_LEN))
+				f->meta->displayName = f->meta->bannerDesc.gameName;
 			fixBannerDesc(f->meta->bannerDesc.company, BNR_SHORT_TEXT_LEN);
-			f->meta->gameName = f->meta->bannerDesc.fullGameName;
 			fixBannerDesc(f->meta->bannerDesc.fullGameName, BNR_FULL_TEXT_LEN);
+			if(strnlen(f->meta->bannerDesc.fullGameName, BNR_FULL_TEXT_LEN))
+				f->meta->displayName = f->meta->bannerDesc.fullGameName;
 			fixBannerDesc(f->meta->bannerDesc.fullCompany, BNR_FULL_TEXT_LEN);
 			// Some banners only have empty spaces as padding until they hit a new line in the IPL
 			fixBannerDesc(f->meta->bannerDesc.description, BNR_DESC_LEN);
@@ -212,6 +215,7 @@ void populate_meta(file_handle *f) {
 					f->meta->regionTexObj = &ntscuTexObj;
 				else if(region == 'P')
 					f->meta->regionTexObj = &palTexObj;
+				f->meta->displayName = strncpy(f->meta->bannerDesc.fullGameName, isoInfo->name, BNR_FULL_TEXT_LEN);
 			}
 			else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
 				card_dir* dir = (card_dir*)&f->other;
@@ -225,6 +229,7 @@ void populate_meta(file_handle *f) {
 						f->meta->regionTexObj = &ntscuTexObj;
 					else if(region == 'P')
 						f->meta->regionTexObj = &palTexObj;
+					f->meta->displayName = strncpy(f->meta->bannerDesc.gameName, stat.filename, BNR_SHORT_TEXT_LEN);
 				}
 			}
 			else if(endsWith(f->name,".gci") || endsWith(f->name,".gcs") || endsWith(f->name,".sav")) {
@@ -252,6 +257,7 @@ void populate_meta(file_handle *f) {
 							f->meta->regionTexObj = &ntscuTexObj;
 						else if(region == 'P')
 							f->meta->regionTexObj = &palTexObj;
+						f->meta->displayName = strncpy(f->meta->bannerDesc.gameName, gci.filename, BNR_SHORT_TEXT_LEN);
 					}
 				}
 			}

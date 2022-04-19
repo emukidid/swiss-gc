@@ -1237,8 +1237,11 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 				GX_InitTexObjUserData(&eventData->file->meta->bannerTexObj, &eventData->file->meta->bannerTlutObj);
 			}
 		}
-		if(eventData->file->meta->gameName == file->meta->bannerDesc.fullGameName) {
-			eventData->file->meta->gameName = eventData->file->meta->bannerDesc.fullGameName;
+		if(eventData->file->meta->displayName == file->meta->bannerDesc.gameName) {
+			eventData->file->meta->displayName = eventData->file->meta->bannerDesc.gameName;
+		}
+		else if(eventData->file->meta->displayName == file->meta->bannerDesc.fullGameName) {
+			eventData->file->meta->displayName = eventData->file->meta->bannerDesc.fullGameName;
 		}
 	}
 	// Hide extension when rendering certain files
@@ -1267,8 +1270,8 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 }
 
 uiDrawObj_t* DrawFileCarouselEntry(int x1, int y1, int x2, int y2, const char *message, file_handle *file, int distFromMiddle) {
-	if(file->meta && file->meta->gameName) {
-		message = file->meta->gameName;
+	if(file->meta && file->meta->displayName) {
+		message = file->meta->displayName;
 	}
 	uiDrawObj_t* event = DrawFileBrowserButton(x1, y1, x2, y2, message, file, B_SELECTED);
 	drawFileBrowserButtonEvent_t *data = (drawFileBrowserButtonEvent_t*)event->data;
