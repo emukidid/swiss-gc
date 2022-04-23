@@ -156,42 +156,37 @@ int load_existing_entry(char *entry) {
 	if(entryDevice) {
 		print_gecko("Device required for entry [%s]\r\n", entryDevice->deviceName);
 		
-		DEVICEHANDLER_INTERFACE *oldDevice = devices[DEVICE_CUR];
-		devices[DEVICE_CUR] = entryDevice;
 		// Init the device if it isn't one we were about to browse anyway
-		int found = 0;
-		if(devices[DEVICE_CUR] == oldDevice || devices[DEVICE_CUR]->init(devices[DEVICE_CUR]->initial)) {
-			// Save the old current path in case if we fail to find the recent list entry.
-			file_handle *oldPath = calloc(1, sizeof(file_handle));
-			memcpy(oldPath, &curFile, sizeof(file_handle));
-			
+		if(devices[DEVICE_CUR] == entryDevice || entryDevice->init(entryDevice->initial)) {
+			if(devices[DEVICE_CUR] && devices[DEVICE_CUR] != entryDevice) {
+				devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
+			}
 			// Attempt to read the directory the recent file lives in (required for 2 disc games)
-			memset(&curFile, 0, sizeof(file_handle));
-			getParentPath(entry, &curFile.name[0]);
+			devices[DEVICE_CUR] = entryDevice;
+			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+			getParentPath(entry, curFile.name);
 			scanFiles();
+			
+			curMenuLocation = ON_FILLIST;
+			curMenuSelection = 0;
+			curSelection = 0;
+			needsDeviceChange = 0;
+			needsRefresh = 0;
 			
 			// Finally, read the actual file
-			memset(&curFile, 0, sizeof(file_handle));
-			strcpy(&curFile.name[0], entry);
-			if(devices[DEVICE_CUR] == &__device_dvd) curFile.size = DISC_SIZE;
-			if(devices[DEVICE_CUR]->readFile(&curFile, NULL, 0) == 0) {
-				found = 1;
-				if(endsWith(entry,".dol") || endsWith(entry,".dol+cli") || endsWith(entry,".elf")) {
-					boot_dol();
-				}
-				else {
-					print_gecko("Entry exists, reading meta.\r\n");
-					populate_meta(&curFile);
+			file_handle *curDirEntries = getCurrentDirEntries();
+			for(int i = 0; i < getCurrentDirEntryCount(); i++) {
+				if(!strcmp(curDirEntries[i].name, entry)) {
+					curSelection = i;
+					populate_meta(&curDirEntries[i]);
+					memcpy(&curFile, &curDirEntries[i], sizeof(file_handle));
 					load_file();
+					memcpy(&curFile, &curDir, sizeof(file_handle));
+					return 0;
 				}
 			}
-			// User cancelled, clean things up
-			memcpy(&curFile, oldPath, sizeof(file_handle));
-			free(oldPath);
-			scanFiles();
+			return RECENT_ERR_ENT_MISSING;
 		}
-		devices[DEVICE_CUR] = oldDevice;
-		return found ? 0 : RECENT_ERR_ENT_MISSING;
 	}
 	print_gecko("Device was not found\r\n");
 	return RECENT_ERR_DEV_MISSING;

@@ -361,8 +361,11 @@ uiDrawObj_t* loadingBox = NULL;
 uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t* filePanel)
 {
 	memset(txtbuffer,0,sizeof(txtbuffer));
-	if(num_files<=0) return NULL;
-  
+	if(num_files<=0) {
+		memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+		needsRefresh=1;
+		return filePanel;
+	}
 	while(1) {
 		if(loadingBox != NULL) {
 			DrawDispose(loadingBox);
@@ -441,6 +444,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		
 		if((swissSettings.recentListLevel != 2) && (PAD_ButtonsHeld(0) & PAD_BUTTON_START)) {
 			select_recent_entry();
+			return filePanel;
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B) {
 			curMenuLocation=ON_OPTIONS;
@@ -588,7 +592,11 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawObj_t* filePanel)
 {
 	memset(txtbuffer,0,sizeof(txtbuffer));
-	if(num_files<=0) return NULL;
+	if(num_files<=0) {
+		memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+		needsRefresh=1;
+		return filePanel;
+	}
 	if(curSelection == 0 && num_files > 1 && (*directory)[0].fileAttrib==IS_SPECIAL) {
 		curSelection = 1; // skip the ".." by default
 	}
@@ -674,6 +682,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		}
 		if((swissSettings.recentListLevel != 2) && (PAD_ButtonsHeld(0) & PAD_BUTTON_START)) {
 			select_recent_entry();
+			return filePanel;
 		}
 		if(PAD_StickX(0) <= -16 || PAD_StickX(0) >= 16) {
 			usleep((abs(PAD_StickX(0)) > 64 ? 50000:100000) - abs(PAD_StickX(0)*64));
