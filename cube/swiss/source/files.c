@@ -27,10 +27,8 @@ int fileComparator(const void *a1, const void *b1)
 			return 1;
 	}
 	
-	if(a->fileAttrib == IS_DIR && b->fileAttrib == IS_FILE)
-		return -1;
-	if(a->fileAttrib == IS_FILE && b->fileAttrib == IS_DIR)
-		return 1;
+	if(a->fileAttrib != b->fileAttrib)
+		return b->fileAttrib - a->fileAttrib;
 
 	return strcasecmp(a->name, b->name);
 }

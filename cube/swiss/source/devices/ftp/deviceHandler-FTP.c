@@ -129,12 +129,12 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	int num_entries = 1, i = 1;
 	*dir = malloc( num_entries * sizeof(file_handle) );
 	memset(*dir,0,sizeof(file_handle) * num_entries);
+	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
-	strcpy((*dir)[0].name, "..");
 	
 	// Read each entry of the directory
 	while( (entry = readdir(dp)) != NULL ){
-		if(strlen(entry->d_name) <= 2  && (entry->d_name[0] == '.' || entry->d_name[1] == '.')) {
+		if(!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) {
 			continue;
 		}
 		// Do we want this one?

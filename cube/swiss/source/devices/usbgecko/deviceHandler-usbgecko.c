@@ -43,8 +43,8 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 	file_handle *entry = NULL;
 	*dir = malloc( num_entries * sizeof(file_handle) );
 	memset(*dir,0,sizeof(file_handle) * num_entries);
+	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
-	strcpy((*dir)[0].name, "..");
 	
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading directory"));
 	// Read each entry of the directory

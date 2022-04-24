@@ -7,6 +7,7 @@
 #include "deviceHandler-SYS.h"
 #include "main.h"
 #include "dvd.h"
+#include "files.h"
 #include "gui/FrameBufferMagic.h"
 
 int read_rom_ipl(unsigned int offset, void* buffer, unsigned int length);
@@ -285,7 +286,7 @@ s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	int num_entries = 1, i;
 	*dir = malloc(num_entries * sizeof(file_handle));
 	memset(&(*dir)[0], 0, sizeof(file_handle));
-	strcpy((*dir)[0].name,"..");
+	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 
 	for(i = 0; i < NUM_ROMS; i++) {

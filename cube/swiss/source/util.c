@@ -178,10 +178,16 @@ int load_existing_entry(char *entry) {
 			for(int i = 0; i < getCurrentDirEntryCount(); i++) {
 				if(!strcmp(curDirEntries[i].name, entry)) {
 					curSelection = i;
-					populate_meta(&curDirEntries[i]);
-					memcpy(&curFile, &curDirEntries[i], sizeof(file_handle));
-					load_file();
-					memcpy(&curFile, &curDir, sizeof(file_handle));
+					if(curDirEntries[i].fileAttrib == IS_FILE) {
+						populate_meta(&curDirEntries[i]);
+						memcpy(&curFile, &curDirEntries[i], sizeof(file_handle));
+						load_file();
+						memcpy(&curFile, &curDir, sizeof(file_handle));
+					}
+					else if(curDirEntries[i].fileAttrib == IS_DIR) {
+						memcpy(&curFile, &curDirEntries[i], sizeof(file_handle));
+						needsRefresh = 1;
+					}
 					return 0;
 				}
 			}

@@ -135,14 +135,11 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	// Set everything up to read
 	int num_entries = 1, i = 1;
 	*dir = calloc(sizeof(file_handle), 1);
+	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
-	strcpy((*dir)[0].name, "..");
 
 	// Read each entry of the directory
 	while( f_readdir(dp, &entry) == FR_OK && entry.fname[0] != '\0') {
-		if(strlen(entry.fname) <= 2  && (entry.fname[0] == '.' || entry.fname[1] == '.')) {
-			continue;
-		}
 		if(!swissSettings.showHiddenFiles && ((entry.fattrib & AM_HID) || entry.fname[0] == '.')) {
 			continue;
 		}

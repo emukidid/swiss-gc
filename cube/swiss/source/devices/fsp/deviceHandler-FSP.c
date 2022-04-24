@@ -49,13 +49,13 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	// Set everything up to read
 	int num_entries = 1, i = 1;
 	*dir = calloc(sizeof(file_handle), 1);
+	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
-	strcpy((*dir)[0].name, "..");
 	
 	u64 usedSpace = 0LL;
 	// Read each entry of the directory
 	while( !fsp_readdir_native(dp, &entry, &result) && result == &entry ){
-		if(strlen(entry.name) <= 2  && (entry.name[0] == '.' || entry.name[1] == '.')) {
+		if(!strcmp(entry.name, ".") || !strcmp(entry.name, "..")) {
 			continue;
 		}
 		// Do we want this one?

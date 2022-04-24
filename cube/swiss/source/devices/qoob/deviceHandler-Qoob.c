@@ -43,7 +43,7 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 	int num_entries = 1, i = 1, block = 0;
 	*dir = malloc( num_entries * sizeof(file_handle) );
 	memset(&(*dir)[0], 0, sizeof(file_handle));
-	strcpy((*dir)[0].name,"..");
+	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 	
 	u32 usedSpace = 0;

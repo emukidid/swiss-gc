@@ -75,7 +75,7 @@ s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	u32 numPartitions = 0, numIsoInPartition = 0, i,j, num_entries = 1;
 	*dir = malloc( num_entries * sizeof(file_handle) );
 	memset(&(*dir)[0], 0, sizeof(file_handle));
-	strcpy((*dir)[0].name,"..");
+	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 
 	numPartitions = GetNumPartitions();

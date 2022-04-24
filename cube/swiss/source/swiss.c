@@ -429,16 +429,30 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_X) VIDEO_WaitVSync();
 			return filePanel;
 		}
-		if((PAD_ButtonsHeld(0) & PAD_TRIGGER_Z) && swissSettings.enableFileManagement 
-			&& ((*directory)[curSelection].fileAttrib == IS_FILE || (*directory)[curSelection].fileAttrib == IS_DIR)) {
-			memcpy(&curDir, &curFile, sizeof(file_handle));
-			memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
-			needsRefresh = manage_file() ? 1:0;
-			while(PAD_ButtonsHeld(0) & PAD_BUTTON_B) VIDEO_WaitVSync();
-			memcpy(&curFile, &curDir, sizeof(file_handle));
-			if(needsRefresh) {
-				// If we return from doing something with a file, refresh the device in the same dir we were at
-				return filePanel;
+		if((PAD_ButtonsHeld(0) & PAD_TRIGGER_Z) && swissSettings.enableFileManagement) {
+			if((*directory)[curSelection].fileAttrib == IS_FILE || (*directory)[curSelection].fileAttrib == IS_DIR) {
+				memcpy(&curDir, &curFile, sizeof(file_handle));
+				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
+				needsRefresh = manage_file() ? 1:0;
+				memcpy(&curFile, &curDir, sizeof(file_handle));
+				while(PAD_ButtonsHeld(0) & PAD_BUTTON_B) VIDEO_WaitVSync();
+				if(needsRefresh) {
+					// If we return from doing something with a file, refresh the device in the same dir we were at
+					return filePanel;
+				}
+			}
+			else if((*directory)[curSelection].fileAttrib == IS_SPECIAL) {
+				// Toggle autoload
+				if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])) {
+					memset(&swissSettings.autoload[0], 0, PATHNAME_MAX);
+				}
+				else {
+					strcpy(&swissSettings.autoload[0], &curFile.name[0]);
+				}
+				// Save config
+				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload ..."));
+				config_update_global(true);
+				DrawDispose(msgBox);
 			}
 		}
 		
@@ -663,16 +677,30 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_X) VIDEO_WaitVSync();
 			return filePanel;
 		}
-		if((PAD_ButtonsHeld(0) & PAD_TRIGGER_Z) && swissSettings.enableFileManagement
-			&& ((*directory)[curSelection].fileAttrib == IS_FILE || (*directory)[curSelection].fileAttrib == IS_DIR)) {
-			memcpy(&curDir, &curFile, sizeof(file_handle));
-			memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
-			needsRefresh = manage_file() ? 1:0;
-			memcpy(&curFile, &curDir, sizeof(file_handle));
-			while(PAD_ButtonsHeld(0) & PAD_BUTTON_B) VIDEO_WaitVSync();
-			if(needsRefresh) {
-				// If we return from doing something with a file, refresh the device in the same dir we were at
-				return filePanel;
+		if((PAD_ButtonsHeld(0) & PAD_TRIGGER_Z) && swissSettings.enableFileManagement) {
+			if((*directory)[curSelection].fileAttrib == IS_FILE || (*directory)[curSelection].fileAttrib == IS_DIR) {
+				memcpy(&curDir, &curFile, sizeof(file_handle));
+				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
+				needsRefresh = manage_file() ? 1:0;
+				memcpy(&curFile, &curDir, sizeof(file_handle));
+				while(PAD_ButtonsHeld(0) & PAD_BUTTON_B) VIDEO_WaitVSync();
+				if(needsRefresh) {
+					// If we return from doing something with a file, refresh the device in the same dir we were at
+					return filePanel;
+				}
+			}
+			else if((*directory)[curSelection].fileAttrib == IS_SPECIAL) {
+				// Toggle autoload
+				if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])) {
+					memset(&swissSettings.autoload[0], 0, PATHNAME_MAX);
+				}
+				else {
+					strcpy(&swissSettings.autoload[0], &curFile.name[0]);
+				}
+				// Save config
+				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload ..."));
+				config_update_global(true);
+				DrawDispose(msgBox);
 			}
 		}
 		
