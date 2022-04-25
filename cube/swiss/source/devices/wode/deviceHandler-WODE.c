@@ -89,7 +89,7 @@ s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			if(tmp.iso_type==1) { //add gamecube only
 				*dir = realloc( *dir, (num_entries+1) * sizeof(file_handle) ); 
 				memset(&(*dir)[num_entries], 0, sizeof(file_handle));
-				sprintf((*dir)[num_entries].name, "%s.gcm",&tmp.name[0]);
+				concatf_path((*dir)[num_entries].name, ffile->name, "%.64s.gcm", &tmp.name[0]);
 				(*dir)[num_entries].fileAttrib = IS_FILE;
 				(*dir)[num_entries].size = DISC_SIZE;
 				memcpy(&(*dir)[num_entries].other, &tmp, sizeof(ISOInfo_t));

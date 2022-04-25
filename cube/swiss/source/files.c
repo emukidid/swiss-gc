@@ -80,7 +80,7 @@ int getCurrentDirEntryCount() {
 	return curDirEntryCount;
 }
 
-void concat_path(char *pathName, char *dirName, char *baseName)
+void concat_path(char *pathName, const char *dirName, const char *baseName)
 {
 	size_t len;
 
@@ -97,7 +97,7 @@ void concat_path(char *pathName, char *dirName, char *baseName)
 	strlcat(pathName, baseName, PATHNAME_MAX);
 }
 
-void concatf_path(char *pathName, char *dirName, char *baseName, ...)
+void concatf_path(char *pathName, const char *dirName, const char *baseName, ...)
 {
 	size_t len;
 

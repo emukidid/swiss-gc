@@ -293,7 +293,7 @@ s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 		num_entries++;
 		*dir = realloc(*dir, num_entries * sizeof(file_handle));
 		memset(&(*dir)[i + 1], 0, sizeof(file_handle));
-		strcpy((*dir)[i + 1].name, rom_names[i]);
+		concat_path((*dir)[i + 1].name, ffile->name, rom_names[i]);
 		(*dir)[i + 1].fileAttrib = IS_FILE;
 		(*dir)[i + 1].size       = rom_sizes[i];
 		(*dir)[i + 1].fileBase   = i;
@@ -320,6 +320,7 @@ s32 deviceHandler_SYS_closeFile(file_handle* file) {
 }
 
 s32 deviceHandler_SYS_deinit() {
+	initial_SYS_info.totalSpace = 0LL;
 	return 0;
 }
 

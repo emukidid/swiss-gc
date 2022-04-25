@@ -282,9 +282,9 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		}
 		//Read in the whole table of offsets
 		tmpTable = (unsigned int*)memalign(32,MAX_MULTIGAME*4);
-		tmpName = (char*)memalign(32,512);
+		tmpName = (char*)memalign(32,64);
 		memset(tmpTable,0,MAX_MULTIGAME*4);
-		memset(tmpName,0,512);
+		memset(tmpName,0,64);
 		DVD_Read(&tmpTable[0],MULTIGAME_TABLE_OFFSET,MAX_MULTIGAME*4);
 
 		// count entries
@@ -308,8 +308,8 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			}
 			print_gecko("fileBase is %016llX isGC? %s\r\n", tmpOffset, isGC ? "yes" : "no");
 			if((tmpOffset%(isGC?0x8000:0x20000)==0) && (tmpOffset<(isGC?DISC_SIZE:WII_D9_SIZE))) {
-				DVD_Read(&tmpName[0],tmpOffset+32, 512);
-				sprintf( (*dir)[num].name,"%s.gcm", &tmpName[0] );
+				DVD_Read(&tmpName[0],tmpOffset+32,64);
+				concatf_path((*dir)[num].name, ffile->name, "%.64s.gcm", &tmpName[0]);
 				(*dir)[num].fileBase = tmpOffset;
 				(*dir)[num].offset = 0;
 				(*dir)[num].size   = (isGC?DISC_SIZE:WII_D9_SIZE)-tmpOffset;
@@ -336,7 +336,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		*dir = calloc( num_entries * sizeof(file_handle), 1);
 		int i;
 		for(i=0; i<num_entries; ++i){
-			strcpy( (*dir)[i].name, DVDToc->file[i].name );
+			concat_path((*dir)[i].name, ffile->name, DVDToc->file[i].name);
 			(*dir)[i].fileBase = (uint64_t)(((uint64_t)DVDToc->file[i].sector)*2048);
 			(*dir)[i].offset = 0;
 			(*dir)[i].size   = DVDToc->file[i].size;
@@ -352,8 +352,8 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		free(DVDToc);
 		DVDToc = NULL;
 
-		if(strlen((*dir)[0].name) == 0)
-			strcpy( (*dir)[0].name, ".." );
+		if(strcmp((*dir)[0].name, ffile->name) == 0)
+			concat_path((*dir)[0].name, ffile->name, "..");
 	}
 	initial_DVD_info.freeSpace = initial_DVD_info.totalSpace - usedSpace;
 	return num_entries;
