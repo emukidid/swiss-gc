@@ -69,7 +69,7 @@ DSTATUS disk_initialize (
 	// - DEFAULT_SECTORS_PAGE = 64
 	// NOTE: endOfPartition isn't usable, since this is a
 	// per-disk cache, not per-partition. Use UINT_MAX.
-	cache[pdrv] = _FAT_cache_constructor(4, 64, driver[pdrv], (sec_t)-1, 512);
+	cache[pdrv] = _FAT_cache_constructor(16, 64, driver[pdrv], (sec_t)-1, 512);
 
 	// Device initialized.
 	disk_isInit[pdrv] = true;
