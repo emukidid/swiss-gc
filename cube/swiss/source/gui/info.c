@@ -147,10 +147,10 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		sprintf(txtbuffer, "Commit %s Revision %s", GITREVISION, GITVERSION);
 		DrawAddChild(container, DrawStyledLabel(640/2, 165, txtbuffer, 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 208, "Patreon supporters", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 228, "meneerbeer, Dan Kunz, Heather Kent, Joshua Witt, Filyx20, SubElement, KirovAir,", 0.60f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 244, "Cristofer Cruz, LemonMeringueTy, badsector, Fernando Avelino, RamblingOkie,", 0.60f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 228, "meneerbeer, Dan Kunz, SubElement, KirovAir, Cristofer Cruz,", 0.60f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 244, "Roman Antonacci, badsector, Fernando Avelino, RamblingOkie,", 0.60f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 260, "Kory, Lindh0lm154, Alex Mitchell, Haymose, finnyguy, Marlon,", 0.60f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 276, "HakanaiSeishin, Borg Number One (a.k.a. Steven Weiser)", 0.60f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 276, "HakanaiSeishin, Borg Number One (a.k.a. Steven Weiser), Jeffrey Pierce", 0.60f, true, defaultColor));
 		
 		DrawAddChild(container, DrawStyledLabel(640/2, 300, "Extra Greetz: FIX94, megalomaniac, sepp256, novenary", 0.60f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(110, 320, "Web/Support", 0.64f, false, defaultColor));
