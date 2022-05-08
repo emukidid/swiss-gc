@@ -61,6 +61,7 @@ static const struct {
 	{ "G9SE8P\x00\x03", false, 1, 0x1E76, 0x82D09071, 1245077504,  +214900736, {  441842048,  +214466732, 6496, 0x7CBD }, "Sonic Heroes" },
 	{ "G9SJ8P\x00\x00", false, 1, 0xC0D7, 0xE291DD98, 1459310592,     +667648, {  614910892,     +245764, 6496, 0x2336 }, "Sonic Heroes" },
 	{ "GAGPEL\x00\x00", false, 1, 0xA2BD, 0x488AB477,  754982912,  +704995328, {  754973244,  +704996900, 8096, 0x63D7 }, "Astérix & Obélix XXL" },
+	{ "GB8E78\x00\x00", true,  1, 0x3B42, 0x1F19869C,  432257024, +1027721216, {  412625660,      +32768, 6496, 0x9BD7 }, "BattleBots" },
 	{ "GBLEAV\x00\x00", true,  1, 0x4075, 0xFBBF079E,  547112960,  +912865280, {  547105344,     +296288, 6496, 0xEB38 }, "Bloody Roar: Primal Fury" },
 	{ "GDEE71\x00\x00", false, 1, 0xC228, 0xC2C80167, 1358307328,  +101670912, {  914092380,       +7536, 6496, 0x2D5A }, "Baldur's Gate: Dark Alliance" },
 	{ "GEAE8P\x00\x00", false, 1, 0x4329, 0x22E6FE4B, 1421514752,   +38463488, { 1206244016,   +36660560, 6496, 0x51AD }, "Skies of Arcadia Legends Maeson" },
@@ -108,7 +109,7 @@ static const struct {
 	{ "RELSAB\x00\x00", false, 1, 0x4535, 0x5DC67D47, 1298782208,  +161196032, {         ~0,          +0,    0, 0xFFFF }, "Galleon" },
 	{ "RELSAB\x00\x00", false, 1, 0xB288, 0x141D0A04,  136779776, +1323198464, {         ~0,          +0,    0, 0xFFFF }, "Sonic Heroes" },
 	{ "RELSAB\x00\x00", false, 1, 0xFD3E, 0x0F846161,  134455296, +1325522944, {         ~0,          +0,    0, 0xFFFF }, "ATV: Quad Power Racing 2" },
-#define REDUMP_INDEX 58
+#define REDUMP_INDEX 59
 	{ "102E01\x00\x07", true,  1, 0x10B2, 0x4CA6F4EB, 1450858496,    +9119744, {  122984064,    +1245184, 6496, 0x19E5 }, "Aging Disc DOL-USA Ver. 07" },
 	{ "301E01\x00\x00", true,  1, 0x2291, 0xBE031BBE,  220121088, +1239857152, {  152535040, +1239842816, 6496, 0x1086 }, "Nintendo GameCube Service Disc Version 1.0/03" },
 	{ "D23J01\x00\x00", true,  1, 0x54F8, 0x385BDC6A, 1310650368,  +149327872, {  584824840,  +149335704, 6496, 0x51A7 }, "Game Taikai Yuushou Kinen: Tokusei SmaBro DX Movie Disc" },
@@ -930,7 +931,7 @@ static const struct {
 	{ "GHWP78\x00\x00", false, 1, 0x7AA7, 0x8C0A8A48,  854927360,  +605050880, {  432009208,       +1068, 6496, 0x124B }, "Hot Wheels: Velocity X" },
 	{ "GHYE6S\x00\x00", false, 1, 0x10DE, 0x457B6B08,  986146816,  +473831424, {  689976240,  +473831928, 6496, 0xCF40 }, "Disney's The Haunted Mansion" },
 	{ "GHZE5D\x00\x00", false, 1, 0x059A, 0x83791CE1, 1274449920,  +185528320, {  527919492,      +23840, 6496, 0x69F1 }, "NHL Hitz Pro" },
-	{ "GI2J18\x00\x00", false, 1, 0x8B37, 0xE5BAE879,  595101696,  +864876544, {  595093980,  +864877764, 6496, 0xD5DB }, "Momotarou Dentetsu 12: Nishi Nihon Hen mo Arimasse!" },
+	{ "GI2J18\x00\x00", false, 1, 0x8B37, 0xE5BAE879,  595101696,  +864876544, {  595093980,  +864877764, 6496, 0xD5DB }, "Momotarou Dentetsu 12: Nishi Nihon-hen mo Arimasse!" },
 	{ "GIAE7D\x00\x00", false, 1, 0x498A, 0xFFA77E19, 1046716416,  +413261824, { 1046708752,  +413262992, 6496, 0x46B5 }, "Ice Age 2: The Meltdown" },
 	{ "GIAP7D\x00\x00", false, 1, 0x4EC4, 0xA7E661DA, 1358315520,  +101662720, { 1358306380,  +101663764, 8096, 0x1561 }, "Ice Age 2: The Meltdown" },
 	{ "GIBE4F\x00\x00", false, 1, 0x27CA, 0x7F6469AB,  347353088, +1112625152, {  289299336,      +18828, 6496, 0x50D3 }, "The Italian Job" },
