@@ -410,8 +410,10 @@ void end_read() {
 }
 
 void reset_device() {
-	end_read();
-	send_cmd(CMD0, 0);
+	if(exi_regs != NULL) {
+		end_read();
+		send_cmd(CMD0, 0);
+	}
 }
 
 /* End of SD functions */
