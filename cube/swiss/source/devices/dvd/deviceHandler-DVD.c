@@ -566,10 +566,13 @@ bool deviceHandler_DVD_test() {
 }
 
 u32 deviceHandler_DVD_emulated() {
-	if (swissSettings.emulateMemoryCard)
-		return EMU_MEMCARD;
-	else
-		return EMU_NONE;
+	if (devices[DEVICE_PATCHES]) {
+		if (swissSettings.emulateMemoryCard)
+			return EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER;
+		else
+			return EMU_READ | EMU_BUS_ARBITER;
+	} else
+		return EMU_READ;
 }
 
 DEVICEHANDLER_INTERFACE __device_dvd = {
@@ -579,7 +582,7 @@ DEVICEHANDLER_INTERFACE __device_dvd = {
 	"Supported File System(s): GCM, ISO 9660, Multi-Game",
 	{TEX_GCDVDSMALL, 84, 84, 84, 84},
 	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_HYPERVISOR|FEAT_AUDIO_STREAMING,
-	EMU_MEMCARD,
+	EMU_READ|EMU_MEMCARD,
 	LOC_DVD_CONNECTOR,
 	&initial_DVD,
 	(_fn_test)&deviceHandler_DVD_test,

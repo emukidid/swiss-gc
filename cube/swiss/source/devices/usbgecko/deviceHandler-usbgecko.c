@@ -229,7 +229,7 @@ bool deviceHandler_USBGecko_test() {
 }
 
 u32 deviceHandler_USBGecko_emulated() {
-	return EMU_READ;
+	return EMU_READ | EMU_BUS_ARBITER;
 }
 
 DEVICEHANDLER_INTERFACE __device_usbgecko = {

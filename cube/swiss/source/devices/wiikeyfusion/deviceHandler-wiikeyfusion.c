@@ -232,12 +232,19 @@ bool deviceHandler_WKF_test() {
 }
 
 u32 deviceHandler_WKF_emulated() {
-	if (swissSettings.audioStreaming)
-		return EMU_READ|EMU_AUDIO_STREAMING;
-	else if (swissSettings.emulateMemoryCard)
-		return EMU_READ|EMU_MEMCARD;
-	else
-		return EMU_READ;
+	if (devices[DEVICE_PATCHES]) {
+		if (swissSettings.audioStreaming)
+			return EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER;
+		else if (swissSettings.emulateMemoryCard)
+			return EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER;
+		else
+			return EMU_READ | EMU_BUS_ARBITER;
+	} else {
+		if (swissSettings.audioStreaming)
+			return EMU_READ | EMU_AUDIO_STREAMING;
+		else
+			return EMU_READ;
+	}
 }
 
 DEVICEHANDLER_INTERFACE __device_wkf = {

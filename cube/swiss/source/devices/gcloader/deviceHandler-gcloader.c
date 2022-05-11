@@ -306,12 +306,28 @@ bool deviceHandler_GCLOADER_test() {
 }
 
 u32 deviceHandler_GCLOADER_emulated() {
-	if (swissSettings.emulateReadSpeed)
-		return EMU_READ_SPEED;
-	else if (swissSettings.emulateMemoryCard)
-		return EMU_MEMCARD;
-	else
-		return EMU_NONE;
+	if (devices[DEVICE_PATCHES]) {
+		if (devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
+			if (swissSettings.emulateReadSpeed)
+				return EMU_READ | EMU_READ_SPEED | EMU_BUS_ARBITER;
+			else if (swissSettings.emulateMemoryCard)
+				return EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER;
+			else
+				return EMU_READ | EMU_BUS_ARBITER;
+		} else {
+			if (swissSettings.emulateReadSpeed)
+				return EMU_READ | EMU_READ_SPEED;
+			else if (swissSettings.emulateMemoryCard)
+				return EMU_READ | EMU_MEMCARD;
+			else
+				return EMU_READ;
+		}
+	} else {
+		if (swissSettings.emulateReadSpeed)
+			return EMU_READ | EMU_READ_SPEED;
+		else
+			return EMU_READ;
+	}
 }
 
 DEVICEHANDLER_INTERFACE __device_gcloader = {
@@ -321,7 +337,7 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	"Supported File System(s): FAT16, FAT32, exFAT",
 	{TEX_GCLOADER, 115, 72, 120, 80},
 	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_AUDIO_STREAMING,
-	EMU_READ_SPEED|EMU_MEMCARD,
+	EMU_READ|EMU_READ_SPEED|EMU_MEMCARD,
 	LOC_DVD_CONNECTOR,
 	&initial_GCLOADER,
 	(_fn_test)&deviceHandler_GCLOADER_test,

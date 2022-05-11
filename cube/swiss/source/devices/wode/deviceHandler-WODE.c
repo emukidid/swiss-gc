@@ -274,10 +274,13 @@ bool deviceHandler_WODE_test() {
 }
 
 u32 deviceHandler_WODE_emulated() {
-	if (swissSettings.emulateMemoryCard)
-		return EMU_MEMCARD;
-	else
-		return EMU_NONE;
+	if (devices[DEVICE_PATCHES]) {
+		if (swissSettings.emulateMemoryCard)
+			return EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER;
+		else
+			return EMU_READ | EMU_BUS_ARBITER;
+	} else
+		return EMU_READ;
 }
 
 DEVICEHANDLER_INTERFACE __device_wode = {
@@ -287,7 +290,7 @@ DEVICEHANDLER_INTERFACE __device_wode = {
 	"Supported File System(s): FAT32, NTFS, EXT2/3, HPFS",
 	{TEX_WODEIMG, 116, 40, 120, 48},
 	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_HYPERVISOR,
-	EMU_MEMCARD,
+	EMU_READ|EMU_MEMCARD,
 	LOC_DVD_CONNECTOR,
 	&initial_WODE,
 	(_fn_test)&deviceHandler_WODE_test,

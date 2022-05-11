@@ -156,16 +156,16 @@ int install_code(int final)
 	// IDE-EXI
 	else if(devices[DEVICE_CUR] == &__device_ata_a || devices[DEVICE_CUR] == &__device_ata_b || devices[DEVICE_CUR] == &__device_ata_c) {
 		switch (devices[DEVICE_CUR]->emulated()) {
-			case EMU_READ:
-			case EMU_READ | EMU_READ_SPEED:
+			case EMU_READ | EMU_BUS_ARBITER:
+			case EMU_READ | EMU_READ_SPEED | EMU_BUS_ARBITER:
 				patch     = !_ideexi_version ? ideexi_v1_bin      : ideexi_v2_bin;
 				patchSize = !_ideexi_version ? ideexi_v1_bin_size : ideexi_v2_bin_size;
 				break;
-			case EMU_READ | EMU_AUDIO_STREAMING:
+			case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER:
 				patch     = !_ideexi_version ? ideexi_v1_dtk_bin      : ideexi_v2_dtk_bin;
 				patchSize = !_ideexi_version ? ideexi_v1_dtk_bin_size : ideexi_v2_dtk_bin_size;
 				break;
-			case EMU_READ | EMU_MEMCARD:
+			case EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER:
 				patch     = !_ideexi_version ? ideexi_v1_card_bin      : ideexi_v2_card_bin;
 				patchSize = !_ideexi_version ? ideexi_v1_card_bin_size : ideexi_v2_card_bin_size;
 				break;
@@ -177,16 +177,16 @@ int install_code(int final)
 	// SD Card over EXI
 	else if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
 		switch (devices[DEVICE_CUR]->emulated()) {
-			case EMU_READ:
-			case EMU_READ | EMU_READ_SPEED:
+			case EMU_READ | EMU_BUS_ARBITER:
+			case EMU_READ | EMU_READ_SPEED | EMU_BUS_ARBITER:
 				patch     = sd_bin;
 				patchSize = sd_bin_size;
 				break;
-			case EMU_READ | EMU_AUDIO_STREAMING:
+			case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER:
 				patch     = sd_dtk_bin;
 				patchSize = sd_dtk_bin_size;
 				break;
-			case EMU_READ | EMU_MEMCARD:
+			case EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER:
 				patch     = sd_card_bin;
 				patchSize = sd_card_bin_size;
 				break;
@@ -198,11 +198,12 @@ int install_code(int final)
 	// DVD
 	else if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_wode) {
 		switch (devices[DEVICE_CUR]->emulated()) {
-			case EMU_NONE:
+			case EMU_READ:
+			case EMU_READ | EMU_BUS_ARBITER:
 				patch     = dvd_bin;
 				patchSize = dvd_bin_size;
 				break;
-			case EMU_MEMCARD:
+			case EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER:
 				patch     = dvd_card_bin;
 				patchSize = dvd_card_bin_size;
 				break;
@@ -214,7 +215,7 @@ int install_code(int final)
 	// USB Gecko
 	else if(devices[DEVICE_CUR] == &__device_usbgecko) {
 		switch (devices[DEVICE_CUR]->emulated()) {
-			case EMU_READ:
+			case EMU_READ | EMU_BUS_ARBITER:
 				patch     = usbgecko_bin;
 				patchSize = usbgecko_bin_size;
 				break;
@@ -227,14 +228,16 @@ int install_code(int final)
 	else if(devices[DEVICE_CUR] == &__device_wkf) {
 		switch (devices[DEVICE_CUR]->emulated()) {
 			case EMU_READ:
+			case EMU_READ | EMU_BUS_ARBITER:
 				patch     = wkf_bin;
 				patchSize = wkf_bin_size;
 				break;
 			case EMU_READ | EMU_AUDIO_STREAMING:
+			case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER:
 				patch     = wkf_dtk_bin;
 				patchSize = wkf_dtk_bin_size;
 				break;
-			case EMU_READ | EMU_MEMCARD:
+			case EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER:
 				patch     = wkf_card_bin;
 				patchSize = wkf_card_bin_size;
 				break;
@@ -247,7 +250,7 @@ int install_code(int final)
 	else if(devices[DEVICE_CUR] == &__device_fsp) {
 		if (devices[DEVICE_PATCHES] != &__device_fsp) {
 			switch (devices[DEVICE_CUR]->emulated()) {
-				case EMU_READ:
+				case EMU_READ | EMU_BUS_ARBITER:
 					patch     = fsp_bin;
 					patchSize = fsp_bin_size;
 					break;
@@ -256,11 +259,11 @@ int install_code(int final)
 			}
 		} else {
 			switch (devices[DEVICE_CUR]->emulated()) {
-				case EMU_READ:
+				case EMU_READ | EMU_BUS_ARBITER:
 					patch     = fsp_bin;
 					patchSize = fsp_bin_size;
 					break;
-				case EMU_READ | EMU_AUDIO_STREAMING:
+				case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER:
 					patch     = fsp_dtk_bin;
 					patchSize = fsp_dtk_bin_size;
 					break;
@@ -274,12 +277,14 @@ int install_code(int final)
 	else if(devices[DEVICE_CUR] == &__device_gcloader) {
 		if (devices[DEVICE_PATCHES] != &__device_gcloader) {
 			switch (devices[DEVICE_CUR]->emulated()) {
-				case EMU_NONE:
-				case EMU_READ_SPEED:
+				case EMU_READ:
+				case EMU_READ | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_READ_SPEED:
+				case EMU_READ | EMU_READ_SPEED | EMU_BUS_ARBITER:
 					patch     = gcloader_v1_bin;
 					patchSize = gcloader_v1_bin_size;
 					break;
-				case EMU_MEMCARD:
+				case EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER:
 					patch     = gcloader_v1_card_bin;
 					patchSize = gcloader_v1_card_bin_size;
 					break;
@@ -288,12 +293,12 @@ int install_code(int final)
 			}
 		} else {
 			switch (devices[DEVICE_CUR]->emulated()) {
-				case EMU_NONE:
-				case EMU_READ_SPEED:
+				case EMU_READ:
+				case EMU_READ | EMU_READ_SPEED:
 					patch     = gcloader_v2_bin;
 					patchSize = gcloader_v2_bin_size;
 					break;
-				case EMU_MEMCARD:
+				case EMU_READ | EMU_MEMCARD:
 					patch     = gcloader_v2_card_bin;
 					patchSize = gcloader_v2_card_bin_size;
 					break;
@@ -5031,62 +5036,68 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *SetInterruptMask = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SetInterruptMask) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+				switch (j) {
+					case 0:
+					case 1:
+						data[i +  72] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i +  88] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i +  92] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i + 109] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i + 114] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i + 126] = 0x3CA00C00;	// lis		r5, 0x0C00
+						break;
+					case 2:
+						data[i +  82] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i +  98] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i + 102] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i + 119] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i + 124] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i + 136] = 0x3CA00C00;	// lis		r5, 0x0C00
+						break;
+					case 3:
+					case 4:
+						data[i +  70] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i +  85] = 0x3C800C00;	// lis		r4, 0x0C00
+						data[i +  89] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i + 110] = 0x3CA00C00;	// lis		r5, 0x0C00
+						break;
+					case 5:
+						data[i +  80] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i +  95] = 0x3C800C00;	// lis		r4, 0x0C00
+						data[i +  99] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i + 120] = 0x3CA00C00;	// lis		r5, 0x0C00
+						break;
+					case 6:
+						data[i +  67] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i +  79] = 0x3C800C00;	// lis		r4, 0x0C00
+						data[i +  84] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i +  96] = 0x3C800C00;	// lis		r4, 0x0C00
+						data[i + 100] = 0x3CA00C00;	// lis		r5, 0x0C00
+						data[i + 109] = 0x3C800C00;	// lis		r4, 0x0C00
+						break;
+				}
+			}
 			switch (j) {
 				case 0:
-					data[i +  72] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i +  88] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i +  92] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i + 109] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i + 114] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i + 126] = 0x3CA00C00;	// lis		r5, 0x0C00
 					data[i + 168] = 0x3CA00C00;	// lis		r5, 0x0C00
 					break;
 				case 1:
-					data[i +  72] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i +  88] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i +  92] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i + 109] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i + 114] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i + 126] = 0x3CA00C00;	// lis		r5, 0x0C00
 					data[i + 172] = 0x3CA00C00;	// lis		r5, 0x0C00
 					break;
 				case 2:
-					data[i +  82] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i +  98] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i + 102] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i + 119] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i + 124] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i + 136] = 0x3CA00C00;	// lis		r5, 0x0C00
 					data[i + 182] = 0x3CA00C00;	// lis		r5, 0x0C00
 					break;
 				case 3:
-					data[i +  70] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i +  85] = 0x3C800C00;	// lis		r4, 0x0C00
-					data[i +  89] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i + 110] = 0x3CA00C00;	// lis		r5, 0x0C00
 					data[i + 163] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 				case 4:
-					data[i +  70] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i +  85] = 0x3C800C00;	// lis		r4, 0x0C00
-					data[i +  89] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i + 110] = 0x3CA00C00;	// lis		r5, 0x0C00
 					data[i + 167] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 				case 5:
-					data[i +  80] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i +  95] = 0x3C800C00;	// lis		r4, 0x0C00
-					data[i +  99] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i + 120] = 0x3CA00C00;	// lis		r5, 0x0C00
 					data[i + 177] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 				case 6:
-					data[i +  67] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i +  79] = 0x3C800C00;	// lis		r4, 0x0C00
-					data[i +  84] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i +  96] = 0x3C800C00;	// lis		r4, 0x0C00
-					data[i + 100] = 0x3CA00C00;	// lis		r5, 0x0C00
-					data[i + 109] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 144] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
@@ -5100,13 +5111,33 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *__OSDispatchInterrupt = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__OSDispatchInterrupt) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+				switch (j) {
+					case 0:
+					case 1:
+					case 2:
+						data[i +  85] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i +  99] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 114] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 3:
+					case 4:
+					case 5:
+						data[i +  76] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i +  90] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 105] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 6:
+						data[i +  58] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i +  69] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i +  80] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+				}
+			}
 			switch (j) {
 				case 0:
 					data[i +   7] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  12] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i +  85] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i +  99] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 114] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 170] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 173] = 0x3CA00C00;	// lis		r5, 0x0C00
 					data[i + 179] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -5117,9 +5148,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				case 2:
 					data[i +   7] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i +  12] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i +  85] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i +  99] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 114] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 174] = 0x3C800C00;	// lis		r4, 0x0C00
 					data[i + 177] = 0x3CA00C00;	// lis		r5, 0x0C00
 					data[i + 183] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -5130,15 +5158,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				case 4:
 				case 5:
 					data[i +   7] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i +  76] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i +  90] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 105] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 6:
 					data[i +   2] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i +  58] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i +  69] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i +  80] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
 			if ((k = SystemCallVectorSig.offsetFoundAt))
@@ -5323,7 +5345,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *CompleteTransfer = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (CompleteTransfer) {
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5344,7 +5366,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIImm = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIImm) {
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5377,7 +5399,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIDma = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIDma) {
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5410,7 +5432,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXISync = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISync) {
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5493,22 +5515,24 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIClearInterrupts = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIClearInterrupts) {
-			switch (j) {
-				case 0:
-					data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 39] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 1:
-					data[i + 21] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 40] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 2:
-					data[i +  1] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 3:
-					data[i +  4] = 0x3CE00C00;	// lis		r7, 0x0C00
-					data[i + 20] = 0x3CE00C00;	// lis		r7, 0x0C00
-					break;
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+				switch (j) {
+					case 0:
+						data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 39] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 1:
+						data[i + 21] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 40] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 2:
+						data[i +  1] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 3:
+						data[i +  4] = 0x3CE00C00;	// lis		r7, 0x0C00
+						data[i + 20] = 0x3CE00C00;	// lis		r7, 0x0C00
+						break;
+				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXIClearInterruptsSigs[j].Name, j, EXIClearInterrupts);
 			patched++;
@@ -5520,26 +5544,28 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *__EXIProbe = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__EXIProbe) {
-			switch (j) {
-				case 0:
-				case 1:
-					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 2:
-					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 3:
-				case 4:
-					data[i + 17] = 0x3C800C00;	// lis		r4, 0x0C00
-					break;
-				case 5:
-					data[i + 18] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 36] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 6:
-					data[i + 17] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+				switch (j) {
+					case 0:
+					case 1:
+						data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 2:
+						data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 3:
+					case 4:
+						data[i + 17] = 0x3C800C00;	// lis		r4, 0x0C00
+						break;
+					case 5:
+						data[i + 18] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 36] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 6:
+						data[i + 17] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", __EXIProbeSigs[j].Name, j, __EXIProbe);
 			patched++;
@@ -5550,7 +5576,8 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXISelectSD = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISelectSD) {
-			data[i + 55] = 0x3C600C00;	// lis		r3, 0x0C00
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER))
+				data[i + 55] = 0x3C600C00;	// lis		r3, 0x0C00
 			
 			print_gecko("Found:[%s] @ %08X\n", EXISelectSDSig.Name, EXISelectSD);
 			patched++;
@@ -5562,24 +5589,26 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXISelect = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISelect) {
-			switch (j) {
-				case 0:
-				case 1:
-				case 2:
-					data[i +  79] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i +  91] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 3:
-				case 4:
-					data[i + 38] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 5:
-					data[i + 42] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 55] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 6:
-					data[i + 41] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+				switch (j) {
+					case 0:
+					case 1:
+					case 2:
+						data[i +  79] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i +  91] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 3:
+					case 4:
+						data[i + 38] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 5:
+						data[i + 42] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 55] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 6:
+						data[i + 41] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXISelectSigs[j].Name, j, EXISelect);
 			patched++;
@@ -5591,28 +5620,30 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIDeselect = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIDeselect) {
-			switch (j) {
-				case 0:
-				case 1:
-					data[i + 33] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 39] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 2:
-					data[i + 34] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 40] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 3:
-				case 4:
-				case 5:
-					data[i + 22] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 6:
-					data[i + 23] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 7:
-					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+				switch (j) {
+					case 0:
+					case 1:
+						data[i + 33] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 39] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 2:
+						data[i + 34] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 40] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 3:
+					case 4:
+					case 5:
+						data[i + 22] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 6:
+						data[i + 23] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 7:
+						data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXIDeselectSigs[j].Name, j, EXIDeselect);
 			patched++;
@@ -5624,20 +5655,22 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIIntrruptHandler) {
-			switch (j) {
-				case 3:
-					data[i + 10] = 0x3CA00C00;	// lis		r5, 0x0C00
-					break;
-				case 4:
-					data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 5:
-					data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 24] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 6:
-					data[i + 15] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+				switch (j) {
+					case 3:
+						data[i + 10] = 0x3CA00C00;	// lis		r5, 0x0C00
+						break;
+					case 4:
+						data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 5:
+						data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 24] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 6:
+						data[i + 15] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXIIntrruptHandlerSigs[j].Name, j, EXIIntrruptHandler);
 			patched++;
@@ -5649,19 +5682,21 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *TCIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (TCIntrruptHandler) {
-			switch (j) {
-				case 3:
-				case 4:
-					data[i + 23] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 5:
-					data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 53] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 6:
-					data[i + 23] = 0x3CC00C00;	// lis		r6, 0x0C00
-					break;
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+				switch (j) {
+					case 3:
+					case 4:
+						data[i + 23] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 5:
+						data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 53] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 6:
+						data[i + 23] = 0x3CC00C00;	// lis		r6, 0x0C00
+						break;
+				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", TCIntrruptHandlerSigs[j].Name, j, TCIntrruptHandler);
 			patched++;
@@ -5673,23 +5708,25 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXTIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXTIntrruptHandler) {
-			switch (j) {
-				case 0:
-				case 1:
-					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 2:
-					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 4:
-					data[i + 18] = 0x3CA00C00;	// lis		r5, 0x0C00
-					break;
-				case 5:
-					data[i + 17] = 0x3C800C00;	// lis		r4, 0x0C00
-					break;
-				case 6:
-					data[i + 17] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+				switch (j) {
+					case 0:
+					case 1:
+						data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 2:
+						data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 4:
+						data[i + 18] = 0x3CA00C00;	// lis		r5, 0x0C00
+						break;
+					case 5:
+						data[i + 17] = 0x3C800C00;	// lis		r4, 0x0C00
+						break;
+					case 6:
+						data[i + 17] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXTIntrruptHandlerSigs[j].Name, j, EXTIntrruptHandler);
 			patched++;
@@ -5701,47 +5738,49 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIInit) {
-			switch (j) {
-				case 0:
-					data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 10] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 1:
-					data[i +  9] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 12] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 15] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 18] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 2:
-					data[i +  3] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i +  8] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 22] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 31] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 3:
-				case 4:
-					data[i + 10] = 0x3CA00C00;	// lis		r5, 0x0C00
-					break;
-				case 5:
-					data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 10] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
-					break;
-				case 6:
-					data[i + 13] = 0x3C800C00;	// lis		r4, 0x0C00
-					break;
-				case 7:
-				case 8:
-				case 9:
-					data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
-					data[i + 25] = 0x3C800C00;	// lis		r4, 0x0C00
-					break;
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+				switch (j) {
+					case 0:
+						data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 10] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 1:
+						data[i +  9] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 12] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 15] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 18] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 2:
+						data[i +  3] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i +  8] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 22] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 31] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 3:
+					case 4:
+						data[i + 10] = 0x3CA00C00;	// lis		r5, 0x0C00
+						break;
+					case 5:
+						data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 10] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 6:
+						data[i + 13] = 0x3C800C00;	// lis		r4, 0x0C00
+						break;
+					case 7:
+					case 8:
+					case 9:
+						data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 25] = 0x3C800C00;	// lis		r4, 0x0C00
+						break;
+				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXIInitSigs[j].Name, j, EXIInit);
 			patched++;

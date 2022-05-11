@@ -307,9 +307,9 @@ bool deviceHandler_FSP_test() {
 
 u32 deviceHandler_FSP_emulated() {
 	if (swissSettings.audioStreaming)
-		return EMU_READ|EMU_AUDIO_STREAMING;
+		return EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER;
 	else
-		return EMU_READ;
+		return EMU_READ | EMU_BUS_ARBITER;
 }
 
 DEVICEHANDLER_INTERFACE __device_fsp = {

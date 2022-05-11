@@ -104,6 +104,7 @@ typedef u32 (* _fn_emulated)(void);
 #define EMU_READ_SPEED		0x2
 #define EMU_AUDIO_STREAMING	0x4
 #define EMU_MEMCARD			0x8
+#define EMU_BUS_ARBITER		0x10
 
 // Device locations
 #define LOC_MEMCARD_SLOT_A 	0x1
