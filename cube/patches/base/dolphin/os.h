@@ -123,6 +123,8 @@ static OSContext *OSGetCurrentContext(void)
 	return OSCurrentContext;
 }
 
+extern void (*OSLoadContext)(OSContext *context) __attribute((noreturn));
+
 void OSClearContext(OSContext *context);
 
 extern u32 OSDebugMonitorSize;
@@ -162,8 +164,6 @@ static OSExceptionHandler OSGetExceptionHandler(OSException exception)
 {
 	return OSExceptionHandlerTable[exception];
 }
-
-extern void (*OSUnhandledException)(OSException exception, OSContext *context, u32 dsisr, u32 dar);
 
 typedef enum OSInterrupt {
 	OS_INTERRUPT_MEM_0 = 0,
@@ -300,8 +300,8 @@ static OSInterruptHandler OSGetInterruptHandler(OSInterrupt interrupt)
 	return OSInterruptHandlerTable[interrupt];
 }
 
-extern OSInterruptMask (*OSMaskInterrupts)(OSInterruptMask mask);
-extern OSInterruptMask (*OSUnmaskInterrupts)(OSInterruptMask mask);
+extern int (*OSDisableInterrupts)(void);
+extern void (*OSDispatchInterrupt)(OSException exception, OSContext *context) __attribute((noreturn));
 
 #define OS_RESET_RESTART  0
 #define OS_RESET_HOTRESET 1

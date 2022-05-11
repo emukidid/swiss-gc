@@ -26,6 +26,7 @@
 #include "dolphin/os.h"
 #include "emulator.h"
 #include "frag.h"
+#include "interrupt.h"
 #include "ipl.h"
 
 #ifndef QUEUE_SIZE
@@ -51,6 +52,8 @@ static struct {
 	uint32_t offset;
 	bool read, patch;
 } dvd = {0};
+
+static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 
 static void wkf_read_queued(void)
 {
@@ -84,7 +87,8 @@ static void wkf_read_queued(void)
 		DI[7] = 0b001;
 	}
 
-	OSUnmaskInterrupts(OS_INTERRUPTMASK_PI_DI);
+	set_interrupt_handler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
+	unmask_interrupts(OS_INTERRUPTMASK_PI_DI);
 }
 
 static void wkf_done_queued(void)
@@ -117,9 +121,9 @@ static void wkf_done_queued(void)
 	}
 }
 
-void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	OSMaskInterrupts(OS_INTERRUPTMASK_PI_DI);
+	mask_interrupts(OS_INTERRUPTMASK_PI_DI);
 
 	wkf_done_queued();
 }

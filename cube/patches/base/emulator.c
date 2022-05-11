@@ -30,12 +30,17 @@
 #include "emulator_card.h"
 #include "fifo.h"
 #include "frag.h"
+#include "interrupt.h"
 
 static struct {
-	OSInterruptHandler handler[OS_INTERRUPT_MAX];
-	OSInterruptMask status;
-	OSInterruptMask mask;
-} irq = {0};
+	union {
+		uint32_t regs[2];
+		struct {
+			uint32_t intsr;
+			uint32_t intmsk;
+		} reg;
+	};
+} pi = {0};
 
 #ifdef CARD_EMULATOR
 static struct {
@@ -58,35 +63,25 @@ static struct {
 	}
 };
 
-static void exi_update_interrupts(unsigned chan)
+static void exi_update_interrupts(void)
 {
-	uint32_t current = (exi.reg[chan].cpr >> 1) & (exi.reg[chan].cpr & 0b00010000000101);
+	if ((exi.reg[EXI_CHANNEL_0].cpr >> 1) & (exi.reg[EXI_CHANNEL_0].cpr & 0b00010000000101) ||
+		(exi.reg[EXI_CHANNEL_1].cpr >> 1) & (exi.reg[EXI_CHANNEL_1].cpr & 0b00010000000101) ||
+		(exi.reg[EXI_CHANNEL_2].cpr >> 1) & (exi.reg[EXI_CHANNEL_2].cpr & 0b00010000000101))
+		pi.reg.intsr |=  0b00000000010000;
+	else
+		pi.reg.intsr &= ~0b00000000010000;
 
-	switch (chan) {
-		case EXI_CHANNEL_0:
-			irq.status = ((current << (31 - OS_INTERRUPT_EXI_0_EXI)) & OS_INTERRUPTMASK_EXI_0_EXI) | (irq.status & ~OS_INTERRUPTMASK_EXI_0_EXI);
-			irq.status = ((current << (29 - OS_INTERRUPT_EXI_0_TC))  & OS_INTERRUPTMASK_EXI_0_TC)  | (irq.status & ~OS_INTERRUPTMASK_EXI_0_TC);
-			irq.status = ((current << (21 - OS_INTERRUPT_EXI_0_EXT)) & OS_INTERRUPTMASK_EXI_0_EXT) | (irq.status & ~OS_INTERRUPTMASK_EXI_0_EXT);
-			break;
-		case EXI_CHANNEL_1:
-			irq.status = ((current << (31 - OS_INTERRUPT_EXI_1_EXI)) & OS_INTERRUPTMASK_EXI_1_EXI) | (irq.status & ~OS_INTERRUPTMASK_EXI_1_EXI);
-			irq.status = ((current << (29 - OS_INTERRUPT_EXI_1_TC))  & OS_INTERRUPTMASK_EXI_1_TC)  | (irq.status & ~OS_INTERRUPTMASK_EXI_1_TC);
-			irq.status = ((current << (21 - OS_INTERRUPT_EXI_1_EXT)) & OS_INTERRUPTMASK_EXI_1_EXT) | (irq.status & ~OS_INTERRUPTMASK_EXI_1_EXT);
-			break;
-		case EXI_CHANNEL_2:
-			irq.status = ((current << (31 - OS_INTERRUPT_EXI_2_EXI)) & OS_INTERRUPTMASK_EXI_2_EXI) | (irq.status & ~OS_INTERRUPTMASK_EXI_2_EXI);
-			irq.status = ((current << (29 - OS_INTERRUPT_EXI_2_TC))  & OS_INTERRUPTMASK_EXI_2_TC)  | (irq.status & ~OS_INTERRUPTMASK_EXI_2_TC);
-			break;
-	}
-
-	if (irq.status & irq.mask)
+	if (pi.reg.intsr & pi.reg.intmsk)
 		assert_interrupt();
+	else
+		PI[0] = 1;
 }
 
 void exi_interrupt(unsigned chan)
 {
 	exi.reg[chan].cpr |=  0b00000000000010;
-	exi_update_interrupts(chan);
+	exi_update_interrupts();
 }
 
 void exi_complete_transfer(unsigned chan)
@@ -98,7 +93,7 @@ void exi_complete_transfer(unsigned chan)
 
 	exi.reg[chan].cpr |=  0b00000000001000;
 	exi.reg[chan].cr  &= ~0b000001;
-	exi_update_interrupts(chan);
+	exi_update_interrupts();
 }
 
 void exi0_complete_transfer()
@@ -145,7 +140,7 @@ void exi_remove_device(unsigned chan)
 {
 	exi.reg[chan].cpr &= ~0b01000000000000;
 	exi.reg[chan].cpr |=  0b00100000000000;
-	exi_update_interrupts(chan);
+	exi_update_interrupts();
 }
 
 static void exi_read(unsigned index, uint32_t *value)
@@ -208,22 +203,18 @@ static void exi_write(unsigned index, uint32_t value)
 		case 0:
 			if (chan == EXI_CHANNEL_1) {
 				#ifndef USB
-				if (!(exi.reg[chan].cpr & 0b01100000000000)) {
+				if (!(exi.reg[chan].cpr & 0b01100000000000))
 					EXI[chan][0] = value;
-					OSGlobalInterruptMask = (OSGlobalInterruptMask & ~OS_INTERRUPTMASK_EXI_1) | (OS_INTERRUPTMASK_EXI_1 & ~irq.mask);
-				}
 				#endif
-			} else if (chan == EXI_CHANNEL_2) {
+			} else if (chan == EXI_CHANNEL_2)
 				EXI[chan][0] = (value & 0b00000000000011) | (EXI[chan][0] & 0b00011111110100);
-				OSGlobalInterruptMask = (OSGlobalInterruptMask & ~OS_INTERRUPTMASK_EXI_2_EXI) | (OS_INTERRUPTMASK_EXI_2_EXI & ~irq.mask);
-			}
 
 			exi.reg[chan].cpr = ((value & 0b00100000001010) ^ exi.reg[chan].cpr) & exi.reg[chan].cpr;
 
 			if ((value & 0b00001110000000) & ((value & 0b00001110000000) - 1))
-				exi.reg[chan].cpr = (value & 0b10010001110101) | (exi.reg[chan].cpr & ~0b00011111110101);
+				exi.reg[chan].cpr = (value & 0b10010001110101) | (exi.reg[chan].cpr & 0b11100000001010);
 			else
-				exi.reg[chan].cpr = (value & 0b10011111110101) | (exi.reg[chan].cpr & ~0b00011111110101);
+				exi.reg[chan].cpr = (value & 0b10011111110101) | (exi.reg[chan].cpr & 0b11100000001010);
 
 			dev2 = (exi.reg[chan].cpr >> 7) & 0b111;
 
@@ -233,7 +224,6 @@ static void exi_write(unsigned index, uint32_t value)
 						end_read();
 
 					EXI[chan][0] = (value & 0b10001111111100) | (EXI[chan][0] & 0b00010000000001);
-					OSGlobalInterruptMask = (OSGlobalInterruptMask & ~OS_INTERRUPTMASK_EXI_0_TC) | (OS_INTERRUPTMASK_EXI_0_TC & ~irq.mask);
 				}
 			}
 
@@ -244,7 +234,7 @@ static void exi_write(unsigned index, uint32_t value)
 					card_deselect(chan);
 			}
 
-			exi_update_interrupts(chan);
+			exi_update_interrupts();
 			break;
 		case 1 ... 2:
 			exi.regs[index] = value & 0x3FFFFE0;
@@ -301,17 +291,18 @@ static void exi_read(unsigned index, uint32_t *value)
 {
 	unsigned chan = index / 5;
 
-	switch (index) {
+	uint32_t mask = exi_get_interrupt_mask(chan);
+
+	switch (index % 5) {
 		case 0:
-		case 5:
 			#ifdef USB
 			if (chan == *VAR_EXI_SLOT || chan == EXI_CHANNEL_1)
 			#else
 			if (chan == *VAR_EXI_SLOT)
 			#endif
-				*value = EXI[chan][0] & ~0b01000000000000;
+				*value = EXI[chan][0] & ~(mask | 0b01000000000000);
 			else
-				*value = EXI[chan][0];
+				*value = EXI[chan][0] & ~mask;
 			break;
 		default:
 			*value = (*EXI)[index];
@@ -323,6 +314,8 @@ static void exi_write(unsigned index, uint32_t value)
 	unsigned chan = index / 5;
 	unsigned dev = (EXI[chan][0] >> 7) & 0b111;
 	unsigned dev2;
+
+	uint32_t mask = exi_get_interrupt_mask(chan);
 
 	switch (index % 5) {
 		case 0:
@@ -344,7 +337,7 @@ static void exi_write(unsigned index, uint32_t value)
 				}
 			}
 
-			EXI[chan][0] = value;
+			EXI[chan][0] = (value & ~mask) | (mask >> 1);
 			break;
 		default:
 			(*EXI)[index] = value;
@@ -461,12 +454,14 @@ static void di_update_interrupts(void)
 {
 	if ((di.reg.sr  >> 1) & (di.reg.sr  & 0b0101010) ||
 		(di.reg.cvr >> 1) & (di.reg.cvr & 0b010))
-		irq.status |=  OS_INTERRUPTMASK_PI_DI;
+		pi.reg.intsr |=  0b00000000000100;
 	else
-		irq.status &= ~OS_INTERRUPTMASK_PI_DI;
+		pi.reg.intsr &= ~0b00000000000100;
 
-	if (irq.status & irq.mask)
+	if (pi.reg.intsr & pi.reg.intmsk)
 		assert_interrupt();
+	else
+		PI[0] = 1;
 }
 
 void di_error(uint32_t error)
@@ -670,7 +665,7 @@ static void di_read(unsigned index, uint32_t *value)
 	#else
 	switch (index) {
 		case 0 ... 1:
-			*value = di.regs[index] | DI[index];
+			*value = di.regs[index] | (DI[index] & 1);
 			break;
 		case 2 ... 4:
 		case 7 ... 8:
@@ -692,17 +687,11 @@ static void di_write(unsigned index, uint32_t value)
 {
 	switch (index) {
 		case 0:
-			#ifdef DI_PASSTHROUGH
-			DI[0] = value;
-			#endif
 			di.reg.sr = ((value & 0b1010100) ^ di.reg.sr) & di.reg.sr;
-			di.reg.sr = (value & 0b0101011) | (di.reg.sr & ~0b0101010);
+			di.reg.sr = (value & 0b0101011) | (di.reg.sr & 0b1010101);
 			di_update_interrupts();
 			break;
 		case 1:
-			#ifdef DI_PASSTHROUGH
-			DI[1] = value;
-			#endif
 			di.reg.cvr = ((value & 0b100) ^ di.reg.cvr) & di.reg.cvr;
 			di.reg.cvr = (value & 0b010) | (di.reg.cvr & ~0b010);
 			di_update_interrupts();
@@ -810,8 +799,8 @@ static void di_reset(void)
 	uint32_t disr  = DI[0];
 	uint32_t dicvr = DI[1];
 
-	DI[0] = disr;
-	DI[1] = dicvr;
+	DI[0] = disr  & 0b1111110;
+	DI[1] = dicvr & 0b110;
 
 	if (di.reset > 0 && !(disr & 0b0010100)) return;
 	if (di.reset > 3 &&  (disr & 0b0000100))
@@ -858,14 +847,82 @@ static void di_reset(void)
 }
 #endif
 
+#ifdef DI_PASSTHROUGH
+static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+{
+	#ifdef DVD
+	if (di.reset) {
+		di_reset();
+		return;
+	}
+	#endif
+
+	uint32_t disr  = DI[0];
+	uint32_t dicvr = DI[1];
+
+	DI[0] = disr  & 0b1111110;
+	DI[1] = dicvr & 0b110;
+
+	if (disr & 0b1010100) {
+		di.reg.cr = DI[7];
+
+		if (di.reg.cr & 0b010) {
+			di.reg.mar    = DI[5];
+			di.reg.length = DI[6];
+
+			switch (di.reg.cmdbuf0 >> 24) {
+				case DI_CMD_READ:
+				{
+					di.reg.length += OSRoundDown32B(di.reg.cmdbuf2 - DI[4]);
+					break;
+				}
+			}
+		} else {
+			di.reg.immbuf = DI[8];
+
+			switch (di.reg.cmdbuf0 >> 24) {
+				case DI_CMD_REQUEST_ERROR:
+				{
+					if (!(di.reg.immbuf & 0xFFFFFF))
+						di.reg.immbuf = di.error | (di.reg.immbuf & ~0xFFFFFF);
+					di.error = 0;
+					break;
+				}
+			}
+		}
+	}
+
+	di.reg.sr  |= disr  & 0b1010100;
+	di.reg.cvr |= dicvr & 0b100;
+	di_update_interrupts();
+}
+#endif
+
 static void pi_read(unsigned index, uint32_t *value)
 {
-	*value = PI[index];
+	switch (index) {
+		case 0:
+			*value = pi.reg.intsr | (PI[0] & ~0b00000000000101);
+			break;
+		case 1:
+			*value = pi.reg.intmsk;
+			break;
+		default:
+			*value = PI[index];
+	}
 }
 
 static void pi_write(unsigned index, uint32_t value)
 {
 	switch (index) {
+		case 0:
+			PI[0] = value & 0b11111111111010;
+			pi.reg.intsr = ((value & 0b11000000000011) ^ pi.reg.intsr) & pi.reg.intsr;
+			break;
+		case 1:
+			PI[1] = (value & 0b11111111111010) | (PI[1] & 0b00000000000101);
+			pi.reg.intmsk = value & 0b11111111111111;
+			break;
 		case 9:
 			#ifndef DVD
 			PI[index] = ((value << 2) & 0b100) | (value & ~0b100);
@@ -1058,15 +1115,6 @@ ppc_context_t *service_exception(ppc_context_t *context)
 	return context;
 }
 
-static void memzero(void *buf, size_t size)
-{
-	uint8_t *b = buf;
-	uint8_t *e = b + size;
-
-	while (b != e)
-		*b++ = '\0';
-}
-
 void dsi_exception_vector(void);
 void external_interrupt_vector(void);
 
@@ -1086,9 +1134,6 @@ void init(void **arenaLo, void **arenaHi)
 	OSCreateAlarm(&cover_alarm);
 	OSCreateAlarm(&read_alarm);
 
-	memzero(irq.handler, sizeof(irq.handler));
-	irq.mask = 0;
-
 	write_branch((void *)0x80000300, dsi_exception_vector);
 	#ifdef ISR
 	write_branch((void *)0x80000500, external_interrupt_vector);
@@ -1097,6 +1142,14 @@ void init(void **arenaLo, void **arenaHi)
 	#ifdef BBA
 	bba_init(arenaLo, arenaHi);
 	#endif
+	#ifdef DI_PASSTHROUGH
+	DI[0] = 0b0101010;
+	DI[1] = 0b010;
+
+	set_interrupt_handler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
+	unmask_interrupts(OS_INTERRUPTMASK_PI_DI);
+	#endif
+	unmask_interrupts(OS_INTERRUPTMASK_PI_ERROR);
 	#ifdef DTK
 	*arenaHi -= sizeof(*dsp.buffer[0]); dsp.buffer[0] = OSCachedToUncached(*arenaHi);
 	*arenaHi -= sizeof(*dsp.buffer[1]); dsp.buffer[1] = OSCachedToUncached(*arenaHi);
@@ -1105,180 +1158,9 @@ void init(void **arenaLo, void **arenaHi)
 	#endif
 }
 
-static void dispatch_interrupt(OSInterrupt interrupt, OSContext *context)
-{
-	if (irq.handler[interrupt])
-		irq.handler[interrupt](interrupt, context);
-}
-
-static void pi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
-{
-	if (irq.status & irq.mask) {
-		dispatch_interrupt(__builtin_clz(irq.status & irq.mask), context);
-		return;
-	}
-
-	PI[0] = 1;
-}
-
-#if defined DI_PASSTHROUGH
-static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
-{
-	#ifdef DVD
-	if (di.reset) {
-		di_reset();
-		return;
-	}
-	#endif
-
-	uint32_t dicr = DI[7];
-
-	if ((di.reg.cr & ~dicr) & 0b001) {
-		di.reg.cr = dicr;
-
-		if (di.reg.cr & 0b010) {
-			di.reg.mar    = DI[5];
-			di.reg.length = DI[6];
-
-			switch (di.reg.cmdbuf0 >> 24) {
-				case DI_CMD_READ:
-				{
-					di.reg.length += OSRoundDown32B(di.reg.cmdbuf2 - DI[4]);
-					break;
-				}
-			}
-		} else {
-			di.reg.immbuf = DI[8];
-
-			switch (di.reg.cmdbuf0 >> 24) {
-				case DI_CMD_REQUEST_ERROR:
-				{
-					if (!(di.reg.immbuf & 0xFFFFFF))
-						di.reg.immbuf = di.error | (di.reg.immbuf & ~0xFFFFFF);
-					di.error = 0;
-					break;
-				}
-			}
-		}
-	}
-
-	dispatch_interrupt(interrupt, context);
-}
-#elif defined GCODE || defined WKF
-void di_interrupt_handler(OSInterrupt interrupt, OSContext *context);
-#endif
-
-#ifdef BBA
-void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context);
-#endif
-
-OSInterruptHandler set_irq_handler(OSInterrupt interrupt, OSInterruptHandler handler)
-{
-	switch (interrupt) {
-		#ifdef CARD_EMULATOR
-		case OS_INTERRUPT_EXI_0_EXI:
-		case OS_INTERRUPT_EXI_0_TC:
-		case OS_INTERRUPT_EXI_0_EXT:
-		case OS_INTERRUPT_EXI_1_EXI:
-		case OS_INTERRUPT_EXI_1_TC:
-		case OS_INTERRUPT_EXI_1_EXT:
-		case OS_INTERRUPT_EXI_2_EXI:
-		case OS_INTERRUPT_EXI_2_TC:
-			OSSetInterruptHandler(OS_INTERRUPT_PI_ERROR, pi_interrupt_handler);
-		#endif
-		default:
-			OSSetInterruptHandler(interrupt, dispatch_interrupt);
-			break;
-		case OS_INTERRUPT_PI_DI:
-			#if defined GCODE || defined WKF || defined DI_PASSTHROUGH
-			OSSetInterruptHandler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
-			#endif
-			OSSetInterruptHandler(OS_INTERRUPT_PI_ERROR, pi_interrupt_handler);
-			#ifdef BBA
-			OSSetInterruptHandler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
-			#endif
-			break;
-	}
-
-	OSInterruptHandler oldHandler = irq.handler[interrupt];
-	irq.handler[interrupt] = handler;
-	return oldHandler;
-}
-
-static void set_irq_mask(OSInterruptMask mask, OSInterruptMask current)
-{
-	#ifdef CARD_EMULATOR
-	if (mask & OS_INTERRUPTMASK_EXI_0) {
-		uint32_t reg = EXIEmuRegs[EXI_CHANNEL_0][0];
-
-		reg = ((current >> (31 - OS_INTERRUPT_EXI_0_EXI)) & 0b00000000000001) | (reg & ~0b00000000000001);
-		reg = ((current >> (29 - OS_INTERRUPT_EXI_0_TC))  & 0b00000000000100) | (reg & ~0b00000000000100);
-		reg = ((current >> (21 - OS_INTERRUPT_EXI_0_EXT)) & 0b00010000000000) | (reg & ~0b00010000000000);
-
-		EXIEmuRegs[EXI_CHANNEL_0][0] = reg & ~0b00100000001010;
-	}
-	if (mask & OS_INTERRUPTMASK_EXI_1) {
-		uint32_t reg = EXIEmuRegs[EXI_CHANNEL_1][0];
-
-		reg = ((current >> (31 - OS_INTERRUPT_EXI_1_EXI)) & 0b00000000000001) | (reg & ~0b00000000000001);
-		reg = ((current >> (29 - OS_INTERRUPT_EXI_1_TC))  & 0b00000000000100) | (reg & ~0b00000000000100);
-		reg = ((current >> (21 - OS_INTERRUPT_EXI_1_EXT)) & 0b00010000000000) | (reg & ~0b00010000000000);
-
-		EXIEmuRegs[EXI_CHANNEL_1][0] = reg & ~0b00100000001010;
-	}
-	if (mask & OS_INTERRUPTMASK_EXI_2) {
-		uint32_t reg = EXIEmuRegs[EXI_CHANNEL_2][0];
-
-		reg = ((current >> (31 - OS_INTERRUPT_EXI_2_EXI)) & 0b00000000000001) | (reg & ~0b00000000000001);
-		reg = ((current >> (29 - OS_INTERRUPT_EXI_2_TC))  & 0b00000000000100) | (reg & ~0b00000000000100);
-
-		EXIEmuRegs[EXI_CHANNEL_2][0] = reg & ~0b00100000001010;
-	}
-	#endif
-}
-
-OSInterruptMask mask_irq(OSInterruptMask mask)
-{
-	set_irq_mask(mask, irq.mask &= ~mask);
-
-	#ifdef CARD_EMULATOR
-	if ((mask & OS_INTERRUPTMASK_EXI) && !(mask & ~OS_INTERRUPTMASK_EXI))
-		mask &= ~OS_INTERRUPTMASK_EXI;
-	#endif
-	#ifndef DI_PASSTHROUGH
-	if (mask == OS_INTERRUPTMASK_PI_DI)
-		mask &= ~OS_INTERRUPTMASK_PI_DI;
-	#endif
-
-	return OSMaskInterrupts(mask);
-}
-
-OSInterruptMask unmask_irq(OSInterruptMask mask)
-{
-	set_irq_mask(mask, irq.mask |= mask);
-
-	#ifdef CARD_EMULATOR
-	if ((mask & OS_INTERRUPTMASK_EXI) && !(mask & ~OS_INTERRUPTMASK_EXI)) {
-		mask &= ~OS_INTERRUPTMASK_EXI;
-		mask |=  OS_INTERRUPTMASK_PI_ERROR;
-	}
-	#endif
-	if (mask == OS_INTERRUPTMASK_PI_DI) {
-		#ifndef DI_PASSTHROUGH
-		mask &= ~OS_INTERRUPTMASK_PI_DI;
-		#endif
-		mask |=  OS_INTERRUPTMASK_PI_ERROR;
-		#ifdef BBA
-		mask |=  OS_INTERRUPTMASK_EXI_2_EXI;
-		#endif
-	}
-
-	return OSUnmaskInterrupts(mask);
-}
-
 void idle_thread(void)
 {
-	disable_interrupts();
+	OSDisableInterrupts();
 	#ifndef ASYNC_READ
 	trickle_read();
 	#endif
@@ -1287,6 +1169,6 @@ void idle_thread(void)
 
 void fini(void)
 {
-	disable_interrupts();
+	OSDisableInterrupts();
 	reset_devices();
 }

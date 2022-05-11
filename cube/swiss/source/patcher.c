@@ -916,6 +916,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 209, 33, 8,  7, 40,  9, NULL, 0, "__OSDispatchInterrupt" },
 		{ 167, 28, 8,  7, 38, 10, NULL, 0, "__OSDispatchInterrupt" }	// SN Systems ProDG
 	};
+	FuncPattern ExternalInterruptHandlerSigs[3] = {
+		{  5, 0,  3, 0, 1, 0, NULL, 0, "ExternalInterruptHandler" },
+		{ 19, 0, 10, 0, 1, 7, NULL, 0, "ExternalInterruptHandler" },
+		{ 20, 0, 11, 0, 1, 7, NULL, 0, "ExternalInterruptHandler" }	// SN Systems ProDG
+	};
 	FuncPattern __OSRebootSigs[14] = {
 		{  81, 34, 6, 16,  1,  2, NULL, 0, "__OSRebootD" },
 		{  89, 39, 8, 17,  1,  2, NULL, 0, "__OSRebootD" },
@@ -2107,6 +2112,40 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 280, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 281, length, &ICFlashInvalidateSig))
 							__OSBootDolSimpleSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(__OSInterruptInitSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &__OSInterruptInitSigs[j])) {
+				switch (j) {
+					case 0:
+						if (get_immediate (data,   i + 20, i + 21, &address) && address == 0xCC003000 &&
+							findx_pattern (data, dataType, i + 24, length, &__OSMaskInterruptsSigs[0]) &&
+							findi_patterns(data, dataType, i + 26, i + 27, length, &ExternalInterruptHandlerSigs[0],
+							                                                       &ExternalInterruptHandlerSigs[1],
+							                                                       &ExternalInterruptHandlerSigs[2], NULL) &&
+							findx_pattern (data, dataType, i + 28, length, &__OSSetExceptionHandlerSigs[0]) &&
+							get_immediate (data,   i + 30, i + 31, &address) && address == 0xCC003000 &&
+							findx_pattern (data, dataType, i + 33, length, &__OSUnmaskInterruptsSigs[0]))
+							__OSInterruptInitSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (get_immediate (data,   i + 13, i + 14, &address) && address == 0xCC003000 &&
+							findx_pattern (data, dataType, i + 19, length, &__OSMaskInterruptsSigs[1]) &&
+							findi_patterns(data, dataType, i + 20, i + 21, length, &ExternalInterruptHandlerSigs[0],
+							                                                       &ExternalInterruptHandlerSigs[1],
+							                                                       &ExternalInterruptHandlerSigs[2], NULL) &&
+							findx_pattern (data, dataType, i + 23, length, &__OSSetExceptionHandlerSigs[1]))
+							__OSInterruptInitSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (get_immediate(data,   i + 13, i + 16, &address) && address == 0xCC003004 &&
+							findx_pattern(data, dataType, i + 17, length, &__OSMaskInterruptsSigs[2]) &&
+							findi_pattern(data, dataType, i + 18, i + 20, length, &ExternalInterruptHandlerSigs[2]) &&
+							findx_pattern(data, dataType, i + 21, length, &__OSSetExceptionHandlerSigs[2]))
+							__OSInterruptInitSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -4885,26 +4924,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	for (j = 0; j < sizeof(PrepareExecSigs) / sizeof(FuncPattern); j++)
-	if ((i = PrepareExecSigs[j].offsetFoundAt)) {
-		u32 *PrepareExec = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (PrepareExec) {
-			switch (j) {
-				case 0:
-					data[i + 42] = branchAndLink(MASK_IRQ,   PrepareExec + 42);
-					data[i + 44] = branchAndLink(UNMASK_IRQ, PrepareExec + 44);
-					break;
-				case 1:
-					data[i + 46] = branchAndLink(MASK_IRQ,   PrepareExec + 46);
-					data[i + 48] = branchAndLink(UNMASK_IRQ, PrepareExec + 48);
-					break;
-			}
-			print_gecko("Found:[%s] @ %08X\n", PrepareExecSigs[j].Name, PrepareExec);
-			patched++;
-		}
-	}
-	
 	for (j = 0; j < sizeof(OSExceptionInitSigs) / sizeof(FuncPattern); j++)
 	if ((i = OSExceptionInitSigs[j].offsetFoundAt)) {
 		u32 *OSExceptionInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
@@ -4960,36 +4979,49 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	for (j = 0; j < sizeof(__OSUnhandledExceptionSigs) / sizeof(FuncPattern); j++)
-	if ((i = __OSUnhandledExceptionSigs[j].offsetFoundAt)) {
-		u32 *__OSUnhandledException = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+	for (j = 0; j < sizeof(OSLoadContextSigs) / sizeof(FuncPattern); j++)
+	if ((i = OSLoadContextSigs[j].offsetFoundAt)) {
+		u32 *OSLoadContext = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		if (__OSUnhandledException) {
+		if (OSLoadContext) {
 			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 2] = (u32)__OSUnhandledException;
+				data[k + 2] = (u32)OSLoadContext;
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", __OSUnhandledExceptionSigs[j].Name, j, __OSUnhandledException);
+			print_gecko("Found:[%s$%i] @ %08X\n", OSLoadContextSigs[j].Name, j, OSLoadContext);
 			patched++;
 		}
 	}
 	
-	for (j = 0; j < sizeof(__OSBootDolSimpleSigs) / sizeof(FuncPattern); j++)
-	if ((i = __OSBootDolSimpleSigs[j].offsetFoundAt)) {
-		u32 *__OSBootDolSimple = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+	if ((i = OSDisableInterruptsSig.offsetFoundAt)) {
+		u32 *OSDisableInterrupts = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		if (__OSBootDolSimple) {
+		if (OSDisableInterrupts) {
+			if ((k = SystemCallVectorSig.offsetFoundAt))
+				data[k + 3] = (u32)OSDisableInterrupts;
+			
+			print_gecko("Found:[%s$%i] @ %08X\n", OSDisableInterruptsSig.Name, j, OSDisableInterrupts);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(__OSInterruptInitSigs) / sizeof(FuncPattern); j++)
+	if ((i = __OSInterruptInitSigs[j].offsetFoundAt)) {
+		u32 *__OSInterruptInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__OSInterruptInit) {
 			switch (j) {
 				case 0:
-					data[i + 43] = branchAndLink(MASK_IRQ,   __OSBootDolSimple + 43);
-					data[i + 45] = branchAndLink(UNMASK_IRQ, __OSBootDolSimple + 45);
+					data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 30] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 1:
+					data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
 				case 2:
-					data[i + 42] = branchAndLink(MASK_IRQ,   __OSBootDolSimple + 42);
-					data[i + 44] = branchAndLink(UNMASK_IRQ, __OSBootDolSimple + 44);
+					data[i + 13] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __OSBootDolSimpleSigs[j].Name, j, __OSBootDolSimple);
+			print_gecko("Found:[%s$%i] @ %08X\n", __OSInterruptInitSigs[j].Name, j, __OSInterruptInit);
 			patched++;
 		}
 	}
@@ -4997,48 +5029,68 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(SetInterruptMaskSigs) / sizeof(FuncPattern); j++)
 	if ((i = SetInterruptMaskSigs[j].offsetFoundAt)) {
 		u32 *SetInterruptMask = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		u32 **jumpTable;
 		
 		if (SetInterruptMask) {
 			switch (j) {
 				case 0:
+					data[i +  72] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i +  88] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i +  92] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 109] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 114] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 126] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 168] = 0x3CA00C00;	// lis		r5, 0x0C00
+					break;
 				case 1:
-					jumpTable = loadResolve(data, dataType, i + 5, i + 6);
-					jumpTable[4] = SetInterruptMask + 11;
+					data[i +  72] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i +  88] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i +  92] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 109] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 114] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 126] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 172] = 0x3CA00C00;	// lis		r5, 0x0C00
+					break;
+				case 2:
+					data[i +  82] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i +  98] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 102] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 119] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 124] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 136] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 182] = 0x3CA00C00;	// lis		r5, 0x0C00
 					break;
 				case 3:
+					data[i +  70] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i +  85] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i +  89] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 110] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 163] = 0x3C800C00;	// lis		r4, 0x0C00
+					break;
 				case 4:
-					jumpTable = loadResolve(data, dataType, i + 3, i + 4);
-					jumpTable[4] = SetInterruptMask +  9;
+					data[i +  70] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i +  85] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i +  89] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 110] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 167] = 0x3C800C00;	// lis		r4, 0x0C00
+					break;
+				case 5:
+					data[i +  80] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i +  95] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i +  99] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 120] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 177] = 0x3C800C00;	// lis		r4, 0x0C00
+					break;
+				case 6:
+					data[i +  67] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i +  79] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i +  84] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i +  96] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 100] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 109] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 144] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", SetInterruptMaskSigs[j].Name, j, SetInterruptMask);
-			patched++;
-		}
-	}
-	
-	for (j = 0; j < sizeof(__OSMaskInterruptsSigs) / sizeof(FuncPattern); j++)
-	if ((i = __OSMaskInterruptsSigs[j].offsetFoundAt)) {
-		u32 *__OSMaskInterrupts = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (__OSMaskInterrupts) {
-			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 3] = (u32)__OSMaskInterrupts;
-			
-			print_gecko("Found:[%s$%i] @ %08X\n", __OSMaskInterruptsSigs[j].Name, j, __OSMaskInterrupts);
-			patched++;
-		}
-	}
-	
-	for (j = 0; j < sizeof(__OSUnmaskInterruptsSigs) / sizeof(FuncPattern); j++)
-	if ((i = __OSUnmaskInterruptsSigs[j].offsetFoundAt)) {
-		u32 *__OSUnmaskInterrupts = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (__OSUnmaskInterrupts) {
-			if ((k = SystemCallVectorSig.offsetFoundAt))
-				data[k + 4] = (u32)__OSUnmaskInterrupts;
-			
-			print_gecko("Found:[%s$%i] @ %08X\n", __OSUnmaskInterruptsSigs[j].Name, j, __OSUnmaskInterrupts);
 			patched++;
 		}
 	}
@@ -5050,65 +5102,61 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		if (__OSDispatchInterrupt) {
 			switch (j) {
 				case 0:
-					data[i + 161] = 0x4800008C;	// b		+35
+					data[i +   7] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  12] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  85] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  99] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 114] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 170] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 173] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 179] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 182] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 191] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 				case 1:
 				case 2:
-					data[i + 165] = 0x4800008C;	// b		+35
+					data[i +   7] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  12] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  85] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  99] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 114] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 174] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 177] = 0x3CA00C00;	// lis		r5, 0x0C00
+					data[i + 183] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 186] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 195] = 0x3C800C00;	// lis		r4, 0x0C00
+					break;
+				case 3:
+				case 4:
+				case 5:
+					data[i +   7] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  76] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  90] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 105] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 6:
+					data[i +   2] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  58] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  69] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  80] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
+			if ((k = SystemCallVectorSig.offsetFoundAt))
+				data[k + 4] = (u32)__OSDispatchInterrupt;
+			
 			print_gecko("Found:[%s$%i] @ %08X\n", __OSDispatchInterruptSigs[j].Name, j, __OSDispatchInterrupt);
 			patched++;
 		}
 	}
 	
-	for (j = 0; j < sizeof(__OSRebootSigs) / sizeof(FuncPattern); j++)
-	if ((i = __OSRebootSigs[j].offsetFoundAt)) {
-		u32 *__OSReboot = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+	for (j = 0; j < sizeof(ExternalInterruptHandlerSigs) / sizeof(FuncPattern); j++)
+	if ((i = ExternalInterruptHandlerSigs[j].offsetFoundAt)) {
+		u32 *ExternalInterruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		if (__OSReboot) {
-			switch (j) {
-				case 0:
-					data[i + 41] = branchAndLink(MASK_IRQ,   __OSReboot + 41);
-					data[i + 43] = branchAndLink(UNMASK_IRQ, __OSReboot + 43);
-					break;
-				case 1:
-					data[i + 49] = branchAndLink(MASK_IRQ,   __OSReboot + 49);
-					data[i + 51] = branchAndLink(UNMASK_IRQ, __OSReboot + 51);
-					break;
-				case 2:
-				case 3:
-					data[i + 48] = branchAndLink(MASK_IRQ,   __OSReboot + 48);
-					data[i + 50] = branchAndLink(UNMASK_IRQ, __OSReboot + 50);
-					break;
-				case 4:
-					data[i + 45] = branchAndLink(MASK_IRQ,   __OSReboot + 45);
-					data[i + 47] = branchAndLink(UNMASK_IRQ, __OSReboot + 47);
-					break;
-				case 6:
-					data[i + 31] = branchAndLink(MASK_IRQ,   __OSReboot + 31);
-					data[i + 33] = branchAndLink(UNMASK_IRQ, __OSReboot + 33);
-					break;
-				case 7:
-					data[i + 38] = branchAndLink(MASK_IRQ,   __OSReboot + 38);
-					data[i + 40] = branchAndLink(UNMASK_IRQ, __OSReboot + 40);
-					break;
-				case 8:
-				case 9:
-					data[i + 36] = branchAndLink(MASK_IRQ,   __OSReboot + 36);
-					data[i + 38] = branchAndLink(UNMASK_IRQ, __OSReboot + 38);
-					break;
-				case 10:
-				case 11:
-					data[i + 32] = branchAndLink(MASK_IRQ,   __OSReboot + 32);
-					data[i + 34] = branchAndLink(UNMASK_IRQ, __OSReboot + 34);
-					break;
-				case 12:
-					data[i + 31] = branchAndLink(MASK_IRQ,   __OSReboot + 31);
-					data[i + 33] = branchAndLink(UNMASK_IRQ, __OSReboot + 33);
-					break;
-			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __OSRebootSigs[j].Name, j, __OSReboot);
+		if (ExternalInterruptHandler) {
+			data[i + ExternalInterruptHandlerSigs[j].Length - 1] = branch(DISPATCH_INTERRUPT, ExternalInterruptHandler + ExternalInterruptHandlerSigs[j].Length - 1);
+			
+			print_gecko("Found:[%s$%i] @ %08X\n", ExternalInterruptHandlerSigs[j].Name, j, ExternalInterruptHandler);
 			patched++;
 		}
 	}
@@ -5270,70 +5318,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	for (j = 0; j < sizeof(SetExiInterruptMaskSigs) / sizeof(FuncPattern); j++)
-	if ((i = SetExiInterruptMaskSigs[j].offsetFoundAt)) {
-		u32 *SetExiInterruptMask = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (SetExiInterruptMask) {
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
-				switch (j) {
-					case 0:
-					case 1:
-					case 2:
-						data[i + 29] = branchAndLink(MASK_IRQ,   SetExiInterruptMask + 29);
-						data[i + 32] = branchAndLink(UNMASK_IRQ, SetExiInterruptMask + 32);
-						data[i + 41] = branchAndLink(MASK_IRQ,   SetExiInterruptMask + 41);
-						data[i + 44] = branchAndLink(UNMASK_IRQ, SetExiInterruptMask + 44);
-						break;
-					case 3:
-					case 4:
-						data[i + 27] = branchAndLink(MASK_IRQ,   SetExiInterruptMask + 27);
-						data[i + 30] = branchAndLink(UNMASK_IRQ, SetExiInterruptMask + 30);
-						data[i + 39] = branchAndLink(MASK_IRQ,   SetExiInterruptMask + 39);
-						data[i + 42] = branchAndLink(UNMASK_IRQ, SetExiInterruptMask + 42);
-						break;
-					case 5:
-						data[i + 29] = branchAndLink(MASK_IRQ,   SetExiInterruptMask + 29);
-						data[i + 32] = branchAndLink(UNMASK_IRQ, SetExiInterruptMask + 32);
-						data[i + 41] = branchAndLink(MASK_IRQ,   SetExiInterruptMask + 41);
-						data[i + 44] = branchAndLink(UNMASK_IRQ, SetExiInterruptMask + 44);
-						break;
-					case 6:
-						data[i + 27] = branchAndLink(MASK_IRQ,   SetExiInterruptMask + 27);
-						data[i + 30] = branchAndLink(UNMASK_IRQ, SetExiInterruptMask + 30);
-						data[i + 39] = branchAndLink(MASK_IRQ,   SetExiInterruptMask + 39);
-						data[i + 42] = branchAndLink(UNMASK_IRQ, SetExiInterruptMask + 42);
-						break;
-				}
-			}
-			if (devices[DEVICE_CUR] == &__device_fsp) {
-				switch (j) {
-					case 0:
-					case 1:
-					case 2:
-						data[i + 28] = 0x3C600040;	// lis		r3, 0x0040
-						data[i + 31] = 0x3C600040;	// lis		r3, 0x0040
-						break;
-					case 3:
-					case 4:
-						data[i + 26] = 0x3C600040;	// lis		r3, 0x0040
-						data[i + 29] = 0x3C600040;	// lis		r3, 0x0040
-						break;
-					case 5:
-						data[i + 28] = 0x3C600040;	// lis		r3, 0x0040
-						data[i + 31] = 0x3C600040;	// lis		r3, 0x0040
-						break;
-					case 6:
-						data[i + 26] = 0x3C600040;	// lis		r3, 0x0040
-						data[i + 29] = 0x3C600040;	// lis		r3, 0x0040
-						break;
-				}
-			}
-			print_gecko("Found:[%s$%i] @ %08X\n", SetExiInterruptMaskSigs[j].Name, j, SetExiInterruptMask);
-			patched++;
-		}
-	}
-	
 	for (j = 0; j < sizeof(CompleteTransferSigs) / sizeof(FuncPattern); j++)
 	if ((i = CompleteTransferSigs[j].offsetFoundAt)) {
 		u32 *CompleteTransfer = Calc_ProperAddress(data, dataType, i * sizeof(u32));
@@ -5365,23 +5349,19 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					case 0:
 					case 1:
 					case 2:
-						data[i +  73] = branchAndLink(UNMASK_IRQ, EXIImm + 73);
 						data[i +  93] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i + 111] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 					case 3:
 					case 4:
-						data[i +  37] = branchAndLink(UNMASK_IRQ, EXIImm + 37);
 						data[i + 119] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i + 133] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 					case 5:
-						data[i +  38] = branchAndLink(UNMASK_IRQ, EXIImm + 38);
 						data[i +  58] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i +  76] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 					case 6:
-						data[i +  37] = branchAndLink(UNMASK_IRQ, EXIImm + 37);
 						data[i + 118] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i + 135] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
@@ -5402,24 +5382,20 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					case 0:
 					case 1:
 					case 2:
-						data[i +  80] = branchAndLink(UNMASK_IRQ, EXIDma + 80);
 						data[i +  88] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i +  94] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i + 102] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 					case 3:
 					case 4:
-						data[i +  37] = branchAndLink(UNMASK_IRQ, EXIDma + 37);
 						data[i +  39] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 					case 5:
-						data[i +  38] = branchAndLink(UNMASK_IRQ, EXIDma + 38);
 						data[i +  47] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i +  54] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i +  63] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 					case 6:
-						data[i +  37] = branchAndLink(UNMASK_IRQ, EXIDma + 37);
 						data[i +  42] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 				}
@@ -5517,24 +5493,22 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIClearInterrupts = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIClearInterrupts) {
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
-				switch (j) {
-					case 0:
-						data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 39] = 0x3C600C00;	// lis		r3, 0x0C00
-						break;
-					case 1:
-						data[i + 21] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 40] = 0x3C600C00;	// lis		r3, 0x0C00
-						break;
-					case 2:
-						data[i +  1] = 0x3C600C00;	// lis		r3, 0x0C00
-						break;
-					case 3:
-						data[i +  4] = 0x3CE00C00;	// lis		r7, 0x0C00
-						data[i + 20] = 0x3CE00C00;	// lis		r7, 0x0C00
-						break;
-				}
+			switch (j) {
+				case 0:
+					data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 39] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 1:
+					data[i + 21] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 40] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i +  1] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 3:
+					data[i +  4] = 0x3CE00C00;	// lis		r7, 0x0C00
+					data[i + 20] = 0x3CE00C00;	// lis		r7, 0x0C00
+					break;
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXIClearInterruptsSigs[j].Name, j, EXIClearInterrupts);
 			patched++;
@@ -5572,103 +5546,12 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	for (j = 0; j < sizeof(__EXIAttachSigs) / sizeof(FuncPattern); j++)
-	if ((i = __EXIAttachSigs[j].offsetFoundAt)) {
-		u32 *__EXIAttach = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (__EXIAttach) {
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
-				switch (j) {
-					case 0:
-						data[i + 43] = branchAndLink(UNMASK_IRQ, __EXIAttach + 43);
-						break;
-					case 1:
-						data[i + 44] = branchAndLink(UNMASK_IRQ, __EXIAttach + 44);
-						break;
-				}
-			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __EXIAttachSigs[j].Name, j, __EXIAttach);
-			patched++;
-		}
-	}
-	
-	for (j = 0; j < sizeof(EXIAttachSigs) / sizeof(FuncPattern); j++)
-	if ((i = EXIAttachSigs[j].offsetFoundAt)) {
-		u32 *EXIAttach = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (EXIAttach) {
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
-				switch (j) {
-					case 0:
-						data[i + 47] = branchAndLink(UNMASK_IRQ, EXIAttach + 47);
-						break;
-					case 3:
-						data[i + 42] = branchAndLink(UNMASK_IRQ, EXIAttach + 42);
-						break;
-					case 4:
-						data[i + 52] = branchAndLink(UNMASK_IRQ, EXIAttach + 52);
-						break;
-					case 5:
-						data[i + 58] = branchAndLink(UNMASK_IRQ, EXIAttach + 58);
-						break;
-					case 6:
-						data[i + 52] = branchAndLink(UNMASK_IRQ, EXIAttach + 52);
-						break;
-				}
-			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXIAttachSigs[j].Name, j, EXIAttach);
-			patched++;
-		}
-	}
-	
-	for (j = 0; j < sizeof(EXIDetachSigs) / sizeof(FuncPattern); j++)
-	if ((i = EXIDetachSigs[j].offsetFoundAt)) {
-		u32 *EXIDetach = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (EXIDetach) {
-			switch (j) {
-				case 0:
-				case 1:
-				case 2:
-					data[i + 11] = 0x2C1D0003;	// cmpwi	r29, 3
-					break;
-			}
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
-				switch (j) {
-					case 0:
-					case 1:
-						data[i + 44] = branchAndLink(MASK_IRQ, EXIDetach + 44);
-						break;
-					case 2:
-						data[i + 45] = branchAndLink(MASK_IRQ, EXIDetach + 45);
-						break;
-					case 3:
-					case 4:
-						data[i + 36] = branchAndLink(MASK_IRQ, EXIDetach + 36);
-						break;
-					case 5:
-						data[i + 34] = branchAndLink(MASK_IRQ, EXIDetach + 34);
-						break;
-					case 6:
-						data[i + 36] = branchAndLink(MASK_IRQ, EXIDetach + 36);
-						break;
-				}
-			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXIDetachSigs[j].Name, j, EXIDetach);
-			patched++;
-		}
-	}
-	
 	if ((i = EXISelectSDSig.offsetFoundAt)) {
 		u32 *EXISelectSD = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISelectSD) {
 			data[i + 55] = 0x3C600C00;	// lis		r3, 0x0C00
 			
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
-				data[i + 73] = branchAndLink(MASK_IRQ, EXISelectSD + 73);
-				data[i + 76] = branchAndLink(MASK_IRQ, EXISelectSD + 76);
-			}
 			print_gecko("Found:[%s] @ %08X\n", EXISelectSDSig.Name, EXISelectSD);
 			patched++;
 		}
@@ -5698,29 +5581,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 41] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
-				switch (j) {
-					case 0:
-					case 1:
-					case 2:
-						data[i + 104] = branchAndLink(MASK_IRQ, EXISelect + 104);
-						data[i + 107] = branchAndLink(MASK_IRQ, EXISelect + 107);
-						break;
-					case 3:
-					case 4:
-						data[i + 63] = branchAndLink(MASK_IRQ, EXISelect + 63);
-						data[i + 66] = branchAndLink(MASK_IRQ, EXISelect + 66);
-						break;
-					case 5:
-						data[i + 68] = branchAndLink(MASK_IRQ, EXISelect + 68);
-						data[i + 71] = branchAndLink(MASK_IRQ, EXISelect + 71);
-						break;
-					case 6:
-						data[i + 63] = branchAndLink(MASK_IRQ, EXISelect + 63);
-						data[i + 66] = branchAndLink(MASK_IRQ, EXISelect + 66);
-						break;
-				}
-			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXISelectSigs[j].Name, j, EXISelect);
 			patched++;
 		}
@@ -5731,40 +5591,28 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIDeselect = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIDeselect) {
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
-				switch (j) {
-					case 0:
-					case 1:
-						data[i + 33] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 39] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 52] = branchAndLink(UNMASK_IRQ, EXIDeselect + 52);
-						data[i + 55] = branchAndLink(UNMASK_IRQ, EXIDeselect + 55);
-						break;
-					case 2:
-						data[i + 34] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 40] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 53] = branchAndLink(UNMASK_IRQ, EXIDeselect + 53);
-						data[i + 56] = branchAndLink(UNMASK_IRQ, EXIDeselect + 56);
-						break;
-					case 3:
-					case 4:
-					case 5:
-						data[i + 22] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 41] = branchAndLink(UNMASK_IRQ, EXIDeselect + 41);
-						data[i + 44] = branchAndLink(UNMASK_IRQ, EXIDeselect + 44);
-						break;
-					case 6:
-						data[i + 23] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 42] = branchAndLink(UNMASK_IRQ, EXIDeselect + 42);
-						data[i + 45] = branchAndLink(UNMASK_IRQ, EXIDeselect + 45);
-						break;
-					case 7:
-						data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 41] = branchAndLink(UNMASK_IRQ, EXIDeselect + 41);
-						data[i + 44] = branchAndLink(UNMASK_IRQ, EXIDeselect + 44);
-						break;
-				}
+			switch (j) {
+				case 0:
+				case 1:
+					data[i + 33] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 39] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i + 34] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 40] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 3:
+				case 4:
+				case 5:
+					data[i + 22] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 6:
+					data[i + 23] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 7:
+					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXIDeselectSigs[j].Name, j, EXIDeselect);
 			patched++;
@@ -5776,22 +5624,20 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIIntrruptHandler) {
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
-				switch (j) {
-					case 3:
-						data[i + 10] = 0x3CA00C00;	// lis		r5, 0x0C00
-						break;
-					case 4:
-						data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
-						break;
-					case 5:
-						data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 24] = 0x3C600C00;	// lis		r3, 0x0C00
-						break;
-					case 6:
-						data[i + 15] = 0x3C600C00;	// lis		r3, 0x0C00
-						break;
-				}
+			switch (j) {
+				case 3:
+					data[i + 10] = 0x3CA00C00;	// lis		r5, 0x0C00
+					break;
+				case 4:
+					data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 5:
+					data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 24] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 6:
+					data[i + 15] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXIIntrruptHandlerSigs[j].Name, j, EXIIntrruptHandler);
 			patched++;
@@ -5803,31 +5649,19 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *TCIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (TCIntrruptHandler) {
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
-				switch (j) {
-					case 0:
-					case 1:
-						data[i + 27] = branchAndLink(MASK_IRQ, TCIntrruptHandler + 27);
-						break;
-					case 2:
-						data[i + 28] = branchAndLink(MASK_IRQ, TCIntrruptHandler + 28);
-						break;
-					case 3:
-					case 4:
-						data[i + 21] = branchAndLink(MASK_IRQ, TCIntrruptHandler + 21);
-						data[i + 23] = 0x3C600C00;	// lis		r3, 0x0C00
-						break;
-					case 5:
-						data[i + 17] = branchAndLink(MASK_IRQ, TCIntrruptHandler + 17);
-						data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 53] = 0x3C600C00;	// lis		r3, 0x0C00
-						break;
-					case 6:
-						data[i + 21] = branchAndLink(MASK_IRQ, TCIntrruptHandler + 21);
-						data[i + 23] = 0x3CC00C00;	// lis		r6, 0x0C00
-						break;
-				}
+			switch (j) {
+				case 3:
+				case 4:
+					data[i + 23] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 5:
+					data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 53] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 6:
+					data[i + 23] = 0x3CC00C00;	// lis		r6, 0x0C00
+					break;
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", TCIntrruptHandlerSigs[j].Name, j, TCIntrruptHandler);
 			patched++;
@@ -5839,36 +5673,23 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXTIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXTIntrruptHandler) {
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
-				switch (j) {
-					case 0:
-					case 1:
-						data[i + 23] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 23);
-						data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
-						break;
-					case 2:
-						data[i + 24] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 24);
-						data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
-						break;
-					case 3:
-						data[i + 24] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 24);
-						break;
-					case 4:
-						data[i + 16] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 16);
-						data[i + 18] = 0x3CA00C00;	// lis		r5, 0x0C00
-						break;
-					case 5:
-						data[i + 15] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 15);
-						data[i + 17] = 0x3C800C00;	// lis		r4, 0x0C00
-						break;
-					case 6:
-						data[i + 13] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 13);
-						data[i + 17] = 0x3C600C00;	// lis		r3, 0x0C00
-						break;
-					case 7:
-						data[i + 18] = branchAndLink(MASK_IRQ, EXTIntrruptHandler + 18);
-						break;
-				}
+			switch (j) {
+				case 0:
+				case 1:
+					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 4:
+					data[i + 18] = 0x3CA00C00;	// lis		r5, 0x0C00
+					break;
+				case 5:
+					data[i + 17] = 0x3C800C00;	// lis		r4, 0x0C00
+					break;
+				case 6:
+					data[i + 17] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXTIntrruptHandlerSigs[j].Name, j, EXTIntrruptHandler);
 			patched++;
@@ -5880,112 +5701,47 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIInit) {
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
-				switch (j) {
-					case 0:
-						data[i +  5] = branchAndLink(MASK_IRQ, EXIInit + 5);
-						data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 10] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 21] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 21);
-						data[i + 25] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 25);
-						data[i + 29] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 29);
-						data[i + 33] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 33);
-						data[i + 37] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 37);
-						data[i + 41] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 41);
-						data[i + 45] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 45);
-						data[i + 49] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 49);
-						break;
-					case 1:
-						data[i +  7] = branchAndLink(MASK_IRQ, EXIInit + 7);
-						data[i +  9] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 12] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 15] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 18] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 23] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 23);
-						data[i + 27] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 27);
-						data[i + 31] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 31);
-						data[i + 35] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 35);
-						data[i + 39] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 39);
-						data[i + 43] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 43);
-						data[i + 47] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 47);
-						data[i + 51] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 51);
-						break;
-					case 2:
-						data[i +  3] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i +  8] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 20] = branchAndLink(MASK_IRQ, EXIInit + 20);
-						data[i + 22] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 31] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 36] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 36);
-						data[i + 40] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 40);
-						data[i + 44] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 44);
-						data[i + 48] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 48);
-						data[i + 52] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 52);
-						data[i + 56] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 56);
-						data[i + 60] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 60);
-						data[i + 64] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 64);
-						break;
-					case 3:
-					case 4:
-						data[i +  9] = branchAndLink(MASK_IRQ, EXIInit + 9);
-						data[i + 10] = 0x3CA00C00;	// lis		r5, 0x0C00
-						data[i + 21] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 21);
-						data[i + 26] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 26);
-						data[i + 31] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 31);
-						data[i + 34] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 34);
-						data[i + 37] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 37);
-						data[i + 40] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 40);
-						data[i + 43] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 43);
-						data[i + 46] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 46);
-						break;
-					case 5:
-						data[i +  5] = branchAndLink(MASK_IRQ, EXIInit + 5);
-						data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 10] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 21] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 21);
-						data[i + 25] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 25);
-						data[i + 29] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 29);
-						data[i + 33] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 33);
-						data[i + 37] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 37);
-						data[i + 41] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 41);
-						data[i + 45] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 45);
-						data[i + 49] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 49);
-						break;
-					case 6:
-						data[i + 11] = branchAndLink(MASK_IRQ, EXIInit + 11);
-						data[i + 13] = 0x3C800C00;	// lis		r4, 0x0C00
-						data[i + 23] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 23);
-						data[i + 28] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 28);
-						data[i + 33] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 33);
-						data[i + 36] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 36);
-						data[i + 39] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 39);
-						data[i + 42] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 42);
-						data[i + 45] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 45);
-						data[i + 48] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 48);
-						break;
-					case 7:
-					case 8:
-					case 9:
-						data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 23] = branchAndLink(MASK_IRQ, EXIInit + 23);
-						data[i + 25] = 0x3C800C00;	// lis		r4, 0x0C00
-						data[i + 35] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 35);
-						data[i + 40] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 40);
-						data[i + 45] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 45);
-						data[i + 48] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 48);
-						data[i + 51] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 51);
-						data[i + 54] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 54);
-						data[i + 57] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 57);
-						data[i + 60] = branchAndLink(SET_IRQ_HANDLER, EXIInit + 60);
-						break;
-				}
+			switch (j) {
+				case 0:
+					data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 10] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 1:
+					data[i +  9] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 12] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 15] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 18] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 2:
+					data[i +  3] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i +  8] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 22] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 31] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 3:
+				case 4:
+					data[i + 10] = 0x3CA00C00;	// lis		r5, 0x0C00
+					break;
+				case 5:
+					data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 10] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 13] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
+					break;
+				case 6:
+					data[i + 13] = 0x3C800C00;	// lis		r4, 0x0C00
+					break;
+				case 7:
+				case 8:
+				case 9:
+					data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 25] = 0x3C800C00;	// lis		r4, 0x0C00
+					break;
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXIInitSigs[j].Name, j, EXIInit);
 			patched++;
@@ -6014,40 +5770,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				data[k + 7] = (u32)EXIUnlock;
 			
 			print_gecko("Found:[%s$%i] @ %08X\n", EXIUnlockSigs[j].Name, j, EXIUnlock);
-			patched++;
-		}
-	}
-	
-	for (j = 0; j < sizeof(EXIGetIDSigs) / sizeof(FuncPattern); j++)
-	if ((i = EXIGetIDSigs[j].offsetFoundAt)) {
-		u32 *EXIGetID = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (EXIGetID) {
-			if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
-				switch (j) {
-					case 4:
-						data[i +  42] = branchAndLink(UNMASK_IRQ, EXIGetID +  42);
-						data[i + 168] = branchAndLink(MASK_IRQ,   EXIGetID + 168);
-						break;
-					case 5:
-						data[i +  56] = branchAndLink(UNMASK_IRQ, EXIGetID +  56);
-						data[i + 190] = branchAndLink(MASK_IRQ,   EXIGetID + 190);
-						break;
-					case 6:
-						data[i +  57] = branchAndLink(UNMASK_IRQ, EXIGetID +  57);
-						data[i + 193] = branchAndLink(MASK_IRQ,   EXIGetID + 193);
-						break;
-					case 7:
-						data[i +  56] = branchAndLink(UNMASK_IRQ, EXIGetID +  56);
-						data[i + 190] = branchAndLink(MASK_IRQ,   EXIGetID + 190);
-						break;
-					case 8:
-						data[i +  65] = branchAndLink(UNMASK_IRQ, EXIGetID +  65);
-						data[i + 203] = branchAndLink(MASK_IRQ,   EXIGetID + 203);
-						break;
-				}
-			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXIGetIDSigs[j].Name, j, EXIGetID);
 			patched++;
 		}
 	}
@@ -6155,23 +5877,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					break;
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", __DVDInterruptHandlerSigs[j].Name, j, __DVDInterruptHandler);
-			patched++;
-		}
-	}
-	
-	for (j = 0; j < sizeof(AlarmHandlerForTimeoutSigs) / sizeof(FuncPattern); j++)
-	if ((i = AlarmHandlerForTimeoutSigs[j].offsetFoundAt)) {
-		u32 *AlarmHandlerForTimeout = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (AlarmHandlerForTimeout) {
-			switch (j) {
-				case 0:
-				case 1:
-				case 2:
-					data[i + 6] = branchAndLink(MASK_IRQ, AlarmHandlerForTimeout + 6);
-					break;
-			}
-			print_gecko("Found:[%s$%i] @ %08X\n", AlarmHandlerForTimeoutSigs[j].Name, j, AlarmHandlerForTimeout);
 			patched++;
 		}
 	}
@@ -6702,46 +6407,30 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		if (DVDInit) {
 			switch (j) {
 				case 0:
-					data[i + 23] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 23);
-					data[i + 25] = branchAndLink(UNMASK_IRQ,      DVDInit + 25);
 					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 32] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 1:
-					data[i + 21] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 21);
-					data[i + 23] = branchAndLink(UNMASK_IRQ,      DVDInit + 23);
 					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 30] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 2:
-					data[i + 23] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 23);
-					data[i + 25] = branchAndLink(UNMASK_IRQ,      DVDInit + 25);
 					data[i + 29] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 32] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 3:
-					data[i + 20] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 20);
-					data[i + 22] = branchAndLink(UNMASK_IRQ,      DVDInit + 22);
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 4:
-					data[i + 22] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 22);
-					data[i + 24] = branchAndLink(UNMASK_IRQ,      DVDInit + 24);
 					data[i + 27] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 5:
-					data[i + 20] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 20);
-					data[i + 22] = branchAndLink(UNMASK_IRQ,      DVDInit + 22);
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 6:
-					data[i + 19] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 19);
-					data[i + 21] = branchAndLink(UNMASK_IRQ,      DVDInit + 21);
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 				case 7:
-					data[i + 23] = branchAndLink(SET_IRQ_HANDLER, DVDInit + 23);
-					data[i + 25] = branchAndLink(UNMASK_IRQ,      DVDInit + 25);
 					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
@@ -11751,11 +11440,6 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 			case 1448256:
 				*(s16 *)(data + 0x813007DA - 0x81300000) = 0x0C00;
 				
-				*(u32 *)(data + 0x813011D0 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x813011D0);
-				*(u32 *)(data + 0x813011DC - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x813011DC);
-				*(u32 *)(data + 0x81301258 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81301258);
-				*(u32 *)(data + 0x81301260 - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x81301260);
-				
 				*(s16 *)(data + 0x81301422 - 0x81300000) = 0x0C00;
 				*(s16 *)(data + 0x81301476 - 0x81300000) = 0x0C00;
 				*(u32 *)(data + 0x81301484 - 0x81300000) = 0x80050004;
@@ -11770,11 +11454,6 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 				break;
 			case 1449824:
 				*(s16 *)(data + 0x81300B4E - 0x81300000) = 0x0C00;
-				
-				*(u32 *)(data + 0x81301510 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81301510);
-				*(u32 *)(data + 0x8130151C - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x8130151C);
-				*(u32 *)(data + 0x81301598 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81301598);
-				*(u32 *)(data + 0x813015A0 - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x813015A0);
 				
 				*(s16 *)(data + 0x81301762 - 0x81300000) = 0x0C00;
 				*(s16 *)(data + 0x813017B6 - 0x81300000) = 0x0C00;
@@ -11803,11 +11482,6 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 			case 1760128:
 				*(s16 *)(data + 0x8130082E - 0x81300000) = 0x0C00;
 				
-				*(u32 *)(data + 0x81301258 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81301258);
-				*(u32 *)(data + 0x81301264 - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x81301264);
-				*(u32 *)(data + 0x813012D8 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x813012D8);
-				*(u32 *)(data + 0x813012E0 - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x813012E0);
-				
 				*(s16 *)(data + 0x81301496 - 0x81300000) = 0x0C00;
 				*(s16 *)(data + 0x813014E6 - 0x81300000) = 0x0C00;
 				*(u32 *)(data + 0x813014F4 - 0x81300000) = 0x80050004;
@@ -11828,11 +11502,6 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 				break;
 			case 1607552:
 				*(s16 *)(data + 0x81300A5A - 0x81300000) = 0x0C00;
-				
-				*(u32 *)(data + 0x81301FC8 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81301FC8);
-				*(u32 *)(data + 0x81301FD4 - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x81301FD4);
-				*(u32 *)(data + 0x81302050 - 0x81300000) = branchAndLink(SET_IRQ_HANDLER, (u32 *)0x81302050);
-				*(u32 *)(data + 0x81302058 - 0x81300000) = branchAndLink(UNMASK_IRQ,      (u32 *)0x81302058);
 				
 				*(s16 *)(data + 0x8130221A - 0x81300000) = 0x0C00;
 				*(s16 *)(data + 0x8130226E - 0x81300000) = 0x0C00;
@@ -11862,16 +11531,6 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 				*(s16 *)(data + 0x813006DA - 0x81300000) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.2");
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "D56J01", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 3055616:
-				// Skip second EXIInit call.
-				*(u32 *)(data + 0x800AF1B4 - 0x80005840 + 0x26C0) = 0x60000000;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11970,46 +11629,6 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 				*(s16 *)(data + 0x801EB8AE - 0x80009080 + 0x25E0) = -0x0304;
 				*(s16 *)(data + 0x801EB8BE - 0x80009080 + 0x25E0) =  0x0304;
 				*(s16 *)(data + 0x801EB906 - 0x80009080 + 0x25E0) = -0x0308;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GPAE01", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 2825472:
-				// Skip second EXIInit call.
-				*(u32 *)(data + 0x800B09EC - 0x80005840 + 0x26C0) = 0x60000000;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GPAJ01", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 3055584:
-				// Skip second EXIInit call.
-				*(u32 *)(data + 0x800AF1C0 - 0x80005840 + 0x26C0) = 0x60000000;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GPAP01", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 2745728:
-				// Skip second EXIInit call.
-				*(u32 *)(data + 0x800B538C - 0x80005840 + 0x26C0) = 0x60000000;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GPAU01", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 2720352:
-				// Skip second EXIInit call.
-				*(u32 *)(data + 0x800B5304 - 0x80005840 + 0x26C0) = 0x60000000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -12133,16 +11752,6 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 			case 4573216:
 				// Move up DSI exception handler.
 				*(s16 *)(data + 0x802B0046 - 0x800056A0 + 0x2600) = 0x0304;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "PCKJ01", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 3093408:
-				// Skip second EXIInit call.
-				*(u32 *)(data + 0x800B0464 - 0x80005840 + 0x26C0) = 0x60000000;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;

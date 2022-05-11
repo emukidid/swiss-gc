@@ -11,6 +11,7 @@
 #include "dolphin/os.h"
 #include "emulator.h"
 #include "frag.h"
+#include "interrupt.h"
 
 //CMD0 - Reset command
 #define CMD0				0x40
@@ -69,13 +70,12 @@ static struct {
 	.next_sector = ~0
 };
 
-static OSInterruptHandler TCIntrruptHandler = NULL;
 static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 
 // EXI Functions
 static void exi_clear_interrupts(bool exi, bool tc, bool ext)
 {
-	exi_regs[0] = (exi_regs[0] & ~0x80A) | (ext << 11) | (tc << 3) | (exi << 1);
+	exi_regs[0] = (exi_regs[0] & (0x3FFF & ~0x80A)) | (ext << 11) | (tc << 3) | (exi << 1);
 }
 
 static int exi_selected()
@@ -185,8 +185,8 @@ static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sy
 		exi_imm_read(1, 0);
 
 		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_TC + (3 * exi_channel);
-		TCIntrruptHandler = OSSetInterruptHandler(interrupt, tc_interrupt_handler);
-		OSUnmaskInterrupts(OS_INTERRUPTMASK(interrupt));
+		set_interrupt_handler(interrupt, tc_interrupt_handler);
+		unmask_interrupts(OS_INTERRUPTMASK(interrupt) & (OS_INTERRUPTMASK_EXI_0_TC | OS_INTERRUPTMASK_EXI_1_TC | OS_INTERRUPTMASK_EXI_2_TC));
 		#endif
 	}
 }
@@ -299,8 +299,7 @@ static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	if (_mmc.transferred < SECTOR_SIZE)
 		return;
 
-	OSMaskInterrupts(OS_INTERRUPTMASK(interrupt));
-	OSSetInterruptHandler(interrupt, TCIntrruptHandler);
+	mask_interrupts(OS_INTERRUPTMASK(interrupt) & (OS_INTERRUPTMASK_EXI_0_TC | OS_INTERRUPTMASK_EXI_1_TC | OS_INTERRUPTMASK_EXI_2_TC));
 	exi_deselect();
 
 	mmc_done_queued();

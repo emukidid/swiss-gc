@@ -87,9 +87,7 @@ trace_exception:
 	.globl _start
 _start:
 	b		init
-	b		set_irq_handler
-	b		mask_irq
-	b		unmask_irq
+	b		dispatch_interrupt
 	b		idle_thread
 	b		fini
 

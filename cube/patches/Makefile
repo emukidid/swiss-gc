@@ -84,6 +84,7 @@ sd.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDVD_MATH
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
@@ -92,7 +93,7 @@ sd.bin:
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/floor.S
 	@$(CC) -Os $(OPTS) -c base/sqrt.S
-	@$(CC) -Os $(OPTS) -o sd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o floor.o sqrt.o
+	@$(CC) -Os $(OPTS) -o sd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D sd.elf > $(DISASM)/sd.txt
 	@$(OBJCOPY) -O binary sd.elf sd.bin
@@ -105,13 +106,14 @@ sd.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o sd.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o sd.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D sd.card.elf > $(DISASM)/sd.card.txt
 	@$(OBJCOPY) -O binary sd.card.elf sd.card.bin
@@ -125,13 +127,14 @@ sd.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDTK
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=3 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o sd.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o sd.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D sd.dtk.elf > $(DISASM)/sd.dtk.txt
 	@$(OBJCOPY) -O binary sd.dtk.elf sd.dtk.bin
@@ -145,6 +148,7 @@ ideexi-v1.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDVD_MATH
 	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=0 -DISR_READ=1 -DWRITE=0
@@ -153,7 +157,7 @@ ideexi-v1.bin:
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/floor.S
 	@$(CC) -Os $(OPTS) -c base/sqrt.S
-	@$(CC) -Os $(OPTS) -o ideexi-v1.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o floor.o sqrt.o
+	@$(CC) -Os $(OPTS) -o ideexi-v1.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v1.elf > $(DISASM)/ideexi-v1.txt
 	@$(OBJCOPY) -O binary ideexi-v1.elf ideexi-v1.bin
@@ -166,13 +170,14 @@ ideexi-v1.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=0 -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o ideexi-v1.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o ideexi-v1.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v1.card.elf > $(DISASM)/ideexi-v1.card.txt
 	@$(OBJCOPY) -O binary ideexi-v1.card.elf ideexi-v1.card.bin
@@ -186,13 +191,14 @@ ideexi-v1.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDTK
 	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=0 -DISR_READ=1 -DQUEUE_SIZE=3 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o ideexi-v1.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o ideexi-v1.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v1.dtk.elf > $(DISASM)/ideexi-v1.dtk.txt
 	@$(OBJCOPY) -O binary ideexi-v1.dtk.elf ideexi-v1.dtk.bin
@@ -206,6 +212,7 @@ ideexi-v2.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDVD_MATH
 	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=1 -DWRITE=0
@@ -214,7 +221,7 @@ ideexi-v2.bin:
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/floor.S
 	@$(CC) -Os $(OPTS) -c base/sqrt.S
-	@$(CC) -Os $(OPTS) -o ideexi-v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o floor.o sqrt.o
+	@$(CC) -Os $(OPTS) -o ideexi-v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.elf > $(DISASM)/ideexi-v2.txt
 	@$(OBJCOPY) -O binary ideexi-v2.elf ideexi-v2.bin
@@ -227,13 +234,14 @@ ideexi-v2.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DDMA -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S -DDMA
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o ideexi-v2.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o ideexi-v2.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.card.elf > $(DISASM)/ideexi-v2.card.txt
 	@$(OBJCOPY) -O binary ideexi-v2.card.elf ideexi-v2.card.bin
@@ -247,13 +255,14 @@ ideexi-v2.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDTK
 	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=1 -DQUEUE_SIZE=3 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S -DDMA
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o ideexi-v2.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o ideexi-v2.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.dtk.elf > $(DISASM)/ideexi-v2.dtk.txt
 	@$(OBJCOPY) -O binary ideexi-v2.dtk.elf ideexi-v2.dtk.bin
@@ -265,13 +274,14 @@ dvd.bin:
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDI_PASSTHROUGH -DDVD -DISR
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o dvd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o ipl.o dvd.o sd.o sd_isr.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o dvd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o interrupt.o ipl.o dvd.o sd.o sd_isr.o uart.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd.txt
 	@$(OBJCOPY) -O binary dvd.elf dvd.bin
@@ -284,13 +294,14 @@ dvd.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DDI_PASSTHROUGH -DDVD -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o dvd.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o ipl.o dvd.o sd.o sd_isr.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o dvd.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o dvd.o sd.o sd_isr.o uart.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D dvd.card.elf > $(DISASM)/dvd.card.txt
 	@$(OBJCOPY) -O binary dvd.card.elf dvd.card.bin
@@ -302,12 +313,13 @@ usbgecko.bin:
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DISR -DUSB
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c usbgecko/usbgecko.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c usbgecko/usbgecko_isr.S -DMMC
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o usbgecko.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o ipl.o usbgecko.o usbgecko_isr.o sd.o os.o
+	@$(CC) -Os $(OPTS) -o usbgecko.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o interrupt.o ipl.o usbgecko.o usbgecko_isr.o sd.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usbgecko.txt
 	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
@@ -319,13 +331,14 @@ wkf.bin:
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDMA -DISR -DWKF
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o wkf.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o ipl.o wkf.o sd.o sd_isr.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o wkf.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o interrupt.o ipl.o wkf.o sd.o sd_isr.o uart.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf.txt
 	@$(OBJCOPY) -O binary wkf.elf wkf.bin
@@ -338,13 +351,14 @@ wkf.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DDMA -DISR -DWKF
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o wkf.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o ipl.o wkf.o sd.o sd_isr.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o wkf.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o wkf.o sd.o sd_isr.o uart.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.card.elf > $(DISASM)/wkf.card.txt
 	@$(OBJCOPY) -O binary wkf.card.elf wkf.card.bin
@@ -358,13 +372,14 @@ wkf.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ -DQUEUE_SIZE=3
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o wkf.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o ipl.o wkf.o sd.o sd_isr.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o wkf.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o wkf.o sd.o sd_isr.o uart.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.dtk.elf > $(DISASM)/wkf.dtk.txt
 	@$(OBJCOPY) -O binary wkf.dtk.elf wkf.dtk.bin
@@ -376,6 +391,7 @@ fsp.bin:
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DISR
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c bba/bba.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
@@ -383,7 +399,7 @@ fsp.bin:
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/setjmp.S
-	@$(CC) -Os $(OPTS) -o fsp.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o ipl.o bba.o sd.o sd_isr.o uart.o os.o setjmp.o
+	@$(CC) -Os $(OPTS) -o fsp.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o interrupt.o ipl.o bba.o sd.o sd_isr.o uart.o os.o setjmp.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D fsp.elf > $(DISASM)/fsp.txt
 	@$(OBJCOPY) -O binary fsp.elf fsp.bin
@@ -397,12 +413,13 @@ fsp.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c bba/bba.c -DASYNC_READ -DQUEUE_SIZE=3
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/setjmp.S
-	@$(CC) -Os $(OPTS) -o fsp.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o ipl.o bba.o uart.o os.o setjmp.o
+	@$(CC) -Os $(OPTS) -o fsp.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o bba.o uart.o os.o setjmp.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D fsp.dtk.elf > $(DISASM)/fsp.dtk.txt
 	@$(OBJCOPY) -O binary fsp.dtk.elf fsp.dtk.bin
@@ -416,6 +433,7 @@ gcloader-v1.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DDVD_MATH -DGCODE
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
@@ -424,7 +442,7 @@ gcloader-v1.bin:
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/floor.S
 	@$(CC) -Os $(OPTS) -c base/sqrt.S
-	@$(CC) -Os $(OPTS) -o gcloader-v1.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o ipl.o dvd.o sd.o sd_isr.o uart.o os.o floor.o sqrt.o
+	@$(CC) -Os $(OPTS) -o gcloader-v1.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o dvd.o sd.o sd_isr.o uart.o os.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader-v1.elf > $(DISASM)/gcloader-v1.txt
 	@$(OBJCOPY) -O binary gcloader-v1.elf gcloader-v1.bin
@@ -437,13 +455,14 @@ gcloader-v1.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DDI_PASSTHROUGH -DGCODE -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DGCODE
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o gcloader-v1.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o ipl.o dvd.o sd.o sd_isr.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o gcloader-v1.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o dvd.o sd.o sd_isr.o uart.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader-v1.card.elf > $(DISASM)/gcloader-v1.card.txt
 	@$(OBJCOPY) -O binary gcloader-v1.card.elf gcloader-v1.card.bin
@@ -457,13 +476,14 @@ gcloader-v2.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c gcloader/gcloader.c -DDVD_MATH
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/floor.S
 	@$(CC) -Os $(OPTS) -c base/sqrt.S
-	@$(CC) -Os $(OPTS) -o gcloader-v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o ipl.o gcloader.o uart.o os.o floor.o sqrt.o
+	@$(CC) -Os $(OPTS) -o gcloader-v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o gcloader.o uart.o os.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader-v2.elf > $(DISASM)/gcloader-v2.txt
 	@$(OBJCOPY) -O binary gcloader-v2.elf gcloader-v2.bin
@@ -476,11 +496,12 @@ gcloader-v2.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DDMA -DGCODE
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c gcloader/gcloader.c -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o gcloader-v2.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o ipl.o gcloader.o uart.o os.o
+	@$(CC) -Os $(OPTS) -o gcloader-v2.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o gcloader.o uart.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader-v2.card.elf > $(DISASM)/gcloader-v2.card.txt
 	@$(OBJCOPY) -O binary gcloader-v2.card.elf gcloader-v2.card.bin

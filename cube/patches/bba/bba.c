@@ -26,6 +26,7 @@
 #include "dolphin/os.h"
 #include "emulator.h"
 #include "frag.h"
+#include "interrupt.h"
 #include "ipl.h"
 
 static struct {
@@ -87,7 +88,7 @@ static struct {
 
 static void exi_clear_interrupts(int32_t chan, bool exi, bool tc, bool ext)
 {
-	EXI[chan][0] = (EXI[chan][0] & ~0x80A) | (ext << 11) | (tc << 3) | (exi << 1);
+	EXI[chan][0] = (EXI[chan][0] & (0x3FFF & ~0x80A)) | (ext << 11) | (tc << 3) | (exi << 1);
 }
 
 static void exi_select(void)
@@ -277,8 +278,8 @@ static void exi_coroutine()
 	if (EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, exi_callback)) {
 		_bba.lock = true;
 
-		OSInterruptHandler TCIntrruptHandler = OSSetInterruptHandler(OS_INTERRUPT_EXI_0_TC, exi_callback);
-		OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_0_TC);
+		set_interrupt_handler(OS_INTERRUPT_EXI_0_TC, exi_callback);
+		unmask_interrupts(OS_INTERRUPTMASK_EXI_0_TC);
 
 		uint8_t status = bba_cmd_in8(0x03);
 		bba_cmd_out8(0x02, BBA_CMD_IRMASKALL);
@@ -288,8 +289,7 @@ static void exi_coroutine()
 		bba_cmd_out8(0x03, status);
 		bba_cmd_out8(0x02, BBA_CMD_IRMASKNONE);
 
-		OSMaskInterrupts(OS_INTERRUPTMASK_EXI_0_TC);
-		OSSetInterruptHandler(OS_INTERRUPT_EXI_0_TC, TCIntrruptHandler);
+		mask_interrupts(OS_INTERRUPTMASK_EXI_0_TC);
 
 		_bba.lock = false;
 		EXIUnlock(EXI_CHANNEL_0);
@@ -299,7 +299,7 @@ static void exi_coroutine()
 		longjmp(_bba.exit, 1);
 }
 
-void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+static void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	exi_clear_interrupts(EXI_CHANNEL_2, 1, 0, 0);
 	exi_callback();
@@ -315,6 +315,9 @@ void bba_init(void **arenaLo, void **arenaHi)
 	_bba.entry->lr = (intptr_t)exi_coroutine;
 
 	*arenaHi -= sizeof(*_bba.page);  _bba.page  = *arenaHi;
+
+	set_interrupt_handler(OS_INTERRUPT_EXI_2_EXI, exi_interrupt_handler);
+	unmask_interrupts(OS_INTERRUPTMASK_EXI_2_EXI);
 }
 
 void schedule_read(OSTick ticks)

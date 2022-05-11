@@ -27,6 +27,7 @@
 #include "dolphin/os.h"
 #include "emulator.h"
 #include "frag.h"
+#include "interrupt.h"
 #include "ipl.h"
 
 #ifndef QUEUE_SIZE
@@ -84,6 +85,8 @@ static void gcode_set_disc_number(uint32_t disc)
 	DI[7] = 0b001;
 	while (DI[7] & 0b001);
 }
+
+static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 
 static void gcode_done_queued(void);
 static void gcode_read_queued(void)
@@ -173,7 +176,8 @@ static void gcode_read_queued(void)
 			break;
 	}
 
-	OSUnmaskInterrupts(OS_INTERRUPTMASK_PI_DI);
+	set_interrupt_handler(OS_INTERRUPT_PI_DI, di_interrupt_handler);
+	unmask_interrupts(OS_INTERRUPTMASK_PI_DI);
 }
 
 static void gcode_done_queued(void)
@@ -247,9 +251,9 @@ static void gcode_done_queued(void)
 	}
 }
 
-void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	OSMaskInterrupts(OS_INTERRUPTMASK_PI_DI);
+	mask_interrupts(OS_INTERRUPTMASK_PI_DI);
 
 	gcode_done_queued();
 }

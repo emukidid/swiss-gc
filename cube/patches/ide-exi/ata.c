@@ -11,6 +11,7 @@
 #include "dolphin/os.h"
 #include "emulator.h"
 #include "frag.h"
+#include "interrupt.h"
 
 // NOTE: cs0 then cs1!
 // ATA registers address        val  - cs0 cs1 a2 a1 a0
@@ -85,12 +86,11 @@ static struct {
 	.next_sector = ~0
 };
 
-static OSInterruptHandler TCIntrruptHandler = NULL;
 static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 
 static void exi_clear_interrupts(bool exi, bool tc, bool ext)
 {
-	exi_regs[0] = (exi_regs[0] & ~0x80A) | (ext << 11) | (tc << 3) | (exi << 1);
+	exi_regs[0] = (exi_regs[0] & (0x3FFF & ~0x80A)) | (ext << 11) | (tc << 3) | (exi << 1);
 }
 
 static int exi_selected()
@@ -264,8 +264,8 @@ static void ataReadBufferAsync(void *buffer)
 	exi_imm_read_write(0x17000000, 3, 0);
 
 	OSInterrupt interrupt = OS_INTERRUPT_EXI_0_TC + (3 * exi_channel);
-	TCIntrruptHandler = OSSetInterruptHandler(interrupt, tc_interrupt_handler);
-	OSUnmaskInterrupts(OS_INTERRUPTMASK(interrupt));
+	set_interrupt_handler(interrupt, tc_interrupt_handler);
+	unmask_interrupts(OS_INTERRUPTMASK(interrupt) & (OS_INTERRUPTMASK_EXI_0_TC | OS_INTERRUPTMASK_EXI_1_TC));
 	#endif
 }
 
@@ -436,8 +436,7 @@ static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 		return;
 	#endif
 
-	OSMaskInterrupts(OS_INTERRUPTMASK(interrupt));
-	OSSetInterruptHandler(interrupt, TCIntrruptHandler);
+	mask_interrupts(OS_INTERRUPTMASK(interrupt) & (OS_INTERRUPTMASK_EXI_0_TC | OS_INTERRUPTMASK_EXI_1_TC));
 	exi_deselect();
 
 	ata_done_queued();

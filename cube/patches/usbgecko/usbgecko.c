@@ -25,6 +25,7 @@
 #include "dolphin/os.h"
 #include "emulator.h"
 #include "frag.h"
+#include "interrupt.h"
 #include "ipl.h"
 
 #ifndef QUEUE_SIZE
@@ -67,7 +68,6 @@ static struct {
 	bool read, patch;
 } dvd = {0};
 
-static OSInterruptHandler TCIntrruptHandler = NULL;
 static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 
 #include "usbgecko_low.c"
@@ -130,8 +130,8 @@ static void usb_read_queued(void)
 	exi_clear_interrupts(0, 1, 0);
 	exi_imm_read_write(0xD << 28, 1, 0);
 
-	TCIntrruptHandler = OSSetInterruptHandler(OS_INTERRUPT_EXI_1_TC, tc_interrupt_handler);
-	OSUnmaskInterrupts(OS_INTERRUPTMASK_EXI_1_TC);
+	set_interrupt_handler(OS_INTERRUPT_EXI_1_TC, tc_interrupt_handler);
+	unmask_interrupts(OS_INTERRUPTMASK_EXI_1_TC);
 }
 
 static void usb_done_queued(void)
@@ -161,8 +161,7 @@ static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 	if (_usb.requested)
 		return;
 
-	OSMaskInterrupts(OS_INTERRUPTMASK_EXI_1_TC);
-	OSSetInterruptHandler(OS_INTERRUPT_EXI_1_TC, TCIntrruptHandler);
+	mask_interrupts(OS_INTERRUPTMASK_EXI_1_TC);
 	exi_deselect();
 
 	usb_done_queued();

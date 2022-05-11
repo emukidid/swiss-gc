@@ -24,7 +24,7 @@
 
 static void exi_clear_interrupts(bool exi, bool tc, bool ext)
 {
-	EXI[EXI_CHANNEL_1][0] = (EXI[EXI_CHANNEL_1][0] & ~0x80A) | (ext << 11) | (tc << 3) | (exi << 1);
+	EXI[EXI_CHANNEL_1][0] = (EXI[EXI_CHANNEL_1][0] & (0x3FFF & ~0x80A)) | (ext << 11) | (tc << 3) | (exi << 1);
 }
 
 static void exi_select(void)
