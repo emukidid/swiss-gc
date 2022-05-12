@@ -766,10 +766,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	u32 address;
 	FuncPattern memcpySig = 
 		{ 11, 3, 0, 0, 2, 1, memcpy_bin, memcpy_bin_size, "memcpy" };
-	FuncPattern PrepareExecSigs[2] = {
-		{ 54, 19, 3, 17,  3, 3, NULL, 0, "PrepareExecD" },
-		{ 60, 15, 3, 16, 13, 2, NULL, 0, "PrepareExec" }
-	};
 	FuncPattern PPCHaltSig = 
 		{ 5, 1, 0, 0, 1, 1, NULL, 0, "PPCHalt" };
 	FuncPattern OSInitSigs[29] = {
@@ -863,20 +859,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{  9, 3, 1, 0, 0, 1, NULL, 0, "OSClearContext" },
 		{  9, 3, 1, 0, 0, 1, NULL, 0, "OSClearContext" }	// SN Systems ProDG
 	};
-	FuncPattern __OSUnhandledExceptionSigs[7] = {
-		{ 106, 34, 2, 13, 13,  5, NULL, 0, "__OSUnhandledExceptionD" },
-		{ 147, 58, 2, 23,  6,  7, NULL, 0, "__OSUnhandledExceptionD" },
-		{ 211, 75, 7, 33, 10, 10, NULL, 0, "__OSUnhandledExceptionD" },
-		{  93, 27, 2, 12, 13,  4, NULL, 0, "__OSUnhandledException" },
-		{ 128, 43, 2, 22,  6,  5, NULL, 0, "__OSUnhandledException" },
-		{ 186, 56, 7, 32, 10,  7, NULL, 0, "__OSUnhandledException" },
-		{ 194, 53, 7, 34, 10, 15, NULL, 0, "__OSUnhandledException" }	// SN Systems ProDG
-	};
-	FuncPattern __OSBootDolSimpleSigs[3] = {
-		{ 109,  35, 15, 25,  3, 10, NULL, 0, "__OSBootDolSimpleD" },
-		{ 310, 100, 17, 53, 29, 40, NULL, 0, "__OSBootDolSimple" },
-		{ 289, 104, 17, 53, 29, 16, NULL, 0, "__OSBootDolSimple" }
-	};
 	FuncPattern OSDisableInterruptsSig = 
 		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
 	FuncPattern OSEnableInterruptsSig = 
@@ -925,22 +907,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{  5, 0,  3, 0, 1, 0, NULL, 0, "ExternalInterruptHandler" },
 		{ 19, 0, 10, 0, 1, 7, NULL, 0, "ExternalInterruptHandler" },
 		{ 20, 0, 11, 0, 1, 7, NULL, 0, "ExternalInterruptHandler" }	// SN Systems ProDG
-	};
-	FuncPattern __OSRebootSigs[14] = {
-		{  81, 34, 6, 16,  1,  2, NULL, 0, "__OSRebootD" },
-		{  89, 39, 8, 17,  1,  2, NULL, 0, "__OSRebootD" },
-		{  88, 39, 7, 17,  1,  2, NULL, 0, "__OSRebootD" },
-		{  90, 39, 7, 19,  1,  2, NULL, 0, "__OSRebootD" },
-		{ 159, 56, 8, 32,  8, 18, NULL, 0, "__OSRebootD" },
-		{  25, 10, 5,  6,  0,  2, NULL, 0, "__OSRebootD" },
-		{ 108, 36, 7, 16, 26,  3, NULL, 0, "__OSReboot" },
-		{ 115, 40, 9, 17, 26,  3, NULL, 0, "__OSReboot" },
-		{ 112, 39, 8, 17, 26,  2, NULL, 0, "__OSReboot" },
-		{ 114, 39, 8, 19, 26,  2, NULL, 0, "__OSReboot" },
-		{ 199, 56, 7, 42, 13, 36, NULL, 0, "__OSReboot" },	// SN Systems ProDG
-		{ 208, 54, 7, 40, 23, 34, NULL, 0, "__OSReboot" },
-		{ 204, 54, 6, 40, 23, 35, NULL, 0, "__OSReboot" },
-		{  28, 11, 5,  6,  0,  2, NULL, 0, "__OSReboot" }
 	};
 	FuncPattern __OSDoHotResetSigs[3] = {
 		{ 17, 6, 3, 3, 0, 2, NULL, 0, "__OSDoHotResetD" },
@@ -1053,28 +1019,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 109, 34, 6, 5,  8,  8, NULL, 0, "__EXIProbe" },
 		{  93, 30, 7, 5,  8,  9, NULL, 0, "__EXIProbe" }
 	};
-	FuncPattern __EXIAttachSigs[2] = {
-		{ 55, 18, 5, 7, 3, 5, NULL, 0, "__EXIAttachD" },
-		{ 56, 19, 5, 7, 3, 5, NULL, 0, "__EXIAttachD" }
-	};
-	FuncPattern EXIAttachSigs[7] = {
-		{ 59, 19, 5,  8, 5, 5, NULL, 0, "EXIAttachD" },
-		{ 43, 11, 3,  6, 3, 5, NULL, 0, "EXIAttachD" },
-		{ 44, 12, 3,  6, 3, 5, NULL, 0, "EXIAttachD" },
-		{ 57, 18, 9,  6, 3, 4, NULL, 0, "EXIAttach" },
-		{ 67, 19, 4, 11, 3, 3, NULL, 0, "EXIAttach" },
-		{ 74, 19, 5, 11, 3, 7, NULL, 0, "EXIAttach" },
-		{ 67, 18, 4, 11, 3, 5, NULL, 0, "EXIAttach" }
-	};
-	FuncPattern EXIDetachSigs[7] = {
-		{ 53, 16, 3, 6, 5, 5, NULL, 0, "EXIDetachD" },
-		{ 53, 16, 3, 6, 5, 5, NULL, 0, "EXIDetachD" },
-		{ 54, 17, 3, 6, 5, 5, NULL, 0, "EXIDetachD" },
-		{ 47, 15, 6, 5, 3, 3, NULL, 0, "EXIDetach" },
-		{ 47, 15, 6, 5, 3, 3, NULL, 0, "EXIDetach" },
-		{ 43, 12, 3, 5, 3, 4, NULL, 0, "EXIDetach" },
-		{ 47, 15, 6, 5, 3, 4, NULL, 0, "EXIDetach" }
-	};
 	FuncPattern EXISelectSDSig = 
 		{ 85, 23, 4, 7, 14, 6, NULL, 0, "EXISelectSD" };
 	FuncPattern EXISelectSigs[7] = {
@@ -1153,17 +1097,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 55, 21, 8, 5, 3, 2, NULL, 0, "EXIUnlock" },
 		{ 50, 18, 4, 5, 3, 3, NULL, 0, "EXIUnlock" },
 		{ 55, 21, 8, 5, 3, 3, NULL, 0, "EXIUnlock" }
-	};
-	FuncPattern EXIGetIDSigs[9] = {
-		{  97, 27,  4, 11,  7,  9, NULL, 0, "EXIGetIDD" },
-		{ 152, 45,  6, 14, 14, 15, NULL, 0, "EXIGetIDD" },
-		{ 153, 46,  6, 14, 14, 15, NULL, 0, "EXIGetIDD" },
-		{ 168, 49,  7, 16, 16, 16, NULL, 0, "EXIGetIDD" },
-		{ 181, 54,  8, 24, 14, 13, NULL, 0, "EXIGetID" },
-		{ 223, 70, 11, 26, 20, 17, NULL, 0, "EXIGetID" },
-		{ 228, 66, 11, 26, 19, 19, NULL, 0, "EXIGetID" },
-		{ 223, 69, 11, 26, 20, 20, NULL, 0, "EXIGetID" },
-		{ 236, 71, 12, 28, 22, 21, NULL, 0, "EXIGetID" }
 	};
 	FuncPattern __DVDInterruptHandlerSigs[10] = {
 		{ 157, 49, 21,  9, 18, 12, NULL, 0, "__DVDInterruptHandlerD" },
@@ -1507,29 +1440,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		
 		FuncPattern fp;
 		make_pattern(data, i, length, &fp);
-		
-		for (j = 0; j < sizeof(PrepareExecSigs) / sizeof(FuncPattern); j++) {
-			if (compare_pattern(&fp, &PrepareExecSigs[j])) {
-				switch (j) {
-					case 0:
-						if (findx_pattern(data, dataType, i + 10, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 40, length, &__OSDoHotResetSigs[0]) &&
-							findx_pattern(data, dataType, i + 42, length, &__OSMaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i + 44, length, &__OSUnmaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i + 45, length, &OSEnableInterruptsSig))
-							PrepareExecSigs[j].offsetFoundAt = i;
-						break;
-					case 1:
-						if (findx_pattern(data, dataType, i + 12, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 44, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 46, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i + 48, length, &__OSUnmaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i + 49, length, &OSEnableInterruptsSig))
-							PrepareExecSigs[j].offsetFoundAt = i;
-						break;
-				}
-			}
-		}
 		
 		for (j = 0; j < sizeof(OSInitSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &OSInitSigs[j])) {
@@ -2028,100 +1938,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			}
 		}
 		
-		for (j = 0; j < sizeof(__OSUnhandledExceptionSigs) / sizeof(FuncPattern); j++) {
-			if (compare_pattern(&fp, &__OSUnhandledExceptionSigs[j])) {
-				switch (j) {
-					case 0:
-						if (findx_patterns(data, dataType, i +  38, length, &OSLoadContextSigs[0],
-							                                                &OSLoadContextSigs[1], NULL) &&
-							findx_patterns(data, dataType, i +  43, length, &OSLoadContextSigs[0],
-							                                                &OSLoadContextSigs[1], NULL))
-							__OSUnhandledExceptionSigs[j].offsetFoundAt = i;
-						break;
-					case 1:
-						if (findx_pattern(data, dataType, i +  41, length, &OSLoadContextSigs[1]) &&
-							findx_pattern(data, dataType, i +  46, length, &OSLoadContextSigs[1]))
-							__OSUnhandledExceptionSigs[j].offsetFoundAt = i;
-						break;
-					case 2:
-						if (findx_pattern(data, dataType, i +  88, length, &OSLoadContextSigs[2]) &&
-							findx_pattern(data, dataType, i + 106, length, &OSLoadContextSigs[2]) &&
-							findx_pattern(data, dataType, i + 111, length, &OSLoadContextSigs[2]))
-							__OSUnhandledExceptionSigs[j].offsetFoundAt = i;
-						break;
-					case 3:
-						if (findx_patterns(data, dataType, i +  33, length, &OSLoadContextSigs[0],
-							                                                &OSLoadContextSigs[1], NULL) &&
-							findx_patterns(data, dataType, i +  38, length, &OSLoadContextSigs[0],
-							                                                &OSLoadContextSigs[1], NULL))
-							__OSUnhandledExceptionSigs[j].offsetFoundAt = i;
-						break;
-					case 4:
-						if (findx_pattern(data, dataType, i +  38, length, &OSLoadContextSigs[1]) &&
-							findx_pattern(data, dataType, i +  43, length, &OSLoadContextSigs[1]))
-							__OSUnhandledExceptionSigs[j].offsetFoundAt = i;
-						break;
-					case 5:
-						if (findx_pattern(data, dataType, i +  78, length, &OSLoadContextSigs[2]) &&
-							findx_pattern(data, dataType, i +  97, length, &OSLoadContextSigs[2]) &&
-							findx_pattern(data, dataType, i + 102, length, &OSLoadContextSigs[2]))
-							__OSUnhandledExceptionSigs[j].offsetFoundAt = i;
-						break;
-					case 6:
-						if (findx_pattern(data, dataType, i +  84, length, &OSLoadContextSigs[2]) &&
-							findx_pattern(data, dataType, i + 103, length, &OSLoadContextSigs[2]) &&
-							findx_pattern(data, dataType, i + 108, length, &OSLoadContextSigs[2]))
-							__OSUnhandledExceptionSigs[j].offsetFoundAt = i;
-						break;
-				}
-			}
-		}
-		
-		for (j = 0; j < sizeof(__OSBootDolSimpleSigs) / sizeof(FuncPattern); j++) {
-			if (compare_pattern(&fp, &__OSBootDolSimpleSigs[j])) {
-				switch (j) {
-					case 0:
-						if (findx_pattern(data, dataType, i +  11, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  43, length, &__OSMaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i +  45, length, &__OSUnmaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i +  46, length, &OSEnableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  52, length, &__OSDoHotResetSigs[0]) &&
-							findx_pattern(data, dataType, i + 100, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 101, length, &ICFlashInvalidateSig))
-							__OSBootDolSimpleSigs[j].offsetFoundAt = i;
-						break;
-					case 1:
-						if (findx_pattern(data, dataType, i +  11, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  42, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  44, length, &__OSUnmaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  45, length, &OSEnableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  70, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 118, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 245, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 291, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 301, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 302, length, &ICFlashInvalidateSig))
-							__OSBootDolSimpleSigs[j].offsetFoundAt = i;
-						break;
-					case 2:
-						if (findx_pattern(data, dataType, i +  11, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  42, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  44, length, &__OSUnmaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  45, length, &OSEnableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  53, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i +  83, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 152, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 210, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 241, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 270, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 280, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 281, length, &ICFlashInvalidateSig))
-							__OSBootDolSimpleSigs[j].offsetFoundAt = i;
-						break;
-				}
-			}
-		}
-		
 		for (j = 0; j < sizeof(__OSInterruptInitSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &__OSInterruptInitSigs[j])) {
 				switch (j) {
@@ -2244,173 +2060,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 157, length, &OSLoadContextSigs[2]) &&
 							findx_pattern(data, dataType, i + 159, length, &OSLoadContextSigs[2]))
 							__OSDispatchInterruptSigs[j].offsetFoundAt = i;
-						break;
-				}
-			}
-		}
-		
-		for (j = 0; j < sizeof(__OSRebootSigs) / sizeof(FuncPattern); j++) {
-			if (compare_pattern(&fp, &__OSRebootSigs[j])) {
-				switch (j) {
-					case 0:
-						if (findx_pattern(data, dataType, i +  16, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  27, length, &OSClearContextSigs[0]) &&
-							findx_pattern(data, dataType, i +  29, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i +  39, length, &__OSDoHotResetSigs[0]) &&
-							findx_pattern(data, dataType, i +  41, length, &__OSMaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i +  43, length, &__OSUnmaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i +  44, length, &OSEnableInterruptsSig))
-							__OSRebootSigs[j].offsetFoundAt = i;
-						break;
-					case 1:
-						if (findx_pattern(data, dataType, i +  16, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  33, length, &OSClearContextSigs[0]) &&
-							findx_pattern(data, dataType, i +  35, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i +  47, length, &__OSDoHotResetSigs[0]) &&
-							findx_pattern(data, dataType, i +  49, length, &__OSMaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i +  51, length, &__OSUnmaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i +  52, length, &OSEnableInterruptsSig))
-							__OSRebootSigs[j].offsetFoundAt = i;
-						break;
-					case 2:
-						if (findx_pattern(data, dataType, i +  15, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  32, length, &OSClearContextSigs[0]) &&
-							findx_pattern(data, dataType, i +  34, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i +  46, length, &__OSDoHotResetSigs[0]) &&
-							findx_pattern(data, dataType, i +  48, length, &__OSMaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i +  50, length, &__OSUnmaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i +  51, length, &OSEnableInterruptsSig))
-							__OSRebootSigs[j].offsetFoundAt = i;
-						break;
-					case 3:
-						if (findx_pattern(data, dataType, i +  15, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  32, length, &OSClearContextSigs[0]) &&
-							findx_pattern(data, dataType, i +  34, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i +  46, length, &__OSDoHotResetSigs[0]) &&
-							findx_pattern(data, dataType, i +  48, length, &__OSMaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i +  50, length, &__OSUnmaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i +  51, length, &OSEnableInterruptsSig))
-							__OSRebootSigs[j].offsetFoundAt = i;
-						break;
-					case 4:
-						if (findx_pattern(data, dataType, i +  15, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  32, length, &OSClearContextSigs[0]) &&
-							findx_pattern(data, dataType, i +  34, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i +  45, length, &__OSMaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i +  47, length, &__OSUnmaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i +  48, length, &OSEnableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  73, length, &__OSDoHotResetSigs[0]) &&
-							findx_pattern(data, dataType, i + 114, length, &__OSDoHotResetSigs[0]) &&
-							findx_pattern(data, dataType, i + 150, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 151, length, &ICFlashInvalidateSig))
-							__OSRebootSigs[j].offsetFoundAt = i;
-						break;
-					case 5:
-						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  11, length, &OSClearContextSigs[0]) &&
-							findx_pattern(data, dataType, i +  13, length, &OSSetCurrentContextSig))
-							__OSRebootSigs[j].offsetFoundAt = i;
-						break;
-					case 6:
-						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  18, length, &OSClearContextSigs[1]) &&
-							findx_pattern(data, dataType, i +  20, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i +  29, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i +  31, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  33, length, &__OSUnmaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  34, length, &OSEnableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  61, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i +  94, length, &__OSDoHotResetSigs[1]))
-							__OSRebootSigs[j].offsetFoundAt = i;
-						break;
-					case 7:
-						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  23, length, &OSClearContextSigs[1]) &&
-							findx_pattern(data, dataType, i +  25, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i +  36, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i +  38, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  40, length, &__OSUnmaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  41, length, &OSEnableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  68, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 101, length, &__OSDoHotResetSigs[1]))
-							__OSRebootSigs[j].offsetFoundAt = i;
-						break;
-					case 8:
-						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  21, length, &OSClearContextSigs[1]) &&
-							findx_pattern(data, dataType, i +  23, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i +  34, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i +  36, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  38, length, &__OSUnmaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  39, length, &OSEnableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  66, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i +  99, length, &__OSDoHotResetSigs[1]))
-							__OSRebootSigs[j].offsetFoundAt = i;
-						break;
-					case 9:
-						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  21, length, &OSClearContextSigs[1]) &&
-							findx_pattern(data, dataType, i +  23, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i +  34, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i +  36, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  38, length, &__OSUnmaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  39, length, &OSEnableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  66, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i +  99, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 104, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 105, length, &ICFlashInvalidateSig))
-							__OSRebootSigs[j].offsetFoundAt = i;
-						break;
-					case 10:
-						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  19, length, &OSClearContextSigs[2]) &&
-							findx_pattern(data, dataType, i +  21, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i +  32, length, &__OSMaskInterruptsSigs[2]) &&
-							findx_pattern(data, dataType, i +  34, length, &__OSUnmaskInterruptsSigs[2]) &&
-							findx_pattern(data, dataType, i +  35, length, &OSEnableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  59, length, &__OSDoHotResetSigs[2]) &&
-							findx_pattern(data, dataType, i + 102, length, &__OSDoHotResetSigs[2]) &&
-							findx_pattern(data, dataType, i + 140, length, &__OSDoHotResetSigs[2]) &&
-							findx_pattern(data, dataType, i + 181, length, &__OSDoHotResetSigs[2]) &&
-							findx_pattern(data, dataType, i + 189, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 190, length, &ICFlashInvalidateSig))
-							__OSRebootSigs[j].offsetFoundAt = i;
-						break;
-					case 11:
-						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  20, length, &OSClearContextSigs[1]) &&
-							findx_pattern(data, dataType, i +  22, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i +  32, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  34, length, &__OSUnmaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  35, length, &OSEnableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  59, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 108, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 148, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 191, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 199, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 200, length, &ICFlashInvalidateSig))
-							__OSRebootSigs[j].offsetFoundAt = i;
-						break;
-					case 12:
-						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  18, length, &OSClearContextSigs[1]) &&
-							findx_pattern(data, dataType, i +  20, length, &OSSetCurrentContextSig) &&
-							findx_pattern(data, dataType, i +  31, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  33, length, &__OSUnmaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  34, length, &OSEnableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  58, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 106, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 145, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 187, length, &__OSDoHotResetSigs[1]) &&
-							findx_pattern(data, dataType, i + 195, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 196, length, &ICFlashInvalidateSig))
-							__OSRebootSigs[j].offsetFoundAt = i;
-						break;
-					case 13:
-						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  13, length, &OSClearContextSigs[1]) &&
-							findx_pattern(data, dataType, i +  15, length, &OSSetCurrentContextSig))
-							__OSRebootSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -3025,89 +2674,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			}
 		}
 		
-		for (j = 0; j < sizeof(EXIDetachSigs) / sizeof(FuncPattern); j++) {
-			if (compare_pattern(&fp, &EXIDetachSigs[j])) {
-				switch (j) {
-					case 0:
-						if ((data[i + 5] & 0xFC00FFFF) == 0x1C000038 &&
-							findx_pattern(data, dataType, i + 19, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 35, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 44, length, &__OSMaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[0]))
-							EXIDetachSigs[j].offsetFoundAt = i;
-						break;
-					case 1:
-						if ((data[i + 5] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern(data, dataType, i + 19, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 35, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 44, length, &__OSMaskInterruptsSigs[0]) &&
-							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[1]))
-							EXIDetachSigs[j].offsetFoundAt = i;
-						break;
-					case 2:
-						if ((data[i + 5] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern (data, dataType, i + 20, length, &OSDisableInterruptsSig) &&
-							findx_pattern (data, dataType, i + 26, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i + 36, length, &OSRestoreInterruptsSig) &&
-							findx_patterns(data, dataType, i + 45, length, &__OSMaskInterruptsSigs[0],
-							                                               &__OSMaskInterruptsSigs[1], NULL) &&
-							findx_pattern (data, dataType, i + 47, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[2]))
-							EXIDetachSigs[j].offsetFoundAt = i;
-						break;
-					case 3:
-						if ((data[i + 7] & 0xFC00FFFF) == 0x1C000038 &&
-							findx_pattern(data, dataType, i + 11, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 17, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 36, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[3]))
-							EXIDetachSigs[j].offsetFoundAt = i;
-						break;
-					case 4:
-						if ((data[i + 8] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern(data, dataType, i + 11, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 17, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 36, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[4]))
-							EXIDetachSigs[j].offsetFoundAt = i;
-						break;
-					case 5:
-						if ((data[i + 5] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern(data, dataType, i +  9, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 15, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 34, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i + 36, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[5]))
-							EXIDetachSigs[j].offsetFoundAt = i;
-						break;
-					case 6:
-						if ((data[i + 7] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern(data, dataType, i + 11, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 17, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 36, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[6]))
-							EXIDetachSigs[j].offsetFoundAt = i;
-						break;
-				}
-			}
-		}
-		
 		if (compare_pattern(&fp, &EXISelectSDSig)) {
 			if ((data[i + 7] & 0xFC00FFFF) == 0x54003032 &&
 				findx_pattern(data, dataType, i + 11, length, &OSDisableInterruptsSig) &&
 				findx_pattern(data, dataType, i + 24, length, &__EXIProbeSigs[6]) &&
-				findx_pattern(data, dataType, i + 33, length, &EXIGetIDSigs[8]) &&
 				findx_pattern(data, dataType, i + 48, length, &OSRestoreInterruptsSig) &&
 				get_immediate(data,   i + 55, i + 56, &address) && address == 0xCC006800 &&
 				findx_pattern(data, dataType, i + 73, length, &__OSMaskInterruptsSigs[1]) &&
@@ -3343,10 +2913,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findi_pattern (data, dataType, i + 62, i + 63, length, &TCIntrruptHandlerSigs[2]) &&
 							findx_patterns(data, dataType, i + 64, length, &__OSSetInterruptHandlerSigs[0],
 							                                               &__OSSetInterruptHandlerSigs[1], NULL) &&
-							findx_pattern (data, dataType, i + 68, length, &EXIGetIDSigs[3]) &&
-							findx_pattern (data, dataType, i + 72, length, &EXIProbeResetSigs[1]) &&
-							findx_pattern (data, dataType, i + 77, length, &EXIGetIDSigs[3]) &&
-							findx_pattern (data, dataType, i + 91, length, &EXIGetIDSigs[3]))
+							findx_pattern (data, dataType, i + 72, length, &EXIProbeResetSigs[1]))
 							EXIInitSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
@@ -3477,8 +3044,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							get_immediate (data,   i + 64, i + 65, &address) && address == 0x800030C4 &&
 							get_immediate (data,   i + 64, i + 66, &address) && address == 0x800030C0 &&
 							findx_pattern (data, dataType, i + 72, length, &__EXIProbeSigs[6]) &&
-							findx_pattern (data, dataType, i + 74, length, &__EXIProbeSigs[6]) &&
-							findx_pattern (data, dataType, i + 78, length, &EXIGetIDSigs[8]))
+							findx_pattern (data, dataType, i + 74, length, &__EXIProbeSigs[6]))
 							EXIInitSigs[j].offsetFoundAt = i;
 						break;
 					case 8:
@@ -3502,8 +3068,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							get_immediate(data,   i + 64, i + 65, &address) && address == 0x800030C4 &&
 							get_immediate(data,   i + 64, i + 66, &address) && address == 0x800030C0 &&
 							findx_pattern(data, dataType, i + 72, length, &__EXIProbeSigs[6]) &&
-							findx_pattern(data, dataType, i + 74, length, &__EXIProbeSigs[6]) &&
-							findx_pattern(data, dataType, i + 78, length, &EXIGetIDSigs[8]))
+							findx_pattern(data, dataType, i + 74, length, &__EXIProbeSigs[6]))
 							EXIInitSigs[j].offsetFoundAt = i;
 						break;
 					case 9:
@@ -3524,13 +3089,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 54, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 57, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 60, length, &__OSSetInterruptHandlerSigs[1]) &&
-							findx_pattern(data, dataType, i + 64, length, &EXIGetIDSigs[8]) &&
 							get_immediate(data,   i + 68, i + 69, &address) && address == 0x800030C4 &&
 							get_immediate(data,   i + 68, i + 70, &address) && address == 0x800030C0 &&
 							findx_pattern(data, dataType, i + 76, length, &__EXIProbeSigs[6]) &&
-							findx_pattern(data, dataType, i + 78, length, &__EXIProbeSigs[6]) &&
-							findx_pattern(data, dataType, i + 83, length, &EXIGetIDSigs[8]) &&
-							findx_pattern(data, dataType, i + 97, length, &EXIGetIDSigs[8]))
+							findx_pattern(data, dataType, i + 78, length, &__EXIProbeSigs[6]))
 							EXIInitSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -3602,253 +3164,6 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 45, length, &OSRestoreInterruptsSig) &&
 							find_pattern_before(data, length, &fp, &EXILockSigs[6]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
-						break;
-				}
-			}
-		}
-		
-		for (j = 0; j < sizeof(EXIGetIDSigs) / sizeof(FuncPattern); j++) {
-			if (compare_pattern(&fp, &EXIGetIDSigs[j])) {
-				switch (j) {
-					case 0:
-						if (findx_pattern(data, dataType, i +  23, length, &EXIAttachSigs[0]) &&
-							findx_pattern(data, dataType, i +  31, length, &EXILockSigs[0]) &&
-							findx_pattern(data, dataType, i +  39, length, &EXISelectSigs[0]) &&
-							findx_pattern(data, dataType, i +  51, length, &EXIImmSigs[0]) &&
-							findx_pattern(data, dataType, i +  56, length, &EXISyncSigs[0]) &&
-							findx_pattern(data, dataType, i +  65, length, &EXIImmSigs[0]) &&
-							findx_pattern(data, dataType, i +  70, length, &EXISyncSigs[0]) &&
-							findx_pattern(data, dataType, i +  75, length, &EXIDeselectSigs[0]) &&
-							findx_pattern(data, dataType, i +  80, length, &EXIUnlockSigs[0]) &&
-							findx_pattern(data, dataType, i +  86, length, &EXIDetachSigs[0]))
-							EXIGetIDSigs[j].offsetFoundAt = i;
-						break;
-					case 1:
-						if ((data[i + 7] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern(data, dataType, i +  26, length, &__EXIProbeSigs[1]) &&
-							get_immediate(data,  i +  33, i +  34, &address) && address == 0x800030C0 &&
-							findx_pattern(data, dataType, i +  44, length, &__EXIAttachSigs[0]) &&
-							get_immediate(data,  i +  50, i +  51, &address) && address == 0x800030C0 &&
-							findx_pattern(data, dataType, i +  63, length, &EXILockSigs[1]) &&
-							findx_pattern(data, dataType, i +  71, length, &EXISelectSigs[1]) &&
-							findx_pattern(data, dataType, i +  83, length, &EXIImmSigs[1]) &&
-							findx_pattern(data, dataType, i +  88, length, &EXISyncSigs[1]) &&
-							findx_pattern(data, dataType, i +  97, length, &EXIImmSigs[1]) &&
-							findx_pattern(data, dataType, i + 102, length, &EXISyncSigs[1]) &&
-							findx_pattern(data, dataType, i + 107, length, &EXIDeselectSigs[1]) &&
-							findx_pattern(data, dataType, i + 112, length, &EXIUnlockSigs[1]) &&
-							findx_pattern(data, dataType, i + 118, length, &EXIDetachSigs[1]) &&
-							findx_pattern(data, dataType, i + 119, length, &OSDisableInterruptsSig) &&
-							get_immediate(data,  i + 122, i + 123, &address) && address == 0x800030C0 &&
-							findx_pattern(data, dataType, i + 135, length, &OSRestoreInterruptsSig))
-							EXIGetIDSigs[j].offsetFoundAt = i;
-						break;
-					case 2:
-						if ((data[i + 7] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern (data, dataType, i +  27, length, &__EXIProbeSigs[2]) &&
-							get_immediate (data,  i +  34, i +  35, &address) && address == 0x800030C0 &&
-							findx_pattern (data, dataType, i +  45, length, &__EXIAttachSigs[1]) &&
-							get_immediate (data,  i +  51, i +  52, &address) && address == 0x800030C0 &&
-							findx_pattern (data, dataType, i +  64, length, &EXILockSigs[2]) &&
-							findx_pattern (data, dataType, i +  72, length, &EXISelectSigs[2]) &&
-							findx_pattern (data, dataType, i +  84, length, &EXIImmSigs[2]) &&
-							findx_patterns(data, dataType, i +  89, length, &EXISyncSigs[2],
-							                                                &EXISyncSigs[3], NULL) &&
-							findx_pattern (data, dataType, i +  98, length, &EXIImmSigs[2]) &&
-							findx_patterns(data, dataType, i + 103, length, &EXISyncSigs[2],
-							                                                &EXISyncSigs[3], NULL) &&
-							findx_pattern (data, dataType, i + 108, length, &EXIDeselectSigs[2]) &&
-							findx_pattern (data, dataType, i + 113, length, &EXIUnlockSigs[2]) &&
-							findx_pattern (data, dataType, i + 119, length, &EXIDetachSigs[2]) &&
-							findx_pattern (data, dataType, i + 120, length, &OSDisableInterruptsSig) &&
-							get_immediate (data,  i + 123, i + 124, &address) && address == 0x800030C0 &&
-							findx_pattern (data, dataType, i + 136, length, &OSRestoreInterruptsSig))
-							EXIGetIDSigs[j].offsetFoundAt = i;
-						break;
-					case 3:
-						if ((data[i + 7] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern(data, dataType, i +  38, length, &__EXIProbeSigs[2]) &&
-							get_immediate(data,  i +  45, i +  46, &address) && address == 0x800030C0 &&
-							findx_pattern(data, dataType, i +  56, length, &__EXIAttachSigs[1]) &&
-							get_immediate(data,  i +  62, i +  63, &address) && address == 0x800030C0 &&
-							findx_pattern(data, dataType, i +  65, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  77, length, &EXILockSigs[2]) &&
-							findx_pattern(data, dataType, i +  85, length, &EXISelectSigs[2]) &&
-							findx_pattern(data, dataType, i +  97, length, &EXIImmSigs[2]) &&
-							findx_pattern(data, dataType, i + 102, length, &EXISyncSigs[4]) &&
-							findx_pattern(data, dataType, i + 111, length, &EXIImmSigs[2]) &&
-							findx_pattern(data, dataType, i + 116, length, &EXISyncSigs[4]) &&
-							findx_pattern(data, dataType, i + 121, length, &EXIDeselectSigs[2]) &&
-							findx_pattern(data, dataType, i + 126, length, &EXIUnlockSigs[2]) &&
-							findx_pattern(data, dataType, i + 128, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 134, length, &EXIDetachSigs[2]) &&
-							findx_pattern(data, dataType, i + 135, length, &OSDisableInterruptsSig) &&
-							get_immediate(data,  i + 138, i + 139, &address) && address == 0x800030C0 &&
-							findx_pattern(data, dataType, i + 151, length, &OSRestoreInterruptsSig))
-							EXIGetIDSigs[j].offsetFoundAt = i;
-						break;
-					case 4:
-						if ((data[i + 13] & 0xFC00FFFF) == 0x1C000038 &&
-							findx_pattern(data, dataType, i +  15, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  21, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  25, length, &__EXIProbeSigs[3]) &&
-							findx_pattern(data, dataType, i +  29, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  36, length, &EXIClearInterruptsSigs[2]) &&
-							findx_pattern(data, dataType, i +  42, length, &__OSUnmaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  47, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  56, length, &EXILockSigs[3]) &&
-							findx_pattern(data, dataType, i +  64, length, &EXISelectSigs[3]) &&
-							findx_pattern(data, dataType, i +  76, length, &EXIImmSigs[3]) &&
-							findx_pattern(data, dataType, i +  81, length, &EXISyncSigs[6]) &&
-							findx_pattern(data, dataType, i +  90, length, &EXIImmSigs[3]) &&
-							findx_pattern(data, dataType, i +  95, length, &EXISyncSigs[6]) &&
-							findx_pattern(data, dataType, i + 100, length, &EXIDeselectSigs[4]) &&
-							(data[i + 104] & 0xFC00FFFF) == 0x1C000038 &&
-							findx_pattern(data, dataType, i + 106, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 112, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 119, length, &SetExiInterruptMaskSigs[3]) &&
-							findx_pattern(data, dataType, i + 138, length, &OSRestoreInterruptsSig) &&
-							(data[i + 143] & 0xFC00FFFF) == 0x1C000038 &&
-							findx_pattern(data, dataType, i + 145, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 151, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 160, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 168, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i + 170, length, &OSRestoreInterruptsSig))
-							EXIGetIDSigs[j].offsetFoundAt = i;
-						break;
-					case 5:
-						if ((data[i + 7] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern (data, dataType, i +  16, length, &__EXIProbeSigs[4]) &&
-							get_immediate (data,  i +  21, i +  24, &address) && address == 0x800030C0 &&
-							findx_pattern (data, dataType, i +  33, length, &OSDisableInterruptsSig) &&
-							findx_pattern (data, dataType, i +  39, length, &__EXIProbeSigs[4]) &&
-							findx_pattern (data, dataType, i +  43, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i +  50, length, &EXIClearInterruptsSigs[2]) &&
-							findx_pattern (data, dataType, i +  56, length, &__OSUnmaskInterruptsSigs[1]) &&
-							findx_pattern (data, dataType, i +  61, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i +  82, length, &EXILockSigs[4]) &&
-							findx_pattern (data, dataType, i +  90, length, &EXISelectSigs[4]) &&
-							findx_pattern (data, dataType, i + 102, length, &EXIImmSigs[4]) &&
-							findx_patterns(data, dataType, i + 107, length, &EXISyncSigs[7],
-							                                                &EXISyncSigs[9], NULL) &&
-							findx_pattern (data, dataType, i + 116, length, &EXIImmSigs[4]) &&
-							findx_patterns(data, dataType, i + 121, length, &EXISyncSigs[7],
-							                                                &EXISyncSigs[9], NULL) &&
-							findx_pattern (data, dataType, i + 126, length, &EXIDeselectSigs[5]) &&
-							findx_pattern (data, dataType, i + 130, length, &OSDisableInterruptsSig) &&
-							findx_pattern (data, dataType, i + 136, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i + 143, length, &SetExiInterruptMaskSigs[4]) &&
-							findx_pattern (data, dataType, i + 162, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i + 167, length, &OSDisableInterruptsSig) &&
-							findx_pattern (data, dataType, i + 173, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i + 182, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i + 190, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern (data, dataType, i + 192, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i + 193, length, &OSDisableInterruptsSig) &&
-							get_immediate (data,  i + 194, i + 196, &address) && address == 0x800030C0 &&
-							findx_pattern (data, dataType, i + 206, length, &OSRestoreInterruptsSig))
-							EXIGetIDSigs[j].offsetFoundAt = i;
-						break;
-					case 6:
-						if ((data[i + 9] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern(data, dataType, i +  16, length, &__EXIProbeSigs[5]) &&
-							get_immediate(data,  i +  23, i +  24, &address) && address == 0x800030C0 &&
-							(data[i + 32] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern(data, dataType, i +  34, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  40, length, &__EXIProbeSigs[5]) &&
-							findx_pattern(data, dataType, i +  44, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  51, length, &EXIClearInterruptsSigs[3]) &&
-							findx_pattern(data, dataType, i +  57, length, &__OSUnmaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  62, length, &OSRestoreInterruptsSig) &&
-							get_immediate(data,  i +  69, i +  70, &address) && address == 0x800030C0 &&
-							findx_pattern(data, dataType, i +  82, length, &EXILockSigs[5]) &&
-							findx_pattern(data, dataType, i +  89, length, &EXISelectSigs[5]) &&
-							findx_pattern(data, dataType, i + 100, length, &EXIImmSigs[5]) &&
-							findx_pattern(data, dataType, i + 105, length, &EXISyncSigs[8]) &&
-							findx_pattern(data, dataType, i + 114, length, &EXIImmSigs[5]) &&
-							findx_pattern(data, dataType, i + 119, length, &EXISyncSigs[8]) &&
-							findx_pattern(data, dataType, i + 124, length, &EXIDeselectSigs[6]) &&
-							(data[i + 128] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern(data, dataType, i + 130, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 136, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 143, length, &SetExiInterruptMaskSigs[5]) &&
-							findx_pattern(data, dataType, i + 163, length, &OSRestoreInterruptsSig) &&
-							(data[i + 168] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern(data, dataType, i + 170, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 176, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 185, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 193, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i + 195, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 196, length, &OSDisableInterruptsSig) &&
-							get_immediate(data,  i + 199, i + 200, &address) && address == 0x800030C0 &&
-							findx_pattern(data, dataType, i + 211, length, &OSRestoreInterruptsSig))
-							EXIGetIDSigs[j].offsetFoundAt = i;
-						break;
-					case 7:
-						if ((data[i + 7] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern(data, dataType, i +  16, length, &__EXIProbeSigs[6]) &&
-							get_immediate(data,  i +  23, i +  24, &address) && address == 0x800030C0 &&
-							findx_pattern(data, dataType, i +  33, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  39, length, &__EXIProbeSigs[6]) &&
-							findx_pattern(data, dataType, i +  43, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  50, length, &EXIClearInterruptsSigs[2]) &&
-							findx_pattern(data, dataType, i +  56, length, &__OSUnmaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i +  61, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  82, length, &EXILockSigs[6]) &&
-							findx_pattern(data, dataType, i +  90, length, &EXISelectSigs[6]) &&
-							findx_pattern(data, dataType, i + 102, length, &EXIImmSigs[6]) &&
-							findx_pattern(data, dataType, i + 107, length, &EXISyncSigs[10]) &&
-							findx_pattern(data, dataType, i + 116, length, &EXIImmSigs[6]) &&
-							findx_pattern(data, dataType, i + 121, length, &EXISyncSigs[10]) &&
-							findx_pattern(data, dataType, i + 126, length, &EXIDeselectSigs[7]) &&
-							findx_pattern(data, dataType, i + 130, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 136, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 143, length, &SetExiInterruptMaskSigs[6]) &&
-							findx_pattern(data, dataType, i + 162, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 167, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 173, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 182, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 190, length, &__OSMaskInterruptsSigs[1]) &&
-							findx_pattern(data, dataType, i + 192, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 193, length, &OSDisableInterruptsSig) &&
-							get_immediate(data,  i + 195, i + 196, &address) && address == 0x800030C0 &&
-							findx_pattern(data, dataType, i + 206, length, &OSRestoreInterruptsSig))
-							EXIGetIDSigs[j].offsetFoundAt = i;
-						break;
-					case 8:
-						if ((data[i + 7] & 0xFC00FFFF) == 0x54003032 &&
-							findx_pattern (data, dataType, i +  25, length, &__EXIProbeSigs[6]) &&
-							get_immediate (data,  i +  32, i +  33, &address) && address == 0x800030C0 &&
-							findx_pattern (data, dataType, i +  42, length, &OSDisableInterruptsSig) &&
-							findx_pattern (data, dataType, i +  48, length, &__EXIProbeSigs[6]) &&
-							findx_pattern (data, dataType, i +  52, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i +  59, length, &EXIClearInterruptsSigs[2]) &&
-							findx_patterns(data, dataType, i +  65, length, &__OSUnmaskInterruptsSigs[1],
-							                                                &__OSUnmaskInterruptsSigs[2], NULL) &&
-							findx_pattern (data, dataType, i +  70, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
-							findx_pattern (data, dataType, i +  93, length, &EXILockSigs[6]) &&
-							findx_pattern (data, dataType, i + 101, length, &EXISelectSigs[6]) &&
-							findx_pattern (data, dataType, i + 113, length, &EXIImmSigs[6]) &&
-							findx_pattern (data, dataType, i + 118, length, &EXISyncSigs[11]) &&
-							findx_pattern (data, dataType, i + 127, length, &EXIImmSigs[6]) &&
-							findx_pattern (data, dataType, i + 132, length, &EXISyncSigs[11]) &&
-							findx_pattern (data, dataType, i + 137, length, &EXIDeselectSigs[7]) &&
-							findx_pattern (data, dataType, i + 141, length, &OSDisableInterruptsSig) &&
-							findx_pattern (data, dataType, i + 147, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i + 154, length, &SetExiInterruptMaskSigs[6]) &&
-							findx_pattern (data, dataType, i + 173, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i + 175, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i + 180, length, &OSDisableInterruptsSig) &&
-							findx_pattern (data, dataType, i + 186, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i + 195, length, &OSRestoreInterruptsSig) &&
-							findx_patterns(data, dataType, i + 203, length, &__OSMaskInterruptsSigs[1],
-							                                                &__OSMaskInterruptsSigs[2], NULL) &&
-							findx_pattern (data, dataType, i + 205, length, &OSRestoreInterruptsSig) &&
-							findx_pattern (data, dataType, i + 206, length, &OSDisableInterruptsSig) &&
-							get_immediate (data,  i + 208, i + 209, &address) && address == 0x800030C0 &&
-							findx_pattern (data, dataType, i + 219, length, &OSRestoreInterruptsSig))
-							EXIGetIDSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
