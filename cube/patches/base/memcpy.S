@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2022, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -23,13 +23,9 @@
 .section .text
 	.globl memcpy
 memcpy:
-	cmplwi	r5, 0
-	beqlr
-	subi	r5, r5, 1
 	srwi.	r6, r5, 5
-	mtctr	r6
 	clrlwi	r5, r5, 27
-	addi	r5, r5, 1
+	mtctr	r6
 	mtxer	r5
 	mr		r0, r3
 	beq		2f
