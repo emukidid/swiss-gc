@@ -9865,7 +9865,54 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
+			case 5212864:
+				// Fix memcpy/memmove usage.
+				*(u32 *)(data + 0x80101CD0 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80396E10, (u32 *)0x80101CD0);
+				
+				*(u32 *)(data + 0x80101DDC - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80396E10, (u32 *)0x80101DDC);
+				
+				*(u32 *)(data + 0x80103DE8 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80396E10, (u32 *)0x80103DE8);
+				
+				*(u32 *)(data + 0x80154974 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80396E10, (u32 *)0x80154974);
+				
+				*(u32 *)(data + 0x80154B0C - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80396E10, (u32 *)0x80154B0C);
+				
+				*(u32 *)(data + 0x80361B4C - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80396E10, (u32 *)0x80361B4C);
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 5214112:
+				// Fix memcpy/memmove usage.
+				*(u32 *)(data + 0x80101CD0 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80396E68, (u32 *)0x80101CD0);
+				
+				*(u32 *)(data + 0x80101DDC - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80396E68, (u32 *)0x80101DDC);
+				
+				*(u32 *)(data + 0x80103DE8 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80396E68, (u32 *)0x80103DE8);
+				
+				*(u32 *)(data + 0x80154974 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80396E68, (u32 *)0x80154974);
+				
+				*(u32 *)(data + 0x80154B0C - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80396E68, (u32 *)0x80154B0C);
+				
+				*(u32 *)(data + 0x80361B90 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80396E68, (u32 *)0x80361B90);
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
 			case 5233088:
+				// Fix memcpy/memmove usage.
+				*(u32 *)(data + 0x80101BA4 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A568, (u32 *)0x80101BA4);
+				
+				*(u32 *)(data + 0x80101CB0 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A568, (u32 *)0x80101CB0);
+				
+				*(u32 *)(data + 0x80103CB0 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A568, (u32 *)0x80103CB0);
+				
+				*(u32 *)(data + 0x80154A94 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A568, (u32 *)0x80154A94);
+				
+				*(u32 *)(data + 0x80154C2C - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A568, (u32 *)0x80154C2C);
+				
+				*(u32 *)(data + 0x803637E4 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A568, (u32 *)0x803637E4);
+				
 				// Move buffer from 0x80001800 to debug monitor.
 				addr = getPatchAddr(OS_RESERVED);
 				
@@ -9904,12 +9951,102 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
+			case 5210560:
+				// Fix memcpy/memmove usage.
+				*(u32 *)(data + 0x80101A2C - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80395B40, (u32 *)0x80101A2C);
+				
+				*(u32 *)(data + 0x80101B38 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80395B40, (u32 *)0x80101B38);
+				
+				*(u32 *)(data + 0x80103B44 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80395B40, (u32 *)0x80103B44);
+				
+				*(u32 *)(data + 0x801545B8 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80395B40, (u32 *)0x801545B8);
+				
+				*(u32 *)(data + 0x80154750 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80395B40, (u32 *)0x80154750);
+				
+				*(u32 *)(data + 0x80360C98 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80395B40, (u32 *)0x80360C98);
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 5225632:
+				// Fix memcpy/memmove usage.
+				*(u32 *)(data + 0x80101C14 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80398548, (u32 *)0x80101C14);
+				
+				*(u32 *)(data + 0x80101D20 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80398548, (u32 *)0x80101D20);
+				
+				*(u32 *)(data + 0x80103D20 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80398548, (u32 *)0x80103D20);
+				
+				*(u32 *)(data + 0x8015496C - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80398548, (u32 *)0x8015496C);
+				
+				*(u32 *)(data + 0x80154B04 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80398548, (u32 *)0x80154B04);
+				
+				*(u32 *)(data + 0x80362108 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80398548, (u32 *)0x80362108);
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
 			case 5234880:
+				// Fix memcpy/memmove usage.
+				*(u32 *)(data + 0x80101B94 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A198, (u32 *)0x80101B94);
+				
+				*(u32 *)(data + 0x80101CA0 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A198, (u32 *)0x80101CA0);
+				
+				*(u32 *)(data + 0x80103CA0 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A198, (u32 *)0x80103CA0);
+				
+				*(u32 *)(data + 0x80154A30 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A198, (u32 *)0x80154A30);
+				
+				*(u32 *)(data + 0x80154BC8 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A198, (u32 *)0x80154BC8);
+				
+				*(u32 *)(data + 0x80363418 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A198, (u32 *)0x80363418);
+				
 				// Move buffer from 0x80001800 to debug monitor.
 				addr = getPatchAddr(OS_RESERVED);
 				
 				*(s16 *)(data + 0x8036F1FA - 0x8000F740 + 0x2620) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x8036F202 - 0x8000F740 + 0x2620) = ((u32)addr & 0xFFFF);
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 5235488:
+				// Fix memcpy/memmove usage.
+				*(u32 *)(data + 0x80101DE0 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A3E8, (u32 *)0x80101DE0);
+				
+				*(u32 *)(data + 0x80101EEC - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A3E8, (u32 *)0x80101EEC);
+				
+				*(u32 *)(data + 0x80103F6C - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A3E8, (u32 *)0x80103F6C);
+				
+				*(u32 *)(data + 0x80154C0C - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A3E8, (u32 *)0x80154C0C);
+				
+				*(u32 *)(data + 0x80154DA4 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A3E8, (u32 *)0x80154DA4);
+				
+				*(u32 *)(data + 0x80363664 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x8039A3E8, (u32 *)0x80363664);
+				
+				// Move buffer from 0x80001800 to debug monitor.
+				addr = getPatchAddr(OS_RESERVED);
+				
+				*(s16 *)(data + 0x8036F446 - 0x8000F740 + 0x2620) = ((u32)addr + 0x8000) >> 16;
+				*(s16 *)(data + 0x8036F44E - 0x8000F740 + 0x2620) = ((u32)addr & 0xFFFF);
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GPOP8P", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 5237184:
+				// Fix memcpy/memmove usage.
+				*(u32 *)(data + 0x80101D94 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80399058, (u32 *)0x80101D94);
+				
+				*(u32 *)(data + 0x80101EA0 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80399058, (u32 *)0x80101EA0);
+				
+				*(u32 *)(data + 0x80103EA0 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80399058, (u32 *)0x80103EA0);
+				
+				*(u32 *)(data + 0x80154F58 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80399058, (u32 *)0x80154F58);
+				
+				*(u32 *)(data + 0x801550F0 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80399058, (u32 *)0x801550F0);
+				
+				*(u32 *)(data + 0x80362BD8 - 0x8000F740 + 0x2620) = branchAndLink((u32 *)0x80399058, (u32 *)0x80362BD8);
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
