@@ -9557,6 +9557,26 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 		}
+	} else if (!strncmp(gameID, "DPSJ8P", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4649632:
+				// Fix memcpy/memmove usage.
+				*(u32 *)(data + 0x8005D8C0 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x8030F5D4, (u32 *)0x8005D8C0);
+				
+				*(u32 *)(data + 0x8005D9CC - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x8030F5D4, (u32 *)0x8005D9CC);
+				
+				*(u32 *)(data + 0x8005F938 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x8030F5D4, (u32 *)0x8005F938);
+				
+				*(u32 *)(data + 0x800B2548 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x8030F5D4, (u32 *)0x800B2548);
+				
+				*(u32 *)(data + 0x800B26E0 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x8030F5D4, (u32 *)0x800B26E0);
+				
+				*(u32 *)(data + 0x801E7DCC - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x8030F5D4, (u32 *)0x801E7DCC);
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
 	} else if (!strncmp(gameID, "GC6E01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3779808:
@@ -10081,6 +10101,19 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 			case 4785536:
+				// Fix memcpy/memmove usage.
+				*(u32 *)(data + 0x8005D2F4 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x80343244, (u32 *)0x8005D2F4);
+				
+				*(u32 *)(data + 0x8005D400 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x80343244, (u32 *)0x8005D400);
+				
+				*(u32 *)(data + 0x8005F36C - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x80343244, (u32 *)0x8005F36C);
+				
+				*(u32 *)(data + 0x800B06CC - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x80343244, (u32 *)0x800B06CC);
+				
+				*(u32 *)(data + 0x800B0864 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x80343244, (u32 *)0x800B0864);
+				
+				*(u32 *)(data + 0x801D6200 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x80343244, (u32 *)0x801D6200);
+				
 				// Move buffer from 0x80001800 to debug monitor.
 				addr = getPatchAddr(OS_RESERVED);
 				
@@ -10123,6 +10156,19 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 			case 4781856:
+				// Fix memcpy/memmove usage.
+				*(u32 *)(data + 0x8005D3A0 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x803421F4, (u32 *)0x8005D3A0);
+				
+				*(u32 *)(data + 0x8005D4AC - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x803421F4, (u32 *)0x8005D4AC);
+				
+				*(u32 *)(data + 0x8005F418 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x803421F4, (u32 *)0x8005F418);
+				
+				*(u32 *)(data + 0x800B06E8 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x803421F4, (u32 *)0x800B06E8);
+				
+				*(u32 *)(data + 0x800B0880 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x803421F4, (u32 *)0x800B0880);
+				
+				*(u32 *)(data + 0x801D6174 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x803421F4, (u32 *)0x801D6174);
+				
 				// Move buffer from 0x80001800 to debug monitor.
 				addr = getPatchAddr(OS_RESERVED);
 				
@@ -10165,6 +10211,19 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 			case 4794720:
+				// Fix memcpy/memmove usage.
+				*(u32 *)(data + 0x8005D45C - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x80344114, (u32 *)0x8005D45C);
+				
+				*(u32 *)(data + 0x8005D568 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x80344114, (u32 *)0x8005D568);
+				
+				*(u32 *)(data + 0x8005F4D4 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x80344114, (u32 *)0x8005F4D4);
+				
+				*(u32 *)(data + 0x800B0B10 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x80344114, (u32 *)0x800B0B10);
+				
+				*(u32 *)(data + 0x800B0CA8 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x80344114, (u32 *)0x800B0CA8);
+				
+				*(u32 *)(data + 0x801D6874 - 0x8000E680 + 0x26C0) = branchAndLink((u32 *)0x80344114, (u32 *)0x801D6874);
+				
 				// Move buffer from 0x80001800 to debug monitor.
 				addr = getPatchAddr(OS_RESERVED);
 				
