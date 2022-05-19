@@ -150,6 +150,7 @@ static const struct {
 	{ "D62J01\x00\x00", true,  2, 0x0D8F, 0x632EB575, 1147928576,  +312049664, {  885163800,  +312066364, 6496, 0x285C }, "Gekkan Nintendo Tentou Demo 2003.8.1" },
 	{ "D62J01\x01\x00", true,  2, 0x5FDC, 0x2CBA3D86, 1340178432,  +119799808, { 1077424012,  +119806152, 6496, 0x285C }, "Gekkan Nintendo Tentou Demo 2003.8.1" },
 	{ "D63E01\x00\x00", true,  1, 0x90C1, 0x509003FB, 1438484480,   +21493760, {  277026676,   +21090092, 6496, 0x7E15 }, "Interactive Multi-Game Demo Disc Version 30" },
+	{ "D63J01\x00\x00", true,  1, 0xB217, 0x1DB920C9, 1448181760,   +11796480, { 1155687760,   +11805508, 6496, 0xC645 }, "Gekkan Nintendo Tentou Demo 2003.9.1" },
 	{ "D64E01\x00\x00", true,  1, 0x5C93, 0xD936A2C2, 1314195456,  +145782784, {  276839788,  +145369396, 6496, 0xBC49 }, "Interactive Multi-Game Demo Disc Version 29" },
 	{ "D64J01\x00\x01", true,  1, 0xF75D, 0x029014E4, 1354854400,  +105123840, {    1996200,  +105121560, 6496, 0xFC57 }, "Gekkan Nintendo Tentou Demo 2003.10.1" },
 	{ "D65E01\x00\x00", true,  1, 0x3C38, 0x052A45B7,  994793472,  +465184768, {  240865956,  +464851964, 6496, 0xCDB7 }, "Interactive Multi-Game Demo Disc Version 28" },
