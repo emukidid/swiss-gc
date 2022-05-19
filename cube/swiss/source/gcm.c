@@ -498,11 +498,11 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			continue;	// skip unused PSO files
 		}
 		uiDrawObj_t* progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
-		int sizeToRead = filesToPatch[i].size, ret = 0;
+		int sizeToRead = (filesToPatch[i].size + 31) & ~31;
 		void *buffer = memalign(32, sizeToRead);
 		
 		devices[DEVICE_CUR]->seekFile(file,filesToPatch[i].offset, DEVICE_HANDLER_SEEK_SET);
-		ret = devices[DEVICE_CUR]->readFile(file,buffer,sizeToRead);
+		int ret = devices[DEVICE_CUR]->readFile(file,buffer,sizeToRead);
 		print_gecko("Read from %08X Size %08X - Result: %08X\r\n", filesToPatch[i].offset, sizeToRead, ret);
 		if(ret != sizeToRead) {
 			DrawDispose(progBox);			
@@ -512,8 +512,9 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			return 0;
 		}
 		
+		u8 *oldBuffer = NULL, *newBuffer = NULL;
 		if(filesToPatch[i].type == PATCH_DOL_PRS || filesToPatch[i].type == PATCH_OTHER_PRS) {
-			sizeToRead = pso_prs_decompress_buf(buffer, (u8**)&buffer, sizeToRead);
+			sizeToRead = pso_prs_decompress_buf(buffer, &newBuffer, filesToPatch[i].size);
 			if(sizeToRead < 0) {
 				DrawDispose(progBox);
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to decompress!"));
@@ -521,6 +522,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 				DrawDispose(msgBox);
 				return 0;
 			}
+			oldBuffer = buffer;
+			buffer = newBuffer;
 		}
 		
 		// Patch raw files for certain games
@@ -560,14 +563,20 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		}
 		
 		if(filesToPatch[i].type == PATCH_DOL_PRS || filesToPatch[i].type == PATCH_OTHER_PRS) {
-			sizeToRead = pso_prs_compress(buffer, (u8**)&buffer, sizeToRead);
-			if(sizeToRead < 0 || sizeToRead > filesToPatch[i].size) {
+			sizeToRead = pso_prs_compress2(buffer, oldBuffer, sizeToRead, filesToPatch[i].size);
+			if(sizeToRead < 0) {
 				DrawDispose(progBox);
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to recompress!"));
 				sleep(5);
 				DrawDispose(msgBox);
 				return 0;
 			}
+			filesToPatch[i].size = sizeToRead;
+			sizeToRead = (filesToPatch[i].size + 31) & ~31;
+			buffer = oldBuffer;
+			oldBuffer = NULL;
+			free(newBuffer);
+			newBuffer = NULL;
 		}
 		
 		if(patched) {
@@ -622,7 +631,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 				}
 			}
 			// Otherwise, write a file out for this game with the patched buffer inside.
-			print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", patchFile.name, sizeToRead, filesToPatch[i].offset);
+			print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", patchFile.name, filesToPatch[i].size, filesToPatch[i].offset);
 			devices[DEVICE_PATCHES]->seekFile(&patchFile, 0, DEVICE_HANDLER_SEEK_SET);
 			devices[DEVICE_PATCHES]->writeFile(&patchFile, buffer, sizeToRead);
 			devices[DEVICE_PATCHES]->writeFile(&patchFile, patchInfo, 16);

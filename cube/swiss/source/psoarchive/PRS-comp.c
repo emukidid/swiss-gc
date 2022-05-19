@@ -354,7 +354,8 @@ int pso_prs_archive2(const uint8_t *src, uint8_t *dst, size_t src_len,
     function will never produce output larger than that of the prs_archive
     function, and will usually produce output that is significantly smaller.
  ******************************************************************************/
-int pso_prs_compress(const uint8_t *src, uint8_t **dst, size_t src_len) {
+int pso_prs_compress2(const uint8_t *src, uint8_t *dst, size_t src_len,
+                      size_t dst_len) {
     struct prs_comp_cxt cxt;
     struct prs_hash_cxt *hcxt;
     int rv, mlen, mlen2;
@@ -372,7 +373,7 @@ int pso_prs_compress(const uint8_t *src, uint8_t **dst, size_t src_len) {
     /* Meh. Don't feel like dealing with it here, since it's not compressible
        at all anyway. */
     if(src_len <= 3)
-        return pso_prs_archive(src, dst, src_len);
+        return pso_prs_archive2(src, dst, src_len, dst_len);
 
     /* Allocate the hash context. */
     if(!(hcxt = (struct prs_hash_cxt *)malloc(sizeof(struct prs_hash_cxt))))
@@ -383,14 +384,8 @@ int pso_prs_compress(const uint8_t *src, uint8_t **dst, size_t src_len) {
     memset(hcxt, 0, sizeof(struct prs_hash_cxt));
     cxt.src = src;
     cxt.src_len = src_len;
-    cxt.dst_len = pso_prs_max_compressed_size(src_len);
-
-    /* Allocate our "compressed" buffer. */
-    if(!(cxt.dst = (uint8_t *)malloc(cxt.dst_len))) {
-        free(hcxt);
-        return PSOARCHIVE_EMEM;
-    }
-
+    cxt.dst_len = dst_len;
+    cxt.dst = dst;
     cxt.flag_ptr = cxt.dst;
 
     /* Add the first two "strings" to the hash table. */
@@ -537,15 +532,9 @@ blergh:
 
     free(hcxt);
 
-    /* Resize the output (if realloc fails to resize it, then just use the
-       unshortened buffer). */
-    if(!(*dst = realloc(cxt.dst, cxt.dst_pos)))
-        *dst = cxt.dst;
-
     return (int)cxt.dst_pos;
 
 out:
-    free(cxt.dst);
     free(hcxt);
     return rv;
 }
