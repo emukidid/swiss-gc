@@ -28,9 +28,10 @@
 
 /* Compress a buffer with PRS compression into a preallocated buffer.
 
-   This function archives the data in the src buffer into a preallocated buffer.
-   This function will never produce output larger than that of the prs_archive
-   function, and will usually beat that function rather significantly.
+   This function compresses the data in the src buffer into a preallocated
+   buffer. This function will never produce output larger than that of the
+   prs_archive function, and will usually beat that function rather
+   significantly.
 
    In testing, the compressed output of this function actually beats Sega's own
    compression slightly (by 100 bytes or so on an uncompressed version of the

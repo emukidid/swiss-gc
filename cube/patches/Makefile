@@ -30,7 +30,8 @@ clean:
 
 cpatches:
 	@echo Building C Patches ...
-	@$(CC) -O3 $(OPTS) -c base/memcpy.S
+	@$(CC) -O3 $(OPTS) -c base/memmove.S -DBACKWARDS_MEMCPY -o backwards_memcpy.o
+	@$(CC) -O3 $(OPTS) -c base/memmove.S -DMEMCPY -o memcpy.o
 	@$(CC) -O3 $(OPTS) -c base/pad.c
 	@$(CC) -O3 $(OPTS) -c usbgecko/uart.c -DEXI=EXIEmuRegs
 	@$(CC) -O3 $(OPTS) -o CheckStatus.elf -e CheckStatus -T base/common.ld -T base/dolphin/os.ld pad.o
@@ -38,9 +39,11 @@ cpatches:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D CheckStatus.elf > $(DISASM)/CheckStatus.txt
 	@$(OBJDUMP) -D WriteUARTN.elf > $(DISASM)/WriteUARTN.txt
+	@$(OBJCOPY) -O binary backwards_memcpy.o backwards_memcpy.bin
 	@$(OBJCOPY) -O binary memcpy.o memcpy.bin
 	@$(OBJCOPY) -O binary CheckStatus.elf CheckStatus.bin
 	@$(OBJCOPY) -O binary WriteUARTN.elf WriteUARTN.bin
+	@$(BIN2S) backwards_memcpy.bin > $(DEST)/backwards_memcpy.s
 	@$(BIN2S) memcpy.bin > $(DEST)/memcpy.s
 	@$(BIN2S) CheckStatus.bin > $(DEST)/CheckStatus.s
 	@$(BIN2S) WriteUARTN.bin > $(DEST)/WriteUARTN.s

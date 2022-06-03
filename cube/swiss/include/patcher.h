@@ -66,6 +66,8 @@ extern u8 gcloader_v2_card_bin[];
 extern u32 gcloader_v2_card_bin_size;
 
 /* SDK patches */
+extern u8 backwards_memcpy_bin[];
+extern u32 backwards_memcpy_bin_size;
 extern u8 memcpy_bin[];
 extern u32 memcpy_bin_size;
 extern u8 DVDLowTestAlarmHook[];
@@ -152,7 +154,8 @@ extern u8 VIRetraceHandlerHook[];
 extern u32 VIRetraceHandlerHook_length;
 
 enum patchIds {
-	DVD_LOWTESTALARMHOOK = 0,
+	BACKWARDS_MEMCPY = 0,
+	DVD_LOWTESTALARMHOOK,
 	GX_COPYDISPHOOK,
 	GX_INITTEXOBJLODHOOK,
 	GX_SETPROJECTIONHOOK,
