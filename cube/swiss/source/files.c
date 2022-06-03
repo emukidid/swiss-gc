@@ -124,11 +124,18 @@ void ensure_path(int deviceSlot, char *path, char *oldPath) {
 	if(oldPath) {
 		file_handle fhOldFullPath = { .fileAttrib = IS_DIR };
 		concat_path(fhOldFullPath.name, devices[deviceSlot]->initial->name, oldPath);
-		if(devices[deviceSlot]->renameFile(&fhOldFullPath, fhFullPath.name)) {
+		if(devices[deviceSlot]->renameFile) {
+			if(devices[deviceSlot]->renameFile(&fhOldFullPath, fhFullPath.name)) {
+				if(devices[deviceSlot]->makeDir) {
+					devices[deviceSlot]->makeDir(&fhFullPath);
+				}
+			}
+		}
+		else if(devices[deviceSlot]->makeDir) {
 			devices[deviceSlot]->makeDir(&fhFullPath);
 		}
 	}
-	else {
+	else if(devices[deviceSlot]->makeDir) {
 		devices[deviceSlot]->makeDir(&fhFullPath);
 	}
 }
