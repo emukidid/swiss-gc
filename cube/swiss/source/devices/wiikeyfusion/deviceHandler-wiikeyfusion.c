@@ -91,6 +91,21 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 			}
 		}
 		
+		// If disc 1 is fragmented, make a note of the fragments and their sizes
+		if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, FRAGS_DISC_1, 0, UINT32_MAX)) {
+			free(fragList);
+			return 0;
+		}
+		
+		// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
+		if(file2) {
+			// TODO fix 2 disc patched games
+			if(!getFragments(DEVICE_CUR, file2, &fragList, &numFrags, FRAGS_DISC_2, 0, UINT32_MAX)) {
+				free(fragList);
+				return 0;
+			}
+		}
+		
 		if(swissSettings.igrType == IGR_BOOTBIN || endsWith(file->name,".tgc")) {
 			memset(&patchFile, 0, sizeof(file_handle));
 			concat_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/apploader.img");
@@ -158,19 +173,17 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 		*(vu8*)VAR_EXI_SLOT = (u8)(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2));
 		*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[*(vu8*)VAR_EXI_SLOT];
 	}
-	
-	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, FRAGS_DISC_1, 0, UINT32_MAX)) {
-		free(fragList);
-		return 0;
-	}
-	
-	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
-	if(file2) {
-		// TODO fix 2 disc patched games
-		if(!getFragments(DEVICE_CUR, file2, &fragList, &numFrags, FRAGS_DISC_2, 0, UINT32_MAX)) {
+	else {
+		if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, FRAGS_DISC_1, 0, UINT32_MAX) || numFrags != 1) {
 			free(fragList);
 			return 0;
+		}
+		
+		if(file2) {
+			if(!getFragments(DEVICE_CUR, file2, &fragList, &numFrags, FRAGS_DISC_2, 0, UINT32_MAX) || numFrags != 2) {
+				free(fragList);
+				return 0;
+			}
 		}
 	}
 	
