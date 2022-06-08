@@ -97,5 +97,3 @@ unhandled_exception:
 	mfsprg	r5, 1
 	mfsprg	r4, 0
 	ba		0x00000304
-
-#include "memcpy.S"

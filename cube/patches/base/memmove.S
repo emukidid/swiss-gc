@@ -64,3 +64,6 @@ memmove:
 #else
 3:	b		backwards_memcpy
 #endif
+
+	.globl memcpy
+	.set memcpy, memmove
