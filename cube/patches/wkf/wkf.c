@@ -63,6 +63,10 @@ static void wkf_read_queued(void)
 	uint32_t offset = wkf.queued->offset;
 	uint32_t sector = wkf.queued->sector;
 
+	int misalign;
+	if ((misalign = (uintptr_t)buffer % 32))
+		memmove(wkf.buffer, buffer - misalign, 32);
+
 	if (wkf.base_sector != sector) {
 		DI[2] = 0xDE000000;
 		DI[3] = sector;
@@ -76,7 +80,7 @@ static void wkf_read_queued(void)
 	DI[1] = 0;
 
 	if (length) {
-		length = OSRoundUp32B((uintptr_t)buffer % 32 + length);
+		length = OSRoundUp32B(misalign + length);
 
 		DI[2] = DI_CMD_READ << 24;
 		DI[3] = offset >> 2;
@@ -108,10 +112,6 @@ static void wkf_done_queued(void)
 	}
 
 	wkf.queued->callback(buffer, length);
-	buffer += length;
-
-	if ((misalign = (uintptr_t)buffer % 32))
-		memmove(wkf.buffer, buffer - misalign, 32);
 
 	wkf.queued->callback = NULL;
 	wkf.queued = NULL;
