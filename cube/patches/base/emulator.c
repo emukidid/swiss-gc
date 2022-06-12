@@ -902,6 +902,8 @@ static void pi_read(unsigned index, uint32_t *value)
 {
 	switch (index) {
 		case 0:
+			if (!(pi.reg.intsr & pi.reg.intmsk))
+				PI[0] = 1;
 			*value = pi.reg.intsr | (PI[0] & ~0b00000000000101);
 			break;
 		case 1:
