@@ -42,6 +42,14 @@ static struct {
 	};
 } pi = {0};
 
+static void pi_update_interrupts(void)
+{
+	if (pi.reg.intsr & pi.reg.intmsk)
+		assert_interrupt();
+	else
+		PI[0] = 1;
+}
+
 #ifdef CARD_EMULATOR
 static struct {
 	union {
@@ -72,10 +80,7 @@ static void exi_update_interrupts(void)
 	else
 		pi.reg.intsr &= ~0b00000000010000;
 
-	if (pi.reg.intsr & pi.reg.intmsk)
-		assert_interrupt();
-	else
-		PI[0] = 1;
+	pi_update_interrupts();
 }
 
 void exi_interrupt(unsigned chan)
@@ -458,10 +463,7 @@ static void di_update_interrupts(void)
 	else
 		pi.reg.intsr &= ~0b00000000000100;
 
-	if (pi.reg.intsr & pi.reg.intmsk)
-		assert_interrupt();
-	else
-		PI[0] = 1;
+	pi_update_interrupts();
 }
 
 void di_error(uint32_t error)
@@ -920,10 +922,12 @@ static void pi_write(unsigned index, uint32_t value)
 		case 0:
 			PI[0] = value & 0b11111111111010;
 			pi.reg.intsr = ((value & 0b11000000000011) ^ pi.reg.intsr) & pi.reg.intsr;
+			pi_update_interrupts();
 			break;
 		case 1:
 			PI[1] = (value & 0b11111111111010) | (PI[1] & 0b00000000000101);
 			pi.reg.intmsk = value & 0b11111111111111;
+			pi_update_interrupts();
 			break;
 		case 9:
 			#ifndef DVD
