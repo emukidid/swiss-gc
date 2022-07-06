@@ -45,14 +45,14 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 	uiDrawObj_t* player = NULL;
 	while(MP3Player_IsPlaying() || ret == PLAYER_PAUSE ) {
 	
-		u32 buttons = PAD_ButtonsHeld(0);
+		u32 buttons = padsButtonsHeld();
 		if(buttons & PAD_BUTTON_B) {			// Stop
-			while((PAD_ButtonsHeld(0) & PAD_BUTTON_B)){VIDEO_WaitVSync();};
+			while((padsButtonsHeld() & PAD_BUTTON_B)){VIDEO_WaitVSync();};
 			MP3Player_Stop();
 			ret = PLAYER_STOP;
 		}
 		else if(buttons & PAD_BUTTON_START) {	// Pause
-			while((PAD_ButtonsHeld(0) & PAD_BUTTON_START)){VIDEO_WaitVSync();};
+			while((padsButtonsHeld() & PAD_BUTTON_START)){VIDEO_WaitVSync();};
 			if(ret != PLAYER_PAUSE) {
 				MP3Player_Stop();
 				ret = PLAYER_PAUSE;
@@ -96,7 +96,7 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 			MP3Player_PlayFile(file, &mp3Reader, NULL);
 		}
 		else if(buttons & PAD_TRIGGER_Z) {		// Toggle Shuffle
-			while((PAD_ButtonsHeld(0) & PAD_TRIGGER_Z)){VIDEO_WaitVSync();};
+			while((padsButtonsHeld() & PAD_TRIGGER_Z)){VIDEO_WaitVSync();};
 			useShuffle ^=1;
 		}
 		uiDrawObj_t* display = updatescreen_mp3(file, ret, numFiles, curMP3);

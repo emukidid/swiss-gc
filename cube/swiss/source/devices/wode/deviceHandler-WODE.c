@@ -17,6 +17,7 @@
 #include "patcher.h"
 #include "dvd.h"
 #include "WodeInterface.h"
+#include "util.h"
 
 char wode_regions[]  = {'J','E','P','A','K'};
 char *wode_regions_str[] = {"JPN","USA","EUR","ALL","KOR"};

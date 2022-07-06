@@ -37,6 +37,7 @@
 #include "exi.h"
 #include "ftp_devoptab.h"
 #include "bba.h"
+#include "util.h"
 
 /* FTP Globals */
 extern int net_initialized;

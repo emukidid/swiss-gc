@@ -17,6 +17,7 @@
 #include "exi.h"
 #include "bba.h"
 #include "patcher.h"
+#include "util.h"
 
 extern int net_initialized;
 static FSP_SESSION *fsp_session;

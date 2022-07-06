@@ -1547,7 +1547,7 @@ void DrawArgsSelector(const char *fileName) {
 	int param_selection = 0;
 	int params_per_page = 6;
 	
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+	while ((padsButtonsHeld() & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	uiDrawObj_t *container = NULL;
 	while(1) {
 		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
@@ -1577,9 +1577,9 @@ void DrawArgsSelector(const char *fileName) {
 		DrawPublish(newPanel);
 		container = newPanel;
 		
-		while (!(PAD_ButtonsHeld(0) & (PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_START|PAD_BUTTON_A)))
+		while (!(padsButtonsHeld() & (PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_START|PAD_BUTTON_A)))
 			{ VIDEO_WaitVSync (); }
-		u16 btns = PAD_ButtonsHeld(0);
+		u16 btns = padsButtonsHeld();
 		if((btns & (PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT)) && params->parameters[param_selection].enable) {
 			int curValIdx = params->parameters[param_selection].currentValueIdx;
 			int maxValIdx = params->parameters[param_selection].num_values;
@@ -1598,7 +1598,7 @@ void DrawArgsSelector(const char *fileName) {
 		if(btns & PAD_BUTTON_START) {
 			break;
 		}
-		while (PAD_ButtonsHeld(0) & (PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_START|PAD_BUTTON_A))
+		while (padsButtonsHeld() & (PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_START|PAD_BUTTON_A))
 			{ VIDEO_WaitVSync (); }
 	}
 	DrawDispose(container);
@@ -1627,7 +1627,7 @@ void DrawCheatsSelector(const char *fileName) {
 	int cheat_selection = 0;
 	int cheats_per_page = 6;
 
-	while ((PAD_ButtonsHeld(0) & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+	while ((padsButtonsHeld() & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
 	uiDrawObj_t *container = NULL;		
 	while(1) {
 		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
@@ -1665,9 +1665,9 @@ void DrawCheatsSelector(const char *fileName) {
 		DrawPublish(newPanel);
 		container = newPanel;
 		
-		while (!(PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R)))
+		while (!(padsButtonsHeld() & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R)))
 			{ VIDEO_WaitVSync (); }
-		u16 btns = PAD_ButtonsHeld(0);
+		u16 btns = padsButtonsHeld();
 		if(btns & (PAD_BUTTON_UP|PAD_BUTTON_DOWN)) {
 			cheat_selection = btns & PAD_BUTTON_UP ? 
 				((--cheat_selection < 0) ? cheats->num_cheats-1 : cheat_selection)
@@ -1690,7 +1690,7 @@ void DrawCheatsSelector(const char *fileName) {
 		if(btns & PAD_BUTTON_B) {
 			break;
 		}
-		while (PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R))
+		while (padsButtonsHeld() & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R))
 			{ VIDEO_WaitVSync (); }
 	}
 	DrawDispose(container);
@@ -1839,7 +1839,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 	}
 	
 	// Wait for any A or Left/Right presses to finish
-	while ((PAD_ButtonsHeld(0) & (PAD_BUTTON_A|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT))){ VIDEO_WaitVSync (); }
+	while ((padsButtonsHeld() & (PAD_BUTTON_A|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT))){ VIDEO_WaitVSync (); }
 	uiDrawObj_t *container = NULL;
 	while(1) {
 		// Double box for extra darkness
@@ -1892,9 +1892,9 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 		DrawPublish(newPanel);
 		container = newPanel;
 		
-		while (!(PAD_ButtonsHeld(0) & (PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_START)))
+		while (!(padsButtonsHeld() & (PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_START)))
 			{ VIDEO_WaitVSync (); }
-		u16 btns = PAD_ButtonsHeld(0);
+		u16 btns = padsButtonsHeld();
 		// Key nav
 		if(btns & PAD_BUTTON_DOWN) {
 			cur_row = (cur_row + 1 >= num_rows ? 0 : cur_row + 1);
@@ -1970,7 +1970,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 			}
 			break;
 		}
-		while (PAD_ButtonsHeld(0) & (PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_START))
+		while (padsButtonsHeld() & (PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_START))
 			{ VIDEO_WaitVSync (); }
 	}
 	if(text) free(text);

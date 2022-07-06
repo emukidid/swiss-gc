@@ -18,6 +18,7 @@
 #include "dvd.h"
 #include "gcm.h"
 #include "wkf.h"
+#include "util.h"
 
 #define OFFSET_NOTSET 0
 #define OFFSET_SET    1

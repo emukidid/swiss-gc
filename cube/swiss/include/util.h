@@ -23,5 +23,8 @@ bool update_recent();
 int load_existing_entry(char *entry);
 bool deleteFileOrDir(file_handle* entry);
 int formatBytes(char *string, off_t count, blksize_t blocksize, bool metric);
+u16 padsButtonsHeld();
+s8 padsStickX();
+s8 padsStickY();
 
 #endif 
