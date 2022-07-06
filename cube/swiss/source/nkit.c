@@ -50,86 +50,6 @@ static const struct {
 
 	const char *title;
 } nkit_dat[] = {
-	{ "00\0E01\x00\x00",false, 1, 0x21CF, 0xBF114CB3,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
-	{ "00\0E01\x00\x00",false, 1, 0x42A2, 0x499CF1AB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
-	{ "D28J01\x00\x00", true,  1, 0x8FC6, 0x8EFBB42B,  794134528,  +665843712, {  394649296,  +665814992, 6496, 0xE5B2 }, "Gekkan Nintendo Tentou Demo 2002.4.4" },
-	{ "G2TE52\x00\x00", false, 1, 0xC13C, 0xC98922BB,  397957120, +1062021120, {         ~0,          +0,    0, 0xFFFF }, "Gun" },
-	{ "G2TP52\x00\x00", false, 1, 0xEFEC, 0x0C20DB86, 1459980288,       -2048, { 1018210520,          +0, 6496, 0x2A86 }, "Memory Card Utility Program" },
-	{ "G2TP52\x00\x00", false, 1, 0xEFEC, 0xEE959C7E, 1459955712,      +22528, { 1018210520,          +0, 6496, 0x2179 }, "Memory Card Utility Program" },
-	{ "G4BE08\x00\x00", false, 2, 0xAC60, 0xF42C8796, 1391001600,   +68976640, {    3678236,   +67028612, 6496, 0xE6BE }, "Resident Evil 4" },
-	{ "G62ET2\x00\x00", false, 1, 0x579D, 0x2E97A802, 1225426944,  +234551296, {  981792860,  +234552024, 6496, 0x3F44 }, "Major League Baseball 2K6" },
-	{ "G8FE8P\x00\x00", false, 1, 0xEFE4, 0x7ECE5185, 1376434176,        +736, { 1376427664,        +752, 6496, 0xF054 }, "Virtua Quest" },
-	{ "G9SE8P\x00\x00", false, 1, 0x2452, 0x9570B84D, 1187868672,  +272109568, {         ~0,          +0,    0, 0xFFFF }, "Sonic Heroes" },
-	{ "G9SE8P\x00\x00", false, 1, 0x81CE, 0xDAFDE48B, 1459208192,     +770048, {         ~0,          +0,    0, 0xFFFF }, "Sonic Heroes" },
-	{ "G9SE8P\x00\x00", false, 1, 0xEC9A, 0x4F1E87EB, 1285890048,   +91774976, {  575774080,   +73228928, 6496, 0x7CBD }, "Sonic Heroes" },
-	{ "G9SE8P\x00\x03", false, 1, 0x1E76, 0x82D09071, 1245077504,  +214900736, {  441842048,  +214466732, 6496, 0x7CBD }, "Sonic Heroes" },
-	{ "G9SJ8P\x00\x00", false, 1, 0xC0D7, 0xE291DD98, 1459310592,     +667648, {  614910892,     +245764, 6496, 0x2336 }, "Sonic Heroes" },
-	{ "GAAJ08\x00\x00", false, 1, 0x59B5, 0xCFF85DC4,  431874048, +1028104192, {  431866960, +1028104784, 6496, 0x3F32 }, "Disney's Hide & Sneak" },
-	{ "GAGPEL\x00\x00", false, 1, 0xA2BD, 0x488AB477,  754982912,  +704995328, {  754973244,  +704996900, 8096, 0x63D7 }, "Astérix & Obélix XXL" },
-	{ "GASE8P\x00\x00", false, 1, 0xA1B0, 0xDD918AD1, 1404723200,   +55255040, {  774689240,   +55255472, 6496, 0x0D21 }, "Sonic Adventure DX: Director's Cut" },
-	{ "GB8E78\x00\x00", true,  1, 0x3B42, 0x1F19869C,  432257024, +1027721216, {  412625660,      +32768, 6496, 0x9BD7 }, "BattleBots" },
-	{ "GDEE71\x00\x00", false, 1, 0xC228, 0xC2C80167, 1358307328,  +101670912, {  914092380,       +7536, 6496, 0x2D5A }, "Baldur's Gate: Dark Alliance" },
-	{ "GEAE8P\x00\x00", false, 1, 0x4329, 0x22E6FE4B, 1421514752,   +38463488, { 1206244016,   +36660560, 6496, 0x51AD }, "Skies of Arcadia Legends Maeson" },
-	{ "GEAE8P\x00\x00", false, 1, 0xE528, 0xEE8698CB, 1441400832,   +18577408, { 1206239432,   +16754488, 6496, 0xCB3E }, "Skies of Arcadia Legends" },
-	{ "GEAP8P\x00\x00", false, 1, 0x44D4, 0x0CCE9042, 1445722112,   +14256128, { 1221750612,   +12339372, 8096, 0x1EBE }, "Skies of Arcadia Legends Maeson" },
-	{ "GEAP8P\x00\x00", false, 1, 0x44D4, 0x7C966541, 1445722112,   +14256128, { 1221750612,   +12339372, 8096, 0x1EBE }, "Skies of Arcadia Legends Maeson" },
-	{ "GEAP8P\x00\x00", false, 1, 0xE97B, 0xDE5D8B4B, 1440671744,   +19306496, { 1221746028,   +17478292, 8096, 0x90EE }, "Skies of Arcadia Legends" },
-	{ "GFTP01\x00\x00", false, 1, 0x3F77, 0x963DEB2E, 1336121344,  +123856896, {    2083652,  +123826684, 8096, 0x9AC5 }, "Mario Golf: Toadstool Tour" },
-	{ "GGSEA4\x00\x00", false, 2, 0xCD03, 0xD1B33770, 1316773888,  +143204352, {  596774724,      +32956, 6496, 0x215E }, "Metal Gear Solid: The Twin Snakes" },
-	{ "GGSEA4\x01\x00", false, 2, 0x5C18, 0x85409E81, 1406547968,   +53430272, {  681679984,      +17296, 6496, 0x2460 }, "Metal Gear Solid: The Twin Snakes" },
-	{ "GIQE78\x00\x00", false, 1, 0x93A4, 0x7B595396,  488515584,  +971462656, {   43243600,      +30640, 6496, 0x3149 }, "Disney/Pixar Ratatouille" },
-	{ "GK4E01\x00\x00", false, 2, 0x1B8C, 0x4768F314, 1456455680,    +3522560, {    2826708,    +1871404, 6496, 0xC964 }, "Baten Kaitos Origins" },
-	{ "GK4E01\x00\x00", false, 2, 0x1B8C, 0x4C578D78, 1451636736,    +8341504, {    2826708,    +6696492, 6496, 0xC964 }, "Baten Kaitos Origins" },
-	{ "GK4E01\x00\x00", false, 2, 0x1B8C, 0x8640ADA7, 1451636736,    +8341504, {    2826708,    +6696492, 6496, 0xC964 }, "Baten Kaitos Origins" },
-	{ "GK4E01\x00\x00", false, 2, 0x1B8C, 0x8783BDE8, 1456455680,    +3522560, {    2826708,    +1871404, 6496, 0xC964 }, "Baten Kaitos Origins" },
-	{ "GK4E01\x00\x00", false, 2, 0x3523, 0xCEA55401, 1454843904,    +5134336, {    2826464,    +3491616, 6496, 0xBA4A }, "Baten Kaitos Origins" },
-	{ "GK4E01\x00\x00", false, 2, 0xEFEF, 0x770EB63D, 1454764032,    +5214208, {    2737124,    +3562524, 6496, 0x33F8 }, "Baten Kaitos Origins" },
-	{ "GK4E01\x01\x00", false, 2, 0x1EE9, 0x38E4CFAB, 1392433152,   +67545088, {    2826864,   +65891728, 6496, 0xAE65 }, "Baten Kaitos Origins" },
-	{ "GK4E01\x01\x00", false, 2, 0x1EE9, 0xB0133874, 1391022080,   +68956160, {    2826864,   +67300752, 6496, 0xAE65 }, "Baten Kaitos Origins" },
-	{ "GK4E01\x01\x00", false, 2, 0x1EE9, 0xCE2A8F82, 1391022080,   +68956160, {    2826864,   +67300752, 6496, 0xAE65 }, "Baten Kaitos Origins" },
-	{ "GK4E01\x01\x00", false, 2, 0x1EE9, 0xD2768D19, 1392433152,   +67545088, {    2826864,   +65891728, 6496, 0xAE65 }, "Baten Kaitos Origins" },
-	{ "GK4E01\x01\x00", false, 2, 0x2A88, 0xA5BA3E53, 1390612480,   +69365760, {    2737376,   +67732256, 6496, 0x15F9 }, "Baten Kaitos Origins" },
-	{ "GK4E01\x01\x00", false, 2, 0xC320, 0xED57831A, 1391255552,   +68722688, {    2826620,   +67077764, 6496, 0x9C4B }, "Baten Kaitos Origins" },
-	{ "GKBEAF\x00\x00", false, 2, 0x25A5, 0xE52B2B6B, 1440837632,   +19140608, { 1440830320,   +19139728, 6496, 0xD47E }, "Baten Kaitos: Eternal Wings and the Lost Ocean" },
-	{ "GKBEAF\x01\x00", false, 2, 0x6D51, 0xF3B588CF, 1332668416,  +127309824, { 1332660460,  +127309588, 6496, 0x8880 }, "Baten Kaitos: Eternal Wings and the Lost Ocean" },
-	{ "GLJEGG\x00\x00", false, 1, 0x3684, 0xC411F2F8,  577157120,  +883148800, {  560702976,  +882822244, 6496, 0x83D8 }, "Radio Allergy" },
-	{ "GMPP01\x00\x00", false, 1, 0x39B0, 0xB7DA63ED,  607344640,  +852633600, {  559136944,     +232500, 8096, 0x03FE }, "Mario Party 4" },
-	{ "GMPP01\x00\x02", false, 1, 0x9D34, 0xF0DE4105,  607346688,  +852631552, {  559137448,     +264764, 8096, 0x03FE }, "Mario Party 4" },
-	{ "GMUP5D\x00\x00", false, 1, 0xEE0B, 0xD442A6BF, 1425692672,   +34285568, {    6644012,    +5580500, 6496, 0x093D }, "Dr. Muto" },
-	{ "GNDP8P\x01\x01", false, 1, 0x6F6A, 0x81525825,  894347264,  +565630976, {         ~0,          +0,    0, 0xFFFF }, "Need for Speed: Underground" },
-	{ "GP5P01\x00\x00", false, 1, 0xFBF1, 0x9DC1BB2A,  922845184,  +537133056, {   14902032,      +41916, 8096, 0x3D31 }, "Mario Party 5" },
-	{ "GPNE08\x00\x00", false, 1, 0xA6AC, 0xD42D1079,  689250304,  +770727936, {  492787200,  +770729280, 6496, 0x5AB7 }, "P.N. 03" },
-	{ "GQSEAF\x00\x00", false, 2, 0x0E94, 0x9E8B9546, 1380898816,   +79079424, {  349195336,   +79079928, 6496, 0xF367 }, "Tales of Symphonia" },
-	{ "GQSEAF\x01\x00", false, 2, 0xED8E, 0xDA5B73F2, 1395918848,   +64059392, {  387734936,   +64059656, 6496, 0xB169 }, "Tales of Symphonia" },
-	{ "GSBJ8P\x00\x01", false, 1, 0x00C2, 0x37188ABA, 1381527552,   +78450688, { 1148003688,      +30812, 6496, 0xB21E }, "Sonic Adventure 2: Battle" },
-	{ "GSNE8P\x00\x00", false, 1, 0x6D00, 0x9E1674E2, 1381541888,   +78436352, { 1148014968,       +3360, 6496, 0x1937 }, "Sonic Adventure 2: Battle" },
-	{ "GSOE8P\x00\x00", false, 1, 0xF780, 0xC90A1327,  400175104, +1059803136, {   17701084,       +6432, 6496, 0x10E5 }, "Sonic Mega Collection" },
-	{ "GW7E69\x00\x00", false, 1, 0xBA0B, 0x9D4C631E, 1303988224,  +155990016, {  665209012,  +155709260, 6496, 0x347B }, "007: Agent Under Fire: Reloaded" },
-	{ "GW7E69\x00\x00", false, 1, 0xBD9C, 0x623336BA, 1342423040,  +117555200, {  663027564,  +117248148, 6496, 0x347B }, "007: Agent Under Fire: Reloaded" },
-	{ "GW7E69\x00\x00", false, 1, 0xDB76, 0x4BC8D2F2, 1342423040,  +117555200, {  663027520,  +117250240, 6496, 0x347B }, "007: Agent Under Fire: Reloaded" },
-	{ "GXPE78\x00\x00", false, 1, 0x3EAD, 0xF1EEF03F, 1444642816,   +15335424, {         ~0,          +0,    0, 0xFFFF }, "Pirates of the Caribbean" },
-	{ "GXRE08\x00\x00", false, 1, 0x098E, 0x7FAD64AA, 1275594752,  +184383488, { 1275586724,  +184385020, 6496, 0x88E4 }, "Mega Man X: Command Mission" },
-	{ "GXRE08\x00\x00", false, 1, 0x4778, 0x864EAC0B, 1278449664,   +65759232, { 1278442420,   +65733708, 6496, 0x2817 }, "Mega Man X: Command Mission" },
-	{ "GXXE01\x00\x00", false, 1, 0x98C1, 0x5D851B48, 1076094976,  +383883264, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
-	{ "GXXE01\x00\x00", false, 1, 0x98C1, 0x9B232C01, 1089105920,  +370872320, {   11889508,  +367324092, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
-	{ "GXXE01\x00\x00", false, 1, 0x98C1, 0xA6B80ED7, 1087750144,  +372228096, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
-	{ "GXXE01\x00\x00", false, 1, 0x98C1, 0xBE135566, 1087750144,  +372228096, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
-	{ "GXXE01\x00\x00", false, 1, 0x98C1, 0xDF5B1825, 1087750144,  +372228096, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
-	{ "GXXE01\x00\x00", false, 1, 0x98C1, 0xE0D19118, 1093384192,  +366594048, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
-	{ "GXXE01\x00\x00", false, 1, 0xA1B6, 0x734E4775, 1093365760,  +366612480, {   12619752,  +363950104, 6496, 0xF5D7 }, "Pokémon XD: Gale of Darkness: ReduX" },
-	{ "GZPE70\x00\x00", false, 1, 0x887C, 0xBC256FCD, 1416488960,   +43489280, {    2317240,      +17384, 6496, 0x195D }, "Zapper" },
-	{ "RELSAB\x00\x00", false, 1, 0x2E3D, 0x97BA74C5,  128698368, +1331279872, {  113594680, +1331280376, 8096, 0xADB1 }, "Metroid Prime 3: Corruption" },
-	{ "RELSAB\x00\x00", false, 1, 0x35B7, 0x524B2418,  750051328,  +709926912, {         ~0,          +0,    0, 0xFFFF }, "Disney/Pixar Ratatouille" },
-	{ "RELSAB\x00\x00", false, 1, 0x4535, 0x5DC67D47, 1298782208,  +161196032, {         ~0,          +0,    0, 0xFFFF }, "Galleon" },
-	{ "RELSAB\x00\x00", false, 1, 0x63C1, 0x55314C4D, 1121071104,  +338907136, {  646741420,      +29460, 6496, 0xD28D }, "Sonic Adventure DX" },
-	{ "RELSAB\x00\x00", false, 1, 0xB288, 0x141D0A04,  136779776, +1323198464, {         ~0,          +0,    0, 0xFFFF }, "Sonic Heroes" },
-	{ "RELSAB\x00\x00", false, 1, 0xFD3E, 0x0F846161,  134455296, +1325522944, {         ~0,          +0,    0, 0xFFFF }, "ATV: Quad Power Racing 2" },
-	{ "RELSAB\x00\x00", true,  1, 0xD9CE, 0x16D7BCCE, 1459978240,          +0, { 1193214528,          +0, 6496, 0x1458 }, "Summoner: The Prophecy" },
-	{ "RELSAB\x00\x00", true,  1, 0xFCCE, 0x146E4A5A, 1459947520,      +30720, { 1193673280,          +0, 6496, 0x8F7A }, "Summoner: The Prophecy" },
-	{ "RELSAB\x01\x01", false, 1, 0x3C92, 0xA553BEC9,  126601216, +1333377024, {   96423396,      +27800, 6496, 0x19E5 }, "Smashing Drive" },
-	{ "RELSAB\x01\x01", false, 1, 0xA47D, 0xBB46463A,  482416640,  +977561600, {    3936256,      +28760, 6496, 0x3FED }, "Rayman Arena" },
-	{ "TESTNA\x00\x00", false, 1, 0x0C28, 0x6254FB97,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define REDUMP_INDEX 79
 	{ "101J01\x00\x03", true,  1, 0xA361, 0x1A7B7608, 1459486720,     +491520, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL Ver. 03" },
 	{ "102E01\x00\x07", true,  1, 0x10B2, 0x4CA6F4EB, 1450858496,    +9119744, {  122984064,    +1245184, 6496, 0x19E5 }, "Aging Disc DOL-USA Ver. 07" },
 	{ "301E01\x00\x00", true,  1, 0x2291, 0xBE031BBE,  220121088, +1239857152, {  152535040, +1239842816, 6496, 0x1086 }, "Nintendo GameCube Service Disc Version 1.0/03" },
@@ -2085,6 +2005,87 @@ static const struct {
 	{ "UGPJ01\x00\x03", false, 1, 0xC4F0, 0xDFF567CB,    2473984, +1457504256, {    2003524,      +28092, 6496, 0xE53B }, "Game Boy Player Start-Up Disc" },
 	{ "UGPP01\x00\x01", false, 1, 0x6D4F, 0x5ECD9681,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{ "UGPP01\x00\x02", false, 1, 0xCA50, 0x1E26380C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
+#define REDUMP_COUNT 1955
+	{ "00\0E01\x00\x00",false, 1, 0x21CF, 0xBF114CB3,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
+	{ "00\0E01\x00\x00",false, 1, 0x42A2, 0x499CF1AB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
+	{ "D28J01\x00\x00", true,  1, 0x8FC6, 0x8EFBB42B,  794134528,  +665843712, {  394649296,  +665814992, 6496, 0xE5B2 }, "Gekkan Nintendo Tentou Demo 2002.4.4" },
+	{ "G2TE52\x00\x00", false, 1, 0xC13C, 0xC98922BB,  397957120, +1062021120, {         ~0,          +0,    0, 0xFFFF }, "Gun" },
+	{ "G2TP52\x00\x00", false, 1, 0xEFEC, 0x0C20DB86, 1459980288,       -2048, { 1018210520,          +0, 6496, 0x2A86 }, "Memory Card Utility Program" },
+	{ "G2TP52\x00\x00", false, 1, 0xEFEC, 0xEE959C7E, 1459955712,      +22528, { 1018210520,          +0, 6496, 0x2179 }, "Memory Card Utility Program" },
+	{ "G4BE08\x00\x00", false, 2, 0xAC60, 0xF42C8796, 1391001600,   +68976640, {    3678236,   +67028612, 6496, 0xE6BE }, "Resident Evil 4" },
+	{ "G62ET2\x00\x00", false, 1, 0x579D, 0x2E97A802, 1225426944,  +234551296, {  981792860,  +234552024, 6496, 0x3F44 }, "Major League Baseball 2K6" },
+	{ "G8FE8P\x00\x00", false, 1, 0xEFE4, 0x7ECE5185, 1376434176,        +736, { 1376427664,        +752, 6496, 0xF054 }, "Virtua Quest" },
+	{ "G9SE8P\x00\x00", false, 1, 0x2452, 0x9570B84D, 1187868672,  +272109568, {         ~0,          +0,    0, 0xFFFF }, "Sonic Heroes" },
+	{ "G9SE8P\x00\x00", false, 1, 0x81CE, 0xDAFDE48B, 1459208192,     +770048, {         ~0,          +0,    0, 0xFFFF }, "Sonic Heroes" },
+	{ "G9SE8P\x00\x00", false, 1, 0xEC9A, 0x4F1E87EB, 1285890048,   +91774976, {  575774080,   +73228928, 6496, 0x7CBD }, "Sonic Heroes" },
+	{ "G9SE8P\x00\x03", false, 1, 0x1E76, 0x82D09071, 1245077504,  +214900736, {  441842048,  +214466732, 6496, 0x7CBD }, "Sonic Heroes" },
+	{ "G9SJ8P\x00\x00", false, 1, 0xC0D7, 0xE291DD98, 1459310592,     +667648, {  614910892,     +245764, 6496, 0x2336 }, "Sonic Heroes" },
+	{ "GAAJ08\x00\x00", false, 1, 0x59B5, 0xCFF85DC4,  431874048, +1028104192, {  431866960, +1028104784, 6496, 0x3F32 }, "Disney's Hide & Sneak" },
+	{ "GAGPEL\x00\x00", false, 1, 0xA2BD, 0x488AB477,  754982912,  +704995328, {  754973244,  +704996900, 8096, 0x63D7 }, "Astérix & Obélix XXL" },
+	{ "GASE8P\x00\x00", false, 1, 0xA1B0, 0xDD918AD1, 1404723200,   +55255040, {  774689240,   +55255472, 6496, 0x0D21 }, "Sonic Adventure DX: Director's Cut" },
+	{ "GB8E78\x00\x00", true,  1, 0x3B42, 0x1F19869C,  432257024, +1027721216, {  412625660,      +32768, 6496, 0x9BD7 }, "BattleBots" },
+	{ "GDEE71\x00\x00", false, 1, 0xC228, 0xC2C80167, 1358307328,  +101670912, {  914092380,       +7536, 6496, 0x2D5A }, "Baldur's Gate: Dark Alliance" },
+	{ "GEAE8P\x00\x00", false, 1, 0x4329, 0x22E6FE4B, 1421514752,   +38463488, { 1206244016,   +36660560, 6496, 0x51AD }, "Skies of Arcadia Legends Maeson" },
+	{ "GEAE8P\x00\x00", false, 1, 0xE528, 0xEE8698CB, 1441400832,   +18577408, { 1206239432,   +16754488, 6496, 0xCB3E }, "Skies of Arcadia Legends" },
+	{ "GEAP8P\x00\x00", false, 1, 0x44D4, 0x0CCE9042, 1445722112,   +14256128, { 1221750612,   +12339372, 8096, 0x1EBE }, "Skies of Arcadia Legends Maeson" },
+	{ "GEAP8P\x00\x00", false, 1, 0x44D4, 0x7C966541, 1445722112,   +14256128, { 1221750612,   +12339372, 8096, 0x1EBE }, "Skies of Arcadia Legends Maeson" },
+	{ "GEAP8P\x00\x00", false, 1, 0xE97B, 0xDE5D8B4B, 1440671744,   +19306496, { 1221746028,   +17478292, 8096, 0x90EE }, "Skies of Arcadia Legends" },
+	{ "GFTP01\x00\x00", false, 1, 0x3F77, 0x963DEB2E, 1336121344,  +123856896, {    2083652,  +123826684, 8096, 0x9AC5 }, "Mario Golf: Toadstool Tour" },
+	{ "GGSEA4\x00\x00", false, 2, 0xCD03, 0xD1B33770, 1316773888,  +143204352, {  596774724,      +32956, 6496, 0x215E }, "Metal Gear Solid: The Twin Snakes" },
+	{ "GGSEA4\x01\x00", false, 2, 0x5C18, 0x85409E81, 1406547968,   +53430272, {  681679984,      +17296, 6496, 0x2460 }, "Metal Gear Solid: The Twin Snakes" },
+	{ "GIQE78\x00\x00", false, 1, 0x93A4, 0x7B595396,  488515584,  +971462656, {   43243600,      +30640, 6496, 0x3149 }, "Disney/Pixar Ratatouille" },
+	{ "GK4E01\x00\x00", false, 2, 0x1B8C, 0x4768F314, 1456455680,    +3522560, {    2826708,    +1871404, 6496, 0xC964 }, "Baten Kaitos Origins" },
+	{ "GK4E01\x00\x00", false, 2, 0x1B8C, 0x4C578D78, 1451636736,    +8341504, {    2826708,    +6696492, 6496, 0xC964 }, "Baten Kaitos Origins" },
+	{ "GK4E01\x00\x00", false, 2, 0x1B8C, 0x8640ADA7, 1451636736,    +8341504, {    2826708,    +6696492, 6496, 0xC964 }, "Baten Kaitos Origins" },
+	{ "GK4E01\x00\x00", false, 2, 0x1B8C, 0x8783BDE8, 1456455680,    +3522560, {    2826708,    +1871404, 6496, 0xC964 }, "Baten Kaitos Origins" },
+	{ "GK4E01\x00\x00", false, 2, 0x3523, 0xCEA55401, 1454843904,    +5134336, {    2826464,    +3491616, 6496, 0xBA4A }, "Baten Kaitos Origins" },
+	{ "GK4E01\x00\x00", false, 2, 0xEFEF, 0x770EB63D, 1454764032,    +5214208, {    2737124,    +3562524, 6496, 0x33F8 }, "Baten Kaitos Origins" },
+	{ "GK4E01\x01\x00", false, 2, 0x1EE9, 0x38E4CFAB, 1392433152,   +67545088, {    2826864,   +65891728, 6496, 0xAE65 }, "Baten Kaitos Origins" },
+	{ "GK4E01\x01\x00", false, 2, 0x1EE9, 0xB0133874, 1391022080,   +68956160, {    2826864,   +67300752, 6496, 0xAE65 }, "Baten Kaitos Origins" },
+	{ "GK4E01\x01\x00", false, 2, 0x1EE9, 0xCE2A8F82, 1391022080,   +68956160, {    2826864,   +67300752, 6496, 0xAE65 }, "Baten Kaitos Origins" },
+	{ "GK4E01\x01\x00", false, 2, 0x1EE9, 0xD2768D19, 1392433152,   +67545088, {    2826864,   +65891728, 6496, 0xAE65 }, "Baten Kaitos Origins" },
+	{ "GK4E01\x01\x00", false, 2, 0x2A88, 0xA5BA3E53, 1390612480,   +69365760, {    2737376,   +67732256, 6496, 0x15F9 }, "Baten Kaitos Origins" },
+	{ "GK4E01\x01\x00", false, 2, 0xC320, 0xED57831A, 1391255552,   +68722688, {    2826620,   +67077764, 6496, 0x9C4B }, "Baten Kaitos Origins" },
+	{ "GKBEAF\x00\x00", false, 2, 0x25A5, 0xE52B2B6B, 1440837632,   +19140608, { 1440830320,   +19139728, 6496, 0xD47E }, "Baten Kaitos: Eternal Wings and the Lost Ocean" },
+	{ "GKBEAF\x01\x00", false, 2, 0x6D51, 0xF3B588CF, 1332668416,  +127309824, { 1332660460,  +127309588, 6496, 0x8880 }, "Baten Kaitos: Eternal Wings and the Lost Ocean" },
+	{ "GLJEGG\x00\x00", false, 1, 0x3684, 0xC411F2F8,  577157120,  +883148800, {  560702976,  +882822244, 6496, 0x83D8 }, "Radio Allergy" },
+	{ "GMPP01\x00\x00", false, 1, 0x39B0, 0xB7DA63ED,  607344640,  +852633600, {  559136944,     +232500, 8096, 0x03FE }, "Mario Party 4" },
+	{ "GMPP01\x00\x02", false, 1, 0x9D34, 0xF0DE4105,  607346688,  +852631552, {  559137448,     +264764, 8096, 0x03FE }, "Mario Party 4" },
+	{ "GMUP5D\x00\x00", false, 1, 0xEE0B, 0xD442A6BF, 1425692672,   +34285568, {    6644012,    +5580500, 6496, 0x093D }, "Dr. Muto" },
+	{ "GNDP8P\x01\x01", false, 1, 0x6F6A, 0x81525825,  894347264,  +565630976, {         ~0,          +0,    0, 0xFFFF }, "Need for Speed: Underground" },
+	{ "GP5P01\x00\x00", false, 1, 0xFBF1, 0x9DC1BB2A,  922845184,  +537133056, {   14902032,      +41916, 8096, 0x3D31 }, "Mario Party 5" },
+	{ "GPNE08\x00\x00", false, 1, 0xA6AC, 0xD42D1079,  689250304,  +770727936, {  492787200,  +770729280, 6496, 0x5AB7 }, "P.N. 03" },
+	{ "GQSEAF\x00\x00", false, 2, 0x0E94, 0x9E8B9546, 1380898816,   +79079424, {  349195336,   +79079928, 6496, 0xF367 }, "Tales of Symphonia" },
+	{ "GQSEAF\x01\x00", false, 2, 0xED8E, 0xDA5B73F2, 1395918848,   +64059392, {  387734936,   +64059656, 6496, 0xB169 }, "Tales of Symphonia" },
+	{ "GSBJ8P\x00\x01", false, 1, 0x00C2, 0x37188ABA, 1381527552,   +78450688, { 1148003688,      +30812, 6496, 0xB21E }, "Sonic Adventure 2: Battle" },
+	{ "GSNE8P\x00\x00", false, 1, 0x6D00, 0x9E1674E2, 1381541888,   +78436352, { 1148014968,       +3360, 6496, 0x1937 }, "Sonic Adventure 2: Battle" },
+	{ "GSOE8P\x00\x00", false, 1, 0xF780, 0xC90A1327,  400175104, +1059803136, {   17701084,       +6432, 6496, 0x10E5 }, "Sonic Mega Collection" },
+	{ "GW7E69\x00\x00", false, 1, 0xBA0B, 0x9D4C631E, 1303988224,  +155990016, {  665209012,  +155709260, 6496, 0x347B }, "007: Agent Under Fire: Reloaded" },
+	{ "GW7E69\x00\x00", false, 1, 0xBD9C, 0x623336BA, 1342423040,  +117555200, {  663027564,  +117248148, 6496, 0x347B }, "007: Agent Under Fire: Reloaded" },
+	{ "GW7E69\x00\x00", false, 1, 0xDB76, 0x4BC8D2F2, 1342423040,  +117555200, {  663027520,  +117250240, 6496, 0x347B }, "007: Agent Under Fire: Reloaded" },
+	{ "GXPE78\x00\x00", false, 1, 0x3EAD, 0xF1EEF03F, 1444642816,   +15335424, {         ~0,          +0,    0, 0xFFFF }, "Pirates of the Caribbean" },
+	{ "GXRE08\x00\x00", false, 1, 0x098E, 0x7FAD64AA, 1275594752,  +184383488, { 1275586724,  +184385020, 6496, 0x88E4 }, "Mega Man X: Command Mission" },
+	{ "GXRE08\x00\x00", false, 1, 0x4778, 0x864EAC0B, 1278449664,   +65759232, { 1278442420,   +65733708, 6496, 0x2817 }, "Mega Man X: Command Mission" },
+	{ "GXXE01\x00\x00", false, 1, 0x98C1, 0x5D851B48, 1076094976,  +383883264, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
+	{ "GXXE01\x00\x00", false, 1, 0x98C1, 0x9B232C01, 1089105920,  +370872320, {   11889508,  +367324092, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
+	{ "GXXE01\x00\x00", false, 1, 0x98C1, 0xA6B80ED7, 1087750144,  +372228096, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
+	{ "GXXE01\x00\x00", false, 1, 0x98C1, 0xBE135566, 1087750144,  +372228096, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
+	{ "GXXE01\x00\x00", false, 1, 0x98C1, 0xDF5B1825, 1087750144,  +372228096, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
+	{ "GXXE01\x00\x00", false, 1, 0x98C1, 0xE0D19118, 1093384192,  +366594048, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
+	{ "GXXE01\x00\x00", false, 1, 0xA1B6, 0x734E4775, 1093365760,  +366612480, {   12619752,  +363950104, 6496, 0xF5D7 }, "Pokémon XD: Gale of Darkness: ReduX" },
+	{ "GZPE70\x00\x00", false, 1, 0x887C, 0xBC256FCD, 1416488960,   +43489280, {    2317240,      +17384, 6496, 0x195D }, "Zapper" },
+	{ "RELSAB\x00\x00", false, 1, 0x2E3D, 0x97BA74C5,  128698368, +1331279872, {  113594680, +1331280376, 8096, 0xADB1 }, "Metroid Prime 3: Corruption" },
+	{ "RELSAB\x00\x00", false, 1, 0x35B7, 0x524B2418,  750051328,  +709926912, {         ~0,          +0,    0, 0xFFFF }, "Disney/Pixar Ratatouille" },
+	{ "RELSAB\x00\x00", false, 1, 0x4535, 0x5DC67D47, 1298782208,  +161196032, {         ~0,          +0,    0, 0xFFFF }, "Galleon" },
+	{ "RELSAB\x00\x00", false, 1, 0x63C1, 0x55314C4D, 1121071104,  +338907136, {  646741420,      +29460, 6496, 0xD28D }, "Sonic Adventure DX" },
+	{ "RELSAB\x00\x00", false, 1, 0xB288, 0x141D0A04,  136779776, +1323198464, {         ~0,          +0,    0, 0xFFFF }, "Sonic Heroes" },
+	{ "RELSAB\x00\x00", false, 1, 0xFD3E, 0x0F846161,  134455296, +1325522944, {         ~0,          +0,    0, 0xFFFF }, "ATV: Quad Power Racing 2" },
+	{ "RELSAB\x00\x00", true,  1, 0xD9CE, 0x16D7BCCE, 1459978240,          +0, { 1193214528,          +0, 6496, 0x1458 }, "Summoner: The Prophecy" },
+	{ "RELSAB\x00\x00", true,  1, 0xFCCE, 0x146E4A5A, 1459947520,      +30720, { 1193673280,          +0, 6496, 0x8F7A }, "Summoner: The Prophecy" },
+	{ "RELSAB\x01\x01", false, 1, 0x3C92, 0xA553BEC9,  126601216, +1333377024, {   96423396,      +27800, 6496, 0x19E5 }, "Smashing Drive" },
+	{ "RELSAB\x01\x01", false, 1, 0xA47D, 0xBB46463A,  482416640,  +977561600, {    3936256,      +28760, 6496, 0x3FED }, "Rayman Arena" },
+	{ "RELSAB\x01\x01", true,  1, 0x771E, 0x17B30888,  134633472, +1325344768, {         ~0,          +0,    0, 0xFFFF }, "Crazy Taxi" },
+	{ "TESTNA\x00\x00", false, 1, 0x0C28, 0x6254FB97,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
 };
 
 uint16_t fletcher16(const void *buffer, size_t size)
@@ -2125,7 +2126,7 @@ bool is_redump_disc(const file_meta *meta)
 	if (!meta)
 		return false;
 
-	for (int i = REDUMP_INDEX; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+	for (int i = 0; i < REDUMP_COUNT; i++)
 		if (!memcmp(&meta->diskId, nkit_dat[i].header, 8) &&
 			(meta->bannerSum == nkit_dat[i].banner.sum || meta->bannerSum == 0xFFFF))
 			return true;
@@ -2135,6 +2136,20 @@ bool is_redump_disc(const file_meta *meta)
 
 bool is_streaming_disc(const DiskHeader *header)
 {
+	if (!memcmp(&header->NKitMagicWord, "NKIT v01", 8)) {
+		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+			if (!memcmp(header, nkit_dat[i].header, 8) &&
+				header->ImageCRC == nkit_dat[i].crc)
+				return nkit_dat[i].streaming;
+	} else {
+		uint16_t header_sum = fletcher16(header, sizeof(*header));
+
+		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+			if (!memcmp(header, nkit_dat[i].header, 8) &&
+				header_sum == nkit_dat[i].header_sum)
+				return nkit_dat[i].streaming;
+	}
+
 	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
 		if (!memcmp(header, nkit_dat[i].header, 8))
 			return nkit_dat[i].streaming;
@@ -2172,16 +2187,7 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = REDUMP_INDEX; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++) {
-			if (!memcmp(header, nkit_dat[i].header, 8) &&
-				header_sum == nkit_dat[i].header_sum &&
-				*size == nkit_dat[i].size + nkit_dat[i]._size) {
-				*offset = nkit_dat[i].banner.offset + nkit_dat[i].banner._offset;
-				*size = nkit_dat[i].banner.size;
-				return true;
-			}
-		}
-		for (int i = 0; i < REDUMP_INDEX; i++) {
+		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++) {
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header_sum == nkit_dat[i].header_sum &&
 				*size == nkit_dat[i].size + nkit_dat[i]._size) {
@@ -2211,15 +2217,7 @@ const char *get_gcm_title(const DiskHeader *header, file_meta *meta)
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = REDUMP_INDEX; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++) {
-			if (!memcmp(header, nkit_dat[i].header, 8) &&
-				header_sum == nkit_dat[i].header_sum &&
-				meta->bannerSum == nkit_dat[i].banner.sum) {
-				meta->displayName = nkit_dat[i].title;
-				return nkit_dat[i].title;
-			}
-		}
-		for (int i = 0; i < REDUMP_INDEX; i++) {
+		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++) {
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header_sum == nkit_dat[i].header_sum &&
 				meta->bannerSum == nkit_dat[i].banner.sum) {
@@ -2269,12 +2267,11 @@ bool valid_gcm_magic(DiskHeader *header)
 bool valid_gcm_size(const DiskHeader *header, off_t size)
 {
 	if (!memcmp(&header->NKitMagicWord, "NKIT v01", 8)) {
-		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++) {
+		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header->ImageCRC == nkit_dat[i].crc &&
 				header->ImageSize == nkit_dat[i].size + nkit_dat[i]._size &&
 				size == nkit_dat[i].size) return true;
-		}
 	} else if (size == DISC_SIZE)
 		return true;
 
