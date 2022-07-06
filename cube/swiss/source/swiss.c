@@ -338,23 +338,29 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 }
 
 // Modify entry to go up a directory.
-void upToParent(file_handle* entry)
+int upToParent(file_handle* entry)
 {
 	int len = strlen(entry->name);
 	
 	// Go up a folder
 	while(len && entry->name[len-1]!='/')
 		len--;
-	if(len != strlen(entry->name))
+	if(len && len != strlen(entry->name))
 		entry->name[len-1] = '\0';
+	else
+		return 1;
 
 	// If we're a file, go up to the parent of the file
 	if(entry->fileAttrib == IS_FILE) {
 		while(len && entry->name[len-1]!='/')
 			len--;
-		if(len != strlen(entry->name))
+		if(len && len != strlen(entry->name))
 			entry->name[len-1] = '\0';
+		else
+			return 1;
 	}
+
+	return 0;
 }
 
 uiDrawObj_t* loadingBox = NULL;
@@ -410,7 +416,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL) {
-				upToParent(&curFile);
+				needsDeviceChange = upToParent(&curFile);
 				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_FILE) {
@@ -424,7 +430,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			return filePanel;
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
-			upToParent(&curFile);
+			needsDeviceChange = upToParent(&curFile);
 			needsRefresh=1;
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_X) VIDEO_WaitVSync();
 			return filePanel;
@@ -658,7 +664,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL){
-				upToParent(&curFile);
+				needsDeviceChange = upToParent(&curFile);
 				needsRefresh=1;
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_FILE){
@@ -672,7 +678,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			return filePanel;
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_X) {
-			upToParent(&curFile);
+			needsDeviceChange = upToParent(&curFile);
 			needsRefresh=1;
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_X) VIDEO_WaitVSync();
 			return filePanel;
