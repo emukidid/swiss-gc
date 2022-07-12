@@ -36,11 +36,13 @@ extern char* _menu_array[];
 extern file_handle curFile;
 extern file_handle curDir;
 extern char IPLInfo[256] __attribute__((aligned(32)));
-extern u8 driveVersion[32];
+extern dvdcmdblk commandBlock;
+extern dvddrvinfo driveInfo;
 extern DiskHeader GCMDisk;
 
 extern void udelay(int s);
 extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
+extern s32 DVD_LowGetCoverStatus(void);
 extern u32 sdgecko_getAddressingType(s32 drv_no);
 extern u32 sdgecko_getSpeed(s32 drv_no);
 extern void sdgecko_setSpeed(s32 drv_no, u32 freq);

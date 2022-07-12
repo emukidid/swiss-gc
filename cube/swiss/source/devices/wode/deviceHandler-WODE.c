@@ -270,7 +270,7 @@ s32 deviceHandler_WODE_closeFile(file_handle* file) {
 }
 
 bool deviceHandler_WODE_test() {
-	return swissSettings.hasDVDDrive && (*(u32*)&driveVersion[4] == 0x20080714);
+	return swissSettings.hasDVDDrive && driveInfo.rel_date == 0x20080714;
 }
 
 u32 deviceHandler_WODE_emulated() {

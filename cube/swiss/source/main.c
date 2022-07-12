@@ -35,9 +35,15 @@
 #include "aram/sidestep.h"
 #include "devices/filemeta.h"
 
-u8 driveVersion[32];
+dvdcmdblk commandBlock;
+dvddrvinfo driveInfo __attribute__((aligned(32)));
 SwissSettings swissSettings;
 
+static void driveInfoCallback(s32 result, dvdcmdblk *block) {
+	if(result >= 0) {
+		swissSettings.hasDVDDrive = 1;
+	}
+}
 
 /* Initialise Video, PAD, DVD, Font */
 void Initialise (void)
@@ -45,7 +51,7 @@ void Initialise (void)
 	VIDEO_Init ();
 	PAD_Init ();  
 	DVD_Init(); 
-	*(volatile unsigned long*)0xcc00643c = 0x00000000; //allow 32mhz exi bus
+	DVD_InquiryAsync(&commandBlock, &driveInfo, driveInfoCallback);
 	
 	// Disable IPL modchips to allow access to IPL ROM fonts
 	ipl_set_config(6); 
@@ -94,27 +100,23 @@ void Initialise (void)
 
 	init_font();
 	DrawInit();
-	
-	drive_version(&driveVersion[0]);
-	swissSettings.hasDVDDrive = *(u64*)&driveVersion[0] ? 1 : 0;
-	
-	if(!swissSettings.hasDVDDrive) {
-		// Reset DVD if there was a IPL replacement that hasn't done that for us yet
-		uiDrawObj_t *progBox = DrawPublish(DrawProgressBar(true, 0, "Initialise DVD .. (HOLD B if NO DVD Drive)"));
-		dvd_reset();	// low-level, basic
-		dvd_read_id();
-		if(!(PAD_ButtonsHeld(0) & PAD_BUTTON_B)) {
-			dvd_set_streaming(*(char*)0x80000008);
+
+	uiDrawObj_t *progBox = DrawPublish(DrawProgressBar(true, 0, "Initialise DVD .. (HOLD B if NO DVD Drive)"));
+	while(DVD_GetCmdBlockStatus(&commandBlock) == DVD_STATE_BUSY) {
+		if(DVD_LowGetCoverStatus() == 1) {
+			break;
 		}
-		drive_version(&driveVersion[0]);
-		swissSettings.hasDVDDrive = *(u64*)&driveVersion[0] ? 2 : 0;
-		if(!swissSettings.hasDVDDrive) {
-			DrawDispose(progBox);
-			progBox = DrawPublish(DrawMessageBox(D_INFO, "No DVD Drive Detected !!"));
-			sleep(2);
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B) {
+			while(PAD_ButtonsHeld(0) & PAD_BUTTON_B) VIDEO_WaitVSync();
+			break;
 		}
-		DrawDispose(progBox);
 	}
+	if(DVD_GetCmdBlockStatus(&commandBlock) != DVD_STATE_END) {
+		DrawDispose(progBox);
+		progBox = DrawPublish(DrawMessageBox(D_INFO, "No DVD Drive Detected !!"));
+		sleep(2);
+	}
+	DrawDispose(progBox);
 }
 
 uiDrawObj_t *configProgBar = NULL;
@@ -260,9 +262,9 @@ int main ()
 	
 	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(LOC_DVD_CONNECTOR);
 	if(device == &__device_dvd) {
-		// DVD Motor off setting; Always stop the drive if we only started it to read the ID out
-		if((swissSettings.stopMotor && swissSettings.hasDVDDrive) || (swissSettings.hasDVDDrive == 2)) {
-			dvd_motor_off();
+		// DVD Motor off setting
+		if(swissSettings.stopMotor) {
+			DVD_StopMotor(&commandBlock);
 		}
 	}
 	else if(device == &__device_gcloader) {

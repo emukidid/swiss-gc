@@ -29,13 +29,13 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		// Model
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"MODEL", 0.65f, true, defaultColor));
 		if(mfpvr() == GC_CPU_VERSION01) {
-			if(*(u16*)&driveVersion[2] == 0x0201) {
+			if(driveInfo.dev_code == 0x0201) {
 				strcpy(topStr, "NPDP-GDEV (GCT-0100)");
 			}
 			else if(!strncmp(&IPLInfo[0x55], "TDEV Revision 1.1", 17)) {
 				strcpy(topStr, "Nintendo GameCube DOT-006");
 			}
-			else if(*(u16*)&driveVersion[2] == 0x0200) {
+			else if(driveInfo.dev_code == 0x0200) {
 				if(!strncmp(&IPLInfo[0x55], "PAL  Revision 1.0", 17)) {
 					strcpy(topStr, "Nintendo GameCube DOT-002P");
 				}
@@ -43,7 +43,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 					strcpy(topStr, "Nintendo GameCube DOT-002");
 				}
 			}
-			else if(*(u16*)&driveVersion[2] == 0x0001) {
+			else if(driveInfo.dev_code == 0x0001) {
 				if(!strncmp(&IPLInfo[0x55], "PAL  Revision 1.0", 17)) {
 					strcpy(topStr, "Nintendo GameCube DOT-001P");
 				}
@@ -51,7 +51,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 					strcpy(topStr, "Nintendo GameCube DOT-001");
 				}
 			}
-			else if(*(u16*)&driveVersion[2] == 0x0000 && driveVersion[9] == 'M') {
+			else if(driveInfo.dev_code == 0x0000 && driveInfo.pad[1] == 'M') {
 				strcpy(topStr, "Panasonic Q SL-GC10-S");
 			}
 			else if(!strncmp(&IPLInfo[0x55], "MPAL Revision 1.1", 17)) {
@@ -119,6 +119,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		
 		DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(LOC_DVD_CONNECTOR);
 		if(device == &__device_dvd) {
+			u8* driveVersion = (u8*)&driveInfo;
 			sprintf(topStr, "%s %02X %02X%02X/%02X (%02X)",device->hwName,driveVersion[6],driveVersion[4],driveVersion[5],driveVersion[7],driveVersion[8]);
 		}
 		else if(device == &__device_gcloader) {

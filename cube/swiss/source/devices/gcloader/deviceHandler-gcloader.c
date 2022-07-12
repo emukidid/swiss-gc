@@ -294,8 +294,8 @@ s32 deviceHandler_GCLOADER_deinit(file_handle* file) {
 }
 
 bool deviceHandler_GCLOADER_test() {
-	if (swissSettings.hasDVDDrive && *(u32*)&driveVersion[4] == 0x20196c64) {
-		if (driveVersion[9] == 'w')
+	if (swissSettings.hasDVDDrive && driveInfo.rel_date == 0x20196c64) {
+		if (driveInfo.pad[1] == 'w')
 			__device_gcloader.features |=  (FEAT_WRITE|FEAT_CONFIG_DEVICE|FEAT_PATCHES);
 		else
 			__device_gcloader.features &= ~(FEAT_WRITE|FEAT_CONFIG_DEVICE|FEAT_PATCHES);
