@@ -43,21 +43,10 @@ device_info* deviceHandler_GCLOADER_info() {
 
 static char *bootFile_names[] = {"boot.iso", "boot.iso.iso", "boot.gcm", "boot.gcm.gcm"};
 
-s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
+static s32 setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	// GCLoader disc/file fragment setup
 	file_frag *disc1FragList = NULL, *disc2FragList = NULL;
 	u32 disc1Frags = 0, disc2Frags = 0;
-	
-	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
-	if(file2) {
-		if(!getFragments(DEVICE_CUR, file2, &disc2FragList, &disc2Frags, 1, 0, UINT32_MAX)) {
-			free(disc2FragList);
-			return 0;
-		}
-	}
-	
-	// write disc 2 frags
-	gcloaderWriteFrags(1, disc2FragList, disc2Frags);
 	
 	if(numToPatch < -1) {
 		file_handle bootFile;
@@ -75,7 +64,6 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 			if(!getFragments(DEVICE_CUR, &bootFile, &disc1FragList, &disc1Frags, 0, 0, sizeof(DiskHeader))) {
 				devices[DEVICE_CUR]->closeFile(&bootFile);
 				free(disc1FragList);
-				free(disc2FragList);
 				return 0;
 			}
 			devices[DEVICE_CUR]->closeFile(&bootFile);
@@ -85,18 +73,30 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
 	if(!getFragments(DEVICE_CUR, file, &disc1FragList, &disc1Frags, 0, 0, UINT32_MAX)) {
 		free(disc1FragList);
-		free(disc2FragList);
 		return 0;
 	}
+	
+	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
+	if(file2) {
+		if(!getFragments(DEVICE_CUR, file2, &disc2FragList, &disc2Frags, 1, 0, UINT32_MAX)) {
+			free(disc2FragList);
+			free(disc1FragList);
+			return 0;
+		}
+	}
+	
+	// write disc 2 frags
+	gcloaderWriteFrags(1, disc2FragList, disc2Frags);
 	
 	// write disc 1 frags
 	gcloaderWriteFrags(0, disc1FragList, disc1Frags);
 	
 	// set disc 1 as active disc
 	gcloaderWriteDiscNum(0);
+	
 	if(numToPatch < 0) {
-		free(disc1FragList);
 		free(disc2FragList);
+		free(disc1FragList);
 		return 1;
 	}
 	
@@ -105,11 +105,18 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 		file->fileBase  = (u32)installPatch2(disc1FragList, (disc1Frags + 1) * sizeof(file_frag)) | ((u64)disc1Frags << 32);
 	}
 	
-	free(disc1FragList);
 	free(disc2FragList);
-	disc1FragList = NULL;
-	disc2FragList = NULL;
-	
+	free(disc1FragList);
+	return 1;
+}
+
+s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
+	if(!setupFile(file, file2, numToPatch)) {
+		return 0;
+	}
+	if(numToPatch < 0) {
+		return 1;
+	}
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
 		int i;
@@ -132,40 +139,41 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 					if(!getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_DISC_1, patchInfo[0], patchInfo[1])) {
 						devices[DEVICE_PATCHES]->closeFile(&patchFile);
 						free(fragList);
-						return 0;
+						goto fail;
 					}
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				}
 				else {
 					devices[DEVICE_PATCHES]->deleteFile(&patchFile);
 					free(fragList);
-					return 0;
+					goto fail;
 				}
 			}
 			else {
 				free(fragList);
-				return 0;
+				goto fail;
 			}
 		}
 		
 		if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, FRAGS_DISC_1, 0, 0)) {
 			free(fragList);
-			return 0;
+			goto fail;
 		}
 		
 		if(file2) {
 			if(!getFragments(DEVICE_CUR, file2, &fragList, &numFrags, FRAGS_DISC_2, 0, 0)) {
 				free(fragList);
-				return 0;
+				goto fail;
 			}
 		}
 		
 		for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
-			memset(&patchFile, 0, sizeof(file_handle));
-			concat_path(patchFile.name, devices[DEVICE_CUR]->initial->name, bootFile_names[i]);
+			file_handle bootFile;
+			memset(&bootFile, 0, sizeof(file_handle));
+			concat_path(bootFile.name, devices[DEVICE_CUR]->initial->name, bootFile_names[i]);
 			
-			if(getFragments(DEVICE_CUR, &patchFile, &fragList, &numFrags, FRAGS_BOOT_GCM, 0, UINT32_MAX)) {
-				devices[DEVICE_CUR]->closeFile(&patchFile);
+			if(getFragments(DEVICE_CUR, &bootFile, &fragList, &numFrags, FRAGS_BOOT_GCM, 0, UINT32_MAX)) {
+				devices[DEVICE_CUR]->closeFile(&bootFile);
 				break;
 			}
 		}
@@ -248,6 +256,20 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 	}
 	memcpy(VAR_DISC_1_ID, (char*)&GCMDisk, sizeof(VAR_DISC_1_ID));
 	return 1;
+
+fail:
+	int i;
+	for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
+		file_handle bootFile;
+		memset(&bootFile, 0, sizeof(file_handle));
+		concat_path(bootFile.name, devices[DEVICE_CUR]->initial->name, bootFile_names[i]);
+		
+		if(setupFile(&bootFile, NULL, -1)) {
+			devices[DEVICE_CUR]->closeFile(&bootFile);
+			break;
+		}
+	}
+	return 0;
 }
 
 s32 deviceHandler_GCLOADER_init(file_handle* file){
