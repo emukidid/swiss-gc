@@ -828,13 +828,16 @@ void sortDols(ExecutableFile *filesToPatch, int num_files)
 }
 
 // Allow the user to select an alternate DOL
-ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch) {
+ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch, int num_files) {
 	int i = 0, j = 0, max = 0, idx = 0, page = 4;
-	for(i = 0; i < 64; i++) if(filesToPatch[i].offset == 0) break;
-	sortDols(filesToPatch, i);	// Sort DOL to the top
-	for(i = 0; i < 64; i++) if(filesToPatch[i].offset == 0 || (filesToPatch[i].type != PATCH_DOL && filesToPatch[i].type != PATCH_ELF)) break;
-	int num_files = i;
-	if(num_files < 2) return 0;
+	sortDols(filesToPatch, num_files);	// Sort DOL to the top
+	for(i = 0; i < num_files; i++) {
+		if(filesToPatch[i].type != PATCH_DOL && filesToPatch[i].type != PATCH_ELF) {
+			num_files = i;
+			break;
+		}
+	}
+	if(num_files < 2) return NULL;
 	
 	int fileListBase = 175;
 	int scrollBarHeight = (page*40);
@@ -876,8 +879,9 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 {
 	uiDrawObj_t* progBox = NULL;
 	char* gameID = (char*)0x80000000;
-	int sizeToRead, type;
-	void *buffer;
+	void* buffer;
+	u32 sizeToRead;
+	int type;
 	
 	// Clear OSLoMem
 	asm volatile("mtdabr %0" :: "r" (0));
@@ -956,37 +960,34 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		if(devices[DEVICE_PATCHES] && devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
 			sprintf(txtbuffer, "Loading BS2\nDo not remove %s", devices[DEVICE_PATCHES]->deviceName);
 			progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
+
+			if(!load_rom_ipl(devices[DEVICE_PATCHES], &buffer, &sizeToRead) &&
+				!load_rom_ipl(devices[DEVICE_CUR], &buffer, &sizeToRead) &&
+				!load_rom_ipl(&__device_sys, &buffer, &sizeToRead)) {
+				return 0;
+			}
 		}
 		else {
 			progBox = DrawPublish(DrawProgressBar(true, 0, "Loading BS2"));
+
+			if(!load_rom_ipl(devices[DEVICE_CUR], &buffer, &sizeToRead) &&
+				!load_rom_ipl(&__device_sys, &buffer, &sizeToRead)) {
+				return 0;
+			}
 		}
-		
-		// Read BS2
-		u32 bs2Header[8] __attribute__((aligned(32)));
-		read_rom_ipl_clear(0x800,bs2Header,32);
-		
-		sizeToRead = (bs2Header[0]-0x81300000+31)&~31;
 		type = PATCH_BS2;
-		buffer = memalign(32,sizeToRead);
-		if(!buffer) {
-			return 0;
-		}
-		read_rom_ipl_clear(0x820,buffer,sizeToRead);
 	}
 	else {
 		// Prompt for DOL selection if multi-dol
-		ExecutableFile* altDol = NULL;
-		if(filesToPatch != NULL && numToPatch > 0) {
-			altDol = select_alt_dol(filesToPatch);
-			if(altDol != NULL) {
-				print_gecko("Alt DOL selected :%08X\r\n", altDol->offset);
-				// For a DOL from a TGC, redirect the FST to the TGC FST.
-				if(altDol->tgcBase != 0) {
-					GCMDisk.FSTOffset = altDol->tgcFstOffset;
-					GCMDisk.FSTSize = altDol->tgcFstSize;
-					GCMDisk.MaxFSTSize = altDol->tgcFstSize;
-					*(vu32*)0x800030F4 = altDol->tgcBase;
-				}
+		ExecutableFile* altDol = select_alt_dol(filesToPatch, numToPatch);
+		if(altDol != NULL) {
+			print_gecko("Alt DOL selected :%08X\r\n", altDol->offset);
+			// For a DOL from a TGC, redirect the FST to the TGC FST.
+			if(altDol->tgcBase != 0) {
+				GCMDisk.FSTOffset = altDol->tgcFstOffset;
+				GCMDisk.FSTSize = altDol->tgcFstSize;
+				GCMDisk.MaxFSTSize = altDol->tgcFstSize;
+				*(vu32*)0x800030F4 = altDol->tgcBase;
 			}
 		}
 

@@ -95,14 +95,7 @@ device_info* deviceHandler_SYS_info(file_handle* file) {
 	return &initial_SYS_info;
 }
 
-int read_rom_ipl(unsigned int offset, void* buffer, unsigned int length) {
-	__SYS_ReadROM(buffer, length, offset);
-	return length;
-}
-
-int read_rom_ipl_clear(unsigned int offset, void* buffer, unsigned int length) {
-	int ret = read_rom_ipl(offset, buffer, length);
-
+static void descrambler(unsigned int offset, void* buffer, unsigned int length) {
 	// bootrom descrambler reversed by segher
 	// Copyright 2008 Segher Boessenkool <segher@kernel.crashing.org>
 
@@ -157,7 +150,48 @@ int read_rom_ipl_clear(unsigned int offset, void* buffer, unsigned int length) {
 			nacc = 0;
 		}
 	}
+}
 
+bool load_rom_ipl(DEVICEHANDLER_INTERFACE* device, void** buffer, unsigned int* length) {
+	file_handle* file = calloc(1, sizeof(file_handle));
+	concat_path(file->name, device->initial->name, "swiss/patches/ipl.bin");
+
+	u32 bs2Header[8] ATTRIBUTE_ALIGN(32);
+	device->seekFile(file, 0x800, DEVICE_HANDLER_SEEK_SET);
+	if(device->readFile(file, bs2Header, sizeof(bs2Header)) == sizeof(bs2Header)) {
+		descrambler(0x800, bs2Header, sizeof(bs2Header));
+
+		if(bs2Header[0] >= 0x81300000 && bs2Header[0] <= 0x814AF6E0) {
+			u32 sizeToRead = (bs2Header[0] - 0x81300000 + 31) & ~31;
+			void* bs2Image = memalign(32, sizeToRead);
+
+			if(bs2Image) {
+				if(device->readFile(file, bs2Image, sizeToRead) == sizeToRead) {
+					device->closeFile(file);
+					free(file);
+
+					descrambler(0x820, bs2Image, sizeToRead);
+					*buffer = bs2Image;
+					*length = sizeToRead;
+					return true;
+				}
+				free(bs2Image);
+			}
+		}
+	}
+	device->closeFile(file);
+	free(file);
+	return false;
+}
+
+int read_rom_ipl(unsigned int offset, void* buffer, unsigned int length) {
+	__SYS_ReadROM(buffer, length, offset);
+	return length;
+}
+
+int read_rom_ipl_clear(unsigned int offset, void* buffer, unsigned int length) {
+	int ret = read_rom_ipl(offset, buffer, length);
+	descrambler(offset, buffer, length);
 	return ret;
 }
 
