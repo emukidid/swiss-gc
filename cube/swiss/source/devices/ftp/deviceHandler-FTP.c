@@ -88,39 +88,7 @@ void init_ftp() {
 }
 
 s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){	
-   
-	// We need at least a share name and ip addr in the settings filled out
-	if(!strlen(&swissSettings.ftpHostIp[0])) {
-		sprintf(txtbuffer, "Check FTP Configuration");
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-		DrawPublish(msgBox);
-		wait_press_A();
-		DrawDispose(msgBox);
-		return SMB_SMBCFGERR;
-	}
-
-	if(!net_initialized) {       //Init if we have to
-		sprintf(txtbuffer, "Network has not been initialised");
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-		DrawPublish(msgBox);
-		wait_press_A();
-		DrawDispose(msgBox);
-		return SMB_NETINITERR;
-	} 
-
-	if(!ftp_initialized) {       //Connect to the FTP
-		init_ftp();
-		if(!ftp_initialized) {
-			sprintf(txtbuffer, "Error initialising FTP");
-			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-			DrawPublish(msgBox);
-			wait_press_A();
-			DrawDispose(msgBox);
-			return SMB_SMBERR; //fail
-		}
-		readDeviceInfoFTP();
-	}
-		
+   	
 	DIR* dp = opendir( ffile->name );
 	if(!dp) return -1;
 	struct dirent *entry;
@@ -198,7 +166,26 @@ s32 deviceHandler_FTP_writeFile(file_handle* file, void* buffer, u32 length){
 
 s32 deviceHandler_FTP_init(file_handle* file){
 	init_network();
-	return 1;
+	// We need at least a share name and ip addr in the settings filled out
+	if(!strlen(&swissSettings.ftpHostIp[0])) {
+		file->status = E_CHECKCONFIG;
+		return EFAULT;
+	}
+
+	if(!net_initialized) {       //Init if we have to
+		file->status = E_NONET;
+		return EFAULT;
+	} 
+
+	if(!ftp_initialized) {       //Connect to the FTP
+		init_ftp();
+		if(!ftp_initialized) {
+			file->status = E_CONNECTFAIL;
+			return EIO;
+		}
+		readDeviceInfoFTP();
+	}
+	return 0;
 }
 
 s32 deviceHandler_FTP_closeFile(file_handle* file) {
@@ -241,6 +228,18 @@ bool deviceHandler_FTP_test() {
 	return exi_bba_exists();
 }
 
+char* deviceHandler_FTP_status(file_handle* file) {
+	switch(file->status) {
+		case E_NONET:
+			return "Network has not been initialised";
+		case E_CHECKCONFIG:
+			return "Check FTP Configuration";
+		case E_CONNECTFAIL:
+			return "Error connecting to FTP server";
+	}
+	return NULL;
+}
+
 DEVICEHANDLER_INTERFACE __device_ftp = {
 	DEVICE_ID_D,
 	"Broadband Adapter",
@@ -265,4 +264,5 @@ DEVICEHANDLER_INTERFACE __device_ftp = {
 	(_fn_setupFile)NULL,
 	(_fn_deinit)&deviceHandler_FTP_deinit,
 	(_fn_emulated)NULL,
+	(_fn_status)&deviceHandler_FTP_status,
 };

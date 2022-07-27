@@ -26,11 +26,6 @@
 
 #include "deviceHandler.h"
 
-// error codes
-#define SMB_NETINITERR -110
-#define SMB_SMBCFGERR  -111
-#define SMB_SMBERR -112
-
 extern DEVICEHANDLER_INTERFACE __device_smb;
 
 

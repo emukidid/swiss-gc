@@ -19,7 +19,6 @@
 #include "patcher.h"
 #include "dvd.h"
 
-const DISC_INTERFACE* wkf = &__io_wkf;
 FATFS *wkffs = NULL;
 
 file_handle initial_WKF =
@@ -186,8 +185,13 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 	return 1;
 }
 
-s32 deviceHandler_WKF_init(file_handle* file) {
-	wkfReinit();
+bool deviceHandler_WKF_test() {
+	return swissSettings.hasDVDDrive && (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF);
+}
+
+s32 deviceHandler_WKF_init(file_handle* file){
+	if(!deviceHandler_WKF_test()) return ENODEV;
+	wkfReinit();	// TODO extended error status
 	if(wkffs != NULL) {
 		f_unmount("wkf:/");
 		free(wkffs);
@@ -195,8 +199,8 @@ s32 deviceHandler_WKF_init(file_handle* file) {
 		disk_shutdown(DEV_WKF);
 	}
 	wkffs = (FATFS*)malloc(sizeof(FATFS));
-	return f_mount(wkffs, "wkf:/", 1) == FR_OK;
-}
+	return f_mount(wkffs, "wkf:/", 1) == FR_OK ? 0 : EIO;
+		}
 
 s32 deviceHandler_WKF_deinit(file_handle* file) {
 	deviceHandler_FAT_closeFile(file);
@@ -207,10 +211,6 @@ s32 deviceHandler_WKF_deinit(file_handle* file) {
 		disk_shutdown(DEV_WKF);
 	}
 	return 0;
-}
-
-bool deviceHandler_WKF_test() {
-	return swissSettings.hasDVDDrive && (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF);
 }
 
 u32 deviceHandler_WKF_emulated() {
@@ -253,4 +253,5 @@ DEVICEHANDLER_INTERFACE __device_wkf = {
 	(_fn_setupFile)&deviceHandler_WKF_setupFile,
 	(_fn_deinit)&deviceHandler_WKF_deinit,
 	(_fn_emulated)&deviceHandler_WKF_emulated,
+	(_fn_status)&deviceHandler_FAT_status,
 };

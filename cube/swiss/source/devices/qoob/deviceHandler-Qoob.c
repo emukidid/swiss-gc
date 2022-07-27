@@ -95,20 +95,6 @@ s32 deviceHandler_Qoob_readFile(file_handle* file, void* buffer, u32 length) {
 	return length;
 }
 
-s32 deviceHandler_Qoob_init(file_handle* file) {
-	ipl_set_config(0);
-	return 1;
-}
-
-s32 deviceHandler_Qoob_deinit(file_handle* file) {
-	ipl_set_config(6);
-	return 0;
-}
-
-s32 deviceHandler_Qoob_closeFile(file_handle* file) {
-    return 0;
-}
-
 bool deviceHandler_Qoob_test() {
 	// Read 1024 bytes from certain sections of the IPL Mask ROM and compare with Qoob enabled/disabled
 	char *qoobData = (char*)memalign(32, 0x400);
@@ -137,6 +123,27 @@ bool deviceHandler_Qoob_test() {
 	return qoobFound;
 }
 
+s32 deviceHandler_Qoob_init(file_handle* file) {
+	if(!deviceHandler_Qoob_test()) {
+		return ENODEV;
+	}
+	ipl_set_config(0);
+	return 0;
+}
+
+s32 deviceHandler_Qoob_deinit(file_handle* file) {
+	ipl_set_config(6);
+	return 0;
+}
+
+s32 deviceHandler_Qoob_closeFile(file_handle* file) {
+    return 0;
+}
+
+char* deviceHandler_Qoob_status(file_handle* file) {
+	return NULL;
+}
+
 DEVICEHANDLER_INTERFACE __device_qoob = {
 	DEVICE_ID_7,
 	"Qoob Modchip",
@@ -161,4 +168,5 @@ DEVICEHANDLER_INTERFACE __device_qoob = {
 	(_fn_setupFile)NULL,
 	(_fn_deinit)&deviceHandler_Qoob_deinit,
 	(_fn_emulated)NULL,
+	(_fn_status)&deviceHandler_Qoob_status,
 };

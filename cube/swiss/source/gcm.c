@@ -451,13 +451,13 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		if(devices[DEVICE_CONFIG] == &__device_sd_a || devices[DEVICE_CONFIG] == &__device_sd_b || devices[DEVICE_CONFIG] == &__device_sd_c) {
 			devices[DEVICE_PATCHES] = devices[DEVICE_CONFIG];
 		}
-		else if(deviceHandler_test(&__device_sd_c)) {
+		else if(deviceHandler_getDeviceAvailable(&__device_sd_c)) {
 			devices[DEVICE_PATCHES] = &__device_sd_c;
 		}
-		else if(deviceHandler_test(&__device_sd_b)) {
+		else if(deviceHandler_getDeviceAvailable(&__device_sd_b)) {
 			devices[DEVICE_PATCHES] = &__device_sd_b;
 		}
-		else if(deviceHandler_test(&__device_sd_a)) {
+		else if(deviceHandler_getDeviceAvailable(&__device_sd_a)) {
 			devices[DEVICE_PATCHES] = &__device_sd_a;
 		}
 		else {
@@ -582,7 +582,7 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		if(patched) {
 			if(!patchDeviceReady) {
 				deviceHandler_setStatEnabled(0);
-				if(!devices[DEVICE_PATCHES]->init(devices[DEVICE_PATCHES]->initial)) {
+				if(devices[DEVICE_PATCHES]->init(devices[DEVICE_PATCHES]->initial)) {
 					deviceHandler_setStatEnabled(1);
 					DrawDispose(progBox);
 					return false;

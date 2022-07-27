@@ -236,20 +236,14 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, int numTo
 s32 deviceHandler_FSP_init(file_handle* file) {
 	init_network();
 	if(!net_initialized) {
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Network has not been initialised");
-		DrawPublish(msgBox);
-		wait_press_A();
-		DrawDispose(msgBox);
-		return 0;
+		file->status = E_NONET;
+		return EFAULT;
 	}
 	
 	fsp_session = fsp_open_session(swissSettings.fspHostIp, swissSettings.fspPort, swissSettings.fspPassword);
 	if(!fsp_session) {
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Check FSP Configuration");
-		DrawPublish(msgBox);
-		wait_press_A();
-		DrawDispose(msgBox);
-		return 0;
+		file->status = E_CHECKCONFIG;
+		return EFAULT;
 	}
 	
 	u8 dirpro;
@@ -263,8 +257,7 @@ s32 deviceHandler_FSP_init(file_handle* file) {
 		__device_fsp.features |=  FEAT_PATCHES;
 	else
 		__device_fsp.features &= ~FEAT_PATCHES;
-	
-	return 1;
+	return 0;
 }
 
 s32 deviceHandler_FSP_closeFile(file_handle* file) {
@@ -314,6 +307,16 @@ u32 deviceHandler_FSP_emulated() {
 		return EMU_READ | EMU_BUS_ARBITER;
 }
 
+char* deviceHandler_FSP_status(file_handle* file) {
+	switch(file->status) {
+		case E_NONET:
+			return "Network has not been initialised";
+		case E_CHECKCONFIG:
+			return "Check FSP Configuration";
+	}
+	return NULL;
+}
+
 DEVICEHANDLER_INTERFACE __device_fsp = {
 	DEVICE_ID_E,
 	"Broadband Adapter",
@@ -338,4 +341,5 @@ DEVICEHANDLER_INTERFACE __device_fsp = {
 	(_fn_setupFile)&deviceHandler_FSP_setupFile,
 	(_fn_deinit)&deviceHandler_FSP_deinit,
 	(_fn_emulated)&deviceHandler_FSP_emulated,
+	(_fn_status)&deviceHandler_FSP_status,
 };
