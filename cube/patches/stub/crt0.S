@@ -74,12 +74,19 @@ startup:
 	stwu	r0, -8 (sp)
 
 	bl		pf_main
+
+	lis		r3, 0x0C00
+	li		r4, 0x3000 + 9*4
+	eciwx	r0, r4, r3
+	andi.	r0, r0, 0b100
+	beq		reset
+
 	bl		dvd_main
 
 reset:
-	li		r0, 0
 	lis		r3, 0x0C00
 	li		r4, 0x3000 + 9*4
+	li		r0, 0b000
 	ecowx	r0, r4, r3
 	b		.
 

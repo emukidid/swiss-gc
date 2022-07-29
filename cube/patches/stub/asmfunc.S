@@ -96,9 +96,13 @@ dvd_read:
 1:	dcbi	r6, r3
 	addi	r6, r6, 32
 	bdnz	1b
-	lis		r0, 0xA800
 	lis		r6, 0x0C00
+	li		r7, 0x6000 + 7*4
+	eciwx	r0, r7, r6
+	andi.	r0, r0, 0b001
+	bne		3f
 	li		r7, 0x6000 + 2*4
+	lis		r0, 0xA800
 	ecowx	r0, r7, r6
 	li		r7, 0x6000 + 3*4
 	ecowx	r5, r7, r6
