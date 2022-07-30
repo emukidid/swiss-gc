@@ -176,10 +176,6 @@ void do_videomode_swap() {
 }
 
 void drawCurrentDevice(uiDrawObj_t *containerPanel) {
-	if(devices[DEVICE_CUR] == NULL)
-		return;
-	device_info* info = (device_info*)devices[DEVICE_CUR]->info(devices[DEVICE_CUR]->initial);
-
 	uiDrawObj_t *bgBox = DrawTransparentBox(30, 100, 135, 200);	// Device icon + slot box
 	DrawAddChild(containerPanel, bgBox);
 	// Draw the device image
@@ -208,11 +204,13 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 		sprintf(txtbuffer, "%s", "Serial Port 2");
 	else if(devices[DEVICE_CUR]->location == LOC_SYSTEM)
 		sprintf(txtbuffer, "%s", "System");
+	uiDrawObj_t *devLocationLabel = DrawStyledLabel(30 + ((135-30) / 2), 195, txtbuffer, 0.65f, true, defaultColor);
+	DrawAddChild(containerPanel, devLocationLabel);
 	
-	// Info labels
-	uiDrawObj_t *devNameLabel = DrawStyledLabel(30 + ((135-30) / 2), 195, txtbuffer, 0.65f, true, defaultColor);
+	device_info *info = devices[DEVICE_CUR]->info(devices[DEVICE_CUR]->initial);
+	if(info == NULL) return;
+	
 	uiDrawObj_t *devInfoBox = DrawTransparentBox(30, 225, 135, 330);	// Device size/extra info box
-	DrawAddChild(containerPanel, devNameLabel);
 	DrawAddChild(containerPanel, devInfoBox);
 	
 	// Total space
@@ -482,15 +480,14 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 }
 
 void drawCurrentDeviceCarousel(uiDrawObj_t *containerPanel) {
-	if(devices[DEVICE_CUR] == NULL)
-		return;
-	device_info* info = (device_info*)devices[DEVICE_CUR]->info(devices[DEVICE_CUR]->initial);
-
 	uiDrawObj_t *bgBox = DrawTransparentBox(30, 395, getVideoMode()->fbWidth-30, 420);
 	DrawAddChild(containerPanel, bgBox);
 	// Device name
 	uiDrawObj_t *devNameLabel = DrawStyledLabel(50, 400, devices[DEVICE_CUR]->deviceName, 0.5f, false, defaultColor);
 	DrawAddChild(containerPanel, devNameLabel);
+	
+	device_info *info = devices[DEVICE_CUR]->info(devices[DEVICE_CUR]->initial);
+	if(info == NULL) return;
 	
 	// Used space
 	u64 usedSpace = info->totalSpace - info->freeSpace;

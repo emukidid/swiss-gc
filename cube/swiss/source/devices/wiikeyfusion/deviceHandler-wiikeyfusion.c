@@ -32,16 +32,6 @@ file_handle initial_WKF =
 	  0
 	};
 
-
-device_info initial_WKF_info = {
-	0LL,
-	0LL
-};
-	
-device_info* deviceHandler_WKF_info(file_handle* file) {
-	return &initial_WKF_info;
-}
-
 s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	int i;
 	file_frag *fragList = NULL;
@@ -196,8 +186,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, int numTo
 	return 1;
 }
 
-s32 deviceHandler_WKF_init(file_handle* file){
-	
+s32 deviceHandler_WKF_init(file_handle* file) {
 	wkfReinit();
 	if(wkffs != NULL) {
 		f_unmount("wkf:/");
@@ -206,31 +195,11 @@ s32 deviceHandler_WKF_init(file_handle* file){
 		disk_shutdown(DEV_WKF);
 	}
 	wkffs = (FATFS*)malloc(sizeof(FATFS));
-	int ret = 0;
-	
-	if(((ret=f_mount(wkffs, "wkf:/", 1)) == FR_OK) && deviceHandler_getStatEnabled()) {	
-		sprintf(txtbuffer, "Reading filesystem info for wkf:/");
-		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
-		
-		DWORD freeClusters;
-		FATFS *fatfs;
-		if(f_getfree("wkf:/", &freeClusters, &fatfs) == FR_OK) {
-			initial_WKF_info.freeSpace = (u64)(freeClusters) * fatfs->csize * fatfs->ssize;
-			initial_WKF_info.totalSpace = (u64)(fatfs->n_fatent - 2) * fatfs->csize * fatfs->ssize;
-		}
-		DrawDispose(msgBox);
-	}
-	else {
-		initial_WKF_info.freeSpace = initial_WKF_info.totalSpace = 0LL;
-	}
-
-	return ret == FR_OK;
+	return f_mount(wkffs, "wkf:/", 1) == FR_OK;
 }
 
 s32 deviceHandler_WKF_deinit(file_handle* file) {
 	deviceHandler_FAT_closeFile(file);
-	initial_WKF_info.freeSpace = 0LL;
-	initial_WKF_info.totalSpace = 0LL;
 	if(file) {
 		f_unmount(file->name);
 		free(wkffs);
@@ -271,7 +240,7 @@ DEVICEHANDLER_INTERFACE __device_wkf = {
 	LOC_DVD_CONNECTOR,
 	&initial_WKF,
 	(_fn_test)&deviceHandler_WKF_test,
-	(_fn_info)&deviceHandler_WKF_info,
+	(_fn_info)&deviceHandler_FAT_info,
 	(_fn_init)&deviceHandler_WKF_init,
 	(_fn_makeDir)&deviceHandler_FAT_makeDir,
 	(_fn_readDir)&deviceHandler_FAT_readDir,

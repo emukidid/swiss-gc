@@ -31,16 +31,6 @@ file_handle initial_GCLOADER =
 	  0
 	};
 
-
-device_info initial_GCLOADER_info = {
-	0LL,
-	0LL
-};
-	
-device_info* deviceHandler_GCLOADER_info() {
-	return &initial_GCLOADER_info;
-}
-
 static char *bootFile_names[] = {"boot.iso", "boot.iso.iso", "boot.gcm", "boot.gcm.gcm"};
 
 static s32 setupFile(file_handle* file, file_handle* file2, int numToPatch) {
@@ -272,8 +262,7 @@ fail:
 	return 0;
 }
 
-s32 deviceHandler_GCLOADER_init(file_handle* file){
-
+s32 deviceHandler_GCLOADER_init(file_handle* file) {
 	if(gcloaderfs != NULL) {
 		f_unmount("gcldr:/");
 		free(gcloaderfs);
@@ -281,31 +270,11 @@ s32 deviceHandler_GCLOADER_init(file_handle* file){
 		disk_shutdown(DEV_GCLDR);
 	}
 	gcloaderfs = (FATFS*)malloc(sizeof(FATFS));
-	int ret = 0;
-	
-	if(((ret=f_mount(gcloaderfs, "gcldr:/", 1)) == FR_OK) && deviceHandler_getStatEnabled()) {	
-		sprintf(txtbuffer, "Reading filesystem info for gcldr:/");
-		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
-		
-		DWORD freeClusters;
-		FATFS *fatfs;
-		if(f_getfree("gcldr:/", &freeClusters, &fatfs) == FR_OK) {
-			initial_GCLOADER_info.freeSpace = (u64)(freeClusters) * fatfs->csize * fatfs->ssize;
-			initial_GCLOADER_info.totalSpace = (u64)(fatfs->n_fatent - 2) * fatfs->csize * fatfs->ssize;
-		}
-		DrawDispose(msgBox);
-	}
-	else {
-		initial_GCLOADER_info.freeSpace = initial_GCLOADER_info.totalSpace = 0LL;
-	}
-
-	return ret == FR_OK;
+	return f_mount(gcloaderfs, "gcldr:/", 1) == FR_OK;
 }
 
 s32 deviceHandler_GCLOADER_deinit(file_handle* file) {
 	deviceHandler_FAT_closeFile(file);
-	initial_GCLOADER_info.freeSpace = 0LL;
-	initial_GCLOADER_info.totalSpace = 0LL;
 	if(file) {
 		f_unmount(file->name);
 		free(gcloaderfs);
@@ -363,7 +332,7 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	LOC_DVD_CONNECTOR,
 	&initial_GCLOADER,
 	(_fn_test)&deviceHandler_GCLOADER_test,
-	(_fn_info)&deviceHandler_GCLOADER_info,
+	(_fn_info)&deviceHandler_FAT_info,
 	(_fn_init)&deviceHandler_GCLOADER_init,
 	(_fn_makeDir)&deviceHandler_FAT_makeDir,
 	(_fn_readDir)&deviceHandler_FAT_readDir,

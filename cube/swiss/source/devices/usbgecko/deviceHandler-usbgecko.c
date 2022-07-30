@@ -217,6 +217,7 @@ s32 deviceHandler_USBGecko_init(file_handle* file) {
 }
 
 s32 deviceHandler_USBGecko_deinit(file_handle* file) {
+	initial_USBGecko_info.totalSpace = 0LL;
 	return 0;
 }
 

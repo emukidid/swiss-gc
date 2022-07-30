@@ -277,6 +277,7 @@ s32 deviceHandler_FSP_closeFile(file_handle* file) {
 
 s32 deviceHandler_FSP_deinit(file_handle* file) {
 	deviceHandler_FSP_closeFile(file);
+	initial_FSP_info.totalSpace = 0LL;
 	fsp_close_session(fsp_session);
 	fsp_session = NULL;
 	return 0;

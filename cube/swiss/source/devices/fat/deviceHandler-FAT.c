@@ -92,39 +92,20 @@ file_handle initial_ATA_C =
 	  0
 	};
 
-static device_info initial_FAT_info[5];
-	
+static device_info initial_FAT_info[FF_VOLUMES];
+
 device_info* deviceHandler_FAT_info(file_handle* file) {
-	int isSDCard = IS_SDCARD(file->name);
-	int slot = GET_SLOT(file->name);
-	return &initial_FAT_info[(isSDCard ? slot : SD_COUNT + slot)];
+	device_info* info = NULL;
+	DWORD freeClusters;
+	FATFS* fatfs;
+	if(f_getfree(file->name, &freeClusters, &fatfs) == FR_OK) {
+		info = &initial_FAT_info[fatfs->pdrv];
+		info->freeSpace = (u64)(freeClusters) * fatfs->csize * fatfs->ssize;
+		info->totalSpace = (u64)(fatfs->n_fatent - 2) * fatfs->csize * fatfs->ssize;
+	}
+	return info;
 }
 
-void populateDeviceInfo(file_handle* file) {
-	device_info* info = deviceHandler_FAT_info(file);
-	
-	if(deviceHandler_getStatEnabled()) {
-		int isSDCard = IS_SDCARD(file->name);
-		int slot = GET_SLOT(file->name);
-		
-		sprintf(txtbuffer, "Reading filesystem info for %s%c:/", isSDCard ? "sd":"ata", ('a'+slot));
-		print_gecko(txtbuffer);
-		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
-		
-		sprintf(txtbuffer, "%s%c:/", isSDCard ? "sd":"ata", ('a'+slot));
-		DWORD freeClusters;
-		FATFS *fatfs;
-		if(f_getfree(txtbuffer, &freeClusters, &fatfs) == FR_OK) {
-			info->freeSpace = (u64)(freeClusters) * fatfs->csize * fatfs->ssize;
-			info->totalSpace = (u64)(fatfs->n_fatent - 2) * fatfs->csize * fatfs->ssize;
-		}
-		else {
-			info->freeSpace = info->totalSpace = 0LL;
-		}
-		DrawDispose(msgBox);
-	}
-}
-	
 s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {	
 
 	DIRF* dp = malloc(sizeof(DIRF));
@@ -419,8 +400,6 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 	if(!isSDCard && slot == 2) {
 		ret = fatFs_Mount(DEV_ATAC, "atac:/");
 	}
-	if(ret)
-		populateDeviceInfo(file);
 	return ret;
 }
 
@@ -436,9 +415,6 @@ s32 deviceHandler_FAT_closeFile(file_handle* file) {
 
 s32 deviceHandler_FAT_deinit(file_handle* file) {
 	deviceHandler_FAT_closeFile(file);
-	device_info* info = deviceHandler_FAT_info(file);
-	info->freeSpace = 0LL;
-	info->totalSpace = 0LL;
 	if(file) {
 		int isSDCard = IS_SDCARD(file->name);
 		int slot = GET_SLOT(file->name);

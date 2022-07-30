@@ -99,8 +99,8 @@ s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			}
 		}
 	}
-	DrawDispose(msgBox);
 	initial_WODE_info.totalSpace = num_entries;
+	DrawDispose(msgBox);
 	return num_entries;
 }
 
@@ -249,11 +249,11 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, int numT
 
 s32 deviceHandler_WODE_init(file_handle* file){
 	wodeInited = startupWode() == 0 ? 1:0;
-	initial_WODE_info.totalSpace = 0LL;
 	return wodeInited;
 }
 
 s32 deviceHandler_WODE_deinit(file_handle* file) {
+	initial_WODE_info.totalSpace = 0LL;
 	return 0;
 }
 
