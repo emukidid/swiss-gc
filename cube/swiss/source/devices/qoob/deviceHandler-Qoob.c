@@ -29,7 +29,8 @@ file_handle initial_Qoob =
 	
 device_info initial_Qoob_info = {
 	0x200000,
-	0x200000
+	0x200000,
+	false
 };
 	
 device_info* deviceHandler_Qoob_info(file_handle* file) {

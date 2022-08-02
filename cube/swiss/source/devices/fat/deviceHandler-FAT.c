@@ -102,6 +102,7 @@ device_info* deviceHandler_FAT_info(file_handle* file) {
 		info = &initial_FAT_info[fatfs->pdrv];
 		info->freeSpace = (u64)(freeClusters) * fatfs->csize * fatfs->ssize;
 		info->totalSpace = (u64)(fatfs->n_fatent - 2) * fatfs->csize * fatfs->ssize;
+		info->metric = true;
 	}
 	return info;
 }

@@ -55,7 +55,8 @@ file_handle initial_SMB =
 
 device_info initial_SMB_info = {
 	0LL,
-	0LL
+	0LL,
+	true
 };
 	
 device_info* deviceHandler_SMB_info(file_handle* file) {

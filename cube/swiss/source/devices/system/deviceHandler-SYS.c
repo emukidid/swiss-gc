@@ -88,7 +88,8 @@ file_handle initial_SYS =
 device_info initial_SYS_info =
 {
 	0LL,
-	0LL
+	0LL,
+	false
 };
 
 device_info* deviceHandler_SYS_info(file_handle* file) {

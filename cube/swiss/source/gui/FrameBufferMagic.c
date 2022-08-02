@@ -712,15 +712,8 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
 		bool displaySpeed = data->speed != 0;
 		drawString(displaySpeed ? (x1 + 80) : (640/2), middleY+30, fbTextBuffer, 1.0f, true, defaultColor);
 		if(displaySpeed) {
-			if(data->speed >= 1048576) {
-				sprintf(fbTextBuffer,"%.2fMB/s", (float)data->speed/(float)(1048576));
-			}
-			else if(data->speed >= 1024) {
-				sprintf(fbTextBuffer,"%.2fKB/s", (float)data->speed/(float)(1024));
-			}
-			else {
-				sprintf(fbTextBuffer,"%iB/s", data->speed);
-			}
+			formatBytes(fbTextBuffer, data->speed, 0, true);
+			strcat(fbTextBuffer, "/s");
 			drawString(x1 + 280, middleY+30, fbTextBuffer, 1.0f, true, defaultColor);
 			sprintf(fbTextBuffer,"Elapsed: %02i:%02i:%02i", data->timestart / 3600, (data->timestart / 60)%60,  data->timestart % 60);
 			drawString(x1 + 500, middleY+30, fbTextBuffer, 0.65f, true, defaultColor);
@@ -1092,13 +1085,13 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 					sprintf(fbTextBuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
 				}
 				else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
-					sprintf(fbTextBuffer,"Size: %.2fKB (%d blocks)", (float)file->size/1024, file->size/8192);
+					formatBytes(stpcpy(fbTextBuffer, "Size: "), file->size, 8192, false);
 				}
 				else if(devices[DEVICE_CUR] == &__device_qoob) {
-					sprintf(fbTextBuffer,"Size: %.2fKB (%d blocks)", (float)file->size/1024, file->size/0x10000);
+					formatBytes(stpcpy(fbTextBuffer, "Size: "), file->size, 65536, false);
 				}
 				else {
-					sprintf(fbTextBuffer,"Size: %.2f%s", file->size > (1024*1024*1024) ? (float)file->size/(1024*1024*1024) : file->size > (1024*1024) ? (float)file->size/(1024*1024) : (float)file->size/1024, file->size > (1024*1024*1024) ? "GB" : file->size > (1024*1024) ? "MB" : "KB");
+					formatBytes(stpcpy(fbTextBuffer, "Size: "), file->size, 0, true);
 				}
 				drawString(data->x2 - (borderSize + (GetTextSizeInPixels(fbTextBuffer)*0.45f)), 
 					data->y2-(borderSize+24), fbTextBuffer, 0.45f, false, defaultColor);
@@ -1198,13 +1191,13 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				sprintf(fbTextBuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
 			}
 			else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
-				sprintf(fbTextBuffer,"%.2fKB (%d blocks)", (float)file->size/1024, file->size/8192);
+				formatBytes(fbTextBuffer, file->size, 8192, false);
 			}
 			else if(devices[DEVICE_CUR] == &__device_qoob) {
-				sprintf(fbTextBuffer,"%.2fKB (%d blocks)", (float)file->size/1024, file->size/0x10000);
+				formatBytes(fbTextBuffer, file->size, 65536, false);
 			}
 			else {
-				sprintf(fbTextBuffer,"%.2f%s", file->size > (1024*1024*1024) ? (float)file->size/(1024*1024*1024) : file->size > (1024*1024) ? (float)file->size/(1024*1024) : (float)file->size/1024, file->size > (1024*1024*1024) ? "GB" : file->size > (1024*1024) ? "MB" : "KB");
+				formatBytes(fbTextBuffer, file->size, 0, true);
 			}
 			drawString(data->x2 - ((borderSize) + (GetTextSizeInPixels(fbTextBuffer)*0.45)), 
 				data->y1+borderSize+21, fbTextBuffer, 0.45f, false, defaultColor);

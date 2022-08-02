@@ -33,7 +33,8 @@ file_handle initial_WODE =
 	};
 device_info initial_WODE_info = {
 	0LL,
-	0LL
+	0LL,
+	true
 };
 	
 int startupWode() {

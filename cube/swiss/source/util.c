@@ -219,3 +219,37 @@ bool deleteFileOrDir(file_handle* entry) {
 	}
 	return true;	// IS_SPECIAL can be ignored.
 }
+
+int formatBytes(char *string, off_t count, blksize_t blocksize, bool metric)
+{
+	static const struct {
+		const char *unit[2];
+		double value[2];
+	} units[] = {
+		{{ "YiB", "YB" }, { 0x1p80, 1e24 }},
+		{{ "ZiB", "ZB" }, { 0x1p70, 1e21 }},
+		{{ "EiB", "EB" }, { 0x1p60, 1e18 }},
+		{{ "PiB", "PB" }, { 0x1p50, 1e15 }},
+		{{ "TiB", "TB" }, { 0x1p40, 1e12 }},
+		{{ "GiB", "GB" }, { 0x1p30, 1e9 }},
+		{{ "MiB", "MB" }, { 0x1p20, 1e6 }},
+		{{ "KiB", "kB" }, { 0x1p10, 1e3 }},
+		{{ NULL }}
+	};
+
+	if (blocksize) {
+		blkcnt_t blocks = (count + blocksize - 1) / blocksize;
+
+		for (int i = 0; units[i].unit[metric]; i++)
+			if (count >= units[i].value[metric])
+				return sprintf(string, "%.3g %s (%jd blocks)", count / units[i].value[metric], units[i].unit[metric], (intmax_t)blocks);
+
+		return sprintf(string, "%jd bytes (%jd blocks)", (intmax_t)count, (intmax_t)blocks);
+	}
+
+	for (int i = 0; units[i].unit[metric]; i++)
+		if (count >= units[i].value[metric])
+			return sprintf(string, "%.3g %s", count / units[i].value[metric], units[i].unit[metric]);
+
+	return sprintf(string, "%jd bytes", (intmax_t)count);
+}

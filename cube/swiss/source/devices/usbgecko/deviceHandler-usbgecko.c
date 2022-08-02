@@ -27,7 +27,8 @@ file_handle initial_USBGecko =
 
 device_info initial_USBGecko_info = {
 	0LL,
-	0LL
+	0LL,
+	true
 };
 
 extern char *getRelativeName(char *str);

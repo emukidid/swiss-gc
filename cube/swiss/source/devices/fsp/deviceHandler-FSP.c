@@ -32,7 +32,8 @@ file_handle initial_FSP =
 
 device_info initial_FSP_info = {
 	0LL,
-	0LL
+	0LL,
+	true
 };
 
 device_info* deviceHandler_FSP_info(file_handle* file) {

@@ -33,7 +33,8 @@ file_handle initial_DVD =
 
 device_info initial_DVD_info = {
 	DISC_SIZE,
-	DISC_SIZE
+	DISC_SIZE,
+	true
 };
 
 static char error_str[256];

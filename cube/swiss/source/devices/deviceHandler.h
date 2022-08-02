@@ -56,6 +56,7 @@ typedef struct {
 typedef struct {
 	u64 freeSpace;
 	u64 totalSpace;
+	bool metric;
 } device_info;
 
 typedef struct {
