@@ -36,14 +36,14 @@ static struct {
 	bba_page_t (*page)[8];
 	ppc_context_t *entry;
 	ppc_context_t *exit;
-} _bba = {0};
+} _bba;
 
 static struct {
 	void *buffer;
 	uint32_t length;
 	uint32_t offset;
 	bool read, patch;
-} dvd = {0};
+} dvd;
 
 #include "tcpip.c"
 

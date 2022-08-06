@@ -148,7 +148,7 @@ static struct {
 		uint16_t pathlen;
 		frag_callback callback;
 	} queue[QUEUE_SIZE], *queued;
-} _fsp = {0};
+} _fsp;
 
 static uint16_t ipv4_checksum(ipv4_header_t *header)
 {

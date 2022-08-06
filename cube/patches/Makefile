@@ -5,7 +5,7 @@ LD      = $(DIR)/powerpc-eabi-ld
 OBJDUMP = $(DIR)/powerpc-eabi-objdump
 OBJCOPY = $(DIR)/powerpc-eabi-objcopy
 
-OPTS	= -ffast-math -flto -fno-tree-loop-distribute-patterns -ffunction-sections -fdata-sections -fno-zero-initialized-in-bss -Wl,--gc-sections -Ibase -Wno-address-of-packed-member -Wno-scalar-storage-order
+OPTS	= -ffast-math -flto -fno-tree-loop-distribute-patterns -ffunction-sections -fdata-sections -Wl,--gc-sections -Ibase -Wno-address-of-packed-member -Wno-scalar-storage-order
 
 DEST    = ../swiss/source/patches
 
@@ -60,7 +60,7 @@ reboot.bin:
 	@$(CC) -Os $(OPTS) -o reboot.elf -T stub/reboot.ld crt0.o main.o asmfunc.o mmcbbp.o pff.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D reboot.elf > $(DISASM)/reboot.txt
-	@$(OBJCOPY) -O binary reboot.elf reboot.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents reboot.elf reboot.bin
 	@truncate -s %32 reboot.bin
 	@$(BIN2S) reboot.bin > $(DEST)/Reboot.s
 	@rm -f *.bin *.elf *.o
@@ -76,7 +76,7 @@ stub.bin:
 	@$(CC) -Os $(OPTS) -o stub.elf -T stub/stub.ld crt0.o main.o asmfunc.o mmcbbp.o pff.o os.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D stub.elf > $(DISASM)/stub.txt
-	@$(OBJCOPY) -O binary stub.elf stub.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents stub.elf stub.bin
 	@$(BIN2S) stub.bin > $(DEST)/Stub.s
 	@rm -f *.bin *.elf *.o
 
@@ -100,7 +100,7 @@ sd.bin:
 	@$(CC) -Os $(OPTS) -o sd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o memcpy.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D sd.elf > $(DISASM)/sd.txt
-	@$(OBJCOPY) -O binary sd.elf sd.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd.elf sd.bin
 	@$(BIN2S) sd.bin > $(DEST)/SlotAB-SD.s
 	@rm -f *.bin *.elf *.o
 
@@ -121,7 +121,7 @@ sd.card.bin:
 	@$(CC) -Os $(OPTS) -o sd.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D sd.card.elf > $(DISASM)/sd.card.txt
-	@$(OBJCOPY) -O binary sd.card.elf sd.card.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd.card.elf sd.card.bin
 	@$(BIN2S) sd.card.bin > $(DEST)/SlotAB-SD.card.s
 	@rm -f *.bin *.elf *.o
 
@@ -143,7 +143,7 @@ sd.dtk.bin:
 	@$(CC) -Os $(OPTS) -o sd.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D sd.dtk.elf > $(DISASM)/sd.dtk.txt
-	@$(OBJCOPY) -O binary sd.dtk.elf sd.dtk.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd.dtk.elf sd.dtk.bin
 	@$(BIN2S) sd.dtk.bin > $(DEST)/SlotAB-SD.dtk.s
 	@rm -f *.bin *.elf *.o
 
@@ -167,7 +167,7 @@ ideexi-v1.bin:
 	@$(CC) -Os $(OPTS) -o ideexi-v1.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o memcpy.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v1.elf > $(DISASM)/ideexi-v1.txt
-	@$(OBJCOPY) -O binary ideexi-v1.elf ideexi-v1.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v1.elf ideexi-v1.bin
 	@$(BIN2S) ideexi-v1.bin > $(DEST)/SlotAB-IDEEXI_V1.s
 	@rm -f *.bin *.elf *.o
 
@@ -188,7 +188,7 @@ ideexi-v1.card.bin:
 	@$(CC) -Os $(OPTS) -o ideexi-v1.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v1.card.elf > $(DISASM)/ideexi-v1.card.txt
-	@$(OBJCOPY) -O binary ideexi-v1.card.elf ideexi-v1.card.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v1.card.elf ideexi-v1.card.bin
 	@$(BIN2S) ideexi-v1.card.bin > $(DEST)/SlotAB-IDEEXI_V1.card.s
 	@rm -f *.bin *.elf *.o
 
@@ -210,7 +210,7 @@ ideexi-v1.dtk.bin:
 	@$(CC) -Os $(OPTS) -o ideexi-v1.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v1.dtk.elf > $(DISASM)/ideexi-v1.dtk.txt
-	@$(OBJCOPY) -O binary ideexi-v1.dtk.elf ideexi-v1.dtk.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v1.dtk.elf ideexi-v1.dtk.bin
 	@$(BIN2S) ideexi-v1.dtk.bin > $(DEST)/SlotAB-IDEEXI_V1.dtk.s
 	@rm -f *.bin *.elf *.o
 
@@ -234,7 +234,7 @@ ideexi-v2.bin:
 	@$(CC) -Os $(OPTS) -o ideexi-v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o memcpy.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.elf > $(DISASM)/ideexi-v2.txt
-	@$(OBJCOPY) -O binary ideexi-v2.elf ideexi-v2.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v2.elf ideexi-v2.bin
 	@$(BIN2S) ideexi-v2.bin > $(DEST)/SlotAB-IDEEXI_V2.s
 	@rm -f *.bin *.elf *.o
 
@@ -255,7 +255,7 @@ ideexi-v2.card.bin:
 	@$(CC) -Os $(OPTS) -o ideexi-v2.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.card.elf > $(DISASM)/ideexi-v2.card.txt
-	@$(OBJCOPY) -O binary ideexi-v2.card.elf ideexi-v2.card.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v2.card.elf ideexi-v2.card.bin
 	@$(BIN2S) ideexi-v2.card.bin > $(DEST)/SlotAB-IDEEXI_V2.card.s
 	@rm -f *.bin *.elf *.o
 
@@ -277,7 +277,7 @@ ideexi-v2.dtk.bin:
 	@$(CC) -Os $(OPTS) -o ideexi-v2.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.dtk.elf > $(DISASM)/ideexi-v2.dtk.txt
-	@$(OBJCOPY) -O binary ideexi-v2.dtk.elf ideexi-v2.dtk.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v2.dtk.elf ideexi-v2.dtk.bin
 	@$(BIN2S) ideexi-v2.dtk.bin > $(DEST)/SlotAB-IDEEXI_V2.dtk.s
 	@rm -f *.bin *.elf *.o
 
@@ -297,7 +297,7 @@ dvd.bin:
 	@$(CC) -Os $(OPTS) -o dvd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o interrupt.o ipl.o dvd.o sd.o sd_isr.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd.txt
-	@$(OBJCOPY) -O binary dvd.elf dvd.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents dvd.elf dvd.bin
 	@$(BIN2S) dvd.bin > $(DEST)/DVDPatch.s
 	@rm -f *.bin *.elf *.o
 
@@ -318,7 +318,7 @@ dvd.card.bin:
 	@$(CC) -Os $(OPTS) -o dvd.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o dvd.o sd.o sd_isr.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D dvd.card.elf > $(DISASM)/dvd.card.txt
-	@$(OBJCOPY) -O binary dvd.card.elf dvd.card.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents dvd.card.elf dvd.card.bin
 	@$(BIN2S) dvd.card.bin > $(DEST)/DVDPatch.card.s
 	@rm -f *.bin *.elf *.o
 
@@ -337,7 +337,7 @@ usbgecko.bin:
 	@$(CC) -Os $(OPTS) -o usbgecko.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o interrupt.o ipl.o usbgecko.o usbgecko_isr.o sd.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usbgecko.txt
-	@$(OBJCOPY) -O binary usbgecko.elf usbgecko.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents usbgecko.elf usbgecko.bin
 	@$(BIN2S) usbgecko.bin > $(DEST)/USBGeckoPatch.s
 	@rm -f *.bin *.elf *.o
 
@@ -357,7 +357,7 @@ wkf.bin:
 	@$(CC) -Os $(OPTS) -o wkf.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o interrupt.o ipl.o wkf.o sd.o sd_isr.o uart.o os.o memmove.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf.txt
-	@$(OBJCOPY) -O binary wkf.elf wkf.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents wkf.elf wkf.bin
 	@$(BIN2S) wkf.bin > $(DEST)/WKFPatch.s
 	@rm -f *.bin *.elf *.o
 
@@ -378,7 +378,7 @@ wkf.card.bin:
 	@$(CC) -Os $(OPTS) -o wkf.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o wkf.o sd.o sd_isr.o uart.o os.o memmove.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.card.elf > $(DISASM)/wkf.card.txt
-	@$(OBJCOPY) -O binary wkf.card.elf wkf.card.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents wkf.card.elf wkf.card.bin
 	@$(BIN2S) wkf.card.bin > $(DEST)/WKFPatch.card.s
 	@rm -f *.bin *.elf *.o
 
@@ -400,7 +400,7 @@ wkf.dtk.bin:
 	@$(CC) -Os $(OPTS) -o wkf.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o wkf.o sd.o sd_isr.o uart.o os.o memmove.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.dtk.elf > $(DISASM)/wkf.dtk.txt
-	@$(OBJCOPY) -O binary wkf.dtk.elf wkf.dtk.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents wkf.dtk.elf wkf.dtk.bin
 	@$(BIN2S) wkf.dtk.bin > $(DEST)/WKFPatch.dtk.s
 	@rm -f *.bin *.elf *.o
 
@@ -421,7 +421,7 @@ fsp.bin:
 	@$(CC) -Os $(OPTS) -o fsp.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o frag.o interrupt.o ipl.o bba.o sd.o sd_isr.o uart.o os.o memcpy.o setjmp.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D fsp.elf > $(DISASM)/fsp.txt
-	@$(OBJCOPY) -O binary fsp.elf fsp.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents fsp.elf fsp.bin
 	@$(BIN2S) fsp.bin > $(DEST)/FSPPatch.s
 	@rm -f *.bin *.elf *.o
 
@@ -442,7 +442,7 @@ fsp.dtk.bin:
 	@$(CC) -Os $(OPTS) -o fsp.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o bba.o uart.o os.o memcpy.o setjmp.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D fsp.dtk.elf > $(DISASM)/fsp.dtk.txt
-	@$(OBJCOPY) -O binary fsp.dtk.elf fsp.dtk.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents fsp.dtk.elf fsp.dtk.bin
 	@$(BIN2S) fsp.dtk.bin > $(DEST)/FSPPatch.dtk.s
 	@rm -f *.bin *.elf *.o
 
@@ -466,7 +466,7 @@ gcloader-v1.bin:
 	@$(CC) -Os $(OPTS) -o gcloader-v1.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o dvd.o sd.o sd_isr.o uart.o os.o memcpy.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader-v1.elf > $(DISASM)/gcloader-v1.txt
-	@$(OBJCOPY) -O binary gcloader-v1.elf gcloader-v1.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v1.elf gcloader-v1.bin
 	@$(BIN2S) gcloader-v1.bin > $(DEST)/GCLoaderPatch1.s
 	@rm -f *.bin *.elf *.o
 
@@ -487,7 +487,7 @@ gcloader-v1.card.bin:
 	@$(CC) -Os $(OPTS) -o gcloader-v1.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o dvd.o sd.o sd_isr.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader-v1.card.elf > $(DISASM)/gcloader-v1.card.txt
-	@$(OBJCOPY) -O binary gcloader-v1.card.elf gcloader-v1.card.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v1.card.elf gcloader-v1.card.bin
 	@$(BIN2S) gcloader-v1.card.bin > $(DEST)/GCLoaderPatch1.card.s
 	@rm -f *.bin *.elf *.o
 
@@ -509,7 +509,7 @@ gcloader-v2.bin:
 	@$(CC) -Os $(OPTS) -o gcloader-v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o gcloader.o uart.o os.o memcpy.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader-v2.elf > $(DISASM)/gcloader-v2.txt
-	@$(OBJCOPY) -O binary gcloader-v2.elf gcloader-v2.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v2.elf gcloader-v2.bin
 	@$(BIN2S) gcloader-v2.bin > $(DEST)/GCLoaderPatch2.s
 	@rm -f *.bin *.elf *.o
 
@@ -528,6 +528,6 @@ gcloader-v2.card.bin:
 	@$(CC) -Os $(OPTS) -o gcloader-v2.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o gcloader.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader-v2.card.elf > $(DISASM)/gcloader-v2.card.txt
-	@$(OBJCOPY) -O binary gcloader-v2.card.elf gcloader-v2.card.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v2.card.elf gcloader-v2.card.bin
 	@$(BIN2S) gcloader-v2.card.bin > $(DEST)/GCLoaderPatch2.card.s
 	@rm -f *.bin *.elf *.o

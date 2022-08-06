@@ -40,7 +40,7 @@ static struct {
 			uint32_t intmsk;
 		} reg;
 	};
-} pi = {0};
+} pi;
 
 static void pi_update_interrupts(void)
 {
@@ -372,7 +372,7 @@ static struct {
 		uint32_t start;
 		uint32_t length;
 	} next;
-} dtk = {0};
+} dtk;
 
 #ifdef DTK
 static void dtk_decode_buffer(void *address, uint32_t length)
@@ -453,7 +453,7 @@ static struct {
 	#ifdef DVD
 	int reset;
 	#endif
-} di = {0};
+} di;
 
 static void di_update_interrupts(void)
 {
@@ -500,9 +500,9 @@ void di_close_cover()
 	di_update_interrupts();
 }
 
-OSAlarm di_alarm = {0};
-OSAlarm cover_alarm = {0};
-OSAlarm read_alarm = {0};
+OSAlarm di_alarm;
+OSAlarm cover_alarm;
+OSAlarm read_alarm;
 
 #ifndef DI_PASSTHROUGH
 #ifdef GCODE
@@ -734,7 +734,7 @@ static struct {
 	} req;
 
 	uint8_t (*buffer[2])[640];
-} dsp = {0};
+} dsp;
 
 static void dsp_read(unsigned index, uint32_t *value)
 {

@@ -48,7 +48,7 @@ void dly_us (UINT n);		/* Delay n microseconds (asmfunc.S) */
 
 
 static
-BYTE CardType = 0;
+BYTE CardType;
 
 
 /*-----------------------------------------------------------------------*/

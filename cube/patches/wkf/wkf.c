@@ -52,7 +52,7 @@ static struct {
 	uint32_t length;
 	uint32_t offset;
 	bool read, patch;
-} dvd = {0};
+} dvd;
 
 static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 

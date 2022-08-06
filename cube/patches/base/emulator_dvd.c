@@ -48,7 +48,7 @@ static struct {
 
 	OSTime start_time;
 	OSTime end_time;
-} read_buffer = {0};
+} read_buffer;
 
 static uint32_t dvd_buffer_size(void)
 {

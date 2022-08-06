@@ -59,14 +59,14 @@ static struct {
 		uint32_t offset;
 		frag_callback callback;
 	} queue[QUEUE_SIZE], *queued;
-} usb = {0};
+} usb;
 
 static struct {
 	void *buffer;
 	uint32_t length;
 	uint32_t offset;
 	bool read, patch;
-} dvd = {0};
+} dvd;
 
 static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 

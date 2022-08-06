@@ -31,7 +31,7 @@ static struct {
 	uint32_t length;
 	uint32_t offset;
 	bool read;
-} dvd = {0};
+} dvd;
 
 bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *frag, frag_callback callback)
 {

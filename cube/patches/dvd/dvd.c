@@ -33,7 +33,7 @@ static struct {
 	uint32_t length;
 	uint32_t offset;
 	bool read, patch;
-} dvd = {0};
+} dvd;
 
 static void dvd_read(void *address, uint32_t length, uint32_t offset)
 {

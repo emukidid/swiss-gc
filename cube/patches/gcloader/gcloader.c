@@ -56,7 +56,7 @@ static struct {
 	uint32_t length;
 	uint32_t offset;
 	bool read;
-} dvd = {0};
+} dvd;
 
 static void gcode_set_disc_frags(uint32_t disc, const frag_t *frag, uint32_t count)
 {

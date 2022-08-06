@@ -375,7 +375,7 @@
 ---------------------------------------------------------------------------*/
 
 
-static FATFS *FatFs = 0;	/* Pointer to the file system object (logical drive) */
+static FATFS *FatFs;	/* Pointer to the file system object (logical drive) */
 
 
 /*-----------------------------------------------------------------------*/

@@ -26,7 +26,7 @@
 static struct {
 	OSInterruptHandler handler[OS_INTERRUPT_MAX];
 	OSInterruptMask mask;
-} irq = {0};
+} irq;
 
 OSInterruptHandler set_interrupt_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
