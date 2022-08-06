@@ -35,10 +35,11 @@ bool checkExtension(char *filename) {
 	return canLoadFileType(filename);
 }
 
-char *getRelativeName(char *str) {
-	char *chr = strrchr(str, '/');
-	if (!chr) chr = strchr(str, ':');
-	return chr ? chr + 1 : str;
+char *getRelativeName(char *path)
+{
+	char *chr = strrchr(path, '/');
+	if (!chr) chr = strchr(path, ':');
+	return chr ? chr + 1 : path;
 }
 
 void getParentPath(char *src, char *dst) {
@@ -50,9 +51,42 @@ void getParentPath(char *src, char *dst) {
 	}
 }
 
-char *getDevicePath(char *str) {
-	char *chr = strchr(str, ':');
-	return chr ? chr + 1 : str;
+char *getDevicePath(char *path)
+{
+	char *chr = strchr(path, ':');
+	return chr ? chr + 1 : path;
+}
+
+char *getExternalPath(char *path)
+{
+	static const struct {
+		const char *internal;
+		const char *external;
+	} devices[] = {
+		{ "ataa:/",  "carda:" },
+		{ "atab:/",  "cardb:" },
+		{ "atac:/",  "fat:"   },
+		{ "gcldr:/", "dvd:"   },
+		{ "sda:/",   "carda:" },
+		{ "sdb:/",   "cardb:" },
+		{ "sdc:/",   "sd:"    },
+		{ "wkf:/",   "dvd:"   },
+		{ NULL }
+	};
+
+	char *devicePath = getDevicePath(path);
+
+	if (devicePath == path)
+		return strdup(path);
+
+	for (int i = 0; devices[i].internal; i++) {
+		if (!strncmp(path, devices[i].internal, devicePath - path)) {
+			char *newPath = malloc(strlen(devices[i].external) + strlen(devicePath) + 1);
+			return strcat(strcpy(newPath, devices[i].external), devicePath);
+		}
+	}
+
+	return strdup(path);
 }
 
 char stripbuffer[PATHNAME_MAX];

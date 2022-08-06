@@ -1171,7 +1171,7 @@ void boot_dol()
 			devices[DEVICE_CUR]->readFile(cliArgFile, cli_buffer, cliArgFile->size);
 
 			// Parse CLI
-			argv[argc] = (char*)&curFile.name;
+			argv[argc] = getExternalPath(&curFile.name[0]);
 			argc++;
 			// First argument is at the beginning of the file
 			if(cli_buffer[0] != '\r' && cli_buffer[0] != '\n') {

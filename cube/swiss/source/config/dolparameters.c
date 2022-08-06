@@ -133,7 +133,7 @@ void populateArgv(int *argc, char *argv[], char *filename) {
 		if(param->enable) {
 			if(*argc == 0) {
 				// Filename first
-				argv[0] = filename;
+				argv[0] = getExternalPath(filename);
 				*argc += 1;
 			}
 			ParameterValue *arg = &param->arg;

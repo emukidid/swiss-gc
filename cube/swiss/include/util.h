@@ -12,9 +12,10 @@
 int endsWith(char *str, char *end);
 bool canLoadFileType(char *filename);
 bool checkExtension(char *filename);
-char *getRelativeName(char *str);
+char *getRelativeName(char *path);
 void getParentPath(char *src, char *dst);
-char *getDevicePath(char *str);
+char *getDevicePath(char *path);
+char *getExternalPath(char *path);
 char *stripInvalidChars(char *str);
 void load_auto_dol();
 void print_gecko(const char* fmt, ...);
