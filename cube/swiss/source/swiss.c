@@ -2275,18 +2275,6 @@ void select_device(int type)
 	devices[type] = allDevices[curDevice];
 }
 
-char* getErrMsg(s32 err) {
-	switch(err) {
-		case ENODEV:
-			return "No device found";
-		case EIO:
-			return "I/O error";
-		case EFAULT:
-			return "General Error";
-	}
-	return "Unknown error";
-}
-
 void menu_loop()
 { 
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
@@ -2313,7 +2301,7 @@ void menu_loop()
 				}
 				DrawDispose(msgBox);
 				char* statusMsg = devices[DEVICE_CUR]->status(devices[DEVICE_CUR]->initial);
-				msgBox = DrawPublish(DrawMessageBox(D_FAIL, statusMsg ? statusMsg : getErrMsg(ret)));
+				msgBox = DrawPublish(DrawMessageBox(D_FAIL, statusMsg ? statusMsg : strerror(ret)));
 				sleep(2);
 				DrawDispose(msgBox);
 				return;
