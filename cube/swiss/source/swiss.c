@@ -1716,7 +1716,7 @@ void load_game() {
 	
 	if(devices[DEVICE_CUR] == &__device_wode) {
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Setup base offset please Wait .."));
-		devices[DEVICE_CUR]->setupFile(&curFile, disc2File, -1);
+		devices[DEVICE_CUR]->setupFile(&curFile, disc2File, NULL, -1);
 		DrawDispose(msgBox);
 	}
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading ..."));
@@ -1802,7 +1802,7 @@ void load_game() {
 			config_unload_current();
 			return;
 		}
-		if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, -2)) {
+		if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, NULL, -2)) {
 			msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
 			wait_press_A();
 			DrawDispose(msgBox);
@@ -1845,7 +1845,7 @@ void load_game() {
 
 	// Report to the user the patch status of this GCM/ISO file
 	if(devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
-		numToPatch = check_game(filesToPatch);
+		numToPatch = check_game(&curFile, disc2File, filesToPatch);
 	}
 	
 	*(vu8*)VAR_CURRENT_DISC = FRAGS_DISC_1;
@@ -1863,7 +1863,7 @@ void load_game() {
 	*(vu8*)VAR_CARD_B_ID = 0x00;
 	
 	// Call the special setup for each device (e.g. SD will set the sector(s))
-	if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, numToPatch)) {
+	if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, filesToPatch, numToPatch)) {
 		msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
 		wait_press_A();
 		free(filesToPatch);
@@ -1959,29 +1959,30 @@ void load_file()
 
 }
 
-int check_game(ExecutableFile *filesToPatch)
+int check_game(file_handle *file, file_handle *file2, ExecutableFile *filesToPatch)
 { 	
 	char* gameID = (char*)&GCMDisk;
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Checking Game .."));
 	
-	u32 numToPatch;
+	int numToPatch;
 	if(tgcFile.magic == TGC_MAGIC) {
-		numToPatch = parse_tgc(&curFile, filesToPatch, 0, getRelativeName(curFile.name));
+		numToPatch = parse_tgc(file, filesToPatch, 0, getRelativeName(file->name));
 	}
 	else {
-		numToPatch = parse_gcm(&curFile, filesToPatch);
+		numToPatch = parse_gcm(file, file2, filesToPatch);
 		
 		if(!strncmp(gameID, "GCCE01", 6) || !strncmp(gameID, "GCCJGC", 6) || !strncmp(gameID, "GCCP01", 6)) {
-			parse_gcm_add(&curFile, filesToPatch, &numToPatch, "ffcc_cli.bin");
+			parse_gcm_add(file, filesToPatch, &numToPatch, "ffcc_cli.bin");
 		}
 		if(swissSettings.disableVideoPatches < 1) {
 			if(!strncmp(gameID, "GS8P7D", 6)) {
-				parse_gcm_add(&curFile, filesToPatch, &numToPatch, "SPYROCFG_NGC.CFG");
+				parse_gcm_add(file, filesToPatch, &numToPatch, "SPYROCFG_NGC.CFG");
 			}
 		}
 	}
 	DrawDispose(msgBox);
-	return patch_gcm(&curFile, filesToPatch, numToPatch);
+	patch_gcm(filesToPatch, numToPatch);
+	return numToPatch;
 }
 
 uiDrawObj_t* draw_game_info() {

@@ -84,6 +84,8 @@ typedef struct {
 } TGCHeader __attribute__((aligned(32)));
 
 typedef struct {
+	file_handle *file;
+	file_handle *patchFile;
 	u32 offset;
 	u32 size;
 	char name[256];
@@ -95,11 +97,11 @@ typedef struct {
 	u32 tgcFakeOffset;
 } ExecutableFile;
 
-int parse_gcm(file_handle *file, ExecutableFile *filesToPatch);
+int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatch);
 void adjust_tgc_fst(char* FST, u32 tgc_base, u32 fileAreaStart, u32 fakeAmount);
 int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, char* tgcname);
-int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch);
-void parse_gcm_add(file_handle *file, ExecutableFile *filesToPatch, u32 *numToPatch, char *fileName);
+int patch_gcm(ExecutableFile *filesToPatch, int numToPatch);
+void parse_gcm_add(file_handle *file, ExecutableFile *filesToPatch, int *numToPatch, char *fileName);
 int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace);
 void get_gcm_banner(file_handle *file, u32 *file_offset, u32 *file_size);
 DiskHeader *get_gcm_header(file_handle *file);

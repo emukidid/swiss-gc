@@ -118,7 +118,7 @@ void get_gcm_banner(file_handle *file, u32 *file_offset, u32 *file_size) {
 }
 
 // Add a file to our current filesToPatch based on fileName
-void parse_gcm_add(file_handle *file, ExecutableFile *filesToPatch, u32 *numToPatch, char *fileName) {
+void parse_gcm_add(file_handle *file, ExecutableFile *filesToPatch, int *numToPatch, char *fileName) {
 	DiskHeader *diskHeader = get_gcm_header(file);
 	if(!diskHeader) return;
 	
@@ -213,12 +213,15 @@ u32 calc_elf_segments_size(file_handle *file, u32 file_offset, u32 *file_size) {
 }
 
 // Returns the number of filesToPatch and fills out the filesToPatch array passed in (pre-allocated)
-int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
+int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatch) {
 	char	filename[256];
 	int		dolOffset = 0, dolSize = 0, numFiles = 0;
 
 	DiskHeader *diskHeader = get_gcm_header(file);
 	if(!diskHeader) return 0;
+	if(diskHeader->MaxFSTSize > GCMDisk.MaxFSTSize) {
+		GCMDisk.MaxFSTSize = diskHeader->MaxFSTSize;
+	}
 
 	// Patch the apploader too!
 	// Calc Apploader size
@@ -228,6 +231,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Apploader Header"));
 		while(1);
 	}
+	filesToPatch[numFiles].file = file;
 	filesToPatch[numFiles].offset = 0x2440;
 	filesToPatch[numFiles].size = sizeof(ApploaderHeader) + ((apploaderHeader.size + 31) & ~31) + ((apploaderHeader.rebootSize + 31) & ~31);
 	filesToPatch[numFiles].type = PATCH_APPLOADER;
@@ -243,6 +247,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Main DOL Header"));
 			while(1);
 		}
+		filesToPatch[numFiles].file = file;
 		filesToPatch[numFiles].offset = dolOffset = diskHeader->DOLOffset;
 		filesToPatch[numFiles].size = dolSize = DOLSize(&dolhdr);
 		filesToPatch[numFiles].type = PATCH_DOL;
@@ -277,6 +282,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 						continue;
 					}
 				}
+				filesToPatch[numFiles].file = file;
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL;
@@ -284,6 +290,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 				numFiles++;
 			}
 			if(!strcasecmp(filename,"switcher.prs")) {
+				filesToPatch[numFiles].file = file;
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL_PRS;
@@ -296,6 +303,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 						continue;
 					}
 				}
+				filesToPatch[numFiles].file = file;
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_ELF;
@@ -303,6 +311,7 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 				numFiles++;
 			}
 			if(!strcasecmp(filename,"execD.img")) {
+				filesToPatch[numFiles].file = file;
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_BS2;
@@ -318,7 +327,11 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 	free(FST);
 	free(diskHeader);
 	
+	if(file2) {
+		numFiles += parse_gcm(file2, NULL, &filesToPatch[numFiles]);
+	}
 	// This need to be last.
+	filesToPatch[numFiles].file = file;
 	filesToPatch[numFiles].offset = 0;
 	filesToPatch[numFiles].size = 0x2440;
 	filesToPatch[numFiles].type = PATCH_OTHER;
@@ -363,6 +376,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 		devices[DEVICE_CUR]->seekFile(file,tgc_base+tgcHeader.apploaderOffset,DEVICE_HANDLER_SEEK_SET);
 		devices[DEVICE_CUR]->readFile(file,&apploaderHeader,sizeof(ApploaderHeader));
 		
+		filesToPatch[numFiles].file = file;
 		filesToPatch[numFiles].offset = tgc_base+tgcHeader.apploaderOffset;
 		filesToPatch[numFiles].size = sizeof(ApploaderHeader) + ((apploaderHeader.size + 31) & ~31) + ((apploaderHeader.rebootSize + 31) & ~31);
 		filesToPatch[numFiles].type = PATCH_APPLOADER;
@@ -370,6 +384,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 		numFiles++;
 	}
 	
+	filesToPatch[numFiles].file = file;
 	filesToPatch[numFiles].offset = tgc_base+tgcHeader.dolStart;
 	filesToPatch[numFiles].size = tgcHeader.dolLength;
 	filesToPatch[numFiles].type = PATCH_DOL;
@@ -407,6 +422,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 				if(tgcHeader.dolLength == size || !valid_dol_file(file, file_offset, size)) {
 					continue;
 				}
+				filesToPatch[numFiles].file = file;
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL;
@@ -422,6 +438,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 				if(tgcHeader.dolLength == calc_elf_segments_size(file, file_offset, &size) + DOLHDRLENGTH) {
 					continue;
 				}
+				filesToPatch[numFiles].file = file;
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_ELF;
@@ -434,6 +451,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 				numFiles++;
 			}
 			if(!strcasecmp(filename,"execD.img")) {
+				filesToPatch[numFiles].file = file;
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_BS2;
@@ -446,7 +464,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 	return numFiles;
 }
 
-int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
+int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 	int i, num_patched = 0;
 	// If the current device isn't SD via EXI, init one slot to write patches.
 	// TODO expand this to support IDE-EXI and other writable devices (requires dvd patch re-write/modularity)
@@ -514,8 +532,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 		int sizeToRead = (filesToPatch[i].size + 31) & ~31;
 		void *buffer = memalign(32, sizeToRead);
 		
-		devices[DEVICE_CUR]->seekFile(file,filesToPatch[i].offset, DEVICE_HANDLER_SEEK_SET);
-		int ret = devices[DEVICE_CUR]->readFile(file,buffer,sizeToRead);
+		devices[DEVICE_CUR]->seekFile(filesToPatch[i].file,filesToPatch[i].offset, DEVICE_HANDLER_SEEK_SET);
+		int ret = devices[DEVICE_CUR]->readFile(filesToPatch[i].file,buffer,sizeToRead);
 		print_gecko("Read from %08X Size %08X - Result: %08X\r\n", filesToPatch[i].offset, sizeToRead, ret);
 		if(ret != sizeToRead) {
 			DrawDispose(progBox);			
@@ -612,9 +630,8 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			ensure_path(DEVICE_PATCHES, patchDirName, NULL);
 			
 			// File handle for a patch we might need to write
-			file_handle patchFile;
-			memset(&patchFile, 0, sizeof(file_handle));
-			concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/%.4s/%i", gameID, num_patched);
+			filesToPatch[i].patchFile = calloc(1, sizeof(file_handle));
+			concatf_path(filesToPatch[i].patchFile->name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/%.4s/%i", gameID, num_patched);
 
 			// Make patch trailer
 			u32 patchInfo[4];
@@ -624,31 +641,31 @@ int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch) {
 			patchInfo[3] = crc32(0, buffer, sizeToRead);
 
 			// See if this file already exists, if it does, match crc
-			if(!devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0)) {
+			if(!devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, NULL, 0)) {
 				//print_gecko("Old Patch exists\r\n");
 				u32 oldPatchInfo[4];
 				memset(oldPatchInfo, 0, 16);
-				devices[DEVICE_PATCHES]->seekFile(&patchFile, -16, DEVICE_HANDLER_SEEK_END);
-				devices[DEVICE_PATCHES]->readFile(&patchFile, oldPatchInfo, 16);
+				devices[DEVICE_PATCHES]->seekFile(filesToPatch[i].patchFile, -16, DEVICE_HANDLER_SEEK_END);
+				devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, oldPatchInfo, 16);
 				if(!memcmp(oldPatchInfo, patchInfo, 16)) {
 					num_patched++;
-					devices[DEVICE_PATCHES]->closeFile(&patchFile);
+					devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile);
 					free(buffer);
 					print_gecko("CRC matched, no need to patch again\r\n");
 					DrawDispose(progBox);
 					continue;
 				}
 				else {
-					devices[DEVICE_PATCHES]->deleteFile(&patchFile);
+					devices[DEVICE_PATCHES]->deleteFile(filesToPatch[i].patchFile);
 					print_gecko("CRC mismatch, writing patch again\r\n");
 				}
 			}
 			// Otherwise, write a file out for this game with the patched buffer inside.
-			print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", patchFile.name, filesToPatch[i].size, filesToPatch[i].offset);
-			devices[DEVICE_PATCHES]->seekFile(&patchFile, 0, DEVICE_HANDLER_SEEK_SET);
-			devices[DEVICE_PATCHES]->writeFile(&patchFile, buffer, sizeToRead);
-			devices[DEVICE_PATCHES]->writeFile(&patchFile, patchInfo, 16);
-			devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", filesToPatch[i].patchFile->name, filesToPatch[i].size, filesToPatch[i].offset);
+			devices[DEVICE_PATCHES]->seekFile(filesToPatch[i].patchFile, 0, DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_PATCHES]->writeFile(filesToPatch[i].patchFile, buffer, sizeToRead);
+			devices[DEVICE_PATCHES]->writeFile(filesToPatch[i].patchFile, patchInfo, 16);
+			devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile);
 			num_patched++;
 		}
 		DrawDispose(progBox);

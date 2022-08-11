@@ -10694,8 +10694,10 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 	int patched = 0;
 	
 	if (!strcmp(fileName, "boot.bin")) {
-		memcpy(data, &GCMDisk, length);
+		DiskHeader *diskHeader = (DiskHeader *) data;
+		diskHeader->DVDMagicWord = GCMDisk.DVDMagicWord;
 		memset(data + 0x200, 0, 0x200);
+		diskHeader->MaxFSTSize = GCMDisk.MaxFSTSize;
 		
 		print_gecko("Patched:[%s]\n", fileName);
 		patched++;

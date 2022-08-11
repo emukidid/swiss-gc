@@ -120,7 +120,7 @@ s32 deviceHandler_WODE_readFile(file_handle* file, void* buffer, u32 length) {
 	return bytesread;
 }
 
-s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
+s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
 	if(numToPatch < 0) {
 		if(numToPatch == -1) {
 			ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
@@ -143,28 +143,38 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, int numT
 		// Look for patch files, if we find some, open them and add them as fragments
 		file_handle patchFile;
 		for(i = 0; i < numToPatch; i++) {
-			memset(&patchFile, 0, sizeof(file_handle));
-			concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/%.4s/%i", (char*)&GCMDisk, i);
-			
-			if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) == 0) {
+			if(!filesToPatch[i].patchFile) continue;
+			if(devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, NULL, 0) == 0) {
 				u32 patchInfo[4];
 				memset(patchInfo, 0, 16);
-				devices[DEVICE_PATCHES]->seekFile(&patchFile, -16, DEVICE_HANDLER_SEEK_END);
-				if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-					if(!getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_DISC_1, patchInfo[0], patchInfo[1])) {
-						devices[DEVICE_PATCHES]->closeFile(&patchFile);
+				devices[DEVICE_PATCHES]->seekFile(filesToPatch[i].patchFile, -16, DEVICE_HANDLER_SEEK_END);
+				if((devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
+					if(!getFragments(DEVICE_PATCHES, filesToPatch[i].patchFile, &fragList, &numFrags, filesToPatch[i].file == file2, patchInfo[0], patchInfo[1])) {
+						devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile);
 						free(fragList);
 						return 0;
 					}
-					devices[DEVICE_PATCHES]->closeFile(&patchFile);
+					devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile);
 				}
 				else {
-					devices[DEVICE_PATCHES]->deleteFile(&patchFile);
+					devices[DEVICE_PATCHES]->deleteFile(filesToPatch[i].patchFile);
 					free(fragList);
 					return 0;
 				}
 			}
 			else {
+				free(fragList);
+				return 0;
+			}
+		}
+		
+		if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, FRAGS_DISC_1, 0, 0)) {
+			free(fragList);
+			return 0;
+		}
+		
+		if(file2) {
+			if(!getFragments(DEVICE_CUR, file2, &fragList, &numFrags, FRAGS_DISC_2, 0, 0)) {
 				free(fragList);
 				return 0;
 			}

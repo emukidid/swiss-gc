@@ -199,7 +199,7 @@ s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length) {
 	return bytes_written;
 }
 
-s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
+s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
 	int i;
 	file_frag *fragList = NULL;
 	u32 numFrags = 0;
@@ -207,23 +207,21 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	// Look for patch files, if we find some, open them and add them as fragments
 	file_handle patchFile;
 	for(i = 0; i < numToPatch; i++) {
-		memset(&patchFile, 0, sizeof(file_handle));
-		concatf_path(patchFile.name, devices[DEVICE_CUR]->initial->name, "swiss/patches/%.4s/%i", (char*)&GCMDisk, i);
-		
-		if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) == 0) {
+		if(!filesToPatch[i].patchFile) continue;
+		if(devices[DEVICE_CUR]->readFile(filesToPatch[i].patchFile, NULL, 0) == 0) {
 			u32 patchInfo[4];
 			memset(patchInfo, 0, 16);
-			devices[DEVICE_CUR]->seekFile(&patchFile, -16, DEVICE_HANDLER_SEEK_END);
-			if((devices[DEVICE_CUR]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-				if(!getFragments(DEVICE_CUR, &patchFile, &fragList, &numFrags, FRAGS_DISC_1, patchInfo[0], patchInfo[1])) {
-					devices[DEVICE_CUR]->closeFile(&patchFile);
+			devices[DEVICE_CUR]->seekFile(filesToPatch[i].patchFile, -16, DEVICE_HANDLER_SEEK_END);
+			if((devices[DEVICE_CUR]->readFile(filesToPatch[i].patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
+				if(!getFragments(DEVICE_CUR, filesToPatch[i].patchFile, &fragList, &numFrags, filesToPatch[i].file == file2, patchInfo[0], patchInfo[1])) {
+					devices[DEVICE_CUR]->closeFile(filesToPatch[i].patchFile);
 					free(fragList);
 					return 0;
 				}
-				devices[DEVICE_CUR]->closeFile(&patchFile);
+				devices[DEVICE_CUR]->closeFile(filesToPatch[i].patchFile);
 			}
 			else {
-				devices[DEVICE_CUR]->deleteFile(&patchFile);
+				devices[DEVICE_CUR]->deleteFile(filesToPatch[i].patchFile);
 				free(fragList);
 				return 0;
 			}
@@ -242,7 +240,6 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, int numTo
 	
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
-		// TODO fix 2 disc patched games
 		if(!getFragments(DEVICE_CUR, file2, &fragList, &numFrags, FRAGS_DISC_2, 0, UINT32_MAX)) {
 			free(fragList);
 			return 0;

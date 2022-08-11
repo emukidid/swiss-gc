@@ -33,7 +33,7 @@ file_handle initial_GCLOADER =
 
 static char *bootFile_names[] = {"boot.iso", "boot.iso.iso", "boot.gcm", "boot.gcm.gcm"};
 
-static s32 setupFile(file_handle* file, file_handle* file2, int numToPatch) {
+static s32 setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
 	// GCLoader disc/file fragment setup
 	file_frag *disc1FragList = NULL, *disc2FragList = NULL;
 	u32 disc1Frags = 0, disc2Frags = 0;
@@ -100,8 +100,8 @@ static s32 setupFile(file_handle* file, file_handle* file2, int numToPatch) {
 	return 1;
 }
 
-s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int numToPatch) {
-	if(!setupFile(file, file2, numToPatch)) {
+s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
+	if(!setupFile(file, file2, filesToPatch, numToPatch)) {
 		return 0;
 	}
 	if(numToPatch < 0) {
@@ -118,23 +118,21 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, int 
 		// Look for patch files, if we find some, open them and add them as fragments
 		file_handle patchFile;
 		for(i = 0; i < numToPatch; i++) {
-			memset(&patchFile, 0, sizeof(file_handle));
-			concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/%.4s/%i", (char*)&GCMDisk, i);
-			
-			if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) == 0) {
+			if(!filesToPatch[i].patchFile) continue;
+			if(devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, NULL, 0) == 0) {
 				u32 patchInfo[4];
 				memset(patchInfo, 0, 16);
-				devices[DEVICE_PATCHES]->seekFile(&patchFile, -16, DEVICE_HANDLER_SEEK_END);
-				if((devices[DEVICE_PATCHES]->readFile(&patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-					if(!getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_DISC_1, patchInfo[0], patchInfo[1])) {
-						devices[DEVICE_PATCHES]->closeFile(&patchFile);
+				devices[DEVICE_PATCHES]->seekFile(filesToPatch[i].patchFile, -16, DEVICE_HANDLER_SEEK_END);
+				if((devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
+					if(!getFragments(DEVICE_PATCHES, filesToPatch[i].patchFile, &fragList, &numFrags, filesToPatch[i].file == file2, patchInfo[0], patchInfo[1])) {
+						devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile);
 						free(fragList);
 						goto fail;
 					}
-					devices[DEVICE_PATCHES]->closeFile(&patchFile);
+					devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile);
 				}
 				else {
-					devices[DEVICE_PATCHES]->deleteFile(&patchFile);
+					devices[DEVICE_PATCHES]->deleteFile(filesToPatch[i].patchFile);
 					free(fragList);
 					goto fail;
 				}
@@ -254,7 +252,7 @@ fail:
 		memset(&bootFile, 0, sizeof(file_handle));
 		concat_path(bootFile.name, devices[DEVICE_CUR]->initial->name, bootFile_names[i]);
 		
-		if(setupFile(&bootFile, NULL, -1)) {
+		if(setupFile(&bootFile, NULL, NULL, -1)) {
 			devices[DEVICE_CUR]->closeFile(&bootFile);
 			break;
 		}
