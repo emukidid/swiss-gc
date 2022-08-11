@@ -262,25 +262,24 @@ void populate_meta(file_handle *f) {
 				}
 			}
 			else if(endsWith(f->name,".gcm") || endsWith(f->name,".iso")) {
-				DiskHeader *header = memalign(32, sizeof(DiskHeader));
-				devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
-				if(devices[DEVICE_CUR]->readFile(f, header, sizeof(DiskHeader)) == sizeof(DiskHeader) && valid_gcm_magic(header)) {
+				DiskHeader *diskHeader = get_gcm_header(f);
+				if(diskHeader) {
 					u32 bannerOffset = 0, bannerSize = f->size;
-					if(!get_gcm_banner_fast(header, &bannerOffset, &bannerSize))
+					if(!get_gcm_banner_fast(diskHeader, &bannerOffset, &bannerSize))
 						get_gcm_banner(f, &bannerOffset, &bannerSize);
 					populate_game_meta(f, bannerOffset, bannerSize);
-					get_gcm_title(header, f->meta);
+					get_gcm_title(diskHeader, f->meta);
 					// Assign GCM region texture
-					char region = wodeRegionToChar(header->RegionCode);
+					char region = wodeRegionToChar(diskHeader->RegionCode);
 					if(region == 'J')
 						f->meta->regionTexObj = &ntscjTexObj;
 					else if(region == 'E')
 						f->meta->regionTexObj = &ntscuTexObj;
 					else if(region == 'P')
 						f->meta->regionTexObj = &palTexObj;
-					memcpy(&f->meta->diskId, header, sizeof(dvddiskid));
+					memcpy(&f->meta->diskId, diskHeader, sizeof(dvddiskid));
+					free(diskHeader);
 				}
-				free(header);
 			}
 			else if(endsWith(f->name,".tgc")) {
 				TGCHeader tgcHeader;

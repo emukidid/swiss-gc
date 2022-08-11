@@ -100,7 +100,7 @@ void adjust_tgc_fst(char* FST, u32 tgc_base, u32 fileAreaStart, u32 fakeAmount);
 int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, char* tgcname);
 int patch_gcm(file_handle *file, ExecutableFile *filesToPatch, int numToPatch);
 void parse_gcm_add(file_handle *file, ExecutableFile *filesToPatch, u32 *numToPatch, char *fileName);
-int parse_gcm_for_ext(file_handle *file, char *ext, bool find32k);
 int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace);
 void get_gcm_banner(file_handle *file, u32 *file_offset, u32 *file_size);
+DiskHeader *get_gcm_header(file_handle *file);
 #endif

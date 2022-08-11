@@ -25,40 +25,51 @@
 #define FST_ENTRY_SIZE 12
 
 // Parse disc header & read FST into a buffer
-void* get_fst(file_handle* file) {
-	DiskHeader header;
-	char	*FST;
+DiskHeader *get_gcm_header(file_handle *file) {
+	DiskHeader *diskHeader;
 	
 	// Grab disc header
-	memset(&header,0,sizeof(DiskHeader));
+	diskHeader=(DiskHeader*)memalign(32,sizeof(DiskHeader));
+	if(!diskHeader) return NULL;
+	
 	if(devices[DEVICE_CUR] == &__device_dvd && (dvdDiscTypeInt == GAMECUBE_DISC || dvdDiscTypeInt == MULTIDISC_DISC)) {
-		if(DVD_Read(&header, 0, sizeof(DiskHeader)) != sizeof(DiskHeader)) {
+		if(DVD_Read(diskHeader, 0, sizeof(DiskHeader)) != sizeof(DiskHeader)) {
+			free(diskHeader);
 			return NULL;
 		}
 	}
- 	else {
+	else {
 		devices[DEVICE_CUR]->seekFile(file,0,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(file,&header,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
+		if(devices[DEVICE_CUR]->readFile(file,diskHeader,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
+			free(diskHeader);
 			return NULL;
 		}
 	}
 	
-	if(!valid_gcm_magic(&header)) return NULL;
+	if(!valid_gcm_magic(diskHeader)) {
+		free(diskHeader);
+		return NULL;
+	}
+	return diskHeader;
+}
+
+char *get_fst(file_handle *file, u32 file_offset, u32 file_size) {
+	char *FST;
 	
 	// Alloc and read FST
-	FST=(char*)memalign(32,header.FSTSize); 
+	FST=(char*)memalign(32,file_size);
 	if(!FST) return NULL;
-
+	
 	if(devices[DEVICE_CUR] == &__device_dvd && (dvdDiscTypeInt == GAMECUBE_DISC || dvdDiscTypeInt == MULTIDISC_DISC)) {
-		if(DVD_Read(FST, header.FSTOffset, header.FSTSize) != header.FSTSize) {
+		if(DVD_Read(FST, file_offset, file_size) != file_size) {
 			free(FST);
 			return NULL;
 		}
 	}
  	else {
-		devices[DEVICE_CUR]->seekFile(file,header.FSTOffset,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(file,FST,header.FSTSize) != header.FSTSize) {
-			free(FST); 
+		devices[DEVICE_CUR]->seekFile(file,file_offset,DEVICE_HANDLER_SEEK_SET);
+		if(devices[DEVICE_CUR]->readFile(file,FST,file_size) != file_size) {
+			free(FST);
 			return NULL;
 		}
 	}
@@ -95,21 +106,29 @@ void get_fst_details(char *FST, char *searchFileName, u32 *file_offset, u32 *fil
 
 //Lets parse the entire game FST in search for the banner
 void get_gcm_banner(file_handle *file, u32 *file_offset, u32 *file_size) {
-	char *FST = get_fst(file);
+	DiskHeader *diskHeader = get_gcm_header(file);
+	if(!diskHeader) return;
+	
+	char *FST = get_fst(file, diskHeader->FSTOffset, diskHeader->FSTSize);
 	if(!FST) return;
 	
 	get_fst_details(FST, "opening.bnr", file_offset, file_size);
 	free(FST);
+	free(diskHeader);
 }
 
 // Add a file to our current filesToPatch based on fileName
 void parse_gcm_add(file_handle *file, ExecutableFile *filesToPatch, u32 *numToPatch, char *fileName) {
-	char *FST = get_fst(file);
+	DiskHeader *diskHeader = get_gcm_header(file);
+	if(!diskHeader) return;
+	
+	char *FST = get_fst(file, diskHeader->FSTOffset, diskHeader->FSTSize);
 	if(!FST) return;
 	
 	u32 file_offset, file_size;
 	get_fst_details(FST, fileName, &file_offset, &file_size);
 	free(FST);
+	free(diskHeader);
 	if(file_offset != -1) {
 		filesToPatch[*numToPatch].offset = file_offset;
 		filesToPatch[*numToPatch].size = file_size;
@@ -195,12 +214,11 @@ u32 calc_elf_segments_size(file_handle *file, u32 file_offset, u32 *file_size) {
 
 // Returns the number of filesToPatch and fills out the filesToPatch array passed in (pre-allocated)
 int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
-
-	char	*FST = get_fst(file);
 	char	filename[256];
 	int		dolOffset = 0, dolSize = 0, numFiles = 0;
 
-	if(!FST) return -1;
+	DiskHeader *diskHeader = get_gcm_header(file);
+	if(!diskHeader) return 0;
 
 	// Patch the apploader too!
 	// Calc Apploader size
@@ -216,21 +234,24 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 	sprintf(filesToPatch[numFiles].name, "apploader.img");
 	numFiles++;
 
-	if(GCMDisk.DOLOffset != 0) {
+	if(diskHeader->DOLOffset != 0) {
 		// Multi-DOL games may re-load the main DOL, so make sure we patch it too.
 		// Calc size
 		DOLHEADER dolhdr;
-		devices[DEVICE_CUR]->seekFile(file,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
+		devices[DEVICE_CUR]->seekFile(file,diskHeader->DOLOffset,DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
 			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Main DOL Header"));
 			while(1);
 		}
-		filesToPatch[numFiles].offset = dolOffset = GCMDisk.DOLOffset;
+		filesToPatch[numFiles].offset = dolOffset = diskHeader->DOLOffset;
 		filesToPatch[numFiles].size = dolSize = DOLSize(&dolhdr);
 		filesToPatch[numFiles].type = PATCH_DOL;
 		sprintf(filesToPatch[numFiles].name, "default.dol");
 		numFiles++;
 	}
+
+	char *FST = get_fst(file, diskHeader->FSTOffset, diskHeader->FSTSize);
+	if(!FST) return 0;
 
 	u32 entries=*(unsigned int*)&FST[8];
 	u32 string_table_offset=FST_ENTRY_SIZE*entries;
@@ -290,17 +311,12 @@ int parse_gcm(file_handle *file, ExecutableFile *filesToPatch) {
 			}
 			if(endsWith(filename,".tgc")) {
 				// Go through all the TGC's internal files
-				ExecutableFile *filesInTGCToPatch = memalign(32, sizeof(ExecutableFile)*32);
-				int numTGCFilesToPatch = parse_tgc(file, filesInTGCToPatch, file_offset, filename), j;
-				for(j=0; j<numTGCFilesToPatch; j++) {
-					memcpy(&filesToPatch[numFiles], &filesInTGCToPatch[j], sizeof(ExecutableFile));
-					numFiles++;
-				}
-				free(filesInTGCToPatch);
+				numFiles += parse_tgc(file, &filesToPatch[numFiles], file_offset, filename);
 			}
 		} 
 	}
 	free(FST);
+	free(diskHeader);
 	
 	// This need to be last.
 	filesToPatch[numFiles].offset = 0;
@@ -330,7 +346,6 @@ void adjust_tgc_fst(char* FST, u32 tgc_base, u32 fileAreaStart, u32 fakeAmount) 
 }
 
 int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, char* tgcname) {
-	char	*FST; 
 	char	filename[256];
 	int		numFiles = 0;
 	
@@ -338,7 +353,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 	devices[DEVICE_CUR]->seekFile(file,tgc_base,DEVICE_HANDLER_SEEK_SET);
 	devices[DEVICE_CUR]->readFile(file,&tgcHeader,sizeof(TGCHeader));
 	
-	if(tgcHeader.magic != TGC_MAGIC) return -1;
+	if(tgcHeader.magic != TGC_MAGIC) return 0;
 	if(tgcHeader.fstMaxLength > GCMDisk.MaxFSTSize) {
 		GCMDisk.MaxFSTSize = tgcHeader.fstMaxLength;
 	}
@@ -367,9 +382,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 	numFiles++;
 
 	// Alloc and read FST
-	FST=(char*)memalign(32,tgcHeader.fstLength);
-	devices[DEVICE_CUR]->seekFile(file,tgc_base+tgcHeader.fstStart,DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file,FST,tgcHeader.fstLength);
+	char *FST = get_fst(file, tgc_base + tgcHeader.fstStart, tgcHeader.fstLength);
 
 	// Adjust TGC FST offsets
 	adjust_tgc_fst(FST, tgc_base, tgcHeader.userStart, tgcHeader.gcmUserStart);
@@ -663,11 +676,14 @@ u64 calc_fst_entries_size(char *FST) {
 int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 
 	print_gecko("Read dir for directory: %s\r\n",file->name);
-	char 	*FST = get_fst(file);
 	char	filename[PATHNAME_MAX];
 	int		numFiles = 1, idx = 0;
 	int		isRoot = !strcmp((const char*)&file->name[0], "dvd:/");
 	
+	DiskHeader *diskHeader = get_gcm_header(file);
+	if(!diskHeader) return -1;
+	
+	char *FST = get_fst(file, diskHeader->FSTOffset, diskHeader->FSTSize);
 	if(!FST) return -1;
 	
 	// Get the space taken up by this disc
@@ -675,9 +691,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		
 	// Add the disc itself as a "file"
 	*dir = calloc( numFiles * sizeof(file_handle), 1 );
-	strcpy((*dir)[idx].name, __device_dvd.initial->name);
-	DVD_Read(&(*dir)[idx].name[strlen(__device_dvd.initial->name)], 32, 128);
-	strcat((*dir)[idx].name, ".gcm");
+	concatf_path((*dir)[idx].name, __device_dvd.initial->name, "%.64s.gcm", diskHeader->GameName);
 	(*dir)[idx].fileBase = 0;
 	(*dir)[idx].offset = 0;
 	(*dir)[idx].size = DISC_SIZE;
@@ -773,107 +787,6 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 	}
 	
 	free(FST);
-
-	return numFiles;
-}
-
-// Returns the number of files matching the extension (in a TGC)
-int parse_tgc_for_ext(file_handle *file, u32 tgc_base, char* tgcname, char* ext, bool find32k) {
-	char	*FST; 
-	char	filename[256];
-	u32 fileAreaStart, fakeAmount, numFiles = 0;
-	
-	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x24,DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file, &fileAreaStart, 4);
-	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x34,DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file, &fakeAmount, 4);
-	
-	// Grab FST Offset & Size
-	u32 fstOfsAndSize[2];
- 	devices[DEVICE_CUR]->seekFile(file,tgc_base+0x10,DEVICE_HANDLER_SEEK_SET);
- 	devices[DEVICE_CUR]->readFile(file,&fstOfsAndSize,2*sizeof(u32));
-
- 	// Alloc and read FST
-	FST=(char*)memalign(32,fstOfsAndSize[1]); 
-	devices[DEVICE_CUR]->seekFile(file,tgc_base+fstOfsAndSize[0],DEVICE_HANDLER_SEEK_SET);
- 	devices[DEVICE_CUR]->readFile(file,FST,fstOfsAndSize[1]);
-
-	// Adjust TGC FST offsets
-	adjust_tgc_fst(FST, tgc_base, fileAreaStart, fakeAmount);
-	
-	u32 entries=*(unsigned int*)&FST[8];
-	u32 string_table_offset=FST_ENTRY_SIZE*entries;
-		
-	int i;
-	// go through every entry
-	for (i=1;i<entries;i++) 
-	{ 
-		u32 offset=i*0x0c; 
-		if(FST[offset]==0) //skip directories
-		{ 
-			u32 size = 0, file_offset = 0;
-			u32 filename_offset=((*(unsigned int*)&FST[offset]) & 0x00FFFFFF); 
-			memset(&filename[0],0,256);
-			memcpy(&filename[0],&FST[string_table_offset+filename_offset],255);
-			memcpy(&size,&FST[offset+8],4);
-			memcpy(&file_offset,&FST[offset+4],4);
-			// Match on file extension
-			if(ext && size && endsWith(filename,ext)) {
-				print_gecko("File matched ext (%s): %s/%s\r\n", ext, tgcname, filename);
-				numFiles++;
-			}
-			// Match on file offset + size being a multiple of 32K
-			if(find32k && size && !(size & 0x7FFF) && !(file_offset & 0x7FFF)) {
-				print_gecko("File matched 32K size + alignment: %s/%s\r\n", tgcname, filename);
-				numFiles++;
-			}
-		} 
-	}
-	free(FST);
-	return numFiles;
-}
-
-// Returns the number of files matching the extension
-int parse_gcm_for_ext(file_handle *file, char *ext, bool find32k) {
-
-	char	*FST = get_fst(file);
-	char	filename[256];
-	int		numFiles = 0;
-
-	if(!FST) return -1;
-
-	u32 entries=*(unsigned int*)&FST[8];
-	u32 string_table_offset=FST_ENTRY_SIZE*entries;
-		
-	int i;
-	// go through every entry
-	for (i=1;i<entries;i++) 
-	{ 
-		u32 offset=i*0x0c, file_offset = 0; 
-		if(FST[offset]==0) //skip directories
-		{ 
-			u32 size = 0;
-			u32 filename_offset=((*(unsigned int*)&FST[offset]) & 0x00FFFFFF); 
-			memset(&filename[0],0,256);
-			memcpy(&file_offset,&FST[offset+4],4);
-			memcpy(&filename[0],&FST[string_table_offset+filename_offset],255);
-			memcpy(&size,&FST[offset+8],4);
-			// Match on file extension
-			if(ext && endsWith(filename,ext) && size) {
-				print_gecko("File matched ext (%s): %s\r\n", ext, filename);
-				numFiles++;
-			}
-			// Match on file offset + size being a multiple of 32K
-			if(find32k && size && !(size & 0x7FFF) && !(file_offset & 0x7FFF)) {
-				print_gecko("File matched 32K size + alignment: %s\r\n", filename);
-				numFiles++;
-			}
-			if(endsWith(filename,".tgc")) {
-				// Go through all the TGC's internal files too
-				numFiles += parse_tgc_for_ext(file, file_offset, filename, ext, find32k);
-			}
-		} 
-	}
-	free(FST);
+	free(diskHeader);
 	return numFiles;
 }
