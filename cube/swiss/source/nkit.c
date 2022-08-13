@@ -50,8 +50,12 @@ static const struct {
 
 	const char *title;
 } nkit_dat[] = {
-	{ "101J01\x00\x03", true,  1, 0xA361, 0x1A7B7608, 1459486720,     +491520, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL Ver. 03" },
-	{ "102E01\x00\x07", true,  1, 0x10B2, 0x4CA6F4EB, 1450858496,    +9119744, {  122984064,    +1245184, 6496, 0x19E5 }, "Aging Disc DOL-USA Ver. 07" },
+	{ "101E01\x00\x05", true,  1, 0xB6FD, 0x4BB518CD, 1435981824,   +23996416, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
+	{ "101J01\x00\x03", true,  1, 0xA361, 0x1A7B7608, 1459486720,     +491520, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
+	{ "101J01\x00\x06", true,  1, 0x402F, 0xC3C5D3D6, 1459486720,     +491520, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
+	{ "102E01\x00\x07", true,  1, 0x10B2, 0x4CA6F4EB, 1450858496,    +9119744, {  122984064,    +1245184, 6496, 0x19E5 }, "Aging Disc DOL-USA" },
+	{ "102J01\x00\x07", true,  1, 0xF1B6, 0x0BEC4525, 1450858496,    +9119744, {  122984064,    +1245184, 6496, 0x19E5 }, "Aging Disc DOL" },
+	{ "102P01\x00\x07", true,  1, 0x44BE, 0xC3103545, 1450858496,    +9119744, {  122984064,    +1245184, 6496, 0x19E5 }, "Aging Disc DOL-PAL" },
 	{ "301E01\x00\x00", true,  1, 0x2291, 0xBE031BBE,  220121088, +1239857152, {  152535040, +1239842816, 6496, 0x1086 }, "Nintendo GameCube Service Disc Version 1.0/03" },
 	{ "BOER51\x00\x00", false, 1, 0xFA3E, 0x70BE6BAE, 1301760000,  +158218240, {  193123256,      +32136, 6496, 0x34EC }, "Burnout" },
 	{ "D23J01\x00\x00", true,  1, 0x54F8, 0x385BDC6A, 1310650368,  +149327872, {  584824840,  +149335704, 6496, 0x51A7 }, "Game Taikai Yuushou Kinen: Tokusei SmaBro DX Movie Disc" },
@@ -2011,7 +2015,7 @@ static const struct {
 	{ "UGPJ01\x00\x03", false, 1, 0xC4F0, 0xDFF567CB,    2473984, +1457504256, {    2003524,      +28092, 6496, 0xE53B }, "Game Boy Player Start-Up Disc" },
 	{ "UGPP01\x00\x01", false, 1, 0x6D4F, 0x5ECD9681,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{ "UGPP01\x00\x02", false, 1, 0xCA50, 0x1E26380C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
-#define REDUMP_COUNT 1961
+#define REDUMP_COUNT 1965
 	{ "00\0E01\x00\x00",false, 1, 0x21CF, 0xBF114CB3,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{ "00\0E01\x00\x00",false, 1, 0x42A2, 0x499CF1AB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{ "D28J01\x00\x00", true,  1, 0x8FC6, 0x8EFBB42B,  794134528,  +665843712, {  394649296,  +665814992, 6496, 0xE5B2 }, "Gekkan Nintendo Tentou Demo 2002.4.4" },
