@@ -112,25 +112,7 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, Exec
 		file_handle patchFile;
 		for(i = 0; i < numToPatch; i++) {
 			if(!filesToPatch[i].patchFile) continue;
-			if(devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, NULL, 0) == 0) {
-				u32 patchInfo[4];
-				memset(patchInfo, 0, 16);
-				devices[DEVICE_PATCHES]->seekFile(filesToPatch[i].patchFile, -16, DEVICE_HANDLER_SEEK_END);
-				if((devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, &patchInfo, 16) == 16) && (patchInfo[2] == SWISS_MAGIC)) {
-					if(!getFragments(DEVICE_PATCHES, filesToPatch[i].patchFile, &fragList, &numFrags, filesToPatch[i].file == file2, patchInfo[0], patchInfo[1])) {
-						devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile);
-						free(fragList);
-						return 0;
-					}
-					devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile);
-				}
-				else {
-					devices[DEVICE_PATCHES]->deleteFile(filesToPatch[i].patchFile);
-					free(fragList);
-					return 0;
-				}
-			}
-			else {
+			if(!getFragments(DEVICE_PATCHES, filesToPatch[i].patchFile, &fragList, &numFrags, filesToPatch[i].file == file2, filesToPatch[i].offset, filesToPatch[i].size)) {
 				free(fragList);
 				return 0;
 			}

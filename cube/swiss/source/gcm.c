@@ -130,6 +130,7 @@ void parse_gcm_add(file_handle *file, ExecutableFile *filesToPatch, int *numToPa
 	free(FST);
 	free(diskHeader);
 	if(file_offset != -1) {
+		filesToPatch[*numToPatch].file = file;
 		filesToPatch[*numToPatch].offset = file_offset;
 		filesToPatch[*numToPatch].size = file_size;
 		filesToPatch[*numToPatch].type = endsWith(fileName,".prs") ? PATCH_OTHER_PRS:PATCH_OTHER;
@@ -505,14 +506,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		return 0;
 	}
 
-	char patchDirName[256];
-	char gameID[16];
-	memset(&gameID, 0, 16);
-	memset(&patchDirName, 0, 256);
-	strncpy((char*)&gameID, (char*)&GCMDisk, 4);
-	snprintf(&patchDirName[0], 256, "swiss/patches/%.4s", &gameID[0]);
-	memcpy((char*)&gameID, (char*)&GCMDisk, 12);
-	print_gecko("Patch dir will be: %s%s if required\r\n", devices[DEVICE_PATCHES]->initial->name, patchDirName);
+	char* gameID = (char*)&GCMDisk;
 	// Go through all the possible files we think need patching..
 	for(i = 0; i < numToPatch; i++) {
 		u32 patched = 0;
@@ -542,6 +536,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			DrawDispose(msgBox);
 			return 0;
 		}
+		u32 crc = crc32(0, buffer, sizeToRead);
 		
 		u8 *oldBuffer = NULL, *newBuffer = NULL;
 		if(filesToPatch[i].type == PATCH_DOL_PRS || filesToPatch[i].type == PATCH_OTHER_PRS) {
@@ -627,31 +622,23 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			
 			// If the old directory exists, lets move it to the new location (swiss_patches is now just patches under /swiss/)
 			ensure_path(DEVICE_PATCHES, "swiss/patches", "swiss_patches");	// TODO kill this off in our next major release.
-			ensure_path(DEVICE_PATCHES, patchDirName, NULL);
+			ensure_path(DEVICE_PATCHES, "swiss/patches/game", NULL);
 			
 			// File handle for a patch we might need to write
 			filesToPatch[i].patchFile = calloc(1, sizeof(file_handle));
-			concatf_path(filesToPatch[i].patchFile->name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/%.4s/%i", gameID, num_patched);
+			concatf_path(filesToPatch[i].patchFile->name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/game/%08X.bin", crc);
 
 			// Make patch trailer
-			u32 patchInfo[4];
-			patchInfo[0] = filesToPatch[i].offset;
-			patchInfo[1] = filesToPatch[i].size;
-			patchInfo[2] = SWISS_MAGIC;
-			patchInfo[3] = crc32(0, buffer, sizeToRead);
+			u32 old_crc, new_crc = crc32(0, buffer, sizeToRead);
 
 			// See if this file already exists, if it does, match crc
 			if(!devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, NULL, 0)) {
-				//print_gecko("Old Patch exists\r\n");
-				u32 oldPatchInfo[4];
-				memset(oldPatchInfo, 0, 16);
-				devices[DEVICE_PATCHES]->seekFile(filesToPatch[i].patchFile, -16, DEVICE_HANDLER_SEEK_END);
-				devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, oldPatchInfo, 16);
-				if(!memcmp(oldPatchInfo, patchInfo, 16)) {
-					num_patched++;
-					devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile);
-					free(buffer);
+				if(devices[DEVICE_PATCHES]->seekFile(filesToPatch[i].patchFile, -sizeof(old_crc), DEVICE_HANDLER_SEEK_END) == sizeToRead &&
+					devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, &old_crc, sizeof(old_crc)) == sizeof(old_crc) &&
+					old_crc == new_crc) {
 					print_gecko("CRC matched, no need to patch again\r\n");
+					num_patched++;
+					free(buffer);
 					DrawDispose(progBox);
 					continue;
 				}
@@ -663,13 +650,17 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			// Otherwise, write a file out for this game with the patched buffer inside.
 			print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", filesToPatch[i].patchFile->name, filesToPatch[i].size, filesToPatch[i].offset);
 			devices[DEVICE_PATCHES]->seekFile(filesToPatch[i].patchFile, 0, DEVICE_HANDLER_SEEK_SET);
-			devices[DEVICE_PATCHES]->writeFile(filesToPatch[i].patchFile, buffer, sizeToRead);
-			devices[DEVICE_PATCHES]->writeFile(filesToPatch[i].patchFile, patchInfo, 16);
-			devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile);
-			num_patched++;
+			if(devices[DEVICE_PATCHES]->writeFile(filesToPatch[i].patchFile, buffer, sizeToRead) == sizeToRead &&
+				devices[DEVICE_PATCHES]->writeFile(filesToPatch[i].patchFile, &new_crc, sizeof(new_crc)) == sizeof(new_crc) &&
+				!devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile)) {
+				num_patched++;
+			}
+			else {
+				devices[DEVICE_PATCHES]->deleteFile(filesToPatch[i].patchFile);
+			}
 		}
-		DrawDispose(progBox);
 		free(buffer);
+		DrawDispose(progBox);
 	}
 
 	return num_patched;

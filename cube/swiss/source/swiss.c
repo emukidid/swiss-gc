@@ -1866,15 +1866,25 @@ void load_game() {
 	if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, filesToPatch, numToPatch)) {
 		msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
 		wait_press_A();
-		free(filesToPatch);
 		DrawDispose(msgBox);
-		config_unload_current();
-		return;
+		goto fail;
 	}
 
 	load_app(filesToPatch, numToPatch);
-	free(filesToPatch);
+fail:
 	config_unload_current();
+
+	if(devices[DEVICE_PATCHES] != NULL) {
+		for(int i = 0; i < numToPatch; i++) {
+			devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile);
+			free(filesToPatch[i].patchFile);
+		}
+		if(devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
+			devices[DEVICE_PATCHES]->deinit(devices[DEVICE_PATCHES]->initial);
+		}
+		devices[DEVICE_PATCHES] = NULL;
+	}
+	free(filesToPatch);
 }
 
 /* Execute/Load/Parse the currently selected file */
@@ -1931,10 +1941,6 @@ void load_file()
 		if(endsWith(fileName,".iso") || endsWith(fileName,".gcm") || endsWith(fileName,".tgc")) {
 			if(devices[DEVICE_CUR]->features & FEAT_BOOT_GCM) {
 				load_game();
-				if(devices[DEVICE_PATCHES] && devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
-					devices[DEVICE_PATCHES]->deinit(devices[DEVICE_PATCHES]->initial);
-				}
-				devices[DEVICE_PATCHES] = NULL;
 				memset(&GCMDisk, 0, sizeof(DiskHeader));
 			}
 			else {
