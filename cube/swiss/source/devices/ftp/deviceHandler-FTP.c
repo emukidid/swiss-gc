@@ -179,8 +179,8 @@ s32 deviceHandler_FTP_readFile(file_handle* file, void* buffer, u32 length){
 	}
 	
 	fseek(file->fp, file->offset, SEEK_SET);
-	int bytes_read = fread(buffer, 1, length, file->fp);
-	if(bytes_read > 0) file->offset += bytes_read;
+	size_t bytes_read = fread(buffer, 1, length, file->fp);
+	file->offset = ftell(file->fp);
 	return bytes_read;
 }
 
@@ -191,8 +191,8 @@ s32 deviceHandler_FTP_writeFile(file_handle* file, void* buffer, u32 length){
 	if(!file->fp) return -1;
 	
 	fseek(file->fp, file->offset, SEEK_SET);
-	int bytes_written = fwrite(buffer, 1, length, file->fp);
-	if(bytes_written > 0) file->offset += bytes_written;
+	size_t bytes_written = fwrite(buffer, 1, length, file->fp);
+	file->offset = ftell(file->fp);
 	return bytes_written;
 }
 

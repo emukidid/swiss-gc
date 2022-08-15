@@ -105,8 +105,8 @@ s32 deviceHandler_FSP_readFile(file_handle* file, void* buffer, u32 length) {
 	}
 	
 	fsp_fseek(file->fp, file->offset, SEEK_SET);
-	s32 bytes_read = fsp_fread(buffer, 1, length, file->fp);
-	if(bytes_read > 0) file->offset += bytes_read;
+	size_t bytes_read = fsp_fread(buffer, 1, length, file->fp);
+	file->offset = fsp_ftell(file->fp);
 	return bytes_read;
 }
 
@@ -117,8 +117,8 @@ s32 deviceHandler_FSP_writeFile(file_handle* file, void* buffer, u32 length) {
 	if(!file->fp) return -1;
 	
 	fsp_fseek(file->fp, file->offset, SEEK_SET);
-	s32 bytes_written = fsp_fwrite(buffer, 1, length, file->fp);
-	if(bytes_written > 0) file->offset += bytes_written;
+	size_t bytes_written = fsp_fwrite(buffer, 1, length, file->fp);
+	file->offset = fsp_ftell(file->fp);
 	return bytes_written;
 }
 

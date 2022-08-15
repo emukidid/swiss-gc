@@ -156,7 +156,7 @@ s64 deviceHandler_FAT_seekFile(file_handle* file, s64 where, u32 type){
 }
 
 s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
-  	if(!file->ffsFp) {
+	if(!file->ffsFp) {
 		file->ffsFp = malloc(sizeof(FIL));
 		if(f_open(file->ffsFp, file->name, FA_READ ) != FR_OK) {
 			free(file->ffsFp);
@@ -164,20 +164,15 @@ s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
 			return -1;
 		}
 	}
-	if(file->size <= 0) {
-		file->size = f_size(file->ffsFp);
-	}
-	
 	f_lseek(file->ffsFp, file->offset);
-	if(length > 0) {
-		UINT bytes_read = 0;
-		if(f_read(file->ffsFp, buffer, length, &bytes_read) != FR_OK || bytes_read != length) {
-			return -1;
-		}
-		file->offset += bytes_read;
-		return bytes_read;
+	
+	UINT bytes_read;
+	if(f_read(file->ffsFp, buffer, length, &bytes_read) != FR_OK || bytes_read != length) {
+		return -1;
 	}
-	return 0;
+	file->offset = f_tell(file->ffsFp);
+	file->size = f_size(file->ffsFp);
+	return bytes_read;
 }
 
 s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length) {
@@ -188,14 +183,16 @@ s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length) {
 			file->ffsFp = NULL;
 			return -1;
 		}
+		f_expand(file->ffsFp, file->offset + length, 1);
 	}
 	f_lseek(file->ffsFp, file->offset);
-		
-	UINT bytes_written = 0;
+	
+	UINT bytes_written;
 	if(f_write(file->ffsFp, buffer, length, &bytes_written) != FR_OK || bytes_written != length) {
 		return -1;
 	}
-	file->offset += bytes_written;
+	file->offset = f_tell(file->ffsFp);
+	file->size = f_size(file->ffsFp);
 	return bytes_written;
 }
 
