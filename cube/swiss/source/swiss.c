@@ -917,7 +917,10 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	}
 	else {
 		// Prompt for DOL selection if multi-dol
-		ExecutableFile* altDol = select_alt_dol(filesToPatch, numToPatch);
+		ExecutableFile* altDol = NULL;
+		if(devices[DEVICE_PATCHES] == NULL) {
+			altDol = select_alt_dol(filesToPatch, numToPatch);
+		}
 		if(altDol != NULL) {
 			print_gecko("Alt DOL selected :%08X\r\n", altDol->offset);
 			// For a DOL from a TGC, redirect the FST to the TGC FST.
@@ -974,8 +977,8 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 			if(!buffer) {
 				return 0;
 			}
-			devices[DEVICE_CUR]->seekFile(&curFile,altDol->offset,DEVICE_HANDLER_SEEK_SET);
-			if(devices[DEVICE_CUR]->readFile(&curFile,buffer,sizeToRead) != sizeToRead) {
+			devices[DEVICE_CUR]->seekFile(altDol->file,altDol->offset,DEVICE_HANDLER_SEEK_SET);
+			if(devices[DEVICE_CUR]->readFile(altDol->file,buffer,sizeToRead) != sizeToRead) {
 				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
 				while(1);
 			}
@@ -1846,9 +1849,7 @@ void load_game() {
 	memset(filesToPatch, 0, sizeof(ExecutableFile)*512);
 
 	// Report to the user the patch status of this GCM/ISO file
-	if(devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
-		numToPatch = check_game(&curFile, disc2File, filesToPatch);
-	}
+	numToPatch = check_game(&curFile, disc2File, filesToPatch);
 	
 	*(vu8*)VAR_CURRENT_DISC = FRAGS_DISC_1;
 	*(vu8*)VAR_SECOND_DISC = disc2File ? 1:0;
@@ -1995,7 +1996,10 @@ int check_game(file_handle *file, file_handle *file2, ExecutableFile *filesToPat
 		}
 	}
 	DrawDispose(msgBox);
-	patch_gcm(filesToPatch, numToPatch);
+	
+	if(devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
+		patch_gcm(filesToPatch, numToPatch);
+	}
 	return numToPatch;
 }
 
