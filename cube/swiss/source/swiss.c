@@ -443,7 +443,8 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			return filePanel;
 		}
 		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B) {
-			curMenuLocation=ON_OPTIONS;
+			curMenuLocation = ON_OPTIONS;
+			DrawUpdateFileBrowserButton((*directory)[curSelection].uiObj, (curMenuLocation == ON_FILLIST) ? B_SELECTED:B_NOSELECT);
 			return filePanel;
 		}
 		if(PAD_StickY(0) <= -16 || PAD_StickY(0) >= 16) {
@@ -646,8 +647,9 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			}
 		}
 		
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B)	{
-			curMenuLocation=ON_OPTIONS;
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B) {
+			curMenuLocation = ON_OPTIONS;
+			DrawUpdateFileBrowserButton((*directory)[curSelection].uiObj, (curMenuLocation == ON_FILLIST) ? B_SELECTED:B_NOSELECT);
 			return filePanel;
 		}
 		if((swissSettings.recentListLevel != 2) && (PAD_ButtonsHeld(0) & PAD_BUTTON_START)) {
@@ -2295,6 +2297,7 @@ void menu_loop()
 		needsDeviceChange = 0;
 		needsRefresh = 1;
 		curMenuLocation = ON_FILLIST;
+		DrawUpdateMenuButtons((curMenuLocation == ON_OPTIONS) ? curMenuSelection : MENU_NOSELECT);
 		select_device(DEVICE_CUR);
 		if(devices[DEVICE_CUR] != NULL) {
 			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
@@ -2316,15 +2319,15 @@ void menu_loop()
 
 	uiDrawObj_t *filePanel = NULL;
 	while(1) {
-		DrawUpdateMenuButtons((curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
+		DrawUpdateMenuButtons((curMenuLocation == ON_OPTIONS) ? curMenuSelection : MENU_NOSELECT);
 		if(devices[DEVICE_CUR] != NULL && needsRefresh) {
 			curMenuLocation=ON_OPTIONS;
 			curSelection=0; curMenuSelection=0;
 			scanFiles();
 			if(getCurrentDirEntryCount()<1) { devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial); needsDeviceChange=1; break;}
 			needsRefresh = 0;
-			curMenuLocation=ON_FILLIST;
-			DrawUpdateMenuButtons((curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
+			curMenuLocation = ON_FILLIST;
+			DrawUpdateMenuButtons((curMenuLocation == ON_OPTIONS) ? curMenuSelection : MENU_NOSELECT);
 		}
 		if(devices[DEVICE_CUR] != NULL && curMenuLocation==ON_FILLIST) {
 			file_handle* curDirFiles = getCurrentDirEntries();
@@ -2350,16 +2353,16 @@ void menu_loop()
 			if(btns & PAD_BUTTON_A) {
 				//handle menu event
 				switch(curMenuSelection) {
-					case 0:		// Device change
+					case MENU_DEVICE:
 						needsDeviceChange = 1;  //Change from SD->DVD or vice versa
 						break;
-					case 1:		// Settings
+					case MENU_SETTINGS:
 						show_settings(NULL, NULL);
 						break;
-					case 2:		// Credits
+					case MENU_INFO:
 						show_info();
 						break;
-					case 3:
+					case MENU_REFRESH:
 						if(devices[DEVICE_CUR] != NULL) {
 							memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 							if(devices[DEVICE_CUR] == &__device_wkf) { 
@@ -2368,7 +2371,7 @@ void menu_loop()
 						}
 						needsRefresh=1;
 						break;
-					case 4:
+					case MENU_EXIT:
 						DrawShutdown();
 						SYS_ResetSystem(SYS_HOTRESET, 0, TRUE);
 						__builtin_unreachable();
@@ -2392,5 +2395,4 @@ void menu_loop()
 	if(filePanel != NULL) {
 		DrawDispose(filePanel);
 	}
-	DrawUpdateMenuButtons((curMenuLocation==ON_OPTIONS)?curMenuSelection:-1);
 }

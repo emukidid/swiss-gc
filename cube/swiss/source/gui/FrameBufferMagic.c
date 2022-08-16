@@ -1437,10 +1437,17 @@ void DrawUpdateProgressBarDetail(uiDrawObj_t *evt, int percent, int speed, int t
 	LWP_MutexUnlock(_videomutex);
 }
 
-void DrawUpdateMenuButtons(u32 selection) {
+void DrawUpdateMenuButtons(int selection) {
 	LWP_MutexLock(_videomutex);
 	drawMenuButtonsEvent_t *data = (drawMenuButtonsEvent_t*)buttonPanel->data;
 	data->selection = selection;
+	LWP_MutexUnlock(_videomutex);
+}
+
+void DrawUpdateFileBrowserButton(uiDrawObj_t *evt, int mode) {
+	LWP_MutexLock(_videomutex);
+	drawFileBrowserButtonEvent_t *data = (drawFileBrowserButtonEvent_t*)evt->data;
+	data->mode = mode;
 	LWP_MutexUnlock(_videomutex);
 }
 
@@ -2098,7 +2105,7 @@ void DrawInit() {
 	uiDrawObj_t *container = DrawContainer();
 	DrawAddChild(container, DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 	DrawAddChild(container, DrawTitleBar());
-	buttonPanel = DrawMenuButtons(-1);
+	buttonPanel = DrawMenuButtons(MENU_NOSELECT);
 	DrawAddChild(container, buttonPanel);
 	DrawPublish(container);
 	LWP_MutexInit(&_videomutex, 0);
