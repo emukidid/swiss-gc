@@ -1167,7 +1167,7 @@ void boot_dol()
 	// we found something, use parameters (.cli)
 	if(cliArgFile) {
 		print_gecko("Argument file found [%s]\r\n", cliArgFile->name);
-		char *cli_buffer = memalign(32, cliArgFile->size);
+		char *cli_buffer = calloc(1, cliArgFile->size + 1);
 		if(cli_buffer) {
 			devices[DEVICE_CUR]->seekFile(cliArgFile, 0, DEVICE_HANDLER_SEEK_SET);
 			devices[DEVICE_CUR]->readFile(cliArgFile, cli_buffer, cliArgFile->size);
@@ -1211,7 +1211,7 @@ void boot_dol()
 	// we found something, parse and display parameters for selection (.dcp)
 	if(dcpArgFile) {
 		print_gecko("Argument file found [%s]\r\n", dcpArgFile->name);
-		char *dcp_buffer = memalign(32, dcpArgFile->size);
+		char *dcp_buffer = calloc(1, dcpArgFile->size + 1);
 		if(dcp_buffer) {
 			devices[DEVICE_CUR]->seekFile(dcpArgFile, 0, DEVICE_HANDLER_SEEK_SET);
 			devices[DEVICE_CUR]->readFile(dcpArgFile, dcp_buffer, dcpArgFile->size);

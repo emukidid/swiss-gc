@@ -231,8 +231,7 @@ int findCheats(bool silent) {
 	char trimmedGameId[8], testBuffer[8];
 	memset(trimmedGameId, 0, 8);
 	memcpy(trimmedGameId, (char*)&GCMDisk, 6);
-	file_handle *cheatsFile = memalign(32,sizeof(file_handle));
-	memset(cheatsFile, 0, sizeof(file_handle));
+	file_handle *cheatsFile = calloc(1, sizeof(file_handle));
 	concatf_path(cheatsFile->name, devices[DEVICE_CUR]->initial->name, "swiss/cheats/%.6s.txt", trimmedGameId);
 	print_gecko("Looking for cheats file @ [%s]\r\n", cheatsFile->name);
 
@@ -290,7 +289,7 @@ int findCheats(bool silent) {
 		deviceHandler_setStatEnabled(1);
 	}
 	// Still fail?
-	if(devices[DEVICE_TEMP] == NULL || devices[DEVICE_TEMP]->readFile(cheatsFile, &testBuffer, 8) != 8) {
+	if(devices[DEVICE_TEMP] == NULL || cheatsFile->size == 0) {
 		if(!silent) {
 			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
 			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"No cheats file found.\nPress A to continue.");
@@ -303,7 +302,7 @@ int findCheats(bool silent) {
 		return 0;
 	}
 	print_gecko("Cheats file found with size %i\r\n", cheatsFile->size);
-	char *cheats_buffer = memalign(32, cheatsFile->size);
+	char *cheats_buffer = calloc(1, cheatsFile->size + 1);
 	if(cheats_buffer) {
 		devices[DEVICE_TEMP]->seekFile(cheatsFile, 0, DEVICE_HANDLER_SEEK_SET);
 		devices[DEVICE_TEMP]->readFile(cheatsFile, cheats_buffer, cheatsFile->size);
