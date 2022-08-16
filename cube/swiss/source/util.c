@@ -9,7 +9,7 @@
 
 
 /* File name helper functions */
-char *knownExtensions[] = {".dol", ".iso", ".gcm", ".mp3", ".fzn", ".dol+cli", ".elf", ".tgc"};
+char *knownExtensions[] = {".dol", ".dol+cli", ".elf", ".fzn", ".gcm", ".gcz", ".iso", ".mp3", ".rvz", ".tgc"};
 
 int endsWith(char *str, char *end) {
 	size_t len_str = strlen(str);

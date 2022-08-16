@@ -1904,11 +1904,7 @@ void load_file()
 			DrawDispose(msgBox);
 			return;
 		}
-		if(endsWith(fileName,".mp3")) {
-			mp3_player(getCurrentDirEntries(), getCurrentDirEntryCount(), &curFile);
-			return;
-		}
-		if(endsWith(fileName,".fzn")) {
+		else if(endsWith(fileName,".fzn")) {
 			if(curFile.size != 0x1D0000) {
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "File Size must be 0x1D0000 bytes!"));
 				sleep(2);
@@ -1940,7 +1936,7 @@ void load_file()
 			DrawDispose(msgBox);
 			return;
 		}
-		if(endsWith(fileName,".iso") || endsWith(fileName,".gcm") || endsWith(fileName,".tgc")) {
+		else if(endsWith(fileName,".gcm") || endsWith(fileName,".iso") || endsWith(fileName,".tgc")) {
 			if(devices[DEVICE_CUR]->features & FEAT_BOOT_GCM) {
 				load_game();
 				memset(&GCMDisk, 0, sizeof(DiskHeader));
@@ -1956,6 +1952,16 @@ void load_file()
 				sleep(5);
 				DrawDispose(msgBox);
 			}
+			return;
+		}
+		else if(endsWith(fileName,".gcz") || endsWith(fileName,".rvz")) {
+			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Compressed disc images must be\ndecompressed using NKit or Dolphin."));
+			sleep(5);
+			DrawDispose(msgBox);
+			return;
+		}
+		else if(endsWith(fileName,".mp3")) {
+			mp3_player(getCurrentDirEntries(), getCurrentDirEntryCount(), &curFile);
 			return;
 		}
 		// This should be unreachable now anyway.
