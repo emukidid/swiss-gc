@@ -50,12 +50,9 @@ static s32 setupFile(file_handle* file, file_handle* file2, ExecutableFile* file
 		else
 			GCMDisk.RegionCode = getFontEncode() ? 0:1;
 		
-		if(devices[DEVICE_CUR]->writeFile(&bootFile, &GCMDisk, sizeof(DiskHeader)) == sizeof(DiskHeader)) {
-			if(!getFragments(DEVICE_CUR, &bootFile, &disc1FragList, &disc1Frags, 0, 0, sizeof(DiskHeader))) {
-				devices[DEVICE_CUR]->closeFile(&bootFile);
-				free(disc1FragList);
-				return 0;
-			}
+		if(devices[DEVICE_CUR]->writeFile(&bootFile, &GCMDisk, sizeof(DiskHeader)) == sizeof(DiskHeader) &&
+			!devices[DEVICE_CUR]->closeFile(&bootFile)) {
+			getFragments(DEVICE_CUR, &bootFile, &disc1FragList, &disc1Frags, 0, 0, sizeof(DiskHeader));
 			devices[DEVICE_CUR]->closeFile(&bootFile);
 		}
 	}
