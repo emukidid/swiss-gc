@@ -309,6 +309,18 @@ void populate_meta(file_handle *f) {
 			if (devices[DEVICE_CUR]->readFile(bannerFile, NULL, 0) == 0 && bannerFile->size) {
 				populate_game_meta(bannerFile, 0, bannerFile->size);
 				devices[DEVICE_CUR]->closeFile(bannerFile);
+				
+				file_handle *bootFile = calloc(1, sizeof(file_handle));
+				concat_path(bootFile->name, f->name, "default.dol");
+				bootFile->meta = f->meta;
+				
+				if (devices[DEVICE_CUR]->readFile(bootFile, NULL, 0) == 0 && bootFile->size) {
+					devices[DEVICE_CUR]->closeFile(bootFile);
+					
+					f = memcpy(f, bootFile, sizeof(file_handle));
+					f->meta->fileTypeTexObj = &dolimgTexObj;
+				}
+				free(bootFile);
 			}
 			free(bannerFile);
 		}
