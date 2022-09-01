@@ -1,7 +1,9 @@
 #ifndef _FSPLIB_H_LOCK
 #define _FSPLIB_H_LOCK 1
+#include <ogc/mutex.h>
 
 typedef struct FSP_LOCK {
+               mutex_t lock_mutex;
                unsigned short share_key;
 } FSP_LOCK;
 
