@@ -813,7 +813,7 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch, int num_files) {
 	
 }
 
-unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
+void load_app(ExecutableFile *fileToPatch)
 {
 	uiDrawObj_t* progBox = NULL;
 	char* gameID = (char*)0x80000000;
@@ -844,31 +844,57 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	// Copy the game header to 0x80000000
 	memcpy(gameID,(char*)&GCMDisk,0x20);
 	
-	if(tgcFile.magic == TGC_MAGIC) {
-		// Read FST to top of Main Memory (round to 32 byte boundary)
-		u32 fstAddr = (topAddr-tgcFile.fstMaxLength)&~31;
-		devices[DEVICE_CUR]->seekFile(&curFile,tgcFile.fstStart,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,tgcFile.fstLength) != tgcFile.fstLength) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
-			while(1);
+	if(fileToPatch != NULL) {
+		// For a DOL from a TGC, redirect the FST to the TGC FST.
+		if(fileToPatch->tgcFstOffset != 0) {
+			// Read FST to top of Main Memory (round to 32 byte boundary)
+			u32 fstAddr = (topAddr-fileToPatch->tgcFstSize)&~31;
+			devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->tgcFstOffset,DEVICE_HANDLER_SEEK_SET);
+			if(devices[DEVICE_CUR]->readFile(fileToPatch->file,(void*)fstAddr,fileToPatch->tgcFstSize) != fileToPatch->tgcFstSize) {
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
+				while(1);
+			}
+			adjust_tgc_fst((void*)fstAddr, fileToPatch->tgcBase, fileToPatch->tgcFileStartArea, fileToPatch->tgcFakeOffset);
+			
+			// Copy bi2.bin (Disk Header Information) to just under the FST
+			u32 bi2Addr = (fstAddr-0x2000)&~31;
+			memcpy((void*)bi2Addr,(void*)&GCMDisk+0x440,0x2000);
+			
+			// Patch bi2.bin
+			Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
+			
+			*(volatile u32*)0x80000020 = 0x0D15EA5E;
+			*(volatile u32*)0x80000024 = 1;
+			*(volatile u32*)0x80000034 = fstAddr;								// Arena Hi
+			*(volatile u32*)0x80000038 = fstAddr;								// FST Location in ram
+			*(volatile u32*)0x8000003C = fileToPatch->tgcFstSize;				// FST Max Length
+			*(volatile u32*)0x800000F4 = bi2Addr;								// bi2.bin location
+			*(volatile u32*)0x800030F4 = fileToPatch->tgcBase;
 		}
-		adjust_tgc_fst((void*)fstAddr, curFile.fileBase, tgcFile.userStart, tgcFile.gcmUserStart);
+		else {
+			// Read FST to top of Main Memory (round to 32 byte boundary)
+			u32 fstAddr = (topAddr-GCMDisk.MaxFSTSize)&~31;
+			devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
+			if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,GCMDisk.FSTSize) != GCMDisk.FSTSize) {
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
+				while(1);
+			}
+			
+			// Copy bi2.bin (Disk Header Information) to just under the FST
+			u32 bi2Addr = (fstAddr-0x2000)&~31;
+			memcpy((void*)bi2Addr,(void*)&GCMDisk+0x440,0x2000);
+			
+			// Patch bi2.bin
+			Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
+			
+			*(volatile u32*)0x80000020 = 0x0D15EA5E;
+			*(volatile u32*)0x80000024 = 1;
+			*(volatile u32*)0x80000034 = fstAddr;								// Arena Hi
+			*(volatile u32*)0x80000038 = fstAddr;								// FST Location in ram
+			*(volatile u32*)0x8000003C = GCMDisk.MaxFSTSize;					// FST Max Length
+			*(volatile u32*)0x800000F4 = bi2Addr;								// bi2.bin location
+		}
 		
-		// Copy bi2.bin (Disk Header Information) to just under the FST
-		u32 bi2Addr = (fstAddr-0x2000)&~31;
-		memcpy((void*)bi2Addr,(void*)&GCMDisk+0x440,0x2000);
-		
-		// Patch bi2.bin
-		Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
-
-		*(volatile u32*)0x80000020 = 0x0D15EA5E;
-		*(volatile u32*)0x80000024 = 1;
-		*(volatile u32*)0x80000034 = fstAddr;								// Arena Hi
-		*(volatile u32*)0x80000038 = fstAddr;								// FST Location in ram
-		*(volatile u32*)0x8000003C = tgcFile.fstMaxLength;					// FST Max Length
-		*(volatile u32*)0x800000F4 = bi2Addr;								// bi2.bin location
-		*(volatile u32*)0x800030F4 = curFile.fileBase;
-
 		if(devices[DEVICE_PATCHES] && devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
 			sprintf(txtbuffer, "Loading DOL\nDo not remove %s", devices[DEVICE_PATCHES]->deviceName);
 			progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
@@ -876,25 +902,32 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		else {
 			progBox = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
 		}
-
-		print_gecko("DOL Lives at %08X\r\n", tgcFile.dolStart);
-		sizeToRead = tgcFile.dolLength;
-		type = PATCH_DOL;
+		
+		print_gecko("DOL Lives at %08X\r\n", fileToPatch->offset);
+		sizeToRead = fileToPatch->size;
+		type = fileToPatch->type;
 		print_gecko("DOL size %i\r\n", sizeToRead);
 		
-		// Read the entire Main DOL
-		buffer = memalign(32,sizeToRead);
+		buffer = memalign(32, sizeToRead);
 		print_gecko("DOL buffer %08X\r\n", (u32)buffer);
-		if(!buffer) {
-			return 0;
+		if(buffer == NULL) return;
+		
+		if(fileToPatch->patchFile != NULL) {
+			devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile,0,DEVICE_HANDLER_SEEK_SET);
+			if(devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile,buffer,sizeToRead) != sizeToRead) {
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
+				while(1);
+			}
 		}
-		devices[DEVICE_CUR]->seekFile(&curFile,tgcFile.dolStart,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,buffer,sizeToRead) != sizeToRead) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
-			while(1);
+		else {
+			devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->offset,DEVICE_HANDLER_SEEK_SET);
+			if(devices[DEVICE_CUR]->readFile(fileToPatch->file,buffer,sizeToRead) != sizeToRead) {
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
+				while(1);
+			}
 		}
 	}
-	else if(swissSettings.bs2Boot || GCMDisk.DOLOffset == 0) {
+	else {
 		if(devices[DEVICE_PATCHES] && devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
 			sprintf(txtbuffer, "Loading BS2\nDo not remove %s", devices[DEVICE_PATCHES]->deviceName);
 			progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
@@ -902,7 +935,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 			if(!load_rom_ipl(devices[DEVICE_PATCHES], &buffer, &sizeToRead) &&
 				!load_rom_ipl(devices[DEVICE_CUR], &buffer, &sizeToRead) &&
 				!load_rom_ipl(&__device_sys, &buffer, &sizeToRead)) {
-				return 0;
+				return;
 			}
 		}
 		else {
@@ -910,146 +943,51 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 
 			if(!load_rom_ipl(devices[DEVICE_CUR], &buffer, &sizeToRead) &&
 				!load_rom_ipl(&__device_sys, &buffer, &sizeToRead)) {
-				return 0;
+				return;
 			}
 		}
 		type = PATCH_BS2;
 	}
-	else {
-		// Prompt for DOL selection if multi-dol
-		ExecutableFile* altDol = NULL;
-		if(devices[DEVICE_PATCHES] == NULL) {
-			altDol = select_alt_dol(filesToPatch, numToPatch);
-		}
-		if(altDol != NULL) {
-			print_gecko("Alt DOL selected :%08X\r\n", altDol->offset);
-			// For a DOL from a TGC, redirect the FST to the TGC FST.
-			if(altDol->tgcBase != 0) {
-				GCMDisk.FSTOffset = altDol->tgcFstOffset;
-				GCMDisk.FSTSize = altDol->tgcFstSize;
-				GCMDisk.MaxFSTSize = altDol->tgcFstSize;
-				*(vu32*)0x800030F4 = altDol->tgcBase;
-			}
-		}
-
-		// Read FST to top of Main Memory (round to 32 byte boundary)
-		u32 fstAddr = (topAddr-GCMDisk.MaxFSTSize)&~31;
-		devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,GCMDisk.FSTSize) != GCMDisk.FSTSize) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
-			while(1);
-		}
-		if(altDol != NULL && altDol->tgcBase != 0) {
-			adjust_tgc_fst((void*)fstAddr, altDol->tgcBase, altDol->tgcFileStartArea, altDol->tgcFakeOffset);
-		}
-		
-		// Copy bi2.bin (Disk Header Information) to just under the FST
-		u32 bi2Addr = (fstAddr-0x2000)&~31;
-		memcpy((void*)bi2Addr,(void*)&GCMDisk+0x440,0x2000);
-		
-		// Patch bi2.bin
-		Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
-
-		*(volatile u32*)0x80000020 = 0x0D15EA5E;
-		*(volatile u32*)0x80000024 = 1;
-		*(volatile u32*)0x80000034 = fstAddr;								// Arena Hi
-		*(volatile u32*)0x80000038 = fstAddr;								// FST Location in ram
-		*(volatile u32*)0x8000003C = GCMDisk.MaxFSTSize;					// FST Max Length
-		*(volatile u32*)0x800000F4 = bi2Addr;								// bi2.bin location
-
-		if(devices[DEVICE_PATCHES] && devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
-			sprintf(txtbuffer, "Loading DOL\nDo not remove %s", devices[DEVICE_PATCHES]->deviceName);
-			progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
-		}
-		else {
-			progBox = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
-		}
-
-		if(altDol != NULL) {
-			print_gecko("DOL Lives at %08X\r\n", altDol->offset);
-			sizeToRead = altDol->size;
-			type = altDol->type;
-			print_gecko("DOL size %i\r\n", sizeToRead);
-			
-			// Read the entire Alt DOL
-			buffer = memalign(32,sizeToRead);
-			print_gecko("DOL buffer %08X\r\n", (u32)buffer);
-			if(!buffer) {
-				return 0;
-			}
-			devices[DEVICE_CUR]->seekFile(altDol->file,altDol->offset,DEVICE_HANDLER_SEEK_SET);
-			if(devices[DEVICE_CUR]->readFile(altDol->file,buffer,sizeToRead) != sizeToRead) {
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
-				while(1);
-			}
-		}
-		else {
-			print_gecko("DOL Lives at %08X\r\n", GCMDisk.DOLOffset);
-			
-			// Read the Main DOL header
-			DOLHEADER dolhdr;
-			devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
-			if(devices[DEVICE_CUR]->readFile(&curFile,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL Header"));
-				while(1);
-			}
-			
-			// Figure out the size of the Main DOL so that we can read it all
-			sizeToRead = DOLSize(&dolhdr);
-			type = PATCH_DOL;
-			print_gecko("DOL size %i\r\n", sizeToRead);
-
-			// Read the entire Main DOL
-			buffer = memalign(32,sizeToRead);
-			print_gecko("DOL buffer %08X\r\n", (u32)buffer);
-			if(!buffer) {
-				return 0;
-			}
-			devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.DOLOffset,DEVICE_HANDLER_SEEK_SET);
-			if(devices[DEVICE_CUR]->readFile(&curFile,buffer,sizeToRead) != sizeToRead) {
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
-				while(1);
-			}
-		}
-	}
-
+	
 	setTopAddr((u32)VAR_PATCHES_BASE);
-
-	// Patch hypervisor
-	if(devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
-		Patch_Hypervisor(buffer, sizeToRead, type);
-		Patch_GameSpecificHypervisor(buffer, sizeToRead, gameID, type);
-	}
 	
-	// Patch specific game hacks
-	Patch_GameSpecific(buffer, sizeToRead, gameID, type);
-	
-	// Patch CARD, PAD
-	Patch_Miscellaneous(buffer, sizeToRead, type);
-	
-	// Force Video Mode
-	if(swissSettings.disableVideoPatches < 2) {
-		if(swissSettings.disableVideoPatches < 1) {
-			Patch_GameSpecificVideo(buffer, sizeToRead, gameID, type);
+	if(fileToPatch == NULL || fileToPatch->patchFile == NULL) {
+		// Patch hypervisor
+		if(devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
+			Patch_Hypervisor(buffer, sizeToRead, type);
+			Patch_GameSpecificHypervisor(buffer, sizeToRead, gameID, type);
 		}
-		Patch_VideoMode(buffer, sizeToRead, type);
+		
+		// Patch specific game hacks
+		Patch_GameSpecific(buffer, sizeToRead, gameID, type);
+		
+		// Patch CARD, PAD
+		Patch_Miscellaneous(buffer, sizeToRead, type);
+		
+		// Force Video Mode
+		if(swissSettings.disableVideoPatches < 2) {
+			if(swissSettings.disableVideoPatches < 1) {
+				Patch_GameSpecificVideo(buffer, sizeToRead, gameID, type);
+			}
+			Patch_VideoMode(buffer, sizeToRead, type);
+		}
+		// Force Widescreen
+		if(swissSettings.forceWidescreen) {
+			Patch_Widescreen(buffer, sizeToRead, type);
+		}
+		// Force Anisotropy
+		if(swissSettings.forceAnisotropy) {
+			Patch_TexFilt(buffer, sizeToRead, type);
+		}
+		// Force Text Encoding
+		Patch_FontEncode(buffer, sizeToRead);
+		
+		// Cheats
+		if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
+			Patch_CheatsHook(buffer, sizeToRead, type);
+		}
 	}
-	// Force Widescreen
-	if(swissSettings.forceWidescreen) {
-		Patch_Widescreen(buffer, sizeToRead, type);
-	}
-	// Force Anisotropy
-	if(swissSettings.forceAnisotropy) {
-		Patch_TexFilt(buffer, sizeToRead, type);
-	}
-	// Force Text Encoding
-	Patch_FontEncode(buffer, sizeToRead);
 	
-	// Cheats
-	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
-		Patch_CheatsHook(buffer, sizeToRead, type);
-	}
-
 	DCFlushRange(buffer, sizeToRead);
 	ICInvalidateRange(buffer, sizeToRead);
 	
@@ -1060,7 +998,7 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 		DrawPublish(msgBox);
 		wait_press_A();
 		DrawDispose(msgBox);
-		return 0;
+		return;
 	}
 	
 	// Don't spin down the drive when running something from it...
@@ -1102,7 +1040,6 @@ unsigned int load_app(ExecutableFile *filesToPatch, int numToPatch)
 	else if(type == PATCH_ELF) {
 		ELFtoARAM(buffer, 0, NULL);
 	}
-	return 0;
 }
 
 void boot_dol()
@@ -1851,8 +1788,33 @@ void load_game() {
 	// Report to the user the patch status of this GCM/ISO file
 	numToPatch = check_game(&curFile, disc2File, filesToPatch);
 	
-	*(vu8*)VAR_CURRENT_DISC = FRAGS_DISC_1;
-	*(vu8*)VAR_SECOND_DISC = disc2File ? 1:0;
+	// Prompt for DOL selection if multi-dol
+	ExecutableFile *fileToPatch = NULL;
+	if(devices[DEVICE_PATCHES] == NULL) {
+		fileToPatch = select_alt_dol(filesToPatch, numToPatch);
+	}
+	if(fileToPatch != NULL) {
+		print_gecko("Alt DOL selected: %s\r\n", fileToPatch->name);
+	}
+	else if(tgcFile.magic == TGC_MAGIC) {
+		for(int i = 0; i < numToPatch; i++) {
+			if(filesToPatch[i].file == &curFile && filesToPatch[i].offset == tgcFile.dolStart) {
+				fileToPatch = &filesToPatch[i];
+				break;
+			}
+		}
+	}
+	else if(!swissSettings.bs2Boot) {
+		for(int i = 0; i < numToPatch; i++) {
+			if(filesToPatch[i].file == &curFile && filesToPatch[i].offset == GCMDisk.DOLOffset) {
+				fileToPatch = &filesToPatch[i];
+				break;
+			}
+		}
+	}
+	
+	*(vu8*)VAR_CURRENT_DISC = fileToPatch && fileToPatch->file == disc2File;
+	*(vu8*)VAR_SECOND_DISC = !!disc2File;
 	*(vu8*)VAR_DRIVE_PATCHED = 0;
 	*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
 	*(vu32**)VAR_EXI_REGS = NULL;
@@ -1873,7 +1835,7 @@ void load_game() {
 		goto fail;
 	}
 
-	load_app(filesToPatch, numToPatch);
+	load_app(fileToPatch);
 fail:
 	config_unload_current();
 
