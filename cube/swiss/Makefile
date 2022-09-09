@@ -81,7 +81,8 @@ SOURCES		:=  source \
 			  source/psoarchive \
               source/images \
 			  source/images/buttons \
-			  source/fatfs
+			  source/fatfs \
+			  source/xxhash
 DATA		:=	data  
 TEXTURES	:=	source/images \
               source/images/buttons

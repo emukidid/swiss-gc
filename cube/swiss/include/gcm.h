@@ -88,6 +88,7 @@ typedef struct {
 	file_handle *patchFile;
 	u32 offset;
 	u32 size;
+	u64 hash;
 	char name[256];
 	u32 type;
 	u32 tgcFstOffset;

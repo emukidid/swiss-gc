@@ -20,7 +20,7 @@
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "psoarchive/PRS.h"
-#include <zlib.h>
+#include "xxhash/xxhash.h"
 
 #define FST_ENTRY_SIZE 12
 
@@ -536,7 +536,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			DrawDispose(msgBox);
 			return 0;
 		}
-		u32 crc = crc32(0, buffer, sizeToRead);
+		filesToPatch[i].hash = XXH3_64bits(buffer, sizeToRead);
 		
 		u8 *oldBuffer = NULL, *newBuffer = NULL;
 		if(filesToPatch[i].type == PATCH_DOL_PRS || filesToPatch[i].type == PATCH_OTHER_PRS) {
@@ -626,17 +626,17 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			
 			// File handle for a patch we might need to write
 			filesToPatch[i].patchFile = calloc(1, sizeof(file_handle));
-			concatf_path(filesToPatch[i].patchFile->name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/game/%08X.bin", crc);
+			concatf_path(filesToPatch[i].patchFile->name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/game/%08X.bin", (u32)filesToPatch[i].hash);
 
 			// Make patch trailer
-			u32 old_crc, new_crc = crc32(0, buffer, sizeToRead);
+			XXH128_hash_t old_hash, new_hash = XXH3_128bits(buffer, sizeToRead);
 
-			// See if this file already exists, if it does, match crc
+			// See if this file already exists, if it does, match hash
 			if(!devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, NULL, 0)) {
-				if(devices[DEVICE_PATCHES]->seekFile(filesToPatch[i].patchFile, -sizeof(old_crc), DEVICE_HANDLER_SEEK_END) == sizeToRead &&
-					devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, &old_crc, sizeof(old_crc)) == sizeof(old_crc) &&
-					old_crc == new_crc) {
-					print_gecko("CRC matched, no need to patch again\r\n");
+				if(devices[DEVICE_PATCHES]->seekFile(filesToPatch[i].patchFile, -sizeof(old_hash), DEVICE_HANDLER_SEEK_END) == sizeToRead &&
+					devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, &old_hash, sizeof(old_hash)) == sizeof(old_hash) &&
+					XXH128_isEqual(old_hash, new_hash)) {
+					print_gecko("Hash matched, no need to patch again\r\n");
 					num_patched++;
 					free(buffer);
 					DrawDispose(progBox);
@@ -644,14 +644,14 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 				}
 				else {
 					devices[DEVICE_PATCHES]->deleteFile(filesToPatch[i].patchFile);
-					print_gecko("CRC mismatch, writing patch again\r\n");
+					print_gecko("Hash mismatch, writing patch again\r\n");
 				}
 			}
 			// Otherwise, write a file out for this game with the patched buffer inside.
 			print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", filesToPatch[i].patchFile->name, filesToPatch[i].size, filesToPatch[i].offset);
 			devices[DEVICE_PATCHES]->seekFile(filesToPatch[i].patchFile, 0, DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_PATCHES]->writeFile(filesToPatch[i].patchFile, buffer, sizeToRead) == sizeToRead &&
-				devices[DEVICE_PATCHES]->writeFile(filesToPatch[i].patchFile, &new_crc, sizeof(new_crc)) == sizeof(new_crc) &&
+				devices[DEVICE_PATCHES]->writeFile(filesToPatch[i].patchFile, &new_hash, sizeof(new_hash)) == sizeof(new_hash) &&
 				!devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile)) {
 				num_patched++;
 			}
