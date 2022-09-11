@@ -34,6 +34,7 @@
 #include "patcher.h"
 #include "dvd.h"
 #include "elf.h"
+#include "gameid.h"
 #include "gcm.h"
 #include "mp3.h"
 #include "nkit.h"
@@ -45,6 +46,7 @@
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
 #include "devices/filemeta.h"
+#include "xxhash/xxhash.h"
 #include "dolparameters.h"
 #include "../../reservedarea.h"
 
@@ -904,7 +906,7 @@ void load_app(ExecutableFile *fileToPatch)
 		}
 		
 		print_gecko("DOL Lives at %08X\r\n", fileToPatch->offset);
-		sizeToRead = fileToPatch->size;
+		sizeToRead = (fileToPatch->size + 31) & ~31;
 		type = fileToPatch->type;
 		print_gecko("DOL size %i\r\n", sizeToRead);
 		
@@ -925,6 +927,8 @@ void load_app(ExecutableFile *fileToPatch)
 				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
 				while(1);
 			}
+			fileToPatch->hash = XXH3_64bits(buffer, sizeToRead);
+			gameID_set(&GCMDisk, fileToPatch->hash);
 		}
 	}
 	else {
@@ -1795,19 +1799,23 @@ void load_game() {
 	}
 	if(fileToPatch != NULL) {
 		print_gecko("Alt DOL selected: %s\r\n", fileToPatch->name);
+		gameID_set(&GCMDisk, fileToPatch->hash);
 	}
 	else if(tgcFile.magic == TGC_MAGIC) {
 		for(int i = 0; i < numToPatch; i++) {
 			if(filesToPatch[i].file == &curFile && filesToPatch[i].offset == tgcFile.dolStart) {
 				fileToPatch = &filesToPatch[i];
+				gameID_set(&GCMDisk, filesToPatch[i].hash);
 				break;
 			}
 		}
 	}
-	else if(!swissSettings.bs2Boot) {
+	else {
 		for(int i = 0; i < numToPatch; i++) {
 			if(filesToPatch[i].file == &curFile && filesToPatch[i].offset == GCMDisk.DOLOffset) {
-				fileToPatch = &filesToPatch[i];
+				if(!swissSettings.bs2Boot)
+					fileToPatch = &filesToPatch[i];
+				gameID_set(&GCMDisk, filesToPatch[i].hash);
 				break;
 			}
 		}
@@ -1837,6 +1845,7 @@ void load_game() {
 
 	load_app(fileToPatch);
 fail:
+	gameID_unset();
 	config_unload_current();
 
 	if(devices[DEVICE_PATCHES] != NULL) {
