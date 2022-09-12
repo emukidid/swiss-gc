@@ -251,6 +251,7 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 		filesToPatch[numFiles].file = file;
 		filesToPatch[numFiles].offset = dolOffset = diskHeader->DOLOffset;
 		filesToPatch[numFiles].size = dolSize = DOLSize(&dolhdr);
+		filesToPatch[numFiles].hash = get_gcm_boot_hash(diskHeader);
 		filesToPatch[numFiles].type = PATCH_DOL;
 		sprintf(filesToPatch[numFiles].name, "default.dol");
 		numFiles++;

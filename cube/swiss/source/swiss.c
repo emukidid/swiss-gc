@@ -1741,10 +1741,13 @@ void load_game() {
 	}
 	
 	if(bootMode == 2) {
+		gameID_set(&GCMDisk, get_gcm_boot_hash(&GCMDisk));
+		
 		if(devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support clean boot."));
 			sleep(2);
 			DrawDispose(msgBox);
+			gameID_unset();
 			config_unload_current();
 			return;
 		}
@@ -1752,6 +1755,7 @@ void load_game() {
 			msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
 			wait_press_A();
 			DrawDispose(msgBox);
+			gameID_unset();
 			config_unload_current();
 			return;
 		}
