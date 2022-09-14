@@ -1078,6 +1078,7 @@ void boot_dol()
 		}
   		ptr+=size;
 	}
+	gameID_set(NULL, XXH3_64bits(dol_buffer, curFile.size));
 	DrawDispose(progBar);
 	
 	if(devices[DEVICE_CONFIG] != NULL) {

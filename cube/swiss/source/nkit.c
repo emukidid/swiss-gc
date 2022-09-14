@@ -2201,6 +2201,14 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header_sum == nkit_dat[i].header_sum &&
 				*size == nkit_dat[i].size + nkit_dat[i]._size) {
+
+				for (int j = i + 1; j < sizeof(nkit_dat) / sizeof(*nkit_dat); j++)
+					if (!memcmp(nkit_dat[i].header, nkit_dat[j].header, 8) &&
+						nkit_dat[i].header_sum == nkit_dat[j].header_sum &&
+						nkit_dat[i].size + nkit_dat[i]._size == nkit_dat[j].size + nkit_dat[j]._size &&
+						nkit_dat[i].banner.offset + nkit_dat[i].banner._offset != nkit_dat[j].banner.offset + nkit_dat[j].banner._offset)
+						return false;
+
 				*offset = nkit_dat[i].banner.offset + nkit_dat[i].banner._offset;
 				*size = nkit_dat[i].banner.size;
 				return true;
