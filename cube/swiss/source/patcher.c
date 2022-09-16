@@ -9,6 +9,7 @@
 #include <string.h>
 #include <math.h>
 #include <malloc.h>
+#include <zlib.h>
 #include "swiss.h"
 #include "main.h"
 #include "patcher.h"
@@ -14048,4 +14049,118 @@ int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
 	return 0;
 }
 
-
+int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int type)
+{
+	int i, j;
+	int patched = 0;
+	void *data = *buffer;
+	u32 length = *sizeToRead;
+	
+	int patch(void *buffer, u32 sizeToRead, const char *gameID, int type)
+	{
+		int patched = 0;
+		
+		// Patch hypervisor
+		if (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
+			patched += Patch_Hypervisor(buffer, sizeToRead, type);
+			patched += Patch_GameSpecificHypervisor(buffer, sizeToRead, gameID, type);
+		}
+		
+		// Patch specific game hacks
+		patched += Patch_GameSpecific(buffer, sizeToRead, gameID, type);
+		
+		// Patch CARD, PAD
+		patched += Patch_Miscellaneous(buffer, sizeToRead, type);
+		
+		// Force Video Mode
+		if (swissSettings.disableVideoPatches < 2) {
+			if (swissSettings.disableVideoPatches < 1)
+				Patch_GameSpecificVideo(buffer, sizeToRead, gameID, type);
+			Patch_VideoMode(buffer, sizeToRead, type);
+		}
+		
+		// Force Widescreen
+		if (swissSettings.forceWidescreen)
+			Patch_Widescreen(buffer, sizeToRead, type);
+		
+		// Force Anisotropy
+		if (swissSettings.forceAnisotropy)
+			Patch_TexFilt(buffer, sizeToRead, type);
+		
+		// Force Text Encoding
+		patched += Patch_FontEncode(buffer, sizeToRead);
+		
+		// Cheats
+		if (swissSettings.wiirdDebug || getEnabledCheatsSize() > 0)
+			Patch_CheatsHook(buffer, sizeToRead, type);
+		
+		return patched;
+	}
+	
+	if ((!strncmp(gameID, "GLRD64", 6) || !strncmp(gameID, "GLRE64", 6) || !strncmp(gameID, "GLRF64", 6) || !strncmp(gameID, "GLRP64", 6) || !strncmp(gameID, "GWXJ13", 6)) && type == PATCH_DOL) {
+		struct {
+			uLongf deflateLength;
+			uLongf inflateLength;
+			Bytef data[];
+		} *zlib = Calc_Address(data, type, 0x80200000);
+		
+		if (zlib == NULL)
+			return patch(data, length, gameID, type);
+		
+		DOLHEADER *dol = realloc(data, length + zlib->inflateLength);
+		
+		if (dol == NULL)
+			return patch(data, length, gameID, type);
+		if (dol != data) {
+			data = dol;
+			zlib = Calc_Address(data, type, 0x80200000);
+		}
+		
+		DOLHEADER *dol2 = data + length;
+		DOLHEADER dolhdr;
+		
+		if (uncompress((Bytef *)dol2, &zlib->inflateLength, zlib->data, zlib->deflateLength) == Z_OK) {
+			memcpy(&dolhdr, dol, DOLHDRLENGTH);
+			
+			for (j = 0; j < MAXTEXTSECTION; j++) {
+				if (dol2->textOffset[j]) {
+					for (i = 0; i < MAXTEXTSECTION; i++) {
+						if (!dol->textOffset[i]) {
+							dol->textOffset[i] = dol2->textOffset[j] + length;
+							dol->textAddress[i] = dol2->textAddress[j];
+							dol->textLength[i] = dol2->textLength[j];
+							break;
+						}
+					}
+				}
+			}
+			
+			for (j = 0; j < MAXDATASECTION; j++) {
+				if (dol2->dataOffset[j]) {
+					for (i = 0; i < MAXDATASECTION; i++) {
+						if (!dol->dataOffset[i]) {
+							dol->dataOffset[i] = dol2->dataOffset[j] + length;
+							dol->dataAddress[i] = dol2->dataAddress[j];
+							dol->dataLength[i] = dol2->dataLength[j];
+							break;
+						}
+					}
+				}
+			}
+			
+			length = DOLSize(data);
+			patched = patch(data, length, gameID, type);
+			
+			memcpy(dol, &dolhdr, DOLHDRLENGTH);
+			compress2(zlib->data, &zlib->deflateLength, (Bytef *)dol2, zlib->inflateLength, Z_BEST_COMPRESSION);
+			
+			length = DOLSize(data);
+			data = realloc(data, length);
+		}
+		
+		*buffer = data;
+		*sizeToRead = length;
+		return patched;
+	}
+	return patch(data, length, gameID, type);
+}

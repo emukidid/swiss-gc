@@ -510,7 +510,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 	char* gameID = (char*)&GCMDisk;
 	// Go through all the possible files we think need patching..
 	for(i = 0; i < numToPatch; i++) {
-		u32 patched = 0;
+		int patched = 0;
 
 		sprintf(txtbuffer, "Patching File %i/%i\n%s [%iKB]",i+1,numToPatch,filesToPatch[i].name,filesToPatch[i].size/1024);
 		
@@ -524,7 +524,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			continue;	// skip unused PSO files
 		}
 		uiDrawObj_t* progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
-		int sizeToRead = (filesToPatch[i].size + 31) & ~31;
+		u32 sizeToRead = (filesToPatch[i].size + 31) & ~31;
 		void *buffer = memalign(32, sizeToRead);
 		
 		devices[DEVICE_CUR]->seekFile(filesToPatch[i].file,filesToPatch[i].offset, DEVICE_HANDLER_SEEK_SET);
@@ -541,64 +541,38 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		
 		u8 *oldBuffer = NULL, *newBuffer = NULL;
 		if(filesToPatch[i].type == PATCH_DOL_PRS || filesToPatch[i].type == PATCH_OTHER_PRS) {
-			sizeToRead = pso_prs_decompress_buf(buffer, &newBuffer, filesToPatch[i].size);
-			if(sizeToRead < 0) {
+			ret = pso_prs_decompress_buf(buffer, &newBuffer, filesToPatch[i].size);
+			if(ret < 0) {
 				DrawDispose(progBox);
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to decompress!"));
 				sleep(5);
 				DrawDispose(msgBox);
 				return 0;
 			}
+			sizeToRead = ret;
 			oldBuffer = buffer;
 			buffer = newBuffer;
 		}
 		
 		// Patch raw files for certain games
 		if(filesToPatch[i].type == PATCH_OTHER || filesToPatch[i].type == PATCH_OTHER_PRS) {
-			patched += Patch_GameSpecificFile(buffer, sizeToRead, gameID, filesToPatch[i].name);
+			patched = Patch_GameSpecificFile(buffer, sizeToRead, gameID, filesToPatch[i].name);
 		}
-		else { 
+		else {
 			// Patch executable files
-			if(devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
-				patched += Patch_Hypervisor(buffer, sizeToRead, filesToPatch[i].type);
-				patched += Patch_GameSpecificHypervisor(buffer, sizeToRead, gameID, filesToPatch[i].type);
-			}
-		
-			// Patch specific game hacks
-			patched += Patch_GameSpecific(buffer, sizeToRead, gameID, filesToPatch[i].type);
-			
-			// Patch CARD, PAD
-			patched += Patch_Miscellaneous(buffer, sizeToRead, filesToPatch[i].type);
-			
-			if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
-				Patch_CheatsHook(buffer, sizeToRead, filesToPatch[i].type);
-			}
-			
-			patched += Patch_FontEncode(buffer, sizeToRead);
-			
-			if(swissSettings.disableVideoPatches < 2) {
-				if(swissSettings.disableVideoPatches < 1) {
-					Patch_GameSpecificVideo(buffer, sizeToRead, gameID, filesToPatch[i].type);
-				}
-				Patch_VideoMode(buffer, sizeToRead, filesToPatch[i].type);
-			}
-			
-			if(swissSettings.forceWidescreen)
-				Patch_Widescreen(buffer, sizeToRead, filesToPatch[i].type);
-			if(swissSettings.forceAnisotropy)
-				Patch_TexFilt(buffer, sizeToRead, filesToPatch[i].type);
+			patched = Patch_ExecutableFile(&buffer, &sizeToRead, gameID, filesToPatch[i].type);
 		}
 		
 		if(filesToPatch[i].type == PATCH_DOL_PRS || filesToPatch[i].type == PATCH_OTHER_PRS) {
-			sizeToRead = pso_prs_compress2(buffer, oldBuffer, sizeToRead, filesToPatch[i].size);
-			if(sizeToRead < 0) {
+			ret = pso_prs_compress2(buffer, oldBuffer, sizeToRead, filesToPatch[i].size);
+			if(ret < 0) {
 				DrawDispose(progBox);
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to recompress!"));
 				sleep(5);
 				DrawDispose(msgBox);
 				return 0;
 			}
-			filesToPatch[i].size = sizeToRead;
+			filesToPatch[i].size = ret;
 			sizeToRead = (filesToPatch[i].size + 31) & ~31;
 			buffer = oldBuffer;
 			oldBuffer = NULL;

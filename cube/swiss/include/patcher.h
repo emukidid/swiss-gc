@@ -223,6 +223,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType);
 void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt);
 void *Calc_Address(void *data, int dataType, u32 properAddress);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);
+int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int type);
 void *installPatch(int patchId);
 void *installPatch2(void *patchLocation, u32 patchSize);
 void *getPatchAddr(int patchId);

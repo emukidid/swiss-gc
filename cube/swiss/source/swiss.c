@@ -956,40 +956,7 @@ void load_app(ExecutableFile *fileToPatch)
 	setTopAddr((u32)VAR_PATCHES_BASE);
 	
 	if(fileToPatch == NULL || fileToPatch->patchFile == NULL) {
-		// Patch hypervisor
-		if(devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
-			Patch_Hypervisor(buffer, sizeToRead, type);
-			Patch_GameSpecificHypervisor(buffer, sizeToRead, gameID, type);
-		}
-		
-		// Patch specific game hacks
-		Patch_GameSpecific(buffer, sizeToRead, gameID, type);
-		
-		// Patch CARD, PAD
-		Patch_Miscellaneous(buffer, sizeToRead, type);
-		
-		// Force Video Mode
-		if(swissSettings.disableVideoPatches < 2) {
-			if(swissSettings.disableVideoPatches < 1) {
-				Patch_GameSpecificVideo(buffer, sizeToRead, gameID, type);
-			}
-			Patch_VideoMode(buffer, sizeToRead, type);
-		}
-		// Force Widescreen
-		if(swissSettings.forceWidescreen) {
-			Patch_Widescreen(buffer, sizeToRead, type);
-		}
-		// Force Anisotropy
-		if(swissSettings.forceAnisotropy) {
-			Patch_TexFilt(buffer, sizeToRead, type);
-		}
-		// Force Text Encoding
-		Patch_FontEncode(buffer, sizeToRead);
-		
-		// Cheats
-		if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
-			Patch_CheatsHook(buffer, sizeToRead, type);
-		}
+		Patch_ExecutableFile(&buffer, &sizeToRead, gameID, type);
 	}
 	
 	DCFlushRange(buffer, sizeToRead);
