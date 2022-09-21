@@ -53,40 +53,6 @@
 #define SWISS_SETTINGS_DIR "swiss/settings"
 #define SWISS_GAME_SETTINGS_DIR "swiss/settings/game"
 
-/** Crappy dynamic string appender */
-#define APPEND_BLOCKSIZE 256
-typedef struct {
-	char *mem;
-	u32 memlen;
-} appended_string;
-
-appended_string *string_append(appended_string *appstr, char* str) {
-
-	if(appstr == NULL) {
-		appstr = calloc(1, sizeof(appended_string));
-		appstr->memlen = (str != NULL) ? strlen(str) : APPEND_BLOCKSIZE;
-		appstr->memlen += APPEND_BLOCKSIZE-(appstr->memlen % APPEND_BLOCKSIZE);	// 256b sized blocks
-		appstr->mem = calloc(1, appstr->memlen);
-		if(appstr->mem != NULL && str != NULL) {
-			strcpy(appstr->mem, str);
-		}
-	}
-	else {
-		if(str != NULL) {
-			u32 oldlen = strlen(appstr->mem);
-			u32 newlenreq = strlen(str) + strlen(appstr->mem);
-			if(newlenreq >= appstr->memlen) {
-				newlenreq += APPEND_BLOCKSIZE-(newlenreq%APPEND_BLOCKSIZE);
-				appstr->mem = realloc(appstr->mem, newlenreq);
-				appstr->memlen = newlenreq;
-				memset(appstr->mem + oldlen, 0, newlenreq-oldlen);
-			}
-			strcpy(appstr->mem + oldlen, str);
-		}
-	}
-	return appstr;
-}
-
 // Tries to init the current config device
 bool config_set_device() {
 	// Set the current config device to whatever the current configDeviceId is
@@ -169,115 +135,66 @@ void config_file_delete(char* filename) {
 int config_update_global(bool checkConfigDevice) {
 	if(checkConfigDevice && !config_set_device()) return 0;
 
-	char *str = "# Swiss Configuration File!\r\n# Anything written in here will be lost!\r\n\r\n#!!Swiss Settings Start!!\r\n";
-	appended_string *configString = string_append(NULL, str);
+	char *configString = NULL;
+	size_t len = 0;
+	FILE *fp = open_memstream(&configString, &len);
+	if(!fp) return 0;
+
 	// Write out Swiss settings
-	sprintf(txtbuffer, "SD/IDE Speed=%s\r\n",(swissSettings.exiSpeed ? "32MHz":"16MHz"));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "Swiss Video Mode=%s\r\n",(uiVModeStr[swissSettings.uiVMode]));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "Enable Debug=%s\r\n",(swissSettings.debugUSB ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "Hide Unknown file types=%s\r\n",(swissSettings.hideUnknownFileTypes ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "Stop DVD Motor on startup=%s\r\n",(swissSettings.stopMotor ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "Enable WiiRD debug=%s\r\n",(swissSettings.wiirdDebug ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "Enable File Management=%s\r\n",(swissSettings.enableFileManagement ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "Disable Video Patches=%s\r\n",(disableVideoPatchesStr[swissSettings.disableVideoPatches]));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "Force Video Active=%s\r\n",(swissSettings.forceVideoActive ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "Force DTV Status=%s\r\n",(swissSettings.forceDTVStatus ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "SMBUserName=%s\r\n",swissSettings.smbUser);
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "SMBPassword=%s\r\n",swissSettings.smbPassword);
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "SMBShareName=%s\r\n",swissSettings.smbShare);
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "SMBHostIP=%s\r\n",swissSettings.smbServerIp);
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "AutoCheats=%s\r\n", (swissSettings.autoCheats ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "InitNetwork=%s\r\n", (swissSettings.initNetworkAtStart ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "IGRType=%s\r\n", (igrTypeStr[swissSettings.igrType]));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "AVECompat=%s\r\n", (aveCompatStr[swissSettings.aveCompat]));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "FileBrowserType=%s\r\n", (fileBrowserStr[swissSettings.fileBrowserType]));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "BS2Boot=%s\r\n", (bs2BootStr[swissSettings.bs2Boot]));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "FTPUserName=%s\r\n",swissSettings.ftpUserName);
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "FTPPassword=%s\r\n",swissSettings.ftpPassword);
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "FTPHostIP=%s\r\n",swissSettings.ftpHostIp);
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "FTPPort=%hu\r\n",swissSettings.ftpPort);
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "FTPUsePasv=%s\r\n",swissSettings.ftpUsePasv ? "Yes":"No");
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "FSPHostIP=%s\r\n",swissSettings.fspHostIp);
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "FSPPort=%hu\r\n",swissSettings.fspPort);
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "FSPPassword=%s\r\n",swissSettings.fspPassword);
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "ShowHiddenFiles=%s\r\n", (swissSettings.showHiddenFiles ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "RecentListLevel=%s\r\n", (recentListLevelStr[swissSettings.recentListLevel]));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "GCLoaderTopVersion=%s\r\n",swissSettings.gcloaderTopVersion);
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "Autoload=%s\r\n",swissSettings.autoload);
-	string_append(configString, txtbuffer);
+	fprintf(fp, "# Swiss Configuration File!\r\n# Anything written in here will be lost!\r\n\r\n#!!Swiss Settings Start!!\r\n");
+	fprintf(fp, "SD/IDE Speed=%s\r\n", swissSettings.exiSpeed ? "32MHz":"16MHz");
+	fprintf(fp, "Swiss Video Mode=%s\r\n", uiVModeStr[swissSettings.uiVMode]);
+	fprintf(fp, "Enable Debug=%s\r\n", swissSettings.debugUSB ? "Yes":"No");
+	fprintf(fp, "Hide Unknown file types=%s\r\n", swissSettings.hideUnknownFileTypes ? "Yes":"No");
+	fprintf(fp, "Stop DVD Motor on startup=%s\r\n", swissSettings.stopMotor ? "Yes":"No");
+	fprintf(fp, "Enable WiiRD debug=%s\r\n", swissSettings.wiirdDebug ? "Yes":"No");
+	fprintf(fp, "Enable File Management=%s\r\n", swissSettings.enableFileManagement ? "Yes":"No");
+	fprintf(fp, "Disable Video Patches=%s\r\n", disableVideoPatchesStr[swissSettings.disableVideoPatches]);
+	fprintf(fp, "Force Video Active=%s\r\n", swissSettings.forceVideoActive ? "Yes":"No");
+	fprintf(fp, "Force DTV Status=%s\r\n", swissSettings.forceDTVStatus ? "Yes":"No");
+	fprintf(fp, "SMBUserName=%s\r\n", swissSettings.smbUser);
+	fprintf(fp, "SMBPassword=%s\r\n", swissSettings.smbPassword);
+	fprintf(fp, "SMBShareName=%s\r\n", swissSettings.smbShare);
+	fprintf(fp, "SMBHostIP=%s\r\n", swissSettings.smbServerIp);
+	fprintf(fp, "AutoCheats=%s\r\n", swissSettings.autoCheats ? "Yes":"No");
+	fprintf(fp, "InitNetwork=%s\r\n", swissSettings.initNetworkAtStart ? "Yes":"No");
+	fprintf(fp, "IGRType=%s\r\n", igrTypeStr[swissSettings.igrType]);
+	fprintf(fp, "AVECompat=%s\r\n", aveCompatStr[swissSettings.aveCompat]);
+	fprintf(fp, "FileBrowserType=%s\r\n", fileBrowserStr[swissSettings.fileBrowserType]);
+	fprintf(fp, "BS2Boot=%s\r\n", bs2BootStr[swissSettings.bs2Boot]);
+	fprintf(fp, "FTPUserName=%s\r\n", swissSettings.ftpUserName);
+	fprintf(fp, "FTPPassword=%s\r\n", swissSettings.ftpPassword);
+	fprintf(fp, "FTPHostIP=%s\r\n", swissSettings.ftpHostIp);
+	fprintf(fp, "FTPPort=%hu\r\n", swissSettings.ftpPort);
+	fprintf(fp, "FTPUsePasv=%s\r\n", swissSettings.ftpUsePasv ? "Yes":"No");
+	fprintf(fp, "FSPHostIP=%s\r\n", swissSettings.fspHostIp);
+	fprintf(fp, "FSPPort=%hu\r\n", swissSettings.fspPort);
+	fprintf(fp, "FSPPassword=%s\r\n", swissSettings.fspPassword);
+	fprintf(fp, "ShowHiddenFiles=%s\r\n", swissSettings.showHiddenFiles ? "Yes":"No");
+	fprintf(fp, "RecentListLevel=%s\r\n", recentListLevelStr[swissSettings.recentListLevel]);
+	fprintf(fp, "GCLoaderTopVersion=%s\r\n", swissSettings.gcloaderTopVersion);
+	fprintf(fp, "Autoload=%s\r\n", swissSettings.autoload);
 
 	// Write out the default game config portion too
-	sprintf(txtbuffer, "Force Video Mode=%s\r\n",gameVModeStr[swissSettings.gameVMode]);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Force Horizontal Scale=%s\r\n",forceHScaleStr[swissSettings.forceHScale]);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Force Vertical Offset=%+hi\r\n",swissSettings.forceVOffset);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Force Vertical Filter=%s\r\n",forceVFilterStr[swissSettings.forceVFilter]);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Disable Alpha Dithering=%s\r\n",(swissSettings.disableDithering ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Force Anisotropic Filter=%s\r\n",(swissSettings.forceAnisotropy ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Force Widescreen=%s\r\n",forceWidescreenStr[swissSettings.forceWidescreen]);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[swissSettings.invertCStick]);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Digital Trigger Level=%hhu\r\n",swissSettings.triggerLevel);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Emulate Read Speed=%s\r\n",emulateReadSpeedStr[swissSettings.emulateReadSpeed]);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Emulate Memory Card=%s\r\n",(swissSettings.emulateMemoryCard ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	sprintf(txtbuffer, "#!!Swiss Settings End!!\r\n\r\n");
-	string_append(configString, txtbuffer);
-	
+	fprintf(fp, "Force Video Mode=%s\r\n", gameVModeStr[swissSettings.gameVMode]);
+	fprintf(fp, "Force Horizontal Scale=%s\r\n", forceHScaleStr[swissSettings.forceHScale]);
+	fprintf(fp, "Force Vertical Offset=%+hi\r\n", swissSettings.forceVOffset);
+	fprintf(fp, "Force Vertical Filter=%s\r\n", forceVFilterStr[swissSettings.forceVFilter]);
+	fprintf(fp, "Disable Alpha Dithering=%s\r\n", swissSettings.disableDithering ? "Yes":"No");
+	fprintf(fp, "Force Anisotropic Filter=%s\r\n", swissSettings.forceAnisotropy ? "Yes":"No");
+	fprintf(fp, "Force Widescreen=%s\r\n", forceWidescreenStr[swissSettings.forceWidescreen]);
+	fprintf(fp, "Invert Camera Stick=%s\r\n", invertCStickStr[swissSettings.invertCStick]);
+	fprintf(fp, "Digital Trigger Level=%hhu\r\n", swissSettings.triggerLevel);
+	fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[swissSettings.emulateReadSpeed]);
+	fprintf(fp, "Emulate Memory Card=%s\r\n", swissSettings.emulateMemoryCard ? "Yes":"No");
+	fprintf(fp, "#!!Swiss Settings End!!\r\n\r\n");
+	fclose(fp);
+
 	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
 	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL);
 	
 	concat_path(txtbuffer, SWISS_SETTINGS_DIR, SWISS_SETTINGS_FILENAME);
-	int res = config_file_write(txtbuffer, configString->mem);
+	int res = config_file_write(txtbuffer, configString);
 	free(configString);
 	if(checkConfigDevice) {
 		config_unset_device();
@@ -288,19 +205,24 @@ int config_update_global(bool checkConfigDevice) {
 int config_update_recent(bool checkConfigDevice) {
 	if(checkConfigDevice && !config_set_device()) return 0;
 
-	char *str = "# Recent list. Created by Swiss\r\n";
-	appended_string *configString = string_append(NULL, str);
+	char *configString = NULL;
+	size_t len = 0;
+	FILE *fp = open_memstream(&configString, &len);
+	if(!fp) return 0;
+
+	fprintf(fp, "# Recent list. Created by Swiss\r\n");
 	int i;
 	for(i = 0; i < RECENT_MAX; i++) {
-		sprintf(txtbuffer, "Recent_%i=%s\r\n",i,swissSettings.recent[i]);
-		//print_gecko("added recent [%s]\r\n",txtbuffer);
-		string_append(configString, txtbuffer);
+		fprintf(fp, "Recent_%i=%s\r\n", i, swissSettings.recent[i]);
+		//print_gecko("added recent num %i [%s]\r\n", i, swissSettings.recent[i]);
 	}
+	fclose(fp);
+
 	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
 	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL);
 	
 	concat_path(txtbuffer, SWISS_SETTINGS_DIR, SWISS_RECENTLIST_FILENAME);
-	int res = config_file_write(txtbuffer, configString->mem);
+	int res = config_file_write(txtbuffer, configString);
 	free(configString);
 	if(checkConfigDevice) {
 		config_unset_device();
@@ -312,56 +234,34 @@ int config_update_recent(bool checkConfigDevice) {
 int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	if(checkConfigDevice && !config_set_device()) return 0;
 
-	char *str = "# Game specific configuration file. Created by Swiss\r\n";
-	appended_string *configString = string_append(NULL, str);
-	sprintf(txtbuffer, "ID=%.4s\r\n",entry->game_id);
-	string_append(configString, txtbuffer);
-		
-	sprintf(txtbuffer, "Name=%.64s\r\n",entry->game_name);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Comment=%.128s\r\n",entry->comment);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Status=%.32s\r\n",entry->status);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Force Video Mode=%s\r\n",gameVModeStr[entry->gameVMode]);
-	string_append(configString, txtbuffer);
-		
-	sprintf(txtbuffer, "Force Horizontal Scale=%s\r\n",forceHScaleStr[entry->forceHScale]);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Force Vertical Offset=%+hi\r\n",entry->forceVOffset);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Force Vertical Filter=%s\r\n",forceVFilterStr[entry->forceVFilter]);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Disable Alpha Dithering=%s\r\n",(entry->disableDithering ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Force Anisotropic Filter=%s\r\n",(entry->forceAnisotropy ? "Yes":"No"));
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Force Widescreen=%s\r\n",forceWidescreenStr[entry->forceWidescreen]);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Invert Camera Stick=%s\r\n",invertCStickStr[entry->invertCStick]);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Digital Trigger Level=%hhu\r\n",entry->triggerLevel);
-	string_append(configString, txtbuffer);
-	
-	sprintf(txtbuffer, "Emulate Read Speed=%s\r\n",emulateReadSpeedStr[entry->emulateReadSpeed]);
-	string_append(configString, txtbuffer);
+	char *configString = NULL;
+	size_t len = 0;
+	FILE *fp = open_memstream(&configString, &len);
+	if(!fp) return 0;
+
+	fprintf(fp, "# Game specific configuration file. Created by Swiss\r\n");
+	fprintf(fp, "ID=%.4s\r\n", entry->game_id);
+	fprintf(fp, "Name=%.64s\r\n", entry->game_name);
+	fprintf(fp, "Comment=%.128s\r\n", entry->comment);
+	fprintf(fp, "Status=%.32s\r\n", entry->status);
+	fprintf(fp, "Force Video Mode=%s\r\n", gameVModeStr[entry->gameVMode]);
+	fprintf(fp, "Force Horizontal Scale=%s\r\n", forceHScaleStr[entry->forceHScale]);
+	fprintf(fp, "Force Vertical Offset=%+hi\r\n", entry->forceVOffset);
+	fprintf(fp, "Force Vertical Filter=%s\r\n", forceVFilterStr[entry->forceVFilter]);
+	fprintf(fp, "Disable Alpha Dithering=%s\r\n", entry->disableDithering ? "Yes":"No");
+	fprintf(fp, "Force Anisotropic Filter=%s\r\n", entry->forceAnisotropy ? "Yes":"No");
+	fprintf(fp, "Force Widescreen=%s\r\n", forceWidescreenStr[entry->forceWidescreen]);
+	fprintf(fp, "Invert Camera Stick=%s\r\n", invertCStickStr[entry->invertCStick]);
+	fprintf(fp, "Digital Trigger Level=%hhu\r\n", entry->triggerLevel);
+	fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[entry->emulateReadSpeed]);
+	fclose(fp);
 
 	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
 	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL);
 	ensure_path(DEVICE_CONFIG, SWISS_GAME_SETTINGS_DIR, NULL);
 	
 	concatf_path(txtbuffer, SWISS_GAME_SETTINGS_DIR, "%.4s.ini", entry->game_id);
-	int res = config_file_write(txtbuffer, configString->mem);
+	int res = config_file_write(txtbuffer, configString);
 	free(configString);
 	if(checkConfigDevice) {
 		config_unset_device();
