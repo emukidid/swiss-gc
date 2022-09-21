@@ -139,7 +139,7 @@ void config_migration(char* text, int state, int percent) {
 /****************************************************************************
 * Main
 ****************************************************************************/
-int main () 
+int main(int argc, char *argv[])
 {
 	// Setup defaults (if no config is found)
 	memset(&swissSettings, 0 , sizeof(SwissSettings));
@@ -244,6 +244,7 @@ int main ()
 	
 	// Read Swiss settings
 	config_init(&config_migration);
+	config_parse_args(argc, argv);
 	
 	// Swiss video mode force
 	GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);

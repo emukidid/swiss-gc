@@ -1,3 +1,4 @@
+#include <argz.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -809,6 +810,20 @@ void config_parse_global(char *configData) {
 		}
 		// And round we go again
 		line = strtok_r( NULL, "\r\n", &linectx);
+	}
+}
+
+void config_parse_args(int argc, char *argv[]) {
+	if(argc == 0 || argv == NULL) {
+		return;
+	}
+	char *argz;
+	size_t argz_len;
+	argz_create(&argv[1], &argz, &argz_len);
+	argz_stringify(argz, argz_len, '\n');
+	if(argz != NULL) {
+		config_parse_global(argz);
+		free(argz);
 	}
 }
 
