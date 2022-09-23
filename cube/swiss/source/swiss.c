@@ -985,7 +985,11 @@ void load_app(ExecutableFile *fileToPatch)
 	DrawShutdown();
 	
 	do_videomode_swap();
-	VIDEO_SetPostRetraceCallback (NULL);
+	VIDEO_SetPostRetraceCallback(NULL);
+	VIDEO_SetBlack(true);
+	VIDEO_Flush();
+	VIDEO_WaitVSync();
+	
 	DCFlushRange((void*)0x80000000, 0x3100);
 	ICInvalidateRange((void*)0x80000000, 0x3100);
 	
