@@ -24,28 +24,40 @@ int whichfb = 0;				//Frame buffer toggle
 #define Eurgb60ProgStr "PAL 480p"
 #define UnknownVideo   "Unknown"
 
-char *videoModeStr = NULL;
-
 char *getVideoModeString() {
-	return videoModeStr;
+	switch(vmode->viTVMode) {
+		case VI_TVMODE_NTSC_INT:     return NtscIntStr;
+		case VI_TVMODE_NTSC_DS:      return NtscDsStr;
+		case VI_TVMODE_NTSC_PROG:    return NtscProgStr;
+		case VI_TVMODE_PAL_INT:      return PalIntStr;
+		case VI_TVMODE_PAL_DS:       return PalDsStr;
+		case VI_TVMODE_PAL_PROG:     return PalProgStr;
+		case VI_TVMODE_MPAL_INT:     return MpalIntStr;
+		case VI_TVMODE_MPAL_DS:      return MpalDsStr;
+		case VI_TVMODE_MPAL_PROG:    return MpalProgStr;
+		case VI_TVMODE_EURGB60_INT:  return Eurgb60IntStr;
+		case VI_TVMODE_EURGB60_DS:   return Eurgb60DsStr;
+		case VI_TVMODE_EURGB60_PROG: return Eurgb60ProgStr;
+		default:                     return UnknownVideo;
+	}
 }
 
-void setVideoModeString(GXRModeObj *v) {
-	switch(v->viTVMode) {
-		case VI_TVMODE_NTSC_INT:     videoModeStr = NtscIntStr;     break;
-		case VI_TVMODE_NTSC_DS:      videoModeStr = NtscDsStr;      break;
-		case VI_TVMODE_NTSC_PROG:    videoModeStr = NtscProgStr;    break;
-		case VI_TVMODE_PAL_INT:      videoModeStr = PalIntStr;      break;
-		case VI_TVMODE_PAL_DS:       videoModeStr = PalDsStr;       break;
-		case VI_TVMODE_PAL_PROG:     videoModeStr = PalProgStr;     break;
-		case VI_TVMODE_MPAL_INT:     videoModeStr = MpalIntStr;     break;
-		case VI_TVMODE_MPAL_DS:      videoModeStr = MpalDsStr;      break;
-		case VI_TVMODE_MPAL_PROG:    videoModeStr = MpalProgStr;    break;
-		case VI_TVMODE_EURGB60_INT:  videoModeStr = Eurgb60IntStr;  break;
-		case VI_TVMODE_EURGB60_DS:   videoModeStr = Eurgb60DsStr;   break;
-		case VI_TVMODE_EURGB60_PROG: videoModeStr = Eurgb60ProgStr; break;
-		default:                     videoModeStr = UnknownVideo;
+int getTVFormat() {
+	switch(vmode->viTVMode >> 2) {
+		case VI_PAL:
+		case VI_DEBUG_PAL:
+			return VI_PAL;
+		case VI_MPAL:
+			return VI_MPAL;
+		case VI_EURGB60:
+			return VI_EURGB60;
+		default:
+			return VI_NTSC;
 	}
+}
+
+int getScanMode() {
+	return vmode->viTVMode & 3;
 }
 
 int getDTVStatus() {
@@ -147,5 +159,4 @@ void setVideoMode(GXRModeObj *m) {
 	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the xfb
 	
 	vmode = m;
-	setVideoModeString(vmode);
 }

@@ -25,7 +25,7 @@
 	
 SwissSettings tempSettings;
 char *uiVModeStr[] = {"Auto", "480i", "480p", "576i", "576p"};
-char *gameVModeStr[] = {"No", "480i", "480sf", "240p", "960i", "480p", "1080i60", "540p60", "576i", "576sf", "288p", "1152i", "576p", "1080i50", "540p50"};
+char *gameVModeStr[] = {"Auto", "480i", "480sf", "240p", "960i", "480p", "1080i60", "540p60", "576i", "576sf", "288p", "1152i", "576p", "1080i50", "540p50"};
 char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "656px", "672px", "704px", "720px"};
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
@@ -799,10 +799,8 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 					DrawVideoMode(newmode);
 				}
 				// Save settings to SRAM
-				if(swissSettings.uiVMode > 0) {
-					swissSettings.sram60Hz = (swissSettings.uiVMode >= 1) && (swissSettings.uiVMode <= 2);
-					swissSettings.sramProgressive = (swissSettings.uiVMode == 2) || (swissSettings.uiVMode == 4);
-				}
+				swissSettings.sram60Hz = getTVFormat() != VI_PAL;
+				swissSettings.sramProgressive = getScanMode() == VI_PROGRESSIVE;
 				if(swissSettings.aveCompat == 1) {
 					swissSettings.sramHOffset &= ~1;
 				}

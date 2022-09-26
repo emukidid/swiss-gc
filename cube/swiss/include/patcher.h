@@ -138,6 +138,8 @@ extern u8 VIConfigure1080i60[];
 extern u32 VIConfigure1080i60_length;
 extern u8 VIConfigure1152i[];
 extern u32 VIConfigure1152i_length;
+extern u8 VIConfigureAutop[];
+extern u32 VIConfigureAutop_length;
 extern u8 VIConfigureHook1[];
 extern u32 VIConfigureHook1_length;
 extern u8 VIConfigureHook1GCVideo[];
@@ -179,6 +181,7 @@ enum patchIds {
 	VI_CONFIGURE1080I50,
 	VI_CONFIGURE1080I60,
 	VI_CONFIGURE1152I,
+	VI_CONFIGUREAUTOP,
 	VI_CONFIGUREHOOK1,
 	VI_CONFIGUREHOOK1_GCVIDEO,
 	VI_CONFIGUREHOOK2,

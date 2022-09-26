@@ -98,13 +98,17 @@ void ogc_video__reset()
 		}
 		if(swissSettings.sramProgressive && !getDTVStatus())
 			swissSettings.gameVMode = 0;
-	}
-	else {
-		if(swissSettings.uiVMode > 0) {
-			swissSettings.sram60Hz = (swissSettings.uiVMode >= 1 && swissSettings.uiVMode <= 2);
-			swissSettings.sramProgressive = (swissSettings.uiVMode == 2 || swissSettings.uiVMode == 4);
-		}
-		swissSettings.gameVMode = 0;
+	} else {
+		swissSettings.sram60Hz = getTVFormat() != VI_PAL;
+		swissSettings.sramProgressive = getScanMode() == VI_PROGRESSIVE;
+		
+		if(swissSettings.sramProgressive) {
+			if(swissSettings.sramVideo == SYS_VIDEO_PAL)
+				swissSettings.gameVMode = -2;
+			else
+				swissSettings.gameVMode = -1;
+		} else
+			swissSettings.gameVMode = 0;
 	}
 	
 	if(!strncmp(gameID, "GB3E51", 6)
@@ -121,6 +125,14 @@ void ogc_video__reset()
 	/* set TV mode for current game */
 	uiDrawObj_t *msgBox = NULL;
 	switch(swissSettings.gameVMode) {
+		case -2:
+			msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 576p");
+			newmode = &TVPal576ProgScale;
+			break;
+		case -1:
+			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480p");
+			newmode = &TVNtsc480Prog;
+			break;
 		case 0:
 			if(swissSettings.sramVideo == SYS_VIDEO_MPAL && !getDTVStatus()) {
 				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL-M 480i");
@@ -164,16 +176,13 @@ void ogc_video__reset()
 			newmode = &TVPal576ProgScale;
 			break;
 	}
+	if((newmode != NULL) && (newmode != getVideoMode())) {
+		DrawVideoMode(newmode);
+	}
 	if(msgBox != NULL) {
 		DrawPublish(msgBox);
 		sleep(2);
 		DrawDispose(msgBox);
-	}
-}
-
-void do_videomode_swap() {
-	if((newmode != NULL) && (newmode != getVideoMode())) {
-		setVideoMode(newmode);
 	}
 }
 
@@ -984,7 +993,6 @@ void load_app(ExecutableFile *fileToPatch)
 	DrawDispose(progBox);
 	DrawShutdown();
 	
-	do_videomode_swap();
 	VIDEO_SetPostRetraceCallback(NULL);
 	VIDEO_SetBlack(true);
 	VIDEO_Flush();

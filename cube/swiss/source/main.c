@@ -73,7 +73,7 @@ void Initialise (void)
 			}
 			else if((strstr(IPLInfo,"PAL")!=NULL)) {
 				swissSettings.sramVideo = SYS_VIDEO_PAL;
-				vmode = &TVPal576ProgScale;
+				vmode = &TVNtsc480Prog;
 			}
 			else {
 				swissSettings.sramVideo = SYS_VIDEO_NTSC;

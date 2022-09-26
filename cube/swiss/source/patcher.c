@@ -80,6 +80,8 @@ void *installPatch(int patchId) {
 			patchSize = VIConfigure1080i60_length; patchLocation = VIConfigure1080i60; break;
 		case VI_CONFIGURE1152I:
 			patchSize = VIConfigure1152i_length; patchLocation = VIConfigure1152i; break;
+		case VI_CONFIGUREAUTOP:
+			patchSize = VIConfigureAutop_length; patchLocation = VIConfigureAutop; break;
 		case VI_CONFIGUREHOOK1:
 			patchSize = VIConfigureHook1_length; patchLocation = VIConfigureHook1; break;
 		case VI_CONFIGUREHOOK1_GCVIDEO:
@@ -6678,7 +6680,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				swissSettings.forceHScale = 1;
 		case 3: case 10: case 4: case 11:
 			swissSettings.forceVOffset &= ~1;
-		case 2: case  9: case 5: case 12:
+		case 2: case  9: case 5: case 12: case -1: case -2:
 			if (!swissSettings.forceVFilter)
 				swissSettings.forceVFilter = 1;
 	}
@@ -7283,7 +7285,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 24] = 0x7C630E70;	// srawi	r3, r3, 1
 					break;
 			}
-			if (swissSettings.gameVMode >= 8 && swissSettings.gameVMode <= 14) {
+			if (swissSettings.gameVMode == -2 || (swissSettings.gameVMode >= 8 && swissSettings.gameVMode <= 14)) {
 				switch (k) {
 					case 0:
 					case 2:
@@ -7514,7 +7516,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				jumpTable[3] = jumpTable[6];
 				jumpTable[6] = jump;
 			}
-			else if (swissSettings.gameVMode >= 8 && swissSettings.gameVMode <= 14) {
+			else if (swissSettings.gameVMode == -2 || (swissSettings.gameVMode >= 8 && swissSettings.gameVMode <= 14)) {
 				if (swissSettings.gameVMode == 14)
 					memcpy(timingTable + 6, video_timing_540p50, sizeof(video_timing_540p50));
 				else if (swissSettings.gameVMode == 13)
@@ -7813,6 +7815,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				VIConfigureHook1 = getPatchAddr(VI_CONFIGUREHOOK1);
 			
 			switch (swissSettings.gameVMode) {
+				case -2:
+				case -1: VIConfigureHook1 = getPatchAddr(VI_CONFIGUREAUTOP);   break;
 				case  1:
 				case  2: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE480I);    break;
 				case  3: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE240P);    break;
@@ -8016,7 +8020,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 508] = branchAndLink(VIConfigureHook2, VIConfigure + 508);
 					break;
 			}
-			if (swissSettings.gameVMode > 0) {
+			if (swissSettings.gameVMode != 0) {
 				switch (j) {
 					case 0:
 						data[i +  18] = 0x881E0017;	// lbz		r0, 23 (r30)
@@ -8026,14 +8030,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i +  55] = 0xA01E0000;	// lhz		r0, 0 (r30)
 						data[i +  63] = 0xA01E0000;	// lhz		r0, 0 (r30)
 						data[i +  73] = 0xA01E0000;	// lhz		r0, 0 (r30)
-						data[i +  97] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 107] = 0x881E0016;	// lbz		r0, 22 (r30)
-						data[i + 120] = 0xA01E0010;	// lhz		r0, 16 (r30)
-						data[i + 122] = 0x801F0114;	// lwz		r0, 276 (r31)
-						data[i + 123] = 0x28000001;	// cmplwi	r0, 1
-						data[i + 125] = 0xA01E0010;	// lhz		r0, 16 (r30)
-						data[i + 126] = 0x5400003C;	// clrrwi	r0, r0, 1
-						data[i + 128] = 0xA01E0010;	// lhz		r0, 16 (r30)
 						data[i + 130] = 0xA07E0000;	// lhz		r3, 0 (r30)
 						break;
 					case 1:
@@ -8045,8 +8042,70 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i +  44] = 0xA01E0002;	// lhz		r0, 2 (r30)
 						data[i +  61] = 0xA01E0000;	// lhz		r0, 0 (r30)
 						data[i +  69] = 0xA01E0000;	// lhz		r0, 0 (r30)
-						data[i +  90] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 100] = 0x881E0016;	// lbz		r0, 22 (r30)
+						break;
+					case 2:
+						data[i +   8] = 0xA09F0000;	// lhz		r4, 0 (r31)
+						data[i +  54] = 0x887F0016;	// lbz		r3, 22 (r31)
+						data[i +  76] = 0xA07F0000;	// lhz		r3, 0 (r31)
+						break;
+					case 3:
+						data[i +   8] = 0xA09F0000;	// lhz		r4, 0 (r31)
+						data[i +  46] = 0x887F0016;	// lbz		r3, 22 (r31)
+						data[i +  68] = 0xA07F0000;	// lhz		r3, 0 (r31)
+						break;
+					case 4:
+						data[i +   8] = 0xA09F0000;	// lhz		r4, 0 (r31)
+						data[i +  46] = 0x887F0016;	// lbz		r3, 22 (r31)
+						break;
+					case 5:
+						data[i +  10] = 0xA01F0000;	// lhz		r0, 0 (r31)
+						data[i +  45] = 0xA07F0000;	// lhz		r3, 0 (r31)
+						data[i +  81] = 0x887F0016;	// lbz		r3, 22 (r31)
+						data[i + 103] = 0xA07F0000;	// lhz		r3, 0 (r31)
+						data[i + 237] = 0xA0DF0000;	// lhz		r6, 0 (r31)
+						break;
+					case 6:
+						data[i +  10] = 0xA09F0000;	// lhz		r4, 0 (r31)
+						data[i +  20] = 0xA01F0000;	// lhz		r0, 0 (r31)
+						data[i +  84] = 0x887F0016;	// lbz		r3, 22 (r31)
+						data[i + 106] = 0xA07F0000;	// lhz		r3, 0 (r31)
+						break;
+					case 7:
+						data[i +  10] = 0xA09F0000;	// lhz		r4, 0 (r31)
+						data[i +  20] = 0xA01F0000;	// lhz		r0, 0 (r31)
+						data[i +  84] = 0x887F0016;	// lbz		r3, 22 (r31)
+						break;
+					case 8:
+						data[i +  10] = 0xA09F0000;	// lhz		r4, 0 (r31)
+						data[i +  20] = 0xA01F0000;	// lhz		r0, 0 (r31)
+						data[i + 116] = 0x887F0016;	// lbz		r3, 22 (r31)
+						break;
+					case 9:
+						data[i +  10] = 0xA0BB0000;	// lhz		r5, 0 (r27)
+						data[i +  20] = 0xA01B0000;	// lhz		r0, 0 (r27)
+						data[i + 112] = 0x887B0016;	// lbz		r3, 22 (r27)
+						break;
+					case 10:
+						data[i +  10] = 0xA0930000;	// lhz		r4, 0 (r19)
+						data[i +  20] = 0xA0130000;	// lhz		r0, 0 (r19)
+						data[i + 116] = 0x88730016;	// lbz		r3, 22 (r19)
+						break;
+				}
+			}
+			if (swissSettings.gameVMode > 0) {
+				switch (j) {
+					case 0:
+						data[i +  97] = 0x5400003C;	// clrrwi	r0, r0, 1
+						data[i + 120] = 0xA01E0010;	// lhz		r0, 16 (r30)
+						data[i + 122] = 0x801F0114;	// lwz		r0, 276 (r31)
+						data[i + 123] = 0x28000001;	// cmplwi	r0, 1
+						data[i + 125] = 0xA01E0010;	// lhz		r0, 16 (r30)
+						data[i + 126] = 0x5400003C;	// clrrwi	r0, r0, 1
+						data[i + 128] = 0xA01E0010;	// lhz		r0, 16 (r30)
+						break;
+					case 1:
+						data[i +  90] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 113] = 0xA01E0010;	// lhz		r0, 16 (r30)
 						data[i + 118] = 0xA01E0010;	// lhz		r0, 16 (r30)
 						data[i + 120] = 0x801F0114;	// lwz		r0, 276 (r31)
@@ -8056,33 +8115,25 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 126] = 0xA01E0010;	// lhz		r0, 16 (r30)
 						break;
 					case 2:
-						data[i +   8] = 0xA09F0000;	// lhz		r4, 0 (r31)
 						data[i +  35] = 0x5400003C;	// clrrwi	r0, r0, 1
-						data[i +  54] = 0x887F0016;	// lbz		r3, 22 (r31)
 						data[i +  65] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  67] = 0x801B0000;	// lwz		r0, 0 (r27)
 						data[i +  68] = 0x28000001;	// cmplwi	r0, 1
 						data[i +  70] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  71] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i +  73] = 0xA01F0010;	// lhz		r0, 16 (r31)
-						data[i +  76] = 0xA07F0000;	// lhz		r3, 0 (r31)
 						break;
 					case 3:
-						data[i +   8] = 0xA09F0000;	// lhz		r4, 0 (r31)
 						data[i +  27] = 0x5400003C;	// clrrwi	r0, r0, 1
-						data[i +  46] = 0x887F0016;	// lbz		r3, 22 (r31)
 						data[i +  57] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  59] = 0x801C0000;	// lwz		r0, 0 (r28)
 						data[i +  60] = 0x28000001;	// cmplwi	r0, 1
 						data[i +  62] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  63] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i +  65] = 0xA01F0010;	// lhz		r0, 16 (r31)
-						data[i +  68] = 0xA07F0000;	// lhz		r3, 0 (r31)
 						break;
 					case 4:
-						data[i +   8] = 0xA09F0000;	// lhz		r4, 0 (r31)
 						data[i +  27] = 0x5400003C;	// clrrwi	r0, r0, 1
-						data[i +  46] = 0x887F0016;	// lbz		r3, 22 (r31)
 						data[i +  57] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  59] = 0x801C0000;	// lwz		r0, 0 (r28)
 						data[i +  60] = 0x28000001;	// cmplwi	r0, 1
@@ -8091,37 +8142,25 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i +  65] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						break;
 					case 5:
-						data[i +  10] = 0xA01F0000;	// lhz		r0, 0 (r31)
-						data[i +  45] = 0xA07F0000;	// lhz		r3, 0 (r31)
 						data[i +  62] = 0x5400003C;	// clrrwi	r0, r0, 1
-						data[i +  81] = 0x887F0016;	// lbz		r3, 22 (r31)
 						data[i +  92] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  94] = 0x801C0000;	// lwz		r0, 0 (r28)
 						data[i +  95] = 0x28000001;	// cmplwi	r0, 1
 						data[i +  97] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  98] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 100] = 0xA01F0010;	// lhz		r0, 16 (r31)
-						data[i + 103] = 0xA07F0000;	// lhz		r3, 0 (r31)
-						data[i + 237] = 0xA0DF0000;	// lhz		r6, 0 (r31)
 						break;
 					case 6:
-						data[i +  10] = 0xA09F0000;	// lhz		r4, 0 (r31)
-						data[i +  20] = 0xA01F0000;	// lhz		r0, 0 (r31)
 						data[i +  65] = 0x5400003C;	// clrrwi	r0, r0, 1
-						data[i +  84] = 0x887F0016;	// lbz		r3, 22 (r31)
 						data[i +  95] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  97] = 0x801C0000;	// lwz		r0, 0 (r28)
 						data[i +  98] = 0x28000001;	// cmplwi	r0, 1
 						data[i + 100] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i + 101] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 103] = 0xA01F0010;	// lhz		r0, 16 (r31)
-						data[i + 106] = 0xA07F0000;	// lhz		r3, 0 (r31)
 						break;
 					case 7:
-						data[i +  10] = 0xA09F0000;	// lhz		r4, 0 (r31)
-						data[i +  20] = 0xA01F0000;	// lhz		r0, 0 (r31)
 						data[i +  65] = 0x5400003C;	// clrrwi	r0, r0, 1
-						data[i +  84] = 0x887F0016;	// lbz		r3, 22 (r31)
 						data[i +  95] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  99] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i + 101] = 0x801C0000;	// lwz		r0, 0 (r28)
@@ -8131,10 +8170,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 107] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						break;
 					case 8:
-						data[i +  10] = 0xA09F0000;	// lhz		r4, 0 (r31)
-						data[i +  20] = 0xA01F0000;	// lhz		r0, 0 (r31)
 						data[i +  97] = 0x5400003C;	// clrrwi	r0, r0, 1
-						data[i + 116] = 0x887F0016;	// lbz		r3, 22 (r31)
 						data[i + 127] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i + 131] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i + 133] = 0x801C0000;	// lwz		r0, 0 (r28)
@@ -8144,10 +8180,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 139] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						break;
 					case 9:
-						data[i +  10] = 0xA0BB0000;	// lhz		r5, 0 (r27)
-						data[i +  20] = 0xA01B0000;	// lhz		r0, 0 (r27)
 						data[i + 101] = 0x5408003C;	// clrrwi	r8, r0, 1
-						data[i + 112] = 0x887B0016;	// lbz		r3, 22 (r27)
 						data[i + 123] = 0xA0FB0010;	// lhz		r7, 16 (r27)
 						data[i + 127] = 0xA0FB0010;	// lhz		r7, 16 (r27)
 						data[i + 129] = 0x28090001;	// cmplwi	r9, 1
@@ -8155,10 +8188,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 133] = 0xA0FB0010;	// lhz		r7, 16 (r27)
 						break;
 					case 10:
-						data[i +  10] = 0xA0930000;	// lhz		r4, 0 (r19)
-						data[i +  20] = 0xA0130000;	// lhz		r0, 0 (r19)
 						data[i +  97] = 0x5400003C;	// clrrwi	r0, r0, 1
-						data[i + 116] = 0x88730016;	// lbz		r3, 22 (r19)
 						data[i + 127] = 0xA0130010;	// lhz		r0, 16 (r19)
 						data[i + 131] = 0xA0130010;	// lhz		r0, 16 (r19)
 						data[i + 133] = 0x801D0000;	// lwz		r0, 0 (r29)
@@ -8371,7 +8401,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				data[i + 0] = 0x38600001;	// li		r3, 1
 				data[i + 1] = 0x4E800020;	// blr
 			}
-			else if (swissSettings.gameVMode >= 8 && swissSettings.gameVMode <= 14) {
+			else if (swissSettings.gameVMode == -2 || (swissSettings.gameVMode >= 8 && swissSettings.gameVMode <= 14)) {
 				if (j == 1)
 					data[i + 12] = 0x38600006;	// li		r3, 6
 			}
@@ -11824,7 +11854,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x80167208 - 0x800945C0 + 0x915C0, 704);
 				SET_VI_WIDTH(data + 0x80167280 - 0x800945C0 + 0x915C0, 704);
 				
-				if (swissSettings.gameVMode > 0) {
+				if (swissSettings.gameVMode != 0) {
 					*(s16 *)(data + 0x800331BE - 0x80005740 + 0x2520) = 448;
 					*(u32 *)(data + 0x800331FC - 0x80005740 + 0x2520) = 0x60000000;
 					
@@ -11841,7 +11871,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x801670E0 - 0x80094500 + 0x91500, 704);
 				SET_VI_WIDTH(data + 0x80167158 - 0x80094500 + 0x91500, 704);
 				
-				if (swissSettings.gameVMode > 0) {
+				if (swissSettings.gameVMode != 0) {
 					*(s16 *)(data + 0x80033062 - 0x80005740 + 0x2520) = 448;
 					*(u32 *)(data + 0x800330A0 - 0x80005740 + 0x2520) = 0x60000000;
 					
@@ -14104,7 +14134,7 @@ int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int
 			Bytef data[];
 		} *zlib = Calc_Address(data, type, 0x80200000);
 		
-		if (zlib == NULL)
+		if (zlib == NULL || __builtin_add_overflow_p(length, zlib->inflateLength, (size_t)0))
 			return patch(data, length, gameID, type);
 		
 		DOLHEADER *dol = realloc(data, length + zlib->inflateLength);
