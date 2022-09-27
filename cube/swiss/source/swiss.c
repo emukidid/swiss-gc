@@ -1715,11 +1715,8 @@ void load_game() {
 	}
 	
 	DrawDispose(msgBox);
-	int bootMode = 1;
-	if (!swissSettings.autoboot) {
-		// Show game info or return to the menu
-		bootMode = info_game();
-	}
+	// Show game info or return to the menu
+	int bootMode = info_game();
 	if(!bootMode) return;
 	
 	if(tgcFile.magic == TGC_MAGIC) {
@@ -2049,7 +2046,8 @@ int info_game()
 	config_find(config);	// populate
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
 	int num_cheats = -1;
-	while(1) {
+	// Skip inputs if autoboot is set
+	while(!swissSettings.autoboot) {
 		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PAD_TRIGGER_R)){ VIDEO_WaitVSync (); }
 		while(!(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PAD_TRIGGER_R))){ VIDEO_WaitVSync (); }
 		u32 buttons = PAD_ButtonsHeld(0);
@@ -2102,6 +2100,7 @@ int info_game()
 		}
 		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	}
+	if (swissSettings.autoboot) ret = 1;
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	DrawDispose(infoPanel);
 	// Load config for this game into our current settings
