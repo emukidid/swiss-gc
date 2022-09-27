@@ -1715,8 +1715,11 @@ void load_game() {
 	}
 	
 	DrawDispose(msgBox);
-	// Show game info or return to the menu
-	int bootMode = info_game();
+	int bootMode = 1;
+	if (!swissSettings.autoboot) {
+		// Show game info or return to the menu
+		bootMode = info_game();
+	}
 	if(!bootMode) return;
 	
 	if(tgcFile.magic == TGC_MAGIC) {

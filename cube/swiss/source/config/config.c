@@ -544,6 +544,9 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 				else if(!strcmp("Autoload", name)) {
 					strlcpy(swissSettings.autoload, value, sizeof(swissSettings.autoload));
 				}
+				else if(!strcmp("Autoboot", name)) {
+					swissSettings.autoboot = !strcmp("Yes", value) ? 1:0;
+				}
 				else if(!strncmp("Recent_", name, strlen("Recent_"))) {
 					int recent_slot = atoi(name+strlen("Recent_"));
 					if(recent_slot >= 0 && recent_slot < RECENT_MAX) {
@@ -786,6 +789,16 @@ void config_parse_global(char *configData) {
 				}
 				else if(!strcmp("Autoload", name)) {
 					strlcpy(swissSettings.autoload, value, sizeof(swissSettings.autoload));
+				}
+				else if(!strcmp("Autoboot", name)) {
+					swissSettings.autoboot = !strcmp("Yes", value) ? 1:0;
+				}
+				else if(!strncmp("Recent_", name, strlen("Recent_"))) {
+					int recent_slot = atoi(name+strlen("Recent_"));
+					if(recent_slot >= 0 && recent_slot < RECENT_MAX) {
+						//print_gecko("found recent num %i [%s]\r\n", recent_slot, value);
+						strncpy(swissSettings.recent[recent_slot], value, PATHNAME_MAX);
+					}
 				}
 			}
 		}

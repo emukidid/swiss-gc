@@ -130,6 +130,7 @@ typedef struct {
 	int showHiddenFiles;
 	int recentListLevel;	// on, lazy, off
 	char gcloaderTopVersion[32];
+	bool autoboot;
 	char autoload[PATHNAME_MAX];
 	char recent[RECENT_MAX][PATHNAME_MAX];
 } SwissSettings;
