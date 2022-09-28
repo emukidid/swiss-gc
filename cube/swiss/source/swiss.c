@@ -2046,8 +2046,13 @@ int info_game()
 	config_find(config);	// populate
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
 	int num_cheats = -1;
+
 	// Skip inputs if autoboot is set
-	while(!swissSettings.autoboot) {
+	if (swissSettings.autoboot && !(PAD_ButtonsHeld(0) & PAD_TRIGGER_L)) {
+		return 1;
+	}
+
+	while(1) {
 		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PAD_TRIGGER_R)){ VIDEO_WaitVSync (); }
 		while(!(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PAD_TRIGGER_R))){ VIDEO_WaitVSync (); }
 		u32 buttons = PAD_ButtonsHeld(0);
@@ -2100,7 +2105,6 @@ int info_game()
 		}
 		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	}
-	if (swissSettings.autoboot) ret = 1;
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	DrawDispose(infoPanel);
 	// Load config for this game into our current settings

@@ -175,6 +175,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "RecentListLevel=%s\r\n", recentListLevelStr[swissSettings.recentListLevel]);
 	fprintf(fp, "GCLoaderTopVersion=%s\r\n", swissSettings.gcloaderTopVersion);
 	fprintf(fp, "Autoload=%s\r\n", swissSettings.autoload);
+	fprintf(fp, "Autoboot=%d\r\n", swissSettings.autoboot);
 
 	// Write out the default game config portion too
 	fprintf(fp, "Force Video Mode=%s\r\n", gameVModeStr[swissSettings.gameVMode]);
