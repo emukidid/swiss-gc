@@ -3,14 +3,10 @@
 
 #include "swiss.h"
 typedef struct {
-	char game_id[4];
-	char padding_1[1];
-	char game_name[64];
-	char padding_2[1];
-	char comment[128];
-	char padding_3[1];
-	char status[32];
-	char padding_4[1];
+	char game_id[4 + 1];
+	char game_name[64 + 1];
+	char comment[128 + 1];
+	char status[32 + 1];
 	int gameVMode;
 	int forceHScale;
 	short forceVOffset;
