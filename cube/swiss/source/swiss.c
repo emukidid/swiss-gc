@@ -2047,15 +2047,17 @@ int info_game()
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
 	int num_cheats = -1;
 
-	// Skip inputs if autoboot is set
-	if (swissSettings.autoboot && !(PAD_ButtonsHeld(0) & PAD_TRIGGER_L)) {
-		return 1;
-	}
-
 	while(1) {
-		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PAD_TRIGGER_R)){ VIDEO_WaitVSync (); }
-		while(!(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PAD_TRIGGER_R))){ VIDEO_WaitVSync (); }
-		u32 buttons = PAD_ButtonsHeld(0);
+		u32 buttons = 0;
+		if (swissSettings.autoboot && !(PAD_ButtonsHeld(0) & PAD_TRIGGER_L)) {
+			// Skip inputs if autoboot is set
+			buttons = PAD_BUTTON_A;
+		} else {
+			while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PAD_TRIGGER_R)){ VIDEO_WaitVSync (); }
+			while(!(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PAD_TRIGGER_R))){ VIDEO_WaitVSync (); }
+			buttons = PAD_ButtonsHeld(0);
+		}
+
 		if(buttons & (PAD_BUTTON_B|PAD_BUTTON_A)){
 			ret = (buttons & PAD_BUTTON_A) ? (buttons & PAD_TRIGGER_L) ? 2:1:0;
 			// WODE can't return from here.
