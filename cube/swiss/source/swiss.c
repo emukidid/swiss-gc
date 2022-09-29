@@ -412,6 +412,9 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 				if(canLoadFileType(&curFile.name[0])) {
 					load_file();
 				}
+				else if(swissSettings.enableFileManagement) {
+					needsRefresh = manage_file() ? 1:0;
+				}
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 			}
 			return filePanel;
@@ -620,6 +623,9 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
 				if(canLoadFileType(&curFile.name[0])) {
 					load_file();
+				}
+				else if(swissSettings.enableFileManagement) {
+					needsRefresh = manage_file() ? 1:0;
 				}
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 			}
