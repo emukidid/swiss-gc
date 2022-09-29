@@ -95,7 +95,6 @@ void refreshSRAM(SwissSettings *settings) {
 		memset(sram, 0, sizeof(syssram));
 		sram->flags |= 0x10;
 		sram->flags |= 0x04;
-		sram->flags |= swissSettings.sramVideo & 0x03;
 		writeSram = true;
 	}
 	settings->sramHOffset = sram->display_offsetH;
@@ -103,6 +102,7 @@ void refreshSRAM(SwissSettings *settings) {
 	settings->sramLanguage = sram->lang;
 	settings->sramProgressive = (sram->flags >> 7) & 1;
 	settings->sramStereo = (sram->flags >> 2) & 1;
+	settings->sramVideo = sram->flags & 3;
 	__SYS_UnlockSram(writeSram);
 	if(writeSram)
 		while(!__SYS_SyncSram());

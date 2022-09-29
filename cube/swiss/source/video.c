@@ -72,6 +72,16 @@ int getFontEncode() {
 
 GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 	switch(uiVMode) {
+		case 0:
+			if(getDTVStatus()) {
+				return &TVNtsc480Prog;
+			} else {
+				switch(swissSettings.sramVideo) {
+					case SYS_VIDEO_MPAL: return &TVMpal480IntDf;
+					case SYS_VIDEO_PAL:  return swissSettings.sram60Hz ? &TVEurgb60Hz480IntDf : &TVPal576IntDfScale;
+					default:             return &TVNtsc480IntDf;
+				}
+			}
 		case 1:
 			if(getDTVStatus()) {
 				return &TVNtsc480IntDf;
