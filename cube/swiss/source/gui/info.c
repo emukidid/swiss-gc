@@ -28,15 +28,16 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawLabel(30, 55, "System Info (1/3):"));
 		// Model
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"MODEL", 0.65f, true, defaultColor));
-		if(mfpvr() == GC_CPU_VERSION01) {
+		if(is_gamecube()) {
 			if(driveInfo.dev_code == 0x0201) {
 				strcpy(topStr, "NPDP-GDEV (GCT-0100)");
 			}
-			else if(!strncmp(&IPLInfo[0x55], "TDEV Revision 1.1", 17)) {
+			else if(!strncmp(&IPLInfo[0x55], "TDEV", 4) ||
+					!strncmp(&IPLInfo[0x55], "DEV  Revision 0.1", 0x11)) {
 				strcpy(topStr, "Nintendo GameCube DOT-006");
 			}
 			else if(driveInfo.dev_code == 0x0200) {
-				if(!strncmp(&IPLInfo[0x55], "PAL  Revision 1.0", 17)) {
+				if(!strncmp(&IPLInfo[0x55], "PAL ", 4)) {
 					strcpy(topStr, "Nintendo GameCube DOT-002P");
 				}
 				else {
@@ -44,7 +45,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 				}
 			}
 			else if(driveInfo.dev_code == 0x0001) {
-				if(!strncmp(&IPLInfo[0x55], "PAL  Revision 1.0", 17)) {
+				if(!strncmp(&IPLInfo[0x55], "PAL ", 4)) {
 					strcpy(topStr, "Nintendo GameCube DOT-001P");
 				}
 				else {
@@ -54,15 +55,21 @@ uiDrawObj_t * info_draw_page(int page_num) {
 			else if(driveInfo.dev_code == 0x0000 && driveInfo.pad[1] == 'M') {
 				strcpy(topStr, "Panasonic Q SL-GC10-S");
 			}
-			else if(!strncmp(&IPLInfo[0x55], "MPAL Revision 1.1", 17)) {
-				strcpy(topStr, "Nintendo GameCube DOL-002 (BRA)");
+			else if(!strncmp(&IPLInfo[0x55], "PAL  Revision 1.2", 0x11)) {
+				strcpy(topStr, "Nintendo GameCube DOL-101(EUR)");
+			}
+			else if(!strncmp(&IPLInfo[0x55], "NTSC Revision 1.2", 0x11)) {
+				sprintf(topStr, "Nintendo GameCube DOL-101(%s)", getFontEncode() ? "JPN" : "USA");
+			}
+			else if(!strncmp(&IPLInfo[0x55], "MPAL", 4)) {
+				strcpy(topStr, "Nintendo GameCube DOL-002(BRA)");
+			}
+			else if(!strncmp(&IPLInfo[0x55], "PAL ", 4)) {
+				strcpy(topStr, "Nintendo GameCube DOL-001(EUR)");
 			}
 			else {
-				strcpy(topStr, "Nintendo GameCube DOL-001");
+				sprintf(topStr, "Nintendo GameCube DOL-001(%s)", getFontEncode() ? "JPN" : "USA");
 			}
-		}
-		else if(mfpvr() == GC_CPU_VERSION02) {
-			strcpy(topStr, "Nintendo GameCube DOL-101");
 		}
 		else {
 			strcpy(topStr, "Nintendo Wii");
