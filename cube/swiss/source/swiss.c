@@ -307,6 +307,9 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 		sprintf(txtbuffer, "%s", &curFile.name[0]);
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, ((getVideoMode()->fbWidth-150)-20), .85);
 		DrawAddChild(containerPanel, DrawStyledLabel(150, 80, txtbuffer, scale, false, defaultColor));
+		if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])) {
+			DrawAddChild(containerPanel, DrawImage(TEX_STAR, ((getVideoMode()->fbWidth-30)-16), 80, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+		}
 		if(num_files > FILES_PER_PAGE) {
 			uiDrawObj_t *scrollBar = DrawVertScrollBar(getVideoMode()->fbWidth-25, fileListBase, 16, scrollBarHeight, (float)((float)curSelection/(float)(num_files-1)),scrollBarTabHeight);
 			DrawAddChild(containerPanel, scrollBar);
@@ -507,6 +510,9 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 		sprintf(txtbuffer, "%s", &curFile.name[0]);
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, (getVideoMode()->fbWidth-60), .85);
 		DrawAddChild(containerPanel, DrawStyledLabel(30, 85, txtbuffer, scale, false, defaultColor));
+		if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])) {
+			DrawAddChild(containerPanel, DrawImage(TEX_STAR, ((getVideoMode()->fbWidth-30)-16), 85, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+		}
 		int left_num = curSelection - current_view_start; // Number of entries to the left
 		int right_num = (current_view_end - curSelection)-1;
 		//print_gecko("%i entries to the left, %i to the right in this view\r\n", left_num, right_num);

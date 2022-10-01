@@ -64,6 +64,7 @@ GXTexObj palTexObj;
 GXTexObj checkedTexObj;
 GXTexObj uncheckedTexObj;
 GXTexObj loadingTexObj;
+GXTexObj starTexObj;
 GXTexObj mp3imgTexObj;
 GXTexObj dolimgTexObj;
 GXTexObj dolcliimgTexObj;
@@ -177,6 +178,7 @@ typedef struct drawFileBrowserButtonEvent {
 	char *displayName;
 	file_handle *file;
 	int mode;
+	bool isAutoLoadEntry;
 	bool isCarousel;	// Draw this as a full "card" style
 	int distFromMiddle;	// 0 = full, -1 spine only but large then gradually getting smaller as dist increases from 0
 } drawFileBrowserButtonEvent_t;
@@ -351,6 +353,7 @@ static void init_textures()
 	TPL_GetTexture(&buttonsTPL, unchecked_32, &uncheckedTexObj);
 	TPL_GetTexture(&buttonsTPL, loading_16, &loadingTexObj);
 	GX_InitTexObjWrapMode(&loadingTexObj, GX_MIRROR, GX_MIRROR);
+	TPL_GetTexture(&buttonsTPL, star_16, &starTexObj);
 	TPL_GetTexture(&imagesTPL, mp3img, &mp3imgTexObj);
 	TPL_GetTexture(&imagesTPL, dolimg, &dolimgTexObj);
 	TPL_GetTexture(&imagesTPL, dolcliimg, &dolcliimgTexObj);
@@ -541,6 +544,9 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			break;
 		case TEX_UNCHECKED:
 			texObj = &uncheckedTexObj; color = (GXColor) {87,87,87,255};
+			break;
+		case TEX_STAR:
+			texObj = &starTexObj; color = (GXColor) {255,255,0,255};
 			break;
 		case TEX_GCLOADER:
 			texObj = &gcloaderTexObj; color = (GXColor) {216,216,216,255};
@@ -1052,6 +1058,11 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 					GX_TexCoord2f32(0.0f,1.0f);
 				GX_End();
 				
+				if(data->isAutoLoadEntry) {
+					drawInit();
+					_DrawImageNow(TEX_STAR, bnr_x+bnr_width-16, data->y1+borderSize+40, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+				}
+				
 				// Company
 				sprintf(fbTextBuffer, "%.*s", BNR_FULL_TEXT_LEN, file->meta->bannerDesc.fullCompany);
 				float scale = GetTextScaleToFitInWidth(fbTextBuffer,(data->x2-data->x1)-(borderSize*2));
@@ -1129,6 +1140,11 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 					GX_Color4u8(255, 255, 255, 255);
 					GX_TexCoord2f32(0.0f,1.0f);
 				GX_End();
+				
+				if(data->isAutoLoadEntry) {
+					drawInit();
+					_DrawImageNow(TEX_STAR, x_start, data->y2-bnr_width-borderSize, 12, 12, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+				}
 			}
 			// fullGameName displays some titles with incorrect encoding, use displayName instead
 			drawStringEllipsis(data->x1 + (data->x2-data->x1)/2 - GetFontHeight(0.5f)/2, data->y2-bnr_width-5-borderSize, data->displayName, 0.5f, false, defaultColor, true, (data->y2-bnr_width-5-borderSize) - (data->y1 + (borderSize*2)));
@@ -1170,6 +1186,11 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				GX_Color4u8(255, 255, 255, 255);
 				GX_TexCoord2f32(0.0f,1.0f);
 			GX_End();
+			
+			if(data->isAutoLoadEntry) {
+				drawInit();
+				_DrawImageNow(TEX_STAR, data->x1+7+96-16, data->y1+4, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+			}
 		}
 		if(file->meta && file->meta->regionTexObj) {
 			drawInit();
@@ -1255,6 +1276,7 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 			eventData->displayName[((u32)strrchr(eventData->displayName, '.'))-((u32)eventData->displayName)] = '\0';
 		}
 	}
+	eventData->isAutoLoadEntry = !strncmp(swissSettings.autoload, file->name, strlen(file->name));
 	
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_FILEBROWSERBUTTON;
