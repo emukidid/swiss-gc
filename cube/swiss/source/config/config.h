@@ -17,6 +17,7 @@ typedef struct {
 	int invertCStick;
 	int triggerLevel;
 	int emulateReadSpeed;
+	int cleanBoot;
 } ConfigEntry;
 
 void config_find(ConfigEntry *entry);

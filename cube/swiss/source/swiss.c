@@ -1721,35 +1721,45 @@ void load_game() {
 	}
 	
 	DrawDispose(msgBox);
+	// Find the config for this game, or default if we don't know about it
+	ConfigEntry *config = calloc(1, sizeof(ConfigEntry));
+	memcpy(config->game_id, &GCMDisk.ConsoleID, 4);
+	memcpy(config->game_name, GCMDisk.GameName, 64);
+	config->cleanBoot = !valid_gcm_boot(&GCMDisk);
+	config_find(config);
+	
 	// Show game info or return to the menu
-	int bootMode = info_game();
-	if(!bootMode) return;
-	
-	if(tgcFile.magic == TGC_MAGIC) {
-		bootMode = 1;
-	}
-	else if(!valid_gcm_boot(&GCMDisk)) {
-		bootMode = 2;
+	if(!info_game(config)) {
+		free(config);
+		return;
 	}
 	
-	if(bootMode == 2) {
+	if(devices[DEVICE_CONFIG] != NULL) {
+		// Update the recent list.
+		if(update_recent()) {
+			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list ..."));
+			config_update_recent(true);
+			DrawDispose(msgBox);
+		}
+	}
+	
+	// Load config for this game into our current settings
+	config_load_current(config);
+	
+	if(config->cleanBoot) {
 		gameID_set(&GCMDisk, get_gcm_boot_hash(&GCMDisk));
 		
 		if(devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support clean boot."));
 			sleep(2);
 			DrawDispose(msgBox);
-			gameID_unset();
-			config_unload_current();
-			return;
+			goto fail;
 		}
 		if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, NULL, -2)) {
 			msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
 			wait_press_A();
 			DrawDispose(msgBox);
-			gameID_unset();
-			config_unload_current();
-			return;
+			goto fail;
 		}
 		if(devices[DEVICE_CUR] != &__device_dvd) {
 			devices[DEVICE_CUR]->deinit(&curFile);
@@ -1773,7 +1783,6 @@ void load_game() {
 			DrawDispose(msgBox);
 		}
 	}
-	
 	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
 		setTopAddr(WIIRD_ENGINE);
 	}
@@ -1836,14 +1845,12 @@ void load_game() {
 		msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));
 		wait_press_A();
 		DrawDispose(msgBox);
-		goto fail;
+		goto fail_patched;
 	}
 
 	load_app(fileToPatch);
-fail:
-	gameID_unset();
-	config_unload_current();
 
+fail_patched:
 	if(devices[DEVICE_PATCHES] != NULL) {
 		for(int i = 0; i < numToPatch; i++) {
 			devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile);
@@ -1855,6 +1862,10 @@ fail:
 		devices[DEVICE_PATCHES] = NULL;
 	}
 	free(filesToPatch);
+fail:
+	gameID_unset();
+	config_unload_current();
+	free(config);
 }
 
 /* Execute/Load/Parse the currently selected file */
@@ -2041,42 +2052,31 @@ uiDrawObj_t* draw_game_info() {
 }
 
 /* Show info about the game - and also load the config for it */
-int info_game()
+int info_game(ConfigEntry *config)
 {
-	int ret = -1;
-	ConfigEntry *config = NULL;
-	// Find the config for this game, or default if we don't know about it
-	config = calloc(1, sizeof(ConfigEntry));
-	memcpy(config->game_id, &GCMDisk.ConsoleID, 4);
-	strncpy(&config->game_name[0], &GCMDisk.GameName[0], 64);
-	config_find(config);	// populate
+	int ret = 0, num_cheats = -1;
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
-	int num_cheats = -1;
 	while(1) {
 		while(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PAD_TRIGGER_R)){ VIDEO_WaitVSync (); }
 		while(!(PAD_ButtonsHeld(0) & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PAD_TRIGGER_R))){ VIDEO_WaitVSync (); }
 		u32 buttons = PAD_ButtonsHeld(0);
-		if(buttons & (PAD_BUTTON_B|PAD_BUTTON_A)){
-			ret = (buttons & PAD_BUTTON_A) ? (buttons & PAD_TRIGGER_L) ? 2:1:0;
-			// WODE can't return from here.
-			if(devices[DEVICE_CUR] == &__device_wode && !ret) {
-				continue;
+		if(buttons & PAD_BUTTON_A) {
+			if(buttons & PAD_TRIGGER_L) {
+				config->cleanBoot = 1;
 			}
-			if(ret && devices[DEVICE_CONFIG] != NULL) {
-				// Update the recent list.
-				if(update_recent()) {
-					uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list ..."));
-					config_update_recent(true);
-					DrawDispose(msgBox);
-				}
-			}
+			ret = 1;
+			break;
+		}
+		// WODE can't return from here.
+		if((buttons & PAD_BUTTON_B) && devices[DEVICE_CUR] != &__device_wode) {
+			ret = 0;
 			break;
 		}
 		if((buttons & PAD_TRIGGER_R) && is_verifiable_disc(&GCMDisk)) {
 			verify_game();
 		}
 		if(buttons & PAD_BUTTON_X) {
-			show_settings(valid_gcm_boot(&GCMDisk) ? &curFile : NULL, config);
+			show_settings(PAGE_GAME, 0, config);
 		}
 		if((buttons & PAD_TRIGGER_Z) && devices[DEVICE_CONFIG] != NULL) {
 			// Toggle autoload
@@ -2107,10 +2107,6 @@ int info_game()
 	}
 	while(PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	DrawDispose(infoPanel);
-	// Load config for this game into our current settings
-	if(ret) 
-		config_load_current(config);
-	free(config);
 	return ret;
 }
 
@@ -2334,7 +2330,7 @@ void menu_loop()
 						needsDeviceChange = 1;  //Change from SD->DVD or vice versa
 						break;
 					case MENU_SETTINGS:
-						show_settings(NULL, NULL);
+						show_settings(PAGE_GLOBAL, 0, NULL);
 						break;
 					case MENU_INFO:
 						show_info();

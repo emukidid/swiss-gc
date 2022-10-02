@@ -173,7 +173,7 @@ void drawSettingEntryNumeric(uiDrawObj_t* page, int *y, char *label, int num, bo
 	drawSettingEntryString(page, y, label, txtbuffer, selected, enabled);
 }
 
-uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, ConfigEntry *gameConfig) {
+uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfig) {
 	uiDrawObj_t* page = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 	char sramHOffsetStr[8];
 	char forceVOffsetStr[8];
@@ -304,7 +304,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 	}
 	else if(page_num == PAGE_GAME) {
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Current Game Settings (5/5):"));
-		bool enabledGamePatches = file != NULL && gameConfig != NULL;
+		bool enabledGamePatches = gameConfig != NULL && !gameConfig->cleanBoot;
 		if(enabledGamePatches) {
 			bool enabledVideoPatches = swissSettings.disableVideoPatches < 2;
 			bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
@@ -344,7 +344,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, file_handle *file, Con
 	return page;
 }
 
-void settings_toggle(int page, int option, int direction, file_handle *file, ConfigEntry *gameConfig) {
+void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfig) {
 	if(page == PAGE_GLOBAL) {
 		switch(option) {
 			case SET_SYS_SOUND:
@@ -628,7 +628,7 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 			break;
 		}
 	}
-	else if(page == PAGE_GAME && file != NULL && gameConfig != NULL) {
+	else if(page == PAGE_GAME && gameConfig != NULL && !gameConfig->cleanBoot) {
 		switch(option) {
 			case SET_FORCE_VIDEOMODE:
 				if(swissSettings.disableVideoPatches < 2) {
@@ -718,20 +718,13 @@ void settings_toggle(int page, int option, int direction, file_handle *file, Con
 	}
 }
 
-int show_settings(file_handle *file, ConfigEntry *config) {
-	int page = PAGE_GLOBAL, option = SET_SYS_SOUND;
-	
+int show_settings(int page, int option, ConfigEntry *config) {
 	// Copy current settings to a temp copy in case the user cancels out
 	memcpy((void*)&tempSettings,(void*)&swissSettings, sizeof(SwissSettings));
 	
-	// Setup the settings for the current game
-	if(config != NULL) {
-		page = PAGE_GAME;
-	}
-		
 	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
-		uiDrawObj_t* settingsPage = settings_draw_page(page, option, file, config);
+		uiDrawObj_t* settingsPage = settings_draw_page(page, option, config);
 		while (!((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
 			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
 			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_UP) 
@@ -761,7 +754,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				option++;
 			}
 			else {
-				settings_toggle(page, option, 1, file, config);
+				settings_toggle(page, option, 1, config);
 			}
 		}
 		if(btns & PAD_BUTTON_LEFT) {
@@ -773,7 +766,7 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				option--;
 			}
 			else {
-				settings_toggle(page, option, -1, file, config);
+				settings_toggle(page, option, -1, config);
 			}
 		}
 		if((btns & PAD_BUTTON_DOWN) && option < settings_count_pp[page])
@@ -853,8 +846,8 @@ int show_settings(file_handle *file, ConfigEntry *config) {
 				page--; option = 0;
 			}
 			// These use text input, allow them to be accessed with the A button
-			if(page == PAGE_NETWORK && ((option >= SET_FTP_HOSTIP && option <= SET_FTP_PASS) || (option >= SET_FSP_HOSTIP && option <= SET_SMB_PASS))) {
-				settings_toggle(page, option, -1, file, config);
+			if(page == PAGE_NETWORK && ((option >= SET_FSP_HOSTIP && option <= SET_FTP_PASS) || (option >= SET_SMB_HOSTIP && option <= SET_SMB_PASS))) {
+				settings_toggle(page, option, 0, config);
 			}
 		}
 		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 

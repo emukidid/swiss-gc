@@ -128,7 +128,7 @@ extern char *bs2BootStr[];
 extern char *recentListLevelStr[];
 #define SRAM_LANG_MAX 6
 extern char *sramLang[];
-int show_settings(file_handle *file, ConfigEntry *config);
+int show_settings(int page, int option, ConfigEntry *config);
 void refreshSRAM();
 
 #endif

@@ -1022,5 +1022,8 @@ void config_unload_current() {
 	swissSettings.forceWidescreen = backup.forceWidescreen;
 	swissSettings.invertCStick = backup.invertCStick;
 	swissSettings.triggerLevel = backup.triggerLevel;
+	swissSettings.sram60Hz = backup.sram60Hz;
+	swissSettings.sramProgressive = backup.sramProgressive;
 	swissSettings.emulateReadSpeed = backup.emulateReadSpeed;
+	swissSettings.sramVideo = backup.sramVideo;
 }
