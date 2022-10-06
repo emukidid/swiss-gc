@@ -67,6 +67,7 @@ static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	"Auto-load all cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. /swiss/cheats/GPOP8D.txt (on a compatible device)\nthen all cheats in the file will be enabled",
 	"WiiRD debugging:\n\nDisabled - Boot as normal (default)\nEnabled - This will start a game with the WiiRD debugger enabled & paused\n\nThe WiiRD debugger takes up more memory and can cause issues."
 };
@@ -288,6 +289,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool emulatedMemoryCard = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_MEMCARD);
 		drawSettingEntryString(page, &page_y_ofs, "In-Game Reset:", igrTypeStr[swissSettings.igrType], option == SET_IGR, true);
 		drawSettingEntryString(page, &page_y_ofs, "Boot through IPL:", bs2BootStr[swissSettings.bs2Boot], option == SET_BS2BOOT, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Boot without prompts:", swissSettings.autoBoot, option == SET_AUTOBOOT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Memory Card:", swissSettings.emulateMemoryCard, option == SET_EMULATE_MEMCARD, emulatedMemoryCard);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force Video Active:", swissSettings.forceVideoActive, option == SET_FORCE_VIDACTIVE, enabledVideoPatches);
 		drawSettingEntryString(page, &page_y_ofs, "Disable Video Patches:", disableVideoPatchesStr[swissSettings.disableVideoPatches], option == SET_ENABLE_VIDPATCH, true);
@@ -524,6 +526,9 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					swissSettings.bs2Boot = 0;
 				if(swissSettings.bs2Boot < 0)
 					swissSettings.bs2Boot = 3;
+			break;
+			case SET_AUTOBOOT:
+				swissSettings.autoBoot ^=1;
 			break;
 			case SET_EMULATE_MEMCARD:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_MEMCARD))

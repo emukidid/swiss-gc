@@ -790,6 +790,7 @@ void sortDols(ExecutableFile *filesToPatch, int num_files)
 
 // Allow the user to select an alternate DOL
 ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch, int num_files) {
+	if(swissSettings.autoBoot) return NULL;
 	int i = 0, j = 0, max = 0, idx = 0, page = 4;
 	sortDols(filesToPatch, num_files);	// Sort DOL to the top
 	for(i = 0; i < num_files; i++) {
@@ -2054,6 +2055,13 @@ uiDrawObj_t* draw_game_info() {
 /* Show info about the game - and also load the config for it */
 int info_game(ConfigEntry *config)
 {
+	if(swissSettings.autoBoot) {
+		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B) {
+			swissSettings.autoBoot = 0;
+		} else {
+			return swissSettings.autoBoot;
+		}
+	}
 	int ret = 0, num_cheats = -1;
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
 	while(1) {

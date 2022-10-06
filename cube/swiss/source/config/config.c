@@ -157,6 +157,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "SMBPassword=%s\r\n", swissSettings.smbPassword);
 	fprintf(fp, "SMBShareName=%s\r\n", swissSettings.smbShare);
 	fprintf(fp, "SMBHostIP=%s\r\n", swissSettings.smbServerIp);
+	fprintf(fp, "AutoBoot=%s\r\n", swissSettings.autoBoot ? "Yes":"No");
 	fprintf(fp, "AutoCheats=%s\r\n", swissSettings.autoCheats ? "Yes":"No");
 	fprintf(fp, "InitNetwork=%s\r\n", swissSettings.initNetworkAtStart ? "Yes":"No");
 	fprintf(fp, "IGRType=%s\r\n", igrTypeStr[swissSettings.igrType]);
@@ -465,6 +466,9 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 				else if(!strcmp("SMBHostIP", name)) {
 					strlcpy(swissSettings.smbServerIp, value, sizeof(swissSettings.smbServerIp));
 				}
+				else if(!strcmp("AutoBoot", name)) {
+					swissSettings.autoBoot = !strcmp("Yes", value);
+				}
 				else if(!strcmp("AutoCheats", name)) {
 					swissSettings.autoCheats = !strcmp("Yes", value);
 				}
@@ -707,6 +711,9 @@ void config_parse_global(char *configData) {
 				}
 				else if(!strcmp("SMBHostIP", name)) {
 					strlcpy(swissSettings.smbServerIp, value, sizeof(swissSettings.smbServerIp));
+				}
+				else if(!strcmp("AutoBoot", name)) {
+					swissSettings.autoBoot = !strcmp("Yes", value);
 				}
 				else if(!strcmp("AutoCheats", name)) {
 					swissSettings.autoCheats = !strcmp("Yes", value);

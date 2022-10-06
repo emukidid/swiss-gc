@@ -120,6 +120,7 @@ typedef struct {
 	char fspHostIp[32];
 	u16 fspPort;
 	char fspPassword[32];
+	int autoBoot;
 	int autoCheats;
 	int igrType;
 	int initNetworkAtStart;
