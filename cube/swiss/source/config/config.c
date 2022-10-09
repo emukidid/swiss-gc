@@ -182,6 +182,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Force Horizontal Scale=%s\r\n", forceHScaleStr[swissSettings.forceHScale]);
 	fprintf(fp, "Force Vertical Offset=%+hi\r\n", swissSettings.forceVOffset);
 	fprintf(fp, "Force Vertical Filter=%s\r\n", forceVFilterStr[swissSettings.forceVFilter]);
+	fprintf(fp, "Force Field Rendering=%s\r\n", forceVJitterStr[swissSettings.forceVJitter]);
 	fprintf(fp, "Disable Alpha Dithering=%s\r\n", swissSettings.disableDithering ? "Yes":"No");
 	fprintf(fp, "Force Anisotropic Filter=%s\r\n", swissSettings.forceAnisotropy ? "Yes":"No");
 	fprintf(fp, "Force Widescreen=%s\r\n", forceWidescreenStr[swissSettings.forceWidescreen]);
@@ -250,6 +251,7 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	fprintf(fp, "Force Horizontal Scale=%s\r\n", forceHScaleStr[entry->forceHScale]);
 	fprintf(fp, "Force Vertical Offset=%+hi\r\n", entry->forceVOffset);
 	fprintf(fp, "Force Vertical Filter=%s\r\n", forceVFilterStr[entry->forceVFilter]);
+	fprintf(fp, "Force Field Rendering=%s\r\n", forceVJitterStr[entry->forceVJitter]);
 	fprintf(fp, "Disable Alpha Dithering=%s\r\n", entry->disableDithering ? "Yes":"No");
 	fprintf(fp, "Force Anisotropic Filter=%s\r\n", entry->forceAnisotropy ? "Yes":"No");
 	fprintf(fp, "Force Widescreen=%s\r\n", forceWidescreenStr[entry->forceWidescreen]);
@@ -281,6 +283,7 @@ void config_defaults(ConfigEntry *entry) {
 	entry->forceVOffset = swissSettings.forceVOffset;
 	entry->forceVOffset = swissSettings.aveCompat == 1 ? -3:0;
 	entry->forceVFilter = swissSettings.forceVFilter;
+	entry->forceVJitter = swissSettings.forceVJitter;
 	entry->disableDithering = swissSettings.disableDithering;
 	entry->forceAnisotropy = swissSettings.forceAnisotropy;
 	entry->forceWidescreen = swissSettings.forceWidescreen;
@@ -365,6 +368,15 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 					int *ptr = !defaultPassed ? &swissSettings.forceVFilter : &configEntries[configEntriesCount].forceVFilter;
 					for(int i = 0; i < 4; i++) {
 						if(!strcmp(forceVFilterStr[i], value)) {
+							*ptr = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Force Field Rendering", name)) {
+					int *ptr = !defaultPassed ? &swissSettings.forceVJitter : &configEntries[configEntriesCount].forceVJitter;
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(forceVJitterStr[i], value)) {
 							*ptr = i;
 							break;
 						}
@@ -618,6 +630,14 @@ void config_parse_global(char *configData) {
 					for(int i = 0; i < 4; i++) {
 						if(!strcmp(forceVFilterStr[i], value)) {
 							swissSettings.forceVFilter = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Force Field Rendering", name)) {
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(forceVJitterStr[i], value)) {
+							swissSettings.forceVJitter = i;
 							break;
 						}
 					}
@@ -894,6 +914,14 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 						}
 					}
 				}
+				else if(!strcmp("Force Field Rendering", name)) {
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(forceVJitterStr[i], value)) {
+							entry->forceVJitter = i;
+							break;
+						}
+					}
+				}
 				else if(!strcmp("Disable Alpha Dithering", name)) {
 					entry->disableDithering = !strcmp("Yes", value);
 				}
@@ -1011,6 +1039,7 @@ void config_load_current(ConfigEntry *config) {
 	swissSettings.forceHScale = config->forceHScale;
 	swissSettings.forceVOffset = config->forceVOffset;
 	swissSettings.forceVFilter = config->forceVFilter;
+	swissSettings.forceVJitter = config->forceVJitter;
 	swissSettings.disableDithering = config->disableDithering;
 	swissSettings.forceAnisotropy = config->forceAnisotropy;
 	swissSettings.forceWidescreen = config->forceWidescreen;
@@ -1024,6 +1053,7 @@ void config_unload_current() {
 	swissSettings.forceHScale = backup.forceHScale;
 	swissSettings.forceVOffset = backup.forceVOffset;
 	swissSettings.forceVFilter = backup.forceVFilter;
+	swissSettings.forceVJitter = backup.forceVJitter;
 	swissSettings.disableDithering = backup.disableDithering;
 	swissSettings.forceAnisotropy = backup.forceAnisotropy;
 	swissSettings.forceWidescreen = backup.forceWidescreen;

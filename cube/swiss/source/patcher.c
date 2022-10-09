@@ -6675,14 +6675,40 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	_SDA2_BASE_ = _SDA_BASE_ = 0;
 	
 	switch (swissSettings.gameVMode) {
-		case 6: case 13: case 7: case 14:
-			if (!swissSettings.forceHScale)
-				swissSettings.forceHScale = 1;
-		case 3: case 10: case 4: case 11:
-			swissSettings.forceVOffset &= ~1;
-		case 2: case  9: case 5: case 12: case -1: case -2:
+		case 2: case 9: case 5: case 12: case -1: case -2:
 			if (!swissSettings.forceVFilter)
 				swissSettings.forceVFilter = 1;
+			break;
+		case 3: case 10:
+			swissSettings.forceVOffset &= ~1;
+			if (!swissSettings.forceVFilter)
+				swissSettings.forceVFilter = 1;
+			if (!swissSettings.forceVJitter)
+				swissSettings.forceVJitter = 2;
+			break;
+		case 4: case 11:
+			swissSettings.forceVOffset &= ~1;
+			if (!swissSettings.forceVFilter)
+				swissSettings.forceVFilter = 1;
+			if (!swissSettings.forceVJitter)
+				swissSettings.forceVJitter = 1;
+			break;
+		case 6: case 13:
+			if (!swissSettings.forceHScale)
+				swissSettings.forceHScale = 1;
+			swissSettings.forceVOffset &= ~1;
+			if (!swissSettings.forceVFilter)
+				swissSettings.forceVFilter = 1;
+			if (!swissSettings.forceVJitter)
+				swissSettings.forceVJitter = 1;
+			break;
+		case 7: case 14:
+			if (!swissSettings.forceHScale)
+				swissSettings.forceHScale = 1;
+			swissSettings.forceVOffset &= ~1;
+			if (!swissSettings.forceVFilter)
+				swissSettings.forceVFilter = 1;
+			break;
 	}
 	
 	if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 10)
@@ -7397,8 +7423,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							break;
 					}
 				}
-				if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11 ||
-					swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13) {
+				if (swissSettings.forceVJitter == 1) {
 					__VIRetraceHandlerHook = getPatchAddr(VI_RETRACEHANDLERHOOK);
 					
 					switch (j) {
@@ -8396,14 +8421,14 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			if (j == 0)
 				data[i + 7] = 0x547F0FFE;	// srwi		r31, r3, 31
 			
-			if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 8) {
+			if (swissSettings.gameVMode == -2 || (swissSettings.gameVMode >= 8 && swissSettings.gameVMode <= 14))
+				if (j == 1)
+					data[i + 12] = 0x38600006;	// li		r3, 6
+			
+			if (swissSettings.forceVJitter == 2) {
 				memset(data + i, 0, VIGetNextFieldSigs[j].Length * sizeof(u32));
 				data[i + 0] = 0x38600001;	// li		r3, 1
 				data[i + 1] = 0x4E800020;	// blr
-			}
-			else if (swissSettings.gameVMode == -2 || (swissSettings.gameVMode >= 8 && swissSettings.gameVMode <= 14)) {
-				if (j == 1)
-					data[i + 12] = 0x38600006;	// li		r3, 6
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", VIGetNextFieldSigs[j].Name, j, VIGetNextField);
 		}
@@ -8433,8 +8458,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		u32 *__GXInitGX = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__GXInitGX) {
-			if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11 ||
-				swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13) {
+			if (swissSettings.forceVJitter == 1) {
 				switch (j) {
 					case 0: data[i + 1055] = 0x38600001; break;
 					case 1: data[i +  466] = 0x38600001; break;
@@ -8526,8 +8550,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11 ||
-		swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13) {
+	if (swissSettings.forceVJitter == 1) {
 		for (j = 0; j < sizeof(GXCopyDispSigs) / sizeof(FuncPattern); j++)
 			if (GXCopyDispSigs[j].offsetFoundAt) break;
 		

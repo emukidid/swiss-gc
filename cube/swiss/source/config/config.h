@@ -11,6 +11,7 @@ typedef struct {
 	int forceHScale;
 	short forceVOffset;
 	int forceVFilter;
+	int forceVJitter;
 	int disableDithering;
 	int forceAnisotropy;
 	int forceWidescreen;

@@ -28,6 +28,7 @@ char *uiVModeStr[] = {"Auto", "480i", "480p", "576i", "576p"};
 char *gameVModeStr[] = {"Auto", "480i", "480sf", "240p", "960i", "480p", "1080i60", "540p60", "576i", "576sf", "288p", "1152i", "576p", "1080i50", "540p50"};
 char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "656px", "672px", "704px", "720px"};
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
+char *forceVJitterStr[] = {"Auto", "On", "Off"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
 char *disableVideoPatchesStr[] = {"None", "Game", "All"};
@@ -76,6 +77,7 @@ static char *tooltips_game[PAGE_GAME_MAX+1] = {
 	NULL,
 	NULL,
 	"Force Vertical Offset:\n\n+0 - Standard value\n-2 - GCVideo-DVI compatible (480i)\n-3 - GCVideo-DVI compatible (default)\n-4 - GCVideo-DVI compatible (240p)\n-12 - Datapath VisionRGB (480p)",
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -305,6 +307,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
 		drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_DEFAULT_VERT_OFFSET, enabledVideoPatches);
 		drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_DEFAULT_VERT_FILTER, enabledVideoPatches);
+		drawSettingEntryString(page, &page_y_ofs, "Force Field Rendering:", forceVJitterStr[swissSettings.forceVJitter], option == SET_FIELD_RENDER, enabledVideoPatches);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_DEFAULT_ALPHA_DITHER, enabledVideoPatches);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_DEFAULT_ANISO_FILTER, true);
 		drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, true);
@@ -324,6 +327,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			sprintf(forceVOffsetStr, "%+hi", gameConfig->forceVOffset);
 			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_VERT_OFFSET, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[gameConfig->forceVFilter], option == SET_VERT_FILTER, enabledVideoPatches);
+			drawSettingEntryString(page, &page_y_ofs, "Force Field Rendering:", forceVJitterStr[gameConfig->forceVJitter], option == SET_FIELD_RENDER, enabledVideoPatches);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", gameConfig->disableDithering, option == SET_ALPHA_DITHER, enabledVideoPatches);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", gameConfig->forceAnisotropy, option == SET_ANISO_FILTER, true);
 			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[gameConfig->forceWidescreen], option == SET_WIDESCREEN, true);
@@ -339,6 +343,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
 			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_VERT_OFFSET, false);
 			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_VERT_FILTER, false);
+			drawSettingEntryString(page, &page_y_ofs, "Force Field Rendering:", forceVJitterStr[swissSettings.forceVJitter], option == SET_FIELD_RENDER, false);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_ALPHA_DITHER, false);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_ANISO_FILTER, false);
 			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_WIDESCREEN, false);
@@ -602,6 +607,15 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 						swissSettings.forceVFilter = 3;
 				}
 			break;
+			case SET_DEFAULT_FIELD_RENDER:
+				if(swissSettings.disableVideoPatches < 2) {
+					swissSettings.forceVJitter += direction;
+					if(swissSettings.forceVJitter > 2)
+						swissSettings.forceVJitter = 0;
+					if(swissSettings.forceVJitter < 0)
+						swissSettings.forceVJitter = 2;
+				}
+			break;
 			case SET_DEFAULT_ALPHA_DITHER:
 				if(swissSettings.disableVideoPatches < 2)
 					swissSettings.disableDithering ^= 1;
@@ -688,6 +702,15 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 						gameConfig->forceVFilter = 0;
 					if(gameConfig->forceVFilter < 0)
 						gameConfig->forceVFilter = 3;
+				}
+			break;
+			case SET_FIELD_RENDER:
+				if(swissSettings.disableVideoPatches < 2) {
+					gameConfig->forceVJitter += direction;
+					if(gameConfig->forceVJitter > 2)
+						gameConfig->forceVJitter = 0;
+					if(gameConfig->forceVJitter < 0)
+						gameConfig->forceVJitter = 2;
 				}
 			break;
 			case SET_ALPHA_DITHER:
