@@ -510,26 +510,27 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 	char* gameID = (char*)&GCMDisk;
 	// Go through all the possible files we think need patching..
 	for(i = 0; i < numToPatch; i++) {
+		ExecutableFile *fileToPatch = &filesToPatch[i];
 		int patched = 0;
 
-		sprintf(txtbuffer, "Patching File %i/%i\n%s [%iKB]",i+1,numToPatch,filesToPatch[i].name,filesToPatch[i].size/1024);
+		sprintf(txtbuffer, "Patching File %i/%i\n%s [%iKB]",i+1,numToPatch,fileToPatch->name,fileToPatch->size/1024);
 		
-		if(filesToPatch[i].size > 8*1024*1024) {
-			print_gecko("Skipping %s %iKB too large\r\n", filesToPatch[i].name, filesToPatch[i].size/1024);
+		if(fileToPatch->size > 8*1024*1024) {
+			print_gecko("Skipping %s %iKB too large\r\n", fileToPatch->name, fileToPatch->size/1024);
 			continue;
 		}
-		print_gecko("Checking %s %iKb\r\n", filesToPatch[i].name, filesToPatch[i].size/1024);
+		print_gecko("Checking %s %iKb\r\n", fileToPatch->name, fileToPatch->size/1024);
 		
-		if(!strcasecmp(filesToPatch[i].name, "iwanagaD.dol") || !strcasecmp(filesToPatch[i].name, "switcherD.dol")) {
+		if(!strcasecmp(fileToPatch->name, "iwanagaD.dol") || !strcasecmp(fileToPatch->name, "switcherD.dol")) {
 			continue;	// skip unused PSO files
 		}
 		uiDrawObj_t* progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
-		u32 sizeToRead = (filesToPatch[i].size + 31) & ~31;
+		u32 sizeToRead = (fileToPatch->size + 31) & ~31;
 		void *buffer = memalign(32, sizeToRead);
 		
-		devices[DEVICE_CUR]->seekFile(filesToPatch[i].file,filesToPatch[i].offset, DEVICE_HANDLER_SEEK_SET);
-		int ret = devices[DEVICE_CUR]->readFile(filesToPatch[i].file,buffer,sizeToRead);
-		print_gecko("Read from %08X Size %08X - Result: %08X\r\n", filesToPatch[i].offset, sizeToRead, ret);
+		devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->offset,DEVICE_HANDLER_SEEK_SET);
+		int ret = devices[DEVICE_CUR]->readFile(fileToPatch->file,buffer,sizeToRead);
+		print_gecko("Read from %08X Size %08X - Result: %08X\r\n", fileToPatch->offset, sizeToRead, ret);
 		if(ret != sizeToRead) {
 			DrawDispose(progBox);			
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to read!"));
@@ -537,11 +538,11 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			DrawDispose(msgBox);
 			return 0;
 		}
-		filesToPatch[i].hash = XXH3_64bits(buffer, sizeToRead);
+		fileToPatch->hash = XXH3_64bits(buffer, sizeToRead);
 		
 		u8 *oldBuffer = NULL, *newBuffer = NULL;
-		if(filesToPatch[i].type == PATCH_DOL_PRS || filesToPatch[i].type == PATCH_OTHER_PRS) {
-			ret = pso_prs_decompress_buf(buffer, &newBuffer, filesToPatch[i].size);
+		if(fileToPatch->type == PATCH_DOL_PRS || fileToPatch->type == PATCH_OTHER_PRS) {
+			ret = pso_prs_decompress_buf(buffer, &newBuffer, fileToPatch->size);
 			if(ret < 0) {
 				DrawDispose(progBox);
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to decompress!"));
@@ -555,16 +556,16 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		}
 		
 		// Patch raw files for certain games
-		if(filesToPatch[i].type == PATCH_OTHER || filesToPatch[i].type == PATCH_OTHER_PRS) {
-			patched = Patch_GameSpecificFile(buffer, sizeToRead, gameID, filesToPatch[i].name);
+		if(fileToPatch->type == PATCH_OTHER || fileToPatch->type == PATCH_OTHER_PRS) {
+			patched = Patch_GameSpecificFile(buffer, sizeToRead, gameID, fileToPatch->name);
 		}
 		else {
 			// Patch executable files
-			patched = Patch_ExecutableFile(&buffer, &sizeToRead, gameID, filesToPatch[i].type);
+			patched = Patch_ExecutableFile(&buffer, &sizeToRead, gameID, fileToPatch->type);
 		}
 		
-		if(filesToPatch[i].type == PATCH_DOL_PRS || filesToPatch[i].type == PATCH_OTHER_PRS) {
-			ret = pso_prs_compress2(buffer, oldBuffer, sizeToRead, filesToPatch[i].size);
+		if(fileToPatch->type == PATCH_DOL_PRS || fileToPatch->type == PATCH_OTHER_PRS) {
+			ret = pso_prs_compress2(buffer, oldBuffer, sizeToRead, fileToPatch->size);
 			if(ret < 0) {
 				DrawDispose(progBox);
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to recompress!"));
@@ -572,13 +573,16 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 				DrawDispose(msgBox);
 				return 0;
 			}
-			filesToPatch[i].size = ret;
-			sizeToRead = (filesToPatch[i].size + 31) & ~31;
+			fileToPatch->size = ret;
+			sizeToRead = (fileToPatch->size + 31) & ~31;
 			buffer = oldBuffer;
 			oldBuffer = NULL;
 			free(newBuffer);
 			newBuffer = NULL;
 		}
+		
+		// Make patch trailer
+		XXH128_hash_t old_hash, new_hash = XXH3_128bits(buffer, sizeToRead);
 		
 		if(patched) {
 			if(!patchDeviceReady) {
@@ -600,16 +604,17 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			ensure_path(DEVICE_PATCHES, "swiss/patches/game", NULL);
 			
 			// File handle for a patch we might need to write
-			filesToPatch[i].patchFile = calloc(1, sizeof(file_handle));
-			concatf_path(filesToPatch[i].patchFile->name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/game/%08X.bin", (u32)filesToPatch[i].hash);
-
-			// Make patch trailer
-			XXH128_hash_t old_hash, new_hash = XXH3_128bits(buffer, sizeToRead);
-
+			fileToPatch->patchFile = calloc(1, sizeof(file_handle));
+			
+			if(devices[DEVICE_PATCHES] == &__device_fsp)
+				concatf_path(fileToPatch->patchFile->name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/game/%016llx%016llx.bin", new_hash.high64, new_hash.low64);
+			else
+				concatf_path(fileToPatch->patchFile->name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/game/%08x.bin", (u32)fileToPatch->hash);
+			
 			// See if this file already exists, if it does, match hash
-			if(!devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, NULL, 0)) {
-				if(devices[DEVICE_PATCHES]->seekFile(filesToPatch[i].patchFile, -sizeof(old_hash), DEVICE_HANDLER_SEEK_END) == sizeToRead &&
-					devices[DEVICE_PATCHES]->readFile(filesToPatch[i].patchFile, &old_hash, sizeof(old_hash)) == sizeof(old_hash) &&
+			if(!devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, NULL, 0)) {
+				if(devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile, -sizeof(old_hash), DEVICE_HANDLER_SEEK_END) == sizeToRead &&
+					devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, &old_hash, sizeof(old_hash)) == sizeof(old_hash) &&
 					XXH128_isEqual(old_hash, new_hash)) {
 					print_gecko("Hash matched, no need to patch again\r\n");
 					num_patched++;
@@ -618,20 +623,20 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 					continue;
 				}
 				else {
-					devices[DEVICE_PATCHES]->deleteFile(filesToPatch[i].patchFile);
+					devices[DEVICE_PATCHES]->deleteFile(fileToPatch->patchFile);
 					print_gecko("Hash mismatch, writing patch again\r\n");
 				}
 			}
 			// Otherwise, write a file out for this game with the patched buffer inside.
-			print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", filesToPatch[i].patchFile->name, filesToPatch[i].size, filesToPatch[i].offset);
-			devices[DEVICE_PATCHES]->seekFile(filesToPatch[i].patchFile, 0, DEVICE_HANDLER_SEEK_SET);
-			if(devices[DEVICE_PATCHES]->writeFile(filesToPatch[i].patchFile, buffer, sizeToRead) == sizeToRead &&
-				devices[DEVICE_PATCHES]->writeFile(filesToPatch[i].patchFile, &new_hash, sizeof(new_hash)) == sizeof(new_hash) &&
-				!devices[DEVICE_PATCHES]->closeFile(filesToPatch[i].patchFile)) {
+			print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", fileToPatch->patchFile->name, fileToPatch->size, fileToPatch->offset);
+			devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile, 0, DEVICE_HANDLER_SEEK_SET);
+			if(devices[DEVICE_PATCHES]->writeFile(fileToPatch->patchFile, buffer, sizeToRead) == sizeToRead &&
+				devices[DEVICE_PATCHES]->writeFile(fileToPatch->patchFile, &new_hash, sizeof(new_hash)) == sizeof(new_hash) &&
+				!devices[DEVICE_PATCHES]->closeFile(fileToPatch->patchFile)) {
 				num_patched++;
 			}
 			else {
-				devices[DEVICE_PATCHES]->deleteFile(filesToPatch[i].patchFile);
+				devices[DEVICE_PATCHES]->deleteFile(fileToPatch->patchFile);
 			}
 		}
 		free(buffer);
