@@ -15,12 +15,12 @@ jobs:
         sudo apt-get install -y --no-install-recommends gcc gcc-mingw-w64-i686 libc6-dev libc6-i386 p7zip-full xorriso
 
     - name: Checkout swiss-gc
-      uses: actions/checkout@v2
+      uses: actions/checkout@main
       with:
         fetch-depth: 0
 
     - name: Checkout libogc2
-      uses: actions/checkout@v2
+      uses: actions/checkout@main
       with:
         repository: extremscorner/libogc2
         path: cube/libogc2
@@ -33,7 +33,7 @@ jobs:
       run: make
 
     - name: Upload Swiss artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@main
       with:
         name: swiss-gc
         path: swiss_r*/*
