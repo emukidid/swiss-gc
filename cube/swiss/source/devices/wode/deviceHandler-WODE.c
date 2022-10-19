@@ -21,7 +21,7 @@
 char wode_regions[]  = {'J','E','P','A','K'};
 char *wode_regions_str[] = {"JPN","USA","EUR","ALL","KOR"};
 char disktype[] = {'?', 'G','W','W','I' };
-int wodeInited = 0;
+s32 wodeInited = 0;
 
 file_handle initial_WODE =
 	{ "wode:/",     // directory
@@ -37,15 +37,15 @@ device_info initial_WODE_info = {
 	true
 };
 	
-int startupWode() {
+s32 startupWode() {
 	if(OpenWode() == 0) {
 		CloseWode();
 		if(OpenWode() == 0) {
-			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"No Wode found! Press A");
+			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"No WODE found! Press A");
 			DrawPublish(msgBox);
 			wait_press_A();
 			DrawDispose(msgBox);
-			return -1;
+			return ENODEV;
 		}
 	}
 	// Wode initialised, return success
@@ -56,7 +56,7 @@ int startupWode() {
 			wode_version_info->fpga_version, wode_version_info->hw_version);
 		return 0;
 	}
-	return -1;
+	return EIO;
 }
 
 device_info* deviceHandler_WODE_info(file_handle* file) {
@@ -240,9 +240,10 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, Executab
 	return 1;
 }
 
-s32 deviceHandler_WODE_init(file_handle* file){
-	wodeInited = startupWode() == 0 ? 1:0;
-	return wodeInited;
+s32 deviceHandler_WODE_init(file_handle* file) {
+	int res = startupWode();
+	wodeInited = !res ? 1:0;
+	return res;
 }
 
 s32 deviceHandler_WODE_deinit(file_handle* file) {
@@ -276,6 +277,10 @@ u32 deviceHandler_WODE_emulated() {
 		return EMU_READ;
 }
 
+char* deviceHandler_WODE_status(file_handle* file) {
+	return NULL;
+}
+
 DEVICEHANDLER_INTERFACE __device_wode = {
 	DEVICE_ID_C,
 	"WODE",
@@ -300,4 +305,5 @@ DEVICEHANDLER_INTERFACE __device_wode = {
 	(_fn_setupFile)&deviceHandler_WODE_setupFile,
 	(_fn_deinit)&deviceHandler_WODE_deinit,
 	(_fn_emulated)&deviceHandler_WODE_emulated,
+	(_fn_status)&deviceHandler_WODE_status,
 };

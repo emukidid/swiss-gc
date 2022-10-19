@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
 	}
 	if(devices[DEVICE_CUR] != NULL) {
 		print_gecko("Detected %s\r\n", devices[DEVICE_CUR]->deviceName);
-		if(devices[DEVICE_CUR]->init(devices[DEVICE_CUR]->initial)) {
+		if(!devices[DEVICE_CUR]->init(devices[DEVICE_CUR]->initial)) {
 			if(devices[DEVICE_CUR]->features & FEAT_AUTOLOAD_DOL) {
 				load_auto_dol();
 			}

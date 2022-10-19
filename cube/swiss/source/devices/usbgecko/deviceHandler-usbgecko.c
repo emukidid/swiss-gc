@@ -15,6 +15,8 @@
 #include "usbgecko.h"
 #include "patcher.h"
 
+#define NO_PC (-1)
+
 file_handle initial_USBGecko =
 	{ "./",     // directory
 	  0ULL,     // fileBase (u64)
@@ -170,12 +172,10 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, Exec
 }
 
 s32 deviceHandler_USBGecko_init(file_handle* file) {
-	s32 success = 0;
-	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Looking for USBGecko in Slot B"));
+	s32 res = 0;
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Waiting for PC ..."));
 	if(usb_isgeckoalive(1)) {
 		s32 retries = 1000;
-		DrawDispose(msgBox);
-		msgBox = DrawPublish(DrawProgressBar(true, 0, "Waiting for PC ..."));
 		
 		usb_flush(1);
 		usbgecko_lock_file(0);
@@ -184,15 +184,15 @@ s32 deviceHandler_USBGecko_init(file_handle* file) {
 			VIDEO_WaitVSync();
 			retries--;
 		}
-		success = retries > 1 ? 1 : 0;
-		if(!success) {
-			DrawDispose(msgBox);
-			msgBox = DrawPublish(DrawMessageBox(D_INFO,"Couldn't find PC!"));
-			sleep(5);
+		if(!retries) {
+			file->status = NO_PC;
 		}
 	}
+	else {
+		res = ENODEV;
+	}
 	DrawDispose(msgBox);
-	return success;
+	return res;
 }
 
 s32 deviceHandler_USBGecko_deinit(file_handle* file) {
@@ -210,6 +210,12 @@ bool deviceHandler_USBGecko_test() {
 
 u32 deviceHandler_USBGecko_emulated() {
 	return EMU_READ | EMU_BUS_ARBITER;
+}
+
+char* deviceHandler_USBGecko_status(file_handle* file) {
+	if(file->status == NO_PC)
+		return "Couldn't connect to PC";
+	return NULL;
 }
 
 DEVICEHANDLER_INTERFACE __device_usbgecko = {
@@ -236,4 +242,5 @@ DEVICEHANDLER_INTERFACE __device_usbgecko = {
 	(_fn_setupFile)&deviceHandler_USBGecko_setupFile,
 	(_fn_deinit)&deviceHandler_USBGecko_deinit,
 	(_fn_emulated)&deviceHandler_USBGecko_emulated,
+	(_fn_status)&deviceHandler_USBGecko_status,
 };

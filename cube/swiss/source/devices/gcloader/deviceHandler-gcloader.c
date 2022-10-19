@@ -239,7 +239,7 @@ fail:
 	return 0;
 }
 
-s32 deviceHandler_GCLOADER_init(file_handle* file) {
+s32 deviceHandler_GCLOADER_init(file_handle* file){
 	if(gcloaderfs != NULL) {
 		f_unmount("gcldr:/");
 		free(gcloaderfs);
@@ -247,8 +247,8 @@ s32 deviceHandler_GCLOADER_init(file_handle* file) {
 		disk_shutdown(DEV_GCLDR);
 	}
 	gcloaderfs = (FATFS*)malloc(sizeof(FATFS));
-	return f_mount(gcloaderfs, "gcldr:/", 1) == FR_OK;
-}
+	return f_mount(gcloaderfs, "gcldr:/", 1) == FR_OK ? 0 : EIO;
+		}
 
 s32 deviceHandler_GCLOADER_deinit(file_handle* file) {
 	deviceHandler_FAT_closeFile(file);
@@ -322,4 +322,5 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	(_fn_setupFile)&deviceHandler_GCLOADER_setupFile,
 	(_fn_deinit)&deviceHandler_GCLOADER_deinit,
 	(_fn_emulated)&deviceHandler_GCLOADER_emulated,
+	(_fn_status)&deviceHandler_FAT_status,
 };

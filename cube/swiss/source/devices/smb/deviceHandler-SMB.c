@@ -92,39 +92,7 @@ void init_samba() {
 }
 
 s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){	
-   
-	// We need at least a share name and ip addr in the settings filled out
-	if(!strlen(&swissSettings.smbShare[0]) || !strlen(&swissSettings.smbServerIp[0])) {
-		sprintf(txtbuffer, "Check SMB Configuration");
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-		DrawPublish(msgBox);
-		wait_press_A();
-		DrawDispose(msgBox);
-		return SMB_SMBCFGERR;
-	}
-
-	if(!net_initialized) {       //Init if we have to
-		sprintf(txtbuffer, "Network has not been initialised");
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-		DrawPublish(msgBox);
-		wait_press_A();
-		DrawDispose(msgBox);
-		return SMB_NETINITERR;
-	} 
-
-	if(!smb_initialized) {       //Connect to the share
-		init_samba();
-		if(!smb_initialized) {
-			sprintf(txtbuffer, "Error initialising SMB");
-			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-			DrawPublish(msgBox);
-			wait_press_A();
-			DrawDispose(msgBox);
-			return SMB_SMBERR; //fail
-		}
-		readDeviceInfoSMB();
-	}
-		
+   	
 	DIR* dp = opendir( ffile->name );
 	if(!dp) return -1;
 	struct dirent *entry;
@@ -202,7 +170,27 @@ s32 deviceHandler_SMB_writeFile(file_handle* file, void* buffer, u32 length){
 
 s32 deviceHandler_SMB_init(file_handle* file) {
 	init_network();
-	return 1;
+	// We need at least a share name and ip addr in the settings filled out
+	if(!strlen(&swissSettings.smbShare[0]) || !strlen(&swissSettings.smbServerIp[0])) {
+		file->status = E_CHECKCONFIG;
+		return EFAULT;
+	}
+
+	if(!net_initialized) {       //Init if we have to
+		file->status = E_NONET;
+		return EFAULT;
+	} 
+
+	if(!smb_initialized) {       //Connect to the share
+		init_samba();
+		if(!smb_initialized) {
+			file->status = E_CONNECTFAIL;
+			return EIO;
+		}
+		readDeviceInfoSMB();
+	}
+	
+	return 0;
 }
 
 s32 deviceHandler_SMB_closeFile(file_handle* file) {
@@ -245,6 +233,18 @@ bool deviceHandler_SMB_test() {
 	return exi_bba_exists();
 }
 
+char* deviceHandler_SMB_status(file_handle* file) {
+	switch(file->status) {
+		case E_NONET:
+			return "Network has not been initialised";
+		case E_CHECKCONFIG:
+			return "Check SMB Configuration";
+		case E_CONNECTFAIL:
+			return "Error connecting to SMB share";
+	}
+	return NULL;
+}
+
 DEVICEHANDLER_INTERFACE __device_smb = {
 	DEVICE_ID_8,
 	"Broadband Adapter",
@@ -269,4 +269,5 @@ DEVICEHANDLER_INTERFACE __device_smb = {
 	(_fn_setupFile)NULL,
 	(_fn_deinit)&deviceHandler_SMB_deinit,
 	(_fn_emulated)NULL,
+	(_fn_status)&deviceHandler_SMB_status,
 };

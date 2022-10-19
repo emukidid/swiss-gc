@@ -1302,7 +1302,7 @@ bool manage_file() {
 		if(devices[DEVICE_CUR] != devices[DEVICE_DEST]) {
 			devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );	
 			deviceHandler_setStatEnabled(0);
-			if(!devices[DEVICE_DEST]->init( devices[DEVICE_DEST]->initial )) {
+			if(devices[DEVICE_DEST]->init( devices[DEVICE_DEST]->initial )) {
 				sprintf(txtbuffer, "Failed to init destination device! (%u)\nPress A to continue.",ret);
 				uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
 				DrawPublish(msgBox);
@@ -2284,9 +2284,16 @@ void menu_loop()
 			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Setting up device"));
 			// If the user selected a device, make sure it's ready before we browse the filesystem
-			if(!devices[DEVICE_CUR]->init( devices[DEVICE_CUR]->initial )) {
+			s32 ret = devices[DEVICE_CUR]->init( devices[DEVICE_CUR]->initial );
+			if(ret) {
 				needsDeviceChange = 1;
-				deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], false);
+				if(ret == ENODEV) {	// for completely removed devices vs something like the disc drive without a disc.
+					deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], false);
+				}
+				DrawDispose(msgBox);
+				char* statusMsg = devices[DEVICE_CUR]->status(devices[DEVICE_CUR]->initial);
+				msgBox = DrawPublish(DrawMessageBox(D_FAIL, statusMsg ? statusMsg : strerror(ret)));
+				sleep(2);
 				DrawDispose(msgBox);
 				return;
 			}

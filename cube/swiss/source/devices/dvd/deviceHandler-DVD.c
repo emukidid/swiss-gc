@@ -23,7 +23,7 @@
 #define OFFSET_SET    1
 
 file_handle initial_DVD =
-	{ "dvd:/",     // directory
+{ "dvd:/",     // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
 	  0,        // size
@@ -132,7 +132,7 @@ char *dvd_error_str()
 
 int initialize_disc(u32 streaming) {
 	int patched = NORMAL_MODE;
-	uiDrawObj_t* progBar = DrawPublish(DrawProgressBar(true, 0, "DVD Is Initializing"));
+	uiDrawObj_t* progBar = DrawPublish(DrawProgressBar(true, 0, "DVD Initializing"));
 	if(is_gamecube())
 	{
 		// Reset WKF hard to allow for a real disc to be read if SD is removed
@@ -158,13 +158,8 @@ int initialize_disc(u32 streaming) {
 				drive_status = DEBUG_MODE;
 			}
 		}
-		else if((dvd_get_error()>>24) == 1) {  // Lid is open, tell the user!
+		else if((dvd_get_error()>>24) == 1) {  // Lid is open
 			DrawDispose(progBar);
-			sprintf(txtbuffer, "Error %s. Press A.",dvd_error_str());
-			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, txtbuffer);
-			DrawPublish(msgBox);
-			wait_press_A();
-			DrawDispose(msgBox);
 			return DRV_ERROR;
 		}
 		if((streaming == ENABLE_AUDIO) || (streaming == DISABLE_AUDIO)) {
@@ -185,17 +180,11 @@ int initialize_disc(u32 streaming) {
 		}
 	}
 	dvd_read_id();
-	if(dvd_get_error()) { //no disc, or no game id.
-		DrawDispose(progBar);
-		sprintf(txtbuffer, "Error: %s",dvd_error_str());
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, txtbuffer);
-		DrawPublish(msgBox);
-		wait_press_A();
-		dvd_reset();	// for good measure
-		DrawDispose(msgBox);
+	DrawDispose(progBar);
+	if(dvd_get_error()) {
 		return DRV_ERROR;
 	}
-	DrawDispose(progBar);
+			
 	return patched;
 }
 
@@ -520,16 +509,11 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, Executabl
 }
 
 s32 deviceHandler_DVD_init(file_handle* file){
-  file->status = initialize_disc(ENABLE_BYDISK);
-  if(file->status == DRV_ERROR){
-	  uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"Failed to mount DVD. Press A");
-	  DrawPublish(msgBox);
-	  wait_press_A();
-	  DrawDispose(msgBox);
-	  return file->status;
-  }
-  dvd_init=1;
-  return file->status;
+	if(!swissSettings.hasDVDDrive) return ENODEV;
+	
+	file->status = initialize_disc(ENABLE_BYDISK);
+	dvd_init = file->status != DRV_ERROR;
+	return !dvd_init;
 }
 
 s32 deviceHandler_DVD_deinit(file_handle* file) {
@@ -556,6 +540,16 @@ u32 deviceHandler_DVD_emulated() {
 		return EMU_READ;
 }
 
+char* deviceHandler_DVD_status(file_handle* file) {
+	if(!swissSettings.hasDVDDrive) {
+		return NULL;
+	}
+	if(file->status == DRV_ERROR) {
+		return dvd_error_str();
+	}
+	return NULL;
+}
+
 DEVICEHANDLER_INTERFACE __device_dvd = {
 	DEVICE_ID_0,
 	"Disc Drive",
@@ -580,4 +574,5 @@ DEVICEHANDLER_INTERFACE __device_dvd = {
 	(_fn_setupFile)&deviceHandler_DVD_setupFile,
 	(_fn_deinit)&deviceHandler_DVD_deinit,
 	(_fn_emulated)&deviceHandler_DVD_emulated,
+	(_fn_status)&deviceHandler_DVD_status,
 };

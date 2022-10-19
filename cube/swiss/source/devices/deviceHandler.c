@@ -68,13 +68,6 @@ void deviceHandler_setAllDevicesAvailable() {
 	}
 }
 
-int deviceHandler_test(DEVICEHANDLER_INTERFACE *device) {
-	deviceHandler_setStatEnabled(0);
-	int ret = device->init(device->initial);
-	deviceHandler_setStatEnabled(1);
-	return ret;
-}
-
 DEVICEHANDLER_INTERFACE* getDeviceByUniqueId(u8 id) {
 	for(int i = 0; i < MAX_DEVICES; i++) {
 		if(allDevices[i] != NULL && allDevices[i]->deviceUniqueId == id) {

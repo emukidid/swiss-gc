@@ -51,17 +51,19 @@ void card_removed_cb(s32 chn, s32 result) {
 char *cardError(int error_code) {
   switch(error_code) {
     case CARD_ERROR_BUSY:
-      return "Memory Card Busy";
+		return "Memory Card Busy";
     case CARD_ERROR_WRONGDEVICE:
-      return "Inserted device is not a memory card";
+		return "Inserted device is not a memory card";
     case CARD_ERROR_NOCARD:
-      return "No Card Inserted";
+		return "No Card Inserted";
     case CARD_ERROR_BROKEN:
-      return "Card Corrupted(?)";
+		return "Card Corrupted(?)";
 	case CARD_ERROR_NOFILE:
 		return "File does not exist";
+	case CARD_ERROR_FATAL_ERROR:
+		return "Fatal error";
     default:
-      return "Unknown error";
+		return "Unknown error";
   }
 }
 
@@ -462,15 +464,17 @@ s32 deviceHandler_CARD_init(file_handle* file){
 	int slot = (!strncmp((const char*)initial_CARDB.name, file->name, 7));
 	file->status = initialize_card(slot);
 	s32 memSize = 0, sectSize = 0;
-	int ret = CARD_ProbeEx(slot,&memSize,&sectSize);
-	if(ret==CARD_ERROR_READY) {
-		initial_CARD_info[slot].totalSpace = (u64)(memSize<<17);
-	} else {
-		print_gecko("CARD_ProbeEx failed %i\r\n", ret);
+	if(file->status == CARD_ERROR_READY) {
+		int ret = CARD_ProbeEx(slot,&memSize,&sectSize);
+		if(ret == CARD_ERROR_READY) {
+			initial_CARD_info[slot].totalSpace = (u64)(memSize<<17);
+		}
+		else {
+			print_gecko("CARD_ProbeEx failed %i\r\n", ret);
+		}
 	}
 	initial_CARD_info[slot].freeSpace = 0LL;
-	
-	return file->status == CARD_ERROR_READY ? 1 : 0;
+	return file->status == CARD_ERROR_READY ? 0 : EIO;
 }
 
 s32 deviceHandler_CARD_deinit(file_handle* file) {
@@ -529,6 +533,13 @@ bool deviceHandler_CARD_test_b() {
 	return ((initialize_card(1)==CARD_ERROR_READY) && (CARD_ProbeEx(1, &memSize,&sectSize)==CARD_ERROR_READY));
 }
 
+char* deviceHandler_CARD_status(file_handle* file) {
+	if(file->status) {
+		return cardError(file->status);
+	}
+	return NULL;
+}
+
 DEVICEHANDLER_INTERFACE __device_card_a = {
 	DEVICE_ID_5,
 	"Memory Card",
@@ -553,6 +564,7 @@ DEVICEHANDLER_INTERFACE __device_card_a = {
 	(_fn_setupFile)NULL,
 	(_fn_deinit)&deviceHandler_CARD_deinit,
 	(_fn_emulated)NULL,
+	(_fn_status)&deviceHandler_CARD_status,
 };
 
 DEVICEHANDLER_INTERFACE __device_card_b = {
@@ -579,4 +591,5 @@ DEVICEHANDLER_INTERFACE __device_card_b = {
 	(_fn_setupFile)NULL,
 	(_fn_deinit)&deviceHandler_CARD_deinit,
 	(_fn_emulated)NULL,
+	(_fn_status)&deviceHandler_CARD_status,
 };

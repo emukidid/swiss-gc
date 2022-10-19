@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <gctypes.h>
 #include <stdio.h>
+#include <errno.h>
 #include "ff.h"
 #include "diskio.h"
 #include "wode/WodeInterface.h"
@@ -86,6 +87,7 @@ typedef s32 (* _fn_renameFile)(file_handle*, char*);
 typedef s32 (* _fn_setupFile)(file_handle*, file_handle*, void*, int);
 typedef s32 (* _fn_deinit)(file_handle*);
 typedef u32 (* _fn_emulated)(void);
+typedef char* (* _fn_status)(file_handle*);
 
 // Device features
 #define FEAT_READ				0x1
@@ -162,6 +164,7 @@ struct DEVICEHANDLER_STRUCT {
 	_fn_setupFile	setupFile;
 	_fn_deinit		deinit;
 	_fn_emulated	emulated;
+	_fn_status		status;
 } ;
 
 typedef struct DEVICEHANDLER_STRUCT DEVICEHANDLER_INTERFACE;
@@ -173,6 +176,13 @@ enum DEVICE_SLOTS {
 	DEVICE_CONFIG,
 	DEVICE_PATCHES,
 	MAX_DEVICE_SLOTS
+};
+
+// Common error types
+enum DEV_ERRORS {
+	E_NONET=1,
+	E_CHECKCONFIG,
+	E_CONNECTFAIL
 };
 
 #include "devices/dvd/deviceHandler-DVD.h"
@@ -197,7 +207,6 @@ extern void deviceHandler_setAllDevicesAvailable();
 extern DEVICEHANDLER_INTERFACE* allDevices[MAX_DEVICES];
 extern DEVICEHANDLER_INTERFACE* devices[MAX_DEVICE_SLOTS];
 
-extern int deviceHandler_test(DEVICEHANDLER_INTERFACE *device);
 extern DEVICEHANDLER_INTERFACE* getDeviceByUniqueId(u8 id);
 extern DEVICEHANDLER_INTERFACE* getDeviceByLocation(u32 location);
 extern DEVICEHANDLER_INTERFACE* getDeviceFromPath(char *path);

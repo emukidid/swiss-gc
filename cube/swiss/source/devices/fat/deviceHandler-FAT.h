@@ -25,6 +25,7 @@ extern s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 leng
 extern s32 deviceHandler_FAT_closeFile(file_handle* file);
 extern s32 deviceHandler_FAT_deleteFile(file_handle* file);
 extern s32 deviceHandler_FAT_renameFile(file_handle* file, char* name);
+extern char* deviceHandler_FAT_status(file_handle* file);
 
 #endif
 

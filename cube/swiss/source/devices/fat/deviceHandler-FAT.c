@@ -93,20 +93,20 @@ file_handle initial_ATA_C =
 	};
 
 static device_info initial_FAT_info[FF_VOLUMES];
-
+	
 device_info* deviceHandler_FAT_info(file_handle* file) {
 	device_info* info = NULL;
-	DWORD freeClusters;
-	FATFS* fatfs;
+		DWORD freeClusters;
+		FATFS *fatfs;
 	if(f_getfree(file->name, &freeClusters, &fatfs) == FR_OK) {
 		info = &initial_FAT_info[fatfs->pdrv];
-		info->freeSpace = (u64)(freeClusters) * fatfs->csize * fatfs->ssize;
-		info->totalSpace = (u64)(fatfs->n_fatent - 2) * fatfs->csize * fatfs->ssize;
+			info->freeSpace = (u64)(freeClusters) * fatfs->csize * fatfs->ssize;
+			info->totalSpace = (u64)(fatfs->n_fatent - 2) * fatfs->csize * fatfs->ssize;
 		info->metric = true;
-	}
+		}
 	return info;
-}
-
+		}
+	
 s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {	
 
 	DIRF* dp = malloc(sizeof(DIRF));
@@ -319,7 +319,7 @@ s32 fatFs_Mount(u8 devNum, char *path) {
 		disk_shutdown(devNum);
 	}
 	fs[devNum] = (FATFS*)malloc(sizeof(FATFS));
-	return f_mount(fs[devNum], path, 1) == FR_OK;
+	return f_mount(fs[devNum], path, 1);
 }
 
 void setSDGeckoSpeed(int slot, bool fast) {
@@ -330,54 +330,54 @@ void setSDGeckoSpeed(int slot, bool fast) {
 s32 deviceHandler_FAT_init(file_handle* file) {
 	int isSDCard = IS_SDCARD(file->name);
 	int slot = GET_SLOT(file->name);
-	int ret = 0;
+	file->status = 0;
 	print_gecko("Init %s %i\r\n", (isSDCard ? "SD":"ATA"), slot);
 	// SD Card - Slot A
 	if(isSDCard && slot == 0) {
 		setSDGeckoSpeed(slot, swissSettings.exiSpeed);
 		__device_sd_a.features |= FEAT_BOOT_GCM;
-		ret = fatFs_Mount(DEV_SDA, "sda:/");
-		if(!ret) {
+		file->status = fatFs_Mount(DEV_SDA, "sda:/");
+		if(file->status != FR_OK) {
 			setSDGeckoSpeed(slot, false);
 			__device_sd_a.features &= ~FEAT_BOOT_GCM;
-			ret = fatFs_Mount(DEV_SDA, "sda:/");
+			file->status = fatFs_Mount(DEV_SDA, "sda:/");
 		}
 	}
 	// SD Card - Slot B
 	if(isSDCard && slot == 1) {
 		setSDGeckoSpeed(slot, swissSettings.exiSpeed);
 		__device_sd_b.features |= FEAT_BOOT_GCM;
-		ret = fatFs_Mount(DEV_SDB, "sdb:/");
-		if(!ret) {
+		file->status = fatFs_Mount(DEV_SDB, "sdb:/");
+		if(file->status != FR_OK) {
 			setSDGeckoSpeed(slot, false);
 			__device_sd_b.features &= ~FEAT_BOOT_GCM;
-			ret = fatFs_Mount(DEV_SDB, "sdb:/");
+			file->status = fatFs_Mount(DEV_SDB, "sdb:/");
 		}
 	}
 	// SD Card - SD2SP2
 	if(isSDCard && slot == 2) {
 		setSDGeckoSpeed(slot, swissSettings.exiSpeed);
 		__device_sd_c.features |= FEAT_BOOT_GCM;
-		ret = fatFs_Mount(DEV_SDC, "sdc:/");
-		if(!ret) {
+		file->status = fatFs_Mount(DEV_SDC, "sdc:/");
+		if(file->status != FR_OK) {
 			setSDGeckoSpeed(slot, false);
 			__device_sd_c.features &= ~FEAT_BOOT_GCM;
-			ret = fatFs_Mount(DEV_SDC, "sdc:/");
+			file->status = fatFs_Mount(DEV_SDC, "sdc:/");
 		}
 	}
 	// IDE-EXI - Slot A
 	if(!isSDCard && slot == 0) {
-		ret = fatFs_Mount(DEV_ATAA, "ataa:/");
+		file->status = fatFs_Mount(DEV_ATAA, "ataa:/");
 	}
 	// IDE-EXI - Slot B
 	if(!isSDCard && slot == 1) {
-		ret = fatFs_Mount(DEV_ATAB, "atab:/");
+		file->status = fatFs_Mount(DEV_ATAB, "atab:/");
 	}
 	// M.2 Loader
 	if(!isSDCard && slot == 2) {
-		ret = fatFs_Mount(DEV_ATAC, "atac:/");
+		file->status = fatFs_Mount(DEV_ATAC, "atac:/");
 	}
-	return ret;
+	return file->status == FR_OK ? 0 : EIO;
 }
 
 s32 deviceHandler_FAT_closeFile(file_handle* file) {
@@ -458,6 +458,53 @@ u32 deviceHandler_FAT_emulated_ata() {
 		return EMU_READ | EMU_BUS_ARBITER;
 }
 
+char* deviceHandler_FAT_status(file_handle* file) {
+	switch(file->status) {
+		case FR_OK:			/* (0) Succeeded */
+			return NULL;
+		case FR_DISK_ERR:
+			return "Error occurred in the low level disk I/O layer";
+		case FR_INT_ERR:
+			return "Assertion failed";
+		case FR_NOT_READY:
+			return "The physical drive cannot work";
+		case FR_NO_FILE:
+			return "Could not find the file";
+		case FR_NO_PATH:
+			return "Could not find the path";
+		case FR_INVALID_NAME:
+			return "The path name format is invalid";
+		case FR_DENIED:
+			return "Access denied due to prohibited access or directory full";
+		case FR_EXIST:
+			return "Access denied due to prohibited access";
+		case FR_INVALID_OBJECT:
+			return "The file/directory object is invalid";
+		case FR_WRITE_PROTECTED:
+			return "The physical drive is write protected";
+		case FR_INVALID_DRIVE:
+			return "The logical drive number is invalid";
+		case FR_NOT_ENABLED:
+			return "The volume has no work area";
+		case FR_NO_FILESYSTEM:
+			return "There is no valid FAT volume";
+		case FR_MKFS_ABORTED:
+			return "The f_mkfs() aborted due to any problem";
+		case FR_TIMEOUT:
+			return "Could not get a grant to access the volume within defined period";
+		case FR_LOCKED:
+			return "The operation is rejected according to the file sharing policy";
+		case FR_NOT_ENOUGH_CORE:
+			return "LFN working buffer could not be allocated";
+		case FR_TOO_MANY_OPEN_FILES:
+			return "Number of open files > FF_FS_LOCK";
+		case FR_INVALID_PARAMETER:
+			return "Given parameter is invalid";
+		default:
+			return "Unknown error occurred";
+	}
+}
+
 DEVICEHANDLER_INTERFACE __device_sd_a = {
 	DEVICE_ID_1,
 	"SD Card Adapter",
@@ -482,6 +529,7 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
 	(_fn_emulated)&deviceHandler_FAT_emulated_sd,
+	(_fn_status)&deviceHandler_FAT_status,
 };
 
 DEVICEHANDLER_INTERFACE __device_sd_b = {
@@ -508,6 +556,7 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
 	(_fn_emulated)&deviceHandler_FAT_emulated_sd,
+	(_fn_status)&deviceHandler_FAT_status,
 };
 
 DEVICEHANDLER_INTERFACE __device_ata_a = {
@@ -534,6 +583,7 @@ DEVICEHANDLER_INTERFACE __device_ata_a = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
 	(_fn_emulated)&deviceHandler_FAT_emulated_ata,
+	(_fn_status)&deviceHandler_FAT_status,
 };
 
 DEVICEHANDLER_INTERFACE __device_ata_b = {
@@ -560,6 +610,7 @@ DEVICEHANDLER_INTERFACE __device_ata_b = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
 	(_fn_emulated)&deviceHandler_FAT_emulated_ata,
+	(_fn_status)&deviceHandler_FAT_status,
 };
 
 DEVICEHANDLER_INTERFACE __device_sd_c = {
@@ -586,6 +637,7 @@ DEVICEHANDLER_INTERFACE __device_sd_c = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
 	(_fn_emulated)&deviceHandler_FAT_emulated_sd,
+	(_fn_status)&deviceHandler_FAT_status,
 };
 
 DEVICEHANDLER_INTERFACE __device_ata_c = {
@@ -612,4 +664,5 @@ DEVICEHANDLER_INTERFACE __device_ata_c = {
 	(_fn_setupFile)&deviceHandler_FAT_setupFile,
 	(_fn_deinit)&deviceHandler_FAT_deinit,
 	(_fn_emulated)&deviceHandler_FAT_emulated_sd,
+	(_fn_status)&deviceHandler_FAT_status,
 };

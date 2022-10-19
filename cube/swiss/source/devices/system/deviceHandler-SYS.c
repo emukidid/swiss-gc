@@ -314,7 +314,7 @@ s32 deviceHandler_SYS_init(file_handle* file) {
 		initial_SYS_info.totalSpace += rom_sizes[i];
 	}
 
-	return 1;
+	return 0;
 }
 
 s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
@@ -363,6 +363,10 @@ bool deviceHandler_SYS_test() {
 	return true;
 }
 
+char* deviceHandler_SYS_status(file_handle* file) {
+	return NULL;
+}
+
 DEVICEHANDLER_INTERFACE __device_sys = {
 	DEVICE_ID_9,
 	"Various",
@@ -387,4 +391,5 @@ DEVICEHANDLER_INTERFACE __device_sys = {
 	(_fn_setupFile)NULL,
 	(_fn_deinit)&deviceHandler_SYS_deinit,
 	(_fn_emulated)NULL,
+	(_fn_status)&deviceHandler_SYS_status,
 };

@@ -191,7 +191,7 @@ int load_existing_entry(char *entry) {
 		print_gecko("Device required for entry [%s]\r\n", entryDevice->deviceName);
 		
 		// Init the device if it isn't one we were about to browse anyway
-		if(devices[DEVICE_CUR] == entryDevice || entryDevice->init(entryDevice->initial)) {
+		if(devices[DEVICE_CUR] == entryDevice || !entryDevice->init(entryDevice->initial)) {
 			if(devices[DEVICE_CUR] && devices[DEVICE_CUR] != entryDevice) {
 				devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 			}
