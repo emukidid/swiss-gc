@@ -9757,11 +9757,15 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 		switch (length) {
 			case 3009280:
 				// Accept Memory Card 2043 or 1019 instead of Memory Card 507.
-				if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD)
+				if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
 					*(s16 *)(data + 0x801F1FF2 - 0x800056C0 + 0x2600) = 128;
-				else
-					*(s16 *)(data + 0x801F1FF2 - 0x800056C0 + 0x2600) = 64;
-				
+				} else {
+					s32 memSize = 0;
+					
+					while (CARD_ProbeEx(CARD_SLOTA, &memSize, NULL) == CARD_ERROR_BUSY);
+					
+					*(s16 *)(data + 0x801F1FF2 - 0x800056C0 + 0x2600) = memSize < 32 ? 64 : memSize;
+				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
@@ -9770,11 +9774,15 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 		switch (length) {
 			case 3075488:
 				// Accept Memory Card 2043 or 1019 instead of Memory Card 507.
-				if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD)
+				if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
 					*(s16 *)(data + 0x801FF53E - 0x800056C0 + 0x2600) = 128;
-				else
-					*(s16 *)(data + 0x801FF53E - 0x800056C0 + 0x2600) = 64;
-				
+				} else {
+					s32 memSize = 0;
+					
+					while (CARD_ProbeEx(CARD_SLOTA, &memSize, NULL) == CARD_ERROR_BUSY);
+					
+					*(s16 *)(data + 0x801FF53E - 0x800056C0 + 0x2600) = memSize < 32 ? 64 : memSize;
+				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
@@ -9790,11 +9798,15 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					*(s16 *)(data + 0x800F0502 - 0x800129E0 + 0x2520) = 128;
 				} else {
-					*(s16 *)(data + 0x800EFF3A - 0x800129E0 + 0x2520) = 64;
+					s32 memSize = 0;
 					
-					*(s16 *)(data + 0x800F0082 - 0x800129E0 + 0x2520) = 64;
+					while (CARD_ProbeEx(CARD_SLOTA, &memSize, NULL) == CARD_ERROR_BUSY);
 					
-					*(s16 *)(data + 0x800F0502 - 0x800129E0 + 0x2520) = 64;
+					*(s16 *)(data + 0x800EFF3A - 0x800129E0 + 0x2520) = memSize < 32 ? 64 : memSize;
+					
+					*(s16 *)(data + 0x800F0082 - 0x800129E0 + 0x2520) = memSize < 32 ? 64 : memSize;
+					
+					*(s16 *)(data + 0x800F0502 - 0x800129E0 + 0x2520) = memSize < 32 ? 64 : memSize;
 				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -9811,11 +9823,15 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					*(s16 *)(data + 0x800E6BB6 - 0x80012260 + 0x2520) = 128;
 				} else {
-					*(s16 *)(data + 0x800E65EE - 0x80012260 + 0x2520) = 64;
+					s32 memSize = 0;
 					
-					*(s16 *)(data + 0x800E6736 - 0x80012260 + 0x2520) = 64;
+					while (CARD_ProbeEx(CARD_SLOTA, &memSize, NULL) == CARD_ERROR_BUSY);
 					
-					*(s16 *)(data + 0x800E6BB6 - 0x80012260 + 0x2520) = 64;
+					*(s16 *)(data + 0x800E65EE - 0x80012260 + 0x2520) = memSize < 32 ? 64 : memSize;
+					
+					*(s16 *)(data + 0x800E6736 - 0x80012260 + 0x2520) = memSize < 32 ? 64 : memSize;
+					
+					*(s16 *)(data + 0x800E6BB6 - 0x80012260 + 0x2520) = memSize < 32 ? 64 : memSize;
 				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -10440,11 +10456,15 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 		switch (length) {
 			case 839584:
 				// Accept Memory Card 2043 or 1019 instead of Memory Card 507.
-				if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD)
+				if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
 					*(s16 *)(data + 0x8003758E - 0x8000AEA0 + 0x2520) = 128;
-				else
-					*(s16 *)(data + 0x8003758E - 0x8000AEA0 + 0x2520) = 64;
-				
+				} else {
+					s32 memSize = 0;
+					
+					while (CARD_ProbeEx(CARD_SLOTA, &memSize, NULL) == CARD_ERROR_BUSY);
+					
+					*(s16 *)(data + 0x8003758E - 0x8000AEA0 + 0x2520) = memSize < 32 ? 64 : memSize;
+				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
@@ -10453,11 +10473,15 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 		switch (length) {
 			case 804544:
 				// Accept Memory Card 2043 or 1019 instead of Memory Card 507.
-				if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD)
+				if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
 					*(s16 *)(data + 0x8003740A - 0x8000AE60 + 0x2520) = 128;
-				else
-					*(s16 *)(data + 0x8003740A - 0x8000AE60 + 0x2520) = 64;
-				
+				} else {
+					s32 memSize = 0;
+					
+					while (CARD_ProbeEx(CARD_SLOTA, &memSize, NULL) == CARD_ERROR_BUSY);
+					
+					*(s16 *)(data + 0x8003740A - 0x8000AE60 + 0x2520) = memSize < 32 ? 64 : memSize;
+				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
@@ -10466,11 +10490,15 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 		switch (length) {
 			case 834912:
 				// Accept Memory Card 2043 or 1019 instead of Memory Card 507.
-				if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD)
+				if (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
 					*(s16 *)(data + 0x800374D6 - 0x8000AE60 + 0x2520) = 128;
-				else
-					*(s16 *)(data + 0x800374D6 - 0x8000AE60 + 0x2520) = 64;
-				
+				} else {
+					s32 memSize = 0;
+					
+					while (CARD_ProbeEx(CARD_SLOTA, &memSize, NULL) == CARD_ERROR_BUSY);
+					
+					*(s16 *)(data + 0x800374D6 - 0x8000AE60 + 0x2520) = memSize < 32 ? 64 : memSize;
+				}
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
