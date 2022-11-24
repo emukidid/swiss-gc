@@ -1968,6 +1968,72 @@ int check_game(file_handle *file, file_handle *file2, ExecutableFile *filesToPat
 		if(!strncmp(gameID, "GCCE01", 6) || !strncmp(gameID, "GCCJGC", 6) || !strncmp(gameID, "GCCP01", 6)) {
 			parse_gcm_add(file, filesToPatch, &numToPatch, "ffcc_cli.bin");
 		}
+		else if(!strncmp(gameID, "GHAE08", 6) || !strncmp(gameID, "GHAJ08", 6)) {
+			parse_gcm_add(file, filesToPatch, &numToPatch, "claire.rel");
+			parse_gcm_add(file, filesToPatch, &numToPatch, "leon.rel");
+		}
+		else if(!strncmp(gameID, "GHAP08", 6)) {
+			switch(swissSettings.sramLanguage) {
+				case SYS_LANG_ENGLISH:
+					parse_gcm_add(file, filesToPatch, &numToPatch, "claire.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "leon.rel");
+					break;
+				case SYS_LANG_GERMAN:
+					parse_gcm_add(file, filesToPatch, &numToPatch, "claire_g.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "leon_g.rel");
+					break;
+				case SYS_LANG_FRENCH:
+					parse_gcm_add(file, filesToPatch, &numToPatch, "claire_f.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "leon_f.rel");
+					break;
+				case SYS_LANG_SPANISH:
+					parse_gcm_add(file, filesToPatch, &numToPatch, "claire_s.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "leon_s.rel");
+					break;
+				case SYS_LANG_ITALIAN:
+					parse_gcm_add(file, filesToPatch, &numToPatch, "claire_i.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "leon_i.rel");
+					break;
+				default:
+					parse_gcm_add(file, filesToPatch, &numToPatch, "claire.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "claire_f.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "claire_g.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "claire_i.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "claire_s.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "leon.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "leon_f.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "leon_g.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "leon_i.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "leon_s.rel");
+					break;
+			}
+		}
+		else if(!strncmp(gameID, "GLEP08", 6)) {
+			switch(swissSettings.sramLanguage) {
+				case SYS_LANG_ENGLISH:
+					parse_gcm_add(file, filesToPatch, &numToPatch, "eng.rel");
+					break;
+				case SYS_LANG_GERMAN:
+					parse_gcm_add(file, filesToPatch, &numToPatch, "ger.rel");
+					break;
+				case SYS_LANG_FRENCH:
+					parse_gcm_add(file, filesToPatch, &numToPatch, "fra.rel");
+					break;
+				case SYS_LANG_SPANISH:
+					parse_gcm_add(file, filesToPatch, &numToPatch, "spa.rel");
+					break;
+				case SYS_LANG_ITALIAN:
+					parse_gcm_add(file, filesToPatch, &numToPatch, "ita.rel");
+					break;
+				default:
+					parse_gcm_add(file, filesToPatch, &numToPatch, "eng.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "fra.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "ger.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "ita.rel");
+					parse_gcm_add(file, filesToPatch, &numToPatch, "spa.rel");
+					break;
+			}
+		}
 		if(swissSettings.disableVideoPatches < 1) {
 			if(!strncmp(gameID, "GS8P7D", 6)) {
 				parse_gcm_add(file, filesToPatch, &numToPatch, "SPYROCFG_NGC.CFG");

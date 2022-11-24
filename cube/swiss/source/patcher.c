@@ -9946,6 +9946,56 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 		}
+	} else if (!strncmp(gameID, "GHAE08", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 800672:
+				// Fix race condition with ARAM DMA transfer.
+				*(u32 *)(data + 0x800339E4 - 0x80006820 + 0x2620) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GHAJ08", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1072288:
+				// Fix race condition with ARAM DMA transfer.
+				*(u32 *)(data + 0x80065FFC - 0x80006820 + 0x2620) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GHAP08", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 805984:
+				// Fix race condition with ARAM DMA transfer.
+				*(u32 *)(data + 0x80033D60 - 0x80006820 + 0x2620) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GLEE08", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 2303296:
+				// Fix race condition with ARAM DMA transfer.
+				*(u32 *)(data + 0x80150E94 - 0x80006760 + 0x2620) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GLEJ08", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 2298208:
+				// Fix race condition with ARAM DMA transfer.
+				*(u32 *)(data + 0x8015110C - 0x80006760 + 0x2620) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
 	} else if ((!strncmp(gameID, "GOND69", 6) || !strncmp(gameID, "GONE69", 6) || !strncmp(gameID, "GONF69", 6) || !strncmp(gameID, "GONP69", 6)) && (dataType == PATCH_DOL || dataType == PATCH_ELF)) {
 		switch (length) {
 			case 277472:
@@ -10831,9 +10881,169 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 			print_gecko("Patched:[%s]\n", fileName);
 			patched++;
 		}
+	} else if (!strncmp(gameID, "GHAE08", 6)) {
+		if (!strcasecmp(fileName, "claire.rel")) {
+			*(u32 *)(data + 0x190294) = 0x60000000;
+			
+			*(u8 *)(data + 0x1EFDF6) = R_PPC_NONE;
+			*(u32 *)(data + 0x1EFDF8) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "leon.rel")) {
+			*(u32 *)(data + 0x1903FC) = 0x60000000;
+			
+			*(u8 *)(data + 0x1EFF86) = R_PPC_NONE;
+			*(u32 *)(data + 0x1EFF88) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GHAJ08", 6)) {
+		if (!strcasecmp(fileName, "claire.rel")) {
+			*(u32 *)(data + 0x1903FC) = 0x60000000;
+			
+			*(u8 *)(data + 0x1FD19A) = R_PPC_NONE;
+			*(u32 *)(data + 0x1FD19C) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "leon.rel")) {
+			*(u32 *)(data + 0x1904C4) = 0x60000000;
+			
+			*(u8 *)(data + 0x1FD30A) = R_PPC_NONE;
+			*(u32 *)(data + 0x1FD30C) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GHAP08", 6)) {
+		if (!strcasecmp(fileName, "claire.rel")) {
+			*(u32 *)(data + 0x190710) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F0FBE) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F0FC0) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "claire_f.rel")) {
+			*(u32 *)(data + 0x1912E8) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F251E) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F2520) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "claire_g.rel")) {
+			*(u32 *)(data + 0x1905A8) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F1AE6) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F1AE8) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "claire_i.rel")) {
+			*(u32 *)(data + 0x19113C) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F269E) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F26A0) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "claire_s.rel")) {
+			*(u32 *)(data + 0x1912E4) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F281E) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F2820) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "leon.rel")) {
+			*(u32 *)(data + 0x190878) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F116E) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F1170) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "leon_f.rel")) {
+			*(u32 *)(data + 0x191408) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F25EE) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F25F0) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "leon_g.rel")) {
+			*(u32 *)(data + 0x190638) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F1AF6) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F1AF8) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "leon_i.rel")) {
+			*(u32 *)(data + 0x19125C) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F278E) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F2790) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "leon_s.rel")) {
+			*(u32 *)(data + 0x191380) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F286E) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F2870) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
 	} else if (!strncmp(gameID, "GHQE7D", 6) || !strncmp(gameID, "GHQP7D", 6)) {
 		if (!strcmp(fileName, "bi2.bin")) {
 			*(u32 *)(data + 0x24) = 5;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GLEP08", 6)) {
+		if (!strcasecmp(fileName, "eng.rel")) {
+			*(u32 *)(data + 0x14C354) = 0x60000000;
+			
+			*(u8 *)(data + 0x1BFCE6) = R_PPC_NONE;
+			*(u32 *)(data + 0x1BFCE8) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "fra.rel")) {
+			*(u32 *)(data + 0x14D21C) = 0x60000000;
+			
+			*(u8 *)(data + 0x1C0FE6) = R_PPC_NONE;
+			*(u32 *)(data + 0x1C0FE8) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "ger.rel")) {
+			*(u32 *)(data + 0x14D020) = 0x60000000;
+			
+			*(u8 *)(data + 0x1C1886) = R_PPC_NONE;
+			*(u32 *)(data + 0x1C1888) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "ita.rel")) {
+			*(u32 *)(data + 0x14D084) = 0x60000000;
+			
+			*(u8 *)(data + 0x1C1246) = R_PPC_NONE;
+			*(u32 *)(data + 0x1C1248) = 0;
+			
+			print_gecko("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "spa.rel")) {
+			*(u32 *)(data + 0x14D204) = 0x60000000;
+			
+			*(u8 *)(data + 0x1C1386) = R_PPC_NONE;
+			*(u32 *)(data + 0x1C1388) = 0;
 			
 			print_gecko("Patched:[%s]\n", fileName);
 			patched++;
