@@ -1746,6 +1746,7 @@ void load_game() {
 	
 	// Load config for this game into our current settings
 	config_load_current(config);
+	gameID_early_set(&GCMDisk);
 	
 	if(config->cleanBoot) {
 		gameID_set(&GCMDisk, get_gcm_boot_hash(&GCMDisk));

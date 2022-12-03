@@ -18,13 +18,13 @@
  */
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <string.h>
 #include <ogc/si.h>
 #include "gameid.h"
 #include "gcm.h"
+#include "mcp.h"
 
-static uint8_t command[1 + 10] = {0x1D};
+static u8 command[1 + 10] = {0x1D};
 
 static void callback(s32 chan, u32 type)
 {
@@ -66,7 +66,18 @@ static void gameID_deinit(void)
 	SYS_UnregisterResetFunc(&resetinfo);
 }
 
-void gameID_set(const DiskHeader *header, uint64_t hash)
+void gameID_early_set(const DiskHeader *header)
+{
+	for (s32 chan = 0; chan < 2; chan++) {
+		u32 id;
+		if (MCP_ProbeEx(chan) < 0) continue;
+		if (MCP_GetDeviceID(chan, &id) < 0) continue;
+		if (MCP_SetDiskID(chan, (dvddiskid *)header) < 0) continue;
+		if (MCP_SetDiskInfo(chan, header->GameName) < 0) continue;
+	}
+}
+
+void gameID_set(const DiskHeader *header, u64 hash)
 {
 	memcpy(&command[1], &hash, 8);
 
