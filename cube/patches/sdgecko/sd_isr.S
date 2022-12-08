@@ -79,7 +79,9 @@ external_interrupt_vector:
 4:	lis		r4, 0x0C00
 	li		r5, 0x3000
 	eciwx	r5, r5, r4
-	rlwinm.	r6, r5, 0, 16, 14
+	li		r6, 0x3000 + 1*4
+	eciwx	r6, r6, r4
+	and.	r6, r6, r5
 	bne		5f
 	mfsprg	r6, 3
 	mtcr	r6
