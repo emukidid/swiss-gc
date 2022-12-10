@@ -67,7 +67,7 @@ void Initialise (void)
 	else if(!strncmp(&IPLInfo[0x55], "MPAL", 4))
 		swissSettings.sramVideo = SYS_VIDEO_MPAL;
 
-	GXRModeObj *vmode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
+	GXRModeObj *vmode = getVideoMode();
 	setVideoMode(vmode);
 
 	init_font();

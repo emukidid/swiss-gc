@@ -25,7 +25,7 @@ int whichfb = 0;				//Frame buffer toggle
 #define UnknownVideo   "Unknown"
 
 char *getVideoModeString() {
-	switch(vmode->viTVMode) {
+	switch(getVideoMode()->viTVMode) {
 		case VI_TVMODE_NTSC_INT:     return NtscIntStr;
 		case VI_TVMODE_NTSC_DS:      return NtscDsStr;
 		case VI_TVMODE_NTSC_PROG:    return NtscProgStr;
@@ -43,26 +43,46 @@ char *getVideoModeString() {
 }
 
 int getTVFormat() {
+	if(vmode == NULL) {
+		volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
+		int format = (vireg[1] >> 8) & 3;
+		switch(format) {
+			case VI_NTSC:
+				return swissSettings.sramVideo == SYS_VIDEO_PAL ? VI_EURGB60 : VI_NTSC;
+			case VI_DEBUG:
+				switch(swissSettings.sramVideo) {
+					case SYS_VIDEO_PAL:  return swissSettings.sram60Hz ? VI_EURGB60 : VI_PAL;
+					case SYS_VIDEO_MPAL: return VI_MPAL;
+					default:             return VI_NTSC;
+				}
+		}
+		return format;
+	}
 	switch(vmode->viTVMode >> 2) {
 		case VI_PAL:
-		case VI_DEBUG_PAL:
-			return VI_PAL;
-		case VI_MPAL:
-			return VI_MPAL;
-		case VI_EURGB60:
-			return VI_EURGB60;
-		default:
-			return VI_NTSC;
+		case VI_DEBUG_PAL: return VI_PAL;
+		case VI_EURGB60:   return VI_EURGB60;
+		case VI_MPAL:      return VI_MPAL;
+		default:           return VI_NTSC;
 	}
 }
 
 int getScanMode() {
+	if(vmode == NULL) {
+		volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
+		if(vireg[54] & 1)
+			return VI_PROGRESSIVE;
+		else if((vireg[1] >> 2) & 1)
+			return VI_NON_INTERLACE;
+		else
+			return VI_INTERLACE;
+	}
 	return vmode->viTVMode & 3;
 }
 
 int getDTVStatus() {
 	volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
-	return swissSettings.forceDTVStatus || (vireg[55] & 1);
+	return (vireg[55] & 1) || swissSettings.forceDTVStatus;
 }
 
 int getFontEncode() {
@@ -74,44 +94,40 @@ GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 	switch(uiVMode) {
 		case 0:
 			if(getDTVStatus()) {
-				return &TVNtsc480Prog;
+				return swissSettings.sramVideo == SYS_VIDEO_PAL ? &TVEurgb60Hz480Prog : &TVNtsc480Prog;
 			} else {
 				switch(swissSettings.sramVideo) {
-					case SYS_VIDEO_MPAL: return &TVMpal480IntDf;
 					case SYS_VIDEO_PAL:  return swissSettings.sram60Hz ? &TVEurgb60Hz480IntDf : &TVPal576IntDfScale;
+					case SYS_VIDEO_MPAL: return &TVMpal480IntDf;
 					default:             return &TVNtsc480IntDf;
 				}
 			}
 		case 1:
 			if(getDTVStatus()) {
-				return &TVNtsc480IntDf;
+				return swissSettings.sramVideo == SYS_VIDEO_PAL ? &TVEurgb60Hz480IntDf : &TVNtsc480IntDf;
 			} else {
 				switch(swissSettings.sramVideo) {
-					case SYS_VIDEO_MPAL: return &TVMpal480IntDf;
 					case SYS_VIDEO_PAL:  return &TVEurgb60Hz480IntDf;
+					case SYS_VIDEO_MPAL: return &TVMpal480IntDf;
 					default:             return &TVNtsc480IntDf;
 				}
 			}
 		case 2:
 			if(getDTVStatus()) {
-				return &TVNtsc480Prog;
+				return swissSettings.sramVideo == SYS_VIDEO_PAL ? &TVEurgb60Hz480Prog : &TVNtsc480Prog;
 			} else {
 				switch(swissSettings.sramVideo) {
-					case SYS_VIDEO_MPAL: return &TVMpal480IntDf;
 					case SYS_VIDEO_PAL:  return &TVEurgb60Hz480IntDf;
+					case SYS_VIDEO_MPAL: return &TVMpal480IntDf;
 					default:             return &TVNtsc480IntDf;
 				}
 			}
 		case 3:
 			return &TVPal576IntDfScale;
 		case 4:
-			if(getDTVStatus()) {
-				return &TVPal576ProgScale;
-			} else {
-				return &TVPal576IntDfScale;
-			}
+			return getDTVStatus() ? &TVPal576ProgScale : &TVPal576IntDfScale;
 	}
-	return vmode;
+	return getVideoMode();
 }
 
 static void ProperScanPADS() {
@@ -119,6 +135,25 @@ static void ProperScanPADS() {
 }
 
 GXRModeObj* getVideoMode() {
+	if(vmode == NULL) {
+		if(getScanMode() == VI_PROGRESSIVE) {
+			switch(getTVFormat()) {
+				case VI_PAL:
+				case VI_DEBUG_PAL: return &TVPal576ProgScale;
+				case VI_EURGB60:   return &TVEurgb60Hz480Prog;
+				case VI_MPAL:      return &TVMpal480Prog;
+				default:           return &TVNtsc480Prog;
+			}
+		} else {
+			switch(getTVFormat()) {
+				case VI_PAL:
+				case VI_DEBUG_PAL: return &TVPal576IntDfScale;
+				case VI_EURGB60:   return &TVEurgb60Hz480IntDf;
+				case VI_MPAL:      return &TVMpal480IntDf;
+				default:           return &TVNtsc480IntDf;
+			}
+		}
+	}
 	return vmode;
 }
 
