@@ -726,6 +726,75 @@ u32 _aigetdmastartaddr[] = {
 	0x4E800020	// blr
 };
 
+u32 _gxpeekargb_a[] = {
+	0x546013BA,	// clrlslwi	r0, r3, 16, 2
+	0x6400C800,	// oris		r0, r0, 0xC800
+	0x54030512,	// rlwinm	r3, r0, 0, 20, 9
+	0x54806126,	// clrlslwi	r0, r4, 16, 12
+	0x7C600378,	// or		r0, r3, r0
+	0x5403028E,	// rlwinm	r0, r0, 0, 10, 7
+	0x80030000,	// lwz		r0, 0 (r3)
+	0x90050000,	// stw		r0, 0 (r5)
+	0x4E800020	// blr
+};
+
+u32 _gxpeekargb_b[] = {
+	0x5463103A,	// slwi		r3, r3, 2
+	0x54846026,	// slwi		r4, r4, 12
+	0x6463C800,	// oris		r3, r3, 0xC800
+	0x54600512,	// rlwinm	r0, r3, 0, 20, 9
+	0x7C032378,	// or		r3, r0, r4
+	0x5463028E,	// rlwinm	r3, r3, 0, 10, 7
+	0x80030000,	// lwz		r0, 0 (r3)
+	0x90050000,	// stw		r0, 0 (r5)
+	0x4E800020	// blr
+};
+
+u32 _gxpeekargb_c[] = {
+	0x5460043E,	// clrlwi	r0, r3, 16
+	0x3C60C800,	// lis		r3, 0xC800
+	0x5003153A,	// insrwi	r3, r0, 10, 20
+	0x38000000,	// li		r0, 0
+	0x508362A6,	// insrwi	r3, r4, 10, 10
+	0x5003B212,	// insrwi	r3, r0, 2, 8
+	0x80030000,	// lwz		r0, 0 (r3)
+	0x90050000,	// stw		r0, 0 (r5)
+	0x4E800020	// blr
+};
+
+u32 _gxpokeargb_a[] = {
+	0x546013BA,	// clrlslwi	r0, r3, 16, 2
+	0x6400C800,	// oris		r0, r0, 0xC800
+	0x54030512,	// rlwinm	r3, r0, 0, 20, 9
+	0x54806126,	// clrlslwi	r0, r4, 16, 12
+	0x7C600378,	// or		r0, r3, r0
+	0x5403028E,	// rlwinm	r0, r0, 0, 10, 7
+	0x90A30000,	// stw		r5, 0 (r3)
+	0x4E800020	// blr
+};
+
+u32 _gxpokeargb_b[] = {
+	0x5463103A,	// slwi		r3, r3, 2
+	0x54846026,	// slwi		r4, r4, 12
+	0x6463C800,	// oris		r3, r3, 0xC800
+	0x54600512,	// rlwinm	r0, r3, 0, 20, 9
+	0x7C032378,	// or		r3, r0, r4
+	0x5463028E,	// rlwinm	r3, r3, 0, 10, 7
+	0x90A30000,	// stw		r5, 0 (r3)
+	0x4E800020	// blr
+};
+
+u32 _gxpokeargb_c[] = {
+	0x5460043E,	// clrlwi	r0, r3, 16
+	0x3C60C800,	// lis		r3, 0xC800
+	0x5003153A,	// insrwi	r3, r0, 10, 20
+	0x38000000,	// li		r0, 0
+	0x508362A6,	// insrwi	r3, r4, 10, 10
+	0x5003B212,	// insrwi	r3, r0, 2, 8
+	0x90A30000,	// stw		r5, 0 (r3)
+	0x4E800020	// blr
+};
+
 u32 _gxpeekz_a[] = {
 	0x546013BA,	// clrlslwi	r0, r3, 16, 2
 	0x6400C800,	// oris		r0, r0, 0xC800
@@ -761,6 +830,41 @@ u32 _gxpeekz_c[] = {
 	0x5003B212,	// insrwi	r3, r0, 2, 8
 	0x80030000,	// lwz		r0, 0 (r3)
 	0x90050000,	// stw		r0, 0 (r5)
+	0x4E800020	// blr
+};
+
+u32 _gxpokez_a[] = {
+	0x546013BA,	// clrlslwi	r0, r3, 16, 2
+	0x6400C800,	// oris		r0, r0, 0xC800
+	0x54030512,	// rlwinm	r3, r0, 0, 20, 9
+	0x54806126,	// clrlslwi	r0, r4, 16, 12
+	0x7C600378,	// or		r0, r3, r0
+	0x5400028E,	// rlwinm	r0, r0, 0, 10, 7
+	0x64030040,	// oris		r3, r0, 0x0040
+	0x90A30000,	// stw		r5, 0 (r3)
+	0x4E800020	// blr
+};
+
+u32 _gxpokez_b[] = {
+	0x5463103A,	// slwi		r3, r3, 2
+	0x54846026,	// slwi		r4, r4, 12
+	0x6463C800,	// oris		r3, r3, 0xC800
+	0x54600512,	// rlwinm	r0, r3, 0, 20, 9
+	0x7C032378,	// or		r3, r0, r4
+	0x5460028E,	// rlwinm	r0, r3, 0, 10, 7
+	0x64030040,	// oris		r3, r0, 0x0040
+	0x90A30000,	// stw		r5, 0 (r3)
+	0x4E800020	// blr
+};
+
+u32 _gxpokez_c[] = {
+	0x5460043E,	// clrlwi	r0, r3, 16
+	0x3C60C800,	// lis		r3, 0xC800
+	0x5003153A,	// insrwi	r3, r0, 10, 20
+	0x38000001,	// li		r0, 1
+	0x508362A6,	// insrwi	r3, r4, 10, 10
+	0x5003B212,	// insrwi	r3, r0, 2, 8
+	0x90A30000,	// stw		r5, 0 (r3)
 	0x4E800020	// blr
 };
 
@@ -1390,10 +1494,25 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 7, 2, 0, 0, 0, 0, NULL, 0, "AIGetDMAStartAddrD" },
 		{ 7, 2, 0, 0, 0, 0, NULL, 0, "AIGetDMAStartAddr" }
 	};
+	FuncPattern GXPeekARGBSigs[3] = {
+		{ 9, 1, 1, 0, 0, 1, GXPeekARGBPatch, GXPeekARGBPatch_length, "GXPeekARGB" },
+		{ 9, 1, 1, 0, 0, 1, GXPeekARGBPatch, GXPeekARGBPatch_length, "GXPeekARGB" },	// SN Systems ProDG
+		{ 9, 3, 1, 0, 0, 0, GXPeekARGBPatch, GXPeekARGBPatch_length, "GXPeekARGB" }
+	};
+	FuncPattern GXPokeARGBSigs[3] = {
+		{ 8, 0, 1, 0, 0, 1, GXPokeARGBPatch, GXPokeARGBPatch_length, "GXPokeARGB" },
+		{ 8, 0, 1, 0, 0, 1, GXPokeARGBPatch, GXPokeARGBPatch_length, "GXPokeARGB" },	// SN Systems ProDG
+		{ 8, 2, 1, 0, 0, 0, GXPokeARGBPatch, GXPokeARGBPatch_length, "GXPokeARGB" }
+	};
 	FuncPattern GXPeekZSigs[3] = {
-		{ 10, 1, 1, 0, 0, 1, NULL, 0, "GXPeekZ" },
-		{ 10, 1, 1, 0, 0, 1, NULL, 0, "GXPeekZ" },	// SN Systems ProDG
-		{  9, 3, 1, 0, 0, 0, NULL, 0, "GXPeekZ" }
+		{ 10, 1, 1, 0, 0, 1, GXPeekZPatch, GXPeekZPatch_length, "GXPeekZ" },
+		{ 10, 1, 1, 0, 0, 1, GXPeekZPatch, GXPeekZPatch_length, "GXPeekZ" },	// SN Systems ProDG
+		{  9, 3, 1, 0, 0, 0, GXPeekZPatch, GXPeekZPatch_length, "GXPeekZ" }
+	};
+	FuncPattern GXPokeZSigs[3] = {
+		{ 9, 0, 1, 0, 0, 1, GXPokeZPatch, GXPokeZPatch_length, "GXPokeZ" },
+		{ 9, 0, 1, 0, 0, 1, GXPokeZPatch, GXPokeZPatch_length, "GXPokeZ" },	// SN Systems ProDG
+		{ 8, 2, 1, 0, 0, 0, GXPokeZPatch, GXPokeZPatch_length, "GXPokeZ" }
 	};
 	FuncPattern __VMBASESetupExceptionHandlersSigs[2] = {
 		{ 95, 38, 12, 6, 0, 20, NULL, 0, "__VMBASESetupExceptionHandlers" },
@@ -1434,12 +1553,30 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				AIGetDMAStartAddrSigs[0].offsetFoundAt = i;
 			else if (!memcmp(data + i, _aigetdmastartaddr, sizeof(_aigetdmastartaddr)))
 				AIGetDMAStartAddrSigs[1].offsetFoundAt = i;
+			else if (!memcmp(data + i, _gxpeekargb_a, sizeof(_gxpeekargb_a)))
+				GXPeekARGBSigs[0].offsetFoundAt = i;
+			else if (!memcmp(data + i, _gxpeekargb_b, sizeof(_gxpeekargb_b)))
+				GXPeekARGBSigs[1].offsetFoundAt = i;
+			else if (!memcmp(data + i, _gxpeekargb_c, sizeof(_gxpeekargb_c)))
+				GXPeekARGBSigs[2].offsetFoundAt = i;
+			else if (!memcmp(data + i, _gxpokeargb_a, sizeof(_gxpokeargb_a)))
+				GXPokeARGBSigs[0].offsetFoundAt = i;
+			else if (!memcmp(data + i, _gxpokeargb_b, sizeof(_gxpokeargb_b)))
+				GXPokeARGBSigs[1].offsetFoundAt = i;
+			else if (!memcmp(data + i, _gxpokeargb_c, sizeof(_gxpokeargb_c)))
+				GXPokeARGBSigs[2].offsetFoundAt = i;
 			else if (!memcmp(data + i, _gxpeekz_a, sizeof(_gxpeekz_a)))
 				GXPeekZSigs[0].offsetFoundAt = i;
 			else if (!memcmp(data + i, _gxpeekz_b, sizeof(_gxpeekz_b)))
 				GXPeekZSigs[1].offsetFoundAt = i;
 			else if (!memcmp(data + i, _gxpeekz_c, sizeof(_gxpeekz_c)))
 				GXPeekZSigs[2].offsetFoundAt = i;
+			else if (!memcmp(data + i, _gxpokez_a, sizeof(_gxpokez_a)))
+				GXPokeZSigs[0].offsetFoundAt = i;
+			else if (!memcmp(data + i, _gxpokez_b, sizeof(_gxpokez_b)))
+				GXPokeZSigs[1].offsetFoundAt = i;
+			else if (!memcmp(data + i, _gxpokez_c, sizeof(_gxpokez_c)))
+				GXPokeZSigs[2].offsetFoundAt = i;
 			continue;
 		}
 		
@@ -6224,16 +6361,56 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		}
 	}
 	
+	for (j = 0; j < sizeof(GXPeekARGBSigs) / sizeof(FuncPattern); j++)
+	if ((i = GXPeekARGBSigs[j].offsetFoundAt)) {
+		u32 *GXPeekARGB = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (GXPeekARGB) {
+			memset(data + i, 0, GXPeekARGBSigs[j].Length * sizeof(u32));
+			memcpy(data + i, GXPeekARGBSigs[j].Patch, GXPeekARGBSigs[j].PatchLength);
+			
+			print_gecko("Found:[%s$%i] @ %08X\n", GXPeekARGBSigs[j].Name, j, GXPeekARGB);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(GXPokeARGBSigs) / sizeof(FuncPattern); j++)
+	if ((i = GXPokeARGBSigs[j].offsetFoundAt)) {
+		u32 *GXPokeARGB = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (GXPokeARGB) {
+			memset(data + i, 0, GXPokeARGBSigs[j].Length * sizeof(u32));
+			memcpy(data + i, GXPokeARGBSigs[j].Patch, GXPokeARGBSigs[j].PatchLength);
+			
+			print_gecko("Found:[%s$%i] @ %08X\n", GXPokeARGBSigs[j].Name, j, GXPokeARGB);
+			patched++;
+		}
+	}
+	
 	for (j = 0; j < sizeof(GXPeekZSigs) / sizeof(FuncPattern); j++)
 	if ((i = GXPeekZSigs[j].offsetFoundAt)) {
 		u32 *GXPeekZ = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (GXPeekZ) {
-			memcpy(data + i, _gxpeekz_c, sizeof(_gxpeekz_c));
+			memset(data + i, 0, GXPeekZSigs[j].Length * sizeof(u32));
+			memcpy(data + i, GXPeekZSigs[j].Patch, GXPeekZSigs[j].PatchLength);
 			
-			data[i + 1] = 0x3C600800;	// lis		r3, 0x0800
+			data[i + 1] = 0x3CC00800;	// lis		r6, 0x0800
 			
 			print_gecko("Found:[%s$%i] @ %08X\n", GXPeekZSigs[j].Name, j, GXPeekZ);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(GXPokeZSigs) / sizeof(FuncPattern); j++)
+	if ((i = GXPokeZSigs[j].offsetFoundAt)) {
+		u32 *GXPokeZ = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (GXPokeZ) {
+			memset(data + i, 0, GXPokeZSigs[j].Length * sizeof(u32));
+			memcpy(data + i, GXPokeZSigs[j].Patch, GXPokeZSigs[j].PatchLength);
+			
+			print_gecko("Found:[%s$%i] @ %08X\n", GXPokeZSigs[j].Name, j, GXPokeZ);
 			patched++;
 		}
 	}

@@ -951,7 +951,7 @@ static void efb_read(uint32_t address, uint32_t *value)
 {
 	uint16_t zmode = PE[0];
 	PE[0] = 0;
-	*(volatile uint32_t *)OSPhysicalToUncached(address) = 0xFFFFFF;
+	*(volatile uint32_t *)OSPhysicalToUncached(address) = address;
 	*value = *(volatile uint32_t *)OSPhysicalToUncached(address);
 	PE[0] = zmode;
 }
