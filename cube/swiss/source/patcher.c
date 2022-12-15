@@ -9964,6 +9964,26 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 		}
+	} else if (!strncmp(gameID, "GDREAF", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1881216:
+				// Fix race condition with ARAM DMA transfer.
+				*(u32 *)(data + 0x8000AF34 - 0x800032C0 + 0x2C0) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GDRP69", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1950240:
+				// Fix race condition with ARAM DMA transfer.
+				*(u32 *)(data + 0x8000B7EC - 0x800032E0 + 0x2E0) = 0x60000000;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
 	} else if (!strncmp(gameID, "GDXEA4", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 2039904:
