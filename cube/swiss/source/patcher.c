@@ -12883,7 +12883,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	int i, j;
 	int patched = 0;
 	u32 address, constant;
-	FuncPattern OSGetConsoleTypeSigs[] = {
+	FuncPattern OSGetConsoleTypeSigs[3] = {
 		{ 13, 7, 0, 0, 2, 0, NULL, 0, "OSGetConsoleTypeD" },
 		{ 10, 4, 0, 0, 2, 0, NULL, 0, "OSGetConsoleType" },
 		{  9, 4, 0, 0, 1, 0, NULL, 0, "OSGetConsoleType" }	// SN Systems ProDG
@@ -12942,6 +12942,13 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 128, 47, 4, 14, 18, 7, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" },
 		{ 135, 47, 4, 17, 18, 9, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" }
 	};
+	FuncPattern SISetXYSigs[5] = {
+		{ 49, 15, 4, 5, 3, 4, NULL, 0, "SISetXYD" },
+		{ 51, 16, 5, 5, 3, 4, NULL, 0, "SISetXYD" },
+		{ 24,  7, 5, 2, 0, 3, NULL, 0, "SISetXY" },
+		{ 27, 10, 6, 2, 0, 3, NULL, 0, "SISetXY" },
+		{ 24,  7, 6, 2, 0, 3, NULL, 0, "SISetXY" }	// SN Systems ProDG
+	};
 	FuncPattern SIGetResponseSigs[6] = {
 		{ 36, 13, 4, 1, 2,  4, NULL, 0, "SIGetResponseD" },
 		{ 48, 12, 5, 4, 3,  7, NULL, 0, "SIGetResponseD" },
@@ -12949,6 +12956,20 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 52, 13, 8, 3, 2, 10, NULL, 0, "SIGetResponse" },
 		{ 49, 13, 8, 3, 2,  7, NULL, 0, "SIGetResponse" },
 		{ 74, 26, 9, 4, 3, 14, NULL, 0, "SIGetResponse" }	// SN Systems ProDG
+	};
+	FuncPattern SISetSamplingRateSigs[7] = {
+		{ 49, 11, 2, 5,  9, 5, NULL, 0, "PADSetSamplingRateD" },
+		{ 62, 14, 3, 7, 11, 6, NULL, 0, "PADSetSamplingRateD" },
+		{ 62, 11, 3, 6, 13, 6, NULL, 0, "SISetSamplingRateD" },
+		{ 44, 10, 5, 4,  8, 4, NULL, 0, "PADSetSamplingRate" },
+		{ 59, 14, 7, 6, 10, 6, NULL, 0, "PADSetSamplingRate" },
+		{ 57, 12, 6, 5, 12, 6, NULL, 0, "SISetSamplingRate" },
+		{ 54, 12, 6, 5, 10, 7, NULL, 0, "SISetSamplingRate" }	// SN Systems ProDG
+	};
+	FuncPattern SIRefreshSamplingRateSigs[3] = {
+		{  9,  3, 2, 1,  0, 2, NULL, 0, "PADRefreshSamplingRate" },
+		{  9,  3, 2, 1,  0, 2, NULL, 0, "SIRefreshSamplingRate" },
+		{ 54, 13, 6, 5, 10, 6, NULL, 0, "SIRefreshSamplingRate" }	// SN Systems ProDG
 	};
 	FuncPattern UpdateOriginSigs[5] = {
 		{ 105, 15, 1, 0, 20, 4, NULL, 0, "UpdateOriginD" },
@@ -13184,6 +13205,80 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 			}
 		}
 		
+		for (j = 0; j < sizeof(SISetSamplingRateSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &SISetSamplingRateSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i + 41, length, &SISetXYSigs[0]))
+							SISetSamplingRateSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i + 17, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i + 38, i + 39, &constant) && constant == 0xCC00206C &&
+							findx_pattern(data, dataType, i + 52, length, &SISetXYSigs[0]) &&
+							findx_pattern(data, dataType, i + 56, length, &OSRestoreInterruptsSig))
+							SISetSamplingRateSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i + 17, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i + 40, i + 41, &constant) && constant == 0xCC00206C &&
+							findx_pattern(data, dataType, i + 54, length, &SISetXYSigs[1]) &&
+							findx_pattern(data, dataType, i + 56, length, &OSRestoreInterruptsSig))
+							SISetSamplingRateSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i + 34, length, &SISetXYSigs[2]))
+							SISetSamplingRateSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_pattern(data, dataType, i + 13, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i + 34, i + 35, &constant) && constant == 0xCC00206C &&
+							findx_pattern(data, dataType, i + 46, length, &SISetXYSigs[2]) &&
+							findx_pattern(data, dataType, i + 50, length, &OSRestoreInterruptsSig))
+							SISetSamplingRateSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (findx_pattern(data, dataType, i + 12, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i + 35, i + 36, &constant) && constant == 0xCC00206C &&
+							findx_pattern(data, dataType, i + 47, length, &SISetXYSigs[3]) &&
+							findx_pattern(data, dataType, i + 49, length, &OSRestoreInterruptsSig))
+							SISetSamplingRateSigs[j].offsetFoundAt = i;
+						break;
+					case 6:
+						if (findx_pattern(data, dataType, i + 12, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i + 35, i + 37, &constant) && constant == 0xCC00206C &&
+							findx_pattern(data, dataType, i + 44, length, &SISetXYSigs[4]) &&
+							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig))
+							SISetSamplingRateSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(SIRefreshSamplingRateSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &SIRefreshSamplingRateSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_patterns(data, dataType, i + 4, length, &SISetSamplingRateSigs[1],
+							                                              &SISetSamplingRateSigs[4], NULL))
+							SIRefreshSamplingRateSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_patterns(data, dataType, i + 4, length, &SISetSamplingRateSigs[2],
+							                                              &SISetSamplingRateSigs[5], NULL))
+							SIRefreshSamplingRateSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i + 12, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i + 35, i + 37, &constant) && constant == 0xCC00206C &&
+							findx_pattern(data, dataType, i + 44, length, &SISetXYSigs[4]) &&
+							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig))
+							SIRefreshSamplingRateSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
 		for (j = 0; j < sizeof(PADOriginCallbackSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &PADOriginCallbackSigs[j])) {
 				switch (j) {
@@ -13269,30 +13364,35 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					case 0:
 						if (findx_pattern(data, dataType, i +  11, length, &PADSetSpecSigs[0]) &&
 							get_immediate(data,  i +  56, i +  57, &address) && address == 0x800030E0 &&
-							get_immediate(data,  i +  62, i +  63, &address) && address == 0x800030E0)
+							get_immediate(data,  i +  62, i +  63, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  77, length, &SISetSamplingRateSigs[0]))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i +  13, length, &PADSetSpecSigs[0]) &&
 							get_immediate(data,  i +  57, i +  58, &address) && address == 0x800030E0 &&
-							get_immediate(data,  i +  65, i +  66, &address) && address == 0x800030E0)
+							get_immediate(data,  i +  65, i +  66, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  80, length, &SISetSamplingRateSigs[1]))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i +  13, length, &PADSetSpecSigs[0]) &&
 							get_immediate(data,  i +  59, i +  60, &address) && address == 0x800030E0 &&
-							get_immediate(data,  i +  67, i +  68, &address) && address == 0x800030E0)
+							get_immediate(data,  i +  67, i +  68, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  79, length, &SIRefreshSamplingRateSigs[1]))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
 						if (findx_pattern(data, dataType, i +  15, length, &PADSetSpecSigs[0]) &&
 							get_immediate(data,  i +  61, i +  62, &address) && address == 0x800030E0 &&
-							get_immediate(data,  i +  69, i +  70, &address) && address == 0x800030E0)
+							get_immediate(data,  i +  69, i +  70, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  81, length, &SIRefreshSamplingRateSigs[1]))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i +  10, length, &PADSetSpecSigs[1]) &&
 							get_immediate(data,  i +  45, i +  46, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  50, length, &SISetSamplingRateSigs[3]) &&
 							findx_pattern(data, dataType, i +  52, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  77, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
@@ -13300,6 +13400,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					case 5:
 						if (findx_pattern(data, dataType, i +  10, length, &PADSetSpecSigs[1]) &&
 							get_immediate(data,  i +  45, i +  46, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  50, length, &SISetSamplingRateSigs[3]) &&
 							findx_pattern(data, dataType, i +  53, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  84, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
@@ -13307,6 +13408,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					case 6:
 						if (findx_pattern(data, dataType, i +  10, length, &PADSetSpecSigs[1]) &&
 							get_immediate(data,  i +  45, i +  46, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  50, length, &SISetSamplingRateSigs[3]) &&
 							findx_pattern(data, dataType, i +  56, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  87, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
@@ -13318,6 +13420,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							get_immediate(data,  i +  49, i +  56, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  49, i +  60, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  49, i +  64, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  69, length, &SISetSamplingRateSigs[3]) &&
 							findx_pattern(data, dataType, i +  75, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 106, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
@@ -13329,6 +13432,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							get_immediate(data,  i +  49, i +  56, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  49, i +  60, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  49, i +  64, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  69, length, &SISetSamplingRateSigs[3]) &&
 							findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 122, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
@@ -13340,6 +13444,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							get_immediate(data,  i +  52, i +  59, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  52, i +  63, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  52, i +  67, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  72, length, &SISetSamplingRateSigs[4]) &&
 							findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 125, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
@@ -13351,6 +13456,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							get_immediate(data,  i +  52, i +  59, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  52, i +  63, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  52, i +  67, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  72, length, &SISetSamplingRateSigs[4]) &&
 							findx_pattern(data, dataType, i +  77, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 126, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
@@ -13362,6 +13468,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							get_immediate(data,  i +  54, i +  59, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  54, i +  63, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  54, i +  67, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  71, length, &SIRefreshSamplingRateSigs[1]) &&
 							findx_pattern(data, dataType, i +  76, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 125, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
@@ -13373,6 +13480,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							get_immediate(data,  i +  56, i +  61, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  56, i +  65, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  56, i +  69, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  73, length, &SIRefreshSamplingRateSigs[1]) &&
 							findx_pattern(data, dataType, i +  78, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 127, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
@@ -13381,6 +13489,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 						if (findx_pattern(data, dataType, i +  15, length, &PADSetSpecSigs[1]) &&
 							get_immediate(data,  i +  43, i +  47, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  49, i +  51, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  62, length, &SIRefreshSamplingRateSigs[2]) &&
 							findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 115, length, &OSRestoreInterruptsSig))
 							PADInitSigs[j].offsetFoundAt = i;
@@ -13391,7 +13500,8 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							get_immediate(data,  i +  56, i +  57, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  56, i +  61, &address) && address == 0x800030E0 &&
 							get_immediate(data,  i +  56, i +  65, &address) && address == 0x800030E0 &&
-							get_immediate(data,  i +  56, i +  69, &address) && address == 0x800030E0)
+							get_immediate(data,  i +  56, i +  69, &address) && address == 0x800030E0 &&
+							findx_pattern(data, dataType, i +  73, length, &SIRefreshSamplingRateSigs[1]))
 							PADInitSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -13943,6 +14053,41 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 				memcpy(data + i, WriteUARTNSigs[j].Patch, WriteUARTNSigs[j].PatchLength);
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", WriteUARTNSigs[j].Name, j, WriteUARTN);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(SISetSamplingRateSigs) / sizeof(FuncPattern); j++)
+	if ((i = SISetSamplingRateSigs[j].offsetFoundAt)) {
+		u32 *SISetSamplingRate = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (SISetSamplingRate) {
+			if (swissSettings.forcePollRate) {
+				switch (j) {
+					case 0: data[i + 4] = 0x3BC00000 | ((swissSettings.forcePollRate - 1) & 0xFFFF); break;
+					case 1: data[i + 4] = 0x3BE00000 | ((swissSettings.forcePollRate - 1) & 0xFFFF); break;
+					case 2: data[i + 4] = 0x3BC00000 | ((swissSettings.forcePollRate - 1) & 0xFFFF); break;
+					case 3: data[i + 6] = 0x3BA00000 | ((swissSettings.forcePollRate - 1) & 0xFFFF); break;
+					case 4: data[i + 7] = 0x3B800000 | ((swissSettings.forcePollRate - 1) & 0xFFFF); break;
+					case 5:
+					case 6: data[i + 6] = 0x3BA00000 | ((swissSettings.forcePollRate - 1) & 0xFFFF); break;
+				}
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", SISetSamplingRateSigs[j].Name, j, SISetSamplingRate);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(SIRefreshSamplingRateSigs) / sizeof(FuncPattern); j++)
+	if ((i = SIRefreshSamplingRateSigs[j].offsetFoundAt)) {
+		u32 *SIRefreshSamplingRate = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (SIRefreshSamplingRate) {
+			if (swissSettings.forcePollRate)
+				if (j == 2)
+					data[i + 8] = 0x3BA00000 | ((swissSettings.forcePollRate - 1) & 0xFFFF);
+			
+			print_gecko("Found:[%s$%i] @ %08X\n", SIRefreshSamplingRateSigs[j].Name, j, SIRefreshSamplingRate);
 			patched++;
 		}
 	}

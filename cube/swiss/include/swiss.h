@@ -92,6 +92,7 @@ typedef struct {
 	int forceWidescreen;
 	int fontEncode;
 	int audioStreaming;
+	int forcePollRate;
 	int invertCStick;
 	int triggerLevel;
 	int wiirdDebug;	// Enable WiiRD debug

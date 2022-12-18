@@ -88,6 +88,7 @@ enum SETTINGS_GAME_DEFAULTS {
 	SET_DEFAULT_ALPHA_DITHER,
 	SET_DEFAULT_ANISO_FILTER,
 	SET_DEFAULT_WIDESCREEN,
+	SET_DEFAULT_POLL_RATE,
 	SET_DEFAULT_INVERT_CAMERA,
 	SET_DEFAULT_TRIGGER_LEVEL,
 	SET_DEFAULT_READ_SPEED,
@@ -107,6 +108,7 @@ enum SETTINGS_GAME {
 	SET_ALPHA_DITHER,
 	SET_ANISO_FILTER,
 	SET_WIDESCREEN,
+	SET_POLL_RATE,
 	SET_INVERT_CAMERA,
 	SET_TRIGGER_LEVEL,
 	SET_READ_SPEED,
@@ -122,6 +124,7 @@ extern char *forceHScaleStr[];
 extern char *forceVFilterStr[];
 extern char *forceVJitterStr[];
 extern char *forceWidescreenStr[];
+extern char *forcePollRateStr[];
 extern char *invertCStickStr[];
 extern char *disableVideoPatchesStr[];
 extern char *emulateReadSpeedStr[];

@@ -15,6 +15,7 @@ typedef struct {
 	int disableDithering;
 	int forceAnisotropy;
 	int forceWidescreen;
+	int forcePollRate;
 	int invertCStick;
 	int triggerLevel;
 	int emulateReadSpeed;
