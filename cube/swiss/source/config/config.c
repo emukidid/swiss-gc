@@ -191,6 +191,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Digital Trigger Level=%hhu\r\n", swissSettings.triggerLevel);
 	fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[swissSettings.emulateReadSpeed]);
 	fprintf(fp, "Emulate Memory Card=%s\r\n", swissSettings.emulateMemoryCard ? "Yes":"No");
+	fprintf(fp, "Prefer Clean Boot=%s\r\n", swissSettings.preferCleanBoot ? "Yes":"No");
 	fprintf(fp, "#!!Swiss Settings End!!\r\n\r\n");
 	fclose(fp);
 
@@ -260,6 +261,7 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	fprintf(fp, "Invert Camera Stick=%s\r\n", invertCStickStr[entry->invertCStick]);
 	fprintf(fp, "Digital Trigger Level=%hhu\r\n", entry->triggerLevel);
 	fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[entry->emulateReadSpeed]);
+	fprintf(fp, "Prefer Clean Boot=%s\r\n", entry->preferCleanBoot ? "Yes":"No");
 	fclose(fp);
 
 	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
@@ -293,6 +295,7 @@ void config_defaults(ConfigEntry *entry) {
 	entry->invertCStick = swissSettings.invertCStick;
 	entry->triggerLevel = swissSettings.triggerLevel;
 	entry->emulateReadSpeed = swissSettings.emulateReadSpeed;
+	entry->preferCleanBoot = swissSettings.preferCleanBoot;
 
 	for(int i = 0; i < sizeof(emulateReadSpeedEntries) / sizeof(*emulateReadSpeedEntries); i++) {
 		if(!strncmp(entry->game_id, emulateReadSpeedEntries[i], 4)) {
@@ -677,6 +680,9 @@ void config_parse_global(char *configData) {
 				else if(!strcmp("Emulate Memory Card", name)) {
 					swissSettings.emulateMemoryCard = !strcmp("Yes", value);
 				}
+				else if(!strcmp("Prefer Clean Boot", name)) {
+					swissSettings.preferCleanBoot = !strcmp("Yes", value);
+				}
 				
 				// Swiss settings
 				else if(!strcmp("SD/IDE Speed", name)) {
@@ -962,6 +968,9 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 						}
 					}
 				}
+				else if(!strcmp("Prefer Clean Boot", name)) {
+					entry->preferCleanBoot = !strcmp("Yes", value);
+				}
 			}
 		}
 		// And round we go again
@@ -1054,6 +1063,7 @@ void config_load_current(ConfigEntry *config) {
 	swissSettings.invertCStick = config->invertCStick;
 	swissSettings.triggerLevel = config->triggerLevel;
 	swissSettings.emulateReadSpeed = config->emulateReadSpeed;
+	swissSettings.preferCleanBoot = config->preferCleanBoot;
 }
 
 void config_unload_current() {
@@ -1071,5 +1081,6 @@ void config_unload_current() {
 	swissSettings.sram60Hz = backup.sram60Hz;
 	swissSettings.sramProgressive = backup.sramProgressive;
 	swissSettings.emulateReadSpeed = backup.emulateReadSpeed;
+	swissSettings.preferCleanBoot = backup.preferCleanBoot;
 	swissSettings.sramVideo = backup.sramVideo;
 }

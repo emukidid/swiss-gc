@@ -1726,7 +1726,7 @@ void load_game() {
 	ConfigEntry *config = calloc(1, sizeof(ConfigEntry));
 	memcpy(config->game_id, &GCMDisk.ConsoleID, 4);
 	memcpy(config->game_name, GCMDisk.GameName, 64);
-	config->cleanBoot = !valid_gcm_boot(&GCMDisk);
+	config->forceCleanBoot = !valid_gcm_boot(&GCMDisk);
 	config_find(config);
 	
 	// Show game info or return to the menu
@@ -1748,7 +1748,7 @@ void load_game() {
 	config_load_current(config);
 	gameID_early_set(&GCMDisk);
 	
-	if(config->cleanBoot) {
+	if(config->forceCleanBoot || (config->preferCleanBoot && devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR)) {
 		gameID_set(&GCMDisk, get_gcm_boot_hash(&GCMDisk));
 		
 		if(devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
@@ -2137,7 +2137,7 @@ int info_game(ConfigEntry *config)
 		u32 buttons = PAD_ButtonsHeld(0);
 		if(buttons & PAD_BUTTON_A) {
 			if(buttons & PAD_TRIGGER_L) {
-				config->cleanBoot = 1;
+				config->forceCleanBoot = 1;
 			}
 			ret = 1;
 			break;

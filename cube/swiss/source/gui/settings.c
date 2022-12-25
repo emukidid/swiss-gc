@@ -65,7 +65,7 @@ static char *tooltips_network[PAGE_NETWORK_MAX+1] = {
 
 static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
 	"In-Game Reset: (A + Z + Start)\n\nReboot: Soft-Reset the GameCube\nigr.dol: Low mem (< 0x81300000) igr.dol at the root of SD Card",
-	NULL,
+	"Boot through IPL:\n\nWhen enabled, games will be booted with the GameCube\nlogo screen and Main Menu accessible with patches applied.",
 	NULL,
 	NULL,
 	NULL,
@@ -86,7 +86,8 @@ static char *tooltips_game[PAGE_GAME_MAX+1] = {
 	"Force Polling Rate:\n\nVSync - Highest compatibility\n1000Hz - Lowest input latency",
 	"Invert Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Invert X-axis of the C Stick\nY - Invert Y-axis of the C Stick\nX&Y - Invert both axes of the C Stick",
 	"Digital Trigger Level:\n\nSets the level where the L/R Button is fully pressed.",
-	"Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated\nby the original medium, or for speedrunning."
+	"Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated\nby the original medium, or for speedrunning.",
+	"Prefer Clean Boot:\n\nWhen enabled, the GameCube will be reset and the game\nbooted through normal processes with no changes applied.\nRegion restrictions may be applicable.\n\nOnly available to devices attached to the DVD Interface."
 };
 
 syssram* sram;
@@ -308,6 +309,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Default Game Settings (4/5):"));
 		bool enabledVideoPatches = swissSettings.disableVideoPatches < 2;
 		bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
+		bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR);
 		if(option < SET_DEFAULT_READ_SPEED) {
 			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_DEFAULT_FORCE_VIDEOMODE, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, enabledVideoPatches);
@@ -324,6 +326,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_DEFAULT_TRIGGER_LEVEL, true);
 		} else {
 			drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_DEFAULT_READ_SPEED, emulatedReadSpeed);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_DEFAULT_CLEAN_BOOT, enabledCleanBoot);
 		}
 	}
 	else if(page_num == PAGE_GAME) {
@@ -332,10 +335,11 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)SET_PAGE_5_BACK);
 		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, page_y_ofs, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_5_BACK-1)),scrollBarTabHeight));
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Current Game Settings (5/5):"));
-		bool enabledGamePatches = gameConfig != NULL && !gameConfig->cleanBoot;
+		bool enabledGamePatches = gameConfig != NULL && !gameConfig->forceCleanBoot;
 		if(enabledGamePatches) {
 			bool enabledVideoPatches = swissSettings.disableVideoPatches < 2;
 			bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
+			bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR);
 			if(option < SET_READ_SPEED) {
 				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
 				drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[gameConfig->forceHScale], option == SET_HORIZ_SCALE, enabledVideoPatches);
@@ -352,6 +356,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_TRIGGER_LEVEL, true);
 			} else {
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[gameConfig->emulateReadSpeed], option == SET_READ_SPEED, emulatedReadSpeed);
+				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", gameConfig->preferCleanBoot, option == SET_CLEAN_BOOT, enabledCleanBoot);
 			}
 		}
 		else {
@@ -372,6 +377,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_TRIGGER_LEVEL, false);
 			} else {
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_READ_SPEED, false);
+				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_CLEAN_BOOT, false);
 			}
 		}
 	}
@@ -682,9 +688,13 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 						swissSettings.emulateReadSpeed = 2;
 				}
 			break;
+			case SET_DEFAULT_CLEAN_BOOT:
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR))
+					swissSettings.preferCleanBoot ^= 1;
+			break;
 		}
 	}
-	else if(page == PAGE_GAME && gameConfig != NULL && !gameConfig->cleanBoot) {
+	else if(page == PAGE_GAME && gameConfig != NULL && !gameConfig->forceCleanBoot) {
 		switch(option) {
 			case SET_FORCE_VIDEOMODE:
 				if(swissSettings.disableVideoPatches < 2) {
@@ -785,6 +795,10 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					if(gameConfig->emulateReadSpeed < 0)
 						gameConfig->emulateReadSpeed = 2;
 				}
+			break;
+			case SET_CLEAN_BOOT:
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR))
+					gameConfig->preferCleanBoot ^= 1;
 			break;
 		}
 	}
