@@ -151,7 +151,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 	else if(page_num == 2) {
 		DrawAddChild(container, DrawLabel(30, 55, "Credits (3/3):"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version 0.6", 1.0f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid & Extrems, 2022", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid & Extrems, 2023", 0.75f, true, defaultColor));
 		sprintf(txtbuffer, "Commit %s Revision %s", GITREVISION, GITVERSION);
 		DrawAddChild(container, DrawStyledLabel(640/2, 165, txtbuffer, 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 208, "Patreon supporters", 0.75f, true, defaultColor));

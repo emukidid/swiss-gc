@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2023, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -799,7 +799,7 @@ static const struct {
 	{ "GGSPA4\x00\x00", false, 2, 0xDA70, 0x09BF72F6, 1234962432,  +225015808, 0x0C0026D796CD60A2, {  531666940,      +36868, 6496, 0xEB41 }, "Metal Gear Solid: The Twin Snakes" },
 	{ "GGSPA4\x01\x00", false, 2, 0x3F71, 0x95986481, 1317832704,  +142145536, 0x0C0026D796CD60A2, {  610263248,      +44848, 6496, 0xEE43 }, "Metal Gear Solid: The Twin Snakes" },
 	{ "GGTE01\x00\x00", false, 1, 0x0790, 0xDB4C3C85,  427722752, +1032255488, 0x00BE1EFF76CB6FEB, {    5230416, +1032256152, 6496, 0xE018 }, "Chibi-Robo! Plug into Adventure!" },
-	{ "GGTJ01\x00\x01", false, 1, 0x915D, 0xD3A3126F,  395712512, +1064265728, 0xDA517FAFEEF00228, {    2482192, +1064267672, 6496, 0x8DBE }, "ChibiRobo!" },
+	{ "GGTJ01\x00\x01", false, 1, 0x915D, 0xD3A3126F,  395712512, +1064265728, 0xDA517FAFEEF00228, {    2482192, +1064267672, 6496, 0x8DBE }, "Chibi-Robo!" },
 	{ "GGTP01\x00\x00", false, 1, 0x5273, 0x88080C8F,  611936256,  +848041984, 0x5398147CF751B1AC, {  177016756,  +848042612, 8096, 0x363D }, "Chibi-Robo!" },
 	{ "GGVD78\x00\x00", false, 1, 0x4365, 0x2E2565BB,  705005568,  +754972672, 0xECB8BFCE925B00A5, {  524112880,     +173072, 6496, 0xE237 }, "Nickelodeon SpongeBob Schwammkopf: Der Film" },
 	{ "GGVE78\x00\x01", false, 1, 0xC940, 0x77BE3CC6,  833777664,  +626200576, 0xE8844FD465C89A0E, {  663582496,     +116960, 6496, 0x2DB3 }, "Nickelodeon SpongeBob SquarePants: The Movie" },
