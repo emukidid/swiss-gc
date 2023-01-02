@@ -877,7 +877,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 11, 3, 0, 0, 2, 1, memcpy_bin, memcpy_bin_size, "memcpy" };
 	FuncPattern PPCHaltSig = 
 		{ 5, 1, 0, 0, 1, 1, NULL, 0, "PPCHalt" };
-	FuncPattern OSInitSigs[29] = {
+	FuncPattern OSInitSigs[30] = {
 		{ 200,  79, 12, 34, 22,  9, NULL, 0, "OSInitD" },
 		{ 201,  79, 12, 35, 22,  9, NULL, 0, "OSInitD" },
 		{ 202,  79, 12, 36, 22,  9, NULL, 0, "OSInitD" },
@@ -906,6 +906,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 222,  74, 17, 43, 27,  8, NULL, 0, "OSInit" },
 		{ 277,  90, 20, 63, 30, 15, NULL, 0, "OSInit" },	// SN Systems ProDG
 		{ 246,  83, 17, 50, 32, 10, NULL, 0, "OSInit" },
+		{ 302,  99, 20, 70, 35, 17, NULL, 0, "OSInit" },	// SN Systems ProDG
 		{ 312,  97, 17, 71, 39, 17, NULL, 0, "OSInit" }
 	};
 	FuncPattern OSExceptionInitSigs[4] = {
@@ -921,10 +922,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	};
 	FuncPattern SetTimerSig = 
 		{ 43, 13, 3, 4, 4, 10, NULL, 0, "SetTimerD" };
-	FuncPattern InsertAlarmSigs[3] = {
+	FuncPattern InsertAlarmSigs[4] = {
 		{ 123, 38, 17,  6, 11, 24, NULL, 0, "InsertAlarmD" },
 		{ 148, 30, 16, 10, 17, 45, NULL, 0, "InsertAlarm" },
-		{ 154, 31, 16, 12, 17, 51, NULL, 0, "InsertAlarm" }	// SN Systems ProDG
+		{ 154, 31, 16, 12, 17, 51, NULL, 0, "InsertAlarm" },	// SN Systems ProDG
+		{ 154, 32, 16, 12, 17, 51, NULL, 0, "InsertAlarm" }		// SN Systems ProDG
 	};
 	FuncPattern OSSetAlarmSigs[3] = {
 		{ 58, 18, 4, 8, 0, 9, NULL, 0, "OSSetAlarmD" },
@@ -1022,7 +1024,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 18, 6, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" },
 		{ 17, 5, 3, 3, 0, 3, NULL, 0, "__OSDoHotReset" }	// SN Systems ProDG
 	};
-	FuncPattern OSResetSystemSigs[18] = {
+	FuncPattern OSResetSystemSigs[19] = {
 		{  64, 13, 2, 15,  6, 8, NULL, 0, "OSResetSystemD" },
 		{  65, 13, 2, 16,  6, 8, NULL, 0, "OSResetSystemD" },
 		{  90, 28, 3, 25,  5, 7, NULL, 0, "OSResetSystemD" },
@@ -1038,6 +1040,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 158, 41, 2, 24, 30, 9, NULL, 0, "OSResetSystem" },
 		{ 148, 44, 2, 26, 16, 9, NULL, 0, "OSResetSystem" },	// SN Systems ProDG
 		{ 162, 41, 2, 24, 34, 9, NULL, 0, "OSResetSystem" },
+		{ 152, 44, 2, 26, 20, 9, NULL, 0, "OSResetSystem" },	// SN Systems ProDG
 		{ 174, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem" },
 		{ 175, 44, 3, 25, 37, 9, NULL, 0, "OSResetSystem" },
 		{ 128, 38, 6, 31, 16, 6, NULL, 0, "OSResetSystem" }
@@ -1077,25 +1080,27 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 53, 16, 3, 1, 7, 4, NULL, 0, "CompleteTransferD" },
 		{ 54, 17, 3, 1, 7, 4, NULL, 0, "CompleteTransferD" }
 	};
-	FuncPattern EXIImmSigs[7] = {
+	FuncPattern EXIImmSigs[8] = {
 		{ 122, 38, 7, 9, 12,  9, NULL, 0, "EXIImmD" },
 		{ 122, 38, 7, 9, 12,  9, NULL, 0, "EXIImmD" },
 		{ 122, 38, 7, 9, 12,  9, NULL, 0, "EXIImmD" },
 		{ 151, 27, 8, 5, 12, 17, NULL, 0, "EXIImm" },
 		{ 151, 27, 8, 5, 12, 17, NULL, 0, "EXIImm" },
 		{  87, 24, 7, 5,  7,  9, NULL, 0, "EXIImm" },
-		{ 151, 36, 8, 5, 12, 32, NULL, 0, "EXIImm" }
+		{ 151, 36, 8, 5, 12, 32, NULL, 0, "EXIImm" },
+		{ 150, 34, 8, 7,  7, 39, NULL, 0, "EXIImm" }	// SN Systems ProDG
 	};
-	FuncPattern EXIDmaSigs[7] = {
-		{ 113, 42, 5, 10, 8, 6, NULL, 0, "EXIDmaD" },
-		{ 113, 42, 5, 10, 8, 6, NULL, 0, "EXIDmaD" },
-		{ 113, 42, 5, 10, 8, 6, NULL, 0, "EXIDmaD" },
-		{  59, 17, 7,  5, 2, 4, NULL, 0, "EXIDma" },
-		{  59, 17, 7,  5, 2, 4, NULL, 0, "EXIDma" },
-		{  74, 28, 8,  5, 2, 8, NULL, 0, "EXIDma" },
-		{  59, 17, 7,  5, 2, 5, NULL, 0, "EXIDma" }
+	FuncPattern EXIDmaSigs[8] = {
+		{ 113, 42, 5, 10, 8,  6, NULL, 0, "EXIDmaD" },
+		{ 113, 42, 5, 10, 8,  6, NULL, 0, "EXIDmaD" },
+		{ 113, 42, 5, 10, 8,  6, NULL, 0, "EXIDmaD" },
+		{  59, 17, 7,  5, 2,  4, NULL, 0, "EXIDma" },
+		{  59, 17, 7,  5, 2,  4, NULL, 0, "EXIDma" },
+		{  74, 28, 8,  5, 2,  8, NULL, 0, "EXIDma" },
+		{  59, 17, 7,  5, 2,  5, NULL, 0, "EXIDma" },
+		{  61, 16, 7,  7, 2, 10, NULL, 0, "EXIDma" }	// SN Systems ProDG
 	};
-	FuncPattern EXISyncSigs[12] = {
+	FuncPattern EXISyncSigs[13] = {
 		{  80, 25, 2, 6,  7,  7, NULL, 0, "EXISyncD" },
 		{  80, 25, 2, 6,  7,  7, NULL, 0, "EXISyncD" },
 		{  80, 24, 2, 6,  7,  6, NULL, 0, "EXISyncD" },
@@ -1107,67 +1112,75 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{  92, 26, 3, 3,  9,  7, NULL, 0, "EXISync" },
 		{ 142, 35, 3, 3, 12, 17, NULL, 0, "EXISync" },
 		{ 142, 39, 3, 3, 12, 19, NULL, 0, "EXISync" },
-		{ 147, 40, 3, 4, 13, 19, NULL, 0, "EXISync" }
+		{ 147, 40, 3, 4, 13, 19, NULL, 0, "EXISync" },
+		{ 152, 41, 3, 6, 13, 23, NULL, 0, "EXISync" }	// SN Systems ProDG
 	};
-	FuncPattern EXIClearInterruptsSigs[4] = {
+	FuncPattern EXIClearInterruptsSigs[5] = {
 		{ 48, 13, 5, 1, 5, 3, NULL, 0, "EXIClearInterruptsD" },
 		{ 49, 14, 5, 1, 5, 3, NULL, 0, "EXIClearInterruptsD" },
 		{ 18,  3, 1, 0, 3, 2, NULL, 0, "EXIClearInterrupts" },
-		{ 27,  5, 1, 0, 3, 0, NULL, 0, "EXIClearInterrupts" }
+		{ 27,  5, 1, 0, 3, 0, NULL, 0, "EXIClearInterrupts" },
+		{ 21,  4, 0, 0, 3, 3, NULL, 0, "EXIClearInterrupts" }	// SN Systems ProDG
 	};
-	FuncPattern EXIProbeResetSigs[2] = {
+	FuncPattern EXIProbeResetSigs[3] = {
 		{ 16,  7, 4, 2, 0, 2, NULL, 0, "EXIProbeResetD" },
-		{ 23, 12, 6, 2, 0, 2, NULL, 0, "EXIProbeResetD" }
+		{ 23, 12, 6, 2, 0, 2, NULL, 0, "EXIProbeResetD" },
+		{ 19,  8, 6, 2, 0, 2, NULL, 0, "EXIProbeReset" }	// SN Systems ProDG
 	};
-	FuncPattern __EXIProbeSigs[7] = {
+	FuncPattern __EXIProbeSigs[8] = {
 		{ 108, 38, 2, 7, 10, 10, NULL, 0, "EXIProbeD" },
 		{ 111, 38, 5, 7, 10, 10, NULL, 0, "__EXIProbeD" },
 		{ 112, 39, 5, 7, 10, 10, NULL, 0, "__EXIProbeD" },
 		{  90, 30, 4, 5,  8, 10, NULL, 0, "EXIProbe" },
 		{  93, 30, 7, 5,  8, 10, NULL, 0, "__EXIProbe" },
 		{ 109, 34, 6, 5,  8,  8, NULL, 0, "__EXIProbe" },
-		{  93, 30, 7, 5,  8,  9, NULL, 0, "__EXIProbe" }
+		{  93, 30, 7, 5,  8,  9, NULL, 0, "__EXIProbe" },
+		{  97, 31, 9, 5,  8, 15, NULL, 0, "__EXIProbe" }	// SN Systems ProDG
 	};
 	FuncPattern EXISelectSDSig = 
 		{ 85, 23, 4, 7, 14, 6, NULL, 0, "EXISelectSD" };
-	FuncPattern EXISelectSigs[7] = {
-		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD" },
-		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD" },
-		{ 116, 33, 3, 10, 17, 6, NULL, 0, "EXISelectD" },
-		{  75, 18, 4,  6, 11, 7, NULL, 0, "EXISelect" },
-		{  75, 18, 4,  6, 11, 7, NULL, 0, "EXISelect" },
-		{  80, 20, 4,  6, 11, 6, NULL, 0, "EXISelect" },
-		{  75, 18, 4,  6, 11, 8, NULL, 0, "EXISelect" }
+	FuncPattern EXISelectSigs[8] = {
+		{ 116, 33, 3, 10, 17,  6, NULL, 0, "EXISelectD" },
+		{ 116, 33, 3, 10, 17,  6, NULL, 0, "EXISelectD" },
+		{ 116, 33, 3, 10, 17,  6, NULL, 0, "EXISelectD" },
+		{  75, 18, 4,  6, 11,  7, NULL, 0, "EXISelect" },
+		{  75, 18, 4,  6, 11,  7, NULL, 0, "EXISelect" },
+		{  80, 20, 4,  6, 11,  6, NULL, 0, "EXISelect" },
+		{  75, 18, 4,  6, 11,  8, NULL, 0, "EXISelect" },
+		{ 148, 37, 6, 12, 19, 22, NULL, 0, "EXISelect" }	// SN Systems ProDG
 	};
-	FuncPattern EXIDeselectSigs[8] = {
-		{ 76, 21, 3, 7, 14, 5, NULL, 0, "EXIDeselectD" },
-		{ 76, 21, 3, 7, 14, 5, NULL, 0, "EXIDeselectD" },
-		{ 77, 22, 3, 7, 14, 5, NULL, 0, "EXIDeselectD" },
-		{ 68, 20, 8, 6, 11, 3, NULL, 0, "EXIDeselect" },
-		{ 68, 20, 8, 6, 12, 3, NULL, 0, "EXIDeselect" },
-		{ 68, 20, 8, 6, 12, 3, NULL, 0, "EXIDeselect" },
-		{ 66, 17, 3, 6, 12, 4, NULL, 0, "EXIDeselect" },
-		{ 68, 20, 8, 6, 12, 4, NULL, 0, "EXIDeselect" }
+	FuncPattern EXIDeselectSigs[9] = {
+		{  76, 21,  3,  7, 14,  5, NULL, 0, "EXIDeselectD" },
+		{  76, 21,  3,  7, 14,  5, NULL, 0, "EXIDeselectD" },
+		{  77, 22,  3,  7, 14,  5, NULL, 0, "EXIDeselectD" },
+		{  68, 20,  8,  6, 11,  3, NULL, 0, "EXIDeselect" },
+		{  68, 20,  8,  6, 12,  3, NULL, 0, "EXIDeselect" },
+		{  68, 20,  8,  6, 12,  3, NULL, 0, "EXIDeselect" },
+		{  66, 17,  3,  6, 12,  4, NULL, 0, "EXIDeselect" },
+		{  68, 20,  8,  6, 12,  4, NULL, 0, "EXIDeselect" },
+		{ 136, 37, 10, 10, 18, 17, NULL, 0, "EXIDeselect" }	// SN Systems ProDG
 	};
-	FuncPattern EXIIntrruptHandlerSigs[7] = {
+	FuncPattern EXIIntrruptHandlerSigs[8] = {
 		{ 42, 16, 3, 2, 3, 2, NULL, 0, "EXIIntrruptHandlerD" },
 		{ 50, 20, 2, 6, 3, 3, NULL, 0, "EXIIntrruptHandlerD" },
 		{ 51, 21, 2, 6, 3, 3, NULL, 0, "EXIIntrruptHandlerD" },
 		{ 32, 10, 3, 0, 1, 7, NULL, 0, "EXIIntrruptHandler" },
 		{ 50, 19, 6, 4, 1, 8, NULL, 0, "EXIIntrruptHandler" },
 		{ 48, 16, 3, 4, 1, 3, NULL, 0, "EXIIntrruptHandler" },
-		{ 50, 19, 6, 4, 1, 7, NULL, 0, "EXIIntrruptHandler" }
+		{ 50, 19, 6, 4, 1, 7, NULL, 0, "EXIIntrruptHandler" },
+		{ 47, 15, 5, 4, 1, 7, NULL, 0, "EXIIntrruptHandler" }	// SN Systems ProDG
 	};
-	FuncPattern TCIntrruptHandlerSigs[7] = {
+	FuncPattern TCIntrruptHandlerSigs[8] = {
 		{  50, 18, 4, 4, 3,  4, NULL, 0, "TCIntrruptHandlerD" },
 		{  58, 22, 3, 8, 3,  3, NULL, 0, "TCIntrruptHandlerD" },
 		{  59, 23, 3, 8, 3,  3, NULL, 0, "TCIntrruptHandlerD" },
 		{ 125, 34, 9, 1, 8, 21, NULL, 0, "TCIntrruptHandler" },
 		{ 134, 37, 9, 5, 8, 21, NULL, 0, "TCIntrruptHandler" },
 		{  87, 28, 5, 5, 6,  4, NULL, 0, "TCIntrruptHandler" },
-		{ 134, 41, 9, 5, 8, 22, NULL, 0, "TCIntrruptHandler" }
+		{ 134, 41, 9, 5, 8, 22, NULL, 0, "TCIntrruptHandler" },
+		{ 131, 37, 8, 5, 8, 23, NULL, 0, "TCIntrruptHandler" }	// SN Systems ProDG
 	};
-	FuncPattern EXTIntrruptHandlerSigs[8] = {
+	FuncPattern EXTIntrruptHandlerSigs[9] = {
 		{ 52, 18, 5, 2, 3, 4, NULL, 0, "EXTIntrruptHandlerD" },
 		{ 60, 22, 4, 6, 3, 5, NULL, 0, "EXTIntrruptHandlerD" },
 		{ 61, 23, 4, 6, 3, 5, NULL, 0, "EXTIntrruptHandlerD" },
@@ -1175,9 +1188,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 43, 17, 6, 1, 1, 7, NULL, 0, "EXTIntrruptHandler" },
 		{ 50, 17, 4, 5, 1, 5, NULL, 0, "EXTIntrruptHandler" },
 		{ 50, 18, 4, 5, 1, 5, NULL, 0, "EXTIntrruptHandler" },
-		{ 52, 20, 8, 5, 1, 5, NULL, 0, "EXTIntrruptHandler" }
+		{ 52, 20, 8, 5, 1, 5, NULL, 0, "EXTIntrruptHandler" },
+		{ 52, 18, 8, 5, 1, 6, NULL, 0, "EXTIntrruptHandler" }	// SN Systems ProDG
 	};
-	FuncPattern EXIInitSigs[10] = {
+	FuncPattern EXIInitSigs[11] = {
 		{  58, 36,  6, 11, 1, 2, NULL, 0, "EXIInitD" },
 		{  60, 37,  6, 12, 1, 2, NULL, 0, "EXIInitD" },
 		{ 107, 61,  6, 16, 8, 2, NULL, 0, "EXIInitD" },
@@ -1187,25 +1201,28 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{  71, 35, 14, 13, 1, 2, NULL, 0, "EXIInit" },
 		{  89, 43, 14, 14, 4, 2, NULL, 0, "EXIInit" },
 		{  87, 42, 14, 13, 4, 2, NULL, 0, "EXIInit" },
-		{ 117, 58, 14, 17, 8, 2, NULL, 0, "EXIInit" }
+		{ 117, 58, 14, 17, 8, 2, NULL, 0, "EXIInit" },
+		{ 103, 57,  6, 16, 8, 2, NULL, 0, "EXIInit" }	// SN Systems ProDG
 	};
-	FuncPattern EXILockSigs[7] = {
-		{ 106, 35, 5, 9, 13, 6, NULL, 0, "EXILockD" },
-		{ 106, 35, 5, 9, 13, 6, NULL, 0, "EXILockD" },
-		{ 106, 35, 5, 9, 13, 6, NULL, 0, "EXILockD" },
-		{  61, 18, 7, 5,  5, 6, NULL, 0, "EXILock" },
-		{  61, 18, 7, 5,  5, 6, NULL, 0, "EXILock" },
-		{  63, 19, 5, 5,  6, 6, NULL, 0, "EXILock" },
-		{  61, 17, 7, 5,  5, 7, NULL, 0, "EXILock" }
+	FuncPattern EXILockSigs[8] = {
+		{ 106, 35, 5,  9, 13,  6, NULL, 0, "EXILockD" },
+		{ 106, 35, 5,  9, 13,  6, NULL, 0, "EXILockD" },
+		{ 106, 35, 5,  9, 13,  6, NULL, 0, "EXILockD" },
+		{  61, 18, 7,  5,  5,  6, NULL, 0, "EXILock" },
+		{  61, 18, 7,  5,  5,  6, NULL, 0, "EXILock" },
+		{  63, 19, 5,  5,  6,  6, NULL, 0, "EXILock" },
+		{  61, 17, 7,  5,  5,  7, NULL, 0, "EXILock" },
+		{ 110, 30, 7, 13, 22, 10, NULL, 0, "EXILock" }	// SN Systems ProDG
 	};
-	FuncPattern EXIUnlockSigs[7] = {
-		{ 60, 22, 4, 6, 5, 4, NULL, 0, "EXIUnlockD" },
-		{ 60, 22, 4, 6, 5, 4, NULL, 0, "EXIUnlockD" },
-		{ 61, 23, 4, 6, 5, 4, NULL, 0, "EXIUnlockD" },
-		{ 55, 21, 8, 5, 3, 2, NULL, 0, "EXIUnlock" },
-		{ 55, 21, 8, 5, 3, 2, NULL, 0, "EXIUnlock" },
-		{ 50, 18, 4, 5, 3, 3, NULL, 0, "EXIUnlock" },
-		{ 55, 21, 8, 5, 3, 3, NULL, 0, "EXIUnlock" }
+	FuncPattern EXIUnlockSigs[8] = {
+		{  60, 22, 4,  6,  5, 4, NULL, 0, "EXIUnlockD" },
+		{  60, 22, 4,  6,  5, 4, NULL, 0, "EXIUnlockD" },
+		{  61, 23, 4,  6,  5, 4, NULL, 0, "EXIUnlockD" },
+		{  55, 21, 8,  5,  3, 2, NULL, 0, "EXIUnlock" },
+		{  55, 21, 8,  5,  3, 2, NULL, 0, "EXIUnlock" },
+		{  50, 18, 4,  5,  3, 3, NULL, 0, "EXIUnlock" },
+		{  55, 21, 8,  5,  3, 3, NULL, 0, "EXIUnlock" },
+		{ 101, 33, 8, 11, 20, 4, NULL, 0, "EXIUnlock" }	// SN Systems ProDG
 	};
 	FuncPattern __DVDInterruptHandlerSigs[10] = {
 		{ 157, 49, 21,  9, 18, 12, NULL, 0, "__DVDInterruptHandlerD" },
@@ -1348,12 +1365,13 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{  5,  2, 2, 0, 0, 0, NULL, 0, "DVDLowBreak" },
 		{  5,  2, 2, 0, 0, 0, NULL, 0, "DVDLowBreak" }	// SN Systems ProDG
 	};
-	FuncPattern DVDLowClearCallbackSigs[5] = {
+	FuncPattern DVDLowClearCallbackSigs[6] = {
 		{ 12, 6, 4, 0, 0, 0, NULL, 0, "DVDLowClearCallbackD" },
 		{ 14, 7, 5, 0, 0, 0, NULL, 0, "DVDLowClearCallbackD" },
 		{  6, 3, 2, 0, 0, 0, NULL, 0, "DVDLowClearCallback" },
 		{  6, 3, 2, 0, 0, 0, NULL, 0, "DVDLowClearCallback" },	// SN Systems ProDG
-		{  7, 3, 3, 0, 0, 0, NULL, 0, "DVDLowClearCallback" }
+		{  7, 3, 3, 0, 0, 0, NULL, 0, "DVDLowClearCallback" },
+		{  7, 3, 3, 0, 0, 0, NULL, 0, "DVDLowClearCallback" }	// SN Systems ProDG
 	};
 	FuncPattern DVDLowGetCoverStatusSigs[3] = {
 		{ 35, 13, 2, 1, 4,  9, NULL, 0, "DVDLowGetCoverStatusD" },
@@ -1486,9 +1504,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 24, 7, 5, 3, 2, 3, NULL, 0, "__DVDDequeueWaitingQueue" },
 		{ 26, 7, 5, 3, 2, 5, NULL, 0, "__DVDDequeueWaitingQueue" }	// SN Systems ProDG
 	};
-	FuncPattern AIInitDMASigs[2] = {
+	FuncPattern AIInitDMASigs[3] = {
 		{ 44, 12, 2, 3, 1, 6, NULL, 0, "AIInitDMAD" },
-		{ 34,  8, 4, 2, 0, 5, NULL, 0, "AIInitDMA" }
+		{ 34,  8, 4, 2, 0, 5, NULL, 0, "AIInitDMA" },
+		{ 31,  5, 4, 2, 0, 7, NULL, 0, "AIInitDMA" }	// SN Systems ProDG
 	};
 	FuncPattern AIGetDMAStartAddrSigs[2] = {
 		{ 7, 2, 0, 0, 0, 0, NULL, 0, "AIGetDMAStartAddrD" },
@@ -1984,6 +2003,21 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							OSInitSigs[j].offsetFoundAt = i;
 						break;
 					case 28:
+						if (findx_pattern(data, dataType, i +  12, length, &__OSGetSystemTimeSigs[2]) &&
+							findx_pattern(data, dataType, i +  15, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  64, length, &OSSetArenaLoSig) &&
+							findx_pattern(data, dataType, i +  79, length, &OSSetArenaLoSig) &&
+							findx_pattern(data, dataType, i +  86, length, &OSSetArenaHiSig) &&
+							findx_pattern(data, dataType, i +  87, length, &OSExceptionInitSigs[3]) &&
+							findx_pattern(data, dataType, i +  88, length, &__OSInitSystemCallSigs[2]) &&
+							findx_pattern(data, dataType, i +  91, length, &__OSInterruptInitSigs[2]) &&
+							findx_pattern(data, dataType, i +  95, length, &__OSSetInterruptHandlerSigs[2]) &&
+							findx_pattern(data, dataType, i + 190, length, &OSGetArenaHiSigs[2]) &&
+							findx_pattern(data, dataType, i + 192, length, &OSGetArenaLoSigs[2]) &&
+							findx_pattern(data, dataType, i + 272, length, &OSEnableInterruptsSig))
+							OSInitSigs[j].offsetFoundAt = i;
+						break;
+					case 29:
 						if (findx_pattern(data, dataType, i +  15, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  18, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  73, length, &OSSetArenaLoSig) &&
@@ -2041,10 +2075,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							OSSetAlarmSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (findx_pattern(data, dataType, i +  9, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i + 14, length, &__OSGetSystemTimeSigs[2]) &&
-							findx_pattern(data, dataType, i + 19, length, &InsertAlarmSigs[2]) &&
-							findx_pattern(data, dataType, i + 21, length, &OSRestoreInterruptsSig))
+						if (findx_pattern (data, dataType, i +  9, length, &OSDisableInterruptsSig) &&
+							findx_pattern (data, dataType, i + 14, length, &__OSGetSystemTimeSigs[2]) &&
+							findx_patterns(data, dataType, i + 19, length, &InsertAlarmSigs[2],
+							                                               &InsertAlarmSigs[3], NULL) &&
+							findx_pattern (data, dataType, i + 21, length, &OSRestoreInterruptsSig))
 							OSSetAlarmSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -2320,18 +2355,24 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							OSResetSystemSigs[j].offsetFoundAt = i;
 						break;
 					case 15:
+						if (findx_pattern(data, dataType, i +  50, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  70, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  74, length, &ICFlashInvalidateSig))
+							OSResetSystemSigs[j].offsetFoundAt = i;
+						break;
+					case 16:
 						if (findx_pattern(data, dataType, i +  64, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  86, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  91, length, &ICFlashInvalidateSig))
 							OSResetSystemSigs[j].offsetFoundAt = i;
 						break;
-					case 16:
+					case 17:
 						if (findx_pattern(data, dataType, i +  65, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  87, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  92, length, &ICFlashInvalidateSig))
 							OSResetSystemSigs[j].offsetFoundAt = i;
 						break;
-					case 17:
+					case 18:
 						if (findx_pattern(data, dataType, i +  67, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  74, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  79, length, &ICFlashInvalidateSig))
@@ -2485,6 +2526,17 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern (data, dataType, i + 141, length, &OSRestoreInterruptsSig))
 							EXIImmSigs[j].offsetFoundAt = i;
 						break;
+					case 7:
+						if ((data[i + 10] & 0xFC00FFFF) == 0x54003032 &&
+							findx_pattern(data, dataType, i +  14, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  23, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  34, length, &EXIClearInterruptsSigs[4]) &&
+							findx_pattern(data, dataType, i +  38, length, &__OSUnmaskInterruptsSigs[2]) &&
+							get_immediate(data,  i + 119, i + 120, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i + 136, i + 137, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i + 142, length, &OSRestoreInterruptsSig))
+							EXIImmSigs[j].offsetFoundAt = i;
+						break;
 				}
 			}
 		}
@@ -2570,6 +2622,16 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							                                                &__OSUnmaskInterruptsSigs[2], NULL) &&
 							get_immediate (data,  i +  42, i +  43, &address) && address == 0xCC006800 &&
 							findx_pattern (data, dataType, i +  52, length, &OSRestoreInterruptsSig))
+							EXIDmaSigs[j].offsetFoundAt = i;
+						break;
+					case 7:
+						if ((data[i + 10] & 0xFC00FFFF) == 0x54003032 &&
+							findx_pattern(data, dataType, i +  14, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  23, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  34, length, &EXIClearInterruptsSigs[4]) &&
+							findx_pattern(data, dataType, i +  38, length, &__OSUnmaskInterruptsSigs[2]) &&
+							get_immediate(data,  i +  43, i +  44, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  53, length, &OSRestoreInterruptsSig))
 							EXIDmaSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -2701,6 +2763,16 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 136, length, &OSRestoreInterruptsSig))
 							EXISyncSigs[j].offsetFoundAt = i;
 						break;
+					case 12:
+						if ((data[i + 6] & 0xFC00FFFF) == 0x54003032 &&
+							get_immediate(data,  i +  12, i +  13, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  19, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  34, i +  35, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i + 114, i + 115, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i + 134, i + 135, &address) && address == 0x800030E6 &&
+							findx_pattern(data, dataType, i + 140, length, &OSRestoreInterruptsSig))
+							EXISyncSigs[j].offsetFoundAt = i;
+						break;
 				}
 			}
 		}
@@ -2810,6 +2882,19 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							get_immediate(data,  i +  69, i +  70, &address) && address == 0x800030C0 &&
 							get_immediate(data,  i +  81, i +  82, &address) && address == 0x800030C0 &&
 							findx_pattern(data, dataType, i +  86, length, &OSRestoreInterruptsSig))
+							__EXIProbeSigs[j].offsetFoundAt = i;
+						break;
+					case 7:
+						if ((data[i + 8] & 0xFC00FFFF) == 0x54003032 &&
+							findx_pattern(data, dataType, i +  17, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +  20, i +  21, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  35, i +  36, &address) && address == 0x800030C0 &&
+							findx_pattern(data, dataType, i +  40, length, &OSGetTimeSig) &&
+							get_immediate(data,  i +  41, i +  42, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i +  55, i +  56, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  70, i +  71, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i +  82, i +  83, &address) && address == 0x800030C0 &&
+							findx_pattern(data, dataType, i +  87, length, &OSRestoreInterruptsSig))
 							__EXIProbeSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -2934,6 +3019,26 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern (data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
 							findx_pattern (data, dataType, i + 52, length, &__EXIProbeSigs[6]) &&
 							find_pattern_before(data, length, &fp, &EXISelectSigs[6]))
+							EXIDeselectSigs[j].offsetFoundAt = i;
+						break;
+					case 8:
+						if ((data[i + 8] & 0xFC00FFFF) == 0x54003032 &&
+							findx_pattern(data, dataType, i +  12, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  17, length, &OSRestoreInterruptsSig) &&
+							get_immediate(data,   i + 24, i +  25, &address) && address == 0xCC006800 &&
+							findx_pattern(data, dataType, i +  39, length, &__OSUnmaskInterruptsSigs[2]) &&
+							findx_pattern(data, dataType, i +  42, length, &__OSUnmaskInterruptsSigs[2]) &&
+							findx_pattern(data, dataType, i +  44, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i +  54, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i + 57, i +  58, &address) && address == 0xCC006800 &&
+							get_immediate(data,  i +  72, i +  73, &address) && address == 0x800030C0 &&
+							findx_pattern(data, dataType, i +  77, length, &OSGetTimeSig) &&
+							get_immediate(data,  i +  78, i +  79, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i +  92, i +  93, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i + 107, i + 108, &address) && address == 0x800030C0 &&
+							get_immediate(data,  i + 118, i + 119, &address) && address == 0x800030C0 &&
+							findx_pattern(data, dataType, i + 122, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &EXISelectSigs[7]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -3237,6 +3342,34 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 78, length, &__EXIProbeSigs[6]))
 							EXIInitSigs[j].offsetFoundAt = i;
 						break;
+					case 10:
+						if (get_immediate(data,   i +  3, i +  4, &address) && address == 0xCC006834 &&
+							get_immediate(data,   i +  3, i +  5, &address) && address == 0xCC00680C &&
+							get_immediate(data,   i +  3, i +  6, &address) && address == 0xCC006820 &&
+							findx_pattern(data, dataType, i + 21, length, &__OSMaskInterruptsSigs[2]) &&
+							get_immediate(data,   i + 23, i + 24, &address) && address == 0xCC006800 &&
+							get_immediate(data,   i + 23, i + 25, &address) && address == 0xCC006814 &&
+							get_immediate(data,   i + 23, i + 26, &address) && address == 0xCC006828 &&
+							get_immediate(data,   i + 23, i + 28, &address) && address == 0xCC006800 &&
+							findi_pattern(data, dataType, i + 30, i + 31, length, &EXIIntrruptHandlerSigs[7]) &&
+							findx_pattern(data, dataType, i + 32, length, &__OSSetInterruptHandlerSigs[2]) &&
+							findi_pattern(data, dataType, i + 34, i + 35, length, &TCIntrruptHandlerSigs[7]) &&
+							findx_pattern(data, dataType, i + 36, length, &__OSSetInterruptHandlerSigs[2]) &&
+							findi_pattern(data, dataType, i + 38, i + 39, length, &EXTIntrruptHandlerSigs[8]) &&
+							findx_pattern(data, dataType, i + 40, length, &__OSSetInterruptHandlerSigs[2]) &&
+							findi_pattern(data, dataType, i + 42, i + 43, length, &EXIIntrruptHandlerSigs[7]) &&
+							findx_pattern(data, dataType, i + 44, length, &__OSSetInterruptHandlerSigs[2]) &&
+							findi_pattern(data, dataType, i + 46, i + 47, length, &TCIntrruptHandlerSigs[7]) &&
+							findx_pattern(data, dataType, i + 48, length, &__OSSetInterruptHandlerSigs[2]) &&
+							findi_pattern(data, dataType, i + 50, i + 51, length, &EXTIntrruptHandlerSigs[8]) &&
+							findx_pattern(data, dataType, i + 52, length, &__OSSetInterruptHandlerSigs[2]) &&
+							findi_pattern(data, dataType, i + 54, i + 55, length, &EXIIntrruptHandlerSigs[7]) &&
+							findx_pattern(data, dataType, i + 56, length, &__OSSetInterruptHandlerSigs[2]) &&
+							findi_pattern(data, dataType, i + 58, i + 59, length, &TCIntrruptHandlerSigs[7]) &&
+							findx_pattern(data, dataType, i + 60, length, &__OSSetInterruptHandlerSigs[2]) &&
+							findx_pattern(data, dataType, i + 68, length, &EXIProbeResetSigs[2]))
+							EXIInitSigs[j].offsetFoundAt = i;
+						break;
 				}
 			}
 		}
@@ -3305,6 +3438,20 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 26, length, &SetExiInterruptMaskSigs[6]) &&
 							findx_pattern(data, dataType, i + 45, length, &OSRestoreInterruptsSig) &&
 							find_pattern_before(data, length, &fp, &EXILockSigs[6]))
+							EXIUnlockSigs[j].offsetFoundAt = i;
+						break;
+					case 7:
+						if ((data[i + 8] & 0xFC00FFFF) == 0x54003032 &&
+							findx_pattern(data, dataType, i + 12, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 17, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 44, length, &__OSMaskInterruptsSigs[2]) &&
+							findx_pattern(data, dataType, i + 47, length, &__OSUnmaskInterruptsSigs[2]) &&
+							findx_pattern(data, dataType, i + 56, length, &__OSMaskInterruptsSigs[2]) &&
+							findx_pattern(data, dataType, i + 59, length, &__OSUnmaskInterruptsSigs[2]) &&
+							findx_pattern(data, dataType, i + 69, length, &__OSMaskInterruptsSigs[2]) &&
+							findx_pattern(data, dataType, i + 72, length, &__OSUnmaskInterruptsSigs[2]) &&
+							findx_pattern(data, dataType, i + 91, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &EXILockSigs[7]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -4246,14 +4393,15 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						}
 						break;
 					case 8:
-						if (findx_pattern(data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
-							findx_pattern(data, dataType, i +  31, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  42, length, &DVDLowBreakSigs[5]) &&
-							findx_pattern(data, dataType, i +  45, length, &__DVDDequeueWaitingQueueSigs[2]) &&
-							findx_pattern(data, dataType, i +  87, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i +  94, length, &DVDLowClearCallbackSigs[3]) &&
-							findx_pattern(data, dataType, i + 100, length, &OSRestoreInterruptsSig) &&
-							findx_pattern(data, dataType, i + 149, length, &OSRestoreInterruptsSig))
+						if (findx_pattern (data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
+							findx_pattern (data, dataType, i +  31, length, &OSRestoreInterruptsSig) &&
+							findx_pattern (data, dataType, i +  42, length, &DVDLowBreakSigs[5]) &&
+							findx_pattern (data, dataType, i +  45, length, &__DVDDequeueWaitingQueueSigs[2]) &&
+							findx_pattern (data, dataType, i +  87, length, &OSRestoreInterruptsSig) &&
+							findx_patterns(data, dataType, i +  94, length, &DVDLowClearCallbackSigs[3],
+							                                                &DVDLowClearCallbackSigs[5], NULL) &&
+							findx_pattern (data, dataType, i + 100, length, &OSRestoreInterruptsSig) &&
+							findx_pattern (data, dataType, i + 149, length, &OSRestoreInterruptsSig))
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -4333,6 +4481,17 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							get_immediate(data,   i +  8, i + 11, &address) && address == 0xCC005000 &&
 							get_immediate(data,   i +  8, i + 12, &address) && address == 0xCC005000 &&
 							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig))
+							AIInitDMASigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  7, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i +  8, i + 10, &address) && address == 0xCC005030 &&
+							get_immediate(data,   i +  8, i + 15, &address) && address == 0xCC005030 &&
+							get_immediate(data,   i +  8, i + 16, &address) && address == 0xCC005032 &&
+							get_immediate(data,   i +  8, i + 19, &address) && address == 0xCC005032 &&
+							get_immediate(data,   i +  8, i + 20, &address) && address == 0xCC005036 &&
+							get_immediate(data,   i +  8, i + 23, &address) && address == 0xCC005036 &&
+							findx_pattern(data, dataType, i + 24, length, &OSRestoreInterruptsSig))
 							AIInitDMASigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -4685,9 +4844,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				case 12: data[i + 77] = branchAndLink(FINI, OSResetSystem + 77); break;
 				case 13: data[i + 66] = branchAndLink(FINI, OSResetSystem + 66); break;
 				case 14: data[i + 81] = branchAndLink(FINI, OSResetSystem + 81); break;
-				case 15: data[i + 86] = branchAndLink(FINI, OSResetSystem + 86); break;
-				case 16: data[i + 87] = branchAndLink(FINI, OSResetSystem + 87); break;
-				case 17: data[i + 74] = branchAndLink(FINI, OSResetSystem + 74); break;
+				case 15: data[i + 70] = branchAndLink(FINI, OSResetSystem + 70); break;
+				case 16: data[i + 86] = branchAndLink(FINI, OSResetSystem + 86); break;
+				case 17: data[i + 87] = branchAndLink(FINI, OSResetSystem + 87); break;
+				case 18: data[i + 74] = branchAndLink(FINI, OSResetSystem + 74); break;
 			}
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 5] = (u32)OSResetSystem;
@@ -4848,6 +5008,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						data[i + 118] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i + 135] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
+					case 7:
+						data[i + 119] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 136] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
 				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXIImmSigs[j].Name, j, EXIImm);
@@ -4880,6 +5044,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 					case 6:
 						data[i +  42] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 7:
+						data[i +  43] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 				}
 			}
@@ -4964,6 +5131,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						data[i + 122] = 0x80640010;	// lwz		r3, 0x0010 (r4)
 						data[i + 126] = 0x80640010;	// lwz		r3, 0x0010 (r4)
 						break;
+					case 12:
+						data[i +  12] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i +  34] = 0x3C800C00;	// lis		r4, 0x0C00
+						data[i + 114] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
 				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXISyncSigs[j].Name, j, EXISync);
@@ -4992,6 +5164,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					case 3:
 						data[i +  4] = 0x3CE00C00;	// lis		r7, 0x0C00
 						data[i + 20] = 0x3CE00C00;	// lis		r7, 0x0C00
+						break;
+					case 4:
+						data[i +  1] = 0x3CE00C00;	// lis		r7, 0x0C00
+						data[i + 16] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 				}
 			}
@@ -5025,6 +5201,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 					case 6:
 						data[i + 17] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 7:
+						data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 				}
 			}
@@ -5060,14 +5239,18 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 					case 3:
 					case 4:
-						data[i + 38] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i +  38] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 					case 5:
-						data[i + 42] = 0x3C600C00;	// lis		r3, 0x0C00
-						data[i + 55] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i +  42] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i +  55] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 					case 6:
-						data[i + 41] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i +  41] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 7:
+						data[i +  32] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 114] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 				}
 			}
@@ -5104,6 +5287,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					case 7:
 						data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
+					case 8:
+						data[i + 24] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 57] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
 				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", EXIDeselectSigs[j].Name, j, EXIDeselect);
@@ -5129,6 +5316,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						data[i + 24] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 					case 6:
+					case 7:
 						data[i + 15] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 				}
@@ -5156,6 +5344,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 					case 6:
 						data[i + 23] = 0x3CC00C00;	// lis		r6, 0x0C00
+						break;
+					case 7:
+						data[i + 23] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 				}
 			}
@@ -5240,6 +5431,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					case 9:
 						data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
 						data[i + 25] = 0x3C800C00;	// lis		r4, 0x0C00
+						break;
+					case 10:
+						data[i +  3] = 0x3C600C00;	// lis		r3, 0x0C00
+						data[i + 23] = 0x3C600C00;	// lis		r3, 0x0C00
 						break;
 				}
 			}
@@ -6332,6 +6527,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 					case 1:
 						data[i +  8] = 0x3C800C00;	// lis		r4, 0x0C00
+						break;
+					case 2:
+						data[i +  8] = 0x3CE00C00;	// lis		r7, 0x0C00
 						break;
 				}
 			}
@@ -12926,21 +13124,23 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{  9,  3,  2, 1, 0, 2, NULL, 0, "__OSUnlockSramEx" },
 		{ 98, 43, 11, 9, 5, 6, NULL, 0, "__OSUnlockSramEx" }	// SN Systems ProDG
 	};
-	FuncPattern InitializeUARTSigs[5] = {
+	FuncPattern InitializeUARTSigs[6] = {
 		{ 18,  7, 4, 1, 1, 2, NULL, 0, "InitializeUARTD" },
 		{ 28, 12, 6, 1, 2, 2, NULL, 0, "InitializeUARTD" },
 		{ 16,  6, 3, 1, 1, 2, NULL, 0, "InitializeUART" },
 		{ 18,  7, 4, 1, 1, 2, NULL, 0, "InitializeUART" },
-		{ 28, 12, 6, 1, 2, 2, NULL, 0, "InitializeUART" }
+		{ 28, 12, 6, 1, 2, 2, NULL, 0, "InitializeUART" },
+		{ 28, 12, 6, 1, 2, 2, NULL, 0, "InitializeUART" }	// SN Systems ProDG
 	};
 	FuncPattern QueueLengthSig = 
 		{ 38, 21, 3, 6, 1, 2, NULL, 0, "QueueLengthD" };
-	FuncPattern WriteUARTNSigs[5] = {
-		{  99, 28, 3,  9, 17, 8, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTND" },
-		{ 105, 28, 3, 12, 17, 9, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTND" },
-		{ 128, 48, 4, 14, 18, 7, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" },
-		{ 128, 47, 4, 14, 18, 7, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" },
-		{ 135, 47, 4, 17, 18, 9, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" }
+	FuncPattern WriteUARTNSigs[6] = {
+		{  99, 28, 3,  9, 17,  8, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTND" },
+		{ 105, 28, 3, 12, 17,  9, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTND" },
+		{ 128, 48, 4, 14, 18,  7, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" },
+		{ 128, 47, 4, 14, 18,  7, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" },
+		{ 135, 47, 4, 17, 18,  9, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" },
+		{ 136, 46, 4, 19, 17, 11, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" }	// SN Systems ProDG
 	};
 	FuncPattern SISetXYSigs[5] = {
 		{ 49, 15, 4, 5, 3, 4, NULL, 0, "SISetXYD" },
@@ -13148,7 +13348,8 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							InitializeUARTSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
-						if (findx_patterns(data, dataType, i +  9, length, &OSGetConsoleTypeSigs[0],
+						if (get_immediate (data,   i +  4, i +  5, &constant) && constant == 0xA5FF005A &&
+							findx_patterns(data, dataType, i +  9, length, &OSGetConsoleTypeSigs[0],
 							                                               &OSGetConsoleTypeSigs[1], NULL) &&
 							get_immediate (data,   i + 20, i + 21, &constant) && constant == 0xA5FF005A)
 							InitializeUARTSigs[j].offsetFoundAt = i;
@@ -13164,9 +13365,16 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							InitializeUARTSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
-						if (findx_patterns(data, dataType, i +  9, length, &OSGetConsoleTypeSigs[1],
+						if (get_immediate (data,   i +  4, i +  5, &constant) && constant == 0xA5FF005A &&
+							findx_patterns(data, dataType, i +  9, length, &OSGetConsoleTypeSigs[1],
 							                                               &OSGetConsoleTypeSigs[2], NULL) &&
 							get_immediate (data,   i + 16, i + 17, &constant) && constant == 0xA5FF005A)
+							InitializeUARTSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (get_immediate(data,   i +  4, i +  5, &constant) && constant == 0xA5FF005A &&
+							findx_pattern(data, dataType, i +  9, length, &OSGetConsoleTypeSigs[2]) &&
+							get_immediate(data,   i + 16, i + 18, &constant) && constant == 0xA5FF005A)
 							InitializeUARTSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -13198,6 +13406,13 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 						if (get_immediate(data,  i +   7, i +   8, &constant) && constant == 0xA5FF005A &&
 							findx_pattern(data, dataType, i +  12, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  22, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 128, length, &OSRestoreInterruptsSig))
+							WriteUARTNSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (get_immediate(data,  i +   8, i +   9, &constant) && constant == 0xA5FF005A &&
+							findx_pattern(data, dataType, i +  13, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  23, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 128, length, &OSRestoreInterruptsSig))
 							WriteUARTNSigs[j].offsetFoundAt = i;
 						break;
