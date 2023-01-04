@@ -221,7 +221,10 @@ s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, Exec
 			*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[*(vu8*)VAR_EXI_SLOT];
 		}
 	}
-	memcpy(VAR_DISC_1_ID, (char*)&GCMDisk, sizeof(VAR_DISC_1_ID));
+	
+	if(file2 && file2->meta)
+		memcpy(VAR_DISC_2_ID, &file2->meta->diskId, sizeof(VAR_DISC_2_ID));
+	memcpy(VAR_DISC_1_ID, &GCMDisk, sizeof(VAR_DISC_1_ID));
 	return 1;
 
 fail:

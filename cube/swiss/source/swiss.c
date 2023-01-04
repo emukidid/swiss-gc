@@ -1830,7 +1830,7 @@ void load_game() {
 	
 	*(vu8*)VAR_CURRENT_DISC = fileToPatch && fileToPatch->file == disc2File;
 	*(vu8*)VAR_SECOND_DISC = !!disc2File;
-	*(vu8*)VAR_DRIVE_PATCHED = 0;
+	*(vu8*)VAR_DRIVE_PATCHED = drive_status == DEBUG_MODE;
 	*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
 	*(vu32**)VAR_EXI_REGS = NULL;
 	*(vu8*)VAR_EXI_SLOT = EXI_CHANNEL_MAX;
