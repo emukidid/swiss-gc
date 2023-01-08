@@ -6866,7 +6866,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 54, 21, 6, 3, 3, 12, NULL, 0, "VISetRegsD" },
 		{ 58, 21, 7, 3, 3, 12, NULL, 0, "VISetRegsD" }
 	};
-	FuncPattern __VIRetraceHandlerSigs[8] = {
+	FuncPattern __VIRetraceHandlerSigs[9] = {
 		{ 120, 41,  7, 10, 13,  6, NULL, 0, "__VIRetraceHandlerD" },
 		{ 121, 41,  7, 11, 13,  6, NULL, 0, "__VIRetraceHandlerD" },
 		{ 132, 39,  7, 10, 15, 13, NULL, 0, "__VIRetraceHandler" },
@@ -6874,9 +6874,10 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 138, 42,  9, 11, 15, 13, NULL, 0, "__VIRetraceHandler" },
 		{ 140, 43, 10, 11, 15, 13, NULL, 0, "__VIRetraceHandler" },
 		{ 147, 46, 13, 10, 15, 15, NULL, 0, "__VIRetraceHandler" },	// SN Systems ProDG
-		{ 157, 50, 10, 15, 16, 13, NULL, 0, "__VIRetraceHandler" }
+		{ 157, 50, 10, 15, 16, 13, NULL, 0, "__VIRetraceHandler" },
+		{ 164, 53, 13, 14, 16, 15, NULL, 0, "__VIRetraceHandler" }	// SN Systems ProDG
 	};
-	FuncPattern getTimingSigs[8] = {
+	FuncPattern getTimingSigs[9] = {
 		{  30,  12,  2,  0,  7,  2,           NULL,                     0, "getTimingD" },
 		{  40,  16,  2,  0, 12,  2, getTimingPatch, getTimingPatch_length, "getTimingD" },
 		{  26,  11,  0,  0,  0,  3,           NULL,                     0, "getTiming" },
@@ -6884,6 +6885,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{  36,  15,  0,  0,  0,  4, getTimingPatch, getTimingPatch_length, "getTiming" },
 		{  40,  19,  0,  0,  0,  2,           NULL,                     0, "getTiming" },
 		{ 559, 112, 44, 14, 53, 48,           NULL,                     0, "getTiming" },	// SN Systems ProDG
+		{ 560, 112, 44, 14, 53, 48,           NULL,                     0, "getTiming" },	// SN Systems ProDG
 		{  42,  20,  0,  0,  0,  2,           NULL,                     0, "getTiming" }
 	};
 	FuncPattern __VIInitSigs[7] = {
@@ -6924,7 +6926,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 104, 22, 14, 0, 4, 25, NULL, 0, "setVerticalRegs" },
 		{ 114, 19, 13, 0, 4, 25, NULL, 0, "setVerticalRegs" }	// SN Systems ProDG
 	};
-	FuncPattern VIConfigureSigs[11] = {
+	FuncPattern VIConfigureSigs[12] = {
 		{ 280,  74, 15, 20, 21, 20, NULL, 0, "VIConfigureD" },
 		{ 314,  86, 15, 21, 27, 20, NULL, 0, "VIConfigureD" },
 		{ 428,  90, 43,  6, 32, 60, NULL, 0, "VIConfigure" },
@@ -6935,6 +6937,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 487, 105, 44, 12, 38, 63, NULL, 0, "VIConfigure" },
 		{ 522, 111, 44, 13, 53, 64, NULL, 0, "VIConfigure" },
 		{ 559, 112, 44, 14, 53, 48, NULL, 0, "VIConfigure" },	// SN Systems ProDG
+		{ 560, 112, 44, 14, 53, 48, NULL, 0, "VIConfigure" },	// SN Systems ProDG
 		{ 514, 110, 44, 13, 49, 63, NULL, 0, "VIConfigure" }
 	};
 	FuncPattern VIConfigurePanSigs[2] = {
@@ -6971,7 +6974,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 17, 3, 2, 2, 0, 3, NULL, 0, "VIGetDTVStatusD" },
 		{ 15, 4, 3, 2, 0, 2, NULL, 0, "VIGetDTVStatus" }
 	};
-	FuncPattern __GXInitGXSigs[9] = {
+	FuncPattern __GXInitGXSigs[10] = {
 		{ 1130, 567, 66, 133, 46, 46, NULL, 0, "__GXInitGXD" },
 		{  544, 319, 33, 109, 18,  5, NULL, 0, "__GXInitGXD" },
 		{  976, 454, 81, 119, 43, 36, NULL, 0, "__GXInitGX" },
@@ -6980,7 +6983,8 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{  561, 313, 36, 110, 28, 11, NULL, 0, "__GXInitGX" },
 		{  546, 293, 37, 110,  7,  9, NULL, 0, "__GXInitGX" },	// SN Systems ProDG
 		{  549, 289, 38, 110,  7,  9, NULL, 0, "__GXInitGX" },	// SN Systems ProDG
-		{  590, 333, 34, 119, 28, 11, NULL, 0, "__GXInitGX" }
+		{  590, 333, 34, 119, 28, 11, NULL, 0, "__GXInitGX" },
+		{  576, 331, 34, 119, 15, 12, NULL, 0, "__GXInitGX" }	// SN Systems ProDG
 	};
 	FuncPattern GXAdjustForOverscanSigs[4] = {
 		{ 57,  6,  4, 0, 3, 11, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscanD" },
@@ -6988,28 +6992,31 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 63, 11,  8, 1, 2, 10, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan" },	// SN Systems ProDG
 		{ 81, 17, 15, 0, 3,  7, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan" }
 	};
-	FuncPattern GXSetDispCopySrcSigs[5] = {
+	FuncPattern GXSetDispCopySrcSigs[6] = {
 		{ 104, 44, 10, 5, 5, 6, NULL, 0, "GXSetDispCopySrcD" },
 		{  48, 19,  8, 0, 0, 4, NULL, 0, "GXSetDispCopySrc" },
 		{  36,  9,  8, 0, 0, 4, NULL, 0, "GXSetDispCopySrc" },
 		{  14,  2,  2, 0, 0, 2, NULL, 0, "GXSetDispCopySrc" },	// SN Systems ProDG
-		{  31, 11,  8, 0, 0, 0, NULL, 0, "GXSetDispCopySrc" }
+		{  31, 11,  8, 0, 0, 0, NULL, 0, "GXSetDispCopySrc" },
+		{  31, 11,  8, 0, 0, 0, NULL, 0, "GXSetDispCopySrc" }	// SN Systems ProDG
 	};
-	FuncPattern GXSetDispCopyYScaleSigs[7] = {
+	FuncPattern GXSetDispCopyYScaleSigs[8] = {
 		{ 100, 33, 8, 8, 4, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScaleD" },
 		{  85, 32, 4, 6, 4, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScaleD" },
 		{  47, 15, 8, 2, 0, 4, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" },
 		{  53, 17, 4, 1, 5, 8, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" },
 		{  50, 14, 4, 1, 5, 8, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" },
 		{  44,  8, 4, 1, 2, 3, GXSetDispCopyYScalePatch2, GXSetDispCopyYScalePatch2_length, "GXSetDispCopyYScale" },	// SN Systems ProDG
-		{  51, 16, 4, 1, 5, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" }
+		{  51, 16, 4, 1, 5, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" },
+		{  52, 17, 4, 1, 5, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" }		// SN Systems ProDG
 	};
-	FuncPattern GXSetCopyFilterSigs[5] = {
+	FuncPattern GXSetCopyFilterSigs[6] = {
 		{ 567, 183, 44, 32, 36, 38, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilterD" },
 		{ 138,  15,  7,  0,  4,  5, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" },
 		{ 163,  19, 23,  0,  3, 14, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" },	// SN Systems ProDG
 		{ 163,  19, 23,  0,  3, 14, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" },	// SN Systems ProDG
-		{ 130,  25,  7,  0,  4,  0, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" }
+		{ 130,  25,  7,  0,  4,  0, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" },
+		{ 124,  19,  6,  0,  4,  0, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" }	// SN Systems ProDG
 	};
 	FuncPattern GXSetDispCopyGammaSigs[4] = {
 		{ 34, 12, 3, 2, 2, 3, NULL, 0, "GXSetDispCopyGammaD" },
@@ -7017,35 +7024,39 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{  6,  1, 1, 0, 0, 1, NULL, 0, "GXSetDispCopyGamma" },	// SN Systems ProDG
 		{  5,  2, 1, 0, 0, 0, NULL, 0, "GXSetDispCopyGamma" }
 	};
-	FuncPattern GXCopyDispSigs[5] = {
+	FuncPattern GXCopyDispSigs[6] = {
 		{ 149, 62,  3, 14, 14, 3, NULL, 0, "GXCopyDispD" },
 		{  92, 34, 14,  0,  3, 1, NULL, 0, "GXCopyDisp" },
 		{  87, 29, 14,  0,  3, 1, NULL, 0, "GXCopyDisp" },
 		{  69, 15, 12,  0,  1, 1, NULL, 0, "GXCopyDisp" },	// SN Systems ProDG
-		{  90, 35, 14,  0,  3, 0, NULL, 0, "GXCopyDisp" }
+		{  90, 35, 14,  0,  3, 0, NULL, 0, "GXCopyDisp" },
+		{  89, 34, 14,  0,  3, 0, NULL, 0, "GXCopyDisp" }	// SN Systems ProDG
 	};
-	FuncPattern GXSetBlendModeSigs[5] = {
+	FuncPattern GXSetBlendModeSigs[6] = {
 		{ 154, 66, 10, 7, 9, 17, GXSetBlendModePatch1, GXSetBlendModePatch1_length, "GXSetBlendModeD" },
 		{  65, 20,  8, 0, 2,  6, GXSetBlendModePatch1, GXSetBlendModePatch1_length, "GXSetBlendMode" },
 		{  21,  6,  2, 0, 0,  2, GXSetBlendModePatch2, GXSetBlendModePatch2_length, "GXSetBlendMode" },
+		{  23,  5,  2, 0, 0,  2,                 NULL,                           0, "GXSetBlendMode" },	// SN Systems ProDG
 		{  36,  2,  2, 0, 0,  6, GXSetBlendModePatch3, GXSetBlendModePatch3_length, "GXSetBlendMode" },	// SN Systems ProDG
 		{  38,  2,  2, 0, 0,  8, GXSetBlendModePatch3, GXSetBlendModePatch3_length, "GXSetBlendMode" }	// SN Systems ProDG
 	};
 	FuncPattern __GXSetViewportSig = 
 		{ 36, 15, 7, 0, 0, 0, GXSetViewportPatch, GXSetViewportPatch_length, "__GXSetViewport" };
-	FuncPattern GXSetViewportJitterSigs[5] = {
+	FuncPattern GXSetViewportJitterSigs[6] = {
 		{ 193, 76, 22, 4, 15, 22, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitterD" },
 		{  71, 20, 15, 1,  1,  3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter" },
 		{  65, 14, 15, 1,  1,  3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter" },
 		{  31,  6, 10, 1,  0,  4,                     NULL,                               0, "GXSetViewportJitter" },	// SN Systems ProDG
-		{  22,  6,  8, 1,  0,  2,                     NULL,                               0, "GXSetViewportJitter" }
+		{  22,  6,  8, 1,  0,  2,                     NULL,                               0, "GXSetViewportJitter" },
+		{  48, 17, 13, 0,  0,  0,                     NULL,                               0, "GXSetViewportJitter" }	// SN Systems ProDG
 	};
-	FuncPattern GXSetViewportSigs[5] = {
-		{ 21, 9, 8, 1, 0, 2, NULL, 0, "GXSetViewportD" },
-		{  9, 3, 2, 1, 0, 2, NULL, 0, "GXSetViewport" },
-		{  9, 3, 2, 1, 0, 2, NULL, 0, "GXSetViewport" },
-		{  2, 1, 0, 0, 1, 0, NULL, 0, "GXSetViewport" },	// SN Systems ProDG
-		{ 18, 5, 8, 1, 0, 2, NULL, 0, "GXSetViewport" }
+	FuncPattern GXSetViewportSigs[6] = {
+		{ 21,  9,  8, 1, 0, 2, NULL, 0, "GXSetViewportD" },
+		{  9,  3,  2, 1, 0, 2, NULL, 0, "GXSetViewport" },
+		{  9,  3,  2, 1, 0, 2, NULL, 0, "GXSetViewport" },
+		{  2,  1,  0, 0, 1, 0, NULL, 0, "GXSetViewport" },	// SN Systems ProDG
+		{ 18,  5,  8, 1, 0, 2, NULL, 0, "GXSetViewport" },
+		{ 44, 16, 13, 0, 0, 0, NULL, 0, "GXSetViewport" }	// SN Systems ProDG
 	};
 	_SDA2_BASE_ = _SDA_BASE_ = 0;
 	
@@ -7226,6 +7237,16 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						if (findx_pattern(data, dataType, i + 80, length, &getCurrentFieldEvenOddSigs[3]))
 							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[3], &VIGetRetraceCountSig);
 						break;
+					case 8:
+						if (findx_pattern(data, dataType, i +  49, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  64, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  72, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i + 156, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						
+						if (findx_pattern(data, dataType, i + 85, length, &getCurrentFieldEvenOddSigs[4]))
+							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
+						break;
 				}
 			}
 		}
@@ -7387,11 +7408,19 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 550, length, &setVerticalRegsSigs[3]);
 						break;
 					case 10:
+						if (findx_pattern(data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 553, length, &OSRestoreInterruptsSig))
+							VIConfigureSigs[j].offsetFoundAt = getTimingSigs[7].offsetFoundAt = i;
+						
+						findx_pattern(data, dataType, i + 538, length, &setFbbRegsSigs[2]);
+						findx_pattern(data, dataType, i + 551, length, &setVerticalRegsSigs[3]);
+						break;
+					case 11:
 						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 508, length, &OSRestoreInterruptsSig))
 							VIConfigureSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i + 155, length, &getTimingSigs[7]);
+						findx_pattern(data, dataType, i + 155, length, &getTimingSigs[8]);
 						findx_pattern(data, dataType, i + 495, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 506, length, &setVerticalRegsSigs[2]);
 						break;
@@ -7614,7 +7643,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						if (findx_pattern(data, dataType, i + 501, length, &GXSetDispCopyGammaSigs[2]))
 							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[3]);
 						
-						findx_pattern(data, dataType, i + 433, length, &GXSetBlendModeSigs[3]);
+						findx_pattern(data, dataType, i + 433, length, &GXSetBlendModeSigs[4]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[3]);
 						break;
 					case 7:
@@ -7627,7 +7656,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						if (findx_pattern(data, dataType, i + 503, length, &GXSetDispCopyGammaSigs[2]))
 							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[3]);
 						
-						findx_pattern(data, dataType, i + 435, length, &GXSetBlendModeSigs[4]);
+						findx_pattern(data, dataType, i + 435, length, &GXSetBlendModeSigs[5]);
 						findx_pattern(data, dataType, i + 204, length, &GXSetViewportSigs[3]);
 						break;
 					case 8:
@@ -7642,6 +7671,19 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						
 						findx_pattern(data, dataType, i + 490, length, &GXSetBlendModeSigs[2]);
 						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[4]);
+						break;
+					case 9:
+						if (findx_pattern(data, dataType, i + 512, length, &GXSetDispCopySrcSigs[5]))
+							find_pattern_before(data, length, &GXSetDispCopySrcSigs[5], &GXAdjustForOverscanSigs[1]);
+						
+						findx_pattern(data, dataType, i + 529, length, &GXSetDispCopyYScaleSigs[7]);
+						findx_pattern(data, dataType, i + 536, length, &GXSetCopyFilterSigs[5]);
+						
+						if (findx_pattern(data, dataType, i + 538, length, &GXSetDispCopyGammaSigs[3]))
+							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[3], &GXCopyDispSigs[5]);
+						
+						findx_pattern(data, dataType, i + 478, length, &GXSetBlendModeSigs[3]);
+						findx_pattern(data, dataType, i + 209, length, &GXSetViewportSigs[5]);
 						break;
 				}
 			}
@@ -7763,6 +7805,10 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 81] = 0x2C030000;	// cmpwi	r3, 0
 						data[i + 82] = 0x408200C4;	// bne		+49
 						break;
+					case 8:
+						data[i + 86] = 0x2C030000;	// cmpwi	r3, 0
+						data[i + 87] = 0x408200C4;	// bne		+49
+						break;
 				}
 				if (swissSettings.gameVMode == 2 || swissSettings.gameVMode == 9) {
 					switch (j) {
@@ -7795,6 +7841,13 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i + 79] = 0x54630FFE;	// srwi		r3, r3, 31
 							data[i + 80] = 0x3C800000 | ((u32)VAR_AREA >> 16);
 							data[i + 81] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
+							break;
+						case 8:
+							data[i + 82] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 82);
+							data[i + 83] = 0x2C030000;	// cmpwi	r3, 0
+							data[i + 84] = 0x54630FFE;	// srwi		r3, r3, 31
+							data[i + 85] = 0x3C800000 | ((u32)VAR_AREA >> 16);
+							data[i + 86] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
 							break;
 					}
 				}
@@ -7851,6 +7904,13 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i + 153] = data[i + 152];
 							data[i + 152] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 152);
 							break;
+						case 8:
+							data[i + 161] = data[i + 160];
+							data[i + 160] = data[i + 159];
+							data[i + 159] = data[i + 158];
+							data[i + 158] = data[i + 157];
+							data[i + 157] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 157);
+							break;
 					}
 					data[i + __VIRetraceHandlerSigs[j].Length - 1] = branch(__VIRetraceHandlerHook, __VIRetraceHandler + __VIRetraceHandlerSigs[j].Length - 1);
 				}
@@ -7872,7 +7932,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		u8 (*timingTable)[38];
 		
 		if (getTiming) {
-			if (j == 6) {
+			if (j == 6 || j == 7) {
 				timingTableAddr = (data[i +   5] << 16) + (s16)data[i +   7];
 				jumpTableAddr   = (data[i + 147] << 16) + (s16)data[i + 149];
 				k = (u16)data[i + 144] + 1;
@@ -8406,6 +8466,25 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					data[i + 552] = branchAndLink(VIConfigureHook2, VIConfigure + 552);
 					break;
 				case 10:
+					data[i +   8] = branchAndLink(VIConfigureHook1, VIConfigure + 8);
+					data[i +  96] = 0xA09B0012;	// lhz		r4, 18 (r27)
+					data[i + 106] = 0xA0FB0014;	// lhz		r7, 20 (r27)
+					data[i + 112] = 0xA07B0016;	// lhz		r3, 22 (r27)
+					data[i + 209] = 0xA8060002;	// lha		r0, 2 (r6)
+					data[i + 211] = 0x38E00000 | (swissSettings.forceVOffset & 0xFFFF);
+					data[i + 213] = 0x541907FE;	// clrlwi	r25, r0, 31
+					data[i + 217] = 0x7F393A14;	// add		r25, r25, r7
+					data[i + 226] = 0x573A07FE;	// clrlwi	r26, r25, 31
+					data[i + 234] = 0x7D9A6050;	// sub		r12, r12, r26
+					data[i + 333] = 0x815D0024;	// lwz		r10, 36 (r29)
+					data[i + 337] = 0x280A0002;	// cmplwi	r10, 2
+					data[i + 344] = 0x280A0003;	// cmplwi	r10, 3
+					data[i + 346] = 0x280A0001;	// cmplwi	r10, 1
+					data[i + 347] = 0x40810010;	// ble		+4
+					data[i + 543] = 0xA87E000A;	// lha		r3, 10 (r30)
+					data[i + 553] = branchAndLink(VIConfigureHook2, VIConfigure + 553);
+					break;
+				case 11:
 					data[i +   9] = branchAndLink(VIConfigureHook1, VIConfigure + 9);
 					data[i +  91] = 0xA0130012;	// lhz		r0, 18 (r19)
 					data[i + 103] = 0xA0130014;	// lhz		r0, 20 (r19)
@@ -8482,11 +8561,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 116] = 0x887F0016;	// lbz		r3, 22 (r31)
 						break;
 					case 9:
+					case 10:
 						data[i +  10] = 0xA0BB0000;	// lhz		r5, 0 (r27)
 						data[i +  20] = 0xA01B0000;	// lhz		r0, 0 (r27)
 						data[i + 112] = 0x887B0016;	// lbz		r3, 22 (r27)
 						break;
-					case 10:
+					case 11:
 						data[i +  10] = 0xA0930000;	// lhz		r4, 0 (r19)
 						data[i +  20] = 0xA0130000;	// lhz		r0, 0 (r19)
 						data[i + 116] = 0x88730016;	// lbz		r3, 22 (r19)
@@ -8580,6 +8660,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 139] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						break;
 					case 9:
+					case 10:
 						data[i + 101] = 0x5408003C;	// clrrwi	r8, r0, 1
 						data[i + 123] = 0xA0FB0010;	// lhz		r7, 16 (r27)
 						data[i + 127] = 0xA0FB0010;	// lhz		r7, 16 (r27)
@@ -8587,7 +8668,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 131] = 0xA0FB0010;	// lhz		r7, 16 (r27)
 						data[i + 133] = 0xA0FB0010;	// lhz		r7, 16 (r27)
 						break;
-					case 10:
+					case 11:
 						data[i +  97] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 127] = 0xA0130010;	// lhz		r0, 16 (r19)
 						data[i + 131] = 0xA0130010;	// lhz		r0, 16 (r19)
@@ -8643,6 +8724,10 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 310] = 0x5160177A;	// rlwimi	r0, r11, 2, 29, 29
 						break;
 					case 10:
+						data[i + 310] = 0x7D004378;	// mr		r0, r8
+						data[i + 311] = 0x5160177A;	// rlwimi	r0, r11, 2, 29, 29
+						break;
+					case 11:
 						data[i + 288] = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
 						data[i + 289] = 0x54E9003C;	// rlwinm	r9, r7, 0, 0, 30
 						data[i + 290] = 0x61290001;	// ori		r9, r9, 1
@@ -8697,11 +8782,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						data[i + 248] = 0x38000004;	// li		r0, 4
 						break;
 					case 9:
+					case 10:
 						data[i + 232] = 0x81250028;	// lwz		r9, 40 (r5)
 						data[i + 250] = 0x28090001;	// cmplwi	r9, 1
 						data[i + 273] = 0x38000004;	// li		r0, 4
 						break;
-					case 10:
+					case 11:
 						data[i + 245] = 0x80160000;	// lwz		r0, 0 (r22)
 						data[i + 246] = 0x28000001;	// cmplwi	r0, 1
 						data[i + 248] = 0x38000004;	// li		r0, 4
@@ -8843,6 +8929,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					case 5: data[i +  491] = 0x38600001; break;
 					case 6: data[i +  461] = 0x38600001; break;
 					case 7: data[i +  520] = 0x38600001; break;
+					case 8: data[i +  503] = 0x38600001; break;
 				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", __GXInitGXSigs[j].Name, j, __GXInitGX);
@@ -8873,7 +8960,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			
 			if (GXSetDispCopyYScale) {
 				if (GXSetDispCopyYScaleSigs[j].Patch) {
-					u32 op = j >= 2 ? data[i + 7] : data[i + 65];
+					u32 op = j >= 2 ? j == 7 ? data[i + 13] : data[i + 7] : data[i + 65];
 					memset(data + i, 0, GXSetDispCopyYScaleSigs[j].Length * sizeof(u32));
 					memcpy(data + i, GXSetDispCopyYScaleSigs[j].Patch, GXSetDispCopyYScaleSigs[j].PatchLength);
 					
@@ -13096,9 +13183,10 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 71, 18, 10, 7, 9, 12, NULL, 0, "OSCancelAlarm" },
 		{ 70, 18, 10, 7, 9, 13, NULL, 0, "OSCancelAlarm" }	// SN Systems ProDG
 	};
-	FuncPattern OSGetFontEncodeSigs[2] = {
+	FuncPattern OSGetFontEncodeSigs[3] = {
 		{ 31, 8, 2, 1, 7, 2, NULL, 0, "OSGetFontEncodeD" },
-		{ 22, 6, 0, 0, 6, 0, NULL, 0, "OSGetFontEncode" }
+		{ 22, 6, 0, 0, 6, 0, NULL, 0, "OSGetFontEncode" },
+		{ 18, 4, 0, 0, 4, 0, NULL, 0, "OSGetFontEncode" }	// SN Systems ProDG
 	};
 	FuncPattern OSDisableInterruptsSig = 
 		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
@@ -13248,10 +13336,11 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 234, 46, 0, 0, 42, 51, NULL, 0, "SPEC2_MakeStatus" },	// SN Systems ProDG
 		{ 284, 55, 2, 0, 43, 76, NULL, 0, "SPEC2_MakeStatus" }
 	};
-	FuncPattern TimeoutHandlerSigs[3] = {
+	FuncPattern TimeoutHandlerSigs[4] = {
 		{ 50, 18, 4, 2, 7, 3, NULL, 0, "TimeoutHandlerD" },
 		{ 38, 15, 5, 1, 3, 5, NULL, 0, "TimeoutHandler" },
-		{ 41, 16, 5, 1, 4, 5, NULL, 0, "TimeoutHandler" }
+		{ 41, 16, 5, 1, 4, 5, NULL, 0, "TimeoutHandler" },
+		{ 40, 14, 5, 1, 4, 6, NULL, 0, "TimeoutHandler" }	// SN Systems ProDG
 	};
 	FuncPattern SetupTimeoutAlarmSigs[4] = {
 		{ 61, 20, 3, 3,  8, 17, NULL, 0, "SetupTimeoutAlarmD" },
@@ -13259,34 +13348,38 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 62, 20, 3, 3,  8, 14, NULL, 0, "SetupTimeoutAlarm" },
 		{ 91, 27, 3, 4, 10, 25, NULL, 0, "SetupTimeoutAlarm" }
 	};
-	FuncPattern RetrySigs[5] = {
+	FuncPattern RetrySigs[6] = {
 		{  98, 34, 2, 15,  8,  3, NULL, 0, "RetryD" },
 		{  98, 33, 2, 15,  8,  3, NULL, 0, "RetryD" },
 		{ 123, 40, 4, 15, 11, 13, NULL, 0, "Retry" },
 		{ 139, 48, 4, 16, 14, 14, NULL, 0, "Retry" },
+		{ 133, 45, 4, 16, 13, 13, NULL, 0, "Retry" },	// SN Systems ProDG
 		{ 168, 54, 4, 17, 16, 25, NULL, 0, "Retry" }
 	};
-	FuncPattern __CARDStartSigs[6] = {
-		{  65, 24, 6, 5,  7,  2, NULL, 0, "__CARDStartD" },
-		{  70, 20, 6, 7,  7,  3, NULL, 0, "__CARDStartD" },
-		{  88, 30, 8, 5, 10, 13, NULL, 0, "__CARDStart" },
-		{ 104, 38, 8, 6, 13, 14, NULL, 0, "__CARDStart" },
-		{ 109, 32, 6, 8, 13, 14, NULL, 0, "__CARDStart" },
-		{ 137, 37, 6, 9, 15, 25, NULL, 0, "__CARDStart" }
+	FuncPattern __CARDStartSigs[7] = {
+		{  65, 24, 6,  5,  7,  2, NULL, 0, "__CARDStartD" },
+		{  70, 20, 6,  7,  7,  3, NULL, 0, "__CARDStartD" },
+		{  88, 30, 8,  5, 10, 13, NULL, 0, "__CARDStart" },
+		{ 104, 38, 8,  6, 13, 14, NULL, 0, "__CARDStart" },
+		{ 181, 56, 8, 17, 27, 13, NULL, 0, "__CARDStart" },	// SN Systems ProDG
+		{ 109, 32, 6,  8, 13, 14, NULL, 0, "__CARDStart" },
+		{ 137, 37, 6,  9, 15, 25, NULL, 0, "__CARDStart" }
 	};
 	FuncPattern __CARDGetFontEncodeSig = 
 		{ 2, 0, 0, 0, 0, 0, NULL, 0, "__CARDGetFontEncode" };
-	FuncPattern __CARDGetControlBlockSigs[4] = {
+	FuncPattern __CARDGetControlBlockSigs[5] = {
 		{ 46, 11, 6, 2, 5, 4, NULL, 0, "__CARDGetControlBlockD" },
 		{ 46, 11, 6, 2, 5, 4, NULL, 0, "__CARDGetControlBlockD" },
 		{ 44, 12, 7, 2, 5, 4, NULL, 0, "__CARDGetControlBlock" },
-		{ 46, 13, 8, 2, 5, 2, NULL, 0, "__CARDGetControlBlock" }
+		{ 46, 13, 8, 2, 5, 2, NULL, 0, "__CARDGetControlBlock" },
+		{ 46, 13, 8, 2, 5, 3, NULL, 0, "__CARDGetControlBlock" }	// SN Systems ProDG
 	};
-	FuncPattern __CARDPutControlBlockSigs[4] = {
+	FuncPattern __CARDPutControlBlockSigs[5] = {
 		{ 29, 8, 3, 3, 1, 3, NULL, 0, "__CARDPutControlBlockD" },
 		{ 34, 9, 4, 3, 2, 3, NULL, 0, "__CARDPutControlBlockD" },
 		{ 20, 5, 5, 2, 1, 2, NULL, 0, "__CARDPutControlBlock" },
-		{ 25, 6, 6, 2, 2, 2, NULL, 0, "__CARDPutControlBlock" }
+		{ 25, 6, 6, 2, 2, 2, NULL, 0, "__CARDPutControlBlock" },
+		{ 25, 6, 6, 2, 2, 4, NULL, 0, "__CARDPutControlBlock" }	// SN Systems ProDG
 	};
 	FuncPattern CARDGetEncodingSigs[2] = {
 		{ 27,  9, 4, 2, 2, 3, NULL, 0, "CARDGetEncodingD" },
@@ -13302,7 +13395,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 161, 28, 2, 6, 12, 63, NULL, 0, "VerifyID" },
 		{ 161, 28, 2, 6, 12, 63, NULL, 0, "VerifyID" }
 	};
-	FuncPattern DoMountSigs[11] = {
+	FuncPattern DoMountSigs[12] = {
 		{ 181, 48,  6, 18, 20, 26, NULL, 0, "DoMountD" },
 		{ 222, 57,  7, 20, 25, 27, NULL, 0, "DoMountD" },
 		{ 244, 57,  7, 20, 37, 27, NULL, 0, "DoMountD" },
@@ -13313,6 +13406,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 276, 68, 11, 19, 26, 33, NULL, 0, "DoMount" },
 		{ 297, 67, 11, 19, 38, 33, NULL, 0, "DoMount" },
 		{ 260, 66, 11, 20, 24, 33, NULL, 0, "DoMount" },
+		{ 288, 50, 11, 19, 36, 24, NULL, 0, "DoMount" },	// SN Systems ProDG
 		{ 277, 69, 11, 22, 27, 35, NULL, 0, "DoMount" }
 	};
 	_SDA2_BASE_ = _SDA_BASE_ = 0;
@@ -13927,6 +14021,16 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							RetrySigs[j].offsetFoundAt = i;
 						break;
 					case 4:
+						if (findx_pattern(data, dataType, i +  20, length, &OSCancelAlarmSigs[2]) &&
+							get_immediate(data,  i +  32, i +  34, &address) && address == 0x800000F8 &&
+							findi_pattern(data, dataType, i +  35, i +  36, length, &TimeoutHandlerSigs[3]) &&
+							findx_pattern(data, dataType, i +  44, length, &OSSetAlarmSigs[2]) &&
+							get_immediate(data,  i +  47, i +  48, &address) && address == 0x800000F8 &&
+							findi_pattern(data, dataType, i +  49, i +  59, length, &TimeoutHandlerSigs[3]) &&
+							findx_pattern(data, dataType, i +  66, length, &OSSetAlarmSigs[2]))
+							RetrySigs[j].offsetFoundAt = i;
+						break;
+					case 5:
 						if (findx_pattern(data, dataType, i +  21, length, &OSCancelAlarmSigs[1]) &&
 							get_immediate(data,  i +  33, i +  34, &address) && address == 0x800000F8 &&
 							findi_pattern(data, dataType, i +  36, i +  42, length, &TimeoutHandlerSigs[2]) &&
@@ -13975,6 +14079,16 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							__CARDStartSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
+						if (findx_pattern(data, dataType, i +  36, length, &OSCancelAlarmSigs[2]) &&
+							get_immediate(data,  i +  48, i +  50, &address) && address == 0x800000F8 &&
+							findi_pattern(data, dataType, i +  51, i +  52, length, &TimeoutHandlerSigs[3]) &&
+							findx_pattern(data, dataType, i +  60, length, &OSSetAlarmSigs[2]) &&
+							get_immediate(data,  i +  63, i +  64, &address) && address == 0x800000F8 &&
+							findi_pattern(data, dataType, i +  65, i +  75, length, &TimeoutHandlerSigs[3]) &&
+							findx_pattern(data, dataType, i +  82, length, &OSSetAlarmSigs[2]))
+							__CARDStartSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
 						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  49, length, &OSCancelAlarmSigs[1]) &&
 							get_immediate(data,  i +  61, i +  62, &address) && address == 0x800000F8 &&
@@ -13986,7 +14100,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 102, length, &OSRestoreInterruptsSig))
 							__CARDStartSigs[j].offsetFoundAt = i;
 						break;
-					case 5:
+					case 6:
 						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  49, length, &OSCancelAlarmSigs[1]) &&
 							get_immediate(data,  i +  61, i +  62, &address) && address == 0x800000F8 &&
@@ -14227,6 +14341,16 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 							DoMountSigs[j].offsetFoundAt = i;
 						break;
 					case 10:
+						if (findx_pattern(data, dataType, i + 123, length, &__OSLockSramExSigs[2]) &&
+							findx_pattern(data, dataType, i + 177, length, &__OSUnlockSramExSigs[2]) &&
+							findx_pattern(data, dataType, i + 182, length, &__OSLockSramExSigs[2]) &&
+							findx_pattern(data, dataType, i + 210, length, &__OSUnlockSramExSigs[2]) &&
+							findx_pattern(data, dataType, i + 226, length, &__OSLockSramExSigs[2]) &&
+							findx_pattern(data, dataType, i + 230, length, &__OSUnlockSramExSigs[2]) &&
+							findx_pattern(data, dataType, i + 271, length, &__CARDPutControlBlockSigs[4]))
+							DoMountSigs[j].offsetFoundAt = i;
+						break;
+					case 11:
 						if (findx_pattern(data, dataType, i +  99, length, &__OSLockSramExSigs[1]) &&
 							findx_pattern(data, dataType, i + 159, length, &__OSUnlockSramExSigs[1]) &&
 							findx_pattern(data, dataType, i + 164, length, &__OSLockSramExSigs[1]) &&
@@ -14596,8 +14720,9 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		
 		if (Retry) {
 			switch (j) {
-				case 3:
-				case 4: data[i + 41] = 0x1CC007D0; break;	// mulli	r6, r0, 2000
+				case 3: data[i + 41] = 0x1CC007D0; break;	// mulli	r6, r0, 2000
+				case 4: data[i + 43] = 0x1CC007D0; break;	// mulli	r6, r0, 2000
+				case 5: data[i + 41] = 0x1CC007D0; break;	// mulli	r6, r0, 2000
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", RetrySigs[j].Name, j, Retry);
 			patched++;
@@ -14611,8 +14736,9 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		if (__CARDStart) {
 			switch (j) {
 				case 3: data[i + 66] = 0x1CC007D0; break;	// mulli	r6, r0, 2000
-				case 4:
-				case 5: data[i + 69] = 0x1CC007D0; break;	// mulli	r6, r0, 2000
+				case 4: data[i + 59] = 0x1CC007D0; break;	// mulli	r6, r0, 2000
+				case 5:
+				case 6: data[i + 69] = 0x1CC007D0; break;	// mulli	r6, r0, 2000
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", __CARDStartSigs[j].Name, j, __CARDStart);
 			patched++;
@@ -14664,7 +14790,8 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 				case  7: data[i + 201] = 0x48000004; break;	// b		+1
 				case  8: data[i + 222] = 0x48000004; break;	// b		+1
 				case  9: data[i + 185] = 0x48000004; break;	// b		+1
-				case 10: data[i + 202] = 0x48000004; break;	// b		+1
+				case 10: data[i + 218] = 0x48000004; break;	// b		+1
+				case 11: data[i + 202] = 0x48000004; break;	// b		+1
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", DoMountSigs[j].Name, j, DoMount);
 			patched++;
