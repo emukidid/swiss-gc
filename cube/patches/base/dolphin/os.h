@@ -284,7 +284,7 @@ typedef u32 OSInterruptMask;
                              OS_INTERRUPTMASK_PI_HSP)
 
 extern OSInterruptMask OSGlobalInterruptMask;
-extern OSInterruptMask OSUserInterruptMask;
+extern OSInterruptMask OSLocalInterruptMask;
 
 extern OSInterruptHandler OSInterruptHandlerTable[32];
 

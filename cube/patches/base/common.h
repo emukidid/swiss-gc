@@ -73,6 +73,7 @@ typedef volatile f64 vf64;
 	asm ("rlwinm %0,%1,(%2)&31,%3,%4" : "=r" (a) : "r" (b), "i" (sh), "i" (mb), "i" (me))
 
 extern volatile u16 PE[24];
+extern volatile u16 VI[59];
 extern volatile u32 PI[13];
 extern volatile u16 MI[46];
 extern volatile u32 DSP[15];

@@ -27,6 +27,8 @@ OSInterruptHandler set_interrupt_handler(OSInterrupt interrupt, OSInterruptHandl
 OSInterruptHandler get_interrupt_handler(OSInterrupt interrupt);
 OSInterruptMask mask_interrupts(OSInterruptMask mask);
 OSInterruptMask unmask_interrupts(OSInterruptMask mask);
+OSInterruptMask mask_user_interrupts(OSInterruptMask mask);
+OSInterruptMask unmask_user_interrupts(OSInterruptMask mask);
 
 uint32_t exi_get_interrupt_mask(unsigned chan);
 

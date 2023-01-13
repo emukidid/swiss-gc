@@ -947,6 +947,34 @@ static void pi_write(unsigned index, uint32_t value)
 	}
 }
 
+#ifndef NO_VIDEO
+static OSAlarm vi_alarm;
+
+static void vi_alarm_handler(OSAlarm *alarm, OSContext *context)
+{
+	VI[24] &= ~0x8000;
+	VI[26] &= ~0x8000;
+
+	if (unmask_user_interrupts(OS_INTERRUPTMASK_PI_VI) & OS_INTERRUPTMASK_DSP_AI)
+		DSP[13] |= 0x8000;
+}
+
+static void vi_write(unsigned index, uint16_t value)
+{
+	switch (index) {
+		case 0:
+			if (VI[0] != value && ((value >> 4) & 0x3FF)) {
+				if (mask_user_interrupts(OS_INTERRUPTMASK_PI_VI) & OS_INTERRUPTMASK_DSP_AI)
+					DSP[13] &= ~0x8000;
+
+				OSSetAlarm(&vi_alarm, OSSecondsToTicks(2), vi_alarm_handler);
+			}
+		default:
+			VI[index] = value;
+	}
+}
+#endif
+
 static void efb_read(uint32_t address, uint32_t *value)
 {
 	uint16_t zmode = PE[0];
@@ -1005,25 +1033,33 @@ static bool ppc_store8(uint32_t address, uint8_t value)
 	return false;
 }
 
-#ifdef DTK
 static bool ppc_load16(uint32_t address, uint32_t *value)
 {
+	#ifdef DTK
 	if ((address & ~0xFFE) == 0x0C005000) {
 		dsp_read((address >> 1) & 0xFF, value);
 		return true;
 	}
+	#endif
 	return false;
 }
 
 static bool ppc_store16(uint32_t address, uint16_t value)
 {
+	#ifndef NO_VIDEO
+	if ((address & ~0xFFE) == 0x0C002000) {
+		vi_write((address >> 1) & 0xFF, value);
+		return true;
+	}
+	#endif
+	#ifdef DTK
 	if ((address & ~0xFFE) == 0x0C005000) {
 		dsp_write((address >> 1) & 0xFF, value);
 		return true;
 	}
+	#endif
 	return false;
 }
-#endif
 
 static bool ppc_dcbz(uint32_t address)
 {
@@ -1060,6 +1096,15 @@ static bool ppc_step(ppc_context_t *context)
 					int rb = (opcode >> 11) & 0x1F;
 					return ppc_store32(ra ? context->gpr[ra] + context->gpr[rb] : context->gpr[rb], context->gpr[rs]);
 				}
+				#ifndef NO_VIDEO
+				case 407:
+				{
+					int rs = (opcode >> 21) & 0x1F;
+					int ra = (opcode >> 16) & 0x1F;
+					int rb = (opcode >> 11) & 0x1F;
+					return ppc_store16(ra ? context->gpr[ra] + context->gpr[rb] : context->gpr[rb], context->gpr[rs]);
+				}
+				#endif
 				case 1014:
 				{
 					int ra = (opcode >> 16) & 0x1F;

@@ -1504,6 +1504,21 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 24, 7, 5, 3, 2, 3, NULL, 0, "__DVDDequeueWaitingQueue" },
 		{ 26, 7, 5, 3, 2, 5, NULL, 0, "__DVDDequeueWaitingQueue" }	// SN Systems ProDG
 	};
+	FuncPattern VISetRegsSigs[2] = {
+		{ 54, 21, 6, 3, 3, 12, NULL, 0, "VISetRegsD" },
+		{ 58, 21, 7, 3, 3, 12, NULL, 0, "VISetRegsD" }
+	};
+	FuncPattern __VIRetraceHandlerSigs[9] = {
+		{ 120, 41,  7, 10, 13,  6, NULL, 0, "__VIRetraceHandlerD" },
+		{ 121, 41,  7, 11, 13,  6, NULL, 0, "__VIRetraceHandlerD" },
+		{ 132, 39,  7, 10, 15, 13, NULL, 0, "__VIRetraceHandler" },
+		{ 137, 42,  8, 11, 15, 13, NULL, 0, "__VIRetraceHandler" },
+		{ 138, 42,  9, 11, 15, 13, NULL, 0, "__VIRetraceHandler" },
+		{ 140, 43, 10, 11, 15, 13, NULL, 0, "__VIRetraceHandler" },
+		{ 147, 46, 13, 10, 15, 15, NULL, 0, "__VIRetraceHandler" },	// SN Systems ProDG
+		{ 157, 50, 10, 15, 16, 13, NULL, 0, "__VIRetraceHandler" },
+		{ 164, 53, 13, 14, 16, 15, NULL, 0, "__VIRetraceHandler" }	// SN Systems ProDG
+	};
 	FuncPattern AIInitDMASigs[3] = {
 		{ 44, 12, 2, 3, 1, 6, NULL, 0, "AIInitDMAD" },
 		{ 34,  8, 4, 2, 0, 5, NULL, 0, "AIInitDMA" },
@@ -4460,6 +4475,165 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			}
 		}
 		
+		for (j = 0; j < sizeof(__VIRetraceHandlerSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &__VIRetraceHandlerSigs[j])) {
+				switch (j) {
+					case 0:
+						if (get_immediate(data,  i +   6, i +   7, &address) && address == 0xCC002030 &&
+							get_immediate(data,  i +  11, i +  12, &address) && address == 0xCC002030 &&
+							get_immediate(data,  i +  14, i +  15, &address) && address == 0xCC002034 &&
+							get_immediate(data,  i +  19, i +  20, &address) && address == 0xCC002034 &&
+							get_immediate(data,  i +  22, i +  23, &address) && address == 0xCC002038 &&
+							get_immediate(data,  i +  27, i +  28, &address) && address == 0xCC002038 &&
+							get_immediate(data,  i +  30, i +  31, &address) && address == 0xCC00203C &&
+							get_immediate(data,  i +  35, i +  36, &address) && address == 0xCC00203C &&
+							get_immediate(data,  i +  38, i +  39, &address) && address == 0xCC00203C &&
+							findx_pattern(data, dataType, i +  45, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  59, length, &OSClearContextSigs[0]) &&
+							findx_pattern(data, dataType, i +  61, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  74, length, &VISetRegsSigs[0]) &&
+							findx_pattern(data, dataType, i + 104, length, &OSClearContextSigs[0]) &&
+							findx_pattern(data, dataType, i + 112, length, &OSClearContextSigs[0]) &&
+							findx_pattern(data, dataType, i + 114, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (get_immediate(data,  i +   6, i +   7, &address) && address == 0xCC002030 &&
+							get_immediate(data,  i +  11, i +  12, &address) && address == 0xCC002030 &&
+							get_immediate(data,  i +  14, i +  15, &address) && address == 0xCC002034 &&
+							get_immediate(data,  i +  19, i +  20, &address) && address == 0xCC002034 &&
+							get_immediate(data,  i +  22, i +  23, &address) && address == 0xCC002038 &&
+							get_immediate(data,  i +  27, i +  28, &address) && address == 0xCC002038 &&
+							get_immediate(data,  i +  30, i +  31, &address) && address == 0xCC00203C &&
+							get_immediate(data,  i +  35, i +  36, &address) && address == 0xCC00203C &&
+							get_immediate(data,  i +  38, i +  39, &address) && address == 0xCC00203C &&
+							findx_pattern(data, dataType, i +  45, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  59, length, &OSClearContextSigs[0]) &&
+							findx_pattern(data, dataType, i +  61, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  74, length, &VISetRegsSigs[1]) &&
+							findx_pattern(data, dataType, i + 105, length, &OSClearContextSigs[0]) &&
+							findx_pattern(data, dataType, i + 113, length, &OSClearContextSigs[0]) &&
+							findx_pattern(data, dataType, i + 115, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (get_immediate(data,  i +   1, i +   7, &address) && address == 0xCC002030 &&
+							get_immediate(data,  i +  13, i +  14, &address) && address == 0xCC002034 &&
+							get_immediate(data,  i +  20, i +  21, &address) && address == 0xCC002038 &&
+							get_immediate(data,  i +  27, i +  28, &address) && address == 0xCC00203C &&
+							findx_pattern(data, dataType, i +  39, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  45, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i +  47, length, &OSSetCurrentContextSig) &&
+							get_immediate(data,  i +  64, i +  66, &address) && address == 0xCC002000 &&
+							findx_pattern(data, dataType, i + 116, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 124, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 126, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (get_immediate(data,  i +   1, i +   7, &address) && address == 0xCC002030 &&
+							get_immediate(data,  i +  13, i +  14, &address) && address == 0xCC002034 &&
+							get_immediate(data,  i +  20, i +  21, &address) && address == 0xCC002038 &&
+							get_immediate(data,  i +  27, i +  28, &address) && address == 0xCC00203C &&
+							findx_pattern(data, dataType, i +  39, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  45, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i +  47, length, &OSSetCurrentContextSig) &&
+							get_immediate(data,  i +  64, i +  66, &address) && address == 0xCC002000 &&
+							findx_pattern(data, dataType, i + 121, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 129, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 131, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (get_immediate(data,  i +   1, i +   3, &address) && address == 0xCC002000 &&
+							get_immediate(data,  i +  16, i +  17, &address) && address == 0xCC002034 &&
+							get_immediate(data,  i +  23, i +  24, &address) && address == 0xCC002038 &&
+							get_immediate(data,  i +  30, i +  31, &address) && address == 0xCC00203C &&
+							findx_pattern(data, dataType, i +  42, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  48, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i +  50, length, &OSSetCurrentContextSig) &&
+							get_immediate(data,  i +  66, i +  67, &address) && address == 0xCC002000 &&
+							findx_pattern(data, dataType, i + 122, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 130, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 132, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (get_immediate(data,  i +   1, i +   3, &address) && address == 0xCC002000 &&
+							get_immediate(data,  i +  16, i +  17, &address) && address == 0xCC002034 &&
+							get_immediate(data,  i +  23, i +  24, &address) && address == 0xCC002038 &&
+							get_immediate(data,  i +  30, i +  31, &address) && address == 0xCC00203C &&
+							findx_pattern(data, dataType, i +  42, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  48, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i +  50, length, &OSSetCurrentContextSig) &&
+							get_immediate(data,  i +  66, i +  67, &address) && address == 0xCC002000 &&
+							findx_pattern(data, dataType, i + 124, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 132, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 134, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						break;
+					case 6:
+						if (get_immediate(data,  i +   2, i +   9, &address) && address == 0xCC002030 &&
+							get_immediate(data,  i +   2, i +  15, &address) && address == 0xCC002030 &&
+							get_immediate(data,  i +  16, i +  17, &address) && address == 0xCC002034 &&
+							get_immediate(data,  i +  16, i +  23, &address) && address == 0xCC002034 &&
+							get_immediate(data,  i +  24, i +  25, &address) && address == 0xCC002038 &&
+							get_immediate(data,  i +  24, i +  31, &address) && address == 0xCC002038 &&
+							get_immediate(data,  i +  32, i +  33, &address) && address == 0xCC00203C &&
+							get_immediate(data,  i +  32, i +  39, &address) && address == 0xCC00203C &&
+							get_immediate(data,  i +  41, i +  42, &address) && address == 0xCC00203C &&
+							findx_pattern(data, dataType, i +  47, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  53, length, &OSClearContextSigs[2]) &&
+							findx_pattern(data, dataType, i +  55, length, &OSSetCurrentContextSig) &&
+							get_immediate(data,  i +  72, i +  74, &address) && address == 0xCC002000 &&
+							findx_pattern(data, dataType, i + 129, length, &OSClearContextSigs[2]) &&
+							findx_pattern(data, dataType, i + 137, length, &OSClearContextSigs[2]) &&
+							findx_pattern(data, dataType, i + 139, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						break;
+					case 7:
+						if (get_immediate(data,  i +   1, i +   3, &address) && address == 0xCC002000 &&
+							get_immediate(data,  i +  16, i +  17, &address) && address == 0xCC002034 &&
+							get_immediate(data,  i +  23, i +  24, &address) && address == 0xCC002038 &&
+							get_immediate(data,  i +  30, i +  31, &address) && address == 0xCC00203C &&
+							findx_pattern(data, dataType, i +  42, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i +  44, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  57, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i +  59, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  65, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i +  67, length, &OSSetCurrentContextSig) &&
+							get_immediate(data,  i +  83, i +  84, &address) && address == 0xCC002000 &&
+							findx_pattern(data, dataType, i + 141, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 149, length, &OSClearContextSigs[1]) &&
+							findx_pattern(data, dataType, i + 151, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						break;
+					case 8:
+						if (get_immediate(data,  i +   2, i +   9, &address) && address == 0xCC002030 &&
+							get_immediate(data,  i +   2, i +  15, &address) && address == 0xCC002030 &&
+							get_immediate(data,  i +  16, i +  17, &address) && address == 0xCC002034 &&
+							get_immediate(data,  i +  16, i +  23, &address) && address == 0xCC002034 &&
+							get_immediate(data,  i +  24, i +  25, &address) && address == 0xCC002038 &&
+							get_immediate(data,  i +  24, i +  31, &address) && address == 0xCC002038 &&
+							get_immediate(data,  i +  32, i +  33, &address) && address == 0xCC00203C &&
+							get_immediate(data,  i +  32, i +  39, &address) && address == 0xCC00203C &&
+							get_immediate(data,  i +  41, i +  42, &address) && address == 0xCC00203C &&
+							findx_pattern(data, dataType, i +  47, length, &OSClearContextSigs[2]) &&
+							findx_pattern(data, dataType, i +  49, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  62, length, &OSClearContextSigs[2]) &&
+							findx_pattern(data, dataType, i +  64, length, &OSSetCurrentContextSig) &&
+							findx_pattern(data, dataType, i +  70, length, &OSClearContextSigs[2]) &&
+							findx_pattern(data, dataType, i +  72, length, &OSSetCurrentContextSig) &&
+							get_immediate(data,  i +  89, i +  91, &address) && address == 0xCC002000 &&
+							findx_pattern(data, dataType, i + 146, length, &OSClearContextSigs[2]) &&
+							findx_pattern(data, dataType, i + 154, length, &OSClearContextSigs[2]) &&
+							findx_pattern(data, dataType, i + 156, length, &OSSetCurrentContextSig))
+							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
 		for (j = 0; j < sizeof(AIInitDMASigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &AIInitDMASigs[j])) {
 				switch (j) {
@@ -6506,6 +6680,55 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					break;
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", DVDCheckDiskSigs[j].Name, j, DVDCheckDisk);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(VISetRegsSigs) / sizeof(FuncPattern); j++)
+	if ((i = VISetRegsSigs[j].offsetFoundAt)) {
+		u32 *VISetRegs = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (VISetRegs) {
+			if (swissSettings.pauseAVOutput) {
+				switch (j) {
+					case 0:
+					case 1:
+						data[i + 21] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+				}
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", VISetRegsSigs[j].Name, j, VISetRegs);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(__VIRetraceHandlerSigs) / sizeof(FuncPattern); j++)
+	if ((i = __VIRetraceHandlerSigs[j].offsetFoundAt)) {
+		u32 *__VIRetraceHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__VIRetraceHandler) {
+			if (swissSettings.pauseAVOutput) {
+				switch (j) {
+					case 2:
+					case 3:
+						data[i + 64] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 4:
+					case 5:
+						data[i + 66] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 6:
+						data[i + 72] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 7:
+						data[i + 83] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+					case 8:
+						data[i + 89] = 0x3C600C00;	// lis		r3, 0x0C00
+						break;
+				}
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", __VIRetraceHandlerSigs[j].Name, j, __VIRetraceHandler);
 			patched++;
 		}
 	}

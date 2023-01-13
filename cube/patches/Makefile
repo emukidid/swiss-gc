@@ -407,7 +407,7 @@ wkf.dtk.bin:
 fsp.bin:
 	@echo Building FSP Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DISR -DNO_VIDEO
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/interrupt.c
 	@$(CC) -Os $(OPTS) -c base/ipl.c
@@ -428,7 +428,7 @@ fsp.bin:
 fsp.dtk.bin:
 	@echo Building FSP Patch + DTK ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DDTK
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DDTK -DNO_VIDEO
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1

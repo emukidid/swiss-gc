@@ -105,6 +105,7 @@ typedef struct {
 	int disableVideoPatches;
 	int forceVideoActive;
 	int forceDTVStatus;
+	int pauseAVOutput;
 	int emulateReadSpeed;
 	int emulateMemoryCard;
 	int preferCleanBoot;

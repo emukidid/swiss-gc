@@ -115,6 +115,18 @@ OSInterruptMask unmask_interrupts(OSInterruptMask mask)
 	return set_interrupt_mask(mask, irq.mask |= mask);
 }
 
+OSInterruptMask mask_user_interrupts(OSInterruptMask mask)
+{
+	OSLocalInterruptMask |= mask;
+	return set_interrupt_mask(mask, ~(OSGlobalInterruptMask | OSLocalInterruptMask));
+}
+
+OSInterruptMask unmask_user_interrupts(OSInterruptMask mask)
+{
+	OSLocalInterruptMask &= ~mask;
+	return set_interrupt_mask(mask, ~(OSGlobalInterruptMask | OSLocalInterruptMask));
+}
+
 uint32_t exi_get_interrupt_mask(unsigned chan)
 {
 	uint32_t mask;

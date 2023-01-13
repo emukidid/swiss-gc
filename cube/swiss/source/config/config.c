@@ -153,6 +153,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Disable Video Patches=%s\r\n", disableVideoPatchesStr[swissSettings.disableVideoPatches]);
 	fprintf(fp, "Force Video Active=%s\r\n", swissSettings.forceVideoActive ? "Yes":"No");
 	fprintf(fp, "Force DTV Status=%s\r\n", swissSettings.forceDTVStatus ? "Yes":"No");
+	fprintf(fp, "Pause for resolution change=%s\r\n", swissSettings.pauseAVOutput ? "Yes":"No");
 	fprintf(fp, "SMBUserName=%s\r\n", swissSettings.smbUser);
 	fprintf(fp, "SMBPassword=%s\r\n", swissSettings.smbPassword);
 	fprintf(fp, "SMBShareName=%s\r\n", swissSettings.smbShare);
@@ -724,6 +725,9 @@ void config_parse_global(char *configData) {
 				}
 				else if(!strcmp("Force DTV Status", name)) {
 					swissSettings.forceDTVStatus = !strcmp("Yes", value);
+				}
+				else if(!strcmp("Pause for resolution change", name)) {
+					swissSettings.pauseAVOutput = !strcmp("Yes", value);
 				}
 				else if(!strcmp("SMBUserName", name)) {
 					strlcpy(swissSettings.smbUser, value, sizeof(swissSettings.smbUser));
