@@ -123,63 +123,49 @@ void ogc_video__reset()
 	while(!__SYS_SyncSram());
 	
 	/* set TV mode for current game */
-	uiDrawObj_t *msgBox = NULL;
 	switch(swissSettings.gameVMode) {
 		case -2:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 576p");
+			sprintf(txtbuffer, "Video Mode: %s", "PAL 576p");
 			newmode = &TVPal576ProgScale;
 			break;
 		case -1:
-			msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480p");
+			sprintf(txtbuffer, "Video Mode: %s", "NTSC 480p");
 			newmode = &TVNtsc480Prog;
 			break;
 		case 0:
 			if(swissSettings.sramVideo == SYS_VIDEO_MPAL && !getDTVStatus()) {
-				msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL-M 480i");
+				sprintf(txtbuffer, "Video Mode: %s", "PAL-M 480i");
 				newmode = &TVMpal480IntDf;
 			}
 			else if(swissSettings.sramVideo == SYS_VIDEO_PAL) {
-				if(swissSettings.sramProgressive && !getDTVStatus())
-					msgBox = DrawMessageBox(D_WARN, "Video Mode: PAL 576i\nComponent Cable not detected.");
-				else
-					msgBox = DrawMessageBox(D_INFO, "Video Mode: PAL 576i");
-				
+				sprintf(txtbuffer, "Video Mode: %s", "PAL 576i");
 				newmode = &TVPal576IntDfScale;
 			}
 			else {
-				if(swissSettings.sramProgressive && !getDTVStatus())
-					msgBox = DrawMessageBox(D_WARN, "Video Mode: NTSC 480i\nComponent Cable not detected.");
-				else
-					msgBox = DrawMessageBox(D_INFO, "Video Mode: NTSC 480i");
-				
+				sprintf(txtbuffer, "Video Mode: %s", "NTSC 480i");
 				newmode = &TVNtsc480IntDf;
 			}
 			break;
 		case 1 ... 3:
 			sprintf(txtbuffer, "Video Mode: %s %s", "NTSC", gameVModeStr[swissSettings.gameVMode]);
-			msgBox = DrawMessageBox(D_INFO, txtbuffer);
 			newmode = &TVNtsc480IntDf;
 			break;
 		case 4 ... 7:
 			sprintf(txtbuffer, "Video Mode: %s %s", "NTSC", gameVModeStr[swissSettings.gameVMode]);
-			msgBox = DrawMessageBox(D_INFO, txtbuffer);
 			newmode = &TVNtsc480Prog;
 			break;
 		case 8 ... 10:
 			sprintf(txtbuffer, "Video Mode: %s %s\n%s Mode selected.", "PAL", gameVModeStr[swissSettings.gameVMode], swissSettings.sram60Hz ? "60Hz":"50Hz");
-			msgBox = DrawMessageBox(D_INFO, txtbuffer);
 			newmode = &TVPal576IntDfScale;
 			break;
 		case 11 ... 14:
 			sprintf(txtbuffer, "Video Mode: %s %s\n%s Mode selected.", "PAL", gameVModeStr[swissSettings.gameVMode], swissSettings.sram60Hz ? "60Hz":"50Hz");
-			msgBox = DrawMessageBox(D_INFO, txtbuffer);
 			newmode = &TVPal576ProgScale;
 			break;
 	}
 	if((newmode != NULL) && (newmode != getVideoMode())) {
 		DrawVideoMode(newmode);
-	}
-	if(msgBox != NULL) {
+		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, txtbuffer);
 		DrawPublish(msgBox);
 		sleep(2);
 		DrawDispose(msgBox);
