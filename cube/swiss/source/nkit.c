@@ -1286,6 +1286,7 @@ static const struct {
 	{ "GNHE5d\x00\x00", false, 1, 0xCCBB, 0xAAFF05B0,    1169408, +1458808832, 0x0000000000000000, {      94248,       +4056, 6496, 0xF932 }, "Action Replay Ultimate Codes Max Pack" },
 	{ "GNHE5d\x00\x00", false, 1, 0xCCBB, 0xB1B28589,    1714176, +1458264064, 0x0000000000000000, {      94248,       +4056, 6496, 0x3310 }, "Action Replay Ultimate Codes Greatest Hits: Best Buy Achievers Weekend 2004" },
 	{ "GNHE5d\x00\x00", false, 1, 0xCCBB, 0xB21FE659,    1042432, +1458935808, 0x0000000000000000, {      94248,       +4056, 6496, 0x6BCB }, "Cube CD 14 (33)" },
+	{ "GNHE5d\x00\x00", false, 1, 0xCCBB, 0xBF7B7C5A,    1189888, +1458788352, 0x0000000000000000, {      94248,       +4056, 6496, 0xD19A }, "Power Link Game Enhancer Disc" },
 	{ "GNHE5d\x00\x00", false, 1, 0xCCBB, 0xC4256D56,    1650688, +1458327552, 0x0000000000000000, {      94248,       +4056, 6496, 0x83D8 }, "Ultimate Codes for Use with Metroid Prime" },
 	{ "GNHE5d\x00\x00", false, 1, 0xCCBB, 0xC7E200F3,    2117632, +1457860608, 0x0000000000000000, {      94248,       +4056, 6496, 0x3A76 }, "Action Replay Ultimate Cheats für Enter the Matrix" },
 	{ "GNHE5d\x00\x00", false, 1, 0xCCBB, 0xCC3182C3,   11837440, +1448140800, 0x0000000000000000, {      94248,       +4056, 6496, 0xCC3B }, "MaxPlay" },
@@ -2017,7 +2018,7 @@ static const struct {
 	{ "UGPJ01\x00\x03", false, 1, 0xC4F0, 0xDFF567CB,    2473984, +1457504256, 0xFB2218FBFA6AB9FE, {    2003524,      +28092, 6496, 0xE53B }, "Game Boy Player Start-Up Disc" },
 	{ "UGPP01\x00\x01", false, 1, 0x6D4F, 0x5ECD9681,    5079040, +1454899200, 0x4E9244DEFB94F10C, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{ "UGPP01\x00\x02", false, 1, 0xCA50, 0x1E26380C,    5079040, +1454899200, 0x483B4CE794041533, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
-#define REDUMP_COUNT 1966
+#define REDUMP_COUNT 1967
 	{ "00\0E01\x00\x00",false, 1, 0x21CF, 0xBF114CB3,   31170560, +1428807680, 0xC1BAC83BFBED3EDB, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{ "00\0E01\x00\x00",false, 1, 0x42A2, 0x499CF1AB,   31170560, +1428807680, 0xC1BAC83BFBED3EDB, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{ "D28J01\x00\x00", true,  1, 0x8FC6, 0x8EFBB42B,  794134528,  +665843712, 0xB1F399DE51C25382, {  394649296,  +665814992, 6496, 0xE5B2 }, "Gekkan Nintendo Tentou Demo 2002.4.4" },
