@@ -133,3 +133,27 @@ unsigned int exi_get_id(int chn, int dev)
 	EXI_GetID(chn,dev,&cid);
 	return cid;
 }
+
+unsigned char rom_read(int addr)
+{
+	addr <<= 6;
+	unsigned long val;
+	exi_select(0, 1, 3);
+	exi_write(0, &addr, 4);
+	exi_read(0, &val, 4);
+	exi_deselect(0);
+	return val >> 24;
+}
+
+void rom_write(int addr, unsigned char c)
+{
+	unsigned long val;
+	addr <<= 6;
+	addr |= 0x80000000;
+	val = c << 24;
+	exi_select(0, 1, 3);
+	exi_write(0, &addr, 4);
+	exi_write(0, &val, 4);
+	exi_deselect(0);
+}
+

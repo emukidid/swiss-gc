@@ -1171,7 +1171,7 @@ bool manage_file() {
 	bool canMove = canWrite && isFile;
 	bool canCopy = isFile;
 	bool canDelete = canWrite;
-	bool canRename = canWrite;
+	bool canRename = canWrite && devices[DEVICE_CUR]->renameFile;
 	
 	// Ask the user what they want to do with the selected entry
 	uiDrawObj_t* manageFileBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 320);
@@ -1466,7 +1466,8 @@ bool manage_file() {
 			
 			// Read from one file and write to the new directory
 			u32 isCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
-			u32 curOffset = curFile.offset, cancelled = 0, chunkSize = (isCard||isDestCard) ? curFile.size : (256*1024);
+			u32 bulkWrite = isCard || devices[DEVICE_DEST] == &__device_qoob;
+			u32 curOffset = curFile.offset, cancelled = 0, chunkSize = (bulkWrite||isDestCard) ? curFile.size : (256*1024);
 			char *readBuffer = (char*)memalign(32,chunkSize);
 			sprintf(txtbuffer, "Copying to: %s",getRelativeName(destFile->name));
 			uiDrawObj_t* progBar = DrawProgressBar(false, 0, txtbuffer);
