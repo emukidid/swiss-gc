@@ -8342,31 +8342,21 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			}
 			switch (k) {
 				case 0:
-					data[i +  14] = 0x38600000 | (newmode->viTVMode & 0xFFFF);
-					break;
-				case 1:
-					data[i +  14] = 0x38600000 | (newmode->viTVMode & 0xFFFF);
-					data[i + 143] = 0x38000000 | (swissSettings.sramVideo & 0xFFFF);
-					break;
+				case 1: data[i + 14] = 0x38600000 | (newmode->viTVMode & 0xFFFF); break;
 				case 2:
-				case 3:
-					data[i +  15] = 0x38600000 | (newmode->viTVMode & 0xFFFF);
-					break;
+				case 3: data[i + 15] = 0x38600000 | (newmode->viTVMode & 0xFFFF); break;
 				case 4:
-					data[i +  18] = 0x38600000 | (newmode->viTVMode & 0xFFFF);
-					break;
-				case 5:
-					data[i +  18] = 0x38600000 | (newmode->viTVMode & 0xFFFF);
-					data[i + 138] = 0x38800000 | (swissSettings.sramVideo & 0xFFFF);
-					break;
-				case 6:
-					data[i +  24] = 0x38600000 | (newmode->viTVMode & 0xFFFF);
-					data[i + 152] = 0x38800000 | (swissSettings.sramVideo & 0xFFFF);
-					break;
-				case 7:
-					data[i +  17] = 0x38600000 | (newmode->viTVMode & 0xFFFF);
-					data[i + 201] = 0x39200000 | (swissSettings.sramVideo & 0xFFFF);
-					break;
+				case 5: data[i + 18] = 0x38600000 | (newmode->viTVMode & 0xFFFF); break;
+				case 6: data[i + 24] = 0x38600000 | (newmode->viTVMode & 0xFFFF); break;
+				case 7: data[i + 17] = 0x38600000 | (newmode->viTVMode & 0xFFFF); break;
+			}
+			if (swissSettings.gameVMode > 0) {
+				switch (k) {
+					case 1: data[i + 143] = 0x38000000 | (swissSettings.sramVideo & 0xFFFF); break;
+					case 5: data[i + 138] = 0x38800000 | (swissSettings.sramVideo & 0xFFFF); break;
+					case 6: data[i + 152] = 0x38800000 | (swissSettings.sramVideo & 0xFFFF); break;
+					case 7: data[i + 201] = 0x39200000 | (swissSettings.sramVideo & 0xFFFF); break;
+				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", VIInitSigs[k].Name, k, VIInit);
 		}
