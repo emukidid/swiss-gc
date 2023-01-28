@@ -112,16 +112,5 @@ int ataWriteSectors(int chn, u64 sector,unsigned int numSectors, unsigned char *
 bool ataIsInserted(int chn);
 int ataShutdown(int chn);
 int ide_exi_inserted(int chn);
-// Swap defines
-#define __lhbrx(base,index)			\
-({	register u16 res;				\
-	__asm__ volatile ("lhbrx	%0,%1,%2" : "=r"(res) : "b%"(index), "r"(base) : "memory"); \
-	res; })
-
-#define __lwbrx(base,index)			\
-({	register u32 res;				\
-	__asm__ volatile ("lwbrx	%0,%1,%2" : "=r"(res) : "b%"(index), "r"(base) : "memory"); \
-	res; })
 
 #endif
-

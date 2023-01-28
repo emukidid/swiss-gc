@@ -1452,8 +1452,11 @@ bool manage_file() {
 					if(!memcmp(&gci, "DATELGC_SAVE", 12)) {
 						devices[DEVICE_CUR]->seekFile(&curFile, 0x80, DEVICE_HANDLER_SEEK_SET);
 						devices[DEVICE_CUR]->readFile(&curFile, &gci, sizeof(GCI));
+						#pragma GCC diagnostic push
+						#pragma GCC diagnostic ignored "-Wrestrict"
 						swab(&gci.reserved01, &gci.reserved01, 2);
 						swab(&gci.icon_addr,  &gci.icon_addr, 20);
+						#pragma GCC diagnostic pop
 					}
 					else if(!memcmp(&gci, "GCSAVE", 6)) {
 						devices[DEVICE_CUR]->seekFile(&curFile, 0x110, DEVICE_HANDLER_SEEK_SET);

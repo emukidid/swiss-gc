@@ -135,9 +135,7 @@ void populate_save_meta(file_handle *f, u8 bannerFormat, u32 bannerOffset, u32 c
 		char comment[64];
 		devices[DEVICE_CUR]->seekFile(f, commentOffset, DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(f, comment, 64) == 64) {
-			strncat(f->meta->bannerDesc.description, &comment[0], 32);
-			strlcat(f->meta->bannerDesc.description, "\n", BNR_DESC_LEN);
-			strncat(f->meta->bannerDesc.description, &comment[32], 32);
+			snprintf(f->meta->bannerDesc.description, BNR_DESC_LEN, "%.32s\n%.32s", &comment[0], &comment[32]);
 			fixBannerDesc(f->meta->bannerDesc.description, BNR_DESC_LEN);
 		}
 	}
@@ -239,8 +237,11 @@ void populate_meta(file_handle *f) {
 					if(!memcmp(&gci, "DATELGC_SAVE", 12)) {
 						devices[DEVICE_CUR]->seekFile(f, 0x80, DEVICE_HANDLER_SEEK_SET);
 						devices[DEVICE_CUR]->readFile(f, &gci, sizeof(GCI));
+						#pragma GCC diagnostic push
+						#pragma GCC diagnostic ignored "-Wrestrict"
 						swab(&gci.reserved01, &gci.reserved01, 2);
 						swab(&gci.icon_addr,  &gci.icon_addr, 20);
+						#pragma GCC diagnostic pop
 					}
 					else if(!memcmp(&gci, "GCSAVE", 6)) {
 						devices[DEVICE_CUR]->seekFile(f, 0x110, DEVICE_HANDLER_SEEK_SET);

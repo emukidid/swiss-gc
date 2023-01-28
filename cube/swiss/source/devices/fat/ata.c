@@ -13,6 +13,7 @@
 #include <string.h>
 #include <debug.h>
 #include <ogc/exi.h>
+#include <ogc/machine/processor.h>
 #include <ata.h>
 #include <malloc.h>
 #include "main.h"
@@ -30,12 +31,6 @@ int _ideexi_version = IDE_EXI_V1;
 
 // Drive information struct
 typeDriveInfo ataDriveInfo;
-
-static inline u16 bswap16(u16 val)
-{
-	u16 tmp = val;
-	return __lhbrx(&tmp,0);
-}
 
 // Returns 8 bits from the ATA Status register
 static inline u8 ataReadStatusReg(int chn)

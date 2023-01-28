@@ -12,8 +12,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <debug.h>
-#include <ogc/usbgecko.h>
 #include <ogc/exi.h>
+#include <ogc/usbgecko.h>
+#include <ogc/machine/processor.h>
 #include <malloc.h>
 #include "main.h"
 #include "swiss.h"
@@ -37,11 +38,6 @@ typedef struct {
 	u32 offset;    // Offset in the file
 	u32 size;      // size to read
 } usb_data_req;
-
-static inline u32 bswap32(u32 val) {
-	u32 tmp = val;
-	return __lwbrx(&tmp,0);
-}
 
 u8 *get_buffer() {
 	if(replybuffer == NULL) {

@@ -11,11 +11,6 @@
 #include <gccore.h>
 #include "deviceHandler.h"
 
-#define __lwbrx(base,index)			\
-({	register u32 res;				\
-	__asm__ volatile ("lwbrx	%0,%1,%2" : "=r"(res) : "b%"(index), "r"(base) : "memory"); \
-	res; })
-
 // Returns 1 if the PC side is ready, 0 otherwise
 s32 usbgecko_pc_ready();
 
