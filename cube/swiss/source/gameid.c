@@ -73,10 +73,16 @@ void gameID_early_set(const DiskHeader *header)
 {
 	for (s32 chan = 0; chan < 2; chan++) {
 		u32 id;
-		if (MCP_ProbeEx(chan) < 0) continue;
-		if (MCP_GetDeviceID(chan, &id) < 0) continue;
-		if (MCP_SetDiskID(chan, (dvddiskid *)header) < 0) continue;
-		if (MCP_SetDiskInfo(chan, header->GameName) < 0) continue;
+		s32 ret;
+
+		while ((ret = MCP_ProbeEx(chan)) == MCP_RESULT_BUSY);
+		if (ret < 0) continue;
+		while ((ret = MCP_GetDeviceID(chan, &id)) == MCP_RESULT_BUSY);
+		if (ret < 0) continue;
+		while ((ret = MCP_SetDiskID(chan, (dvddiskid *)header)) == MCP_RESULT_BUSY);
+		if (ret < 0) continue;
+		while ((ret = MCP_SetDiskInfo(chan, header->GameName)) == MCP_RESULT_BUSY);
+		if (ret < 0) continue;
 	}
 }
 
