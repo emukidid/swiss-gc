@@ -229,6 +229,7 @@ int main(int argc, char *argv[])
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Initialising Network"));
 		init_network();
 		init_httpd_thread();
+		init_wiiload_thread();
 		DrawDispose(msgBox);
 	}
 	

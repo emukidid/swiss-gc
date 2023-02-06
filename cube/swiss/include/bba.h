@@ -8,5 +8,6 @@ extern char bba_netmask[16];
 extern char bba_gateway[16];
 
 void init_network();
+void init_wiiload_thread();
 
 #endif
