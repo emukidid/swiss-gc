@@ -149,9 +149,9 @@ static void wiiload_handler(int sd)
 
 	if (buffer) {
 		if (!memcmp(buffer, ELFMAG, SELFMAG))
-			ELFtoARAM(buffer, 0, NULL);
+			ELFtoARAM(buffer, args, header.args_size);
 		else
-			DOLtoARAM(buffer, 0, NULL);
+			DOLtoARAM(buffer, args, header.args_size);
 	}
 
 	free(args);

@@ -6,6 +6,7 @@
 	- by emu_kidid for Swiss 28/07/2015
    ----------------------------------------------------------- */
 
+#include <argz.h>
 #include <gccore.h>
 #include <string.h>
 #include <malloc.h>
@@ -124,18 +125,13 @@ Parameters* getParameters() {
 	return &_parameters;
 }
 
-void populateArgv(int *argc, char *argv[], char *filename) {
+void populateArgv(char **argz, size_t *argz_len, char *filename) {
 	int i = 0;
 	Parameters* params = getParameters();
 	print_gecko("There are %i parameters\r\n", params->num_params);
 	for(i = 0; i < params->num_params; i++) {
 		Parameter *param = &params->parameters[i];
 		if(param->enable) {
-			if(*argc == 0) {
-				// Filename first
-				argv[0] = getExternalPath(filename);
-				*argc += 1;
-			}
 			ParameterValue *arg = &param->arg;
 			ParameterValue *val = &param->values[param->currentValueIdx];
 			//print_gecko("Arg: (%s) [%s] is enabled with value (%s) [%s]\r\n",
@@ -147,9 +143,9 @@ void populateArgv(int *argc, char *argv[], char *filename) {
 			else
 				sprintf(argvEntry, "%s=%s", arg->value, val->value);
 			print_gecko("Argv entry: [%s]\r\n", argvEntry);
-			argv[*argc] = argvEntry;
-			*argc+=1;
+			argz_add(argz, argz_len, argvEntry);
+			free(argvEntry);
 		}
 	}
-	print_gecko("Arg count: %i\r\n", *argc);
+	print_gecko("Arg count: %i\r\n", argz_count(*argz, *argz_len));
 }

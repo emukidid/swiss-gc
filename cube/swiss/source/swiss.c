@@ -4,6 +4,7 @@
 *
 */
 
+#include <argz.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <gccore.h>		/*** Wrapper to include common libogc headers ***/
@@ -1017,10 +1018,10 @@ void load_app(ExecutableFile *fileToPatch)
 		BINtoARAM(buffer, sizeToRead, 0x81300000);
 	}
 	else if(type == PATCH_DOL) {
-		DOLtoARAM(buffer, 0, NULL);
+		DOLtoARAM(buffer, NULL, 0);
 	}
 	else if(type == PATCH_ELF) {
-		ELFtoARAM(buffer, 0, NULL);
+		ELFtoARAM(buffer, NULL, 0);
 	}
 }
 
@@ -1069,26 +1070,20 @@ void boot_dol()
 	}
 	
 	// Build a command line to pass to the DOL
-	int argc = 0;
-	char *argv[1024];
+	char *argz = getExternalPath(&curFile.name[0]);
+	size_t argz_len = strlen(argz) + 1;
 
-	u32 readTest;
 	char fileName[PATHNAME_MAX];
 	memset(&fileName[0], 0, PATHNAME_MAX);
 	strncpy(&fileName[0], &curFile.name[0], strrchr(&curFile.name[0], '.') - &curFile.name[0]);
 	print_gecko("DOL file name without extension [%s]\r\n", fileName);
 	
-	file_handle *cliArgFile = calloc(1, sizeof(file_handle));
-	
 	// .cli argument file
+	file_handle *cliArgFile = calloc(1, sizeof(file_handle));
 	snprintf(cliArgFile->name, PATHNAME_MAX, "%s.cli", fileName);
-	if(devices[DEVICE_CUR]->readFile(cliArgFile, &readTest, 4) != 4) {
-		free(cliArgFile);
-		cliArgFile = NULL;
-	}
 	
 	// we found something, use parameters (.cli)
-	if(cliArgFile) {
+	if(devices[DEVICE_CUR]->readFile(cliArgFile, NULL, 0) == 0 && cliArgFile->size) {
 		print_gecko("Argument file found [%s]\r\n", cliArgFile->name);
 		char *cli_buffer = calloc(1, cliArgFile->size + 1);
 		if(cli_buffer) {
@@ -1096,43 +1091,19 @@ void boot_dol()
 			devices[DEVICE_CUR]->readFile(cliArgFile, cli_buffer, cliArgFile->size);
 
 			// Parse CLI
-			argv[argc] = getExternalPath(&curFile.name[0]);
-			argc++;
-			// First argument is at the beginning of the file
-			if(cli_buffer[0] != '\r' && cli_buffer[0] != '\n') {
-				argv[argc] = cli_buffer;
-				argc++;
-			}
-
-			// Search for the others after each newline
-			for(i = 0; i < cliArgFile->size; i++) {
-				if(cli_buffer[i] == '\r' || cli_buffer[i] == '\n') {
-					cli_buffer[i] = '\0';
-				}
-				else if(cli_buffer[i - 1] == '\0') {
-					argv[argc] = cli_buffer + i;
-					argc++;
-
-					if(argc >= 1024)
-						break;
-				}
-			}
+			argz_add_sep(&argz, &argz_len, cli_buffer, '\n');
+			free(cli_buffer);
 		}
 	}
-
+	devices[DEVICE_CUR]->closeFile(cliArgFile);
 	free(cliArgFile);
 
-	file_handle *dcpArgFile = calloc(1, sizeof(file_handle));
-	
 	// .dcp parameter file
+	file_handle *dcpArgFile = calloc(1, sizeof(file_handle));
 	snprintf(dcpArgFile->name, PATHNAME_MAX, "%s.dcp", fileName);
-	if(devices[DEVICE_CUR]->readFile(dcpArgFile, &readTest, 4) != 4) {
-		free(dcpArgFile);
-		dcpArgFile = NULL;
-	}
 	
 	// we found something, parse and display parameters for selection (.dcp)
-	if(dcpArgFile) {
+	if(devices[DEVICE_CUR]->readFile(dcpArgFile, NULL, 0) == 0 && dcpArgFile->size) {
 		print_gecko("Argument file found [%s]\r\n", dcpArgFile->name);
 		char *dcp_buffer = calloc(1, dcpArgFile->size + 1);
 		if(dcp_buffer) {
@@ -1141,24 +1112,26 @@ void boot_dol()
 
 			// Parse DCP
 			parseParameters(dcp_buffer);
+			free(dcp_buffer);
+
 			Parameters *params = (Parameters*)getParameters();
 			if(params->num_params > 0) {
 				DrawArgsSelector(getRelativeName(&curFile.name[0]));
 				// Get an argv back or none.
-				populateArgv(&argc, argv, (char*)&curFile.name);
+				populateArgv(&argz, &argz_len, &curFile.name[0]);
 			}
 		}
 	}
-
+	devices[DEVICE_CUR]->closeFile(dcpArgFile);
 	free(dcpArgFile);
 
 	if(devices[DEVICE_CUR] != NULL) devices[DEVICE_CUR]->deinit( devices[DEVICE_CUR]->initial );
 	// Boot
 	if(!memcmp(dol_buffer, ELFMAG, SELFMAG)) {
-		ELFtoARAM(dol_buffer, argc, argc == 0 ? NULL : argv);
+		ELFtoARAM(dol_buffer, argz, argz_len);
 	}
 	else {
-		DOLtoARAM(dol_buffer, argc, argc == 0 ? NULL : argv);
+		DOLtoARAM(dol_buffer, argz, argz_len);
 	}
 
 	free(dol_buffer);

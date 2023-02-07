@@ -303,11 +303,11 @@ u32 DOLSize(DOLHEADER *dol)
 *
 * Pass in a memory pointer to a previously loaded DOL
 ****************************************************************************/
-int DOLtoARAM(unsigned char *dol, int argc, char *argv[])
+int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
 {
   u32 sizeinbytes;
   int i;
-  struct __argv dolargs;
+  struct __argv args;
 
   /*** Make sure ARAM subsystem is alive! ***/
   AR_Init(NULL, 0); /*** No stack - we need it all ***/
@@ -331,6 +331,18 @@ int DOLtoARAM(unsigned char *dol, int argc, char *argv[])
     /*** This may seem strange, but in developing d0lLZ we found some with section addresses with zero length ***/
     if (dolhdr->textAddress[i] && dolhdr->textLength[i])
     {
+      if (dolhdr->entryPoint >= dolhdr->textAddress[i] &&
+          dolhdr->entryPoint < (dolhdr->textAddress[i] + dolhdr->textLength[i]))
+      {
+        u32 *entrypoint = (u32 *) (dol + (dolhdr->entryPoint - dolhdr->textAddress[i]) + dolhdr->textOffset[i]);
+
+        if (entrypoint[1] != ARGV_MAGIC)
+        {
+          argz = NULL;
+          argz_len = 0;
+        }
+      }
+
       ARAMPut(dol + dolhdr->textOffset[i], (char *) ((dolhdr->textAddress[i] - minaddress) + ARAMSTART),
               dolhdr->textLength[i]);
     }
@@ -347,30 +359,18 @@ int DOLtoARAM(unsigned char *dol, int argc, char *argv[])
   }
 
   /*** Pass a command line ***/
-  if (argc)
+  if (argz)
   {
-    dolargs.argvMagic = ARGV_MAGIC;
-    dolargs.argc = argc;
-    dolargs.length = 1;
+    args.argvMagic = ARGV_MAGIC;
+    args.commandLine = argz;
+    args.length = argz_len;
 
-    for (i = 0; i < argc; i++)
-    {
-      size_t argLength = strlen(argv[i]) + 1;
-      dolargs.length += argLength;
-    }
-    dolargs.commandLine = malloc(dolargs.length);
+    ARAMPut((unsigned char *) args.commandLine, (char *) ((maxaddress - minaddress) + ARAMSTART), args.length);
 
-    unsigned int position = 0;
-    for (i = 0; i < argc; i++)
-    {
-      size_t argLength = strlen(argv[i]) + 1;
-      memcpy(dolargs.commandLine + position, argv[i], argLength);
-      position += argLength;
-    }
-    dolargs.commandLine[dolargs.length - 1] = '\0';
-    DCStoreRange(dolargs.commandLine, dolargs.length);
+    args.commandLine = (char *) maxaddress;
+    sizeinbytes += args.length;
 
-    ARAMPut((unsigned char *) &dolargs, (char *) (dolhdr->entryPoint - minaddress + 8 + ARAMSTART), sizeof(struct __argv));
+    ARAMPut((unsigned char *) &args, (char *) ((dolhdr->entryPoint + 8 - minaddress) + ARAMSTART), sizeof(struct __argv));
   }
 
   /*** Now go run it ***/
@@ -400,7 +400,7 @@ static void ELFMinMax(Elf32_Ehdr *ehdr, Elf32_Phdr *phdr)
   }
 }
 
-int ELFtoARAM(unsigned char *elf, int argc, char *argv[])
+int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
 {
   Elf32_Ehdr *ehdr;
   Elf32_Phdr *phdr;
@@ -429,35 +429,35 @@ int ELFtoARAM(unsigned char *elf, int argc, char *argv[])
   {
     if (phdr[i].p_type == PT_LOAD)
     {
+      if (ehdr->e_entry >= phdr[i].p_vaddr &&
+          ehdr->e_entry < (phdr[i].p_vaddr + phdr[i].p_filesz))
+      {
+        u32 *entrypoint = (u32 *) (elf + (ehdr->e_entry - phdr[i].p_vaddr) + phdr[i].p_offset);
+
+        if (entrypoint[1] != ARGV_MAGIC)
+        {
+          argz = NULL;
+          argz_len = 0;
+        }
+      }
+
       ARAMPut(elf + phdr[i].p_offset, (char *) ((phdr[i].p_vaddr - minaddress) + ARAMSTART), phdr[i].p_filesz);
     }
   }
 
   /*** Pass a command line ***/
-  if (argc)
+  if (argz)
   {
     args.argvMagic = ARGV_MAGIC;
-    args.argc = argc;
-    args.length = 1;
+    args.commandLine = argz;
+    args.length = argz_len;
 
-    for (i = 0; i < argc; i++)
-    {
-      size_t argLength = strlen(argv[i]) + 1;
-      args.length += argLength;
-    }
-    args.commandLine = malloc(args.length);
+    ARAMPut((unsigned char *) args.commandLine, (char *) ((maxaddress - minaddress) + ARAMSTART), args.length);
 
-    unsigned int position = 0;
-    for (i = 0; i < argc; i++)
-    {
-      size_t argLength = strlen(argv[i]) + 1;
-      memcpy(args.commandLine + position, argv[i], argLength);
-      position += argLength;
-    }
-    args.commandLine[args.length - 1] = '\0';
-    DCStoreRange(args.commandLine, args.length);
+    args.commandLine = (char *) maxaddress;
+    sizeinbytes += args.length;
 
-    ARAMPut((unsigned char *) &args, (char *) (ehdr->e_entry - minaddress + 8 + ARAMSTART), sizeof(struct __argv));
+    ARAMPut((unsigned char *) &args, (char *) ((ehdr->e_entry + 8 - minaddress) + ARAMSTART), sizeof(struct __argv));
   }
 
   /*** Now go run it ***/
