@@ -45,7 +45,7 @@ Another Note: Specific devices will have specific locations/executable file vari
         <td>Action</td>
     </tr>
     <tr>
-        <td>Left Joysitck or D-Pad</td>
+        <td>Left Joystick or D-Pad</td>
         <td>Navigate through the UI</td>
     </tr>
     <tr>
