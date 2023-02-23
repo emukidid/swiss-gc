@@ -1091,7 +1091,13 @@ void boot_dol()
 			devices[DEVICE_CUR]->readFile(cliArgFile, cli_buffer, cliArgFile->size);
 
 			// Parse CLI
-			argz_add_sep(&argz, &argz_len, cli_buffer, '\n');
+			char *line, *linectx = NULL;
+			line = strtok_r(cli_buffer, "\r\n", &linectx);
+			while(line != NULL) {
+				argz_add(&argz, &argz_len, line);
+				line = strtok_r(NULL, "\r\n", &linectx);
+			}
+
 			free(cli_buffer);
 		}
 	}
