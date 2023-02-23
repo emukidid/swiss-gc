@@ -83,7 +83,7 @@ void parseParameters(char *filecontents) {
 	line = strtok_r( filecontents, "\n", &linectx );
 
 	Parameter *curParam = NULL;	// The current one we're parsing
-	while( line != NULL && numParameters < MAX_PARAMS ) {
+	while( line != NULL ) {
 		//print_gecko("Line [%s]\r\n", line);
 		if(line[0] != '#') {
 			char *key, *namectx = NULL;
@@ -97,6 +97,8 @@ void parseParameters(char *filecontents) {
 			}
 			
 			if(!strcasecmp("Name", key)) {
+				if (numParameters >= MAX_PARAMS)
+					break;
 				curParam = (Parameter*)&_parameters.parameters[numParameters];
 				memset(curParam, 0, sizeof(Parameter));
 				//print_gecko("Current Param %08X\r\n", curParam);
