@@ -3,6 +3,7 @@
         by novenary
  */
 
+#include <stdlib.h>
 #include <malloc.h>
 #include "deviceHandler-SYS.h"
 #include "main.h"
@@ -319,14 +320,13 @@ s32 deviceHandler_SYS_init(file_handle* file) {
 
 s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	int num_entries = 1, i;
-	*dir = malloc(num_entries * sizeof(file_handle));
-	memset(&(*dir)[0], 0, sizeof(file_handle));
+	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 
 	for(i = 0; i < NUM_ROMS; i++) {
 		num_entries++;
-		*dir = realloc(*dir, num_entries * sizeof(file_handle));
+		*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
 		memset(&(*dir)[i + 1], 0, sizeof(file_handle));
 		concat_path((*dir)[i + 1].name, ffile->name, rom_names[i]);
 		(*dir)[i + 1].fileAttrib = IS_FILE;

@@ -150,7 +150,7 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 		
 		print_gecko("getFragments [%s] - found %i fragments [%i arr]\r\n", file->name, (clmt[0]/2)-1, clmt[0]);
 		
-		frags = realloc(frags, sizeof(file_frag) * (numFrags + (clmt[0]/2)));
+		frags = reallocarray(frags, numFrags + (clmt[0]/2), sizeof(file_frag));
 		if(frags == NULL) {
 			return false;
 		}
@@ -171,7 +171,7 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 		file->status = 1;
 	}
 	else if(devices[deviceSlot] == &__device_fsp) {
-		frags = realloc(frags, sizeof(file_frag) * (numFrags + 2));
+		frags = reallocarray(frags, numFrags + 2, sizeof(file_frag));
 		if(frags == NULL) {
 			return false;
 		}
@@ -186,7 +186,7 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 		numFrags++;
 	}
 	else if(devices[deviceSlot] == &__device_usbgecko) {
-		frags = realloc(frags, sizeof(file_frag) * (numFrags + 2));
+		frags = reallocarray(frags, numFrags + 2, sizeof(file_frag));
 		if(frags == NULL) {
 			return false;
 		}
@@ -198,7 +198,7 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 		numFrags++;
 	}
 	else {
-		frags = realloc(frags, sizeof(file_frag) * (numFrags + 2));
+		frags = reallocarray(frags, numFrags + 2, sizeof(file_frag));
 		if(frags == NULL) {
 			return false;
 		}

@@ -3,6 +3,7 @@
 	by emu_kidid
  */
 
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <malloc.h>
@@ -42,8 +43,7 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 	// Set everything up to read
 	s32 num_entries = 1, i = 1;
 	file_handle *entry = NULL;
-	*dir = malloc( num_entries * sizeof(file_handle) );
-	memset(*dir,0,sizeof(file_handle) * num_entries);
+	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 	
@@ -59,7 +59,7 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 		// Make sure we have room for this one
 		if(i == num_entries) {
 			++num_entries;
-			*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
+			*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
 		}
 		memset(&(*dir)[i], 0, sizeof(file_handle));
 		strcpy((*dir)[i].name, entry->name);

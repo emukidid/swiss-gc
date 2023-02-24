@@ -288,7 +288,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 
 		if(num_entries <= 0) { return num_entries; }
 		// malloc the directory structure
-		*dir = calloc( num_entries * sizeof(file_handle), 1 );
+		*dir = calloc(num_entries, sizeof(file_handle));
 		
 		// parse entries
 		for(i = 0; i < num_entries; i++) {
@@ -323,7 +323,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		// If it was not successful, just return the error
 		if(num_entries <= 0) return -1;
 		// Convert the DVD "file" data to fileBrowser_files
-		*dir = calloc( num_entries * sizeof(file_handle), 1);
+		*dir = calloc(num_entries, sizeof(file_handle));
 		int i;
 		for(i=0; i<num_entries; ++i){
 			concat_path((*dir)[i].name, ffile->name, DVDToc->file[i].name);

@@ -5,6 +5,7 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <gccore.h>
 #include <malloc.h>
@@ -116,7 +117,7 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	memset(memcard_dir, 0, sizeof(card_dir));
  	
 	/* Convert the Memory Card "file" data to fileBrowser_files */
-	*dir = calloc(sizeof(file_handle), 1);
+	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 
@@ -126,7 +127,7 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		// Make sure we have room for this one
 		if(i == num_entries){
 			++num_entries;
-			*dir = realloc( *dir, num_entries * sizeof(file_handle) ); 
+			*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
 		}
 		memset(&(*dir)[i], 0, sizeof(file_handle));
 		concatf_path((*dir)[i].name, ffile->name, "%.*s", CARD_FILENAMELEN, memcard_dir->filename);

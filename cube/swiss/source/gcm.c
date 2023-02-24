@@ -678,7 +678,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 	if(usedSpace) *usedSpace = calc_fst_entries_size(FST);
 		
 	// Add the disc itself as a "file"
-	*dir = calloc( numFiles * sizeof(file_handle), 1 );
+	*dir = calloc(numFiles, sizeof(file_handle));
 	concatf_path((*dir)[idx].name, __device_dvd.initial->name, "%.64s.gcm", diskHeader->GameName);
 	(*dir)[idx].fileBase = 0;
 	(*dir)[idx].offset = 0;
@@ -712,7 +712,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		// Add a special ".." dir which will take us back up a dir
 		if(idx == numFiles){
 			++numFiles;
-			*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
+			*dir = reallocarray(*dir, numFiles, sizeof(file_handle));
 		}
 		memset(&(*dir)[idx], 0, sizeof(file_handle));
 		concat_path((*dir)[idx].name, file->name, "..");
@@ -742,7 +742,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 				//print_gecko("Adding: [%03i]%s:%s offset %08X length %08X\r\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
 				if(idx == numFiles){
 					++numFiles;
-					*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
+					*dir = reallocarray(*dir, numFiles, sizeof(file_handle));
 				}
 				memset(&(*dir)[idx], 0, sizeof(file_handle));
 				strcpy((*dir)[idx].name, filename);
@@ -761,7 +761,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 			//print_gecko("Adding: [%03i]%s:%s offset %08X length %08X\r\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
 			if(idx == numFiles){
 				++numFiles;
-				*dir = realloc( *dir, numFiles * sizeof(file_handle) ); 
+				*dir = reallocarray(*dir, numFiles, sizeof(file_handle));
 			}
 			memset(&(*dir)[idx], 0, sizeof(file_handle));
 			strcpy((*dir)[idx].name, filename);
