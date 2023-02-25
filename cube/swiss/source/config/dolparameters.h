@@ -27,25 +27,21 @@ Name={--turbo, Turbo (default 2)}
 Values={1, 1}, {2, 2}, {3, 3}
 */
 
-#define MAX_PARAMS 16
-#define MAX_VALUES_PER_PARAM 8
-#define MAX_PARAM_STRING 32
-
 typedef struct {
-	char value[MAX_PARAM_STRING];	// Value passed to DOL
-	char name[MAX_PARAM_STRING];	// User friendly name
+	char *value;	// Value passed to DOL
+	char *name;		// User friendly name
 } ParameterValue;
 
 typedef struct {
-	ParameterValue arg;	// The parameter itself
-	int num_values;		// How many possible values this parameter has
-	int enable;			// Whether this param is used
-	int currentValueIdx;// Current value index
-	ParameterValue values[MAX_VALUES_PER_PARAM];	// The values
+	ParameterValue arg;		// The parameter itself
+	int num_values;			// How many possible values this parameter has
+	int enable;				// Whether this param is used
+	int currentValueIdx;	// Current value index
+	ParameterValue *values;	// The values
 } Parameter;
 
 typedef struct {
-	Parameter parameters[MAX_PARAMS];
+	Parameter *parameters;
 	int num_params;
 } Parameters;
 

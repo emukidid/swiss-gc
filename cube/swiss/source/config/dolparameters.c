@@ -7,7 +7,9 @@
    ----------------------------------------------------------- */
 
 #include <argz.h>
+#include <envz.h>
 #include <gccore.h>
+#include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
 #include "swiss.h"
@@ -39,8 +41,9 @@ void printParams(Parameters *params) {
 		ParameterValue *arg = &param->arg;
 		print_gecko("Argument: (%s) [%s]\r\n", arg->value, arg->name);
 		print_gecko("This parameter has %i values\r\n", param->num_values);
-		for(j = 0; j < params->parameters[i].num_values; j++) {
-			print_gecko("Value: (%s) [%s]\r\n", params->parameters[i].values[j].value, params->parameters[i].values[j].name);
+		for(j = 0; j < param->num_values; j++) {
+			ParameterValue *val = &param->values[j];
+			print_gecko("Value: (%s) [%s]\r\n", val->value, val->name);
 		}
 	}
 }
@@ -65,9 +68,8 @@ void parseParameterValue(char *tuple, ParameterValue* val) {
 		while(*valStart==' ') valStart++;	// avoid whitespace at the start of the value
 		if(((valEnd=strchr(valStart, '}'))!=NULL)) {
 			while(*valEnd==' ') valEnd--;
-			memset(val, 0, sizeof(ParameterValue));
-			memcpy(val->value, keyStart, (int)((u32)keyEnd-(u32)(keyStart)));
-			memcpy(val->name, valStart, (int)((u32)valEnd-(u32)valStart));
+			val->value = strndup(keyStart, (int)((u32)keyEnd-(u32)keyStart));
+			val->name = strndup(valStart, (int)((u32)valEnd-(u32)valStart));
 			//print_gecko("Parameter with screen name: [%s] and value [%s]\r\n",val->name, val->value);
 		}
 	}
@@ -80,7 +82,7 @@ void parseParameterValue(char *tuple, ParameterValue* val) {
 void parseParameters(char *filecontents) {
 	char *line = NULL, *linectx = NULL;
 	int numParameters = 0;
-	line = strtok_r( filecontents, "\n", &linectx );
+	line = strtok_r( filecontents, "\r\n", &linectx );
 
 	Parameter *curParam = NULL;	// The current one we're parsing
 	while( line != NULL ) {
@@ -97,7 +99,8 @@ void parseParameters(char *filecontents) {
 			}
 			
 			if(!strcasecmp("Name", key)) {
-				curParam = (Parameter*)&_parameters.parameters[numParameters];
+				_parameters.parameters = reallocarray(_parameters.parameters, numParameters+1, sizeof(Parameter));
+				curParam = &_parameters.parameters[numParameters];
 				memset(curParam, 0, sizeof(Parameter));
 				//print_gecko("Current Param %08X\r\n", curParam);
 				parseParameterValue(value, &curParam->arg);
@@ -107,6 +110,7 @@ void parseParameters(char *filecontents) {
 				char *valuePairStart = strchr(value, '{');
 				int numValues = 0;
 				while(valuePairStart != NULL) {
+					curParam->values = reallocarray(curParam->values, numValues+1, sizeof(ParameterValue));
 					parseParameterValue(valuePairStart, &curParam->values[numValues]);
 					valuePairStart = strchr(valuePairStart+1, '{');
 					numValues++;
@@ -115,7 +119,7 @@ void parseParameters(char *filecontents) {
 			}
 		}
 		// And round we go again
-		line = strtok_r( NULL, "\n", &linectx);
+		line = strtok_r( NULL, "\r\n", &linectx);
 	}
 	_parameters.num_params = numParameters;
 	//printParams(getParameters());
@@ -136,15 +140,12 @@ void populateArgv(char **argz, size_t *argz_len, char *filename) {
 			ParameterValue *val = &param->values[param->currentValueIdx];
 			//print_gecko("Arg: (%s) [%s] is enabled with value (%s) [%s]\r\n",
 			//	arg->value, arg->name, val->value, val->name);
-			char *argvEntry = (char*)malloc((MAX_PARAM_STRING * 2) + 2);
-			memset(argvEntry, 0, (MAX_PARAM_STRING * 2) + 2);
-			if(!arg->value[0])
-				sprintf(argvEntry, "%s", val->value);
-			else
-				sprintf(argvEntry, "%s=%s", arg->value, val->value);
-			print_gecko("Argv entry: [%s]\r\n", argvEntry);
-			argz_add(argz, argz_len, argvEntry);
-			free(argvEntry);
+			if(arg->value[0] && val->value[0])
+				envz_add(argz, argz_len, arg->value, val->value);
+			else if(arg->value[0])
+				envz_add(argz, argz_len, arg->value, NULL);
+			else if(val->value[0])
+				envz_add(argz, argz_len, val->value, NULL);
 		}
 	}
 	print_gecko("Arg count: %i\r\n", argz_count(*argz, *argz_len));
