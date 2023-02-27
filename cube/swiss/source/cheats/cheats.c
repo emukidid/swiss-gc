@@ -61,36 +61,15 @@ int getEnabledCheatsCount(void) {
 	return enabled;
 }
 
-static char *validCodeValues = "0123456789AaBbCcDdEeFf";
 // Checks that the line contains a valid code in the format of "01234567 89ABCDEF"
-int isValidCode(char *code) {
-	int i, j;
-	
-	if(strlen(code) < 17) return 0; // Not in format
-	for(i = 0; i < 16; i++) {
-		if(i == 8 && code[i] != ' ') 
-			return 0; // No space separating the two values
-		if(i == 8)
-			continue;
-		int found = 0;
-		for(j = 0; j < strlen(validCodeValues); j++) {
-			if(code[i] == validCodeValues[j]) {
-				found = 1;
-				break;
-			}
-		}
-		if(!found) return 0; 	// Wasn't a valid hexadecimal value
-	}
-
-	return 1;
+int isValidCode(char *line) {
+	int len = 0;
+	return sscanf(line, "%*8[0-9A-Fa-f] %*8[0-9A-Fa-f]%n", &len) == 0 && len > 16;
 }
 
-int containsXX(char *line) {
-	return strlen(line)>=16 
-			&& (
-				(tolower((int)line[6]) > 0x66 || tolower((int)line[7]) > 0x66 || tolower((int)line[15]) > 0x66 || tolower((int)line[16]) > 0x66)
-				)
-			;
+int isCheatCode(char *line) {
+	int len = 0;
+	return sscanf(line, "%*8[0-9A-Za-z] %*8[0-9A-Za-z]%n", &len) == 0 && len > 16;
 }
 
 /** 
@@ -100,81 +79,80 @@ int containsXX(char *line) {
 void parseCheats(char *filecontents) {
 	char *line = NULL, *prevLine = NULL, *linectx = NULL;
 	int numCheats = 0;
-	line = strtok_r( filecontents, "\n", &linectx );
+	line = strtok_r( filecontents, "\r\n", &linectx );
 
 	// Free previous
-	if(_cheats.num_cheats > 0) {
+	if(_cheats.cheat) {
 		int i;
 		for(i = 0; i < _cheats.num_cheats; i++) {
-			if(_cheats.cheat[i].codes) {
-				free(_cheats.cheat[i].codes);
-			}
+			CheatEntry *cheat = &_cheats.cheat[i];
+			free(cheat->name);
+			free(cheat->codes);
 		}
+		free(_cheats.cheat);
+		_cheats.cheat = NULL;
+		_cheats.num_cheats = 0;
 	}
-	memset(&_cheats, 0, sizeof(CheatEntries));
 	
 	CheatEntry *curCheat = NULL;	// The current one we're parsing
-	while( line != NULL && numCheats < CHEATS_MAX_FOR_GAME) {
+	while( line != NULL ) {
 		//print_gecko("Line [%s]\r\n", line);
-		
-		if(isValidCode(line)) {		// The line looks like a valid code
+		if(isCheatCode(line)) {		// The line looks like a valid code
+			_cheats.cheat = reallocarray(_cheats.cheat, numCheats+1, sizeof(CheatEntry));
+			curCheat = &_cheats.cheat[numCheats];
+			memset(curCheat, 0, sizeof(CheatEntry));
+			
 			if(prevLine != NULL) {
-				curCheat = &_cheats.cheat[numCheats];
-				strncpy(curCheat->name, prevLine, strlen(prevLine) > CHEATS_NAME_LEN ? CHEATS_NAME_LEN-1:strlen(prevLine));
-				if(curCheat->name[strlen(curCheat->name)-1] == '\r')
-					curCheat->name[strlen(curCheat->name)-1] = 0;
+				curCheat->name = strdup(prevLine);
 				//print_gecko("Cheat Name: [%s]\r\n", prevLine);
 			}
-			int unsupported = 0;
-			u32 *codesBuf = (u32*)calloc(1, sizeof(u32) * 2 * SINGLE_CHEAT_MAX_LINES);
-			
-			// Add this valid code as the first code for this cheat
-			codesBuf[(curCheat->num_codes << 1)+0] = (u32)strtoul(line, NULL, 16);
-			codesBuf[(curCheat->num_codes << 1)+1] = (u32)strtoul(line+8, NULL, 16);
-			curCheat->num_codes++;
-			
-			line = strtok_r( NULL, "\n", &linectx);
-			// Keep going until we're out of codes for this cheat
-			while( line != NULL) {
-				if(curCheat->num_codes == SINGLE_CHEAT_MAX_LINES) {
-					unsupported = 1;
-					break;
-				}
+			int numCodes = 0, unsupported = 0;
+			if(isValidCode(line)) {
+				// Add this valid code as the first code for this cheat
+				curCheat->codes = reallocarray(curCheat->codes, numCodes+1, sizeof(*curCheat->codes));
+				sscanf(line, "%x %x", &curCheat->codes[numCodes][0], &curCheat->codes[numCodes][1]);
+				numCodes++;
+			}
+			else {
 				// If a code contains "XX" in it, it is unsupported, discard it entirely
-				if(containsXX(line)) {
-					unsupported = 1;
-					break;
-				}
-				if(isValidCode(line)) {
-					// Add this valid code
-					codesBuf[(curCheat->num_codes << 1)+0] = (u32)strtoul(line, NULL, 16);
-					codesBuf[(curCheat->num_codes << 1)+1] = (u32)strtoul(line+8, NULL, 16);
-					curCheat->num_codes++;
+				unsupported = 1;
+				numCodes++;
+			}
+			
+			line = strtok_r( NULL, "\r\n", &linectx);
+			// Keep going until we're out of codes for this cheat
+			while( line != NULL ) {
+				if(isCheatCode(line)) {
+					if(isValidCode(line)) {
+						// Add this valid code
+						curCheat->codes = reallocarray(curCheat->codes, numCodes+1, sizeof(*curCheat->codes));
+						sscanf(line, "%x %x", &curCheat->codes[numCodes][0], &curCheat->codes[numCodes][1]);
+						numCodes++;
+					}
+					else {
+						// If a code contains "XX" in it, it is unsupported, discard it entirely
+						unsupported = 1;
+						numCodes++;
+					}
 				}
 				else {
 					break;
 				}
-				line = strtok_r( NULL, "\n", &linectx);
+				line = strtok_r( NULL, "\r\n", &linectx);
 			}
 			
 			if(unsupported) {
-				memset(curCheat, 0, sizeof(CheatEntry));
-				while(line != NULL && strlen(line) >=2) {
-					line = strtok_r( NULL, "\n", &linectx);	// finish this unsupported cheat.
-				}
+				free(curCheat->name);
+				free(curCheat->codes);
 			}
 			else {
+				curCheat->num_codes = numCodes;
 				numCheats++;
-				// Alloc and store it.
-				print_gecko("Allocating %i bytes for %i codes\r\n", sizeof *curCheat->codes * curCheat->num_codes, curCheat->num_codes);
-				curCheat->codes = calloc(1, sizeof *curCheat->codes * curCheat->num_codes );
-				memcpy(curCheat->codes, codesBuf, sizeof *curCheat->codes * curCheat->num_codes);
 			}
-			free(codesBuf);
 		}
 		prevLine = line;
 		// And round we go again
-		line = strtok_r( NULL, "\n", &linectx);
+		line = strtok_r( NULL, "\r\n", &linectx);
 	}
 	_cheats.num_cheats = numCheats;
 	//printCheats();

@@ -17,10 +17,6 @@ extern u8 kenobigc_dbg_bin[];
 #define CHEATS_FALSE			0
 #define CHEATS_ENGINE_START		((void*)(WIIRD_ENGINE+0xA8))
 
-#define CHEATS_NAME_LEN			128
-#define CHEATS_MAX_FOR_GAME		400
-#define SINGLE_CHEAT_MAX_LINES	512
-
 // Example:
 /*
 [G9TD52] Shark Tale (PAL German)
@@ -36,16 +32,15 @@ Infinite Health [Ralf]
 */
 
 typedef struct {
-	char name[CHEATS_NAME_LEN];
+	char *name;
 	u32 (*codes)[2];
 	int num_codes;
 	int enabled;
 } CheatEntry;
 
 typedef struct {
-	CheatEntry cheat[CHEATS_MAX_FOR_GAME];
+	CheatEntry *cheat;
 	int num_cheats;
-	int enabled;
 } CheatEntries;
 
 // Installs the GeckoOS (kenobiGC) cheats engine and sets up variables/copies cheats
