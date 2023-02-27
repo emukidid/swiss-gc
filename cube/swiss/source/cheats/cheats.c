@@ -69,7 +69,7 @@ int isValidCode(char *line) {
 
 int isCheatCode(char *line) {
 	int len = 0;
-	return sscanf(line, "%*8[0-9A-Za-z] %*8[0-9A-Za-z]%n", &len) == 0 && len > 16;
+	return sscanf(line, "%*2[0-9A-Fa-f]%*6[0-9A-Za-z] %*8[0-9A-Za-z]%n", &len) == 0 && len > 16;
 }
 
 /** 
