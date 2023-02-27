@@ -1137,6 +1137,26 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{  93, 30, 7, 5,  8,  9, NULL, 0, "__EXIProbe" },
 		{  97, 31, 9, 5,  8, 15, NULL, 0, "__EXIProbe" }	// SN Systems ProDG
 	};
+	FuncPattern EXIAttachSigs[8] = {
+		{  59, 19,  5,  8,  5,  5, NULL, 0, "EXIAttachD" },
+		{  43, 11,  3,  6,  3,  5, NULL, 0, "EXIAttachD" },
+		{  44, 12,  3,  6,  3,  5, NULL, 0, "EXIAttachD" },
+		{  57, 18,  9,  6,  3,  4, NULL, 0, "EXIAttach" },
+		{  67, 19,  4, 11,  3,  3, NULL, 0, "EXIAttach" },
+		{  74, 19,  5, 11,  3,  7, NULL, 0, "EXIAttach" },
+		{  67, 18,  4, 11,  3,  5, NULL, 0, "EXIAttach" },
+		{ 214, 54, 10, 20, 19, 29, NULL, 0, "EXIAttach" }	// SN Systems ProDG
+	};
+	FuncPattern EXIDetachSigs[8] = {
+		{ 53, 16, 3, 6, 5, 5, NULL, 0, "EXIDetachD" },
+		{ 53, 16, 3, 6, 5, 5, NULL, 0, "EXIDetachD" },
+		{ 54, 17, 3, 6, 5, 5, NULL, 0, "EXIDetachD" },
+		{ 47, 15, 6, 5, 3, 3, NULL, 0, "EXIDetach" },
+		{ 47, 15, 6, 5, 3, 3, NULL, 0, "EXIDetach" },
+		{ 43, 12, 3, 5, 3, 4, NULL, 0, "EXIDetach" },
+		{ 47, 15, 6, 5, 3, 4, NULL, 0, "EXIDetach" },
+		{ 45, 15, 6, 5, 3, 5, NULL, 0, "EXIDetach" }	// SN Systems ProDG
+	};
 	FuncPattern EXISelectSDSig = 
 		{ 85, 23, 4, 7, 14, 6, NULL, 0, "EXISelectSD" };
 	FuncPattern EXISelectSigs[8] = {
@@ -2913,6 +2933,94 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							get_immediate(data,  i +  82, i +  83, &address) && address == 0x800030C0 &&
 							findx_pattern(data, dataType, i +  87, length, &OSRestoreInterruptsSig))
 							__EXIProbeSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(EXIDetachSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &EXIDetachSigs[j])) {
+				switch (j) {
+					case 0:
+						if ((data[i + 5] & 0xFC00FFFF) == 0x1C000038 &&
+							findx_pattern(data, dataType, i + 19, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 35, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 44, length, &__OSMaskInterruptsSigs[0]) &&
+							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &EXIAttachSigs[0]))
+							EXIDetachSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if ((data[i + 5] & 0xFC00FFFF) == 0x54003032 &&
+							findx_pattern(data, dataType, i + 19, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 35, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 44, length, &__OSMaskInterruptsSigs[0]) &&
+							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &EXIAttachSigs[1]))
+							EXIDetachSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if ((data[i + 5] & 0xFC00FFFF) == 0x54003032 &&
+							findx_pattern (data, dataType, i + 20, length, &OSDisableInterruptsSig) &&
+							findx_pattern (data, dataType, i + 26, length, &OSRestoreInterruptsSig) &&
+							findx_pattern (data, dataType, i + 36, length, &OSRestoreInterruptsSig) &&
+							findx_patterns(data, dataType, i + 45, length, &__OSMaskInterruptsSigs[0],
+							                                               &__OSMaskInterruptsSigs[1], NULL) &&
+							findx_pattern (data, dataType, i + 47, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &EXIAttachSigs[2]))
+							EXIDetachSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if ((data[i + 7] & 0xFC00FFFF) == 0x1C000038 &&
+							findx_pattern(data, dataType, i + 11, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 17, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 36, length, &__OSMaskInterruptsSigs[1]) &&
+							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &EXIAttachSigs[3]))
+							EXIDetachSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if ((data[i + 8] & 0xFC00FFFF) == 0x54003032 &&
+							findx_pattern(data, dataType, i + 11, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 17, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 36, length, &__OSMaskInterruptsSigs[1]) &&
+							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &EXIAttachSigs[4]))
+							EXIDetachSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if ((data[i + 5] & 0xFC00FFFF) == 0x54003032 &&
+							findx_pattern(data, dataType, i +  9, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 15, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 34, length, &__OSMaskInterruptsSigs[1]) &&
+							findx_pattern(data, dataType, i + 36, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &EXIAttachSigs[5]))
+							EXIDetachSigs[j].offsetFoundAt = i;
+						break;
+					case 6:
+						if ((data[i + 7] & 0xFC00FFFF) == 0x54003032 &&
+							findx_pattern(data, dataType, i + 11, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 17, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 36, length, &__OSMaskInterruptsSigs[1]) &&
+							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &EXIAttachSigs[6]))
+							EXIDetachSigs[j].offsetFoundAt = i;
+						break;
+					case 7:
+						if ((data[i + 7] & 0xFC00FFFF) == 0x54003032 &&
+							findx_pattern(data, dataType, i + 11, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 16, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 34, length, &__OSMaskInterruptsSigs[2]) &&
+							findx_pattern(data, dataType, i + 36, length, &OSRestoreInterruptsSig) &&
+							find_pattern_before(data, length, &fp, &EXIAttachSigs[7]))
+							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -5406,6 +5514,23 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", __EXIProbeSigs[j].Name, j, __EXIProbe);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(EXIDetachSigs) / sizeof(FuncPattern); j++)
+	if ((i = EXIDetachSigs[j].offsetFoundAt)) {
+		u32 *EXIDetach = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (EXIDetach) {
+			switch (j) {
+				case 0:
+				case 1:
+				case 2:
+					data[i + 11] = 0x2C1D0003;	// cmpwi	r29, 3
+					break;
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", EXIDetachSigs[j].Name, j, EXIDetach);
 			patched++;
 		}
 	}
