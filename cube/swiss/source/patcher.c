@@ -1244,6 +1244,18 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{  55, 21, 8,  5,  3, 3, NULL, 0, "EXIUnlock" },
 		{ 101, 33, 8, 11, 20, 4, NULL, 0, "EXIUnlock" }	// SN Systems ProDG
 	};
+	FuncPattern EXIGetIDSigs[10] = {
+		{   97,  27,  4, 11,   7,   9, NULL, 0, "EXIGetIDD" },
+		{  152,  45,  6, 14,  14,  15, NULL, 0, "EXIGetIDD" },
+		{  153,  46,  6, 14,  14,  15, NULL, 0, "EXIGetIDD" },
+		{  168,  49,  7, 16,  16,  16, NULL, 0, "EXIGetIDD" },
+		{  181,  54,  8, 24,  14,  13, NULL, 0, "EXIGetID" },
+		{  223,  70, 11, 26,  20,  17, NULL, 0, "EXIGetID" },
+		{  228,  66, 11, 26,  19,  19, NULL, 0, "EXIGetID" },
+		{  223,  69, 11, 26,  20,  20, NULL, 0, "EXIGetID" },
+		{  236,  71, 12, 28,  22,  21, NULL, 0, "EXIGetID" },
+		{ 1087, 280, 44, 83, 140, 139, NULL, 0, "EXIGetID" }	// SN Systems ProDG
+	};
 	FuncPattern __DVDInterruptHandlerSigs[10] = {
 		{ 157, 49, 21,  9, 18, 12, NULL, 0, "__DVDInterruptHandlerD" },
 		{ 161, 50, 22,  8, 18, 12, NULL, 0, "__DVDInterruptHandlerD" },
@@ -3030,6 +3042,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((data[i + 7] & 0xFC00FFFF) == 0x54003032 &&
 				findx_pattern(data, dataType, i + 11, length, &OSDisableInterruptsSig) &&
 				findx_pattern(data, dataType, i + 24, length, &__EXIProbeSigs[6]) &&
+				findx_pattern(data, dataType, i + 33, length, &EXIGetIDSigs[8]) &&
 				findx_pattern(data, dataType, i + 48, length, &OSRestoreInterruptsSig) &&
 				get_immediate(data,   i + 55, i + 56, &address) && address == 0xCC006800 &&
 				findx_pattern(data, dataType, i + 73, length, &__OSMaskInterruptsSigs[1]) &&
@@ -3285,7 +3298,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findi_pattern (data, dataType, i + 62, i + 63, length, &TCIntrruptHandlerSigs[2]) &&
 							findx_patterns(data, dataType, i + 64, length, &__OSSetInterruptHandlerSigs[0],
 							                                               &__OSSetInterruptHandlerSigs[1], NULL) &&
-							findx_pattern (data, dataType, i + 72, length, &EXIProbeResetSigs[1]))
+							findx_pattern (data, dataType, i + 68, length, &EXIGetIDSigs[3]) &&
+							findx_pattern (data, dataType, i + 72, length, &EXIProbeResetSigs[1]) &&
+							findx_pattern (data, dataType, i + 77, length, &EXIGetIDSigs[3]) &&
+							findx_pattern (data, dataType, i + 91, length, &EXIGetIDSigs[3]))
 							EXIInitSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
@@ -3416,7 +3432,8 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							get_immediate (data,   i + 64, i + 65, &address) && address == 0x800030C4 &&
 							get_immediate (data,   i + 64, i + 66, &address) && address == 0x800030C0 &&
 							findx_pattern (data, dataType, i + 72, length, &__EXIProbeSigs[6]) &&
-							findx_pattern (data, dataType, i + 74, length, &__EXIProbeSigs[6]))
+							findx_pattern (data, dataType, i + 74, length, &__EXIProbeSigs[6]) &&
+							findx_pattern (data, dataType, i + 78, length, &EXIGetIDSigs[8]))
 							EXIInitSigs[j].offsetFoundAt = i;
 						break;
 					case 8:
@@ -3440,7 +3457,8 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							get_immediate(data,   i + 64, i + 65, &address) && address == 0x800030C4 &&
 							get_immediate(data,   i + 64, i + 66, &address) && address == 0x800030C0 &&
 							findx_pattern(data, dataType, i + 72, length, &__EXIProbeSigs[6]) &&
-							findx_pattern(data, dataType, i + 74, length, &__EXIProbeSigs[6]))
+							findx_pattern(data, dataType, i + 74, length, &__EXIProbeSigs[6]) &&
+							findx_pattern(data, dataType, i + 78, length, &EXIGetIDSigs[8]))
 							EXIInitSigs[j].offsetFoundAt = i;
 						break;
 					case 9:
@@ -3461,10 +3479,13 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 54, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 57, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 60, length, &__OSSetInterruptHandlerSigs[1]) &&
+							findx_pattern(data, dataType, i + 64, length, &EXIGetIDSigs[8]) &&
 							get_immediate(data,   i + 68, i + 69, &address) && address == 0x800030C4 &&
 							get_immediate(data,   i + 68, i + 70, &address) && address == 0x800030C0 &&
 							findx_pattern(data, dataType, i + 76, length, &__EXIProbeSigs[6]) &&
-							findx_pattern(data, dataType, i + 78, length, &__EXIProbeSigs[6]))
+							findx_pattern(data, dataType, i + 78, length, &__EXIProbeSigs[6]) &&
+							findx_pattern(data, dataType, i + 83, length, &EXIGetIDSigs[8]) &&
+							findx_pattern(data, dataType, i + 97, length, &EXIGetIDSigs[8]))
 							EXIInitSigs[j].offsetFoundAt = i;
 						break;
 					case 10:
@@ -3492,7 +3513,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 56, length, &__OSSetInterruptHandlerSigs[2]) &&
 							findi_pattern(data, dataType, i + 58, i + 59, length, &TCIntrruptHandlerSigs[7]) &&
 							findx_pattern(data, dataType, i + 60, length, &__OSSetInterruptHandlerSigs[2]) &&
-							findx_pattern(data, dataType, i + 68, length, &EXIProbeResetSigs[2]))
+							findx_pattern(data, dataType, i + 64, length, &EXIGetIDSigs[9]) &&
+							findx_pattern(data, dataType, i + 68, length, &EXIProbeResetSigs[2]) &&
+							findx_pattern(data, dataType, i + 73, length, &EXIGetIDSigs[9]) &&
+							findx_pattern(data, dataType, i + 87, length, &EXIGetIDSigs[9]))
 							EXIInitSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -5518,6 +5542,23 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		}
 	}
 	
+	for (j = 0; j < sizeof(EXIAttachSigs) / sizeof(FuncPattern); j++)
+	if ((i = EXIAttachSigs[j].offsetFoundAt)) {
+		u32 *EXIAttach = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (EXIAttach) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+				if (j == 7) {
+					data[i +  19] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 115] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 188] = 0x3C600C00;	// lis		r3, 0x0C00
+				}
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", EXIAttachSigs[j].Name, j, EXIAttach);
+			patched++;
+		}
+	}
+	
 	for (j = 0; j < sizeof(EXIDetachSigs) / sizeof(FuncPattern); j++)
 	if ((i = EXIDetachSigs[j].offsetFoundAt)) {
 		u32 *EXIDetach = Calc_ProperAddress(data, dataType, i * sizeof(u32));
@@ -5788,6 +5829,37 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				data[k + 7] = (u32)EXIUnlock;
 			
 			print_gecko("Found:[%s$%i] @ %08X\n", EXIUnlockSigs[j].Name, j, EXIUnlock);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(EXIGetIDSigs) / sizeof(FuncPattern); j++)
+	if ((i = EXIGetIDSigs[j].offsetFoundAt)) {
+		u32 *EXIGetID = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (EXIGetID) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+				if (j == 9) {
+					data[i +  33] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 127] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 188] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 344] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 426] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 476] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 493] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 512] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 534] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 614] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 665] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 683] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 694] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 716] = 0x3C800C00;	// lis		r4, 0x0C00
+					data[i + 797] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 842] = 0x3C600C00;	// lis		r3, 0x0C00
+					data[i + 875] = 0x3C600C00;	// lis		r3, 0x0C00
+				}
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", EXIGetIDSigs[j].Name, j, EXIGetID);
 			patched++;
 		}
 	}
