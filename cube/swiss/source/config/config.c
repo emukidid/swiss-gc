@@ -150,6 +150,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Stop DVD Motor on startup=%s\r\n", swissSettings.stopMotor ? "Yes":"No");
 	fprintf(fp, "Enable WiiRD debug=%s\r\n", swissSettings.wiirdDebug ? "Yes":"No");
 	fprintf(fp, "Enable File Management=%s\r\n", swissSettings.enableFileManagement ? "Yes":"No");
+	fprintf(fp, "Disable MemCard PRO GameID=%s\r\n", disableMCPGameIDStr[swissSettings.disableMCPGameID]);
 	fprintf(fp, "Disable Video Patches=%s\r\n", disableVideoPatchesStr[swissSettings.disableVideoPatches]);
 	fprintf(fp, "Force Video Active=%s\r\n", swissSettings.forceVideoActive ? "Yes":"No");
 	fprintf(fp, "Force DTV Status=%s\r\n", swissSettings.forceDTVStatus ? "Yes":"No");
@@ -711,6 +712,14 @@ void config_parse_global(char *configData) {
 				}
 				else if(!strcmp("Enable File Management", name)) {
 					swissSettings.enableFileManagement = !strcmp("Yes", value);
+				}
+				else if(!strcmp("Disable MemCard PRO GameID", name)) {
+					for(int i = 0; i < 4; i++) {
+						if(!strcmp(disableMCPGameIDStr[i], value)) {
+							swissSettings.disableMCPGameID = i;
+							break;
+						}
+					}
 				}
 				else if(!strcmp("Disable Video Patches", name)) {
 					for(int i = 0; i < 3; i++) {

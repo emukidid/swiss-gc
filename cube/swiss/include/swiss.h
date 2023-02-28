@@ -102,6 +102,7 @@ typedef struct {
 	int sramStereo;
 	int stopMotor;
 	int enableFileManagement;
+	int disableMCPGameID;
 	int disableVideoPatches;
 	int forceVideoActive;
 	int forceDTVStatus;

@@ -23,6 +23,7 @@
 #include "gameid.h"
 #include "gcm.h"
 #include "mcp.h"
+#include "swiss.h"
 
 static u8 command[1 + 10] = {0x1D};
 
@@ -75,6 +76,8 @@ void gameID_early_set(const DiskHeader *header)
 		u32 id;
 		s32 ret;
 
+		if (swissSettings.disableMCPGameID & (1 << chan))
+			continue;
 		while ((ret = MCP_ProbeEx(chan)) == MCP_RESULT_BUSY);
 		if (ret < 0) continue;
 		while ((ret = MCP_GetDeviceID(chan, &id)) == MCP_RESULT_BUSY);

@@ -68,6 +68,7 @@ enum SETTINGS_GAME_GLOBAL {
 	SET_BS2BOOT,
 	SET_AUTOBOOT,
 	SET_EMULATE_MEMCARD,
+	SET_ENABLE_MCPGAMEID,
 	SET_FORCE_VIDACTIVE,
 	SET_ENABLE_VIDPATCH,
 	SET_PAUSE_AVOUTPUT,
@@ -129,6 +130,7 @@ extern char *forceVJitterStr[];
 extern char *forceWidescreenStr[];
 extern char *forcePollRateStr[];
 extern char *invertCStickStr[];
+extern char *disableMCPGameIDStr[];
 extern char *disableVideoPatchesStr[];
 extern char *emulateReadSpeedStr[];
 extern char *igrTypeStr[];

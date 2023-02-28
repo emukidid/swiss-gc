@@ -32,6 +32,7 @@ char *forceVJitterStr[] = {"Auto", "On", "Off"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *forcePollRateStr[] = {"No", "VSync", "1000Hz", "500Hz", "350Hz", "300Hz", "250Hz", "200Hz", "150Hz", "150Hz", "120Hz", "120Hz", "100Hz"};
 char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
+char *disableMCPGameIDStr[] = {"No", "Slot A", "Slot B", "Slot A&B"};
 char *disableVideoPatchesStr[] = {"None", "Game", "All"};
 char *emulateReadSpeedStr[] = {"No", "Yes", "Wii"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
@@ -66,6 +67,7 @@ static char *tooltips_network[PAGE_NETWORK_MAX+1] = {
 static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
 	"In-Game Reset: (A + Z + Start)\n\nReboot: Soft-Reset the GameCube\nigr.dol: Low mem (< 0x81300000) igr.dol at the root of SD Card",
 	"Boot through IPL:\n\nWhen enabled, games will be booted with the GameCube\nlogo screen and Main Menu accessible with patches applied.",
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -297,6 +299,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		drawSettingEntryString(page, &page_y_ofs, "Boot through IPL:", bs2BootStr[swissSettings.bs2Boot], option == SET_BS2BOOT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Boot without prompts:", swissSettings.autoBoot, option == SET_AUTOBOOT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Memory Card:", swissSettings.emulateMemoryCard, option == SET_EMULATE_MEMCARD, emulatedMemoryCard);
+		drawSettingEntryString(page, &page_y_ofs, "Disable MemCard PRO GameID:", disableMCPGameIDStr[swissSettings.disableMCPGameID], option == SET_ENABLE_MCPGAMEID, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force Video Active:", swissSettings.forceVideoActive, option == SET_FORCE_VIDACTIVE, enabledVideoPatches);
 		drawSettingEntryString(page, &page_y_ofs, "Disable Video Patches:", disableVideoPatchesStr[swissSettings.disableVideoPatches], option == SET_ENABLE_VIDPATCH, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Pause for resolution change:", swissSettings.pauseAVOutput, option == SET_PAUSE_AVOUTPUT, true);
@@ -568,6 +571,13 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_EMULATE_MEMCARD:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_MEMCARD))
 					swissSettings.emulateMemoryCard ^= 1;
+			break;
+			case SET_ENABLE_MCPGAMEID:
+				swissSettings.disableMCPGameID += direction;
+				if(swissSettings.disableMCPGameID > 3)
+					swissSettings.disableMCPGameID = 0;
+				if(swissSettings.disableMCPGameID < 0)
+					swissSettings.disableMCPGameID = 3;
 			break;
 			case SET_FORCE_VIDACTIVE:
 				if(swissSettings.disableVideoPatches < 2)
