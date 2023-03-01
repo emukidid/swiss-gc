@@ -128,7 +128,7 @@ void load_auto_dol() {
 				// If we've made it this far, we've already found an autoboot DOL,
 				// the first one (boot.dol) is not cancellable, but the rest of the
 				// list is
-				if (PAD_ButtonsHeld(0) & PAD_BUTTON_Y) {
+				if (padsButtonsHeld() & PAD_BUTTON_Y) {
 					return;
 				}
 			}

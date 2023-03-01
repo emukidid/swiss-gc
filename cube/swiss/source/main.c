@@ -78,8 +78,8 @@ void Initialise (void)
 		if(DVD_LowGetCoverStatus() == 1) {
 			break;
 		}
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B) {
-			while(PAD_ButtonsHeld(0) & PAD_BUTTON_B) VIDEO_WaitVSync();
+		if(padsButtonsHeld() & PAD_BUTTON_B) {
+			while(padsButtonsHeld() & PAD_BUTTON_B) VIDEO_WaitVSync();
 			break;
 		}
 	}
@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
 
 // Checks if devices are available, prints name of device being detected for slow init devices
 void populateDeviceAvailability() {
-	if(PAD_ButtonsHeld(0) & PAD_BUTTON_B) {
+	if(padsButtonsHeld() & PAD_BUTTON_B) {
 		deviceHandler_setAllDevicesAvailable();
 		return;
 	}
@@ -282,7 +282,7 @@ void populateDeviceAvailability() {
 			print_gecko("Checking device availability for device %s\r\n", allDevices[i]->deviceName);
 			deviceHandler_setDeviceAvailable(allDevices[i], allDevices[i]->test());
 		}
-		if(PAD_ButtonsHeld(0) & PAD_BUTTON_B) {
+		if(padsButtonsHeld() & PAD_BUTTON_B) {
 			deviceHandler_setAllDevicesAvailable();
 			break;
 		}

@@ -180,7 +180,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 void show_info() {
 	int page = 0;
 	uiDrawObj_t* pagePanel = NULL;
-	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
+	while (padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
 		uiDrawObj_t* newPanel = info_draw_page(page);
 		if(pagePanel != NULL) {
@@ -188,28 +188,28 @@ void show_info() {
 		}
 		pagePanel = newPanel;
 		DrawPublish(pagePanel);
-		while (!((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
-			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
-			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_B)
-			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_A)
-			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)
-			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L)))
+		while (!((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
+			|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
+			|| (padsButtonsHeld() & PAD_BUTTON_B)
+			|| (padsButtonsHeld() & PAD_BUTTON_A)
+			|| (padsButtonsHeld() & PAD_TRIGGER_R)
+			|| (padsButtonsHeld() & PAD_TRIGGER_L)))
 			{ VIDEO_WaitVSync (); }
-		u16 btns = PAD_ButtonsHeld(0);
-		if(((btns & PAD_BUTTON_RIGHT) || (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)) && page < 2)
+		u16 btns = padsButtonsHeld();
+		if(((btns & PAD_BUTTON_RIGHT) || (padsButtonsHeld() & PAD_TRIGGER_R)) && page < 2)
 			page++;
-		if(((btns & PAD_BUTTON_LEFT) || (PAD_ButtonsHeld(0) & PAD_TRIGGER_L)) && page > 0)
+		if(((btns & PAD_BUTTON_LEFT) || (padsButtonsHeld() & PAD_TRIGGER_L)) && page > 0)
 			page--;
 		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
 			break;
-		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
-			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
-			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_B)
-			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_A)
-			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)
-			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L))
+		while ((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
+			|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
+			|| (padsButtonsHeld() & PAD_BUTTON_B)
+			|| (padsButtonsHeld() & PAD_BUTTON_A)
+			|| (padsButtonsHeld() & PAD_TRIGGER_R)
+			|| (padsButtonsHeld() & PAD_TRIGGER_L))
 			{ VIDEO_WaitVSync (); }
 	}
 	DrawDispose(pagePanel);
-	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
+	while (padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 }

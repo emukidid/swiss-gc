@@ -269,11 +269,11 @@ int findCheats(bool silent) {
 	// Still fail?
 	if(devices[DEVICE_TEMP] == NULL || cheatsFile->size == 0) {
 		if(!silent) {
-			while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
+			while(padsButtonsHeld() & PAD_BUTTON_Y);
 			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"No cheats file found.\nPress A to continue.");
 			DrawPublish(msgBox);
-			while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
-			while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+			while(!(padsButtonsHeld() & PAD_BUTTON_A));
+			while(padsButtonsHeld() & PAD_BUTTON_A);
 			DrawDispose(msgBox);
 		}
 		free(cheatsFile);
@@ -289,11 +289,11 @@ int findCheats(bool silent) {
 		free(cheatsFile);
 	}
 	if(!silent && _cheats.num_cheats == 0) {
-		while(PAD_ButtonsHeld(0) & PAD_BUTTON_Y);
+		while(padsButtonsHeld() & PAD_BUTTON_Y);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Empty or unreadable cheats file found.\nPress A to continue.");
 		DrawPublish(msgBox);
-		while(!(PAD_ButtonsHeld(0) & PAD_BUTTON_A));
-		while(PAD_ButtonsHeld(0) & PAD_BUTTON_A);
+		while(!(padsButtonsHeld() & PAD_BUTTON_A));
+		while(padsButtonsHeld() & PAD_BUTTON_A);
 		DrawDispose(msgBox);
 	}
 	return _cheats.num_cheats;

@@ -823,26 +823,26 @@ int show_settings(int page, int option, ConfigEntry *config) {
 	// Copy current settings to a temp copy in case the user cancels out
 	memcpy((void*)&tempSettings,(void*)&swissSettings, sizeof(SwissSettings));
 	
-	while (PAD_ButtonsHeld(0) & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
+	while (padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
 		uiDrawObj_t* settingsPage = settings_draw_page(page, option, config);
-		while (!((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
-			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
-			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_UP) 
-			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) 
-			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_B)
-			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_A)
-			|| (PAD_ButtonsHeld(0) & PAD_BUTTON_Y)
-			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)
-			|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L)))
+		while (!((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
+			|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
+			|| (padsButtonsHeld() & PAD_BUTTON_UP) 
+			|| (padsButtonsHeld() & PAD_BUTTON_DOWN) 
+			|| (padsButtonsHeld() & PAD_BUTTON_B)
+			|| (padsButtonsHeld() & PAD_BUTTON_A)
+			|| (padsButtonsHeld() & PAD_BUTTON_Y)
+			|| (padsButtonsHeld() & PAD_TRIGGER_R)
+			|| (padsButtonsHeld() & PAD_TRIGGER_L)))
 			{ VIDEO_WaitVSync (); }
-		u16 btns = PAD_ButtonsHeld(0);
+		u16 btns = padsButtonsHeld();
 		if(btns & PAD_BUTTON_Y) {
 			char *tooltip = get_tooltip(page, option);
 			if(tooltip) {
 				uiDrawObj_t* tooltipBox = DrawPublish(DrawTooltip(tooltip));
-				while (PAD_ButtonsHeld(0) & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
-				while (!((PAD_ButtonsHeld(0) & PAD_BUTTON_Y) || (PAD_ButtonsHeld(0) & PAD_BUTTON_B))){ VIDEO_WaitVSync (); }
+				while (padsButtonsHeld() & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
+				while (!((padsButtonsHeld() & PAD_BUTTON_Y) || (padsButtonsHeld() & PAD_BUTTON_B))){ VIDEO_WaitVSync (); }
 				DrawDispose(tooltipBox);
 			}
 		}
@@ -951,15 +951,15 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				settings_toggle(page, option, 0, config);
 			}
 		}
-		while ((PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) 
-				|| (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) 
-				|| (PAD_ButtonsHeld(0) & PAD_BUTTON_UP) 
-				|| (PAD_ButtonsHeld(0) & PAD_BUTTON_DOWN) 
-				|| (PAD_ButtonsHeld(0) & PAD_BUTTON_B) 
-				|| (PAD_ButtonsHeld(0) & PAD_BUTTON_A)
-				|| (PAD_ButtonsHeld(0) & PAD_BUTTON_Y)
-				|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_R)
-				|| (PAD_ButtonsHeld(0) & PAD_TRIGGER_L))
+		while ((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
+				|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
+				|| (padsButtonsHeld() & PAD_BUTTON_UP) 
+				|| (padsButtonsHeld() & PAD_BUTTON_DOWN) 
+				|| (padsButtonsHeld() & PAD_BUTTON_B) 
+				|| (padsButtonsHeld() & PAD_BUTTON_A)
+				|| (padsButtonsHeld() & PAD_BUTTON_Y)
+				|| (padsButtonsHeld() & PAD_TRIGGER_R)
+				|| (padsButtonsHeld() & PAD_TRIGGER_L))
 			{ VIDEO_WaitVSync (); }
 		DrawDispose(settingsPage);
 	}
