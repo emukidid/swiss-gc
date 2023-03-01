@@ -15,6 +15,7 @@
 #include "util.h"
 #include "files.h"
 #include "video.h"
+#include "input.h"
 #include <sdcard/card_cmn.h>
 #include "deviceHandler.h"
 #include "gui/FrameBufferMagic.h"

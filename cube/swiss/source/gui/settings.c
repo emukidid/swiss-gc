@@ -15,7 +15,6 @@
 #include "config.h"
 #include "settings.h"
 #include "exi.h"
-#include "util.h"
 
 #define page_x_ofs_key (30)
 #define page_x_ofs_val (410)

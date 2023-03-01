@@ -34,7 +34,6 @@
 #include "devices/fat/ata.h"
 #include "aram/sidestep.h"
 #include "devices/filemeta.h"
-#include "util.h"
 
 dvdcmdblk commandBlock;
 dvddrvinfo driveInfo __attribute__((aligned(32)));

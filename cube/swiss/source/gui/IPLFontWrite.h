@@ -10,6 +10,7 @@
 #define IPLFontWrite_H
 
 #include "FrameBufferMagic.h"
+#include "input.h"
 
 #define wait_press_A() ({while((padsButtonsHeld() & PAD_BUTTON_A)){VIDEO_WaitVSync();} while(!(padsButtonsHeld() & PAD_BUTTON_A)){VIDEO_WaitVSync();}})
 

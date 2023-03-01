@@ -17,7 +17,6 @@
 #include "bba.h"
 #include "gcloader.h"
 #include "wkf.h"
-#include "util.h"
 
 char topStr[256];
 

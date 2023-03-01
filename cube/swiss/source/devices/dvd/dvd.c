@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include "main.h"
 #include "util.h"
+#include "input.h"
 #include "dvd.h"
 #include "drivecodes.h"
 

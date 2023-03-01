@@ -16,7 +16,6 @@
 #include "swiss.h"
 #include "main.h"
 #include "images/gamecube_rgb.h"
-#include "util.h"
 
 
 file_handle initial_CARDA =

@@ -22,7 +22,6 @@
 #include "patcher.h"
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
-#include "util.h"
 
 static CheatEntries _cheats;
 

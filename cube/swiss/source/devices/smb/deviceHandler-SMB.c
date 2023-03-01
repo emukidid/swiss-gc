@@ -39,7 +39,6 @@
 #include "deviceHandler-SMB.h"
 #include "exi.h"
 #include "bba.h"
-#include "util.h"
 
 /* SMB Globals */
 extern int net_initialized;
