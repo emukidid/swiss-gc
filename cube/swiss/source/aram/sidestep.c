@@ -12,13 +12,13 @@
 #include <string.h>
 #include <malloc.h>
 #include <network.h>
-#include <asndlib.h>
 #include <ogc/lwp_threads.h>
 #include <gctypes.h>
 
 #include "sidestep.h"
 #include "ssaram.h"
 #include "elf.h"
+#include "gui/FrameBufferMagic.h"
 #include "patcher.h"
 
 #define ARAMSTART 0x8000
@@ -183,8 +183,7 @@ void ARAMRun(u32 entrypoint, u32 dst, u32 src, u32 len)
 	_len = len;
 	
 	/*** Shutdown libOGC ***/
-	GX_AbortFrame();
-	ASND_End();
+	DrawShutdown();
 	u32 bi2Addr = *(volatile u32*)0x800000F4;
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
 	*(volatile u32*)0x800000F4 = bi2Addr;

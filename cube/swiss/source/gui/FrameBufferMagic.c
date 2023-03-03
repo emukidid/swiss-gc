@@ -80,8 +80,8 @@ static char fbTextBuffer[256];
 #define VIDEO_STACK_SIZE (1024*64)
 #define VIDEO_PRIORITY 100
 static char  video_thread_stack[VIDEO_STACK_SIZE];
-static lwp_t video_thread;
-static mutex_t _videomutex;
+static lwp_t video_thread = LWP_THREAD_NULL;
+static mutex_t _videomutex = LWP_MUTEX_NULL;
 static int threadAlive = 0;
 
 enum VideoEventType
@@ -2207,8 +2207,10 @@ void DrawLoadBackdrop() {
 
 void DrawShutdown() {
 	LWP_MutexDestroy(_videomutex);
+	_videomutex = LWP_MUTEX_NULL;
 	threadAlive = 0;
 	LWP_JoinThread(video_thread, NULL);
+	video_thread = LWP_THREAD_NULL;
 	GX_SetCurrentGXThread();
 }
 
