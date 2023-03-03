@@ -324,8 +324,6 @@ void schedule_read(OSTick ticks)
 {
 	void read_callback(void *address, uint32_t length)
 	{
-		DCStoreRangeNoSync(address, length);
-
 		dvd.buffer += length;
 		dvd.length -= length;
 		dvd.offset += length;
@@ -359,7 +357,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 		*VAR_SECOND_DISC = 0;
 	}
 
-	dvd.buffer = OSPhysicalToCached(address);
+	dvd.buffer = OSPhysicalToUncached(address);
 	dvd.length = length;
 	dvd.offset = offset;
 	dvd.read = true;
@@ -373,7 +371,6 @@ void trickle_read()
 	if (dvd.read && dvd.patch) {
 		OSTick start = OSGetTick();
 		int size = frag_read(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset);
-		DCStoreRangeNoSync(dvd.buffer, size);
 		OSTick end = OSGetTick();
 
 		dvd.buffer += size;
