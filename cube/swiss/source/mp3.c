@@ -1,6 +1,5 @@
 #include <gccore.h>
 #include <stdlib.h>
-#include <asndlib.h>
 #include <mp3player.h>
 #include "main.h"
 #include "util.h"
@@ -10,7 +9,7 @@
 #include "gui/IPLFontWrite.h"
 
 static int useShuffle = 0;
-static int volume = MAX_VOLUME;
+static int volume = 192;
 
 s32 mp3Reader(void *cbdata, void *dst, s32 size) {
 	file_handle *file = cbdata;
@@ -21,7 +20,7 @@ s32 mp3Reader(void *cbdata, void *dst, s32 size) {
 
 uiDrawObj_t* updatescreen_mp3(file_handle *file, int state, int numFiles, int curMP3) {
 	uiDrawObj_t* player = DrawEmptyBox(10,100, getVideoMode()->fbWidth-10, 400);
-	sprintf(txtbuffer, "%s -  Volume (%i%%)", (state == PLAYER_PAUSE ? "Paused":"Playing"), (int)(((float)volume/(float)MAX_VOLUME)*100));
+	sprintf(txtbuffer, "%s -  Volume (%i%%)", (state == PLAYER_PAUSE ? "Paused":"Playing"), (int)(((float)volume/(float)256)*100));
 	DrawAddChild(player, DrawStyledLabel(640/2, 130, txtbuffer, 1.0f, true, defaultColor));
 	sprintf(txtbuffer, "(%i/%i) %s",curMP3, numFiles,getRelativeName(file->name));
 	float scale = GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-10-10);
@@ -63,11 +62,11 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 			}
 		}
 		else if(buttons & PAD_BUTTON_X) {		// VOL+
-			if(volume<MAX_VOLUME) volume++;
+			if(volume<256) volume++;
 			MP3Player_Volume(volume);
 		}
 		else if(buttons & PAD_BUTTON_Y) {		// VOL-
-			if(volume>MIN_VOLUME) volume--;
+			if(volume>0) volume--;
 			MP3Player_Volume(volume);
 		}
 		else if(buttons & PAD_TRIGGER_R) {		// Next
@@ -115,8 +114,8 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 /* Plays a MP3 file */
 void mp3_player(file_handle* allFiles, int numFiles, file_handle* curFile) {
 	// Initialise the audio subsystem
-	ASND_Init();
 	MP3Player_Init();
+	MP3Player_Volume(volume);
 	
 	// Find all the .mp3 files in the set of allFiles, and also where our file is.
 	int curMP3 = 0, i = 0;

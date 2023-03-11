@@ -309,6 +309,7 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
   struct __argv args;
 
   /*** Make sure ARAM subsystem is alive! ***/
+  AR_Reset();
   AR_Init(NULL, 0); /*** No stack - we need it all ***/
   ARAMClear();
 
@@ -408,6 +409,7 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
   struct __argv args;
 
   /*** Make sure ARAM subsystem is alive! ***/
+  AR_Reset();
   AR_Init(NULL, 0); /*** No stack - we need it all ***/
   ARAMClear();
 
@@ -469,6 +471,7 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
 int BINtoARAM(unsigned char *bin, int len, unsigned int entrypoint)
 {
   /*** Make sure ARAM subsystem is alive! ***/
+  AR_Reset();
   AR_Init(NULL, 0); /*** No stack - we need it all ***/
   ARAMClear();
 
