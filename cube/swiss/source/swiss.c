@@ -1008,11 +1008,11 @@ void load_app(ExecutableFile *fileToPatch)
 	print_gecko("libogc shutdown and boot game!\r\n");
 	if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
 		print_gecko("set size\r\n");
-		sdgecko_setPageSize(devices[DEVICE_CUR] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_CUR] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2), 512);
+		sdgecko_setPageSize(GET_SLOT(devices[DEVICE_CUR]->initial), 512);
 	}
 	else if(devices[DEVICE_PATCHES] == &__device_sd_a || devices[DEVICE_PATCHES] == &__device_sd_b || devices[DEVICE_PATCHES] == &__device_sd_c) {
 		print_gecko("set size\r\n");
-		sdgecko_setPageSize(devices[DEVICE_PATCHES] == &__device_sd_a ? EXI_CHANNEL_0:(devices[DEVICE_PATCHES] == &__device_sd_b ? EXI_CHANNEL_1:EXI_CHANNEL_2), 512);
+		sdgecko_setPageSize(GET_SLOT(devices[DEVICE_PATCHES]->initial), 512);
 	}
 	if(type == PATCH_BS2) {
 		BINtoARAM(buffer, sizeToRead, 0x81300000);

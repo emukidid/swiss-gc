@@ -27,5 +27,7 @@ extern s32 deviceHandler_FAT_deleteFile(file_handle* file);
 extern s32 deviceHandler_FAT_renameFile(file_handle* file, char* name);
 extern char* deviceHandler_FAT_status(file_handle* file);
 
+int GET_SLOT(file_handle* file);
+
 #endif
 

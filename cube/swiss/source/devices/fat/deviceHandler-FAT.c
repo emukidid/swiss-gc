@@ -24,13 +24,13 @@ const DISC_INTERFACE* cardb = &__io_gcsdb;
 const DISC_INTERFACE* cardc = &__io_gcsd2;
 FATFS *fs[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
 #define SD_COUNT 3
-#define IS_SDCARD(v) (v[0] == 's' && v[1] == 'd')
-int GET_SLOT(char *path) {
-	if(IS_SDCARD(path)) {
-		return path[2] - 'a';
+#define IS_SDCARD(file) (file->name[0] == 's' && file->name[1] == 'd')
+int GET_SLOT(file_handle* file) {
+	if(IS_SDCARD(file)) {
+		return file->name[2] - 'a';
 	}
 	// IDE-EXI
-	return path[3] - 'a';
+	return file->name[3] - 'a';
 }
 
 file_handle initial_SD_A =
@@ -94,20 +94,20 @@ file_handle initial_ATA_C =
 	};
 
 static device_info initial_FAT_info[FF_VOLUMES];
-	
+
 device_info* deviceHandler_FAT_info(file_handle* file) {
 	device_info* info = NULL;
-		DWORD freeClusters;
-		FATFS *fatfs;
+	DWORD freeClusters;
+	FATFS* fatfs;
 	if(f_getfree(file->name, &freeClusters, &fatfs) == FR_OK) {
 		info = &initial_FAT_info[fatfs->pdrv];
-			info->freeSpace = (u64)(freeClusters) * fatfs->csize * fatfs->ssize;
-			info->totalSpace = (u64)(fatfs->n_fatent - 2) * fatfs->csize * fatfs->ssize;
+		info->freeSpace = (u64)(freeClusters) * fatfs->csize * fatfs->ssize;
+		info->totalSpace = (u64)(fatfs->n_fatent - 2) * fatfs->csize * fatfs->ssize;
 		info->metric = true;
-		}
+	}
 	return info;
-		}
-	
+}
+
 s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {	
 
 	DIRF* dp = malloc(sizeof(DIRF));
@@ -292,8 +292,8 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 		fragList = NULL;
 	}
 	
-	int isSDCard = IS_SDCARD(file->name);
-	int slot = GET_SLOT(file->name);
+	int isSDCard = IS_SDCARD(file);
+	int slot = GET_SLOT(file);
 	if(isSDCard) {
 		// Card Type
 		*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(slot) ? 0:9;
@@ -329,8 +329,8 @@ void setSDGeckoSpeed(int slot, bool fast) {
 }
 
 s32 deviceHandler_FAT_init(file_handle* file) {
-	int isSDCard = IS_SDCARD(file->name);
-	int slot = GET_SLOT(file->name);
+	int isSDCard = IS_SDCARD(file);
+	int slot = GET_SLOT(file);
 	file->status = 0;
 	print_gecko("Init %s %i\r\n", (isSDCard ? "SD":"ATA"), slot);
 	// SD Card - Slot A
@@ -394,8 +394,8 @@ s32 deviceHandler_FAT_closeFile(file_handle* file) {
 s32 deviceHandler_FAT_deinit(file_handle* file) {
 	deviceHandler_FAT_closeFile(file);
 	if(file) {
-		int isSDCard = IS_SDCARD(file->name);
-		int slot = GET_SLOT(file->name);
+		int isSDCard = IS_SDCARD(file);
+		int slot = GET_SLOT(file);
 		f_unmount(file->name);
 		free(fs[isSDCard ? slot : SD_COUNT+slot]);
 		fs[isSDCard ? slot : SD_COUNT+slot] = NULL;
