@@ -15028,20 +15028,70 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		if (UpdateOrigin) {
 			if (swissSettings.invertCStick & 1) {
 				switch (j) {
-					case 0: data[i + 79] = 0x2004007F; break;	// subfic	r0, r4, 127
-					case 1: data[i + 82] = 0x2003007F; break;	// subfic	r0, r3, 127
-					case 2: data[i + 75] = 0x2004007F; break;	// subfic	r0, r4, 127
-					case 3: data[i + 77] = 0x20A5007F; break;	// subfic	r5, r5, 127
-					case 4: data[i + 81] = 0x2084007F; break;	// subfic	r4, r4, 127
+					case 0:
+						if (swissSettings.swapCStick & 1)
+							data[i + 73] = 0x2004007F;	// subfic	r0, r4, 127
+						else
+							data[i + 79] = 0x2004007F;	// subfic	r0, r4, 127
+						break;
+					case 1:
+						if (swissSettings.swapCStick & 1)
+							data[i + 76] = 0x2003007F;	// subfic	r0, r3, 127
+						else
+							data[i + 82] = 0x2003007F;	// subfic	r0, r3, 127
+						break;
+					case 2:
+						if (swissSettings.swapCStick & 1)
+							data[i + 69] = 0x2004007F;	// subfic	r0, r4, 127
+						else
+							data[i + 75] = 0x2004007F;	// subfic	r0, r4, 127
+						break;
+					case 3:
+						if (swissSettings.swapCStick & 1)
+							data[i + 71] = 0x20A5007F;	// subfic	r5, r5, 127
+						else
+							data[i + 77] = 0x20A5007F;	// subfic	r5, r5, 127
+						break;
+					case 4:
+						if (swissSettings.swapCStick & 1)
+							data[i + 75] = 0x2084007F;	// subfic	r4, r4, 127
+						else
+							data[i + 81] = 0x2084007F;	// subfic	r4, r4, 127
+						break;
 				}
 			}
 			if (swissSettings.invertCStick & 2) {
 				switch (j) {
-					case 0: data[i + 82] = 0x2004007F; break;	// subfic	r0, r4, 127
-					case 1: data[i + 85] = 0x2003007F; break;	// subfic	r0, r3, 127
-					case 2: data[i + 78] = 0x2004007F; break;	// subfic	r0, r4, 127
-					case 3: data[i + 80] = 0x20A5007F; break;	// subfic	r5, r5, 127
-					case 4: data[i + 84] = 0x2084007F; break;	// subfic	r4, r4, 127
+					case 0:
+						if (swissSettings.swapCStick & 2)
+							data[i + 76] = 0x2004007F;	// subfic	r0, r4, 127
+						else
+							data[i + 82] = 0x2004007F;	// subfic	r0, r4, 127
+						break;
+					case 1:
+						if (swissSettings.swapCStick & 2)
+							data[i + 79] = 0x2003007F;	// subfic	r0, r3, 127
+						else
+							data[i + 85] = 0x2003007F;	// subfic	r0, r3, 127
+						break;
+					case 2:
+						if (swissSettings.swapCStick & 2)
+							data[i + 72] = 0x2004007F;	// subfic	r0, r4, 127
+						else
+							data[i + 78] = 0x2004007F;	// subfic	r0, r4, 127
+						break;
+					case 3:
+						if (swissSettings.swapCStick & 2)
+							data[i + 74] = 0x20A5007F;	// subfic	r5, r5, 127
+						else
+							data[i + 80] = 0x20A5007F;	// subfic	r5, r5, 127
+						break;
+					case 4:
+						if (swissSettings.swapCStick & 2)
+							data[i + 78] = 0x2084007F;	// subfic	r4, r4, 127
+						else
+							data[i + 84] = 0x2084007F;	// subfic	r4, r4, 127
+						break;
 				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", UpdateOriginSigs[j].Name, j, UpdateOrigin);
@@ -15055,10 +15105,18 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		
 		if (PADOriginCallback) {
 			if (j == 5) {
-				if (swissSettings.invertCStick & 1)
-					data[i + 86] = 0x2004007F;	// subfic	r0, r4, 127
-				if (swissSettings.invertCStick & 2)
-					data[i + 89] = 0x2004007F;	// subfic	r0, r4, 127
+				if (swissSettings.invertCStick & 1) {
+					if (swissSettings.swapCStick & 1)
+						data[i + 79] = 0x20A5007F;	// subfic	r5, r5, 127
+					else
+						data[i + 86] = 0x2004007F;	// subfic	r0, r4, 127
+				}
+				if (swissSettings.invertCStick & 2) {
+					if (swissSettings.swapCStick & 2)
+						data[i + 83] = 0x2004007F;	// subfic	r0, r4, 127
+					else
+						data[i + 89] = 0x2004007F;	// subfic	r0, r4, 127
+				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", PADOriginCallbackSigs[j].Name, j, PADOriginCallback);
 			patched++;
@@ -15071,10 +15129,18 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		
 		if (PADOriginUpdateCallback) {
 			if (j == 5) {
-				if (swissSettings.invertCStick & 1)
-					data[i + 93] = 0x2003007F;	// subfic	r0, r3, 127
-				if (swissSettings.invertCStick & 2)
-					data[i + 96] = 0x2003007F;	// subfic	r0, r3, 127
+				if (swissSettings.invertCStick & 1) {
+					if (swissSettings.swapCStick & 1)
+						data[i + 86] = 0x2063007F;	// subfic	r3, r3, 127
+					else
+						data[i + 93] = 0x2003007F;	// subfic	r0, r3, 127
+				}
+				if (swissSettings.invertCStick & 2) {
+					if (swissSettings.swapCStick & 2)
+						data[i + 90] = 0x2003007F;	// subfic	r0, r3, 127
+					else
+						data[i + 96] = 0x2003007F;	// subfic	r0, r3, 127
+				}
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", PADOriginUpdateCallbackSigs[j].Name, j, PADOriginUpdateCallback);
 			patched++;
@@ -15173,6 +15239,38 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		u32 *SPEC0_MakeStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SPEC0_MakeStatus) {
+			if (swissSettings.swapCStick & 1) {
+				switch (j) {
+					case 0:
+						data[i + 50] = 0x98040004;	// stb		r0, 4 (r4)
+						data[i + 57] = 0x98040002;	// stb		r0, 2 (r4)
+						break;
+					case 1:
+						data[i + 49] = 0x98640004;	// stb		r3, 4 (r4)
+						data[i + 56] = 0x98640002;	// stb		r3, 2 (r4)
+						break;
+					case 2:
+						data[i + 44] = 0x98640004;	// stb		r3, 4 (r4)
+						data[i + 49] = 0x98640002;	// stb		r3, 2 (r4)
+						break;
+				}
+			}
+			if (swissSettings.swapCStick & 2) {
+				switch (j) {
+					case 0:
+						data[i + 54] = 0x98040005;	// stb		r0, 5 (r4)
+						data[i + 61] = 0x98040003;	// stb		r0, 3 (r4)
+						break;
+					case 1:
+						data[i + 53] = 0x98640005;	// stb		r3, 5 (r4)
+						data[i + 60] = 0x98640003;	// stb		r3, 3 (r4)
+						break;
+					case 2:
+						data[i + 47] = 0x98640005;	// stb		r3, 5 (r4)
+						data[i + 52] = 0x98640003;	// stb		r3, 3 (r4)
+						break;
+				}
+			}
 			if (swissSettings.invertCStick & 1) {
 				switch (j) {
 					case 0: data[i + 90] = 0x20030080; break;	// subfic	r0, r3, 128
@@ -15197,6 +15295,38 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		u32 *SPEC1_MakeStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SPEC1_MakeStatus) {
+			if (swissSettings.swapCStick & 1) {
+				switch (j) {
+					case 0:
+						data[i + 50] = 0x98040004;	// stb		r0, 4 (r4)
+						data[i + 57] = 0x98040002;	// stb		r0, 2 (r4)
+						break;
+					case 1:
+						data[i + 49] = 0x98640004;	// stb		r3, 4 (r4)
+						data[i + 56] = 0x98640002;	// stb		r3, 2 (r4)
+						break;
+					case 2:
+						data[i + 44] = 0x98640004;	// stb		r3, 4 (r4)
+						data[i + 49] = 0x98640002;	// stb		r3, 2 (r4)
+						break;
+				}
+			}
+			if (swissSettings.swapCStick & 2) {
+				switch (j) {
+					case 0:
+						data[i + 54] = 0x98040005;	// stb		r0, 5 (r4)
+						data[i + 61] = 0x98040003;	// stb		r0, 3 (r4)
+						break;
+					case 1:
+						data[i + 53] = 0x98640005;	// stb		r3, 5 (r4)
+						data[i + 60] = 0x98640003;	// stb		r3, 3 (r4)
+						break;
+					case 2:
+						data[i + 47] = 0x98640005;	// stb		r3, 5 (r4)
+						data[i + 52] = 0x98640003;	// stb		r3, 3 (r4)
+						break;
+				}
+			}
 			if (swissSettings.invertCStick & 1) {
 				switch (j) {
 					case 0: data[i + 90] = 0x20030080; break;	// subfic	r0, r3, 128
@@ -15264,6 +15394,114 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					data[i + 249] = 0x41800024;	// blt		+9
 					data[i + 251] = 0x3805FF81;	// subi		r0, r5, 127
 					break;
+			}
+			if (swissSettings.swapCStick & 1) {
+				switch (j) {
+					case 0:
+						data[i +  13] = 0x981F0004;	// stb		r0, 4 (r31)
+						data[i +  46] = 0x981F0002;	// stb		r0, 2 (r31)
+						data[i +  67] = 0x981F0002;	// stb		r0, 2 (r31)
+						data[i +  88] = 0x981F0002;	// stb		r0, 2 (r31)
+						data[i + 108] = 0x981F0002;	// stb		r0, 2 (r31)
+						data[i + 126] = 0x981F0002;	// stb		r0, 2 (r31)
+						data[i + 158] = 0x889D0004;	// lbz		r4, 4 (r29)
+						data[i + 166] = 0x889D0002;	// lbz		r4, 2 (r29)
+						break;
+					case 1:
+						data[i +  13] = 0x981F0004;	// stb		r0, 4 (r31)
+						data[i +  46] = 0x981F0002;	// stb		r0, 2 (r31)
+						data[i +  67] = 0x981F0002;	// stb		r0, 2 (r31)
+						data[i +  88] = 0x981F0002;	// stb		r0, 2 (r31)
+						data[i + 108] = 0x981F0002;	// stb		r0, 2 (r31)
+						data[i + 126] = 0x981F0002;	// stb		r0, 2 (r31)
+						data[i + 190] = 0x889D0004;	// lbz		r4, 4 (r29)
+						data[i + 198] = 0x889D0002;	// lbz		r4, 2 (r29)
+						break;
+					case 2:
+						data[i +   6] = 0x98040004;	// stb		r0, 4 (r4)
+						data[i +  39] = 0x98040002;	// stb		r0, 2 (r4)
+						data[i +  60] = 0x98040002;	// stb		r0, 2 (r4)
+						data[i +  81] = 0x98040002;	// stb		r0, 2 (r4)
+						data[i + 102] = 0x98C40002;	// stb		r6, 2 (r4)
+						data[i + 119] = 0x98C40002;	// stb		r6, 2 (r4)
+						data[i + 147] = 0x88E30004;	// lbz		r7, 4 (r3)
+						data[i + 193] = 0x88E30002;	// lbz		r7, 2 (r3)
+						break;
+					case 3:
+						data[i +   5] = 0x98040004;	// stb		r0, 4 (r4)
+						data[i +  36] = 0x98040002;	// stb		r0, 2 (r4)
+						data[i +  55] = 0x98040002;	// stb		r0, 2 (r4)
+						data[i +  74] = 0x98040002;	// stb		r0, 2 (r4)
+						data[i +  93] = 0x98C40002;	// stb		r6, 2 (r4)
+						data[i + 108] = 0x98C40002;	// stb		r6, 2 (r4)
+						data[i + 135] = 0x88E30004;	// lbz		r7, 4 (r3)
+						data[i + 177] = 0x88E30002;	// lbz		r7, 2 (r3)
+						break;
+					case 4:
+						data[i +   6] = 0x98040004;	// stb		r0, 4 (r4)
+						data[i +  39] = 0x98040002;	// stb		r0, 2 (r4)
+						data[i +  60] = 0x98040002;	// stb		r0, 2 (r4)
+						data[i +  81] = 0x98040002;	// stb		r0, 2 (r4)
+						data[i + 102] = 0x98C40002;	// stb		r6, 2 (r4)
+						data[i + 119] = 0x98C40002;	// stb		r6, 2 (r4)
+						data[i + 178] = 0x88E30004;	// lbz		r7, 4 (r3)
+						data[i + 223] = 0x88E30002;	// lbz		r7, 2 (r3)
+						break;
+				}
+			}
+			if (swissSettings.swapCStick & 2) {
+				switch (j) {
+					case 0:
+						data[i +  16] = 0x981F0005;	// stb		r0, 5 (r31)
+						data[i +  50] = 0x981F0003;	// stb		r0, 3 (r31)
+						data[i +  71] = 0x981F0003;	// stb		r0, 3 (r31)
+						data[i +  92] = 0x981F0003;	// stb		r0, 3 (r31)
+						data[i + 112] = 0x981F0003;	// stb		r0, 3 (r31)
+						data[i + 130] = 0x981F0003;	// stb		r0, 3 (r31)
+						data[i + 162] = 0x889D0005;	// lbz		r4, 5 (r29)
+						data[i + 170] = 0x889D0003;	// lbz		r4, 3 (r29)
+						break;
+					case 1:
+						data[i +  16] = 0x981F0005;	// stb		r0, 5 (r31)
+						data[i +  50] = 0x981F0003;	// stb		r0, 3 (r31)
+						data[i +  71] = 0x981F0003;	// stb		r0, 3 (r31)
+						data[i +  92] = 0x981F0003;	// stb		r0, 3 (r31)
+						data[i + 112] = 0x981F0003;	// stb		r0, 3 (r31)
+						data[i + 130] = 0x981F0003;	// stb		r0, 3 (r31)
+						data[i + 194] = 0x889D0005;	// lbz		r4, 5 (r29)
+						data[i + 202] = 0x889D0003;	// lbz		r4, 3 (r29)
+						break;
+					case 2:
+						data[i +   9] = 0x98040005;	// stb		r0, 5 (r4)
+						data[i +  43] = 0x98040003;	// stb		r0, 3 (r4)
+						data[i +  64] = 0x98040003;	// stb		r0, 3 (r4)
+						data[i +  85] = 0x98040003;	// stb		r0, 3 (r4)
+						data[i + 106] = 0x98C40003;	// stb		r6, 3 (r4)
+						data[i + 123] = 0x98C40003;	// stb		r6, 3 (r4)
+						data[i + 170] = 0x88E30005;	// lbz		r7, 5 (r3)
+						data[i + 216] = 0x88E30003;	// lbz		r7, 3 (r3)
+						break;
+					case 3:
+						data[i +   7] = 0x98040005;	// stb		r0, 5 (r4)
+						data[i +  39] = 0x98040003;	// stb		r0, 3 (r4)
+						data[i +  58] = 0x98040003;	// stb		r0, 3 (r4)
+						data[i +  77] = 0x98040003;	// stb		r0, 3 (r4)
+						data[i +  96] = 0x98C40003;	// stb		r6, 3 (r4)
+						data[i + 111] = 0x98C40003;	// stb		r6, 3 (r4)
+						data[i + 156] = 0x88E30005;	// lbz		r7, 5 (r3)
+						data[i + 198] = 0x88E30003;	// lbz		r7, 3 (r3)
+						break;
+					case 4:
+						data[i +   9] = 0x98040005;	// stb		r0, 5 (r4)
+						data[i +  43] = 0x98040003;	// stb		r0, 3 (r4)
+						data[i +  64] = 0x98040003;	// stb		r0, 3 (r4)
+						data[i +  85] = 0x98040003;	// stb		r0, 3 (r4)
+						data[i + 106] = 0x98C40003;	// stb		r6, 3 (r4)
+						data[i + 123] = 0x98C40003;	// stb		r6, 3 (r4)
+						data[i + 200] = 0x88E30005;	// lbz		r7, 5 (r3)
+						data[i + 246] = 0x88E30003;	// lbz		r7, 3 (r3)
+						break;
+				}
 			}
 			if (swissSettings.invertCStick & 1) {
 				switch (j) {

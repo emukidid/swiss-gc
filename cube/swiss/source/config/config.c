@@ -190,6 +190,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Force Widescreen=%s\r\n", forceWidescreenStr[swissSettings.forceWidescreen]);
 	fprintf(fp, "Force Polling Rate=%s\r\n", forcePollRateStr[swissSettings.forcePollRate]);
 	fprintf(fp, "Invert Camera Stick=%s\r\n", invertCStickStr[swissSettings.invertCStick]);
+	fprintf(fp, "Swap Camera Stick=%s\r\n", swapCStickStr[swissSettings.swapCStick]);
 	fprintf(fp, "Digital Trigger Level=%hhu\r\n", swissSettings.triggerLevel);
 	fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[swissSettings.emulateReadSpeed]);
 	fprintf(fp, "Emulate Memory Card=%s\r\n", swissSettings.emulateMemoryCard ? "Yes":"No");
@@ -261,6 +262,7 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	fprintf(fp, "Force Widescreen=%s\r\n", forceWidescreenStr[entry->forceWidescreen]);
 	fprintf(fp, "Force Polling Rate=%s\r\n", forcePollRateStr[entry->forcePollRate]);
 	fprintf(fp, "Invert Camera Stick=%s\r\n", invertCStickStr[entry->invertCStick]);
+	fprintf(fp, "Swap Camera Stick=%s\r\n", swapCStickStr[entry->swapCStick]);
 	fprintf(fp, "Digital Trigger Level=%hhu\r\n", entry->triggerLevel);
 	fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[entry->emulateReadSpeed]);
 	fprintf(fp, "Prefer Clean Boot=%s\r\n", entry->preferCleanBoot ? "Yes":"No");
@@ -295,6 +297,7 @@ void config_defaults(ConfigEntry *entry) {
 	entry->forceWidescreen = swissSettings.forceWidescreen;
 	entry->forcePollRate = swissSettings.forcePollRate;
 	entry->invertCStick = swissSettings.invertCStick;
+	entry->swapCStick = swissSettings.swapCStick;
 	entry->triggerLevel = swissSettings.triggerLevel;
 	entry->emulateReadSpeed = swissSettings.emulateReadSpeed;
 	entry->preferCleanBoot = swissSettings.preferCleanBoot;
@@ -668,6 +671,14 @@ void config_parse_global(char *configData) {
 						}
 					}
 				}
+				else if(!strcmp("Swap Camera Stick", name)) {
+					for(int i = 0; i < 4; i++) {
+						if(!strcmp(swapCStickStr[i], value)) {
+							swissSettings.swapCStick = i;
+							break;
+						}
+					}
+				}
 				else if(!strcmp("Digital Trigger Level", name)) {
 					swissSettings.triggerLevel = atoi(value);
 				}
@@ -970,6 +981,14 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 						}
 					}
 				}
+				else if(!strcmp("Swap Camera Stick", name)) {
+					for(int i = 0; i < 4; i++) {
+						if(!strcmp(swapCStickStr[i], value)) {
+							entry->swapCStick = i;
+							break;
+						}
+					}
+				}
 				else if(!strcmp("Digital Trigger Level", name)) {
 					entry->triggerLevel = atoi(value);
 				}
@@ -1074,6 +1093,7 @@ void config_load_current(ConfigEntry *config) {
 	swissSettings.forceWidescreen = config->forceWidescreen;
 	swissSettings.forcePollRate = config->forcePollRate;
 	swissSettings.invertCStick = config->invertCStick;
+	swissSettings.swapCStick = config->swapCStick;
 	swissSettings.triggerLevel = config->triggerLevel;
 	swissSettings.emulateReadSpeed = config->emulateReadSpeed;
 	swissSettings.preferCleanBoot = config->preferCleanBoot;
@@ -1090,6 +1110,7 @@ void config_unload_current() {
 	swissSettings.forceWidescreen = backup.forceWidescreen;
 	swissSettings.forcePollRate = backup.forcePollRate;
 	swissSettings.invertCStick = backup.invertCStick;
+	swissSettings.swapCStick = backup.swapCStick;
 	swissSettings.triggerLevel = backup.triggerLevel;
 	swissSettings.sram60Hz = backup.sram60Hz;
 	swissSettings.sramProgressive = backup.sramProgressive;

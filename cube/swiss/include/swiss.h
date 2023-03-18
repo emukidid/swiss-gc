@@ -95,6 +95,7 @@ typedef struct {
 	int audioStreaming;
 	int forcePollRate;
 	int invertCStick;
+	int swapCStick;
 	int triggerLevel;
 	int wiirdDebug;	// Enable WiiRD debug
 	int hideUnknownFileTypes;

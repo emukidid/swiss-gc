@@ -92,6 +92,7 @@ enum SETTINGS_GAME_DEFAULTS {
 	SET_DEFAULT_WIDESCREEN,
 	SET_DEFAULT_POLL_RATE,
 	SET_DEFAULT_INVERT_CAMERA,
+	SET_DEFAULT_SWAP_CAMERA,
 	SET_DEFAULT_TRIGGER_LEVEL,
 	SET_DEFAULT_READ_SPEED,
 	SET_DEFAULT_CLEAN_BOOT,
@@ -113,6 +114,7 @@ enum SETTINGS_GAME {
 	SET_WIDESCREEN,
 	SET_POLL_RATE,
 	SET_INVERT_CAMERA,
+	SET_SWAP_CAMERA,
 	SET_TRIGGER_LEVEL,
 	SET_READ_SPEED,
 	SET_CLEAN_BOOT,
@@ -130,6 +132,7 @@ extern char *forceVJitterStr[];
 extern char *forceWidescreenStr[];
 extern char *forcePollRateStr[];
 extern char *invertCStickStr[];
+extern char *swapCStickStr[];
 extern char *disableMCPGameIDStr[];
 extern char *disableVideoPatchesStr[];
 extern char *emulateReadSpeedStr[];

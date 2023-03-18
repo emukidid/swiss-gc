@@ -17,6 +17,7 @@ typedef struct {
 	int forceWidescreen;
 	int forcePollRate;
 	int invertCStick;
+	int swapCStick;
 	int triggerLevel;
 	int emulateReadSpeed;
 	int forceCleanBoot;
