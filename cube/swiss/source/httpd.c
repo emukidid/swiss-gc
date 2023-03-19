@@ -43,10 +43,6 @@ const static char http_get_ipl[] = "GET /ipl.bin HTTP/1.1\r\n";
 void *httpd (void *arg) {
 //---------------------------------------------------------------------------------
 
-	if(!net_initialized) {
-		print_gecko("httpd thread exiting, no IP\r\n");
-		return NULL;
-	}
 	print_gecko("httpd Alive\r\n");
 	s32 sock, csock;
 	int ret;
@@ -153,10 +149,10 @@ int is_httpd_in_use() {
 }
 
 void init_httpd_thread() {
-	if(bba_exists) {
+	if(net_initialized) {
 		LWP_CreateThread(	&httd_handle,	/* thread handle */ 
 							httpd,			/* code */ 
-							bba_local_ip,	/* arg pointer for thread */
+							NULL,			/* arg pointer for thread */
 							NULL,			/* stack base */ 
 							16*1024,		/* stack size */
 							40				/* thread priority */ );

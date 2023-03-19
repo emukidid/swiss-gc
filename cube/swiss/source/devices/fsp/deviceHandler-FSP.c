@@ -202,9 +202,9 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, Executabl
 	((vu8*)VAR_ROUTER_MAC)[4] = 0xFF;
 	((vu8*)VAR_ROUTER_MAC)[5] = 0xFF;
 	
-	u32 local_ip = inet_addr(bba_local_ip);
-	u32 netmask = inet_addr(bba_netmask);
-	u32 gateway = inet_addr(bba_gateway);
+	u32 local_ip = bba_localip.s_addr;
+	u32 netmask = bba_netmask.s_addr;
+	u32 gateway = bba_gateway.s_addr;
 	u32 host_ip = inet_addr(swissSettings.fspHostIp);
 	u16 port = swissSettings.fspPort ? swissSettings.fspPort : 21;
 	

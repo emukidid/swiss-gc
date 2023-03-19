@@ -174,6 +174,10 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "FSPHostIP=%s\r\n", swissSettings.fspHostIp);
 	fprintf(fp, "FSPPort=%hu\r\n", swissSettings.fspPort);
 	fprintf(fp, "FSPPassword=%s\r\n", swissSettings.fspPassword);
+	fprintf(fp, "BBALocalIP=%s\r\n", swissSettings.bbaLocalIp);
+	fprintf(fp, "BBANetmask=%hu\r\n", swissSettings.bbaNetmask);
+	fprintf(fp, "BBAGateway=%s\r\n", swissSettings.bbaGateway);
+	fprintf(fp, "BBAUseDHCP=%s\r\n", swissSettings.bbaUseDhcp ? "Yes":"No");
 	fprintf(fp, "ShowHiddenFiles=%s\r\n", swissSettings.showHiddenFiles ? "Yes":"No");
 	fprintf(fp, "RecentListLevel=%s\r\n", recentListLevelStr[swissSettings.recentListLevel]);
 	fprintf(fp, "GCLoaderTopVersion=%s\r\n", swissSettings.gcloaderTopVersion);
@@ -825,6 +829,18 @@ void config_parse_global(char *configData) {
 				}
 				else if(!strcmp("FSPPassword", name)) {
 					strlcpy(swissSettings.fspPassword, value, sizeof(swissSettings.fspPassword));
+				}
+				else if(!strcmp("BBALocalIP", name)) {
+					strlcpy(swissSettings.bbaLocalIp, value, sizeof(swissSettings.bbaLocalIp));
+				}
+				else if(!strcmp("BBANetmask", name)) {
+					swissSettings.bbaNetmask = atoi(value);
+				}
+				else if(!strcmp("BBAGateway", name)) {
+					strlcpy(swissSettings.bbaGateway, value, sizeof(swissSettings.bbaGateway));
+				}
+				else if(!strcmp("BBAUseDHCP", name)) {
+					swissSettings.bbaUseDhcp = !strcmp("Yes", value);
 				}
 				else if(!strcmp("ShowHiddenFiles", name)) {
 					swissSettings.showHiddenFiles = !strcmp("Yes", value);

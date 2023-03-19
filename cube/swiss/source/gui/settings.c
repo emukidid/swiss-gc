@@ -276,19 +276,23 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Network Settings (2/5):"));
 		bool netEnable = exi_bba_exists();
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
-		if(option < SET_SMB_USER) {
+		if(option < SET_FTP_PASS) {
 			drawSettingEntryBoolean(page, &page_y_ofs, "Init network at startup:", swissSettings.initNetworkAtStart, option == SET_INIT_NET, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "IPv4 Address:", swissSettings.bbaLocalIp, option == SET_BBA_LOCALIP, netEnable);
+			drawSettingEntryNumeric(page, &page_y_ofs, "IPv4 Netmask:", swissSettings.bbaNetmask, option == SET_BBA_NETMASK, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "IPv4 Gateway:", swissSettings.bbaGateway, option == SET_BBA_GATEWAY, netEnable);
+			drawSettingEntryBoolean(page, &page_y_ofs, "IPv4 uses DHCP:", swissSettings.bbaUseDhcp, option == SET_BBA_DHCP, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "FSP Host IP:", swissSettings.fspHostIp, option == SET_FSP_HOSTIP, netEnable);
 			drawSettingEntryNumeric(page, &page_y_ofs, "FSP Port:", swissSettings.fspPort, option == SET_FSP_PORT, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "FSP Password:", "*****", option == SET_FSP_PASS, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "FTP Host IP:", swissSettings.ftpHostIp, option == SET_FTP_HOSTIP, netEnable);
 			drawSettingEntryNumeric(page, &page_y_ofs, "FTP Port:", swissSettings.ftpPort, option == SET_FTP_PORT, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "FTP Username:", swissSettings.ftpUserName, option == SET_FTP_USER, netEnable);
+		} else {
 			drawSettingEntryString(page, &page_y_ofs, "FTP Password:", "*****", option == SET_FTP_PASS, netEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "FTP PASV Mode:", swissSettings.ftpUsePasv, option == SET_FTP_PASV, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "SMB Host IP:", swissSettings.smbServerIp, option == SET_SMB_HOSTIP, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "SMB Share:", swissSettings.smbShare, option == SET_SMB_SHARE, netEnable);
-		} else {
 			drawSettingEntryString(page, &page_y_ofs, "SMB Username:", swissSettings.smbUser, option == SET_SMB_USER, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "SMB Password:", "*****", option == SET_SMB_PASS, netEnable);
 		}
@@ -515,6 +519,18 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 		switch(option) {
 			case SET_INIT_NET:
 				swissSettings.initNetworkAtStart ^= 1;
+			break;
+			case SET_BBA_LOCALIP:
+				DrawGetTextEntry(ENTRYMODE_IP, "IPv4 Address", &swissSettings.bbaLocalIp, sizeof(swissSettings.bbaLocalIp));
+			break;
+			case SET_BBA_NETMASK:
+				DrawGetTextEntry(ENTRYMODE_NUMERIC, "IPv4 Netmask", &swissSettings.bbaNetmask, 2);
+			break;
+			case SET_BBA_GATEWAY:
+				DrawGetTextEntry(ENTRYMODE_IP, "IPv4 Gateway", &swissSettings.bbaGateway, sizeof(swissSettings.bbaGateway));
+			break;
+			case SET_BBA_DHCP:
+				swissSettings.bbaUseDhcp ^= 1;
 			break;
 			case SET_FSP_HOSTIP:
 				DrawGetTextEntry(ENTRYMODE_IP, "FSP Host IP", &swissSettings.fspHostIp, sizeof(swissSettings.fspHostIp));
@@ -966,7 +982,9 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				page--; option = 0;
 			}
 			// These use text input, allow them to be accessed with the A button
-			if(page == PAGE_NETWORK && ((option >= SET_FSP_HOSTIP && option <= SET_FTP_PASS) || (option >= SET_SMB_HOSTIP && option <= SET_SMB_PASS))) {
+			if(page == PAGE_NETWORK && ((option >= SET_BBA_LOCALIP && option <= SET_BBA_GATEWAY) ||
+										(option >= SET_FSP_HOSTIP && option <= SET_FTP_PASS) ||
+										(option >= SET_SMB_HOSTIP && option <= SET_SMB_PASS))) {
 				settings_toggle(page, option, 0, config);
 			}
 		}

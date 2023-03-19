@@ -154,6 +154,7 @@ int main(int argc, char *argv[])
 	swissSettings.gameVMode = 0;	// Auto video mode
 	swissSettings.exiSpeed = 1;		// 32MHz
 	swissSettings.uiVMode = 0; 		// Auto UI mode
+	swissSettings.bbaUseDhcp = 1;
 	swissSettings.aveCompat = 1;
 	swissSettings.enableFileManagement = 0;
 	Initialise();

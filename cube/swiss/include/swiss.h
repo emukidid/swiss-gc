@@ -118,15 +118,19 @@ typedef struct {
 	char smbUser[32];		//20
 	char smbPassword[32];	//16
 	char smbShare[128];		//80
-	char smbServerIp[32];	//80
+	char smbServerIp[16];	//80
 	char ftpUserName[64];
 	char ftpPassword[32];
-	char ftpHostIp[32];
+	char ftpHostIp[16];
 	u16 ftpPort;
 	bool ftpUsePasv;
-	char fspHostIp[32];
+	char fspHostIp[16];
 	u16 fspPort;
 	char fspPassword[32];
+	char bbaLocalIp[16];
+	u16 bbaNetmask;
+	char bbaGateway[16];
+	bool bbaUseDhcp;
 	int autoBoot;
 	int autoCheats;
 	int igrType;

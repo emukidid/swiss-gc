@@ -4,13 +4,14 @@
 #include <network.h>
 #include <ogcsys.h>
 #include "exi.h"
+#include "swiss.h"
 
 /* Network Globals */
 int net_initialized = 0;
 int bba_exists = 0;
-char bba_local_ip[16];
-char bba_netmask[16];
-char bba_gateway[16];
+struct in_addr bba_localip;
+struct in_addr bba_netmask;
+struct in_addr bba_gateway;
 
 // Init the GC net interface (bba)
 void init_network(void *args) {
@@ -19,8 +20,15 @@ void init_network(void *args) {
 
 	bba_exists = exi_bba_exists();
 	if(bba_exists && !net_initialized) {
-		res = if_config(bba_local_ip, bba_netmask, bba_gateway, true);
-		if(res >= 0 && strcmp("255.255.255.255", bba_local_ip)) {
+		inet_aton(swissSettings.bbaLocalIp, &bba_localip);
+		bba_netmask.s_addr = INADDR_BROADCAST << (32 - swissSettings.bbaNetmask);
+		inet_aton(swissSettings.bbaGateway, &bba_gateway);
+
+		res = if_configex(&bba_localip, &bba_netmask, &bba_gateway, swissSettings.bbaUseDhcp);
+		if(res >= 0) {
+			strcpy(swissSettings.bbaLocalIp, inet_ntoa(bba_localip));
+			swissSettings.bbaNetmask = (32 - __builtin_ctz(bba_netmask.s_addr));
+			strcpy(swissSettings.bbaGateway, inet_ntoa(bba_gateway));
 			net_initialized = 1;
 		}
 		else {
