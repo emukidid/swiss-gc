@@ -8100,7 +8100,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
 						
 						findx_pattern(data, dataType, i + 881, length, &GXSetBlendModeSigs[2]);
-						findx_pattern(data, dataType, i + 553, length, &GXSetViewportSigs[1]);
+						findx_pattern(data, dataType, i + 553, length, &GXSetViewportSigs[2]);
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i + 467, length, &GXSetDispCopySrcSigs[2]))
@@ -8113,7 +8113,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
 						
 						findx_pattern(data, dataType, i + 431, length, &GXSetBlendModeSigs[2]);
-						findx_pattern(data, dataType, i + 186, length, &GXSetViewportSigs[1]);
+						findx_pattern(data, dataType, i + 186, length, &GXSetViewportSigs[2]);
 						break;
 					case 5:
 						if (findx_pattern(data, dataType, i + 482, length, &GXSetDispCopySrcSigs[2]))
@@ -8130,7 +8130,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
 						
 						findx_pattern(data, dataType, i + 446, length, &GXSetBlendModeSigs[2]);
-						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[1]);
+						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[2]);
 						break;
 					case 6:
 						if (findx_pattern(data, dataType, i + 497, length, &GXSetDispCopySrcSigs[3]))
@@ -8143,7 +8143,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[3]);
 						
 						findx_pattern(data, dataType, i + 461, length, &GXSetBlendModeSigs[3]);
-						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[2]);
+						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[3]);
 						break;
 					case 7:
 						if (findx_pattern(data, dataType, i + 473, length, &GXSetDispCopySrcSigs[4]))
@@ -8156,7 +8156,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[3], &GXCopyDispSigs[4]);
 						
 						findx_pattern(data, dataType, i + 433, length, &GXSetBlendModeSigs[5]);
-						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[3]);
+						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[4]);
 						break;
 					case 8:
 						if (findx_pattern(data, dataType, i + 475, length, &GXSetDispCopySrcSigs[4]))
@@ -8169,7 +8169,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[3], &GXCopyDispSigs[4]);
 						
 						findx_pattern(data, dataType, i + 435, length, &GXSetBlendModeSigs[6]);
-						findx_pattern(data, dataType, i + 204, length, &GXSetViewportSigs[3]);
+						findx_pattern(data, dataType, i + 204, length, &GXSetViewportSigs[4]);
 						break;
 					case 9:
 						if (findx_pattern(data, dataType, i + 526, length, &GXSetDispCopySrcSigs[5]))
@@ -8182,7 +8182,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[4], &GXCopyDispSigs[5]);
 						
 						findx_pattern(data, dataType, i + 490, length, &GXSetBlendModeSigs[3]);
-						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[4]);
+						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[5]);
 						break;
 					case 10:
 						if (findx_pattern(data, dataType, i + 512, length, &GXSetDispCopySrcSigs[6]))
@@ -8195,7 +8195,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[4], &GXCopyDispSigs[6]);
 						
 						findx_pattern(data, dataType, i + 478, length, &GXSetBlendModeSigs[4]);
-						findx_pattern(data, dataType, i + 209, length, &GXSetViewportSigs[5]);
+						findx_pattern(data, dataType, i + 209, length, &GXSetViewportSigs[6]);
 						break;
 				}
 			}
