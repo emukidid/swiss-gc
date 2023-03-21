@@ -202,11 +202,15 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, Executabl
 	((vu8*)VAR_ROUTER_MAC)[4] = 0xFF;
 	((vu8*)VAR_ROUTER_MAC)[5] = 0xFF;
 	
+	struct sockaddr_in addr;
+	socklen_t addrlen = sizeof(addr);
+	net_getpeername(fsp_session->fd, (struct sockaddr *)&addr, &addrlen);
+	
 	u32 local_ip = bba_localip.s_addr;
 	u32 netmask = bba_netmask.s_addr;
 	u32 gateway = bba_gateway.s_addr;
-	u32 host_ip = inet_addr(swissSettings.fspHostIp);
-	u16 port = swissSettings.fspPort ? swissSettings.fspPort : 21;
+	u32 host_ip = addr.sin_addr.s_addr;
+	u16 port = addr.sin_port;
 	
 	*(vu32*)VAR_CLIENT_IP = local_ip;
 	*(vu32*)VAR_ROUTER_IP = (host_ip & netmask) == (local_ip & netmask) ? host_ip : gateway;
