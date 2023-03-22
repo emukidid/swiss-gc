@@ -194,14 +194,6 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, Executabl
 		fragList = NULL;
 	}
 	
-	net_get_mac_address(VAR_CLIENT_MAC);
-	((vu8*)VAR_ROUTER_MAC)[0] = 0xFF;
-	((vu8*)VAR_ROUTER_MAC)[1] = 0xFF;
-	((vu8*)VAR_ROUTER_MAC)[2] = 0xFF;
-	((vu8*)VAR_ROUTER_MAC)[3] = 0xFF;
-	((vu8*)VAR_ROUTER_MAC)[4] = 0xFF;
-	((vu8*)VAR_ROUTER_MAC)[5] = 0xFF;
-	
 	struct sockaddr_in addr;
 	socklen_t addrlen = sizeof(addr);
 	net_getpeername(fsp_session->fd, (struct sockaddr *)&addr, &addrlen);
@@ -212,8 +204,22 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, Executabl
 	u32 host_ip = addr.sin_addr.s_addr;
 	u16 port = addr.sin_port;
 	
+	gateway = (host_ip & netmask) == (local_ip & netmask) ? host_ip : gateway;
+	addr.sin_addr.s_addr = gateway;
+	addr.sin_port = 0;
+	
+	struct arpreq arpreq = {
+		.arp_ha.sa_family = AF_UNSPEC,
+		.arp_ha.sa_data = {0xff,0xff,0xff,0xff,0xff,0xff},
+		.arp_dev = "en0"
+	};
+	memcpy(&arpreq.arp_pa, &addr, addrlen);
+	net_ioctl(fsp_session->fd, SIOCGARP, &arpreq);
+	
+	net_get_mac_address(VAR_CLIENT_MAC);
+	memcpy(VAR_ROUTER_MAC, arpreq.arp_ha.sa_data, sizeof(VAR_ROUTER_MAC));
 	*(vu32*)VAR_CLIENT_IP = local_ip;
-	*(vu32*)VAR_ROUTER_IP = (host_ip & netmask) == (local_ip & netmask) ? host_ip : gateway;
+	*(vu32*)VAR_ROUTER_IP = gateway;
 	*(vu32*)VAR_SERVER_IP = host_ip;
 	*(vu16*)VAR_SERVER_PORT = port;
 	return 1;
