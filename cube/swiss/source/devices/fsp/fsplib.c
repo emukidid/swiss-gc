@@ -1193,7 +1193,8 @@ int fsp_stat(FSP_SESSION *s,const char *path,struct stat *sb)
    sb->st_uid=sb->st_gid=0;
    sb->st_mtime=sb->st_ctime=sb->st_atime=ntohl( *(const uint32_t *)( in.buf ));
    sb->st_size=ntohl( *(const uint32_t *)(in.buf + 4 ));
-   sb->st_blocks=(sb->st_size+511)/512;
+   sb->st_blocks=(sb->st_size+S_BLKSIZE-1)/S_BLKSIZE;
+   sb->st_blksize=FSP_SPACE;
    if (ftype==FSP_RDTYPE_DIR)
    {
        sb->st_mode=S_IFDIR | 0755;

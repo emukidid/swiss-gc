@@ -210,7 +210,10 @@ s32 deviceHandler_FTP_deinit(file_handle* file) {
 
 s32 deviceHandler_FTP_deleteFile(file_handle* file) {
 	deviceHandler_FTP_closeFile(file);
-	return unlink(file->name);
+	if(file->fileAttrib == IS_DIR)
+		return rmdir(file->name);
+	else
+		return unlink(file->name);
 }
 
 s32 deviceHandler_FTP_renameFile(file_handle* file, char* name) {

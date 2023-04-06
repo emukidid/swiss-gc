@@ -215,7 +215,10 @@ s32 deviceHandler_SMB_deinit(file_handle* file) {
 
 s32 deviceHandler_SMB_deleteFile(file_handle* file) {
 	deviceHandler_SMB_closeFile(file);
-	return unlink(file->name);
+	if(file->fileAttrib == IS_DIR)
+		return rmdir(file->name);
+	else
+		return unlink(file->name);
 }
 
 s32 deviceHandler_SMB_renameFile(file_handle* file, char* name) {

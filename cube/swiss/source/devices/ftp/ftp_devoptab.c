@@ -2207,9 +2207,8 @@ static int __ftp_mkdir(struct _reent *r, const char *name, int mode)
 	return 0;
 }
 
-static int __ftp_unlink(struct _reent *r, const char *name)
+static int __ftp_rmdir(struct _reent *r, const char *name)
 {
-	FTPDIRENTRY dentry;
 	char path_absolute[FTP_MAXPATH];
 
 	ExtractDevice(name,path_absolute);
@@ -2229,31 +2228,52 @@ static int __ftp_unlink(struct _reent *r, const char *name)
 
 	ftp_absolute_path_no_device(name, path_absolute, env->envIndex);
 
-	if ( FTP_PathInfo(path_absolute, &dentry, env ) == false )
+	_FTP_lock();
+
+    if(FTP_DeleteDir(path_absolute, env) == false)
+    {
+        _FTP_unlock();
+        r->_errno = ENOTDIR;
+        return -1;
+    }
+
+	_FTP_unlock();
+
+	dir_changed = true;
+
+	return 0;
+}
+
+static int __ftp_unlink(struct _reent *r, const char *name)
+{
+	char path_absolute[FTP_MAXPATH];
+
+	ExtractDevice(name,path_absolute);
+	if(path_absolute[0]=='\0')
 	{
-		r->_errno = EBADF;
-	    return -1;
+		getcwd(path_absolute,FTP_MAXPATH);			//review: getcwd, or env->currentdirectory?
+		ExtractDevice(path_absolute,path_absolute);
 	}
 
-	_FTP_lock();
-	if (dentry.isDirectory)
+	ftp_env* env;
+	env=FindFTPEnv(path_absolute);
+	if (env == NULL)
 	{
-	    if(FTP_DeleteDir(path_absolute, env) == false)
-        {
-            _FTP_unlock();
-            r->_errno = ENOTDIR;
-            return -1;
-        }
+		r->_errno = EINVAL;
+		return -1;
 	}
-    else
+
+	ftp_absolute_path_no_device(name, path_absolute, env->envIndex);
+
+	_FTP_lock();
+
+    if(FTP_DeleteFile(path_absolute, env) == false)
     {
-	    if(FTP_DeleteFile(path_absolute, env) == false)
-        {
-            _FTP_unlock();
-            r->_errno = ENOTDIR;
-            return -1;
-        }
-	}
+        _FTP_unlock();
+        r->_errno = ENOTDIR;
+        return -1;
+    }
+
 	_FTP_unlock();
 
 	dir_changed = true;
@@ -2426,8 +2446,8 @@ static int dentry_to_stat(FTPDIRENTRY *dentry, struct stat *st)
 	st->st_atime = 0;
 	st->st_mtime = 0;
 	st->st_ctime = 0;
-	st->st_blksize = 1024;
-	st->st_blocks = (st->st_size + st->st_blksize - 1) / st->st_blksize; // File size in blocks
+	st->st_blksize = S_BLKSIZE;
+	st->st_blocks = (st->st_size + S_BLKSIZE - 1) / S_BLKSIZE; // File size in blocks
 
 	return 0;
 }
@@ -2558,10 +2578,15 @@ static void MountDevice(const char *name, int envIndex)
 	dotab_ftp->dirreset_r=__ftp_dirreset; // device dirreset_r
 	dotab_ftp->dirnext_r=__ftp_dirnext; // device dirnext_r
 	dotab_ftp->dirclose_r=__ftp_dirclose; // device dirclose_r
-	dotab_ftp->statvfs_r=NULL;			// device statvfs_r
-	dotab_ftp->ftruncate_r=NULL;               // device ftruncate_r
-	dotab_ftp->fsync_r=NULL;           // device fsync_r
-	dotab_ftp->deviceData=NULL;       	/* Device data */
+	dotab_ftp->statvfs_r=NULL; // device statvfs_r
+	dotab_ftp->ftruncate_r=NULL; // device ftruncate_r
+	dotab_ftp->fsync_r=NULL; // device fsync_r
+	dotab_ftp->deviceData=NULL; // device data
+	dotab_ftp->chmod_r=NULL; // device chmod_r
+	dotab_ftp->fchmod_r=NULL; // device fchmod_r
+	dotab_ftp->rmdir_r=__ftp_rmdir; // device rmdir_r
+	dotab_ftp->lstat_r=__ftp_stat; // device lstat_r
+	dotab_ftp->utimes_r=NULL; // device utimes_r
 
 	AddDevice(dotab_ftp);
 
