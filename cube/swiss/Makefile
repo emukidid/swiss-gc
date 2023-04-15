@@ -81,6 +81,7 @@ SOURCES		:=  source \
 			  source/psoarchive \
               source/images \
 			  source/images/buttons \
+			  source/compat \
 			  source/fatfs \
 			  source/xxhash
 DATA		:=	data  
