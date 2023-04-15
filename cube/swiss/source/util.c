@@ -1,3 +1,4 @@
+#include <fnmatch.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -210,7 +211,8 @@ int load_existing_entry(char *entry) {
 			// Finally, read the actual file
 			file_handle *curDirEntries = getCurrentDirEntries();
 			for(int i = 0; i < getCurrentDirEntryCount(); i++) {
-				if(!strcmp(curDirEntries[i].name, entry)) {
+				if(!strcmp(entry, curDirEntries[i].name)
+				|| !fnmatch(entry, curDirEntries[i].name, FNM_PATHNAME)) {
 					curSelection = i;
 					if(curDirEntries[i].fileAttrib == IS_FILE) {
 						populate_meta(&curDirEntries[i]);

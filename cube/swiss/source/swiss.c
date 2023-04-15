@@ -5,6 +5,7 @@
 */
 
 #include <argz.h>
+#include <fnmatch.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <gccore.h>		/*** Wrapper to include common libogc headers ***/
@@ -294,7 +295,8 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 		sprintf(txtbuffer, "%s", &curFile.name[0]);
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, ((getVideoMode()->fbWidth-150)-20), .85);
 		DrawAddChild(containerPanel, DrawStyledLabel(150, 80, txtbuffer, scale, false, defaultColor));
-		if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])) {
+		if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])
+		|| !fnmatch(&swissSettings.autoload[0], &curFile.name[0], FNM_PATHNAME)) {
 			DrawAddChild(containerPanel, DrawImage(TEX_STAR, ((getVideoMode()->fbWidth-30)-16), 80, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 		}
 		if(num_files > FILES_PER_PAGE) {
@@ -429,7 +431,8 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			}
 			else if((*directory)[curSelection].fileAttrib == IS_SPECIAL) {
 				// Toggle autoload
-				if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])) {
+				if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])
+				|| !fnmatch(&swissSettings.autoload[0], &curFile.name[0], FNM_PATHNAME)) {
 					memset(&swissSettings.autoload[0], 0, PATHNAME_MAX);
 				}
 				else {
@@ -497,7 +500,8 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 		sprintf(txtbuffer, "%s", &curFile.name[0]);
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, (getVideoMode()->fbWidth-60), .85);
 		DrawAddChild(containerPanel, DrawStyledLabel(30, 85, txtbuffer, scale, false, defaultColor));
-		if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])) {
+		if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])
+		|| !fnmatch(&swissSettings.autoload[0], &curFile.name[0], FNM_PATHNAME)) {
 			DrawAddChild(containerPanel, DrawImage(TEX_STAR, ((getVideoMode()->fbWidth-30)-16), 85, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 		}
 		int left_num = curSelection - current_view_start; // Number of entries to the left
@@ -644,7 +648,8 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			}
 			else if((*directory)[curSelection].fileAttrib == IS_SPECIAL) {
 				// Toggle autoload
-				if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])) {
+				if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])
+				|| !fnmatch(&swissSettings.autoload[0], &curFile.name[0], FNM_PATHNAME)) {
 					memset(&swissSettings.autoload[0], 0, PATHNAME_MAX);
 				}
 				else {
@@ -2079,7 +2084,7 @@ uiDrawObj_t* draw_game_info() {
 	}
 	else {
 		if(devices[DEVICE_CONFIG] != NULL) {
-			bool isAutoLoadEntry = !strcmp(&swissSettings.autoload[0], &curFile.name[0]);
+			bool isAutoLoadEntry = !strcmp(swissSettings.autoload, curFile.name) || !fnmatch(swissSettings.autoload, curFile.name, FNM_PATHNAME);
 			sprintf(txtbuffer, "Load at startup (Z) [Current: %s]", isAutoLoadEntry ? "Yes":"No");
 			DrawAddChild(container, DrawStyledLabel(640/2, 370, txtbuffer, 0.6f, true, defaultColor));
 		}
@@ -2124,8 +2129,12 @@ int info_game(ConfigEntry *config)
 		}
 		if((buttons & PAD_TRIGGER_Z) && devices[DEVICE_CONFIG] != NULL) {
 			// Toggle autoload
-			if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])) {
+			if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])
+			|| !fnmatch(&swissSettings.autoload[0], &curFile.name[0], FNM_PATHNAME)) {
 				memset(&swissSettings.autoload[0], 0, PATHNAME_MAX);
+			}
+			else if(!fnmatch("dvd:/*.gcm", &curFile.name[0], FNM_PATHNAME)) {
+				strcpy(&swissSettings.autoload[0], "dvd:/*.gcm");
 			}
 			else {
 				strcpy(&swissSettings.autoload[0], &curFile.name[0]);
