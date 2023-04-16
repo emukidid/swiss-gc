@@ -1277,7 +1277,7 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 			eventData->displayName[((u32)strrchr(eventData->displayName, '.'))-((u32)eventData->displayName)] = '\0';
 		}
 	}
-	eventData->isAutoLoadEntry = !strncmp(swissSettings.autoload, file->name, strlen(file->name)) || !fnmatch(swissSettings.autoload, file->name, FNM_PATHNAME);
+	eventData->isAutoLoadEntry = !strcmp(swissSettings.autoload, file->name) || !fnmatch(swissSettings.autoload, file->name, FNM_PATHNAME | FNM_PREFIX_DIRS);
 	
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_FILEBROWSERBUTTON;

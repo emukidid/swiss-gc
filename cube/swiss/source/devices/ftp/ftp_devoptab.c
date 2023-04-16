@@ -2587,6 +2587,10 @@ static void MountDevice(const char *name, int envIndex)
 	dotab_ftp->rmdir_r=__ftp_rmdir; // device rmdir_r
 	dotab_ftp->lstat_r=__ftp_stat; // device lstat_r
 	dotab_ftp->utimes_r=NULL; // device utimes_r
+	dotab_ftp->fpathconf_r=NULL; // device fpathconf_r
+	dotab_ftp->pathconf_r=NULL; // device pathconf_r
+	dotab_ftp->symlink_r=NULL; // device symlink_r
+	dotab_ftp->readlink_r=NULL; // device readlink_r
 
 	AddDevice(dotab_ftp);
 

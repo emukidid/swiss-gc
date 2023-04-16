@@ -601,7 +601,7 @@ int fsp_readdir_r(FSP_DIR *dir,struct dirent *entry, struct dirent **result)
         fentry.namlen-=rc;
     }
 
-    strncpy(entry->d_name,fentry.name,NAME_MAX);
+    strncpy(entry->d_name,fentry.name,NAME_MAX+1);
 
     if (fentry.namlen >= NAME_MAX)
     {
