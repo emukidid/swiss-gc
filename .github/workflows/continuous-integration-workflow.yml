@@ -14,26 +14,28 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends gcc gcc-mingw-w64-i686 libc6-dev libc6-i386 p7zip-full xorriso
 
-    - name: Checkout swiss-gc
-      uses: actions/checkout@main
-      with:
-        fetch-depth: 0
-
     - name: Checkout libogc2
       uses: actions/checkout@main
       with:
         repository: extremscorner/libogc2
-        path: cube/libogc2
+        path: libogc2
+
+    - name: Checkout Swiss
+      uses: actions/checkout@main
+      with:
+        path: swiss
+        fetch-depth: 0
 
     - name: Build libogc2
       run: make install
-      working-directory: cube/libogc2
+      working-directory: libogc2
 
     - name: Build Swiss artifacts
       run: make
+      working-directory: swiss
 
     - name: Upload Swiss artifacts
       uses: actions/upload-artifact@main
       with:
         name: swiss-gc
-        path: swiss_r*/*
+        path: swiss/swiss_r*/*
