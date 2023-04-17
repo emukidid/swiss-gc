@@ -248,6 +248,7 @@ int main(int argc, char *argv[])
 				strlcpy(swissSettings.gcloaderTopVersion, gcloaderVersionStr, sizeof(swissSettings.gcloaderTopVersion));
 			}
 			if(strverscmp(swissSettings.gcloaderTopVersion, "2.0.0") < 0) {
+				load_existing_entry("gcldr:/GCLoader_Updater_2.0.0*.dol");
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\ngc-loader.com/firmware-updates"));
 				wait_press_A();
 				DrawDispose(msgBox);
