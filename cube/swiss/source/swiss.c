@@ -1054,6 +1054,8 @@ void boot_dol()
 		devices[DEVICE_CUR]->seekFile(&curFile,i,DEVICE_HANDLER_SEEK_SET);
 		int size = i+131072 > curFile.size ? curFile.size-i : 131072; 
 		if(devices[DEVICE_CUR]->readFile(&curFile,ptr,size)!=size) {
+			DrawDispose(progBar);
+			free(dol_buffer);
 			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"Failed to read DOL. Press A.");
 			DrawPublish(msgBox);
 			wait_press_A();
@@ -1062,7 +1064,18 @@ void boot_dol()
 		}
   		ptr+=size;
 	}
-	gameID_set(NULL, XXH3_64bits(dol_buffer, curFile.size));
+	
+	XXH64_hash_t hash = XXH3_64bits(dol_buffer, curFile.size);
+	if(!valid_dol_xxh3(&curFile, hash)) {
+		DrawDispose(progBar);
+		free(dol_buffer);
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"DOL is corrupted. Press A.");
+		DrawPublish(msgBox);
+		wait_press_A();
+		DrawDispose(msgBox);
+		return;
+	}
+	gameID_set(NULL, hash);
 	DrawDispose(progBar);
 	
 	if(devices[DEVICE_CONFIG] != NULL) {

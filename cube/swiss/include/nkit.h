@@ -36,6 +36,7 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 uint64_t get_gcm_boot_hash(const DiskHeader *header);
 const char *get_gcm_title(const DiskHeader *header, file_meta *meta);
 
+int valid_dol_xxh3(const file_handle *file, uint64_t hash);
 bool valid_gcm_boot(const DiskHeader *header);
 bool valid_gcm_crc32(const DiskHeader *header, uint32_t crc);
 bool valid_gcm_magic(DiskHeader *header);
