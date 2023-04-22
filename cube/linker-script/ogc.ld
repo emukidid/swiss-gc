@@ -1,6 +1,5 @@
 /*
  * Linkscript for GC
- *
  */
 
 OUTPUT_FORMAT("elf32-powerpc", "elf32-powerpc", "elf32-powerpc");
@@ -13,6 +12,7 @@ PHDRS
   stub PT_LOAD FLAGS(5);
   text PT_LOAD FLAGS(5);
   data PT_LOAD FLAGS(6);
+  bss  PT_LOAD;
 }
 
 SECTIONS
@@ -92,7 +92,12 @@ SECTIONS
 
 	.rodata   : { *(.rodata) *(.rodata.*) *(.gnu.linkonce.r.*) } :data
 	.rodata1   : { *(.rodata1) }
-	.sdata2   : { *(.sdata2) *(.sdata2.*) *(.gnu.linkonce.s2.*) }
+	.sdata2   : {
+		PROVIDE(_SDA2_BASE_ = .);
+		*(.sdata2)
+		*(.sdata2.*)
+		*(.gnu.linkonce.s2.*)
+	}
 	.sbss2   : { *(.sbss2) *(.sbss2.*) *(.gnu.linkonce.sb2.*) }
   /* Adjust the address for the data segment.  We want to adjust up to
      the same address within the page on the next page up.  */
@@ -173,6 +178,7 @@ SECTIONS
 
 	.sdata     :
 	{
+		PROVIDE(_SDA_BASE_ = .);
 		*(.sdata)
 		*(.sdata.*)
 		*(.gnu.linkonce.s.*)
@@ -196,7 +202,7 @@ SECTIONS
 		PROVIDE (___sbss_end = .);
 		. = ALIGN(32);   /* REQUIRED. LD is flaky without it. */
 		__sbss_end = .;
-	}
+	} :bss
 
 	.bss       :
 	{
@@ -260,12 +266,8 @@ __stack_addr = (__bss_start + SIZEOF(.bss) + 0x80000 + 7) & (-8);
 __stack_end = (__bss_start + SIZEOF(.bss));
 __intrstack_addr = (__stack_addr + 0x4000);
 __intrstack_end = (__stack_addr);
-__Arena1Lo = (__stack_addr);
-__Arena1Hi = (0x816FEFF0);
-
-__gxregs = (__Arena1Hi + 31) & (-32);
-/* for backward compatibility with old crt0 */
-PROVIDE (__stack = (0x817FEFF0));
+__Arena1Lo = (__intrstack_addr);
+__Arena1Hi = (0x81700000);
 
 PROVIDE(__isIPL = __isIPL);
 PROVIDE(__stack_addr = __stack_addr);
@@ -274,4 +276,3 @@ PROVIDE(__intrstack_addr = __intrstack_addr);
 PROVIDE(__intrstack_end = __intrstack_end);
 PROVIDE(__Arena1Lo = __Arena1Lo);
 PROVIDE(__Arena1Hi = __Arena1Hi);
-PROVIDE(__gxregs = __gxregs);

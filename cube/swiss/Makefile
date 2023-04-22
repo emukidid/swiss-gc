@@ -7,7 +7,7 @@ ifeq ($(strip $(DEVKITPPC)),)
 $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC")
 endif
 
-include $(DEVKITPPC)/base_rules
+include $(DEVKITPRO)/libogc2/gamecube_rules
 
 BUILDTOOLS	:=	$(shell git rev-parse --show-toplevel)/buildtools
 
@@ -16,36 +16,6 @@ GXTEXCONV	:=	$(BUILDTOOLS)/gxtexconv.exe
 else
 GXTEXCONV	:=	$(BUILDTOOLS)/gxtexconv
 endif
-
-PORTLIBS	:=	$(PORTLIBS_PATH)/gamecube $(PORTLIBS_PATH)/ppc
-
-export PATH	:=	$(PORTLIBS_PATH)/gamecube/bin:$(PORTLIBS_PATH)/ppc/bin:$(PATH)
-
-export	LIBOGC_INC	:=	$(DEVKITPRO)/libogc2/include
-export	LIBOGC_LIB	:=	$(DEVKITPRO)/libogc2/lib/cube
-
-
-MACHDEP =  -DGEKKO -mvgc -mcpu=750 -meabi -mhard-float
-
-#---------------------------------------------------------------------------------
-%.dol: %.elf
-	$(SILENTMSG) output ... $(notdir $@)
-	$(SILENTCMD)elf2dol $< $@
-
-#---------------------------------------------------------------------------------
-%.tpl : %.scf
-	$(SILENTMSG) $(notdir $<)
-	$(SILENTCMD)$(GXTEXCONV) -s $< -d $(DEPSDIR)/$*.d -o $@
-
-#---------------------------------------------------------------------------------
-%.elf:
-	$(SILENTMSG) linking ... $(notdir $@)
-	$(SILENTCMD)$(LD)  $^ $(LDFLAGS) $(LIBPATHS) $(LIBS) -o $@
-
-#---------------------------------------------------------------------------------
-%.o: %.c
-	$(SILENTMSG) $(notdir $<)
-	$(SILENTCMD)$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d $(CFLAGS) -c $< -o $@ $(ERROR_FILTER)
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -95,7 +65,7 @@ INCLUDES	:= include $(SOURCES)
 CFLAGS		= -g -O2 -Wall -Wno-format-truncation -fno-strict-aliasing -D_GNU_SOURCE $(MACHDEP) $(INCLUDE) -D'GITREVISION="$(shell git rev-parse --short HEAD)"' -D'GITVERSION="$(shell git rev-list HEAD | wc -l)"'
 CXXFLAGS	= $(CFLAGS)
 
-LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -Wl,--section-start,.init=0x80003100 -T../../linker-script/vgcogc.ld -T ../../reservedarea.ld
+LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -T../../linker-script/ogc.ld -T ../../reservedarea.ld
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
@@ -197,10 +167,16 @@ $(OFILES_SOURCES) : $(HFILES)
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the .tpl extension
 #---------------------------------------------------------------------------------
-%.tpl.o	%_tpl.h :	%.tpl
+%.tpl.o %_tpl.h : %.tpl
 #---------------------------------------------------------------------------------
-	@echo $(notdir $<)
+	$(SILENTMSG) $(notdir $<)
 	$(bin2o)
+
+#---------------------------------------------------------------------------------
+%.tpl : %.scf
+#---------------------------------------------------------------------------------
+	$(SILENTMSG) $(notdir $<)
+	$(SILENTCMD)$(GXTEXCONV) -s $< -d $(DEPSDIR)/$*.d -o $@
 
 -include $(DEPENDS)
 
