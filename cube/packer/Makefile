@@ -9,14 +9,6 @@ endif
 
 include $(DEVKITPRO)/libogc2/gamecube_rules
 
-BUILDTOOLS	:=	$(shell git rev-parse --show-toplevel)/buildtools
-
-ifeq ($(OS),Windows_NT)
-GXTEXCONV	:=	$(BUILDTOOLS)/gxtexconv.exe
-else
-GXTEXCONV	:=	$(BUILDTOOLS)/gxtexconv
-endif
-
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
 # BUILD is the directory where object files & intermediate files will be placed
@@ -25,58 +17,29 @@ endif
 #---------------------------------------------------------------------------------
 TARGET		:=	swiss
 BUILD		:=	build
-SOURCES		:=  source \
-              source/aram \
-			  source/gui \
-			  source/config \
-              source/devices \
-              source/devices/system \
-              source/devices/dvd \
-              source/devices/fat \
-			  source/devices/fsp \
-			  source/devices/ftp \
-			  source/devices/gcloader \
-              source/devices/memcard \
-              source/devices/qoob \
-			  source/devices/smb \
-			  source/devices/usbgecko \
-              source/devices/wode \
-			  source/devices/wiikeyfusion \
-              source/cheats \
-              source/patches \
-			  source/patches/dvd \
-			  source/patches/gx \
-			  source/patches/mtx \
-			  source/patches/vi \
-			  source/psoarchive \
-              source/images \
-			  source/images/buttons \
-			  source/fatfs \
-			  source/xxhash
-DATA		:=	data  
-TEXTURES	:=	source/images \
-              source/images/buttons
-INCLUDES	:= include $(SOURCES)
+SOURCES		:=	source
+DATA		:=	../$(TARGET)
+INCLUDES	:=
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS		= -g -O2 -Wall -Wno-format-truncation -fno-strict-aliasing -D_GNU_SOURCE $(MACHDEP) $(INCLUDE) -D'GITREVISION="$(shell git rev-parse --short HEAD)"' -D'GITVERSION="$(shell git rev-list HEAD | wc -l)"'
+CFLAGS		= -g -O2 -Wall -msdata -G 32768 -ffreestanding $(MACHDEP) $(INCLUDE)
 CXXFLAGS	= $(CFLAGS)
 
-LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -T ../../linker-script/ogc.ld -T ../../reservedarea.ld
+LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -T ../source/link.ld
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-ltinysmb -lbba -laesnd -lmad -ldb -logc -lz
+LIBS	:=
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(PORTLIBS)
+LIBDIRS	:=
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -88,8 +51,7 @@ ifneq ($(BUILD),$(notdir $(CURDIR)))
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-					$(foreach dir,$(DATA),$(CURDIR)/$(dir)) \
-					$(foreach dir,$(TEXTURES),$(CURDIR)/$(dir))
+					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
 
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
@@ -100,9 +62,8 @@ CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
-BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
-SCFFILES	:=	$(foreach dir,$(TEXTURES),$(notdir $(wildcard $(dir)/*.scf)))
-TPLFILES	:=	$(SCFFILES:.scf=.tpl)
+ELFFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.elf)))
+BINFILES	:=	$(ELFFILES:$(TARGET).elf=executable.bin) $(ELFFILES:$(TARGET).elf=executable.xz)
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -113,11 +74,11 @@ else
 	export LD	:=	$(CXX)
 endif
 
-export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES)) $(addsuffix .o,$(TPLFILES))
+export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
 export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
 export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
 
-export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES))) $(addsuffix .h,$(subst .,_,$(TPLFILES)))
+export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 #---------------------------------------------------------------------------------
 # build a list of include paths
@@ -137,8 +98,6 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 
 #---------------------------------------------------------------------------------
 $(BUILD):
-	@echo Current Directory $(CURDIR)
-	@echo GIT Revision $(shell git rev-parse --short HEAD)
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
@@ -165,18 +124,30 @@ $(OUTPUT).elf: $(OFILES)
 $(OFILES_SOURCES) : $(HFILES)
 
 #---------------------------------------------------------------------------------
-# This rule links in binary data with the .tpl extension
+# This rule links in binary data with the .xz extension
 #---------------------------------------------------------------------------------
-%.tpl.o %_tpl.h : %.tpl
+%.xz.o %_xz.h : %.xz
 #---------------------------------------------------------------------------------
 	$(SILENTMSG) $(notdir $<)
 	$(bin2o)
 
 #---------------------------------------------------------------------------------
-%.tpl : %.scf
+executable.xz : executable.bin
 #---------------------------------------------------------------------------------
 	$(SILENTMSG) $(notdir $<)
-	$(SILENTCMD)$(GXTEXCONV) -s $< -d $(DEPSDIR)/$*.d -o $@
+	$(SILENTCMD)7z a $@ $< -mf=ppc -mx=9
+
+#---------------------------------------------------------------------------------
+%.bin.o %_bin.h : %.bin
+#---------------------------------------------------------------------------------
+	$(SILENTMSG) $(notdir $<)
+	$(bin2o)
+
+#---------------------------------------------------------------------------------
+executable.bin : $(TARGET).elf
+#---------------------------------------------------------------------------------
+	$(SILENTMSG) $(notdir $<)
+	$(SILENTCMD)$(OBJCOPY) -O binary $< $@
 
 -include $(DEPENDS)
 

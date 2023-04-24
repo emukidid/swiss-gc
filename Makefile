@@ -36,7 +36,7 @@ GECKOSERVER   = pc/usbgecko
 .NOTPARALLEL:
 
 # Ready to go .7z file with every type of DOL we can think of
-all: clean compile-patches compile build recovery-iso build-gci build-AR build-geckoserver package
+all: clean compile-patches compile compile-packer build recovery-iso build-gci build-AR build-geckoserver package
 
 # For dev use only, avoid the unnecessary fluff
 dev: clean compile-patches compile
@@ -46,6 +46,7 @@ clean:
 	@rm -rf $(DIST)
 	@cd $(PATCHES) && $(MAKE) clean
 	@cd $(SOURCES)/swiss && $(MAKE) clean
+	@cd $(SOURCES)/packer && $(MAKE) clean
 	@cd $(GECKOSERVER) && $(MAKE) clean
 
 #------------------------------------------------------------------
@@ -54,6 +55,9 @@ compile-patches:
 
 compile: # compile
 	@cd $(SOURCES)/swiss && $(MAKE)
+
+compile-packer:
+	@cd $(SOURCES)/packer && $(MAKE)
 
 #------------------------------------------------------------------
 
@@ -74,20 +78,22 @@ build:
 	@cp $(SOURCES)/swiss/swiss.elf $(DIST)/DOL/$(SVN_REVISION).elf
 	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol -v -m
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol
-	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol -m
+	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz.dol -m
+	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-lz.dol
+	@cp $(SOURCES)/packer/swiss.dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/AUTOEXEC.DOL
 	# make ISOs and WKF firmware
 	# NTSC-J
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	# NTSC
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-u.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-u)".iso $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-u.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-u)".iso $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	# PAL
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	# GCLoader
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/GCLoader/boot.iso $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION)-compressed.dol -o $(DIST)/GCLoader/boot.iso $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	# WODE
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-wode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/WODE/$(SVN_REVISION)"(wode_extcfg)".iso $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-wode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION)-compressed.dol -o $(DIST)/WODE/$(SVN_REVISION)"(wode_extcfg)".iso $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	# WKF
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION)-compressed.dol -o $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	@truncate -s 1856K $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn
