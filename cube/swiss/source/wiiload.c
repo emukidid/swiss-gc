@@ -150,6 +150,8 @@ static void wiiload_handler(int sd)
 	if (buffer) {
 		if (!memcmp(buffer, ELFMAG, SELFMAG))
 			ELFtoARAM(buffer, args, header.args_size);
+		else if (!strncasecmp(args, "SDLOADER.BIN", header.args_size))
+			BINtoARAM(buffer, header.inflate_size, 0x81700000);
 		else
 			DOLtoARAM(buffer, args, header.args_size);
 	}

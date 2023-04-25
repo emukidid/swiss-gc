@@ -1154,6 +1154,9 @@ void boot_dol()
 	if(!memcmp(dol_buffer, ELFMAG, SELFMAG)) {
 		ELFtoARAM(dol_buffer, argz, argz_len);
 	}
+	else if(endsWith(curFile.name, "/SDLOADER.BIN")) {
+		BINtoARAM(dol_buffer, curFile.size, 0x81700000);
+	}
 	else {
 		DOLtoARAM(dol_buffer, argz, argz_len);
 	}
@@ -1864,7 +1867,7 @@ void load_file()
 		
 	//if it's a DOL, boot it
 	if(strlen(fileName)>4) {
-		if(endsWith(fileName,".dol") || endsWith(fileName,".dol+cli") || endsWith(fileName,".elf")) {
+		if(endsWith(fileName,".bin") || endsWith(fileName,".dol") || endsWith(fileName,".dol+cli") || endsWith(fileName,".elf")) {
 			boot_dol();
 			// if it was invalid (overlaps sections, too large, etc..) it'll return
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid DOL"));
