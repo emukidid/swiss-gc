@@ -17,7 +17,8 @@
  * with Swiss.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <ppc-asm.h>
+#define _LANGUAGE_ASSEMBLY
+#include "../../reservedarea.h"
 
 .section .init
 	.globl _start, __argv
@@ -48,9 +49,9 @@ startup:
 	lis		r0, reset@h + 0x48000002
 	ori		r0, r0, reset@l + 0x48000002
 1:	stwu	r0, 0x0100 (r3)
-	dcbst	0, r3
+	dcbst	r0, r3
 	sync
-	icbi	0, r3
+	icbi	r0, r3
 	cmplwi	r3, 0x1700
 	blt		1b
 
@@ -70,9 +71,9 @@ reset:
 .section .text
 	.globl __eabi
 __eabi:
-	lis		toc, _SDA2_BASE_@ha
+	lis		r2, _SDA2_BASE_@ha
 	lis		r13, _SDA_BASE_@ha
-	addi	toc, toc, _SDA2_BASE_@l
+	addi	r2, r2, _SDA2_BASE_@l
 	addi	r13, r13, _SDA_BASE_@l
 
 	addi	r3, r13, __sbss_start@sdarel

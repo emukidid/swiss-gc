@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2023, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -25,11 +25,9 @@
 _start:
 #ifdef APPLOADER
 	lis		r3, 0x8000
-	li		r4, 0x3100 / 32
-	mtctr	r4
-1:	dcbz	r0, r3
-	addi	r3, r3, 32
-	bdnz	1b
+	lis		r0, 0xfee1
+	ori		r0, r0, 0xdead
+	stw		r0, 0x00E8 (r3)
 
 	li		r3, 0
 	mtsrr1	r3

@@ -1020,6 +1020,10 @@ static bool ppc_store32(uint32_t address, uint32_t value)
 		return true;
 	}
 	if ((address & ~0b111) == 0x800000E8) {
+		if (value == 0xfee1dead) {
+			asm volatile("mtdabr %0" :: "r" (0x800000E8));
+			reset_devices();
+		}
 		return true;
 	}
 	return false;
@@ -1061,19 +1065,6 @@ static bool ppc_store16(uint32_t address, uint16_t value)
 	return false;
 }
 
-static bool ppc_dcbz(uint32_t address)
-{
-	uint32_t dabr; asm("mfdabr %0" : "=r" (dabr));
-
-	if ((address & ~0b11111) == (dabr & ~0b11111)) {
-		asm volatile("mtdabr %0; dcbz 0,%1" :: "r" (0), "r" (address));
-		reset_devices();
-		return true;
-	}
-
-	return false;
-}
-
 static bool ppc_step(ppc_context_t *context)
 {
 	uint32_t opcode = *(uint32_t *)context->srr0;
@@ -1105,12 +1096,6 @@ static bool ppc_step(ppc_context_t *context)
 					return ppc_store16(ra ? context->gpr[ra] + context->gpr[rb] : context->gpr[rb], context->gpr[rs]);
 				}
 				#endif
-				case 1014:
-				{
-					int ra = (opcode >> 16) & 0x1F;
-					int rb = (opcode >> 11) & 0x1F;
-					return ppc_dcbz(ra ? context->gpr[ra] + context->gpr[rb] : context->gpr[rb]);
-				}
 			}
 			break;
 		}
