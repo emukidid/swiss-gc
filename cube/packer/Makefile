@@ -49,6 +49,7 @@ ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export SDLOADER	:=	$(CURDIR)/SDLOADER
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
@@ -94,17 +95,18 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 export LIBPATHS	:=	-L$(LIBOGC_LIB) $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export SDLOADER	:=	$(CURDIR)/SDLOADER
 .PHONY: $(BUILD) clean
 
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile $(OUTPUT).dol $(SDLOADER).BIN
 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
+	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol $(SDLOADER).ELF $(SDLOADER).BIN
 
 #---------------------------------------------------------------------------------
 run:
@@ -134,7 +136,7 @@ $(OFILES_SOURCES) : $(HFILES)
 #---------------------------------------------------------------------------------
 executable.xz : executable.bin
 #---------------------------------------------------------------------------------
-	$(SILENTMSG) $(notdir $<)
+	$(SILENTMSG) $(notdir $@)
 	$(SILENTCMD)7z a $@ $< -mf=ppc -mx=9
 
 #---------------------------------------------------------------------------------
@@ -146,8 +148,20 @@ executable.xz : executable.bin
 #---------------------------------------------------------------------------------
 executable.bin : $(TARGET).elf
 #---------------------------------------------------------------------------------
-	$(SILENTMSG) $(notdir $<)
+	$(SILENTMSG) $(notdir $@)
 	$(SILENTCMD)$(OBJCOPY) -O binary $< $@
+
+#---------------------------------------------------------------------------------
+$(SDLOADER).BIN : $(SDLOADER).ELF
+#---------------------------------------------------------------------------------
+	$(SILENTMSG) output ... $(notdir $@)
+	$(SILENTCMD)$(OBJCOPY) -O binary $< $@
+
+#---------------------------------------------------------------------------------
+$(SDLOADER).ELF : $(OFILES)
+#---------------------------------------------------------------------------------
+	$(SILENTMSG) linking ... $(notdir $@)
+	$(SILENTCMD)$(LD) $^ $(LDFLAGS) -Wl,--section-start,.init=0x01700000 $(LIBPATHS) $(LIBS) -o $@
 
 -include $(DEPENDS)
 

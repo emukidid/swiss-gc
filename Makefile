@@ -13,7 +13,7 @@ DIST          = dist
 SOURCES       = cube
 BUILDTOOLS    = buildtools
 PATCHES       = $(SOURCES)/patches
-AR_SOURCES    = $(SOURCES)/actionreplay
+PACKER        = $(SOURCES)/packer
 
 ifeq ($(OS),Windows_NT)
 DOLLZ         = $(BUILDTOOLS)/dollz3.exe
@@ -46,7 +46,7 @@ clean:
 	@rm -rf $(DIST)
 	@cd $(PATCHES) && $(MAKE) clean
 	@cd $(SOURCES)/swiss && $(MAKE) clean
-	@cd $(SOURCES)/packer && $(MAKE) clean
+	@cd $(PACKER) && $(MAKE) clean
 	@cd $(GECKOSERVER) && $(MAKE) clean
 
 #------------------------------------------------------------------
@@ -57,7 +57,7 @@ compile: # compile
 	@cd $(SOURCES)/swiss && $(MAKE)
 
 compile-packer:
-	@cd $(SOURCES)/packer && $(MAKE)
+	@cd $(PACKER) && $(MAKE)
 
 #------------------------------------------------------------------
 
@@ -69,8 +69,6 @@ build:
 	@mkdir $(DIST)/ISO
 	@mkdir $(DIST)/WiikeyFusion
 	@mkdir $(DIST)/WiikeyFusion/RecoveryISO
-	@mkdir $(DIST)/ActionReplay
-	@mkdir $(DIST)/GCI
 	@mkdir $(DIST)/WODE
 	@mkdir $(DIST)/GCLoader
 	@cp $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/$(SVN_REVISION).dol
@@ -80,9 +78,8 @@ build:
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol
 	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz.dol -m
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-lz.dol
-	@cp $(SOURCES)/packer/swiss.dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
+	@cp $(PACKER)/swiss.dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
-	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/AUTOEXEC.DOL
 	# make ISOs and WKF firmware
 	# NTSC-J
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
@@ -130,17 +127,14 @@ package:   # create distribution package
 #------------------------------------------------------------------
 
 build-AR: # make ActionReplay
-	@$(BIN2S) $(DIST)/ActionReplay/AUTOEXEC.DOL > $(AR_SOURCES)/autoexec.s
-	@$(CC) -O2 -ffreestanding -c $(AR_SOURCES)/startup.s -o $(AR_SOURCES)/startup.o
-	@$(CC) -O2 -ffreestanding -c $(AR_SOURCES)/autoexec.s -o $(AR_SOURCES)/autoexec.o
-	@$(CC) -O2 -ffreestanding -c $(AR_SOURCES)/main.c -o $(AR_SOURCES)/main.o
-	@$(LD) -o $(AR_SOURCES)/sdloader.elf $(AR_SOURCES)/startup.o $(AR_SOURCES)/main.o $(AR_SOURCES)/autoexec.o --section-start .text=0x81700000
-	@$(OBJCOPY) -O binary $(AR_SOURCES)/sdloader.elf $(DIST)/ActionReplay/SDLOADER.BIN
-	@rm -f $(AR_SOURCES)/*.o $(AR_SOURCES)/*.elf $(AR_SOURCES)/autoexec.s
+	@mkdir $(DIST)/ActionReplay
+	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/AUTOEXEC.DOL
+	@cp $(PACKER)/SDLOADER.BIN $(DIST)/ActionReplay/
 
 #------------------------------------------------------------------
 
 build-gci: # make GCI for memory cards
+	@mkdir $(DIST)/GCI
 	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/GCI/boot.gci boot.dol
 	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/GCI/xeno.gci xeno.dol
 	@cp $(BUILDTOOLS)/dol2gci* $(DIST)/GCI/

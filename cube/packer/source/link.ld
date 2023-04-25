@@ -18,7 +18,7 @@ SECTIONS
 	/DISCARD/ : { executable.bin.o }
 
 	. = ALIGN(32);
-	.init : AT(ADDR(.init) + 0x80000000) { KEEP(*crt0.o(*.init)) } : text
+	.init : AT(ADDR(.init) + 0x80000000) { KEEP(crt0.o(.init)) } : text
 	.text : AT(ADDR(.text) + 0x80000000)
 	{
 		*(.text .text.*)
