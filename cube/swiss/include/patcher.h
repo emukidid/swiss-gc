@@ -11,69 +11,43 @@ typedef struct FuncPattern
 	u32 FCalls;
 	u32 Branch;
 	u32 Moves;
-	u8 *Patch;
+	const void *Patch;
 	u32 PatchLength;
-	char *Name;
+	const char *Name;
 	u32 offsetFoundAt;
 } FuncPattern;
 
 /* the SDGecko/IDE-EXI patches */
-extern u8 reboot_bin[];
-extern u32 reboot_bin_size;
-extern u8 stub_bin[];
-extern u32 stub_bin_size;
-extern u8 ideexi_v1_bin[];
-extern u32 ideexi_v1_bin_size;
-extern u8 ideexi_v1_card_bin[];
-extern u32 ideexi_v1_card_bin_size;
-extern u8 ideexi_v1_dtk_bin[];
-extern u32 ideexi_v1_dtk_bin_size;
-extern u8 ideexi_v2_bin[];
-extern u32 ideexi_v2_bin_size;
-extern u8 ideexi_v2_card_bin[];
-extern u32 ideexi_v2_card_bin_size;
-extern u8 ideexi_v2_dtk_bin[];
-extern u32 ideexi_v2_dtk_bin_size;
-extern u8 sd_bin[];
-extern u32 sd_bin_size;
-extern u8 sd_card_bin[];
-extern u32 sd_card_bin_size;
-extern u8 sd_dtk_bin[];
-extern u32 sd_dtk_bin_size;
-extern u8 usbgecko_bin[];
-extern u32 usbgecko_bin_size;
-extern u8 wkf_bin[];
-extern u32 wkf_bin_size;
-extern u8 wkf_card_bin[];
-extern u32 wkf_card_bin_size;
-extern u8 wkf_dtk_bin[];
-extern u32 wkf_dtk_bin_size;
-extern u8 dvd_bin[];
-extern u32 dvd_bin_size;
-extern u8 dvd_card_bin[];
-extern u32 dvd_card_bin_size;
-extern u8 fsp_bin[];
-extern u32 fsp_bin_size;
-extern u8 fsp_dtk_bin[];
-extern u32 fsp_dtk_bin_size;
-extern u8 gcloader_v1_bin[];
-extern u32 gcloader_v1_bin_size;
-extern u8 gcloader_v1_card_bin[];
-extern u32 gcloader_v1_card_bin_size;
-extern u8 gcloader_v2_bin[];
-extern u32 gcloader_v2_bin_size;
-extern u8 gcloader_v2_card_bin[];
-extern u32 gcloader_v2_card_bin_size;
+#include "reboot_bin.h"
+#include "stub_bin.h"
+#include "sd_bin.h"
+#include "sd_card_bin.h"
+#include "sd_dtk_bin.h"
+#include "ideexi_v1_bin.h"
+#include "ideexi_v1_card_bin.h"
+#include "ideexi_v1_dtk_bin.h"
+#include "ideexi_v2_bin.h"
+#include "ideexi_v2_card_bin.h"
+#include "ideexi_v2_dtk_bin.h"
+#include "dvd_bin.h"
+#include "dvd_card_bin.h"
+#include "usbgecko_bin.h"
+#include "wkf_bin.h"
+#include "wkf_card_bin.h"
+#include "wkf_dtk_bin.h"
+#include "fsp_bin.h"
+#include "fsp_dtk_bin.h"
+#include "gcloader_v1_bin.h"
+#include "gcloader_v1_card_bin.h"
+#include "gcloader_v2_bin.h"
+#include "gcloader_v2_card_bin.h"
 
 /* SDK patches */
-extern u8 backwards_memcpy_bin[];
-extern u32 backwards_memcpy_bin_size;
-extern u8 memcpy_bin[];
-extern u32 memcpy_bin_size;
+#include "backwards_memcpy_bin.h"
+#include "memcpy_bin.h"
 extern u8 DVDLowTestAlarmHook[];
 extern u32 DVDLowTestAlarmHook_length;
-extern u8 WriteUARTN_bin[];
-extern u32 WriteUARTN_bin_size;
+#include "WriteUARTN_bin.h"
 extern u8 GXAdjustForOverscanPatch[];
 extern u32 GXAdjustForOverscanPatch_length;
 extern u8 GXCopyDispHook[];
@@ -118,8 +92,7 @@ extern u8 MTXOrthoHook[];
 extern u32 MTXOrthoHook_length;
 extern u8 MTXPerspectiveHook[];
 extern u32 MTXPerspectiveHook_length;
-extern u8 CheckStatus_bin[];
-extern u32 CheckStatus_bin_size;
+#include "CheckStatus_bin.h"
 extern u8 getTimingPatch[];
 extern u32 getTimingPatch_length;
 extern u8 VIConfigure240p[];
@@ -236,7 +209,7 @@ void *Calc_Address(void *data, int dataType, u32 properAddress);
 int Patch_CheatsHook(u8 *data, u32 length, u32 type);
 int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int type);
 void *installPatch(int patchId);
-void *installPatch2(void *patchLocation, u32 patchSize);
+void *installPatch2(const void *patch, u32 patchSize);
 void *getPatchAddr(int patchId);
 void setTopAddr(u32 addr);
 u32 getTopAddr();

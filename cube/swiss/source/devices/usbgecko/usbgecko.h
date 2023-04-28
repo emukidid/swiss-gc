@@ -18,7 +18,7 @@ s32 usbgecko_pc_ready();
 s32 usbgecko_read_file(void *buffer, u32 length, u32 offset, char* filename);
 
 // Write to the remote file, returns amount written
-s32 usbgecko_write_file(void *buffer, u32 length, u32 offset, char* filename);
+s32 usbgecko_write_file(const void *buffer, u32 length, u32 offset, char* filename);
 
 // Opens a directory on the PC end
 s32 usbgecko_open_dir(char *filename);

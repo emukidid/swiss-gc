@@ -80,7 +80,7 @@ typedef s32 (* _fn_makeDir)(file_handle*);
 typedef s32 (* _fn_readDir)(file_handle*, file_handle**, u32);
 typedef s64 (* _fn_seekFile)(file_handle*, s64, u32);
 typedef s32 (* _fn_readFile)(file_handle*, void*, u32);
-typedef s32 (* _fn_writeFile)(file_handle*, void*, u32);
+typedef s32 (* _fn_writeFile)(file_handle*, const void*, u32);
 typedef s32 (* _fn_closeFile)(file_handle*);
 typedef s32 (* _fn_deleteFile)(file_handle*);
 typedef s32 (* _fn_renameFile)(file_handle*, char*);

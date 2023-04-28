@@ -176,7 +176,7 @@ s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
 	return bytes_read;
 }
 
-s32 deviceHandler_FAT_writeFile(file_handle* file, void* buffer, u32 length) {
+s32 deviceHandler_FAT_writeFile(file_handle* file, const void* buffer, u32 length) {
 	if(!file->ffsFp) {
 		file->ffsFp = malloc(sizeof(FIL));
 		if(f_open(file->ffsFp, file->name, FA_CREATE_ALWAYS | FA_WRITE ) != FR_OK) {

@@ -25,7 +25,7 @@ gcloaderpatch: gcloader-v1.bin gcloader-v1.card.bin gcloader-v2.bin gcloader-v2.
 
 clean:
 	@rm -f *.bin *.elf *.o
-	@rm -f $(DEST)/*.s
+	@rm -f $(DEST)/*.bin.s $(DEST)/*_bin.h
 	@rm -fr $(DISASM)
 
 cpatches:
@@ -43,10 +43,10 @@ cpatches:
 	@$(OBJCOPY) -O binary memcpy.o memcpy.bin
 	@$(OBJCOPY) -O binary CheckStatus.elf CheckStatus.bin
 	@$(OBJCOPY) -O binary WriteUARTN.elf WriteUARTN.bin
-	@$(BIN2S) backwards_memcpy.bin > $(DEST)/backwards_memcpy.s
-	@$(BIN2S) memcpy.bin > $(DEST)/memcpy.s
-	@$(BIN2S) CheckStatus.bin > $(DEST)/CheckStatus.s
-	@$(BIN2S) WriteUARTN.bin > $(DEST)/WriteUARTN.s
+	@$(BIN2S) -H $(DEST)/backwards_memcpy_bin.h backwards_memcpy.bin > $(DEST)/backwards_memcpy.bin.s
+	@$(BIN2S) -H $(DEST)/memcpy_bin.h memcpy.bin > $(DEST)/memcpy.bin.s
+	@$(BIN2S) -H $(DEST)/CheckStatus_bin.h CheckStatus.bin > $(DEST)/CheckStatus.bin.s
+	@$(BIN2S) -H $(DEST)/WriteUARTN_bin.h WriteUARTN.bin > $(DEST)/WriteUARTN.bin.s
 	@rm -f *.bin *.elf *.o
 
 reboot.bin:
@@ -62,7 +62,7 @@ reboot.bin:
 	@$(OBJDUMP) -D reboot.elf > $(DISASM)/reboot.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents reboot.elf reboot.bin
 	@truncate -s %32 reboot.bin
-	@$(BIN2S) reboot.bin > $(DEST)/Reboot.s
+	@$(BIN2S) -H $(DEST)/reboot_bin.h reboot.bin > $(DEST)/reboot.bin.s
 	@rm -f *.bin *.elf *.o
 
 stub.bin:
@@ -77,7 +77,7 @@ stub.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D stub.elf > $(DISASM)/stub.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents stub.elf stub.bin
-	@$(BIN2S) stub.bin > $(DEST)/Stub.s
+	@$(BIN2S) -H $(DEST)/stub_bin.h stub.bin > $(DEST)/stub.bin.s
 	@rm -f *.bin *.elf *.o
 
 sd.bin:
@@ -101,7 +101,7 @@ sd.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D sd.elf > $(DISASM)/sd.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd.elf sd.bin
-	@$(BIN2S) sd.bin > $(DEST)/SlotAB-SD.s
+	@$(BIN2S) -H $(DEST)/sd_bin.h sd.bin > $(DEST)/sd.bin.s
 	@rm -f *.bin *.elf *.o
 
 sd.card.bin:
@@ -122,7 +122,7 @@ sd.card.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D sd.card.elf > $(DISASM)/sd.card.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd.card.elf sd.card.bin
-	@$(BIN2S) sd.card.bin > $(DEST)/SlotAB-SD.card.s
+	@$(BIN2S) -H $(DEST)/sd_card_bin.h sd.card.bin > $(DEST)/sd.card.bin.s
 	@rm -f *.bin *.elf *.o
 
 sd.dtk.bin:
@@ -144,7 +144,7 @@ sd.dtk.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D sd.dtk.elf > $(DISASM)/sd.dtk.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd.dtk.elf sd.dtk.bin
-	@$(BIN2S) sd.dtk.bin > $(DEST)/SlotAB-SD.dtk.s
+	@$(BIN2S) -H $(DEST)/sd_dtk_bin.h sd.dtk.bin > $(DEST)/sd.dtk.bin.s
 	@rm -f *.bin *.elf *.o
 
 ideexi-v1.bin:
@@ -168,7 +168,7 @@ ideexi-v1.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v1.elf > $(DISASM)/ideexi-v1.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v1.elf ideexi-v1.bin
-	@$(BIN2S) ideexi-v1.bin > $(DEST)/SlotAB-IDEEXI_V1.s
+	@$(BIN2S) -H $(DEST)/ideexi_v1_bin.h ideexi-v1.bin > $(DEST)/ideexi-v1.bin.s
 	@rm -f *.bin *.elf *.o
 
 ideexi-v1.card.bin:
@@ -189,7 +189,7 @@ ideexi-v1.card.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v1.card.elf > $(DISASM)/ideexi-v1.card.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v1.card.elf ideexi-v1.card.bin
-	@$(BIN2S) ideexi-v1.card.bin > $(DEST)/SlotAB-IDEEXI_V1.card.s
+	@$(BIN2S) -H $(DEST)/ideexi_v1_card_bin.h ideexi-v1.card.bin > $(DEST)/ideexi-v1.card.bin.s
 	@rm -f *.bin *.elf *.o
 
 ideexi-v1.dtk.bin:
@@ -211,7 +211,7 @@ ideexi-v1.dtk.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v1.dtk.elf > $(DISASM)/ideexi-v1.dtk.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v1.dtk.elf ideexi-v1.dtk.bin
-	@$(BIN2S) ideexi-v1.dtk.bin > $(DEST)/SlotAB-IDEEXI_V1.dtk.s
+	@$(BIN2S) -H $(DEST)/ideexi_v1_dtk_bin.h ideexi-v1.dtk.bin > $(DEST)/ideexi-v1.dtk.bin.s
 	@rm -f *.bin *.elf *.o
 
 ideexi-v2.bin:
@@ -235,7 +235,7 @@ ideexi-v2.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.elf > $(DISASM)/ideexi-v2.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v2.elf ideexi-v2.bin
-	@$(BIN2S) ideexi-v2.bin > $(DEST)/SlotAB-IDEEXI_V2.s
+	@$(BIN2S) -H $(DEST)/ideexi_v2_bin.h ideexi-v2.bin > $(DEST)/ideexi-v2.bin.s
 	@rm -f *.bin *.elf *.o
 
 ideexi-v2.card.bin:
@@ -256,7 +256,7 @@ ideexi-v2.card.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.card.elf > $(DISASM)/ideexi-v2.card.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v2.card.elf ideexi-v2.card.bin
-	@$(BIN2S) ideexi-v2.card.bin > $(DEST)/SlotAB-IDEEXI_V2.card.s
+	@$(BIN2S) -H $(DEST)/ideexi_v2_card_bin.h ideexi-v2.card.bin > $(DEST)/ideexi-v2.card.bin.s
 	@rm -f *.bin *.elf *.o
 
 ideexi-v2.dtk.bin:
@@ -278,7 +278,7 @@ ideexi-v2.dtk.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.dtk.elf > $(DISASM)/ideexi-v2.dtk.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v2.dtk.elf ideexi-v2.dtk.bin
-	@$(BIN2S) ideexi-v2.dtk.bin > $(DEST)/SlotAB-IDEEXI_V2.dtk.s
+	@$(BIN2S) -H $(DEST)/ideexi_v2_dtk_bin.h ideexi-v2.dtk.bin > $(DEST)/ideexi-v2.dtk.bin.s
 	@rm -f *.bin *.elf *.o
 
 dvd.bin:
@@ -298,7 +298,7 @@ dvd.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D dvd.elf > $(DISASM)/dvd.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents dvd.elf dvd.bin
-	@$(BIN2S) dvd.bin > $(DEST)/DVDPatch.s
+	@$(BIN2S) -H $(DEST)/dvd_bin.h dvd.bin > $(DEST)/dvd.bin.s
 	@rm -f *.bin *.elf *.o
 
 dvd.card.bin:
@@ -319,7 +319,7 @@ dvd.card.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D dvd.card.elf > $(DISASM)/dvd.card.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents dvd.card.elf dvd.card.bin
-	@$(BIN2S) dvd.card.bin > $(DEST)/DVDPatch.card.s
+	@$(BIN2S) -H $(DEST)/dvd_card_bin.h dvd.card.bin > $(DEST)/dvd.card.bin.s
 	@rm -f *.bin *.elf *.o
 
 usbgecko.bin:
@@ -338,7 +338,7 @@ usbgecko.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D usbgecko.elf > $(DISASM)/usbgecko.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents usbgecko.elf usbgecko.bin
-	@$(BIN2S) usbgecko.bin > $(DEST)/USBGeckoPatch.s
+	@$(BIN2S) -H $(DEST)/usbgecko_bin.h usbgecko.bin > $(DEST)/usbgecko.bin.s
 	@rm -f *.bin *.elf *.o
 
 wkf.bin:
@@ -358,7 +358,7 @@ wkf.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.elf > $(DISASM)/wkf.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents wkf.elf wkf.bin
-	@$(BIN2S) wkf.bin > $(DEST)/WKFPatch.s
+	@$(BIN2S) -H $(DEST)/wkf_bin.h wkf.bin > $(DEST)/wkf.bin.s
 	@rm -f *.bin *.elf *.o
 
 wkf.card.bin:
@@ -379,7 +379,7 @@ wkf.card.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.card.elf > $(DISASM)/wkf.card.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents wkf.card.elf wkf.card.bin
-	@$(BIN2S) wkf.card.bin > $(DEST)/WKFPatch.card.s
+	@$(BIN2S) -H $(DEST)/wkf_card_bin.h wkf.card.bin > $(DEST)/wkf.card.bin.s
 	@rm -f *.bin *.elf *.o
 
 wkf.dtk.bin:
@@ -401,7 +401,7 @@ wkf.dtk.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D wkf.dtk.elf > $(DISASM)/wkf.dtk.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents wkf.dtk.elf wkf.dtk.bin
-	@$(BIN2S) wkf.dtk.bin > $(DEST)/WKFPatch.dtk.s
+	@$(BIN2S) -H $(DEST)/wkf_dtk_bin.h wkf.dtk.bin > $(DEST)/wkf.dtk.bin.s
 	@rm -f *.bin *.elf *.o
 
 fsp.bin:
@@ -422,7 +422,7 @@ fsp.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D fsp.elf > $(DISASM)/fsp.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents fsp.elf fsp.bin
-	@$(BIN2S) fsp.bin > $(DEST)/FSPPatch.s
+	@$(BIN2S) -H $(DEST)/fsp_bin.h fsp.bin > $(DEST)/fsp.bin.s
 	@rm -f *.bin *.elf *.o
 
 fsp.dtk.bin:
@@ -443,7 +443,7 @@ fsp.dtk.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D fsp.dtk.elf > $(DISASM)/fsp.dtk.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents fsp.dtk.elf fsp.dtk.bin
-	@$(BIN2S) fsp.dtk.bin > $(DEST)/FSPPatch.dtk.s
+	@$(BIN2S) -H $(DEST)/fsp_dtk_bin.h fsp.dtk.bin > $(DEST)/fsp.dtk.bin.s
 	@rm -f *.bin *.elf *.o
 
 gcloader-v1.bin:
@@ -467,7 +467,7 @@ gcloader-v1.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader-v1.elf > $(DISASM)/gcloader-v1.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v1.elf gcloader-v1.bin
-	@$(BIN2S) gcloader-v1.bin > $(DEST)/GCLoaderPatch1.s
+	@$(BIN2S) -H $(DEST)/gcloader_v1_bin.h gcloader-v1.bin > $(DEST)/gcloader-v1.bin.s
 	@rm -f *.bin *.elf *.o
 
 gcloader-v1.card.bin:
@@ -488,7 +488,7 @@ gcloader-v1.card.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader-v1.card.elf > $(DISASM)/gcloader-v1.card.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v1.card.elf gcloader-v1.card.bin
-	@$(BIN2S) gcloader-v1.card.bin > $(DEST)/GCLoaderPatch1.card.s
+	@$(BIN2S) -H $(DEST)/gcloader_v1_card_bin.h gcloader-v1.card.bin > $(DEST)/gcloader-v1.card.bin.s
 	@rm -f *.bin *.elf *.o
 
 gcloader-v2.bin:
@@ -510,7 +510,7 @@ gcloader-v2.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader-v2.elf > $(DISASM)/gcloader-v2.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v2.elf gcloader-v2.bin
-	@$(BIN2S) gcloader-v2.bin > $(DEST)/GCLoaderPatch2.s
+	@$(BIN2S) -H $(DEST)/gcloader_v2_bin.h gcloader-v2.bin > $(DEST)/gcloader-v2.bin.s
 	@rm -f *.bin *.elf *.o
 
 gcloader-v2.card.bin:
@@ -529,5 +529,5 @@ gcloader-v2.card.bin:
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader-v2.card.elf > $(DISASM)/gcloader-v2.card.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v2.card.elf gcloader-v2.card.bin
-	@$(BIN2S) gcloader-v2.card.bin > $(DEST)/GCLoaderPatch2.card.s
+	@$(BIN2S) -H $(DEST)/gcloader_v2_card_bin.h gcloader-v2.card.bin > $(DEST)/gcloader-v2.card.bin.s
 	@rm -f *.bin *.elf *.o

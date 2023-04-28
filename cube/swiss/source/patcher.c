@@ -27,90 +27,91 @@ static void *patch_locations[PATCHES_MAX];
 
 // Returns where the ASM patch has been copied to
 void *installPatch(int patchId) {
-	u32 patchSize = 0;
 	void *patchLocation = NULL;
+	const void *patch = NULL; u32 patchSize = 0;
 	switch(patchId) {
 		case BACKWARDS_MEMCPY:
-			patchSize = backwards_memcpy_bin_size; patchLocation = backwards_memcpy_bin; break;
+			patch = backwards_memcpy_bin; patchSize = backwards_memcpy_bin_size; break;
 		case DVD_LOWTESTALARMHOOK:
-			patchSize = DVDLowTestAlarmHook_length; patchLocation = DVDLowTestAlarmHook; break;
+			patch = DVDLowTestAlarmHook; patchSize = DVDLowTestAlarmHook_length; break;
 		case GX_COPYDISPHOOK:
-			patchSize = GXCopyDispHook_length; patchLocation = GXCopyDispHook; break;
+			patch = GXCopyDispHook; patchSize = GXCopyDispHook_length; break;
 		case GX_INITTEXOBJLODHOOK:
-			patchSize = GXInitTexObjLODHook_length; patchLocation = GXInitTexObjLODHook; break;
+			patch = GXInitTexObjLODHook; patchSize = GXInitTexObjLODHook_length; break;
 		case GX_SETPROJECTIONHOOK:
-			patchSize = GXSetProjectionHook_length; patchLocation = GXSetProjectionHook; break;
+			patch = GXSetProjectionHook; patchSize = GXSetProjectionHook_length; break;
 		case GX_SETSCISSORHOOK:
-			patchSize = GXSetScissorHook_length; patchLocation = GXSetScissorHook; break;
+			patch = GXSetScissorHook; patchSize = GXSetScissorHook_length; break;
 		case MTX_FRUSTUMHOOK:
-			patchSize = MTXFrustumHook_length; patchLocation = MTXFrustumHook; break;
+			patch = MTXFrustumHook; patchSize = MTXFrustumHook_length; break;
 		case MTX_LIGHTFRUSTUMHOOK:
-			patchSize = MTXLightFrustumHook_length; patchLocation = MTXLightFrustumHook; break;
+			patch = MTXLightFrustumHook; patchSize = MTXLightFrustumHook_length; break;
 		case MTX_LIGHTPERSPECTIVEHOOK:
-			patchSize = MTXLightPerspectiveHook_length; patchLocation = MTXLightPerspectiveHook; break;
+			patch = MTXLightPerspectiveHook; patchSize = MTXLightPerspectiveHook_length; break;
 		case MTX_ORTHOHOOK:
-			patchSize = MTXOrthoHook_length; patchLocation = MTXOrthoHook; break;
+			patch = MTXOrthoHook; patchSize = MTXOrthoHook_length; break;
 		case MTX_PERSPECTIVEHOOK:
-			patchSize = MTXPerspectiveHook_length; patchLocation = MTXPerspectiveHook; break;
+			patch = MTXPerspectiveHook; patchSize = MTXPerspectiveHook_length; break;
 		case OS_RESERVED:
 			patchSize = 0x1800; break;
 		case PAD_CHECKSTATUS:
-			patchSize = CheckStatus_bin_size; patchLocation = CheckStatus_bin; break;
+			patch = CheckStatus_bin; patchSize = CheckStatus_bin_size; break;
 		case VI_CONFIGURE240P:
-			patchSize = VIConfigure240p_length; patchLocation = VIConfigure240p; break;
+			patch = VIConfigure240p; patchSize = VIConfigure240p_length; break;
 		case VI_CONFIGURE288P:
-			patchSize = VIConfigure288p_length; patchLocation = VIConfigure288p; break;
+			patch = VIConfigure288p; patchSize = VIConfigure288p_length; break;
 		case VI_CONFIGURE480I:
-			patchSize = VIConfigure480i_length; patchLocation = VIConfigure480i; break;
+			patch = VIConfigure480i; patchSize = VIConfigure480i_length; break;
 		case VI_CONFIGURE480P:
-			patchSize = VIConfigure480p_length; patchLocation = VIConfigure480p; break;
+			patch = VIConfigure480p; patchSize = VIConfigure480p_length; break;
 		case VI_CONFIGURE540P50:
-			patchSize = VIConfigure540p50_length; patchLocation = VIConfigure540p50; break;
+			patch = VIConfigure540p50; patchSize = VIConfigure540p50_length; break;
 		case VI_CONFIGURE540P60:
-			patchSize = VIConfigure540p60_length; patchLocation = VIConfigure540p60; break;
+			patch = VIConfigure540p60; patchSize = VIConfigure540p60_length; break;
 		case VI_CONFIGURE576I:
-			patchSize = VIConfigure576i_length; patchLocation = VIConfigure576i; break;
+			patch = VIConfigure576i; patchSize = VIConfigure576i_length; break;
 		case VI_CONFIGURE576P:
-			patchSize = VIConfigure576p_length; patchLocation = VIConfigure576p; break;
+			patch = VIConfigure576p; patchSize = VIConfigure576p_length; break;
 		case VI_CONFIGURE960I:
-			patchSize = VIConfigure960i_length; patchLocation = VIConfigure960i; break;
+			patch = VIConfigure960i; patchSize = VIConfigure960i_length; break;
 		case VI_CONFIGURE1080I50:
-			patchSize = VIConfigure1080i50_length; patchLocation = VIConfigure1080i50; break;
+			patch = VIConfigure1080i50; patchSize = VIConfigure1080i50_length; break;
 		case VI_CONFIGURE1080I60:
-			patchSize = VIConfigure1080i60_length; patchLocation = VIConfigure1080i60; break;
+			patch = VIConfigure1080i60; patchSize = VIConfigure1080i60_length; break;
 		case VI_CONFIGURE1152I:
-			patchSize = VIConfigure1152i_length; patchLocation = VIConfigure1152i; break;
+			patch = VIConfigure1152i; patchSize = VIConfigure1152i_length; break;
 		case VI_CONFIGUREAUTOP:
-			patchSize = VIConfigureAutop_length; patchLocation = VIConfigureAutop; break;
+			patch = VIConfigureAutop; patchSize = VIConfigureAutop_length; break;
 		case VI_CONFIGUREHOOK1:
-			patchSize = VIConfigureHook1_length; patchLocation = VIConfigureHook1; break;
+			patch = VIConfigureHook1; patchSize = VIConfigureHook1_length; break;
 		case VI_CONFIGUREHOOK1_GCVIDEO:
-			patchSize = VIConfigureHook1GCVideo_length; patchLocation = VIConfigureHook1GCVideo; break;
+			patch = VIConfigureHook1GCVideo; patchSize = VIConfigureHook1GCVideo_length; break;
 		case VI_CONFIGUREHOOK2:
-			patchSize = VIConfigureHook2_length; patchLocation = VIConfigureHook2; break;
+			patch = VIConfigureHook2; patchSize = VIConfigureHook2_length; break;
 		case VI_CONFIGUREPANHOOK:
-			patchSize = VIConfigurePanHook_length; patchLocation = VIConfigurePanHook; break;
+			patch = VIConfigurePanHook; patchSize = VIConfigurePanHook_length; break;
 		case VI_CONFIGUREPANHOOKD:
-			patchSize = VIConfigurePanHookD_length; patchLocation = VIConfigurePanHookD; break;
+			patch = VIConfigurePanHookD; patchSize = VIConfigurePanHookD_length; break;
 		case VI_GETRETRACECOUNTHOOK:
-			patchSize = VIGetRetraceCountHook_length; patchLocation = VIGetRetraceCountHook; break;
+			patch = VIGetRetraceCountHook; patchSize = VIGetRetraceCountHook_length; break;
 		case VI_RETRACEHANDLERHOOK:
-			patchSize = VIRetraceHandlerHook_length; patchLocation = VIRetraceHandlerHook; break;
+			patch = VIRetraceHandlerHook; patchSize = VIRetraceHandlerHook_length; break;
 		default:
 			break;
 	}
-	patchLocation = installPatch2(patchLocation, patchSize);
+	patchLocation = installPatch2(patch, patchSize);
 	print_gecko("Installed patch %i to %08X\r\n", patchId, patchLocation);
 	return patchLocation;
 }
 
-void *installPatch2(void *patchLocation, u32 patchSize) {
+void *installPatch2(const void *patch, u32 patchSize) {
+	void *patchLocation = NULL;
 	if (top_addr == 0x81800000)
 		top_addr -= 8;
 	top_addr -= patchSize;
-	if (patchLocation) {
+	if (patch) {
 		top_addr &= ~3;
-		patchLocation = memcpy((void*)top_addr, patchLocation, patchSize);
+		patchLocation = memcpy((void*)top_addr, patch, patchSize);
 	} else {
 		top_addr &= ~31;
 		patchLocation = memset((void*)top_addr, 0, patchSize);
@@ -147,7 +148,7 @@ u32 getTopAddr() {
 int install_code(int final)
 {
 	u32 location = LO_RESERVE;
-	u8 *patch = NULL; u32 patchSize = 0;
+	const void *patch = NULL; u32 patchSize = 0;
 	
 	// Reload Stub
 	if (GCMDisk.DVDMagicWord != DVD_MAGIC) {

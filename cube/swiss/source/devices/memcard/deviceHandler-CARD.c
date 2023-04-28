@@ -315,7 +315,7 @@ s32 deviceHandler_CARD_readFile(file_handle* file, void* buffer, u32 length){
 }
 
 // This function should always be called for the FULL length cause CARD is lame like that.
-s32 deviceHandler_CARD_writeFile(file_handle* file, void* data, u32 length) {
+s32 deviceHandler_CARD_writeFile(file_handle* file, const void* data, u32 length) {
 	
 	if(gciInfo == NULL) {	// Swiss ID for this
 		CARD_SetGameAndCompany();

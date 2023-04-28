@@ -110,7 +110,7 @@ s32 usbgecko_read_file(void *buffer, u32 length, u32 offset, char* filename) {
 }
 
 // Write to the remote file, returns amount written
-s32 usbgecko_write_file(void *buffer, u32 length, u32 offset, char* filename) {
+s32 usbgecko_write_file(const void *buffer, u32 length, u32 offset, char* filename) {
 	return 0;
 }
 

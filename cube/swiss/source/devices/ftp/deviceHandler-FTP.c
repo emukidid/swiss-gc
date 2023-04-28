@@ -152,7 +152,7 @@ s32 deviceHandler_FTP_readFile(file_handle* file, void* buffer, u32 length){
 	return bytes_read;
 }
 
-s32 deviceHandler_FTP_writeFile(file_handle* file, void* buffer, u32 length){
+s32 deviceHandler_FTP_writeFile(file_handle* file, const void* buffer, u32 length){
 	if(!file->fp) {
 		file->fp = fopen(file->name, "wb");
 	}

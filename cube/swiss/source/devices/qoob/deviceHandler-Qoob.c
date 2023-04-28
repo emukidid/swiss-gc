@@ -271,7 +271,7 @@ int write_qoob_rom(unsigned char *src, u32 dest, int len)
 
 
 // Assumes a single call to write a file.
-s32 deviceHandler_Qoob_writeFile(file_handle* file, void* buffer, u32 length) {
+s32 deviceHandler_Qoob_writeFile(file_handle* file, const void* buffer, u32 length) {
 	if(!length) return 0;
 
 	if(!file->fileBase) {

@@ -94,7 +94,7 @@ s32 deviceHandler_USBGecko_readFile(file_handle* file, void* buffer, u32 length)
 	return bytes_read;
 }
 
-s32 deviceHandler_USBGecko_writeFile(file_handle* file, void* buffer, u32 length) {	
+s32 deviceHandler_USBGecko_writeFile(file_handle* file, const void* buffer, u32 length) {
 	s32 bytes_written = usbgecko_write_file(buffer, length, file->offset, file->name);
 	if(bytes_written > 0) file->offset += bytes_written;
 	
