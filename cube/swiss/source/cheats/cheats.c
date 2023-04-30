@@ -166,7 +166,7 @@ CheatEntries* getCheats() {
 void kenobi_install_engine() {
 	int isDebug = swissSettings.wiirdDebug;
 	// If high memory is in use, we'll use low, otherwise high.
-	u8 *ptr = isDebug ? kenobigc_dbg_bin : kenobigc_bin;
+	const u8 *ptr = isDebug ? kenobigc_dbg_bin : kenobigc_bin;
 	u32 size = isDebug ? kenobigc_dbg_bin_size : kenobigc_bin_size;
 	
 	print_gecko("Copying kenobi%s to %08X\r\n", (isDebug?"_dbg":""),(u32)CHEATS_ENGINE);

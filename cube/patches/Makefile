@@ -12,7 +12,7 @@ DEST    = ../swiss/source/patches
 DISASM    = disassembly
 
 .NOTPARALLEL:
-all: clean cpatches stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch
+all: clean codehandler cpatches stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch
 
 stub: reboot.bin stub.bin
 sdpatch: sd.bin sd.card.bin sd.dtk.bin
@@ -27,6 +27,14 @@ clean:
 	@rm -f *.bin *.elf *.o
 	@rm -f $(DEST)/*.bin.s $(DEST)/*_bin.h
 	@rm -fr $(DISASM)
+
+codehandler:
+	@echo Building Codehandler ...
+	@$(CC) -nostartfiles -nodefaultlibs -nostdlib -o kenobigc.bin -T cheats/codehandler.ld cheats/codehandleronly.s
+	@$(CC) -nostartfiles -nodefaultlibs -nostdlib -o kenobigc.dbg.bin -T cheats/codehandler.ld cheats/codehandler.s
+	@$(BIN2S) -H $(DEST)/kenobigc_bin.h kenobigc.bin > $(DEST)/kenobigc.bin.s
+	@$(BIN2S) -H $(DEST)/kenobigc_dbg_bin.h kenobigc.dbg.bin > $(DEST)/kenobigc.dbg.bin.s
+	@rm -f *.bin
 
 cpatches:
 	@echo Building C Patches ...

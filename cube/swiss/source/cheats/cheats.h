@@ -1,10 +1,8 @@
 #ifndef __CHEATS_H
 #define __CHEATS_H
 
-extern int kenobigc_bin_size;
-extern u8 kenobigc_bin[];
-extern int kenobigc_dbg_bin_size;
-extern u8 kenobigc_dbg_bin[];
+#include "kenobigc_bin.h"
+#include "kenobigc_dbg_bin.h"
 
 #define CHEATS_MAX_SIZE(size)	(WIIRD_ENGINE_SPACE-size-8)
 #define CHEATS_LOCATION(size)	((void*)(WIIRD_ENGINE + size - 8))
