@@ -286,8 +286,10 @@ int findCheats(bool silent) {
 		devices[DEVICE_TEMP]->readFile(cheatsFile, cheats_buffer, cheatsFile->size);
 		parseCheats(cheats_buffer);
 		free(cheats_buffer);
-		free(cheatsFile);
 	}
+	devices[DEVICE_TEMP]->closeFile(cheatsFile);
+	free(cheatsFile);
+
 	if(!silent && _cheats.num_cheats == 0) {
 		while(padsButtonsHeld() & PAD_BUTTON_Y);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Empty or unreadable cheats file found.\nPress A to continue.");

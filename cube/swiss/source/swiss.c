@@ -407,6 +407,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 				else if(swissSettings.enableFileManagement) {
 					needsRefresh = manage_file() ? 1:0;
 				}
+				memcpy(&(*directory)[curSelection], &curFile, sizeof(file_handle));
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 			}
 			return filePanel;
@@ -422,6 +423,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 				memcpy(&curDir, &curFile, sizeof(file_handle));
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
 				needsRefresh = manage_file() ? 1:0;
+				memcpy(&(*directory)[curSelection], &curFile, sizeof(file_handle));
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 				while(padsButtonsHeld() & PAD_BUTTON_B) VIDEO_WaitVSync();
 				if(needsRefresh) {
@@ -624,6 +626,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 				else if(swissSettings.enableFileManagement) {
 					needsRefresh = manage_file() ? 1:0;
 				}
+				memcpy(&(*directory)[curSelection], &curFile, sizeof(file_handle));
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 			}
 			return filePanel;
@@ -639,6 +642,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 				memcpy(&curDir, &curFile, sizeof(file_handle));
 				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
 				needsRefresh = manage_file() ? 1:0;
+				memcpy(&(*directory)[curSelection], &curFile, sizeof(file_handle));
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 				while(padsButtonsHeld() & PAD_BUTTON_B) VIDEO_WaitVSync();
 				if(needsRefresh) {

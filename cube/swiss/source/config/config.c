@@ -102,9 +102,9 @@ char* config_file_read(char* filename) {
 		if (readBuffer) {
 			print_gecko("config_file_read: reading %i byte file\r\n", configFile->size);
 			devices[DEVICE_CONFIG]->readFile(configFile, readBuffer, configFile->size);
-			devices[DEVICE_CONFIG]->closeFile(configFile);
 		}
 	}
+	devices[DEVICE_CONFIG]->closeFile(configFile);
 	free(configFile);
 	return readBuffer;
 }
@@ -121,6 +121,7 @@ int config_file_write(char* filename, char* contents) {
 		free(configFile);
 		return 1;
 	}
+	devices[DEVICE_CONFIG]->closeFile(configFile);
 	free(configFile);
 	return 0;
 }

@@ -42,12 +42,12 @@ void sortFiles(file_handle* dir, int num_files)
 
 void freeFiles() {
 	if(curDirEntries) {
-		int i;
-		for(i = 0; i < curDirEntryCount; i++) {
+		for(int i = 0; i < curDirEntryCount; i++) {
 			if(curDirEntries[i].meta) {
 				meta_free(curDirEntries[i].meta);
 				curDirEntries[i].meta = NULL;
 			}
+			devices[DEVICE_CUR]->closeFile(&curDirEntries[i]);
 		}
 		free(curDirEntries);
 		curDirEntries = NULL;
@@ -58,7 +58,6 @@ void freeFiles() {
 void scanFiles() {
 	freeFiles();
 	// Read the directory/device TOC
-	if(curDirEntries){ free(curDirEntries); curDirEntries = NULL; }
 	print_gecko("Reading directory: %s\r\n",curFile.name);
 	curDirEntryCount = devices[DEVICE_CUR]->readDir(&curFile, &curDirEntries, -1);
 	print_gecko("Found %i entries\r\n",curDirEntryCount);
