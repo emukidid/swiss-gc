@@ -332,28 +332,31 @@ file_handle* meta_find_disc2(file_handle *f) {
 	file_handle* disc2File = NULL;
 	if(is_multi_disc(f->meta)) {
 		file_handle* dirEntries = getCurrentDirEntries();
-		for(int i = 0; i < getCurrentDirEntryCount(); i++) {
-			if(!dirEntries[i].meta) {
-				populate_meta(&dirEntries[i]);
-			}
-			if(dirEntries[i].meta) {
-				if(strncmp((const char*)dirEntries[i].meta->diskId.gamename, (const char*)f->meta->diskId.gamename, 4)) {
-					continue;
+		for(int i = 0; i < 2; i++) {
+			for(int j = 0; j < getCurrentDirEntryCount(); j++) {
+				if(!dirEntries[j].meta) {
+					if(i == 0) continue;
+					populate_meta(&dirEntries[j]);
 				}
-				if(strncmp((const char*)dirEntries[i].meta->diskId.company, (const char*)f->meta->diskId.company, 2)) {
-					continue;
+				if(dirEntries[j].meta) {
+					if(strncmp((const char*)dirEntries[j].meta->diskId.gamename, (const char*)f->meta->diskId.gamename, 4)) {
+						continue;
+					}
+					if(strncmp((const char*)dirEntries[j].meta->diskId.company, (const char*)f->meta->diskId.company, 2)) {
+						continue;
+					}
+					if(dirEntries[j].meta->diskId.disknum == f->meta->diskId.disknum) {
+						continue;
+					}
+					if(dirEntries[j].meta->diskId.gamever != f->meta->diskId.gamever) {
+						continue;
+					}
+					if(strcasecmp(dirEntries[j].name, f->name) != dirEntries[j].meta->diskId.disknum - f->meta->diskId.disknum) {
+						disc2File = &dirEntries[j];
+						continue;
+					}
+					return &dirEntries[j];
 				}
-				if(dirEntries[i].meta->diskId.disknum == f->meta->diskId.disknum) {
-					continue;
-				}
-				if(dirEntries[i].meta->diskId.gamever != f->meta->diskId.gamever) {
-					continue;
-				}
-				if(strcasecmp(dirEntries[i].name, f->name) != dirEntries[i].meta->diskId.disknum - f->meta->diskId.disknum) {
-					disc2File = &dirEntries[i];
-					continue;
-				}
-				return &dirEntries[i];
 			}
 		}
 	}
