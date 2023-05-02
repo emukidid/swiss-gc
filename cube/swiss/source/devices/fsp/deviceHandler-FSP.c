@@ -93,8 +93,8 @@ s64 deviceHandler_FSP_seekFile(file_handle* file, s64 where, u32 type) {
 s32 deviceHandler_FSP_readFile(file_handle* file, void* buffer, u32 length) {
 	if(!file->fp) {
 		file->fp = fsp_fopen(fsp_session, getDevicePath(file->name), "rb");
+		if(!file->fp) return -1;
 	}
-	if(!file->fp) return -1;
 	if(file->size <= 0) {
 		struct stat fstat;
 		if(fsp_stat(fsp_session, getDevicePath(file->name), &fstat)) {
@@ -114,8 +114,8 @@ s32 deviceHandler_FSP_readFile(file_handle* file, void* buffer, u32 length) {
 s32 deviceHandler_FSP_writeFile(file_handle* file, const void* buffer, u32 length) {
 	if(!file->fp) {
 		file->fp = fsp_fopen(fsp_session, getDevicePath(file->name), "wb");
+		if(!file->fp) return -1;
 	}
-	if(!file->fp) return -1;
 	
 	fsp_fseek(file->fp, file->offset, SEEK_SET);
 	size_t bytes_written = fsp_fwrite(buffer, 1, length, file->fp);

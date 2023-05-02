@@ -143,8 +143,9 @@ s64 deviceHandler_SMB_seekFile(file_handle* file, s64 where, u32 type){
 s32 deviceHandler_SMB_readFile(file_handle* file, void* buffer, u32 length){
 	if(!file->fp) {
 		file->fp = fopen(file->name, "rb");
+		if(!file->fp) return -1;
+		setbuf(file->fp, NULL);
 	}
-	if(!file->fp) return -1;
 	if(file->size <= 0) {
 		fseek(file->fp, 0, SEEK_END);
 		file->size = ftell(file->fp);
@@ -159,8 +160,9 @@ s32 deviceHandler_SMB_readFile(file_handle* file, void* buffer, u32 length){
 s32 deviceHandler_SMB_writeFile(file_handle* file, const void* buffer, u32 length){
 	if(!file->fp) {
 		file->fp = fopen(file->name, "wb");
+		if(!file->fp) return -1;
+		setbuf(file->fp, NULL);
 	}
-	if(!file->fp) return -1;
 	
 	fseek(file->fp, file->offset, SEEK_SET);
 	size_t bytes_written = fwrite(buffer, 1, length, file->fp);
