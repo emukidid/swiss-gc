@@ -1,3 +1,4 @@
+#include <fnmatch.h>
 #include <gccore.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -60,6 +61,23 @@ void scanFiles() {
 	// Read the directory/device TOC
 	print_gecko("Reading directory: %s\r\n",curFile.name);
 	curDirEntryCount = devices[DEVICE_CUR]->readDir(&curFile, &curDirEntries, -1);
+	if(!strcasecmp(swissSettings.flattenDir, curFile.name)
+	|| !fnmatch(swissSettings.flattenDir, curFile.name, FNM_PATHNAME | FNM_CASEFOLD)) {
+		for(int i = 0; i < curDirEntryCount; i++) {
+			if(curDirEntries[i].fileAttrib == IS_DIR) {
+				file_handle* dirEntries = NULL;
+				int dirEntryCount = devices[DEVICE_CUR]->readDir(&curDirEntries[i], &dirEntries, -1);
+				if(dirEntryCount > 1) {
+					curDirEntryCount--; dirEntryCount--;
+					curDirEntries = reallocarray(curDirEntries, curDirEntryCount + dirEntryCount, sizeof(file_handle));
+					memmove(&curDirEntries[i + dirEntryCount], &curDirEntries[i + 1], (curDirEntryCount - i) * sizeof(file_handle));
+					memmove(&curDirEntries[i], &dirEntries[1], dirEntryCount * sizeof(file_handle));
+					curDirEntryCount += dirEntryCount; i--;
+				}
+				free(dirEntries);
+			}
+		}
+	}
 	print_gecko("Found %i entries\r\n",curDirEntryCount);
 	sortFiles(curDirEntries, curDirEntryCount);
 	for(int i = 0; i < curDirEntryCount; i++) {

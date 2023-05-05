@@ -115,6 +115,7 @@ int main(int argc, char *argv[])
 {
 	// Setup defaults (if no config is found)
 	memset(&swissSettings, 0 , sizeof(SwissSettings));
+	strcpy(swissSettings.flattenDir, "*/games");
 
 	// Register all devices supported (order matters for boot devices)
 	int i = 0;

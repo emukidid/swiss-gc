@@ -183,6 +183,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "RecentListLevel=%s\r\n", recentListLevelStr[swissSettings.recentListLevel]);
 	fprintf(fp, "GCLoaderTopVersion=%s\r\n", swissSettings.gcloaderTopVersion);
 	fprintf(fp, "Autoload=%s\r\n", swissSettings.autoload);
+	fprintf(fp, "FlattenDir=%s\r\n", swissSettings.flattenDir);
 
 	// Write out the default game config portion too
 	fprintf(fp, "Force Video Mode=%s\r\n", gameVModeStr[swissSettings.gameVMode]);
@@ -859,6 +860,9 @@ void config_parse_global(char *configData) {
 				}
 				else if(!strcmp("Autoload", name)) {
 					strlcpy(swissSettings.autoload, value, sizeof(swissSettings.autoload));
+				}
+				else if(!strcmp("FlattenDir", name)) {
+					strlcpy(swissSettings.flattenDir, value, sizeof(swissSettings.flattenDir));
 				}
 			}
 		}
