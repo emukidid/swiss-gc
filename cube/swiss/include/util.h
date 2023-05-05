@@ -13,6 +13,7 @@ int endsWith(char *str, char *end);
 bool canLoadFileType(char *filename);
 bool checkExtension(char *filename);
 char *getRelativeName(char *path);
+char *getRelativePath(char *path, char *parentPath);
 void getParentPath(char *src, char *dst);
 char *getDevicePath(char *path);
 char *getExternalPath(char *path);

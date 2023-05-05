@@ -43,6 +43,20 @@ char *getRelativeName(char *path)
 	return chr ? chr + 1 : path;
 }
 
+char *getRelativePath(char *path, char *parentPath)
+{
+	size_t len = strlen(parentPath);
+
+	if (!strncmp(path, parentPath, len)) {
+		if (parentPath[len - 1] == '/')
+			return path + len;
+		else if (path[len] == '/')
+			return path + len + 1;
+	}
+
+	return path;
+}
+
 void getParentPath(char *src, char *dst) {
 	int i;
 	for(i=strlen(src);i>0;i--){

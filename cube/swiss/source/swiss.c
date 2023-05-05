@@ -307,7 +307,7 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 			populate_meta(&((*directory)[current_view_start]));
 			uiDrawObj_t *browserButton = DrawFileBrowserButton(150, fileListBase+(j*40), 
 									getVideoMode()->fbWidth-30, fileListBase+(j*40)+40, 
-									getRelativeName((*directory)[current_view_start].name),
+									getRelativePath((*directory)[current_view_start].name, curFile.name),
 									&((*directory)[current_view_start]), 
 									(current_view_start == curSelection) ? B_SELECTED:B_NOSELECT);
 			((*directory)[current_view_start]).uiObj = browserButton;
@@ -527,7 +527,7 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 			populate_meta(&((*directory)[current_view_start]));
 			browserObject = DrawFileCarouselEntry(left_x_base - ((sub_entry_width*(left_num-j-1))+sub_entry_width), y_base + 10, 
 									left_x_base - ((sub_entry_width*(left_num-j-1))), y_base + 10 + sub_entry_height, 
-									getRelativeName((*directory)[current_view_start].name),
+									getRelativePath((*directory)[current_view_start].name, curFile.name),
 									&((*directory)[current_view_start]), j - left_num);
 			((*directory)[current_view_start]).uiObj = browserObject;
 			DrawAddChild(containerPanel, browserObject);
@@ -538,7 +538,7 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 		populate_meta(&((*directory)[current_view_start]));
 		browserObject = DrawFileCarouselEntry(((getVideoMode()->fbWidth / 2) - (main_entry_width / 2)), y_base, 
 								((getVideoMode()->fbWidth / 2) + (main_entry_width / 2)), y_base + main_entry_height, 
-								parentLink ? "Up to parent directory" : getRelativeName((*directory)[current_view_start].name),
+								parentLink ? "Up to parent directory" : getRelativePath((*directory)[current_view_start].name, curFile.name),
 								&((*directory)[current_view_start]), 0);
 		((*directory)[current_view_start]).uiObj = browserObject;
 		DrawAddChild(containerPanel, browserObject);
@@ -549,7 +549,7 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 			populate_meta(&((*directory)[current_view_start]));
 			browserObject = DrawFileCarouselEntry(right_x_base + ((sub_entry_width*j)), y_base + 10, 
 									right_x_base + ((sub_entry_width*j)+sub_entry_width), y_base + 10 + sub_entry_height,
-									getRelativeName((*directory)[current_view_start].name),
+									getRelativePath((*directory)[current_view_start].name, curFile.name),
 									&((*directory)[current_view_start]), j+1);
 			((*directory)[current_view_start]).uiObj = browserObject;
 			DrawAddChild(containerPanel, browserObject);
@@ -2173,7 +2173,7 @@ int info_game(ConfigEntry *config)
 				num_cheats = findCheats(false);
 			}
 			if(num_cheats != 0) {
-				DrawCheatsSelector(getRelativeName(getCurrentDirEntries()[curSelection].name));
+				DrawCheatsSelector(getRelativeName(&curFile.name[0]));
 			}
 		}
 		while(padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
