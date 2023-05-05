@@ -15960,11 +15960,36 @@ int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int
 			
 			length = DOLSize(data);
 			data = realloc(data, length);
+		} else {
+			data = realloc(data, length);
+			patched = patch(data, length, gameID, type);
 		}
 		
 		*buffer = data;
 		*sizeToRead = length;
 		return patched;
 	}
-	return patch(data, length, gameID, type);
+	
+	patched = patch(data, length, gameID, type);
+	
+	if (type == PATCH_DOL) {
+		DOLHEADER *hdr = (DOLHEADER *) data;
+		
+		for (i = 0; i < MAXTEXTSECTION; i++) {
+			if (hdr->textOffset[i]) {
+				hdr->textOffset[i] -= hdr->textAddress[i] &  31;
+				hdr->textLength[i] += hdr->textAddress[i] &  31;
+				hdr->textAddress[i] = hdr->textAddress[i] & ~31;
+			}
+		}
+		
+		for (i = 0; i < MAXDATASECTION; i++) {
+			if (hdr->dataOffset[i]) {
+				hdr->dataOffset[i] -= hdr->dataAddress[i] &  31;
+				hdr->dataLength[i] += hdr->dataAddress[i] &  31;
+				hdr->dataAddress[i] = hdr->dataAddress[i] & ~31;
+			}
+		}
+	}
+	return patched;
 }
