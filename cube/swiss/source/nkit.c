@@ -44,8 +44,14 @@ static const struct {
 };
 
 static const dvddiskid NDDEMO = {
-	"00\0E",
-	"01"
+	.gamename  = "00\0E",
+	.company   = "01"
+};
+
+static const dvddiskid DATEL = {
+	.gamename  = "DTLX",
+	.company   = "01",
+	.streaming = true
 };
 
 static const struct {
@@ -2310,10 +2316,13 @@ bool valid_gcm_boot(const DiskHeader *header)
 	if (!memcmp(header, &NDDEMO, offsetof(DiskHeader, DVDMagicWord)) &&
 		!strcmp(header->GameName, "NDDEMO")) return true;
 
+	if (!memcmp(header, &DATEL, offsetof(DiskHeader, DVDMagicWord)))
+		return false;
+
 	if (isdigit(header->ConsoleID) && header->MakerCodeA == '0' && header->MakerCodeB == '1')
 		return false;
 
-	return header->DOLOffset != 0 && header->FSTAddress != 0;
+	return !!header->DOLOffset;
 }
 
 bool valid_gcm_crc32(const DiskHeader *header, uint32_t crc)
