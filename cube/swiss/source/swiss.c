@@ -270,7 +270,7 @@ void select_recent_entry() {
 	do {VIDEO_WaitVSync();} while (padsButtonsHeld() & PAD_BUTTON_B);
 	DrawDispose(container);
 	if(idx >= 0) {
-		int res = load_existing_entry(&swissSettings.recent[idx][0]);
+		int res = find_existing_entry(&swissSettings.recent[idx][0], true);
 		if(res) {
 			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,res == RECENT_ERR_ENT_MISSING ? "Recent entry not found.\nPress A to continue." 
 																					:	"Recent device not found.\nPress A to continue.");
@@ -447,7 +447,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			}
 		}
 		
-		if((swissSettings.recentListLevel != 2) && (padsButtonsHeld() & PAD_BUTTON_START)) {
+		if((padsButtonsHeld() & PAD_BUTTON_START) && swissSettings.recentListLevel > 0) {
 			select_recent_entry();
 			return filePanel;
 		}
@@ -671,7 +671,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			DrawUpdateFileBrowserButton((*directory)[curSelection].uiObj, (curMenuLocation == ON_FILLIST) ? B_SELECTED:B_NOSELECT);
 			return filePanel;
 		}
-		if((swissSettings.recentListLevel != 2) && (padsButtonsHeld() & PAD_BUTTON_START)) {
+		if((padsButtonsHeld() & PAD_BUTTON_START) && swissSettings.recentListLevel > 0) {
 			select_recent_entry();
 			return filePanel;
 		}
@@ -2434,7 +2434,7 @@ void menu_loop()
 			if((btns & PAD_BUTTON_B) && devices[DEVICE_CUR] != NULL) {
 				curMenuLocation = ON_FILLIST;
 			}
-			if((swissSettings.recentListLevel != 2) && (padsButtonsHeld() & PAD_BUTTON_START)) {
+			if((btns & PAD_BUTTON_START) && swissSettings.recentListLevel > 0) {
 				select_recent_entry();
 			}
 			while(padsButtonsHeld() & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_START)) {

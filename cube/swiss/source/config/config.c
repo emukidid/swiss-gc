@@ -1086,7 +1086,7 @@ int config_init(void (*progress_indicator)(char*, int, int)) {
 	}
 	
 	// Read the recent list if enabled
-	if(swissSettings.recentListLevel != 2) {
+	if(swissSettings.recentListLevel > 0) {
 		concat_path(txtbuffer, SWISS_SETTINGS_DIR, SWISS_RECENTLIST_FILENAME);
 		configData = config_file_read(txtbuffer);
 		if(configData != NULL) {

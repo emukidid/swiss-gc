@@ -168,7 +168,7 @@ void print_gecko(const char* fmt, ...)
 /* Update recent list with a new entry. */
 bool update_recent() {
 	// Off
-	if(swissSettings.recentListLevel == 2) return false;
+	if(swissSettings.recentListLevel == 0) return false;
 	
 	int i, found_idx = -1, max_idx = RECENT_MAX-1;
 	// See if this entry already exists in the recent list, if so, we'll move it to the top.
@@ -199,7 +199,7 @@ bool update_recent() {
 	return true;
 }
 
-int load_existing_entry(char *entry) {
+int find_existing_entry(char *entry, bool load) {
 	// get the device handler for it
 	DEVICEHANDLER_INTERFACE *entryDevice = getDeviceFromPath(entry);
 	if(entryDevice) {
@@ -229,7 +229,7 @@ int load_existing_entry(char *entry) {
 				if(!strcmp(entry, curDirEntries[i].name)
 				|| !fnmatch(entry, curDirEntries[i].name, FNM_PATHNAME)) {
 					curSelection = i;
-					if(curDirEntries[i].fileAttrib == IS_FILE) {
+					if(curDirEntries[i].fileAttrib == IS_FILE && load) {
 						populate_meta(&curDirEntries[i]);
 						memcpy(&curFile, &curDirEntries[i], sizeof(file_handle));
 						load_file();

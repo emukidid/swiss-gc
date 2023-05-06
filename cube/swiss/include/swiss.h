@@ -140,7 +140,7 @@ typedef struct {
 	int fileBrowserType;
 	int bs2Boot;
 	int showHiddenFiles;
-	int recentListLevel;	// on, lazy, off
+	int recentListLevel;	// off, lazy, on
 	char gcloaderTopVersion[32];
 	char autoload[PATHNAME_MAX];
 	char flattenDir[PATHNAME_MAX];

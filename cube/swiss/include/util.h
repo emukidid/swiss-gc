@@ -21,7 +21,7 @@ char *stripInvalidChars(char *str);
 void load_auto_dol();
 void print_gecko(const char* fmt, ...);
 bool update_recent();
-int load_existing_entry(char *entry);
+int find_existing_entry(char *entry, bool load);
 bool deleteFileOrDir(file_handle* entry);
 int formatBytes(char *string, off_t count, blksize_t blocksize, bool metric);
 

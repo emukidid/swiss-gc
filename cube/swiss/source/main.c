@@ -158,6 +158,7 @@ int main(int argc, char *argv[])
 	swissSettings.bbaUseDhcp = 1;
 	swissSettings.aveCompat = 1;
 	swissSettings.enableFileManagement = 0;
+	swissSettings.recentListLevel = 2;
 	Initialise();
 
 	needsDeviceChange = 1;
@@ -249,7 +250,7 @@ int main(int argc, char *argv[])
 				strlcpy(swissSettings.gcloaderTopVersion, gcloaderVersionStr, sizeof(swissSettings.gcloaderTopVersion));
 			}
 			if(strverscmp(swissSettings.gcloaderTopVersion, "2.0.0") < 0) {
-				load_existing_entry("gcldr:/GCLoader_Updater_2.0.0*.dol");
+				find_existing_entry("gcldr:/GCLoader_Updater_2.0.0*.dol", true);
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\ngc-loader.com/firmware-updates"));
 				wait_press_A();
 				DrawDispose(msgBox);
@@ -262,7 +263,10 @@ int main(int argc, char *argv[])
 	if(swissSettings.autoload[0]) {
 		// Check that the path in the autoload entry points at a device that has been detected
 		print_gecko("Autoload entry detected [%s]\r\n", swissSettings.autoload);
-		load_existing_entry(&swissSettings.autoload[0]);
+		find_existing_entry(&swissSettings.autoload[0], true);
+	}
+	else if(swissSettings.recent[0][0] && swissSettings.recentListLevel > 1) {
+		find_existing_entry(&swissSettings.recent[0][0], false);
 	}
 
 	while(1) {
