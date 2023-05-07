@@ -57,13 +57,20 @@ char *getRelativePath(char *path, char *parentPath)
 	return path;
 }
 
-void getParentPath(char *src, char *dst) {
-	int i;
-	for(i=strlen(src);i>0;i--){
-		if(src[i]=='/') {
-			strncpy(dst, src, i);
-		}
-	}
+bool getParentPath(char *path, char *parentPath)
+{
+	if (path != parentPath)
+		strcpy(parentPath, path);
+
+	char *first = strchr(parentPath, '/');
+	char *last = strrchr(parentPath, '/');
+
+	if (!first || first[1] == '\0')
+		return true;
+	if (first == last)
+		first[1] = '\0';
+	else last[0] = '\0';
+	return false;
 }
 
 char *getDevicePath(char *path)
@@ -215,6 +222,9 @@ int find_existing_entry(char *entry, bool load) {
 			devices[DEVICE_CUR] = entryDevice;
 			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 			getParentPath(entry, curFile.name);
+			while(!fnmatch(swissSettings.flattenDir, curFile.name, FNM_PATHNAME | FNM_CASEFOLD | FNM_LEADING_DIR)
+				&& fnmatch(swissSettings.flattenDir, curFile.name, FNM_PATHNAME | FNM_CASEFOLD) == FNM_NOMATCH)
+				getParentPath(curFile.name, curFile.name);
 			scanFiles();
 			
 			curMenuLocation = ON_FILLIST;

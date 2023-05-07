@@ -317,29 +317,14 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 }
 
 // Modify entry to go up a directory.
-int upToParent(file_handle* entry)
+bool upToParent(file_handle* entry)
 {
-	int len = strlen(entry->name);
+	// If we're a file, go up to the parent of the file
+	if(entry->fileAttrib == IS_FILE)
+		getParentPath(entry->name, entry->name);
 	
 	// Go up a folder
-	while(len && entry->name[len-1]!='/')
-		len--;
-	if(len && len != strlen(entry->name))
-		entry->name[len-1] = '\0';
-	else
-		return 1;
-
-	// If we're a file, go up to the parent of the file
-	if(entry->fileAttrib == IS_FILE) {
-		while(len && entry->name[len-1]!='/')
-			len--;
-		if(len && len != strlen(entry->name))
-			entry->name[len-1] = '\0';
-		else
-			return 1;
-	}
-
-	return 0;
+	return getParentPath(entry->name, entry->name);
 }
 
 uiDrawObj_t* loadingBox = NULL;

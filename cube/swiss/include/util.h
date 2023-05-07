@@ -14,7 +14,7 @@ bool canLoadFileType(char *filename);
 bool checkExtension(char *filename);
 char *getRelativeName(char *path);
 char *getRelativePath(char *path, char *parentPath);
-void getParentPath(char *src, char *dst);
+bool getParentPath(char *path, char *parentPath);
 char *getDevicePath(char *path);
 char *getExternalPath(char *path);
 char *stripInvalidChars(char *str);
