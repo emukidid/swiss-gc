@@ -2130,7 +2130,7 @@ int info_game(ConfigEntry *config)
 			verify_game();
 		}
 		if(buttons & PAD_BUTTON_X) {
-			show_settings(PAGE_GAME, 0, config);
+			needsRefresh = show_settings(PAGE_GAME, 0, config);
 		}
 		if((buttons & PAD_TRIGGER_Z) && devices[DEVICE_CONFIG] != NULL) {
 			// Toggle autoload
@@ -2395,7 +2395,7 @@ void menu_loop()
 						needsDeviceChange = 1;  //Change from SD->DVD or vice versa
 						break;
 					case MENU_SETTINGS:
-						show_settings(PAGE_GLOBAL, 0, NULL);
+						needsRefresh = show_settings(PAGE_GLOBAL, 0, NULL);
 						break;
 					case MENU_INFO:
 						show_info();
