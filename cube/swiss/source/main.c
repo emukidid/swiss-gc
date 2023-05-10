@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 			if(devices[DEVICE_CUR]->features & FEAT_AUTOLOAD_DOL) {
 				load_auto_dol();
 			}
-			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+			memcpy(&curDir, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 			needsDeviceChange = 0;
 			DrawLoadBackdrop();
 		}

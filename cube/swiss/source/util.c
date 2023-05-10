@@ -129,7 +129,7 @@ char *autoboot_dols[] = { "/boot.dol", "/boot2.dol" }; // Keep this list sorted
 void load_auto_dol() {
 	u8 rev_buf[sizeof(GITREVISION) - 1]; // Don't include the NUL termination in the comparison
 
-	memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+	memcpy(&curDir, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 	scanFiles();
 	file_handle* curDirEntries = getCurrentDirEntries();
 	for (int i = 0; i < getCurrentDirEntryCount(); i++) {
@@ -145,6 +145,7 @@ void load_auto_dol() {
 					curSelection = i;
 					memcpy(&curFile, &curDirEntries[i], sizeof(file_handle));
 					boot_dol();
+					memcpy(&curDirEntries[i], &curFile, sizeof(file_handle));
 				}
 
 				// If we've made it this far, we've already found an autoboot DOL,
@@ -220,11 +221,11 @@ int find_existing_entry(char *entry, bool load) {
 			}
 			// Attempt to read the directory the recent file lives in (required for 2 disc games)
 			devices[DEVICE_CUR] = entryDevice;
-			memcpy(&curFile, devices[DEVICE_CUR]->initial, sizeof(file_handle));
-			getParentPath(entry, curFile.name);
-			while(!fnmatch(swissSettings.flattenDir, curFile.name, FNM_PATHNAME | FNM_CASEFOLD | FNM_LEADING_DIR)
-				&& fnmatch(swissSettings.flattenDir, curFile.name, FNM_PATHNAME | FNM_CASEFOLD) == FNM_NOMATCH)
-				getParentPath(curFile.name, curFile.name);
+			memcpy(&curDir, devices[DEVICE_CUR]->initial, sizeof(file_handle));
+			getParentPath(entry, curDir.name);
+			while(!fnmatch(swissSettings.flattenDir, curDir.name, FNM_PATHNAME | FNM_CASEFOLD | FNM_LEADING_DIR)
+				&& fnmatch(swissSettings.flattenDir, curDir.name, FNM_PATHNAME | FNM_CASEFOLD) == FNM_NOMATCH)
+				getParentPath(curDir.name, curDir.name);
 			scanFiles();
 			
 			curMenuLocation = ON_FILLIST;
@@ -243,10 +244,10 @@ int find_existing_entry(char *entry, bool load) {
 						populate_meta(&curDirEntries[i]);
 						memcpy(&curFile, &curDirEntries[i], sizeof(file_handle));
 						load_file();
-						memcpy(&curFile, &curDir, sizeof(file_handle));
+						memcpy(&curDirEntries[i], &curFile, sizeof(file_handle));
 					}
 					else if(curDirEntries[i].fileAttrib == IS_DIR) {
-						memcpy(&curFile, &curDirEntries[i], sizeof(file_handle));
+						memcpy(&curDir, &curDirEntries[i], sizeof(file_handle));
 						needsRefresh = 1;
 					}
 					return 0;

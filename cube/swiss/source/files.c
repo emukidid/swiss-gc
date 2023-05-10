@@ -59,9 +59,9 @@ void freeFiles() {
 void scanFiles() {
 	freeFiles();
 	// Read the directory/device TOC
-	print_gecko("Reading directory: %s\r\n",curFile.name);
-	curDirEntryCount = devices[DEVICE_CUR]->readDir(&curFile, &curDirEntries, -1);
-	if(!fnmatch(swissSettings.flattenDir, curFile.name, FNM_PATHNAME | FNM_CASEFOLD)) {
+	print_gecko("Reading directory: %s\r\n",curDir.name);
+	curDirEntryCount = devices[DEVICE_CUR]->readDir(&curDir, &curDirEntries, -1);
+	if(!fnmatch(swissSettings.flattenDir, curDir.name, FNM_PATHNAME | FNM_CASEFOLD)) {
 		for(int i = 0; i < curDirEntryCount; i++) {
 			if(curDirEntries[i].fileAttrib == IS_DIR) {
 				file_handle* dirEntries = NULL;
@@ -80,12 +80,12 @@ void scanFiles() {
 	print_gecko("Found %i entries\r\n",curDirEntryCount);
 	sortFiles(curDirEntries, curDirEntryCount);
 	for(int i = 0; i < curDirEntryCount; i++) {
-		if(!strcmp(curDirEntries[i].name, curDir.name)) {
+		if(!strcmp(curDirEntries[i].name, curFile.name)) {
 			curSelection = i;
 			break;
 		}
 	}
-	memcpy(&curDir, &curFile, sizeof(file_handle));
+	memcpy(&curFile, &curDir, sizeof(file_handle));
 }
 
 file_handle* getCurrentDirEntries() {
