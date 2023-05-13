@@ -98,6 +98,7 @@ typedef struct {
 	int swapCStick;
 	int triggerLevel;
 	int wiirdDebug;	// Enable WiiRD debug
+	int wiirdEngine;
 	int hideUnknownFileTypes;
 	int sram60Hz;
 	int sramProgressive;

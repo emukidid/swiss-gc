@@ -991,7 +991,7 @@ void load_app(ExecutableFile *fileToPatch)
 	DCFlushRange((void*)0x80000000, 0x3100);
 	ICInvalidateRange((void*)0x80000000, 0x3100);
 	
-	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
+	if(swissSettings.wiirdEngine) {
 		kenobi_install_engine();
 	}
 	
@@ -1760,10 +1760,15 @@ void load_game() {
 			DrawDispose(msgBox);
 		}
 	}
+	if(swissSettings.wiirdDebug && !usb_isgeckoalive(1)) {
+		swissSettings.wiirdDebug = 0;
+	}
 	if(swissSettings.wiirdDebug || getEnabledCheatsSize() > 0) {
+		swissSettings.wiirdEngine = 1;
 		setTopAddr(WIIRD_ENGINE);
 	}
 	else {
+		swissSettings.wiirdEngine = 0;
 		setTopAddr(0x81800000);
 	}
 	

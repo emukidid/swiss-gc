@@ -1133,6 +1133,7 @@ void config_unload_current() {
 	swissSettings.invertCStick = backup.invertCStick;
 	swissSettings.swapCStick = backup.swapCStick;
 	swissSettings.triggerLevel = backup.triggerLevel;
+	swissSettings.wiirdDebug = backup.wiirdDebug;
 	swissSettings.sram60Hz = backup.sram60Hz;
 	swissSettings.sramProgressive = backup.sramProgressive;
 	swissSettings.emulateReadSpeed = backup.emulateReadSpeed;

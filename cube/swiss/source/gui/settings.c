@@ -248,6 +248,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)SET_PAGE_1_NEXT);
 		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, page_y_ofs, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_1_NEXT-1)),scrollBarTabHeight));
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Global Settings (1/5):"));
+		bool dbgEnable = devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
 		if(option < SET_STOP_MOTOR) {
 			drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo":"Mono", option == SET_SYS_SOUND, true);
@@ -267,7 +268,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "SD/IDE Speed:", swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == SET_EXI_SPEED, true);
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, true);
-			drawSettingEntryBoolean(page, &page_y_ofs, "USB Gecko debug output:", swissSettings.debugUSB, option == SET_ENABLE_USBGECKODBG, true);
+			drawSettingEntryBoolean(page, &page_y_ofs, "USB Gecko debug output:", swissSettings.debugUSB, option == SET_ENABLE_USBGECKODBG, dbgEnable);
 		}
 	}
 	else if(page_num == PAGE_NETWORK) {
@@ -303,6 +304,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Global Game Settings (3/5):"));
 		bool enabledVideoPatches = swissSettings.disableVideoPatches < 2;
 		bool emulatedMemoryCard = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_MEMCARD);
+		bool dbgEnable = devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko);
 		drawSettingEntryString(page, &page_y_ofs, "In-Game Reset:", igrTypeStr[swissSettings.igrType], option == SET_IGR, true);
 		drawSettingEntryString(page, &page_y_ofs, "Boot through IPL:", bs2BootStr[swissSettings.bs2Boot], option == SET_BS2BOOT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Boot without prompts:", swissSettings.autoBoot, option == SET_AUTOBOOT, true);
@@ -312,7 +314,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		drawSettingEntryString(page, &page_y_ofs, "Disable Video Patches:", disableVideoPatchesStr[swissSettings.disableVideoPatches], option == SET_ENABLE_VIDPATCH, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Pause for resolution change:", swissSettings.pauseAVOutput, option == SET_PAUSE_AVOUTPUT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Auto-load all cheats:", swissSettings.autoCheats, option == SET_ALL_CHEATS, true);
-		drawSettingEntryBoolean(page, &page_y_ofs, "WiiRD debugging:", swissSettings.wiirdDebug, option == SET_WIIRDDBG, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "WiiRD debugging:", swissSettings.wiirdDebug, option == SET_WIIRDDBG, dbgEnable);
 	}
 	else if(page_num == PAGE_GAME_DEFAULTS) {
 		int settings_per_page = 10;
@@ -516,7 +518,8 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				swissSettings.forceDTVStatus ^= 1;
 			break;
 			case SET_ENABLE_USBGECKODBG:
-				swissSettings.debugUSB ^= 1;
+				if(devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko))
+					swissSettings.debugUSB ^= 1;
 			break;
 		}
 	}
@@ -623,7 +626,8 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				swissSettings.autoCheats ^=1;
 			break;
 			case SET_WIIRDDBG:
-				swissSettings.wiirdDebug ^=1;
+				if(devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko))
+					swissSettings.wiirdDebug ^=1;
 			break;
 		}
 	}

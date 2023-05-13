@@ -15895,7 +15895,7 @@ int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int
 		patched += Patch_FontEncode(buffer, sizeToRead);
 		
 		// Cheats
-		if (swissSettings.wiirdDebug || getEnabledCheatsSize() > 0)
+		if (swissSettings.wiirdEngine)
 			Patch_CheatsHook(buffer, sizeToRead, type);
 		
 		return patched;
