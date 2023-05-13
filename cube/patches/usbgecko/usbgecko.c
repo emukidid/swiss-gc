@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2023, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -47,7 +47,7 @@ typedef struct {
 } __attribute((packed, scalar_storage_order("little-endian"))) usb_request_t;
 
 extern struct {
-	int requested;
+	int32_t requested;
 	intptr_t buffer;
 	intptr_t registers;
 } _usb;
@@ -196,7 +196,7 @@ void schedule_read(OSTick ticks)
 {
 	void read_callback(void *address, uint32_t length)
 	{
-		DCStoreRangeNoSync(address, length);
+		DCFlushRangeNoSync(address, length);
 
 		dvd.buffer += length;
 		dvd.length -= length;
@@ -245,7 +245,7 @@ void trickle_read()
 	if (dvd.read && dvd.patch) {
 		OSTick start = OSGetTick();
 		int size = frag_read(*VAR_CURRENT_DISC, dvd.buffer, dvd.length, dvd.offset);
-		DCStoreRangeNoSync(dvd.buffer, size);
+		DCFlushRangeNoSync(dvd.buffer, size);
 		OSTick end = OSGetTick();
 
 		dvd.buffer += size;

@@ -91,7 +91,7 @@ stub.bin:
 sd.bin:
 	@echo Building SD Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDMA -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -115,7 +115,7 @@ sd.bin:
 sd.card.bin:
 	@echo Building SD Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DDMA -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/interrupt.c
@@ -136,7 +136,7 @@ sd.card.bin:
 sd.dtk.bin:
 	@echo Building SD Patch + DTK ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDMA -DDTK -DISR
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -158,7 +158,7 @@ sd.dtk.bin:
 ideexi-v1.bin:
 	@echo Building IDE-EXI-v1 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDMA -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
@@ -182,7 +182,7 @@ ideexi-v1.bin:
 ideexi-v1.card.bin:
 	@echo Building IDE-EXI-v1 Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DDMA -DISR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c
 	@$(CC) -Os $(OPTS) -c base/interrupt.c
@@ -203,7 +203,7 @@ ideexi-v1.card.bin:
 ideexi-v1.dtk.bin:
 	@echo Building IDE-EXI-v1 Patch + DTK ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK -DISR
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK -DDMA -DISR
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/frag.c

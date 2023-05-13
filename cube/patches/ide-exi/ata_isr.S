@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2021-2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2021-2023, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -26,10 +26,12 @@
 _ata:
 _ata_transferred:
 	.long	512
-#ifdef DMA
-_ata_buffer:
+#ifndef DMA
+_ata_data:
 	.long	0
 #endif
+_ata_buffer:
+	.long	0
 _ata_registers:
 	.long	0x0C006800
 
@@ -45,20 +47,15 @@ external_interrupt_vector:
 	rlwinm	r6, r5, 1, 28, 28
 	and.	r6, r5, r6
 	lwz		r6, _ata_transferred - 0x80000000 (r0)
-	cmpwi	cr7, r6, 512
+	cmpwi	cr7, r6, 512 - 4
 	cmpwi	cr6, r6, 0
 	beq		7f
-	bnl		cr7, 7f
-#ifdef DMA
-	bnl		cr6, 6f
-#endif
+	bgt		cr7, 7f
 	li		r5, 4*4
-	eciwx	r5, r5, r4
+	eciwx	r6, r5, r4
 #ifndef DMA
-	blt		cr6, 2f
-	stw		r5, VAR_SECTOR_BUF (r6)
-	addi	r6, r6, 4
-	stw		r6, _ata_transferred - 0x80000000 (r0)
+	blt		cr6, 3f
+	stw		r6, _ata_data - 0x80000000 (r0)
 1:	eciwx	r5, r0, r4
 	andi.	r6, r5, 0x405
 	ecowx	r6, r0, r4
@@ -67,38 +64,40 @@ external_interrupt_vector:
 	li		r5, 3*4
 	li		r6, ((4 - 1) << 4) | 0b01
 	ecowx	r6, r5, r4
-	b		5f
+	li		r5, 0
+	blt		cr6, 2f
+	lwz		r4, _ata_buffer - 0x80000000 (r0)
+	lwz		r5, _ata_transferred - 0x80000000 (r0)
+	lwz		r6, _ata_data - 0x80000000 (r0)
+	ecowx	r6, r5, r4
+	addi	r5, r5, 4
+2:	stw		r5, _ata_transferred - 0x80000000 (r0)
+	b		6f
 #endif
-2:	andi.	r6, r5, 0x0800
-	bne		3f
+3:	andi.	r6, r6, 0x0800
+	mcrf	cr1, cr0
 	eciwx	r5, r0, r4
 	andi.	r6, r5, 0x405
 	ecowx	r6, r0, r4
 	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
 	ecowx	r5, r0, r4
+	bne		cr1, 4f
 	li		r5, 4*4
 	lis		r6, 0x1700
 	ecowx	r6, r5, r4
 	li		r5, 3*4
 	li		r6, ((3 - 1) << 4) | 0b01
 	ecowx	r6, r5, r4
-	b		5f
-3:	eciwx	r5, r0, r4
-	andi.	r6, r5, 0x405
-	ecowx	r6, r0, r4
-	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
-	ecowx	r5, r0, r4
-	li		r5, 4*4
+	b		6f
+4:	li		r5, 4*4
 	lis		r6, 0x7000 | 128
 	ecowx	r6, r5, r4
 	li		r5, 3*4
 	li		r6, ((4 - 1) << 4) | 0b01
 	ecowx	r6, r5, r4
-4:	eciwx	r6, r5, r4
+5:	eciwx	r6, r5, r4
 	andi.	r6, r6, 0b01
-	bne		4b
-	li		r6, 0
-	stw		r6, _ata_transferred - 0x80000000 (r0)
+	bne		5b
 #ifndef DMA
 	b		1b
 #else
@@ -111,11 +110,12 @@ external_interrupt_vector:
 	li		r5, 2*4
 	li		r6, 512
 	ecowx	r6, r5, r4
+	stw		r6, _ata_transferred - 0x80000000 (r0)
 	li		r5, 3*4
 	li		r6, 0b11
 	ecowx	r6, r5, r4
 #endif
-5:	lis		r4, 0x0C00
+6:	lis		r4, 0x0C00
 	li		r5, 0x3000
 	eciwx	r5, r5, r4
 	li		r6, 0x3000 + 1*4
@@ -128,10 +128,6 @@ external_interrupt_vector:
 	mfsprg	r5, 1
 	mfsprg	r4, 0
 	rfi
-#ifdef DMA
-6:	li		r6, 512
-	stw		r6, _ata_transferred - 0x80000000 (r0)
-#endif
 7:	mfsprg	r6, 3
 	mtcr	r6
 	mfsprg	r6, 2

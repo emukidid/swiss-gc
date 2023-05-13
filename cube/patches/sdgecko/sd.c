@@ -43,7 +43,9 @@
 
 #if ISR_READ
 extern struct {
-	int transferred;
+	int32_t transferred;
+	uint32_t data;
+	intptr_t buffer;
 	intptr_t registers;
 } _mmc;
 #endif
@@ -178,6 +180,7 @@ static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sy
 	else {
 		#if ISR_READ
 		_mmc.registers = OSUncachedToPhysical(exi_regs);
+		_mmc.buffer = (intptr_t)dest & ~OS_BASE_UNCACHED;
 		_mmc.transferred = -1;
 
 		exi_select();
@@ -248,13 +251,18 @@ static void mmc_read_queued(void)
 		return;
 	}
 
+	if (length < SECTOR_SIZE) {
+		mmc.last_sector = sector;
+		buffer = mmc.buffer;
+		DCInvalidateRange(__builtin_assume_aligned(buffer, 32), SECTOR_SIZE);
+	}
+
 	if (sector != mmc.next_sector || WRITE != mmc.write) {
 		end_read();
 		send_cmd(CMD18, sector << *VAR_SD_SHIFT);
 	}
 
-	rcvr_datablock(mmc.buffer, 0, SECTOR_SIZE, 0);
-	mmc.last_sector = sector;
+	rcvr_datablock(buffer, 0, SECTOR_SIZE, 0);
 	mmc.next_sector = sector + 1;
 	mmc.write = WRITE;
 }
@@ -267,7 +275,7 @@ static void mmc_done_queued(void)
 	uint32_t sector = mmc.queued->sector;
 	bool write = mmc.queued->write;
 
-	if (!WRITE)
+	if (!WRITE && sector == mmc.last_sector)
 		buffer = memcpy(buffer, *mmc.buffer + offset, length);
 	mmc.queued->callback(buffer, length);
 
