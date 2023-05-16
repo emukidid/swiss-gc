@@ -51,17 +51,16 @@ external_interrupt_vector:
 	cmpwi	cr6, r6, 0
 	beq		7f
 	bgt		cr7, 7f
+	andi.	r6, r5, 0x405
+	ecowx	r6, r0, r4
+	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
+	ecowx	r5, r0, r4
 	li		r5, 4*4
 	eciwx	r6, r5, r4
 #ifndef DMA
 	blt		cr6, 3f
 	stw		r6, _ata_data - 0x80000000 (r0)
-1:	eciwx	r5, r0, r4
-	andi.	r6, r5, 0x405
-	ecowx	r6, r0, r4
-	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
-	ecowx	r5, r0, r4
-	li		r5, 3*4
+1:	li		r5, 3*4
 	li		r6, ((4 - 1) << 4) | 0b01
 	ecowx	r6, r5, r4
 	li		r5, 0
@@ -75,22 +74,14 @@ external_interrupt_vector:
 	b		6f
 #endif
 3:	andi.	r6, r6, 0x0800
-	mcrf	cr1, cr0
-	eciwx	r5, r0, r4
-	andi.	r6, r5, 0x405
-	ecowx	r6, r0, r4
-	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
-	ecowx	r5, r0, r4
-	bne		cr1, 4f
-	li		r5, 4*4
+	bne		4f
 	lis		r6, 0x1700
 	ecowx	r6, r5, r4
 	li		r5, 3*4
 	li		r6, ((3 - 1) << 4) | 0b01
 	ecowx	r6, r5, r4
 	b		6f
-4:	li		r5, 4*4
-	lis		r6, 0x7000 | 128
+4:	lis		r6, 0x7000 | 128
 	ecowx	r6, r5, r4
 	li		r5, 3*4
 	li		r6, ((4 - 1) << 4) | 0b01
@@ -99,6 +90,11 @@ external_interrupt_vector:
 	andi.	r6, r6, 0b01
 	bne		5b
 #ifndef DMA
+	eciwx	r5, r0, r4
+	andi.	r6, r5, 0x405
+	ecowx	r6, r0, r4
+	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
+	ecowx	r5, r0, r4
 	b		1b
 #else
 	eciwx	r5, r0, r4

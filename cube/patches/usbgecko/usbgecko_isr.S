@@ -26,6 +26,8 @@
 _usb:
 _usb_requested:
 	.long	0
+_usb_data:
+	.long	0
 _usb_buffer:
 	.long	0
 _usb_registers:
@@ -55,114 +57,117 @@ external_interrupt_vector:
 	eciwx	r5, r0, r4
 	rlwinm	r6, r5, 1, 28, 28
 	and.	r6, r5, r6
-	lwz		r5, _usb_requested - 0x80000000 (r0)
-	lwz		r6, _usb_buffer - 0x80000000 (r0)
-	cmpwi	cr7, r5, 1
-	cmpwi	cr6, r6, 0
+	lwz		r6, _usb_requested - 0x80000000 (r0)
+	cmpwi	cr7, r6, 0
+	cmpwi	cr6, r6, -1
 #ifdef MMC
-	beq		3f
-	blt		cr7, 3f
+	beq		5f
+	beq		cr7, 5f
 #else
-	beq		10f
-	blt		cr7, 10f
+	beq		12f
+	beq		cr7, 12f
 #endif
-	li		r5, 4*4
+	beq		cr6, 1f
+	andi.	r6, r5, 0x405
+	ecowx	r6, r0, r4
+	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
+	ecowx	r5, r0, r4
+1:	li		r5, 4*4
 	eciwx	r5, r5, r4
-	bnl		cr6, 2f
-	clrlwi	r6, r6, 1
-	extrwi	r5, r5, 8, 8
-	stb		r5, 0 (r6)
-	addi	r6, r6, 1
-	lwz		r5, _usb_requested - 0x80000000 (r0)
-	stw		r6, _usb_buffer - 0x80000000 (r0)
-	subi	r5, r5, 1
-	stw		r5, _usb_requested - 0x80000000 (r0)
-	beq		cr7, 10f
-1:	eciwx	r5, r0, r4
-	andi.	r6, r5, 0x405
-	ecowx	r6, r0, r4
-	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
-	ecowx	r5, r0, r4
-	li		r5, 4*4
-	lis		r6, 0xD000
-	ecowx	r6, r5, r4
-	li		r5, 3*4
-	li		r6, ((1 - 1) << 4) | 0b01
-	ecowx	r6, r5, r4
-	b		9f
-2:	rlwimi.	r6, r5, 5, 0, 0
-	stw		r6, _usb_buffer - 0x80000000 (r0)
-	bnl		1b
-	eciwx	r5, r0, r4
-	andi.	r6, r5, 0x405
-	ecowx	r6, r0, r4
-	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
-	ecowx	r5, r0, r4
+	andis.	r6, r5, 0x0400
+	lwz		r6, _usb_requested - 0x80000000 (r0)
+	blt		cr7, 2f
+	beq		3f
+	neg		r6, r6
+	stw		r6, _usb_requested - 0x80000000 (r0)
 	li		r5, 4*4
 	lis		r6, 0xA000
 	ecowx	r6, r5, r4
 	li		r5, 3*4
 	li		r6, ((2 - 1) << 4) | 0b01
 	ecowx	r6, r5, r4
+	b		11f
+2:	not		r6, r6
+	stw		r6, _usb_requested - 0x80000000 (r0)
+	extrwi	r6, r5, 8, 8
+	lwz		r5, _usb_data - 0x80000000 (r0)
+	insrwi	r6, r5, 24, 0
+	stw		r6, _usb_data - 0x80000000 (r0)
+	beq		cr6, 4f
+3:	li		r5, 4*4
+	lis		r6, 0xD000
+	ecowx	r6, r5, r4
+	li		r5, 3*4
+	li		r6, ((1 - 1) << 4) | 0b01
+	ecowx	r6, r5, r4
+	bgt		cr7, 11f
+4:	lwz		r4, _usb_buffer - 0x80000000 (r0)
+	addi	r5, r4, 1
+	clrrwi	r4, r4, 2
+	stw		r5, _usb_buffer - 0x80000000 (r0)
+	clrlwi.	r5, r5, 30
+	bne		11f
+	lwz		r6, _usb_data - 0x80000000 (r0)
+	ecowx	r6, r5, r4
 #ifdef MMC
-	b		9f
-3:	lwz		r4, _mmc_registers - 0x80000000 (r0)
+	b		11f
+5:	lwz		r4, _mmc_registers - 0x80000000 (r0)
 	eciwx	r5, r0, r4
 	rlwinm	r6, r5, 1, 28, 28
 	and.	r6, r5, r6
 	lwz		r6, _mmc_transferred - 0x80000000 (r0)
 	cmpwi	cr7, r6, 512 - 4
 	cmpwi	cr6, r6, 0
-	beq		10f
-	bgt		cr7, 10f
+	beq		12f
+	bgt		cr7, 12f
 	andi.	r5, r5, (0x3FFF & ~0x80A) | (1 << 3)
 	ecowx	r5, r0, r4
 	li		r5, 4*4
 	eciwx	r6, r5, r4
-	blt		cr6, 8f
+	blt		cr6, 10f
 	stw		r6, _mmc_data - 0x80000000 (r0)
 	li		r6, ~0
 	ecowx	r6, r5, r4
-	bnl		cr7, 7f
-4:	li		r5, 3*4
+	bnl		cr7, 9f
+6:	li		r5, 3*4
 	li		r6, ((4 - 1) << 4) | 0b01
 	ecowx	r6, r5, r4
 	li		r5, 0
-	blt		cr6, 6f
-5:	lwz		r4, _mmc_buffer - 0x80000000 (r0)
+	blt		cr6, 8f
+7:	lwz		r4, _mmc_buffer - 0x80000000 (r0)
 	lwz		r5, _mmc_transferred - 0x80000000 (r0)
 	lwz		r6, _mmc_data - 0x80000000 (r0)
 	ecowx	r6, r5, r4
 	addi	r5, r5, 4
-6:	stw		r5, _mmc_transferred - 0x80000000 (r0)
-	b		9f
-7:	li		r5, 3*4
+8:	stw		r5, _mmc_transferred - 0x80000000 (r0)
+	b		11f
+9:	li		r5, 3*4
 	li		r6, ((2 - 1) << 4) | 0b01
 	ecowx	r6, r5, r4
-	b		5b
-8:	srwi	r6, r6, 24
+	b		7b
+10:	srwi	r6, r6, 24
 	cmplwi	r6, 0xFE
 	li		r6, ~0
 	ecowx	r6, r5, r4
-	beq		4b
+	beq		6b
 	li		r5, 3*4
 	li		r6, ((1 - 1) << 4) | 0b01
 	ecowx	r6, r5, r4
 #endif
-9:	lis		r4, 0x0C00
+11:	lis		r4, 0x0C00
 	li		r5, 0x3000
 	eciwx	r5, r5, r4
 	li		r6, 0x3000 + 1*4
 	eciwx	r6, r6, r4
 	and.	r6, r6, r5
-	bne		10f
+	bne		12f
 	mfsprg	r6, 3
 	mtcr	r6
 	mfsprg	r6, 2
 	mfsprg	r5, 1
 	mfsprg	r4, 0
 	rfi
-10:	mfsprg	r6, 3
+12:	mfsprg	r6, 3
 	mtcr	r6
 	mfsprg	r6, 2
 	mfsprg	r5, 1
