@@ -250,12 +250,13 @@ static void bba_receive(void)
 
 		DCInvalidateRange(__builtin_assume_aligned(page, 32), size);
 		bba_ins(_bba.rrp << 8, page, size);
+		bba_out8(BBA_RRP, bba->next);
 
 		size = bba->length - sizeof(*bba);
-
 		eth_input(page, (void *)bba->data, size);
-		bba_out8(BBA_RRP, _bba.rrp = bba->next);
+
 		_bba.rwp = bba_in8(BBA_RWP);
+		_bba.rrp = bba->next;
 	}
 }
 

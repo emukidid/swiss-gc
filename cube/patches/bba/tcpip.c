@@ -188,7 +188,7 @@ static void fsp_get_file(uint32_t offset, uint32_t length, const char *path, uin
 	_fsp.command = CC_GET_FILE;
 	_fsp.sequence++;
 	_fsp.position = offset;
-	_fsp.data_length = MIN(length, OSRoundDown32B(1500 - (fsp->data - eth->data)));
+	_fsp.data_length = MIN(length, 2030 - (fsp->data - eth->data));
 
 	fsp->command = _fsp.command;
 	fsp->checksum = 0x00;
