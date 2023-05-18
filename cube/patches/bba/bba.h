@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2023, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -32,6 +32,6 @@ typedef struct {
 typedef uint8_t bba_page_t[256] __attribute((aligned(32)));
 
 void bba_transmit_fifo(const void *data, size_t size);
-void bba_receive_dma(bba_page_t page, size_t size);
+void bba_receive_dma(void *data, size_t size, uint8_t offset);
 
 #endif /* BBA_H */

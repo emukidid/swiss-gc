@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2017-2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2017-2023, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -188,7 +188,7 @@ static void fsp_get_file(uint32_t offset, uint32_t length, const char *path, uin
 	_fsp.command = CC_GET_FILE;
 	_fsp.sequence++;
 	_fsp.position = offset;
-	_fsp.data_length = MIN(length, 1500 - (fsp->data - eth->data));
+	_fsp.data_length = MIN(length, OSRoundDown32B(1500 - (fsp->data - eth->data)));
 
 	fsp->command = _fsp.command;
 	fsp->checksum = 0x00;
@@ -324,8 +324,7 @@ static void fsp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, 
 				OSCancelAlarm(&read_alarm);
 
 				uint8_t *data = _fsp.queued->buffer + _fsp.queued->offset;
-				int data_size = MIN(fsp->data_length & ~(4 - 1), _fsp.data_length);
-				int page_size = MIN(page[1] - fsp->data, data_size);
+				size_t data_size = MIN(_fsp.data_length, OSRoundDown32B(fsp->data_length));
 
 				_fsp.command = CC_NULL;
 				_fsp.queued->offset += data_size;
@@ -333,8 +332,7 @@ static void fsp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, 
 				if (_fsp.queued->offset != _fsp.queued->length)
 					fsp_pop_queue();
 
-				bba_receive_dma(page[1], data_size - page_size);
-				memcpy(data, fsp->data, data_size);
+				bba_receive_dma(data, data_size, fsp->data - page[0]);
 
 				if (_fsp.queued->offset == _fsp.queued->length)
 					fsp_done_queued();

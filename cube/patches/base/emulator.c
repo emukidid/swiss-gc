@@ -412,9 +412,7 @@ bool dtk_fill_buffer(void)
 		dtk_fill_buffer();
 	}
 
-	#ifdef DMA
 	DCInvalidateRange(__builtin_assume_aligned(dtk.buffer, 32), sizeof(*dtk.buffer));
-	#endif
 	return dtk.reading = frag_read_async(*VAR_CURRENT_DISC, dtk.buffer, sizeof(*dtk.buffer), dtk.current.position, read_callback);
 	#else
 	OSCancelAlarm(&read_alarm);

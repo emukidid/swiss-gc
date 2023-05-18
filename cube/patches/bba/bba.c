@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2017-2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2017-2023, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -82,7 +82,7 @@ static struct {
 
 #define BBA_INIT_TLBP	0x00
 #define BBA_INIT_BP		0x01
-#define BBA_INIT_RHBP	0x0f
+#define BBA_INIT_RHBP	0x10
 #define BBA_INIT_RWP	BBA_INIT_BP
 #define BBA_INIT_RRP	BBA_INIT_BP
 
@@ -221,19 +221,10 @@ void bba_transmit_fifo(const void *data, size_t size)
 	bba_out8(BBA_NCRA, (bba_in8(BBA_NCRA) & ~BBA_NCRA_ST0) | BBA_NCRA_ST1);
 }
 
-void bba_receive_dma(bba_page_t page, size_t size)
+void bba_receive_dma(void *data, size_t size, uint8_t offset)
 {
 	if (!size) return;
-	DCInvalidateRange(__builtin_assume_aligned(page, 32), size);
-
-	int page_wrap = MIN(size, (BBA_INIT_RHBP + 1 - _bba.rrp) << 8);
-
-	if (page_wrap < size) {
-		bba_ins(_bba.rrp << 8, page, page_wrap);
-		_bba.rrp = BBA_INIT_RRP;
-		bba_ins(_bba.rrp << 8, page + page_wrap, size - page_wrap);
-	} else
-		bba_ins(_bba.rrp << 8, page, size);
+	bba_ins(_bba.rrp << 8 | offset, data, size);
 }
 
 static void bba_receive(void)
@@ -244,11 +235,10 @@ static void bba_receive(void)
 	while (_bba.rrp != _bba.rwp) {
 		bba_page_t *page = *_bba.page;
 		bba_header_t *bba = (bba_header_t *)page;
-		size_t size = sizeof(bba_page_t);
+		size_t size = sizeof(bba_header_t) + MIN_FRAME_SIZE;
 
 		DCInvalidateRange(__builtin_assume_aligned(page, 32), size);
 		bba_ins(_bba.rrp << 8, page, size);
-		_bba.rrp = _bba.rrp % BBA_INIT_RHBP + 1;
 
 		size = bba->length - sizeof(*bba);
 
