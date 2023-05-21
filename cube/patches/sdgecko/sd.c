@@ -48,6 +48,8 @@ extern struct {
 	intptr_t buffer;
 	intptr_t registers;
 } _mmc;
+
+void mmc_interrupt_vector(void);
 #endif
 
 static struct {
@@ -304,8 +306,10 @@ static void mmc_done_queued(void)
 
 static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	if (_mmc.transferred < SECTOR_SIZE)
+	if (_mmc.transferred < SECTOR_SIZE) {
+		write_branch((void *)0x80000500, mmc_interrupt_vector);
 		return;
+	}
 
 	mask_interrupts(OS_INTERRUPTMASK(interrupt) & (OS_INTERRUPTMASK_EXI_0_TC | OS_INTERRUPTMASK_EXI_1_TC | OS_INTERRUPTMASK_EXI_2_TC));
 	exi_deselect();

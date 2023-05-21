@@ -53,6 +53,8 @@ extern struct {
 	intptr_t registers;
 } _usb;
 
+void usb_interrupt_vector(void);
+
 static struct {
 	struct {
 		void *buffer;
@@ -159,8 +161,10 @@ static void usb_done_queued(void)
 
 static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	if (_usb.requested)
+	if (_usb.requested) {
+		write_branch((void *)0x80000500, usb_interrupt_vector);
 		return;
+	}
 
 	mask_interrupts(OS_INTERRUPTMASK_EXI_1_TC);
 	exi_deselect();

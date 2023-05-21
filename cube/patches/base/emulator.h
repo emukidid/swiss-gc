@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2023, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -44,6 +44,7 @@ void perform_read(uint32_t address, uint32_t length, uint32_t offset);
 void trickle_read();
 bool change_disc(void);
 void reset_devices(void);
+void write_branch(void *a, void *b);
 
 void exi_interrupt(unsigned chan);
 void exi_complete_transfer(unsigned chan);

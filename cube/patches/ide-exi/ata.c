@@ -63,6 +63,8 @@ extern struct {
 	intptr_t buffer;
 	intptr_t registers;
 } _ata;
+
+void ata_interrupt_vector(void);
 #endif
 
 static struct {
@@ -428,8 +430,10 @@ static void ata_done_queued(void)
 static void tc_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	#if ISR_READ
-	if (_ata.transferred < SECTOR_SIZE)
+	if (_ata.transferred < SECTOR_SIZE) {
+		write_branch((void *)0x80000500, ata_interrupt_vector);
 		return;
+	}
 	#endif
 
 	mask_interrupts(OS_INTERRUPTMASK(interrupt) & (OS_INTERRUPTMASK_EXI_0_TC | OS_INTERRUPTMASK_EXI_1_TC));

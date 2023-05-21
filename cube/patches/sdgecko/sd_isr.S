@@ -20,7 +20,7 @@
 #define _LANGUAGE_ASSEMBLY
 #include "../../reservedarea.h"
 
-.section .text.external_interrupt_vector,"ax",@progbits
+.section .text.mmc_interrupt_vector,"ax",@progbits
 	.balign 32
 	.globl _mmc
 _mmc:
@@ -33,8 +33,8 @@ _mmc_buffer:
 _mmc_registers:
 	.long	0x0C006800
 
-	.globl external_interrupt_vector
-external_interrupt_vector:
+	.globl mmc_interrupt_vector
+mmc_interrupt_vector:
 	mtsprg	0, r4
 	mtsprg	1, r5
 	mtsprg	2, r6

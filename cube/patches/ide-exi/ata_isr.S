@@ -20,7 +20,7 @@
 #define _LANGUAGE_ASSEMBLY
 #include "../../reservedarea.h"
 
-.section .text.external_interrupt_vector,"ax",@progbits
+.section .text.ata_interrupt_vector,"ax",@progbits
 	.balign 32
 	.globl _ata
 _ata:
@@ -35,8 +35,8 @@ _ata_buffer:
 _ata_registers:
 	.long	0x0C006800
 
-	.globl external_interrupt_vector
-external_interrupt_vector:
+	.globl ata_interrupt_vector
+ata_interrupt_vector:
 	mtsprg	0, r4
 	mtsprg	1, r5
 	mtsprg	2, r6

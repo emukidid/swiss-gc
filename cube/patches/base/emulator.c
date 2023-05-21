@@ -1150,12 +1150,15 @@ ppc_context_t *service_exception(ppc_context_t *context)
 }
 
 void dsi_exception_vector(void);
-void external_interrupt_vector(void);
 
-static void write_branch(void *a, void *b)
+void write_branch(void *a, void *b)
 {
-	*(uint32_t *)a = (uint32_t)(b - (OS_BASE_CACHED - 0x48000002));
-	asm volatile("dcbst 0,%0; sync; icbi 0,%0" :: "r" (a));
+	uint32_t branch = (uint32_t)(b - (OS_BASE_CACHED - 0x48000002));
+
+	if (*(uint32_t *)a != branch) {
+		*(uint32_t *)a  = branch;
+		asm volatile("dcbst 0,%0; sync; icbi 0,%0" :: "r" (a));
+	}
 }
 
 #ifdef BBA
@@ -1169,9 +1172,6 @@ void init(void **arenaLo, void **arenaHi)
 	OSCreateAlarm(&read_alarm);
 
 	write_branch((void *)0x80000300, dsi_exception_vector);
-	#ifdef ISR
-	write_branch((void *)0x80000500, external_interrupt_vector);
-	#endif
 
 	#ifdef BBA
 	bba_init(arenaLo, arenaHi);
