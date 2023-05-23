@@ -175,6 +175,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "FSPHostIP=%s\r\n", swissSettings.fspHostIp);
 	fprintf(fp, "FSPPort=%hu\r\n", swissSettings.fspPort);
 	fprintf(fp, "FSPPassword=%s\r\n", swissSettings.fspPassword);
+	fprintf(fp, "FSPPathMTU=%hu\r\n", swissSettings.fspPathMtu);
 	fprintf(fp, "BBALocalIP=%s\r\n", swissSettings.bbaLocalIp);
 	fprintf(fp, "BBANetmask=%hu\r\n", swissSettings.bbaNetmask);
 	fprintf(fp, "BBAGateway=%s\r\n", swissSettings.bbaGateway);
@@ -831,6 +832,9 @@ void config_parse_global(char *configData) {
 				}
 				else if(!strcmp("FSPPassword", name)) {
 					strlcpy(swissSettings.fspPassword, value, sizeof(swissSettings.fspPassword));
+				}
+				else if(!strcmp("FSPPathMTU", name)) {
+					swissSettings.fspPathMtu = atoi(value);
 				}
 				else if(!strcmp("BBALocalIP", name)) {
 					strlcpy(swissSettings.bbaLocalIp, value, sizeof(swissSettings.bbaLocalIp));

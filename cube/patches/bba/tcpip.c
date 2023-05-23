@@ -126,12 +126,15 @@ typedef struct {
 	uint8_t data[];
 } __attribute((packed)) fsp_header_t;
 
-static struct eth_addr  *const _client_mac = (struct eth_addr  *)VAR_CLIENT_MAC;
-static struct eth_addr  *const _router_mac = (struct eth_addr  *)VAR_ROUTER_MAC;
-static struct ipv4_addr *const _client_ip  = (struct ipv4_addr *)VAR_CLIENT_IP;
-static struct ipv4_addr *const _router_ip  = (struct ipv4_addr *)VAR_ROUTER_IP;
-static struct ipv4_addr *const _server_ip  = (struct ipv4_addr *)VAR_SERVER_IP;
-static uint16_t         *const _port       = (uint16_t         *)VAR_SERVER_PORT;
+static struct {
+	struct eth_addr client_mac;
+	struct eth_addr router_mac;
+	struct ipv4_addr client_ip;
+	struct ipv4_addr router_ip;
+	struct ipv4_addr server_ip;
+	uint16_t port;
+	uint16_t pmtu;
+} *const env = (void *)VAR_NETWORK_ENV;
 
 static struct {
 	uint8_t command;
@@ -188,7 +191,7 @@ static void fsp_get_file(uint32_t offset, uint32_t length, const char *path, uin
 	_fsp.command = CC_GET_FILE;
 	_fsp.sequence++;
 	_fsp.position = offset;
-	_fsp.data_length = MIN(length, 2030 - (fsp->data - eth->data));
+	_fsp.data_length = MIN(length, env->pmtu - (fsp->data - eth->data));
 
 	fsp->command = _fsp.command;
 	fsp->checksum = 0x00;
@@ -199,8 +202,8 @@ static void fsp_get_file(uint32_t offset, uint32_t length, const char *path, uin
 	*(uint16_t *)(memcpy(fsp->data, path, pathlen) + fsp->data_length) = _fsp.data_length;
 	fsp->checksum = fsp_checksum(fsp, sizeof(*fsp) + fsp->data_length + sizeof(uint16_t));
 
-	udp->src_port = *_port;
-	udp->dst_port = *_port;
+	udp->src_port = env->port;
+	udp->dst_port = env->port;
 	udp->length = sizeof(*udp) + sizeof(*fsp) + fsp->data_length + sizeof(uint16_t);
 	udp->checksum = 0x0000;
 
@@ -215,12 +218,12 @@ static void fsp_get_file(uint32_t offset, uint32_t length, const char *path, uin
 	ipv4->ttl = 64;
 	ipv4->protocol = IP_PROTO_UDP;
 	ipv4->checksum = 0x0000;
-	ipv4->src_addr = *_client_ip;
-	ipv4->dst_addr = *_server_ip;
+	ipv4->src_addr = env->client_ip;
+	ipv4->dst_addr = env->server_ip;
 	ipv4->checksum = ipv4_checksum(ipv4);
 
-	eth->dst_addr = *_router_mac;
-	eth->src_addr = *_client_mac;
+	eth->dst_addr = env->router_mac;
+	eth->src_addr = env->client_mac;
 	eth->type = ETH_TYPE_IPV4;
 	bba_transmit_fifo(eth, sizeof(*eth) + ipv4->length);
 }
@@ -350,13 +353,13 @@ static void udp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, 
 
 	size -= sizeof(*udp);
 
-	if (ipv4->src_addr.addr == (*_server_ip).addr &&
-		ipv4->dst_addr.addr == (*_client_ip).addr) {
+	if (ipv4->src_addr.addr == env->server_ip.addr &&
+		ipv4->dst_addr.addr == env->client_ip.addr) {
 
-		*_router_mac = eth->src_addr;
+		env->router_mac = eth->src_addr;
 
-		if (udp->src_port == *_port &&
-			udp->dst_port == *_port)
+		if (udp->src_port == env->port &&
+			udp->dst_port == env->port)
 			fsp_input(page, eth, ipv4, udp, (void *)udp->data, size);
 	}
 }
@@ -394,8 +397,8 @@ static void arp_reply(arp_packet_t *request)
 	arp->protocol_type = ETH_TYPE_IPV4;
 	arp->protocol_length = sizeof(struct ipv4_addr);
 	arp->operation = ARP_REPLY;
-	arp->src_mac = *_client_mac;
-	arp->src_ip = *_client_ip;
+	arp->src_mac = env->client_mac;
+	arp->src_ip = env->client_ip;
 	arp->dst_mac = request->src_mac;
 	arp->dst_ip = request->src_ip;
 
@@ -415,19 +418,19 @@ static void arp_input(bba_page_t *page, eth_header_t *eth, arp_packet_t *arp, si
 	switch (arp->operation) {
 		case ARP_REQUEST:
 			if ((!arp->dst_mac.addr ||
-				arp->dst_mac.addr == (*_client_mac).addr) &&
-				arp->dst_ip.addr  == (*_client_ip).addr) {
+				arp->dst_mac.addr == env->client_mac.addr) &&
+				arp->dst_ip.addr  == env->client_ip.addr) {
 				arp_reply(arp);
 
-				if (arp->src_ip.addr  == (*_router_ip).addr)
-					*_router_mac = arp->src_mac;
+				if (arp->src_ip.addr == env->router_ip.addr)
+					env->router_mac = arp->src_mac;
 			}
 			break;
 		case ARP_REPLY:
-			if (arp->dst_mac.addr == (*_client_mac).addr &&
-				arp->dst_ip.addr  == (*_client_ip).addr &&
-				arp->src_ip.addr  == (*_router_ip).addr)
-				*_router_mac = arp->src_mac;
+			if (arp->dst_mac.addr == env->client_mac.addr &&
+				arp->dst_ip.addr  == env->client_ip.addr &&
+				arp->src_ip.addr  == env->router_ip.addr)
+				env->router_mac = arp->src_mac;
 			break;
 	}
 }

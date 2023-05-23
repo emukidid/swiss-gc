@@ -20,7 +20,7 @@
 #include "deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
 
-#define in_range(x, a, b) (((x) >= (a)) && ((x) < (b)))
+#define in_range(x, a, b) (((x) >= (a)) && ((x) <= (b)))
 
 #define RECENT_MAX 8
 #define FILES_PER_PAGE 8
@@ -128,6 +128,7 @@ typedef struct {
 	char fspHostIp[16];
 	u16 fspPort;
 	char fspPassword[32];
+	u16 fspPathMtu;
 	char bbaLocalIp[16];
 	u16 bbaNetmask;
 	char bbaGateway[16];

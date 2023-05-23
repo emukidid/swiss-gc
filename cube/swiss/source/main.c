@@ -152,9 +152,12 @@ int main(int argc, char *argv[])
 	// Sane defaults
 	refreshSRAM(&swissSettings);
 	swissSettings.debugUSB = 0;
-	swissSettings.gameVMode = 0;	// Auto video mode
 	swissSettings.exiSpeed = 1;		// 32MHz
 	swissSettings.uiVMode = 0; 		// Auto UI mode
+	swissSettings.gameVMode = 0;	// Auto video mode
+	swissSettings.ftpPort = 21;
+	swissSettings.fspPort = 21;
+	swissSettings.fspPathMtu = 1500;
 	swissSettings.bbaUseDhcp = 1;
 	swissSettings.aveCompat = 1;
 	swissSettings.enableFileManagement = 0;

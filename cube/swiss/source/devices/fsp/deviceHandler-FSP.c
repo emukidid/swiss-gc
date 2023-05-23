@@ -222,6 +222,7 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, Executabl
 	*(vu32*)VAR_ROUTER_IP = gateway;
 	*(vu32*)VAR_SERVER_IP = host_ip;
 	*(vu16*)VAR_SERVER_PORT = port;
+	*(vu16*)VAR_SERVER_PMTU = in_range(swissSettings.fspPathMtu, 576, 2030) ? swissSettings.fspPathMtu : 1500;
 	return 1;
 }
 

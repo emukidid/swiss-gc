@@ -18,12 +18,14 @@ VAR_FRAG_LIST		= VAR_AREA | 0x09BC;	/* pointer to fragments (u32 offset, u32 siz
 VAR_DISC_1_ID		= VAR_AREA | 0x09C0;	/* disc 1 header */
 VAR_DISC_2_ID		= VAR_AREA | 0x09CA;	/* disc 2 header */
 
+VAR_NETWORK_ENV		= VAR_AREA | 0x09C0;	/* network environment variables */
 VAR_CLIENT_MAC		= VAR_AREA | 0x09C0;	/* client MAC address */
 VAR_ROUTER_MAC		= VAR_AREA | 0x09C6;	/* router MAC address */
 VAR_CLIENT_IP		= VAR_AREA | 0x09CC;	/* client IPv4 address */
 VAR_ROUTER_IP		= VAR_AREA | 0x09D0;	/* router IPv4 address */
 VAR_SERVER_IP		= VAR_AREA | 0x09D4;	/* server IPv4 address */
 VAR_SERVER_PORT		= VAR_AREA | 0x09D8;	/* server UDP port */
+VAR_SERVER_PMTU		= VAR_AREA | 0x09DA;	/* server MTU */
 
 VAR_FLOAT1_6		= VAR_AREA | 0x09E0;	/* constant 1/6 */
 VAR_FLOAT9_16		= VAR_AREA | 0x09E4;	/* constant 9/16 */

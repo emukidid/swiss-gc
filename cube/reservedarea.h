@@ -90,12 +90,14 @@ extern char VAR_FRAG_LIST[4];		// pointer to fragments (u32 offset, u32 size, u3
 extern char VAR_DISC_1_ID[10];		// disc 1 header
 extern char VAR_DISC_2_ID[10];		// disc 2 header
 
+extern char VAR_NETWORK_ENV[0x20];	// network environment variables
 extern char VAR_CLIENT_MAC[6];		// client MAC address
 extern char VAR_ROUTER_MAC[6];		// router MAC address
 extern char VAR_CLIENT_IP[4];		// client IPv4 address
 extern char VAR_ROUTER_IP[4];		// router IPv4 address
 extern char VAR_SERVER_IP[4];		// server IPv4 address
 extern char VAR_SERVER_PORT[2];		// server UDP port
+extern char VAR_SERVER_PMTU[2];		// server MTU
 
 extern char VAR_FLOAT1_6[4];		// constant 1/6
 extern char VAR_FLOAT9_16[4];		// constant 9/16
