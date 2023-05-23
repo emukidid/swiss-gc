@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include "deviceHandler-SYS.h"
+#include "swiss.h"
 #include "main.h"
 #include "dvd.h"
 #include "files.h"
@@ -163,7 +164,7 @@ bool load_rom_ipl(DEVICEHANDLER_INTERFACE* device, void** buffer, unsigned int* 
 	if(device->readFile(file, bs2Header, sizeof(bs2Header)) == sizeof(bs2Header)) {
 		descrambler(0x800, bs2Header, sizeof(bs2Header));
 
-		if(bs2Header[0] >= 0x81300000 && bs2Header[0] <= 0x814AF6E0) {
+		if(in_range(bs2Header[0], 0x81300000, 0x814AF6E0)) {
 			u32 sizeToRead = (bs2Header[0] - 0x81300000 + 31) & ~31;
 			void* bs2Image = memalign(32, sizeToRead);
 

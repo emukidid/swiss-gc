@@ -86,9 +86,8 @@ void ogc_video__reset()
 		swissSettings.sramVideo = SYS_VIDEO_NTSC;
 	
 	if(swissSettings.gameVMode > 0 && swissSettings.disableVideoPatches < 2) {
-		swissSettings.sram60Hz = (swissSettings.gameVMode >= 1 && swissSettings.gameVMode <= 7);
-		swissSettings.sramProgressive = (swissSettings.gameVMode >= 4 && swissSettings.gameVMode <= 7) ||
-										(swissSettings.gameVMode >= 11 && swissSettings.gameVMode <= 14);
+		swissSettings.sram60Hz = in_range(swissSettings.gameVMode, 1, 7);
+		swissSettings.sramProgressive = in_range(swissSettings.gameVMode, 4, 7) || in_range(swissSettings.gameVMode, 11, 14);
 		
 		if(swissSettings.sram60Hz) {
 			for(i = 0; i < sizeof(DiscIDNoNTSC)/sizeof(char*); i++) {

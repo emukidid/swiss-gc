@@ -645,15 +645,15 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					if(swissSettings.gameVMode < 0)
 						swissSettings.gameVMode = 14;
 					if(swissSettings.aveCompat) {
-						while(swissSettings.gameVMode >= 6 && swissSettings.gameVMode <= 7)
+						while(in_range(swissSettings.gameVMode, 6, 7))
 							swissSettings.gameVMode += direction;
-						while(swissSettings.gameVMode >= 13 && swissSettings.gameVMode <= 14)
+						while(in_range(swissSettings.gameVMode, 13, 14))
 							swissSettings.gameVMode += direction;
 					}
 					if(!getDTVStatus()) {
-						while(swissSettings.gameVMode >= 4 && swissSettings.gameVMode <= 7)
+						while(in_range(swissSettings.gameVMode, 4, 7))
 							swissSettings.gameVMode += direction;
-						while(swissSettings.gameVMode >= 11 && swissSettings.gameVMode <= 14)
+						while(in_range(swissSettings.gameVMode, 11, 14))
 							swissSettings.gameVMode += direction;
 					}
 					if(swissSettings.gameVMode > 14)
@@ -760,15 +760,15 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					if(gameConfig->gameVMode < 0)
 						gameConfig->gameVMode = 14;
 					if(swissSettings.aveCompat) {
-						while(gameConfig->gameVMode >= 6 && gameConfig->gameVMode <= 7)
+						while(in_range(gameConfig->gameVMode, 6, 7))
 							gameConfig->gameVMode += direction;
-						while(gameConfig->gameVMode >= 13 && gameConfig->gameVMode <= 14)
+						while(in_range(gameConfig->gameVMode, 13, 14))
 							gameConfig->gameVMode += direction;
 					}
 					if(!getDTVStatus()) {
-						while(gameConfig->gameVMode >= 4 && gameConfig->gameVMode <= 7)
+						while(in_range(gameConfig->gameVMode, 4, 7))
 							gameConfig->gameVMode += direction;
-						while(gameConfig->gameVMode >= 11 && gameConfig->gameVMode <= 14)
+						while(in_range(gameConfig->gameVMode, 11, 14))
 							gameConfig->gameVMode += direction;
 					}
 					if(gameConfig->gameVMode > 14)
@@ -998,9 +998,9 @@ int show_settings(int page, int option, ConfigEntry *config) {
 			if(page == PAGE_GLOBAL && option == SET_FLATTEN_DIR) {
 				settings_toggle(page, option, 0, config);
 			}
-			if(page == PAGE_NETWORK && ((option >= SET_BBA_LOCALIP && option <= SET_BBA_GATEWAY) ||
-										(option >= SET_FSP_HOSTIP && option <= SET_FTP_PASS) ||
-										(option >= SET_SMB_HOSTIP && option <= SET_SMB_PASS))) {
+			if(page == PAGE_NETWORK && (in_range(option, SET_BBA_LOCALIP, SET_BBA_GATEWAY) ||
+										in_range(option, SET_FSP_HOSTIP,  SET_FTP_PASS) ||
+										in_range(option, SET_SMB_HOSTIP,  SET_SMB_PASS))) {
 				settings_toggle(page, option, 0, config);
 			}
 		}

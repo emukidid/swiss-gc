@@ -52,7 +52,7 @@ file_meta* meta_alloc() {
 	while(!meta) {
 		int i = 0;
 		for (i = 0; i < getCurrentDirEntryCount(); i++) {
-			if(!(i >= current_view_start && i <= current_view_end)) {
+			if(!in_range(i, current_view_start, current_view_end)) {
 				if(dirEntries[i].meta) {
 					meta_free(dirEntries[i].meta);
 					dirEntries[i].meta = NULL;
