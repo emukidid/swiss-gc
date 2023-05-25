@@ -1693,6 +1693,13 @@ void load_game() {
 				sleep(5);
 			}
 		}
+		else if(!memcmp(&GCMDisk.NKitMagicWord, "NKIT v01", 8) && !valid_gcm_boot(&GCMDisk)) {
+			DrawDispose(msgBox);
+			msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is not playable in NKit.iso format.\nPlease convert back to ISO using NKit."));
+			sleep(5);
+			DrawDispose(msgBox);
+			return;
+		}
 	}
 	
 	DrawDispose(msgBox);
