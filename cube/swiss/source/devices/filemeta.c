@@ -289,6 +289,18 @@ void populate_meta(file_handle *f) {
 					populate_game_meta(f, tgcHeader.bannerStart, tgcHeader.bannerLength);
 				}
 			}
+			else if(endsWith(f->name,"/default.dol")) {
+				file_handle *bannerFile = calloc(1, sizeof(file_handle));
+				getParentPath(f->name, bannerFile->name);
+				concat_path(bannerFile->name, bannerFile->name, "opening.bnr");
+				bannerFile->meta = f->meta;
+				
+				if (devices[DEVICE_CUR]->readFile(bannerFile, NULL, 0) == 0 && bannerFile->size)
+					populate_game_meta(bannerFile, 0, bannerFile->size);
+				
+				devices[DEVICE_CUR]->closeFile(bannerFile);
+				free(bannerFile);
+			}
 			if(endsWith(f->name,".dol"))
 				f->meta->fileTypeTexObj = &dolimgTexObj;
 			else if(endsWith(f->name,".dol+cli"))
@@ -309,7 +321,6 @@ void populate_meta(file_handle *f) {
 			
 			if (devices[DEVICE_CUR]->readFile(bannerFile, NULL, 0) == 0 && bannerFile->size) {
 				populate_game_meta(bannerFile, 0, bannerFile->size);
-				devices[DEVICE_CUR]->closeFile(bannerFile);
 				
 				file_handle *bootFile = calloc(1, sizeof(file_handle));
 				concat_path(bootFile->name, f->name, "default.dol");
@@ -321,8 +332,10 @@ void populate_meta(file_handle *f) {
 					f = memcpy(f, bootFile, sizeof(file_handle));
 					f->meta->fileTypeTexObj = &dolimgTexObj;
 				}
+				devices[DEVICE_CUR]->closeFile(bootFile);
 				free(bootFile);
 			}
+			devices[DEVICE_CUR]->closeFile(bannerFile);
 			free(bannerFile);
 		}
 	}
