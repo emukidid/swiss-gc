@@ -130,8 +130,8 @@ static void usb_read_queued(void)
 	usb_request(offset, length);
 
 	exi_select();
-	exi_clear_interrupts(0, 1, 0);
-	exi_imm_read_write(0xD << 28, 1, 0);
+	exi_clear_interrupts(false, true, false);
+	exi_imm_read_write(0xD << 28, 1, false);
 
 	set_interrupt_handler(OS_INTERRUPT_EXI_1_TC, tc_interrupt_handler);
 	unmask_interrupts(OS_INTERRUPTMASK_EXI_1_TC);

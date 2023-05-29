@@ -96,7 +96,7 @@ static void exi_clear_interrupts(bool exi, bool tc, bool ext)
 	exi_regs[0] = (exi_regs[0] & (0x3FFF & ~0x80A)) | (ext << 11) | (tc << 3) | (exi << 1);
 }
 
-static int exi_selected()
+static bool exi_selected()
 {
 	return !!(exi_regs[0] & 0x380);
 }
@@ -111,7 +111,7 @@ static void exi_deselect()
 	exi_regs[0] &= 0x405;
 }
 
-static void exi_imm_write(u32 data, int len, int sync)
+static void exi_imm_write(u32 data, int len, bool sync)
 {
 	exi_regs[4] = data;
 	// Tell EXI if this is a read or a write
@@ -120,7 +120,7 @@ static void exi_imm_write(u32 data, int len, int sync)
 	while (sync && (exi_regs[3] & 1));
 }
 
-static u32 exi_imm_read(int len, int sync)
+static u32 exi_imm_read(int len, bool sync)
 {
 	// Tell EXI if this is a read or a write
 	exi_regs[3] = ((len - 1) << 4) | (EXI_READ << 2) | 1;
@@ -133,7 +133,7 @@ static u32 exi_imm_read(int len, int sync)
 	}
 }
 
-static u32 exi_imm_read_write(u32 data, int len, int sync)
+static u32 exi_imm_read_write(u32 data, int len, bool sync)
 {
 	exi_regs[4] = data;
 	// Tell EXI if this is a read or a write
@@ -147,7 +147,7 @@ static u32 exi_imm_read_write(u32 data, int len, int sync)
 	}
 }
 
-static void exi_dma_read(void* data, int len, int sync)
+static void exi_dma_read(void* data, int len, bool sync)
 {
 	exi_regs[1] = (unsigned long)data;
 	exi_regs[2] = len;
@@ -161,7 +161,7 @@ static u8 ataReadStatusReg()
 	// read ATA_REG_CMDSTATUS1 | 0x00 (dummy)
 	u8 dat;
 	exi_select();
-	dat=exi_imm_read_write(0x17000000, 3, 1);
+	dat=exi_imm_read_write(0x17000000, 3, true);
 	exi_deselect();
 	return dat;
 }
@@ -170,7 +170,7 @@ static u8 ataReadStatusReg()
 static void ataWriteByte(u8 addr, u8 data)
 {
 	exi_select();
-	exi_imm_write(0x80000000 | (addr << 24) | (data<<16), 3, 1);
+	exi_imm_write(0x80000000 | (addr << 24) | (data<<16), 3, true);
 	exi_deselect();
 }
 
@@ -179,7 +179,7 @@ static void ataWriteu16(u16 data)
 {
 	// write 16 bit to ATA_REG_DATA | data LSB | data MSB | 0x00 (dummy)
 	exi_select();
-	exi_imm_write(0xD0000000 | (((data>>8) & 0xff)<<16) | ((data & 0xff)<<8), 4, 1);
+	exi_imm_write(0xD0000000 | (((data>>8) & 0xff)<<16) | ((data & 0xff)<<8), 4, true);
 	exi_deselect();
 }
 
@@ -216,7 +216,7 @@ static void ataReadSectors(u64 sector, u16 count)
 	ataWriteByte(ATA_REG_COMMAND, !_ata48bit ? ATA_CMD_READSECT : ATA_CMD_READSECTEXT);
 }
 
-static int ataReadBuffer(void *buffer)
+static bool ataReadBuffer(void *buffer)
 {
 	u8 status;
 
@@ -224,7 +224,7 @@ static int ataReadBuffer(void *buffer)
 	do {
 		status = ataReadStatusReg();
 		// If the error bit was set, fail.
-		if(status & ATA_SR_ERR) return 0;
+		if(status & ATA_SR_ERR) return false;
 	} while((status & ATA_SR_BSY) || !(status & ATA_SR_DRQ));
 
 	// read data from drive
@@ -233,24 +233,24 @@ static int ataReadBuffer(void *buffer)
 	u16 dwords = 128;
 	// (31:29) 011b | (28:24) 10000b | (23:16) <num_words_LSB> | (15:8) <num_words_MSB> | (7:0) 00h (4 bytes)
 	exi_select();
-	exi_imm_write(0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8), 4, 1);
+	exi_imm_write(0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8), 4, true);
 	#if DMA_READ
 	// v2, no deselect or extra read required.
 	DCInvalidateRange(__builtin_assume_aligned(ptr, 32), SECTOR_SIZE);
-	exi_dma_read(ptr, SECTOR_SIZE, 1);
+	exi_dma_read(ptr, SECTOR_SIZE, true);
 	exi_deselect();
 	#else
 	exi_deselect();
 	for(i = 0; i < dwords; i++) {
 		exi_select();
-		*ptr++ = exi_imm_read(4, 1);
+		*ptr++ = exi_imm_read(4, true);
 		exi_deselect();
 	}
 	exi_select();
-	exi_imm_read(4, 1);
+	exi_imm_read(4, true);
 	exi_deselect();
 	#endif
-	return 1;
+	return true;
 }
 
 static void ataReadBufferAsync(void *buffer)
@@ -261,8 +261,8 @@ static void ataReadBufferAsync(void *buffer)
 	_ata.transferred = -1;
 
 	exi_select();
-	exi_clear_interrupts(0, 1, 0);
-	exi_imm_read_write(0x17000000, 3, 0);
+	exi_clear_interrupts(false, true, false);
+	exi_imm_read_write(0x17000000, 3, false);
 
 	OSInterrupt interrupt = OS_INTERRUPT_EXI_0_TC + (3 * exi_channel);
 	set_interrupt_handler(interrupt, tc_interrupt_handler);
@@ -303,7 +303,7 @@ static void ataWriteSectors(u64 sector, u16 count)
 	ataWriteByte(ATA_REG_COMMAND, !_ata48bit ? ATA_CMD_WRITESECT : ATA_CMD_WRITESECTEXT);
 }
 
-static int ataWriteBuffer(void *buffer)
+static bool ataWriteBuffer(void *buffer)
 {
 	u8 status;
 
@@ -311,7 +311,7 @@ static int ataWriteBuffer(void *buffer)
 	do {
 		status = ataReadStatusReg();
 		// If the error bit was set, fail.
-		if(status & ATA_SR_ERR) return 0;
+		if(status & ATA_SR_ERR) return false;
 	} while((status & ATA_SR_BSY) || !(status & ATA_SR_DRQ));
 
 	// Write data to the drive
@@ -325,10 +325,10 @@ static int ataWriteBuffer(void *buffer)
 	do {
 		status = ataReadStatusReg();
 		// If the error bit was set, fail.
-		if(status & ATA_SR_ERR) return 0;
+		if(status & ATA_SR_ERR) return false;
 	} while(status & ATA_SR_BSY);
 
-	return 1;
+	return true;
 }
 
 #if DMA_READ || ISR_READ

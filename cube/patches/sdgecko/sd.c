@@ -82,7 +82,7 @@ static void exi_clear_interrupts(bool exi, bool tc, bool ext)
 	exi_regs[0] = (exi_regs[0] & (0x3FFF & ~0x80A)) | (ext << 11) | (tc << 3) | (exi << 1);
 }
 
-static int exi_selected()
+static bool exi_selected()
 {
 	return !!(exi_regs[0] & 0x380);
 }
@@ -97,7 +97,7 @@ static void exi_deselect()
 	exi_regs[0] &= 0x405;
 }
 
-static void exi_imm_write(u32 data, int len, int sync)
+static void exi_imm_write(u32 data, int len, bool sync)
 {
 	exi_regs[4] = data;
 	// Tell EXI if this is a read or a write
@@ -106,7 +106,7 @@ static void exi_imm_write(u32 data, int len, int sync)
 	while (sync && (exi_regs[3] & 1));
 }
 
-static u32 exi_imm_read(int len, int sync)
+static u32 exi_imm_read(int len, bool sync)
 {
 	exi_regs[4] = ~0;
 	// Tell EXI if this is a read or a write
@@ -120,7 +120,7 @@ static u32 exi_imm_read(int len, int sync)
 	}
 }
 
-static void exi_dma_write(void* data, int len, int sync)
+static void exi_dma_write(void* data, int len, bool sync)
 {
 	exi_regs[1] = (unsigned long)data;
 	exi_regs[2] = len;
@@ -129,7 +129,7 @@ static void exi_dma_write(void* data, int len, int sync)
 }
 
 // SD Functions
-#define rcvr_spi() ((u8)(exi_imm_read(1, 1) & 0xFF))
+#define rcvr_spi() ((u8)(exi_imm_read(1, true) & 0xFF))
 
 static void send_cmd(u32 cmd, u32 sector) {
 	exi_select();
@@ -137,9 +137,9 @@ static void send_cmd(u32 cmd, u32 sector) {
 	if(cmd != CMD12)
 		while(rcvr_spi() != 0xFF);
 
-	exi_imm_write(cmd<<24, 1, 1);
-	exi_imm_write(sector, 4, 1);
-	exi_imm_write(1<<24, 1, 1);
+	exi_imm_write(cmd<<24, 1, true);
+	exi_imm_write(sector, 4, true);
+	exi_imm_write(1<<24, 1, true);
 
 	while(rcvr_spi() & 0x80);
 
@@ -149,7 +149,7 @@ static void send_cmd(u32 cmd, u32 sector) {
 static void exi_read_to_buffer(void *dest, u32 len) {
 	u32 *destu = (u32*)dest;
 	while(len>=4) {
-		u32 read = exi_imm_read(4, 1);
+		u32 read = exi_imm_read(4, true);
 		if(dest) *destu++ = read;
 		len-=4;
 	}
@@ -161,7 +161,7 @@ static void exi_read_to_buffer(void *dest, u32 len) {
 	}
 }
 
-static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sync) {
+static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, bool sync) {
 	if(sync) {
 		exi_select();
 
@@ -186,8 +186,8 @@ static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sy
 		_mmc.transferred = -1;
 
 		exi_select();
-		exi_clear_interrupts(0, 1, 0);
-		exi_imm_read(1, 0);
+		exi_clear_interrupts(false, true, false);
+		exi_imm_read(1, false);
 
 		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_TC + (3 * exi_channel);
 		set_interrupt_handler(interrupt, tc_interrupt_handler);
@@ -196,16 +196,16 @@ static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, int sy
 	}
 }
 
-static int xmit_datablock(void *src, u32 token) {
+static bool xmit_datablock(void *src, u32 token) {
 	exi_select();
 
 	while(rcvr_spi() != 0xFF);
 
-	exi_imm_write(token<<24, 1, 1);
+	exi_imm_write(token<<24, 1, true);
 
 	if(token != 0xFD) {
-		exi_dma_write(src, SECTOR_SIZE, 1);
-		exi_imm_write(0xFFFF<<16, 2, 1);
+		exi_dma_write(src, SECTOR_SIZE, true);
+		exi_imm_write(0xFFFF<<16, 2, true);
 	}
 
 	u8 res = rcvr_spi();
@@ -264,7 +264,7 @@ static void mmc_read_queued(void)
 		send_cmd(CMD18, sector << *VAR_SD_SHIFT);
 	}
 
-	rcvr_datablock(buffer, 0, SECTOR_SIZE, 0);
+	rcvr_datablock(buffer, 0, SECTOR_SIZE, false);
 	mmc.next_sector = sector + 1;
 	mmc.write = WRITE;
 }
@@ -376,7 +376,7 @@ int do_read_write(void *buf, u32 len, u32 offset, u64 sectorLba, bool write) {
 	// Send single block read command and the LBA we want to read at
 	send_cmd(CMD17, lba << lbaShift);
 	// Read block
-	rcvr_datablock(buf, startByte, numBytes, 1);
+	rcvr_datablock(buf, startByte, numBytes, true);
 	#else
 	// If we saved this sector
 	if(lba == mmc.last_sector) {
@@ -391,14 +391,14 @@ int do_read_write(void *buf, u32 len, u32 offset, u64 sectorLba, bool write) {
 	}
 	if(numBytes < SECTOR_SIZE) {
 		// Read half block
-		rcvr_datablock(mmc.buffer, 0, SECTOR_SIZE, 1);
+		rcvr_datablock(mmc.buffer, 0, SECTOR_SIZE, true);
 		memcpy(buf, *mmc.buffer + startByte, numBytes);
 		// Save current LBA
 		mmc.last_sector = lba;
 	}
 	else {
 		// Read full block
-		rcvr_datablock(buf, 0, SECTOR_SIZE, 1);
+		rcvr_datablock(buf, 0, SECTOR_SIZE, true);
 	}
 	// Save next LBA
 	mmc.next_sector = lba + 1;

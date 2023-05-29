@@ -191,8 +191,8 @@ static void bba_ins(uint16_t reg, void *val, uint32_t len)
 {
 	exi_select();
 	exi_imm_write(0x80 << 24 | reg << 8, 4);
-	exi_clear_interrupts(EXI_CHANNEL_0, 0, 1, 0);
-	exi_dma_read(val, len, 0);
+	exi_clear_interrupts(EXI_CHANNEL_0, false, true, false);
+	exi_dma_read(val, len, false);
 
 	_bba.lock = false;
 	if (!setjmp(_bba.entry))
@@ -208,10 +208,10 @@ static void bba_outs(uint16_t reg, const void *val, uint32_t len)
 	exi_imm_write(0xC0 << 24 | reg << 8, 4);
 
 	if (!_bba.lock) {
-		exi_dma_write(val, len, 1);
+		exi_dma_write(val, len, true);
 	} else {
-		exi_clear_interrupts(EXI_CHANNEL_0, 0, 1, 0);
-		exi_dma_write(val, len, 0);
+		exi_clear_interrupts(EXI_CHANNEL_0, false, true, false);
+		exi_dma_write(val, len, false);
 
 		_bba.lock = false;
 		if (!setjmp(_bba.entry))
@@ -303,7 +303,7 @@ static void exi_coroutine()
 
 static void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	exi_clear_interrupts(EXI_CHANNEL_2, 1, 0, 0);
+	exi_clear_interrupts(EXI_CHANNEL_2, true, false, false);
 	exi_callback();
 }
 

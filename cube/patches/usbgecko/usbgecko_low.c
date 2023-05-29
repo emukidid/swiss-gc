@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2023, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -53,7 +53,7 @@ static bool usb_probe(void)
 	uint16_t val;
 
 	exi_select();
-	val = exi_imm_read_write(0x9 << 28, 2, 1);
+	val = exi_imm_read_write(0x9 << 28, 2, true);
 	exi_deselect();
 
 	return val == 0x470;
@@ -64,7 +64,7 @@ static bool usb_receive_byte(uint8_t *data)
 	uint16_t val;
 
 	exi_select();
-	val = exi_imm_read_write(0xA << 28, 2, 1); *data = val;
+	val = exi_imm_read_write(0xA << 28, 2, true); *data = val;
 	exi_deselect();
 
 	return !(val & 0x800);
@@ -75,7 +75,7 @@ static bool usb_transmit_byte(const uint8_t *data)
 	uint16_t val;
 
 	exi_select();
-	val = exi_imm_read_write(0xB << 28 | *data << 20, 2, 1);
+	val = exi_imm_read_write(0xB << 28 | *data << 20, 2, true);
 	exi_deselect();
 
 	return !(val & 0x400);
@@ -86,7 +86,7 @@ static bool usb_transmit_check(void)
 	uint8_t val;
 
 	exi_select();
-	val = exi_imm_read_write(0xC << 28, 1, 1);
+	val = exi_imm_read_write(0xC << 28, 1, true);
 	exi_deselect();
 
 	return !(val & 0x4);
@@ -97,7 +97,7 @@ static bool usb_receive_check(void)
 	uint8_t val;
 
 	exi_select();
-	val = exi_imm_read_write(0xD << 28, 1, 1);
+	val = exi_imm_read_write(0xD << 28, 1, true);
 	exi_deselect();
 
 	return !(val & 0x4);
@@ -105,7 +105,8 @@ static bool usb_receive_check(void)
 
 static int usb_transmit(const void *data, int size, int minsize)
 {
-	int i = 0, j = 0, check = 1;
+	int i = 0, j = 0;
+	bool check = true;
 
 	while (i < size) {
 		if ((check && usb_transmit_check()) ||
@@ -125,7 +126,8 @@ static int usb_transmit(const void *data, int size, int minsize)
 
 static int usb_receive(void *data, int size, int minsize)
 {
-	int i = 0, j = 0, check = 1;
+	int i = 0, j = 0;
+	bool check = true;
 
 	while (i < size) {
 		if ((check && usb_receive_check()) ||
