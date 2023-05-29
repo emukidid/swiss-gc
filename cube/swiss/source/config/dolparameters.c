@@ -88,11 +88,8 @@ void parseParameters(char *filecontents) {
 	while( line != NULL ) {
 		//print_gecko("Line [%s]\r\n", line);
 		if(line[0] != '#') {
-			char *key, *namectx = NULL;
-			char *value = NULL;
-			key = strtok_r(line, "=", &namectx);
-			if(key != NULL)
-				value = strtok_r(NULL, "=", &namectx);
+			char *key, *value = NULL;
+			key = strtok_r(line, "=", &value);
 			
 			if(value != NULL) {
 				//print_gecko("Key [%s] Value [%s]\r\n", key, value);

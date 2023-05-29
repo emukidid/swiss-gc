@@ -330,11 +330,8 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 		//print_gecko("Line [%s]\r\n", line);
 		if(line[0] != '#') {
 			// Is this line a new game entry?
-			char *name, *namectx = NULL;
-			char *value = NULL;
-			name = strtok_r(line, "=", &namectx);
-			if(name != NULL)
-				value = strtok_r(NULL, "=", &namectx);
+			char *name, *value = NULL;
+			name = strtok_r(line, "=", &value);
 			
 			if(value != NULL) {
 				//print_gecko("Name [%s] Value [%s]\r\n", name, value);
@@ -604,11 +601,8 @@ void config_parse_global(char *configData) {
 	while( line != NULL ) {
 		//print_gecko("Line [%s]\r\n", line);
 		if(line[0] != '#') {
-			char *name, *namectx = NULL;
-			char *value = NULL;
-			name = strtok_r(line, "=", &namectx);
-			if(name != NULL)
-				value = strtok_r(NULL, "=", &namectx);
+			char *name, *value = NULL;
+			name = strtok_r(line, "=", &value);
 			
 			if(value != NULL) {
 				//print_gecko("Name [%s] Value [%s]\r\n", name, value);
@@ -895,11 +889,8 @@ void config_parse_recent(char *configData) {
 	while( line != NULL ) {
 		//print_gecko("Line [%s]\r\n", line);
 		if(line[0] != '#') {
-			char *name, *namectx = NULL;
-			char *value = NULL;
-			name = strtok_r(line, "=", &namectx);
-			if(name != NULL)
-				value = strtok_r(NULL, "=", &namectx);
+			char *name, *value = NULL;
+			name = strtok_r(line, "=", &value);
 			
 			if(value != NULL) {
 				//print_gecko("Name [%s] Value [%s]\r\n", name, value);
@@ -924,11 +915,8 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 	while( line != NULL ) {
 		//print_gecko("Line [%s]\r\n", line);
 		if(line[0] != '#') {
-			char *name, *namectx = NULL;
-			char *value = NULL;
-			name = strtok_r(line, "=", &namectx);
-			if(name != NULL)
-				value = strtok_r(NULL, "=", &namectx);
+			char *name, *value = NULL;
+			name = strtok_r(line, "=", &value);
 			
 			if(value != NULL) {
 				//print_gecko("Name [%s] Value [%s]\r\n", name, value);
