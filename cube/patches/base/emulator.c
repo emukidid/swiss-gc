@@ -31,6 +31,7 @@
 #include "fifo.h"
 #include "frag.h"
 #include "interrupt.h"
+#include "PowerPC.h"
 
 static struct {
 	union {
@@ -1065,72 +1066,72 @@ static bool ppc_store16(uint32_t address, uint16_t value)
 
 static bool ppc_step(ppc_context_t *context)
 {
-	uint32_t opcode = *(uint32_t *)context->srr0;
+	PowerPC_instr instr = *(PowerPC_instr *)context->srr0;
 
-	switch (opcode >> 26) {
-		case 31:
+	switch (PPC_GET_OPCODE(instr)) {
+		case PPC_OPCODE_X:
 		{
-			switch ((opcode >> 1) & 0x3FF) {
-				case 23:
+			switch (PPC_GET_FUNC(instr)) {
+				case PPC_FUNC_LWZX:
 				{
-					int rd = (opcode >> 21) & 0x1F;
-					int ra = (opcode >> 16) & 0x1F;
-					int rb = (opcode >> 11) & 0x1F;
+					int rd = PPC_GET_RD(instr);
+					int ra = PPC_GET_RA(instr);
+					int rb = PPC_GET_RB(instr);
 					return ppc_load32(ra ? context->gpr[ra] + context->gpr[rb] : context->gpr[rb], &context->gpr[rd]);
 				}
-				case 151:
+				case PPC_FUNC_STWX:
 				{
-					int rs = (opcode >> 21) & 0x1F;
-					int ra = (opcode >> 16) & 0x1F;
-					int rb = (opcode >> 11) & 0x1F;
+					int rs = PPC_GET_RS(instr);
+					int ra = PPC_GET_RA(instr);
+					int rb = PPC_GET_RB(instr);
 					return ppc_store32(ra ? context->gpr[ra] + context->gpr[rb] : context->gpr[rb], context->gpr[rs]);
 				}
 				#ifndef NO_VIDEO
-				case 407:
+				case PPC_FUNC_STHX:
 				{
-					int rs = (opcode >> 21) & 0x1F;
-					int ra = (opcode >> 16) & 0x1F;
-					int rb = (opcode >> 11) & 0x1F;
+					int rs = PPC_GET_RS(instr);
+					int ra = PPC_GET_RA(instr);
+					int rb = PPC_GET_RB(instr);
 					return ppc_store16(ra ? context->gpr[ra] + context->gpr[rb] : context->gpr[rb], context->gpr[rs]);
 				}
 				#endif
 			}
 			break;
 		}
-		case 32:
+		case PPC_OPCODE_LWZ:
 		{
-			int rd = (opcode >> 21) & 0x1F;
-			int ra = (opcode >> 16) & 0x1F;
-			short d = opcode & 0xFFFF;
+			int rd = PPC_GET_RD(instr);
+			int ra = PPC_GET_RA(instr);
+			short d = PPC_GET_IMMED(instr);
 			return ppc_load32(ra ? context->gpr[ra] + d : d, &context->gpr[rd]);
 		}
-		case 36:
+		case PPC_OPCODE_STW:
 		{
-			int rs = (opcode >> 21) & 0x1F;
-			int ra = (opcode >> 16) & 0x1F;
-			short d = opcode & 0xFFFF;
+			int rs = PPC_GET_RS(instr);
+			int ra = PPC_GET_RA(instr);
+			short d = PPC_GET_IMMED(instr);
 			return ppc_store32(ra ? context->gpr[ra] + d : d, context->gpr[rs]);
 		}
-		case 39:
+		case PPC_OPCODE_STBU:
 		{
-			int rs = (opcode >> 21) & 0x1F;
-			int ra = (opcode >> 16) & 0x1F;
-			short d = opcode & 0xFFFF;
+			int rs = PPC_GET_RS(instr);
+			int ra = PPC_GET_RA(instr);
+			short d = PPC_GET_IMMED(instr);
 			return ppc_store8(ra ? context->gpr[ra] += d : d, context->gpr[rs]);
 		}
 		#ifdef DTK
-		case 40:
+		case PPC_OPCODE_LHZ:
 		{
-			int rd = (opcode >> 21) & 0x1F;
-			int ra = (opcode >> 16) & 0x1F;
-			short d = opcode & 0xFFFF;
+			int rd = PPC_GET_RD(instr);
+			int ra = PPC_GET_RA(instr);
+			short d = PPC_GET_IMMED(instr);
 			return ppc_load16(ra ? context->gpr[ra] + d : d, &context->gpr[rd]);
 		}
-		case 44:
+		case PPC_OPCODE_STH:
 		{
-			int rs = (opcode >> 21) & 0x1F;
-			int ra = (opcode >> 16) & 0x1F;
-			short d = opcode & 0xFFFF;
+			int rs = PPC_GET_RS(instr);
+			int ra = PPC_GET_RA(instr);
+			short d = PPC_GET_IMMED(instr);
 			return ppc_store16(ra ? context->gpr[ra] + d : d, context->gpr[rs]);
 		}
 		#endif
@@ -1142,7 +1143,7 @@ static bool ppc_step(ppc_context_t *context)
 ppc_context_t *service_exception(ppc_context_t *context)
 {
 	if (ppc_step(context))
-		context->srr0 += 4;
+		context->srr0 += sizeof(PowerPC_instr);
 	else
 		__builtin_trap();
 
@@ -1153,10 +1154,10 @@ void dsi_exception_vector(void);
 
 void write_branch(void *a, void *b)
 {
-	uint32_t branch = (uint32_t)(b - (OS_BASE_CACHED - 0x48000002));
+	PowerPC_instr instr = (PowerPC_instr)(b - (OS_BASE_CACHED - 0x48000002));
 
-	if (*(uint32_t *)a != branch) {
-		*(uint32_t *)a  = branch;
+	if (*(PowerPC_instr *)a != instr) {
+		*(PowerPC_instr *)a  = instr;
 		asm volatile("dcbst 0,%0; sync; icbi 0,%0" :: "r" (a));
 	}
 }
