@@ -1679,7 +1679,15 @@ void load_game() {
 		}
 		
 		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
-		if(is_redump_disc(curFile.meta) && !valid_gcm_size(&GCMDisk, curFile.size)) {
+		
+		if(is_nkit_format(&GCMDisk) && !valid_gcm_boot(&GCMDisk)) {
+			DrawDispose(msgBox);
+			msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is not playable in NKit.iso format.\nPlease convert back to ISO using NKit."));
+			sleep(5);
+			DrawDispose(msgBox);
+			return;
+		}
+		else if(is_redump_disc(curFile.meta) && !valid_gcm_size(&GCMDisk, curFile.size)) {
 			if(swissSettings.audioStreaming) {
 				DrawDispose(msgBox);
 				msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump and is not playable.\nPlease attempt recovery using NKit."));
@@ -1692,13 +1700,6 @@ void load_game() {
 				msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump, but may be playable.\nPlease attempt recovery using NKit."));
 				sleep(5);
 			}
-		}
-		else if(!memcmp(&GCMDisk.NKitMagicWord, "NKIT v01", 8) && !valid_gcm_boot(&GCMDisk)) {
-			DrawDispose(msgBox);
-			msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is not playable in NKit.iso format.\nPlease convert back to ISO using NKit."));
-			sleep(5);
-			DrawDispose(msgBox);
-			return;
 		}
 	}
 	

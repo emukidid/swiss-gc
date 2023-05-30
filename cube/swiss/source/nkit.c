@@ -2161,6 +2161,11 @@ bool is_multi_disc(const file_meta *meta)
 	return false;
 }
 
+bool is_nkit_format(const DiskHeader *header)
+{
+	return !memcmp(&header->NKitMagicWord, "NKIT v01", 8);
+}
+
 bool is_redump_disc(const file_meta *meta)
 {
 	if (!meta)
@@ -2176,7 +2181,7 @@ bool is_redump_disc(const file_meta *meta)
 
 bool is_streaming_disc(const DiskHeader *header)
 {
-	if (!memcmp(&header->NKitMagicWord, "NKIT v01", 8)) {
+	if (is_nkit_format(header)) {
 		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header->ImageCRC == nkit_dat[i].crc)
@@ -2199,7 +2204,7 @@ bool is_streaming_disc(const DiskHeader *header)
 
 bool is_verifiable_disc(const DiskHeader *header)
 {
-	if (!memcmp(&header->NKitMagicWord, "NKIT v01", 8))
+	if (is_nkit_format(header))
 		return true;
 
 	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
@@ -2213,7 +2218,7 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 {
 	*offset = ~0;
 
-	if (!memcmp(&header->NKitMagicWord, "NKIT v01", 8)) {
+	if (is_nkit_format(header)) {
 		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++) {
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header->ImageCRC == nkit_dat[i].crc &&
@@ -2251,7 +2256,7 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 
 uint64_t get_gcm_boot_hash(const DiskHeader *header)
 {
-	if (!memcmp(&header->NKitMagicWord, "NKIT v01", 8)) {
+	if (is_nkit_format(header)) {
 		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header->ImageCRC == nkit_dat[i].crc)
@@ -2273,7 +2278,7 @@ const char *get_gcm_title(const DiskHeader *header, file_meta *meta)
 	if (meta->bannerSum == 0xFFFF)
 		meta->displayName = strncpy(meta->bannerDesc.fullGameName, header->GameName, BNR_FULL_TEXT_LEN);
 
-	if (!memcmp(&header->NKitMagicWord, "NKIT v01", 8)) {
+	if (is_nkit_format(header)) {
 		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++) {
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header->ImageCRC == nkit_dat[i].crc) {
@@ -2330,7 +2335,7 @@ bool valid_gcm_boot(const DiskHeader *header)
 
 bool valid_gcm_crc32(const DiskHeader *header, uint32_t crc)
 {
-	if (!memcmp(&header->NKitMagicWord, "NKIT v01", 8))
+	if (is_nkit_format(header))
 		return header->ImageCRC == crc;
 
 	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
@@ -2353,7 +2358,7 @@ bool valid_gcm_magic(DiskHeader *header)
 
 bool valid_gcm_size(const DiskHeader *header, off_t size)
 {
-	if (!memcmp(&header->NKitMagicWord, "NKIT v01", 8)) {
+	if (is_nkit_format(header)) {
 		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header->ImageCRC == nkit_dat[i].crc &&
