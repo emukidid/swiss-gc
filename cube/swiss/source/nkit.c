@@ -598,6 +598,7 @@ static const struct {
 	{ "GCQE7D\x00\x00", false, 1, 0x5344, 0xE81553BD, 1345501184,  +114477056, 0xA20F8EA53D150B2B, { 1345493340,       +4664, 6496, 0xE15F }, "Buffy the Vampire Slayer: Chaos Bleeds" },
 	{ "GCQF7D\x00\x00", false, 1, 0xBF78, 0xBEDAAC80, 1418211328,   +41766912, 0x4D7C36B8F934A472, { 1418204032,      +30272, 6496, 0xEA05 }, "Buffy contre les Vampires: Chaos Bleeds" },
 	{ "GCQP7D\x00\x00", false, 1, 0xF384, 0x46E25097, 1424568320,   +35409920, 0x4D7C36B8F934A472, { 1424561124,      +30268, 6496, 0xA9D0 }, "Buffy the Vampire Slayer: Chaos Bleeds" },
+	{ "GCRPBM\x00\x00", false, 1, 0xD202, 0x09EFF165,   10774528,  +105123840, 0x0000000000000000, {      17736,         +24, 8096, 0xE5E6 }, "Xeno Crisis" },
 	{ "GCSEAF\x00\x00", true,  1, 0xB9D8, 0x718F9112, 1366556672,   +93421568, 0xD8443682705DDCEA, {    3664676,   +93451356, 6496, 0x2E92 }, "SRS: Street Racing Syndicate" },
 	{ "GCSPAF\x00\x00", true,  1, 0x098F, 0x0AEE62B4, 1403248640,   +56729600, 0x2F982E4215FB324A, {    3724548,   +56724860, 8096, 0xC7FC }, "SRS: Street Racing Syndicate" },
 	{ "GCSPAF\x00\x01", true,  1, 0x2B08, 0x8DD1D444, 1258063872,  +201914368, 0x91D52B1DFFC1598A, {    3719812,  +201899292, 8096, 0xC7FC }, "SRS: Street Racing Syndicate" },
@@ -2040,7 +2041,7 @@ static const struct {
 	{ "UGPJ01\x00\x03", false, 1, 0xC4F0, 0xDFF567CB,    2473984, +1457504256, 0xFB2218FBFA6AB9FE, {    2003524,      +28092, 6496, 0xE53B }, "Game Boy Player Start-Up Disc" },
 	{ "UGPP01\x00\x01", false, 1, 0x6D4F, 0x5ECD9681,    5079040, +1454899200, 0x4E9244DEFB94F10C, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{ "UGPP01\x00\x02", false, 1, 0xCA50, 0x1E26380C,    5079040, +1454899200, 0x483B4CE794041533, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
-#define REDUMP_COUNT 1967
+#define REDUMP_COUNT 1968
 	{ "00\0E01\x00\x00",false, 1, 0x21CF, 0xBF114CB3,   31170560, +1428807680, 0xC1BAC83BFBED3EDB, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{ "00\0E01\x00\x00",false, 1, 0x42A2, 0x499CF1AB,   31170560, +1428807680, 0xC1BAC83BFBED3EDB, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{ "D28J01\x00\x00", true,  1, 0x8FC6, 0x8EFBB42B,  794134528,  +665843712, 0xB1F399DE51C25382, {  394649296,  +665814992, 6496, 0xE5B2 }, "Gekkan Nintendo Tentou Demo 2002.4.4" },
@@ -2062,7 +2063,6 @@ static const struct {
 	{ "GCCE01\x00\x00", false, 1, 0xF223, 0xD466236E, 1329932288,  +130045952, 0x89D01E6E0E49A121, {  570366340,      +30392, 6496, 0x6BE6 }, "Final Fantasy Crystal Chronicles: Single Player Upgrade" },
 	{ "GCREBM\x00\x00", false, 1, 0x9EF5, 0x00FFED74,   10774528,  +105123840, 0x0000000000000000, {      17736,         +24, 6496, 0x65EB }, "Xeno Crisis" },
 	{ "GCRJBM\x00\x00", false, 1, 0x80F9, 0x0C6D4075,   10774528,  +105123840, 0x0000000000000000, {      17736,         +24, 6496, 0xFAC5 }, "Xeno Crisis" },
-	{ "GCRPBM\x00\x00", false, 1, 0xD202, 0x09EFF165,   10774528,  +105123840, 0x0000000000000000, {      17736,         +24, 8096, 0xE5E6 }, "Xeno Crisis" },
 	{ "GDEE71\x00\x00", false, 1, 0xC228, 0xC2C80167, 1358307328,  +101670912, 0x616D2EAD3B11D74F, {  914092380,       +7536, 6496, 0x2D5A }, "Baldur's Gate: Dark Alliance" },
 	{ "GEAE8P\x00\x00", false, 1, 0x4329, 0x22E6FE4B, 1421514752,   +38463488, 0x776C0A056378855A, { 1206244016,   +36660560, 6496, 0x51AD }, "Skies of Arcadia Legends Maeson" },
 	{ "GEAE8P\x00\x00", false, 1, 0xE528, 0xEE8698CB, 1441400832,   +18577408, 0xEE3D9D60D95DC4D8, { 1206239432,   +16754488, 6496, 0xCB3E }, "Skies of Arcadia Legends" },
@@ -2359,8 +2359,15 @@ bool valid_gcm_size(const DiskHeader *header, off_t size)
 				header->ImageCRC == nkit_dat[i].crc &&
 				header->ImageSize == nkit_dat[i].size + nkit_dat[i]._size &&
 				size == nkit_dat[i].size) return true;
-	} else if (size == DISC_SIZE)
-		return true;
+	} else {
+		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-	return false;
+		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+			if (!memcmp(header, nkit_dat[i].header, 8) &&
+				header_sum == nkit_dat[i].header_sum &&
+				size == nkit_dat[i].size + nkit_dat[i]._size)
+				return true;
+	}
+
+	return size == DISC_SIZE;
 }
