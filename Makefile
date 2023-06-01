@@ -71,28 +71,26 @@ build:
 	@mkdir $(DIST)/WiikeyFusion/RecoveryISO
 	@mkdir $(DIST)/WODE
 	@mkdir $(DIST)/GCLoader
-	@cp $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/$(SVN_REVISION).dol
+	@cp $(PACKER)/swiss.dol $(DIST)/DOL/$(SVN_REVISION).dol
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION).dol
 	@cp $(SOURCES)/swiss/swiss.elf $(DIST)/DOL/$(SVN_REVISION).elf
 	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol -v -m
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol
 	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz.dol -m
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-lz.dol
-	@cp $(PACKER)/swiss.dol $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
-	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
 	# make ISOs and WKF firmware
 	# NTSC-J
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# NTSC
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-u.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-u)".iso $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-u.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-u)".iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# PAL
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION)-compressed.dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# GCLoader
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION)-compressed.dol -o $(DIST)/GCLoader/boot.iso $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/GCLoader/boot.iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# WODE
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-wode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION)-compressed.dol -o $(DIST)/WODE/$(SVN_REVISION)"(wode_extcfg)".iso $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-wode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/WODE/$(SVN_REVISION)"(wode_extcfg)".iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# WKF
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION)-compressed.dol -o $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn $(DIST)/DOL/$(SVN_REVISION)-compressed.dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn $(DIST)/DOL/$(SVN_REVISION).dol
 	@truncate -s 1856K $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn
 	@cp $(BUILDTOOLS)/wkf/autoboot.fzn.fw $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn.fw
 
@@ -128,15 +126,15 @@ package:   # create distribution package
 
 build-AR: # make ActionReplay
 	@mkdir $(DIST)/ActionReplay
-	@cp $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/ActionReplay/AUTOEXEC.DOL
+	@cp $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/ActionReplay/AUTOEXEC.DOL
 	@cp $(PACKER)/SDLOADER.BIN $(DIST)/ActionReplay/
 
 #------------------------------------------------------------------
 
 build-gci: # make GCI for memory cards
 	@mkdir $(DIST)/GCI
-	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/GCI/boot.gci boot.dol
-	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION)-compressed.dol $(DIST)/GCI/xeno.gci xeno.dol
+	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/GCI/boot.gci boot.dol
+	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/GCI/xeno.gci xeno.dol
 	@cp $(BUILDTOOLS)/dol2gci* $(DIST)/GCI/
 
 #------------------------------------------------------------------

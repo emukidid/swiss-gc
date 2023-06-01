@@ -8,7 +8,7 @@ This file is most commmonly used for booting swiss.
 
 ----------------------------------------------------------
 
-- swiss-compressed.dol :  same as swiss.dol
+- swiss-lz.dol : same as swiss.dol
 This file is shrunk to fit for upload into Qoob Pro flash.
 
 ----------------------------------------------------------
