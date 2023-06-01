@@ -4,7 +4,7 @@
 # We have 0x2400 bytes to play with at 0x80000C00 (code+data)
 #**************************************************************************
 #define _LANGUAGE_ASSEMBLY
-#include "../../reservedarea.h"
+#include "asm.h"
 
 .section .text
 	.org 0x80000C00 - 0x80000C00

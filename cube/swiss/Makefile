@@ -56,7 +56,7 @@ SOURCES		:=  source \
 DATA		:=	data  
 TEXTURES	:=	source/images \
               source/images/buttons
-INCLUDES	:= include $(SOURCES)
+INCLUDES	:=	include $(SOURCES) ..
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -65,6 +65,7 @@ INCLUDES	:= include $(SOURCES)
 CFLAGS		= -g -O2 -Wall -Wno-format-truncation -fno-strict-aliasing -D_GNU_SOURCE $(MACHDEP) $(INCLUDE) -D'GITREVISION="$(shell git rev-parse --short HEAD)"' -D'GITVERSION="$(shell git rev-list HEAD | wc -l)"'
 CXXFLAGS	= $(CFLAGS)
 
+ASFLAGS		= $(MACHDEP) -mregnames -D_LANGUAGE_ASSEMBLY $(INCLUDE)
 LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -T ../../linker-script/ogc.ld -T ../../reservedarea.ld
 
 #---------------------------------------------------------------------------------

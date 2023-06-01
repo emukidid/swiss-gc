@@ -9,7 +9,7 @@
 */
 
 #ifdef _LANGUAGE_ASSEMBLY
-#include "asm.h"
+
 .set VAR_AREA,				0x8000
 
 .set VAR_JUMP_TABLE,		0x00A0	# Dolphin OS jump table
@@ -139,5 +139,5 @@ extern char VAR_RMODE[4];			// render mode
 #define FRAGS_CARD(n)	(4 + (n))
 #define FRAGS_CARD_A	FRAGS_CARD(0)
 #define FRAGS_CARD_B	FRAGS_CARD(1)
-#endif
 
+#endif

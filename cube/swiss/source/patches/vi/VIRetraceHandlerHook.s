@@ -1,6 +1,4 @@
-#include "../asm.h"
-#define _LANGUAGE_ASSEMBLY
-#include "../../../../reservedarea.h"
+#include "reservedarea.h"
 
 .globl VIRetraceHandlerHook
 VIRetraceHandlerHook:

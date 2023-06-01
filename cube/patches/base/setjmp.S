@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2022-2023, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -18,7 +18,7 @@
  */
 
 #define _LANGUAGE_ASSEMBLY
-#include "../../reservedarea.h"
+#include "asm.h"
 
 .section .text
 	.globl setjmp

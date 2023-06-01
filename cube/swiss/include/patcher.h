@@ -1,7 +1,7 @@
 #ifndef PATCHER_H
 #define PATCHER_H
 
-#include "../../reservedarea.h"
+#include "reservedarea.h"
 
 typedef struct FuncPattern
 {

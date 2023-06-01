@@ -17,9 +17,6 @@
  * with Swiss.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define _LANGUAGE_ASSEMBLY
-#include "../../reservedarea.h"
-
 .section .init
 	.globl _start, __argv
 _start:
@@ -49,9 +46,9 @@ startup:
 	lis		r0, reset@h + 0x48000002
 	ori		r0, r0, reset@l + 0x48000002
 1:	stwu	r0, 0x0100 (r3)
-	dcbst	r0, r3
+	dcbst	0, r3
 	sync
-	icbi	r0, r3
+	icbi	0, r3
 	cmplwi	r3, 0x1700
 	blt		1b
 

@@ -50,7 +50,7 @@
 #include "devices/filemeta.h"
 #include "xxhash/xxhash.h"
 #include "dolparameters.h"
-#include "../../reservedarea.h"
+#include "reservedarea.h"
 
 DiskHeader GCMDisk;      //Gamecube Disc Header struct
 TGCHeader tgcFile;

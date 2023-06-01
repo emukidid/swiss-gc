@@ -5,7 +5,7 @@ LD      = $(DIR)/powerpc-eabi-ld
 OBJDUMP = $(DIR)/powerpc-eabi-objdump
 OBJCOPY = $(DIR)/powerpc-eabi-objcopy
 
-OPTS	= -ffast-math -flto -fipa-pta -fno-tree-loop-distribute-patterns -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--no-warn-rwx-segments -I.. -Ibase -Wno-address-of-packed-member -Wno-scalar-storage-order
+OPTS	= -ffast-math -flto -fipa-pta -fno-tree-loop-distribute-patterns -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--no-warn-rwx-segments -Wno-address-of-packed-member -Wno-scalar-storage-order -iquote base -iquote ..
 
 DEST    = ../swiss/source/patches
 

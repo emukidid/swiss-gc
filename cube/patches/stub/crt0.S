@@ -18,7 +18,7 @@
  */
 
 #define _LANGUAGE_ASSEMBLY
-#include "../../reservedarea.h"
+#include "asm.h"
 
 .section .init
 	.globl _start

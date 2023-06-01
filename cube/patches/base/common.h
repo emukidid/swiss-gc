@@ -1,7 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include "../../reservedarea.h"
+#include "reservedarea.h"
 
 typedef unsigned char u8;
 typedef signed char s8;

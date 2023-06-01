@@ -18,7 +18,7 @@
  */
 
 #define _LANGUAGE_ASSEMBLY
-#include "../../reservedarea.h"
+#include "asm.h"
 
 .section .text.mmc_interrupt_vector,"ax",@progbits
 	.balign 32

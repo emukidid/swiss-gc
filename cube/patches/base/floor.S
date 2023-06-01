@@ -17,7 +17,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 #define _LANGUAGE_ASSEMBLY
-#include "../../reservedarea.h"
+#include "asm.h"
 
 .section .rodata.cst4,"aM",@progbits,4
 	.align 2

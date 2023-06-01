@@ -19,7 +19,7 @@ TARGET		:=	swiss
 BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	../$(TARGET)
-INCLUDES	:=
+INCLUDES	:=	..
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -28,6 +28,7 @@ INCLUDES	:=
 CFLAGS		= -g -O2 -Wall -msdata -G 32768 -ffreestanding $(MACHDEP) $(INCLUDE)
 CXXFLAGS	= $(CFLAGS)
 
+ASFLAGS		= $(MACHDEP) -mregnames -D_LANGUAGE_ASSEMBLY $(INCLUDE)
 LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -T ../source/link.ld
 
 #---------------------------------------------------------------------------------
@@ -84,7 +85,7 @@ export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
 #---------------------------------------------------------------------------------
 # build a list of include paths
 #---------------------------------------------------------------------------------
-export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
+export INCLUDE	:=	$(foreach dir,$(INCLUDES), -iquote $(CURDIR)/$(dir)) \
 					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 					-I$(CURDIR)/$(BUILD) \
 					-I$(LIBOGC_INC)
