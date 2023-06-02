@@ -34,7 +34,7 @@ bool is_streaming_disc(const DiskHeader *header);
 bool is_verifiable_disc(const DiskHeader *header);
 
 bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *size);
-uint64_t get_gcm_boot_hash(const DiskHeader *header);
+uint64_t get_gcm_boot_hash(const DiskHeader *header, const file_meta *meta);
 const char *get_gcm_title(const DiskHeader *header, file_meta *meta);
 
 int valid_dol_xxh3(const file_handle *file, uint64_t hash);

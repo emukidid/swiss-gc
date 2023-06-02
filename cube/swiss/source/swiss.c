@@ -1731,7 +1731,7 @@ void load_game() {
 	gameID_early_set(&GCMDisk);
 	
 	if(config->forceCleanBoot || (config->preferCleanBoot && devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR)) {
-		gameID_set(&GCMDisk, get_gcm_boot_hash(&GCMDisk));
+		gameID_set(&GCMDisk, get_gcm_boot_hash(&GCMDisk, curFile.meta));
 		
 		if(devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support clean boot."));
