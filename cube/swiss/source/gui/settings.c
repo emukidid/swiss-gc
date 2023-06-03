@@ -53,7 +53,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"File Management:\n\nWhen enabled, pressing Z on an entry in the file browser will allow it to be managed.",
 	"Recent List:\n\n(On) - Press Start while browsing to show a recent list.\n(Lazy) - Same as On but list updates only for new entries.\n(Off) - Recent list is completely disabled.\n\nThe lazy/off options exist to minimise SD card writes.",
 	NULL,
-	"Hide unknown file types:\n\nDisabled - Show all files (default)\nEnabled - Swiss will hide unknown file types from being displayed\n\nKnown file types are:\n GameCube Executables (.dol)\n Disc images (.gcm/.iso/.nkit.iso/.tgc)\n MP3 Music (.mp3)\n WASP/WKF Flash files (.fzn)\n GameCube Memory Card Files (.gci/.gcs/.sav)\n GameCube Executables with parameters appended (.dol+cli)\n GameCube ELF files (.elf)",
+	"Hide unknown file types:\n\nDisabled - Show all files (default)\nEnabled - Swiss will hide unknown file types from being displayed\n\nKnown file types are:\n GameCube Executables (.bin/.dol/.elf)\n Disc images (.gcm/.iso/.nkit.iso/.tgc)\n MP3 Music (.mp3)\n WASP/WKF Flash files (.fzn)\n GameCube Memory Card Files (.gci/.gcs/.sav)\n GameCube Executables with parameters appended (.dol+cli)",
 	"Flatten directory:\n\nFlattens a directory structure matching a glob pattern.",
 	"Stop DVD Motor at startup:\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the DVD drive from spinning when Swiss starts\n\nThis option is mostly for users booting from game\nexploits where the disc will already be spinning.",
 	"SD/IDE Speed:\n\nThe speed to try and use on the EXI bus for SD Card Adapters or IDE-EXI devices.\n32 MHz may not work on some SD cards.",

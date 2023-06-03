@@ -1006,6 +1006,9 @@ void load_app(ExecutableFile *fileToPatch)
 	if(type == PATCH_BS2) {
 		BINtoARAM(buffer, sizeToRead, 0x81300000);
 	}
+	else if(type == PATCH_BIN) {
+		BINtoARAM(buffer, sizeToRead, 0x80003100);
+	}
 	else if(type == PATCH_DOL) {
 		DOLtoARAM(buffer, NULL, 0);
 	}
@@ -1016,10 +1019,10 @@ void load_app(ExecutableFile *fileToPatch)
 
 void boot_dol()
 { 
-	unsigned char *dol_buffer;
-	unsigned char *ptr;
+	void *dol_buffer;
+	void *ptr;
   
-	dol_buffer = (unsigned char*)memalign(32,curFile.size);
+	dol_buffer = memalign(32, curFile.size);
 	if(!dol_buffer) {
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"DOL is too big. Press A.");
 		DrawPublish(msgBox);
@@ -1140,6 +1143,9 @@ void boot_dol()
 	}
 	else if(endsWith(curFile.name, "/SDLOADER.BIN")) {
 		BINtoARAM(dol_buffer, curFile.size, 0x81700000);
+	}
+	else if(branchResolve(dol_buffer, PATCH_BIN, 0)) {
+		BINtoARAM(dol_buffer, curFile.size, 0x80003100);
 	}
 	else {
 		DOLtoARAM(dol_buffer, argz, argz_len);

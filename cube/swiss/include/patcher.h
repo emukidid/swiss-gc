@@ -187,6 +187,7 @@ enum patchIds {
 enum patchTypes {
 	PATCH_APPLOADER = 0,
 	PATCH_BS2,
+	PATCH_BIN,
 	PATCH_DOL,
 	PATCH_DOL_PRS,
 	PATCH_ELF,
@@ -214,7 +215,6 @@ void *getPatchAddr(int patchId);
 void setTopAddr(u32 addr);
 u32 getTopAddr();
 int install_code(int final);
-
+u32 branchResolve(u32 *data, int dataType, u32 offsetFoundAt);
 
 #endif
-

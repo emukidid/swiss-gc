@@ -15705,6 +15705,10 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 		if(offsetFoundAt < 0x1AF6E0)
 			return (void*)(offsetFoundAt+0x81300000);
 	}
+	else if(dataType == PATCH_BIN) {
+		if(offsetFoundAt < 0x400000)
+			return (void*)(offsetFoundAt+0x80003100);
+	}
 	return NULL;
 }
 
@@ -15783,6 +15787,10 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 	else if(dataType == PATCH_BS2) {
 		if(properAddress >= 0x81300000 && properAddress < 0x814AF6E0)
 			return data+properAddress-0x81300000;
+	}
+	else if(dataType == PATCH_BIN) {
+		if(properAddress >= 0x80003100 && properAddress < 0x80403100)
+			return data+properAddress-0x80003100;
 	}
 	return NULL;
 }
