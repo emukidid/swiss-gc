@@ -816,33 +816,27 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch, int num_files) {
 void load_app(ExecutableFile *fileToPatch)
 {
 	uiDrawObj_t* progBox = NULL;
-	char* gameID = (char*)0x80000000;
+	char* gameID = VAR_AREA;
 	void* buffer;
 	u32 sizeToRead;
 	int type;
-	
-	// Clear OSLoMem
-	asm volatile("mtdabr %0" :: "r" (0));
-	memset((void*)0x80000000,0,0x100);
-	memset((void*)0x80003000,0,0x100);
 	
 	// Get top of memory
 	u32 topAddr = getTopAddr();
 	print_gecko("Top of RAM simulated as: 0x%08X\r\n", topAddr);
 	
-	*(volatile u32*)0x80000028 = 0x01800000;
-	*(volatile u32*)0x8000002C = (swissSettings.debugUSB ? 0x10000004:0x00000001) + (*(volatile u32*)0xCC00302C >> 28);
-	*(volatile u32*)0x800000CC = swissSettings.sramVideo;
-	*(volatile u32*)0x800000D0 = 0x01000000;
-	*(volatile u32*)0x800000E8 = 0x81800000 - topAddr;
-	*(volatile u32*)0x800000EC = topAddr;
-	if (topAddr != 0x81800000) asm volatile("mtdabr %0" :: "r" (0x800000E8 | 0b110));
-	*(volatile u32*)0x800000F0 = 0x01800000;
-	*(volatile u32*)0x800000F8 = TB_BUS_CLOCK;
-	*(volatile u32*)0x800000FC = TB_CORE_CLOCK;
+	*(vu32*)(VAR_AREA+0x0028) = 0x01800000;
+	*(vu32*)(VAR_AREA+0x002C) = (swissSettings.debugUSB ? 0x10000004:0x00000001) + (*(vu32*)0xCC00302C >> 28);
+	*(vu32*)(VAR_AREA+0x00CC) = swissSettings.sramVideo;
+	*(vu32*)(VAR_AREA+0x00D0) = 0x01000000;
+	*(vu32*)(VAR_AREA+0x00E8) = 0x81800000 - topAddr;
+	*(vu32*)(VAR_AREA+0x00EC) = topAddr;
+	*(vu32*)(VAR_AREA+0x00F0) = 0x01800000;
+	*(vu32*)(VAR_AREA+0x00F8) = TB_BUS_CLOCK;
+	*(vu32*)(VAR_AREA+0x00FC) = TB_CORE_CLOCK;
 	
 	// Copy the game header to 0x80000000
-	memcpy(gameID,(char*)&GCMDisk,0x20);
+	memcpy(VAR_AREA,(void*)&GCMDisk,0x20);
 	
 	if(fileToPatch != NULL) {
 		// For a DOL from a TGC, redirect the FST to the TGC FST.
@@ -863,13 +857,13 @@ void load_app(ExecutableFile *fileToPatch)
 			// Patch bi2.bin
 			Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
 			
-			*(volatile u32*)0x80000020 = 0x0D15EA5E;
-			*(volatile u32*)0x80000024 = 1;
-			*(volatile u32*)0x80000034 = fstAddr;								// Arena Hi
-			*(volatile u32*)0x80000038 = fstAddr;								// FST Location in ram
-			*(volatile u32*)0x8000003C = fileToPatch->tgcFstSize;				// FST Max Length
-			*(volatile u32*)0x800000F4 = bi2Addr;								// bi2.bin location
-			*(volatile u32*)0x800030F4 = fileToPatch->tgcBase;
+			*(vu32*)(VAR_AREA+0x0020) = 0x0D15EA5E;
+			*(vu32*)(VAR_AREA+0x0024) = 1;
+			*(vu32*)(VAR_AREA+0x0034) = fstAddr;								// Arena Hi
+			*(vu32*)(VAR_AREA+0x0038) = fstAddr;								// FST Location in ram
+			*(vu32*)(VAR_AREA+0x003C) = fileToPatch->tgcFstSize;				// FST Max Length
+			*(vu32*)(VAR_AREA+0x00F4) = bi2Addr;								// bi2.bin location
+			*(vu32*)(VAR_AREA+0x30F4) = fileToPatch->tgcBase;
 		}
 		else {
 			// Read FST to top of Main Memory (round to 32 byte boundary)
@@ -887,12 +881,12 @@ void load_app(ExecutableFile *fileToPatch)
 			// Patch bi2.bin
 			Patch_GameSpecificFile((void*)bi2Addr, 0x2000, gameID, "bi2.bin");
 			
-			*(volatile u32*)0x80000020 = 0x0D15EA5E;
-			*(volatile u32*)0x80000024 = 1;
-			*(volatile u32*)0x80000034 = fstAddr;								// Arena Hi
-			*(volatile u32*)0x80000038 = fstAddr;								// FST Location in ram
-			*(volatile u32*)0x8000003C = GCMDisk.MaxFSTSize;					// FST Max Length
-			*(volatile u32*)0x800000F4 = bi2Addr;								// bi2.bin location
+			*(vu32*)(VAR_AREA+0x0020) = 0x0D15EA5E;
+			*(vu32*)(VAR_AREA+0x0024) = 1;
+			*(vu32*)(VAR_AREA+0x0034) = fstAddr;								// Arena Hi
+			*(vu32*)(VAR_AREA+0x0038) = fstAddr;								// FST Location in ram
+			*(vu32*)(VAR_AREA+0x003C) = GCMDisk.MaxFSTSize;						// FST Max Length
+			*(vu32*)(VAR_AREA+0x00F4) = bi2Addr;								// bi2.bin location
 		}
 		
 		if(devices[DEVICE_PATCHES] && devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
@@ -951,7 +945,7 @@ void load_app(ExecutableFile *fileToPatch)
 		type = PATCH_BS2;
 	}
 	
-	setTopAddr((u32)VAR_PATCHES_BASE);
+	setTopAddr(HI_RESERVE);
 	
 	if(fileToPatch == NULL || fileToPatch->patchFile == NULL) {
 		Patch_ExecutableFile(&buffer, &sizeToRead, gameID, type);
@@ -970,6 +964,12 @@ void load_app(ExecutableFile *fileToPatch)
 		return;
 	}
 	
+	setTopAddr(topAddr);
+	
+	if(swissSettings.wiirdEngine) {
+		kenobi_install_engine();
+	}
+	
 	// Don't spin down the drive when running something from it...
 	if(devices[DEVICE_CUR] != &__device_dvd) {
 		devices[DEVICE_CUR]->deinit(&curFile);
@@ -986,13 +986,6 @@ void load_app(ExecutableFile *fileToPatch)
 	VIDEO_SetBlack(true);
 	VIDEO_Flush();
 	VIDEO_WaitVSync();
-	
-	DCFlushRange((void*)0x80000000, 0x3100);
-	ICInvalidateRange((void*)0x80000000, 0x3100);
-	
-	if(swissSettings.wiirdEngine) {
-		kenobi_install_engine();
-	}
 	
 	print_gecko("libogc shutdown and boot game!\r\n");
 	if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {

@@ -171,7 +171,7 @@ void kenobi_install_engine() {
 	
 	print_gecko("Copying kenobi%s to %08X\r\n", (isDebug?"_dbg":""),(u32)CHEATS_ENGINE);
 	memcpy(CHEATS_ENGINE, ptr, size);
-	memcpy(CHEATS_GAMEID, (void*)0x80000000, CHEATS_GAMEID_LEN);
+	memcpy(CHEATS_GAMEID, VAR_AREA, CHEATS_GAMEID_LEN);
 	if(!isDebug) {
 		CHEATS_ENABLE_CHEATS = CHEATS_TRUE;
 	}

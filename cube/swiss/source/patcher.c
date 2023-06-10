@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <gccore.h>		/*** Wrapper to include common libogc headers ***/
 #include <ogcsys.h>		/*** Needed for console support ***/
+#include <ogc/machine/processor.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +21,8 @@
 #include "elf.h"
 #include "ata.h"
 #include "cheats.h"
+
+char VAR_AREA[0x3100];
 
 static u32 top_addr;
 
@@ -109,16 +112,13 @@ void *installPatch2(const void *patch, u32 patchSize) {
 	if (top_addr == 0x81800000)
 		top_addr -= 8;
 	top_addr -= patchSize;
-	if (patch) {
-		top_addr &= ~3;
-		patchLocation = memcpy((void*)top_addr, patch, patchSize);
-	} else {
-		top_addr &= ~31;
-		patchLocation = memset((void*)top_addr, 0, patchSize);
-	}
+	top_addr &= patch ? ~3 : ~31;
+	patchLocation = Calc_Address(NULL, PATCH_OTHER, top_addr);
+	if (patch) memcpy(patchLocation, patch, patchSize);
+	else memset(patchLocation, 0, patchSize);
 	DCFlushRange(patchLocation, patchSize);
 	ICInvalidateRange(patchLocation, patchSize);
-	return patchLocation;
+	return (void *)top_addr;
 }
 
 // See patchIds enum in patcher.h
@@ -147,17 +147,20 @@ u32 getTopAddr() {
 
 int install_code(int final)
 {
-	u32 location = LO_RESERVE;
+	void *patchLocation = NULL;
 	const void *patch = NULL; u32 patchSize = 0;
 	
 	// Reload Stub
 	if (GCMDisk.DVDMagicWord != DVD_MAGIC) {
-		location = 0x80001800;
-		setTopAddr(0x80003000);
 		patch     = stub_bin;
 		patchSize = stub_bin_size;
-		
 		print_gecko("Installing Reload Stub\r\n");
+		
+		memcpy((void *)0x80001800, patch, patchSize);
+		DCFlushRangeNoSync((void *)0x80001800, patchSize);
+		ICInvalidateRange((void *)0x80001800, patchSize);
+		_sync();
+		return 1;
 	}
 	// IDE-EXI
 	else if(devices[DEVICE_CUR] == &__device_ata_a || devices[DEVICE_CUR] == &__device_ata_b || devices[DEVICE_CUR] == &__device_ata_c) {
@@ -314,14 +317,22 @@ int install_code(int final)
 		}
 		print_gecko("Installing Patch for GC Loader\r\n");
 	}
-	print_gecko("Space for patch remaining: %i\r\n", top_addr - location);
-	print_gecko("Space taken by vars/video patches: %i\r\n", VAR_PATCHES_BASE - top_addr);
-	if(top_addr - location < patchSize)
-		return 0;
-	if(final) {
-		memcpy((void*)location,patch,patchSize);
-		DCFlushRange((void*)location,patchSize);
-		ICInvalidateRange((void*)location,patchSize);
+	if (!final) {
+		print_gecko("Space for patch remaining: %i\r\n", top_addr - LO_RESERVE);
+		print_gecko("Space taken by vars/video patches: %i\r\n", HI_RESERVE - top_addr);
+		if (top_addr < LO_RESERVE + patchSize)
+			return 0;
+		patchLocation = Calc_Address(NULL, PATCH_OTHER, LO_RESERVE);
+		memcpy(patchLocation, patch, patchSize);
+		DCFlushRange(patchLocation, patchSize);
+		ICInvalidateRange(patchLocation, patchSize);
+	} else {
+		memcpy((void *)0x80000000, VAR_AREA, sizeof(VAR_AREA));
+		DCFlushRangeNoSync((void *)0x80000000, sizeof(VAR_AREA));
+		ICInvalidateRange((void *)0x80000000, sizeof(VAR_AREA));
+		_sync();
+		if (top_addr != 0x81800000)
+			mtspr(DABR, 0x800000E8 | 0b110);
 	}
 	return 1;
 }
@@ -5196,7 +5207,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		if (__OSInitSystemCall) {
 			switch (j) {
 				case 0:
-					data[i +  4] = 0x38600000 | ((u32)VAR_JUMP_TABLE & 0xFFFF);
+					data[i +  4] = 0x38600000 | ((u32)(VAR_JUMP_TABLE - VAR_AREA + 0x80000000) & 0xFFFF);
 					data[i + 12] = 0x3CA00000 | ((u32)__OSInitSystemCall + 0x8000) >> 16;
 					data[i + 13] = 0x38050000 | ((u32)__OSInitSystemCall & 0xFFFF);
 					data[i + 17] = 0x38800020;	// li		r4, 32
@@ -5214,9 +5225,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 22] = branchAndLink(INIT, __OSInitSystemCall + 22);
 					break;
 				case 1:
-					data[i +  4] = 0x3CA00000 | ((u32)VAR_JUMP_TABLE + 0x8000) >> 16;
+					data[i +  4] = 0x3CA00000 | ((u32)(VAR_JUMP_TABLE - VAR_AREA + 0x80000000) + 0x8000) >> 16;
 					data[i +  6] = 0x3C600000 | ((u32)__OSInitSystemCall + 0x8000) >> 16;
-					data[i +  7] = 0x3BE50000 | ((u32)VAR_JUMP_TABLE & 0xFFFF);
+					data[i +  7] = 0x3BE50000 | ((u32)(VAR_JUMP_TABLE - VAR_AREA + 0x80000000) & 0xFFFF);
 					data[i +  8] = 0x38030000 | ((u32)__OSInitSystemCall & 0xFFFF);
 					data[i + 14] = 0x38800020;	// li		r4, 32
 					
@@ -5234,12 +5245,12 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					break;
 				case 2:
 					data[i +  3] = 0x3C600000 | ((u32)__OSInitSystemCall + 0x8000) >> 16;
-					data[i +  6] = 0x3CA00000 | ((u32)VAR_JUMP_TABLE + 0x8000) >> 16;
+					data[i +  6] = 0x3CA00000 | ((u32)(VAR_JUMP_TABLE - VAR_AREA + 0x80000000) + 0x8000) >> 16;
 					data[i +  7] = 0x38030000 | ((u32)__OSInitSystemCall & 0xFFFF);
-					data[i +  8] = 0x38650000 | ((u32)VAR_JUMP_TABLE & 0xFFFF);
-					data[i + 11] = 0x3C600000 | ((u32)VAR_JUMP_TABLE + 0x8000) >> 16;
+					data[i +  8] = 0x38650000 | ((u32)(VAR_JUMP_TABLE - VAR_AREA + 0x80000000) & 0xFFFF);
+					data[i + 11] = 0x3C600000 | ((u32)(VAR_JUMP_TABLE - VAR_AREA + 0x80000000) + 0x8000) >> 16;
 					data[i + 12] = 0x38800020;	// li		r4, 32
-					data[i + 13] = 0x38630000 | ((u32)VAR_JUMP_TABLE & 0xFFFF);
+					data[i + 13] = 0x38630000 | ((u32)(VAR_JUMP_TABLE - VAR_AREA + 0x80000000) & 0xFFFF);
 					data[i + 16] = 0x60000000;	// nop
 					
 					if (get_immediate(data, OSSetArenaLoSig.offsetFoundAt, 13, &__OSArenaLo))
@@ -8277,16 +8288,16 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i +  4] = branchAndLink(getCurrentFieldEvenOdd, VISetRegs + 4);
 							data[i +  5] = 0x2C030000;	// cmpwi	r3, 0
 							data[i +  6] = 0x54630FFE;	// srwi		r3, r3, 31
-							data[i +  7] = 0x3C800000 | ((u32)VAR_AREA >> 16);
-							data[i +  8] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
+							data[i +  7] = 0x3C800000 | ((u32)(VAR_CURRENT_FIELD - VAR_AREA + 0x80000000) + 0x8000) >> 16;
+							data[i +  8] = 0x98640000 | ((u32)(VAR_CURRENT_FIELD - VAR_AREA + 0x80000000) & 0xFFFF);
 							break;
 						case 1:
 						case 2:
 							data[i +  6] = branchAndLink(getCurrentFieldEvenOdd, VISetRegs + 6);
 							data[i +  7] = 0x2C030000;	// cmpwi	r3, 0
 							data[i +  8] = 0x54630FFE;	// srwi		r3, r3, 31
-							data[i +  9] = 0x3C800000 | ((u32)VAR_AREA >> 16);
-							data[i + 10] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
+							data[i +  9] = 0x3C800000 | ((u32)(VAR_CURRENT_FIELD - VAR_AREA + 0x80000000) + 0x8000) >> 16;
+							data[i + 10] = 0x98640000 | ((u32)(VAR_CURRENT_FIELD - VAR_AREA + 0x80000000) & 0xFFFF);
 							break;
 					}
 				}
@@ -8336,37 +8347,37 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 							data[i + 57] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 57);
 							data[i + 58] = 0x2C030000;	// cmpwi	r3, 0
 							data[i + 59] = 0x54630FFE;	// srwi		r3, r3, 31
-							data[i + 60] = 0x3C800000 | ((u32)VAR_AREA >> 16);
-							data[i + 61] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
+							data[i + 60] = 0x3C800000 | ((u32)(VAR_CURRENT_FIELD - VAR_AREA + 0x80000000) + 0x8000) >> 16;
+							data[i + 61] = 0x98640000 | ((u32)(VAR_CURRENT_FIELD - VAR_AREA + 0x80000000) & 0xFFFF);
 							break;
 						case 5:
 						case 6:
 							data[i + 60] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 60);
 							data[i + 61] = 0x2C030000;	// cmpwi	r3, 0
 							data[i + 62] = 0x54630FFE;	// srwi		r3, r3, 31
-							data[i + 63] = 0x3C800000 | ((u32)VAR_AREA >> 16);
-							data[i + 64] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
+							data[i + 63] = 0x3C800000 | ((u32)(VAR_CURRENT_FIELD - VAR_AREA + 0x80000000) + 0x8000) >> 16;
+							data[i + 64] = 0x98640000 | ((u32)(VAR_CURRENT_FIELD - VAR_AREA + 0x80000000) & 0xFFFF);
 							break;
 						case 7:
 							data[i + 65] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 65);
 							data[i + 66] = 0x2C030000;	// cmpwi	r3, 0
 							data[i + 67] = 0x54630FFE;	// srwi		r3, r3, 31
-							data[i + 68] = 0x3C800000 | ((u32)VAR_AREA >> 16);
-							data[i + 69] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
+							data[i + 68] = 0x3C800000 | ((u32)(VAR_CURRENT_FIELD - VAR_AREA + 0x80000000) + 0x8000) >> 16;
+							data[i + 69] = 0x98640000 | ((u32)(VAR_CURRENT_FIELD - VAR_AREA + 0x80000000) & 0xFFFF);
 							break;
 						case 8:
 							data[i + 77] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 77);
 							data[i + 78] = 0x2C030000;	// cmpwi	r3, 0
 							data[i + 79] = 0x54630FFE;	// srwi		r3, r3, 31
-							data[i + 80] = 0x3C800000 | ((u32)VAR_AREA >> 16);
-							data[i + 81] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
+							data[i + 80] = 0x3C800000 | ((u32)(VAR_CURRENT_FIELD - VAR_AREA + 0x80000000) + 0x8000) >> 16;
+							data[i + 81] = 0x98640000 | ((u32)(VAR_CURRENT_FIELD - VAR_AREA + 0x80000000) & 0xFFFF);
 							break;
 						case 9:
 							data[i + 82] = branchAndLink(getCurrentFieldEvenOdd, __VIRetraceHandler + 82);
 							data[i + 83] = 0x2C030000;	// cmpwi	r3, 0
 							data[i + 84] = 0x54630FFE;	// srwi		r3, r3, 31
-							data[i + 85] = 0x3C800000 | ((u32)VAR_AREA >> 16);
-							data[i + 86] = 0x98640000 | ((u32)VAR_CURRENT_FIELD & 0xFFFF);
+							data[i + 85] = 0x3C800000 | ((u32)(VAR_CURRENT_FIELD - VAR_AREA + 0x80000000) + 0x8000) >> 16;
+							data[i + 86] = 0x98640000 | ((u32)(VAR_CURRENT_FIELD - VAR_AREA + 0x80000000) & 0xFFFF);
 							break;
 					}
 				}
@@ -15791,6 +15802,12 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 	else if(dataType == PATCH_BIN) {
 		if(properAddress >= 0x80003100 && properAddress < 0x80403100)
 			return data+properAddress-0x80003100;
+	}
+	if(properAddress >= 0x80000000 && properAddress < 0x80003100) {
+		return VAR_AREA+properAddress-0x80000000;
+	}
+	else if(properAddress >= 0x81700000 && properAddress < 0x81800000) {
+		return (void*)properAddress;
 	}
 	return NULL;
 }

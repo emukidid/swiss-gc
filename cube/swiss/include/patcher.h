@@ -173,9 +173,8 @@ enum patchIds {
 	PATCHES_MAX
 };
 
-#define SWISS_MAGIC 0x53574953 /* "SWIS" */
-
 #define LO_RESERVE 0x80000C00
+#define HI_RESERVE 0x80003000
 
 /* Function jump locations for the hypervisor */
 #define INIT				(u32 *)(LO_RESERVE + 0x104)

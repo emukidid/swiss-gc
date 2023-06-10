@@ -1,3 +1,5 @@
+VAR_AREA = 0x80000000;
+
 INCLUDE ../reservedarea.ld
 
 CP  = 0xCC000000;

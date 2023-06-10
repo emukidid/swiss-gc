@@ -127,6 +127,10 @@
 #define SPRG2	274
 #define SPRG3	275
 
+#define DABR	1013
+
+#define IABR	1010
+
 #define PMC1    953
 #define PMC2    954
 #define PMC3    957

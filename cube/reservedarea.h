@@ -70,7 +70,7 @@
 
 #else
 
-extern char VAR_AREA[];
+extern char VAR_AREA[0x3100];
 
 extern char VAR_JUMP_TABLE[0x20];	// Dolphin OS jump table
 extern char VAR_TVMODE[4];			// TV format
