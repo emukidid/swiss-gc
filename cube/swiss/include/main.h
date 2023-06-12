@@ -45,8 +45,9 @@ enum dvdDiscTypes
 	COBRA_MULTIGAME_DISC=0, //Cobra Multigame Disc, games can be every 32Kb interval
 	GCOSD5_MULTIGAME_DISC,  //GCOS Single Layer Disc, games can be every 128Kb interval
 	GCOSD9_MULTIGAME_DISC,  //GCOS Single Dual Disc, games can be every 128Kb interval
-	MULTIDISC_DISC,         //Multi Disc Gamecube Game
-	GAMECUBE_DISC,          //Single Disc Gamecube Game
+	MULTIDISC_DISC,         //Multi Disc GameCube Game
+	GAMECUBE_DISC,          //Single Disc GameCube Game
+	ISO9660_GAMECUBE_DISC,  //ISO9660 Filesystem Disc GameCube Game
 	ISO9660_DISC,           //ISO9660 Filesystem Disc
 	UNKNOWN_DISC	        //Unknown
 };

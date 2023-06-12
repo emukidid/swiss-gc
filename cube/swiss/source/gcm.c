@@ -32,7 +32,7 @@ DiskHeader *get_gcm_header(file_handle *file) {
 	diskHeader=(DiskHeader*)memalign(32,sizeof(DiskHeader));
 	if(!diskHeader) return NULL;
 	
-	if(devices[DEVICE_CUR] == &__device_dvd && (dvdDiscTypeInt == GAMECUBE_DISC || dvdDiscTypeInt == MULTIDISC_DISC)) {
+	if(devices[DEVICE_CUR] == &__device_dvd && file->fileAttrib == IS_DIR) {
 		if(DVD_Read(diskHeader, 0, sizeof(DiskHeader)) != sizeof(DiskHeader)) {
 			free(diskHeader);
 			return NULL;
@@ -60,7 +60,7 @@ char *get_fst(file_handle *file, u32 file_offset, u32 file_size) {
 	FST=(char*)memalign(32,file_size);
 	if(!FST) return NULL;
 	
-	if(devices[DEVICE_CUR] == &__device_dvd && (dvdDiscTypeInt == GAMECUBE_DISC || dvdDiscTypeInt == MULTIDISC_DISC)) {
+	if(devices[DEVICE_CUR] == &__device_dvd && file->fileAttrib == IS_DIR) {
 		if(DVD_Read(FST, file_offset, file_size) != file_size) {
 			free(FST);
 			return NULL;

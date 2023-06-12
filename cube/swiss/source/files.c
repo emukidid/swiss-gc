@@ -20,7 +20,7 @@ int fileComparator(const void *a1, const void *b1)
 	if(a && !b) return -1;
 	if(!a && !b) return 0;
 	
-	if((devices[DEVICE_CUR] == &__device_dvd) && ((dvdDiscTypeInt == GAMECUBE_DISC) || (dvdDiscTypeInt == MULTIDISC_DISC)))
+	if((devices[DEVICE_CUR] == &__device_dvd) && ((dvdDiscTypeInt == ISO9660_GAMECUBE_DISC) || (dvdDiscTypeInt == GAMECUBE_DISC) || (dvdDiscTypeInt == MULTIDISC_DISC)))
 	{
 		if(a->size == DISC_SIZE && a->fileBase == 0)
 			return -1;

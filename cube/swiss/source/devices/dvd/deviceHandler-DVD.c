@@ -3,7 +3,7 @@
 	by emu_kidid
  */
 
-
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <malloc.h>
@@ -197,7 +197,7 @@ int gettype_disc() {
   // Don't assume there will be a valid disc ID at 0x80000000. 
   // Lets read the first 32b off the disc.
   DVD_Read((void*)checkBuf,0,32);
-  DVD_Read((void*)iso9660Buf,32769,32);
+  DVD_Read((void*)iso9660Buf,32768,32);
   
   // Attempt to determine the disc type from the 32 byte header at 0x80000000
   if (strncmp(checkBuf, "COBRAM", 6) == 0) {
@@ -212,9 +212,15 @@ int gettype_disc() {
 	dvdDiscTypeStr = GCOSD9Str;
 	type = GCOSD9_MULTIGAME_DISC;  //"GCOPDVD9" is GCOS Dual Layer MultiGame Disc
   }
-  else if (strncmp(iso9660Buf, "CD001", 5) == 0) {
-	dvdDiscTypeStr = ISO9660Str;
-	type = ISO9660_DISC;  //"CD001" at 32769 is iso9660
+  else if (strncmp(iso9660Buf+1, "CD001", 5) == 0) {
+	if ((*(vu32*)(&checkBuf[0x1C])) == DVD_MAGIC) {
+	  dvdDiscTypeStr = ISO9660Str;
+	  type = ISO9660_GAMECUBE_DISC;
+	}
+	else {
+	  dvdDiscTypeStr = ISO9660Str;
+	  type = ISO9660_DISC;  //"CD001" at 32769 is iso9660
+	}
   }
   else if ((*(vu32*)(&checkBuf[0x1C])) == DVD_MAGIC) {
 	if(checkBuf[6]) {
@@ -317,7 +323,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		// Virtual entries for FST entries :D
 		num_entries = read_fst(ffile, dir, !toc_read ? &usedSpace:NULL);
 	}
-	else if(dvdDiscTypeInt == ISO9660_DISC) {
+	else if((dvdDiscTypeInt == ISO9660_DISC) || (dvdDiscTypeInt == ISO9660_GAMECUBE_DISC)) {
 		// Call the corresponding DVD function
 		num_entries = dvd_read_directoryentries(ffile->fileBase,ffile->size);
 		// If it was not successful, just return the error
@@ -345,6 +351,23 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		if(strcmp((*dir)[0].name, ffile->name) == 0) {
 			concat_path((*dir)[0].name, ffile->name, "..");
 			(*dir)[0].fileAttrib = IS_SPECIAL;
+		}
+
+		if(dvdDiscTypeInt == ISO9660_GAMECUBE_DISC) {
+			DiskHeader *diskHeader = get_gcm_header(ffile);
+			if(!diskHeader) return -1;
+
+			*dir = reallocarray(*dir, num_entries + 1, sizeof(file_handle));
+			memset(&(*dir)[num_entries], 0, sizeof(file_handle));
+			concatf_path((*dir)[num_entries].name, initial_DVD.name, "%.64s.gcm", diskHeader->GameName);
+			(*dir)[num_entries].fileBase = 0;
+			(*dir)[num_entries].offset = 0;
+			(*dir)[num_entries].size = DISC_SIZE;
+			(*dir)[num_entries].fileAttrib = IS_FILE;
+			(*dir)[num_entries].meta = 0;
+			num_entries++;
+
+			free(diskHeader);
 		}
 	}
 	initial_DVD_info.freeSpace = initial_DVD_info.totalSpace - usedSpace;
