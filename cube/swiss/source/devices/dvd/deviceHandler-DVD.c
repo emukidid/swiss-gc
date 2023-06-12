@@ -342,8 +342,10 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		free(DVDToc);
 		DVDToc = NULL;
 
-		if(strcmp((*dir)[0].name, ffile->name) == 0)
+		if(strcmp((*dir)[0].name, ffile->name) == 0) {
 			concat_path((*dir)[0].name, ffile->name, "..");
+			(*dir)[0].fileAttrib = IS_SPECIAL;
+		}
 	}
 	initial_DVD_info.freeSpace = initial_DVD_info.totalSpace - usedSpace;
 	return num_entries;

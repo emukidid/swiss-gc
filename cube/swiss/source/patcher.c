@@ -137,7 +137,7 @@ void setTopAddr(u32 addr) {
 	top_addr = addr & ~3;
 	int patchId;
 	for (patchId = 0; patchId < PATCHES_MAX; patchId++)
-		if (patch_locations[patchId] < (void*)top_addr)
+		if (patch_locations[patchId] < (void *)top_addr || !top_addr)
 			patch_locations[patchId] = NULL;
 }
 
@@ -151,7 +151,7 @@ int install_code(int final)
 	const void *patch = NULL; u32 patchSize = 0;
 	
 	// Reload Stub
-	if (GCMDisk.DVDMagicWord != DVD_MAGIC) {
+	if (!top_addr) {
 		patch     = stub_bin;
 		patchSize = stub_bin_size;
 		print_gecko("Installing Reload Stub\r\n");

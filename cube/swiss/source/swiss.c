@@ -380,6 +380,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL) {
 				memcpy(&curFile, &curDir, sizeof(file_handle));
+				curDir.fileBase = (*directory)[curSelection].fileBase;
 				needsDeviceChange = upToParent(&curDir);
 				needsRefresh=1;
 			}
@@ -597,6 +598,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			}
 			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL){
 				memcpy(&curFile, &curDir, sizeof(file_handle));
+				curDir.fileBase = (*directory)[curSelection].fileBase;
 				needsDeviceChange = upToParent(&curDir);
 				needsRefresh=1;
 			}
@@ -711,6 +713,7 @@ bool select_dest_dir(file_handle* directory, file_handle* selection)
 				refresh=1;
 			}
 			else if(directories[idx].fileAttrib==IS_SPECIAL){
+				curDir.fileBase = directories[idx].fileBase;
 				upToParent(&curDir);
 				refresh=1;
 			}
@@ -1850,6 +1853,7 @@ fail_patched:
 		devices[DEVICE_PATCHES] = NULL;
 	}
 	free(filesToPatch);
+	setTopAddr(0);
 fail:
 	gameID_unset();
 	config_unload_current();

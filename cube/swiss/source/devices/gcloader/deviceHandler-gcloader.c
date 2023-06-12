@@ -43,18 +43,17 @@ static s32 setupFile(file_handle* file, file_handle* file2, ExecutableFile* file
 		memset(&bootFile, 0, sizeof(file_handle));
 		concat_path(bootFile.name, devices[DEVICE_CUR]->initial->name, "boot.bin");
 		
-		if(strstr(IPLInfo,"MPAL")!=NULL)
+		if(!strncmp(&IPLInfo[0x55], "MPAL", 4))
 			GCMDisk.RegionCode = 1;
-		else if(strstr(IPLInfo,"PAL")!=NULL)
+		else if(!strncmp(&IPLInfo[0x55], "PAL ", 4))
 			GCMDisk.RegionCode = 2;
 		else
 			GCMDisk.RegionCode = getFontEncode() ? 0:1;
 		
 		if(devices[DEVICE_CUR]->writeFile(&bootFile, &GCMDisk, sizeof(DiskHeader)) == sizeof(DiskHeader) &&
-			!devices[DEVICE_CUR]->closeFile(&bootFile)) {
+			!devices[DEVICE_CUR]->closeFile(&bootFile))
 			getFragments(DEVICE_CUR, &bootFile, &disc1FragList, &disc1Frags, 0, 0, sizeof(DiskHeader));
-			devices[DEVICE_CUR]->closeFile(&bootFile);
-		}
+		devices[DEVICE_CUR]->closeFile(&bootFile);
 	}
 	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes

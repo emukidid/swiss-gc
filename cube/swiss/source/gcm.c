@@ -696,14 +696,6 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 	int dir_end_offset = isRoot ? *(u32*)&FST[8] : 0;
 	isRoot = parent_dir_offset==0;
 	
-	// Haxx because we navigate GCM FST by offset and not name
-	if(endsWith(file->name, "..") && strlen(file->name) > 2) {
-		int len = strlen(file->name)-3;
-		while(len && file->name[len-1]!='/')
-      		len--;
-		file->name[len-1] = 0;
-	}
-	
 	u32 filename_offset=((*(u32*)&FST[parent_dir_offset*0x0C]) & 0x00FFFFFF); 
 	concat_path(filename, file->name, &FST[string_table_offset+filename_offset]);
 	dir_end_offset = *(u32*)&FST[(parent_dir_offset*0x0C) + 8];
@@ -719,7 +711,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		(*dir)[idx].fileBase = *(u32*)&FST[(parent_dir_offset*0x0C)+4];
 		(*dir)[idx].offset = 0;
 		(*dir)[idx].size = 0;
-		(*dir)[idx].fileAttrib = IS_DIR;
+		(*dir)[idx].fileAttrib = IS_SPECIAL;
 		(*dir)[idx].meta = 0;
 		idx++;
 	}
