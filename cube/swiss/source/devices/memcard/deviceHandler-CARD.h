@@ -33,7 +33,7 @@ extern DEVICEHANDLER_INTERFACE __device_card_b;
 
 int initialize_card(int slot);
 void setCopyGCIMode(bool _isCopyGCIMode);
-void setGCIInfo(void *buffer);
+void setGCIInfo(const void *buffer);
 char getGCIRegion(const char *gameID);
 #endif
 

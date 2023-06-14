@@ -316,7 +316,11 @@ s32 deviceHandler_CARD_readFile(file_handle* file, void* buffer, u32 length){
 
 // This function should always be called for the FULL length cause CARD is lame like that.
 s32 deviceHandler_CARD_writeFile(file_handle* file, const void* data, u32 length) {
-	
+	if(isCopyGCIMode) {
+		setGCIInfo(data);
+		data+=sizeof(GCI);
+		length-=sizeof(GCI);
+	}
 	if(gciInfo == NULL) {	// Swiss ID for this
 		CARD_SetGameAndCompany();
 	} else {	// Game specific
@@ -331,16 +335,16 @@ s32 deviceHandler_CARD_writeFile(file_handle* file, const void* data, u32 length
 	
 	card_file cardfile;
 	unsigned int slot = (!strncmp((const char*)initial_CARDB.name, file->name, 7)), ret = 0;
-	unsigned int adj_length = (length % 8192 == 0 ? length : (length + (8192-length%8192)))+8192;
+	unsigned int adj_length = (length % 8192 == 0 ? length : (length + (8192-length%8192)));
 	char *filename = NULL;
 	char fname[CARD_FILENAMELEN+1];
 	if(gciInfo != NULL) {
 		memset(fname, 0, CARD_FILENAMELEN+1);
 		memcpy(fname, gciInfo->filename, CARD_FILENAMELEN);
 		filename = &fname[0];
-		adj_length = gciInfo->filesize8*8192;
 	} else {
 		filename = getRelativeName(file->name);
+		adj_length += 8192;
 	}
 	
 	// Open the file based on the slot & file name
@@ -375,7 +379,6 @@ s32 deviceHandler_CARD_writeFile(file_handle* file, const void* data, u32 length
 		memcpy(tmpBuffer+0x2000, data, length);	// Copy data
 	}
 	else {
-		data+=sizeof(GCI);
 		memcpy(tmpBuffer, data, length);	// Copy data
 	}
 	
@@ -419,7 +422,7 @@ void setCopyGCIMode(bool _isCopyGCIMode) {
 	isCopyGCIMode = _isCopyGCIMode;
 }
 
-void setGCIInfo(void *buffer) {
+void setGCIInfo(const void *buffer) {
 	if(buffer == NULL) {
 		if(gciInfo != NULL) {
 			free(gciInfo);

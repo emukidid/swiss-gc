@@ -1039,7 +1039,14 @@ int fsp_fseek(FSP_FILE *stream, long offset, int whence)
 
 long fsp_ftell(FSP_FILE *f)
 {
-    return f->pos + f->bufpos;
+    if(f->writing)
+    {
+        return f->pos + f->bufpos;
+    }
+    else
+    {
+        return f->pos + f->bufpos - FSP_SPACE;
+    }
 }
 
 void fsp_rewind(FSP_FILE *f)

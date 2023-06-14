@@ -1431,7 +1431,7 @@ bool manage_file() {
 				curFile.size += sizeof(GCI);
 			}
 			// If we're copying a .gci to a memory card, do it properly
-			if(isDestCard && (endsWith(curFile.name,".gci") || endsWith(curFile.name,".gcs") || endsWith(curFile.name,".sav"))) {
+			else if(isDestCard && (endsWith(curFile.name,".gci") || endsWith(curFile.name,".gcs") || endsWith(curFile.name,".sav"))) {
 				GCI gci;
 				devices[DEVICE_CUR]->seekFile(&curFile, 0, DEVICE_HANDLER_SEEK_SET);
 				if(devices[DEVICE_CUR]->readFile(&curFile, &gci, sizeof(GCI)) == sizeof(GCI)) {
@@ -1449,14 +1449,13 @@ bool manage_file() {
 						devices[DEVICE_CUR]->readFile(&curFile, &gci, sizeof(GCI));
 					}
 					if(curFile.size - curFile.offset == gci.filesize8 * 8192) setGCIInfo(&gci);
-					devices[DEVICE_CUR]->seekFile(&curFile, -sizeof(GCI), DEVICE_HANDLER_SEEK_CUR);
+					else devices[DEVICE_CUR]->seekFile(&curFile, -sizeof(GCI), DEVICE_HANDLER_SEEK_CUR);
 				}
 			}
 			
 			// Read from one file and write to the new directory
-			u32 isCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
-			u32 bulkWrite = isCard || devices[DEVICE_DEST] == &__device_qoob;
-			u32 curOffset = curFile.offset, cancelled = 0, chunkSize = (bulkWrite||isDestCard) ? curFile.size : (256*1024);
+			u32 bulkWrite = isSrcCard || isDestCard || devices[DEVICE_DEST] == &__device_qoob;
+			u32 curOffset = curFile.offset, cancelled = 0, chunkSize = bulkWrite ? curFile.size - curOffset : (256*1024);
 			char *readBuffer = (char*)memalign(32,chunkSize);
 			sprintf(txtbuffer, "Copying to: %s",getRelativeName(destFile->name));
 			uiDrawObj_t* progBar = DrawProgressBar(false, 0, txtbuffer);
