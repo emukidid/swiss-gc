@@ -2041,7 +2041,7 @@ static const struct {
 	{ "UGPJ01\x00\x03", false, 1, 0xC4F0, 0xDFF567CB,    2473984, +1457504256, 0xFB2218FBFA6AB9FE, {    2003524,      +28092, 6496, 0xE53B }, "Game Boy Player Start-Up Disc" },
 	{ "UGPP01\x00\x01", false, 1, 0x6D4F, 0x5ECD9681,    5079040, +1454899200, 0x4E9244DEFB94F10C, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{ "UGPP01\x00\x02", false, 1, 0xCA50, 0x1E26380C,    5079040, +1454899200, 0x483B4CE794041533, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
-#define REDUMP_COUNT 1968
+#define REDUMP_COUNT (1968)
 	{ "00\0E01\x00\x00",false, 1, 0x21CF, 0xBF114CB3,   31170560, +1428807680, 0xC1BAC83BFBED3EDB, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{ "00\0E01\x00\x00",false, 1, 0x42A2, 0x499CF1AB,   31170560, +1428807680, 0xC1BAC83BFBED3EDB, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{ "D28J01\x00\x00", true,  1, 0x8FC6, 0x8EFBB42B,  794134528,  +665843712, 0xB1F399DE51C25382, {  394649296,  +665814992, 6496, 0xE5B2 }, "Gekkan Nintendo Tentou Demo 2002.4.4" },
@@ -2126,6 +2126,23 @@ static const struct {
 	{ "RELSAB\x01\x01", false, 1, 0xA47D, 0xBB46463A,  482416640,  +977561600, 0x7A5CBC4681D2D704, {    3936256,      +28760, 6496, 0x3FED }, "Rayman Arena" },
 	{ "RELSAB\x01\x01", true,  1, 0x771E, 0x17B30888,  134633472, +1325344768, 0x3E5C6F107670681B, {         ~0,          +0,    0, 0xFFFF }, "Crazy Taxi" },
 	{ "TESTNA\x00\x00", false, 1, 0x0C28, 0x6254FB97,   26834944,       -1658, 0xAA2E5EDD0EF81992, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
+#define VALID_COUNT (REDUMP_COUNT + 84)
+	{ "101E01\x00\x05", true,  1, 0xB6FD, 0x4BB518CD, 1435949056,   +24029184, 0x27CFAD706924A030, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
+	{ "101J01\x00\x03", true,  1, 0xA361, 0x1A7B7608, 1459453952,     +524288, 0x6E2DA2E062EF73BA, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
+	{ "101J01\x00\x06", true,  1, 0x402F, 0xC3C5D3D6, 1459453952,     +524288, 0x946298C97236262D, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
+	{ "102E01\x00\x07", true,  1, 0x10B2, 0x4CA6F4EB, 1450627072,    +9351168, 0xD6169C112BBD3349, {  122951084,    +1278164, 6496, 0x19E5 }, "Aging Disc DOL-USA" },
+	{ "102J01\x00\x07", true,  1, 0xF1B6, 0x0BEC4525, 1450627072,    +9351168, 0xD6169C112BBD3349, {  122951084,    +1278164, 6496, 0x19E5 }, "Aging Disc DOL" },
+	{ "102P01\x00\x07", true,  1, 0x44BE, 0xC3103545, 1450627072,    +9351168, 0xD6169C112BBD3349, {  122951084,    +1278164, 6496, 0x19E5 }, "Aging Disc DOL-PAL" },
+	{ "301E01\x00\x00", true,  1, 0x2291, 0xBE031BBE,  206022656, +1253955584, 0x7AB7116BCF31F77C, {  140151696, +1252226160, 6496, 0x1086 }, "Nintendo GameCube Service Disc Version 1.0/03" },
+	{ "D65E01\x00\x00", true,  1, 0x3C38, 0x052A45B7,  994826240,  +465152000, 0x88BC5142ECB15EEA, {  240898724,  +464819196, 6496, 0xCDB7 }, "Interactive Multi-Game Demo Disc Version 28" },
+	{ "D67E01\x00\x00", true,  1, 0xDAEA, 0xF2675688, 1380059136,   +79919104, 0x88BC5142ECB15EEA, {  430344808,   +79387704, 6496, 0xCA22 }, "Interactive Multi-Game Demo Disc Version 26" },
+	{ "DMTJ18\x00\x00", false, 1, 0xBD99, 0x9F17E51E, 1460045824,      -67584, 0x6D3DED5E273755FA, {    3801096,          -8, 6496, 0x4C34 }, "Disney's Magical Park" },
+	{ "G2TE52\x00\x00", false, 1, 0xF5AB, 0xCCA24AD9, 1418463232,   +41515008, 0xF855E85B28EA5E1C, { 1048108148,          +0, 6496, 0x2179 }, "Tony Hawk's Underground 2" },
+	{ "G2TP52\x00\x00", false, 1, 0x6C77, 0x34A3FE67, 1418463232,   +41515008, 0x4ADE9F3E9C55CF69, { 1048108128,          +0, 6496, 0x2179 }, "Tony Hawk's Underground 2" },
+	{ "GNMEAF\x00\x00", true,  1, 0xBD06, 0x316232A1,  660848640,  +799129600, 0x4537061684D7C9D1, {  484029924,      +70216, 6496, 0x9E0C }, "Namco Museum" },
+	{ "GNMEAF\x00\x01", true,  1, 0x25E4, 0x0BECBC5F,  662274048,  +797704192, 0xBA5DB6E856CA7B9A, {  485454564,      +54600, 6496, 0x9E0C }, "Namco Museum" },
+	{ "GPMEAF\x00\x00", true,  1, 0x1CEA, 0x2E6425F3, 1154119680,  +305858560, 0x272C8825B749E04B, {  172111684,     +520148, 6496, 0x1480 }, "Pac-Man Fever" },
+#define TOTAL_COUNT (VALID_COUNT + 15)
 };
 
 uint16_t fletcher16(const void *buffer, size_t size)
@@ -2146,7 +2163,7 @@ bool is_multi_disc(const file_meta *meta)
 	if (!meta)
 		return false;
 
-	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+	for (int i = 0; i < TOTAL_COUNT; i++)
 		if (!memcmp(&meta->diskId, nkit_dat[i].header, 8) &&
 			(meta->bannerSum == nkit_dat[i].banner.sum || meta->bannerSum == 0xFFFF))
 			return nkit_dat[i].discs > 1;
@@ -2182,20 +2199,20 @@ bool is_redump_disc(const file_meta *meta)
 bool is_streaming_disc(const DiskHeader *header)
 {
 	if (is_nkit_format(header)) {
-		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+		for (int i = 0; i < TOTAL_COUNT; i++)
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header->ImageCRC == nkit_dat[i].crc)
 				return nkit_dat[i].streaming;
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+		for (int i = 0; i < TOTAL_COUNT; i++)
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header_sum == nkit_dat[i].header_sum)
 				return nkit_dat[i].streaming;
 	}
 
-	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+	for (int i = 0; i < TOTAL_COUNT; i++)
 		if (!memcmp(header, nkit_dat[i].header, 8))
 			return nkit_dat[i].streaming;
 
@@ -2207,7 +2224,7 @@ bool is_verifiable_disc(const DiskHeader *header)
 	if (is_nkit_format(header))
 		return true;
 
-	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+	for (int i = 0; i < TOTAL_COUNT; i++)
 		if (!memcmp(header, nkit_dat[i].header, 8))
 			return true;
 
@@ -2219,7 +2236,7 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 	*offset = ~0;
 
 	if (is_nkit_format(header)) {
-		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++) {
+		for (int i = 0; i < TOTAL_COUNT; i++) {
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header->ImageCRC == nkit_dat[i].crc &&
 				header->ImageSize == nkit_dat[i].size + nkit_dat[i]._size &&
@@ -2232,12 +2249,12 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++) {
+		for (int i = 0; i < TOTAL_COUNT; i++) {
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header_sum == nkit_dat[i].header_sum &&
 				*size == nkit_dat[i].size + nkit_dat[i]._size) {
 
-				for (int j = i + 1; j < sizeof(nkit_dat) / sizeof(*nkit_dat); j++)
+				for (int j = i + 1; j < TOTAL_COUNT; j++)
 					if (!memcmp(nkit_dat[i].header, nkit_dat[j].header, 8) &&
 						nkit_dat[i].header_sum == nkit_dat[j].header_sum &&
 						nkit_dat[i].size + nkit_dat[i]._size == nkit_dat[j].size + nkit_dat[j]._size &&
@@ -2257,14 +2274,14 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 uint64_t get_gcm_boot_hash(const DiskHeader *header, const file_meta *meta)
 {
 	if (is_nkit_format(header)) {
-		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+		for (int i = 0; i < TOTAL_COUNT; i++)
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header->ImageCRC == nkit_dat[i].crc)
 				return nkit_dat[i].boot_hash;
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+		for (int i = 0; i < TOTAL_COUNT; i++)
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header_sum == nkit_dat[i].header_sum &&
 				meta->bannerSum == nkit_dat[i].banner.sum)
@@ -2280,7 +2297,7 @@ const char *get_gcm_title(const DiskHeader *header, file_meta *meta)
 		meta->displayName = strncpy(meta->bannerDesc.fullGameName, header->GameName, BNR_FULL_TEXT_LEN);
 
 	if (is_nkit_format(header)) {
-		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++) {
+		for (int i = 0; i < TOTAL_COUNT; i++) {
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header->ImageCRC == nkit_dat[i].crc) {
 				meta->displayName = nkit_dat[i].title;
@@ -2290,7 +2307,7 @@ const char *get_gcm_title(const DiskHeader *header, file_meta *meta)
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++) {
+		for (int i = 0; i < TOTAL_COUNT; i++) {
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header_sum == nkit_dat[i].header_sum &&
 				meta->bannerSum == nkit_dat[i].banner.sum) {
@@ -2339,7 +2356,7 @@ bool valid_gcm_crc32(const DiskHeader *header, uint32_t crc)
 	if (is_nkit_format(header))
 		return header->ImageCRC == crc;
 
-	for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+	for (int i = 0; i < VALID_COUNT; i++)
 		if (!memcmp(header, nkit_dat[i].header, 8) &&
 			crc == nkit_dat[i].crc) return true;
 
@@ -2360,7 +2377,7 @@ bool valid_gcm_magic(DiskHeader *header)
 bool valid_gcm_size(const DiskHeader *header, off_t size)
 {
 	if (is_nkit_format(header)) {
-		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+		for (int i = 0; i < VALID_COUNT; i++)
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header->ImageCRC == nkit_dat[i].crc &&
 				header->ImageSize == nkit_dat[i].size + nkit_dat[i]._size &&
@@ -2368,7 +2385,7 @@ bool valid_gcm_size(const DiskHeader *header, off_t size)
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < sizeof(nkit_dat) / sizeof(*nkit_dat); i++)
+		for (int i = 0; i < VALID_COUNT; i++)
 			if (!memcmp(header, nkit_dat[i].header, 8) &&
 				header_sum == nkit_dat[i].header_sum &&
 				size == nkit_dat[i].size + nkit_dat[i]._size)
@@ -2376,4 +2393,18 @@ bool valid_gcm_size(const DiskHeader *header, off_t size)
 	}
 
 	return size == DISC_SIZE;
+}
+
+bool needs_nkit_reencode(const DiskHeader *header, off_t size)
+{
+	if (!is_nkit_format(header))
+		return false;
+
+	for (int i = VALID_COUNT; i < TOTAL_COUNT; i++)
+		if (!memcmp(header, nkit_dat[i].header, 8) &&
+			header->ImageCRC == nkit_dat[i].crc &&
+			header->ImageSize == nkit_dat[i].size + nkit_dat[i]._size &&
+			size == nkit_dat[i].size) return true;
+
+	return false;
 }

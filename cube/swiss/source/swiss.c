@@ -1681,7 +1681,14 @@ void load_game() {
 		
 		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
 		
-		if(is_nkit_format(&GCMDisk) && !valid_gcm_boot(&GCMDisk)) {
+		if(needs_nkit_reencode(&GCMDisk, curFile.size)) {
+			DrawDispose(msgBox);
+			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Please reconvert to NKit.iso using\nNKit bundled with this Swiss release."));
+			sleep(5);
+			DrawDispose(msgBox);
+			return;
+		}
+		else if(is_nkit_format(&GCMDisk) && !valid_gcm_boot(&GCMDisk)) {
 			DrawDispose(msgBox);
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is not playable in NKit.iso format.\nPlease convert back to ISO using NKit."));
 			sleep(5);
