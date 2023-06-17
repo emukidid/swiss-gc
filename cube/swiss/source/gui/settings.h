@@ -147,7 +147,7 @@ extern char *aveCompatStr[];
 extern char *fileBrowserStr[];
 extern char *bs2BootStr[];
 extern char *recentListLevelStr[];
-#define SRAM_LANG_MAX 6
+#define SRAM_LANG_MAX 7
 extern char *sramLang[];
 int show_settings(int page, int option, ConfigEntry *config);
 void refreshSRAM();

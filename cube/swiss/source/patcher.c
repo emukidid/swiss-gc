@@ -333,6 +333,7 @@ int install_code(int final)
 		_sync();
 		if (top_addr != 0x81800000)
 			mtspr(DABR, 0x800000E8 | 0b110);
+		mtspr(EAR, 0x8000000C);
 	}
 	return 1;
 }

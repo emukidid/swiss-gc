@@ -127,6 +127,8 @@
 #define SPRG2	274
 #define SPRG3	275
 
+#define EAR		282
+
 #define DABR	1013
 
 #define IABR	1010

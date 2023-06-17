@@ -40,7 +40,7 @@ char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
 char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL"};
 char *fileBrowserStr[] = {"Standard", "Carousel"};
 char *bs2BootStr[] = {"No", "Yes", "Sound 1", "Sound 2"};
-char *sramLang[] = {"English", "German", "French", "Spanish", "Italian", "Dutch", "Japanese"};
+char *sramLang[] = {"English", "German", "French", "Spanish", "Italian", "Dutch", "Japanese", "English (US)"};
 char *recentListLevelStr[] = {"Off", "Lazy", "On"};
 
 static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {

@@ -105,11 +105,6 @@ static void ARAMStub(void)
     asm("bdnz flush");
     asm("isync");
 
-    /*** Enable external control ***/
-    asm("lis 8,0x8000");
-    asm("ori 8,8,0x000c");
-    asm("mtear 8");
-
     /*** Party! ***/
     asm("mtlr 3");
     asm("li 0,0");

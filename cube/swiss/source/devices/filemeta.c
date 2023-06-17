@@ -159,12 +159,15 @@ void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 			if(!memcmp(banner->magic, "BNR1", 4)) {
 				f->meta->bannerSum = fletcher16(banner, bannerSize);
 				memcpy(f->meta->banner, banner->pixelData, f->meta->bannerSize);
-				memcpy(&f->meta->bannerDesc, &banner->desc[0], sizeof(f->meta->bannerDesc));
+				memcpy(&f->meta->bannerDesc, &banner->desc[SYS_LANG_ENGLISH], sizeof(f->meta->bannerDesc));
 			}
 			else if(!memcmp(banner->magic, "BNR2", 4)) {
 				f->meta->bannerSum = fletcher16(banner, bannerSize);
 				memcpy(f->meta->banner, banner->pixelData, f->meta->bannerSize);
-				memcpy(&f->meta->bannerDesc, &banner->desc[swissSettings.sramLanguage], sizeof(f->meta->bannerDesc));
+				if(in_range(swissSettings.sramLanguage, SYS_LANG_ENGLISH, SYS_LANG_DUTCH))
+					memcpy(&f->meta->bannerDesc, &banner->desc[swissSettings.sramLanguage], sizeof(f->meta->bannerDesc));
+				else
+					memcpy(&f->meta->bannerDesc, &banner->desc[SYS_LANG_ENGLISH], sizeof(f->meta->bannerDesc));
 			}
 			fixBannerDesc(f->meta->bannerDesc.gameName, BNR_SHORT_TEXT_LEN);
 			if(strnlen(f->meta->bannerDesc.gameName, BNR_SHORT_TEXT_LEN))

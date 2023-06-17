@@ -2090,6 +2090,7 @@ static const struct {
 	{ "GLJEGG\x00\x00", false, 1, 0x3684, 0xC411F2F8,  577157120,  +883148800, 0xED983A4B64245ED8, {  560702976,  +882822244, 6496, 0x83D8 }, "Radio Allergy" },
 	{ "GMPP01\x00\x00", false, 1, 0x39B0, 0xB7DA63ED,  607344640,  +852633600, 0x895DFE61A45E24FC, {  559136944,     +232500, 8096, 0x03FE }, "Mario Party 4" },
 	{ "GMPP01\x00\x02", false, 1, 0x9D34, 0xF0DE4105,  607346688,  +852631552, 0x895DFE61A45E24FC, {  559137448,     +264764, 8096, 0x03FE }, "Mario Party 4" },
+	{ "GMSP01\x00\x00", false, 1, 0x6C8C, 0xF968261A,  404224000,     +100352, 0x784E17B83254CEE8, {  404214580,      +70348, 8096, 0x4911 }, "Super Mario Sunshine" },
 	{ "GMUP5D\x00\x00", false, 1, 0xEE0B, 0xD442A6BF, 1425692672,   +34285568, 0x436DC9BED493D5DE, {    6644012,    +5580500, 6496, 0x093D }, "Dr. Muto" },
 	{ "GNDP8P\x01\x01", false, 1, 0x6F6A, 0x81525825,  894347264,  +565630976, 0x7B6CD8E32A668D95, {         ~0,          +0,    0, 0xFFFF }, "Need for Speed: Underground" },
 	{ "GP5P01\x00\x00", false, 1, 0xFBF1, 0x9DC1BB2A,  922845184,  +537133056, 0xC5CD32D7C41AAE3D, {   14902032,      +41916, 8096, 0x3D31 }, "Mario Party 5" },
@@ -2126,7 +2127,7 @@ static const struct {
 	{ "RELSAB\x01\x01", false, 1, 0xA47D, 0xBB46463A,  482416640,  +977561600, 0x7A5CBC4681D2D704, {    3936256,      +28760, 6496, 0x3FED }, "Rayman Arena" },
 	{ "RELSAB\x01\x01", true,  1, 0x771E, 0x17B30888,  134633472, +1325344768, 0x3E5C6F107670681B, {         ~0,          +0,    0, 0xFFFF }, "Crazy Taxi" },
 	{ "TESTNA\x00\x00", false, 1, 0x0C28, 0x6254FB97,   26834944,       -1658, 0xAA2E5EDD0EF81992, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 84)
+#define VALID_COUNT (REDUMP_COUNT + 85)
 	{ "101E01\x00\x05", true,  1, 0xB6FD, 0x4BB518CD, 1435949056,   +24029184, 0x27CFAD706924A030, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{ "101J01\x00\x03", true,  1, 0xA361, 0x1A7B7608, 1459453952,     +524288, 0x6E2DA2E062EF73BA, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
 	{ "101J01\x00\x06", true,  1, 0x402F, 0xC3C5D3D6, 1459453952,     +524288, 0x946298C97236262D, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
