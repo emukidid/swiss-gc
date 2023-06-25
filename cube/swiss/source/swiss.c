@@ -919,6 +919,7 @@ void load_app(ExecutableFile *fileToPatch)
 			XXH128_hash_t old_hash, new_hash = XXH3_128bits(buffer, sizeToRead);
 			if(devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, &old_hash, sizeof(old_hash)) != sizeof(old_hash) ||
 				!XXH128_isEqual(old_hash, new_hash)) {
+				devices[DEVICE_PATCHES]->deleteFile(fileToPatch->patchFile);
 				DrawPublish(DrawMessageBox(D_FAIL, "Failed integrity verification"));
 				while(1);
 			}
