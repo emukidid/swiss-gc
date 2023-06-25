@@ -240,21 +240,32 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 	numFiles++;
 
 	if(diskHeader->DOLOffset != 0) {
-		// Multi-DOL games may re-load the main DOL, so make sure we patch it too.
-		// Calc size
-		DOLHEADER dolhdr;
-		devices[DEVICE_CUR]->seekFile(file,diskHeader->DOLOffset,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Main DOL Header"));
-			while(1);
+		if(is_datel_disc(diskHeader)) {
+			filesToPatch[numFiles].file = file;
+			filesToPatch[numFiles].offset = diskHeader->DOLOffset;
+			filesToPatch[numFiles].size = 0x400000;
+			filesToPatch[numFiles].hash = get_gcm_boot_hash(diskHeader, file->meta);
+			filesToPatch[numFiles].type = PATCH_BIN;
+			sprintf(filesToPatch[numFiles].name, "default.bin");
+			numFiles++;
 		}
-		filesToPatch[numFiles].file = file;
-		filesToPatch[numFiles].offset = dolOffset = diskHeader->DOLOffset;
-		filesToPatch[numFiles].size = dolSize = DOLSize(&dolhdr);
-		filesToPatch[numFiles].hash = get_gcm_boot_hash(diskHeader, file->meta);
-		filesToPatch[numFiles].type = PATCH_DOL;
-		sprintf(filesToPatch[numFiles].name, "default.dol");
-		numFiles++;
+		else {
+			// Multi-DOL games may re-load the main DOL, so make sure we patch it too.
+			// Calc size
+			DOLHEADER dolhdr;
+			devices[DEVICE_CUR]->seekFile(file,diskHeader->DOLOffset,DEVICE_HANDLER_SEEK_SET);
+			if(devices[DEVICE_CUR]->readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Main DOL Header"));
+				while(1);
+			}
+			filesToPatch[numFiles].file = file;
+			filesToPatch[numFiles].offset = dolOffset = diskHeader->DOLOffset;
+			filesToPatch[numFiles].size = dolSize = DOLSize(&dolhdr);
+			filesToPatch[numFiles].hash = get_gcm_boot_hash(diskHeader, file->meta);
+			filesToPatch[numFiles].type = PATCH_DOL;
+			sprintf(filesToPatch[numFiles].name, "default.dol");
+			numFiles++;
+		}
 	}
 
 	char *FST = get_fst(file, diskHeader->FSTOffset, diskHeader->FSTSize);
@@ -532,7 +543,8 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		int ret = devices[DEVICE_CUR]->readFile(fileToPatch->file,buffer,sizeToRead);
 		print_gecko("Read from %08X Size %08X - Result: %08X\r\n", fileToPatch->offset, sizeToRead, ret);
 		if(ret != sizeToRead) {
-			DrawDispose(progBox);			
+			free(buffer);
+			DrawDispose(progBox);
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to read!"));
 			sleep(5);
 			DrawDispose(msgBox);
@@ -544,6 +556,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		if(fileToPatch->type == PATCH_DOL_PRS || fileToPatch->type == PATCH_OTHER_PRS) {
 			ret = pso_prs_decompress_buf(buffer, &newBuffer, fileToPatch->size);
 			if(ret < 0) {
+				free(buffer);
 				DrawDispose(progBox);
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to decompress!"));
 				sleep(5);
@@ -567,6 +580,8 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		if(fileToPatch->type == PATCH_DOL_PRS || fileToPatch->type == PATCH_OTHER_PRS) {
 			ret = pso_prs_compress2(buffer, oldBuffer, sizeToRead, fileToPatch->size);
 			if(ret < 0) {
+				free(newBuffer);
+				free(oldBuffer);
 				DrawDispose(progBox);
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to recompress!"));
 				sleep(5);
@@ -589,8 +604,12 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 				deviceHandler_setStatEnabled(0);
 				if(devices[DEVICE_PATCHES]->init(devices[DEVICE_PATCHES]->initial)) {
 					deviceHandler_setStatEnabled(1);
+					free(buffer);
 					DrawDispose(progBox);
-					return false;
+					uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "No writable device available.\nAn SD Card Adapter is necessary in order\nfor patches to survive application restart."));
+					sleep(5);
+					DrawDispose(msgBox);
+					return 0;
 				}
 				deviceHandler_setStatEnabled(1);
 				patchDeviceReady = true;

@@ -747,9 +747,9 @@ int exccomp(const void *a1, const void *b1)
 	if(a && !b) return -1;
 	if(!a && !b) return 0;
 	
-	if((a->type == PATCH_DOL || a->type == PATCH_ELF) && (b->type != PATCH_DOL && b->type != PATCH_ELF))
+	if(in_range(a->type, PATCH_BIN, PATCH_ELF) && !in_range(b->type, PATCH_BIN, PATCH_ELF))
 		return -1;
-	if((a->type != PATCH_DOL && a->type != PATCH_ELF) && (b->type == PATCH_DOL || b->type == PATCH_ELF))
+	if(!in_range(a->type, PATCH_BIN, PATCH_ELF) && in_range(b->type, PATCH_BIN, PATCH_ELF))
 		return 1;
 	
 	if(a->offset == GCMDisk.DOLOffset && b->offset != GCMDisk.DOLOffset)
@@ -773,7 +773,7 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch, int num_files) {
 	int i = 0, j = 0, max = 0, idx = 0, page = 4;
 	sortDols(filesToPatch, num_files);	// Sort DOL to the top
 	for(i = 0; i < num_files; i++) {
-		if(filesToPatch[i].type != PATCH_DOL && filesToPatch[i].type != PATCH_ELF) {
+		if(!in_range(filesToPatch[i].type, PATCH_BIN, PATCH_ELF)) {
 			num_files = i;
 			break;
 		}
@@ -915,6 +915,13 @@ void load_app(ExecutableFile *fileToPatch)
 				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
 				while(1);
 			}
+			
+			XXH128_hash_t old_hash, new_hash = XXH3_128bits(buffer, sizeToRead);
+			if(devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, &old_hash, sizeof(old_hash)) != sizeof(old_hash) ||
+				!XXH128_isEqual(old_hash, new_hash)) {
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed integrity verification"));
+				while(1);
+			}
 		}
 		else {
 			devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->offset,DEVICE_HANDLER_SEEK_SET);
@@ -954,12 +961,10 @@ void load_app(ExecutableFile *fileToPatch)
 		Patch_ExecutableFile(&buffer, &sizeToRead, gameID, type);
 	}
 	
-	DCFlushRange(buffer, sizeToRead);
-	ICInvalidateRange(buffer, sizeToRead);
-	
 	// See if the combination of our patches has exhausted our play area.
 	if(!install_code(0)) {
 		DrawDispose(progBox);
+		free(buffer);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Exhausted reserved memory.\nAn SD Card Adapter is necessary in order\nfor patches to reserve additional memory.");
 		DrawPublish(msgBox);
 		wait_press_A();
@@ -1011,6 +1016,8 @@ void load_app(ExecutableFile *fileToPatch)
 	else if(type == PATCH_ELF) {
 		ELFtoARAM(buffer, NULL, 0);
 	}
+	SYS_ResetSystem(SYS_HOTRESET, 0, FALSE);
+	__builtin_unreachable();
 }
 
 void boot_dol()

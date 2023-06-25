@@ -2159,6 +2159,11 @@ uint16_t fletcher16(const void *buffer, size_t size)
 	return sum[1] << 8 | sum[0];
 }
 
+bool is_datel_disc(const DiskHeader *header)
+{
+	return !memcmp(header, &DATEL, offsetof(DiskHeader, DVDMagicWord));
+}
+
 bool is_multi_disc(const file_meta *meta)
 {
 	if (!meta)
