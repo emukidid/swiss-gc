@@ -826,6 +826,9 @@ void load_app(ExecutableFile *fileToPatch)
 	
 	// Get top of memory
 	u32 topAddr = getTopAddr();
+	if (topAddr < 0x81700000) {
+		topAddr = 0x81800000;
+	}
 	print_gecko("Top of RAM simulated as: 0x%08X\r\n", topAddr);
 	
 	*(vu32*)(VAR_AREA+0x0028) = 0x01800000;
@@ -956,8 +959,9 @@ void load_app(ExecutableFile *fileToPatch)
 		type = PATCH_BS2;
 	}
 	
-	setTopAddr(HI_RESERVE);
-	
+	if(getTopAddr() == topAddr) {
+		setTopAddr(HI_RESERVE);
+	}
 	if(fileToPatch == NULL || fileToPatch->patchFile == NULL) {
 		Patch_ExecutableFile(&buffer, &sizeToRead, gameID, type);
 	}
@@ -972,7 +976,6 @@ void load_app(ExecutableFile *fileToPatch)
 		DrawDispose(msgBox);
 		return;
 	}
-	
 	setTopAddr(topAddr);
 	
 	if(swissSettings.wiirdEngine) {
@@ -1724,7 +1727,7 @@ void load_game() {
 	ConfigEntry *config = calloc(1, sizeof(ConfigEntry));
 	memcpy(config->game_id, &GCMDisk.ConsoleID, 4);
 	memcpy(config->game_name, GCMDisk.GameName, 64);
-	config->forceCleanBoot = !valid_gcm_boot(&GCMDisk);
+	config->forceCleanBoot = is_diag_disc(&GCMDisk);
 	config_find(config);
 	
 	// Show game info or return to the menu
@@ -1820,7 +1823,7 @@ void load_game() {
 			}
 		}
 	}
-	else {
+	else if(valid_gcm_boot(&GCMDisk)) {
 		for(int i = 0; i < numToPatch; i++) {
 			if(filesToPatch[i].file == &curFile && filesToPatch[i].offset == GCMDisk.DOLOffset) {
 				if(!swissSettings.bs2Boot)
@@ -1845,6 +1848,9 @@ void load_game() {
 	*(vu8*)VAR_CARD_A_ID = 0x00;
 	*(vu8*)VAR_CARD_B_ID = 0x00;
 	
+	if(getTopAddr() == 0x81800000) {
+		setTopAddr(HI_RESERVE);
+	}
 	// Call the special setup for each device (e.g. SD will set the sector(s))
 	if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, filesToPatch, numToPatch)) {
 		msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to setup the file (too fragmented?)"));

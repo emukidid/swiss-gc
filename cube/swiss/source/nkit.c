@@ -2165,6 +2165,14 @@ bool is_datel_disc(const DiskHeader *header)
 	return !memcmp(header, &DATEL, offsetof(DiskHeader, DVDMagicWord));
 }
 
+bool is_diag_disc(const DiskHeader *header)
+{
+	if (!memcmp(header, &NDDEMO, offsetof(DiskHeader, DVDMagicWord)) &&
+		!strcmp(header->GameName, "NDDEMO")) return false;
+
+	return isdigit(header->ConsoleID) && header->MakerCodeA == '0' && header->MakerCodeB == '1';
+}
+
 bool is_multi_disc(const file_meta *meta)
 {
 	if (!meta)
@@ -2346,13 +2354,7 @@ int valid_dol_xxh3(const file_handle *file, uint64_t hash)
 
 bool valid_gcm_boot(const DiskHeader *header)
 {
-	if (!memcmp(header, &NDDEMO, offsetof(DiskHeader, DVDMagicWord)) &&
-		!strcmp(header->GameName, "NDDEMO")) return true;
-
 	if (!memcmp(header, &DATEL, offsetof(DiskHeader, DVDMagicWord)))
-		return false;
-
-	if (isdigit(header->ConsoleID) && header->MakerCodeA == '0' && header->MakerCodeB == '1')
 		return false;
 
 	return !!header->DOLOffset;

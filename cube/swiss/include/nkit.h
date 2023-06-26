@@ -28,6 +28,7 @@
 uint16_t fletcher16(const void *buffer, size_t size);
 
 bool is_datel_disc(const DiskHeader *header);
+bool is_diag_disc(const DiskHeader *header);
 bool is_multi_disc(const file_meta *meta);
 bool is_nkit_format(const DiskHeader *header);
 bool is_redump_disc(const file_meta *meta);
