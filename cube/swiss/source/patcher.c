@@ -10066,617 +10066,617 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 		}
 	} else if (dataType == PATCH_BS2) {
 		switch (length) {
-			case 1435168:
+			case 1435200:
 				// Don't clear OSLoMem.
-				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300478 - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x8130048C - 0x81300000 + 0x20) = 0x60000000;
 				
 				// __VIInit(newmode->viTVMode & ~0x3);
-				*(s16 *)(data + 0x81300712 - 0x81300000) = newmode->viTVMode & ~0x3;
+				*(s16 *)(data + 0x81300712 - 0x81300000 + 0x20) = newmode->viTVMode & ~0x3;
 				
 				// Accept any region code.
-				*(s16 *)(data + 0x81300E8A - 0x81300000) = 1;
-				*(s16 *)(data + 0x81300EA2 - 0x81300000) = 1;
-				*(s16 *)(data + 0x81300EAA - 0x81300000) = 1;
+				*(s16 *)(data + 0x81300E8A - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x81300EA2 - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x81300EAA - 0x81300000 + 0x20) = 1;
 				
 				// Don't panic on field rendering.
-				*(u32 *)(data + 0x813016A0 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x813016A0 - 0x81300000 + 0x20) = 0x60000000;
 				
 				// Force boot sound.
-				*(u32 *)(data + 0x81302F00 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				*(u32 *)(data + 0x81302F00 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				// Force text encoding.
-				*(u32 *)(data + 0x8130B3E4 - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
+				*(u32 *)(data + 0x8130B3E4 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
 				// Force English language, the hard way.
-				*(s16 *)(data + 0x8130B40A - 0x81300000) = 10;
-				*(s16 *)(data + 0x8130B412 - 0x81300000) = 38;
-				*(s16 *)(data + 0x8130B416 - 0x81300000) = 39;
-				*(s16 *)(data + 0x8130B422 - 0x81300000) = 15;
-				*(s16 *)(data + 0x8130B42E - 0x81300000) = 7;
-				*(s16 *)(data + 0x8130B43A - 0x81300000) = 1;
-				*(s16 *)(data + 0x8130B446 - 0x81300000) = 4;
-				*(s16 *)(data + 0x8130B44E - 0x81300000) = 45;
-				*(s16 *)(data + 0x8130B452 - 0x81300000) = 46;
-				*(s16 *)(data + 0x8130B45A - 0x81300000) = 42;
-				*(s16 *)(data + 0x8130B45E - 0x81300000) = 40;
-				*(s16 *)(data + 0x8130B466 - 0x81300000) = 43;
-				*(s16 *)(data + 0x8130B476 - 0x81300000) = 31;
-				*(s16 *)(data + 0x8130B47E - 0x81300000) = 29;
-				*(s16 *)(data + 0x8130B482 - 0x81300000) = 30;
-				*(s16 *)(data + 0x8130B48E - 0x81300000) = 80;
+				*(s16 *)(data + 0x8130B40A - 0x81300000 + 0x20) = 10;
+				*(s16 *)(data + 0x8130B412 - 0x81300000 + 0x20) = 38;
+				*(s16 *)(data + 0x8130B416 - 0x81300000 + 0x20) = 39;
+				*(s16 *)(data + 0x8130B422 - 0x81300000 + 0x20) = 15;
+				*(s16 *)(data + 0x8130B42E - 0x81300000 + 0x20) = 7;
+				*(s16 *)(data + 0x8130B43A - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x8130B446 - 0x81300000 + 0x20) = 4;
+				*(s16 *)(data + 0x8130B44E - 0x81300000 + 0x20) = 45;
+				*(s16 *)(data + 0x8130B452 - 0x81300000 + 0x20) = 46;
+				*(s16 *)(data + 0x8130B45A - 0x81300000 + 0x20) = 42;
+				*(s16 *)(data + 0x8130B45E - 0x81300000 + 0x20) = 40;
+				*(s16 *)(data + 0x8130B466 - 0x81300000 + 0x20) = 43;
+				*(s16 *)(data + 0x8130B476 - 0x81300000 + 0x20) = 31;
+				*(s16 *)(data + 0x8130B47E - 0x81300000 + 0x20) = 29;
+				*(s16 *)(data + 0x8130B482 - 0x81300000 + 0x20) = 30;
+				*(s16 *)(data + 0x8130B48E - 0x81300000 + 0x20) = 80;
 				
 				if (newmode->viTVMode >> 2 == VI_PAL) {
 					// Fix logo animation speed.
-					*(s16 *)(data + 0x8130E8B2 - 0x81300000) = 8;
-					*(s16 *)(data + 0x8130E8B6 - 0x81300000) = 15;
-					*(s16 *)(data + 0x8130E8C2 - 0x81300000) = 6;
-					*(s16 *)(data + 0x8130E8C6 - 0x81300000) = 5;
-					*(s16 *)(data + 0x8130E8CA - 0x81300000) = 4;
-					*(s16 *)(data + 0x8130E8CE - 0x81300000) = 13;
-					*(s16 *)(data + 0x8130E8D2 - 0x81300000) = 255;
-					*(s16 *)(data + 0x8130E8D6 - 0x81300000) = 17;
-					*(s16 *)(data + 0x8130E8DE - 0x81300000) = 33;
-					*(s16 *)(data + 0x8130E8E2 - 0x81300000) = 50;
-					*(u32 *)(data + 0x8130E91C - 0x81300000) = 0xB1630016;
-					*(u32 *)(data + 0x8130E924 - 0x81300000) = 0x9943000B;
-					*(u32 *)(data + 0x8130E928 - 0x81300000) = 0x9BA3001C;
-					*(u32 *)(data + 0x8130E92C - 0x81300000) = 0x9B830037;
-					*(u32 *)(data + 0x8130E930 - 0x81300000) = 0x99630035;
+					*(s16 *)(data + 0x8130E8B2 - 0x81300000 + 0x20) = 8;
+					*(s16 *)(data + 0x8130E8B6 - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x8130E8C2 - 0x81300000 + 0x20) = 6;
+					*(s16 *)(data + 0x8130E8C6 - 0x81300000 + 0x20) = 5;
+					*(s16 *)(data + 0x8130E8CA - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x8130E8CE - 0x81300000 + 0x20) = 13;
+					*(s16 *)(data + 0x8130E8D2 - 0x81300000 + 0x20) = 255;
+					*(s16 *)(data + 0x8130E8D6 - 0x81300000 + 0x20) = 17;
+					*(s16 *)(data + 0x8130E8DE - 0x81300000 + 0x20) = 33;
+					*(s16 *)(data + 0x8130E8E2 - 0x81300000 + 0x20) = 50;
+					*(u32 *)(data + 0x8130E91C - 0x81300000 + 0x20) = 0xB1630016;
+					*(u32 *)(data + 0x8130E924 - 0x81300000 + 0x20) = 0x9943000B;
+					*(u32 *)(data + 0x8130E928 - 0x81300000 + 0x20) = 0x9BA3001C;
+					*(u32 *)(data + 0x8130E92C - 0x81300000 + 0x20) = 0x9B830037;
+					*(u32 *)(data + 0x8130E930 - 0x81300000 + 0x20) = 0x99630035;
 					
-					memcpy(data + 0x8135DDE0 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+					memcpy(data + 0x8135DDE0 - 0x81300000 + 0x20, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				}
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
 				patched++;
 				break;
-			case 1448256:
+			case 1448280:
 				// Don't clear OSLoMem.
-				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300478 - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x8130048C - 0x81300000 + 0x20) = 0x60000000;
 				
 				// __VIInit(newmode->viTVMode & ~0x3);
-				*(u32 *)(data + 0x81300710 - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x81300714 - 0x81300000) = 0x38600000 | (newmode->viTVMode & 0xFFFC);
+				*(u32 *)(data + 0x81300710 - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x81300714 - 0x81300000 + 0x20) = 0x38600000 | (newmode->viTVMode & 0xFFFC);
 				
 				// Accept any region code.
-				*(s16 *)(data + 0x8130092E - 0x81300000) = 1;
-				*(s16 *)(data + 0x81300946 - 0x81300000) = 1;
-				*(s16 *)(data + 0x8130094E - 0x81300000) = 1;
+				*(s16 *)(data + 0x8130092E - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x81300946 - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x8130094E - 0x81300000 + 0x20) = 1;
 				
 				// Don't panic on field rendering.
-				*(u32 *)(data + 0x81302E60 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81302E60 - 0x81300000 + 0x20) = 0x60000000;
 				
 				// Force boot sound.
-				*(u32 *)(data + 0x813046C0 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				*(u32 *)(data + 0x813046C0 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				// Force text encoding.
-				*(u32 *)(data + 0x8130CBA4 - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
+				*(u32 *)(data + 0x8130CBA4 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
 				// Force English language, the hard way.
-				*(s16 *)(data + 0x8130CBCA - 0x81300000) = 10;
-				*(s16 *)(data + 0x8130CBD2 - 0x81300000) = 38;
-				*(s16 *)(data + 0x8130CBD6 - 0x81300000) = 39;
-				*(s16 *)(data + 0x8130CBE2 - 0x81300000) = 15;
-				*(s16 *)(data + 0x8130CBEE - 0x81300000) = 7;
-				*(s16 *)(data + 0x8130CBFA - 0x81300000) = 1;
-				*(s16 *)(data + 0x8130CC06 - 0x81300000) = 4;
-				*(s16 *)(data + 0x8130CC0E - 0x81300000) = 45;
-				*(s16 *)(data + 0x8130CC12 - 0x81300000) = 46;
-				*(s16 *)(data + 0x8130CC1A - 0x81300000) = 42;
-				*(s16 *)(data + 0x8130CC1E - 0x81300000) = 40;
-				*(s16 *)(data + 0x8130CC26 - 0x81300000) = 43;
-				*(s16 *)(data + 0x8130CC36 - 0x81300000) = 31;
-				*(s16 *)(data + 0x8130CC3E - 0x81300000) = 29;
-				*(s16 *)(data + 0x8130CC42 - 0x81300000) = 30;
-				*(s16 *)(data + 0x8130CC4E - 0x81300000) = 80;
+				*(s16 *)(data + 0x8130CBCA - 0x81300000 + 0x20) = 10;
+				*(s16 *)(data + 0x8130CBD2 - 0x81300000 + 0x20) = 38;
+				*(s16 *)(data + 0x8130CBD6 - 0x81300000 + 0x20) = 39;
+				*(s16 *)(data + 0x8130CBE2 - 0x81300000 + 0x20) = 15;
+				*(s16 *)(data + 0x8130CBEE - 0x81300000 + 0x20) = 7;
+				*(s16 *)(data + 0x8130CBFA - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x8130CC06 - 0x81300000 + 0x20) = 4;
+				*(s16 *)(data + 0x8130CC0E - 0x81300000 + 0x20) = 45;
+				*(s16 *)(data + 0x8130CC12 - 0x81300000 + 0x20) = 46;
+				*(s16 *)(data + 0x8130CC1A - 0x81300000 + 0x20) = 42;
+				*(s16 *)(data + 0x8130CC1E - 0x81300000 + 0x20) = 40;
+				*(s16 *)(data + 0x8130CC26 - 0x81300000 + 0x20) = 43;
+				*(s16 *)(data + 0x8130CC36 - 0x81300000 + 0x20) = 31;
+				*(s16 *)(data + 0x8130CC3E - 0x81300000 + 0x20) = 29;
+				*(s16 *)(data + 0x8130CC42 - 0x81300000 + 0x20) = 30;
+				*(s16 *)(data + 0x8130CC4E - 0x81300000 + 0x20) = 80;
 				
 				if (newmode->viTVMode >> 2 == VI_PAL) {
 					// Fix logo animation speed.
-					*(s16 *)(data + 0x81310072 - 0x81300000) = 8;
-					*(s16 *)(data + 0x81310076 - 0x81300000) = 15;
-					*(s16 *)(data + 0x81310082 - 0x81300000) = 6;
-					*(s16 *)(data + 0x81310086 - 0x81300000) = 5;
-					*(s16 *)(data + 0x8131008A - 0x81300000) = 4;
-					*(s16 *)(data + 0x8131008E - 0x81300000) = 13;
-					*(s16 *)(data + 0x81310092 - 0x81300000) = 255;
-					*(s16 *)(data + 0x81310096 - 0x81300000) = 17;
-					*(s16 *)(data + 0x8131009E - 0x81300000) = 33;
-					*(s16 *)(data + 0x813100A2 - 0x81300000) = 50;
-					*(u32 *)(data + 0x813100DC - 0x81300000) = 0xB1630016;
-					*(u32 *)(data + 0x813100E4 - 0x81300000) = 0x9943000B;
-					*(u32 *)(data + 0x813100E8 - 0x81300000) = 0x9BA3001C;
-					*(u32 *)(data + 0x813100EC - 0x81300000) = 0x9B830037;
-					*(u32 *)(data + 0x813100F0 - 0x81300000) = 0x99630035;
+					*(s16 *)(data + 0x81310072 - 0x81300000 + 0x20) = 8;
+					*(s16 *)(data + 0x81310076 - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x81310082 - 0x81300000 + 0x20) = 6;
+					*(s16 *)(data + 0x81310086 - 0x81300000 + 0x20) = 5;
+					*(s16 *)(data + 0x8131008A - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x8131008E - 0x81300000 + 0x20) = 13;
+					*(s16 *)(data + 0x81310092 - 0x81300000 + 0x20) = 255;
+					*(s16 *)(data + 0x81310096 - 0x81300000 + 0x20) = 17;
+					*(s16 *)(data + 0x8131009E - 0x81300000 + 0x20) = 33;
+					*(s16 *)(data + 0x813100A2 - 0x81300000 + 0x20) = 50;
+					*(u32 *)(data + 0x813100DC - 0x81300000 + 0x20) = 0xB1630016;
+					*(u32 *)(data + 0x813100E4 - 0x81300000 + 0x20) = 0x9943000B;
+					*(u32 *)(data + 0x813100E8 - 0x81300000 + 0x20) = 0x9BA3001C;
+					*(u32 *)(data + 0x813100EC - 0x81300000 + 0x20) = 0x9B830037;
+					*(u32 *)(data + 0x813100F0 - 0x81300000 + 0x20) = 0x99630035;
 					
-					memcpy(data + 0x8135FD00 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+					memcpy(data + 0x8135FD00 - 0x81300000 + 0x20, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				}
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
 				patched++;
 				break;
-			case 1449824:
+			case 1449848:
 				// Don't clear OSLoMem.
-				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300478 - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x8130048C - 0x81300000 + 0x20) = 0x60000000;
 				
 				// Force 24MB physical memory size.
-				*(s16 *)(data + 0x813004AE - 0x81300000) = 0x1800000 >> 16;
+				*(s16 *)(data + 0x813004AE - 0x81300000 + 0x20) = 0x1800000 >> 16;
 				
 				// __VIInit(newmode->viTVMode & ~0x3);
-				*(u32 *)(data + 0x813009BC - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x813009C0 - 0x81300000) = 0x38600000 | (newmode->viTVMode & 0xFFFC);
+				*(u32 *)(data + 0x813009BC - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x813009C0 - 0x81300000 + 0x20) = 0x38600000 | (newmode->viTVMode & 0xFFFC);
 				
 				// Force production mode.
-				*(s16 *)(data + 0x81300A4E - 0x81300000) = 1;
+				*(s16 *)(data + 0x81300A4E - 0x81300000 + 0x20) = 1;
 				
 				// Accept any region code.
-				*(s16 *)(data + 0x8130121E - 0x81300000) = 1;
+				*(s16 *)(data + 0x8130121E - 0x81300000 + 0x20) = 1;
 				
 				// Don't panic on field rendering.
-				*(u32 *)(data + 0x813031A0 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x813031A0 - 0x81300000 + 0x20) = 0x60000000;
 				
 				// Force boot sound.
-				*(u32 *)(data + 0x8130497C - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				*(u32 *)(data + 0x8130497C - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				// Force text encoding.
-				*(u32 *)(data + 0x8130CE60 - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
+				*(u32 *)(data + 0x8130CE60 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
 				// Force English language, the hard way.
-				*(s16 *)(data + 0x8130CE86 - 0x81300000) = 10;
-				*(s16 *)(data + 0x8130CE8E - 0x81300000) = 38;
-				*(s16 *)(data + 0x8130CE92 - 0x81300000) = 39;
-				*(s16 *)(data + 0x8130CE9E - 0x81300000) = 15;
-				*(s16 *)(data + 0x8130CEAA - 0x81300000) = 7;
-				*(s16 *)(data + 0x8130CEB6 - 0x81300000) = 1;
-				*(s16 *)(data + 0x8130CEC2 - 0x81300000) = 4;
-				*(s16 *)(data + 0x8130CECA - 0x81300000) = 45;
-				*(s16 *)(data + 0x8130CECE - 0x81300000) = 46;
-				*(s16 *)(data + 0x8130CED6 - 0x81300000) = 42;
-				*(s16 *)(data + 0x8130CEDA - 0x81300000) = 40;
-				*(s16 *)(data + 0x8130CEE2 - 0x81300000) = 43;
-				*(s16 *)(data + 0x8130CEF2 - 0x81300000) = 31;
-				*(s16 *)(data + 0x8130CEFA - 0x81300000) = 29;
-				*(s16 *)(data + 0x8130CEFE - 0x81300000) = 30;
-				*(s16 *)(data + 0x8130CF0A - 0x81300000) = 80;
+				*(s16 *)(data + 0x8130CE86 - 0x81300000 + 0x20) = 10;
+				*(s16 *)(data + 0x8130CE8E - 0x81300000 + 0x20) = 38;
+				*(s16 *)(data + 0x8130CE92 - 0x81300000 + 0x20) = 39;
+				*(s16 *)(data + 0x8130CE9E - 0x81300000 + 0x20) = 15;
+				*(s16 *)(data + 0x8130CEAA - 0x81300000 + 0x20) = 7;
+				*(s16 *)(data + 0x8130CEB6 - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x8130CEC2 - 0x81300000 + 0x20) = 4;
+				*(s16 *)(data + 0x8130CECA - 0x81300000 + 0x20) = 45;
+				*(s16 *)(data + 0x8130CECE - 0x81300000 + 0x20) = 46;
+				*(s16 *)(data + 0x8130CED6 - 0x81300000 + 0x20) = 42;
+				*(s16 *)(data + 0x8130CEDA - 0x81300000 + 0x20) = 40;
+				*(s16 *)(data + 0x8130CEE2 - 0x81300000 + 0x20) = 43;
+				*(s16 *)(data + 0x8130CEF2 - 0x81300000 + 0x20) = 31;
+				*(s16 *)(data + 0x8130CEFA - 0x81300000 + 0x20) = 29;
+				*(s16 *)(data + 0x8130CEFE - 0x81300000 + 0x20) = 30;
+				*(s16 *)(data + 0x8130CF0A - 0x81300000 + 0x20) = 80;
 				
 				if (newmode->viTVMode >> 2 == VI_PAL) {
 					// Fix logo animation speed.
-					*(s16 *)(data + 0x8131032E - 0x81300000) = 8;
-					*(s16 *)(data + 0x81310332 - 0x81300000) = 15;
-					*(s16 *)(data + 0x8131033E - 0x81300000) = 6;
-					*(s16 *)(data + 0x81310342 - 0x81300000) = 5;
-					*(s16 *)(data + 0x81310346 - 0x81300000) = 4;
-					*(s16 *)(data + 0x8131034A - 0x81300000) = 13;
-					*(s16 *)(data + 0x8131034E - 0x81300000) = 255;
-					*(s16 *)(data + 0x81310352 - 0x81300000) = 17;
-					*(s16 *)(data + 0x8131035A - 0x81300000) = 33;
-					*(s16 *)(data + 0x8131035E - 0x81300000) = 50;
-					*(u32 *)(data + 0x81310398 - 0x81300000) = 0xB1630016;
-					*(u32 *)(data + 0x813103A0 - 0x81300000) = 0x9943000B;
-					*(u32 *)(data + 0x813103A4 - 0x81300000) = 0x9BA3001C;
-					*(u32 *)(data + 0x813103A8 - 0x81300000) = 0x9B830037;
-					*(u32 *)(data + 0x813103AC - 0x81300000) = 0x99630035;
+					*(s16 *)(data + 0x8131032E - 0x81300000 + 0x20) = 8;
+					*(s16 *)(data + 0x81310332 - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x8131033E - 0x81300000 + 0x20) = 6;
+					*(s16 *)(data + 0x81310342 - 0x81300000 + 0x20) = 5;
+					*(s16 *)(data + 0x81310346 - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x8131034A - 0x81300000 + 0x20) = 13;
+					*(s16 *)(data + 0x8131034E - 0x81300000 + 0x20) = 255;
+					*(s16 *)(data + 0x81310352 - 0x81300000 + 0x20) = 17;
+					*(s16 *)(data + 0x8131035A - 0x81300000 + 0x20) = 33;
+					*(s16 *)(data + 0x8131035E - 0x81300000 + 0x20) = 50;
+					*(u32 *)(data + 0x81310398 - 0x81300000 + 0x20) = 0xB1630016;
+					*(u32 *)(data + 0x813103A0 - 0x81300000 + 0x20) = 0x9943000B;
+					*(u32 *)(data + 0x813103A4 - 0x81300000 + 0x20) = 0x9BA3001C;
+					*(u32 *)(data + 0x813103A8 - 0x81300000 + 0x20) = 0x9B830037;
+					*(u32 *)(data + 0x813103AC - 0x81300000 + 0x20) = 0x99630035;
 					
-					memcpy(data + 0x81360160 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+					memcpy(data + 0x81360160 - 0x81300000 + 0x20, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				}
 				print_gecko("Patched:[%s]\n", "DEV  Revision 1.0");
 				patched++;
 				break;
-			case 1583072:
+			case 1583088:
 				// Don't clear OSLoMem.
-				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300478 - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x8130048C - 0x81300000 + 0x20) = 0x60000000;
 				
 				// __VIInit(newmode->viTVMode);
-				*(s16 *)(data + 0x81300522 - 0x81300000) = newmode->viTVMode;
+				*(s16 *)(data + 0x81300522 - 0x81300000 + 0x20) = newmode->viTVMode;
 				
 				// Accept any region code.
-				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
-				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
+				*(s16 *)(data + 0x8130077E - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x813007A2 - 0x81300000 + 0x20) = 1;
 				
 				// Don't panic on field rendering.
-				*(u32 *)(data + 0x813014A8 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x813014A8 - 0x81300000 + 0x20) = 0x60000000;
 				
 				// Force boot sound.
-				*(u32 *)(data + 0x81302DE8 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				*(u32 *)(data + 0x81302DE8 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				// Force text encoding.
-				*(u32 *)(data + 0x8130B55C - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
+				*(u32 *)(data + 0x8130B55C - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
 				// Force English language, the hard way.
-				*(s16 *)(data + 0x8130B592 - 0x81300000) = 38;
-				*(s16 *)(data + 0x8130B5B2 - 0x81300000) = 10;
-				*(s16 *)(data + 0x8130B5BA - 0x81300000) = 39;
-				*(s16 *)(data + 0x8130B5BE - 0x81300000) = 15;
-				*(s16 *)(data + 0x8130B5C6 - 0x81300000) = 7;
-				*(s16 *)(data + 0x8130B5CA - 0x81300000) = 1;
-				*(s16 *)(data + 0x8130B5D2 - 0x81300000) = 4;
-				*(s16 *)(data + 0x8130B5D6 - 0x81300000) = 45;
-				*(s16 *)(data + 0x8130B5DE - 0x81300000) = 46;
-				*(s16 *)(data + 0x8130B5E2 - 0x81300000) = 42;
-				*(s16 *)(data + 0x8130B5EA - 0x81300000) = 40;
-				*(s16 *)(data + 0x8130B5EE - 0x81300000) = 43;
-				*(s16 *)(data + 0x8130B602 - 0x81300000) = 31;
-				*(s16 *)(data + 0x8130B606 - 0x81300000) = 29;
-				*(s16 *)(data + 0x8130B60E - 0x81300000) = 30;
-				*(s16 *)(data + 0x8130B61A - 0x81300000) = 80;
+				*(s16 *)(data + 0x8130B592 - 0x81300000 + 0x20) = 38;
+				*(s16 *)(data + 0x8130B5B2 - 0x81300000 + 0x20) = 10;
+				*(s16 *)(data + 0x8130B5BA - 0x81300000 + 0x20) = 39;
+				*(s16 *)(data + 0x8130B5BE - 0x81300000 + 0x20) = 15;
+				*(s16 *)(data + 0x8130B5C6 - 0x81300000 + 0x20) = 7;
+				*(s16 *)(data + 0x8130B5CA - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x8130B5D2 - 0x81300000 + 0x20) = 4;
+				*(s16 *)(data + 0x8130B5D6 - 0x81300000 + 0x20) = 45;
+				*(s16 *)(data + 0x8130B5DE - 0x81300000 + 0x20) = 46;
+				*(s16 *)(data + 0x8130B5E2 - 0x81300000 + 0x20) = 42;
+				*(s16 *)(data + 0x8130B5EA - 0x81300000 + 0x20) = 40;
+				*(s16 *)(data + 0x8130B5EE - 0x81300000 + 0x20) = 43;
+				*(s16 *)(data + 0x8130B602 - 0x81300000 + 0x20) = 31;
+				*(s16 *)(data + 0x8130B606 - 0x81300000 + 0x20) = 29;
+				*(s16 *)(data + 0x8130B60E - 0x81300000 + 0x20) = 30;
+				*(s16 *)(data + 0x8130B61A - 0x81300000 + 0x20) = 80;
 				
 				if (newmode->viTVMode >> 2 == VI_PAL) {
 					// Fix logo animation speed.
-					*(s16 *)(data + 0x8130EAAA - 0x81300000) = 8;
-					*(s16 *)(data + 0x8130EAAE - 0x81300000) = 15;
-					*(s16 *)(data + 0x8130EABA - 0x81300000) = 6;
-					*(s16 *)(data + 0x8130EABE - 0x81300000) = 5;
-					*(s16 *)(data + 0x8130EAC2 - 0x81300000) = 4;
-					*(s16 *)(data + 0x8130EAC6 - 0x81300000) = 13;
-					*(s16 *)(data + 0x8130EACA - 0x81300000) = 255;
-					*(s16 *)(data + 0x8130EACE - 0x81300000) = 17;
-					*(s16 *)(data + 0x8130EAD6 - 0x81300000) = 33;
-					*(s16 *)(data + 0x8130EADA - 0x81300000) = 50;
-					*(u32 *)(data + 0x8130EB14 - 0x81300000) = 0xB1630016;
-					*(u32 *)(data + 0x8130EB1C - 0x81300000) = 0x9943000B;
-					*(u32 *)(data + 0x8130EB20 - 0x81300000) = 0x9BA3001C;
-					*(u32 *)(data + 0x8130EB24 - 0x81300000) = 0x9B830037;
-					*(u32 *)(data + 0x8130EB28 - 0x81300000) = 0x99630035;
+					*(s16 *)(data + 0x8130EAAA - 0x81300000 + 0x20) = 8;
+					*(s16 *)(data + 0x8130EAAE - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x8130EABA - 0x81300000 + 0x20) = 6;
+					*(s16 *)(data + 0x8130EABE - 0x81300000 + 0x20) = 5;
+					*(s16 *)(data + 0x8130EAC2 - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x8130EAC6 - 0x81300000 + 0x20) = 13;
+					*(s16 *)(data + 0x8130EACA - 0x81300000 + 0x20) = 255;
+					*(s16 *)(data + 0x8130EACE - 0x81300000 + 0x20) = 17;
+					*(s16 *)(data + 0x8130EAD6 - 0x81300000 + 0x20) = 33;
+					*(s16 *)(data + 0x8130EADA - 0x81300000 + 0x20) = 50;
+					*(u32 *)(data + 0x8130EB14 - 0x81300000 + 0x20) = 0xB1630016;
+					*(u32 *)(data + 0x8130EB1C - 0x81300000 + 0x20) = 0x9943000B;
+					*(u32 *)(data + 0x8130EB20 - 0x81300000 + 0x20) = 0x9BA3001C;
+					*(u32 *)(data + 0x8130EB24 - 0x81300000 + 0x20) = 0x9B830037;
+					*(u32 *)(data + 0x8130EB28 - 0x81300000 + 0x20) = 0x99630035;
 					
-					memcpy(data + 0x8137D9F0 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+					memcpy(data + 0x8137D9F0 - 0x81300000 + 0x20, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				}
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.1");
 				patched++;
 				break;
-			case 1763040:
+			case 1763048:
 				// Don't clear OSLoMem.
-				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300478 - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x8130048C - 0x81300000 + 0x20) = 0x60000000;
 				
 				// __VIInit(newmode->viTVMode);
-				*(s16 *)(data + 0x81300522 - 0x81300000) = newmode->viTVMode;
+				*(s16 *)(data + 0x81300522 - 0x81300000 + 0x20) = newmode->viTVMode;
 				
 				// Accept any region code.
-				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
-				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
+				*(s16 *)(data + 0x8130077E - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x813007A2 - 0x81300000 + 0x20) = 1;
 				
 				// Don't panic on field rendering.
-				*(u32 *)(data + 0x813014A8 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x813014A8 - 0x81300000 + 0x20) = 0x60000000;
 				
 				// Force boot sound.
-				*(u32 *)(data + 0x81302DE8 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				*(u32 *)(data + 0x81302DE8 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				if (newmode->viTVMode >> 2 != VI_PAL) {
 					// Fix logo animation speed.
-					*(s16 *)(data + 0x8130F1C6 - 0x81300000) = 10;
-					*(s16 *)(data + 0x8130F1CA - 0x81300000) = 255;
-					*(s16 *)(data + 0x8130F1D6 - 0x81300000) = 7;
-					*(s16 *)(data + 0x8130F1DA - 0x81300000) = 6;
-					*(s16 *)(data + 0x8130F1DE - 0x81300000) = 5;
-					*(s16 *)(data + 0x8130F1E2 - 0x81300000) = 16;
-					*(s16 *)(data + 0x8130F1E6 - 0x81300000) = 18;
-					*(s16 *)(data + 0x8130F1EA - 0x81300000) = 20;
-					*(s16 *)(data + 0x8130F1F2 - 0x81300000) = 40;
-					*(s16 *)(data + 0x8130F1F6 - 0x81300000) = 60;
-					*(u32 *)(data + 0x8130F230 - 0x81300000) = 0xB3E30016;
-					*(u32 *)(data + 0x8130F238 - 0x81300000) = 0x9963000B;
-					*(u32 *)(data + 0x8130F23C - 0x81300000) = 0x9BC3001C;
-					*(u32 *)(data + 0x8130F240 - 0x81300000) = 0x9BA30037;
-					*(u32 *)(data + 0x8130F244 - 0x81300000) = 0x99430035;
+					*(s16 *)(data + 0x8130F1C6 - 0x81300000 + 0x20) = 10;
+					*(s16 *)(data + 0x8130F1CA - 0x81300000 + 0x20) = 255;
+					*(s16 *)(data + 0x8130F1D6 - 0x81300000 + 0x20) = 7;
+					*(s16 *)(data + 0x8130F1DA - 0x81300000 + 0x20) = 6;
+					*(s16 *)(data + 0x8130F1DE - 0x81300000 + 0x20) = 5;
+					*(s16 *)(data + 0x8130F1E2 - 0x81300000 + 0x20) = 16;
+					*(s16 *)(data + 0x8130F1E6 - 0x81300000 + 0x20) = 18;
+					*(s16 *)(data + 0x8130F1EA - 0x81300000 + 0x20) = 20;
+					*(s16 *)(data + 0x8130F1F2 - 0x81300000 + 0x20) = 40;
+					*(s16 *)(data + 0x8130F1F6 - 0x81300000 + 0x20) = 60;
+					*(u32 *)(data + 0x8130F230 - 0x81300000 + 0x20) = 0xB3E30016;
+					*(u32 *)(data + 0x8130F238 - 0x81300000 + 0x20) = 0x9963000B;
+					*(u32 *)(data + 0x8130F23C - 0x81300000 + 0x20) = 0x9BC3001C;
+					*(u32 *)(data + 0x8130F240 - 0x81300000 + 0x20) = 0x9BA30037;
+					*(u32 *)(data + 0x8130F244 - 0x81300000 + 0x20) = 0x99430035;
 					
-					memcpy(data + 0x81380FD0 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
+					memcpy(data + 0x81380FD0 - 0x81300000 + 0x20, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
 				}
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
 				patched++;
 				break;
-			case 1760128:
+			case 1760152:
 				// Don't clear OSLoMem.
-				*(u32 *)(data + 0x81300458 - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x8130046C - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300458 - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x8130046C - 0x81300000 + 0x20) = 0x60000000;
 				
 				// __VIInit(newmode->viTVMode);
-				*(u32 *)(data + 0x81300764 - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x81300768 - 0x81300000) = 0x38600000 | (newmode->viTVMode & 0xFFFF);
+				*(u32 *)(data + 0x81300764 - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x81300768 - 0x81300000 + 0x20) = 0x38600000 | (newmode->viTVMode & 0xFFFF);
 				
 				// Accept any region code.
-				*(s16 *)(data + 0x813009D6 - 0x81300000) = 1;
-				*(s16 *)(data + 0x813009FA - 0x81300000) = 1;
+				*(s16 *)(data + 0x813009D6 - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x813009FA - 0x81300000 + 0x20) = 1;
 				
 				// Don't panic on field rendering.
-				*(u32 *)(data + 0x81302AEC - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81302AEC - 0x81300000 + 0x20) = 0x60000000;
 				
 				// Force boot sound.
-				*(u32 *)(data + 0x813043EC - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				*(u32 *)(data + 0x813043EC - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				if (newmode->viTVMode >> 2 != VI_PAL) {
 					// Fix logo animation speed.
-					*(s16 *)(data + 0x8130FDDA - 0x81300000) = 10;
-					*(s16 *)(data + 0x8130FDDE - 0x81300000) = 255;
-					*(s16 *)(data + 0x8130FDEA - 0x81300000) = 7;
-					*(s16 *)(data + 0x8130FDEE - 0x81300000) = 6;
-					*(s16 *)(data + 0x8130FDF2 - 0x81300000) = 5;
-					*(s16 *)(data + 0x8130FDF6 - 0x81300000) = 16;
-					*(s16 *)(data + 0x8130FDFA - 0x81300000) = 18;
-					*(s16 *)(data + 0x8130FDFE - 0x81300000) = 20;
-					*(s16 *)(data + 0x8130FE06 - 0x81300000) = 40;
-					*(s16 *)(data + 0x8130FE0A - 0x81300000) = 60;
-					*(u32 *)(data + 0x8130FE44 - 0x81300000) = 0xB3E30016;
-					*(u32 *)(data + 0x8130FE4C - 0x81300000) = 0x9963000B;
-					*(u32 *)(data + 0x8130FE50 - 0x81300000) = 0x9BC3001C;
-					*(u32 *)(data + 0x8130FE54 - 0x81300000) = 0x9BA30037;
-					*(u32 *)(data + 0x8130FE58 - 0x81300000) = 0x99430035;
+					*(s16 *)(data + 0x8130FDDA - 0x81300000 + 0x20) = 10;
+					*(s16 *)(data + 0x8130FDDE - 0x81300000 + 0x20) = 255;
+					*(s16 *)(data + 0x8130FDEA - 0x81300000 + 0x20) = 7;
+					*(s16 *)(data + 0x8130FDEE - 0x81300000 + 0x20) = 6;
+					*(s16 *)(data + 0x8130FDF2 - 0x81300000 + 0x20) = 5;
+					*(s16 *)(data + 0x8130FDF6 - 0x81300000 + 0x20) = 16;
+					*(s16 *)(data + 0x8130FDFA - 0x81300000 + 0x20) = 18;
+					*(s16 *)(data + 0x8130FDFE - 0x81300000 + 0x20) = 20;
+					*(s16 *)(data + 0x8130FE06 - 0x81300000 + 0x20) = 40;
+					*(s16 *)(data + 0x8130FE0A - 0x81300000 + 0x20) = 60;
+					*(u32 *)(data + 0x8130FE44 - 0x81300000 + 0x20) = 0xB3E30016;
+					*(u32 *)(data + 0x8130FE4C - 0x81300000 + 0x20) = 0x9963000B;
+					*(u32 *)(data + 0x8130FE50 - 0x81300000 + 0x20) = 0x9BC3001C;
+					*(u32 *)(data + 0x8130FE54 - 0x81300000 + 0x20) = 0x9BA30037;
+					*(u32 *)(data + 0x8130FE58 - 0x81300000 + 0x20) = 0x99430035;
 					
-					memcpy(data + 0x81380384 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
+					memcpy(data + 0x81380384 - 0x81300000 + 0x20, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
 				}
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
 				patched++;
 				break;
-			case 1561760:
+			case 1561776:
 				// Don't clear OSLoMem.
-				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300478 - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x8130048C - 0x81300000 + 0x20) = 0x60000000;
 				
 				// __VIInit(newmode->viTVMode);
-				*(s16 *)(data + 0x81300522 - 0x81300000) = newmode->viTVMode;
+				*(s16 *)(data + 0x81300522 - 0x81300000 + 0x20) = newmode->viTVMode;
 				
 				// Accept any region code.
-				*(s16 *)(data + 0x8130077E - 0x81300000) = 1;
-				*(s16 *)(data + 0x813007A2 - 0x81300000) = 1;
+				*(s16 *)(data + 0x8130077E - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x813007A2 - 0x81300000 + 0x20) = 1;
 				
 				// Don't panic on field rendering.
-				*(u32 *)(data + 0x813014A8 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x813014A8 - 0x81300000 + 0x20) = 0x60000000;
 				
 				// Force boot sound.
-				*(u32 *)(data + 0x81302DE8 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				*(u32 *)(data + 0x81302DE8 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				if (newmode->viTVMode >> 2 != VI_PAL) {
-					memcpy(data + 0x8137D910 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
+					memcpy(data + 0x8137D910 - 0x81300000 + 0x20, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
 				} else {
 					// Fix logo animation speed.
-					*(s16 *)(data + 0x8130E9D6 - 0x81300000) = 8;
-					*(s16 *)(data + 0x8130E9DA - 0x81300000) = 15;
-					*(s16 *)(data + 0x8130E9E6 - 0x81300000) = 6;
-					*(s16 *)(data + 0x8130E9EA - 0x81300000) = 5;
-					*(s16 *)(data + 0x8130E9EE - 0x81300000) = 4;
-					*(s16 *)(data + 0x8130E9F2 - 0x81300000) = 13;
-					*(s16 *)(data + 0x8130E9F6 - 0x81300000) = 255;
-					*(s16 *)(data + 0x8130E9FA - 0x81300000) = 17;
-					*(s16 *)(data + 0x8130EA02 - 0x81300000) = 33;
-					*(s16 *)(data + 0x8130EA06 - 0x81300000) = 50;
-					*(u32 *)(data + 0x8130EA40 - 0x81300000) = 0xB1630016;
-					*(u32 *)(data + 0x8130EA48 - 0x81300000) = 0x9943000B;
-					*(u32 *)(data + 0x8130EA4C - 0x81300000) = 0x9BA3001C;
-					*(u32 *)(data + 0x8130EA50 - 0x81300000) = 0x9B830037;
-					*(u32 *)(data + 0x8130EA54 - 0x81300000) = 0x99630035;
+					*(s16 *)(data + 0x8130E9D6 - 0x81300000 + 0x20) = 8;
+					*(s16 *)(data + 0x8130E9DA - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x8130E9E6 - 0x81300000 + 0x20) = 6;
+					*(s16 *)(data + 0x8130E9EA - 0x81300000 + 0x20) = 5;
+					*(s16 *)(data + 0x8130E9EE - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x8130E9F2 - 0x81300000 + 0x20) = 13;
+					*(s16 *)(data + 0x8130E9F6 - 0x81300000 + 0x20) = 255;
+					*(s16 *)(data + 0x8130E9FA - 0x81300000 + 0x20) = 17;
+					*(s16 *)(data + 0x8130EA02 - 0x81300000 + 0x20) = 33;
+					*(s16 *)(data + 0x8130EA06 - 0x81300000 + 0x20) = 50;
+					*(u32 *)(data + 0x8130EA40 - 0x81300000 + 0x20) = 0xB1630016;
+					*(u32 *)(data + 0x8130EA48 - 0x81300000 + 0x20) = 0x9943000B;
+					*(u32 *)(data + 0x8130EA4C - 0x81300000 + 0x20) = 0x9BA3001C;
+					*(u32 *)(data + 0x8130EA50 - 0x81300000 + 0x20) = 0x9B830037;
+					*(u32 *)(data + 0x8130EA54 - 0x81300000 + 0x20) = 0x99630035;
 					
-					memcpy(data + 0x8137D910 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+					memcpy(data + 0x8137D910 - 0x81300000 + 0x20, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				}
 				print_gecko("Patched:[%s]\n", "MPAL Revision 1.1");
 				patched++;
 				break;
-			case 1607552:
+			case 1607576:
 				// Don't clear OSLoMem.
-				*(u32 *)(data + 0x81300478 - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x8130048C - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300478 - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x8130048C - 0x81300000 + 0x20) = 0x60000000;
 				
 				// Force 24MB physical memory size.
-				*(s16 *)(data + 0x81300496 - 0x81300000) = 0x1800000 >> 16;
+				*(s16 *)(data + 0x81300496 - 0x81300000 + 0x20) = 0x1800000 >> 16;
 				
 				// __VIInit(newmode->viTVMode);
-				*(u32 *)(data + 0x813007F0 - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x813007F4 - 0x81300000) = 0x38600000 | (newmode->viTVMode & 0xFFFF);
+				*(u32 *)(data + 0x813007F0 - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x813007F4 - 0x81300000 + 0x20) = 0x38600000 | (newmode->viTVMode & 0xFFFF);
 				
 				// Force production mode.
-				*(s16 *)(data + 0x813008A6 - 0x81300000) = 1;
+				*(s16 *)(data + 0x813008A6 - 0x81300000 + 0x20) = 1;
 				
 				// Accept any region code.
-				*(s16 *)(data + 0x81300C02 - 0x81300000) = 1;
-				*(s16 *)(data + 0x81300C26 - 0x81300000) = 1;
+				*(s16 *)(data + 0x81300C02 - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x81300C26 - 0x81300000 + 0x20) = 1;
 				
 				// Don't panic on field rendering.
-				*(u32 *)(data + 0x81303BF4 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81303BF4 - 0x81300000 + 0x20) = 0x60000000;
 				
 				// Force boot sound.
-				*(u32 *)(data + 0x813054B0 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				*(u32 *)(data + 0x813054B0 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				// Force text encoding.
-				*(u32 *)(data + 0x8130DBFC - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
+				*(u32 *)(data + 0x8130DBFC - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
 				// Force English language, the hard way.
-				*(s16 *)(data + 0x8130DC32 - 0x81300000) = 38;
-				*(s16 *)(data + 0x8130DC52 - 0x81300000) = 10;
-				*(s16 *)(data + 0x8130DC5A - 0x81300000) = 39;
-				*(s16 *)(data + 0x8130DC5E - 0x81300000) = 15;
-				*(s16 *)(data + 0x8130DC66 - 0x81300000) = 7;
-				*(s16 *)(data + 0x8130DC6A - 0x81300000) = 1;
-				*(s16 *)(data + 0x8130DC72 - 0x81300000) = 4;
-				*(s16 *)(data + 0x8130DC76 - 0x81300000) = 45;
-				*(s16 *)(data + 0x8130DC7E - 0x81300000) = 46;
-				*(s16 *)(data + 0x8130DC82 - 0x81300000) = 42;
-				*(s16 *)(data + 0x8130DC8A - 0x81300000) = 40;
-				*(s16 *)(data + 0x8130DC8E - 0x81300000) = 43;
-				*(s16 *)(data + 0x8130DCA2 - 0x81300000) = 31;
-				*(s16 *)(data + 0x8130DCA6 - 0x81300000) = 29;
-				*(s16 *)(data + 0x8130DCAE - 0x81300000) = 30;
-				*(s16 *)(data + 0x8130DCBA - 0x81300000) = 80;
+				*(s16 *)(data + 0x8130DC32 - 0x81300000 + 0x20) = 38;
+				*(s16 *)(data + 0x8130DC52 - 0x81300000 + 0x20) = 10;
+				*(s16 *)(data + 0x8130DC5A - 0x81300000 + 0x20) = 39;
+				*(s16 *)(data + 0x8130DC5E - 0x81300000 + 0x20) = 15;
+				*(s16 *)(data + 0x8130DC66 - 0x81300000 + 0x20) = 7;
+				*(s16 *)(data + 0x8130DC6A - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x8130DC72 - 0x81300000 + 0x20) = 4;
+				*(s16 *)(data + 0x8130DC76 - 0x81300000 + 0x20) = 45;
+				*(s16 *)(data + 0x8130DC7E - 0x81300000 + 0x20) = 46;
+				*(s16 *)(data + 0x8130DC82 - 0x81300000 + 0x20) = 42;
+				*(s16 *)(data + 0x8130DC8A - 0x81300000 + 0x20) = 40;
+				*(s16 *)(data + 0x8130DC8E - 0x81300000 + 0x20) = 43;
+				*(s16 *)(data + 0x8130DCA2 - 0x81300000 + 0x20) = 31;
+				*(s16 *)(data + 0x8130DCA6 - 0x81300000 + 0x20) = 29;
+				*(s16 *)(data + 0x8130DCAE - 0x81300000 + 0x20) = 30;
+				*(s16 *)(data + 0x8130DCBA - 0x81300000 + 0x20) = 80;
 				
 				if (newmode->viTVMode >> 2 == VI_PAL) {
 					// Fix logo animation speed.
-					*(s16 *)(data + 0x8131114A - 0x81300000) = 8;
-					*(s16 *)(data + 0x8131114E - 0x81300000) = 15;
-					*(s16 *)(data + 0x8131115A - 0x81300000) = 6;
-					*(s16 *)(data + 0x8131115E - 0x81300000) = 5;
-					*(s16 *)(data + 0x81311162 - 0x81300000) = 4;
-					*(s16 *)(data + 0x81311166 - 0x81300000) = 13;
-					*(s16 *)(data + 0x8131116A - 0x81300000) = 255;
-					*(s16 *)(data + 0x8131116E - 0x81300000) = 17;
-					*(s16 *)(data + 0x81311176 - 0x81300000) = 33;
-					*(s16 *)(data + 0x8131117A - 0x81300000) = 50;
-					*(u32 *)(data + 0x813111B4 - 0x81300000) = 0xB1630016;
-					*(u32 *)(data + 0x813111BC - 0x81300000) = 0x9943000B;
-					*(u32 *)(data + 0x813111C0 - 0x81300000) = 0x9BA3001C;
-					*(u32 *)(data + 0x813111C4 - 0x81300000) = 0x9B830037;
-					*(u32 *)(data + 0x813111C8 - 0x81300000) = 0x99630035;
+					*(s16 *)(data + 0x8131114A - 0x81300000 + 0x20) = 8;
+					*(s16 *)(data + 0x8131114E - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x8131115A - 0x81300000 + 0x20) = 6;
+					*(s16 *)(data + 0x8131115E - 0x81300000 + 0x20) = 5;
+					*(s16 *)(data + 0x81311162 - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x81311166 - 0x81300000 + 0x20) = 13;
+					*(s16 *)(data + 0x8131116A - 0x81300000 + 0x20) = 255;
+					*(s16 *)(data + 0x8131116E - 0x81300000 + 0x20) = 17;
+					*(s16 *)(data + 0x81311176 - 0x81300000 + 0x20) = 33;
+					*(s16 *)(data + 0x8131117A - 0x81300000 + 0x20) = 50;
+					*(u32 *)(data + 0x813111B4 - 0x81300000 + 0x20) = 0xB1630016;
+					*(u32 *)(data + 0x813111BC - 0x81300000 + 0x20) = 0x9943000B;
+					*(u32 *)(data + 0x813111C0 - 0x81300000 + 0x20) = 0x9BA3001C;
+					*(u32 *)(data + 0x813111C4 - 0x81300000 + 0x20) = 0x9B830037;
+					*(u32 *)(data + 0x813111C8 - 0x81300000 + 0x20) = 0x99630035;
 				}
 				print_gecko("Patched:[%s]\n", "TDEV Revision 1.1");
 				patched++;
 				break;
-			case 1586336:
+			case 1586352:
 				// Don't clear OSLoMem.
-				*(u32 *)(data + 0x81300474 - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x81300488 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300474 - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x81300488 - 0x81300000 + 0x20) = 0x60000000;
 				
 				// __VIInit(newmode->viTVMode);
-				*(s16 *)(data + 0x81300876 - 0x81300000) = newmode->viTVMode;
+				*(s16 *)(data + 0x81300876 - 0x81300000 + 0x20) = newmode->viTVMode;
 				
 				// Accept any region code.
-				*(s16 *)(data + 0x81300ACE - 0x81300000) = 1;
-				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
+				*(s16 *)(data + 0x81300ACE - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x81300AF2 - 0x81300000 + 0x20) = 1;
 				
 				// Don't panic on field rendering.
-				*(u32 *)(data + 0x8130185C - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x8130185C - 0x81300000 + 0x20) = 0x60000000;
 				
 				// Force boot sound.
-				*(u32 *)(data + 0x81303184 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				*(u32 *)(data + 0x81303184 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				// Force text encoding.
-				*(u32 *)(data + 0x8130B8D0 - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
+				*(u32 *)(data + 0x8130B8D0 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
 				// Force English language, the hard way.
-				*(s16 *)(data + 0x8130B906 - 0x81300000) = 38;
-				*(s16 *)(data + 0x8130B926 - 0x81300000) = 10;
-				*(s16 *)(data + 0x8130B92E - 0x81300000) = 39;
-				*(s16 *)(data + 0x8130B932 - 0x81300000) = 15;
-				*(s16 *)(data + 0x8130B93A - 0x81300000) = 7;
-				*(s16 *)(data + 0x8130B93E - 0x81300000) = 1;
-				*(s16 *)(data + 0x8130B946 - 0x81300000) = 4;
-				*(s16 *)(data + 0x8130B94A - 0x81300000) = 45;
-				*(s16 *)(data + 0x8130B952 - 0x81300000) = 46;
-				*(s16 *)(data + 0x8130B956 - 0x81300000) = 42;
-				*(s16 *)(data + 0x8130B95E - 0x81300000) = 40;
-				*(s16 *)(data + 0x8130B962 - 0x81300000) = 43;
-				*(s16 *)(data + 0x8130B976 - 0x81300000) = 31;
-				*(s16 *)(data + 0x8130B97A - 0x81300000) = 29;
-				*(s16 *)(data + 0x8130B982 - 0x81300000) = 30;
-				*(s16 *)(data + 0x8130B98E - 0x81300000) = 80;
+				*(s16 *)(data + 0x8130B906 - 0x81300000 + 0x20) = 38;
+				*(s16 *)(data + 0x8130B926 - 0x81300000 + 0x20) = 10;
+				*(s16 *)(data + 0x8130B92E - 0x81300000 + 0x20) = 39;
+				*(s16 *)(data + 0x8130B932 - 0x81300000 + 0x20) = 15;
+				*(s16 *)(data + 0x8130B93A - 0x81300000 + 0x20) = 7;
+				*(s16 *)(data + 0x8130B93E - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x8130B946 - 0x81300000 + 0x20) = 4;
+				*(s16 *)(data + 0x8130B94A - 0x81300000 + 0x20) = 45;
+				*(s16 *)(data + 0x8130B952 - 0x81300000 + 0x20) = 46;
+				*(s16 *)(data + 0x8130B956 - 0x81300000 + 0x20) = 42;
+				*(s16 *)(data + 0x8130B95E - 0x81300000 + 0x20) = 40;
+				*(s16 *)(data + 0x8130B962 - 0x81300000 + 0x20) = 43;
+				*(s16 *)(data + 0x8130B976 - 0x81300000 + 0x20) = 31;
+				*(s16 *)(data + 0x8130B97A - 0x81300000 + 0x20) = 29;
+				*(s16 *)(data + 0x8130B982 - 0x81300000 + 0x20) = 30;
+				*(s16 *)(data + 0x8130B98E - 0x81300000 + 0x20) = 80;
 				
 				if (newmode->viTVMode >> 2 == VI_PAL) {
 					// Fix logo animation speed.
-					*(s16 *)(data + 0x8130EE1E - 0x81300000) = 8;
-					*(s16 *)(data + 0x8130EE22 - 0x81300000) = 15;
-					*(s16 *)(data + 0x8130EE2E - 0x81300000) = 6;
-					*(s16 *)(data + 0x8130EE32 - 0x81300000) = 5;
-					*(s16 *)(data + 0x8130EE36 - 0x81300000) = 4;
-					*(s16 *)(data + 0x8130EE3A - 0x81300000) = 13;
-					*(s16 *)(data + 0x8130EE3E - 0x81300000) = 255;
-					*(s16 *)(data + 0x8130EE42 - 0x81300000) = 17;
-					*(s16 *)(data + 0x8130EE4A - 0x81300000) = 33;
-					*(s16 *)(data + 0x8130EE4E - 0x81300000) = 50;
-					*(u32 *)(data + 0x8130EE88 - 0x81300000) = 0xB1630016;
-					*(u32 *)(data + 0x8130EE90 - 0x81300000) = 0x9943000B;
-					*(u32 *)(data + 0x8130EE94 - 0x81300000) = 0x9BA3001C;
-					*(u32 *)(data + 0x8130EE98 - 0x81300000) = 0x9B830037;
-					*(u32 *)(data + 0x8130EE9C - 0x81300000) = 0x99630035;
+					*(s16 *)(data + 0x8130EE1E - 0x81300000 + 0x20) = 8;
+					*(s16 *)(data + 0x8130EE22 - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x8130EE2E - 0x81300000 + 0x20) = 6;
+					*(s16 *)(data + 0x8130EE32 - 0x81300000 + 0x20) = 5;
+					*(s16 *)(data + 0x8130EE36 - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x8130EE3A - 0x81300000 + 0x20) = 13;
+					*(s16 *)(data + 0x8130EE3E - 0x81300000 + 0x20) = 255;
+					*(s16 *)(data + 0x8130EE42 - 0x81300000 + 0x20) = 17;
+					*(s16 *)(data + 0x8130EE4A - 0x81300000 + 0x20) = 33;
+					*(s16 *)(data + 0x8130EE4E - 0x81300000 + 0x20) = 50;
+					*(u32 *)(data + 0x8130EE88 - 0x81300000 + 0x20) = 0xB1630016;
+					*(u32 *)(data + 0x8130EE90 - 0x81300000 + 0x20) = 0x9943000B;
+					*(u32 *)(data + 0x8130EE94 - 0x81300000 + 0x20) = 0x9BA3001C;
+					*(u32 *)(data + 0x8130EE98 - 0x81300000 + 0x20) = 0x9B830037;
+					*(u32 *)(data + 0x8130EE9C - 0x81300000 + 0x20) = 0x99630035;
 					
-					memcpy(data + 0x8137ECB8 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+					memcpy(data + 0x8137ECB8 - 0x81300000 + 0x20, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				}
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
 				patched++;
 				break;
-			case 1587488:
+			case 1587504:
 				// Don't clear OSLoMem.
-				*(u32 *)(data + 0x81300474 - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x81300488 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300474 - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x81300488 - 0x81300000 + 0x20) = 0x60000000;
 				
 				// __VIInit(newmode->viTVMode);
-				*(s16 *)(data + 0x81300876 - 0x81300000) = newmode->viTVMode;
+				*(s16 *)(data + 0x81300876 - 0x81300000 + 0x20) = newmode->viTVMode;
 				
 				// Accept any region code.
-				*(s16 *)(data + 0x81300ACE - 0x81300000) = 1;
-				*(s16 *)(data + 0x81300AF2 - 0x81300000) = 1;
+				*(s16 *)(data + 0x81300ACE - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x81300AF2 - 0x81300000 + 0x20) = 1;
 				
 				// Don't panic on field rendering.
-				*(u32 *)(data + 0x81301874 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81301874 - 0x81300000 + 0x20) = 0x60000000;
 				
 				// Force boot sound.
-				*(u32 *)(data + 0x8130319C - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				*(u32 *)(data + 0x8130319C - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				// Force text encoding.
-				*(u32 *)(data + 0x8130B8E8 - 0x81300000) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
+				*(u32 *)(data + 0x8130B8E8 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
 				// Force English language, the hard way.
-				*(s16 *)(data + 0x8130B91E - 0x81300000) = 38;
-				*(s16 *)(data + 0x8130B93E - 0x81300000) = 10;
-				*(s16 *)(data + 0x8130B946 - 0x81300000) = 39;
-				*(s16 *)(data + 0x8130B94A - 0x81300000) = 15;
-				*(s16 *)(data + 0x8130B952 - 0x81300000) = 7;
-				*(s16 *)(data + 0x8130B956 - 0x81300000) = 1;
-				*(s16 *)(data + 0x8130B95E - 0x81300000) = 4;
-				*(s16 *)(data + 0x8130B962 - 0x81300000) = 45;
-				*(s16 *)(data + 0x8130B96A - 0x81300000) = 46;
-				*(s16 *)(data + 0x8130B96E - 0x81300000) = 42;
-				*(s16 *)(data + 0x8130B976 - 0x81300000) = 40;
-				*(s16 *)(data + 0x8130B97A - 0x81300000) = 43;
-				*(s16 *)(data + 0x8130B98E - 0x81300000) = 31;
-				*(s16 *)(data + 0x8130B992 - 0x81300000) = 29;
-				*(s16 *)(data + 0x8130B99A - 0x81300000) = 30;
-				*(s16 *)(data + 0x8130B9A6 - 0x81300000) = 80;
+				*(s16 *)(data + 0x8130B91E - 0x81300000 + 0x20) = 38;
+				*(s16 *)(data + 0x8130B93E - 0x81300000 + 0x20) = 10;
+				*(s16 *)(data + 0x8130B946 - 0x81300000 + 0x20) = 39;
+				*(s16 *)(data + 0x8130B94A - 0x81300000 + 0x20) = 15;
+				*(s16 *)(data + 0x8130B952 - 0x81300000 + 0x20) = 7;
+				*(s16 *)(data + 0x8130B956 - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x8130B95E - 0x81300000 + 0x20) = 4;
+				*(s16 *)(data + 0x8130B962 - 0x81300000 + 0x20) = 45;
+				*(s16 *)(data + 0x8130B96A - 0x81300000 + 0x20) = 46;
+				*(s16 *)(data + 0x8130B96E - 0x81300000 + 0x20) = 42;
+				*(s16 *)(data + 0x8130B976 - 0x81300000 + 0x20) = 40;
+				*(s16 *)(data + 0x8130B97A - 0x81300000 + 0x20) = 43;
+				*(s16 *)(data + 0x8130B98E - 0x81300000 + 0x20) = 31;
+				*(s16 *)(data + 0x8130B992 - 0x81300000 + 0x20) = 29;
+				*(s16 *)(data + 0x8130B99A - 0x81300000 + 0x20) = 30;
+				*(s16 *)(data + 0x8130B9A6 - 0x81300000 + 0x20) = 80;
 				
 				if (newmode->viTVMode >> 2 == VI_PAL) {
 					// Fix logo animation speed.
-					*(s16 *)(data + 0x8130EE36 - 0x81300000) = 8;
-					*(s16 *)(data + 0x8130EE3A - 0x81300000) = 15;
-					*(s16 *)(data + 0x8130EE46 - 0x81300000) = 6;
-					*(s16 *)(data + 0x8130EE4A - 0x81300000) = 5;
-					*(s16 *)(data + 0x8130EE4E - 0x81300000) = 4;
-					*(s16 *)(data + 0x8130EE52 - 0x81300000) = 13;
-					*(s16 *)(data + 0x8130EE56 - 0x81300000) = 255;
-					*(s16 *)(data + 0x8130EE5A - 0x81300000) = 17;
-					*(s16 *)(data + 0x8130EE62 - 0x81300000) = 33;
-					*(s16 *)(data + 0x8130EE66 - 0x81300000) = 50;
-					*(u32 *)(data + 0x8130EEA0 - 0x81300000) = 0xB1630016;
-					*(u32 *)(data + 0x8130EEA8 - 0x81300000) = 0x9943000B;
-					*(u32 *)(data + 0x8130EEAC - 0x81300000) = 0x9BA3001C;
-					*(u32 *)(data + 0x8130EEB0 - 0x81300000) = 0x9B830037;
-					*(u32 *)(data + 0x8130EEB4 - 0x81300000) = 0x99630035;
+					*(s16 *)(data + 0x8130EE36 - 0x81300000 + 0x20) = 8;
+					*(s16 *)(data + 0x8130EE3A - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x8130EE46 - 0x81300000 + 0x20) = 6;
+					*(s16 *)(data + 0x8130EE4A - 0x81300000 + 0x20) = 5;
+					*(s16 *)(data + 0x8130EE4E - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x8130EE52 - 0x81300000 + 0x20) = 13;
+					*(s16 *)(data + 0x8130EE56 - 0x81300000 + 0x20) = 255;
+					*(s16 *)(data + 0x8130EE5A - 0x81300000 + 0x20) = 17;
+					*(s16 *)(data + 0x8130EE62 - 0x81300000 + 0x20) = 33;
+					*(s16 *)(data + 0x8130EE66 - 0x81300000 + 0x20) = 50;
+					*(u32 *)(data + 0x8130EEA0 - 0x81300000 + 0x20) = 0xB1630016;
+					*(u32 *)(data + 0x8130EEA8 - 0x81300000 + 0x20) = 0x9943000B;
+					*(u32 *)(data + 0x8130EEAC - 0x81300000 + 0x20) = 0x9BA3001C;
+					*(u32 *)(data + 0x8130EEB0 - 0x81300000 + 0x20) = 0x9B830037;
+					*(u32 *)(data + 0x8130EEB4 - 0x81300000 + 0x20) = 0x99630035;
 					
-					memcpy(data + 0x8137F138 - 0x81300000, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
+					memcpy(data + 0x8137F138 - 0x81300000 + 0x20, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				}
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
 				patched++;
 				break;
-			case 1766752:
+			case 1766768:
 				// Don't clear OSLoMem.
-				*(u32 *)(data + 0x81300474 - 0x81300000) = 0x60000000;
-				*(u32 *)(data + 0x81300488 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81300474 - 0x81300000 + 0x20) = 0x60000000;
+				*(u32 *)(data + 0x81300488 - 0x81300000 + 0x20) = 0x60000000;
 				
 				// __VIInit(newmode->viTVMode);
-				*(s16 *)(data + 0x81300612 - 0x81300000) = newmode->viTVMode;
+				*(s16 *)(data + 0x81300612 - 0x81300000 + 0x20) = newmode->viTVMode;
 				
 				// Accept any region code.
-				*(s16 *)(data + 0x81300882 - 0x81300000) = 1;
-				*(s16 *)(data + 0x813008A6 - 0x81300000) = 1;
+				*(s16 *)(data + 0x81300882 - 0x81300000 + 0x20) = 1;
+				*(s16 *)(data + 0x813008A6 - 0x81300000 + 0x20) = 1;
 				
 				// Don't panic on field rendering.
-				*(u32 *)(data + 0x81301628 - 0x81300000) = 0x60000000;
+				*(u32 *)(data + 0x81301628 - 0x81300000 + 0x20) = 0x60000000;
 				
 				// Force boot sound.
-				*(u32 *)(data + 0x81302F50 - 0x81300000) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
+				*(u32 *)(data + 0x81302F50 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
 				if (newmode->viTVMode >> 2 != VI_PAL) {
 					// Fix logo animation speed.
-					*(s16 *)(data + 0x8130F306 - 0x81300000) = 10;
-					*(s16 *)(data + 0x8130F30A - 0x81300000) = 255;
-					*(s16 *)(data + 0x8130F316 - 0x81300000) = 7;
-					*(s16 *)(data + 0x8130F31A - 0x81300000) = 6;
-					*(s16 *)(data + 0x8130F31E - 0x81300000) = 5;
-					*(s16 *)(data + 0x8130F322 - 0x81300000) = 16;
-					*(s16 *)(data + 0x8130F326 - 0x81300000) = 18;
-					*(s16 *)(data + 0x8130F32A - 0x81300000) = 20;
-					*(s16 *)(data + 0x8130F332 - 0x81300000) = 40;
-					*(s16 *)(data + 0x8130F336 - 0x81300000) = 60;
-					*(u32 *)(data + 0x8130F370 - 0x81300000) = 0xB3E30016;
-					*(u32 *)(data + 0x8130F378 - 0x81300000) = 0x9963000B;
-					*(u32 *)(data + 0x8130F37C - 0x81300000) = 0x9BC3001C;
-					*(u32 *)(data + 0x8130F380 - 0x81300000) = 0x9BA30037;
-					*(u32 *)(data + 0x8130F384 - 0x81300000) = 0x99430035;
+					*(s16 *)(data + 0x8130F306 - 0x81300000 + 0x20) = 10;
+					*(s16 *)(data + 0x8130F30A - 0x81300000 + 0x20) = 255;
+					*(s16 *)(data + 0x8130F316 - 0x81300000 + 0x20) = 7;
+					*(s16 *)(data + 0x8130F31A - 0x81300000 + 0x20) = 6;
+					*(s16 *)(data + 0x8130F31E - 0x81300000 + 0x20) = 5;
+					*(s16 *)(data + 0x8130F322 - 0x81300000 + 0x20) = 16;
+					*(s16 *)(data + 0x8130F326 - 0x81300000 + 0x20) = 18;
+					*(s16 *)(data + 0x8130F32A - 0x81300000 + 0x20) = 20;
+					*(s16 *)(data + 0x8130F332 - 0x81300000 + 0x20) = 40;
+					*(s16 *)(data + 0x8130F336 - 0x81300000 + 0x20) = 60;
+					*(u32 *)(data + 0x8130F370 - 0x81300000 + 0x20) = 0xB3E30016;
+					*(u32 *)(data + 0x8130F378 - 0x81300000 + 0x20) = 0x9963000B;
+					*(u32 *)(data + 0x8130F37C - 0x81300000 + 0x20) = 0x9BC3001C;
+					*(u32 *)(data + 0x8130F380 - 0x81300000 + 0x20) = 0x9BA30037;
+					*(u32 *)(data + 0x8130F384 - 0x81300000 + 0x20) = 0x99430035;
 					
-					memcpy(data + 0x81382470 - 0x81300000, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
+					memcpy(data + 0x81382470 - 0x81300000 + 0x20, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
 				}
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.2");
 				patched++;
@@ -12303,104 +12303,104 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 	
 	if (dataType == PATCH_BS2) {
 		switch (length) {
-			case 1435168:
-				*(s16 *)(data + 0x813007C2 - 0x81300000) = 0x0C00;
+			case 1435200:
+				*(s16 *)(data + 0x813007C2 - 0x81300000 + 0x20) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
 				patched++;
 				break;
-			case 1448256:
-				*(s16 *)(data + 0x813007DA - 0x81300000) = 0x0C00;
+			case 1448280:
+				*(s16 *)(data + 0x813007DA - 0x81300000 + 0x20) = 0x0C00;
 				
-				*(s16 *)(data + 0x81301422 - 0x81300000) = 0x0C00;
-				*(s16 *)(data + 0x81301476 - 0x81300000) = 0x0C00;
-				*(u32 *)(data + 0x81301484 - 0x81300000) = 0x80050004;
-				*(u32 *)(data + 0x813014A8 - 0x81300000) = 0x90050004;
+				*(s16 *)(data + 0x81301422 - 0x81300000 + 0x20) = 0x0C00;
+				*(s16 *)(data + 0x81301476 - 0x81300000 + 0x20) = 0x0C00;
+				*(u32 *)(data + 0x81301484 - 0x81300000 + 0x20) = 0x80050004;
+				*(u32 *)(data + 0x813014A8 - 0x81300000 + 0x20) = 0x90050004;
 				
-				*(s16 *)(data + 0x8130170E - 0x81300000) = 0x0C00;
+				*(s16 *)(data + 0x8130170E - 0x81300000 + 0x20) = 0x0C00;
 				
-				*(s16 *)(data + 0x813019AE - 0x81300000) = 0x0C00;
+				*(s16 *)(data + 0x813019AE - 0x81300000 + 0x20) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
 				patched++;
 				break;
-			case 1449824:
-				*(s16 *)(data + 0x81300B4E - 0x81300000) = 0x0C00;
+			case 1449848:
+				*(s16 *)(data + 0x81300B4E - 0x81300000 + 0x20) = 0x0C00;
 				
-				*(s16 *)(data + 0x81301762 - 0x81300000) = 0x0C00;
-				*(s16 *)(data + 0x813017B6 - 0x81300000) = 0x0C00;
-				*(u32 *)(data + 0x813017C4 - 0x81300000) = 0x80050004;
-				*(u32 *)(data + 0x813017E8 - 0x81300000) = 0x90050004;
+				*(s16 *)(data + 0x81301762 - 0x81300000 + 0x20) = 0x0C00;
+				*(s16 *)(data + 0x813017B6 - 0x81300000 + 0x20) = 0x0C00;
+				*(u32 *)(data + 0x813017C4 - 0x81300000 + 0x20) = 0x80050004;
+				*(u32 *)(data + 0x813017E8 - 0x81300000 + 0x20) = 0x90050004;
 				
-				*(s16 *)(data + 0x81301A4E - 0x81300000) = 0x0C00;
+				*(s16 *)(data + 0x81301A4E - 0x81300000 + 0x20) = 0x0C00;
 				
-				*(s16 *)(data + 0x81301CEE - 0x81300000) = 0x0C00;
+				*(s16 *)(data + 0x81301CEE - 0x81300000 + 0x20) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "DEV  Revision 1.0");
 				patched++;
 				break;
-			case 1583072:
-				*(s16 *)(data + 0x813005EA - 0x81300000) = 0x0C00;
+			case 1583088:
+				*(s16 *)(data + 0x813005EA - 0x81300000 + 0x20) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.1");
 				patched++;
 				break;
-			case 1763040:
-				*(s16 *)(data + 0x813005EA - 0x81300000) = 0x0C00;
+			case 1763048:
+				*(s16 *)(data + 0x813005EA - 0x81300000 + 0x20) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
 				patched++;
 				break;
-			case 1760128:
-				*(s16 *)(data + 0x8130082E - 0x81300000) = 0x0C00;
+			case 1760152:
+				*(s16 *)(data + 0x8130082E - 0x81300000 + 0x20) = 0x0C00;
 				
-				*(s16 *)(data + 0x81301496 - 0x81300000) = 0x0C00;
-				*(s16 *)(data + 0x813014E6 - 0x81300000) = 0x0C00;
-				*(u32 *)(data + 0x813014F4 - 0x81300000) = 0x80050004;
-				*(u32 *)(data + 0x81301518 - 0x81300000) = 0x90050004;
+				*(s16 *)(data + 0x81301496 - 0x81300000 + 0x20) = 0x0C00;
+				*(s16 *)(data + 0x813014E6 - 0x81300000 + 0x20) = 0x0C00;
+				*(u32 *)(data + 0x813014F4 - 0x81300000 + 0x20) = 0x80050004;
+				*(u32 *)(data + 0x81301518 - 0x81300000 + 0x20) = 0x90050004;
 				
-				*(s16 *)(data + 0x81301772 - 0x81300000) = 0x0C00;
+				*(s16 *)(data + 0x81301772 - 0x81300000 + 0x20) = 0x0C00;
 				
-				*(s16 *)(data + 0x813018A6 - 0x81300000) = 0x0C00;
+				*(s16 *)(data + 0x813018A6 - 0x81300000 + 0x20) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
 				patched++;
 				break;
-			case 1561760:
-				*(s16 *)(data + 0x813005EA - 0x81300000) = 0x0C00;
+			case 1561776:
+				*(s16 *)(data + 0x813005EA - 0x81300000 + 0x20) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "MPAL Revision 1.1");
 				patched++;
 				break;
-			case 1607552:
-				*(s16 *)(data + 0x81300A5A - 0x81300000) = 0x0C00;
+			case 1607576:
+				*(s16 *)(data + 0x81300A5A - 0x81300000 + 0x20) = 0x0C00;
 				
-				*(s16 *)(data + 0x8130221A - 0x81300000) = 0x0C00;
-				*(s16 *)(data + 0x8130226E - 0x81300000) = 0x0C00;
-				*(u32 *)(data + 0x8130227C - 0x81300000) = 0x80050004;
-				*(u32 *)(data + 0x813022A0 - 0x81300000) = 0x90050004;
+				*(s16 *)(data + 0x8130221A - 0x81300000 + 0x20) = 0x0C00;
+				*(s16 *)(data + 0x8130226E - 0x81300000 + 0x20) = 0x0C00;
+				*(u32 *)(data + 0x8130227C - 0x81300000 + 0x20) = 0x80050004;
+				*(u32 *)(data + 0x813022A0 - 0x81300000 + 0x20) = 0x90050004;
 				
-				*(s16 *)(data + 0x81302506 - 0x81300000) = 0x0C00;
+				*(s16 *)(data + 0x81302506 - 0x81300000 + 0x20) = 0x0C00;
 				
-				*(s16 *)(data + 0x813027A6 - 0x81300000) = 0x0C00;
+				*(s16 *)(data + 0x813027A6 - 0x81300000 + 0x20) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "TDEV Revision 1.1");
 				patched++;
 				break;
-			case 1586336:
-				*(s16 *)(data + 0x81300926 - 0x81300000) = 0x0C00;
+			case 1586352:
+				*(s16 *)(data + 0x81300926 - 0x81300000 + 0x20) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
 				patched++;
 				break;
-			case 1587488:
-				*(s16 *)(data + 0x81300926 - 0x81300000) = 0x0C00;
+			case 1587504:
+				*(s16 *)(data + 0x81300926 - 0x81300000 + 0x20) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
 				patched++;
 				break;
-			case 1766752:
-				*(s16 *)(data + 0x813006DA - 0x81300000) = 0x0C00;
+			case 1766768:
+				*(s16 *)(data + 0x813006DA - 0x81300000 + 0x20) = 0x0C00;
 				
 				print_gecko("Patched:[%s]\n", "PAL  Revision 1.2");
 				patched++;
@@ -15714,8 +15714,11 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 		}
 	}
 	else if(dataType == PATCH_BS2) {
-		if(offsetFoundAt < 0x1AF6E0)
-			return (void*)(offsetFoundAt+0x81300000);
+		u32 offset = sizeof(BS2Header);
+		BS2Header *bs2Header = (BS2Header *) data;
+
+		if(offsetFoundAt >= offset && offsetFoundAt < offset + bs2Header->bss - 0x81300000)
+			return (void*)(offsetFoundAt+0x81300000-offset);
 	}
 	else if(dataType == PATCH_BIN) {
 		if(offsetFoundAt < 0x400000)
@@ -15797,8 +15800,11 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 		}
 	}
 	else if(dataType == PATCH_BS2) {
-		if(properAddress >= 0x81300000 && properAddress < 0x814AF6E0)
-			return data+properAddress-0x81300000;
+		u32 offset = sizeof(BS2Header);
+		BS2Header *bs2Header = (BS2Header *) data;
+
+		if(properAddress >= 0x81300000 && properAddress < bs2Header->bss)
+			return data+properAddress-0x81300000+offset;
 	}
 	else if(dataType == PATCH_BIN) {
 		if(properAddress >= 0x80003100 && properAddress < 0x80403100)

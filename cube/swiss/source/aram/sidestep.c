@@ -461,7 +461,7 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
   return 1;
 }
 
-int BINtoARAM(unsigned char *bin, int len, unsigned int entrypoint)
+int BINtoARAM(unsigned char *bin, size_t len, unsigned int entrypoint, unsigned int minaddress)
 {
   /*** Make sure ARAM subsystem is alive! ***/
   AR_Reset();
@@ -472,7 +472,7 @@ int BINtoARAM(unsigned char *bin, int len, unsigned int entrypoint)
   ARAMPut(bin, (char *) ARAMSTART, len);
 
   /*** Now go run it ***/
-  ARAMRun(entrypoint, entrypoint, ARAMSTART, len);
+  ARAMRun(entrypoint, minaddress, ARAMSTART, len);
 
   /*** Will never return ***/
   return 1;

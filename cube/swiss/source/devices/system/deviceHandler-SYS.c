@@ -159,23 +159,24 @@ bool load_rom_ipl(DEVICEHANDLER_INTERFACE* device, void** buffer, unsigned int* 
 	file_handle* file = calloc(1, sizeof(file_handle));
 	concat_path(file->name, device->initial->name, "swiss/patches/ipl.bin");
 
-	u32 bs2Header[8] ATTRIBUTE_ALIGN(32);
+	BS2Header bs2Header;
 	device->seekFile(file, 0x800, DEVICE_HANDLER_SEEK_SET);
-	if(device->readFile(file, bs2Header, sizeof(bs2Header)) == sizeof(bs2Header)) {
-		descrambler(0x800, bs2Header, sizeof(bs2Header));
+	if(device->readFile(file, &bs2Header, sizeof(BS2Header)) == sizeof(BS2Header)) {
+		descrambler(0x800, &bs2Header, sizeof(BS2Header));
 
-		if(in_range(bs2Header[0], 0x81300000, 0x814AF6E0)) {
-			u32 sizeToRead = (bs2Header[0] - 0x81300000 + 31) & ~31;
+		if(in_range(bs2Header.bss, 0x81300000, 0x814AF6E0)) {
+			u32 sizeToRead = (bs2Header.bss - 0x812FFFE0 + 31) & ~31;
 			void* bs2Image = memalign(32, sizeToRead);
 
 			if(bs2Image) {
+				device->seekFile(file, 0x800, DEVICE_HANDLER_SEEK_SET);
 				if(device->readFile(file, bs2Image, sizeToRead) == sizeToRead) {
 					device->closeFile(file);
 					free(file);
 
-					descrambler(0x820, bs2Image, sizeToRead);
+					descrambler(0x800, bs2Image, sizeToRead);
 					*buffer = bs2Image;
-					*length = sizeToRead;
+					*length = bs2Header.bss - 0x812FFFE0;
 					return true;
 				}
 				free(bs2Image);

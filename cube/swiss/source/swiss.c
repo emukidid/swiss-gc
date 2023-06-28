@@ -1009,10 +1009,10 @@ void load_app(ExecutableFile *fileToPatch)
 		sdgecko_setPageSize(GET_SLOT(devices[DEVICE_PATCHES]->initial), 512);
 	}
 	if(type == PATCH_BS2) {
-		BINtoARAM(buffer, sizeToRead, 0x81300000);
+		BINtoARAM(buffer, sizeToRead, 0x81300000, 0x812FFFE0);
 	}
 	else if(type == PATCH_BIN) {
-		BINtoARAM(buffer, sizeToRead, 0x80003100);
+		BINtoARAM(buffer, sizeToRead, 0x80003100, 0x80003100);
 	}
 	else if(type == PATCH_DOL) {
 		DOLtoARAM(buffer, NULL, 0);
@@ -1149,10 +1149,10 @@ void boot_dol()
 		ELFtoARAM(dol_buffer, argz, argz_len);
 	}
 	else if(endsWith(curFile.name, "/SDLOADER.BIN")) {
-		BINtoARAM(dol_buffer, curFile.size, 0x81700000);
+		BINtoARAM(dol_buffer, curFile.size, 0x81700000, 0x81700000);
 	}
 	else if(branchResolve(dol_buffer, PATCH_BIN, 0)) {
-		BINtoARAM(dol_buffer, curFile.size, 0x80003100);
+		BINtoARAM(dol_buffer, curFile.size, 0x80003100, 0x80003100);
 	}
 	else {
 		DOLtoARAM(dol_buffer, argz, argz_len);

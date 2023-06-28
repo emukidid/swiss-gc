@@ -65,6 +65,12 @@ typedef struct {
 } ApploaderHeader __attribute__((aligned(32)));
 
 typedef struct {
+	u32 bss;
+	u32 bssLen;
+	u8  reserved[24];
+} BS2Header __attribute__((aligned(32)));
+
+typedef struct {
 	u32 magic;
 	u32 version;
 	u32 headerStart;

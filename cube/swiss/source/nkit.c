@@ -32,16 +32,27 @@ static const struct {
 	uint32_t size;
 	uint64_t hash;
 } firm_dat[] = {
-	{ "GCLoader_0.9.0.beta.dol",          482720, 0x1EA769DDEC6A4D4A },
-	{ "GCLoader_0.10.0.beta.dol",         482816, 0xD2C965F3FBF90CE0 },
-	{ "GCLoader_Updater_1.0.0.dol",       483008, 0x1082431A5EB433EF },
-	{ "GCLoader_Updater_1.0.1.dol",       491136, 0xD1390E9DF955D140 },
-	{ "GCLoader_Updater_1.1.0.dol",       837984, 0x23AF174DA5A9370C },
-	{ "GCLoader_Updater_1.1.1.dol",       837984, 0x80A20D6470A6258F },
-	{ "GCLoader_Updater_1.1.2.dol",       837984, 0x41181F74E7E6E517 },
-	{ "GCLoader_Updater_2.0.0.BETA.dol",  838240, 0xDDB903C9CD1BCFAA },
-	{ "GCLoader_Updater_2.0.0.dol",       838240, 0xDCF7E6BE86E334A9 },
-	{ "GCLoader_Updater_2.0.1.BETA.dol", 1176704, 0x5264440845874534 },
+	{ "BS2.img", /* gc-npdp-gdev.bin   */ 1449848, 0xB5337A8BCA0E5FD8 },
+	{ "BS2.img", /* gc-npdp-ntsc.bin   */ 1448280, 0x4260AD4F5FDF0A5B },
+	{ "BS2.img", /* gc-npdp-pal.bin    */ 1760152, 0xEE52F211A2606E5F },
+	{ "BS2.img", /* gc-ntsc-10.bin     */ 1435200, 0x527D965731D24BED },
+	{ "BS2.img", /* gc-ntsc-11.bin     */ 1583088, 0xBC8BFECC5C10F9C8 },
+	{ "BS2.img", /* gc-ntsc-12-001.bin */ 1586352, 0xF8D5D0BDB63F6AA0 },
+	{ "BS2.img", /* gc-ntsc-12-101.bin */ 1587504, 0xB2DF84B4FC5D19C9 },
+	{ "BS2.img", /* gc-pal-10.bin      */ 1763048, 0xFE619244E43783CD },
+	{ "BS2.img", /* gc-pal-11.bin      */ 1561776, 0x42ABF623D3ECE19D },
+	{ "BS2.img", /* gc-pal-12.bin      */ 1766768, 0x730C642334E6899C },
+	{ "BS2.img", /* gc-tdev.bin        */ 1607576, 0xA5B3C22DD481346A },
+	{ "GCLoader_0.9.0.beta.dol",           482720, 0x1EA769DDEC6A4D4A },
+	{ "GCLoader_0.10.0.beta.dol",          482816, 0xD2C965F3FBF90CE0 },
+	{ "GCLoader_Updater_1.0.0.dol",        483008, 0x1082431A5EB433EF },
+	{ "GCLoader_Updater_1.0.1.dol",        491136, 0xD1390E9DF955D140 },
+	{ "GCLoader_Updater_1.1.0.dol",        837984, 0x23AF174DA5A9370C },
+	{ "GCLoader_Updater_1.1.1.dol",        837984, 0x80A20D6470A6258F },
+	{ "GCLoader_Updater_1.1.2.dol",        837984, 0x41181F74E7E6E517 },
+	{ "GCLoader_Updater_2.0.0.BETA.dol",   838240, 0xDDB903C9CD1BCFAA },
+	{ "GCLoader_Updater_2.0.0.dol",        838240, 0xDCF7E6BE86E334A9 },
+	{ "GCLoader_Updater_2.0.1.BETA.dol",  1176704, 0x5264440845874534 },
 };
 
 static const dvddiskid NDDEMO = {
