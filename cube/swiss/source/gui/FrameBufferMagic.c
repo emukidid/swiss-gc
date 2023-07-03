@@ -304,15 +304,14 @@ static void disposeEvent(uiDrawObj_t *event) {
 		if(current->event == event) {
 			//print_gecko("Disposing event %08X\r\n", (u32)current);
 			clearNestedEvent(current->event);
-			if(previous != NULL) {
-				previous->next = current->next;
-			}
+			previous->next = current->next;
+			free(current);
 		}
 		else {
 			previous = current;
 		}
-		current = current->next;
-    }
+		current = previous->next;
+	}
 }
 
 
