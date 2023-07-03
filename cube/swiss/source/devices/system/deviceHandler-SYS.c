@@ -25,9 +25,25 @@ int read_rom_dvd_disk_pfi(unsigned int offset, void* buffer, unsigned int length
 int read_rom_dvd_disk_dmi(unsigned int offset, void* buffer, unsigned int length);
 int read_rom_aram(unsigned int offset, void* buffer, unsigned int length);
 
-#define NUM_ROMS 12
+enum rom_types
+{
+	ROM_IPL = 0,
+	ROM_IPL_CLEAR,
+	ROM_DSP_ROM,
+	ROM_DSP_COEF,
+	ROM_DVD_RAM_LOW,
+	ROM_DVD_ROM,
+	ROM_DVD_RAM_HIGH,
+	ROM_DVD_DISK_BCA,
+	ROM_DVD_DISK_PFI,
+	ROM_DVD_DISK_DMI,
+	ROM_SRAM,
+	ROM_ARAM,
+	ROM_ARAM_INTERNAL,
+	NUM_ROMS
+};
 
-const char* rom_names[] =
+static const char* rom_names[] =
 {
 	"ipl.bin",
 	"ipl_clear.bin",
@@ -40,10 +56,11 @@ const char* rom_names[] =
 	"dvd_disk_pfi.bin",
 	"dvd_disk_dmi.bin",
 	"sram.bin",
-	"aram.bin"
+	"aram.bin",
+	"aram_internal.bin"
 };
 
-const int rom_sizes[] =
+static int rom_sizes[] =
 {
 	2 * 1024 * 1024,
 	2 * 1024 * 1024,
@@ -56,10 +73,11 @@ const int rom_sizes[] =
 	2048,
 	2048,
 	64,
+	16 * 1024 * 1024,
 	16 * 1024 * 1024
 };
 
-int (*read_rom[])(unsigned int offset, void* buffer, unsigned int length) =
+static int (*read_rom[])(unsigned int offset, void* buffer, unsigned int length) =
 {
 	read_rom_ipl,
 	read_rom_ipl_clear,
@@ -72,6 +90,7 @@ int (*read_rom[])(unsigned int offset, void* buffer, unsigned int length) =
 	read_rom_dvd_disk_pfi,
 	read_rom_dvd_disk_dmi,
 	read_rom_sram,
+	read_rom_aram,
 	read_rom_aram
 };
 
@@ -158,6 +177,7 @@ static void descrambler(unsigned int offset, void* buffer, unsigned int length) 
 bool load_rom_ipl(DEVICEHANDLER_INTERFACE* device, void** buffer, unsigned int* length) {
 	file_handle* file = calloc(1, sizeof(file_handle));
 	concat_path(file->name, device->initial->name, "swiss/patches/ipl.bin");
+	file->fileBase = ROM_IPL;
 
 	BS2Header bs2Header;
 	device->seekFile(file, 0x800, DEVICE_HANDLER_SEEK_SET);
@@ -292,7 +312,7 @@ int read_rom_aram(unsigned int offset, void* buffer, unsigned int length) {
 	{
 		uint32_t sector = offset / 2048;
 		DCInvalidateRange(buffer, length);
-		AR_StartDMA(1, (u32) sector_buffer, sector * 2048, 2048);
+		AR_StartDMA(AR_ARAMTOMRAM, (u32) sector_buffer, sector * 2048, 2048);
 		while (AR_GetDMAStatus());
 		uint32_t off = offset & 2047;
 
@@ -312,6 +332,14 @@ int read_rom_aram(unsigned int offset, void* buffer, unsigned int length) {
 
 s32 deviceHandler_SYS_init(file_handle* file) {
 	s32 i;
+
+	if(!AR_CheckInit()) {
+		AR_Init(NULL, 0);
+		AR_Reset();
+	}
+
+	rom_sizes[ROM_ARAM]          = AR_GetSize();
+	rom_sizes[ROM_ARAM_INTERNAL] = AR_GetInternalSize();
 
 	for(i = 0; i < NUM_ROMS; i++) {
 		initial_SYS_info.totalSpace += rom_sizes[i];
@@ -342,6 +370,7 @@ s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 s32 deviceHandler_SYS_readFile(file_handle* file, void* buffer, u32 length) {
 	int ret = read_rom[file->fileBase](file->offset, buffer, length);
 	file->offset += ret;
+	file->size = rom_sizes[file->fileBase];
 	return ret;
 }
 

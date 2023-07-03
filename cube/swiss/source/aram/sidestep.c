@@ -185,28 +185,6 @@ void ARAMRun(u32 entrypoint, u32 dst, u32 src, u32 len)
 	__lwp_thread_stopmultitasking(ARAMRunStub);
 }
 
-/****************************************************************************
-* ARAMClear
-*
-* To make life easy, just clear out the Auxilliary RAM completely.
-****************************************************************************/
-static void ARAMClear(void)
-{
-  int i;
-  unsigned char *buffer = memalign(32, 2048); /*** A little 2k buffer ***/
-
-  memset(buffer, 0, 2048);
-  DCFlushRange(buffer, 2048);
-
-  for (i = ARAMSTART; i < 0x1000000; i += 2048)
-  {
-    ARAMPut(buffer, (char *) i, 2048);
-    while (AR_GetDMAStatus());
-  }
-
-  free(buffer);
-}
-
 /*--- DOL Decoding functions -----------------------------------------------*/
 /****************************************************************************
 * DOLMinMax
@@ -304,7 +282,7 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
   /*** Make sure ARAM subsystem is alive! ***/
   AR_Reset();
   AR_Init(NULL, 0); /*** No stack - we need it all ***/
-  ARAMClear();
+  AR_Clear(AR_ARAMINTALL);
 
   /*** Get DOL header ***/
   dolhdr = (DOLHEADER *) dol;
@@ -404,7 +382,7 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
   /*** Make sure ARAM subsystem is alive! ***/
   AR_Reset();
   AR_Init(NULL, 0); /*** No stack - we need it all ***/
-  ARAMClear();
+  AR_Clear(AR_ARAMINTALL);
 
   /*** First, does this look like an ELF? ***/
   if (!valid_elf_image(elf))
@@ -466,7 +444,7 @@ int BINtoARAM(unsigned char *bin, size_t len, unsigned int entrypoint, unsigned 
   /*** Make sure ARAM subsystem is alive! ***/
   AR_Reset();
   AR_Init(NULL, 0); /*** No stack - we need it all ***/
-  ARAMClear();
+  AR_Clear(AR_ARAMINTALL);
 
   /*** Move BIN into ARAM ***/
   ARAMPut(bin, (char *) ARAMSTART, len);
