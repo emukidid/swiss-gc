@@ -12,18 +12,18 @@
 #include "files.h"
 #include "gui/FrameBufferMagic.h"
 
-int read_rom_ipl(unsigned int offset, void* buffer, unsigned int length);
-int read_rom_ipl_clear(unsigned int offset, void* buffer, unsigned int length);
-int read_rom_sram(unsigned int offset, void* buffer, unsigned int length);
-int read_rom_dsp_rom(unsigned int offset, void* buffer, unsigned int length);
-int read_rom_dsp_coef(unsigned int offset, void* buffer, unsigned int length);
-int read_rom_dvd_ram_low(unsigned int offset, void* buffer, unsigned int length);
-int read_rom_dvd_rom(unsigned int offset, void* buffer, unsigned int length);
-int read_rom_dvd_ram_high(unsigned int offset, void* buffer, unsigned int length);
-int read_rom_dvd_disk_bca(unsigned int offset, void* buffer, unsigned int length);
-int read_rom_dvd_disk_pfi(unsigned int offset, void* buffer, unsigned int length);
-int read_rom_dvd_disk_dmi(unsigned int offset, void* buffer, unsigned int length);
-int read_rom_aram(unsigned int offset, void* buffer, unsigned int length);
+s32 read_rom_ipl(file_handle* file, void* buffer, u32 length);
+s32 read_rom_ipl_clear(file_handle* file, void* buffer, u32 length);
+s32 read_rom_sram(file_handle* file, void* buffer, u32 length);
+s32 read_rom_dsp_rom(file_handle* file, void* buffer, u32 length);
+s32 read_rom_dsp_coef(file_handle* file, void* buffer, u32 length);
+s32 read_rom_dvd_ram_low(file_handle* file, void* buffer, u32 length);
+s32 read_rom_dvd_rom(file_handle* file, void* buffer, u32 length);
+s32 read_rom_dvd_ram_high(file_handle* file, void* buffer, u32 length);
+s32 read_rom_dvd_disk_bca(file_handle* file, void* buffer, u32 length);
+s32 read_rom_dvd_disk_pfi(file_handle* file, void* buffer, u32 length);
+s32 read_rom_dvd_disk_dmi(file_handle* file, void* buffer, u32 length);
+s32 read_rom_aram(file_handle* file, void* buffer, u32 length);
 
 enum rom_types
 {
@@ -77,7 +77,7 @@ static int rom_sizes[] =
 	16 * 1024 * 1024
 };
 
-static int (*read_rom[])(unsigned int offset, void* buffer, unsigned int length) =
+static s32 (*read_rom[])(file_handle* file, void* buffer, u32 length) =
 {
 	read_rom_ipl,
 	read_rom_ipl_clear,
@@ -174,7 +174,7 @@ static void descrambler(unsigned int offset, void* buffer, unsigned int length) 
 	}
 }
 
-bool load_rom_ipl(DEVICEHANDLER_INTERFACE* device, void** buffer, unsigned int* length) {
+bool load_rom_ipl(DEVICEHANDLER_INTERFACE* device, void** buffer, u32* length) {
 	file_handle* file = calloc(1, sizeof(file_handle));
 	concat_path(file->name, device->initial->name, "swiss/patches/ipl.bin");
 	file->fileBase = ROM_IPL;
@@ -208,18 +208,18 @@ bool load_rom_ipl(DEVICEHANDLER_INTERFACE* device, void** buffer, unsigned int* 
 	return false;
 }
 
-int read_rom_ipl(unsigned int offset, void* buffer, unsigned int length) {
-	__SYS_ReadROM(buffer, length, offset);
+s32 read_rom_ipl(file_handle* file, void* buffer, u32 length) {
+	__SYS_ReadROM(buffer, length, file->offset);
 	return length;
 }
 
-int read_rom_ipl_clear(unsigned int offset, void* buffer, unsigned int length) {
-	int ret = read_rom_ipl(offset, buffer, length);
-	descrambler(offset, buffer, length);
+s32 read_rom_ipl_clear(file_handle* file, void* buffer, u32 length) {
+	s32 ret = read_rom_ipl(file, buffer, length);
+	descrambler(file->offset, buffer, length);
 	return ret;
 }
 
-int read_rom_sram(unsigned int offset, void* buffer, unsigned int length) {
+s32 read_rom_sram(file_handle* file, void* buffer, u32 length) {
 	u32 command, ret;
 
 	DCInvalidateRange(buffer, length);
@@ -231,7 +231,7 @@ int read_rom_sram(unsigned int offset, void* buffer, unsigned int length) {
 	}
 
 	ret = 0;
-	command = 0x20000100 + (offset << 6);
+	command = 0x20000100 + (file->offset << 6);
 	if(EXI_Imm(EXI_CHANNEL_0, &command, 4, EXI_WRITE, NULL) == 0) ret |= 0x01;
 	if(EXI_Sync(EXI_CHANNEL_0) == 0) ret |= 0x02;
 	if(EXI_Dma(EXI_CHANNEL_0, buffer, length, EXI_READ, NULL) == 0) ret |= 0x04;
@@ -243,91 +243,71 @@ int read_rom_sram(unsigned int offset, void* buffer, unsigned int length) {
 	return length;
 }
 
-int read_rom_dsp_rom(unsigned int offset, void* buffer, unsigned int length) {
+s32 read_rom_dsp_rom(file_handle* file, void* buffer, u32 length) {
 	// TODO
-	(void) offset;
+	(void) file;
 	(void) buffer;
 	(void) length;
 	return 0;
 }
 
-int read_rom_dsp_coef(unsigned int offset, void* buffer, unsigned int length) {
+s32 read_rom_dsp_coef(file_handle* file, void* buffer, u32 length) {
 	// TODO
-	(void) offset;
+	(void) file;
 	(void) buffer;
 	(void) length;
 	return 0;
 }
 
-int read_rom_dvd_ram_low(unsigned int offset, void* buffer, unsigned int length) {
+s32 read_rom_dvd_ram_low(file_handle* file, void* buffer, u32 length) {
 	dvd_unlock();
-	dvd_readmem_array(0x8000 + offset, buffer, length);
+	dvd_readmem_array(0x8000 + file->offset, buffer, length);
 	return length;
 }
 
-int read_rom_dvd_rom(unsigned int offset, void* buffer, unsigned int length) {
+s32 read_rom_dvd_rom(file_handle* file, void* buffer, u32 length) {
 	dvd_unlock();
-	dvd_readmem_array(0xA0000 + offset, buffer, length);
+	dvd_readmem_array(0xA0000 + file->offset, buffer, length);
 	return length;
 }
 
-int read_rom_dvd_ram_high(unsigned int offset, void* buffer, unsigned int length) {
+s32 read_rom_dvd_ram_high(file_handle* file, void* buffer, u32 length) {
 	dvd_unlock();
-	dvd_readmem_array(0x400000 + offset, buffer, length);
+	dvd_readmem_array(0x400000 + file->offset, buffer, length);
 	return length;
 }
 
-int read_rom_dvd_disk_bca(unsigned int offset, void* buffer, unsigned int length) {
+s32 read_rom_dvd_disk_bca(file_handle* file, void* buffer, u32 length) {
 	if((dvd_get_error()>>24) != 5) {
 		dvd_reset();
 	}
 	dvd_unlock();
-	dvd_readmem_array(0x415460 + offset, buffer, length);
+	dvd_readmem_array(0x415460 + file->offset, buffer, length);
 	return length;
 }
 
-int read_rom_dvd_disk_pfi(unsigned int offset, void* buffer, unsigned int length) {
+s32 read_rom_dvd_disk_pfi(file_handle* file, void* buffer, u32 length) {
 	if((dvd_get_error()>>24) != 5) {
 		dvd_reset();
 	}
 	dvd_unlock();
-	dvd_readmem_array(0x41710C + offset, buffer, length);
+	dvd_readmem_array(0x41710C + file->offset, buffer, length);
 	return length;
 }
 
-int read_rom_dvd_disk_dmi(unsigned int offset, void* buffer, unsigned int length) {
+s32 read_rom_dvd_disk_dmi(file_handle* file, void* buffer, u32 length) {
 	if((dvd_get_error()>>24) != 5) {
 		dvd_reset();
 	}
 	dvd_unlock();
-	dvd_readmem_array(0x41791C + offset, buffer, length);
+	dvd_readmem_array(0x41791C + file->offset, buffer, length);
 	return length;
 }
 
-int read_rom_aram(unsigned int offset, void* buffer, unsigned int length) {
-	u32 ol = length;
-
-	u8 *sector_buffer = (u8*)memalign(32,2048);
-	while (length)
-	{
-		uint32_t sector = offset / 2048;
-		DCInvalidateRange(buffer, length);
-		AR_StartDMA(AR_ARAMTOMRAM, (u32) sector_buffer, sector * 2048, 2048);
-		while (AR_GetDMAStatus());
-		uint32_t off = offset & 2047;
-
-		int rl = 2048 - off;
-		if (rl > length)
-			rl = length;
-		memcpy(buffer, sector_buffer + off, rl);	
-
-		offset += rl;
-		length -= rl;
-		buffer += rl;
-	}
-	free(sector_buffer);
-
-	return ol;
+s32 read_rom_aram(file_handle* file, void* buffer, u32 length) {
+	DCInvalidateRange(buffer, length);
+	ARQ_PostRequest((ARQRequest*) file->other, (u32) file, ARQ_ARAMTOMRAM, ARQ_PRIO_LO, file->offset, (u32) buffer, length);
+	return length;
 }
 
 s32 deviceHandler_SYS_init(file_handle* file) {
@@ -336,6 +316,10 @@ s32 deviceHandler_SYS_init(file_handle* file) {
 	if(!AR_CheckInit()) {
 		AR_Init(NULL, 0);
 		AR_Reset();
+	}
+	if(!ARQ_CheckInit()) {
+		ARQ_Init();
+		ARQ_Reset();
 	}
 
 	rom_sizes[ROM_ARAM]          = AR_GetSize();
@@ -368,7 +352,7 @@ s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 }
 
 s32 deviceHandler_SYS_readFile(file_handle* file, void* buffer, u32 length) {
-	int ret = read_rom[file->fileBase](file->offset, buffer, length);
+	s32 ret = read_rom[file->fileBase](file, buffer, length);
 	file->offset += ret;
 	file->size = rom_sizes[file->fileBase];
 	return ret;

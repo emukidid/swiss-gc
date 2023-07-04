@@ -10,6 +10,6 @@
 
 extern DEVICEHANDLER_INTERFACE __device_sys;
 
-extern bool load_rom_ipl(DEVICEHANDLER_INTERFACE* device, void** buffer, unsigned int* length);
+extern bool load_rom_ipl(DEVICEHANDLER_INTERFACE* device, void** buffer, u32* length);
 
 #endif
