@@ -522,7 +522,6 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 	// Go through all the possible files we think need patching..
 	for(i = 0; i < numToPatch; i++) {
 		ExecutableFile *fileToPatch = &filesToPatch[i];
-		int patched = 0;
 
 		sprintf(txtbuffer, "Patching File %i/%i\n%s [%iKB]",i+1,numToPatch,fileToPatch->name,fileToPatch->size/1024);
 		
@@ -536,6 +535,8 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			continue;	// skip unused PSO files
 		}
 		uiDrawObj_t* progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
+		const char* message = NULL;
+		
 		u32 sizeToRead = (fileToPatch->size + 31) & ~31;
 		void *buffer = memalign(32, sizeToRead);
 		
@@ -543,40 +544,29 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		int ret = devices[DEVICE_CUR]->readFile(fileToPatch->file,buffer,sizeToRead);
 		print_gecko("Read from %08X Size %08X - Result: %08X\r\n", fileToPatch->offset, sizeToRead, ret);
 		if(ret != sizeToRead) {
-			free(buffer);
-			DrawDispose(progBox);
-			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to read file!"));
-			sleep(5);
-			DrawDispose(msgBox);
-			continue;
+			message = "Failed to read file!";
+			goto fail;
 		}
 		
 		fileToPatch->hash = XXH3_64bits(buffer, sizeToRead);
 		if(!valid_file_xxh3(&GCMDisk, fileToPatch)) {
-			free(buffer);
-			DrawDispose(progBox);
-			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed integrity check!"));
-			sleep(5);
-			DrawDispose(msgBox);
-			continue;
+			message = "Failed integrity check!";
+			goto fail;
 		}
 		
 		u8 *oldBuffer = NULL, *newBuffer = NULL;
 		if(fileToPatch->type == PATCH_DOL_PRS || fileToPatch->type == PATCH_OTHER_PRS) {
 			ret = pso_prs_decompress_buf(buffer, &newBuffer, fileToPatch->size);
 			if(ret < 0) {
-				free(buffer);
-				DrawDispose(progBox);
-				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to decompress file!"));
-				sleep(5);
-				DrawDispose(msgBox);
-				continue;
+				message = "Failed to decompress file!";
+				goto fail;
 			}
 			sizeToRead = ret;
 			oldBuffer = buffer;
 			buffer = newBuffer;
 		}
 		
+		int patched;
 		// Patch raw files for certain games
 		if(fileToPatch->type == PATCH_OTHER || fileToPatch->type == PATCH_OTHER_PRS) {
 			patched = Patch_GameSpecificFile(buffer, sizeToRead, gameID, fileToPatch->name);
@@ -589,13 +579,9 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		if(fileToPatch->type == PATCH_DOL_PRS || fileToPatch->type == PATCH_OTHER_PRS) {
 			ret = pso_prs_compress2(buffer, oldBuffer, sizeToRead, fileToPatch->size);
 			if(ret < 0) {
-				free(newBuffer);
+				message = "Failed to recompress file!";
 				free(oldBuffer);
-				DrawDispose(progBox);
-				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to recompress file!"));
-				sleep(5);
-				DrawDispose(msgBox);
-				continue;
+				goto fail;
 			}
 			fileToPatch->size = ret;
 			sizeToRead = (fileToPatch->size + 31) & ~31;
@@ -665,16 +651,18 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			}
 			else {
 				devices[DEVICE_PATCHES]->deleteFile(fileToPatch->patchFile);
-				free(buffer);
-				DrawDispose(progBox);
-				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to write file!"));
-				sleep(5);
-				DrawDispose(msgBox);
-				continue;
+				message = "Failed to write file!";
+				goto fail;
 			}
 		}
+fail:
 		free(buffer);
 		DrawDispose(progBox);
+		if(message) {
+			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, message));
+			sleep(2);
+			DrawDispose(msgBox);
+		}
 	}
 
 	return num_patched;

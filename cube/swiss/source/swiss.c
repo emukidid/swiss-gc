@@ -819,8 +819,9 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch, int num_files) {
 void load_app(ExecutableFile *fileToPatch)
 {
 	uiDrawObj_t* progBox = NULL;
+	const char* message = NULL;
 	char* gameID = VAR_AREA;
-	void* buffer;
+	void* buffer = NULL;
 	u32 sizeToRead;
 	int type;
 	
@@ -851,8 +852,8 @@ void load_app(ExecutableFile *fileToPatch)
 			u32 fstAddr = (topAddr-fileToPatch->tgcFstSize)&~31;
 			devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->tgcFstOffset,DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_CUR]->readFile(fileToPatch->file,(void*)fstAddr,fileToPatch->tgcFstSize) != fileToPatch->tgcFstSize) {
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read FST!"));
-				while(1);
+				message = "Failed to read FST!";
+				goto fail;
 			}
 			adjust_tgc_fst((void*)fstAddr, fileToPatch->tgcBase, fileToPatch->tgcFileStartArea, fileToPatch->tgcFakeOffset);
 			
@@ -876,8 +877,8 @@ void load_app(ExecutableFile *fileToPatch)
 			u32 fstAddr = (topAddr-GCMDisk.MaxFSTSize)&~31;
 			devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,GCMDisk.FSTSize) != GCMDisk.FSTSize) {
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read FST!"));
-				while(1);
+				message = "Failed to read FST!";
+				goto fail;
 			}
 			
 			// Copy bi2.bin (Disk Header Information) to just under the FST
@@ -910,36 +911,36 @@ void load_app(ExecutableFile *fileToPatch)
 		
 		buffer = memalign(32, sizeToRead);
 		print_gecko("DOL buffer %08X\r\n", (u32)buffer);
-		if(buffer == NULL) return;
+		if(buffer == NULL) goto fail;
 		
 		if(fileToPatch->patchFile != NULL) {
 			devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile,0,DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile,buffer,sizeToRead) != sizeToRead) {
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL!"));
-				while(1);
+				message = "Failed to read DOL!";
+				goto fail;
 			}
 			
 			XXH128_hash_t old_hash, new_hash = XXH3_128bits(buffer, sizeToRead);
 			if(devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, &old_hash, sizeof(old_hash)) != sizeof(old_hash) ||
 				!XXH128_isEqual(old_hash, new_hash)) {
 				devices[DEVICE_PATCHES]->deleteFile(fileToPatch->patchFile);
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed integrity check!"));
-				while(1);
+				message = "Failed integrity check!";
+				goto fail;
 			}
 		}
 		else {
 			devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->offset,DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_CUR]->readFile(fileToPatch->file,buffer,sizeToRead) != sizeToRead) {
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL!"));
-				while(1);
+				message = "Failed to read DOL!";
+				goto fail;
 			}
+			
 			fileToPatch->hash = XXH3_64bits(buffer, sizeToRead);
+			if(!valid_file_xxh3(&GCMDisk, fileToPatch)) {
+				message = "Failed integrity check!";
+				goto fail;
+			}
 			gameID_set(&GCMDisk, fileToPatch->hash);
-		}
-		
-		if(!valid_file_xxh3(&GCMDisk, fileToPatch)) {
-			DrawPublish(DrawMessageBox(D_FAIL, "Failed integrity check!"));
-			while(1);
 		}
 	}
 	else {
@@ -950,8 +951,8 @@ void load_app(ExecutableFile *fileToPatch)
 			if(!load_rom_ipl(devices[DEVICE_PATCHES], &buffer, &sizeToRead) &&
 				!load_rom_ipl(devices[DEVICE_CUR], &buffer, &sizeToRead) &&
 				!load_rom_ipl(&__device_sys, &buffer, &sizeToRead)) {
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read BS2!"));
-				while(1);
+				message = "Failed to read BS2!";
+				goto fail;
 			}
 		}
 		else {
@@ -959,8 +960,8 @@ void load_app(ExecutableFile *fileToPatch)
 
 			if(!load_rom_ipl(devices[DEVICE_CUR], &buffer, &sizeToRead) &&
 				!load_rom_ipl(&__device_sys, &buffer, &sizeToRead)) {
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read BS2!"));
-				while(1);
+				message = "Failed to read BS2!";
+				goto fail;
 			}
 		}
 		type = PATCH_BS2;
@@ -969,8 +970,8 @@ void load_app(ExecutableFile *fileToPatch)
 			fileToPatch->size = sizeToRead;
 			fileToPatch->hash = XXH3_64bits(buffer, sizeToRead);
 			if(!valid_file_xxh3(&GCMDisk, fileToPatch)) {
-				DrawPublish(DrawMessageBox(D_FAIL, "Unknown BS2"));
-				while(1);
+				message = "Unknown BS2";
+				goto fail;
 			}
 		}
 	}
@@ -984,13 +985,8 @@ void load_app(ExecutableFile *fileToPatch)
 	
 	// See if the combination of our patches has exhausted our play area.
 	if(!install_code(0)) {
-		DrawDispose(progBox);
-		free(buffer);
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Exhausted reserved memory.\nAn SD Card Adapter is necessary in order\nfor patches to reserve additional memory.");
-		DrawPublish(msgBox);
-		wait_press_A();
-		DrawDispose(msgBox);
-		return;
+		message = "Exhausted reserved memory.\nAn SD Card Adapter is necessary in order\nfor patches to reserve additional memory.";
+		goto fail;
 	}
 	setTopAddr(topAddr);
 	
@@ -1038,6 +1034,15 @@ void load_app(ExecutableFile *fileToPatch)
 	}
 	SYS_ResetSystem(SYS_HOTRESET, 0, FALSE);
 	__builtin_unreachable();
+
+fail:
+	free(buffer);
+	DrawDispose(progBox);
+	if(message) {
+		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, message));
+		wait_press_A();
+		DrawDispose(msgBox);
+	}
 }
 
 void boot_dol()
