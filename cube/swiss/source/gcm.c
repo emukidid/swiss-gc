@@ -545,12 +545,21 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		if(ret != sizeToRead) {
 			free(buffer);
 			DrawDispose(progBox);
-			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to read!"));
+			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to read file!"));
 			sleep(5);
 			DrawDispose(msgBox);
-			return 0;
+			continue;
 		}
+		
 		fileToPatch->hash = XXH3_64bits(buffer, sizeToRead);
+		if(!valid_file_xxh3(&GCMDisk, fileToPatch)) {
+			free(buffer);
+			DrawDispose(progBox);
+			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed integrity check!"));
+			sleep(5);
+			DrawDispose(msgBox);
+			continue;
+		}
 		
 		u8 *oldBuffer = NULL, *newBuffer = NULL;
 		if(fileToPatch->type == PATCH_DOL_PRS || fileToPatch->type == PATCH_OTHER_PRS) {
@@ -558,10 +567,10 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			if(ret < 0) {
 				free(buffer);
 				DrawDispose(progBox);
-				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to decompress!"));
+				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to decompress file!"));
 				sleep(5);
 				DrawDispose(msgBox);
-				return 0;
+				continue;
 			}
 			sizeToRead = ret;
 			oldBuffer = buffer;
@@ -583,10 +592,10 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 				free(newBuffer);
 				free(oldBuffer);
 				DrawDispose(progBox);
-				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to recompress!"));
+				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to recompress file!"));
 				sleep(5);
 				DrawDispose(msgBox);
-				return 0;
+				continue;
 			}
 			fileToPatch->size = ret;
 			sizeToRead = (fileToPatch->size + 31) & ~31;
@@ -656,6 +665,12 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			}
 			else {
 				devices[DEVICE_PATCHES]->deleteFile(fileToPatch->patchFile);
+				free(buffer);
+				DrawDispose(progBox);
+				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, "Failed to write file!"));
+				sleep(5);
+				DrawDispose(msgBox);
+				continue;
 			}
 		}
 		free(buffer);

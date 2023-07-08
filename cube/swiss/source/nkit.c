@@ -2363,6 +2363,37 @@ int valid_dol_xxh3(const file_handle *file, uint64_t hash)
 	return -1;
 }
 
+int valid_file_xxh3(const DiskHeader *header, const ExecutableFile *file)
+{
+	int valid = -1;
+
+	if (valid_gcm_boot(header) && header->DOLOffset == file->offset) {
+		if (is_nkit_format(header)) {
+			for (int i = 0; i < VALID_COUNT; i++) {
+				if (!memcmp(header, nkit_dat[i].header, 8) &&
+					header->ImageCRC == nkit_dat[i].crc) {
+					if (file->hash == nkit_dat[i].boot_hash)
+						return 1;
+
+					valid = 0;
+				}
+			}
+		}
+	}
+
+	for (int i = 0; i < sizeof(firm_dat) / sizeof(*firm_dat); i++) {
+		if (!strcasecmp(file->name, firm_dat[i].name)) {
+			if (file->size == firm_dat[i].size &&
+				file->hash == firm_dat[i].hash)
+				return 1;
+
+			valid = 0;
+		}
+	}
+
+	return valid;
+}
+
 bool valid_gcm_boot(const DiskHeader *header)
 {
 	if (!memcmp(header, &DATEL, offsetof(DiskHeader, DVDMagicWord)))

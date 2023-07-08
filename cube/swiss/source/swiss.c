@@ -844,14 +844,14 @@ void load_app(ExecutableFile *fileToPatch)
 	// Copy the game header to 0x80000000
 	memcpy(VAR_AREA,(void*)&GCMDisk,0x20);
 	
-	if(fileToPatch != NULL) {
+	if(fileToPatch != NULL && fileToPatch->file != NULL) {
 		// For a DOL from a TGC, redirect the FST to the TGC FST.
 		if(fileToPatch->tgcFstOffset != 0) {
 			// Read FST to top of Main Memory (round to 32 byte boundary)
 			u32 fstAddr = (topAddr-fileToPatch->tgcFstSize)&~31;
 			devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->tgcFstOffset,DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_CUR]->readFile(fileToPatch->file,(void*)fstAddr,fileToPatch->tgcFstSize) != fileToPatch->tgcFstSize) {
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read FST!"));
 				while(1);
 			}
 			adjust_tgc_fst((void*)fstAddr, fileToPatch->tgcBase, fileToPatch->tgcFileStartArea, fileToPatch->tgcFakeOffset);
@@ -876,7 +876,7 @@ void load_app(ExecutableFile *fileToPatch)
 			u32 fstAddr = (topAddr-GCMDisk.MaxFSTSize)&~31;
 			devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,GCMDisk.FSTSize) != GCMDisk.FSTSize) {
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read fst.bin"));
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read FST!"));
 				while(1);
 			}
 			
@@ -915,7 +915,7 @@ void load_app(ExecutableFile *fileToPatch)
 		if(fileToPatch->patchFile != NULL) {
 			devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile,0,DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile,buffer,sizeToRead) != sizeToRead) {
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL!"));
 				while(1);
 			}
 			
@@ -923,18 +923,23 @@ void load_app(ExecutableFile *fileToPatch)
 			if(devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, &old_hash, sizeof(old_hash)) != sizeof(old_hash) ||
 				!XXH128_isEqual(old_hash, new_hash)) {
 				devices[DEVICE_PATCHES]->deleteFile(fileToPatch->patchFile);
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed integrity verification"));
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed integrity check!"));
 				while(1);
 			}
 		}
 		else {
 			devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->offset,DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_CUR]->readFile(fileToPatch->file,buffer,sizeToRead) != sizeToRead) {
-				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL"));
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read DOL!"));
 				while(1);
 			}
 			fileToPatch->hash = XXH3_64bits(buffer, sizeToRead);
 			gameID_set(&GCMDisk, fileToPatch->hash);
+		}
+		
+		if(!valid_file_xxh3(&GCMDisk, fileToPatch)) {
+			DrawPublish(DrawMessageBox(D_FAIL, "Failed integrity check!"));
+			while(1);
 		}
 	}
 	else {
@@ -945,7 +950,8 @@ void load_app(ExecutableFile *fileToPatch)
 			if(!load_rom_ipl(devices[DEVICE_PATCHES], &buffer, &sizeToRead) &&
 				!load_rom_ipl(devices[DEVICE_CUR], &buffer, &sizeToRead) &&
 				!load_rom_ipl(&__device_sys, &buffer, &sizeToRead)) {
-				return;
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read BS2!"));
+				while(1);
 			}
 		}
 		else {
@@ -953,10 +959,20 @@ void load_app(ExecutableFile *fileToPatch)
 
 			if(!load_rom_ipl(devices[DEVICE_CUR], &buffer, &sizeToRead) &&
 				!load_rom_ipl(&__device_sys, &buffer, &sizeToRead)) {
-				return;
+				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read BS2!"));
+				while(1);
 			}
 		}
 		type = PATCH_BS2;
+
+		if(fileToPatch != NULL) {
+			fileToPatch->size = sizeToRead;
+			fileToPatch->hash = XXH3_64bits(buffer, sizeToRead);
+			if(!valid_file_xxh3(&GCMDisk, fileToPatch)) {
+				DrawPublish(DrawMessageBox(D_FAIL, "Unknown BS2"));
+				while(1);
+			}
+		}
 	}
 	
 	if(getTopAddr() == topAddr) {
@@ -1826,15 +1842,26 @@ void load_game() {
 	else if(valid_gcm_boot(&GCMDisk)) {
 		for(int i = 0; i < numToPatch; i++) {
 			if(filesToPatch[i].file == &curFile && filesToPatch[i].offset == GCMDisk.DOLOffset) {
-				if(!swissSettings.bs2Boot)
-					fileToPatch = &filesToPatch[i];
+				fileToPatch = &filesToPatch[i];
 				gameID_set(&GCMDisk, filesToPatch[i].hash);
 				break;
 			}
 		}
+		if(swissSettings.bs2Boot) {
+			fileToPatch = &filesToPatch[numToPatch++];
+			strcpy(fileToPatch->name, "BS2.img");
+			fileToPatch->type = PATCH_BS2;
+		}
+	}
+	else {
+		gameID_set(&GCMDisk, get_gcm_boot_hash(&GCMDisk, curFile.meta));
+		
+		fileToPatch = &filesToPatch[numToPatch++];
+		strcpy(fileToPatch->name, "BS2.img");
+		fileToPatch->type = PATCH_BS2;
 	}
 	
-	*(vu8*)VAR_CURRENT_DISC = fileToPatch && fileToPatch->file == disc2File;
+	*(vu8*)VAR_CURRENT_DISC = disc2File && disc2File == fileToPatch->file;
 	*(vu8*)VAR_SECOND_DISC = !!disc2File;
 	*(vu8*)VAR_DRIVE_PATCHED = drive_status == DEBUG_MODE;
 	*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
