@@ -26,6 +26,8 @@ s32 read_rom_dvd_disk_pfi(file_handle* file, void* buffer, u32 length);
 s32 read_rom_dvd_disk_dmi(file_handle* file, void* buffer, u32 length);
 s32 read_rom_aram(file_handle* file, void* buffer, u32 length);
 s32 write_rom_aram(file_handle* file, const void* buffer, u32 length);
+s32 read_rom_aram_expansion(file_handle* file, void* buffer, u32 length);
+s32 write_rom_aram_expansion(file_handle* file, const void* buffer, u32 length);
 s32 read_rom_void(file_handle* file, void* buffer, u32 length);
 s32 write_rom_void(file_handle* file, const void* buffer, u32 length);
 
@@ -45,6 +47,7 @@ enum rom_types
 	ROM_SRAM,
 	ROM_ARAM,
 	ROM_ARAM_INTERNAL,
+	ROM_ARAM_EXPANSION,
 	NUM_ROMS
 };
 
@@ -63,7 +66,8 @@ static char* rom_names[] =
 	"/dvd_disk_dmi.bin",
 	"/sram.bin",
 	"/aram.bin",
-	"/aram_internal.bin"
+	"/aram_internal.bin",
+	"/aram_expansion.bin"
 };
 
 static int rom_sizes[] =
@@ -81,7 +85,8 @@ static int rom_sizes[] =
 	2048,
 	64,
 	16 * 1024 * 1024,
-	16 * 1024 * 1024
+	16 * 1024 * 1024,
+	0
 };
 
 static s32 (*read_rom[])(file_handle* file, void* buffer, u32 length) =
@@ -99,7 +104,8 @@ static s32 (*read_rom[])(file_handle* file, void* buffer, u32 length) =
 	read_rom_dvd_disk_dmi,
 	read_rom_sram,
 	read_rom_aram,
-	read_rom_aram
+	read_rom_aram,
+	read_rom_aram_expansion
 };
 
 static s32 (*write_rom[])(file_handle* file, const void* buffer, u32 length) =
@@ -117,7 +123,8 @@ static s32 (*write_rom[])(file_handle* file, const void* buffer, u32 length) =
 	write_rom_void,
 	write_rom_sram,
 	write_rom_aram,
-	write_rom_aram
+	write_rom_aram,
+	write_rom_aram_expansion
 };
 
 file_handle initial_SYS =
@@ -339,6 +346,18 @@ s32 write_rom_aram(file_handle* file, const void* buffer, u32 length) {
 	return length;
 }
 
+s32 read_rom_aram_expansion(file_handle* file, void* buffer, u32 length) {
+	DCInvalidateRange(buffer, length);
+	ARQ_PostRequest((ARQRequest*) file->other, (u32) file, ARQ_ARAMTOMRAM, ARQ_PRIO_LO, AR_GetInternalSize() + file->offset, (u32) buffer, length);
+	return length;
+}
+
+s32 write_rom_aram_expansion(file_handle* file, const void* buffer, u32 length) {
+	DCFlushRange((void*) buffer, length);
+	ARQ_PostRequest((ARQRequest*) file->other, (u32) file, ARQ_MRAMTOARAM, ARQ_PRIO_LO, AR_GetInternalSize() + file->offset, (u32) buffer, length);
+	return length;
+}
+
 s32 read_rom_void(file_handle* file, void* buffer, u32 length) {
 	DCZeroRange(buffer, length);
 	return 0;
@@ -360,8 +379,9 @@ s32 deviceHandler_SYS_init(file_handle* file) {
 		ARQ_Reset();
 	}
 
-	rom_sizes[ROM_ARAM]          = AR_GetSize();
-	rom_sizes[ROM_ARAM_INTERNAL] = AR_GetInternalSize();
+	rom_sizes[ROM_ARAM]           = AR_GetSize();
+	rom_sizes[ROM_ARAM_INTERNAL]  = AR_GetInternalSize();
+	rom_sizes[ROM_ARAM_EXPANSION] = rom_sizes[ROM_ARAM] - rom_sizes[ROM_ARAM_INTERNAL];
 
 	for(i = ROM_IPL; i < NUM_ROMS; i++) {
 		initial_SYS_info.totalSpace += rom_sizes[i];
