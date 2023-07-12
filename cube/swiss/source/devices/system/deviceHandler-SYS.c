@@ -210,7 +210,6 @@ static void descrambler(unsigned int offset, void* buffer, unsigned int length) 
 bool load_rom_ipl(DEVICEHANDLER_INTERFACE* device, void** buffer, u32* length) {
 	file_handle* file = calloc(1, sizeof(file_handle));
 	concat_path(file->name, device->initial->name, "swiss/patches/ipl.bin");
-	file->fileBase = ROM_IPL;
 
 	BS2Header bs2Header;
 	device->seekFile(file, 0x800, DEVICE_HANDLER_SEEK_SET);

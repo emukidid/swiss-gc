@@ -821,7 +821,7 @@ void load_app(ExecutableFile *fileToPatch)
 	uiDrawObj_t* progBox = NULL;
 	const char* message = NULL;
 	char* gameID = VAR_AREA;
-	void* buffer = NULL;
+	void* buffer;
 	u32 sizeToRead;
 	int type;
 	
@@ -853,7 +853,7 @@ void load_app(ExecutableFile *fileToPatch)
 			devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->tgcFstOffset,DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_CUR]->readFile(fileToPatch->file,(void*)fstAddr,fileToPatch->tgcFstSize) != fileToPatch->tgcFstSize) {
 				message = "Failed to read FST!";
-				goto fail;
+				goto fail_early;
 			}
 			adjust_tgc_fst((void*)fstAddr, fileToPatch->tgcBase, fileToPatch->tgcFileStartArea, fileToPatch->tgcFakeOffset);
 			
@@ -878,7 +878,7 @@ void load_app(ExecutableFile *fileToPatch)
 			devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,GCMDisk.FSTSize) != GCMDisk.FSTSize) {
 				message = "Failed to read FST!";
-				goto fail;
+				goto fail_early;
 			}
 			
 			// Copy bi2.bin (Disk Header Information) to just under the FST
@@ -1038,6 +1038,7 @@ void load_app(ExecutableFile *fileToPatch)
 fail:
 	free(buffer);
 	DrawDispose(progBox);
+fail_early:
 	if(message) {
 		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, message));
 		wait_press_A();
