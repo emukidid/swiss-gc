@@ -105,9 +105,12 @@ void concat_path(char *pathName, const char *dirName, const char *baseName)
 	else
 		len = strlcpy(pathName, dirName, PATHNAME_MAX);
 
-	if (len && pathName[len - 1] != '/' && baseName[0] != '/') {
-		pathName[len++] = '/';
-		pathName[len] = '\0';
+	if (len) {
+		if (pathName[len - 1] != '/' && baseName[0] != '/') {
+			pathName[len++] = '/';
+			pathName[len] = '\0';
+		} else if (pathName[len - 1] == '/' && baseName[0] == '/')
+			baseName++;
 	}
 
 	strlcat(pathName, baseName, PATHNAME_MAX);
@@ -122,9 +125,12 @@ void concatf_path(char *pathName, const char *dirName, const char *baseName, ...
 	else
 		len = strlcpy(pathName, dirName, PATHNAME_MAX);
 
-	if (len && pathName[len - 1] != '/' && baseName[0] != '/') {
-		pathName[len++] = '/';
-		pathName[len] = '\0';
+	if (len) {
+		if (pathName[len - 1] != '/' && baseName[0] != '/') {
+			pathName[len++] = '/';
+			pathName[len] = '\0';
+		} else if (pathName[len - 1] == '/' && baseName[0] == '/')
+			baseName++;
 	}
 
 	va_list args;

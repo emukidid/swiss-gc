@@ -1188,7 +1188,7 @@ bool manage_file() {
 	bool canWrite = devices[DEVICE_CUR]->features & FEAT_WRITE;
 	bool canMove = canWrite && isFile;
 	bool canCopy = isFile;
-	bool canDelete = canWrite;
+	bool canDelete = canWrite && devices[DEVICE_CUR]->deleteFile;
 	bool canRename = canWrite && devices[DEVICE_CUR]->renameFile;
 	
 	// Ask the user what they want to do with the selected entry
@@ -1285,7 +1285,7 @@ bool manage_file() {
 		return modified;
 	}
 	// Handle deletes (dir or file)
-	else if(option == DELETE_OPTION) {
+	else if(canDelete && option == DELETE_OPTION) {
 		uiDrawObj_t *progBar = DrawPublish(DrawProgressBar(true, 0, "Deleting ..."));
 		bool deleted = deleteFileOrDir(&curFile);
 		DrawDispose(progBar);
@@ -1366,7 +1366,7 @@ bool manage_file() {
 						DrawDispose(msgBox);
 						return false; 
 					}
-					else {
+					else if(devices[DEVICE_DEST]->deleteFile) {
 						devices[DEVICE_DEST]->deleteFile(destFile);
 					}
 
@@ -1575,7 +1575,7 @@ bool manage_file() {
 			uiDrawObj_t *msgBox = NULL;
 			if(!cancelled) {
 				// If cut, delete from source device
-				if(option == MOVE_OPTION) {
+				if(canDelete && option == MOVE_OPTION) {
 					devices[DEVICE_CUR]->deleteFile(&curFile);
 					needsRefresh=1;
 					msgBox = DrawMessageBox(D_INFO,"Move Complete!");

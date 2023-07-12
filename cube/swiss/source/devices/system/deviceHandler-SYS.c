@@ -15,6 +15,7 @@
 s32 read_rom_ipl(file_handle* file, void* buffer, u32 length);
 s32 read_rom_ipl_clear(file_handle* file, void* buffer, u32 length);
 s32 read_rom_sram(file_handle* file, void* buffer, u32 length);
+s32 write_rom_sram(file_handle* file, const void* buffer, u32 length);
 s32 read_rom_dsp_rom(file_handle* file, void* buffer, u32 length);
 s32 read_rom_dsp_coef(file_handle* file, void* buffer, u32 length);
 s32 read_rom_dvd_ram_low(file_handle* file, void* buffer, u32 length);
@@ -24,10 +25,14 @@ s32 read_rom_dvd_disk_bca(file_handle* file, void* buffer, u32 length);
 s32 read_rom_dvd_disk_pfi(file_handle* file, void* buffer, u32 length);
 s32 read_rom_dvd_disk_dmi(file_handle* file, void* buffer, u32 length);
 s32 read_rom_aram(file_handle* file, void* buffer, u32 length);
+s32 write_rom_aram(file_handle* file, const void* buffer, u32 length);
+s32 read_rom_void(file_handle* file, void* buffer, u32 length);
+s32 write_rom_void(file_handle* file, const void* buffer, u32 length);
 
 enum rom_types
 {
-	ROM_IPL = 0,
+	ROM_VOID = 0,
+	ROM_IPL,
 	ROM_IPL_CLEAR,
 	ROM_DSP_ROM,
 	ROM_DSP_COEF,
@@ -43,25 +48,27 @@ enum rom_types
 	NUM_ROMS
 };
 
-static const char* rom_names[] =
+static char* rom_names[] =
 {
-	"ipl.bin",
-	"ipl_clear.bin",
-	"dsp_rom.bin",
-	"dsp_coef.bin",
-	"dvd_ram_low.bin",
-	"dvd_rom.bin",
-	"dvd_ram_high.bin",
-	"dvd_disk_bca.bin",
-	"dvd_disk_pfi.bin",
-	"dvd_disk_dmi.bin",
-	"sram.bin",
-	"aram.bin",
-	"aram_internal.bin"
+	NULL,
+	"/ipl.bin",
+	"/ipl_clear.bin",
+	"/dsp_rom.bin",
+	"/dsp_coef.bin",
+	"/dvd_ram_low.bin",
+	"/dvd_rom.bin",
+	"/dvd_ram_high.bin",
+	"/dvd_disk_bca.bin",
+	"/dvd_disk_pfi.bin",
+	"/dvd_disk_dmi.bin",
+	"/sram.bin",
+	"/aram.bin",
+	"/aram_internal.bin"
 };
 
 static int rom_sizes[] =
 {
+	0,
 	2 * 1024 * 1024,
 	2 * 1024 * 1024,
 	8 * 1024,
@@ -79,6 +86,7 @@ static int rom_sizes[] =
 
 static s32 (*read_rom[])(file_handle* file, void* buffer, u32 length) =
 {
+	read_rom_void,
 	read_rom_ipl,
 	read_rom_ipl_clear,
 	read_rom_dsp_rom,
@@ -92,6 +100,24 @@ static s32 (*read_rom[])(file_handle* file, void* buffer, u32 length) =
 	read_rom_sram,
 	read_rom_aram,
 	read_rom_aram
+};
+
+static s32 (*write_rom[])(file_handle* file, const void* buffer, u32 length) =
+{
+	write_rom_void,
+	write_rom_void,
+	write_rom_void,
+	write_rom_void,
+	write_rom_void,
+	write_rom_void,
+	write_rom_void,
+	write_rom_void,
+	write_rom_void,
+	write_rom_void,
+	write_rom_void,
+	write_rom_sram,
+	write_rom_aram,
+	write_rom_aram
 };
 
 file_handle initial_SYS =
@@ -220,26 +246,23 @@ s32 read_rom_ipl_clear(file_handle* file, void* buffer, u32 length) {
 }
 
 s32 read_rom_sram(file_handle* file, void* buffer, u32 length) {
-	u32 command, ret;
+	syssram* sram = __SYS_LockSram();
+	if(!sram) return 0;
 
-	DCInvalidateRange(buffer, length);
+	memcpy(buffer, (const void*) sram + file->offset, length);
 
-	if(EXI_Lock(EXI_CHANNEL_0, EXI_DEVICE_1, NULL) == 0) return 0;
-	if(EXI_Select(EXI_CHANNEL_0, EXI_DEVICE_1, EXI_SPEED8MHZ) == 0) {
-		EXI_Unlock(EXI_CHANNEL_0);
-		return 0;
-	}
+	__SYS_UnlockSram(FALSE);
+	return length;
+}
 
-	ret = 0;
-	command = 0x20000100 + (file->offset << 6);
-	if(EXI_Imm(EXI_CHANNEL_0, &command, 4, EXI_WRITE, NULL) == 0) ret |= 0x01;
-	if(EXI_Sync(EXI_CHANNEL_0) == 0) ret |= 0x02;
-	if(EXI_Dma(EXI_CHANNEL_0, buffer, length, EXI_READ, NULL) == 0) ret |= 0x04;
-	if(EXI_Sync(EXI_CHANNEL_0) == 0) ret |= 0x08;
-	if(EXI_Deselect(EXI_CHANNEL_0) == 0) ret |= 0x10;
-	if(EXI_Unlock(EXI_CHANNEL_0) == 0) ret |= 0x20;
+s32 write_rom_sram(file_handle* file, const void* buffer, u32 length) {
+	syssram* sram = __SYS_LockSram();
+	if(!sram) return 0;
 
-	if(ret) return 0;
+	memcpy((void*) sram + file->offset, buffer, length);
+
+	__SYS_UnlockSram(TRUE);
+	while(!__SYS_SyncSram());
 	return length;
 }
 
@@ -310,6 +333,21 @@ s32 read_rom_aram(file_handle* file, void* buffer, u32 length) {
 	return length;
 }
 
+s32 write_rom_aram(file_handle* file, const void* buffer, u32 length) {
+	DCFlushRange((void*) buffer, length);
+	ARQ_PostRequest((ARQRequest*) file->other, (u32) file, ARQ_MRAMTOARAM, ARQ_PRIO_LO, file->offset, (u32) buffer, length);
+	return length;
+}
+
+s32 read_rom_void(file_handle* file, void* buffer, u32 length) {
+	DCZeroRange(buffer, length);
+	return 0;
+}
+
+s32 write_rom_void(file_handle* file, const void* buffer, u32 length) {
+	return 0;
+}
+
 s32 deviceHandler_SYS_init(file_handle* file) {
 	s32 i;
 
@@ -325,7 +363,7 @@ s32 deviceHandler_SYS_init(file_handle* file) {
 	rom_sizes[ROM_ARAM]          = AR_GetSize();
 	rom_sizes[ROM_ARAM_INTERNAL] = AR_GetInternalSize();
 
-	for(i = 0; i < NUM_ROMS; i++) {
+	for(i = ROM_IPL; i < NUM_ROMS; i++) {
 		initial_SYS_info.totalSpace += rom_sizes[i];
 	}
 
@@ -338,7 +376,7 @@ s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 
-	for(i = 0; i < NUM_ROMS; i++) {
+	for(i = ROM_IPL; i < NUM_ROMS; i++) {
 		*dir = reallocarray(*dir, num_entries + 1, sizeof(file_handle));
 		memset(&(*dir)[num_entries], 0, sizeof(file_handle));
 		concat_path((*dir)[num_entries].name, ffile->name, rom_names[i]);
@@ -351,18 +389,47 @@ s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	return num_entries;
 }
 
+s64 deviceHandler_SYS_seekFile(file_handle* file, s64 where, u32 type) {
+	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
+	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset = file->offset + where;
+	else if(type == DEVICE_HANDLER_SEEK_END) file->offset = file->size + where;
+	return file->offset;
+}
+
 s32 deviceHandler_SYS_readFile(file_handle* file, void* buffer, u32 length) {
+	s32 i;
+
+	if(file->fileBase == ROM_VOID) {
+		for(i = ROM_IPL; i < NUM_ROMS; i++) {
+			if(endsWith(file->name, rom_names[i])) {
+				file->fileBase = i;
+				break;
+			}
+		}
+	}
+
 	s32 ret = read_rom[file->fileBase](file, buffer, length);
 	file->offset += ret;
 	file->size = rom_sizes[file->fileBase];
 	return ret;
 }
 
-s64 deviceHandler_SYS_seekFile(file_handle* file, s64 where, u32 type) {
-	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
-	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset = file->offset + where;
-	else if(type == DEVICE_HANDLER_SEEK_END) file->offset = file->size + where;
-	return file->offset;
+s32 deviceHandler_SYS_writeFile(file_handle* file, const void* buffer, u32 length) {
+	s32 i;
+
+	if(file->fileBase == ROM_VOID) {
+		for(i = ROM_IPL; i < NUM_ROMS; i++) {
+			if(endsWith(file->name, rom_names[i])) {
+				file->fileBase = i;
+				break;
+			}
+		}
+	}
+
+	s32 ret = write_rom[file->fileBase](file, buffer, length);
+	file->offset += ret;
+	file->size = rom_sizes[file->fileBase];
+	return ret;
 }
 
 s32 deviceHandler_SYS_closeFile(file_handle* file) {
@@ -388,7 +455,7 @@ DEVICEHANDLER_INTERFACE __device_sys = {
 	"System",
 	"Backup IPL, DSP, DVD, SRAM",
 	{TEX_SYSTEM, 75, 48, 76, 48},
-	FEAT_READ,
+	FEAT_READ|FEAT_WRITE,
 	EMU_NONE,
 	LOC_SYSTEM,
 	&initial_SYS,
@@ -399,7 +466,7 @@ DEVICEHANDLER_INTERFACE __device_sys = {
 	(_fn_readDir)&deviceHandler_SYS_readDir,
 	(_fn_seekFile)&deviceHandler_SYS_seekFile,
 	(_fn_readFile)&deviceHandler_SYS_readFile,
-	(_fn_writeFile)NULL,
+	(_fn_writeFile)&deviceHandler_SYS_writeFile,
 	(_fn_closeFile)&deviceHandler_SYS_closeFile,
 	(_fn_deleteFile)NULL,
 	(_fn_renameFile)NULL,
