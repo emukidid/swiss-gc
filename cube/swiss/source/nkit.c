@@ -227,6 +227,7 @@ static const struct {
 	{ "DPSJ8P\x00\x00", false, 1, 0xB3B1, 0x230570E1, 1143683072,  +316295168, 0xD6B9904CBD23766F, {  287886316,  +316295196, 6496, 0xD936 }, "Phantasy Star Online Episode III: C.A.R.D. Revolution: Trial Edition" },
 	{ "DR2JCQ\x00\x00", false, 1, 0xFE97, 0xE3295A1A,  394209280, +1065768960, 0x5AADCAB50FE80160, {  231032552,       +6424, 6496, 0x3C3C }, "Rune II: Koruten no Kagi no Himitsu" },
 	{ "DRSEAF\x00\x00", false, 1, 0xF2AF, 0x989E11D9,  126695424, +1333282816, 0xA60F5B909DC1B199, {   39425384, +1333283128, 6496, 0x8804 }, "Soulcalibur II" },
+	{ "DSTJ13\x00\x00", false, 1, 0x45BC, 0x190F43D4, 1066573824,  +393404416, 0x682095BA117EDC39, { 1066566848,     +102184, 6496, 0x7461 }, "SSX Tricky" },
 	{ "DSWJ13\x00\x00", false, 1, 0x74F1, 0x913AE6A5, 1393250304,   +66727936, 0xDAF64B9ED5CB92C1, {    2562816,      +25856, 6496, 0xD5EA }, "Star Wars: Rogue Squadron II" },
 	{ "DTLX01\x00\x00", false, 1, 0x06A6, 0x1891D9AF,    2775040, +1457203200, 0x2869303EC5A42690, {      94248,       +4056, 6496, 0x6505 }, "Action Replay for GameCube" },
 	{ "DTLX01\x00\x00", false, 1, 0x0BA7, 0x020106B3,    2775040, +1457203200, 0x2869303EC5A42690, {      94248,       +4056, 6496, 0x6505 }, "Action Replay for GameCube" },
@@ -2053,7 +2054,7 @@ static const struct {
 	{ "UGPJ01\x00\x03", false, 1, 0xC4F0, 0xDFF567CB,    2473984, +1457504256, 0xFB2218FBFA6AB9FE, {    2003524,      +28092, 6496, 0xE53B }, "Game Boy Player Start-Up Disc" },
 	{ "UGPP01\x00\x01", false, 1, 0x6D4F, 0x5ECD9681,    5079040, +1454899200, 0x4E9244DEFB94F10C, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{ "UGPP01\x00\x02", false, 1, 0xCA50, 0x1E26380C,    5079040, +1454899200, 0x483B4CE794041533, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
-#define REDUMP_COUNT (1968)
+#define REDUMP_COUNT (1969)
 	{ "00\0E01\x00\x00",false, 1, 0x21CF, 0xBF114CB3,   31170560, +1428807680, 0xC1BAC83BFBED3EDB, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{ "00\0E01\x00\x00",false, 1, 0x42A2, 0x499CF1AB,   31170560, +1428807680, 0xC1BAC83BFBED3EDB, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{ "D28J01\x00\x00", true,  1, 0x8FC6, 0x8EFBB42B,  794134528,  +665843712, 0xB1F399DE51C25382, {  394649296,  +665814992, 6496, 0xE5B2 }, "Gekkan Nintendo Tentou Demo 2002.4.4" },
