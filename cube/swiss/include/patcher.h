@@ -186,6 +186,7 @@ enum patchIds {
 enum patchTypes {
 	PATCH_APPLOADER = 0,
 	PATCH_BS2,
+	PATCH_EXEC,
 	PATCH_BIN,
 	PATCH_DOL,
 	PATCH_DOL_PRS,

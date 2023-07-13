@@ -323,11 +323,19 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if(!strcasecmp(filename,"execD.img")) {
+			if(!strcasecmp(filename,"appl2.img") || !strcasecmp(filename,"appl2D.img")) {
 				filesToPatch[numFiles].file = file;
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
-				filesToPatch[numFiles].type = PATCH_BS2;
+				filesToPatch[numFiles].type = PATCH_APPLOADER;
+				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
+				numFiles++;
+			}
+			if(!strcasecmp(filename,"exec.img") || !strcasecmp(filename,"execD.img")) {
+				filesToPatch[numFiles].file = file;
+				filesToPatch[numFiles].offset = file_offset;
+				filesToPatch[numFiles].size = size;
+				filesToPatch[numFiles].type = PATCH_EXEC;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
@@ -463,11 +471,19 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
-			if(!strcasecmp(filename,"execD.img")) {
+			if(!strcasecmp(filename,"appl2.img") || !strcasecmp(filename,"appl2D.img")) {
 				filesToPatch[numFiles].file = file;
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
-				filesToPatch[numFiles].type = PATCH_BS2;
+				filesToPatch[numFiles].type = PATCH_APPLOADER;
+				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
+				numFiles++;
+			}
+			if(!strcasecmp(filename,"exec.img") || !strcasecmp(filename,"execD.img")) {
+				filesToPatch[numFiles].file = file;
+				filesToPatch[numFiles].offset = file_offset;
+				filesToPatch[numFiles].size = size;
+				filesToPatch[numFiles].type = PATCH_EXEC;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}

@@ -15720,6 +15720,10 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 		if(offsetFoundAt >= offset && offsetFoundAt < offset + bs2Header->bss - 0x81300000)
 			return (void*)(offsetFoundAt+0x81300000-offset);
 	}
+	else if(dataType == PATCH_EXEC) {
+		if(offsetFoundAt < 0x400000)
+			return (void*)(offsetFoundAt+0x81300000);
+	}
 	else if(dataType == PATCH_BIN) {
 		if(offsetFoundAt < 0x400000)
 			return (void*)(offsetFoundAt+0x80003100);
@@ -15806,6 +15810,10 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 		if(properAddress >= 0x81300000 && properAddress < bs2Header->bss)
 			return data+properAddress-0x81300000+offset;
 	}
+	else if(dataType == PATCH_EXEC) {
+		if(properAddress >= 0x81300000 && properAddress < 0x81700000)
+			return data+properAddress-0x81300000;
+	}
 	else if(dataType == PATCH_BIN) {
 		if(properAddress >= 0x80003100 && properAddress < 0x80403100)
 			return data+properAddress-0x80003100;
@@ -15821,7 +15829,7 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 
 // Ocarina cheat engine hook - Patch OSSleepThread
 int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
-	if(type == PATCH_APPLOADER || type == PATCH_BS2)
+	if(in_range(type, PATCH_APPLOADER, PATCH_EXEC))
 		return 0;
 
 	int i;
