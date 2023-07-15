@@ -11912,7 +11912,7 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 	
 	if (!strcmp(fileName, "boot.bin")) {
 		DiskHeader *diskHeader = (DiskHeader *) data;
-		diskHeader->DVDMagicWord = GCMDisk.DVDMagicWord;
+		diskHeader->DVDMagicWord = DVD_MAGIC;
 		memset(data + 0x200, 0, 0x200);
 		diskHeader->MaxFSTSize = GCMDisk.MaxFSTSize;
 		

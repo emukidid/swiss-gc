@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include "gcm.h"
 
+uint8_t fletcher8(const void *buffer, size_t size);
 uint16_t fletcher16(const void *buffer, size_t size);
 
 bool is_datel_disc(const DiskHeader *header);
@@ -43,7 +44,7 @@ int valid_dol_xxh3(const file_handle *file, uint64_t hash);
 int valid_file_xxh3(const DiskHeader *header, const ExecutableFile *file);
 bool valid_gcm_boot(const DiskHeader *header);
 bool valid_gcm_crc32(const DiskHeader *header, uint32_t crc);
-bool valid_gcm_magic(DiskHeader *header);
+bool valid_gcm_magic(const DiskHeader *header);
 bool valid_gcm_size(const DiskHeader *header, off_t size);
 
 bool needs_nkit_reencode(const DiskHeader *header, off_t size);
