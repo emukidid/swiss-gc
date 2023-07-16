@@ -11,5 +11,6 @@
 extern DEVICEHANDLER_INTERFACE __device_sys;
 
 extern bool load_rom_ipl(DEVICEHANDLER_INTERFACE* device, void** buffer, u32* length);
+extern bool is_rom_name(char* filename);
 
 #endif

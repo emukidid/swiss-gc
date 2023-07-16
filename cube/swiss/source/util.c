@@ -24,7 +24,7 @@ bool canLoadFileType(char *filename) {
 	int i;
 	for(i = 0; i < sizeof(knownExtensions)/sizeof(char*); i++) {
 		if(endsWith(filename, knownExtensions[i])) {
-			return true;
+			return !is_rom_name(filename);
 		}
 	}
 	return false;

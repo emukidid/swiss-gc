@@ -366,6 +366,16 @@ s32 write_rom_void(file_handle* file, const void* buffer, u32 length) {
 	return 0;
 }
 
+bool is_rom_name(char* filename) {
+	int i;
+	for(i = ROM_IPL; i < NUM_ROMS; i++) {
+		if(endsWith(filename, rom_names[i])) {
+			return true;
+		}
+	}
+	return false;
+}
+
 s32 deviceHandler_SYS_init(file_handle* file) {
 	s32 i;
 
