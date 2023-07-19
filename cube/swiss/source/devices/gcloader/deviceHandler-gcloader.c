@@ -57,48 +57,45 @@ static s32 setupFile(file_handle* file, file_handle* file2, ExecutableFile* file
 	}
 	
 	// If disc 1 is fragmented, make a note of the fragments and their sizes
-	if(!getFragments(DEVICE_CUR, file, &disc1FragList, &disc1Frags, 0, 0, UINT32_MAX)) {
-		free(disc1FragList);
-		return 0;
-	}
+	if(!getFragments(DEVICE_CUR, file, &disc1FragList, &disc1Frags, 0, 0, UINT32_MAX))
+		goto fail;
 	
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
-		if(!getFragments(DEVICE_CUR, file2, &disc2FragList, &disc2Frags, 1, 0, UINT32_MAX)) {
-			free(disc2FragList);
-			free(disc1FragList);
-			return 0;
+		if(!getFragments(DEVICE_CUR, file2, &disc2FragList, &disc2Frags, 1, 0, UINT32_MAX))
+			goto fail;
+		
+		if(devices[DEVICE_PATCHES] == devices[DEVICE_CUR]) {
+			file2->fileBase = (u32)installPatch2(disc2FragList, (disc2Frags + 1) * sizeof(file_frag)) | ((u64)disc2Frags << 32);
+			file->fileBase  = (u32)installPatch2(disc1FragList, (disc1Frags + 1) * sizeof(file_frag)) | ((u64)disc1Frags << 32);
 		}
 	}
 	
 	// write disc 2 frags
-	gcloaderWriteFrags(1, disc2FragList, disc2Frags);
+	if(gcloaderWriteFrags(1, disc2FragList, disc2Frags))
+		goto fail;
 	
 	// write disc 1 frags
-	gcloaderWriteFrags(0, disc1FragList, disc1Frags);
+	if(gcloaderWriteFrags(0, disc1FragList, disc1Frags))
+		goto fail;
 	
 	// set disc 1 as active disc
-	gcloaderWriteDiscNum(0);
-	
-	if(numToPatch < 0) {
-		free(disc2FragList);
-		free(disc1FragList);
-		return 1;
-	}
-	
-	if(file2 && devices[DEVICE_PATCHES] == devices[DEVICE_CUR]) {
-		file2->fileBase = (u32)installPatch2(disc2FragList, (disc2Frags + 1) * sizeof(file_frag)) | ((u64)disc2Frags << 32);
-		file->fileBase  = (u32)installPatch2(disc1FragList, (disc1Frags + 1) * sizeof(file_frag)) | ((u64)disc1Frags << 32);
-	}
+	if(gcloaderWriteDiscNum(0))
+		goto fail;
 	
 	free(disc2FragList);
 	free(disc1FragList);
 	return 1;
+
+fail:
+	free(disc2FragList);
+	free(disc1FragList);
+	return 0;
 }
 
 s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
 	if(!setupFile(file, file2, filesToPatch, numToPatch)) {
-		return 0;
+		goto fail;
 	}
 	if(numToPatch < 0) {
 		return 1;

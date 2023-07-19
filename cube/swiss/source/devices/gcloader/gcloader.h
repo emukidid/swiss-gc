@@ -14,7 +14,7 @@
 
 u32 gcloaderReadId();
 char *gcloaderGetVersion();
-void gcloaderWriteFrags(u32 discNum, file_frag *fragList, u32 totFrags);
-void gcloaderWriteDiscNum(u32 discNum);
+int gcloaderWriteFrags(u32 discNum, file_frag *fragList, u32 totFrags);
+int gcloaderWriteDiscNum(u32 discNum);
 
 #endif
