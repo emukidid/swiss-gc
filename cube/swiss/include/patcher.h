@@ -37,6 +37,7 @@ typedef struct FuncPattern
 #include "wkf_dtk_bin.h"
 #include "fsp_bin.h"
 #include "fsp_dtk_bin.h"
+#include "fsp_eth_bin.h"
 #include "gcloader_v1_bin.h"
 #include "gcloader_v1_card_bin.h"
 #include "gcloader_v2_bin.h"

@@ -5,7 +5,7 @@ LD      = $(DIR)/powerpc-eabi-ld
 OBJDUMP = $(DIR)/powerpc-eabi-objdump
 OBJCOPY = $(DIR)/powerpc-eabi-objcopy
 
-OPTS	= -ffast-math -flto -fipa-pta -fno-tree-loop-distribute-patterns -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--no-warn-rwx-segments -Wno-address-of-packed-member -Wno-scalar-storage-order -iquote base -iquote ..
+OPTS	= -ffast-math -flto -fipa-pta -fno-tree-loop-distribute-patterns -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--no-warn-rwx-segments -Wno-address-of-packed-member -Wno-scalar-storage-order -iquote base -iquote . -iquote ..
 
 DEST    = ../swiss/source/patches
 
@@ -20,7 +20,7 @@ ideexipatch: ideexi-v1.bin ideexi-v1.card.bin ideexi-v1.dtk.bin ideexi-v2.bin id
 dvdpatch: dvd.bin dvd.card.bin
 usbgeckopatch: usbgecko.bin
 wkfpatch: wkf.bin wkf.card.bin wkf.dtk.bin
-fsppatch: fsp.bin fsp.dtk.bin
+fsppatch: fsp.bin fsp.dtk.bin fsp.eth.bin
 gcloaderpatch: gcloader-v1.bin gcloader-v1.card.bin gcloader-v2.bin gcloader-v2.card.bin
 
 clean:
@@ -453,6 +453,26 @@ fsp.dtk.bin:
 	@$(OBJDUMP) -D fsp.dtk.elf > $(DISASM)/fsp.dtk.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents fsp.dtk.elf fsp.dtk.bin
 	@$(BIN2S) -H $(DEST)/fsp_dtk_bin.h fsp.dtk.bin > $(DEST)/fsp.dtk.bin.s
+	@rm -f *.bin *.elf *.o
+
+fsp.eth.bin:
+	@echo Building FSP Patch + ETH ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DETH_EMULATOR -DNO_VIDEO
+	@$(CC) -Os $(OPTS) -c base/emulator_eth.c
+	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c bba/bba.c -DASYNC_READ -DETH_EMULATOR
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -c base/setjmp.S
+	@$(CC) -Os $(OPTS) -o fsp.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o bba.o uart.o os.o memcpy.o setjmp.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D fsp.eth.elf > $(DISASM)/fsp.eth.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents fsp.eth.elf fsp.eth.bin
+	@$(BIN2S) -H $(DEST)/fsp_eth_bin.h fsp.eth.bin > $(DEST)/fsp.eth.bin.s
 	@rm -f *.bin *.elf *.o
 
 gcloader-v1.bin:

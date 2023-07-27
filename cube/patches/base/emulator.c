@@ -22,12 +22,14 @@
 #include <stdbool.h>
 #include <string.h>
 #include "audio.h"
+#include "bba/bba.h"
 #include "common.h"
 #include "dolphin/dvd.h"
 #include "dolphin/exi.h"
 #include "dolphin/os.h"
 #include "emulator.h"
 #include "emulator_card.h"
+#include "emulator_eth.h"
 #include "fifo.h"
 #include "frag.h"
 #include "interrupt.h"
@@ -284,6 +286,148 @@ static void exi_write(unsigned index, uint32_t value)
 
 						exi_complete_transfer(chan);
 					}
+				}
+			}
+			break;
+		case 4:
+			exi.regs[index] = value;
+			break;
+	}
+}
+#elifdef ETH_EMULATOR
+static struct {
+	union {
+		uint32_t regs[15];
+		struct {
+			uint32_t cpr;
+			uint32_t mar;
+			uint32_t length;
+			uint32_t cr;
+			uint32_t data;
+		} reg[3];
+	};
+} exi;
+
+static void exi_update_interrupts(void)
+{
+	if ((exi.reg[EXI_CHANNEL_0].cpr >> 1) & (exi.reg[EXI_CHANNEL_0].cpr & 0b00010000000101) ||
+		(exi.reg[EXI_CHANNEL_1].cpr >> 1) & (exi.reg[EXI_CHANNEL_1].cpr & 0b00010000000101) ||
+		(exi.reg[EXI_CHANNEL_2].cpr >> 1) & (exi.reg[EXI_CHANNEL_2].cpr & 0b00010000000101))
+		pi.reg.intsr |=  0b00000000010000;
+	else
+		pi.reg.intsr &= ~0b00000000010000;
+
+	pi_update_interrupts();
+}
+
+void exi_interrupt(unsigned chan)
+{
+	exi.reg[chan].cpr |=  0b00000000000010;
+	exi_update_interrupts();
+}
+
+void exi_complete_transfer(unsigned chan)
+{
+	if (exi.reg[chan].cr & 0b000010) {
+		exi.reg[chan].mar += exi.reg[chan].length;
+		exi.reg[chan].length = 0;
+	}
+
+	exi.reg[chan].cpr |=  0b00000000001000;
+	exi.reg[chan].cr  &= ~0b000001;
+	exi_update_interrupts();
+}
+
+static void exi_read(unsigned index, uint32_t *value)
+{
+	unsigned chan = index / 5;
+	unsigned dev = (exi.reg[chan].cpr >> 7) & 0b111;
+
+	uint32_t mask = exi_get_interrupt_mask(chan);
+
+	switch (index % 5) {
+		case 0:
+			if (chan == EXI_CHANNEL_0 && (dev & (1 << EXI_DEVICE_2)))
+				*value = exi.reg[chan].cpr | (EXI[chan][0] & ~(mask | 0b00001111111100));
+			else if (chan == EXI_CHANNEL_2)
+				*value = exi.reg[chan].cpr | (EXI[chan][0] & ~(mask | 0b00000000000011));
+			else
+				*value = exi.reg[chan].cpr | (EXI[chan][0] & ~mask);
+			break;
+		case 1 ... 4:
+			if (chan == EXI_CHANNEL_0 && (dev & (1 << EXI_DEVICE_2)))
+				*value = exi.regs[index];
+			else
+				*value = exi.regs[index] = (*EXI)[index];
+			break;
+	}
+}
+
+static void exi_write(unsigned index, uint32_t value)
+{
+	unsigned chan = index / 5;
+	unsigned dev = (exi.reg[chan].cpr >> 7) & 0b111;
+	unsigned dev2;
+
+	uint32_t mask = exi_get_interrupt_mask(chan);
+
+	switch (index % 5) {
+		case 0:
+			exi.reg[chan].cpr = ((value & 0b00100000001010) ^ exi.reg[chan].cpr) & exi.reg[chan].cpr;
+
+			if ((value & 0b00001110000000) & ((value & 0b00001110000000) - 1))
+				exi.reg[chan].cpr = (value & 0b10010001110101) | (exi.reg[chan].cpr & 0b11100000001010);
+			else
+				exi.reg[chan].cpr = (value & 0b10011111110101) | (exi.reg[chan].cpr & 0b11100000001010);
+
+			dev2 = (exi.reg[chan].cpr >> 7) & 0b111;
+
+			if (chan == EXI_CHANNEL_0 && ((dev | dev2) & (1 << EXI_DEVICE_2)))
+				EXI[chan][0] = (value & ~(mask | 0b00001111111100)) | (mask >> 1);
+			else if (chan == EXI_CHANNEL_2)
+				EXI[chan][0] = (value & ~(mask | 0b00000000000011)) | (mask >> 1);
+			else
+				EXI[chan][0] = (value & ~mask) | (mask >> 1);
+
+			if (chan == EXI_CHANNEL_0) {
+				if ((~dev & dev2) & (1 << EXI_DEVICE_2))
+					eth_exi_select();
+				if ((dev & ~dev2) & (1 << EXI_DEVICE_2))
+					eth_exi_deselect();
+			}
+
+			exi_update_interrupts();
+			break;
+		case 1 ... 2:
+			exi.regs[index] = value & 0x3FFFFE0;
+			break;
+		case 3:
+			exi.regs[index] = value & 0b111111;
+
+			if (value & 0b000001) {
+				if (chan == EXI_CHANNEL_0 && (dev & (1 << EXI_DEVICE_2))) {
+					if (value & 0b000010) {
+						uint32_t address = exi.reg[chan].mar;
+						uint32_t length  = exi.reg[chan].length;
+						int type = (exi.reg[chan].cr >> 2) & 0b11;
+
+						eth_exi_dma(address, length, type);
+
+						exi_complete_transfer(chan);
+					} else {
+						int length = (exi.reg[chan].cr >> 4) & 0b11;
+						char *data = (char *)&exi.reg[chan].data;
+
+						for (int i = 0; i <= length; i++)
+							data[i] = eth_exi_imm(data[i]);
+
+						exi_complete_transfer(chan);
+					}
+				} else {
+					EXI[chan][1] = exi.reg[chan].mar;
+					EXI[chan][2] = exi.reg[chan].length;
+					EXI[chan][4] = exi.reg[chan].data;
+					EXI[chan][3] = exi.reg[chan].cr;
 				}
 			}
 			break;
@@ -1162,10 +1306,6 @@ void write_branch(void *a, void *b)
 	}
 }
 
-#ifdef BBA
-void bba_init(void **arenaLo, void **arenaHi);
-#endif
-
 void init(void **arenaLo, void **arenaHi)
 {
 	OSCreateAlarm(&di_alarm);
@@ -1176,6 +1316,9 @@ void init(void **arenaLo, void **arenaHi)
 
 	#ifdef BBA
 	bba_init(arenaLo, arenaHi);
+	#endif
+	#ifdef ETH_EMULATOR
+	eth_init(arenaLo, arenaHi);
 	#endif
 	#ifdef DI_PASSTHROUGH
 	DI[0] = 0b0101010;

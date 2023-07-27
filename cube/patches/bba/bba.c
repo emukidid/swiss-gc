@@ -25,6 +25,7 @@
 #include "dolphin/exi.h"
 #include "dolphin/os.h"
 #include "emulator.h"
+#include "emulator_eth.h"
 #include "frag.h"
 #include "interrupt.h"
 #include "ipl.h"
@@ -46,45 +47,6 @@ static struct {
 } dvd;
 
 #include "tcpip.c"
-
-#define BBA_CMD_IRMASKALL		0x00
-#define BBA_CMD_IRMASKNONE		0xF8
-
-#define BBA_NCRA				0x00		/* Network Control Register A, RW */
-#define BBA_NCRA_RESET			(1<<0)	/* RESET */
-#define BBA_NCRA_ST0			(1<<1)	/* ST0, Start transmit command/status */
-#define BBA_NCRA_ST1			(1<<2)	/* ST1,  " */
-#define BBA_NCRA_SR				(1<<3)	/* SR, Start Receive */
-
-#define BBA_IR 0x09		/* Interrupt Register, RW, 00h */
-#define BBA_IR_FRAGI       (1<<0)	/* FRAGI, Fragment Counter Interrupt */
-#define BBA_IR_RI          (1<<1)	/* RI, Receive Interrupt */
-#define BBA_IR_TI          (1<<2)	/* TI, Transmit Interrupt */
-#define BBA_IR_REI         (1<<3)	/* REI, Receive Error Interrupt */
-#define BBA_IR_TEI         (1<<4)	/* TEI, Transmit Error Interrupt */
-#define BBA_IR_FIFOEI      (1<<5)	/* FIFOEI, FIFO Error Interrupt */
-#define BBA_IR_BUSEI       (1<<6)	/* BUSEI, BUS Error Interrupt */
-#define BBA_IR_RBFI        (1<<7)	/* RBFI, RX Buffer Full Interrupt */
-
-#define BBA_RWP  0x16/*+0x17*/	/* Receive Buffer Write Page Pointer Register */
-#define BBA_RRP  0x18/*+0x19*/	/* Receive Buffer Read Page Pointer Register */
-
-#define BBA_WRTXFIFOD 0x48/*-0x4b*/	/* Write TX FIFO Data Port Register */
-
-#define BBA_RX_STATUS_BF      (1<<0)
-#define BBA_RX_STATUS_CRC     (1<<1)
-#define BBA_RX_STATUS_FAE     (1<<2)
-#define BBA_RX_STATUS_FO      (1<<3)
-#define BBA_RX_STATUS_RW      (1<<4)
-#define BBA_RX_STATUS_MF      (1<<5)
-#define BBA_RX_STATUS_RF      (1<<6)
-#define BBA_RX_STATUS_RERR    (1<<7)
-
-#define BBA_INIT_TLBP	0x00
-#define BBA_INIT_BP		0x01
-#define BBA_INIT_RHBP	0x10
-#define BBA_INIT_RWP	BBA_INIT_BP
-#define BBA_INIT_RRP	BBA_INIT_BP
 
 static void exi_clear_interrupts(int32_t chan, bool exi, bool tc, bool ext)
 {
@@ -208,7 +170,11 @@ static void bba_outs(uint16_t reg, const void *val, uint32_t len)
 	exi_imm_write(0xC0 << 24 | reg << 8, 4);
 
 	if (!_bba.lock) {
+		#ifdef ETH_EMULATOR
+		exi_immex_write(val, len);
+		#else
 		exi_dma_write(val, len, true);
+		#endif
 	} else {
 		exi_clear_interrupts(EXI_CHANNEL_0, false, true, false);
 		exi_dma_write(val, len, false);
@@ -248,12 +214,20 @@ static void bba_receive(void)
 		bba_header_t *bba = (bba_header_t *)page;
 		size_t size = sizeof(bba_header_t) + MIN_FRAME_SIZE;
 
-		DCInvalidateRange(__builtin_assume_aligned(page, 32), size);
-		bba_ins(_bba.rrp << 8, page, size);
+		DCInvalidateRange(__builtin_assume_aligned(bba, 32), size);
+		bba_receive_dma(bba, size, 0);
 		bba_out8(BBA_RRP, bba->next);
 
-		size = bba->length - sizeof(*bba);
-		eth_input(page, (void *)bba->data, size);
+		size = bba->length;
+		#ifdef ETH_EMULATOR
+		if (!eth_input(page, (void *)bba->data, size - sizeof(*bba))) {
+			DCInvalidateRange(__builtin_assume_aligned(bba, 32), size);
+			bba_receive_dma(bba, size, 0);
+			eth_mac_receive(bba->data, size - sizeof(*bba));
+		}
+		#else
+		eth_input(page, (void *)bba->data, size - sizeof(*bba));
+		#endif
 
 		_bba.rwp = bba_in8(BBA_RWP);
 		_bba.rrp = bba->next;

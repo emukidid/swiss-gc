@@ -305,12 +305,12 @@ bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *
 	return false;
 }
 
-static void fsp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, size_t size)
+static bool fsp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, fsp_header_t *fsp, size_t size)
 {
 	if (size < sizeof(*fsp) + fsp->data_length)
-		return;
+		return false;
 	if (udp->length < sizeof(*udp) + sizeof(*fsp) + fsp->data_length)
-		return;
+		return false;
 
 	size -= sizeof(*fsp);
 
@@ -342,14 +342,16 @@ static void fsp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, 
 			}
 			break;
 	}
+
+	return true;
 }
 
-static void udp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, size_t size)
+static bool udp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, udp_header_t *udp, size_t size)
 {
 	if (size < sizeof(*udp))
-		return;
+		return false;
 	if (udp->length < sizeof(*udp))
-		return;
+		return false;
 
 	size -= sizeof(*udp);
 
@@ -360,30 +362,33 @@ static void udp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, 
 
 		if (udp->src_port == env->port &&
 			udp->dst_port == env->port)
-			fsp_input(page, eth, ipv4, udp, (void *)udp->data, size);
+			return fsp_input(page, eth, ipv4, udp, (void *)udp->data, size);
 	}
+
+	return false;
 }
 
-static void ipv4_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, size_t size)
+static bool ipv4_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, size_t size)
 {
 	if (ipv4->version != 4)
-		return;
+		return false;
 	if (ipv4->words < 5 || ipv4->words * 4 > ipv4->length)
-		return;
+		return false;
 	if (size < ipv4->length)
-		return;
+		return false;
 	if (ipv4->offset != 0 || (ipv4->flags & 0b001))
-		return;
+		return false;
 	if (ipv4_checksum(ipv4))
-		return;
+		return false;
 
 	size = ipv4->length - ipv4->words * 4;
 
 	switch (ipv4->protocol) {
 		case IP_PROTO_UDP:
-			udp_input(page, eth, ipv4, (void *)ipv4 + ipv4->words * 4, size);
-			break;
+			return udp_input(page, eth, ipv4, (void *)ipv4 + ipv4->words * 4, size);
 	}
+
+	return false;
 }
 
 static void arp_reply(arp_packet_t *request)
@@ -408,12 +413,12 @@ static void arp_reply(arp_packet_t *request)
 	bba_transmit_fifo(eth, MIN_FRAME_SIZE);
 }
 
-static void arp_input(bba_page_t *page, eth_header_t *eth, arp_packet_t *arp, size_t size)
+static bool arp_input(bba_page_t *page, eth_header_t *eth, arp_packet_t *arp, size_t size)
 {
 	if (arp->hardware_type != HW_ETHERNET || arp->hardware_length != sizeof(struct eth_addr))
-		return;
+		return false;
 	if (arp->protocol_type != ETH_TYPE_IPV4 || arp->protocol_length != sizeof(struct ipv4_addr))
-		return;
+		return false;
 
 	switch (arp->operation) {
 		case ARP_REQUEST:
@@ -424,6 +429,8 @@ static void arp_input(bba_page_t *page, eth_header_t *eth, arp_packet_t *arp, si
 
 				if (arp->src_ip.addr == env->router_ip.addr)
 					env->router_mac = arp->src_mac;
+
+				return true;
 			}
 			break;
 		case ARP_REPLY:
@@ -433,21 +440,23 @@ static void arp_input(bba_page_t *page, eth_header_t *eth, arp_packet_t *arp, si
 				env->router_mac = arp->src_mac;
 			break;
 	}
+
+	return false;
 }
 
-static void eth_input(bba_page_t *page, eth_header_t *eth, size_t size)
+static bool eth_input(bba_page_t *page, eth_header_t *eth, size_t size)
 {
 	if (size < MIN_FRAME_SIZE)
-		return;
+		return false;
 
 	size -= sizeof(*eth);
 
 	switch (eth->type) {
 		case ETH_TYPE_ARP:
-			arp_input(page, eth, (void *)eth->data, size);
-			break;
+			return arp_input(page, eth, (void *)eth->data, size);
 		case ETH_TYPE_IPV4:
-			ipv4_input(page, eth, (void *)eth->data, size);
-			break;
+			return ipv4_input(page, eth, (void *)eth->data, size);
 	}
+
+	return false;
 }

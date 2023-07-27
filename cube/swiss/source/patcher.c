@@ -269,8 +269,8 @@ int install_code(int final)
 		} else {
 			switch (devices[DEVICE_CUR]->emulated()) {
 				case EMU_READ | EMU_BUS_ARBITER:
-					patch     = fsp_bin;
-					patchSize = fsp_bin_size;
+					patch     = fsp_eth_bin;
+					patchSize = fsp_eth_bin_size;
 					break;
 				case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER:
 					patch     = fsp_dtk_bin;
