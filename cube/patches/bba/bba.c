@@ -111,7 +111,25 @@ static void exi_dma_read(void *buf, uint32_t len, bool sync)
 	while (sync && (EXI[EXI_CHANNEL_0][3] & 0b01));
 }
 
-static uint8_t bba_in8(uint16_t reg)
+uint8_t bba_cmd_in8(uint8_t reg)
+{
+	uint8_t val;
+
+	exi_select();
+	val = exi_imm_read_write((reg & 0x3F) << 24, 4);
+	exi_deselect();
+
+	return val;
+}
+
+void bba_cmd_out8(uint8_t reg, uint8_t val)
+{
+	exi_select();
+	exi_imm_write(0x40 << 24 | (reg & 0x3F) << 24 | val, 4);
+	exi_deselect();
+}
+
+uint8_t bba_in8(uint16_t reg)
 {
 	uint8_t val;
 
@@ -123,7 +141,7 @@ static uint8_t bba_in8(uint16_t reg)
 	return val;
 }
 
-static void bba_out8(uint16_t reg, uint8_t val)
+void bba_out8(uint16_t reg, uint8_t val)
 {
 	exi_select();
 	exi_imm_write(0xC0 << 24 | reg << 8, 4);
@@ -131,25 +149,7 @@ static void bba_out8(uint16_t reg, uint8_t val)
 	exi_deselect();
 }
 
-static uint8_t bba_cmd_in8(uint8_t reg)
-{
-	uint8_t val;
-
-	exi_select();
-	val = exi_imm_read_write(0x00 << 24 | reg << 24, 4);
-	exi_deselect();
-
-	return val;
-}
-
-static void bba_cmd_out8(uint8_t reg, uint8_t val)
-{
-	exi_select();
-	exi_imm_write(0x40 << 24 | reg << 24 | val, 4);
-	exi_deselect();
-}
-
-static void bba_ins(uint16_t reg, void *val, uint32_t len)
+void bba_ins(uint16_t reg, void *val, uint32_t len)
 {
 	exi_select();
 	exi_imm_write(0x80 << 24 | reg << 8, 4);
@@ -164,7 +164,7 @@ static void bba_ins(uint16_t reg, void *val, uint32_t len)
 	exi_deselect();
 }
 
-static void bba_outs(uint16_t reg, const void *val, uint32_t len)
+void bba_outs(uint16_t reg, const void *val, uint32_t len)
 {
 	exi_select();
 	exi_imm_write(0xC0 << 24 | reg << 8, 4);

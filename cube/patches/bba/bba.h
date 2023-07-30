@@ -66,6 +66,15 @@
 #define BBA_NAFR_PAR4 0x24	/* Physical Address Register Byte 4 */
 #define BBA_NAFR_PAR5 0x25	/* Physical Address Register Byte 5 */
 
+#define BBA_NAFR_MAR0 0x26	/* Hash Table Register Byte 0 */
+#define BBA_NAFR_MAR1 0x27	/* Hash Table Register Byte 1 */
+#define BBA_NAFR_MAR2 0x28	/* Hash Table Register Byte 2 */
+#define BBA_NAFR_MAR3 0x29	/* Hash Table Register Byte 3 */
+#define BBA_NAFR_MAR4 0x2a	/* Hash Table Register Byte 4 */
+#define BBA_NAFR_MAR5 0x2b	/* Hash Table Register Byte 5 */
+#define BBA_NAFR_MAR6 0x2c	/* Hash Table Register Byte 6 */
+#define BBA_NAFR_MAR7 0x2d	/* Hash Table Register Byte 7 */
+
 #define BBA_NWAYS 0x31
 #define   BBA_NWAYS_LS10	 (1<<0)
 #define   BBA_NWAYS_LS100	 (1<<1)
@@ -96,6 +105,13 @@ typedef struct {
 } __attribute((packed, scalar_storage_order("little-endian"))) bba_header_t;
 
 typedef uint8_t bba_page_t[256] __attribute((aligned(32)));
+
+uint8_t bba_cmd_in8(uint8_t reg);
+void bba_cmd_out8(uint8_t reg, uint8_t val);
+uint8_t bba_in8(uint16_t reg);
+void bba_out8(uint16_t reg, uint8_t val);
+void bba_ins(uint16_t reg, void *val, uint32_t len);
+void bba_outs(uint16_t reg, const void *val, uint32_t len);
 
 void bba_transmit_fifo(const void *data, size_t size);
 void bba_receive_dma(void *data, size_t size, uint8_t offset);

@@ -141,6 +141,10 @@ static void eth_mac_write(uint8_t value)
 			(*eth.mac.fifo)[eth.mac.txfifocnt++] = value;
 			break;
 		}
+		case BBA_NAFR_MAR0 ... BBA_NAFR_MAR7:
+		{
+			bba_out8(address, value);
+		}
 		default:
 		{
 			(*eth.mac.data)[(address - 256) % 4096 + 256] = value;
