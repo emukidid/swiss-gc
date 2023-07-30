@@ -41,6 +41,8 @@ static struct {
 			uint8_t (*data)[256 + 4096];
 			uint8_t *regs;
 		};
+
+		int txfifocnt;
 		uint8_t (*fifo)[BBA_TX_MAX_PACKET_SIZE];
 	} mac;
 } eth;
@@ -118,9 +120,8 @@ static void eth_mac_write(uint8_t value)
 			eth.mac.regs[address] = value;
 
 			if ((eth.mac.regs[BBA_NCRA] & (BBA_NCRA_ST0 | BBA_NCRA_ST1)) == BBA_NCRA_ST1) {
-				bba_transmit_fifo(*eth.mac.fifo, __lhbrx(&eth.mac.regs[BBA_TXFIFOCNT]));
-				eth.mac.regs[BBA_TXFIFOCNT + 0] = 
-				eth.mac.regs[BBA_TXFIFOCNT + 1] = 0;
+				bba_transmit_fifo(*eth.mac.fifo, eth.mac.txfifocnt);
+				eth.mac.txfifocnt = 0;
 				eth.mac.regs[BBA_NCRA] &= ~BBA_NCRA_ST1;
 
 				if (eth.mac.regs[BBA_IMR] & BBA_IMR_TIM) {
@@ -137,9 +138,7 @@ static void eth_mac_write(uint8_t value)
 		}
 		case BBA_WRTXFIFOD:
 		{
-			uint16_t txfifocnt = __lhbrx(&eth.mac.regs[BBA_TXFIFOCNT]);
-			(*eth.mac.fifo)[txfifocnt++] = value;
-			__sthbrx(&eth.mac.regs[BBA_TXFIFOCNT], txfifocnt);
+			(*eth.mac.fifo)[eth.mac.txfifocnt++] = value;
 			break;
 		}
 		default:
@@ -231,10 +230,8 @@ void eth_exi_dma(uint32_t address, uint32_t length, int type)
 		if (eth.exi.command & 0x40) {
 			if (eth.exi.position >= 4 && type == EXI_WRITE) {
 				if (eth.mac.address == BBA_WRTXFIFOD) {
-					uint16_t txfifocnt = __lhbrx(&eth.mac.regs[BBA_TXFIFOCNT]);
-					memcpy(*eth.mac.fifo + txfifocnt, buffer, length);
-					txfifocnt += length;
-					__sthbrx(&eth.mac.regs[BBA_TXFIFOCNT], txfifocnt);
+					memcpy(*eth.mac.fifo + eth.mac.txfifocnt, buffer, length);
+					eth.mac.txfifocnt += length;
 				}
 			}
 		} else {
@@ -259,6 +256,8 @@ void eth_exi_deselect(void)
 
 void eth_init(void **arenaLo, void **arenaHi)
 {
+	eth.mac.txfifocnt = 0;
+
 	*arenaHi -= sizeof(*eth.mac.fifo); eth.mac.fifo = *arenaHi;
 	*arenaHi -= sizeof(*eth.mac.data); eth.mac.data = *arenaHi;
 
