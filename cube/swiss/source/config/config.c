@@ -810,7 +810,7 @@ void config_parse_global(char *configData) {
 					}
 				}
 				else if(!strcmp("DeviceSelectorType", name)) {
-					for(int i = 0; i < 2; i++) {
+					for(int i = 0; i < 3; i++) {
 						if(!strcmp(deviceSelectorTypesStr[i], value)) {
 							swissSettings.deviceSelectorType = i;
 							break;
