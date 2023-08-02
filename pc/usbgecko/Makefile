@@ -34,3 +34,5 @@ windows:
 	$(WIN-CC) $(WIN-LFLAGS) $(OBJS) -o $(TARGET).exe $(WIN-LFLAGS)
 	$(STRIP) -g $(TARGET).exe
 	@rm -f *.o
+
+.NOTPARALLEL:
