@@ -2254,7 +2254,7 @@ void select_device(int type)
 			curDevice = 0;
 		}
 	}
-	
+
 	// return without prompting if the device selector is disabled
 	if(swissSettings.deviceSelectorType == DEVICE_SELECTOR_DISABLED) {
 		devices[type] = allDevices[curDevice];
@@ -2268,13 +2268,17 @@ void select_device(int type)
 		uiDrawObj_t *selectLabel = DrawStyledLabel(640/2, 195
 													, type == DEVICE_DEST ? "Destination Device" : "Device Selection"
 													, 1.0f, true, defaultColor);
-		uiDrawObj_t *fwdLabel = DrawLabel(520, 270, "->");
-		uiDrawObj_t *backLabel = DrawLabel(100, 270, "<-");
-		uiDrawObj_t *showAllLabel = DrawStyledLabel(20, 400, "(Z) Show all devices", 0.65f, false, showAllDevices ? defaultColor:deSelectedColor);
+
+		if(swissSettings.deviceSelectorType != DEVICE_SELECTOR_SHOW_ONLY) {
+			uiDrawObj_t *fwdLabel = DrawLabel(520, 270, "->");
+			uiDrawObj_t *backLabel = DrawLabel(100, 270, "<-");
+			uiDrawObj_t *showAllLabel = DrawStyledLabel(20, 400, "(Z) Show all devices", 0.65f, false, showAllDevices ? defaultColor:deSelectedColor);
+			DrawAddChild(deviceSelectBox, fwdLabel);
+			DrawAddChild(deviceSelectBox, backLabel);
+			DrawAddChild(deviceSelectBox, showAllLabel);
+		}
+
 		DrawAddChild(deviceSelectBox, selectLabel);
-		DrawAddChild(deviceSelectBox, fwdLabel);
-		DrawAddChild(deviceSelectBox, backLabel);
-		DrawAddChild(deviceSelectBox, showAllLabel);
 		
 		if(direction != 0) {
 			if(direction > 0) {
@@ -2308,7 +2312,7 @@ void select_device(int type)
 			DrawAddChild(deviceSelectBox, gameBootLabel);
 		}
 		// Memory card port devices, allow for speed selection
-		if(allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2)) {
+		if(swissSettings.deviceSelectorType != DEVICE_SELECTOR_SHOW_ONLY && allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2)) {
 			uiDrawObj_t *exiOptionsLabel = DrawStyledLabel(getVideoMode()->fbWidth-190, 400, "(X) EXI Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
 			DrawAddChild(deviceSelectBox, exiOptionsLabel);
 			if(inAdvanced) {
@@ -2322,26 +2326,29 @@ void select_device(int type)
 			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_Z) ))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = padsButtonsHeld();
-		if((btns & PAD_BUTTON_X) && (allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2)))
-			inAdvanced ^= 1;
-		if(btns & PAD_TRIGGER_Z) {
-			showAllDevices ^= 1;
-			if(!showAllDevices && !deviceHandler_getDeviceAvailable(allDevices[curDevice])) {
-				inAdvanced = 0;
-				direction = 1;
+
+		if(swissSettings.deviceSelectorType != DEVICE_SELECTOR_SHOW_ONLY) {
+			if((btns & PAD_BUTTON_X) && (allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2)))
+				inAdvanced ^= 1;
+			if(btns & PAD_TRIGGER_Z) {
+				showAllDevices ^= 1;
+				if(!showAllDevices && !deviceHandler_getDeviceAvailable(allDevices[curDevice])) {
+					inAdvanced = 0;
+					direction = 1;
+				}
 			}
-		}
-		if(inAdvanced) {
-			if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
-				swissSettings.exiSpeed^=1;
+			if(inAdvanced) {
+				if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
+					swissSettings.exiSpeed^=1;
+				}
 			}
-		}
-		else {
-			if(btns & PAD_BUTTON_RIGHT) {
-				direction = 1;
-			}
-			if(btns & PAD_BUTTON_LEFT) {
-				direction = -1;
+			else {
+				if(btns & PAD_BUTTON_RIGHT) {
+					direction = 1;
+				}
+				if(btns & PAD_BUTTON_LEFT) {
+					direction = -1;
+				}
 			}
 		}
 			
