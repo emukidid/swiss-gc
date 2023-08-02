@@ -162,6 +162,7 @@ int main(int argc, char *argv[])
 	swissSettings.aveCompat = 1;
 	swissSettings.enableFileManagement = 0;
 	swissSettings.recentListLevel = 2;
+	swissSettings.deviceSelectorType = DEVICE_SELECTOR_ENABLED;
 	Initialise();
 
 	needsDeviceChange = 1;
