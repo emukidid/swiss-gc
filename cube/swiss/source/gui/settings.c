@@ -42,6 +42,7 @@ char *fileBrowserStr[] = {"Standard", "Carousel"};
 char *bs2BootStr[] = {"No", "Yes", "Sound 1", "Sound 2"};
 char *sramLang[] = {"English", "German", "French", "Spanish", "Italian", "Dutch", "Japanese", "English (US)"};
 char *recentListLevelStr[] = {"Off", "Lazy", "On"};
+char *deviceSelectorTypesStr[] = {"Enabled", "Show Only", "Disabled"};
 
 static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"System Sound:\n\nSets the default audio output type used by most games",
