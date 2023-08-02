@@ -52,6 +52,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	NULL,
 	"File Browser Type:\n\nStandard - Displays files with minimal detail (default)\n\nCarousel - Suited towards Game/DOL only use, consider combining\nthis option with the File Management setting turned off\nand Hide Unknown File Types turned on for a better experience.",
 	"File Management:\n\nWhen enabled, pressing Z on an entry in the file browser will allow it to be managed.",
+	"Device Selector:\n\nEnabled - Devices can be selected (default)\n\nShow Only - The current device is shown in the selector, and cannot be changed\n\nDisabled - The device selector will not appear",
 	"Recent List:\n\n(On) - Press Start while browsing to show a recent list.\n(Lazy) - Same as On but list updates only for new entries.\n(Off) - Recent list is completely disabled.\n\nThe lazy/off options exist to minimise SD card writes.",
 	NULL,
 	"Hide unknown file types:\n\nDisabled - Show all files (default)\nEnabled - Swiss will hide unknown file types from being displayed\n\nKnown file types are:\n GameCube Executables (.bin/.dol/.elf)\n Disc images (.gcm/.iso/.nkit.iso/.tgc)\n MP3 Music (.mp3)\n WASP/WKF Flash files (.fzn)\n GameCube Memory Card Files (.gci/.gcs/.sav)\n GameCube Executables with parameters appended (.dol+cli)",
@@ -252,7 +253,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Global Settings (1/5):"));
 		bool dbgEnable = devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
-		if(option < SET_STOP_MOTOR) {
+		if(option < SET_FLATTEN_DIR) {
 			drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo":"Mono", option == SET_SYS_SOUND, true);
 			sprintf(sramHOffsetStr, "%+hi", swissSettings.sramHOffset);
 			drawSettingEntryString(page, &page_y_ofs, "Screen Position:", sramHOffsetStr, option == SET_SCREEN_POS, true);
@@ -261,11 +262,12 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "Swiss Video Mode:", uiVModeStr[swissSettings.uiVMode], option == SET_SWISS_VIDEOMODE, true);
 			drawSettingEntryString(page, &page_y_ofs, "File Browser Type:", fileBrowserStr[swissSettings.fileBrowserType], option == SET_FILEBROWSER_TYPE, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "File Management:", swissSettings.enableFileManagement, option == SET_FILE_MGMT, true);
+			drawSettingEntryString(page, &page_y_ofs, "Device Selector:", deviceSelectorTypesStr[swissSettings.deviceSelectorType], option == SET_DEVICE_SELECTOR_TYPE, true);
 			drawSettingEntryString(page, &page_y_ofs, "Recent List:", recentListLevelStr[swissSettings.recentListLevel], option == SET_RECENT_LIST, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Show hidden files:", swissSettings.showHiddenFiles, option == SET_SHOW_HIDDEN, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Hide unknown file types:", swissSettings.hideUnknownFileTypes, option == SET_HIDE_UNK, true);
-			drawSettingEntryString(page, &page_y_ofs, "Flatten directory:", swissSettings.flattenDir, option == SET_FLATTEN_DIR, true);
 		} else {
+			drawSettingEntryString(page, &page_y_ofs, "Flatten directory:", swissSettings.flattenDir, option == SET_FLATTEN_DIR, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Motor at startup:", swissSettings.stopMotor, option == SET_STOP_MOTOR, true);
 			drawSettingEntryString(page, &page_y_ofs, "SD/IDE Speed:", swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == SET_EXI_SPEED, true);
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
@@ -492,6 +494,15 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_FILE_MGMT:
 				swissSettings.enableFileManagement ^=1;
+			break;
+			case SET_DEVICE_SELECTOR_TYPE:
+				swissSettings.deviceSelectorType += direction;
+				if(swissSettings.deviceSelectorType > 2) {
+					swissSettings.deviceSelectorType = 0;
+				}
+				if(swissSettings.deviceSelectorType < 0) {
+					swissSettings.deviceSelectorType = 2;
+				}
 			break;
 			case SET_RECENT_LIST:
 				swissSettings.recentListLevel += direction;
