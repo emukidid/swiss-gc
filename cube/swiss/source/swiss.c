@@ -2255,6 +2255,11 @@ void select_device(int type)
 		}
 	}
 	
+	// return without prompting if the device selector is disabled
+	if(swissSettings.deviceSelectorType == DEVICE_SELECTOR_DISABLED) {
+		devices[type] = allDevices[curDevice];
+		return;
+	}
 	
 	uiDrawObj_t *deviceSelectBox = NULL;
 	while(1) {
