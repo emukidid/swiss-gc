@@ -148,8 +148,16 @@ typedef struct {
 	char autoload[PATHNAME_MAX];
 	char flattenDir[PATHNAME_MAX];
 	char recent[RECENT_MAX][PATHNAME_MAX];
+	u8 deviceSelectorType; // on, show only, off
 } SwissSettings;
 extern SwissSettings swissSettings;
+
+enum deviceSelectorTypes
+{
+	DEVICE_SELECTOR_ENABLED=0,
+	DEVICE_SELECTOR_SHOW_ONLY,
+	DEVICE_SELECTOR_DISABLED
+};
 
 enum fileOptions
 {
