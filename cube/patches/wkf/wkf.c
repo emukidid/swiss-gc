@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2023, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -32,6 +32,7 @@
 #ifndef QUEUE_SIZE
 #define QUEUE_SIZE 2
 #endif
+#define SECTOR_SIZE 512
 
 static struct {
 	char buffer[32];
@@ -64,8 +65,11 @@ static void wkf_read_queued(void)
 	uint32_t sector = wkf.queued->sector;
 
 	int misalign;
-	if ((misalign = (uintptr_t)buffer % 32))
-		memmove(wkf.buffer, buffer - misalign, 32);
+	if ((misalign = (uintptr_t)buffer % 32)) {
+		memcpy(wkf.buffer, buffer - misalign, misalign);
+		offset += 32768;
+		sector -= 32768 / SECTOR_SIZE;
+	}
 
 	if (wkf.base_sector != sector) {
 		DI[2] = 0xDE000000;
@@ -83,7 +87,7 @@ static void wkf_read_queued(void)
 		length = OSRoundUp32B(misalign + length);
 
 		DI[2] = DI_CMD_READ << 24;
-		DI[3] = offset >> 2;
+		DI[3] = (offset - misalign) >> 2;
 		DI[4] = length;
 		DI[5] = (uint32_t)buffer;
 		DI[6] = length;
@@ -106,10 +110,8 @@ static void wkf_done_queued(void)
 	uint32_t sector = wkf.queued->sector;
 
 	int misalign;
-	if ((misalign = (uintptr_t)buffer % 32)) {
-		memmove(buffer, buffer - misalign, OSRoundUp32B(misalign + length) - misalign);
-		memmove(buffer - misalign, wkf.buffer, misalign);
-	}
+	if ((misalign = (uintptr_t)buffer % 32))
+		memcpy(buffer - misalign, wkf.buffer, misalign);
 
 	wkf.queued->callback(buffer, length);
 
