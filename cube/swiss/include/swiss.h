@@ -33,7 +33,6 @@ extern int needsDeviceChange;
 extern int needsRefresh;
 extern int curMenuLocation;
 
-extern char* _menu_array[];
 extern file_handle curFile;
 extern file_handle curDir;
 extern char IPLInfo[256] __attribute__((aligned(32)));
