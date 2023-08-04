@@ -52,7 +52,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	NULL,
 	"File Browser Type:\n\nStandard - Displays files with minimal detail (default)\n\nCarousel - Suited towards Game/DOL only use, consider combining\nthis option with the File Management setting turned off\nand Hide Unknown File Types turned on for a better experience.",
 	"File Management:\n\nWhen enabled, pressing Z on an entry in the file browser will allow it to be managed.",
-	"Device Selector:\n\nEnabled - Devices can be selected (default)\n\nShow Only - The current device is shown in the selector, and cannot be changed\n\nDisabled - The device selector will not appear",
+	"Device Selector:\n\nEnabled - Devices can be selected (default)\n\nShow Only - The current device is shown in the\nselector, and cannot be changed\n\nDisabled - The device selector will not appear and\nthe menu button will be removed",
 	"Recent List:\n\n(On) - Press Start while browsing to show a recent list.\n(Lazy) - Same as On but list updates only for new entries.\n(Off) - Recent list is completely disabled.\n\nThe lazy/off options exist to minimise SD card writes.",
 	NULL,
 	"Hide unknown file types:\n\nDisabled - Show all files (default)\nEnabled - Swiss will hide unknown file types from being displayed\n\nKnown file types are:\n GameCube Executables (.bin/.dol/.elf)\n Disc images (.gcm/.iso/.nkit.iso/.tgc)\n MP3 Music (.mp3)\n WASP/WKF Flash files (.fzn)\n GameCube Memory Card Files (.gci/.gcs/.sav)\n GameCube Executables with parameters appended (.dol+cli)",
