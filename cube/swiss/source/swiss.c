@@ -2461,12 +2461,25 @@ void menu_loop()
 				VIDEO_WaitVSync();
 			}
 			
-			if(btns & PAD_BUTTON_LEFT){	curMenuSelection = (--curMenuSelection < 0) ? (MENU_MAX-1) : curMenuSelection;}
-			else if(btns & PAD_BUTTON_RIGHT){curMenuSelection = (curMenuSelection + 1) % MENU_MAX;	}
+			// the curMenuSelection only knows about the index among all menu items, but the switch below wants
+			// this to map to a specific menu item ID. This variable holds the corrected menu item ID.
+			int menuItemSelection;
+
+			if(swissSettings.deviceSelectorType == DEVICE_SELECTOR_DISABLED) {
+				if(btns & PAD_BUTTON_LEFT){	curMenuSelection = (--curMenuSelection < 0) ? (MENU_MAX-2) : curMenuSelection;}
+				else if(btns & PAD_BUTTON_RIGHT){curMenuSelection = (curMenuSelection + 1) % (MENU_MAX-1);	}
+
+				menuItemSelection = curMenuSelection + 1;
+			} else {
+				if(btns & PAD_BUTTON_LEFT){	curMenuSelection = (--curMenuSelection < 0) ? (MENU_MAX-1) : curMenuSelection;}
+				else if(btns & PAD_BUTTON_RIGHT){curMenuSelection = (curMenuSelection + 1) % MENU_MAX;	}
+
+				menuItemSelection = curMenuSelection;
+			}
 
 			if(btns & PAD_BUTTON_A) {
 				//handle menu event
-				switch(curMenuSelection) {
+				switch(menuItemSelection) {
 					case MENU_DEVICE:
 						needsDeviceChange = 1;  //Change from SD->DVD or vice versa
 						break;
