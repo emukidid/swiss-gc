@@ -218,15 +218,15 @@ static void bba_receive(void)
 		bba_receive_dma(bba, size, 0);
 		bba_out8(BBA_RRP, bba->next);
 
-		size = bba->length;
+		size = bba->length - sizeof(*bba);
 		#ifdef ETH_EMULATOR
-		if (!eth_input(page, (void *)bba->data, size - sizeof(*bba))) {
-			DCInvalidateRange(__builtin_assume_aligned(bba, 32), size);
-			bba_receive_dma(bba, size, 0);
-			eth_mac_receive(bba->data, size - sizeof(*bba));
+		if (!eth_input(page, (void *)bba->data, size)) {
+			DCInvalidateRange(__builtin_assume_aligned(bba->data + MIN_FRAME_SIZE, 32), size - MIN_FRAME_SIZE);
+			bba_receive_dma(bba->data + MIN_FRAME_SIZE, size - MIN_FRAME_SIZE, sizeof(*bba) + MIN_FRAME_SIZE);
+			eth_mac_receive(bba->data, size);
 		}
 		#else
-		eth_input(page, (void *)bba->data, size - sizeof(*bba));
+		eth_input(page, (void *)bba->data, size);
 		#endif
 
 		_bba.rwp = bba_in8(BBA_RWP);

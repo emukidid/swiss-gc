@@ -447,7 +447,7 @@ static bool arp_input(bba_page_t *page, eth_header_t *eth, arp_packet_t *arp, si
 static bool eth_input(bba_page_t *page, eth_header_t *eth, size_t size)
 {
 	if (size < MIN_FRAME_SIZE)
-		return false;
+		return true;
 
 	size -= sizeof(*eth);
 
