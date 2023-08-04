@@ -1,6 +1,12 @@
 #ifndef BTNS_H
 #define BTNS_H
 
+// Button positioning constants
+#define BTN_BASE_XOFFSET_5BUTTONS (48)
+#define BTN_BASE_XOFFSET_4BUTTONS (64) // chosen completely arbitrarily
+#define BTN_XOFFSET_5BUTTONS (119) // floor(602/5)-1
+#define BTN_XOFFSET_4BUTTONS (149) // floor(602/4)-1
+
 // Buttons
 #define BTNSETTINGS_X       (18)
 #define BTNSETTINGS_Y        (3)
