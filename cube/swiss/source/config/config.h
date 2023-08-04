@@ -20,6 +20,7 @@ typedef struct {
 	int swapCStick;
 	int triggerLevel;
 	int emulateReadSpeed;
+	int emulateEthernet;
 	int forceCleanBoot;
 	int preferCleanBoot;
 } ConfigEntry;

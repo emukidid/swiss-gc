@@ -201,6 +201,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Digital Trigger Level=%hhu\r\n", swissSettings.triggerLevel);
 	fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[swissSettings.emulateReadSpeed]);
 	fprintf(fp, "Emulate Memory Card=%s\r\n", swissSettings.emulateMemoryCard ? "Yes":"No");
+	fprintf(fp, "Emulate Broadband Adapter=%s\r\n", swissSettings.emulateEthernet ? "Yes":"No");
 	fprintf(fp, "Prefer Clean Boot=%s\r\n", swissSettings.preferCleanBoot ? "Yes":"No");
 	fprintf(fp, "#!!Swiss Settings End!!\r\n\r\n");
 	fclose(fp);
@@ -272,6 +273,7 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	fprintf(fp, "Swap Camera Stick=%s\r\n", swapCStickStr[entry->swapCStick]);
 	fprintf(fp, "Digital Trigger Level=%hhu\r\n", entry->triggerLevel);
 	fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[entry->emulateReadSpeed]);
+	fprintf(fp, "Emulate Broadband Adapter=%s\r\n", entry->emulateEthernet ? "Yes":"No");
 	fprintf(fp, "Prefer Clean Boot=%s\r\n", entry->preferCleanBoot ? "Yes":"No");
 	fclose(fp);
 
@@ -289,6 +291,7 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 }
 
 static char emulateReadSpeedEntries[][4] = {"GQSD", "GQSE", "GQSF", "GQSI", "GQSP", "GQSS", "GTOJ"};
+static char emulateEthernetEntries[][4] = {"DPSJ", "GHEJ", "GKYE", "GKYJ", "GKYP", "GM4E", "GM4J", "GM4P", "GPJJ", "GPOE", "GPOJ", "GPOP", "GPSE", "GPSJ", "GPSP", "GTEE", "GTEJ", "GTEP", "GTEW", "PHEJ"};
 
 void config_defaults(ConfigEntry *entry) {
 	strcpy(entry->comment, "No Comment");
@@ -307,11 +310,18 @@ void config_defaults(ConfigEntry *entry) {
 	entry->swapCStick = swissSettings.swapCStick;
 	entry->triggerLevel = swissSettings.triggerLevel;
 	entry->emulateReadSpeed = swissSettings.emulateReadSpeed;
+	entry->emulateEthernet = swissSettings.emulateEthernet;
 	entry->preferCleanBoot = swissSettings.preferCleanBoot;
 
 	for(int i = 0; i < sizeof(emulateReadSpeedEntries) / sizeof(*emulateReadSpeedEntries); i++) {
 		if(!strncmp(entry->game_id, emulateReadSpeedEntries[i], 4)) {
 			entry->emulateReadSpeed = 1;
+			break;
+		}
+	}
+	for(int i = 0; i < sizeof(emulateEthernetEntries) / sizeof(*emulateEthernetEntries); i++) {
+		if(!strncmp(entry->game_id, emulateEthernetEntries[i], 4)) {
+			entry->emulateEthernet = 1;
 			break;
 		}
 	}
@@ -694,6 +704,9 @@ void config_parse_global(char *configData) {
 				else if(!strcmp("Emulate Memory Card", name)) {
 					swissSettings.emulateMemoryCard = !strcmp("Yes", value);
 				}
+				else if(!strcmp("Emulate Broadband Adapter", name)) {
+					swissSettings.emulateEthernet = !strcmp("Yes", value);
+				}
 				else if(!strcmp("Prefer Clean Boot", name)) {
 					swissSettings.preferCleanBoot = !strcmp("Yes", value);
 				}
@@ -1013,6 +1026,9 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 						}
 					}
 				}
+				else if(!strcmp("Emulate Broadband Adapter", name)) {
+					entry->emulateEthernet = !strcmp("Yes", value);
+				}
 				else if(!strcmp("Prefer Clean Boot", name)) {
 					entry->preferCleanBoot = !strcmp("Yes", value);
 				}
@@ -1109,6 +1125,7 @@ void config_load_current(ConfigEntry *config) {
 	swissSettings.swapCStick = config->swapCStick;
 	swissSettings.triggerLevel = config->triggerLevel;
 	swissSettings.emulateReadSpeed = config->emulateReadSpeed;
+	swissSettings.emulateEthernet = config->emulateEthernet;
 	swissSettings.preferCleanBoot = config->preferCleanBoot;
 }
 
@@ -1129,6 +1146,7 @@ void config_unload_current() {
 	swissSettings.sram60Hz = backup.sram60Hz;
 	swissSettings.sramProgressive = backup.sramProgressive;
 	swissSettings.emulateReadSpeed = backup.emulateReadSpeed;
+	swissSettings.emulateEthernet = backup.emulateEthernet;
 	swissSettings.preferCleanBoot = backup.preferCleanBoot;
 	swissSettings.sramVideo = backup.sramVideo;
 }

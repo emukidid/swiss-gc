@@ -93,6 +93,7 @@ static char *tooltips_game[PAGE_GAME_MAX+1] = {
 	"Swap Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Swap X-axis of the C Stick with the Control Stick\nY - Swap Y-axis of the C Stick with the Control Stick\nX&Y - Swap both axes of the C Stick with the Control Stick",
 	"Digital Trigger Level:\n\nSets the level where the L/R Button is fully pressed.",
 	"Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated\nby the original medium, or for speedrunning.",
+	"Emulate Broadband Adapter:\n\nOnly available with the File Service Protocol.\n\nPackets not destined for the hypervisor are forwarded to\nthe virtual MAC. The virtual MAC address is the same as\nthe physical MAC. The physical MAC/PHY retain their\nconfiguration from Swiss, including link speed.",
 	"Prefer Clean Boot:\n\nWhen enabled, the GameCube will be reset and the game\nbooted through normal processes with no changes applied.\nRegion restrictions may be applicable.\n\nOnly available to devices attached to the DVD Interface."
 };
 
@@ -325,6 +326,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Default Game Settings (4/5):"));
 		bool enabledVideoPatches = swissSettings.disableVideoPatches < 2;
 		bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
+		bool emulatedEthernet = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_ETHERNET);
 		bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR);
 		if(option < SET_DEFAULT_TRIGGER_LEVEL) {
 			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_DEFAULT_FORCE_VIDEOMODE, enabledVideoPatches);
@@ -343,6 +345,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
 			drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_DEFAULT_TRIGGER_LEVEL, true);
 			drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_DEFAULT_READ_SPEED, emulatedReadSpeed);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", swissSettings.emulateEthernet, option == SET_DEFAULT_EMULATE_ETHERNET, emulatedEthernet);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_DEFAULT_CLEAN_BOOT, enabledCleanBoot);
 		}
 	}
@@ -356,6 +359,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		if(enabledGamePatches) {
 			bool enabledVideoPatches = swissSettings.disableVideoPatches < 2;
 			bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
+			bool emulatedEthernet = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_ETHERNET);
 			bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR);
 			if(option < SET_TRIGGER_LEVEL) {
 				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
@@ -374,6 +378,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				sprintf(triggerLevelStr, "%hhu", gameConfig->triggerLevel);
 				drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_TRIGGER_LEVEL, true);
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[gameConfig->emulateReadSpeed], option == SET_READ_SPEED, emulatedReadSpeed);
+				drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", gameConfig->emulateEthernet, option == SET_EMULATE_ETHERNET, emulatedEthernet);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", gameConfig->preferCleanBoot, option == SET_CLEAN_BOOT, enabledCleanBoot);
 			}
 		}
@@ -396,6 +401,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
 				drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_TRIGGER_LEVEL, false);
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_READ_SPEED, false);
+				drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", swissSettings.emulateEthernet, option == SET_EMULATE_ETHERNET, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_CLEAN_BOOT, false);
 			}
 		}
@@ -744,6 +750,10 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 						swissSettings.emulateReadSpeed = 2;
 				}
 			break;
+			case SET_DEFAULT_EMULATE_ETHERNET:
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_ETHERNET))
+					swissSettings.emulateEthernet ^= 1;
+			break;
 			case SET_DEFAULT_CLEAN_BOOT:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR))
 					swissSettings.preferCleanBoot ^= 1;
@@ -858,6 +868,10 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					if(gameConfig->emulateReadSpeed < 0)
 						gameConfig->emulateReadSpeed = 2;
 				}
+			break;
+			case SET_EMULATE_ETHERNET:
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_ETHERNET))
+					gameConfig->emulateEthernet ^= 1;
 			break;
 			case SET_CLEAN_BOOT:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR))

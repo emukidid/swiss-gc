@@ -246,10 +246,14 @@ s32 deviceHandler_FSP_init(file_handle* file) {
 		dirpro = 0;
 	
 	if((dirpro & (FSP_DIR_MKDIR|FSP_DIR_ADD|FSP_DIR_DEL|FSP_DIR_GET)) == (FSP_DIR_MKDIR|FSP_DIR_ADD|FSP_DIR_DEL) ||
-		(dirpro & FSP_DIR_OWNER))
+		(dirpro & FSP_DIR_OWNER)) {
 		__device_fsp.features |=  FEAT_PATCHES;
-	else
+		__device_fsp.emulable |=  EMU_ETHERNET;
+	}
+	else {
 		__device_fsp.features &= ~FEAT_PATCHES;
+		__device_fsp.emulable &= ~EMU_ETHERNET;
+	}
 	return 0;
 }
 
@@ -294,10 +298,19 @@ bool deviceHandler_FSP_test() {
 }
 
 u32 deviceHandler_FSP_emulated() {
-	if (swissSettings.audioStreaming)
-		return EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER;
-	else
-		return EMU_READ | EMU_BUS_ARBITER;
+	if (devices[DEVICE_PATCHES] && devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
+		if (swissSettings.audioStreaming)
+			return EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER;
+		else
+			return EMU_READ | EMU_BUS_ARBITER;
+	} else {
+		if (swissSettings.audioStreaming)
+			return EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER;
+		else if (swissSettings.emulateEthernet)
+			return EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER;
+		else
+			return EMU_READ | EMU_BUS_ARBITER;
+	}
 }
 
 char* deviceHandler_FSP_status(file_handle* file) {
@@ -317,7 +330,7 @@ DEVICEHANDLER_INTERFACE __device_fsp = {
 	"Configurable via the settings screen",
 	{TEX_SAMBA, 140, 64, 140, 64},
 	FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_HYPERVISOR|FEAT_AUDIO_STREAMING,
-	EMU_READ|EMU_AUDIO_STREAMING,
+	EMU_READ|EMU_AUDIO_STREAMING|EMU_ETHERNET,
 	LOC_SERIAL_PORT_1,
 	&initial_FSP,
 	(_fn_test)&deviceHandler_FSP_test,
