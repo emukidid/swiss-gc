@@ -367,6 +367,10 @@ file_handle* meta_find_disc2(file_handle *f) {
 					if(dirEntries[j].meta->diskId.gamever != f->meta->diskId.gamever) {
 						continue;
 					}
+					if(strlen(dirEntries[j].name) != strlen(f->name)) {
+						disc2File = &dirEntries[j];
+						continue;
+					}
 					if(strcasecmp(dirEntries[j].name, f->name) != dirEntries[j].meta->diskId.disknum - f->meta->diskId.disknum) {
 						disc2File = &dirEntries[j];
 						continue;
