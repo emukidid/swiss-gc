@@ -55,6 +55,8 @@ void *installPatch(int patchId) {
 			patch = MTXOrthoHook; patchSize = MTXOrthoHook_length; break;
 		case MTX_PERSPECTIVEHOOK:
 			patch = MTXPerspectiveHook; patchSize = MTXPerspectiveHook_length; break;
+		case OS_CALLALARMHANDLER:
+			patch = CallAlarmHandler_bin; patchSize = CallAlarmHandler_bin_size; break;
 		case OS_RESERVED:
 			patchSize = 0x1800; break;
 		case PAD_CHECKSTATUS:
@@ -954,6 +956,13 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 52, 15,  7, 6, 5,  4, NULL, 0, "OSCancelAlarmD" },
 		{ 71, 18, 10, 7, 9, 12, NULL, 0, "OSCancelAlarm" },
 		{ 70, 18, 10, 7, 9, 13, NULL, 0, "OSCancelAlarm" }	// SN Systems ProDG
+	};
+	FuncPattern DecrementerExceptionCallbackSigs[5] = {
+		{  93, 30,  6, 14,  4, 10, NULL, 0, "DecrementerExceptionCallbackD" },
+		{ 101, 33,  6, 18,  4, 10, NULL, 0, "DecrementerExceptionCallbackD" },
+		{ 132, 36, 10, 16, 12, 30, NULL, 0, "DecrementerExceptionCallback" },
+		{ 140, 39, 10, 20, 12, 30, NULL, 0, "DecrementerExceptionCallback" },
+		{ 140, 35, 10, 20, 12, 32, NULL, 0, "DecrementerExceptionCallback" }	// SN Systems ProDG
 	};
 	FuncPattern OSGetArenaHiSigs[3] = {
 		{ 30, 15, 3, 2, 1, 3, NULL, 0, "OSGetArenaHiD" },
@@ -2176,6 +2185,82 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 31, length, &__OSGetSystemTimeSigs[2]) &&
 							findx_pattern(data, dataType, i + 62, length, &OSRestoreInterruptsSig))
 							OSCancelAlarmSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(DecrementerExceptionCallbackSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &DecrementerExceptionCallbackSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +   7, length, &OSGetTimeSig) &&
+							findx_pattern(data, dataType, i +  14, length, &OSLoadContextSigs[1]) &&
+							findx_pattern(data, dataType, i +  25, length, &SetTimerSig) &&
+							findx_pattern(data, dataType, i +  27, length, &OSLoadContextSigs[1]) &&
+							findx_pattern(data, dataType, i +  64, length, &InsertAlarmSigs[0]) &&
+							findx_pattern(data, dataType, i +  77, length, &SetTimerSig) &&
+							findx_pattern(data, dataType, i +  87, length, &OSLoadContextSigs[1]))
+							DecrementerExceptionCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern (data, dataType, i +   7, length, &__OSGetSystemTimeSigs[0]) &&
+							findx_patterns(data, dataType, i +  14, length, &OSLoadContextSigs[1],
+							                                                &OSLoadContextSigs[2], NULL) &&
+							findx_pattern (data, dataType, i +  25, length, &SetTimerSig) &&
+							findx_patterns(data, dataType, i +  27, length, &OSLoadContextSigs[1],
+							                                                &OSLoadContextSigs[2], NULL) &&
+							findx_pattern (data, dataType, i +  64, length, &InsertAlarmSigs[0]) &&
+							findx_pattern (data, dataType, i +  77, length, &SetTimerSig) &&
+							findx_pattern (data, dataType, i +  80, length, &OSClearContextSigs[0]) &&
+							findx_pattern (data, dataType, i +  82, length, &OSSetCurrentContextSig) &&
+							findx_pattern (data, dataType, i +  89, length, &OSClearContextSigs[0]) &&
+							findx_pattern (data, dataType, i +  91, length, &OSSetCurrentContextSig) &&
+							findx_patterns(data, dataType, i +  95, length, &OSLoadContextSigs[1],
+							                                                &OSLoadContextSigs[2], NULL))
+							DecrementerExceptionCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +   8, length, &OSGetTimeSig) &&
+							findx_pattern(data, dataType, i +  16, length, &OSLoadContextSigs[1]) &&
+							findx_pattern(data, dataType, i +  26, length, &OSGetTimeSig) &&
+							findx_pattern(data, dataType, i +  55, length, &OSLoadContextSigs[1]) &&
+							findx_pattern(data, dataType, i +  82, length, &InsertAlarmSigs[1]) &&
+							findx_pattern(data, dataType, i +  86, length, &OSGetTimeSig) &&
+							findx_pattern(data, dataType, i + 123, length, &OSLoadContextSigs[1]))
+							DecrementerExceptionCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern (data, dataType, i +   8, length, &__OSGetSystemTimeSigs[1]) &&
+							findx_patterns(data, dataType, i +  16, length, &OSLoadContextSigs[1],
+							                                                &OSLoadContextSigs[2], NULL) &&
+							findx_pattern (data, dataType, i +  26, length, &__OSGetSystemTimeSigs[1]) &&
+							findx_patterns(data, dataType, i +  55, length, &OSLoadContextSigs[1],
+							                                                &OSLoadContextSigs[2], NULL) &&
+							findx_pattern (data, dataType, i +  82, length, &InsertAlarmSigs[1]) &&
+							findx_pattern (data, dataType, i +  86, length, &__OSGetSystemTimeSigs[1]) &&
+							findx_pattern (data, dataType, i + 116, length, &OSClearContextSigs[1]) &&
+							findx_pattern (data, dataType, i + 118, length, &OSSetCurrentContextSig) &&
+							findx_pattern (data, dataType, i + 125, length, &OSClearContextSigs[1]) &&
+							findx_pattern (data, dataType, i + 127, length, &OSSetCurrentContextSig) &&
+							findx_patterns(data, dataType, i + 131, length, &OSLoadContextSigs[1],
+							                                                &OSLoadContextSigs[2], NULL))
+							DecrementerExceptionCallbackSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_pattern (data, dataType, i +   8, length, &__OSGetSystemTimeSigs[2]) &&
+							findx_pattern (data, dataType, i +  16, length, &OSLoadContextSigs[2]) &&
+							findx_pattern (data, dataType, i +  26, length, &__OSGetSystemTimeSigs[2]) &&
+							findx_pattern (data, dataType, i +  55, length, &OSLoadContextSigs[2]) &&
+							findx_patterns(data, dataType, i +  82, length, &InsertAlarmSigs[2],
+							                                                &InsertAlarmSigs[3], NULL) &&
+							findx_pattern (data, dataType, i +  86, length, &__OSGetSystemTimeSigs[2]) &&
+							findx_pattern (data, dataType, i + 116, length, &OSClearContextSigs[2]) &&
+							findx_pattern (data, dataType, i + 118, length, &OSSetCurrentContextSig) &&
+							findx_pattern (data, dataType, i + 125, length, &OSClearContextSigs[2]) &&
+							findx_pattern (data, dataType, i + 127, length, &OSSetCurrentContextSig) &&
+							findx_pattern (data, dataType, i + 131, length, &OSLoadContextSigs[2]))
+							DecrementerExceptionCallbackSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -4947,6 +5032,35 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				data[k + 1] = (u32)OSCancelAlarm;
 			
 			print_gecko("Found:[%s$%i] @ %08X\n", OSCancelAlarmSigs[j].Name, j, OSCancelAlarm);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(DecrementerExceptionCallbackSigs) / sizeof(FuncPattern); j++)
+	if ((i = DecrementerExceptionCallbackSigs[j].offsetFoundAt)) {
+		u32 *DecrementerExceptionCallback = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		u32 *CallAlarmHandler;
+		
+		if (DecrementerExceptionCallback) {
+			if (devices[DEVICE_CUR]->emulated() & EMU_READ_SPEED) {
+				switch (j) {
+					case 0:
+						CallAlarmHandler = getPatchAddr(OS_CALLALARMHANDLER);
+						
+						data[i +  81] = 0x38BB0000;	// addi		r5, r27, 0
+						data[i +  82] = 0x60000000;	// nop
+						data[i +  83] = branchAndLink(CallAlarmHandler, DecrementerExceptionCallback +  83);
+						break;
+					case 2:
+						CallAlarmHandler = getPatchAddr(OS_CALLALARMHANDLER);
+						
+						data[i + 115] = 0x38BE0000;	// addi		r5, r30, 0
+						data[i + 116] = 0x60000000;	// nop
+						data[i + 119] = branchAndLink(CallAlarmHandler, DecrementerExceptionCallback + 119);
+						break;
+				}
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", DecrementerExceptionCallbackSigs[j].Name, j, DecrementerExceptionCallback);
 			patched++;
 		}
 	}
