@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
 	}
 	else if(device == &__device_gcloader) {
 		char *gcloaderVersionStr = gcloaderGetVersion();
-		if(gcloaderVersionStr != NULL) {
+		if(gcloaderVersionStr != NULL && !endsWith(gcloaderVersionStr, ".GCLOADER_HW2")) {
 			if(strverscmp(swissSettings.gcloaderTopVersion, gcloaderVersionStr) < 0) {
 				strlcpy(swissSettings.gcloaderTopVersion, gcloaderVersionStr, sizeof(swissSettings.gcloaderTopVersion));
 			}
