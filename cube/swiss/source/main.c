@@ -136,6 +136,7 @@ int main(int argc, char *argv[])
 	allDevices[i++] = &__device_ata_b;
 	allDevices[i++] = &__device_qoob;
 	allDevices[i++] = &__device_smb;
+	allDevices[i++] = &__device_aram;
 	allDevices[i++] = &__device_sys;
 	allDevices[i++] = &__device_usbgecko;
 	allDevices[i++] = &__device_ftp;

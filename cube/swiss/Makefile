@@ -31,6 +31,7 @@ SOURCES		:=  source \
 			  source/config \
               source/devices \
               source/devices/system \
+			  source/devices/aram \
               source/devices/dvd \
               source/devices/fat \
 			  source/devices/fsp \

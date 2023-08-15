@@ -200,6 +200,8 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 		sprintf(txtbuffer, "%s", "Serial Port 1");
 	else if(devices[DEVICE_CUR]->location == LOC_SERIAL_PORT_2)
 		sprintf(txtbuffer, "%s", "Serial Port 2");
+	else if(devices[DEVICE_CUR]->location == LOC_HSP)
+		sprintf(txtbuffer, "%s", "Hi Speed Port");
 	else if(devices[DEVICE_CUR]->location == LOC_SYSTEM)
 		sprintf(txtbuffer, "%s", "System");
 	uiDrawObj_t *devLocationLabel = DrawStyledLabel(30 + ((135-30) / 2), 195, txtbuffer, 0.65f, true, defaultColor);

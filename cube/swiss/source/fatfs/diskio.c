@@ -14,13 +14,14 @@
 #include "ata.h"
 #include "wkf.h"
 #include <ogc/dvd.h>
+#include "aram.h"
 #include "ff_cache/cache.h"
 
-const DISC_INTERFACE *driver[FF_VOLUMES] = {&__io_gcsda, &__io_gcsdb, &__io_gcsd2, &__io_ataa, &__io_atab, &__io_atac, &__io_wkf, &__io_gcode};
-static bool disk_isInit[FF_VOLUMES] = {0,0,0,0,0,0,0,0};
+static const DISC_INTERFACE *driver[FF_VOLUMES] = {&__io_gcsda, &__io_gcsdb, &__io_gcsd2, &__io_ataa, &__io_atab, &__io_atac, &__io_wkf, &__io_gcode, &__io_aram};
+static bool disk_isInit[FF_VOLUMES] = {0};
 
 // Disk caches
-CACHE *cache[FF_VOLUMES] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+static CACHE *cache[FF_VOLUMES] = {NULL};
 
 
 /*-----------------------------------------------------------------------*/
@@ -69,7 +70,14 @@ DSTATUS disk_initialize (
 	// - DEFAULT_SECTORS_PAGE = 64
 	// NOTE: endOfPartition isn't usable, since this is a
 	// per-disk cache, not per-partition. Use UINT_MAX.
-	cache[pdrv] = _FAT_cache_constructor(16, 64, driver[pdrv], (sec_t)-1, 512);
+	switch (pdrv) {
+		case DEV_ARAM:
+			cache[pdrv] = _FAT_cache_constructor(2, 8, driver[pdrv], (sec_t)-1, 512);
+			break;
+		default:
+			cache[pdrv] = _FAT_cache_constructor(16, 64, driver[pdrv], (sec_t)-1, 512);
+			break;
+	}
 
 	// Device initialized.
 	disk_isInit[pdrv] = true;
@@ -94,7 +102,10 @@ DRESULT disk_read (
 
 	// Read from the cache.
 	bool ret;
-	if (count == 1) {
+	if (!cache[pdrv]) {
+		// No cache.
+		ret = _FAT_disc_readSectors(driver[pdrv], sector, count, buff);
+	} else if (count == 1) {
 		// Single sector.
 		ret = _FAT_cache_readSector(cache[pdrv], buff, sector);
 	} else {
@@ -125,7 +136,10 @@ DRESULT disk_write (
 
 	// Write to the cache.
 	bool ret;
-	if (count == 1) {
+	if (!cache[pdrv]) {
+		// No cache.
+		ret = _FAT_disc_writeSectors(driver[pdrv], sector, count, buff);
+	} else if (count == 1) {
 		// Single sector.
 		ret = _FAT_cache_writeSector(cache[pdrv], buff, sector);
 	} else {
@@ -143,7 +157,7 @@ DRESULT disk_write (
 
 DRESULT disk_ioctl (
 	BYTE pdrv,		/* Physical drive number (0..) */
-	BYTE cmd,		/* Control code */
+	BYTE ctrl,		/* Control code */
 	void *buff		/* Buffer to send/receive control data */
 )
 {
@@ -151,17 +165,42 @@ DRESULT disk_ioctl (
 	if (pdrv >= DEV_MAX)
 		return ret;
 
-	switch (cmd) {
+	switch (ctrl) {
 		case CTRL_SYNC:
-			ret = (_FAT_cache_flush(cache[pdrv]) ? RES_OK : RES_ERROR);
+			if (cache[pdrv]) {
+				// Flush the cache.
+				ret = (_FAT_cache_flush(cache[pdrv]) ? RES_OK : RES_ERROR);
+			}
+			break;
+
+		case GET_SECTOR_COUNT:
+			if (cache[pdrv]) {
+				*(LBA_t*)buff = cache[pdrv]->endOfPartition;
+				ret = RES_OK;
+			}
 			break;
 
 		case GET_SECTOR_SIZE:
-			*(WORD*)buff = 512;
-			ret = RES_OK;
+			if (cache[pdrv]) {
+				*(WORD*)buff = cache[pdrv]->bytesPerSector;
+				ret = RES_OK;
+			}
+			break;
+
+		case GET_BLOCK_SIZE:
+			if (cache[pdrv]) {
+				*(DWORD*)buff = cache[pdrv]->sectorsPerPage;
+				ret = RES_OK;
+			}
 			break;
 
 		default:
+			break;
+	}
+
+	switch (pdrv) {
+		case DEV_ARAM:
+			ret = ARAM_ioctl(ctrl, buff);
 			break;
 	}
 

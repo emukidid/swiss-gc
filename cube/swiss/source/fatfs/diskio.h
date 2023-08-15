@@ -35,6 +35,7 @@ typedef enum {
 	DEV_ATAC,
 	DEV_WKF,
 	DEV_GCLDR,
+	DEV_ARAM,
 	DEV_MAX
 } DeviceNumber;
 

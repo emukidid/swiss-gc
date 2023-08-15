@@ -16,7 +16,7 @@
 #include "wode/WodeInterface.h"
 #include "bnr.h"
 
-#define MAX_DEVICES 19
+#define MAX_DEVICES 20
 #define PATHNAME_MAX 1024
 
 typedef struct {
@@ -138,7 +138,8 @@ typedef char* (* _fn_status)(file_handle*);
 #define DEVICE_ID_F			0x0F
 #define DEVICE_ID_G			0x10
 #define DEVICE_ID_H			0x11
-#define DEVICE_ID_MAX		DEVICE_ID_H
+#define DEVICE_ID_I			0x12
+#define DEVICE_ID_MAX		DEVICE_ID_I
 #define DEVICE_ID_UNK		(DEVICE_ID_MAX + 1)
 
 struct DEVICEHANDLER_STRUCT {
@@ -198,6 +199,7 @@ enum DEV_ERRORS {
 #include "devices/ftp/deviceHandler-FTP.h"
 #include "devices/fsp/deviceHandler-FSP.h"
 #include "devices/gcloader/deviceHandler-gcloader.h"
+#include "devices/aram/deviceHandler-ARAM.h"
 
 extern void deviceHandler_setStatEnabled(int enable);
 extern int deviceHandler_getStatEnabled();
