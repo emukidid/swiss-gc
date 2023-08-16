@@ -19,10 +19,7 @@
 #include "patcher.h"
 #include "dvd.h"
 
-const DISC_INTERFACE* carda = &__io_gcsda;
-const DISC_INTERFACE* cardb = &__io_gcsdb;
-const DISC_INTERFACE* cardc = &__io_gcsd2;
-FATFS *fs[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+static FATFS *fs[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
 #define SD_COUNT 3
 #define IS_SDCARD(file) (file->name[0] == 's' && file->name[1] == 'd')
 int GET_SLOT(file_handle* file) {
@@ -421,13 +418,13 @@ s32 deviceHandler_FAT_makeDir(file_handle* dir) {
 }
 
 bool deviceHandler_FAT_test_sd_a() {
-	return carda->startup() && carda->shutdown();
+	return __io_gcsda.startup() && __io_gcsda.shutdown();
 }
 bool deviceHandler_FAT_test_sd_b() {
-	return cardb->startup() && cardb->shutdown();
+	return __io_gcsdb.startup() && __io_gcsdb.shutdown();
 }
 bool deviceHandler_FAT_test_sd_c() {
-	return cardc->startup() && cardc->shutdown();
+	return __io_gcsd2.startup() && __io_gcsd2.shutdown();
 }
 bool deviceHandler_FAT_test_ata_a() {
 	return ide_exi_inserted(0);

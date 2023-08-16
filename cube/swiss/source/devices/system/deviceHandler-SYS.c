@@ -482,7 +482,7 @@ DEVICEHANDLER_INTERFACE __device_sys = {
 	DEVICE_ID_9,
 	"Various",
 	"System",
-	"Backup IPL, DSP, DVD, SRAM",
+	"Backup IPL, DSP, DVD, SRAM, ARAM",
 	{TEX_SYSTEM, 75, 48, 76, 48},
 	FEAT_READ|FEAT_WRITE,
 	EMU_NONE,

@@ -172,7 +172,7 @@
 
 
 #define FF_STR_VOLUME_ID	1
-#define FF_VOLUME_STRS		"sda","sdb","sdc","ataa","atab","atac","wkf","gcldr","aram"
+#define FF_VOLUME_STRS		"sda","sdb","sdc","ataa","atab","atac","wkf","gcldr","ram"
 /* FF_STR_VOLUME_ID switches support for volume ID in arbitrary strings.
 /  When FF_STR_VOLUME_ID is set to 1 or 2, arbitrary strings can be used as drive
 /  number in the path name. FF_VOLUME_STRS defines the volume ID strings for each

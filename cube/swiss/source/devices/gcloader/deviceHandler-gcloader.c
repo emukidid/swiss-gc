@@ -19,7 +19,7 @@
 #include "patcher.h"
 #include "dvd.h"
 
-FATFS *gcloaderfs = NULL;
+static FATFS *gcloaderfs = NULL;
 
 file_handle initial_GCLOADER =
 	{ "gcldr:/",       // directory
@@ -247,8 +247,9 @@ s32 deviceHandler_GCLOADER_init(file_handle* file){
 		disk_shutdown(DEV_GCLDR);
 	}
 	gcloaderfs = (FATFS*)malloc(sizeof(FATFS));
-	return f_mount(gcloaderfs, "gcldr:/", 1) == FR_OK ? 0 : EIO;
-		}
+	file->status = f_mount(gcloaderfs, "gcldr:/", 1);
+	return file->status == FR_OK ? 0 : EIO;
+}
 
 s32 deviceHandler_GCLOADER_deinit(file_handle* file) {
 	deviceHandler_FAT_closeFile(file);

@@ -18,7 +18,7 @@
 static FATFS *aramfs = NULL;
 
 file_handle initial_ARAM =
-	{ "aram:/",       // directory
+	{ "ram:/",       // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
 	  0,        // size
@@ -29,17 +29,17 @@ file_handle initial_ARAM =
 
 s32 deviceHandler_ARAM_init(file_handle* file) {
 	if(aramfs != NULL) {
-		f_unmount("aram:/");
+		f_unmount("ram:/");
 		free(aramfs);
 		aramfs = NULL;
 		disk_shutdown(DEV_ARAM);
 	}
 	aramfs = (FATFS*)malloc(sizeof(FATFS));
-	file->status = f_mount(aramfs, "aram:/", 1);
+	file->status = f_mount(aramfs, "ram:/", 1);
 	if(file->status == FR_NO_FILESYSTEM) {
-		file->status = f_mkfs("aram:/", &(MKFS_PARM){FM_EXFAT | FM_SFD}, aramfs->win, sizeof(aramfs->win));
+		file->status = f_mkfs("ram:/", &(MKFS_PARM){FM_EXFAT | FM_SFD}, aramfs->win, sizeof(aramfs->win));
 		if(file->status == FR_OK) {
-			file->status = f_mount(aramfs, "aram:/", 1);
+			file->status = f_mount(aramfs, "ram:/", 1);
 		}
 	}
 	return file->status == FR_OK ? 0 : EIO;

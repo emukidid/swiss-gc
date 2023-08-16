@@ -19,7 +19,7 @@
 #include "patcher.h"
 #include "dvd.h"
 
-FATFS *wkffs = NULL;
+static FATFS *wkffs = NULL;
 
 file_handle initial_WKF =
 	{ "wkf:/",       // directory
@@ -179,8 +179,9 @@ s32 deviceHandler_WKF_init(file_handle* file){
 		disk_shutdown(DEV_WKF);
 	}
 	wkffs = (FATFS*)malloc(sizeof(FATFS));
-	return f_mount(wkffs, "wkf:/", 1) == FR_OK ? 0 : EIO;
-		}
+	file->status = f_mount(wkffs, "wkf:/", 1);
+	return file->status == FR_OK ? 0 : EIO;
+}
 
 s32 deviceHandler_WKF_deinit(file_handle* file) {
 	deviceHandler_FAT_closeFile(file);
