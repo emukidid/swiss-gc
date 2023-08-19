@@ -17,8 +17,8 @@
  * with Swiss.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __NKIT_H
-#define __NKIT_H
+#ifndef __NKIT_H__
+#define __NKIT_H__
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -46,7 +46,8 @@ bool valid_gcm_boot(const DiskHeader *header);
 bool valid_gcm_crc32(const DiskHeader *header, uint32_t crc);
 bool valid_gcm_magic(const DiskHeader *header);
 bool valid_gcm_size(const DiskHeader *header, off_t size);
+bool valid_gcm_size2(const DiskHeader *header, off_t size);
 
 bool needs_nkit_reencode(const DiskHeader *header, off_t size);
 
-#endif /* __NKIT_H */
+#endif /* __NKIT_H__ */

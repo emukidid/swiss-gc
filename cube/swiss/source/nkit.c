@@ -2348,7 +2348,8 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
 				header->Version == nkit_dat[i].gamever &&
-				*size == nkit_dat[i].size + nkit_dat[i]._size) {
+				(*size == nkit_dat[i].size + nkit_dat[i]._size ||
+				*size == header->UserPos + header->UserLength)) {
 
 				for (int j = i + 1; j < TOTAL_COUNT; j++)
 					if (nkit_dat[i].header_sum16 == nkit_dat[j].header_sum16 &&
@@ -2539,6 +2540,11 @@ bool valid_gcm_size(const DiskHeader *header, off_t size)
 	}
 
 	return size == DISC_SIZE;
+}
+
+bool valid_gcm_size2(const DiskHeader *header, off_t size)
+{
+	return size == header->UserPos + header->UserLength;
 }
 
 bool needs_nkit_reencode(const DiskHeader *header, off_t size)
