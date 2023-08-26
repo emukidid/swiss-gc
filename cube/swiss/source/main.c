@@ -248,16 +248,30 @@ int main(int argc, char *argv[])
 		}
 	}
 	else if(device == &__device_gcloader) {
-		char *gcloaderVersionStr = gcloaderGetVersion();
-		if(gcloaderVersionStr != NULL && !endsWith(gcloaderVersionStr, ".GCLOADER_HW2")) {
-			if(strverscmp(swissSettings.gcloaderTopVersion, gcloaderVersionStr) < 0) {
+		int gcloaderVersion = driveInfo.pad[2] + 1;
+		char *gcloaderVersionStr = gcloaderGetVersion(driveInfo.pad[2]);
+		if(gcloaderVersionStr != NULL) {
+			if(strverscmp(swissSettings.gcloaderTopVersion, gcloaderVersionStr) < 0 || swissSettings.gcloaderVersion != gcloaderVersion) {
 				strlcpy(swissSettings.gcloaderTopVersion, gcloaderVersionStr, sizeof(swissSettings.gcloaderTopVersion));
+				swissSettings.gcloaderVersion = gcloaderVersion;
 			}
-			if(strverscmp(swissSettings.gcloaderTopVersion, "2.0.1") < 0) {
-				find_existing_entry("gcldr:/GCLoader_Updater_2.0.1*.dol", true);
-				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\ngc-loader.com/firmware-updates"));
-				wait_press_A();
-				DrawDispose(msgBox);
+			switch(gcloaderVersion) {
+				case 1:
+					if(strverscmp(swissSettings.gcloaderTopVersion, "2.0.1") < 0) {
+						find_existing_entry("gcldr:/GCLoader_Updater_2.0.1*.dol", true);
+						uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\ngc-loader.com/firmware-updates"));
+						wait_press_A();
+						DrawDispose(msgBox);
+					}
+					break;
+				case 2:
+					if(strverscmp(swissSettings.gcloaderTopVersion, "1.0.1") < 0) {
+						find_existing_entry("gcldr:/GC_LOADER_HW2_UPDATER_1.0.1.dol", true);
+						uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\ngc-loader.com/firmware-updates-hw2"));
+						wait_press_A();
+						DrawDispose(msgBox);
+					}
+					break;
 			}
 		}
 		free(gcloaderVersionStr);

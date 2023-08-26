@@ -144,6 +144,7 @@ typedef struct {
 	int bs2Boot;
 	int showHiddenFiles;
 	int recentListLevel;	// off, lazy, on
+	int gcloaderVersion;
 	char gcloaderTopVersion[32];
 	char autoload[PATHNAME_MAX];
 	char flattenDir[PATHNAME_MAX];

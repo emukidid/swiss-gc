@@ -39,8 +39,8 @@ u32 gcloaderReadId() {
 	return __gcloaderCmdImm(0xB0000000, 0x00000000, 0x00000000);
 }
 
-char *gcloaderGetVersion() {
-	int len = (__gcloaderCmdImm(0xB1000001, 0x00000000, 0x00000000)+31)&~31;
+char *gcloaderGetVersion(u8 hwVersion) {
+	int len = (__gcloaderCmdImm(0xB1000001, hwVersion, 0x00000000)+31)&~31;
 	if(len <= 0) {
 		return NULL;
 	}
@@ -49,7 +49,7 @@ char *gcloaderGetVersion() {
 		return NULL;
 	}
 	gcloader[2] = 0xB1000000;
-	gcloader[3] = 0;
+	gcloader[3] = hwVersion;
 	gcloader[4] = 0;
 	gcloader[5] = (u32)buffer;
 	gcloader[6] = len;
