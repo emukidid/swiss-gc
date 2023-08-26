@@ -2149,6 +2149,17 @@ uiDrawObj_t* draw_game_info() {
 			sprintf(txtbuffer, "Disc %i/%i [Found: %s]", GCMDisk.DiscID+1, GCMDisk.TotalDisc, meta_find_disc2(&curFile) ? "Yes":"No");
 			DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.6f, true, defaultColor));
 		}
+		else if(GCMDisk.CountryCode == 'E'
+			&& GCMDisk.RegionCode == 0) {
+			if(GCMDisk.Version > 0x30) {
+				sprintf(txtbuffer, "Revision %X", GCMDisk.Version - 0x30);
+				DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.6f, true, defaultColor));
+			}
+		}
+		else if(GCMDisk.Version) {
+			sprintf(txtbuffer, "Revision %X", GCMDisk.Version);
+			DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.6f, true, defaultColor));
+		}
 	}
 	if(devices[DEVICE_CUR] == &__device_wode) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 390, "Settings (X) - Cheats (Y) - Boot (A)", 0.75f, true, defaultColor));
