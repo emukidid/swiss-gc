@@ -74,7 +74,6 @@ char *cardError(int error_code) {
 
 
 int initialize_card(int slot) {
-	EXI_Detach(slot);
 	int slot_error = CARD_ERROR_READY, i = 0;
   
 	if(!card_init[slot]) {

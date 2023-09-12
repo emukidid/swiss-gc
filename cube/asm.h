@@ -330,6 +330,11 @@
 #define DMAU		922
 #define DMAL		923
 
+#define ECID0		924
+#define ECID1		925
+#define ECID2		926
+#define ECID3		927
+
 #define MSR_RI				0x00000002
 #define MSR_DR				0x00000010
 #define MSR_IR				0x00000020

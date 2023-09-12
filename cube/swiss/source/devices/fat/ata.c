@@ -160,19 +160,7 @@ static inline void ata_read_buffer(int chn, u32 *dst)
 	}
 	else {
 		// IDE_EXI_V2, no need to select / deselect all the time
-		u32 *ptr = dst;
-		if(((u32)dst)%32) {
-			ptr = (u32*)memalign(32, 512);
-		}
-		
-		DCInvalidateRange(ptr,512);
-		EXI_Dma(chn,ptr,512,EXI_READ,NULL);
-		EXI_Sync(chn);
-		if(((u32)dst)%32) {
-			memcpy(dst, ptr, 512);
-			free(ptr);
-		}
-		//EXI_ImmEx(chn,dst,512,EXI_READ);
+		EXI_DmaEx(chn,dst,512,EXI_READ);
 		EXI_Deselect(chn);
 		EXI_Unlock(chn);
 	}
@@ -191,7 +179,7 @@ static inline void ata_write_buffer(int chn, u32 *src)
 	EXI_Lock(chn, dev, NULL);
 	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_ImmEx(chn,&dat,3,EXI_WRITE);
-	EXI_ImmEx(chn, src,512,EXI_WRITE);
+	EXI_DmaEx(chn, src,512,EXI_WRITE);
 	dat = 0;
 	EXI_ImmEx(chn,&dat,1,EXI_WRITE);	// Burn an extra cycle for the IDE-EXI to know to stop serving data
 	EXI_Deselect(chn);
