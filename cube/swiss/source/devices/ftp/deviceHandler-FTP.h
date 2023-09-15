@@ -27,6 +27,7 @@
 
 extern DEVICEHANDLER_INTERFACE __device_ftp;
 
+extern bool deviceHandler_FTP_test();
 
 #endif
 

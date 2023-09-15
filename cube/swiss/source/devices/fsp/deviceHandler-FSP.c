@@ -294,7 +294,21 @@ s32 deviceHandler_FSP_makeDir(file_handle* dir) {
 }
 
 bool deviceHandler_FSP_test() {
-	return exi_bba_exists();
+	char ifname[4];
+	if(if_indextoname(1, ifname)) {
+		if(ifname[0] == 'E') {
+			__device_fsp.hwName = "ENC28J60";
+			__device_fsp.features = FEAT_READ|FEAT_WRITE;
+			__device_fsp.emulable = EMU_NONE;
+			if(ifname[1] == '0')
+				__device_fsp.location = LOC_MEMCARD_SLOT_A;
+			else if(ifname[1] == '1')
+				__device_fsp.location = LOC_MEMCARD_SLOT_B;
+			else if(ifname[1] == '2')
+				__device_fsp.location = LOC_SERIAL_PORT_2;
+		}
+	}
+	return net_initialized || exi_bba_exists();
 }
 
 u32 deviceHandler_FSP_emulated() {

@@ -28,6 +28,7 @@
 
 extern DEVICEHANDLER_INTERFACE __device_smb;
 
+extern bool deviceHandler_SMB_test();
 
 #endif
 

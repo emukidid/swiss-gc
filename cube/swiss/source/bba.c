@@ -5,10 +5,10 @@
 #include <ogcsys.h>
 #include "exi.h"
 #include "swiss.h"
+#include "deviceHandler.h"
 
 /* Network Globals */
 int net_initialized = 0;
-int bba_exists = 0;
 struct in_addr bba_localip;
 struct in_addr bba_netmask;
 struct in_addr bba_gateway;
@@ -18,8 +18,7 @@ void init_network(void *args) {
 
 	int res = 0;
 
-	bba_exists = exi_bba_exists();
-	if(bba_exists && !net_initialized) {
+	if(!net_initialized) {
 		inet_aton(swissSettings.bbaLocalIp, &bba_localip);
 		bba_netmask.s_addr = INADDR_BROADCAST << (32 - swissSettings.bbaNetmask);
 		inet_aton(swissSettings.bbaGateway, &bba_gateway);
@@ -34,6 +33,10 @@ void init_network(void *args) {
 		else {
 			net_initialized = 0;
 		}
+
+		deviceHandler_setDeviceAvailable(&__device_smb, deviceHandler_SMB_test());
+		deviceHandler_setDeviceAvailable(&__device_ftp, deviceHandler_FTP_test());
+		deviceHandler_setDeviceAvailable(&__device_fsp, deviceHandler_FSP_test());
 	}
 }
 

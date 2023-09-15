@@ -15,6 +15,7 @@
 #include "config.h"
 #include "settings.h"
 #include "exi.h"
+#include "bba.h"
 
 #define page_x_ofs_key (30)
 #define page_x_ofs_val (410)
@@ -278,10 +279,10 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)SET_PAGE_2_BACK);
 		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, page_y_ofs, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_2_BACK-1)),scrollBarTabHeight));
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Network Settings (2/5):"));
-		bool netEnable = exi_bba_exists();
+		bool netEnable = net_initialized || exi_bba_exists();
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
 		if(option < SET_FTP_USER) {
-			drawSettingEntryBoolean(page, &page_y_ofs, "Init network at startup:", swissSettings.initNetworkAtStart, option == SET_INIT_NET, netEnable);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Init network at startup:", swissSettings.initNetworkAtStart, option == SET_INIT_NET, true);
 			drawSettingEntryString(page, &page_y_ofs, "IPv4 Address:", swissSettings.bbaLocalIp, option == SET_BBA_LOCALIP, netEnable);
 			drawSettingEntryNumeric(page, &page_y_ofs, "IPv4 Netmask:", swissSettings.bbaNetmask, option == SET_BBA_NETMASK, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "IPv4 Gateway:", swissSettings.bbaGateway, option == SET_BBA_GATEWAY, netEnable);

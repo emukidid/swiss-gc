@@ -11,5 +11,7 @@
 
 extern DEVICEHANDLER_INTERFACE __device_fsp;
 
+extern bool deviceHandler_FSP_test();
+
 #endif
 

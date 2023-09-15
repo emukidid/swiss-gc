@@ -235,7 +235,19 @@ s32 deviceHandler_SMB_makeDir(file_handle* dir) {
 }
 
 bool deviceHandler_SMB_test() {
-	return exi_bba_exists();
+	char ifname[4];
+	if(if_indextoname(1, ifname)) {
+		if(ifname[0] == 'E') {
+			__device_smb.hwName = "ENC28J60";
+			if(ifname[1] == '0')
+				__device_smb.location = LOC_MEMCARD_SLOT_A;
+			else if(ifname[1] == '1')
+				__device_smb.location = LOC_MEMCARD_SLOT_B;
+			else if(ifname[1] == '2')
+				__device_smb.location = LOC_SERIAL_PORT_2;
+		}
+	}
+	return net_initialized || exi_bba_exists();
 }
 
 char* deviceHandler_SMB_status(file_handle* file) {
