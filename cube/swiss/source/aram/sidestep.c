@@ -24,12 +24,11 @@
 #define ARAMSTART 0x8000
 
 /*** A global or two ***/
-static DOLHEADER *dolhdr;
 static u32 minaddress = 0;
 static u32 maxaddress = 0;
 static u32 _entrypoint, _dst, _src, _len;
 
-typedef int (*BOOTSTUB) (u32 entrypoint, u32 dst, u32 src, int len, u32 invlen, u32 invaddress);
+typedef int (*BOOTSTUB) (u32 entrypoint, u32 dst, u32 src, int len, u32 invlen, u32 invaddress, u32 zerolen, u32 zeroaddress);
 
 /*--- Auxilliary RAM Support ----------------------------------------------*/
 /****************************************************************************
@@ -47,7 +46,15 @@ static void ARAMStub(void)
              R6 = Data length
              R7 = Invalidate Length / 32
              R8 = Invalidate Start Address
+             R9 = Zero Length / 32
+             R10 = Zero Start Address
         ***/
+
+    asm("mtctr 9");
+    asm("Zero:");
+    asm("dcbz 0,10");
+    asm("addi 10,10,32");
+    asm("bdnz Zero");
 
     asm("mtctr 7");
     asm("Invalidate:");
@@ -149,20 +156,22 @@ void ARAMRunStub(void)
 	char *p;
 	char *s = (char *) ARAMStub;
 
-	/*** Copy ARAMStub to 81300000 ***/
-	if (_dst + _len < 0x81300000) p = (void *) 0x81300000;
-	else p = (void *) 0x80003100;
-	memcpy(p, s, ARAMRunStub - ARAMStub);
-
 	/*** Round length to 32 bytes ***/
 	if (_len & 0x1f) _len = (_len & ~0x1f) + 0x20;
 
-	/*** Flush everything! ***/
-	DCFlushRange((void *) 0x80000000, 0x1800000);
+	/*** Copy ARAMStub to 81300000 ***/
+	if (_dst + _len < 0x81300000) p = (void *) 0x81300000;
+	else p = (void *) (_dst + _len);
+	memcpy(p, s, ARAMRunStub - ARAMStub);
+
+	/*** Flush ARAMStub ***/
+	DCFlushRangeNoSync(p, ARAMRunStub - ARAMStub);
+	ICInvalidateRange(p, ARAMRunStub - ARAMStub);
+	_sync();
 
 	/*** Boot the bugger :D ***/
 	stub = (BOOTSTUB) p;
-	stub((u32) _entrypoint, _dst, _src, _len | 0x80000000, _len >> 5, _dst);
+	stub((u32) _entrypoint, _dst, _src, _len | 0x80000000, _len >> 5, _dst, ((u32) p - 0x80003100) >> 5, 0x80003100);
 }
 
 /****************************************************************************
@@ -229,9 +238,6 @@ static void DOLMinMax(DOLHEADER * dol)
     if ((dol->bssAddress + dol->bssLength) > maxaddress)
       maxaddress = dol->bssAddress + dol->bssLength;
   }
-
-  /*** Some OLD dols, Xrick in particular, require ~128k clear memory ***/
-  maxaddress += 0x20000;
 }
 
 u32 DOLSize(DOLHEADER *dol)
@@ -275,6 +281,7 @@ u32 DOLSize(DOLHEADER *dol)
 ****************************************************************************/
 int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
 {
+  DOLHEADER *dolhdr;
   u32 sizeinbytes;
   int i;
   struct __argv args;
