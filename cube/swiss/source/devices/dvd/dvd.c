@@ -42,9 +42,8 @@ unsigned int dvd_read_id()
 	
 	while(( dvd[7] & 1) && !(padsButtonsHeld() & PAD_BUTTON_B)){ VIDEO_WaitVSync (); }
 	
-	if (dvd[0] & 0x4){
+	if (dvd[6])
 		return 1;
-	}
 	return 0;
 }
 
@@ -124,13 +123,10 @@ int dvd_seek(int offset)
 	dvd[2] = 0xAB000000;
 	dvd[3] = offset >> 2;
 	dvd[4] = 0;
-
+	dvd[8] = 1;
 	dvd[7] = 1;
 	while (dvd[7] & 1);
-
-	if (dvd[0] & 0x4)
-		return 1;
-	return 0;
+	return dvd[8];
 }
 
 void dvd_setstatus()
@@ -421,7 +417,6 @@ DVD_LowRead64(void* dst, unsigned int len, uint64_t offset)
 */
 int DVD_LowRead64(void* dst, u32 len, uint64_t offset)
 {
-	vu32* dvd = (vu32*)0xCC006000;
 	if(offset>>2 > 0xFFFFFFFF)
 		return -1;
 	
@@ -434,10 +429,10 @@ int DVD_LowRead64(void* dst, u32 len, uint64_t offset)
 	dvd[5] = (u32)dst;
 	dvd[6] = len;
 	dvd[7] = 3; // enable reading!
+	DCInvalidateRange(dst, len);
 	while (dvd[7] & 1);
 
-	DCInvalidateRange(dst, len);
-	if (dvd[0] & 0x4)
+	if (dvd[6])
 		return 1;
 	return 0;
 }
@@ -483,7 +478,6 @@ DVD_ReadID()
 */
 int DVD_ReadID(dvddiskid *diskID)
 {
-  volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
 	dvd[0] = 0x2E;
 	dvd[1] = 0;
 	dvd[2] = 0xA8000040;
@@ -493,7 +487,7 @@ int DVD_ReadID(dvddiskid *diskID)
 	dvd[6] = 0x20;
 	dvd[7] = 3; // enable reading!
 	while (dvd[7] & 1);
-	if (dvd[0] & 0x4)
+	if (dvd[6])
 		return 1;
 	return 0;
 }
