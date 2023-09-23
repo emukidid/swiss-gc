@@ -333,6 +333,8 @@ int install_code(int final)
 		DCFlushRange(patchLocation, patchSize);
 		ICInvalidateRange(patchLocation, patchSize);
 	} else {
+		for (u32 i = 0x100; i <= 0x900; i += 0x100)
+			*(u32 *)&VAR_AREA[i] = 0x4C000064;
 		memcpy((void *)0x80000000, VAR_AREA, sizeof(VAR_AREA));
 		DCFlushRangeNoSync((void *)0x80000000, sizeof(VAR_AREA));
 		ICInvalidateRange((void *)0x80000000, sizeof(VAR_AREA));

@@ -86,20 +86,6 @@ static void ARAMStub(void)
     asm("cmpwi 5,5,0");
     asm("bne WaitDMA");		/*** Wait DMA Complete ***/
 
-    /*** Update exceptions ***/
-    asm("lis 8,0x8000");
-    asm("lis 5,0x4c00");
-    asm("ori 5,5,0x64");
-    asm("stw 5,0x100(8)");
-    asm("stw 5,0x200(8)");
-    asm("stw 5,0x300(8)");
-    asm("stw 5,0x400(8)");
-    asm("stw 5,0x500(8)");
-    asm("stw 5,0x600(8)");
-    asm("stw 5,0x700(8)");
-    asm("stw 5,0x800(8)");
-    asm("stw 5,0x900(8)");
-
     /*** Flush it all again ***/
     asm("lis 7,0x30");
     asm("lis 8,0x8000");
