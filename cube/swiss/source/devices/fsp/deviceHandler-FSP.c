@@ -308,7 +308,7 @@ bool deviceHandler_FSP_test() {
 				__device_fsp.location = LOC_SERIAL_PORT_2;
 		}
 	}
-	return net_initialized || exi_bba_exists();
+	return net_initialized || bba_exists(LOC_ANY);
 }
 
 u32 deviceHandler_FSP_emulated() {

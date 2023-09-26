@@ -118,6 +118,7 @@ typedef char* (* _fn_status)(file_handle*);
 #define LOC_SERIAL_PORT_2	0x10
 #define LOC_HSP				0x20
 #define LOC_SYSTEM			0x40
+#define LOC_ANY				(LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_DVD_CONNECTOR | LOC_SERIAL_PORT_1 | LOC_SERIAL_PORT_2 | LOC_HSP | LOC_SYSTEM)
 
 // Device unique Id (used to store last used config device in SRAM - configDeviceId)
 #define DEVICE_ID_0			0x00

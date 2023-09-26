@@ -9,5 +9,6 @@ extern struct in_addr bba_gateway;
 
 void init_network();
 void init_wiiload_thread();
+bool bba_exists(u32 location);
 
 #endif

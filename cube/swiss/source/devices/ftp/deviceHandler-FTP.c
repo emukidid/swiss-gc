@@ -242,7 +242,7 @@ bool deviceHandler_FTP_test() {
 				__device_ftp.location = LOC_SERIAL_PORT_2;
 		}
 	}
-	return net_initialized || exi_bba_exists();
+	return net_initialized || bba_exists(LOC_ANY);
 }
 
 char* deviceHandler_FTP_status(file_handle* file) {

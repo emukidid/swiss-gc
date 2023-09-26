@@ -113,7 +113,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 130, (char*)"SLOT-B", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 146, getHwNameByLocation(LOC_MEMCARD_SLOT_B), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 170, (char*)"SERIAL PORT 1", 0.65f, true, defaultColor));
-		if(exi_bba_exists()) {
+		if(bba_exists(LOC_SERIAL_PORT_1)) {
 			sprintf(topStr, "%s (%s)", getHwNameByLocation(LOC_SERIAL_PORT_1), !net_initialized ? "Not initialised" : inet_ntoa(bba_localip));
 		}
 		else {
