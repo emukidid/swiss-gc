@@ -2157,7 +2157,7 @@ static const struct {
 	{{ "GU4X78\x10\x00" }, false, 0x31, 0xD771, 0x75A51568, 0xF9A5FECB2A74C58A,  888997888,  +570980352, {  651030656,  +570981108, 6496, 0x77D5 }, "2 Games in 1: Nickelodeon Bob L'éponge: Le Film" },
 	{{ "GU4X78\x11\x00" }, false, 0x0B, 0x22C1, 0x4D3EA301, 0xB2E5743BD67B2D4A, 1260439552,  +199538688, { 1145594892,  +199539324, 6496, 0x92D7 }, "2 Games in 1: Nickelodeon Bob L'éponge: La Bataille de Bikini Bottom" },
 	{{ "GUPJ8P\x00\x00" }, false, 0x41, 0x44E2, 0x15DC6E3D, 0x8546B2B1C3CC02EF, 1384941568,   +75036672, {  473211608,       +8024, 6496, 0xB744 }, "Shadow the Hedgehog: Trial Version" },
-	{{ "GUVE51\x00\x00" }, true,  0xFF, 0x3E8D, 0x39983142, 0x43D84DF2FF5A2ED9, 1449197568,          +0, {  659287096,          +0, 6496, 0x48AF }, "Freestyle Street Soccer" },
+	{{ "GUVE51\x00\x00" }, true,  0xAA, 0x3E8D, 0x32ED3EBF, 0x43D84DF2FF5A2ED9, 1379624960,   +80353280, {  579276432,   +80010664, 6496, 0x48AF }, "Freestyle Street Soccer" },
 	{{ "GW7E69\x00\x00" }, false, 0x51, 0xBD9C, 0x623336BA, 0x2C85D98760F49F3C, 1342423040,  +117555200, {  663027564,  +117248148, 6496, 0x347B }, "007: Agent Under Fire: Reloaded" },
 	{{ "GW7E69\x00\x00" }, false, 0x66, 0xDB76, 0x4BC8D2F2, 0x2C85D98760F49F3C, 1342423040,  +117555200, {  663027520,  +117250240, 6496, 0x347B }, "007: Agent Under Fire: Reloaded" },
 	{{ "GW7E69\x00\x00" }, false, 0xE4, 0xBA0B, 0x9D4C631E, 0x2C85D98760F49F3C, 1303988224,  +155990016, {  665209012,  +155709260, 6496, 0x347B }, "007: Agent Under Fire: Reloaded" },
