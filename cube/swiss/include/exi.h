@@ -3,7 +3,7 @@
 
 // EXI Device ID's
 #define EXI_MX98730EC_ID 0x04020200
-#define EXI_IDEEXIV2_ID  0x49444532
+#define EXI_IDE_ID       0x49444500
 #define EXI_ENC28J60_ID  0xFA050000
 
 extern int GCN_SD_SPEED;

@@ -24,6 +24,7 @@
 
 #define IDE_EXI_V1 0
 #define IDE_EXI_V2 1
+#define IDE_EXI_V3 2
 
 u16 buffer[256] ATTRIBUTE_ALIGN (32);
 static int __ata_init[3] = {0,0,0};
@@ -193,14 +194,15 @@ void print_hdd_sector(u32 *dest) {
 	}
 }
 
-// works for V2 IDE-EXI only
+// works for V2+ IDE-EXI only
 int ide_exi_inserted(int chn) {
 	int dev = EXI_DEVICE_0;
 	if(chn == EXI_CHANNEL_2) {
 		chn = EXI_CHANNEL_0;
 		dev = EXI_DEVICE_2;
 	}
-	return exi_get_id(chn,dev) == EXI_IDEEXIV2_ID;
+	u32 type;
+	return EXI_GetType(chn,dev,&type) && type == EXI_IDE_ID;
 }
 
 int _ideExiVersion(int chn) {
@@ -209,11 +211,12 @@ int _ideExiVersion(int chn) {
 		chn = EXI_CHANNEL_0;
 		dev = EXI_DEVICE_2;
 	}
-	u32 cid = exi_get_id(chn,dev);
+	u32 cid = 0;
+	EXI_GetID(chn,dev,&cid);
 	print_gecko("IDE-EXI ID: %08X\r\n",cid);
-	if(cid==EXI_IDEEXIV2_ID) {
-		print_gecko("IDE-EXI v2 detected\r\n");
-		return IDE_EXI_V2;
+	if((cid&~0xff)==EXI_IDE_ID) {
+		print_gecko("IDE-EXI v2+ detected\r\n");
+		return (cid&0xff)-'1';
 	}
 	else {
 		print_gecko("Unknown - assume IDE-EXI v1\r\n");
@@ -230,8 +233,11 @@ u32 _ataDriveIdentify(int chn) {
 
   	memset(&ataDriveInfo, 0, sizeof(typeDriveInfo));
 
-	// Get the ID to see if it's a V2
+	// Get the ID to see if it's a V2+
 	_ideexi_version = _ideExiVersion(chn);
+	if(_ideexi_version == IDE_EXI_V1 && chn == EXI_CHANNEL_2) {
+		return -1;
+	}
   		
   	// Select the device
   	ataWriteByte(chn, ATA_REG_DEVICE, 0/*ATA_HEAD_USE_LBA*/);
@@ -514,9 +520,14 @@ int _ataWriteSector(int chn, u64 lba, u32 *Buffer)
 	while(!(ataReadStatusReg(chn) & ATA_SR_DRQ));
 
 	// Write data to the drive
-	u16 *ptr = (u16*)Buffer;
-	for (i=0; i<256; i++) {
-		ataWriteu16(chn, ptr[i]);
+	if(_ideexi_version < IDE_EXI_V3) {
+		u16 *ptr = (u16*)Buffer;
+		for (i=0; i<256; i++) {
+			ataWriteu16(chn, ptr[i]);
+		}
+	}
+	else {
+		ata_write_buffer(chn, Buffer);
 	}
 	
 	// Wait for the write to finish
