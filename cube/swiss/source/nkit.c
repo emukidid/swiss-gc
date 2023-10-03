@@ -2078,6 +2078,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 #define REDUMP_COUNT (1979)
+	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
 	{{ "327E01\x00\x00" }, false, 0x83, 0x7406, 0xAF7E5D39, 0x1A5F0EA47A582D7E, 1457711104,    +2267136, { 1457702788,    +2268956, 6496, 0x3591 }, "Memory Card Utility Program" },
@@ -2085,6 +2086,8 @@ static const struct {
 	{{ "G2TE52\x00\x00" }, false, 0xC4, 0xC13C, 0xC98922BB, 0x55A84DC8C78EE6E7,  397957120, +1062021120, {         ~0,          +0,    0, 0xFFFF }, "Gun" },
 	{{ "G2TP52\x00\x00" }, false, 0x10, 0xEFEC, 0xEE959C7E, 0xA6DF308D2E6E85D7, 1459955712,      +22528, { 1018210520,          +0, 6496, 0x2179 }, "Memory Card Utility Program" },
 	{{ "G2TP52\x00\x00" }, false, 0x40, 0xEFEC, 0x0C20DB86, 0xA6DF308D2E6E85D7, 1459980288,       -2048, { 1018210520,          +0, 6496, 0x2A86 }, "Memory Card Utility Program" },
+	{{ "G3EP51\x00\x00" }, true,  0x34, 0x80D0, 0x6F0DFACE, 0x4B8AC78E5081B62E,  459536384, +1000441856, {   87327232,    +2793404, 6496, 0x0649 }, "XGIII: Extreme G Racing" },
+	{{ "G3EP51\x00\x00" }, true,  0x68, 0x80D0, 0x395187D3, 0x4B8AC78E5081B62E,  459601920,  +188680192, {   87327232,    +2793404, 6496, 0x0649 }, "XGIII: Extreme G Racing" },
 	{{ "G4BE08\x10\x00" }, false, 0xD6, 0xAC60, 0xF42C8796, 0x74B4EC020FDC7489, 1391001600,   +68976640, {    3678236,   +67028612, 6496, 0xE6BE }, "Resident Evil 4" },
 	{{ "G62ET2\x00\x00" }, false, 0xD0, 0x579D, 0x2E97A802, 0x4E8946AE8319CFC3, 1225426944,  +234551296, {  981792860,  +234552024, 6496, 0x3F44 }, "Major League Baseball 2K6" },
 	{{ "G8FE8P\x00\x00" }, false, 0xA9, 0xEFE4, 0x7ECE5185, 0xAF39B3DE443B2916, 1376434176,        +736, { 1376427664,        +752, 6496, 0xF054 }, "Virtua Quest" },
@@ -2193,7 +2196,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, false, 0xB5, 0x3C92, 0xA553BEC9, 0xB2D663542AE4C391,  126601216, +1333377024, {   96423396,      +27800, 6496, 0x19E5 }, "Smashing Drive" },
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 115)
+#define VALID_COUNT (REDUMP_COUNT + 118)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
