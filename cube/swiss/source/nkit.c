@@ -1304,6 +1304,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x2E, 0xCCBB, 0x2E098A57, 0xED61A06E328BCADC,     929792, +1459048448, {      94248,       +4056, 6496, 0x71DF }, "CD avec les Codes Exclusifs et Inédits pour le Jeu Metroid Prime" },
 	{{ "GNHE5d\x00\x00" }, false, 0x32, 0xCCBB, 0xF788D099, 0x20C822BDDEB80BC7,    1245184, +1458733056, {      94248,       +4056, 6496, 0x08F2 }, "Ultimate Codes for Use with Tom Clancy's Splinter Cell" },
 	{{ "GNHE5d\x00\x00" }, false, 0x33, 0xCCBB, 0xC7E200F3, 0x2B7A18F78F0474B8,    2117632, +1457860608, {      94248,       +4056, 6496, 0x3A76 }, "Action Replay Ultimate Cheats für Enter the Matrix" },
+	{{ "GNHE5d\x00\x00" }, false, 0x38, 0xCCBB, 0xF44D8921, 0x2634109EB130EDB7,    2183168, +1457795072, {      94248,       +4056, 6496, 0x3101 }, "Karat GC-you Pro Action Replay PAR GC-you" },
 	{{ "GNHE5d\x00\x00" }, false, 0x3A, 0xCCBB, 0xA1C6B7A4, 0xE00BE64FE685E811,    1107968, +1458870272, {      94248,       +4056, 6496, 0xA9C4 }, "CD Exclusif avec les Codes pour les Jeux Resident Evil et Resident Evil Zero" },
 	{{ "GNHE5d\x00\x00" }, false, 0x3C, 0xCCBB, 0xB1B28589, 0xBA2B9164B083E0A3,    1714176, +1458264064, {      94248,       +4056, 6496, 0x3310 }, "Action Replay Ultimate Codes Greatest Hits: Best Buy Achievers Weekend 2004" },
 	{{ "GNHE5d\x00\x00" }, false, 0x3D, 0xCCBB, 0x1570E92E, 0x987DD6D6992B0FCD,     774144, +1459204096, {      94248,       +4056, 6496, 0x6923 }, "Cube CD 19 (38)" },
@@ -1342,6 +1343,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0xCD, 0xCCBB, 0x989E3A76, 0x852811A76F5A51E6,    3313664, +1456664576, {      94248,       +4056, 6496, 0x66A0 }, "Action Replay Max" },
 	{{ "GNHE5d\x00\x00" }, false, 0xCE, 0xCCBB, 0x3BDA1560, 0x1852230C9556B627,    1204224, +1458774016, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 01 (20)" },
 	{{ "GNHE5d\x00\x00" }, false, 0xD0, 0xCCBB, 0x4EE5DC34, 0xE124F07A58E1334C,     874496, +1459103744, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 13 (32)" },
+	{{ "GNHE5d\x00\x00" }, false, 0xD6, 0xCCBB, 0x22EAE5C0, 0xE0D2EE7B7D7A9185,     837632, +1459140608, {      94248,       +4056, 6496, 0xB228 }, "FreeLoader for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0xDA, 0x3E90, 0x38FBD370, 0xD82129F8E4473619,    2203648, +1457774592, {      94248,       +4056, 6496, 0xE312 }, "Advance Game Port" },
 	{{ "GNHE5d\x00\x00" }, false, 0xE1, 0xCCBB, 0xDE08BB29, 0x1ED57927373BF559,    1888256, +1458089984, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 11 (30)" },
 	{{ "GNHE5d\x00\x00" }, false, 0xE2, 0xCCBB, 0x4805F346, 0x67DB0165563C2F8C,    1318912, +1458659328, {      94248,       +4056, 6496, 0xB8A4 }, "Ultimate Codes for Use with The Legend of Zelda: The Wind Waker" },
@@ -2077,7 +2079,7 @@ static const struct {
 	{{ "UGPJ01\x00\x03" }, false, 0xDE, 0xC4F0, 0xDFF567CB, 0xFB2218FBFA6AB9FE,    2473984, +1457504256, {    2003524,      +28092, 6496, 0xE53B }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
-#define REDUMP_COUNT (1979)
+#define REDUMP_COUNT (1981)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
