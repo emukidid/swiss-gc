@@ -168,7 +168,13 @@ static CACHE_ENTRY* _FAT_cache_getPage(CACHE *cache,sec_t sector,sec_t numSector
 		}
 	}
 
-	if(!_FAT_disc_readSectors(cache->disc,cacheEntries[oldUsed].sector+sec,secs_to_read,cacheEntries[oldUsed].cache+(sec*cache->bytesPerSector))) return NULL;
+	if(!_FAT_disc_readSectors(cache->disc,cacheEntries[oldUsed].sector+sec,secs_to_read,cacheEntries[oldUsed].cache+(sec*cache->bytesPerSector))) {
+		cacheEntries[oldUsed].sector = CACHE_FREE;
+		cacheEntries[oldUsed].count = 0;
+		cacheEntries[oldUsed].last_access = 0;
+		cacheEntries[oldUsed].dirty = 0;
+		return NULL;
+	}
 
 	cacheEntries[oldUsed].last_access = accessTime();
 	return &(cacheEntries[oldUsed]);
