@@ -1647,8 +1647,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			}
 			continue;
 		}
-		if ((data[i - 1] != 0x4E800020 &&
-			(data[i + 0] == 0x60000000 || data[i - 1] != 0x4C000064) &&
+		if ( data[i + 0] == 0x00000000 || data[i + 0] == 0x60000000 ||
+			(data[i - 1] != 0x4E800020 &&
+			(data[i - 1] != 0x00000000 || data[i - 2] != 0x4E800020) &&
+			(data[i - 1] != 0x00000000 || data[i - 2] != 0x00000000 || data[i - 3] != 0x4E800020) &&
+			 data[i - 1] != 0x4C000064 &&
 			(data[i - 1] != 0x60000000 || data[i - 2] != 0x4C000064) &&
 			branchResolve(data, dataType, i - 1) == 0))
 			continue;
@@ -7618,6 +7621,14 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 {
 	int i, j, k;
 	u32 address;
+	FuncPattern LCStoreDataSigs[2] = {
+		{ 64, 17, 3, 4, 7, 4, NULL, 0, "LCStoreDataD" },
+		{ 43,  9, 6, 2, 5, 5, NULL, 0, "LCStoreData" }
+	};
+	FuncPattern LCQueueWaitSigs[2] = {
+		{ 6, 1, 0, 0, 0, 1, NULL, 0, "LCQueueWait" },
+		{ 5, 0, 0, 0, 0, 2, NULL, 0, "LCQueueWait" }
+	};
 	FuncPattern OSSetCurrentContextSig = 
 		{ 23, 4, 4, 0, 0, 5, NULL, 0, "OSSetCurrentContext" };
 	FuncPattern OSDisableInterruptsSig = 
@@ -7847,6 +7858,30 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 18,  5,  8, 1, 0, 2, NULL, 0, "GXSetViewport" },
 		{ 44, 16, 13, 0, 0, 0, NULL, 0, "GXSetViewport" }	// SN Systems ProDG
 	};
+	FuncPattern __THPDecompressiMCURow512x448Sigs[2] = {
+		{ 1666, 208, 19, 10, 22, 65, NULL, 0, "__THPDecompressiMCURow512x448" },
+		{ 1698, 210, 17, 10, 22, 77, NULL, 0, "__THPDecompressiMCURow512x448" }
+	};
+	FuncPattern __THPDecompressiMCURow640x480Sigs[2] = {
+		{ 1667, 208, 19, 10, 22, 65, NULL, 0, "__THPDecompressiMCURow640x480" },
+		{ 1699, 210, 17, 10, 22, 77, NULL, 0, "__THPDecompressiMCURow640x480" }
+	};
+	FuncPattern __THPDecompressiMCURowNxNSigs[2] = {
+		{ 1664, 196, 15, 10, 22, 68, NULL, 0, "__THPDecompressiMCURowNxN" },
+		{ 1707, 202, 19, 10, 22, 80, NULL, 0, "__THPDecompressiMCURowNxN" }
+	};
+	FuncPattern __THPHuffDecodeDCTCompYSigs[2] = {
+		{ 415, 74, 31, 0, 45, 52, NULL, 0, "__THPHuffDecodeDCTCompY" },
+		{ 415, 74, 31, 0, 45, 52, NULL, 0, "__THPHuffDecodeDCTCompY" }
+	};
+	FuncPattern __THPHuffDecodeDCTCompUSigs[2] = {
+		{ 426, 73, 43, 0, 45, 67, NULL, 0, "__THPHuffDecodeDCTCompU" },
+		{ 426, 74, 43, 0, 45, 69, NULL, 0, "__THPHuffDecodeDCTCompU" }
+	};
+	FuncPattern __THPHuffDecodeDCTCompVSigs[2] = {
+		{ 426, 73, 43, 0, 45, 67, NULL, 0, "__THPHuffDecodeDCTCompV" },
+		{ 426, 74, 43, 0, 45, 69, NULL, 0, "__THPHuffDecodeDCTCompV" }
+	};
 	_SDA2_BASE_ = _SDA_BASE_ = 0;
 	
 	switch (swissSettings.gameVMode) {
@@ -7944,9 +7979,12 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 			}
 			continue;
 		}
-		if ((data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) ||
+		if ( data[i + 0] == 0x00000000 || data[i + 0] == 0x60000000 ||
+			(data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) ||
 			(data[i - 1] != 0x4E800020 &&
-			(data[i + 0] == 0x60000000 || data[i - 1] != 0x4C000064) &&
+			(data[i - 1] != 0x00000000 || data[i - 2] != 0x4E800020) &&
+			(data[i - 1] != 0x00000000 || data[i - 2] != 0x00000000 || data[i - 3] != 0x4E800020) &&
+			 data[i - 1] != 0x4C000064 &&
 			(data[i - 1] != 0x60000000 || data[i - 2] != 0x4C000064) &&
 			branchResolve(data, dataType, i - 1) == 0))
 			continue;
@@ -8517,6 +8555,117 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						
 						findx_pattern(data, dataType, i + 478, length, &GXSetBlendModeSigs[4]);
 						findx_pattern(data, dataType, i + 209, length, &GXSetViewportSigs[6]);
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(__THPDecompressiMCURow512x448Sigs) / sizeof(FuncPattern); j++) {
+			if (!__THPDecompressiMCURow512x448Sigs[j].offsetFoundAt && compare_pattern(&fp, &__THPDecompressiMCURow512x448Sigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +   16, length, &LCQueueWaitSigs[0]) &&
+							findx_pattern(data, dataType, i +   28, length, &__THPHuffDecodeDCTCompYSigs[0]) &&
+							findx_pattern(data, dataType, i +   31, length, &__THPHuffDecodeDCTCompYSigs[0]) &&
+							findx_pattern(data, dataType, i +   34, length, &__THPHuffDecodeDCTCompYSigs[0]) &&
+							findx_pattern(data, dataType, i +   37, length, &__THPHuffDecodeDCTCompYSigs[0]) &&
+							findx_pattern(data, dataType, i +   40, length, &__THPHuffDecodeDCTCompUSigs[0]) &&
+							findx_pattern(data, dataType, i +   43, length, &__THPHuffDecodeDCTCompVSigs[0]) &&
+							findx_pattern(data, dataType, i + 1635, length, &LCStoreDataSigs[1]) &&
+							findx_pattern(data, dataType, i + 1639, length, &LCStoreDataSigs[1]) &&
+							findx_pattern(data, dataType, i + 1643, length, &LCStoreDataSigs[1]))
+							__THPDecompressiMCURow512x448Sigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_patterns(data, dataType, i +   13, length, &LCQueueWaitSigs[0],
+							                                                 &LCQueueWaitSigs[1], NULL) &&
+							findx_pattern (data, dataType, i +   23, length, &__THPHuffDecodeDCTCompYSigs[1]) &&
+							findx_pattern (data, dataType, i +   26, length, &__THPHuffDecodeDCTCompYSigs[1]) &&
+							findx_pattern (data, dataType, i +   29, length, &__THPHuffDecodeDCTCompYSigs[1]) &&
+							findx_pattern (data, dataType, i +   32, length, &__THPHuffDecodeDCTCompYSigs[1]) &&
+							findx_pattern (data, dataType, i +   35, length, &__THPHuffDecodeDCTCompUSigs[1]) &&
+							findx_pattern (data, dataType, i +   38, length, &__THPHuffDecodeDCTCompVSigs[1]) &&
+							findx_patterns(data, dataType, i + 1664, length, &LCStoreDataSigs[0],
+							                                                 &LCStoreDataSigs[1], NULL) &&
+							findx_patterns(data, dataType, i + 1669, length, &LCStoreDataSigs[0],
+							                                                 &LCStoreDataSigs[1], NULL) &&
+							findx_patterns(data, dataType, i + 1674, length, &LCStoreDataSigs[0],
+							                                                 &LCStoreDataSigs[1], NULL))
+							__THPDecompressiMCURow512x448Sigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(__THPDecompressiMCURow640x480Sigs) / sizeof(FuncPattern); j++) {
+			if (!__THPDecompressiMCURow640x480Sigs[j].offsetFoundAt && compare_pattern(&fp, &__THPDecompressiMCURow640x480Sigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +   16, length, &LCQueueWaitSigs[0]) &&
+							findx_pattern(data, dataType, i +   28, length, &__THPHuffDecodeDCTCompYSigs[0]) &&
+							findx_pattern(data, dataType, i +   31, length, &__THPHuffDecodeDCTCompYSigs[0]) &&
+							findx_pattern(data, dataType, i +   34, length, &__THPHuffDecodeDCTCompYSigs[0]) &&
+							findx_pattern(data, dataType, i +   37, length, &__THPHuffDecodeDCTCompYSigs[0]) &&
+							findx_pattern(data, dataType, i +   40, length, &__THPHuffDecodeDCTCompUSigs[0]) &&
+							findx_pattern(data, dataType, i +   43, length, &__THPHuffDecodeDCTCompVSigs[0]) &&
+							findx_pattern(data, dataType, i + 1636, length, &LCStoreDataSigs[1]) &&
+							findx_pattern(data, dataType, i + 1640, length, &LCStoreDataSigs[1]) &&
+							findx_pattern(data, dataType, i + 1644, length, &LCStoreDataSigs[1]))
+							__THPDecompressiMCURow640x480Sigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_patterns(data, dataType, i +   13, length, &LCQueueWaitSigs[0],
+							                                                 &LCQueueWaitSigs[1], NULL) &&
+							findx_pattern (data, dataType, i +   23, length, &__THPHuffDecodeDCTCompYSigs[1]) &&
+							findx_pattern (data, dataType, i +   26, length, &__THPHuffDecodeDCTCompYSigs[1]) &&
+							findx_pattern (data, dataType, i +   29, length, &__THPHuffDecodeDCTCompYSigs[1]) &&
+							findx_pattern (data, dataType, i +   32, length, &__THPHuffDecodeDCTCompYSigs[1]) &&
+							findx_pattern (data, dataType, i +   35, length, &__THPHuffDecodeDCTCompUSigs[1]) &&
+							findx_pattern (data, dataType, i +   38, length, &__THPHuffDecodeDCTCompVSigs[1]) &&
+							findx_patterns(data, dataType, i + 1665, length, &LCStoreDataSigs[0],
+							                                                 &LCStoreDataSigs[1], NULL) &&
+							findx_patterns(data, dataType, i + 1670, length, &LCStoreDataSigs[0],
+							                                                 &LCStoreDataSigs[1], NULL) &&
+							findx_patterns(data, dataType, i + 1675, length, &LCStoreDataSigs[0],
+							                                                 &LCStoreDataSigs[1], NULL))
+							__THPDecompressiMCURow640x480Sigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(__THPDecompressiMCURowNxNSigs) / sizeof(FuncPattern); j++) {
+			if (!__THPDecompressiMCURowNxNSigs[j].offsetFoundAt && compare_pattern(&fp, &__THPDecompressiMCURowNxNSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +   14, length, &LCQueueWaitSigs[0]) &&
+							findx_pattern(data, dataType, i +   27, length, &__THPHuffDecodeDCTCompYSigs[0]) &&
+							findx_pattern(data, dataType, i +   30, length, &__THPHuffDecodeDCTCompYSigs[0]) &&
+							findx_pattern(data, dataType, i +   33, length, &__THPHuffDecodeDCTCompYSigs[0]) &&
+							findx_pattern(data, dataType, i +   36, length, &__THPHuffDecodeDCTCompYSigs[0]) &&
+							findx_pattern(data, dataType, i +   39, length, &__THPHuffDecodeDCTCompUSigs[0]) &&
+							findx_pattern(data, dataType, i +   42, length, &__THPHuffDecodeDCTCompVSigs[0]) &&
+							findx_pattern(data, dataType, i + 1634, length, &LCStoreDataSigs[1]) &&
+							findx_pattern(data, dataType, i + 1638, length, &LCStoreDataSigs[1]) &&
+							findx_pattern(data, dataType, i + 1642, length, &LCStoreDataSigs[1]))
+							__THPDecompressiMCURowNxNSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_patterns(data, dataType, i +   17, length, &LCQueueWaitSigs[0],
+							                                                 &LCQueueWaitSigs[1], NULL) &&
+							findx_pattern (data, dataType, i +   28, length, &__THPHuffDecodeDCTCompYSigs[1]) &&
+							findx_pattern (data, dataType, i +   31, length, &__THPHuffDecodeDCTCompYSigs[1]) &&
+							findx_pattern (data, dataType, i +   34, length, &__THPHuffDecodeDCTCompYSigs[1]) &&
+							findx_pattern (data, dataType, i +   37, length, &__THPHuffDecodeDCTCompYSigs[1]) &&
+							findx_pattern (data, dataType, i +   40, length, &__THPHuffDecodeDCTCompUSigs[1]) &&
+							findx_pattern (data, dataType, i +   43, length, &__THPHuffDecodeDCTCompVSigs[1]) &&
+							findx_patterns(data, dataType, i + 1669, length, &LCStoreDataSigs[0],
+							                                                 &LCStoreDataSigs[1], NULL) &&
+							findx_patterns(data, dataType, i + 1674, length, &LCStoreDataSigs[0],
+							                                                 &LCStoreDataSigs[1], NULL) &&
+							findx_patterns(data, dataType, i + 1679, length, &LCStoreDataSigs[0],
+							                                                 &LCStoreDataSigs[1], NULL))
+							__THPDecompressiMCURowNxNSigs[j].offsetFoundAt = i;
 						break;
 				}
 			}
@@ -10000,6 +10149,123 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 				}
 				print_gecko("Found:[%s] @ %08X\n", __GXSetViewportSigs[j].Name, __GXSetViewport);
 			}
+		}
+	}
+	
+	for (j = 0; j < sizeof(__THPDecompressiMCURow512x448Sigs) / sizeof(FuncPattern); j++)
+	if ((i = __THPDecompressiMCURow512x448Sigs[j].offsetFoundAt)) {
+		u32 *__THPDecompressiMCURow512x448 = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__THPDecompressiMCURow512x448) {
+			switch (j) {
+				case 0:
+					data[i +  125] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  130] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  378] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  383] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  633] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  639] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  894] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  900] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i + 1161] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i + 1166] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i + 1420] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i + 1425] = 0x11081828;	// ps_sub	f8, f8, f3
+					break;
+				case 1:
+					data[i +  123] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  129] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  383] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  389] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  642] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  648] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  903] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  909] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i + 1173] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i + 1179] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i + 1439] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i + 1445] = 0x11081828;	// ps_sub	f8, f8, f3
+					break;
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", __THPDecompressiMCURow512x448Sigs[j].Name, j, __THPDecompressiMCURow512x448);
+		}
+	}
+	
+	for (j = 0; j < sizeof(__THPDecompressiMCURow640x480Sigs) / sizeof(FuncPattern); j++)
+	if ((i = __THPDecompressiMCURow640x480Sigs[j].offsetFoundAt)) {
+		u32 *__THPDecompressiMCURow640x480 = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__THPDecompressiMCURow640x480) {
+			switch (j) {
+				case 0:
+					data[i +  125] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  130] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  378] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  383] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  633] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  639] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  894] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  900] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i + 1161] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i + 1166] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i + 1420] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i + 1425] = 0x11081828;	// ps_sub	f8, f8, f3
+					break;
+				case 1:
+					data[i +  123] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  129] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  383] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  389] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  642] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  648] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  903] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  909] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i + 1173] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i + 1179] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i + 1439] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i + 1445] = 0x11081828;	// ps_sub	f8, f8, f3
+					break;
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", __THPDecompressiMCURow640x480Sigs[j].Name, j, __THPDecompressiMCURow640x480);
+		}
+	}
+	
+	for (j = 0; j < sizeof(__THPDecompressiMCURowNxNSigs) / sizeof(FuncPattern); j++)
+	if ((i = __THPDecompressiMCURowNxNSigs[j].offsetFoundAt)) {
+		u32 *__THPDecompressiMCURowNxN = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__THPDecompressiMCURowNxN) {
+			switch (j) {
+				case 0:
+					data[i +  123] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  128] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  376] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  381] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  631] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  637] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  892] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  898] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i + 1158] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i + 1163] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i + 1417] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i + 1422] = 0x11081828;	// ps_sub	f8, f8, f3
+					break;
+				case 1:
+					data[i +  127] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  133] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  387] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  393] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  646] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  652] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i +  907] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i +  913] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i + 1176] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i + 1182] = 0x11081828;	// ps_sub	f8, f8, f3
+					data[i + 1442] = 0x11071F7C;	// ps_nmsub f8, f7, f29, f3
+					data[i + 1448] = 0x11081828;	// ps_sub	f8, f8, f3
+					break;
+			}
+			print_gecko("Found:[%s$%i] @ %08X\n", __THPDecompressiMCURowNxNSigs[j].Name, j, __THPDecompressiMCURowNxN);
 		}
 	}
 }
@@ -14334,9 +14600,12 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 			}
 			continue;
 		}
-		if ((data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) ||
+		if ( data[i + 0] == 0x00000000 || data[i + 0] == 0x60000000 ||
+			(data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) ||
 			(data[i - 1] != 0x4E800020 &&
-			(data[i + 0] == 0x60000000 || data[i - 1] != 0x4C000064) &&
+			(data[i - 1] != 0x00000000 || data[i - 2] != 0x4E800020) &&
+			(data[i - 1] != 0x00000000 || data[i - 2] != 0x00000000 || data[i - 3] != 0x4E800020) &&
+			 data[i - 1] != 0x4C000064 &&
 			(data[i - 1] != 0x60000000 || data[i - 2] != 0x4C000064) &&
 			branchResolve(data, dataType, i - 1) == 0))
 			continue;
