@@ -249,14 +249,12 @@ int main(int argc, char *argv[])
 		}
 	}
 	else if(device == &__device_gcloader) {
-		int gcloaderVersion = driveInfo.pad[2] + 1;
-		char *gcloaderVersionStr = gcloaderGetVersion(driveInfo.pad[2]);
 		if(gcloaderVersionStr != NULL) {
-			if(strverscmp(swissSettings.gcloaderTopVersion, gcloaderVersionStr) < 0 || swissSettings.gcloaderVersion != gcloaderVersion) {
+			if(strverscmp(swissSettings.gcloaderTopVersion, gcloaderVersionStr) < 0 || swissSettings.gcloaderHwVersion != gcloaderHwVersion) {
 				strlcpy(swissSettings.gcloaderTopVersion, gcloaderVersionStr, sizeof(swissSettings.gcloaderTopVersion));
-				swissSettings.gcloaderVersion = gcloaderVersion;
+				swissSettings.gcloaderHwVersion = gcloaderHwVersion;
 			}
-			switch(gcloaderVersion) {
+			switch(gcloaderHwVersion) {
 				case 1:
 					if(strverscmp(swissSettings.gcloaderTopVersion, "2.0.1") < 0) {
 						find_existing_entry("gcldr:/GCLoader_Updater_2.0.1*.dol", true);
@@ -275,7 +273,6 @@ int main(int argc, char *argv[])
 					break;
 			}
 		}
-		free(gcloaderVersionStr);
 	}
 	
 	// Check for autoload entry

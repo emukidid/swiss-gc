@@ -182,7 +182,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "BBAUseDHCP=%s\r\n", swissSettings.bbaUseDhcp ? "Yes":"No");
 	fprintf(fp, "ShowHiddenFiles=%s\r\n", swissSettings.showHiddenFiles ? "Yes":"No");
 	fprintf(fp, "RecentListLevel=%s\r\n", recentListLevelStr[swissSettings.recentListLevel]);
-	fprintf(fp, "GCLoaderVersion=%i\r\n", swissSettings.gcloaderVersion);
+	fprintf(fp, "GCLoaderHWVersion=%i\r\n", swissSettings.gcloaderHwVersion);
 	fprintf(fp, "GCLoaderTopVersion=%s\r\n", swissSettings.gcloaderTopVersion);
 	fprintf(fp, "Autoload=%s\r\n", swissSettings.autoload);
 	fprintf(fp, "FlattenDir=%s\r\n", swissSettings.flattenDir);
@@ -867,8 +867,8 @@ void config_parse_global(char *configData) {
 						}
 					}
 				}
-				else if(!strcmp("GCLoaderVersion", name)) {
-					swissSettings.gcloaderVersion = atoi(value);
+				else if(!strcmp("GCLoaderHWVersion", name)) {
+					swissSettings.gcloaderHwVersion = atoi(value);
 				}
 				else if(!strcmp("GCLoaderTopVersion", name)) {
 					strlcpy(swissSettings.gcloaderTopVersion, value, sizeof(swissSettings.gcloaderTopVersion));

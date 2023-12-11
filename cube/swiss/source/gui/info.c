@@ -130,10 +130,12 @@ uiDrawObj_t * info_draw_page(int page_num) {
 			sprintf(topStr, "%s %02X %02X%02X/%02X (%02X)",device->hwName,driveVersion[6],driveVersion[4],driveVersion[5],driveVersion[7],driveVersion[8]);
 		}
 		else if(device == &__device_gcloader) {
-			int gcloaderVersion = driveInfo.pad[2]+1;
-			char* gcloaderVersionStr = gcloaderGetVersion(driveInfo.pad[2]);
-			sprintf(topStr, "%s HW%i (%s)",device->hwName,gcloaderVersion,gcloaderVersionStr);
-			free(gcloaderVersionStr);
+			if(gcloaderVersionStr != NULL) {
+				sprintf(topStr, "%s HW%i (%s)",device->hwName,gcloaderHwVersion,gcloaderVersionStr);
+			}
+			else {
+				strcpy(topStr, device->hwName);
+			}
 		}
 		else if(device == &__device_wkf) {
 			sprintf(topStr, "%s (%s)",device->hwName,wkfGetSerial());

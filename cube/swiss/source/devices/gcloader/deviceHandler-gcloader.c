@@ -19,6 +19,8 @@
 #include "patcher.h"
 #include "dvd.h"
 
+int gcloaderHwVersion;
+char *gcloaderVersionStr;
 static FATFS *gcloaderfs = NULL;
 
 file_handle initial_GCLOADER =
@@ -263,11 +265,31 @@ s32 deviceHandler_GCLOADER_deinit(file_handle* file) {
 }
 
 bool deviceHandler_GCLOADER_test() {
+	free(gcloaderVersionStr);
+	gcloaderVersionStr = NULL;
+	gcloaderHwVersion = 0;
+	
 	if (swissSettings.hasDVDDrive && driveInfo.rel_date == 0x20196c64) {
 		if (driveInfo.pad[1] == 'w')
 			__device_gcloader.features |=  (FEAT_WRITE|FEAT_CONFIG_DEVICE|FEAT_PATCHES);
 		else
 			__device_gcloader.features &= ~(FEAT_WRITE|FEAT_CONFIG_DEVICE|FEAT_PATCHES);
+		
+		if (gcloaderReadId() == 0xAAAAAAAA) {
+			gcloaderHwVersion = driveInfo.pad[2] + 1;
+			gcloaderVersionStr = gcloaderGetVersion(driveInfo.pad[2]);
+			
+			if (gcloaderVersionStr) {
+				switch (gcloaderHwVersion) {
+					case 2:
+						if (strverscmp(gcloaderVersionStr, "1.0.0") <= 0)
+							__device_gcloader.features &= ~FEAT_PATCHES;
+						break;
+				}
+			}
+			__device_gcloader.hwName = "GC Loader";
+		} else
+			__device_gcloader.hwName = "GC Loader compatible";
 		
 		return true;
 	}
