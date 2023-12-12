@@ -16,8 +16,11 @@
 #include "wode/WodeInterface.h"
 #include "bnr.h"
 
-#define MAX_DEVICES 20
 #define PATHNAME_MAX 1024
+
+#define STATUS_NOT_MAPPED  0
+#define STATUS_MAPPED      1
+#define STATUS_HAS_MAPPING 2
 
 typedef struct {
 	u32 offset;
@@ -207,6 +210,8 @@ extern int deviceHandler_getStatEnabled();
 extern bool deviceHandler_getDeviceAvailable(DEVICEHANDLER_INTERFACE *dev);
 extern void deviceHandler_setDeviceAvailable(DEVICEHANDLER_INTERFACE *dev, bool availability);
 extern void deviceHandler_setAllDevicesAvailable();
+
+#define MAX_DEVICES 20
 
 extern DEVICEHANDLER_INTERFACE* allDevices[MAX_DEVICES];
 extern DEVICEHANDLER_INTERFACE* devices[MAX_DEVICE_SLOTS];

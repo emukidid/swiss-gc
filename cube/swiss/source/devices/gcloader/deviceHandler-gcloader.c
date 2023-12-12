@@ -23,7 +23,7 @@ int gcloaderHwVersion;
 char *gcloaderVersionStr;
 static FATFS *gcloaderfs = NULL;
 
-file_handle initial_GCLOADER =
+file_handle initial_GCLoader =
 	{ "gcldr:/",       // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
@@ -32,6 +32,15 @@ file_handle initial_GCLOADER =
 	  0,
 	  0
 	};
+
+s32 deviceHandler_GCLoader_readFile(file_handle* file, void* buffer, u32 length) {
+	if(file->status == STATUS_MAPPED) {
+		s32 bytes_read = DVD_ReadPrio((dvdcmdblk*)file->other, buffer, length, file->offset, 2);
+		if(bytes_read > 0) file->offset += bytes_read;
+		return bytes_read;
+	}
+	return deviceHandler_FAT_readFile(file, buffer, length);
+}
 
 static char *bootFile_names[] = {"boot.iso", "boot.iso.iso", "boot.gcm", "boot.gcm.gcm"};
 
@@ -87,6 +96,7 @@ static s32 setupFile(file_handle* file, file_handle* file2, ExecutableFile* file
 	
 	free(disc2FragList);
 	free(disc1FragList);
+	file->status = STATUS_MAPPED;
 	return 1;
 
 fail:
@@ -95,7 +105,7 @@ fail:
 	return 0;
 }
 
-s32 deviceHandler_GCLOADER_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
+s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
 	if(!setupFile(file, file2, filesToPatch, numToPatch)) {
 		goto fail;
 	}
@@ -238,10 +248,11 @@ fail:
 			break;
 		}
 	}
+	file->status = STATUS_NOT_MAPPED;
 	return 0;
 }
 
-s32 deviceHandler_GCLOADER_init(file_handle* file){
+s32 deviceHandler_GCLoader_init(file_handle* file){
 	if(gcloaderfs != NULL) {
 		f_unmount("gcldr:/");
 		free(gcloaderfs);
@@ -253,7 +264,7 @@ s32 deviceHandler_GCLOADER_init(file_handle* file){
 	return file->status == FR_OK ? 0 : EIO;
 }
 
-s32 deviceHandler_GCLOADER_deinit(file_handle* file) {
+s32 deviceHandler_GCLoader_deinit(file_handle* file) {
 	deviceHandler_FAT_closeFile(file);
 	if(file) {
 		f_unmount(file->name);
@@ -264,7 +275,7 @@ s32 deviceHandler_GCLOADER_deinit(file_handle* file) {
 	return 0;
 }
 
-bool deviceHandler_GCLOADER_test() {
+bool deviceHandler_GCLoader_test() {
 	free(gcloaderVersionStr);
 	gcloaderVersionStr = NULL;
 	gcloaderHwVersion = 0;
@@ -296,7 +307,7 @@ bool deviceHandler_GCLOADER_test() {
 	return false;
 }
 
-u32 deviceHandler_GCLOADER_emulated() {
+u32 deviceHandler_GCLoader_emulated() {
 	if (devices[DEVICE_PATCHES]) {
 		if (devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
 			if (swissSettings.emulateReadSpeed)
@@ -330,20 +341,20 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_AUDIO_STREAMING,
 	EMU_READ|EMU_READ_SPEED|EMU_MEMCARD,
 	LOC_DVD_CONNECTOR,
-	&initial_GCLOADER,
-	(_fn_test)&deviceHandler_GCLOADER_test,
+	&initial_GCLoader,
+	(_fn_test)&deviceHandler_GCLoader_test,
 	(_fn_info)&deviceHandler_FAT_info,
-	(_fn_init)&deviceHandler_GCLOADER_init,
+	(_fn_init)&deviceHandler_GCLoader_init,
 	(_fn_makeDir)&deviceHandler_FAT_makeDir,
 	(_fn_readDir)&deviceHandler_FAT_readDir,
 	(_fn_seekFile)&deviceHandler_FAT_seekFile,
-	(_fn_readFile)&deviceHandler_FAT_readFile,
+	(_fn_readFile)&deviceHandler_GCLoader_readFile,
 	(_fn_writeFile)deviceHandler_FAT_writeFile,
 	(_fn_closeFile)&deviceHandler_FAT_closeFile,
 	(_fn_deleteFile)deviceHandler_FAT_deleteFile,
 	(_fn_renameFile)&deviceHandler_FAT_renameFile,
-	(_fn_setupFile)&deviceHandler_GCLOADER_setupFile,
-	(_fn_deinit)&deviceHandler_GCLOADER_deinit,
-	(_fn_emulated)&deviceHandler_GCLOADER_emulated,
+	(_fn_setupFile)&deviceHandler_GCLoader_setupFile,
+	(_fn_deinit)&deviceHandler_GCLoader_deinit,
+	(_fn_emulated)&deviceHandler_GCLoader_emulated,
 	(_fn_status)&deviceHandler_FAT_status,
 };

@@ -136,7 +136,7 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 	if(forceSize == 0) {
 		forceSize = file->size;
 	}
-	if(!file->status && file->ffsFp) {
+	if(file->ffsFp && file->status == STATUS_NOT_MAPPED) {
 		FATFS* fatfs = file->ffsFp->obj.fs;
 		// fatfs - Cluster link table map buffer
 		DWORD clmt[(MAX_FRAGS+1)*2];
@@ -168,7 +168,7 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 			forceSize -= size;
 			numFrags++;
 		}
-		file->status = 1;
+		file->status = STATUS_HAS_MAPPING;
 	}
 	else if(devices[deviceSlot] == &__device_fsp) {
 		frags = reallocarray(frags, numFrags + 2, sizeof(file_frag));

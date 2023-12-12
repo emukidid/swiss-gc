@@ -19,9 +19,6 @@
 #include "gcm.h"
 #include "wkf.h"
 
-#define OFFSET_NOTSET 0
-#define OFFSET_SET    1
-
 file_handle initial_DVD =
 { "dvd:/",     // directory
 	  0ULL,     // fileBase (u64)
@@ -311,7 +308,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				(*dir)[num].size   = (isGC?DISC_SIZE:WII_D9_SIZE)-tmpOffset;
 				(*dir)[num].fileAttrib	 = IS_FILE;
 				(*dir)[num].meta = 0;
-				(*dir)[num].status = OFFSET_NOTSET;
+				(*dir)[num].status = STATUS_NOT_MAPPED;
 				num++;
 			}
 		}
@@ -387,7 +384,7 @@ s32 deviceHandler_DVD_readFile(file_handle* file, void* buffer, u32 length){
 	if(file->size == 0) return 0;	// Don't read garbage
 	u64 actualOffset = file->fileBase+file->offset;
 
-	if(file->status == OFFSET_SET) {
+	if(file->status == STATUS_MAPPED) {
 		actualOffset = file->offset;
 	}
 	int bytesread = DVD_Read(buffer,actualOffset,length);
@@ -418,7 +415,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, Executabl
 			DrawDispose(msgBox);
 		}
 		dvd_set_offset(file->fileBase);
-		file->status = OFFSET_SET;
+		file->status = STATUS_MAPPED;
 		print_gecko("Streaming %s %08X\r\n",swissSettings.audioStreaming?"Enabled":"Disabled",dvd_get_error());
 	}
 	if(numToPatch < 0) {

@@ -852,8 +852,9 @@ void load_app(ExecutableFile *fileToPatch)
 		if(fileToPatch->tgcFstOffset != 0) {
 			// Read FST to top of Main Memory (round to 32 byte boundary)
 			u32 fstAddr = (topAddr-fileToPatch->tgcFstSize)&~31;
+			u32 fstSize = (fileToPatch->tgcFstSize+31)&~31;
 			devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->tgcFstOffset,DEVICE_HANDLER_SEEK_SET);
-			if(devices[DEVICE_CUR]->readFile(fileToPatch->file,(void*)fstAddr,fileToPatch->tgcFstSize) != fileToPatch->tgcFstSize) {
+			if(devices[DEVICE_CUR]->readFile(fileToPatch->file,(void*)fstAddr,fstSize) != fstSize) {
 				message = "Failed to read FST!";
 				goto fail_early;
 			}
@@ -877,8 +878,9 @@ void load_app(ExecutableFile *fileToPatch)
 		else {
 			// Read FST to top of Main Memory (round to 32 byte boundary)
 			u32 fstAddr = (topAddr-GCMDisk.MaxFSTSize)&~31;
+			u32 fstSize = (GCMDisk.FSTSize+31)&~31;
 			devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
-			if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,GCMDisk.FSTSize) != GCMDisk.FSTSize) {
+			if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,fstSize) != fstSize) {
 				message = "Failed to read FST!";
 				goto fail_early;
 			}
