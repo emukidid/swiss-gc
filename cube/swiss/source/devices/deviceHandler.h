@@ -106,6 +106,12 @@ typedef char* (* _fn_status)(file_handle*);
 #define FEAT_PATCHES			0x100
 #define FEAT_AUDIO_STREAMING	0x200
 
+// Device quirks
+#define QUIRK_NONE						0x0
+#define QUIRK_GCLOADER_NO_DISC_2		0x1
+#define QUIRK_GCLOADER_NO_PARTIAL_READ	0x2
+#define QUIRK_GCLOADER_WRITE_CONFLICT	0x4
+
 // Device emulated features
 #define EMU_NONE			0x0
 #define EMU_READ			0x1
@@ -157,6 +163,7 @@ struct DEVICEHANDLER_STRUCT {
 	const char*		deviceDescription;
 	textureImage	deviceTexture;
 	u32				features;
+	u32				quirks;
 	u32				emulable;
 	u32				location;
 	file_handle*	initial;

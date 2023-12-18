@@ -286,15 +286,24 @@ bool deviceHandler_GCLoader_test() {
 		else
 			__device_gcloader.features &= ~(FEAT_WRITE|FEAT_CONFIG_DEVICE|FEAT_PATCHES);
 		
+		__device_gcloader.quirks = QUIRK_NONE;
+		
 		if (gcloaderReadId() == 0xAAAAAAAA) {
 			gcloaderHwVersion = driveInfo.pad[2] + 1;
 			gcloaderVersionStr = gcloaderGetVersion(driveInfo.pad[2]);
 			
 			if (gcloaderVersionStr) {
 				switch (gcloaderHwVersion) {
+					case 1:
+						if (strverscmp(gcloaderVersionStr, "1.0.0") < 0)
+							__device_gcloader.quirks |= QUIRK_GCLOADER_NO_DISC_2;
+						break;
 					case 2:
-						if (strverscmp(gcloaderVersionStr, "1.0.0") <= 0)
+						if (strverscmp(gcloaderVersionStr, "1.0.1") < 0) {
 							__device_gcloader.features &= ~FEAT_PATCHES;
+							__device_gcloader.quirks |= QUIRK_GCLOADER_NO_DISC_2 | QUIRK_GCLOADER_NO_PARTIAL_READ;
+						} else if (!strverscmp(gcloaderVersionStr, "1.1.0.BETA"))
+							__device_gcloader.quirks |= QUIRK_GCLOADER_WRITE_CONFLICT;
 						break;
 				}
 			}
@@ -319,7 +328,8 @@ u32 deviceHandler_GCLoader_emulated() {
 		} else {
 			if (swissSettings.emulateReadSpeed)
 				return EMU_READ | EMU_READ_SPEED;
-			else if (swissSettings.emulateMemoryCard)
+			else if (swissSettings.emulateMemoryCard &&
+					!(swissSettings.audioStreaming && (devices[DEVICE_CUR]->quirks & QUIRK_GCLOADER_WRITE_CONFLICT)))
 				return EMU_READ | EMU_MEMCARD;
 			else
 				return EMU_READ;

@@ -54,6 +54,7 @@ static const struct {
 	{ "GCLoader_Updater_2.0.0.dol",            838240, 0xDCF7E6BE86E334A9 },
 	{ "GCLoader_Updater_2.0.1.BETA.dol",      1176704, 0x5264440845874534 },
 	{ "GCLoader_Updater_2.0.1.dol",           1176672, 0x04B8A4BC92D821DD },
+	{ "GC_LOADER_HW2_UPDATER_1.0.0.dol",      1267200, 0x25AC594FF8F3C302 },
 	{ "GC_LOADER_HW2_UPDATER_1.0.1.dol",      1267200, 0x753F83C3E35CCBE0 },
 	{ "GC_LOADER_HW2_UPDATER_1.1.0.BETA.dol", 1267200, 0x153785DED813D3B1 },
 };
