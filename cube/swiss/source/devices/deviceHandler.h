@@ -71,6 +71,8 @@ typedef struct {
 	u16 realHeight;
 } textureImage;
 
+typedef struct ExecutableFile ExecutableFile;
+
 #define DEVICE_HANDLER_SEEK_SET 0
 #define DEVICE_HANDLER_SEEK_CUR 1
 #define DEVICE_HANDLER_SEEK_END 2
@@ -87,7 +89,7 @@ typedef s32 (* _fn_writeFile)(file_handle*, const void*, u32);
 typedef s32 (* _fn_closeFile)(file_handle*);
 typedef s32 (* _fn_deleteFile)(file_handle*);
 typedef s32 (* _fn_renameFile)(file_handle*, char*);
-typedef s32 (* _fn_setupFile)(file_handle*, file_handle*, void*, int);
+typedef s32 (* _fn_setupFile)(file_handle*, file_handle*, ExecutableFile*, int);
 typedef s32 (* _fn_deinit)(file_handle*);
 typedef u32 (* _fn_emulated)(void);
 typedef char* (* _fn_status)(file_handle*);
@@ -146,6 +148,8 @@ typedef char* (* _fn_status)(file_handle*);
 #define DEVICE_ID_MAX		DEVICE_ID_I
 #define DEVICE_ID_UNK		(DEVICE_ID_MAX + 1)
 
+typedef struct DEVICEHANDLER_STRUCT DEVICEHANDLER_INTERFACE;
+
 struct DEVICEHANDLER_STRUCT {
 	u8 				deviceUniqueId;
 	const char*		hwName;
@@ -172,8 +176,6 @@ struct DEVICEHANDLER_STRUCT {
 	_fn_emulated	emulated;
 	_fn_status		status;
 } ;
-
-typedef struct DEVICEHANDLER_STRUCT DEVICEHANDLER_INTERFACE;
 
 enum DEVICE_SLOTS {
 	DEVICE_CUR,

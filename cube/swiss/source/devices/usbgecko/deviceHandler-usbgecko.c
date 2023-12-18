@@ -73,7 +73,7 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 	return num_entries;
 }
 
-s64 deviceHandler_USBGecko_seekFile(file_handle* file, s64 where, s32 type){
+s64 deviceHandler_USBGecko_seekFile(file_handle* file, s64 where, u32 type){
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset = file->offset + where;
 	else if(type == DEVICE_HANDLER_SEEK_END) file->offset = file->size + where;
@@ -220,28 +220,24 @@ char* deviceHandler_USBGecko_status(file_handle* file) {
 }
 
 DEVICEHANDLER_INTERFACE __device_usbgecko = {
-	DEVICE_ID_A,
-	"USB Gecko",
-	"USB Gecko - Slot B only",
-	"Requires PC application to be up",
-	{TEX_USBGECKO, 60, 84, 64, 88},
-	FEAT_READ|FEAT_BOOT_GCM|FEAT_HYPERVISOR,
-	EMU_READ,
-	LOC_MEMCARD_SLOT_B,
-	&initial_USBGecko,
-	(_fn_test)&deviceHandler_USBGecko_test,
-	(_fn_info)&deviceHandler_USBGecko_info,
-	(_fn_init)&deviceHandler_USBGecko_init,
-	(_fn_makeDir)NULL,
-	(_fn_readDir)&deviceHandler_USBGecko_readDir,
-	(_fn_seekFile)&deviceHandler_USBGecko_seekFile,
-	(_fn_readFile)&deviceHandler_USBGecko_readFile,
-	(_fn_writeFile)NULL,
-	(_fn_closeFile)&deviceHandler_USBGecko_closeFile,
-	(_fn_deleteFile)NULL,
-	(_fn_renameFile)NULL,
-	(_fn_setupFile)&deviceHandler_USBGecko_setupFile,
-	(_fn_deinit)&deviceHandler_USBGecko_deinit,
-	(_fn_emulated)&deviceHandler_USBGecko_emulated,
-	(_fn_status)&deviceHandler_USBGecko_status,
+	.deviceUniqueId = DEVICE_ID_A,
+	.hwName = "USB Gecko",
+	.deviceName = "USB Gecko - Slot B only",
+	.deviceDescription = "Requires PC application to be up",
+	.deviceTexture = {TEX_USBGECKO, 60, 84, 64, 88},
+	.features = FEAT_READ|FEAT_BOOT_GCM|FEAT_HYPERVISOR,
+	.emulable = EMU_READ,
+	.location = LOC_MEMCARD_SLOT_B,
+	.initial = &initial_USBGecko,
+	.test = deviceHandler_USBGecko_test,
+	.info = deviceHandler_USBGecko_info,
+	.init = deviceHandler_USBGecko_init,
+	.readDir = deviceHandler_USBGecko_readDir,
+	.seekFile = deviceHandler_USBGecko_seekFile,
+	.readFile = deviceHandler_USBGecko_readFile,
+	.closeFile = deviceHandler_USBGecko_closeFile,
+	.setupFile = deviceHandler_USBGecko_setupFile,
+	.deinit = deviceHandler_USBGecko_deinit,
+	.emulated = deviceHandler_USBGecko_emulated,
+	.status = deviceHandler_USBGecko_status,
 };
