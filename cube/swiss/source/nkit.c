@@ -2105,6 +2105,7 @@ static const struct {
 	{{ "GAGPEL\x00\x00" }, false, 0xCB, 0xA2BD, 0x488AB477, 0xE1DF569A51FB9D2C,  754982912,  +704995328, {  754973244,  +704996900, 8096, 0x63D7 }, "Astérix & Obélix XXL" },
 	{{ "GASE8P\x00\x00" }, false, 0xB3, 0xA1B0, 0xDD918AD1, 0xD9B670DD43BD37A5, 1404723200,   +55255040, {  774689240,   +55255472, 6496, 0x0D21 }, "Sonic Adventure DX: Director's Cut" },
 	{{ "GB8E78\x00\x00" }, true,  0x03, 0x3B42, 0x1F19869C, 0x0716D4D5A73AB0BC,  432257024, +1027721216, {  412625660,      +32768, 6496, 0x9BD7 }, "BattleBots" },
+	{{ "GBIJ08\x00\x00" }, false, 0x75, 0x7EF2, 0xD752514D, 0xD4E03DF58675E232,  175702016, +1284276224, {    2519252, +1283945932, 6496, 0xEF92 }, "Resident Evil 4" },
 	{{ "GCCE01\x00\x00" }, false, 0x13, 0xF223, 0xD466236E, 0x89D01E6E0E49A121, 1329932288,  +130045952, {  570366340,      +30392, 6496, 0x6BE6 }, "Final Fantasy Crystal Chronicles: Single Player Upgrade" },
 	{{ "GCREBM\x00\x00" }, false, 0xA7, 0x9EF5, 0x00FFED74, 0x34BF21CA529D0E02,   10774528,  +105123840, {      17736,         +24, 6496, 0x65EB }, "Xeno Crisis" },
 	{{ "GCRJBM\x00\x00" }, false, 0x6D, 0x80F9, 0x0C6D4075, 0x34BF21CA529D0E02,   10774528,  +105123840, {      17736,         +24, 6496, 0xFAC5 }, "Xeno Crisis" },
@@ -2201,7 +2202,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, false, 0xB5, 0x3C92, 0xA553BEC9, 0xB2D663542AE4C391,  126601216, +1333377024, {   96423396,      +27800, 6496, 0x19E5 }, "Smashing Drive" },
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 118)
+#define VALID_COUNT (REDUMP_COUNT + 119)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
