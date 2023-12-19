@@ -35,7 +35,7 @@ file_handle initial_GCLoader =
 
 s32 deviceHandler_GCLoader_readFile(file_handle* file, void* buffer, u32 length) {
 	if(file->status == STATUS_MAPPED) {
-		s32 bytes_read = DVD_ReadPrio((dvdcmdblk*)file->other, buffer, length, file->offset, 2);
+		s32 bytes_read = DVD_ReadAbs((dvdcmdblk*)file->other, buffer, length, file->offset);
 		if(bytes_read > 0) file->offset += bytes_read;
 		return bytes_read;
 	}

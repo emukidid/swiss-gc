@@ -63,7 +63,7 @@ unsigned long OpenWode( void )
 	if(InitDVD() < 0)
 		return 0;
 
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20, WODE_MAGIC, 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20, WODE_MAGIC) <= 0){
     return 0;
 	}
 
@@ -78,14 +78,14 @@ unsigned long OpenWode( void )
 void CloseWode( void )
 {
 	dvdcmdblk cmdblk;
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20, WODE_EXIT_REMOTE, 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20, WODE_EXIT_REMOTE) <= 0){
 	}
 }
 /*
 unsigned long GetJoystick( void )
 {
 	dvdcmdblk cmdblk;
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_GET_JSTICK, 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_GET_JSTICK) <= 0){
 		printf ("Error -> GetJoystick\n");
 		ExitToWii();
 	}
@@ -96,7 +96,7 @@ unsigned long GetJoystick( void )
 unsigned long GetNumPartitions( void )
 {
 	dvdcmdblk cmdblk;
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_GET_NUM_PARTS, 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_GET_NUM_PARTS) <= 0){
 	}
 	return *(unsigned long*)&dvdbuffer[0]; 
 }
@@ -104,7 +104,7 @@ unsigned long GetNumPartitions( void )
 unsigned long GetNumISOsInSelectedPartition( int partition )
 {
 	dvdcmdblk cmdblk;
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_GET_NUM_ISOS(partition), 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_GET_NUM_ISOS(partition)) <= 0){
 	}
 	return *(unsigned long*)&dvdbuffer[0]; 
 }
@@ -112,7 +112,7 @@ unsigned long GetNumISOsInSelectedPartition( int partition )
 int GetPartitionInfo(unsigned long partition_idx, PartitionInfo_t* PartitionInfo)
 {
 	dvdcmdblk cmdblk;
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x80 , WODE_GET_PART(partition_idx), 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x80 , WODE_GET_PART(partition_idx)) <= 0){
 	}
 	memcpy(PartitionInfo->name,dvdbuffer,64);
 	PartitionInfo->NumISOs 			= *((unsigned long*)&dvdbuffer[64]);
@@ -124,7 +124,7 @@ int GetPartitionInfo(unsigned long partition_idx, PartitionInfo_t* PartitionInfo
 int GetISOInfo(unsigned long partition_idx, unsigned long iso_idx, ISOInfo_t * ISOInfo)
 {
 	dvdcmdblk cmdblk;
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x80 , WODE_GET_ISO(partition_idx,iso_idx), 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x80 , WODE_GET_ISO(partition_idx,iso_idx)) <= 0){
 	}
 	memcpy(ISOInfo->name,dvdbuffer,64);
 	ISOInfo->iso_type 		= *((unsigned long*)&dvdbuffer[64]);
@@ -135,7 +135,7 @@ int GetISOInfo(unsigned long partition_idx, unsigned long iso_idx, ISOInfo_t * I
 unsigned long GotoFlatMode( void )
 {
 	dvdcmdblk cmdblk;
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20, WODE_GOTO_FLAT_MODE, 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20, WODE_GOTO_FLAT_MODE) <= 0){
 	}
 	CloseWode();
 	return 0;
@@ -149,7 +149,7 @@ unsigned long GetMaxFavorites( void )
 int GetFavoriteInfo(unsigned long index, FavoriteInfo_t * favoriteInfo)
 {
 	dvdcmdblk cmdblk;
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x80 , WODE_GET_FAVORITE_INFO(index), 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x80 , WODE_GET_FAVORITE_INFO(index)) <= 0){
 		ExitToWii();
 	}
 
@@ -170,7 +170,7 @@ int EraseFavorite(unsigned long idx)
 {
 	dvdcmdblk cmdblk;
 
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_ERASE_FAVORITE(idx), 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_ERASE_FAVORITE(idx)) <= 0){
 		printf ("Error -> EraseFavorite\n");
 		ExitToWii();
 	}
@@ -180,7 +180,7 @@ int EraseFavorite(unsigned long idx)
 int  GetNumFavorites( void )
 {
 	dvdcmdblk cmdblk;
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_GET_NUM_FAVORITES, 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_GET_NUM_FAVORITES) <= 0){
 		printf ("Error -> GetNumFavorites\n");
 		ExitToWii();
 	}
@@ -190,18 +190,18 @@ int  GetNumFavorites( void )
 int InsertFavorite(unsigned long IsoIndex)
 {
 	dvdcmdblk cmdblk;
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_SET_FAVORITE_FAVE(GetSelectedFavorite()), 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_SET_FAVORITE_FAVE(GetSelectedFavorite())) <= 0){
 		printf ("Error -> WODE_SET_FAVORITE_FAVE\n");
 		ExitToWii();
 	}
 
 	// 256 partitions should be enough
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_SET_FAVORITE_PART(GetSelectedPartition()),	2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_SET_FAVORITE_PART(GetSelectedPartition())) <= 0){
 		printf ("Error -> WODE_SET_FAVORITE_PART\n");
 		ExitToWii();
 	}
 
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_SET_FAVORITE_ISO(IsoIndex),	2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_SET_FAVORITE_ISO(IsoIndex)) <= 0){
 		printf ("Error -> WODE_SET_FAVORITE_PART\n");
 		ExitToWii();
 	}
@@ -217,32 +217,32 @@ unsigned long SaveSettings( void )
 {
 	dvdcmdblk cmdblk;
 
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_SET_REGION_HACK(MENU_GetRegion()), 2) <= 0){	//20
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_SET_REGION_HACK(MENU_GetRegion())) <= 0){	//20
 		printf ("Error -> SetRegion\n");
 		ExitToWii();
 	}
 
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_SET_UPDATE_BLOCK_HACK(MENU_GetBlockUpdates()), 2) <= 0){  //21
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_SET_UPDATE_BLOCK_HACK(MENU_GetBlockUpdates())) <= 0){  //21
 		printf ("Error -> SetBlockUpdates\n");
 		ExitToWii();
 	}
 
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_SET_AUTOBOOT_HACK(MENU_GetAutoStart()), 2) <= 0){	//22
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_SET_AUTOBOOT_HACK(MENU_GetAutoStart())) <= 0){	//22
 		printf ("Error -> SetAutoStart\n");
 		ExitToWii();
 	}
 
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_SET_RELOAD_HACK(MENU_GetAutoload()), 2) <= 0){	//23
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_SET_RELOAD_HACK(MENU_GetAutoload())) <= 0){	//23
 		printf ("Error -> SetWiiRegion\n");
 		ExitToWii();
 	}
 
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_SET_WII_REGION(MENU_GetWiiRegion()), 2) <= 0){		//24
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_SET_WII_REGION(MENU_GetWiiRegion())) <= 0){		//24
 		printf ("Error -> SetAutoload\n");
 		ExitToWii();
 	}
 
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_WRITE_SETTINGS, 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_WRITE_SETTINGS) <= 0){
 		printf ("Error -> Wite Settings\n");
 		ExitToWii();
 	}
@@ -270,7 +270,7 @@ unsigned long SaveSettings( void )
 int GetSettings( s_user_settings * settings )
 {
 	dvdcmdblk cmdblk;
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_GET_SETTINGS, 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_GET_SETTINGS) <= 0){
 		ExitToWii();
 		return 0;
 	}
@@ -287,7 +287,7 @@ int GetSettings( s_user_settings * settings )
 int GetVersions( device_versions * versions )
 {
 	dvdcmdblk cmdblk;
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20 , WODE_GET_VERSIONS, 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20 , WODE_GET_VERSIONS) <= 0){
 		return 0;
 	}
 
@@ -312,9 +312,9 @@ void SetISO(unsigned long Partition, unsigned long Iso)
 {
 	dvdcmdblk cmdblk;
 
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20, WODE_LAUNCH_GAME_PART(Partition), 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20, WODE_LAUNCH_GAME_PART(Partition)) <= 0){
 	}
-	if(DVD_ReadPrio (&cmdblk, dvdbuffer, 0x20, WODE_LAUNCH_GAME_ISO(Iso), 2) <= 0){
+	if(DVD_ReadAbs (&cmdblk, dvdbuffer, 0x20, WODE_LAUNCH_GAME_ISO(Iso)) <= 0){
 	}
 	CloseWode();
 }

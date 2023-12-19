@@ -67,7 +67,8 @@ static const dvddiskid NDDEMO = {
 static const dvddiskid DATEL = {
 	.gamename  = "DTLX",
 	.company   = "01",
-	.streaming = true
+	.streaming = true,
+	.magic     = DVD_MAGIC
 };
 
 static const struct {
