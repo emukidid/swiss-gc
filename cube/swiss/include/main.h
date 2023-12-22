@@ -93,13 +93,15 @@ enum setupStream
 #define DVD_STACK_SIZE 1024
 
 //Console Version Type Helpers
-#define GC_CPU_VERSION01 0x00083214
-#define GC_CPU_VERSION02 0x00083410
 #ifndef mfpvr
 #define mfpvr()  ({unsigned int rval; asm volatile("mfpvr %0" : "=r" (rval)); rval;})
 #endif
 
-#define is_gamecube() (((mfpvr() == GC_CPU_VERSION01)||((mfpvr() == GC_CPU_VERSION02))))
+static inline bool is_gamecube(void)
+{
+	u32 pvr = mfpvr();
+	return ((pvr >> 16) & 0xFFFF) == 0x0008 && ((pvr >> 12) & 0xF) != 0x7;
+}
 
 #define MAX_MULTIGAME 128
 #define MULTIGAME_TABLE_OFFSET 64

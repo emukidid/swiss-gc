@@ -28,7 +28,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawLabel(30, 55, "System Info (1/3):"));
 		// Model
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"MODEL", 0.65f, true, defaultColor));
-		if(is_gamecube()) {
+		if(!strncmp(IPLInfo, "(C) ", 4)) {
 			if(driveInfo.dev_code == 0x0201) {
 				strcpy(topStr, "NPDP-GDEV (GCT-0100)");
 			}
@@ -77,7 +77,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 106, topStr, 0.75f, true, defaultColor));
 		// IPL version string
 		DrawAddChild(container, DrawStyledLabel(640/2, 130, (char*)"IPL VERSION", 0.65f, true, defaultColor));
-		if(is_gamecube()) {
+		if(!strncmp(IPLInfo, "(C) ", 4)) {
 			if(!IPLInfo[0x55]) {
 				strcpy(topStr, "NTSC Revision 1.0");
 			}
