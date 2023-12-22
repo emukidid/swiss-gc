@@ -400,6 +400,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		}
 		if(padsButtonsHeld() & PAD_BUTTON_X) {
 			memcpy(&curFile, &curDir, sizeof(file_handle));
+			curDir.fileBase = (*directory)[curSelection].fileBase;
 			needsDeviceChange = upToParent(&curDir);
 			needsRefresh=1;
 			while(padsButtonsHeld() & PAD_BUTTON_X) VIDEO_WaitVSync();
@@ -618,6 +619,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		}
 		if(padsButtonsHeld() & PAD_BUTTON_X) {
 			memcpy(&curFile, &curDir, sizeof(file_handle));
+			curDir.fileBase = (*directory)[curSelection].fileBase;
 			needsDeviceChange = upToParent(&curDir);
 			needsRefresh=1;
 			while(padsButtonsHeld() & PAD_BUTTON_X) VIDEO_WaitVSync();
