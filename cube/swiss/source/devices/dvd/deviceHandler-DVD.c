@@ -349,14 +349,13 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			concat_path((*dir)[0].name, ffile->name, "..");
 			(*dir)[0].fileAttrib = IS_SPECIAL;
 		}
-
-		if(dvdDiscTypeInt == ISO9660_GAMECUBE_DISC) {
+		else if(dvdDiscTypeInt == ISO9660_GAMECUBE_DISC) {
 			DiskHeader *diskHeader = get_gcm_header(ffile);
 			if(!diskHeader) return -1;
 
 			*dir = reallocarray(*dir, num_entries + 1, sizeof(file_handle));
 			memset(&(*dir)[num_entries], 0, sizeof(file_handle));
-			concatf_path((*dir)[num_entries].name, initial_DVD.name, "%.64s.gcm", diskHeader->GameName);
+			concatf_path((*dir)[num_entries].name, ffile->name, "%.64s.gcm", diskHeader->GameName);
 			(*dir)[num_entries].fileBase = 0;
 			(*dir)[num_entries].offset = 0;
 			(*dir)[num_entries].size = DISC_SIZE;

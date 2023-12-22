@@ -704,7 +704,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 	print_gecko("Read dir for directory: %s\r\n",file->name);
 	char	filename[PATHNAME_MAX];
 	int		numFiles = 1, idx = 0;
-	int		isRoot = !strcmp((const char*)&file->name[0], "dvd:/");
+	int		isRoot = file->fileBase == 0;
 	
 	DiskHeader *diskHeader = get_gcm_header(file);
 	if(!diskHeader) return -1;
@@ -714,16 +714,18 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 	
 	// Get the space taken up by this disc
 	if(usedSpace) *usedSpace = calc_fst_entries_size(FST);
-		
-	// Add the disc itself as a "file"
-	*dir = calloc(numFiles, sizeof(file_handle));
-	concatf_path((*dir)[idx].name, __device_dvd.initial->name, "%.64s.gcm", diskHeader->GameName);
-	(*dir)[idx].fileBase = 0;
-	(*dir)[idx].offset = 0;
-	(*dir)[idx].size = DISC_SIZE;
-	(*dir)[idx].fileAttrib = IS_FILE;
-	(*dir)[idx].meta = 0;
-	idx++;
+	
+	if(isRoot) {
+		// Add the disc itself as a "file"
+		*dir = calloc(numFiles, sizeof(file_handle));
+		concatf_path((*dir)[idx].name, file->name, "%.64s.gcm", diskHeader->GameName);
+		(*dir)[idx].fileBase = 0;
+		(*dir)[idx].offset = 0;
+		(*dir)[idx].size = DISC_SIZE;
+		(*dir)[idx].fileAttrib = IS_FILE;
+		(*dir)[idx].meta = 0;
+		idx++;
+	}
 	
 	u32 entries=*(unsigned int*)&FST[8];
 	u32 string_table_offset=FST_ENTRY_SIZE*entries;
@@ -732,7 +734,6 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 	// Go through the FST and find our DIR (or ROOT)
 	int parent_dir_offset = (u32)file->fileBase;
 	int dir_end_offset = isRoot ? *(u32*)&FST[8] : 0;
-	isRoot = parent_dir_offset==0;
 	
 	u32 filename_offset=((*(u32*)&FST[parent_dir_offset*0x0C]) & 0x00FFFFFF); 
 	concat_path(filename, file->name, &FST[string_table_offset+filename_offset]);
@@ -740,11 +741,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 	
 	if(!isRoot) {
 		// Add a special ".." dir which will take us back up a dir
-		if(idx == numFiles){
-			++numFiles;
-			*dir = reallocarray(*dir, numFiles, sizeof(file_handle));
-		}
-		memset(&(*dir)[idx], 0, sizeof(file_handle));
+		*dir = calloc(numFiles, sizeof(file_handle));
 		concat_path((*dir)[idx].name, file->name, "..");
 		(*dir)[idx].fileBase = *(u32*)&FST[(parent_dir_offset*0x0C)+4];
 		(*dir)[idx].offset = 0;
