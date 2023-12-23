@@ -2094,6 +2094,9 @@ static const struct {
 	{{ "G3EP51\x00\x00" }, true,  0x34, 0x80D0, 0x6F0DFACE, 0x4B8AC78E5081B62E,  459536384, +1000441856, {   87327232,    +2793404, 6496, 0x0649 }, "XGIII: Extreme G Racing" },
 	{{ "G3EP51\x00\x00" }, true,  0x68, 0x80D0, 0x395187D3, 0x4B8AC78E5081B62E,  459601920,  +188680192, {   87327232,    +2793404, 6496, 0x0649 }, "XGIII: Extreme G Racing" },
 	{{ "G4BE08\x10\x00" }, false, 0xD6, 0xAC60, 0xF42C8796, 0x74B4EC020FDC7489, 1391001600,   +68976640, {    3678236,   +67028612, 6496, 0xE6BE }, "Resident Evil 4" },
+	{{ "G4BE08\x11\x00" }, false, 0xC7, 0xAA7D, 0xFBA12C43, 0x74B4EC020FDC7489, 1259536384,  +200441856, {    3676788,  +198528044, 6496, 0x67E1 }, "Resident Evil 4" },
+	{{ "G4BP08\x10\x00" }, false, 0x10, 0x777A, 0x31F5D8AD, 0x783B8E355E0F9A9F, 1417314304,   +42663936, {    2349456,   +38997264, 6496, 0xF938 }, "Resident Evil 4" },
+	{{ "G4BP08\x11\x00" }, false, 0xCC, 0xC48A, 0x69AD405C, 0x783B8E355E0F9A9F, 1403289600,   +56688640, {    2348320,   +53088640, 6496, 0x6F76 }, "Resident Evil 4" },
 	{{ "G62ET2\x00\x00" }, false, 0xD0, 0x579D, 0x2E97A802, 0x4E8946AE8319CFC3, 1225426944,  +234551296, {  981792860,  +234552024, 6496, 0x3F44 }, "Major League Baseball 2K6" },
 	{{ "G8FE8P\x00\x00" }, false, 0xA9, 0xEFE4, 0x7ECE5185, 0xAF39B3DE443B2916, 1376434176,        +736, { 1376427664,        +752, 6496, 0xF054 }, "Virtua Quest" },
 	{{ "G9SE8P\x00\x00" }, false, 0xB9, 0x81CE, 0xDAFDE48B, 0x3BDC78E23AA114DA, 1459208192,     +770048, {         ~0,          +0,    0, 0xFFFF }, "Sonic Heroes" },
@@ -2185,6 +2188,9 @@ static const struct {
 	{{ "GXXE01\x00\x00" }, false, 0xCB, 0x98C1, 0xBE135566, 0xB56AE9983F6E4903, 1087750144,  +372228096, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
 	{{ "GZLE01\x00\x00" }, false, 0x09, 0x863D, 0x5D06C4D8, 0x36D193DF45BFDAA4,  720627712,   +40671232, {  225455448,    +9556648, 6496, 0xDF7E }, "The Legend of Zelda: The Wind Waker Rewritten" },
 	{{ "GZPE70\x00\x00" }, false, 0x63, 0x887C, 0xBC256FCD, 0xE7D53A48267CDB88, 1416488960,   +43489280, {    2317240,      +17384, 6496, 0x195D }, "Zapper" },
+	{{ "P4BJ08\x00\x00" }, false, 0x05, 0x5E4E, 0xDCCA4674, 0xB020404FA0B3C711,  341442560, +1118535680, {   18687900, +1118144116, 6496, 0x1D46 }, "Resident Evil 4" },
+	{{ "P4BJ08\x00\x00" }, false, 0x2D, 0x9B3F, 0x5C165AAF, 0xB020404FA0B3C711,  273385472, +1186592768, {  238830020,      +65084, 6496, 0x1D46 }, "Biohazard 4" },
+	{{ "P4BJ08\x00\x00" }, false, 0xE3, 0x9B3F, 0xEC06ECF3, 0xB020404FA0B3C711,  273813504, +1186164736, {  238912292,      +64732, 6496, 0x1D46 }, "Biohazard 4" },
 	{{ "PZHP69\x00\x00" }, false, 0x40, 0xBAC4, 0x3873B78F, 0x6644F65D96920450, 1110884352,  +349093888, {  583244796,      +30880, 8096, 0x1D7C }, "Need for Speed: Underground" },
 	{{ "RELSAB\x00\x00" }, false, 0x01, 0x58E1, 0x911795AE, 0xFEF0EF64907D1C20,    3733504, +1456244736, {         ~0,          +0,    0, 0xFFFF }, "KPAD Demo" },
 	{{ "RELSAB\x00\x00" }, false, 0x01, 0xD64E, 0x87A41CC0, 0x6973B52BB5B82A39, 1374566400,   +85411840, { 1374558044,       +4580, 6496, 0x9CA2 }, "Gladius" },
@@ -2202,7 +2208,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, false, 0xB5, 0x3C92, 0xA553BEC9, 0xB2D663542AE4C391,  126601216, +1333377024, {   96423396,      +27800, 6496, 0x19E5 }, "Smashing Drive" },
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 119)
+#define VALID_COUNT (REDUMP_COUNT + 125)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
