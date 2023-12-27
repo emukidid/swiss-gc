@@ -199,7 +199,7 @@ enum patchTypes {
 };
 
 int Patch_Hypervisor(u32 *data, u32 length, int dataType);
-void Patch_VideoMode(u32 *data, u32 length, int dataType);
+void Patch_Video(u32 *data, u32 length, int dataType);
 void Patch_Widescreen(u32 *data, u32 length, int dataType);
 int Patch_TexFilt(u32 *data, u32 length, int dataType);
 int Patch_FontEncode(u32 *data, u32 length);

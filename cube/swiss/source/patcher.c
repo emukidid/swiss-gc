@@ -1636,19 +1636,18 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	_SDA2_BASE_ = _SDA_BASE_ = 0;
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
-		if (!_SDA2_BASE_ && !_SDA_BASE_) {
-			if ((data[i + 0] & 0xFFFF0000) == 0x3C400000 &&
-				(data[i + 1] & 0xFFFF0000) == 0x60420000 &&
-				(data[i + 2] & 0xFFFF0000) == 0x3DA00000 &&
-				(data[i + 3] & 0xFFFF0000) == 0x61AD0000) {
-				get_immediate(data, i + 0, i + 1, &_SDA2_BASE_);
-				get_immediate(data, i + 2, i + 3, &_SDA_BASE_);
-				i += 4;
-			}
-			continue;
+		if ((data[i + 0] & 0xFFFF0000) == 0x3C400000 &&
+			(data[i + 1] & 0xFFFF0000) == 0x60420000 &&
+			(data[i + 2] & 0xFFFF0000) == 0x3DA00000 &&
+			(data[i + 3] & 0xFFFF0000) == 0x61AD0000) {
+			get_immediate(data, i + 0, i + 1, &_SDA2_BASE_);
+			get_immediate(data, i + 2, i + 3, &_SDA_BASE_);
+			break;
 		}
-		if ( data[i + 0] == 0x00000000 || data[i + 0] == 0x60000000 ||
-			(data[i - 1] != 0x4E800020 &&
+	}
+	
+	for (i = 0; i < length / sizeof(u32); i++) {
+		if ((data[i - 1] != 0x4E800020 &&
 			(data[i - 1] != 0x00000000 || data[i - 2] != 0x4E800020) &&
 			(data[i - 1] != 0x00000000 || data[i - 2] != 0x00000000 || data[i - 3] != 0x4E800020) &&
 			 data[i - 1] != 0x4C000064 &&
@@ -1656,7 +1655,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			branchResolve(data, dataType, i - 1) == 0))
 			continue;
 		
-		if (data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) {
+		if (data[i + 0] != 0x7C0802A6 && (data[i + 0] & 0xFFFF0000) != 0x94210000) {
 			if (!memcmp(data + i, _memcpy, sizeof(_memcpy)))
 				memcpySig.offsetFoundAt = i;
 			else if (!memcmp(data + i, _ppchalt, sizeof(_ppchalt)))
@@ -7617,7 +7616,7 @@ u8 vertical_reduction[][7] = {
 
 extern GXRModeObj *newmode;
 
-void Patch_VideoMode(u32 *data, u32 length, int dataType)
+void Patch_Video(u32 *data, u32 length, int dataType)
 {
 	int i, j, k;
 	u32 address;
@@ -7882,6 +7881,10 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		{ 426, 73, 43, 0, 45, 67, NULL, 0, "__THPHuffDecodeDCTCompV" },
 		{ 426, 74, 43, 0, 45, 69, NULL, 0, "__THPHuffDecodeDCTCompV" }
 	};
+	FuncPattern IDct64_GCSig = 
+		{ 435, 6, 1, 5, 1, 5, NULL, 0, "IDct64_GC" };
+	FuncPattern IDct10_GCSig = 
+		{ 221, 6, 1, 3, 1, 5, NULL, 0, "IDct10_GC" };
 	_SDA2_BASE_ = _SDA_BASE_ = 0;
 	
 	switch (swissSettings.gameVMode) {
@@ -7968,19 +7971,18 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 	}
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
-		if (!_SDA2_BASE_ && !_SDA_BASE_) {
-			if ((data[i + 0] & 0xFFFF0000) == 0x3C400000 &&
-				(data[i + 1] & 0xFFFF0000) == 0x60420000 &&
-				(data[i + 2] & 0xFFFF0000) == 0x3DA00000 &&
-				(data[i + 3] & 0xFFFF0000) == 0x61AD0000) {
-				get_immediate(data, i + 0, i + 1, &_SDA2_BASE_);
-				get_immediate(data, i + 2, i + 3, &_SDA_BASE_);
-				i += 4;
-			}
-			continue;
+		if ((data[i + 0] & 0xFFFF0000) == 0x3C400000 &&
+			(data[i + 1] & 0xFFFF0000) == 0x60420000 &&
+			(data[i + 2] & 0xFFFF0000) == 0x3DA00000 &&
+			(data[i + 3] & 0xFFFF0000) == 0x61AD0000) {
+			get_immediate(data, i + 0, i + 1, &_SDA2_BASE_);
+			get_immediate(data, i + 2, i + 3, &_SDA_BASE_);
+			break;
 		}
-		if ( data[i + 0] == 0x00000000 || data[i + 0] == 0x60000000 ||
-			(data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) ||
+	}
+	
+	for (i = 0; i < length / sizeof(u32); i++) {
+		if ((data[i + 0] != 0x7C0802A6 && (data[i + 0] & 0xFFFF0000) != 0x94210000) ||
 			(data[i - 1] != 0x4E800020 &&
 			(data[i - 1] != 0x00000000 || data[i - 2] != 0x4E800020) &&
 			(data[i - 1] != 0x00000000 || data[i - 2] != 0x00000000 || data[i - 3] != 0x4E800020) &&
@@ -8561,7 +8563,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		}
 		
 		for (j = 0; j < sizeof(__THPDecompressiMCURow512x448Sigs) / sizeof(FuncPattern); j++) {
-			if (!__THPDecompressiMCURow512x448Sigs[j].offsetFoundAt && compare_pattern(&fp, &__THPDecompressiMCURow512x448Sigs[j])) {
+			if (compare_pattern(&fp, &__THPDecompressiMCURow512x448Sigs[j])) {
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i +   16, length, &LCQueueWaitSigs[0]) &&
@@ -8598,7 +8600,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		}
 		
 		for (j = 0; j < sizeof(__THPDecompressiMCURow640x480Sigs) / sizeof(FuncPattern); j++) {
-			if (!__THPDecompressiMCURow640x480Sigs[j].offsetFoundAt && compare_pattern(&fp, &__THPDecompressiMCURow640x480Sigs[j])) {
+			if (compare_pattern(&fp, &__THPDecompressiMCURow640x480Sigs[j])) {
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i +   16, length, &LCQueueWaitSigs[0]) &&
@@ -8635,7 +8637,7 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 		}
 		
 		for (j = 0; j < sizeof(__THPDecompressiMCURowNxNSigs) / sizeof(FuncPattern); j++) {
-			if (!__THPDecompressiMCURowNxNSigs[j].offsetFoundAt && compare_pattern(&fp, &__THPDecompressiMCURowNxNSigs[j])) {
+			if (compare_pattern(&fp, &__THPDecompressiMCURowNxNSigs[j])) {
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i +   14, length, &LCQueueWaitSigs[0]) &&
@@ -8669,6 +8671,24 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
+		}
+		
+		if (compare_pattern(&fp, &IDct64_GCSig)) {
+			if (branchResolve(data, dataType, i +  94) == i +  96 &&
+				branchResolve(data, dataType, i +  95) == i + 133 &&
+				branchResolve(data, dataType, i + 205) == i +  96 &&
+				branchResolve(data, dataType, i + 278) == i +  96 &&
+				branchResolve(data, dataType, i + 351) == i +  96 &&
+				branchResolve(data, dataType, i + 378) == i +  96)
+				IDct64_GCSig.offsetFoundAt = i;
+		}
+		
+		if (compare_pattern(&fp, &IDct10_GCSig)) {
+			if (branchResolve(data, dataType, i +  66) == i + 68 &&
+				branchResolve(data, dataType, i +  67) == i + 97 &&
+				branchResolve(data, dataType, i + 141) == i + 68 &&
+				branchResolve(data, dataType, i + 164) == i + 68)
+				IDct10_GCSig.offsetFoundAt = i;
 		}
 		i += fp.Length - 1;
 	}
@@ -10266,6 +10286,26 @@ void Patch_VideoMode(u32 *data, u32 length, int dataType)
 					break;
 			}
 			print_gecko("Found:[%s$%i] @ %08X\n", __THPDecompressiMCURowNxNSigs[j].Name, j, __THPDecompressiMCURowNxN);
+		}
+	}
+	
+	if ((i = IDct64_GCSig.offsetFoundAt)) {
+		u32 *IDct64_GC = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (IDct64_GC) {
+			data[i + 107] = 0x1272982A;	// ps_add	f19, f18, f19
+			
+			print_gecko("Found:[%s] @ %08X\n", IDct64_GCSig.Name, IDct64_GC);
+		}
+	}
+	
+	if ((i = IDct10_GCSig.offsetFoundAt)) {
+		u32 *IDct10_GC = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (IDct10_GC) {
+			data[i + 76] = 0x1272982A;	// ps_add	f19, f18, f19
+			
+			print_gecko("Found:[%s] @ %08X\n", IDct10_GCSig.Name, IDct10_GC);
 		}
 	}
 }
@@ -14589,19 +14629,18 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	_SDA2_BASE_ = _SDA_BASE_ = 0;
 	
 	for (i = 0; i < length / sizeof(u32); i++) {
-		if (!_SDA2_BASE_ && !_SDA_BASE_) {
-			if ((data[i + 0] & 0xFFFF0000) == 0x3C400000 &&
-				(data[i + 1] & 0xFFFF0000) == 0x60420000 &&
-				(data[i + 2] & 0xFFFF0000) == 0x3DA00000 &&
-				(data[i + 3] & 0xFFFF0000) == 0x61AD0000) {
-				get_immediate(data, i + 0, i + 1, &_SDA2_BASE_);
-				get_immediate(data, i + 2, i + 3, &_SDA_BASE_);
-				i += 4;
-			}
-			continue;
+		if ((data[i + 0] & 0xFFFF0000) == 0x3C400000 &&
+			(data[i + 1] & 0xFFFF0000) == 0x60420000 &&
+			(data[i + 2] & 0xFFFF0000) == 0x3DA00000 &&
+			(data[i + 3] & 0xFFFF0000) == 0x61AD0000) {
+			get_immediate(data, i + 0, i + 1, &_SDA2_BASE_);
+			get_immediate(data, i + 2, i + 3, &_SDA_BASE_);
+			break;
 		}
-		if ( data[i + 0] == 0x00000000 || data[i + 0] == 0x60000000 ||
-			(data[i + 0] != 0x7C0802A6 && data[i + 1] != 0x7C0802A6) ||
+	}
+	
+	for (i = 0; i < length / sizeof(u32); i++) {
+		if ((data[i + 0] != 0x7C0802A6 && (data[i + 0] & 0xFFFF0000) != 0x94210000) ||
 			(data[i - 1] != 0x4E800020 &&
 			(data[i - 1] != 0x00000000 || data[i - 2] != 0x4E800020) &&
 			(data[i - 1] != 0x00000000 || data[i - 2] != 0x00000000 || data[i - 3] != 0x4E800020) &&
@@ -16497,7 +16536,7 @@ int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int
 		if (swissSettings.disableVideoPatches < 2) {
 			if (swissSettings.disableVideoPatches < 1)
 				Patch_GameSpecificVideo(buffer, sizeToRead, gameID, type);
-			Patch_VideoMode(buffer, sizeToRead, type);
+			Patch_Video(buffer, sizeToRead, type);
 		}
 		
 		// Force Widescreen
