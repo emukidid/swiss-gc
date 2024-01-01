@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -57,6 +57,9 @@ static const struct {
 	{ "GC_LOADER_HW2_UPDATER_1.0.0.dol",      1267200, 0x25AC594FF8F3C302 },
 	{ "GC_LOADER_HW2_UPDATER_1.0.1.dol",      1267200, 0x753F83C3E35CCBE0 },
 	{ "GC_LOADER_HW2_UPDATER_1.1.0.BETA.dol", 1267200, 0x153785DED813D3B1 },
+
+	{ "240p Test Suite (World) (v1.17) (Program) (Aftermarket) (Unl).dol",        1906336, 0x65A1EF7519BE163F },
+	{ "Xeno Crisis (World) (En,Ja,Fr,De,Es,It,Nl,Pt-BR) (Aftermarket) (Unl).dol", 5331008, 0x34BF21CA529D0E02 },
 };
 
 static const dvddiskid NDDEMO = {
@@ -2109,6 +2112,7 @@ static const struct {
 	{{ "GASE8P\x00\x00" }, false, 0xB3, 0xA1B0, 0xDD918AD1, 0xD9B670DD43BD37A5, 1404723200,   +55255040, {  774689240,   +55255472, 6496, 0x0D21 }, "Sonic Adventure DX: Director's Cut" },
 	{{ "GB8E78\x00\x00" }, true,  0x03, 0x3B42, 0x1F19869C, 0x0716D4D5A73AB0BC,  432257024, +1027721216, {  412625660,      +32768, 6496, 0x9BD7 }, "BattleBots" },
 	{{ "GBIJ08\x00\x00" }, false, 0x75, 0x7EF2, 0xD752514D, 0xD4E03DF58675E232,  175702016, +1284276224, {    2519252, +1283945932, 6496, 0xEF92 }, "Resident Evil 4" },
+	{{ "GBLPGL\x00\x00" }, false, 0x74, 0x72B9, 0x66F13AD8, 0x5C4B48DFD1F0CD01,    1640448,      +96256, {      17768,         +24, 6496, 0x4411 }, "240p Test Suite" },
 	{{ "GCCE01\x00\x00" }, false, 0x13, 0xF223, 0xD466236E, 0x89D01E6E0E49A121, 1329932288,  +130045952, {  570366340,      +30392, 6496, 0x6BE6 }, "Final Fantasy Crystal Chronicles: Single Player Upgrade" },
 	{{ "GCREBM\x00\x00" }, false, 0xA7, 0x9EF5, 0x00FFED74, 0x34BF21CA529D0E02,   10774528,  +105123840, {      17736,         +24, 6496, 0x65EB }, "Xeno Crisis" },
 	{{ "GCRJBM\x00\x00" }, false, 0x6D, 0x80F9, 0x0C6D4075, 0x34BF21CA529D0E02,   10774528,  +105123840, {      17736,         +24, 6496, 0xFAC5 }, "Xeno Crisis" },
@@ -2208,7 +2212,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, false, 0xB5, 0x3C92, 0xA553BEC9, 0xB2D663542AE4C391,  126601216, +1333377024, {   96423396,      +27800, 6496, 0x19E5 }, "Smashing Drive" },
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 125)
+#define VALID_COUNT (REDUMP_COUNT + 126)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },

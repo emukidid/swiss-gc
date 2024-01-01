@@ -19,7 +19,7 @@ typedef struct {
 	char magic[4]; // 'BNR1' or 'BNR2'
 	u8 padding[0x1C];
 	u8 pixelData[BNR_PIXELDATA_LEN];
-	BNRDesc desc[5];
+	BNRDesc desc[6];
 } BNR;
 
 #endif
