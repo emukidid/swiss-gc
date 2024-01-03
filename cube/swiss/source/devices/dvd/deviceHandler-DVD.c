@@ -547,6 +547,10 @@ s32 deviceHandler_DVD_deinit(file_handle* file) {
 }
 
 s32 deviceHandler_DVD_closeFile(file_handle* file){
+	if(file && file->status == STATUS_MAPPED) {
+		dvd_set_offset(0);
+		file->status = STATUS_NOT_MAPPED;
+	}
 	return 0;
 }
 

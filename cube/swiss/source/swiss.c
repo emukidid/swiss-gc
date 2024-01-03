@@ -1002,7 +1002,7 @@ void load_app(ExecutableFile *fileToPatch)
 	
 	// Don't spin down the drive when running something from it...
 	if(devices[DEVICE_CUR] != &__device_dvd) {
-		devices[DEVICE_CUR]->deinit(&curFile);
+		devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 	}
 	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
 		// Check DVD Status, make sure it's error code 0
@@ -1608,6 +1608,19 @@ void verify_game()
 {
 	u32 crc = 0;
 	u32 curOffset = 0, cancelled = 0, chunkSize = (32*1024);
+	
+	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
+		devices[DEVICE_CUR]->setupFile(&curFile, NULL, NULL, -1);
+		if(swissSettings.audioStreaming) {
+			AUDIO_SetStreamVolLeft(0);
+			AUDIO_SetStreamVolRight(0);
+			AUDIO_SetStreamPlayState(AI_STREAM_START);
+			DVD_PrepareStreamAbs(&commandBlock, curFile.size & ~(32*1024-1), 0);
+			DVD_StopStreamAtEnd(&commandBlock);
+		}
+		chunkSize = (512*1024);
+	}
+	
 	unsigned char *readBuffer = (unsigned char*)memalign(32,chunkSize);
 	uiDrawObj_t* progBar = DrawProgressBar(false, 0, "Verifying ...");
 	DrawPublish(progBar);
@@ -1643,7 +1656,7 @@ void verify_game()
 			DrawPublish(msgBox);
 			wait_press_A();
 			DrawDispose(msgBox);
-			return;
+			goto fail;
 		}
 		crc = crc32(crc,readBuffer,amountToRead);
 		curOffset+=amountToRead;
@@ -1661,6 +1674,15 @@ void verify_game()
 		DrawPublish(msgBox);
 		wait_press_A();
 		DrawDispose(msgBox);
+	}
+
+fail:
+	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
+		if(swissSettings.audioStreaming) {
+			DVD_CancelStream(&commandBlock);
+			AUDIO_SetStreamPlayState(AI_STREAM_STOP);
+		}
+		devices[DEVICE_CUR]->closeFile(&curFile);
 	}
 }
 
@@ -1793,7 +1815,7 @@ void load_game() {
 			goto fail;
 		}
 		if(devices[DEVICE_CUR] != &__device_dvd) {
-			devices[DEVICE_CUR]->deinit(&curFile);
+			devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 		}
 		
 		DrawShutdown();
@@ -1917,6 +1939,9 @@ fail:
 	gameID_unset();
 	config_unload_current();
 	free(config);
+
+	devices[DEVICE_CUR]->closeFile(&curFile);
+	devices[DEVICE_CUR]->closeFile(disc2File);
 }
 
 /* Execute/Load/Parse the currently selected file */

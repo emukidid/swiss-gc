@@ -52,7 +52,7 @@ static s32 setupFile(file_handle* file, file_handle* file2, ExecutableFile* file
 	if(numToPatch < -1) {
 		file_handle bootFile;
 		memset(&bootFile, 0, sizeof(file_handle));
-		concat_path(bootFile.name, devices[DEVICE_CUR]->initial->name, "boot.bin");
+		concat_path(bootFile.name, initial_GCLoader.name, "boot.bin");
 		
 		if(!strncmp(&IPLInfo[0x55], "MPAL", 4))
 			GCMDisk.RegionCode = 1;
@@ -107,7 +107,7 @@ fail:
 
 s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
 	if(!setupFile(file, file2, filesToPatch, numToPatch)) {
-		goto fail;
+		return 0;
 	}
 	if(numToPatch < 0) {
 		return 1;
@@ -126,26 +126,26 @@ s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, Exec
 			if(!filesToPatch[i].patchFile) continue;
 			if(!getFragments(DEVICE_PATCHES, filesToPatch[i].patchFile, &fragList, &numFrags, filesToPatch[i].file == file2, filesToPatch[i].offset, filesToPatch[i].size)) {
 				free(fragList);
-				goto fail;
+				return 0;
 			}
 		}
 		
 		if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, FRAGS_DISC_1, 0, 0)) {
 			free(fragList);
-			goto fail;
+			return 0;
 		}
 		
 		if(file2) {
 			if(!getFragments(DEVICE_CUR, file2, &fragList, &numFrags, FRAGS_DISC_2, 0, 0)) {
 				free(fragList);
-				goto fail;
+				return 0;
 			}
 		}
 		
 		for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
 			file_handle bootFile;
 			memset(&bootFile, 0, sizeof(file_handle));
-			concat_path(bootFile.name, devices[DEVICE_CUR]->initial->name, bootFile_names[i]);
+			concat_path(bootFile.name, initial_GCLoader.name, bootFile_names[i]);
 			
 			if(getFragments(DEVICE_CUR, &bootFile, &fragList, &numFrags, FRAGS_BOOT_GCM, 0, UINT32_MAX)) {
 				devices[DEVICE_CUR]->closeFile(&bootFile);
@@ -235,21 +235,6 @@ s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, Exec
 		memcpy(VAR_DISC_2_ID, &file2->meta->diskId, sizeof(VAR_DISC_2_ID));
 	memcpy(VAR_DISC_1_ID, &GCMDisk, sizeof(VAR_DISC_1_ID));
 	return 1;
-
-fail:
-	int i;
-	for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
-		file_handle bootFile;
-		memset(&bootFile, 0, sizeof(file_handle));
-		concat_path(bootFile.name, devices[DEVICE_CUR]->initial->name, bootFile_names[i]);
-		
-		if(setupFile(&bootFile, NULL, NULL, -1)) {
-			devices[DEVICE_CUR]->closeFile(&bootFile);
-			break;
-		}
-	}
-	file->status = STATUS_NOT_MAPPED;
-	return 0;
 }
 
 s32 deviceHandler_GCLoader_init(file_handle* file){
@@ -264,8 +249,26 @@ s32 deviceHandler_GCLoader_init(file_handle* file){
 	return file->status == FR_OK ? 0 : EIO;
 }
 
+s32 deviceHandler_GCLoader_closeFile(file_handle* file) {
+	if(file && file->status == STATUS_MAPPED) {
+		int i;
+		for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
+			file_handle bootFile;
+			memset(&bootFile, 0, sizeof(file_handle));
+			concat_path(bootFile.name, initial_GCLoader.name, bootFile_names[i]);
+			
+			if(setupFile(&bootFile, NULL, NULL, -1)) {
+				deviceHandler_FAT_closeFile(&bootFile);
+				break;
+			}
+		}
+		file->status = STATUS_NOT_MAPPED;
+	}
+	return deviceHandler_FAT_closeFile(file);
+}
+
 s32 deviceHandler_GCLoader_deinit(file_handle* file) {
-	deviceHandler_FAT_closeFile(file);
+	deviceHandler_GCLoader_closeFile(file);
 	if(file) {
 		f_unmount(file->name);
 		free(gcloaderfs);
@@ -360,7 +363,7 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	.seekFile = deviceHandler_FAT_seekFile,
 	.readFile = deviceHandler_GCLoader_readFile,
 	.writeFile = deviceHandler_FAT_writeFile,
-	.closeFile = deviceHandler_FAT_closeFile,
+	.closeFile = deviceHandler_GCLoader_closeFile,
 	.deleteFile = deviceHandler_FAT_deleteFile,
 	.renameFile = deviceHandler_FAT_renameFile,
 	.setupFile = deviceHandler_GCLoader_setupFile,

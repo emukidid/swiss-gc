@@ -121,12 +121,13 @@ s32 deviceHandler_WODE_readFile(file_handle* file, void* buffer, u32 length) {
 
 s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
 	if(numToPatch < 0) {
-		if(numToPatch == -1) {
+		if(file->status == STATUS_NOT_MAPPED) {
 			ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
 			SetISO(isoInfo->iso_partition,isoInfo->iso_number);
 			sleep(2);
 			DVD_Reset(DVD_RESETHARD);
 			while(dvd_get_error()) {dvd_read_id();}
+			file->status = STATUS_MAPPED;
 		}
 		return 1;
 	}
