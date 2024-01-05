@@ -13302,7 +13302,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 	rmode->viXOrigin = (u16) ((720 - (width)) / 2); \
 	rmode->viWidth = (u16) (width); \
 }
-	if (!strncmp(gameID, "GAEJ01", 6) && dataType == PATCH_DOL) {
+	if ((!strncmp(gameID, "GAEE01", 6) || !strncmp(gameID, "GAEJ01", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1069088:
 				*(s16 *)(data + 0x80006CBE - 0x80005760 + 0x26C0) = 0;
@@ -16320,7 +16320,7 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 		else if(apploaderHeader->rebootSize) {
 			offset += apploaderHeader->size;
 
-			if(strncmp(apploaderHeader->date, "2004/02/01", 10) <= 0) {
+			if(strncmp(apploaderHeader->date, "2004/02/01", 10) <= 0 || strncmp(apploaderHeader->date, "2005/10/08", 10) >= 0) {
 				if(offsetFoundAt >= offset && offsetFoundAt < offset + apploaderHeader->rebootSize)
 					return (void*)(offsetFoundAt+0x81300000-offset);
 			}
@@ -16410,7 +16410,7 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 		else if(apploaderHeader->rebootSize) {
 			offset += apploaderHeader->size;
 
-			if(strncmp(apploaderHeader->date, "2004/02/01", 10) <= 0) {
+			if(strncmp(apploaderHeader->date, "2004/02/01", 10) <= 0 || strncmp(apploaderHeader->date, "2005/10/08", 10) >= 0) {
 				if(properAddress >= 0x81300000 && properAddress < 0x81300000 + apploaderHeader->rebootSize)
 					return data+properAddress-0x81300000+offset;
 			}
