@@ -28,6 +28,7 @@ enum SETTINGS_GLOBAL {
 	SET_SWISS_VIDEOMODE,
 	SET_FILEBROWSER_TYPE,
 	SET_FILE_MGMT,
+	SET_DEVICE_SELECTOR_TYPE,
 	SET_RECENT_LIST,
 	SET_SHOW_HIDDEN,
 	SET_HIDE_UNK,
@@ -149,6 +150,7 @@ extern char *aveCompatStr[];
 extern char *fileBrowserStr[];
 extern char *bs2BootStr[];
 extern char *recentListLevelStr[];
+extern char *deviceSelectorTypesStr[];
 #define SRAM_LANG_MAX 7
 extern char *sramLang[];
 int show_settings(int page, int option, ConfigEntry *config);

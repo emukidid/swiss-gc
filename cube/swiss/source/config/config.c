@@ -166,6 +166,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "IGRType=%s\r\n", igrTypeStr[swissSettings.igrType]);
 	fprintf(fp, "AVECompat=%s\r\n", aveCompatStr[swissSettings.aveCompat]);
 	fprintf(fp, "FileBrowserType=%s\r\n", fileBrowserStr[swissSettings.fileBrowserType]);
+	fprintf(fp, "DeviceSelectorType=%s\r\n", deviceSelectorTypesStr[swissSettings.deviceSelectorType]);
 	fprintf(fp, "BS2Boot=%s\r\n", bs2BootStr[swissSettings.bs2Boot]);
 	fprintf(fp, "FTPUserName=%s\r\n", swissSettings.ftpUserName);
 	fprintf(fp, "FTPPassword=%s\r\n", swissSettings.ftpPassword);
@@ -805,6 +806,14 @@ void config_parse_global(char *configData) {
 					for(int i = 0; i < 2; i++) {
 						if(!strcmp(fileBrowserStr[i], value)) {
 							swissSettings.fileBrowserType = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("DeviceSelectorType", name)) {
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(deviceSelectorTypesStr[i], value)) {
+							swissSettings.deviceSelectorType = i;
 							break;
 						}
 					}

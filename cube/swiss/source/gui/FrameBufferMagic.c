@@ -1413,21 +1413,37 @@ static void _DrawMenuButtons(uiDrawObj_t *evt) {
 	
 	_DrawSimpleBox(19, 426, 602, 602, 0, fillColor, noColor);
 	
+	int btnBaseXOffset = 0, btnXOffset = 0, currentButton = 0, numButtons = 0;
+
+	if(swissSettings.deviceSelectorType == DEVICE_SELECTOR_DISABLED) {
+		btnBaseXOffset = BTN_BASE_XOFFSET_4BUTTONS;
+		btnXOffset 	   = BTN_XOFFSET_4BUTTONS;
+		numButtons 	   = 4;
+	} else {
+		btnBaseXOffset = BTN_BASE_XOFFSET_5BUTTONS;
+		btnXOffset 	   = BTN_XOFFSET_5BUTTONS;
+		numButtons 	   = 5;
+	}
+
 	// Highlight selected
 	int i;
-	for(i=0;i<5;i++)
+	for(i=0;i<numButtons;i++)
 	{
 		if(data->selection==i) 
-			_DrawImageNow(TEX_BTNHILIGHT, 48+(i*119), 428, BTNHILIGHT_WIDTH, BTNHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+			_DrawImageNow(TEX_BTNHILIGHT, btnBaseXOffset+(i*btnXOffset), 428, BTNHILIGHT_WIDTH, BTNHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	}
 
 	// Draw the buttons	
 	drawInit();
-	_DrawImageNow(TEX_BTNDEVICE, 48+(0*119)+BTNDEVICE_X, 428+BTNDEVICE_Y, BTNDEVICE_WIDTH, BTNDEVICE_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNSETTINGS, 48+(1*119)+BTNSETTINGS_X, 428+BTNSETTINGS_Y, BTNSETTINGS_WIDTH, BTNSETTINGS_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNINFO, 48+(2*119)+BTNINFO_X, 428+BTNINFO_Y, BTNINFO_WIDTH, BTNINFO_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNREFRESH, 48+(3*119)+BTNREFRESH_X, 428+BTNREFRESH_Y, BTNREFRESH_WIDTH, BTNREFRESH_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNEXIT, 48+(4*119)+BTNEXIT_X, 428+BTNEXIT_Y, BTNEXIT_WIDTH, BTNEXIT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+
+	if(swissSettings.deviceSelectorType != DEVICE_SELECTOR_DISABLED) {
+		_DrawImageNow(TEX_BTNDEVICE, btnBaseXOffset+((currentButton++)*btnXOffset)+BTNDEVICE_X, 428+BTNDEVICE_Y, BTNDEVICE_WIDTH, BTNDEVICE_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	}
+
+	_DrawImageNow(TEX_BTNSETTINGS, btnBaseXOffset+((currentButton++)*btnXOffset)+BTNSETTINGS_X, 428+BTNSETTINGS_Y, BTNSETTINGS_WIDTH, BTNSETTINGS_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNINFO, btnBaseXOffset+((currentButton++)*btnXOffset)+BTNINFO_X, 428+BTNINFO_Y, BTNINFO_WIDTH, BTNINFO_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNREFRESH, btnBaseXOffset+((currentButton++)*btnXOffset)+BTNREFRESH_X, 428+BTNREFRESH_Y, BTNREFRESH_WIDTH, BTNREFRESH_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNEXIT, btnBaseXOffset+((currentButton++)*btnXOffset)+BTNEXIT_X, 428+BTNEXIT_Y, BTNEXIT_WIDTH, BTNEXIT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 }
 
 // External
