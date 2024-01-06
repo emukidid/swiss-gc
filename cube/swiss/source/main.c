@@ -145,8 +145,9 @@ int main(int argc, char *argv[])
 	
 	// Set current devices
 	devices[DEVICE_CUR] = NULL;
+	devices[DEVICE_PREV] = NULL;
 	devices[DEVICE_DEST] = NULL;
-	devices[DEVICE_TEMP] = NULL;
+	devices[DEVICE_CHEATS] = NULL;
 	devices[DEVICE_CONFIG] = NULL;
 	devices[DEVICE_PATCHES] = NULL;
 	

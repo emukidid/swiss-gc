@@ -217,6 +217,7 @@ int find_existing_entry(char *entry, bool load) {
 		if(devices[DEVICE_CUR] == entryDevice || !entryDevice->init(entryDevice->initial)) {
 			freeFiles();
 			if(devices[DEVICE_CUR] && devices[DEVICE_CUR] != entryDevice) {
+				devices[DEVICE_PREV] = devices[DEVICE_CUR];
 				devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 			}
 			// Attempt to read the directory the recent file lives in (required for 2 disc games)

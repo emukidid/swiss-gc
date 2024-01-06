@@ -2289,6 +2289,9 @@ void select_device(int type)
 	int inAdvanced = 0, showAllDevices = 0;
 	int direction = 0;
 
+	while((allDevices[curDevice] != devices[DEVICE_PREV])) {
+		curDevice = (curDevice + 1) % MAX_DEVICES;
+	}
 	// Find the first device that meets the requiredFeatures and is available
 	while((allDevices[curDevice] == NULL) || !(deviceHandler_getDeviceAvailable(allDevices[curDevice])||showAllDevices) || !(allDevices[curDevice]->features & requiredFeatures)) {
 		curDevice = (curDevice + 1) % MAX_DEVICES;
@@ -2413,8 +2416,8 @@ void select_device(int type)
 			devices[type]->deinit( devices[type]->initial );
 		}
 	}
-	DrawDispose(deviceSelectBox);
 	devices[type] = allDevices[curDevice];
+	DrawDispose(deviceSelectBox);
 }
 
 void menu_loop()
@@ -2424,6 +2427,7 @@ void menu_loop()
 	if(needsDeviceChange) {
 		freeFiles();
 		if(devices[DEVICE_CUR]) {
+			devices[DEVICE_PREV] = devices[DEVICE_CUR];
 			devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 		}
 		devices[DEVICE_CUR] = NULL;
