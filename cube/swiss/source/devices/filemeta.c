@@ -341,6 +341,9 @@ void populate_meta(file_handle *f) {
 			devices[DEVICE_CUR]->closeFile(bannerFile);
 			free(bannerFile);
 		}
+		else if (f->fileAttrib == IS_SPECIAL) {
+			f->meta->displayName = "Up to parent directory";
+		}
 	}
 }
 

@@ -524,7 +524,7 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 		populate_meta(&((*directory)[current_view_start]));
 		browserObject = DrawFileCarouselEntry(((getVideoMode()->fbWidth / 2) - (main_entry_width / 2)), y_base, 
 								((getVideoMode()->fbWidth / 2) + (main_entry_width / 2)), y_base + main_entry_height, 
-								parentLink ? "Up to parent directory" : getRelativePath((*directory)[current_view_start].name, curDir.name),
+								getRelativePath((*directory)[current_view_start].name, curDir.name),
 								&((*directory)[current_view_start]), 0);
 		((*directory)[current_view_start]).uiObj = browserObject;
 		DrawAddChild(containerPanel, browserObject);
@@ -2291,13 +2291,9 @@ void select_device(int type)
 
 	// Find the first device that meets the requiredFeatures and is available
 	while((allDevices[curDevice] == NULL) || !(deviceHandler_getDeviceAvailable(allDevices[curDevice])||showAllDevices) || !(allDevices[curDevice]->features & requiredFeatures)) {
-		curDevice ++;
-		if( (curDevice >= MAX_DEVICES)){
-			curDevice = 0;
-		}
+		curDevice = (curDevice + 1) % MAX_DEVICES;
 	}
-	
-	
+
 	uiDrawObj_t *deviceSelectBox = NULL;
 	while(1) {
 		// Device selector
@@ -2356,7 +2352,7 @@ void select_device(int type)
 		}
 		DrawPublish(deviceSelectBox);	
 		while (!(padsButtonsHeld() & 
-			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_Z) ))
+			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z) ))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = padsButtonsHeld();
 		if((btns & PAD_BUTTON_X) && (allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2)))
@@ -2374,10 +2370,10 @@ void select_device(int type)
 			}
 		}
 		else {
-			if(btns & PAD_BUTTON_RIGHT) {
+			if(btns & (PAD_BUTTON_RIGHT|PAD_TRIGGER_R)) {
 				direction = 1;
 			}
-			if(btns & PAD_BUTTON_LEFT) {
+			if(btns & (PAD_BUTTON_LEFT|PAD_TRIGGER_L)) {
 				direction = -1;
 			}
 		}
@@ -2405,7 +2401,7 @@ void select_device(int type)
 		}
 		while ((padsButtonsHeld() & 
 			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A
-			|PAD_BUTTON_X|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_TRIGGER_Z) ))
+			|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z) ))
 			{ VIDEO_WaitVSync (); }
 		DrawDispose(deviceSelectBox);
 	}
