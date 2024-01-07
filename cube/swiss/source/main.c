@@ -212,10 +212,7 @@ int main(int argc, char *argv[])
 			if(allDevices[i] != NULL && (allDevices[i]->features & FEAT_CONFIG_DEVICE) && deviceHandler_getDeviceAvailable(allDevices[i])) {
 				swissSettings.configDeviceId = allDevices[i]->deviceUniqueId;
 				print_gecko("No default config device found, using [%s]\r\n", allDevices[i]->deviceName);
-				syssramex* sramex = __SYS_LockSramEx();
-				sramex->__padding0 = swissSettings.configDeviceId;
-				__SYS_UnlockSramEx(1);
-				while(!__SYS_SyncSram());
+				show_settings(PAGE_GLOBAL, SET_CONFIG_DEV, NULL);
 				break;
 			}
 		}
