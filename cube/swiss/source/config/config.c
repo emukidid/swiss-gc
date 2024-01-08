@@ -510,7 +510,7 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 					}
 				}
 				else if(!strcmp("AVECompat", name)) {
-					for(int i = 0; i < 4; i++) {
+					for(int i = 0; i < 5; i++) {
 						if(!strcmp(aveCompatStr[i], value)) {
 							swissSettings.aveCompat = i;
 							break;
@@ -794,7 +794,7 @@ void config_parse_global(char *configData) {
 					}
 				}
 				else if(!strcmp("AVECompat", name)) {
-					for(int i = 0; i < 4; i++) {
+					for(int i = 0; i < 5; i++) {
 						if(!strcmp(aveCompatStr[i], value)) {
 							swissSettings.aveCompat = i;
 							break;

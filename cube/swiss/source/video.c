@@ -19,6 +19,8 @@ int whichfb = 0;				//Frame buffer toggle
 #define MpalIntStr     "PAL-M 480i"
 #define MpalDsStr      "PAL-M 240p"
 #define MpalProgStr    "PAL-M 480p"
+#define DebugPalIntStr "NTSC 576i"
+#define DebugPalDsStr  "NTSC 288p"
 #define Eurgb60IntStr  "PAL 480i"
 #define Eurgb60DsStr   "PAL 240p"
 #define Eurgb60ProgStr "PAL 480p"
@@ -26,19 +28,21 @@ int whichfb = 0;				//Frame buffer toggle
 
 char *getVideoModeString() {
 	switch(getVideoMode()->viTVMode) {
-		case VI_TVMODE_NTSC_INT:     return NtscIntStr;
-		case VI_TVMODE_NTSC_DS:      return NtscDsStr;
-		case VI_TVMODE_NTSC_PROG:    return NtscProgStr;
-		case VI_TVMODE_PAL_INT:      return PalIntStr;
-		case VI_TVMODE_PAL_DS:       return PalDsStr;
-		case VI_TVMODE_PAL_PROG:     return PalProgStr;
-		case VI_TVMODE_MPAL_INT:     return MpalIntStr;
-		case VI_TVMODE_MPAL_DS:      return MpalDsStr;
-		case VI_TVMODE_MPAL_PROG:    return MpalProgStr;
-		case VI_TVMODE_EURGB60_INT:  return Eurgb60IntStr;
-		case VI_TVMODE_EURGB60_DS:   return Eurgb60DsStr;
-		case VI_TVMODE_EURGB60_PROG: return Eurgb60ProgStr;
-		default:                     return UnknownVideo;
+		case VI_TVMODE_NTSC_INT:      return NtscIntStr;
+		case VI_TVMODE_NTSC_DS:       return NtscDsStr;
+		case VI_TVMODE_NTSC_PROG:     return NtscProgStr;
+		case VI_TVMODE_PAL_INT:       return PalIntStr;
+		case VI_TVMODE_PAL_DS:        return PalDsStr;
+		case VI_TVMODE_PAL_PROG:      return PalProgStr;
+		case VI_TVMODE_MPAL_INT:      return MpalIntStr;
+		case VI_TVMODE_MPAL_DS:       return MpalDsStr;
+		case VI_TVMODE_MPAL_PROG:     return MpalProgStr;
+		case VI_TVMODE_DEBUG_PAL_INT: return DebugPalIntStr;
+		case VI_TVMODE_DEBUG_PAL_DS:  return DebugPalDsStr;
+		case VI_TVMODE_EURGB60_INT:   return Eurgb60IntStr;
+		case VI_TVMODE_EURGB60_DS:    return Eurgb60DsStr;
+		case VI_TVMODE_EURGB60_PROG:  return Eurgb60ProgStr;
+		default:                      return UnknownVideo;
 	}
 }
 
@@ -81,8 +85,11 @@ int getScanMode() {
 }
 
 int getDTVStatus() {
-	volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
-	return (vireg[55] & 1) || swissSettings.forceDTVStatus;
+	if(!in_range(swissSettings.aveCompat, 3, 4)) {
+		volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
+		return (vireg[55] & 1) || swissSettings.forceDTVStatus;
+	}
+	return 0;
 }
 
 int getFontEncode() {
@@ -158,6 +165,17 @@ GXRModeObj* getVideoMode() {
 }
 
 void setVideoMode(GXRModeObj *m) {
+	if(swissSettings.aveCompat == 3) {
+		switch(m->viTVMode) {
+			case VI_TVMODE_PAL_INT: m->viTVMode = VI_TVMODE_DEBUG_PAL_INT; break;
+			case VI_TVMODE_PAL_DS:  m->viTVMode = VI_TVMODE_DEBUG_PAL_DS;  break;
+		}
+	} else {
+		switch(m->viTVMode) {
+			case VI_TVMODE_DEBUG_PAL_INT: m->viTVMode = VI_TVMODE_PAL_INT; break;
+			case VI_TVMODE_DEBUG_PAL_DS:  m->viTVMode = VI_TVMODE_PAL_DS;  break;
+		}
+	}
 	m->viWidth = 704;
 	m->viXOrigin = 8;
 	VIDEO_Configure (m);

@@ -38,7 +38,7 @@ char *disableMCPGameIDStr[] = {"No", "Slot A", "Slot B", "Slot A&B"};
 char *disableVideoPatchesStr[] = {"None", "Game", "All"};
 char *emulateReadSpeedStr[] = {"No", "Yes", "Wii"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
-char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL"};
+char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL", "AVE P-DOL"};
 char *fileBrowserStr[] = {"Standard", "Carousel"};
 char *bs2BootStr[] = {"No", "Yes", "Sound 1", "Sound 2"};
 char *sramLang[] = {"English", "German", "French", "Spanish", "Italian", "Dutch", "Japanese", "English (US)"};
@@ -58,7 +58,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"Flatten directory:\n\nFlattens a directory structure matching a glob pattern.",
 	"Stop DVD Motor at startup:\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the DVD drive from spinning when Swiss starts\n\nThis option is mostly for users booting from game\nexploits where the disc will already be spinning.",
 	"SD/IDE Speed:\n\nThe speed to try and use on the EXI bus for SD Card Adapters or IDE-EXI devices.\n32 MHz may not work on some SD cards.",
-	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply firmware workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
+	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nAVE P-DOL - Disable progressive scan mode\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply firmware workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
 	"Force DTV Status:\n\nDisabled - Use signal from the video interface (default)\nEnabled - Force on in case of hardware fault",
 	"Enable USB Gecko debug output:\n\nIf a USB Gecko is present in slot B, debug output from\nSwiss & in game (if the game supported output over OSReport)\nwill be output. If nothing is reading the data out from the\ndevice it may cause Swiss/games to hang."
 };
@@ -250,6 +250,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)SET_PAGE_1_NEXT);
 		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, page_y_ofs, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_1_NEXT-1)),scrollBarTabHeight));
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Global Settings (1/5):"));
+		bool dtvEnable = swissSettings.aveCompat < 3;
 		bool dbgEnable = devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
 		if(option < SET_STOP_MOTOR) {
@@ -269,7 +270,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Motor at startup:", swissSettings.stopMotor, option == SET_STOP_MOTOR, true);
 			drawSettingEntryString(page, &page_y_ofs, "SD/IDE Speed:", swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == SET_EXI_SPEED, true);
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, true);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, dtvEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "USB Gecko debug output:", swissSettings.debugUSB, option == SET_ENABLE_USBGECKODBG, dbgEnable);
 		}
 	}
@@ -517,13 +518,14 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_AVE_COMPAT:
 				swissSettings.aveCompat += direction;
-				if(swissSettings.aveCompat > 3)
+				if(swissSettings.aveCompat > 4)
 					swissSettings.aveCompat = 0;
 				if(swissSettings.aveCompat < 0)
-					swissSettings.aveCompat = 3;
+					swissSettings.aveCompat = 4;
 			break;
 			case SET_FORCE_DTVSTATUS:
-				swissSettings.forceDTVStatus ^= 1;
+				if(swissSettings.aveCompat < 3)
+					swissSettings.forceDTVStatus ^= 1;
 			break;
 			case SET_ENABLE_USBGECKODBG:
 				if(devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko))
@@ -651,16 +653,12 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 						swissSettings.gameVMode = 0;
 					if(swissSettings.gameVMode < 0)
 						swissSettings.gameVMode = 14;
-					if(swissSettings.aveCompat) {
-						while(in_range(swissSettings.gameVMode, 6, 7))
-							swissSettings.gameVMode += direction;
-						while(in_range(swissSettings.gameVMode, 13, 14))
+					if(!getDTVStatus()) {
+						while(in_range(swissSettings.gameVMode, 4, 7) || in_range(swissSettings.gameVMode, 11, 14))
 							swissSettings.gameVMode += direction;
 					}
-					if(!getDTVStatus()) {
-						while(in_range(swissSettings.gameVMode, 4, 7))
-							swissSettings.gameVMode += direction;
-						while(in_range(swissSettings.gameVMode, 11, 14))
+					else if(swissSettings.aveCompat != 0) {
+						while(in_range(swissSettings.gameVMode, 6, 7) || in_range(swissSettings.gameVMode, 13, 14))
 							swissSettings.gameVMode += direction;
 					}
 					if(swissSettings.gameVMode > 14)
@@ -770,16 +768,12 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 						gameConfig->gameVMode = 0;
 					if(gameConfig->gameVMode < 0)
 						gameConfig->gameVMode = 14;
-					if(swissSettings.aveCompat) {
-						while(in_range(gameConfig->gameVMode, 6, 7))
-							gameConfig->gameVMode += direction;
-						while(in_range(gameConfig->gameVMode, 13, 14))
+					if(!getDTVStatus()) {
+						while(in_range(gameConfig->gameVMode, 4, 7) || in_range(gameConfig->gameVMode, 11, 14))
 							gameConfig->gameVMode += direction;
 					}
-					if(!getDTVStatus()) {
-						while(in_range(gameConfig->gameVMode, 4, 7))
-							gameConfig->gameVMode += direction;
-						while(in_range(gameConfig->gameVMode, 11, 14))
+					else if(swissSettings.aveCompat != 0) {
+						while(in_range(gameConfig->gameVMode, 6, 7) || in_range(gameConfig->gameVMode, 13, 14))
 							gameConfig->gameVMode += direction;
 					}
 					if(gameConfig->gameVMode > 14)
@@ -951,10 +945,8 @@ int show_settings(int page, int option, ConfigEntry *config) {
 			if(option == settings_count_pp[page]-1) {
 				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving changes ..."));
 				// Change Swiss video mode if it was modified.
-				if(tempSettings.uiVMode != swissSettings.uiVMode) {
-					GXRModeObj *newmode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
-					DrawVideoMode(newmode);
-				}
+				GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
+				DrawVideoMode(forcedMode);
 				// Save settings to SRAM
 				swissSettings.sram60Hz = getTVFormat() != VI_PAL;
 				swissSettings.sramProgressive = getScanMode() == VI_PROGRESSIVE;

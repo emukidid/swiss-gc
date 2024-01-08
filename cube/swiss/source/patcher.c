@@ -9947,20 +9947,23 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (swissSettings.forceDTVStatus) {
-		for (j = 0; j < sizeof(VIGetDTVStatusSigs) / sizeof(FuncPattern); j++)
-			if (VIGetDTVStatusSigs[j].offsetFoundAt) break;
+	for (j = 0; j < sizeof(VIGetDTVStatusSigs) / sizeof(FuncPattern); j++)
+		if (VIGetDTVStatusSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(VIGetDTVStatusSigs) / sizeof(FuncPattern) && (i = VIGetDTVStatusSigs[j].offsetFoundAt)) {
+		u32 *VIGetDTVStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		if (j < sizeof(VIGetDTVStatusSigs) / sizeof(FuncPattern) && (i = VIGetDTVStatusSigs[j].offsetFoundAt)) {
-			u32 *VIGetDTVStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			
-			if (VIGetDTVStatus) {
+		if (VIGetDTVStatus) {
+			if (in_range(swissSettings.aveCompat, 3, 4)) {
+				memset(data + i, 0, VIGetDTVStatusSigs[j].Length * sizeof(u32));
+				data[i + 0] = 0x38600000;	// li		r3, 0
+				data[i + 1] = 0x4E800020;	// blr
+			} else if (swissSettings.forceDTVStatus) {
 				memset(data + i, 0, VIGetDTVStatusSigs[j].Length * sizeof(u32));
 				data[i + 0] = 0x38600001;	// li		r3, 1
 				data[i + 1] = 0x4E800020;	// blr
-				
-				print_gecko("Found:[%s$%i] @ %08X\n", VIGetDTVStatusSigs[j].Name, j, VIGetDTVStatus);
 			}
+			print_gecko("Found:[%s$%i] @ %08X\n", VIGetDTVStatusSigs[j].Name, j, VIGetDTVStatus);
 		}
 	}
 	
@@ -10720,7 +10723,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130B482 - 0x81300000 + 0x20) = 30;
 				*(s16 *)(data + 0x8130B48E - 0x81300000 + 0x20) = 80;
 				
-				if (newmode->viTVMode >> 2 == VI_PAL) {
+				if (getTVFormat() == VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8130E8B2 - 0x81300000 + 0x20) = 8;
 					*(s16 *)(data + 0x8130E8B6 - 0x81300000 + 0x20) = 15;
@@ -10784,7 +10787,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130CC42 - 0x81300000 + 0x20) = 30;
 				*(s16 *)(data + 0x8130CC4E - 0x81300000 + 0x20) = 80;
 				
-				if (newmode->viTVMode >> 2 == VI_PAL) {
+				if (getTVFormat() == VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x81310072 - 0x81300000 + 0x20) = 8;
 					*(s16 *)(data + 0x81310076 - 0x81300000 + 0x20) = 15;
@@ -10852,7 +10855,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130CEFE - 0x81300000 + 0x20) = 30;
 				*(s16 *)(data + 0x8130CF0A - 0x81300000 + 0x20) = 80;
 				
-				if (newmode->viTVMode >> 2 == VI_PAL) {
+				if (getTVFormat() == VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8131032E - 0x81300000 + 0x20) = 8;
 					*(s16 *)(data + 0x81310332 - 0x81300000 + 0x20) = 15;
@@ -10914,7 +10917,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130B60E - 0x81300000 + 0x20) = 30;
 				*(s16 *)(data + 0x8130B61A - 0x81300000 + 0x20) = 80;
 				
-				if (newmode->viTVMode >> 2 == VI_PAL) {
+				if (getTVFormat() == VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8130EAAA - 0x81300000 + 0x20) = 8;
 					*(s16 *)(data + 0x8130EAAE - 0x81300000 + 0x20) = 15;
@@ -10955,7 +10958,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force boot sound.
 				*(u32 *)(data + 0x81302DE8 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
-				if (newmode->viTVMode >> 2 != VI_PAL) {
+				if (getTVFormat() != VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8130F1C6 - 0x81300000 + 0x20) = 10;
 					*(s16 *)(data + 0x8130F1CA - 0x81300000 + 0x20) = 255;
@@ -10997,7 +11000,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force boot sound.
 				*(u32 *)(data + 0x813043EC - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
-				if (newmode->viTVMode >> 2 != VI_PAL) {
+				if (getTVFormat() != VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8130FDDA - 0x81300000 + 0x20) = 10;
 					*(s16 *)(data + 0x8130FDDE - 0x81300000 + 0x20) = 255;
@@ -11038,7 +11041,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force boot sound.
 				*(u32 *)(data + 0x81302DE8 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
-				if (newmode->viTVMode >> 2 != VI_PAL) {
+				if (getTVFormat() != VI_PAL) {
 					memcpy(data + 0x8137D910 - 0x81300000 + 0x20, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
 				} else {
 					// Fix logo animation speed.
@@ -11109,7 +11112,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130DCAE - 0x81300000 + 0x20) = 30;
 				*(s16 *)(data + 0x8130DCBA - 0x81300000 + 0x20) = 80;
 				
-				if (newmode->viTVMode >> 2 == VI_PAL) {
+				if (getTVFormat() == VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8131114A - 0x81300000 + 0x20) = 8;
 					*(s16 *)(data + 0x8131114E - 0x81300000 + 0x20) = 15;
@@ -11169,7 +11172,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130B982 - 0x81300000 + 0x20) = 30;
 				*(s16 *)(data + 0x8130B98E - 0x81300000 + 0x20) = 80;
 				
-				if (newmode->viTVMode >> 2 == VI_PAL) {
+				if (getTVFormat() == VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8130EE1E - 0x81300000 + 0x20) = 8;
 					*(s16 *)(data + 0x8130EE22 - 0x81300000 + 0x20) = 15;
@@ -11231,7 +11234,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8130B99A - 0x81300000 + 0x20) = 30;
 				*(s16 *)(data + 0x8130B9A6 - 0x81300000 + 0x20) = 80;
 				
-				if (newmode->viTVMode >> 2 == VI_PAL) {
+				if (getTVFormat() == VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8130EE36 - 0x81300000 + 0x20) = 8;
 					*(s16 *)(data + 0x8130EE3A - 0x81300000 + 0x20) = 15;
@@ -11272,7 +11275,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force boot sound.
 				*(u32 *)(data + 0x81302F50 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.bs2Boot - 1) & 0xFFFF);
 				
-				if (newmode->viTVMode >> 2 != VI_PAL) {
+				if (getTVFormat() != VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8130F306 - 0x81300000 + 0x20) = 10;
 					*(s16 *)(data + 0x8130F30A - 0x81300000 + 0x20) = 255;

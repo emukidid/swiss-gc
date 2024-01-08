@@ -224,10 +224,7 @@ int main(int argc, char *argv[])
 	
 	// Swiss video mode force
 	GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
-	
-	if((forcedMode != NULL) && (forcedMode != getVideoMode())) {
-		DrawVideoMode(forcedMode);
-	}
+	DrawVideoMode(forcedMode);
 	
 	swissSettings.initNetworkAtStart |= bba_exists(LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2);
 	if(swissSettings.initNetworkAtStart) {

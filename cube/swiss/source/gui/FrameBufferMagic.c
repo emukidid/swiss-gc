@@ -2217,6 +2217,8 @@ void DrawShutdown() {
 void DrawVideoMode(GXRModeObj *videoMode)
 {
 	LWP_MutexLock(_videomutex);
-	setVideoMode(videoMode);
+	if(getVideoMode() != videoMode) {
+		setVideoMode(videoMode);
+	}
 	LWP_MutexUnlock(_videomutex);
 }
