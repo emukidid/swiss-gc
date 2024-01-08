@@ -532,6 +532,17 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					swissSettings.debugUSB ^= 1;
 			break;
 		}
+		switch(option) {
+			case SET_SWISS_VIDEOMODE:
+			case SET_AVE_COMPAT:
+			case SET_FORCE_DTVSTATUS:
+			{
+				// Change Swiss video mode if it was modified.
+				GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
+				DrawVideoMode(forcedMode);
+			}
+			break;
+		}
 	}
 	else if(page == PAGE_NETWORK) {
 		switch(option) {
@@ -880,6 +891,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 	// Copy current settings to a temp copy in case the user cancels out
 	memcpy((void*)&tempSettings,(void*)&swissSettings, sizeof(SwissSettings));
 	
+	GXRModeObj *oldmode = getVideoMode();
 	while (padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
 		uiDrawObj_t* settingsPage = settings_draw_page(page, option, config);
@@ -944,9 +956,6 @@ int show_settings(int page, int option, ConfigEntry *config) {
 			// Generic Save/Cancel/Back/Next button actions
 			if(option == settings_count_pp[page]-1) {
 				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving changes ..."));
-				// Change Swiss video mode if it was modified.
-				GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
-				DrawVideoMode(forcedMode);
 				// Save settings to SRAM
 				swissSettings.sram60Hz = getTVFormat() != VI_PAL;
 				swissSettings.sramProgressive = getScanMode() == VI_PROGRESSIVE;
@@ -993,6 +1002,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				memcpy((void*)&swissSettings, (void*)&tempSettings, sizeof(SwissSettings));
 				VIDEO_SetAdjustingValues(swissSettings.sramHOffset, 0);
 				DrawDispose(settingsPage);
+				DrawVideoMode(oldmode);
 				return 0;
 			}
 			if((page != PAGE_MAX) && (option == settings_count_pp[page]-2)) {
