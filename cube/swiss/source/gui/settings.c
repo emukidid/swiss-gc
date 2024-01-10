@@ -23,7 +23,8 @@
 #define page_nav_y (390)
 #define page_saveexit_y (425)
 #define label_size (0.75f)
-	
+
+ConfigEntry tempConfig;
 SwissSettings tempSettings;
 char *uiVModeStr[] = {"Auto", "480i", "480p", "576i", "576p"};
 char *gameVModeStr[] = {"Auto", "480i", "480sf", "240p", "960i", "480p", "1080i60", "540p60", "576i", "576sf", "288p", "1152i", "576p", "1080i50", "540p50"};
@@ -382,6 +383,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[gameConfig->emulateReadSpeed], option == SET_READ_SPEED, emulatedReadSpeed);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", gameConfig->emulateEthernet, option == SET_EMULATE_ETHERNET, emulatedEthernet);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", gameConfig->preferCleanBoot, option == SET_CLEAN_BOOT, enabledCleanBoot);
+				drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULTS, true);
 			}
 		}
 		else {
@@ -405,6 +407,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_READ_SPEED, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", swissSettings.emulateEthernet, option == SET_EMULATE_ETHERNET, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_CLEAN_BOOT, false);
+				drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULTS, false);
 			}
 		}
 	}
@@ -883,13 +886,20 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR))
 					gameConfig->preferCleanBoot ^= 1;
 			break;
+			case SET_DEFAULTS:
+				if(direction == 0)
+					config_defaults(gameConfig);
+			break;
 		}
 	}
 }
 
 int show_settings(int page, int option, ConfigEntry *config) {
 	// Copy current settings to a temp copy in case the user cancels out
-	memcpy((void*)&tempSettings,(void*)&swissSettings, sizeof(SwissSettings));
+	if(config != NULL) {
+		memcpy(&tempConfig, config, sizeof(ConfigEntry));
+	}
+	memcpy(&tempSettings, &swissSettings, sizeof(SwissSettings));
 	
 	GXRModeObj *oldmode = getVideoMode();
 	while (padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
@@ -999,7 +1009,10 @@ int show_settings(int page, int option, ConfigEntry *config) {
 			}
 			if(option == settings_count_pp[page]) {
 				// Exit without saving (revert)
-				memcpy((void*)&swissSettings, (void*)&tempSettings, sizeof(SwissSettings));
+				if(config != NULL) {
+					memcpy(config, &tempConfig, sizeof(ConfigEntry));
+				}
+				memcpy(&swissSettings, &tempSettings, sizeof(SwissSettings));
 				VIDEO_SetAdjustingValues(swissSettings.sramHOffset, 0);
 				DrawDispose(settingsPage);
 				DrawVideoMode(oldmode);
@@ -1018,6 +1031,9 @@ int show_settings(int page, int option, ConfigEntry *config) {
 			if(page == PAGE_NETWORK && (in_range(option, SET_BBA_LOCALIP, SET_BBA_GATEWAY) ||
 										in_range(option, SET_FSP_HOSTIP,  SET_FTP_PASS) ||
 										in_range(option, SET_SMB_HOSTIP,  SET_SMB_PASS))) {
+				settings_toggle(page, option, 0, config);
+			}
+			if(page == PAGE_GAME && option == SET_DEFAULTS) {
 				settings_toggle(page, option, 0, config);
 			}
 		}
