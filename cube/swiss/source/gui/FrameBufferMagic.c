@@ -662,7 +662,7 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
 	if(data->miniMode) {	
 		int x = 30, y = 420;
 		if(data->miniModePos == PROGRESS_BOX_TOPRIGHT) {
-			x = 560; y = 100;
+			x = 535; y = 95;
 		}
 		GXColor loadingColor = (GXColor) {255,255,255,data->miniModeAlpha};
 		int numSegments = (data->percent*8)/100;
@@ -1284,11 +1284,15 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 	return event;
 }
 
-uiDrawObj_t* DrawFileCarouselEntry(int x1, int y1, int x2, int y2, const char *message, file_handle *file, int distFromMiddle) {
+uiDrawObj_t* DrawFileBrowserButtonMeta(int x1, int y1, int x2, int y2, const char *message, file_handle *file, int mode) {
 	if(file->meta && file->meta->displayName) {
 		message = file->meta->displayName;
 	}
-	uiDrawObj_t* event = DrawFileBrowserButton(x1, y1, x2, y2, message, file, B_SELECTED);
+	return DrawFileBrowserButton(x1, y1, x2, y2, message, file, mode);
+}
+
+uiDrawObj_t* DrawFileCarouselEntry(int x1, int y1, int x2, int y2, const char *message, file_handle *file, int distFromMiddle) {
+	uiDrawObj_t* event = DrawFileBrowserButtonMeta(x1, y1, x2, y2, message, file, B_SELECTED);
 	drawFileBrowserButtonEvent_t *data = (drawFileBrowserButtonEvent_t*)event->data;
 	data->isCarousel = true;
 	data->distFromMiddle = distFromMiddle;
