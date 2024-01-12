@@ -1350,6 +1350,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0xB4, 0xCCBB, 0x20843654, 0x5DBD31BFC23686E8,    1083392, +1458894848, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 06 (25)" },
 	{{ "GNHE5d\x00\x00" }, false, 0xB4, 0xCCBB, 0x9A3FE338, 0x6C7CC9A9C272E7CC,   15079424, +1444898816, {      94248,       +4056, 6496, 0xA25A }, "Bonus Powersaves" },
 	{{ "GNHE5d\x00\x00" }, false, 0xB6, 0xCCBB, 0x5515E329, 0xE694B087FAFC6723,    1312768, +1458665472, {      94248,       +4056, 6496, 0x5AE1 }, "Action Replay Ultimate Codes for Use with Enter the Matrix" },
+	{{ "GNHE5d\x00\x00" }, false, 0xB8, 0x3E90, 0x9CB4C020, 0x77FF4EC0A6167611,     837632, +1459140608, {      94248,       +4056, 6496, 0x4E23 }, "FreeLoader for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0xBE, 0xCCBB, 0xCEB11A37, 0xB1B21E0D2447D422,    1222656, +1458755584, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 04 (23)" },
 	{{ "GNHE5d\x00\x00" }, false, 0xCD, 0xCCBB, 0x989E3A76, 0x852811A76F5A51E6,    3313664, +1456664576, {      94248,       +4056, 6496, 0x66A0 }, "Action Replay Max" },
 	{{ "GNHE5d\x00\x00" }, false, 0xCE, 0xCCBB, 0x3BDA1560, 0x1852230C9556B627,    1204224, +1458774016, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 01 (20)" },
@@ -2091,7 +2092,7 @@ static const struct {
 	{{ "UGPJ01\x00\x03" }, false, 0xDE, 0xC4F0, 0xDFF567CB, 0xFB2218FBFA6AB9FE,    2473984, +1457504256, {    2003524,      +28092, 6496, 0xE53B }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
-#define REDUMP_COUNT (1982)
+#define REDUMP_COUNT (1983)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
