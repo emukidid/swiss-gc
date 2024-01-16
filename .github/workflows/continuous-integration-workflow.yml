@@ -13,22 +13,18 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends gcc gcc-mingw-w64-i686 libc6-dev libc6-i386 p7zip-full xorriso
-
-    - name: Checkout libogc2
-      uses: actions/checkout@main
-      with:
-        repository: extremscorner/libogc2
-        path: libogc2
+        sudo dkp-pacman-key --recv-keys C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE --keyserver keyserver.ubuntu.com
+        sudo dkp-pacman-key --lsign-key C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE
+        sudo sed -i '/^\[dkp-libs\]$/,$d' /opt/devkitpro/pacman/etc/pacman.conf
+        sudo echo -e '[extremscorner-devkitpro]\nServer = https://packages.extremscorner.org/devkitpro/linux/$arch' >> /opt/devkitpro/pacman/etc/pacman.conf
+        sudo dkp-pacman -Sy
+        sudo dkp-pacman -S --noconfirm libogc2-git
 
     - name: Checkout Swiss
       uses: actions/checkout@main
       with:
         path: swiss
         fetch-depth: 0
-
-    - name: Build libogc2
-      run: make install
-      working-directory: libogc2
 
     - name: Build Swiss artifacts
       run: make
