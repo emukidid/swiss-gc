@@ -1933,8 +1933,13 @@ void load_game() {
 			}
 		}
 	}
-	
+	if(swissSettings.audioStreaming && !(devices[DEVICE_CUR]->features & FEAT_AUDIO_STREAMING)) {
+		DrawDispose(msgBox);
+		msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support audio streaming.\nThis may impact playability."));
+		sleep(5);
+	}
 	DrawDispose(msgBox);
+	
 	// Find the config for this game, or default if we don't know about it
 	ConfigEntry *config = calloc(1, sizeof(ConfigEntry));
 	memcpy(config->game_id, &GCMDisk.ConsoleID, 4);

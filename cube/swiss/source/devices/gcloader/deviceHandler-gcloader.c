@@ -311,11 +311,14 @@ bool deviceHandler_GCLoader_test() {
 				}
 			}
 			__device_gcloader.hwName = "GC Loader";
-		} else
+			__device_gcloader.features |=  FEAT_AUDIO_STREAMING;
+		} else {
 			__device_gcloader.hwName = "GC Loader compatible";
-		
+			__device_gcloader.features &= ~FEAT_AUDIO_STREAMING;
+		}
 		return true;
 	}
+	
 	return false;
 }
 
