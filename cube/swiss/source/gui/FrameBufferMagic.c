@@ -671,7 +671,7 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
 		GX_InvalidateTexAll();
 		GX_LoadTexObj(&loadingTexObj, GX_TEXMAP0);
 		_drawRect(x-8, y-8, 16, 16, 0, loadingColor, (float) (numSegments)/8, (float) (numSegments+1)/8, 0.0f, 1.0f);
-		drawString(x+38, y, "Loading...", 0.55f, true, loadingColor);
+		drawString(x+38, y, "Loading\205", 0.55f, true, loadingColor);
 		return;
 	}
 	_DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor);		
@@ -1385,17 +1385,17 @@ static void _DrawTitleBar(uiDrawObj_t *evt) {
 	
 	drawString(40, 28, "Swiss v0.6", 1.5f, false, defaultColor);
 	sprintf(fbTextBuffer, "commit: %s rev: %s", GITREVISION, GITVERSION);
-	drawString(425, 50, fbTextBuffer, 0.55f, false, defaultColor);
+	drawString(412, 50, fbTextBuffer, 0.55f, false, defaultColor);
 	
 	s8 cputemp = SYS_GetCoreTemperature();
 	if(cputemp >= 0) {
 		sprintf(fbTextBuffer, "%i\260C", cputemp);
-		drawString(390, 33, fbTextBuffer, 0.55f, false, defaultColor);
+		drawString(395, 33, fbTextBuffer, 0.55f, false, defaultColor);
 	}
 	time_t curtime;
 	if(time(&curtime) != (time_t)-1) {
-		strftime(fbTextBuffer, sizeof(fbTextBuffer), "%Y-%m-%d - %H:%M:%S", localtime(&curtime));
-		drawString(434, 33, fbTextBuffer, 0.55f, false, defaultColor);
+		strftime(fbTextBuffer, sizeof(fbTextBuffer), "%Y-%m-%d \267 %H:%M:%S", localtime(&curtime));
+		drawString(439, 33, fbTextBuffer, 0.55f, false, defaultColor);
 	}
 }
 
@@ -1534,10 +1534,10 @@ static uiDrawObj_t* drawParameterForArgsSelector(Parameter *param, int x, int y,
 	// If enabled, draw arrows indicating where in the param list we are
 	if(selected && param->enable && param->num_values > 1) {
 		if(param->currentValueIdx != 0) {
-			DrawAddChild(container, DrawStyledLabel(x+(chkWidth+nameWidth+(gapWidth*4)), y+5, "<-", .8f, false, defaultColor));
+			DrawAddChild(container, DrawStyledLabel(x+(chkWidth+nameWidth+(gapWidth*4)), y+5, "\213", .8f, false, defaultColor));
 		}
 		if(param->currentValueIdx != param->num_values-1) {
-			DrawAddChild(container, DrawStyledLabel(x+(chkWidth+nameWidth+paramWidth+(gapWidth*6)), y+5, "->", .8f, false, defaultColor));
+			DrawAddChild(container, DrawStyledLabel(x+(chkWidth+nameWidth+paramWidth+(gapWidth*7)), y+5, "\233", .8f, false, defaultColor));
 		}
 	}
 	// Draw the current value
@@ -1573,7 +1573,7 @@ void DrawArgsSelector(const char *fileName) {
 		DrawAddChild(newPanel, DrawStyledLabel(33, 345, "Default values will be used by the DOL being loaded if a", 0.8f, false, defaultColor));
 		DrawAddChild(newPanel, DrawStyledLabel(33, 365, "parameter is not enabled. Please check the documentation", 0.8f, false, defaultColor));
 		DrawAddChild(newPanel, DrawStyledLabel(33, 385, "for this DOL if you are unsure of the default values.", 0.8f, false, defaultColor));
-		DrawAddChild(newPanel, DrawStyledLabel(640/2, 440, "(A) Toggle Param - (Start) Load the DOL", 1.0f, true, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(640/2, 440, "(A) Toggle Param \267 (Start) Load the DOL", 1.0f, true, defaultColor));
 		
 		if(container) {
 			DrawDispose(container);
@@ -1661,7 +1661,7 @@ void DrawCheatsSelector(const char *fileName) {
 		
 		sprintf(txtbuffer, "WiiRD Debug %s", swissSettings.wiirdDebug ? "Enabled":"Disabled");
 		DrawAddChild(newPanel, DrawStyledLabel(33, 395, txtbuffer, 0.8f, false, defaultColor));
-		DrawAddChild(newPanel, DrawStyledLabel(640/2, 440, "(A) Toggle Cheat - (X) WiiRD Debug - (B) Return", 0.9f, true, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(640/2, 440, "(A) Toggle Cheat \267 (X) WiiRD Debug \267 (B) Return", 0.9f, true, defaultColor));
 
 		if(container) {
 			DrawDispose(container);
@@ -1855,7 +1855,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 		// Draw the text entry box (TODO: mask chars if the mode says to do so)
 		DrawAddChild(newPanel, DrawEmptyBox(40, 100, getVideoMode()->fbWidth-40, 140));
 		DrawAddChild(newPanel, DrawStyledLabelWithCaret(320, 120, text, GetTextScaleToFitInWidth(text, getVideoMode()->fbWidth-90), true, defaultColor, caret));
-		DrawAddChild(newPanel, DrawStyledLabel(320, 160, "(L/R) Cursor | (Start) Accept | (B) Discard", 0.75f, true, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(320, 160, "(L/R) Cursor \267 (Start) Accept \267 (B) Discard", 0.75f, true, defaultColor));
 
 		// Alphanumeric has a little "mode" hint at the bottom (upper/lower case set switching)
 		if(mode & ENTRYMODE_ALPHA) {

@@ -427,7 +427,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 					strcpy(&swissSettings.autoload[0], &curDir.name[0]);
 				}
 				// Save config
-				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload ..."));
+				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload\205"));
 				config_update_global(true);
 				DrawDispose(msgBox);
 			}
@@ -646,7 +646,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 					strcpy(&swissSettings.autoload[0], &curDir.name[0]);
 				}
 				// Save config
-				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload ..."));
+				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload\205"));
 				config_update_global(true);
 				DrawDispose(msgBox);
 			}
@@ -808,7 +808,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 					strcpy(&swissSettings.autoload[0], &curDir.name[0]);
 				}
 				// Save config
-				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload ..."));
+				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload\205"));
 				config_update_global(true);
 				DrawDispose(msgBox);
 			}
@@ -1265,7 +1265,7 @@ void boot_dol()
 	if(devices[DEVICE_CONFIG] != NULL) {
 		// Update the recent list.
 		if(update_recent()) {
-			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list ..."));
+			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list\205"));
 			config_update_recent(true);
 			DrawDispose(msgBox);
 		}
@@ -1455,7 +1455,7 @@ bool manage_file() {
 	}
 	// Handle deletes (dir or file)
 	else if(canDelete && option == DELETE_OPTION) {
-		uiDrawObj_t *progBar = DrawPublish(DrawProgressBar(true, 0, "Deleting ..."));
+		uiDrawObj_t *progBar = DrawPublish(DrawProgressBar(true, 0, "Deleting\205"));
 		bool deleted = deleteFileOrDir(&curFile);
 		DrawDispose(progBar);
 		sprintf(txtbuffer, "%s %s\nPress A to continue.", isFile ? "File" : "Directory", deleted ? "deleted successfully" : "failed to delete!");
@@ -1784,7 +1784,7 @@ void verify_game()
 	}
 	
 	unsigned char *readBuffer = (unsigned char*)memalign(32,chunkSize);
-	uiDrawObj_t* progBar = DrawProgressBar(false, 0, "Verifying ...");
+	uiDrawObj_t* progBar = DrawProgressBar(false, 0, "Verifying\205");
 	DrawPublish(progBar);
 	
 	u64 startTime = gettime();
@@ -1852,11 +1852,11 @@ void load_game() {
 	file_handle *disc2File = meta_find_disc2(&curFile);
 	
 	if(devices[DEVICE_CUR] == &__device_wode) {
-		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Setup base offset please Wait .."));
+		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Setup base offset please Wait\205"));
 		devices[DEVICE_CUR]->setupFile(&curFile, disc2File, NULL, -1);
 		DrawDispose(msgBox);
 	}
-	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading ..."));
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading\205"));
 	
 	// boot the GCM/ISO file, gamecube disc or multigame selected entry
 	memset(&tgcFile, 0, sizeof(TGCHeader));
@@ -1956,7 +1956,7 @@ void load_game() {
 	if(devices[DEVICE_CONFIG] != NULL) {
 		// Update the recent list.
 		if(update_recent()) {
-			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list ..."));
+			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving recent list\205"));
 			config_update_recent(true);
 			DrawDispose(msgBox);
 		}
@@ -2133,7 +2133,7 @@ void load_file()
 				DrawDispose(msgBox);
 				return;
 			}
-			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading Flash File ..."));
+			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading Flash File\205"));
 			u8 *flash = (u8*)memalign(32,0x1D0000);
 			devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
 			devices[DEVICE_CUR]->readFile(&curFile,flash,0x1D0000);
@@ -2198,7 +2198,7 @@ void load_file()
 int check_game(file_handle *file, file_handle *file2, ExecutableFile *filesToPatch)
 { 	
 	char* gameID = (char*)&GCMDisk;
-	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Checking Game .."));
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Checking Game\205"));
 	
 	int numToPatch;
 	if(tgcFile.magic == TGC_MAGIC) {
@@ -2336,7 +2336,7 @@ uiDrawObj_t* draw_game_info() {
 	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
 		if(is_verifiable_disc(&GCMDisk)) {
-			DrawAddChild(container, DrawStyledLabel(640/2, 180, "Verify (R)", 0.6f, true, defaultColor));
+			DrawAddChild(container, DrawStyledLabel(640/2, 180, "(R) Verify", 0.6f, true, defaultColor));
 		}
 		sprintf(txtbuffer, "Game ID: [%.6s] Audio Streaming: [%s]", (char*)&GCMDisk, (swissSettings.audioStreaming ? "Yes":"No"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 200, txtbuffer, 0.8f, true, defaultColor));
@@ -2358,15 +2358,15 @@ uiDrawObj_t* draw_game_info() {
 		}
 	}
 	if(devices[DEVICE_CUR] == &__device_wode) {
-		DrawAddChild(container, DrawStyledLabel(640/2, 390, "Settings (X) - Cheats (Y) - Boot (A)", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 390, "(X) Settings \267 (Y) Cheats \267 (A) Boot", 0.75f, true, defaultColor));
 	}
 	else {
 		if(devices[DEVICE_CONFIG] != NULL) {
 			bool isAutoLoadEntry = !strcmp(swissSettings.autoload, curFile.name) || !fnmatch(swissSettings.autoload, curFile.name, FNM_PATHNAME);
-			sprintf(txtbuffer, "Load at startup (Z) [Current: %s]", isAutoLoadEntry ? "Yes":"No");
+			sprintf(txtbuffer, "(Z) Load at startup [Current: %s]", isAutoLoadEntry ? "Yes":"No");
 			DrawAddChild(container, DrawStyledLabel(640/2, 370, txtbuffer, 0.6f, true, defaultColor));
 		}
-		DrawAddChild(container, DrawStyledLabel(640/2, 390, "Settings (X) - Cheats (Y) - Exit (B) - Boot (A)", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 390, "(X) Settings \267 (Y) Cheats \267 (B) Exit \267 (A) Boot", 0.75f, true, defaultColor));
 	}
 	return container;
 }
@@ -2418,7 +2418,7 @@ int info_game(ConfigEntry *config)
 				strcpy(&swissSettings.autoload[0], &curFile.name[0]);
 			}
 			// Save config
-			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload ..."));
+			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload\205"));
 			config_update_global(true);
 			DrawDispose(infoPanel);
 			infoPanel = DrawPublish(draw_game_info());
@@ -2471,8 +2471,8 @@ void select_device(int type)
 		uiDrawObj_t *selectLabel = DrawStyledLabel(640/2, 195
 													, type == DEVICE_DEST ? "Destination Device" : "Device Selection"
 													, 1.0f, true, defaultColor);
-		uiDrawObj_t *fwdLabel = DrawLabel(520, 270, "->");
-		uiDrawObj_t *backLabel = DrawLabel(100, 270, "<-");
+		uiDrawObj_t *fwdLabel = DrawLabel(530, 270, "\233");
+		uiDrawObj_t *backLabel = DrawLabel(100, 270, "\213");
 		uiDrawObj_t *showAllLabel = DrawStyledLabel(20, 400, "(Z) Show all devices", 0.65f, false, showAllDevices ? defaultColor:deSelectedColor);
 		DrawAddChild(deviceSelectBox, selectLabel);
 		DrawAddChild(deviceSelectBox, fwdLabel);

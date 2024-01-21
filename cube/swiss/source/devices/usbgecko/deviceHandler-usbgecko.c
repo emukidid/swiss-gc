@@ -174,7 +174,7 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, Exec
 
 s32 deviceHandler_USBGecko_init(file_handle* file) {
 	s32 res = 0;
-	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Waiting for PC ..."));
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Waiting for PC\205"));
 	if(usb_isgeckoalive(1)) {
 		s32 retries = 1000;
 		

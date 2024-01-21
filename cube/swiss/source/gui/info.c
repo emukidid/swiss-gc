@@ -171,10 +171,10 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 378, "Visit us on IRC at EFNet/#gc-forever", 0.75f, true, defaultColor));
 	}
 	if(page_num != 2) {
-		DrawAddChild(container, DrawLabel(520, 400, "->"));
+		DrawAddChild(container, DrawLabel(530, 400, "\233"));
 	}
 	if(page_num != 0) {
-		DrawAddChild(container, DrawLabel(100, 400, "<-"));
+		DrawAddChild(container, DrawLabel(100, 400, "\213"));
 	}
 	DrawAddChild(container, DrawStyledLabel(640/2, 410, "Press A or B to return", 1.0f, true, defaultColor));
 	return container;

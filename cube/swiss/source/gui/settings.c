@@ -162,13 +162,9 @@ void add_tooltip_label(uiDrawObj_t* page, int page_num, int option) {
 	}
 }
 
-void drawSelectIndicator(uiDrawObj_t* page, int y) {
-	DrawAddChild(page, DrawStyledLabel(20, y + (page_y_line / 4), "*", 0.35f, false, disabledColor));	
-}
-
 void drawSettingEntryString(uiDrawObj_t* page, int *y, char *label, char *key, bool selected, bool enabled) {
 	if(selected) {
-		drawSelectIndicator(page, *y);
+		DrawAddChild(page, DrawStyledLabel(20, *y, "\225", label_size, false, enabled ? defaultColor:deSelectedColor));
 	}
 	DrawAddChild(page, DrawStyledLabel(page_x_ofs_key, *y, label, label_size, false, enabled ? defaultColor:deSelectedColor));
 	DrawAddChild(page, DrawStyledLabel(page_x_ofs_val, *y, key, label_size, false, enabled && selected ? defaultColor:deSelectedColor));
@@ -176,16 +172,10 @@ void drawSettingEntryString(uiDrawObj_t* page, int *y, char *label, char *key, b
 }
 
 void drawSettingEntryBoolean(uiDrawObj_t* page, int *y, char *label, bool boolval, bool selected, bool enabled) {
-	if(selected) {
-		drawSelectIndicator(page, *y);
-	}
 	drawSettingEntryString(page, y, label, boolval ? "Yes" : "No", selected, enabled);
 }
 
 void drawSettingEntryNumeric(uiDrawObj_t* page, int *y, char *label, int num, bool selected, bool enabled) {
-	if(selected) {
-		drawSelectIndicator(page, *y);
-	}
 	sprintf(txtbuffer, "%i", num);
 	drawSettingEntryString(page, y, label, txtbuffer, selected, enabled);
 }
@@ -969,7 +959,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 		if((btns & PAD_BUTTON_A)) {
 			// Generic Save/Cancel/Back/Next button actions
 			if(option == settings_count_pp[page]-1) {
-				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving changes ..."));
+				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving changes\205"));
 				// Save settings to SRAM
 				swissSettings.sram60Hz = getTVFormat() != VI_PAL;
 				swissSettings.sramProgressive = getScanMode() == VI_PROGRESSIVE;

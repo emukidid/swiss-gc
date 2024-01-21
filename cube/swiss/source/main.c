@@ -73,7 +73,7 @@ void Initialise (void)
 	init_font();
 	DrawInit();
 
-	uiDrawObj_t *progBox = DrawPublish(DrawProgressBar(true, 0, "Initialise DVD .. (HOLD B if NO DVD Drive)"));
+	uiDrawObj_t *progBox = DrawPublish(DrawProgressBar(true, 0, "Initialise DVD\205 (HOLD B if NO DVD Drive)"));
 	while(DVD_GetCmdBlockStatus(&commandBlock) == DVD_STATE_BUSY) {
 		if(DVD_LowGetCoverStatus() == 1) {
 			break;
@@ -293,7 +293,7 @@ void populateDeviceAvailability() {
 		deviceHandler_setAllDevicesAvailable();
 		return;
 	}
-	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Detecting devices ...\nThis can be skipped by holding B next time"));
+	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Detecting devices\205\nThis can be skipped by holding B next time"));
 	int i;
 	for(i = 0; i < MAX_DEVICES; i++) {
 		if(allDevices[i] != NULL && !deviceHandler_getDeviceAvailable(allDevices[i])) {
