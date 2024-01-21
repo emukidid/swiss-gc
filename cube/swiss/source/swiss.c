@@ -2357,15 +2357,22 @@ uiDrawObj_t* draw_game_info() {
 			DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.6f, true, defaultColor));
 		}
 	}
+
+	char *textPtr = txtbuffer;
+	if(devices[DEVICE_CONFIG] != NULL) {
+		bool isAutoLoadEntry = !strcmp(swissSettings.autoload, curFile.name) || !fnmatch(swissSettings.autoload, curFile.name, FNM_PATHNAME);
+		textPtr += sprintf(textPtr, "(Z) Load at startup [Current: %s]", isAutoLoadEntry ? "Yes":"No");
+	}
+	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
+		textPtr = stpcpy(textPtr, textPtr == txtbuffer ? "(L+A) Clean Boot":" \267 (L+A) Clean Boot");
+	}
+	if(textPtr != txtbuffer) {
+		DrawAddChild(container, DrawStyledLabel(640/2, 370, txtbuffer, 0.6f, true, defaultColor));
+	}
 	if(devices[DEVICE_CUR] == &__device_wode) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 390, "(X) Settings \267 (Y) Cheats \267 (A) Boot", 0.75f, true, defaultColor));
 	}
 	else {
-		if(devices[DEVICE_CONFIG] != NULL) {
-			bool isAutoLoadEntry = !strcmp(swissSettings.autoload, curFile.name) || !fnmatch(swissSettings.autoload, curFile.name, FNM_PATHNAME);
-			sprintf(txtbuffer, "(Z) Load at startup [Current: %s]", isAutoLoadEntry ? "Yes":"No");
-			DrawAddChild(container, DrawStyledLabel(640/2, 370, txtbuffer, 0.6f, true, defaultColor));
-		}
 		DrawAddChild(container, DrawStyledLabel(640/2, 390, "(X) Settings \267 (Y) Cheats \267 (B) Exit \267 (A) Boot", 0.75f, true, defaultColor));
 	}
 	return container;
