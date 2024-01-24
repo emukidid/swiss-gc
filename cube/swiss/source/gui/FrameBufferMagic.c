@@ -1484,10 +1484,10 @@ static void _DrawVertScrollBar(uiDrawObj_t *evt) {
 	int x2 = data->x+data->width;
 	int y1 = data->y;
 	int y2 = data->y+data->height;
-	int scrollStartY = y1+3 + (int)(data->height*data->scrollPercent);
+	int scrollStartY = y1+3 + (int)((data->height-6-data->scrollHeight)*data->scrollPercent);
 
-	if(scrollStartY + data->scrollHeight +3 > y2)
-		scrollStartY = y2-data->scrollHeight-3;
+	if(scrollStartY > y2-3-data->scrollHeight)
+		scrollStartY = y2-3-data->scrollHeight;
 	
 	GXColor fillColor = (GXColor) {46,57,104,GUI_MSGBOX_ALPHA}; 	//bluish
   	GXColor noColor = (GXColor) {0,0,0,0}; //blank
