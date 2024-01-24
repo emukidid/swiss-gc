@@ -200,6 +200,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Invert Camera Stick=%s\r\n", invertCStickStr[swissSettings.invertCStick]);
 	fprintf(fp, "Swap Camera Stick=%s\r\n", swapCStickStr[swissSettings.swapCStick]);
 	fprintf(fp, "Digital Trigger Level=%hhu\r\n", swissSettings.triggerLevel);
+	fprintf(fp, "Emulate Audio Streaming=%s\r\n", emulateAudioStreamStr[swissSettings.emulateAudioStream]);
 	fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[swissSettings.emulateReadSpeed]);
 	fprintf(fp, "Emulate Memory Card=%s\r\n", swissSettings.emulateMemoryCard ? "Yes":"No");
 	fprintf(fp, "Emulate Broadband Adapter=%s\r\n", swissSettings.emulateEthernet ? "Yes":"No");
@@ -273,6 +274,7 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	fprintf(fp, "Invert Camera Stick=%s\r\n", invertCStickStr[entry->invertCStick]);
 	fprintf(fp, "Swap Camera Stick=%s\r\n", swapCStickStr[entry->swapCStick]);
 	fprintf(fp, "Digital Trigger Level=%hhu\r\n", entry->triggerLevel);
+	fprintf(fp, "Emulate Audio Streaming=%s\r\n", emulateAudioStreamStr[entry->emulateAudioStream]);
 	fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[entry->emulateReadSpeed]);
 	fprintf(fp, "Emulate Broadband Adapter=%s\r\n", entry->emulateEthernet ? "Yes":"No");
 	fprintf(fp, "Prefer Clean Boot=%s\r\n", entry->preferCleanBoot ? "Yes":"No");
@@ -310,6 +312,7 @@ void config_defaults(ConfigEntry *entry) {
 	entry->invertCStick = swissSettings.invertCStick;
 	entry->swapCStick = swissSettings.swapCStick;
 	entry->triggerLevel = swissSettings.triggerLevel;
+	entry->emulateAudioStream = swissSettings.emulateAudioStream;
 	entry->emulateReadSpeed = swissSettings.emulateReadSpeed;
 	entry->emulateEthernet = swissSettings.emulateEthernet;
 	entry->preferCleanBoot = swissSettings.preferCleanBoot;
@@ -694,6 +697,14 @@ void config_parse_global(char *configData) {
 				else if(!strcmp("Digital Trigger Level", name)) {
 					swissSettings.triggerLevel = atoi(value);
 				}
+				else if(!strcmp("Emulate Audio Streaming", name)) {
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(emulateAudioStreamStr[i], value)) {
+							swissSettings.emulateAudioStream = i;
+							break;
+						}
+					}
+				}
 				else if(!strcmp("Emulate Read Speed", name)) {
 					for(int i = 0; i < 3; i++) {
 						if(!strcmp(emulateReadSpeedStr[i], value)) {
@@ -1022,6 +1033,14 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 				else if(!strcmp("Digital Trigger Level", name)) {
 					entry->triggerLevel = atoi(value);
 				}
+				else if(!strcmp("Emulate Audio Streaming", name)) {
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(emulateAudioStreamStr[i], value)) {
+							entry->emulateAudioStream = i;
+							break;
+						}
+					}
+				}
 				else if(!strcmp("Emulate Read Speed", name)) {
 					for(int i = 0; i < 3; i++) {
 						if(!strcmp(emulateReadSpeedStr[i], value)) {
@@ -1128,6 +1147,7 @@ void config_load_current(ConfigEntry *config) {
 	swissSettings.invertCStick = config->invertCStick;
 	swissSettings.swapCStick = config->swapCStick;
 	swissSettings.triggerLevel = config->triggerLevel;
+	swissSettings.emulateAudioStream = config->emulateAudioStream;
 	swissSettings.emulateReadSpeed = config->emulateReadSpeed;
 	swissSettings.emulateEthernet = config->emulateEthernet;
 	swissSettings.preferCleanBoot = config->preferCleanBoot;
@@ -1149,6 +1169,7 @@ void config_unload_current() {
 	swissSettings.wiirdDebug = backup.wiirdDebug;
 	swissSettings.sram60Hz = backup.sram60Hz;
 	swissSettings.sramProgressive = backup.sramProgressive;
+	swissSettings.emulateAudioStream = backup.emulateAudioStream;
 	swissSettings.emulateReadSpeed = backup.emulateReadSpeed;
 	swissSettings.emulateEthernet = backup.emulateEthernet;
 	swissSettings.preferCleanBoot = backup.preferCleanBoot;

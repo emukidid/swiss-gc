@@ -37,6 +37,7 @@ char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
 char *swapCStickStr[] = {"No", "X", "Y", "X&Y"};
 char *disableMCPGameIDStr[] = {"No", "Slot A", "Slot B", "Slot A&B"};
 char *disableVideoPatchesStr[] = {"None", "Game", "All"};
+char *emulateAudioStreamStr[] = {"Off", "Auto", "On"};
 char *emulateReadSpeedStr[] = {"No", "Yes", "Wii"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
 char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL", "AVE P-DOL"};
@@ -93,7 +94,8 @@ static char *tooltips_game[PAGE_GAME_MAX+1] = {
 	"Force Polling Rate:\n\nVSync - Highest compatibility\n1000Hz - Lowest input latency",
 	"Invert Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Invert X-axis of the C Stick\nY - Invert Y-axis of the C Stick\nX&Y - Invert both axes of the C Stick",
 	"Swap Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Swap X-axis of the C Stick with the Control Stick\nY - Swap Y-axis of the C Stick with the Control Stick\nX&Y - Swap both axes of the C Stick with the Control Stick",
-	"Digital Trigger Level:\n\nSets the level where the L/R Button is fully pressed.",
+	"Digital Trigger Level:\n\nSets the threshold where the L/R Button is fully pressed.",
+	"Emulate Audio Streaming:\n\nAudio streaming is a hardware feature that allows a compressed\naudio track to be played in the background by the disc drive.\n\nEmulation is necessary for devices not attached to the\nDVD Interface, or for those not implementing it regardless.",
 	"Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated\nby the original medium, or for speedrunning.",
 	"Emulate Broadband Adapter:\n\nOnly available with the File Service Protocol.\n\nPackets not destined for the hypervisor are forwarded to\nthe virtual MAC. The virtual MAC address is the same as\nthe physical MAC. The physical MAC/PHY retain their\nconfiguration from Swiss, including link speed.",
 	"Prefer Clean Boot:\n\nWhen enabled, the GameCube will be reset and the game\nbooted through normal processes with no changes applied.\nRegion restrictions may be applicable.\n\nOnly available to devices attached to the DVD Interface."
@@ -318,6 +320,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, page_y_ofs, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_4_BACK-1)),scrollBarTabHeight));
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Default Game Settings (4/5):"));
 		bool enabledVideoPatches = swissSettings.disableVideoPatches < 2;
+		bool emulatedAudioStream = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_AUDIO_STREAMING);
 		bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
 		bool emulatedEthernet = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_ETHERNET);
 		bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR);
@@ -337,6 +340,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		} else {
 			sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
 			drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_DEFAULT_TRIGGER_LEVEL, true);
+			drawSettingEntryString(page, &page_y_ofs, "Emulate Audio Streaming:", emulateAudioStreamStr[swissSettings.emulateAudioStream], option == SET_DEFAULT_AUDIO_STREAM, emulatedAudioStream);
 			drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_DEFAULT_READ_SPEED, emulatedReadSpeed);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", swissSettings.emulateEthernet, option == SET_DEFAULT_EMULATE_ETHERNET, emulatedEthernet);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_DEFAULT_CLEAN_BOOT, enabledCleanBoot);
@@ -351,6 +355,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool enabledGamePatches = gameConfig != NULL && !gameConfig->forceCleanBoot;
 		if(enabledGamePatches) {
 			bool enabledVideoPatches = swissSettings.disableVideoPatches < 2;
+			bool emulatedAudioStream = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_AUDIO_STREAMING);
 			bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
 			bool emulatedEthernet = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_ETHERNET);
 			bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR);
@@ -370,6 +375,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			} else {
 				sprintf(triggerLevelStr, "%hhu", gameConfig->triggerLevel);
 				drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_TRIGGER_LEVEL, true);
+				drawSettingEntryString(page, &page_y_ofs, "Emulate Audio Streaming:", emulateAudioStreamStr[gameConfig->emulateAudioStream], option == SET_AUDIO_STREAM, emulatedAudioStream);
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[gameConfig->emulateReadSpeed], option == SET_READ_SPEED, emulatedReadSpeed);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", gameConfig->emulateEthernet, option == SET_EMULATE_ETHERNET, emulatedEthernet);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", gameConfig->preferCleanBoot, option == SET_CLEAN_BOOT, enabledCleanBoot);
@@ -394,6 +400,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			} else {
 				sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
 				drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_TRIGGER_LEVEL, false);
+				drawSettingEntryString(page, &page_y_ofs, "Emulate Audio Streaming:", emulateAudioStreamStr[swissSettings.emulateAudioStream], option == SET_AUDIO_STREAM, false);
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_READ_SPEED, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", swissSettings.emulateEthernet, option == SET_EMULATE_ETHERNET, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_CLEAN_BOOT, false);
@@ -748,6 +755,15 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				if(swissSettings.triggerLevel < 0)
 					swissSettings.triggerLevel = 200;
 			break;
+			case SET_DEFAULT_AUDIO_STREAM:
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_AUDIO_STREAMING)) {
+					swissSettings.emulateAudioStream += direction;
+					if(swissSettings.emulateAudioStream > 2)
+						swissSettings.emulateAudioStream = 0;
+					if(swissSettings.emulateAudioStream < 0)
+						swissSettings.emulateAudioStream = 2;
+				}
+			break;
 			case SET_DEFAULT_READ_SPEED:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED)) {
 					swissSettings.emulateReadSpeed += direction;
@@ -862,6 +878,15 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					gameConfig->triggerLevel = 0;
 				if(gameConfig->triggerLevel < 0)
 					gameConfig->triggerLevel = 200;
+			break;
+			case SET_AUDIO_STREAM:
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_AUDIO_STREAMING)) {
+					gameConfig->emulateAudioStream += direction;
+					if(gameConfig->emulateAudioStream > 2)
+						gameConfig->emulateAudioStream = 0;
+					if(gameConfig->emulateAudioStream < 0)
+						gameConfig->emulateAudioStream = 2;
+				}
 			break;
 			case SET_READ_SPEED:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED)) {

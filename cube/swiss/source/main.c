@@ -157,6 +157,7 @@ int main(int argc, char *argv[])
 	swissSettings.exiSpeed = 1;		// 32MHz
 	swissSettings.uiVMode = 0; 		// Auto UI mode
 	swissSettings.gameVMode = 0;	// Auto video mode
+	swissSettings.emulateAudioStream = 1;
 	swissSettings.ftpPort = 21;
 	swissSettings.fspPort = 21;
 	swissSettings.fspPathMtu = 1500;

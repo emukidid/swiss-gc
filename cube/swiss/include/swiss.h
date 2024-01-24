@@ -111,6 +111,7 @@ typedef struct {
 	int forceVideoActive;
 	int forceDTVStatus;
 	int pauseAVOutput;
+	int emulateAudioStream;
 	int emulateReadSpeed;
 	int emulateMemoryCard;
 	int emulateEthernet;

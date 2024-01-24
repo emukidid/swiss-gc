@@ -196,14 +196,16 @@ s32 deviceHandler_WKF_deinit(file_handle* file) {
 
 u32 deviceHandler_WKF_emulated() {
 	if (devices[DEVICE_PATCHES]) {
-		if (swissSettings.audioStreaming)
+		if ((swissSettings.emulateAudioStream == 1 && swissSettings.audioStreaming) ||
+			swissSettings.emulateAudioStream > 1)
 			return EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER;
 		else if (swissSettings.emulateMemoryCard)
 			return EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER;
 		else
 			return EMU_READ | EMU_BUS_ARBITER;
 	} else {
-		if (swissSettings.audioStreaming)
+		if ((swissSettings.emulateAudioStream == 1 && swissSettings.audioStreaming) ||
+			swissSettings.emulateAudioStream > 1)
 			return EMU_READ | EMU_AUDIO_STREAMING;
 		else
 			return EMU_READ;

@@ -313,6 +313,10 @@ int install_code(int final)
 					patch     = gcloader_v2_bin;
 					patchSize = gcloader_v2_bin_size;
 					break;
+				case EMU_READ | EMU_AUDIO_STREAMING:
+					patch     = gcloader_v2_dtk_bin;
+					patchSize = gcloader_v2_dtk_bin_size;
+					break;
 				case EMU_READ | EMU_MEMCARD:
 					patch     = gcloader_v2_card_bin;
 					patchSize = gcloader_v2_card_bin_size;

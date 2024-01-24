@@ -437,7 +437,8 @@ bool deviceHandler_FAT_test_ata_c() {
 }
 
 u32 deviceHandler_FAT_emulated_sd() {
-	if (swissSettings.audioStreaming)
+	if ((swissSettings.emulateAudioStream == 1 && swissSettings.audioStreaming) ||
+		swissSettings.emulateAudioStream > 1)
 		return EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER;
 	else if (swissSettings.emulateReadSpeed)
 		return EMU_READ | EMU_READ_SPEED | EMU_BUS_ARBITER;
@@ -448,7 +449,8 @@ u32 deviceHandler_FAT_emulated_sd() {
 }
 
 u32 deviceHandler_FAT_emulated_ata() {
-	if (swissSettings.audioStreaming)
+	if ((swissSettings.emulateAudioStream == 1 && swissSettings.audioStreaming) ||
+		swissSettings.emulateAudioStream > 1)
 		return EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER;
 	else if (swissSettings.emulateMemoryCard)
 		return EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER;

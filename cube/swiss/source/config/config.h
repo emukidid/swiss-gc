@@ -19,6 +19,7 @@ typedef struct {
 	int invertCStick;
 	int swapCStick;
 	int triggerLevel;
+	int emulateAudioStream;
 	int emulateReadSpeed;
 	int emulateEthernet;
 	int forceCleanBoot;

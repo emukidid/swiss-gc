@@ -21,7 +21,7 @@ dvdpatch: dvd.bin dvd.card.bin
 usbgeckopatch: usbgecko.bin
 wkfpatch: wkf.bin wkf.card.bin wkf.dtk.bin
 fsppatch: fsp.bin fsp.dtk.bin fsp.eth.bin
-gcloaderpatch: gcloader-v1.bin gcloader-v1.card.bin gcloader-v2.bin gcloader-v2.card.bin
+gcloaderpatch: gcloader-v1.bin gcloader-v1.card.bin gcloader-v2.bin gcloader-v2.card.bin gcloader-v2.dtk.bin
 
 clean:
 	@rm -f *.bin *.elf *.o
@@ -564,4 +564,24 @@ gcloader-v2.card.bin:
 	@$(OBJDUMP) -D gcloader-v2.card.elf > $(DISASM)/gcloader-v2.card.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v2.card.elf gcloader-v2.card.bin
 	@$(BIN2S) -H $(DEST)/gcloader_v2_card_bin.h gcloader-v2.card.bin > $(DEST)/gcloader-v2.card.bin.s
+	@rm -f *.bin *.elf *.o
+
+gcloader-v2.dtk.bin:
+	@echo Building GCLoader-v2 Patch + DTK ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK -DGCODE
+	@$(CC) -Os $(OPTS) -c base/audio.c
+	@$(CC) -Os $(OPTS) -c base/fifo.c
+	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/interrupt.c
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c gcloader/gcloader.c -DQUEUE_SIZE=3
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -o gcloader-v2.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o gcloader.o uart.o os.o memcpy.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D gcloader-v2.dtk.elf > $(DISASM)/gcloader-v2.dtk.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v2.dtk.elf gcloader-v2.dtk.bin
+	@$(BIN2S) -H $(DEST)/gcloader_v2_dtk_bin.h gcloader-v2.dtk.bin > $(DEST)/gcloader-v2.dtk.bin.s
 	@rm -f *.bin *.elf *.o

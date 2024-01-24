@@ -285,9 +285,9 @@ bool deviceHandler_GCLoader_test() {
 	
 	if (swissSettings.hasDVDDrive && driveInfo.rel_date == 0x20196c64) {
 		if (driveInfo.pad[1] == 'w')
-			__device_gcloader.features |=  (FEAT_WRITE|FEAT_CONFIG_DEVICE|FEAT_PATCHES);
+			__device_gcloader.features |=  (FEAT_WRITE | FEAT_CONFIG_DEVICE | FEAT_PATCHES);
 		else
-			__device_gcloader.features &= ~(FEAT_WRITE|FEAT_CONFIG_DEVICE|FEAT_PATCHES);
+			__device_gcloader.features &= ~(FEAT_WRITE | FEAT_CONFIG_DEVICE | FEAT_PATCHES);
 		
 		__device_gcloader.quirks = QUIRK_NONE;
 		
@@ -332,7 +332,9 @@ u32 deviceHandler_GCLoader_emulated() {
 			else
 				return EMU_READ | EMU_BUS_ARBITER;
 		} else {
-			if (swissSettings.emulateReadSpeed)
+			if (swissSettings.emulateAudioStream > 1)
+				return EMU_READ | EMU_AUDIO_STREAMING;
+			else if (swissSettings.emulateReadSpeed)
 				return EMU_READ | EMU_READ_SPEED;
 			else if (swissSettings.emulateMemoryCard &&
 					!(swissSettings.audioStreaming && (devices[DEVICE_CUR]->quirks & QUIRK_GCLOADER_WRITE_CONFLICT)))
@@ -355,7 +357,7 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_GCLOADER, 115, 72, 120, 80},
 	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_FAT_FUNCS|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
-	.emulable = EMU_READ|EMU_READ_SPEED|EMU_MEMCARD,
+	.emulable = EMU_READ|EMU_READ_SPEED|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	.location = LOC_DVD_CONNECTOR,
 	.initial = &initial_GCLoader,
 	.test = deviceHandler_GCLoader_test,

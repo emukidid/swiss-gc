@@ -313,12 +313,14 @@ bool deviceHandler_FSP_test() {
 
 u32 deviceHandler_FSP_emulated() {
 	if (devices[DEVICE_PATCHES] && devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
-		if (swissSettings.audioStreaming)
+		if ((swissSettings.emulateAudioStream == 1 && swissSettings.audioStreaming) ||
+			swissSettings.emulateAudioStream > 1)
 			return EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER;
 		else
 			return EMU_READ | EMU_BUS_ARBITER;
 	} else {
-		if (swissSettings.audioStreaming)
+		if ((swissSettings.emulateAudioStream == 1 && swissSettings.audioStreaming) ||
+			swissSettings.emulateAudioStream > 1)
 			return EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER;
 		else if (swissSettings.emulateEthernet)
 			return EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER;

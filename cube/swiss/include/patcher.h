@@ -42,6 +42,7 @@ typedef struct FuncPattern
 #include "gcloader_v1_card_bin.h"
 #include "gcloader_v2_bin.h"
 #include "gcloader_v2_card_bin.h"
+#include "gcloader_v2_dtk_bin.h"
 
 /* SDK patches */
 #include "backwards_memcpy_bin.h"
