@@ -471,9 +471,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					// Go to next writable device
 					while((allDevices[curDevicePos] == NULL) || !(allDevices[curDevicePos]->features & FEAT_CONFIG_DEVICE)) {
 						curDevicePos += direction;
-						if((curDevicePos < 0) || (curDevicePos >= MAX_DEVICES)){
-							curDevicePos = direction > 0 ? 0 : MAX_DEVICES-1;
-						}
+						curDevicePos = (curDevicePos + MAX_DEVICES) % MAX_DEVICES;
 					}
 					if(allDevices[curDevicePos] != NULL) {
 						swissSettings.configDeviceId = allDevices[curDevicePos]->deviceUniqueId;
@@ -483,27 +481,18 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_SWISS_VIDEOMODE:
 				swissSettings.uiVMode += direction;
-				if(swissSettings.uiVMode > 4)
-					swissSettings.uiVMode = 0;
-				if(swissSettings.uiVMode < 0)
-					swissSettings.uiVMode = 4;
+				swissSettings.uiVMode = (swissSettings.uiVMode + 5) % 5;
 			break;
 			case SET_FILEBROWSER_TYPE:
 				swissSettings.fileBrowserType += direction;
-				if(swissSettings.fileBrowserType > 2)
-					swissSettings.fileBrowserType = 0;
-				if(swissSettings.fileBrowserType < 0)
-					swissSettings.fileBrowserType = 2;
+				swissSettings.fileBrowserType = (swissSettings.fileBrowserType + 3) % 3;
 			break;
 			case SET_FILE_MGMT:
 				swissSettings.enableFileManagement ^=1;
 			break;
 			case SET_RECENT_LIST:
 				swissSettings.recentListLevel += direction;
-				if(swissSettings.recentListLevel > 2)
-					swissSettings.recentListLevel = 0;
-				if(swissSettings.recentListLevel < 0)
-					swissSettings.recentListLevel = 2;
+				swissSettings.recentListLevel = (swissSettings.recentListLevel + 3) % 3;
 			break;
 			case SET_SHOW_HIDDEN:
 				swissSettings.showHiddenFiles ^= 1;
@@ -522,10 +511,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_AVE_COMPAT:
 				swissSettings.aveCompat += direction;
-				if(swissSettings.aveCompat > 4)
-					swissSettings.aveCompat = 0;
-				if(swissSettings.aveCompat < 0)
-					swissSettings.aveCompat = 4;
+				swissSettings.aveCompat = (swissSettings.aveCompat + 5) % 5;
 			break;
 			case SET_FORCE_DTVSTATUS:
 				if(swissSettings.aveCompat < 3)
@@ -610,17 +596,11 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 		switch(option) {
 			case SET_IGR:
 				swissSettings.igrType += direction;
-				if(swissSettings.igrType > 2)
-					swissSettings.igrType = 0;
-				if(swissSettings.igrType < 0)
-					swissSettings.igrType = 2;
+				swissSettings.igrType = (swissSettings.igrType + 3) % 3;
 			break;
 			case SET_BS2BOOT:
 				swissSettings.bs2Boot += direction;
-				if(swissSettings.bs2Boot > 3)
-					swissSettings.bs2Boot = 0;
-				if(swissSettings.bs2Boot < 0)
-					swissSettings.bs2Boot = 3;
+				swissSettings.bs2Boot = (swissSettings.bs2Boot + 4) % 4;
 			break;
 			case SET_AUTOBOOT:
 				swissSettings.autoBoot ^=1;
@@ -631,10 +611,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_ENABLE_MCPGAMEID:
 				swissSettings.disableMCPGameID += direction;
-				if(swissSettings.disableMCPGameID > 3)
-					swissSettings.disableMCPGameID = 0;
-				if(swissSettings.disableMCPGameID < 0)
-					swissSettings.disableMCPGameID = 3;
+				swissSettings.disableMCPGameID = (swissSettings.disableMCPGameID + 4) % 4;
 			break;
 			case SET_FORCE_VIDACTIVE:
 				if(swissSettings.disableVideoPatches < 2)
@@ -642,10 +619,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_ENABLE_VIDPATCH:
 				swissSettings.disableVideoPatches += direction;
-				if(swissSettings.disableVideoPatches > 2)
-					swissSettings.disableVideoPatches = 0;
-				if(swissSettings.disableVideoPatches < 0)
-					swissSettings.disableVideoPatches = 2;
+				swissSettings.disableVideoPatches = (swissSettings.disableVideoPatches + 3) % 3;
 			break;
 			case SET_PAUSE_AVOUTPUT:
 				swissSettings.pauseAVOutput ^=1;
@@ -664,31 +638,25 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_DEFAULT_FORCE_VIDEOMODE:
 				if(swissSettings.disableVideoPatches < 2) {
 					swissSettings.gameVMode += direction;
-					if(swissSettings.gameVMode > 14)
-						swissSettings.gameVMode = 0;
-					if(swissSettings.gameVMode < 0)
-						swissSettings.gameVMode = 14;
+					swissSettings.gameVMode = (swissSettings.gameVMode + 15) % 15;
 					if(!getDTVStatus()) {
-						while(in_range(swissSettings.gameVMode, 4, 7) || in_range(swissSettings.gameVMode, 11, 14))
+						while(in_range(swissSettings.gameVMode, 4, 7) || in_range(swissSettings.gameVMode, 11, 14)) {
 							swissSettings.gameVMode += direction;
+							swissSettings.gameVMode = (swissSettings.gameVMode + 15) % 15;
+						}
 					}
 					else if(swissSettings.aveCompat != 0) {
-						while(in_range(swissSettings.gameVMode, 6, 7) || in_range(swissSettings.gameVMode, 13, 14))
+						while(in_range(swissSettings.gameVMode, 6, 7) || in_range(swissSettings.gameVMode, 13, 14)) {
 							swissSettings.gameVMode += direction;
+							swissSettings.gameVMode = (swissSettings.gameVMode + 15) % 15;
+						}
 					}
-					if(swissSettings.gameVMode > 14)
-						swissSettings.gameVMode = 0;
-					if(swissSettings.gameVMode < 0)
-						swissSettings.gameVMode = 14;
 				}
 			break;
 			case SET_DEFAULT_HORIZ_SCALE:
 				if(swissSettings.disableVideoPatches < 2) {
 					swissSettings.forceHScale += direction;
-					if(swissSettings.forceHScale > 8)
-						swissSettings.forceHScale = 0;
-					if(swissSettings.forceHScale < 0)
-						swissSettings.forceHScale = 8;
+					swissSettings.forceHScale = (swissSettings.forceHScale + 9) % 9;
 				}
 			break;
 			case SET_DEFAULT_VERT_OFFSET:
@@ -698,19 +666,13 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_DEFAULT_VERT_FILTER:
 				if(swissSettings.disableVideoPatches < 2) {
 					swissSettings.forceVFilter += direction;
-					if(swissSettings.forceVFilter > 3)
-						swissSettings.forceVFilter = 0;
-					if(swissSettings.forceVFilter < 0)
-						swissSettings.forceVFilter = 3;
+					swissSettings.forceVFilter = (swissSettings.forceVFilter + 4) % 4;
 				}
 			break;
 			case SET_DEFAULT_FIELD_RENDER:
 				if(swissSettings.disableVideoPatches < 2) {
 					swissSettings.forceVJitter += direction;
-					if(swissSettings.forceVJitter > 2)
-						swissSettings.forceVJitter = 0;
-					if(swissSettings.forceVJitter < 0)
-						swissSettings.forceVJitter = 2;
+					swissSettings.forceVJitter = (swissSettings.forceVJitter + 3) % 3;
 				}
 			break;
 			case SET_DEFAULT_ALPHA_DITHER:
@@ -722,55 +684,34 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_DEFAULT_WIDESCREEN:
 				swissSettings.forceWidescreen += direction;
-				if(swissSettings.forceWidescreen > 2)
-					swissSettings.forceWidescreen = 0;
-				if(swissSettings.forceWidescreen < 0)
-					swissSettings.forceWidescreen = 2;
+				swissSettings.forceWidescreen = (swissSettings.forceWidescreen + 3) % 3;
 			break;
 			case SET_DEFAULT_POLL_RATE:
 				swissSettings.forcePollRate += direction;
-				if(swissSettings.forcePollRate > 12)
-					swissSettings.forcePollRate = 0;
-				if(swissSettings.forcePollRate < 0)
-					swissSettings.forcePollRate = 12;
+				swissSettings.forcePollRate = (swissSettings.forcePollRate + 13) % 13;
 			break;
 			case SET_DEFAULT_INVERT_CAMERA:
 				swissSettings.invertCStick += direction;
-				if(swissSettings.invertCStick > 3)
-					swissSettings.invertCStick = 0;
-				if(swissSettings.invertCStick < 0)
-					swissSettings.invertCStick = 3;
+				swissSettings.invertCStick = (swissSettings.invertCStick + 4) % 4;
 			break;
 			case SET_DEFAULT_SWAP_CAMERA:
 				swissSettings.swapCStick += direction;
-				if(swissSettings.swapCStick > 3)
-					swissSettings.swapCStick = 0;
-				if(swissSettings.swapCStick < 0)
-					swissSettings.swapCStick = 3;
+				swissSettings.swapCStick = (swissSettings.swapCStick + 4) % 4;
 			break;
 			case SET_DEFAULT_TRIGGER_LEVEL:
 				swissSettings.triggerLevel += direction * 10;
-				if(swissSettings.triggerLevel > 200)
-					swissSettings.triggerLevel = 0;
-				if(swissSettings.triggerLevel < 0)
-					swissSettings.triggerLevel = 200;
+				swissSettings.triggerLevel = (swissSettings.triggerLevel + 210) % 210;
 			break;
 			case SET_DEFAULT_AUDIO_STREAM:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_AUDIO_STREAMING)) {
 					swissSettings.emulateAudioStream += direction;
-					if(swissSettings.emulateAudioStream > 2)
-						swissSettings.emulateAudioStream = 0;
-					if(swissSettings.emulateAudioStream < 0)
-						swissSettings.emulateAudioStream = 2;
+					swissSettings.emulateAudioStream = (swissSettings.emulateAudioStream + 3) % 3;
 				}
 			break;
 			case SET_DEFAULT_READ_SPEED:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED)) {
 					swissSettings.emulateReadSpeed += direction;
-					if(swissSettings.emulateReadSpeed > 2)
-						swissSettings.emulateReadSpeed = 0;
-					if(swissSettings.emulateReadSpeed < 0)
-						swissSettings.emulateReadSpeed = 2;
+					swissSettings.emulateReadSpeed = (swissSettings.emulateReadSpeed + 3) % 3;
 				}
 			break;
 			case SET_DEFAULT_EMULATE_ETHERNET:
@@ -788,31 +729,25 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_FORCE_VIDEOMODE:
 				if(swissSettings.disableVideoPatches < 2) {
 					gameConfig->gameVMode += direction;
-					if(gameConfig->gameVMode > 14)
-						gameConfig->gameVMode = 0;
-					if(gameConfig->gameVMode < 0)
-						gameConfig->gameVMode = 14;
+					gameConfig->gameVMode = (gameConfig->gameVMode + 15) % 15;
 					if(!getDTVStatus()) {
-						while(in_range(gameConfig->gameVMode, 4, 7) || in_range(gameConfig->gameVMode, 11, 14))
+						while(in_range(gameConfig->gameVMode, 4, 7) || in_range(gameConfig->gameVMode, 11, 14)) {
 							gameConfig->gameVMode += direction;
+							gameConfig->gameVMode = (gameConfig->gameVMode + 15) % 15;
+						}
 					}
 					else if(swissSettings.aveCompat != 0) {
-						while(in_range(gameConfig->gameVMode, 6, 7) || in_range(gameConfig->gameVMode, 13, 14))
+						while(in_range(gameConfig->gameVMode, 6, 7) || in_range(gameConfig->gameVMode, 13, 14)) {
 							gameConfig->gameVMode += direction;
+							gameConfig->gameVMode = (gameConfig->gameVMode + 15) % 15;
+						}
 					}
-					if(gameConfig->gameVMode > 14)
-						gameConfig->gameVMode = 0;
-					if(gameConfig->gameVMode < 0)
-						gameConfig->gameVMode = 14;
 				}
 			break;
 			case SET_HORIZ_SCALE:
 				if(swissSettings.disableVideoPatches < 2) {
 					gameConfig->forceHScale += direction;
-					if(gameConfig->forceHScale > 8)
-						gameConfig->forceHScale = 0;
-					if(gameConfig->forceHScale < 0)
-						gameConfig->forceHScale = 8;
+					gameConfig->forceHScale = (gameConfig->forceHScale + 9) % 9;
 				}
 			break;
 			case SET_VERT_OFFSET:
@@ -822,19 +757,13 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_VERT_FILTER:
 				if(swissSettings.disableVideoPatches < 2) {
 					gameConfig->forceVFilter += direction;
-					if(gameConfig->forceVFilter > 3)
-						gameConfig->forceVFilter = 0;
-					if(gameConfig->forceVFilter < 0)
-						gameConfig->forceVFilter = 3;
+					gameConfig->forceVFilter = (gameConfig->forceVFilter + 4) % 4;
 				}
 			break;
 			case SET_FIELD_RENDER:
 				if(swissSettings.disableVideoPatches < 2) {
 					gameConfig->forceVJitter += direction;
-					if(gameConfig->forceVJitter > 2)
-						gameConfig->forceVJitter = 0;
-					if(gameConfig->forceVJitter < 0)
-						gameConfig->forceVJitter = 2;
+					gameConfig->forceVJitter = (gameConfig->forceVJitter + 3) % 3;
 				}
 			break;
 			case SET_ALPHA_DITHER:
@@ -846,55 +775,34 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_WIDESCREEN:
 				gameConfig->forceWidescreen += direction;
-				if(gameConfig->forceWidescreen > 2)
-					gameConfig->forceWidescreen = 0;
-				if(gameConfig->forceWidescreen < 0)
-					gameConfig->forceWidescreen = 2;
+				gameConfig->forceWidescreen = (gameConfig->forceWidescreen + 3) % 3;
 			break;
 			case SET_POLL_RATE:
 				gameConfig->forcePollRate += direction;
-				if(gameConfig->forcePollRate > 12)
-					gameConfig->forcePollRate = 0;
-				if(gameConfig->forcePollRate < 0)
-					gameConfig->forcePollRate = 12;
+				gameConfig->forcePollRate = (gameConfig->forcePollRate + 13) % 13;
 			break;
 			case SET_INVERT_CAMERA:
 				gameConfig->invertCStick += direction;
-				if(gameConfig->invertCStick > 3)
-					gameConfig->invertCStick = 0;
-				if(gameConfig->invertCStick < 0)
-					gameConfig->invertCStick = 3;
+				gameConfig->invertCStick = (gameConfig->invertCStick + 4) % 4;
 			break;
 			case SET_SWAP_CAMERA:
 				gameConfig->swapCStick += direction;
-				if(gameConfig->swapCStick > 3)
-					gameConfig->swapCStick = 0;
-				if(gameConfig->swapCStick < 0)
-					gameConfig->swapCStick = 3;
+				gameConfig->swapCStick = (gameConfig->swapCStick + 4) % 4;
 			break;
 			case SET_TRIGGER_LEVEL:
 				gameConfig->triggerLevel += direction * 10;
-				if(gameConfig->triggerLevel > 200)
-					gameConfig->triggerLevel = 0;
-				if(gameConfig->triggerLevel < 0)
-					gameConfig->triggerLevel = 200;
+				gameConfig->triggerLevel = (gameConfig->triggerLevel + 210) % 210;
 			break;
 			case SET_AUDIO_STREAM:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_AUDIO_STREAMING)) {
 					gameConfig->emulateAudioStream += direction;
-					if(gameConfig->emulateAudioStream > 2)
-						gameConfig->emulateAudioStream = 0;
-					if(gameConfig->emulateAudioStream < 0)
-						gameConfig->emulateAudioStream = 2;
+					gameConfig->emulateAudioStream = (gameConfig->emulateAudioStream + 3) % 3;
 				}
 			break;
 			case SET_READ_SPEED:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED)) {
 					gameConfig->emulateReadSpeed += direction;
-					if(gameConfig->emulateReadSpeed > 2)
-						gameConfig->emulateReadSpeed = 0;
-					if(gameConfig->emulateReadSpeed < 0)
-						gameConfig->emulateReadSpeed = 2;
+					gameConfig->emulateReadSpeed = (gameConfig->emulateReadSpeed + 3) % 3;
 				}
 			break;
 			case SET_EMULATE_ETHERNET:

@@ -2499,9 +2499,7 @@ void select_device(int type)
 					break;	// Show all devices? then continue
 				}
 				curDevice += direction;
-				if((curDevice < 0) || (curDevice >= MAX_DEVICES)){
-					curDevice = direction > 0 ? 0 : MAX_DEVICES-1;
-				}
+				curDevice = (curDevice + MAX_DEVICES) % MAX_DEVICES;
 			}
 			direction = 0;
 		}
