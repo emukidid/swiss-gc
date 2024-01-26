@@ -111,16 +111,22 @@ void *installPatch(int patchId) {
 
 void *installPatch2(const void *patch, u32 patchSize) {
 	void *patchLocation = NULL;
-	if (top_addr == 0x81800000)
-		top_addr -= 8;
-	top_addr -= patchSize;
-	top_addr &= patch ? ~3 : ~31;
-	patchLocation = Calc_Address(NULL, PATCH_OTHER, top_addr);
+	void *addr;
+	if (!top_addr) {
+		addr = SYS_AllocArenaMemHi(patchSize, patch ? 4 : 32);
+	} else {
+		if (top_addr == 0x81800000)
+			top_addr -= 8;
+		top_addr -= patchSize;
+		top_addr &= patch ? ~3 : ~31;
+		addr = (void *)top_addr;
+	}
+	patchLocation = Calc_Address(NULL, PATCH_OTHER, (u32)addr);
 	if (patch) memcpy(patchLocation, patch, patchSize);
 	else memset(patchLocation, 0, patchSize);
 	DCFlushRange(patchLocation, patchSize);
 	ICInvalidateRange(patchLocation, patchSize);
-	return (void *)top_addr;
+	return addr;
 }
 
 // See patchIds enum in patcher.h
@@ -139,7 +145,7 @@ void setTopAddr(u32 addr) {
 	top_addr = addr & ~3;
 	int patchId;
 	for (patchId = 0; patchId < PATCHES_MAX; patchId++)
-		if (patch_locations[patchId] < (void *)top_addr || !top_addr)
+		if (patch_locations[patchId] < (void *)top_addr)
 			patch_locations[patchId] = NULL;
 }
 
@@ -16444,7 +16450,7 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 	if(properAddress >= 0x80000000 && properAddress < 0x80003100) {
 		return VAR_AREA+properAddress-0x80000000;
 	}
-	else if(properAddress >= 0x81700000 && properAddress < 0x81800000) {
+	else if(properAddress >= (u32)SYS_GetArenaHi() && properAddress < 0x81800000) {
 		return (void*)properAddress;
 	}
 	return NULL;

@@ -1145,10 +1145,15 @@ void load_app(ExecutableFile *fileToPatch)
 	}
 	
 	if(getTopAddr() == topAddr) {
-		setTopAddr(HI_RESERVE);
+		if(type == PATCH_BS2) setTopAddr(0);
+		else setTopAddr(HI_RESERVE);
 	}
 	if(fileToPatch == NULL || fileToPatch->patchFile == NULL) {
 		Patch_ExecutableFile(&buffer, &sizeToRead, gameID, type);
+	}
+	if(getTopAddr() == 0) {
+		setTopAddr(HI_RESERVE);
+		*(vu32*)(VAR_AREA+0x0034) = (u32)SYS_GetArenaHi() & ~31;
 	}
 	
 	// See if the combination of our patches has exhausted our play area.
@@ -2077,7 +2082,8 @@ void load_game() {
 	*(vu8*)VAR_CARD_B_ID = 0x00;
 	
 	if(getTopAddr() == 0x81800000) {
-		setTopAddr(HI_RESERVE);
+		if(fileToPatch->type == PATCH_BS2) setTopAddr(0);
+		else setTopAddr(HI_RESERVE);
 	}
 	// Call the special setup for each device (e.g. SD will set the sector(s))
 	if(!devices[DEVICE_CUR]->setupFile(&curFile, disc2File, filesToPatch, numToPatch)) {
@@ -2101,6 +2107,7 @@ fail_patched:
 		devices[DEVICE_PATCHES] = NULL;
 	}
 	free(filesToPatch);
+	setTopAddr(0x81800000);
 	setTopAddr(0);
 fail:
 	gameID_unset();
