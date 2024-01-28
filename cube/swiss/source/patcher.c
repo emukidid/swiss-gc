@@ -7644,6 +7644,32 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
 	FuncPattern OSRestoreInterruptsSig = 
 		{ 9, 0, 0, 0, 2, 2, NULL, 0, "OSRestoreInterrupts" };
+	FuncPattern __OSLockSramSigs[3] = {
+		{  9, 3, 2, 1, 0, 2, NULL, 0, "__OSLockSramD" },
+		{ 23, 7, 5, 2, 2, 2, NULL, 0, "__OSLockSram" },
+		{ 20, 7, 4, 2, 2, 3, NULL, 0, "__OSLockSram" }	// SN Systems ProDG
+	};
+	FuncPattern UnlockSramSigs[4] = {
+		{  74, 20, 7, 3,  6,  8, NULL, 0, "UnlockSramD" },
+		{  88, 22, 7, 3,  7,  8, NULL, 0, "UnlockSramD" },
+		{ 194, 39, 7, 9,  9, 38, NULL, 0, "UnlockSram" },
+		{ 207, 42, 7, 9, 10, 38, NULL, 0, "UnlockSram" }
+	};
+	FuncPattern __OSUnlockSramSigs[3] = {
+		{  11,  4,  3, 1, 0,  2, NULL, 0, "__OSUnlockSramD" },
+		{   9,  3,  2, 1, 0,  2, NULL, 0, "__OSUnlockSram" },
+		{ 173, 53, 11, 9, 9, 25, NULL, 0, "__OSUnlockSram" }	// SN Systems ProDG
+	};
+	FuncPattern OSGetEuRgb60ModeSigs[3] = {
+		{ 16,  3, 2, 2, 0, 3, NULL, 0, "OSGetEuRgb60ModeD" },
+		{ 28,  9, 5, 3, 2, 2, NULL, 0, "OSGetEuRgb60Mode" },
+		{ 31, 11, 6, 3, 2, 2, NULL, 0, "OSGetEuRgb60Mode" }	// SN Systems ProDG
+	};
+	FuncPattern OSSetEuRgb60ModeSigs[3] = {
+		{  39,  8,  2,  4,  3,  6, NULL, 0, "OSSetEuRgb60ModeD" },
+		{  41, 12,  6,  4,  3,  4, NULL, 0, "OSSetEuRgb60Mode" },
+		{ 194, 54, 10, 14, 11, 27, NULL, 0, "OSSetEuRgb60Mode" }	// SN Systems ProDG
+	};
 	FuncPattern OSSleepThreadSigs[2] = {
 		{ 93, 32, 14, 9, 8, 8, NULL, 0, "OSSleepThreadD" },
 		{ 59, 17, 16, 3, 7, 5, NULL, 0, "OSSleepThread" }
@@ -8003,6 +8029,87 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		
 		FuncPattern fp;
 		make_pattern(data, i, length, &fp);
+		
+		for (j = 0; j < sizeof(OSGetEuRgb60ModeSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &OSGetEuRgb60ModeSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  4, length, &__OSLockSramSigs[0]) &&
+							(data[i +  6] & 0xFC00FFFF) == 0x88000011 &&
+							(data[i +  7] & 0xFC00FFFF) == 0x5400D7FE &&
+							findx_pattern(data, dataType, i +  9, length, &__OSUnlockSramSigs[0]))
+							OSGetEuRgb60ModeSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern (data, dataType, i +  6, length, &OSDisableInterruptsSig) &&
+							findx_pattern (data, dataType, i + 11, length, &OSRestoreInterruptsSig) &&
+							(data[i + 17] & 0xFC00FFFF) == 0x88000011 &&
+							(data[i + 20] & 0xFC00FFFF) == 0x5400D7FE &&
+							findx_patterns(data, dataType, i + 21, length, &UnlockSramSigs[2],
+							                                               &UnlockSramSigs[3], NULL))
+							OSGetEuRgb60ModeSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 10, length, &OSRestoreInterruptsSig) &&
+							(data[i + 17] & 0xFC00FFFF) == 0x88000011 &&
+							(data[i + 22] & 0xFC00FFFF) == 0x5400D7FE &&
+							findx_pattern(data, dataType, i + 24, length, &OSRestoreInterruptsSig))
+							OSGetEuRgb60ModeSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(OSSetEuRgb60ModeSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &OSSetEuRgb60ModeSigs[j])) {
+				switch (j) {
+					case 0:
+						if ((data[i + 15] & 0xFC00FFFF) == 0x54003032 &&
+							(data[i + 16] & 0xFC00FFFF) == 0x54000672 &&
+							findx_pattern(data, dataType, i + 17, length, &__OSLockSramSigs[0]) &&
+							(data[i + 19] & 0xFC00FFFF) == 0x88000011 &&
+							(data[i + 20] & 0xFC00FFFF) == 0x54000672 &&
+							findx_pattern(data, dataType, i + 24, length, &__OSUnlockSramSigs[0]) &&
+							(data[i + 27] & 0xFC00FFFF) == 0x540006B0 &&
+							(data[i + 28] & 0xFC00FFFF) == 0x98000011 &&
+							(data[i + 29] & 0xFC00FFFF) == 0x88000011 &&
+							(data[i + 31] & 0xFC00FFFF) == 0x98000011 &&
+							findx_pattern(data, dataType, i + 33, length, &__OSUnlockSramSigs[0]))
+							OSSetEuRgb60ModeSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if ((data[i +  7] & 0xFC00FFFF) == 0x54003672 &&
+							findx_pattern (data, dataType, i +  8, length, &OSDisableInterruptsSig) &&
+							findx_pattern (data, dataType, i + 13, length, &OSRestoreInterruptsSig) &&
+							(data[i + 19] & 0xFC00FFFF) == 0x88000011 &&
+							(data[i + 20] & 0xFC00FFFF) == 0x54000672 &&
+							findx_patterns(data, dataType, i + 25, length, &UnlockSramSigs[2],
+							                                               &UnlockSramSigs[3], NULL) &&
+							(data[i + 27] & 0xFC00FFFF) == 0x540006B0 &&
+							(data[i + 28] & 0xFC00FFFF) == 0x98000011 &&
+							(data[i + 31] & 0xFC00FFFF) == 0x88000011 &&
+							(data[i + 33] & 0xFC00FFFF) == 0x98000011 &&
+							findx_patterns(data, dataType, i + 34, length, &UnlockSramSigs[2],
+							                                               &UnlockSramSigs[3], NULL))
+							OSSetEuRgb60ModeSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if ((data[i +  5] & 0xFC00FFFF) == 0x54003672 &&
+							findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  12, length, &OSRestoreInterruptsSig) &&
+							(data[i + 19] & 0xFC00FFFF) == 0x88000011 &&
+							(data[i + 20] & 0xFC00FFFF) == 0x54000672 &&
+							findx_pattern(data, dataType, i +  28, length, &OSRestoreInterruptsSig) &&
+							(data[i + 30] & 0xFC00FFFF) == 0x540006B0 &&
+							(data[i + 33] & 0xFC00FFFF) == 0x98000011 &&
+							(data[i + 36] & 0xFC00FFFF) == 0x98000011 &&
+							findx_pattern(data, dataType, i + 187, length, &OSRestoreInterruptsSig))
+							OSSetEuRgb60ModeSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
 		
 		for (j = 0; j < sizeof(__VIRetraceHandlerSigs) / sizeof(FuncPattern); j++) {
 			if (!__VIRetraceHandlerSigs[j].offsetFoundAt && compare_pattern(&fp, &__VIRetraceHandlerSigs[j])) {
@@ -8398,7 +8505,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		}
 		
 		for (j = 0; j < sizeof(VIGetDTVStatusSigs) / sizeof(FuncPattern); j++) {
-			if (!VIGetDTVStatusSigs[j].offsetFoundAt && compare_pattern(&fp, &VIGetDTVStatusSigs[j])) {
+			if (compare_pattern(&fp, &VIGetDTVStatusSigs[j])) {
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
@@ -8701,6 +8808,35 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				IDct10_GCSig.offsetFoundAt = i;
 		}
 		i += fp.Length - 1;
+	}
+	
+	for (j = 0; j < sizeof(OSGetEuRgb60ModeSigs) / sizeof(FuncPattern); j++)
+	if ((i = OSGetEuRgb60ModeSigs[j].offsetFoundAt)) {
+		u32 *OSGetEuRgb60Mode = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (OSGetEuRgb60Mode) {
+			if (in_range(swissSettings.gameVMode, 1, 7)) {
+				memset(data + i, 0, OSGetEuRgb60ModeSigs[j].Length * sizeof(u32));
+				
+				data[i + 0] = 0x38600001;	// li		r3, 1
+				data[i + 1] = 0x4E800020;	// blr
+			}
+			print_gecko("Found:[%s] @ %08X\n", OSGetEuRgb60ModeSigs[j].Name, OSGetEuRgb60Mode);
+		}
+	}
+	
+	for (j = 0; j < sizeof(OSSetEuRgb60ModeSigs) / sizeof(FuncPattern); j++)
+	if ((i = OSSetEuRgb60ModeSigs[j].offsetFoundAt)) {
+		u32 *OSSetEuRgb60Mode = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (OSSetEuRgb60Mode) {
+			if (in_range(swissSettings.gameVMode, 1, 7)) {
+				memset(data + i, 0, OSSetEuRgb60ModeSigs[j].Length * sizeof(u32));
+				
+				data[i + 0] = 0x4E800020;	// blr
+			}
+			print_gecko("Found:[%s] @ %08X\n", OSSetEuRgb60ModeSigs[j].Name, OSSetEuRgb60Mode);
+		}
 	}
 	
 	for (k = 0; k < sizeof(getCurrentFieldEvenOddSigs) / sizeof(FuncPattern); k++)
@@ -9958,18 +10094,18 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(VIGetDTVStatusSigs) / sizeof(FuncPattern); j++)
-		if (VIGetDTVStatusSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(VIGetDTVStatusSigs) / sizeof(FuncPattern) && (i = VIGetDTVStatusSigs[j].offsetFoundAt)) {
+	if ((i = VIGetDTVStatusSigs[j].offsetFoundAt)) {
 		u32 *VIGetDTVStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (VIGetDTVStatus) {
 			if (in_range(swissSettings.aveCompat, 3, 4)) {
 				memset(data + i, 0, VIGetDTVStatusSigs[j].Length * sizeof(u32));
+				
 				data[i + 0] = 0x38600000;	// li		r3, 0
 				data[i + 1] = 0x4E800020;	// blr
 			} else if (swissSettings.forceDTVStatus) {
 				memset(data + i, 0, VIGetDTVStatusSigs[j].Length * sizeof(u32));
+				
 				data[i + 0] = 0x38600001;	// li		r3, 1
 				data[i + 1] = 0x4E800020;	// blr
 			}

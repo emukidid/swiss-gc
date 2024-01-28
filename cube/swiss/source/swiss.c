@@ -69,7 +69,7 @@ int needsRefresh = 0;
 int current_view_start = 0;
 int current_view_end = 0;
 
-char *DiscIDNoNTSC[] = {"DLSP64", "G3FD69", "G3FF69", "G3FP69", "G3FS69", "GFZP01", "GLRD64", "GLRF64", "GLRP64", "GM8P01", "GMSP01", "GSWD64", "GSWF64", "GSWI64", "GSWP64", "GSWS64"};
+char *DiscIDNoNTSC[] = {"DLSP64", "G3FD69", "G3FF69", "G3FP69", "G3FS69", "GLRD64", "GLRF64", "GLRP64", "GM8P01", "GSWD64", "GSWF64", "GSWI64", "GSWP64", "GSWS64"};
 
 /* re-init video for a given game */
 void ogc_video__reset()
