@@ -293,7 +293,7 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 	int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
 	if(num_files > 0) {
 		// Draw which directory we're in
-		sprintf(txtbuffer, "%s", &curDir.name[0]);
+		sprintf(txtbuffer, "%s", getDevicePath(&curDir.name[0]));
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, ((getVideoMode()->fbWidth-150)-20), .85);
 		DrawAddChild(containerPanel, DrawStyledLabel(150, 80, txtbuffer, scale, false, defaultColor));
 		if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
@@ -485,7 +485,7 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 	drawCurrentDeviceCarousel(containerPanel);
 	if(num_files > 0) {
 		// Draw which directory we're in
-		sprintf(txtbuffer, "%s", &curDir.name[0]);
+		sprintf(txtbuffer, "%s", getDevicePath(&curDir.name[0]));
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, (getVideoMode()->fbWidth-60), .85);
 		DrawAddChild(containerPanel, DrawStyledLabel(30, 80, txtbuffer, scale, false, defaultColor));
 		if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
@@ -683,7 +683,7 @@ void drawFilesFullwidth(file_handle** directory, int num_files, uiDrawObj_t *con
 	int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
 	if(num_files > 0) {
 		// Draw which directory we're in
-		sprintf(txtbuffer, "%s", &curDir.name[0]);
+		sprintf(txtbuffer, "%s", getDevicePath(&curDir.name[0]));
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, (getVideoMode()->fbWidth-60), .85);
 		DrawAddChild(containerPanel, DrawStyledLabel(30, 80, txtbuffer, scale, false, defaultColor));
 		if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
