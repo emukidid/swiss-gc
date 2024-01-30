@@ -23,9 +23,9 @@ char topStr[256];
 uiDrawObj_t * info_draw_page(int page_num) {
 	uiDrawObj_t *container = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 420);
 	
-	// System Info (Page 1/3)
+	// System Info (Page 1/4)
 	if(!page_num) {
-		DrawAddChild(container, DrawLabel(30, 55, "System Info (1/3):"));
+		DrawAddChild(container, DrawLabel(30, 55, "System Info (1/4):"));
 		// Model
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"MODEL", 0.65f, true, defaultColor));
 		if(!strncmp(IPLInfo, "(C) ", 4)) {
@@ -106,7 +106,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 346, topStr, 0.75f, true, defaultColor));
 	}
 	else if(page_num == 1) {
-		DrawAddChild(container, DrawLabel(30, 55, "Device Info (2/3):"));
+		DrawAddChild(container, DrawLabel(30, 55, "Device Info (2/4):"));
 		
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"SLOT-A", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 106, getHwNameByLocation(LOC_MEMCARD_SLOT_A), 0.75f, true, defaultColor));
@@ -152,25 +152,34 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 386, (char*)(devices[DEVICE_CONFIG] != NULL ? devices[DEVICE_CONFIG]->deviceName : "None"), 0.75f, true, defaultColor));
 	}
 	else if(page_num == 2) {
-		DrawAddChild(container, DrawLabel(30, 55, "Credits (3/3):"));
+		DrawAddChild(container, DrawLabel(30, 55, "Version Info (3/4):"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version 0.6", 1.0f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid & Extrems, 2024", 0.75f, true, defaultColor));
 		sprintf(txtbuffer, "Commit %s Revision %s", GITREVISION, GITVERSION);
 		DrawAddChild(container, DrawStyledLabel(640/2, 165, txtbuffer, 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 208, "Patreon supporters", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 228, "meneerbeer, Dan Kunz, SubElement, KirovAir, Cristofer Cruz,", 0.60f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 244, "Roman Antonacci, badsector, Fernando Avelino, RamblingOkie,", 0.60f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 260, "Kory, Lindh0lm154, Alex Mitchell, Haymose, finnyguy, Marlon,", 0.60f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 276, "HakanaiSeishin, Borg Number One (a.k.a. Steven Weiser), Jeffrey Pierce", 0.60f, true, defaultColor));
-		
-		DrawAddChild(container, DrawStyledLabel(640/2, 300, "Extra Greetz: FIX94, megalomaniac, sepp256, novenary", 0.60f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(110, 320, "Web/Support", 0.64f, false, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(410, 320, "Source/Updates", 0.64f, false, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(85, 336, "www.gc-forever.com", 0.64f, false, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(355, 336, "github.com/emukidid/swiss-gc", 0.64f, false, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 220, "Source/Updates/Issues", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 244, "github.com/emukidid/swiss-gc", 0.64f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 310, "Web/Support", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 334, "www.gc-forever.com", 0.64f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 378, "Visit us on IRC at EFNet/#gc-forever", 0.75f, true, defaultColor));
 	}
-	if(page_num != 2) {
+	else if(page_num == 3) {
+		DrawAddChild(container, DrawLabel(30, 55, "Greetings (4/4):"));
+		DrawAddChild(container, DrawStyledLabel(640/2, 90, "Current patreon supporters", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 114, "Borg Number One (a.k.a. Steven Weiser), Roman Antonacci, 8BitMods,", 0.60f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 134, "CastleMania Ryan, Dan Kunz, Fernando Avelino, HakanaiSeishin, Haymose,", 0.60f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 154, "Alex Mitchell, badsector, Jeffrey Pierce, Jon Moon, kevin,", 0.60f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 174, "Kory, Marlon, silversteel, William Fowler", 0.60f, true, defaultColor));
+
+		DrawAddChild(container, DrawStyledLabel(640/2, 210, "Historical Patreon supporters", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 234, "meneerbeer, SubElement, KirovAir, Cristofer Cruz,", 0.60f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 254, "RamblingOkie, Lindh0lm154, finnyguy, CtPG", 0.60f, true, defaultColor));
+
+		DrawAddChild(container, DrawStyledLabel(640/2, 290, "Extra Greetz: FIX94, megalomaniac, sepp256, novenary", 0.60f, true, defaultColor));
+		
+		DrawAddChild(container, DrawStyledLabel(640/2, 330, "...and a big thanks to YOU, for using Swiss!", 0.75f, true, defaultColor));
+	}
+	if(page_num != 3) {
 		DrawAddChild(container, DrawLabel(530, 400, "\233"));
 	}
 	if(page_num != 0) {
@@ -199,7 +208,7 @@ void show_info() {
 			|| (padsButtonsHeld() & PAD_TRIGGER_L)))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = padsButtonsHeld();
-		if(((btns & PAD_BUTTON_RIGHT) || (padsButtonsHeld() & PAD_TRIGGER_R)) && page < 2)
+		if(((btns & PAD_BUTTON_RIGHT) || (padsButtonsHeld() & PAD_TRIGGER_R)) && page < 3)
 			page++;
 		if(((btns & PAD_BUTTON_LEFT) || (padsButtonsHeld() & PAD_TRIGGER_L)) && page > 0)
 			page--;
