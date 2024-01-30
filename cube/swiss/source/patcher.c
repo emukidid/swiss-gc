@@ -8931,7 +8931,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		
 		if (j < sizeof(__VIRetraceHandlerSigs) / sizeof(FuncPattern) && (i = __VIRetraceHandlerSigs[j].offsetFoundAt)) {
 			u32 *__VIRetraceHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			u32 *__VIRetraceHandlerHook;
+			u32 *__VIRetraceHandlerHook = NULL;
 			
 			if (__VIRetraceHandler && getCurrentFieldEvenOdd) {
 				switch (j) {
@@ -9073,6 +9073,12 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							break;
 					}
 					data[i + __VIRetraceHandlerSigs[j].Length - 1] = branch(__VIRetraceHandlerHook, __VIRetraceHandler + __VIRetraceHandlerSigs[j].Length - 1);
+				}
+				if (swissSettings.wiirdEngine && !in_range(dataType, PATCH_APPLOADER, PATCH_EXEC)) {
+					if (__VIRetraceHandlerHook)
+						__VIRetraceHandlerHook[5] = branch(CHEATS_ENGINE_START, __VIRetraceHandlerHook + 5);
+					else
+						data[i + __VIRetraceHandlerSigs[j].Length - 1] = branch(CHEATS_ENGINE_START, __VIRetraceHandler + __VIRetraceHandlerSigs[j].Length - 1);
 				}
 				print_gecko("Found:[%s$%i] @ %08X\n", __VIRetraceHandlerSigs[j].Name, j, __VIRetraceHandler);
 			}
@@ -16687,6 +16693,9 @@ int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int
 				Patch_GameSpecificVideo(buffer, sizeToRead, gameID, type);
 			Patch_Video(buffer, sizeToRead, type);
 		}
+		// Cheats
+		else if (swissSettings.wiirdEngine)
+			Patch_CheatsHook(buffer, sizeToRead, type);
 		
 		// Force Widescreen
 		if (swissSettings.forceWidescreen)
@@ -16698,10 +16707,6 @@ int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int
 		
 		// Force Text Encoding
 		patched += Patch_FontEncode(buffer, sizeToRead);
-		
-		// Cheats
-		if (swissSettings.wiirdEngine)
-			Patch_CheatsHook(buffer, sizeToRead, type);
 		
 		return patched;
 	}

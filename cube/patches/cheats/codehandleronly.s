@@ -38,6 +38,7 @@ _start:
 	ori	r26,r20,0x2000		#enable floating point ?
 	andi.	r26,r26,0xF9FF
 	mtmsr	r26
+	isync
 
 	stfd	f2,152(r1)		# stores f2
 	stfd	f3,160(r1)		# stores f3
@@ -102,8 +103,6 @@ resumegame:
 	lwz	r0,8(r1)		# loads r0
 
 	addi	r1,r1,168
-
-	isync
 
     blr				# return back to game
 
