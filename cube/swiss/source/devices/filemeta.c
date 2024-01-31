@@ -201,7 +201,7 @@ void populate_meta(file_handle *f) {
 		f->meta = meta_alloc();
 		// File detection (GCM, DOL, MP3 etc)
 		if(f->fileAttrib==IS_FILE) {
-			if(devices[DEVICE_CUR] == &__device_wode) {
+			if(devices[DEVICE_CUR] == &__device_wode && f->status == STATUS_NOT_MAPPED) {
 				f->meta->bannerSum = 0xFFFF;
 				f->meta->bannerSize = BNR_PIXELDATA_LEN;
 				f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
@@ -345,6 +345,12 @@ void populate_meta(file_handle *f) {
 			f->meta->displayName = "Up to parent directory";
 		}
 	}
+}
+
+void repopulate_meta(file_handle *f) {
+	meta_free(f->meta);
+	f->meta = NULL;
+	populate_meta(f);
 }
 
 file_handle* meta_find_disc2(file_handle *f) {

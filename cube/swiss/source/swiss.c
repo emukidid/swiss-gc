@@ -1860,6 +1860,7 @@ void load_game() {
 		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Setup base offset please Wait\205"));
 		devices[DEVICE_CUR]->setupFile(&curFile, disc2File, NULL, -1);
 		DrawDispose(msgBox);
+		repopulate_meta(&curFile);
 	}
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading\205"));
 	
@@ -2040,7 +2041,7 @@ void load_game() {
 		for(int i = 0; i < numToPatch; i++) {
 			if(filesToPatch[i].file == &curFile && filesToPatch[i].offset == tgcFile.dolStart) {
 				fileToPatch = &filesToPatch[i];
-				gameID_set(&GCMDisk, filesToPatch[i].hash);
+				gameID_set(&GCMDisk, fileToPatch->hash);
 				break;
 			}
 		}
@@ -2049,7 +2050,7 @@ void load_game() {
 		for(int i = 0; i < numToPatch; i++) {
 			if(filesToPatch[i].file == &curFile && filesToPatch[i].offset == GCMDisk.DOLOffset) {
 				fileToPatch = &filesToPatch[i];
-				gameID_set(&GCMDisk, filesToPatch[i].hash);
+				gameID_set(&GCMDisk, fileToPatch->hash);
 				break;
 			}
 		}
