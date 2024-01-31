@@ -246,6 +246,8 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 			filesToPatch[numFiles].size = 0x400000;
 			filesToPatch[numFiles].hash = get_gcm_boot_hash(diskHeader, file->meta);
 			filesToPatch[numFiles].type = PATCH_BIN;
+			filesToPatch[numFiles].fstOffset = diskHeader->FSTOffset;
+			filesToPatch[numFiles].fstSize = diskHeader->FSTSize;
 			sprintf(filesToPatch[numFiles].name, "default.bin");
 			numFiles++;
 		}
@@ -263,6 +265,8 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 			filesToPatch[numFiles].size = dolSize = DOLSize(&dolhdr);
 			filesToPatch[numFiles].hash = get_gcm_boot_hash(diskHeader, file->meta);
 			filesToPatch[numFiles].type = PATCH_DOL;
+			filesToPatch[numFiles].fstOffset = diskHeader->FSTOffset;
+			filesToPatch[numFiles].fstSize = diskHeader->FSTSize;
 			sprintf(filesToPatch[numFiles].name, "default.dol");
 			numFiles++;
 		}
@@ -299,6 +303,8 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL;
+				filesToPatch[numFiles].fstOffset = diskHeader->FSTOffset;
+				filesToPatch[numFiles].fstSize = diskHeader->FSTSize;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
@@ -307,6 +313,8 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL_PRS;
+				filesToPatch[numFiles].fstOffset = diskHeader->FSTOffset;
+				filesToPatch[numFiles].fstSize = diskHeader->FSTSize;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
@@ -320,6 +328,8 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_ELF;
+				filesToPatch[numFiles].fstOffset = diskHeader->FSTOffset;
+				filesToPatch[numFiles].fstSize = diskHeader->FSTSize;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
 				numFiles++;
 			}
@@ -409,9 +419,9 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 	filesToPatch[numFiles].offset = tgc_base+tgcHeader.dolStart;
 	filesToPatch[numFiles].size = tgcHeader.dolLength;
 	filesToPatch[numFiles].type = PATCH_DOL;
-	filesToPatch[numFiles].tgcFstOffset = tgc_base+tgcHeader.fstStart;
-	filesToPatch[numFiles].tgcFstSize = tgcHeader.fstLength;
-	filesToPatch[numFiles].tgcBase = file->fileBase+tgc_base;
+	filesToPatch[numFiles].fstOffset = tgc_base+tgcHeader.fstStart;
+	filesToPatch[numFiles].fstSize = tgcHeader.fstLength;
+	filesToPatch[numFiles].tgcBase = tgc_base+file->fileBase;
 	filesToPatch[numFiles].tgcFileStartArea = tgcHeader.userStart;
 	filesToPatch[numFiles].tgcFakeOffset = tgcHeader.gcmUserStart;
 	sprintf(filesToPatch[numFiles].name, "%s/%s", tgcname, "default.dol");
@@ -447,9 +457,9 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_DOL;
-				filesToPatch[numFiles].tgcFstOffset = tgc_base+tgcHeader.fstStart;
-				filesToPatch[numFiles].tgcFstSize = tgcHeader.fstLength;
-				filesToPatch[numFiles].tgcBase = file->fileBase+tgc_base;
+				filesToPatch[numFiles].fstOffset = tgc_base+tgcHeader.fstStart;
+				filesToPatch[numFiles].fstSize = tgcHeader.fstLength;
+				filesToPatch[numFiles].tgcBase = tgc_base+file->fileBase;
 				filesToPatch[numFiles].tgcFileStartArea = tgcHeader.userStart;
 				filesToPatch[numFiles].tgcFakeOffset = tgcHeader.gcmUserStart;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 
@@ -463,9 +473,9 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 				filesToPatch[numFiles].offset = file_offset;
 				filesToPatch[numFiles].size = size;
 				filesToPatch[numFiles].type = PATCH_ELF;
-				filesToPatch[numFiles].tgcFstOffset = tgc_base+tgcHeader.fstStart;
-				filesToPatch[numFiles].tgcFstSize = tgcHeader.fstLength;
-				filesToPatch[numFiles].tgcBase = file->fileBase+tgc_base;
+				filesToPatch[numFiles].fstOffset = tgc_base+tgcHeader.fstStart;
+				filesToPatch[numFiles].fstSize = tgcHeader.fstLength;
+				filesToPatch[numFiles].tgcBase = tgc_base+file->fileBase;
 				filesToPatch[numFiles].tgcFileStartArea = tgcHeader.userStart;
 				filesToPatch[numFiles].tgcFakeOffset = tgcHeader.gcmUserStart;
 				memcpy(&filesToPatch[numFiles].name,&filename[0],64); 

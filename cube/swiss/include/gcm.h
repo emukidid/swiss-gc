@@ -99,8 +99,8 @@ struct ExecutableFile {
 	u64 hash;
 	char name[256];
 	u32 type;
-	u32 tgcFstOffset;
-	u32 tgcFstSize;
+	u32 fstOffset;
+	u32 fstSize;
 	u32 tgcBase;
 	u32 tgcFileStartArea;
 	u32 tgcFakeOffset;

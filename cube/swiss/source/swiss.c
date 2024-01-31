@@ -1013,11 +1013,11 @@ void load_app(ExecutableFile *fileToPatch)
 	
 	if(fileToPatch != NULL && fileToPatch->file != NULL) {
 		// For a DOL from a TGC, redirect the FST to the TGC FST.
-		if(fileToPatch->tgcFstOffset != 0) {
+		if(fileToPatch->tgcBase + fileToPatch->tgcFileStartArea != 0) {
 			// Read FST to top of Main Memory (round to 32 byte boundary)
-			u32 fstAddr = (topAddr-fileToPatch->tgcFstSize)&~31;
-			u32 fstSize = (fileToPatch->tgcFstSize+31)&~31;
-			devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->tgcFstOffset,DEVICE_HANDLER_SEEK_SET);
+			u32 fstAddr = (topAddr-fileToPatch->fstSize)&~31;
+			u32 fstSize = (fileToPatch->fstSize+31)&~31;
+			devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->fstOffset,DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_CUR]->readFile(fileToPatch->file,(void*)fstAddr,fstSize) != fstSize) {
 				message = "Failed to read FST!";
 				goto fail_early;
@@ -1035,16 +1035,16 @@ void load_app(ExecutableFile *fileToPatch)
 			*(vu32*)(VAR_AREA+0x0024) = 1;
 			*(vu32*)(VAR_AREA+0x0034) = fstAddr;								// Arena Hi
 			*(vu32*)(VAR_AREA+0x0038) = fstAddr;								// FST Location in ram
-			*(vu32*)(VAR_AREA+0x003C) = fileToPatch->tgcFstSize;				// FST Max Length
+			*(vu32*)(VAR_AREA+0x003C) = fileToPatch->fstSize;					// FST Max Length
 			*(vu32*)(VAR_AREA+0x00F4) = bi2Addr;								// bi2.bin location
 			*(vu32*)(VAR_AREA+0x30F4) = fileToPatch->tgcBase;
 		}
 		else {
 			// Read FST to top of Main Memory (round to 32 byte boundary)
 			u32 fstAddr = (topAddr-GCMDisk.MaxFSTSize)&~31;
-			u32 fstSize = (GCMDisk.FSTSize+31)&~31;
-			devices[DEVICE_CUR]->seekFile(&curFile,GCMDisk.FSTOffset,DEVICE_HANDLER_SEEK_SET);
-			if(devices[DEVICE_CUR]->readFile(&curFile,(void*)fstAddr,fstSize) != fstSize) {
+			u32 fstSize = (fileToPatch->fstSize+31)&~31;
+			devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->fstOffset,DEVICE_HANDLER_SEEK_SET);
+			if(devices[DEVICE_CUR]->readFile(fileToPatch->file,(void*)fstAddr,fstSize) != fstSize) {
 				message = "Failed to read FST!";
 				goto fail_early;
 			}
