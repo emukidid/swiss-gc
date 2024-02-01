@@ -28,6 +28,7 @@
 #include "btns.h"
 #include "dolparameters.h"
 #include "cheats.h"
+#include "boxart.h"
 
 #define GUI_MSGBOX_ALPHA 225
 
@@ -100,11 +101,12 @@ enum VideoEventType
 	EV_CONTAINER,
 	EV_MENUBUTTONS,
 	EV_TOOLTIP,
-	EV_TITLEBAR
+	EV_TITLEBAR,
+	EV_3DBOXART
 };
 
 char * typeStrings[] = {"TexObj", "MsgBox", "Image", "Progress", "SelectableButton", "EmptyBox", "TransparentBox",
-						"FileBrowserButton", "VertScrollbar", "StyledLabel", "Container", "MenuButtons", "Tooltip", "TitleBar"};
+						"FileBrowserButton", "VertScrollbar", "StyledLabel", "Container", "MenuButtons", "Tooltip", "TitleBar", "3DBoxArt"};
 
 typedef struct drawTexObjEvent {
 	GXTexObj *texObj;
@@ -207,6 +209,15 @@ typedef struct drawProgressEvent {
 	int timeremain;
 } drawProgressEvent_t;
 
+typedef struct draw3DBoxArtEvent {
+	GXTexObj *texture;
+	float zoom;
+	int x_pan;
+	int y_pan;
+	int type;
+	// TODO position so we can rotate
+} draw3DBoxArtEvent_t;
+
 typedef struct uiDrawObjQueue {
 	struct uiDrawObj *event;
 	struct uiDrawObjQueue *next;
@@ -281,6 +292,12 @@ static void clearNestedEvent(uiDrawObj_t *event) {
 				free(((drawTooltipEvent_t*)event->data)->tooltip);
 			}
 		}
+		else if(event->type == EV_3DBOXART) {
+			if(((draw3DBoxArtEvent_t*)event->data)->texture) {
+				//printf("Clear Nested EV_3DBOXART\r\n");
+				free(((draw3DBoxArtEvent_t*)event->data)->texture);
+			}
+		}
 		//printf("Clear Nested event->data\r\n");
 		free(event->data);
 	}
@@ -304,14 +321,14 @@ static void disposeEvent(uiDrawObj_t *event) {
 		if(current->event == event) {
 			//print_gecko("Disposing event %08X\r\n", (u32)current);
 			clearNestedEvent(current->event);
-			previous->next = current->next;
+				previous->next = current->next;
 			free(current);
-		}
+			}
 		else {
 			previous = current;
 		}
 		current = previous->next;
-	}
+    }
 }
 
 
@@ -1407,6 +1424,109 @@ uiDrawObj_t* DrawTitleBar()
 	return event;
 }
 
+
+// Internal
+static void _Draw3DBoxArt(uiDrawObj_t *evt) {
+	draw3DBoxArtEvent_t *data = (draw3DBoxArtEvent_t*)evt->data;
+	
+	GX_InvalidateTexAll();
+	GX_LoadTexObj(data->texture, GX_TEXMAP0);
+	GXColor color = (GXColor) {255,255,255,255};
+	float x = (float)data->x_pan;
+	float y = (float)data->y_pan;
+	float depth = 0.0f;
+	int rawWidth = 0;
+	switch(data->type) {
+		case BOX_FRONT:
+			rawWidth = BOXART_FRONT_WIDTH;
+		break;
+			
+		case BOX_SPINE:
+			rawWidth = BOXART_SPINE_WIDTH;
+		break;
+		
+		case BOX_BACK:
+			rawWidth = BOXART_BACK_WIDTH;
+		break;
+	
+		case BOX_ALL:
+		default:
+			rawWidth = BOXART_WIDTH;
+		break;
+	}
+	float width = (rawWidth*data->zoom);
+	float height = (BOXART_HEIGHT*data->zoom);
+	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+		GX_Position3f32(x, y, depth);
+		GX_Color4u8(color.r, color.g, color.b, color.a);
+		GX_TexCoord2f32(0.0f, 1.0f); // s1 t0
+		GX_Position3f32((x+width),y, depth );
+		GX_Color4u8(color.r, color.g, color.b, color.a);
+		GX_TexCoord2f32(0.0f, 0.0f); // s0 t0
+		GX_Position3f32((x+width), (y+height), depth );
+		GX_Color4u8(color.r, color.g, color.b, color.a);
+		GX_TexCoord2f32(1.0f,0.0f); // s0 t1
+		GX_Position3f32(x,(y+height),depth );
+		GX_Color4u8(color.r, color.g, color.b, color.a);
+		GX_TexCoord2f32(1.0f,1.0f); // s1 t1
+	GX_End();
+}
+
+// External
+uiDrawObj_t* Draw3DBoxArt(void* texture, int textureBytes, int x, int y, int exp_width, int exp_height, int type) {
+	draw3DBoxArtEvent_t *eventData = calloc(1, sizeof(draw3DBoxArtEvent_t));
+	eventData->texture = calloc(1, sizeof(GXTexObj));
+	eventData->x_pan = x;
+	eventData->y_pan = y;
+	eventData->type = type;
+	// width and height are all flipped so we can load partial textures (front, spine, back)
+	int textureSize, width = BOXART_HEIGHT, height;
+	switch(type) {
+		case BOX_FRONT:
+			textureSize = BOXART_TEX_FRONT_SIZE;
+			height = BOXART_FRONT_WIDTH;	// 486
+		break;
+			
+		case BOX_SPINE:
+			textureSize = BOXART_TEX_SPINE_SIZE;
+			height = BOXART_SPINE_WIDTH;	// 48
+		break;
+		
+		case BOX_BACK:
+			textureSize = BOXART_TEX_BACK_SIZE;
+			height = BOXART_BACK_WIDTH;	// 490
+		break;
+	
+		case BOX_ALL:
+		default:
+			textureSize = BOXART_TEX_SIZE;
+			height = BOXART_WIDTH;
+		break;
+	}
+	// TODO get rid of this if we're going with fixed sizing.
+	// Calculate zoom based on size expected, keep it within ratio.
+	float widthRatio = ((float)exp_width / (float)height);
+	float heightRatio = ((float)exp_height / (float)width);
+	eventData->zoom = ((float)widthRatio * (float)width > (float)exp_width) ? heightRatio : widthRatio;
+	
+	DCFlushRange(texture, textureSize);
+	GX_InitTexObj(eventData->texture, texture, width, height, BOXART_TEX_FMT, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
+	event->type = EV_3DBOXART;
+	event->data = eventData;
+	return event;
+}
+
+// External
+void DrawUpdate3DBoxArt(uiDrawObj_t *evt, float zoom, int x_pan, int y_pan) {
+	LWP_MutexLock(_videomutex);
+	draw3DBoxArtEvent_t *data = (draw3DBoxArtEvent_t*)evt->data;
+	data->zoom = zoom;
+	data->x_pan = x_pan;
+	data->y_pan = y_pan;
+	LWP_MutexUnlock(_videomutex);
+}
+
 // Internal
 static void _DrawMenuButtons(uiDrawObj_t *evt) {
 	
@@ -2024,6 +2144,9 @@ static void videoDrawEvent(uiDrawObj_t *videoEvent) {
 			break;
 		case EV_TITLEBAR:
 			_DrawTitleBar(videoEvent);
+			break;
+		case EV_3DBOXART:
+			_Draw3DBoxArt(videoEvent);
 			break;
 		default:
 			break;

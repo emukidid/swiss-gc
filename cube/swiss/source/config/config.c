@@ -521,7 +521,7 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 					}
 				}
 				else if(!strcmp("FileBrowserType", name)) {
-					for(int i = 0; i < 3; i++) {
+					for(int i = 0; i < 4; i++) {
 						if(!strcmp(fileBrowserStr[i], value)) {
 							swissSettings.fileBrowserType = i;
 							break;

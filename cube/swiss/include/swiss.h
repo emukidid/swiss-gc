@@ -26,6 +26,7 @@
 #define FILES_PER_PAGE 8
 #define FILES_PER_PAGE_FULLWIDTH 7
 #define FILES_PER_PAGE_CAROUSEL 9
+#define FILES_PER_PAGE_BOXART 16
 extern int current_view_start;
 extern int current_view_end;
 extern int curMenuSelection;	      //menu selection
@@ -166,6 +167,7 @@ enum fileBrowserTypes
 {
 	BROWSER_STANDARD=0,
 	BROWSER_FULLWIDTH,
+	BROWSER_BOXART,
 	BROWSER_CAROUSEL,
 	BROWSER_MAX
 };

@@ -112,6 +112,8 @@ uiDrawObj_t* DrawFadingLabel(int x, int y, const char *string, float size);
 uiDrawObj_t* DrawMenuButtons(int selection);
 uiDrawObj_t* DrawTooltip(const char *tooltip);
 uiDrawObj_t* DrawTitleBar();
+uiDrawObj_t* Draw3DBoxArt(void* texture, int textureBytes, int x, int y, int exp_width, int exp_height, int type);
+void DrawUpdate3DBoxArt(uiDrawObj_t *evt, float zoom, int x_pan, int y_pan);
 void DrawUpdateProgressBar(uiDrawObj_t *evt, int percent);
 void DrawUpdateProgressBarDetail(uiDrawObj_t *evt, int percent, int speed, int timestart, int timeremain);
 void DrawUpdateMenuButtons(int selection);

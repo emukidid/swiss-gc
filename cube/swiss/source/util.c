@@ -242,7 +242,7 @@ int find_existing_entry(char *entry, bool load) {
 				|| !fnmatch(entry, curDirEntries[i].name, FNM_PATHNAME)) {
 					curSelection = i;
 					if(curDirEntries[i].fileAttrib == IS_FILE && load) {
-						populate_meta(&curDirEntries[i]);
+						populate_meta(&curDirEntries[i], -1);
 						memcpy(&curFile, &curDirEntries[i], sizeof(file_handle));
 						load_file();
 						memcpy(&curDirEntries[i], &curFile, sizeof(file_handle));

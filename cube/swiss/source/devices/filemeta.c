@@ -21,10 +21,12 @@
 #include "swiss.h"
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
+#include "../gui/boxart.h"
 
 //this is the blank banner that will be shown if no banner is found on a disc
 extern BNR blankbanner;
 
+// TODO meta size is lame as it only takes the struct into consideration and not the texture data, needs fixing cause 512 * texture == Out of memory.
 #define NUM_META_MAX (512)
 #define META_CACHE_SIZE (sizeof(file_meta) * NUM_META_MAX)
 
@@ -35,6 +37,18 @@ void meta_free(file_meta* meta) {
 		if(meta->banner) {
 			free(meta->banner);
 			meta->banner = NULL;
+		}
+		if(meta->boxartBack) {
+			free(meta->boxartBack);
+			meta->boxartBack = NULL;
+		}
+		if(meta->boxartFront) {
+			free(meta->boxartFront);
+			meta->boxartFront = NULL;
+		}
+		if(meta->boxartSpine) {
+			free(meta->boxartSpine);
+			meta->boxartSpine = NULL;
 		}
 		__lwp_heap_free(meta_cache, meta);
 	}
@@ -195,7 +209,7 @@ void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 	meta_create_direct_texture(f->meta);
 }
 
-void populate_meta(file_handle *f) {
+void populate_meta(file_handle *f, int boxart) {
 	// If the meta hasn't been created, lets read it.
 	if(!f->meta) {
 		f->meta = meta_alloc();
@@ -345,12 +359,29 @@ void populate_meta(file_handle *f) {
 			f->meta->displayName = "Up to parent directory";
 		}
 	}
+	
+	if(f->meta && (f->meta->diskId.magic == DVD_MAGIC || f->meta->diskId.gamename[0])) {
+		// Boxart
+		BOXART_Init();	// TODO make this nicer, internal and not a pain when a user doesn't have boxart.bin avail.
+		if (boxart == BOX_SPINE && !f->meta->boxartSpine) {
+			f->meta->boxartSpine = memalign(32, BOXART_TEX_SPINE_SIZE);
+			BOXART_LoadTexture((char*)&f->meta->diskId, f->meta->boxartSpine, boxart);
+		}
+		else if (boxart == BOX_FRONT && !f->meta->boxartFront) {
+			f->meta->boxartFront = memalign(32, BOXART_TEX_FRONT_SIZE);
+			BOXART_LoadTexture((char*)&f->meta->diskId, f->meta->boxartFront, boxart);
+		}
+		else if (boxart == BOX_BACK && !f->meta->boxartBack) {
+			f->meta->boxartBack = memalign(32, BOXART_TEX_BACK_SIZE);
+			BOXART_LoadTexture((char*)&f->meta->diskId, f->meta->boxartBack, boxart);
+		}
+	}
 }
 
 void repopulate_meta(file_handle *f) {
 	meta_free(f->meta);
 	f->meta = NULL;
-	populate_meta(f);
+	populate_meta(f, -1);
 }
 
 file_handle* meta_find_disc2(file_handle *f) {
@@ -361,7 +392,7 @@ file_handle* meta_find_disc2(file_handle *f) {
 			for(int j = 0; j < getCurrentDirEntryCount(); j++) {
 				if(!dirEntries[j].meta) {
 					if(i == 0) continue;
-					populate_meta(&dirEntries[j]);
+					populate_meta(&dirEntries[j] ,-1);
 				}
 				if(dirEntries[j].meta) {
 					if(strncmp((const char*)dirEntries[j].meta->diskId.gamename, (const char*)f->meta->diskId.gamename, 4)) {

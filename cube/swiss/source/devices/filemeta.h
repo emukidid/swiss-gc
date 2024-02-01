@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "deviceHandler.h"
 
-void populate_meta(file_handle *f);
+void populate_meta(file_handle *f, int boxart);
 void repopulate_meta(file_handle *f);
 file_handle* meta_find_disc2(file_handle *f);
 void meta_free(file_meta* meta);

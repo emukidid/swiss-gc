@@ -41,6 +41,9 @@ typedef struct {
 	GXTexObj bannerTexObj;
 	GXTlutObj bannerTlutObj;
 	BNRDesc bannerDesc;
+	u8 *boxartSpine;
+	u8 *boxartFront;
+	u8 *boxartBack;
 } file_meta;
 
 typedef struct {

@@ -41,7 +41,7 @@ char *emulateAudioStreamStr[] = {"Off", "Auto", "On"};
 char *emulateReadSpeedStr[] = {"No", "Yes", "Wii"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
 char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL", "AVE P-DOL"};
-char *fileBrowserStr[] = {"Standard", "Fullwidth", "Carousel"};
+char *fileBrowserStr[] = {"Standard", "Fullwidth", "Boxart", "Carousel"};
 char *bs2BootStr[] = {"No", "Yes", "Sound 1", "Sound 2"};
 char *sramLang[] = {"English", "German", "French", "Spanish", "Italian", "Dutch", "Japanese", "English (US)"};
 char *recentListLevelStr[] = {"Off", "Lazy", "On"};
@@ -485,7 +485,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_FILEBROWSER_TYPE:
 				swissSettings.fileBrowserType += direction;
-				swissSettings.fileBrowserType = (swissSettings.fileBrowserType + 3) % 3;
+				swissSettings.fileBrowserType = (swissSettings.fileBrowserType + 4) % 4;
 			break;
 			case SET_FILE_MGMT:
 				swissSettings.enableFileManagement ^=1;
