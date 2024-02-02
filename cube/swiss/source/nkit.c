@@ -1162,6 +1162,7 @@ static const struct {
 	{{ "GLQP41\x00\x00" }, false, 0x72, 0xA9C6, 0x47DF5B17, 0x673E384DF0D9E6CC, 1424304128,   +35674112, { 1401037496,   +35674192, 6496, 0x7DC0 }, "Tom Clancy's Rainbow Six: Lockdown" },
 	{{ "GLRD64\x00\x00" }, false, 0x3E, 0x4047, 0x220C4EA3, 0xB6E5CD6A21504BAB, 1449596928,   +10381312, {    3144764,        +964, 8096, 0x626B }, "Star Wars: Rogue Squadron III: Rebel Strike" },
 	{{ "GLRE64\x00\x00" }, false, 0x07, 0x9718, 0x040A6155, 0x62697AB35F811AC4, 1447792640,   +12185600, {    3112228,        +732, 6496, 0x5522 }, "Star Wars: Rogue Squadron III: Rebel Strike" },
+	{{ "GLRE64\x00\x01" }, false, 0x96, 0xBE5D, 0xD54098AF, 0xF161C583D6C8256C, 1447952384,   +12025856, {    3125564,      +20164, 6496, 0x5522 }, "Star Wars: Rogue Squadron III: Rebel Strike" },
 	{{ "GLRF64\x00\x00" }, false, 0x4D, 0x0349, 0xE4438BB0, 0xB6E5CD6A21504BAB, 1447972864,   +12005376, {    3144764,        +964, 8096, 0x626B }, "Star Wars: Rogue Squadron III: Rebel Strike" },
 	{{ "GLRP64\x00\x00" }, false, 0x99, 0xD053, 0x54CA6364, 0xB6E5CD6A21504BAB, 1447972864,   +12005376, {    3144764,        +964, 8096, 0x626B }, "Star Wars: Rogue Squadron III: Rebel Strike" },
 	{{ "GLSD64\x00\x00" }, false, 0x1D, 0x4984, 0xFC4F3434, 0x59234A8E6F4980CA, 1349064704,  +110913536, { 1349055112,  +110915032, 8096, 0x1E12 }, "Gladius" },
@@ -2094,7 +2095,7 @@ static const struct {
 	{{ "UGPJ01\x00\x03" }, false, 0xDE, 0xC4F0, 0xDFF567CB, 0xFB2218FBFA6AB9FE,    2473984, +1457504256, {    2003524,      +28092, 6496, 0xE53B }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
-#define REDUMP_COUNT (1985)
+#define REDUMP_COUNT (1986)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
@@ -2214,6 +2215,7 @@ static const struct {
 	{{ "GXXE01\x00\x00" }, false, 0xA8, 0x98C1, 0xE0D19118, 0xA851883E7EBE15B2, 1093384192,  +366594048, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
 	{{ "GXXE01\x00\x00" }, false, 0xBD, 0x98C1, 0xDF5B1825, 0x6816956D0220746F, 1087750144,  +372228096, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
 	{{ "GXXE01\x00\x00" }, false, 0xCB, 0x98C1, 0xBE135566, 0xB56AE9983F6E4903, 1087750144,  +372228096, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
+	{{ "GYFEA4\x00\x00" }, false, 0x99, 0xFD98, 0xF7DE993B, 0xF9A63BE22E0BCEE5,  584765440,  +875212800, {  344220044,  +875213940, 6496, 0x23CA }, "Yu-Gi-Oh! The Falsebound Kingdom" },
 	{{ "GZBEB2\x00\x00" }, false, 0x3E, 0x6A71, 0x21866440, 0x506BD6CC75ADDC0B,  553748480,  +906229760, {  114322196,       +1548, 6496, 0xB677 }, "Zatch Bell! Go! Go! Mamodo Fight!!" },
 	{{ "GZLE01\x00\x00" }, false, 0x09, 0x863D, 0x5D06C4D8, 0x36D193DF45BFDAA4,  720627712,   +40671232, {  225455448,    +9556648, 6496, 0xDF7E }, "The Legend of Zelda: The Wind Waker Rewritten" },
 	{{ "GZPE70\x00\x00" }, false, 0x63, 0x887C, 0xBC256FCD, 0xE7D53A48267CDB88, 1416488960,   +43489280, {    2317240,      +17384, 6496, 0x195D }, "Zapper" },
@@ -2239,7 +2241,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 144)
+#define VALID_COUNT (REDUMP_COUNT + 145)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
