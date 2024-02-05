@@ -49,7 +49,6 @@ SOURCES		:=  source \
 			  source/patches/gx \
 			  source/patches/mtx \
 			  source/patches/vi \
-			  source/psoarchive \
               source/images \
 			  source/images/buttons \
 			  source/fatfs \
@@ -72,7 +71,7 @@ LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -T ../../linker-script/ogc.ld -T 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-ltinysmb -lbba -laesnd -lmad -ldb -logc -lz
+LIBS	:=	-ltinysmb -lbba -laesnd -lmad -ldb -logc -lpsoarchive -lz
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

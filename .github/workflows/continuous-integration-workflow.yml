@@ -18,7 +18,7 @@ jobs:
         sudo sed -i '/^\[dkp-libs\]$/,$d' /opt/devkitpro/pacman/etc/pacman.conf
         sudo echo -e '[extremscorner-devkitpro]\nServer = https://packages.extremscorner.org/devkitpro/linux/$arch' >> /opt/devkitpro/pacman/etc/pacman.conf
         sudo dkp-pacman -Sy
-        sudo dkp-pacman -S --noconfirm --ask 4 libogc2-git ppc-zlib-ng-compat
+        sudo dkp-pacman -S --noconfirm --ask 4 libogc2-git ppc-libpsoarchive ppc-zlib-ng-compat
 
     - name: Checkout Swiss
       uses: actions/checkout@main
