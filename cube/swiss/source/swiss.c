@@ -48,6 +48,7 @@
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
 #include "devices/filemeta.h"
+#include "psoarchive/PRS.h"
 #include "xxhash/xxhash.h"
 #include "dolparameters.h"
 #include "reservedarea.h"
@@ -1110,6 +1111,20 @@ void load_app(ExecutableFile *fileToPatch)
 			}
 			gameID_set(&GCMDisk, fileToPatch->hash);
 		}
+		
+		u8 *oldBuffer = buffer, *newBuffer = NULL;
+		if(type == PATCH_DOL_PRS || type == PATCH_OTHER_PRS) {
+			int ret = pso_prs_decompress_buf(buffer, &newBuffer, fileToPatch->size);
+			if(ret < 0) {
+				message = "Failed to decompress DOL!";
+				goto fail;
+			}
+			sizeToRead = ret;
+			buffer = newBuffer;
+			newBuffer = NULL;
+			free(oldBuffer);
+			oldBuffer = NULL;
+		}
 	}
 	else {
 		if(devices[DEVICE_PATCHES] && devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
@@ -1199,7 +1214,7 @@ void load_app(ExecutableFile *fileToPatch)
 	else if(type == PATCH_BIN) {
 		BINtoARAM(buffer, sizeToRead, 0x80003100, 0x80003100);
 	}
-	else if(type == PATCH_DOL) {
+	else if(type == PATCH_DOL || type == PATCH_DOL_PRS) {
 		DOLtoARAM(buffer, NULL, 0);
 	}
 	else if(type == PATCH_ELF) {

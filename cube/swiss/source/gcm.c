@@ -580,15 +580,14 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			goto fail;
 		}
 		
-		u8 *oldBuffer = NULL, *newBuffer = NULL;
+		u8 *oldBuffer = buffer, *newBuffer = NULL;
 		if(fileToPatch->type == PATCH_DOL_PRS || fileToPatch->type == PATCH_OTHER_PRS) {
-			ret = pso_prs_decompress_buf(buffer, &newBuffer, fileToPatch->size);
+			int ret = pso_prs_decompress_buf(buffer, &newBuffer, fileToPatch->size);
 			if(ret < 0) {
 				message = "Failed to decompress file!";
 				goto fail;
 			}
 			sizeToRead = ret;
-			oldBuffer = buffer;
 			buffer = newBuffer;
 		}
 		
@@ -603,7 +602,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		}
 		
 		if(fileToPatch->type == PATCH_DOL_PRS || fileToPatch->type == PATCH_OTHER_PRS) {
-			ret = pso_prs_compress2(buffer, oldBuffer, sizeToRead, fileToPatch->size);
+			int ret = pso_prs_compress2(buffer, oldBuffer, sizeToRead, fileToPatch->size);
 			if(ret < 0) {
 				message = "Failed to recompress file!";
 				free(oldBuffer);
