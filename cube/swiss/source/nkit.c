@@ -2101,6 +2101,7 @@ static const struct {
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
 	{{ "327E01\x00\x00" }, false, 0x83, 0x7406, 0xAF7E5D39, 0x1A5F0EA47A582D7E, 1457711104,    +2267136, { 1457702788,    +2268956, 6496, 0x3591 }, "Memory Card Utility Program" },
 	{{ "D28J01\x00\x00" }, true,  0x7B, 0x8FC6, 0x8EFBB42B, 0xB1F399DE51C25382,  794134528,  +665843712, {  394649296,  +665814992, 6496, 0xE5B2 }, "Gekkan Nintendo Tentou Demo 2002.4.4" },
+	{{ "D58J01\x00\x01" }, false, 0x55, 0x219B, 0x56742BA5, 0xE0F39BE49F49EEAE,   89075712,       +6400, {   59875016,       +6808, 6496, 0xB69F }, "Pokémon Distributing Machine" },
 	{{ "G2TE52\x00\x00" }, false, 0xC4, 0xC13C, 0xC98922BB, 0x55A84DC8C78EE6E7,  397957120, +1062021120, {         ~0,          +0,    0, 0xFFFF }, "Gun" },
 	{{ "G2TP52\x00\x00" }, false, 0x10, 0xEFEC, 0xEE959C7E, 0xA6DF308D2E6E85D7, 1459955712,      +22528, { 1018210520,          +0, 6496, 0x2179 }, "Memory Card Utility Program" },
 	{{ "G2TP52\x00\x00" }, false, 0x40, 0xEFEC, 0x0C20DB86, 0xA6DF308D2E6E85D7, 1459980288,       -2048, { 1018210520,          +0, 6496, 0x2A86 }, "Memory Card Utility Program" },
@@ -2120,6 +2121,7 @@ static const struct {
 	{{ "GAAJ08\x00\x00" }, false, 0xE8, 0x59B5, 0xCFF85DC4, 0x8FB84CC1BD034EF2,  431874048, +1028104192, {  431866960, +1028104784, 6496, 0x3F32 }, "Disney's Hide & Sneak" },
 	{{ "GAEE01\x00\x00" }, false, 0x35, 0xFBDD, 0x4766503F, 0x436691A998882797,   29786112, +1430192128, {   29137112, +1430187816, 6496, 0x1129 }, "Animal Forest e+" },
 	{{ "GAGPEL\x00\x00" }, false, 0xCB, 0xA2BD, 0x488AB477, 0xE1DF569A51FB9D2C,  754982912,  +704995328, {  754973244,  +704996900, 8096, 0x63D7 }, "Astérix & Obélix XXL" },
+	{{ "GAMEA4\x00\x02" }, false, 0x24, 0xABAC, 0xB230E452, 0x6F80D9A7EB6B34B5,   80752640,       +7520, {         ~0,          +0,    0, 0xFFFF }, "Pokémon Distributing Machine" },
 	{{ "GASE8P\x00\x00" }, false, 0xB3, 0xA1B0, 0xDD918AD1, 0xD9B670DD43BD37A5, 1404723200,   +55255040, {  774689240,   +55255472, 6496, 0x0D21 }, "Sonic Adventure DX: Director's Cut" },
 	{{ "GB8E78\x00\x00" }, true,  0x03, 0x3B42, 0x1F19869C, 0x0716D4D5A73AB0BC,  432257024, +1027721216, {  412625660,      +32768, 6496, 0x9BD7 }, "BattleBots" },
 	{{ "GBIJ08\x00\x00" }, false, 0x75, 0x7EF2, 0xD752514D, 0xD4E03DF58675E232,  175702016, +1284276224, {    2519252, +1283945932, 6496, 0xEF92 }, "Resident Evil 4" },
@@ -2241,7 +2243,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 145)
+#define VALID_COUNT (REDUMP_COUNT + 147)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
