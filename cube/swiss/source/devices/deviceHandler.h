@@ -103,7 +103,7 @@ typedef char* (* _fn_status)(file_handle*);
 #define FEAT_BOOT_DEVICE		0x8
 #define FEAT_CONFIG_DEVICE		0x10
 #define FEAT_AUTOLOAD_DOL		0x20
-#define FEAT_FAT_FUNCS			0x40
+#define FEAT_THREAD_SAFE		0x40
 #define FEAT_HYPERVISOR			0x80
 #define FEAT_PATCHES			0x100
 #define FEAT_AUDIO_STREAMING	0x200
