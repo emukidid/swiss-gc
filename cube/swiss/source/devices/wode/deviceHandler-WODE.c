@@ -90,8 +90,9 @@ s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				*dir = reallocarray(*dir, num_entries + 1, sizeof(file_handle));
 				memset(&(*dir)[num_entries], 0, sizeof(file_handle));
 				concatf_path((*dir)[num_entries].name, ffile->name, "%.64s.gcm", &tmp.name[0]);
-				(*dir)[num_entries].fileAttrib = IS_FILE;
+				(*dir)[num_entries].fileBase = num_entries;
 				(*dir)[num_entries].size = DISC_SIZE;
+				(*dir)[num_entries].fileAttrib = IS_FILE;
 				memcpy(&(*dir)[num_entries].other, &tmp, sizeof(ISOInfo_t));
 				print_gecko("Adding WODE entry: %s part:%08X iso:%08X region:%08X\r\n",
 					&tmp.name[0], tmp.iso_partition, tmp.iso_number, tmp.iso_region);

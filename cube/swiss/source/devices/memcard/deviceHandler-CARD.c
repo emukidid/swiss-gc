@@ -130,6 +130,7 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		}
 		memset(&(*dir)[i], 0, sizeof(file_handle));
 		concatf_path((*dir)[i].name, ffile->name, "%.*s", CARD_FILENAMELEN, memcard_dir->filename);
+		(*dir)[i].fileBase   = i;
 		(*dir)[i].size       = memcard_dir->filelen;
 		(*dir)[i].fileAttrib = IS_FILE;
 		memcpy( (*dir)[i].other, memcard_dir, sizeof(card_dir));

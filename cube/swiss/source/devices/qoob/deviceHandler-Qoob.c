@@ -148,9 +148,9 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 					}
 				}
 				concat_path((*dir)[i].name, ffile->name, entryName);
+				(*dir)[i].fileBase   = block;
 				(*dir)[i].size       = entryHeader.num_blocks * QOOB_BLOCK_SIZE;
 				(*dir)[i].fileAttrib = IS_FILE;
-				(*dir)[i].fileBase   = block;
 				usedSpace += (*dir)[i].size;
 				++i;
 				

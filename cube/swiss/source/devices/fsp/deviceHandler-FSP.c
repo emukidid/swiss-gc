@@ -72,6 +72,7 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
 			concat_path((*dir)[i].name, ffile->name, entry.name);
+			(*dir)[i].fileBase   = i;
 			(*dir)[i].size       = entry.size;
 			(*dir)[i].fileAttrib = (entry.type == FSP_RDTYPE_DIR) ? IS_DIR : IS_FILE;
 			usedSpace += (*dir)[i].size;

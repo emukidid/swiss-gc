@@ -409,9 +409,9 @@ s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 		*dir = reallocarray(*dir, num_entries + 1, sizeof(file_handle));
 		memset(&(*dir)[num_entries], 0, sizeof(file_handle));
 		concat_path((*dir)[num_entries].name, ffile->name, rom_names[i]);
-		(*dir)[num_entries].fileAttrib = IS_FILE;
-		(*dir)[num_entries].size       = rom_sizes[i];
 		(*dir)[num_entries].fileBase   = i;
+		(*dir)[num_entries].size       = rom_sizes[i];
+		(*dir)[num_entries].fileAttrib = IS_FILE;
 		num_entries++;
 	}
 

@@ -123,6 +123,7 @@ s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			memset(&(*dir)[i], 0, sizeof(file_handle));
 			concat_path((*dir)[i].name, ffile->name, entry->d_name);
 			stat((*dir)[i].name, &fstat);
+			(*dir)[i].fileBase   = i;
 			(*dir)[i].size       = fstat.st_size;
 			(*dir)[i].fileAttrib = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
 			++i;

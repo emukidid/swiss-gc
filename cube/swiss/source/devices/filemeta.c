@@ -360,8 +360,9 @@ file_handle* meta_find_disc2(file_handle *f) {
 	file_handle* disc2File = NULL;
 	if(is_multi_disc(f->meta)) {
 		file_handle* dirEntries = getCurrentDirEntries();
+		int dirEntryCount = getCurrentDirEntryCount();
 		for(int i = 0; i < 2; i++) {
-			for(int j = 0; j < getCurrentDirEntryCount(); j++) {
+			for(int j = 0; j < dirEntryCount; j++) {
 				if(!dirEntries[j].meta) {
 					if(i == 0) continue;
 					populate_meta(&dirEntries[j]);
@@ -396,13 +397,20 @@ file_handle* meta_find_disc2(file_handle *f) {
 }
 
 static void *meta_thread_func(void *arg) {
-	file_handle* dirEntries = getCurrentDirEntries();
-	for(int i = 0; i < getCurrentDirEntryCount(); i++) {
-		if(meta_thread != LWP_GetSelf()) break;
-		if(trylockFile(&dirEntries[i])) {
-			populate_meta(&dirEntries[i]);
-			unlockFile(&dirEntries[i]);
+	file_handle *dirEntries = getCurrentDirEntries();
+	int dirEntryCount = getCurrentDirEntryCount();
+	for (int i = 0; i < dirEntryCount; i++) {
+		for (int j = 0; j < dirEntryCount; j++) {
+			if (dirEntries[j].fileBase != i)
+				continue;
+			if (trylockFile(&dirEntries[j])) {
+				populate_meta(&dirEntries[j]);
+				unlockFile(&dirEntries[j]);
+			}
+			break;
 		}
+		if (meta_thread != LWP_GetSelf())
+			break;
 	}
 	return NULL;
 }
