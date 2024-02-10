@@ -16,6 +16,7 @@
 #include <main.h>
 #include <ogc/lwp_heap.h>
 #include "dvd.h"
+#include "filelock.h"
 #include "filemeta.h"
 #include "nkit.h"
 #include "swiss.h"
@@ -29,6 +30,7 @@ extern BNR blankbanner;
 #define META_CACHE_SIZE (sizeof(file_meta) * NUM_META_MAX)
 
 static heap_cntrl* meta_cache = NULL;
+static lwp_t meta_thread = LWP_THREAD_NULL;
 
 void meta_free(file_meta* meta) {
 	if(meta_cache && meta) {
@@ -53,9 +55,10 @@ file_meta* meta_alloc() {
 		int i = 0;
 		for (i = 0; i < getCurrentDirEntryCount(); i++) {
 			if(!in_range(i, current_view_start, current_view_end)) {
-				if(dirEntries[i].meta) {
+				if(dirEntries[i].meta && trylockFile(&dirEntries[i])) {
 					meta_free(dirEntries[i].meta);
 					dirEntries[i].meta = NULL;
+					unlockFile(&dirEntries[i]);
 					break;
 				}
 			}
@@ -390,4 +393,26 @@ file_handle* meta_find_disc2(file_handle *f) {
 		}
 	}
 	return disc2File;
+}
+
+static void *meta_thread_func(void *arg) {
+	file_handle* dirEntries = getCurrentDirEntries();
+	for(int i = 0; i < getCurrentDirEntryCount(); i++) {
+		if(meta_thread != LWP_GetSelf()) break;
+		if(trylockFile(&dirEntries[i])) {
+			populate_meta(&dirEntries[i]);
+			unlockFile(&dirEntries[i]);
+		}
+	}
+	return NULL;
+}
+
+void meta_thread_start() {
+	LWP_CreateThread(&meta_thread, meta_thread_func, NULL, NULL, 0, LWP_PRIO_NORMAL);
+}
+
+void meta_thread_stop() {
+	lwp_t thread = meta_thread;
+	meta_thread = LWP_THREAD_NULL;
+	LWP_JoinThread(thread, NULL);
 }
