@@ -417,7 +417,7 @@ static void *meta_thread_func(void *arg) {
 
 void meta_thread_start() {
 	if (devices[DEVICE_CUR]->features & FEAT_THREAD_SAFE)
-		LWP_CreateThread(&meta_thread, meta_thread_func, NULL, NULL, 0, LWP_PRIO_NORMAL);
+		LWP_CreateThread(&meta_thread, meta_thread_func, NULL, NULL, 16*1024, LWP_PRIO_NORMAL);
 }
 
 void meta_thread_stop() {

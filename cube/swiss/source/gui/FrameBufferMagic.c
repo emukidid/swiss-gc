@@ -78,12 +78,11 @@ GXTexObj m2loaderTexObj;
 static char fbTextBuffer[256];
 
 // Video threading vars
-#define VIDEO_STACK_SIZE (1024*64)
+#define VIDEO_STACK_SIZE (64*1024)
 #define VIDEO_PRIORITY 100
 static char  video_thread_stack[VIDEO_STACK_SIZE];
 static lwp_t video_thread = LWP_THREAD_NULL;
 static mutex_t _videomutex = LWP_MUTEX_NULL;
-static int threadAlive = 0;
 
 enum VideoEventType
 {
@@ -2049,7 +2048,7 @@ static void *videoUpdate(void *videoEventQueue) {
 	//int frames = 0;
 	//int framerate = 0;
 	//u32 lasttime = gettick();
-	while(threadAlive) {
+	while(video_thread == LWP_GetSelf()) {
 		whichfb ^= 1;
 		//frames++;
 		LWP_MutexLock(_videomutex);
@@ -2135,7 +2134,6 @@ void DrawInit() {
 	DrawAddChild(container, buttonPanel);
 	DrawPublish(container);
 	LWP_MutexInit(&_videomutex, 0);
-	threadAlive = 1;
 	LWP_CreateThread(&video_thread, videoUpdate, videoEventQueue, video_thread_stack, VIDEO_STACK_SIZE, VIDEO_PRIORITY);
 }
 
@@ -2210,11 +2208,12 @@ void DrawLoadBackdrop() {
 }
 
 void DrawShutdown() {
-	LWP_MutexDestroy(_videomutex);
+	mutex_t mutex = _videomutex;
 	_videomutex = LWP_MUTEX_NULL;
-	threadAlive = 0;
-	LWP_JoinThread(video_thread, NULL);
+	LWP_MutexDestroy(mutex);
+	lwp_t thread = video_thread;
 	video_thread = LWP_THREAD_NULL;
+	LWP_JoinThread(thread, NULL);
 	GX_SetCurrentGXThread();
 }
 
