@@ -307,15 +307,15 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 			DrawAddChild(containerPanel, scrollBar);
 		}
 		for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
-			lockFile(&(*directory)[current_view_start]);
-			populate_meta(&(*directory)[current_view_start]);
+			lockFile(directory[current_view_start]);
+			populate_meta(directory[current_view_start]);
 			uiDrawObj_t *browserButton = DrawFileBrowserButton(150, fileListBase+(j*40), 
 									getVideoMode()->fbWidth-30, fileListBase+(j*40)+40, 
-									getRelativePath((*directory)[current_view_start].name, curDir.name),
-									&(*directory)[current_view_start],
+									getRelativePath(directory[current_view_start]->name, curDir.name),
+									directory[current_view_start],
 									(current_view_start == curSelection) ? B_SELECTED:B_NOSELECT);
-			(*directory)[current_view_start].uiObj = browserButton;
-			unlockFile(&(*directory)[current_view_start]);
+			directory[current_view_start]->uiObj = browserButton;
+			unlockFile(directory[current_view_start]);
 			DrawAddChild(containerPanel, browserButton);
 		}
 	}
@@ -380,20 +380,20 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		}
 		
 		if(padsButtonsHeld() & PAD_BUTTON_A) {
-			lockFile(&(*directory)[curSelection]);
+			lockFile(directory[curSelection]);
 			//go into a folder or select a file
-			if((*directory)[curSelection].fileAttrib==IS_DIR) {
-				memcpy(&curDir, &(*directory)[curSelection], sizeof(file_handle));
+			if(directory[curSelection]->fileAttrib==IS_DIR) {
+				memcpy(&curDir, directory[curSelection], sizeof(file_handle));
 				needsRefresh=1;
 			}
-			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL) {
+			else if(directory[curSelection]->fileAttrib==IS_SPECIAL) {
 				memcpy(&curFile, &curDir, sizeof(file_handle));
-				curDir.fileBase = (*directory)[curSelection].fileBase;
+				curDir.fileBase = directory[curSelection]->fileBase;
 				needsDeviceChange = upToParent(&curDir);
 				needsRefresh=1;
 			}
-			else if((*directory)[curSelection].fileAttrib==IS_FILE) {
-				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
+			else if(directory[curSelection]->fileAttrib==IS_FILE) {
+				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				if(canLoadFileType(&curFile.name[0])) {
 					meta_thread_stop();
 					load_file();
@@ -402,34 +402,34 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 					meta_thread_stop();
 					needsRefresh = manage_file() ? 1:0;
 				}
-				memcpy(&(*directory)[curSelection], &curFile, sizeof(file_handle));
+				memcpy(directory[curSelection], &curFile, sizeof(file_handle));
 			}
-			unlockFile(&(*directory)[curSelection]);
+			unlockFile(directory[curSelection]);
 			break;
 		}
 		if(padsButtonsHeld() & PAD_BUTTON_X) {
 			memcpy(&curFile, &curDir, sizeof(file_handle));
-			curDir.fileBase = (*directory)[0].fileBase;
+			curDir.fileBase = directory[0]->fileBase;
 			needsDeviceChange = upToParent(&curDir);
 			needsRefresh=1;
 			while(padsButtonsHeld() & PAD_BUTTON_X) VIDEO_WaitVSync();
 			break;
 		}
 		if((padsButtonsHeld() & PAD_TRIGGER_Z) && swissSettings.enableFileManagement) {
-			lockFile(&(*directory)[curSelection]);
-			if((*directory)[curSelection].fileAttrib == IS_FILE || (*directory)[curSelection].fileAttrib == IS_DIR) {
-				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
+			lockFile(directory[curSelection]);
+			if(directory[curSelection]->fileAttrib == IS_FILE || directory[curSelection]->fileAttrib == IS_DIR) {
+				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				meta_thread_stop();
 				needsRefresh = manage_file() ? 1:0;
-				memcpy(&(*directory)[curSelection], &curFile, sizeof(file_handle));
+				memcpy(directory[curSelection], &curFile, sizeof(file_handle));
 				while(padsButtonsHeld() & PAD_BUTTON_B) VIDEO_WaitVSync();
 				if(needsRefresh) {
 					// If we return from doing something with a file, refresh the device in the same dir we were at
-					unlockFile(&(*directory)[curSelection]);
+					unlockFile(directory[curSelection]);
 					break;
 				}
 			}
-			else if((*directory)[curSelection].fileAttrib == IS_SPECIAL) {
+			else if(directory[curSelection]->fileAttrib == IS_SPECIAL) {
 				// Toggle autoload
 				if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 				|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
@@ -443,7 +443,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 				config_update_global(true);
 				DrawDispose(msgBox);
 			}
-			unlockFile(&(*directory)[curSelection]);
+			unlockFile(directory[curSelection]);
 		}
 		
 		if((padsButtonsHeld() & PAD_BUTTON_START) && swissSettings.recentListLevel > 0) {
@@ -453,7 +453,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		}
 		if(padsButtonsHeld() & PAD_BUTTON_B) {
 			curMenuLocation = ON_OPTIONS;
-			DrawUpdateFileBrowserButton((*directory)[curSelection].uiObj, (curMenuLocation == ON_FILLIST) ? B_SELECTED:B_NOSELECT);
+			DrawUpdateFileBrowserButton(directory[curSelection]->uiObj, (curMenuLocation == ON_FILLIST) ? B_SELECTED:B_NOSELECT);
 			break;
 		}
 		if(padsStickY() <= -16 || padsStickY() >= 16) {
@@ -512,7 +512,7 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 		//print_gecko("%i entries to the left, %i to the right in this view\r\n", left_num, right_num);
 		//print_gecko("%i cur sel, %i start, %i end\r\n", curSelection, current_view_start, current_view_end);
 		
-		bool parentLink = ((*directory)[curSelection].fileAttrib==IS_SPECIAL);
+		bool parentLink = (directory[curSelection]->fileAttrib==IS_SPECIAL);
 		int y_base = 105; // top most point
 		int sub_entry_width = 40;
 		int sub_entry_height = 270;
@@ -525,40 +525,40 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 		// TODO scale and position based on how far from the middle these are (banner and text too)
 		// Left spineart entries
 		for(j = 0; j < left_num; j++) {
-			lockFile(&(*directory)[current_view_start]);
-			populate_meta(&(*directory)[current_view_start]);
+			lockFile(directory[current_view_start]);
+			populate_meta(directory[current_view_start]);
 			browserObject = DrawFileCarouselEntry(left_x_base - ((sub_entry_width*(left_num-j-1))+sub_entry_width), y_base + 10, 
 									left_x_base - ((sub_entry_width*(left_num-j-1))), y_base + 10 + sub_entry_height, 
-									getRelativePath((*directory)[current_view_start].name, curDir.name),
-									&(*directory)[current_view_start], j - left_num);
-			(*directory)[current_view_start].uiObj = browserObject;
-			unlockFile(&(*directory)[current_view_start]);
+									getRelativePath(directory[current_view_start]->name, curDir.name),
+									directory[current_view_start], j - left_num);
+			directory[current_view_start]->uiObj = browserObject;
+			unlockFile(directory[current_view_start]);
 			DrawAddChild(containerPanel, browserObject);
 			current_view_start++;
 		}
 		
 		// Main entry
-		lockFile(&(*directory)[current_view_start]);
-		populate_meta(&(*directory)[current_view_start]);
+		lockFile(directory[current_view_start]);
+		populate_meta(directory[current_view_start]);
 		browserObject = DrawFileCarouselEntry(((getVideoMode()->fbWidth / 2) - (main_entry_width / 2)), y_base, 
 								((getVideoMode()->fbWidth / 2) + (main_entry_width / 2)), y_base + main_entry_height, 
-								getRelativePath((*directory)[current_view_start].name, curDir.name),
-								&(*directory)[current_view_start], 0);
-		(*directory)[current_view_start].uiObj = browserObject;
-		unlockFile(&(*directory)[current_view_start]);
+								getRelativePath(directory[current_view_start]->name, curDir.name),
+								directory[current_view_start], 0);
+		directory[current_view_start]->uiObj = browserObject;
+		unlockFile(directory[current_view_start]);
 		DrawAddChild(containerPanel, browserObject);
 		current_view_start++;
 		
 		// Right spineart entries
 		for(j = 0; j < right_num; j++) {
-			lockFile(&(*directory)[current_view_start]);
-			populate_meta(&(*directory)[current_view_start]);
+			lockFile(directory[current_view_start]);
+			populate_meta(directory[current_view_start]);
 			browserObject = DrawFileCarouselEntry(right_x_base + ((sub_entry_width*j)), y_base + 10, 
 									right_x_base + ((sub_entry_width*j)+sub_entry_width), y_base + 10 + sub_entry_height,
-									getRelativePath((*directory)[current_view_start].name, curDir.name),
-									&(*directory)[current_view_start], j+1);
-			(*directory)[current_view_start].uiObj = browserObject;
-			unlockFile(&(*directory)[current_view_start]);
+									getRelativePath(directory[current_view_start]->name, curDir.name),
+									directory[current_view_start], j+1);
+			directory[current_view_start]->uiObj = browserObject;
+			unlockFile(directory[current_view_start]);
 			DrawAddChild(containerPanel, browserObject);
 			current_view_start++;
 		}
@@ -574,7 +574,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		needsRefresh=1;
 		return filePanel;
 	}
-	if(curSelection == 0 && num_files > 1 && (*directory)[0].fileAttrib==IS_SPECIAL) {
+	if(curSelection == 0 && num_files > 1 && directory[0]->fileAttrib==IS_SPECIAL) {
 		curSelection = 1; // skip the ".." by default
 	}
 	meta_thread_start();
@@ -616,20 +616,20 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		}
 		
 		if((padsButtonsHeld() & PAD_BUTTON_A)) {
-			lockFile(&(*directory)[curSelection]);
+			lockFile(directory[curSelection]);
 			//go into a folder or select a file
-			if((*directory)[curSelection].fileAttrib==IS_DIR) {
-				memcpy(&curDir, &(*directory)[curSelection], sizeof(file_handle));
+			if(directory[curSelection]->fileAttrib==IS_DIR) {
+				memcpy(&curDir, directory[curSelection], sizeof(file_handle));
 				needsRefresh=1;
 			}
-			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL){
+			else if(directory[curSelection]->fileAttrib==IS_SPECIAL){
 				memcpy(&curFile, &curDir, sizeof(file_handle));
-				curDir.fileBase = (*directory)[curSelection].fileBase;
+				curDir.fileBase = directory[curSelection]->fileBase;
 				needsDeviceChange = upToParent(&curDir);
 				needsRefresh=1;
 			}
-			else if((*directory)[curSelection].fileAttrib==IS_FILE){
-				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
+			else if(directory[curSelection]->fileAttrib==IS_FILE){
+				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				if(canLoadFileType(&curFile.name[0])) {
 					meta_thread_stop();
 					load_file();
@@ -638,34 +638,34 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 					meta_thread_stop();
 					needsRefresh = manage_file() ? 1:0;
 				}
-				memcpy(&(*directory)[curSelection], &curFile, sizeof(file_handle));
+				memcpy(directory[curSelection], &curFile, sizeof(file_handle));
 			}
-			unlockFile(&(*directory)[curSelection]);
+			unlockFile(directory[curSelection]);
 			break;
 		}
 		if(padsButtonsHeld() & PAD_BUTTON_X) {
 			memcpy(&curFile, &curDir, sizeof(file_handle));
-			curDir.fileBase = (*directory)[0].fileBase;
+			curDir.fileBase = directory[0]->fileBase;
 			needsDeviceChange = upToParent(&curDir);
 			needsRefresh=1;
 			while(padsButtonsHeld() & PAD_BUTTON_X) VIDEO_WaitVSync();
 			break;
 		}
 		if((padsButtonsHeld() & PAD_TRIGGER_Z) && swissSettings.enableFileManagement) {
-			lockFile(&(*directory)[curSelection]);
-			if((*directory)[curSelection].fileAttrib == IS_FILE || (*directory)[curSelection].fileAttrib == IS_DIR) {
-				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
+			lockFile(directory[curSelection]);
+			if(directory[curSelection]->fileAttrib == IS_FILE || directory[curSelection]->fileAttrib == IS_DIR) {
+				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				meta_thread_stop();
 				needsRefresh = manage_file() ? 1:0;
-				memcpy(&(*directory)[curSelection], &curFile, sizeof(file_handle));
+				memcpy(directory[curSelection], &curFile, sizeof(file_handle));
 				while(padsButtonsHeld() & PAD_BUTTON_B) VIDEO_WaitVSync();
 				if(needsRefresh) {
 					// If we return from doing something with a file, refresh the device in the same dir we were at
-					unlockFile(&(*directory)[curSelection]);
+					unlockFile(directory[curSelection]);
 					break;
 				}
 			}
-			else if((*directory)[curSelection].fileAttrib == IS_SPECIAL) {
+			else if(directory[curSelection]->fileAttrib == IS_SPECIAL) {
 				// Toggle autoload
 				if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 				|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
@@ -679,12 +679,12 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 				config_update_global(true);
 				DrawDispose(msgBox);
 			}
-			unlockFile(&(*directory)[curSelection]);
+			unlockFile(directory[curSelection]);
 		}
 		
 		if(padsButtonsHeld() & PAD_BUTTON_B) {
 			curMenuLocation = ON_OPTIONS;
-			DrawUpdateFileBrowserButton((*directory)[curSelection].uiObj, (curMenuLocation == ON_FILLIST) ? B_SELECTED:B_NOSELECT);
+			DrawUpdateFileBrowserButton(directory[curSelection]->uiObj, (curMenuLocation == ON_FILLIST) ? B_SELECTED:B_NOSELECT);
 			break;
 		}
 		if((padsButtonsHeld() & PAD_BUTTON_START) && swissSettings.recentListLevel > 0) {
@@ -727,15 +727,15 @@ void drawFilesFullwidth(file_handle** directory, int num_files, uiDrawObj_t *con
 			DrawAddChild(containerPanel, scrollBar);
 		}
 		for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
-			lockFile(&(*directory)[current_view_start]);
-			populate_meta(&(*directory)[current_view_start]);
+			lockFile(directory[current_view_start]);
+			populate_meta(directory[current_view_start]);
 			uiDrawObj_t *browserButton = DrawFileBrowserButtonMeta(30, fileListBase+(j*40), 
 									getVideoMode()->fbWidth-30, fileListBase+(j*40)+40, 
-									getRelativePath((*directory)[current_view_start].name, curDir.name),
-									&(*directory)[current_view_start],
+									getRelativePath(directory[current_view_start]->name, curDir.name),
+									directory[current_view_start],
 									(current_view_start == curSelection) ? B_SELECTED:B_NOSELECT);
-			(*directory)[current_view_start].uiObj = browserButton;
-			unlockFile(&(*directory)[current_view_start]);
+			directory[current_view_start]->uiObj = browserButton;
+			unlockFile(directory[current_view_start]);
 			DrawAddChild(containerPanel, browserButton);
 		}
 	}
@@ -749,7 +749,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		needsRefresh=1;
 		return filePanel;
 	}
-	if(curSelection == 0 && num_files > 1 && (*directory)[0].fileAttrib==IS_SPECIAL) {
+	if(curSelection == 0 && num_files > 1 && directory[0]->fileAttrib==IS_SPECIAL) {
 		curSelection = 1; // skip the ".." by default
 	}
 	meta_thread_start();
@@ -791,20 +791,20 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		}
 		
 		if(padsButtonsHeld() & PAD_BUTTON_A) {
-			lockFile(&(*directory)[curSelection]);
+			lockFile(directory[curSelection]);
 			//go into a folder or select a file
-			if((*directory)[curSelection].fileAttrib==IS_DIR) {
-				memcpy(&curDir, &(*directory)[curSelection], sizeof(file_handle));
+			if(directory[curSelection]->fileAttrib==IS_DIR) {
+				memcpy(&curDir, directory[curSelection], sizeof(file_handle));
 				needsRefresh=1;
 			}
-			else if((*directory)[curSelection].fileAttrib==IS_SPECIAL) {
+			else if(directory[curSelection]->fileAttrib==IS_SPECIAL) {
 				memcpy(&curFile, &curDir, sizeof(file_handle));
-				curDir.fileBase = (*directory)[curSelection].fileBase;
+				curDir.fileBase = directory[curSelection]->fileBase;
 				needsDeviceChange = upToParent(&curDir);
 				needsRefresh=1;
 			}
-			else if((*directory)[curSelection].fileAttrib==IS_FILE) {
-				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
+			else if(directory[curSelection]->fileAttrib==IS_FILE) {
+				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				if(canLoadFileType(&curFile.name[0])) {
 					meta_thread_stop();
 					load_file();
@@ -813,34 +813,34 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 					meta_thread_stop();
 					needsRefresh = manage_file() ? 1:0;
 				}
-				memcpy(&(*directory)[curSelection], &curFile, sizeof(file_handle));
+				memcpy(directory[curSelection], &curFile, sizeof(file_handle));
 			}
-			unlockFile(&(*directory)[curSelection]);
+			unlockFile(directory[curSelection]);
 			break;
 		}
 		if(padsButtonsHeld() & PAD_BUTTON_X) {
 			memcpy(&curFile, &curDir, sizeof(file_handle));
-			curDir.fileBase = (*directory)[0].fileBase;
+			curDir.fileBase = directory[0]->fileBase;
 			needsDeviceChange = upToParent(&curDir);
 			needsRefresh=1;
 			while(padsButtonsHeld() & PAD_BUTTON_X) VIDEO_WaitVSync();
 			break;
 		}
 		if((padsButtonsHeld() & PAD_TRIGGER_Z) && swissSettings.enableFileManagement) {
-			lockFile(&(*directory)[curSelection]);
-			if((*directory)[curSelection].fileAttrib == IS_FILE || (*directory)[curSelection].fileAttrib == IS_DIR) {
-				memcpy(&curFile, &(*directory)[curSelection], sizeof(file_handle));
+			lockFile(directory[curSelection]);
+			if(directory[curSelection]->fileAttrib == IS_FILE || directory[curSelection]->fileAttrib == IS_DIR) {
+				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				meta_thread_stop();
 				needsRefresh = manage_file() ? 1:0;
-				memcpy(&(*directory)[curSelection], &curFile, sizeof(file_handle));
+				memcpy(directory[curSelection], &curFile, sizeof(file_handle));
 				while(padsButtonsHeld() & PAD_BUTTON_B) VIDEO_WaitVSync();
 				if(needsRefresh) {
 					// If we return from doing something with a file, refresh the device in the same dir we were at
-					unlockFile(&(*directory)[curSelection]);
+					unlockFile(directory[curSelection]);
 					break;
 				}
 			}
-			else if((*directory)[curSelection].fileAttrib == IS_SPECIAL) {
+			else if(directory[curSelection]->fileAttrib == IS_SPECIAL) {
 				// Toggle autoload
 				if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 				|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
@@ -854,7 +854,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 				config_update_global(true);
 				DrawDispose(msgBox);
 			}
-			unlockFile(&(*directory)[curSelection]);
+			unlockFile(directory[curSelection]);
 		}
 		
 		if((padsButtonsHeld() & PAD_BUTTON_START) && swissSettings.recentListLevel > 0) {
@@ -864,7 +864,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		}
 		if(padsButtonsHeld() & PAD_BUTTON_B) {
 			curMenuLocation = ON_OPTIONS;
-			DrawUpdateFileBrowserButton((*directory)[curSelection].uiObj, (curMenuLocation == ON_FILLIST) ? B_SELECTED:B_NOSELECT);
+			DrawUpdateFileBrowserButton(directory[curSelection]->uiObj, (curMenuLocation == ON_FILLIST) ? B_SELECTED:B_NOSELECT);
 			break;
 		}
 		if(padsStickY() <= -16 || padsStickY() >= 16) {
@@ -879,11 +879,12 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 	return filePanel;
 }
 
-bool select_dest_dir(file_handle* directory, file_handle* selection)
+bool select_dest_dir(file_handle* initial, file_handle* selection)
 {
-	file_handle *directories = NULL;
+	file_handle **directory = NULL;
+	file_handle *curDirEntries = NULL;
 	file_handle curDir;
-	memcpy(&curDir, directory, sizeof(file_entry));
+	memcpy(&curDir, initial, sizeof(file_entry));
 	int i = 0, j = 0, max = 0, refresh = 1, num_files =0, idx = 0;
 	
 	bool cancelled = false;
@@ -894,8 +895,10 @@ bool select_dest_dir(file_handle* directory, file_handle* selection)
 	while(1){
 		// Read the directory
 		if(refresh) {
-			num_files = devices[DEVICE_DEST]->readDir(&curDir, &directories, IS_DIR);
-			sortFiles(directories, num_files);
+			free(directory);
+			free(curDirEntries);
+			num_files = devices[DEVICE_DEST]->readDir(&curDir, &curDirEntries, IS_DIR);
+			directory = sortFiles(curDirEntries, num_files);
 			refresh = idx = 0;
 			scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
 		}
@@ -906,7 +909,7 @@ bool select_dest_dir(file_handle* directory, file_handle* selection)
 		if(num_files > FILES_PER_PAGE)
 			DrawAddChild(tempBox, DrawVertScrollBar(getVideoMode()->fbWidth-30, fileListBase, 16, scrollBarHeight, (float)((float)idx/(float)(num_files-1)),scrollBarTabHeight));
 		for(j = 0; i<max; ++i,++j) {
-			DrawAddChild(tempBox, DrawSelectableButton(50,fileListBase+(j*40), getVideoMode()->fbWidth-35, fileListBase+(j*40)+40, getRelativeName((directories)[i].name), (i == idx) ? B_SELECTED:B_NOSELECT));
+			DrawAddChild(tempBox, DrawSelectableButton(50,fileListBase+(j*40), getVideoMode()->fbWidth-35, fileListBase+(j*40)+40, getRelativeName(directory[i]->name), (i == idx) ? B_SELECTED:B_NOSELECT));
 		}
 		if(destDirBox) {
 			DrawDispose(destDirBox);
@@ -919,12 +922,12 @@ bool select_dest_dir(file_handle* directory, file_handle* selection)
 		if((padsButtonsHeld() & PAD_BUTTON_DOWN) || padsStickY() < -16) {idx = (idx + 1) % num_files;	}
 		if((padsButtonsHeld() & PAD_BUTTON_A))	{
 			//go into a folder or select a file
-			if((directories)[idx].fileAttrib==IS_DIR) {
-				memcpy(&curDir, &(directories)[idx], sizeof(file_handle));
+			if(directory[idx]->fileAttrib==IS_DIR) {
+				memcpy(&curDir, directory[idx], sizeof(file_handle));
 				refresh=1;
 			}
-			else if(directories[idx].fileAttrib==IS_SPECIAL){
-				curDir.fileBase = directories[idx].fileBase;
+			else if(directory[idx]->fileAttrib==IS_SPECIAL){
+				curDir.fileBase = directory[idx]->fileBase;
 				upToParent(&curDir);
 				refresh=1;
 			}
@@ -944,7 +947,8 @@ bool select_dest_dir(file_handle* directory, file_handle* selection)
 			{ VIDEO_WaitVSync (); }
 	}
 	DrawDispose(destDirBox);
-	free(directories);
+	free(curDirEntries);
+	free(directory);
 	return cancelled;
 }
 
@@ -2250,7 +2254,7 @@ void load_file()
 			return;
 		}
 		else if(endsWith(fileName,".mp3")) {
-			mp3_player(getCurrentDirEntries(), getCurrentDirEntryCount(), &curFile);
+			mp3_player(getSortedDirEntries(), getSortedDirEntryCount(), &curFile);
 			return;
 		}
 		// This should be unreachable now anyway.
@@ -2713,15 +2717,14 @@ void menu_loop()
 			DrawUpdateMenuButtons((curMenuLocation == ON_OPTIONS) ? curMenuSelection : MENU_NOSELECT);
 		}
 		if(devices[DEVICE_CUR] != NULL && curMenuLocation==ON_FILLIST) {
-			file_handle* curDirFiles = getCurrentDirEntries();
 			if(swissSettings.fileBrowserType == BROWSER_CAROUSEL) {
-				filePanel = renderFileCarousel(&curDirFiles, getCurrentDirEntryCount(), filePanel);
+				filePanel = renderFileCarousel(getSortedDirEntries(), getSortedDirEntryCount(), filePanel);
 			}
 			else if(swissSettings.fileBrowserType == BROWSER_FULLWIDTH) {
-				filePanel = renderFileFullwidth(&curDirFiles, getCurrentDirEntryCount(), filePanel);
+				filePanel = renderFileFullwidth(getSortedDirEntries(), getSortedDirEntryCount(), filePanel);
 			}
 			else {
-				filePanel = renderFileBrowser(&curDirFiles, getCurrentDirEntryCount(), filePanel);
+				filePanel = renderFileBrowser(getSortedDirEntries(), getSortedDirEntryCount(), filePanel);
 			}
 			while(padsButtonsHeld() & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT)) {
 				VIDEO_WaitVSync (); 

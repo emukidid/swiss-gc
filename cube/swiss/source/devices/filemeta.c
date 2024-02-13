@@ -50,15 +50,15 @@ file_meta* meta_alloc() {
 
 	file_meta* meta = __lwp_heap_allocate(meta_cache, sizeof(file_meta));
 	// While there's no room to allocate, call release
-	file_handle* dirEntries = getCurrentDirEntries();
+	file_handle** dirEntries = getSortedDirEntries();
+	int dirEntryCount = getSortedDirEntryCount();
 	while(!meta) {
-		int i = 0;
-		for (i = 0; i < getCurrentDirEntryCount(); i++) {
+		for(int i = 0; i < dirEntryCount; i++) {
 			if(!in_range(i, current_view_start, current_view_end)) {
-				if(dirEntries[i].meta && trylockFile(&dirEntries[i])) {
-					meta_free(dirEntries[i].meta);
-					dirEntries[i].meta = NULL;
-					unlockFile(&dirEntries[i]);
+				if(dirEntries[i]->meta && trylockFile(dirEntries[i])) {
+					meta_free(dirEntries[i]->meta);
+					dirEntries[i]->meta = NULL;
+					unlockFile(dirEntries[i]);
 					break;
 				}
 			}
@@ -400,24 +400,18 @@ static void *meta_thread_func(void *arg) {
 	file_handle *dirEntries = getCurrentDirEntries();
 	int dirEntryCount = getCurrentDirEntryCount();
 	for (int i = 0; i < dirEntryCount; i++) {
-		for (int j = 0; j < dirEntryCount; j++) {
-			if (dirEntries[j].fileBase != i)
-				continue;
-			if (trylockFile(&dirEntries[j])) {
-				populate_meta(&dirEntries[j]);
-				unlockFile(&dirEntries[j]);
-			}
-			break;
+		if (meta_thread != LWP_GetSelf()) break;
+		if (trylockFile(&dirEntries[i])) {
+			populate_meta(&dirEntries[i]);
+			unlockFile(&dirEntries[i]);
 		}
-		if (meta_thread != LWP_GetSelf())
-			break;
 	}
 	return NULL;
 }
 
 void meta_thread_start() {
 	if (devices[DEVICE_CUR]->features & FEAT_THREAD_SAFE)
-		LWP_CreateThread(&meta_thread, meta_thread_func, NULL, NULL, 16*1024, LWP_PRIO_NORMAL);
+		LWP_CreateThread(&meta_thread, meta_thread_func, NULL, NULL, 32*1024, LWP_PRIO_NORMAL);
 }
 
 void meta_thread_stop() {

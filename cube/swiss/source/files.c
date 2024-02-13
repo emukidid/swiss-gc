@@ -8,17 +8,14 @@
 #include "files.h"
 #include "devices/filemeta.h"
 
+static file_handle** sortedDirEntries;
 static file_handle* curDirEntries;  // all the files in the current dir
 static int curDirEntryCount;		// count of files in the current dir
 
 int fileComparator(const void *a1, const void *b1)
 {
-	const file_handle* a = a1;
-	const file_handle* b = b1;
-	
-	if(!a && b) return 1;
-	if(a && !b) return -1;
-	if(!a && !b) return 0;
+	const file_handle* a = *(const file_handle **)a1;
+	const file_handle* b = *(const file_handle **)b1;
 	
 	if((devices[DEVICE_CUR] == &__device_dvd) && ((dvdDiscTypeInt == ISO9660_GAMECUBE_DISC) || (dvdDiscTypeInt == GAMECUBE_DISC) || (dvdDiscTypeInt == MULTIDISC_DISC)))
 	{
@@ -34,14 +31,21 @@ int fileComparator(const void *a1, const void *b1)
 	return strcasecmp(a->name, b->name);
 }
 
-void sortFiles(file_handle* dir, int num_files)
+file_handle** sortFiles(file_handle* dir, int num_files)
 {
-	if(num_files > 0) {
-		qsort(&dir[0],num_files,sizeof(file_handle), fileComparator);
+	file_handle** sortedDir = calloc(num_files, sizeof(file_handle*));
+	if(sortedDir) {
+		for(int i = 0; i < num_files; i++) {
+			sortedDir[i] = &dir[i];
+		}
+		qsort(sortedDir, num_files, sizeof(file_handle*), fileComparator);
 	}
+	return sortedDir;
 }
 
 void freeFiles() {
+	free(sortedDirEntries);
+	sortedDirEntries = NULL;
 	if(curDirEntries) {
 		for(int i = 0; i < curDirEntryCount; i++) {
 			if(curDirEntries[i].meta) {
@@ -78,14 +82,18 @@ void scanFiles() {
 		}
 	}
 	print_gecko("Found %i entries\r\n",curDirEntryCount);
-	sortFiles(curDirEntries, curDirEntryCount);
+	sortedDirEntries = sortFiles(curDirEntries, curDirEntryCount);
 	for(int i = 0; i < curDirEntryCount; i++) {
-		if(!strcmp(curDirEntries[i].name, curFile.name)) {
+		if(!strcmp(sortedDirEntries[i]->name, curFile.name)) {
 			curSelection = i;
 			break;
 		}
 	}
 	memcpy(&curFile, &curDir, sizeof(file_handle));
+}
+
+file_handle** getSortedDirEntries() {
+	return sortedDirEntries;
 }
 
 file_handle* getCurrentDirEntries() {

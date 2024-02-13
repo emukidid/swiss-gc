@@ -11,6 +11,6 @@
 #define PLAYER_NEXT			2
 #define PLAYER_PREV			3
 
-extern void mp3_player(file_handle* allFiles, int numFiles, file_handle* curFile);
+extern void mp3_player(file_handle** allFiles, int numFiles, file_handle* curFile);
 
 #endif

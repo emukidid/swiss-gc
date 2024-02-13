@@ -131,21 +131,22 @@ void load_auto_dol() {
 
 	memcpy(&curDir, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 	scanFiles();
-	file_handle* curDirEntries = getCurrentDirEntries();
-	for (int i = 0; i < getCurrentDirEntryCount(); i++) {
+	file_handle** dirEntries = getSortedDirEntries();
+	int dirEntryCount = getSortedDirEntryCount();
+	for (int i = 0; i < dirEntryCount; i++) {
 		for (int f = 0; f < (sizeof(autoboot_dols) / sizeof(char *)); f++) {
-			if (endsWith(curDirEntries[i].name, autoboot_dols[f])) {
+			if (endsWith(dirEntries[i]->name, autoboot_dols[f])) {
 				// Official Swiss releases have the short commit hash appended to
 				// the end of the DOL, compare it to our own to make sure we don't
 				// bootloop the same version
-				devices[DEVICE_CUR]->seekFile(&curDirEntries[i], -sizeof(rev_buf), DEVICE_HANDLER_SEEK_END);
-				devices[DEVICE_CUR]->readFile(&curDirEntries[i], rev_buf, sizeof(rev_buf));
+				devices[DEVICE_CUR]->seekFile(dirEntries[i], -sizeof(rev_buf), DEVICE_HANDLER_SEEK_END);
+				devices[DEVICE_CUR]->readFile(dirEntries[i], rev_buf, sizeof(rev_buf));
 				if (memcmp(GITREVISION, rev_buf, sizeof(rev_buf)) != 0) {
 					// Emulate some of the menu's behavior to satisfy boot_dol
 					curSelection = i;
-					memcpy(&curFile, &curDirEntries[i], sizeof(file_handle));
+					memcpy(&curFile, dirEntries[i], sizeof(file_handle));
 					boot_dol();
-					memcpy(&curDirEntries[i], &curFile, sizeof(file_handle));
+					memcpy(dirEntries[i], &curFile, sizeof(file_handle));
 				}
 
 				// If we've made it this far, we've already found an autoboot DOL,
@@ -236,19 +237,20 @@ int find_existing_entry(char *entry, bool load) {
 			needsRefresh = 0;
 			
 			// Finally, read the actual file
-			file_handle *curDirEntries = getCurrentDirEntries();
-			for(int i = 0; i < getCurrentDirEntryCount(); i++) {
-				if(!strcmp(entry, curDirEntries[i].name)
-				|| !fnmatch(entry, curDirEntries[i].name, FNM_PATHNAME)) {
+			file_handle **dirEntries = getSortedDirEntries();
+			int dirEntryCount = getSortedDirEntryCount();
+			for(int i = 0; i < dirEntryCount; i++) {
+				if(!strcmp(entry, dirEntries[i]->name)
+				|| !fnmatch(entry, dirEntries[i]->name, FNM_PATHNAME)) {
 					curSelection = i;
-					if(curDirEntries[i].fileAttrib == IS_FILE && load) {
-						populate_meta(&curDirEntries[i]);
-						memcpy(&curFile, &curDirEntries[i], sizeof(file_handle));
+					if(dirEntries[i]->fileAttrib == IS_FILE && load) {
+						populate_meta(dirEntries[i]);
+						memcpy(&curFile, dirEntries[i], sizeof(file_handle));
 						load_file();
-						memcpy(&curDirEntries[i], &curFile, sizeof(file_handle));
+						memcpy(dirEntries[i], &curFile, sizeof(file_handle));
 					}
-					else if(curDirEntries[i].fileAttrib == IS_DIR) {
-						memcpy(&curDir, &curDirEntries[i], sizeof(file_handle));
+					else if(dirEntries[i]->fileAttrib == IS_DIR) {
+						memcpy(&curDir, dirEntries[i], sizeof(file_handle));
 						needsRefresh = 1;
 					}
 					return 0;

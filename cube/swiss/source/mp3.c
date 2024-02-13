@@ -112,7 +112,7 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 }
 
 /* Plays a MP3 file */
-void mp3_player(file_handle* allFiles, int numFiles, file_handle* curFile) {
+void mp3_player(file_handle** allFiles, int numFiles, file_handle* curFile) {
 	// Initialise the audio subsystem
 	MP3Player_Init();
 	MP3Player_Volume(volume);
@@ -121,7 +121,7 @@ void mp3_player(file_handle* allFiles, int numFiles, file_handle* curFile) {
 	int curMP3 = 0, i = 0;
 
 	for(i = 0; i < numFiles; i++) {
-		if(!strcmp(allFiles[i].name,curFile->name)) {
+		if(!strcmp(allFiles[i]->name,curFile->name)) {
 			curMP3 = i;
 			break;
 		}
@@ -134,8 +134,8 @@ void mp3_player(file_handle* allFiles, int numFiles, file_handle* curFile) {
 			i = (rand() % numFiles);
 		}
 		// if it's .mp3
-		if((strlen(allFiles[i].name)>4) && endsWith(allFiles[i].name,".mp3")) {
-			ret = play_mp3(&allFiles[i], numFiles, i);
+		if(endsWith(allFiles[i]->name,".mp3")) {
+			ret = play_mp3(allFiles[i], numFiles, i);
 		}
 		if(ret == PLAYER_STOP) {
 			break;
