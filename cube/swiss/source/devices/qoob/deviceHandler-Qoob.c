@@ -166,7 +166,7 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 	}
 	initial_Qoob_info.freeSpace = initial_Qoob_info.totalSpace - usedSpace;
 	DrawDispose(msgBox);
-	return num_entries;
+	return i;
 }
 
 s64 deviceHandler_Qoob_seekFile(file_handle* file, s64 where, u32 type) {

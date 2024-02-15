@@ -62,16 +62,16 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 			*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
 		}
 		memset(&(*dir)[i], 0, sizeof(file_handle));
-		strcpy((*dir)[i].name, entry->name);
-		(*dir)[i].fileBase   = i;
-		(*dir)[i].size       = entry->size;
-		(*dir)[i].fileAttrib = entry->fileAttrib;
-		usedSpace += (*dir)[i].size;
-		++i;
+		if(strlcpy((*dir)[i].name, entry->name, PATHNAME_MAX) < PATHNAME_MAX) {
+			(*dir)[i].size       = entry->size;
+			(*dir)[i].fileAttrib = entry->fileAttrib;
+			usedSpace += (*dir)[i].size;
+			++i;
+		}
 	}
 	initial_USBGecko_info.totalSpace = usedSpace;
 	DrawDispose(msgBox);
-	return num_entries;
+	return i;
 }
 
 s64 deviceHandler_USBGecko_seekFile(file_handle* file, s64 where, u32 type){

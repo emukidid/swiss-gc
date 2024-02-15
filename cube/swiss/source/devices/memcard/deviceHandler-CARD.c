@@ -130,7 +130,7 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		}
 		memset(&(*dir)[i], 0, sizeof(file_handle));
 		concatf_path((*dir)[i].name, ffile->name, "%.*s", CARD_FILENAMELEN, memcard_dir->filename);
-		(*dir)[i].fileBase   = i;
+		(*dir)[i].fileBase   = memcard_dir->fileno;
 		(*dir)[i].size       = memcard_dir->filelen;
 		(*dir)[i].fileAttrib = IS_FILE;
 		memcpy( (*dir)[i].other, memcard_dir, sizeof(card_dir));
@@ -142,7 +142,7 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	
 	initial_CARD_info[slot].freeSpace = initial_CARD_info[slot].totalSpace - usedSpace;
 
-	return num_entries;
+	return i;
 }
 
 // Finds a file based on file->name and populates file->size if found.

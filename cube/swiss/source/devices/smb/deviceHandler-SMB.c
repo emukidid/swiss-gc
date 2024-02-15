@@ -123,17 +123,17 @@ s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
-			concat_path((*dir)[i].name, ffile->name, entry->d_name);
-			stat((*dir)[i].name, &fstat);
-			(*dir)[i].fileBase   = i;
-			(*dir)[i].size       = fstat.st_size;
-			(*dir)[i].fileAttrib = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
-			++i;
+			if(concat_path((*dir)[i].name, ffile->name, entry->d_name) < PATHNAME_MAX) {
+				stat((*dir)[i].name, &fstat);
+				(*dir)[i].size       = fstat.st_size;
+				(*dir)[i].fileAttrib = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
+				++i;
+			}
 		}
 	} while(entry || errno == EOVERFLOW);
 	
 	closedir(dp);
-	return num_entries;
+	return i;
 }
 
 s64 deviceHandler_SMB_seekFile(file_handle* file, s64 where, u32 type){

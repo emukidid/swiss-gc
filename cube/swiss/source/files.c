@@ -104,7 +104,7 @@ int getCurrentDirEntryCount() {
 	return curDirEntryCount;
 }
 
-void concat_path(char *pathName, const char *dirName, const char *baseName)
+size_t concat_path(char *pathName, const char *dirName, const char *baseName)
 {
 	size_t len;
 
@@ -113,18 +113,24 @@ void concat_path(char *pathName, const char *dirName, const char *baseName)
 	else
 		len = strlcpy(pathName, dirName, PATHNAME_MAX);
 
+	if (len >= PATHNAME_MAX)
+		return len;
+
 	if (len) {
 		if (pathName[len - 1] != '/' && baseName[0] != '/') {
+			if (len + 1 >= PATHNAME_MAX)
+				return len + 1 + strlen(baseName);
+
 			pathName[len++] = '/';
 			pathName[len] = '\0';
 		} else if (pathName[len - 1] == '/' && baseName[0] == '/')
 			baseName++;
 	}
 
-	strlcat(pathName, baseName, PATHNAME_MAX);
+	return strlcat(pathName, baseName, PATHNAME_MAX);
 }
 
-void concatf_path(char *pathName, const char *dirName, const char *baseName, ...)
+size_t concatf_path(char *pathName, const char *dirName, const char *baseName, ...)
 {
 	size_t len;
 
@@ -133,8 +139,19 @@ void concatf_path(char *pathName, const char *dirName, const char *baseName, ...
 	else
 		len = strlcpy(pathName, dirName, PATHNAME_MAX);
 
+	if (len >= PATHNAME_MAX)
+		return len;
+
 	if (len) {
 		if (pathName[len - 1] != '/' && baseName[0] != '/') {
+			if (len + 1 >= PATHNAME_MAX) {
+				va_list args;
+				va_start(args, baseName);
+				len += vsnprintf(NULL, 0, baseName, args);
+				va_end(args);
+				return len + 1;
+			}
+
 			pathName[len++] = '/';
 			pathName[len] = '\0';
 		} else if (pathName[len - 1] == '/' && baseName[0] == '/')
@@ -143,8 +160,9 @@ void concatf_path(char *pathName, const char *dirName, const char *baseName, ...
 
 	va_list args;
 	va_start(args, baseName);
-	vsnprintf(pathName + len, PATHNAME_MAX - len, baseName, args);
+	len += vsnprintf(pathName + len, PATHNAME_MAX - len, baseName, args);
 	va_end(args);
+	return len;
 }
 
 // Either renames a path to a new one, or creates one.

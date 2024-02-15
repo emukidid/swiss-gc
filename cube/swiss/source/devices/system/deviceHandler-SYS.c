@@ -400,19 +400,16 @@ s32 deviceHandler_SYS_init(file_handle* file) {
 }
 
 s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
-	int num_entries = 1, i;
+	int num_entries = NUM_ROMS, i = ROM_VOID;
 	*dir = calloc(num_entries, sizeof(file_handle));
-	concat_path((*dir)[0].name, ffile->name, "..");
-	(*dir)[0].fileAttrib = IS_SPECIAL;
+	concat_path((*dir)[i].name, ffile->name, "..");
+	(*dir)[i].fileAttrib = IS_SPECIAL;
 
 	for(i = ROM_IPL; i < NUM_ROMS; i++) {
-		*dir = reallocarray(*dir, num_entries + 1, sizeof(file_handle));
-		memset(&(*dir)[num_entries], 0, sizeof(file_handle));
-		concat_path((*dir)[num_entries].name, ffile->name, rom_names[i]);
-		(*dir)[num_entries].fileBase   = i;
-		(*dir)[num_entries].size       = rom_sizes[i];
-		(*dir)[num_entries].fileAttrib = IS_FILE;
-		num_entries++;
+		concat_path((*dir)[i].name, ffile->name, rom_names[i]);
+		(*dir)[i].fileBase   = i;
+		(*dir)[i].size       = rom_sizes[i];
+		(*dir)[i].fileAttrib = IS_FILE;
 	}
 
 	return num_entries;

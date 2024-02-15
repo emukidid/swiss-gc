@@ -13,8 +13,8 @@ file_handle** getSortedDirEntries();
 file_handle* getCurrentDirEntries();
 #define getSortedDirEntryCount getCurrentDirEntryCount
 int getCurrentDirEntryCount();
-void concat_path(char *pathName, const char *dirName, const char *baseName);
-void concatf_path(char *pathName, const char *dirName, const char *baseName, ...);
+size_t concat_path(char *pathName, const char *dirName, const char *baseName);
+size_t concatf_path(char *pathName, const char *dirName, const char *baseName, ...);
 void ensure_path(int deviceSlot, char *path, char *oldPath);
 
 #endif 

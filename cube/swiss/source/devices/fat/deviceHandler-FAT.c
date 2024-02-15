@@ -134,17 +134,17 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 				*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
-			concat_path((*dir)[i].name, ffile->name, entry.fname);
-			(*dir)[i].fileBase   = i;
-			(*dir)[i].size       = entry.fsize;
-			(*dir)[i].fileAttrib = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
-			++i;
+			if(concat_path((*dir)[i].name, ffile->name, entry.fname) < PATHNAME_MAX) {
+				(*dir)[i].size       = entry.fsize;
+				(*dir)[i].fileAttrib = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
+				++i;
+			}
 		}
 	}
 	
 	f_closedir(dp);
 	free(dp);
-	return num_entries;
+	return i;
 }
 
 s64 deviceHandler_FAT_seekFile(file_handle* file, s64 where, u32 type){

@@ -71,17 +71,17 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 				*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
-			concat_path((*dir)[i].name, ffile->name, entry.name);
-			(*dir)[i].fileBase   = i;
-			(*dir)[i].size       = entry.size;
-			(*dir)[i].fileAttrib = (entry.type == FSP_RDTYPE_DIR) ? IS_DIR : IS_FILE;
-			usedSpace += (*dir)[i].size;
-			++i;
+			if(concat_path((*dir)[i].name, ffile->name, entry.name) < PATHNAME_MAX) {
+				(*dir)[i].size       = entry.size;
+				(*dir)[i].fileAttrib = (entry.type == FSP_RDTYPE_DIR) ? IS_DIR : IS_FILE;
+				usedSpace += (*dir)[i].size;
+				++i;
+			}
 		}
 	}
 	initial_FSP_info.totalSpace = usedSpace;
 	fsp_closedir(dp);
-	return num_entries;
+	return i;
 }
 
 s64 deviceHandler_FSP_seekFile(file_handle* file, s64 where, u32 type) {
