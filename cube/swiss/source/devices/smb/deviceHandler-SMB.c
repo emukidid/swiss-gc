@@ -106,8 +106,10 @@ s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 	
 	// Read each entry of the directory
-	while( (entry = readdir(dp)) != NULL ){
-		if(!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) {
+	do {
+		errno = 0;
+		entry = readdir(dp);
+		if(!entry || !strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) {
 			continue;
 		}
 		// Do we want this one?
@@ -128,7 +130,7 @@ s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			(*dir)[i].fileAttrib = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
 			++i;
 		}
-	}
+	} while(entry || errno == EOVERFLOW);
 	
 	closedir(dp);
 	return num_entries;
