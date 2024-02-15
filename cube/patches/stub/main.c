@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2021, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -26,7 +26,7 @@
 #include "eltorito.h"
 #include "pff.h"
 
-volatile uint32_t(*EXIRegs)[5] = (volatile uint32_t(*)[5])0x0C006800;
+volatile uint32_t(*EXIRegs)[5] = EXI;
 
 void run(void (*entry)(void));
 
@@ -35,8 +35,6 @@ void dly_us(UINT n)
 	OSTick start = OSGetTick();
 	while (OSDiffTick(OSGetTick(), start) < OSMicrosecondsToTicks(n));
 }
-
-uint32_t dvd_read(void *address, uint32_t length, uint32_t offset);
 
 static bool memeq(const void *a, const void *b, size_t size)
 {
@@ -50,6 +48,8 @@ static bool memeq(const void *a, const void *b, size_t size)
 
 	return true;
 }
+
+uint32_t dvd_read(void *address, uint32_t length, uint32_t offset);
 
 static void dvd_load(uint32_t offset)
 {
@@ -142,6 +142,7 @@ static void pf_load(const char *path)
 void pf_main(void)
 {
 	FATFS fs;
+	EXIRegs = EXI;
 
 	for (int chan = 0; chan < EXI_CHANNEL_MAX; chan++, EXIRegs++) {
 		if (pf_mount(&fs) == FR_OK) {
