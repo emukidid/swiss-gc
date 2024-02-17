@@ -25,6 +25,8 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <time.h>
+#include <psoarchive/PRS.h>
+#include <xxhash.h>
 #include <zlib.h>
 
 #include "swiss.h"
@@ -49,8 +51,6 @@
 #include "devices/deviceHandler.h"
 #include "devices/filelock.h"
 #include "devices/filemeta.h"
-#include "psoarchive/PRS.h"
-#include "xxhash/xxhash.h"
 #include "dolparameters.h"
 #include "reservedarea.h"
 

@@ -6,6 +6,8 @@
 #include <string.h>
 #include <math.h>
 #include <malloc.h>
+#include <psoarchive/PRS.h>
+#include <xxhash.h>
 #include "dvd.h"
 #include "elf.h"
 #include "gcm.h"
@@ -19,8 +21,6 @@
 #include "devices/deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
-#include "psoarchive/PRS.h"
-#include "xxhash/xxhash.h"
 
 #define FST_ENTRY_SIZE 12
 
