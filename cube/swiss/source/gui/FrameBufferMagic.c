@@ -36,6 +36,7 @@ TPLFile buttonsTPL;
 TPLFile backdropTPL;
 GXTexObj backdropTexObj;
 GXTlutObj backdropTlutObj;
+GXTexObj backdropIndTexObj;
 GXTexObj gcdvdsmallTexObj;
 GXTexObj sdsmallTexObj;
 GXTlutObj sdsmallTlutObj;
@@ -319,7 +320,11 @@ static void init_textures()
 	TPL_OpenTPLFromMemory(&imagesTPL, (void *)images_tpl, images_tpl_size);
 	TPL_OpenTPLFromMemory(&buttonsTPL, (void *)buttons_tpl, buttons_tpl_size);
 	TPL_GetTextureCI(&imagesTPL, backdrop, &backdropTexObj, &backdropTlutObj, GX_TLUT0);
+	GX_InitTexObjFilterMode(&backdropTexObj, GX_LINEAR, GX_NEAR);
 	GX_InitTexObjUserData(&backdropTexObj, &backdropTlutObj);
+	TPL_GetTexture(&imagesTPL, backdropind, &backdropIndTexObj);
+	GX_InitTexObjFilterMode(&backdropIndTexObj, GX_NEAR, GX_NEAR);
+	GX_InitTexObjUserData(&backdropIndTexObj, &backdropTexObj);
 	TPL_GetTexture(&imagesTPL, gcdvdsmall, &gcdvdsmallTexObj);
 	TPL_GetTextureCI(&imagesTPL, sdsmall, &sdsmallTexObj, &sdsmallTlutObj, GX_TLUT0);
 	GX_InitTexObjUserData(&sdsmallTexObj, &sdsmallTlutObj);
@@ -398,17 +403,20 @@ static void drawInit()
 	GX_SetNumTexGens (1);
 	GX_SetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
 
+	GX_SetNumIndStages (0);
 	GX_SetNumTevStages (2);
 	GX_SetTevOrder (GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
 	GX_SetTevColorIn (GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO);
 	GX_SetTevColorOp (GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
 	GX_SetTevAlphaIn (GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_TEXA, GX_CA_RASA, GX_CA_ZERO);
 	GX_SetTevAlphaOp (GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+	GX_SetTevDirect (GX_TEVSTAGE0);
 	GX_SetTevOrder (GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
 	GX_SetTevColorIn (GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_RASA, GX_CC_ZERO);
 	GX_SetTevColorOp (GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
 	GX_SetTevAlphaIn (GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
 	GX_SetTevAlphaOp (GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+	GX_SetTevDirect (GX_TEVSTAGE1);
 
 	//set blend mode
 	GX_SetBlendMode(GX_BM_BLEND, GX_BL_ONE, GX_BL_INVSRCALPHA, GX_LO_CLEAR); //Fix src alpha
@@ -485,6 +493,18 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 				default:
 					texObj = &backdropTexObj;
 					break;
+			}
+			if(GX_GetTexObjUserData(&backdropIndTexObj) == texObj) {
+				GX_LoadTexObj(&backdropIndTexObj, GX_TEXMAP1);
+				
+				GX_SetNumIndStages(1);
+				GX_SetIndTexOrder(GX_INDTEXSTAGE0, GX_TEXCOORD0, GX_TEXMAP1);
+				GX_SetIndTexCoordScale(GX_INDTEXSTAGE0, GX_ITS_16, GX_ITS_16);
+				
+				GX_SetTevIndTile(GX_TEVSTAGE0, GX_INDTEXSTAGE0, 16, 16, 16, 16, GX_ITF_8, GX_ITM_0, GX_ITB_NONE, GX_ITBA_OFF);
+				GX_SetTevIndRepeat(GX_TEVSTAGE1);
+				
+				s1*=2; s2*=2; t1*=2; t2*=2;
 			}
 			break;
 		case TEX_GCDVDSMALL:
@@ -2195,6 +2215,7 @@ void DrawLoadBackdrop() {
 					TPL_GetTexture(&backdropTPL, id, &backdropTexObj);
 					break;
 			}
+			GX_InitTexObjUserData(&backdropIndTexObj, NULL);
 		}
 		else {
 			TPL_CloseTPLFile(&backdropTPL);
