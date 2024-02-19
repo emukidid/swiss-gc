@@ -355,9 +355,11 @@ static void init_textures()
 	TPL_GetTexture(&imagesTPL, palimg, &palTexObj);
 	TPL_GetTexture(&buttonsTPL, checked_32, &checkedTexObj);
 	TPL_GetTexture(&buttonsTPL, unchecked_32, &uncheckedTexObj);
+	GX_InitTexObjWrapMode(&uncheckedTexObj, GX_MIRROR, GX_MIRROR);
 	TPL_GetTexture(&buttonsTPL, loading_16, &loadingTexObj);
 	GX_InitTexObjWrapMode(&loadingTexObj, GX_MIRROR, GX_MIRROR);
 	TPL_GetTexture(&buttonsTPL, star_16, &starTexObj);
+	GX_InitTexObjWrapMode(&starTexObj, GX_MIRROR, GX_REPEAT);
 	TPL_GetTexture(&imagesTPL, mp3img, &mp3imgTexObj);
 	TPL_GetTexture(&imagesTPL, dolimg, &dolimgTexObj);
 	TPL_GetTexture(&imagesTPL, dolcliimg, &dolcliimgTexObj);
@@ -563,9 +565,11 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			break;
 		case TEX_UNCHECKED:
 			texObj = &uncheckedTexObj; color = (GXColor) {87,87,87,255};
+			s1*=2; s2*=2; t1*=2; t2*=2;
 			break;
 		case TEX_STAR:
 			texObj = &starTexObj; color = (GXColor) {255,255,0,255};
+			s1*=2; s2*=2;
 			break;
 		case TEX_GCLOADER:
 			texObj = &gcloaderTexObj; color = (GXColor) {216,216,216,255};
