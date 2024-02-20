@@ -178,7 +178,7 @@ void drawFontInit(void)
 	guOrtho(GXprojection2D, 0, 480, 0, 640, 0, 1);
 	GX_LoadProjectionMtx(GXprojection2D, GX_ORTHOGRAPHIC);
 
-	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_TRUE);
+	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_FALSE);
 
 	GX_ClearVtxDesc();
 	GX_SetVtxDesc(GX_VA_PTNMTXIDX, GX_PNMTX0);
@@ -187,14 +187,15 @@ void drawFontInit(void)
 	GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);
 	GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
 	//set vertex attribute formats here
-	GX_SetVtxAttrFmt(GX_VTXFMT1, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
+	GX_SetVtxAttrFmt(GX_VTXFMT1, GX_VA_POS, GX_POS_XY, GX_S16, 0);
 	GX_SetVtxAttrFmt(GX_VTXFMT1, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-	GX_SetVtxAttrFmt(GX_VTXFMT1, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+	GX_SetVtxAttrFmt(GX_VTXFMT1, GX_VA_TEX0, GX_TEX_ST, GX_S16, 0);
 
 	//enable textures
 	GX_SetNumChans (1);
 	GX_SetNumTexGens (1);
 	GX_SetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
+	GX_SetTexCoordScaleManually(GX_TEXCOORD0, GX_ENABLE, 1, 1);
 
 	GX_InvalidateTexAll();
 	GX_InitTexObj(&fontTexObj, &fontFont[0], 512, 512, GX_TF_I4, GX_CLAMP, GX_CLAMP, GX_FALSE);
@@ -253,13 +254,13 @@ void drawString(int x, int y, char *string, float scale, bool centered, GXColor 
 		for (i=0; i<4; i++) {
 			int s = (i & 1) ^ ((i & 2) >> 1) ? fontChars.font_size[c] : 1;
 			int t = (i & 2) ? fontChars.fheight : 1;
-			float s0 = ((float) (fontChars.s[c] + s))/512;
-			float t0 = ((float) (fontChars.t[c] + t))/512;
+			int s0 = fontChars.s[c] + s;
+			int t0 = fontChars.t[c] + t;
 			s = (int) s * scale;
 			t = (int) t * scale;
-			GX_Position3s16(x + s, y + t, 0);
+			GX_Position2s16(x + s, y + t);
 			GX_Color4u8(fontColor.r, fontColor.g, fontColor.b, fontColor.a);
-			GX_TexCoord2f32(s0, t0);
+			GX_TexCoord2s16(s0, t0);
 		}
 		GX_End();
 
@@ -302,16 +303,16 @@ void drawStringWithCaret(int x, int y, char *string, float scale, bool centered,
 		for (i=0; i<4; i++) {
 			int s = (i & 1) ^ ((i & 2) >> 1) ? fontChars.font_size[c] : 1;
 			int t = (i & 2) ? fontChars.fheight : 1;
-			float s0 = ((float) (fontChars.s[c] + s))/512;
-			float t0 = ((float) (fontChars.t[c] + t))/512;
+			int s0 = fontChars.s[c] + s;
+			int t0 = fontChars.t[c] + t;
 			s = (int) s * scale;
 			t = (int) t * scale;
-			GX_Position3s16(x + s, y + t, 0);
+			GX_Position2s16(x + s, y + t);
 			if(pos == caretPosition)
 				GX_Color4u8(caretColor.r, caretColor.g, caretColor.b, caretColor.a);
 			else
 				GX_Color4u8(fontColor.r, fontColor.g, fontColor.b, fontColor.a);
-			GX_TexCoord2f32(s0, t0);
+			GX_TexCoord2s16(s0, t0);
 		}
 		GX_End();
 
@@ -385,17 +386,17 @@ void drawStringEllipsis(int x, int y, char *string, float scale, bool centered, 
 		for (i=0; i<4; i++) {
 			int s = (i & 1) ^ ((i & 2) >> 1) ? fontChars.font_size[c] : 1;
 			int t = (i & 2) ? fontChars.fheight : 1;
-			float s0 = ((float) (fontChars.s[c] + s))/512;
-			float t0 = ((float) (fontChars.t[c] + t))/512;
+			int s0 = fontChars.s[c] + s;
+			int t0 = fontChars.t[c] + t;
 			s = (int) s * scale;
 			t = (int) t * scale;
 			if(rotateVertical) {
-				GX_Position3s16(x + t, y - s, 0);
+				GX_Position2s16(x + t, y - s);
 			} else {
-				GX_Position3s16(x + s, y + t, 0);
+				GX_Position2s16(x + s, y + t);
 			}
 			GX_Color4u8(fontColor.r, fontColor.g, fontColor.b, fontColor.a);
-			GX_TexCoord2f32(s0, t0);
+			GX_TexCoord2s16(s0, t0);
 		}
 		GX_End();
 

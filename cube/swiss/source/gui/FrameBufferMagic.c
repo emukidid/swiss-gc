@@ -44,11 +44,13 @@ GXTexObj hddTexObj;
 GXTlutObj hddTlutObj;
 GXTexObj qoobTexObj;
 GXTlutObj qoobTlutObj;
+GXTexObj qoobIndTexObj;
 GXTexObj wodeimgTexObj;
 GXTexObj usbgeckoTexObj;
 GXTlutObj usbgeckoTlutObj;
 GXTexObj memcardTexObj;
 GXTlutObj memcardTlutObj;
+GXTexObj memcardIndTexObj;
 GXTexObj sambaTexObj;
 GXTexObj wiikeyTexObj;
 GXTexObj systemTexObj;
@@ -322,7 +324,7 @@ static void init_textures()
 	TPL_GetTextureCI(&imagesTPL, backdrop, &backdropTexObj, &backdropTlutObj, GX_TLUT0);
 	GX_InitTexObjFilterMode(&backdropTexObj, GX_LINEAR, GX_NEAR);
 	GX_InitTexObjUserData(&backdropTexObj, &backdropTlutObj);
-	TPL_GetTexture(&imagesTPL, backdropind, &backdropIndTexObj);
+	TPL_GetTexture(&imagesTPL, backdrop_ind, &backdropIndTexObj);
 	GX_InitTexObjFilterMode(&backdropIndTexObj, GX_NEAR, GX_NEAR);
 	GX_InitTexObjUserData(&backdropIndTexObj, &backdropTexObj);
 	TPL_GetTexture(&imagesTPL, gcdvdsmall, &gcdvdsmallTexObj);
@@ -331,12 +333,18 @@ static void init_textures()
 	TPL_GetTextureCI(&imagesTPL, hdd, &hddTexObj, &hddTlutObj, GX_TLUT0);
 	GX_InitTexObjUserData(&hddTexObj, &hddTlutObj);
 	TPL_GetTextureCI(&imagesTPL, qoob, &qoobTexObj, &qoobTlutObj, GX_TLUT0);
+	GX_InitTexObjFilterMode(&qoobTexObj, GX_LINEAR, GX_NEAR);
 	GX_InitTexObjUserData(&qoobTexObj, &qoobTlutObj);
+	TPL_GetTexture(&imagesTPL, qoob_ind, &qoobIndTexObj);
+	GX_InitTexObjFilterMode(&qoobIndTexObj, GX_NEAR, GX_NEAR);
 	TPL_GetTexture(&imagesTPL, wodeimg, &wodeimgTexObj);
 	TPL_GetTexture(&imagesTPL, wiikeyimg, &wiikeyTexObj);
 	TPL_GetTexture(&imagesTPL, systemimg, &systemTexObj);
 	TPL_GetTextureCI(&imagesTPL, memcardimg, &memcardTexObj, &memcardTlutObj, GX_TLUT0);
+	GX_InitTexObjFilterMode(&memcardTexObj, GX_LINEAR, GX_NEAR);
 	GX_InitTexObjUserData(&memcardTexObj, &memcardTlutObj);
+	TPL_GetTexture(&imagesTPL, memcardimg_ind, &memcardIndTexObj);
+	GX_InitTexObjFilterMode(&memcardIndTexObj, GX_NEAR, GX_NEAR);
 	TPL_GetTextureCI(&imagesTPL, usbgeckoimg, &usbgeckoTexObj, &usbgeckoTlutObj, GX_TLUT0);
 	GX_InitTexObjUserData(&usbgeckoTexObj, &usbgeckoTlutObj);
 	TPL_GetTexture(&imagesTPL, sambaimg, &sambaTexObj);
@@ -386,7 +394,7 @@ static void drawInit()
 	guOrtho(GXprojection2D, 0, 480, 0, 640, 0, 1);
 	GX_LoadProjectionMtx(GXprojection2D, GX_ORTHOGRAPHIC);
 
-	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_TRUE);
+	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_FALSE);
 
 	GX_ClearVtxDesc();
 	GX_SetVtxDesc(GX_VA_PTNMTXIDX, GX_PNMTX0);
@@ -396,7 +404,6 @@ static void drawInit()
 	GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
 	//set vertex attribute formats here
 	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_F32, 0);
 	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
 	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
 
@@ -404,6 +411,7 @@ static void drawInit()
 	GX_SetNumChans (1);
 	GX_SetNumTexGens (1);
 	GX_SetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
+	GX_SetTexCoordScaleManually(GX_TEXCOORD0, GX_DISABLE, 0, 0);
 
 	GX_SetNumIndStages (0);
 	GX_SetNumTevStages (2);
@@ -471,7 +479,9 @@ static void _DrawSimpleBox(int x, int y, int width, int height, int depth, GXCol
 
 // Internal
 static void _DrawImageNow(int textureId, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered) {
+	u16 ss = 0, ts = 0;
 	GXTexObj *texObj = NULL;
+	GXTexObj *indTexObj = NULL;
 	GXColor color = (GXColor) {255,255,255,255};
 	
 	switch(textureId)
@@ -487,26 +497,18 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 					}
 				case GX_TF_IA4:
 				case GX_TF_IA8:
-					texObj = &backdropTexObj; color = (GXColor) {0,0,255,255};
-					
 					GX_SetTevColorIn(GX_TEVSTAGE0, GX_CC_TEXA, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO);
 					GX_SetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
+					
+					texObj = &backdropTexObj; color = (GXColor) {0,0,255,255};
 					break;
 				default:
 					texObj = &backdropTexObj;
 					break;
 			}
 			if(GX_GetTexObjUserData(&backdropIndTexObj) == texObj) {
-				GX_LoadTexObj(&backdropIndTexObj, GX_TEXMAP1);
-				
-				GX_SetNumIndStages(1);
-				GX_SetIndTexOrder(GX_INDTEXSTAGE0, GX_TEXCOORD0, GX_TEXMAP1);
-				GX_SetIndTexCoordScale(GX_INDTEXSTAGE0, GX_ITS_16, GX_ITS_16);
-				
-				GX_SetTevIndTile(GX_TEVSTAGE0, GX_INDTEXSTAGE0, 16, 16, 16, 16, GX_ITF_8, GX_ITM_0, GX_ITB_NONE, GX_ITBA_OFF);
-				GX_SetTevIndRepeat(GX_TEVSTAGE1);
-				
-				s1*=2; s2*=2; t1*=2; t2*=2;
+				indTexObj = &backdropIndTexObj;
+				ss = 640; ts = 480;
 			}
 			break;
 		case TEX_GCDVDSMALL:
@@ -520,6 +522,8 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			break;
 		case TEX_QOOB:
 			texObj = &qoobTexObj;
+			indTexObj = &qoobIndTexObj;
+			ss = 96; ts = 102;
 			break;
 		case TEX_WODEIMG:
 			texObj = &wodeimgTexObj; color = (GXColor) {216,216,216,255};
@@ -535,15 +539,17 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			break;
 		case TEX_MEMCARD:
 			texObj = &memcardTexObj;
+			indTexObj = &memcardIndTexObj;
+			ss = 80; ts = 92;
 			break;
 		case TEX_SAMBA:
 			texObj = &sambaTexObj;
 			break;
 		case TEX_BTNHILIGHT:
-			texObj = &btnhilightTexObj; color = (GXColor) {127,134,255,255};
-			
 			GX_SetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO);
 			GX_SetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
+			
+			texObj = &btnhilightTexObj; color = (GXColor) {127,134,255,255};
 			break;
 		case TEX_BTNDEVICE:
 			texObj = &btndeviceTexObj;
@@ -565,11 +571,11 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			break;
 		case TEX_UNCHECKED:
 			texObj = &uncheckedTexObj; color = (GXColor) {87,87,87,255};
-			s1*=2; s2*=2; t1*=2; t2*=2;
+			ss = 32; ts = 32;
 			break;
 		case TEX_STAR:
 			texObj = &starTexObj; color = (GXColor) {255,255,0,255};
-			s1*=2; s2*=2;
+			ss = 16;
 			break;
 		case TEX_GCLOADER:
 			texObj = &gcloaderTexObj; color = (GXColor) {216,216,216,255};
@@ -579,10 +585,33 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			break;
 	}
 	
+	if(!ss) ss = GX_GetTexObjWidth(texObj);
+	if(!ts) ts = GX_GetTexObjHeight(texObj);
+	GX_SetTexCoordScaleManually(GX_TEXCOORD0, GX_ENABLE, ss, ts);
+	
 	GX_InvalidateTexAll();
 	GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
 	if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
 	GX_LoadTexObj(texObj, GX_TEXMAP0);
+	
+	if(indTexObj) {
+		GX_LoadTexObj(indTexObj, GX_TEXMAP1);
+		
+		GX_SetNumIndStages(1);
+		GX_SetIndTexOrder(GX_INDTEXSTAGE0, GX_TEXCOORD0, GX_TEXMAP1);
+		GX_SetIndTexCoordScale(GX_INDTEXSTAGE0, GX_ITS_16, GX_ITS_16);
+		
+		switch(GX_GetTexObjFmt(indTexObj)) {
+			case GX_TF_I8:
+				GX_SetTevIndTile(GX_TEVSTAGE0, GX_INDTEXSTAGE0, 16, 16, 16, 0, GX_ITF_8, GX_ITM_0, GX_ITB_NONE, GX_ITBA_OFF);
+				GX_SetTevIndRepeat(GX_TEVSTAGE1);
+				break;
+			case GX_TF_IA8:
+				GX_SetTevIndTile(GX_TEVSTAGE0, GX_INDTEXSTAGE0, 16, 16, 16, 16, GX_ITF_8, GX_ITM_0, GX_ITB_NONE, GX_ITBA_OFF);
+				GX_SetTevIndRepeat(GX_TEVSTAGE1);
+				break;
+		}
+	}
 	
 	_drawRect(x, y, width, height, depth, color, s1, s2, t1, t2);
 }
