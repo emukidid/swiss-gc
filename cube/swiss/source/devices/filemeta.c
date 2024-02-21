@@ -49,10 +49,18 @@ file_meta* meta_alloc() {
 	}
 
 	file_meta* meta = __lwp_heap_allocate(meta_cache, sizeof(file_meta));
+	// When there's no room to allocate, kill thread
+	if(!meta) {
+		lwp_t thread = meta_thread;
+		meta_thread = LWP_THREAD_NULL;
+		if(thread == LWP_GetSelf()) {
+			return NULL;
+		}
+	}
 	// While there's no room to allocate, call release
-	file_handle** dirEntries = getSortedDirEntries();
-	int dirEntryCount = getSortedDirEntryCount();
 	while(!meta) {
+		file_handle** dirEntries = getSortedDirEntries();
+		int dirEntryCount = getSortedDirEntryCount();
 		for(int i = 0; i < dirEntryCount; i++) {
 			if(!in_range(i, current_view_start, current_view_end)) {
 				if(dirEntries[i]->meta && trylockFile(dirEntries[i])) {
@@ -200,8 +208,7 @@ void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 
 void populate_meta(file_handle *f) {
 	// If the meta hasn't been created, lets read it.
-	if(!f->meta) {
-		f->meta = meta_alloc();
+	if(!f->meta && (f->meta = meta_alloc())) {
 		// File detection (GCM, DOL, MP3 etc)
 		if(f->fileAttrib==IS_FILE) {
 			if(devices[DEVICE_CUR] == &__device_wode && f->status == STATUS_NOT_MAPPED) {
