@@ -1610,15 +1610,15 @@ void DrawArgsSelector(const char *fileName) {
 		sprintf(txtbuffer, "%s Parameters:", fileName);
 		DrawAddChild(newPanel, DrawStyledLabel(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), false, defaultColor));
 
-		int j = 0;
+		int i = 0, j = 0;
 		int current_view_start = MIN(MAX(0,param_selection-params_per_page/2),MAX(0,params->num_params-params_per_page));
 		int current_view_end = MIN(params->num_params, MAX(param_selection+params_per_page/2,params_per_page));
 	
 		int scrollBarHeight = 90+(params_per_page*20);
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)params->num_params);
 		DrawAddChild(newPanel, DrawVertScrollBar(getVideoMode()->fbWidth-45, 120, 25, scrollBarHeight, (float)((float)param_selection/(float)(params->num_params-1)),scrollBarTabHeight));
-		for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
-			DrawAddChild(newPanel, drawParameterForArgsSelector(&params->parameters[current_view_start], 25, 120+j*35, current_view_start==param_selection));
+		for(i = current_view_start,j = 0; i<current_view_end; ++i,++j) {
+			DrawAddChild(newPanel, drawParameterForArgsSelector(&params->parameters[i], 25, 120+j*35, i==param_selection));
 		}
 		// Write about the default if there is any
 		DrawAddChild(newPanel, DrawTransparentBox( 35, 350, getVideoMode()->fbWidth-35, 400));
@@ -1690,15 +1690,15 @@ void DrawCheatsSelector(const char *fileName) {
 		sprintf(txtbuffer, "%s Cheats:", fileName);
 		DrawAddChild(newPanel, DrawStyledLabel(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), false, defaultColor));
 
-		int j = 0;
+		int i = 0, j = 0;
 		int current_view_start = MIN(MAX(0,cheat_selection-cheats_per_page/2),MAX(0,cheats->num_cheats-cheats_per_page));
 		int current_view_end = MIN(cheats->num_cheats, MAX(cheat_selection+cheats_per_page/2,cheats_per_page));
 	
 		int scrollBarHeight = 90+(cheats_per_page*20);
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)cheats->num_cheats);
 		DrawAddChild(newPanel, DrawVertScrollBar(getVideoMode()->fbWidth-45, 120, 25, scrollBarHeight, (float)((float)cheat_selection/(float)(cheats->num_cheats-1)),scrollBarTabHeight));
-		for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
-			DrawAddChild(newPanel, drawCheatForCheatsSelector(&cheats->cheat[current_view_start], 25, 120+j*35, current_view_start==cheat_selection));
+		for(i = current_view_start,j = 0; i<current_view_end; ++i,++j) {
+			DrawAddChild(newPanel, drawCheatForCheatsSelector(&cheats->cheat[i], 25, 120+j*35, i==cheat_selection));
 		}
 		// Write about how many cheats are enabled
 		DrawAddChild(newPanel, DrawTransparentBox( 35, 350, getVideoMode()->fbWidth-35, 410));

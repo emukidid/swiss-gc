@@ -286,7 +286,7 @@ void select_recent_entry() {
 
 // Draws all the files in the current dir.
 void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPanel) {
-	int j = 0;
+	int i = 0, j = 0;
 	current_view_start = MIN(MAX(0,curSelection-FILES_PER_PAGE/2),MAX(0,num_files-FILES_PER_PAGE));
 	current_view_end = MIN(num_files, MAX(curSelection+(FILES_PER_PAGE+1)/2,FILES_PER_PAGE));
 	drawCurrentDevice(containerPanel);
@@ -306,16 +306,16 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 			uiDrawObj_t *scrollBar = DrawVertScrollBar(getVideoMode()->fbWidth-25, fileListBase, 16, scrollBarHeight, (float)((float)curSelection/(float)(num_files-1)),scrollBarTabHeight);
 			DrawAddChild(containerPanel, scrollBar);
 		}
-		for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
-			lockFile(directory[current_view_start]);
-			populate_meta(directory[current_view_start]);
-			uiDrawObj_t *browserButton = DrawFileBrowserButton(150, fileListBase+(j*40), 
-									getVideoMode()->fbWidth-30, fileListBase+(j*40)+40, 
-									getRelativePath(directory[current_view_start]->name, curDir.name),
-									directory[current_view_start],
-									(current_view_start == curSelection) ? B_SELECTED:B_NOSELECT);
-			directory[current_view_start]->uiObj = browserButton;
-			unlockFile(directory[current_view_start]);
+		for(i = current_view_start,j = 0; i<current_view_end; ++i,++j) {
+			lockFile(directory[i]);
+			populate_meta(directory[i]);
+			uiDrawObj_t *browserButton = DrawFileBrowserButton(150, fileListBase+(j*40),
+									getVideoMode()->fbWidth-30, fileListBase+(j*40)+40,
+									getRelativePath(directory[i]->name, curDir.name),
+									directory[i],
+									(i == curSelection) ? B_SELECTED:B_NOSELECT);
+			directory[i]->uiObj = browserButton;
+			unlockFile(directory[i]);
 			DrawAddChild(containerPanel, browserButton);
 		}
 	}
@@ -494,9 +494,9 @@ void drawCurrentDeviceCarousel(uiDrawObj_t *containerPanel) {
 
 // Draws all the files in the current dir.
 void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *containerPanel) {
-	int j = 0;
-	current_view_start = MIN(MAX(0,curSelection-FILES_PER_PAGE_CAROUSEL/2),MAX(0,num_files-FILES_PER_PAGE_CAROUSEL));
-	current_view_end = MIN(num_files, MAX(curSelection+(FILES_PER_PAGE_CAROUSEL+1)/2,FILES_PER_PAGE_CAROUSEL));
+	int i = 0;
+	current_view_start = MAX(0,curSelection-FILES_PER_PAGE_CAROUSEL/2);
+	current_view_end = MIN(num_files,curSelection+(FILES_PER_PAGE_CAROUSEL+1)/2);
 	drawCurrentDeviceCarousel(containerPanel);
 	if(num_files > 0) {
 		// Draw which directory we're in
@@ -507,8 +507,8 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 		|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
 			DrawAddChild(containerPanel, DrawImage(TEX_STAR, ((getVideoMode()->fbWidth-30)-16), 80, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 		}
-		int left_num = curSelection - current_view_start; // Number of entries to the left
-		int right_num = (current_view_end - curSelection)-1;
+		//int left_num = curSelection - current_view_start; // Number of entries to the left
+		//int right_num = (current_view_end - curSelection)-1;
 		//print_gecko("%i entries to the left, %i to the right in this view\r\n", left_num, right_num);
 		//print_gecko("%i cur sel, %i start, %i end\r\n", curSelection, current_view_start, current_view_end);
 		
@@ -524,43 +524,40 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 		uiDrawObj_t *browserObject = NULL;
 		// TODO scale and position based on how far from the middle these are (banner and text too)
 		// Left spineart entries
-		for(j = 0; j < left_num; j++) {
-			lockFile(directory[current_view_start]);
-			populate_meta(directory[current_view_start]);
-			browserObject = DrawFileCarouselEntry(left_x_base - ((sub_entry_width*(left_num-j-1))+sub_entry_width), y_base + 10, 
-									left_x_base - ((sub_entry_width*(left_num-j-1))), y_base + 10 + sub_entry_height, 
-									getRelativePath(directory[current_view_start]->name, curDir.name),
-									directory[current_view_start], j - left_num);
-			directory[current_view_start]->uiObj = browserObject;
-			unlockFile(directory[current_view_start]);
+		for(i = current_view_start; i < curSelection; i++) {
+			lockFile(directory[i]);
+			populate_meta(directory[i]);
+			browserObject = DrawFileCarouselEntry(left_x_base + ((sub_entry_width*(i-curSelection))), y_base + 10,
+									left_x_base + ((sub_entry_width*(i-curSelection))+sub_entry_width), y_base + 10 + sub_entry_height,
+									getRelativePath(directory[i]->name, curDir.name),
+									directory[i], i - curSelection);
+			directory[i]->uiObj = browserObject;
+			unlockFile(directory[i]);
 			DrawAddChild(containerPanel, browserObject);
-			current_view_start++;
 		}
 		
 		// Main entry
-		lockFile(directory[current_view_start]);
-		populate_meta(directory[current_view_start]);
-		browserObject = DrawFileCarouselEntry(((getVideoMode()->fbWidth / 2) - (main_entry_width / 2)), y_base, 
-								((getVideoMode()->fbWidth / 2) + (main_entry_width / 2)), y_base + main_entry_height, 
-								getRelativePath(directory[current_view_start]->name, curDir.name),
-								directory[current_view_start], 0);
-		directory[current_view_start]->uiObj = browserObject;
-		unlockFile(directory[current_view_start]);
+		lockFile(directory[curSelection]);
+		populate_meta(directory[curSelection]);
+		browserObject = DrawFileCarouselEntry(((getVideoMode()->fbWidth / 2) - (main_entry_width / 2)), y_base,
+								((getVideoMode()->fbWidth / 2) + (main_entry_width / 2)), y_base + main_entry_height,
+								getRelativePath(directory[curSelection]->name, curDir.name),
+								directory[curSelection], 0);
+		directory[curSelection]->uiObj = browserObject;
+		unlockFile(directory[curSelection]);
 		DrawAddChild(containerPanel, browserObject);
-		current_view_start++;
 		
 		// Right spineart entries
-		for(j = 0; j < right_num; j++) {
-			lockFile(directory[current_view_start]);
-			populate_meta(directory[current_view_start]);
-			browserObject = DrawFileCarouselEntry(right_x_base + ((sub_entry_width*j)), y_base + 10, 
-									right_x_base + ((sub_entry_width*j)+sub_entry_width), y_base + 10 + sub_entry_height,
-									getRelativePath(directory[current_view_start]->name, curDir.name),
-									directory[current_view_start], j+1);
-			directory[current_view_start]->uiObj = browserObject;
-			unlockFile(directory[current_view_start]);
+		for(i = curSelection+1; i < current_view_end; i++) {
+			lockFile(directory[i]);
+			populate_meta(directory[i]);
+			browserObject = DrawFileCarouselEntry(right_x_base + ((sub_entry_width*(i-curSelection-1))), y_base + 10,
+									right_x_base + ((sub_entry_width*(i-curSelection-1))+sub_entry_width), y_base + 10 + sub_entry_height,
+									getRelativePath(directory[i]->name, curDir.name),
+									directory[i], i - curSelection);
+			directory[i]->uiObj = browserObject;
+			unlockFile(directory[i]);
 			DrawAddChild(containerPanel, browserObject);
-			current_view_start++;
 		}
 	}
 }
@@ -706,7 +703,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 
 // Draws all the files in the current dir.
 void drawFilesFullwidth(file_handle** directory, int num_files, uiDrawObj_t *containerPanel) {
-	int j = 0;
+	int i = 0, j = 0;
 	current_view_start = MIN(MAX(0,curSelection-FILES_PER_PAGE_FULLWIDTH/2),MAX(0,num_files-FILES_PER_PAGE_FULLWIDTH));
 	current_view_end = MIN(num_files, MAX(curSelection+(FILES_PER_PAGE_FULLWIDTH+1)/2,FILES_PER_PAGE_FULLWIDTH));
 	drawCurrentDeviceCarousel(containerPanel);
@@ -726,16 +723,16 @@ void drawFilesFullwidth(file_handle** directory, int num_files, uiDrawObj_t *con
 			uiDrawObj_t *scrollBar = DrawVertScrollBar(getVideoMode()->fbWidth-25, fileListBase, 16, scrollBarHeight, (float)((float)curSelection/(float)(num_files-1)),scrollBarTabHeight);
 			DrawAddChild(containerPanel, scrollBar);
 		}
-		for(j = 0; current_view_start<current_view_end; ++current_view_start,++j) {
-			lockFile(directory[current_view_start]);
-			populate_meta(directory[current_view_start]);
-			uiDrawObj_t *browserButton = DrawFileBrowserButtonMeta(30, fileListBase+(j*40), 
-									getVideoMode()->fbWidth-30, fileListBase+(j*40)+40, 
-									getRelativePath(directory[current_view_start]->name, curDir.name),
-									directory[current_view_start],
-									(current_view_start == curSelection) ? B_SELECTED:B_NOSELECT);
-			directory[current_view_start]->uiObj = browserButton;
-			unlockFile(directory[current_view_start]);
+		for(i = current_view_start,j = 0; i<current_view_end; ++i,++j) {
+			lockFile(directory[i]);
+			populate_meta(directory[i]);
+			uiDrawObj_t *browserButton = DrawFileBrowserButtonMeta(30, fileListBase+(j*40),
+									getVideoMode()->fbWidth-30, fileListBase+(j*40)+40,
+									getRelativePath(directory[i]->name, curDir.name),
+									directory[i],
+									(i == curSelection) ? B_SELECTED:B_NOSELECT);
+			directory[i]->uiObj = browserButton;
+			unlockFile(directory[i]);
 			DrawAddChild(containerPanel, browserButton);
 		}
 	}

@@ -66,6 +66,7 @@ file_meta* meta_alloc() {
 				if(dirEntries[i]->meta && trylockFile(dirEntries[i])) {
 					meta_free(dirEntries[i]->meta);
 					dirEntries[i]->meta = NULL;
+					devices[DEVICE_CUR]->closeFile(dirEntries[i]);
 					unlockFile(dirEntries[i]);
 					break;
 				}
