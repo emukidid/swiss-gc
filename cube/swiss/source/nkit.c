@@ -787,7 +787,7 @@ static const struct {
 	{{ "GFAE69\x00\x00" }, false, 0x18, 0x0DF4, 0x8C59699F, 0x46293A759E6AA51D, 1351774208,  +108204032, {    3353888,      +21216, 6496, 0x659D }, "FIFA Soccer 2003" },
 	{{ "GFAF69\x00\x00" }, false, 0x81, 0xD4EA, 0x0F05CFEF, 0xB45275A88DEECEFD, 1322387456,  +137590784, {    3351836,      +23268, 6496, 0xEB36 }, "FIFA Football 2003" },
 	{{ "GFAI69\x00\x00" }, false, 0x14, 0xF8ED, 0x5530E06E, 0x4464F2AEF2608CDB, 1360357376,   +99620864, {    3351836,      +23268, 6496, 0xB6F4 }, "FIFA Football 2003" },
-	{{ "GFAJ13\x00\x00" }, false, 0xE1, 0x4203, 0x7085DCF5, 0xC4A754D639D9E72F, 1315667968,  +144310272, {    9162576,      +24496, 6496, 0x659D }, "FIFA 2003" },
+	{{ "GFAJ13\x00\x00" }, false, 0xE1, 0x4203, 0x7085DCF5, 0xC4A754D639D9E72F, 1315667968,  +144310272, {    9162576,      +24496, 6496, 0x659D }, "FIFA 2003: European Football" },
 	{{ "GFAP69\x00\x00" }, false, 0x7E, 0x6FF8, 0x60DB66FA, 0x17527C7682F018B7, 1340725248,  +119252992, {    3351840,      +23264, 6496, 0x8547 }, "FIFA Football 2003" },
 	{{ "GFAS69\x00\x00" }, false, 0xC5, 0xC6F7, 0xA69E1A79, 0xD0AABDF3F304B386, 1384972288,   +75005952, {    3351836,      +23268, 6496, 0x1183 }, "FIFA Football 2003" },
 	{{ "GFBE5D\x00\x00" }, false, 0x7E, 0x9898, 0x88F6FA17, 0x8EF6C1B5F8299030, 1071638528,  +388339712, {  781270916,      +25348, 6496, 0x60D8 }, "FireBlade" },
@@ -2177,6 +2177,8 @@ static const struct {
 	{{ "GKBEAF\x10\x00" }, false, 0x7D, 0x25A5, 0xE52B2B6B, 0x3286EDC536D4C0D3, 1440837632,   +19140608, { 1440830320,   +19139728, 6496, 0xD47E }, "Baten Kaitos: Eternal Wings and the Lost Ocean" },
 	{{ "GKBEAF\x11\x00" }, false, 0x23, 0x6D51, 0xF3B588CF, 0x3286EDC536D4C0D3, 1332668416,  +127309824, { 1332660460,  +127309588, 6496, 0x8880 }, "Baten Kaitos: Eternal Wings and the Lost Ocean" },
 	{{ "GKQE01\x00\x00" }, false, 0x54, 0x9E10, 0x0A1A7ABC, 0xDDCC878CAC3DB6AE,  239120384, +1220857856, {  170183312, +1220859652, 6496, 0x7D26 }, "Kururin Squash!" },
+	{{ "GL3EE8\x10\x00" }, false, 0xC1, 0x7503, 0xB4F243B4, 0x4B2C1E055CD023FA, 1135499264,  +324478976, {  835948536,       +7688, 6496, 0x08BD }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x11\x00" }, false, 0x12, 0xDC00, 0x2CF6D984, 0x4B2C1E055CD023FA, 1099397120,  +360581120, { 1079112416,       +8780, 6496, 0xDEAB }, "Lupin III: Lost Treasure Under the Sea" },
 	{{ "GLJEGG\x00\x00" }, false, 0x44, 0x3684, 0xC411F2F8, 0xED983A4B64245ED8,  577157120,  +883148800, {  560702976,  +882822244, 6496, 0x83D8 }, "Radio Allergy" },
 	{{ "GMPP01\x00\x00" }, false, 0x0E, 0x39B0, 0xB7DA63ED, 0x895DFE61A45E24FC,  607344640,  +852633600, {  559136944,     +232500, 8096, 0x03FE }, "Mario Party 4" },
 	{{ "GMPP01\x00\x02" }, false, 0x6C, 0x9D34, 0xF0DE4105, 0x895DFE61A45E24FC,  607346688,  +852631552, {  559137448,     +264764, 8096, 0x03FE }, "Mario Party 4" },
@@ -2243,7 +2245,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 147)
+#define VALID_COUNT (REDUMP_COUNT + 149)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
@@ -2281,6 +2283,10 @@ static const struct {
 	{{ "GIPEAF\x00\x00" }, false, 0x05, 0x15EB, 0x83911F16, 0x27948CC021FDA205,  772724736,  +687253504, {   58698940,  +670761124, 6496, 0x7257 }, "Shonen Jump's One Piece: Pirates' Carnival" },
 	{{ "GKQE01\x00\x00" }, false, 0x4A, 0x9E10, 0x0A1A7ABC, 0xDDCC878CAC3DB6AE, 1459984384,       -6144, { 1391047416,       -4452, 6496, 0x7D26 }, "Kururin Squash!" },
 	{{ "GKQE01\x00\x00" }, false, 0x97, 0x9E10, 0x0A1A7ABC, 0xDDCC878CAC3DB6AE, 1459984384,       -6144, { 1391047324,       -4360, 6496, 0x7D26 }, "Kururin Squash!" },
+	{{ "GL3EE8\x10\x00" }, false, 0x3A, 0x7503, 0xB4F243B4, 0x4B2C1E055CD023FA, 1459980288,       -2048, {  835956232,          -8, 6496, 0x08BD }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x10\x00" }, false, 0x46, 0x7503, 0xB4F243B4, 0x4B2C1E055CD023FA, 1459980288,       -2048, {  835956232,          -8, 6496, 0x08BD }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x11\x00" }, false, 0x11, 0xDC00, 0x2CF6D984, 0x4B2C1E055CD023FA, 1459980288,       -2048, { 1079121204,          -8, 6496, 0xDEAB }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x11\x00" }, false, 0x83, 0xDC00, 0x2CF6D984, 0x4B2C1E055CD023FA, 1459980288,       -2048, { 1079121204,          -8, 6496, 0xDEAB }, "Lupin III: Lost Treasure Under the Sea" },
 	{{ "GLJEGG\x00\x00" }, false, 0xD9, 0x3684, 0xC411F2F8, 0xED983A4B64245ED8,  577157120,  +883148800, {  560702976,  +882822244, 6496, 0x83D8 }, "Radio Allergy" },
 	{{ "GNMEAF\x00\x00" }, true,  0xD6, 0xBD06, 0x316232A1, 0x4537061684D7C9D1,  660848640,  +799129600, {  484029924,      +70216, 6496, 0x9E0C }, "Namco Museum" },
 	{{ "GNMEAF\x00\x01" }, true,  0x6B, 0x25E4, 0x0BECBC5F, 0xBA5DB6E856CA7B9A,  662274048,  +797704192, {  485454564,      +54600, 6496, 0x9E0C }, "Namco Museum" },
@@ -2290,7 +2296,7 @@ static const struct {
 	{{ "RELSAB\x00\x00" }, false, 0xAC, 0xBA9E, 0x1D74AD4A, 0x1A5F0EA47A582D7E, 1455841280,    +4136960, {         ~0,          +0,    0, 0xFFFF }, "Memory Card Utility Program" },
 	{{ "RELSAB\x00\x00" }, true,  0x44, 0xFCCE, 0x146E4A5A, 0x1E9563341CFB48F4, 1459947520,      +30720, { 1193673280,          +0, 6496, 0x8F7A }, "Summoner: The Prophecy" },
 	{{ "RELSAB\x00\x00" }, true,  0xD6, 0xD9CE, 0x16D7BCCE, 0xB64ADF7A4E8423B8, 1459978240,          +0, { 1193214528,          +0, 6496, 0x1458 }, "Summoner: The Prophecy" },
-#define TOTAL_COUNT (VALID_COUNT + 46)
+#define TOTAL_COUNT (VALID_COUNT + 50)
 };
 
 uint8_t fletcher8(const void *buffer, size_t size)
