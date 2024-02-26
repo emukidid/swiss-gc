@@ -1290,16 +1290,21 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 	eventData->mode = mode;
 	eventData->file = calloc(1, sizeof(file_handle));
 	memcpy(eventData->file, file, sizeof(file_handle));
-	if(file->meta) {
+	if(eventData->file->meta) {
 		eventData->file->meta = calloc(1, sizeof(file_meta));
 		memcpy(eventData->file->meta, file->meta, sizeof(file_meta));
-		if(file->meta->banner) {
+		if(eventData->file->meta->banner) {
 			// Make a copy cause we want this one to be killed off when the display event is disposed
 			eventData->file->meta->banner = memalign(32, eventData->file->meta->bannerSize);
 			memcpy(eventData->file->meta->banner, file->meta->banner, eventData->file->meta->bannerSize);
 			DCFlushRange(eventData->file->meta->banner, eventData->file->meta->bannerSize);
 			GX_InitTexObjData(&eventData->file->meta->bannerTexObj, eventData->file->meta->banner);
 			if(GX_GetTexObjUserData(&eventData->file->meta->bannerTexObj) == &file->meta->bannerTlutObj) {
+				void *img_ptr;
+				u16 wd, ht;
+				u8 fmt, wrap_s, wrap_t, mipmap;
+				GX_GetTexObjAll(&eventData->file->meta->bannerTexObj, &img_ptr, &wd, &ht, &fmt, &wrap_s, &wrap_t, &mipmap);
+				GX_InitTlutObjData(&eventData->file->meta->bannerTlutObj, img_ptr + GX_GetTexBufferSize(wd, ht, fmt, mipmap, 0));
 				GX_InitTexObjUserData(&eventData->file->meta->bannerTexObj, &eventData->file->meta->bannerTlutObj);
 			}
 		}

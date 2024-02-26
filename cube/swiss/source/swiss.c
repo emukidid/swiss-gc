@@ -343,9 +343,6 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 	}
 	meta_thread_start();
 	while(1) {
-		if(loadingBox != NULL) {
-			DrawDispose(loadingBox);
-		}
 		loadingBox = DrawProgressLoading(PROGRESS_BOX_BOTTOMLEFT);
 		DrawPublish(loadingBox);
 		uiDrawObj_t *newPanel = DrawContainer();
@@ -576,9 +573,6 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 	}
 	meta_thread_start();
 	while(1) {
-		if(loadingBox != NULL) {
-			DrawDispose(loadingBox);
-		}
 		loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
 		DrawPublish(loadingBox);
 		uiDrawObj_t *newPanel = DrawContainer();
@@ -751,9 +745,6 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 	}
 	meta_thread_start();
 	while(1) {
-		if(loadingBox != NULL) {
-			DrawDispose(loadingBox);
-		}
 		loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
 		DrawPublish(loadingBox);
 		uiDrawObj_t *newPanel = DrawContainer();
