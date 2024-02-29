@@ -16,6 +16,7 @@
 #include "swiss.h"
 #include "main.h"
 #include "ata.h"
+#include "bba.h"
 #include "patcher.h"
 #include "dvd.h"
 
@@ -306,6 +307,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 		// Is the HDD in use a 48 bit LBA supported HDD?
 		*(vu8*)VAR_ATA_LBA48 = ataDriveInfo.lba48Support;
 	}
+	net_get_mac_address(VAR_CLIENT_MAC);
 	return 1;
 }
 
@@ -443,6 +445,8 @@ u32 deviceHandler_FAT_emulated_sd() {
 		return EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER;
 	else if (swissSettings.emulateReadSpeed)
 		return EMU_READ | EMU_READ_SPEED | EMU_BUS_ARBITER;
+	else if (swissSettings.emulateEthernet && (devices[DEVICE_CUR]->emulable & EMU_ETHERNET))
+		return EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER;
 	else if (swissSettings.emulateMemoryCard)
 		return EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER;
 	else
@@ -453,6 +457,8 @@ u32 deviceHandler_FAT_emulated_ata() {
 	if ((swissSettings.emulateAudioStream == 1 && swissSettings.audioStreaming) ||
 		swissSettings.emulateAudioStream > 1)
 		return EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER;
+	else if (swissSettings.emulateEthernet && (devices[DEVICE_CUR]->emulable & EMU_ETHERNET))
+		return EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER;
 	else if (swissSettings.emulateMemoryCard)
 		return EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER;
 	else

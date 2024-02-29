@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -1049,7 +1049,7 @@ static void pi_read(unsigned index, uint32_t *value)
 		case 0:
 			if (!(pi.reg.intsr & pi.reg.intmsk))
 				PI[0] = 1;
-			*value = pi.reg.intsr | (PI[0] & ~0b00000000000101);
+			*value = pi.reg.intsr | (PI[0] & ~0b01000000000101);
 			break;
 		case 1:
 			*value = pi.reg.intmsk;
@@ -1063,12 +1063,12 @@ static void pi_write(unsigned index, uint32_t value)
 {
 	switch (index) {
 		case 0:
-			PI[0] = value & 0b11111111111010;
+			PI[0] = value & 0b10111111111010;
 			pi.reg.intsr = ((value & 0b11000000000011) ^ pi.reg.intsr) & pi.reg.intsr;
 			pi_update_interrupts();
 			break;
 		case 1:
-			PI[1] = (value & 0b11111111111010) | (PI[1] & 0b00000000000101);
+			PI[1] = (value & 0b10111111111010) | (PI[1] & 0b01000000000101);
 			pi.reg.intmsk = value & 0b11111111111111;
 			pi_update_interrupts();
 			break;

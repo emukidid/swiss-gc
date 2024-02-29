@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2023-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -21,6 +21,7 @@
 #define EMULATOR_ETH_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 void eth_mac_receive(const void *data, size_t size);
 

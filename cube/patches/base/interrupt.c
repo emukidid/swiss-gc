@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2021-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2021-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -134,7 +134,7 @@ uint32_t exi_get_interrupt_mask(unsigned chan)
 
 	rlwinm(mask, current, OS_INTERRUPT_EXI_0_EXI - 30, 30, 30);
 	rlwimi(mask, current, OS_INTERRUPT_EXI_0_TC  - 28, 28, 28);
-	rlwimi(mask, current, OS_INTERRUPT_EXI_0_EXT - 20, 20, 20);
+//	rlwimi(mask, current, OS_INTERRUPT_EXI_0_EXT - 20, 20, 20);
 
 	return mask;
 }
@@ -149,12 +149,12 @@ void dispatch_interrupt(OSException exception, OSContext *context)
 		uint32_t exi0cpr = EXI[EXI_CHANNEL_0][0];
 		rlwinm(cause, exi0cpr, 30 - OS_INTERRUPT_EXI_0_EXI, OS_INTERRUPT_EXI_0_EXI, OS_INTERRUPT_EXI_0_EXI);
 		rlwimi(cause, exi0cpr, 28 - OS_INTERRUPT_EXI_0_TC,  OS_INTERRUPT_EXI_0_TC,  OS_INTERRUPT_EXI_0_TC);
-		rlwimi(cause, exi0cpr, 20 - OS_INTERRUPT_EXI_0_EXT, OS_INTERRUPT_EXI_0_EXT, OS_INTERRUPT_EXI_0_EXT);
+//		rlwimi(cause, exi0cpr, 20 - OS_INTERRUPT_EXI_0_EXT, OS_INTERRUPT_EXI_0_EXT, OS_INTERRUPT_EXI_0_EXT);
 
 		uint32_t exi1cpr = EXI[EXI_CHANNEL_1][0];
 		rlwimi(cause, exi1cpr, 30 - OS_INTERRUPT_EXI_1_EXI, OS_INTERRUPT_EXI_1_EXI, OS_INTERRUPT_EXI_1_EXI);
 		rlwimi(cause, exi1cpr, 28 - OS_INTERRUPT_EXI_1_TC,  OS_INTERRUPT_EXI_1_TC,  OS_INTERRUPT_EXI_1_TC);
-		rlwimi(cause, exi1cpr, 20 - OS_INTERRUPT_EXI_1_EXT, OS_INTERRUPT_EXI_1_EXT, OS_INTERRUPT_EXI_1_EXT);
+//		rlwimi(cause, exi1cpr, 20 - OS_INTERRUPT_EXI_1_EXT, OS_INTERRUPT_EXI_1_EXT, OS_INTERRUPT_EXI_1_EXT);
 
 		uint32_t exi2cpr = EXI[EXI_CHANNEL_2][0];
 		rlwimi(cause, exi2cpr, 30 - OS_INTERRUPT_EXI_2_EXI, OS_INTERRUPT_EXI_2_EXI, OS_INTERRUPT_EXI_2_EXI);
@@ -166,7 +166,7 @@ void dispatch_interrupt(OSException exception, OSContext *context)
 //	rlwimi(cause, piintsr, 21 - OS_INTERRUPT_PI_PE_FINISH, OS_INTERRUPT_PI_PE_FINISH, OS_INTERRUPT_PI_PE_FINISH);
 	rlwimi(cause, piintsr, 31 - OS_INTERRUPT_PI_ERROR,     OS_INTERRUPT_PI_SI,        OS_INTERRUPT_PI_ERROR);
 //	rlwimi(cause, piintsr, 23 - OS_INTERRUPT_PI_VI,        OS_INTERRUPT_PI_VI,        OS_INTERRUPT_PI_VI);
-//	rlwimi(cause, piintsr, 19 - OS_INTERRUPT_PI_DEBUG,     OS_INTERRUPT_PI_DEBUG,     OS_INTERRUPT_PI_DEBUG);
+	rlwimi(cause, piintsr, 19 - OS_INTERRUPT_PI_DEBUG,     OS_INTERRUPT_PI_DEBUG,     OS_INTERRUPT_PI_DEBUG);
 //	rlwimi(cause, piintsr, 18 - OS_INTERRUPT_PI_HSP,       OS_INTERRUPT_PI_HSP,       OS_INTERRUPT_PI_HSP);
 
 	if (cause & irq.mask) {

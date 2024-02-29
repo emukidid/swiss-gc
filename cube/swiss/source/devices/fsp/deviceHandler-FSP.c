@@ -323,7 +323,7 @@ u32 deviceHandler_FSP_emulated() {
 		if ((swissSettings.emulateAudioStream == 1 && swissSettings.audioStreaming) ||
 			swissSettings.emulateAudioStream > 1)
 			return EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER;
-		else if (swissSettings.emulateEthernet)
+		else if (swissSettings.emulateEthernet && (devices[DEVICE_CUR]->emulable & EMU_ETHERNET))
 			return EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER;
 		else
 			return EMU_READ | EMU_BUS_ARBITER;

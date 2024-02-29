@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2023-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -19,6 +19,7 @@
 
 #include <ppu_intrinsics.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <string.h>
 #include "bba/bba.h"
 #include "common.h"
@@ -141,10 +142,12 @@ static void eth_mac_write(uint8_t value)
 			(*eth.mac.fifo)[eth.mac.txfifocnt++] = value;
 			break;
 		}
+		#ifdef BBA
 		case BBA_NAFR_MAR0 ... BBA_NAFR_MAR7:
 		{
 			bba_out8(address, value);
 		}
+		#endif
 		default:
 		{
 			(*eth.mac.data)[(address - 256) % 4096 + 256] = value;

@@ -186,6 +186,10 @@ int install_code(int final)
 				patch     = !_ideexi_version ? ideexi_v1_card_bin      : ideexi_v2_card_bin;
 				patchSize = !_ideexi_version ? ideexi_v1_card_bin_size : ideexi_v2_card_bin_size;
 				break;
+			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
+				patch     = !_ideexi_version ? ideexi_v1_eth_bin      : ideexi_v2_eth_bin;
+				patchSize = !_ideexi_version ? ideexi_v1_eth_bin_size : ideexi_v2_eth_bin_size;
+				break;
 			default:
 				return 0;
 		}

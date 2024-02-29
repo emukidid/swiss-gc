@@ -37,6 +37,12 @@ void init_network(void *args) {
 		deviceHandler_setDeviceAvailable(&__device_smb, deviceHandler_SMB_test());
 		deviceHandler_setDeviceAvailable(&__device_ftp, deviceHandler_FTP_test());
 		deviceHandler_setDeviceAvailable(&__device_fsp, deviceHandler_FSP_test());
+
+		if(if_nametoindex("E20") == 1) {
+			__device_ata_a.emulable |= EMU_ETHERNET;
+			__device_ata_b.emulable |= EMU_ETHERNET;
+			__device_ata_c.emulable |= EMU_ETHERNET;
+		}
 	}
 }
 
