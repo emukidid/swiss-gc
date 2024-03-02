@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2017-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2017-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -125,7 +125,7 @@ uint8_t bba_cmd_in8(uint8_t reg)
 void bba_cmd_out8(uint8_t reg, uint8_t val)
 {
 	exi_select();
-	exi_imm_write(0x40 << 24 | (reg & 0x3F) << 24 | val, 4);
+	exi_imm_read_write(0x40 << 24 | (reg & 0x3F) << 24 | val, 4);
 	exi_deselect();
 }
 
@@ -134,7 +134,7 @@ uint8_t bba_in8(uint16_t reg)
 	uint8_t val;
 
 	exi_select();
-	exi_imm_write(0x80 << 24 | reg << 8, 4);
+	exi_imm_read_write(0x80 << 24 | reg << 8, 4);
 	val = exi_imm_read(1);
 	exi_deselect();
 
@@ -144,7 +144,7 @@ uint8_t bba_in8(uint16_t reg)
 void bba_out8(uint16_t reg, uint8_t val)
 {
 	exi_select();
-	exi_imm_write(0xC0 << 24 | reg << 8, 4);
+	exi_imm_read_write(0xC0 << 24 | reg << 8, 4);
 	exi_imm_write(val << 24, 1);
 	exi_deselect();
 }
@@ -152,7 +152,7 @@ void bba_out8(uint16_t reg, uint8_t val)
 void bba_ins(uint16_t reg, void *val, uint32_t len)
 {
 	exi_select();
-	exi_imm_write(0x80 << 24 | reg << 8, 4);
+	exi_imm_read_write(0x80 << 24 | reg << 8, 4);
 	exi_clear_interrupts(EXI_CHANNEL_0, false, true, false);
 	exi_dma_read(val, len, false);
 
@@ -167,7 +167,7 @@ void bba_ins(uint16_t reg, void *val, uint32_t len)
 void bba_outs(uint16_t reg, const void *val, uint32_t len)
 {
 	exi_select();
-	exi_imm_write(0xC0 << 24 | reg << 8, 4);
+	exi_imm_read_write(0xC0 << 24 | reg << 8, 4);
 
 	if (!_bba.lock) {
 		#ifdef ETH_EMULATOR

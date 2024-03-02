@@ -23,21 +23,27 @@
 #include "dolphin/os.h"
 #include "interrupt.h"
 
+#ifndef IRQ_MASK
+#define IRQ_MASK (OS_INTERRUPTMASK_MEM | OS_INTERRUPTMASK_DSP | OS_INTERRUPTMASK_AI  | OS_INTERRUPTMASK_EXI | OS_INTERRUPTMASK_PI)
+#endif
+#define IRQ_MIN (__builtin_clz(IRQ_MASK))
+#define IRQ_MAX (32 - __builtin_ctz(IRQ_MASK))
+
 static struct {
-	OSInterruptHandler handler[OS_INTERRUPT_MAX];
+	OSInterruptHandler handler[IRQ_MAX - IRQ_MIN];
 	OSInterruptMask mask;
 } irq;
 
 OSInterruptHandler set_interrupt_handler(OSInterrupt interrupt, OSInterruptHandler handler)
 {
-	OSInterruptHandler oldHandler = irq.handler[interrupt];
-	irq.handler[interrupt] = handler;
+	OSInterruptHandler oldHandler = irq.handler[interrupt - IRQ_MIN];
+	irq.handler[interrupt - IRQ_MIN] = handler;
 	return oldHandler;
 }
 
 OSInterruptHandler get_interrupt_handler(OSInterrupt interrupt)
 {
-	return irq.handler[interrupt];
+	return irq.handler[interrupt - IRQ_MIN];
 }
 
 static OSInterruptMask set_interrupt_mask(OSInterruptMask mask, OSInterruptMask current)
@@ -129,12 +135,15 @@ OSInterruptMask unmask_user_interrupts(OSInterruptMask mask)
 
 uint32_t exi_get_interrupt_mask(unsigned chan)
 {
-	uint32_t mask;
+	uint32_t mask = 0;
 	uint32_t current = (irq.mask & OS_INTERRUPTMASK_EXI) << (3 * chan);
 
-	rlwinm(mask, current, OS_INTERRUPT_EXI_0_EXI - 30, 30, 30);
-	rlwimi(mask, current, OS_INTERRUPT_EXI_0_TC  - 28, 28, 28);
-//	rlwimi(mask, current, OS_INTERRUPT_EXI_0_EXT - 20, 20, 20);
+	if (IRQ_MASK & (OS_INTERRUPTMASK_EXI_0_EXI | OS_INTERRUPTMASK_EXI_1_EXI | OS_INTERRUPTMASK_EXI_2_EXI))
+		rlwimi(mask, current, OS_INTERRUPT_EXI_0_EXI - 30, 30, 30);
+	if (IRQ_MASK & (OS_INTERRUPTMASK_EXI_0_TC  | OS_INTERRUPTMASK_EXI_1_TC  | OS_INTERRUPTMASK_EXI_2_TC))
+		rlwimi(mask, current, OS_INTERRUPT_EXI_0_TC  - 28, 28, 28);
+	if (IRQ_MASK & (OS_INTERRUPTMASK_EXI_0_EXT | OS_INTERRUPTMASK_EXI_1_EXT))
+		rlwimi(mask, current, OS_INTERRUPT_EXI_0_EXT - 20, 20, 20);
 
 	return mask;
 }
@@ -146,34 +155,56 @@ void dispatch_interrupt(OSException exception, OSContext *context)
 	uint32_t piintsr = PI[0] & PI[1];
 
 	if (piintsr & 0b00000000010000) {
-		uint32_t exi0cpr = EXI[EXI_CHANNEL_0][0];
-		rlwinm(cause, exi0cpr, 30 - OS_INTERRUPT_EXI_0_EXI, OS_INTERRUPT_EXI_0_EXI, OS_INTERRUPT_EXI_0_EXI);
-		rlwimi(cause, exi0cpr, 28 - OS_INTERRUPT_EXI_0_TC,  OS_INTERRUPT_EXI_0_TC,  OS_INTERRUPT_EXI_0_TC);
-//		rlwimi(cause, exi0cpr, 20 - OS_INTERRUPT_EXI_0_EXT, OS_INTERRUPT_EXI_0_EXT, OS_INTERRUPT_EXI_0_EXT);
+		if (IRQ_MASK & OS_INTERRUPTMASK_EXI_0) {
+			uint32_t exi0cpr = EXI[EXI_CHANNEL_0][0];
 
-		uint32_t exi1cpr = EXI[EXI_CHANNEL_1][0];
-		rlwimi(cause, exi1cpr, 30 - OS_INTERRUPT_EXI_1_EXI, OS_INTERRUPT_EXI_1_EXI, OS_INTERRUPT_EXI_1_EXI);
-		rlwimi(cause, exi1cpr, 28 - OS_INTERRUPT_EXI_1_TC,  OS_INTERRUPT_EXI_1_TC,  OS_INTERRUPT_EXI_1_TC);
-//		rlwimi(cause, exi1cpr, 20 - OS_INTERRUPT_EXI_1_EXT, OS_INTERRUPT_EXI_1_EXT, OS_INTERRUPT_EXI_1_EXT);
+			if (IRQ_MASK & OS_INTERRUPTMASK_EXI_0_EXI)
+				rlwimi(cause, exi0cpr, 30 - OS_INTERRUPT_EXI_0_EXI, OS_INTERRUPT_EXI_0_EXI, OS_INTERRUPT_EXI_0_EXI);
+			if (IRQ_MASK & OS_INTERRUPTMASK_EXI_0_TC)
+				rlwimi(cause, exi0cpr, 28 - OS_INTERRUPT_EXI_0_TC,  OS_INTERRUPT_EXI_0_TC,  OS_INTERRUPT_EXI_0_TC);
+			if (IRQ_MASK & OS_INTERRUPTMASK_EXI_0_EXT)
+				rlwimi(cause, exi0cpr, 20 - OS_INTERRUPT_EXI_0_EXT, OS_INTERRUPT_EXI_0_EXT, OS_INTERRUPT_EXI_0_EXT);
+		}
+		if (IRQ_MASK & OS_INTERRUPTMASK_EXI_1) {
+			uint32_t exi1cpr = EXI[EXI_CHANNEL_1][0];
 
-		uint32_t exi2cpr = EXI[EXI_CHANNEL_2][0];
-		rlwimi(cause, exi2cpr, 30 - OS_INTERRUPT_EXI_2_EXI, OS_INTERRUPT_EXI_2_EXI, OS_INTERRUPT_EXI_2_EXI);
-		rlwimi(cause, exi2cpr, 28 - OS_INTERRUPT_EXI_2_TC,  OS_INTERRUPT_EXI_2_TC,  OS_INTERRUPT_EXI_2_TC);
+			if (IRQ_MASK & OS_INTERRUPTMASK_EXI_1_EXI)
+				rlwimi(cause, exi1cpr, 30 - OS_INTERRUPT_EXI_1_EXI, OS_INTERRUPT_EXI_1_EXI, OS_INTERRUPT_EXI_1_EXI);
+			if (IRQ_MASK & OS_INTERRUPTMASK_EXI_1_TC)
+				rlwimi(cause, exi1cpr, 28 - OS_INTERRUPT_EXI_1_TC,  OS_INTERRUPT_EXI_1_TC,  OS_INTERRUPT_EXI_1_TC);
+			if (IRQ_MASK & OS_INTERRUPTMASK_EXI_1_EXT)
+				rlwimi(cause, exi1cpr, 20 - OS_INTERRUPT_EXI_1_EXT, OS_INTERRUPT_EXI_1_EXT, OS_INTERRUPT_EXI_1_EXT);
+		}
+		if (IRQ_MASK & OS_INTERRUPTMASK_EXI_2) {
+			uint32_t exi2cpr = EXI[EXI_CHANNEL_2][0];
+
+			if (IRQ_MASK & OS_INTERRUPTMASK_EXI_2_EXI)
+				rlwimi(cause, exi2cpr, 30 - OS_INTERRUPT_EXI_2_EXI, OS_INTERRUPT_EXI_2_EXI, OS_INTERRUPT_EXI_2_EXI);
+			if (IRQ_MASK & OS_INTERRUPTMASK_EXI_2_TC)
+				rlwimi(cause, exi2cpr, 28 - OS_INTERRUPT_EXI_2_TC,  OS_INTERRUPT_EXI_2_TC,  OS_INTERRUPT_EXI_2_TC);
+		}
 	}
 
-//	rlwimi(cause, piintsr, 20 - OS_INTERRUPT_PI_CP,        OS_INTERRUPT_PI_CP,        OS_INTERRUPT_PI_CP);
-//	rlwimi(cause, piintsr, 22 - OS_INTERRUPT_PI_PE_TOKEN,  OS_INTERRUPT_PI_PE_TOKEN,  OS_INTERRUPT_PI_PE_TOKEN);
-//	rlwimi(cause, piintsr, 21 - OS_INTERRUPT_PI_PE_FINISH, OS_INTERRUPT_PI_PE_FINISH, OS_INTERRUPT_PI_PE_FINISH);
-	rlwimi(cause, piintsr, 31 - OS_INTERRUPT_PI_ERROR,     OS_INTERRUPT_PI_SI,        OS_INTERRUPT_PI_ERROR);
-//	rlwimi(cause, piintsr, 23 - OS_INTERRUPT_PI_VI,        OS_INTERRUPT_PI_VI,        OS_INTERRUPT_PI_VI);
-	rlwimi(cause, piintsr, 19 - OS_INTERRUPT_PI_DEBUG,     OS_INTERRUPT_PI_DEBUG,     OS_INTERRUPT_PI_DEBUG);
-//	rlwimi(cause, piintsr, 18 - OS_INTERRUPT_PI_HSP,       OS_INTERRUPT_PI_HSP,       OS_INTERRUPT_PI_HSP);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_CP)
+		rlwimi(cause, piintsr, 20 - OS_INTERRUPT_PI_CP,        OS_INTERRUPT_PI_CP,        OS_INTERRUPT_PI_CP);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_PE_TOKEN)
+		rlwimi(cause, piintsr, 22 - OS_INTERRUPT_PI_PE_TOKEN,  OS_INTERRUPT_PI_PE_TOKEN,  OS_INTERRUPT_PI_PE_TOKEN);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_PE_FINISH)
+		rlwimi(cause, piintsr, 21 - OS_INTERRUPT_PI_PE_FINISH, OS_INTERRUPT_PI_PE_FINISH, OS_INTERRUPT_PI_PE_FINISH);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_ERROR)
+		rlwimi(cause, piintsr, 31 - OS_INTERRUPT_PI_ERROR,     OS_INTERRUPT_PI_SI,        OS_INTERRUPT_PI_ERROR);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_VI)
+		rlwimi(cause, piintsr, 23 - OS_INTERRUPT_PI_VI,        OS_INTERRUPT_PI_VI,        OS_INTERRUPT_PI_VI);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_DEBUG)
+		rlwimi(cause, piintsr, 19 - OS_INTERRUPT_PI_DEBUG,     OS_INTERRUPT_PI_DEBUG,     OS_INTERRUPT_PI_DEBUG);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_HSP)
+		rlwimi(cause, piintsr, 18 - OS_INTERRUPT_PI_HSP,       OS_INTERRUPT_PI_HSP,       OS_INTERRUPT_PI_HSP);
 
 	if (cause & irq.mask) {
 		OSInterrupt interrupt = __builtin_clz(cause & irq.mask);
 
-		if (irq.handler[interrupt]) {
-			irq.handler[interrupt](interrupt, context);
+		if (irq.handler[interrupt - IRQ_MIN]) {
+			irq.handler[interrupt - IRQ_MIN](interrupt, context);
 			OSLoadContext(context);
 		}
 	}

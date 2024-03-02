@@ -44,13 +44,6 @@ static void exi_deselect(void)
 	EXI[EXI_CHANNEL_2][0] &= 0x405;
 }
 
-static void exi_imm_write(uint32_t data, uint32_t len)
-{
-	EXI[EXI_CHANNEL_2][4] = data;
-	EXI[EXI_CHANNEL_2][3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 0b01;
-	while (EXI[EXI_CHANNEL_2][3] & 0b01);
-}
-
 static uint32_t exi_imm_read(uint32_t len)
 {
 	EXI[EXI_CHANNEL_2][3] = ((len - 1) << 4) | (EXI_READ << 2) | 0b01;
@@ -96,7 +89,7 @@ static uint8_t enc28j60_read_cmd(uint32_t cmd)
 static void enc28j60_write_cmd(uint32_t cmd, uint8_t data)
 {
 	exi_select();
-	exi_imm_write(cmd | data << 16, 2);
+	exi_imm_read_write(cmd | data << 16, 2);
 	exi_deselect();
 }
 
@@ -150,14 +143,14 @@ static void enc28j60_interrupt(void)
 
 	if (eir & ENC28J60_EIR_PKTIF) {
 		exi_select();
-		exi_imm_write(ENC28J60_CMD_RBM, 1);
+		exi_imm_read_write(ENC28J60_CMD_RBM, 1);
 
-		uint8_t rsv[6];
-		for (int i = 0; i < sizeof(rsv); i++)
-			rsv[i] = exi_imm_read(1);
-		uint16_t next_packet = __lhbrx(rsv + 0);
-		uint16_t byte_count = __lhbrx(rsv + 2);
-		//uint16_t status = __lhbrx(rsv + 4);
+		uint16_t rsv[3];
+		for (int i = 0; i < sizeof(rsv) / sizeof(uint16_t); i++)
+			__sthbrx(rsv + i, exi_imm_read(sizeof(uint16_t)));
+		uint16_t next_packet = rsv[0];
+		uint16_t byte_count = rsv[1];
+		//uint16_t status = rsv[2];
 
 		DCInvalidateRange(__builtin_assume_aligned(_bba.page, 32), byte_count);
 		exi_dma_read(_bba.page, byte_count, true);
@@ -198,7 +191,7 @@ void bba_transmit_fifo(const void *data, size_t size)
 	enc28j60_write_reg16(ENC28J60_ETXND, ENC28J60_INIT_ETXST + size);
 
 	exi_select();
-	exi_imm_write(ENC28J60_CMD_WBM, 2);
+	exi_imm_read_write(ENC28J60_CMD_WBM, 2);
 
 	DCStoreRange(__builtin_assume_aligned(data, 32), size);
 	exi_dma_write(data, size, true);

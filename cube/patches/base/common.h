@@ -66,8 +66,12 @@ typedef volatile f64 vf64;
 	asm volatile ("mtmsr %0" :: "r" (msr)); \
 })
 
-#define rlwimi(a, b, sh, mb ,me) \
-	asm ("rlwimi %0,%1,(%2)&31,%3,%4" : "+r" (a) : "r" (b), "i" (sh), "i" (mb), "i" (me))
+#define rlwimi(a, b, sh, mb ,me) ({ \
+	if (__builtin_constant_p(a) && (a) == 0) \
+		asm ("rlwinm %0,%1,(%2)&31,%3,%4" : "=r" (a) : "r" (b), "i" (sh), "i" (mb), "i" (me)); \
+	else \
+		asm ("rlwimi %0,%1,(%2)&31,%3,%4" : "+r" (a) : "r" (b), "i" (sh), "i" (mb), "i" (me)); \
+})
 
 #define rlwinm(a, b, sh, mb ,me) \
 	asm ("rlwinm %0,%1,(%2)&31,%3,%4" : "=r" (a) : "r" (b), "i" (sh), "i" (mb), "i" (me))

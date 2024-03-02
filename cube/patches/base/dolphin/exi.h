@@ -2,6 +2,7 @@
 #define EXI_H
 
 #include "common.h"
+#include "dolphin/os.h"
 
 #define EXI_STATE_BUSY_DMA 0x01
 #define EXI_STATE_BUSY_IMM 0x02
@@ -39,7 +40,7 @@ enum {
 	EXI_SPEED_32MHZ,
 };
 
-typedef void (*EXICallback)(s32 chan, u32 dev);
+typedef void (*EXICallback)(s32 chan, OSContext *context);
 
 typedef struct EXIControl {
 	EXICallback exiCallback;
