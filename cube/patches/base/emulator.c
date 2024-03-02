@@ -344,6 +344,8 @@ static void exi_read(unsigned index, uint32_t *value)
 	unsigned dev = (exi.reg[chan].cpr >> 7) & 0b111;
 
 	uint32_t mask = exi_get_interrupt_mask(chan);
+	uint32_t mask2 = (((mask << 1) & 0b00000000010000) * 0b111111) | (mask >> 1);
+	mask |= mask2;
 
 	switch (index % 5) {
 		case 0:
@@ -370,6 +372,8 @@ static void exi_write(unsigned index, uint32_t value)
 	unsigned dev2;
 
 	uint32_t mask = exi_get_interrupt_mask(chan);
+	uint32_t mask2 = (((mask << 1) & 0b00000000010000) * 0b111111) | (mask >> 1);
+	mask |= mask2;
 
 	switch (index % 5) {
 		case 0:
@@ -383,11 +387,11 @@ static void exi_write(unsigned index, uint32_t value)
 			dev2 = (exi.reg[chan].cpr >> 7) & 0b111;
 
 			if (chan == EXI_CHANNEL_0 && ((dev | dev2) & (1 << EXI_DEVICE_2)))
-				EXI[chan][0] = (value & ~(mask | 0b00001111111100)) | (mask >> 1);
+				EXI[chan][0] = (value & ~(mask | 0b00001111111100)) | (EXI[chan][0] & mask2);
 			else if (chan == EXI_CHANNEL_2)
-				EXI[chan][0] = (value & ~(mask | 0b00000000000011)) | (mask >> 1);
+				EXI[chan][0] = (value & ~(mask | 0b00000000000011)) | (EXI[chan][0] & mask2);
 			else
-				EXI[chan][0] = (value & ~mask) | (mask >> 1);
+				EXI[chan][0] = (value & ~mask) | (EXI[chan][0] & mask2);
 
 			if (chan == EXI_CHANNEL_0) {
 				if ((~dev & dev2) & (1 << EXI_DEVICE_2))
@@ -442,6 +446,8 @@ static void exi_read(unsigned index, uint32_t *value)
 	unsigned chan = index / 5;
 
 	uint32_t mask = exi_get_interrupt_mask(chan);
+	uint32_t mask2 = (((mask << 1) & 0b00000000010000) * 0b111111) | (mask >> 1);
+	mask |= mask2;
 
 	switch (index % 5) {
 		case 0:
@@ -466,6 +472,8 @@ static void exi_write(unsigned index, uint32_t value)
 	unsigned dev2;
 
 	uint32_t mask = exi_get_interrupt_mask(chan);
+	uint32_t mask2 = (((mask << 1) & 0b00000000010000) * 0b111111) | (mask >> 1);
+	mask |= mask2;
 
 	switch (index % 5) {
 		case 0:
@@ -487,7 +495,7 @@ static void exi_write(unsigned index, uint32_t value)
 				}
 			}
 
-			EXI[chan][0] = (value & ~mask) | (mask >> 1);
+			EXI[chan][0] = (value & ~mask) | (EXI[chan][0] & mask2);
 			break;
 		default:
 			(*EXI)[index] = value;
