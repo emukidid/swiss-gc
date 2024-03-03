@@ -13,8 +13,8 @@ VAR_ATA_LBA48		= VAR_AREA + 0x09BA;	/* Is the HDD in use a 48 bit LBA supported 
 VAR_IGR_TYPE		= VAR_AREA + 0x09BB;	/* IGR exit type */
 VAR_FRAG_LIST		= VAR_AREA + 0x09BC;	/* pointer to fragments (u32 offset, u32 size, u32 rawsector) */
 
-VAR_DISC_1_ID		= VAR_AREA + 0x09C0;	/* disc 1 header */
-VAR_DISC_2_ID		= VAR_AREA + 0x09CA;	/* disc 2 header */
+VAR_DISC_1_ID		= VAR_AREA + 0x09CC;	/* disc 1 header */
+VAR_DISC_2_ID		= VAR_AREA + 0x09D6;	/* disc 2 header */
 
 VAR_NETWORK_ENV		= VAR_AREA + 0x09C0;	/* network environment variables */
 VAR_CLIENT_MAC		= VAR_AREA + 0x09C0;	/* client MAC address */

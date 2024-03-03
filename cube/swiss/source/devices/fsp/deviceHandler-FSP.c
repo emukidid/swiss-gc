@@ -217,7 +217,6 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, Executabl
 	memcpy(&arpreq.arp_pa, &addr, addrlen);
 	net_ioctl(fsp_session->fd, SIOCGARP, &arpreq);
 	
-	net_get_mac_address(VAR_CLIENT_MAC);
 	memcpy(VAR_ROUTER_MAC, arpreq.arp_ha.sa_data, sizeof(VAR_ROUTER_MAC));
 	*(vu32*)VAR_CLIENT_IP = local_ip;
 	*(vu32*)VAR_ROUTER_IP = gateway;

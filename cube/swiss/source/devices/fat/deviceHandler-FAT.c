@@ -16,7 +16,6 @@
 #include "swiss.h"
 #include "main.h"
 #include "ata.h"
-#include "bba.h"
 #include "patcher.h"
 #include "dvd.h"
 
@@ -307,7 +306,6 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 		// Is the HDD in use a 48 bit LBA supported HDD?
 		*(vu8*)VAR_ATA_LBA48 = ataDriveInfo.lba48Support;
 	}
-	net_get_mac_address(VAR_CLIENT_MAC);
 	return 1;
 }
 

@@ -349,12 +349,14 @@ static void exi_read(unsigned index, uint32_t *value)
 
 	switch (index % 5) {
 		case 0:
+			if (chan == *VAR_EXI_SLOT)
+				mask |= 0b01000000000000;
 			if (chan == EXI_CHANNEL_0 && (dev & (1 << EXI_DEVICE_2)))
-				*value = exi.reg[chan].cpr | (EXI[chan][0] & ~(mask | 0b00001111111100));
+				mask |= 0b00001111111100;
 			else if (chan == EXI_CHANNEL_2)
-				*value = exi.reg[chan].cpr | (EXI[chan][0] & ~(mask | 0b00000000000011));
-			else
-				*value = exi.reg[chan].cpr | (EXI[chan][0] & ~mask);
+				mask |= 0b00000000000011;
+
+			*value = exi.reg[chan].cpr | (EXI[chan][0] & ~mask);
 			break;
 		case 1 ... 4:
 			if (chan == EXI_CHANNEL_0 && (dev & (1 << EXI_DEVICE_2)))
@@ -386,12 +388,19 @@ static void exi_write(unsigned index, uint32_t value)
 
 			dev2 = (exi.reg[chan].cpr >> 7) & 0b111;
 
+			if (chan == *VAR_EXI_SLOT) {
+				if ((dev | dev2) & (1 << EXI_DEVICE_0))
+					mask |= 0b00001110000000;
+				if (~dev & dev2)
+					end_read();
+			}
+
 			if (chan == EXI_CHANNEL_0 && ((dev | dev2) & (1 << EXI_DEVICE_2)))
-				EXI[chan][0] = (value & ~(mask | 0b00001111111100)) | (EXI[chan][0] & mask2);
+				mask |= 0b00001111111100;
 			else if (chan == EXI_CHANNEL_2)
-				EXI[chan][0] = (value & ~(mask | 0b00000000000011)) | (EXI[chan][0] & mask2);
-			else
-				EXI[chan][0] = (value & ~mask) | (EXI[chan][0] & mask2);
+				mask |= 0b00000000000011;
+
+			EXI[chan][0] = (value & ~mask) | (EXI[chan][0] & mask2);
 
 			if (chan == EXI_CHANNEL_0) {
 				if ((~dev & dev2) & (1 << EXI_DEVICE_2))
@@ -451,14 +460,14 @@ static void exi_read(unsigned index, uint32_t *value)
 
 	switch (index % 5) {
 		case 0:
-			#ifdef USB
-			if (chan == *VAR_EXI_SLOT || chan == EXI_CHANNEL_1)
-			#else
 			if (chan == *VAR_EXI_SLOT)
+				mask |= 0b01000000000000;
+			#ifdef USB
+			if (chan == EXI_CHANNEL_1)
+				mask |= 0b01000000000000;
 			#endif
-				*value = EXI[chan][0] & ~(mask | 0b01000000000000);
-			else
-				*value = EXI[chan][0] & ~mask;
+
+			*value = EXI[chan][0] & ~mask;
 			break;
 		default:
 			*value = (*EXI)[index];
@@ -480,19 +489,20 @@ static void exi_write(unsigned index, uint32_t value)
 			dev2 = (value >> 7) & 0b111;
 
 			if (~dev & dev2) {
+				if (chan == *VAR_EXI_SLOT) {
+					if (dev2 & (1 << EXI_DEVICE_0))
+						mask |= 0b00001110000000;
+					end_read();
+				}
+
 				#ifdef BBA
 				if (chan == EXI_CHANNEL_0 && (dev2 & (1 << EXI_DEVICE_2)))
-					value &= ~0b00001110000000;
+					mask |= 0b00001110000000;
 				#endif
 				#ifdef USB
 				if (chan == EXI_CHANNEL_1 && (dev2 & (1 << EXI_DEVICE_0)))
-					value &= ~0b00001110000000;
+					mask |= 0b00001110000000;
 				#endif
-				if (chan == *VAR_EXI_SLOT) {
-					if (dev2 & (1 << EXI_DEVICE_0))
-						value &= ~0b00001110000000;
-					end_read();
-				}
 			}
 
 			EXI[chan][0] = (value & ~mask) | (EXI[chan][0] & mask2);

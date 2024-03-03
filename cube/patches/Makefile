@@ -15,13 +15,13 @@ DISASM    = disassembly
 all: clean codehandler cpatches stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch
 
 stub: reboot.bin stub.bin
-sdpatch: sd.bin sd.card.bin sd.dtk.bin
+sdpatch: sd.bin sd.card.bin sd.dtk.bin sd.eth.bin
 ideexipatch: ideexi-v1.bin ideexi-v1.card.bin ideexi-v1.dtk.bin ideexi-v1.eth.bin ideexi-v2.bin ideexi-v2.card.bin ideexi-v2.dtk.bin ideexi-v2.eth.bin
 dvdpatch: dvd.bin dvd.card.bin
 usbgeckopatch: usbgecko.bin
 wkfpatch: wkf.bin wkf.card.bin wkf.dtk.bin
 fsppatch: fsp.bin fsp.dtk.bin fsp.eth.bin
-gcloaderpatch: gcloader-v1.bin gcloader-v1.card.bin gcloader-v2.bin gcloader-v2.card.bin gcloader-v2.dtk.bin
+gcloaderpatch: gcloader-v1.bin gcloader-v1.card.bin gcloader-v2.bin gcloader-v2.card.bin gcloader-v2.dtk.bin gcloader-v2.eth.bin
 
 clean:
 	@rm -f *.bin *.elf *.o
@@ -160,6 +160,28 @@ sd.dtk.bin:
 	@$(BIN2S) -H $(DEST)/sd_dtk_bin.h sd.dtk.bin > $(DEST)/sd.dtk.bin.s
 	@rm -f *.bin *.elf *.o
 
+sd.eth.bin:
+	@echo Building SD Patch + ETH ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DETH_EMULATOR -DNO_VIDEO
+	@$(CC) -Os $(OPTS) -c base/emulator_eth.c
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000000001000000
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
+	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -o sd.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o enc28j60.o uart.o os.o memcpy.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D sd.eth.elf > $(DISASM)/sd.eth.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd.eth.elf sd.eth.bin
+	@$(BIN2S) -H $(DEST)/sd_eth_bin.h sd.eth.bin > $(DEST)/sd.eth.bin.s
+	@rm -f *.bin *.elf *.o
+
 ideexi-v1.bin:
 	@echo Building IDE-EXI-v1 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
@@ -236,13 +258,13 @@ ideexi-v1.eth.bin:
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001000000000001000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
 	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=0 -DISR_READ=1 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S
+	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/memcpy.S
-	@$(CC) -Os $(OPTS) -o ideexi-v1.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o enc28j60.o ata.o ata_isr.o uart.o os.o memcpy.o
+	@$(CC) -Os $(OPTS) -o ideexi-v1.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o enc28j60.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v1.eth.elf > $(DISASM)/ideexi-v1.eth.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v1.eth.elf ideexi-v1.eth.bin
@@ -325,13 +347,13 @@ ideexi-v2.eth.bin:
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001000000000001000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
 	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=1 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S -DDMA
+	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/memcpy.S
-	@$(CC) -Os $(OPTS) -o ideexi-v2.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o enc28j60.o ata.o ata_isr.o uart.o os.o memcpy.o
+	@$(CC) -Os $(OPTS) -o ideexi-v2.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o enc28j60.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2.eth.elf > $(DISASM)/ideexi-v2.eth.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v2.eth.elf ideexi-v2.eth.bin
@@ -402,7 +424,7 @@ usbgecko.bin:
 wkf.bin:
 	@echo Building WKF Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DWKF
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000111100000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
@@ -422,7 +444,7 @@ wkf.bin:
 wkf.card.bin:
 	@echo Building WKF Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DWKF
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000111100000000
@@ -443,7 +465,7 @@ wkf.card.bin:
 wkf.dtk.bin:
 	@echo Building WKF Patch + DTK ...
 	@$(CC) -Os $(OPTS) -c base/base.S
-	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK -DWKF
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
@@ -628,4 +650,24 @@ gcloader-v2.dtk.bin:
 	@$(OBJDUMP) -D gcloader-v2.dtk.elf > $(DISASM)/gcloader-v2.dtk.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v2.dtk.elf gcloader-v2.dtk.bin
 	@$(BIN2S) -H $(DEST)/gcloader_v2_dtk_bin.h gcloader-v2.dtk.bin > $(DEST)/gcloader-v2.dtk.bin.s
+	@rm -f *.bin *.elf *.o
+
+gcloader-v2.eth.bin:
+	@echo Building GCLoader-v2 Patch + ETH ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DETH_EMULATOR -DGCODE -DNO_VIDEO
+	@$(CC) -Os $(OPTS) -c base/emulator_eth.c
+	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000000000000000111101000000
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c gcloader/gcloader.c
+	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -o gcloader-v2.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o gcloader.o enc28j60.o uart.o os.o memcpy.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D gcloader-v2.eth.elf > $(DISASM)/gcloader-v2.eth.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v2.eth.elf gcloader-v2.eth.bin
+	@$(BIN2S) -H $(DEST)/gcloader_v2_eth_bin.h gcloader-v2.eth.bin > $(DEST)/gcloader-v2.eth.bin.s
 	@rm -f *.bin *.elf *.o

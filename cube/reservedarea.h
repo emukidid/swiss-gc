@@ -27,8 +27,8 @@
 .set VAR_IGR_EXIT_TYPE,		0x09BB	# IGR exit type
 .set VAR_FRAG_LIST,			0x09BC	# pointer to fragments (u32 offset, u32 size, u32 rawsector)
 
-.set VAR_DISC_1_ID,			0x09C0	# disc 1 header
-.set VAR_DISC_2_ID,			0x09CA	# disc 2 header
+.set VAR_DISC_1_ID,			0x09CC	# disc 1 header
+.set VAR_DISC_2_ID,			0x09D6	# disc 2 header
 
 .set VAR_CLIENT_MAC,		0x09C0	# client MAC address
 .set VAR_ROUTER_MAC,		0x09C6	# router MAC address

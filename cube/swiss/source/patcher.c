@@ -211,6 +211,10 @@ int install_code(int final)
 				patch     = sd_card_bin;
 				patchSize = sd_card_bin_size;
 				break;
+			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
+				patch     = sd_eth_bin;
+				patchSize = sd_eth_bin_size;
+				break;
 			default:
 				return 0;
 		}
@@ -330,6 +334,10 @@ int install_code(int final)
 				case EMU_READ | EMU_MEMCARD:
 					patch     = gcloader_v2_card_bin;
 					patchSize = gcloader_v2_card_bin_size;
+					break;
+				case EMU_READ | EMU_ETHERNET:
+					patch     = gcloader_v2_eth_bin;
+					patchSize = gcloader_v2_eth_bin_size;
 					break;
 				default:
 					return 0;
@@ -5317,7 +5325,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *SetInterruptMask = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (SetInterruptMask) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5392,7 +5400,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *__OSDispatchInterrupt = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__OSDispatchInterrupt) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5633,7 +5641,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *CompleteTransfer = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (CompleteTransfer) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5654,7 +5662,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIImm = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIImm) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5691,7 +5699,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIDma = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIDma) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5727,7 +5735,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXISync = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISync) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5815,7 +5823,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIClearInterrupts = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIClearInterrupts) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 						data[i + 20] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -5848,7 +5856,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *__EXIProbe = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__EXIProbe) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5884,7 +5892,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIAttach = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIAttach) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				if (j == 7) {
 					data[i +  19] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 115] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -5917,7 +5925,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXISelectSD = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISelectSD) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER))
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER))
 				data[i + 55] = 0x3C600C00;	// lis		r3, 0x0C00
 			
 			print_gecko("Found:[%s] @ %08X\n", EXISelectSDSig.Name, EXISelectSD);
@@ -5930,7 +5938,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXISelect = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXISelect) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -5965,7 +5973,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIDeselect = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIDeselect) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -6004,7 +6012,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIIntrruptHandler) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 3:
 						data[i + 10] = 0x3CA00C00;	// lis		r5, 0x0C00
@@ -6032,7 +6040,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *TCIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (TCIntrruptHandler) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 3:
 					case 4:
@@ -6061,7 +6069,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXTIntrruptHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXTIntrruptHandler) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -6091,7 +6099,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIInit = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIInit) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				switch (j) {
 					case 0:
 						data[i +  7] = 0x3C600C00;	// lis		r3, 0x0C00
@@ -6175,7 +6183,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXIGetID = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXIGetID) {
-			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_BUS_ARBITER)) {
+			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER)) {
 				if (j == 9) {
 					data[i +  33] = 0x3C600C00;	// lis		r3, 0x0C00
 					data[i + 127] = 0x3C600C00;	// lis		r3, 0x0C00
