@@ -298,7 +298,8 @@ bool deviceHandler_FSP_test() {
 	if(if_indextoname(1, ifname)) {
 		if(ifname[0] == 'E') {
 			__device_fsp.hwName = "ENC28J60";
-			__device_fsp.features = FEAT_READ|FEAT_WRITE;
+			__device_fsp.deviceTexture = (textureImage){TEX_ETH2GC, 64, 80, 64, 80};
+			__device_fsp.features = FEAT_READ|FEAT_WRITE|FEAT_THREAD_SAFE;
 			__device_fsp.emulable = EMU_NONE;
 			if(ifname[1] == '0')
 				__device_fsp.location = LOC_MEMCARD_SLOT_A;
@@ -344,7 +345,7 @@ DEVICEHANDLER_INTERFACE __device_fsp = {
 	.hwName = "Broadband Adapter",
 	.deviceName = "File Service Protocol",
 	.deviceDescription = "Configurable via the settings screen",
-	.deviceTexture = {TEX_SAMBA, 140, 64, 140, 64},
+	.deviceTexture = {TEX_BBA, 140, 64, 140, 64},
 	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
 	.emulable = EMU_READ|EMU_AUDIO_STREAMING|EMU_ETHERNET,
 	.location = LOC_SERIAL_PORT_1,

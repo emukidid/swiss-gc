@@ -237,6 +237,7 @@ bool deviceHandler_FTP_test() {
 	if(if_indextoname(1, ifname)) {
 		if(ifname[0] == 'E') {
 			__device_ftp.hwName = "ENC28J60";
+			__device_ftp.deviceTexture = (textureImage){TEX_ETH2GC, 64, 80, 64, 80};
 			if(ifname[1] == '0')
 				__device_ftp.location = LOC_MEMCARD_SLOT_A;
 			else if(ifname[1] == '1')
@@ -265,7 +266,7 @@ DEVICEHANDLER_INTERFACE __device_ftp = {
 	.hwName = "Broadband Adapter",
 	.deviceName = "File Transfer Protocol",
 	.deviceDescription = "Configurable via the settings screen",
-	.deviceTexture = {TEX_SAMBA, 140, 64, 140, 64},
+	.deviceTexture = {TEX_BBA, 140, 64, 140, 64},
 	.features = FEAT_READ|FEAT_WRITE|FEAT_THREAD_SAFE,
 	.location = LOC_SERIAL_PORT_1,
 	.initial = &initial_FTP,

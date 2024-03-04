@@ -35,6 +35,7 @@
 #include "info.h"
 #include "httpd.h"
 #include "exi.h"
+#include "bba.h"
 #include "patcher.h"
 #include "dvd.h"
 #include "elf.h"

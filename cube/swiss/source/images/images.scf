@@ -1,13 +1,15 @@
 <filepath="backdrop.png" id="backdrop" colfmt=8 palfmt=0 />
 <filepath="backdrop_ind.png" id="backdrop_ind" colfmt=3 />
+<filepath="bba.tif" id="bbaimg" colfmt=3 />
 <filepath="dir.tif" id="dirimg" colfmt=6 />
 <filepath="dol.tif" id="dolimg" colfmt=6 />
 <filepath="dolcli.tif" id="dolcliimg" colfmt=6 />
 <filepath="elf.tif" id="elfimg" colfmt=6 />
+<filepath="eth2gc.tif" id="eth2gcimg" colfmt=0 />
 <filepath="file.tif" id="fileimg" colfmt=6 />
 <filepath="gcdvdsmall.tif" id="gcdvdsmall" colfmt=3 />
 <filepath="gcloader.tif" id="gcloaderimg" colfmt=0 />
-<filepath="hdd.tif" id="hdd" colfmt=9 palfmt=0 />
+<filepath="hdd.tif" id="hddimg" colfmt=9 palfmt=0 />
 <filepath="m2loader.tif" id="m2loaderimg" colfmt=0 />
 <filepath="memcard.png" id="memcardimg" colfmt=9 palfmt=0 />
 <filepath="memcard_ind.png" id="memcardimg_ind" colfmt=1 />
@@ -15,9 +17,8 @@
 <filepath="ntscj.tif" id="ntscjimg" colfmt=5 />
 <filepath="ntscu.tif" id="ntscuimg" colfmt=5 />
 <filepath="pal.tif" id="palimg" colfmt=5 />
-<filepath="qoob.png" id="qoob" colfmt=9 palfmt=0 />
-<filepath="qoob_ind.png" id="qoob_ind" colfmt=1 />
-<filepath="samba.tif" id="sambaimg" colfmt=3 />
+<filepath="qoob.png" id="qoobimg" colfmt=9 palfmt=0 />
+<filepath="qoob_ind.png" id="qoobimg_ind" colfmt=1 />
 <filepath="sdsmall.tif" id="sdsmall" colfmt=9 palfmt=0 />
 <filepath="systemimg.tif" id="systemimg" colfmt=3 />
 <filepath="usbgecko.tif" id="usbgeckoimg" colfmt=9 palfmt=0 />

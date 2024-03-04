@@ -51,7 +51,7 @@ GXTlutObj usbgeckoTlutObj;
 GXTexObj memcardTexObj;
 GXTlutObj memcardTlutObj;
 GXTexObj memcardIndTexObj;
-GXTexObj sambaTexObj;
+GXTexObj bbaTexObj;
 GXTexObj wiikeyTexObj;
 GXTexObj systemTexObj;
 GXTexObj btnhilightTexObj;
@@ -77,6 +77,7 @@ GXTexObj fileimgTexObj;
 GXTexObj dirimgTexObj;
 GXTexObj gcloaderTexObj;
 GXTexObj m2loaderTexObj;
+GXTexObj eth2gcTexObj;
 
 static char fbTextBuffer[256];
 
@@ -330,12 +331,12 @@ static void init_textures()
 	TPL_GetTexture(&imagesTPL, gcdvdsmall, &gcdvdsmallTexObj);
 	TPL_GetTextureCI(&imagesTPL, sdsmall, &sdsmallTexObj, &sdsmallTlutObj, GX_TLUT0);
 	GX_InitTexObjUserData(&sdsmallTexObj, &sdsmallTlutObj);
-	TPL_GetTextureCI(&imagesTPL, hdd, &hddTexObj, &hddTlutObj, GX_TLUT0);
+	TPL_GetTextureCI(&imagesTPL, hddimg, &hddTexObj, &hddTlutObj, GX_TLUT0);
 	GX_InitTexObjUserData(&hddTexObj, &hddTlutObj);
-	TPL_GetTextureCI(&imagesTPL, qoob, &qoobTexObj, &qoobTlutObj, GX_TLUT0);
+	TPL_GetTextureCI(&imagesTPL, qoobimg, &qoobTexObj, &qoobTlutObj, GX_TLUT0);
 	GX_InitTexObjFilterMode(&qoobTexObj, GX_LINEAR, GX_NEAR);
 	GX_InitTexObjUserData(&qoobTexObj, &qoobTlutObj);
-	TPL_GetTexture(&imagesTPL, qoob_ind, &qoobIndTexObj);
+	TPL_GetTexture(&imagesTPL, qoobimg_ind, &qoobIndTexObj);
 	GX_InitTexObjFilterMode(&qoobIndTexObj, GX_NEAR, GX_NEAR);
 	TPL_GetTexture(&imagesTPL, wodeimg, &wodeimgTexObj);
 	TPL_GetTexture(&imagesTPL, wiikeyimg, &wiikeyTexObj);
@@ -347,7 +348,7 @@ static void init_textures()
 	GX_InitTexObjFilterMode(&memcardIndTexObj, GX_NEAR, GX_NEAR);
 	TPL_GetTextureCI(&imagesTPL, usbgeckoimg, &usbgeckoTexObj, &usbgeckoTlutObj, GX_TLUT0);
 	GX_InitTexObjUserData(&usbgeckoTexObj, &usbgeckoTlutObj);
-	TPL_GetTexture(&imagesTPL, sambaimg, &sambaTexObj);
+	TPL_GetTexture(&imagesTPL, bbaimg, &bbaTexObj);
 	TPL_GetTexture(&buttonsTPL, btnhilight, &btnhilightTexObj);
 	TPL_GetTexture(&buttonsTPL, btndevice, &btndeviceTexObj);
 	TPL_GetTexture(&buttonsTPL, btnsettings, &btnsettingsTexObj);
@@ -376,6 +377,7 @@ static void init_textures()
 	TPL_GetTexture(&imagesTPL, dirimg, &dirimgTexObj);
 	TPL_GetTexture(&imagesTPL, gcloaderimg, &gcloaderTexObj);
 	TPL_GetTexture(&imagesTPL, m2loaderimg, &m2loaderTexObj);
+	TPL_GetTexture(&imagesTPL, eth2gcimg, &eth2gcTexObj);
 }
 
 static void drawInit()
@@ -542,8 +544,8 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			indTexObj = &memcardIndTexObj;
 			ss = 80; ts = 92;
 			break;
-		case TEX_SAMBA:
-			texObj = &sambaTexObj;
+		case TEX_BBA:
+			texObj = &bbaTexObj;
 			break;
 		case TEX_BTNHILIGHT:
 			GX_SetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO);
@@ -582,6 +584,9 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			break;
 		case TEX_M2LOADER:
 			texObj = &m2loaderTexObj;
+			break;
+		case TEX_ETH2GC:
+			texObj = &eth2gcTexObj; color = (GXColor) {216,216,216,255};
 			break;
 	}
 	
