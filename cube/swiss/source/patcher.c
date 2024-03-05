@@ -335,7 +335,7 @@ int install_code(int final)
 					patch     = gcloader_v2_card_bin;
 					patchSize = gcloader_v2_card_bin_size;
 					break;
-				case EMU_READ | EMU_ETHERNET:
+				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
 					patch     = gcloader_v2_eth_bin;
 					patchSize = gcloader_v2_eth_bin_size;
 					break;

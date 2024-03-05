@@ -510,7 +510,13 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 	bool patchDeviceReady = false;
 	if(devices[DEVICE_CUR]->features & FEAT_PATCHES) {
 		if(devices[DEVICE_CUR] == &__device_gcloader && (devices[DEVICE_CONFIG] == &__device_sd_a || devices[DEVICE_CONFIG] == &__device_sd_b || devices[DEVICE_CONFIG] == &__device_sd_c)) {
+			devices[DEVICE_PATCHES] = devices[DEVICE_CUR];
+			u32 emulated = devices[DEVICE_CUR]->emulated();
 			devices[DEVICE_PATCHES] = devices[DEVICE_CONFIG];
+			if((emulated ^ devices[DEVICE_CUR]->emulated()) & ~EMU_BUS_ARBITER) {
+				devices[DEVICE_PATCHES] = devices[DEVICE_CUR];
+				patchDeviceReady = true;
+			}
 		}
 		else {
 			devices[DEVICE_PATCHES] = devices[DEVICE_CUR];

@@ -337,7 +337,7 @@ u32 deviceHandler_GCLoader_emulated() {
 			else if (swissSettings.emulateReadSpeed)
 				return EMU_READ | EMU_READ_SPEED;
 			else if (swissSettings.emulateEthernet && (devices[DEVICE_CUR]->emulable & EMU_ETHERNET))
-				return EMU_READ | EMU_ETHERNET;
+				return EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER;
 			else if (swissSettings.emulateMemoryCard &&
 					!(swissSettings.audioStreaming && (devices[DEVICE_CUR]->quirks & QUIRK_GCLOADER_WRITE_CONFLICT)))
 				return EMU_READ | EMU_MEMCARD;

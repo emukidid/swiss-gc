@@ -35,7 +35,8 @@ void init_network(void *args) {
 		}
 
 		if(if_nametoindex("E20") == 1) {
-			__device_gcloader.emulable |= EMU_ETHERNET;
+			if(__device_gcloader.features & FEAT_PATCHES)
+				__device_gcloader.emulable |= EMU_ETHERNET;
 			__device_ata_c.emulable |= EMU_ETHERNET;
 			__device_sd_c.emulable |= EMU_ETHERNET;
 			__device_sd_a.emulable |= EMU_ETHERNET;
