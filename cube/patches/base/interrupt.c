@@ -148,6 +148,35 @@ uint32_t exi_get_interrupt_mask(unsigned chan)
 	return mask;
 }
 
+uint32_t pi_get_interrupt_mask(void)
+{
+	uint32_t mask = (OS_INTERRUPTMASK_PI_DI | OS_INTERRUPTMASK_PI_ERROR) >> (31 - OS_INTERRUPT_PI_ERROR);
+	uint32_t current = irq.mask;
+
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_CP)
+		rlwimi(mask, current, OS_INTERRUPT_PI_CP - 20, 20, 20);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_PE_TOKEN)
+		rlwimi(mask, current, OS_INTERRUPT_PI_PE_TOKEN - 22, 22, 22);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_PE_FINISH)
+		rlwimi(mask, current, OS_INTERRUPT_PI_PE_FINISH - 21, 21, 21);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_SI)
+		rlwimi(mask, current, OS_INTERRUPT_PI_SI - 28, 28, 28);
+//	if (IRQ_MASK & OS_INTERRUPTMASK_PI_DI)
+//		rlwimi(mask, current, OS_INTERRUPT_PI_DI - 29, 29, 29);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_RSW)
+		rlwimi(mask, current, OS_INTERRUPT_PI_RSW - 30, 30, 30);
+//	if (IRQ_MASK & OS_INTERRUPTMASK_PI_ERROR)
+//		rlwimi(mask, current, OS_INTERRUPT_PI_ERROR - 31, 31, 31);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_VI)
+		rlwimi(mask, current, OS_INTERRUPT_PI_VI - 23, 23, 23);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_DEBUG)
+		rlwimi(mask, current, OS_INTERRUPT_PI_DEBUG - 19, 19, 19);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_HSP)
+		rlwimi(mask, current, OS_INTERRUPT_PI_HSP - 18, 18, 18);
+
+	return mask;
+}
+
 void dispatch_interrupt(OSException exception, OSContext *context)
 {
 	OSInterruptMask cause = 0;
@@ -191,8 +220,14 @@ void dispatch_interrupt(OSException exception, OSContext *context)
 		rlwimi(cause, piintsr, 22 - OS_INTERRUPT_PI_PE_TOKEN,  OS_INTERRUPT_PI_PE_TOKEN,  OS_INTERRUPT_PI_PE_TOKEN);
 	if (IRQ_MASK & OS_INTERRUPTMASK_PI_PE_FINISH)
 		rlwimi(cause, piintsr, 21 - OS_INTERRUPT_PI_PE_FINISH, OS_INTERRUPT_PI_PE_FINISH, OS_INTERRUPT_PI_PE_FINISH);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_SI)
+		rlwimi(cause, piintsr, 28 - OS_INTERRUPT_PI_SI,        OS_INTERRUPT_PI_SI,        OS_INTERRUPT_PI_SI);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_DI)
+		rlwimi(cause, piintsr, 29 - OS_INTERRUPT_PI_DI,        OS_INTERRUPT_PI_DI,        OS_INTERRUPT_PI_DI);
+	if (IRQ_MASK & OS_INTERRUPTMASK_PI_RSW)
+		rlwimi(cause, piintsr, 30 - OS_INTERRUPT_PI_RSW,       OS_INTERRUPT_PI_RSW,       OS_INTERRUPT_PI_RSW);
 	if (IRQ_MASK & OS_INTERRUPTMASK_PI_ERROR)
-		rlwimi(cause, piintsr, 31 - OS_INTERRUPT_PI_ERROR,     OS_INTERRUPT_PI_SI,        OS_INTERRUPT_PI_ERROR);
+		rlwimi(cause, piintsr, 31 - OS_INTERRUPT_PI_ERROR,     OS_INTERRUPT_PI_ERROR,     OS_INTERRUPT_PI_ERROR);
 	if (IRQ_MASK & OS_INTERRUPTMASK_PI_VI)
 		rlwimi(cause, piintsr, 23 - OS_INTERRUPT_PI_VI,        OS_INTERRUPT_PI_VI,        OS_INTERRUPT_PI_VI);
 	if (IRQ_MASK & OS_INTERRUPTMASK_PI_DEBUG)

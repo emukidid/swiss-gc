@@ -365,7 +365,7 @@ dvd.bin:
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDI_PASSTHROUGH -DDVD
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000111100000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
@@ -386,7 +386,7 @@ dvd.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DDI_PASSTHROUGH -DDVD
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000111100000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
@@ -426,7 +426,7 @@ wkf.bin:
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000111100000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
@@ -447,7 +447,7 @@ wkf.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000111100000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
@@ -469,7 +469,7 @@ wkf.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000111100000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ -DQUEUE_SIZE=3
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
@@ -553,7 +553,7 @@ gcloader-v1.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000111100000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DDVD_MATH -DGCODE
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
@@ -576,7 +576,7 @@ gcloader-v1.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DDI_PASSTHROUGH -DGCODE
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1 -DDIRECT_DISC
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000111100000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DGCODE
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
@@ -598,7 +598,7 @@ gcloader-v2.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
 	@$(CC) -Os $(OPTS) -c base/DVDMath.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000000000000000111100000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000000000000000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c gcloader/gcloader.c -DDVD_MATH
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
@@ -619,7 +619,7 @@ gcloader-v2.card.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DGCODE
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000000000000000111100000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000000000000000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c gcloader/gcloader.c -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
@@ -639,7 +639,7 @@ gcloader-v2.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/audio.c
 	@$(CC) -Os $(OPTS) -c base/fifo.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000000000000000111100000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000000000000000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c gcloader/gcloader.c -DQUEUE_SIZE=3
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
@@ -658,7 +658,7 @@ gcloader-v2.eth.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DETH_EMULATOR -DGCODE -DNO_VIDEO
 	@$(CC) -Os $(OPTS) -c base/emulator_eth.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000000000000000111101000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000000000000000010001000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c gcloader/gcloader.c
 	@$(CC) -Os $(OPTS) -c bba/enc28j60.c

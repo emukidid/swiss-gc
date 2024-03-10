@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2021-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2021-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -31,5 +31,6 @@ OSInterruptMask mask_user_interrupts(OSInterruptMask mask);
 OSInterruptMask unmask_user_interrupts(OSInterruptMask mask);
 
 uint32_t exi_get_interrupt_mask(unsigned chan);
+uint32_t pi_get_interrupt_mask(void);
 
 #endif /* INTERRUPT_H */

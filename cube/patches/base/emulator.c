@@ -1061,11 +1061,13 @@ static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 
 static void pi_read(unsigned index, uint32_t *value)
 {
+	uint32_t mask = pi_get_interrupt_mask();
+
 	switch (index) {
 		case 0:
 			if (!(pi.reg.intsr & pi.reg.intmsk))
 				PI[0] = 1;
-			*value = pi.reg.intsr | (PI[0] & ~0b01000000000101);
+			*value = pi.reg.intsr | (PI[0] & ~mask);
 			break;
 		case 1:
 			*value = pi.reg.intmsk;
@@ -1077,14 +1079,16 @@ static void pi_read(unsigned index, uint32_t *value)
 
 static void pi_write(unsigned index, uint32_t value)
 {
+	uint32_t mask = pi_get_interrupt_mask();
+
 	switch (index) {
 		case 0:
-			PI[0] = value & 0b10111111111010;
+			PI[0] = value & ~mask;
 			pi.reg.intsr = ((value & 0b11000000000011) ^ pi.reg.intsr) & pi.reg.intsr;
 			pi_update_interrupts();
 			break;
 		case 1:
-			PI[1] = (value & 0b10111111111010) | (PI[1] & 0b01000000000101);
+			PI[1] = (value & ~mask) | (PI[1] & mask);
 			pi.reg.intmsk = value & 0b11111111111111;
 			pi_update_interrupts();
 			break;
