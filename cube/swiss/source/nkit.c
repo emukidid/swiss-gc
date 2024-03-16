@@ -1338,6 +1338,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x68, 0xCCBB, 0xBF7B7C5A, 0x421F5299A43CCD74,    1189888, +1458788352, {      94248,       +4056, 6496, 0xD19A }, "Power Link Game Enhancer Disc" },
 	{{ "GNHE5d\x00\x00" }, false, 0x73, 0xCCBB, 0x4B9B91E6, 0xAEC6721D4E3AB041,     866304, +1459111936, {      94248,       +4056, 6496, 0x71CD }, "Cube CD 15 (34)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x7B, 0xCCBB, 0xCC3182C3, 0x009AEBA340070CC2,   11837440, +1448140800, {      94248,       +4056, 6496, 0xCC3B }, "MaxPlay" },
+	{{ "GNHE5d\x00\x00" }, false, 0x7C, 0xCCBB, 0x26649910, 0x76B7CDED51201288,    2185216, +1457793024, {      94248,       +4056, 6496, 0xCD3A }, "Karat GC-you Pro Action Replay PAR GC-you" },
 	{{ "GNHE5d\x00\x00" }, false, 0x83, 0xCCBB, 0x564BDDF9, 0x91E9D9008467BF60,    1906688, +1458071552, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 02 (21)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x88, 0xCCBB, 0xF61CF908, 0xE369CEC46FA0233D,    3311616, +1456666624, {      94248,       +4056, 6496, 0x4C9F }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x89, 0xCCBB, 0x31DAF617, 0x6EF3EBBCCC9774A4,    1284096, +1458694144, {      94248,       +4056, 6496, 0x400E }, "Action Replay Ultimate Codes for Use with The Legend of Zelda: Twilight Princess" },
@@ -1349,6 +1350,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0xA4, 0xCCBB, 0xA04B47B2, 0x0B1283EE258112F2,    1245184, +1458733056, {      94248,       +4056, 6496, 0xD5E2 }, "Action Replay Ultimate Codes for Use with Final Fantasy: Crystal Chronicles" },
 	{{ "GNHE5d\x00\x00" }, false, 0xA9, 0xCCBB, 0xEB7F7BC6, 0x1F6713160B2BAF7F,     800768, +1459177472, {      94248,       +4056, 6496, 0xF61C }, "Cube CD 20 (40)" },
 	{{ "GNHE5d\x00\x00" }, false, 0xAA, 0xCCBB, 0xA5292C47, 0x076715BBB1E14944,    1355776, +1458622464, {      94248,       +4056, 6496, 0x9839 }, "Ultimate Cheats für The Legend of Zelda: The Wind Waker" },
+	{{ "GNHE5d\x00\x00" }, false, 0xB2, 0xCCBB, 0x1C41B917, 0x7377C1D04F62513F,     964608, +1459013632, {      94248,       +4056, 6496, 0x6DE7 }, "Karat GC-you Pro Action Replay: Best Price! Sokukouryaku GC-you Vol. 1" },
 	{{ "GNHE5d\x00\x00" }, false, 0xB2, 0xCCBB, 0xD58BB1D1, 0x96E3E05621D4ECBB,    1867776, +1458110464, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 10 (29)" },
 	{{ "GNHE5d\x00\x00" }, false, 0xB4, 0xCCBB, 0x20843654, 0x5DBD31BFC23686E8,    1083392, +1458894848, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 06 (25)" },
 	{{ "GNHE5d\x00\x00" }, false, 0xB4, 0xCCBB, 0x9A3FE338, 0x6C7CC9A9C272E7CC,   15079424, +1444898816, {      94248,       +4056, 6496, 0xA25A }, "Max Memory Power Saves: Volume 1" },
@@ -2095,7 +2097,7 @@ static const struct {
 	{{ "UGPJ01\x00\x03" }, false, 0xDE, 0xC4F0, 0xDFF567CB, 0xFB2218FBFA6AB9FE,    2473984, +1457504256, {    2003524,      +28092, 6496, 0xE53B }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
-#define REDUMP_COUNT (1986)
+#define REDUMP_COUNT (1988)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
