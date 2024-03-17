@@ -14,27 +14,27 @@
 #include "devices/dvd/deviceHandler-DVD.h"
 
 static int httpd_in_use = 0;
-static lwp_t httd_handle = (lwp_t)NULL;
+static lwp_t httpd_handle = LWP_THREAD_NULL;
 const static char http_200[] = "HTTP/1.1 200 OK\r\n";
 
-const static char indexdata[] = "<html> \
-                               <head><title>Swiss httpd page</title></head> \
-                               <body> \
-                               <a href=\"dvd.iso\">Dump DVD Disc</a><br> \
-							   <a href=\"ipl.bin\">Dump IPL Mask ROM</a><br> \
-                               </body> \
-                               </html>";
-							   
-const static char nodisc[] = "<html> \
-                               <head><title>Swiss httpd page</title></head> \
-                               <body> \
-                               No DVD Disc found for dumping. Error is: %s \
-                               </body> \
-                               </html>";
+const static char indexdata[] = "<html>" \
+                                "<head><title>Swiss httpd page</title></head>" \
+                                "<body>" \
+                                "<a href=\"dvd.iso\">Dump DVD Disc</a><br>" \
+                                "<a href=\"ipl.bin\">Dump IPL Mask ROM</a><br>" \
+                                "</body>" \
+                                "</html>";
 
-const static char http_html_hdr[] = "Content-type: text/html\r\n\r\n";
-const static char http_data_hdr[] = "Content-type: application/octet-stream\r\n\r\n";
-const static char http_len_hdr[] = "Content-Length: %d\r\n\r\n";
+const static char nodisc[] = "<html>" \
+                             "<head><title>Swiss httpd page</title></head>" \
+                             "<body>" \
+                             "No DVD Disc found for dumping. Error is: %s" \
+                             "</body>" \
+                             "</html>";
+
+const static char http_html_hdr[] = "Content-Type: text/html\r\n\r\n";
+const static char http_data_hdr[] = "Content-Type: application/octet-stream\r\n" \
+                                    "Content-Length: %d\r\n\r\n";
 const static char http_get_index[] = "GET / HTTP/1.1\r\n";
 const static char http_get_dvd[] = "GET /dvd.iso HTTP/1.1\r\n";
 const static char http_get_ipl[] = "GET /ipl.bin HTTP/1.1\r\n";
@@ -94,10 +94,9 @@ void *httpd (void *arg) {
 					// download a disc image
 					else if ( !strncmp( temp, http_get_dvd, strlen(http_get_dvd) ) ) {
 						net_send(csock, http_200, strlen(http_200), 0);
-						net_send(csock, http_data_hdr, strlen(http_data_hdr), 0);
 						// See if there's a valid disc in the drive
 						if(initialize_disc(DISABLE_AUDIO) != DRV_ERROR) {
-							sprintf(temp, http_len_hdr, DISC_SIZE);
+							sprintf(temp, http_data_hdr, DISC_SIZE);
 							net_send(csock, temp, strlen(temp), 0);
 							// Loop and pump DVD data out
 							httpd_in_use = 1;
@@ -121,7 +120,7 @@ void *httpd (void *arg) {
 					// download the IPL
 					else if ( !strncmp( temp, http_get_ipl, strlen(http_get_ipl) ) ) {
 						net_send(csock, http_200, strlen(http_200), 0);
-						sprintf(temp, http_len_hdr, 2*1024*1024);
+						sprintf(temp, http_data_hdr, 2*1024*1024);
 						net_send(csock, temp, strlen(temp), 0);
 						// Loop and pump IPL data out
 						httpd_in_use = 1;
@@ -150,7 +149,7 @@ int is_httpd_in_use() {
 
 void init_httpd_thread() {
 	if(net_initialized) {
-		LWP_CreateThread(	&httd_handle,	/* thread handle */ 
+		LWP_CreateThread(	&httpd_handle,	/* thread handle */ 
 							httpd,			/* code */ 
 							NULL,			/* arg pointer for thread */
 							NULL,			/* stack base */ 
