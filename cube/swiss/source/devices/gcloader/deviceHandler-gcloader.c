@@ -311,10 +311,16 @@ bool deviceHandler_GCLoader_test() {
 				}
 			}
 			__device_gcloader.hwName = "GC Loader";
-			__device_gcloader.features |=  FEAT_AUDIO_STREAMING;
+			__device_gcloader.features |= FEAT_AUDIO_STREAMING;
 		} else {
 			__device_gcloader.hwName = "GC Loader compatible";
-			__device_gcloader.features &= ~FEAT_AUDIO_STREAMING;
+			
+			if (DVD_PrepareStreamAbs(&commandBlock, 32*1024, 0) == DVD_ERROR_OK &&
+				DVD_GetStreamErrorStatus(&commandBlock) == TRUE &&
+				DVD_CancelStream(&commandBlock) == DVD_ERROR_OK)
+				__device_gcloader.features |=  FEAT_AUDIO_STREAMING;
+			else
+				__device_gcloader.features &= ~FEAT_AUDIO_STREAMING;
 		}
 		return true;
 	}
