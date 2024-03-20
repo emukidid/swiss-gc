@@ -316,8 +316,9 @@ bool deviceHandler_GCLoader_test() {
 			__device_gcloader.hwName = "GC Loader compatible";
 			
 			if (DVD_PrepareStreamAbs(&commandBlock, 32*1024, 0) == DVD_ERROR_OK &&
-				DVD_GetStreamErrorStatus(&commandBlock) == TRUE &&
-				DVD_CancelStream(&commandBlock) == DVD_ERROR_OK)
+				(u8)DVD_GetStreamErrorStatus(&commandBlock) == TRUE &&
+				DVD_CancelStream(&commandBlock) == DVD_ERROR_OK &&
+				(u8)DVD_GetStreamErrorStatus(&commandBlock) == FALSE)
 				__device_gcloader.features |=  FEAT_AUDIO_STREAMING;
 			else
 				__device_gcloader.features &= ~FEAT_AUDIO_STREAMING;
