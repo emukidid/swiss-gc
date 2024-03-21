@@ -2388,9 +2388,14 @@ uiDrawObj_t* draw_game_info() {
 			char* rest = &txtbuffer[0]; 
 			char* tok;
 			int line = 0;
+			float minScale = 1.0f;
 			while ((tok = strtok_r (rest,"\r\n", &rest))) {
-				float scale = GetTextScaleToFitInWidth(tok,(getVideoMode()->fbWidth-78)-75);
-				DrawAddChild(container, DrawStyledLabel(640/2, 315+(line*scale*24), tok, scale, true, defaultColor));
+				minScale = MIN(GetTextScaleToFitInWidth(tok,(getVideoMode()->fbWidth-78)-75), minScale);
+			}
+			sprintf(txtbuffer, "%s", curFile.meta->bannerDesc.description);
+			rest = &txtbuffer[0]; 
+			while ((tok = strtok_r (rest,"\r\n", &rest))) {
+				DrawAddChild(container, DrawStyledLabel(640/2, 315+(line*minScale*24), tok, minScale, true, defaultColor));
 				line++;
 			}
 		}
