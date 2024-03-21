@@ -1,10 +1,9 @@
+/* SPDX-License-Identifier: 0BSD */
+
 /*
  * Private includes and definitions for userspace use of XZ Embedded
  *
  * Author: Lasse Collin <lasse.collin@tukaani.org>
- *
- * This file has been put into the public domain.
- * You can do whatever you want with this file.
  */
 
 #ifndef XZ_CONFIG_H
@@ -25,23 +24,20 @@
 /* #define XZ_DEC_ARM */
 /* #define XZ_DEC_ARMTHUMB */
 /* #define XZ_DEC_ARM64 */
+/* #define XZ_DEC_RISCV */
 #define XZ_DEC_POWERPC
 /* #define XZ_DEC_IA64 */
 /* #define XZ_DEC_SPARC */
 
 /*
- * MSVC doesn't support modern C but XZ Embedded is mostly C89
- * so these are enough.
+ * Visual Studio 2013 update 2 supports only __inline, not inline.
+ * MSVC v19.0 / VS 2015 and newer support both.
  */
-#ifdef _MSC_VER
-typedef unsigned char bool;
-#	define true 1
-#	define false 0
+#if defined(_MSC_VER) && _MSC_VER < 1900 && !defined(inline)
 #	define inline __inline
-#else
-#	include <stdbool.h>
 #endif
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -60,6 +56,16 @@ void memzero(void *buf, size_t size);
 #	define min(x, y) ((x) < (y) ? (x) : (y))
 #endif
 #define min_t(type, x, y) min(x, y)
+
+#ifndef fallthrough
+#	if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202000
+#		define fallthrough [[fallthrough]]
+#	elif defined(__GNUC__) && __GNUC__ >= 7
+#		define fallthrough __attribute__((__fallthrough__))
+#	else
+#		define fallthrough do {} while (0)
+#	endif
+#endif
 
 /*
  * Some functions have been marked with __always_inline to keep the
