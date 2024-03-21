@@ -165,6 +165,7 @@ int main(int argc, char *argv[])
 	swissSettings.aveCompat = 1;
 	swissSettings.enableFileManagement = 0;
 	swissSettings.recentListLevel = 2;
+	memset(&swissSettings.recent[0][0], 0, PATHNAME_MAX);
 	Initialise();
 
 	needsDeviceChange = 1;
