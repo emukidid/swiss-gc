@@ -132,6 +132,8 @@ extern u8 VIConfigureHook1[];
 extern u32 VIConfigureHook1_length;
 extern u8 VIConfigureHook1GCVideo[];
 extern u32 VIConfigureHook1GCVideo_length;
+extern u8 VIConfigureHook1RT4K[];
+extern u32 VIConfigureHook1RT4K_length;
 extern u8 VIConfigureHook2[];
 extern u32 VIConfigureHook2_length;
 extern u8 VIConfigurePanHook[];
@@ -173,6 +175,7 @@ enum patchIds {
 	VI_CONFIGUREAUTOP,
 	VI_CONFIGUREHOOK1,
 	VI_CONFIGUREHOOK1_GCVIDEO,
+	VI_CONFIGUREHOOK1_RT4K,
 	VI_CONFIGUREHOOK2,
 	VI_CONFIGUREPANHOOK,
 	VI_CONFIGUREPANHOOKD,

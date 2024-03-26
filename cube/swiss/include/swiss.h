@@ -141,6 +141,7 @@ typedef struct {
 	int igrType;
 	int initNetworkAtStart;
 	int aveCompat;
+	int rt4kOptim;
 	u8 configDeviceId;	// see deviceHandler.h
 	int fileBrowserType;
 	int bs2Boot;

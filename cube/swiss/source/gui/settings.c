@@ -60,8 +60,9 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"Flatten directory:\n\nFlattens a directory structure matching a glob pattern.",
 	"Stop DVD Motor at startup:\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the DVD drive from spinning when Swiss starts\n\nThis option is mostly for users booting from game\nexploits where the disc will already be spinning.",
 	"SD/IDE Speed:\n\nThe speed to try and use on the EXI bus for SD Card Adapters or IDE-EXI devices.\n32 MHz may not work on some SD cards.",
-	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nAVE P-DOL - Disable progressive scan mode\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply firmware workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
-	"Force DTV Status:\n\nDisabled - Use signal from the video interface (default)\nEnabled - Force on in case of hardware fault",
+	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nAVE P-DOL - Disable progressive scan mode\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply general workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
+	"Force DTV Status:\n\nDisabled - Use detect signal from the Digital AV Out (default)\nEnabled - Force detection in the case of a hardware fault",
+	"Optimise for RetroTINK-4K:\n\nRequires GCVideo-DVI v3.0 or later with Fix Resolution Off.",
 	"Enable USB Gecko debug output:\n\nIf a USB Gecko is present in slot B, debug output from\nSwiss & in game (if the game supported output over OSReport)\nwill be output. If nothing is reading the data out from the\ndevice it may cause Swiss/games to hang."
 };
 
@@ -75,7 +76,7 @@ static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL,
+	"Force Video Active:\n\nA workaround for GCVideo-DVI v3.0 series, obsoleted by 3.1.",
 	NULL,
 	"Pause for resolution change:\n\nWhen enabled, a change in active video resolution will pause\nthe game for 2 seconds.",
 	"Auto-load all cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. /swiss/cheats/GPOP8D.txt (on a compatible device)\nthen all cheats in the file will be enabled",
@@ -244,6 +245,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, page_y_ofs, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_1_NEXT-1)),scrollBarTabHeight));
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Global Settings (1/5):"));
 		bool dtvEnable = swissSettings.aveCompat < 3;
+		bool rt4kEnable = swissSettings.aveCompat == 1;
 		bool dbgEnable = devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
 		if(option < SET_STOP_MOTOR) {
@@ -264,6 +266,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "SD/IDE Speed:", swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == SET_EXI_SPEED, true);
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, dtvEnable);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Optimise for RetroTINK-4K:", swissSettings.rt4kOptim, option == SET_RT4K_OPTIM, rt4kEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "USB Gecko debug output:", swissSettings.debugUSB, option == SET_ENABLE_USBGECKODBG, dbgEnable);
 		}
 	}
@@ -517,6 +520,10 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				if(swissSettings.aveCompat < 3)
 					swissSettings.forceDTVStatus ^= 1;
 			break;
+			case SET_RT4K_OPTIM:
+				if(swissSettings.aveCompat == 1)
+					swissSettings.rt4kOptim ^= 1;
+			break;
 			case SET_ENABLE_USBGECKODBG:
 				if(devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko))
 					swissSettings.debugUSB ^= 1;
@@ -526,6 +533,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_SWISS_VIDEOMODE:
 			case SET_AVE_COMPAT:
 			case SET_FORCE_DTVSTATUS:
+			case SET_RT4K_OPTIM:
 			{
 				// Change Swiss video mode if it was modified.
 				GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
