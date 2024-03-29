@@ -243,10 +243,12 @@ bool deviceHandler_SMB_test() {
 		if(ifname[0] == 'E') {
 			__device_smb.hwName = "ENC28J60";
 			__device_smb.deviceTexture = (textureImage){TEX_ETH2GC, 64, 80, 64, 80};
-			if(ifname[1] == '0')
+			if(ifname[1] == 'A')
 				__device_smb.location = LOC_MEMCARD_SLOT_A;
-			else if(ifname[1] == '1')
+			else if(ifname[1] == 'B')
 				__device_smb.location = LOC_MEMCARD_SLOT_B;
+			else if(ifname[1] == '1')
+				__device_smb.location = LOC_SERIAL_PORT_1;
 			else if(ifname[1] == '2')
 				__device_smb.location = LOC_SERIAL_PORT_2;
 		}

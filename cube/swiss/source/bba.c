@@ -70,6 +70,7 @@ bool bba_exists(u32 location)
 	if ((location & LOC_SERIAL_PORT_1) && EXI_GetID(EXI_CHANNEL_0, EXI_DEVICE_2, &id)) {
 		switch (id) {
 			case EXI_MX98730EC_ID:
+			case EXI_ENC28J60_ID:
 				return true;
 		}
 	}
