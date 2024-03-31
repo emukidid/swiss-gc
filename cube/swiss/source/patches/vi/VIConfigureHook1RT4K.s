@@ -13,12 +13,12 @@ VIConfigureHook1RT4K:
 	stw			%r3, VAR_RMODE (%r4)
 	lbz			%r0, VAR_VFILTER_ON (%r4)
 	cmpwi		%r0, 0
-	beq			5f
+	beq			1f
 	addi		%r4, %r4, VAR_VFILTER
 	addi		%r3, %r3, 50
 	lswi		%r5, %r4, 7
 	stswi		%r5, %r3, 7
-5:	mfmsr		%r3
+1:	mfmsr		%r3
 	rlwinm		%r4, %r3, 0, 17, 15
 	extrwi		%r3, %r3, 1, 16
 	mtmsr		%r4

@@ -95,6 +95,8 @@ void *installPatch(int patchId) {
 			patch = VIConfigureHook1RT4K; patchSize = VIConfigureHook1RT4K_length; break;
 		case VI_CONFIGUREHOOK2:
 			patch = VIConfigureHook2; patchSize = VIConfigureHook2_length; break;
+		case VI_CONFIGURENOYSCALE:
+			patch = VIConfigureNoYScale; patchSize = VIConfigureNoYScale_length; break;
 		case VI_CONFIGUREPANHOOK:
 			patch = VIConfigurePanHook; patchSize = VIConfigurePanHook_length; break;
 		case VI_CONFIGUREPANHOOKD:
@@ -9473,6 +9475,9 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				case 13: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE1080I50); break;
 				case 14: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE540P50);  break;
 			}
+			
+			if (swissSettings.aveCompat == 1 && swissSettings.rt4kOptim)
+				VIConfigureHook1 = getPatchAddr(VI_CONFIGURENOYSCALE);
 			
 			switch (j) {
 				case 0:

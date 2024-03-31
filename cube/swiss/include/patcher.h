@@ -136,6 +136,8 @@ extern u8 VIConfigureHook1RT4K[];
 extern u32 VIConfigureHook1RT4K_length;
 extern u8 VIConfigureHook2[];
 extern u32 VIConfigureHook2_length;
+extern u8 VIConfigureNoYScale[];
+extern u32 VIConfigureNoYScale_length;
 extern u8 VIConfigurePanHook[];
 extern u32 VIConfigurePanHook_length;
 extern u8 VIConfigurePanHookD[];
@@ -177,6 +179,7 @@ enum patchIds {
 	VI_CONFIGUREHOOK1_GCVIDEO,
 	VI_CONFIGUREHOOK1_RT4K,
 	VI_CONFIGUREHOOK2,
+	VI_CONFIGURENOYSCALE,
 	VI_CONFIGUREPANHOOK,
 	VI_CONFIGUREPANHOOKD,
 	VI_GETRETRACECOUNTHOOK,
