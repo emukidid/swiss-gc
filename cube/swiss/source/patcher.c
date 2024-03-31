@@ -14484,6 +14484,22 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_gecko("Patched:[%.6s]\n", gameID);
 				break;
 		}
+	} else if ((!strncmp(gameID, "GVLD69", 6) || !strncmp(gameID, "GVLF69", 6) || !strncmp(gameID, "GVLP69", 6)) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 5309888:
+				*(s16 *)(data + 0x80219932 - 0x800034A0 + 0x4A0) = 384;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if (!strncmp(gameID, "GVLE69", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 5304256:
+				*(s16 *)(data + 0x80219732 - 0x800034A0 + 0x4A0) = 384;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				break;
+		}
 	} else if (!strncmp(gameID, "GWRE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3431456:
