@@ -7827,11 +7827,11 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		{  576, 331, 34, 119, 15, 12, NULL, 0, "__GXInitGX" }	// SN Systems ProDG
 	};
 	FuncPattern GXAdjustForOverscanSigs[5] = {
-		{ 57,  6,  4, 0, 3, 11, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscanD" },
-		{ 67,  6,  4, 0, 3, 14, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscanD" },
-		{ 72, 17, 15, 0, 3,  5, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan" },
-		{ 63, 11,  8, 1, 2, 10, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan" },	// SN Systems ProDG
-		{ 81, 17, 15, 0, 3,  7, GXAdjustForOverscanPatch, GXAdjustForOverscanPatch_length, "GXAdjustForOverscan" }
+		{ 57,  6,  4, 0, 3, 11, NULL, 0, "GXAdjustForOverscanD" },
+		{ 67,  6,  4, 0, 3, 14, NULL, 0, "GXAdjustForOverscanD" },
+		{ 72, 17, 15, 0, 3,  5, NULL, 0, "GXAdjustForOverscan" },
+		{ 63, 11,  8, 1, 2, 10, NULL, 0, "GXAdjustForOverscan" },	// SN Systems ProDG
+		{ 81, 17, 15, 0, 3,  7, NULL, 0, "GXAdjustForOverscan" }
 	};
 	FuncPattern GXSetDispCopySrcSigs[7] = {
 		{ 104, 44, 10, 5, 5, 6, NULL, 0, "GXSetDispCopySrcD" },
@@ -7843,15 +7843,15 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		{  31, 11,  8, 0, 0, 0, NULL, 0, "GXSetDispCopySrc" }	// SN Systems ProDG
 	};
 	FuncPattern GXSetDispCopyYScaleSigs[9] = {
-		{ 100, 33, 8, 8, 4, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScaleD" },
-		{  85, 32, 4, 6, 4, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScaleD" },
-		{  82, 33, 4, 6, 4, 5, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScaleD" },
-		{  47, 15, 8, 2, 0, 4, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" },
-		{  53, 17, 4, 1, 5, 8, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" },
-		{  50, 14, 4, 1, 5, 8, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" },
-		{  44,  8, 4, 1, 2, 3, GXSetDispCopyYScalePatch2, GXSetDispCopyYScalePatch2_length, "GXSetDispCopyYScale" },	// SN Systems ProDG
-		{  51, 16, 4, 1, 5, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" },
-		{  52, 17, 4, 1, 5, 7, GXSetDispCopyYScalePatch1, GXSetDispCopyYScalePatch1_length, "GXSetDispCopyYScale" }		// SN Systems ProDG
+		{ 100, 33, 8, 8, 4, 7, NULL, 0, "GXSetDispCopyYScaleD" },
+		{  85, 32, 4, 6, 4, 7, NULL, 0, "GXSetDispCopyYScaleD" },
+		{  82, 33, 4, 6, 4, 5, NULL, 0, "GXSetDispCopyYScaleD" },
+		{  47, 15, 8, 2, 0, 4, NULL, 0, "GXSetDispCopyYScale" },
+		{  53, 17, 4, 1, 5, 8, NULL, 0, "GXSetDispCopyYScale" },
+		{  50, 14, 4, 1, 5, 8, NULL, 0, "GXSetDispCopyYScale" },
+		{  44,  8, 4, 1, 2, 3, NULL, 0, "GXSetDispCopyYScale" },	// SN Systems ProDG
+		{  51, 16, 4, 1, 5, 7, NULL, 0, "GXSetDispCopyYScale" },
+		{  52, 17, 4, 1, 5, 7, NULL, 0, "GXSetDispCopyYScale" }		// SN Systems ProDG
 	};
 	FuncPattern GXSetCopyFilterSigs[7] = {
 		{ 567, 183, 44, 32, 36, 38, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilterD" },
@@ -7974,6 +7974,35 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 			if (!swissSettings.forceVFilter)
 				swissSettings.forceVFilter = 1;
 			break;
+	}
+	
+	if (in_range(swissSettings.gameVMode, 1, 7)) {
+		for (j = 0; j < sizeof(GXAdjustForOverscanSigs) / sizeof(FuncPattern); j++) {
+			GXAdjustForOverscanSigs[j].Patch       = GXAdjustForOverscanPatch;
+			GXAdjustForOverscanSigs[j].PatchLength = GXAdjustForOverscanPatch_length;
+		}
+	}
+	
+	if (swissSettings.aveCompat == 1 && swissSettings.rt4kOptim) {
+		for (j = 0; j < sizeof(GXSetDispCopyYScaleSigs) / sizeof(FuncPattern); j++) {
+			if (j == 6) {
+				GXSetDispCopyYScaleSigs[j].Patch       = GXSetDispCopyYScaleStub2;
+				GXSetDispCopyYScaleSigs[j].PatchLength = GXSetDispCopyYScaleStub2_length;
+			} else {
+				GXSetDispCopyYScaleSigs[j].Patch       = GXSetDispCopyYScaleStub1;
+				GXSetDispCopyYScaleSigs[j].PatchLength = GXSetDispCopyYScaleStub1_length;
+			}
+		}
+	} else if (in_range(swissSettings.gameVMode, 1, 7)) {
+		for (j = 0; j < sizeof(GXSetDispCopyYScaleSigs) / sizeof(FuncPattern); j++) {
+			if (j == 6) {
+				GXSetDispCopyYScaleSigs[j].Patch       = GXSetDispCopyYScalePatch2;
+				GXSetDispCopyYScaleSigs[j].PatchLength = GXSetDispCopyYScalePatch2_length;
+			} else {
+				GXSetDispCopyYScaleSigs[j].Patch       = GXSetDispCopyYScalePatch1;
+				GXSetDispCopyYScaleSigs[j].PatchLength = GXSetDispCopyYScalePatch1_length;
+			}
+		}
 	}
 	
 	if (swissSettings.gameVMode == 3 || swissSettings.gameVMode == 10)
@@ -10168,51 +10197,51 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (in_range(swissSettings.gameVMode, 1, 7)) {
-		for (j = 0; j < sizeof(GXAdjustForOverscanSigs) / sizeof(FuncPattern); j++)
-			if (GXAdjustForOverscanSigs[j].offsetFoundAt) break;
+	for (j = 0; j < sizeof(GXAdjustForOverscanSigs) / sizeof(FuncPattern); j++)
+		if (GXAdjustForOverscanSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(GXAdjustForOverscanSigs) / sizeof(FuncPattern) && (i = GXAdjustForOverscanSigs[j].offsetFoundAt)) {
+		u32 *GXAdjustForOverscan = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
-		if (j < sizeof(GXAdjustForOverscanSigs) / sizeof(FuncPattern) && (i = GXAdjustForOverscanSigs[j].offsetFoundAt)) {
-			u32 *GXAdjustForOverscan = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			
-			if (GXAdjustForOverscan) {
-				if (GXAdjustForOverscanSigs[j].Patch) {
-					memset(data + i, 0, GXAdjustForOverscanSigs[j].Length * sizeof(u32));
-					memcpy(data + i, GXAdjustForOverscanSigs[j].Patch, GXAdjustForOverscanSigs[j].PatchLength);
-				}
-				print_gecko("Found:[%s$%i] @ %08X\n", GXAdjustForOverscanSigs[j].Name, j, GXAdjustForOverscan);
+		if (GXAdjustForOverscan) {
+			if (GXAdjustForOverscanSigs[j].Patch) {
+				memset(data + i, 0, GXAdjustForOverscanSigs[j].Length * sizeof(u32));
+				memcpy(data + i, GXAdjustForOverscanSigs[j].Patch, GXAdjustForOverscanSigs[j].PatchLength);
 			}
+			print_gecko("Found:[%s$%i] @ %08X\n", GXAdjustForOverscanSigs[j].Name, j, GXAdjustForOverscan);
 		}
+	}
+	
+	for (j = 0; j < sizeof(GXSetDispCopyYScaleSigs) / sizeof(FuncPattern); j++)
+		if (GXSetDispCopyYScaleSigs[j].offsetFoundAt) break;
+	
+	if (j < sizeof(GXSetDispCopyYScaleSigs) / sizeof(FuncPattern) && (i = GXSetDispCopyYScaleSigs[j].offsetFoundAt)) {
+		u32 *GXSetDispCopyYScale = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		u32 __GXData;
 		
-		for (j = 0; j < sizeof(GXSetDispCopyYScaleSigs) / sizeof(FuncPattern); j++)
-			if (GXSetDispCopyYScaleSigs[j].offsetFoundAt) break;
-		
-		if (j < sizeof(GXSetDispCopyYScaleSigs) / sizeof(FuncPattern) && (i = GXSetDispCopyYScaleSigs[j].offsetFoundAt)) {
-			u32 *GXSetDispCopyYScale = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			u32 __GXData;
-			
-			if (GXSetDispCopyYScale) {
-				if (GXSetDispCopyYScaleSigs[j].Patch) {
-					switch (j) {
-						case 0: __GXData = data[i + 65]      & 0x1FFFFF; break;
-						case 1: __GXData = data[i + 56]      & 0x1FFFFF; break;
-						case 2: __GXData = data[i + 55]      & 0x1FFFFF; break;
-						case 3:
-						case 4:
-						case 5: __GXData = data[i +  7]      & 0x1FFFFF; break;
-						case 6: __GXData = data[i +  7] >> 5 & 0x1F0000; break;
-						case 7: __GXData = data[i +  7]      & 0x1FFFFF; break;
-						case 8: __GXData = data[i + 13]      & 0x1FFFFF; break;
-					}
-					
-					memset(data + i, 0, GXSetDispCopyYScaleSigs[j].Length * sizeof(u32));
-					memcpy(data + i, GXSetDispCopyYScaleSigs[j].Patch, GXSetDispCopyYScaleSigs[j].PatchLength);
-					
-					if (GXSetDispCopyYScaleSigs[j].Patch != GXSetDispCopyYScalePatch2)
-						data[i + 6] |= __GXData;
+		if (GXSetDispCopyYScale) {
+			if (GXSetDispCopyYScaleSigs[j].Patch) {
+				switch (j) {
+					case 0: __GXData = data[i + 65]      & 0x1FFFFF; break;
+					case 1: __GXData = data[i + 56]      & 0x1FFFFF; break;
+					case 2: __GXData = data[i + 55]      & 0x1FFFFF; break;
+					case 3:
+					case 4:
+					case 5: __GXData = data[i +  7]      & 0x1FFFFF; break;
+					case 6: __GXData = data[i +  7] >> 5 & 0x1F0000; break;
+					case 7: __GXData = data[i +  7]      & 0x1FFFFF; break;
+					case 8: __GXData = data[i + 13]      & 0x1FFFFF; break;
 				}
-				print_gecko("Found:[%s$%i] @ %08X\n", GXSetDispCopyYScaleSigs[j].Name, j, GXSetDispCopyYScale);
+				
+				memset(data + i, 0, GXSetDispCopyYScaleSigs[j].Length * sizeof(u32));
+				memcpy(data + i, GXSetDispCopyYScaleSigs[j].Patch, GXSetDispCopyYScaleSigs[j].PatchLength);
+				
+				if (GXSetDispCopyYScaleSigs[j].Patch == GXSetDispCopyYScalePatch1)
+					data[i + 6] |= __GXData;
+				if (GXSetDispCopyYScaleSigs[j].Patch == GXSetDispCopyYScaleStub1)
+					data[i + 0] |= __GXData;
 			}
+			print_gecko("Found:[%s$%i] @ %08X\n", GXSetDispCopyYScaleSigs[j].Name, j, GXSetDispCopyYScale);
 		}
 	}
 	

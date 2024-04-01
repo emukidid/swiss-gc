@@ -179,6 +179,7 @@ void updateVideoMode(GXRModeObj *m) {
 		}
 	}
 	if(swissSettings.aveCompat == 1 && swissSettings.rt4kOptim) {
+		m->xfbHeight = m->efbHeight;
 		m->viWidth = m->fbWidth;
 		m->viXOrigin = 40;
 	} else {

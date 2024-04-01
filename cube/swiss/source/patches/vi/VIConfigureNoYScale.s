@@ -1,4 +1,3 @@
-#include "reservedarea.h"
 
 .globl VIConfigureNoYScale
 VIConfigureNoYScale:
@@ -9,9 +8,9 @@ VIConfigureNoYScale:
 	lbz			%r0, 25 (%r3)
 	cmpwi		%r0, 0
 	beq			1f
-	srwi		%r7, %r6, 1
-	addi		%r7, %r7, 2
-	cmpw		%r7, %r5
+	srwi		%r6, %r6, 1
+	addi		%r6, %r6, 2
+	cmpw		%r6, %r5
 	beq			2f
 1:	clrrwi		%r6, %r5, 1
 	sth			%r6, 8 (%r3)
