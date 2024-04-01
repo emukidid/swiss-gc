@@ -309,7 +309,8 @@ bool deviceHandler_FSP_test() {
 				__device_fsp.location = LOC_SERIAL_PORT_1;
 			else if(ifname[1] == '2')
 				__device_fsp.location = LOC_SERIAL_PORT_2;
-		}
+		} else if(ifname[0] == 'e')
+			__device_fsp.location = LOC_SERIAL_PORT_1;
 	}
 	return net_initialized || bba_exists(LOC_ANY);
 }
@@ -350,7 +351,6 @@ DEVICEHANDLER_INTERFACE __device_fsp = {
 	.deviceTexture = {TEX_BBA, 140, 64, 140, 64},
 	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
 	.emulable = EMU_READ|EMU_AUDIO_STREAMING|EMU_ETHERNET,
-	.location = LOC_SERIAL_PORT_1,
 	.initial = &initial_FSP,
 	.test = deviceHandler_FSP_test,
 	.info = deviceHandler_FSP_info,

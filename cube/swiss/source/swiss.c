@@ -207,6 +207,8 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 		sprintf(txtbuffer, "%s", "Hi Speed Port");
 	else if(devices[DEVICE_CUR]->location == LOC_SYSTEM)
 		sprintf(txtbuffer, "%s", "System");
+	else
+		sprintf(txtbuffer, "%s", "Unknown");
 	uiDrawObj_t *devLocationLabel = DrawStyledLabel(30 + ((135-30) / 2), 195, txtbuffer, 0.65f, true, defaultColor);
 	DrawAddChild(containerPanel, devLocationLabel);
 	

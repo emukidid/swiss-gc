@@ -246,7 +246,8 @@ bool deviceHandler_FTP_test() {
 				__device_ftp.location = LOC_SERIAL_PORT_1;
 			else if(ifname[1] == '2')
 				__device_ftp.location = LOC_SERIAL_PORT_2;
-		}
+		} else if(ifname[0] == 'e')
+			__device_ftp.location = LOC_SERIAL_PORT_1;
 	}
 	return net_initialized || bba_exists(LOC_ANY);
 }
@@ -270,7 +271,6 @@ DEVICEHANDLER_INTERFACE __device_ftp = {
 	.deviceDescription = "Configurable via the settings screen",
 	.deviceTexture = {TEX_BBA, 140, 64, 140, 64},
 	.features = FEAT_READ|FEAT_WRITE|FEAT_THREAD_SAFE,
-	.location = LOC_SERIAL_PORT_1,
 	.initial = &initial_FTP,
 	.test = deviceHandler_FTP_test,
 	.info = deviceHandler_FTP_info,

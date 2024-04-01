@@ -124,8 +124,9 @@ typedef char* (* _fn_status)(file_handle*);
 #define EMU_BUS_ARBITER		0x20
 
 // Device locations
-#define LOC_MEMCARD_SLOT_A 	0x1
-#define LOC_MEMCARD_SLOT_B 	0x2
+#define LOC_UNK				0x0
+#define LOC_MEMCARD_SLOT_A	0x1
+#define LOC_MEMCARD_SLOT_B	0x2
 #define LOC_DVD_CONNECTOR	0x4
 #define LOC_SERIAL_PORT_1	0x8
 #define LOC_SERIAL_PORT_2	0x10
