@@ -73,6 +73,9 @@ static s32 setupFile(file_handle* file, file_handle* file2, ExecutableFile* file
 	
 	// If there is a disc 2 and it's fragmented, make a note of the fragments and their sizes
 	if(file2) {
+		if(devices[DEVICE_CUR]->quirks & QUIRK_GCLOADER_NO_DISC_2)
+			goto fail;
+		
 		if(!getFragments(DEVICE_CUR, file2, &disc2FragList, &disc2Frags, 1, 0, UINT32_MAX))
 			goto fail;
 		

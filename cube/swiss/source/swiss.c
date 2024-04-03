@@ -2410,8 +2410,13 @@ uiDrawObj_t* draw_game_info() {
 		DrawAddChild(container, DrawStyledLabel(640/2, 200, txtbuffer, 0.8f, true, defaultColor));
 
 		if(GCMDisk.TotalDisc > 1) {
-			sprintf(txtbuffer, "Disc %i/%i [Found: %s]", GCMDisk.DiscID+1, GCMDisk.TotalDisc, meta_find_disc2(&curFile) ? "Yes":"No");
-			DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.6f, true, defaultColor));
+			if(devices[DEVICE_CUR]->quirks & QUIRK_GCLOADER_NO_DISC_2) {
+				DrawAddChild(container, DrawStyledLabel(640/2, 220, "A firmware update is required.", 0.6f, true, defaultColor));
+			}
+			else {
+				sprintf(txtbuffer, "Disc %i/%i [Found: %s]", GCMDisk.DiscID+1, GCMDisk.TotalDisc, meta_find_disc2(&curFile) ? "Yes":"No");
+				DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.6f, true, defaultColor));
+			}
 		}
 		else if(GCMDisk.CountryCode == 'E'
 			&& GCMDisk.RegionCode == 0) {
