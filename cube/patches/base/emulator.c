@@ -719,7 +719,7 @@ static void di_execute_command()
 					uint32_t offset = DVDRoundDown32KB(di.reg.cmdbuf1 << 2);
 					uint32_t length = DVDRoundDown32KB(di.reg.cmdbuf2);
 
-					if (!offset && !length) {
+					if (!length) {
 						dtk.stopping = true;
 					} else if (!dtk.stopping) {
 						dtk.next.start  = offset;
@@ -756,7 +756,11 @@ static void di_execute_command()
 		case DI_CMD_REQUEST_AUDIO_STATUS:
 		{
 			switch ((di.reg.cmdbuf0 >> 16) & 0x03) {
+				#ifndef DTK
 				case 0x00: result = dtk.playing; break;
+				#else
+				case 0x00: result = dtk.playing | !!fifo_size(&dtk.fifo); break;
+				#endif
 				case 0x01: result = DVDRoundDown32KB(dtk.current.position) >> 2; break;
 				case 0x02: result = DVDRoundDown32KB(dtk.current.start) >> 2; break;
 				case 0x03: result = dtk.current.length; break;
