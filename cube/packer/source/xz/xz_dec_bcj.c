@@ -5,7 +5,6 @@
  *
  * Authors: Lasse Collin <lasse.collin@tukaani.org>
  *          Igor Pavlov <https://7-zip.org/>
- *          Jia Tan <jiat0218@gmail.com>
  */
 
 #include "xz_private.h"

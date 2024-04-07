@@ -1139,6 +1139,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			// Region
 			if(file->meta && file->meta->regionTexObj) {
 				drawString(data->x2 - borderSize - 83, data->y2-(borderSize+46), "Region:", 0.45f, false, defaultColor);
+				drawInit();
 				_DrawTexObjNow(file->meta->regionTexObj, data->x2 - 44, data->y2-(borderSize+50), 32, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 			}
 			
