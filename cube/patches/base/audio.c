@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -50,8 +50,8 @@ static int_fast16_t decode_sample(uint8_t header, int sample, int32_t prev[2])
 	int index = (header & 0x30) >> 4;
 	int shift = header & 0xF;
 
-	int32_t curr = prev[0] * table[0][index] -
-	               prev[1] * table[1][index];
+	int32_t curr = prev[0] * table[0][index]
+	             - prev[1] * table[1][index];
 
 	curr = clamp_s22((curr + 32) >> 6) + ((int16_t)(sample << 12) >> shift << 6);
 
@@ -89,38 +89,38 @@ void adpcm_reset(adpcm_t *adpcm)
 	adpcm->r[0] = adpcm->r[1] = 0;
 }
 
-void adpcm_decode(adpcm_t *adpcm, fifo_t *out, uint8_t *in, int count)
+void adpcm_decode(adpcm_t *adpcm, fifo_t *fifo, const uint8_t *in, int count)
 {
 	for (int j = 0; j < count; j += 28, in += 32) {
 		for (int i = 0; i < 28; i++) {
 			sample_t sample;
 			sample.l = decode_sample(in[0], in[4 + i] & 0xF, adpcm->l);
 			sample.r = decode_sample(in[1], in[4 + i] >>  4, adpcm->r);
-			push_sample(out, sample);
+			push_sample(fifo, sample);
 		}
 	}
 }
 
-void mix_samples(volatile sample_t *out, fifo_t *in, int count, bool _3to2, uint8_t volume_l, uint8_t volume_r)
+void mix_samples(volatile sample_t *out, volatile sample_t *in, fifo_t *fifo, int count, bool _3to2, uint8_t volume_l, uint8_t volume_r)
 {
 	for (int i = 0; i < count; i++) {
 		sample_t sample = {0};
-		pop_sample(in, &sample);
+		pop_sample(fifo, &sample);
 		int_fast16_t r = sample.r;
 		int_fast16_t l = sample.l;
 
 		if (i & _3to2) {
-			pop_sample(in, &sample);
+			pop_sample(fifo, &sample);
 			r = (r + sample.r) >> 1;
 			l = (l + sample.l) >> 1;
 		}
 
-		sample = *out;
+		sample = in[i];
 		r = (r * volume_r >> 8) + sample.r;
 		l = (l * volume_l >> 8) + sample.l;
 
 		sample.r = clamp_s16(r);
 		sample.l = clamp_s16(l);
-		*out++ = sample;
+		out[i] = sample;
 	}
 }

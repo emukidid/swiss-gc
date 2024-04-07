@@ -927,23 +927,24 @@ static void dsp_write(unsigned index, uint16_t value)
 			dsp.regs[index - 24] = value;
 
 			if ((value & 0x8000) && dsp.req.aima >= 0) {
-				void *buffer = OSPhysicalToUncached(dsp.reg.aima);
+				void *in = OSPhysicalToUncached(dsp.reg.aima);
 				int length = (dsp.reg.aibl & 0x7FFF) << 5;
 				int count = length / sizeof(sample_t);
+				void *out = in;
 
 				if (length <= sizeof(**dsp.buffer)) {
-					void *buffer2 = dsp.buffer[0];
+					out = dsp.buffer[0];
 					dsp.buffer[0] = dsp.buffer[1];
-					dsp.buffer[1] = buffer2;
-					buffer = memcpy(buffer2, buffer, length);
+					dsp.buffer[1] = out;
 				}
 
 				uint32_t aicr = AI[0];
 				uint32_t aivr = AI[1];
 
-				if (aicr & 0b0000001) mix_samples(buffer, &dtk.fifo, count, aicr & 0b1000000, aivr, aivr >> 8);
+				if (aicr & 0b0000001) mix_samples(out, in, &dtk.fifo, count, aicr & 0b1000000, aivr, aivr >> 8);
+				else if (out != in) out = memcpy(out, in, length);
 
-				DSP[12] = (intptr_t)buffer;
+				DSP[12] = (intptr_t)out;
 				DSP[13] = ((length >> 5) & 0x7FFF) | 0x8000;
 
 				dtk_fill_buffer();
