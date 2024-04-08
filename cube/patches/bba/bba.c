@@ -161,7 +161,7 @@ void bba_ins(uint16_t reg, void *val, uint32_t len)
 
 	_bba.locked = false;
 	if (!setjmp(_bba.entry))
-		longjmp(_bba.exit, 1);
+		longjmp(_bba.exit, 2);
 	_bba.locked = true;
 
 	exi_deselect();
@@ -184,7 +184,7 @@ void bba_outs(uint16_t reg, const void *val, uint32_t len)
 
 	_bba.locked = false;
 	if (!setjmp(_bba.entry))
-		longjmp(_bba.exit, 1);
+		longjmp(_bba.exit, 2);
 	_bba.locked = true;
 
 	exi_deselect();
@@ -247,8 +247,14 @@ static void bba_interrupt(void)
 
 static void exi_callback()
 {
-	if (!setjmp(_bba.exit))
-		longjmp(_bba.entry, 1);
+	switch (setjmp(_bba.exit)) {
+		case 0:
+			longjmp(_bba.entry, 1);
+			break;
+		case 1:
+			EXIUnlock(EXI_CHANNEL_0);
+			break;
+	}
 }
 
 static void exi_coroutine()
@@ -275,11 +281,12 @@ static void exi_coroutine()
 		mask_interrupts(OS_INTERRUPTMASK_EXI_0_TC);
 
 		_bba.locked = false;
-		EXIUnlock(EXI_CHANNEL_0);
+		if (!setjmp(_bba.entry))
+			longjmp(_bba.exit, 1);
+	} else {
+		if (!setjmp(_bba.entry))
+			longjmp(_bba.exit, 2);
 	}
-
-	if (!setjmp(_bba.entry))
-		longjmp(_bba.exit, 1);
 }
 
 static void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
