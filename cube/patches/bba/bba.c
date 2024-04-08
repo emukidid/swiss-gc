@@ -31,12 +31,13 @@
 #include "ipl.h"
 
 static struct {
-	bool lock;
+	bool locked;
 	uint8_t rwp;
 	uint8_t rrp;
 	bba_page_t (*page)[8];
 	ppc_context_t *entry;
 	ppc_context_t *exit;
+	void (*callback)(void);
 } _bba;
 
 static struct {
@@ -45,6 +46,8 @@ static struct {
 	uint32_t offset;
 	bool read, patch;
 } dvd;
+
+static void exi_callback();
 
 #include "tcpip.c"
 
@@ -156,10 +159,10 @@ void bba_ins(uint16_t reg, void *val, uint32_t len)
 	exi_clear_interrupts(EXI_CHANNEL_0, false, true, false);
 	exi_dma_read(val, len, false);
 
-	_bba.lock = false;
+	_bba.locked = false;
 	if (!setjmp(_bba.entry))
 		longjmp(_bba.exit, 1);
-	_bba.lock = true;
+	_bba.locked = true;
 
 	exi_deselect();
 }
@@ -168,22 +171,21 @@ void bba_outs(uint16_t reg, const void *val, uint32_t len)
 {
 	exi_select();
 	exi_imm_read_write(0xC0 << 24 | reg << 8, 4);
-
-	if (!_bba.lock) {
-		#ifdef ETH_EMULATOR
+	#ifdef ETH_EMULATOR
+	if (!_bba.locked) {
 		exi_immex_write(val, len);
-		#else
-		exi_dma_write(val, len, true);
-		#endif
-	} else {
-		exi_clear_interrupts(EXI_CHANNEL_0, false, true, false);
-		exi_dma_write(val, len, false);
-
-		_bba.lock = false;
-		if (!setjmp(_bba.entry))
-			longjmp(_bba.exit, 1);
-		_bba.lock = true;
+		exi_deselect();
+		return;
 	}
+	#endif
+
+	exi_clear_interrupts(EXI_CHANNEL_0, false, true, false);
+	exi_dma_write(val, len, false);
+
+	_bba.locked = false;
+	if (!setjmp(_bba.entry))
+		longjmp(_bba.exit, 1);
+	_bba.locked = true;
 
 	exi_deselect();
 }
@@ -252,10 +254,15 @@ static void exi_callback()
 static void exi_coroutine()
 {
 	if (EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, exi_callback)) {
-		_bba.lock = true;
+		_bba.locked = true;
 
 		set_interrupt_handler(OS_INTERRUPT_EXI_0_TC, exi_callback);
 		unmask_interrupts(OS_INTERRUPTMASK_EXI_0_TC);
+
+		if (_bba.callback) {
+			_bba.callback();
+			_bba.callback = NULL;
+		}
 
 		uint8_t status = bba_cmd_in8(0x03);
 		bba_cmd_out8(0x02, BBA_CMD_IRMASKALL);
@@ -267,7 +274,7 @@ static void exi_coroutine()
 
 		mask_interrupts(OS_INTERRUPTMASK_EXI_0_TC);
 
-		_bba.lock = false;
+		_bba.locked = false;
 		EXIUnlock(EXI_CHANNEL_0);
 	}
 
