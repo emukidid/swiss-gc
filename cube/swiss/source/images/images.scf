@@ -10,6 +10,7 @@
 <filepath="gcdvdsmall.tif" id="gcdvdsmall" colfmt=3 />
 <filepath="gcloader.tif" id="gcloaderimg" colfmt=0 />
 <filepath="hdd.tif" id="hddimg" colfmt=9 palfmt=0 />
+<filepath="kunaigc.tif" id="kunaigcimg" colfmt=9 palfmt=0 />
 <filepath="m2loader.tif" id="m2loaderimg" colfmt=0 />
 <filepath="memcard.png" id="memcardimg" colfmt=9 palfmt=0 />
 <filepath="memcard_ind.png" id="memcardimg_ind" colfmt=1 />

@@ -42,6 +42,7 @@ GXTexObj sdsmallTexObj;
 GXTlutObj sdsmallTlutObj;
 GXTexObj hddTexObj;
 GXTlutObj hddTlutObj;
+GXTexObj kunaigcTexObj;
 GXTexObj qoobTexObj;
 GXTlutObj qoobTlutObj;
 GXTexObj qoobIndTexObj;
@@ -333,6 +334,7 @@ static void init_textures()
 	GX_InitTexObjUserData(&sdsmallTexObj, &sdsmallTlutObj);
 	TPL_GetTextureCI(&imagesTPL, hddimg, &hddTexObj, &hddTlutObj, GX_TLUT0);
 	GX_InitTexObjUserData(&hddTexObj, &hddTlutObj);
+	TPL_GetTexture(&imagesTPL, kunaigcimg, &kunaigcTexObj);
 	TPL_GetTextureCI(&imagesTPL, qoobimg, &qoobTexObj, &qoobTlutObj, GX_TLUT0);
 	GX_InitTexObjFilterMode(&qoobTexObj, GX_LINEAR, GX_NEAR);
 	GX_InitTexObjUserData(&qoobTexObj, &qoobTlutObj);
@@ -587,6 +589,9 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			break;
 		case TEX_ETH2GC:
 			texObj = &eth2gcTexObj; color = (GXColor) {216,216,216,255};
+			break;
+		case TEX_KUNAIGC:
+			texObj = &kunaigcTexObj; color = (GXColor) {216,216,216,255};
 			break;
 	}
 	
