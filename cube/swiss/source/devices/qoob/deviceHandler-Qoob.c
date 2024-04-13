@@ -21,13 +21,14 @@ typedef struct qoobEntryHeader qoobEntryHeader;
 
 struct qoobEntryHeader {
 	u32 entry_type;
-	char entry_name[0xF8];
-	u16 num_blocks;
-	u16 unk;
+	char entry_name[0xF4];
+	u32 _reserved;
+	u32 size;
 };
 #define QOOB_BLOCK_SIZE (65536)
-#define QOOB_FILE_APPL (0x4170706C)	//Appl
-#define QOOB_FILE_BIOS (0x42494F53)	//BIOS
+#define QOOB_FILE_APPL (0x4170706C)	//Appl (likely never used)
+#define QOOB_FILE_BIOS_WRONG (0x42494F53)	//BIOS
+#define QOOB_FILE_BIOS (0x28432920)	//"(C) "
 #define QOOB_FILE_QPIC (0x51504943)	//QPIC
 #define QOOB_FILE_QCFG (0x51434647)	//QCFG
 #define QOOB_FILE_QCHT (0x51434854)	//QCHT
@@ -64,6 +65,7 @@ char *getQoobExtension(qoobEntryHeader* entryHeader) {
 			return "elf";
 		case QOOB_FILE_APPL:
 			return "appl";
+		case QOOB_FILE_BIOS_WRONG:
 		case QOOB_FILE_BIOS:
 			return "gcb";
 		case QOOB_FILE_QPIC:
@@ -81,6 +83,10 @@ char *getQoobExtension(qoobEntryHeader* entryHeader) {
 		default:
 			return NULL;
 	}
+}
+
+u32 sizeToBlocks(u32 size) {
+	return (size + QOOB_BLOCK_SIZE - 1) / QOOB_BLOCK_SIZE;
 }
 	
 s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) {	
@@ -103,6 +109,7 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 		switch(entryHeader.entry_type) {
 			case QOOB_FILE_ELF:
 			case QOOB_FILE_APPL:
+			case QOOB_FILE_BIOS_WRONG:
 			case QOOB_FILE_BIOS:
 			case QOOB_FILE_QPIC:
 			case QOOB_FILE_QCFG:
@@ -149,13 +156,13 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 				}
 				concat_path((*dir)[i].name, ffile->name, entryName);
 				(*dir)[i].fileBase   = block;
-				(*dir)[i].size       = entryHeader.num_blocks * QOOB_BLOCK_SIZE;
+				(*dir)[i].size       = sizeToBlocks(entryHeader.size) * QOOB_BLOCK_SIZE;
 				(*dir)[i].fileAttrib = IS_FILE;
 				usedSpace += (*dir)[i].size;
 				++i;
 				
-				print_gecko("Found [%08X] entry, %08X in size\r\n", entryHeader.entry_type, entryHeader.num_blocks);
-				block += (entryHeader.num_blocks * QOOB_BLOCK_SIZE);
+				print_gecko("Found [%08X] entry, %08X in size\r\n", entryHeader.entry_type, entryHeader.size);
+				block += sizeToBlocks(entryHeader.size) * QOOB_BLOCK_SIZE;
 				break;
 			}
 			default:
@@ -290,6 +297,7 @@ s32 deviceHandler_Qoob_writeFile(file_handle* file, const void* buffer, u32 leng
 			print_gecko("Checking block at %08X\r\n", block);
 			switch(entryHeader.entry_type) {
 				case QOOB_FILE_APPL:
+				case QOOB_FILE_BIOS_WRONG:
 				case QOOB_FILE_BIOS:
 				case QOOB_FILE_QPIC:
 				case QOOB_FILE_QCFG:
@@ -308,8 +316,8 @@ s32 deviceHandler_Qoob_writeFile(file_handle* file, const void* buffer, u32 leng
 						emptyBlock = 0;
 						emptyBlockSize = 0;
 					}
-					print_gecko("Found [%08X] entry, %08X in size\r\n", entryHeader.entry_type, entryHeader.num_blocks);
-					block += (entryHeader.num_blocks * QOOB_BLOCK_SIZE);
+					print_gecko("Found [%08X] entry, %08X in size\r\n", entryHeader.entry_type, entryHeader.size);
+					block += sizeToBlocks(entryHeader.size) * QOOB_BLOCK_SIZE;
 					break;
 				case 0xFFFFFFFF:
 					print_gecko("empty block found at %08X [%08X]\r\n", block, entryHeader.entry_type);
@@ -359,7 +367,7 @@ s32 deviceHandler_Qoob_writeFile(file_handle* file, const void* buffer, u32 leng
 		qoobEntryHeader entryHeader;
 		memset(&entryHeader, 0, sizeof(qoobEntryHeader));
 		entryHeader.entry_type = endsWith(file->name,".dol") ? QOOB_FILE_ELF /*yes, these go in as "ELF" */ : QOOB_FILE_SWIS;
-		entryHeader.num_blocks = (length >> 16) + (length % (QOOB_BLOCK_SIZE-1) > 0 ? 1 : 0);
+		entryHeader.size = sizeToBlocks(length) * QOOB_BLOCK_SIZE;
 		snprintf(&entryHeader.entry_name[0], 64, "%s", getRelativeName(file->name));
 		write_qoob_rom((unsigned char*)&entryHeader, file->fileBase, sizeof(qoobEntryHeader));
 	}	
