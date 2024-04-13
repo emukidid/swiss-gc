@@ -165,6 +165,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "InitNetwork=%s\r\n", swissSettings.initNetworkAtStart ? "Yes":"No");
 	fprintf(fp, "IGRType=%s\r\n", igrTypeStr[swissSettings.igrType]);
 	fprintf(fp, "AVECompat=%s\r\n", aveCompatStr[swissSettings.aveCompat]);
+	fprintf(fp, "RT4KOptim=%s\r\n", swissSettings.rt4kOptim ? "Yes":"No");
 	fprintf(fp, "FileBrowserType=%s\r\n", fileBrowserStr[swissSettings.fileBrowserType]);
 	fprintf(fp, "BS2Boot=%s\r\n", bs2BootStr[swissSettings.bs2Boot]);
 	fprintf(fp, "FTPUserName=%s\r\n", swissSettings.ftpUserName);
@@ -811,6 +812,9 @@ void config_parse_global(char *configData) {
 							break;
 						}
 					}
+				}
+				else if(!strcmp("RT4KOptim", name)) {
+					swissSettings.rt4kOptim = !strcmp("Yes", value);
 				}
 				else if(!strcmp("FileBrowserType", name)) {
 					for(int i = 0; i < 3; i++) {

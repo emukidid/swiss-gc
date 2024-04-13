@@ -230,8 +230,13 @@ static void fsp_get_file(uint32_t offset, uint32_t length, const char *path, uin
 
 static void fsp_read_queued(void)
 {
-	if (!_bba.lock && !EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, (EXICallback)fsp_read_queued))
+	if (!_bba.locked) {
+		if (!_bba.callback) {
+			_bba.callback = fsp_read_queued;
+			exi_callback();
+		}
 		return;
+	}
 
 	void *buffer = _fsp.queued->buffer + _fsp.queued->offset;
 	uint32_t length = _fsp.queued->length - _fsp.queued->offset;
@@ -242,8 +247,6 @@ static void fsp_read_queued(void)
 	fsp_get_file(offset, length, path, pathlen);
 
 	OSSetAlarm(&read_alarm, OSSecondsToTicks(1), (OSAlarmHandler)fsp_read_queued);
-
-	if (!_bba.lock) EXIUnlock(EXI_CHANNEL_0);
 }
 
 static void fsp_pop_queue(void)

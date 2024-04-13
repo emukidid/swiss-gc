@@ -243,13 +243,16 @@ bool deviceHandler_SMB_test() {
 		if(ifname[0] == 'E') {
 			__device_smb.hwName = "ENC28J60";
 			__device_smb.deviceTexture = (textureImage){TEX_ETH2GC, 64, 80, 64, 80};
-			if(ifname[1] == '0')
+			if(ifname[1] == 'A')
 				__device_smb.location = LOC_MEMCARD_SLOT_A;
-			else if(ifname[1] == '1')
+			else if(ifname[1] == 'B')
 				__device_smb.location = LOC_MEMCARD_SLOT_B;
+			else if(ifname[1] == '1')
+				__device_smb.location = LOC_SERIAL_PORT_1;
 			else if(ifname[1] == '2')
 				__device_smb.location = LOC_SERIAL_PORT_2;
-		}
+		} else if(ifname[0] == 'e')
+			__device_smb.location = LOC_SERIAL_PORT_1;
 	}
 	return net_initialized || bba_exists(LOC_ANY);
 }
@@ -273,7 +276,6 @@ DEVICEHANDLER_INTERFACE __device_smb = {
 	.deviceDescription = "Configurable via the settings screen",
 	.deviceTexture = {TEX_BBA, 140, 64, 140, 64},
 	.features = FEAT_READ|FEAT_WRITE|FEAT_THREAD_SAFE,
-	.location = LOC_SERIAL_PORT_1,
 	.initial = &initial_SMB,
 	.test = deviceHandler_SMB_test,
 	.info = deviceHandler_SMB_info,

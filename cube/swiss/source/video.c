@@ -85,7 +85,9 @@ int getScanMode() {
 }
 
 int getDTVStatus() {
-	if(!in_range(swissSettings.aveCompat, 3, 4)) {
+	if(swissSettings.aveCompat == 1 && swissSettings.rt4kOptim) {
+		return 1;
+	} else if(!in_range(swissSettings.aveCompat , 3, 4)) {
 		volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
 		return (vireg[55] & 1) || swissSettings.forceDTVStatus;
 	}
@@ -164,7 +166,7 @@ GXRModeObj* getVideoMode() {
 	return vmode;
 }
 
-void setVideoMode(GXRModeObj *m) {
+void updateVideoMode(GXRModeObj *m) {
 	if(swissSettings.aveCompat == 3) {
 		switch(m->viTVMode) {
 			case VI_TVMODE_PAL_INT: m->viTVMode = VI_TVMODE_DEBUG_PAL_INT; break;
@@ -176,9 +178,20 @@ void setVideoMode(GXRModeObj *m) {
 			case VI_TVMODE_DEBUG_PAL_DS:  m->viTVMode = VI_TVMODE_PAL_DS;  break;
 		}
 	}
-	m->viWidth = 704;
-	m->viXOrigin = 8;
+	if(swissSettings.aveCompat == 1 && swissSettings.rt4kOptim) {
+		m->xfbHeight = m->efbHeight;
+		m->viWidth = m->fbWidth;
+		m->viXOrigin = 40;
+	} else {
+		m->viWidth = 704;
+		m->viXOrigin = 8;
+	}
 	VIDEO_Configure (m);
+	VIDEO_Flush ();
+}
+
+void setVideoMode(GXRModeObj *m) {
+	updateVideoMode(m);
 	if(xfb[0]) free(MEM_K1_TO_K0(xfb[0]));
 	if(xfb[1]) free(MEM_K1_TO_K0(xfb[1]));
 	xfb[0] = (u32 *) SYS_AllocateFramebuffer (m);
@@ -191,7 +204,7 @@ void setVideoMode(GXRModeObj *m) {
 	VIDEO_ClearFrameBuffer (m, xfb[1], COLOR_BLACK);
 	VIDEO_SetNextFramebuffer (xfb[0]);
 	VIDEO_SetPostRetraceCallback (ProperScanPADS);
-	VIDEO_SetBlack (0);
+	VIDEO_SetBlack (false);
 	VIDEO_Flush ();
 	VIDEO_WaitVSync ();
 	if (m->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();

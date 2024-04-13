@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -35,8 +35,8 @@ typedef struct {
 } sample_t;
 
 void adpcm_reset(adpcm_t *adpcm);
-void adpcm_decode(adpcm_t *adpcm, fifo_t *out, uint8_t *in, int count);
+void adpcm_decode(adpcm_t *adpcm, fifo_t *fifo, const uint8_t *in, int count);
 
-void mix_samples(volatile sample_t *out, fifo_t *in, int count, bool _3to2, uint8_t volume_l, uint8_t volume_r);
+void mix_samples(volatile sample_t *out, volatile sample_t *in, fifo_t *fifo, int count, bool _3to2, uint8_t volume_l, uint8_t volume_r);
 
 #endif /* AUDIO_H */

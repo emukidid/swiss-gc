@@ -366,7 +366,7 @@ void repopulate_meta(file_handle *f) {
 
 file_handle* meta_find_disc2(file_handle *f) {
 	file_handle* disc2File = NULL;
-	if(is_multi_disc(f->meta)) {
+	if(is_multi_disc(f->meta) && !(devices[DEVICE_CUR]->quirks & QUIRK_GCLOADER_NO_DISC_2)) {
 		file_handle* dirEntries = getCurrentDirEntries();
 		int dirEntryCount = getCurrentDirEntryCount();
 		for(int i = 0; i < 2; i++) {

@@ -290,21 +290,25 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 		fragList = NULL;
 	}
 	
-	int isSDCard = IS_SDCARD(file);
-	int slot = GET_SLOT(file);
-	if(isSDCard) {
-		// Card Type
-		*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(slot) ? 0:9;
-	}
-	// Copy the actual freq
-	*(vu8*)VAR_EXI_FREQ = isSDCard ? sdgecko_getSpeed(slot):(swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-	// Device slot (0, 1 or 2)
-	*(vu8*)VAR_EXI_SLOT = slot;
-	*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[isSDCard ? (slot%EXI_CHANNEL_MAX):(slot%EXI_CHANNEL_2)];
-	// IDE-EXI only settings
-	if(!isSDCard) {
-		// Is the HDD in use a 48 bit LBA supported HDD?
-		*(vu8*)VAR_ATA_LBA48 = ataDriveInfo.lba48Support;
+	s32 exi_channel, exi_device;
+	if(getExiDeviceByLocation(devices[DEVICE_CUR]->location, &exi_channel, &exi_device)) {
+		if(IS_SDCARD(file)) {
+			// Card Type
+			*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(exi_channel) ? 0:9;
+			// Copy the actual freq
+			*(vu8*)VAR_EXI_CPR = (exi_channel << 6) | ((1 << exi_device) << 3) | sdgecko_getSpeed(exi_channel);
+			// Device slot (0, 1 or 2)
+			*(vu8*)VAR_EXI_SLOT = exi_channel;
+		}
+		else {
+			// Is the HDD in use a 48 bit LBA supported HDD?
+			*(vu8*)VAR_ATA_LBA48 = ataDriveInfo.lba48Support;
+			// Copy the actual freq
+			*(vu8*)VAR_EXI_CPR = (exi_channel << 6) | ((1 << exi_device) << 3) | (swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+			// Device slot (0, 1 or 2)
+			*(vu8*)VAR_EXI_SLOT = exi_channel | exi_device;
+		}
+		*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[exi_channel];
 	}
 	return 1;
 }

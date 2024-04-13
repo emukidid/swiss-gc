@@ -516,14 +516,16 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, Executabl
 			fragList = NULL;
 		}
 		
-		int slot = GET_SLOT(devices[DEVICE_PATCHES]->initial);
-		// Card Type
-		*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(slot) ? 0:9;
-		// Copy the actual freq
-		*(vu8*)VAR_EXI_FREQ = sdgecko_getSpeed(slot);
-		// Device slot (0, 1 or 2)
-		*(vu8*)VAR_EXI_SLOT = slot;
-		*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[slot];
+		s32 exi_channel, exi_device;
+		if(getExiDeviceByLocation(devices[DEVICE_PATCHES]->location, &exi_channel, &exi_device)) {
+			// Card Type
+			*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(exi_channel) ? 0:9;
+			// Copy the actual freq
+			*(vu8*)VAR_EXI_CPR = (exi_channel << 6) | ((1 << exi_device) << 3) | sdgecko_getSpeed(exi_channel);
+			// Device slot (0, 1 or 2)
+			*(vu8*)VAR_EXI_SLOT = exi_channel;
+			*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[exi_channel];
+		}
 	}
 	
 	if(file2 && file2->meta)

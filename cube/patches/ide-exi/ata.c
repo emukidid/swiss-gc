@@ -49,7 +49,7 @@
 
 #define _ata48bit *(u8*)VAR_ATA_LBA48
 
-#define exi_freq			(*(u8*)VAR_EXI_FREQ)
+#define exi_cpr				(*(u8*)VAR_EXI_CPR)
 #define exi_channel			(*(u8*)VAR_EXI_SLOT & (EXI_CHANNEL_0 | EXI_CHANNEL_1))
 #define exi_device			(*(u8*)VAR_EXI_SLOT & (EXI_DEVICE_0  | EXI_DEVICE_2))
 #define exi_regs			(*(vu32**)VAR_EXI_REGS)
@@ -103,7 +103,7 @@ static bool exi_selected()
 
 static void exi_select()
 {
-	exi_regs[0] = (exi_regs[0] & 0x405) | ((1 << exi_device) << 7) | (exi_freq << 4);
+	exi_regs[0] = (exi_regs[0] & 0x405) | ((exi_cpr << 4) & 0x3F0);
 }
 
 static void exi_deselect()
