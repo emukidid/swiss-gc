@@ -1240,12 +1240,18 @@ void load_app(ExecutableFile *fileToPatch)
 	
 	print_gecko("libogc shutdown and boot game!\r\n");
 	if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
-		print_gecko("set size\r\n");
-		sdgecko_setPageSize(GET_SLOT(devices[DEVICE_CUR]->initial), 512);
+		s32 exi_channel;
+		if(getExiDeviceByLocation(devices[DEVICE_CUR]->location, &exi_channel, NULL)) {
+			sdgecko_setPageSize(exi_channel, 512);
+			print_gecko("set size\r\n");
+		}
 	}
 	else if(devices[DEVICE_PATCHES] == &__device_sd_a || devices[DEVICE_PATCHES] == &__device_sd_b || devices[DEVICE_PATCHES] == &__device_sd_c) {
-		print_gecko("set size\r\n");
-		sdgecko_setPageSize(GET_SLOT(devices[DEVICE_PATCHES]->initial), 512);
+		s32 exi_channel;
+		if(getExiDeviceByLocation(devices[DEVICE_PATCHES]->location, &exi_channel, NULL)) {
+			sdgecko_setPageSize(exi_channel, 512);
+			print_gecko("set size\r\n");
+		}
 	}
 	if(type == PATCH_BS2) {
 		BINtoARAM(buffer, sizeToRead, 0x81300000, 0x812FFFE0);
@@ -2128,7 +2134,7 @@ void load_game() {
 	*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
 	*(vu32**)VAR_EXI_REGS = NULL;
 	*(vu8*)VAR_EXI_SLOT = EXI_CHANNEL_MAX;
-	*(vu8*)VAR_EXI_FREQ = EXI_SPEED1MHZ;
+	*(vu8*)VAR_EXI_CPR = (EXI_CHANNEL_MAX << 6) | EXI_SPEED1MHZ;
 	*(vu8*)VAR_SD_SHIFT = 0;
 	*(vu8*)VAR_IGR_TYPE = swissSettings.igrType | (tgcFile.magic == TGC_MAGIC ? 0x80:0x00);
 	*(vu32**)VAR_FRAG_LIST = NULL;

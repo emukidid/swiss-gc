@@ -392,8 +392,8 @@ static void exi_write(unsigned index, uint32_t value)
 				mask |= 0b00000000000011;
 			if (chan == EXI_CHANNEL_0 && ((dev | dev2) & (1 << EXI_DEVICE_2))) {
 				mask |= 0b00001111111100;
-			} else if (chan == *VAR_EXI_SLOT) {
-				if ((dev | dev2) & (1 << EXI_DEVICE_0))
+			} else if (chan == *VAR_EXI_CPR >> 6) {
+				if ((dev | dev2) & *VAR_EXI_CPR >> 3)
 					mask |= 0b00001110000000;
 				if (~dev & dev2)
 					end_read();
@@ -488,8 +488,8 @@ static void exi_write(unsigned index, uint32_t value)
 			dev2 = (value >> 7) & 0b111;
 
 			if (~dev & dev2) {
-				if (chan == *VAR_EXI_SLOT) {
-					if (dev2 & (1 << EXI_DEVICE_0))
+				if (chan == *VAR_EXI_CPR >> 6) {
+					if (dev2 & *VAR_EXI_CPR >> 3)
 						mask |= 0b00001110000000;
 					end_read();
 				}

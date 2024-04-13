@@ -7,7 +7,7 @@ VAR_DRIVE_PATCHED	= VAR_AREA + 0x09B2;	/* disc drive patched */
 VAR_EMU_READ_SPEED	= VAR_AREA + 0x09B3;	/* emulate read speed */
 VAR_EXI_REGS		= VAR_AREA + 0x09B4;	/* pointer to EXI registers */
 VAR_EXI_SLOT		= VAR_AREA + 0x09B8;	/* is the EXI slot (0 = slot a, 1 = slot b) */
-VAR_EXI_FREQ		= VAR_AREA + 0x09B9;	/* is the EXI frequency (4 = 16mhz, 5 = 32mhz) */
+VAR_EXI_CPR			= VAR_AREA + 0x09B9;	/* is the EXI frequency (4 = 16mhz, 5 = 32mhz) */
 VAR_SD_SHIFT		= VAR_AREA + 0x09BA;	/* is the SD Card shift amount when issueing read cmds */
 VAR_ATA_LBA48		= VAR_AREA + 0x09BA;	/* Is the HDD in use a 48 bit LBA supported HDD? */
 VAR_IGR_TYPE		= VAR_AREA + 0x09BB;	/* IGR exit type */

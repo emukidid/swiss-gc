@@ -99,28 +99,43 @@ DEVICEHANDLER_INTERFACE* getDeviceFromPath(char *path) {
 	return NULL;
 }
 
+bool getExiDeviceByLocation(u32 location, s32 *chan, s32 *dev) {
+	switch(location) {
+		case LOC_MEMCARD_SLOT_A:
+			if(chan) *chan = EXI_CHANNEL_0;
+			if(dev) *dev = EXI_DEVICE_0;
+			return true;
+		case LOC_MEMCARD_SLOT_B:
+			if(chan) *chan = EXI_CHANNEL_1;
+			if(dev) *dev = EXI_DEVICE_0;
+			return true;
+		case LOC_SERIAL_PORT_1:
+			if(chan) *chan = EXI_CHANNEL_0;
+			if(dev) *dev = EXI_DEVICE_2;
+			return true;
+		case LOC_SERIAL_PORT_2:
+			if(chan) *chan = EXI_CHANNEL_2;
+			if(dev) *dev = EXI_DEVICE_0;
+			return true;
+		case LOC_SYSTEM:
+			if(chan) *chan = EXI_CHANNEL_0;
+			if(dev) *dev = EXI_DEVICE_1;
+			return true;
+	}
+	return false;
+}
+
 const char* getHwNameByLocation(u32 location) {
 	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(location);
 	if(device != NULL) {
 		return device->hwName;
 	}
-	u32 type;
-	switch(location) {
-		case LOC_MEMCARD_SLOT_A:
-			if(EXI_GetType(EXI_CHANNEL_0, EXI_DEVICE_0, &type) && ~type) return EXI_GetTypeString(type);
-			break;
-		case LOC_MEMCARD_SLOT_B:
-			if(EXI_GetType(EXI_CHANNEL_1, EXI_DEVICE_0, &type) && ~type) return EXI_GetTypeString(type);
-			break;
-		case LOC_SERIAL_PORT_1:
-			if(EXI_GetType(EXI_CHANNEL_0, EXI_DEVICE_2, &type) && ~type) return EXI_GetTypeString(type);
-			break;
-		case LOC_SERIAL_PORT_2:
-			if(EXI_GetType(EXI_CHANNEL_2, EXI_DEVICE_0, &type) && ~type) return EXI_GetTypeString(type);
-			break;
-		case LOC_SYSTEM:
-			if(EXI_GetType(EXI_CHANNEL_0, EXI_DEVICE_1, &type) && ~type) return EXI_GetTypeString(type);
-			break;
+	s32 chan, dev;
+	if(getExiDeviceByLocation(location, &chan, &dev)) {
+		u32 type;
+		if(EXI_GetType(chan, dev, &type) && ~type) {
+			return EXI_GetTypeString(type);
+		}
 	}
 	return "Empty";
 }

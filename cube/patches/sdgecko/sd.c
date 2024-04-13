@@ -37,7 +37,7 @@
 #define WRITE				write
 #endif
 
-#define exi_freq			(*(u8*)VAR_EXI_FREQ)
+#define exi_cpr				(*(u8*)VAR_EXI_CPR)
 #define exi_channel			({ if (*VAR_EXI_SLOT >= EXI_CHANNEL_MAX) __builtin_trap(); *VAR_EXI_SLOT; })
 #define exi_regs			(*(vu32**)VAR_EXI_REGS)
 
@@ -89,7 +89,7 @@ static bool exi_selected()
 
 static void exi_select()
 {
-	exi_regs[0] = (exi_regs[0] & 0x405) | ((1 << EXI_DEVICE_0) << 7) | (exi_freq << 4);
+	exi_regs[0] = (exi_regs[0] & 0x405) | ((exi_cpr << 4) & 0x3F0);
 }
 
 static void exi_deselect()
