@@ -591,7 +591,7 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			texObj = &eth2gcTexObj; color = (GXColor) {216,216,216,255};
 			break;
 		case TEX_KUNAIGC:
-			texObj = &kunaigcTexObj; color = (GXColor) {216,216,216,255};
+			texObj = &kunaigcTexObj; 
 			break;
 	}
 	
