@@ -29,50 +29,57 @@
 #include "enc28j60.h"
 #include "interrupt.h"
 
+#define exi_regs (*(volatile uint32_t **)VAR_EXI2_REGS)
+
 static struct {
 	uint8_t bank;
 	bba_page_t (*page)[8];
 } _bba;
 
+static void exi_clear_interrupts(bool exi, bool tc, bool ext)
+{
+	exi_regs[0] = (exi_regs[0] & (0x3FFF & ~0x80A)) | (ext << 11) | (tc << 3) | (exi << 1);
+}
+
 static void exi_select(void)
 {
-	EXI[EXI_CHANNEL_2][0] = (EXI[EXI_CHANNEL_2][0] & 0x405) | ((1 << EXI_DEVICE_0) << 7) | (EXI_SPEED_32MHZ << 4);
+	exi_regs[0] = (exi_regs[0] & 0x405) | ((1 << EXI_DEVICE_0) << 7) | (EXI_SPEED_32MHZ << 4);
 }
 
 static void exi_deselect(void)
 {
-	EXI[EXI_CHANNEL_2][0] &= 0x405;
+	exi_regs[0] &= 0x405;
 }
 
 static uint32_t exi_imm_read(uint32_t len)
 {
-	EXI[EXI_CHANNEL_2][3] = ((len - 1) << 4) | (EXI_READ << 2) | 0b01;
-	while (EXI[EXI_CHANNEL_2][3] & 0b01);
-	return EXI[EXI_CHANNEL_2][4] >> ((4 - len) * 8);
+	exi_regs[3] = ((len - 1) << 4) | (EXI_READ << 2) | 0b01;
+	while (exi_regs[3] & 0b01);
+	return exi_regs[4] >> ((4 - len) * 8);
 }
 
 static uint32_t exi_imm_read_write(uint32_t data, uint32_t len)
 {
-	EXI[EXI_CHANNEL_2][4] = data;
-	EXI[EXI_CHANNEL_2][3] = ((len - 1) << 4) | (EXI_READ_WRITE << 2) | 0b01;
-	while (EXI[EXI_CHANNEL_2][3] & 0b01);
-	return EXI[EXI_CHANNEL_2][4] >> ((4 - len) * 8);
+	exi_regs[4] = data;
+	exi_regs[3] = ((len - 1) << 4) | (EXI_READ_WRITE << 2) | 0b01;
+	while (exi_regs[3] & 0b01);
+	return exi_regs[4] >> ((4 - len) * 8);
 }
 
 static void exi_dma_write(const void *buf, uint32_t len, bool sync)
 {
-	EXI[EXI_CHANNEL_2][1] = (uint32_t)buf;
-	EXI[EXI_CHANNEL_2][2] = OSRoundUp32B(len);
-	EXI[EXI_CHANNEL_2][3] = (EXI_WRITE << 2) | 0b11;
-	while (sync && (EXI[EXI_CHANNEL_2][3] & 0b01));
+	exi_regs[1] = (uint32_t)buf;
+	exi_regs[2] = OSRoundUp32B(len);
+	exi_regs[3] = (EXI_WRITE << 2) | 0b11;
+	while (sync && (exi_regs[3] & 0b01));
 }
 
 static void exi_dma_read(void *buf, uint32_t len, bool sync)
 {
-	EXI[EXI_CHANNEL_2][1] = (uint32_t)buf;
-	EXI[EXI_CHANNEL_2][2] = OSRoundUp32B(len);
-	EXI[EXI_CHANNEL_2][3] = (EXI_READ << 2) | 0b11;
-	while (sync && (EXI[EXI_CHANNEL_2][3] & 0b01));
+	exi_regs[1] = (uint32_t)buf;
+	exi_regs[2] = OSRoundUp32B(len);
+	exi_regs[3] = (EXI_READ << 2) | 0b11;
+	while (sync && (exi_regs[3] & 0b01));
 }
 
 static uint8_t enc28j60_read_cmd(uint32_t cmd)
@@ -168,18 +175,25 @@ static void enc28j60_interrupt(void)
 	enc28j60_set_bits(ENC28J60_EIE, ENC28J60_EIE_INTIE);
 }
 
-static void exi_callback()
+static void exi_callback(int32_t chan, OSContext *context)
 {
-	if (EXILock(EXI_CHANNEL_2, EXI_DEVICE_0, exi_callback)) {
+	if (EXILock(chan, EXI_DEVICE_0, exi_callback)) {
 		enc28j60_interrupt();
-		EXIUnlock(EXI_CHANNEL_2);
+		EXIUnlock(chan);
 	}
+}
+
+static void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
+{
+	int32_t chan = (interrupt - OS_INTERRUPT_EXI_0_EXI) / 3;
+	exi_clear_interrupts(true, false, false);
+	exi_callback(chan, context);
 }
 
 static void debug_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	PI[0] = 1 << 12;
-	exi_callback();
+	exi_callback(EXI_CHANNEL_2, context);
 }
 
 void bba_transmit_fifo(const void *data, size_t size)
@@ -204,6 +218,14 @@ void bba_init(void **arenaLo, void **arenaHi)
 {
 	*arenaHi -= sizeof(*_bba.page);  _bba.page  = *arenaHi;
 
-	set_interrupt_handler(OS_INTERRUPT_PI_DEBUG, debug_interrupt_handler);
-	unmask_interrupts(OS_INTERRUPTMASK_PI_DEBUG);
+	int32_t chan = ((uintptr_t)exi_regs & 0x3C) / 0x14;
+
+	if (chan < EXI_CHANNEL_2) {
+		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_EXI + (3 * chan);
+		set_interrupt_handler(interrupt, exi_interrupt_handler);
+		unmask_interrupts(OS_INTERRUPTMASK(interrupt) & (OS_INTERRUPTMASK_EXI_0_EXI | OS_INTERRUPTMASK_EXI_1_EXI));
+	} else {
+		set_interrupt_handler(OS_INTERRUPT_PI_DEBUG, debug_interrupt_handler);
+		unmask_interrupts(OS_INTERRUPTMASK_PI_DEBUG);
+	}
 }
