@@ -303,16 +303,8 @@ bool deviceHandler_FSP_test() {
 			__device_fsp.deviceTexture = (textureImage){TEX_ETH2GC, 64, 80, 64, 80};
 			__device_fsp.features = FEAT_READ|FEAT_WRITE|FEAT_THREAD_SAFE;
 			__device_fsp.emulable = EMU_NONE;
-			if(ifname[1] == 'A')
-				__device_fsp.location = LOC_MEMCARD_SLOT_A;
-			else if(ifname[1] == 'B')
-				__device_fsp.location = LOC_MEMCARD_SLOT_B;
-			else if(ifname[1] == '1')
-				__device_fsp.location = LOC_SERIAL_PORT_1;
-			else if(ifname[1] == '2')
-				__device_fsp.location = LOC_SERIAL_PORT_2;
-		} else if(ifname[0] == 'e')
-			__device_fsp.location = LOC_SERIAL_PORT_1;
+		}
+		__device_fsp.location = bba_location;
 	}
 	return net_initialized || bba_exists(LOC_ANY);
 }

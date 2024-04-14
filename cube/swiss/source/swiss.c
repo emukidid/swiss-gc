@@ -2139,7 +2139,7 @@ void load_game() {
 	*(vu8*)VAR_IGR_TYPE = swissSettings.igrType | (tgcFile.magic == TGC_MAGIC ? 0x80:0x00);
 	*(vu32**)VAR_FRAG_LIST = NULL;
 	net_get_mac_address(VAR_CLIENT_MAC);
-	*(vu32**)VAR_EXI2_REGS = getExiRegsByLocation(__device_fsp.location);
+	*(vu32**)VAR_EXI2_REGS = getExiRegsByLocation(bba_location);
 	*(vu8*)VAR_TRIGGER_LEVEL = swissSettings.triggerLevel;
 	*(vu8*)VAR_CARD_A_ID = 0x00;
 	*(vu8*)VAR_CARD_B_ID = 0x00;
