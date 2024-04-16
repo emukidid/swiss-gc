@@ -7,30 +7,53 @@
 
 
 #include "kunaigc.h"
+#include "ogc/exi.h"
 #include <stdio.h>
+#include <sys/unistd.h>
+
+static bool exi_locked = false;
+
+static s32 exi_unlocked(s32 chn,s32 dev)
+{
+    if (EXI_Lock(EXI_CHANNEL_0, EXI_DEVICE_1, &exi_unlocked))
+    {
+        exi_locked = true;
+    }
+}
+
+static void lock_exi()
+{
+    exi_locked = EXI_Lock(EXI_CHANNEL_0, EXI_DEVICE_1, &exi_unlocked) > 0 ? true : false;
+    while (!exi_locked)
+    {
+        usleep(100);
+    }
+}
+
+static void unlock_exi()
+{
+    EXI_Unlock(EXI_CHANNEL_0);
+    exi_locked = false;
+}
 
 //wait for "WIP" flag being unset
 void kunai_wait() {
-        kunai_enable_passthrough();
-        spiflash_wait();
-        kunai_disable_passthrough();
+    kunai_enable_passthrough();
+    spiflash_wait();
+    kunai_disable_passthrough();
 }
 
 void kunai_disable_passthrough(void) {
     EXI_Deselect(EXI_CHANNEL_0);
-    EXI_Unlock(EXI_CHANNEL_0);
+    unlock_exi();
 }
 
 void kunai_enable_passthrough(void) {
-    s32 retVal = 0;
-    uint8_t repetitions = 3;
-    do {
-        u32 addr = 0x80000000; //for passthrough we need to send one '1' and 31 '0' and afterwards whatever we want
-        EXI_Lock(EXI_CHANNEL_0, EXI_DEVICE_1, NULL);
-        EXI_Select(EXI_CHANNEL_0, EXI_DEVICE_1, EXI_SPEED32MHZ);
-        EXI_Imm(EXI_CHANNEL_0, &addr, 4, EXI_WRITE, NULL);
-        retVal = EXI_Sync(EXI_CHANNEL_0);
-    } while(retVal <= 0 && --repetitions);
+    u32 addr = 0x80000000; //for passthrough we need to send one '1' and 31 '0' and afterwards whatever we want
+    lock_exi();
+    EXI_Select(EXI_CHANNEL_0, EXI_DEVICE_1, EXI_SPEED32MHZ);
+    EXI_Imm(EXI_CHANNEL_0, &addr, 4, EXI_WRITE, NULL);
+    EXI_Sync(EXI_CHANNEL_0);
 }
 
 
@@ -107,27 +130,27 @@ int kunai_sync(const struct lfs_config *c) { return 0;}
 void kunai_disable(void) {
     u32 addr = 0xc0000000;
     u32 data = 6 << 24;
-    EXI_Lock(EXI_CHANNEL_0, EXI_DEVICE_1, NULL);
+    lock_exi();
     EXI_Select(EXI_CHANNEL_0, EXI_DEVICE_1, EXI_SPEED8MHZ);
     EXI_Imm(EXI_CHANNEL_0, &addr, 4, EXI_WRITE, NULL);
     EXI_Sync(EXI_CHANNEL_0);
     EXI_Imm(EXI_CHANNEL_0, &data, 4, EXI_WRITE, NULL);
     EXI_Sync(EXI_CHANNEL_0);
     EXI_Deselect(EXI_CHANNEL_0);
-    EXI_Unlock(EXI_CHANNEL_0);
+    unlock_exi();
 }
 
 void kunai_reenable(void) {
     u32 addr = 0xc0000000;
     u32 data = 1 << 24;
-    EXI_Lock(EXI_CHANNEL_0, EXI_DEVICE_1, NULL);
+    lock_exi();
     EXI_Select(EXI_CHANNEL_0, EXI_DEVICE_1, EXI_SPEED8MHZ);
     EXI_Imm(EXI_CHANNEL_0, &addr, 4, EXI_WRITE, NULL);
     EXI_Sync(EXI_CHANNEL_0);
     EXI_Imm(EXI_CHANNEL_0, &data, 4, EXI_WRITE, NULL);
     EXI_Sync(EXI_CHANNEL_0);
     EXI_Deselect(EXI_CHANNEL_0);
-    EXI_Unlock(EXI_CHANNEL_0);
+    unlock_exi();
 }
 
 void kunai_sector_erase(uint32_t addr) {
