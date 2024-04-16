@@ -19,6 +19,8 @@ static s32 exi_unlocked(s32 chn,s32 dev)
     {
         exi_locked = true;
     }
+
+    return 0;
 }
 
 static void lock_exi()
