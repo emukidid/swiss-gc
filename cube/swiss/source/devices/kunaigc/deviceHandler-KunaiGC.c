@@ -150,16 +150,24 @@ s32 deviceHandler_KunaiGC_readFile(file_handle* file, void* buffer, u32 length) 
 
 // Assumes a single call to write a file.
 s32 deviceHandler_KunaiGC_writeFile(file_handle* file, const void* buffer, u32 length) {
+	s32 total_bytes_written = 0;
 	if (!file->fp || !(((lfs_file_t*)file->fp)->flags & LFS_O_WRONLY)) {
 		if (lfs_file_open(&lfs, &lfs_file, file->name, LFS_O_RDWR | LFS_O_CREAT) < 0) return -1;
 		file->fp = (void*)&lfs_file;
 	}
 	lfs_file_seek(&lfs, (lfs_file_t *) file->fp, file->offset, LFS_SEEK_SET);
 
-	lfs_ssize_t bytes_written = lfs_file_write(&lfs, (lfs_file_t *) file->fp, buffer, length);
+	do {
+		s32 bytes_written = 0;
+		size_t chunkSize = length > cfg.prog_size ? cfg.prog_size : length;
+		bytes_written += lfs_file_write(&lfs, (lfs_file_t *) file->fp, (buffer + total_bytes_written), chunkSize);
+		length -= bytes_written; 
+		total_bytes_written += bytes_written;
+	} while (length > 0);
+
 	file->offset = lfs_file_tell(&lfs, (lfs_file_t *) file->fp);
 	readLFSInfo();
-	return bytes_written;
+	return total_bytes_written;
 }
 
 s32 deviceHandler_KunaiGC_deleteFile(file_handle* file) {
