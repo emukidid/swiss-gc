@@ -25,7 +25,7 @@ static s32 exi_unlocked(s32 chn,s32 dev)
 
 static void lock_exi()
 {
-    exi_locked = EXI_Lock(EXI_CHANNEL_0, EXI_DEVICE_1, &exi_unlocked) > 0 ? true : false;
+    exi_locked = EXI_Lock(EXI_CHANNEL_0, EXI_DEVICE_1, &exi_unlocked) > 0;
     while (!exi_locked)
     {
         usleep(100);
