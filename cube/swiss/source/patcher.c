@@ -6161,6 +6161,39 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *EXILock = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (EXILock) {
+			if (devices[DEVICE_CUR]->emulated() & EMU_BUS_ARBITER) {
+				switch (j) {
+					case 0:
+						data[i + 56] = 0x38030024;	// addi		r0, r3, 36
+						data[i + 58] = 0x7C00C840;	// cmplw	r0, r25
+						break;
+					case 1:
+					case 2:
+						data[i + 56] = 0x3803002C;	// addi		r0, r3, 44
+						data[i + 58] = 0x7C00C840;	// cmplw	r0, r25
+						break;
+					case 3:
+						data[i + 23] = 0x80030024;	// lwz		r0, 36 (r3)
+						data[i + 24] = 0x7C00E840;	// cmplw	r0, r29
+						break;
+					case 4:
+						data[i + 23] = 0x8003002C;	// lwz		r0, 44 (r3)
+						data[i + 24] = 0x7C00E840;	// cmplw	r0, r29
+						break;
+					case 5:
+						data[i + 21] = 0x3803002C;	// addi		r0, r3, 44
+						data[i + 23] = 0x7C00D840;	// cmplw	r0, r27
+						break;
+					case 6:
+						data[i + 23] = 0x8003002C;	// lwz		r0, 44 (r3)
+						data[i + 24] = 0x7C00E040;	// cmplw	r0, r28
+						break;
+					case 7:
+						data[i + 24] = 0x8003002C;	// lwz		r0, 44 (r3)
+						data[i + 25] = 0x7C00E040;	// cmplw	r0, r28
+						break;
+				}
+			}
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 6] = (u32)EXILock;
 			

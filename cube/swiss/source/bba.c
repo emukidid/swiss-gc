@@ -12,6 +12,7 @@ int net_initialized = 0;
 struct in_addr bba_localip;
 struct in_addr bba_netmask;
 struct in_addr bba_gateway;
+u32 bba_location = LOC_UNK;
 
 // Init the GC net interface (bba)
 void init_network(void *args) {
@@ -34,15 +35,28 @@ void init_network(void *args) {
 			net_initialized = 0;
 		}
 
-		if(if_nametoindex("E20") == 1) {
-			if(__device_gcloader.features & FEAT_PATCHES)
-				__device_gcloader.emulable |= EMU_ETHERNET;
-			__device_ata_c.emulable |= EMU_ETHERNET;
-			__device_sd_c.emulable |= EMU_ETHERNET;
-			__device_sd_a.emulable |= EMU_ETHERNET;
-			__device_sd_b.emulable |= EMU_ETHERNET;
-			__device_ata_a.emulable |= EMU_ETHERNET;
-			__device_ata_b.emulable |= EMU_ETHERNET;
+		char ifname[4];
+		if (if_indextoname(1, ifname)) {
+			if (ifname[0] == 'E') {
+				switch (ifname[1]) {
+					case 'A': bba_location = LOC_MEMCARD_SLOT_A; break;
+					case 'B': bba_location = LOC_MEMCARD_SLOT_B; break;
+					case '1': bba_location = LOC_SERIAL_PORT_1;  break;
+					case '2': bba_location = LOC_SERIAL_PORT_2;  break;
+				}
+			} else if (ifname[0] == 'e')
+				bba_location = LOC_SERIAL_PORT_1;
+
+			if (ifname[0] == 'E' && strchr("2AB", ifname[1])) {
+				if (__device_gcloader.features & FEAT_PATCHES)
+					__device_gcloader.emulable |= EMU_ETHERNET;
+				__device_ata_c.emulable |= EMU_ETHERNET;
+				__device_sd_c.emulable |= EMU_ETHERNET;
+				__device_sd_a.emulable |= EMU_ETHERNET;
+				__device_sd_b.emulable |= EMU_ETHERNET;
+				__device_ata_a.emulable |= EMU_ETHERNET;
+				__device_ata_b.emulable |= EMU_ETHERNET;
+			}
 		}
 
 		deviceHandler_setDeviceAvailable(&__device_smb, deviceHandler_SMB_test());

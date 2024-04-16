@@ -125,6 +125,14 @@ bool getExiDeviceByLocation(u32 location, s32 *chan, s32 *dev) {
 	return false;
 }
 
+vu32* getExiRegsByLocation(u32 location) {
+	s32 chan;
+	if(getExiDeviceByLocation(location, &chan, NULL)) {
+		return ((vu32(*)[5])0xCC006800)[chan];
+	}
+	return NULL;
+}
+
 const char* getHwNameByLocation(u32 location) {
 	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(location);
 	if(device != NULL) {

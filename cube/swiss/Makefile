@@ -9,14 +9,6 @@ endif
 
 include $(DEVKITPRO)/libogc2/gamecube_rules
 
-BUILDTOOLS	:=	$(shell git rev-parse --show-toplevel)/buildtools
-
-ifeq ($(OS),Windows_NT)
-GXTEXCONV	:=	$(BUILDTOOLS)/gxtexconv.exe
-else
-GXTEXCONV	:=	$(BUILDTOOLS)/gxtexconv
-endif
-
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
 # BUILD is the directory where object files & intermediate files will be placed
@@ -172,12 +164,6 @@ $(OFILES_SOURCES) : $(HFILES)
 #---------------------------------------------------------------------------------
 	$(SILENTMSG) $(notdir $<)
 	$(bin2o)
-
-#---------------------------------------------------------------------------------
-%.tpl : %.scf
-#---------------------------------------------------------------------------------
-	$(SILENTMSG) $(notdir $<)
-	$(SILENTCMD)$(GXTEXCONV) -s $< -d $(DEPSDIR)/$*.d -o $@
 
 -include $(DEPENDS)
 
