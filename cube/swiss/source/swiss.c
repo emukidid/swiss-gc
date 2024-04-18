@@ -102,22 +102,23 @@ void ogc_video__reset()
 		}
 		if(swissSettings.sramProgressive && !getDTVStatus())
 			swissSettings.gameVMode = 0;
+		if(swissSettings.sramVideo == SYS_VIDEO_PAL && !swissSettings.sram60Hz)
+			swissSettings.sramProgressive = 0;
 	} else {
 		swissSettings.sram60Hz = getTVFormat() != VI_PAL;
 		swissSettings.sramProgressive = getScanMode() == VI_PROGRESSIVE;
 		
 		if(swissSettings.sramProgressive) {
-			if(swissSettings.sramVideo == SYS_VIDEO_PAL)
+			if(swissSettings.sramVideo == SYS_VIDEO_PAL) {
+				swissSettings.sramProgressive = 0;
 				swissSettings.gameVMode = -2;
-			else
+			} else
 				swissSettings.gameVMode = -1;
 		} else
 			swissSettings.gameVMode = 0;
 	}
 	
-	if(!strncmp(gameID, "GB3E51", 6)
-		|| (!strncmp(gameID, "G2OE41", 6) && swissSettings.sramLanguage == SYS_LANG_SPANISH)
-		|| !strncmp(gameID, "GMXP70", 6))
+	if(!strncmp(gameID, "GB3E51", 6) || (!strncmp(gameID, "G2OE41", 6) && swissSettings.sramLanguage == SYS_LANG_SPANISH))
 		swissSettings.sramProgressive = 0;
 	
 	syssram* sram = __SYS_LockSram();

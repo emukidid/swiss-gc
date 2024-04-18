@@ -8149,6 +8149,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							(data[i + 19] & 0xFC00FFFF) == 0x88000011 &&
 							(data[i + 20] & 0xFC00FFFF) == 0x54000672 &&
 							findx_pattern(data, dataType, i + 24, length, &__OSUnlockSramSigs[0]) &&
+							(data[i + 26] & 0xFC00FFFF) == 0x88000011 &&
 							(data[i + 27] & 0xFC00FFFF) == 0x540006B0 &&
 							(data[i + 28] & 0xFC00FFFF) == 0x98000011 &&
 							(data[i + 29] & 0xFC00FFFF) == 0x88000011 &&
@@ -8899,7 +8900,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				data[i + 0] = 0x38600001;	// li		r3, 1
 				data[i + 1] = 0x4E800020;	// blr
 			}
-			print_gecko("Found:[%s] @ %08X\n", OSGetEuRgb60ModeSigs[j].Name, OSGetEuRgb60Mode);
+			print_gecko("Found:[%s$%i] @ %08X\n", OSGetEuRgb60ModeSigs[j].Name, j, OSGetEuRgb60Mode);
 		}
 	}
 	
@@ -8913,7 +8914,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				
 				data[i + 0] = 0x4E800020;	// blr
 			}
-			print_gecko("Found:[%s] @ %08X\n", OSSetEuRgb60ModeSigs[j].Name, OSSetEuRgb60Mode);
+			print_gecko("Found:[%s$%i] @ %08X\n", OSSetEuRgb60ModeSigs[j].Name, j, OSSetEuRgb60Mode);
 		}
 	}
 	
