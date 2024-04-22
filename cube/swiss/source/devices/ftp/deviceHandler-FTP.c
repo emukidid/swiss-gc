@@ -93,7 +93,11 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	DIR* dp = opendir( ffile->name );
 	if(!dp) return -1;
 	struct dirent *entry;
+	#ifdef _DIRENT_HAVE_D_STAT
+	#define fstat entry->d_stat
+	#else
 	struct stat fstat;
+	#endif
 	
 	// Set everything up to read
 	int num_entries = 1, i = 1;
@@ -120,7 +124,10 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
 			if(concat_path((*dir)[i].name, ffile->name, entry->d_name) < PATHNAME_MAX
-				&& !stat((*dir)[i].name, &fstat) && fstat.st_size <= UINT32_MAX) {
+				#ifndef _DIRENT_HAVE_D_STAT
+				&& !stat((*dir)[i].name, &fstat)
+				#endif
+				&& fstat.st_size <= UINT32_MAX) {
 				(*dir)[i].size       = fstat.st_size;
 				(*dir)[i].fileAttrib = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
 				++i;
@@ -128,6 +135,7 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		}
 	} while(entry || errno == EOVERFLOW);
 	
+	#undef fstat
 	closedir(dp);
 	return i;
 }
