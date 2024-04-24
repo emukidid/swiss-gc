@@ -138,17 +138,9 @@ static void enc28j60_write_reg16(ENC28J60Reg16 addr, uint16_t data)
 static void enc28j60_interrupt(void)
 {
 	enc28j60_clear_bits(ENC28J60_EIE, ENC28J60_EIE_INTIE);
-	uint8_t eie = enc28j60_read_reg8(ENC28J60_EIE);
-	uint8_t eir = enc28j60_read_reg8(ENC28J60_EIR);
+	uint8_t epktcnt = enc28j60_read_reg8(ENC28J60_EPKTCNT);
 
-	if (eir == 0) {
-		uint8_t epktcnt = enc28j60_read_reg8(ENC28J60_EPKTCNT);
-		if (epktcnt > 0) eir |= ENC28J60_EIR_PKTIF;
-	}
-
-	eir &= eie;
-
-	if (eir & ENC28J60_EIR_PKTIF) {
+	if (epktcnt > 0) {
 		exi_select();
 		exi_imm_read_write(ENC28J60_CMD_RBM, 1);
 
@@ -171,7 +163,6 @@ static void enc28j60_interrupt(void)
 		enc28j60_set_bits(ENC28J60_ECON2, ENC28J60_ECON2_PKTDEC);
 	}
 
-	enc28j60_clear_bits(ENC28J60_EIR, eir);
 	enc28j60_set_bits(ENC28J60_EIE, ENC28J60_EIE_INTIE);
 }
 
@@ -217,6 +208,9 @@ void bba_transmit_fifo(const void *data, size_t size)
 void bba_init(void **arenaLo, void **arenaHi)
 {
 	*arenaHi -= sizeof(*_bba.page);  _bba.page  = *arenaHi;
+
+	enc28j60_clear_bits(ENC28J60_EIE, 0xFF);
+	enc28j60_set_bits(ENC28J60_EIE, ENC28J60_EIE_INTIE | ENC28J60_EIE_PKTIE);
 
 	int32_t chan = ((uintptr_t)exi_regs & 0x3C) / 0x14;
 
