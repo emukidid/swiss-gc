@@ -513,7 +513,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			devices[DEVICE_PATCHES] = devices[DEVICE_CUR];
 			u32 emulated = devices[DEVICE_CUR]->emulated();
 			devices[DEVICE_PATCHES] = devices[DEVICE_CONFIG];
-			if((emulated ^ devices[DEVICE_CUR]->emulated()) & ~EMU_BUS_ARBITER) {
+			if(emulated > devices[DEVICE_CUR]->emulated()) {
 				devices[DEVICE_PATCHES] = devices[DEVICE_CUR];
 				patchDeviceReady = true;
 			}

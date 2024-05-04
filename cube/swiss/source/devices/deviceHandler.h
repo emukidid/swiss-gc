@@ -115,13 +115,13 @@ typedef char* (* _fn_status)(file_handle*);
 #define QUIRK_GCLOADER_WRITE_CONFLICT	0x4
 
 // Device emulated features
+#define EMU_READ			0x80000000
+#define EMU_AUDIO_STREAMING	0x40000000
+#define EMU_READ_SPEED		0x20000000
+#define EMU_ETHERNET		0x10000000
+#define EMU_MEMCARD			0x8000000
+#define EMU_BUS_ARBITER		0x1
 #define EMU_NONE			0x0
-#define EMU_READ			0x1
-#define EMU_READ_SPEED		0x2
-#define EMU_AUDIO_STREAMING	0x4
-#define EMU_MEMCARD			0x8
-#define EMU_ETHERNET		0x10
-#define EMU_BUS_ARBITER		0x20
 
 // Device locations
 #define LOC_UNK				0x0
