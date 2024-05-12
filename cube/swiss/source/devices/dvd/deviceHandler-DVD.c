@@ -557,6 +557,7 @@ s32 deviceHandler_DVD_closeFile(file_handle* file){
 }
 
 bool deviceHandler_DVD_test() {
+	while(DVD_LowGetCoverStatus() == 0);
 	return swissSettings.hasDVDDrive != 0;
 }
 

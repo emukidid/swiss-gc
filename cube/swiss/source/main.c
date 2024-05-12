@@ -56,8 +56,6 @@ void Initialise (void)
 	// Disable IPL modchips to allow access to IPL ROM fonts
 	ipl_set_config(6); 
 	usleep(1000); //wait for modchip to disable (overkill)
-	
-	
 	__SYS_ReadROM(IPLInfo,256,0);	// Read IPL tag
 
 	if(!strncmp(&IPLInfo[0x55], "NTSC", 4))
@@ -72,23 +70,6 @@ void Initialise (void)
 
 	init_font();
 	DrawInit();
-
-	uiDrawObj_t *progBox = DrawPublish(DrawProgressBar(true, 0, "Initialise DVD\205 (HOLD B if NO DVD Drive)"));
-	while(DVD_GetCmdBlockStatus(&commandBlock) == DVD_STATE_BUSY) {
-		if(DVD_LowGetCoverStatus() == 1) {
-			break;
-		}
-		if(padsButtonsHeld() & PAD_BUTTON_B) {
-			while(padsButtonsHeld() & PAD_BUTTON_B) VIDEO_WaitVSync();
-			break;
-		}
-	}
-	if(DVD_GetCmdBlockStatus(&commandBlock) != DVD_STATE_END) {
-		DrawDispose(progBox);
-		progBox = DrawPublish(DrawMessageBox(D_INFO, "No DVD Drive Detected !!"));
-		sleep(2);
-	}
-	DrawDispose(progBox);
 }
 
 uiDrawObj_t *configProgBar = NULL;
@@ -296,6 +277,15 @@ void populateDeviceAvailability() {
 		return;
 	}
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Detecting devices\205\nThis can be skipped by holding B next time"));
+	while(DVD_GetCmdBlockStatus(&commandBlock) == DVD_STATE_BUSY) {
+		if(DVD_LowGetCoverStatus() == 1) {
+			break;
+		}
+		if(padsButtonsHeld() & PAD_BUTTON_B) {
+			deviceHandler_setAllDevicesAvailable();
+			break;
+		}
+	}
 	int i;
 	for(i = 0; i < MAX_DEVICES; i++) {
 		if(allDevices[i] != NULL && !deviceHandler_getDeviceAvailable(allDevices[i])) {

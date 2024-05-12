@@ -270,6 +270,7 @@ s32 deviceHandler_WODE_closeFile(file_handle* file) {
 }
 
 bool deviceHandler_WODE_test() {
+	while(DVD_LowGetCoverStatus() == 0);
 	return swissSettings.hasDVDDrive && driveInfo.rel_date == 0x20080714;
 }
 
