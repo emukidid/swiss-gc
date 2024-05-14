@@ -200,6 +200,6 @@ fail:
 
 void init_wiiload_thread(void)
 {
-	if (net_initialized)
+	if (net_initialized && thread == LWP_THREAD_NULL)
 		LWP_CreateThread(&thread, thread_func, NULL, NULL, 0, LWP_PRIO_NORMAL);
 }

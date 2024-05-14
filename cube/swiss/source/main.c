@@ -212,11 +212,7 @@ int main(int argc, char *argv[])
 	swissSettings.initNetworkAtStart |= bba_exists(LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2);
 	if(swissSettings.initNetworkAtStart) {
 		// Start up the BBA if it exists
-		uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Initialising Network"));
-		init_network();
-		init_httpd_thread();
-		init_wiiload_thread();
-		DrawDispose(msgBox);
+		init_network_async();
 	}
 	
 	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(LOC_DVD_CONNECTOR);

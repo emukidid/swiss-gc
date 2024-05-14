@@ -148,7 +148,7 @@ int is_httpd_in_use() {
 }
 
 void init_httpd_thread() {
-	if(net_initialized) {
+	if (net_initialized && httpd_handle == LWP_THREAD_NULL) {
 		LWP_CreateThread(	&httpd_handle,	/* thread handle */ 
 							httpd,			/* code */ 
 							NULL,			/* arg pointer for thread */
