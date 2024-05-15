@@ -229,8 +229,7 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, Executabl
 }
 
 s32 deviceHandler_FSP_init(file_handle* file) {
-	init_network();
-	if(!net_initialized) {
+	if(!init_network()) {
 		file->status = E_NONET;
 		return EFAULT;
 	}

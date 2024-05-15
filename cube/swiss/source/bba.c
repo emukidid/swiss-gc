@@ -74,10 +74,11 @@ void init_network_async(void)
 		LWP_CreateThread(&net_thread, net_thread_func, NULL, NULL, 0, LWP_PRIO_NORMAL);
 }
 
-void init_network(void)
+bool init_network(void)
 {
 	init_network_async();
 	wait_network();
+	return net_initialized && (bba_localip.s_addr = net_gethostip()) != INADDR_ANY;
 }
 
 void wait_network(void)

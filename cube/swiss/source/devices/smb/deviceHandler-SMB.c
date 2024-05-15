@@ -182,14 +182,13 @@ s32 deviceHandler_SMB_writeFile(file_handle* file, const void* buffer, u32 lengt
 }
 
 s32 deviceHandler_SMB_init(file_handle* file) {
-	init_network();
 	// We need at least a share name and ip addr in the settings filled out
 	if(!strlen(&swissSettings.smbShare[0]) || !strlen(&swissSettings.smbServerIp[0])) {
 		file->status = E_CHECKCONFIG;
 		return EFAULT;
 	}
 
-	if(!net_initialized) {       //Init if we have to
+	if(!init_network()) {        //Init if we have to
 		file->status = E_NONET;
 		return EFAULT;
 	} 
