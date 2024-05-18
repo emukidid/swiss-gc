@@ -92,36 +92,36 @@ void wait_network(void)
 	}
 }
 
-bool bba_exists(u32 location)
+u32 bba_exists(u32 location)
 {
 	u32 id;
 
-	if ((location & LOC_MEMCARD_SLOT_A) && EXI_GetID(EXI_CHANNEL_0, EXI_DEVICE_0, &id)) {
-		switch (id) {
-			case EXI_ENC28J60_ID:
-				return true;
-		}
-	}
-	if ((location & LOC_MEMCARD_SLOT_B) && EXI_GetID(EXI_CHANNEL_1, EXI_DEVICE_0, &id)) {
-		switch (id) {
-			case EXI_ENC28J60_ID:
-				return true;
-		}
-	}
 	if ((location & LOC_SERIAL_PORT_1) && EXI_GetID(EXI_CHANNEL_0, EXI_DEVICE_2, &id)) {
 		switch (id) {
 			case EXI_MX98730EC_ID:
 			case EXI_ENC28J60_ID:
-				return true;
+				return LOC_SERIAL_PORT_1;
 		}
 	}
 	if ((location & LOC_SERIAL_PORT_2) && EXI_GetID(EXI_CHANNEL_2, EXI_DEVICE_0, &id)) {
 		switch (id) {
 			case EXI_ENC28J60_ID:
-				return true;
+				return LOC_SERIAL_PORT_2;
 		}
 	}
-	return false;
+	if ((location & LOC_MEMCARD_SLOT_A) && EXI_GetID(EXI_CHANNEL_0, EXI_DEVICE_0, &id)) {
+		switch (id) {
+			case EXI_ENC28J60_ID:
+				return LOC_MEMCARD_SLOT_A;
+		}
+	}
+	if ((location & LOC_MEMCARD_SLOT_B) && EXI_GetID(EXI_CHANNEL_1, EXI_DEVICE_0, &id)) {
+		switch (id) {
+			case EXI_ENC28J60_ID:
+				return LOC_MEMCARD_SLOT_B;
+		}
+	}
+	return LOC_UNK;
 }
 
 const char *bba_address_str(void)

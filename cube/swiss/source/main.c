@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
 	GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
 	DrawVideoMode(forcedMode);
 	
-	swissSettings.initNetworkAtStart |= bba_exists(LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2);
+	swissSettings.initNetworkAtStart |= !!bba_exists(LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2);
 	if(swissSettings.initNetworkAtStart) {
 		// Start up the BBA if it exists
 		init_network_async();

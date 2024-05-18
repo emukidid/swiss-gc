@@ -20,6 +20,32 @@
 
 char topStr[256];
 
+const char* getDeviceInfoString(u32 location) {
+	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(location);
+	if(device == &__device_dvd) {
+		u8* driveVersion = (u8*)&driveInfo;
+		sprintf(topStr,"%s %02X %02X%02X/%02X (%02X)",device->hwName,driveVersion[6],driveVersion[4],driveVersion[5],driveVersion[7],driveVersion[8]);
+	}
+	else if(device == &__device_gcloader) {
+		if(gcloaderVersionStr != NULL) {
+			sprintf(topStr, "%s HW%i (%s)", device->hwName, gcloaderHwVersion, gcloaderVersionStr);
+		}
+		else {
+			strcpy(topStr, device->hwName);
+		}
+	}
+	else if(device == &__device_wkf) {
+		sprintf(topStr, "%s (%s)", device->hwName, wkfGetSerial());
+	}
+	else if(location == bba_location || (bba_location == LOC_UNK && bba_exists(LOC_ANY) == location)) {
+		sprintf(topStr, "%s (%s)", getHwNameByLocation(location), bba_address_str());
+	}
+	else {
+		strcpy(topStr, getHwNameByLocation(location));
+	}
+	return topStr;
+}
+
 uiDrawObj_t * info_draw_page(int page_num) {
 	uiDrawObj_t *container = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 420);
 	
@@ -107,43 +133,16 @@ uiDrawObj_t * info_draw_page(int page_num) {
 	}
 	else if(page_num == 1) {
 		DrawAddChild(container, DrawLabel(30, 55, "Device Info (2/4):"));
-		
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"SLOT-A", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 106, getHwNameByLocation(LOC_MEMCARD_SLOT_A), 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 106, getDeviceInfoString(LOC_MEMCARD_SLOT_A), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 130, (char*)"SLOT-B", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 146, getHwNameByLocation(LOC_MEMCARD_SLOT_B), 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 146, getDeviceInfoString(LOC_MEMCARD_SLOT_B), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 170, (char*)"SERIAL PORT 1", 0.65f, true, defaultColor));
-		if(bba_exists(LOC_SERIAL_PORT_1)) {
-			sprintf(topStr, "%s (%s)", getHwNameByLocation(LOC_SERIAL_PORT_1), bba_address_str());
-		}
-		else {
-			strcpy(topStr, getHwNameByLocation(LOC_SERIAL_PORT_1));
-		}
-		DrawAddChild(container, DrawStyledLabel(640/2, 186, topStr, 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 186, getDeviceInfoString(LOC_SERIAL_PORT_1), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 210, (char*)"SERIAL PORT 2", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 226, getHwNameByLocation(LOC_SERIAL_PORT_2), 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 226, getDeviceInfoString(LOC_SERIAL_PORT_2), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"DRIVE INTERFACE", 0.65f, true, defaultColor));
-		
-		DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(LOC_DVD_CONNECTOR);
-		if(device == &__device_dvd) {
-			u8* driveVersion = (u8*)&driveInfo;
-			sprintf(topStr, "%s %02X %02X%02X/%02X (%02X)",device->hwName,driveVersion[6],driveVersion[4],driveVersion[5],driveVersion[7],driveVersion[8]);
-		}
-		else if(device == &__device_gcloader) {
-			if(gcloaderVersionStr != NULL) {
-				sprintf(topStr, "%s HW%i (%s)",device->hwName,gcloaderHwVersion,gcloaderVersionStr);
-			}
-			else {
-				strcpy(topStr, device->hwName);
-			}
-		}
-		else if(device == &__device_wkf) {
-			sprintf(topStr, "%s (%s)",device->hwName,wkfGetSerial());
-		}
-		else {
-			strcpy(topStr, getHwNameByLocation(LOC_DVD_CONNECTOR));
-		}
-		DrawAddChild(container, DrawStyledLabel(640/2, 266, topStr, 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 266, getDeviceInfoString(LOC_DVD_CONNECTOR), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"PROGRESSIVE VIDEO", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 306, (char*)(getDTVStatus() ? "Yes" : "No"), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 330, (char*)"CURRENT DEVICE", 0.65f, true, defaultColor));
@@ -155,8 +154,8 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawLabel(30, 55, "Version Info (3/4):"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version 0.6", 1.0f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid & Extrems, 2024", 0.75f, true, defaultColor));
-		sprintf(txtbuffer, "Commit %s Revision %s", GITREVISION, GITVERSION);
-		DrawAddChild(container, DrawStyledLabel(640/2, 165, txtbuffer, 0.75f, true, defaultColor));
+		sprintf(topStr, "Commit %s Revision %s", GITREVISION, GITVERSION);
+		DrawAddChild(container, DrawStyledLabel(640/2, 165, topStr, 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 220, "Source/Updates/Issues", 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 244, "github.com/emukidid/swiss-gc", 0.64f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 310, "Web/Support", 0.75f, true, defaultColor));
