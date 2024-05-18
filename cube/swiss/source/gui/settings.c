@@ -830,6 +830,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 }
 
 int show_settings(int page, int option, ConfigEntry *config) {
+	wait_network();
 	// Copy current settings to a temp copy in case the user cancels out
 	if(config != NULL) {
 		memcpy(&tempConfig, config, sizeof(ConfigEntry));

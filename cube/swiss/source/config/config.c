@@ -12,6 +12,7 @@
 #include "main.h"
 #include "config.h"
 #include "settings.h"
+#include "bba.h"
 
 // This is an example Swiss settings entry (sits at the top of global.ini)
 //!!Swiss Settings Start!!
@@ -1137,6 +1138,7 @@ int config_init(void (*progress_indicator)(char*, int, int)) {
 SwissSettings backup;
 
 void config_load_current(ConfigEntry *config) {
+	wait_network();
 	// load settings for this game to current settings
 	memcpy(&backup, &swissSettings, sizeof(SwissSettings));
 	swissSettings.gameVMode = config->gameVMode;
