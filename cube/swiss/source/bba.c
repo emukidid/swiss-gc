@@ -123,3 +123,21 @@ bool bba_exists(u32 location)
 	}
 	return false;
 }
+
+const char *bba_address_str(void)
+{
+	static char string[18];
+
+	if ((bba_localip.s_addr = net_gethostip()) == INADDR_ANY) {
+		u8 mac_addr[6];
+
+		if (net_get_mac_address(mac_addr) < 0)
+			return "Not initialised";
+
+		sprintf(string, "%02X:%02X:%02X:%02X:%02X:%02X", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+		return string;
+	}
+
+	sprintf(string, "%u.%u.%u.%u", ip4_addr1(&bba_localip), ip4_addr2(&bba_localip), ip4_addr3(&bba_localip), ip4_addr4(&bba_localip));
+	return string;
+}

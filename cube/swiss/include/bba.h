@@ -13,5 +13,6 @@ bool init_network();
 void init_network_async();
 void init_wiiload_thread();
 bool bba_exists(u32 location);
+const char *bba_address_str();
 
 #endif

@@ -114,8 +114,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 146, getHwNameByLocation(LOC_MEMCARD_SLOT_B), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 170, (char*)"SERIAL PORT 1", 0.65f, true, defaultColor));
 		if(bba_exists(LOC_SERIAL_PORT_1)) {
-			bba_localip.s_addr = net_gethostip();
-			sprintf(topStr, "%s (%s)", getHwNameByLocation(LOC_SERIAL_PORT_1), bba_localip.s_addr == INADDR_ANY ? "Not initialised" : inet_ntoa(bba_localip));
+			sprintf(topStr, "%s (%s)", getHwNameByLocation(LOC_SERIAL_PORT_1), bba_address_str());
 		}
 		else {
 			strcpy(topStr, getHwNameByLocation(LOC_SERIAL_PORT_1));
