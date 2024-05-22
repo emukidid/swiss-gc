@@ -743,6 +743,7 @@ static const struct {
 	{{ "GESPA4\x00\x00" }, false, 0x79, 0x3910, 0xB591A35F, 0x06BB39C380942CAD,  756324352,  +703653888, {  545286120,      +20204, 8096, 0xA1EE }, "Evolution Skateboarding" },
 	{{ "GEVJ0M\x00\x00" }, false, 0x53, 0x06ED, 0x8F6F5F3E, 0xAD8416CD80901E96, 1242880000,  +217098240, { 1212724116,      +13792, 6496, 0x253A }, "Shinki Sekai Evolutia" },
 	{{ "GEWE41\x00\x00" }, false, 0x96, 0x906D, 0xBFCB4D4F, 0x741A8FCE16F4B335, 1284227072,  +175751168, { 1256536768,      +22676, 6496, 0x4B71 }, "Evolution Worlds" },
+	{{ "GEWE41\x00\x00" }, false, 0xAA, 0x1C6B, 0x74E3FBEE, 0x6D5DC8CE5C7C3D54, 1284227072,  +175751168, { 1256536256,      +23188, 6496, 0x4B71 }, "Evolution Worlds" },
 	{{ "GEWP41\x00\x00" }, false, 0x7A, 0x3BD1, 0x7388F4F9, 0x514E09AB37F86624, 1374953472,   +85024768, { 1255137752,      +21596, 6496, 0x4B71 }, "Evolution Worlds" },
 	{{ "GEXE52\x00\x00" }, true,  0xAA, 0x7E76, 0x940C7C23, 0xAE5A9FAFDCFFCC32, 1335173120,  +124805120, { 1184956416,          +0, 6496, 0x8FBE }, "Disney's Extreme Skate Adventure" },
 	{{ "GEXP52\x00\x00" }, true,  0xD8, 0xA604, 0x119F3B75, 0xA8DB0D78395E66C2, 1441525760,   +18452480, { 1161363456,          +0, 6496, 0x8FBE }, "Disney's Extreme Skate Adventure" },
@@ -2097,7 +2098,7 @@ static const struct {
 	{{ "UGPJ01\x00\x03" }, false, 0xDE, 0xC4F0, 0xDFF567CB, 0xFB2218FBFA6AB9FE,    2473984, +1457504256, {    2003524,      +28092, 6496, 0xE53B }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
-#define REDUMP_COUNT (1988)
+#define REDUMP_COUNT (1989)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
