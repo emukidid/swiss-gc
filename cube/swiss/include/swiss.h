@@ -46,6 +46,8 @@ extern void udelay(int s);
 extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
 extern s32 DVD_LowGetCoverStatus(void);
 extern u32 sdgecko_getAddressingType(s32 drv_no);
+extern u32 sdgecko_getDevice(s32 drv_no);
+extern void sdgecko_setDevice(s32 drv_no, u32 dev);
 extern u32 sdgecko_getSpeed(s32 drv_no);
 extern void sdgecko_setSpeed(s32 drv_no, u32 freq);
 extern u32 sdgecko_getPageSize(s32 drv_no);

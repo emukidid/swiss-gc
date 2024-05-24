@@ -2597,7 +2597,7 @@ void select_device(int type)
 			DrawAddChild(deviceSelectBox, gameBootLabel);
 		}
 		// Memory card port devices, allow for speed selection
-		if(allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2)) {
+		if(allDevices[curDevice]->features & FEAT_EXI_SPEED) {
 			uiDrawObj_t *exiOptionsLabel = DrawStyledLabel(getVideoMode()->fbWidth-190, 400, "(X) EXI Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
 			DrawAddChild(deviceSelectBox, exiOptionsLabel);
 			if(inAdvanced) {
@@ -2611,7 +2611,7 @@ void select_device(int type)
 			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z) ))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = padsButtonsHeld();
-		if((btns & PAD_BUTTON_X) && (allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2)))
+		if((btns & PAD_BUTTON_X) && (allDevices[curDevice]->features & FEAT_EXI_SPEED))
 			inAdvanced ^= 1;
 		if(btns & PAD_TRIGGER_Z) {
 			showAllDevices ^= 1;

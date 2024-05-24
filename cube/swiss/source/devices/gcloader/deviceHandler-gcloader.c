@@ -225,6 +225,7 @@ s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, Exec
 		if(devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
 			s32 exi_channel, exi_device;
 			if(getExiDeviceByLocation(devices[DEVICE_PATCHES]->location, &exi_channel, &exi_device)) {
+				exi_device = sdgecko_getDevice(exi_channel);
 				// Card Type
 				*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(exi_channel) ? 0:9;
 				// Copy the actual freq

@@ -107,6 +107,7 @@ typedef char* (* _fn_status)(file_handle*);
 #define FEAT_HYPERVISOR			0x80
 #define FEAT_PATCHES			0x100
 #define FEAT_AUDIO_STREAMING	0x200
+#define FEAT_EXI_SPEED			0x400
 
 // Device quirks
 #define QUIRK_NONE						0x0

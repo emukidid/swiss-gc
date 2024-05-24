@@ -293,6 +293,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 	s32 exi_channel, exi_device;
 	if(getExiDeviceByLocation(devices[DEVICE_CUR]->location, &exi_channel, &exi_device)) {
 		if(IS_SDCARD(file)) {
+			exi_device = sdgecko_getDevice(exi_channel);
 			// Card Type
 			*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(exi_channel) ? 0:9;
 			// Copy the actual freq
@@ -423,7 +424,17 @@ s32 deviceHandler_FAT_makeDir(file_handle* dir) {
 }
 
 bool deviceHandler_FAT_test_sd_a() {
-	return __io_gcsda.startup() && __io_gcsda.shutdown();
+	bool ret = __io_gcsda.startup() && __io_gcsda.shutdown();
+
+	if(__io_gcsda.features & FEATURE_GAMECUBE_SLOTA) {
+		__device_sd_a.deviceName = "SD Card - Slot A";
+		__device_sd_a.location = LOC_MEMCARD_SLOT_A;
+	}
+	else if(__io_gcsda.features & FEATURE_GAMECUBE_PORT1) {
+		__device_sd_a.deviceName = "SD Card - SD2SP1";
+		__device_sd_a.location = LOC_SERIAL_PORT_1;
+	}
+	return ret;
 }
 bool deviceHandler_FAT_test_sd_b() {
 	return __io_gcsdb.startup() && __io_gcsdb.shutdown();
@@ -520,7 +531,7 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 	.deviceName = "SD Card - Slot A",
 	.deviceDescription = "SD(HC/XC) Card - Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_SDSMALL, 59, 78, 64, 80},
-	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING|FEAT_EXI_SPEED,
 	.emulable = EMU_READ|EMU_READ_SPEED|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	.location = LOC_MEMCARD_SLOT_A,
 	.initial = &initial_SD_A,
@@ -547,7 +558,7 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 	.deviceName = "SD Card - Slot B",
 	.deviceDescription = "SD(HC/XC) Card - Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_SDSMALL, 59, 78, 64, 80},
-	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING|FEAT_EXI_SPEED,
 	.emulable = EMU_READ|EMU_READ_SPEED|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	.location = LOC_MEMCARD_SLOT_B,
 	.initial = &initial_SD_B,
@@ -574,7 +585,7 @@ DEVICEHANDLER_INTERFACE __device_ata_a = {
 	.deviceName = "IDE-EXI - Slot A",
 	.deviceDescription = "IDE/PATA HDD - Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_HDD, 104, 73, 104, 76},
-	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING|FEAT_EXI_SPEED,
 	.emulable = EMU_READ|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	.location = LOC_MEMCARD_SLOT_A,
 	.initial = &initial_ATA_A,
@@ -601,7 +612,7 @@ DEVICEHANDLER_INTERFACE __device_ata_b = {
 	.deviceName = "IDE-EXI - Slot B",
 	.deviceDescription = "IDE/PATA HDD - Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_HDD, 104, 73, 104, 76},
-	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING|FEAT_EXI_SPEED,
 	.emulable = EMU_READ|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	.location = LOC_MEMCARD_SLOT_B,
 	.initial = &initial_ATA_B,
@@ -628,7 +639,7 @@ DEVICEHANDLER_INTERFACE __device_sd_c = {
 	.deviceName = "SD Card - SD2SP2",
 	.deviceDescription = "SD(HC/XC) Card - Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_SDSMALL, 59, 78, 64, 80},
-	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING|FEAT_EXI_SPEED,
 	.emulable = EMU_READ|EMU_READ_SPEED|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	.location = LOC_SERIAL_PORT_2,
 	.initial = &initial_SD_C,
@@ -655,7 +666,7 @@ DEVICEHANDLER_INTERFACE __device_ata_c = {
 	.deviceName = "M.2 Loader",
 	.deviceDescription = "M.2 SATA SSD - Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_M2LOADER, 112, 54, 112, 56},
-	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING|FEAT_EXI_SPEED,
 	.emulable = EMU_READ|EMU_READ_SPEED|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	.location = LOC_SERIAL_PORT_1,
 	.initial = &initial_ATA_C,
