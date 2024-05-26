@@ -440,7 +440,14 @@ bool deviceHandler_FAT_test_sd_b() {
 	return __io_gcsdb.startup() && __io_gcsdb.shutdown();
 }
 bool deviceHandler_FAT_test_sd_c() {
-	return __io_gcsd2.startup() && __io_gcsd2.shutdown();
+	bool ret = __io_gcsd2.startup() && __io_gcsd2.shutdown();
+
+	if (sdgecko_getDevice(2) == EXI_DEVICE_0)
+		__device_sd_c.hwName = "SD Card Adapter";
+	else
+		__device_sd_c.hwName = "ETH2GC Sidecar+";
+
+	return ret;
 }
 bool deviceHandler_FAT_test_ata_a() {
 	return ide_exi_inserted(0);
