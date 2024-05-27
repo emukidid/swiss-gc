@@ -404,7 +404,8 @@ file_handle* meta_find_disc2(file_handle *f) {
 	return disc2File;
 }
 
-static void *meta_thread_func(void *arg) {
+static void *meta_thread_func(void *loadingBox) {
+	DrawUpdateProgressLoading(loadingBox, +1);
 	file_handle *dirEntries = getCurrentDirEntries();
 	int dirEntryCount = getCurrentDirEntryCount();
 	for (int i = 0; i < dirEntryCount; i++) {
@@ -414,12 +415,13 @@ static void *meta_thread_func(void *arg) {
 			unlockFile(&dirEntries[i]);
 		}
 	}
+	DrawUpdateProgressLoading(loadingBox, -1);
 	return NULL;
 }
 
-void meta_thread_start() {
+void meta_thread_start(void *loadingBox) {
 	if (devices[DEVICE_CUR]->features & FEAT_THREAD_SAFE)
-		LWP_CreateThread(&meta_thread, meta_thread_func, NULL, NULL, 16*1024, LWP_PRIO_NORMAL);
+		LWP_CreateThread(&meta_thread, meta_thread_func, loadingBox, NULL, 16*1024, LWP_PRIO_NORMAL);
 }
 
 void meta_thread_stop() {

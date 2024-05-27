@@ -724,7 +724,12 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
 		GXColor loadingColor = (GXColor) {255,255,255,data->miniModeAlpha};
 		int numSegments = (data->percent*8)/100;
 		data->percent += (data->percent + 2 > 200 ? -200 : 2);
-		data->miniModeAlpha = (data->miniModeAlpha + 2 > 255 ? 255 : data->miniModeAlpha + 2);
+		if(data->speed != 0) {
+			data->miniModeAlpha = MIN(255, data->miniModeAlpha + 3);
+		}
+		else {
+			data->miniModeAlpha = MAX(0, data->miniModeAlpha - 3);
+		}
 		GX_InvalidateTexAll();
 		GX_LoadTexObj(&loadingTexObj, GX_TEXMAP0);
 		_drawRect(x-8, y-8, 16, 16, 0, loadingColor, (float) (numSegments)/8, (float) (numSegments+1)/8, 0.0f, 1.0f);
@@ -1523,6 +1528,13 @@ void DrawUpdateProgressBarDetail(uiDrawObj_t *evt, int percent, int speed, int t
 	data->speed = speed;
 	data->timestart = timestart;
 	data->timeremain = timeremain;
+	LWP_MutexUnlock(_videomutex);
+}
+
+void DrawUpdateProgressLoading(uiDrawObj_t *evt, int increment) {
+	LWP_MutexLock(_videomutex);
+	drawProgressEvent_t *data = (drawProgressEvent_t*)evt->data;
+	data->speed += increment;
 	LWP_MutexUnlock(_videomutex);
 }
 

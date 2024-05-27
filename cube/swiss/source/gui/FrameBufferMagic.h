@@ -115,6 +115,7 @@ uiDrawObj_t* DrawTooltip(const char *tooltip);
 uiDrawObj_t* DrawTitleBar();
 void DrawUpdateProgressBar(uiDrawObj_t *evt, int percent);
 void DrawUpdateProgressBarDetail(uiDrawObj_t *evt, int percent, int speed, int timestart, int timeremain);
+void DrawUpdateProgressLoading(uiDrawObj_t *evt, int increment);
 void DrawUpdateMenuButtons(int selection);
 void DrawUpdateFileBrowserButton(uiDrawObj_t *evt, int mode);
 void DrawAddChild(uiDrawObj_t *parent, uiDrawObj_t *child);

@@ -336,7 +336,6 @@ bool upToParent(file_handle* entry)
 	return getParentPath(entry->name, entry->name);
 }
 
-uiDrawObj_t* loadingBox = NULL;
 uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t* filePanel)
 {
 	memset(txtbuffer,0,sizeof(txtbuffer));
@@ -345,10 +344,11 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		needsRefresh=1;
 		return filePanel;
 	}
-	meta_thread_start();
+	uiDrawObj_t *loadingBox = DrawProgressLoading(PROGRESS_BOX_BOTTOMLEFT);
+	DrawPublish(loadingBox);
+	meta_thread_start(loadingBox);
 	while(1) {
-		loadingBox = DrawProgressLoading(PROGRESS_BOX_BOTTOMLEFT);
-		DrawPublish(loadingBox);
+		DrawUpdateProgressLoading(loadingBox, +1);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFiles(directory, num_files, newPanel);
 		if(filePanel != NULL) {
@@ -356,7 +356,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		}
 		filePanel = newPanel;
 		DrawPublish(filePanel);
-		DrawDispose(loadingBox);
+		DrawUpdateProgressLoading(loadingBox, -1);
 		
 		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z;
 		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & waitButtons))
@@ -466,6 +466,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		}
 	}
 	meta_thread_stop();
+	DrawDispose(loadingBox);
 	return filePanel;
 }
 
@@ -575,10 +576,11 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 	if(curSelection == 0 && num_files > 1 && directory[0]->fileAttrib==IS_SPECIAL) {
 		curSelection = 1; // skip the ".." by default
 	}
-	meta_thread_start();
+	uiDrawObj_t *loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
+	DrawPublish(loadingBox);
+	meta_thread_start(loadingBox);
 	while(1) {
-		loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
-		DrawPublish(loadingBox);
+		DrawUpdateProgressLoading(loadingBox, +1);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFilesCarousel(directory, num_files, newPanel);
 		if(filePanel != NULL) {
@@ -586,7 +588,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		}
 		filePanel = newPanel;
 		DrawPublish(filePanel);
-		DrawDispose(loadingBox);
+		DrawUpdateProgressLoading(loadingBox, -1);
 		
 		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z;
 		while ((padsStickX() > -16 && padsStickX() < 16) && !(padsButtonsHeld() & waitButtons))
@@ -696,6 +698,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		}
 	}
 	meta_thread_stop();
+	DrawDispose(loadingBox);
 	return filePanel;
 }
 
@@ -747,10 +750,11 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 	if(curSelection == 0 && num_files > 1 && directory[0]->fileAttrib==IS_SPECIAL) {
 		curSelection = 1; // skip the ".." by default
 	}
-	meta_thread_start();
+	uiDrawObj_t *loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
+	DrawPublish(loadingBox);
+	meta_thread_start(loadingBox);
 	while(1) {
-		loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
-		DrawPublish(loadingBox);
+		DrawUpdateProgressLoading(loadingBox, +1);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFilesFullwidth(directory, num_files, newPanel);
 		if(filePanel != NULL) {
@@ -758,7 +762,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		}
 		filePanel = newPanel;
 		DrawPublish(filePanel);
-		DrawDispose(loadingBox);
+		DrawUpdateProgressLoading(loadingBox, -1);
 		
 		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z;
 		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & waitButtons))
@@ -868,6 +872,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		}
 	}
 	meta_thread_stop();
+	DrawDispose(loadingBox);
 	return filePanel;
 }
 
