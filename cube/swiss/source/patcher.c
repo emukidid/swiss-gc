@@ -6164,11 +6164,26 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if (devices[DEVICE_CUR]->emulated() & EMU_BUS_ARBITER) {
 				switch (j) {
 					case 0:
+						data[i + 26] = 0x281D0003;	// cmplwi	r29, 3
+						data[i + 27] = 0x41800018;	// blt		+6
+						data[i + 46] = 0x2C000002;	// cmpwi	r0, 2
+						data[i + 47] = 0x41800018;	// blt		+6
 						data[i + 56] = 0x38030024;	// addi		r0, r3, 36
 						data[i + 58] = 0x7C00C840;	// cmplw	r0, r25
 						break;
 					case 1:
+						data[i + 26] = 0x281D0003;	// cmplwi	r29, 3
+						data[i + 27] = 0x41800018;	// blt		+6
+						data[i + 46] = 0x2C000002;	// cmpwi	r0, 2
+						data[i + 47] = 0x41800018;	// blt		+6
+						data[i + 56] = 0x3803002C;	// addi		r0, r3, 44
+						data[i + 58] = 0x7C00C840;	// cmplw	r0, r25
+						break;
 					case 2:
+						data[i + 26] = 0x281C0003;	// cmplwi	r28, 3
+						data[i + 27] = 0x41800018;	// blt		+6
+						data[i + 46] = 0x2C000002;	// cmpwi	r0, 2
+						data[i + 47] = 0x41800018;	// blt		+6
 						data[i + 56] = 0x3803002C;	// addi		r0, r3, 44
 						data[i + 58] = 0x7C00C840;	// cmplw	r0, r25
 						break;

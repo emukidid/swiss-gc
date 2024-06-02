@@ -38,7 +38,8 @@
 #endif
 
 #define exi_cpr				(*(u8*)VAR_EXI_CPR)
-#define exi_channel			({ if (*VAR_EXI_SLOT >= EXI_CHANNEL_MAX) __builtin_trap(); *VAR_EXI_SLOT; })
+#define exi_channel			(*(u8*)VAR_EXI_SLOT & 0x3)
+#define exi_device			((*(u8*)VAR_EXI_SLOT & 0xC) >> 2)
 #define exi_regs			(*(vu32**)VAR_EXI_REGS)
 
 #if ISR_READ
@@ -219,7 +220,9 @@ static bool xmit_datablock(void *src, u32 token) {
 static void mmc_done_queued(void);
 static void mmc_read_queued(void)
 {
-	if (!EXILock(exi_channel, EXI_DEVICE_0, (EXICallback)mmc_read_queued))
+	if (exi_channel >= EXI_CHANNEL_MAX)
+		__builtin_trap();
+	if (!EXILock(exi_channel, exi_device, (EXICallback)mmc_read_queued))
 		return;
 
 	void *buffer = mmc.queued->buffer;

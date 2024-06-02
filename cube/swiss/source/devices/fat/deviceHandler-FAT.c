@@ -298,17 +298,15 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 			*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(exi_channel) ? 0:9;
 			// Copy the actual freq
 			*(vu8*)VAR_EXI_CPR = (exi_channel << 6) | ((1 << exi_device) << 3) | sdgecko_getSpeed(exi_channel);
-			// Device slot (0, 1 or 2)
-			*(vu8*)VAR_EXI_SLOT = exi_channel;
 		}
 		else {
 			// Is the HDD in use a 48 bit LBA supported HDD?
 			*(vu8*)VAR_ATA_LBA48 = ataDriveInfo.lba48Support;
 			// Copy the actual freq
 			*(vu8*)VAR_EXI_CPR = (exi_channel << 6) | ((1 << exi_device) << 3) | (swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
-			// Device slot (0, 1 or 2)
-			*(vu8*)VAR_EXI_SLOT = exi_channel | exi_device;
 		}
+		// Device slot (0, 1 or 2)
+		*(vu8*)VAR_EXI_SLOT = (exi_device << 2) | exi_channel;
 		*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[exi_channel];
 	}
 	return 1;

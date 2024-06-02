@@ -2139,7 +2139,7 @@ void load_game() {
 	*(vu8*)VAR_DRIVE_PATCHED = drive_status == DEBUG_MODE;
 	*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
 	*(vu32**)VAR_EXI_REGS = NULL;
-	*(vu8*)VAR_EXI_SLOT = EXI_CHANNEL_MAX;
+	*(vu8*)VAR_EXI_SLOT = (EXI_DEVICE_MAX << 2) | EXI_CHANNEL_MAX;
 	*(vu8*)VAR_EXI_CPR = (EXI_CHANNEL_MAX << 6) | EXI_SPEED1MHZ;
 	*(vu8*)VAR_SD_SHIFT = 0;
 	*(vu8*)VAR_IGR_TYPE = swissSettings.igrType | (tgcFile.magic == TGC_MAGIC ? 0x80:0x00);

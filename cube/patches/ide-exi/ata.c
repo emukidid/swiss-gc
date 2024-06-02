@@ -50,8 +50,8 @@
 #define _ata48bit *(u8*)VAR_ATA_LBA48
 
 #define exi_cpr				(*(u8*)VAR_EXI_CPR)
-#define exi_channel			(*(u8*)VAR_EXI_SLOT & (EXI_CHANNEL_0 | EXI_CHANNEL_1))
-#define exi_device			(*(u8*)VAR_EXI_SLOT & (EXI_DEVICE_0  | EXI_DEVICE_2))
+#define exi_channel			(*(u8*)VAR_EXI_SLOT & 0x3)
+#define exi_device			((*(u8*)VAR_EXI_SLOT & 0xC) >> 2)
 #define exi_regs			(*(vu32**)VAR_EXI_REGS)
 
 #if ISR_READ

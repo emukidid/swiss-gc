@@ -171,7 +171,7 @@ static void exi_read(unsigned index, uint32_t *value)
 			break;
 		#ifndef USB
 		case 5:
-			if (!dev && chan != *VAR_EXI_SLOT) {
+			if (!dev && chan != *VAR_EXI_SLOT & 0xF) {
 				if (exi.reg[chan].cpr & 0b01000000000000) {
 					if (EXI[chan][0] & 0b01000000000000)
 						exi_remove_device(chan);
@@ -228,7 +228,7 @@ static void exi_write(unsigned index, uint32_t value)
 
 			if (chan == EXI_CHANNEL_0) {
 				if ((dev | dev2) & ~(1 << EXI_DEVICE_0)) {
-					if (*VAR_EXI_SLOT == EXI_CHANNEL_0)
+					if (chan == *VAR_EXI_SLOT & 0x3)
 						end_read();
 
 					EXI[chan][0] = (value & 0b10001111111100) | (EXI[chan][0] & 0b00010000000001);
@@ -353,7 +353,7 @@ static void exi_read(unsigned index, uint32_t *value)
 				mask |= 0b00000000000011;
 			if (chan == EXI_CHANNEL_0 && (dev & (1 << EXI_DEVICE_2)))
 				mask |= 0b00001111111100;
-			if (chan == *VAR_EXI_SLOT)
+			if (chan == *VAR_EXI_SLOT & 0xF)
 				mask |= 0b01000000000000;
 
 			*value = exi.reg[chan].cpr | (EXI[chan][0] & ~mask);
@@ -459,7 +459,7 @@ static void exi_read(unsigned index, uint32_t *value)
 
 	switch (index % 5) {
 		case 0:
-			if (chan == *VAR_EXI_SLOT)
+			if (chan == *VAR_EXI_SLOT & 0xF)
 				mask |= 0b01000000000000;
 			#ifdef USB
 			if (chan == EXI_CHANNEL_1)
