@@ -28,6 +28,7 @@
 #include "exi.h"
 #include "httpd.h"
 #include "config.h"
+#include "sram.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
@@ -208,6 +209,9 @@ int main(int argc, char *argv[])
 	// Swiss video mode force
 	GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
 	DrawVideoMode(forcedMode);
+	
+	swissSettings.sram60Hz = getTVFormat() != VI_PAL;
+	swissSettings.sramProgressive = getScanMode() == VI_PROGRESSIVE;
 	
 	swissSettings.initNetworkAtStart |= !!bba_exists(LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2);
 	if(swissSettings.initNetworkAtStart) {

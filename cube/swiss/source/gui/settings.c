@@ -16,6 +16,7 @@
 #include "settings.h"
 #include "exi.h"
 #include "bba.h"
+#include "sram.h"
 
 #define page_x_ofs_key (30)
 #define page_x_ofs_val (410)
@@ -102,37 +103,8 @@ static char *tooltips_game[PAGE_GAME_MAX+1] = {
 	"Prefer Clean Boot:\n\nWhen enabled, the GameCube will be reset and the game\nbooted through normal processes with no changes applied.\nRegion restrictions may be applicable.\n\nOnly available to devices attached to the DVD Interface."
 };
 
-syssram* sram;
-syssramex* sramex;
-
 // Number of settings (including Back, Next, Save, Exit buttons) per page
 int settings_count_pp[5] = {PAGE_GLOBAL_MAX, PAGE_NETWORK_MAX, PAGE_GAME_GLOBAL_MAX, PAGE_GAME_DEFAULTS_MAX, PAGE_GAME_MAX};
-
-void refreshSRAM(SwissSettings *settings) {
-	bool writeSram = false;
-	sram = __SYS_LockSram();
-	if(!__SYS_CheckSram()) {
-		memset(sram, 0, sizeof(syssram));
-		sram->flags |= 0x10;
-		sram->flags |= 0x04;
-		writeSram = true;
-	}
-	settings->sramHOffset = sram->display_offsetH;
-	settings->sram60Hz = (sram->ntd >> 6) & 1;
-	settings->sramLanguage = sram->lang;
-	settings->sramProgressive = (sram->flags >> 7) & 1;
-	settings->sramStereo = (sram->flags >> 2) & 1;
-	settings->sramVideo = sram->flags & 3;
-	__SYS_UnlockSram(writeSram);
-	if(writeSram)
-		while(!__SYS_SyncSram());
-	sramex = __SYS_LockSramEx();
-	settings->configDeviceId = sramex->__padding0;
-	if(settings->configDeviceId > DEVICE_ID_MAX || !(getDeviceByUniqueId(settings->configDeviceId)->features & FEAT_CONFIG_DEVICE)) {
-		settings->configDeviceId = DEVICE_ID_UNK;
-	}
-	__SYS_UnlockSramEx(0);
-}
 
 char* getConfigDeviceName(SwissSettings *settings) {
 	DEVICEHANDLER_INTERFACE *configDevice = getDeviceByUniqueId(settings->configDeviceId);
@@ -909,19 +881,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 					swissSettings.sramHOffset &= ~1;
 				}
 				VIDEO_SetAdjustingValues(swissSettings.sramHOffset, 0);
-				sram = __SYS_LockSram();
-				sram->display_offsetH = swissSettings.sramHOffset;
-				sram->ntd = swissSettings.sram60Hz ? (sram->ntd|0x40):(sram->ntd&~0x40);
-				sram->lang = swissSettings.sramLanguage;
-				sram->flags = swissSettings.sramProgressive ? (sram->flags|0x80):(sram->flags&~0x80);
-				sram->flags = swissSettings.sramStereo ? (sram->flags|0x04):(sram->flags&~0x04);
-				sram->flags = (swissSettings.sramVideo&0x03)|(sram->flags&~0x03);
-				__SYS_UnlockSram(1);
-				while(!__SYS_SyncSram());
-				sramex = __SYS_LockSramEx();
-				sramex->__padding0 = swissSettings.configDeviceId;
-				__SYS_UnlockSramEx(1);
-				while(!__SYS_SyncSram());
+				updateSRAM(&swissSettings, true);
 				// Update our .ini (in memory)
 				if(config != NULL) {
 					config_update_game(config, true);

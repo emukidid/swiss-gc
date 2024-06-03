@@ -10,6 +10,7 @@
 #include "bba.h"
 #include "dvd.h"
 #include "main.h"
+#include "swiss.h"
 #include "util.h"
 #include "devices/dvd/deviceHandler-DVD.h"
 

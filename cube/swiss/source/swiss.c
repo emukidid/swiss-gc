@@ -104,28 +104,17 @@ void ogc_video__reset()
 			swissSettings.gameVMode = 0;
 		if(swissSettings.sramVideo == SYS_VIDEO_PAL && !swissSettings.sram60Hz)
 			swissSettings.sramProgressive = 0;
-	} else {
-		swissSettings.sram60Hz = getTVFormat() != VI_PAL;
-		swissSettings.sramProgressive = getScanMode() == VI_PROGRESSIVE;
-		
-		if(swissSettings.sramProgressive) {
-			if(swissSettings.sramVideo == SYS_VIDEO_PAL) {
-				swissSettings.sramProgressive = 0;
-				swissSettings.gameVMode = -2;
-			} else
-				swissSettings.gameVMode = -1;
+	} else if(swissSettings.sramProgressive) {
+		if(swissSettings.sramVideo == SYS_VIDEO_PAL) {
+			swissSettings.sramProgressive = 0;
+			swissSettings.gameVMode = -2;
 		} else
-			swissSettings.gameVMode = 0;
-	}
+			swissSettings.gameVMode = -1;
+	} else
+		swissSettings.gameVMode = 0;
 	
 	if(!strncmp(gameID, "GB3E51", 6) || (!strncmp(gameID, "G2OE41", 6) && swissSettings.sramLanguage == SYS_LANG_SPANISH))
 		swissSettings.sramProgressive = 0;
-	
-	syssram* sram = __SYS_LockSram();
-	sram->ntd = swissSettings.sram60Hz ? (sram->ntd|0x40):(sram->ntd&~0x40);
-	sram->flags = swissSettings.sramProgressive ? (sram->flags|0x80):(sram->flags&~0x80);
-	__SYS_UnlockSram(1);
-	while(!__SYS_SyncSram());
 	
 	/* set TV mode for current game */
 	switch(swissSettings.gameVMode) {

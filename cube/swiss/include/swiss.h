@@ -43,7 +43,6 @@ extern dvddrvinfo driveInfo;
 extern DiskHeader GCMDisk;
 
 extern void udelay(int s);
-extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
 extern s32 DVD_LowGetCoverStatus(void);
 extern u32 sdgecko_getAddressingType(s32 drv_no);
 extern u32 sdgecko_getDevice(s32 drv_no);
@@ -57,10 +56,13 @@ extern s32 sdgecko_readCSD(s32 drv_no);
 extern s32 sdgecko_readStatus(s32 drv_no);
 extern s32 sdgecko_setHS(s32 drv_no);
 
-extern syssram* __SYS_LockSram();
+extern syssram* __SYS_LockSram(void);
+extern syssramex* __SYS_LockSramEx(void);
 extern u32 __SYS_UnlockSram(u32 write);
-extern syssramex* __SYS_LockSramEx();
 extern u32 __SYS_UnlockSramEx(u32 write);
+extern u32 __SYS_SyncSram(void);
+extern u32 __SYS_CheckSram(void);
+extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
 
 extern uiDrawObj_t * renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t *container);
 
