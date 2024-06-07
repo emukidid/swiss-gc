@@ -12,12 +12,13 @@
 /* File name helper functions */
 char *knownExtensions[] = {".bin", ".dol", ".dol+cli", ".elf", ".fzn", ".gcm", ".gcz", ".iso", ".mp3", ".rvz", ".tgc"};
 
-int endsWith(char *str, char *end) {
+char *endsWith(char *str, char *end) {
 	size_t len_str = strlen(str);
 	size_t len_end = strlen(end);
 	if(len_str < len_end)
-		return 0;
-	return !strcasecmp(str + len_str - len_end, end);
+		return NULL;
+	str += len_str - len_end;
+	return !strcasecmp(str, end) ? str : NULL;
 }
 
 bool canLoadFileType(char *filename) {

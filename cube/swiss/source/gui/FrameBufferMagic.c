@@ -1327,21 +1327,28 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 		}
 	}
 	// Hide extension when rendering certain files
-	if(file->fileAttrib == IS_FILE) {
-		if(endsWith(eventData->displayName,".dol")
-			|| endsWith(eventData->displayName,".dol+cli")
-			|| endsWith(eventData->displayName,".elf")
-			|| endsWith(eventData->displayName,".gci")
-			|| endsWith(eventData->displayName,".gcm")
-			|| endsWith(eventData->displayName,".gcs")
-			|| endsWith(eventData->displayName,".iso")
-			|| endsWith(eventData->displayName,".mp3")
-			|| endsWith(eventData->displayName,".sav")
-			|| endsWith(eventData->displayName,".tgc")) {
-			if(endsWith(eventData->displayName,".nkit.iso")) {
-				eventData->displayName[((u32)strrchr(eventData->displayName, '.'))-((u32)eventData->displayName)] = '\0';
+	if(eventData->file->fileAttrib == IS_FILE) {
+		char *fileName = endsWith(eventData->file->name, eventData->displayName);
+		char *start = fileName ? eventData->displayName : getRelativeName(eventData->file->name);
+		char *end;
+		if((end = endsWith(start,".dol"))
+			|| (end = endsWith(start,".dol+cli"))
+			|| (end = endsWith(start,".elf"))
+			|| (end = endsWith(start,".gci"))
+			|| (end = endsWith(start,".gcm"))
+			|| (end = endsWith(start,".gcs"))
+			|| (end = endsWith(start,".nkit.iso"))
+			|| (end = endsWith(start,".iso"))
+			|| (end = endsWith(start,".mp3"))
+			|| (end = endsWith(start,".sav"))
+			|| (end = endsWith(start,".tgc"))) {
+			if(fileName) {
+				*end = '\0';
 			}
-			eventData->displayName[((u32)strrchr(eventData->displayName, '.'))-((u32)eventData->displayName)] = '\0';
+			else if(memmem(eventData->displayName, strlen(eventData->displayName), start, end - start)) {
+				end = mempcpy(eventData->displayName, start, end - start);
+				*end = '\0';
+			}
 		}
 	}
 	eventData->isAutoLoadEntry = !strcmp(swissSettings.autoload, file->name) || !fnmatch(swissSettings.autoload, file->name, FNM_PATHNAME | FNM_PREFIX_DIRS);
