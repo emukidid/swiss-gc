@@ -9,6 +9,8 @@
 #include <malloc.h>
 #include <ogc/dvd.h>
 #include <ogc/machine/processor.h>
+#include <sdcard/card_cmn.h>
+#include <sdcard/card_io.h>
 #include <sdcard/gcsd.h>
 #include "deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
@@ -435,16 +437,27 @@ bool deviceHandler_FAT_test_sd_a() {
 	return ret;
 }
 bool deviceHandler_FAT_test_sd_b() {
-	return __io_gcsdb.startup() && __io_gcsdb.shutdown();
+	bool ret = __io_gcsdb.startup() && __io_gcsdb.shutdown();
+
+	if (ret) {
+		if (sdgecko_getTransferMode(1) == CARDIO_TRANSFER_DMA)
+			__device_sd_b.hwName = "Semi-Passive SD Card Adapter";
+		else
+			__device_sd_b.hwName = "Passive SD Card Adapter";
+	}
+	return ret;
 }
 bool deviceHandler_FAT_test_sd_c() {
 	bool ret = __io_gcsd2.startup() && __io_gcsd2.shutdown();
 
-	if (sdgecko_getDevice(2) == EXI_DEVICE_0)
-		__device_sd_c.hwName = "SD Card Adapter";
-	else
-		__device_sd_c.hwName = "ETH2GC Sidecar+";
-
+	if (ret) {
+		if (sdgecko_getTransferMode(2) == CARDIO_TRANSFER_DMA)
+			__device_sd_c.hwName = "Semi-Passive SD Card Adapter";
+		else if (sdgecko_getDevice(2) == EXI_DEVICE_0)
+			__device_sd_c.hwName = "Passive SD Card Adapter";
+		else
+			__device_sd_c.hwName = "ETH2GC Sidecar+";
+	}
 	return ret;
 }
 bool deviceHandler_FAT_test_ata_a() {

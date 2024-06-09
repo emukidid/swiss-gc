@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -26,8 +26,10 @@
 _mmc:
 _mmc_transferred:
 	.long	512
+#ifndef DMA
 _mmc_data:
 	.long	0
+#endif
 _mmc_buffer:
 	.long	0
 _mmc_registers:
@@ -54,6 +56,7 @@ mmc_interrupt_vector:
 	li		r5, 4*4
 	eciwx	r6, r5, r4
 	blt		cr6, 5f
+#ifndef DMA
 	stw		r6, _mmc_data - 0x80000000 (r0)
 	li		r6, ~0
 	ecowx	r6, r5, r4
@@ -74,6 +77,28 @@ mmc_interrupt_vector:
 	li		r6, ((2 - 1) << 4) | 0b01
 	ecowx	r6, r5, r4
 	b		2b
+#else
+	li		r6, ~0
+	ecowx	r6, r5, r4
+	li		r5, 3*4
+	li		r6, ((2 - 1) << 4) | 0b01
+	ecowx	r6, r5, r4
+	li		r6, 512
+	stw		r6, _mmc_transferred - 0x80000000 (r0)
+	b		6f
+1:	li		r5, 1*4
+	lwz		r6, _mmc_buffer - 0x80000000 (r0)
+	ecowx	r6, r5, r4
+	li		r5, 2*4
+	li		r6, 512
+	ecowx	r6, r5, r4
+	li		r5, 3*4
+	li		r6, 0b11
+	ecowx	r6, r5, r4
+	li		r6, 0
+	stw		r6, _mmc_transferred - 0x80000000 (r0)
+	b		6f
+#endif
 5:	srwi	r6, r6, 24
 	cmplwi	r6, 0xFE
 	li		r6, ~0

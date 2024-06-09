@@ -201,26 +201,50 @@ int install_code(int final)
 	}
 	// SD Card over EXI
 	else if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
-		switch (devices[DEVICE_CUR]->emulated()) {
-			case EMU_READ | EMU_BUS_ARBITER:
-			case EMU_READ | EMU_READ_SPEED | EMU_BUS_ARBITER:
-				patch     = sd_bin;
-				patchSize = sd_bin_size;
-				break;
-			case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER:
-				patch     = sd_dtk_bin;
-				patchSize = sd_dtk_bin_size;
-				break;
-			case EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER:
-				patch     = sd_card_bin;
-				patchSize = sd_card_bin_size;
-				break;
-			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
-				patch     = sd_eth_bin;
-				patchSize = sd_eth_bin_size;
-				break;
-			default:
-				return 0;
+		if (strcmp(devices[DEVICE_CUR]->hwName, "Semi-Passive SD Card Adapter")) {
+			switch (devices[DEVICE_CUR]->emulated()) {
+				case EMU_READ | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_READ_SPEED | EMU_BUS_ARBITER:
+					patch     = sd_v1_bin;
+					patchSize = sd_v1_bin_size;
+					break;
+				case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER:
+					patch     = sd_v1_dtk_bin;
+					patchSize = sd_v1_dtk_bin_size;
+					break;
+				case EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER:
+					patch     = sd_v1_card_bin;
+					patchSize = sd_v1_card_bin_size;
+					break;
+				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
+					patch     = sd_v1_eth_bin;
+					patchSize = sd_v1_eth_bin_size;
+					break;
+				default:
+					return 0;
+			}
+		} else {
+			switch (devices[DEVICE_CUR]->emulated()) {
+				case EMU_READ | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_READ_SPEED | EMU_BUS_ARBITER:
+					patch     = sd_v2_bin;
+					patchSize = sd_v2_bin_size;
+					break;
+				case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER:
+					patch     = sd_v2_dtk_bin;
+					patchSize = sd_v2_dtk_bin_size;
+					break;
+				case EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER:
+					patch     = sd_v2_card_bin;
+					patchSize = sd_v2_card_bin_size;
+					break;
+				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
+					patch     = sd_v2_eth_bin;
+					patchSize = sd_v2_eth_bin_size;
+					break;
+				default:
+					return 0;
+			}
 		}
 		print_gecko("Installing Patch for SD Card over EXI\r\n");
 	}

@@ -45,6 +45,7 @@ extern DiskHeader GCMDisk;
 extern void udelay(int s);
 extern s32 DVD_LowGetCoverStatus(void);
 extern u32 sdgecko_getAddressingType(s32 drv_no);
+extern u32 sdgecko_getTransferMode(s32 drv_no);
 extern u32 sdgecko_getDevice(s32 drv_no);
 extern void sdgecko_setDevice(s32 drv_no, u32 dev);
 extern u32 sdgecko_getSpeed(s32 drv_no);
@@ -54,7 +55,6 @@ extern s32 sdgecko_setPageSize(s32 drv_no, u32 size);
 extern s32 sdgecko_readCID(s32 drv_no);
 extern s32 sdgecko_readCSD(s32 drv_no);
 extern s32 sdgecko_readStatus(s32 drv_no);
-extern s32 sdgecko_setHS(s32 drv_no);
 
 extern syssram* __SYS_LockSram(void);
 extern syssramex* __SYS_LockSramEx(void);

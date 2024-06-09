@@ -15,7 +15,7 @@ DISASM    = disassembly
 all: clean codehandler cpatches stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch
 
 stub: reboot.bin stub.bin
-sdpatch: sd.bin sd.card.bin sd.dtk.bin sd.eth.bin
+sdpatch: sd-v1.bin sd-v1.card.bin sd-v1.dtk.bin sd-v1.eth.bin sd-v2.bin sd-v2.card.bin sd-v2.dtk.bin sd-v2.eth.bin
 ideexipatch: ideexi-v1.bin ideexi-v1.card.bin ideexi-v1.dtk.bin ideexi-v1.eth.bin ideexi-v2.bin ideexi-v2.card.bin ideexi-v2.dtk.bin ideexi-v2.eth.bin
 dvdpatch: dvd.bin dvd.card.bin
 usbgeckopatch: usbgecko.bin
@@ -93,8 +93,8 @@ stub.bin:
 	@$(BIN2S) -H $(DEST)/stub_bin.h stub.bin > $(DEST)/stub.bin.s
 	@rm -f *.bin *.elf *.o
 
-sd.bin:
-	@echo Building SD Patch ...
+sd-v1.bin:
+	@echo Building SD-v1 Patch ...
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
@@ -103,22 +103,22 @@ sd.bin:
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000000000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDVD_MATH
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=0 -DISR_READ=1 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/memcpy.S
 	@$(CC) -Os $(OPTS) -c base/floor.S
 	@$(CC) -Os $(OPTS) -c base/sqrt.S
-	@$(CC) -Os $(OPTS) -o sd.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o memcpy.o floor.o sqrt.o
+	@$(CC) -Os $(OPTS) -o sd-v1.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o memcpy.o floor.o sqrt.o
 	@mkdir -p $(DISASM)
-	@$(OBJDUMP) -D sd.elf > $(DISASM)/sd.txt
-	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd.elf sd.bin
-	@$(BIN2S) -H $(DEST)/sd_bin.h sd.bin > $(DEST)/sd.bin.s
+	@$(OBJDUMP) -D sd-v1.elf > $(DISASM)/sd-v1.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd-v1.elf sd-v1.bin
+	@$(BIN2S) -H $(DEST)/sd_v1_bin.h sd-v1.bin > $(DEST)/sd-v1.bin.s
 	@rm -f *.bin *.elf *.o
 
-sd.card.bin:
-	@echo Building SD Patch + CARD ...
+sd-v1.card.bin:
+	@echo Building SD-v1 Patch + CARD ...
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR
 	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
@@ -126,20 +126,20 @@ sd.card.bin:
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000000000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=0 -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/memcpy.S
-	@$(CC) -Os $(OPTS) -o sd.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o memcpy.o
+	@$(CC) -Os $(OPTS) -o sd-v1.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
-	@$(OBJDUMP) -D sd.card.elf > $(DISASM)/sd.card.txt
-	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd.card.elf sd.card.bin
-	@$(BIN2S) -H $(DEST)/sd_card_bin.h sd.card.bin > $(DEST)/sd.card.bin.s
+	@$(OBJDUMP) -D sd-v1.card.elf > $(DISASM)/sd-v1.card.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd-v1.card.elf sd-v1.card.bin
+	@$(BIN2S) -H $(DEST)/sd_v1_card_bin.h sd-v1.card.bin > $(DEST)/sd-v1.card.bin.s
 	@rm -f *.bin *.elf *.o
 
-sd.dtk.bin:
-	@echo Building SD Patch + DTK ...
+sd-v1.dtk.bin:
+	@echo Building SD-v1 Patch + DTK ...
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK
 	@$(CC) -Os $(OPTS) -c base/audio.c
@@ -148,20 +148,20 @@ sd.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000000000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDTK
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=3 -DWRITE=0
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=0 -DISR_READ=1 -DQUEUE_SIZE=3 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/memcpy.S
-	@$(CC) -Os $(OPTS) -o sd.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o memcpy.o
+	@$(CC) -Os $(OPTS) -o sd-v1.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
-	@$(OBJDUMP) -D sd.dtk.elf > $(DISASM)/sd.dtk.txt
-	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd.dtk.elf sd.dtk.bin
-	@$(BIN2S) -H $(DEST)/sd_dtk_bin.h sd.dtk.bin > $(DEST)/sd.dtk.bin.s
+	@$(OBJDUMP) -D sd-v1.dtk.elf > $(DISASM)/sd-v1.dtk.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd-v1.dtk.elf sd-v1.dtk.bin
+	@$(BIN2S) -H $(DEST)/sd_v1_dtk_bin.h sd-v1.dtk.bin > $(DEST)/sd-v1.dtk.bin.s
 	@rm -f *.bin *.elf *.o
 
-sd.eth.bin:
-	@echo Building SD Patch + ETH ...
+sd-v1.eth.bin:
+	@echo Building SD-v1 Patch + ETH ...
 	@$(CC) -Os $(OPTS) -c base/base.S
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DETH_EMULATOR -DNO_VIDEO
 	@$(CC) -Os $(OPTS) -c base/emulator_eth.c
@@ -169,17 +169,106 @@ sd.eth.bin:
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000011011001000000001000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=0 -DISR_READ=1 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/memcpy.S
-	@$(CC) -Os $(OPTS) -o sd.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o enc28j60.o uart.o os.o memcpy.o
+	@$(CC) -Os $(OPTS) -o sd-v1.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o enc28j60.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
-	@$(OBJDUMP) -D sd.eth.elf > $(DISASM)/sd.eth.txt
-	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd.eth.elf sd.eth.bin
-	@$(BIN2S) -H $(DEST)/sd_eth_bin.h sd.eth.bin > $(DEST)/sd.eth.bin.s
+	@$(OBJDUMP) -D sd-v1.eth.elf > $(DISASM)/sd-v1.eth.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd-v1.eth.elf sd-v1.eth.bin
+	@$(BIN2S) -H $(DEST)/sd_v1_eth_bin.h sd-v1.eth.bin > $(DEST)/sd-v1.eth.bin.s
+	@rm -f *.bin *.elf *.o
+
+sd-v2.bin:
+	@echo Building SD-v2 Patch ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
+	@$(CC) -Os $(OPTS) -c base/DVDMath.c
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000000000000000
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDVD_MATH
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=1 -DISR_READ=1 -DWRITE=0
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S -DDMA
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -c base/floor.S
+	@$(CC) -Os $(OPTS) -c base/sqrt.S
+	@$(CC) -Os $(OPTS) -o sd-v2.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o memcpy.o floor.o sqrt.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D sd-v2.elf > $(DISASM)/sd-v2.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd-v2.elf sd-v2.bin
+	@$(BIN2S) -H $(DEST)/sd_v2_bin.h sd-v2.bin > $(DEST)/sd-v2.bin.s
+	@rm -f *.bin *.elf *.o
+
+sd-v2.card.bin:
+	@echo Building SD-v2 Patch + CARD ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR
+	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000000000000000
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=1 -DISR_READ=1 -DQUEUE_SIZE=4
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S -DDMA
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -o sd-v2.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o memcpy.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D sd-v2.card.elf > $(DISASM)/sd-v2.card.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd-v2.card.elf sd-v2.card.bin
+	@$(BIN2S) -H $(DEST)/sd_v2_card_bin.h sd-v2.card.bin > $(DEST)/sd-v2.card.bin.s
+	@rm -f *.bin *.elf *.o
+
+sd-v2.dtk.bin:
+	@echo Building SD-v2 Patch + DTK ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK
+	@$(CC) -Os $(OPTS) -c base/audio.c
+	@$(CC) -Os $(OPTS) -c base/fifo.c
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000000000000000
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDTK
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=1 -DISR_READ=1 -DQUEUE_SIZE=3 -DWRITE=0
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S -DDMA
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -o sd-v2.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o uart.o os.o memcpy.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D sd-v2.dtk.elf > $(DISASM)/sd-v2.dtk.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd-v2.dtk.elf sd-v2.dtk.bin
+	@$(BIN2S) -H $(DEST)/sd_v2_dtk_bin.h sd-v2.dtk.bin > $(DEST)/sd-v2.dtk.bin.s
+	@rm -f *.bin *.elf *.o
+
+sd-v2.eth.bin:
+	@echo Building SD-v2 Patch + ETH ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DETH_EMULATOR -DNO_VIDEO
+	@$(CC) -Os $(OPTS) -c base/emulator_eth.c
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000011011001000000001000000
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=1 -DISR_READ=1 -DWRITE=0
+	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S -DDMA
+	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -o sd-v2.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o enc28j60.o uart.o os.o memcpy.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D sd-v2.eth.elf > $(DISASM)/sd-v2.eth.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd-v2.eth.elf sd-v2.eth.bin
+	@$(BIN2S) -H $(DEST)/sd_v2_eth_bin.h sd-v2.eth.bin > $(DEST)/sd-v2.eth.bin.s
 	@rm -f *.bin *.elf *.o
 
 ideexi-v1.bin:
@@ -368,7 +457,7 @@ dvd.bin:
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=0 -DISR_READ=1 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
@@ -389,7 +478,7 @@ dvd.card.bin:
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=0 -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
@@ -410,7 +499,7 @@ usbgecko.bin:
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c usbgecko/usbgecko.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c usbgecko/usbgecko_isr.S
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=0 -DISR_READ=1 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/memcpy.S
@@ -429,7 +518,7 @@ wkf.bin:
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=0 -DISR_READ=1 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
@@ -450,7 +539,7 @@ wkf.card.bin:
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=0 -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
@@ -472,7 +561,7 @@ wkf.dtk.bin:
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c wkf/wkf.c -DASYNC_READ -DQUEUE_SIZE=3
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=0 -DISR_READ=1 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
@@ -492,7 +581,7 @@ fsp.bin:
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001011000000000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c bba/bba.c -DASYNC_READ
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=0 -DISR_READ=1 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
@@ -556,7 +645,7 @@ gcloader-v1.bin:
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DDVD_MATH -DGCODE
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DWRITE=0
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=0 -DISR_READ=1 -DWRITE=0
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
@@ -579,7 +668,7 @@ gcloader-v1.card.bin:
 	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000010000000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c dvd/dvd.c -DASYNC_READ -DGCODE
-	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DISR_READ=1 -DQUEUE_SIZE=4
+	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=0 -DISR_READ=1 -DQUEUE_SIZE=4
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
