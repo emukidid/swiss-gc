@@ -111,9 +111,10 @@ typedef char* (* _fn_status)(file_handle*);
 
 // Device quirks
 #define QUIRK_NONE						0x0
-#define QUIRK_GCLOADER_NO_DISC_2		0x1
-#define QUIRK_GCLOADER_NO_PARTIAL_READ	0x2
-#define QUIRK_GCLOADER_WRITE_CONFLICT	0x4
+#define QUIRK_EXI_SPEED					0x1
+#define QUIRK_GCLOADER_NO_DISC_2		0x2
+#define QUIRK_GCLOADER_NO_PARTIAL_READ	0x4
+#define QUIRK_GCLOADER_WRITE_CONFLICT	0x8
 
 // Device emulated features
 #define EMU_READ			0x80000000

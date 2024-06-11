@@ -339,35 +339,29 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 	// SD Card - Slot A
 	if(isSDCard && slot == 0) {
 		setSDGeckoSpeed(slot, swissSettings.exiSpeed);
-		__device_sd_a.features |= FEAT_BOOT_GCM;
 		file->status = fatFs_Mount(DEV_SDA, "sda:/");
-		if(file->status != FR_OK) {
-			setSDGeckoSpeed(slot, false);
-			__device_sd_a.features &= ~FEAT_BOOT_GCM;
-			file->status = fatFs_Mount(DEV_SDA, "sda:/");
-		}
+		if(sdgecko_getSpeed(slot) < EXI_SPEED32MHZ)
+			__device_sd_a.quirks |=  QUIRK_EXI_SPEED;
+		else
+			__device_sd_a.quirks &= ~QUIRK_EXI_SPEED;
 	}
 	// SD Card - Slot B
 	if(isSDCard && slot == 1) {
 		setSDGeckoSpeed(slot, swissSettings.exiSpeed);
-		__device_sd_b.features |= FEAT_BOOT_GCM;
 		file->status = fatFs_Mount(DEV_SDB, "sdb:/");
-		if(file->status != FR_OK) {
-			setSDGeckoSpeed(slot, false);
-			__device_sd_b.features &= ~FEAT_BOOT_GCM;
-			file->status = fatFs_Mount(DEV_SDB, "sdb:/");
-		}
+		if(sdgecko_getSpeed(slot) < EXI_SPEED32MHZ)
+			__device_sd_b.quirks |=  QUIRK_EXI_SPEED;
+		else
+			__device_sd_b.quirks &= ~QUIRK_EXI_SPEED;
 	}
 	// SD Card - SD2SP2
 	if(isSDCard && slot == 2) {
 		setSDGeckoSpeed(slot, swissSettings.exiSpeed);
-		__device_sd_c.features |= FEAT_BOOT_GCM;
 		file->status = fatFs_Mount(DEV_SDC, "sdc:/");
-		if(file->status != FR_OK) {
-			setSDGeckoSpeed(slot, false);
-			__device_sd_c.features &= ~FEAT_BOOT_GCM;
-			file->status = fatFs_Mount(DEV_SDC, "sdc:/");
-		}
+		if(sdgecko_getSpeed(slot) < EXI_SPEED32MHZ)
+			__device_sd_c.quirks |=  QUIRK_EXI_SPEED;
+		else
+			__device_sd_c.quirks &= ~QUIRK_EXI_SPEED;
 	}
 	// IDE-EXI - Slot A
 	if(!isSDCard && slot == 0) {

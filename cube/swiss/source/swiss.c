@@ -1999,6 +1999,11 @@ void load_game() {
 		msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support audio streaming.\nThis may impact playability."));
 		sleep(5);
 	}
+	if(swissSettings.exiSpeed && (devices[DEVICE_CUR]->quirks & QUIRK_EXI_SPEED)) {
+		DrawDispose(msgBox);
+		msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device is operating in a degraded state.\nThis may impact playability."));
+		sleep(5);
+	}
 	DrawDispose(msgBox);
 	
 	// Find the config for this game, or default if we don't know about it
@@ -2229,13 +2234,7 @@ void load_file()
 				memset(&GCMDisk, 0, sizeof(DiskHeader));
 			}
 			else {
-				uiDrawObj_t *msgBox = NULL;
-				if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
-					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support disc images.\nSet EXI Speed to 16 MHz to bypass."));
-				}
-				else {
-					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support disc images."));
-				}
+				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support disc images."));
 				sleep(5);
 				DrawDispose(msgBox);
 			}
