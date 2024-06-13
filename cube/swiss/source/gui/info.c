@@ -37,7 +37,7 @@ const char* getDeviceInfoString(u32 location) {
 	else if(device == &__device_wkf) {
 		sprintf(topStr, "%s (%s)", device->hwName, wkfGetSerial());
 	}
-	else if(location == bba_location || (bba_location == LOC_UNK && bba_exists(LOC_ANY) == location)) {
+	else if(location == bba_exists(LOC_ANY)) {
 		sprintf(topStr, "%s (%s)", getHwNameByLocation(location), bba_address_str());
 	}
 	else {

@@ -29,6 +29,7 @@ static void *net_thread_func(void *arg)
 		return NULL;
 	}
 
+	net_initialized = 1;
 	strcpy(swissSettings.bbaLocalIp, inet_ntoa(bba_localip));
 	swissSettings.bbaNetmask = (32 - __builtin_ctz(bba_netmask.s_addr));
 	strcpy(swissSettings.bbaGateway, inet_ntoa(bba_gateway));
@@ -61,7 +62,6 @@ static void *net_thread_func(void *arg)
 	deviceHandler_setDeviceAvailable(&__device_ftp, deviceHandler_FTP_test());
 	deviceHandler_setDeviceAvailable(&__device_fsp, deviceHandler_FSP_test());
 
-	net_initialized = 1;
 	init_httpd_thread();
 	init_wiiload_thread();
 	return NULL;
@@ -95,6 +95,9 @@ void wait_network(void)
 u32 bba_exists(u32 location)
 {
 	u32 id;
+
+	if (location & bba_location)
+		return bba_location;
 
 	if ((location & LOC_SERIAL_PORT_1) && EXI_GetID(EXI_CHANNEL_0, EXI_DEVICE_2, &id)) {
 		switch (id) {
