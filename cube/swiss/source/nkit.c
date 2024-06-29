@@ -2222,6 +2222,7 @@ static const struct {
 	{{ "GXXE01\x00\x00" }, false, 0xA8, 0x98C1, 0xE0D19118, 0xA851883E7EBE15B2, 1093384192,  +366594048, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
 	{{ "GXXE01\x00\x00" }, false, 0xBD, 0x98C1, 0xDF5B1825, 0x6816956D0220746F, 1087750144,  +372228096, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
 	{{ "GXXE01\x00\x00" }, false, 0xCB, 0x98C1, 0xBE135566, 0xB56AE9983F6E4903, 1087750144,  +372228096, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
+	{{ "GY3E01\x00\x00" }, false, 0x3C, 0x112A, 0x696F5AC7, 0x780C22857F53C0D0,  264794112, +1195184128, {    3756480, +1195184724, 6496, 0x12FC }, "Donkey Konga 3: Tabehoudai! Haru Mogitate 50-kyoku" },
 	{{ "GYFEA4\x00\x00" }, false, 0x99, 0xFD98, 0xF7DE993B, 0xF9A63BE22E0BCEE5,  584765440,  +875212800, {  344220044,  +875213940, 6496, 0x23CA }, "Yu-Gi-Oh! The Falsebound Kingdom" },
 	{{ "GZBEB2\x00\x00" }, false, 0x3E, 0x6A71, 0x21866440, 0x506BD6CC75ADDC0B,  553748480,  +906229760, {  114322196,       +1548, 6496, 0xB677 }, "Zatch Bell! Go! Go! Mamodo Fight!!" },
 	{{ "GZLE01\x00\x00" }, false, 0x09, 0x863D, 0x5D06C4D8, 0x36D193DF45BFDAA4,  720627712,   +40671232, {  225455448,    +9556648, 6496, 0xDF7E }, "The Legend of Zelda: The Wind Waker Rewritten" },
@@ -2248,7 +2249,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 149)
+#define VALID_COUNT (REDUMP_COUNT + 150)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
@@ -2296,10 +2297,12 @@ static const struct {
 	{{ "GPMEAF\x00\x00" }, true,  0x47, 0x1CEA, 0x2E6425F3, 0x272C8825B749E04B, 1154119680,  +305858560, {  172111684,     +520148, 6496, 0x1480 }, "Pac-Man Fever" },
 	{{ "GXQP41\x00\x00" }, false, 0x55, 0x904A, 0xD0B0EDE0, 0x260C8DE80E2C787E, 1459980288,       -2048, {  479137452,        -312, 8096, 0xA071 }, "Taxi 3: The Game" },
 	{{ "GXQP41\x00\x00" }, false, 0xCE, 0x904A, 0xD0B0EDE0, 0x260C8DE80E2C787E, 1459980288,       -2048, {  479137452,        -312, 8096, 0xA071 }, "Taxi 3: The Game" },
+	{{ "GY3E01\x00\x00" }, false, 0x0A, 0x112A, 0x696F5AC7, 0x780C22857F53C0D0, 1459980288,       -2048, { 1198941300,         -96, 6496, 0x12FC }, "Donkey Konga 3: Tabehoudai! Haru Mogitate 50-kyoku" },
+	{{ "GY3E01\x00\x00" }, false, 0xE7, 0x112A, 0x696F5AC7, 0x780C22857F53C0D0, 1459980288,       -2048, { 1198941212,          -8, 6496, 0x12FC }, "Donkey Konga 3: Tabehoudai! Haru Mogitate 50-kyoku" },
 	{{ "RELSAB\x00\x00" }, false, 0xAC, 0xBA9E, 0x1D74AD4A, 0x1A5F0EA47A582D7E, 1455841280,    +4136960, {         ~0,          +0,    0, 0xFFFF }, "Memory Card Utility Program" },
 	{{ "RELSAB\x00\x00" }, true,  0x44, 0xFCCE, 0x146E4A5A, 0x1E9563341CFB48F4, 1459947520,      +30720, { 1193673280,          +0, 6496, 0x8F7A }, "Summoner: The Prophecy" },
 	{{ "RELSAB\x00\x00" }, true,  0xD6, 0xD9CE, 0x16D7BCCE, 0xB64ADF7A4E8423B8, 1459978240,          +0, { 1193214528,          +0, 6496, 0x1458 }, "Summoner: The Prophecy" },
-#define TOTAL_COUNT (VALID_COUNT + 50)
+#define TOTAL_COUNT (VALID_COUNT + 52)
 };
 
 uint8_t fletcher8(const void *buffer, size_t size)
