@@ -385,30 +385,21 @@ s32 deviceHandler_Qoob_deleteFile(file_handle* file) {
 }
 
 bool deviceHandler_Qoob_test() {
-	// Read 1024 bytes from certain sections of the IPL Mask ROM and compare with Qoob enabled/disabled
-	char *qoobData = (char*)memalign(32, 0x400);
-	char *iplData = (char*)memalign(32, 0x400);
-	
-	memset(qoobData, 0, 0x400);
-	memset(iplData, 0, 0x400);
-	
+	char buf[8];
+	memset(buf, 0, sizeof(buf));
+
 	ipl_set_config(0);
-	__SYS_ReadROM(qoobData,0x100,0);
-	__SYS_ReadROM(qoobData+0x100,0x100,0x80000);
-	__SYS_ReadROM(qoobData+0x200,0x100,0x1FCF00);
-	__SYS_ReadROM(qoobData+0x300,0x100,0x1FFF00);
-	
-	
+	// Read device ID
+	for (int i = 0; i < sizeof(buf) / sizeof(buf[0]); i++) {
+		u32 val = -1;
+		__SYS_ReadROM(&val, 4, 0x1000001 + i);
+		buf[i] = val;
+	}
 	ipl_set_config(6);
-	__SYS_ReadROM(iplData,0x100,0);
-	__SYS_ReadROM(iplData+0x100,0x100,0x80000);
-	__SYS_ReadROM(iplData+0x200,0x100,0x1FCF00);
-	__SYS_ReadROM(iplData+0x300,0x100,0x1FFF00);
 	
-	bool qoobFound = memcmp(qoobData, iplData, 0x400) != 0;
-	
-	free(qoobData);
-	free(iplData);
+	// Qoob Pro is QOOB, Qoob SX is QBSX
+	// We're not interested in the latter
+	bool qoobFound = memcmp(buf, "QOOB", 4) == 0;
 	return qoobFound;
 }
 
