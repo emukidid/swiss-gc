@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -83,6 +83,28 @@ startup:
 
 reset:
 	lis		r3, 0x0C00
+#ifndef APPLOADER
+	li		r4, 0x6800
+	li		r0, ((1 << 1) << 7) | (3 << 4)
+	ecowx	r0, r4, r3
+	li		r5, 0x6800 + 4*4
+	lis		r0, 0xC000
+	ecowx	r0, r5, r3
+	li		r6, 0x6800 + 3*4
+	li		r0, ((4 - 1) << 4) | 0b01
+	ecowx	r0, r6, r3
+1:	eciwx	r0, r6, r3
+	andi.	r0, r0, 0b01
+	bne		1b
+	lis		r0, 0x0100
+	ecowx	r0, r5, r3
+	li		r0, ((4 - 1) << 4) | 0b01
+	ecowx	r0, r6, r3
+2:	eciwx	r0, r6, r3
+	andi.	r0, r0, 0b01
+	bne		2b
+	ecowx	r0, r4, r3
+#endif
 	li		r4, 0x3000 + 9*4
 	li		r0, 0b000
 	ecowx	r0, r4, r3
@@ -90,6 +112,30 @@ reset:
 
 	.globl run
 run:
+#ifdef APPLOADER
+	lis		r4, 0x0C00
+	li		r5, 0x6800
+	li		r0, ((1 << 1) << 7) | (3 << 4)
+	ecowx	r0, r5, r4
+	li		r6, 0x6800 + 4*4
+	lis		r0, 0xC000
+	ecowx	r0, r6, r4
+	li		r7, 0x6800 + 3*4
+	li		r0, ((4 - 1) << 4) | 0b01
+	ecowx	r0, r7, r4
+1:	eciwx	r0, r7, r4
+	andi.	r0, r0, 0b01
+	bne		1b
+	lis		r0, 0x0600
+	ecowx	r0, r6, r4
+	li		r0, ((4 - 1) << 4) | 0b01
+	ecowx	r0, r7, r4
+2:	eciwx	r0, r7, r4
+	andi.	r0, r0, 0b01
+	bne		2b
+	ecowx	r0, r5, r4
+#endif
+
 	oris	r3, r3, 0x8000
 	mtsrr0	r3
 	li		r3, 0x30

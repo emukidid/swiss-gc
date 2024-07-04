@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2022-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -24,12 +24,12 @@
 
 static void exi_select(void)
 {
-	EXI[EXI_CHANNEL_0][0] = (EXI[EXI_CHANNEL_0][0] & 0x405) | ((1 << EXI_DEVICE_1) << 7) | (EXI_SPEED_8MHZ << 4);
+	EXI[EXI_CHANNEL_0][0] = ((1 << EXI_DEVICE_1) << 7) | (EXI_SPEED_8MHZ << 4);
 }
 
 static void exi_deselect(void)
 {
-	EXI[EXI_CHANNEL_0][0] &= 0x405;
+	EXI[EXI_CHANNEL_0][0] = 0;
 }
 
 static void exi_imm_write(uint32_t data, uint32_t len)
