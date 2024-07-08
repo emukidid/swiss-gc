@@ -68,11 +68,11 @@ static void status_callback(s32 result, dvdcmdblk *block)
 	LWP_ThreadBroadcast(queue);
 }
 
-static void mount_callback(s32 result, dvdcmdblk *block)
+static void read_callback(s32 result, dvdcmdblk *block)
 {
 	flippyfile *file = block->usrdata;
 
-	if (result < 0)
+	if (result != block->currtxsize)
 		file->result = FLIPPY_RESULT_DISK_ERR;
 	else
 		file->result = FLIPPY_RESULT_OK;
@@ -103,7 +103,7 @@ static void command_callback(s32 result, dvdcmdblk *block)
 {
 	flippyfile *file = block->usrdata;
 
-	if (result < 0) {
+	if (result != block->currtxsize) {
 		file->result = FLIPPY_RESULT_DISK_ERR;
 	} else {
 		DVD_ReadDmaAsyncPrio(block, FLIPPY_CMD_STATUS, file, sizeof(flippyfile), status_callback, 0);
@@ -119,7 +119,7 @@ flippyresult flippy_mount(flippyfileinfo *info)
 	flippyfile *file = &info->file;
 
 	DVD_SetUserData(&block, file);
-	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_MOUNT(file->handle), NULL, 0, mount_callback, 0)) {
+	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_MOUNT(file->handle), NULL, 0, read_callback, 0)) {
 		file->result = FLIPPY_RESULT_NOT_READY;
 		return file->result;
 	}
@@ -179,7 +179,7 @@ flippyresult flippy_pread(flippyfileinfo *info, void *buf, u32 len, u32 offset)
 	}
 
 	DVD_SetUserData(&block, file);
-	if (!DVD_ReadDmaAsyncPrio(&block, FLIPPY_CMD_READ(file->handle, offset, len), buf, len, command_callback, 2)) {
+	if (!DVD_ReadDmaAsyncPrio(&block, FLIPPY_CMD_READ(file->handle, offset, len), buf, len, read_callback, 2)) {
 		file->result = FLIPPY_RESULT_NOT_READY;
 		return file->result;
 	}
