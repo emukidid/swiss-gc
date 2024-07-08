@@ -29,6 +29,7 @@ SOURCES		:=  source \
 			  source/devices/fsp \
 			  source/devices/ftp \
 			  source/devices/gcloader \
+              source/devices/kunaigc \
               source/devices/memcard \
               source/devices/qoob \
 			  source/devices/smb \
