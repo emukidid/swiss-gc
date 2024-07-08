@@ -7,6 +7,7 @@
 <filepath="elf.tif" id="elfimg" colfmt=6 />
 <filepath="eth2gc.tif" id="eth2gcimg" colfmt=0 />
 <filepath="file.tif" id="fileimg" colfmt=6 />
+<filepath="flippy.tif" id="flippyimg" colfmt=0 />
 <filepath="gcdvdsmall.tif" id="gcdvdsmall" colfmt=3 />
 <filepath="gcloader.tif" id="gcloaderimg" colfmt=0 />
 <filepath="hdd.tif" id="hddimg" colfmt=9 palfmt=0 />
