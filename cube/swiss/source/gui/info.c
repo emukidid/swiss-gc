@@ -26,6 +26,9 @@ const char* getDeviceInfoString(u32 location) {
 		u8* driveVersion = (u8*)&driveInfo;
 		sprintf(topStr,"%s %02X %02X%02X/%02X (%02X)",device->hwName,driveVersion[6],driveVersion[4],driveVersion[5],driveVersion[7],driveVersion[8]);
 	}
+	else if(device == &__device_flippy) {
+		sprintf(topStr, "%s (%u.%u)", device->hwName, driveInfo.pad[4], driveInfo.pad[5]);
+	}
 	else if(device == &__device_gcloader) {
 		if(gcloaderVersionStr != NULL) {
 			sprintf(topStr, "%s HW%i (%s)", device->hwName, gcloaderHwVersion, gcloaderVersionStr);

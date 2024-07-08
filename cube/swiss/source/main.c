@@ -104,6 +104,7 @@ int main(int argc, char *argv[])
 	for(i = 0; i < MAX_DEVICES; i++)
 		allDevices[i] = NULL;
 	i = 0;
+	allDevices[i++] = &__device_flippy;
 	allDevices[i++] = &__device_wkf;
 	allDevices[i++] = &__device_wode;
 	allDevices[i++] = &__device_gcloader;

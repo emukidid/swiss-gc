@@ -26,6 +26,7 @@ SOURCES		:=  source \
 			  source/devices/aram \
               source/devices/dvd \
               source/devices/fat \
+			  source/devices/flippydrive \
 			  source/devices/fsp \
 			  source/devices/ftp \
 			  source/devices/gcloader \
