@@ -95,6 +95,7 @@ typedef struct {
 } flippydirinfo;
 
 flippyresult flippy_mount(flippyfileinfo *info);
+flippyresult flippy_reset(void);
 flippyresult flippy_mkdir(const char *path);
 flippyresult flippy_pread(flippyfileinfo *info, void *buf, u32 len, u32 offset);
 flippyresult flippy_pwrite(flippyfileinfo *info, const void *buf, u32 len, u32 offset);

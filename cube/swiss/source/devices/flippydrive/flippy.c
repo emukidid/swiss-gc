@@ -29,6 +29,8 @@
 	((dvdcmdbuf){(((0xB5) << 24) | (0x00))})
 #define FLIPPY_CMD_MOUNT(handle) \
 	((dvdcmdbuf){(((0xB5) << 24) | (((handle) & 0xFF) << 16) | (0x01))})
+#define FLIPPY_CMD_RESET \
+	((dvdcmdbuf){(((0xB5) << 24) | (0x05)), (0xAA55F641)})
 #define FLIPPY_CMD_MKDIR \
 	((dvdcmdbuf){(((0xB5) << 24) | (0x07))})
 /* #define FLIPPY_CMD_READ(handle, offset, length) \
@@ -132,6 +134,17 @@ flippyresult flippy_mount(flippyfileinfo *info)
 	IRQ_Restore(level);
 
 	return file->result;
+}
+
+flippyresult flippy_reset(void)
+{
+	dvdcmdblk block;
+
+	if (DVD_ReadImmPrio(&block, FLIPPY_CMD_RESET, NULL, 0, 3) < 0)
+		return FLIPPY_RESULT_NOT_READY;
+
+	DVD_Reset(DVD_RESETHARD);
+	return FLIPPY_RESULT_OK;
 }
 
 flippyresult flippy_mkdir(const char *path)

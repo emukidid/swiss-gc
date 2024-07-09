@@ -39,6 +39,7 @@
 #include "patcher.h"
 #include "dvd.h"
 #include "elf.h"
+#include "flippy.h"
 #include "gameid.h"
 #include "gcm.h"
 #include "mp3.h"
@@ -2764,6 +2765,10 @@ void menu_loop()
 						needsRefresh=1;
 						break;
 					case MENU_EXIT:
+						DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(LOC_DVD_CONNECTOR);
+						if(device == &__device_flippy) {
+							flippy_reset();
+						}
 						DrawShutdown();
 						SYS_ResetSystem(SYS_HOTRESET, 0, TRUE);
 						__builtin_unreachable();
