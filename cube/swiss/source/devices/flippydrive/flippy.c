@@ -176,20 +176,10 @@ flippyresult flippy_mkdir(const char *path)
 	return file->result;
 }
 
-flippyresult flippy_pread(flippyfileinfo *info, void *buf, u32 len, u32 offset)
+static flippyresult flippy_pread_dma(flippyfileinfo *info, void *buf, u32 len, u32 offset)
 {
 	dvdcmdblk block;
 	flippyfile *file = &info->file;
-
-	if (offset % 4 || offset + len > file->size) {
-		file->result = FLIPPY_RESULT_INVALID_PARAMETER;
-		return file->result;
-	}
-
-	if (!len) {
-		file->result = FLIPPY_RESULT_OK;
-		return file->result;
-	}
 
 	DVD_SetUserData(&block, file);
 	if (!DVD_ReadDmaAsyncPrio(&block, FLIPPY_CMD_READ(file->handle, offset, len), buf, len, read_callback, 2)) {
@@ -207,9 +197,86 @@ flippyresult flippy_pread(flippyfileinfo *info, void *buf, u32 len, u32 offset)
 	return file->result;
 }
 
-flippyresult flippy_pwrite(flippyfileinfo *info, const void *buf, u32 len, u32 offset)
+flippyresult flippy_pread(flippyfileinfo *info, void *buf, u32 len, u32 offset)
+{
+	u32 roundlen;
+	s32 misalign;
+	flippyresult result;
+	flippyfile *file = &info->file;
+
+	if (offset % 4 || offset + len > file->size) {
+		file->result = FLIPPY_RESULT_INVALID_PARAMETER;
+		return file->result;
+	}
+
+	if (!len) {
+		file->result = FLIPPY_RESULT_OK;
+		return file->result;
+	}
+
+	if ((misalign = -(u32)buf & 31)) {
+		result = flippy_pread_dma(info, info->buffer, 32, offset);
+		if (result != FLIPPY_RESULT_OK) return result;
+		memcpy(buf, info->buffer, misalign);
+		offset += misalign;
+		len -= misalign;
+		buf += misalign;
+	}
+
+	if ((roundlen = len & ~31)) {
+		result = flippy_pread_dma(info, buf, roundlen, offset);
+		if (result != FLIPPY_RESULT_OK) return result;
+		offset += roundlen;
+		len -= roundlen;
+		buf += roundlen;
+	}
+
+	if (len) {
+		result = flippy_pread_dma(info, info->buffer, 32, offset);
+		if (result != FLIPPY_RESULT_OK) return result;
+		memcpy(buf, info->buffer, len);
+	}
+
+	return result;
+}
+
+static flippyresult flippy_pwrite_dma(flippyfileinfo *info, const void *buf, u32 len, u32 offset)
 {
 	dvdcmdblk block;
+	flippyfile *file = &info->file;
+
+	do {
+		u32 xlen = len;
+		if (xlen > 16352)
+			xlen = 16352;
+
+		DVD_SetUserData(&block, file);
+		if (!DVD_WriteDmaAsyncPrio(&block, FLIPPY_CMD_WRITE(file->handle, offset, xlen), buf, (xlen + 31) & ~31, command_callback, 2)) {
+			file->result = FLIPPY_RESULT_NOT_READY;
+			return file->result;
+		}
+
+		u32 level = IRQ_Disable();
+		while (block.state != DVD_STATE_END
+			&& block.state != DVD_STATE_FATAL_ERROR
+			&& block.state != DVD_STATE_CANCELED)
+			LWP_ThreadSleep(queue);
+		IRQ_Restore(level);
+
+		if (file->result != FLIPPY_RESULT_OK) break;
+		offset += xlen;
+		len -= xlen;
+		buf += xlen;
+	} while (len);
+
+	return file->result;
+}
+
+flippyresult flippy_pwrite(flippyfileinfo *info, const void *buf, u32 len, u32 offset)
+{
+	u32 roundlen;
+	s32 misalign;
+	flippyresult result;
 	flippyfile *file = &info->file;
 
 	if (!len) {
@@ -217,20 +284,30 @@ flippyresult flippy_pwrite(flippyfileinfo *info, const void *buf, u32 len, u32 o
 		return file->result;
 	}
 
-	DVD_SetUserData(&block, file);
-	if (!DVD_WriteDmaAsyncPrio(&block, FLIPPY_CMD_WRITE(file->handle, offset, len), buf, len, command_callback, 2)) {
-		file->result = FLIPPY_RESULT_NOT_READY;
-		return file->result;
+	if ((misalign = -(u32)buf & 31)) {
+		memcpy(info->buffer, buf, misalign);
+		result = flippy_pwrite_dma(info, info->buffer, misalign, offset);
+		if (result != FLIPPY_RESULT_OK) return result;
+		offset += misalign;
+		len -= misalign;
+		buf += misalign;
 	}
 
-	u32 level = IRQ_Disable();
-	while (block.state != DVD_STATE_END
-		&& block.state != DVD_STATE_FATAL_ERROR
-		&& block.state != DVD_STATE_CANCELED)
-		LWP_ThreadSleep(queue);
-	IRQ_Restore(level);
+	if ((roundlen = len & ~31)) {
+		result = flippy_pwrite_dma(info, buf, roundlen, offset);
+		if (result != FLIPPY_RESULT_OK) return result;
+		offset += roundlen;
+		len -= roundlen;
+		buf += roundlen;
+	}
 
-	return file->result;
+	if (len) {
+		memcpy(info->buffer, buf, len);
+		result = flippy_pwrite_dma(info, info->buffer, len, offset);
+		if (result != FLIPPY_RESULT_OK) return result;
+	}
+
+	return result;
 }
 
 flippyresult flippy_open(flippyfileinfo *info, const char *path, u32 flags)
