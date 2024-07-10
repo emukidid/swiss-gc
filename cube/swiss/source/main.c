@@ -105,6 +105,7 @@ int main(int argc, char *argv[])
 		allDevices[i] = NULL;
 	i = 0;
 	allDevices[i++] = &__device_flippy;
+	allDevices[i++] = &__device_flippyflash;
 	allDevices[i++] = &__device_wkf;
 	allDevices[i++] = &__device_wode;
 	allDevices[i++] = &__device_gcloader;

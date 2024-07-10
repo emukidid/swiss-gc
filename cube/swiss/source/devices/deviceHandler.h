@@ -157,7 +157,8 @@ typedef char* (* _fn_status)(file_handle*);
 #define DEVICE_ID_H			0x11
 #define DEVICE_ID_I			0x12
 #define DEVICE_ID_J			0x13
-#define DEVICE_ID_MAX		DEVICE_ID_J
+#define DEVICE_ID_K			0x14
+#define DEVICE_ID_MAX		DEVICE_ID_K
 #define DEVICE_ID_UNK		(DEVICE_ID_MAX + 1)
 
 typedef struct DEVICEHANDLER_STRUCT DEVICEHANDLER_INTERFACE;
@@ -228,7 +229,7 @@ extern bool deviceHandler_getDeviceAvailable(DEVICEHANDLER_INTERFACE *dev);
 extern void deviceHandler_setDeviceAvailable(DEVICEHANDLER_INTERFACE *dev, bool availability);
 extern void deviceHandler_setAllDevicesAvailable();
 
-#define MAX_DEVICES 21
+#define MAX_DEVICES 22
 
 extern DEVICEHANDLER_INTERFACE* allDevices[MAX_DEVICES];
 extern DEVICEHANDLER_INTERFACE* devices[MAX_DEVICE_SLOTS];

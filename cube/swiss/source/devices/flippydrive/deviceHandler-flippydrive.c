@@ -15,7 +15,17 @@
 #include "flippy.h"
 
 file_handle initial_Flippy =
-	{ "fldr:/",      // directory
+	{ "fldrv:/",      // directory
+	  0ULL,     // fileBase (u64)
+	  0,        // offset
+	  0,        // size
+	  IS_DIR,
+	  0,
+	  0
+	};
+
+file_handle initial_FlippyFlash =
+	{ "flffs:/",      // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
 	  0,        // size
@@ -37,7 +47,9 @@ device_info* deviceHandler_Flippy_info(file_handle* file) {
 s32 deviceHandler_Flippy_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 
 	flippydirinfo* dp = memalign(32, sizeof(flippydirinfo));
-	if(flippy_opendir(dp, getDevicePath(ffile->name)) != FLIPPY_RESULT_OK) return -1;
+	if((getDeviceFromPath(ffile->name) == &__device_flippyflash ?
+		flippy_flash_opendir(dp, getDevicePath(ffile->name)) :
+		flippy_opendir(dp, getDevicePath(ffile->name))) != FLIPPY_RESULT_OK) return -1;
 	flippyfilestat entry;
 	
 	// Set everything up to read
@@ -85,7 +97,9 @@ s64 deviceHandler_Flippy_seekFile(file_handle* file, s64 where, u32 type) {
 s32 deviceHandler_Flippy_readFile(file_handle* file, void* buffer, u32 length) {
 	if(!file->fp) {
 		file->fp = memalign(32, sizeof(flippyfileinfo));
-		if(flippy_open(file->fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT) != FLIPPY_RESULT_OK) {
+		if((getDeviceFromPath(file->name) == &__device_flippyflash ?
+			flippy_flash_open(file->fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT) :
+			flippy_open(file->fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT)) != FLIPPY_RESULT_OK) {
 			free(file->fp);
 			file->fp = NULL;
 			return -1;
@@ -109,7 +123,9 @@ s32 deviceHandler_Flippy_readFile(file_handle* file, void* buffer, u32 length) {
 s32 deviceHandler_Flippy_writeFile(file_handle* file, const void* buffer, u32 length) {
 	if(!file->fp) {
 		file->fp = memalign(32, sizeof(flippyfileinfo));
-		if(flippy_open(file->fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT | FLIPPY_FLAG_WRITE) != FLIPPY_RESULT_OK) {
+		if((getDeviceFromPath(file->name) == &__device_flippyflash ?
+			flippy_flash_open(file->fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT | FLIPPY_FLAG_WRITE) :
+			flippy_open(file->fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT | FLIPPY_FLAG_WRITE)) != FLIPPY_RESULT_OK) {
 			free(file->fp);
 			file->fp = NULL;
 			return -1;
@@ -145,7 +161,10 @@ s32 deviceHandler_Flippy_deinit(file_handle* file) {
 
 s32 deviceHandler_Flippy_deleteFile(file_handle* file) {
 	deviceHandler_Flippy_closeFile(file);
-	return flippy_unlink(getDevicePath(file->name));
+	if(getDeviceFromPath(file->name) == &__device_flippyflash)
+		return flippy_flash_unlink(getDevicePath(file->name));
+	else
+		return flippy_unlink(getDevicePath(file->name));
 }
 
 s32 deviceHandler_Flippy_renameFile(file_handle* file, char* name) {
@@ -181,6 +200,10 @@ bool deviceHandler_Flippy_test() {
 	return false;
 }
 
+bool deviceHandler_FlippyFlash_test() {
+	return deviceHandler_getDeviceAvailable(&__device_flippy);
+}
+
 char* deviceHandler_Flippy_status(file_handle* file) {
 	return NULL;
 }
@@ -205,6 +228,28 @@ DEVICEHANDLER_INTERFACE __device_flippy = {
 	.closeFile = deviceHandler_Flippy_closeFile,
 	.deleteFile = deviceHandler_Flippy_deleteFile,
 	.renameFile = deviceHandler_Flippy_renameFile,
+	.deinit = deviceHandler_Flippy_deinit,
+	.status = deviceHandler_Flippy_status,
+};
+
+DEVICEHANDLER_INTERFACE __device_flippyflash = {
+	.deviceUniqueId = DEVICE_ID_K,
+	.hwName = "FlippyDrive",
+	.deviceName = "FlippyDrive Flash",
+	.deviceDescription = "Supported File System(s): FAT12",
+	.deviceTexture = {TEX_FLIPPY, 102, 56, 104, 58},
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_DEVICE|FEAT_THREAD_SAFE,
+	.location = LOC_SYSTEM,
+	.initial = &initial_FlippyFlash,
+	.test = deviceHandler_FlippyFlash_test,
+	.info = deviceHandler_Flippy_info,
+	.init = deviceHandler_Flippy_init,
+	.readDir = deviceHandler_Flippy_readDir,
+	.seekFile = deviceHandler_Flippy_seekFile,
+	.readFile = deviceHandler_Flippy_readFile,
+	.writeFile = deviceHandler_Flippy_writeFile,
+	.closeFile = deviceHandler_Flippy_closeFile,
+	.deleteFile = deviceHandler_Flippy_deleteFile,
 	.deinit = deviceHandler_Flippy_deinit,
 	.status = deviceHandler_Flippy_status,
 };

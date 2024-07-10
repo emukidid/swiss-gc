@@ -10,6 +10,7 @@
 #include "../deviceHandler.h"
 
 extern DEVICEHANDLER_INTERFACE __device_flippy;
+extern DEVICEHANDLER_INTERFACE __device_flippyflash;
 
 #endif
 
