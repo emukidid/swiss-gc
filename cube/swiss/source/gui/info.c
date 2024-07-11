@@ -15,6 +15,7 @@
 #include "ata.h"
 #include "exi.h"
 #include "bba.h"
+#include "flippy.h"
 #include "gcloader.h"
 #include "wkf.h"
 
@@ -27,7 +28,8 @@ const char* getDeviceInfoString(u32 location) {
 		sprintf(topStr,"%s %02X %02X%02X/%02X (%02X)",device->hwName,driveVersion[6],driveVersion[4],driveVersion[5],driveVersion[7],driveVersion[8]);
 	}
 	else if(device == &__device_flippy) {
-		sprintf(topStr, "%s (%u.%u)", device->hwName, driveInfo.pad[4], driveInfo.pad[5]);
+		flippyversion *version = (flippyversion*)driveInfo.pad;
+		sprintf(topStr, "%s (%u.%u.%u%s)", device->hwName, version->major, version->minor, version->build, version->dirty ? "-dirtyboi" : "");
 	}
 	else if(device == &__device_gcloader) {
 		if(gcloaderVersionStr != NULL) {

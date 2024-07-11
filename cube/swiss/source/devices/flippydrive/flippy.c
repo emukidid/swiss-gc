@@ -598,11 +598,16 @@ flippyresult flippy_init(void)
 	dvdcmdblk block;
 	STACK_ALIGN(dvddrvinfo,     driveinfo, 1, 32);
 	STACK_ALIGN(flippyfileinfo, fileinfo,  1, 32);
+	flippyversion *version = (flippyversion *)driveinfo->pad;
 
 	if (initialized) return FLIPPY_RESULT_OK;
 	DVD_Init();
 
 	if (DVD_Inquiry(&block, driveinfo) < 0 || driveinfo->rel_date != 0x20220426)
+		return FLIPPY_RESULT_NOT_READY;
+
+	if (FLIPPY_VERSION(version->major, version->minor, version->build) <
+		FLIPPY_VERSION(FLIPPY_MINVER_MAJOR, FLIPPY_MINVER_MINOR, FLIPPY_MINVER_BUILD))
 		return FLIPPY_RESULT_NOT_READY;
 
 	LWP_InitQueue(&queue);

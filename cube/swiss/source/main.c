@@ -23,6 +23,7 @@
 #include "swiss.h"
 #include "bba.h"
 #include "dvd.h"
+#include "flippy.h"
 #include "gcloader.h"
 #include "wkf.h"
 #include "exi.h"
@@ -226,6 +227,19 @@ int main(int argc, char *argv[])
 		// DVD Motor off setting
 		if(swissSettings.stopMotor) {
 			DVD_StopMotor(&commandBlock);
+		}
+	}
+	else if(device == &__device_flippy) {
+		flippyversion *version = (flippyversion*)driveInfo.pad;
+		if(FLIPPY_VERSION(version->major, version->minor, version->build) < FLIPPY_VERSION(FLIPPY_MINVER_MAJOR, FLIPPY_MINVER_MINOR, FLIPPY_MINVER_BUILD)) {
+			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is required.\nflippydrive.com/updates"));
+			wait_press_A();
+			DrawDispose(msgBox);
+		}
+		else if(FLIPPY_VERSION(version->major, version->minor, version->build) < FLIPPY_VERSION(1,0,0)) {
+			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\nflippydrive.com/updates"));
+			wait_press_A();
+			DrawDispose(msgBox);
 		}
 	}
 	else if(device == &__device_gcloader) {

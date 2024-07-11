@@ -32,6 +32,12 @@
 #define FLIPPY_MAX_HANDLE 32
 #define FLIPPY_MAX_PATH   256
 
+#define FLIPPY_MINVER_MAJOR 0
+#define FLIPPY_MINVER_MINOR 3
+#define FLIPPY_MINVER_BUILD 2
+
+#define FLIPPY_VERSION(major, minor, build) (((major) << 24) | ((minor) << 16) | ((build) << 1))
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -93,6 +99,15 @@ typedef struct {
 	flippyfile dir;
 	flippyfilestat stat;
 } flippydirinfo;
+
+typedef struct {
+	u32 flags;
+	u8 major;
+	u8 minor;
+	u16 build : 15;
+	u16 dirty : 1;
+	u8 padding[16];
+} ATTRIBUTE_PACKED flippyversion;
 
 flippyresult flippy_mount(flippyfileinfo *info);
 flippyresult flippy_reset(void);
