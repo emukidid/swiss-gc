@@ -32,9 +32,9 @@
 #define FLIPPY_MAX_HANDLE 32
 #define FLIPPY_MAX_PATH   256
 
-#define FLIPPY_MINVER_MAJOR 0
-#define FLIPPY_MINVER_MINOR 3
-#define FLIPPY_MINVER_BUILD 2
+#define FLIPPY_MINVER_MAJOR 1
+#define FLIPPY_MINVER_MINOR 0
+#define FLIPPY_MINVER_BUILD 0
 
 #define FLIPPY_VERSION(major, minor, build) (((major) << 24) | ((minor) << 16) | ((build) << 1))
 

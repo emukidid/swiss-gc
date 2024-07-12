@@ -33,10 +33,8 @@
 	((dvdcmdbuf){(((0xB5) << 24) | (0x05)), (0xAA55F641)})
 #define FLIPPY_CMD_MKDIR \
 	((dvdcmdbuf){(((0xB5) << 24) | (0x07))})
-/* #define FLIPPY_CMD_READ(handle, offset, length) \
-	((dvdcmdbuf){(((0xB5) << 24) | (((handle) & 0xFF) << 16) | (0x08)), (offset), (length)}) */
 #define FLIPPY_CMD_READ(handle, offset, length) \
-	((dvdcmdbuf){(((0xA8) << 24) | (((handle) & 0xFF) << 16)), ((offset) >> 2), (length)})
+	((dvdcmdbuf){(((0xB5) << 24) | (((handle) & 0xFF) << 16) | (0x08)), (offset), (length)})
 #define FLIPPY_CMD_WRITE(handle, offset, length) \
 	((dvdcmdbuf){(((0xB5) << 24) | (((handle) & 0xFF) << 16) | (0x09)), (offset), (length)})
 #define FLIPPY_CMD_OPEN \
@@ -70,7 +68,7 @@ static void status_callback(s32 result, dvdcmdblk *block)
 	LWP_ThreadBroadcast(queue);
 }
 
-static void read_callback(s32 result, dvdcmdblk *block)
+static void mount_callback(s32 result, dvdcmdblk *block)
 {
 	flippyfile *file = block->usrdata;
 
@@ -121,7 +119,7 @@ flippyresult flippy_mount(flippyfileinfo *info)
 	flippyfile *file = &info->file;
 
 	DVD_SetUserData(&block, file);
-	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_MOUNT(file->handle), NULL, 0, read_callback, 0)) {
+	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_MOUNT(file->handle), NULL, 0, mount_callback, 0)) {
 		file->result = FLIPPY_RESULT_NOT_READY;
 		return file->result;
 	}
@@ -182,7 +180,7 @@ static flippyresult flippy_pread_dma(flippyfileinfo *info, void *buf, u32 len, u
 	flippyfile *file = &info->file;
 
 	DVD_SetUserData(&block, file);
-	if (!DVD_ReadDmaAsyncPrio(&block, FLIPPY_CMD_READ(file->handle, offset, len), buf, len, read_callback, 2)) {
+	if (!DVD_ReadDmaAsyncPrio(&block, FLIPPY_CMD_READ(file->handle, offset, len), buf, len, command_callback, 2)) {
 		file->result = FLIPPY_RESULT_NOT_READY;
 		return file->result;
 	}
@@ -204,7 +202,7 @@ flippyresult flippy_pread(flippyfileinfo *info, void *buf, u32 len, u32 offset)
 	flippyresult result;
 	flippyfile *file = &info->file;
 
-	if (offset % 4 || offset + len > file->size) {
+	if (offset + len > file->size) {
 		file->result = FLIPPY_RESULT_INVALID_PARAMETER;
 		return file->result;
 	}
