@@ -611,10 +611,13 @@ flippyresult flippy_init(void)
 
 	LWP_InitQueue(&queue);
 
-	for (int i = 0; i < FLIPPY_MAX_HANDLE; i++) {
+	for (int i = 0; i < FLIPPY_MAX_HANDLES; i++) {
 		fileinfo->file.handle = i + 1;
 		flippy_close(fileinfo);
 	}
+
+	fileinfo->file.handle = FLIPPY_FLASH_HANDLE;
+	flippy_close(fileinfo);
 
 	initialized = true;
 	return FLIPPY_RESULT_OK;
