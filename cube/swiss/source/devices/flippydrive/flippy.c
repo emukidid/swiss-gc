@@ -68,7 +68,7 @@ static void status_callback(s32 result, dvdcmdblk *block)
 	LWP_ThreadBroadcast(queue);
 }
 
-static void mount_callback(s32 result, dvdcmdblk *block)
+static void read_callback(s32 result, dvdcmdblk *block)
 {
 	flippyfile *file = block->usrdata;
 
@@ -119,7 +119,7 @@ flippyresult flippy_mount(flippyfileinfo *info)
 	flippyfile *file = &info->file;
 
 	DVD_SetUserData(&block, file);
-	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_MOUNT(file->handle), NULL, 0, mount_callback, 0)) {
+	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_MOUNT(file->handle), NULL, 0, read_callback, 0)) {
 		file->result = FLIPPY_RESULT_NOT_READY;
 		return file->result;
 	}
@@ -180,7 +180,7 @@ static flippyresult flippy_pread_dma(flippyfileinfo *info, void *buf, u32 len, u
 	flippyfile *file = &info->file;
 
 	DVD_SetUserData(&block, file);
-	if (!DVD_ReadDmaAsyncPrio(&block, FLIPPY_CMD_READ(file->handle, offset, len), buf, len, command_callback, 2)) {
+	if (!DVD_ReadDmaAsyncPrio(&block, FLIPPY_CMD_READ(file->handle, offset, len), buf, (len + 31) & ~31, read_callback, 2)) {
 		file->result = FLIPPY_RESULT_NOT_READY;
 		return file->result;
 	}
@@ -249,7 +249,7 @@ static flippyresult flippy_pwrite_dma(flippyfileinfo *info, const void *buf, u32
 			xlen = 16352;
 
 		DVD_SetUserData(&block, file);
-		if (!DVD_WriteDmaAsyncPrio(&block, FLIPPY_CMD_WRITE(file->handle, offset, xlen), buf, (xlen + 31) & ~31, command_callback, 2)) {
+		if (!DVD_WriteDmaAsyncPrio(&block, FLIPPY_CMD_WRITE(file->handle, offset, xlen), buf, xlen ? (xlen + 31) & ~31 : 32, command_callback, 2)) {
 			file->result = FLIPPY_RESULT_NOT_READY;
 			return file->result;
 		}
@@ -275,14 +275,14 @@ flippyresult flippy_pwrite(flippyfileinfo *info, const void *buf, u32 len, u32 o
 	u32 roundlen;
 	s32 misalign;
 	flippyresult result;
-	flippyfile *file = &info->file;
 
 	if (!len) {
-		file->result = FLIPPY_RESULT_OK;
-		return file->result;
+		memset(info->buffer, 0, 32);
+		return flippy_pwrite_dma(info, info->buffer, len, offset);
 	}
 
 	if ((misalign = -(u32)buf & 31)) {
+		memset(info->buffer, 0, 32);
 		memcpy(info->buffer, buf, misalign);
 		result = flippy_pwrite_dma(info, info->buffer, misalign, offset);
 		if (result != FLIPPY_RESULT_OK) return result;
@@ -300,6 +300,7 @@ flippyresult flippy_pwrite(flippyfileinfo *info, const void *buf, u32 len, u32 o
 	}
 
 	if (len) {
+		memset(info->buffer, 0, 32);
 		memcpy(info->buffer, buf, len);
 		result = flippy_pwrite_dma(info, info->buffer, len, offset);
 		if (result != FLIPPY_RESULT_OK) return result;
