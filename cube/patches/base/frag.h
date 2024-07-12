@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2021-2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2021-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -36,6 +36,12 @@ struct frag {
 			uint64_t file   :  8;
 			uint64_t device :  8;
 			uint64_t sector : 48;
+		};
+		struct {
+			uint32_t        : 16;
+			uint32_t handle :  8;
+			uint32_t        :  8;
+			uint32_t filepos;
 		};
 		struct {
 			uint16_t        : 16;

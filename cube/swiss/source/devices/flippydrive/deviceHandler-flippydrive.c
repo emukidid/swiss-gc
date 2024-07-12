@@ -95,6 +95,11 @@ s64 deviceHandler_Flippy_seekFile(file_handle* file, s64 where, u32 type) {
 }
 
 s32 deviceHandler_Flippy_readFile(file_handle* file, void* buffer, u32 length) {
+	if(file->status == STATUS_MAPPED) {
+		s32 bytes_read = DVD_ReadAbs((dvdcmdblk*)file->other, buffer, length, file->offset);
+		if(bytes_read > 0) file->offset += bytes_read;
+		return bytes_read;
+	}
 	if(!file->fp) {
 		file->fp = memalign(32, sizeof(flippyfileinfo));
 		if((getDeviceFromPath(file->name) == &__device_flippyflash ?
@@ -140,6 +145,26 @@ s32 deviceHandler_Flippy_writeFile(file_handle* file, const void* buffer, u32 le
 	return length;
 }
 
+s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
+	file_frag *fragList = NULL;
+	u32 numFrags = 0;
+	
+	if(numToPatch < 0) {
+		if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, 0, 0, 0) || numFrags != 1) {
+			free(fragList);
+			return 0;
+		}
+		if(flippy_mount(file->fp) != FLIPPY_RESULT_OK) {
+			free(fragList);
+			return 0;
+		}
+		free(fragList);
+		file->status = STATUS_MAPPED;
+		return 1;
+	}
+	return 0;
+}
+
 s32 deviceHandler_Flippy_init(file_handle* file) {
 	return flippy_init() == FLIPPY_RESULT_OK ? 0 : ENODEV;
 }
@@ -150,6 +175,7 @@ s32 deviceHandler_Flippy_closeFile(file_handle* file) {
 		ret = flippy_close(file->fp);
 		free(file->fp);
 		file->fp = NULL;
+		file->status = STATUS_NOT_MAPPED;
 	}
 	return ret;
 }
@@ -214,7 +240,7 @@ DEVICEHANDLER_INTERFACE __device_flippy = {
 	.deviceName = "FlippyDrive",
 	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_FLIPPY, 102, 56, 104, 58},
-	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_THREAD_SAFE,
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_THREAD_SAFE|FEAT_AUDIO_STREAMING,
 	.location = LOC_DVD_CONNECTOR,
 	.initial = &initial_Flippy,
 	.test = deviceHandler_Flippy_test,
@@ -228,6 +254,7 @@ DEVICEHANDLER_INTERFACE __device_flippy = {
 	.closeFile = deviceHandler_Flippy_closeFile,
 	.deleteFile = deviceHandler_Flippy_deleteFile,
 	.renameFile = deviceHandler_Flippy_renameFile,
+	.setupFile = deviceHandler_Flippy_setupFile,
 	.deinit = deviceHandler_Flippy_deinit,
 	.status = deviceHandler_Flippy_status,
 };
@@ -238,7 +265,7 @@ DEVICEHANDLER_INTERFACE __device_flippyflash = {
 	.deviceName = "FlippyDrive Flash",
 	.deviceDescription = "Supported File System(s): FAT12",
 	.deviceTexture = {TEX_FLIPPY, 102, 56, 104, 58},
-	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_DEVICE|FEAT_THREAD_SAFE,
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_AUDIO_STREAMING,
 	.location = LOC_SYSTEM,
 	.initial = &initial_FlippyFlash,
 	.test = deviceHandler_FlippyFlash_test,
@@ -250,6 +277,7 @@ DEVICEHANDLER_INTERFACE __device_flippyflash = {
 	.writeFile = deviceHandler_Flippy_writeFile,
 	.closeFile = deviceHandler_Flippy_closeFile,
 	.deleteFile = deviceHandler_Flippy_deleteFile,
+	.setupFile = deviceHandler_Flippy_setupFile,
 	.deinit = deviceHandler_Flippy_deinit,
 	.status = deviceHandler_Flippy_status,
 };

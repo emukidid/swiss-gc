@@ -15,6 +15,7 @@
 #include "swiss.h"
 #include "patcher.h"
 #include "deviceHandler.h"
+#include "flippy.h"
 
 DEVICEHANDLER_INTERFACE* allDevices[MAX_DEVICES];	// All devices registered in Swiss
 DEVICEHANDLER_INTERFACE* devices[MAX_DEVICE_SLOTS];	// Currently used devices
@@ -192,6 +193,19 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 			numFrags++;
 		}
 		file->status = STATUS_HAS_MAPPING;
+	}
+	else if(devices[deviceSlot] == &__device_flippy) {
+		frags = reallocarray(frags, numFrags + 2, sizeof(file_frag));
+		if(frags == NULL) {
+			return false;
+		}
+		flippyfileinfo* info = file->fp;
+		frags[numFrags].offset = forceBaseOffset;
+		frags[numFrags].size = forceSize;
+		frags[numFrags].fileNum = fileNum;
+		frags[numFrags].devNum = deviceSlot == DEVICE_PATCHES;
+		frags[numFrags].fileBase = ((u64)info->file.handle << 40);
+		numFrags++;
 	}
 	else if(devices[deviceSlot] == &__device_fsp) {
 		frags = reallocarray(frags, numFrags + 2, sizeof(file_frag));
