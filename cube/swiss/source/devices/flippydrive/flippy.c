@@ -23,6 +23,7 @@
 #include <ogc/irq.h>
 #include <ogc/lwp.h>
 #include <ogc/machine/processor.h>
+#include <ogc/semaphore.h>
 #include "flippy.h"
 
 #define FLIPPY_CMD_BOOT(magic) \
@@ -56,18 +57,27 @@
 #define FLIPPY_CMD_RENAME \
 	((dvdcmdbuf){(((0xB5) << 24) | (0x13))})
 
-enum {
-	DVD_COVER_RESET = 0,
-	DVD_COVER_OPEN,
-	DVD_COVER_CLOSED
-};
+typedef void (*dvdcallbacklow)(s32 result);
 
-extern s32 DVD_LowGetCoverStatus(void);
+extern s32 DVD_LowWaitCoverClose(dvdcallbacklow cb);
 
 static dvddrvinfo driveinfo ATTRIBUTE_ALIGN(32);
 static flippybootstatus bootstatus ATTRIBUTE_ALIGN(32);
 
 static lwpq_t queue = LWP_TQUEUE_NULL;
+static sem_t semaphore = LWP_SEM_NULL;
+
+static void cover_callback(s32 result)
+{
+	LWP_SemPost(semaphore);
+	DVD_Resume();
+}
+
+static void reset_callback(s32 result, dvdcmdblk *block)
+{
+	DVD_Pause();
+	DVD_LowWaitCoverClose(cover_callback);
+}
 
 static void status_callback(s32 result, dvdcmdblk *block)
 {
@@ -188,11 +198,14 @@ flippyresult flippy_reset(void)
 {
 	dvdcmdblk block;
 
-	if (DVD_ReadImmPrio(&block, FLIPPY_CMD_RESET, NULL, 0, 3) < 0)
+	LWP_SemInit(&semaphore, 0, 1);
+	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_RESET, NULL, 0, reset_callback, 3)) {
+		LWP_SemDestroy(semaphore);
 		return FLIPPY_RESULT_NOT_READY;
+	}
 
-	DVD_Reset(DVD_RESETHARD);
-	while (DVD_LowGetCoverStatus() != DVD_COVER_CLOSED);
+	LWP_SemWait(semaphore);
+	LWP_SemDestroy(semaphore);
 	return FLIPPY_RESULT_OK;
 }
 
