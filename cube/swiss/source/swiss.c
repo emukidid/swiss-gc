@@ -184,7 +184,9 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 				, scaledWidth, scaledHeight, // scaled image
 				0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	DrawAddChild(containerPanel, devImageLabel);
-	if(devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)
+	if(devices[DEVICE_CUR]->location & LOC_SYSTEM)
+		sprintf(txtbuffer, "%s", "System");
+	else if(devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)
 		sprintf(txtbuffer, "%s", "Slot A");
 	else if(devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_B)
 		sprintf(txtbuffer, "%s", "Slot B");
@@ -196,8 +198,6 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 		sprintf(txtbuffer, "%s", "Serial Port 2");
 	else if(devices[DEVICE_CUR]->location == LOC_HSP)
 		sprintf(txtbuffer, "%s", "Hi Speed Port");
-	else if(devices[DEVICE_CUR]->location == LOC_SYSTEM)
-		sprintf(txtbuffer, "%s", "System");
 	else
 		sprintf(txtbuffer, "%s", "Unknown");
 	uiDrawObj_t *devLocationLabel = DrawStyledLabel(30 + ((135-30) / 2), 195, txtbuffer, 0.65f, true, defaultColor);
@@ -1221,7 +1221,7 @@ void load_app(ExecutableFile *fileToPatch)
 	if(devices[DEVICE_CUR] != &__device_dvd) {
 		devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 	}
-	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
+	if(devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR) {
 		// Check DVD Status, make sure it's error code 0
 		print_gecko("DVD: %08X\r\n",dvd_get_error());
 	}
@@ -2033,10 +2033,10 @@ void load_game() {
 	config_load_current(config);
 	gameID_early_set(&GCMDisk);
 	
-	if(config->forceCleanBoot || (config->preferCleanBoot && devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR)) {
+	if(config->forceCleanBoot || (config->preferCleanBoot && (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))) {
 		gameID_set(&GCMDisk, get_gcm_boot_hash(&GCMDisk, curFile.meta));
 		
-		if(devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
+		if(!(devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR)) {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support clean boot."));
 			sleep(2);
 			DrawDispose(msgBox);
@@ -2464,7 +2464,7 @@ uiDrawObj_t* draw_game_info() {
 		bool isAutoLoadEntry = !strcmp(swissSettings.autoload, curFile.name) || !fnmatch(swissSettings.autoload, curFile.name, FNM_PATHNAME);
 		textPtr += sprintf(textPtr, "(Z) Load at startup [Current: %s]", isAutoLoadEntry ? "Yes":"No");
 	}
-	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
+	if(devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR) {
 		textPtr = stpcpy(textPtr, textPtr == txtbuffer ? "(L+A) Clean Boot":" \267 (L+A) Clean Boot");
 	}
 	if(textPtr != txtbuffer) {
