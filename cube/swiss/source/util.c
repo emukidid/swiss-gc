@@ -151,6 +151,7 @@ void load_auto_dol() {
 					boot_dol();
 					memcpy(dirEntries[i], &curFile, sizeof(file_handle));
 				}
+				devices[DEVICE_CUR]->closeFile(dirEntries[i]);
 
 				// If we've made it this far, we've already found an autoboot DOL,
 				// the first one (boot.dol) is not cancellable, but the rest of the

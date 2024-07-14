@@ -108,6 +108,7 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 	}
 	if(player != NULL)
 		DrawDispose(player);
+	devices[DEVICE_CUR]->closeFile(file);
 	return ret;
 }
 

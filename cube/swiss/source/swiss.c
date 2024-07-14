@@ -1301,6 +1301,7 @@ void boot_dol()
 		if(devices[DEVICE_CUR]->readFile(&curFile,ptr,size)!=size) {
 			DrawDispose(progBar);
 			free(dol_buffer);
+			devices[DEVICE_CUR]->closeFile(&curFile);
 			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"Failed to read DOL. Press A.");
 			DrawPublish(msgBox);
 			wait_press_A();
@@ -1314,6 +1315,7 @@ void boot_dol()
 	if(!valid_dol_xxh3(&curFile, hash)) {
 		DrawDispose(progBar);
 		free(dol_buffer);
+		devices[DEVICE_CUR]->closeFile(&curFile);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"DOL is corrupted. Press A.");
 		DrawPublish(msgBox);
 		wait_press_A();
@@ -1577,6 +1579,7 @@ bool manage_file() {
 
 		// If the destination file already exists, ask the user what to do
 		if(devices[DEVICE_DEST]->readFile(destFile, NULL, 0) == 0) {
+			devices[DEVICE_DEST]->closeFile(destFile);
 			uiDrawObj_t* dupeBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 350);
 			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 160, "File exists:", 1.0f, true, defaultColor));
 			float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
@@ -1929,7 +1932,7 @@ void load_game() {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
 			sleep(2);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		
 		devices[DEVICE_CUR]->seekFile(&curFile,tgcFile.headerStart,DEVICE_HANDLER_SEEK_SET);
@@ -1938,7 +1941,7 @@ void load_game() {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
 			sleep(2);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		
 		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
@@ -1954,14 +1957,14 @@ void load_game() {
 					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File! (Fake SD Card?)"));
 					sleep(2);
 					DrawDispose(msgBox);
-					return;
+					goto exit;
 				}
 			}
 			DrawDispose(msgBox);
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
 			sleep(2);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		
 		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
@@ -1971,14 +1974,14 @@ void load_game() {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Please reconvert to NKit.iso using\nNKit bundled with this Swiss release."));
 			sleep(5);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		else if(is_nkit_format(&GCMDisk) && !valid_gcm_boot(&GCMDisk)) {
 			DrawDispose(msgBox);
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is not playable in NKit.iso format.\nPlease convert back to ISO using NKit."));
 			sleep(5);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		else if(is_redump_disc(curFile.meta) && !valid_gcm_size(&GCMDisk, curFile.size)) {
 			if(swissSettings.audioStreaming && !valid_gcm_size2(&GCMDisk, curFile.size)) {
@@ -1986,7 +1989,7 @@ void load_game() {
 				msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump and is not playable.\nPlease attempt recovery using NKit."));
 				sleep(5);
 				DrawDispose(msgBox);
-				return;
+				goto exit;
 			}
 			else {
 				DrawDispose(msgBox);
@@ -2017,7 +2020,7 @@ void load_game() {
 	// Show game info or return to the menu
 	if(!info_game(config)) {
 		free(config);
-		return;
+		goto exit;
 	}
 	
 	if(devices[DEVICE_CONFIG] != NULL) {
@@ -2177,7 +2180,7 @@ fail:
 	gameID_unset();
 	config_unload_current();
 	free(config);
-
+exit:
 	devices[DEVICE_CUR]->closeFile(&curFile);
 	devices[DEVICE_CUR]->closeFile(disc2File);
 }
