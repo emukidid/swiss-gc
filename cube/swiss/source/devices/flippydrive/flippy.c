@@ -25,6 +25,10 @@
 #include <ogc/machine/processor.h>
 #include "flippy.h"
 
+#define FLIPPY_CMD_BOOT(magic) \
+	((dvdcmdbuf){(((0x12) << 24)), (0xABADBEEF), (magic)})
+#define FLIPPY_CMD_BOOT_STATUS \
+	((dvdcmdbuf){(((0xB4) << 24))})
 #define FLIPPY_CMD_STATUS \
 	((dvdcmdbuf){(((0xB5) << 24) | (0x00))})
 #define FLIPPY_CMD_MOUNT(handle) \
@@ -52,6 +56,17 @@
 #define FLIPPY_CMD_RENAME \
 	((dvdcmdbuf){(((0xB5) << 24) | (0x13))})
 
+enum {
+	DVD_COVER_RESET = 0,
+	DVD_COVER_OPEN,
+	DVD_COVER_CLOSED
+};
+
+extern s32 DVD_LowGetCoverStatus(void);
+
+static dvddrvinfo driveinfo ATTRIBUTE_ALIGN(32);
+static flippybootstatus bootstatus ATTRIBUTE_ALIGN(32);
+
 static lwpq_t queue = LWP_TQUEUE_NULL;
 
 static void status_callback(s32 result, dvdcmdblk *block)
@@ -68,7 +83,7 @@ static void status_callback(s32 result, dvdcmdblk *block)
 	LWP_ThreadBroadcast(queue);
 }
 
-static void read_callback(s32 result, dvdcmdblk *block)
+static void nostatus_callback(s32 result, dvdcmdblk *block)
 {
 	flippyfile *file = block->usrdata;
 
@@ -113,13 +128,48 @@ static void command_callback(s32 result, dvdcmdblk *block)
 	LWP_ThreadBroadcast(queue);
 }
 
+flippyresult flippy_boot(flippybootmode mode)
+{
+	dvdcmdblk block;
+	u32 magic;
+
+	switch (mode) {
+		case FLIPPY_MODE_BOOT:
+			magic = 0xCAFE6969;
+			break;
+		case FLIPPY_MODE_UPDATE:
+			magic = 0xDABFED69;
+			break;
+		case FLIPPY_MODE_NOUPDATE:
+			magic = 0xDECAF420;
+			break;
+		default:
+			return FLIPPY_RESULT_INVALID_PARAMETER;
+	}
+
+	if (DVD_ReadImmPrio(&block, FLIPPY_CMD_BOOT(magic), NULL, 0, 0) < 0)
+		return FLIPPY_RESULT_NOT_READY;
+
+	return FLIPPY_RESULT_OK;
+}
+
+flippybootstatus *flippy_getbootstatus(void)
+{
+	dvdcmdblk block;
+
+	if (DVD_ReadDmaPrio(&block, FLIPPY_CMD_BOOT_STATUS, &bootstatus, sizeof(flippybootstatus), 2) < 0)
+		return NULL;
+
+	return &bootstatus;
+}
+
 flippyresult flippy_mount(flippyfileinfo *info)
 {
 	dvdcmdblk block;
 	flippyfile *file = &info->file;
 
 	DVD_SetUserData(&block, file);
-	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_MOUNT(file->handle), NULL, 0, read_callback, 0)) {
+	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_MOUNT(file->handle), NULL, 0, nostatus_callback, 0)) {
 		file->result = FLIPPY_RESULT_NOT_READY;
 		return file->result;
 	}
@@ -142,6 +192,7 @@ flippyresult flippy_reset(void)
 		return FLIPPY_RESULT_NOT_READY;
 
 	DVD_Reset(DVD_RESETHARD);
+	while (DVD_LowGetCoverStatus() != DVD_COVER_CLOSED);
 	return FLIPPY_RESULT_OK;
 }
 
@@ -180,7 +231,7 @@ static flippyresult flippy_pread_dma(flippyfileinfo *info, void *buf, u32 len, u
 	flippyfile *file = &info->file;
 
 	DVD_SetUserData(&block, file);
-	if (!DVD_ReadDmaAsyncPrio(&block, FLIPPY_CMD_READ(file->handle, offset, len), buf, (len + 31) & ~31, read_callback, 2)) {
+	if (!DVD_ReadDmaAsyncPrio(&block, FLIPPY_CMD_READ(file->handle, offset, len), buf, (len + 31) & ~31, nostatus_callback, 2)) {
 		file->result = FLIPPY_RESULT_NOT_READY;
 		return file->result;
 	}
@@ -370,6 +421,21 @@ flippyresult flippy_opendir(flippydirinfo *info, const char *path)
 	IRQ_Restore(level);
 
 	return dir->result;
+}
+
+flippyresult flippy_closeall(void)
+{
+	STACK_ALIGN(flippyfileinfo, info, 1, 32);
+
+	for (int i = 0; i < FLIPPY_MAX_HANDLES; i++) {
+		info->file.handle = i + 1;
+		flippy_close(info);
+	}
+
+	info->file.handle = FLIPPY_FLASH_HANDLE;
+	flippy_close(info);
+
+	return FLIPPY_RESULT_OK;
 }
 
 flippyresult flippy_close(flippyfileinfo *info)
@@ -595,14 +661,12 @@ flippyresult flippy_init(void)
 {
 	static bool initialized;
 	dvdcmdblk block;
-	STACK_ALIGN(dvddrvinfo,     driveinfo, 1, 32);
-	STACK_ALIGN(flippyfileinfo, fileinfo,  1, 32);
-	flippyversion *version = (flippyversion *)driveinfo->pad;
+	flippyversion *version = (flippyversion *)driveinfo.pad;
 
 	if (initialized) return FLIPPY_RESULT_OK;
 	DVD_Init();
 
-	if (DVD_Inquiry(&block, driveinfo) < 0 || driveinfo->rel_date != 0x20220426)
+	if (DVD_Inquiry(&block, &driveinfo) < 0 || driveinfo.rel_date != 0x20220426)
 		return FLIPPY_RESULT_NOT_READY;
 
 	if (FLIPPY_VERSION(version->major, version->minor, version->build) <
@@ -610,15 +674,6 @@ flippyresult flippy_init(void)
 		return FLIPPY_RESULT_NOT_READY;
 
 	LWP_InitQueue(&queue);
-
-	for (int i = 0; i < FLIPPY_MAX_HANDLES; i++) {
-		fileinfo->file.handle = i + 1;
-		flippy_close(fileinfo);
-	}
-
-	fileinfo->file.handle = FLIPPY_FLASH_HANDLE;
-	flippy_close(fileinfo);
-
 	initialized = true;
-	return FLIPPY_RESULT_OK;
+	return flippy_closeall();
 }

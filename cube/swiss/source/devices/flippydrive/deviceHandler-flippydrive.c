@@ -210,9 +210,9 @@ bool deviceHandler_Flippy_test() {
 	if (swissSettings.hasDVDDrive) {
 		switch (driveInfo.rel_date) {
 			case 0x20220420:
-				if (DVD_ReadImm(&commandBlock, ((dvdcmdbuf){0x12000000, 0xABADBEEF, 0xCAFE6969}), NULL, 0) < 0)
+				if (flippy_boot(FLIPPY_MODE_BOOT) != FLIPPY_RESULT_OK)
 					return false;
-				if (DVD_ReadImm(&commandBlock, ((dvdcmdbuf){0x12000000, 0xABADBEEF, 0xDECAF420}), NULL, 0) < 0)
+				if (flippy_boot(FLIPPY_MODE_NOUPDATE) != FLIPPY_RESULT_OK)
 					return false;
 				
 				while (driveInfo.rel_date != 0x20220426)

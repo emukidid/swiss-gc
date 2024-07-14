@@ -2197,6 +2197,32 @@ void load_file()
 			DrawDispose(msgBox);
 			return;
 		}
+		else if(endsWith(fileName,".fpkg")) {
+			if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
+				uiDrawObj_t *progBar = DrawPublish(DrawProgressBar(true, 0, "Resetting RP2040"));
+				flippy_reset();
+				DVD_Inquiry(&commandBlock, &driveInfo);
+				flippy_boot(FLIPPY_MODE_UPDATE);
+				flippybootstatus *status;
+				while((status = flippy_getbootstatus()) && status->current_progress != 0xFFFF) {
+					sprintf(txtbuffer, "%.64s\n%.64s", status->text, status->subtext);
+					uiDrawObj_t *newBar = DrawProgressBar(!status->show_progress_bar, (int)(((float)status->current_progress/(float)1000)*100), txtbuffer);
+					if(progBar != NULL) {
+						DrawDispose(progBar);
+					}
+					progBar = newBar;
+					DrawPublish(progBar);
+				}
+				DrawDispose(progBar);
+				deviceHandler_setDeviceAvailable(&__device_flippy, deviceHandler_Flippy_test());
+				deviceHandler_setDeviceAvailable(&__device_flippyflash, deviceHandler_FlippyFlash_test());
+				needsDeviceChange = !deviceHandler_getDeviceAvailable(devices[DEVICE_CUR]);
+				needsRefresh = 1;
+				return;
+			}
+			needsRefresh = manage_file() ? 1:0;
+			return;
+		}
 		else if(endsWith(fileName,".fzn")) {
 			if(curFile.size != 0x1D0000) {
 				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "File Size must be 0x1D0000 bytes!"));

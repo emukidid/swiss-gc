@@ -12,5 +12,8 @@
 extern DEVICEHANDLER_INTERFACE __device_flippy;
 extern DEVICEHANDLER_INTERFACE __device_flippyflash;
 
+extern bool deviceHandler_Flippy_test();
+extern bool deviceHandler_FlippyFlash_test();
+
 #endif
 

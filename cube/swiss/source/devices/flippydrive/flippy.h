@@ -111,6 +111,24 @@ typedef struct {
 	u8 padding[16];
 } ATTRIBUTE_PACKED flippyversion;
 
+typedef enum {
+	FLIPPY_MODE_BOOT = 0,
+	FLIPPY_MODE_UPDATE,
+	FLIPPY_MODE_NOUPDATE
+} flippybootmode;
+
+typedef struct {
+	u32 magic;
+	u8 show_video;
+	u8 show_progress_bar;
+	u16 current_progress;
+	char text[64];
+	char subtext[64];
+	u8 padding[120];
+} ATTRIBUTE_PACKED flippybootstatus;
+
+flippyresult flippy_boot(flippybootmode mode);
+flippybootstatus *flippy_getbootstatus(void);
 flippyresult flippy_mount(flippyfileinfo *info);
 flippyresult flippy_reset(void);
 flippyresult flippy_mkdir(const char *path);
@@ -118,6 +136,7 @@ flippyresult flippy_pread(flippyfileinfo *info, void *buf, u32 len, u32 offset);
 flippyresult flippy_pwrite(flippyfileinfo *info, const void *buf, u32 len, u32 offset);
 flippyresult flippy_open(flippyfileinfo *info, const char *path, u32 flags);
 flippyresult flippy_opendir(flippydirinfo *info, const char *path);
+flippyresult flippy_closeall(void);
 flippyresult flippy_close(flippyfileinfo *info);
 flippyresult flippy_closedir(flippydirinfo *info);
 flippyresult flippy_unlink(const char *path);
