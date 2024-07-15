@@ -271,9 +271,11 @@ flippyresult flippy_pread(flippyfileinfo *info, void *buf, u32 len, u32 offset)
 		return file->result;
 	}
 
-	if (!len) {
-		file->result = FLIPPY_RESULT_OK;
-		return file->result;
+	if (len <= 32) {
+		result = flippy_pread_dma(info, info->buffer, 32, offset);
+		if (result != FLIPPY_RESULT_OK) return result;
+		memcpy(buf, info->buffer, len);
+		return result;
 	}
 
 	if ((misalign = -(u32)buf & 31)) {
@@ -340,8 +342,9 @@ flippyresult flippy_pwrite(flippyfileinfo *info, const void *buf, u32 len, u32 o
 	s32 misalign;
 	flippyresult result;
 
-	if (!len) {
+	if (len <= 32) {
 		memset(info->buffer, 0, 32);
+		memcpy(info->buffer, buf, len);
 		return flippy_pwrite_dma(info, info->buffer, len, offset);
 	}
 
@@ -366,8 +369,7 @@ flippyresult flippy_pwrite(flippyfileinfo *info, const void *buf, u32 len, u32 o
 	if (len) {
 		memset(info->buffer, 0, 32);
 		memcpy(info->buffer, buf, len);
-		result = flippy_pwrite_dma(info, info->buffer, len, offset);
-		if (result != FLIPPY_RESULT_OK) return result;
+		return flippy_pwrite_dma(info, info->buffer, len, offset);
 	}
 
 	return result;
