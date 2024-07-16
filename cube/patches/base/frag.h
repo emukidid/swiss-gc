@@ -38,9 +38,8 @@ struct frag {
 			uint64_t sector : 48;
 		};
 		struct {
-			uint32_t        : 16;
+			uint32_t        : 24;
 			uint32_t handle :  8;
-			uint32_t        :  8;
 			uint32_t filepos;
 		};
 		struct {

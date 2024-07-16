@@ -373,6 +373,23 @@ int install_code(int final)
 		}
 		print_gecko("Installing Patch for GC Loader\r\n");
 	}
+	// FlippyDrive
+	else if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
+		switch (devices[DEVICE_CUR]->emulated()) {
+			case EMU_READ:
+			case EMU_READ | EMU_READ_SPEED:
+				patch     = flippy_bin;
+				patchSize = flippy_bin_size;
+				break;
+			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
+				patch     = flippy_eth_bin;
+				patchSize = flippy_eth_bin_size;
+				break;
+			default:
+				return 0;
+		}
+		print_gecko("Installing Patch for FlippyDrive\r\n");
+	}
 	if (!final) {
 		print_gecko("Space for patch remaining: %i\r\n", top_addr - LO_RESERVE);
 		print_gecko("Space taken by vars/video patches: %i\r\n", HI_RESERVE - top_addr);

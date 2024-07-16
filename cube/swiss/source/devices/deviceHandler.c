@@ -204,7 +204,7 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 		frags[numFrags].size = forceSize;
 		frags[numFrags].fileNum = fileNum;
 		frags[numFrags].devNum = deviceSlot == DEVICE_PATCHES;
-		frags[numFrags].fileBase = ((u64)info->file.handle << 40);
+		frags[numFrags].fileBase = ((u64)info->file.handle << 32);
 		numFrags++;
 	}
 	else if(devices[deviceSlot] == &__device_fsp) {

@@ -523,22 +523,23 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			patchDeviceReady = true;
 		}
 	}
+	else if(devices[DEVICE_CUR] == &__device_flippyflash) {
+		devices[DEVICE_PATCHES] = &__device_flippy;
+	}
+	else if(devices[DEVICE_CONFIG] == &__device_sd_a || devices[DEVICE_CONFIG] == &__device_sd_b || devices[DEVICE_CONFIG] == &__device_sd_c) {
+		devices[DEVICE_PATCHES] = devices[DEVICE_CONFIG];
+	}
+	else if(deviceHandler_getDeviceAvailable(&__device_sd_c)) {
+		devices[DEVICE_PATCHES] = &__device_sd_c;
+	}
+	else if(deviceHandler_getDeviceAvailable(&__device_sd_b)) {
+		devices[DEVICE_PATCHES] = &__device_sd_b;
+	}
+	else if(deviceHandler_getDeviceAvailable(&__device_sd_a)) {
+		devices[DEVICE_PATCHES] = &__device_sd_a;
+	}
 	else {
-		if(devices[DEVICE_CONFIG] == &__device_sd_a || devices[DEVICE_CONFIG] == &__device_sd_b || devices[DEVICE_CONFIG] == &__device_sd_c) {
-			devices[DEVICE_PATCHES] = devices[DEVICE_CONFIG];
-		}
-		else if(deviceHandler_getDeviceAvailable(&__device_sd_c)) {
-			devices[DEVICE_PATCHES] = &__device_sd_c;
-		}
-		else if(deviceHandler_getDeviceAvailable(&__device_sd_b)) {
-			devices[DEVICE_PATCHES] = &__device_sd_b;
-		}
-		else if(deviceHandler_getDeviceAvailable(&__device_sd_a)) {
-			devices[DEVICE_PATCHES] = &__device_sd_a;
-		}
-		else {
-			devices[DEVICE_PATCHES] = NULL;
-		}
+		devices[DEVICE_PATCHES] = NULL;
 	}
 
 	if(devices[DEVICE_PATCHES] == NULL) {

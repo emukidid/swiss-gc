@@ -13,6 +13,7 @@
 #include "swiss.h"
 #include "main.h"
 #include "flippy.h"
+#include "patcher.h"
 
 file_handle initial_Flippy =
 	{ "fldrv:/",      // directory
@@ -94,6 +95,12 @@ s64 deviceHandler_Flippy_seekFile(file_handle* file, s64 where, u32 type) {
 	return file->offset;
 }
 
+static u32 defaultFlags(file_handle* file) {
+	if(endsWith(file->name,".gcm") || endsWith(file->name,".iso") || endsWith(file->name,".tgc"))
+		return 0;
+	return FLIPPY_FLAG_DEFAULT;
+}
+
 s32 deviceHandler_Flippy_readFile(file_handle* file, void* buffer, u32 length) {
 	if(file->status == STATUS_MAPPED) {
 		s32 bytes_read = DVD_ReadAbs((dvdcmdblk*)file->other, buffer, length, file->offset);
@@ -103,8 +110,8 @@ s32 deviceHandler_Flippy_readFile(file_handle* file, void* buffer, u32 length) {
 	if(!file->fp) {
 		file->fp = memalign(32, sizeof(flippyfileinfo));
 		if((getDeviceFromPath(file->name) == &__device_flippyflash ?
-			flippy_flash_open(file->fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT) :
-			flippy_open(file->fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT)) != FLIPPY_RESULT_OK) {
+			flippy_flash_open(file->fp, getDevicePath(file->name), defaultFlags(file)) :
+			flippy_open(file->fp, getDevicePath(file->name), defaultFlags(file))) != FLIPPY_RESULT_OK) {
 			free(file->fp);
 			file->fp = NULL;
 			return -1;
@@ -146,6 +153,7 @@ s32 deviceHandler_Flippy_writeFile(file_handle* file, const void* buffer, u32 le
 }
 
 s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
+	int i;
 	file_frag *fragList = NULL;
 	u32 numFrags = 0;
 	
@@ -162,7 +170,60 @@ s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, Execut
 		file->status = STATUS_MAPPED;
 		return 1;
 	}
-	return 0;
+	
+	// Look for patch files, if we find some, open them and add them as fragments
+	file_handle patchFile;
+	for(i = 0; i < numToPatch; i++) {
+		if(!filesToPatch[i].patchFile) continue;
+		if(!getFragments(DEVICE_PATCHES, filesToPatch[i].patchFile, &fragList, &numFrags, filesToPatch[i].file == file2, filesToPatch[i].offset, filesToPatch[i].size)) {
+			free(fragList);
+			return 0;
+		}
+	}
+	
+	if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, FRAGS_DISC_1, 0, 0)) {
+		free(fragList);
+		return 0;
+	}
+	if(flippy_mount(file->fp) != FLIPPY_RESULT_OK) {
+		free(fragList);
+		return 0;
+	}
+	
+	if(file2) {
+		if(!getFragments(DEVICE_CUR, file2, &fragList, &numFrags, FRAGS_DISC_2, 0, 0)) {
+			free(fragList);
+			return 0;
+		}
+	}
+	
+	if(swissSettings.igrType == IGR_BOOTBIN || endsWith(file->name,".tgc")) {
+		memset(&patchFile, 0, sizeof(file_handle));
+		concat_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/apploader.img");
+		
+		ApploaderHeader apploaderHeader;
+		if(devices[DEVICE_PATCHES]->readFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader)) != sizeof(ApploaderHeader) || apploaderHeader.rebootSize != reboot_bin_size) {
+			devices[DEVICE_PATCHES]->deleteFile(&patchFile);
+			
+			memset(&apploaderHeader, 0, sizeof(ApploaderHeader));
+			apploaderHeader.rebootSize = reboot_bin_size;
+			
+			devices[DEVICE_PATCHES]->seekFile(&patchFile, 0, DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader));
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, reboot_bin, reboot_bin_size);
+			devices[DEVICE_PATCHES]->closeFile(&patchFile);
+		}
+		
+		getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_APPLOADER, 0x2440, 0);
+	}
+	
+	if(fragList) {
+		print_frag_list(fragList, numFrags);
+		*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (numFrags + 1) * sizeof(file_frag));
+		free(fragList);
+		fragList = NULL;
+	}
+	return 1;
 }
 
 s32 deviceHandler_Flippy_init(file_handle* file) {
@@ -230,6 +291,15 @@ bool deviceHandler_FlippyFlash_test() {
 	return deviceHandler_getDeviceAvailable(&__device_flippy);
 }
 
+u32 deviceHandler_Flippy_emulated() {
+	if (swissSettings.emulateReadSpeed)
+		return EMU_READ | EMU_READ_SPEED;
+	else if (swissSettings.emulateEthernet && (devices[DEVICE_CUR]->emulable & EMU_ETHERNET))
+		return EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER;
+	else
+		return EMU_READ;
+}
+
 char* deviceHandler_Flippy_status(file_handle* file) {
 	return NULL;
 }
@@ -240,7 +310,8 @@ DEVICEHANDLER_INTERFACE __device_flippy = {
 	.deviceName = "FlippyDrive",
 	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_FLIPPY, 102, 56, 104, 58},
-	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_THREAD_SAFE|FEAT_AUDIO_STREAMING,
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
+	.emulable = EMU_READ|EMU_READ_SPEED,
 	.location = LOC_DVD_CONNECTOR,
 	.initial = &initial_Flippy,
 	.test = deviceHandler_Flippy_test,
@@ -256,6 +327,7 @@ DEVICEHANDLER_INTERFACE __device_flippy = {
 	.renameFile = deviceHandler_Flippy_renameFile,
 	.setupFile = deviceHandler_Flippy_setupFile,
 	.deinit = deviceHandler_Flippy_deinit,
+	.emulated = deviceHandler_Flippy_emulated,
 	.status = deviceHandler_Flippy_status,
 };
 
@@ -265,7 +337,8 @@ DEVICEHANDLER_INTERFACE __device_flippyflash = {
 	.deviceName = "FlippyDrive Flash",
 	.deviceDescription = "Supported File System(s): FAT12",
 	.deviceTexture = {TEX_FLIPPY, 102, 56, 104, 58},
-	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE,
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_HYPERVISOR,
+	.emulable = EMU_READ|EMU_READ_SPEED,
 	.location = LOC_DVD_CONNECTOR|LOC_SYSTEM,
 	.initial = &initial_FlippyFlash,
 	.test = deviceHandler_FlippyFlash_test,
@@ -279,5 +352,6 @@ DEVICEHANDLER_INTERFACE __device_flippyflash = {
 	.deleteFile = deviceHandler_Flippy_deleteFile,
 	.setupFile = deviceHandler_Flippy_setupFile,
 	.deinit = deviceHandler_Flippy_deinit,
+	.emulated = deviceHandler_Flippy_emulated,
 	.status = deviceHandler_Flippy_status,
 };

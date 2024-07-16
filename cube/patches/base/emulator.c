@@ -664,7 +664,9 @@ OSAlarm cover_alarm;
 OSAlarm read_alarm;
 
 #ifndef DI_PASSTHROUGH
-#ifdef GCODE
+#ifdef FLIPPY
+bool flippy_push_queue(void *buffer, uint32_t length, uint32_t offset, uint32_t command, frag_callback callback);
+#elifdef GCODE
 bool gcode_push_queue(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, uint32_t command, frag_callback callback);
 #endif
 
@@ -703,7 +705,14 @@ static void di_execute_command()
 			di.error = 0;
 			break;
 		}
-		#if defined GCODE && !defined DTK
+		#if defined FLIPPY && !defined DTK
+		case DI_CMD_AUDIO_STREAM:
+		case DI_CMD_REQUEST_AUDIO_STATUS:
+		{
+			flippy_push_queue(&di.reg.immbuf, di.reg.cmdbuf2, di.reg.cmdbuf1, di.reg.cmdbuf0, di_complete_transfer);
+			return;
+		}
+		#elif defined GCODE && !defined DTK
 		case DI_CMD_AUDIO_STREAM:
 		case DI_CMD_REQUEST_AUDIO_STATUS:
 		{
@@ -772,7 +781,7 @@ static void di_execute_command()
 		{
 			if (di.status == 0 && change_disc()) {
 				di_open_cover();
-				#ifndef GCODE
+				#if !defined FLIPPY && !defined GCODE
 				OSSetAlarm(&cover_alarm, OSSecondsToTicks(1.5), di_close_cover);
 				#endif
 			}
