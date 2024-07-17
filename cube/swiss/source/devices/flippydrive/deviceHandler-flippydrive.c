@@ -217,6 +217,40 @@ s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, Execut
 		getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_APPLOADER, 0x2440, 0);
 	}
 	
+	if(swissSettings.emulateMemoryCard) {
+		memset(&patchFile, 0, sizeof(file_handle));
+		concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+		concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+		ensure_path(DEVICE_PATCHES, "swiss/saves", NULL);
+		devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
+		
+		if(devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0) == 0 && !patchFile.size) {
+			devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
+			devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
+		}
+		
+		if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_A, 0, 31.5*1024*1024))
+			*(vu8*)VAR_CARD_A_ID = (patchFile.size * 8/1024/1024) & 0xFC;
+		
+		memset(&patchFile, 0, sizeof(file_handle));
+		concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+		concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
+		ensure_path(DEVICE_PATCHES, "swiss/saves", NULL);
+		devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
+		
+		if(devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0) == 0 && !patchFile.size) {
+			devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
+			devices[DEVICE_PATCHES]->closeFile(&patchFile);
+			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
+		}
+		
+		if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_B, 0, 31.5*1024*1024))
+			*(vu8*)VAR_CARD_B_ID = (patchFile.size * 8/1024/1024) & 0xFC;
+	}
+	
 	if(fragList) {
 		print_frag_list(fragList, numFrags);
 		*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (numFrags + 1) * sizeof(file_frag));
@@ -296,6 +330,8 @@ u32 deviceHandler_Flippy_emulated() {
 		return EMU_READ | EMU_READ_SPEED;
 	else if (swissSettings.emulateEthernet && (devices[DEVICE_CUR]->emulable & EMU_ETHERNET))
 		return EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER;
+	else if (swissSettings.emulateMemoryCard)
+		return EMU_READ | EMU_MEMCARD;
 	else
 		return EMU_READ;
 }
@@ -311,7 +347,7 @@ DEVICEHANDLER_INTERFACE __device_flippy = {
 	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_FLIPPY, 102, 56, 104, 58},
 	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
-	.emulable = EMU_READ|EMU_READ_SPEED,
+	.emulable = EMU_READ|EMU_READ_SPEED|EMU_MEMCARD,
 	.location = LOC_DVD_CONNECTOR,
 	.initial = &initial_Flippy,
 	.test = deviceHandler_Flippy_test,
@@ -338,7 +374,7 @@ DEVICEHANDLER_INTERFACE __device_flippyflash = {
 	.deviceDescription = "Supported File System(s): FAT12",
 	.deviceTexture = {TEX_FLIPPY, 102, 56, 104, 58},
 	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_HYPERVISOR,
-	.emulable = EMU_READ|EMU_READ_SPEED,
+	.emulable = EMU_READ|EMU_READ_SPEED|EMU_MEMCARD,
 	.location = LOC_DVD_CONNECTOR|LOC_SYSTEM,
 	.initial = &initial_FlippyFlash,
 	.test = deviceHandler_FlippyFlash_test,

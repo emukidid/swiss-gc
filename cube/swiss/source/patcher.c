@@ -381,6 +381,10 @@ int install_code(int final)
 				patch     = flippy_bin;
 				patchSize = flippy_bin_size;
 				break;
+			case EMU_READ | EMU_MEMCARD:
+				patch     = flippy_card_bin;
+				patchSize = flippy_card_bin_size;
+				break;
 			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
 				patch     = flippy_eth_bin;
 				patchSize = flippy_eth_bin_size;

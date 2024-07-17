@@ -52,6 +52,7 @@ typedef struct FuncPattern
 #include "gcloader_v2_dtk_bin.h"
 #include "gcloader_v2_eth_bin.h"
 #include "flippy_bin.h"
+#include "flippy_card_bin.h"
 #include "flippy_eth_bin.h"
 
 /* SDK patches */
