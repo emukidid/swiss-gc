@@ -116,19 +116,19 @@ s32 deviceHandler_Flippy_readFile(file_handle* file, void* buffer, u32 length) {
 			file->fp = NULL;
 			return -1;
 		}
+		flippyfileinfo* info = file->fp;
+		file->size = info->file.size;
 	}
-	flippyfileinfo* info = file->fp;
-	if(file->offset > info->file.size) {
-		file->offset = info->file.size;
+	if(file->offset > file->size) {
+		file->offset = file->size;
 	}
-	if(length + file->offset > info->file.size) {
-		length = info->file.size - file->offset;
+	if(length + file->offset > file->size) {
+		length = file->size - file->offset;
 	}
 	if(flippy_pread(file->fp, buffer, length, file->offset) != FLIPPY_RESULT_OK) {
 		return -1;
 	}
 	file->offset += length;
-	file->size = info->file.size;
 	return length;
 }
 
@@ -142,13 +142,13 @@ s32 deviceHandler_Flippy_writeFile(file_handle* file, const void* buffer, u32 le
 			file->fp = NULL;
 			return -1;
 		}
+		flippyfileinfo* info = file->fp;
+		file->size = info->file.size;
 	}
-	flippyfileinfo* info = file->fp;
 	if(flippy_pwrite(file->fp, buffer, length, file->offset) != FLIPPY_RESULT_OK) {
 		return -1;
 	}
 	file->offset += length;
-	file->size = info->file.size;
 	return length;
 }
 

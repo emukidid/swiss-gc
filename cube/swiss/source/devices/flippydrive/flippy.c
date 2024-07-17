@@ -271,6 +271,11 @@ flippyresult flippy_pread(flippyfileinfo *info, void *buf, u32 len, u32 offset)
 		return file->result;
 	}
 
+	if (!len) {
+		file->result = FLIPPY_RESULT_OK;
+		return file->result;
+	}
+
 	if (len <= 32) {
 		result = flippy_pread_dma(info, info->buffer, 32, offset);
 		if (result != FLIPPY_RESULT_OK) return result;
@@ -315,7 +320,7 @@ static flippyresult flippy_pwrite_dma(flippyfileinfo *info, const void *buf, u32
 			xlen = 16352;
 
 		DVD_SetUserData(&block, file);
-		if (!DVD_WriteDmaAsyncPrio(&block, FLIPPY_CMD_WRITE(file->handle, offset, xlen), buf, xlen ? (xlen + 31) & ~31 : 32, command_callback, 2)) {
+		if (!DVD_WriteDmaAsyncPrio(&block, FLIPPY_CMD_WRITE(file->handle, offset, xlen), buf, xlen ? (xlen + 31) & ~31 : 32, nostatus_callback, 2)) {
 			file->result = FLIPPY_RESULT_NOT_READY;
 			return file->result;
 		}
@@ -341,6 +346,17 @@ flippyresult flippy_pwrite(flippyfileinfo *info, const void *buf, u32 len, u32 o
 	u32 roundlen;
 	s32 misalign;
 	flippyresult result;
+	flippyfile *file = &info->file;
+
+	if (!(file->flags & FLIPPY_FLAG_WRITE)) {
+		file->result = FLIPPY_RESULT_DENIED;
+		return file->result;
+	}
+
+	if (!len && offset <= file->size) {
+		file->result = FLIPPY_RESULT_OK;
+		return file->result;
+	}
 
 	if (len <= 32) {
 		memset(info->buffer, 0, 32);
