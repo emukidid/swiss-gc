@@ -63,6 +63,13 @@ static void flippy_reset(void)
 	while (!(DI[1] & 0b100));
 }
 
+static void flippy_close(uint8_t handle)
+{
+	DI[2] = DI_CMD_FLIPPY_IPC << 24 | handle << 16 | 0x0B;
+	DI[7] = 0b001;
+	while (DI[7] & 0b001);
+}
+
 static void di_interrupt_handler(OSInterrupt interrupt, OSContext *context);
 
 static void flippy_done_queued(void);
@@ -141,8 +148,7 @@ static void flippy_done_queued(void)
 		case DI_CMD_FLIPPY_IPC:
 			switch (command & 0xFF) {
 				case 0x01:
-					const frag_t *frag = buffer;
-					*VAR_CURRENT_DISC = frag->file;
+					*VAR_CURRENT_DISC = ((const frag_t *)buffer)->file;
 					break;
 			}
 			break;
@@ -301,6 +307,16 @@ void reset_devices(void)
 		while (DI[7] & 0b001);
 
 		AI[0] &= ~0b0000001;
+	}
+
+	const frag_t *frags = *(frag_t **)VAR_FRAG_LIST;
+	uint8_t handle = 0;
+
+	for (int i = 0; frags[i].size; i++) {
+		if (handle != frags[i].handle) {
+			handle  = frags[i].handle;
+			flippy_close(handle);
+		}
 	}
 
 	flippy_reset();

@@ -231,7 +231,7 @@ s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, Execut
 			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 		}
 		
-		if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_A, 0, 31.5*1024*1024))
+		if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_A, 0, 0))
 			*(vu8*)VAR_CARD_A_ID = (patchFile.size * 8/1024/1024) & 0xFC;
 		
 		memset(&patchFile, 0, sizeof(file_handle));
@@ -247,7 +247,7 @@ s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, Execut
 			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 		}
 		
-		if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_B, 0, 31.5*1024*1024))
+		if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_B, 0, 0))
 			*(vu8*)VAR_CARD_B_ID = (patchFile.size * 8/1024/1024) & 0xFC;
 	}
 	
