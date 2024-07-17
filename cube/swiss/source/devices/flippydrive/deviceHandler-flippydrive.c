@@ -277,6 +277,7 @@ s32 deviceHandler_Flippy_closeFile(file_handle* file) {
 
 s32 deviceHandler_Flippy_deinit(file_handle* file) {
 	deviceHandler_Flippy_closeFile(file);
+	flippy_closeall();
 	return 0;
 }
 
@@ -347,6 +348,7 @@ DEVICEHANDLER_INTERFACE __device_flippy = {
 	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_FLIPPY, 102, 56, 104, 58},
 	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
+	.quirks = QUIRK_NO_DEINIT,
 	.emulable = EMU_READ|EMU_READ_SPEED|EMU_MEMCARD,
 	.location = LOC_DVD_CONNECTOR,
 	.initial = &initial_Flippy,
@@ -374,6 +376,7 @@ DEVICEHANDLER_INTERFACE __device_flippyflash = {
 	.deviceDescription = "Supported File System(s): FAT12",
 	.deviceTexture = {TEX_FLIPPY, 102, 56, 104, 58},
 	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_HYPERVISOR,
+	.quirks = QUIRK_NO_DEINIT,
 	.emulable = EMU_READ|EMU_READ_SPEED|EMU_MEMCARD,
 	.location = LOC_DVD_CONNECTOR|LOC_SYSTEM,
 	.initial = &initial_FlippyFlash,

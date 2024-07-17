@@ -1218,7 +1218,7 @@ void load_app(ExecutableFile *fileToPatch)
 	}
 	
 	// Don't spin down the drive when running something from it...
-	if(devices[DEVICE_CUR] != &__device_dvd) {
+	if(!(devices[DEVICE_CUR]->quirks & QUIRK_NO_DEINIT)) {
 		devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 	}
 	if(devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR) {
@@ -2051,7 +2051,7 @@ void load_game() {
 			DrawDispose(msgBox);
 			goto fail;
 		}
-		if(devices[DEVICE_CUR] != &__device_dvd) {
+		if(!(devices[DEVICE_CUR]->quirks & QUIRK_NO_DEINIT)) {
 			devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 		}
 		
@@ -2203,6 +2203,7 @@ void load_file()
 		else if(endsWith(fileName,".fpkg")) {
 			if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
 				uiDrawObj_t *progBar = DrawPublish(DrawProgressBar(true, 0, "Resetting RP2040"));
+				flippy_closeall();
 				flippy_reset();
 				DVD_Inquiry(&commandBlock, &driveInfo);
 				flippy_boot(FLIPPY_MODE_UPDATE);
@@ -2794,6 +2795,9 @@ void menu_loop()
 						needsRefresh=1;
 						break;
 					case MENU_EXIT:
+						if(devices[DEVICE_CUR] != NULL) {
+							devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
+						}
 						DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(LOC_DVD_CONNECTOR);
 						if(device == &__device_flippy) {
 							flippy_reset();
