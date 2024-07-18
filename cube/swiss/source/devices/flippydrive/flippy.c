@@ -57,12 +57,15 @@
 #define FLIPPY_CMD_RENAME \
 	((dvdcmdbuf){(((0xB5) << 24) | (0x13))})
 
+typedef void (*flippycallback)(flippyfile *file);
 typedef void (*dvdcallbacklow)(s32 result);
 
 extern s32 DVD_LowWaitCoverClose(dvdcallbacklow cb);
 
 static dvddrvinfo driveinfo ATTRIBUTE_ALIGN(32);
 static flippybootstatus bootstatus ATTRIBUTE_ALIGN(32);
+
+static u64 handles = ((1LL << FLIPPY_MAX_HANDLES) - 1) | (1LL << (FLIPPY_FLASH_HANDLE - 1));
 
 static lwpq_t queue = LWP_TQUEUE_NULL;
 static sem_t semaphore = LWP_SEM_NULL;
@@ -81,7 +84,8 @@ static void reset_callback(s32 result, dvdcmdblk *block)
 
 static void status_callback(s32 result, dvdcmdblk *block)
 {
-	flippyfile *file = block->buf;
+	flippyfile *file  = block->buf;
+	flippycallback cb = block->usrdata;
 
 	if (result != sizeof(flippyfile)) {
 		file->result = FLIPPY_RESULT_DISK_ERR;
@@ -90,19 +94,28 @@ static void status_callback(s32 result, dvdcmdblk *block)
 		file->size   = bswap64(file->size);
 	}
 
+	if (cb) cb(file);
 	LWP_ThreadBroadcast(queue);
 }
 
-static void nostatus_callback(s32 result, dvdcmdblk *block)
+static void open_callback(flippyfile *file)
 {
-	flippyfile *file = block->usrdata;
+	switch (file->result) {
+		case FLIPPY_RESULT_OK:
+			handles |= (1LL << (file->handle - 1));
+			break;
+	}
+}
 
-	if (result != block->currtxsize)
-		file->result = FLIPPY_RESULT_DISK_ERR;
-	else
-		file->result = FLIPPY_RESULT_OK;
-
-	LWP_ThreadBroadcast(queue);
+static void close_callback(flippyfile *file)
+{
+	switch (file->result) {
+		case FLIPPY_RESULT_OK:
+		case FLIPPY_RESULT_INT_ERR:
+		case FLIPPY_RESULT_INVALID_OBJECT:
+			handles &= ~(1LL << (file->handle - 1));
+			break;
+	}
 }
 
 static void readdir_callback(s32 result, dvdcmdblk *block)
@@ -126,16 +139,32 @@ static void readdir_callback(s32 result, dvdcmdblk *block)
 
 static void command_callback(s32 result, dvdcmdblk *block)
 {
-	flippyfile *file = block->usrdata;
+	flippyfile *file  = block->usrdata;
+	flippycallback cb = NULL;
 
 	if (result != block->currtxsize) {
 		file->result = FLIPPY_RESULT_DISK_ERR;
-	} else {
-		DVD_ReadDmaAsyncPrio(block, FLIPPY_CMD_STATUS, file, sizeof(flippyfile), status_callback, 0);
+		LWP_ThreadBroadcast(queue);
 		return;
 	}
 
-	LWP_ThreadBroadcast(queue);
+	switch (block->cmdbuf[0] & 0xFF) {
+		case 0x01:
+		case 0x08 ... 0x09:
+			file->result = FLIPPY_RESULT_OK;
+			LWP_ThreadBroadcast(queue);
+			return;
+		case 0x0A:
+		case 0x11:
+			cb = open_callback;
+			break;
+		case 0x0B:
+			cb = close_callback;
+			break;
+	}
+
+	DVD_SetUserData(block, cb);
+	DVD_ReadDmaAsyncPrio(block, FLIPPY_CMD_STATUS, file, sizeof(flippyfile), status_callback, 0);
 }
 
 flippyresult flippy_boot(flippybootmode mode)
@@ -179,7 +208,7 @@ flippyresult flippy_mount(flippyfileinfo *info)
 	flippyfile *file = &info->file;
 
 	DVD_SetUserData(&block, file);
-	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_MOUNT(file->handle), NULL, 0, nostatus_callback, 0)) {
+	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_MOUNT(file->handle), NULL, 0, command_callback, 0)) {
 		file->result = FLIPPY_RESULT_NOT_READY;
 		return file->result;
 	}
@@ -244,7 +273,7 @@ static flippyresult flippy_pread_dma(flippyfileinfo *info, void *buf, u32 len, u
 	flippyfile *file = &info->file;
 
 	DVD_SetUserData(&block, file);
-	if (!DVD_ReadDmaAsyncPrio(&block, FLIPPY_CMD_READ(file->handle, offset, len), buf, (len + 31) & ~31, nostatus_callback, 2)) {
+	if (!DVD_ReadDmaAsyncPrio(&block, FLIPPY_CMD_READ(file->handle, offset, len), buf, (len + 31) & ~31, command_callback, 2)) {
 		file->result = FLIPPY_RESULT_NOT_READY;
 		return file->result;
 	}
@@ -320,7 +349,7 @@ static flippyresult flippy_pwrite_dma(flippyfileinfo *info, const void *buf, u32
 			xlen = 16352;
 
 		DVD_SetUserData(&block, file);
-		if (!DVD_WriteDmaAsyncPrio(&block, FLIPPY_CMD_WRITE(file->handle, offset, xlen), buf, xlen ? (xlen + 31) & ~31 : 32, nostatus_callback, 2)) {
+		if (!DVD_WriteDmaAsyncPrio(&block, FLIPPY_CMD_WRITE(file->handle, offset, xlen), buf, xlen ? (xlen + 31) & ~31 : 32, command_callback, 2)) {
 			file->result = FLIPPY_RESULT_NOT_READY;
 			return file->result;
 		}
@@ -474,6 +503,11 @@ flippyresult flippy_close(flippyfileinfo *info)
 	dvdcmdblk block;
 	flippyfile *file = &info->file;
 
+	if (!(handles & (1LL << (file->handle - 1)))) {
+		file->result = FLIPPY_RESULT_INVALID_OBJECT;
+		return file->result;
+	}
+
 	DVD_SetUserData(&block, file);
 	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_CLOSE(file->handle), NULL, 0, command_callback, 3)) {
 		file->result = FLIPPY_RESULT_NOT_READY;
@@ -494,6 +528,11 @@ flippyresult flippy_closedir(flippydirinfo *info)
 {
 	dvdcmdblk block;
 	flippyfile *dir = &info->dir;
+
+	if (!(handles & (1LL << (dir->handle - 1)))) {
+		dir->result = FLIPPY_RESULT_INVALID_OBJECT;
+		return dir->result;
+	}
 
 	DVD_SetUserData(&block, dir);
 	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_CLOSE(dir->handle), NULL, 0, command_callback, 3)) {
@@ -578,6 +617,11 @@ flippyresult flippy_flash_open(flippyfileinfo *info, const char *path, u32 flags
 	stat->type  = FLIPPY_TYPE_FILE;
 	stat->flags = flags;
 
+	if (handles & (1LL << (FLIPPY_FLASH_HANDLE - 1))) {
+		file->result = FLIPPY_RESULT_TOO_MANY_OPEN_FILES;
+		return file->result;
+	}
+
 	DVD_SetUserData(&block, file);
 	if (!DVD_WriteDmaAsyncPrio(&block, FLIPPY_CMD_FLASH_OPEN, stat, sizeof(flippyfilestat), command_callback, 2)) {
 		file->result = FLIPPY_RESULT_NOT_READY;
@@ -608,6 +652,11 @@ flippyresult flippy_flash_opendir(flippydirinfo *info, const char *path)
 	}
 
 	stat->type = FLIPPY_TYPE_DIR;
+
+	if (handles & (1LL << (FLIPPY_FLASH_HANDLE - 1))) {
+		dir->result = FLIPPY_RESULT_TOO_MANY_OPEN_FILES;
+		return dir->result;
+	}
 
 	DVD_SetUserData(&block, dir);
 	if (!DVD_WriteDmaAsyncPrio(&block, FLIPPY_CMD_FLASH_OPEN, stat, sizeof(flippyfilestat), command_callback, 2)) {
@@ -702,7 +751,7 @@ flippyresult flippy_init(void)
 
 	if (FLIPPY_VERSION(version->major, version->minor, version->build) <
 		FLIPPY_VERSION(FLIPPY_MINVER_MAJOR, FLIPPY_MINVER_MINOR, FLIPPY_MINVER_BUILD))
-		return FLIPPY_RESULT_NOT_READY;
+		return FLIPPY_RESULT_INT_ERR;
 
 	LWP_InitQueue(&queue);
 	initialized = true;
