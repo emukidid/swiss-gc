@@ -11924,7 +11924,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
-			case 266324:
+			case 266336:
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x807023F0 - 0x807003A0 + 0x500) = 0x807E0000;
 				
@@ -12005,7 +12005,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
-			case 339500:
+			case 339520:
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x80701C38 - 0x807003A0 + 0x500) = 0x807E0000;
 				
@@ -12022,7 +12022,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
-			case 338376:
+			case 338400:
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x80701C38 - 0x807003A0 + 0x500) = 0x807E0000;
 				
@@ -12039,7 +12039,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
-			case 268372:
+			case 268384:
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x807023F0 - 0x807003A0 + 0x500) = 0x807E0000;
 				
@@ -12315,7 +12315,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
-			case 260164:
+			case 260192:
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x80500EB4 - 0x805003A0 + 0x500) = 0x387D2720;
 				
@@ -12332,7 +12332,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
-			case 260852:
+			case 260864:
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x80500EB4 - 0x805003A0 + 0x500) = 0x387D2800;
 				
