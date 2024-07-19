@@ -10,7 +10,7 @@
 
 
 /* File name helper functions */
-char *knownExtensions[] = {".bin", ".dol", ".dol+cli", ".elf", ".fzn", ".gcm", ".gcz", ".iso", ".mp3", ".rvz", ".tgc"};
+char *knownExtensions[] = {".bin", ".dol", ".dol+cli", ".elf", ".fpkg", ".fzn", ".gcm", ".gcz", ".iso", ".mp3", ".rvz", ".tgc"};
 
 char *endsWith(char *str, char *end) {
 	size_t len_str = strlen(str);
@@ -89,6 +89,8 @@ char *getExternalPath(char *path)
 		{ "ataa:/",  "carda:" },
 		{ "atab:/",  "cardb:" },
 		{ "atac:/",  "fat:"   },
+		{ "fldrv:/", "dvd:"   },
+		{ "flffs:/", "flash:" },
 		{ "gcldr:/", "dvd:"   },
 		{ "sda:/",   "carda:" },
 		{ "sdb:/",   "cardb:" },
@@ -149,6 +151,7 @@ void load_auto_dol() {
 					boot_dol();
 					memcpy(dirEntries[i], &curFile, sizeof(file_handle));
 				}
+				devices[DEVICE_CUR]->closeFile(dirEntries[i]);
 
 				// If we've made it this far, we've already found an autoboot DOL,
 				// the first one (boot.dol) is not cancellable, but the rest of the

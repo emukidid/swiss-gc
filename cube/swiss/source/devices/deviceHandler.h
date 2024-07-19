@@ -115,6 +115,7 @@ typedef char* (* _fn_status)(file_handle*);
 #define QUIRK_GCLOADER_NO_DISC_2		0x2
 #define QUIRK_GCLOADER_NO_PARTIAL_READ	0x4
 #define QUIRK_GCLOADER_WRITE_CONFLICT	0x8
+#define QUIRK_NO_DEINIT					0x10
 
 // Device emulated features
 #define EMU_READ			0x80000000
@@ -156,7 +157,9 @@ typedef char* (* _fn_status)(file_handle*);
 #define DEVICE_ID_G			0x10
 #define DEVICE_ID_H			0x11
 #define DEVICE_ID_I			0x12
-#define DEVICE_ID_MAX		DEVICE_ID_I
+#define DEVICE_ID_J			0x13
+#define DEVICE_ID_K			0x14
+#define DEVICE_ID_MAX		DEVICE_ID_K
 #define DEVICE_ID_UNK		(DEVICE_ID_MAX + 1)
 
 typedef struct DEVICEHANDLER_STRUCT DEVICEHANDLER_INTERFACE;
@@ -219,6 +222,7 @@ enum DEV_ERRORS {
 #include "devices/fsp/deviceHandler-FSP.h"
 #include "devices/gcloader/deviceHandler-gcloader.h"
 #include "devices/aram/deviceHandler-ARAM.h"
+#include "devices/flippydrive/deviceHandler-flippydrive.h"
 
 extern void deviceHandler_setStatEnabled(int enable);
 extern int deviceHandler_getStatEnabled();
@@ -226,7 +230,7 @@ extern bool deviceHandler_getDeviceAvailable(DEVICEHANDLER_INTERFACE *dev);
 extern void deviceHandler_setDeviceAvailable(DEVICEHANDLER_INTERFACE *dev, bool availability);
 extern void deviceHandler_setAllDevicesAvailable();
 
-#define MAX_DEVICES 20
+#define MAX_DEVICES 22
 
 extern DEVICEHANDLER_INTERFACE* allDevices[MAX_DEVICES];
 extern DEVICEHANDLER_INTERFACE* devices[MAX_DEVICE_SLOTS];

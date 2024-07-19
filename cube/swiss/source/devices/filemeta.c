@@ -315,6 +315,9 @@ void populate_meta(file_handle *f) {
 				devices[DEVICE_CUR]->closeFile(bannerFile);
 				free(bannerFile);
 			}
+			if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
+				devices[DEVICE_CUR]->closeFile(f);
+			}
 			if(endsWith(f->name,".dol"))
 				f->meta->fileTypeTexObj = &dolimgTexObj;
 			else if(endsWith(f->name,".dol+cli"))

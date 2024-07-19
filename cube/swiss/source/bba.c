@@ -47,6 +47,8 @@ static void *net_thread_func(void *arg)
 			bba_location = LOC_SERIAL_PORT_1;
 
 		if (ifname[0] == 'E' && strchr("2AB", ifname[1])) {
+			__device_flippy.emulable |= EMU_ETHERNET;
+			__device_flippyflash.emulable |= EMU_ETHERNET;
 			if (__device_gcloader.features & FEAT_PATCHES)
 				__device_gcloader.emulable |= EMU_ETHERNET;
 			__device_ata_c.emulable |= EMU_ETHERNET;

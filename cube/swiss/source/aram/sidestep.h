@@ -31,7 +31,7 @@ typedef struct {
 
     unsigned int entryPoint;
     unsigned int unused[MAXTEXTSECTION];
-} DOLHEADER;
+} DOLHEADER __attribute__((aligned(32)));
 
 u32 DOLSize(DOLHEADER *dol);
 int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len);

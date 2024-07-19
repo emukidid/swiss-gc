@@ -589,6 +589,7 @@ DEVICEHANDLER_INTERFACE __device_dvd = {
 	.deviceDescription = "Supported File System(s): GCM, ISO 9660, Multi-Game",
 	.deviceTexture = {TEX_GCDVDSMALL, 84, 84, 84, 84},
 	.features = FEAT_READ|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_HYPERVISOR|FEAT_AUDIO_STREAMING,
+	.quirks = QUIRK_NO_DEINIT,
 	.emulable = EMU_READ|EMU_MEMCARD,
 	.location = LOC_DVD_CONNECTOR,
 	.initial = &initial_DVD,

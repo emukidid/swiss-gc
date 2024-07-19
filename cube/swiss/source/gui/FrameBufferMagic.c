@@ -78,6 +78,7 @@ GXTexObj dirimgTexObj;
 GXTexObj gcloaderTexObj;
 GXTexObj m2loaderTexObj;
 GXTexObj eth2gcTexObj;
+GXTexObj flippyTexObj;
 
 static char fbTextBuffer[256];
 
@@ -378,6 +379,7 @@ static void init_textures()
 	TPL_GetTexture(&imagesTPL, gcloaderimg, &gcloaderTexObj);
 	TPL_GetTexture(&imagesTPL, m2loaderimg, &m2loaderTexObj);
 	TPL_GetTexture(&imagesTPL, eth2gcimg, &eth2gcTexObj);
+	TPL_GetTexture(&imagesTPL, flippyimg, &flippyTexObj);
 }
 
 static void drawInit()
@@ -587,6 +589,10 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			break;
 		case TEX_ETH2GC:
 			texObj = &eth2gcTexObj; color = (GXColor) {216,216,216,255};
+			break;
+		case TEX_FLIPPY:
+			texObj = &flippyTexObj; color = (GXColor) {216,216,216,255};
+			t1 -= 18.0f/40.0f;
 			break;
 	}
 	

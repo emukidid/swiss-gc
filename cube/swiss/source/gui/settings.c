@@ -298,7 +298,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool emulatedAudioStream = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_AUDIO_STREAMING);
 		bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
 		bool emulatedEthernet = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_ETHERNET);
-		bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR);
+		bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
 		if(option < SET_DEFAULT_TRIGGER_LEVEL) {
 			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_DEFAULT_FORCE_VIDEOMODE, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, enabledVideoPatches);
@@ -333,7 +333,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			bool emulatedAudioStream = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_AUDIO_STREAMING);
 			bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
 			bool emulatedEthernet = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_ETHERNET);
-			bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR);
+			bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
 			if(option < SET_TRIGGER_LEVEL) {
 				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
 				drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[gameConfig->forceHScale], option == SET_HORIZ_SCALE, enabledVideoPatches);
@@ -699,7 +699,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					swissSettings.emulateEthernet ^= 1;
 			break;
 			case SET_DEFAULT_CLEAN_BOOT:
-				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR))
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))
 					swissSettings.preferCleanBoot ^= 1;
 			break;
 		}
@@ -790,7 +790,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					gameConfig->emulateEthernet ^= 1;
 			break;
 			case SET_CLEAN_BOOT:
-				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR))
+				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))
 					gameConfig->preferCleanBoot ^= 1;
 			break;
 			case SET_DEFAULTS:

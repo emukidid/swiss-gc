@@ -39,6 +39,7 @@
 #include "patcher.h"
 #include "dvd.h"
 #include "elf.h"
+#include "flippy.h"
 #include "gameid.h"
 #include "gcm.h"
 #include "mp3.h"
@@ -183,7 +184,9 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 				, scaledWidth, scaledHeight, // scaled image
 				0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	DrawAddChild(containerPanel, devImageLabel);
-	if(devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)
+	if(devices[DEVICE_CUR]->location & LOC_SYSTEM)
+		sprintf(txtbuffer, "%s", "System");
+	else if(devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)
 		sprintf(txtbuffer, "%s", "Slot A");
 	else if(devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_B)
 		sprintf(txtbuffer, "%s", "Slot B");
@@ -195,8 +198,6 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 		sprintf(txtbuffer, "%s", "Serial Port 2");
 	else if(devices[DEVICE_CUR]->location == LOC_HSP)
 		sprintf(txtbuffer, "%s", "Hi Speed Port");
-	else if(devices[DEVICE_CUR]->location == LOC_SYSTEM)
-		sprintf(txtbuffer, "%s", "System");
 	else
 		sprintf(txtbuffer, "%s", "Unknown");
 	uiDrawObj_t *devLocationLabel = DrawStyledLabel(30 + ((135-30) / 2), 195, txtbuffer, 0.65f, true, defaultColor);
@@ -1217,10 +1218,10 @@ void load_app(ExecutableFile *fileToPatch)
 	}
 	
 	// Don't spin down the drive when running something from it...
-	if(devices[DEVICE_CUR] != &__device_dvd) {
+	if(!(devices[DEVICE_CUR]->quirks & QUIRK_NO_DEINIT)) {
 		devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 	}
-	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
+	if(devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR) {
 		// Check DVD Status, make sure it's error code 0
 		print_gecko("DVD: %08X\r\n",dvd_get_error());
 	}
@@ -1300,6 +1301,7 @@ void boot_dol()
 		if(devices[DEVICE_CUR]->readFile(&curFile,ptr,size)!=size) {
 			DrawDispose(progBar);
 			free(dol_buffer);
+			devices[DEVICE_CUR]->closeFile(&curFile);
 			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"Failed to read DOL. Press A.");
 			DrawPublish(msgBox);
 			wait_press_A();
@@ -1313,6 +1315,7 @@ void boot_dol()
 	if(!valid_dol_xxh3(&curFile, hash)) {
 		DrawDispose(progBar);
 		free(dol_buffer);
+		devices[DEVICE_CUR]->closeFile(&curFile);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"DOL is corrupted. Press A.");
 		DrawPublish(msgBox);
 		wait_press_A();
@@ -1576,6 +1579,7 @@ bool manage_file() {
 
 		// If the destination file already exists, ask the user what to do
 		if(devices[DEVICE_DEST]->readFile(destFile, NULL, 0) == 0) {
+			devices[DEVICE_DEST]->closeFile(destFile);
 			uiDrawObj_t* dupeBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 350);
 			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 160, "File exists:", 1.0f, true, defaultColor));
 			float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
@@ -1928,7 +1932,7 @@ void load_game() {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
 			sleep(2);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		
 		devices[DEVICE_CUR]->seekFile(&curFile,tgcFile.headerStart,DEVICE_HANDLER_SEEK_SET);
@@ -1937,7 +1941,7 @@ void load_game() {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
 			sleep(2);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		
 		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
@@ -1953,14 +1957,14 @@ void load_game() {
 					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File! (Fake SD Card?)"));
 					sleep(2);
 					DrawDispose(msgBox);
-					return;
+					goto exit;
 				}
 			}
 			DrawDispose(msgBox);
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
 			sleep(2);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		
 		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
@@ -1970,14 +1974,14 @@ void load_game() {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Please reconvert to NKit.iso using\nNKit bundled with this Swiss release."));
 			sleep(5);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		else if(is_nkit_format(&GCMDisk) && !valid_gcm_boot(&GCMDisk)) {
 			DrawDispose(msgBox);
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is not playable in NKit.iso format.\nPlease convert back to ISO using NKit."));
 			sleep(5);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		else if(is_redump_disc(curFile.meta) && !valid_gcm_size(&GCMDisk, curFile.size)) {
 			if(swissSettings.audioStreaming && !valid_gcm_size2(&GCMDisk, curFile.size)) {
@@ -1985,7 +1989,7 @@ void load_game() {
 				msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump and is not playable.\nPlease attempt recovery using NKit."));
 				sleep(5);
 				DrawDispose(msgBox);
-				return;
+				goto exit;
 			}
 			else {
 				DrawDispose(msgBox);
@@ -2016,7 +2020,7 @@ void load_game() {
 	// Show game info or return to the menu
 	if(!info_game(config)) {
 		free(config);
-		return;
+		goto exit;
 	}
 	
 	if(devices[DEVICE_CONFIG] != NULL) {
@@ -2032,10 +2036,10 @@ void load_game() {
 	config_load_current(config);
 	gameID_early_set(&GCMDisk);
 	
-	if(config->forceCleanBoot || (config->preferCleanBoot && devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR)) {
+	if(config->forceCleanBoot || (config->preferCleanBoot && (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))) {
 		gameID_set(&GCMDisk, get_gcm_boot_hash(&GCMDisk, curFile.meta));
 		
-		if(devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
+		if(!(devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR)) {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support clean boot."));
 			sleep(2);
 			DrawDispose(msgBox);
@@ -2047,7 +2051,7 @@ void load_game() {
 			DrawDispose(msgBox);
 			goto fail;
 		}
-		if(devices[DEVICE_CUR] != &__device_dvd) {
+		if(!(devices[DEVICE_CUR]->quirks & QUIRK_NO_DEINIT)) {
 			devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 		}
 		
@@ -2176,7 +2180,7 @@ fail:
 	gameID_unset();
 	config_unload_current();
 	free(config);
-
+exit:
 	devices[DEVICE_CUR]->closeFile(&curFile);
 	devices[DEVICE_CUR]->closeFile(disc2File);
 }
@@ -2194,6 +2198,33 @@ void load_file()
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid DOL"));
 			sleep(2);
 			DrawDispose(msgBox);
+			return;
+		}
+		else if(endsWith(fileName,".fpkg")) {
+			if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
+				uiDrawObj_t *progBar = DrawPublish(DrawProgressBar(true, 0, "Resetting RP2040"));
+				flippy_closeall();
+				flippy_reset();
+				DVD_Inquiry(&commandBlock, &driveInfo);
+				flippy_boot(FLIPPY_MODE_UPDATE);
+				flippybootstatus *status;
+				while((status = flippy_getbootstatus()) && status->current_progress != 0xFFFF) {
+					sprintf(txtbuffer, "%.64s\n%.64s", status->text, status->subtext);
+					uiDrawObj_t *newBar = DrawProgressBar(!status->show_progress_bar, (int)(((float)status->current_progress/(float)1000)*100), txtbuffer);
+					if(progBar != NULL) {
+						DrawDispose(progBar);
+					}
+					progBar = newBar;
+					DrawPublish(progBar);
+				}
+				DrawDispose(progBar);
+				deviceHandler_setDeviceAvailable(&__device_flippy, deviceHandler_Flippy_test());
+				deviceHandler_setDeviceAvailable(&__device_flippyflash, deviceHandler_FlippyFlash_test());
+				needsDeviceChange = !deviceHandler_getDeviceAvailable(devices[DEVICE_CUR]);
+				needsRefresh = 1;
+				return;
+			}
+			needsRefresh = manage_file() ? 1:0;
 			return;
 		}
 		else if(endsWith(fileName,".fzn")) {
@@ -2437,7 +2468,7 @@ uiDrawObj_t* draw_game_info() {
 		bool isAutoLoadEntry = !strcmp(swissSettings.autoload, curFile.name) || !fnmatch(swissSettings.autoload, curFile.name, FNM_PATHNAME);
 		textPtr += sprintf(textPtr, "(Z) Load at startup [Current: %s]", isAutoLoadEntry ? "Yes":"No");
 	}
-	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
+	if(devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR) {
 		textPtr = stpcpy(textPtr, textPtr == txtbuffer ? "(L+A) Clean Boot":" \267 (L+A) Clean Boot");
 	}
 	if(textPtr != txtbuffer) {
@@ -2764,6 +2795,13 @@ void menu_loop()
 						needsRefresh=1;
 						break;
 					case MENU_EXIT:
+						if(devices[DEVICE_CUR] != NULL) {
+							devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
+						}
+						DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(LOC_DVD_CONNECTOR);
+						if(device == &__device_flippy) {
+							flippy_reset();
+						}
 						DrawShutdown();
 						SYS_ResetSystem(SYS_HOTRESET, 0, TRUE);
 						__builtin_unreachable();

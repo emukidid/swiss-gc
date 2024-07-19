@@ -12,7 +12,7 @@ DEST    = ../swiss/source/patches
 DISASM    = disassembly
 
 .NOTPARALLEL:
-all: clean codehandler cpatches stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch
+all: clean codehandler cpatches stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch flippypatch
 
 stub: reboot.bin stub.bin
 sdpatch: sd-v1.bin sd-v1.card.bin sd-v1.dtk.bin sd-v1.eth.bin sd-v2.bin sd-v2.card.bin sd-v2.dtk.bin sd-v2.eth.bin
@@ -22,6 +22,7 @@ usbgeckopatch: usbgecko.bin
 wkfpatch: wkf.bin wkf.card.bin wkf.dtk.bin
 fsppatch: fsp.bin fsp.dtk.bin fsp.eth.bin
 gcloaderpatch: gcloader-v1.bin gcloader-v1.card.bin gcloader-v2.bin gcloader-v2.card.bin gcloader-v2.dtk.bin gcloader-v2.eth.bin
+flippypatch: flippy.bin flippy.card.bin flippy.eth.bin
 
 clean:
 	@rm -f *.bin *.elf *.o
@@ -759,4 +760,65 @@ gcloader-v2.eth.bin:
 	@$(OBJDUMP) -D gcloader-v2.eth.elf > $(DISASM)/gcloader-v2.eth.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v2.eth.elf gcloader-v2.eth.bin
 	@$(BIN2S) -H $(DEST)/gcloader_v2_eth_bin.h gcloader-v2.eth.bin > $(DEST)/gcloader-v2.eth.bin.s
+	@rm -f *.bin *.elf *.o
+
+flippy.bin:
+	@echo Building Flippy Patch ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DFLIPPY
+	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=1
+	@$(CC) -Os $(OPTS) -c base/DVDMath.c
+	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000000000000000010000000000
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c flippydrive/flippy.c -DDVD_MATH
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -c base/floor.S
+	@$(CC) -Os $(OPTS) -c base/sqrt.S
+	@$(CC) -Os $(OPTS) -o flippy.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o flippy.o uart.o os.o memcpy.o floor.o sqrt.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D flippy.elf > $(DISASM)/flippy.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents flippy.elf flippy.bin
+	@$(BIN2S) -H $(DEST)/flippy_bin.h flippy.bin > $(DEST)/flippy.bin.s
+	@rm -f *.bin *.elf *.o
+
+flippy.card.bin:
+	@echo Building Flippy Patch + CARD ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR -DFLIPPY
+	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000000000000000010000000000
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c flippydrive/flippy.c -DQUEUE_SIZE=4
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -o flippy.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o flippy.o uart.o os.o memcpy.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D flippy.card.elf > $(DISASM)/flippy.card.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents flippy.card.elf flippy.card.bin
+	@$(BIN2S) -H $(DEST)/flippy_card_bin.h flippy.card.bin > $(DEST)/flippy.card.bin.s
+	@rm -f *.bin *.elf *.o
+
+flippy.eth.bin:
+	@echo Building Flippy Patch + ETH ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DETH_EMULATOR -DFLIPPY -DNO_VIDEO
+	@$(CC) -Os $(OPTS) -c base/emulator_eth.c
+	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000010010000000010001000000
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c flippydrive/flippy.c
+	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -o flippy.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o flippy.o enc28j60.o uart.o os.o memcpy.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D flippy.eth.elf > $(DISASM)/flippy.eth.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents flippy.eth.elf flippy.eth.bin
+	@$(BIN2S) -H $(DEST)/flippy_eth_bin.h flippy.eth.bin > $(DEST)/flippy.eth.bin.s
 	@rm -f *.bin *.elf *.o

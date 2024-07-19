@@ -72,7 +72,8 @@ enum TextureId
 	TEX_STAR,
 	TEX_GCLOADER,
 	TEX_M2LOADER,
-	TEX_ETH2GC
+	TEX_ETH2GC,
+	TEX_FLIPPY
 };
 
 extern GXTexObj ntscjTexObj;
