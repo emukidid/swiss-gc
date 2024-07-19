@@ -46,6 +46,7 @@ s32 deviceHandler_Flippy_readDir(file_handle* ffile, file_handle** dir, u32 type
 		flippy_flash_opendir(dp, getDevicePath(ffile->name)) :
 		flippy_opendir(dp, getDevicePath(ffile->name))) != FLIPPY_RESULT_OK) return -1;
 	flippyfilestat entry;
+	flippyfilestat *result;
 	
 	// Set everything up to read
 	int num_entries = 1, i = 1;
@@ -54,7 +55,7 @@ s32 deviceHandler_Flippy_readDir(file_handle* ffile, file_handle** dir, u32 type
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 	
 	// Read each entry of the directory
-	while( flippy_readdir(dp, &entry) == FLIPPY_RESULT_OK && entry.name[0] != '\0') {
+	while( flippy_readdir(dp, &entry, &result) == FLIPPY_RESULT_OK && result == &entry ) {
 		if(!strcmp(entry.name, ".") || !strcmp(entry.name, "..")) {
 			continue;
 		}
@@ -271,7 +272,10 @@ s32 deviceHandler_Flippy_closeFile(file_handle* file) {
 
 s32 deviceHandler_Flippy_deinit(file_handle* file) {
 	deviceHandler_Flippy_closeFile(file);
-	flippy_closeall();
+	if(getDeviceFromPath(file->name) == &__device_flippyflash)
+		flippy_closefrom(FLIPPY_FLASH_HANDLE);
+	else
+		flippy_close_range(1, FLIPPY_MAX_HANDLES + 1);
 	return 0;
 }
 

@@ -2217,7 +2217,7 @@ void load_file()
 		else if(endsWith(fileName,".fpkg")) {
 			if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
 				uiDrawObj_t *progBar = DrawPublish(DrawProgressBar(true, 0, "Resetting RP2040"));
-				flippy_closeall();
+				flippy_closefrom(1);
 				flippy_reset();
 				DVD_Inquiry(&commandBlock, &driveInfo);
 				flippy_boot(FLIPPY_MODE_UPDATE);

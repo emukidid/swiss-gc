@@ -483,21 +483,6 @@ flippyresult flippy_opendir(flippydirinfo *info, const char *path)
 	return dir->result;
 }
 
-flippyresult flippy_closeall(void)
-{
-	STACK_ALIGN(flippyfileinfo, info, 1, 32);
-
-	for (int i = 0; i < FLIPPY_MAX_HANDLES; i++) {
-		info->file.handle = i + 1;
-		flippy_close(info);
-	}
-
-	info->file.handle = FLIPPY_FLASH_HANDLE;
-	flippy_close(info);
-
-	return FLIPPY_RESULT_OK;
-}
-
 flippyresult flippy_close(flippyfileinfo *info)
 {
 	dvdcmdblk block;
@@ -550,6 +535,23 @@ flippyresult flippy_closedir(flippydirinfo *info)
 	return dir->result;
 }
 
+flippyresult flippy_close_range(u8 low, u8 max)
+{
+	STACK_ALIGN(flippyfileinfo, info, 1, 32);
+
+	for (u8 i = low; i <= max; i++) {
+		info->file.handle = i;
+		flippy_close(info);
+	}
+
+	return FLIPPY_RESULT_OK;
+}
+
+flippyresult flippy_closefrom(u8 low)
+{
+	return flippy_close_range(low, FLIPPY_FLASH_HANDLE);
+}
+
 flippyresult flippy_unlink(const char *path)
 {
 	dvdcmdblk block;
@@ -579,7 +581,7 @@ flippyresult flippy_unlink(const char *path)
 	return file->result;
 }
 
-flippyresult flippy_readdir(flippydirinfo *info, flippyfilestat *entry)
+flippyresult flippy_readdir(flippydirinfo *info, flippyfilestat *entry, flippyfilestat **result)
 {
 	dvdcmdblk block;
 	flippyfile *dir = &info->dir;
@@ -597,6 +599,11 @@ flippyresult flippy_readdir(flippydirinfo *info, flippyfilestat *entry)
 		&& block.state != DVD_STATE_CANCELED)
 		LWP_ThreadSleep(queue);
 	IRQ_Restore(level);
+
+	if (entry->result == FLIPPY_RESULT_OK && entry->name[0] != '\0')
+		*result = entry;
+	else
+		*result = NULL;
 
 	return entry->result;
 }
@@ -755,5 +762,5 @@ flippyresult flippy_init(void)
 
 	LWP_InitQueue(&queue);
 	initialized = true;
-	return flippy_closeall();
+	return flippy_closefrom(1);
 }
