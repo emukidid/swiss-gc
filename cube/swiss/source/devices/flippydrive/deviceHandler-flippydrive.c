@@ -35,14 +35,8 @@ file_handle initial_FlippyFlash =
 	  0
 	};
 
-device_info initial_Flippy_info = {
-	0LL,
-	0LL,
-	true
-};
-
 device_info* deviceHandler_Flippy_info(file_handle* file) {
-	return &initial_Flippy_info;
+	return NULL;
 }
 
 s32 deviceHandler_Flippy_readDir(file_handle* ffile, file_handle** dir, u32 type) {

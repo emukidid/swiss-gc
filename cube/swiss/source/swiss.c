@@ -204,31 +204,41 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 	DrawAddChild(containerPanel, devLocationLabel);
 	
 	device_info *info = devices[DEVICE_CUR]->info(devices[DEVICE_CUR]->initial);
-	if(info == NULL) return;
-	
-	uiDrawObj_t *devInfoBox = DrawTransparentBox(30, 225, 135, 330);	// Device size/extra info box
-	DrawAddChild(containerPanel, devInfoBox);
-	
-	// Total space
-	uiDrawObj_t *devTotalLabel = DrawStyledLabel(83, 233, "Total:", 0.6f, true, defaultColor);
-	DrawAddChild(containerPanel, devTotalLabel);
-	formatBytes(txtbuffer, info->totalSpace, 0, info->metric);
-	uiDrawObj_t *devTotalSizeLabel = DrawStyledLabel(83, 248, txtbuffer, 0.6f, true, defaultColor);
-	DrawAddChild(containerPanel, devTotalSizeLabel);
-	
-	// Free space
-	uiDrawObj_t *devFreeLabel = DrawStyledLabel(83, 268, "Free:", 0.6f, true, defaultColor);
-	DrawAddChild(containerPanel, devFreeLabel);
-	formatBytes(txtbuffer, info->freeSpace, 0, info->metric);
-	uiDrawObj_t *devFreeSizeLabel = DrawStyledLabel(83, 283, txtbuffer, 0.6f, true, defaultColor);
-	DrawAddChild(containerPanel, devFreeSizeLabel);
-	
-	// Used space
-	uiDrawObj_t *devUsedLabel = DrawStyledLabel(83, 303, "Used:", 0.6f, true, defaultColor);
-	DrawAddChild(containerPanel, devUsedLabel);
-	formatBytes(txtbuffer, info->totalSpace - info->freeSpace, 0, info->metric);
-	uiDrawObj_t *devUsedSizeLabel = DrawStyledLabel(83, 318, txtbuffer, 0.6f, true, defaultColor);
-	DrawAddChild(containerPanel, devUsedSizeLabel);
+	if (info == NULL) {
+		uiDrawObj_t *devInfoBox = DrawTransparentBox(30, 225, 135, 260);	// Device size/extra info box
+		DrawAddChild(containerPanel, devInfoBox);
+		
+		// Used space
+		uiDrawObj_t *devUsedLabel = DrawStyledLabel(83, 233, "Used:", 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devUsedLabel);
+		formatBytes(txtbuffer, getCurrentDirSize(), 0, !(devices[DEVICE_CUR]->location & LOC_SYSTEM));
+		uiDrawObj_t *devUsedSizeLabel = DrawStyledLabel(83, 248, txtbuffer, 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devUsedSizeLabel);
+	} else {
+		uiDrawObj_t *devInfoBox = DrawTransparentBox(30, 225, 135, 330);	// Device size/extra info box
+		DrawAddChild(containerPanel, devInfoBox);
+		
+		// Total space
+		uiDrawObj_t *devTotalLabel = DrawStyledLabel(83, 233, "Total:", 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devTotalLabel);
+		formatBytes(txtbuffer, info->totalSpace, 0, info->metric);
+		uiDrawObj_t *devTotalSizeLabel = DrawStyledLabel(83, 248, txtbuffer, 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devTotalSizeLabel);
+		
+		// Free space
+		uiDrawObj_t *devFreeLabel = DrawStyledLabel(83, 268, "Free:", 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devFreeLabel);
+		formatBytes(txtbuffer, info->freeSpace, 0, info->metric);
+		uiDrawObj_t *devFreeSizeLabel = DrawStyledLabel(83, 283, txtbuffer, 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devFreeSizeLabel);
+		
+		// Used space
+		uiDrawObj_t *devUsedLabel = DrawStyledLabel(83, 303, "Used:", 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devUsedLabel);
+		formatBytes(txtbuffer, info->totalSpace - info->freeSpace, 0, info->metric);
+		uiDrawObj_t *devUsedSizeLabel = DrawStyledLabel(83, 318, txtbuffer, 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devUsedSizeLabel);
+	}
 }
 
 void select_recent_entry() {
@@ -468,16 +478,20 @@ void drawCurrentDeviceCarousel(uiDrawObj_t *containerPanel) {
 	DrawAddChild(containerPanel, devNameLabel);
 	
 	device_info *info = devices[DEVICE_CUR]->info(devices[DEVICE_CUR]->initial);
-	if(info == NULL) return;
-	
-	// Info labels
-	char *textPtr = txtbuffer;
-	textPtr = stpcpy(textPtr, "Total: ");
-	textPtr += formatBytes(textPtr, info->totalSpace, 0, info->metric);
-	textPtr = stpcpy(textPtr, " | Free: ");
-	textPtr += formatBytes(textPtr, info->freeSpace, 0, info->metric);
-	textPtr = stpcpy(textPtr, " | Used: ");
-	textPtr += formatBytes(textPtr, info->totalSpace - info->freeSpace, 0, info->metric);
+	if (info == NULL) {
+		char *textPtr = txtbuffer;
+		textPtr = stpcpy(textPtr, "Used: ");
+		textPtr += formatBytes(textPtr, getCurrentDirSize(), 0, !(devices[DEVICE_CUR]->location & LOC_SYSTEM));
+	} else {
+		// Info labels
+		char *textPtr = txtbuffer;
+		textPtr = stpcpy(textPtr, "Total: ");
+		textPtr += formatBytes(textPtr, info->totalSpace, 0, info->metric);
+		textPtr = stpcpy(textPtr, " | Free: ");
+		textPtr += formatBytes(textPtr, info->freeSpace, 0, info->metric);
+		textPtr = stpcpy(textPtr, " | Used: ");
+		textPtr += formatBytes(textPtr, info->totalSpace - info->freeSpace, 0, info->metric);
+	}
 	
 	int starting_pos = getVideoMode()->fbWidth-50-GetTextSizeInPixels(txtbuffer)*0.5;
 	uiDrawObj_t *devInfoLabel = DrawStyledLabel(starting_pos, 400, txtbuffer, 0.5f, false, defaultColor);

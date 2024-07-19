@@ -28,14 +28,8 @@ file_handle initial_USBGecko =
 	  0
 	};
 
-device_info initial_USBGecko_info = {
-	0LL,
-	0LL,
-	true
-};
-
 device_info* deviceHandler_USBGecko_info(file_handle* file) {
-	return &initial_USBGecko_info;
+	return NULL;
 }
 	
 s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 type){	
@@ -51,7 +45,6 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 	// Read each entry of the directory
 	s32 res = usbgecko_open_dir(ffile->name);
 	if(!res) return -1;
-	u64 usedSpace = 0LL;
 	while( (entry = usbgecko_get_entry()) != NULL ){
 		if(entry->fileAttrib == IS_FILE) {
 			if(!checkExtension(entry->name)) continue;
@@ -65,11 +58,9 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 		if(strlcpy((*dir)[i].name, entry->name, PATHNAME_MAX) < PATHNAME_MAX) {
 			(*dir)[i].size       = entry->size;
 			(*dir)[i].fileAttrib = entry->fileAttrib;
-			usedSpace += (*dir)[i].size;
 			++i;
 		}
 	}
-	initial_USBGecko_info.totalSpace = usedSpace;
 	DrawDispose(msgBox);
 	return i;
 }
@@ -201,7 +192,6 @@ s32 deviceHandler_USBGecko_init(file_handle* file) {
 }
 
 s32 deviceHandler_USBGecko_deinit(file_handle* file) {
-	initial_USBGecko_info.totalSpace = 0LL;
 	return 0;
 }
 

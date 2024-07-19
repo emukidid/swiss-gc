@@ -1171,7 +1171,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 					formatBytes(stpcpy(fbTextBuffer, "Size: "), file->size, 65536, false);
 				}
 				else {
-					formatBytes(stpcpy(fbTextBuffer, "Size: "), file->size, 0, true);
+					formatBytes(stpcpy(fbTextBuffer, "Size: "), file->size, 0, !(devices[DEVICE_CUR]->location & LOC_SYSTEM));
 				}
 				drawString(data->x2 - (borderSize + (GetTextSizeInPixels(fbTextBuffer)*0.45f)), 
 					data->y2-(borderSize+24), fbTextBuffer, 0.45f, false, defaultColor);
@@ -1287,7 +1287,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				formatBytes(fbTextBuffer, file->size, 65536, false);
 			}
 			else {
-				formatBytes(fbTextBuffer, file->size, 0, true);
+				formatBytes(fbTextBuffer, file->size, 0, !(devices[DEVICE_CUR]->location & LOC_SYSTEM));
 			}
 			drawString(data->x2 - ((borderSize) + (GetTextSizeInPixels(fbTextBuffer)*0.45)), 
 				data->y1+borderSize+21, fbTextBuffer, 0.45f, false, defaultColor);

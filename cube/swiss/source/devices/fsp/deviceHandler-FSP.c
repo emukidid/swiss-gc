@@ -31,14 +31,8 @@ file_handle initial_FSP =
 	  0
 	};
 
-device_info initial_FSP_info = {
-	0LL,
-	0LL,
-	true
-};
-
 device_info* deviceHandler_FSP_info(file_handle* file) {
-	return &initial_FSP_info;
+	return NULL;
 }
 
 s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
@@ -54,7 +48,6 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileAttrib = IS_SPECIAL;
 	
-	u64 usedSpace = 0LL;
 	// Read each entry of the directory
 	while( !fsp_readdir_native(dp, &entry, &result) && result == &entry ){
 		if(!strcmp(entry.name, ".") || !strcmp(entry.name, "..")) {
@@ -74,12 +67,10 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			if(concat_path((*dir)[i].name, ffile->name, entry.name) < PATHNAME_MAX) {
 				(*dir)[i].size       = entry.size;
 				(*dir)[i].fileAttrib = (entry.type == FSP_RDTYPE_DIR) ? IS_DIR : IS_FILE;
-				usedSpace += (*dir)[i].size;
 				++i;
 			}
 		}
 	}
-	initial_FSP_info.totalSpace = usedSpace;
 	fsp_closedir(dp);
 	return i;
 }
@@ -270,7 +261,6 @@ s32 deviceHandler_FSP_closeFile(file_handle* file) {
 
 s32 deviceHandler_FSP_deinit(file_handle* file) {
 	deviceHandler_FSP_closeFile(file);
-	initial_FSP_info.totalSpace = 0LL;
 	fsp_close_session(fsp_session);
 	fsp_session = NULL;
 	return 0;

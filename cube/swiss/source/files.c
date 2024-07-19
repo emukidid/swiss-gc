@@ -104,6 +104,14 @@ int getCurrentDirEntryCount() {
 	return curDirEntryCount;
 }
 
+u64 getCurrentDirSize() {
+	u64 curDirSize = 0LL;
+	for(int i = 0; i < curDirEntryCount; i++) {
+		curDirSize += curDirEntries[i].size;
+	}
+	return curDirSize;
+}
+
 size_t concat_path(char *pathName, const char *dirName, const char *baseName)
 {
 	size_t len;

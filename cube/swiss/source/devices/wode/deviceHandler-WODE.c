@@ -31,12 +31,7 @@ file_handle initial_WODE =
 	  IS_DIR,
 	  DRV_ERROR
 	};
-device_info initial_WODE_info = {
-	0LL,
-	0LL,
-	true
-};
-	
+
 s32 startupWode() {
 	if(OpenWode() == 0) {
 		CloseWode();
@@ -60,7 +55,7 @@ s32 startupWode() {
 }
 
 device_info* deviceHandler_WODE_info(file_handle* file) {
-	return &initial_WODE_info;
+	return NULL;
 }
 	
 s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){	
@@ -99,7 +94,6 @@ s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			}
 		}
 	}
-	initial_WODE_info.totalSpace = num_entries;
 	DrawDispose(msgBox);
 	return num_entries;
 }
@@ -254,7 +248,6 @@ s32 deviceHandler_WODE_init(file_handle* file) {
 }
 
 s32 deviceHandler_WODE_deinit(file_handle* file) {
-	initial_WODE_info.totalSpace = 0LL;
 	return 0;
 }
 

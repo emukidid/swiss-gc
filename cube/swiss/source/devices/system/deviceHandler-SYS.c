@@ -139,15 +139,8 @@ file_handle initial_SYS =
 	NULL
 };
 
-device_info initial_SYS_info =
-{
-	0LL,
-	0LL,
-	false
-};
-
 device_info* deviceHandler_SYS_info(file_handle* file) {
-	return &initial_SYS_info;
+	return NULL;
 }
 
 static void descrambler(unsigned int offset, void* buffer, unsigned int length) {
@@ -377,8 +370,6 @@ bool is_rom_name(char* filename) {
 }
 
 s32 deviceHandler_SYS_init(file_handle* file) {
-	s32 i;
-
 	if(!AR_CheckInit()) {
 		AR_Init(NULL, 0);
 		AR_Reset();
@@ -391,11 +382,6 @@ s32 deviceHandler_SYS_init(file_handle* file) {
 	rom_sizes[ROM_ARAM]           = AR_GetSize();
 	rom_sizes[ROM_ARAM_INTERNAL]  = AR_GetInternalSize();
 	rom_sizes[ROM_ARAM_EXPANSION] = rom_sizes[ROM_ARAM] - rom_sizes[ROM_ARAM_INTERNAL];
-
-	for(i = ROM_IPL; i < NUM_ROMS; i++) {
-		initial_SYS_info.totalSpace += rom_sizes[i];
-	}
-
 	return 0;
 }
 
@@ -463,7 +449,6 @@ s32 deviceHandler_SYS_closeFile(file_handle* file) {
 }
 
 s32 deviceHandler_SYS_deinit() {
-	initial_SYS_info.totalSpace = 0LL;
 	return 0;
 }
 
