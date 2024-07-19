@@ -62,7 +62,7 @@ typedef void (*dvdcallbacklow)(s32 result);
 
 extern s32 DVD_LowWaitCoverClose(dvdcallbacklow cb);
 
-static dvddrvinfo driveinfo ATTRIBUTE_ALIGN(32);
+static dvddrvinfo       driveinfo  ATTRIBUTE_ALIGN(32);
 static flippybootstatus bootstatus ATTRIBUTE_ALIGN(32);
 
 static u64 handles = ((1LL << FLIPPY_MAX_HANDLES) - 1) | (1LL << (FLIPPY_FLASH_HANDLE - 1));
@@ -84,7 +84,7 @@ static void reset_callback(s32 result, dvdcmdblk *block)
 
 static void status_callback(s32 result, dvdcmdblk *block)
 {
-	flippyfile *file  = block->buf;
+	flippyfile  *file = block->buf;
 	flippycallback cb = block->usrdata;
 
 	if (result != sizeof(flippyfile)) {
@@ -139,7 +139,7 @@ static void readdir_callback(s32 result, dvdcmdblk *block)
 
 static void command_callback(s32 result, dvdcmdblk *block)
 {
-	flippyfile *file  = block->usrdata;
+	flippyfile  *file = block->usrdata;
 	flippycallback cb = NULL;
 
 	if (result != block->currtxsize) {
