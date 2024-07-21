@@ -1142,7 +1142,8 @@ void load_app(ExecutableFile *fileToPatch)
 			if(devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, &old_hash, sizeof(old_hash)) != sizeof(old_hash) ||
 				!XXH128_isEqual(old_hash, new_hash)) {
 				devices[DEVICE_PATCHES]->deleteFile(fileToPatch->patchFile);
-				message = "Failed integrity check!";
+				sprintf(txtbuffer, "Failed integrity check in patched file!\nPlease test %s for defects.", devices[DEVICE_PATCHES]->deviceName);
+				message = txtbuffer;
 				goto fail;
 			}
 		}
