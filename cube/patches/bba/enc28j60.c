@@ -29,7 +29,9 @@
 #include "enc28j60.h"
 #include "interrupt.h"
 
-#define exi_regs (*(volatile uint32_t **)VAR_EXI2_REGS)
+#define exi_channel ((*VAR_EXI_SLOT & 0x30) >> 4)
+#define exi_device  ((*VAR_EXI_SLOT & 0xC0) >> 6)
+#define exi_regs    (*(volatile uint32_t **)VAR_EXI2_REGS)
 
 static struct {
 	uint8_t bank;
@@ -212,10 +214,8 @@ void bba_init(void **arenaLo, void **arenaHi)
 	enc28j60_clear_bits(ENC28J60_EIE, 0xFF);
 	enc28j60_set_bits(ENC28J60_EIE, ENC28J60_EIE_INTIE | ENC28J60_EIE_PKTIE);
 
-	int32_t chan = ((uintptr_t)exi_regs & 0x3C) / 0x14;
-
-	if (chan < EXI_CHANNEL_2) {
-		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_EXI + (3 * chan);
+	if (exi_channel < EXI_CHANNEL_2) {
+		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_EXI + (3 * exi_channel);
 		set_interrupt_handler(interrupt, exi_interrupt_handler);
 		unmask_interrupts(OS_INTERRUPTMASK(interrupt) & (OS_INTERRUPTMASK_EXI_0_EXI | OS_INTERRUPTMASK_EXI_1_EXI));
 	} else {

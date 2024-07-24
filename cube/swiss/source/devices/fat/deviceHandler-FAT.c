@@ -308,7 +308,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 			*(vu8*)VAR_EXI_CPR = (exi_channel << 6) | ((1 << exi_device) << 3) | (swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 		}
 		// Device slot (0, 1 or 2)
-		*(vu8*)VAR_EXI_SLOT = (exi_device << 2) | exi_channel;
+		*(vu8*)VAR_EXI_SLOT = (*(vu8*)VAR_EXI_SLOT & 0xF0) | (((exi_device << 2) | exi_channel) & 0x0F);
 		*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[exi_channel];
 	}
 	return 1;

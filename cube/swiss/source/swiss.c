@@ -2152,13 +2152,13 @@ void load_game() {
 	*(vu8*)VAR_DRIVE_PATCHED = drive_status == DEBUG_MODE;
 	*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
 	*(vu32**)VAR_EXI_REGS = NULL;
-	*(vu8*)VAR_EXI_SLOT = (EXI_DEVICE_MAX << 2) | EXI_CHANNEL_MAX;
+	*(vu8*)VAR_EXI_SLOT = (EXI_DEVICE_MAX << 6) | (EXI_CHANNEL_MAX << 4) | (EXI_DEVICE_MAX << 2) | EXI_CHANNEL_MAX;
 	*(vu8*)VAR_EXI_CPR = (EXI_CHANNEL_MAX << 6) | EXI_SPEED1MHZ;
 	*(vu8*)VAR_SD_SHIFT = 0;
 	*(vu8*)VAR_IGR_TYPE = swissSettings.igrType | (tgcFile.magic == TGC_MAGIC ? 0x80:0x00);
 	*(vu32**)VAR_FRAG_LIST = NULL;
 	net_get_mac_address(VAR_CLIENT_MAC);
-	*(vu32**)VAR_EXI2_REGS = getExiRegsByLocation(bba_location);
+	*(vu32**)VAR_EXI2_REGS = NULL;
 	*(vu8*)VAR_TRIGGER_LEVEL = swissSettings.triggerLevel;
 	*(vu8*)VAR_CARD_A_ID = 0x00;
 	*(vu8*)VAR_CARD_B_ID = 0x00;
@@ -2173,6 +2173,14 @@ void load_game() {
 		wait_press_A();
 		DrawDispose(msgBox);
 		goto fail_patched;
+	}
+
+	if(devices[DEVICE_CUR]->emulated() & EMU_ETHERNET) {
+		s32 exi_channel, exi_device;
+		if(getExiDeviceByLocation(bba_location, &exi_channel, &exi_device)) {
+			*(vu8*)VAR_EXI_SLOT = (*(vu8*)VAR_EXI_SLOT & 0x0F) | (((exi_device << 6) | (exi_channel << 4)) & 0xF0);
+			*(vu32**)VAR_EXI2_REGS = ((vu32(*)[5])0xCC006800)[exi_channel];
+		}
 	}
 
 	load_app(fileToPatch);
