@@ -36,6 +36,11 @@
 static struct {
 	uint8_t bank;
 	bba_page_t (*page)[8];
+	struct {
+		void *data;
+		size_t size;
+		bba_callback callback;
+	} output;
 } _bba;
 
 static void exi_clear_interrupts(bool exi, bool tc, bool ext)
@@ -168,28 +173,33 @@ static void enc28j60_interrupt(void)
 	enc28j60_set_bits(ENC28J60_EIE, ENC28J60_EIE_INTIE);
 }
 
-static void exi_callback(int32_t chan, OSContext *context)
+static void exi_callback()
 {
-	if (EXILock(chan, EXI_DEVICE_0, exi_callback)) {
+	if (EXILock(exi_channel, exi_device, exi_callback)) {
+		if (_bba.output.callback) {
+			bba_output(_bba.output.data, _bba.output.size);
+			_bba.output.callback();
+			_bba.output.callback = NULL;
+		}
+
 		enc28j60_interrupt();
-		EXIUnlock(chan);
+		EXIUnlock(exi_channel);
 	}
 }
 
 static void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	int32_t chan = (interrupt - OS_INTERRUPT_EXI_0_EXI) / 3;
 	exi_clear_interrupts(true, false, false);
-	exi_callback(chan, context);
+	exi_callback();
 }
 
 static void debug_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	PI[0] = 1 << 12;
-	exi_callback(EXI_CHANNEL_2, context);
+	exi_callback();
 }
 
-void bba_transmit_fifo(const void *data, size_t size)
+void bba_output(const void *data, size_t size)
 {
 	enc28j60_set_bits(ENC28J60_ECON1, ENC28J60_ECON1_TXRST);
 	enc28j60_clear_bits(ENC28J60_ECON1, ENC28J60_ECON1_TXRST);
@@ -205,6 +215,15 @@ void bba_transmit_fifo(const void *data, size_t size)
 	exi_deselect();
 
 	enc28j60_set_bits(ENC28J60_ECON1, ENC28J60_ECON1_TXRTS);
+}
+
+void bba_output_async(const void *data, size_t size, bba_callback callback)
+{
+	_bba.output.data = (void *)data;
+	_bba.output.size = size;
+	_bba.output.callback = callback;
+
+	exi_callback();
 }
 
 void bba_init(void **arenaLo, void **arenaHi)

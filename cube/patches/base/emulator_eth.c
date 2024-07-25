@@ -100,6 +100,17 @@ void eth_mac_receive(const void *data, size_t size)
 	}
 }
 
+static void eth_mac_transmit(void)
+{
+	eth.mac.txfifocnt = 0;
+	eth.mac.regs[BBA_NCRA] &= ~BBA_NCRA_ST1;
+
+	if (eth.mac.regs[BBA_IMR] & BBA_IMR_TIM) {
+		eth.mac.regs[BBA_IR] |= BBA_IR_TI;
+		eth_update_interrupts();
+	}
+}
+
 static uint8_t eth_mac_read(void)
 {
 	uint16_t address = eth.mac.address % 8192;
@@ -120,16 +131,8 @@ static void eth_mac_write(uint8_t value)
 		{
 			eth.mac.regs[address] = value;
 
-			if ((eth.mac.regs[BBA_NCRA] & (BBA_NCRA_ST0 | BBA_NCRA_ST1)) == BBA_NCRA_ST1) {
-				bba_transmit_fifo(*eth.mac.fifo, eth.mac.txfifocnt);
-				eth.mac.txfifocnt = 0;
-				eth.mac.regs[BBA_NCRA] &= ~BBA_NCRA_ST1;
-
-				if (eth.mac.regs[BBA_IMR] & BBA_IMR_TIM) {
-					eth.mac.regs[BBA_IR] |= BBA_IR_TI;
-					eth_update_interrupts();
-				}
-			}
+			if ((eth.mac.regs[BBA_NCRA] & (BBA_NCRA_ST0 | BBA_NCRA_ST1)) == BBA_NCRA_ST1)
+				bba_output_async(*eth.mac.fifo, eth.mac.txfifocnt, eth_mac_transmit);
 			break;
 		}
 		case BBA_IR:

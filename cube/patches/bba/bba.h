@@ -106,6 +106,8 @@ typedef struct {
 
 typedef uint8_t bba_page_t[256] __attribute((aligned(32)));
 
+typedef void (*bba_callback)(void);
+
 uint8_t bba_cmd_in8(uint8_t reg);
 void bba_cmd_out8(uint8_t reg, uint8_t val);
 uint8_t bba_in8(uint16_t reg);
@@ -113,8 +115,9 @@ void bba_out8(uint16_t reg, uint8_t val);
 void bba_ins(uint16_t reg, void *val, uint32_t len);
 void bba_outs(uint16_t reg, const void *val, uint32_t len);
 
-void bba_transmit_fifo(const void *data, size_t size);
-void bba_receive_dma(void *data, size_t size, uint8_t offset);
+void bba_input(void *data, size_t size, uint8_t offset);
+void bba_output(const void *data, size_t size);
+void bba_output_async(const void *data, size_t size, bba_callback callback);
 
 void bba_init(void **arenaLo, void **arenaHi);
 

@@ -37,7 +37,7 @@ static struct {
 	bba_page_t (*page)[8];
 	ppc_context_t *entry;
 	ppc_context_t *exit;
-	void (*callback)(void);
+	bba_callback callback;
 } _bba;
 
 static struct {
@@ -190,9 +190,13 @@ void bba_outs(uint16_t reg, const void *val, uint32_t len)
 	exi_deselect();
 }
 
-void bba_transmit_fifo(const void *data, size_t size)
+void bba_input(void *data, size_t size, uint8_t offset)
 {
-	if (!size) return;
+	if (size) bba_ins(_bba.rrp << 8 | offset, data, size);
+}
+
+void bba_output(const void *data, size_t size)
+{
 	DCStoreRange(__builtin_assume_aligned(data, 32), size);
 
 	while (bba_in8(BBA_NCRA) & (BBA_NCRA_ST0 | BBA_NCRA_ST1));
@@ -200,10 +204,10 @@ void bba_transmit_fifo(const void *data, size_t size)
 	bba_out8(BBA_NCRA, (bba_in8(BBA_NCRA) & ~BBA_NCRA_ST0) | BBA_NCRA_ST1);
 }
 
-void bba_receive_dma(void *data, size_t size, uint8_t offset)
+void bba_output_async(const void *data, size_t size, bba_callback callback)
 {
-	if (!size) return;
-	bba_ins(_bba.rrp << 8 | offset, data, size);
+	bba_output(data, size);
+	callback();
 }
 
 static void bba_receive(void)
@@ -217,14 +221,14 @@ static void bba_receive(void)
 		size_t size = sizeof(bba_header_t) + MIN_FRAME_SIZE;
 
 		DCInvalidateRange(__builtin_assume_aligned(bba, 32), size);
-		bba_receive_dma(bba, size, 0);
+		bba_input(bba, size, 0);
 		bba_out8(BBA_RRP, bba->next);
 
 		size = bba->length - sizeof(*bba);
 		#ifdef ETH_EMULATOR
 		if (!eth_input(page, (void *)bba->data, size)) {
 			DCInvalidateRange(__builtin_assume_aligned(bba->data + MIN_FRAME_SIZE, 32), size - MIN_FRAME_SIZE);
-			bba_receive_dma(bba->data + MIN_FRAME_SIZE, size - MIN_FRAME_SIZE, sizeof(*bba) + MIN_FRAME_SIZE);
+			bba_input(bba->data + MIN_FRAME_SIZE, size - MIN_FRAME_SIZE, sizeof(bba_header_t) + MIN_FRAME_SIZE);
 			eth_mac_receive(bba->data, size);
 		}
 		#else
