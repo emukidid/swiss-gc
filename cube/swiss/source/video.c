@@ -99,6 +99,12 @@ int getFontEncode() {
 	return (vireg[55] >> 1) & 1;
 }
 
+f32 getYScaleFactor(u16 efbHeight, u16 xfbHeight) {
+	if(swissSettings.aveCompat == 1 && swissSettings.rt4kOptim)
+		return 1.0f;
+	return GX_GetYScaleFactor(efbHeight, xfbHeight);
+}
+
 GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 	switch(uiVMode) {
 		case 0:
@@ -179,7 +185,6 @@ void updateVideoMode(GXRModeObj *m) {
 		}
 	}
 	if(swissSettings.aveCompat == 1 && swissSettings.rt4kOptim) {
-		m->xfbHeight = m->efbHeight;
 		m->viWidth = m->fbWidth;
 		m->viXOrigin = 40;
 	} else {
@@ -221,7 +226,7 @@ void setVideoMode(GXRModeObj *m) {
 	// init viewport
 	GX_SetViewport (1.0f/24.0f, 1.0f/24.0f, m->fbWidth, m->efbHeight, 0.0f, 1.0f);
 	// Set the correct y scaling for efb->xfb copy operation
-	GX_SetDispCopyYScale ((f32) m->xfbHeight / (f32) m->efbHeight);
+	GX_SetDispCopyYScale (GX_GetYScaleFactor (m->efbHeight, m->xfbHeight));
 	GX_SetDispCopySrc (0, 0, m->fbWidth, m->efbHeight);
 	GX_SetDispCopyDst (m->fbWidth, m->xfbHeight);
 	GX_SetCopyFilter (m->aa, m->sample_pattern, GX_TRUE, m->vfilter);

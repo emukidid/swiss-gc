@@ -16,5 +16,6 @@ int getTVFormat();
 int getScanMode();
 int getDTVStatus();
 int getFontEncode();
+f32 getYScaleFactor(u16 efbHeight, u16 xfbHeight);
 
 #endif 

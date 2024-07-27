@@ -2172,12 +2172,15 @@ static void *videoUpdate(void *videoEventQueue) {
 		}
 		
 		//Copy EFB->XFB
-		GX_SetCopyClear((GXColor){0, 0, 0, 0xFF}, GX_MAX_Z24);
-		GX_CopyDisp(xfb[whichfb],GX_TRUE);
+		GXRModeObj *vmode = getVideoMode();
+		u16 width = vmode->fbWidth;
+		u16 height = GX_SetDispCopyYScale(getYScaleFactor(vmode->efbHeight, vmode->xfbHeight));
+		GX_CopyDisp(xfb[whichfb], GX_TRUE);
 		GX_DrawDone();
 
 		LWP_MutexUnlock(_videomutex);
 		VIDEO_SetNextFramebuffer(xfb[whichfb]);
+		VIDEO_ConfigurePan(0, 0, width, height);
 		VIDEO_Flush();
 		VIDEO_WaitVSync();
 	}
