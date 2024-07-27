@@ -8,6 +8,8 @@ VIConfigureNoYScale:
 	lbz			%r0, 25 (%r3)
 	cmpwi		%r0, 0
 	beq			1f
+	cmpwi		%r5, 242
+	beq			2f
 	srwi		%r6, %r6, 1
 	addi		%r6, %r6, 2
 	cmpw		%r6, %r5
