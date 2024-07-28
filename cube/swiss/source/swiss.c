@@ -2716,6 +2716,9 @@ void select_device(int type)
 			devices[type]->deinit( devices[type]->initial );
 		}
 	}
+	if(showAllDevices && (allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2))) {
+		EXI_ProbeReset();
+	}
 	devices[type] = allDevices[curDevice];
 	DrawDispose(deviceSelectBox);
 }
