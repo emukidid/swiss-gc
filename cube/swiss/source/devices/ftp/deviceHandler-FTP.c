@@ -241,10 +241,18 @@ s32 deviceHandler_FTP_makeDir(file_handle* dir) {
 
 bool deviceHandler_FTP_test() {
 	char ifname[4];
-	if(if_indextoname(1, ifname)) {
-		if(ifname[0] == 'E') {
+	if (if_indextoname(1, ifname)) {
+		if (ifname[0] == 'E')
 			__device_ftp.hwName = "ENC28J60";
-			__device_ftp.deviceTexture = (textureImage){TEX_ETH2GC, 64, 80, 64, 80};
+		
+		switch (bba_location) {
+			case LOC_MEMCARD_SLOT_A:
+			case LOC_MEMCARD_SLOT_B:
+				__device_ftp.deviceTexture = (textureImage){TEX_GCNET, 65, 84, 72, 88};
+				break;
+			case LOC_SERIAL_PORT_2:
+				__device_ftp.deviceTexture = (textureImage){TEX_ETH2GC, 64, 80, 64, 80};
+				break;
 		}
 		__device_ftp.location = bba_location;
 	}

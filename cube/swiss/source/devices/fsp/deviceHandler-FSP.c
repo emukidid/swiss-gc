@@ -287,12 +287,20 @@ s32 deviceHandler_FSP_makeDir(file_handle* dir) {
 
 bool deviceHandler_FSP_test() {
 	char ifname[4];
-	if(if_indextoname(1, ifname)) {
-		if(ifname[0] == 'E') {
+	if (if_indextoname(1, ifname)) {
+		if (ifname[0] == 'E') {
 			__device_fsp.hwName = "ENC28J60";
-			__device_fsp.deviceTexture = (textureImage){TEX_ETH2GC, 64, 80, 64, 80};
 			__device_fsp.features = FEAT_READ|FEAT_WRITE|FEAT_THREAD_SAFE;
 			__device_fsp.emulable = EMU_NONE;
+		}
+		switch (bba_location) {
+			case LOC_MEMCARD_SLOT_A:
+			case LOC_MEMCARD_SLOT_B:
+				__device_fsp.deviceTexture = (textureImage){TEX_GCNET, 65, 84, 72, 88};
+				break;
+			case LOC_SERIAL_PORT_2:
+				__device_fsp.deviceTexture = (textureImage){TEX_ETH2GC, 64, 80, 64, 80};
+				break;
 		}
 		__device_fsp.location = bba_location;
 	}
