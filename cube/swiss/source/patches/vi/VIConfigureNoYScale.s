@@ -5,6 +5,8 @@ VIConfigureNoYScale:
 	lhz			%r5, 6 (%r3)
 	cmpw		%r5, %r6
 	bgt			2f
+	cmpwi		%r5, 240
+	blt			2f
 	lbz			%r0, 25 (%r3)
 	cmpwi		%r0, 0
 	beq			1f
