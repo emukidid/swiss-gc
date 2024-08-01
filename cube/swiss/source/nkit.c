@@ -1344,6 +1344,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x88, 0xCCBB, 0xF61CF908, 0xE369CEC46FA0233D,    3311616, +1456666624, {      94248,       +4056, 6496, 0x4C9F }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x89, 0xCCBB, 0x31DAF617, 0x6EF3EBBCCC9774A4,    1284096, +1458694144, {      94248,       +4056, 6496, 0x400E }, "Action Replay Ultimate Codes for Use with The Legend of Zelda: Twilight Princess" },
 	{{ "GNHE5d\x00\x00" }, false, 0x8B, 0xCCBB, 0xB21FE659, 0x4F69F289DB473EBF,    1042432, +1458935808, {      94248,       +4056, 6496, 0x6BCB }, "Cube CD 14 (33)" },
+	{{ "GNHE5d\x00\x00" }, false, 0x92, 0x3E90, 0x93418D2A, 0x3B40D9C1767A0BD8,    1705984, +1458272256, {      94248,       +4056, 6496, 0xB20B }, "Advance Connector GC-you" },
 	{{ "GNHE5d\x00\x00" }, false, 0x92, 0x3E90, 0xF9450866, 0xD8E05FFDED31B676,   12331008, +1447647232, {      94248,       +4056, 6496, 0xB714 }, "Advance Game Port / Cheat Construction Kit" },
 	{{ "GNHE5d\x00\x00" }, false, 0x98, 0x8464, 0x53F2137A, 0x1D6B58FD88349461,  855990272,  +603987968, {    7480672,      +30652, 6496, 0x8BDF }, "NHL Hitz 2002" },
 	{{ "GNHE5d\x00\x00" }, false, 0x98, 0xCCBB, 0xE5C0156E, 0x654DFB8F0F5E8495,     968704, +1459009536, {      94248,       +4056, 6496, 0x71CD }, "Cube CD 16 (35)" },
@@ -2100,7 +2101,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (1991)
+#define REDUMP_COUNT (1992)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
