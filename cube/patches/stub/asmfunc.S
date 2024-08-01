@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -39,11 +39,15 @@ init_spi:
 select:
 #ifdef APPLOADER
 	lis		r3, EXIRegs@ha
+	lis		r4, EXICsb@ha
 	lwz		r3, EXIRegs@l (r3)
+	lwz		r4, EXICsb@l (r4)
 #else
 	lwz		r3, EXIRegs (r0)
+	lwz		r4, EXICsb (r0)
 #endif
-	li		r0, ((1 << 0) << 7) | (4 << 4)
+	li		r0, (4 << 4)
+	insrwi	r0, r4, 3, 22
 	ecowx	r0, r0, r3
 	b		rcv_spi
 

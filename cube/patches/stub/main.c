@@ -27,6 +27,7 @@
 #include "pff.h"
 
 volatile uint32_t(*EXIRegs)[5] = EXI;
+uint32_t EXICsb = 0421421421;
 
 void run(void (*entry)(void));
 
@@ -143,14 +144,18 @@ void pf_main(void)
 {
 	FATFS fs;
 	EXIRegs = EXI;
+	EXICsb = 0421421421;
 
 	for (int chan = 0; chan < EXI_CHANNEL_MAX; chan++, EXIRegs++) {
-		if (pf_mount(&fs) == FR_OK) {
-			pf_load("/AUTOEXEC.DOL");
-			pf_load("/BOOT.DOL");
-			pf_load("/BOOT2.DOL");
-			pf_load("/IGR.DOL");
-			pf_load("/IPL.DOL");
+		for (int dev = 0; dev < EXI_DEVICE_MAX; dev++, EXICsb >>= 3) {
+			if (EXICsb & (1 << EXI_DEVICE_1)) continue;
+			if (pf_mount(&fs) == FR_OK) {
+				pf_load("/AUTOEXEC.DOL");
+				pf_load("/BOOT.DOL");
+				pf_load("/BOOT2.DOL");
+				pf_load("/IGR.DOL");
+				pf_load("/IPL.DOL");
+			}
 		}
 	}
 }
