@@ -41,10 +41,10 @@ select:
 	lis		r3, EXIRegs@ha
 	lis		r4, EXICsb@ha
 	lwz		r3, EXIRegs@l (r3)
-	lwz		r4, EXICsb@l (r4)
+	lhz		r4, EXICsb@l (r4)
 #else
 	lwz		r3, EXIRegs (r0)
-	lwz		r4, EXICsb (r0)
+	lhz		r4, EXICsb (r0)
 #endif
 	li		r0, (4 << 4)
 	insrwi	r0, r4, 3, 22
