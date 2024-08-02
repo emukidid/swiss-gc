@@ -23,7 +23,10 @@ char topStr[256];
 
 const char* getDeviceInfoString(u32 location) {
 	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(location);
-	if(device == &__device_dvd) {
+	if(location == bba_exists(LOC_ANY)) {
+		sprintf(topStr, "%s (%s)", getHwNameByLocation(location), bba_address_str());
+	}
+	else if(device == &__device_dvd) {
 		u8* driveVersion = (u8*)&driveInfo;
 		sprintf(topStr,"%s %02X %02X%02X/%02X (%02X)",device->hwName,driveVersion[6],driveVersion[4],driveVersion[5],driveVersion[7],driveVersion[8]);
 	}
@@ -39,11 +42,17 @@ const char* getDeviceInfoString(u32 location) {
 			strcpy(topStr, device->hwName);
 		}
 	}
+	else if(device == &__device_sd_a || device == &__device_sd_b || device == &__device_sd_c) {
+		s32 exi_channel;
+		if(getExiDeviceByLocation(location, &exi_channel, NULL)) {
+			sprintf(topStr, "%u MHz %s", 1 << sdgecko_getSpeed(exi_channel), device->hwName);
+		}
+		else {
+			strcpy(topStr, device->hwName);
+		}
+	}
 	else if(device == &__device_wkf) {
 		sprintf(topStr, "%s (%s)", device->hwName, wkfGetSerial());
-	}
-	else if(location == bba_exists(LOC_ANY)) {
-		sprintf(topStr, "%s (%s)", getHwNameByLocation(location), bba_address_str());
 	}
 	else {
 		strcpy(topStr, getHwNameByLocation(location));
