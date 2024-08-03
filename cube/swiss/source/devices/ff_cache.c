@@ -50,14 +50,16 @@ CACHE* _FAT_cache_constructor (unsigned int numberOfPages, unsigned int sectorsP
 	unsigned int i;
 	CACHE_ENTRY* cacheEntries;
 
-	if (numberOfPages < 2) {
-		numberOfPages = 2;
-	}
-
 	if (sectorsPerPage < 8) {
+		numberOfPages = (numberOfPages * sectorsPerPage) / 8;
 		sectorsPerPage = 8;
 	} else if (sectorsPerPage > 64) {
+		numberOfPages = (numberOfPages * sectorsPerPage) / 64;
 		sectorsPerPage = 64;
+	}
+
+	if (numberOfPages < 2) {
+		numberOfPages = 2;
 	}
 
 	cache = (CACHE*) _FAT_mem_allocate (sizeof(CACHE));

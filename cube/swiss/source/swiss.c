@@ -1848,7 +1848,7 @@ bool manage_file() {
 void verify_game()
 {
 	u32 crc = 0;
-	u32 curOffset = 0, cancelled = 0, chunkSize = (32*1024);
+	u32 curOffset = 0, cancelled = 0, chunkSize = (512*1024);
 	
 	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
 		devices[DEVICE_CUR]->setupFile(&curFile, NULL, NULL, -1);
@@ -1859,7 +1859,6 @@ void verify_game()
 			DVD_PrepareStreamAbs(&commandBlock, curFile.size & ~(32*1024-1), 0);
 			DVD_StopStreamAtEnd(&commandBlock);
 		}
-		chunkSize = (512*1024);
 	}
 	
 	unsigned char *readBuffer = (unsigned char*)memalign(32,chunkSize);
