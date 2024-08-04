@@ -586,6 +586,17 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			message = "Failed integrity check!";
 			goto fail;
 		}
+		int j;
+		for(j = 0; j < i; j++) {
+			if(filesToPatch[i].hash == filesToPatch[j].hash) {
+				filesToPatch[i].size = filesToPatch[j].size;
+				if(filesToPatch[j].patchFile) {
+					filesToPatch[i].patchFile = calloc(1, sizeof(file_handle));
+					strcpy(filesToPatch[i].patchFile->name, filesToPatch[j].patchFile->name);
+				}
+				goto fail;
+			}
+		}
 		
 		u8 *oldBuffer = buffer, *newBuffer = NULL;
 		if(fileToPatch->type == PATCH_DOL_PRS || fileToPatch->type == PATCH_OTHER_PRS) {
