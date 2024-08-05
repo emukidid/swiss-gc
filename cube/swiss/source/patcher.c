@@ -164,14 +164,6 @@ int install_code(int final)
 	
 	// Reload Stub
 	if (!top_addr) {
-		patch     = stub_bin;
-		patchSize = stub_bin_size;
-		print_gecko("Installing Reload Stub\r\n");
-		
-		memcpy((void *)0x80001800, patch, patchSize);
-		DCFlushRangeNoSync((void *)0x80001800, patchSize);
-		ICInvalidateRange((void *)0x80001800, patchSize);
-		_sync();
 		return 1;
 	}
 	// IDE-EXI
@@ -415,6 +407,14 @@ int install_code(int final)
 		mtspr(EAR, 0x8000000C);
 	}
 	return 1;
+}
+
+void __SYS_PreInit()
+{
+	memcpy((void *)0x80001800, stub_bin, stub_bin_size);
+	DCFlushRangeNoSync((void *)0x80001800, stub_bin_size);
+	ICInvalidateRange((void *)0x80001800, stub_bin_size);
+	_sync();
 }
 
 void make_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
