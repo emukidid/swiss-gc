@@ -92,7 +92,7 @@ s64 deviceHandler_Flippy_seekFile(file_handle* file, s64 where, u32 type) {
 
 static u32 defaultFlags(file_handle* file) {
 	if(endsWith(file->name,".gcm") || endsWith(file->name,".iso") || endsWith(file->name,".tgc"))
-		return 0;
+		return FLIPPY_FLAG_DISABLE_DVDSPEED;
 	return FLIPPY_FLAG_DEFAULT;
 }
 
