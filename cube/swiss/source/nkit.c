@@ -639,6 +639,7 @@ static const struct {
 	{{ "GCQE7D\x00\x00" }, false, 0x4C, 0x5344, 0xE81553BD, 0xA20F8EA53D150B2B, 1345501184,  +114477056, { 1345493340,       +4664, 6496, 0xE15F }, "Buffy the Vampire Slayer: Chaos Bleeds" },
 	{{ "GCQF7D\x00\x00" }, false, 0x23, 0xBF78, 0xBEDAAC80, 0x4D7C36B8F934A472, 1418211328,   +41766912, { 1418204032,      +30272, 6496, 0xEA05 }, "Buffy contre les Vampires: Chaos Bleeds" },
 	{{ "GCQP7D\x00\x00" }, false, 0xEC, 0xF384, 0x46E25097, 0x4D7C36B8F934A472, 1424568320,   +35409920, { 1424561124,      +30268, 6496, 0xA9D0 }, "Buffy the Vampire Slayer: Chaos Bleeds" },
+	{{ "GCRJBM\x00\x00" }, false, 0x6D, 0x80F9, 0x0C6D4075, 0x34BF21CA529D0E02,   10774528,  +105123840, {      17736,         +24, 6496, 0xFAC5 }, "Xeno Crisis" },
 	{{ "GCRPBM\x00\x00" }, false, 0xDC, 0xD202, 0x09EFF165, 0x34BF21CA529D0E02,   10774528,  +105123840, {      17736,         +24, 8096, 0xE5E6 }, "Xeno Crisis" },
 	{{ "GCSEAF\x00\x00" }, true,  0x05, 0xB9D8, 0x718F9112, 0xD8443682705DDCEA, 1366556672,   +93421568, {    3664676,   +93451356, 6496, 0x2E92 }, "SRS: Street Racing Syndicate" },
 	{{ "GCSPAF\x00\x00" }, true,  0x00, 0x098F, 0x0AEE62B4, 0x2F982E4215FB324A, 1403248640,   +56729600, {    3724548,   +56724860, 8096, 0xC7FC }, "SRS: Street Racing Syndicate" },
@@ -2101,7 +2102,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (1992)
+#define REDUMP_COUNT (1993)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
@@ -2140,7 +2141,6 @@ static const struct {
 	{{ "GBLPGL\x00\x00" }, false, 0xD4, 0x72B9, 0xFC2DC457, 0x23D8CE720A3B44F3,     962560,      +86016, {      17768,         +24, 6496, 0x4411 }, "240p Test Suite" },
 	{{ "GCCE01\x00\x00" }, false, 0x13, 0xF223, 0xD466236E, 0x89D01E6E0E49A121, 1329932288,  +130045952, {  570366340,      +30392, 6496, 0x6BE6 }, "Final Fantasy Crystal Chronicles: Single Player Upgrade" },
 	{{ "GCREBM\x00\x00" }, false, 0xA7, 0x9EF5, 0x00FFED74, 0x34BF21CA529D0E02,   10774528,  +105123840, {      17736,         +24, 6496, 0x65EB }, "Xeno Crisis" },
-	{{ "GCRJBM\x00\x00" }, false, 0x6D, 0x80F9, 0x0C6D4075, 0x34BF21CA529D0E02,   10774528,  +105123840, {      17736,         +24, 6496, 0xFAC5 }, "Xeno Crisis" },
 	{{ "GDEE71\x00\x00" }, false, 0x65, 0xC228, 0xC2C80167, 0x616D2EAD3B11D74F, 1358307328,  +101670912, {  914092380,       +7536, 6496, 0x2D5A }, "Baldur's Gate: Dark Alliance" },
 	{{ "GEAE8P\x00\x00" }, false, 0x16, 0x4329, 0x22E6FE4B, 0x776C0A056378855A, 1421514752,   +38463488, { 1206244016,   +36660560, 6496, 0x51AD }, "Skies of Arcadia Legends Maeson" },
 	{{ "GEAE8P\x00\x00" }, false, 0x66, 0xE528, 0xEE8698CB, 0xEE3D9D60D95DC4D8, 1441400832,   +18577408, { 1206239432,   +16754488, 6496, 0xCB3E }, "Skies of Arcadia Legends" },
@@ -2252,7 +2252,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 150)
+#define VALID_COUNT (REDUMP_COUNT + 149)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
