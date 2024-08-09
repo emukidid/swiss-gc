@@ -47,7 +47,7 @@ static struct {
 	bool read, patch;
 } dvd;
 
-static void exi_callback();
+static void exi_lock();
 
 #include "tcpip.c"
 
@@ -261,42 +261,44 @@ static void exi_callback()
 	}
 }
 
+static void exi_lock()
+{
+	if (EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, exi_lock))
+		exi_callback();
+}
+
 static void exi_coroutine()
 {
-	if (EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, exi_callback)) {
-		_bba.locked = true;
+	_bba.locked = true;
 
-		set_interrupt_handler(OS_INTERRUPT_EXI_0_TC, exi_callback);
-		unmask_interrupts(OS_INTERRUPTMASK_EXI_0_TC);
+	set_interrupt_handler(OS_INTERRUPT_EXI_0_TC, exi_callback);
+	unmask_interrupts(OS_INTERRUPTMASK_EXI_0_TC);
 
-		if (_bba.callback) {
-			_bba.callback();
-			_bba.callback = NULL;
-		}
+	bba_cmd_out8(0x02, BBA_CMD_IRMASKALL);
 
-		uint8_t status = bba_cmd_in8(0x03);
-		bba_cmd_out8(0x02, BBA_CMD_IRMASKALL);
-
-		if (status & 0x80) bba_interrupt();
-
-		bba_cmd_out8(0x03, status);
-		bba_cmd_out8(0x02, BBA_CMD_IRMASKNONE);
-
-		mask_interrupts(OS_INTERRUPTMASK_EXI_0_TC);
-
-		_bba.locked = false;
-		if (!setjmp(_bba.entry))
-			longjmp(_bba.exit, 1);
-	} else {
-		if (!setjmp(_bba.entry))
-			longjmp(_bba.exit, 2);
+	if (_bba.callback) {
+		_bba.callback();
+		_bba.callback = NULL;
 	}
+
+	uint8_t status = bba_cmd_in8(0x03);
+
+	if (status & 0x80) bba_interrupt();
+
+	bba_cmd_out8(0x03, status);
+	bba_cmd_out8(0x02, BBA_CMD_IRMASKNONE);
+
+	mask_interrupts(OS_INTERRUPTMASK_EXI_0_TC);
+
+	_bba.locked = false;
+	if (!setjmp(_bba.entry))
+		longjmp(_bba.exit, 1);
 }
 
 static void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	exi_clear_interrupts(EXI_CHANNEL_2, true, false, false);
-	exi_callback();
+	exi_lock();
 }
 
 void bba_init(void **arenaLo, void **arenaHi)

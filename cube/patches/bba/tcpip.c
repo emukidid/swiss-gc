@@ -233,7 +233,7 @@ static void fsp_read_queued(void)
 	if (!_bba.locked) {
 		if (!_bba.callback) {
 			_bba.callback = fsp_read_queued;
-			exi_callback();
+			exi_lock();
 		}
 		return;
 	}
