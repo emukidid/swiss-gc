@@ -3,6 +3,7 @@
 	by emu_kidid
  */
 
+#include <fnmatch.h>
 #include <stdio.h>
 #include <ogcsys.h>
 #include <unistd.h>
@@ -346,8 +347,29 @@ void populate_meta(file_handle *f) {
 				if (devices[DEVICE_CUR]->readFile(bootFile, NULL, 0) == 0 && bootFile->size) {
 					devices[DEVICE_CUR]->closeFile(bootFile);
 					
-					f = memcpy(f, bootFile, sizeof(file_handle));
+					f = memcpy(f, bootFile, offsetof(file_handle, uiObj));
 					f->meta->fileTypeTexObj = &dolimgTexObj;
+				}
+				devices[DEVICE_CUR]->closeFile(bootFile);
+				free(bootFile);
+			}
+			if (!fnmatch("*/apps/*", f->name, FNM_PATHNAME | FNM_CASEFOLD)) {
+				file_handle *bootFile = calloc(1, sizeof(file_handle));
+				concat_path(bootFile->name, f->name, "boot.dol");
+				bootFile->meta = f->meta;
+				
+				if (devices[DEVICE_CUR]->readFile(bootFile, NULL, 0) == 0 && bootFile->size) {
+					devices[DEVICE_CUR]->closeFile(bootFile);
+					
+					concatf_path(bootFile->name, f->name, "%s.dol", getRelativeName(f->name));
+					bootFile->size = 0;
+					
+					if (devices[DEVICE_CUR]->readFile(bootFile, NULL, 0) == 0 && bootFile->size) {
+						devices[DEVICE_CUR]->closeFile(bootFile);
+						
+						f = memcpy(f, bootFile, offsetof(file_handle, uiObj));
+						f->meta->fileTypeTexObj = &dolimgTexObj;
+					}
 				}
 				devices[DEVICE_CUR]->closeFile(bootFile);
 				free(bootFile);
