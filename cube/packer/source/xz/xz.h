@@ -146,7 +146,7 @@ struct xz_buf {
 	size_t out_size;
 };
 
-/**
+/*
  * struct xz_dec - Opaque type to hold the XZ decoder state
  */
 struct xz_dec;
@@ -278,23 +278,33 @@ XZ_EXTERN void xz_dec_reset(struct xz_dec *s);
  */
 XZ_EXTERN void xz_dec_end(struct xz_dec *s);
 
-/*
- * Decompressor for MicroLZMA, an LZMA variant with a very minimal header.
- * See xz_dec_microlzma_alloc() below for details.
+/**
+ * DOC: MicroLZMA decompressor
+ *
+ * This MicroLZMA header format was created for use in EROFS but may be used
+ * by others too. **In most cases one needs the XZ APIs above instead.**
+ *
+ * The compressed format supported by this decoder is a raw LZMA stream
+ * whose first byte (always 0x00) has been replaced with bitwise-negation
+ * of the LZMA properties (lc/lp/pb) byte. For example, if lc/lp/pb is
+ * 3/0/2, the first byte is 0xA2. This way the first byte can never be 0x00.
+ * Just like with LZMA2, lc + lp <= 4 must be true. The LZMA end-of-stream
+ * marker must not be used. The unused values are reserved for future use.
  *
  * These functions aren't used or available in preboot code and thus aren't
  * marked with XZ_EXTERN. This avoids warnings about static functions that
  * are never defined.
  */
-/**
+
+/*
  * struct xz_dec_microlzma - Opaque type to hold the MicroLZMA decoder state
  */
 struct xz_dec_microlzma;
 
 /**
  * xz_dec_microlzma_alloc() - Allocate memory for the MicroLZMA decoder
- * @mode        XZ_SINGLE or XZ_PREALLOC
- * @dict_size   LZMA dictionary size. This must be at least 4 KiB and
+ * @mode:       XZ_SINGLE or XZ_PREALLOC
+ * @dict_size:  LZMA dictionary size. This must be at least 4 KiB and
  *              at most 3 GiB.
  *
  * In contrast to xz_dec_init(), this function only allocates the memory
@@ -307,30 +317,21 @@ struct xz_dec_microlzma;
  * On success, xz_dec_microlzma_alloc() returns a pointer to
  * struct xz_dec_microlzma. If memory allocation fails or
  * dict_size is invalid, NULL is returned.
- *
- * The compressed format supported by this decoder is a raw LZMA stream
- * whose first byte (always 0x00) has been replaced with bitwise-negation
- * of the LZMA properties (lc/lp/pb) byte. For example, if lc/lp/pb is
- * 3/0/2, the first byte is 0xA2. This way the first byte can never be 0x00.
- * Just like with LZMA2, lc + lp <= 4 must be true. The LZMA end-of-stream
- * marker must not be used. The unused values are reserved for future use.
- * This MicroLZMA header format was created for use in EROFS but may be used
- * by others too.
  */
 extern struct xz_dec_microlzma *xz_dec_microlzma_alloc(enum xz_mode mode,
 						       uint32_t dict_size);
 
 /**
  * xz_dec_microlzma_reset() - Reset the MicroLZMA decoder state
- * @s           Decoder state allocated using xz_dec_microlzma_alloc()
- * @comp_size   Compressed size of the input stream
- * @uncomp_size Uncompressed size of the input stream. A value smaller
+ * @s:          Decoder state allocated using xz_dec_microlzma_alloc()
+ * @comp_size:  Compressed size of the input stream
+ * @uncomp_size:  Uncompressed size of the input stream. A value smaller
  *              than the real uncompressed size of the input stream can
  *              be specified if uncomp_size_is_exact is set to false.
  *              uncomp_size can never be set to a value larger than the
  *              expected real uncompressed size because it would eventually
  *              result in XZ_DATA_ERROR.
- * @uncomp_size_is_exact  This is an int instead of bool to avoid
+ * @uncomp_size_is_exact:  This is an int instead of bool to avoid
  *              requiring stdbool.h. This should normally be set to true.
  *              When this is set to false, error detection is weaker.
  */
@@ -340,7 +341,7 @@ extern void xz_dec_microlzma_reset(struct xz_dec_microlzma *s,
 
 /**
  * xz_dec_microlzma_run() - Run the MicroLZMA decoder
- * @s           Decoder state initialized using xz_dec_microlzma_reset()
+ * @s:          Decoder state initialized using xz_dec_microlzma_reset()
  * @b:          Input and output buffers
  *
  * This works similarly to xz_dec_run() with a few important differences.

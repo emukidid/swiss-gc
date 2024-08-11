@@ -22,6 +22,7 @@ else
 DOLLZ         = $(BUILDTOOLS)/dollz3
 DOL2GCI       = $(BUILDTOOLS)/dol2gci
 endif
+DOL2IPL       = $(BUILDTOOLS)/dol2ipl.py
 
 ifneq ($(shell which mkisofs),)
 MKISOFS       = mkisofs
@@ -36,7 +37,7 @@ GECKOSERVER   = pc/usbgecko
 .NOTPARALLEL:
 
 # Ready to go .7z file with every type of DOL we can think of
-all: clean compile-patches compile compile-packer build recovery-iso build-gci build-AR build-geckoserver package
+all: clean compile-patches compile compile-packer build recovery-iso build-gci build-AR build-geckoserver build-pico package
 
 # For dev use only, avoid the unnecessary fluff
 dev: clean compile-patches compile
@@ -113,6 +114,7 @@ package:   # create distribution package
 	@mv $(DIST)/GCLoader $(SVN_REVISION)
 	@mv $(DIST)/ActionReplay $(SVN_REVISION)
 	@mv $(DIST)/USBGeckoRemoteServer $(SVN_REVISION)
+	@mv $(DIST)/PicoBoot $(SVN_REVISION)
 	@find ./$(SVN_REVISION) -type f -print0 | xargs -0 sha256sum > $(SVN_REVISION).sha256
 	@mv $(SVN_REVISION).sha256 $(SVN_REVISION)
 	@git log -n 4 > $(SVN_REVISION)-changelog.txt
@@ -143,3 +145,9 @@ build-geckoserver:
 	@cd $(GECKOSERVER) && $(MAKE)
 	@mkdir $(DIST)/USBGeckoRemoteServer
 	@mv $(GECKOSERVER)/swissserver* $(DIST)/USBGeckoRemoteServer/
+
+#------------------------------------------------------------------
+
+build-pico:
+	@mkdir $(DIST)/PicoBoot
+	@$(DOL2IPL) $(DIST)/PicoBoot/$(SVN_REVISION).uf2 $(PACKER)/reboot.dol
