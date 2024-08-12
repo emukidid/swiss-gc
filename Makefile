@@ -37,7 +37,7 @@ GECKOSERVER   = pc/usbgecko
 .NOTPARALLEL:
 
 # Ready to go .7z file with every type of DOL we can think of
-all: clean compile-patches compile compile-packer build recovery-iso build-gci build-AR build-geckoserver build-ipl package
+all: clean compile-patches compile compile-packer build recovery-iso build-AR build-gci build-ipl build-geckoserver package
 
 # For dev use only, avoid the unnecessary fluff
 dev: clean compile-patches compile
@@ -67,27 +67,28 @@ build:
 	@mkdir $(DIST)
 	@mkdir $(DIST)/DOL
 	@mkdir $(DIST)/DOL/Viper
+	@mkdir $(DIST)/FlippyDrive
+	@mkdir $(DIST)/GCLoader
 	@mkdir $(DIST)/ISO
 	@mkdir $(DIST)/WiikeyFusion
-	@mkdir $(DIST)/WiikeyFusion/RecoveryISO
 	@mkdir $(DIST)/WODE
-	@mkdir $(DIST)/GCLoader
 	@cp $(PACKER)/swiss.dol $(DIST)/DOL/$(SVN_REVISION).dol
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION).dol
 	@cp $(SOURCES)/swiss/swiss.elf $(DIST)/DOL/$(SVN_REVISION).elf
-	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol -v -m
-	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol
 	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz.dol -m
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-lz.dol
+	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol -v -m
+	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol
+	@cp $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/FlippyDrive/boot.dol
 	# make ISOs and WKF firmware
+	# GCLoader
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/GCLoader/boot.iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# NTSC-J
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# NTSC
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-u.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-u)".iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# PAL
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/DOL/$(SVN_REVISION).dol
-	# GCLoader
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/GCLoader/boot.iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# WODE
 	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-wode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/WODE/$(SVN_REVISION)"(wode_extcfg)".iso $(DIST)/DOL/$(SVN_REVISION).dol
 	# WKF
@@ -98,6 +99,7 @@ build:
 #------------------------------------------------------------------
 
 recovery-iso:
+	@mkdir $(DIST)/WiikeyFusion/RecoveryISO
 	@cp $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/WiikeyFusion/RecoveryISO/$(SVN_REVISION)"_Recovery".iso
 	# merge bootloader and swiss
 	@dd if=$(BUILDTOOLS)/wkf/recovery_bootloader.iso of=$(DIST)/WiikeyFusion/RecoveryISO/$(SVN_REVISION)"_Recovery".iso bs=32K count=1 conv=notrunc
@@ -112,6 +114,7 @@ package:   # create distribution package
 	@mv $(DIST)/WODE $(SVN_REVISION)
 	@mv $(DIST)/WiikeyFusion $(SVN_REVISION)
 	@mv $(DIST)/GCLoader $(SVN_REVISION)
+	@mv $(DIST)/FlippyDrive $(SVN_REVISION)
 	@mv $(DIST)/ActionReplay $(SVN_REVISION)
 	@mv $(DIST)/USBGeckoRemoteServer $(SVN_REVISION)
 	@mv $(DIST)/IGR $(SVN_REVISION)
