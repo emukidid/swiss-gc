@@ -151,7 +151,6 @@ void pf_main(void)
 			pf_load("/AUTOEXEC.DOL");
 			pf_load("/BOOT.DOL");
 			pf_load("/BOOT2.DOL");
-			pf_load("/IGR.DOL");
 			pf_load("/IPL.DOL");
 		}
 

@@ -40,7 +40,7 @@ char *disableMCPGameIDStr[] = {"No", "Slot A", "Slot B", "Slot A&B"};
 char *disableVideoPatchesStr[] = {"None", "Game", "All"};
 char *emulateAudioStreamStr[] = {"Off", "Auto", "On"};
 char *emulateReadSpeedStr[] = {"No", "Yes", "Wii"};
-char *igrTypeStr[] = {"Disabled", "Reboot", "igr.dol"};
+char *igrTypeStr[] = {"Disabled", "Reboot", "Apploader"};
 char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL", "AVE P-DOL"};
 char *fileBrowserStr[] = {"Standard", "Fullwidth", "Carousel"};
 char *bs2BootStr[] = {"No", "Yes", "Sound 1", "Sound 2"};
@@ -72,7 +72,7 @@ static char *tooltips_network[PAGE_NETWORK_MAX+1] = {
 };
 
 static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
-	"In-Game Reset: (A + Z + Start)\n\nReboot: Soft-Reset the GameCube\nigr.dol: Low mem (< 0x81300000) igr.dol at the root of SD Card",
+	"In-Game Reset: (A + Z + Start)\n\nReboot - Perform hot reset with a compatible device\nApploader - Requires /swiss/patches/apploader.img",
 	"Boot through IPL:\n\nWhen enabled, games will be booted with the GameCube\nlogo screen and Main Menu accessible with patches applied.",
 	NULL,
 	NULL,

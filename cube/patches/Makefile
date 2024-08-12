@@ -14,7 +14,7 @@ DISASM    = disassembly
 .NOTPARALLEL:
 all: clean codehandler cpatches stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch flippypatch
 
-stub: reboot.bin stub.bin
+stub: stub.bin
 sdpatch: sd-v1.bin sd-v1.card.bin sd-v1.dtk.bin sd-v1.eth.bin sd-v2.bin sd-v2.card.bin sd-v2.dtk.bin sd-v2.eth.bin
 ideexipatch: ideexi-v1.bin ideexi-v1.card.bin ideexi-v1.dtk.bin ideexi-v1.eth.bin ideexi-v2.bin ideexi-v2.card.bin ideexi-v2.dtk.bin ideexi-v2.eth.bin
 dvdpatch: dvd.bin dvd.card.bin
@@ -61,22 +61,6 @@ cpatches:
 	@$(BIN2S) -H $(DEST)/CallAlarmHandler_bin.h CallAlarmHandler.bin > $(DEST)/CallAlarmHandler.bin.s
 	@$(BIN2S) -H $(DEST)/CheckStatus_bin.h CheckStatus.bin > $(DEST)/CheckStatus.bin.s
 	@$(BIN2S) -H $(DEST)/WriteUARTN_bin.h WriteUARTN.bin > $(DEST)/WriteUARTN.bin.s
-	@rm -f *.bin *.elf *.o
-
-reboot.bin:
-	@echo Building Reboot ...
-	@$(CC) -Os $(OPTS) -c stub/crt0.S -DAPPLOADER
-	@$(CC) -Os $(OPTS) -c stub/main.c
-	@$(CC) -Os $(OPTS) -c stub/asmfunc.S -DAPPLOADER
-	@$(CC) -Os $(OPTS) -c stub/mmcbbp.c
-	@$(CC) -Os $(OPTS) -c stub/pff.c
-	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
-	@$(CC) -Os $(OPTS) -o reboot.elf -T stub/reboot.ld crt0.o main.o asmfunc.o mmcbbp.o pff.o os.o
-	@mkdir -p $(DISASM)
-	@$(OBJDUMP) -D reboot.elf > $(DISASM)/reboot.txt
-	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents reboot.elf reboot.bin
-	@truncate -s %32 reboot.bin
-	@$(BIN2S) -H $(DEST)/reboot_bin.h reboot.bin > $(DEST)/reboot.bin.s
 	@rm -f *.bin *.elf *.o
 
 stub.bin:

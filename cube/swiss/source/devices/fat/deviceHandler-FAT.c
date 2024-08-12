@@ -226,22 +226,9 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 		}
 	}
 	
-	if(swissSettings.igrType == IGR_BOOTBIN || endsWith(file->name,".tgc")) {
+	if(swissSettings.igrType == IGR_APPLOADER || endsWith(file->name,".tgc")) {
 		memset(&patchFile, 0, sizeof(file_handle));
 		concat_path(patchFile.name, devices[DEVICE_CUR]->initial->name, "swiss/patches/apploader.img");
-		
-		ApploaderHeader apploaderHeader;
-		if(devices[DEVICE_CUR]->readFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader)) != sizeof(ApploaderHeader) || apploaderHeader.rebootSize != reboot_bin_size) {
-			devices[DEVICE_CUR]->deleteFile(&patchFile);
-			
-			memset(&apploaderHeader, 0, sizeof(ApploaderHeader));
-			apploaderHeader.rebootSize = reboot_bin_size;
-			
-			devices[DEVICE_CUR]->seekFile(&patchFile, 0, DEVICE_HANDLER_SEEK_SET);
-			devices[DEVICE_CUR]->writeFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader));
-			devices[DEVICE_CUR]->writeFile(&patchFile, reboot_bin, reboot_bin_size);
-			devices[DEVICE_CUR]->closeFile(&patchFile);
-		}
 		
 		getFragments(DEVICE_CUR, &patchFile, &fragList, &numFrags, FRAGS_APPLOADER, 0x2440, 0);
 		devices[DEVICE_CUR]->closeFile(&patchFile);

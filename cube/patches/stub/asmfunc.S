@@ -23,12 +23,7 @@
 .section .text
 	.globl init_spi
 init_spi:
-#ifdef APPLOADER
-	lis		r3, EXIRegs@ha
-	lwz		r3, EXIRegs@l (r3)
-#else
 	lwz		r3, EXIRegs (r0)
-#endif
 	li		r4, 3*4
 1:	eciwx	r0, r4, r3
 	andi.	r0, r0, 0b01
@@ -37,15 +32,8 @@ init_spi:
 
 	.globl select
 select:
-#ifdef APPLOADER
-	lis		r3, EXIRegs@ha
-	lis		r4, EXICsb@ha
-	lwz		r3, EXIRegs@l (r3)
-	lhz		r4, EXICsb@l (r4)
-#else
 	lwz		r3, EXIRegs (r0)
 	lhz		r4, EXICsb (r0)
-#endif
 	li		r0, (4 << 4)
 	insrwi	r0, r4, 3, 22
 	ecowx	r0, r0, r3
@@ -53,12 +41,7 @@ select:
 
 	.globl deselect
 deselect:
-#ifdef APPLOADER
-	lis		r3, EXIRegs@ha
-	lwz		r3, EXIRegs@l (r3)
-#else
 	lwz		r3, EXIRegs (r0)
-#endif
 	li		r0, 0
 	ecowx	r0, r0, r3
 
@@ -68,12 +51,7 @@ rcv_spi:
 
 	.globl xmit_spi
 xmit_spi:
-#ifdef APPLOADER
-	lis		r4, EXIRegs@ha
-	lwz		r4, EXIRegs@l (r4)
-#else
 	lwz		r4, EXIRegs (r0)
-#endif
 	li		r5, 4*4
 	slwi	r0, r3, 24
 	ecowx	r0, r5, r4

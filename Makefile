@@ -37,7 +37,7 @@ GECKOSERVER   = pc/usbgecko
 .NOTPARALLEL:
 
 # Ready to go .7z file with every type of DOL we can think of
-all: clean compile-patches compile compile-packer build recovery-iso build-gci build-AR build-geckoserver build-pico package
+all: clean compile-patches compile compile-packer build recovery-iso build-gci build-AR build-geckoserver build-ipl package
 
 # For dev use only, avoid the unnecessary fluff
 dev: clean compile-patches compile
@@ -114,6 +114,7 @@ package:   # create distribution package
 	@mv $(DIST)/GCLoader $(SVN_REVISION)
 	@mv $(DIST)/ActionReplay $(SVN_REVISION)
 	@mv $(DIST)/USBGeckoRemoteServer $(SVN_REVISION)
+	@mv $(DIST)/IGR $(SVN_REVISION)
 	@mv $(DIST)/PicoBoot $(SVN_REVISION)
 	@find ./$(SVN_REVISION) -type f -print0 | xargs -0 sha256sum > $(SVN_REVISION).sha256
 	@mv $(SVN_REVISION).sha256 $(SVN_REVISION)
@@ -148,6 +149,10 @@ build-geckoserver:
 
 #------------------------------------------------------------------
 
-build-pico:
+build-ipl:
+	@mkdir $(DIST)/IGR
+	@mkdir $(DIST)/IGR/swiss
+	@mkdir $(DIST)/IGR/swiss/patches
 	@mkdir $(DIST)/PicoBoot
+	@$(DOL2IPL) $(DIST)/IGR/swiss/patches/apploader.img $(PACKER)/reboot.dol *$(SVN_REVISION).dol
 	@$(DOL2IPL) $(DIST)/PicoBoot/$(SVN_REVISION).uf2 $(PACKER)/reboot.dol

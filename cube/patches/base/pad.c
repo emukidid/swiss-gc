@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -38,7 +38,7 @@ void CheckStatus(s32 chan, PADStatus *status)
 			if (OSResetSystem) {
 				enable_interrupts();
 				*VAR_IGR_TYPE = IGR_OFF | 0x80;
-				if (igr_type == IGR_BOOTBIN)
+				if (igr_type == IGR_APPLOADER)
 					OSResetSystem(OS_RESET_RESTART, 0, 0);
 				else
 					OSResetSystem(OS_RESET_HOTRESET, 0, 0);

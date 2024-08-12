@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2012-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2012-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -30,7 +30,15 @@ __argv:
 	.long	0	# argv
 	.long	0	# end address of argv
 
-1:	li		r3, 0
+1:	mfdabr	r3
+	xoris	r0, r3, 0x8000
+	cmpwi	r0, 0x00E8 | 0b110
+	bne		2f
+	lis		r0, 0xfee1
+	ori		r0, r0, 0xdead
+	stw		r0, -0b110 (r3)
+
+2:	li		r3, 0
 	mtsrr1	r3
 	lis		r3, startup@ha
 	addi	r3, r3, startup@l

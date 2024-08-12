@@ -129,9 +129,8 @@ extern char VAR_RMODE[4];			// render mode
 
 // IGR Types
 #define IGR_OFF			0
-#define IGR_HARDRESET	1
-#define IGR_BOOTBIN		2
-#define IGR_USBGKOFLASH	3
+#define IGR_HOTRESET	1
+#define IGR_APPLOADER	2
 
 // FAT Fragments
 #define FRAGS_NULL		(char)-1
