@@ -50,6 +50,19 @@ startup:
 	ori		r0, r0, 0x000C
 	mtear	r0
 
+	lis		r3, 0x0C00
+	li		r4, 0x3000
+	li		r0, 1
+	ecowx	r0, r4, r3
+	eciwx	r0, r4, r3
+	lis		r5, 0x1000
+	eciwx	r0, 0, r5
+	eciwx	r0, r4, r3
+	andi.	r0, r0, 1
+	ecowx	r0, r4, r3
+
+	beqla	0x1800
+
 	li		r3, 0
 	lis		r0, reset@h + 0x48000002
 	ori		r0, r0, reset@l + 0x48000002
