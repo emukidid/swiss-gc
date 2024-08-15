@@ -28,7 +28,9 @@ _start:
 	.asciz	"STUBHAXX"
 	.align 2
 
-1:	li		r3, 0
+1:	rlwinm	r3, r3, 0, 17, 15
+	mtmsr	r3
+	li		r3, 0
 	mtsrr1	r3
 	li		r3, startup
 	mtsrr0	r3
