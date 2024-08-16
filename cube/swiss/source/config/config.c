@@ -1090,10 +1090,11 @@ void config_find(ConfigEntry *entry) {
 	Returns 1 on successful file open, 0 otherwise
 */
 int config_init(void (*progress_indicator)(char*, int, int)) {
+	int res = 0;
 	progress_indicator("Loading settings", 1, -2);
 	if(!config_set_device()) {
 		progress_indicator(NULL, 0, 0);
-		return 0;
+		return res;
 	}
 	
 	// Make the new settings base dir(s) if we don't have them already
@@ -1116,9 +1117,7 @@ int config_init(void (*progress_indicator)(char*, int, int)) {
 	if(configData != NULL) {
 		config_parse_global(configData);
 		free(configData);
-	} else {
-		// Store current/defaults.
-		config_update_global(false);
+		res = 1;
 	}
 	
 	// Read the recent list if enabled
@@ -1132,7 +1131,7 @@ int config_init(void (*progress_indicator)(char*, int, int)) {
 	}
 	progress_indicator(NULL, 0, 0);
 	config_unset_device();
-	return 0;
+	return res;
 }
 
 SwissSettings backup;

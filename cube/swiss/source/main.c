@@ -193,20 +193,23 @@ int main(int argc, char *argv[])
 	// Scan here since some devices would already be initialised (faster)
 	populateDeviceAvailability();
 
+	// Read Swiss settings
+	if(!config_init(&config_migration)) {
+		swissSettings.configDeviceId = DEVICE_ID_UNK;
+	}
 	// If there's no default config device, set it to the first writable device available
 	if(swissSettings.configDeviceId == DEVICE_ID_UNK) {
-		for(int i = 0; i < MAX_DEVICES; i++) {
+		for(i = 0; i < MAX_DEVICES; i++) {
 			if(allDevices[i] != NULL && (allDevices[i]->features & FEAT_CONFIG_DEVICE) && deviceHandler_getDeviceAvailable(allDevices[i])) {
 				swissSettings.configDeviceId = allDevices[i]->deviceUniqueId;
 				print_gecko("No default config device found, using [%s]\r\n", allDevices[i]->deviceName);
-				show_settings(PAGE_GLOBAL, SET_CONFIG_DEV, NULL);
+				if(!config_init(&config_migration)) {
+					show_settings(PAGE_GLOBAL, SET_CONFIG_DEV, NULL);
+				}
 				break;
 			}
 		}
 	}
-	
-	// Read Swiss settings
-	config_init(&config_migration);
 	config_parse_args(argc, argv);
 	
 	// Swiss video mode force
