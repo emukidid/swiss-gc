@@ -6,6 +6,7 @@ extern int net_initialized;
 extern struct in_addr bba_localip;
 extern struct in_addr bba_netmask;
 extern struct in_addr bba_gateway;
+extern const char *bba_device_str;
 extern u32 bba_location;
 
 void wait_network();

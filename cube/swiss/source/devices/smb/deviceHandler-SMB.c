@@ -245,23 +245,22 @@ s32 deviceHandler_SMB_makeDir(file_handle* dir) {
 }
 
 bool deviceHandler_SMB_test() {
-	char ifname[4];
-	if (if_indextoname(1, ifname)) {
-		if (ifname[0] == 'E')
-			__device_smb.hwName = "ENC28J60";
-		
-		switch (bba_location) {
-			case LOC_MEMCARD_SLOT_A:
-			case LOC_MEMCARD_SLOT_B:
-				__device_smb.deviceTexture = (textureImage){TEX_GCNET, 65, 84, 72, 88};
-				break;
-			case LOC_SERIAL_PORT_2:
-				__device_smb.deviceTexture = (textureImage){TEX_ETH2GC, 64, 80, 64, 80};
-				break;
-		}
-		__device_smb.location = bba_location;
+	__device_smb.hwName = bba_device_str;
+	__device_smb.location = bba_location;
+
+	switch (bba_exists(LOC_ANY)) {
+		case LOC_MEMCARD_SLOT_A:
+		case LOC_MEMCARD_SLOT_B:
+			__device_smb.deviceTexture = (textureImage){TEX_GCNET, 65, 84, 72, 88};
+			return true;
+		case LOC_SERIAL_PORT_1:
+			__device_smb.deviceTexture = (textureImage){TEX_BBA, 140, 64, 140, 64};
+			return true;
+		case LOC_SERIAL_PORT_2:
+			__device_smb.deviceTexture = (textureImage){TEX_ETH2GC, 64, 80, 64, 80};
+			return true;
 	}
-	return net_initialized || bba_exists(LOC_ANY);
+	return net_initialized;
 }
 
 char* deviceHandler_SMB_status(file_handle* file) {

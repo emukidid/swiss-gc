@@ -14,6 +14,7 @@ int net_initialized = 0;
 struct in_addr bba_localip;
 struct in_addr bba_netmask;
 struct in_addr bba_gateway;
+const char *bba_device_str = "Broadband Adapter";
 u32 bba_location = LOC_UNK;
 
 static lwp_t net_thread = LWP_THREAD_NULL;
@@ -36,6 +37,10 @@ static void *net_thread_func(void *arg)
 
 	char ifname[4];
 	if (if_indextoname(1, ifname)) {
+		switch (ifname[0]) {
+			case 'e': bba_device_str = "Broadband Adapter";  break;
+			case 'E': bba_device_str = "ENC28J60";           break;
+		}
 		if (ifname[0] == 'E') {
 			switch (ifname[1]) {
 				case 'A': bba_location = LOC_MEMCARD_SLOT_A; break;
