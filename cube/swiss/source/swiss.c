@@ -83,7 +83,8 @@ void ogc_video__reset()
 	int i;
 	
 	swissSettings.fontEncode = region == 'J';
-	
+	if(region != 'P')
+		swissSettings.sramLanguage = SYS_LANG_ENGLISH;
 	if(region == 'P')
 		swissSettings.sramVideo = SYS_VIDEO_PAL;
 	else if(swissSettings.sramVideo == SYS_VIDEO_PAL)
@@ -114,7 +115,7 @@ void ogc_video__reset()
 	} else
 		swissSettings.gameVMode = 0;
 	
-	if(!strncmp(gameID, "GB3E51", 6) || (!strncmp(gameID, "G2OE41", 6) && swissSettings.sramLanguage == SYS_LANG_SPANISH))
+	if(!strncmp(gameID, "GB3E51", 6))
 		swissSettings.sramProgressive = 0;
 	
 	/* set TV mode for current game */

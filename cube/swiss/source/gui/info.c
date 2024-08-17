@@ -135,7 +135,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 210, (char*)"AUDIO", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 226, (char*)(swissSettings.sramStereo ? "Stereo" : "Mono"), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"LANGUAGE", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 266, (char*)(swissSettings.sramLanguage > SRAM_LANG_MAX ? "Unknown" : sramLang[swissSettings.sramLanguage]), 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 266, (char*)(sramLang[swissSettings.sramLanguage]), 0.75f, true, defaultColor));
 
 		// GC 00083214, 00083410
 		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"CPU PVR", 0.65f, true, defaultColor));

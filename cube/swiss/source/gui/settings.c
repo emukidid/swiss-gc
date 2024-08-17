@@ -224,7 +224,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo":"Mono", option == SET_SYS_SOUND, true);
 			sprintf(sramHOffsetStr, "%+hi", swissSettings.sramHOffset);
 			drawSettingEntryString(page, &page_y_ofs, "Screen Position:", sramHOffsetStr, option == SET_SCREEN_POS, true);
-			drawSettingEntryString(page, &page_y_ofs, "System Language:", swissSettings.sramLanguage > SRAM_LANG_MAX ? "Unknown" : sramLang[swissSettings.sramLanguage], option == SET_SYS_LANG, true);
+			drawSettingEntryString(page, &page_y_ofs, "System Language:", sramLang[swissSettings.sramLanguage], option == SET_SYS_LANG, true);
 			drawSettingEntryString(page, &page_y_ofs, "Configuration Device:", getConfigDeviceName(&swissSettings), option == SET_CONFIG_DEV, true);
 			drawSettingEntryString(page, &page_y_ofs, "Swiss Video Mode:", uiVModeStr[swissSettings.uiVMode], option == SET_SWISS_VIDEOMODE, true);
 			drawSettingEntryString(page, &page_y_ofs, "File Browser Type:", fileBrowserStr[swissSettings.fileBrowserType], option == SET_FILEBROWSER_TYPE, true);
@@ -409,10 +409,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_SYS_LANG:
 				swissSettings.sramLanguage += direction;
-				if(swissSettings.sramLanguage > SYS_LANG_DUTCH)
-					swissSettings.sramLanguage = SYS_LANG_ENGLISH;
-				if(swissSettings.sramLanguage < SYS_LANG_ENGLISH)
-					swissSettings.sramLanguage = SYS_LANG_DUTCH;
+				swissSettings.sramLanguage = ((s8)swissSettings.sramLanguage + SRAM_LANG_MAX) % SRAM_LANG_MAX;
 			break;
 			case SET_CONFIG_DEV:
 			{

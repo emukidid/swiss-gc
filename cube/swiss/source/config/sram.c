@@ -57,6 +57,8 @@ void refreshSRAM(SwissSettings *settings)
 	settings->sramHOffset = SYS_GetDisplayOffsetH();
 	settings->sram60Hz = SYS_GetEuRGB60();
 	settings->sramLanguage = SYS_GetLanguage();
+	if (settings->sramLanguage > SYS_LANG_ENGLISH_US)
+		settings->sramLanguage = SYS_LANG_ENGLISH;
 	settings->sramProgressive = SYS_GetProgressiveScan();
 	settings->sramStereo = SYS_GetSoundMode();
 	settings->sramVideo = SYS_GetVideoMode();
