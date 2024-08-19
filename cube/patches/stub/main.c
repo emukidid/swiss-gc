@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include "dolphin/dolformat.h"
+#include "dolphin/dvd.h"
 #include "dolphin/exi.h"
 #include "dolphin/os.h"
 #include "eltorito.h"
@@ -50,7 +51,9 @@ static bool memeq(const void *a, const void *b, size_t size)
 	return true;
 }
 
+uint32_t dvd_inquiry(DVDDriveInfo *info);
 uint32_t dvd_read(void *address, uint32_t length, uint32_t offset);
+void flippy_reset(void);
 
 static void dvd_load(uint32_t offset)
 {
@@ -68,13 +71,13 @@ static void dvd_load(uint32_t offset)
 
 	for (int i = 0; i < DOL_MAX_TEXT; i++) {
 		if (dvd_read(image.text[i], image.textLen[i],
-			offset + image.textData[i]) != image.textLen[i]) return;
+			offset + image.textData[i]) < image.textLen[i]) return;
 		ICInvalidateRange(image.text[i], image.textLen[i]);
 	}
 
 	for (int i = 0; i < DOL_MAX_DATA; i++) {
 		if (dvd_read(image.data[i], image.dataLen[i],
-			offset + image.dataData[i]) != image.dataLen[i]) return;
+			offset + image.dataData[i]) < image.dataLen[i]) return;
 	}
 
 	run(image.entry);
@@ -82,6 +85,21 @@ static void dvd_load(uint32_t offset)
 
 void dvd_main(void)
 {
+	DVDDriveInfo info __attribute((aligned(32)));
+	if (!dvd_inquiry(&info)) return;
+
+	switch (info.releaseDate) {
+		case 0x20220426:
+			flippy_reset();
+		case 0x20220420:
+		{
+			DVDBB2 BB2 __attribute((aligned(32)));
+			if (dvd_read(&BB2, sizeof(BB2), 0x420) != sizeof(BB2)) return;
+			if (BB2.bootFilePosition) dvd_load(BB2.bootFilePosition);
+			break;
+		}
+	}
+
 	uint32_t offset = 17 * DI_SECTOR_SIZE;
 
 	struct di_boot_record boot_record __attribute((aligned(32)));

@@ -34,7 +34,26 @@ struct DVDDiskID {
 	u8 gameVersion;
 	u8 streaming;
 	u8 streamingBufSize;
-	u8 padding[22];
+	u8 padding[18];
+	u32 magic;
 };
+
+typedef struct DVDDriveInfo {
+	u16 revisionLevel;
+	u16 deviceCode;
+	u32 releaseDate;
+	u8 padding[24];
+} DVDDriveInfo;
+
+typedef struct DVDBB2 {
+	u32 bootFilePosition;
+	u32 FSTPosition;
+	u32 FSTLength;
+	u32 FSTMaxLength;
+	void *FSTAddress;
+	u32 userPosition;
+	u32 userLength;
+	u32 padding;
+} DVDBB2;
 
 #endif /* DVD_H */
