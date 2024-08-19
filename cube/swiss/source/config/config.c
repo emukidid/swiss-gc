@@ -1152,27 +1152,65 @@ int config_init(void (*progress_indicator)(char*, int, int)) {
 }
 
 SwissSettings backup;
+static char gameVModePalEntries[][4] = {"DLSP", "G3FD", "G3FF", "G3FP", "G3FS", "GLRD", "GLRF", "GLRP", "GM8P", "GSWD", "GSWF", "GSWI", "GSWP", "GSWS"};
 
-void config_load_current(ConfigEntry *config) {
+void config_load_current(ConfigEntry *entry) {
 	wait_network();
 	// load settings for this game to current settings
 	memcpy(&backup, &swissSettings, sizeof(SwissSettings));
-	swissSettings.gameVMode = config->gameVMode;
-	swissSettings.forceHScale = config->forceHScale;
-	swissSettings.forceVOffset = config->forceVOffset;
-	swissSettings.forceVFilter = config->forceVFilter;
-	swissSettings.forceVJitter = config->forceVJitter;
-	swissSettings.disableDithering = config->disableDithering;
-	swissSettings.forceAnisotropy = config->forceAnisotropy;
-	swissSettings.forceWidescreen = config->forceWidescreen;
-	swissSettings.forcePollRate = config->forcePollRate;
-	swissSettings.invertCStick = config->invertCStick;
-	swissSettings.swapCStick = config->swapCStick;
-	swissSettings.triggerLevel = config->triggerLevel;
-	swissSettings.emulateAudioStream = config->emulateAudioStream;
-	swissSettings.emulateReadSpeed = config->emulateReadSpeed;
-	swissSettings.emulateEthernet = config->emulateEthernet;
-	swissSettings.preferCleanBoot = config->preferCleanBoot;
+	swissSettings.gameVMode = entry->gameVMode;
+	swissSettings.forceHScale = entry->forceHScale;
+	swissSettings.forceVOffset = entry->forceVOffset;
+	swissSettings.forceVFilter = entry->forceVFilter;
+	swissSettings.forceVJitter = entry->forceVJitter;
+	swissSettings.disableDithering = entry->disableDithering;
+	swissSettings.forceAnisotropy = entry->forceAnisotropy;
+	swissSettings.forceWidescreen = entry->forceWidescreen;
+	swissSettings.fontEncode = entry->region == 'J';
+	swissSettings.forcePollRate = entry->forcePollRate;
+	swissSettings.invertCStick = entry->invertCStick;
+	swissSettings.swapCStick = entry->swapCStick;
+	swissSettings.triggerLevel = entry->triggerLevel;
+	swissSettings.emulateAudioStream = entry->emulateAudioStream;
+	swissSettings.emulateReadSpeed = entry->emulateReadSpeed;
+	swissSettings.emulateEthernet = entry->emulateEthernet;
+	swissSettings.preferCleanBoot = entry->preferCleanBoot;
+	
+	if(entry->region != 'P')
+		swissSettings.sramLanguage = SYS_LANG_ENGLISH;
+	
+	if(entry->region == 'P')
+		swissSettings.sramVideo = SYS_VIDEO_PAL;
+	else if(swissSettings.sramVideo == SYS_VIDEO_PAL)
+		swissSettings.sramVideo = SYS_VIDEO_NTSC;
+	
+	if(swissSettings.gameVMode > 0 && swissSettings.disableVideoPatches < 2) {
+		swissSettings.sram60Hz = in_range(swissSettings.gameVMode, 1, 7);
+		swissSettings.sramProgressive = in_range(swissSettings.gameVMode, 4, 7) || in_range(swissSettings.gameVMode, 11, 14);
+		
+		if(swissSettings.sram60Hz) {
+			for(int i = 0; i < sizeof(gameVModePalEntries) / sizeof(*gameVModePalEntries); i++) {
+				if(!strncmp(entry->game_id, gameVModePalEntries[i], 4)) {
+					swissSettings.gameVMode += 7;
+					break;
+				}
+			}
+		}
+		if(swissSettings.sramProgressive && !getDTVStatus())
+			swissSettings.gameVMode = 0;
+		if(swissSettings.sramVideo == SYS_VIDEO_PAL && !swissSettings.sram60Hz)
+			swissSettings.sramProgressive = 0;
+	} else if(swissSettings.sramProgressive) {
+		if(swissSettings.sramVideo == SYS_VIDEO_PAL) {
+			swissSettings.sramProgressive = 0;
+			swissSettings.gameVMode = -2;
+		} else
+			swissSettings.gameVMode = -1;
+	} else
+		swissSettings.gameVMode = 0;
+	
+	if(!strncmp(entry->game_id, "GB3E", 4))
+		swissSettings.sramProgressive = 0;
 }
 
 void config_unload_current() {

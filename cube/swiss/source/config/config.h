@@ -7,6 +7,7 @@ typedef struct {
 	char game_name[64 + 1];
 	char comment[128 + 1];
 	char status[32 + 1];
+	char region;
 	int gameVMode;
 	int forceHScale;
 	short forceVOffset;
@@ -33,7 +34,7 @@ int config_update_global(bool checkConfigDevice);
 int config_update_recent(bool checkConfigDevice);
 int config_init(void (*progress_indicator)(char*, int, int));
 void config_parse_args(int argc, char *argv[]);
-void config_load_current(ConfigEntry *config);
+void config_load_current(ConfigEntry *entry);
 void config_unload_current();
 
 #endif

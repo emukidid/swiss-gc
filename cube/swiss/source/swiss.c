@@ -73,51 +73,9 @@ int needsRefresh = 0;
 int current_view_start = 0;
 int current_view_end = 0;
 
-char *DiscIDNoNTSC[] = {"DLSP64", "G3FD69", "G3FF69", "G3FP69", "G3FS69", "GLRD64", "GLRF64", "GLRP64", "GM8P01", "GSWD64", "GSWF64", "GSWI64", "GSWP64", "GSWS64"};
-
 /* re-init video for a given game */
 void ogc_video__reset()
 {
-	char* gameID = (char*)&GCMDisk;
-	char region = wodeRegionToChar(GCMDisk.RegionCode);
-	int i;
-	
-	swissSettings.fontEncode = region == 'J';
-	if(region != 'P')
-		swissSettings.sramLanguage = SYS_LANG_ENGLISH;
-	if(region == 'P')
-		swissSettings.sramVideo = SYS_VIDEO_PAL;
-	else if(swissSettings.sramVideo == SYS_VIDEO_PAL)
-		swissSettings.sramVideo = SYS_VIDEO_NTSC;
-	
-	if(swissSettings.gameVMode > 0 && swissSettings.disableVideoPatches < 2) {
-		swissSettings.sram60Hz = in_range(swissSettings.gameVMode, 1, 7);
-		swissSettings.sramProgressive = in_range(swissSettings.gameVMode, 4, 7) || in_range(swissSettings.gameVMode, 11, 14);
-		
-		if(swissSettings.sram60Hz) {
-			for(i = 0; i < sizeof(DiscIDNoNTSC)/sizeof(char*); i++) {
-				if(!strncmp(gameID, DiscIDNoNTSC[i], 6)) {
-					swissSettings.gameVMode += 7;
-					break;
-				}
-			}
-		}
-		if(swissSettings.sramProgressive && !getDTVStatus())
-			swissSettings.gameVMode = 0;
-		if(swissSettings.sramVideo == SYS_VIDEO_PAL && !swissSettings.sram60Hz)
-			swissSettings.sramProgressive = 0;
-	} else if(swissSettings.sramProgressive) {
-		if(swissSettings.sramVideo == SYS_VIDEO_PAL) {
-			swissSettings.sramProgressive = 0;
-			swissSettings.gameVMode = -2;
-		} else
-			swissSettings.gameVMode = -1;
-	} else
-		swissSettings.gameVMode = 0;
-	
-	if(!strncmp(gameID, "GB3E51", 6))
-		swissSettings.sramProgressive = 0;
-	
 	/* set TV mode for current game */
 	switch(swissSettings.gameVMode) {
 		case -2:
@@ -2029,6 +1987,7 @@ void load_game() {
 	ConfigEntry *config = calloc(1, sizeof(ConfigEntry));
 	memcpy(config->game_id, &GCMDisk.ConsoleID, 4);
 	memcpy(config->game_name, GCMDisk.GameName, 64);
+	config->region = wodeRegionToChar(GCMDisk.RegionCode);
 	config->forceCleanBoot = is_diag_disc(&GCMDisk);
 	config_find(config);
 	
