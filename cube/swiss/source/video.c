@@ -3,12 +3,13 @@
 #include <malloc.h>
 #include "swiss.h"
 
+#define DEFAULT_FIFO_SIZE (256*1024)//(64*1024) minimum
+static u8 gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
+
 static GXRModeObj *vmode;		//Graphics Mode Object
-void *gp_fifo = NULL;
 u32 *xfb[2] = { NULL, NULL };	//Framebuffers
 int whichfb = 0;				//Frame buffer toggle
 
-#define DEFAULT_FIFO_SIZE    (256*1024)//(64*1024) minimum
 //Video Modes (strings)
 #define NtscIntStr     "NTSC 480i"
 #define NtscDsStr      "NTSC 240p"
@@ -197,6 +198,7 @@ void updateVideoMode(GXRModeObj *m) {
 
 void setVideoMode(GXRModeObj *m) {
 	updateVideoMode(m);
+	GX_AbortFrame ();
 	if(xfb[0]) free(MEM_K1_TO_K0(xfb[0]));
 	if(xfb[1]) free(MEM_K1_TO_K0(xfb[1]));
 	xfb[0] = (u32 *) SYS_AllocateFramebuffer (m);
@@ -215,12 +217,8 @@ void setVideoMode(GXRModeObj *m) {
 	if (m->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
 	else while (VIDEO_GetNextField())   VIDEO_WaitVSync();
 	
-	// setup the fifo and then init GX
-	if(gp_fifo == NULL) {
-		gp_fifo = MEM_K0_TO_K1 (memalign (32, DEFAULT_FIFO_SIZE));
-		memset (gp_fifo, 0, DEFAULT_FIFO_SIZE);
-		GX_Init (gp_fifo, DEFAULT_FIFO_SIZE);
-	}
+	// init GX
+	GX_Init (gp_fifo, DEFAULT_FIFO_SIZE);
 	// clears the bg to color and clears the z buffer
 	GX_SetCopyClear ((GXColor) {0, 0, 0, 0xFF}, GX_MAX_Z24);
 	// init viewport
