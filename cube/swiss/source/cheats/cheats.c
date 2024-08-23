@@ -22,6 +22,7 @@
 #include "patcher.h"
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
+#include <xxhash.h>
 
 static CheatEntries _cheats;
 
@@ -301,14 +302,86 @@ int findCheats(bool silent) {
 	return _cheats.num_cheats;
 }
 
-int applyAllCheats() {
+XXH64_hash_t calcCheatsHash() {
+	XXH64_state_t* const state = XXH64_createState();
+	XXH64_hash_t const seed = 0;
+	XXH64_reset(state, seed);
+	
 	int i = 0, j = 0;
 	for(i = 0; i < _cheats.num_cheats; i++) {
 		CheatEntry *cheat = &_cheats.cheat[i];
-		cheat->enabled = 1;
-		if(getEnabledCheatsSize() > kenobi_get_maxsize())
-			cheat->enabled = 0;
-		j++;
+		for(j = 0; j < cheat->num_codes; j++) {
+			XXH64_update(state, &cheat->codes[j][0], 8);
+		}
 	}
-	return j;
+	XXH64_hash_t const hash = XXH64_digest(state);
+	XXH64_freeState(state);
+	print_gecko("Cheats file hash is: [%08x], %i cheats.\r\n", (u32)(hash&0xFFFFFFFF), _cheats.num_cheats);
+	return hash;
+}
+
+void loadCheatsSelection() {
+	XXH64_hash_t old_hash = 0;
+	file_handle *cheatsSelFile = calloc(1, sizeof(file_handle));
+	char *trimmedGameId = calloc(1, 8);
+	memcpy(trimmedGameId, (char*)&GCMDisk, 6);
+	concatf_path(cheatsSelFile->name, devices[DEVICE_CHEATS]->initial->name, "swiss/cheats/%.6s.chtsel", trimmedGameId);
+	print_gecko("Looking for previous cheat selection file [%s].\r\n", cheatsSelFile->name);
+	// See if we've saved cheat selections for this game before.
+	if(!devices[DEVICE_CHEATS]->readFile(cheatsSelFile, NULL, 0)) {
+		XXH64_hash_t curCheatsHash = calcCheatsHash();
+		// We have, but was the cheats file the same as it is now?
+		devices[DEVICE_CHEATS]->seekFile(cheatsSelFile, -sizeof(old_hash), DEVICE_HANDLER_SEEK_END);
+		if (devices[DEVICE_CHEATS]->readFile(cheatsSelFile, &old_hash, sizeof(XXH64_hash_t)) == sizeof(XXH64_hash_t) && (old_hash == curCheatsHash)) {
+			print_gecko("Hash matched, loading cheat selections.\r\n");
+			devices[DEVICE_CHEATS]->seekFile(cheatsSelFile, 0, DEVICE_HANDLER_SEEK_SET);
+			int i = 0;
+			for(i = 0; i < _cheats.num_cheats; i++) {
+				CheatEntry *cheat = &_cheats.cheat[i];
+				u8 enabled = 0;
+				devices[DEVICE_CHEATS]->readFile(cheatsSelFile, &enabled, 1);
+				cheat->enabled = enabled;
+			}
+		}
+		else {
+			// Mismatch, the cheats.txt file changed, delete the selections as they'd no longer be valid.
+			devices[DEVICE_CHEATS]->deleteFile(cheatsSelFile);
+			print_gecko("Hash mismatch, deleting cheat selection file.\r\n");
+		}
+	}
+	devices[DEVICE_CHEATS]->closeFile(cheatsSelFile);
+	free(cheatsSelFile);
+	free(trimmedGameId);
+}
+
+void saveCheatsSelection() {
+	// Save hash of the cheats file.
+	XXH64_hash_t cheatsHash = calcCheatsHash();
+	
+	file_handle *cheatsSelFile = calloc(1, sizeof(file_handle));
+	char *trimmedGameId = calloc(1, 8);
+	memcpy(trimmedGameId, (char*)&GCMDisk, 6);
+	concatf_path(cheatsSelFile->name, devices[DEVICE_CHEATS]->initial->name, "swiss/cheats/%.6s.chtsel", trimmedGameId);
+	print_gecko("Looking to update cheat selection file [%s].\r\n", cheatsSelFile->name);
+	
+	int i = 0;
+	int anyEnabled = 0;
+	for(i = 0; i < _cheats.num_cheats; i++) {
+		CheatEntry *cheat = &_cheats.cheat[i];
+		u8 enabled = cheat->enabled;
+		devices[DEVICE_CHEATS]->writeFile(cheatsSelFile, &enabled, 1);
+		anyEnabled |= cheat->enabled;
+	}
+	if(!anyEnabled) {
+		devices[DEVICE_CHEATS]->deleteFile(cheatsSelFile);
+		print_gecko("Removed empty cheats file\r\n");
+	} 
+	else {
+		devices[DEVICE_CHEATS]->writeFile(cheatsSelFile, &cheatsHash, sizeof(XXH64_hash_t));
+		print_gecko("Finished writing cheat selection file, hash is: [%08X].\r\n", (u32)(cheatsHash&0xFFFFFFFF));
+	}
+	devices[DEVICE_CHEATS]->closeFile(cheatsSelFile);
+	free(cheatsSelFile);
+	free(trimmedGameId);
+	
 }

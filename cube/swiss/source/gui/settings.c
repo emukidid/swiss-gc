@@ -80,7 +80,7 @@ static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
 	"Force Video Active:\n\nA workaround for GCVideo-DVI v3.0 series, obsoleted by 3.1.",
 	NULL,
 	"Pause for resolution change:\n\nWhen enabled, a change in active video resolution will pause\nthe game for 2 seconds.",
-	"Auto-load all cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. /swiss/cheats/GPOP8D.txt (on a compatible device)\nthen all cheats in the file will be enabled",
+	"Auto-load cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. /swiss/cheats/GPOP8D.txt (on a compatible device)\nthen all previously enabled cheats will be re-enabled",
 	"WiiRD debugging:\n\nDisabled - Boot as normal (default)\nEnabled - This will start a game with the WiiRD debugger enabled & paused\n\nThe WiiRD debugger takes up more memory and can cause issues."
 };
 
@@ -181,7 +181,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 	// Stop DVD Motor on startup [Yes/No]
 	// Enable WiiRD debugging in Games [Yes/No]
 	// Enable File Management [Yes/No]
-	// Auto-load all cheats [Yes/No]
+	// Auto-load cheats [Yes/No]
 	// Init network at startup [Yes/No]
 	
 	/** Current Game Settings - only if a valid GCM file is highlighted (Page 3/) */
@@ -285,7 +285,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force Video Active:", swissSettings.forceVideoActive, option == SET_FORCE_VIDACTIVE, enabledVideoPatches);
 		drawSettingEntryString(page, &page_y_ofs, "Disable Video Patches:", disableVideoPatchesStr[swissSettings.disableVideoPatches], option == SET_ENABLE_VIDPATCH, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Pause for resolution change:", swissSettings.pauseAVOutput, option == SET_PAUSE_AVOUTPUT, true);
-		drawSettingEntryBoolean(page, &page_y_ofs, "Auto-load all cheats:", swissSettings.autoCheats, option == SET_ALL_CHEATS, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Auto-load cheats:", swissSettings.autoCheats, option == SET_ALL_CHEATS, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "WiiRD debugging:", swissSettings.wiirdDebug, option == SET_WIIRDDBG, dbgEnable);
 	}
 	else if(page_num == PAGE_GAME_DEFAULTS) {

@@ -2040,7 +2040,8 @@ void load_game() {
 	// Auto load cheats if the set to auto load and if any are found
 	if(swissSettings.autoCheats) {
 		if(findCheats(true) > 0) {
-			int appliedCount = applyAllCheats();
+			loadCheatsSelection();
+			int appliedCount = getEnabledCheatsCount();
 			sprintf(txtbuffer, "Applied %i cheats", appliedCount);
 			msgBox = DrawPublish(DrawMessageBox(D_INFO, txtbuffer));
 			sleep(1);
@@ -2525,7 +2526,9 @@ int info_game(ConfigEntry *config)
 				num_cheats = findCheats(false);
 			}
 			if(num_cheats != 0) {
+				loadCheatsSelection();
 				DrawCheatsSelector(getRelativeName(&curFile.name[0]));
+				saveCheatsSelection();
 			}
 		}
 		while(padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }

@@ -51,5 +51,6 @@ int getEnabledCheatsSize(void);
 int getEnabledCheatsCount(void);
 CheatEntries* getCheats();
 int findCheats(bool silent);
-int applyAllCheats();
+void loadCheatsSelection();
+void saveCheatsSelection();
 #endif
