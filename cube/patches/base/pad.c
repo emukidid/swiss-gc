@@ -24,10 +24,19 @@
 void CheckStatus(s32 chan, PADStatus *status)
 {
 	if (*VAR_TRIGGER_LEVEL > 0) {
-		if (status->triggerL >= *VAR_TRIGGER_LEVEL)
+		if (status->button & PAD_BUTTON_L)
+			status->triggerL = *VAR_TRIGGER_LEVEL;
+		if (status->triggerL >= *VAR_TRIGGER_LEVEL) {
+			status->triggerL = *VAR_TRIGGER_LEVEL;
 			status->button |= PAD_BUTTON_L;
-		if (status->triggerR >= *VAR_TRIGGER_LEVEL)
+		}
+
+		if (status->button & PAD_BUTTON_R)
+			status->triggerR = *VAR_TRIGGER_LEVEL;
+		if (status->triggerR >= *VAR_TRIGGER_LEVEL) {
+			status->triggerR = *VAR_TRIGGER_LEVEL;
 			status->button |= PAD_BUTTON_R;
+		}
 	}
 
 	u8 igr_type = *VAR_IGR_TYPE & ~0x80;
