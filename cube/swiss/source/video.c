@@ -58,14 +58,14 @@ int getTVFormat() {
 				case VI_DEBUG:
 					switch(swissSettings.sramVideo) {
 						case SYS_VIDEO_PAL:  return swissSettings.sram60Hz ? VI_EURGB60 : VI_PAL;
-						case SYS_VIDEO_MPAL: return VI_MPAL;
+						case SYS_VIDEO_MPAL: return vireg[55] & 1 ? VI_NTSC : VI_MPAL;
 						default:             return VI_NTSC;
 					}
 			}
 		} else {
 			switch(swissSettings.sramVideo) {
 				case SYS_VIDEO_PAL:  return swissSettings.sram60Hz ? VI_EURGB60 : VI_PAL;
-				case SYS_VIDEO_MPAL: return VI_MPAL;
+				case SYS_VIDEO_MPAL: return vireg[55] & 1 ? VI_NTSC : VI_MPAL;
 				default:             return VI_NTSC;
 			}
 		}
