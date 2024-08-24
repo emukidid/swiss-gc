@@ -50,7 +50,6 @@ static void driveInfoCallback(s32 result, dvdcmdblk *block) {
 /* Initialise Video, PAD, DVD, Font */
 void Initialise (void)
 {
-	VIDEO_Init ();
 	PAD_Init ();  
 	DVD_Init(); 
 	DVD_InquiryAsync(&commandBlock, &driveInfo, driveInfoCallback);

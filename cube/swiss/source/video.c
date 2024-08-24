@@ -51,15 +51,23 @@ int getTVFormat() {
 	if(vmode == NULL) {
 		volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
 		int format = (vireg[1] >> 8) & 3;
-		switch(format) {
-			case VI_NTSC:
-				return swissSettings.sramVideo == SYS_VIDEO_PAL ? VI_EURGB60 : VI_NTSC;
-			case VI_DEBUG:
-				switch(swissSettings.sramVideo) {
-					case SYS_VIDEO_PAL:  return swissSettings.sram60Hz ? VI_EURGB60 : VI_PAL;
-					case SYS_VIDEO_MPAL: return VI_MPAL;
-					default:             return VI_NTSC;
-				}
+		if(vireg[1] & 1) {
+			switch(format) {
+				case VI_NTSC:
+					return swissSettings.sramVideo == SYS_VIDEO_PAL ? VI_EURGB60 : VI_NTSC;
+				case VI_DEBUG:
+					switch(swissSettings.sramVideo) {
+						case SYS_VIDEO_PAL:  return swissSettings.sram60Hz ? VI_EURGB60 : VI_PAL;
+						case SYS_VIDEO_MPAL: return VI_MPAL;
+						default:             return VI_NTSC;
+					}
+			}
+		} else {
+			switch(swissSettings.sramVideo) {
+				case SYS_VIDEO_PAL:  return swissSettings.sram60Hz ? VI_EURGB60 : VI_PAL;
+				case SYS_VIDEO_MPAL: return VI_MPAL;
+				default:             return VI_NTSC;
+			}
 		}
 		return format;
 	}
@@ -75,12 +83,15 @@ int getTVFormat() {
 int getScanMode() {
 	if(vmode == NULL) {
 		volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
-		if(vireg[54] & 1)
+		if(vireg[1] & 1) {
+			if(vireg[54] & 1)
+				return VI_PROGRESSIVE;
+			else if((vireg[1] >> 2) & 1)
+				return VI_NON_INTERLACE;
+		} else if((vireg[55] & 1) && swissSettings.sramProgressive)
 			return VI_PROGRESSIVE;
-		else if((vireg[1] >> 2) & 1)
-			return VI_NON_INTERLACE;
-		else
-			return VI_INTERLACE;
+		
+		return VI_INTERLACE;
 	}
 	return vmode->viTVMode & 3;
 }
@@ -192,6 +203,7 @@ void updateVideoMode(GXRModeObj *m) {
 		m->viWidth = 704;
 		m->viXOrigin = 8;
 	}
+	VIDEO_Init ();
 	VIDEO_Configure (m);
 	VIDEO_Flush ();
 }
