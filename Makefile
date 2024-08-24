@@ -24,10 +24,15 @@ DOL2GCI       = $(BUILDTOOLS)/dol2gci
 endif
 DOL2IPL       = $(BUILDTOOLS)/dol2ipl.py
 
-ifneq ($(shell which mkisofs),)
+ifneq ($(shell which mkisofs 2>/dev/null),)
 MKISOFS       = mkisofs
 else
 MKISOFS       = xorrisofs
+endif
+ifneq ($(shell which dkp-pacman 2>/dev/null),)
+PACMAN        = dkp-pacman
+else
+PACMAN        = pacman
 endif
 
 BUILT_PATCHES = patches
@@ -55,6 +60,7 @@ compile-patches:
 	@cd $(PATCHES) && $(MAKE)
 
 compile: # compile
+	@$(PACMAN) -Q gamecube-tools-git libogc2-git ppc-libmad ppc-libpsoarchive ppc-libxxhash ppc-zlib-ng-compat
 	@cd $(SOURCES)/swiss && $(MAKE)
 
 compile-packer:
