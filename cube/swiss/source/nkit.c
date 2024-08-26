@@ -1317,6 +1317,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x1B, 0xCCBB, 0x6611EBB9, 0x5542A9570DFCCA68,    1376256, +1458601984, {      94248,       +4056, 6496, 0x6EC8 }, "Ultimate Codes for Use with Animal Crossing" },
 	{{ "GNHE5d\x00\x00" }, false, 0x25, 0xCCBB, 0x105DDF80, 0x2860F18D229E6724,   11837440, +1448140800, {      94248,       +4056, 6496, 0x9217 }, "MaxPlay" },
 	{{ "GNHE5d\x00\x00" }, false, 0x28, 0x3E90, 0x56FE3B5E, 0x6544CBF254A0C4CD,    2197504, +1457780736, {      94248,       +4056, 6496, 0xE312 }, "Advance Game Port" },
+	{{ "GNHE5d\x00\x00" }, false, 0x2C, 0x3E90, 0x0E8BB8D0, 0xCB5D5096FE9FD4E8,    2045952, +1457932288, {      94248,       +4056, 6496, 0xB20B }, "Advance Game Port" },
 	{{ "GNHE5d\x00\x00" }, false, 0x2C, 0xCCBB, 0x11A23CFC, 0x9D96DC5BD2CAB822,    3047424, +1456930816, {      94248,       +4056, 6496, 0x4C9F }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x2D, 0xCCBB, 0x20410C84, 0xFD841AF194632025,     968704, +1459009536, {      94248,       +4056, 6496, 0xB8A4 }, "Action Replay Ultimate Codes for Use with Wario World" },
 	{{ "GNHE5d\x00\x00" }, false, 0x2E, 0xCCBB, 0x2E098A57, 0xED61A06E328BCADC,     929792, +1459048448, {      94248,       +4056, 6496, 0x71DF }, "CD avec les Codes Exclusifs et Inédits pour le Jeu Metroid Prime" },
@@ -1326,6 +1327,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x3A, 0xCCBB, 0xA1C6B7A4, 0xE00BE64FE685E811,    1107968, +1458870272, {      94248,       +4056, 6496, 0xA9C4 }, "CD Exclusif avec les Codes pour les Jeux Resident Evil et Resident Evil Zero" },
 	{{ "GNHE5d\x00\x00" }, false, 0x3C, 0xCCBB, 0xB1B28589, 0xBA2B9164B083E0A3,    1714176, +1458264064, {      94248,       +4056, 6496, 0x3310 }, "Action Replay Ultimate Codes Greatest Hits: Best Buy Achievers Weekend 2004" },
 	{{ "GNHE5d\x00\x00" }, false, 0x3D, 0xCCBB, 0x1570E92E, 0x987DD6D6992B0FCD,     774144, +1459204096, {      94248,       +4056, 6496, 0x6923 }, "Cube CD 19 (38)" },
+	{{ "GNHE5d\x00\x00" }, false, 0x42, 0x685B, 0x7B642B57, 0x1BB6CC5F6B2F8B1A,     647168, +1459331072, {      94248,       +4056, 6496, 0x1F49 }, "SD Media Launcher for GameCube / Wii" },
 	{{ "GNHE5d\x00\x00" }, false, 0x42, 0xCCBB, 0xA7648498, 0x3C56B5D0829E5870,    2043904, +1457934336, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 08 (27)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x44, 0xCCBB, 0x9CB75B81, 0x775708DF885B4B68,    2471936, +1457506304, {      94248,       +4056, 6496, 0x329E }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x46, 0x3E90, 0xF9FEDBF8, 0xD3397948AA37DA17,    1181696, +1458796544, {      94248,       +4056, 6496, 0x8508 }, "Action Replay Ultimate Cheats for Use with Pokémon Colosseum" },
@@ -2105,7 +2107,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (1996)
+#define REDUMP_COUNT (1998)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
