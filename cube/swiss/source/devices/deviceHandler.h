@@ -123,7 +123,8 @@ typedef char* (* _fn_status)(file_handle*);
 #define EMU_READ_SPEED		0x20000000
 #define EMU_ETHERNET		0x10000000
 #define EMU_MEMCARD			0x8000000
-#define EMU_BUS_ARBITER		0x1
+#define EMU_BUS_ARBITER		0x2
+#define EMU_NO_PAUSING		0x1
 #define EMU_NONE			0x0
 
 // Device locations

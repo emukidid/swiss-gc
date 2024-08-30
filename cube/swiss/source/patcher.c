@@ -182,7 +182,7 @@ int install_code(int final)
 				patch     = !_ideexi_version ? ideexi_v1_card_bin      : ideexi_v2_card_bin;
 				patchSize = !_ideexi_version ? ideexi_v1_card_bin_size : ideexi_v2_card_bin_size;
 				break;
-			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
+			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
 				patch     = !_ideexi_version ? ideexi_v1_eth_bin      : ideexi_v2_eth_bin;
 				patchSize = !_ideexi_version ? ideexi_v1_eth_bin_size : ideexi_v2_eth_bin_size;
 				break;
@@ -208,7 +208,7 @@ int install_code(int final)
 					patch     = sd_v1_card_bin;
 					patchSize = sd_v1_card_bin_size;
 					break;
-				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
 					patch     = sd_v1_eth_bin;
 					patchSize = sd_v1_eth_bin_size;
 					break;
@@ -230,7 +230,7 @@ int install_code(int final)
 					patch     = sd_v2_card_bin;
 					patchSize = sd_v2_card_bin_size;
 					break;
-				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
 					patch     = sd_v2_eth_bin;
 					patchSize = sd_v2_eth_bin_size;
 					break;
@@ -295,7 +295,7 @@ int install_code(int final)
 	else if(devices[DEVICE_CUR] == &__device_fsp) {
 		if (devices[DEVICE_PATCHES] != &__device_fsp) {
 			switch (devices[DEVICE_CUR]->emulated()) {
-				case EMU_READ | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_BUS_ARBITER | EMU_NO_PAUSING:
 					patch     = fsp_bin;
 					patchSize = fsp_bin_size;
 					break;
@@ -304,15 +304,15 @@ int install_code(int final)
 			}
 		} else {
 			switch (devices[DEVICE_CUR]->emulated()) {
-				case EMU_READ | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_BUS_ARBITER | EMU_NO_PAUSING:
 					patch     = fsp_bin;
 					patchSize = fsp_bin_size;
 					break;
-				case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER | EMU_NO_PAUSING:
 					patch     = fsp_dtk_bin;
 					patchSize = fsp_dtk_bin_size;
 					break;
-				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
 					patch     = fsp_eth_bin;
 					patchSize = fsp_eth_bin_size;
 					break;
@@ -355,7 +355,7 @@ int install_code(int final)
 					patch     = gcloader_v2_card_bin;
 					patchSize = gcloader_v2_card_bin_size;
 					break;
-				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
 					patch     = gcloader_v2_eth_bin;
 					patchSize = gcloader_v2_eth_bin_size;
 					break;
@@ -377,7 +377,7 @@ int install_code(int final)
 				patch     = flippy_card_bin;
 				patchSize = flippy_card_bin_size;
 				break;
-			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
+			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
 				patch     = flippy_eth_bin;
 				patchSize = flippy_eth_bin_size;
 				break;
@@ -7352,7 +7352,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *VISetRegs = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (VISetRegs) {
-			if (swissSettings.pauseAVOutput) {
+			if (swissSettings.pauseAVOutput && !(devices[DEVICE_CUR]->emulated() & EMU_NO_PAUSING)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -7371,7 +7371,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *__VIRetraceHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__VIRetraceHandler) {
-			if (swissSettings.pauseAVOutput) {
+			if (swissSettings.pauseAVOutput && !(devices[DEVICE_CUR]->emulated() & EMU_NO_PAUSING)) {
 				switch (j) {
 					case 3:
 					case 4:

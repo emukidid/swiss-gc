@@ -315,7 +315,7 @@ u32 deviceHandler_Flippy_emulated() {
 	if (swissSettings.emulateReadSpeed)
 		return EMU_READ | EMU_READ_SPEED;
 	else if (swissSettings.emulateEthernet && (devices[DEVICE_CUR]->emulable & EMU_ETHERNET))
-		return EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER;
+		return EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING;
 	else if (swissSettings.emulateMemoryCard)
 		return EMU_READ | EMU_MEMCARD;
 	else
