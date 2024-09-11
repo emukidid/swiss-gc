@@ -87,17 +87,19 @@ void ogc_video__reset()
 			newmode = &TVNtsc480Prog;
 			break;
 		case 0:
-			if(swissSettings.sramVideo == SYS_VIDEO_MPAL && !getDTVStatus()) {
-				sprintf(txtbuffer, "Video Mode: %s", "PAL-M 480i");
-				newmode = &TVMpal480IntDf;
-			}
-			else if(swissSettings.sramVideo == SYS_VIDEO_PAL) {
-				sprintf(txtbuffer, "Video Mode: %s", "PAL 576i");
-				newmode = &TVPal576IntDfScale;
-			}
-			else {
-				sprintf(txtbuffer, "Video Mode: %s", "NTSC 480i");
-				newmode = &TVNtsc480IntDf;
+			switch(swissSettings.sramVideo) {
+				case SYS_VIDEO_PAL:
+					sprintf(txtbuffer, "Video Mode: %s", "PAL 576i");
+					newmode = &TVPal576IntDfScale;
+					break;
+				case SYS_VIDEO_MPAL:
+					sprintf(txtbuffer, "Video Mode: %s", "PAL-M 480i");
+					newmode = &TVMpal480IntDf;
+					break;
+				default:
+					sprintf(txtbuffer, "Video Mode: %s", "NTSC 480i");
+					newmode = &TVNtsc480IntDf;
+					break;
 			}
 			break;
 		case 1 ... 3:
@@ -115,6 +117,9 @@ void ogc_video__reset()
 		case 11 ... 14:
 			sprintf(txtbuffer, "Video Mode: %s %s\n%s Mode selected.", "PAL", gameVModeStr[swissSettings.gameVMode], swissSettings.sram60Hz ? "60Hz":"50Hz");
 			newmode = &TVPal576ProgScale;
+			break;
+		default:
+			newmode = NULL;
 			break;
 	}
 	if((newmode != NULL) && (newmode != getVideoMode())) {

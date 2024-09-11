@@ -1176,12 +1176,13 @@ void config_load_current(ConfigEntry *entry) {
 	swissSettings.emulateEthernet = entry->emulateEthernet;
 	swissSettings.preferCleanBoot = entry->preferCleanBoot;
 	
-	if(entry->region != 'P')
+	if(!strchr("PA?", entry->region))
 		swissSettings.sramLanguage = SYS_LANG_ENGLISH;
 	
 	if(entry->region == 'P')
 		swissSettings.sramVideo = SYS_VIDEO_PAL;
-	else if(swissSettings.sramVideo == SYS_VIDEO_PAL)
+	else if((swissSettings.sramVideo == SYS_VIDEO_PAL && !strchr("A?", entry->region)) ||
+			(swissSettings.sramVideo == SYS_VIDEO_MPAL && getDTVStatus()))
 		swissSettings.sramVideo = SYS_VIDEO_NTSC;
 	
 	if(swissSettings.gameVMode > 0 && swissSettings.disableVideoPatches < 2) {

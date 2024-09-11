@@ -239,11 +239,11 @@ s32 deviceHandler_WODE_deinit(file_handle* file) {
 }
 
 char wodeRegionToChar(int region) {
-	return wode_regions[region];
+	return in_range(region, 0, 4) ? wode_regions[region] : '?';
 }
 
 char *wodeRegionToString(int region) {
-	return wode_regions_str[region];
+	return in_range(region, 0, 4) ? wode_regions_str[region] : "UNK";
 }
 
 s32 deviceHandler_WODE_closeFile(file_handle* file) {
