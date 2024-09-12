@@ -10,6 +10,7 @@
 #include <string.h>
 #include <math.h>
 #include <malloc.h>
+#include <libdeflate.h>
 #include <zlib.h>
 #include "swiss.h"
 #include "main.h"
@@ -16961,7 +16962,10 @@ int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int
 			patched = patch(data, length, gameID, type);
 			
 			memcpy(dol, &dolhdr, DOLHDRLENGTH);
-			compress2(zlib->data, &zlib->deflateLength, (Bytef *)dol2, zlib->inflateLength, Z_BEST_COMPRESSION);
+			
+			struct libdeflate_compressor *compressor = libdeflate_alloc_compressor(7);
+			if (compressor) zlib->deflateLength = libdeflate_zlib_compress(compressor, (Bytef *)dol2, zlib->inflateLength, zlib->data, zlib->deflateLength);
+			libdeflate_free_compressor(compressor);
 			
 			length = DOLSize(data);
 			data = realloc(data, length);

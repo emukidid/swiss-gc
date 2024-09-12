@@ -60,7 +60,7 @@ compile-patches:
 	@cd $(PATCHES) && $(MAKE)
 
 compile: # compile
-	@$(PACMAN) -Q gamecube-tools-git libogc2-git ppc-libmad ppc-libpsoarchive ppc-libxxhash ppc-zlib-ng-compat
+	@$(PACMAN) -Q gamecube-tools-git libogc2-git ppc-libdeflate ppc-libmad ppc-libpsoarchive ppc-libxxhash ppc-zlib-ng-compat
 	@cd $(SOURCES)/swiss && $(MAKE)
 
 compile-packer:
