@@ -156,7 +156,7 @@ char *stripInvalidChars(char *str)
 }
 
 /* Autoboot DOL from the current device, from the current autoboot_dols list */
-char *autoboot_dols[] = { "/boot.dol", "/boot2.dol" }; // Keep this list sorted
+char *autoboot_dols[] = {"*/boot.dol", "*/boot2.dol", "*/swiss_r[1-9]*.dol"}; // Keep this list sorted
 void load_auto_dol() {
 	u8 rev_buf[sizeof(GITREVISION) - 1]; // Don't include the NUL termination in the comparison
 
@@ -166,7 +166,7 @@ void load_auto_dol() {
 	int dirEntryCount = getSortedDirEntryCount();
 	for (int i = 0; i < dirEntryCount; i++) {
 		for (int f = 0; f < (sizeof(autoboot_dols) / sizeof(char *)); f++) {
-			if (endsWith(dirEntries[i]->name, autoboot_dols[f])) {
+			if (!fnmatch(autoboot_dols[f], dirEntries[i]->name, FNM_PATHNAME | FNM_CASEFOLD)) {
 				// Official Swiss releases have the short commit hash appended to
 				// the end of the DOL, compare it to our own to make sure we don't
 				// bootloop the same version
