@@ -745,7 +745,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 	if(isRoot) {
 		// Add the disc itself as a "file"
 		*dir = calloc(numFiles, sizeof(file_handle));
-		concatf_path((*dir)[idx].name, file->name, "%.64s.gcm", diskHeader->GameName);
+		concatf_path((*dir)[idx].name, file->name, "%.64s [%.6s].gcm", stripInvalidChars(diskHeader->GameName), diskHeader);
 		(*dir)[idx].fileBase = 0;
 		(*dir)[idx].offset = 0;
 		(*dir)[idx].size = DISC_SIZE;

@@ -115,16 +115,44 @@ char *getExternalPath(char *path)
 }
 
 char stripbuffer[PATHNAME_MAX];
-char *stripInvalidChars(char *str) {
-	strcpy(stripbuffer, str);
-	int i = 0;
-	for(i = 0; i < strlen(stripbuffer); i++) {
-		if(str[i] == '\\' || str[i] == '/' || str[i] == ':'|| str[i] == '*'
-		|| str[i] == '?'|| str[i] == '"'|| str[i] == '<'|| str[i] == '>'|| str[i] == '|') {
-			stripbuffer[i] = '_';
+char *stripInvalidChars(char *str)
+{
+	char *dst = stripbuffer;
+
+	for (char *src = str; *src; src++) {
+		switch (*src) {
+			case 0x00 ... 0x1F:
+			case 0x7F:
+				*dst++ = ' ';
+				break;
+			case '"':
+			case '*':
+			case '<':
+			case '>':
+				*dst++ = '\'';
+				break;
+			case '/':
+			case ':':
+			case '\\':
+			case '|':
+				if (src > str) {
+					if (src[-1] != ' ' && src[1] == ' ')
+						*dst++ = ' ';
+					*dst++ = '-';
+					if (src[-1] == ' ' && src[1] != ' ')
+						*dst++ = ' ';
+				}
+				break;
+			case '?':
+				break;
+			default:
+				*dst++ = *src;
+				break;
 		}
 	}
-	return &stripbuffer[0];
+
+	*dst++ = '\0';
+	return stripbuffer;
 }
 
 /* Autoboot DOL from the current device, from the current autoboot_dols list */

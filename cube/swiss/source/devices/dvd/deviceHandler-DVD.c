@@ -355,7 +355,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 
 			*dir = reallocarray(*dir, num_entries + 1, sizeof(file_handle));
 			memset(&(*dir)[num_entries], 0, sizeof(file_handle));
-			concatf_path((*dir)[num_entries].name, ffile->name, "%.64s.gcm", diskHeader->GameName);
+			concatf_path((*dir)[num_entries].name, ffile->name, "%.64s [%.6s].gcm", stripInvalidChars(diskHeader->GameName), diskHeader);
 			(*dir)[num_entries].fileBase = 0;
 			(*dir)[num_entries].offset = 0;
 			(*dir)[num_entries].size = DISC_SIZE;
