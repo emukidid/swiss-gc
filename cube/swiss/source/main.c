@@ -162,8 +162,8 @@ int main(int argc, char *argv[])
 		}
 		print_gecko("Arena Size: %iKb\r\n",(SYS_GetArena1Hi()-SYS_GetArena1Lo())/1024);
 		print_gecko("DVD Drive Present? %s\r\n",swissSettings.hasDVDDrive?"Yes":"No");
-		print_gecko("GIT Commit: %s\r\n", GITREVISION);
-		print_gecko("GIT Revision: %s\r\n", GITVERSION);
+		print_gecko("GIT Commit: %s\r\n", GIT_COMMIT);
+		print_gecko("GIT Revision: %s\r\n", GIT_REVISION);
 	}
 	
 	// Go through all devices with FEAT_BOOT_DEVICE feature and set it as current if one is available

@@ -155,10 +155,13 @@ char *stripInvalidChars(char *str)
 	return stripbuffer;
 }
 
+static const char git_tags[][sizeof(GIT_COMMIT)] = {
+#include "tags.h"
+};
 /* Autoboot DOL from the current device, from the current autoboot_dols list */
 char *autoboot_dols[] = {"*/boot.dol", "*/boot2.dol", "*/swiss_r[1-9]*.dol"}; // Keep this list sorted
 void load_auto_dol() {
-	u8 rev_buf[sizeof(GITREVISION) - 1]; // Don't include the NUL termination in the comparison
+	char trailer[sizeof(GIT_COMMIT) - 1]; // Don't include the NUL termination in the comparison
 
 	memcpy(&curDir, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 	scanFiles();
@@ -170,9 +173,10 @@ void load_auto_dol() {
 				// Official Swiss releases have the short commit hash appended to
 				// the end of the DOL, compare it to our own to make sure we don't
 				// bootloop the same version
-				devices[DEVICE_CUR]->seekFile(dirEntries[i], -sizeof(rev_buf), DEVICE_HANDLER_SEEK_END);
-				devices[DEVICE_CUR]->readFile(dirEntries[i], rev_buf, sizeof(rev_buf));
-				if (memcmp(GITREVISION, rev_buf, sizeof(rev_buf)) != 0) {
+				devices[DEVICE_CUR]->seekFile(dirEntries[i], -sizeof(trailer), DEVICE_HANDLER_SEEK_END);
+				devices[DEVICE_CUR]->readFile(dirEntries[i], trailer, sizeof(trailer));
+				if (memcmp(GIT_COMMIT, trailer, sizeof(trailer)) != 0 &&
+					memmem(git_tags, sizeof(git_tags), trailer, sizeof(trailer)) == NULL) {
 					// Emulate some of the menu's behavior to satisfy boot_dol
 					curSelection = i;
 					memcpy(&curFile, dirEntries[i], sizeof(file_handle));
