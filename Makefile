@@ -72,7 +72,7 @@ build:
 	# create initial DIR structure and various DOLs 
 	@mkdir $(DIST)
 	@mkdir $(DIST)/DOL
-	@mkdir $(DIST)/DOL/Viper
+	@mkdir $(DIST)/DOL/Legacy
 	@mkdir $(DIST)/FlippyDrive
 	@mkdir $(DIST)/GCLoader
 	@mkdir $(DIST)/ISO
@@ -81,10 +81,10 @@ build:
 	@cp $(PACKER)/swiss.dol $(DIST)/DOL/$(SVN_REVISION).dol
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION).dol
 	@cp $(SOURCES)/swiss/swiss.elf $(DIST)/DOL/$(SVN_REVISION).elf
-	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz.dol -m
-	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-lz.dol
-	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol -v -m
-	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Viper/$(SVN_REVISION)-lz-viper.dol
+	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/Legacy/$(SVN_REVISION)-lz.dol -m
+	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Legacy/$(SVN_REVISION)-lz.dol
+	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/Legacy/$(SVN_REVISION)-lz-viper.dol -v -m
+	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Legacy/$(SVN_REVISION)-lz-viper.dol
 	@cp $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/FlippyDrive/boot.dol
 	# make ISOs and WKF firmware
 	# GCLoader
@@ -114,17 +114,17 @@ recovery-iso:
 
 package:   # create distribution package
 	@mkdir $(SVN_REVISION)
-	@mv $(DIST)/DOL $(SVN_REVISION)
-	@mv $(DIST)/GCI $(SVN_REVISION)
-	@mv $(DIST)/ISO $(SVN_REVISION)
-	@mv $(DIST)/WODE $(SVN_REVISION)
-	@mv $(DIST)/WiikeyFusion $(SVN_REVISION)
-	@mv $(DIST)/GCLoader $(SVN_REVISION)
-	@mv $(DIST)/FlippyDrive $(SVN_REVISION)
 	@mv $(DIST)/ActionReplay $(SVN_REVISION)
-	@mv $(DIST)/USBGeckoRemoteServer $(SVN_REVISION)
-	@mv $(DIST)/IGR $(SVN_REVISION)
+	@mv $(DIST)/Apploader $(SVN_REVISION)
+	@mv $(DIST)/DOL $(SVN_REVISION)
+	@mv $(DIST)/FlippyDrive $(SVN_REVISION)
+	@mv $(DIST)/GCLoader $(SVN_REVISION)
+	@mv $(DIST)/ISO $(SVN_REVISION)
+	@mv $(DIST)/MemoryCard $(SVN_REVISION)
 	@mv $(DIST)/PicoBoot $(SVN_REVISION)
+	@mv $(DIST)/USBGeckoRemoteServer $(SVN_REVISION)
+	@mv $(DIST)/WiikeyFusion $(SVN_REVISION)
+	@mv $(DIST)/WODE $(SVN_REVISION)
 	@find ./$(SVN_REVISION) -type f -print0 | xargs -0 sha256sum > $(SVN_REVISION).sha256
 	@mv $(SVN_REVISION).sha256 $(SVN_REVISION)
 	@git log -n 4 > $(SVN_REVISION)-changelog.txt
@@ -144,24 +144,25 @@ build-AR: # make ActionReplay
 #------------------------------------------------------------------
 
 build-gci: # make GCI for memory cards
-	@mkdir $(DIST)/GCI
-	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/GCI/boot.gci boot.dol
-	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/GCI/xeno.gci xeno.dol
-	@cp $(BUILDTOOLS)/dol2gci* $(DIST)/GCI/
+	@mkdir $(DIST)/MemoryCard
+	@mkdir $(DIST)/MemoryCard/dol2gci
+	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/MemoryCard/boot.gci boot.dol
+	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/MemoryCard/xeno.gci xeno.dol
+	@cp $(BUILDTOOLS)/dol2gci* $(DIST)/MemoryCard/dol2gci/
 
 #------------------------------------------------------------------
 
 build-geckoserver:
 	@cd $(GECKOSERVER) && $(MAKE)
 	@mkdir $(DIST)/USBGeckoRemoteServer
-	@mv $(GECKOSERVER)/swissserver* $(DIST)/USBGeckoRemoteServer/
+	@cp $(GECKOSERVER)/swissserver* $(DIST)/USBGeckoRemoteServer/
 
 #------------------------------------------------------------------
 
 build-ipl:
-	@mkdir $(DIST)/IGR
-	@mkdir $(DIST)/IGR/swiss
-	@mkdir $(DIST)/IGR/swiss/patches
+	@mkdir $(DIST)/Apploader
+	@mkdir $(DIST)/Apploader/swiss
+	@mkdir $(DIST)/Apploader/swiss/patches
 	@mkdir $(DIST)/PicoBoot
-	@$(DOL2IPL) $(DIST)/IGR/swiss/patches/apploader.img $(PACKER)/reboot.dol *$(SVN_REVISION).dol
+	@$(DOL2IPL) $(DIST)/Apploader/swiss/patches/apploader.img $(PACKER)/reboot.dol *$(SVN_REVISION).dol
 	@$(DOL2IPL) $(DIST)/PicoBoot/$(SVN_REVISION).uf2 $(PACKER)/reboot.dol
