@@ -298,6 +298,7 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	return res;
 }
 
+static char triggerLevelEntries[][4] = {"GKGE", "GKGJ", "GKGP", "GY2E", "GY2J", "GY2P", "GY3E", "GY3J", "GYBE", "GYBJ", "GYBP"};
 static char emulateReadSpeedEntries[][4] = {"GQSD", "GQSE", "GQSF", "GQSI", "GQSP", "GQSS", "GTOJ"};
 static char emulateEthernetEntries[][4] = {"DPSJ", "GHEE", "GHEJ", "GKYE", "GKYJ", "GKYP", "GM4E", "GM4J", "GM4P", "GPJJ", "GPOE", "GPOJ", "GPOP", "GPSE", "GPSJ", "GPSP", "GTEE", "GTEJ", "GTEP", "GTEW", "PHEJ"};
 
@@ -322,6 +323,12 @@ void config_defaults(ConfigEntry *entry) {
 	entry->emulateEthernet = swissSettings.emulateEthernet;
 	entry->preferCleanBoot = swissSettings.preferCleanBoot;
 
+	for(int i = 0; i < sizeof(triggerLevelEntries) / sizeof(*triggerLevelEntries); i++) {
+		if(!strncmp(entry->game_id, triggerLevelEntries[i], 4)) {
+			entry->triggerLevel = 0;
+			break;
+		}
+	}
 	for(int i = 0; i < sizeof(emulateReadSpeedEntries) / sizeof(*emulateReadSpeedEntries); i++) {
 		if(!strncmp(entry->game_id, emulateReadSpeedEntries[i], 4)) {
 			entry->emulateReadSpeed = 1;
