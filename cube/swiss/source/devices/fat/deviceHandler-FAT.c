@@ -168,7 +168,7 @@ s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
 	f_lseek(file->ffsFp, file->offset);
 	
 	UINT bytes_read;
-	if(f_read(file->ffsFp, buffer, length, &bytes_read) != FR_OK || bytes_read != length) {
+	if(f_read(file->ffsFp, buffer, length, &bytes_read) != FR_OK) {
 		return -1;
 	}
 	file->offset = f_tell(file->ffsFp);
@@ -189,7 +189,7 @@ s32 deviceHandler_FAT_writeFile(file_handle* file, const void* buffer, u32 lengt
 	f_lseek(file->ffsFp, file->offset);
 	
 	UINT bytes_written;
-	if(f_write(file->ffsFp, buffer, length, &bytes_written) != FR_OK || bytes_written != length) {
+	if(f_write(file->ffsFp, buffer, length, &bytes_written) != FR_OK) {
 		return -1;
 	}
 	file->offset = f_tell(file->ffsFp);

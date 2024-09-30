@@ -6,6 +6,7 @@
 #include "main.h"
 #include "util.h"
 #include "dvd.h"
+#include "aram/sidestep.h"
 #include "devices/filemeta.h"
 
 
@@ -159,26 +160,43 @@ static const char git_tags[][sizeof(GIT_COMMIT)] = {
 #include "tags.h"
 };
 /* Autoboot DOL from the current device, from the current autoboot_dols list */
-char *autoboot_dols[] = {"*/boot.dol", "*/boot2.dol", "*/swiss_r[1-9]*.dol"}; // Keep this list sorted
+static const char *autoboot_dols[] = {
+	"atac:/[abxyz].dol",
+	"atac:/start.dol",
+	"atac:/ipl.dol",
+	"sd[abc]:/[abxyz].dol",
+	"sd[abc]:/start.dol",
+	"sd[abc]:/ipl.dol",
+	"sd[ab]:/AUTOEXEC.DOL",
+	"*/boot.dol",
+	"*/boot2.dol",
+	"*/swiss_r[1-9]*.dol"
+};
 void load_auto_dol() {
-	char trailer[sizeof(GIT_COMMIT)]; // Don't include the NUL termination in the comparison
-	size_t trailer_size;
+	char trailer[sizeof(GIT_COMMIT) - 1]; // Don't include the NUL termination in the comparison
+	int trailer_size;
 
 	memcpy(&curDir, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 	scanFiles();
 	file_handle** dirEntries = getSortedDirEntries();
 	int dirEntryCount = getSortedDirEntryCount();
-	for (int i = 0; i < dirEntryCount; i++) {
-		for (int f = 0; f < (sizeof(autoboot_dols) / sizeof(char *)); f++) {
+	for (int f = 0; f < sizeof(autoboot_dols) / sizeof(*autoboot_dols); f++) {
+		for (int i = 0; i < dirEntryCount; i++) {
 			if (!fnmatch(autoboot_dols[f], dirEntries[i]->name, FNM_PATHNAME | FNM_CASEFOLD)) {
-				// Official Swiss releases have the short commit hash appended to
-				// the end of the DOL, compare it to our own to make sure we don't
-				// bootloop the same version
-				trailer_size = dirEntries[i]->size % 8 ? 7 : sizeof(trailer) - 1;
-				devices[DEVICE_CUR]->seekFile(dirEntries[i], -trailer_size, DEVICE_HANDLER_SEEK_END);
-				devices[DEVICE_CUR]->readFile(dirEntries[i], trailer, trailer_size);
-				if (memcmp(GIT_COMMIT, trailer, trailer_size) != 0 &&
-					memmem(git_tags, sizeof(git_tags), trailer, trailer_size) == NULL) {
+				DOLHEADER dolhdr;
+				devices[DEVICE_CUR]->seekFile(dirEntries[i], 0, DEVICE_HANDLER_SEEK_SET);
+				if (devices[DEVICE_CUR]->readFile(dirEntries[i], &dolhdr, DOLHDRLENGTH) == DOLHDRLENGTH) {
+					// Official Swiss releases have the short commit hash appended to
+					// the end of the DOL, compare it to our own to make sure we don't
+					// bootloop the same version
+					devices[DEVICE_CUR]->seekFile(dirEntries[i], DOLSize(&dolhdr), DEVICE_HANDLER_SEEK_SET);
+					trailer_size = devices[DEVICE_CUR]->readFile(dirEntries[i], trailer, sizeof(trailer));
+				} else {
+					trailer_size = 0;
+				}
+				if ((*autoboot_dols[f] == '*' && trailer_size < 7) || (trailer_size >= 7 &&
+					memcmp(GIT_COMMIT, trailer, trailer_size) != 0 &&
+					memmem(git_tags, sizeof(git_tags), trailer, trailer_size) == NULL)) {
 					// Emulate some of the menu's behavior to satisfy boot_dol
 					curSelection = i;
 					memcpy(&curFile, dirEntries[i], sizeof(file_handle));
