@@ -1218,6 +1218,7 @@ void load_app(ExecutableFile *fileToPatch)
 		s32 exi_channel;
 		if(getExiDeviceByLocation(devices[DEVICE_CUR]->location, &exi_channel, NULL)) {
 			sdgecko_setPageSize(exi_channel, 512);
+			sdgecko_enableCRC(exi_channel, false);
 			print_gecko("set size\r\n");
 		}
 	}
@@ -1225,6 +1226,7 @@ void load_app(ExecutableFile *fileToPatch)
 		s32 exi_channel;
 		if(getExiDeviceByLocation(devices[DEVICE_PATCHES]->location, &exi_channel, NULL)) {
 			sdgecko_setPageSize(exi_channel, 512);
+			sdgecko_enableCRC(exi_channel, false);
 			print_gecko("set size\r\n");
 		}
 	}

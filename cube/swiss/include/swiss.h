@@ -52,6 +52,7 @@ extern u32 sdgecko_getSpeed(s32 drv_no);
 extern void sdgecko_setSpeed(s32 drv_no, u32 freq);
 extern u32 sdgecko_getPageSize(s32 drv_no);
 extern s32 sdgecko_setPageSize(s32 drv_no, u32 size);
+extern s32 sdgecko_enableCRC(s32 drv_no, bool enable);
 extern s32 sdgecko_readCID(s32 drv_no);
 extern s32 sdgecko_readCSD(s32 drv_no);
 extern s32 sdgecko_readStatus(s32 drv_no);
