@@ -25,6 +25,8 @@
 #define CMD24				(0x58)
 //CMD25 - Write multiple block command
 #define CMD25				(0x59)
+//CMD59 - CRC option command
+#define CMD59				(0x7B)
 
 #ifndef QUEUE_SIZE
 #define QUEUE_SIZE			2
@@ -438,6 +440,7 @@ void reset_device() {
 	if(exi_regs != NULL) {
 		end_read();
 		send_cmd(CMD0, 0);
+		send_cmd(CMD59, 1);
 	}
 }
 
