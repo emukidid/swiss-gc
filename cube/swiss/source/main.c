@@ -42,7 +42,10 @@ dvddrvinfo driveInfo __attribute__((aligned(32)));
 SwissSettings swissSettings;
 
 static void driveInfoCallback(s32 result, dvdcmdblk *block) {
-	if(result >= 0) {
+	if(result == DVD_ERROR_CANCELED) {
+		DVD_StopMotorAsync(block, NULL);
+	}
+	else if(result >= 0) {
 		swissSettings.hasDVDDrive = 1;
 	}
 }
@@ -290,17 +293,13 @@ int main(int argc, char *argv[])
 
 // Checks if devices are available, prints name of device being detected for slow init devices
 void populateDeviceAvailability() {
-	if(padsButtonsHeld() & PAD_BUTTON_B) {
-		deviceHandler_setAllDevicesAvailable();
-		return;
-	}
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Detecting devices\205\nThis can be skipped by holding B next time"));
 	while(DVD_GetCmdBlockStatus(&commandBlock) == DVD_STATE_BUSY) {
 		if(DVD_LowGetCoverStatus() == 1) {
 			break;
 		}
 		if(padsButtonsHeld() & PAD_BUTTON_B) {
-			deviceHandler_setAllDevicesAvailable();
+			DVD_CancelAsync(&commandBlock, NULL);
 			break;
 		}
 	}
@@ -309,10 +308,6 @@ void populateDeviceAvailability() {
 		if(allDevices[i] != NULL && !deviceHandler_getDeviceAvailable(allDevices[i])) {
 			print_gecko("Checking device availability for device %s\r\n", allDevices[i]->deviceName);
 			deviceHandler_setDeviceAvailable(allDevices[i], allDevices[i]->test());
-		}
-		if(padsButtonsHeld() & PAD_BUTTON_B) {
-			deviceHandler_setAllDevicesAvailable();
-			break;
 		}
 	}
 	DrawDispose(msgBox);
