@@ -172,7 +172,7 @@ static const char *autoboot_dols[] = {
 	"*/boot2.dol",
 	"*/swiss_r[1-9]*.dol"
 };
-void load_auto_dol() {
+void load_auto_dol(int argc, char *argv[]) {
 	char trailer[sizeof(GIT_COMMIT) - 1]; // Don't include the NUL termination in the comparison
 	int trailer_size;
 
@@ -200,7 +200,7 @@ void load_auto_dol() {
 					// Emulate some of the menu's behavior to satisfy boot_dol
 					curSelection = i;
 					memcpy(&curFile, dirEntries[i], sizeof(file_handle));
-					boot_dol();
+					boot_dol(argc, argv);
 					memcpy(dirEntries[i], &curFile, sizeof(file_handle));
 				}
 				devices[DEVICE_CUR]->closeFile(dirEntries[i]);

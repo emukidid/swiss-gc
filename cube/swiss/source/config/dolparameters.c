@@ -126,7 +126,7 @@ Parameters* getParameters() {
 	return &_parameters;
 }
 
-void populateArgv(char **argz, size_t *argz_len, char *filename) {
+void populateArgz(char **argz, size_t *argz_len) {
 	int i = 0;
 	Parameters* params = getParameters();
 	print_gecko("There are %i parameters\r\n", params->num_params);

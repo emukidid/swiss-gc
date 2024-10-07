@@ -47,5 +47,5 @@ typedef struct {
 
 void parseParameters(char *filecontents);
 Parameters* getParameters();
-void populateArgv(char **argz, size_t *argz_len, char *filename);
+void populateArgz(char **argz, size_t *argz_len);
 #endif

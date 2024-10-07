@@ -1256,8 +1256,8 @@ fail_early:
 	}
 }
 
-void boot_dol()
-{ 
+void boot_dol(int argc, char *argv[])
+{
 	void *dol_buffer;
 	void *ptr;
   
@@ -1370,12 +1370,16 @@ void boot_dol()
 			if(params->num_params > 0) {
 				DrawArgsSelector(getRelativeName(&curFile.name[0]));
 				// Get an argv back or none.
-				populateArgv(&argz, &argz_len, &curFile.name[0]);
+				populateArgz(&argz, &argz_len);
 			}
 		}
 	}
 	devices[DEVICE_CUR]->closeFile(dcpArgFile);
 	free(dcpArgFile);
+
+	for(i = 1; i < argc; i++) {
+		argz_add(&argz, &argz_len, argv[i]);
+	}
 
 	if(devices[DEVICE_CUR] != NULL) devices[DEVICE_CUR]->deinit( devices[DEVICE_CUR]->initial );
 	// Boot
@@ -2183,7 +2187,7 @@ void load_file()
 	//if it's a DOL, boot it
 	if(strlen(fileName)>4) {
 		if(endsWith(fileName,".bin") || endsWith(fileName,".dol") || endsWith(fileName,".dol+cli") || endsWith(fileName,".elf")) {
-			boot_dol();
+			boot_dol(0, NULL);
 			// if it was invalid (overlaps sections, too large, etc..) it'll return
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid DOL"));
 			sleep(2);

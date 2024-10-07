@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
 		print_gecko("Detected %s\r\n", devices[DEVICE_CUR]->deviceName);
 		if(!devices[DEVICE_CUR]->init(devices[DEVICE_CUR]->initial)) {
 			if(devices[DEVICE_CUR]->features & FEAT_AUTOLOAD_DOL) {
-				load_auto_dol();
+				load_auto_dol(argc, argv);
 			}
 			memcpy(&curDir, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 			needsDeviceChange = 0;

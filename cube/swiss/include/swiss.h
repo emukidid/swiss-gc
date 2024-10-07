@@ -68,7 +68,7 @@ extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
 extern uiDrawObj_t * renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t *container);
 
 extern void menu_loop();
-extern void boot_dol();
+extern void boot_dol(int argc, char *argv[]);
 extern bool manage_file();
 extern void load_file();
 extern int check_game();
