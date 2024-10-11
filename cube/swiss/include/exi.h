@@ -2,7 +2,7 @@
 #define __EXI_H
 
 // EXI Device ID's
-#define EXI_W5500_ID     0x03000000
+#define EXI_WIZNET_ID    0x03000000
 #define EXI_MX98730EC_ID 0x04020200
 #define EXI_IDE_ID       0x49444500
 #define EXI_ENC28J60_ID  0xFA050000
