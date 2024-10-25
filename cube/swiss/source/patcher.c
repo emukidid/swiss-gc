@@ -191,6 +191,9 @@ int install_code(int final)
 				} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
 					patch     = !_ideexi_version ? ideexi_v1_w5500_eth_bin      : ideexi_v2_w5500_eth_bin;
 					patchSize = !_ideexi_version ? ideexi_v1_w5500_eth_bin_size : ideexi_v2_w5500_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
+					patch     = !_ideexi_version ? ideexi_v1_w6100_eth_bin      : ideexi_v2_w6100_eth_bin;
+					patchSize = !_ideexi_version ? ideexi_v1_w6100_eth_bin_size : ideexi_v2_w6100_eth_bin_size;
 				}
 				break;
 			default:
@@ -222,6 +225,9 @@ int install_code(int final)
 					} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
 						patch     = sd_v1_w5500_eth_bin;
 						patchSize = sd_v1_w5500_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
+						patch     = sd_v1_w6100_eth_bin;
+						patchSize = sd_v1_w6100_eth_bin_size;
 					}
 					break;
 				default:
@@ -249,6 +255,9 @@ int install_code(int final)
 					} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
 						patch     = sd_v2_w5500_eth_bin;
 						patchSize = sd_v2_w5500_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
+						patch     = sd_v2_w6100_eth_bin;
+						patchSize = sd_v2_w6100_eth_bin_size;
 					}
 					break;
 				default:
@@ -379,6 +388,9 @@ int install_code(int final)
 					} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
 						patch     = gcloader_v2_w5500_eth_bin;
 						patchSize = gcloader_v2_w5500_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
+						patch     = gcloader_v2_w6100_eth_bin;
+						patchSize = gcloader_v2_w6100_eth_bin_size;
 					}
 					break;
 				default:
@@ -406,6 +418,9 @@ int install_code(int final)
 				} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
 					patch     = flippy_w5500_eth_bin;
 					patchSize = flippy_w5500_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
+					patch     = flippy_w6100_eth_bin;
+					patchSize = flippy_w6100_eth_bin_size;
 				}
 				break;
 			default:

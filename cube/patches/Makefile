@@ -158,18 +158,23 @@ sd-v1.eth.bin:
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S
 	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
 	@$(CC) -Os $(OPTS) -c bba/w5500.c
+	@$(CC) -Os $(OPTS) -c bba/w6100.c
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/memcpy.S
 	@$(CC) -Os $(OPTS) -o sd-v1-enc28j60.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o enc28j60.o uart.o os.o memcpy.o
 	@$(CC) -Os $(OPTS) -o sd-v1-w5500.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o w5500.o uart.o os.o memcpy.o
+	@$(CC) -Os $(OPTS) -o sd-v1-w6100.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o w6100.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D sd-v1-enc28j60.eth.elf > $(DISASM)/sd-v1-enc28j60.eth.txt
 	@$(OBJDUMP) -D sd-v1-w5500.eth.elf > $(DISASM)/sd-v1-w5500.eth.txt
+	@$(OBJDUMP) -D sd-v1-w6100.eth.elf > $(DISASM)/sd-v1-w6100.eth.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd-v1-enc28j60.eth.elf sd-v1-enc28j60.eth.bin
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd-v1-w5500.eth.elf sd-v1-w5500.eth.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd-v1-w6100.eth.elf sd-v1-w6100.eth.bin
 	@$(BIN2S) -H $(DEST)/sd_v1_enc28j60_eth_bin.h sd-v1-enc28j60.eth.bin > $(DEST)/sd-v1-enc28j60.eth.bin.s
 	@$(BIN2S) -H $(DEST)/sd_v1_w5500_eth_bin.h sd-v1-w5500.eth.bin > $(DEST)/sd-v1-w5500.eth.bin.s
+	@$(BIN2S) -H $(DEST)/sd_v1_w6100_eth_bin.h sd-v1-w6100.eth.bin > $(DEST)/sd-v1-w6100.eth.bin.s
 	@rm -f *.bin *.elf *.o
 
 sd-v2.bin:
@@ -252,18 +257,23 @@ sd-v2.eth.bin:
 	@$(CC) -Os $(OPTS) -c sdgecko/sd_isr.S -DDMA
 	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
 	@$(CC) -Os $(OPTS) -c bba/w5500.c
+	@$(CC) -Os $(OPTS) -c bba/w6100.c
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/memcpy.S
 	@$(CC) -Os $(OPTS) -o sd-v2-enc28j60.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o enc28j60.o uart.o os.o memcpy.o
 	@$(CC) -Os $(OPTS) -o sd-v2-w5500.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o w5500.o uart.o os.o memcpy.o
+	@$(CC) -Os $(OPTS) -o sd-v2-w6100.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o sd.o sd_isr.o w6100.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D sd-v2-enc28j60.eth.elf > $(DISASM)/sd-v2-enc28j60.eth.txt
 	@$(OBJDUMP) -D sd-v2-w5500.eth.elf > $(DISASM)/sd-v2-w5500.eth.txt
+	@$(OBJDUMP) -D sd-v2-w6100.eth.elf > $(DISASM)/sd-v2-w6100.eth.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd-v2-enc28j60.eth.elf sd-v2-enc28j60.eth.bin
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd-v2-w5500.eth.elf sd-v2-w5500.eth.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents sd-v2-w6100.eth.elf sd-v2-w6100.eth.bin
 	@$(BIN2S) -H $(DEST)/sd_v2_enc28j60_eth_bin.h sd-v2-enc28j60.eth.bin > $(DEST)/sd-v2-enc28j60.eth.bin.s
 	@$(BIN2S) -H $(DEST)/sd_v2_w5500_eth_bin.h sd-v2-w5500.eth.bin > $(DEST)/sd-v2-w5500.eth.bin.s
+	@$(BIN2S) -H $(DEST)/sd_v2_w6100_eth_bin.h sd-v2-w6100.eth.bin > $(DEST)/sd-v2-w6100.eth.bin.s
 	@rm -f *.bin *.elf *.o
 
 ideexi-v1.bin:
@@ -346,18 +356,23 @@ ideexi-v1.eth.bin:
 	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S
 	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
 	@$(CC) -Os $(OPTS) -c bba/w5500.c
+	@$(CC) -Os $(OPTS) -c bba/w6100.c
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/memcpy.S
 	@$(CC) -Os $(OPTS) -o ideexi-v1-enc28j60.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o enc28j60.o uart.o os.o memcpy.o
 	@$(CC) -Os $(OPTS) -o ideexi-v1-w5500.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o w5500.o uart.o os.o memcpy.o
+	@$(CC) -Os $(OPTS) -o ideexi-v1-w6100.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o w6100.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v1-enc28j60.eth.elf > $(DISASM)/ideexi-v1-enc28j60.eth.txt
 	@$(OBJDUMP) -D ideexi-v1-w5500.eth.elf > $(DISASM)/ideexi-v1-w5500.eth.txt
+	@$(OBJDUMP) -D ideexi-v1-w6100.eth.elf > $(DISASM)/ideexi-v1-w6100.eth.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v1-enc28j60.eth.elf ideexi-v1-enc28j60.eth.bin
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v1-w5500.eth.elf ideexi-v1-w5500.eth.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v1-w6100.eth.elf ideexi-v1-w6100.eth.bin
 	@$(BIN2S) -H $(DEST)/ideexi_v1_enc28j60_eth_bin.h ideexi-v1-enc28j60.eth.bin > $(DEST)/ideexi-v1-enc28j60.eth.bin.s
 	@$(BIN2S) -H $(DEST)/ideexi_v1_w5500_eth_bin.h ideexi-v1-w5500.eth.bin > $(DEST)/ideexi-v1-w5500.eth.bin.s
+	@$(BIN2S) -H $(DEST)/ideexi_v1_w6100_eth_bin.h ideexi-v1-w6100.eth.bin > $(DEST)/ideexi-v1-w6100.eth.bin.s
 	@rm -f *.bin *.elf *.o
 
 ideexi-v2.bin:
@@ -440,18 +455,23 @@ ideexi-v2.eth.bin:
 	@$(CC) -Os $(OPTS) -c ide-exi/ata_isr.S -DDMA
 	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
 	@$(CC) -Os $(OPTS) -c bba/w5500.c
+	@$(CC) -Os $(OPTS) -c bba/w6100.c
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/memcpy.S
 	@$(CC) -Os $(OPTS) -o ideexi-v2-enc28j60.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o enc28j60.o uart.o os.o memcpy.o
 	@$(CC) -Os $(OPTS) -o ideexi-v2-w5500.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o w5500.o uart.o os.o memcpy.o
+	@$(CC) -Os $(OPTS) -o ideexi-v2-w6100.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o ata.o ata_isr.o w6100.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D ideexi-v2-enc28j60.eth.elf > $(DISASM)/ideexi-v2-enc28j60.eth.txt
 	@$(OBJDUMP) -D ideexi-v2-w5500.eth.elf > $(DISASM)/ideexi-v2-w5500.eth.txt
+	@$(OBJDUMP) -D ideexi-v2-w6100.eth.elf > $(DISASM)/ideexi-v2-w6100.eth.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v2-enc28j60.eth.elf ideexi-v2-enc28j60.eth.bin
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v2-w5500.eth.elf ideexi-v2-w5500.eth.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents ideexi-v2-w6100.eth.elf ideexi-v2-w6100.eth.bin
 	@$(BIN2S) -H $(DEST)/ideexi_v2_enc28j60_eth_bin.h ideexi-v2-enc28j60.eth.bin > $(DEST)/ideexi-v2-enc28j60.eth.bin.s
 	@$(BIN2S) -H $(DEST)/ideexi_v2_w5500_eth_bin.h ideexi-v2-w5500.eth.bin > $(DEST)/ideexi-v2-w5500.eth.bin.s
+	@$(BIN2S) -H $(DEST)/ideexi_v2_w6100_eth_bin.h ideexi-v2-w6100.eth.bin > $(DEST)/ideexi-v2-w6100.eth.bin.s
 	@rm -f *.bin *.elf *.o
 
 dvd.bin:
@@ -757,18 +777,23 @@ gcloader-v2.eth.bin:
 	@$(CC) -Os $(OPTS) -c gcloader/gcloader.c
 	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
 	@$(CC) -Os $(OPTS) -c bba/w5500.c
+	@$(CC) -Os $(OPTS) -c bba/w6100.c
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/memcpy.S
 	@$(CC) -Os $(OPTS) -o gcloader-v2-enc28j60.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o gcloader.o enc28j60.o uart.o os.o memcpy.o
 	@$(CC) -Os $(OPTS) -o gcloader-v2-w5500.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o gcloader.o w5500.o uart.o os.o memcpy.o
+	@$(CC) -Os $(OPTS) -o gcloader-v2-w6100.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o gcloader.o w6100.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D gcloader-v2-enc28j60.eth.elf > $(DISASM)/gcloader-v2-enc28j60.eth.txt
 	@$(OBJDUMP) -D gcloader-v2-w5500.eth.elf > $(DISASM)/gcloader-v2-w5500.eth.txt
+	@$(OBJDUMP) -D gcloader-v2-w6100.eth.elf > $(DISASM)/gcloader-v2-w6100.eth.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v2-enc28j60.eth.elf gcloader-v2-enc28j60.eth.bin
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v2-w5500.eth.elf gcloader-v2-w5500.eth.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents gcloader-v2-w6100.eth.elf gcloader-v2-w6100.eth.bin
 	@$(BIN2S) -H $(DEST)/gcloader_v2_enc28j60_eth_bin.h gcloader-v2-enc28j60.eth.bin > $(DEST)/gcloader-v2-enc28j60.eth.bin.s
 	@$(BIN2S) -H $(DEST)/gcloader_v2_w5500_eth_bin.h gcloader-v2-w5500.eth.bin > $(DEST)/gcloader-v2-w5500.eth.bin.s
+	@$(BIN2S) -H $(DEST)/gcloader_v2_w6100_eth_bin.h gcloader-v2-w6100.eth.bin > $(DEST)/gcloader-v2-w6100.eth.bin.s
 	@rm -f *.bin *.elf *.o
 
 flippy.bin:
@@ -823,16 +848,21 @@ flippy.eth.bin:
 	@$(CC) -Os $(OPTS) -c flippydrive/flippy.c
 	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
 	@$(CC) -Os $(OPTS) -c bba/w5500.c
+	@$(CC) -Os $(OPTS) -c bba/w6100.c
 	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
 	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
 	@$(CC) -Os $(OPTS) -c base/memcpy.S
 	@$(CC) -Os $(OPTS) -o flippy-enc28j60.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o flippy.o enc28j60.o uart.o os.o memcpy.o
 	@$(CC) -Os $(OPTS) -o flippy-w5500.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o flippy.o w5500.o uart.o os.o memcpy.o
+	@$(CC) -Os $(OPTS) -o flippy-w6100.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o flippy.o w6100.o uart.o os.o memcpy.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D flippy-enc28j60.eth.elf > $(DISASM)/flippy-enc28j60.eth.txt
 	@$(OBJDUMP) -D flippy-w5500.eth.elf > $(DISASM)/flippy-w5500.eth.txt
+	@$(OBJDUMP) -D flippy-w6100.eth.elf > $(DISASM)/flippy-w6100.eth.txt
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents flippy-enc28j60.eth.elf flippy-enc28j60.eth.bin
 	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents flippy-w5500.eth.elf flippy-w5500.eth.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents flippy-w6100.eth.elf flippy-w6100.eth.bin
 	@$(BIN2S) -H $(DEST)/flippy_enc28j60_eth_bin.h flippy-enc28j60.eth.bin > $(DEST)/flippy-enc28j60.eth.bin.s
 	@$(BIN2S) -H $(DEST)/flippy_w5500_eth_bin.h flippy-w5500.eth.bin > $(DEST)/flippy-w5500.eth.bin.s
+	@$(BIN2S) -H $(DEST)/flippy_w6100_eth_bin.h flippy-w6100.eth.bin > $(DEST)/flippy-w6100.eth.bin.s
 	@rm -f *.bin *.elf *.o
