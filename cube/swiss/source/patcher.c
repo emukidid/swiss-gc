@@ -21,6 +21,7 @@
 #include "sidestep.h"
 #include "elf.h"
 #include "ata.h"
+#include "bba.h"
 #include "cheats.h"
 
 char VAR_AREA[0x3100];
@@ -184,8 +185,13 @@ int install_code(int final)
 				patchSize = !_ideexi_version ? ideexi_v1_card_bin_size : ideexi_v2_card_bin_size;
 				break;
 			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
-				patch     = !_ideexi_version ? ideexi_v1_eth_bin      : ideexi_v2_eth_bin;
-				patchSize = !_ideexi_version ? ideexi_v1_eth_bin_size : ideexi_v2_eth_bin_size;
+				if (!strcmp(bba_device_str, "ENC28J60")) {
+					patch     = !_ideexi_version ? ideexi_v1_enc28j60_eth_bin      : ideexi_v2_enc28j60_eth_bin;
+					patchSize = !_ideexi_version ? ideexi_v1_enc28j60_eth_bin_size : ideexi_v2_enc28j60_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
+					patch     = !_ideexi_version ? ideexi_v1_w5500_eth_bin      : ideexi_v2_w5500_eth_bin;
+					patchSize = !_ideexi_version ? ideexi_v1_w5500_eth_bin_size : ideexi_v2_w5500_eth_bin_size;
+				}
 				break;
 			default:
 				return 0;
@@ -210,8 +216,13 @@ int install_code(int final)
 					patchSize = sd_v1_card_bin_size;
 					break;
 				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
-					patch     = sd_v1_eth_bin;
-					patchSize = sd_v1_eth_bin_size;
+					if (!strcmp(bba_device_str, "ENC28J60")) {
+						patch     = sd_v1_enc28j60_eth_bin;
+						patchSize = sd_v1_enc28j60_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
+						patch     = sd_v1_w5500_eth_bin;
+						patchSize = sd_v1_w5500_eth_bin_size;
+					}
 					break;
 				default:
 					return 0;
@@ -232,8 +243,13 @@ int install_code(int final)
 					patchSize = sd_v2_card_bin_size;
 					break;
 				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
-					patch     = sd_v2_eth_bin;
-					patchSize = sd_v2_eth_bin_size;
+					if (!strcmp(bba_device_str, "ENC28J60")) {
+						patch     = sd_v2_enc28j60_eth_bin;
+						patchSize = sd_v2_enc28j60_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
+						patch     = sd_v2_w5500_eth_bin;
+						patchSize = sd_v2_w5500_eth_bin_size;
+					}
 					break;
 				default:
 					return 0;
@@ -357,8 +373,13 @@ int install_code(int final)
 					patchSize = gcloader_v2_card_bin_size;
 					break;
 				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
-					patch     = gcloader_v2_eth_bin;
-					patchSize = gcloader_v2_eth_bin_size;
+					if (!strcmp(bba_device_str, "ENC28J60")) {
+						patch     = gcloader_v2_enc28j60_eth_bin;
+						patchSize = gcloader_v2_enc28j60_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
+						patch     = gcloader_v2_w5500_eth_bin;
+						patchSize = gcloader_v2_w5500_eth_bin_size;
+					}
 					break;
 				default:
 					return 0;
@@ -379,8 +400,13 @@ int install_code(int final)
 				patchSize = flippy_card_bin_size;
 				break;
 			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
-				patch     = flippy_eth_bin;
-				patchSize = flippy_eth_bin_size;
+				if (!strcmp(bba_device_str, "ENC28J60")) {
+					patch     = flippy_enc28j60_eth_bin;
+					patchSize = flippy_enc28j60_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
+					patch     = flippy_w5500_eth_bin;
+					patchSize = flippy_w5500_eth_bin_size;
+				}
 				break;
 			default:
 				return 0;

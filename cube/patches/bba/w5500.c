@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2023-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -26,22 +26,24 @@
 #include "dolphin/exi.h"
 #include "dolphin/os.h"
 #include "emulator_eth.h"
-#include "enc28j60.h"
 #include "interrupt.h"
+#include "w5500.h"
 
 #define exi_channel ((*VAR_EXI_SLOT & 0x30) >> 4)
 #define exi_device  ((*VAR_EXI_SLOT & 0xC0) >> 6)
 #define exi_regs    (*(volatile uint32_t **)VAR_EXI2_REGS)
 
 static struct {
-	uint8_t bank;
+	bool sendok;
+	uint16_t wr;
+	uint16_t rd;
 	bba_page_t (*page)[8];
 	struct {
 		void *data;
 		size_t size;
 		bba_callback callback;
 	} output;
-} enc28j60;
+} w5500;
 
 static void exi_clear_interrupts(bool exi, bool tc, bool ext)
 {
@@ -56,6 +58,13 @@ static void exi_select(void)
 static void exi_deselect(void)
 {
 	exi_regs[0] &= 0x405;
+}
+
+static void exi_imm_write(uint32_t data, uint32_t len)
+{
+	exi_regs[4] = data;
+	exi_regs[3] = ((len - 1) << 4) | (EXI_WRITE << 2) | 0b01;
+	while (exi_regs[3] & 0b01);
 }
 
 static uint32_t exi_imm_read(uint32_t len)
@@ -89,99 +98,120 @@ static void exi_dma_read(void *buf, uint32_t len, bool sync)
 	while (sync && (exi_regs[3] & 0b01));
 }
 
-static uint8_t enc28j60_read_cmd(uint32_t cmd)
+static void w5500_read_cmd(uint32_t cmd, void *buf, uint32_t len)
 {
-	uint8_t data;
+	cmd &= ~W5500_RWB;
+	cmd  = (cmd << 16) | (cmd >> 16);
 
 	exi_select();
-	data = exi_imm_read_write(cmd, 2 + ENC28J60_EXI_DUMMY(cmd));
+	exi_imm_write(cmd, 3);
+	exi_dma_read(buf, len, true);
+	exi_deselect();
+}
+
+static void w5500_write_cmd(uint32_t cmd, const void *buf, uint32_t len)
+{
+	cmd |= W5500_RWB;
+	cmd  = (cmd << 16) | (cmd >> 16);
+
+	exi_select();
+	exi_imm_write(cmd, 3);
+	exi_dma_write(buf, len, true);
+	exi_deselect();
+}
+
+static uint8_t w5500_read_reg8(W5500Reg addr)
+{
+	uint8_t data;
+	uint32_t cmd = W5500_OM(1) | addr;
+
+	cmd = (cmd << 16) | (cmd >> 16);
+
+	exi_select();
+	data = exi_imm_read_write(cmd, 4);
 	exi_deselect();
 
 	return data;
 }
 
-static void enc28j60_write_cmd(uint32_t cmd, uint8_t data)
+static void w5500_write_reg8(W5500Reg addr, uint8_t data)
 {
+	uint32_t cmd = W5500_RWB | W5500_OM(1) | addr;
+
+	cmd = (cmd << 16) | (cmd >> 16);
+
 	exi_select();
-	exi_imm_read_write(cmd | data << 16, 2);
+	exi_imm_read_write(cmd | data, 4);
 	exi_deselect();
 }
 
-static void enc28j60_set_bits(ENC28J60Reg addr, uint8_t data)
+static uint16_t w5500_read_reg16(W5500Reg16 addr)
 {
-	enc28j60_write_cmd(ENC28J60_CMD_BFS(addr), data);
+	uint16_t data;
+	uint32_t cmd = W5500_OM(2) | addr;
+
+	cmd = (cmd << 16) | (cmd >> 16);
+
+	exi_select();
+	exi_imm_write(cmd, 3);
+	data = exi_imm_read(2);
+	exi_deselect();
+
+	return data;
 }
 
-static void enc28j60_clear_bits(ENC28J60Reg addr, uint8_t data)
+static void w5500_write_reg16(W5500Reg16 addr, uint16_t data)
 {
-	enc28j60_write_cmd(ENC28J60_CMD_BFC(addr), data);
+	uint32_t cmd = W5500_RWB | W5500_OM(2) | addr;
+
+	cmd = (cmd << 16) | (cmd >> 16);
+
+	exi_select();
+	exi_imm_write(cmd, 3);
+	exi_imm_write(data << 16, 2);
+	exi_deselect();
 }
 
-static void enc28j60_select_bank(uint8_t addr)
+static void w5500_interrupt(void)
 {
-	uint8_t bank = addr >> 5;
+	w5500_write_reg8(W5500_SIMR, 0);
+	uint8_t ir = w5500_read_reg8(W5500_S0_IR);
 
-	if (enc28j60.bank != bank && bank < 4) {
-		enc28j60_clear_bits(ENC28J60_ECON1, ENC28J60_ECON1_BSEL(enc28j60.bank));
-		enc28j60_set_bits(ENC28J60_ECON1, ENC28J60_ECON1_BSEL(bank));
-
-		enc28j60.bank = bank;
-	}
-}
-
-static uint8_t enc28j60_read_reg8(ENC28J60Reg addr)
-{
-	enc28j60_select_bank(addr);
-	return enc28j60_read_cmd(ENC28J60_CMD_RCR(addr));
-}
-
-static void enc28j60_write_reg16(ENC28J60Reg16 addr, uint16_t data)
-{
-	enc28j60_select_bank(addr);
-	enc28j60_write_cmd(ENC28J60_CMD_WCR(addr + 0), data);
-	enc28j60_write_cmd(ENC28J60_CMD_WCR(addr + 1), data >> 8);
-}
-
-static void enc28j60_interrupt(void)
-{
-	enc28j60_clear_bits(ENC28J60_EIE, ENC28J60_EIE_INTIE);
-	uint8_t epktcnt = enc28j60_read_reg8(ENC28J60_EPKTCNT);
-
-	if (epktcnt > 0) {
-		exi_select();
-		exi_imm_read_write(ENC28J60_CMD_RBM, 1);
-
-		uint16_t rsv[3];
-		for (int i = 0; i < sizeof(rsv) / sizeof(uint16_t); i++)
-			__sthbrx(rsv + i, exi_imm_read(sizeof(uint16_t)));
-		uint16_t next_packet = rsv[0];
-		uint16_t byte_count = rsv[1];
-		//uint16_t status = rsv[2];
-
-		DCInvalidateRange(__builtin_assume_aligned(enc28j60.page, 32), byte_count);
-		exi_dma_read(enc28j60.page, byte_count, true);
-		exi_deselect();
-
-		eth_mac_receive(enc28j60.page, byte_count - 4);
-
-		enc28j60_write_reg16(ENC28J60_ERDPT, next_packet);
-		enc28j60_write_reg16(ENC28J60_ERXRDPT, next_packet == ENC28J60_INIT_ERXST ? ENC28J60_INIT_ERXND : next_packet - 1);
-
-		enc28j60_set_bits(ENC28J60_ECON2, ENC28J60_ECON2_PKTDEC);
+	if (ir & W5500_Sn_IR_SENDOK) {
+		w5500_write_reg8(W5500_S0_IR, W5500_Sn_IR_SENDOK);
+		w5500.sendok = true;
 	}
 
-	enc28j60_set_bits(ENC28J60_EIE, ENC28J60_EIE_INTIE);
+	if (ir & W5500_Sn_IR_RECV) {
+		w5500_write_reg8(W5500_S0_IR, W5500_Sn_IR_RECV);
+
+		uint16_t rd = w5500.rd;
+		uint16_t rs = w5500_read_reg16(W5500_RXBUF_S(0, rd));
+		w5500.rd = rd + rs;
+
+		rd += sizeof(rs);
+		rs -= sizeof(rs);
+
+		DCInvalidateRange(__builtin_assume_aligned(w5500.page, 32), rs);
+		w5500_read_cmd(W5500_RXBUF_S(0, rd), w5500.page, rs);
+		eth_mac_receive(w5500.page, rs);
+
+		w5500_write_reg16(W5500_S0_RX_RD, w5500.rd);
+		w5500_write_reg8(W5500_S0_CR, W5500_Sn_CR_RECV);
+	}
+
+	w5500_write_reg8(W5500_SIMR, W5500_SIMR_S(0));
 }
 
 static void exi_callback()
 {
 	if (EXILock(exi_channel, exi_device, exi_callback)) {
-		enc28j60_interrupt();
+		w5500_interrupt();
 
-		if (enc28j60.output.callback) {
-			bba_output(enc28j60.output.data, enc28j60.output.size);
-			enc28j60.output.callback();
-			enc28j60.output.callback = NULL;
+		if (w5500.output.callback && w5500.sendok) {
+			bba_output(w5500.output.data, w5500.output.size);
+			w5500.output.callback();
+			w5500.output.callback = NULL;
 		}
 
 		EXIUnlock(exi_channel);
@@ -202,37 +232,32 @@ static void debug_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 
 void bba_output(const void *data, size_t size)
 {
-	enc28j60_set_bits(ENC28J60_ECON1, ENC28J60_ECON1_TXRST);
-	enc28j60_clear_bits(ENC28J60_ECON1, ENC28J60_ECON1_TXRST);
-
-	enc28j60_write_reg16(ENC28J60_EWRPT, ENC28J60_INIT_ETXST);
-	enc28j60_write_reg16(ENC28J60_ETXND, ENC28J60_INIT_ETXST + size);
-
-	exi_select();
-	exi_imm_read_write(ENC28J60_CMD_WBM, 2);
-
 	DCStoreRange(__builtin_assume_aligned(data, 32), size);
-	exi_dma_write(data, size, true);
-	exi_deselect();
+	w5500_write_cmd(W5500_TXBUF_S(0, w5500.wr), data, size);
+	w5500.wr += size;
 
-	enc28j60_set_bits(ENC28J60_ECON1, ENC28J60_ECON1_TXRTS);
+	w5500_write_reg16(W5500_S0_TX_WR, w5500.wr);
+	w5500_write_reg8(W5500_S0_CR, W5500_Sn_CR_SEND);
+	w5500.sendok = false;
 }
 
 void bba_output_async(const void *data, size_t size, bba_callback callback)
 {
-	enc28j60.output.data = (void *)data;
-	enc28j60.output.size = size;
-	enc28j60.output.callback = callback;
+	w5500.output.data = (void *)data;
+	w5500.output.size = size;
+	w5500.output.callback = callback;
 
 	exi_callback();
 }
 
 void bba_init(void **arenaLo, void **arenaHi)
 {
-	enc28j60_clear_bits(ENC28J60_EIE, 0xFF);
-	enc28j60_set_bits(ENC28J60_EIE, ENC28J60_EIE_INTIE | ENC28J60_EIE_PKTIE);
+	w5500.sendok = w5500_read_reg16(W5500_S0_TX_FSR) == W5500_TX_BUFSIZE;
 
-	*arenaHi -= sizeof(*enc28j60.page); enc28j60.page = *arenaHi;
+	w5500.wr = w5500_read_reg16(W5500_S0_TX_WR);
+	w5500.rd = w5500_read_reg16(W5500_S0_RX_RD);
+
+	*arenaHi -= sizeof(*w5500.page); w5500.page = *arenaHi;
 
 	if (exi_channel < EXI_CHANNEL_2) {
 		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_EXI + (3 * exi_channel);
