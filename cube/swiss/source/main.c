@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
 			wait_press_A();
 			DrawDispose(msgBox);
 		}
-		else if(FLIPPY_VERSION(version->major, version->minor, version->build) < FLIPPY_VERSION(1,1,1)) {
+		else if(FLIPPY_VERSION(version->major, version->minor, version->build) < FLIPPY_VERSION(1,2,3)) {
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\nflippydrive.com/updates"));
 			wait_press_A();
 			DrawDispose(msgBox);

@@ -32,8 +32,8 @@
 	((dvdcmdbuf){(((0xB4) << 24))})
 #define FLIPPY_CMD_STATUS \
 	((dvdcmdbuf){(((0xB5) << 24) | (0x00))})
-#define FLIPPY_CMD_MOUNT(handle) \
-	((dvdcmdbuf){(((0xB5) << 24) | (((handle) & 0xFF) << 16) | (0x01))})
+#define FLIPPY_CMD_MOUNT(handle1, handle2) \
+	((dvdcmdbuf){(((0xB5) << 24) | (((handle1) & 0xFF) << 16) | (((handle2) & 0xFF) << 8) | (0x01))})
 #define FLIPPY_CMD_RESET \
 	((dvdcmdbuf){(((0xB5) << 24) | (0x05)), (0xAA55F641)})
 #define FLIPPY_CMD_MKDIR \
@@ -208,7 +208,30 @@ flippyresult flippy_mount(flippyfileinfo *info)
 	flippyfile *file = &info->file;
 
 	DVD_SetUserData(&block, file);
-	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_MOUNT(file->handle), NULL, 0, command_callback, 0)) {
+	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_MOUNT(file->handle, 0), NULL, 0, command_callback, 0)) {
+		file->result = FLIPPY_RESULT_NOT_READY;
+		return file->result;
+	}
+
+	u32 level = IRQ_Disable();
+	while (block.state != DVD_STATE_END
+		&& block.state != DVD_STATE_FATAL_ERROR
+		&& block.state != DVD_STATE_CANCELED)
+		LWP_ThreadSleep(queue);
+	IRQ_Restore(level);
+
+	return file->result;
+}
+
+flippyresult flippy_mount2(flippyfileinfo *info1, flippyfileinfo *info2)
+{
+	dvdcmdblk block;
+	STACK_ALIGN(flippyfile,     file, 1, 32);
+	flippyfile *file1 = &info1->file;
+	flippyfile *file2 = &info2->file;
+
+	DVD_SetUserData(&block, file);
+	if (!DVD_ReadImmAsyncPrio(&block, FLIPPY_CMD_MOUNT(file1->handle, file2->handle), NULL, 0, command_callback, 0)) {
 		file->result = FLIPPY_RESULT_NOT_READY;
 		return file->result;
 	}

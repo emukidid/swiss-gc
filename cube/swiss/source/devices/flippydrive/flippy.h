@@ -130,6 +130,7 @@ typedef struct {
 flippyresult flippy_boot(flippybootmode mode);
 flippybootstatus *flippy_getbootstatus(void);
 flippyresult flippy_mount(flippyfileinfo *info);
+flippyresult flippy_mount2(flippyfileinfo *info1, flippyfileinfo *info2);
 flippyresult flippy_reset(void);
 flippyresult flippy_mkdir(const char *path);
 flippyresult flippy_pread(flippyfileinfo *info, void *buf, u32 len, u32 offset);

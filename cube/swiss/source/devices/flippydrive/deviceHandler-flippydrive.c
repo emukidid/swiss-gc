@@ -153,13 +153,18 @@ s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, Execut
 	u32 numFrags = 0;
 	
 	if(numToPatch < 0) {
-		if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, 0, 0, 0) || numFrags != 1) {
+		if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, 0, 0, 0) || numFrags != 1 ||
+			flippy_mount(file->fp) != FLIPPY_RESULT_OK) {
 			free(fragList);
 			return 0;
 		}
-		if(flippy_mount(file->fp) != FLIPPY_RESULT_OK) {
-			free(fragList);
-			return 0;
+		
+		if(file2) {
+			if(!getFragments(DEVICE_CUR, file2, &fragList, &numFrags, 0, 0, 0) || numFrags != 2 ||
+				flippy_mount2(file->fp, file2->fp) != FLIPPY_RESULT_OK) {
+				free(fragList);
+				return 0;
+			}
 		}
 		free(fragList);
 		file->status = STATUS_MAPPED;
@@ -176,17 +181,15 @@ s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, Execut
 		}
 	}
 	
-	if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, FRAGS_DISC_1, 0, 0)) {
-		free(fragList);
-		return 0;
-	}
-	if(flippy_mount(file->fp) != FLIPPY_RESULT_OK) {
+	if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, FRAGS_DISC_1, 0, 0) ||
+		flippy_mount(file->fp) != FLIPPY_RESULT_OK) {
 		free(fragList);
 		return 0;
 	}
 	
 	if(file2) {
-		if(!getFragments(DEVICE_CUR, file2, &fragList, &numFrags, FRAGS_DISC_2, 0, 0)) {
+		if(!getFragments(DEVICE_CUR, file2, &fragList, &numFrags, FRAGS_DISC_2, 0, 0) ||
+			flippy_mount2(file->fp, file2->fp) != FLIPPY_RESULT_OK) {
 			free(fragList);
 			return 0;
 		}
@@ -291,9 +294,8 @@ bool deviceHandler_Flippy_test() {
 	if (swissSettings.hasDVDDrive) {
 		switch (driveInfo.rel_date) {
 			case 0x20220420:
-				if (flippy_boot(FLIPPY_MODE_BOOT) != FLIPPY_RESULT_OK)
-					return false;
-				if (flippy_boot(FLIPPY_MODE_NOUPDATE) != FLIPPY_RESULT_OK)
+				if (flippy_boot(FLIPPY_MODE_BOOT) != FLIPPY_RESULT_OK ||
+					flippy_boot(FLIPPY_MODE_NOUPDATE) != FLIPPY_RESULT_OK)
 					return false;
 				
 				while (driveInfo.rel_date != 0x20220426)
