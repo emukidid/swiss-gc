@@ -280,7 +280,8 @@ s32 deviceHandler_Flippy_deleteFile(file_handle* file) {
 s32 deviceHandler_Flippy_renameFile(file_handle* file, char* name) {
 	deviceHandler_Flippy_closeFile(file);
 	int ret = flippy_rename(getDevicePath(file->name), getDevicePath(name));
-	strcpy(file->name, name);
+	if(ret == FLIPPY_RESULT_OK || ret == FLIPPY_RESULT_NO_FILE || ret == FLIPPY_RESULT_NO_PATH)
+		strcpy(file->name, name);
 	return ret;
 }
 

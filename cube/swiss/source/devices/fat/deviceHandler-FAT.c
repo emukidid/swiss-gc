@@ -396,7 +396,8 @@ s32 deviceHandler_FAT_deleteFile(file_handle* file) {
 s32 deviceHandler_FAT_renameFile(file_handle* file, char* name) {
 	deviceHandler_FAT_closeFile(file);
 	int ret = f_rename(file->name, name);
-	strcpy(file->name, name);
+	if(ret == FR_OK || ret == FR_NO_FILE || ret == FR_NO_PATH)
+		strcpy(file->name, name);
 	return ret;
 }
 

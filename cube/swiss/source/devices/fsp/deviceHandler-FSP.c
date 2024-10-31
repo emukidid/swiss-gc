@@ -264,7 +264,8 @@ s32 deviceHandler_FSP_deleteFile(file_handle* file) {
 s32 deviceHandler_FSP_renameFile(file_handle* file, char* name) {
 	deviceHandler_FSP_closeFile(file);
 	int ret = fsp_rename(fsp_session, getDevicePath(file->name), getDevicePath(name));
-	strcpy(file->name, name);
+	if(ret == 0)
+		strcpy(file->name, name);
 	return ret;
 }
 

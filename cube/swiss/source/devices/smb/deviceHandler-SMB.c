@@ -236,7 +236,8 @@ s32 deviceHandler_SMB_deleteFile(file_handle* file) {
 s32 deviceHandler_SMB_renameFile(file_handle* file, char* name) {
 	deviceHandler_SMB_closeFile(file);
 	int ret = rename(file->name, name);
-	strcpy(file->name, name);
+	if(ret == 0)
+		strcpy(file->name, name);
 	return ret;
 }
 
