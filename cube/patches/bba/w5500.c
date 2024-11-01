@@ -35,6 +35,7 @@
 
 static struct {
 	bool sendok;
+	bool interrupt;
 	uint16_t wr;
 	uint16_t rd;
 	bba_page_t (*page)[8];
@@ -206,7 +207,10 @@ static void w5500_interrupt(void)
 static void exi_callback()
 {
 	if (EXILock(exi_channel, exi_device, exi_callback)) {
-		w5500_interrupt();
+		if (w5500.interrupt) {
+			w5500_interrupt();
+			w5500.interrupt = false;
+		}
 
 		if (w5500.output.callback && w5500.sendok) {
 			bba_output(w5500.output.data, w5500.output.size);
@@ -221,12 +225,14 @@ static void exi_callback()
 static void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	exi_clear_interrupts(true, false, false);
+	w5500.interrupt = true;
 	exi_callback();
 }
 
 static void debug_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	PI[0] = 1 << 12;
+	w5500.interrupt = true;
 	exi_callback();
 }
 

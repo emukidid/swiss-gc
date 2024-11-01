@@ -35,6 +35,7 @@
 
 static struct {
 	uint8_t bank;
+	bool interrupt;
 	bba_page_t (*page)[8];
 	struct {
 		void *data;
@@ -176,7 +177,10 @@ static void enc28j60_interrupt(void)
 static void exi_callback()
 {
 	if (EXILock(exi_channel, exi_device, exi_callback)) {
-		enc28j60_interrupt();
+		if (enc28j60.interrupt) {
+			enc28j60_interrupt();
+			enc28j60.interrupt = false;
+		}
 
 		if (enc28j60.output.callback) {
 			bba_output(enc28j60.output.data, enc28j60.output.size);
@@ -191,12 +195,14 @@ static void exi_callback()
 static void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	exi_clear_interrupts(true, false, false);
+	enc28j60.interrupt = true;
 	exi_callback();
 }
 
 static void debug_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	PI[0] = 1 << 12;
+	enc28j60.interrupt = true;
 	exi_callback();
 }
 

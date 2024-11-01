@@ -35,6 +35,7 @@
 
 static struct {
 	bool sendok;
+	bool interrupt;
 	uint16_t wr;
 	uint16_t rd;
 	bba_page_t (*page)[8];
@@ -206,7 +207,10 @@ static void w6100_interrupt(void)
 static void exi_callback()
 {
 	if (EXILock(exi_channel, exi_device, exi_callback)) {
-		w6100_interrupt();
+		if (w6100.interrupt) {
+			w6100_interrupt();
+			w6100.interrupt = false;
+		}
 
 		if (w6100.output.callback && w6100.sendok) {
 			bba_output(w6100.output.data, w6100.output.size);
@@ -221,12 +225,14 @@ static void exi_callback()
 static void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	exi_clear_interrupts(true, false, false);
+	w6100.interrupt = true;
 	exi_callback();
 }
 
 static void debug_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	PI[0] = 1 << 12;
+	w6100.interrupt = true;
 	exi_callback();
 }
 
