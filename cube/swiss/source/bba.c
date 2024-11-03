@@ -6,6 +6,7 @@
 #include "bba.h"
 #include "exi.h"
 #include "httpd.h"
+#include "rt4k.h"
 #include "swiss.h"
 #include "deviceHandler.h"
 
@@ -73,6 +74,7 @@ static void *net_thread_func(void *arg)
 
 	init_httpd_thread();
 	init_wiiload_thread();
+	rt4k_init();
 	return NULL;
 }
 

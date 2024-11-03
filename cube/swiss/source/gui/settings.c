@@ -17,6 +17,7 @@
 #include "exi.h"
 #include "bba.h"
 #include "sram.h"
+#include "rt4k.h"
 
 #define page_x_ofs_key (30)
 #define page_x_ofs_val (410)
@@ -99,8 +100,9 @@ static char *tooltips_game[PAGE_GAME_MAX+1] = {
 	"Digital Trigger Level:\n\nSets the threshold where the L/R Button is fully pressed.",
 	"Emulate Audio Streaming:\n\nAudio streaming is a hardware feature that allows a compressed\naudio track to be played in the background by the disc drive.\n\nEmulation is necessary for devices not attached to the\nDVD Interface, or for those not implementing it regardless.",
 	"Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated\nby the original medium, or for speedrunning.",
-	"Emulate Broadband Adapter:\n\nOnly available with the File Service Protocol or an initialised\nETH2GC module, where memory constraints permit.\n\nPackets not destined for the hypervisor are forwarded to\nthe virtual MAC. The virtual MAC address is the same as\nthe physical MAC. The physical MAC/PHY retain their\nconfiguration from Swiss, including link speed.",
-	"Prefer Clean Boot:\n\nWhen enabled, the GameCube will be reset and the game\nbooted through normal processes with no changes applied.\nRegion restrictions may be applicable.\n\nOnly available to devices attached to the DVD Interface."
+	"Emulate Broadband Adapter:\n\nOnly available with the File Service Protocol or an initialised\nETH2GC/GCNET module, where memory constraints permit.\n\nPackets not destined for the hypervisor are forwarded to\nthe virtual MAC. The virtual MAC address is the same as\nthe physical MAC. The physical MAC/PHY retain their\nconfiguration from Swiss, including link speed.",
+	"Prefer Clean Boot:\n\nWhen enabled, the GameCube will be reset and the game\nbooted through normal processes with no changes applied.\nRegion restrictions may be applicable.\n\nOnly available to devices attached to the DVD Interface.",
+	"RetroTINK-4K Profile:\n\nPresses a profile button through a configured ser2net TCP\nconnection to the RetroTINK-4K's serial port."
 };
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
@@ -270,6 +272,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "SMB Share:", swissSettings.smbShare, option == SET_SMB_SHARE, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "SMB Username:", swissSettings.smbUser, option == SET_SMB_USER, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "SMB Password:", "*****", option == SET_SMB_PASS, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "RetroTINK-4K Host IP:", swissSettings.rt4kHostIp, option == SET_RT4K_HOSTIP, netEnable);
+			drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Port:", swissSettings.rt4kPort, option == SET_RT4K_PORT, netEnable);
 		}
 	}
 	else if(page_num == PAGE_GAME_GLOBAL) {
@@ -299,6 +303,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
 		bool emulatedEthernet = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_ETHERNET);
 		bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
+		bool rt4kEnable = is_rt4k_alive();
 		if(option < SET_DEFAULT_TRIGGER_LEVEL) {
 			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_DEFAULT_FORCE_VIDEOMODE, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, enabledVideoPatches);
@@ -319,6 +324,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_DEFAULT_READ_SPEED, emulatedReadSpeed);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", swissSettings.emulateEthernet, option == SET_DEFAULT_EMULATE_ETHERNET, emulatedEthernet);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_DEFAULT_CLEAN_BOOT, enabledCleanBoot);
+			drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", swissSettings.rt4kProfile, option == SET_DEFAULT_RT4K_PROFILE, rt4kEnable);
 		}
 	}
 	else if(page_num == PAGE_GAME) {
@@ -334,6 +340,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
 			bool emulatedEthernet = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_ETHERNET);
 			bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
+			bool rt4kEnable = is_rt4k_alive();
 			if(option < SET_TRIGGER_LEVEL) {
 				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
 				drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[gameConfig->forceHScale], option == SET_HORIZ_SCALE, enabledVideoPatches);
@@ -354,6 +361,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[gameConfig->emulateReadSpeed], option == SET_READ_SPEED, emulatedReadSpeed);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", gameConfig->emulateEthernet, option == SET_EMULATE_ETHERNET, emulatedEthernet);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", gameConfig->preferCleanBoot, option == SET_CLEAN_BOOT, enabledCleanBoot);
+				drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", gameConfig->rt4kProfile, option == SET_RT4K_PROFILE, rt4kEnable);
 				drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULTS, true);
 			}
 		}
@@ -379,6 +387,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_READ_SPEED, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", swissSettings.emulateEthernet, option == SET_EMULATE_ETHERNET, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_CLEAN_BOOT, false);
+				drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", swissSettings.rt4kProfile, option == SET_DEFAULT_RT4K_PROFILE, false);
 				drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULTS, false);
 			}
 		}
@@ -567,6 +576,12 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_SMB_PASS:
 				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_MASKED, "SMB Password", &swissSettings.smbPassword, sizeof(swissSettings.smbPassword) - 1);
 			break;
+			case SET_RT4K_HOSTIP:
+				DrawGetTextEntry(ENTRYMODE_IP, "RetroTINK-4K Host IP", &swissSettings.rt4kHostIp, sizeof(swissSettings.rt4kHostIp) - 1);
+			break;
+			case SET_RT4K_PORT:
+				DrawGetTextEntry(ENTRYMODE_NUMERIC, "RetroTINK-4K Port", &swissSettings.rt4kPort, 5);
+			break;
 		}
 	}
 	else if(page == PAGE_GAME_GLOBAL) {
@@ -699,6 +714,12 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))
 					swissSettings.preferCleanBoot ^= 1;
 			break;
+			case SET_DEFAULT_RT4K_PROFILE:
+				if(is_rt4k_alive()) {
+					swissSettings.rt4kProfile += direction;
+					swissSettings.rt4kProfile = (swissSettings.rt4kProfile + 13) % 13;
+				}
+			break;
 		}
 	}
 	else if(page == PAGE_GAME && gameConfig != NULL && !gameConfig->forceCleanBoot) {
@@ -789,6 +810,12 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_CLEAN_BOOT:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))
 					gameConfig->preferCleanBoot ^= 1;
+			break;
+			case SET_RT4K_PROFILE:
+				if(is_rt4k_alive()) {
+					gameConfig->rt4kProfile += direction;
+					gameConfig->rt4kProfile = (gameConfig->rt4kProfile + 13) % 13;
+				}
 			break;
 			case SET_DEFAULTS:
 				if(direction == 0)
@@ -882,10 +909,10 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				// Update our .ini (in memory)
 				if(config != NULL) {
 					config_update_game(config, true);
-					DrawDispose(msgBox);
 				}
 				// flush settings to .ini
 				if(config_update_global(true)) {
+					rt4k_init();
 					DrawDispose(msgBox);
 					msgBox = DrawPublish(DrawMessageBox(D_INFO,"Config Saved Successfully!"));
 					sleep(1);
@@ -923,7 +950,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 			}
 			if(page == PAGE_NETWORK && (in_range(option, SET_BBA_LOCALIP, SET_BBA_GATEWAY) ||
 										in_range(option, SET_FSP_HOSTIP,  SET_FTP_PASS) ||
-										in_range(option, SET_SMB_HOSTIP,  SET_SMB_PASS))) {
+										in_range(option, SET_SMB_HOSTIP,  SET_RT4K_PORT))) {
 				settings_toggle(page, option, 0, config);
 			}
 			if(page == PAGE_GAME && option == SET_DEFAULTS) {

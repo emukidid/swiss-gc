@@ -124,6 +124,9 @@ typedef struct {
 	s8 sramHOffset;
 	u8 sramLanguage;
 	u8 sramVideo;
+	char rt4kHostIp[16];
+	u16 rt4kPort;
+	bool rt4kOptim;
 	char smbUser[32];		//20
 	char smbPassword[32];	//16
 	char smbShare[128];		//80
@@ -146,7 +149,7 @@ typedef struct {
 	int igrType;
 	int initNetworkAtStart;
 	int aveCompat;
-	int rt4kOptim;
+	int rt4kProfile;
 	u8 configDeviceId;	// see deviceHandler.h
 	int fileBrowserType;
 	int bs2Boot;

@@ -25,6 +25,7 @@ typedef struct {
 	int emulateEthernet;
 	int forceCleanBoot;
 	int preferCleanBoot;
+	int rt4kProfile;
 } ConfigEntry;
 
 void config_find(ConfigEntry *entry);

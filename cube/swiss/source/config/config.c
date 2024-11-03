@@ -160,18 +160,20 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Force Video Active=%s\r\n", swissSettings.forceVideoActive ? "Yes":"No");
 	fprintf(fp, "Force DTV Status=%s\r\n", swissSettings.forceDTVStatus ? "Yes":"No");
 	fprintf(fp, "Pause for resolution change=%s\r\n", swissSettings.pauseAVOutput ? "Yes":"No");
-	fprintf(fp, "SMBUserName=%s\r\n", swissSettings.smbUser);
-	fprintf(fp, "SMBPassword=%s\r\n", swissSettings.smbPassword);
-	fprintf(fp, "SMBShareName=%s\r\n", swissSettings.smbShare);
-	fprintf(fp, "SMBHostIP=%s\r\n", swissSettings.smbServerIp);
 	fprintf(fp, "AutoBoot=%s\r\n", swissSettings.autoBoot ? "Yes":"No");
 	fprintf(fp, "AutoCheats=%s\r\n", swissSettings.autoCheats ? "Yes":"No");
 	fprintf(fp, "InitNetwork=%s\r\n", swissSettings.initNetworkAtStart ? "Yes":"No");
 	fprintf(fp, "IGRType=%s\r\n", igrTypeStr[swissSettings.igrType]);
 	fprintf(fp, "AVECompat=%s\r\n", aveCompatStr[swissSettings.aveCompat]);
-	fprintf(fp, "RT4KOptim=%s\r\n", swissSettings.rt4kOptim ? "Yes":"No");
 	fprintf(fp, "FileBrowserType=%s\r\n", fileBrowserStr[swissSettings.fileBrowserType]);
 	fprintf(fp, "BS2Boot=%s\r\n", bs2BootStr[swissSettings.bs2Boot]);
+	fprintf(fp, "RT4KHostIP=%s\r\n", swissSettings.rt4kHostIp);
+	fprintf(fp, "RT4KPort=%hu\r\n", swissSettings.rt4kPort);
+	fprintf(fp, "RT4KOptim=%s\r\n", swissSettings.rt4kOptim ? "Yes":"No");
+	fprintf(fp, "SMBUserName=%s\r\n", swissSettings.smbUser);
+	fprintf(fp, "SMBPassword=%s\r\n", swissSettings.smbPassword);
+	fprintf(fp, "SMBShareName=%s\r\n", swissSettings.smbShare);
+	fprintf(fp, "SMBHostIP=%s\r\n", swissSettings.smbServerIp);
 	fprintf(fp, "FTPUserName=%s\r\n", swissSettings.ftpUserName);
 	fprintf(fp, "FTPPassword=%s\r\n", swissSettings.ftpPassword);
 	fprintf(fp, "FTPHostIP=%s\r\n", swissSettings.ftpHostIp);
@@ -210,6 +212,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Emulate Memory Card=%s\r\n", swissSettings.emulateMemoryCard ? "Yes":"No");
 	fprintf(fp, "Emulate Broadband Adapter=%s\r\n", swissSettings.emulateEthernet ? "Yes":"No");
 	fprintf(fp, "Prefer Clean Boot=%s\r\n", swissSettings.preferCleanBoot ? "Yes":"No");
+	fprintf(fp, "RetroTINK-4K Profile=%i\r\n", swissSettings.rt4kProfile);
 	fprintf(fp, "#!!Swiss Settings End!!\r\n\r\n");
 	fclose(fp);
 
@@ -283,6 +286,7 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	if(entry->emulateReadSpeed != swissSettings.emulateReadSpeed) fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[entry->emulateReadSpeed]);
 	if(entry->emulateEthernet != swissSettings.emulateEthernet) fprintf(fp, "Emulate Broadband Adapter=%s\r\n", entry->emulateEthernet ? "Yes":"No");
 	if(entry->preferCleanBoot != swissSettings.preferCleanBoot) fprintf(fp, "Prefer Clean Boot=%s\r\n", entry->preferCleanBoot ? "Yes":"No");
+	if(entry->rt4kProfile != swissSettings.rt4kProfile) fprintf(fp, "RetroTINK-4K Profile=%i\r\n", entry->rt4kProfile);
 	fclose(fp);
 
 	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
@@ -322,6 +326,7 @@ void config_defaults(ConfigEntry *entry) {
 	entry->emulateReadSpeed = swissSettings.emulateReadSpeed;
 	entry->emulateEthernet = swissSettings.emulateEthernet;
 	entry->preferCleanBoot = swissSettings.preferCleanBoot;
+	entry->rt4kProfile = swissSettings.rt4kProfile;
 
 	for(int i = 0; i < sizeof(triggerLevelEntries) / sizeof(*triggerLevelEntries); i++) {
 		if(!strncmp(entry->game_id, triggerLevelEntries[i], 4)) {
@@ -734,6 +739,9 @@ void config_parse_global(char *configData) {
 				else if(!strcmp("Prefer Clean Boot", name)) {
 					swissSettings.preferCleanBoot = !strcmp("Yes", value);
 				}
+				else if(!strcmp("RetroTINK-4K Profile", name)) {
+					swissSettings.rt4kProfile = atoi(value);
+				}
 				
 				// Swiss settings
 				else if(!strcmp("SD/IDE Speed", name)) {
@@ -801,18 +809,6 @@ void config_parse_global(char *configData) {
 				else if(!strcmp("Pause for resolution change", name)) {
 					swissSettings.pauseAVOutput = !strcmp("Yes", value);
 				}
-				else if(!strcmp("SMBUserName", name)) {
-					strlcpy(swissSettings.smbUser, value, sizeof(swissSettings.smbUser));
-				}
-				else if(!strcmp("SMBPassword", name)) {
-					strlcpy(swissSettings.smbPassword, value, sizeof(swissSettings.smbPassword));
-				}
-				else if(!strcmp("SMBShareName", name)) {
-					strlcpy(swissSettings.smbShare, value, sizeof(swissSettings.smbShare));
-				}
-				else if(!strcmp("SMBHostIP", name)) {
-					strlcpy(swissSettings.smbServerIp, value, sizeof(swissSettings.smbServerIp));
-				}
 				else if(!strcmp("AutoBoot", name)) {
 					swissSettings.autoBoot = !strcmp("Yes", value);
 				}
@@ -838,9 +834,6 @@ void config_parse_global(char *configData) {
 						}
 					}
 				}
-				else if(!strcmp("RT4KOptim", name)) {
-					swissSettings.rt4kOptim = !strcmp("Yes", value);
-				}
 				else if(!strcmp("FileBrowserType", name)) {
 					for(int i = 0; i < 3; i++) {
 						if(!strcmp(fileBrowserStr[i], value)) {
@@ -856,6 +849,27 @@ void config_parse_global(char *configData) {
 							break;
 						}
 					}
+				}
+				else if(!strcmp("RT4KHostIP", name)) {
+					strlcpy(swissSettings.rt4kHostIp, value, sizeof(swissSettings.rt4kHostIp));
+				}
+				else if(!strcmp("RT4KPort", name)) {
+					swissSettings.rt4kPort = atoi(value);
+				}
+				else if(!strcmp("RT4KOptim", name)) {
+					swissSettings.rt4kOptim = !strcmp("Yes", value);
+				}
+				else if(!strcmp("SMBUserName", name)) {
+					strlcpy(swissSettings.smbUser, value, sizeof(swissSettings.smbUser));
+				}
+				else if(!strcmp("SMBPassword", name)) {
+					strlcpy(swissSettings.smbPassword, value, sizeof(swissSettings.smbPassword));
+				}
+				else if(!strcmp("SMBShareName", name)) {
+					strlcpy(swissSettings.smbShare, value, sizeof(swissSettings.smbShare));
+				}
+				else if(!strcmp("SMBHostIP", name)) {
+					strlcpy(swissSettings.smbServerIp, value, sizeof(swissSettings.smbServerIp));
 				}
 				else if(!strcmp("FTPUserName", name)) {
 					strlcpy(swissSettings.ftpUserName, value, sizeof(swissSettings.ftpUserName));
@@ -1084,6 +1098,9 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 				else if(!strcmp("Prefer Clean Boot", name)) {
 					entry->preferCleanBoot = !strcmp("Yes", value);
 				}
+				else if(!strcmp("RetroTINK-4K Profile", name)) {
+					entry->rt4kProfile = atoi(value);
+				}
 			}
 		}
 		// And round we go again
@@ -1182,6 +1199,7 @@ void config_load_current(ConfigEntry *entry) {
 	swissSettings.emulateReadSpeed = entry->emulateReadSpeed;
 	swissSettings.emulateEthernet = entry->emulateEthernet;
 	swissSettings.preferCleanBoot = entry->preferCleanBoot;
+	swissSettings.rt4kProfile = entry->rt4kProfile;
 	
 	if(!strchr("PA?", entry->region))
 		swissSettings.sramLanguage = SYS_LANG_ENGLISH;
@@ -1243,4 +1261,5 @@ void config_unload_current() {
 	swissSettings.preferCleanBoot = backup.preferCleanBoot;
 	swissSettings.sramLanguage = backup.sramLanguage;
 	swissSettings.sramVideo = backup.sramVideo;
+	swissSettings.rt4kProfile = backup.rt4kProfile;
 }
