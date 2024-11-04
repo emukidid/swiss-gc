@@ -2797,8 +2797,8 @@ void menu_loop()
 						if(devices[DEVICE_CUR] != NULL) {
 							devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 						}
-						DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(LOC_DVD_CONNECTOR);
-						if(device == &__device_flippy) {
+						if(swissSettings.hasFlippyDrive) {
+							flippy_bypass(false);
 							flippy_reset();
 						}
 						DrawShutdown();

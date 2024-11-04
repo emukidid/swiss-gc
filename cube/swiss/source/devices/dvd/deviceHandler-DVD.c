@@ -14,6 +14,7 @@
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "main.h"
+#include "flippy.h"
 #include "patcher.h"
 #include "dvd.h"
 #include "gcm.h"
@@ -523,6 +524,10 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, Executabl
 }
 
 s32 deviceHandler_DVD_init(file_handle* file){
+	if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
+		return EBUSY;
+	}
+	if(swissSettings.hasFlippyDrive) flippy_bypass(true);
 	if(!swissSettings.hasDVDDrive) return ENODEV;
 	
 	file->status = initialize_disc(ENABLE_BYDISK);

@@ -26,7 +26,7 @@ file_handle initial_Flippy =
 	};
 
 file_handle initial_FlippyFlash =
-	{ "flffs:/",      // directory
+	{ "fdffs:/",      // directory
 	  0ULL,     // fileBase (u64)
 	  0,        // offset
 	  0,        // size
@@ -246,6 +246,11 @@ s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, Execut
 }
 
 s32 deviceHandler_Flippy_init(file_handle* file) {
+	if(devices[DEVICE_CUR] && (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR) &&
+		devices[DEVICE_CUR] != &__device_flippy &&
+		devices[DEVICE_CUR] != &__device_flippyflash) {
+		return EBUSY;
+	}
 	return flippy_init() == FLIPPY_RESULT_OK ? 0 : ENODEV;
 }
 
@@ -303,6 +308,7 @@ bool deviceHandler_Flippy_test() {
 					if (DVD_Inquiry(&commandBlock, &driveInfo) < 0)
 						return false;
 			case 0x20220426:
+				swissSettings.hasFlippyDrive = 1;
 				return true;
 		}
 	}

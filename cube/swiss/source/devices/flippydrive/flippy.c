@@ -56,6 +56,10 @@
 	((dvdcmdbuf){(((0xB5) << 24) | (0x12))})
 #define FLIPPY_CMD_RENAME \
 	((dvdcmdbuf){(((0xB5) << 24) | (0x13))})
+#define FLIPPY_CMD_BYPASS_ENTRY \
+	((dvdcmdbuf){(((0xDC) << 24))})
+#define FLIPPY_CMD_BYPASS_EXIT \
+	((dvdcmdbuf){(((0xDC) << 24)), (0xE3F72BAB), (0x72648977)})
 
 typedef void (*flippycallback)(flippyfile *file);
 typedef void (*dvdcallbacklow)(s32 result);
@@ -767,13 +771,41 @@ flippyresult flippy_rename(const char *old, const char *new)
 	return file->result;
 }
 
+flippyresult flippy_bypass(bool bypass)
+{
+	dvdcmdblk block;
+
+	if (DVD_Inquiry(&block, &driveinfo) < 0)
+		return FLIPPY_RESULT_NOT_READY;
+
+	switch (driveinfo.rel_date) {
+		case 0x20220420:
+		case 0x20220426:
+			if (!bypass) return FLIPPY_RESULT_OK;
+			break;
+		default:
+			if (bypass) return FLIPPY_RESULT_OK;
+			break;
+	}
+
+	LWP_SemInit(&semaphore, 0, 1);
+	if (!DVD_ReadImmAsyncPrio(&block, bypass ? FLIPPY_CMD_BYPASS_ENTRY : FLIPPY_CMD_BYPASS_EXIT, NULL, 0, reset_callback, 3)) {
+		LWP_SemDestroy(semaphore);
+		return FLIPPY_RESULT_NOT_READY;
+	}
+
+	LWP_SemWait(semaphore);
+	LWP_SemDestroy(semaphore);
+	return FLIPPY_RESULT_OK;
+}
+
 flippyresult flippy_init(void)
 {
 	static bool initialized;
 	dvdcmdblk block;
 	flippyversion *version = (flippyversion *)driveinfo.pad;
 
-	if (initialized) return FLIPPY_RESULT_OK;
+	if (initialized) return flippy_bypass(false);
 	DVD_Init();
 
 	if (DVD_Inquiry(&block, &driveinfo) < 0 || driveinfo.rel_date != 0x20220426)

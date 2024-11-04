@@ -194,7 +194,7 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 		}
 		file->status = STATUS_HAS_MAPPING;
 	}
-	else if(devices[deviceSlot] == &__device_flippy) {
+	else if(devices[deviceSlot] == &__device_flippy || devices[deviceSlot] == &__device_flippyflash) {
 		frags = reallocarray(frags, numFrags + 2, sizeof(file_frag));
 		if(frags == NULL) {
 			return false;

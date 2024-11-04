@@ -147,6 +147,7 @@ flippyresult flippy_flash_open(flippyfileinfo *info, const char *path, u32 flags
 flippyresult flippy_flash_opendir(flippydirinfo *info, const char *path);
 flippyresult flippy_flash_unlink(const char *path);
 flippyresult flippy_rename(const char *old, const char *new);
+flippyresult flippy_bypass(bool bypass);
 flippyresult flippy_init(void);
 
 #ifdef __cplusplus
