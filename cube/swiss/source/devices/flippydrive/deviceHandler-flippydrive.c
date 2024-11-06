@@ -299,14 +299,31 @@ bool deviceHandler_Flippy_test() {
 	
 	if (swissSettings.hasDVDDrive) {
 		switch (driveInfo.rel_date) {
+			case 0x20010608:
+			case 0x20010831:
+			case 0x20020402:
+			case 0x20020823:
+				if (flippy_bypass(false) != FLIPPY_RESULT_OK)
+					return false;
+				
+				if (DVD_Inquiry(&commandBlock, &driveInfo) < 0) {
+					swissSettings.hasDVDDrive = 0;
+					return false;
+				}
+				break;
+		}
+		switch (driveInfo.rel_date) {
 			case 0x20220420:
 				if (flippy_boot(FLIPPY_MODE_BOOT) != FLIPPY_RESULT_OK ||
 					flippy_boot(FLIPPY_MODE_NOUPDATE) != FLIPPY_RESULT_OK)
 					return false;
 				
-				while (driveInfo.rel_date != 0x20220426)
-					if (DVD_Inquiry(&commandBlock, &driveInfo) < 0)
+				while (driveInfo.rel_date != 0x20220426) {
+					if (DVD_Inquiry(&commandBlock, &driveInfo) < 0) {
+						swissSettings.hasDVDDrive = 0;
 						return false;
+					}
+				}
 			case 0x20220426:
 				swissSettings.hasFlippyDrive = 1;
 				return true;

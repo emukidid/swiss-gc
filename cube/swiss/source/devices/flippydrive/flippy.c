@@ -24,6 +24,7 @@
 #include <ogc/lwp.h>
 #include <ogc/machine/processor.h>
 #include <ogc/semaphore.h>
+#include <ogc/system.h>
 #include "flippy.h"
 
 #define FLIPPY_CMD_BOOT(magic) \
@@ -65,25 +66,52 @@ typedef void (*flippycallback)(flippyfile *file);
 typedef void (*dvdcallbacklow)(s32 result);
 
 extern s32 DVD_LowWaitCoverClose(dvdcallbacklow cb);
+extern dvdcallbacklow DVD_LowClearCallback(void);
 
 static dvddrvinfo       driveinfo  ATTRIBUTE_ALIGN(32);
 static flippybootstatus bootstatus ATTRIBUTE_ALIGN(32);
 
 static u64 handles = ((1LL << FLIPPY_MAX_HANDLES) - 1) | (1LL << (FLIPPY_FLASH_HANDLE - 1));
 
+static syswd_t alarm = SYS_WD_NULL;
 static lwpq_t queue = LWP_TQUEUE_NULL;
 static sem_t semaphore = LWP_SEM_NULL;
 
+static void alarm_callback(syswd_t alarm, void *arg)
+{
+	SYS_RemoveAlarm(alarm);
+	DVD_LowClearCallback();
+	LWP_SemPost(semaphore);
+	DVD_Resume();
+}
+
 static void cover_callback(s32 result)
 {
+	SYS_RemoveAlarm(alarm);
 	LWP_SemPost(semaphore);
 	DVD_Resume();
 }
 
 static void reset_callback(s32 result, dvdcmdblk *block)
 {
+	struct timespec tv;
+
 	DVD_Pause();
 	DVD_LowWaitCoverClose(cover_callback);
+
+	switch (block->cmdbuf[0] >> 24) {
+		case 0xDC:
+			tv.tv_sec  = 0;
+			tv.tv_nsec = 20000000;
+			break;
+		default:
+			tv.tv_sec  = 10;
+			tv.tv_nsec = 0;
+			break;
+	}
+
+	SYS_CreateAlarm(&alarm);
+	SYS_SetAlarm(alarm, &tv, alarm_callback, block);
 }
 
 static void status_callback(s32 result, dvdcmdblk *block)
