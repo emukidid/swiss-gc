@@ -57,7 +57,9 @@ s32 deviceHandler_ARAM_deinit(file_handle* file) {
 }
 
 bool deviceHandler_ARAM_test() {
-	return __io_aram.startup() && __io_aram.isInserted();
+	return __io_aram.startup(&__io_aram)
+		&& __io_aram.isInserted(&__io_aram)
+		&& __io_aram.shutdown(&__io_aram);
 }
 
 DEVICEHANDLER_INTERFACE __device_aram = {

@@ -38,8 +38,8 @@ A list of all default devices to try at startup,
 terminated by a {NULL,NULL} entry.
 */
 typedef struct {
-	const char* name; 
-	const DISC_INTERFACE* (*getInterface)(void);
+	const char* name;
+	DISC_INTERFACE* (*getInterface)(void);
 } INTERFACE_ID;
 extern const INTERFACE_ID _FAT_disc_interfaces[];
 #endif
@@ -48,8 +48,8 @@ extern const INTERFACE_ID _FAT_disc_interfaces[];
 Check if a disc is inserted
 Return true if a disc is inserted and ready, false otherwise
 */
-static inline bool _FAT_disc_isInserted (const DISC_INTERFACE* disc) {
-	return disc->isInserted();
+static inline bool _FAT_disc_isInserted (DISC_INTERFACE* disc) {
+	return disc->isInserted(disc);
 }
 
 /*
@@ -59,11 +59,11 @@ else it is at least 1
 sector is 0 or greater
 buffer is a pointer to the memory to fill
 */
-static inline bool _FAT_disc_readSectors (const DISC_INTERFACE* disc, sec_t sector, sec_t numSectors, void* buffer) {
+static inline bool _FAT_disc_readSectors (DISC_INTERFACE* disc, sec_t sector, sec_t numSectors, void* buffer) {
 	// Nintendont: Attempt reading up to 10 times.
 	int ret, i;
 	for (i = 10; i > 0; i--) {
-		ret = disc->readSectors (sector, numSectors, buffer);
+		ret = disc->readSectors (disc, sector, numSectors, buffer);
 		if (ret != 0)
 			break;
 	}
@@ -77,43 +77,43 @@ else it is at least 1
 sector is 0 or greater
 buffer is a pointer to the memory to read from
 */
-static inline bool _FAT_disc_writeSectors (const DISC_INTERFACE* disc, sec_t sector, sec_t numSectors, const void* buffer) {
-	return disc->writeSectors (sector, numSectors, buffer);
+static inline bool _FAT_disc_writeSectors (DISC_INTERFACE* disc, sec_t sector, sec_t numSectors, const void* buffer) {
+	return disc->writeSectors (disc, sector, numSectors, buffer);
 }
 
 /*
 Reset the card back to a ready state
 */
-static inline bool _FAT_disc_clearStatus (const DISC_INTERFACE* disc) {
-	return disc->clearStatus();
+static inline bool _FAT_disc_clearStatus (DISC_INTERFACE* disc) {
+	return disc->clearStatus(disc);
 }
 
 /*
 Initialise the disc to a state ready for data reading or writing
 */
-static inline bool _FAT_disc_startup (const DISC_INTERFACE* disc) {
-	return disc->startup();
+static inline bool _FAT_disc_startup (DISC_INTERFACE* disc) {
+	return disc->startup(disc);
 }
 
 /*
 Put the disc in a state ready for power down.
 Complete any pending writes and disable the disc if necessary
 */
-static inline bool _FAT_disc_shutdown (const DISC_INTERFACE* disc) {
-	return disc->shutdown();
+static inline bool _FAT_disc_shutdown (DISC_INTERFACE* disc) {
+	return disc->shutdown(disc);
 }
 
 /*
 Return a 32 bit value unique to each type of interface
 */
-static inline uint32_t _FAT_disc_hostType (const DISC_INTERFACE* disc) {
+static inline uint32_t _FAT_disc_hostType (DISC_INTERFACE* disc) {
 	return disc->ioType;
 }
 
 /*
 Return a 32 bit value that specifies the capabilities of the disc
 */
-static inline uint32_t _FAT_disc_features (const DISC_INTERFACE* disc) {
+static inline uint32_t _FAT_disc_features (DISC_INTERFACE* disc) {
 	return disc->features;
 }
 

@@ -15,9 +15,9 @@
 
 #define DEVICE_TYPE_GC_ATA	(('G'<<24)|('A'<<16)|('T'<<8)|'A')
 
-extern const DISC_INTERFACE __io_ataa;
-extern const DISC_INTERFACE __io_atab;
-extern const DISC_INTERFACE __io_atac;
+extern DISC_INTERFACE __io_ataa;
+extern DISC_INTERFACE __io_atab;
+extern DISC_INTERFACE __io_atac;
 extern int _ideexi_version;
 
 // ATA status register bits

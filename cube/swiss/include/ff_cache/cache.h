@@ -48,12 +48,12 @@ typedef struct {
 } CACHE_ENTRY;
 
 typedef struct {
-	const DISC_INTERFACE* disc;
-	sec_t		          endOfPartition;
-	unsigned int          numberOfPages;
-	unsigned int          sectorsPerPage;
-	unsigned int          bytesPerSector;
-	CACHE_ENTRY*          cacheEntries;
+	DISC_INTERFACE* disc;
+	sec_t           endOfPartition;
+	unsigned int    numberOfPages;
+	unsigned int    sectorsPerPage;
+	unsigned int    bytesPerSector;
+	CACHE_ENTRY*    cacheEntries;
 } CACHE;
 
 /*
@@ -120,7 +120,7 @@ Clear out the contents of the cache without writing any dirty sectors first
 */
 void _FAT_cache_invalidate (CACHE* cache);
 
-CACHE* _FAT_cache_constructor (unsigned int numberOfPages, unsigned int sectorsPerPage, const DISC_INTERFACE* discInterface, sec_t endOfPartition, unsigned int bytesPerSector);
+CACHE* _FAT_cache_constructor (unsigned int numberOfPages, unsigned int sectorsPerPage, DISC_INTERFACE* discInterface, sec_t endOfPartition, unsigned int bytesPerSector);
 
 void _FAT_cache_destructor (CACHE* cache);
 

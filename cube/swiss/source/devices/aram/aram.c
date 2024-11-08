@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2023-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -26,7 +26,7 @@
 #include "ff.h"
 #include "diskio.h"
 
-static bool __aram_Startup(void)
+static bool __aram_Startup(DISC_INTERFACE *disc)
 {
 	static bool initialized;
 
@@ -46,12 +46,12 @@ static bool __aram_Startup(void)
 	return true;
 }
 
-static bool __aram_IsInserted(void)
+static bool __aram_IsInserted(DISC_INTERFACE *disc)
 {
 	return AR_GetSize() > AR_GetInternalSize();
 }
 
-static bool __aram_ReadSectors(sec_t sector, sec_t numSectors, void *buffer)
+static bool __aram_ReadSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, void *buffer)
 {
 	ARQRequest req;
 
@@ -65,7 +65,7 @@ static bool __aram_ReadSectors(sec_t sector, sec_t numSectors, void *buffer)
 	return true;
 }
 
-static bool __aram_WriteSectors(sec_t sector, sec_t numSectors, const void *buffer)
+static bool __aram_WriteSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, const void *buffer)
 {
 	ARQRequest req;
 
@@ -79,12 +79,12 @@ static bool __aram_WriteSectors(sec_t sector, sec_t numSectors, const void *buff
 	return true;
 }
 
-static bool __aram_ClearStatus(void)
+static bool __aram_ClearStatus(DISC_INTERFACE *disc)
 {
 	return true;
 }
 
-static bool __aram_Shutdown(void)
+static bool __aram_Shutdown(DISC_INTERFACE *disc)
 {
 	return true;
 }
@@ -117,7 +117,7 @@ DRESULT ARAM_ioctl(BYTE ctrl, void *buff)
 	return res;
 }
 
-const DISC_INTERFACE __io_aram = {
+DISC_INTERFACE __io_aram = {
 	DEVICE_TYPE_GC_ARAM,
 	FEATURE_MEDIUM_CANREAD | FEATURE_MEDIUM_CANWRITE,
 	__aram_Startup,

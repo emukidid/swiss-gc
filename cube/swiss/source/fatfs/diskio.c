@@ -17,7 +17,7 @@
 #include "aram.h"
 #include "ff_cache/cache.h"
 
-static const DISC_INTERFACE *driver[FF_VOLUMES] = {&__io_gcsda, &__io_gcsdb, &__io_gcsd2, &__io_ataa, &__io_atab, &__io_atac, &__io_wkf, &__io_gcode, &__io_aram};
+static DISC_INTERFACE *disk[FF_VOLUMES] = {&__io_gcsda, &__io_gcsdb, &__io_gcsd2, &__io_ataa, &__io_atab, &__io_atac, &__io_wkf, &__io_gcode, &__io_aram};
 static bool disk_isInit[FF_VOLUMES] = {0};
 
 // Disk caches
@@ -35,9 +35,9 @@ DSTATUS disk_status (
 		return STA_NOINIT;
 
 	if (disk_isInit[pdrv]) {
-		if (!driver[pdrv]->isInserted())
+		if (!disk[pdrv]->isInserted(disk[pdrv]))
 			return STA_NODISK | STA_NOINIT;
-		return (driver[pdrv]->features & FEATURE_MEDIUM_CANWRITE ? 0 : STA_PROTECT);
+		return (disk[pdrv]->features & FEATURE_MEDIUM_CANWRITE ? 0 : STA_PROTECT);
 	}
 
 	// Disk isn't initialized.
@@ -58,10 +58,10 @@ DSTATUS disk_initialize (
 		return STA_NOINIT;
 
 	if (!disk_isInit[pdrv]) {
-		if (!driver[pdrv]->startup())
+		if (!disk[pdrv]->startup(disk[pdrv]))
 			return STA_NOINIT;
 	}
-	if (!driver[pdrv]->isInserted())
+	if (!disk[pdrv]->isInserted(disk[pdrv]))
 		return STA_NODISK | STA_NOINIT;
 
 	// Initialize the disk cache.
@@ -72,16 +72,16 @@ DSTATUS disk_initialize (
 	// per-disk cache, not per-partition. Use UINT_MAX.
 	switch (pdrv) {
 		case DEV_ARAM:
-			cache[pdrv] = _FAT_cache_constructor(2, 8, driver[pdrv], (sec_t)-1, 512);
+			cache[pdrv] = _FAT_cache_constructor(2, 8, disk[pdrv], (sec_t)-1, 512);
 			break;
 		default:
-			cache[pdrv] = _FAT_cache_constructor(128, 8, driver[pdrv], (sec_t)-1, 512);
+			cache[pdrv] = _FAT_cache_constructor(128, 8, disk[pdrv], (sec_t)-1, 512);
 			break;
 	}
 
 	// Device initialized.
 	disk_isInit[pdrv] = true;
-	return (driver[pdrv]->features & FEATURE_MEDIUM_CANWRITE ? 0 : STA_PROTECT);
+	return (disk[pdrv]->features & FEATURE_MEDIUM_CANWRITE ? 0 : STA_PROTECT);
 }
 
 /*-----------------------------------------------------------------------*/
@@ -104,7 +104,7 @@ DRESULT disk_read (
 	bool ret;
 	if (!cache[pdrv]) {
 		// No cache.
-		ret = _FAT_disc_readSectors(driver[pdrv], sector, count, buff);
+		ret = _FAT_disc_readSectors(disk[pdrv], sector, count, buff);
 	} else if (count == 1) {
 		// Single sector.
 		ret = _FAT_cache_readSector(cache[pdrv], buff, sector);
@@ -138,7 +138,7 @@ DRESULT disk_write (
 	bool ret;
 	if (!cache[pdrv]) {
 		// No cache.
-		ret = _FAT_disc_writeSectors(driver[pdrv], sector, count, buff);
+		ret = _FAT_disc_writeSectors(disk[pdrv], sector, count, buff);
 	} else if (count == 1) {
 		// Single sector.
 		ret = _FAT_cache_writeSector(cache[pdrv], buff, sector);
@@ -254,7 +254,7 @@ DRESULT disk_shutdown (BYTE pdrv)
 	}
 
 	// Shut down the device.
-	driver[pdrv]->shutdown();
+	disk[pdrv]->shutdown(disk[pdrv]);
 	disk_isInit[pdrv] = false;
 	return RES_OK;
 }

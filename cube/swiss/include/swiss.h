@@ -42,7 +42,6 @@ extern dvdcmdblk commandBlock;
 extern dvddrvinfo driveInfo;
 extern DiskHeader GCMDisk;
 
-extern void udelay(int s);
 extern s32 DVD_LowGetCoverStatus(void);
 extern u32 sdgecko_getAddressingType(s32 drv_no);
 extern u32 sdgecko_getTransferMode(s32 drv_no);

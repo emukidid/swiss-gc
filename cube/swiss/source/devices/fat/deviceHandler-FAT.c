@@ -406,7 +406,7 @@ s32 deviceHandler_FAT_makeDir(file_handle* dir) {
 }
 
 bool deviceHandler_FAT_test_sd_a() {
-	bool ret = __io_gcsda.startup() && __io_gcsda.shutdown();
+	bool ret = __io_gcsda.startup(&__io_gcsda) && __io_gcsda.shutdown(&__io_gcsda);
 
 	if(__io_gcsda.features & FEATURE_GAMECUBE_SLOTA) {
 		__device_sd_a.deviceName = "SD Card - Slot A";
@@ -419,7 +419,7 @@ bool deviceHandler_FAT_test_sd_a() {
 	return ret;
 }
 bool deviceHandler_FAT_test_sd_b() {
-	bool ret = __io_gcsdb.startup() && __io_gcsdb.shutdown();
+	bool ret = __io_gcsdb.startup(&__io_gcsdb) && __io_gcsdb.shutdown(&__io_gcsdb);
 
 	if (ret) {
 		if (sdgecko_getTransferMode(1) == CARDIO_TRANSFER_DMA)
@@ -430,7 +430,7 @@ bool deviceHandler_FAT_test_sd_b() {
 	return ret;
 }
 bool deviceHandler_FAT_test_sd_c() {
-	bool ret = __io_gcsd2.startup() && __io_gcsd2.shutdown();
+	bool ret = __io_gcsd2.startup(&__io_gcsd2) && __io_gcsd2.shutdown(&__io_gcsd2);
 
 	if (ret) {
 		if (sdgecko_getTransferMode(2) == CARDIO_TRANSFER_DMA)

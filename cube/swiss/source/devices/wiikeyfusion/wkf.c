@@ -12,6 +12,7 @@
 #include <string.h>
 #include <debug.h>
 #include <ogc/exi.h>
+#include <ogc/timesupp.h>
 #include <wkf.h>
 #include "main.h"
 #include "swiss.h"
@@ -416,45 +417,44 @@ int wkfShutdown(int chn) {
 	return 1;
 }
 
-static bool __wkf_startup(void)
+static bool __wkf_startup(DISC_INTERFACE *disc)
 {
 	return wkfIsInserted(0);
 }
 
-static bool __wkf_isInserted(void)
+static bool __wkf_isInserted(DISC_INTERFACE *disc)
 {
 	return wkfIsInserted(0);
 }
 
-static bool __wkf_readSectors(sec_t sector, sec_t numSectors, void *buffer)
+static bool __wkf_readSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, void *buffer)
 {
 	wkfReadSectors(0, sector, numSectors, buffer);
 	return true;
 }
 
-static bool __wkf_writeSectors(sec_t sector, sec_t numSectors, void *buffer)
+static bool __wkf_writeSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, const void *buffer)
 {
 	return false;
 }
 
-static bool __wkf_clearStatus(void)
+static bool __wkf_clearStatus(DISC_INTERFACE *disc)
 {
 	return true;
 }
 
-static bool __wkf_shutdown(void)
+static bool __wkf_shutdown(DISC_INTERFACE *disc)
 {
 	return true;
 }
 
-
-const DISC_INTERFACE __io_wkf = {
+DISC_INTERFACE __io_wkf = {
 	DEVICE_TYPE_GC_WKF,
 	FEATURE_MEDIUM_CANREAD | FEATURE_GAMECUBE_DVD,
-	(FN_MEDIUM_STARTUP)&__wkf_startup,
-	(FN_MEDIUM_ISINSERTED)&__wkf_isInserted,
-	(FN_MEDIUM_READSECTORS)&__wkf_readSectors,
-	(FN_MEDIUM_WRITESECTORS)&__wkf_writeSectors,
-	(FN_MEDIUM_CLEARSTATUS)&__wkf_clearStatus,
-	(FN_MEDIUM_SHUTDOWN)&__wkf_shutdown
-} ;
+	__wkf_startup,
+	__wkf_isInserted,
+	__wkf_readSectors,
+	__wkf_writeSectors,
+	__wkf_clearStatus,
+	__wkf_shutdown
+};

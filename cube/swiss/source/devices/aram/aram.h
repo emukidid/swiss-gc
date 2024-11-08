@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2023-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -28,6 +28,6 @@ DRESULT ARAM_ioctl(BYTE ctrl, void *buff);
 
 #define DEVICE_TYPE_GC_ARAM (('G'<<24)|('C'<<16)|('A'<<8)|'R')
 
-extern const DISC_INTERFACE __io_aram;
+extern DISC_INTERFACE __io_aram;
 
 #endif
