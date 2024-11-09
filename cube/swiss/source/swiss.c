@@ -2802,7 +2802,7 @@ void menu_loop()
 							flippy_reset();
 						}
 						DrawShutdown();
-						SYS_ResetSystem(SYS_HOTRESET, 0, TRUE);
+						SYS_ResetSystem(SYS_HOTRESET, 0, !swissSettings.hasFlippyDrive);
 						__builtin_unreachable();
 						break;
 				}
