@@ -33,7 +33,7 @@ static void *net_thread_func(void *arg)
 
 	net_initialized = 1;
 	strcpy(swissSettings.bbaLocalIp, inet_ntoa(bba_localip));
-	swissSettings.bbaNetmask = (32 - __builtin_ctz(bba_netmask.s_addr));
+	swissSettings.bbaNetmask = bba_netmask.s_addr ? (32 - __builtin_ctz(bba_netmask.s_addr)) : 0;
 	strcpy(swissSettings.bbaGateway, inet_ntoa(bba_gateway));
 
 	char ifname[4];
