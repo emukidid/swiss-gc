@@ -3935,6 +3935,9 @@ FRESULT f_read (
 	FSIZE_t remain;
 	UINT rcnt, cc, csect;
 	BYTE *rbuff = (BYTE*)buff;
+#if FF_WF_FAST_CONTIGUOUS_READ
+	UINT ccsize;
+#endif
 
 
 	*br = 0;	/* Clear read byte counter */
@@ -3969,9 +3972,31 @@ FRESULT f_read (
 			sect += csect;
 			cc = btr / SS(fs);					/* When remaining bytes >= sector size, */
 			if (cc > 0) {						/* Read maximum contiguous sectors directly */
+#if FF_WF_FAST_CONTIGUOUS_READ
+				ccsize = fs->csize;				/* Contiguous cluster size, in sectors */
+				while (csect + cc > ccsize) {
+#if FF_USE_FASTSEEK
+					if (fp->cltbl) {
+						clst = clmt_clust(fp, fp->fptr + (ccsize * SS(fs)));	/* Get cluster# from the CLMT */
+					} else
+#endif
+					{
+						clst = get_fat(&fp->obj, fp->clust);	/* Follow cluster chain on the FAT */
+					}
+					if (clst < 2) ABORT(fs, FR_INT_ERR);
+					if (clst == 0xFFFFFFFF) ABORT(fs, FR_DISK_ERR);
+					if (clst != fp->clust + 1) break;	/* Not contiguous? */
+					fp->clust = clst;			/* Update current cluster */
+					ccsize += fs->csize;
+				}
+				if (csect + cc > ccsize) {		/* Clip at cluster boundary */
+					cc = ccsize - csect;
+				}
+#else
 				if (csect + cc > fs->csize) {	/* Clip at cluster boundary */
 					cc = fs->csize - csect;
 				}
+#endif
 				if (disk_read(fs->pdrv, rbuff, sect, cc) != RES_OK) ABORT(fs, FR_DISK_ERR);
 #if !FF_FS_READONLY && FF_FS_MINIMIZE <= 2		/* Replace one of the read sectors with cached data if it contains a dirty sector */
 #if FF_FS_TINY
@@ -4034,6 +4059,9 @@ FRESULT f_write (
 	LBA_t sect;
 	UINT wcnt, cc, csect;
 	const BYTE *wbuff = (const BYTE*)buff;
+#if FF_WF_FAST_CONTIGUOUS_WRITE
+	UINT ccsize;
+#endif
 
 
 	*bw = 0;	/* Clear write byte counter */
@@ -4084,9 +4112,32 @@ FRESULT f_write (
 			sect += csect;
 			cc = btw / SS(fs);				/* When remaining bytes >= sector size, */
 			if (cc > 0) {					/* Write maximum contiguous sectors directly */
+#if FF_WF_FAST_CONTIGUOUS_WRITE
+				ccsize = fs->csize;			/* Contiguous cluster size, in sectors */
+				while (csect + cc > ccsize) {
+#if FF_USE_FASTSEEK
+					if (fp->cltbl) {
+						clst = clmt_clust(fp, fp->fptr + (ccsize * SS(fs)));	/* Get cluster# from the CLMT */
+					} else
+#endif
+					{
+						clst = create_chain(&fp->obj, fp->clust);	/* Follow or stretch cluster chain on the FAT */
+					}
+					if (clst == 0) break;		/* Could not allocate a new cluster (disk full) */
+					if (clst == 1) ABORT(fs, FR_INT_ERR);
+					if (clst == 0xFFFFFFFF) ABORT(fs, FR_DISK_ERR);
+					if (clst != fp->clust + 1) break;	/* Not contiguous? */
+					fp->clust = clst;			/* Update current cluster */
+					ccsize += fs->csize;
+				}
+				if (csect + cc > ccsize) {		/* Clip at cluster boundary */
+					cc = ccsize - csect;
+				}
+#else
 				if (csect + cc > fs->csize) {	/* Clip at cluster boundary */
 					cc = fs->csize - csect;
 				}
+#endif
 				if (disk_write(fs->pdrv, wbuff, sect, cc) != RES_OK) ABORT(fs, FR_DISK_ERR);
 #if FF_FS_MINIMIZE <= 2
 #if FF_FS_TINY

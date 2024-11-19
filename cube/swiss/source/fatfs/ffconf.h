@@ -293,5 +293,20 @@
 */
 
 
+/*---------------------------------------------------------------------------/
+/ wf-fatfs Fork Configurations (Optimizations)
+/---------------------------------------------------------------------------*/
+
+#define FF_WF_FAST_CONTIGUOUS_READ	1
+#define FF_WF_FAST_CONTIGUOUS_WRITE	1
+/* FF_WF_FAST_CONTIGUOUS_* controls whether or not contiguous reads or writes
+/  of more than 1 cluster (>4-32KB) are optimized to use large disk_read()
+/  and disk_write() calls. This can be useful on platforms where the cost of
+/  initializing a sector read/write is large.
+/
+/  0: Do not optimize this scenario.
+/  1: Optimize this scenario.
+*/
+
 
 /*--- End of configuration options ---*/
