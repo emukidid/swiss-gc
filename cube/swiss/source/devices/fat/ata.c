@@ -693,7 +693,9 @@ DISC_INTERFACE __io_ataa = {
 	(FN_MEDIUM_READSECTORS)&__ataa_readSectors,
 	(FN_MEDIUM_WRITESECTORS)&__ataa_writeSectors,
 	(FN_MEDIUM_CLEARSTATUS)&__ataa_clearStatus,
-	(FN_MEDIUM_SHUTDOWN)&__ataa_shutdown
+	(FN_MEDIUM_SHUTDOWN)&__ataa_shutdown,
+	0x1000000000000,
+	512
 } ;
 DISC_INTERFACE __io_atab = {
 	DEVICE_TYPE_GC_ATA,
@@ -703,7 +705,9 @@ DISC_INTERFACE __io_atab = {
 	(FN_MEDIUM_READSECTORS)&__atab_readSectors,
 	(FN_MEDIUM_WRITESECTORS)&__atab_writeSectors,
 	(FN_MEDIUM_CLEARSTATUS)&__atab_clearStatus,
-	(FN_MEDIUM_SHUTDOWN)&__atab_shutdown
+	(FN_MEDIUM_SHUTDOWN)&__atab_shutdown,
+	0x1000000000000,
+	512
 } ;
 DISC_INTERFACE __io_atac = {
 	DEVICE_TYPE_GC_ATA,
@@ -713,5 +717,7 @@ DISC_INTERFACE __io_atac = {
 	(FN_MEDIUM_READSECTORS)&__atac_readSectors,
 	(FN_MEDIUM_WRITESECTORS)&__atac_writeSectors,
 	(FN_MEDIUM_CLEARSTATUS)&__atac_clearStatus,
-	(FN_MEDIUM_SHUTDOWN)&__atac_shutdown
+	(FN_MEDIUM_SHUTDOWN)&__atac_shutdown,
+	0x1000000000000,
+	512
 } ;

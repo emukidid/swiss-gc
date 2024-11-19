@@ -21,10 +21,6 @@
 #define __ARAM_H__
 
 #include <ogc/disc_io.h>
-#include "ff.h"
-#include "diskio.h"
-
-DRESULT ARAM_ioctl(BYTE ctrl, void *buff);
 
 #define DEVICE_TYPE_GC_ARAM (('G'<<24)|('C'<<16)|('A'<<8)|'R')
 

@@ -456,5 +456,7 @@ DISC_INTERFACE __io_wkf = {
 	__wkf_readSectors,
 	__wkf_writeSectors,
 	__wkf_clearStatus,
-	__wkf_shutdown
+	__wkf_shutdown,
+	0x8000000,
+	512
 };

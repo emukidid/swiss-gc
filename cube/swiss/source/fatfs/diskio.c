@@ -15,13 +15,10 @@
 #include "wkf.h"
 #include <ogc/dvd.h>
 #include "aram.h"
-#include "ff_cache/cache.h"
+#include <dvm.h>
 
-static DISC_INTERFACE *disk[FF_VOLUMES] = {&__io_gcsda, &__io_gcsdb, &__io_gcsd2, &__io_ataa, &__io_atab, &__io_atac, &__io_wkf, &__io_gcode, &__io_aram};
-static bool disk_isInit[FF_VOLUMES] = {0};
-
-// Disk caches
-static CACHE *cache[FF_VOLUMES] = {NULL};
+static DISC_INTERFACE *iface[FF_VOLUMES] = {&__io_gcsda, &__io_gcsdb, &__io_gcsd2, &__io_ataa, &__io_atab, &__io_atac, &__io_wkf, &__io_gcode, &__io_aram};
+static DvmDisc *disc[FF_VOLUMES] = {NULL};
 
 
 /*-----------------------------------------------------------------------*/
@@ -32,16 +29,11 @@ DSTATUS disk_status (
 )
 {
 	if (pdrv >= DEV_MAX)
+		return STA_NODISK | STA_NOINIT;
+	if (!disc[pdrv])
 		return STA_NOINIT;
 
-	if (disk_isInit[pdrv]) {
-		if (!disk[pdrv]->isInserted(disk[pdrv]))
-			return STA_NODISK | STA_NOINIT;
-		return (disk[pdrv]->features & FEATURE_MEDIUM_CANWRITE ? 0 : STA_PROTECT);
-	}
-
-	// Disk isn't initialized.
-	return STA_NOINIT;
+	return (disc[pdrv]->features & FEATURE_MEDIUM_CANWRITE) ? 0 : STA_PROTECT;
 }
 
 
@@ -55,34 +47,30 @@ DSTATUS disk_initialize (
 )
 {
 	if (pdrv >= DEV_MAX)
-		return STA_NOINIT;
-
-	if (!disk_isInit[pdrv]) {
-		if (!disk[pdrv]->startup(disk[pdrv]))
-			return STA_NOINIT;
-	}
-	if (!disk[pdrv]->isInserted(disk[pdrv]))
 		return STA_NODISK | STA_NOINIT;
 
-	// Initialize the disk cache.
-	// libfat/source/common.h:
-	// - DEFAULT_CACHE_PAGES = 4
-	// - DEFAULT_SECTORS_PAGE = 64
-	// NOTE: endOfPartition isn't usable, since this is a
-	// per-disk cache, not per-partition. Use UINT_MAX.
+	if (disc[pdrv])
+		disc[pdrv]->vt->destroy(disc[pdrv]);
+
+	disc[pdrv] = dvmDiscCreate(iface[pdrv]);
+
+	if (!disc[pdrv])
+		return STA_NOINIT;
+
 	switch (pdrv) {
 		case DEV_ARAM:
-			cache[pdrv] = _FAT_cache_constructor(2, 8, disk[pdrv], (sec_t)-1, 512);
+			disc[pdrv] = dvmDiscCacheCreate(disc[pdrv], 2, 8);
 			break;
+
 		default:
-			cache[pdrv] = _FAT_cache_constructor(128, 8, disk[pdrv], (sec_t)-1, 512);
+			disc[pdrv] = dvmDiscCacheCreate(disc[pdrv], 128, 8);
 			break;
 	}
 
-	// Device initialized.
-	disk_isInit[pdrv] = true;
-	return (disk[pdrv]->features & FEATURE_MEDIUM_CANWRITE ? 0 : STA_PROTECT);
+	return (disc[pdrv]->features & FEATURE_MEDIUM_CANWRITE) ? 0 : STA_PROTECT;
 }
+
+
 
 /*-----------------------------------------------------------------------*/
 /* Read Sector(s)                                                        */
@@ -99,21 +87,10 @@ DRESULT disk_read (
 		return RES_PARERR;
 	if (__builtin_add_overflow_p(sector, count, (sec_t)0))
 		return RES_PARERR;
+	if (!disc[pdrv])
+		return RES_NOTRDY;
 
-	// Read from the cache.
-	bool ret;
-	if (!cache[pdrv]) {
-		// No cache.
-		ret = _FAT_disc_readSectors(disk[pdrv], sector, count, buff);
-	} else if (count == 1) {
-		// Single sector.
-		ret = _FAT_cache_readSector(cache[pdrv], buff, sector);
-	} else {
-		// Multiple sectors.
-		ret = _FAT_cache_readSectors(cache[pdrv], sector, count, buff);
-	}
-
-	return (ret ? RES_OK : RES_ERROR);
+	return disc[pdrv]->vt->read_sectors(disc[pdrv], buff, sector, count) ? RES_OK : RES_ERROR;
 }
 
 
@@ -133,22 +110,14 @@ DRESULT disk_write (
 		return RES_PARERR;
 	if (__builtin_add_overflow_p(sector, count, (sec_t)0))
 		return RES_PARERR;
+	if (!disc[pdrv])
+		return RES_NOTRDY;
+	if (!(disc[pdrv]->features & FEATURE_MEDIUM_CANWRITE))
+		return RES_WRPRT;
 
-	// Write to the cache.
-	bool ret;
-	if (!cache[pdrv]) {
-		// No cache.
-		ret = _FAT_disc_writeSectors(disk[pdrv], sector, count, buff);
-	} else if (count == 1) {
-		// Single sector.
-		ret = _FAT_cache_writeSector(cache[pdrv], buff, sector);
-	} else {
-		// Multiple sectors.
-		ret = _FAT_cache_writeSectors(cache[pdrv], sector, count, buff);
-	}
-
-	return (ret ? RES_OK : RES_ERROR);
+	return disc[pdrv]->vt->write_sectors(disc[pdrv], buff, sector, count) ? RES_OK : RES_ERROR;
 }
+
 
 
 /*-----------------------------------------------------------------------*/
@@ -161,50 +130,35 @@ DRESULT disk_ioctl (
 	void *buff		/* Buffer to send/receive control data */
 )
 {
-	int ret = RES_PARERR;
+	DRESULT res;
+
 	if (pdrv >= DEV_MAX)
-		return ret;
+		return RES_PARERR;
+	if (!disc[pdrv])
+		return RES_NOTRDY;
 
 	switch (ctrl) {
 		case CTRL_SYNC:
-			if (cache[pdrv]) {
-				// Flush the cache.
-				ret = (_FAT_cache_flush(cache[pdrv]) ? RES_OK : RES_ERROR);
-			}
+			disc[pdrv]->vt->flush(disc[pdrv]);
+			res = RES_OK;
 			break;
 
 		case GET_SECTOR_COUNT:
-			if (cache[pdrv]) {
-				*(LBA_t*)buff = cache[pdrv]->endOfPartition;
-				ret = RES_OK;
-			}
+			*(LBA_t*)buff = disc[pdrv]->num_sectors;
+			res = RES_OK;
 			break;
 
 		case GET_SECTOR_SIZE:
-			if (cache[pdrv]) {
-				*(WORD*)buff = cache[pdrv]->bytesPerSector;
-				ret = RES_OK;
-			}
-			break;
-
-		case GET_BLOCK_SIZE:
-			if (cache[pdrv]) {
-				*(DWORD*)buff = cache[pdrv]->sectorsPerPage;
-				ret = RES_OK;
-			}
+			*(WORD*)buff = disc[pdrv]->sector_sz;
+			res = RES_OK;
 			break;
 
 		default:
+			res = RES_PARERR;
 			break;
 	}
 
-	switch (pdrv) {
-		case DEV_ARAM:
-			ret = ARAM_ioctl(ctrl, buff);
-			break;
-	}
-
-	return ret;
+	return res;
 }
 
 
@@ -240,36 +194,16 @@ DWORD get_fattime(void)
 	       ((tm.tm_sec / 2) & 0x1F);
 }
 
-DRESULT disk_shutdown (BYTE pdrv)
+DRESULT disk_shutdown (
+	BYTE pdrv
+)
 {
 	if (pdrv >= DEV_MAX)
 		return RES_PARERR;
-	if (!disk_isInit[pdrv])
-		return RES_OK;
+	if (!disc[pdrv])
+		return RES_NOTRDY;
 
-	if (cache[pdrv]) {
-		// Flush and destroy the cache.
-		_FAT_cache_destructor(cache[pdrv]);
-		cache[pdrv] = NULL;
-	}
-
-	// Shut down the device.
-	disk[pdrv]->shutdown(disk[pdrv]);
-	disk_isInit[pdrv] = false;
-	return RES_OK;
-}
-
-DRESULT disk_flush (BYTE pdrv)
-{
-	if (pdrv >= DEV_MAX)
-		return RES_PARERR;
-	if (!disk_isInit[pdrv])
-		return RES_OK;
-
-	if (cache[pdrv]) {
-		// Flush the cache.
-		_FAT_cache_flush(cache[pdrv]);
-	}
-
+	disc[pdrv]->vt->destroy(disc[pdrv]);
+	disc[pdrv] = NULL;
 	return RES_OK;
 }

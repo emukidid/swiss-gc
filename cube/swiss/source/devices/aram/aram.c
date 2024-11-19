@@ -21,10 +21,9 @@
 #include <ogc/aram.h>
 #include <ogc/arqueue.h>
 #include <ogc/cache.h>
+#define LIBOGC_INTERNAL
 #include <ogc/disc_io.h>
 #include "aram.h"
-#include "ff.h"
-#include "diskio.h"
 
 static bool __aram_Startup(DISC_INTERFACE *disc)
 {
@@ -48,7 +47,9 @@ static bool __aram_Startup(DISC_INTERFACE *disc)
 
 static bool __aram_IsInserted(DISC_INTERFACE *disc)
 {
-	return AR_GetSize() > AR_GetInternalSize();
+	disc->numberOfSectors = (AR_GetSize() - AR_GetInternalSize()) / disc->bytesPerSector;
+
+	return !!disc->numberOfSectors;
 }
 
 static bool __aram_ReadSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, void *buffer)
@@ -89,34 +90,6 @@ static bool __aram_Shutdown(DISC_INTERFACE *disc)
 	return true;
 }
 
-DRESULT ARAM_ioctl(BYTE ctrl, void *buff)
-{
-	DRESULT res;
-
-	switch (ctrl) {
-		case CTRL_SYNC:
-			res = RES_OK;
-			break;
-		case GET_SECTOR_COUNT:
-			*(LBA_t *)buff = (AR_GetSize() - AR_GetInternalSize()) / 512;
-			res = RES_OK;
-			break;
-		case GET_SECTOR_SIZE:
-			*(WORD *)buff = 512;
-			res = RES_OK;
-			break;
-		case GET_BLOCK_SIZE:
-			*(DWORD *)buff = 1;
-			res = RES_OK;
-			break;
-		default:
-			res = RES_PARERR;
-			break;
-	}
-
-	return res;
-}
-
 DISC_INTERFACE __io_aram = {
 	DEVICE_TYPE_GC_ARAM,
 	FEATURE_MEDIUM_CANREAD | FEATURE_MEDIUM_CANWRITE,
@@ -125,5 +98,7 @@ DISC_INTERFACE __io_aram = {
 	__aram_ReadSectors,
 	__aram_WriteSectors,
 	__aram_ClearStatus,
-	__aram_Shutdown
+	__aram_Shutdown,
+	0,
+	512
 };

@@ -63,7 +63,7 @@ LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -T ../../linker-script/ogc.ld -T 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-ltinysmb -lbba -laesnd -lmad -ldb -logc -ldeflate -lpsoarchive -lxxhash -lz
+LIBS	:=	-ldvm -ltinysmb -lbba -laesnd -lmad -ldb -logc -ldeflate -lpsoarchive -lxxhash -lz
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
