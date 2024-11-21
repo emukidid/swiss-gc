@@ -3973,11 +3973,12 @@ FRESULT f_read (
 			cc = btr / SS(fs);					/* When remaining bytes >= sector size, */
 			if (cc > 0) {						/* Read maximum contiguous sectors directly */
 #if FF_WF_FAST_CONTIGUOUS_READ
-				ccsize = fs->csize;				/* Contiguous cluster size, in sectors */
-				while (csect + cc > ccsize) {
+				ccsize = fs->csize - csect;		/* Contiguous cluster size, in sectors */
+				while (cc > ccsize) {
+					rcnt = SS(fs) * ccsize;
 #if FF_USE_FASTSEEK
 					if (fp->cltbl) {
-						clst = clmt_clust(fp, fp->fptr + (ccsize * SS(fs)));	/* Get cluster# from the CLMT */
+						clst = clmt_clust(fp, fp->fptr + rcnt);	/* Get cluster# from the CLMT */
 					} else
 #endif
 					{
@@ -3989,9 +3990,7 @@ FRESULT f_read (
 					fp->clust = clst;			/* Update current cluster */
 					ccsize += fs->csize;
 				}
-				if (csect + cc > ccsize) {		/* Clip at cluster boundary */
-					cc = ccsize - csect;
-				}
+				if (cc > ccsize) cc = ccsize;	/* Clip at cluster boundary */
 #else
 				if (csect + cc > fs->csize) {	/* Clip at cluster boundary */
 					cc = fs->csize - csect;
@@ -4113,11 +4112,15 @@ FRESULT f_write (
 			cc = btw / SS(fs);				/* When remaining bytes >= sector size, */
 			if (cc > 0) {					/* Write maximum contiguous sectors directly */
 #if FF_WF_FAST_CONTIGUOUS_WRITE
-				ccsize = fs->csize;			/* Contiguous cluster size, in sectors */
-				while (csect + cc > ccsize) {
+				ccsize = fs->csize - csect;	/* Contiguous cluster size, in sectors */
+				while (cc > ccsize) {
+					wcnt = SS(fs) * ccsize;
+					if (fp->fptr + wcnt > fp->obj.objsize) {
+						fp->obj.objsize = fp->fptr + wcnt;
+					}
 #if FF_USE_FASTSEEK
 					if (fp->cltbl) {
-						clst = clmt_clust(fp, fp->fptr + (ccsize * SS(fs)));	/* Get cluster# from the CLMT */
+						clst = clmt_clust(fp, fp->fptr + wcnt);	/* Get cluster# from the CLMT */
 					} else
 #endif
 					{
@@ -4130,9 +4133,7 @@ FRESULT f_write (
 					fp->clust = clst;			/* Update current cluster */
 					ccsize += fs->csize;
 				}
-				if (csect + cc > ccsize) {		/* Clip at cluster boundary */
-					cc = ccsize - csect;
-				}
+				if (cc > ccsize) cc = ccsize;	/* Clip at cluster boundary */
 #else
 				if (csect + cc > fs->csize) {	/* Clip at cluster boundary */
 					cc = fs->csize - csect;
