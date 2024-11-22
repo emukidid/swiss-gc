@@ -480,14 +480,14 @@ u32 deviceHandler_FAT_emulated_ata() {
 
 char* deviceHandler_FAT_status(file_handle* file) {
 	switch(file->status) {
-		case FR_OK:			/* (0) Succeeded */
+		case FR_OK:			/* (0) Function succeeded */
 			return NULL;
 		case FR_DISK_ERR:
-			return "Error occurred in the low level disk I/O layer";
+			return "A hard error occurred in the low level disk I/O layer";
 		case FR_INT_ERR:
 			return "Assertion failed";
 		case FR_NOT_READY:
-			return "The physical drive cannot work";
+			return "The physical drive does not work";
 		case FR_NO_FILE:
 			return "Could not find the file";
 		case FR_NO_PATH:
@@ -495,9 +495,9 @@ char* deviceHandler_FAT_status(file_handle* file) {
 		case FR_INVALID_NAME:
 			return "The path name format is invalid";
 		case FR_DENIED:
-			return "Access denied due to prohibited access or directory full";
+			return "Access denied due to a prohibited access or directory full";
 		case FR_EXIST:
-			return "Access denied due to prohibited access";
+			return "Access denied due to a prohibited access";
 		case FR_INVALID_OBJECT:
 			return "The file/directory object is invalid";
 		case FR_WRITE_PROTECTED:
@@ -507,15 +507,15 @@ char* deviceHandler_FAT_status(file_handle* file) {
 		case FR_NOT_ENABLED:
 			return "The volume has no work area";
 		case FR_NO_FILESYSTEM:
-			return "There is no valid FAT volume";
+			return "Could not find a valid FAT volume";
 		case FR_MKFS_ABORTED:
-			return "The f_mkfs() aborted due to any problem";
+			return "The f_mkfs function aborted due to some problem";
 		case FR_TIMEOUT:
-			return "Could not get a grant to access the volume within defined period";
+			return "Could not take control of the volume within defined period";
 		case FR_LOCKED:
 			return "The operation is rejected according to the file sharing policy";
 		case FR_NOT_ENOUGH_CORE:
-			return "LFN working buffer could not be allocated";
+			return "LFN working buffer could not be allocated or given buffer is insufficient in size";
 		case FR_TOO_MANY_OPEN_FILES:
 			return "Number of open files > FF_FS_LOCK";
 		case FR_INVALID_PARAMETER:
