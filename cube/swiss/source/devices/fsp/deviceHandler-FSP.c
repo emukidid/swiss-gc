@@ -46,7 +46,7 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	int num_entries = 1, i = 1;
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
-	(*dir)[0].fileAttrib = IS_SPECIAL;
+	(*dir)[0].fileType = IS_SPECIAL;
 	
 	// Read each entry of the directory
 	while( !fsp_readdir_native(dp, &entry, &result) && result == &entry ){
@@ -55,9 +55,6 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 		}
 		// Do we want this one?
 		if((type == -1 || ((entry.type == FSP_RDTYPE_DIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
-			if(entry.type == FSP_RDTYPE_FILE) {
-				if(!checkExtension(entry.name)) continue;
-			}
 			// Make sure we have room for this one
 			if(i == num_entries){
 				++num_entries;
@@ -65,8 +62,8 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
 			if(concat_path((*dir)[i].name, ffile->name, entry.name) < PATHNAME_MAX) {
-				(*dir)[i].size       = entry.size;
-				(*dir)[i].fileAttrib = (entry.type == FSP_RDTYPE_DIR) ? IS_DIR : IS_FILE;
+				(*dir)[i].size     = entry.size;
+				(*dir)[i].fileType = (entry.type == FSP_RDTYPE_DIR) ? IS_DIR : IS_FILE;
 				++i;
 			}
 		}
@@ -255,7 +252,7 @@ s32 deviceHandler_FSP_deinit(file_handle* file) {
 
 s32 deviceHandler_FSP_deleteFile(file_handle* file) {
 	deviceHandler_FSP_closeFile(file);
-	if(file->fileAttrib == IS_DIR)
+	if(file->fileType == IS_DIR)
 		return fsp_rmdir(fsp_session, getDevicePath(file->name));
 	else
 		return fsp_unlink(fsp_session, getDevicePath(file->name));

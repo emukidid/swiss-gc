@@ -1153,7 +1153,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			drawString(x_mid, data->y1+(borderSize*2)+10, data->displayName, scale, true, defaultColor);
 			
 			// Print specific stats
-			if(file->fileAttrib==IS_FILE) {
+			if(file->fileType==IS_FILE) {
 				if(devices[DEVICE_CUR] == &__device_wode) {
 					ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
 					sprintf(fbTextBuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
@@ -1269,7 +1269,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 		}
 		
 		// Print specific stats
-		if(file->fileAttrib==IS_FILE) {
+		if(file->fileType==IS_FILE) {
 			if(devices[DEVICE_CUR] == &__device_wode) {
 				ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
 				sprintf(fbTextBuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
@@ -1327,7 +1327,7 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 		}
 	}
 	// Hide extension when rendering certain files
-	if(eventData->file->fileAttrib == IS_FILE) {
+	if(eventData->file->fileType == IS_FILE) {
 		char *fileName = endsWith(eventData->file->name, eventData->displayName);
 		char *start = fileName ? eventData->displayName : getRelativeName(eventData->file->name);
 		char *end;

@@ -299,13 +299,13 @@ int find_existing_entry(char *entry, bool load) {
 				if(!strcmp(entry, dirEntries[i]->name)
 				|| !fnmatch(entry, dirEntries[i]->name, FNM_PATHNAME)) {
 					curSelection = i;
-					if(dirEntries[i]->fileAttrib == IS_FILE && load) {
+					if(dirEntries[i]->fileType == IS_FILE && load) {
 						populate_meta(dirEntries[i]);
 						memcpy(&curFile, dirEntries[i], sizeof(file_handle));
 						load_file();
 						memcpy(dirEntries[i], &curFile, sizeof(file_handle));
 					}
-					else if(dirEntries[i]->fileAttrib == IS_DIR) {
+					else if(dirEntries[i]->fileType == IS_DIR) {
 						memcpy(&curDir, dirEntries[i], sizeof(file_handle));
 						needsRefresh = 1;
 					}
@@ -320,7 +320,7 @@ int find_existing_entry(char *entry, bool load) {
 }
 
 bool deleteFileOrDir(file_handle* entry) {
-	if(entry->fileAttrib == IS_DIR) {
+	if(entry->fileType == IS_DIR) {
 		print_gecko("Entering dir for deletion: %s\r\n", entry);
 		file_handle* dirEntries = NULL;
 		int dirEntryCount = devices[DEVICE_CUR]->readDir(entry, &dirEntries, -1);
@@ -334,7 +334,7 @@ bool deleteFileOrDir(file_handle* entry) {
 		print_gecko("Finally, deleting empty directory: %s\r\n", entry);
 		return !devices[DEVICE_CUR]->deleteFile(entry);
 	}
-	if(entry->fileAttrib == IS_FILE) {
+	if(entry->fileType == IS_FILE) {
 		print_gecko("Deleting file: %s\r\n", entry);
 		return !devices[DEVICE_CUR]->deleteFile(entry);
 	}

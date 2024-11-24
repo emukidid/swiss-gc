@@ -32,7 +32,7 @@ DiskHeader *get_gcm_header(file_handle *file) {
 	diskHeader=(DiskHeader*)memalign(32,sizeof(DiskHeader));
 	if(!diskHeader) return NULL;
 	
-	if(devices[DEVICE_CUR] == &__device_dvd && file->fileAttrib == IS_DIR) {
+	if(devices[DEVICE_CUR] == &__device_dvd && file->fileType == IS_DIR) {
 		if(DVD_Read(diskHeader, 0, sizeof(DiskHeader)) != sizeof(DiskHeader)) {
 			free(diskHeader);
 			return NULL;
@@ -60,7 +60,7 @@ char *get_fst(file_handle *file, u32 file_offset, u32 file_size) {
 	FST=(char*)memalign(32,file_size);
 	if(!FST) return NULL;
 	
-	if(devices[DEVICE_CUR] == &__device_dvd && file->fileAttrib == IS_DIR) {
+	if(devices[DEVICE_CUR] == &__device_dvd && file->fileType == IS_DIR) {
 		if(DVD_Read(FST, file_offset, file_size) != file_size) {
 			free(FST);
 			return NULL;
@@ -749,7 +749,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		(*dir)[idx].fileBase = 0;
 		(*dir)[idx].offset = 0;
 		(*dir)[idx].size = DISC_SIZE;
-		(*dir)[idx].fileAttrib = IS_FILE;
+		(*dir)[idx].fileType = IS_FILE;
 		(*dir)[idx].meta = 0;
 		idx++;
 	}
@@ -773,7 +773,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		(*dir)[idx].fileBase = *(u32*)&FST[(parent_dir_offset*0x0C)+4];
 		(*dir)[idx].offset = 0;
 		(*dir)[idx].size = 0;
-		(*dir)[idx].fileAttrib = IS_SPECIAL;
+		(*dir)[idx].fileType = IS_SPECIAL;
 		(*dir)[idx].meta = 0;
 		idx++;
 	}
@@ -803,7 +803,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 				(*dir)[idx].fileBase = i;
 				(*dir)[idx].offset = 0;
 				(*dir)[idx].size = size;
-				(*dir)[idx].fileAttrib = IS_DIR;
+				(*dir)[idx].fileType = IS_DIR;
 				(*dir)[idx].meta = 0;
 				idx++;
 				// Skip the entries that sit in this dir
@@ -822,7 +822,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 			(*dir)[idx].fileBase = file_offset;
 			(*dir)[idx].offset = 0;
 			(*dir)[idx].size = size;
-			(*dir)[idx].fileAttrib = IS_FILE;
+			(*dir)[idx].fileType = IS_FILE;
 			(*dir)[idx].meta = 0;
 			idx++;
 		}

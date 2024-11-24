@@ -118,7 +118,7 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	/* Convert the Memory Card "file" data to fileBrowser_files */
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
-	(*dir)[0].fileAttrib = IS_SPECIAL;
+	(*dir)[0].fileType = IS_SPECIAL;
 
 	int usedSpace = 0;
 	ret = CARD_FindFirst (slot, memcard_dir, true);
@@ -130,9 +130,9 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		}
 		memset(&(*dir)[i], 0, sizeof(file_handle));
 		concatf_path((*dir)[i].name, ffile->name, "%.*s", CARD_FILENAMELEN, memcard_dir->filename);
-		(*dir)[i].fileBase   = memcard_dir->fileno;
-		(*dir)[i].size       = memcard_dir->filelen;
-		(*dir)[i].fileAttrib = IS_FILE;
+		(*dir)[i].fileBase = memcard_dir->fileno;
+		(*dir)[i].size     = memcard_dir->filelen;
+		(*dir)[i].fileType = IS_FILE;
 		memcpy( (*dir)[i].other, memcard_dir, sizeof(card_dir));
 		usedSpace += (*dir)[i].size;
 		ret = CARD_FindNext (memcard_dir);

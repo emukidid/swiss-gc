@@ -293,7 +293,7 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 bool upToParent(file_handle* entry)
 {
 	// If we're a file, go up to the parent of the file
-	if(entry->fileAttrib == IS_FILE)
+	if(entry->fileType == IS_FILE)
 		getParentPath(entry->name, entry->name);
 	
 	// Go up a folder
@@ -347,17 +347,17 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		if(padsButtonsHeld() & PAD_BUTTON_A) {
 			lockFile(directory[curSelection]);
 			//go into a folder or select a file
-			if(directory[curSelection]->fileAttrib==IS_DIR) {
+			if(directory[curSelection]->fileType==IS_DIR) {
 				memcpy(&curDir, directory[curSelection], sizeof(file_handle));
 				needsRefresh=1;
 			}
-			else if(directory[curSelection]->fileAttrib==IS_SPECIAL) {
+			else if(directory[curSelection]->fileType==IS_SPECIAL) {
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 				curDir.fileBase = directory[curSelection]->fileBase;
 				needsDeviceChange = upToParent(&curDir);
 				needsRefresh=1;
 			}
-			else if(directory[curSelection]->fileAttrib==IS_FILE) {
+			else if(directory[curSelection]->fileType==IS_FILE) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				if(canLoadFileType(&curFile.name[0])) {
 					meta_thread_stop();
@@ -382,7 +382,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		}
 		if((padsButtonsHeld() & PAD_TRIGGER_Z) && swissSettings.enableFileManagement) {
 			lockFile(directory[curSelection]);
-			if(directory[curSelection]->fileAttrib == IS_FILE || directory[curSelection]->fileAttrib == IS_DIR) {
+			if(directory[curSelection]->fileType == IS_FILE || directory[curSelection]->fileType == IS_DIR) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				meta_thread_stop();
 				needsRefresh = manage_file() ? 1:0;
@@ -394,7 +394,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 					break;
 				}
 			}
-			else if(directory[curSelection]->fileAttrib == IS_SPECIAL) {
+			else if(directory[curSelection]->fileType == IS_SPECIAL) {
 				// Toggle autoload
 				if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 				|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
@@ -482,7 +482,7 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 		//print_gecko("%i entries to the left, %i to the right in this view\r\n", left_num, right_num);
 		//print_gecko("%i cur sel, %i start, %i end\r\n", curSelection, current_view_start, current_view_end);
 		
-		bool parentLink = (directory[curSelection]->fileAttrib==IS_SPECIAL);
+		bool parentLink = (directory[curSelection]->fileType==IS_SPECIAL);
 		int y_base = 105; // top most point
 		int sub_entry_width = 40;
 		int sub_entry_height = 270;
@@ -541,7 +541,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		needsRefresh=1;
 		return filePanel;
 	}
-	if(curSelection == 0 && num_files > 1 && directory[0]->fileAttrib==IS_SPECIAL) {
+	if(curSelection == 0 && num_files > 1 && directory[0]->fileType==IS_SPECIAL) {
 		curSelection = 1; // skip the ".." by default
 	}
 	uiDrawObj_t *loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
@@ -583,17 +583,17 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		if((padsButtonsHeld() & PAD_BUTTON_A)) {
 			lockFile(directory[curSelection]);
 			//go into a folder or select a file
-			if(directory[curSelection]->fileAttrib==IS_DIR) {
+			if(directory[curSelection]->fileType==IS_DIR) {
 				memcpy(&curDir, directory[curSelection], sizeof(file_handle));
 				needsRefresh=1;
 			}
-			else if(directory[curSelection]->fileAttrib==IS_SPECIAL){
+			else if(directory[curSelection]->fileType==IS_SPECIAL){
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 				curDir.fileBase = directory[curSelection]->fileBase;
 				needsDeviceChange = upToParent(&curDir);
 				needsRefresh=1;
 			}
-			else if(directory[curSelection]->fileAttrib==IS_FILE){
+			else if(directory[curSelection]->fileType==IS_FILE){
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				if(canLoadFileType(&curFile.name[0])) {
 					meta_thread_stop();
@@ -618,7 +618,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		}
 		if((padsButtonsHeld() & PAD_TRIGGER_Z) && swissSettings.enableFileManagement) {
 			lockFile(directory[curSelection]);
-			if(directory[curSelection]->fileAttrib == IS_FILE || directory[curSelection]->fileAttrib == IS_DIR) {
+			if(directory[curSelection]->fileType == IS_FILE || directory[curSelection]->fileType == IS_DIR) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				meta_thread_stop();
 				needsRefresh = manage_file() ? 1:0;
@@ -630,7 +630,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 					break;
 				}
 			}
-			else if(directory[curSelection]->fileAttrib == IS_SPECIAL) {
+			else if(directory[curSelection]->fileType == IS_SPECIAL) {
 				// Toggle autoload
 				if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 				|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
@@ -715,7 +715,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		needsRefresh=1;
 		return filePanel;
 	}
-	if(curSelection == 0 && num_files > 1 && directory[0]->fileAttrib==IS_SPECIAL) {
+	if(curSelection == 0 && num_files > 1 && directory[0]->fileType==IS_SPECIAL) {
 		curSelection = 1; // skip the ".." by default
 	}
 	uiDrawObj_t *loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
@@ -757,17 +757,17 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		if(padsButtonsHeld() & PAD_BUTTON_A) {
 			lockFile(directory[curSelection]);
 			//go into a folder or select a file
-			if(directory[curSelection]->fileAttrib==IS_DIR) {
+			if(directory[curSelection]->fileType==IS_DIR) {
 				memcpy(&curDir, directory[curSelection], sizeof(file_handle));
 				needsRefresh=1;
 			}
-			else if(directory[curSelection]->fileAttrib==IS_SPECIAL) {
+			else if(directory[curSelection]->fileType==IS_SPECIAL) {
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 				curDir.fileBase = directory[curSelection]->fileBase;
 				needsDeviceChange = upToParent(&curDir);
 				needsRefresh=1;
 			}
-			else if(directory[curSelection]->fileAttrib==IS_FILE) {
+			else if(directory[curSelection]->fileType==IS_FILE) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				if(canLoadFileType(&curFile.name[0])) {
 					meta_thread_stop();
@@ -792,7 +792,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		}
 		if((padsButtonsHeld() & PAD_TRIGGER_Z) && swissSettings.enableFileManagement) {
 			lockFile(directory[curSelection]);
-			if(directory[curSelection]->fileAttrib == IS_FILE || directory[curSelection]->fileAttrib == IS_DIR) {
+			if(directory[curSelection]->fileType == IS_FILE || directory[curSelection]->fileType == IS_DIR) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				meta_thread_stop();
 				needsRefresh = manage_file() ? 1:0;
@@ -804,7 +804,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 					break;
 				}
 			}
-			else if(directory[curSelection]->fileAttrib == IS_SPECIAL) {
+			else if(directory[curSelection]->fileType == IS_SPECIAL) {
 				// Toggle autoload
 				if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 				|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
@@ -863,7 +863,7 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 			free(directory);
 			free(curDirEntries);
 			num_files = devices[DEVICE_DEST]->readDir(&curDir, &curDirEntries, IS_DIR);
-			directory = sortFiles(curDirEntries, num_files);
+			num_files = sortFiles(curDirEntries, num_files, &directory);
 			refresh = idx = 0;
 			scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
 		}
@@ -887,11 +887,11 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 		if((padsButtonsHeld() & PAD_BUTTON_DOWN) || padsStickY() < -16) {idx = (idx + 1) % num_files;	}
 		if((padsButtonsHeld() & PAD_BUTTON_A))	{
 			//go into a folder or select a file
-			if(directory[idx]->fileAttrib==IS_DIR) {
+			if(directory[idx]->fileType==IS_DIR) {
 				memcpy(&curDir, directory[idx], sizeof(file_handle));
 				refresh=1;
 			}
-			else if(directory[idx]->fileAttrib==IS_SPECIAL){
+			else if(directory[idx]->fileType==IS_SPECIAL){
 				curDir.fileBase = directory[idx]->fileBase;
 				upToParent(&curDir);
 				refresh=1;
@@ -1401,7 +1401,7 @@ void boot_dol(int argc, char *argv[])
 
 /* Manage file  - The user will be asked what they want to do with the currently selected file - copy/move/delete*/
 bool manage_file() {
-	bool isFile = curFile.fileAttrib == IS_FILE;
+	bool isFile = curFile.fileType == IS_FILE;
 	bool canWrite = devices[DEVICE_CUR]->features & FEAT_WRITE;
 	bool canMove = canWrite && isFile;
 	bool canCopy = isFile;
@@ -1556,7 +1556,7 @@ bool manage_file() {
 		destFile->fileBase = 0;
 		destFile->offset = 0;
 		destFile->size = 0;
-		destFile->fileAttrib = IS_FILE;
+		destFile->fileType = IS_FILE;
 		// Create a GCI if something is coming out from CARD to another device
 		if(isSrcCard && !isDestCard) {
 			strlcat(destFile->name, ".gci", PATHNAME_MAX);

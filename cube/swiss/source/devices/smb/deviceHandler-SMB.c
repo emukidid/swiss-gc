@@ -107,7 +107,7 @@ s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	int num_entries = 1, i = 1;
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
-	(*dir)[0].fileAttrib = IS_SPECIAL;
+	(*dir)[0].fileType = IS_SPECIAL;
 	
 	// Read each entry of the directory
 	do {
@@ -118,9 +118,6 @@ s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		}
 		// Do we want this one?
 		if((type == -1 || ((entry->d_type == DT_DIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
-			if(entry->d_type == DT_REG) {
-				if(!checkExtension(entry->d_name)) continue;
-			}
 			// Make sure we have room for this one
 			if(i == num_entries){
 				++num_entries;
@@ -132,8 +129,8 @@ s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				&& !stat((*dir)[i].name, &fstat)
 				#endif
 				&& fstat.st_size <= UINT32_MAX) {
-				(*dir)[i].size       = fstat.st_size;
-				(*dir)[i].fileAttrib = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
+				(*dir)[i].size     = fstat.st_size;
+				(*dir)[i].fileType = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
 				++i;
 			}
 		}
@@ -227,7 +224,7 @@ s32 deviceHandler_SMB_deinit(file_handle* file) {
 
 s32 deviceHandler_SMB_deleteFile(file_handle* file) {
 	deviceHandler_SMB_closeFile(file);
-	if(file->fileAttrib == IS_DIR)
+	if(file->fileType == IS_DIR)
 		return rmdir(file->name);
 	else
 		return unlink(file->name);

@@ -212,7 +212,7 @@ void populate_meta(file_handle *f) {
 	// If the meta hasn't been created, lets read it.
 	if(!f->meta && (f->meta = meta_alloc())) {
 		// File detection (GCM, DOL, MP3 etc)
-		if(f->fileAttrib==IS_FILE) {
+		if(f->fileType==IS_FILE) {
 			if(devices[DEVICE_CUR] == &__device_wode && f->status == STATUS_NOT_MAPPED) {
 				f->meta->bannerSum = 0xFFFF;
 				f->meta->bannerSize = BNR_PIXELDATA_LEN;
@@ -330,7 +330,7 @@ void populate_meta(file_handle *f) {
 			else
 				f->meta->fileTypeTexObj = &fileimgTexObj;
 		}
-		else if (f->fileAttrib == IS_DIR) {
+		else if (f->fileType == IS_DIR) {
 			f->meta->fileTypeTexObj = &dirimgTexObj;
 			
 			file_handle *bannerFile = calloc(1, sizeof(file_handle));
@@ -377,7 +377,7 @@ void populate_meta(file_handle *f) {
 			devices[DEVICE_CUR]->closeFile(bannerFile);
 			free(bannerFile);
 		}
-		else if (f->fileAttrib == IS_SPECIAL) {
+		else if (f->fileType == IS_SPECIAL) {
 			f->meta->displayName = "Up to parent directory";
 		}
 	}

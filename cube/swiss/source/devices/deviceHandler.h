@@ -18,9 +18,16 @@
 
 #define PATHNAME_MAX 1024
 
-#define STATUS_NOT_MAPPED  0
-#define STATUS_MAPPED      1
-#define STATUS_HAS_MAPPING 2
+#define ATTRIB_READONLY		0x1
+#define ATTRIB_HIDDEN		0x2
+#define ATTRIB_SYSTEM		0x4
+#define ATTRIB_VOLUME		0x8
+#define ATTRIB_DIRECTORY	0x10
+#define ATTRIB_ARCHIVE		0x20
+
+#define STATUS_NOT_MAPPED	0
+#define STATUS_MAPPED		1
+#define STATUS_HAS_MAPPING	2
 
 typedef struct {
 	u32 offset;
@@ -48,7 +55,8 @@ typedef struct {
 	uint64_t fileBase;   	// Raw sector on device
 	u32 offset;    			// Offset in the file
 	u32 size;      			// size of the file
-	s32 fileAttrib;        	// IS_FILE or IS_DIR
+	u8 fileType;			// IS_FILE or IS_DIR
+	u8 fileAttrib;
 	s32 status;            	// is the device ok
 	void *fp;				// file pointer
 	FIL* ffsFp;				// file pointer (FATFS)

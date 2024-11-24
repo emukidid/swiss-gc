@@ -145,7 +145,6 @@ file_handle* usbgecko_get_entry() {
 			memset(&filehndl, 0, sizeof(file_handle));
 			memcpy(&filehndl, get_buffer(), offsetof(file_handle, lockCount));
 			filehndl.size = bswap32(filehndl.size);
-			filehndl.fileAttrib = bswap32(filehndl.fileAttrib);
 			return &filehndl;
 		}
 	}

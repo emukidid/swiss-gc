@@ -118,18 +118,12 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	int num_entries = 1, i = 1;
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
-	(*dir)[0].fileAttrib = IS_SPECIAL;
+	(*dir)[0].fileType = IS_SPECIAL;
 
 	// Read each entry of the directory
 	while( f_readdir(dp, &entry) == FR_OK && entry.fname[0] != '\0') {
-		if(!swissSettings.showHiddenFiles && ((entry.fattrib & AM_HID) || entry.fname[0] == '.')) {
-			continue;
-		}
 		// Do we want this one?
 		if((type == -1 || ((entry.fattrib & AM_DIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
-			if(!(entry.fattrib & AM_DIR)) {
-				if(!checkExtension(entry.fname)) continue;
-			}
 			// Make sure we have room for this one
 			if(i == num_entries){
 				++num_entries;
@@ -137,8 +131,10 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
 			if(concat_path((*dir)[i].name, ffile->name, entry.fname) < PATHNAME_MAX && entry.fsize <= UINT32_MAX) {
-				(*dir)[i].size       = entry.fsize;
-				(*dir)[i].fileAttrib = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
+				(*dir)[i].size        = entry.fsize;
+				(*dir)[i].fileType    = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
+				(*dir)[i].fileAttrib  = entry.fattrib;
+				(*dir)[i].fileAttrib |= (entry.fname[0] == '.') ? AM_HID : 0;
 				++i;
 			}
 		}

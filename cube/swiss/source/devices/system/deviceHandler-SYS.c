@@ -389,13 +389,13 @@ s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	int num_entries = NUM_ROMS, i = ROM_VOID;
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[i].name, ffile->name, "..");
-	(*dir)[i].fileAttrib = IS_SPECIAL;
+	(*dir)[i].fileType = IS_SPECIAL;
 
 	for(i = ROM_IPL; i < NUM_ROMS; i++) {
 		concat_path((*dir)[i].name, ffile->name, rom_names[i]);
-		(*dir)[i].fileBase   = i;
-		(*dir)[i].size       = rom_sizes[i];
-		(*dir)[i].fileAttrib = IS_FILE;
+		(*dir)[i].fileBase = i;
+		(*dir)[i].size     = rom_sizes[i];
+		(*dir)[i].fileType = IS_FILE;
 	}
 
 	return num_entries;

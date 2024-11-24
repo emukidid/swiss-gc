@@ -6,12 +6,12 @@
 #include <stdint.h>
 #include "deviceHandler.h"
 
-file_handle** sortFiles(file_handle* dir, int num_files);
+int sortFiles(file_handle* dir, int numFiles, file_handle*** sortedDir);
 void freeFiles();
 void scanFiles();
 file_handle** getSortedDirEntries();
 file_handle* getCurrentDirEntries();
-#define getSortedDirEntryCount getCurrentDirEntryCount
+int getSortedDirEntryCount();
 int getCurrentDirEntryCount();
 u64 getCurrentDirSize();
 size_t concat_path(char *pathName, const char *dirName, const char *baseName);

@@ -96,7 +96,7 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 	int num_entries = 1, i = 1, block = 0;
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
-	(*dir)[0].fileAttrib = IS_SPECIAL;
+	(*dir)[0].fileType = IS_SPECIAL;
 	
 	u32 usedSpace = 0;
 	
@@ -155,9 +155,9 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 					}
 				}
 				concat_path((*dir)[i].name, ffile->name, entryName);
-				(*dir)[i].fileBase   = block;
-				(*dir)[i].size       = sizeToBlocks(entryHeader.size) * QOOB_BLOCK_SIZE;
-				(*dir)[i].fileAttrib = IS_FILE;
+				(*dir)[i].fileBase = block;
+				(*dir)[i].size     = sizeToBlocks(entryHeader.size) * QOOB_BLOCK_SIZE;
+				(*dir)[i].fileType = IS_FILE;
 				usedSpace += (*dir)[i].size;
 				++i;
 				
