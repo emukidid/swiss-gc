@@ -1256,12 +1256,12 @@ fail_early:
 	}
 }
 
-void boot_dol(int argc, char *argv[])
+void boot_dol(file_handle* file, int argc, char *argv[])
 {
 	void *dol_buffer;
 	void *ptr;
   
-	dol_buffer = memalign(32, curFile.size);
+	dol_buffer = memalign(32, file->size);
 	if(!dol_buffer) {
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"DOL is too big. Press A.");
 		DrawPublish(msgBox);
@@ -1274,15 +1274,15 @@ void boot_dol(int argc, char *argv[])
 	ptr = dol_buffer;
 	uiDrawObj_t* progBar = DrawProgressBar(false, 0, "Loading DOL");
 	DrawPublish(progBar);
-	for(i = 0; i < curFile.size; i+= 131072) {
-		DrawUpdateProgressBar(progBar, (int)((float)((float)i/(float)curFile.size)*100));
+	for(i = 0; i < file->size; i+= 131072) {
+		DrawUpdateProgressBar(progBar, (int)((float)((float)i/(float)file->size)*100));
 		
-		devices[DEVICE_CUR]->seekFile(&curFile,i,DEVICE_HANDLER_SEEK_SET);
-		int size = i+131072 > curFile.size ? curFile.size-i : 131072; 
-		if(devices[DEVICE_CUR]->readFile(&curFile,ptr,size)!=size) {
+		devices[DEVICE_CUR]->seekFile(file,i,DEVICE_HANDLER_SEEK_SET);
+		int size = i+131072 > file->size ? file->size-i : 131072; 
+		if(devices[DEVICE_CUR]->readFile(file,ptr,size)!=size) {
 			DrawDispose(progBar);
 			free(dol_buffer);
-			devices[DEVICE_CUR]->closeFile(&curFile);
+			devices[DEVICE_CUR]->closeFile(file);
 			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"Failed to read DOL. Press A.");
 			DrawPublish(msgBox);
 			wait_press_A();
@@ -1292,11 +1292,11 @@ void boot_dol(int argc, char *argv[])
   		ptr+=size;
 	}
 	
-	XXH64_hash_t hash = XXH3_64bits(dol_buffer, curFile.size);
-	if(!valid_dol_xxh3(&curFile, hash)) {
+	XXH64_hash_t hash = XXH3_64bits(dol_buffer, file->size);
+	if(!valid_dol_xxh3(file, hash)) {
 		DrawDispose(progBar);
 		free(dol_buffer);
-		devices[DEVICE_CUR]->closeFile(&curFile);
+		devices[DEVICE_CUR]->closeFile(file);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"DOL is corrupted. Press A.");
 		DrawPublish(msgBox);
 		wait_press_A();
@@ -1316,12 +1316,12 @@ void boot_dol(int argc, char *argv[])
 	}
 	
 	// Build a command line to pass to the DOL
-	char *argz = getExternalPath(&curFile.name[0]);
+	char *argz = getExternalPath(file->name);
 	size_t argz_len = strlen(argz) + 1;
 
 	char fileName[PATHNAME_MAX];
-	memset(&fileName[0], 0, PATHNAME_MAX);
-	strncpy(&fileName[0], &curFile.name[0], strrchr(&curFile.name[0], '.') - &curFile.name[0]);
+	memset(fileName, 0, PATHNAME_MAX);
+	strncpy(fileName, file->name, strrchr(file->name, '.') - file->name);
 	print_gecko("DOL file name without extension [%s]\r\n", fileName);
 	
 	// .cli argument file
@@ -1368,7 +1368,7 @@ void boot_dol(int argc, char *argv[])
 
 			Parameters *params = (Parameters*)getParameters();
 			if(params->num_params > 0) {
-				DrawArgsSelector(getRelativeName(&curFile.name[0]));
+				DrawArgsSelector(getRelativeName(file->name));
 				// Get an argv back or none.
 				populateArgz(&argz, &argz_len);
 			}
@@ -1386,11 +1386,11 @@ void boot_dol(int argc, char *argv[])
 	if(!memcmp(dol_buffer, ELFMAG, SELFMAG)) {
 		ELFtoARAM(dol_buffer, argz, argz_len);
 	}
-	else if(endsWith(curFile.name, "/SDLOADER.BIN")) {
-		BINtoARAM(dol_buffer, curFile.size, 0x81700000, 0x81700000);
+	else if(endsWith(file->name, "/SDLOADER.BIN")) {
+		BINtoARAM(dol_buffer, file->size, 0x81700000, 0x81700000);
 	}
 	else if(branchResolve(dol_buffer, PATCH_BIN, 0)) {
-		BINtoARAM(dol_buffer, curFile.size, 0x80003100, 0x80003100);
+		BINtoARAM(dol_buffer, file->size, 0x80003100, 0x80003100);
 	}
 	else {
 		DOLtoARAM(dol_buffer, argz, argz_len);
@@ -2187,7 +2187,7 @@ void load_file()
 	//if it's a DOL, boot it
 	if(strlen(fileName)>4) {
 		if(endsWith(fileName,".bin") || endsWith(fileName,".dol") || endsWith(fileName,".dol+cli") || endsWith(fileName,".elf")) {
-			boot_dol(0, NULL);
+			boot_dol(&curFile, 0, NULL);
 			// if it was invalid (overlaps sections, too large, etc..) it'll return
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid DOL"));
 			sleep(2);

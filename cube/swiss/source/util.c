@@ -178,32 +178,28 @@ void load_auto_dol(int argc, char *argv[]) {
 
 	memcpy(&curDir, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 	scanFiles();
-	file_handle** dirEntries = getSortedDirEntries();
-	int dirEntryCount = getSortedDirEntryCount();
+	file_handle *dirEntries = getCurrentDirEntries();
+	int dirEntryCount = getCurrentDirEntryCount();
 	for (int f = 0; f < sizeof(autoboot_dols) / sizeof(*autoboot_dols); f++) {
 		for (int i = 0; i < dirEntryCount; i++) {
-			if (!fnmatch(autoboot_dols[f], dirEntries[i]->name, FNM_PATHNAME | FNM_CASEFOLD)) {
+			if (!fnmatch(autoboot_dols[f], dirEntries[i].name, FNM_PATHNAME | FNM_CASEFOLD)) {
 				DOLHEADER dolhdr;
-				devices[DEVICE_CUR]->seekFile(dirEntries[i], 0, DEVICE_HANDLER_SEEK_SET);
-				if (devices[DEVICE_CUR]->readFile(dirEntries[i], &dolhdr, DOLHDRLENGTH) == DOLHDRLENGTH) {
+				devices[DEVICE_CUR]->seekFile(&dirEntries[i], 0, DEVICE_HANDLER_SEEK_SET);
+				if (devices[DEVICE_CUR]->readFile(&dirEntries[i], &dolhdr, DOLHDRLENGTH) == DOLHDRLENGTH) {
 					// Official Swiss releases have the short commit hash appended to
 					// the end of the DOL, compare it to our own to make sure we don't
 					// bootloop the same version
-					devices[DEVICE_CUR]->seekFile(dirEntries[i], DOLSize(&dolhdr), DEVICE_HANDLER_SEEK_SET);
-					trailer_size = devices[DEVICE_CUR]->readFile(dirEntries[i], trailer, sizeof(trailer));
+					devices[DEVICE_CUR]->seekFile(&dirEntries[i], DOLSize(&dolhdr), DEVICE_HANDLER_SEEK_SET);
+					trailer_size = devices[DEVICE_CUR]->readFile(&dirEntries[i], trailer, sizeof(trailer));
 				} else {
 					trailer_size = 0;
 				}
 				if ((*autoboot_dols[f] == '*' && trailer_size < 7) || (trailer_size >= 7 &&
 					memcmp(GIT_COMMIT, trailer, trailer_size) != 0 &&
 					memmem(git_tags, sizeof(git_tags), trailer, trailer_size) == NULL)) {
-					// Emulate some of the menu's behavior to satisfy boot_dol
-					curSelection = i;
-					memcpy(&curFile, dirEntries[i], sizeof(file_handle));
-					boot_dol(argc, argv);
-					memcpy(dirEntries[i], &curFile, sizeof(file_handle));
+					boot_dol(&dirEntries[i], argc, argv);
 				}
-				devices[DEVICE_CUR]->closeFile(dirEntries[i]);
+				devices[DEVICE_CUR]->closeFile(&dirEntries[i]);
 
 				// If we've made it this far, we've already found an autoboot DOL,
 				// the first one (boot.dol) is not cancellable, but the rest of the
