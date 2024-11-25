@@ -184,6 +184,7 @@ typedef struct drawFileBrowserButtonEvent {
 	char *displayName;
 	file_handle *file;
 	int mode;
+	int alpha;
 	bool isAutoLoadEntry;
 	bool isCarousel;	// Draw this as a full "card" style
 	int distFromMiddle;	// 0 = full, -1 spine only but large then gradually getting smaller as dist increases from 0
@@ -1107,16 +1108,16 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				int bnr_x = x_mid - (bnr_width/2);
 				GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 					GX_Position3f32((float) bnr_x,(float) data->y1+borderSize+40, 0.0f );
-					GX_Color4u8(255, 255, 255, 255);
+					GX_Color4u8(255, 255, 255, data->alpha);
 					GX_TexCoord2f32(0.0f,0.0f);
 					GX_Position3f32((float) (bnr_x+bnr_width),(float) data->y1+borderSize+40,0.0f );
-					GX_Color4u8(255, 255, 255, 255);
+					GX_Color4u8(255, 255, 255, data->alpha);
 					GX_TexCoord2f32(1.0f,0.0f);
 					GX_Position3f32((float) (bnr_x+bnr_width),(float) (data->y1+borderSize+40+bnr_height),0.0f );
-					GX_Color4u8(255, 255, 255, 255);
+					GX_Color4u8(255, 255, 255, data->alpha);
 					GX_TexCoord2f32(1.0f,1.0f);
 					GX_Position3f32((float) bnr_x,(float) (data->y1+borderSize+40+bnr_height),0.0f );
-					GX_Color4u8(255, 255, 255, 255);
+					GX_Color4u8(255, 255, 255, data->alpha);
 					GX_TexCoord2f32(0.0f,1.0f);
 				GX_End();
 				
@@ -1191,16 +1192,16 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				GX_LoadTexObj(texObj, GX_TEXMAP0);
 				GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 					GX_Position3f32((float)x_start,(float) data->y2-borderSize, 0.0f ); // bottom left
-					GX_Color4u8(255, 255, 255, 255);
+					GX_Color4u8(255, 255, 255, data->alpha);
 					GX_TexCoord2f32(0.0f,0.0f);
 					GX_Position3f32((float)x_start,(float) data->y2-bnr_width-borderSize,0.0f );	// top left
-					GX_Color4u8(255, 255, 255, 255);
+					GX_Color4u8(255, 255, 255, data->alpha);
 					GX_TexCoord2f32(1.0f,0.0f);
 					GX_Position3f32((float)x_start+bnr_height,(float) data->y2-bnr_width-borderSize,0.0f );	// top right
-					GX_Color4u8(255, 255, 255, 255);
+					GX_Color4u8(255, 255, 255, data->alpha);
 					GX_TexCoord2f32(1.0f,1.0f);
 					GX_Position3f32((float)x_start+bnr_height,(float) data->y2 - borderSize,0.0f );	// bottom right
-					GX_Color4u8(255, 255, 255, 255);
+					GX_Color4u8(255, 255, 255, data->alpha);
 					GX_TexCoord2f32(0.0f,1.0f);
 				GX_End();
 				
@@ -1237,16 +1238,16 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			GX_LoadTexObj(texObj, GX_TEXMAP0);
 			GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 				GX_Position3f32((float) data->x1+7,(float) data->y1+4, 0.0f );
-				GX_Color4u8(255, 255, 255, 255);
+				GX_Color4u8(255, 255, 255, data->alpha);
 				GX_TexCoord2f32(0.0f,0.0f);
 				GX_Position3f32((float) (data->x1+7+96),(float) data->y1+4,0.0f );
-				GX_Color4u8(255, 255, 255, 255);
+				GX_Color4u8(255, 255, 255, data->alpha);
 				GX_TexCoord2f32(1.0f,0.0f);
 				GX_Position3f32((float) (data->x1+7+96),(float) (data->y1+4+32),0.0f );
-				GX_Color4u8(255, 255, 255, 255);
+				GX_Color4u8(255, 255, 255, data->alpha);
 				GX_TexCoord2f32(1.0f,1.0f);
 				GX_Position3f32((float) data->x1+7,(float) (data->y1+4+32),0.0f );
-				GX_Color4u8(255, 255, 255, 255);
+				GX_Color4u8(255, 255, 255, data->alpha);
 				GX_TexCoord2f32(0.0f,1.0f);
 			GX_End();
 			
@@ -1354,6 +1355,7 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 			}
 		}
 	}
+	eventData->alpha = (eventData->file->fileAttrib & ATTRIB_HIDDEN) ? 128 : 255;
 	eventData->isAutoLoadEntry = !strcmp(swissSettings.autoload, file->name) || !fnmatch(swissSettings.autoload, file->name, FNM_PATHNAME | FNM_PREFIX_DIRS);
 	
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
