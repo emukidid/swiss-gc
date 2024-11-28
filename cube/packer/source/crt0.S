@@ -50,6 +50,11 @@ startup:
 	ori		r0, r0, 0x000C
 	mtear	r0
 
+	li		r3, 0x30F8
+	lis		r0, 0xdead
+	ori		r0, r0, 0xbeef
+	ecowx	r0, 0, r3
+
 	lis		r3, 0x0C00
 	li		r4, 0x3000
 	li		r0, 1

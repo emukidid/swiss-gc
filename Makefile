@@ -35,14 +35,14 @@ else
 PACMAN        = pacman
 endif
 
-BUILT_PATCHES = patches
 GECKOSERVER   = pc/usbgecko
+WIIBOOTER     = wii/booter
 
 #------------------------------------------------------------------
 .NOTPARALLEL:
 
 # Ready to go .7z file with every type of DOL we can think of
-all: clean compile-patches compile compile-packer build recovery-iso build-AR build-gci build-ipl build-geckoserver package
+all: clean compile-patches compile compile-packer build recovery-iso build-AR build-gci build-ipl build-wii build-geckoserver package
 
 # For dev use only, avoid the unnecessary fluff
 dev: clean compile-patches compile
@@ -123,6 +123,7 @@ package:   # create distribution package
 	@mv $(DIST)/MemoryCard $(SVN_REVISION)
 	@mv $(DIST)/PicoBoot $(SVN_REVISION)
 	@mv $(DIST)/USBGeckoRemoteServer $(SVN_REVISION)
+	@mv $(DIST)/Wii $(SVN_REVISION)
 	@mv $(DIST)/WiikeyFusion $(SVN_REVISION)
 	@mv $(DIST)/WODE $(SVN_REVISION)
 	@find ./$(SVN_REVISION) -type f -print0 | xargs -0 sha256sum > $(SVN_REVISION).sha256
@@ -166,3 +167,13 @@ build-ipl:
 	@mkdir $(DIST)/PicoBoot
 	@$(DOL2IPL) $(DIST)/Apploader/swiss/patches/apploader.img $(PACKER)/reboot.dol *$(SVN_REVISION).dol
 	@$(DOL2IPL) $(DIST)/PicoBoot/$(SVN_REVISION).uf2 $(PACKER)/reboot.dol
+
+#------------------------------------------------------------------
+
+build-wii:
+	@cd $(WIIBOOTER) && $(MAKE)
+	@$(DOL2IPL) $(WIIBOOTER)/boot.dol $(PACKER)/reboot.dol
+	@mkdir $(DIST)/Wii
+	@mkdir $(DIST)/Wii/apps
+	@mkdir $(DIST)/Wii/apps/swiss-gc
+	@cp $(WIIBOOTER)/boot.dol $(DIST)/Wii/apps/swiss-gc/

@@ -83,6 +83,40 @@ def flatten_dol(data):
     # Entry point, load address, memory image
     return entry, dol_min, img
 
+def append_dol(data, trailer, base_address):
+    header = struct.unpack(">64I", data[:256])
+    offsets = header[:18]
+    addresses = header[18:36]
+    sizes = header[36:54]
+
+    for section, (offset, address, size) in enumerate(zip(offsets[7:], addresses[7:], sizes[7:]), 7):
+        if address == base_address and offset + size == len(data):
+            data = data[:offset]
+            offset = 0
+            address = 0
+            size = 0
+
+        if offset == 0:
+            offset = len(data)
+            address = base_address
+            size = len(trailer)
+            data = data + trailer
+            break
+
+    offsets = offsets[:section] + (offset,) + offsets[section + 1:]
+    addresses = addresses[:section] + (address,) + addresses[section + 1:]
+    sizes = sizes[:section] + (size,) + sizes[section + 1:]
+
+    header = struct.pack(
+        "> 64I",
+        *offsets,
+        *addresses,
+        *sizes,
+        *header[54:64]
+    )
+
+    return header + data[256:]
+
 def pack_uf2(data, base_address):
     ret = bytearray()
 
@@ -140,7 +174,20 @@ def main():
         print("Unknown input format")
         return -1
 
-    if output.endswith(".img"):
+    if output.endswith(".dol"):
+        with open(output, "rb") as f:
+            img = bytearray(f.read())
+
+        header_size = 32
+        header = struct.pack(
+            "> 32s",
+            b"gchomebrew dol"
+        )
+        assert len(header) == header_size
+
+        out = append_dol(img, header + exe, 0x80800000 - header_size)
+
+    elif output.endswith(".img"):
         if entry != 0x81300000 or load != 0x01300000:
             print("Invalid entry point and base address (must be 0x81300000)")
             return -1
