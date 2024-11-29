@@ -84,18 +84,12 @@ startup:
 	blt		2b
 
 	li		r3, 0x1800
-	lwzu	r0, 4 (r3)
-	xoris	r0, r0, 0x5354
-	cmpwi	r0, 0x5542
-	bne		premain
-	lwz		r0, 4 (r3)
-	xoris	r0, r0, 0x4841
-	cmpwi	r0, 0x5858
-	bne		premain
-
-	li		r0, 0
+	lis		r0, 0x4E80
+	ori		r0, r0, 0x0020
 	stw		r0, 0 (r3)
-	stw		r0, 4 (r3)
+	dcbst	0, r3
+	sync
+	icbi	0, r3
 
 premain:
 	li		r3, 0
