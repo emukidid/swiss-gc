@@ -194,7 +194,7 @@
 #define FSI_StrucSig		484		/* FAT32 FSI: Structure signature (DWORD) */
 #define FSI_Free_Count		488		/* FAT32 FSI: Number of free clusters (DWORD) */
 #define FSI_Nxt_Free		492		/* FAT32 FSI: Last allocated cluster (DWORD) */
-#define FSI_TrailSig		498		/* FAT32 FSI: Trailing signature (DWORD) */
+#define FSI_TrailSig		508		/* FAT32 FSI: Trailing signature (DWORD) */
 
 #define MBR_Table			446		/* MBR: Offset of partition table in the MBR */
 #define SZ_PTE				16		/* MBR: Size of a partition table entry */
@@ -6384,7 +6384,7 @@ FRESULT f_mkfs (
 			st_dword(buf + FSI_StrucSig, 0x61417272);
 			st_dword(buf + FSI_Free_Count, n_clst - 1);	/* Number of free clusters */
 			st_dword(buf + FSI_Nxt_Free, 2);			/* Last allocated cluster# */
-			st_word(buf + BS_55AA, 0xAA55);
+			st_dword(buf + FSI_TrailSig, 0xAA550000);
 			disk_write(pdrv, buf, b_vol + 7, 1);		/* Write backup FSINFO (VBR + 7) */
 			disk_write(pdrv, buf, b_vol + 1, 1);		/* Write original FSINFO (VBR + 1) */
 		}
