@@ -291,6 +291,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		drawSettingEntryBoolean(page, &page_y_ofs, "Pause for resolution change:", swissSettings.pauseAVOutput, option == SET_PAUSE_AVOUTPUT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Auto-load cheats:", swissSettings.autoCheats, option == SET_ALL_CHEATS, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "WiiRD debugging:", swissSettings.wiirdDebug, option == SET_WIIRDDBG, dbgEnable);
+		drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_GLOBAL_DEFAULTS, true);
 	}
 	else if(page_num == PAGE_GAME_DEFAULTS) {
 		int settings_per_page = 10;
@@ -325,6 +326,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", swissSettings.emulateEthernet, option == SET_DEFAULT_EMULATE_ETHERNET, emulatedEthernet);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_DEFAULT_CLEAN_BOOT, enabledCleanBoot);
 			drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", swissSettings.rt4kProfile, option == SET_DEFAULT_RT4K_PROFILE, rt4kEnable);
+			drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULT_DEFAULTS, true);
 		}
 	}
 	else if(page_num == PAGE_GAME) {
@@ -623,6 +625,20 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				if(devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko))
 					swissSettings.wiirdDebug ^=1;
 			break;
+			case SET_GLOBAL_DEFAULTS:
+				if(direction == 0) {
+					swissSettings.igrType = 0;
+					swissSettings.bs2Boot = 0;
+					swissSettings.autoBoot = 0;
+					swissSettings.emulateMemoryCard = 0;
+					swissSettings.disableMCPGameID = 0;
+					swissSettings.forceVideoActive = 0;
+					swissSettings.disableVideoPatches = 0;
+					swissSettings.pauseAVOutput = 0;
+					swissSettings.autoCheats = 0;
+					swissSettings.wiirdDebug = 0;
+				}
+			break;
 		}
 	}
 	else if(page == PAGE_GAME_DEFAULTS) {
@@ -718,6 +734,27 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				if(is_rt4k_alive()) {
 					swissSettings.rt4kProfile += direction;
 					swissSettings.rt4kProfile = (swissSettings.rt4kProfile + 13) % 13;
+				}
+			break;
+			case SET_DEFAULT_DEFAULTS:
+				if(direction == 0) {
+					swissSettings.gameVMode = 0;
+					swissSettings.forceHScale = 0;
+					swissSettings.forceVOffset = 0;
+					swissSettings.forceVFilter = 0;
+					swissSettings.forceVJitter = 0;
+					swissSettings.disableDithering = 0;
+					swissSettings.forceAnisotropy = 0;
+					swissSettings.forceWidescreen = 0;
+					swissSettings.forcePollRate = 0;
+					swissSettings.invertCStick = 0;
+					swissSettings.swapCStick = 0;
+					swissSettings.triggerLevel = 0;
+					swissSettings.emulateAudioStream = 1;
+					swissSettings.emulateReadSpeed = 0;
+					swissSettings.emulateEthernet = 0;
+					swissSettings.preferCleanBoot = 0;
+					swissSettings.rt4kProfile = 0;
 				}
 			break;
 		}
@@ -951,6 +988,12 @@ int show_settings(int page, int option, ConfigEntry *config) {
 			if(page == PAGE_NETWORK && (in_range(option, SET_BBA_LOCALIP, SET_BBA_GATEWAY) ||
 										in_range(option, SET_FSP_HOSTIP,  SET_FTP_PASS) ||
 										in_range(option, SET_SMB_HOSTIP,  SET_RT4K_PORT))) {
+				settings_toggle(page, option, 0, config);
+			}
+			if(page == PAGE_GAME_GLOBAL && option == SET_GLOBAL_DEFAULTS) {
+				settings_toggle(page, option, 0, config);
+			}
+			if(page == PAGE_GAME_DEFAULTS && option == SET_DEFAULT_DEFAULTS) {
 				settings_toggle(page, option, 0, config);
 			}
 			if(page == PAGE_GAME && option == SET_DEFAULTS) {
