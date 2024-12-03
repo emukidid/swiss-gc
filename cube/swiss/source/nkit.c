@@ -1302,6 +1302,7 @@ static const struct {
 	{{ "GNDF69\x00\x00" }, false, 0xAD, 0x8DBD, 0x1952782E, 0x32D8D8C67527B0F5, 1110857728,  +349120512, {  583217800,      +30852, 8096, 0x1D7C }, "Need for Speed: Underground" },
 	{{ "GNDJ13\x00\x00" }, false, 0xE0, 0xF152, 0x836CFEDA, 0x13A558EDB97775EE, 1128900608,  +331077632, {  587165492,      +32104, 6496, 0x89A0 }, "Need for Speed: Underground" },
 	{{ "GNDP69\x00\x00" }, false, 0x7B, 0x01AB, 0x4584DC3B, 0x6644F65D96920450, 1110884352,  +349093888, {  583244796,      +30880, 8096, 0x1D7C }, "Need for Speed: Underground" },
+	{{ "GNDP8P\x01\x01" }, false, 0x11, 0x6F6A, 0x81525825, 0x7B6CD8E32A668D95,  894347264,  +565630976, {         ~0,          +0,    0, 0xFFFF }, "Need for Speed: Underground" },
 	{{ "GNED78\x00\x00" }, true,  0xC7, 0xBA7B, 0x80C21A71, 0x16D33F3B707771F7,  914595840,  +545382400, {  911329992,   +77706552, 6496, 0xE7F2 }, "Disney/Pixar Findet Nemo" },
 	{{ "GNEE78\x00\x00" }, true,  0xA7, 0x2044, 0xA997457F, 0x0128E0D4BDB9645A, 1105072128,  +354906112, { 1101332816,      +32768, 6496, 0x81E7 }, "Disney/Pixar Finding Nemo" },
 	{{ "GNEE78\x00\x01" }, true,  0xB9, 0xADCD, 0xAE9836EC, 0x36CE4B5AE809213A, 1011677184,  +448301056, { 1008417884,   +26526628, 6496, 0x81E7 }, "Disney/Pixar Finding Nemo" },
@@ -2110,7 +2111,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (2000)
+#define REDUMP_COUNT (2001)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
@@ -2199,7 +2200,6 @@ static const struct {
 	{{ "GMPP01\x00\x02" }, false, 0x6C, 0x9D34, 0xF0DE4105, 0x895DFE61A45E24FC,  607346688,  +852631552, {  559137448,     +264764, 8096, 0x03FE }, "Mario Party 4" },
 	{{ "GMSP01\x00\x00" }, false, 0x1D, 0x6C8C, 0xF968261A, 0x784E17B83254CEE8,  404224000,     +100352, {  404214580,      +70348, 8096, 0x4911 }, "Super Mario Sunshine" },
 	{{ "GMUP5D\x00\x00" }, false, 0x80, 0xEE0B, 0xD442A6BF, 0x436DC9BED493D5DE, 1425692672,   +34285568, {    6644012,    +5580500, 6496, 0x093D }, "Dr. Muto" },
-	{{ "GNDP8P\x01\x01" }, false, 0x11, 0x6F6A, 0x81525825, 0x7B6CD8E32A668D95,  894347264,  +565630976, {         ~0,          +0,    0, 0xFFFF }, "Need for Speed: Underground" },
 	{{ "GNHE5d\x00\x00" }, false, 0x94, 0xCCBB, 0xE7F301B7, 0x111E626AC7CDE6B5,     428032, +1459550208, {      94248,       +4056, 6496, 0x5AE1 }, "Action Replay Ultimate Codes for Use with Enter the Matrix" },
 	{{ "GP5P01\x00\x00" }, false, 0x3D, 0xFBF1, 0x9DC1BB2A, 0xC5CD32D7C41AAE3D,  922845184,  +537133056, {   14902032,      +41916, 8096, 0x3D31 }, "Mario Party 5" },
 	{{ "GPNE08\x00\x00" }, false, 0x44, 0xA6AC, 0xD42D1079, 0x43947E5CABB597D0,  689250304,  +770727936, {  492787200,  +770729280, 6496, 0x5AB7 }, "P.N. 03" },
@@ -2260,7 +2260,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 149)
+#define VALID_COUNT (REDUMP_COUNT + 148)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
