@@ -235,7 +235,6 @@ s32 deviceHandler_GCLoader_init(file_handle* file){
 		f_unmount("gcldr:/");
 		free(gcloaderfs);
 		gcloaderfs = NULL;
-		disk_shutdown(DEV_GCLDR);
 	}
 	gcloaderfs = (FATFS*)malloc(sizeof(FATFS));
 	file->status = f_mount(gcloaderfs, "gcldr:/", 1);
@@ -266,7 +265,6 @@ s32 deviceHandler_GCLoader_deinit(file_handle* file) {
 		f_unmount(file->name);
 		free(gcloaderfs);
 		gcloaderfs = NULL;
-		disk_shutdown(DEV_GCLDR);
 	}
 	return 0;
 }

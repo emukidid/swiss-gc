@@ -167,7 +167,6 @@ s32 deviceHandler_WKF_init(file_handle* file){
 		f_unmount("wkf:/");
 		free(wkffs);
 		wkffs = NULL;
-		disk_shutdown(DEV_WKF);
 	}
 	wkffs = (FATFS*)malloc(sizeof(FATFS));
 	file->status = f_mount(wkffs, "wkf:/", 1);
@@ -180,7 +179,6 @@ s32 deviceHandler_WKF_deinit(file_handle* file) {
 		f_unmount(file->name);
 		free(wkffs);
 		wkffs = NULL;
-		disk_shutdown(DEV_WKF);
 	}
 	return 0;
 }

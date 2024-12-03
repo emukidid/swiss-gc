@@ -32,7 +32,6 @@ s32 deviceHandler_ARAM_init(file_handle* file) {
 		f_unmount("ram:/");
 		free(aramfs);
 		aramfs = NULL;
-		disk_shutdown(DEV_ARAM);
 	}
 	aramfs = (FATFS*)malloc(sizeof(FATFS));
 	file->status = f_mount(aramfs, "ram:/", 1);
@@ -51,7 +50,6 @@ s32 deviceHandler_ARAM_deinit(file_handle* file) {
 		f_unmount(file->name);
 		free(aramfs);
 		aramfs = NULL;
-		disk_shutdown(DEV_ARAM);
 	}
 	return 0;
 }

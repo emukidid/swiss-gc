@@ -303,7 +303,6 @@ s32 fatFs_Mount(u8 devNum, char *path) {
 		f_unmount(path);
 		free(fs[devNum]);
 		fs[devNum] = NULL;
-		disk_shutdown(devNum);
 	}
 	fs[devNum] = (FATFS*)malloc(sizeof(FATFS));
 	return f_mount(fs[devNum], path, 1);
@@ -379,7 +378,6 @@ s32 deviceHandler_FAT_deinit(file_handle* file) {
 		f_unmount(file->name);
 		free(fs[isSDCard ? slot : SD_COUNT+slot]);
 		fs[isSDCard ? slot : SD_COUNT+slot] = NULL;
-		disk_shutdown(isSDCard ? slot : SD_COUNT+slot);
 	}
 	return 0;
 }

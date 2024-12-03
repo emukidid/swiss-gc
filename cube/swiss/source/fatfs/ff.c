@@ -3703,6 +3703,7 @@ FRESULT f_mount (
 		ff_mutex_delete(vol);
 #endif
 		cfs->fs_type = 0;		/* Invalidate the filesystem object to be unregistered */
+		disk_shutdown(cfs->pdrv);
 	}
 
 	if (fs) {					/* Register new filesystem object */
