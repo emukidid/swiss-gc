@@ -65,6 +65,7 @@ static const struct {
 	{ "240p Test Suite (World) (v1.09) (Program) (Aftermarket) (Unl).dol",        1333536, 0xFCDAED5E9FF91F3F },
 	{ "240p Test Suite (World) (v1.10b) (Program) (Aftermarket) (Unl).dol",       1576640, 0xF2F18B3601364308 },
 	{ "240p Test Suite (World) (v1.17) (Program) (Aftermarket) (Unl).dol",        1906336, 0x65A1EF7519BE163F },
+	{ "240p Test Suite (World) (v1.19) (Program) (Aftermarket) (Unl).dol",        1894464, 0x287F839D82D7D3CB },
 	{ "Xeno Crisis (World) (En,Ja,Fr,De,Es,It,Nl,Pt-BR) (Aftermarket) (Unl).dol", 5331008, 0x34BF21CA529D0E02 },
 };
 
@@ -2139,6 +2140,7 @@ static const struct {
 	{{ "GASE8P\x00\x00" }, false, 0xB3, 0xA1B0, 0xDD918AD1, 0xD9B670DD43BD37A5, 1404723200,   +55255040, {  774689240,   +55255472, 6496, 0x0D21 }, "Sonic Adventure DX: Director's Cut" },
 	{{ "GB8E78\x00\x00" }, true,  0x03, 0x3B42, 0x1F19869C, 0x0716D4D5A73AB0BC,  432257024, +1027721216, {  412625660,      +32768, 6496, 0x9BD7 }, "BattleBots" },
 	{{ "GBIJ08\x00\x00" }, false, 0x75, 0x7EF2, 0xD752514D, 0xD4E03DF58675E232,  175702016, +1284276224, {    2519252, +1283945932, 6496, 0xEF92 }, "Resident Evil 4" },
+	{{ "GBLPGL\x00\x00" }, false, 0x02, 0x72B9, 0x5EB3D183, 0x9EA116C923108E24,    1570816,     +100352, {      17768,         +24, 6496, 0x4411 }, "240p Test Suite" },
 	{{ "GBLPGL\x00\x00" }, false, 0x18, 0x72B9, 0x24316D11, 0xAE30E4588E3FC3FD,     962560,      +86016, {      17768,         +24, 6496, 0x4411 }, "240p Test Suite" },
 	{{ "GBLPGL\x00\x00" }, false, 0x25, 0x72B9, 0x3B9EB672, 0x798B59FAFDD76092,    1167360,      +77824, {      17768,         +24, 6496, 0x4411 }, "240p Test Suite" },
 	{{ "GBLPGL\x00\x00" }, false, 0x39, 0x72B9, 0xB1C8AD07, 0x56FD6B99E1920B8F,     946176,     +102400, {      17768,         +24, 6496, 0x4411 }, "240p Test Suite" },
@@ -2258,7 +2260,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 148)
+#define VALID_COUNT (REDUMP_COUNT + 149)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
