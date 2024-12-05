@@ -519,6 +519,30 @@ char* deviceHandler_FAT_status(file_handle* file) {
 	}
 }
 
+char* deviceHandler_FAT_details(file_handle* file) {
+	char* deviceDetails = NULL;
+	int isSDCard = IS_SDCARD(file);
+	int slot = GET_SLOT(file);
+	if(isSDCard) {
+		if(sdgecko_readCID(slot) != CARDIO_ERROR_READY) return NULL;
+		asprintf(&deviceDetails,
+			"Manufacturer ID: %02X\n"
+			"OEM/Application ID: %.2s\n"
+			"Product name: %.5s\n"
+			"Product revision: %u.%02u\n"
+			"Product serial number: %08X\n"
+			"Manufacturing date: %u-%02u",
+			MANUFACTURER_ID(slot),
+			OEM_APPLICATION_ID(slot),
+			PRODUCT_NAME(slot),
+			PRODUCT_REVISION(slot) >> 4, PRODUCT_REVISION(slot) & 0xF,
+			PRODUCT_SERIAL_NUMBER(slot),
+			2000 + (MANUFACTURING_DATE(slot) >> 4), MANUFACTURING_DATE(slot) & 0xF
+		);
+	}
+	return deviceDetails;
+}
+
 DEVICEHANDLER_INTERFACE __device_sd_a = {
 	.deviceUniqueId = DEVICE_ID_1,
 	.hwName = "SD Card Adapter",
@@ -544,6 +568,7 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 	.deinit = deviceHandler_FAT_deinit,
 	.emulated = deviceHandler_FAT_emulated_sd,
 	.status = deviceHandler_FAT_status,
+	.details = deviceHandler_FAT_details,
 };
 
 DEVICEHANDLER_INTERFACE __device_sd_b = {
@@ -571,6 +596,7 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 	.deinit = deviceHandler_FAT_deinit,
 	.emulated = deviceHandler_FAT_emulated_sd,
 	.status = deviceHandler_FAT_status,
+	.details = deviceHandler_FAT_details,
 };
 
 DEVICEHANDLER_INTERFACE __device_ata_a = {
@@ -652,6 +678,7 @@ DEVICEHANDLER_INTERFACE __device_sd_c = {
 	.deinit = deviceHandler_FAT_deinit,
 	.emulated = deviceHandler_FAT_emulated_sd,
 	.status = deviceHandler_FAT_status,
+	.details = deviceHandler_FAT_details,
 };
 
 DEVICEHANDLER_INTERFACE __device_ata_c = {

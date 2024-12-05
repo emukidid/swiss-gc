@@ -103,6 +103,7 @@ typedef s32 (* _fn_setupFile)(file_handle*, file_handle*, ExecutableFile*, int);
 typedef s32 (* _fn_deinit)(file_handle*);
 typedef u32 (* _fn_emulated)(void);
 typedef char* (* _fn_status)(file_handle*);
+typedef char* (* _fn_details)(file_handle*);
 
 // Device features
 #define FEAT_READ				0x1
@@ -199,6 +200,7 @@ struct DEVICEHANDLER_STRUCT {
 	_fn_deinit		deinit;
 	_fn_emulated	emulated;
 	_fn_status		status;
+	_fn_details		details;
 } ;
 
 enum DEVICE_SLOTS {

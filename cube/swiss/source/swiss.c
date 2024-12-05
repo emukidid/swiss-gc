@@ -2626,11 +2626,25 @@ void select_device(int type)
 				DrawAddChild(deviceSelectBox, exiSpeedLabel);
 			}
 		}
-		DrawPublish(deviceSelectBox);	
+		if(allDevices[curDevice]->details) {
+			uiDrawObj_t *deviceDetailLabel = DrawStyledLabel(20, 385, "(Y) Show device details", 0.65f, false, deSelectedColor);
+			DrawAddChild(deviceSelectBox, deviceDetailLabel);
+		}
+		DrawPublish(deviceSelectBox);
 		while (!(padsButtonsHeld() & 
-			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z) ))
+			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z) ))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = padsButtonsHeld();
+		if((btns & PAD_BUTTON_Y) && allDevices[curDevice]->details) {
+			char *deviceDetails = allDevices[curDevice]->details(allDevices[curDevice]->initial);
+			if(deviceDetails) {
+				uiDrawObj_t *deviceDetailBox = DrawPublish(DrawTooltip(deviceDetails));
+				while (padsButtonsHeld() & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
+				while (!((padsButtonsHeld() & PAD_BUTTON_Y) || (padsButtonsHeld() & PAD_BUTTON_B))){ VIDEO_WaitVSync (); }
+				DrawDispose(deviceDetailBox);
+				free(deviceDetails);
+			}
+		}
 		if((btns & PAD_BUTTON_X) && (allDevices[curDevice]->features & FEAT_EXI_SPEED))
 			inAdvanced ^= 1;
 		if(btns & PAD_TRIGGER_Z) {
@@ -2677,7 +2691,7 @@ void select_device(int type)
 		}
 		while ((padsButtonsHeld() & 
 			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A
-			|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z) ))
+			|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z) ))
 			{ VIDEO_WaitVSync (); }
 		DrawDispose(deviceSelectBox);
 	}
