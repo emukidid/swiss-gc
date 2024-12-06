@@ -23,12 +23,14 @@
 #include <ogc/cache.h>
 #define LIBOGC_INTERNAL
 #include <ogc/disc_io.h>
+#include <ogc/system.h>
 #include "aram.h"
 
 static bool __aram_Startup(DISC_INTERFACE *disc)
 {
 	static bool initialized;
 
+	if (disc->ioType != DEVICE_TYPE_GAMECUBE_ARAM) return false;
 	if (initialized) return true;
 
 	if (!AR_CheckInit()) {
@@ -47,6 +49,8 @@ static bool __aram_Startup(DISC_INTERFACE *disc)
 
 static bool __aram_IsInserted(DISC_INTERFACE *disc)
 {
+	if (disc->ioType != DEVICE_TYPE_GAMECUBE_ARAM) return false;
+
 	disc->numberOfSectors = (AR_GetSize() - AR_GetInternalSize()) / disc->bytesPerSector;
 
 	return !!disc->numberOfSectors;
@@ -56,9 +60,12 @@ static bool __aram_ReadSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSect
 {
 	ARQRequest req;
 
-	if (sector & ~0xFFFF) return false;
-	if (numSectors & ~0x1FFFF) return false;
-	if ((u32)buffer & 0x1F) return false;
+	if (disc->ioType != DEVICE_TYPE_GAMECUBE_ARAM) return false;
+	if (!(disc->features & FEATURE_MEDIUM_CANREAD)) return false;
+	if ((sector + numSectors) < sector) return false;
+	if ((sector + numSectors) > disc->numberOfSectors) return false;
+	if (disc->bytesPerSector != 512) return false;
+	if (!SYS_IsDMAAddress(buffer)) return false;
 
 	DCInvalidateRange(buffer, numSectors << 9);
 	ARQ_PostRequest(&req, sector, ARQ_ARAMTOMRAM, ARQ_PRIO_LO, AR_GetInternalSize() + (sector << 9), (u32)buffer, numSectors << 9);
@@ -70,9 +77,12 @@ static bool __aram_WriteSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSec
 {
 	ARQRequest req;
 
-	if (sector & ~0xFFFF) return false;
-	if (numSectors & ~0x1FFFF) return false;
-	if ((u32)buffer & 0x1F) return false;
+	if (disc->ioType != DEVICE_TYPE_GAMECUBE_ARAM) return false;
+	if (!(disc->features & FEATURE_MEDIUM_CANWRITE)) return false;
+	if ((sector + numSectors) < sector) return false;
+	if ((sector + numSectors) > disc->numberOfSectors) return false;
+	if (disc->bytesPerSector != 512) return false;
+	if (!SYS_IsDMAAddress(buffer)) return false;
 
 	DCFlushRange((void *)buffer, numSectors << 9);
 	ARQ_PostRequest(&req, sector, ARQ_MRAMTOARAM, ARQ_PRIO_LO, AR_GetInternalSize() + (sector << 9), (u32)buffer, numSectors << 9);
@@ -91,7 +101,7 @@ static bool __aram_Shutdown(DISC_INTERFACE *disc)
 }
 
 DISC_INTERFACE __io_aram = {
-	DEVICE_TYPE_GC_ARAM,
+	DEVICE_TYPE_GAMECUBE_ARAM,
 	FEATURE_MEDIUM_CANREAD | FEATURE_MEDIUM_CANWRITE,
 	__aram_Startup,
 	__aram_IsInserted,

@@ -400,20 +400,19 @@ s32 deviceHandler_FAT_makeDir(file_handle* dir) {
 }
 
 bool deviceHandler_FAT_test_sd_a() {
-	bool ret = __io_gcsda.startup(&__io_gcsda) && __io_gcsda.shutdown(&__io_gcsda);
+	bool ret = sdgecko_isInitialized(0) || (__io_gcsda.startup(&__io_gcsda) && __io_gcsda.shutdown(&__io_gcsda));
 
-	if(__io_gcsda.features & FEATURE_GAMECUBE_SLOTA) {
+	if (__io_gcsda.features & FEATURE_GAMECUBE_SLOTA) {
 		__device_sd_a.deviceName = "SD Card - Slot A";
 		__device_sd_a.location = LOC_MEMCARD_SLOT_A;
-	}
-	else if(__io_gcsda.features & FEATURE_GAMECUBE_PORT1) {
+	} else if (__io_gcsda.features & FEATURE_GAMECUBE_PORT1) {
 		__device_sd_a.deviceName = "SD Card - SD2SP1";
 		__device_sd_a.location = LOC_SERIAL_PORT_1;
 	}
 	return ret;
 }
 bool deviceHandler_FAT_test_sd_b() {
-	bool ret = __io_gcsdb.startup(&__io_gcsdb) && __io_gcsdb.shutdown(&__io_gcsdb);
+	bool ret = sdgecko_isInitialized(1) || (__io_gcsdb.startup(&__io_gcsdb) && __io_gcsdb.shutdown(&__io_gcsdb));
 
 	if (ret) {
 		if (sdgecko_getTransferMode(1) == CARDIO_TRANSFER_DMA)
@@ -424,7 +423,7 @@ bool deviceHandler_FAT_test_sd_b() {
 	return ret;
 }
 bool deviceHandler_FAT_test_sd_c() {
-	bool ret = __io_gcsd2.startup(&__io_gcsd2) && __io_gcsd2.shutdown(&__io_gcsd2);
+	bool ret = sdgecko_isInitialized(2) || (__io_gcsd2.startup(&__io_gcsd2) && __io_gcsd2.shutdown(&__io_gcsd2));
 
 	if (ret) {
 		if (sdgecko_getTransferMode(2) == CARDIO_TRANSFER_DMA)
