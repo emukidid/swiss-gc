@@ -222,6 +222,7 @@ DEVICEHANDLER_INTERFACE __device_wkf = {
 	.closeFile = deviceHandler_FAT_closeFile,
 	.deleteFile = deviceHandler_FAT_deleteFile,
 	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
 	.setupFile = deviceHandler_WKF_setupFile,
 	.deinit = deviceHandler_WKF_deinit,
 	.emulated = deviceHandler_WKF_emulated,

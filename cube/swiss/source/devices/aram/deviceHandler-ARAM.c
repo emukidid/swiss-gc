@@ -80,6 +80,7 @@ DEVICEHANDLER_INTERFACE __device_aram = {
 	.closeFile = deviceHandler_FAT_closeFile,
 	.deleteFile = deviceHandler_FAT_deleteFile,
 	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
 	.deinit = deviceHandler_ARAM_deinit,
 	.status = deviceHandler_FAT_status,
 };

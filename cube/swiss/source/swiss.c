@@ -1402,11 +1402,13 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 /* Manage file  - The user will be asked what they want to do with the currently selected file - copy/move/delete*/
 bool manage_file() {
 	bool isFile = curFile.fileType == IS_FILE;
+	bool isHidden = curFile.fileAttrib & ATTRIB_HIDDEN;
 	bool canWrite = devices[DEVICE_CUR]->features & FEAT_WRITE;
 	bool canMove = canWrite && isFile;
 	bool canCopy = isFile;
 	bool canDelete = canWrite && devices[DEVICE_CUR]->deleteFile;
 	bool canRename = canWrite && devices[DEVICE_CUR]->renameFile;
+	bool canHide = canWrite && devices[DEVICE_CUR]->hideFile;
 	
 	// Ask the user what they want to do with the selected entry
 	uiDrawObj_t* manageFileBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 320);
@@ -1414,15 +1416,16 @@ bool manage_file() {
 	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 160, txtbuffer, 1.0f, true, defaultColor));
 	float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
 	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 190, getRelativeName(curFile.name), scale, true, defaultColor));
-	sprintf(txtbuffer, "%s%s%s%s", 
+	sprintf(txtbuffer, "%s%s%s%s%s",
 					canCopy ? " (X) Copy " : "",
 					canMove ? " (Y) Move " : "",
 					canDelete ? " (Z) Delete " : "",
-					canRename ? " (R) Rename" : "");
-	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 250, txtbuffer, 1.0f, true, defaultColor));
+					canRename ? " (R) Rename " : "",
+					canHide ? isHidden ? " (L) Unhide " : " (L) Hide " : "");
+	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 250, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-10-10), true, defaultColor));
 	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 310, "Press an option to continue, or B to return", 1.0f, true, defaultColor));
 	DrawPublish(manageFileBox);
-	u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_B|PAD_TRIGGER_Z|PAD_TRIGGER_R;
+	u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_B|PAD_TRIGGER_Z|PAD_TRIGGER_R|PAD_TRIGGER_L;
 	do {VIDEO_WaitVSync();} while (padsButtonsHeld() & waitButtons);
 	int option = 0;
 	while(1) {
@@ -1445,6 +1448,11 @@ bool manage_file() {
 		if(canRename && (buttons & PAD_TRIGGER_R)) {
 			option = RENAME_OPTION;
 			while(padsButtonsHeld() & PAD_TRIGGER_R){ VIDEO_WaitVSync (); }
+			break;
+		}
+		if(canRename && (buttons & PAD_TRIGGER_L)) {
+			option = HIDE_OPTION;
+			while(padsButtonsHeld() & PAD_TRIGGER_L){ VIDEO_WaitVSync (); }
 			break;
 		}
 		if(buttons & PAD_BUTTON_B) {
@@ -1478,8 +1486,12 @@ bool manage_file() {
 		}
 	}
 
+	// Handles (un)hiding directories or files on FAT FS devices.
+	if (canHide && option == HIDE_OPTION) {
+		devices[DEVICE_CUR]->hideFile(&curFile, !isHidden);
+	}
 	// Handles renaming directories or files on FAT FS devices.
-	if(canRename && option == RENAME_OPTION) {
+	else if(canRename && option == RENAME_OPTION) {
 		char *nameBuffer = calloc(1, sizeof(curFile.name));
 		char *parentPath = calloc(1, sizeof(curFile.name));
 		getParentPath(&curFile.name[0], parentPath);

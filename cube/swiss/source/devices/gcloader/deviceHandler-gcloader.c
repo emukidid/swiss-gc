@@ -373,6 +373,7 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	.closeFile = deviceHandler_GCLoader_closeFile,
 	.deleteFile = deviceHandler_FAT_deleteFile,
 	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
 	.setupFile = deviceHandler_GCLoader_setupFile,
 	.deinit = deviceHandler_GCLoader_deinit,
 	.emulated = deviceHandler_GCLoader_emulated,

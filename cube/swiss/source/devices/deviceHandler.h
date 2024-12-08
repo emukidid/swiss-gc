@@ -99,6 +99,7 @@ typedef s32 (* _fn_writeFile)(file_handle*, const void*, u32);
 typedef s32 (* _fn_closeFile)(file_handle*);
 typedef s32 (* _fn_deleteFile)(file_handle*);
 typedef s32 (* _fn_renameFile)(file_handle*, char*);
+typedef s32 (* _fn_hideFile)(file_handle*, bool);
 typedef s32 (* _fn_setupFile)(file_handle*, file_handle*, ExecutableFile*, int);
 typedef s32 (* _fn_deinit)(file_handle*);
 typedef u32 (* _fn_emulated)(void);
@@ -196,6 +197,7 @@ struct DEVICEHANDLER_STRUCT {
 	_fn_closeFile	closeFile;
 	_fn_deleteFile	deleteFile;
 	_fn_renameFile	renameFile;
+	_fn_hideFile	hideFile;
 	_fn_setupFile	setupFile;
 	_fn_deinit		deinit;
 	_fn_emulated	emulated;

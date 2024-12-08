@@ -168,7 +168,8 @@ enum fileOptions
 	COPY_OPTION=0,
 	MOVE_OPTION,
 	DELETE_OPTION,
-	RENAME_OPTION
+	RENAME_OPTION,
+	HIDE_OPTION
 };
 
 enum fileBrowserTypes

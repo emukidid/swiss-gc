@@ -395,6 +395,10 @@ s32 deviceHandler_FAT_renameFile(file_handle* file, char* name) {
 	return ret;
 }
 
+s32 deviceHandler_FAT_hideFile(file_handle* file, bool hide) {
+	return f_chmod(file->name, hide ? AM_HID : 0, AM_HID);
+}
+
 s32 deviceHandler_FAT_makeDir(file_handle* dir) {
 	return f_mkdir(dir->name);
 }
@@ -563,6 +567,7 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 	.closeFile = deviceHandler_FAT_closeFile,
 	.deleteFile = deviceHandler_FAT_deleteFile,
 	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
 	.setupFile = deviceHandler_FAT_setupFile,
 	.deinit = deviceHandler_FAT_deinit,
 	.emulated = deviceHandler_FAT_emulated_sd,
@@ -591,6 +596,7 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 	.closeFile = deviceHandler_FAT_closeFile,
 	.deleteFile = deviceHandler_FAT_deleteFile,
 	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
 	.setupFile = deviceHandler_FAT_setupFile,
 	.deinit = deviceHandler_FAT_deinit,
 	.emulated = deviceHandler_FAT_emulated_sd,
@@ -619,6 +625,7 @@ DEVICEHANDLER_INTERFACE __device_ata_a = {
 	.closeFile = deviceHandler_FAT_closeFile,
 	.deleteFile = deviceHandler_FAT_deleteFile,
 	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
 	.setupFile = deviceHandler_FAT_setupFile,
 	.deinit = deviceHandler_FAT_deinit,
 	.emulated = deviceHandler_FAT_emulated_ata,
@@ -646,6 +653,7 @@ DEVICEHANDLER_INTERFACE __device_ata_b = {
 	.closeFile = deviceHandler_FAT_closeFile,
 	.deleteFile = deviceHandler_FAT_deleteFile,
 	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
 	.setupFile = deviceHandler_FAT_setupFile,
 	.deinit = deviceHandler_FAT_deinit,
 	.emulated = deviceHandler_FAT_emulated_ata,
@@ -673,6 +681,7 @@ DEVICEHANDLER_INTERFACE __device_sd_c = {
 	.closeFile = deviceHandler_FAT_closeFile,
 	.deleteFile = deviceHandler_FAT_deleteFile,
 	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
 	.setupFile = deviceHandler_FAT_setupFile,
 	.deinit = deviceHandler_FAT_deinit,
 	.emulated = deviceHandler_FAT_emulated_sd,
@@ -701,6 +710,7 @@ DEVICEHANDLER_INTERFACE __device_ata_c = {
 	.closeFile = deviceHandler_FAT_closeFile,
 	.deleteFile = deviceHandler_FAT_deleteFile,
 	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
 	.setupFile = deviceHandler_FAT_setupFile,
 	.deinit = deviceHandler_FAT_deinit,
 	.emulated = deviceHandler_FAT_emulated_sd,
