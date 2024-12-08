@@ -216,8 +216,8 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "#!!Swiss Settings End!!\r\n\r\n");
 	fclose(fp);
 
-	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
-	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL);
+	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL, true);
+	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL, false);
 	
 	concat_path(txtbuffer, SWISS_SETTINGS_DIR, SWISS_SETTINGS_FILENAME);
 	int res = config_file_write(txtbuffer, configString);
@@ -244,8 +244,8 @@ int config_update_recent(bool checkConfigDevice) {
 	}
 	fclose(fp);
 
-	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
-	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL);
+	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL, true);
+	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL, false);
 	
 	concat_path(txtbuffer, SWISS_SETTINGS_DIR, SWISS_RECENTLIST_FILENAME);
 	int res = config_file_write(txtbuffer, configString);
@@ -289,9 +289,9 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	if(entry->rt4kProfile != swissSettings.rt4kProfile) fprintf(fp, "RetroTINK-4K Profile=%i\r\n", entry->rt4kProfile);
 	fclose(fp);
 
-	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
-	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL);
-	ensure_path(DEVICE_CONFIG, SWISS_GAME_SETTINGS_DIR, NULL);
+	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL, true);
+	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL, false);
+	ensure_path(DEVICE_CONFIG, SWISS_GAME_SETTINGS_DIR, NULL, false);
 	
 	concatf_path(txtbuffer, SWISS_GAME_SETTINGS_DIR, "%.4s.ini", entry->game_id);
 	int res = config_file_write(txtbuffer, configString);
@@ -1139,9 +1139,9 @@ int config_init(void (*progress_indicator)(char*, int, int)) {
 	}
 	
 	// Make the new settings base dir(s) if we don't have them already
-	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL);
-	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL);
-	ensure_path(DEVICE_CONFIG, SWISS_GAME_SETTINGS_DIR, NULL);
+	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL, true);
+	ensure_path(DEVICE_CONFIG, SWISS_SETTINGS_DIR, NULL, false);
+	ensure_path(DEVICE_CONFIG, SWISS_GAME_SETTINGS_DIR, NULL, false);
 	
 	// Read config (legacy /swiss.ini format)
 	char* configData = config_file_read(SWISS_SETTINGS_FILENAME_LEGACY);

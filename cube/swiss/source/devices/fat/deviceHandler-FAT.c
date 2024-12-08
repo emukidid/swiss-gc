@@ -235,7 +235,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 			memset(&patchFile, 0, sizeof(file_handle));
 			concatf_path(patchFile.name, devices[DEVICE_CUR]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 			concatf_path(txtbuffer, devices[DEVICE_CUR]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-			ensure_path(DEVICE_CUR, "swiss/saves", NULL);
+			ensure_path(DEVICE_CUR, "swiss/saves", NULL, false);
 			devices[DEVICE_CUR]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 			
 			if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) != 0) {
@@ -253,7 +253,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 			memset(&patchFile, 0, sizeof(file_handle));
 			concatf_path(patchFile.name, devices[DEVICE_CUR]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 			concatf_path(txtbuffer, devices[DEVICE_CUR]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-			ensure_path(DEVICE_CUR, "swiss/saves", NULL);
+			ensure_path(DEVICE_CUR, "swiss/saves", NULL, false);
 			devices[DEVICE_CUR]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 			
 			if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) != 0) {
@@ -396,7 +396,11 @@ s32 deviceHandler_FAT_renameFile(file_handle* file, char* name) {
 }
 
 s32 deviceHandler_FAT_hideFile(file_handle* file, bool hide) {
-	return f_chmod(file->name, hide ? AM_HID : 0, AM_HID);
+	FILINFO entry;
+	int ret = f_stat(file->name, &entry);
+	if(ret == FR_OK && !!(entry.fattrib & AM_HID) ^ hide)
+		ret = f_chmod(file->name, hide ? AM_HID : 0, AM_HID);
+	return ret;
 }
 
 s32 deviceHandler_FAT_makeDir(file_handle* dir) {
