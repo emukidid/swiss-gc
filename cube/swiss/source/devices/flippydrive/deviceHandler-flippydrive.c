@@ -88,7 +88,7 @@ s64 deviceHandler_Flippy_seekFile(file_handle* file, s64 where, u32 type) {
 }
 
 static u32 defaultFlags(file_handle* file) {
-	if(endsWith(file->name,".gcm") || endsWith(file->name,".iso") || endsWith(file->name,".tgc"))
+	if(endsWith(file->name,".fdi") || endsWith(file->name,".gcm") || endsWith(file->name,".iso") || endsWith(file->name,".tgc"))
 		return FLIPPY_FLAG_DISABLE_DVDSPEED;
 	return FLIPPY_FLAG_DEFAULT;
 }
@@ -322,6 +322,11 @@ bool deviceHandler_Flippy_test() {
 					}
 				}
 			case 0x20220426:
+				flippyversion *version = (flippyversion *)driveInfo.pad;
+				
+				if (FLIPPY_VERSION(version->major, version->minor, version->build) < FLIPPY_VERSION(1,3,1))
+					__device_flippy.extraExtensions = NULL;
+				
 				swissSettings.hasFlippyDrive = 1;
 				return true;
 		}
@@ -355,6 +360,7 @@ DEVICEHANDLER_INTERFACE __device_flippy = {
 	.deviceName = "FlippyDrive",
 	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_FLIPPY, 102, 56, 104, 58},
+	.extraExtensions = (char*[]){".fdi", NULL},
 	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
 	.quirks = QUIRK_NO_DEINIT,
 	.emulable = EMU_READ|EMU_READ_SPEED|EMU_MEMCARD,

@@ -41,7 +41,7 @@ int sortFiles(file_handle* dir, int numFiles, file_handle*** sortedDir)
 			if((dir[j].fileAttrib & ATTRIB_HIDDEN) && !swissSettings.showHiddenFiles) {
 				continue;
 			}
-			if(dir[j].fileType == IS_FILE && !checkExtension(dir[j].name)) {
+			if(dir[j].fileType == IS_FILE && !checkExtension(dir[j].name, devices[DEVICE_CUR]->extraExtensions)) {
 				continue;
 			}
 			(*sortedDir)[i++] = &dir[j];

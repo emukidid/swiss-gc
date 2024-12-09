@@ -181,6 +181,7 @@ struct DEVICEHANDLER_STRUCT {
 	const char*		deviceName;
 	const char*		deviceDescription;
 	textureImage	deviceTexture;
+	char**			extraExtensions;
 	u32				features;
 	u32				quirks;
 	u32				emulable;

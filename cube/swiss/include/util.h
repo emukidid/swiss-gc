@@ -10,8 +10,8 @@
 #define RECENT_ERR_DEV_MISSING 2
 
 char *endsWith(char *str, char *end);
-bool canLoadFileType(char *filename);
-bool checkExtension(char *filename);
+bool canLoadFileType(char *filename, char **extraExtensions);
+bool checkExtension(char *filename, char **extraExtensions);
 char *getRelativeName(char *path);
 char *getRelativePath(char *path, char *parentPath);
 bool getParentPath(char *path, char *parentPath);

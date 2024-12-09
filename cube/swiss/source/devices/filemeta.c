@@ -277,7 +277,7 @@ void populate_meta(file_handle *f) {
 					}
 				}
 			}
-			else if(endsWith(f->name,".gcm") || endsWith(f->name,".iso")) {
+			else if(endsWith(f->name,".fdi") || endsWith(f->name,".gcm") || endsWith(f->name,".iso")) {
 				DiskHeader *diskHeader = get_gcm_header(f);
 				if(diskHeader) {
 					u32 bannerOffset = 0, bannerSize = f->size;

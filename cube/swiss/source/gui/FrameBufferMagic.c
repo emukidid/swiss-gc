@@ -1335,6 +1335,7 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 		if((end = endsWith(start,".dol"))
 			|| (end = endsWith(start,".dol+cli"))
 			|| (end = endsWith(start,".elf"))
+			|| (end = endsWith(start,".fdi"))
 			|| (end = endsWith(start,".gci"))
 			|| (end = endsWith(start,".gcm.gcm"))
 			|| (end = endsWith(start,".gcm"))

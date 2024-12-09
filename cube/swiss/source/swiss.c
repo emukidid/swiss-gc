@@ -359,7 +359,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			}
 			else if(directory[curSelection]->fileType==IS_FILE) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
-				if(canLoadFileType(&curFile.name[0])) {
+				if(canLoadFileType(curFile.name, devices[DEVICE_CUR]->extraExtensions)) {
 					meta_thread_stop();
 					load_file();
 				}
@@ -595,7 +595,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			}
 			else if(directory[curSelection]->fileType==IS_FILE){
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
-				if(canLoadFileType(&curFile.name[0])) {
+				if(canLoadFileType(curFile.name, devices[DEVICE_CUR]->extraExtensions)) {
 					meta_thread_stop();
 					load_file();
 				}
@@ -769,7 +769,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 			}
 			else if(directory[curSelection]->fileType==IS_FILE) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
-				if(canLoadFileType(&curFile.name[0])) {
+				if(canLoadFileType(curFile.name, devices[DEVICE_CUR]->extraExtensions)) {
 					meta_thread_stop();
 					load_file();
 				}
@@ -2265,7 +2265,7 @@ void load_file()
 			DrawDispose(msgBox);
 			return;
 		}
-		else if(endsWith(fileName,".gcm") || endsWith(fileName,".iso") || endsWith(fileName,".tgc")) {
+		else if(endsWith(fileName,".fdi") || endsWith(fileName,".gcm") || endsWith(fileName,".iso") || endsWith(fileName,".tgc")) {
 			if(devices[DEVICE_CUR]->features & FEAT_BOOT_GCM) {
 				load_game();
 				memset(&GCMDisk, 0, sizeof(DiskHeader));

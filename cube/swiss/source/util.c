@@ -11,7 +11,7 @@
 
 
 /* File name helper functions */
-char *knownExtensions[] = {".bin", ".dol", ".dol+cli", ".elf", ".fpkg", ".fzn", ".gcm", ".gcz", ".iso", ".mp3", ".rvz", ".tgc"};
+char *knownExtensions[] = {".bin", ".dol", ".dol+cli", ".elf", ".fpkg", ".fzn", ".gcm", ".gcz", ".iso", ".mp3", ".rvz", ".tgc", NULL};
 
 char *endsWith(char *str, char *end) {
 	size_t len_str = strlen(str);
@@ -22,20 +22,27 @@ char *endsWith(char *str, char *end) {
 	return !strcasecmp(str, end) ? str : NULL;
 }
 
-bool canLoadFileType(char *filename) {
-	int i;
-	for(i = 0; i < sizeof(knownExtensions)/sizeof(char*); i++) {
-		if(endsWith(filename, knownExtensions[i])) {
+bool canLoadFileType(char *filename, char **extraExtensions) {
+	char *ext;
+	if(extraExtensions) {
+		for(ext = *extraExtensions; ext; ext++) {
+			if(endsWith(filename, ext)) {
+				return !is_rom_name(filename);
+			}
+		}
+	}
+	for(ext = *knownExtensions; ext; ext++) {
+		if(endsWith(filename, ext)) {
 			return !is_rom_name(filename);
 		}
 	}
 	return false;
 }
 
-bool checkExtension(char *filename) {
+bool checkExtension(char *filename, char **extraExtensions) {
 	if(!swissSettings.hideUnknownFileTypes)
 		return true;
-	return canLoadFileType(filename);
+	return canLoadFileType(filename, extraExtensions);
 }
 
 char *getRelativeName(char *path)
