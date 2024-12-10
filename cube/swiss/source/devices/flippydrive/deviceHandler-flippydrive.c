@@ -100,6 +100,9 @@ s32 deviceHandler_Flippy_readFile(file_handle* file, void* buffer, u32 length) {
 		return bytes_read;
 	}
 	if(!file->fp) {
+		if(endsWith(file->name,".fdi") && (getDeviceFromPath(file->name)->quirks & QUIRK_FDI_EXCLUSIVE_OPEN)) {
+			return -1;
+		}
 		file->fp = memalign(32, sizeof(flippyfileinfo));
 		if((getDeviceFromPath(file->name) == &__device_flippyflash ?
 			flippy_flash_open(file->fp, getDevicePath(file->name), defaultFlags(file)) :
@@ -109,6 +112,11 @@ s32 deviceHandler_Flippy_readFile(file_handle* file, void* buffer, u32 length) {
 			return -1;
 		}
 		flippyfileinfo* info = file->fp;
+		if(endsWith(file->name,".fdi") && (getDeviceFromPath(file->name)->quirks & QUIRK_FDI_BYTESWAP_SIZE)) {
+			if(info->file.size != file->size) {
+				info->file.size = __builtin_bswap32(info->file.size >> 9 << 8) << 9;
+			}
+		}
 		file->size = info->file.size;
 	}
 	if(file->offset > file->size) {
@@ -323,10 +331,15 @@ bool deviceHandler_Flippy_test() {
 				}
 			case 0x20220426:
 				flippyversion *version = (flippyversion *)driveInfo.pad;
+				__device_flippy.quirks = QUIRK_NO_DEINIT;
 				
-				if (FLIPPY_VERSION(version->major, version->minor, version->build) < FLIPPY_VERSION(1,3,1))
+				if (FLIPPY_VERSION(version->major, version->minor, version->build) < FLIPPY_VERSION(1,3,3))
+					__device_flippy.quirks |= QUIRK_FDI_BYTESWAP_SIZE;
+				
+				if (FLIPPY_VERSION(version->major, version->minor, version->build) < FLIPPY_VERSION(1,3,1)) {
 					__device_flippy.extraExtensions = NULL;
-				
+					__device_flippy.quirks |= QUIRK_FDI_EXCLUSIVE_OPEN;
+				}
 				swissSettings.hasFlippyDrive = 1;
 				return true;
 		}
