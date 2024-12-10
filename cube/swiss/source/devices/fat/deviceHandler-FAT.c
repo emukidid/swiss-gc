@@ -131,10 +131,9 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
 			if(concat_path((*dir)[i].name, ffile->name, entry.fname) < PATHNAME_MAX && entry.fsize <= UINT32_MAX) {
-				(*dir)[i].size        = entry.fsize;
-				(*dir)[i].fileType    = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
-				(*dir)[i].fileAttrib  = entry.fattrib;
-				(*dir)[i].fileAttrib |= (entry.fname[0] == '.') ? AM_HID : 0;
+				(*dir)[i].size       = entry.fsize;
+				(*dir)[i].fileType   = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
+				(*dir)[i].fileAttrib = entry.fattrib;
 				++i;
 			}
 		}

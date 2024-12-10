@@ -352,7 +352,10 @@ void populate_meta(file_handle *f) {
 				}
 				devices[DEVICE_CUR]->closeFile(bootFile);
 				free(bootFile);
-			}
+			} else if (!fnmatch("*/apps", f->name, FNM_PATHNAME | FNM_CASEFOLD))
+				f->meta->displayName = "Applications";
+			 else if (!fnmatch("*/games", f->name, FNM_PATHNAME | FNM_CASEFOLD))
+				f->meta->displayName = "Games";
 			if (!fnmatch("*/apps/*", f->name, FNM_PATHNAME | FNM_CASEFOLD)) {
 				file_handle *bootFile = calloc(1, sizeof(file_handle));
 				concat_path(bootFile->name, f->name, "boot.dol");

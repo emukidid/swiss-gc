@@ -1356,7 +1356,7 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 			}
 		}
 	}
-	eventData->alpha = (eventData->file->fileAttrib & ATTRIB_HIDDEN) ? 128 : 255;
+	eventData->alpha = (eventData->file->fileAttrib & ATTRIB_HIDDEN) || *getRelativeName(eventData->file->name) == '.' ? 128 : 255;
 	eventData->isAutoLoadEntry = !strcmp(swissSettings.autoload, file->name) || !fnmatch(swissSettings.autoload, file->name, FNM_PATHNAME | FNM_PREFIX_DIRS);
 	
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));

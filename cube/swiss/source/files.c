@@ -38,11 +38,15 @@ int sortFiles(file_handle* dir, int numFiles, file_handle*** sortedDir)
 	*sortedDir = calloc(numFiles, sizeof(file_handle*));
 	if(*sortedDir) {
 		for(int j = 0; j < numFiles; j++) {
-			if((dir[j].fileAttrib & ATTRIB_HIDDEN) && !swissSettings.showHiddenFiles) {
-				continue;
-			}
-			if(dir[j].fileType == IS_FILE && !checkExtension(dir[j].name, devices[DEVICE_CUR]->extraExtensions)) {
-				continue;
+			switch(dir[j].fileType) {
+				case IS_SPECIAL:
+					break;
+				case IS_FILE:
+					if(!checkExtension(dir[j].name, devices[DEVICE_CUR]->extraExtensions))
+						continue;
+				default:
+					if(!swissSettings.showHiddenFiles && ((dir[j].fileAttrib & ATTRIB_HIDDEN) || *getRelativeName(dir[j].name) == '.'))
+						continue;
 			}
 			(*sortedDir)[i++] = &dir[j];
 		}

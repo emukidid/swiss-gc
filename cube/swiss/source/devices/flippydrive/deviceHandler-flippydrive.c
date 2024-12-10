@@ -56,7 +56,7 @@ s32 deviceHandler_Flippy_readDir(file_handle* ffile, file_handle** dir, u32 type
 	
 	// Read each entry of the directory
 	while( flippy_readdir(dp, &entry, &result) == FLIPPY_RESULT_OK && result == &entry ) {
-		if(!strcmp(entry.name, ".") || !strcmp(entry.name, "..")) {
+		if(!strcmp(entry.name, ".") || !strcmp(entry.name, "..") || !strcmp(entry.name, "?")) {
 			continue;
 		}
 		// Do we want this one?
@@ -331,12 +331,15 @@ bool deviceHandler_Flippy_test() {
 				}
 			case 0x20220426:
 				flippyversion *version = (flippyversion *)driveInfo.pad;
+				u32 flippy_version = FLIPPY_VERSION(version->major, version->minor, version->build);
+				
 				__device_flippy.quirks = QUIRK_NO_DEINIT;
 				
-				if (FLIPPY_VERSION(version->major, version->minor, version->build) < FLIPPY_VERSION(1,3,3))
+				if (flippy_version >= FLIPPY_VERSION(1,3,0) &&
+					flippy_version <= FLIPPY_VERSION(1,3,2))
 					__device_flippy.quirks |= QUIRK_FDI_BYTESWAP_SIZE;
 				
-				if (FLIPPY_VERSION(version->major, version->minor, version->build) < FLIPPY_VERSION(1,3,1)) {
+				if (flippy_version < FLIPPY_VERSION(1,3,1)) {
 					__device_flippy.extraExtensions = NULL;
 					__device_flippy.quirks |= QUIRK_FDI_EXCLUSIVE_OPEN;
 				}

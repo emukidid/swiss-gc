@@ -236,12 +236,13 @@ int main(int argc, char *argv[])
 	}
 	else if(device == &__device_flippy) {
 		flippyversion *version = (flippyversion*)driveInfo.pad;
-		if(FLIPPY_VERSION(version->major, version->minor, version->build) < FLIPPY_VERSION(FLIPPY_MINVER_MAJOR, FLIPPY_MINVER_MINOR, FLIPPY_MINVER_BUILD)) {
+		u32 flippy_version = FLIPPY_VERSION(version->major, version->minor, version->build);
+		if(flippy_version < FLIPPY_VERSION(FLIPPY_MINVER_MAJOR, FLIPPY_MINVER_MINOR, FLIPPY_MINVER_BUILD)) {
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "A firmware update is required.\nflippydrive.com/updates"));
 			wait_press_A();
 			DrawDispose(msgBox);
 		}
-		else if(FLIPPY_VERSION(version->major, version->minor, version->build) < FLIPPY_VERSION(1,3,2)) {
+		else if(flippy_version < FLIPPY_VERSION(1,3,2)) {
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\nflippydrive.com/updates"));
 			wait_press_A();
 			DrawDispose(msgBox);
