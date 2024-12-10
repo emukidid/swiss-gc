@@ -296,20 +296,20 @@ int find_existing_entry(char *entry, bool load) {
 			needsRefresh = 0;
 			
 			// Finally, read the actual file
-			file_handle **dirEntries = getSortedDirEntries();
-			int dirEntryCount = getSortedDirEntryCount();
+			file_handle *dirEntries = getCurrentDirEntries();
+			int dirEntryCount = getCurrentDirEntryCount();
 			for(int i = 0; i < dirEntryCount; i++) {
-				if(!strcmp(entry, dirEntries[i]->name)
-				|| !fnmatch(entry, dirEntries[i]->name, FNM_PATHNAME)) {
-					curSelection = i;
-					if(dirEntries[i]->fileType == IS_FILE && load) {
-						populate_meta(dirEntries[i]);
-						memcpy(&curFile, dirEntries[i], sizeof(file_handle));
+				if(!strcmp(entry, dirEntries[i].name)
+				|| !fnmatch(entry, dirEntries[i].name, FNM_PATHNAME)) {
+					curSelection = getSortedDirEntryIndex(&dirEntries[i]);
+					if(dirEntries[i].fileType == IS_FILE && load) {
+						populate_meta(&dirEntries[i]);
+						memcpy(&curFile, &dirEntries[i], sizeof(file_handle));
 						load_file();
-						memcpy(dirEntries[i], &curFile, sizeof(file_handle));
+						memcpy(&dirEntries[i], &curFile, sizeof(file_handle));
 					}
-					else if(dirEntries[i]->fileType == IS_DIR) {
-						memcpy(&curDir, dirEntries[i], sizeof(file_handle));
+					else if(dirEntries[i].fileType == IS_DIR) {
+						memcpy(&curDir, &dirEntries[i], sizeof(file_handle));
 						needsRefresh = 1;
 					}
 					return 0;

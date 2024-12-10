@@ -13,6 +13,7 @@ file_handle** getSortedDirEntries();
 file_handle* getCurrentDirEntries();
 int getSortedDirEntryCount();
 int getCurrentDirEntryCount();
+int getSortedDirEntryIndex(file_handle* file);
 u64 getCurrentDirSize();
 size_t concat_path(char *pathName, const char *dirName, const char *baseName);
 size_t concatf_path(char *pathName, const char *dirName, const char *baseName, ...);

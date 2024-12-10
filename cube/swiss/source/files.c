@@ -39,14 +39,14 @@ int sortFiles(file_handle* dir, int numFiles, file_handle*** sortedDir)
 	if(*sortedDir) {
 		for(int j = 0; j < numFiles; j++) {
 			switch(dir[j].fileType) {
-				case IS_SPECIAL:
-					break;
 				case IS_FILE:
 					if(!checkExtension(dir[j].name, devices[DEVICE_CUR]->extraExtensions))
 						continue;
-				default:
+				case IS_DIR:
 					if(!swissSettings.showHiddenFiles && ((dir[j].fileAttrib & ATTRIB_HIDDEN) || *getRelativeName(dir[j].name) == '.'))
 						continue;
+				default:
+					break;
 			}
 			(*sortedDir)[i++] = &dir[j];
 		}
@@ -58,6 +58,7 @@ int sortFiles(file_handle* dir, int numFiles, file_handle*** sortedDir)
 void freeFiles() {
 	free(sortedDirEntries);
 	sortedDirEntries = NULL;
+	sortedDirEntryCount = 0;
 	if(curDirEntries) {
 		for(int i = 0; i < curDirEntryCount; i++) {
 			if(curDirEntries[i].meta) {
@@ -118,6 +119,15 @@ int getSortedDirEntryCount() {
 
 int getCurrentDirEntryCount() {
 	return curDirEntryCount;
+}
+
+int getSortedDirEntryIndex(file_handle* file) {
+	for(int i = 0; i < sortedDirEntryCount; i++) {
+		if(file == sortedDirEntries[i]) {
+			return i;
+		}
+	}
+	return 0;
 }
 
 u64 getCurrentDirSize() {
