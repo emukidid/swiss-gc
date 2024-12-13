@@ -216,6 +216,7 @@ DEVICEHANDLER_INTERFACE __device_wkf = {
 	.init = deviceHandler_WKF_init,
 	.makeDir = deviceHandler_FAT_makeDir,
 	.readDir = deviceHandler_FAT_readDir,
+	.statFile = deviceHandler_FAT_statFile,
 	.seekFile = deviceHandler_FAT_seekFile,
 	.readFile = deviceHandler_FAT_readFile,
 	.writeFile = deviceHandler_FAT_writeFile,

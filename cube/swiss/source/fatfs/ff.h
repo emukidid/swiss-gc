@@ -245,6 +245,7 @@ typedef struct {
 
 typedef struct {
 	FSIZE_t	fsize;			/* File size */
+	DWORD	fclust;			/* File cluster */
 	WORD	fdate;			/* Modified date */
 	WORD	ftime;			/* Modified time */
 	BYTE	fattrib;		/* File attribute */

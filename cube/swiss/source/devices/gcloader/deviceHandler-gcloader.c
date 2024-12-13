@@ -367,6 +367,7 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	.init = deviceHandler_GCLoader_init,
 	.makeDir = deviceHandler_FAT_makeDir,
 	.readDir = deviceHandler_FAT_readDir,
+	.statFile = deviceHandler_FAT_statFile,
 	.seekFile = deviceHandler_FAT_seekFile,
 	.readFile = deviceHandler_GCLoader_readFile,
 	.writeFile = deviceHandler_FAT_writeFile,

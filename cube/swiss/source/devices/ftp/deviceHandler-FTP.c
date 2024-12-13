@@ -125,6 +125,7 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				&& !stat((*dir)[i].name, &fstat)
 				#endif
 				&& fstat.st_size <= UINT32_MAX) {
+				(*dir)[i].fileBase = fstat.st_ino;
 				(*dir)[i].size     = fstat.st_size;
 				(*dir)[i].fileType = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
 				++i;
@@ -135,6 +136,17 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	#undef fstat
 	closedir(dp);
 	return i;
+}
+
+s32 deviceHandler_FTP_statFile(file_handle* file) {
+	struct stat fstat;
+	int ret = stat(file->name, &fstat);
+	if(ret == 0) {
+		file->fileBase = fstat.st_ino;
+		file->size     = fstat.st_size;
+		file->fileType = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
+	}
+	return ret;
 }
 
 s64 deviceHandler_FTP_seekFile(file_handle* file, s64 where, u32 type){
@@ -281,6 +293,7 @@ DEVICEHANDLER_INTERFACE __device_ftp = {
 	.init = deviceHandler_FTP_init,
 	.makeDir = deviceHandler_FTP_makeDir,
 	.readDir = deviceHandler_FTP_readDir,
+	.statFile = deviceHandler_FTP_statFile,
 	.seekFile = deviceHandler_FTP_seekFile,
 	.readFile = deviceHandler_FTP_readFile,
 	.writeFile = deviceHandler_FTP_writeFile,

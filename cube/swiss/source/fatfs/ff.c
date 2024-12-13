@@ -2691,6 +2691,7 @@ static void get_fileinfo (
 		fno->fname[di] = 0;						/* Terminate the name */
 		fno->altname[0] = 0;					/* exFAT does not support SFN */
 
+		fno->fclust = ld_dword(fs->dirbuf + XDIR_FstClus);		/* Start cluster */
 		fno->fattrib = fs->dirbuf[XDIR_Attr] & AM_MASKX;		/* Attribute */
 		fno->fsize = (fno->fattrib & AM_DIR) ? 0 : ld_qword(fs->dirbuf + XDIR_FileSize);	/* Size */
 		fno->ftime = ld_word(fs->dirbuf + XDIR_ModTime + 0);	/* Time */
@@ -2771,6 +2772,7 @@ static void get_fileinfo (
 	fno->fname[di] = 0;		/* Terminate the SFN */
 #endif
 
+	fno->fclust = ld_clust(fs, dp->dir);				/* Start cluster */
 	fno->fattrib = dp->dir[DIR_Attr] & AM_MASK;			/* Attribute */
 	fno->fsize = ld_dword(dp->dir + DIR_FileSize);		/* Size */
 	fno->ftime = ld_word(dp->dir + DIR_ModTime + 0);	/* Time */
@@ -4860,18 +4862,28 @@ FRESULT f_stat (
 )
 {
 	FRESULT res;
+	FATFS *fs;
 	DIRF dj;
 	DEF_NAMBUF
 
 
 	/* Get logical drive */
-	res = mount_volume(&path, &dj.obj.fs, 0);
+	res = mount_volume(&path, &fs, 0);
 	if (res == FR_OK) {
-		INIT_NAMBUF(dj.obj.fs);
+		dj.obj.fs = fs;
+		INIT_NAMBUF(fs);
 		res = follow_path(&dj, path);	/* Follow the file path */
 		if (res == FR_OK) {				/* Follow completed */
 			if (dj.fn[NSFLAG] & NS_NONAME) {	/* It is origin directory */
-				res = FR_INVALID_NAME;
+				fno->fsize = 0;
+				fno->fclust = (fs->fs_type >= FS_FAT32) ? fs->dirbase : 0;
+				fno->fdate = 0;
+				fno->ftime = 0;
+				fno->fattrib = AM_DIR;
+				fno->fname[0] = 0;
+#if FF_USE_LFN
+				fno->altname[0] = 0;
+#endif
 			} else {							/* Found an object */
 				if (fno) get_fileinfo(&dj, fno);
 			}
@@ -4879,7 +4891,7 @@ FRESULT f_stat (
 		FREE_NAMBUF();
 	}
 
-	LEAVE_FF(dj.obj.fs, res);
+	LEAVE_FF(fs, res);
 }
 
 

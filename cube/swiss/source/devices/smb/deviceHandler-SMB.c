@@ -129,6 +129,7 @@ s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				&& !stat((*dir)[i].name, &fstat)
 				#endif
 				&& fstat.st_size <= UINT32_MAX) {
+				(*dir)[i].fileBase = fstat.st_ino;
 				(*dir)[i].size     = fstat.st_size;
 				(*dir)[i].fileType = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
 				++i;
@@ -139,6 +140,17 @@ s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	#undef fstat
 	closedir(dp);
 	return i;
+}
+
+s32 deviceHandler_SMB_statFile(file_handle* file) {
+	struct stat fstat;
+	int ret = stat(file->name, &fstat);
+	if(ret == 0) {
+		file->fileBase = fstat.st_ino;
+		file->size     = fstat.st_size;
+		file->fileType = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
+	}
+	return ret;
 }
 
 s64 deviceHandler_SMB_seekFile(file_handle* file, s64 where, u32 type){
@@ -286,6 +298,7 @@ DEVICEHANDLER_INTERFACE __device_smb = {
 	.init = deviceHandler_SMB_init,
 	.makeDir = deviceHandler_SMB_makeDir,
 	.readDir = deviceHandler_SMB_readDir,
+	.statFile = deviceHandler_SMB_statFile,
 	.seekFile = deviceHandler_SMB_seekFile,
 	.readFile = deviceHandler_SMB_readFile,
 	.writeFile = deviceHandler_SMB_writeFile,

@@ -93,6 +93,7 @@ typedef device_info* (* _fn_info)(file_handle*);
 typedef s32 (* _fn_init)(file_handle*);
 typedef s32 (* _fn_makeDir)(file_handle*);
 typedef s32 (* _fn_readDir)(file_handle*, file_handle**, u32);
+typedef s32 (* _fn_statFile)(file_handle*);
 typedef s64 (* _fn_seekFile)(file_handle*, s64, u32);
 typedef s32 (* _fn_readFile)(file_handle*, void*, u32);
 typedef s32 (* _fn_writeFile)(file_handle*, const void*, u32);
@@ -194,6 +195,7 @@ struct DEVICEHANDLER_STRUCT {
 	_fn_init 		init;
 	_fn_makeDir		makeDir;
 	_fn_readDir		readDir;
+	_fn_statFile	statFile;
 	_fn_seekFile	seekFile;
 	_fn_readFile	readFile;
 	_fn_writeFile	writeFile;

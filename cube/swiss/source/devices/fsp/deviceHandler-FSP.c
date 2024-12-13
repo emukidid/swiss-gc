@@ -72,6 +72,16 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	return i;
 }
 
+s32 deviceHandler_FSP_statFile(file_handle* file) {
+	struct stat fstat;
+	int ret = fsp_stat(fsp_session, getDevicePath(file->name), &fstat);
+	if(ret == 0) {
+		file->size     = fstat.st_size;
+		file->fileType = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
+	}
+	return ret;
+}
+
 s64 deviceHandler_FSP_seekFile(file_handle* file, s64 where, u32 type) {
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset = file->offset + where;
@@ -335,6 +345,7 @@ DEVICEHANDLER_INTERFACE __device_fsp = {
 	.init = deviceHandler_FSP_init,
 	.makeDir = deviceHandler_FSP_makeDir,
 	.readDir = deviceHandler_FSP_readDir,
+	.statFile = deviceHandler_FSP_statFile,
 	.seekFile = deviceHandler_FSP_seekFile,
 	.readFile = deviceHandler_FSP_readFile,
 	.writeFile = deviceHandler_FSP_writeFile,

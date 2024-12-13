@@ -131,6 +131,7 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
 			if(concat_path((*dir)[i].name, ffile->name, entry.fname) < PATHNAME_MAX && entry.fsize <= UINT32_MAX) {
+				(*dir)[i].fileBase   = entry.fclust;
 				(*dir)[i].size       = entry.fsize;
 				(*dir)[i].fileType   = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
 				(*dir)[i].fileAttrib = entry.fattrib;
@@ -142,6 +143,18 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	f_closedir(dp);
 	free(dp);
 	return i;
+}
+
+s32 deviceHandler_FAT_statFile(file_handle* file) {
+	FILINFO entry;
+	int ret = f_stat(file->name, &entry);
+	if(ret == FR_OK) {
+		file->fileBase   = entry.fclust;
+		file->size       = entry.fsize;
+		file->fileType   = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
+		file->fileAttrib = entry.fattrib;
+	}
+	return ret;
 }
 
 s64 deviceHandler_FAT_seekFile(file_handle* file, s64 where, u32 type){
@@ -564,6 +577,7 @@ DEVICEHANDLER_INTERFACE __device_sd_a = {
 	.init = deviceHandler_FAT_init,
 	.makeDir = deviceHandler_FAT_makeDir,
 	.readDir = deviceHandler_FAT_readDir,
+	.statFile = deviceHandler_FAT_statFile,
 	.seekFile = deviceHandler_FAT_seekFile,
 	.readFile = deviceHandler_FAT_readFile,
 	.writeFile = deviceHandler_FAT_writeFile,
@@ -593,6 +607,7 @@ DEVICEHANDLER_INTERFACE __device_sd_b = {
 	.init = deviceHandler_FAT_init,
 	.makeDir = deviceHandler_FAT_makeDir,
 	.readDir = deviceHandler_FAT_readDir,
+	.statFile = deviceHandler_FAT_statFile,
 	.seekFile = deviceHandler_FAT_seekFile,
 	.readFile = deviceHandler_FAT_readFile,
 	.writeFile = deviceHandler_FAT_writeFile,
@@ -622,6 +637,7 @@ DEVICEHANDLER_INTERFACE __device_ata_a = {
 	.init = deviceHandler_FAT_init,
 	.makeDir = deviceHandler_FAT_makeDir,
 	.readDir = deviceHandler_FAT_readDir,
+	.statFile = deviceHandler_FAT_statFile,
 	.seekFile = deviceHandler_FAT_seekFile,
 	.readFile = deviceHandler_FAT_readFile,
 	.writeFile = deviceHandler_FAT_writeFile,
@@ -650,6 +666,7 @@ DEVICEHANDLER_INTERFACE __device_ata_b = {
 	.init = deviceHandler_FAT_init,
 	.makeDir = deviceHandler_FAT_makeDir,
 	.readDir = deviceHandler_FAT_readDir,
+	.statFile = deviceHandler_FAT_statFile,
 	.seekFile = deviceHandler_FAT_seekFile,
 	.readFile = deviceHandler_FAT_readFile,
 	.writeFile = deviceHandler_FAT_writeFile,
@@ -678,6 +695,7 @@ DEVICEHANDLER_INTERFACE __device_sd_c = {
 	.init = deviceHandler_FAT_init,
 	.makeDir = deviceHandler_FAT_makeDir,
 	.readDir = deviceHandler_FAT_readDir,
+	.statFile = deviceHandler_FAT_statFile,
 	.seekFile = deviceHandler_FAT_seekFile,
 	.readFile = deviceHandler_FAT_readFile,
 	.writeFile = deviceHandler_FAT_writeFile,
@@ -707,6 +725,7 @@ DEVICEHANDLER_INTERFACE __device_ata_c = {
 	.init = deviceHandler_FAT_init,
 	.makeDir = deviceHandler_FAT_makeDir,
 	.readDir = deviceHandler_FAT_readDir,
+	.statFile = deviceHandler_FAT_statFile,
 	.seekFile = deviceHandler_FAT_seekFile,
 	.readFile = deviceHandler_FAT_readFile,
 	.writeFile = deviceHandler_FAT_writeFile,
