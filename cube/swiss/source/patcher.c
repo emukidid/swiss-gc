@@ -11879,7 +11879,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 		}
-	} else if (!strncmp(gameID, "GFZE01", 6) && dataType == PATCH_DOL) {
+	} else if ((!strncmp(gameID, "GFZE01", 6) || !strncmp(gameID, "UFZE01", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1414848:
 				// Skip exception stubbing.
@@ -11903,7 +11903,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 		}
-	} else if (!strncmp(gameID, "GFZJ01", 6) && dataType == PATCH_DOL) {
+	} else if ((!strncmp(gameID, "GFZJ01", 6) || !strncmp(gameID, "UFZJ01", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1412928:
 				// Skip exception stubbing and force Japanese language.
@@ -11933,7 +11933,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 		}
-	} else if (!strncmp(gameID, "GFZP01", 6) && dataType == PATCH_DOL) {
+	} else if ((!strncmp(gameID, "GFZP01", 6) || !strncmp(gameID, "UFZP01", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1425760:
 				// Skip exception stubbing.

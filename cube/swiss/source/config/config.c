@@ -303,6 +303,7 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 }
 
 static char triggerLevelEntries[][4] = {"GKGE", "GKGJ", "GKGP", "GY2E", "GY2J", "GY2P", "GY3E", "GY3J", "GYBE", "GYBJ", "GYBP"};
+static char emulateAudioStreamEntries[][4] = {"UFZE", "UFZJ", "UFZP"};
 static char emulateReadSpeedEntries[][4] = {"GQSD", "GQSE", "GQSF", "GQSI", "GQSP", "GQSS", "GTOJ"};
 static char emulateEthernetEntries[][4] = {"DPSJ", "GHEE", "GHEJ", "GKYE", "GKYJ", "GKYP", "GM4E", "GM4J", "GM4P", "GPJJ", "GPOE", "GPOJ", "GPOP", "GPSE", "GPSJ", "GPSP", "GTEE", "GTEJ", "GTEP", "GTEW", "PHEJ"};
 
@@ -331,6 +332,12 @@ void config_defaults(ConfigEntry *entry) {
 	for(int i = 0; i < sizeof(triggerLevelEntries) / sizeof(*triggerLevelEntries); i++) {
 		if(!strncmp(entry->game_id, triggerLevelEntries[i], 4)) {
 			entry->triggerLevel = 0;
+			break;
+		}
+	}
+	for(int i = 0; i < sizeof(emulateAudioStreamEntries) / sizeof(*emulateAudioStreamEntries); i++) {
+		if(!strncmp(entry->game_id, emulateAudioStreamEntries[i], 4)) {
+			entry->emulateAudioStream = 0;
 			break;
 		}
 	}
