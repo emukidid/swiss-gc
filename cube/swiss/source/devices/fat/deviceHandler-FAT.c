@@ -548,15 +548,24 @@ char* deviceHandler_FAT_details(file_handle* file) {
 			"Manufacturer ID: %02X\n"
 			"OEM/Application ID: %.2s\n"
 			"Product name: %.5s\n"
-			"Product revision: %u.%02u\n"
+			"Product revision: %u.%u\n"
 			"Product serial number: %08X\n"
-			"Manufacturing date: %u-%02u",
+			"Manufacturing date: %u-%02u\n"
+			"\n"
+			"Speed Class: C%u\n"
+			"UHS Speed Class: U%u\n"
+			"Video Speed Class: V%u\n"
+			"Application Performance Class: A%u",
 			MANUFACTURER_ID(slot),
 			OEM_APPLICATION_ID(slot),
 			PRODUCT_NAME(slot),
 			PRODUCT_REVISION(slot) >> 4, PRODUCT_REVISION(slot) & 0xF,
 			PRODUCT_SERIAL_NUMBER(slot),
-			2000 + (MANUFACTURING_DATE(slot) >> 4), MANUFACTURING_DATE(slot) & 0xF
+			2000 + (MANUFACTURING_DATE(slot) >> 4), MANUFACTURING_DATE(slot) & 0xF,
+			SPEED_CLASS(slot) < 4 ? SPEED_CLASS(slot) * 2 : 10,
+			UHS_SPEED_GRADE(slot),
+			VIDEO_SPEED_CLASS(slot),
+			APP_PERF_CLASS(slot)
 		);
 	}
 	return deviceDetails;
