@@ -543,7 +543,23 @@ char* deviceHandler_FAT_details(file_handle* file) {
 	int isSDCard = IS_SDCARD(file);
 	int slot = GET_SLOT(file);
 	if(isSDCard) {
+		off_t c_size;
+		char c_size_str[26 + 1];
 		if(sdgecko_readCID(slot) != CARDIO_ERROR_READY) return NULL;
+		switch(CSD_STRUCTURE(slot)) {
+			case 0:
+				c_size = ((C_SIZE(slot) + SIZE_OF_PROTECTED_AREA(slot) + 1LL) << (C_SIZE_MULT(slot) + 2)) << READ_BL_LEN(slot);
+				break;
+			case 1:
+				c_size = ((C_SIZE1(slot) + 1LL) << (READ_BL_LEN(slot) + 10)) + SIZE_OF_PROTECTED_AREA(slot);
+				break;
+			case 2:
+				c_size = ((C_SIZE2(slot) + 1LL) << (READ_BL_LEN(slot) + 10)) + SIZE_OF_PROTECTED_AREA(slot);
+				break;
+			default:
+				c_size = 0;
+				break;
+		}
 		asprintf(&deviceDetails,
 			"Manufacturer ID: %02X\n"
 			"OEM/Application ID: %.2s\n"
@@ -552,16 +568,20 @@ char* deviceHandler_FAT_details(file_handle* file) {
 			"Product serial number: %08X\n"
 			"Manufacturing date: %u-%02u\n"
 			"\n"
+			"Card Capacity: %.*s\n"
 			"Speed Class: C%u\n"
 			"UHS Speed Class: U%u\n"
 			"Video Speed Class: V%u\n"
-			"Application Performance Class: A%u",
+			"Application Performance Class: A%u\n"
+			"\n"
+			"Inconsistencies may indicate a fake SD Card.",
 			MANUFACTURER_ID(slot),
 			OEM_APPLICATION_ID(slot),
 			PRODUCT_NAME(slot),
 			PRODUCT_REVISION(slot) >> 4, PRODUCT_REVISION(slot) & 0xF,
 			PRODUCT_SERIAL_NUMBER(slot),
 			2000 + (MANUFACTURING_DATE(slot) >> 4), MANUFACTURING_DATE(slot) & 0xF,
+			formatBytes(c_size_str, c_size, 0, true), c_size_str,
 			SPEED_CLASS(slot) < 4 ? SPEED_CLASS(slot) * 2 : 10,
 			UHS_SPEED_GRADE(slot),
 			VIDEO_SPEED_CLASS(slot),
