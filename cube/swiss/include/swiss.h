@@ -118,8 +118,9 @@ typedef struct {
 	int pauseAVOutput;
 	int emulateAudioStream;
 	int emulateReadSpeed;
-	int emulateMemoryCard;
 	int emulateEthernet;
+	int emulateMemoryCard;
+	int disableMemoryCard;
 	int preferCleanBoot;
 	s8 sramHOffset;
 	u8 sramLanguage;

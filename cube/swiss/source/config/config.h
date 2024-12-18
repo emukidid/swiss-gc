@@ -23,6 +23,7 @@ typedef struct {
 	int emulateAudioStream;
 	int emulateReadSpeed;
 	int emulateEthernet;
+	int disableMemoryCard;
 	int forceCleanBoot;
 	int preferCleanBoot;
 	int rt4kProfile;

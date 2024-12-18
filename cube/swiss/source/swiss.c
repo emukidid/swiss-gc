@@ -2130,13 +2130,30 @@ void load_game() {
 		fileToPatch->type = PATCH_BS2;
 	}
 	
+	s32 exi_channel = EXI_CHANNEL_MAX;
+	s32 exi_device = EXI_DEVICE_MAX;
+	switch(swissSettings.disableMemoryCard) {
+		case 1:
+			if(EXI_Probe(EXI_CHANNEL_0)) {
+				exi_channel = EXI_CHANNEL_0;
+				exi_device = EXI_DEVICE_0;
+			}
+			break;
+		case 2:
+			if(EXI_Probe(EXI_CHANNEL_1)) {
+				exi_channel = EXI_CHANNEL_1;
+				exi_device = EXI_DEVICE_0;
+			}
+			break;
+	}
+	
 	*(vu8*)VAR_CURRENT_DISC = disc2File && disc2File == fileToPatch->file;
 	*(vu8*)VAR_SECOND_DISC = !!disc2File;
 	*(vu8*)VAR_DRIVE_PATCHED = drive_status == DEBUG_MODE;
 	*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
 	*(vu32**)VAR_EXI_REGS = NULL;
-	*(vu8*)VAR_EXI_SLOT = (EXI_DEVICE_MAX << 6) | (EXI_CHANNEL_MAX << 4) | (EXI_DEVICE_MAX << 2) | EXI_CHANNEL_MAX;
-	*(vu8*)VAR_EXI_CPR = (EXI_CHANNEL_MAX << 6) | EXI_SPEED1MHZ;
+	*(vu8*)VAR_EXI_SLOT = (exi_device << 6) | (exi_channel << 4) | (exi_device << 2) | exi_channel;
+	*(vu8*)VAR_EXI_CPR = (exi_channel << 6) | EXI_SPEED1MHZ;
 	*(vu8*)VAR_SD_SHIFT = 0;
 	*(vu8*)VAR_IGR_TYPE = swissSettings.igrType | (tgcFile.magic == TGC_MAGIC ? 0x80:0x00);
 	*(vu32**)VAR_FRAG_LIST = NULL;

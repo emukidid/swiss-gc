@@ -41,6 +41,7 @@ char *disableMCPGameIDStr[] = {"No", "Slot A", "Slot B", "Slot A&B"};
 char *disableVideoPatchesStr[] = {"None", "Game", "All"};
 char *emulateAudioStreamStr[] = {"Off", "Auto", "On"};
 char *emulateReadSpeedStr[] = {"No", "Yes", "Wii"};
+char *disableMemoryCardStr[] = {"No", "Slot A", "Slot B"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "Apploader"};
 char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL", "AVE P-DOL"};
 char *fileBrowserStr[] = {"Standard", "Fullwidth", "Carousel"};
@@ -101,6 +102,7 @@ static char *tooltips_game[PAGE_GAME_MAX+1] = {
 	"Emulate Audio Streaming:\n\nAudio streaming is a hardware feature that allows a compressed\naudio track to be played in the background by the disc drive.\n\nEmulation is necessary for devices not attached to the\nDVD Interface, or for those not implementing it regardless.",
 	"Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated\nby the original medium, or for speedrunning.",
 	"Emulate Broadband Adapter:\n\nOnly available with the File Service Protocol or an initialised\nETH2GC/GCNET module, where memory constraints permit.\n\nPackets not destined for the hypervisor are forwarded to\nthe virtual MAC. The virtual MAC address is the same as\nthe physical MAC. The physical MAC/PHY retain their\nconfiguration from Swiss, including link speed.",
+	"Disable Memory Card:\n\nSome games misbehave when unexpected devices are present\nin the memory card slots. When selected, the device will be\nhidden from the game if present at boot time.",
 	"Prefer Clean Boot:\n\nWhen enabled, the GameCube will be reset and the game\nbooted through normal processes with no changes applied.\nRegion restrictions may be applicable.\n\nOnly available to devices attached to the DVD Interface.",
 	"RetroTINK-4K Profile:\n\nPresses a profile button through a configured ser2net TCP\nconnection to the RetroTINK-4K's serial port."
 };
@@ -285,9 +287,9 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		drawSettingEntryString(page, &page_y_ofs, "Boot through IPL:", bs2BootStr[swissSettings.bs2Boot], option == SET_BS2BOOT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Boot without prompts:", swissSettings.autoBoot, option == SET_AUTOBOOT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Memory Card:", swissSettings.emulateMemoryCard, option == SET_EMULATE_MEMCARD, emulatedMemoryCard);
-		drawSettingEntryString(page, &page_y_ofs, "Disable MemCard PRO GameID:", disableMCPGameIDStr[swissSettings.disableMCPGameID], option == SET_ENABLE_MCPGAMEID, true);
+		drawSettingEntryString(page, &page_y_ofs, "Disable MemCard PRO GameID:", disableMCPGameIDStr[swissSettings.disableMCPGameID], option == SET_DISABLE_MCPGAMEID, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Force Video Active:", swissSettings.forceVideoActive, option == SET_FORCE_VIDACTIVE, enabledVideoPatches);
-		drawSettingEntryString(page, &page_y_ofs, "Disable Video Patches:", disableVideoPatchesStr[swissSettings.disableVideoPatches], option == SET_ENABLE_VIDPATCH, true);
+		drawSettingEntryString(page, &page_y_ofs, "Disable Video Patches:", disableVideoPatchesStr[swissSettings.disableVideoPatches], option == SET_DISABLE_VIDPATCH, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Pause for resolution change:", swissSettings.pauseAVOutput, option == SET_PAUSE_AVOUTPUT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Auto-load cheats:", swissSettings.autoCheats, option == SET_ALL_CHEATS, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "WiiRD debugging:", swissSettings.wiirdDebug, option == SET_WIIRDDBG, dbgEnable);
@@ -324,6 +326,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "Emulate Audio Streaming:", emulateAudioStreamStr[swissSettings.emulateAudioStream], option == SET_DEFAULT_AUDIO_STREAM, emulatedAudioStream);
 			drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_DEFAULT_READ_SPEED, emulatedReadSpeed);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", swissSettings.emulateEthernet, option == SET_DEFAULT_EMULATE_ETHERNET, emulatedEthernet);
+			drawSettingEntryString(page, &page_y_ofs, "Disable Memory Card:", disableMemoryCardStr[swissSettings.disableMemoryCard], option == SET_DEFAULT_DISABLE_MEMCARD, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_DEFAULT_CLEAN_BOOT, enabledCleanBoot);
 			drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", swissSettings.rt4kProfile, option == SET_DEFAULT_RT4K_PROFILE, rt4kEnable);
 			drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULT_DEFAULTS, true);
@@ -362,6 +365,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Audio Streaming:", emulateAudioStreamStr[gameConfig->emulateAudioStream], option == SET_AUDIO_STREAM, emulatedAudioStream);
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[gameConfig->emulateReadSpeed], option == SET_READ_SPEED, emulatedReadSpeed);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", gameConfig->emulateEthernet, option == SET_EMULATE_ETHERNET, emulatedEthernet);
+				drawSettingEntryString(page, &page_y_ofs, "Disable Memory Card:", disableMemoryCardStr[gameConfig->disableMemoryCard], option == SET_DISABLE_MEMCARD, true);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", gameConfig->preferCleanBoot, option == SET_CLEAN_BOOT, enabledCleanBoot);
 				drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", gameConfig->rt4kProfile, option == SET_RT4K_PROFILE, rt4kEnable);
 				drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULTS, true);
@@ -388,6 +392,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Audio Streaming:", emulateAudioStreamStr[swissSettings.emulateAudioStream], option == SET_AUDIO_STREAM, false);
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_READ_SPEED, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", swissSettings.emulateEthernet, option == SET_EMULATE_ETHERNET, false);
+				drawSettingEntryString(page, &page_y_ofs, "Disable Memory Card:", disableMemoryCardStr[swissSettings.disableMemoryCard], option == SET_DISABLE_MEMCARD, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_CLEAN_BOOT, false);
 				drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", swissSettings.rt4kProfile, option == SET_DEFAULT_RT4K_PROFILE, false);
 				drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULTS, false);
@@ -603,7 +608,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_MEMCARD))
 					swissSettings.emulateMemoryCard ^= 1;
 			break;
-			case SET_ENABLE_MCPGAMEID:
+			case SET_DISABLE_MCPGAMEID:
 				swissSettings.disableMCPGameID += direction;
 				swissSettings.disableMCPGameID = (swissSettings.disableMCPGameID + 4) % 4;
 			break;
@@ -611,7 +616,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				if(swissSettings.disableVideoPatches < 2)
 					swissSettings.forceVideoActive ^= 1;
 			break;
-			case SET_ENABLE_VIDPATCH:
+			case SET_DISABLE_VIDPATCH:
 				swissSettings.disableVideoPatches += direction;
 				swissSettings.disableVideoPatches = (swissSettings.disableVideoPatches + 3) % 3;
 			break;
@@ -726,6 +731,10 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_ETHERNET))
 					swissSettings.emulateEthernet ^= 1;
 			break;
+			case SET_DEFAULT_DISABLE_MEMCARD:
+				swissSettings.disableMemoryCard += direction;
+				swissSettings.disableMemoryCard = (swissSettings.disableMemoryCard + 3) % 3;
+			break;
 			case SET_DEFAULT_CLEAN_BOOT:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))
 					swissSettings.preferCleanBoot ^= 1;
@@ -753,6 +762,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					swissSettings.emulateAudioStream = 1;
 					swissSettings.emulateReadSpeed = 0;
 					swissSettings.emulateEthernet = 0;
+					swissSettings.disableMemoryCard = 0;
 					swissSettings.preferCleanBoot = 0;
 					swissSettings.rt4kProfile = 0;
 				}
@@ -843,6 +853,10 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_EMULATE_ETHERNET:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_ETHERNET))
 					gameConfig->emulateEthernet ^= 1;
+			break;
+			case SET_DISABLE_MEMCARD:
+				gameConfig->disableMemoryCard += direction;
+				gameConfig->disableMemoryCard = (gameConfig->disableMemoryCard + 3) % 3;
 			break;
 			case SET_CLEAN_BOOT:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))

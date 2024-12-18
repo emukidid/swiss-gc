@@ -209,8 +209,9 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Digital Trigger Level=%hhu\r\n", swissSettings.triggerLevel);
 	fprintf(fp, "Emulate Audio Streaming=%s\r\n", emulateAudioStreamStr[swissSettings.emulateAudioStream]);
 	fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[swissSettings.emulateReadSpeed]);
-	fprintf(fp, "Emulate Memory Card=%s\r\n", swissSettings.emulateMemoryCard ? "Yes":"No");
 	fprintf(fp, "Emulate Broadband Adapter=%s\r\n", swissSettings.emulateEthernet ? "Yes":"No");
+	fprintf(fp, "Emulate Memory Card=%s\r\n", swissSettings.emulateMemoryCard ? "Yes":"No");
+	fprintf(fp, "Disable Memory Card=%s\r\n", disableMemoryCardStr[swissSettings.disableMemoryCard]);
 	fprintf(fp, "Prefer Clean Boot=%s\r\n", swissSettings.preferCleanBoot ? "Yes":"No");
 	fprintf(fp, "RetroTINK-4K Profile=%i\r\n", swissSettings.rt4kProfile);
 	fprintf(fp, "#!!Swiss Settings End!!\r\n\r\n");
@@ -285,6 +286,7 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	if(entry->emulateAudioStream != swissSettings.emulateAudioStream) fprintf(fp, "Emulate Audio Streaming=%s\r\n", emulateAudioStreamStr[entry->emulateAudioStream]);
 	if(entry->emulateReadSpeed != swissSettings.emulateReadSpeed) fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[entry->emulateReadSpeed]);
 	if(entry->emulateEthernet != swissSettings.emulateEthernet) fprintf(fp, "Emulate Broadband Adapter=%s\r\n", entry->emulateEthernet ? "Yes":"No");
+	if(entry->disableMemoryCard != swissSettings.disableMemoryCard) fprintf(fp, "Disable Memory Card=%s\r\n", disableMemoryCardStr[entry->disableMemoryCard]);
 	if(entry->preferCleanBoot != swissSettings.preferCleanBoot) fprintf(fp, "Prefer Clean Boot=%s\r\n", entry->preferCleanBoot ? "Yes":"No");
 	if(entry->rt4kProfile != swissSettings.rt4kProfile) fprintf(fp, "RetroTINK-4K Profile=%i\r\n", entry->rt4kProfile);
 	fclose(fp);
@@ -326,6 +328,7 @@ void config_defaults(ConfigEntry *entry) {
 	entry->emulateAudioStream = swissSettings.emulateAudioStream;
 	entry->emulateReadSpeed = swissSettings.emulateReadSpeed;
 	entry->emulateEthernet = swissSettings.emulateEthernet;
+	entry->disableMemoryCard = swissSettings.disableMemoryCard;
 	entry->preferCleanBoot = swissSettings.preferCleanBoot;
 	entry->rt4kProfile = swissSettings.rt4kProfile;
 
@@ -737,11 +740,19 @@ void config_parse_global(char *configData) {
 						}
 					}
 				}
+				else if(!strcmp("Emulate Broadband Adapter", name)) {
+					swissSettings.emulateEthernet = !strcmp("Yes", value);
+				}
 				else if(!strcmp("Emulate Memory Card", name)) {
 					swissSettings.emulateMemoryCard = !strcmp("Yes", value);
 				}
-				else if(!strcmp("Emulate Broadband Adapter", name)) {
-					swissSettings.emulateEthernet = !strcmp("Yes", value);
+				else if(!strcmp("Disable Memory Card", name)) {
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(disableMemoryCardStr[i], value)) {
+							swissSettings.disableMemoryCard = i;
+							break;
+						}
+					}
 				}
 				else if(!strcmp("Prefer Clean Boot", name)) {
 					swissSettings.preferCleanBoot = !strcmp("Yes", value);
@@ -1102,6 +1113,14 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 				else if(!strcmp("Emulate Broadband Adapter", name)) {
 					entry->emulateEthernet = !strcmp("Yes", value);
 				}
+				else if(!strcmp("Disable Memory Card", name)) {
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(disableMemoryCardStr[i], value)) {
+							entry->disableMemoryCard = i;
+							break;
+						}
+					}
+				}
 				else if(!strcmp("Prefer Clean Boot", name)) {
 					entry->preferCleanBoot = !strcmp("Yes", value);
 				}
@@ -1205,6 +1224,7 @@ void config_load_current(ConfigEntry *entry) {
 	swissSettings.emulateAudioStream = entry->emulateAudioStream;
 	swissSettings.emulateReadSpeed = entry->emulateReadSpeed;
 	swissSettings.emulateEthernet = entry->emulateEthernet;
+	swissSettings.disableMemoryCard = entry->disableMemoryCard;
 	swissSettings.preferCleanBoot = entry->preferCleanBoot;
 	swissSettings.rt4kProfile = entry->rt4kProfile;
 	
@@ -1265,6 +1285,7 @@ void config_unload_current() {
 	swissSettings.emulateAudioStream = backup.emulateAudioStream;
 	swissSettings.emulateReadSpeed = backup.emulateReadSpeed;
 	swissSettings.emulateEthernet = backup.emulateEthernet;
+	swissSettings.disableMemoryCard = backup.disableMemoryCard;
 	swissSettings.preferCleanBoot = backup.preferCleanBoot;
 	swissSettings.sramLanguage = backup.sramLanguage;
 	swissSettings.sramVideo = backup.sramVideo;
