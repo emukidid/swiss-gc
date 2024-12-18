@@ -17,14 +17,14 @@
 
 .set VAR_CURRENT_DISC,		0x09B0	# current disc number
 .set VAR_SECOND_DISC,		0x09B1	# second disc present
-.set VAR_DRIVE_PATCHED,		0x09B2	# disc drive patched
+.set VAR_DRIVE_FLAGS,		0x09B2	# disc drive patched
 .set VAR_EMU_READ_SPEED,	0x09B3	# emulate read speed
 .set VAR_EXI_REGS,			0x09B4	# pointer to EXI registers
 .set VAR_EXI_SLOT,			0x09B8	# is the EXI slot (0 = slot a, 1 = slot b)
 .set VAR_EXI_CPR,			0x09B9	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
 .set VAR_SD_SHIFT,			0x09BA	# is the SD Card shift amount when issueing read cmds
 .set VAR_ATA_LBA48,			0x09BA	# Is the HDD in use a 48 bit LBA supported HDD?
-.set VAR_IGR_EXIT_TYPE,		0x09BB	# IGR exit type
+.set VAR_IGR_TYPE,			0x09BB	# IGR exit type
 .set VAR_FRAG_LIST,			0x09BC	# pointer to fragments (u32 offset, u32 size, u32 rawsector)
 
 .set VAR_DISC_1_ID,			0x09CC	# disc 1 header
@@ -79,7 +79,7 @@ extern char VAR_TVMODE[4];			// TV format
 
 extern char VAR_CURRENT_DISC[1];	// current disc number
 extern char VAR_SECOND_DISC[1];		// second disc present
-extern char VAR_DRIVE_PATCHED[1];	// disc drive patched
+extern char VAR_DRIVE_FLAGS[1];		// disc drive patched
 extern char VAR_EMU_READ_SPEED[1];	// emulate read speed
 extern char VAR_EXI_REGS[4];		// pointer to EXI registers
 extern char VAR_EXI_SLOT[1];		// is the EXI slot (0 = slot a, 1 = slot b)

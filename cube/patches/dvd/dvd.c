@@ -83,6 +83,31 @@ static void gcode_set_disc_number(uint32_t disc)
 	DI[7] = 0b001;
 	while (DI[7] & 0b001);
 }
+#else
+static void flippy_reset(void)
+{
+	DI[1] = 0b100;
+
+	DI[2] = DI_CMD_FLIPPY_IPC << 24 | 0x05;
+	DI[3] = 0xAA55F641;
+	DI[7] = 0b001;
+	while (DI[7] & 0b001);
+
+	while (!(DI[1] & 0b100));
+}
+
+static void flippy_bypass(bool bypass)
+{
+	DI[1] = 0b100;
+
+	DI[2] = 0xDC000000;
+	DI[3] = bypass ? 0 : 0xE3F72BAB;
+	DI[4] = bypass ? 0 : 0x72648977;
+	DI[7] = 0b001;
+	while (DI[7] & 0b001);
+
+	while (!(DI[1] & 0b100));
+}
 #endif
 
 bool do_read_disc(void *buffer, uint32_t length, uint32_t offset, const frag_t *frag, frag_callback callback)
@@ -225,6 +250,11 @@ void reset_devices(void)
 	int fragnum = frag_get_list(FRAGS_BOOT_GCM, &frag);
 	gcode_set_disc_frags(0, frag, fragnum);
 	gcode_set_disc_number(0);
+	#else
+	if (*VAR_DRIVE_FLAGS & 0b10) {
+		flippy_bypass(false);
+		flippy_reset();
+	}
 	#endif
 
 	while (EXI[EXI_CHANNEL_0][3] & 0b000001);

@@ -3,7 +3,7 @@ VAR_TVMODE			= VAR_AREA + 0x00CC;	/* TV format */
 
 VAR_CURRENT_DISC	= VAR_AREA + 0x09B0;	/* current disc number */
 VAR_SECOND_DISC		= VAR_AREA + 0x09B1;	/* second disc present */
-VAR_DRIVE_PATCHED	= VAR_AREA + 0x09B2;	/* disc drive patched */
+VAR_DRIVE_FLAGS		= VAR_AREA + 0x09B2;	/* disc drive patched */
 VAR_EMU_READ_SPEED	= VAR_AREA + 0x09B3;	/* emulate read speed */
 VAR_EXI_REGS		= VAR_AREA + 0x09B4;	/* pointer to EXI registers */
 VAR_EXI_SLOT		= VAR_AREA + 0x09B8;	/* is the EXI slot (0 = slot a, 1 = slot b) */

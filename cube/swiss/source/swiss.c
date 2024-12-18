@@ -2149,7 +2149,7 @@ void load_game() {
 	
 	*(vu8*)VAR_CURRENT_DISC = disc2File && disc2File == fileToPatch->file;
 	*(vu8*)VAR_SECOND_DISC = !!disc2File;
-	*(vu8*)VAR_DRIVE_PATCHED = drive_status == DEBUG_MODE;
+	*(vu8*)VAR_DRIVE_FLAGS = (swissSettings.hasFlippyDrive << 1) | (drive_status == DEBUG_MODE);
 	*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
 	*(vu32**)VAR_EXI_REGS = NULL;
 	*(vu8*)VAR_EXI_SLOT = (exi_device << 6) | (exi_channel << 4) | (exi_device << 2) | exi_channel;
