@@ -862,8 +862,13 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 		if(refresh) {
 			free(directory);
 			free(curDirEntries);
+			curDirEntries = NULL;
 			num_files = devices[DEVICE_DEST]->readDir(&curDir, &curDirEntries, IS_DIR);
 			num_files = sortFiles(curDirEntries, num_files, &directory);
+			if(num_files <= 1 && destDirBox == NULL) {
+				memcpy(selection, &curDir, sizeof(file_handle));
+				break;
+			}
 			refresh = idx = 0;
 			scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
 		}
@@ -876,7 +881,7 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 		for(j = 0; i<max; ++i,++j) {
 			DrawAddChild(tempBox, DrawSelectableButton(50,fileListBase+(j*40), getVideoMode()->fbWidth-35, fileListBase+(j*40)+40, getRelativeName(directory[i]->name), (i == idx) ? B_SELECTED:B_NOSELECT));
 		}
-		if(destDirBox) {
+		if(destDirBox != NULL) {
 			DrawDispose(destDirBox);
 		}
 		destDirBox = tempBox;
@@ -911,7 +916,9 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 		while (!(!(padsButtonsHeld() & PAD_BUTTON_X) && !(padsButtonsHeld() & (PAD_BUTTON_X|PAD_BUTTON_A|PAD_BUTTON_B|PAD_BUTTON_UP|PAD_BUTTON_DOWN))))
 			{ VIDEO_WaitVSync (); }
 	}
-	DrawDispose(destDirBox);
+	if(destDirBox != NULL) {
+		DrawDispose(destDirBox);
+	}
 	free(curDirEntries);
 	free(directory);
 	return cancelled;
@@ -2802,7 +2809,7 @@ void menu_loop()
 			else {
 				filePanel = renderFileBrowser(getSortedDirEntries(), getSortedDirEntryCount(), filePanel);
 			}
-			while(padsButtonsHeld() & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT)) {
+			while(padsButtonsHeld() & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_START)) {
 				VIDEO_WaitVSync (); 
 			}
 		}

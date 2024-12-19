@@ -59,6 +59,7 @@ device_info* deviceHandler_WODE_info(file_handle* file) {
 }
 	
 s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){	
+	if(type != -1) return -1;
 
 	if(!wodeInited) return 0;
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading WODE"));

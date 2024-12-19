@@ -100,6 +100,7 @@ device_info* deviceHandler_CARD_info(file_handle* file) {
 }
 
 s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){	
+	if(type != -1) return -1;
 
 	int num_entries = 1, ret = 0, i = 1, slot = (!strncmp((const char*)initial_CARDB.name, ffile->name, 7));
 	card_dir *memcard_dir = NULL;

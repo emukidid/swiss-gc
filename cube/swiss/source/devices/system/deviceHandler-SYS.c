@@ -386,6 +386,8 @@ s32 deviceHandler_SYS_init(file_handle* file) {
 }
 
 s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
+	if(type != -1) return -1;
+
 	int num_entries = NUM_ROMS, i = ROM_VOID;
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[i].name, ffile->name, "..");

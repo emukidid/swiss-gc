@@ -90,7 +90,8 @@ u32 sizeToBlocks(u32 size) {
 }
 	
 s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) {	
-  
+	if(type != -1) return -1;
+
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading Qoob"));
 	// Set everything up to read
 	int num_entries = 1, i = 1, block = 0;
