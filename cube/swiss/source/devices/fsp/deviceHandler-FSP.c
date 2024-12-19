@@ -290,8 +290,13 @@ bool deviceHandler_FSP_test() {
 	}
 	switch (bba_exists(LOC_ANY)) {
 		case LOC_MEMCARD_SLOT_A:
-		case LOC_MEMCARD_SLOT_B:
 			__device_fsp.deviceTexture = (textureImage){TEX_GCNET, 65, 84, 72, 88};
+			return true;
+		case LOC_MEMCARD_SLOT_B:
+			if (sdgecko_getDevice(1) == EXI_DEVICE_0)
+				__device_fsp.deviceTexture = (textureImage){TEX_GCNET, 65, 84, 72, 88};
+			else
+				__device_fsp.deviceTexture = (textureImage){TEX_ETH2GC, 64, 80, 64, 80};
 			return true;
 		case LOC_SERIAL_PORT_1:
 			__device_fsp.deviceTexture = (textureImage){TEX_BBA, 140, 64, 140, 64};

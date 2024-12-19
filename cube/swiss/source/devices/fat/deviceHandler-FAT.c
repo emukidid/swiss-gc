@@ -437,8 +437,10 @@ bool deviceHandler_FAT_test_sd_b() {
 	if (ret) {
 		if (sdgecko_getTransferMode(1) == CARDIO_TRANSFER_DMA)
 			__device_sd_b.hwName = "Semi-Passive SD Card Adapter";
-		else
+		else if (sdgecko_getDevice(1) == EXI_DEVICE_0)
 			__device_sd_b.hwName = "Passive SD Card Adapter";
+		else
+			__device_sd_b.hwName = "ETH2GC Netcard+";
 	}
 	return ret;
 }
