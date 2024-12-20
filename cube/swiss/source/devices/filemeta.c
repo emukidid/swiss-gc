@@ -213,6 +213,19 @@ void populate_meta(file_handle *f) {
 	if(!f->meta && (f->meta = meta_alloc())) {
 		// File detection (GCM, DOL, MP3 etc)
 		if(f->fileType==IS_FILE) {
+			if(endsWith(f->name,".dol"))
+				f->meta->fileTypeTexObj = &dolimgTexObj;
+			else if(endsWith(f->name,".dol+cli"))
+				f->meta->fileTypeTexObj = &dolcliimgTexObj;
+			else if(endsWith(f->name,".elf"))
+				f->meta->fileTypeTexObj = &elfimgTexObj;
+			else if(endsWith(f->name,".fpkg"))
+				f->meta->fileTypeTexObj = &fpkgimgTexObj;
+			else if(endsWith(f->name,".mp3"))
+				f->meta->fileTypeTexObj = &mp3imgTexObj;
+			else
+				f->meta->fileTypeTexObj = &fileimgTexObj;
+			
 			if(devices[DEVICE_CUR] == &__device_wode && f->status == STATUS_NOT_MAPPED) {
 				f->meta->bannerSum = 0xFFFF;
 				f->meta->bannerSize = BNR_PIXELDATA_LEN;
@@ -228,6 +241,7 @@ void populate_meta(file_handle *f) {
 					f->meta->regionTexObj = &ntscuTexObj;
 				else if(region == 'P')
 					f->meta->regionTexObj = &palTexObj;
+				f->meta->fileTypeTexObj = &gcmimgTexObj;
 				f->meta->displayName = strncpy(f->meta->bannerDesc.fullGameName, isoInfo->name, BNR_FULL_TEXT_LEN);
 			}
 			else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
@@ -293,6 +307,7 @@ void populate_meta(file_handle *f) {
 						f->meta->regionTexObj = &ntscuTexObj;
 					else if(region == 'P')
 						f->meta->regionTexObj = &palTexObj;
+					f->meta->fileTypeTexObj = &gcmimgTexObj;
 					memcpy(&f->meta->diskId, diskHeader, sizeof(dvddiskid));
 					free(diskHeader);
 				}
@@ -302,6 +317,7 @@ void populate_meta(file_handle *f) {
 				devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
 				if(devices[DEVICE_CUR]->readFile(f, &tgcHeader, sizeof(TGCHeader)) == sizeof(TGCHeader) && tgcHeader.magic == TGC_MAGIC) {
 					populate_game_meta(f, tgcHeader.bannerStart, tgcHeader.bannerLength);
+					f->meta->fileTypeTexObj = &tgcimgTexObj;
 				}
 			}
 			else if(endsWith(f->name,"/default.dol")) {
@@ -319,16 +335,6 @@ void populate_meta(file_handle *f) {
 			if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
 				devices[DEVICE_CUR]->closeFile(f);
 			}
-			if(endsWith(f->name,".dol"))
-				f->meta->fileTypeTexObj = &dolimgTexObj;
-			else if(endsWith(f->name,".dol+cli"))
-				f->meta->fileTypeTexObj = &dolcliimgTexObj;
-			else if(endsWith(f->name,".elf"))
-				f->meta->fileTypeTexObj = &elfimgTexObj;
-			else if(endsWith(f->name,".mp3"))
-				f->meta->fileTypeTexObj = &mp3imgTexObj;
-			else
-				f->meta->fileTypeTexObj = &fileimgTexObj;
 		}
 		else if (f->fileType == IS_DIR) {
 			f->meta->fileTypeTexObj = &dirimgTexObj;

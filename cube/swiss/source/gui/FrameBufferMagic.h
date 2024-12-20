@@ -80,12 +80,15 @@ enum TextureId
 extern GXTexObj ntscjTexObj;
 extern GXTexObj ntscuTexObj;
 extern GXTexObj palTexObj;
-extern GXTexObj mp3imgTexObj;
+extern GXTexObj dirimgTexObj;
 extern GXTexObj dolimgTexObj;
 extern GXTexObj dolcliimgTexObj;
 extern GXTexObj elfimgTexObj;
 extern GXTexObj fileimgTexObj;
-extern GXTexObj dirimgTexObj;
+extern GXTexObj fpkgimgTexObj;
+extern GXTexObj gcmimgTexObj;
+extern GXTexObj mp3imgTexObj;
+extern GXTexObj tgcimgTexObj;
 
 typedef struct kbBtn_ {
     int supportedEntryMode;

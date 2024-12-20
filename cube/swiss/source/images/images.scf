@@ -8,8 +8,10 @@
 <filepath="eth2gc.tif" id="eth2gcimg" colfmt=0 />
 <filepath="file.tif" id="fileimg" colfmt=6 />
 <filepath="flippy.tif" id="flippyimg" colfmt=0 />
+<filepath="fpkg.tif" id="fpkgimg" colfmt=6 />
 <filepath="gcdvdsmall.tif" id="gcdvdsmall" colfmt=3 />
 <filepath="gcloader.tif" id="gcloaderimg" colfmt=0 />
+<filepath="gcm.tif" id="gcmimg" colfmt=6 />
 <filepath="gcnet.tif" id="gcnetimg" colfmt=0 />
 <filepath="hdd.tif" id="hddimg" colfmt=9 palfmt=0 />
 <filepath="m2loader.tif" id="m2loaderimg" colfmt=0 />
@@ -23,6 +25,7 @@
 <filepath="qoob_ind.png" id="qoobimg_ind" colfmt=1 minfilt=0 magfilt=0 />
 <filepath="sdsmall.tif" id="sdsmall" colfmt=9 palfmt=0 />
 <filepath="systemimg.tif" id="systemimg" colfmt=3 />
+<filepath="tgc.tif" id="tgcimg" colfmt=6 />
 <filepath="usbgecko.tif" id="usbgeckoimg" colfmt=9 palfmt=0 />
 <filepath="wiikey.tif" id="wiikeyimg" colfmt=0 />
 <filepath="wodeimg.tif" id="wodeimg" colfmt=0 />

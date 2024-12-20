@@ -69,12 +69,15 @@ GXTexObj checkedTexObj;
 GXTexObj uncheckedTexObj;
 GXTexObj loadingTexObj;
 GXTexObj starTexObj;
-GXTexObj mp3imgTexObj;
+GXTexObj dirimgTexObj;
 GXTexObj dolimgTexObj;
 GXTexObj dolcliimgTexObj;
 GXTexObj elfimgTexObj;
 GXTexObj fileimgTexObj;
-GXTexObj dirimgTexObj;
+GXTexObj fpkgimgTexObj;
+GXTexObj gcmimgTexObj;
+GXTexObj mp3imgTexObj;
+GXTexObj tgcimgTexObj;
 GXTexObj gcloaderTexObj;
 GXTexObj m2loaderTexObj;
 GXTexObj eth2gcTexObj;
@@ -361,12 +364,15 @@ static void init_textures()
 	TPL_GetTexture(&buttonsTPL, unchecked_32, &uncheckedTexObj);
 	TPL_GetTexture(&buttonsTPL, loading_16, &loadingTexObj);
 	TPL_GetTexture(&buttonsTPL, star_16, &starTexObj);
-	TPL_GetTexture(&imagesTPL, mp3img, &mp3imgTexObj);
+	TPL_GetTexture(&imagesTPL, dirimg, &dirimgTexObj);
 	TPL_GetTexture(&imagesTPL, dolimg, &dolimgTexObj);
 	TPL_GetTexture(&imagesTPL, dolcliimg, &dolcliimgTexObj);
 	TPL_GetTexture(&imagesTPL, elfimg, &elfimgTexObj);
 	TPL_GetTexture(&imagesTPL, fileimg, &fileimgTexObj);
-	TPL_GetTexture(&imagesTPL, dirimg, &dirimgTexObj);
+	TPL_GetTexture(&imagesTPL, fpkgimg, &fpkgimgTexObj);
+	TPL_GetTexture(&imagesTPL, gcmimg, &gcmimgTexObj);
+	TPL_GetTexture(&imagesTPL, mp3img, &mp3imgTexObj);
+	TPL_GetTexture(&imagesTPL, tgcimg, &tgcimgTexObj);
 	TPL_GetTexture(&imagesTPL, gcloaderimg, &gcloaderTexObj);
 	TPL_GetTexture(&imagesTPL, m2loaderimg, &m2loaderTexObj);
 	TPL_GetTexture(&imagesTPL, eth2gcimg, &eth2gcTexObj);
@@ -1305,7 +1311,7 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 	if(eventData->file->meta) {
 		eventData->file->meta = calloc(1, sizeof(file_meta));
 		memcpy(eventData->file->meta, file->meta, sizeof(file_meta));
-		if(eventData->file->meta->banner) {
+		if(eventData->file->meta->banner && eventData->file->meta->bannerSum != 0xFFFF) {
 			// Make a copy cause we want this one to be killed off when the display event is disposed
 			eventData->file->meta->banner = memalign(32, eventData->file->meta->bannerSize);
 			memcpy(eventData->file->meta->banner, file->meta->banner, eventData->file->meta->bannerSize);
@@ -1319,6 +1325,10 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 				GX_InitTlutObjData(&eventData->file->meta->bannerTlutObj, img_ptr + GX_GetTexBufferSize(wd, ht, fmt, mipmap, 0));
 				GX_InitTexObjUserData(&eventData->file->meta->bannerTexObj, &eventData->file->meta->bannerTlutObj);
 			}
+		}
+		else {
+			eventData->file->meta->banner = NULL;
+			eventData->file->meta->bannerSize = 0;
 		}
 		if(eventData->file->meta->displayName == file->meta->bannerDesc.gameName) {
 			eventData->file->meta->displayName = eventData->file->meta->bannerDesc.gameName;
