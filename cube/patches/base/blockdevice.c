@@ -68,9 +68,9 @@ void schedule_read(OSTick ticks)
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
-	if ((*VAR_IGR_TYPE & 0x80) && offset == 0x2440) {
+	if ((*VAR_DRIVE_FLAGS & 0b0010) && offset == 0x2440) {
+		*VAR_DRIVE_FLAGS &= ~0b0011;
 		*VAR_CURRENT_DISC = FRAGS_APPLOADER;
-		*VAR_SECOND_DISC = 0;
 	}
 
 	dvd.buffer = OSPhysicalToUncached(address);
@@ -118,7 +118,7 @@ void trickle_read()
 
 bool change_disc(void)
 {
-	if (*VAR_SECOND_DISC) {
+	if (*VAR_DRIVE_FLAGS & 0b0001) {
 		*VAR_CURRENT_DISC ^= 1;
 		return true;
 	}

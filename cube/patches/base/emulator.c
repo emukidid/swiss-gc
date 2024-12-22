@@ -1113,7 +1113,7 @@ static void pi_write(unsigned index, uint32_t value)
 			PI[index] = ((value << 2) & 0b100) | (value & ~0b100);
 			break;
 			#else
-			if (*VAR_DRIVE_FLAGS & 0b01) {
+			if (*VAR_DRIVE_FLAGS & 0b0100) {
 				PI[index] = ((value << 2) & 0b100) | (value & ~0b100);
 
 				if (!di.reset && !(value & 0b100))

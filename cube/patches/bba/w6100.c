@@ -29,9 +29,11 @@
 #include "interrupt.h"
 #include "w6100.h"
 
-#define exi_channel ((*VAR_EXI_SLOT & 0x30) >> 4)
-#define exi_device  ((*VAR_EXI_SLOT & 0xC0) >> 6)
-#define exi_regs    (*(volatile uint32_t **)VAR_EXI2_REGS)
+#define exi_cpr       (*VAR_EXI2_CPR)
+#define exi_channel   ((*VAR_EXI_SLOT & 0x30) >> 4)
+#define exi_device    ((*VAR_EXI_SLOT & 0xC0) >> 6)
+#define exi_interrupt ((*VAR_EXI2_CPR & 0xC0) >> 6)
+#define exi_regs      (*(volatile uint32_t **)VAR_EXI2_REGS)
 
 static struct {
 	bool sendok;
@@ -46,14 +48,14 @@ static struct {
 	} output;
 } w6100;
 
-static void exi_clear_interrupts(bool exi, bool tc, bool ext)
+static void exi_clear_interrupts(int32_t chan, bool exi, bool tc, bool ext)
 {
-	exi_regs[0] = (exi_regs[0] & (0x3FFF & ~0x80A)) | (ext << 11) | (tc << 3) | (exi << 1);
+	EXI[chan][0] = (EXI[chan][0] & (0x3FFF & ~0x80A)) | (ext << 11) | (tc << 3) | (exi << 1);
 }
 
 static void exi_select(void)
 {
-	exi_regs[0] = (exi_regs[0] & 0x405) | ((1 << EXI_DEVICE_0) << 7) | (EXI_SPEED_32MHZ << 4);
+	exi_regs[0] = (exi_regs[0] & 0x405) | ((exi_cpr << 4) & 0x3F0);
 }
 
 static void exi_deselect(void)
@@ -224,7 +226,8 @@ static void exi_callback()
 
 static void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
-	exi_clear_interrupts(true, false, false);
+	int32_t chan = (interrupt - OS_INTERRUPT_EXI_0_EXI) / 3;
+	exi_clear_interrupts(chan, true, false, false);
 	w6100.interrupt = true;
 	exi_callback();
 }
@@ -265,10 +268,10 @@ void bba_init(void **arenaLo, void **arenaHi)
 
 	*arenaHi -= sizeof(*w6100.page); w6100.page = *arenaHi;
 
-	if (exi_channel < EXI_CHANNEL_2) {
-		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_EXI + (3 * exi_channel);
+	if (exi_interrupt < EXI_CHANNEL_MAX) {
+		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_EXI + (3 * exi_interrupt);
 		set_interrupt_handler(interrupt, exi_interrupt_handler);
-		unmask_interrupts(OS_INTERRUPTMASK(interrupt) & (OS_INTERRUPTMASK_EXI_0_EXI | OS_INTERRUPTMASK_EXI_1_EXI));
+		unmask_interrupts(OS_INTERRUPTMASK(interrupt) & (OS_INTERRUPTMASK_EXI_0_EXI | OS_INTERRUPTMASK_EXI_1_EXI | OS_INTERRUPTMASK_EXI_2_EXI));
 	} else {
 		set_interrupt_handler(OS_INTERRUPT_PI_DEBUG, debug_interrupt_handler);
 		unmask_interrupts(OS_INTERRUPTMASK_PI_DEBUG);

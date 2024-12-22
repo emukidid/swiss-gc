@@ -257,6 +257,7 @@ extern DEVICEHANDLER_INTERFACE* getDeviceByUniqueId(u8 id);
 extern DEVICEHANDLER_INTERFACE* getDeviceByLocation(u32 location);
 extern DEVICEHANDLER_INTERFACE* getDeviceFromPath(char *path);
 extern bool getExiDeviceByLocation(u32 location, s32 *chan, s32 *dev);
+extern bool getExiInterruptByLocation(u32 location, s32 *chan);
 extern vu32* getExiRegsByLocation(u32 location);
 extern const char* getHwNameByLocation(u32 location);
 

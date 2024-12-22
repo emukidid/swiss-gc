@@ -126,6 +126,25 @@ bool getExiDeviceByLocation(u32 location, s32 *chan, s32 *dev) {
 	return false;
 }
 
+bool getExiInterruptByLocation(u32 location, s32 *chan) {
+	switch(location) {
+		case LOC_MEMCARD_SLOT_A:
+			if(chan) *chan = EXI_CHANNEL_0;
+			return true;
+		case LOC_MEMCARD_SLOT_B:
+			if(chan) *chan = EXI_CHANNEL_1;
+			return true;
+		case LOC_SERIAL_PORT_1:
+			if(chan) *chan = EXI_CHANNEL_2;
+			return true;
+		case LOC_SERIAL_PORT_2:
+		case LOC_SYSTEM:
+			if(chan) *chan = EXI_CHANNEL_MAX;
+			return true;
+	}
+	return false;
+}
+
 vu32* getExiRegsByLocation(u32 location) {
 	s32 chan;
 	if(getExiDeviceByLocation(location, &chan, NULL)) {

@@ -151,7 +151,7 @@ sd-v1.eth.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DETH_EMULATOR -DNO_VIDEO
 	@$(CC) -Os $(OPTS) -c base/emulator_eth.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000011011001000000001000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000011011011000000001000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=0 -DISR_READ=1 -DWRITE=0
@@ -250,7 +250,7 @@ sd-v2.eth.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DETH_EMULATOR -DNO_VIDEO
 	@$(CC) -Os $(OPTS) -c base/emulator_eth.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000011011001000000001000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000011011011000000001000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c sdgecko/sd.c -DDMA_READ=1 -DISR_READ=1 -DWRITE=0
@@ -349,7 +349,7 @@ ideexi-v1.eth.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DETH_EMULATOR -DNO_VIDEO
 	@$(CC) -Os $(OPTS) -c base/emulator_eth.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000011011000000000001000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000011011010000000001000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=0 -DISR_READ=1 -DWRITE=0
@@ -448,7 +448,7 @@ ideexi-v2.eth.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DETH_EMULATOR -DNO_VIDEO
 	@$(CC) -Os $(OPTS) -c base/emulator_eth.c
 	@$(CC) -Os $(OPTS) -c base/frag.c
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000011011000000000001000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000011011010000000001000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
 	@$(CC) -Os $(OPTS) -c ide-exi/ata.c -DDMA_READ=1 -DISR_READ=1 -DWRITE=0
@@ -772,7 +772,7 @@ gcloader-v2.eth.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DETH_EMULATOR -DGCODE -DNO_VIDEO
 	@$(CC) -Os $(OPTS) -c base/emulator_eth.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000010010000000010001000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000010010010000010001000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c gcloader/gcloader.c
 	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
@@ -843,7 +843,7 @@ flippy.eth.bin:
 	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DETH_EMULATOR -DFLIPPY -DNO_VIDEO
 	@$(CC) -Os $(OPTS) -c base/emulator_eth.c
 	@$(CC) -Os $(OPTS) -c base/frag.c -DDEVICE_PATCHES=1
-	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000010010000000010001000000
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000010010010000010001000000
 	@$(CC) -Os $(OPTS) -c base/ipl.c
 	@$(CC) -Os $(OPTS) -c flippydrive/flippy.c
 	@$(CC) -Os $(OPTS) -c bba/enc28j60.c

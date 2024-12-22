@@ -300,7 +300,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 			// Is the HDD in use a 48 bit LBA supported HDD?
 			*(vu8*)VAR_ATA_LBA48 = ataDriveInfo.lba48Support;
 			// Copy the actual freq
-			*(vu8*)VAR_EXI_CPR = (exi_channel << 6) | ((1 << exi_device) << 3) | (swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+			*(vu8*)VAR_EXI_CPR = (exi_channel << 6) | ((1 << exi_device) << 3) | (swissSettings.exiSpeed ? EXI_SPEED32MHZ : EXI_SPEED16MHZ);
 		}
 		// Device slot (0, 1 or 2)
 		*(vu8*)VAR_EXI_SLOT = (*(vu8*)VAR_EXI_SLOT & 0xF0) | (((exi_device << 2) | exi_channel) & 0x0F);
@@ -321,7 +321,7 @@ s32 fatFs_Mount(u8 devNum, char *path) {
 }
 
 void setSDGeckoSpeed(int slot, bool fast) {
-	sdgecko_setSpeed(slot, fast ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+	sdgecko_setSpeed(slot, fast ? EXI_SPEED32MHZ : EXI_SPEED16MHZ);
 	print_gecko("SD speed set to %s\r\n", (fast ? "32MHz":"16MHz"));
 }
 

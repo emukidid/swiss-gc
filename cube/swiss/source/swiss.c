@@ -2155,15 +2155,15 @@ void load_game() {
 	}
 	
 	*(vu8*)VAR_CURRENT_DISC = disc2File && disc2File == fileToPatch->file;
-	*(vu8*)VAR_SECOND_DISC = !!disc2File;
-	*(vu8*)VAR_DRIVE_FLAGS = (swissSettings.hasFlippyDrive << 1) | (drive_status == DEBUG_MODE);
+	*(vu8*)VAR_DRIVE_FLAGS = (!!swissSettings.hasFlippyDrive << 3) | ((drive_status == DEBUG_MODE) << 2) | ((tgcFile.magic == TGC_MAGIC) << 1) | !!disc2File;
 	*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
-	*(vu32**)VAR_EXI_REGS = NULL;
-	*(vu8*)VAR_EXI_SLOT = (exi_device << 6) | (exi_channel << 4) | (exi_device << 2) | exi_channel;
-	*(vu8*)VAR_EXI_CPR = (exi_channel << 6) | EXI_SPEED1MHZ;
-	*(vu8*)VAR_SD_SHIFT = 0;
-	*(vu8*)VAR_IGR_TYPE = swissSettings.igrType | (tgcFile.magic == TGC_MAGIC ? 0x80:0x00);
+	*(vu8*)VAR_IGR_TYPE = swissSettings.igrType;
 	*(vu32**)VAR_FRAG_LIST = NULL;
+	*(vu8*)VAR_SD_SHIFT = 0;
+	*(vu8*)VAR_EXI_SLOT = (exi_device << 6) | (exi_channel << 4) | (exi_device << 2) | exi_channel;
+	*(vu8*)VAR_EXI_CPR = (EXI_CHANNEL_MAX << 6) | EXI_SPEED1MHZ;
+	*(vu8*)VAR_EXI2_CPR = (EXI_CHANNEL_MAX << 6) | EXI_SPEED1MHZ;
+	*(vu32**)VAR_EXI_REGS = NULL;
 	net_get_mac_address(VAR_CLIENT_MAC);
 	*(vu32**)VAR_EXI2_REGS = NULL;
 	*(vu8*)VAR_TRIGGER_LEVEL = swissSettings.triggerLevel;
@@ -2183,9 +2183,11 @@ void load_game() {
 	}
 
 	if(devices[DEVICE_CUR]->emulated() & EMU_ETHERNET) {
-		s32 exi_channel, exi_device;
-		if(getExiDeviceByLocation(bba_location, &exi_channel, &exi_device)) {
+		s32 exi_channel, exi_device, exi_interrupt;
+		if(getExiDeviceByLocation(bba_location, &exi_channel, &exi_device) &&
+			getExiInterruptByLocation(bba_location, &exi_interrupt)) {
 			*(vu8*)VAR_EXI_SLOT = (*(vu8*)VAR_EXI_SLOT & 0x0F) | (((exi_device << 6) | (exi_channel << 4)) & 0xF0);
+			*(vu8*)VAR_EXI2_CPR = (exi_interrupt << 6) | ((1 << exi_device) << 3) | (exi_device == EXI_DEVICE_0 ? EXI_SPEED32MHZ : EXI_SPEED16MHZ);
 			*(vu32**)VAR_EXI2_REGS = ((vu32(*)[5])0xCC006800)[exi_channel];
 		}
 	}

@@ -167,9 +167,9 @@ static bool memeq(const void *a, const void *b, size_t size)
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
-	if ((*VAR_IGR_TYPE & 0x80) && offset == 0x2440) {
+	if ((*VAR_DRIVE_FLAGS & 0b0010) && offset == 0x2440) {
+		*VAR_DRIVE_FLAGS &= ~0b0011;
 		*VAR_CURRENT_DISC = FRAGS_APPLOADER;
-		*VAR_SECOND_DISC = 0;
 	} else {
 		switch (*VAR_CURRENT_DISC) {
 			case FRAGS_DISC_1:
@@ -251,7 +251,7 @@ void reset_devices(void)
 	gcode_set_disc_frags(0, frag, fragnum);
 	gcode_set_disc_number(0);
 	#else
-	if (*VAR_DRIVE_FLAGS & 0b10) {
+	if (*VAR_DRIVE_FLAGS & 0b1000) {
 		flippy_bypass(false);
 		flippy_reset();
 	}

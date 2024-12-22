@@ -30,7 +30,7 @@
 #define ENC28J60_CMD_BFC(x) ((0xA0 | ((x) & 0x1F)) << 24) // Bit Field Clear
 #define ENC28J60_CMD_SRC    ((0xFF) << 24)                // System Reset Command
 
-#define ENC28J60_EXI_SPEED(cmd) (((cmd) == ENC28J60_CMD_SRC) ? EXI_SPEED1MHZ : EXI_SPEED32MHZ)
+#define ENC28J60_EXI_SPEED(cmd) (((cmd) == ENC28J60_CMD_SRC) ? EXI_SPEED1MHZ : EXI_SPEED16MHZ)
 #define ENC28J60_EXI_DUMMY(cmd) ((((cmd) >> 24) & 0x1F) < 0x1A)
 
 #define ENC28J60_INIT_ERXST (0)
