@@ -21,6 +21,29 @@ DEVICEHANDLER_INTERFACE* allDevices[MAX_DEVICES];	// All devices registered in S
 DEVICEHANDLER_INTERFACE* devices[MAX_DEVICE_SLOTS];	// Currently used devices
 
 
+static s32 onreset(s32 final)
+{
+	if (!final) {
+		for (int i = 0; i < MAX_DEVICE_SLOTS; i++) {
+			if (devices[i] && !(devices[i]->quirks & QUIRK_NO_DEINIT)) {
+				devices[i]->deinit(devices[i]->initial);
+				devices[i] = NULL;
+			}
+		}
+	}
+	return TRUE;
+}
+
+static sys_resetinfo resetinfo = {
+	{NULL, NULL}, onreset, 0
+};
+
+__attribute((constructor))
+static void registerResetFunc() {
+	SYS_RegisterResetFunc(&resetinfo);
+}
+
+
 // Device stat global disable status
 static int statEnabled = 1;
 void deviceHandler_setStatEnabled(int enable) {statEnabled = enable;}

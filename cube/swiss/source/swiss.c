@@ -1211,6 +1211,9 @@ void load_app(ExecutableFile *fileToPatch)
 		// Check DVD Status, make sure it's error code 0
 		print_gecko("DVD: %08X\r\n",dvd_get_error());
 	}
+	if(devices[DEVICE_PATCHES] && !(devices[DEVICE_PATCHES]->quirks & QUIRK_NO_DEINIT)) {
+		devices[DEVICE_PATCHES]->deinit(devices[DEVICE_PATCHES]->initial);
+	}
 	
 	DrawDispose(progBox);
 	DrawShutdown();
@@ -1388,7 +1391,6 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 		argz_add(&argz, &argz_len, argv[i]);
 	}
 
-	if(devices[DEVICE_CUR] != NULL) devices[DEVICE_CUR]->deinit( devices[DEVICE_CUR]->initial );
 	// Boot
 	if(!memcmp(dol_buffer, ELFMAG, SELFMAG)) {
 		ELFtoARAM(dol_buffer, argz, argz_len);
@@ -2164,7 +2166,7 @@ void load_game() {
 	*(vu8*)VAR_EXI_CPR = (EXI_CHANNEL_MAX << 6) | EXI_SPEED1MHZ;
 	*(vu8*)VAR_EXI2_CPR = (EXI_CHANNEL_MAX << 6) | EXI_SPEED1MHZ;
 	*(vu32**)VAR_EXI_REGS = NULL;
-	net_get_mac_address(VAR_CLIENT_MAC);
+	net_get_mac_address((u8*)VAR_CLIENT_MAC);
 	*(vu32**)VAR_EXI2_REGS = NULL;
 	*(vu8*)VAR_TRIGGER_LEVEL = swissSettings.triggerLevel;
 	*(vu8*)VAR_CARD_A_ID = 0x00;
