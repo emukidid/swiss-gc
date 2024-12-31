@@ -1356,6 +1356,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x92, 0x3E90, 0xF9450866, 0xD8E05FFDED31B676,   12331008, +1447647232, {      94248,       +4056, 6496, 0xB714 }, "Advance Game Port / Cheat Construction Kit" },
 	{{ "GNHE5d\x00\x00" }, false, 0x98, 0x8464, 0x53F2137A, 0x1D6B58FD88349461,  855990272,  +603987968, {    7480672,      +30652, 6496, 0x8BDF }, "NHL Hitz 2002" },
 	{{ "GNHE5d\x00\x00" }, false, 0x98, 0xCCBB, 0xE5C0156E, 0x654DFB8F0F5E8495,     968704, +1459009536, {      94248,       +4056, 6496, 0x71CD }, "Cube CD 16 (35)" },
+	{{ "GNHE5d\x00\x00" }, false, 0x99, 0xCCBB, 0x40647E85, 0x36903BDC45F9FF89,    1396736, +1458581504, {      94248,       +4056, 6496, 0xDD29 }, "FreeLoader for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x99, 0xCCBB, 0xE584A9F1, 0xCA715EDF4ECEBB48,    1355776, +1458622464, {      94248,       +4056, 6496, 0x9839 }, "CD avec les Codes Action Replay Exclusivement pour le Jeu The Legend of Zelda: The Wind Waker" },
 	{{ "GNHE5d\x00\x00" }, false, 0xA4, 0xCCBB, 0xA04B47B2, 0x0B1283EE258112F2,    1245184, +1458733056, {      94248,       +4056, 6496, 0xD5E2 }, "Action Replay Ultimate Codes for Use with Final Fantasy: Crystal Chronicles" },
 	{{ "GNHE5d\x00\x00" }, false, 0xA9, 0xCCBB, 0xEB7F7BC6, 0x1F6713160B2BAF7F,     800768, +1459177472, {      94248,       +4056, 6496, 0xF61C }, "Cube CD 20 (40)" },
@@ -2111,7 +2112,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (2001)
+#define REDUMP_COUNT (2002)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
