@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-/* In Linux, this is used to make extern functions static when needed. */
+/* "#define XZ_EXTERN static" can be used to make extern functions static. */
 #ifndef XZ_EXTERN
 #	define XZ_EXTERN extern
 #endif
@@ -290,10 +290,6 @@ XZ_EXTERN void xz_dec_end(struct xz_dec *s);
  * 3/0/2, the first byte is 0xA2. This way the first byte can never be 0x00.
  * Just like with LZMA2, lc + lp <= 4 must be true. The LZMA end-of-stream
  * marker must not be used. The unused values are reserved for future use.
- *
- * These functions aren't used or available in preboot code and thus aren't
- * marked with XZ_EXTERN. This avoids warnings about static functions that
- * are never defined.
  */
 
 /*
@@ -318,8 +314,8 @@ struct xz_dec_microlzma;
  * struct xz_dec_microlzma. If memory allocation fails or
  * dict_size is invalid, NULL is returned.
  */
-extern struct xz_dec_microlzma *xz_dec_microlzma_alloc(enum xz_mode mode,
-						       uint32_t dict_size);
+XZ_EXTERN struct xz_dec_microlzma *xz_dec_microlzma_alloc(enum xz_mode mode,
+							  uint32_t dict_size);
 
 /**
  * xz_dec_microlzma_reset() - Reset the MicroLZMA decoder state
@@ -335,9 +331,9 @@ extern struct xz_dec_microlzma *xz_dec_microlzma_alloc(enum xz_mode mode,
  *              requiring stdbool.h. This should normally be set to true.
  *              When this is set to false, error detection is weaker.
  */
-extern void xz_dec_microlzma_reset(struct xz_dec_microlzma *s,
-				   uint32_t comp_size, uint32_t uncomp_size,
-				   int uncomp_size_is_exact);
+XZ_EXTERN void xz_dec_microlzma_reset(struct xz_dec_microlzma *s,
+				      uint32_t comp_size, uint32_t uncomp_size,
+				      int uncomp_size_is_exact);
 
 /**
  * xz_dec_microlzma_run() - Run the MicroLZMA decoder
@@ -375,15 +371,15 @@ extern void xz_dec_microlzma_reset(struct xz_dec_microlzma *s,
  * may be changed normally like with XZ_PREALLOC. This way input data can be
  * provided from non-contiguous memory.
  */
-extern enum xz_ret xz_dec_microlzma_run(struct xz_dec_microlzma *s,
-					struct xz_buf *b);
+XZ_EXTERN enum xz_ret xz_dec_microlzma_run(struct xz_dec_microlzma *s,
+					   struct xz_buf *b);
 
 /**
  * xz_dec_microlzma_end() - Free the memory allocated for the decoder state
  * @s:          Decoder state allocated using xz_dec_microlzma_alloc().
  *              If s is NULL, this function does nothing.
  */
-extern void xz_dec_microlzma_end(struct xz_dec_microlzma *s);
+XZ_EXTERN void xz_dec_microlzma_end(struct xz_dec_microlzma *s);
 
 /*
  * Standalone build (userspace build or in-kernel build for boot time use)
