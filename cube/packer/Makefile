@@ -25,7 +25,7 @@ INCLUDES	:=	..
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS		= -g -O2 -Wall -msdata -G 32768 -ffreestanding $(MACHDEP) $(INCLUDE)
+CFLAGS		= -g -O2 -Wall -msdata -G 32768 -ffreestanding -flto=auto $(MACHDEP) $(INCLUDE)
 CXXFLAGS	= $(CFLAGS)
 
 ASFLAGS		= $(MACHDEP) -mregnames -D_LANGUAGE_ASSEMBLY $(INCLUDE)
