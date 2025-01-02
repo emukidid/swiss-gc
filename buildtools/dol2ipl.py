@@ -17,8 +17,6 @@ def scramble(data, *, qoobsx=False):
     x = 1
 
     if qoobsx:
-        # Qoob SX scrambling starts at 0x210000
-        # Use a custom initialization vector to speed things up
         acc = 0xCB
         nacc = 0
 
@@ -80,7 +78,6 @@ def flatten_dol(data):
     for offset, address, size in zip(offsets, addresses, sizes):
         img[address - dol_min:address + size - dol_min] = data[offset:offset + size]
 
-    # Entry point, load address, memory image
     return entry, dol_min, img
 
 def append_dol(data, trailer, base_address):
@@ -148,15 +145,19 @@ def pack_uf2(data, base_address):
     return ret
 
 def main():
-    if len(sys.argv) not in range(3, 4 + 1):
+    if len(sys.argv) not in range(3, 5):
         print(f"Usage: {sys.argv[0]} <output> <executable>")
         return 1
 
     output = sys.argv[1]
     executable = sys.argv[2]
 
-    with open(executable, "rb") as f:
-        exe = bytearray(f.read())
+    try:
+        with open(executable, "rb") as f:
+            exe = bytearray(f.read())
+    except IOError as e:
+        print(f"Error reading {executable}: {e}")
+        return 1
 
     if executable.endswith(".dol"):
         entry, load, img = flatten_dol(exe)
@@ -169,14 +170,19 @@ def main():
         print(f"Load address:  0x{load:0{8}X}")
         print(f"Image size:    {size} bytes ({size // 1024}K)")
     elif executable.endswith(".elf"):
+        # ELF processing can be added here if needed
         pass
     else:
         print("Unknown input format")
         return -1
 
     if output.endswith(".dol"):
-        with open(output, "rb") as f:
-            img = bytearray(f.read())
+        try:
+            with open(output, "rb") as f:
+                img = bytearray(f.read())
+        except IOError as e:
+            print(f"Error reading {output}: {e}")
+            return 1
 
         header_size = 32
         header = struct.pack(
@@ -233,8 +239,14 @@ def main():
         print("Unknown output format")
         return -1
 
-    with open(output, "wb") as f:
-        f.write(out)
+    try:
+        with open(output, "wb") as f:
+            f.write(out)
+    except IOError as e:
+        print(f"Error writing {output}: {e}")
+        return 1
+
+    return 0
 
 if __name__ == "__main__":
     sys.exit(main())
