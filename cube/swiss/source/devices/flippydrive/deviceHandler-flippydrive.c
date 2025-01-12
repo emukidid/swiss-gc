@@ -68,8 +68,9 @@ s32 deviceHandler_Flippy_readDir(file_handle* ffile, file_handle** dir, u32 type
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
 			if(concat_path((*dir)[i].name, ffile->name, entry.name) < PATHNAME_MAX && entry.size <= UINT32_MAX) {
-				(*dir)[i].size     = entry.size;
-				(*dir)[i].fileType = (entry.type == FLIPPY_TYPE_DIR) ? IS_DIR : IS_FILE;
+				(*dir)[i].size       = entry.size;
+				(*dir)[i].fileType   = (entry.type == FLIPPY_TYPE_DIR) ? IS_DIR : IS_FILE;
+				(*dir)[i].fileAttrib = entry.attributes;
 				++i;
 			}
 		}

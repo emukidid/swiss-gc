@@ -29,6 +29,12 @@
 #define FLIPPY_FLAG_WRITE            0x08
 #define FLIPPY_FLAG_DEFAULT          (FLIPPY_FLAG_DISABLE_CACHE | FLIPPY_FLAG_DISABLE_FASTSEEK | FLIPPY_FLAG_DISABLE_DVDSPEED)
 
+#define FLIPPY_ATTRIBUTE_READONLY    0x01
+#define FLIPPY_ATTRIBUTE_HIDDEN      0x02
+#define FLIPPY_ATTRIBUTE_SYSTEM      0x04
+#define FLIPPY_ATTRIBUTE_DIRECTORY   0x10
+#define FLIPPY_ATTRIBUTE_ARCHIVE     0x20
+
 #define FLIPPY_FLASH_HANDLE 64
 
 #define FLIPPY_MAX_HANDLES  31
@@ -94,7 +100,8 @@ typedef struct {
 	u32 date;
 	u32 time;
 	u32 result;
-	u8 padding[10];
+	u8 attributes;
+	u8 padding[9];
 } ATTRIBUTE_PACKED flippyfilestat;
 
 typedef struct {
