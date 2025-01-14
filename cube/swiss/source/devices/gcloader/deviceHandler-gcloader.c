@@ -345,7 +345,9 @@ u32 deviceHandler_GCLoader_emulated() {
 				return EMU_READ;
 		}
 	} else {
-		if (swissSettings.emulateReadSpeed)
+		if (swissSettings.disableHypervisor)
+			return EMU_NONE;
+		else if (swissSettings.emulateReadSpeed)
 			return EMU_READ | EMU_READ_SPEED;
 		else
 			return EMU_READ;

@@ -194,7 +194,8 @@ int install_code(int final)
 				} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
 					patch     = !_ideexi_version ? ideexi_v1_w6100_eth_bin      : ideexi_v2_w6100_eth_bin;
 					patchSize = !_ideexi_version ? ideexi_v1_w6100_eth_bin_size : ideexi_v2_w6100_eth_bin_size;
-				}
+				} else
+					return 0;
 				break;
 			default:
 				return 0;
@@ -228,7 +229,8 @@ int install_code(int final)
 					} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
 						patch     = sd_v1_w6100_eth_bin;
 						patchSize = sd_v1_w6100_eth_bin_size;
-					}
+					} else
+						return 0;
 					break;
 				default:
 					return 0;
@@ -258,7 +260,8 @@ int install_code(int final)
 					} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
 						patch     = sd_v2_w6100_eth_bin;
 						patchSize = sd_v2_w6100_eth_bin_size;
-					}
+					} else
+						return 0;
 					break;
 				default:
 					return 0;
@@ -269,6 +272,8 @@ int install_code(int final)
 	// DVD
 	else if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_wode) {
 		switch (devices[DEVICE_CUR]->emulated()) {
+			case EMU_NONE:
+				break;
 			case EMU_READ:
 			case EMU_READ | EMU_BUS_ARBITER:
 				patch     = dvd_bin;
@@ -298,6 +303,8 @@ int install_code(int final)
 	// Wiikey Fusion
 	else if(devices[DEVICE_CUR] == &__device_wkf) {
 		switch (devices[DEVICE_CUR]->emulated()) {
+			case EMU_NONE:
+				break;
 			case EMU_READ:
 			case EMU_READ | EMU_BUS_ARBITER:
 				patch     = wkf_bin;
@@ -352,6 +359,8 @@ int install_code(int final)
 	else if(devices[DEVICE_CUR] == &__device_gcloader) {
 		if (devices[DEVICE_PATCHES] != &__device_gcloader) {
 			switch (devices[DEVICE_CUR]->emulated()) {
+				case EMU_NONE:
+					break;
 				case EMU_READ:
 				case EMU_READ | EMU_BUS_ARBITER:
 				case EMU_READ | EMU_READ_SPEED:
@@ -368,6 +377,8 @@ int install_code(int final)
 			}
 		} else {
 			switch (devices[DEVICE_CUR]->emulated()) {
+				case EMU_NONE:
+					break;
 				case EMU_READ:
 				case EMU_READ | EMU_READ_SPEED:
 					patch     = gcloader_v2_bin;
@@ -391,7 +402,8 @@ int install_code(int final)
 					} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
 						patch     = gcloader_v2_w6100_eth_bin;
 						patchSize = gcloader_v2_w6100_eth_bin_size;
-					}
+					} else
+						return 0;
 					break;
 				default:
 					return 0;
@@ -402,6 +414,8 @@ int install_code(int final)
 	// FlippyDrive
 	else if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
 		switch (devices[DEVICE_CUR]->emulated()) {
+			case EMU_NONE:
+				break;
 			case EMU_READ:
 			case EMU_READ | EMU_READ_SPEED:
 				patch     = flippy_bin;
@@ -421,7 +435,8 @@ int install_code(int final)
 				} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
 					patch     = flippy_w6100_eth_bin;
 					patchSize = flippy_w6100_eth_bin_size;
-				}
+				} else
+					return 0;
 				break;
 			default:
 				return 0;
@@ -431,7 +446,8 @@ int install_code(int final)
 	if (!final) {
 		print_gecko("Space for patch remaining: %i\r\n", top_addr - LO_RESERVE);
 		print_gecko("Space taken by vars/video patches: %i\r\n", HI_RESERVE - top_addr);
-		if (top_addr < LO_RESERVE + patchSize)
+		if (top_addr < LO_RESERVE + patchSize ||
+			top_addr < 0x80001800)
 			return 0;
 		patchLocation = Calc_Address(NULL, PATCH_OTHER, LO_RESERVE);
 		memcpy(patchLocation, patch, patchSize);
@@ -12776,131 +12792,8 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				patched++;
 				break;
 		}
-	} else if (!strncmp(gameID, "P2ME01", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 508384:
-				// Move persistent structure from 0x80001798 to 0x80000198.
-				*(s16 *)(data + 0x800056FA - 0x800056C0 + 0x2600) = 0x019A;
-				*(s16 *)(data + 0x80005702 - 0x800056C0 + 0x2600) = 0x01A0;
-				*(s16 *)(data + 0x8000571A - 0x800056C0 + 0x2600) = 0x01C7;
-				*(s16 *)(data + 0x8000572E - 0x800056C0 + 0x2600) = 0x01C8;
-				*(s16 *)(data + 0x80005742 - 0x800056C0 + 0x2600) = 0x01C8;
-				*(s16 *)(data + 0x80005772 - 0x800056C0 + 0x2600) = 0x019A;
-				*(s16 *)(data + 0x80005906 - 0x800056C0 + 0x2600) = 0x019A;
-				*(s16 *)(data + 0x800059A2 - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x80005A12 - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x80005CE2 - 0x800056C0 + 0x2600) = 0x019A;
-				*(s16 *)(data + 0x80005D3A - 0x800056C0 + 0x2600) = 0x019A;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-			case 832960:
-				// Move persistent structure from 0x80001798 to 0x80000198.
-				*(s16 *)(data + 0x800056FA - 0x800056C0 + 0x2600) = 0x0199;
-				*(s16 *)(data + 0x8000585E - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x8000586E - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x800058A2 - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x800059DE - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x80005F4A - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x8000604E - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x80006052 - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x80006266 - 0x800056C0 + 0x2600) = 0x0199;
-				*(s16 *)(data + 0x80006282 - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x800062FA - 0x800056C0 + 0x2600) = 0x0199;
-				*(s16 *)(data + 0x80006316 - 0x800056C0 + 0x2600) = 0x0198;
-				
-				*(s16 *)(data + 0x8000680E - 0x800056C0 + 0x2600) = 0x0198;
-				
-				*(s16 *)(data + 0x800068B6 - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x8000697E - 0x800056C0 + 0x2600) = 0x01C8;
-				
-				*(s16 *)(data + 0x80006A4A - 0x800056C0 + 0x2600) = 0x0199;
-				*(s16 *)(data + 0x80006A52 - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x80006A62 - 0x800056C0 + 0x2600) = 0x019A;
-				*(s16 *)(data + 0x80006A7E - 0x800056C0 + 0x2600) = 0x01A0;
-				*(s16 *)(data + 0x80006A92 - 0x800056C0 + 0x2600) = 0x01C7;
-				*(s16 *)(data + 0x80006AAE - 0x800056C0 + 0x2600) = 0x0199;
-				*(s16 *)(data + 0x80006AFE - 0x800056C0 + 0x2600) = 0x0199;
-				*(s16 *)(data + 0x80006B2A - 0x800056C0 + 0x2600) = 0x0199;
-				
-				*(s16 *)(data + 0x80006EF2 - 0x800056C0 + 0x2600) = 0x0199;
-				
-				*(s16 *)(data + 0x80007126 - 0x800056C0 + 0x2600) = 0x0199;
-				
-				*(s16 *)(data + 0x80007132 - 0x800056C0 + 0x2600) = 0x0199;
-				
-				*(s16 *)(data + 0x80007142 - 0x800056C0 + 0x2600) = 0x0199;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "PC6E01", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 508672:
-				// Move persistent structure from 0x80001798 to 0x80000198.
-				*(s16 *)(data + 0x800056FA - 0x800056C0 + 0x2600) = 0x019A;
-				*(s16 *)(data + 0x80005702 - 0x800056C0 + 0x2600) = 0x01A0;
-				*(s16 *)(data + 0x8000571A - 0x800056C0 + 0x2600) = 0x01C7;
-				*(s16 *)(data + 0x8000572E - 0x800056C0 + 0x2600) = 0x01C8;
-				*(s16 *)(data + 0x80005742 - 0x800056C0 + 0x2600) = 0x01C8;
-				*(s16 *)(data + 0x8000592A - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x8000592E - 0x800056C0 + 0x2600) = 0x019A;
-				*(s16 *)(data + 0x80005996 - 0x800056C0 + 0x2600) = 0x0198;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-			case 771104:
-				// Move persistent structure from 0x80001798 to 0x80000198.
-				*(s16 *)(data + 0x800056F6 - 0x800056C0 + 0x2600) = 0x0199;
-				*(s16 *)(data + 0x8000579A - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x800057AA - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x800057E2 - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x80005AFE - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x80005C86 - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x80005CDE - 0x800056C0 + 0x2600) = 0x0198;
-				
-				*(s16 *)(data + 0x8000613E - 0x800056C0 + 0x2600) = 0x0198;
-				
-				*(s16 *)(data + 0x800061E6 - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x8000629E - 0x800056C0 + 0x2600) = 0x01C8;
-				
-				*(s16 *)(data + 0x80006376 - 0x800056C0 + 0x2600) = 0x0199;
-				*(s16 *)(data + 0x8000637E - 0x800056C0 + 0x2600) = 0x0198;
-				*(s16 *)(data + 0x8000638E - 0x800056C0 + 0x2600) = 0x019A;
-				*(s16 *)(data + 0x800063AA - 0x800056C0 + 0x2600) = 0x01A0;
-				*(s16 *)(data + 0x800063BE - 0x800056C0 + 0x2600) = 0x01C7;
-				*(s16 *)(data + 0x800063DA - 0x800056C0 + 0x2600) = 0x0199;
-				*(s16 *)(data + 0x80006422 - 0x800056C0 + 0x2600) = 0x0199;
-				*(s16 *)(data + 0x8000644A - 0x800056C0 + 0x2600) = 0x0199;
-				
-				*(s16 *)(data + 0x800068CA - 0x800056C0 + 0x2600) = 0x0199;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
 	} else if (!strncmp(gameID, "PCKJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
-			case 1181312:
-				// Move persistent structure from 0x800017C0 to 0x800001C0.
-				*(s16 *)(data + 0x800062DA - 0x80005C80 + 0x2600) = 0x01C0;
-				*(s16 *)(data + 0x8000635E - 0x80005C80 + 0x2600) = 0x01C0;
-				
-				*(s16 *)(data + 0x80006926 - 0x80005C80 + 0x2600) = 0x01C0;
-				
-				*(s16 *)(data + 0x800069EA - 0x80005C80 + 0x2600) = 0x01C0;
-				*(s16 *)(data + 0x800069EE - 0x80005C80 + 0x2600) = 0x01C1;
-				*(s16 *)(data + 0x80006A1A - 0x80005C80 + 0x2600) = 0x01C0;
-				
-				*(s16 *)(data + 0x800076E2 - 0x80005C80 + 0x2600) = 0x01C1;
-				*(s16 *)(data + 0x8000783E - 0x80005C80 + 0x2600) = 0x01C1;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
 			case 3771872:
 				// Strip anti-debugging code.
 				*(u32 *)(data + 0x80005DD0 - 0x800055E0 + 0x25E0) = 0x60000000;
@@ -12911,23 +12804,6 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 		}
 	} else if (!strncmp(gameID, "PCSJ01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
-			case 1177728:
-				// Move persistent structure from 0x800017C0 to 0x800001C0.
-				*(s16 *)(data + 0x800062DA - 0x80005C80 + 0x2600) = 0x01C0;
-				*(s16 *)(data + 0x8000635E - 0x80005C80 + 0x2600) = 0x01C0;
-				
-				*(s16 *)(data + 0x80006926 - 0x80005C80 + 0x2600) = 0x01C0;
-				
-				*(s16 *)(data + 0x800069EA - 0x80005C80 + 0x2600) = 0x01C0;
-				*(s16 *)(data + 0x800069EE - 0x80005C80 + 0x2600) = 0x01C1;
-				*(s16 *)(data + 0x80006A1A - 0x80005C80 + 0x2600) = 0x01C0;
-				
-				*(s16 *)(data + 0x800076E2 - 0x80005C80 + 0x2600) = 0x01C1;
-				*(s16 *)(data + 0x8000783E - 0x80005C80 + 0x2600) = 0x01C1;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
 			case 3771872:
 				// Strip anti-debugging code.
 				*(u32 *)(data + 0x80005DD0 - 0x800055E0 + 0x25E0) = 0x60000000;
@@ -13707,6 +13583,152 @@ int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int
 			case 4205664:
 				// Move up DSI exception handler.
 				*(s16 *)(data + 0x802AB256 - 0x800056A0 + 0x2600) = 0x0304;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "P2ME01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 508384:
+				// Move persistent structure from 0x80001798 to 0x80000198.
+				*(s16 *)(data + 0x800056FA - 0x800056C0 + 0x2600) = 0x019A;
+				*(s16 *)(data + 0x80005702 - 0x800056C0 + 0x2600) = 0x01A0;
+				*(s16 *)(data + 0x8000571A - 0x800056C0 + 0x2600) = 0x01C7;
+				*(s16 *)(data + 0x8000572E - 0x800056C0 + 0x2600) = 0x01C8;
+				*(s16 *)(data + 0x80005742 - 0x800056C0 + 0x2600) = 0x01C8;
+				*(s16 *)(data + 0x80005772 - 0x800056C0 + 0x2600) = 0x019A;
+				*(s16 *)(data + 0x80005906 - 0x800056C0 + 0x2600) = 0x019A;
+				*(s16 *)(data + 0x800059A2 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80005A12 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80005CE2 - 0x800056C0 + 0x2600) = 0x019A;
+				*(s16 *)(data + 0x80005D3A - 0x800056C0 + 0x2600) = 0x019A;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 832960:
+				// Move persistent structure from 0x80001798 to 0x80000198.
+				*(s16 *)(data + 0x800056FA - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x8000585E - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x8000586E - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x800058A2 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x800059DE - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80005F4A - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x8000604E - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80006052 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80006266 - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x80006282 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x800062FA - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x80006316 - 0x800056C0 + 0x2600) = 0x0198;
+				
+				*(s16 *)(data + 0x8000680E - 0x800056C0 + 0x2600) = 0x0198;
+				
+				*(s16 *)(data + 0x800068B6 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x8000697E - 0x800056C0 + 0x2600) = 0x01C8;
+				
+				*(s16 *)(data + 0x80006A4A - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x80006A52 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80006A62 - 0x800056C0 + 0x2600) = 0x019A;
+				*(s16 *)(data + 0x80006A7E - 0x800056C0 + 0x2600) = 0x01A0;
+				*(s16 *)(data + 0x80006A92 - 0x800056C0 + 0x2600) = 0x01C7;
+				*(s16 *)(data + 0x80006AAE - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x80006AFE - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x80006B2A - 0x800056C0 + 0x2600) = 0x0199;
+				
+				*(s16 *)(data + 0x80006EF2 - 0x800056C0 + 0x2600) = 0x0199;
+				
+				*(s16 *)(data + 0x80007126 - 0x800056C0 + 0x2600) = 0x0199;
+				
+				*(s16 *)(data + 0x80007132 - 0x800056C0 + 0x2600) = 0x0199;
+				
+				*(s16 *)(data + 0x80007142 - 0x800056C0 + 0x2600) = 0x0199;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "PC6E01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 508672:
+				// Move persistent structure from 0x80001798 to 0x80000198.
+				*(s16 *)(data + 0x800056FA - 0x800056C0 + 0x2600) = 0x019A;
+				*(s16 *)(data + 0x80005702 - 0x800056C0 + 0x2600) = 0x01A0;
+				*(s16 *)(data + 0x8000571A - 0x800056C0 + 0x2600) = 0x01C7;
+				*(s16 *)(data + 0x8000572E - 0x800056C0 + 0x2600) = 0x01C8;
+				*(s16 *)(data + 0x80005742 - 0x800056C0 + 0x2600) = 0x01C8;
+				*(s16 *)(data + 0x8000592A - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x8000592E - 0x800056C0 + 0x2600) = 0x019A;
+				*(s16 *)(data + 0x80005996 - 0x800056C0 + 0x2600) = 0x0198;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 771104:
+				// Move persistent structure from 0x80001798 to 0x80000198.
+				*(s16 *)(data + 0x800056F6 - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x8000579A - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x800057AA - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x800057E2 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80005AFE - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80005C86 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x80005CDE - 0x800056C0 + 0x2600) = 0x0198;
+				
+				*(s16 *)(data + 0x8000613E - 0x800056C0 + 0x2600) = 0x0198;
+				
+				*(s16 *)(data + 0x800061E6 - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x8000629E - 0x800056C0 + 0x2600) = 0x01C8;
+				
+				*(s16 *)(data + 0x80006376 - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x8000637E - 0x800056C0 + 0x2600) = 0x0198;
+				*(s16 *)(data + 0x8000638E - 0x800056C0 + 0x2600) = 0x019A;
+				*(s16 *)(data + 0x800063AA - 0x800056C0 + 0x2600) = 0x01A0;
+				*(s16 *)(data + 0x800063BE - 0x800056C0 + 0x2600) = 0x01C7;
+				*(s16 *)(data + 0x800063DA - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x80006422 - 0x800056C0 + 0x2600) = 0x0199;
+				*(s16 *)(data + 0x8000644A - 0x800056C0 + 0x2600) = 0x0199;
+				
+				*(s16 *)(data + 0x800068CA - 0x800056C0 + 0x2600) = 0x0199;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "PCKJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1181312:
+				// Move persistent structure from 0x800017C0 to 0x800001C0.
+				*(s16 *)(data + 0x800062DA - 0x80005C80 + 0x2600) = 0x01C0;
+				*(s16 *)(data + 0x8000635E - 0x80005C80 + 0x2600) = 0x01C0;
+				
+				*(s16 *)(data + 0x80006926 - 0x80005C80 + 0x2600) = 0x01C0;
+				
+				*(s16 *)(data + 0x800069EA - 0x80005C80 + 0x2600) = 0x01C0;
+				*(s16 *)(data + 0x800069EE - 0x80005C80 + 0x2600) = 0x01C1;
+				*(s16 *)(data + 0x80006A1A - 0x80005C80 + 0x2600) = 0x01C0;
+				
+				*(s16 *)(data + 0x800076E2 - 0x80005C80 + 0x2600) = 0x01C1;
+				*(s16 *)(data + 0x8000783E - 0x80005C80 + 0x2600) = 0x01C1;
+				
+				print_gecko("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "PCSJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 1177728:
+				// Move persistent structure from 0x800017C0 to 0x800001C0.
+				*(s16 *)(data + 0x800062DA - 0x80005C80 + 0x2600) = 0x01C0;
+				*(s16 *)(data + 0x8000635E - 0x80005C80 + 0x2600) = 0x01C0;
+				
+				*(s16 *)(data + 0x80006926 - 0x80005C80 + 0x2600) = 0x01C0;
+				
+				*(s16 *)(data + 0x800069EA - 0x80005C80 + 0x2600) = 0x01C0;
+				*(s16 *)(data + 0x800069EE - 0x80005C80 + 0x2600) = 0x01C1;
+				*(s16 *)(data + 0x80006A1A - 0x80005C80 + 0x2600) = 0x01C0;
+				
+				*(s16 *)(data + 0x800076E2 - 0x80005C80 + 0x2600) = 0x01C1;
+				*(s16 *)(data + 0x8000783E - 0x80005C80 + 0x2600) = 0x01C1;
 				
 				print_gecko("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -16061,7 +16083,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		u32 *InitializeUART = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (InitializeUART) {
-			if ((devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) && swissSettings.debugUSB && !swissSettings.wiirdDebug) {
+			if (devices[DEVICE_CUR]->emulated() && swissSettings.debugUSB && !swissSettings.wiirdDebug) {
 				memset(data + i, 0, InitializeUARTSigs[j].Length * sizeof(u32));
 				
 				data[i + 0] = 0x38600000;	// li		r3, 0
@@ -16077,7 +16099,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		u32 *WriteUARTN = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (WriteUARTN) {
-			if ((devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) && swissSettings.debugUSB && !swissSettings.wiirdDebug) {
+			if (devices[DEVICE_CUR]->emulated() && swissSettings.debugUSB && !swissSettings.wiirdDebug) {
 				memset(data + i, 0, WriteUARTNSigs[j].Length * sizeof(u32));
 				memcpy(data + i, WriteUARTNSigs[j].Patch, WriteUARTNSigs[j].PatchLength);
 			}
@@ -16992,7 +17014,7 @@ int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int
 		int patched = 0;
 		
 		// Patch hypervisor
-		if (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
+		if (devices[DEVICE_CUR]->emulated()) {
 			patched += Patch_Hypervisor(buffer, sizeToRead, type);
 			patched += Patch_GameSpecificHypervisor(buffer, sizeToRead, gameID, type);
 		}

@@ -24,6 +24,7 @@ typedef struct {
 	int emulateReadSpeed;
 	int emulateEthernet;
 	int disableMemoryCard;
+	int disableHypervisor;
 	int forceCleanBoot;
 	int preferCleanBoot;
 	int rt4kProfile;

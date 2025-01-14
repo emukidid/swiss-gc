@@ -560,8 +560,12 @@ u32 deviceHandler_DVD_emulated() {
 			return EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER;
 		else
 			return EMU_READ | EMU_BUS_ARBITER;
-	} else
-		return EMU_READ;
+	} else {
+		if (swissSettings.disableHypervisor)
+			return EMU_NONE;
+		else
+			return EMU_READ;
+	}
 }
 
 char* deviceHandler_DVD_status(file_handle* file) {

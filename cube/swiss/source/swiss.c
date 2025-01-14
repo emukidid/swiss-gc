@@ -2413,7 +2413,7 @@ int check_game(file_handle *file, file_handle *file2, ExecutableFile *filesToPat
 	}
 	DrawDispose(msgBox);
 	
-	if(devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
+	if(devices[DEVICE_CUR]->emulated()) {
 		patch_gcm(filesToPatch, numToPatch);
 	}
 	return numToPatch;

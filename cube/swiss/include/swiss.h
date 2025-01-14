@@ -121,6 +121,7 @@ typedef struct {
 	int emulateEthernet;
 	int emulateMemoryCard;
 	int disableMemoryCard;
+	int disableHypervisor;
 	int preferCleanBoot;
 	s8 sramHOffset;
 	u8 sramLanguage;

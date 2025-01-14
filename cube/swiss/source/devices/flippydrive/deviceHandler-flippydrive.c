@@ -357,7 +357,9 @@ bool deviceHandler_FlippyFlash_test() {
 }
 
 u32 deviceHandler_Flippy_emulated() {
-	if (swissSettings.emulateReadSpeed)
+	if (swissSettings.disableHypervisor)
+		return EMU_NONE;
+	else if (swissSettings.emulateReadSpeed)
 		return EMU_READ | EMU_READ_SPEED;
 	else if (swissSettings.emulateEthernet && (devices[DEVICE_CUR]->emulable & EMU_ETHERNET))
 		return EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING;

@@ -212,6 +212,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Emulate Broadband Adapter=%s\r\n", swissSettings.emulateEthernet ? "Yes":"No");
 	fprintf(fp, "Emulate Memory Card=%s\r\n", swissSettings.emulateMemoryCard ? "Yes":"No");
 	fprintf(fp, "Disable Memory Card=%s\r\n", disableMemoryCardStr[swissSettings.disableMemoryCard]);
+	fprintf(fp, "Disable Hypervisor=%s\r\n", swissSettings.disableHypervisor ? "Yes":"No");
 	fprintf(fp, "Prefer Clean Boot=%s\r\n", swissSettings.preferCleanBoot ? "Yes":"No");
 	fprintf(fp, "RetroTINK-4K Profile=%i\r\n", swissSettings.rt4kProfile);
 	fprintf(fp, "#!!Swiss Settings End!!\r\n\r\n");
@@ -287,6 +288,7 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	if(entry->emulateReadSpeed != swissSettings.emulateReadSpeed) fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[entry->emulateReadSpeed]);
 	if(entry->emulateEthernet != swissSettings.emulateEthernet) fprintf(fp, "Emulate Broadband Adapter=%s\r\n", entry->emulateEthernet ? "Yes":"No");
 	if(entry->disableMemoryCard != swissSettings.disableMemoryCard) fprintf(fp, "Disable Memory Card=%s\r\n", disableMemoryCardStr[entry->disableMemoryCard]);
+	if(entry->disableHypervisor != swissSettings.disableHypervisor) fprintf(fp, "Disable Hypervisor=%s\r\n", entry->disableHypervisor ? "Yes":"No");
 	if(entry->preferCleanBoot != swissSettings.preferCleanBoot) fprintf(fp, "Prefer Clean Boot=%s\r\n", entry->preferCleanBoot ? "Yes":"No");
 	if(entry->rt4kProfile != swissSettings.rt4kProfile) fprintf(fp, "RetroTINK-4K Profile=%i\r\n", entry->rt4kProfile);
 	fclose(fp);
@@ -329,6 +331,7 @@ void config_defaults(ConfigEntry *entry) {
 	entry->emulateReadSpeed = swissSettings.emulateReadSpeed;
 	entry->emulateEthernet = swissSettings.emulateEthernet;
 	entry->disableMemoryCard = swissSettings.disableMemoryCard;
+	entry->disableHypervisor = swissSettings.disableHypervisor;
 	entry->preferCleanBoot = swissSettings.preferCleanBoot;
 	entry->rt4kProfile = swissSettings.rt4kProfile;
 
@@ -754,6 +757,9 @@ void config_parse_global(char *configData) {
 						}
 					}
 				}
+				else if(!strcmp("Disable Hypervisor", name)) {
+					swissSettings.disableHypervisor = !strcmp("Yes", value);
+				}
 				else if(!strcmp("Prefer Clean Boot", name)) {
 					swissSettings.preferCleanBoot = !strcmp("Yes", value);
 				}
@@ -1121,6 +1127,9 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 						}
 					}
 				}
+				else if(!strcmp("Disable Hypervisor", name)) {
+					entry->disableHypervisor = !strcmp("Yes", value);
+				}
 				else if(!strcmp("Prefer Clean Boot", name)) {
 					entry->preferCleanBoot = !strcmp("Yes", value);
 				}
@@ -1225,6 +1234,7 @@ void config_load_current(ConfigEntry *entry) {
 	swissSettings.emulateReadSpeed = entry->emulateReadSpeed;
 	swissSettings.emulateEthernet = entry->emulateEthernet;
 	swissSettings.disableMemoryCard = entry->disableMemoryCard;
+	swissSettings.disableHypervisor = entry->disableHypervisor;
 	swissSettings.preferCleanBoot = entry->preferCleanBoot;
 	swissSettings.rt4kProfile = entry->rt4kProfile;
 	
@@ -1286,6 +1296,7 @@ void config_unload_current() {
 	swissSettings.emulateReadSpeed = backup.emulateReadSpeed;
 	swissSettings.emulateEthernet = backup.emulateEthernet;
 	swissSettings.disableMemoryCard = backup.disableMemoryCard;
+	swissSettings.disableHypervisor = backup.disableHypervisor;
 	swissSettings.preferCleanBoot = backup.preferCleanBoot;
 	swissSettings.sramLanguage = backup.sramLanguage;
 	swissSettings.sramVideo = backup.sramVideo;
