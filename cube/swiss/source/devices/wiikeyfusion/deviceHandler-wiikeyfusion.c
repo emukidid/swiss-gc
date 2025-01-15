@@ -36,7 +36,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, Executabl
 	file_frag *fragList = NULL;
 	u32 numFrags = 0;
 	
-	if(numToPatch < 0) {
+	if(numToPatch < 0 || !devices[DEVICE_CUR]->emulated()) {
 		if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, 0, 0, 0) || numFrags != 1) {
 			free(fragList);
 			return 0;

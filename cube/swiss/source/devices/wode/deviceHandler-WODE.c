@@ -115,7 +115,7 @@ s32 deviceHandler_WODE_readFile(file_handle* file, void* buffer, u32 length) {
 }
 
 s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
-	if(numToPatch < 0) {
+	if(numToPatch < 0 || !devices[DEVICE_CUR]->emulated()) {
 		if(file->status == STATUS_NOT_MAPPED) {
 			ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
 			SetISO(isoInfo->iso_partition,isoInfo->iso_number);

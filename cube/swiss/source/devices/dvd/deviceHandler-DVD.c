@@ -418,7 +418,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, Executabl
 		file->status = STATUS_MAPPED;
 		print_gecko("Streaming %s %08X\r\n",swissSettings.audioStreaming?"Enabled":"Disabled",dvd_get_error());
 	}
-	if(numToPatch < 0) {
+	if(numToPatch < 0 || !devices[DEVICE_CUR]->emulated()) {
 		return 1;
 	}
 	// Check if there are any fragments in our patch location for this game
