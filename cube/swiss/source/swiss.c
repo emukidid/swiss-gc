@@ -1268,11 +1268,8 @@ fail_early:
 
 void boot_dol(file_handle* file, int argc, char *argv[])
 {
-	void *dol_buffer;
-	void *ptr;
-  
-	dol_buffer = memalign(32, file->size);
-	if(!dol_buffer) {
+	void *buffer = memalign(32, file->size);
+	if(!buffer) {
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"DOL is too big. Press A.");
 		DrawPublish(msgBox);
 		wait_press_A();
@@ -1281,7 +1278,7 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 	}
 		
 	int i=0;
-	ptr = dol_buffer;
+	void *ptr = buffer;
 	uiDrawObj_t* progBar = DrawProgressBar(false, 0, "Loading DOL");
 	DrawPublish(progBar);
 	for(i = 0; i < file->size; i+= 131072) {
@@ -1291,7 +1288,7 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 		int size = i+131072 > file->size ? file->size-i : 131072; 
 		if(devices[DEVICE_CUR]->readFile(file,ptr,size)!=size) {
 			DrawDispose(progBar);
-			free(dol_buffer);
+			free(buffer);
 			devices[DEVICE_CUR]->closeFile(file);
 			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"Failed to read DOL. Press A.");
 			DrawPublish(msgBox);
@@ -1302,10 +1299,10 @@ void boot_dol(file_handle* file, int argc, char *argv[])
   		ptr+=size;
 	}
 	
-	XXH64_hash_t hash = XXH3_64bits(dol_buffer, file->size);
+	XXH64_hash_t hash = XXH3_64bits(buffer, file->size);
 	if(!valid_dol_xxh3(file, hash)) {
 		DrawDispose(progBar);
-		free(dol_buffer);
+		free(buffer);
 		devices[DEVICE_CUR]->closeFile(file);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"DOL is corrupted. Press A.");
 		DrawPublish(msgBox);
@@ -1324,16 +1321,16 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 			DrawDispose(msgBox);
 		}
 	}
-	
-	// Build a command line to pass to the DOL
-	char *argz = getExternalPath(file->name);
-	size_t argz_len = strlen(argz) + 1;
 
 	char fileName[PATHNAME_MAX];
 	memset(fileName, 0, PATHNAME_MAX);
 	strncpy(fileName, file->name, strrchr(file->name, '.') - file->name);
 	print_gecko("DOL file name without extension [%s]\r\n", fileName);
 	
+	// Build a command line to pass to the DOL
+	char *argz = getExternalPath(file->name);
+	size_t argz_len = strlen(argz) + 1;
+
 	// .cli argument file
 	file_handle *cliArgFile = calloc(1, sizeof(file_handle));
 	snprintf(cliArgFile->name, PATHNAME_MAX, "%s.cli", fileName);
@@ -1391,21 +1388,31 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 		argz_add(&argz, &argz_len, argv[i]);
 	}
 
-	// Boot
-	if(!memcmp(dol_buffer, ELFMAG, SELFMAG)) {
-		ELFtoARAM(dol_buffer, argz, argz_len);
-	}
-	else if(endsWith(file->name, "/SDLOADER.BIN")) {
-		BINtoARAM(dol_buffer, file->size, 0x81700000, 0x81700000);
-	}
-	else if(branchResolve(dol_buffer, PATCH_BIN, 0)) {
-		BINtoARAM(dol_buffer, file->size, 0x80003100, 0x80003100);
-	}
-	else {
-		DOLtoARAM(dol_buffer, argz, argz_len);
+	// .iso disc image file
+	file_handle *imageFile = calloc(1, sizeof(file_handle));
+	snprintf(imageFile->name, PATHNAME_MAX, "%s.iso", fileName);
+
+	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
+		devices[DEVICE_CUR]->setupFile(imageFile, NULL, NULL, -1);
 	}
 
-	free(dol_buffer);
+	// Boot
+	if(!memcmp(buffer, ELFMAG, SELFMAG)) {
+		ELFtoARAM(buffer, argz, argz_len);
+	}
+	else if(endsWith(file->name, "/SDLOADER.BIN")) {
+		BINtoARAM(buffer, file->size, 0x81700000, 0x81700000);
+	}
+	else if(branchResolve(buffer, PATCH_BIN, 0)) {
+		BINtoARAM(buffer, file->size, 0x80003100, 0x80003100);
+	}
+	else {
+		DOLtoARAM(buffer, argz, argz_len);
+	}
+
+	devices[DEVICE_CUR]->closeFile(imageFile);
+	free(imageFile);
+	free(buffer);
 }
 
 /* Manage file  - The user will be asked what they want to do with the currently selected file - copy/move/delete*/

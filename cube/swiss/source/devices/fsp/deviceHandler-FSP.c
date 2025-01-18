@@ -127,6 +127,9 @@ s32 deviceHandler_FSP_setupFile(file_handle* file, file_handle* file2, Executabl
 	file_frag *fragList = NULL;
 	u32 numFrags = 0;
 	
+	if(numToPatch < 0) {
+		return 0;
+	}
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
 		print_gecko("Save Patch device found\r\n");

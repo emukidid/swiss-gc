@@ -109,6 +109,10 @@ fail:
 }
 
 s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
+	int i;
+	file_frag *fragList = NULL;
+	u32 numFrags = 0;
+	
 	if(!setupFile(file, file2, filesToPatch, numToPatch)) {
 		return 0;
 	}
@@ -117,10 +121,6 @@ s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, Exec
 	}
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
-		int i;
-		file_frag *fragList = NULL;
-		u32 numFrags = 0;
-		
 		print_gecko("Save Patch device found\r\n");
 		
 		// Look for patch files, if we find some, open them and add them as fragments

@@ -395,6 +395,10 @@ s32 deviceHandler_DVD_readFile(file_handle* file, void* buffer, u32 length){
 }
 
 s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
+	int i;
+	file_frag *fragList = NULL;
+	u32 numFrags = 0;
+	
 	// Multi-Game disc audio streaming setup
 	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
 		if(swissSettings.audioStreaming && !isXenoGC) {
@@ -423,10 +427,6 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, Executabl
 	}
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
-		int i;
-		file_frag *fragList = NULL;
-		u32 numFrags = 0;
-		
 		print_gecko("Save Patch device found\r\n");
 		
 		// Look for patch files, if we find some, open them and add them as fragments

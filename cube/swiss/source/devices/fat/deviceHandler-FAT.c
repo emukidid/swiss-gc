@@ -210,6 +210,9 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 	file_frag *fragList = NULL;
 	u32 numFrags = 0;
 	
+	if(numToPatch < 0) {
+		return 0;
+	}
 	// Look for patch files, if we find some, open them and add them as fragments
 	file_handle patchFile;
 	for(i = 0; i < numToPatch; i++) {
