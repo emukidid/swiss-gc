@@ -1326,9 +1326,17 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 	memset(fileName, 0, PATHNAME_MAX);
 	strncpy(fileName, file->name, strrchr(file->name, '.') - file->name);
 	print_gecko("DOL file name without extension [%s]\r\n", fileName);
-	
+
+	// .iso disc image file
+	file_handle *imageFile = calloc(1, sizeof(file_handle));
+	snprintf(imageFile->name, PATHNAME_MAX, "%s.iso", fileName);
+
+	if(devices[DEVICE_CUR]->statFile) {
+		devices[DEVICE_CUR]->statFile(imageFile);
+	}
+
 	// Build a command line to pass to the DOL
-	char *argz = getExternalPath(file->name);
+	char *argz = getExternalPath(imageFile->fileType == IS_FILE ? imageFile->name : file->name);
 	size_t argz_len = strlen(argz) + 1;
 
 	// .cli argument file
@@ -1388,15 +1396,11 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 		argz_add(&argz, &argz_len, argv[i]);
 	}
 
-	// .iso disc image file
-	file_handle *imageFile = calloc(1, sizeof(file_handle));
-	snprintf(imageFile->name, PATHNAME_MAX, "%s.iso", fileName);
-
+	// Boot
 	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
 		devices[DEVICE_CUR]->setupFile(imageFile, NULL, NULL, -1);
 	}
 
-	// Boot
 	if(!memcmp(buffer, ELFMAG, SELFMAG)) {
 		ELFtoARAM(buffer, argz, argz_len);
 	}
