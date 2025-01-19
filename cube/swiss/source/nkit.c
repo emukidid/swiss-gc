@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -2063,7 +2063,7 @@ static const struct {
 	{{ "GZHJDA\x00\x00" }, false, 0x1D, 0xB05D, 0x86F1BB88, 0x8AECED8AB4BCB487,  445110272, +1014867968, {   83045600, +1014868124, 6496, 0x367E }, "Zoids: Full Metal Crash" },
 	{{ "GZLE01\x00\x00" }, false, 0x2C, 0x0503, 0xAD21C2BA, 0x36D193DF45BFDAA4, 1086173184,  +373805056, { 1084514500,  +373806324, 6496, 0x825E }, "The Legend of Zelda: The Wind Waker" },
 	{{ "GZLE01\x00\x30" }, false, 0xA7, 0x23BB, 0x79706BF2, 0x36D193DF45BFDAA4, 1086173184,  +373805056, { 1084514500,  +373806324, 6496, 0x825E }, "The Legend of Zelda: The Wind Waker" },
-	{{ "GZLJ01\x00\x00" }, false, 0x71, 0xDEDE, 0xC58B4E93, 0x66AA07FFD17C4906, 1028438016,  +431540224, { 1026790568,  +431540324, 6496, 0x4D3E }, "Zelda no Densetsu: Kaze no Takuto" },
+	{{ "GZLJ01\x00\x00" }, false, 0x71, 0xDEDE, 0xC58B4E93, 0x66AA07FFD17C4906, 1028438016,  +431540224, { 1026790568,  +431540324, 6496, 0x4D3E }, "Zelda no Densetsu: Kaze no Takt" },
 	{{ "GZLP01\x00\x00" }, false, 0x80, 0xBE51, 0x61FC5423, 0x19B91B3ECA0FF750, 1097971712,  +362006528, { 1091328128,  +362007624, 8096, 0xA9A7 }, "The Legend of Zelda: The Wind Waker" },
 	{{ "GZMP7D\x00\x00" }, false, 0x97, 0x50D8, 0x6D8D3BD4, 0x154717F0C1B938E0, 1329086464,  +130891776, {    1622364,      +16036, 6496, 0xF756 }, "Butt-Ugly Martians: Zoom or Doom!" },
 	{{ "GZOJDA\x00\x01" }, true,  0xA6, 0xF08B, 0x0E0403C3, 0xE6EBF1B229F61ECB, 1086898176,  +373080064, {  313197008,   +10420996, 6496, 0x8F48 }, "Zoids Vs." },
