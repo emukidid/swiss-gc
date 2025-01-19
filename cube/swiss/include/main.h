@@ -25,7 +25,8 @@ enum useCheats
 //File type
 enum fileTypes
 {
-  IS_FILE=0,
+  IS_UNKNOWN=0,
+  IS_FILE,
   IS_DIR,
   IS_SPECIAL
 };

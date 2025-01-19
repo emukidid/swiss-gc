@@ -54,7 +54,7 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 		memset(&(*dir)[i], 0, sizeof(file_handle));
 		if(strlcpy((*dir)[i].name, entry->name, PATHNAME_MAX) < PATHNAME_MAX) {
 			(*dir)[i].size     = entry->size;
-			(*dir)[i].fileType = entry->fileType;
+			(*dir)[i].fileType = entry->fileType + IS_FILE;
 			++i;
 		}
 	}

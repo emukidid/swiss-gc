@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2024-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 

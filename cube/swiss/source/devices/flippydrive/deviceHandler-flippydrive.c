@@ -69,8 +69,8 @@ s32 deviceHandler_Flippy_readDir(file_handle* ffile, file_handle** dir, u32 type
 			memset(&(*dir)[i], 0, sizeof(file_handle));
 			if(concat_path((*dir)[i].name, ffile->name, entry.name) < PATHNAME_MAX && entry.size <= UINT32_MAX) {
 				(*dir)[i].size       = entry.size;
-				(*dir)[i].fileType   = (entry.type == FLIPPY_TYPE_DIR) ? IS_DIR : IS_FILE;
 				(*dir)[i].fileAttrib = entry.attributes;
+				(*dir)[i].fileType   = (entry.type == FLIPPY_TYPE_DIR) ? IS_DIR : IS_FILE;
 				++i;
 			}
 		}
@@ -119,6 +119,7 @@ s32 deviceHandler_Flippy_readFile(file_handle* file, void* buffer, u32 length) {
 			}
 		}
 		file->size = info->file.size;
+		file->fileType = IS_FILE;
 	}
 	if(file->offset > file->size) {
 		file->offset = file->size;
@@ -145,6 +146,7 @@ s32 deviceHandler_Flippy_writeFile(file_handle* file, const void* buffer, u32 le
 		}
 		flippyfileinfo* info = file->fp;
 		file->size = info->file.size;
+		file->fileType = IS_FILE;
 	}
 	if(flippy_pwrite(file->fp, buffer, length, file->offset) != FLIPPY_RESULT_OK) {
 		return -1;

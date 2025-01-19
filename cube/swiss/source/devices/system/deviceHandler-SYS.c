@@ -403,6 +403,19 @@ s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	return num_entries;
 }
 
+s32 deviceHandler_SYS_statFile(file_handle* file) {
+	int i;
+	for(i = ROM_IPL; i < NUM_ROMS; i++) {
+		if(endsWith(file->name, rom_names[i])) {
+			file->fileBase = i;
+			file->size     = rom_sizes[i];
+			file->fileType = IS_FILE;
+			return 0;
+		}
+	}
+	return -1;
+}
+
 s64 deviceHandler_SYS_seekFile(file_handle* file, s64 where, u32 type) {
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset = file->offset + where;
@@ -411,38 +424,26 @@ s64 deviceHandler_SYS_seekFile(file_handle* file, s64 where, u32 type) {
 }
 
 s32 deviceHandler_SYS_readFile(file_handle* file, void* buffer, u32 length) {
-	s32 i;
-
-	if(file->fileBase == ROM_VOID) {
-		for(i = ROM_IPL; i < NUM_ROMS; i++) {
-			if(endsWith(file->name, rom_names[i])) {
-				file->fileBase = i;
-				break;
-			}
+	if(file->fileType != IS_FILE) {
+		if(deviceHandler_SYS_statFile(file)) {
+			return -1;
 		}
 	}
 
 	s32 ret = read_rom[file->fileBase](file, buffer, length);
 	file->offset += ret;
-	file->size = rom_sizes[file->fileBase];
 	return ret;
 }
 
 s32 deviceHandler_SYS_writeFile(file_handle* file, const void* buffer, u32 length) {
-	s32 i;
-
-	if(file->fileBase == ROM_VOID) {
-		for(i = ROM_IPL; i < NUM_ROMS; i++) {
-			if(endsWith(file->name, rom_names[i])) {
-				file->fileBase = i;
-				break;
-			}
+	if(file->fileType != IS_FILE) {
+		if(deviceHandler_SYS_statFile(file)) {
+			return -1;
 		}
 	}
 
 	s32 ret = write_rom[file->fileBase](file, buffer, length);
 	file->offset += ret;
-	file->size = rom_sizes[file->fileBase];
 	return ret;
 }
 
@@ -475,6 +476,7 @@ DEVICEHANDLER_INTERFACE __device_sys = {
 	.info = deviceHandler_SYS_info,
 	.init = deviceHandler_SYS_init,
 	.readDir = deviceHandler_SYS_readDir,
+	.statFile = deviceHandler_SYS_statFile,
 	.seekFile = deviceHandler_SYS_seekFile,
 	.readFile = deviceHandler_SYS_readFile,
 	.writeFile = deviceHandler_SYS_writeFile,

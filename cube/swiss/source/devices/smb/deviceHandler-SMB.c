@@ -165,10 +165,9 @@ s32 deviceHandler_SMB_readFile(file_handle* file, void* buffer, u32 length){
 		file->fp = fopen(file->name, "rb");
 		if(!file->fp) return -1;
 		setbuf(file->fp, NULL);
-	}
-	if(file->size <= 0) {
 		fseek(file->fp, 0, SEEK_END);
 		file->size = ftell(file->fp);
+		file->fileType = IS_FILE;
 	}
 	
 	fseek(file->fp, file->offset, SEEK_SET);
@@ -182,6 +181,8 @@ s32 deviceHandler_SMB_writeFile(file_handle* file, const void* buffer, u32 lengt
 		file->fp = fopen(file->name, "wb");
 		if(!file->fp) return -1;
 		setbuf(file->fp, NULL);
+		file->size = 0;
+		file->fileType = IS_FILE;
 	}
 	
 	fseek(file->fp, file->offset, SEEK_SET);

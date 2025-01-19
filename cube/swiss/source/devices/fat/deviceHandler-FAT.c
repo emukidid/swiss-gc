@@ -133,8 +133,8 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			if(concat_path((*dir)[i].name, ffile->name, entry.fname) < PATHNAME_MAX && entry.fsize <= UINT32_MAX) {
 				(*dir)[i].fileBase   = entry.fclust;
 				(*dir)[i].size       = entry.fsize;
-				(*dir)[i].fileType   = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
 				(*dir)[i].fileAttrib = entry.fattrib;
+				(*dir)[i].fileType   = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
 				++i;
 			}
 		}
@@ -151,8 +151,8 @@ s32 deviceHandler_FAT_statFile(file_handle* file) {
 	if(ret == FR_OK) {
 		file->fileBase   = entry.fclust;
 		file->size       = entry.fsize;
-		file->fileType   = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
 		file->fileAttrib = entry.fattrib;
+		file->fileType   = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
 	}
 	return ret;
 }
@@ -167,11 +167,14 @@ s64 deviceHandler_FAT_seekFile(file_handle* file, s64 where, u32 type){
 s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
 	if(!file->ffsFp) {
 		file->ffsFp = malloc(sizeof(FIL));
-		if(f_open(file->ffsFp, file->name, FA_READ ) != FR_OK) {
+		if(f_open(file->ffsFp, file->name, FA_READ) != FR_OK) {
 			free(file->ffsFp);
 			file->ffsFp = NULL;
 			return -1;
 		}
+		file->fileBase = file->ffsFp->obj.sclust;
+		file->size     = file->ffsFp->obj.objsize;
+		file->fileType = IS_FILE;
 	}
 	f_lseek(file->ffsFp, file->offset);
 	
@@ -187,11 +190,15 @@ s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
 s32 deviceHandler_FAT_writeFile(file_handle* file, const void* buffer, u32 length) {
 	if(!file->ffsFp) {
 		file->ffsFp = malloc(sizeof(FIL));
-		if(f_open(file->ffsFp, file->name, FA_CREATE_ALWAYS | FA_WRITE ) != FR_OK) {
+		if(f_open(file->ffsFp, file->name, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) {
 			free(file->ffsFp);
 			file->ffsFp = NULL;
 			return -1;
 		}
+		file->fileBase = file->ffsFp->obj.sclust;
+		file->size     = file->ffsFp->obj.objsize;
+		file->fileType = IS_FILE;
+		
 		f_expand(file->ffsFp, file->offset + length, 1);
 	}
 	f_lseek(file->ffsFp, file->offset);
