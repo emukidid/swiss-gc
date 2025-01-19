@@ -10,6 +10,7 @@
 #include <xxhash.h>
 #include "dvd.h"
 #include "elf.h"
+#include "eltorito.h"
 #include "gcm.h"
 #include "main.h"
 #include "nkit.h"
@@ -213,6 +214,30 @@ u32 calc_elf_segments_size(file_handle *file, u32 file_offset, u32 *file_size) {
 	return size;
 }
 
+u32 get_iso_boot_record(file_handle *file) {
+	u32 file_offset = 17 * DI_SECTOR_SIZE;
+	
+	struct di_boot_record boot_record;
+	devices[DEVICE_CUR]->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	if(devices[DEVICE_CUR]->readFile(file, &boot_record, sizeof(boot_record)) != sizeof(boot_record)) return 0;
+	if(memcmp(boot_record.boot_system_id, "EL TORITO SPECIFICATION", 23)) return 0;
+	file_offset = boot_record.boot_catalog_offset * DI_SECTOR_SIZE;
+	
+	struct di_validation_entry validation_entry;
+	devices[DEVICE_CUR]->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	if(devices[DEVICE_CUR]->readFile(file, &validation_entry, sizeof(validation_entry)) != sizeof(validation_entry)) return 0;
+	if(validation_entry.header_id != 1 || validation_entry.key_55 != 0x55 || validation_entry.key_AA != 0xAA) return 0;
+	file_offset += sizeof(validation_entry);
+	
+	struct di_default_entry default_entry;
+	devices[DEVICE_CUR]->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	if(devices[DEVICE_CUR]->readFile(file, &default_entry, sizeof(default_entry)) != sizeof(default_entry)) return 0;
+	if(default_entry.boot_indicator != 0x88) return 0;
+	file_offset = default_entry.load_rba * DI_SECTOR_SIZE;
+	
+	return file_offset;
+}
+
 // Returns the number of filesToPatch and fills out the filesToPatch array passed in (pre-allocated)
 int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatch) {
 	char	filename[256];
@@ -239,10 +264,17 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 	sprintf(filesToPatch[numFiles].name, "apploader.img");
 	numFiles++;
 
-	if(diskHeader->DOLOffset != 0) {
+	dolOffset = diskHeader->DOLOffset;
+	if(dolOffset == 0 && diskHeader->FSTOffset + diskHeader->FSTSize <= 0x8000) {
+		dolOffset = get_iso_boot_record(file);
+		if(GCMDisk.DOLOffset == 0) {
+			GCMDisk.DOLOffset = dolOffset;
+		}
+	}
+	if(dolOffset != 0) {
 		if(is_datel_disc(diskHeader)) {
 			filesToPatch[numFiles].file = file;
-			filesToPatch[numFiles].offset = diskHeader->DOLOffset;
+			filesToPatch[numFiles].offset = dolOffset;
 			filesToPatch[numFiles].size = 0x400000;
 			filesToPatch[numFiles].hash = get_gcm_boot_hash(diskHeader, file->meta);
 			filesToPatch[numFiles].type = PATCH_BIN;
@@ -255,13 +287,13 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 			// Multi-DOL games may re-load the main DOL, so make sure we patch it too.
 			// Calc size
 			DOLHEADER dolhdr;
-			devices[DEVICE_CUR]->seekFile(file,diskHeader->DOLOffset,DEVICE_HANDLER_SEEK_SET);
+			devices[DEVICE_CUR]->seekFile(file,dolOffset,DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_CUR]->readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
 				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Main DOL Header"));
 				while(1);
 			}
 			filesToPatch[numFiles].file = file;
-			filesToPatch[numFiles].offset = dolOffset = diskHeader->DOLOffset;
+			filesToPatch[numFiles].offset = dolOffset;
 			filesToPatch[numFiles].size = dolSize = DOLSize(&dolhdr);
 			filesToPatch[numFiles].hash = get_gcm_boot_hash(diskHeader, file->meta);
 			filesToPatch[numFiles].type = PATCH_DOL;

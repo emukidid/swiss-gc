@@ -1011,6 +1011,8 @@ void load_app(ExecutableFile *fileToPatch)
 	void* buffer;
 	u32 sizeToRead;
 	int type;
+	char* argz = NULL;
+	size_t argz_len = 0;
 	
 	// Get top of memory
 	u32 topAddr = getTopAddr();
@@ -1033,6 +1035,9 @@ void load_app(ExecutableFile *fileToPatch)
 	memcpy(VAR_AREA,(void*)&GCMDisk,0x20);
 	
 	if(fileToPatch != NULL && fileToPatch->file != NULL) {
+		argz = getExternalPath(fileToPatch->file->name);
+		argz_len = strlen(argz) + 1;
+		
 		// For a DOL from a TGC, redirect the FST to the TGC FST.
 		if(fileToPatch->tgcBase + fileToPatch->tgcFileStartArea != 0) {
 			// Read FST to top of Main Memory (round to 32 byte boundary)
@@ -1247,18 +1252,19 @@ void load_app(ExecutableFile *fileToPatch)
 		BINtoARAM(buffer, sizeToRead, 0x80003100, 0x80003100);
 	}
 	else if(type == PATCH_DOL || type == PATCH_DOL_PRS) {
-		DOLtoARAM(buffer, NULL, 0);
+		DOLtoARAM(buffer, argz, argz_len);
 	}
 	else if(type == PATCH_ELF) {
-		ELFtoARAM(buffer, NULL, 0);
+		ELFtoARAM(buffer, argz, argz_len);
 	}
 	SYS_ResetSystem(SYS_HOTRESET, 0, FALSE);
 	__builtin_unreachable();
 
 fail:
-	free(buffer);
 	DrawDispose(progBox);
+	free(buffer);
 fail_early:
+	free(argz);
 	if(message) {
 		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, message));
 		wait_press_A();
@@ -1413,10 +1419,11 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 	else {
 		DOLtoARAM(buffer, argz, argz_len);
 	}
+	free(argz);
+	free(buffer);
 
 	devices[DEVICE_CUR]->closeFile(imageFile);
 	free(imageFile);
-	free(buffer);
 }
 
 /* Manage file  - The user will be asked what they want to do with the currently selected file - copy/move/delete*/
