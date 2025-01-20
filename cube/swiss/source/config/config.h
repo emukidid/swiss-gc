@@ -32,7 +32,7 @@ typedef struct {
 
 void config_find(ConfigEntry *entry);
 void config_defaults(ConfigEntry *entry);
-int config_update_game(ConfigEntry *entry, bool checkConfigDevice);
+int config_update_game(ConfigEntry *entry, ConfigEntry *defaults, bool checkConfigDevice);
 int config_update_global(bool checkConfigDevice);
 int config_update_recent(bool checkConfigDevice);
 int config_init(void (*progress_indicator)(char*, int, int));

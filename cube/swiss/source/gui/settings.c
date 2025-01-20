@@ -982,7 +982,8 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				updateSRAM(&swissSettings, true);
 				// Update our .ini (in memory)
 				if(config != NULL) {
-					config_update_game(config, true);
+					config_defaults(&tempConfig);
+					config_update_game(config, &tempConfig, true);
 				}
 				// flush settings to .ini
 				if(config_update_global(true)) {

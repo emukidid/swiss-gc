@@ -259,7 +259,7 @@ int config_update_recent(bool checkConfigDevice) {
 }
 
 
-int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
+int config_update_game(ConfigEntry *entry, ConfigEntry *defaults, bool checkConfigDevice) {
 	if(checkConfigDevice && !config_set_device()) return 0;
 
 	char *configString = NULL;
@@ -272,25 +272,25 @@ int config_update_game(ConfigEntry* entry, bool checkConfigDevice) {
 	fprintf(fp, "Name=%.64s\r\n", entry->game_name);
 	fprintf(fp, "Comment=%.128s\r\n", entry->comment);
 	fprintf(fp, "Status=%.32s\r\n", entry->status);
-	if(entry->gameVMode != swissSettings.gameVMode) fprintf(fp, "Force Video Mode=%s\r\n", gameVModeStr[entry->gameVMode]);
-	if(entry->forceHScale != swissSettings.forceHScale) fprintf(fp, "Force Horizontal Scale=%s\r\n", forceHScaleStr[entry->forceHScale]);
-	if(entry->forceVOffset != swissSettings.forceVOffset) fprintf(fp, "Force Vertical Offset=%+hi\r\n", entry->forceVOffset);
-	if(entry->forceVFilter != swissSettings.forceVFilter) fprintf(fp, "Force Vertical Filter=%s\r\n", forceVFilterStr[entry->forceVFilter]);
-	if(entry->forceVJitter != swissSettings.forceVJitter) fprintf(fp, "Force Field Rendering=%s\r\n", forceVJitterStr[entry->forceVJitter]);
-	if(entry->disableDithering != swissSettings.disableDithering) fprintf(fp, "Disable Alpha Dithering=%s\r\n", entry->disableDithering ? "Yes":"No");
-	if(entry->forceAnisotropy != swissSettings.forceAnisotropy) fprintf(fp, "Force Anisotropic Filter=%s\r\n", entry->forceAnisotropy ? "Yes":"No");
-	if(entry->forceWidescreen != swissSettings.forceWidescreen) fprintf(fp, "Force Widescreen=%s\r\n", forceWidescreenStr[entry->forceWidescreen]);
-	if(entry->forcePollRate != swissSettings.forcePollRate) fprintf(fp, "Force Polling Rate=%s\r\n", forcePollRateStr[entry->forcePollRate]);
-	if(entry->invertCStick != swissSettings.invertCStick) fprintf(fp, "Invert Camera Stick=%s\r\n", invertCStickStr[entry->invertCStick]);
-	if(entry->swapCStick != swissSettings.swapCStick) fprintf(fp, "Swap Camera Stick=%s\r\n", swapCStickStr[entry->swapCStick]);
-	if(entry->triggerLevel != swissSettings.triggerLevel) fprintf(fp, "Digital Trigger Level=%hhu\r\n", entry->triggerLevel);
-	if(entry->emulateAudioStream != swissSettings.emulateAudioStream) fprintf(fp, "Emulate Audio Streaming=%s\r\n", emulateAudioStreamStr[entry->emulateAudioStream]);
-	if(entry->emulateReadSpeed != swissSettings.emulateReadSpeed) fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[entry->emulateReadSpeed]);
-	if(entry->emulateEthernet != swissSettings.emulateEthernet) fprintf(fp, "Emulate Broadband Adapter=%s\r\n", entry->emulateEthernet ? "Yes":"No");
-	if(entry->disableMemoryCard != swissSettings.disableMemoryCard) fprintf(fp, "Disable Memory Card=%s\r\n", disableMemoryCardStr[entry->disableMemoryCard]);
-	if(entry->disableHypervisor != swissSettings.disableHypervisor) fprintf(fp, "Disable Hypervisor=%s\r\n", entry->disableHypervisor ? "Yes":"No");
-	if(entry->preferCleanBoot != swissSettings.preferCleanBoot) fprintf(fp, "Prefer Clean Boot=%s\r\n", entry->preferCleanBoot ? "Yes":"No");
-	if(entry->rt4kProfile != swissSettings.rt4kProfile) fprintf(fp, "RetroTINK-4K Profile=%i\r\n", entry->rt4kProfile);
+	if(entry->gameVMode != defaults->gameVMode) fprintf(fp, "Force Video Mode=%s\r\n", gameVModeStr[entry->gameVMode]);
+	if(entry->forceHScale != defaults->forceHScale) fprintf(fp, "Force Horizontal Scale=%s\r\n", forceHScaleStr[entry->forceHScale]);
+	if(entry->forceVOffset != defaults->forceVOffset) fprintf(fp, "Force Vertical Offset=%+hi\r\n", entry->forceVOffset);
+	if(entry->forceVFilter != defaults->forceVFilter) fprintf(fp, "Force Vertical Filter=%s\r\n", forceVFilterStr[entry->forceVFilter]);
+	if(entry->forceVJitter != defaults->forceVJitter) fprintf(fp, "Force Field Rendering=%s\r\n", forceVJitterStr[entry->forceVJitter]);
+	if(entry->disableDithering != defaults->disableDithering) fprintf(fp, "Disable Alpha Dithering=%s\r\n", entry->disableDithering ? "Yes":"No");
+	if(entry->forceAnisotropy != defaults->forceAnisotropy) fprintf(fp, "Force Anisotropic Filter=%s\r\n", entry->forceAnisotropy ? "Yes":"No");
+	if(entry->forceWidescreen != defaults->forceWidescreen) fprintf(fp, "Force Widescreen=%s\r\n", forceWidescreenStr[entry->forceWidescreen]);
+	if(entry->forcePollRate != defaults->forcePollRate) fprintf(fp, "Force Polling Rate=%s\r\n", forcePollRateStr[entry->forcePollRate]);
+	if(entry->invertCStick != defaults->invertCStick) fprintf(fp, "Invert Camera Stick=%s\r\n", invertCStickStr[entry->invertCStick]);
+	if(entry->swapCStick != defaults->swapCStick) fprintf(fp, "Swap Camera Stick=%s\r\n", swapCStickStr[entry->swapCStick]);
+	if(entry->triggerLevel != defaults->triggerLevel) fprintf(fp, "Digital Trigger Level=%hhu\r\n", entry->triggerLevel);
+	if(entry->emulateAudioStream != defaults->emulateAudioStream) fprintf(fp, "Emulate Audio Streaming=%s\r\n", emulateAudioStreamStr[entry->emulateAudioStream]);
+	if(entry->emulateReadSpeed != defaults->emulateReadSpeed) fprintf(fp, "Emulate Read Speed=%s\r\n", emulateReadSpeedStr[entry->emulateReadSpeed]);
+	if(entry->emulateEthernet != defaults->emulateEthernet) fprintf(fp, "Emulate Broadband Adapter=%s\r\n", entry->emulateEthernet ? "Yes":"No");
+	if(entry->disableMemoryCard != defaults->disableMemoryCard) fprintf(fp, "Disable Memory Card=%s\r\n", disableMemoryCardStr[entry->disableMemoryCard]);
+	if(entry->disableHypervisor != defaults->disableHypervisor) fprintf(fp, "Disable Hypervisor=%s\r\n", entry->disableHypervisor ? "Yes":"No");
+	if(entry->preferCleanBoot != defaults->preferCleanBoot) fprintf(fp, "Prefer Clean Boot=%s\r\n", entry->preferCleanBoot ? "Yes":"No");
+	if(entry->rt4kProfile != defaults->rt4kProfile) fprintf(fp, "RetroTINK-4K Profile=%i\r\n", entry->rt4kProfile);
 	fclose(fp);
 
 	ensure_path(DEVICE_CONFIG, SWISS_BASE_DIR, NULL, true);
@@ -620,16 +620,17 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 		line = strtok_r( NULL, "\r\n", &linectx);
 	}
 
-	if(configEntriesCount > 0 || !first)
+	if(configEntriesCount > 0 || !first) {
 		configEntriesCount++;
-	
+		config_defaults(&configEntries[configEntriesCount]);
+	}
 	 print_gecko("Found %i entries in the (legacy) config file\r\n",configEntriesCount);
 	 
 	 // Write out to individual files.
 	 int i;
 	 for(i = 0; i < configEntriesCount; i++) {
 		 progress_indicator("Migrating settings to new format.", 1, (int)(((float)i / (float)configEntriesCount) * 100));
-		 config_update_game(&configEntries[i], false);
+		 config_update_game(&configEntries[i], &configEntries[configEntriesCount], false);
 	 }
 	 // Write out a new swiss.ini
 	 config_update_global(false);
