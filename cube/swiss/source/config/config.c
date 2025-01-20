@@ -98,14 +98,14 @@ char* config_file_read(char* filename) {
 	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
 	concat_path(configFile->name, devices[DEVICE_CONFIG]->initial->name, filename);
 	print_gecko("config_file_read: looking for %s\r\n", configFile->name);
-	if(devices[DEVICE_CONFIG]->readFile(configFile, NULL, 0) == 0) {
+	if(!devices[DEVICE_CONFIG]->statFile(configFile)) {
 		readBuffer = (char*)calloc(1, configFile->size + 1);
 		if (readBuffer) {
 			print_gecko("config_file_read: reading %i byte file\r\n", configFile->size);
 			devices[DEVICE_CONFIG]->readFile(configFile, readBuffer, configFile->size);
+			devices[DEVICE_CONFIG]->closeFile(configFile);
 		}
 	}
-	devices[DEVICE_CONFIG]->closeFile(configFile);
 	free(configFile);
 	return readBuffer;
 }

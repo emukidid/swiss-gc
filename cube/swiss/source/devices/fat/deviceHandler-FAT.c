@@ -260,7 +260,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 			ensure_path(DEVICE_CUR, "swiss/saves", NULL, false);
 			devices[DEVICE_CUR]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 			
-			if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) != 0) {
+			if(devices[DEVICE_CUR]->statFile(&patchFile)) {
 				devices[DEVICE_CUR]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 				devices[DEVICE_CUR]->writeFile(&patchFile, NULL, 0);
 				devices[DEVICE_CUR]->closeFile(&patchFile);
@@ -278,7 +278,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 			ensure_path(DEVICE_CUR, "swiss/saves", NULL, false);
 			devices[DEVICE_CUR]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 			
-			if(devices[DEVICE_CUR]->readFile(&patchFile, NULL, 0) != 0) {
+			if(devices[DEVICE_CUR]->statFile(&patchFile)) {
 				devices[DEVICE_CUR]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 				devices[DEVICE_CUR]->writeFile(&patchFile, NULL, 0);
 				devices[DEVICE_CUR]->closeFile(&patchFile);

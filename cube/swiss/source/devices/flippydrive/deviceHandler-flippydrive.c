@@ -81,6 +81,18 @@ s32 deviceHandler_Flippy_readDir(file_handle* ffile, file_handle** dir, u32 type
 	return i;
 }
 
+s32 deviceHandler_Flippy_statFile(file_handle* file) {
+	flippyfileinfo* fp = memalign(32, sizeof(flippyfileinfo));
+	int ret = flippy_open(fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT);
+	if(ret == FLIPPY_RESULT_OK) {
+		file->size = fp->file.size;
+		file->fileType = IS_FILE;
+		flippy_close(fp);
+	}
+	free(fp);
+	return ret;
+}
+
 s64 deviceHandler_Flippy_seekFile(file_handle* file, s64 where, u32 type) {
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset = file->offset + where;
@@ -91,7 +103,10 @@ s64 deviceHandler_Flippy_seekFile(file_handle* file, s64 where, u32 type) {
 static u32 defaultFlags(file_handle* file) {
 	if(endsWith(file->name,".fdi") || endsWith(file->name,".gcm") || endsWith(file->name,".iso") || endsWith(file->name,".tgc"))
 		return FLIPPY_FLAG_DISABLE_DVDSPEED;
-	return FLIPPY_FLAG_DEFAULT;
+	else if(endsWith(file->name,".raw"))
+		return FLIPPY_FLAG_DEFAULT | FLIPPY_FLAG_WRITE;
+	else
+		return FLIPPY_FLAG_DEFAULT;
 }
 
 s32 deviceHandler_Flippy_readFile(file_handle* file, void* buffer, u32 length) {
@@ -112,13 +127,13 @@ s32 deviceHandler_Flippy_readFile(file_handle* file, void* buffer, u32 length) {
 			file->fp = NULL;
 			return -1;
 		}
-		flippyfileinfo* info = file->fp;
+		flippyfileinfo* fp = file->fp;
 		if(endsWith(file->name,".fdi") && (getDeviceFromPath(file->name)->quirks & QUIRK_FDI_BYTESWAP_SIZE)) {
-			if(info->file.size != file->size) {
-				info->file.size = __builtin_bswap32(info->file.size >> 9 << 8) << 9;
+			if(fp->file.size != file->size) {
+				fp->file.size = __builtin_bswap32(fp->file.size >> 9 << 8) << 9;
 			}
 		}
-		file->size = info->file.size;
+		file->size = fp->file.size;
 		file->fileType = IS_FILE;
 	}
 	if(file->offset > file->size) {
@@ -144,8 +159,8 @@ s32 deviceHandler_Flippy_writeFile(file_handle* file, const void* buffer, u32 le
 			file->fp = NULL;
 			return -1;
 		}
-		flippyfileinfo* info = file->fp;
-		file->size = info->file.size;
+		flippyfileinfo* fp = file->fp;
+		file->size = fp->file.size;
 		file->fileType = IS_FILE;
 	}
 	if(flippy_pwrite(file->fp, buffer, length, file->offset) != FLIPPY_RESULT_OK) {
@@ -217,11 +232,10 @@ s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, Execut
 		ensure_path(DEVICE_PATCHES, "swiss/saves", NULL, false);
 		devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 		
-		if(devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0) == 0 && !patchFile.size) {
+		if(devices[DEVICE_PATCHES]->statFile(&patchFile)) {
 			devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 			devices[DEVICE_PATCHES]->closeFile(&patchFile);
-			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 		}
 		
 		if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_A, 0, 0))
@@ -233,11 +247,10 @@ s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, Execut
 		ensure_path(DEVICE_PATCHES, "swiss/saves", NULL, false);
 		devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 		
-		if(devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0) == 0 && !patchFile.size) {
+		if(devices[DEVICE_PATCHES]->statFile(&patchFile)) {
 			devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 			devices[DEVICE_PATCHES]->closeFile(&patchFile);
-			devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 		}
 		
 		if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_B, 0, 0))
@@ -392,6 +405,7 @@ DEVICEHANDLER_INTERFACE __device_flippy = {
 	.init = deviceHandler_Flippy_init,
 	.makeDir = deviceHandler_Flippy_makeDir,
 	.readDir = deviceHandler_Flippy_readDir,
+	.statFile = deviceHandler_Flippy_statFile,
 	.seekFile = deviceHandler_Flippy_seekFile,
 	.readFile = deviceHandler_Flippy_readFile,
 	.writeFile = deviceHandler_Flippy_writeFile,

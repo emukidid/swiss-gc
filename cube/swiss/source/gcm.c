@@ -701,7 +701,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 				concatf_path(fileToPatch->patchFile->name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/game/%08x.bin", (u32)fileToPatch->hash);
 			
 			// See if this file already exists, if it does, match hash
-			if(!devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, NULL, 0)) {
+			if(!devices[DEVICE_PATCHES]->statFile(fileToPatch->patchFile)) {
 				if(devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile, -sizeof(old_hash), DEVICE_HANDLER_SEEK_END) == sizeToRead &&
 					devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, &old_hash, sizeof(old_hash)) == sizeof(old_hash) &&
 					XXH128_isEqual(old_hash, new_hash)) {

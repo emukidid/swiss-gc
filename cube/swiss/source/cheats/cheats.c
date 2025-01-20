@@ -328,7 +328,7 @@ void loadCheatsSelection() {
 	concatf_path(cheatsSelFile->name, devices[DEVICE_CHEATS]->initial->name, "swiss/cheats/%.6s.chtsel", trimmedGameId);
 	print_gecko("Looking for previous cheat selection file [%s].\r\n", cheatsSelFile->name);
 	// See if we've saved cheat selections for this game before.
-	if(!devices[DEVICE_CHEATS]->readFile(cheatsSelFile, NULL, 0)) {
+	if(!devices[DEVICE_CHEATS]->statFile(cheatsSelFile)) {
 		XXH64_hash_t curCheatsHash = calcCheatsHash();
 		// We have, but was the cheats file the same as it is now?
 		devices[DEVICE_CHEATS]->seekFile(cheatsSelFile, -sizeof(old_hash), DEVICE_HANDLER_SEEK_END);

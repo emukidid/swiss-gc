@@ -173,7 +173,7 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, Executab
 				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL, false);
 				devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 				
-				if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) != 0) {
+				if(devices[DEVICE_PATCHES]->statFile(&patchFile)) {
 					devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 					devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
@@ -191,7 +191,7 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, Executab
 				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL, false);
 				devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 				
-				if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) != 0) {
+				if(devices[DEVICE_PATCHES]->statFile(&patchFile)) {
 					devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 					devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
