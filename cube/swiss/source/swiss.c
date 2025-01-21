@@ -1208,6 +1208,9 @@ void load_app(ExecutableFile *fileToPatch)
 		kenobi_install_engine();
 	}
 	
+	if(devices[DEVICE_PATCHES] && !(devices[DEVICE_PATCHES]->quirks & QUIRK_NO_DEINIT)) {
+		devices[DEVICE_PATCHES]->deinit(devices[DEVICE_PATCHES]->initial);
+	}
 	// Don't spin down the drive when running something from it...
 	if(!(devices[DEVICE_CUR]->quirks & QUIRK_NO_DEINIT)) {
 		devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
@@ -1216,8 +1219,9 @@ void load_app(ExecutableFile *fileToPatch)
 		// Check DVD Status, make sure it's error code 0
 		print_gecko("DVD: %08X\r\n",dvd_get_error());
 	}
-	if(devices[DEVICE_PATCHES] && !(devices[DEVICE_PATCHES]->quirks & QUIRK_NO_DEINIT)) {
-		devices[DEVICE_PATCHES]->deinit(devices[DEVICE_PATCHES]->initial);
+	else if(swissSettings.hasFlippyDrive) {
+		flippy_bypass(false);
+		flippy_reset();
 	}
 	
 	DrawDispose(progBox);
