@@ -1341,6 +1341,10 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 	file_handle *imageFile = calloc(1, sizeof(file_handle));
 	snprintf(imageFile->name, PATHNAME_MAX, "%s.iso", fileName);
 
+	if(!fnmatch("*/apps/*/*", file->name, FNM_PATHNAME | FNM_CASEFOLD | FNM_LEADING_DIR)) {
+		getParentPath(imageFile->name, imageFile->name);
+		concat_path(imageFile->name, imageFile->name, "data.iso");
+	}
 	if(devices[DEVICE_CUR]->statFile) {
 		devices[DEVICE_CUR]->statFile(imageFile);
 	}
