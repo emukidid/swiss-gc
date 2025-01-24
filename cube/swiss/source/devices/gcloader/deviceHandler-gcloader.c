@@ -44,7 +44,20 @@ s32 deviceHandler_GCLoader_readFile(file_handle* file, void* buffer, u32 length)
 
 static char *bootFile_names[] = {"boot.iso", "boot.iso.iso", "boot.gcm", "boot.gcm.gcm"};
 
-static s32 setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
+bool gcloaderGetBootFile(file_handle* file) {
+	int i;
+	for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
+		memset(file, 0, sizeof(file_handle));
+		concat_path(file->name, initial_GCLoader.name, bootFile_names[i]);
+		
+		if(!deviceHandler_FAT_statFile(file)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+static s32 gcloaderSetupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
 	// GCLoader disc/file fragment setup
 	file_frag *disc1FragList = NULL, *disc2FragList = NULL;
 	u32 disc1Frags = 0, disc2Frags = 0;
@@ -113,7 +126,7 @@ s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, Exec
 	file_frag *fragList = NULL;
 	u32 numFrags = 0;
 	
-	if(!setupFile(file, file2, filesToPatch, numToPatch)) {
+	if(!gcloaderSetupFile(file, file2, filesToPatch, numToPatch)) {
 		return 0;
 	}
 	if(numToPatch < 0 || !devices[DEVICE_CUR]->emulated()) {
@@ -145,15 +158,9 @@ s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, Exec
 			}
 		}
 		
-		for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
-			file_handle bootFile;
-			memset(&bootFile, 0, sizeof(file_handle));
-			concat_path(bootFile.name, initial_GCLoader.name, bootFile_names[i]);
-			
-			if(getFragments(DEVICE_CUR, &bootFile, &fragList, &numFrags, FRAGS_BOOT_GCM, 0, UINT32_MAX)) {
-				devices[DEVICE_CUR]->closeFile(&bootFile);
-				break;
-			}
+		if(gcloaderGetBootFile(&patchFile)) {
+			getFragments(DEVICE_CUR, &patchFile, &fragList, &numFrags, FRAGS_BOOT_GCM, 0, UINT32_MAX);
+			devices[DEVICE_CUR]->closeFile(&patchFile);
 		}
 		
 		if(swissSettings.igrType == IGR_APPLOADER || endsWith(file->name,".tgc")) {
@@ -243,16 +250,10 @@ s32 deviceHandler_GCLoader_init(file_handle* file){
 
 s32 deviceHandler_GCLoader_closeFile(file_handle* file) {
 	if(file && file->status == STATUS_MAPPED) {
-		int i;
-		for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
-			file_handle bootFile;
-			memset(&bootFile, 0, sizeof(file_handle));
-			concat_path(bootFile.name, initial_GCLoader.name, bootFile_names[i]);
-			
-			if(setupFile(&bootFile, NULL, NULL, -1)) {
-				deviceHandler_FAT_closeFile(&bootFile);
-				break;
-			}
+		file_handle bootFile;
+		if(gcloaderGetBootFile(&bootFile)) {
+			gcloaderSetupFile(&bootFile, NULL, NULL, -1);
+			deviceHandler_FAT_closeFile(&bootFile);
 		}
 		file->status = STATUS_NOT_MAPPED;
 	}

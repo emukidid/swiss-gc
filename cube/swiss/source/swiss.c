@@ -1349,6 +1349,16 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 		devices[DEVICE_CUR]->statFile(imageFile);
 	}
 
+	file_handle *bootFile = NULL;
+	if(devices[DEVICE_CUR] == &__device_gcloader) {
+		bootFile = calloc(1, sizeof(file_handle));
+
+		if(!gcloaderGetBootFile(bootFile)) {
+			free(bootFile);
+			bootFile = NULL;
+		}
+	}
+
 	// Build a command line to pass to the DOL
 	char *argz = getExternalPath(imageFile->fileType == IS_FILE ? imageFile->name : file->name);
 	size_t argz_len = strlen(argz) + 1;
@@ -1412,7 +1422,7 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 
 	// Boot
 	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
-		devices[DEVICE_CUR]->setupFile(imageFile, NULL, NULL, -1);
+		devices[DEVICE_CUR]->setupFile(imageFile, bootFile, NULL, -1);
 	}
 
 	if(!memcmp(buffer, ELFMAG, SELFMAG)) {
@@ -1430,7 +1440,9 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 	free(argz);
 	free(buffer);
 
+	devices[DEVICE_CUR]->closeFile(bootFile);
 	devices[DEVICE_CUR]->closeFile(imageFile);
+	free(bootFile);
 	free(imageFile);
 }
 

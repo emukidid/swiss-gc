@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -51,8 +51,11 @@ static bool memeq(const void *a, const void *b, size_t size)
 	return true;
 }
 
+void dvd_reset(void);
 uint32_t dvd_inquiry(DVDDriveInfo *info);
+uint32_t dvd_read_id(DVDDiskID *id);
 uint32_t dvd_read(void *address, uint32_t length, uint32_t offset);
+void dvd_stop_motor(void);
 void flippy_reset(void);
 
 static void dvd_load(uint32_t offset)
@@ -89,6 +92,15 @@ void dvd_main(void)
 	if (!dvd_inquiry(&info)) return;
 
 	switch (info.releaseDate) {
+		case 0x20196C64:
+		{
+			dvd_stop_motor();
+			dvd_reset();
+			dly_us(1150 * 1000);
+			dvd_reset();
+			if (!dvd_read_id(NULL)) return;
+			break;
+		}
 		case 0x20220426:
 			flippy_reset();
 		case 0x20220420:

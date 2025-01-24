@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -65,12 +65,36 @@ xmit_spi:
 	srwi	r3, r0, 24
 	blr
 
+	.globl dvd_reset
+dvd_reset:
+	lis		r3, 0x0C00
+	li		r4, 0x3000 + 9*4
+	eciwx	r0, r4, r3
+	rlwinm	r0, r0, 0, 30, 28
+	ori		r0, r0, 0b001
+	ecowx	r0, r4, r3
+	mftb	r5
+1:	mftb	r6
+	sub		r0, r6, r5
+	cmplwi	r0, 486
+	blt		1b
+	eciwx	r0, r4, r3
+	ori		r0, r0, 0b101
+	ecowx	r0, r4, r3
+	blr
+
 	.globl dvd_inquiry
 dvd_inquiry:
 	lis		r6, 0x1200
-	li		r5, 0
+1:	li		r5, 0
 	li		r4, 32
 	b		dvd_readdma
+
+	.globl dvd_read_id
+dvd_read_id:
+	lis		r6, 0xA800
+	ori		r6, r6, 0x0040
+	b		1b
 
 	.globl dvd_read
 dvd_read:
@@ -113,6 +137,20 @@ dvd_readdma:
 	subf	r3, r3, r0
 	blr
 3:	li		r3, 0
+	blr
+
+	.globl dvd_stop_motor
+dvd_stop_motor:
+	lis		r3, 0x0C00
+	li		r4, 0x6000 + 2*4
+	lis		r0, 0xE300
+	ecowx	r0, r4, r3
+	li		r4, 0x6000 + 7*4
+	li		r0, 0b001
+	ecowx	r0, r4, r3
+1:	eciwx	r0, r4, r3
+	andi.	r0, r0, 0b001
+	bne		1b
 	blr
 
 	.globl flippy_reset
