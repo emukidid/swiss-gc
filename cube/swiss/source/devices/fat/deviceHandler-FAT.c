@@ -550,6 +550,15 @@ char* deviceHandler_FAT_status(file_handle* file) {
 	}
 }
 
+static float exiSpeeds[] = {
+	27.0f/32.0f,
+	27.0f/16.0f,
+	27.0f/8.0f,
+	27.0f/4.0f,
+	27.0f/2.0f,
+	27.0f/1.0f
+};
+
 char* deviceHandler_FAT_details(file_handle* file) {
 	char* deviceDetails = NULL;
 	int isSDCard = IS_SDCARD(file);
@@ -580,12 +589,12 @@ char* deviceHandler_FAT_details(file_handle* file) {
 			"Product serial number: %08X\n"
 			"Manufacturing date: %u-%02u\n"
 			"\n"
+			"Bus Speed Mode: %s (%.3g MHz)\n"
 			"Card Capacity: %.*s\n"
 			"Speed Class: C%u\n"
 			"UHS Speed Class: U%u\n"
 			"Video Speed Class: V%u\n"
 			"Application Performance Class: A%u\n"
-			"\n"
 			"Inconsistencies may indicate a fake SD Card.",
 			MANUFACTURER_ID(slot),
 			OEM_APPLICATION_ID(slot),
@@ -593,6 +602,8 @@ char* deviceHandler_FAT_details(file_handle* file) {
 			PRODUCT_REVISION(slot) >> 4, PRODUCT_REVISION(slot) & 0xF,
 			PRODUCT_SERIAL_NUMBER(slot),
 			2000 + (MANUFACTURING_DATE(slot) >> 4), MANUFACTURING_DATE(slot) & 0xF,
+			TRAN_SPEED(slot) == 0x5A ? "High Speed" : "Default Speed",
+			exiSpeeds[sdgecko_getSpeed(slot)],
 			formatBytes(c_size_str, c_size, 0, true), c_size_str,
 			SPEED_CLASS(slot) < 4 ? SPEED_CLASS(slot) * 2 : 10,
 			UHS_SPEED_GRADE(slot),
