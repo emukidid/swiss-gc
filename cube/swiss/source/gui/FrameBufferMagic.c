@@ -581,6 +581,7 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			break;
 		case TEX_GCLOADER:
 			texObj = &gcloaderTexObj; color = (GXColor) {216,216,216,255};
+			ts = 76;
 			break;
 		case TEX_M2LOADER:
 			texObj = &m2loaderTexObj;
@@ -594,6 +595,10 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			break;
 		case TEX_GCNET:
 			texObj = &gcnetTexObj; color = (GXColor) {216,216,216,255};
+			break;
+		case TEX_GCODE:
+			texObj = &gcloaderTexObj; color = (GXColor) {216,216,216,255};
+			t1 -= 12.0f/88.0f;
 			break;
 	}
 	

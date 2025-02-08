@@ -305,9 +305,11 @@ bool deviceHandler_GCLoader_test() {
 				}
 			}
 			__device_gcloader.hwName = "GC Loader";
+			__device_gcloader.deviceTexture = (textureImage){TEX_GCLOADER, 115, 72, 120, 76};
 			__device_gcloader.features |= FEAT_AUDIO_STREAMING;
 		} else {
 			__device_gcloader.hwName = "GC Loader compatible";
+			__device_gcloader.deviceTexture = (textureImage){TEX_GCODE, 115, 98, 120, 100};
 			
 			if (DVD_PrepareStreamAbs(&commandBlock, 32*1024, 0) == DVD_ERROR_OK &&
 				(u8)DVD_GetStreamErrorStatus(&commandBlock) == TRUE &&
@@ -360,7 +362,7 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	.hwName = "GC Loader",
 	.deviceName = "GC Loader",
 	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
-	.deviceTexture = {TEX_GCLOADER, 115, 72, 120, 80},
+	.deviceTexture = {TEX_GCLOADER, 115, 72, 120, 76},
 	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
 	.emulable = EMU_READ|EMU_READ_SPEED|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	.location = LOC_DVD_CONNECTOR,
