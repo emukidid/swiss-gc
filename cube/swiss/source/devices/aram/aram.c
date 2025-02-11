@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2023-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2023-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -65,7 +65,7 @@ static bool __aram_ReadSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSect
 	if ((sector + numSectors) < sector) return false;
 	if ((sector + numSectors) > disc->numberOfSectors) return false;
 	if (disc->bytesPerSector != 512) return false;
-	if (!SYS_IsDMAAddress(buffer)) return false;
+	if (!SYS_IsDMAAddress(buffer, 32)) return false;
 
 	DCInvalidateRange(buffer, numSectors << 9);
 	ARQ_PostRequest(&req, sector, ARQ_ARAMTOMRAM, ARQ_PRIO_LO, AR_GetInternalSize() + (sector << 9), (u32)buffer, numSectors << 9);
@@ -82,7 +82,7 @@ static bool __aram_WriteSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSec
 	if ((sector + numSectors) < sector) return false;
 	if ((sector + numSectors) > disc->numberOfSectors) return false;
 	if (disc->bytesPerSector != 512) return false;
-	if (!SYS_IsDMAAddress(buffer)) return false;
+	if (!SYS_IsDMAAddress(buffer, 32)) return false;
 
 	DCFlushRange((void *)buffer, numSectors << 9);
 	ARQ_PostRequest(&req, sector, ARQ_MRAMTOARAM, ARQ_PRIO_LO, AR_GetInternalSize() + (sector << 9), (u32)buffer, numSectors << 9);
