@@ -1023,7 +1023,7 @@ void load_app(ExecutableFile *fileToPatch)
 	
 	*(vu32*)(VAR_AREA+0x0028) = 0x01800000;
 	*(vu32*)(VAR_AREA+0x002C) = swissSettings.debugUSB ? 0x10000004:0x00000001;
-	*(vu32*)(VAR_AREA+0x002C) += *(vu32*)0xCC00302C >> 28;
+	*(vu32*)(VAR_AREA+0x002C) += ((vu32*)0xCC003000)[11] >> 28;
 	*(vu32*)(VAR_AREA+0x00CC) = swissSettings.sramVideo;
 	*(vu32*)(VAR_AREA+0x00D0) = 0x01000000;
 	*(vu32*)(VAR_AREA+0x00E8) = 0x81800000 - topAddr;

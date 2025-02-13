@@ -82,7 +82,25 @@ void __SYS_PreInit(void)
 {
 	DCZeroRange((void *)0x80000000, 0x3100);
 
-	*(u32 *)0x80000028 = 0x01800000;
+	switch (((vu16 *)0xCC004000)[20] & 7) {
+		case 0:
+			*(u32 *)0x80000028 = 0x1000000;
+			break;
+		case 1: case 4:
+			*(u32 *)0x80000028 = 0x2000000;
+			break;
+		case 2: case 6:
+			*(u32 *)0x80000028 = 0x1800000;
+			break;
+		case 3: case 7:
+			*(u32 *)0x80000028 = 0x3000000;
+			break;
+		case 5:
+			*(u32 *)0x80000028 = 0x4000000;
+			break;
+	}
+
+	*(u32 *)0x800000F0 = 0x1800000;
 	*(u32 *)0x800000F8 = TB_BUS_CLOCK;
 	*(u32 *)0x800000FC = TB_CORE_CLOCK;
 
