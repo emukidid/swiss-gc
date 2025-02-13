@@ -467,14 +467,6 @@ int install_code(int final)
 	return 1;
 }
 
-void __SYS_PreInit()
-{
-	memcpy((void *)0x80001800, stub_bin, stub_bin_size);
-	DCFlushRangeNoSync((void *)0x80001800, stub_bin_size);
-	ICInvalidateRange((void *)0x80001800, stub_bin_size);
-	_sync();
-}
-
 void make_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
 {
 	u32 i, j;

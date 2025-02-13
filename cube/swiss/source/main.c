@@ -30,6 +30,7 @@
 #include "httpd.h"
 #include "config.h"
 #include "sram.h"
+#include "stub_bin.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
@@ -51,7 +52,7 @@ static void driveInfoCallback(s32 result, dvdcmdblk *block) {
 }
 
 /* Initialise Video, PAD, DVD, Font */
-void Initialise (void)
+void Initialise(void)
 {
 	PAD_Init ();  
 	DVD_Init(); 
@@ -68,12 +69,29 @@ void Initialise (void)
 		swissSettings.sramVideo = SYS_VIDEO_PAL;
 	else if(!strncmp(&IPLInfo[0x55], "MPAL", 4))
 		swissSettings.sramVideo = SYS_VIDEO_MPAL;
+	*(u32*)0x800000CC = swissSettings.sramVideo;
 
 	GXRModeObj *vmode = getVideoMode();
 	setVideoMode(vmode);
 
 	init_font();
 	DrawInit();
+}
+
+void __SYS_PreInit(void)
+{
+	DCZeroRange((void *)0x80000000, 0x3100);
+
+	*(u32 *)0x80000028 = 0x01800000;
+	*(u32 *)0x800000F8 = TB_BUS_CLOCK;
+	*(u32 *)0x800000FC = TB_CORE_CLOCK;
+
+	memcpy((void *)0x80001800, stub_bin, stub_bin_size);
+	DCFlushRangeNoSync((void *)0x80001800, stub_bin_size);
+	ICInvalidateRange((void *)0x80001800, stub_bin_size);
+	_sync();
+
+	*(u64 *)0x800030D8 = -__builtin_ppc_get_timebase();
 }
 
 uiDrawObj_t *configProgBar = NULL;
