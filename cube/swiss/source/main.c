@@ -48,6 +48,7 @@ static void driveInfoCallback(s32 result, dvdcmdblk *block) {
 	}
 	else if(result >= 0) {
 		swissSettings.hasDVDDrive = 1;
+		*(u16*)0x800030E6 = 0x8000 | driveInfo.dev_code;
 	}
 }
 
@@ -99,6 +100,13 @@ void __SYS_PreInit(void)
 			*(u32 *)0x80000028 = 0x4000000;
 			break;
 	}
+
+	if (((vu32 *)0xCC006000)[9] == 0xFF)
+		*(u32 *)0x8000002C = 0x1;
+	else
+		*(u32 *)0x8000002C = 0x10000004;
+
+	*(u32 *)0x8000002C += ((vu32*)0xCC003000)[11] >> 28;
 
 	*(u32 *)0x800000F0 = 0x1800000;
 	*(u32 *)0x800000F8 = TB_BUS_CLOCK;
