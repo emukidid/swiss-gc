@@ -72,6 +72,7 @@ int needsDeviceChange = 0;
 int needsRefresh = 0;
 int current_view_start = 0;
 int current_view_end = 0;
+bool merge_folders_without_asking = true;
 
 /* re-init video for a given game */
 void ogc_video__reset()
@@ -1455,6 +1456,7 @@ bool copy_file(file_handle *srcFile, file_handle *destFile, int option, bool sil
 	char *readBuffer = (char*)memalign(32,chunkSize);
 	sprintf(txtbuffer, "Copying to: %s",getRelativeName(destFile->name));
 	uiDrawObj_t* progBar = DrawProgressBar(false, 0, txtbuffer);
+	uiDrawObj_t* msgBox;
 	DrawPublish(progBar);
 
 	u64 startTime = gettime();
@@ -1581,12 +1583,41 @@ bool copy_folder_recursive(file_handle *srcFolder, file_handle *destFolder, int 
     // Create destination folder
 	u32 ret = devices[DEVICE_DEST]->makeDir(destFolder);
     if (ret != 0) {
-        sprintf(txtbuffer, "Failed to create folder:\n%s\nSrc: %s", destFolder->name, srcFolder->name);
-        uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, txtbuffer);
-        DrawPublish(msgBox);
-        wait_press_A();
-        DrawDispose(msgBox);
-        return true;
+		if (ret == FR_EXIST) {
+			// Folder already exists
+			if (!merge_folders_without_asking) {
+				// Ask to merge, unless they already answered
+				uiDrawObj_t* dupeBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 350);
+				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 160, "Folder exists, overwrite any conflicting file(s)?:", 1.0f, true, defaultColor));
+				float scale = GetTextScaleToFitInWidth(getRelativeName(srcFolder->name), getVideoMode()->fbWidth-10-10);
+				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 200, getRelativeName(srcFolder->name), scale, true, defaultColor));
+				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 230, "(B) Return (Z) Overwrite", 1.0f, true, defaultColor));
+				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 300, "Press an option to continue.", 1.0f, true, defaultColor));
+				DrawPublish(dupeBox);
+				while(padsButtonsHeld() & (PAD_BUTTON_A | PAD_TRIGGER_Z)) { VIDEO_WaitVSync (); }
+				while(1) {
+					u32 buttons = padsButtonsHeld();
+					if(buttons & PAD_TRIGGER_Z) {
+						merge_folders_without_asking = true;
+						while(padsButtonsHeld() & PAD_TRIGGER_Z){ VIDEO_WaitVSync (); }
+						break;
+					}
+					if(buttons & PAD_BUTTON_B) {
+						DrawDispose(dupeBox);
+						return true;
+					}
+				}
+				DrawDispose(dupeBox);
+			}
+		}
+		else {
+			sprintf(txtbuffer, "Failed to create folder (%d):\n%s", ret, destFolder->name);
+			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, txtbuffer);
+			DrawPublish(msgBox);
+			wait_press_A();
+			DrawDispose(msgBox);
+			return true;
+		}
     }
 
     // Read each item in source folder
@@ -1731,7 +1762,7 @@ bool manage_file() {
 			print_gecko("Renaming %s to %s\r\n", &curFile.name[0], txtbuffer);
 			u32 ret = devices[DEVICE_CUR]->renameFile(&curFile, txtbuffer);
 			sprintf(txtbuffer, "%s renamed!\nPress A to continue.", isFile ? "File" : "Directory");
-			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, ret ? "Move Failed! Press A to continue" : txtbuffer);
+			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, ret ? "Move Failed!\nPress A to continue" : txtbuffer);
 			DrawPublish(msgBox);
 			wait_press_A();
 			DrawDispose(msgBox);
@@ -1922,11 +1953,46 @@ bool manage_file() {
 			}
 
 			ret = devices[DEVICE_CUR]->renameFile(&curFile, destFile->name);
-			needsRefresh=1;
-			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,ret ? "Move Failed!\nPress A to continue":"Move Successful!\nPress A to continue");
-			DrawPublish(msgBox);
-			wait_press_A();
-			DrawDispose(msgBox);
+			if (ret == FR_EXIST) {
+				// Folder already exists, ask to merge
+				uiDrawObj_t* dupeBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 350);
+				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 160, "Folder exists, overwrite any conflicting file(s)?:", 1.0f, true, defaultColor));
+				float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
+				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor));
+				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 230, "(B) Return (Z) Overwrite", 1.0f, true, defaultColor));
+				DrawAddChild(dupeBox, DrawStyledLabel(640/2, 300, "Press an option to continue.", 1.0f, true, defaultColor));
+				DrawPublish(dupeBox);
+				while(padsButtonsHeld() & (PAD_BUTTON_A | PAD_TRIGGER_Z)) { VIDEO_WaitVSync (); }
+				while(1) {
+					u32 buttons = padsButtonsHeld();
+					if(buttons & PAD_TRIGGER_Z) {
+						// Copy folder recursively
+						merge_folders_without_asking = true;
+						if (copy_folder_recursive(&curFile, destFile, option) == 0) {
+							// Delete source folder structure if move was successful
+							deleteFileOrDir(&curFile);
+						}
+
+						// Reset flag so it will ask users if it's OK to merge next time
+						merge_folders_without_asking = false;
+
+						while(padsButtonsHeld() & PAD_TRIGGER_Z){ VIDEO_WaitVSync (); }
+						break;
+					}
+					if(buttons & PAD_BUTTON_B) {
+						// Exit prompt with no action
+						break;
+					}
+				}
+				DrawDispose(dupeBox);
+			}
+			else {
+				needsRefresh = 1;
+				uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,ret ? "Move Failed!\nPress A to continue":"Move Successful!\nPress A to continue");
+				DrawPublish(msgBox);
+				wait_press_A();
+				DrawDispose(msgBox);
+			}
 		}
 		else {
 			// If we're copying out from memory card, make a .GCI
@@ -1964,10 +2030,15 @@ bool manage_file() {
 			}
 			else {
 				// Copy folder and subfolders
-				if (copy_folder_recursive(&curFile, destFile, option) != 0) {
-					// Delete source folder structure if move was successful
-					deleteFileOrDir(&curFile);
+				if (copy_folder_recursive(&curFile, destFile, option) == 0) {
+					if (option == MOVE_OPTION) {
+						// Delete source folder structure if move was successful
+						deleteFileOrDir(&curFile);
+					}
 				}
+
+				// Reset flag so it will ask users if it's OK to merge next time
+				merge_folders_without_asking = false;
 			}
 
 			free(destFile);
