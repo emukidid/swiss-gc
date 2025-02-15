@@ -70,6 +70,9 @@ void Initialise(void)
 		swissSettings.sramVideo = SYS_VIDEO_PAL;
 	else if(!strncmp(&IPLInfo[0x55], "MPAL", 4))
 		swissSettings.sramVideo = SYS_VIDEO_MPAL;
+	else if(!strncmp(&IPLInfo[0x55], "TDEV", 4) && (SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_RETAIL)
+		*(u32*)0x8000002C += SYS_CONSOLE_TDEV_HW1 - SYS_CONSOLE_RETAIL_HW1;
+
 	*(u32*)0x800000CC = swissSettings.sramVideo;
 
 	GXRModeObj *vmode = getVideoMode();
@@ -102,9 +105,9 @@ void __SYS_PreInit(void)
 	}
 
 	if (((vu32 *)0xCC006000)[9] == 0xFF)
-		*(u32 *)0x8000002C = 0x1;
+		*(u32 *)0x8000002C = SYS_CONSOLE_RETAIL_HW1;
 	else
-		*(u32 *)0x8000002C = 0x10000004;
+		*(u32 *)0x8000002C = SYS_CONSOLE_DEVELOPMENT_HW1;
 
 	*(u32 *)0x8000002C += ((vu32*)0xCC003000)[11] >> 28;
 
@@ -286,7 +289,7 @@ int main(int argc, char *argv[])
 			wait_press_A();
 			DrawDispose(msgBox);
 		}
-		else if(flippy_version < FLIPPY_VERSION(1,4,0)) {
+		else if(flippy_version < FLIPPY_VERSION(1,4,0) && (SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_RETAIL) {
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\nflippydrive.com/updates"));
 			wait_press_A();
 			DrawDispose(msgBox);
