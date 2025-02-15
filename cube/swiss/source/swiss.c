@@ -1446,16 +1446,197 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 	free(imageFile);
 }
 
+bool copy_file(file_handle *srcFile, file_handle *destFile, int option, bool silent) {
+    // Read from one file and write to the new directory
+	u32 isDestCard = devices[DEVICE_DEST] == &__device_card_a || devices[DEVICE_DEST] == &__device_card_b;
+	u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
+	u32 bulkWrite = isSrcCard || isDestCard || devices[DEVICE_DEST] == &__device_qoob;
+	u32 curOffset = srcFile->offset, cancelled = 0, chunkSize = bulkWrite ? srcFile->size - curOffset : (256*1024);
+	char *readBuffer = (char*)memalign(32,chunkSize);
+	sprintf(txtbuffer, "Copying to: %s",getRelativeName(destFile->name));
+	uiDrawObj_t* progBar = DrawProgressBar(false, 0, txtbuffer);
+	DrawPublish(progBar);
+
+	u64 startTime = gettime();
+	u64 lastTime = gettime();
+	u32 lastOffset = 0;
+	int speed = 0;
+	int timeremain = 0;
+	print_gecko("Copying %i byte file from %s to %s\r\n", srcFile->size, srcFile->name, destFile->name);
+
+	while(curOffset < srcFile->size) {
+		u32 buttons = padsButtonsHeld();
+		if(buttons & PAD_BUTTON_B) {
+			cancelled = 1;
+			break;
+		}
+		u32 timeDiff = diff_msec(lastTime, gettime());
+		u32 timeStart = diff_msec(startTime, gettime());
+		if(timeDiff >= 1000) {
+			speed = (int)((float)(curOffset-lastOffset) / (float)(timeDiff/1000.0f));
+			timeremain = (srcFile->size - curOffset) / speed;
+			lastTime = gettime();
+			lastOffset = curOffset;
+		}
+		DrawUpdateProgressBarDetail(progBar, (int)((float)((float)curOffset/(float)srcFile->size)*100), speed, timeStart/1000, timeremain);
+		u32 amountToCopy = curOffset + chunkSize > srcFile->size ? srcFile->size - curOffset : chunkSize;
+		devices[DEVICE_CUR]->seekFile(srcFile, curOffset, DEVICE_HANDLER_SEEK_SET);
+		
+		u32 ret = devices[DEVICE_CUR]->readFile(srcFile, readBuffer, amountToCopy);
+		if(ret != amountToCopy) {	// Retry the read.
+			devices[DEVICE_CUR]->seekFile(srcFile, curOffset, DEVICE_HANDLER_SEEK_SET);
+			ret = devices[DEVICE_CUR]->readFile(srcFile, readBuffer, amountToCopy);
+			if(ret != amountToCopy) {
+				DrawDispose(progBar);
+				free(readBuffer);
+				devices[DEVICE_CUR]->closeFile(srcFile);
+				devices[DEVICE_DEST]->closeFile(destFile);
+				sprintf(txtbuffer, "Failed to Read! (%d %d)\n%s",amountToCopy,ret, srcFile->name);
+				msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+				DrawPublish(msgBox);
+				wait_press_A();
+				DrawDispose(msgBox);
+				setGCIInfo(NULL);
+				setCopyGCIMode(FALSE);
+				return true;
+			}
+		}
+
+		ret = devices[DEVICE_DEST]->writeFile(destFile, readBuffer, amountToCopy);
+		if(ret != amountToCopy) {
+			DrawDispose(progBar);
+			free(readBuffer);
+			devices[DEVICE_CUR]->closeFile(srcFile);
+			devices[DEVICE_DEST]->closeFile(destFile);
+			sprintf(txtbuffer, "Failed to Write! (%d %d)\n%s",amountToCopy,ret,destFile->name);
+			msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+			DrawPublish(msgBox);
+			wait_press_A();
+			DrawDispose(msgBox);
+			setGCIInfo(NULL);
+			setCopyGCIMode(FALSE);
+			return true;
+		}
+		curOffset+=amountToCopy;
+	}
+	DrawDispose(progBar);
+	free(readBuffer);
+	devices[DEVICE_CUR]->closeFile(srcFile);
+
+	u32 ret = devices[DEVICE_DEST]->writeFile(destFile, NULL, 0);
+	if(ret == 0) {
+		ret = devices[DEVICE_DEST]->closeFile(destFile);
+	}
+	if(ret != 0) {
+		sprintf(txtbuffer, "Failed to Write! (%d)\n%s",ret,destFile->name);
+		msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+		DrawPublish(msgBox);
+		wait_press_A();
+		DrawDispose(msgBox);
+		setGCIInfo(NULL);
+		setCopyGCIMode(FALSE);
+		return true;
+	}
+
+	setGCIInfo(NULL);
+	setCopyGCIMode(FALSE);
+	
+	msgBox = NULL;
+	if(!cancelled) {
+		// If cut, delete from source device
+		bool canDelete = (devices[DEVICE_CUR]->features & FEAT_WRITE) && devices[DEVICE_CUR]->deleteFile;
+		if(canDelete && option == MOVE_OPTION) { 
+			devices[DEVICE_CUR]->deleteFile(srcFile);
+			needsRefresh=1;
+			msgBox = DrawMessageBox(D_INFO,"Move Complete!");
+		}
+		else {
+			msgBox = DrawMessageBox(D_INFO,"Copy Complete.\nPress A to continue");
+		}
+	} 
+	else {
+		sprintf(txtbuffer, "%s cancelled.\nPress A to continue", (option == MOVE_OPTION) ? "Move" : "Copy");
+		msgBox = DrawMessageBox(D_INFO,txtbuffer);
+	}
+
+	if (!silent) {
+		DrawPublish(msgBox);
+		wait_press_A();
+		DrawDispose(msgBox);
+	}
+    return false;
+}
+
+bool copy_folder_recursive(file_handle *srcFolder, file_handle *destFolder, int option) {
+	// Check that destination directory doesn't contain the entire source directory
+	if (strstr(destFolder->name, srcFolder->name) != NULL) {
+		sprintf(txtbuffer, "Source folder cannot\ncontain destination folder!");
+		uiDrawObj_t *msgBox = DrawMessageBox(D_WARN,txtbuffer);
+		DrawPublish(msgBox);
+		wait_press_A();
+		DrawDispose(msgBox);
+		return true;
+	}
+
+    // Create destination folder
+	u32 ret = devices[DEVICE_DEST]->makeDir(destFolder);
+    if (ret != 0) {
+        sprintf(txtbuffer, "Failed to create folder:\n%s\nSrc: %s", destFolder->name, srcFolder->name);
+        uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, txtbuffer);
+        DrawPublish(msgBox);
+        wait_press_A();
+        DrawDispose(msgBox);
+        return true;
+    }
+
+    // Read each item in source folder
+    file_handle **directory = NULL;
+    file_handle *curDirEntries = NULL;
+    int num_files = devices[DEVICE_CUR]->readDir(srcFolder, &curDirEntries, -1);
+    num_files = sortFiles(curDirEntries, num_files, &directory);
+
+    for (int i = 0; i < num_files; i++) {
+        file_handle *srcEntry = directory[i];
+
+        // Create handle to new file or folder
+        file_handle newDestFile;
+        memset(&newDestFile, 0, sizeof(file_handle));
+        snprintf(newDestFile.name, PATHNAME_MAX, "%s/%s", destFolder->name, getRelativeName(srcEntry->name));
+
+        if (srcEntry->fileType == IS_DIR) {
+            // Recurse into subdirectory
+            if (copy_folder_recursive(srcEntry, &newDestFile, option)) {
+				sprintf(txtbuffer, "Recursive folder copy error");
+				uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
+				DrawPublish(msgBox);
+				wait_press_A();
+				DrawDispose(msgBox);
+
+                free(directory);
+                free(curDirEntries);
+                return true;
+            }
+        } else if (srcEntry->fileType == IS_FILE) {
+            // Copy file
+            copy_file(srcEntry, &newDestFile, option, true);
+        }
+    }
+
+    free(directory);
+    free(curDirEntries);
+    return false;
+}
+
 /* Manage file  - The user will be asked what they want to do with the currently selected file - copy/move/delete*/
 bool manage_file() {
-	bool isFile = curFile.fileType == IS_FILE;
-	bool isHidden = curFile.fileAttrib & ATTRIB_HIDDEN;
-	bool canWrite = devices[DEVICE_CUR]->features & FEAT_WRITE;
-	bool canMove = canWrite && isFile;
-	bool canCopy = isFile;
+	bool isFile    = curFile.fileType == IS_FILE;
+	bool isHidden  = curFile.fileAttrib & ATTRIB_HIDDEN;
+	bool canWrite  = devices[DEVICE_CUR]->features & FEAT_WRITE;
+	bool canCopy   = canWrite;
+	bool canMove   = canWrite && devices[DEVICE_CUR]->deleteFile;
 	bool canDelete = canWrite && devices[DEVICE_CUR]->deleteFile;
 	bool canRename = canWrite && devices[DEVICE_CUR]->renameFile;
-	bool canHide = canWrite && devices[DEVICE_CUR]->hideFile;
+	bool canHide   = canWrite && devices[DEVICE_CUR]->hideFile;
 	
 	// Ask the user what they want to do with the selected entry
 	uiDrawObj_t* manageFileBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 320);
@@ -1464,11 +1645,11 @@ bool manage_file() {
 	float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
 	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 190, getRelativeName(curFile.name), scale, true, defaultColor));
 	sprintf(txtbuffer, "%s%s%s%s%s",
-					canCopy ? " (X) Copy " : "",
-					canMove ? " (Y) Move " : "",
-					canDelete ? " (Z) Delete " : "",
-					canRename ? " (R) Rename " : "",
-					canHide ? isHidden ? " (L) Unhide " : " (L) Hide " : "");
+			canCopy ? " (X) Copy " : "",
+			canMove ? " (Y) Move " : "",
+			canDelete ? " (Z) Delete " : "",
+			canRename ? " (R) Rename " : "",
+			canHide ? isHidden ? " (L) Unhide " : " (L) Hide " : "");
 	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 250, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-10-10), true, defaultColor));
 	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 310, "Press an option to continue, or B to return", 1.0f, true, defaultColor));
 	DrawPublish(manageFileBox);
@@ -1510,7 +1691,7 @@ bool manage_file() {
 	do {VIDEO_WaitVSync();} while (padsButtonsHeld() & waitButtons);
 	DrawDispose(manageFileBox);
 	
-	// "Are you sure option" for deletes.
+	// "Are you sure?" option for deletes.
 	if(option == DELETE_OPTION) {
 		uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, "Delete confirmation required.\n \nPress L + A to continue, or B to cancel.");
 		DrawPublish(msgBox);
@@ -1560,7 +1741,7 @@ bool manage_file() {
 		do {VIDEO_WaitVSync();} while (padsButtonsHeld() & (PAD_BUTTON_B|PAD_BUTTON_START));
 		return modified;
 	}
-	// Handle deletes (dir or file)
+	// Handles deletes (dir or file).
 	else if(canDelete && option == DELETE_OPTION) {
 		uiDrawObj_t *progBar = DrawPublish(DrawProgressBar(true, 0, "Deleting\205"));
 		bool deleted = deleteFileOrDir(&curFile);
@@ -1571,9 +1752,11 @@ bool manage_file() {
 		DrawDispose(msgBox);
 		return deleted;
 	}
-	// If copy, ask which device is the destination device and copy
+
+	// Handles copies and moves (dir or file).
 	else if((option == COPY_OPTION) || (option == MOVE_OPTION)) {
 		u32 ret = 0;
+		
 		// Show a list of destination devices (the same device is also a possibility)
 		select_device(DEVICE_DEST);
 		if(devices[DEVICE_DEST] == NULL) return false;
@@ -1593,12 +1776,13 @@ bool manage_file() {
 			}
 			deviceHandler_setStatEnabled(1);
 		}
+
 		// Traverse this destination device and let the user select a directory to dump the file in
-		file_handle *destFile = memalign(32,sizeof(file_handle));
-		memset(destFile, 0, sizeof(file_handle));
+		file_handle *destDir = memalign(32,sizeof(file_handle));
+		memset(destDir, 0, sizeof(file_handle));
 		
 		// Show a directory only browser and get the destination file location
-		ret = select_dest_dir(devices[DEVICE_DEST]->initial, destFile);
+		ret = select_dest_dir(devices[DEVICE_DEST]->initial, destDir);
 		if(ret) {
 			if(devices[DEVICE_DEST] != devices[DEVICE_CUR]) {
 				devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );
@@ -1608,14 +1792,16 @@ bool manage_file() {
 		
 		u32 isDestCard = devices[DEVICE_DEST] == &__device_card_a || devices[DEVICE_DEST] == &__device_card_b;
 		u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
-		
-		concat_path(destFile->name, destFile->name, stripInvalidChars(getRelativeName(curFile.name)));
+		file_handle *destFile = memalign(32,sizeof(file_handle));
+		concat_path(destFile->name, destDir->name, stripInvalidChars(getRelativeName(curFile.name)));
+		free(destDir);
 		destFile->fp = 0;
 		destFile->ffsFp = 0;
 		destFile->fileBase = 0;
 		destFile->offset = 0;
 		destFile->size = 0;
 		destFile->fileType = IS_FILE;
+
 		// Create a GCI if something is coming out from CARD to another device
 		if(isSrcCard && !isDestCard) {
 			strlcat(destFile->name, ".gci", PATHNAME_MAX);
@@ -1724,11 +1910,20 @@ bool manage_file() {
 		devices[DEVICE_DEST]->seekFile(destFile, 0, DEVICE_HANDLER_SEEK_SET);
 		
 		// Same (fat based) device and user wants to move the file, just rename ;)
-		if(devices[DEVICE_CUR] == devices[DEVICE_DEST]
-			&& canRename && option == MOVE_OPTION) {
+		if(devices[DEVICE_CUR] == devices[DEVICE_DEST] && canRename && option == MOVE_OPTION) {
+			// Check that destination directory doesn't contain the entire source directory
+			if (strstr(destFile->name, curFile.name) != NULL) {
+				sprintf(txtbuffer, "Source folder cannot\ncontain destination folder!");
+				uiDrawObj_t *msgBox = DrawMessageBox(D_WARN,txtbuffer);
+				DrawPublish(msgBox);
+				wait_press_A();
+				DrawDispose(msgBox);
+				return false;
+			}
+
 			ret = devices[DEVICE_CUR]->renameFile(&curFile, destFile->name);
 			needsRefresh=1;
-			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,ret ? "Move Failed! Press A to continue":"File moved! Press A to continue");
+			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,ret ? "Move Failed!\nPress A to continue":"Move Successful!\nPress A to continue");
 			DrawPublish(msgBox);
 			wait_press_A();
 			DrawDispose(msgBox);
@@ -1739,6 +1934,7 @@ bool manage_file() {
 				setCopyGCIMode(TRUE);
 				curFile.size += sizeof(GCI);
 			}
+
 			// If we're copying a .gci to a memory card, do it properly
 			else if(isDestCard && (endsWith(curFile.name,".gci") || endsWith(curFile.name,".gcs") || endsWith(curFile.name,".sav"))) {
 				GCI gci;
@@ -1761,113 +1957,20 @@ bool manage_file() {
 					else devices[DEVICE_CUR]->seekFile(&curFile, -sizeof(GCI), DEVICE_HANDLER_SEEK_CUR);
 				}
 			}
-			
-			// Read from one file and write to the new directory
-			u32 bulkWrite = isSrcCard || isDestCard || devices[DEVICE_DEST] == &__device_qoob;
-			u32 curOffset = curFile.offset, cancelled = 0, chunkSize = bulkWrite ? curFile.size - curOffset : (256*1024);
-			char *readBuffer = (char*)memalign(32,chunkSize);
-			sprintf(txtbuffer, "Copying to: %s",getRelativeName(destFile->name));
-			uiDrawObj_t* progBar = DrawProgressBar(false, 0, txtbuffer);
-			DrawPublish(progBar);
-			
-			u64 startTime = gettime();
-			u64 lastTime = gettime();
-			u32 lastOffset = 0;
-			int speed = 0;
-			int timeremain = 0;
-			print_gecko("Copying %i byte file from %s to %s\r\n", curFile.size, &curFile.name[0], destFile->name);
-			while(curOffset < curFile.size) {
-				u32 buttons = padsButtonsHeld();
-				if(buttons & PAD_BUTTON_B) {
-					cancelled = 1;
-					break;
-				}
-				u32 timeDiff = diff_msec(lastTime, gettime());
-				u32 timeStart = diff_msec(startTime, gettime());
-				if(timeDiff >= 1000) {
-					speed = (int)((float)(curOffset-lastOffset) / (float)(timeDiff/1000.0f));
-					timeremain = (curFile.size - curOffset) / speed;
-					lastTime = gettime();
-					lastOffset = curOffset;
-				}
-				DrawUpdateProgressBarDetail(progBar, (int)((float)((float)curOffset/(float)curFile.size)*100), speed, timeStart/1000, timeremain);
-				u32 amountToCopy = curOffset + chunkSize > curFile.size ? curFile.size - curOffset : chunkSize;
-				devices[DEVICE_CUR]->seekFile(&curFile, curOffset, DEVICE_HANDLER_SEEK_SET);
-				ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
-				if(ret != amountToCopy) {	// Retry the read.
-					devices[DEVICE_CUR]->seekFile(&curFile, curOffset, DEVICE_HANDLER_SEEK_SET);
-					ret = devices[DEVICE_CUR]->readFile(&curFile, readBuffer, amountToCopy);
-					if(ret != amountToCopy) {
-						DrawDispose(progBar);
-						free(readBuffer);
-						devices[DEVICE_CUR]->closeFile(&curFile);
-						devices[DEVICE_DEST]->closeFile(destFile);
-						sprintf(txtbuffer, "Failed to Read! (%d %d)\n%s",amountToCopy,ret, &curFile.name[0]);
-						uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-						DrawPublish(msgBox);
-						wait_press_A();
-						DrawDispose(msgBox);
-						setGCIInfo(NULL);
-						setCopyGCIMode(FALSE);
-						return true;
-					}
-				}
-				ret = devices[DEVICE_DEST]->writeFile(destFile, readBuffer, amountToCopy);
-				if(ret != amountToCopy) {
-					DrawDispose(progBar);
-					free(readBuffer);
-					devices[DEVICE_CUR]->closeFile(&curFile);
-					devices[DEVICE_DEST]->closeFile(destFile);
-					sprintf(txtbuffer, "Failed to Write! (%d %d)\n%s",amountToCopy,ret,destFile->name);
-					uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-					DrawPublish(msgBox);
-					wait_press_A();
-					DrawDispose(msgBox);
-					setGCIInfo(NULL);
-					setCopyGCIMode(FALSE);
-					return true;
-				}
-				curOffset+=amountToCopy;
-			}
-			DrawDispose(progBar);
-			free(readBuffer);
-			devices[DEVICE_CUR]->closeFile(&curFile);
 
-			ret = devices[DEVICE_DEST]->writeFile(destFile, NULL, 0);
-			if(ret == 0)
-				ret = devices[DEVICE_DEST]->closeFile(destFile);
-			if(ret != 0) {
-				sprintf(txtbuffer, "Failed to Write! (%d)\n%s",ret,destFile->name);
-				uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
-				DrawPublish(msgBox);
-				wait_press_A();
-				DrawDispose(msgBox);
-				setGCIInfo(NULL);
-				setCopyGCIMode(FALSE);
-				return true;
+			if (isFile) {
+				// Copy file
+				copy_file(&curFile, destFile, option, false);
 			}
-			setGCIInfo(NULL);
-			setCopyGCIMode(FALSE);
-			free(destFile);
-			uiDrawObj_t *msgBox = NULL;
-			if(!cancelled) {
-				// If cut, delete from source device
-				if(canDelete && option == MOVE_OPTION) {
-					devices[DEVICE_CUR]->deleteFile(&curFile);
-					needsRefresh=1;
-					msgBox = DrawMessageBox(D_INFO,"Move Complete!");
-				}
-				else {
-					msgBox = DrawMessageBox(D_INFO,"Copy Complete.\nPress A to continue");
-				}
-			} 
 			else {
-				sprintf(txtbuffer, "%s cancelled.\nPress A to continue", (option == MOVE_OPTION) ? "Move" : "Copy");
-				msgBox = DrawMessageBox(D_INFO,txtbuffer);
+				// Copy folder and subfolders
+				if (copy_folder_recursive(&curFile, destFile, option) != 0) {
+					// Delete source folder structure if move was successful
+					deleteFileOrDir(&curFile);
+				}
 			}
-			DrawPublish(msgBox);
-			wait_press_A();
-			DrawDispose(msgBox);
+
+			free(destFile);
 		}
 	}
 
