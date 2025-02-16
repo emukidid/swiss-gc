@@ -18,7 +18,6 @@ typedef struct FuncPattern
 } FuncPattern;
 
 /* the SDGecko/IDE-EXI patches */
-#include "stub_bin.h"
 #include "sd_v1_bin.h"
 #include "sd_v1_card_bin.h"
 #include "sd_v1_dtk_bin.h"

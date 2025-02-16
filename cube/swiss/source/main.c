@@ -30,6 +30,7 @@
 #include "httpd.h"
 #include "config.h"
 #include "sram.h"
+#include "stub_bin.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "devices/deviceHandler.h"
@@ -47,11 +48,12 @@ static void driveInfoCallback(s32 result, dvdcmdblk *block) {
 	}
 	else if(result >= 0) {
 		swissSettings.hasDVDDrive = 1;
+		*(u16*)0x800030E6 = 0x8000 | driveInfo.dev_code;
 	}
 }
 
 /* Initialise Video, PAD, DVD, Font */
-void Initialise (void)
+void Initialise(void)
 {
 	PAD_Init ();  
 	DVD_Init(); 
@@ -68,12 +70,57 @@ void Initialise (void)
 		swissSettings.sramVideo = SYS_VIDEO_PAL;
 	else if(!strncmp(&IPLInfo[0x55], "MPAL", 4))
 		swissSettings.sramVideo = SYS_VIDEO_MPAL;
+	else if(!strncmp(&IPLInfo[0x55], "TDEV", 4) && (SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_RETAIL)
+		*(u32*)0x8000002C += SYS_CONSOLE_TDEV_HW1 - SYS_CONSOLE_RETAIL_HW1;
+
+	*(u32*)0x800000CC = swissSettings.sramVideo;
 
 	GXRModeObj *vmode = getVideoMode();
 	setVideoMode(vmode);
 
 	init_font();
 	DrawInit();
+}
+
+void __SYS_PreInit(void)
+{
+	DCZeroRange((void *)0x80000000, 0x3100);
+
+	switch (((vu16 *)0xCC004000)[20] & 7) {
+		case 0:
+			*(u32 *)0x80000028 = 0x1000000;
+			break;
+		case 1: case 4:
+			*(u32 *)0x80000028 = 0x2000000;
+			break;
+		case 2: case 6:
+			*(u32 *)0x80000028 = 0x1800000;
+			break;
+		case 3: case 7:
+			*(u32 *)0x80000028 = 0x3000000;
+			break;
+		case 5:
+			*(u32 *)0x80000028 = 0x4000000;
+			break;
+	}
+
+	if (((vu32 *)0xCC006000)[9] == 0xFF)
+		*(u32 *)0x8000002C = SYS_CONSOLE_RETAIL_HW1;
+	else
+		*(u32 *)0x8000002C = SYS_CONSOLE_DEVELOPMENT_HW1;
+
+	*(u32 *)0x8000002C += ((vu32*)0xCC003000)[11] >> 28;
+
+	*(u32 *)0x800000F0 = 0x1800000;
+	*(u32 *)0x800000F8 = TB_BUS_CLOCK;
+	*(u32 *)0x800000FC = TB_CORE_CLOCK;
+
+	memcpy((void *)0x80001800, stub_bin, stub_bin_size);
+	DCFlushRangeNoSync((void *)0x80001800, stub_bin_size);
+	ICInvalidateRange((void *)0x80001800, stub_bin_size);
+	_sync();
+
+	*(u64 *)0x800030D8 = -__builtin_ppc_get_timebase();
 }
 
 uiDrawObj_t *configProgBar = NULL;
@@ -242,7 +289,7 @@ int main(int argc, char *argv[])
 			wait_press_A();
 			DrawDispose(msgBox);
 		}
-		else if(flippy_version < FLIPPY_VERSION(1,4,0)) {
+		else if(flippy_version < FLIPPY_VERSION(1,4,0) && (SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_RETAIL) {
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\nflippydrive.com/updates"));
 			wait_press_A();
 			DrawDispose(msgBox);

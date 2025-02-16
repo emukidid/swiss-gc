@@ -166,6 +166,9 @@ int install_code(int final)
 	
 	// Reload Stub
 	if (!top_addr) {
+		u32 size = SYS_GetPhysicalMemSize();
+		*(u32 *)0x80000034 = (u32)MEM_PHYSICAL_TO_K0(size);
+		*(u32 *)0x800000F0 = size;
 		return 1;
 	}
 	// IDE-EXI
@@ -465,14 +468,6 @@ int install_code(int final)
 		mtspr(EAR, 0x8000000C);
 	}
 	return 1;
-}
-
-void __SYS_PreInit()
-{
-	memcpy((void *)0x80001800, stub_bin, stub_bin_size);
-	DCFlushRangeNoSync((void *)0x80001800, stub_bin_size);
-	ICInvalidateRange((void *)0x80001800, stub_bin_size);
-	_sync();
 }
 
 void make_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)

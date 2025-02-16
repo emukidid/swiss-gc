@@ -103,7 +103,7 @@ premain:
 	blt		1b
 
 	li		r0, 0
-	lis		sp, 0x0180
+	lis		sp, 0x0100
 	stwu	r0, -8 (sp)
 
 	bl		main

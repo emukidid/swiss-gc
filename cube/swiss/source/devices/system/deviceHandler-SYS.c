@@ -28,6 +28,8 @@ s32 read_rom_aram(file_handle* file, void* buffer, u32 length);
 s32 write_rom_aram(file_handle* file, const void* buffer, u32 length);
 s32 read_rom_aram_expansion(file_handle* file, void* buffer, u32 length);
 s32 write_rom_aram_expansion(file_handle* file, const void* buffer, u32 length);
+s32 read_rom_mram(file_handle* file, void* buffer, u32 length);
+s32 read_rom_mram_cached(file_handle* file, void* buffer, u32 length);
 s32 read_rom_void(file_handle* file, void* buffer, u32 length);
 s32 write_rom_void(file_handle* file, const void* buffer, u32 length);
 
@@ -48,6 +50,8 @@ enum rom_types
 	ROM_ARAM,
 	ROM_ARAM_INTERNAL,
 	ROM_ARAM_EXPANSION,
+	ROM_MRAM,
+	ROM_MRAM_CACHED,
 	NUM_ROMS
 };
 
@@ -67,7 +71,9 @@ static char* rom_names[] =
 	"/sram.bin",
 	"/aram.bin",
 	"/aram_internal.bin",
-	"/aram_expansion.bin"
+	"/aram_expansion.bin",
+	"/mram.bin",
+	"/mram_cached.bin"
 };
 
 static int rom_sizes[] =
@@ -86,7 +92,9 @@ static int rom_sizes[] =
 	64,
 	16 * 1024 * 1024,
 	16 * 1024 * 1024,
-	0
+	0,
+	24 * 1024 * 1024,
+	24 * 1024 * 1024
 };
 
 static s32 (*read_rom[])(file_handle* file, void* buffer, u32 length) =
@@ -105,7 +113,9 @@ static s32 (*read_rom[])(file_handle* file, void* buffer, u32 length) =
 	read_rom_sram,
 	read_rom_aram,
 	read_rom_aram,
-	read_rom_aram_expansion
+	read_rom_aram_expansion,
+	read_rom_mram,
+	read_rom_mram_cached
 };
 
 static s32 (*write_rom[])(file_handle* file, const void* buffer, u32 length) =
@@ -124,7 +134,9 @@ static s32 (*write_rom[])(file_handle* file, const void* buffer, u32 length) =
 	write_rom_sram,
 	write_rom_aram,
 	write_rom_aram,
-	write_rom_aram_expansion
+	write_rom_aram_expansion,
+	write_rom_void,
+	write_rom_void
 };
 
 file_handle initial_SYS =
@@ -350,6 +362,16 @@ s32 write_rom_aram_expansion(file_handle* file, const void* buffer, u32 length) 
 	return length;
 }
 
+s32 read_rom_mram(file_handle* file, void* buffer, u32 length) {
+	memcpy(buffer, MEM_PHYSICAL_TO_K1(file->offset), length);
+	return length;
+}
+
+s32 read_rom_mram_cached(file_handle* file, void* buffer, u32 length) {
+	memcpy(buffer, MEM_PHYSICAL_TO_K0(file->offset), length);
+	return length;
+}
+
 s32 read_rom_void(file_handle* file, void* buffer, u32 length) {
 	DCZeroRange(buffer, length);
 	return 0;
@@ -382,6 +404,8 @@ s32 deviceHandler_SYS_init(file_handle* file) {
 	rom_sizes[ROM_ARAM]           = AR_GetSize();
 	rom_sizes[ROM_ARAM_INTERNAL]  = AR_GetInternalSize();
 	rom_sizes[ROM_ARAM_EXPANSION] = rom_sizes[ROM_ARAM] - rom_sizes[ROM_ARAM_INTERNAL];
+	rom_sizes[ROM_MRAM]           = SYS_GetPhysicalMemSize();
+	rom_sizes[ROM_MRAM_CACHED]    = SYS_GetSimulatedMemSize();
 	return 0;
 }
 
