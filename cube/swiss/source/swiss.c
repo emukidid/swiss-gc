@@ -1571,7 +1571,8 @@ bool copy_file(file_handle *srcFile, file_handle *destFile, int option, bool sil
 
 bool copy_folder_recursive(file_handle *srcFolder, file_handle *destFolder, int option) {
 	// Check that destination directory doesn't contain the entire source directory
-	if (strstr(destFolder->name, srcFolder->name) != NULL) {
+	sprintf(txtbuffer, "%s/", srcFolder->name);
+	if (strstr(destFolder->name, txtbuffer) != NULL) {
 		sprintf(txtbuffer, "Source folder cannot\ncontain destination folder!");
 		uiDrawObj_t *msgBox = DrawMessageBox(D_WARN,txtbuffer);
 		DrawPublish(msgBox);
@@ -1761,11 +1762,86 @@ bool manage_file() {
 		if(modified) {
 			print_gecko("Renaming %s to %s\r\n", &curFile.name[0], txtbuffer);
 			u32 ret = devices[DEVICE_CUR]->renameFile(&curFile, txtbuffer);
-			sprintf(txtbuffer, "%s renamed!\nPress A to continue.", isFile ? "File" : "Directory");
-			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, ret ? "Move Failed!\nPress A to continue" : txtbuffer);
-			DrawPublish(msgBox);
-			wait_press_A();
-			DrawDispose(msgBox);
+
+			if (ret != 0) {
+				if (ret == FR_EXIST) {
+					// Folder already exists, ask to merge
+					uiDrawObj_t* dupeBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 350);
+					sprintf(txtbuffer, "%s exists, overwrite any conflicting file(s)?", isFile ? "File" : "Directory");
+					DrawAddChild(dupeBox, DrawStyledLabel(640/2, 160, txtbuffer, 1.0f, true, defaultColor));
+					float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
+					DrawAddChild(dupeBox, DrawStyledLabel(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor));
+					DrawAddChild(dupeBox, DrawStyledLabel(640/2, 230, "(B) Return (Z) Overwrite", 1.0f, true, defaultColor));
+					DrawAddChild(dupeBox, DrawStyledLabel(640/2, 300, "Press an option to continue.", 1.0f, true, defaultColor));
+					DrawPublish(dupeBox);
+					while(padsButtonsHeld() & (PAD_BUTTON_A | PAD_TRIGGER_Z)) { VIDEO_WaitVSync (); }
+					while(1) {
+						u32 buttons = padsButtonsHeld();
+						if(buttons & PAD_TRIGGER_Z) {
+							if (isFile) {
+								if(devices[DEVICE_CUR]->deleteFile) {
+									// Overwrite single file
+									file_handle *destFile = memalign(32,sizeof(file_handle));
+									concat_path(destFile->name, parentPath, stripInvalidChars(nameBuffer));
+									destFile->fp = 0;
+									destFile->ffsFp = 0;
+									destFile->fileBase = 0;
+									destFile->offset = 0;
+									destFile->size = 0;
+									destFile->fileType = IS_FILE;
+									devices[DEVICE_CUR]->deleteFile(destFile);
+									ret = devices[DEVICE_CUR]->renameFile(&curFile, destFile->name);
+									free(destFile);
+								}
+
+								if (ret != 0) {
+									sprintf(txtbuffer, "Rename Failed! (%d)\nPress A to continue", ret);
+									uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, txtbuffer);
+									DrawPublish(msgBox);
+									wait_press_A();
+									DrawDispose(msgBox);
+								}
+							}
+							else {
+								// Copy folder recursively
+								merge_folders_without_asking = true;
+								file_handle *destFile = memalign(32,sizeof(file_handle));
+								concat_path(destFile->name, parentPath, stripInvalidChars(nameBuffer));
+								destFile->fp = 0;
+								destFile->ffsFp = 0;
+								destFile->fileBase = 0;
+								destFile->offset = 0;
+								destFile->size = 0;
+								destFile->fileType = IS_DIR;
+
+								if (copy_folder_recursive(&curFile, destFile, MOVE_OPTION) == 0) {
+									// Delete source folder structure if move was successful
+									deleteFileOrDir(&curFile);
+								}
+
+								// Reset flag so it will ask users if it's OK to merge next time
+								merge_folders_without_asking = false;
+								free(destFile);
+							}
+
+							while(padsButtonsHeld() & PAD_TRIGGER_Z){ VIDEO_WaitVSync (); }
+							break;
+						}
+						if(buttons & PAD_BUTTON_B) {
+							// Exit prompt with no action
+							break;
+						}
+					}
+					DrawDispose(dupeBox);
+				}
+				else {
+					sprintf(txtbuffer, "Rename Failed! (%d)\nPress A to continue", ret);
+					uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, txtbuffer);
+					DrawPublish(msgBox);
+					wait_press_A();
+					DrawDispose(msgBox);
+				}
+			}
 		}
 		free(nameBuffer);
 		free(parentPath);
@@ -1825,13 +1901,13 @@ bool manage_file() {
 		u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
 		file_handle *destFile = memalign(32,sizeof(file_handle));
 		concat_path(destFile->name, destDir->name, stripInvalidChars(getRelativeName(curFile.name)));
-		free(destDir);
 		destFile->fp = 0;
 		destFile->ffsFp = 0;
 		destFile->fileBase = 0;
 		destFile->offset = 0;
 		destFile->size = 0;
 		destFile->fileType = IS_FILE;
+		free(destDir);
 
 		// Create a GCI if something is coming out from CARD to another device
 		if(isSrcCard && !isDestCard) {
@@ -1943,7 +2019,8 @@ bool manage_file() {
 		// Same (fat based) device and user wants to move the file, just rename ;)
 		if(devices[DEVICE_CUR] == devices[DEVICE_DEST] && canRename && option == MOVE_OPTION) {
 			// Check that destination directory doesn't contain the entire source directory
-			if (strstr(destFile->name, curFile.name) != NULL) {
+			sprintf(txtbuffer, "%s/", curFile.name);
+			if (strstr(destFile->name, txtbuffer) != NULL) {
 				sprintf(txtbuffer, "Source folder cannot\ncontain destination folder!");
 				uiDrawObj_t *msgBox = DrawMessageBox(D_WARN,txtbuffer);
 				DrawPublish(msgBox);
