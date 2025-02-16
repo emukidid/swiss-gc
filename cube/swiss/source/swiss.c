@@ -1583,6 +1583,7 @@ bool copy_folder_recursive(file_handle *srcFolder, file_handle *destFolder, int 
 
     // Create destination folder
 	u32 ret = devices[DEVICE_DEST]->makeDir(destFolder);
+	
     if (ret != 0) {
 		if (ret == FR_EXIST) {
 			// Folder already exists
@@ -1814,7 +1815,8 @@ bool manage_file() {
 								destFile->size = 0;
 								destFile->fileType = IS_DIR;
 
-								if (copy_folder_recursive(&curFile, destFile, MOVE_OPTION) == 0) {
+								devices[DEVICE_DEST] = devices[DEVICE_CUR];
+								if (copy_folder_recursive(&curFile, destFile, MOVE_OPTION) == 0) { 
 									// Delete source folder structure if move was successful
 									deleteFileOrDir(&curFile);
 								}
@@ -1908,6 +1910,17 @@ bool manage_file() {
 		destFile->size = 0;
 		destFile->fileType = IS_FILE;
 		free(destDir);
+
+		// Skip if source and destination are the same
+		if(!strcmp(curFile.name, destFile->name)) {
+			sprintf(txtbuffer, "Can't overwrite a folder with itself!");
+			uiDrawObj_t *msgBox = DrawMessageBox(D_WARN,txtbuffer);
+			DrawPublish(msgBox);
+			wait_press_A();
+			DrawDispose(msgBox);
+			free(destFile);
+			return false;
+		}
 
 		// Create a GCI if something is coming out from CARD to another device
 		if(isSrcCard && !isDestCard) {
@@ -2107,15 +2120,24 @@ bool manage_file() {
 			}
 			else {
 				// Copy folder and subfolders
-				if (copy_folder_recursive(&curFile, destFile, option) == 0) {
-					if (option == MOVE_OPTION) {
-						// Delete source folder structure if move was successful
-						deleteFileOrDir(&curFile);
-					}
+				if(!strcmp(curFile.name, destFile->name)) {
+					sprintf(txtbuffer, "Can't overwrite a folder with itself!");
+					uiDrawObj_t *msgBox = DrawMessageBox(D_WARN,txtbuffer);
+					DrawPublish(msgBox);
+					wait_press_A();
+					DrawDispose(msgBox);
 				}
+				else {
+					if (copy_folder_recursive(&curFile, destFile, option) == 0) {
+						if (option == MOVE_OPTION) {
+							// Delete source folder structure if move was successful
+							deleteFileOrDir(&curFile);
+						}
+					}
 
-				// Reset flag so it will ask users if it's OK to merge next time
-				merge_folders_without_asking = false;
+					// Reset flag so it will ask users if it's OK to merge next time
+					merge_folders_without_asking = false;
+				}
 			}
 
 			free(destFile);
