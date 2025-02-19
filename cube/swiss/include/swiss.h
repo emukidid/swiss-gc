@@ -40,6 +40,7 @@ extern file_handle curDir;
 extern char IPLInfo[256] __attribute__((aligned(32)));
 extern dvdcmdblk commandBlock;
 extern dvddrvinfo driveInfo;
+extern dvddiskid *DVDDiskID;
 extern DiskHeader GCMDisk;
 
 extern s32 DVD_LowGetCoverStatus(void);

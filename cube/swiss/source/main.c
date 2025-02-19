@@ -40,6 +40,7 @@
 
 dvdcmdblk commandBlock;
 dvddrvinfo driveInfo __attribute__((aligned(32)));
+dvddiskid *DVDDiskID = (dvddiskid*)0x80000000;
 SwissSettings swissSettings;
 
 static void driveInfoCallback(s32 result, dvdcmdblk *block) {
@@ -84,7 +85,12 @@ void Initialise(void)
 
 void __SYS_PreInit(void)
 {
-	DCZeroRange((void *)0x80000000, 0x3100);
+	u32 start = 0x80000000, end = 0x80003100;
+
+	if (DVDDiskID->magic == DVD_MAGIC)
+		start += sizeof(dvddiskid);
+
+	DCZeroRange((void *)start, end - start);
 
 	switch (((vu16 *)0xCC004000)[20] & 7) {
 		case 0:
@@ -109,7 +115,7 @@ void __SYS_PreInit(void)
 	else
 		*(u32 *)0x8000002C = SYS_CONSOLE_DEVELOPMENT_HW1;
 
-	*(u32 *)0x8000002C += ((vu32*)0xCC003000)[11] >> 28;
+	*(u32 *)0x8000002C += ((vu32 *)0xCC003000)[11] >> 28;
 
 	*(u32 *)0x800000F0 = 0x1800000;
 	*(u32 *)0x800000F8 = TB_BUS_CLOCK;
