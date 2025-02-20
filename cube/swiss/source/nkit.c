@@ -979,7 +979,7 @@ static const struct {
 	{{ "GIHE78\x00\x01" }, false, 0x19, 0xD189, 0xB29A2A47, 0x34A840A79C8A30BF, 1094070272,  +365907968, {  939299108,       +4020, 6496, 0x545F }, "Scooby-Doo! Night of 100 Frights" },
 	{{ "GIHF78\x00\x00" }, false, 0xAE, 0x08A5, 0xDE0ABF46, 0x6ED9DBC4E02C4A99, 1103308800,  +356669440, {  952739908,       +4228, 8096, 0x2373 }, "Scooby-Doo! La Nuit des 100 Frissons" },
 	{{ "GIHP78\x00\x00" }, false, 0x78, 0x6944, 0xAC9948A6, 0x29AA538EBB065EE7, 1044678656,  +415299584, {  891586272,      +32404, 8096, 0x5F8C }, "Scooby-Doo! Night of 100 Frights" },
-	{{ "GIIJ18\x00\x00" }, false, 0x2C, 0x977B, 0x11AAA0D2, 0xF04C6EA1A21C6183,  640131072,  +819847168, {  640124096,          +0, 6496, 0x5B29 }, "Momotarou Dentetsu 11: Black Bombee Shutsugen! no Maki" },
+	{{ "GIIJ18\x00\x00" }, false, 0x2C, 0x977B, 0x11AAA0D2, 0xF04C6EA1A21C6183,  640131072,  +819847168, {  640124096,          +0, 6496, 0x5B29 }, "Momotarou Dentetsu 11: Black Bonby Shutsugen! no Maki" },
 	{{ "GIJEFP\x00\x00" }, false, 0x1B, 0xB3B7, 0x834BDAF9, 0xC96080E6C914109A,  664311808,  +795666432, {  664304292,  +795667420, 6496, 0xBA35 }, "Space Raiders" },
 	{{ "GIJJC0\x00\x00" }, false, 0x90, 0xE404, 0xAAE6405B, 0x63F4D4210554B222,  647563264,  +812414976, {    1844312,      +23464, 6496, 0xA2F6 }, "Space Raiders" },
 	{{ "GIJKC0\x00\x00" }, false, 0x60, 0x9B2E, 0xC0C2035B, 0xD709C301F18ED0E2,  668135424,  +791842816, {  668128868,  +791842844, 6496, 0xBA35 }, "Space Raiders" },
@@ -1345,6 +1345,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x55, 0xCCBB, 0x9E7DC646, 0xC835982AC91C6F64,     974848, +1459003392, {      94248,       +4056, 6496, 0x49CF }, "Cube CD 17 (36)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x57, 0xCCBB, 0x2188E0BF, 0x188D9BA3FDAC7D1E,    1148928, +1458829312, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 05 (24)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x57, 0xCCBB, 0x4D3BC980, 0x7DBCBD513CC0E4EF,     849920, +1459128320, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 03 (22)" },
+	{{ "GNHE5d\x00\x00" }, false, 0x58, 0xCCBB, 0xC80CA638, 0xA8D7793FAA07D360,    2555904, +1457422336, {      94248,       +4056, 6496, 0x329E }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x5A, 0xCCBB, 0x1F756DAD, 0x18600C6BC8C6562B,    1417216, +1458561024, {      94248,       +4056, 6496, 0x6D95 }, "Action Replay Ultimative Cheatcodes für Final Fantasy: Crystal Chronicles" },
 	{{ "GNHE5d\x00\x00" }, false, 0x66, 0xCCBB, 0x55D7EDD1, 0x28A5FFBE9A173388,     989184, +1458989056, {      94248,       +4056, 6496, 0xE787 }, "Ultimate Cheats für Splinter Cell" },
 	{{ "GNHE5d\x00\x00" }, false, 0x68, 0xCCBB, 0xBF7B7C5A, 0x421F5299A43CCD74,    1189888, +1458788352, {      94248,       +4056, 6496, 0xD19A }, "Power Link Game Enhancer Disc" },
@@ -2119,7 +2120,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (2009)
+#define REDUMP_COUNT (2010)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
