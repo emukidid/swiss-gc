@@ -57,7 +57,8 @@ static void driveInfoCallback(s32 result, dvdcmdblk *block) {
 void Initialise(void)
 {
 	PAD_Init ();  
-	DVD_Init(); 
+	DVD_Init();
+	DVD_Reset(DVD_RESETNONE);
 	DVD_InquiryAsync(&commandBlock, &driveInfo, driveInfoCallback);
 	
 	// Disable IPL modchips to allow access to IPL ROM fonts
@@ -117,7 +118,6 @@ void __SYS_PreInit(void)
 
 	*(u32 *)0x8000002C += ((vu32 *)0xCC003000)[11] >> 28;
 
-	*(u32 *)0x800000F0 = 0x1800000;
 	*(u32 *)0x800000F8 = TB_BUS_CLOCK;
 	*(u32 *)0x800000FC = TB_CORE_CLOCK;
 

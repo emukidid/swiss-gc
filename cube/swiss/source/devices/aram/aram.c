@@ -33,15 +33,8 @@ static bool __aram_Startup(DISC_INTERFACE *disc)
 	if (disc->ioType != DEVICE_TYPE_GAMECUBE_ARAM) return false;
 	if (initialized) return true;
 
-	if (!AR_CheckInit()) {
-		AR_Init(NULL, 0);
-		AR_Reset();
-	}
-
-	if (!ARQ_CheckInit()) {
-		ARQ_Init();
-		ARQ_Reset();
-	}
+	AR_Init(NULL, 0);
+	ARQ_Init();
 
 	initialized = true;
 	return true;

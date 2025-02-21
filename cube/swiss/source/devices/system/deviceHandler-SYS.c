@@ -392,14 +392,8 @@ bool is_rom_name(char* filename) {
 }
 
 s32 deviceHandler_SYS_init(file_handle* file) {
-	if(!AR_CheckInit()) {
-		AR_Init(NULL, 0);
-		AR_Reset();
-	}
-	if(!ARQ_CheckInit()) {
-		ARQ_Init();
-		ARQ_Reset();
-	}
+	AR_Init(NULL, 0);
+	ARQ_Init();
 
 	rom_sizes[ROM_ARAM]           = AR_GetSize();
 	rom_sizes[ROM_ARAM_INTERNAL]  = AR_GetInternalSize();

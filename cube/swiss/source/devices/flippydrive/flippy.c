@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2024-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -835,6 +835,7 @@ flippyresult flippy_init(void)
 
 	if (initialized) return flippy_bypass(false);
 	DVD_Init();
+	DVD_Reset(DVD_RESETNONE);
 
 	if (DVD_Inquiry(&block, &driveinfo) < 0 || driveinfo.rel_date != 0x20220426)
 		return FLIPPY_RESULT_NOT_READY;
