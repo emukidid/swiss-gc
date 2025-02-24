@@ -275,8 +275,8 @@ bool deviceHandler_GCLoader_test() {
 	gcloaderVersionStr = NULL;
 	gcloaderHwVersion = 0;
 	
-	if (swissSettings.hasDVDDrive == 1 && driveInfo.rel_date == 0x20196c64) {
-		if (driveInfo.pad[1] == 'w')
+	if (swissSettings.hasDVDDrive == 1 && DVDDriveInfo.rel_date == 0x20196c64) {
+		if (DVDDriveInfo.pad[1] == 'w')
 			__device_gcloader.features |=  (FEAT_WRITE | FEAT_CONFIG_DEVICE | FEAT_PATCHES);
 		else
 			__device_gcloader.features &= ~(FEAT_WRITE | FEAT_CONFIG_DEVICE | FEAT_PATCHES);
@@ -284,8 +284,8 @@ bool deviceHandler_GCLoader_test() {
 		__device_gcloader.quirks = QUIRK_NONE;
 		
 		if (gcloaderReadId() == 0xAAAAAAAA) {
-			gcloaderHwVersion = driveInfo.pad[2] + 1;
-			gcloaderVersionStr = gcloaderGetVersion(driveInfo.pad[2]);
+			gcloaderHwVersion = DVDDriveInfo.pad[2] + 1;
+			gcloaderVersionStr = gcloaderGetVersion(DVDDriveInfo.pad[2]);
 			
 			if (gcloaderVersionStr) {
 				switch (gcloaderHwVersion) {
@@ -319,7 +319,6 @@ bool deviceHandler_GCLoader_test() {
 		}
 		return true;
 	}
-	
 	return false;
 }
 

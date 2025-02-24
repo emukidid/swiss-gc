@@ -39,8 +39,9 @@ extern file_handle curFile;
 extern file_handle curDir;
 extern char IPLInfo[256] __attribute__((aligned(32)));
 extern dvdcmdblk commandBlock;
-extern dvddrvinfo driveInfo;
-extern dvddiskid *DVDDiskID;
+extern dvddrvinfo DVDDriveInfo;
+extern u16* const DVDDeviceCode;
+extern dvddiskid* DVDDiskID;
 extern DiskHeader GCMDisk;
 
 extern u32 sdgecko_getAddressingType(s32 drv_no);

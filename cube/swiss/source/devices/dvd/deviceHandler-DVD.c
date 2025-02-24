@@ -550,6 +550,34 @@ s32 deviceHandler_DVD_closeFile(file_handle* file){
 }
 
 bool deviceHandler_DVD_test() {
+	if (*DVDDeviceCode & 0x8000) {
+		switch (*DVDDeviceCode & ~0x8000) {
+			case 0x0000:
+				__device_dvd.hwName = "NROM Reader";
+				break;
+			case 0x0001:
+				__device_dvd.hwName = "NR Reader";
+				break;
+			case 0x0002:
+				__device_dvd.hwName = "RVL-ROM Reader";
+				break;
+			case 0x0003:
+				__device_dvd.hwName = "RVL-R Reader";
+				break;
+			case 0x0200:
+				__device_dvd.hwName = "NPDP Reader";
+				break;
+			case 0x0201:
+				__device_dvd.hwName = "GDEV";
+				break;
+			case 0x0202:
+				__device_dvd.hwName = "NDEV";
+				break;
+			case 0x0203:
+				__device_dvd.hwName = "RVL-H Reader";
+				break;
+		}
+	}
 	return swissSettings.hasDVDDrive != 0;
 }
 

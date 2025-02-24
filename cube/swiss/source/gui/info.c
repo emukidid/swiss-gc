@@ -28,7 +28,7 @@ const char* getDeviceInfoString(u32 location) {
 	}
 	else if(device == &__device_dvd) {
 		if(swissSettings.hasDVDDrive == 1) {
-			u8* driveVersion = (u8*)&driveInfo;
+			u8* driveVersion = (u8*)&DVDDriveInfo;
 			sprintf(topStr,"%s %02X %02X%02X/%02X (%02X)",device->hwName,driveVersion[6],driveVersion[4],driveVersion[5],driveVersion[7],driveVersion[8]);
 		}
 		else {
@@ -36,7 +36,7 @@ const char* getDeviceInfoString(u32 location) {
 		}
 	}
 	else if(device == &__device_flippy) {
-		flippyversion *version = (flippyversion*)driveInfo.pad;
+		flippyversion *version = (flippyversion*)DVDDriveInfo.pad;
 		sprintf(topStr, "%s (%u.%u.%u%s)", device->hwName, version->major, version->minor, version->build, version->dirty ? "-dirtyboi" : "");
 	}
 	else if(device == &__device_gcloader) {
@@ -74,14 +74,14 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		// Model
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"MODEL", 0.65f, true, defaultColor));
 		if(!strncmp(IPLInfo, "(C) ", 4)) {
-			if(driveInfo.dev_code == 0x0201) {
+			if(*DVDDeviceCode == 0x8201) {
 				strcpy(topStr, "NPDP-GDEV (GCT-0100)");
 			}
 			else if(!strncmp(&IPLInfo[0x55], "TDEV", 4) ||
 					!strncmp(&IPLInfo[0x55], "DEV  Revision 0.1", 0x11)) {
 				strcpy(topStr, "Nintendo GameCube DOT-006");
 			}
-			else if(driveInfo.dev_code == 0x0200) {
+			else if(*DVDDeviceCode == 0x8200) {
 				if(!strncmp(&IPLInfo[0x55], "PAL ", 4)) {
 					strcpy(topStr, "Nintendo GameCube DOT-002P");
 				}
@@ -89,7 +89,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 					strcpy(topStr, "Nintendo GameCube DOT-002");
 				}
 			}
-			else if(driveInfo.dev_code == 0x0001) {
+			else if(*DVDDeviceCode == 0x8001) {
 				if(!strncmp(&IPLInfo[0x55], "PAL ", 4)) {
 					strcpy(topStr, "Nintendo GameCube DOT-001P");
 				}
@@ -97,7 +97,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 					strcpy(topStr, "Nintendo GameCube DOT-001");
 				}
 			}
-			else if(driveInfo.dev_code == 0x0000 && driveInfo.pad[1] == 'M') {
+			else if(*DVDDeviceCode == 0x8000 && DVDDriveInfo.pad[1] == 'M') {
 				strcpy(topStr, "Panasonic Q SL-GC10-S");
 			}
 			else if(!strncmp(&IPLInfo[0x55], "PAL  Revision 1.2", 0x11)) {

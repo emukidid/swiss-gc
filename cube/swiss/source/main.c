@@ -40,26 +40,34 @@
 #include "devices/filemeta.h"
 
 dvdcmdblk commandBlock;
-dvddrvinfo driveInfo __attribute__((aligned(32)));
-dvddiskid *DVDDiskID = (dvddiskid*)0x80000000;
+dvddrvinfo DVDDriveInfo __attribute__((aligned(32)));
+u16* const DVDDeviceCode = (u16*)0x800030E6;
+dvddiskid* DVDDiskID = (dvddiskid*)0x80000000;
 SwissSettings swissSettings;
 
 static void driveInfoCallback(s32 result, dvdcmdblk *block) {
 	if(result == DVD_ERROR_CANCELED) {
 		DVD_StopMotorAsync(block, NULL);
+		return;
 	}
 	else if(result == DVD_ERROR_FATAL) {
 		swissSettings.hasDVDDrive = 0;
-		*(u16*)0x800030E6 = 0x0001;
+		*DVDDeviceCode = 0x0001;
 	}
 	else if(result >= 0) {
 		swissSettings.hasDVDDrive = 1;
-		*(u16*)0x800030E6 = 0x8000 | driveInfo.dev_code;
+		*DVDDeviceCode = 0x8000 | DVDDriveInfo.dev_code;
 	}
+	syssramex* sramex = __SYS_LockSramEx();
+	sramex->dvddev_code = *DVDDeviceCode;
+	__SYS_UnlockSramEx(TRUE);
 }
 
 static void resetCoverCallback(s32 result) {
 	swissSettings.hasDVDDrive = 2;
+	syssramex* sramex = __SYS_LockSramEx();
+	*DVDDeviceCode = sramex->dvddev_code;
+	__SYS_UnlockSramEx(FALSE);
 	DVD_Pause();
 	DVD_Reset(DVD_RESETSOFT);
 }
@@ -73,7 +81,7 @@ void Initialise(void)
 	DVD_Reset(DVD_RESETNONE);
 	while(DVD_LowGetCoverStatus() == DVD_COVER_RESET);
 	DVD_LowSetResetCoverCallback(NULL);
-	DVD_InquiryAsync(&commandBlock, &driveInfo, driveInfoCallback);
+	DVD_InquiryAsync(&commandBlock, &DVDDriveInfo, driveInfoCallback);
 
 	// Disable IPL modchips to allow access to IPL ROM fonts
 	ipl_set_config(6); 
@@ -304,7 +312,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	else if(device == &__device_flippy) {
-		flippyversion *version = (flippyversion*)driveInfo.pad;
+		flippyversion *version = (flippyversion*)DVDDriveInfo.pad;
 		u32 flippy_version = FLIPPY_VERSION(version->major, version->minor, version->build);
 		if(flippy_version < FLIPPY_VERSION(FLIPPY_MINVER_MAJOR, FLIPPY_MINVER_MINOR, FLIPPY_MINVER_BUILD)) {
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "A firmware update is required.\nflippydrive.com/updates"));
