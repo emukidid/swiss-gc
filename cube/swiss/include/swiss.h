@@ -43,7 +43,6 @@ extern dvddrvinfo driveInfo;
 extern dvddiskid *DVDDiskID;
 extern DiskHeader GCMDisk;
 
-extern s32 DVD_LowGetCoverStatus(void);
 extern u32 sdgecko_getAddressingType(s32 drv_no);
 extern u32 sdgecko_getTransferMode(s32 drv_no);
 extern u32 sdgecko_getDevice(s32 drv_no);

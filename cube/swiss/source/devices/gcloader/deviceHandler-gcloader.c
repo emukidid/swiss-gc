@@ -275,9 +275,7 @@ bool deviceHandler_GCLoader_test() {
 	gcloaderVersionStr = NULL;
 	gcloaderHwVersion = 0;
 	
-	while (DVD_LowGetCoverStatus() == 0);
-	
-	if (swissSettings.hasDVDDrive && driveInfo.rel_date == 0x20196c64) {
+	if (swissSettings.hasDVDDrive == 1 && driveInfo.rel_date == 0x20196c64) {
 		if (driveInfo.pad[1] == 'w')
 			__device_gcloader.features |=  (FEAT_WRITE | FEAT_CONFIG_DEVICE | FEAT_PATCHES);
 		else

@@ -2,6 +2,7 @@
 #include <gccore.h>		/*** Wrapper to include common libogc headers ***/
 #include <ogcsys.h>		/*** Needed for console support ***/
 #include <ogc/color.h>
+#include <ogc/dvdlow.h>
 #include <ogc/exi.h>
 #include <ogc/lwp.h>
 #include <ogc/usbgecko.h>
@@ -47,10 +48,20 @@ static void driveInfoCallback(s32 result, dvdcmdblk *block) {
 	if(result == DVD_ERROR_CANCELED) {
 		DVD_StopMotorAsync(block, NULL);
 	}
+	else if(result == DVD_ERROR_FATAL) {
+		swissSettings.hasDVDDrive = 0;
+		*(u16*)0x800030E6 = 0x0001;
+	}
 	else if(result >= 0) {
 		swissSettings.hasDVDDrive = 1;
 		*(u16*)0x800030E6 = 0x8000 | driveInfo.dev_code;
 	}
+}
+
+static void resetCoverCallback(s32 result) {
+	swissSettings.hasDVDDrive = 2;
+	DVD_Pause();
+	DVD_Reset(DVD_RESETSOFT);
 }
 
 /* Initialise Video, PAD, DVD, Font */
@@ -58,9 +69,12 @@ void Initialise(void)
 {
 	PAD_Init ();  
 	DVD_Init();
+	DVD_LowSetResetCoverCallback(resetCoverCallback);
 	DVD_Reset(DVD_RESETNONE);
+	while(DVD_LowGetCoverStatus() == DVD_COVER_RESET);
+	DVD_LowSetResetCoverCallback(NULL);
 	DVD_InquiryAsync(&commandBlock, &driveInfo, driveInfoCallback);
-	
+
 	// Disable IPL modchips to allow access to IPL ROM fonts
 	ipl_set_config(6); 
 	usleep(1000); //wait for modchip to disable (overkill)
@@ -282,9 +296,11 @@ int main(int argc, char *argv[])
 	
 	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(LOC_DVD_CONNECTOR);
 	if(device == &__device_dvd) {
-		// DVD Motor off setting
-		if(swissSettings.stopMotor) {
-			DVD_StopMotor(&commandBlock);
+		if(DVD_GetCmdBlockStatus(&commandBlock) == DVD_STATE_END) {
+			// DVD Motor off setting
+			if(swissSettings.stopMotor) {
+				DVD_StopMotor(&commandBlock);
+			}
 		}
 	}
 	else if(device == &__device_flippy) {
@@ -349,7 +365,7 @@ int main(int argc, char *argv[])
 void populateDeviceAvailability() {
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Detecting devices\205\nThis can be skipped by holding B next time"));
 	while(DVD_GetCmdBlockStatus(&commandBlock) == DVD_STATE_BUSY) {
-		if(DVD_LowGetCoverStatus() == 1) {
+		if(DVD_LowGetCoverStatus() == DVD_COVER_OPEN) {
 			break;
 		}
 		if(padsButtonsHeld() & PAD_BUTTON_B) {

@@ -22,11 +22,12 @@ volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
 
 void dvd_reset()
 {
-	dvd[1] = 2;
-	volatile unsigned long v = *(volatile unsigned long*)0xcc003024;
-	*(volatile unsigned long*)0xcc003024 = (v & ~4) | 1;
-	sleep(1);
-	*(volatile unsigned long*)0xcc003024 = v | 5;
+	DVD_Pause();
+	DVD_Reset(DVD_RESETHARD);
+	usleep(1150000);
+	DVD_Reset(DVD_RESETHARD);
+	DVD_Resume();
+	while(DVD_GetDriveStatus() == DVD_STATE_BUSY);
 }
 
 unsigned int dvd_read_id()

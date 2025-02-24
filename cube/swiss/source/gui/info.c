@@ -27,8 +27,13 @@ const char* getDeviceInfoString(u32 location) {
 		sprintf(topStr, "%s (%s)", getHwNameByLocation(location), bba_address_str());
 	}
 	else if(device == &__device_dvd) {
-		u8* driveVersion = (u8*)&driveInfo;
-		sprintf(topStr,"%s %02X %02X%02X/%02X (%02X)",device->hwName,driveVersion[6],driveVersion[4],driveVersion[5],driveVersion[7],driveVersion[8]);
+		if(swissSettings.hasDVDDrive == 1) {
+			u8* driveVersion = (u8*)&driveInfo;
+			sprintf(topStr,"%s %02X %02X%02X/%02X (%02X)",device->hwName,driveVersion[6],driveVersion[4],driveVersion[5],driveVersion[7],driveVersion[8]);
+		}
+		else {
+			strcpy(topStr, device->hwName);
+		}
 	}
 	else if(device == &__device_flippy) {
 		flippyversion *version = (flippyversion*)driveInfo.pad;

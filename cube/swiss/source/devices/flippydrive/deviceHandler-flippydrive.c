@@ -316,9 +316,7 @@ s32 deviceHandler_Flippy_makeDir(file_handle* dir) {
 }
 
 bool deviceHandler_Flippy_test() {
-	while (DVD_LowGetCoverStatus() == 0);
-	
-	if (swissSettings.hasDVDDrive) {
+	if (swissSettings.hasDVDDrive == 1) {
 		switch (driveInfo.rel_date) {
 			case 0x20010608:
 			case 0x20010831:

@@ -20,6 +20,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ogc/dvd.h>
+#include <ogc/dvdlow.h>
 #include <ogc/irq.h>
 #include <ogc/lwp.h>
 #include <ogc/machine/processor.h>
@@ -63,10 +64,6 @@
 	((dvdcmdbuf){(((0xDC) << 24)), (0xE3F72BAB), (0x72648977)})
 
 typedef void (*flippycallback)(flippyfile *file);
-typedef void (*dvdcallbacklow)(s32 result);
-
-extern s32 DVD_LowWaitCoverClose(dvdcallbacklow cb);
-extern dvdcallbacklow DVD_LowClearCallback(void);
 
 static dvddrvinfo       driveinfo  ATTRIBUTE_ALIGN(32);
 static flippybootstatus bootstatus ATTRIBUTE_ALIGN(32);

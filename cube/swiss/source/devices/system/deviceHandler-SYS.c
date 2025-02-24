@@ -392,6 +392,8 @@ bool is_rom_name(char* filename) {
 }
 
 s32 deviceHandler_SYS_init(file_handle* file) {
+	if(swissSettings.hasDVDDrive > 1) dvd_reset();
+
 	AR_Init(NULL, 0);
 	ARQ_Init();
 

@@ -156,8 +156,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, Executabl
 }
 
 bool deviceHandler_WKF_test() {
-	while(DVD_LowGetCoverStatus() == 0);
-	return swissSettings.hasDVDDrive && (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF);
+	return swissSettings.hasDVDDrive == 1 && (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF);
 }
 
 s32 deviceHandler_WKF_init(file_handle* file){

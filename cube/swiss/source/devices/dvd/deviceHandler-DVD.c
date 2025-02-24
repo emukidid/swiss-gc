@@ -532,7 +532,7 @@ s32 deviceHandler_DVD_init(file_handle* file){
 	
 	file->status = initialize_disc(ENABLE_BYDISK);
 	dvd_init = file->status != DRV_ERROR;
-	return !dvd_init;
+	return dvd_init ? 0 : EIO;
 }
 
 s32 deviceHandler_DVD_deinit(file_handle* file) {
@@ -550,7 +550,6 @@ s32 deviceHandler_DVD_closeFile(file_handle* file){
 }
 
 bool deviceHandler_DVD_test() {
-	while(DVD_LowGetCoverStatus() == 0);
 	return swissSettings.hasDVDDrive != 0;
 }
 

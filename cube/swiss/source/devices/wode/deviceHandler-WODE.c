@@ -258,8 +258,7 @@ static const dvddiskid WODEExtCFG = {
 };
 
 bool deviceHandler_WODE_test() {
-	while(DVD_LowGetCoverStatus() == 0);
-	return swissSettings.hasDVDDrive && !memcmp(DVDDiskID, &WODEExtCFG, sizeof(dvddiskid));
+	return swissSettings.hasDVDDrive == 1 && !memcmp(DVDDiskID, &WODEExtCFG, sizeof(dvddiskid));
 }
 
 u32 deviceHandler_WODE_emulated() {
