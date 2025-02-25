@@ -317,7 +317,7 @@ s32 deviceHandler_Flippy_makeDir(file_handle* dir) {
 
 bool deviceHandler_Flippy_test() {
 	if (swissSettings.hasDVDDrive == 1) {
-		switch (DVDDriveInfo.rel_date) {
+		switch (DVDDriveInfo->rel_date) {
 			case 0x20010608:
 			case 0x20010831:
 			case 0x20020402:
@@ -325,28 +325,28 @@ bool deviceHandler_Flippy_test() {
 				if (flippy_bypass(false) != FLIPPY_RESULT_OK)
 					return false;
 				
-				if (DVD_Inquiry(&commandBlock, &DVDDriveInfo) < 0) {
+				if (DVD_Inquiry(&commandBlock, DVDDriveInfo) < 0) {
 					swissSettings.hasDVDDrive = 0;
 					*DVDDeviceCode = 0x0001;
 					return false;
 				}
 				break;
 		}
-		switch (DVDDriveInfo.rel_date) {
+		switch (DVDDriveInfo->rel_date) {
 			case 0x20220420:
 				if (flippy_boot(FLIPPY_MODE_BOOT) != FLIPPY_RESULT_OK ||
 					flippy_boot(FLIPPY_MODE_NOUPDATE) != FLIPPY_RESULT_OK)
 					return false;
 				
-				while (DVDDriveInfo.rel_date != 0x20220426) {
-					if (DVD_Inquiry(&commandBlock, &DVDDriveInfo) < 0) {
+				while (DVDDriveInfo->rel_date != 0x20220426) {
+					if (DVD_Inquiry(&commandBlock, DVDDriveInfo) < 0) {
 						swissSettings.hasDVDDrive = 0;
 						*DVDDeviceCode = 0x0001;
 						return false;
 					}
 				}
 			case 0x20220426:
-				flippyversion *version = (flippyversion *)DVDDriveInfo.pad;
+				flippyversion *version = (flippyversion *)DVDDriveInfo->pad;
 				u32 flippy_version = FLIPPY_VERSION(version->major, version->minor, version->build);
 				
 				__device_flippy.quirks = QUIRK_NO_DEINIT;

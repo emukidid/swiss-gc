@@ -576,9 +576,12 @@ bool deviceHandler_DVD_test() {
 			case 0x0203:
 				__device_dvd.hwName = "RVL-H Reader";
 				break;
+			default:
+				__device_dvd.hwName = "Unknown";
+				break;
 		}
 	}
-	return swissSettings.hasDVDDrive != 0;
+	return *DVDDeviceCode != 0x0001;
 }
 
 u32 deviceHandler_DVD_emulated() {
@@ -607,7 +610,7 @@ char* deviceHandler_DVD_status(file_handle* file) {
 
 DEVICEHANDLER_INTERFACE __device_dvd = {
 	.deviceUniqueId = DEVICE_ID_0,
-	.hwName = "Disc Drive",
+	.hwName = "NROM Reader",
 	.deviceName = "DVD",
 	.deviceDescription = "Supported File System(s): GCM, ISO 9660, Multi-Game",
 	.deviceTexture = {TEX_GCDVDSMALL, 84, 84, 84, 84},

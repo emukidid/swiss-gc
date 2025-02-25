@@ -117,5 +117,6 @@ extern int dvdDiscTypeInt;
 extern int drive_status;
 
 extern void populateDeviceAvailability();
+extern void refreshDeviceCode(bool subdevice);
 #endif
 

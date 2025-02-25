@@ -2279,7 +2279,7 @@ void load_file()
 				uiDrawObj_t *progBar = DrawPublish(DrawProgressBar(true, 0, "Resetting RP2040"));
 				flippy_closefrom(1);
 				flippy_reset();
-				DVD_Inquiry(&commandBlock, &DVDDriveInfo);
+				refreshDeviceCode(false);
 				flippy_boot(FLIPPY_MODE_UPDATE);
 				flippybootstatus *status;
 				while((status = flippy_getbootstatus()) && status->current_progress != 0xFFFF) {

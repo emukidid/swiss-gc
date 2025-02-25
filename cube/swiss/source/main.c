@@ -40,12 +40,13 @@
 #include "devices/filemeta.h"
 
 dvdcmdblk commandBlock;
-dvddrvinfo DVDDriveInfo __attribute__((aligned(32)));
+dvddrvinfo DVDDriveInfo[2] __attribute__((aligned(32)));
 u16* const DVDDeviceCode = (u16*)0x800030E6;
 dvddiskid* DVDDiskID = (dvddiskid*)0x80000000;
 SwissSettings swissSettings;
 
 static void driveInfoCallback(s32 result, dvdcmdblk *block) {
+	dvddrvinfo* DVDDriveInfo = DVD_GetUserData(block);
 	if(result == DVD_ERROR_CANCELED) {
 		DVD_StopMotorAsync(block, NULL);
 		return;
@@ -56,7 +57,17 @@ static void driveInfoCallback(s32 result, dvdcmdblk *block) {
 	}
 	else if(result >= 0) {
 		swissSettings.hasDVDDrive = 1;
-		*DVDDeviceCode = 0x8000 | DVDDriveInfo.dev_code;
+		switch(DVDDriveInfo->rel_date) {
+			case 0x20220420:
+			case 0x20220426:
+				syssramex* sramex = __SYS_LockSramEx();
+				*DVDDeviceCode = sramex->dvddev_code;
+				__SYS_UnlockSramEx(FALSE);
+				return;
+			default:
+				*DVDDeviceCode = 0x8000 | DVDDriveInfo->dev_code;
+				break;
+		}
 	}
 	syssramex* sramex = __SYS_LockSramEx();
 	sramex->dvddev_code = *DVDDeviceCode;
@@ -81,7 +92,7 @@ void Initialise(void)
 	DVD_Reset(DVD_RESETNONE);
 	while(DVD_LowGetCoverStatus() == DVD_COVER_RESET);
 	DVD_LowSetResetCoverCallback(NULL);
-	DVD_InquiryAsync(&commandBlock, &DVDDriveInfo, driveInfoCallback);
+	refreshDeviceCode(false);
 
 	// Disable IPL modchips to allow access to IPL ROM fonts
 	ipl_set_config(6); 
@@ -312,7 +323,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	else if(device == &__device_flippy) {
-		flippyversion *version = (flippyversion*)DVDDriveInfo.pad;
+		flippyversion *version = (flippyversion*)DVDDriveInfo->pad;
 		u32 flippy_version = FLIPPY_VERSION(version->major, version->minor, version->build);
 		if(flippy_version < FLIPPY_VERSION(FLIPPY_MINVER_MAJOR, FLIPPY_MINVER_MINOR, FLIPPY_MINVER_BUILD)) {
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "A firmware update is required.\nflippydrive.com/updates"));
@@ -389,4 +400,15 @@ void populateDeviceAvailability() {
 		}
 	}
 	DrawDispose(msgBox);
+}
+
+void refreshDeviceCode(bool subdevice) {
+	switch(DVD_GetCmdBlockStatus(&commandBlock)) {
+		case DVD_STATE_END:
+		case DVD_STATE_FATAL_ERROR:
+		case DVD_STATE_CANCELED:
+			DVD_SetUserData(&commandBlock, &DVDDriveInfo[subdevice]);
+			DVD_InquiryAsync(&commandBlock, &DVDDriveInfo[subdevice], driveInfoCallback);
+			break;
+	}
 }

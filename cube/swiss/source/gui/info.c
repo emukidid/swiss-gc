@@ -28,7 +28,7 @@ const char* getDeviceInfoString(u32 location) {
 	}
 	else if(device == &__device_dvd) {
 		if(swissSettings.hasDVDDrive == 1) {
-			u8* driveVersion = (u8*)&DVDDriveInfo;
+			u8* driveVersion = (u8*)DVDDriveInfo;
 			sprintf(topStr,"%s %02X %02X%02X/%02X (%02X)",device->hwName,driveVersion[6],driveVersion[4],driveVersion[5],driveVersion[7],driveVersion[8]);
 		}
 		else {
@@ -36,8 +36,14 @@ const char* getDeviceInfoString(u32 location) {
 		}
 	}
 	else if(device == &__device_flippy) {
-		flippyversion *version = (flippyversion*)DVDDriveInfo.pad;
+		flippyversion *version = (flippyversion*)DVDDriveInfo->pad;
 		sprintf(topStr, "%s (%u.%u.%u%s)", device->hwName, version->major, version->minor, version->build, version->dirty ? "-dirtyboi" : "");
+
+		device = &__device_dvd;
+		if(deviceHandler_getDeviceAvailable(device)) {
+			strcat(topStr, " + ");
+			strcat(topStr, device->hwName);
+		}
 	}
 	else if(device == &__device_gcloader) {
 		if(gcloaderVersionStr != NULL) {
@@ -97,7 +103,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 					strcpy(topStr, "Nintendo GameCube DOT-001");
 				}
 			}
-			else if(*DVDDeviceCode == 0x8000 && DVDDriveInfo.pad[1] == 'M') {
+			else if(*DVDDeviceCode == 0x8000 && DVDDriveInfo->pad[1] == 'M') {
 				strcpy(topStr, "Panasonic Q SL-GC10-S");
 			}
 			else if(!strncmp(&IPLInfo[0x55], "PAL  Revision 1.2", 0x11)) {

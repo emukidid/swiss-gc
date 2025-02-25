@@ -39,7 +39,7 @@ extern file_handle curFile;
 extern file_handle curDir;
 extern char IPLInfo[256] __attribute__((aligned(32)));
 extern dvdcmdblk commandBlock;
-extern dvddrvinfo DVDDriveInfo;
+extern dvddrvinfo DVDDriveInfo[2];
 extern u16* const DVDDeviceCode;
 extern dvddiskid* DVDDiskID;
 extern DiskHeader GCMDisk;

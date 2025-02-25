@@ -26,6 +26,7 @@ void dvd_reset()
 	DVD_Reset(DVD_RESETHARD);
 	usleep(1150000);
 	DVD_Reset(DVD_RESETHARD);
+	refreshDeviceCode(true);
 	DVD_Resume();
 	while(DVD_GetDriveStatus() == DVD_STATE_BUSY);
 }
