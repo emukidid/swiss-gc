@@ -75,12 +75,14 @@ static void driveInfoCallback(s32 result, dvdcmdblk *block) {
 }
 
 static void resetCoverCallback(s32 result) {
-	swissSettings.hasDVDDrive = 2;
 	syssramex* sramex = __SYS_LockSramEx();
-	*DVDDeviceCode = sramex->dvddev_code;
+	if(sramex->dvddev_code & 0x8000) {
+		swissSettings.hasDVDDrive = 2;
+		*DVDDeviceCode = sramex->dvddev_code;
+		DVD_Pause();
+		DVD_Reset(DVD_RESETSOFT);
+	}
 	__SYS_UnlockSramEx(FALSE);
-	DVD_Pause();
-	DVD_Reset(DVD_RESETSOFT);
 }
 
 /* Initialise Video, PAD, DVD, Font */
