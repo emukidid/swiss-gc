@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2012-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2012-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -61,7 +61,17 @@ startup:
 	andi.	r0, r0, 1
 	ecowx	r0, r4, r3
 	beq		reload
-	li		r4, 0x6000 + 5*4
+
+	li		r4, 0x6000 + 7*4
+	eciwx	r0, r4, r3
+	andi.	r0, r0, 0b001
+	beq		1f
+	li		r4, 0x6000
+	eciwx	r0, r4, r3
+	ori		r0, r0, 0b0000001
+	ecowx	r0, r4, r3
+
+1:	li		r4, 0x6000 + 5*4
 	eciwx	r0, r4, r3
 	oris	r0, r0, 0x1000
 	ecowx	r0, r4, r3
@@ -73,15 +83,15 @@ startup:
 	lis		r0, 0xdead
 	ori		r0, r0, 0xbeef
 	ecowx	r0, 0, r3
-1:	eciwx	r0, 0, r3
+2:	eciwx	r0, 0, r3
 	cmpwi	r0, 0
-	bne		1b
+	bne		2b
 
 	mftb	r3
-2:	mftb	r4
+3:	mftb	r4
 	sub		r0, r4, r3
 	cmplwi	r0, 44550
-	blt		2b
+	blt		3b
 
 	li		r3, 0x1800
 	lis		r0, 0x4E80
