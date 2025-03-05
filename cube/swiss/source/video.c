@@ -108,7 +108,7 @@ int getDTVStatus() {
 
 int getFontEncode() {
 	volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
-	return (vireg[55] >> 1) & 1;
+	return (vireg[55] >> 1) & 1 ? SYS_FONTENC_SJIS : SYS_FONTENC_ANSI;
 }
 
 f32 getYScaleFactor(u16 efbHeight, u16 xfbHeight) {

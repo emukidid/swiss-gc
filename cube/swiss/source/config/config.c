@@ -1226,7 +1226,7 @@ void config_load_current(ConfigEntry *entry) {
 	swissSettings.disableDithering = entry->disableDithering;
 	swissSettings.forceAnisotropy = entry->forceAnisotropy;
 	swissSettings.forceWidescreen = entry->forceWidescreen;
-	swissSettings.fontEncode = entry->region == 'J';
+	swissSettings.fontEncode = entry->region == 'J' ? SYS_FONTENC_SJIS : SYS_FONTENC_ANSI;
 	swissSettings.forcePollRate = entry->forcePollRate;
 	swissSettings.invertCStick = entry->invertCStick;
 	swissSettings.swapCStick = entry->swapCStick;
@@ -1245,7 +1245,7 @@ void config_load_current(ConfigEntry *entry) {
 	if(entry->region == 'P')
 		swissSettings.sramVideo = SYS_VIDEO_PAL;
 	else if((swissSettings.sramVideo == SYS_VIDEO_PAL && !strchr("A?", entry->region)) ||
-			(swissSettings.sramVideo == SYS_VIDEO_MPAL && getDTVStatus()))
+			(swissSettings.sramVideo == SYS_VIDEO_MPAL && (swissSettings.fontEncode == SYS_FONTENC_SJIS || getDTVStatus())))
 		swissSettings.sramVideo = SYS_VIDEO_NTSC;
 	
 	if(swissSettings.gameVMode > 0 && swissSettings.disableVideoPatches < 2) {
