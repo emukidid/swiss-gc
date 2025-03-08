@@ -1031,7 +1031,6 @@ void load_app(ExecutableFile *fileToPatch)
 	*(vu32*)(VAR_AREA+0x00F0) = 0x01800000;
 	*(vu32*)(VAR_AREA+0x00F8) = TB_BUS_CLOCK;
 	*(vu32*)(VAR_AREA+0x00FC) = TB_CORE_CLOCK;
-	*(vu64*)(VAR_AREA+0x30D8) = -gettime();
 	
 	// Copy the game header to 0x80000000
 	memcpy(VAR_AREA,(void*)&GCMDisk,0x20);
