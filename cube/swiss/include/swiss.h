@@ -138,6 +138,7 @@ typedef struct {
 	char rt4kHostIp[16];
 	u16 rt4kPort;
 	bool rt4kOptim;
+	char morph4kHostIp[16];
 	char smbUser[32];		//20
 	char smbPassword[32];	//16
 	char smbShare[128];		//80
@@ -161,6 +162,7 @@ typedef struct {
 	int initNetworkAtStart;
 	int aveCompat;
 	int rt4kProfile;
+	char morph4kPreset[128];
 	u8 configDeviceId;	// see deviceHandler.h
 	int fileBrowserType;
 	int bs2Boot;

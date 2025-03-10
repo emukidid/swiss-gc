@@ -6,6 +6,7 @@
 #include "bba.h"
 #include "exi.h"
 #include "httpd.h"
+#include "morph4k.h"
 #include "rt4k.h"
 #include "swiss.h"
 #include "wiiload.h"
@@ -85,6 +86,7 @@ static void *net_thread_func(void *arg)
 	init_httpd_thread();
 	init_wiiload_tcp_thread();
 	rt4k_init();
+	morph4k_init();
 	return NULL;
 }
 

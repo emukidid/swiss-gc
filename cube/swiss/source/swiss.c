@@ -56,6 +56,7 @@
 #include "devices/filemeta.h"
 #include "dolparameters.h"
 #include "reservedarea.h"
+#include "morph4k.h"
 
 DiskHeader GCMDisk;      //Gamecube Disc Header struct
 TGCHeader tgcFile;
@@ -2252,6 +2253,7 @@ fail_patched:
 fail:
 	gameID_unset();
 	rt4k_load_profile(swissSettings.rt4kProfile);
+	morph4k_apply_preset(swissSettings.morph4kPreset);
 	config_unload_current();
 	free(config);
 exit:

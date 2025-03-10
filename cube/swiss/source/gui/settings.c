@@ -69,12 +69,33 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nAVE P-DOL - Disable progressive scan mode\nCMPV-DOL - Enable 1080i & 540p\nGCDigital - Apply input filtering in OSD\nGCVideo - Apply general workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
 	"Force DTV Status:\n\nDisabled - Use detect signal from the Digital AV Out (default)\nEnabled - Force detection in the case of a hardware fault",
 	"Optimise for RetroTINK-4K:\n\nFor GCDigital compatibility mode:\n Requires FX-Framework firmware version 3.9.46.178 or later\n and RetroTINK-4K firmware version 1.9.4 or later, and using\n DV1-Direct mode.\n\nFor GCVideo compatibility mode:\n Requires GCVideo-DVI firmware version 3.0 or later.",
+	"Morph4K Preset:\n\nApplies configured Morph4K preset on startup.",
 	"Enable USB Gecko:\n\nIf a USB Gecko is present, messages output to the debug UART\nby Swiss/games will be redirected. When the USB host isn't\nactively reading from the USB Gecko, it may cause the system\nto hang.\n\nwiiload is also made available for iterative development.",
 	"Wait for USB Gecko:\n\nWait for the transmit buffer to be read by the USB host when full."
 };
 
 static char *tooltips_network[PAGE_NETWORK_MAX+1] = {
-	"Init network at startup:\n\nDisabled - Do not initialise the BBA even if present (default)\nEnabled - If a BBA is present, it will be initialised at startup\n\nIf initialised, navigate to the IP in a web browser to backup\nvarious data. wiiload is available for iterative development."
+	"Init network at startup:\n\nDisabled - Do not initialise the BBA even if present (default)\nEnabled - If a BBA is present, it will be initialised at startup\n\nIf initialised, navigate to the IP in a web browser to backup\nvarious data. wiiload is available for iterative development.",
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	"Morph4K Host IP:\n\nIf present, Swiss will send GameID data to Morph4K.\n\nDisable web credentials in Morph settings for this feature to work."
 };
 
 static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
@@ -251,6 +272,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, dtvEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Optimise for RetroTINK-4K:", swissSettings.rt4kOptim, option == SET_RT4K_OPTIM, rt4kEnable);
+			drawSettingEntryString(page, &page_y_ofs, "Morph4K Preset:", swissSettings.morph4kPreset, option == SET_MORPH4K_PRESET, true);
 			drawSettingEntryString(page, &page_y_ofs, "Enable USB Gecko:", enableUSBGeckoStr[swissSettings.enableUSBGecko], option == SET_ENABLE_USBGECKO, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Wait for USB Gecko:", swissSettings.waitForUSBGecko, option == SET_WAIT_USBGECKO, true);
 		}
@@ -285,6 +307,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "SMB Password:", "*****", option == SET_SMB_PASS, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "RetroTINK-4K Host IP:", swissSettings.rt4kHostIp, option == SET_RT4K_HOSTIP, netEnable);
 			drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Port:", swissSettings.rt4kPort, option == SET_RT4K_PORT, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "Morph4K Host IP:", swissSettings.morph4kHostIp, option == SET_MORPH4K_HOSTIP, netEnable);
 		}
 	}
 	else if(page_num == PAGE_GAME_GLOBAL) {
@@ -542,6 +565,9 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					DrawDispose(msgBox);
 				}
 			break;
+			case SET_MORPH4K_PRESET:
+				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA, "Morph4K Preset", &swissSettings.morph4kPreset, sizeof(swissSettings.morph4kPreset) - 1);
+			break;
 			case SET_ENABLE_USBGECKO:
 				swissSettings.enableUSBGecko += direction;
 				swissSettings.enableUSBGecko = (swissSettings.enableUSBGecko + USBGECKO_MAX) % USBGECKO_MAX;
@@ -624,6 +650,9 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_RT4K_PORT:
 				DrawGetTextEntry(ENTRYMODE_NUMERIC, "RetroTINK-4K Port", &swissSettings.rt4kPort, 5);
+			break;
+			case SET_MORPH4K_HOSTIP:
+				DrawGetTextEntry(ENTRYMODE_IP, "Morph4K Host IP", &swissSettings.morph4kHostIp, sizeof(swissSettings.morph4kHostIp) - 1);
 			break;
 		}
 	}
@@ -1051,12 +1080,15 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				page--; option = 0;
 			}
 			// These use text input, allow them to be accessed with the A button
-			if(page == PAGE_GLOBAL && option == SET_FLATTEN_DIR) {
+			if(
+				page == PAGE_GLOBAL && 
+				(option == SET_FLATTEN_DIR || option == SET_MORPH4K_PRESET)
+			) {
 				settings_toggle(page, option, 0, config);
 			}
 			if(page == PAGE_NETWORK && (in_range(option, SET_BBA_LOCALIP, SET_BBA_GATEWAY) ||
 										in_range(option, SET_FSP_HOSTIP,  SET_FTP_PASS) ||
-										in_range(option, SET_SMB_HOSTIP,  SET_RT4K_PORT))) {
+										in_range(option, SET_SMB_HOSTIP,  SET_MORPH4K_HOSTIP))) {
 				settings_toggle(page, option, 0, config);
 			}
 			if(page == PAGE_GAME_GLOBAL && option == SET_GLOBAL_DEFAULTS) {

@@ -23,6 +23,8 @@
 #include "gameid.h"
 #include "gcm.h"
 #include "mcp.h"
+#include "morph4k.h"
+#include "rt4k.h"
 #include "swiss.h"
 
 static char gameID[1 + 10] = {0x1D};
@@ -100,6 +102,8 @@ void gameID_set(const DiskHeader *header, u64 hash)
 		gameID[9]  = 
 		gameID[10] = '\0';
 	}
+
+	morph4k_send_gameid(&GCMDisk, hash);
 }
 
 void gameID_unset(void)

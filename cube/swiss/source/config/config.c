@@ -174,6 +174,8 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "RT4KHostIP=%s\r\n", swissSettings.rt4kHostIp);
 	fprintf(fp, "RT4KPort=%hu\r\n", swissSettings.rt4kPort);
 	fprintf(fp, "RT4KOptim=%s\r\n", swissSettings.rt4kOptim ? "Yes":"No");
+	fprintf(fp, "Morph4KHostIP=%s\r\n", swissSettings.morph4kHostIp);
+	fprintf(fp, "Morph4KPreset=%s\r\n", swissSettings.morph4kPreset);
 	fprintf(fp, "SMBUserName=%s\r\n", swissSettings.smbUser);
 	fprintf(fp, "SMBPassword=%s\r\n", swissSettings.smbPassword);
 	fprintf(fp, "SMBShareName=%s\r\n", swissSettings.smbShare);
@@ -909,6 +911,12 @@ void config_parse_global(char *configData) {
 				}
 				else if(!strcmp("RT4KOptim", name)) {
 					swissSettings.rt4kOptim = !strcmp("Yes", value);
+				}
+				else if(!strcmp("Morph4KPreset", name)) {
+					strlcpy(swissSettings.morph4kPreset, value, sizeof(swissSettings.morph4kPreset));
+				}
+				else if(!strcmp("Morph4KHostIP", name)) {
+					strlcpy(swissSettings.morph4kHostIp, value, sizeof(swissSettings.morph4kHostIp));
 				}
 				else if(!strcmp("SMBUserName", name)) {
 					strlcpy(swissSettings.smbUser, value, sizeof(swissSettings.smbUser));
