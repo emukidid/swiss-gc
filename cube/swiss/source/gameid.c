@@ -23,6 +23,7 @@
 #include "gameid.h"
 #include "gcm.h"
 #include "mcp.h"
+#include "morph4k.h"
 #include "rt4k.h"
 #include "swiss.h"
 

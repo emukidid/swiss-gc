@@ -41,6 +41,7 @@
 #include "elf.h"
 #include "flippy.h"
 #include "gameid.h"
+#include "morph4k.h"
 #include "gcm.h"
 #include "mp3.h"
 #include "nkit.h"
@@ -2080,9 +2081,14 @@ void load_game() {
 	// Load config for this game into our current settings
 	config_load_current(config);
 	gameID_early_set(&GCMDisk);
-	
+	uint64_t gcm_boot_hash = get_gcm_boot_hash(&GCMDisk, curFile.meta);
+
+	if (strlen(swissSettings.morph4kHostIp) > 0) {
+		morph4k_send_gameid(gcm_boot_hash);
+	}
+
 	if(config->forceCleanBoot || (config->preferCleanBoot && (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))) {
-		gameID_set(&GCMDisk, get_gcm_boot_hash(&GCMDisk, curFile.meta));
+		gameID_set(&GCMDisk, gcm_boot_hash);
 		
 		if(!(devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR)) {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support clean boot."));
