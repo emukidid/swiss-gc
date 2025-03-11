@@ -43,23 +43,28 @@ cpatches:
 	@$(CC) -O3 $(OPTS) -c base/memmove.S -DMEMCPY -o memcpy.o
 	@$(CC) -O3 $(OPTS) -c base/os.c
 	@$(CC) -O3 $(OPTS) -c base/pad.c
+	@$(CC) -O3 $(OPTS) -c base/pad.c -DGCDIGITAL -o pad-gcdigital.o
 	@$(CC) -O3 $(OPTS) -c usbgecko/uart.c -DEXI=EXIEmuRegs
 	@$(CC) -O3 $(OPTS) -o CallAlarmHandler.elf -e CallAlarmHandler -T base/common.ld -T base/dolphin/os.ld os.o
 	@$(CC) -O3 $(OPTS) -o CheckStatus.elf -e CheckStatus -T base/common.ld -T base/dolphin/os.ld pad.o
+	@$(CC) -O3 $(OPTS) -o CheckStatusGCDigital.elf -e CheckStatus -T base/common.ld -T base/dolphin/os.ld pad-gcdigital.o
 	@$(CC) -O3 $(OPTS) -o WriteUARTN.elf -e WriteUARTN -T base/common.ld -T base/dolphin/os.ld uart.o
 	@mkdir -p $(DISASM)
 	@$(OBJDUMP) -D CallAlarmHandler.elf > $(DISASM)/CallAlarmHandler.txt
 	@$(OBJDUMP) -D CheckStatus.elf > $(DISASM)/CheckStatus.txt
+	@$(OBJDUMP) -D CheckStatusGCDigital.elf > $(DISASM)/CheckStatusGCDigital.txt
 	@$(OBJDUMP) -D WriteUARTN.elf > $(DISASM)/WriteUARTN.txt
 	@$(OBJCOPY) -O binary backwards_memcpy.o backwards_memcpy.bin
 	@$(OBJCOPY) -O binary memcpy.o memcpy.bin
 	@$(OBJCOPY) -O binary CallAlarmHandler.elf CallAlarmHandler.bin
 	@$(OBJCOPY) -O binary CheckStatus.elf CheckStatus.bin
+	@$(OBJCOPY) -O binary CheckStatusGCDigital.elf CheckStatusGCDigital.bin
 	@$(OBJCOPY) -O binary WriteUARTN.elf WriteUARTN.bin
 	@$(BIN2S) -H $(DEST)/backwards_memcpy_bin.h backwards_memcpy.bin > $(DEST)/backwards_memcpy.bin.s
 	@$(BIN2S) -H $(DEST)/memcpy_bin.h memcpy.bin > $(DEST)/memcpy.bin.s
 	@$(BIN2S) -H $(DEST)/CallAlarmHandler_bin.h CallAlarmHandler.bin > $(DEST)/CallAlarmHandler.bin.s
 	@$(BIN2S) -H $(DEST)/CheckStatus_bin.h CheckStatus.bin > $(DEST)/CheckStatus.bin.s
+	@$(BIN2S) -H $(DEST)/CheckStatusGCDigital_bin.h CheckStatusGCDigital.bin > $(DEST)/CheckStatusGCDigital.bin.s
 	@$(BIN2S) -H $(DEST)/WriteUARTN_bin.h WriteUARTN.bin > $(DEST)/WriteUARTN.bin.s
 	@rm -f *.bin *.elf *.o
 

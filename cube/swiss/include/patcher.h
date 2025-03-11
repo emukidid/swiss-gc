@@ -121,6 +121,7 @@ extern u8 MTXPerspectiveHook[];
 extern u32 MTXPerspectiveHook_length;
 #include "CallAlarmHandler_bin.h"
 #include "CheckStatus_bin.h"
+#include "CheckStatusGCDigital_bin.h"
 extern u8 getTimingPatch[];
 extern u32 getTimingPatch_length;
 extern u8 VIConfigure240p[];
@@ -183,6 +184,7 @@ enum patchIds {
 	OS_CALLALARMHANDLER,
 	OS_RESERVED,
 	PAD_CHECKSTATUS,
+	PAD_CHECKSTATUS_GCDIGITAL,
 	VI_CONFIGURE240P,
 	VI_CONFIGURE288P,
 	VI_CONFIGURE480I,

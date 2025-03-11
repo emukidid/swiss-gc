@@ -63,6 +63,8 @@ void *installPatch(int patchId) {
 			patchSize = 0x1800; break;
 		case PAD_CHECKSTATUS:
 			patch = CheckStatus_bin; patchSize = CheckStatus_bin_size; break;
+		case PAD_CHECKSTATUS_GCDIGITAL:
+			patch = CheckStatusGCDigital_bin; patchSize = CheckStatusGCDigital_bin_size; break;
 		case VI_CONFIGURE240P:
 			patch = VIConfigure240p; patchSize = VIConfigure240p_length; break;
 		case VI_CONFIGURE288P:
@@ -16270,7 +16272,10 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		u32 *CheckStatus;
 		
 		if (PADRead) {
-			CheckStatus = getPatchAddr(PAD_CHECKSTATUS);
+			if (swissSettings.aveCompat == GCDIGITAL_COMPAT)
+				CheckStatus = getPatchAddr(PAD_CHECKSTATUS_GCDIGITAL);
+			else
+				CheckStatus = getPatchAddr(PAD_CHECKSTATUS);
 			
 			switch (j) {
 				case 0:

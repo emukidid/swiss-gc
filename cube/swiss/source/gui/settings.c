@@ -63,7 +63,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"Flatten directory:\n\nFlattens a directory structure matching a glob pattern.",
 	"Stop DVD Motor at startup:\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the DVD drive from spinning when Swiss starts\n\nThis option is mostly for users booting from game\nexploits where the disc will already be spinning.",
 	"SD/IDE Speed:\n\nThe clock speed to try using on the EXI bus for SD Card Adapter\nand IDE-EXI devices. 32 MHz may not work with some SD cards\nor SD card adapters.",
-	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nAVE P-DOL - Disable progressive scan mode\nCMPV-DOL - Enable 1080i & 540p\nGCVideo - Apply general workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
+	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nAVE P-DOL - Disable progressive scan mode\nCMPV-DOL - Enable 1080i & 540p\nGCDigital - Apply input filtering in OSD\nGCVideo - Apply general workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
 	"Force DTV Status:\n\nDisabled - Use detect signal from the Digital AV Out (default)\nEnabled - Force detection in the case of a hardware fault",
 	"Optimise for RetroTINK-4K:\n\nRequires GCVideo-DVI v3.0 or later with Fix Resolution Off.",
 	"Enable USB Gecko debug output:\n\nIf a USB Gecko is present in slot B, debug output from\nSwiss & in game (if the game supported output over OSReport)\nwill be output. If nothing is reading the data out from the\ndevice it may cause Swiss/games to hang."

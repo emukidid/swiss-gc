@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -17,12 +17,32 @@
  * with Swiss.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
 #include "common.h"
 #include "dolphin/os.h"
 #include "dolphin/pad.h"
 
 void CheckStatus(s32 chan, PADStatus *status)
 {
+	#ifdef GCDIGITAL
+	if (chan == PAD_CHAN0) {
+		if (status->button == PAD_COMBO_OSD_GCDIGITAL)
+			*(u16 *)VAR_PAD_BUTTON = status->button;
+		if (*(u16 *)VAR_PAD_BUTTON == PAD_COMBO_OSD_GCDIGITAL) {
+			if (abs(status->stickX) >= 16 ||
+				abs(status->stickY) >= 16 ||
+				abs(status->substickX) >= 16 ||
+				abs(status->substickY) >= 16) {
+				*(u16 *)VAR_PAD_BUTTON = 0;
+			} else {
+				memset(status, 0, sizeof(PADStatus));
+				status->err = PAD_ERR_TRANSFER;
+				return;
+			}
+		}
+	}
+	#endif
+
 	if (*VAR_TRIGGER_LEVEL > 0) {
 		if (status->button & PAD_BUTTON_L)
 			status->triggerL = *VAR_TRIGGER_LEVEL;

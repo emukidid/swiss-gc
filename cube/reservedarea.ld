@@ -45,4 +45,5 @@ VAR_SECTOR_BUF		= VAR_AREA + 0x0A00;	/* 0x200 of read data */
 
 VAR_PATCHES_BASE	= VAR_AREA + 0x3000;	/* Patches get copied to below this area. */
 
+VAR_PAD_BUTTON		= VAR_AREA + 0x30E4;	/* PAD buttons */
 VAR_RMODE			= VAR_AREA + 0x30F8;	/* render mode */
