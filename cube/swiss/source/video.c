@@ -97,9 +97,9 @@ int getScanMode() {
 }
 
 int getDTVStatus() {
-	if(swissSettings.aveCompat == 1 && swissSettings.rt4kOptim) {
+	if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) && swissSettings.rt4kOptim) {
 		return 1;
-	} else if(!in_range(swissSettings.aveCompat , 3, 4)) {
+	} else if(!in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT)) {
 		volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
 		return (vireg[55] & 1) || swissSettings.forceDTVStatus;
 	}
@@ -112,7 +112,7 @@ int getFontEncode() {
 }
 
 f32 getYScaleFactor(u16 efbHeight, u16 xfbHeight) {
-	if(swissSettings.aveCompat == 1 && swissSettings.rt4kOptim)
+	if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) && swissSettings.rt4kOptim)
 		return 1.0f;
 	return GX_GetYScaleFactor(efbHeight, xfbHeight);
 }
@@ -185,7 +185,7 @@ GXRModeObj* getVideoMode() {
 }
 
 void updateVideoMode(GXRModeObj *m) {
-	if(swissSettings.aveCompat == 3) {
+	if(swissSettings.aveCompat == AVE_N_DOL_COMPAT) {
 		switch(m->viTVMode) {
 			case VI_TVMODE_PAL_INT: m->viTVMode = VI_TVMODE_DEBUG_PAL_INT; break;
 			case VI_TVMODE_PAL_DS:  m->viTVMode = VI_TVMODE_DEBUG_PAL_DS;  break;
@@ -196,7 +196,7 @@ void updateVideoMode(GXRModeObj *m) {
 			case VI_TVMODE_DEBUG_PAL_DS:  m->viTVMode = VI_TVMODE_PAL_DS;  break;
 		}
 	}
-	if(swissSettings.aveCompat == 1 && swissSettings.rt4kOptim) {
+	if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) && swissSettings.rt4kOptim) {
 		m->viWidth = m->fbWidth;
 		m->viXOrigin = 40;
 	} else {

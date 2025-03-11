@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 	swissSettings.fspPort = 21;
 	swissSettings.fspPathMtu = 1500;
 	swissSettings.bbaUseDhcp = 1;
-	swissSettings.aveCompat = 1;
+	swissSettings.aveCompat = GCVIDEO_COMPAT;
 	swissSettings.enableFileManagement = 0;
 	swissSettings.recentListLevel = 2;
 	memset(&swissSettings.recent[0][0], 0, PATHNAME_MAX);

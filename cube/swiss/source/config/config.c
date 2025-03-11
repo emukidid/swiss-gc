@@ -317,7 +317,7 @@ void config_defaults(ConfigEntry *entry) {
 	entry->gameVMode = swissSettings.gameVMode;
 	entry->forceHScale = swissSettings.forceHScale;
 	entry->forceVOffset = swissSettings.forceVOffset;
-	entry->forceVOffset = swissSettings.aveCompat == 1 ? -3:0;
+	entry->forceVOffset = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) ? -3:0;
 	entry->forceVFilter = swissSettings.forceVFilter;
 	entry->forceVJitter = swissSettings.forceVJitter;
 	entry->disableDithering = swissSettings.disableDithering;
@@ -543,7 +543,7 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 					}
 				}
 				else if(!strcmp("AVECompat", name)) {
-					for(int i = 0; i < 5; i++) {
+					for(int i = 0; i < AVE_COMPAT_MAX; i++) {
 						if(!strcmp(aveCompatStr[i], value)) {
 							swissSettings.aveCompat = i;
 							break;
@@ -551,7 +551,7 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 					}
 				}
 				else if(!strcmp("FileBrowserType", name)) {
-					for(int i = 0; i < 3; i++) {
+					for(int i = 0; i < BROWSER_MAX; i++) {
 						if(!strcmp(fileBrowserStr[i], value)) {
 							swissSettings.fileBrowserType = i;
 							break;
@@ -852,7 +852,7 @@ void config_parse_global(char *configData) {
 					}
 				}
 				else if(!strcmp("AVECompat", name)) {
-					for(int i = 0; i < 5; i++) {
+					for(int i = 0; i < AVE_COMPAT_MAX; i++) {
 						if(!strcmp(aveCompatStr[i], value)) {
 							swissSettings.aveCompat = i;
 							break;
@@ -860,7 +860,7 @@ void config_parse_global(char *configData) {
 					}
 				}
 				else if(!strcmp("FileBrowserType", name)) {
-					for(int i = 0; i < 3; i++) {
+					for(int i = 0; i < BROWSER_MAX; i++) {
 						if(!strcmp(fileBrowserStr[i], value)) {
 							swissSettings.fileBrowserType = i;
 							break;

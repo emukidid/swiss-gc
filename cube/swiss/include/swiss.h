@@ -166,6 +166,17 @@ typedef struct {
 } SwissSettings;
 extern SwissSettings swissSettings;
 
+enum aveCompat
+{
+	AVE_N_DOL_COMPAT=0,
+	AVE_P_DOL_COMPAT,
+	CMPV_DOL_COMPAT,
+	GCDIGITAL_COMPAT,
+	GCVIDEO_COMPAT,
+	AVE_RVL_COMPAT,
+	AVE_COMPAT_MAX
+};
+
 enum fileOptions
 {
 	COPY_OPTION=0,

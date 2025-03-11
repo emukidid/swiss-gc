@@ -43,7 +43,7 @@ char *emulateAudioStreamStr[] = {"Off", "Auto", "On"};
 char *emulateReadSpeedStr[] = {"No", "Yes", "Wii"};
 char *disableMemoryCardStr[] = {"No", "Slot A", "Slot B"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "Apploader"};
-char *aveCompatStr[] = {"CMPV-DOL", "GCVideo", "AVE-RVL", "AVE N-DOL", "AVE P-DOL"};
+char *aveCompatStr[] = {"AVE N-DOL", "AVE P-DOL", "CMPV-DOL", "GCDigital", "GCVideo", "AVE-RVL"};
 char *fileBrowserStr[] = {"Standard", "Fullwidth", "Carousel"};
 char *bs2BootStr[] = {"No", "Yes", "Sound 1", "Sound 2"};
 char *sramLang[] = {"English", "German", "French", "Spanish", "Italian", "Dutch", "Japanese", "English (US)"};
@@ -221,8 +221,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)SET_PAGE_1_NEXT);
 		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, page_y_ofs, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_1_NEXT-1)),scrollBarTabHeight));
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Global Settings (1/5):"));
-		bool dtvEnable = swissSettings.aveCompat < 3;
-		bool rt4kEnable = swissSettings.aveCompat == 1;
+		bool dtvEnable = !in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT);
+		bool rt4kEnable = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT);
 		bool dbgEnable = devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
 		if(option < SET_STOP_MOTOR) {
@@ -420,7 +420,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				swissSettings.sramStereo ^= 1;
 			break;
 			case SET_SCREEN_POS:
-				if(swissSettings.aveCompat == 1) {
+				if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT)) {
 					swissSettings.sramHOffset /= 2;
 					swissSettings.sramHOffset += direction;
 					swissSettings.sramHOffset *= 2;
@@ -480,7 +480,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_FILEBROWSER_TYPE:
 				swissSettings.fileBrowserType += direction;
-				swissSettings.fileBrowserType = (swissSettings.fileBrowserType + 3) % 3;
+				swissSettings.fileBrowserType = (swissSettings.fileBrowserType + BROWSER_MAX) % BROWSER_MAX;
 			break;
 			case SET_FILE_MGMT:
 				swissSettings.enableFileManagement ^=1;
@@ -506,14 +506,14 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_AVE_COMPAT:
 				swissSettings.aveCompat += direction;
-				swissSettings.aveCompat = (swissSettings.aveCompat + 5) % 5;
+				swissSettings.aveCompat = (swissSettings.aveCompat + AVE_COMPAT_MAX) % AVE_COMPAT_MAX;
 			break;
 			case SET_FORCE_DTVSTATUS:
-				if(swissSettings.aveCompat < 3)
+				if(!in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT))
 					swissSettings.forceDTVStatus ^= 1;
 			break;
 			case SET_RT4K_OPTIM:
-				if(swissSettings.aveCompat == 1)
+				if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT))
 					swissSettings.rt4kOptim ^= 1;
 			break;
 			case SET_ENABLE_USBGECKODBG:
@@ -668,7 +668,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 							swissSettings.gameVMode = (swissSettings.gameVMode + 15) % 15;
 						}
 					}
-					else if(swissSettings.aveCompat != 0) {
+					else if(swissSettings.aveCompat != CMPV_DOL_COMPAT) {
 						while(in_range(swissSettings.gameVMode, 6, 7) || in_range(swissSettings.gameVMode, 13, 14)) {
 							swissSettings.gameVMode += direction;
 							swissSettings.gameVMode = (swissSettings.gameVMode + 15) % 15;
@@ -798,7 +798,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 							gameConfig->gameVMode = (gameConfig->gameVMode + 15) % 15;
 						}
 					}
-					else if(swissSettings.aveCompat != 0) {
+					else if(swissSettings.aveCompat != CMPV_DOL_COMPAT) {
 						while(in_range(gameConfig->gameVMode, 6, 7) || in_range(gameConfig->gameVMode, 13, 14)) {
 							gameConfig->gameVMode += direction;
 							gameConfig->gameVMode = (gameConfig->gameVMode + 15) % 15;
@@ -975,7 +975,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				// Save settings to SRAM
 				swissSettings.sram60Hz = getTVFormat() != VI_PAL;
 				swissSettings.sramProgressive = getScanMode() == VI_PROGRESSIVE;
-				if(swissSettings.aveCompat == 1) {
+				if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT)) {
 					swissSettings.sramHOffset &= ~1;
 				}
 				VIDEO_SetAdjustingValues(swissSettings.sramHOffset, 0);

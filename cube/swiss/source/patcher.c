@@ -8134,7 +8134,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (swissSettings.aveCompat == 1 && swissSettings.rt4kOptim) {
+	if (in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) && swissSettings.rt4kOptim) {
 		for (j = 0; j < sizeof(GXSetDispCopyYScaleSigs) / sizeof(FuncPattern); j++) {
 			if (j == 6) {
 				GXSetDispCopyYScaleSigs[j].Patch       = GXSetDispCopyYScaleStub2;
@@ -9334,7 +9334,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 			else if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11)
 				memcpy(timingTable + 6, video_timing_960i, sizeof(video_timing_960i));
 			
-			if (swissSettings.aveCompat == 3)
+			if (swissSettings.aveCompat == AVE_N_DOL_COMPAT)
 				memcpy(timingTable + 2, video_timing_ntsc50, sizeof(video_timing_ntsc50));
 			
 			if ((j >= 1 && j < 4) || j >= 6) {
@@ -9650,7 +9650,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		if (VIConfigure) {
 			VIConfigureHook2 = getPatchAddr(VI_CONFIGUREHOOK2);
 			
-			if (swissSettings.aveCompat == 1) {
+			if (in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT)) {
 				if (swissSettings.rt4kOptim)
 					VIConfigureHook1 = getPatchAddr(VI_CONFIGUREHOOK1_RT4K);
 				else
@@ -9677,7 +9677,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				case 14: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE540P50);  break;
 			}
 			
-			if (swissSettings.aveCompat == 1 && swissSettings.rt4kOptim)
+			if (in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) && swissSettings.rt4kOptim)
 				VIConfigureHook1 = getPatchAddr(VI_CONFIGURENOYSCALE);
 			
 			switch (j) {
@@ -10144,8 +10144,8 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			if (swissSettings.aveCompat != 2 && (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11 ||
-												 swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13)) {
+			if (swissSettings.aveCompat != AVE_RVL_COMPAT && (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11 ||
+				                                              swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13)) {
 				switch (j) {
 					case 0:
 						data[i + 181] = 0x579C07B8;	// rlwinm	r28, r28, 0, 30, 28
@@ -10206,7 +10206,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			if (swissSettings.aveCompat == 3) {
+			if (swissSettings.aveCompat == AVE_N_DOL_COMPAT) {
 				switch (j) {
 					case 0:
 						data[i + 170] = 0x801F0118;	// lwz		r0, 280 (r31)
@@ -10382,7 +10382,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		u32 *VIGetDTVStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (VIGetDTVStatus) {
-			if (in_range(swissSettings.aveCompat, 3, 4)) {
+			if (in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT)) {
 				memset(data + i, 0, VIGetDTVStatusSigs[j].Length * sizeof(u32));
 				
 				data[i + 0] = 0x38600000;	// li		r3, 0
