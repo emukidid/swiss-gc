@@ -2084,7 +2084,7 @@ void load_game() {
 	uint64_t gcm_boot_hash = get_gcm_boot_hash(&GCMDisk, curFile.meta);
 
 	if (strlen(swissSettings.morph4kHostIp) > 0) {
-		morph4k_send_gameid(gcm_boot_hash);
+		morph4k_send_gameid(&GCMDisk, gcm_boot_hash);
 	}
 
 	if(config->forceCleanBoot || (config->preferCleanBoot && (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))) {

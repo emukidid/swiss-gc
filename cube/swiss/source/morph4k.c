@@ -39,20 +39,25 @@ static struct {
     .initialized = false
 };
 
-bool morph4k_send_gameid(uint64_t gameid)
+bool morph4k_send_gameid(const DiskHeader *header, uint64_t hash)
 {
-    if (!is_morph4k_alive() || !gameid) {
+    if (!is_morph4k_alive() || !hash) {
         return false;
     }
 
-    print_gecko("morph4k_send_gameid: Sending request with GameID: %016llX\r\n", gameid);
+    print_gecko(
+        "morph4k_send_gameid: Sending request with GameID: %016llX%02X%02X\r\n", 
+        hash, header->ConsoleID, header->CountryCode
+    );
 
     char request[512];
     int req_length = sprintf(request, 
-        "POST /gameid/0x06:%016llX HTTP/1.1\r\n"
+        "POST /gameid/0x06:%016llX%02X%02X HTTP/1.1\r\n"
         "Host: %s\r\n"
         "\r\n",
-        gameid,
+        hash,
+        header->ConsoleID,
+        header->CountryCode,
         swissSettings.morph4kHostIp);
 
     if (net_send(morph4k.sd, request, req_length, 0) != req_length) {

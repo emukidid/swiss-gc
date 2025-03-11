@@ -22,7 +22,9 @@
 
 #include <stdbool.h>
 
-bool morph4k_send_gameid(uint64_t gameid);
+#include "gcm.h"
+
+bool morph4k_send_gameid(const DiskHeader * header, uint64_t hash);
 bool morph4k_apply_preset(void);
 bool is_morph4k_alive(void);
 bool morph4k_init(void);
