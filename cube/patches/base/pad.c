@@ -25,10 +25,12 @@
 void CheckStatus(s32 chan, PADStatus *status)
 {
 	#ifdef GCDIGITAL
+	u16 combo = PAD_COMBO_OSD_GCDIGITAL | (status->button & PAD_USE_ORIGIN);
+
 	if (chan == PAD_CHAN0) {
-		if (status->button == PAD_COMBO_OSD_GCDIGITAL)
+		if (status->button == combo)
 			*(u16 *)VAR_PAD_BUTTON = status->button;
-		if (*(u16 *)VAR_PAD_BUTTON == PAD_COMBO_OSD_GCDIGITAL) {
+		if (*(u16 *)VAR_PAD_BUTTON == combo) {
 			if (abs(status->stickX) >= 16 ||
 				abs(status->stickY) >= 16 ||
 				abs(status->substickX) >= 16 ||
