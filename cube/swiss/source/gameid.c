@@ -106,9 +106,7 @@ void gameID_set(const DiskHeader *header, u64 hash)
 		command[10] = '\0';
 	}
 
-	if (strlen(swissSettings.morph4kHostIp) > 0 && is_morph4k_alive()) {
-		morph4k_send_gameid(&GCMDisk, hash);
-	}
+	morph4k_send_gameid(&GCMDisk, hash);
 }
 
 void gameID_unset(void)

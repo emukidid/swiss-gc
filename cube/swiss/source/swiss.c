@@ -2080,7 +2080,7 @@ void load_game() {
 	// Load config for this game into our current settings
 	config_load_current(config);
 	gameID_early_set(&GCMDisk);
-
+	
 	if(config->forceCleanBoot || (config->preferCleanBoot && (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))) {
 		gameID_set(&GCMDisk, get_gcm_boot_hash(&GCMDisk, curFile.meta));
 		
