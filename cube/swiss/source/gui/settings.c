@@ -513,8 +513,20 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					swissSettings.forceDTVStatus ^= 1;
 			break;
 			case SET_RT4K_OPTIM:
-				if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT))
+				if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT)) {
 					swissSettings.rt4kOptim ^= 1;
+					switch(swissSettings.aveCompat) {
+						case GCDIGITAL_COMPAT:
+							sprintf(txtbuffer, "In the \223GCDigital Settings\224 menu,\nset \223Use console DE\224 to %s.", swissSettings.rt4kOptim ? "on (4:3)" : "off");
+						break;
+						case GCVIDEO_COMPAT:
+							sprintf(txtbuffer, "In the GCVideo \223Advanced Settings\224\nmenu, set \223Fix Resolution\224 to %s.", swissSettings.rt4kOptim ? "Off" : "On");
+						break;
+					}
+					uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, txtbuffer));
+					wait_press_A();
+					DrawDispose(msgBox);
+				}
 			break;
 			case SET_ENABLE_USBGECKODBG:
 				if(devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko))
