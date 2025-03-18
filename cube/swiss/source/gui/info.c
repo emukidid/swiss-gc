@@ -79,12 +79,20 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawLabel(30, 55, "System Info (1/4):"));
 		// Model
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"MODEL", 0.65f, true, defaultColor));
-		if(!strncmp(IPLInfo, "(C) ", 4)) {
+		if((SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_DEVELOPMENT) {
 			if(*DVDDeviceCode == 0x8201) {
 				strcpy(topStr, "NPDP-GDEV (GCT-0100)");
 			}
-			else if(!strncmp(&IPLInfo[0x55], "TDEV", 4) ||
-					!strncmp(&IPLInfo[0x55], "DEV  Revision 0.1", 0x11)) {
+			else if(*DVDDeviceCode == 0x8200) {
+				strcpy(topStr, "NPDP-GBOX (GCT-0200)");
+			}
+			else {
+				strcpy(topStr, "ArtX Orca");
+			}
+		}
+		else if(!strncmp(IPLInfo, "(C) ", 4)) {
+			if(!strncmp(&IPLInfo[0x55], "TDEV", 4) ||
+				!strncmp(&IPLInfo[0x55], "DEV  Revision 0.1", 0x11)) {
 				strcpy(topStr, "Nintendo GameCube DOT-006");
 			}
 			else if(*DVDDeviceCode == 0x8200) {
