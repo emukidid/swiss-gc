@@ -18,7 +18,7 @@
  */
 
 .section .init
-	.globl _start, __argv
+	.globl _start, __argv, __envp
 _start:
 	b		1f
 	.ascii	"_arg"
@@ -30,15 +30,25 @@ __argv:
 	.long	0	# argv
 	.long	0	# end address of argv
 
-1:	mfdabr	r3
+1:	b		2f
+	.ascii	"_env"
+__envp:
+	.long	0	# envp magic
+	.long	0	# environment
+	.long	0	# environment length
+	.long	0	# envc
+	.long	0	# envv
+	.long	0	# end address of envv
+
+2:	mfdabr	r3
 	xoris	r0, r3, 0x8000
 	cmpwi	r0, 0x00E8 | 0b110
-	bne		2f
+	bne		3f
 	lis		r0, 0xfee1
 	ori		r0, r0, 0xdead
 	stw		r0, -0b110 (r3)
 
-2:	li		r3, 0
+3:	li		r3, 0
 	mtsrr1	r3
 	lis		r3, startup@ha
 	addi	r3, r3, startup@l

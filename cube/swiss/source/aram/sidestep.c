@@ -6,10 +6,12 @@
 *
 * softdev March 2007
 ***************************************************************************/
+#include <argz.h>
 #include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <malloc.h>
 #include <network.h>
 #include <ogc/lwp_threads.h>
@@ -270,7 +272,9 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
   DOLHEADER *dolhdr;
   u32 sizeinbytes;
   int i;
-  struct __argv args;
+  char *envz = NULL;
+  size_t envz_len = 0;
+  struct __argv argv;
 
   /*** Make sure ARAM subsystem is alive! ***/
   AR_Reset();
@@ -305,6 +309,10 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
           argz = NULL;
           argz_len = 0;
         }
+        else if (entrypoint[9] == ENVP_MAGIC)
+        {
+          argz_create(environ, &envz, &envz_len);
+        }
       }
 
       ARAMPut(dol + dolhdr->textOffset[i], (char *) ((dolhdr->textAddress[i] - minaddress) + ARAMSTART),
@@ -325,16 +333,33 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
   /*** Pass a command line ***/
   if (argz)
   {
-    args.argvMagic = ARGV_MAGIC;
-    args.commandLine = argz;
-    args.length = argz_len;
+    argv.argvMagic = ARGV_MAGIC;
+    argv.commandLine = argz;
+    argv.length = argz_len;
 
-    ARAMPut((unsigned char *) args.commandLine, (char *) ((maxaddress - minaddress) + ARAMSTART), args.length);
+    ARAMPut((unsigned char *) argv.commandLine, (char *) ((maxaddress - minaddress) + ARAMSTART), argv.length);
 
-    args.commandLine = (char *) maxaddress;
-    sizeinbytes += args.length;
+    argv.commandLine = (char *) maxaddress;
+    maxaddress += argv.length;
+    sizeinbytes += argv.length;
 
-    ARAMPut((unsigned char *) &args, (char *) ((dolhdr->entryPoint + 8 - minaddress) + ARAMSTART), sizeof(struct __argv));
+    ARAMPut((unsigned char *) &argv, (char *) ((dolhdr->entryPoint + 8 - minaddress) + ARAMSTART), sizeof(struct __argv));
+  }
+
+  /*** Pass environment ***/
+  if (envz)
+  {
+    argv.argvMagic = ENVP_MAGIC;
+    argv.commandLine = envz;
+    argv.length = envz_len;
+
+    ARAMPut((unsigned char *) argv.commandLine, (char *) ((maxaddress - minaddress) + ARAMSTART), argv.length);
+
+    argv.commandLine = (char *) maxaddress;
+    maxaddress += argv.length;
+    sizeinbytes += argv.length;
+
+    ARAMPut((unsigned char *) &argv, (char *) ((dolhdr->entryPoint + 40 - minaddress) + ARAMSTART), sizeof(struct __argv));
   }
 
   /*** Now go run it ***/
@@ -370,7 +395,9 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
   Elf32_Phdr *phdr;
   u32 sizeinbytes;
   int i;
-  struct __argv args;
+  char *envz = NULL;
+  size_t envz_len = 0;
+  struct __argv argv;
 
   /*** Make sure ARAM subsystem is alive! ***/
   AR_Reset();
@@ -404,6 +431,10 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
           argz = NULL;
           argz_len = 0;
         }
+        else if (entrypoint[9] == ENVP_MAGIC)
+        {
+          argz_create(environ, &envz, &envz_len);
+        }
       }
 
       ARAMPut(elf + phdr[i].p_offset, (char *) ((phdr[i].p_vaddr - minaddress) + ARAMSTART), phdr[i].p_filesz);
@@ -413,16 +444,33 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
   /*** Pass a command line ***/
   if (argz)
   {
-    args.argvMagic = ARGV_MAGIC;
-    args.commandLine = argz;
-    args.length = argz_len;
+    argv.argvMagic = ARGV_MAGIC;
+    argv.commandLine = argz;
+    argv.length = argz_len;
 
-    ARAMPut((unsigned char *) args.commandLine, (char *) ((maxaddress - minaddress) + ARAMSTART), args.length);
+    ARAMPut((unsigned char *) argv.commandLine, (char *) ((maxaddress - minaddress) + ARAMSTART), argv.length);
 
-    args.commandLine = (char *) maxaddress;
-    sizeinbytes += args.length;
+    argv.commandLine = (char *) maxaddress;
+    maxaddress += argv.length;
+    sizeinbytes += argv.length;
 
-    ARAMPut((unsigned char *) &args, (char *) ((ehdr->e_entry + 8 - minaddress) + ARAMSTART), sizeof(struct __argv));
+    ARAMPut((unsigned char *) &argv, (char *) ((ehdr->e_entry + 8 - minaddress) + ARAMSTART), sizeof(struct __argv));
+  }
+
+  /*** Pass environment ***/
+  if (envz)
+  {
+    argv.argvMagic = ENVP_MAGIC;
+    argv.commandLine = envz;
+    argv.length = envz_len;
+
+    ARAMPut((unsigned char *) argv.commandLine, (char *) ((maxaddress - minaddress) + ARAMSTART), argv.length);
+
+    argv.commandLine = (char *) maxaddress;
+    maxaddress += argv.length;
+    sizeinbytes += argv.length;
+
+    ARAMPut((unsigned char *) &argv, (char *) ((ehdr->e_entry + 40 - minaddress) + ARAMSTART), sizeof(struct __argv));
   }
 
   /*** Now go run it ***/
