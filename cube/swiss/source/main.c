@@ -241,8 +241,9 @@ int main(int argc, char *argv[])
 	swissSettings.enableFileManagement = 0;
 	swissSettings.recentListLevel = 2;
 	memset(&swissSettings.recent[0][0], 0, PATHNAME_MAX);
-	Initialise();
+	config_init_environ();
 
+	Initialise();
 	needsDeviceChange = 1;
 	needsRefresh = 1;
 	
@@ -332,7 +333,7 @@ int main(int argc, char *argv[])
 			wait_press_A();
 			DrawDispose(msgBox);
 		}
-		else if(flippy_version < FLIPPY_VERSION(1,4,0) && (SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_RETAIL) {
+		else if(flippy_version < FLIPPY_VERSION(1,4,2) && (SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_RETAIL) {
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\nflippydrive.com/updates"));
 			wait_press_A();
 			DrawDispose(msgBox);

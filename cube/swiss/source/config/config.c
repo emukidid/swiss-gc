@@ -545,6 +545,7 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 				else if(!strcmp("AVECompat", name)) {
 					for(int i = 0; i < AVE_COMPAT_MAX; i++) {
 						if(!strcmp(aveCompatStr[i], value)) {
+							setenv("AVE", aveCompatStr[i], 1);
 							swissSettings.aveCompat = i;
 							break;
 						}
@@ -854,6 +855,7 @@ void config_parse_global(char *configData) {
 				else if(!strcmp("AVECompat", name)) {
 					for(int i = 0; i < AVE_COMPAT_MAX; i++) {
 						if(!strcmp(aveCompatStr[i], value)) {
+							setenv("AVE", aveCompatStr[i], 1);
 							swissSettings.aveCompat = i;
 							break;
 						}
@@ -1209,6 +1211,21 @@ int config_init(void (*progress_indicator)(char*, int, int)) {
 	progress_indicator(NULL, 0, 0);
 	config_unset_device();
 	return res;
+}
+
+void config_init_environ() {
+	char *value;
+	value = getenv("AVE");
+	if(value == NULL || *value == '\0') {
+		setenv("AVE", aveCompatStr[swissSettings.aveCompat], 1);
+	} else {
+		for(int i = 0; i < AVE_COMPAT_MAX; i++) {
+			if(!strcmp(aveCompatStr[i], value)) {
+				swissSettings.aveCompat = i;
+				break;
+			}
+		}
+	}
 }
 
 SwissSettings backup;

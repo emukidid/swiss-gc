@@ -101,7 +101,7 @@ void main(void)
 		return;
 
 	memmove(entrypoint +  8, &__argv, sizeof(__argv));
-	memmove(entrypoint + 40, &__envp, sizeof(__argv));
+	memmove(entrypoint + 40, &__envp, sizeof(__envp));
 	memsync(xz_buf.out, xz_buf.out_pos);
 
 	_sync();

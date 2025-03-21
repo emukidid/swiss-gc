@@ -36,6 +36,7 @@ int config_update_game(ConfigEntry *entry, ConfigEntry *defaults, bool checkConf
 int config_update_global(bool checkConfigDevice);
 int config_update_recent(bool checkConfigDevice);
 int config_init(void (*progress_indicator)(char*, int, int));
+void config_init_environ();
 void config_parse_args(int argc, char *argv[]);
 void config_load_current(ConfigEntry *entry);
 void config_unload_current();
