@@ -23,6 +23,7 @@
 #include "gameid.h"
 #include "gcm.h"
 #include "mcp.h"
+#include "morph4k.h"
 #include "rt4k.h"
 #include "swiss.h"
 
@@ -104,6 +105,8 @@ void gameID_set(const DiskHeader *header, u64 hash)
 		command[ 9] = 
 		command[10] = '\0';
 	}
+
+	morph4k_send_gameid(&GCMDisk, hash);
 }
 
 void gameID_unset(void)

@@ -6,6 +6,7 @@
 #include "bba.h"
 #include "exi.h"
 #include "httpd.h"
+#include "morph4k.h"
 #include "rt4k.h"
 #include "swiss.h"
 #include "deviceHandler.h"
@@ -72,9 +73,12 @@ static void *net_thread_func(void *arg)
 	deviceHandler_setDeviceAvailable(&__device_ftp, deviceHandler_FTP_test());
 	deviceHandler_setDeviceAvailable(&__device_fsp, deviceHandler_FSP_test());
 
+	rt4k_init();
+	morph4k_init();
+	morph4k_apply_preset();
 	init_httpd_thread();
 	init_wiiload_thread();
-	rt4k_init();
+
 	return NULL;
 }
 
