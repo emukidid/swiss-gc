@@ -1226,6 +1226,11 @@ void config_init_environ() {
 			}
 		}
 	}
+	
+	value = getenv("CUBEBOOT");
+	if(value != NULL) {
+		swissSettings.cubebootInvoked = !!atoi(value);
+	}
 }
 
 SwissSettings backup;

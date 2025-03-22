@@ -359,6 +359,7 @@ bool deviceHandler_Flippy_test() {
 					__device_flippy.extraExtensions = NULL;
 					__device_flippy.quirks |= QUIRK_FDI_EXCLUSIVE_OPEN;
 				}
+				setenv("FLIPPYDRIVE", "1", 1);
 				swissSettings.hasFlippyDrive = 1;
 				return true;
 		}

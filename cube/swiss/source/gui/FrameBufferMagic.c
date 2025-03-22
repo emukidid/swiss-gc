@@ -2232,13 +2232,15 @@ void DrawDispose(uiDrawObj_t *evt)
 	LWP_MutexUnlock(_videomutex);
 }
 
-void DrawInit() {
+void DrawInit(bool black) {
 	init_textures();
 	uiDrawObj_t *container = DrawContainer();
-	DrawAddChild(container, DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-	DrawAddChild(container, DrawTitleBar());
-	buttonPanel = DrawMenuButtons(MENU_NOSELECT);
-	DrawAddChild(container, buttonPanel);
+	if(!black) {
+		DrawAddChild(container, DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+		DrawAddChild(container, DrawTitleBar());
+		buttonPanel = DrawMenuButtons(MENU_NOSELECT);
+		DrawAddChild(container, buttonPanel);
+	}
 	DrawPublish(container);
 	LWP_MutexInit(&_videomutex, 0);
 	LWP_CreateThread(&video_thread, videoUpdate, videoEventQueue, video_thread_stack, VIDEO_STACK_SIZE, VIDEO_PRIORITY);

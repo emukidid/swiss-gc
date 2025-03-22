@@ -85,6 +85,7 @@ extern void select_device(int type);
 extern bool select_dest_dir(file_handle* initial, file_handle* selection);
 
 typedef struct {
+	int cubebootInvoked;
 	int debugUSB; // Debug prints over USBGecko
 	int hasDVDDrive;	// 0 if none, 1 if something
 	int hasFlippyDrive;

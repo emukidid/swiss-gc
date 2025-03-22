@@ -168,6 +168,7 @@ static const char git_tags[][sizeof(GIT_COMMIT)] = {
 };
 /* Autoboot DOL from the current device, from the current autoboot_dols list */
 static const char *autoboot_dols[] = {
+	"*/swiss_r[1-9]*.dol",
 	"atac:/[abxyz].dol",
 	"atac:/start.dol",
 	"atac:/ipl.dol",
@@ -176,8 +177,7 @@ static const char *autoboot_dols[] = {
 	"sd[abc]:/ipl.dol",
 	"sd[ab]:/AUTOEXEC.DOL",
 	"*/boot.dol",
-	"*/boot2.dol",
-	"*/swiss_r[1-9]*.dol"
+	"*/boot2.dol"
 };
 void load_auto_dol(int argc, char *argv[]) {
 	char trailer[sizeof(GIT_COMMIT) - 1]; // Don't include the NUL termination in the comparison
@@ -215,6 +215,9 @@ void load_auto_dol(int argc, char *argv[]) {
 					return;
 				}
 			}
+		}
+		if (swissSettings.cubebootInvoked) {
+			return;
 		}
 	}
 }

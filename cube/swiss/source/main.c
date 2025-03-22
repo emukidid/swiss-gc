@@ -116,7 +116,7 @@ void Initialise(void)
 	setVideoMode(vmode);
 
 	init_font();
-	DrawInit();
+	DrawInit(swissSettings.cubebootInvoked);
 }
 
 void __SYS_PreInit(void)
@@ -376,6 +376,9 @@ int main(int argc, char *argv[])
 		find_existing_entry(&swissSettings.recent[0][0], false);
 	}
 
+	if(swissSettings.cubebootInvoked) {
+		return 0;
+	}
 	while(1) {
 		menu_loop();
 	}

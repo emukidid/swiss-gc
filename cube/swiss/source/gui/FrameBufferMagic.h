@@ -134,7 +134,7 @@ uiDrawObj_t* DrawVertScrollBar(int x, int y, int width, int height, float scroll
 void DrawArgsSelector(const char *fileName);
 void DrawCheatsSelector(const char *fileName);
 void DrawGetTextEntry(int entryMode, const char *label, void *src, int size);
-void DrawInit();
+void DrawInit(bool black);
 void DrawLoadBackdrop();
 void DrawShutdown();
 void DrawVideoMode(GXRModeObj *videoMode);

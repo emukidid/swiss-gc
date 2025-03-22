@@ -2559,6 +2559,9 @@ uiDrawObj_t* draw_game_info() {
 /* Show info about the game - and also load the config for it */
 int info_game(ConfigEntry *config)
 {
+	if(swissSettings.cubebootInvoked) {
+		return swissSettings.cubebootInvoked;
+	}
 	if(swissSettings.autoBoot) {
 		if(padsButtonsHeld() & PAD_BUTTON_B) {
 			swissSettings.autoBoot = 0;
