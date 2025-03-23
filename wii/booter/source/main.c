@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2024-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -17,6 +17,9 @@
  * with Swiss.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <argz.h>
+#include <gctypes.h>
+#include <ogc/cache.h>
 #include <ogc/conf.h>
 #include <ogc/system.h>
 #include <ogc/video.h>
@@ -24,8 +27,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include "dolformat.h"
 
-void *__myArena1Hi = (void *)0x807FFFE0;
+static DOLImage *const dolHeader = (DOLImage *)0x80800000;
+static void *const dolImage = dolHeader;
+static char *const dolMagic = dolImage - 32;
+void *__myArena1Hi = dolMagic;
 
 extern syssram *__SYS_LockSram(void);
 extern bool __SYS_UnlockSram(bool write);
@@ -34,6 +43,7 @@ extern bool __SYS_CheckSram(void);
 
 static void initVideo(void)
 {
+	setenv("AVE", "AVE-RVL", 0);
 	VIDEO_Init();
 
 	unsigned tvMode = VIDEO_GetCurrentTvMode();
@@ -148,8 +158,48 @@ static void initSram(void)
 
 int main(int argc, char **argv)
 {
+	char *argz, *envz;
+	size_t argzlen, envzlen;
+
+	if (strncmp(dolMagic, "gchomebrew dol", 32))
+		return EXIT_FAILURE;
+
 	initVideo();
 	initSram();
+
+	argz_create(argv, &argz, &argzlen);
+	argz_create(environ, &envz, &envzlen);
+
+	envz = memcpy(SYS_AllocArenaMem1Hi(envzlen, 1), envz, envzlen);
+	argz = memcpy(SYS_AllocArenaMem1Hi(argzlen, 1), argz, argzlen);
+
+	for (int i = 0; i < DOL_MAX_TEXT; i++) {
+		if (dolHeader->textData[i]) {
+			uint32_t *text = dolImage + dolHeader->textData[i];
+
+			if (text[1] == ARGV_MAGIC) {
+				struct __argv *argv = (struct __argv *)(text + 2);
+
+				argv->argvMagic = ARGV_MAGIC;
+				argv->commandLine = argz;
+				argv->length = argzlen;
+
+				DCBlockStore(argv);
+				DCStoreRange(argz, argzlen);
+			}
+
+			if (text[9] == ENVP_MAGIC) {
+				struct __argv *envp = (struct __argv *)(text + 10);
+
+				envp->argvMagic = ENVP_MAGIC;
+				envp->commandLine = envz;
+				envp->length = envzlen;
+
+				DCBlockStore(envp);
+				DCStoreRange(envz, envzlen);
+			}
+		}
+	}
 
 	WII_LaunchTitle(0x100000100LL);
 
