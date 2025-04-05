@@ -2290,6 +2290,7 @@ static const struct {
 	{{ "PZHP69\x00\x00" }, false, 0x40, 0xBAC4, 0x3873B78F, 0x6644F65D96920450, 1110884352,  +349093888, {  583244796,      +30880, 8096, 0x1D7C }, "Need for Speed: Underground" },
 	{{ "RELSAB\x00\x00" }, false, 0x01, 0x58E1, 0x911795AE, 0xFEF0EF64907D1C20,    3733504, +1456244736, {         ~0,          +0,    0, 0xFFFF }, "KPAD Demo" },
 	{{ "RELSAB\x00\x00" }, false, 0x01, 0xD64E, 0x87A41CC0, 0x6973B52BB5B82A39, 1374566400,   +85411840, { 1374558044,       +4580, 6496, 0x9CA2 }, "Gladius" },
+	{{ "RELSAB\x00\x00" }, false, 0x68, 0xF505, 0xEE5FC0C9, 0x85E3A0F139E4F00D,     438272, +1459539968, {     382556,      +10660, 6496, 0x1071 }, "Wireless Receiver Test" },
 	{{ "RELSAB\x00\x00" }, false, 0x9E, 0xBA9E, 0x1D74AD4A, 0x1A5F0EA47A582D7E, 1455841280,    +4136960, {         ~0,          +0,    0, 0xFFFF }, "Memory Card Utility Program" },
 	{{ "RELSAB\x00\x00" }, false, 0xAD, 0x35B7, 0x524B2418, 0x589D3DE183C7219D,  750051328,  +709926912, {         ~0,          +0,    0, 0xFFFF }, "Disney/Pixar Ratatouille" },
 	{{ "RELSAB\x00\x00" }, false, 0xB8, 0x63C1, 0x55314C4D, 0xB739F7F167EBC63C, 1121071104,  +338907136, {  646741420,      +29460, 6496, 0xD28D }, "Sonic Adventure DX" },
@@ -2305,7 +2306,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 182)
+#define VALID_COUNT (REDUMP_COUNT + 183)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
