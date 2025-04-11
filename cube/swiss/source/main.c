@@ -357,6 +357,7 @@ int main(int argc, char *argv[])
 				case 2:
 					if(strverscmp(swissSettings.gcloaderTopVersion, "1.0.1") < 0) {
 						find_existing_entry("gcldr:/GC_LOADER_HW2_UPDATER_1.0.1.dol", true);
+						find_existing_entry("gcldr:/GC_LOADER_HW2_UPDATER_1.1.0*.dol", true);
 						uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "A firmware update is available.\ngc-loader.com/firmware-updates-hw2"));
 						wait_press_A();
 						DrawDispose(msgBox);
