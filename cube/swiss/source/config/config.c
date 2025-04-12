@@ -1258,8 +1258,6 @@ void config_load_current(ConfigEntry *entry) {
 	swissSettings.emulateEthernet = entry->emulateEthernet;
 	swissSettings.disableMemoryCard = entry->disableMemoryCard;
 	swissSettings.disableHypervisor = entry->disableHypervisor;
-	swissSettings.preferCleanBoot = entry->preferCleanBoot;
-	swissSettings.rt4kProfile = entry->rt4kProfile;
 	
 	if(!strchr("PA?", entry->region))
 		swissSettings.sramLanguage = SYS_LANG_ENGLISH;
@@ -1320,8 +1318,6 @@ void config_unload_current() {
 	swissSettings.emulateEthernet = backup.emulateEthernet;
 	swissSettings.disableMemoryCard = backup.disableMemoryCard;
 	swissSettings.disableHypervisor = backup.disableHypervisor;
-	swissSettings.preferCleanBoot = backup.preferCleanBoot;
 	swissSettings.sramLanguage = backup.sramLanguage;
 	swissSettings.sramVideo = backup.sramVideo;
-	swissSettings.rt4kProfile = backup.rt4kProfile;
 }

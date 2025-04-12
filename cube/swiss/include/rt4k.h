@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2024-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -25,6 +25,7 @@
 int rt4k_printf(const char *format, ...);
 bool is_rt4k_alive(void);
 bool rt4k_init(void);
+void rt4k_load_profile(int profile);
 void rt4k_deinit(void);
 
 #endif /* __RT4K_H__ */

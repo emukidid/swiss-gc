@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2022-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2022-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -23,7 +23,6 @@
 #include "gameid.h"
 #include "gcm.h"
 #include "mcp.h"
-#include "rt4k.h"
 #include "swiss.h"
 
 static u8 command[1 + 10] = {0x1D};
@@ -73,9 +72,6 @@ static void gameID_deinit(void)
 
 void gameID_early_set(const DiskHeader *header)
 {
-	if (swissSettings.rt4kProfile)
-		rt4k_printf("remote prof%i\n", swissSettings.rt4kProfile);
-
 	for (s32 chan = 0; chan < 2; chan++) {
 		u32 id;
 		s32 ret;

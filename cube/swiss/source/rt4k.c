@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2024-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -113,15 +113,19 @@ bool rt4k_init(void)
 
 	rt4k_printf("pwr on\n");
 same:
-	if (swissSettings.rt4kProfile)
-		rt4k_printf("remote prof%i\n", swissSettings.rt4kProfile);
-
+	rt4k_load_profile(swissSettings.rt4kProfile);
 	return true;
 
 fail:
 	net_close(rt4k.sd);
 	rt4k.sd = INVALID_SOCKET;
 	return false;
+}
+
+void rt4k_load_profile(int profile)
+{
+	if (in_range(profile, 1, 12))
+		rt4k_printf("remote prof%i\n", profile);
 }
 
 void rt4k_deinit(void)

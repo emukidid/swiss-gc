@@ -44,6 +44,7 @@
 #include "gcm.h"
 #include "mp3.h"
 #include "nkit.h"
+#include "rt4k.h"
 #include "wkf.h"
 #include "cheats.h"
 #include "settings.h"
@@ -2052,6 +2053,7 @@ void load_game() {
 		msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device is operating in a degraded state.\nThis may impact playability."));
 		sleep(5);
 	}
+	gameID_early_set(&GCMDisk);
 	DrawDispose(msgBox);
 	
 	// Find the config for this game, or default if we don't know about it
@@ -2079,7 +2081,7 @@ void load_game() {
 	
 	// Load config for this game into our current settings
 	config_load_current(config);
-	gameID_early_set(&GCMDisk);
+	rt4k_load_profile(config->rt4kProfile);
 	
 	if(config->forceCleanBoot || (config->preferCleanBoot && (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))) {
 		gameID_set(&GCMDisk, get_gcm_boot_hash(&GCMDisk, curFile.meta));
@@ -2251,6 +2253,7 @@ fail_patched:
 	setTopAddr(0);
 fail:
 	gameID_unset();
+	rt4k_load_profile(swissSettings.rt4kProfile);
 	config_unload_current();
 	free(config);
 exit:
