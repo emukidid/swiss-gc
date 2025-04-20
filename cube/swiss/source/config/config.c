@@ -308,7 +308,7 @@ int config_update_game(ConfigEntry *entry, ConfigEntry *defaults, bool checkConf
 
 static char triggerLevelEntries[][4] = {"GKGE", "GKGJ", "GKGP", "GY2E", "GY2J", "GY2P", "GY3E", "GY3J", "GYBE", "GYBJ", "GYBP"};
 static char emulateAudioStreamEntries[][4] = {"UFZE", "UFZJ", "UFZP"};
-static char emulateReadSpeedEntries[][4] = {"GQSD", "GQSE", "GQSF", "GQSI", "GQSP", "GQSS", "GTOJ"};
+static char emulateReadSpeedEntries[][4] = {"DRSE", "GQSD", "GQSE", "GQSF", "GQSI", "GQSP", "GQSS", "GRSE", "GRSJ", "GRSP", "GTOJ"};
 static char emulateEthernetEntries[][4] = {"DPSJ", "GHEE", "GHEJ", "GKYE", "GKYJ", "GKYP", "GM4E", "GM4J", "GM4P", "GPJJ", "GPOE", "GPOJ", "GPOP", "GPSE", "GPSJ", "GPSP", "GTEE", "GTEJ", "GTEP", "GTEW", "PHEJ"};
 
 void config_defaults(ConfigEntry *entry) {
