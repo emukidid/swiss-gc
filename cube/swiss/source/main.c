@@ -111,6 +111,7 @@ void Initialise(void)
 		*(u32*)0x8000002C += SYS_CONSOLE_TDEV_HW1 - SYS_CONSOLE_RETAIL_HW1;
 
 	*(u32*)0x800000CC = swissSettings.sramVideo;
+	SYS_SetVideoMode(swissSettings.sramVideo);
 
 	GXRModeObj *vmode = getVideoMode();
 	setVideoMode(vmode);
@@ -307,8 +308,14 @@ int main(int argc, char *argv[])
 	GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);
 	DrawVideoMode(forcedMode);
 	
+	// Save settings to SRAM
 	swissSettings.sram60Hz = getTVFormat() != VI_PAL;
 	swissSettings.sramProgressive = getScanMode() == VI_PROGRESSIVE;
+	if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT)) {
+		swissSettings.sramHOffset &= ~1;
+	}
+	VIDEO_SetAdjustingValues(swissSettings.sramHOffset, 0);
+	updateSRAM(&swissSettings, true);
 	
 	swissSettings.initNetworkAtStart |= !!bba_exists(LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2);
 	if(swissSettings.initNetworkAtStart) {
