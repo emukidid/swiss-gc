@@ -87,21 +87,33 @@ startup:
 	ecowx	r0, r4, r3
 	eciwx	r0, r4, r3
 	andis.	r0, r0, 0x1000
-	beq		premain
+	bne		3f
 
-	li		r3, 0x30F8
+	li		r4, 0x5000 + 2*4
+	li		r0, 0x804
+	ecowx	r0, r4, r3
+	li		r5, 0x5000 + 13*4
+	eciwx	r0, r5, r3
+	rlwinm	r0, r0, 0, 17, 15
+	ecowx	r0, r5, r3
+2:	eciwx	r0, r4, r3
+	rlwinm.	r0, r0, 0, 21, 22
+	bne		2b
+	b		premain
+
+3:	li		r3, 0x30F8
 	lis		r0, 0xdead
 	ori		r0, r0, 0xbeef
 	ecowx	r0, 0, r3
-2:	eciwx	r0, 0, r3
+4:	eciwx	r0, 0, r3
 	cmpwi	r0, 0
-	bne		2b
+	bne		4b
 
 	mftb	r3
-3:	mftb	r4
+5:	mftb	r4
 	sub		r0, r4, r3
 	cmplwi	r0, 44550
-	blt		3b
+	blt		5b
 
 	li		r3, 0x1800
 	lis		r0, 0x4E80
