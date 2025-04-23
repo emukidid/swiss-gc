@@ -159,6 +159,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Disable Video Patches=%s\r\n", disableVideoPatchesStr[swissSettings.disableVideoPatches]);
 	fprintf(fp, "Force Video Active=%s\r\n", swissSettings.forceVideoActive ? "Yes":"No");
 	fprintf(fp, "Force DTV Status=%s\r\n", swissSettings.forceDTVStatus ? "Yes":"No");
+	fprintf(fp, "Last DTV Status=%s\r\n", VIDEO_HaveComponentCable() ? "Yes":"No");
 	fprintf(fp, "Pause for resolution change=%s\r\n", swissSettings.pauseAVOutput ? "Yes":"No");
 	fprintf(fp, "AutoBoot=%s\r\n", swissSettings.autoBoot ? "Yes":"No");
 	fprintf(fp, "AutoCheats=%s\r\n", swissSettings.autoCheats ? "Yes":"No");
@@ -832,6 +833,9 @@ void config_parse_global(char *configData) {
 				else if(!strcmp("Force DTV Status", name)) {
 					swissSettings.forceDTVStatus = !strcmp("Yes", value);
 				}
+				else if(!strcmp("Last DTV Status", name)) {
+					swissSettings.lastDTVStatus = !strcmp("Yes", value);
+				}
 				else if(!strcmp("Pause for resolution change", name)) {
 					swissSettings.pauseAVOutput = !strcmp("Yes", value);
 				}
@@ -1306,6 +1310,7 @@ void config_unload_current() {
 	swissSettings.disableDithering = backup.disableDithering;
 	swissSettings.forceAnisotropy = backup.forceAnisotropy;
 	swissSettings.forceWidescreen = backup.forceWidescreen;
+	swissSettings.fontEncode = backup.fontEncode;
 	swissSettings.forcePollRate = backup.forcePollRate;
 	swissSettings.invertCStick = backup.invertCStick;
 	swissSettings.swapCStick = backup.swapCStick;

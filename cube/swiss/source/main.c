@@ -112,6 +112,7 @@ void Initialise(void)
 
 	*(u32*)0x800000CC = swissSettings.sramVideo;
 	SYS_SetVideoMode(swissSettings.sramVideo);
+	swissSettings.fontEncode = SYS_GetFontEncoding();
 
 	GXRModeObj *vmode = getVideoMode();
 	setVideoMode(vmode);
@@ -233,6 +234,7 @@ int main(int argc, char *argv[])
 	swissSettings.exiSpeed = 1;		// 32MHz
 	swissSettings.uiVMode = 0; 		// Auto UI mode
 	swissSettings.gameVMode = 0;	// Auto video mode
+	swissSettings.lastDTVStatus = VIDEO_HaveComponentCable();
 	swissSettings.emulateAudioStream = 1;
 	swissSettings.ftpPort = 21;
 	swissSettings.fspPort = 21;
@@ -289,6 +291,9 @@ int main(int argc, char *argv[])
 	if(!config_init(&config_migration)) {
 		swissSettings.configDeviceId = DEVICE_ID_UNK;
 	}
+	else if(swissSettings.lastDTVStatus != VIDEO_HaveComponentCable()) {
+		show_settings(PAGE_GLOBAL, SET_AVE_COMPAT, NULL);
+	}
 	// If there's no default config device, set it to the first writable device available
 	if(swissSettings.configDeviceId == DEVICE_ID_UNK) {
 		for(i = 0; i < MAX_DEVICES; i++) {
@@ -297,6 +302,9 @@ int main(int argc, char *argv[])
 				print_gecko("No default config device found, using [%s]\r\n", allDevices[i]->deviceName);
 				if(!config_init(&config_migration)) {
 					show_settings(PAGE_GLOBAL, SET_CONFIG_DEV, NULL);
+				}
+				else if(swissSettings.lastDTVStatus != VIDEO_HaveComponentCable()) {
+					show_settings(PAGE_GLOBAL, SET_AVE_COMPAT, NULL);
 				}
 				break;
 			}

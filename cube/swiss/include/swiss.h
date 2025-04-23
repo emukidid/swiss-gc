@@ -117,6 +117,7 @@ typedef struct {
 	int disableVideoPatches;
 	int forceVideoActive;
 	int forceDTVStatus;
+	int lastDTVStatus;
 	int pauseAVOutput;
 	int emulateAudioStream;
 	int emulateReadSpeed;
