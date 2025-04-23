@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2022-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2022-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -27,38 +27,33 @@ memmove:
 	sub		r0, r3, r4
 	cmplw	r0, r5
 	blt		3f
-	srwi.	r6, r5, 5
-	clrlwi	r5, r5, 27
-	mtctr	r6
-	mtxer	r5
-	mr		r0, r3
+	srwi.	r0, r5, 2
+	clrlwi	r6, r5, 30
+	mtctr	r0
+	mtxer	r6
+	li		r5, 0
 	beq		2f
-1:	lswi	r5, r4, 32
-	stswi	r5, r3, 32
-	addi	r4, r4, 32
-	addi	r3, r3, 32
+1:	lwzx	r0, r5, r4
+	stwx	r0, r5, r3
+	addi	r5, r5, 4
 	bdnz	1b
-2:	lswx	r5, r0, r4
-	stswx	r5, r0, r3
-	mr		r3, r0
+2:	lswx	r0, r5, r4
+	stswx	r0, r5, r3
+	add		r5, r5, r6
 	blr
 #endif
 #ifndef MEMCPY
-3:	add		r4, r4, r5
-	add		r3, r3, r5
-	srwi.	r6, r5, 5
-	clrlwi	r5, r5, 27
-	mtctr	r6
-	mtxer	r5
-	sub		r4, r4, r5
-	sub		r3, r3, r5
-	lswx	r5, r0, r4
-	stswx	r5, r0, r3
+3:	srwi.	r0, r5, 2
+	clrlwi	r6, r5, 30
+	mtctr	r0
+	mtxer	r6
+	sub		r5, r5, r6
+	lswx	r0, r5, r4
+	stswx	r0, r5, r3
 	beqlr
-4:	subi	r4, r4, 32
-	subi	r3, r3, 32
-	lswi	r5, r4, 32
-	stswi	r5, r3, 32
+4:	subi	r5, r5, 4
+	lwzx	r0, r5, r4
+	stwx	r0, r5, r3
 	bdnz	4b
 	blr
 #else
