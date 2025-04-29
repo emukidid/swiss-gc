@@ -70,7 +70,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 };
 
 static char *tooltips_network[PAGE_NETWORK_MAX+1] = {
-	"Init network at startup:\n\nDisabled - Do not initialise the BBA even if present (default)\nEnabled - If a BBA is present, it will be initialised at startup\n\nIf initialised, navigate to the IP in a web browser to backup various data"
+	"Init network at startup:\n\nDisabled - Do not initialise the BBA even if present (default)\nEnabled - If a BBA is present, it will be initialised at startup\n\nIf initialised, navigate to the IP in a web browser to backup\nvarious data. wiiload is supported for iterative development."
 };
 
 static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {

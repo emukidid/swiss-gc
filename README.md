@@ -25,6 +25,9 @@ Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
 - [GC Loader](https://www.gc-forever.com/wiki/index.php?title=GCLoader)
 - [FlippyDrive](https://www.gc-forever.com/wiki/index.php?title=FlippyDrive)
 
+**Can provide the following services**
+- [wiiload](https://wiibrew.org/wiki/Wiiload) v0.5 over TCP/IP
+
 ### Requirements
 - GameCube with controller
 - A [way to boot homebrew](https://www.gc-forever.com/wiki/index.php?title=Booting_homebrew)
