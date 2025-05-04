@@ -26,6 +26,8 @@ Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
 - [FlippyDrive](https://www.gc-forever.com/wiki/index.php?title=FlippyDrive)
 
 **Can provide the following services**
+- Return to loader and environment setup for [libogc2](https://github.com/extremscorner/libogc2) applications
+- Return to loader for older applications using a legacy mechanism
 - [wiiload](https://wiibrew.org/wiki/Wiiload) v0.5 over TCP/IP
 
 ### Requirements
