@@ -28,7 +28,7 @@
 
 ConfigEntry tempConfig;
 SwissSettings tempSettings;
-char *uiVModeStr[] = {"Auto", "480i", "480p", "576i", "576p"};
+char *uiVModeStr[] = {"Auto", "480i", "480sf", "480p", "576i", "576sf", "576p"};
 char *gameVModeStr[] = {"Auto", "480i", "480sf", "240p", "960i", "480p", "1080i60", "540p60", "576i", "576sf", "288p", "1152i", "576p", "1080i50", "540p50"};
 char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "656px", "672px", "704px", "720px"};
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
@@ -476,7 +476,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_SWISS_VIDEOMODE:
 				swissSettings.uiVMode += direction;
-				swissSettings.uiVMode = (swissSettings.uiVMode + 5) % 5;
+				swissSettings.uiVMode = (swissSettings.uiVMode + 7) % 7;
 			break;
 			case SET_FILEBROWSER_TYPE:
 				swissSettings.fileBrowserType += direction;

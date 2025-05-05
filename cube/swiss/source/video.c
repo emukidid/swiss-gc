@@ -130,16 +130,18 @@ GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 				}
 			}
 		case 1:
-			if(getDTVStatus()) {
-				return swissSettings.sramVideo == SYS_VIDEO_PAL ? &TVEurgb60Hz480IntDf : &TVNtsc480IntDf;
-			} else {
-				switch(swissSettings.sramVideo) {
-					case SYS_VIDEO_PAL:  return &TVEurgb60Hz480IntDf;
-					case SYS_VIDEO_MPAL: return &TVMpal480IntDf;
-					default:             return &TVNtsc480IntDf;
-				}
+			switch(swissSettings.sramVideo) {
+				case SYS_VIDEO_PAL:  return &TVEurgb60Hz480IntDf;
+				case SYS_VIDEO_MPAL: return getDTVStatus() ? &TVNtsc480IntDf : &TVMpal480IntDf;
+				default:             return &TVNtsc480IntDf;
 			}
 		case 2:
+			switch(swissSettings.sramVideo) {
+				case SYS_VIDEO_PAL:  return &TVEurgb60Hz480Int;
+				case SYS_VIDEO_MPAL: return getDTVStatus() ? &TVNtsc480Int : &TVMpal480Int;
+				default:             return &TVNtsc480Int;
+			}
+		case 3:
 			if(getDTVStatus()) {
 				return swissSettings.sramVideo == SYS_VIDEO_PAL ? &TVEurgb60Hz480Prog : &TVNtsc480Prog;
 			} else {
@@ -149,9 +151,11 @@ GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 					default:             return &TVNtsc480IntDf;
 				}
 			}
-		case 3:
-			return &TVPal576IntDfScale;
 		case 4:
+			return &TVPal576IntDfScale;
+		case 5:
+			return &TVPal576IntScale;
+		case 6:
 			return getDTVStatus() ? &TVPal576ProgScale : &TVPal576IntDfScale;
 	}
 	return getVideoMode();

@@ -481,7 +481,7 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 					swissSettings.exiSpeed = !strcmp("32MHz", value);
 				}
 				else if(!strcmp("Swiss Video Mode", name)) {
-					for(int i = 0; i < 5; i++) {
+					for(int i = 0; i < 7; i++) {
 						if(!strcmp(uiVModeStr[i], value)) {
 							swissSettings.uiVMode = i;
 							break;
@@ -789,7 +789,7 @@ void config_parse_global(char *configData) {
 					}
 				}
 				else if(!strcmp("Swiss Video Mode", name)) {
-					for(int i = 0; i < 5; i++) {
+					for(int i = 0; i < 7; i++) {
 						if(!strcmp(uiVModeStr[i], value)) {
 							swissSettings.uiVMode = i;
 							break;
