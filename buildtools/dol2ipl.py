@@ -117,16 +117,7 @@ def append_dol(data, trailer, base_address):
 
     return header + data[256:]
 
-def pack_uf2(data, base_address, family):
-    if family == "rp2040":
-        family_id = 0xE48BFF56 # RP2040
-    elif family == "rp2350":
-        family_id = 0xE48BFF59 # RP2350-ARM-S
-    elif family == "data":
-        family_id = 0xE48BFF58 # DATA family ID compatible with RP2350
-    else:
-        raise ValueError(f"Unknown family: {family}")
-
+def pack_uf2(data, base_address, family_ids):
     ret = bytearray()
 
     seq = 0
@@ -137,19 +128,20 @@ def pack_uf2(data, base_address, family):
         chunk = data[:chunk_size]
         data = data[chunk_size:]
 
-        ret += struct.pack(
-            "< 8I 476s I",
-            0x0A324655, # Magic 1 "UF2\n"
-            0x9E5D5157, # Magic 2
-            0x00002000, # Flags (family ID present)
-            addr,
-            chunk_size,
-            seq,
-            total_chunks,
-            family_id,
-            chunk,
-            0x0AB16F30, # Final magic
-        )
+        for family_id in family_ids:
+            ret += struct.pack(
+                "< 8I 476s I",
+                0x0A324655, # Magic 1 "UF2\n"
+                0x9E5D5157, # Magic 2
+                0x00002000, # Flags (family ID present)
+                addr,
+                chunk_size,
+                seq,
+                total_chunks,
+                family_id,
+                chunk,
+                0x0AB16F30, # Final magic
+            )
 
         seq += 1
         addr += chunk_size
@@ -158,7 +150,7 @@ def pack_uf2(data, base_address, family):
 
 def main():
     if len(sys.argv) not in range(3, 4 + 1):
-        print(f"Usage: {sys.argv[0]} <output> <executable> [family]")
+        print(f"Usage: {sys.argv[0]} <output> <executable>")
         return 1
 
     output = sys.argv[1]
@@ -220,7 +212,6 @@ def main():
             print("Invalid entry point and base address (must be 0x81300000)")
             return -1
 
-        family = sys.argv[3]
         img = scramble(bytearray(0x720) + img)[0x720:]
 
         align_size = 4
@@ -237,7 +228,7 @@ def main():
         )
         assert len(header) == header_size
 
-        out = pack_uf2(header + img, 0x10080000, family)
+        out = pack_uf2(header + img, 0x10080000, [0xE48BFF56, 0xE48BFF59])
 
     else:
         print("Unknown output format")
