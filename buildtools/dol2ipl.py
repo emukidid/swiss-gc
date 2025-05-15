@@ -117,7 +117,16 @@ def append_dol(data, trailer, base_address):
 
     return header + data[256:]
 
-def pack_uf2(data, base_address):
+def pack_uf2(data, base_address, family):
+    if family == "rp2040":
+        family_id = 0xE48BFF56 # RP2040
+    elif family == "rp2350":
+        family_id = 0xE48BFF59 # RP2350-ARM-S
+    elif family == "data":
+        family_id = 0xE48BFF58 # DATA family ID compatible with RP2350
+    else:
+        raise ValueError(f"Unknown family: {family}")
+
     ret = bytearray()
 
     seq = 0
@@ -137,7 +146,7 @@ def pack_uf2(data, base_address):
             chunk_size,
             seq,
             total_chunks,
-            0xE48BFF56, # Board family: Raspberry Pi RP2040
+            family_id,
             chunk,
             0x0AB16F30, # Final magic
         )
@@ -149,7 +158,7 @@ def pack_uf2(data, base_address):
 
 def main():
     if len(sys.argv) not in range(3, 4 + 1):
-        print(f"Usage: {sys.argv[0]} <output> <executable>")
+        print(f"Usage: {sys.argv[0]} <output> <executable> [family]")
         return 1
 
     output = sys.argv[1]
@@ -211,6 +220,7 @@ def main():
             print("Invalid entry point and base address (must be 0x81300000)")
             return -1
 
+        family = sys.argv[3]
         img = scramble(bytearray(0x720) + img)[0x720:]
 
         align_size = 4
@@ -227,7 +237,7 @@ def main():
         )
         assert len(header) == header_size
 
-        out = pack_uf2(header + img, 0x10080000)
+        out = pack_uf2(header + img, 0x10080000, family)
 
     else:
         print("Unknown output format")

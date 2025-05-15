@@ -121,11 +121,12 @@ package:   # create distribution package
 	@mv $(DIST)/GCLoader $(SVN_REVISION)
 	@mv $(DIST)/ISO $(SVN_REVISION)
 	@mv $(DIST)/MemoryCard $(SVN_REVISION)
-	@mv $(DIST)/PicoBoot $(SVN_REVISION)
 	@mv $(DIST)/USBGeckoRemoteServer $(SVN_REVISION)
 	@mv $(DIST)/Wii $(SVN_REVISION)
 	@mv $(DIST)/WiikeyFusion $(SVN_REVISION)
 	@mv $(DIST)/WODE $(SVN_REVISION)
+	@mkdir $(SVN_REVISION)/PicoBoot
+	@cp $(DIST)/PicoBoot/$(SVN_REVISION).uf2 $(SVN_REVISION)/PicoBoot/$(SVN_REVISION).uf2
 	@find ./$(SVN_REVISION) -type f -print0 | xargs -0 sha256sum > $(SVN_REVISION).sha256
 	@mv $(SVN_REVISION).sha256 $(SVN_REVISION)
 	@git log -n 4 > $(SVN_REVISION)-changelog.txt
@@ -166,7 +167,9 @@ build-ipl:
 	@mkdir $(DIST)/Apploader/swiss/patches
 	@mkdir $(DIST)/PicoBoot
 	@$(DOL2IPL) $(DIST)/Apploader/swiss/patches/apploader.img $(PACKER)/reboot.dol *$(SVN_REVISION).dol
-	@$(DOL2IPL) $(DIST)/PicoBoot/$(SVN_REVISION).uf2 $(PACKER)/reboot.dol
+	@$(DOL2IPL) $(DIST)/PicoBoot/$(SVN_REVISION)_pico.uf2 $(PACKER)/reboot.dol rp2040
+	@$(DOL2IPL) $(DIST)/PicoBoot/$(SVN_REVISION)_pico2.uf2 $(PACKER)/reboot.dol rp2350
+	@cat $(DIST)/PicoBoot/$(SVN_REVISION)_pico.uf2 $(DIST)/PicoBoot/$(SVN_REVISION)_pico2.uf2 > $(DIST)/PicoBoot/$(SVN_REVISION).uf2
 
 #------------------------------------------------------------------
 
